@@ -152,27 +152,14 @@ void halmd_0_1_x<dimension, float_type>::luaopen(lua_State* L)
     ];
 }
 
-namespace // limit symbols to translation unit
+HALMD_LUA_API int luaopen_libhalmd_io_trajectory_readers_halmd_0_1_x(lua_State* L)
 {
-
-__attribute__((constructor)) void register_lua()
-{
-    lua_wrapper::register_(1) //< distance of derived to base class
-    [
-        &halmd_0_1_x<3, double>::luaopen
-    ]
-    [
-        &halmd_0_1_x<2, double>::luaopen
-    ]
-    [
-        &halmd_0_1_x<3, float>::luaopen
-    ]
-    [
-        &halmd_0_1_x<2, float>::luaopen
-    ];
+    halmd_0_1_x<3, double>::luaopen(L);
+    halmd_0_1_x<2, double>::luaopen(L);
+    halmd_0_1_x<3, float>::luaopen(L);
+    halmd_0_1_x<2, float>::luaopen(L);
+    return 0;
 }
-
-} // namespace
 
 }}} // namespace io::trajectory::readers
 

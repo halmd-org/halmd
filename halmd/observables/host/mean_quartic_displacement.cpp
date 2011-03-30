@@ -73,30 +73,17 @@ void mean_quartic_displacement<dimension, float_type>::luaopen(lua_State* L)
     ];
 }
 
-namespace // limit symbols to translation unit
+HALMD_LUA_API int luaopen_libhalmd_observables_host_mean_quartic_displacement(lua_State* L)
 {
-
-__attribute__((constructor)) void register_lua()
-{
-    lua_wrapper::register_(1) //< distance of derived to base class
 #ifndef USE_HOST_SINGLE_PRECISION
-    [
-        &mean_quartic_displacement<3, double>::luaopen
-    ]
-    [
-        &mean_quartic_displacement<2, double>::luaopen
-    ];
+    mean_quartic_displacement<3, double>::luaopen(L);
+    mean_quartic_displacement<2, double>::luaopen(L);
 #else
-    [
-        &mean_quartic_displacement<3, float>::luaopen
-    ]
-    [
-        &mean_quartic_displacement<2, float>::luaopen
-    ];
+    mean_quartic_displacement<3, float>::luaopen(L);
+    mean_quartic_displacement<2, float>::luaopen(L);
 #endif
+    return 0;
 }
-
-} // namespace
 
 // explicit instantiation
 #ifndef USE_HOST_SINGLE_PRECISION

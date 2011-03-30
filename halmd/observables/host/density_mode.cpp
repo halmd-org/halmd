@@ -128,30 +128,17 @@ void density_mode<dimension, float_type>::luaopen(lua_State* L)
     ];
 }
 
-namespace  // limit symbols to translation unit
+HALMD_LUA_API int luaopen_libhalmd_observables_host_density_mode(lua_State* L)
 {
-
-__attribute__ ((constructor)) void register_lua()
-{
-    lua_wrapper::register_(1)	//< distance of derived to base class
 #ifndef USE_HOST_SINGLE_PRECISION
-    [
-        &density_mode<3, double>::luaopen
-    ]
-    [
-        &density_mode<2, double>::luaopen
-    ];
+    density_mode<3, double>::luaopen(L);
+    density_mode<2, double>::luaopen(L);
 #else
-    [
-        &density_mode<3, float>::luaopen
-    ]
-    [
-        &density_mode<2, float>::luaopen
-    ];
+    density_mode<3, float>::luaopen(L);
+    density_mode<2, float>::luaopen(L);
 #endif
+    return 0;
 }
-
-}  // namespace
 
 // explicit instantiation
 #ifndef USE_HOST_SINGLE_PRECISION

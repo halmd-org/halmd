@@ -48,30 +48,17 @@ void force<dimension, float_type>::luaopen(lua_State* L)
     ];
 }
 
-namespace // limit symbols to translation unit
+HALMD_LUA_API int luaopen_libhalmd_mdsim_host_force(lua_State* L)
 {
-
-__attribute__((constructor)) void register_lua()
-{
-    lua_wrapper::register_(1) //< distance of derived to base class
 #ifndef USE_HOST_SINGLE_PRECISION
-    [
-        &force<3, double>::luaopen
-    ]
-    [
-        &force<2, double>::luaopen
-    ];
+    force<3, double>::luaopen(L);
+    force<2, double>::luaopen(L);
 #else
-    [
-        &force<3, float>::luaopen
-    ]
-    [
-        &force<2, float>::luaopen
-    ];
+    force<3, float>::luaopen(L);
+    force<2, float>::luaopen(L);
 #endif
+    return 0;
 }
-
-} // namespace
 
 }} // namespace mdsim::host
 

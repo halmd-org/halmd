@@ -153,21 +153,12 @@ void thermodynamics<dimension, float_type>::luaopen(lua_State* L)
     ];
 }
 
-namespace // limit symbols to translation unit
+HALMD_LUA_API int luaopen_libhalmd_observables_gpu_thermodynamics(lua_State* L)
 {
-
-__attribute__((constructor)) void register_lua()
-{
-    lua_wrapper::register_(1) //< distance of derived to base class
-    [
-        &thermodynamics<3, float>::luaopen
-    ]
-    [
-        &thermodynamics<2, float>::luaopen
-    ];
+    thermodynamics<3, float>::luaopen(L);
+    thermodynamics<2, float>::luaopen(L);
+    return 0;
 }
-
-} // namespace
 
 // explicit instantiation
 template class thermodynamics<3, float>;

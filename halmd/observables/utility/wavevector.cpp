@@ -155,21 +155,12 @@ void wavevector<dimension>::luaopen(lua_State* L)
     ];
 }
 
-namespace // limit symbols to translation unit
+HALMD_LUA_API int luaopen_libhalmd_observables_utility_wavevector(lua_State* L)
 {
-
-__attribute__((constructor)) void register_lua()
-{
-    lua_wrapper::register_(0) //< distance of derived to base class
-    [
-        &wavevector<3>::luaopen
-    ]
-    [
-        &wavevector<2>::luaopen
-    ];
+    wavevector<3>::luaopen(L);
+    wavevector<2>::luaopen(L);
+    return 0;
 }
-
-} // namespace
 
 // explicit instantiation
 template class wavevector<3>;

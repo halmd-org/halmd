@@ -233,21 +233,12 @@ luaopen(lua_State* L)
     ];
 }
 
-namespace // limit symbols to translation unit
+HALMD_LUA_API int luaopen_libhalmd_mdsim_gpu_integrators_verlet_nvt_andersen(lua_State* L)
 {
-
-__attribute__((constructor)) void register_lua()
-{
-    lua_wrapper::register_(2) //< distance of derived to base class
-    [
-        &verlet_nvt_andersen<3, float, random::gpu::rand48>::luaopen
-    ]
-    [
-        &verlet_nvt_andersen<2, float, random::gpu::rand48>::luaopen
-    ];
+    verlet_nvt_andersen<3, float, random::gpu::rand48>::luaopen(L);
+    verlet_nvt_andersen<2, float, random::gpu::rand48>::luaopen(L);
+    return 0;
 }
-
-} // namespace
 
 // explicit instantiation
 template class verlet_nvt_andersen<3, float, random::gpu::rand48>;

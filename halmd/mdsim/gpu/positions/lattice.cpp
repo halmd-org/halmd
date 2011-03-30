@@ -236,21 +236,12 @@ void lattice<dimension, float_type, RandomNumberGenerator>::luaopen(lua_State* L
     ];
 }
 
-namespace // limit symbols to translation unit
+HALMD_LUA_API int luaopen_libhalmd_mdsim_gpu_positions_lattice(lua_State* L)
 {
-
-__attribute__((constructor)) void register_lua()
-{
-    lua_wrapper::register_(1) //< distance of derived to base class
-    [
-        &lattice<3, float, random::gpu::rand48>::luaopen
-    ]
-    [
-        &lattice<2, float, random::gpu::rand48>::luaopen
-    ];
+    lattice<3, float, random::gpu::rand48>::luaopen(L);
+    lattice<2, float, random::gpu::rand48>::luaopen(L);
+    return 0;
 }
-
-} // namespace
 
 // explicit instantiation
 template class lattice<3, float, random::gpu::rand48>;

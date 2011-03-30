@@ -180,21 +180,12 @@ void sampler<dimension>::luaopen(lua_State* L)
     ];
 }
 
-namespace // limit symbols to translation unit
+HALMD_LUA_API int luaopen_libhalmd_observables_sampler(lua_State* L)
 {
-
-__attribute__((constructor)) void register_lua()
-{
-    lua_wrapper::register_(1) //< distance of derived to base class
-    [
-        &sampler<3>::luaopen
-    ]
-    [
-        &sampler<2>::luaopen
-    ];
+    sampler<3>::luaopen(L);
+    sampler<2>::luaopen(L);
+    return 0;
 }
-
-} // namespace
 
 // explicit instantiation
 template class sampler<3>;

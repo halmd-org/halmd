@@ -242,30 +242,17 @@ void neighbour<dimension, float_type>::luaopen(lua_State* L)
     ];
 }
 
-namespace // limit symbols to translation unit
+HALMD_LUA_API int luaopen_libhalmd_mdsim_host_neighbour(lua_State* L)
 {
-
-__attribute__((constructor)) void register_lua()
-{
-    lua_wrapper::register_(1) //< distance of derived to base class
 #ifndef USE_HOST_SINGLE_PRECISION
-    [
-        &neighbour<3, double>::luaopen
-    ]
-    [
-        &neighbour<2, double>::luaopen
-    ];
+    neighbour<3, double>::luaopen(L);
+    neighbour<2, double>::luaopen(L);
 #else
-    [
-        &neighbour<3, float>::luaopen
-    ]
-    [
-        &neighbour<2, float>::luaopen
-    ];
+    neighbour<3, float>::luaopen(L);
+    neighbour<2, float>::luaopen(L);
 #endif
+    return 0;
 }
-
-} // namespace
 
 // explicit instantiation
 #ifndef USE_HOST_SINGLE_PRECISION

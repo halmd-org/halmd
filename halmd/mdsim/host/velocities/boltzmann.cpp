@@ -139,30 +139,17 @@ void boltzmann<dimension, float_type>::luaopen(lua_State* L)
     ];
 }
 
-namespace // limit symbols to translation unit
+HALMD_LUA_API int luaopen_libhalmd_mdsim_host_velocities_boltzmann(lua_State* L)
 {
-
-__attribute__((constructor)) void register_lua()
-{
-    lua_wrapper::register_(2) //< distance of derived to base class
 #ifndef USE_HOST_SINGLE_PRECISION
-    [
-        &boltzmann<3, double>::luaopen
-    ]
-    [
-        &boltzmann<2, double>::luaopen
-    ];
+    boltzmann<3, double>::luaopen(L);
+    boltzmann<2, double>::luaopen(L);
 #else
-    [
-        &boltzmann<3, float>::luaopen
-    ]
-    [
-        &boltzmann<2, float>::luaopen
-    ];
+    boltzmann<3, float>::luaopen(L);
+    boltzmann<2, float>::luaopen(L);
 #endif
+    return 0;
 }
-
-} // namespace
 
 // explicit instantiation
 #ifndef USE_HOST_SINGLE_PRECISION

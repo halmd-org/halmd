@@ -90,21 +90,12 @@ void box<dimension>::luaopen(lua_State* L)
     ];
 }
 
-namespace // limit symbols to translation unit
+HALMD_LUA_API int luaopen_libhalmd_mdsim_box(lua_State* L)
 {
-
-__attribute__((constructor)) void register_lua()
-{
-    lua_wrapper::register_(0) //< distance of derived to base class
-    [
-        &box<3>::luaopen
-    ]
-    [
-        &box<2>::luaopen
-    ];
+    box<3>::luaopen(L);
+    box<2>::luaopen(L);
+    return 0;
 }
-
-} // namespace
 
 // explicit instantiation
 template class box<3>;

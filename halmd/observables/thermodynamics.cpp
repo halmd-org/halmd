@@ -138,21 +138,12 @@ void thermodynamics<dimension>::luaopen(lua_State* L)
     ];
 }
 
-namespace // limit symbols to translation unit
+HALMD_LUA_API int luaopen_libhalmd_observables_thermodynamics(lua_State* L)
 {
-
-__attribute__((constructor)) void register_lua()
-{
-    lua_wrapper::register_(0) //< distance of derived to base class
-    [
-        &thermodynamics<3>::luaopen
-    ]
-    [
-        &thermodynamics<2>::luaopen
-    ];
+    thermodynamics<3>::luaopen(L);
+    thermodynamics<2>::luaopen(L);
+    return 0;
 }
-
-} // namespace
 
 // explicit instantiation
 template class thermodynamics<3>;

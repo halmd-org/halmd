@@ -85,21 +85,12 @@ void particle<dimension>::luaopen(lua_State* L)
     ];
 }
 
-namespace // limit symbols to translation unit
+HALMD_LUA_API int luaopen_libhalmd_mdsim_particle(lua_State* L)
 {
-
-__attribute__((constructor)) void register_lua()
-{
-    lua_wrapper::register_(0) //< distance of derived to base class
-    [
-        &particle<3>::luaopen
-    ]
-    [
-        &particle<2>::luaopen
-    ];
+    particle<3>::luaopen(L);
+    particle<2>::luaopen(L);
+    return 0;
 }
-
-} // namespace
 
 // explicit instantiation
 template class particle<3>;

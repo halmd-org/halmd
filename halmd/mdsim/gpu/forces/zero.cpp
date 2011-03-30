@@ -79,21 +79,12 @@ void zero<dimension, float_type>::luaopen(lua_State* L)
     ];
 }
 
-namespace // limit symbols to translation unit
+HALMD_LUA_API int luaopen_libhalmd_mdsim_gpu_forces_zero(lua_State* L)
 {
-
-__attribute__((constructor)) void register_lua()
-{
-    lua_wrapper::register_(2) //< distance of derived to base class
-    [
-        &zero<3, float>::luaopen
-    ]
-    [
-        &zero<2, float>::luaopen
-    ];
+    zero<3, float>::luaopen(L);
+    zero<2, float>::luaopen(L);
+    return 0;
 }
-
-} // namespace
 
 // explicit instantiation
 template class zero<3, float>;

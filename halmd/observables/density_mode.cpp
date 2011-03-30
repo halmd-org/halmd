@@ -60,21 +60,12 @@ void density_mode<dimension>::luaopen(lua_State* L)
     ];
 }
 
-namespace // limit symbols to translation unit
+HALMD_LUA_API int luaopen_libhalmd_observables_density_mode(lua_State* L)
 {
-
-__attribute__ ((constructor)) void register_lua()
-{
-    lua_wrapper::register_(0) //< distance of derived to base class
-    [
-        &density_mode<3>::luaopen
-    ]
-    [
-        &density_mode<2>::luaopen
-    ];
+    density_mode<3>::luaopen(L);
+    density_mode<2>::luaopen(L);
+    return 0;
 }
-
-} // namespace
 
 } // namespace observables
 

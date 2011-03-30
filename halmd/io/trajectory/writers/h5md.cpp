@@ -130,27 +130,14 @@ void h5md<dimension, float_type>::luaopen(lua_State* L)
     ];
 }
 
-namespace // limit symbols to translation unit
+HALMD_LUA_API int luaopen_libhalmd_io_trajectory_writers_h5md(lua_State* L)
 {
-
-__attribute__((constructor)) void register_lua()
-{
-    lua_wrapper::register_(1) //< distance of derived to base class
-    [
-        &h5md<3, double>::luaopen
-    ]
-    [
-        &h5md<2, double>::luaopen
-    ]
-    [
-        &h5md<3, float>::luaopen
-    ]
-    [
-        &h5md<2, float>::luaopen
-    ];
+    h5md<3, double>::luaopen(L);
+    h5md<2, double>::luaopen(L);
+    h5md<3, float>::luaopen(L);
+    h5md<2, float>::luaopen(L);
+    return 0;
 }
-
-} // namespace
 
 }}} // namespace io::trajectory::writers
 

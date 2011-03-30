@@ -59,21 +59,12 @@ void writer<dimension>::luaopen(lua_State* L)
     ];
 }
 
-namespace // limit symbols to translation unit
+HALMD_LUA_API int luaopen_libhalmd_io_statevars_writer(lua_State* L)
 {
-
-__attribute__((constructor)) void register_lua()
-{
-    lua_wrapper::register_(0) //< distance of derived to base class
-    [
-        &writer<3>::luaopen
-    ]
-    [
-        &writer<2>::luaopen
-    ];
+    writer<3>::luaopen(L);
+    writer<2>::luaopen(L);
+    return 0;
 }
-
-} // namespace
 
 }} // namespace io::statevars
 

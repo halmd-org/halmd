@@ -91,11 +91,11 @@ void script::load_wrapper()
 {
     lua_State* L = get_pointer(L_); //< get raw pointer for Lua C API
 
-    luabind::open(L); //< setup global structures and Lua class support
+    using namespace luabind;
 
-    luabind::bind_class_info(L); //< class_info(), class_names()
+    open(L); //< setup global structures and Lua class support
 
-    lua_wrapper::open(L); //< register HALMD Lua wrappers
+    bind_class_info(L); //< class_info(), class_names()
 
     luaopen_libhalmd(L);
 }

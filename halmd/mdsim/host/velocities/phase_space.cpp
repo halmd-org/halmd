@@ -84,31 +84,17 @@ void phase_space<dimension, float_type>::luaopen(lua_State* L)
     ];
 }
 
-
-namespace // limit symbols to translation unit
+HALMD_LUA_API int luaopen_libhalmd_mdsim_host_velocities_phase_space(lua_State* L)
 {
-
-__attribute__((constructor)) void register_lua()
-{
-    lua_wrapper::register_(2) //< distance of derived to base class
 #ifndef USE_HOST_SINGLE_PRECISION
-    [
-        &phase_space<3, double>::luaopen
-    ]
-    [
-        &phase_space<2, double>::luaopen
-    ];
+    phase_space<3, double>::luaopen(L);
+    phase_space<2, double>::luaopen(L);
 #else
-    [
-        &phase_space<3, float>::luaopen
-    ]
-    [
-        &phase_space<2, float>::luaopen
-    ];
+    phase_space<3, float>::luaopen(L);
+    phase_space<2, float>::luaopen(L);
 #endif
+    return 0;
 }
-
-} // namespace
 
 // explicit instantiation
 #ifndef USE_HOST_SINGLE_PRECISION

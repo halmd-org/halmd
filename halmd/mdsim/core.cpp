@@ -140,21 +140,12 @@ void core<dimension>::luaopen(lua_State* L)
     ];
 }
 
-namespace // limit symbols to translation unit
+HALMD_LUA_API int luaopen_libhalmd_mdsim_core(lua_State* L)
 {
-
-__attribute__((constructor)) void register_lua()
-{
-    lua_wrapper::register_(0) //< distance of derived to base class
-    [
-        &core<3>::luaopen
-    ]
-    [
-        &core<2>::luaopen
-    ];
+    core<3>::luaopen(L);
+    core<2>::luaopen(L);
+    return 0;
 }
-
-} // namespace
 
 // explicit instantiation
 template class core<3>;

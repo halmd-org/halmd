@@ -48,21 +48,12 @@ void reader<dimension>::luaopen(lua_State* L)
     ];
 }
 
-namespace // limit symbols to translation unit
+HALMD_LUA_API int luaopen_libhalmd_io_trajectory_reader(lua_State* L)
 {
-
-__attribute__((constructor)) void register_lua()
-{
-    lua_wrapper::register_(0) //< distance of derived to base class
-    [
-        &reader<3>::luaopen
-    ]
-    [
-        &reader<2>::luaopen
-    ];
+    reader<3>::luaopen(L);
+    reader<2>::luaopen(L);
+    return 0;
 }
-
-} // namespace
 
 }} // namespace io::trajectory
 

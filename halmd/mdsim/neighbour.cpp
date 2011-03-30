@@ -48,21 +48,12 @@ void neighbour<dimension>::luaopen(lua_State* L)
     ];
 }
 
-namespace // limit symbols to translation unit
+HALMD_LUA_API int luaopen_libhalmd_mdsim_neighbour(lua_State* L)
 {
-
-__attribute__((constructor)) void register_lua()
-{
-    lua_wrapper::register_(0) //< distance to base class
-    [
-        &neighbour<3>::luaopen
-    ]
-    [
-        &neighbour<2>::luaopen
-    ];
+    neighbour<3>::luaopen(L);
+    neighbour<2>::luaopen(L);
+    return 0;
 }
-
-} // namespace
 
 template class neighbour<3>;
 template class neighbour<2>;

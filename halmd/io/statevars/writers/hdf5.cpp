@@ -253,22 +253,13 @@ void hdf5<dimension>::luaopen(lua_State* L)
     ];
 }
 
-namespace // limit symbols to translation unit
+HALMD_LUA_API int luaopen_libhalmd_io_statevars_writers_hdf5(lua_State* L)
 {
-
-__attribute__((constructor)) void register_lua()
-{
-    lua_wrapper::register_(1) //< distance of derived to base class
-    [
-        &hdf5<3>::luaopen
-    ]
-    [
-        &hdf5<2>::luaopen
-    ];
+    hdf5<3>::luaopen(L);
+    hdf5<2>::luaopen(L);
+    return 0;
 }
 
-} // namespace
-
-}}} // namespace io::profiling::writers
+}}} // namespace io::statevars::writers
 
 } // namespace halmd

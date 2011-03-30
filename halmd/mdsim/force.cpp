@@ -46,21 +46,12 @@ void force<dimension>::luaopen(lua_State* L)
     ];
 }
 
-namespace // limit symbols to translation unit
+HALMD_LUA_API int luaopen_libhalmd_mdsim_force(lua_State* L)
 {
-
-__attribute__((constructor)) void register_lua()
-{
-    lua_wrapper::register_(0) //< distance of derived to base class
-    [
-        &force<3>::luaopen
-    ]
-    [
-        &force<2>::luaopen
-    ];
+    force<3>::luaopen(L);
+    force<2>::luaopen(L);
+    return 0;
 }
-
-} // namespace
 
 // explicit instantiation
 template class force<3>;

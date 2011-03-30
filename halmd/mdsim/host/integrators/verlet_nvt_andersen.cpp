@@ -182,30 +182,17 @@ void verlet_nvt_andersen<dimension, float_type>::luaopen(lua_State* L)
     ];
 }
 
-namespace // limit symbols to translation unit
+HALMD_LUA_API int luaopen_libhalmd_mdsim_host_integrators_verlet_nvt_andersen(lua_State* L)
 {
-
-__attribute__((constructor)) void register_lua()
-{
-    lua_wrapper::register_(2) //< distance of derived to base class
 #ifndef USE_HOST_SINGLE_PRECISION
-    [
-        &verlet_nvt_andersen<3, double>::luaopen
-    ]
-    [
-        &verlet_nvt_andersen<2, double>::luaopen
-    ];
+    verlet_nvt_andersen<3, double>::luaopen(L);
+    verlet_nvt_andersen<2, double>::luaopen(L);
 #else
-    [
-        &verlet_nvt_andersen<3, float>::luaopen
-    ]
-    [
-        &verlet_nvt_andersen<2, float>::luaopen
-    ];
+    verlet_nvt_andersen<3, float>::luaopen(L);
+    verlet_nvt_andersen<2, float>::luaopen(L);
 #endif
+    return 0;
 }
-
-} // namespace
 
 // explicit instantiation
 #ifndef USE_HOST_SINGLE_PRECISION

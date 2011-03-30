@@ -133,18 +133,11 @@ void random<RandomNumberGenerator>::luaopen(lua_State* L)
     ];
 }
 
-namespace // limit symbols to translation unit
+HALMD_LUA_API int luaopen_libhalmd_random_gpu_random(lua_State* L)
 {
-
-__attribute__((constructor)) void register_lua()
-{
-    lua_wrapper::register_(1) //< distance of derived to base class
-    [
-        &random<rand48>::luaopen
-    ];
+    random<rand48>::luaopen(L);
+    return 0;
 }
-
-} // namespace
 
 }} // namespace random::gpu
 

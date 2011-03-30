@@ -47,21 +47,12 @@ void velocity<dimension>::luaopen(lua_State* L)
     ];
 }
 
-namespace // limit symbols to translation unit
+HALMD_LUA_API int luaopen_libhalmd_mdsim_velocity(lua_State* L)
 {
-
-__attribute__((constructor)) void register_lua()
-{
-    lua_wrapper::register_(0) //< distance of derived to base class
-    [
-        &velocity<3>::luaopen
-    ]
-    [
-        &velocity<2>::luaopen
-    ];
+    velocity<3>::luaopen(L);
+    velocity<2>::luaopen(L);
+    return 0;
 }
-
-} // namespace
 
 template class velocity<3>;
 template class velocity<2>;

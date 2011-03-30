@@ -43,24 +43,20 @@ endif(WITH_CUDA)
 
 configure_file(version.h.in version.h ESCAPE_QUOTES @ONLY)
 
-if(NOT HALMD_BACKEND_EXECUTABLES)
-  add_executable(halmd
-    main.cpp
-    modules.cpp
-    runner.cpp
-    script.cpp
-  )
-  target_link_libraries(halmd
-    -Wl,-whole-archive
-    ${HALMD_MODULES}
-    -Wl,-no-whole-archive
-    halmd_utility_program_options
-    ${HALMD_COMMON_LIBRARIES}
-    )
-  install(TARGETS halmd
-    RUNTIME DESTINATION bin
-    )
-endif(NOT HALMD_BACKEND_EXECUTABLES)
+add_executable(halmd
+  main.cpp
+  modules.cpp
+  runner.cpp
+  script.cpp
+)
+target_link_libraries(halmd
+  ${HALMD_MODULES}
+  halmd_utility_program_options
+  ${HALMD_COMMON_LIBRARIES}
+)
+install(TARGETS halmd
+  RUNTIME DESTINATION bin
+)
 
 add_subdirectory(algorithm)
 add_subdirectory(io)

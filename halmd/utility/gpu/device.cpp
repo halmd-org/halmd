@@ -226,18 +226,11 @@ void device::luaopen(lua_State* L)
     register_exception_handler<cuda::error>(&translate_cuda_error);
 }
 
-namespace // limit symbols to translation unit
+HALMD_LUA_API int luaopen_libhalmd_utility_gpu_device(lua_State* L)
 {
-
-__attribute__((constructor)) void register_lua()
-{
-    lua_wrapper::register_(0) //< distance of derived to base class
-    [
-        &device::luaopen
-    ];
+    device::luaopen(L);
+    return 0;
 }
-
-} // namespace
 
 }} // namespace utility::gpu
 

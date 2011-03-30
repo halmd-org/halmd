@@ -55,18 +55,11 @@ void writer::luaopen(lua_State* L)
     ];
 }
 
-namespace // limit symbols to translation unit
+HALMD_LUA_API int luaopen_libhalmd_io_profiling_writer(lua_State* L)
 {
-
-__attribute__((constructor)) void register_lua()
-{
-    lua_wrapper::register_(0) //< distance of derived to base class
-    [
-        &writer::luaopen
-    ];
+    writer::luaopen(L);
+    return 0;
 }
-
-} // namespace
 
 }} // namespace io::profiling
 

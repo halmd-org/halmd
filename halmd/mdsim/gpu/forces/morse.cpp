@@ -133,26 +133,13 @@ void morse<float_type>::luaopen(lua_State* L)
     ];
 }
 
-namespace // limit symbols to translation unit
+HALMD_LUA_API int luaopen_libhalmd_mdsim_gpu_forces_morse(lua_State* L)
 {
-
-__attribute__((constructor)) void register_lua()
-{
-    lua_wrapper::register_(0) //< distance of derived to base class
-    [
-        &morse<float>::luaopen
-    ];
-
-    lua_wrapper::register_(2) //< distance of derived to base class
-    [
-        &pair_trunc<3, float, morse<float> >::luaopen
-    ]
-    [
-        &pair_trunc<2, float, morse<float> >::luaopen
-    ];
+    morse<float>::luaopen(L);
+    pair_trunc<3, float, morse<float> >::luaopen(L);
+    pair_trunc<2, float, morse<float> >::luaopen(L);
+    return 0;
 }
-
-} // namespace
 
 // explicit instantiation
 template class morse<float>;

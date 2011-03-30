@@ -63,21 +63,12 @@ void phase_space<dimension, float_type>::luaopen(lua_State* L)
     ];
 }
 
-namespace // limit symbols to translation unit
+HALMD_LUA_API int luaopen_libhalmd_observables_gpu_samples_phase_space(lua_State* L)
 {
-
-__attribute__((constructor)) void register_lua()
-{
-    lua_wrapper::register_(0) //< distance of derived to base class
-    [
-        &phase_space<3, float>::luaopen
-    ]
-    [
-        &phase_space<2, float>::luaopen
-    ];
+    phase_space<3, float>::luaopen(L);
+    phase_space<2, float>::luaopen(L);
+    return 0;
 }
-
-} // namespace
 
 template class phase_space<3, float>;
 template class phase_space<2, float>;

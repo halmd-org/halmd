@@ -211,21 +211,12 @@ void ssf<dimension>::luaopen(lua_State* L)
     ];
 }
 
-namespace // limit symbols to translation unit
+HALMD_LUA_API int luaopen_libhalmd_observables_ssf(lua_State* L)
 {
-
-__attribute__((constructor)) void register_lua()
-{
-    lua_wrapper::register_(0) //< distance of derived to base class
-    [
-        &ssf<3>::luaopen
-    ]
-    [
-        &ssf<2>::luaopen
-    ];
+    ssf<3>::luaopen(L);
+    ssf<2>::luaopen(L);
+    return 0;
 }
-
-} // namespace
 
 // explicit instantiation
 template class ssf<3>;

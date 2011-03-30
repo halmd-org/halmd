@@ -117,30 +117,17 @@ void verlet<dimension, float_type>::luaopen(lua_State* L)
     ];
 }
 
-namespace // limit symbols to translation unit
+HALMD_LUA_API int luaopen_libhalmd_mdsim_host_integrators_verlet(lua_State* L)
 {
-
-__attribute__((constructor)) void register_lua()
-{
-    lua_wrapper::register_(1) //< distance of derived to base class
 #ifndef USE_HOST_SINGLE_PRECISION
-    [
-        &verlet<3, double>::luaopen
-    ]
-    [
-        &verlet<2, double>::luaopen
-    ];
+    verlet<3, double>::luaopen(L);
+    verlet<2, double>::luaopen(L);
 #else
-    [
-        &verlet<3, float>::luaopen
-    ]
-    [
-        &verlet<2, float>::luaopen
-    ];
+    verlet<3, float>::luaopen(L);
+    verlet<2, float>::luaopen(L);
 #endif
+    return 0;
 }
-
-} // namespace
 
 // explicit instantiation
 #ifndef USE_HOST_SINGLE_PRECISION

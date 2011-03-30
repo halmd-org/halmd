@@ -52,21 +52,13 @@ void nvt<dimension>::luaopen(lua_State* L)
     ];
 }
 
-namespace // limit symbols to translation unit
+HALMD_LUA_API int luaopen_libhalmd_mdsim_integrators_nvt(lua_State* L)
 {
-
-__attribute__((constructor)) void register_lua()
-{
-    lua_wrapper::register_(1) //< distance of derived to base class
-    [
-        &nvt<3>::luaopen
-    ]
-    [
-        &nvt<2>::luaopen
-    ];
+    nvt<3>::luaopen(L);
+    nvt<2>::luaopen(L);
+    return 0;
 }
 
-} // namespace
 // explicit instantiation
 template class nvt<3>;
 template class nvt<2>;

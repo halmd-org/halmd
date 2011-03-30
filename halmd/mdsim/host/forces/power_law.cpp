@@ -112,32 +112,18 @@ void power_law<float_type>::luaopen(lua_State* L)
     ];
 }
 
-namespace // limit symbols to translation unit
-{
-
-__attribute__((constructor)) void register_lua()
+HALMD_LUA_API int luaopen_libhalmd_mdsim_host_forces_power_law(lua_State* L)
 {
 #ifndef USE_HOST_SINGLE_PRECISION
     typedef double float_type;
 #else
     typedef float float_type;
 #endif
-
-    lua_wrapper::register_(0) //< distance of derived to base class
-    [
-        &power_law<float_type>::luaopen
-    ];
-
-    lua_wrapper::register_(2) //< distance of derived to base class
-    [
-        &pair_trunc<3, float_type, power_law<float_type> >::luaopen
-    ]
-    [
-        &pair_trunc<2, float_type, power_law<float_type> >::luaopen
-    ];
+    power_law<float_type>::luaopen(L);
+    pair_trunc<3, float_type, power_law<float_type> >::luaopen(L);
+    pair_trunc<2, float_type, power_law<float_type> >::luaopen(L);
+    return 0;
 }
-
-} // namespace
 
 // explicit instantiation
 #ifndef USE_HOST_SINGLE_PRECISION

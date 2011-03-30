@@ -23,13 +23,15 @@
 #include <halmd/mdsim/box.hpp>
 #include <halmd/mdsim/host/integrators/verlet.hpp>
 #include <halmd/mdsim/host/particle.hpp>
+#include <halmd/modules.hpp>
+#include <halmd/utility/lua_wrapper/lua_wrapper.hpp>
+#include <test/tools/lua.hpp>
 #ifdef WITH_CUDA
 # include <halmd/mdsim/gpu/integrators/verlet.hpp>
 # include <halmd/mdsim/gpu/particle.hpp>
 # include <halmd/utility/gpu/device.hpp>
+# include <test/tools/cuda.hpp>
 #endif
-#include <halmd/utility/lua_wrapper/lua_wrapper.hpp>
-#include "test/tools/lua.hpp"
 
 /**
  * This test checks the dependency injection of C++ modules from Lua.
@@ -74,7 +76,7 @@ namespace test_dummy
 /**
  * Test dependency injection using test dummy modules.
  */
-BOOST_FIXTURE_TEST_CASE( dummy_modules, lua_test_fixture )
+BOOST_FIXTURE_TEST_CASE( dummy, lua_test_fixture )
 {
     using namespace test_dummy;
     using namespace luabind;
@@ -102,23 +104,15 @@ BOOST_FIXTURE_TEST_CASE( dummy_modules, lua_test_fixture )
  *
  * This version uses the host modules.
  */
-BOOST_FIXTURE_TEST_CASE( manually_registered_host_modules, lua_test_fixture )
+BOOST_FIXTURE_TEST_CASE( libhalmd_mdsim_host, lua_test_fixture )
 {
-    using namespace halmd;
+    luaopen_libhalmd_mdsim_particle(L);
+    luaopen_libhalmd_mdsim_host_particle(L);
+    luaopen_libhalmd_mdsim_box(L);
+    luaopen_libhalmd_mdsim_integrator(L);
+    luaopen_libhalmd_mdsim_host_integrators_verlet(L);
 
     LUA_REQUIRE( "assert2 = function(...) assert(...) return assert(...) end" );
-
-    mdsim::particle<3>::luaopen(L);
-    mdsim::box<3>::luaopen(L);
-    mdsim::integrator<3>::luaopen(L);
-
-#ifndef USE_HOST_SINGLE_PRECISION
-    mdsim::host::particle<3, double>::luaopen(L);
-    mdsim::host::integrators::verlet<3, double>::luaopen(L);
-#else
-    mdsim::host::particle<3, float>::luaopen(L);
-    mdsim::host::integrators::verlet<3, float>::luaopen(L);
-#endif
 
     LUA_CHECK( "particle = assert2(libhalmd.mdsim.host.particle_3_({ 1000 }))" );
     LUA_CHECK( "box = assert2(libhalmd.mdsim.box_3_(particle, { 10, 10, 10 }))" );
@@ -126,72 +120,29 @@ BOOST_FIXTURE_TEST_CASE( manually_registered_host_modules, lua_test_fixture )
 }
 
 #ifdef WITH_CUDA
+
+struct lua_cuda_fixture : lua_test_fixture, set_cuda_device {};
+
 /**
  * Test dependency injection using manually registered HALMD modules.
  *
  * This version uses the GPU modules.
  */
-BOOST_FIXTURE_TEST_CASE( manually_registered_gpu_modules, lua_test_fixture )
+BOOST_FIXTURE_TEST_CASE( libhalmd_mdsim_gpu, lua_cuda_fixture )
 {
-    using namespace halmd;
+    luaopen_libhalmd_mdsim_particle(L);
+    luaopen_libhalmd_mdsim_gpu_particle(L);
+    luaopen_libhalmd_mdsim_box(L);
+    luaopen_libhalmd_mdsim_integrator(L);
+    luaopen_libhalmd_mdsim_gpu_integrators_verlet(L);
+    luaopen_libhalmd_utility_gpu_device(L);
 
     LUA_REQUIRE( "assert2 = function(...) assert(...) return assert(...) end" );
-
-    utility::gpu::device::luaopen(L);
-
-    mdsim::particle<3>::luaopen(L);
-    mdsim::box<3>::luaopen(L);
-    mdsim::integrator<3>::luaopen(L);
-
-    mdsim::gpu::particle<3, float>::luaopen(L);
-    mdsim::gpu::integrators::verlet<3, float>::luaopen(L);
 
     LUA_CHECK( "device = assert2(libhalmd.utility.gpu.device({}, 128))" );
     LUA_CHECK( "particle = assert2(libhalmd.mdsim.gpu.particle_3_(device, { 1000 }))" );
     LUA_CHECK( "box = assert2(libhalmd.mdsim.box_3_(particle, { 10, 10, 10 }))" );
     LUA_CHECK( "integrator = assert2(libhalmd.mdsim.gpu.integrators.verlet_3_(particle, box, 0.001))" );
 }
-#endif /* WITH_CUDA */
 
-/**
- * Test dependency injection using statically registered HALMD modules.
- *
- * This is the mechanism used in the main executable.
- *
- * This version uses the host modules.
- */
-BOOST_FIXTURE_TEST_CASE( statically_registered_host_modules, lua_test_fixture )
-{
-    using namespace halmd;
-
-    LUA_REQUIRE( "assert2 = function(...) assert(...) return assert(...) end" );
-
-    lua_wrapper::open(L); //< register HALMD Lua wrappers
-
-    LUA_CHECK( "particle = assert2(libhalmd.mdsim.host.particle_3_({ 1000 }))" );
-    LUA_CHECK( "box = assert2(libhalmd.mdsim.box_3_(particle, { 10, 10, 10 }))" );
-    LUA_CHECK( "integrator = assert2(libhalmd.mdsim.host.integrators.verlet_3_(particle, box, 0.001))" );
-}
-
-#ifdef WITH_CUDA
-/**
- * Test dependency injection using statically registered HALMD modules.
- *
- * This is the mechanism used in the main executable.
- *
- * This version uses the GPU modules.
- */
-BOOST_FIXTURE_TEST_CASE( statically_registered_gpu_modules, lua_test_fixture )
-{
-    using namespace halmd;
-
-    LUA_REQUIRE( "assert2 = function(...) assert(...) return assert(...) end" );
-
-    lua_wrapper::open(L); //< register HALMD Lua wrappers
-
-    LUA_CHECK( "device = assert2(libhalmd.utility.gpu.device({}, 128))" );
-    LUA_CHECK( "particle = assert2(libhalmd.mdsim.gpu.particle_3_(device, { 1000 }))" );
-    LUA_CHECK( "box = assert2(libhalmd.mdsim.box_3_(particle, { 10, 10, 10 }))" );
-    LUA_CHECK( "integrator = assert2(libhalmd.mdsim.gpu.integrators.verlet_3_(particle, box, 0.001))" );
-}
 #endif /* WITH_CUDA */

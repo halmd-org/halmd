@@ -170,21 +170,12 @@ void boltzmann<dimension, float_type, RandomNumberGenerator>::luaopen(lua_State*
     ];
 }
 
-namespace // limit symbols to translation unit
+HALMD_LUA_API int luaopen_libhalmd_mdsim_gpu_velocities_boltzmann(lua_State* L)
 {
-
-__attribute__((constructor)) void register_lua()
-{
-    lua_wrapper::register_(2) //< distance of derived to base class
-    [
-        &boltzmann<3, float, random::gpu::rand48>::luaopen
-    ]
-    [
-        &boltzmann<2, float, random::gpu::rand48>::luaopen
-    ];
+    boltzmann<3, float, random::gpu::rand48>::luaopen(L);
+    boltzmann<2, float, random::gpu::rand48>::luaopen(L);
+    return 0;
 }
-
-} // namespace
 
 // explicit instantiation
 template class boltzmann<3, float, random::gpu::rand48>;

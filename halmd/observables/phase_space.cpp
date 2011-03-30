@@ -53,21 +53,12 @@ void phase_space<dimension>::luaopen(lua_State* L)
     ];
 }
 
-namespace // limit symbols to translation unit
+HALMD_LUA_API int luaopen_libhalmd_observables_phase_space(lua_State* L)
 {
-
-__attribute__((constructor)) void register_lua()
-{
-    lua_wrapper::register_(0) //< distance of derived to base class
-    [
-        &phase_space<3>::luaopen
-    ]
-    [
-        &phase_space<2>::luaopen
-    ];
+    phase_space<3>::luaopen(L);
+    phase_space<2>::luaopen(L);
+    return 0;
 }
-
-} // namespace
 
 } // namespace observables
 

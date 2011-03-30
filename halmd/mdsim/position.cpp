@@ -47,21 +47,12 @@ void position<dimension>::luaopen(lua_State* L)
     ];
 }
 
-namespace // limit symbols to translation unit
+HALMD_LUA_API int luaopen_libhalmd_mdsim_position(lua_State* L)
 {
-
-__attribute__((constructor)) void register_lua()
-{
-    lua_wrapper::register_(0) //< distance of derived to base class
-    [
-        &position<3>::luaopen
-    ]
-    [
-        &position<2>::luaopen
-    ];
+    position<3>::luaopen(L);
+    position<2>::luaopen(L);
+    return 0;
 }
-
-} // namespace
 
 template class position<3>;
 template class position<2>;

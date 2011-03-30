@@ -295,17 +295,10 @@ void options_parser::luaopen(lua_State* L)
     ];
 }
 
-namespace // limit symbols to translation unit
+HALMD_LUA_API int luaopen_libhalmd_options_parser(lua_State* L)
 {
-
-__attribute__((constructor)) void register_lua()
-{
-    lua_wrapper::register_(0) //< distance of derived to base class
-    [
-        &options_parser::luaopen
-    ];
+    options_parser::luaopen(L);
+    return 0;
 }
-
-} // namespace
 
 } // namespace halmd

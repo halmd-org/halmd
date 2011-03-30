@@ -215,30 +215,17 @@ void lattice<dimension, float_type>::luaopen(lua_State* L)
     ];
 }
 
-namespace // limit symbols to translation unit
+HALMD_LUA_API int luaopen_libhalmd_mdsim_host_positions_lattice(lua_State* L)
 {
-
-__attribute__((constructor)) void register_lua()
-{
-    lua_wrapper::register_(1) //< distance of derived to base class
 #ifndef USE_HOST_SINGLE_PRECISION
-    [
-        &lattice<3, double>::luaopen
-    ]
-    [
-        &lattice<2, double>::luaopen
-    ];
+    lattice<3, double>::luaopen(L);
+    lattice<2, double>::luaopen(L);
 #else
-    [
-        &lattice<3, float>::luaopen
-    ]
-    [
-        &lattice<2, float>::luaopen
-    ];
+    lattice<3, float>::luaopen(L);
+    lattice<2, float>::luaopen(L);
 #endif
+    return 0;
 }
-
-} // namespace
 
 // explicit instantiation
 #ifndef USE_HOST_SINGLE_PRECISION

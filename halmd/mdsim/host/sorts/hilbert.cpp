@@ -146,30 +146,17 @@ void hilbert<dimension, float_type>::luaopen(lua_State* L)
     ];
 }
 
-namespace // limit symbols to translation unit
+HALMD_LUA_API int luaopen_libhalmd_mdsim_host_sorts_hilbert(lua_State* L)
 {
-
-__attribute__((constructor)) void register_lua()
-{
-    lua_wrapper::register_(1) //< distance of derived to base class
 #ifndef USE_HOST_SINGLE_PRECISION
-    [
-        &hilbert<3, double>::luaopen
-    ]
-    [
-        &hilbert<2, double>::luaopen
-    ];
+    hilbert<3, double>::luaopen(L);
+    hilbert<2, double>::luaopen(L);
 #else
-    [
-        &hilbert<3, float>::luaopen
-    ]
-    [
-        &hilbert<2, float>::luaopen
-    ];
+    hilbert<3, float>::luaopen(L);
+    hilbert<2, float>::luaopen(L);
 #endif
+    return 0;
 }
-
-} // namespace
 
 // explicit instantiation
 #ifndef USE_HOST_SINGLE_PRECISION

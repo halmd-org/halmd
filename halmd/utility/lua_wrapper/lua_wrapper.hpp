@@ -26,6 +26,7 @@
 #include <luabind/exception_handler.hpp>
 #include <luabind/shared_ptr_converter.hpp> //< boost::shared_ptr up- and down-casts
 
+#include <halmd/config.hpp> // HALMD_LUA_API
 #include <halmd/utility/lua_wrapper/any_converter.hpp>
 #include <halmd/utility/lua_wrapper/array_converter.hpp>
 #include <halmd/utility/lua_wrapper/fixed_vector_converter.hpp>

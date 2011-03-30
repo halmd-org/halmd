@@ -49,21 +49,13 @@ void integrator<dimension>::luaopen(lua_State* L)
     ];
 }
 
-namespace // limit symbols to translation unit
+HALMD_LUA_API int luaopen_libhalmd_mdsim_integrator(lua_State* L)
 {
-
-__attribute__((constructor)) void register_lua()
-{
-    lua_wrapper::register_(0) //< distance of derived to base class
-    [
-        &integrator<3>::luaopen
-    ]
-    [
-        &integrator<2>::luaopen
-    ];
+    integrator<3>::luaopen(L);
+    integrator<2>::luaopen(L);
+    return 0;
 }
 
-} // namespace
 // explicit instantiation
 template class integrator<3>;
 template class integrator<2>;
