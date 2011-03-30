@@ -22,11 +22,13 @@
 #include <halmd/config.hpp>
 
 HALMD_LUA_API int luaopen_libhalmd_h5(lua_State* L);
+HALMD_LUA_API int luaopen_libhalmd_po(lua_State* L);
 HALMD_LUA_API int luaopen_libhalmd_signal(lua_State* L);
 
 HALMD_LUA_API int luaopen_libhalmd(lua_State* L)
 {
     luaopen_libhalmd_h5(L);
+    luaopen_libhalmd_po(L);
     luaopen_libhalmd_signal(L);
     return 0;
 }

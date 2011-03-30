@@ -26,17 +26,6 @@
 
 #include <halmd/utility/lua_wrapper/any_converter.hpp>
 
-namespace halmd
-{
-namespace lua_wrapper { namespace program_options
-{
-
-int luaopen(lua_State* L);
-
-}} // namespace lua_wrapper::program_options
-
-} // namespace halmd
-
 namespace luabind
 {
 
