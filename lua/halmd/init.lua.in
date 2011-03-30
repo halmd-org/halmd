@@ -80,6 +80,7 @@ function new(args)
 
     -- Optionally sample macroscopic state variables.
     if args.state_vars then
+        sampler:on_prepare(observables.thermodynamics().prepare, args.state_vars)
         sampler:on_sample(observables.thermodynamics().sample, args.state_vars)
     end
 

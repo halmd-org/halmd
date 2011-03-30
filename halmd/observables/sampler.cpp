@@ -123,20 +123,6 @@ void sampler<dimension>::on_sample(slot_function_type const& slot, uint64_t inte
 }
 
 /**
- * Connect pair of slots to signals emitted before and after MD integration step
- */
-template <int dimension>
-void sampler<dimension>::on_sample(slot_function_pair_type const& slot, uint64_t interval)
-{
-    on_prepare_.connect(
-        bind(&sampler::prepare, this, slot.first, interval, _1)
-    );
-    on_sample_.connect(
-        bind(&sampler::sample, this, slot.second, interval, _1)
-    );
-}
-
-/**
  * Connect slot to signal emitted after finishing simulation run
  */
 template <int dimension>
@@ -189,13 +175,7 @@ void sampler<dimension>::luaopen(lua_State* L)
                 .def("on_start", &sampler::on_start)
                 .def("on_finish", &sampler::on_finish)
                 .def("on_prepare", &sampler::on_prepare)
-                .def("on_sample", static_cast<void (sampler::*)(slot_function_type const&, uint64_t)>(&sampler::on_sample))
-                .def("on_sample", static_cast<void (sampler::*)(slot_function_pair_type const&, uint64_t)>(&sampler::on_sample))
-                .scope
-                [
-                    class_<slot_function_type>("slot_function_type")
-                  , class_<slot_function_pair_type>("slot_function_pair_type")
-                ]
+                .def("on_sample", &sampler::on_sample)
         ]
     ];
 }
