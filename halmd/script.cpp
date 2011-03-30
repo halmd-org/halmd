@@ -32,6 +32,8 @@
 using namespace boost;
 using namespace std;
 
+HALMD_LUA_API int luaopen_libhalmd(lua_State* L);
+
 namespace halmd
 {
 
@@ -101,6 +103,8 @@ void script::load_wrapper()
     lua_wrapper::hdf5::luaopen(L);
     lua_wrapper::program_options::luaopen(L);
     lua_wrapper::ublas::luaopen(L);
+
+    luaopen_libhalmd(L);
 }
 
 /**

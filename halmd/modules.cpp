@@ -1,5 +1,5 @@
 /*
- * Copyright © 2010  Peter Colberg
+ * Copyright © 2011  Peter Colberg
  *
  * This file is part of HALMD.
  *
@@ -17,27 +17,11 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef HALMD_CONFIG_HPP
-#define HALMD_CONFIG_HPP
+#include <lua.hpp>
 
-#define HALMD_LUA_API extern "C"
+#include <halmd/config.hpp>
 
-#ifdef __CUDACC__
-
-#define HALMD_GPU_ENABLED __device__
-
-#define HALMD_GPU_USING(__gpu__, __host__) using __gpu__
-
-#if defined(__CUDA_ARCH__) && __CUDA_ARCH__ >= 130
-# define HALMD_GPU_DOUBLE_PRECISION
-#endif
-
-#else /* __CUDACC__ */
-
-#define HALMD_GPU_ENABLED
-
-#define HALMD_GPU_USING(__gpu__, __host__) using __host__
-
-#endif /* ! __CUDACC__ */
-
-#endif /* ! HALMD_CONFIG_HPP */
+HALMD_LUA_API int luaopen_libhalmd(lua_State* L)
+{
+    return 0;
+}

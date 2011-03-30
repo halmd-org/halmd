@@ -46,6 +46,7 @@ configure_file(version.h.in version.h ESCAPE_QUOTES @ONLY)
 if(NOT HALMD_BACKEND_EXECUTABLES)
   add_executable(halmd
     main.cpp
+    modules.cpp
     runner.cpp
     script.cpp
   )
