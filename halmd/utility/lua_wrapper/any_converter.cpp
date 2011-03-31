@@ -29,7 +29,7 @@
 namespace halmd
 {
 
-HALMD_LUA_API int luaopen_libhalmd_any_converter(lua_State*)
+HALMD_LUA_API int luaopen_libhalmd_any_converter(lua_State* L)
 {
     register_any_converter<void>(); //< empty boost::any
 
