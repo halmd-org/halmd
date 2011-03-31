@@ -1,5 +1,5 @@
 /*
- * Copyright © 2010  Peter Colberg
+ * Copyright © 2010-2011  Peter Colberg
  *
  * This file is part of HALMD.
  *
@@ -18,77 +18,155 @@
  */
 
 #include <luabind/luabind.hpp>
+#include <luabind/detail/convert_to_lua.hpp>
+#include <typeinfo>
 
 #include <halmd/config.hpp>
+#include <halmd/utility/demangle.hpp>
 #include <halmd/utility/lua_wrapper/any_converter.hpp>
 #include <halmd/utility/lua_wrapper/array_converter.hpp>
 #include <halmd/utility/lua_wrapper/long_long_converter.hpp>
 #include <halmd/utility/lua_wrapper/program_options.hpp>
 #include <halmd/utility/lua_wrapper/vector_converter.hpp>
 
+using namespace boost;
+using namespace std;
+
+// This code is based on the any_converter example of Luabind,
+// which demonstrates the conversion of boost::any to Lua.
+
+namespace luabind
+{
+
+//! convert from C++ to Lua
+void default_converter<any>::to(lua_State* L, any const& value)
+{
+    typedef void (*converter)(lua_State* L, any const&);
+
+    // get table of any converter functions from Lua registry,
+    // using address of default_converter<any>::to as unique key
+    lua_pushlightuserdata(L, (void*)&to);
+    lua_gettable(L, LUA_REGISTRYINDEX);
+
+    // lookup any converter function by typeid address
+    lua_pushlightuserdata(L, (void*)&value.type());
+    lua_gettable(L, -2);
+    converter convert = (converter)lua_touserdata(L, -1);
+    lua_pop(L, 2);
+    if (!convert) {
+        throw runtime_error("unregistered any converter: " + halmd::demangled_name(value.type()));
+    }
+
+    // convert any to value type and push onto stack
+    convert(L, value);
+}
+
+} // namespace luabind
+
 namespace halmd
 {
 
+template <typename T>
+struct any_converter
+{
+    //! convert from C++ to Lua
+    static void to(lua_State* L, any const& any)
+    {
+        luabind::detail::convert_to_lua(L, *any_cast<T>(&any));
+    }
+};
+
+template <>
+struct any_converter<void>
+{
+    //! convert from C++ to Lua
+    static void to(lua_State* L, any const&)
+    {
+        lua_pushnil(L);
+    }
+};
+
+/**
+ * register an any converter for given type
+ *
+ * expects table on top of stack
+ */
+template <typename T>
+static void register_any_converter(lua_State* L)
+{
+    lua_pushlightuserdata(L, (void*)&typeid(T));
+    lua_pushlightuserdata(L, (void*)&any_converter<T>::to);
+    lua_settable(L, -3);
+}
+
 HALMD_LUA_API int luaopen_libhalmd_any_converter(lua_State* L)
 {
-    register_any_converter<void>(); //< empty boost::any
+    // create table of any converter functions in Lua registry,
+    // using address of default_converter<any>::to as unique key
+    lua_newtable(L);
+    lua_pushlightuserdata(L, (void*)&luabind::default_converter<any>::to);
+    lua_pushvalue(L, -2);
+    lua_settable(L, LUA_REGISTRYINDEX);
 
-    register_any_converter<bool>();
-    register_any_converter<char>();
-    register_any_converter<signed char>();
-    register_any_converter<unsigned char>();
-    register_any_converter<signed short>();
-    register_any_converter<unsigned short>();
-    register_any_converter<signed int>();
-    register_any_converter<unsigned int>();
-    register_any_converter<signed long>();
-    register_any_converter<unsigned long>();
-    register_any_converter<signed long long>();
-    register_any_converter<unsigned long long>();
-    register_any_converter<float>();
-    register_any_converter<double>();
-    register_any_converter<long double>();
-    register_any_converter<std::string>();
-    register_any_converter<char const*>();
+    register_any_converter<void>(L); //< empty any
 
-    register_any_converter<std::vector<bool> >();
-    register_any_converter<std::vector<char> >();
-    register_any_converter<std::vector<signed char> >();
-    register_any_converter<std::vector<unsigned char> >();
-    register_any_converter<std::vector<signed short> >();
-    register_any_converter<std::vector<unsigned short> >();
-    register_any_converter<std::vector<signed int> >();
-    register_any_converter<std::vector<unsigned int> >();
-    register_any_converter<std::vector<signed long> >();
-    register_any_converter<std::vector<unsigned long> >();
-    register_any_converter<std::vector<signed long long> >();
-    register_any_converter<std::vector<unsigned long long> >();
-    register_any_converter<std::vector<float> >();
-    register_any_converter<std::vector<double> >();
-    register_any_converter<std::vector<long double> >();
-    register_any_converter<std::vector<std::string> >();
-    register_any_converter<std::vector<char const*> >();
+    register_any_converter<bool>(L);
+    register_any_converter<char>(L);
+    register_any_converter<signed char>(L);
+    register_any_converter<unsigned char>(L);
+    register_any_converter<signed short>(L);
+    register_any_converter<unsigned short>(L);
+    register_any_converter<signed int>(L);
+    register_any_converter<unsigned int>(L);
+    register_any_converter<signed long>(L);
+    register_any_converter<unsigned long>(L);
+    register_any_converter<signed long long>(L);
+    register_any_converter<unsigned long long>(L);
+    register_any_converter<float>(L);
+    register_any_converter<double>(L);
+    register_any_converter<long double>(L);
+    register_any_converter<string>(L);
+    register_any_converter<char const*>(L);
 
-    register_any_converter<boost::multi_array<bool, 1> >();
-    register_any_converter<boost::multi_array<char, 1> >();
-    register_any_converter<boost::multi_array<signed char, 1> >();
-    register_any_converter<boost::multi_array<unsigned char, 1> >();
-    register_any_converter<boost::multi_array<signed short, 1> >();
-    register_any_converter<boost::multi_array<unsigned short, 1> >();
-    register_any_converter<boost::multi_array<signed int, 1> >();
-    register_any_converter<boost::multi_array<unsigned int, 1> >();
-    register_any_converter<boost::multi_array<signed long, 1> >();
-    register_any_converter<boost::multi_array<unsigned long, 1> >();
-    register_any_converter<boost::multi_array<signed long long, 1> >();
-    register_any_converter<boost::multi_array<unsigned long long, 1> >();
-    register_any_converter<boost::multi_array<float, 1> >();
-    register_any_converter<boost::multi_array<double, 1> >();
-    register_any_converter<boost::multi_array<long double, 1> >();
-    register_any_converter<boost::multi_array<std::string, 1> >();
-    register_any_converter<boost::multi_array<char const*, 1> >();
+    register_any_converter<vector<bool> >(L);
+    register_any_converter<vector<char> >(L);
+    register_any_converter<vector<signed char> >(L);
+    register_any_converter<vector<unsigned char> >(L);
+    register_any_converter<vector<signed short> >(L);
+    register_any_converter<vector<unsigned short> >(L);
+    register_any_converter<vector<signed int> >(L);
+    register_any_converter<vector<unsigned int> >(L);
+    register_any_converter<vector<signed long> >(L);
+    register_any_converter<vector<unsigned long> >(L);
+    register_any_converter<vector<signed long long> >(L);
+    register_any_converter<vector<unsigned long long> >(L);
+    register_any_converter<vector<float> >(L);
+    register_any_converter<vector<double> >(L);
+    register_any_converter<vector<long double> >(L);
+    register_any_converter<vector<string> >(L);
+    register_any_converter<vector<char const*> >(L);
 
-    register_any_converter<boost::program_options::variables_map>();
+    register_any_converter<multi_array<bool, 1> >(L);
+    register_any_converter<multi_array<char, 1> >(L);
+    register_any_converter<multi_array<signed char, 1> >(L);
+    register_any_converter<multi_array<unsigned char, 1> >(L);
+    register_any_converter<multi_array<signed short, 1> >(L);
+    register_any_converter<multi_array<unsigned short, 1> >(L);
+    register_any_converter<multi_array<signed int, 1> >(L);
+    register_any_converter<multi_array<unsigned int, 1> >(L);
+    register_any_converter<multi_array<signed long, 1> >(L);
+    register_any_converter<multi_array<unsigned long, 1> >(L);
+    register_any_converter<multi_array<signed long long, 1> >(L);
+    register_any_converter<multi_array<unsigned long long, 1> >(L);
+    register_any_converter<multi_array<float, 1> >(L);
+    register_any_converter<multi_array<double, 1> >(L);
+    register_any_converter<multi_array<long double, 1> >(L);
+    register_any_converter<multi_array<string, 1> >(L);
+    register_any_converter<multi_array<char const*, 1> >(L);
 
+    register_any_converter<program_options::variables_map>(L);
+
+    lua_pop(L, 1);
     return 0;
 }
 

@@ -26,6 +26,8 @@
 using namespace boost;
 using namespace std;
 
+HALMD_LUA_API int luaopen_libhalmd_any_converter(lua_State* L);
+
 /**
  * Test conversion of std::map from and to Lua.
  */
@@ -50,6 +52,8 @@ void lua_to_static_map(std::map<std::string, int> const& m)
  */
 BOOST_FIXTURE_TEST_CASE( static_map, lua_test_fixture )
 {
+    luaopen_libhalmd_any_converter(L);
+
     using namespace luabind;
 
     module(L)
@@ -82,6 +86,8 @@ std::map<std::string, boost::any> any_map_to_lua()
  */
 BOOST_FIXTURE_TEST_CASE( any_map, lua_test_fixture )
 {
+    luaopen_libhalmd_any_converter(L);
+
     using namespace luabind;
 
     module(L)
@@ -99,17 +105,3 @@ BOOST_FIXTURE_TEST_CASE( any_map, lua_test_fixture )
     LUA_CHECK( "m.foobar = 43" );
     LUA_CHECK( "lua_to_static_map(m)" );
 }
-
-class register_any_converters
-{
-public:
-    register_any_converters()
-    {
-        using namespace halmd;
-        register_any_converter<unsigned int>();
-        register_any_converter<int>();
-        register_any_converter<void>(); //< boost::any()
-    }
-};
-
-BOOST_GLOBAL_FIXTURE( register_any_converters );
