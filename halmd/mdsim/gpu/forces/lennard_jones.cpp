@@ -27,7 +27,7 @@
 #include <halmd/mdsim/gpu/forces/lennard_jones.hpp>
 #include <halmd/mdsim/gpu/forces/lennard_jones_kernel.hpp>
 #include <halmd/mdsim/gpu/forces/pair_trunc_kernel.hpp>
-#include <halmd/utility/lua_wrapper/lua_wrapper.hpp>
+#include <halmd/utility/lua/lua.hpp>
 
 using namespace boost;
 using namespace boost::numeric::ublas;

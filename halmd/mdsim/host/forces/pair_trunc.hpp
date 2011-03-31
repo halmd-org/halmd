@@ -31,7 +31,7 @@
 #include <halmd/mdsim/host/force.hpp>
 #include <halmd/mdsim/host/forces/smooth.hpp>
 #include <halmd/mdsim/host/particle.hpp>
-#include <halmd/utility/lua_wrapper/lua_wrapper.hpp>
+#include <halmd/utility/lua/lua.hpp>
 #include <halmd/utility/profiler.hpp>
 #include <halmd/utility/scoped_timer.hpp>
 #include <halmd/utility/timer.hpp>

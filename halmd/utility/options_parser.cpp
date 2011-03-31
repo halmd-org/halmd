@@ -20,7 +20,7 @@
 #include <boost/tuple/tuple.hpp>
 #include <fstream>
 
-#include <halmd/utility/lua_wrapper/lua_wrapper.hpp>
+#include <halmd/utility/lua/lua.hpp>
 #include <halmd/utility/options_parser.hpp>
 
 using namespace boost;

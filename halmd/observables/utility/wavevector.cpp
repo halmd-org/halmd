@@ -26,7 +26,7 @@
 #include <halmd/algorithm/host/pick_lattice_points.hpp>
 #include <halmd/io/logger.hpp>
 #include <halmd/observables/utility/wavevector.hpp>
-#include <halmd/utility/lua_wrapper/lua_wrapper.hpp>
+#include <halmd/utility/lua/lua.hpp>
 
 using namespace boost;
 using namespace std;

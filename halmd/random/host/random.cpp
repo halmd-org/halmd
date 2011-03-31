@@ -19,7 +19,7 @@
 
 #include <halmd/io/logger.hpp>
 #include <halmd/random/host/random.hpp>
-#include <halmd/utility/lua_wrapper/lua_wrapper.hpp>
+#include <halmd/utility/lua/lua.hpp>
 #include <halmd/utility/read_integer.hpp>
 
 using namespace boost;

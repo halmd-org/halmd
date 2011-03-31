@@ -23,7 +23,7 @@
 #include <halmd/mdsim/gpu/particle_kernel.cuh>
 #include <halmd/observables/gpu/phase_space.hpp>
 #include <halmd/observables/gpu/phase_space_kernel.hpp>
-#include <halmd/utility/lua_wrapper/lua_wrapper.hpp>
+#include <halmd/utility/lua/lua.hpp>
 
 using namespace boost;
 using namespace std;

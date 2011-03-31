@@ -23,7 +23,7 @@
 #include <halmd/io/trajectory/readers/halmd_0_1_x.hpp>
 #include <halmd/io/utility/hdf5.hpp>
 #include <halmd/utility/demangle.hpp>
-#include <halmd/utility/lua_wrapper/lua_wrapper.hpp>
+#include <halmd/utility/lua/lua.hpp>
 
 using namespace boost;
 using namespace std;

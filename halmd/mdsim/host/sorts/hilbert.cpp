@@ -25,7 +25,7 @@
 #include <halmd/io/logger.hpp>
 #include <halmd/mdsim/host/sorts/hilbert.hpp>
 #include <halmd/mdsim/sorts/hilbert_kernel.hpp>
-#include <halmd/utility/lua_wrapper/lua_wrapper.hpp>
+#include <halmd/utility/lua/lua.hpp>
 
 using namespace boost;
 using namespace std;

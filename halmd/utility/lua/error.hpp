@@ -17,14 +17,12 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef HALMD_UTILITY_LUA_WRAPPER_ERROR_HPP
-#define HALMD_UTILITY_LUA_WRAPPER_ERROR_HPP
+#ifndef HALMD_UTILITY_LUA_ERROR_HPP
+#define HALMD_UTILITY_LUA_ERROR_HPP
 
 #include <luabind/luabind.hpp>
 
 namespace halmd
-{
-namespace lua_wrapper
 {
 
 /**
@@ -58,8 +56,6 @@ private:
     luabind::pcall_callback_fun pcall_callback_;
 };
 
-} // namespace lua_wrapper
-
 } // namespace halmd
 
-#endif /* ! HALMD_UTILITY_LUA_WRAPPER_ERROR_HPP */
+#endif /* ! HALMD_UTILITY_LUA_ERROR_HPP */

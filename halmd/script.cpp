@@ -22,8 +22,7 @@
 
 #include <halmd/io/logger.hpp>
 #include <halmd/script.hpp>
-#include <halmd/utility/lua_wrapper/error.hpp>
-#include <halmd/utility/lua_wrapper/lua_wrapper.hpp>
+#include <halmd/utility/lua/lua.hpp>
 #include <halmd/version.h>
 
 using namespace boost;
@@ -111,7 +110,7 @@ void script::load_library()
 
     try {
 #ifndef NDEBUG
-        lua_wrapper::scoped_pcall_callback pcall_callback(&traceback);
+        scoped_pcall_callback pcall_callback(&traceback);
 #endif
         call_function<void>(L, "require", "halmd");
     }
@@ -137,7 +136,7 @@ void script::options(options_parser& parser)
     object options(globals(L)["halmd"]["option"]["get"]);
     try {
 #ifndef NDEBUG
-        lua_wrapper::scoped_pcall_callback pcall_callback(&traceback);
+        scoped_pcall_callback pcall_callback(&traceback);
 #endif
         call_function<void>(options, ref(parser));
     }
@@ -160,7 +159,7 @@ void script::parsed(po::variables_map const& vm)
     object options(globals(L)["halmd"]["option"]["set"]);
     try {
 #ifndef NDEBUG
-        lua_wrapper::scoped_pcall_callback pcall_callback(&traceback);
+        scoped_pcall_callback pcall_callback(&traceback);
 #endif
         call_function<void>(options, vm);
     }
@@ -184,7 +183,7 @@ shared_ptr<runner> script::run()
     shared_ptr<runner> sampler;
     try {
 #ifndef NDEBUG
-        lua_wrapper::scoped_pcall_callback pcall_callback(&traceback);
+        scoped_pcall_callback pcall_callback(&traceback);
 #endif
         sampler = call_function<shared_ptr<runner> >(L, "halmd");
     }

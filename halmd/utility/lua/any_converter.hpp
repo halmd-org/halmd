@@ -17,8 +17,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef HALMD_UTILITY_LUA_WRAPPER_ANY_CONVERTER_HPP
-#define HALMD_UTILITY_LUA_WRAPPER_ANY_CONVERTER_HPP
+#ifndef HALMD_UTILITY_LUA_ANY_CONVERTER_HPP
+#define HALMD_UTILITY_LUA_ANY_CONVERTER_HPP
 
 #include <boost/any.hpp>
 #include <luabind/luabind.hpp>
@@ -43,4 +43,4 @@ struct default_converter<boost::any const&>
 
 } // namespace luabind
 
-#endif /* ! HALMD_UTILITY_LUA_WRAPPER_ANY_CONVERTER_HPP */
+#endif /* ! HALMD_UTILITY_LUA_ANY_CONVERTER_HPP */

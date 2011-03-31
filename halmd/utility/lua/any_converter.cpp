@@ -23,11 +23,11 @@
 
 #include <halmd/config.hpp>
 #include <halmd/utility/demangle.hpp>
-#include <halmd/utility/lua_wrapper/any_converter.hpp>
-#include <halmd/utility/lua_wrapper/array_converter.hpp>
-#include <halmd/utility/lua_wrapper/long_long_converter.hpp>
-#include <halmd/utility/lua_wrapper/program_options.hpp>
-#include <halmd/utility/lua_wrapper/vector_converter.hpp>
+#include <halmd/utility/lua/any_converter.hpp>
+#include <halmd/utility/lua/array_converter.hpp>
+#include <halmd/utility/lua/long_long_converter.hpp>
+#include <halmd/utility/lua/program_options.hpp>
+#include <halmd/utility/lua/vector_converter.hpp>
 
 using namespace boost;
 using namespace std;

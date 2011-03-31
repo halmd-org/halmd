@@ -23,7 +23,7 @@
 
 #include <halmd/io/logger.hpp>
 #include <halmd/mdsim/host/integrators/verlet_nvt_andersen.hpp>
-#include <halmd/utility/lua_wrapper/lua_wrapper.hpp>
+#include <halmd/utility/lua/lua.hpp>
 #include <halmd/utility/scoped_timer.hpp>
 #include <halmd/utility/timer.hpp>
 

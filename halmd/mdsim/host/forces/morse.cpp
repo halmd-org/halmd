@@ -24,7 +24,7 @@
 #include <halmd/io/logger.hpp>
 #include <halmd/io/utility/hdf5.hpp>
 #include <halmd/mdsim/host/forces/morse.hpp>
-#include <halmd/utility/lua_wrapper/lua_wrapper.hpp>
+#include <halmd/utility/lua/lua.hpp>
 
 using namespace boost;
 using namespace boost::assign;

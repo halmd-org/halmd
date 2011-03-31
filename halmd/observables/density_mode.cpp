@@ -21,7 +21,7 @@
 #include <string>
 
 #include <halmd/observables/density_mode.hpp>
-#include <halmd/utility/lua_wrapper/lua_wrapper.hpp>
+#include <halmd/utility/lua/lua.hpp>
 #include <halmd/utility/signal.hpp>
 
 using namespace boost;

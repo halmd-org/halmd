@@ -25,7 +25,7 @@
 #include <luabind/operator.hpp>
 
 #include <halmd/config.hpp>
-#include <halmd/utility/lua_wrapper/ublas.hpp>
+#include <halmd/utility/lua/ublas.hpp>
 
 using namespace boost::numeric::ublas;
 

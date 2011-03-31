@@ -25,7 +25,7 @@
 #include <halmd/algorithm/gpu/radix_sort.hpp>
 #include <halmd/io/logger.hpp>
 #include <halmd/mdsim/gpu/sorts/hilbert.hpp>
-#include <halmd/utility/lua_wrapper/lua_wrapper.hpp>
+#include <halmd/utility/lua/lua.hpp>
 #include <halmd/utility/scoped_timer.hpp>
 #include <halmd/utility/timer.hpp>
 

@@ -30,7 +30,7 @@ set(HALMD_MODULES
   halmd_random
   halmd_random_host
   halmd_utility
-  halmd_utility_lua_wrapper
+  halmd_utility_lua
   halmd_utility_program_options
 )
 if(WITH_CUDA)

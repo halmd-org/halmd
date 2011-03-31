@@ -20,7 +20,7 @@
 #define BOOST_TEST_MODULE map_converter
 #include <boost/test/unit_test.hpp>
 
-#include <halmd/utility/lua_wrapper/lua_wrapper.hpp>
+#include <halmd/utility/lua/lua.hpp>
 #include "test/tools/lua.hpp"
 
 using namespace boost;

@@ -23,17 +23,15 @@
 #include <stdint.h> // <cstdint> is C++0x
 
 #include <halmd/config.hpp>
-#include <halmd/utility/lua_wrapper/array_converter.hpp>
-#include <halmd/utility/lua_wrapper/long_long_converter.hpp> // *int64_t on x86
-#include <halmd/utility/lua_wrapper/map_converter.hpp>
+#include <halmd/utility/lua/array_converter.hpp>
+#include <halmd/utility/lua/long_long_converter.hpp> // *int64_t on x86
+#include <halmd/utility/lua/map_converter.hpp>
 #include <halmd/utility/program_options/program_options.hpp>
 
 using namespace boost;
 using namespace std;
 
 namespace halmd
-{
-namespace lua_wrapper { namespace program_options
 {
 
 template <typename T>
@@ -213,7 +211,5 @@ HALMD_LUA_API int luaopen_libhalmd_po(lua_State* L)
     ];
     return 0;
 }
-
-}} // namespace lua_wrapper::program_options
 
 } // namespace halmd

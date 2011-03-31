@@ -25,7 +25,7 @@ target_link_libraries(test_options_parser
   test_tools_lua
   halmd_utility
   halmd_utility_program_options
-  halmd_utility_lua_wrapper
+  halmd_utility_lua
   ${Boost_PROGRAM_OPTIONS_LIBRARY}
   ${HALMD_TEST_LIBRARIES}
 )
@@ -46,7 +46,7 @@ add_test(posix_signal
   test_posix_signal --log_level=message
 )
 
-add_subdirectory(lua_wrapper)
+add_subdirectory(lua)
 add_subdirectory(program_options)
 
 if(WITH_CUDA)

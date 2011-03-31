@@ -18,7 +18,7 @@
  */
 
 #include <halmd/random/random.hpp>
-#include <halmd/utility/lua_wrapper/lua_wrapper.hpp>
+#include <halmd/utility/lua/lua.hpp>
 #include <halmd/utility/read_integer.hpp>
 
 using namespace boost;

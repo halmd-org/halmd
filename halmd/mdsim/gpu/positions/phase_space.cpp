@@ -22,7 +22,7 @@
 #include <halmd/io/logger.hpp>
 #include <halmd/mdsim/gpu/positions/phase_space.hpp>
 #include <halmd/mdsim/gpu/positions/phase_space_kernel.hpp>
-#include <halmd/utility/lua_wrapper/lua_wrapper.hpp>
+#include <halmd/utility/lua/lua.hpp>
 
 namespace halmd
 {

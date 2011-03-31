@@ -22,7 +22,7 @@
 #include <halmd/io/logger.hpp>
 #include <halmd/io/trajectory/writers/h5md.hpp>
 #include <halmd/io/utility/hdf5.hpp>
-#include <halmd/utility/lua_wrapper/lua_wrapper.hpp>
+#include <halmd/utility/lua/lua.hpp>
 #include <halmd/utility/demangle.hpp>
 
 using namespace boost;

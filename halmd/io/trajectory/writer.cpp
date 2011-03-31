@@ -20,7 +20,7 @@
 #include <boost/bind.hpp>
 
 #include <halmd/io/trajectory/writer.hpp>
-#include <halmd/utility/lua_wrapper/lua_wrapper.hpp>
+#include <halmd/utility/lua/lua.hpp>
 
 using namespace boost;
 using namespace std;

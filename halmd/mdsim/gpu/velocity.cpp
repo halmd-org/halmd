@@ -21,7 +21,7 @@
 #include <halmd/mdsim/gpu/velocity.hpp>
 #include <halmd/mdsim/gpu/velocity_kernel.hpp>
 #include <halmd/numeric/mp/dsfloat.hpp>
-#include <halmd/utility/lua_wrapper/lua_wrapper.hpp>
+#include <halmd/utility/lua/lua.hpp>
 
 using namespace boost;
 using namespace std;

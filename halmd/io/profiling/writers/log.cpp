@@ -24,7 +24,7 @@
 
 #include <halmd/io/logger.hpp>
 #include <halmd/io/profiling/writers/log.hpp>
-#include <halmd/utility/lua_wrapper/lua_wrapper.hpp>
+#include <halmd/utility/lua/lua.hpp>
 
 using namespace boost;
 using namespace std;

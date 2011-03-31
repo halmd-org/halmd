@@ -29,7 +29,7 @@
 #include <halmd/io/logger.hpp>
 #include <halmd/utility/gpu/device.hpp>
 #include <halmd/utility/gpu/device_kernel.hpp>
-#include <halmd/utility/lua_wrapper/lua_wrapper.hpp>
+#include <halmd/utility/lua/lua.hpp>
 #include <halmd/utility/multi_array.hpp>
 
 using namespace boost;

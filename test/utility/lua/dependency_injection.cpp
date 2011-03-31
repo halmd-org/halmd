@@ -24,7 +24,7 @@
 #include <halmd/mdsim/host/integrators/verlet.hpp>
 #include <halmd/mdsim/host/particle.hpp>
 #include <halmd/modules.hpp>
-#include <halmd/utility/lua_wrapper/lua_wrapper.hpp>
+#include <halmd/utility/lua/lua.hpp>
 #include <test/tools/lua.hpp>
 #ifdef WITH_CUDA
 # include <halmd/mdsim/gpu/integrators/verlet.hpp>

@@ -29,7 +29,7 @@
 #include <halmd/mdsim/gpu/force.hpp>
 #include <halmd/mdsim/gpu/forces/pair_trunc_kernel.hpp>
 #include <halmd/mdsim/gpu/particle.hpp>
-#include <halmd/utility/lua_wrapper/lua_wrapper.hpp>
+#include <halmd/utility/lua/lua.hpp>
 #include <halmd/utility/profiler.hpp>
 #include <halmd/utility/scoped_timer.hpp>
 #include <halmd/utility/timer.hpp>

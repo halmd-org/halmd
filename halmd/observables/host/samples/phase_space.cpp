@@ -21,7 +21,7 @@
 
 #include <halmd/observables/host/samples/phase_space.hpp>
 #include <halmd/utility/demangle.hpp>
-#include <halmd/utility/lua_wrapper/lua_wrapper.hpp>
+#include <halmd/utility/lua/lua.hpp>
 
 using namespace boost;
 using namespace std;

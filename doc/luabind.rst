@@ -35,7 +35,7 @@ programme execution starts. ::
 
     // from file halmd/mdsim/integrator.cpp
 
-    #include <halmd/utility/lua_wrapper/lua_wrapper.hpp>
+    #include <halmd/utility/lua/lua.hpp>
 
     template <int dimension>
     void integrator<dimension>::luaopen(lua_State* L)
