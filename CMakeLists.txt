@@ -73,12 +73,15 @@ find_package(Lua51 QUIET REQUIRED)
 find_package(Luabind QUIET REQUIRED)
 
 if(NOT CMAKE_BUILD_TYPE)
-  set(CMAKE_BUILD_TYPE "Release")
+  set(CMAKE_BUILD_TYPE "Release" CACHE STRING
+    "Choose the type of build, options are: Debug Release RelWithDebInfo MinSizeRel." FORCE)
 endif(NOT CMAKE_BUILD_TYPE)
 
-if(NOT CMAKE_CXX_FLAGS)
-  set(CMAKE_CXX_FLAGS "-fPIC -Wall")
-endif(NOT CMAKE_CXX_FLAGS)
+if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+  if(NOT CMAKE_CXX_FLAGS)
+    set(CMAKE_CXX_FLAGS "-fPIC -Wall")
+  endif(NOT CMAKE_CXX_FLAGS)
+endif()
 
 if(CUDA_FOUND AND NOT HALMD_USE_STATIC_LIBS)
   set(WITH_CUDA TRUE)
