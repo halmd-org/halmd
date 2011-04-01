@@ -34,16 +34,13 @@ void neighbour<dimension>::luaopen(lua_State* L)
 {
     using namespace luabind;
     static string class_name("neighbour_" + lexical_cast<string>(dimension) + "_");
-    module(L)
+    module(L, "libhalmd")
     [
-        namespace_("libhalmd")
+        namespace_("mdsim")
         [
-            namespace_("mdsim")
-            [
-                class_<neighbour, shared_ptr<neighbour> >(class_name.c_str())
-                    .def("check", &neighbour::check)
-                    .def("update", &neighbour::update)
-            ]
+            class_<neighbour, shared_ptr<neighbour> >(class_name.c_str())
+                .def("check", &neighbour::check)
+                .def("update", &neighbour::update)
         ]
     ];
 }

@@ -74,18 +74,15 @@ void box<dimension>::luaopen(lua_State* L)
 {
     using namespace luabind;
     static string class_name("box_" + lexical_cast<string>(dimension) + "_");
-    module(L)
+    module(L, "libhalmd")
     [
-        namespace_("libhalmd")
+        namespace_("mdsim")
         [
-            namespace_("mdsim")
-            [
-                class_<box, shared_ptr<box> >(class_name.c_str())
-                    .def(constructor<shared_ptr<particle_type>, vector_type const&>())
-                    .def(constructor<shared_ptr<particle_type>, double, vector_type const&>())
-                    .property("length", &box::length)
-                    .property("density", &box::density)
-            ]
+            class_<box, shared_ptr<box> >(class_name.c_str())
+                .def(constructor<shared_ptr<particle_type>, vector_type const&>())
+                .def(constructor<shared_ptr<particle_type>, double, vector_type const&>())
+                .property("length", &box::length)
+                .property("density", &box::density)
         ]
     ];
 }

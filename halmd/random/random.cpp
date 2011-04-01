@@ -32,18 +32,15 @@ namespace random
 void random::luaopen(lua_State* L)
 {
     using namespace luabind;
-    module(L)
+    module(L, "libhalmd")
     [
-        namespace_("libhalmd")
+        namespace_("random")
         [
-            namespace_("random")
-            [
-                class_<random, shared_ptr<random> >("random")
-                    .scope
-                    [
-                        def("read_integer", &read_integer<unsigned int>)
-                    ]
-            ]
+            class_<random, shared_ptr<random> >("random")
+                .scope
+                [
+                    def("read_integer", &read_integer<unsigned int>)
+                ]
         ]
     ];
 }

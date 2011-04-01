@@ -39,17 +39,14 @@ random::random(unsigned int seed)
 void random::luaopen(lua_State* L)
 {
     using namespace luabind;
-    module(L)
+    module(L, "libhalmd")
     [
-        namespace_("libhalmd")
+        namespace_("host")
         [
-            namespace_("host")
+            namespace_("random")
             [
-                namespace_("random")
-                [
-                    class_<random, shared_ptr<_Base>, bases<_Base> >("gfsr4")
-                        .def(constructor<unsigned int>())
-                ]
+                class_<random, shared_ptr<_Base>, bases<_Base> >("gfsr4")
+                    .def(constructor<unsigned int>())
             ]
         ]
     ];

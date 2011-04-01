@@ -33,16 +33,13 @@ void force<dimension, float_type>::luaopen(lua_State* L)
 {
     using namespace luabind;
     static string class_name("force_" + lexical_cast<string>(dimension) + "_");
-    module(L)
+    module(L, "libhalmd")
     [
-        namespace_("libhalmd")
+        namespace_("mdsim")
         [
-            namespace_("mdsim")
+            namespace_("gpu")
             [
-                namespace_("gpu")
-                [
-                    class_<force, shared_ptr<_Base>, _Base>(class_name.c_str())
-                ]
+                class_<force, shared_ptr<_Base>, _Base>(class_name.c_str())
             ]
         ]
     ];

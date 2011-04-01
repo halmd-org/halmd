@@ -33,20 +33,17 @@ void nvt<dimension>::luaopen(lua_State* L)
 {
     using namespace luabind;
     static string class_name("nvt_" + lexical_cast<string>(dimension) + "_");
-    module(L)
+    module(L, "libhalmd")
     [
-        namespace_("libhalmd")
+        namespace_("mdsim")
         [
-            namespace_("mdsim")
+            namespace_("integrators")
             [
-                namespace_("integrators")
-                [
-                    class_<nvt, shared_ptr<_Base>, bases<_Base> >(class_name.c_str())
-                        .property(
-                            "temperature"
-                          , (double (nvt::*)() const) &nvt::temperature
-                        )
-                ]
+                class_<nvt, shared_ptr<_Base>, bases<_Base> >(class_name.c_str())
+                    .property(
+                        "temperature"
+                      , (double (nvt::*)() const) &nvt::temperature
+                    )
             ]
         ]
     ];

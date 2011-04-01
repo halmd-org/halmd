@@ -151,23 +151,20 @@ static void log_wrapper(char const* message)
 void logger::luaopen(lua_State* L)
 {
     using namespace luabind;
-    module(L)
+    module(L, "libhalmd")
     [
-        namespace_("libhalmd")
+        namespace_("io")
         [
-            namespace_("io")
+            namespace_("logger")
             [
-                namespace_("logger")
-                [
-                    def("fatal", &log_wrapper<logger::fatal>)
-                  , def("error", &log_wrapper<logger::error>)
-                  , def("warning", &log_wrapper<logger::warning>)
-                  , def("info", &log_wrapper<logger::info>)
+                def("fatal", &log_wrapper<logger::fatal>)
+              , def("error", &log_wrapper<logger::error>)
+              , def("warning", &log_wrapper<logger::warning>)
+              , def("info", &log_wrapper<logger::info>)
 #ifndef NDEBUG
-                  , def("debug", &log_wrapper<logger::debug>)
-                  , def("trace", &log_wrapper<logger::trace>)
+              , def("debug", &log_wrapper<logger::debug>)
+              , def("trace", &log_wrapper<logger::trace>)
 #endif
-                ]
             ]
         ]
     ];

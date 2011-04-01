@@ -161,21 +161,18 @@ void density_mode<dimension, float_type>::luaopen(lua_State* L)
 {
     using namespace luabind;
     static string class_name("density_mode_" + lexical_cast<string>(dimension) + "_");
-    module(L)
+    module(L, "libhalmd")
     [
-        namespace_("libhalmd")
+        namespace_("observables")
         [
-            namespace_("observables")
+            namespace_("gpu")
             [
-                namespace_("gpu")
-                [
-                    class_<density_mode, shared_ptr<_Base>, _Base>(class_name.c_str())
-                        .def(constructor<
-                            shared_ptr<phase_space_type>
-                          , shared_ptr<wavevector_type>
-                        >())
-                        .def("register_runtimes", &density_mode::register_runtimes)
-                ]
+                class_<density_mode, shared_ptr<_Base>, _Base>(class_name.c_str())
+                    .def(constructor<
+                        shared_ptr<phase_space_type>
+                      , shared_ptr<wavevector_type>
+                    >())
+                    .def("register_runtimes", &density_mode::register_runtimes)
             ]
         ]
     ];

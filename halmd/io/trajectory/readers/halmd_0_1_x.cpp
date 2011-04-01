@@ -125,27 +125,24 @@ void halmd_0_1_x<dimension, float_type>::luaopen(lua_State* L)
 {
     using namespace luabind;
     static string class_name("halmd_0_1_x_" + lexical_cast<string>(dimension) + "_" + demangled_name<float_type>() + "_");
-    module(L)
+    module(L, "libhalmd")
     [
-        namespace_("libhalmd")
+        namespace_("io")
         [
-            namespace_("io")
+            namespace_("trajectory")
             [
-                namespace_("trajectory")
+                namespace_("readers")
                 [
-                    namespace_("readers")
-                    [
-                        class_<halmd_0_1_x, shared_ptr<_Base>, _Base>(class_name.c_str())
-                            .def(constructor<
-                                shared_ptr<sample_type>
-                                , string const&
-                                , ssize_t
-                            >())
-                            .scope
-                            [
-                                def("format", &halmd_0_1_x::format)
-                            ]
-                    ]
+                    class_<halmd_0_1_x, shared_ptr<_Base>, _Base>(class_name.c_str())
+                        .def(constructor<
+                            shared_ptr<sample_type>
+                            , string const&
+                            , ssize_t
+                        >())
+                        .scope
+                        [
+                            def("format", &halmd_0_1_x::format)
+                        ]
                 ]
             ]
         ]

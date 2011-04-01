@@ -93,24 +93,21 @@ void verlet<dimension, float_type>::luaopen(lua_State* L)
 {
     using namespace luabind;
     static string class_name(module_name() + ("_" + lexical_cast<string>(dimension) + "_"));
-    module(L)
+    module(L, "libhalmd")
     [
-        namespace_("libhalmd")
+        namespace_("mdsim")
         [
-            namespace_("mdsim")
+            namespace_("host")
             [
-                namespace_("host")
+                namespace_("integrators")
                 [
-                    namespace_("integrators")
-                    [
-                        class_<verlet, shared_ptr<_Base>, bases<_Base> >(class_name.c_str())
-                            .def(constructor<
-                                shared_ptr<particle_type>
-                              , shared_ptr<box_type>
-                              , double>()
-                            )
-                            .property("module_name", &module_name_wrapper<dimension, float_type>)
-                    ]
+                    class_<verlet, shared_ptr<_Base>, bases<_Base> >(class_name.c_str())
+                        .def(constructor<
+                            shared_ptr<particle_type>
+                          , shared_ptr<box_type>
+                          , double>()
+                        )
+                        .property("module_name", &module_name_wrapper<dimension, float_type>)
                 ]
             ]
         ]

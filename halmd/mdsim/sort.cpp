@@ -34,15 +34,12 @@ void sort<dimension>::luaopen(lua_State* L)
 {
     using namespace luabind;
     static string class_name("sort_" + lexical_cast<string>(dimension) + "_");
-    module(L)
+    module(L, "libhalmd")
     [
-        namespace_("libhalmd")
+        namespace_("mdsim")
         [
-            namespace_("mdsim")
-            [
-                class_<sort, shared_ptr<sort> >(class_name.c_str())
-                    .def("order", &sort::order)
-            ]
+            class_<sort, shared_ptr<sort> >(class_name.c_str())
+                .def("order", &sort::order)
         ]
     ];
 }

@@ -34,17 +34,14 @@ void integrator<dimension>::luaopen(lua_State* L)
 {
     using namespace luabind;
     static string class_name("integrator_" + lexical_cast<string>(dimension) + "_");
-    module(L)
+    module(L, "libhalmd")
     [
-        namespace_("libhalmd")
+        namespace_("mdsim")
         [
-            namespace_("mdsim")
-            [
-                class_<integrator, shared_ptr<integrator> >(class_name.c_str())
-                    .property("timestep", static_cast<double (integrator::*)() const>(&integrator::timestep), static_cast<void (integrator::*)(double)>(&integrator::timestep))
-                    .def("integrate", &integrator::integrate)
-                    .def("finalize", &integrator::finalize)
-            ]
+            class_<integrator, shared_ptr<integrator> >(class_name.c_str())
+                .property("timestep", static_cast<double (integrator::*)() const>(&integrator::timestep), static_cast<void (integrator::*)(double)>(&integrator::timestep))
+                .def("integrate", &integrator::integrate)
+                .def("finalize", &integrator::finalize)
         ]
     ];
 }

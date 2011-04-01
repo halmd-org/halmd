@@ -233,20 +233,17 @@ void hdf5<dimension>::luaopen(lua_State* L)
 {
     using namespace luabind;
     static string class_name("hdf5_" + lexical_cast<string>(dimension) + "_");
-    module(L)
+    module(L, "libhalmd")
     [
-        namespace_("libhalmd")
+        namespace_("io")
         [
-            namespace_("io")
+            namespace_("statevars")
             [
-                namespace_("statevars")
+                namespace_("writers")
                 [
-                    namespace_("writers")
-                    [
-                        class_<hdf5, shared_ptr<_Base>, _Base>(class_name.c_str())
-                            .def(constructor<string const&>())
-                            .def("file", &hdf5::file)
-                    ]
+                    class_<hdf5, shared_ptr<_Base>, _Base>(class_name.c_str())
+                        .def(constructor<string const&>())
+                        .def("file", &hdf5::file)
                 ]
             ]
         ]

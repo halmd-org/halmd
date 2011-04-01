@@ -126,30 +126,27 @@ void wavevector<dimension>::luaopen(lua_State* L)
 {
     using namespace luabind;
     static string class_name("wavevector_" + lexical_cast<string>(dimension) + "_");
-    module(L)
+    module(L, "libhalmd")
     [
-        namespace_("libhalmd")
+        namespace_("observables")
         [
-            namespace_("observables")
+            namespace_("utility")
             [
-                namespace_("utility")
-                [
-                    class_<wavevector, shared_ptr<wavevector> >(class_name.c_str())
-                        .def(constructor<
-                             vector<double> const&
-                           , vector_type const&
-                           , double, unsigned int
-                        >())
-                        .def(constructor<
-                             double
-                           , vector_type const&
-                           , double, unsigned int
-                        >())
-                        .property("wavenumber", &wavevector::wavenumber)
-                        .property("value", &wavevector::value)
-                        .property("tolerance", &wavevector::tolerance)
-                        .property("maximum_count", &wavevector::maximum_count)
-                ]
+                class_<wavevector, shared_ptr<wavevector> >(class_name.c_str())
+                    .def(constructor<
+                         vector<double> const&
+                       , vector_type const&
+                       , double, unsigned int
+                    >())
+                    .def(constructor<
+                         double
+                       , vector_type const&
+                       , double, unsigned int
+                    >())
+                    .property("wavenumber", &wavevector::wavenumber)
+                    .property("value", &wavevector::value)
+                    .property("tolerance", &wavevector::tolerance)
+                    .property("maximum_count", &wavevector::maximum_count)
             ]
         ]
     ];

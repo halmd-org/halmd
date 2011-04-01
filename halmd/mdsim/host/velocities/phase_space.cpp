@@ -62,22 +62,19 @@ void phase_space<dimension, float_type>::luaopen(lua_State* L)
 {
     using namespace luabind;
     static string class_name("phase_space_" + lexical_cast<string>(dimension) + "_");
-    module(L)
+    module(L, "libhalmd")
     [
-        namespace_("libhalmd")
+        namespace_("mdsim")
         [
-            namespace_("mdsim")
+            namespace_("host")
             [
-                namespace_("host")
+                namespace_("velocities")
                 [
-                    namespace_("velocities")
-                    [
-                        class_<phase_space, shared_ptr<_Base>, _Base>(class_name.c_str())
-                            .def(constructor<
-                                 shared_ptr<particle_type>
-                               , shared_ptr<sample_type>
-                            >())
-                    ]
+                    class_<phase_space, shared_ptr<_Base>, _Base>(class_name.c_str())
+                        .def(constructor<
+                             shared_ptr<particle_type>
+                           , shared_ptr<sample_type>
+                        >())
                 ]
             ]
         ]

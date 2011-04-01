@@ -114,28 +114,25 @@ void core<dimension>::luaopen(lua_State* L)
 {
     using namespace luabind;
     static string class_name("core_" + lexical_cast<string>(dimension) + "_");
-    module(L)
+    module(L, "libhalmd")
     [
-        namespace_("libhalmd")
+        namespace_("mdsim")
         [
-            namespace_("mdsim")
-            [
-                class_<core, shared_ptr<core> >(class_name.c_str())
-                    .def(constructor<>())
-                    .def("register_runtimes", &core::register_runtimes)
-                    .def_readwrite("particle", &core::particle)
-                    .def_readwrite("box", &core::box)
-                    .def_readwrite("force", &core::force)
-                    .def_readwrite("neighbour", &core::neighbour)
-                    .def_readwrite("sort", &core::sort)
-                    .def_readwrite("integrator", &core::integrator)
-                    .def_readwrite("position", &core::position)
-                    .def_readwrite("velocity", &core::velocity)
-                    .property("dimension", &get_dimension<dimension>)
-                    .property("step_counter", &core::step_counter)
-                    .def("prepare", &core::prepare)
-                    .def("mdstep", &core::mdstep)
-            ]
+            class_<core, shared_ptr<core> >(class_name.c_str())
+                .def(constructor<>())
+                .def("register_runtimes", &core::register_runtimes)
+                .def_readwrite("particle", &core::particle)
+                .def_readwrite("box", &core::box)
+                .def_readwrite("force", &core::force)
+                .def_readwrite("neighbour", &core::neighbour)
+                .def_readwrite("sort", &core::sort)
+                .def_readwrite("integrator", &core::integrator)
+                .def_readwrite("position", &core::position)
+                .def_readwrite("velocity", &core::velocity)
+                .property("dimension", &get_dimension<dimension>)
+                .property("step_counter", &core::step_counter)
+                .def("prepare", &core::prepare)
+                .def("mdstep", &core::mdstep)
         ]
     ];
 }

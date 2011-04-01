@@ -48,15 +48,12 @@ void profiler::register_runtime(accumulator_type const& runtime, string const& t
 void profiler::luaopen(lua_State* L)
 {
     using namespace luabind;
-    module(L)
+    module(L, "libhalmd")
     [
-        namespace_("libhalmd")
+        namespace_("utility")
         [
-            namespace_("utility")
-            [
-                class_<profiler, shared_ptr<profiler> >("profiler")
-                    .def(constructor<writers_type, string>())
-            ]
+            class_<profiler, shared_ptr<profiler> >("profiler")
+                .def(constructor<writers_type, string>())
         ]
     ];
 }

@@ -189,24 +189,21 @@ void ssf<dimension>::luaopen(lua_State* L)
 {
     using namespace luabind;
     static string class_name("ssf_" + lexical_cast<string>(dimension) + "_");
-    module(L)
+    module(L, "libhalmd")
     [
-        namespace_("libhalmd")
+        namespace_("observables")
         [
-            namespace_("observables")
-            [
-                class_<ssf, shared_ptr<ssf> >(class_name.c_str())
-                    .def(constructor<
-                        shared_ptr<density_mode_type>
-                      , unsigned int
-                    >())
-                    .def("register_runtimes", &ssf::register_runtimes)
-                    .def("register_observables", &ssf::register_observables)
-                    .property("value", &ssf::value)
-                    .property("wavevector", &ssf::wavevector)
-                    .property("sample", &sample_wrapper<ssf>)
-                    .def("on_sample", &ssf::on_sample)
-            ]
+            class_<ssf, shared_ptr<ssf> >(class_name.c_str())
+                .def(constructor<
+                    shared_ptr<density_mode_type>
+                  , unsigned int
+                >())
+                .def("register_runtimes", &ssf::register_runtimes)
+                .def("register_observables", &ssf::register_observables)
+                .property("value", &ssf::value)
+                .property("wavevector", &ssf::wavevector)
+                .property("sample", &sample_wrapper<ssf>)
+                .def("on_sample", &ssf::on_sample)
         ]
     ];
 }

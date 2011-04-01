@@ -110,24 +110,21 @@ void random<RandomNumberGenerator>::luaopen(lua_State* L)
 {
     using namespace luabind;
     static string class_name(RandomNumberGenerator::name());
-    module(L)
+    module(L, "libhalmd")
     [
-        namespace_("libhalmd")
+        namespace_("gpu")
         [
-            namespace_("gpu")
+            namespace_("random")
             [
-                namespace_("random")
-                [
-                    class_<random, shared_ptr<_Base>, _Base>(class_name.c_str())
-                        .def(constructor<
-                             shared_ptr<device_type>
-                           , unsigned int
-                           , unsigned int
-                           , unsigned int
-                         >())
-                        .property("blocks", &random::blocks)
-                        .property("threads", &random::threads)
-                ]
+                class_<random, shared_ptr<_Base>, _Base>(class_name.c_str())
+                    .def(constructor<
+                         shared_ptr<device_type>
+                       , unsigned int
+                       , unsigned int
+                       , unsigned int
+                     >())
+                    .property("blocks", &random::blocks)
+                    .property("threads", &random::threads)
             ]
         ]
     ];

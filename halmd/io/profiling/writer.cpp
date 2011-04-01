@@ -39,17 +39,14 @@ write_wrapper(shared_ptr<writer_type> writer)
 void writer::luaopen(lua_State* L)
 {
     using namespace luabind;
-    module(L)
+    module(L, "libhalmd")
     [
-        namespace_("libhalmd")
+        namespace_("io")
         [
-            namespace_("io")
+            namespace_("profiling")
             [
-                namespace_("profiling")
-                [
-                    class_<writer, shared_ptr<writer> >("writer")
-                        .property("write", &write_wrapper<writer>)
-                ]
+                class_<writer, shared_ptr<writer> >("writer")
+                    .property("write", &write_wrapper<writer>)
             ]
         ]
     ];

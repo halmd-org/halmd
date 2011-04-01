@@ -107,23 +107,20 @@ void h5md<dimension, float_type>::luaopen(lua_State* L)
 {
     using namespace luabind;
     static string class_name("h5md_" + lexical_cast<string>(dimension) + "_" + demangled_name<float_type>() + "_");
-    module(L)
+    module(L, "libhalmd")
     [
-        namespace_("libhalmd")
+        namespace_("io")
         [
-            namespace_("io")
+            namespace_("trajectory")
             [
-                namespace_("trajectory")
+                namespace_("writers")
                 [
-                    namespace_("writers")
-                    [
-                        class_<h5md, shared_ptr<_Base>, _Base>(class_name.c_str())
-                            .def(constructor<
-                                shared_ptr<sample_type>
-                              , string const&
-                            >())
-                            .def("file", &h5md::file)
-                    ]
+                    class_<h5md, shared_ptr<_Base>, _Base>(class_name.c_str())
+                        .def(constructor<
+                            shared_ptr<sample_type>
+                          , string const&
+                        >())
+                        .def("file", &h5md::file)
                 ]
             ]
         ]

@@ -70,17 +70,14 @@ void particle<dimension>::luaopen(lua_State* L)
 {
     using namespace luabind;
     static string class_name("particle_" + lexical_cast<string>(dimension) + "_");
-    module(L)
+    module(L, "libhalmd")
     [
-        namespace_("libhalmd")
+        namespace_("mdsim")
         [
-            namespace_("mdsim")
-            [
-                class_<particle, shared_ptr<particle> >(class_name.c_str())
-                    .def_readonly("nbox", &particle::nbox)
-                    .def_readonly("ntype", &particle::ntype)
-                    .def_readonly("ntypes", &particle::ntypes)
-            ]
+            class_<particle, shared_ptr<particle> >(class_name.c_str())
+                .def_readonly("nbox", &particle::nbox)
+                .def_readonly("ntype", &particle::ntype)
+                .def_readonly("ntypes", &particle::ntypes)
         ]
     ];
 }

@@ -28,23 +28,20 @@ namespace halmd
 HALMD_LUA_API int luaopen_libhalmd_signal(lua_State* L)
 {
     using namespace luabind;
-    module(L)
+    module(L, "libhalmd")
     [
-        namespace_("libhalmd")
-        [
-            class_<signal<void ()> >("signal__void__")
-                .scope
-                [
-                    class_<signal<void ()>::slot_function_type>("slot_function_type")
-                        .def("__call", &signal<void ()>::slot_function_type::operator())
-                ]
-          , class_<signal<void (double)> >("signal__double__")
-                .scope
-                [
-                    class_<signal<void (double)>::slot_function_type>("slot_function_type")
-                        .def("__call", &signal<void (double)>::slot_function_type::operator())
-                ]
-        ]
+        class_<signal<void ()> >("signal__void__")
+            .scope
+            [
+                class_<signal<void ()>::slot_function_type>("slot_function_type")
+                    .def("__call", &signal<void ()>::slot_function_type::operator())
+            ]
+      , class_<signal<void (double)> >("signal__double__")
+            .scope
+            [
+                class_<signal<void (double)>::slot_function_type>("slot_function_type")
+                    .def("__call", &signal<void (double)>::slot_function_type::operator())
+            ]
     ];
     return 0;
 }

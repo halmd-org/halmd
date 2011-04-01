@@ -33,15 +33,12 @@ void force<dimension>::luaopen(lua_State* L)
 {
     using namespace luabind;
     static string class_name("force_" + lexical_cast<string>(dimension) + "_");
-    module(L)
+    module(L, "libhalmd")
     [
-        namespace_("libhalmd")
+        namespace_("mdsim")
         [
-            namespace_("mdsim")
-            [
-                class_<force, shared_ptr<force> >(class_name.c_str())
-                    .def("compute", &force::compute)
-            ]
+            class_<force, shared_ptr<force> >(class_name.c_str())
+                .def("compute", &force::compute)
         ]
     ];
 }

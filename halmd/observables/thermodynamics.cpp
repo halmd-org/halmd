@@ -114,26 +114,23 @@ void thermodynamics<dimension>::luaopen(lua_State* L)
 {
     using namespace luabind;
     static string class_name("thermodynamics_" + lexical_cast<string>(dimension) + "_");
-    module(L)
+    module(L, "libhalmd")
     [
-        namespace_("libhalmd")
+        namespace_("observables")
         [
-            namespace_("observables")
-            [
-                class_<thermodynamics, shared_ptr<thermodynamics> >(class_name.c_str())
-                    .def("register_runtimes", &thermodynamics::register_runtimes)
-                    .def("register_observables", &thermodynamics::register_observables)
-                    .property("prepare", &prepare_wrapper<thermodynamics>)
-                    .property("sample", &sample_wrapper<thermodynamics>)
-                    .property("en_kin", &thermodynamics::en_kin)
-                    .property("en_pot", &thermodynamics::en_pot)
-                    .property("en_tot", &thermodynamics::en_tot)
-                    .property("pressure", &thermodynamics::pressure)
-                    .property("temp", &thermodynamics::temp)
-                    .property("v_cm", &thermodynamics::v_cm)
-                    .property("virial", &thermodynamics::virial)
-                    .property("hypervirial", &thermodynamics::hypervirial)
-            ]
+            class_<thermodynamics, shared_ptr<thermodynamics> >(class_name.c_str())
+                .def("register_runtimes", &thermodynamics::register_runtimes)
+                .def("register_observables", &thermodynamics::register_observables)
+                .property("prepare", &prepare_wrapper<thermodynamics>)
+                .property("sample", &sample_wrapper<thermodynamics>)
+                .property("en_kin", &thermodynamics::en_kin)
+                .property("en_pot", &thermodynamics::en_pot)
+                .property("en_tot", &thermodynamics::en_tot)
+                .property("pressure", &thermodynamics::pressure)
+                .property("temp", &thermodynamics::temp)
+                .property("v_cm", &thermodynamics::v_cm)
+                .property("virial", &thermodynamics::virial)
+                .property("hypervirial", &thermodynamics::hypervirial)
         ]
     ];
 }

@@ -145,25 +145,22 @@ void boltzmann<dimension, float_type, RandomNumberGenerator>::luaopen(lua_State*
     typedef typename _Base::_Base _Base_Base;
     using namespace luabind;
     static string class_name(module_name() + ("_" + lexical_cast<string>(dimension) + "_"));
-    module(L)
+    module(L, "libhalmd")
     [
-        namespace_("libhalmd")
+        namespace_("mdsim")
         [
-            namespace_("mdsim")
+            namespace_("gpu")
             [
-                namespace_("gpu")
+                namespace_("velocities")
                 [
-                    namespace_("velocities")
-                    [
-                        class_<boltzmann, shared_ptr<_Base_Base>, bases<_Base_Base, _Base> >(class_name.c_str())
-                            .def(constructor<
-                                 shared_ptr<particle_type>
-                               , shared_ptr<random_type>
-                               , double
-                             >())
-                            .property("temperature", &boltzmann::temperature)
-                            .property("module_name", &module_name_wrapper<dimension, float_type, RandomNumberGenerator>)
-                    ]
+                    class_<boltzmann, shared_ptr<_Base_Base>, bases<_Base_Base, _Base> >(class_name.c_str())
+                        .def(constructor<
+                             shared_ptr<particle_type>
+                           , shared_ptr<random_type>
+                           , double
+                         >())
+                        .property("temperature", &boltzmann::temperature)
+                        .property("module_name", &module_name_wrapper<dimension, float_type, RandomNumberGenerator>)
                 ]
             ]
         ]

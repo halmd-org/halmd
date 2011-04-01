@@ -153,24 +153,21 @@ void hilbert<dimension, float_type>::luaopen(lua_State* L)
 {
     using namespace luabind;
     static string class_name("hilbert_" + lexical_cast<string>(dimension) + "_");
-    module(L)
+    module(L, "libhalmd")
     [
-        namespace_("libhalmd")
+        namespace_("mdsim")
         [
-            namespace_("mdsim")
+            namespace_("gpu")
             [
-                namespace_("gpu")
+                namespace_("sorts")
                 [
-                    namespace_("sorts")
-                    [
-                        class_<hilbert, shared_ptr<_Base>, _Base>(class_name.c_str())
-                            .def(constructor<
-                                shared_ptr<particle_type>
-                              , shared_ptr<box_type>
-                            >())
-                            .property("module_name", &module_name_wrapper<dimension, float_type>)
-                            .def("register_runtimes", &hilbert::register_runtimes)
-                    ]
+                    class_<hilbert, shared_ptr<_Base>, _Base>(class_name.c_str())
+                        .def(constructor<
+                            shared_ptr<particle_type>
+                          , shared_ptr<box_type>
+                        >())
+                        .property("module_name", &module_name_wrapper<dimension, float_type>)
+                        .def("register_runtimes", &hilbert::register_runtimes)
                 ]
             ]
         ]

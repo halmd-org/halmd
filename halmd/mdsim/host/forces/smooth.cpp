@@ -48,19 +48,16 @@ void smooth<dimension, float_type>::luaopen(lua_State* L)
 {
     using namespace luabind;
     static string class_name("smooth_" + lexical_cast<string>(dimension) + "_");
-    module(L)
+    module(L, "libhalmd")
     [
-        namespace_("libhalmd")
+        namespace_("mdsim")
         [
-            namespace_("mdsim")
+            namespace_("host")
             [
-                namespace_("host")
+                namespace_("forces")
                 [
-                    namespace_("forces")
-                    [
-                        class_<smooth, shared_ptr<smooth> >(class_name.c_str())
-                            .def(constructor<double>())
-                    ]
+                    class_<smooth, shared_ptr<smooth> >(class_name.c_str())
+                        .def(constructor<double>())
                 ]
             ]
         ]

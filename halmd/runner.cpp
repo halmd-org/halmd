@@ -29,12 +29,9 @@ namespace halmd
 void runner::luaopen(lua_State* L)
 {
     using namespace luabind;
-    module(L)
+    module(L, "libhalmd")
     [
-        namespace_("libhalmd")
-        [
-            class_<runner, shared_ptr<runner> >("runner")
-        ]
+        class_<runner, shared_ptr<runner> >("runner")
     ];
 }
 

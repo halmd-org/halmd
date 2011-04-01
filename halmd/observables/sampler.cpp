@@ -160,23 +160,20 @@ void sampler<dimension>::luaopen(lua_State* L)
 {
     using namespace luabind;
     static string class_name("sampler_" + lexical_cast<string>(dimension) + "_");
-    module(L)
+    module(L, "libhalmd")
     [
-        namespace_("libhalmd")
-        [
-            class_<sampler, shared_ptr<runner>, runner>(class_name.c_str())
-                .def(constructor<
-                    shared_ptr<core_type>
-                  , uint64_t
-                >())
-                .def("register_runtimes", &sampler::register_runtimes)
-                .property("steps", &sampler::steps)
-                .property("total_time", &sampler::total_time)
-                .def("on_start", &sampler::on_start)
-                .def("on_finish", &sampler::on_finish)
-                .def("on_prepare", &sampler::on_prepare)
-                .def("on_sample", &sampler::on_sample)
-        ]
+        class_<sampler, shared_ptr<runner>, runner>(class_name.c_str())
+            .def(constructor<
+                shared_ptr<core_type>
+              , uint64_t
+            >())
+            .def("register_runtimes", &sampler::register_runtimes)
+            .property("steps", &sampler::steps)
+            .property("total_time", &sampler::total_time)
+            .def("on_start", &sampler::on_start)
+            .def("on_finish", &sampler::on_finish)
+            .def("on_prepare", &sampler::on_prepare)
+            .def("on_sample", &sampler::on_sample)
     ];
 }
 

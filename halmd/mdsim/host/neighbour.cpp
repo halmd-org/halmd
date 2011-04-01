@@ -220,23 +220,20 @@ void neighbour<dimension, float_type>::luaopen(lua_State* L)
 {
     using namespace luabind;
     static string class_name("neighbour_" + lexical_cast<string>(dimension) + "_");
-    module(L)
+    module(L, "libhalmd")
     [
-        namespace_("libhalmd")
+        namespace_("mdsim")
         [
-            namespace_("mdsim")
+            namespace_("host")
             [
-                namespace_("host")
-                [
-                    class_<neighbour, shared_ptr<_Base>, _Base>(class_name.c_str())
-                        .def(constructor<
-                             shared_ptr<particle_type>
-                           , shared_ptr<box_type>
-                           , matrix_type const&
-                           , double
-                         >())
-                        .property("r_skin", &neighbour::r_skin)
-                ]
+                class_<neighbour, shared_ptr<_Base>, _Base>(class_name.c_str())
+                    .def(constructor<
+                         shared_ptr<particle_type>
+                       , shared_ptr<box_type>
+                       , matrix_type const&
+                       , double
+                     >())
+                    .property("r_skin", &neighbour::r_skin)
             ]
         ]
     ];

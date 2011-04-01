@@ -95,17 +95,14 @@ void particle<dimension, float_type>::luaopen(lua_State* L)
 {
     using namespace luabind;
     static string class_name("particle_" + lexical_cast<string>(dimension) + "_");
-    module(L)
+    module(L, "libhalmd")
     [
-        namespace_("libhalmd")
+        namespace_("mdsim")
         [
-            namespace_("mdsim")
+            namespace_("host")
             [
-                namespace_("host")
-                [
-                    class_<particle, shared_ptr<_Base>, _Base>(class_name.c_str())
-                        .def(constructor<vector<unsigned int> const&>())
-                ]
+                class_<particle, shared_ptr<_Base>, _Base>(class_name.c_str())
+                    .def(constructor<vector<unsigned int> const&>())
             ]
         ]
     ];

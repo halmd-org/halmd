@@ -189,26 +189,23 @@ void lattice<dimension, float_type>::luaopen(lua_State* L)
 {
     using namespace luabind;
     static string class_name(module_name() + ("_" + lexical_cast<string>(dimension) + "_"));
-    module(L)
+    module(L, "libhalmd")
     [
-        namespace_("libhalmd")
+        namespace_("mdsim")
         [
-            namespace_("mdsim")
+            namespace_("host")
             [
-                namespace_("host")
+                namespace_("positions")
                 [
-                    namespace_("positions")
-                    [
-                        class_<lattice, shared_ptr<_Base>, _Base>(class_name.c_str())
-                            .def(constructor<
-                                 shared_ptr<particle_type>
-                               , shared_ptr<box_type>
-                               , shared_ptr<random_type>
-                               , vector_type const&
-                            >())
-                            .property("slab", &lattice::slab)
-                            .property("module_name", &module_name_wrapper<dimension, float_type>)
-                    ]
+                    class_<lattice, shared_ptr<_Base>, _Base>(class_name.c_str())
+                        .def(constructor<
+                             shared_ptr<particle_type>
+                           , shared_ptr<box_type>
+                           , shared_ptr<random_type>
+                           , vector_type const&
+                        >())
+                        .property("slab", &lattice::slab)
+                        .property("module_name", &module_name_wrapper<dimension, float_type>)
                 ]
             ]
         ]

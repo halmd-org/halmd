@@ -44,18 +44,15 @@ void density_mode<dimension>::luaopen(lua_State* L)
 {
     using namespace luabind;
     static string class_name("density_mode_" + lexical_cast<string>(dimension) + "_");
-    module(L)
+    module(L, "libhalmd")
     [
-        namespace_("libhalmd")
+        namespace_("observables")
         [
-            namespace_("observables")
-            [
-                class_<density_mode, shared_ptr<density_mode> >(class_name.c_str())
-                    .property("value", &density_mode::value)
-                    .property("wavenumber", &density_mode::wavenumber)
-                    .property("acquire", &acquire_wrapper<density_mode>)
-                    .def("on_acquire", &density_mode::on_acquire)
-            ]
+            class_<density_mode, shared_ptr<density_mode> >(class_name.c_str())
+                .property("value", &density_mode::value)
+                .property("wavenumber", &density_mode::wavenumber)
+                .property("acquire", &acquire_wrapper<density_mode>)
+                .def("on_acquire", &density_mode::on_acquire)
         ]
     ];
 }

@@ -93,21 +93,18 @@ void thermodynamics<dimension, float_type>::luaopen(lua_State* L)
 {
     using namespace luabind;
     static string class_name("thermodynamics_" + lexical_cast<string>(dimension) + "_");
-    module(L)
+    module(L, "libhalmd")
     [
-        namespace_("libhalmd")
+        namespace_("observables")
         [
-            namespace_("observables")
+            namespace_("host")
             [
-                namespace_("host")
-                [
-                    class_<thermodynamics, shared_ptr<_Base>, _Base>(class_name.c_str())
-                        .def(constructor<
-                            shared_ptr<particle_type>
-                          , shared_ptr<box_type>
-                          , shared_ptr<force_type>
-                        >())
-                ]
+                class_<thermodynamics, shared_ptr<_Base>, _Base>(class_name.c_str())
+                    .def(constructor<
+                        shared_ptr<particle_type>
+                      , shared_ptr<box_type>
+                      , shared_ptr<force_type>
+                    >())
             ]
         ]
     ];

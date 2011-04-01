@@ -80,16 +80,13 @@ void velocity<dimension, float_type>::luaopen(lua_State* L)
 {
     using namespace luabind;
     static string class_name("velocity_" + lexical_cast<string>(dimension) + "_");
-    module(L)
+    module(L, "libhalmd")
     [
-        namespace_("libhalmd")
+        namespace_("mdsim")
         [
-            namespace_("mdsim")
+            namespace_("host")
             [
-                namespace_("host")
-                [
-                    class_<velocity, shared_ptr<_Base>, bases<_Base> >(class_name.c_str())
-                ]
+                class_<velocity, shared_ptr<_Base>, bases<_Base> >(class_name.c_str())
             ]
         ]
     ];

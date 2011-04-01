@@ -43,17 +43,14 @@ void writer<dimension>::luaopen(lua_State* L)
 {
     using namespace luabind;
     static string class_name("writer_" + lexical_cast<string>(dimension) + "_");
-    module(L)
+    module(L, "libhalmd")
     [
-        namespace_("libhalmd")
+        namespace_("io")
         [
-            namespace_("io")
+            namespace_("statevars")
             [
-                namespace_("statevars")
-                [
-                    class_<writer, shared_ptr<writer> >(class_name.c_str())
-                        .property("write", &write_wrapper<writer>)
-                ]
+                class_<writer, shared_ptr<writer> >(class_name.c_str())
+                    .property("write", &write_wrapper<writer>)
             ]
         ]
     ];

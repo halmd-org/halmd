@@ -110,20 +110,17 @@ void h5md::write()
 void h5md::luaopen(lua_State* L)
 {
     using namespace luabind;
-    module(L)
+    module(L, "libhalmd")
     [
-        namespace_("libhalmd")
+        namespace_("io")
         [
-            namespace_("io")
+            namespace_("profiling")
             [
-                namespace_("profiling")
+                namespace_("writers")
                 [
-                    namespace_("writers")
-                    [
-                        class_<h5md, shared_ptr<_Base>, _Base>("h5md")
-                            .def(constructor<string const&>())
-                            .def("file", &h5md::file)
-                    ]
+                    class_<h5md, shared_ptr<_Base>, _Base>("h5md")
+                        .def(constructor<string const&>())
+                        .def("file", &h5md::file)
                 ]
             ]
         ]

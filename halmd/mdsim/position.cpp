@@ -34,15 +34,12 @@ void position<dimension>::luaopen(lua_State* L)
 {
     using namespace luabind;
     static string class_name("position_" + lexical_cast<string>(dimension) + "_");
-    module(L)
+    module(L, "libhalmd")
     [
-        namespace_("libhalmd")
+        namespace_("mdsim")
         [
-            namespace_("mdsim")
-            [
-                class_<position, shared_ptr<position> >(class_name.c_str())
-                    .def("set", &position::set)
-            ]
+            class_<position, shared_ptr<position> >(class_name.c_str())
+                .def("set", &position::set)
         ]
     ];
 }

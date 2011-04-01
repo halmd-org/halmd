@@ -109,19 +109,16 @@ void log::write()
 void log::luaopen(lua_State* L)
 {
     using namespace luabind;
-    module(L)
+    module(L, "libhalmd")
     [
-        namespace_("libhalmd")
+        namespace_("io")
         [
-            namespace_("io")
+            namespace_("profiling")
             [
-                namespace_("profiling")
+                namespace_("writers")
                 [
-                    namespace_("writers")
-                    [
-                        class_<log, shared_ptr<_Base>, _Base>("log")
-                            .def(constructor<>())
-                    ]
+                    class_<log, shared_ptr<_Base>, _Base>("log")
+                        .def(constructor<>())
                 ]
             ]
         ]

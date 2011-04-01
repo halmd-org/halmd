@@ -201,25 +201,22 @@ static void translate_cuda_error(lua_State* L, cuda::error const& e)
 void device::luaopen(lua_State* L)
 {
     using namespace luabind;
-    module(L)
+    module(L, "libhalmd")
     [
-        namespace_("libhalmd")
+        namespace_("utility")
         [
-            namespace_("utility")
+            namespace_("gpu")
             [
-                namespace_("gpu")
-                [
-                    class_<device, shared_ptr<device> >("device")
-                        .def(constructor<vector<int>, unsigned int>())
-                        .property("threads", &device::threads)
-                        .scope
-                        [
-                            def("nvidia_driver_version", &device::nvidia_driver_version)
-                          , def("compute_version", &device::compute_version)
-                          , def("cuda_driver_version", &device::cuda_driver_version)
-                          , def("cuda_runtime_version", &device::cuda_runtime_version)
-                        ]
-                ]
+                class_<device, shared_ptr<device> >("device")
+                    .def(constructor<vector<int>, unsigned int>())
+                    .property("threads", &device::threads)
+                    .scope
+                    [
+                        def("nvidia_driver_version", &device::nvidia_driver_version)
+                      , def("compute_version", &device::compute_version)
+                      , def("cuda_driver_version", &device::cuda_driver_version)
+                      , def("cuda_runtime_version", &device::cuda_runtime_version)
+                    ]
             ]
         ]
     ];

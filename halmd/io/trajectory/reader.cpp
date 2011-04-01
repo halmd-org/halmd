@@ -33,16 +33,13 @@ void reader<dimension>::luaopen(lua_State* L)
 {
     using namespace luabind;
     static string class_name("reader_" + lexical_cast<string>(dimension) + "_");
-    module(L)
+    module(L, "libhalmd")
     [
-        namespace_("libhalmd")
+        namespace_("io")
         [
-            namespace_("io")
+            namespace_("trajectory")
             [
-                namespace_("trajectory")
-                [
-                    class_<reader, shared_ptr<reader> >(class_name.c_str())
-                ]
+                class_<reader, shared_ptr<reader> >(class_name.c_str())
             ]
         ]
     ];
