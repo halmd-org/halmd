@@ -8,6 +8,10 @@ Supported compilers
 
 HALMD is known to compile with these C++ compilers.
 
+* GCC 4.6
+
+  - GCC 4.6.0 on CentOS 5.3 (x86_64)
+
 * GCC 4.4
 
   - GCC 4.4.5 on Debian GNU/Linux 6.0 (x86 and x86_64)
