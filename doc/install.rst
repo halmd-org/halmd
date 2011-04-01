@@ -25,7 +25,7 @@ HALMD is known to compile with these C++ compilers.
 
 * GCC 4.1
 
-  - GCC 4.1.2 on RHEL 5.5 (x86_64)
+  - GCC 4.1.2 on CentOS 5.3 (x86_64)
 
 * Clang 2.8 (requires latest `Luabind source`_)
 
