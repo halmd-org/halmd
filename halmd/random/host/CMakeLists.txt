@@ -1,3 +1,3 @@
-add_library(halmd_random_host
+add_library(halmd_random_host_random
   random.cpp
 )

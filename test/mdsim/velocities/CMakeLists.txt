@@ -2,29 +2,31 @@ add_executable(test_velocity_boltzmann
   boltzmann.cpp
 )
 target_link_libraries(test_velocity_boltzmann
-  halmd_mdsim_host_forces
-  halmd_mdsim_host_velocities
-  halmd_mdsim_host
-  halmd_observables_host_samples
-  halmd_observables_host
-  halmd_random_host
+  halmd_mdsim_host_forces_zero
+  halmd_mdsim_host_velocities_boltzmann
+  halmd_mdsim_host_velocity
+  halmd_mdsim_host_particle
+  halmd_observables_host_thermodynamics
+  halmd_random_host_random
 )
 if(WITH_CUDA)
   target_link_libraries(test_velocity_boltzmann
-    halmd_mdsim_gpu_forces
-    halmd_mdsim_gpu_velocities
-    halmd_mdsim_gpu
-    halmd_observables_gpu
-    halmd_random_gpu
-    halmd_utility_gpu
+    halmd_mdsim_gpu_forces_zero
+    halmd_mdsim_gpu_velocities_boltzmann
+    halmd_mdsim_gpu_velocity
+    halmd_mdsim_gpu_particle
+    halmd_observables_gpu_thermodynamics
+    halmd_random_gpu_random
+    halmd_utility_gpu_device
   )
 endif(WITH_CUDA)
 target_link_libraries(test_velocity_boltzmann
-  halmd_io
-  halmd_mdsim
-  halmd_observables
-  halmd_random
-  halmd_utility
+  halmd_io_logger
+  halmd_mdsim_box
+  halmd_mdsim_particle
+  halmd_observables_thermodynamics
+  halmd_random_random
+  halmd_utility_profiler
   ${HALMD_COMMON_LIBRARIES}
   ${HALMD_TEST_LIBRARIES}
 )

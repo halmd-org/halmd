@@ -29,7 +29,7 @@ add_executable(test_radix_sort
 )
 target_link_libraries(test_radix_sort
   halmd_algorithm_gpu
-  halmd_random_gpu
+  halmd_random_gpu_random
   ${HALMD_TEST_LIBRARIES}
   ${Boost_SYSTEM_LIBRARY}
   ${CUDA_LIBRARIES}

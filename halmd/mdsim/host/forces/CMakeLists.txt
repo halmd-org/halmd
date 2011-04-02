@@ -1,7 +1,15 @@
-add_library(halmd_mdsim_host_forces
+add_library(halmd_mdsim_host_forces_lennard_jones
   lennard_jones.cpp
+)
+add_library(halmd_mdsim_host_forces_morse
   morse.cpp
+)
+add_library(halmd_mdsim_host_forces_power_law
   power_law.cpp
+)
+add_library(halmd_mdsim_host_forces_smooth
   smooth.cpp
+)
+add_library(halmd_mdsim_host_forces_zero
   zero.cpp
-  )
+)

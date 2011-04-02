@@ -1,3 +1,3 @@
-add_library(halmd_io_statevars_writers
+add_library(halmd_io_statevars_writers_hdf5
   hdf5.cpp
 )

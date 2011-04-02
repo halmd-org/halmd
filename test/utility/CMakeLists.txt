@@ -23,9 +23,8 @@ add_executable(test_options_parser
 )
 target_link_libraries(test_options_parser
   test_tools_lua
-  halmd_utility
+  halmd_utility_options_parser
   halmd_utility_program_options
-  halmd_utility_lua
   ${Boost_PROGRAM_OPTIONS_LIBRARY}
   ${HALMD_TEST_LIBRARIES}
 )
@@ -37,7 +36,7 @@ add_executable(test_posix_signal
   posix_signal.cpp
 )
 target_link_libraries(test_posix_signal
-  halmd_utility
+  halmd_utility_posix_signal
   ${Boost_SYSTEM_LIBRARY}
   ${HALMD_TEST_LIBRARIES}
   rt

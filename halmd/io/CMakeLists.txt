@@ -1,4 +1,4 @@
-add_library(halmd_io
+add_library(halmd_io_logger
   logger.cpp
 )
 
