@@ -90,6 +90,11 @@ if(CMAKE_CXX_COMPILER_ID MATCHES "^(GNU|Clang|Intel)$")
     set(CMAKE_SHARED_LINKER_FLAGS "-Wl,--as-needed" CACHE STRING
       "Flags used by the linker during the creation of shared libraries." FORCE)
   endif()
+elseif(CMAKE_CXX_COMPILER_ID STREQUAL "XL")
+  if(NOT CMAKE_CXX_FLAGS)
+    set(CMAKE_CXX_FLAGS "-qrtti=all -qmaxmem=32676" CACHE STRING
+      "Flags used by the compiler during all build types." FORCE)
+  endif()
 else()
   message(WARNING "Unsupported CXX compiler: ${CMAKE_CXX_COMPILER_ID}")
 endif()
