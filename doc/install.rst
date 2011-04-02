@@ -36,6 +36,10 @@ HALMD is known to compile with these C++ compilers.
   - Intel C++ compiler 11.1 (upstream) on CentOS 5.3 (x86_64)
   - Intel C++ compiler 12.0 (upstream) on CentOS 5.3 (x86_64)
 
+* XL C++
+
+  - XL C++ 11.1 (upstream) on AIX 5.3 (POWER6)
+
 .. _Luabind source: https://github.com/luabind/luabind
 
 The following C++ compilers **fail** to compile HALMD.
@@ -47,7 +51,6 @@ The following C++ compilers **fail** to compile HALMD.
 * XL C++
 
   - XL C++ 10.1 (packaged) on AIX 5.3 (POWER6)
-  - XL C++ 11.1 (upstream) on AIX 5.3 (POWER6)
 
 
 Software prerequisites
