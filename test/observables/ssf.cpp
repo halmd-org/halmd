@@ -31,6 +31,7 @@
 #include <halmd/io/logger.hpp>
 #include <halmd/observables/utility/wavevector.hpp>
 #include <test/modules.hpp>
+#include <test/tools/init.hpp>
 
 using namespace boost;
 using namespace boost::assign;
@@ -223,7 +224,7 @@ void ssf(string const& backend)
     }
 }
 
-static void __attribute__((constructor)) init_unit_test_suite()
+HALMD_TEST_INIT( init_unit_test_suite )
 {
     using namespace boost::assign;
     using namespace boost::unit_test;

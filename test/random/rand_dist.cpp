@@ -33,6 +33,7 @@
 # include <halmd/random/gpu/rand48.hpp>
 # include <test/tools/cuda.hpp>
 #endif
+#include <test/tools/init.hpp>
 
 //
 // test random number generators in combination with accumulator class
@@ -156,7 +157,7 @@ void test_host_random( unsigned long n )
     BOOST_CHECK_CLOSE_FRACTION(mean(a4), val, tol / val);
 }
 
-static void __attribute__((constructor)) init_unit_test_suite()
+HALMD_TEST_INIT( init_unit_test_suite )
 {
     using namespace boost::unit_test::framework;
 

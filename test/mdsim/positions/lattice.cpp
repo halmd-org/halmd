@@ -34,6 +34,7 @@
 #include <halmd/io/logger.hpp>
 #include <halmd/numeric/accumulator.hpp>
 #include <test/modules.hpp>
+#include <test/tools/init.hpp>
 
 using namespace boost;
 using namespace boost::assign;
@@ -239,7 +240,7 @@ void lattice(string const& backend)
     BOOST_CHECK_SMALL(norm_1(r_max - corner + offset / 2) / norm_1(corner), eps);
 }
 
-static void __attribute__((constructor)) init_unit_test_suite()
+HALMD_TEST_INIT( init_unit_test_suite )
 {
     using namespace boost::assign;
     using namespace boost::unit_test;

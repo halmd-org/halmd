@@ -25,6 +25,7 @@
 #include <cuda_wrapper/cuda_wrapper.hpp>
 #include <halmd/utility/timer.hpp>
 #include <test/tools/cuda.hpp>
+#include <test/tools/init.hpp>
 
 BOOST_GLOBAL_FIXTURE( set_cuda_device );
 
@@ -79,7 +80,7 @@ void performance(size_t size)
     }
 }
 
-static void __attribute__((constructor)) init_unit_test_suite()
+HALMD_TEST_INIT( init_unit_test_suite )
 {
     using namespace boost::unit_test::framework;
 
