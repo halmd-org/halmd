@@ -296,5 +296,5 @@ HDF5
 
 Prepare a statically linked build of the HDF5 C and C++ library with ::
 
-   CC=xlC_r CXX=xlC_r CXXFLAGS=-qrtti=all ./configure --enable-cxx --enable-static --disable-shared --prefix=$HOME/usr/powerpc-ibm-aix5.3/hdf5-1.8.6
+   CC=xlc_r CXX=xlC_r CXXFLAGS=-qrtti=all ./configure --enable-cxx --enable-static --disable-shared --prefix=$HOME/usr/powerpc-ibm-aix5.3/hdf5-1.8.6
 
