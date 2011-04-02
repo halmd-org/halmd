@@ -19,7 +19,7 @@
 
 #include <luabind/luabind.hpp>
 #include <luabind/detail/convert_to_lua.hpp>
-#include <typeinfo>
+#include <luabind/typeid.hpp>
 
 #include <halmd/config.hpp>
 #include <halmd/utility/demangle.hpp>
@@ -29,55 +29,50 @@
 #include <halmd/utility/lua/program_options.hpp>
 #include <halmd/utility/lua/vector_converter.hpp>
 
-using namespace boost;
-using namespace std;
-
 // This code is based on the any_converter example of Luabind,
 // which demonstrates the conversion of boost::any to Lua.
+//
+// The implementation below, however, does not use &typeid(T)
+// to store a type T as a key in the any converter map. This is
+// not portable (e.g. to AIX), as there is no guarantee that
+// &typeid(T) == &typeid(T) for identical type T.
+// Instead we use the Luabind class type_id, which uses the
+// well-defined method type_info::before to compare types.
+//
+// The any converter map is stored inside the Lua interpreter,
+// not as a global variable, to allow unit testing with multiple
+// Lua interpreter instantiations in a single test executable.
 
-namespace luabind
-{
-
-//! convert from C++ to Lua
-void default_converter<any>::to(lua_State* L, any const& value)
-{
-    typedef void (*converter)(lua_State* L, any const&);
-
-    // get table of any converter functions from Lua registry,
-    // using address of default_converter<any>::to as unique key
-    lua_pushlightuserdata(L, (void*)&to);
-    lua_gettable(L, LUA_REGISTRYINDEX);
-
-    // lookup any converter function by typeid address
-    lua_pushlightuserdata(L, (void*)&value.type());
-    lua_gettable(L, -2);
-    converter convert = (converter)lua_touserdata(L, -1);
-    lua_pop(L, 2);
-    if (!convert) {
-        throw runtime_error("unregistered any converter: " + halmd::demangled_name(value.type()));
-    }
-
-    // convert any to value type and push onto stack
-    convert(L, value);
-}
-
-} // namespace luabind
+using namespace boost;
+using namespace std;
 
 namespace halmd
 {
 
-template <typename T>
-struct any_converter
+class any_converter
+  : public map<luabind::type_id, void (*)(lua_State* L, any const&)>
 {
-    //! convert from C++ to Lua
-    static void to(lua_State* L, any const& any)
+private:
+    template <typename T>
+    struct convert
     {
-        luabind::detail::convert_to_lua(L, *any_cast<T>(&any));
+        //! convert from C++ to Lua
+        static void to(lua_State* L, any const& any)
+        {
+            luabind::detail::convert_to_lua(L, *any_cast<T>(&any));
+        }
+    };
+
+public:
+    template <typename T>
+    void register_type()
+    {
+        this->insert(make_pair(luabind::type_id(typeid(T)), &convert<T>::to));
     }
 };
 
 template <>
-struct any_converter<void>
+struct any_converter::convert<void>
 {
     //! convert from C++ to Lua
     static void to(lua_State* L, any const&)
@@ -86,88 +81,98 @@ struct any_converter<void>
     }
 };
 
-/**
- * register an any converter for given type
- *
- * expects table on top of stack
- */
-template <typename T>
-static void register_any_converter(lua_State* L)
-{
-    lua_pushlightuserdata(L, (void*)&typeid(T));
-    lua_pushlightuserdata(L, (void*)&any_converter<T>::to);
-    lua_settable(L, -3);
-}
-
 HALMD_LUA_API int luaopen_libhalmd_any_converter(lua_State* L)
 {
-    // create table of any converter functions in Lua registry,
-    // using address of default_converter<any>::to as unique key
-    lua_newtable(L);
-    lua_pushlightuserdata(L, (void*)&luabind::default_converter<any>::to);
-    lua_pushvalue(L, -2);
-    lua_settable(L, LUA_REGISTRYINDEX);
+    using namespace luabind;
 
-    register_any_converter<void>(L); //< empty any
+    module(L, "libhalmd")
+    [
+        class_<any_converter>("any_converter")
+    ];
 
-    register_any_converter<bool>(L);
-    register_any_converter<char>(L);
-    register_any_converter<signed char>(L);
-    register_any_converter<unsigned char>(L);
-    register_any_converter<signed short>(L);
-    register_any_converter<unsigned short>(L);
-    register_any_converter<signed int>(L);
-    register_any_converter<unsigned int>(L);
-    register_any_converter<signed long>(L);
-    register_any_converter<unsigned long>(L);
-    register_any_converter<signed long long>(L);
-    register_any_converter<unsigned long long>(L);
-    register_any_converter<float>(L);
-    register_any_converter<double>(L);
-    register_any_converter<long double>(L);
-    register_any_converter<string>(L);
-    register_any_converter<char const*>(L);
+    registry(L)["libhalmd_any_converter"] = any_converter();
 
-    register_any_converter<vector<bool> >(L);
-    register_any_converter<vector<char> >(L);
-    register_any_converter<vector<signed char> >(L);
-    register_any_converter<vector<unsigned char> >(L);
-    register_any_converter<vector<signed short> >(L);
-    register_any_converter<vector<unsigned short> >(L);
-    register_any_converter<vector<signed int> >(L);
-    register_any_converter<vector<unsigned int> >(L);
-    register_any_converter<vector<signed long> >(L);
-    register_any_converter<vector<unsigned long> >(L);
-    register_any_converter<vector<signed long long> >(L);
-    register_any_converter<vector<unsigned long long> >(L);
-    register_any_converter<vector<float> >(L);
-    register_any_converter<vector<double> >(L);
-    register_any_converter<vector<long double> >(L);
-    register_any_converter<vector<string> >(L);
-    register_any_converter<vector<char const*> >(L);
+    any_converter* conv = object_cast<any_converter*>(registry(L)["libhalmd_any_converter"]);
 
-    register_any_converter<multi_array<bool, 1> >(L);
-    register_any_converter<multi_array<char, 1> >(L);
-    register_any_converter<multi_array<signed char, 1> >(L);
-    register_any_converter<multi_array<unsigned char, 1> >(L);
-    register_any_converter<multi_array<signed short, 1> >(L);
-    register_any_converter<multi_array<unsigned short, 1> >(L);
-    register_any_converter<multi_array<signed int, 1> >(L);
-    register_any_converter<multi_array<unsigned int, 1> >(L);
-    register_any_converter<multi_array<signed long, 1> >(L);
-    register_any_converter<multi_array<unsigned long, 1> >(L);
-    register_any_converter<multi_array<signed long long, 1> >(L);
-    register_any_converter<multi_array<unsigned long long, 1> >(L);
-    register_any_converter<multi_array<float, 1> >(L);
-    register_any_converter<multi_array<double, 1> >(L);
-    register_any_converter<multi_array<long double, 1> >(L);
-    register_any_converter<multi_array<string, 1> >(L);
-    register_any_converter<multi_array<char const*, 1> >(L);
+    conv->register_type<void>(); //< empty any
 
-    register_any_converter<program_options::variables_map>(L);
+    conv->register_type<bool>();
+    conv->register_type<char>();
+    conv->register_type<signed char>();
+    conv->register_type<unsigned char>();
+    conv->register_type<signed short>();
+    conv->register_type<unsigned short>();
+    conv->register_type<signed int>();
+    conv->register_type<unsigned int>();
+    conv->register_type<signed long>();
+    conv->register_type<unsigned long>();
+    conv->register_type<signed long long>();
+    conv->register_type<unsigned long long>();
+    conv->register_type<float>();
+    conv->register_type<double>();
+    conv->register_type<long double>();
+    conv->register_type<string>();
+    conv->register_type<char const*>();
 
-    lua_pop(L, 1);
+    conv->register_type<vector<bool> >();
+    conv->register_type<vector<char> >();
+    conv->register_type<vector<signed char> >();
+    conv->register_type<vector<unsigned char> >();
+    conv->register_type<vector<signed short> >();
+    conv->register_type<vector<unsigned short> >();
+    conv->register_type<vector<signed int> >();
+    conv->register_type<vector<unsigned int> >();
+    conv->register_type<vector<signed long> >();
+    conv->register_type<vector<unsigned long> >();
+    conv->register_type<vector<signed long long> >();
+    conv->register_type<vector<unsigned long long> >();
+    conv->register_type<vector<float> >();
+    conv->register_type<vector<double> >();
+    conv->register_type<vector<long double> >();
+    conv->register_type<vector<string> >();
+    conv->register_type<vector<char const*> >();
+
+    conv->register_type<multi_array<bool, 1> >();
+    conv->register_type<multi_array<char, 1> >();
+    conv->register_type<multi_array<signed char, 1> >();
+    conv->register_type<multi_array<unsigned char, 1> >();
+    conv->register_type<multi_array<signed short, 1> >();
+    conv->register_type<multi_array<unsigned short, 1> >();
+    conv->register_type<multi_array<signed int, 1> >();
+    conv->register_type<multi_array<unsigned int, 1> >();
+    conv->register_type<multi_array<signed long, 1> >();
+    conv->register_type<multi_array<unsigned long, 1> >();
+    conv->register_type<multi_array<signed long long, 1> >();
+    conv->register_type<multi_array<unsigned long long, 1> >();
+    conv->register_type<multi_array<float, 1> >();
+    conv->register_type<multi_array<double, 1> >();
+    conv->register_type<multi_array<long double, 1> >();
+    conv->register_type<multi_array<string, 1> >();
+    conv->register_type<multi_array<char const*, 1> >();
+
+    conv->register_type<program_options::variables_map>();
+
     return 0;
 }
 
 } // namespace halmd
+
+namespace luabind
+{
+
+//! convert from C++ to Lua
+void default_converter<any>::to(lua_State* L, any const& value)
+{
+    using namespace halmd;
+    any_converter const* conv = object_cast<any_converter const*>(registry(L)["libhalmd_any_converter"]);
+    if (!conv) {
+        throw runtime_error("no registered any converters");
+    }
+    any_converter::const_iterator it = conv->find(value.type());
+    if (it == conv->end()) {
+        throw runtime_error("unregistered any converter: " + demangled_name(value.type()));
+    }
+    it->second(L, value);
+}
+
+} // namespace luabind
