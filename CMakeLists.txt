@@ -58,10 +58,9 @@ if(NOT DEFINED Boost_USE_MULTITHREADED)
   set(Boost_USE_MULTITHREADED FALSE)
 endif(NOT DEFINED Boost_USE_MULTITHREADED)
 
-find_package(Boost 1.39.0 QUIET REQUIRED COMPONENTS
+find_package(Boost 1.39.0 QUIET REQUIRED
   date_time
   filesystem
-  log
   program_options
   system
   thread
@@ -71,6 +70,13 @@ find_package(CUDA QUIET)
 find_package(HDF5 QUIET REQUIRED)
 find_package(Lua51 QUIET REQUIRED)
 find_package(Luabind QUIET REQUIRED)
+
+# Boost.Log fails to compile with XL C++ compiler on AIX.
+if(NOT CMAKE_CXX_PLATFORM_ID STREQUAL "AIX")
+  find_package(Boost QUIET REQUIRED log)
+else()
+  message(WARNING "Boost.Log is not available on this platform.")
+endif()
 
 if(NOT CMAKE_BUILD_TYPE)
   set(CMAKE_BUILD_TYPE "Release" CACHE STRING

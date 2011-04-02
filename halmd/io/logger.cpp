@@ -17,22 +17,23 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#ifndef _AIX
 // increase compiler compatibility, e.g. with Clang 2.8
-#define BOOST_LOG_NO_UNSPECIFIED_BOOL
-#include <boost/log/attributes/clock.hpp>
-#include <boost/log/filters/attr.hpp>
-#include <boost/log/formatters/attr.hpp>
-#include <boost/log/formatters/date_time.hpp>
-#include <boost/log/formatters/format.hpp>
-#include <boost/log/formatters/message.hpp>
-#include <boost/log/utility/empty_deleter.hpp>
-#include <boost/version.hpp>
+# define BOOST_LOG_NO_UNSPECIFIED_BOOL
+# include <boost/log/attributes/clock.hpp>
+# include <boost/log/filters/attr.hpp>
+# include <boost/log/formatters/attr.hpp>
+# include <boost/log/formatters/date_time.hpp>
+# include <boost/log/formatters/format.hpp>
+# include <boost/log/formatters/message.hpp>
+# include <boost/log/utility/empty_deleter.hpp>
+# include <boost/version.hpp>
+#endif /* ! _AIX */
 
 #include <halmd/io/logger.hpp>
 #include <halmd/utility/lua/lua.hpp>
 
 using namespace boost;
-using namespace boost::log;
 using namespace std;
 
 #define TIMESTAMP_FORMAT "%d-%m-%Y %H:%M:%S.%f"
@@ -40,25 +41,9 @@ using namespace std;
 namespace halmd
 {
 
-static inline ostream& operator<<(ostream& os, logger::severity_level level)
-{
-    switch (level)
-    {
-      case logger::trace:
-        os << "[TRACE] "; break;
-      case logger::debug:
-        os << "[DEBUG] "; break;
-      case logger::warning:
-        os << "[WARNING] "; break;
-      case logger::error:
-        os << "[ERROR] "; break;
-      case logger::fatal:
-        os << "[FATAL] "; break;
-      default:
-        break;
-    }
-    return os;
-}
+#ifndef _AIX
+
+using namespace boost::log;
 
 logger::logger()
 {
@@ -142,10 +127,16 @@ logger::~logger()
 
 sources::severity_logger<logger::severity_level> logger::logger_;
 
+#endif /* ! _AIX */
+
 template <enum logger::severity_level level>
 static void log_wrapper(char const* message)
 {
+#ifndef _AIX
     BOOST_LOG_SEV(logger::get(), level) << message;
+#else
+    cout << level << message << endl;
+#endif
 }
 
 void logger::luaopen(lua_State* L)

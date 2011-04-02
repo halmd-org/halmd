@@ -20,14 +20,19 @@
 #ifndef HALMD_IO_LOGGER_HPP
 #define HALMD_IO_LOGGER_HPP
 
+#ifndef _AIX
 // increase compiler compatibility, e.g. with Clang 2.8
-#define BOOST_LOG_NO_UNSPECIFIED_BOOL
-#include <boost/log/sinks/sync_frontend.hpp>
-#include <boost/log/sinks/text_file_backend.hpp>
-#include <boost/log/sinks/text_ostream_backend.hpp>
-#include <boost/log/sources/record_ostream.hpp>
-#include <boost/log/sources/severity_logger.hpp>
+# define BOOST_LOG_NO_UNSPECIFIED_BOOL
+# include <boost/log/sinks/sync_frontend.hpp>
+# include <boost/log/sinks/text_file_backend.hpp>
+# include <boost/log/sinks/text_ostream_backend.hpp>
+# include <boost/log/sources/record_ostream.hpp>
+# include <boost/log/sources/severity_logger.hpp>
+#else /* ! _AIX */
+# include <iostream>
+#endif /* ! _AIX */
 #include <lua.hpp>
+#include <string>
 
 namespace halmd
 {
@@ -45,13 +50,16 @@ public:
         trace,
     };
 
+#ifndef _AIX
     typedef boost::log::sinks::text_ostream_backend console_backend;
     typedef boost::log::sinks::synchronous_sink<console_backend> console_sink;
     typedef boost::log::sinks::text_file_backend file_backend;
     typedef boost::log::sinks::synchronous_sink<file_backend> file_sink;
+#endif /* ! _AIX */
 
     static void luaopen(lua_State* L);
 
+#ifndef _AIX
     logger();
     ~logger();
     void log_to_console(severity_level level);
@@ -61,15 +69,44 @@ public:
     {
        return logger_;
     }
+#else
+    logger() {}
+    void log_to_console(severity_level level) {}
+    void log_to_file(severity_level level, std::string file_name) {}
+#endif /* ! _AIX */
 
 private:
+#ifndef _AIX
     static boost::log::sources::severity_logger<severity_level> logger_;
 
     boost::shared_ptr<console_sink> console_;
     boost::shared_ptr<file_sink> file_;
+#endif /* ! _AIX */
 };
 
-#define __HALMD_LOG__(__level__, __format__)            \
+static inline std::ostream& operator<<(std::ostream& os, logger::severity_level level)
+{
+    switch (level)
+    {
+      case logger::trace:
+        os << "[TRACE] "; break;
+      case logger::debug:
+        os << "[DEBUG] "; break;
+      case logger::warning:
+        os << "[WARNING] "; break;
+      case logger::error:
+        os << "[ERROR] "; break;
+      case logger::fatal:
+        os << "[FATAL] "; break;
+      default:
+        break;
+    }
+    return os;
+}
+
+#ifndef _AIX
+
+# define __HALMD_LOG__(__level__, __format__)           \
     do {                                                \
         BOOST_LOG_SEV(                                  \
             ::halmd::logger::get()                      \
@@ -77,7 +114,7 @@ private:
           ) << __format__;                              \
     } while(0)
 
-#define __HALMD_LOG_ONCE__(__level__, __format__)       \
+# define __HALMD_LOG_ONCE__(__level__, __format__)      \
     do {                                                \
         static bool __logged__ = false;                 \
         if (!__logged__) {                              \
@@ -88,6 +125,26 @@ private:
             __logged__ = true;                          \
         }                                               \
     } while(0)
+
+#else /* ! _AIX */
+
+# define __HALMD_LOG__(__level__, __format__)           \
+    do {                                                \
+        std::cout << ::halmd::logger::__level__         \
+                  << __format__ << std::endl;           \
+    } while(0)
+
+# define __HALMD_LOG_ONCE__(__level__, __format__)      \
+    do {                                                \
+        static bool __logged__ = false;                 \
+        if (!__logged__) {                              \
+            std::cout << ::halmd::logger::__level__     \
+                      << __format__ << std::endl;       \
+            __logged__ = true;                          \
+        }                                               \
+    } while(0)
+
+#endif /* ! _AIX */
 
 #define LOG_FATAL(__format__)           __HALMD_LOG__(fatal, __format__)
 #define LOG_FATAL_ONCE(__format__)      __HALMD_LOG_ONCE__(fatal, __format__)
