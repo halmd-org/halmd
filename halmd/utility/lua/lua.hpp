@@ -28,14 +28,12 @@
 #include <luabind/shared_ptr_converter.hpp> //< boost::shared_ptr up- and down-casts
 
 #include <halmd/config.hpp> // HALMD_LUA_API
-#include <halmd/utility/lua/any_converter.hpp>
 #include <halmd/utility/lua/array_converter.hpp>
 #include <halmd/utility/lua/error.hpp>
 #include <halmd/utility/lua/fixed_vector_converter.hpp>
 #include <halmd/utility/lua/long_long_converter.hpp>
 #include <halmd/utility/lua/map_converter.hpp>
 #include <halmd/utility/lua/optional_converter.hpp>
-#include <halmd/utility/lua/program_options.hpp>
 #include <halmd/utility/lua/ublas.hpp>
 #include <halmd/utility/lua/vector_converter.hpp>
 

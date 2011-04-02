@@ -19,9 +19,12 @@
 
 #define BOOST_TEST_MODULE map_converter
 #include <boost/test/unit_test.hpp>
+#include <luabind/luabind.hpp>
 
-#include <halmd/utility/lua/lua.hpp>
-#include "test/tools/lua.hpp"
+#include <halmd/config.hpp>
+#include <halmd/utility/lua/any_converter.hpp>
+#include <halmd/utility/lua/map_converter.hpp>
+#include <test/tools/lua.hpp>
 
 using namespace boost;
 using namespace std;
