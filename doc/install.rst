@@ -14,18 +14,18 @@ HALMD is known to compile with these C++ compilers.
 
 * GCC 4.4
 
-  - GCC 4.4.5 (packaged) on Debian GNU/Linux squeeze (x86 and x86_64)
-  - GCC 4.4.4 (packaged) on RHEL 6.0 (x86_64)
-  - GCC 4.4.3 (packaged) on Ubuntu 10.04 LTS (x86_64)
+  - GCC 4.4.5 on Debian GNU/Linux squeeze (x86 and x86_64)
+  - GCC 4.4.4 on RHEL 6.0 (x86_64)
+  - GCC 4.4.3 on Ubuntu 10.04 LTS (x86_64)
 
 * GCC 4.3
 
-  - GCC 4.3.3 (packaged) on Ubuntu 9.04 (x86_64)
-  - GCC 4.3.2 (packaged) on Debian GNU/Linux 5.0 (x86_64)
+  - GCC 4.3.3 on Ubuntu 9.04 (x86_64)
+  - GCC 4.3.2 on Debian GNU/Linux 5.0 (x86_64)
 
 * GCC 4.1
 
-  - GCC 4.1.2 (packaged) on CentOS 5.3 (x86_64)
+  - GCC 4.1.2 on CentOS 5.3 (x86_64)
 
 * Clang 2.8 (requires latest `Luabind source`_)
 
@@ -33,12 +33,12 @@ HALMD is known to compile with these C++ compilers.
 
 * Intel C++ compiler (requires latest `Luabind source`_)
 
-  - Intel C++ compiler 11.1 (upstream) on CentOS 5.3 (x86_64)
-  - Intel C++ compiler 12.0 (upstream) on CentOS 5.3 (x86_64)
+  - Intel C++ compiler 11.1 on CentOS 5.3 (x86_64)
+  - Intel C++ compiler 12.0 on CentOS 5.3 (x86_64)
 
 * XL C++
 
-  - XL C++ 11.1 (upstream) on AIX 5.3 (POWER6)
+  - XL C++ 11.1 on AIX 5.3 (POWER6)
 
 .. _Luabind source: https://github.com/luabind/luabind
 
@@ -46,11 +46,11 @@ The following C++ compilers **fail** to compile HALMD.
 
 * Clang ≤ 2.7
 
-  - Clang 2.7 (packaged) on Debian GNU/Linux squeeze (x86_64)
+  - Clang 2.7 on Debian GNU/Linux squeeze (x86_64)
 
 * XL C++
 
-  - XL C++ 10.1 (packaged) on AIX 5.3 (POWER6)
+  - XL C++ 10.1 on AIX 5.3 (POWER6)
 
 
 Software prerequisites
