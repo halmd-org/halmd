@@ -90,15 +90,19 @@ if(CMAKE_CXX_COMPILER_ID MATCHES "^(GNU|Clang|Intel)$")
   endif()
 elseif(CMAKE_CXX_COMPILER_ID STREQUAL "XL")
   if(CMAKE_CXX_FLAGS STREQUAL "${CMAKE_CXX_FLAGS_INIT}")
-    set(CMAKE_CXX_FLAGS "-qrtti=all -qmaxmem=32676" CACHE STRING
+    set(CMAKE_CXX_FLAGS "-qrtti=all" CACHE STRING
       "Flags used by the compiler during all build types." FORCE)
   endif()
   if(CMAKE_CXX_FLAGS_RELEASE STREQUAL "${CMAKE_CXX_FLAGS_RELEASE_INIT}")
-    set(CMAKE_CXX_FLAGS_RELEASE "-O4 -DNDEBUG -qhot -qstrict=all" CACHE STRING
+    set(CMAKE_CXX_FLAGS_RELEASE "-O4 -DNDEBUG -qstrict=all" CACHE STRING
       "Flags used by the compiler during Release builds" FORCE)
   endif()
+  if(CMAKE_CXX_FLAGS_MINSIZEREL STREQUAL "${CMAKE_CXX_FLAGS_MINSIZEREL_INIT}")
+    set(CMAKE_CXX_FLAGS_MINSIZEREL "${CMAKE_CXX_FLAGS_RELEASE}" CACHE STRING
+      "Flags used by the compiler during MinSizeRel builds" FORCE)
+  endif()
   if(CMAKE_CXX_FLAGS_RELWITHDEBINFO STREQUAL "${CMAKE_CXX_FLAGS_RELWITHDEBINFO_INIT}")
-    set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "-g -O2 -qstrict=all" CACHE STRING
+    set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "-g -O3 -qstrict=all" CACHE STRING
       "Flags used by the compiler during RelWithDebInfo builds" FORCE)
   endif()
 else()
@@ -111,7 +115,7 @@ if(CMAKE_CXX_PLATFORM_ID STREQUAL "Linux")
       "Flags used by the linker." FORCE)
   endif()
   if(CMAKE_SHARED_LINKER_FLAGS STREQUAL "${CMAKE_SHARED_LINKER_FLAGS_INIT}")
-    set(CMAKE_SHARED_LINKER_FLAGS "-Wl,--as-needed" CACHE STRING
+    set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS}" CACHE STRING
       "Flags used by the linker during the creation of shared libraries." FORCE)
   endif()
 elseif(CMAKE_CXX_PLATFORM_ID STREQUAL "AIX")
@@ -124,7 +128,7 @@ elseif(CMAKE_CXX_PLATFORM_ID STREQUAL "AIX")
       "Flags used by the linker." FORCE)
   endif()
   if(CMAKE_SHARED_LINKER_FLAGS STREQUAL "${CMAKE_SHARED_LINKER_FLAGS_INIT}")
-    set(CMAKE_SHARED_LINKER_FLAGS "-qtwolink -Wl,-bweaklocal -qnoipa" CACHE STRING
+    set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS}" CACHE STRING
       "Flags used by the linker during the creation of shared libraries." FORCE)
   endif()
 endif()
