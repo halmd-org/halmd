@@ -114,6 +114,19 @@ if(CMAKE_CXX_PLATFORM_ID STREQUAL "Linux")
     set(CMAKE_SHARED_LINKER_FLAGS "-Wl,--as-needed" CACHE STRING
       "Flags used by the linker during the creation of shared libraries." FORCE)
   endif()
+elseif(CMAKE_CXX_PLATFORM_ID STREQUAL "AIX")
+  # The combined flags -qtwolink -Wl,-bweaklocal instruct the AIX linker
+  # to discard unreferenced objects of an archive, which is needed to
+  # avoid undefined symbol errors when linking the unit tests.
+  # -qnoipa is needed to disable link-time IPA, which breaks -qtwolink.
+  if(CMAKE_EXE_LINKER_FLAGS STREQUAL "${CMAKE_EXE_LINKER_FLAGS_INIT}")
+    set(CMAKE_EXE_LINKER_FLAGS "-qtwolink -Wl,-bweaklocal -qnoipa" CACHE STRING
+      "Flags used by the linker." FORCE)
+  endif()
+  if(CMAKE_SHARED_LINKER_FLAGS STREQUAL "${CMAKE_SHARED_LINKER_FLAGS_INIT}")
+    set(CMAKE_SHARED_LINKER_FLAGS "-qtwolink -Wl,-bweaklocal -qnoipa" CACHE STRING
+      "Flags used by the linker during the creation of shared libraries." FORCE)
+  endif()
 endif()
 
 if(CUDA_FOUND AND NOT HALMD_USE_STATIC_LIBS)
