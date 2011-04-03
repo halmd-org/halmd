@@ -1,3 +1,3 @@
-add_library(halmd_mdsim_integrators_nvt
+add_library(halmd_mdsim_integrators
   nvt.cpp
 )
