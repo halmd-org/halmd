@@ -78,13 +78,13 @@ else()
   message(WARNING "Boost.Log is not available on this platform.")
 endif()
 
-if(NOT CMAKE_BUILD_TYPE)
+if(CMAKE_BUILD_TYPE STREQUAL "${CMAKE_BUILD_TYPE_INIT}")
   set(CMAKE_BUILD_TYPE "Release" CACHE STRING
     "Choose the type of build, options are: Debug Release RelWithDebInfo MinSizeRel." FORCE)
-endif(NOT CMAKE_BUILD_TYPE)
+endif()
 
 if(CMAKE_CXX_COMPILER_ID MATCHES "^(GNU|Clang|Intel)$")
-  if(NOT CMAKE_CXX_FLAGS)
+  if(CMAKE_CXX_FLAGS STREQUAL "${CMAKE_CXX_FLAGS_INIT}")
     set(CMAKE_CXX_FLAGS "-fPIC -Wall" CACHE STRING
       "Flags used by the compiler during all build types." FORCE)
   endif()
@@ -133,10 +133,10 @@ if(CUDA_FOUND AND NOT HALMD_USE_STATIC_LIBS)
   set(WITH_CUDA TRUE)
   enable_language(CUDA)
 
-  if(NOT CMAKE_CUDA_FLAGS)
+  if(CMAKE_CUDA_FLAGS STREQUAL "${CMAKE_CUDA_FLAGS_INIT}")
     set(CMAKE_CUDA_FLAGS "-Xcompiler -fPIC -Xptxas -v --host-compilation=c -arch sm_12" CACHE STRING
       "Flags used by the compiler during all build types." FORCE)
-  endif(NOT CMAKE_CUDA_FLAGS)
+  endif()
 
   add_definitions(-DWITH_CUDA)
 else(CUDA_FOUND AND NOT HALMD_USE_STATIC_LIBS)
