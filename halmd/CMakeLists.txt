@@ -59,13 +59,16 @@ set(HALMD_MODULES
   halmd_observables_host_velocity_autocorrelation
   halmd_random_random
   halmd_random_host_random
+  halmd_utility_hostname
   halmd_utility_lua_any_converter
   halmd_utility_lua_hdf5
   halmd_utility_lua_program_options
   halmd_utility_lua_signal
   halmd_utility_lua_ublas
   halmd_utility_options_parser
+  halmd_utility_posix_signal
   halmd_utility_profiler
+  halmd_utility_program_options
 )
 if(WITH_CUDA)
   set(HALMD_MODULES
@@ -73,6 +76,7 @@ if(WITH_CUDA)
     halmd_mdsim_gpu_force
     halmd_mdsim_gpu_forces_lennard_jones
     halmd_mdsim_gpu_forces_morse
+    halmd_mdsim_gpu_forces_pair_trunc_potentials
     halmd_mdsim_gpu_forces_zero
     halmd_mdsim_gpu_integrators_verlet
     halmd_mdsim_gpu_integrators_verlet_nvt_andersen
@@ -142,7 +146,6 @@ add_executable(halmd
 )
 target_link_libraries(halmd
   ${HALMD_MODULES}
-  halmd_utility_hostname
   ${HALMD_COMMON_LIBRARIES}
 )
 install(TARGETS halmd

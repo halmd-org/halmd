@@ -16,6 +16,7 @@ target_link_libraries(test_thermodynamics
 if(WITH_CUDA)
   target_link_libraries(test_thermodynamics
     halmd_mdsim_gpu_forces_lennard_jones
+    halmd_mdsim_gpu_forces_pair_trunc_potentials
     halmd_mdsim_gpu_integrators_verlet
     halmd_mdsim_gpu_integrators_verlet_nvt_andersen
     halmd_mdsim_gpu_neighbour
