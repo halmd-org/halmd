@@ -1,4 +1,4 @@
-add_library(halmd_mdsim
+halmd_add_library(halmd_mdsim
   box.cpp
   core.cpp
   force.cpp
@@ -8,10 +8,21 @@ add_library(halmd_mdsim
   position.cpp
   sort.cpp
   velocity.cpp
-  )
+)
+halmd_add_modules(
+  libhalmd_mdsim_box
+  libhalmd_mdsim_core
+  libhalmd_mdsim_force
+  libhalmd_mdsim_integrator
+  libhalmd_mdsim_neighbour
+  libhalmd_mdsim_particle
+  libhalmd_mdsim_position
+  libhalmd_mdsim_sort
+  libhalmd_mdsim_velocity
+)
 
+add_subdirectory(integrators)
 if(WITH_CUDA)
   add_subdirectory(gpu)
 endif(WITH_CUDA)
 add_subdirectory(host)
-add_subdirectory(integrators)

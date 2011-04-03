@@ -1,4 +1,4 @@
-add_library(halmd_mdsim_gpu
+halmd_add_library(halmd_mdsim_gpu
   force.cpp
   neighbour.cpp
   neighbour_kernel.cu
@@ -6,6 +6,12 @@ add_library(halmd_mdsim_gpu
   particle_kernel.cu
   velocity.cpp
   velocity_kernel.cu
+)
+halmd_add_modules(
+  libhalmd_mdsim_gpu_force
+  libhalmd_mdsim_gpu_neighbour
+  libhalmd_mdsim_gpu_particle
+  libhalmd_mdsim_gpu_velocity
 )
 
 add_subdirectory(forces)
