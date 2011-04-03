@@ -1,10 +1,10 @@
-add_library(halmd_mdsim_gpu_forces_lennard_jones
+halmd_add_module(halmd_mdsim_gpu_forces_lennard_jones
   lennard_jones.cpp
 )
 target_link_libraries(halmd_mdsim_gpu_forces_lennard_jones
   halmd_mdsim_gpu_forces_pair_trunc_potentials
 )
-add_library(halmd_mdsim_gpu_forces_morse
+halmd_add_module(halmd_mdsim_gpu_forces_morse
   morse.cpp
 )
 target_link_libraries(halmd_mdsim_gpu_forces_morse
@@ -13,6 +13,6 @@ target_link_libraries(halmd_mdsim_gpu_forces_morse
 add_library(halmd_mdsim_gpu_forces_pair_trunc_potentials
   pair_trunc_potentials.cu
 )
-add_library(halmd_mdsim_gpu_forces_zero
+halmd_add_module(halmd_mdsim_gpu_forces_zero
   zero.cpp
 )

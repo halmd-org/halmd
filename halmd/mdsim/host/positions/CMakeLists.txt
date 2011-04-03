@@ -1,6 +1,6 @@
-add_library(halmd_mdsim_host_positions_lattice
+halmd_add_module(halmd_mdsim_host_positions_lattice
   lattice.cpp
 )
-add_library(halmd_mdsim_host_positions_phase_space
+halmd_add_module(halmd_mdsim_host_positions_phase_space
   phase_space.cpp
 )

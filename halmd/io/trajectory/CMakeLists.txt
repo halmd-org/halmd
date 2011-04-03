@@ -1,7 +1,7 @@
-add_library(halmd_io_trajectory_reader
+halmd_add_module(halmd_io_trajectory_reader
   reader.cpp
 )
-add_library(halmd_io_trajectory_writer
+halmd_add_module(halmd_io_trajectory_writer
   writer.cpp
 )
 

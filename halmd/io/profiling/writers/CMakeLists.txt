@@ -1,6 +1,6 @@
-add_library(halmd_io_profiling_writers_h5md
+halmd_add_module(halmd_io_profiling_writers_h5md
   h5md.cpp
 )
-add_library(halmd_io_profiling_writers_log
+halmd_add_module(halmd_io_profiling_writers_log
   log.cpp
 )

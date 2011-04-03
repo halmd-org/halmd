@@ -1,4 +1,4 @@
-add_library(halmd_io_statevars_writer
+halmd_add_module(halmd_io_statevars_writer
   writer.cpp
 )
 
