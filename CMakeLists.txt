@@ -106,7 +106,7 @@ elseif(CMAKE_CXX_COMPILER_ID STREQUAL "XL")
       "Flags used by the compiler during MinSizeRel builds" FORCE)
   endif()
   if(CMAKE_CXX_FLAGS_RELWITHDEBINFO STREQUAL "${CMAKE_CXX_FLAGS_RELWITHDEBINFO_INIT}")
-    set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "-g -O3 -qstrict=all" CACHE STRING
+    set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "-g -O2 -qstrict=all" CACHE STRING
       "Flags used by the compiler during RelWithDebInfo builds" FORCE)
   endif()
 else()
