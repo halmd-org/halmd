@@ -24,6 +24,6 @@
 
 #include <halmd/config.hpp>
 
-HALMD_LUA_API int luaopen_lib@MODULE_NAME@(lua_State* L);
+@HALMD_MODULES_LUAOPEN_DECLARE@
 
 #endif /* ! HALMD_MODULES_HPP */

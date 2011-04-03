@@ -21,6 +21,6 @@
 
 HALMD_LUA_API int luaopen_libhalmd(lua_State* L)
 {
-    luaopen_lib@MODULE_NAME@(L);
+    @HALMD_MODULES_LUAOPEN_CALL@
     return 0;
 }

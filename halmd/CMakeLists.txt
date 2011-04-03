@@ -93,20 +93,46 @@ if(WITH_CUDA)
   )
 endif(WITH_CUDA)
 
+add_library(halmd_runner
+  runner.cpp
+)
+
+add_subdirectory(algorithm)
+add_subdirectory(io)
+add_subdirectory(mdsim)
+add_subdirectory(observables)
+add_subdirectory(random)
+add_subdirectory(utility)
+
 ##
-# Generate Lua binding function calls from list of modules
+# Generate Lua binding function calls from module target sources
 #
-foreach(source modules.hpp modules.cpp)
-  file(STRINGS "${source}.in" lines REGEX "@MODULE_NAME@" LIMIT_COUNT 1)
-  foreach(line ${lines})
-    if(line MATCHES "^(.*)@MODULE_NAME@(.*)$")
-      string(REPLACE ";" "${CMAKE_MATCH_2}\n${CMAKE_MATCH_1}" MODULE_NAME "${HALMD_MODULES}")
+set(modules_hpp)
+set(modules_cpp)
+foreach(target ${HALMD_MODULES})
+  get_target_property(sources ${target} SOURCES)
+  get_target_property(location ${target} LOCATION)
+  get_filename_component(binary_dir "${location}" PATH)
+  file(RELATIVE_PATH subdir "${CMAKE_CURRENT_BINARY_DIR}" "${binary_dir}")
+  set(source_dir "${CMAKE_CURRENT_SOURCE_DIR}/${subdir}")
+  foreach(source ${sources})
+    if(NOT IS_ABSOLUTE "${source}")
+      set(source "${source_dir}/${source}")
+    endif()
+    file(STRINGS "${source}" line REGEX "HALMD_LUA_API")
+    if(line MATCHES "^HALMD_LUA_API int ([a-z0-9_]+)\\(lua_State\\* L\\)$")
+      set(modules_hpp "${modules_hpp}\n${line};")
+      set(modules_cpp "${modules_cpp}\n    ${CMAKE_MATCH_1}(L);")
+    elseif(line)
+      message(SEND_ERROR "malformed HALMD_LUA_API function definition in ${source}")
     endif()
   endforeach()
-  configure_file("${source}.in" "${source}" @ONLY)
-  set(MODULE_NAME)
 endforeach()
+string(STRIP "${modules_hpp}" HALMD_MODULES_LUAOPEN_DECLARE)
+string(STRIP "${modules_cpp}" HALMD_MODULES_LUAOPEN_CALL)
 
+configure_file(modules.hpp.in modules.hpp @ONLY)
+configure_file(modules.cpp.in modules.cpp @ONLY)
 configure_file(version.h.in version.h ESCAPE_QUOTES @ONLY)
 
 add_executable(halmd
@@ -122,14 +148,3 @@ target_link_libraries(halmd
 install(TARGETS halmd
   RUNTIME DESTINATION bin
 )
-
-add_library(halmd_runner
-  runner.cpp
-)
-
-add_subdirectory(algorithm)
-add_subdirectory(io)
-add_subdirectory(mdsim)
-add_subdirectory(observables)
-add_subdirectory(random)
-add_subdirectory(utility)
