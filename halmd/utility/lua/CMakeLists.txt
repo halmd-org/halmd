@@ -7,6 +7,9 @@ add_library(halmd_utility_lua_hdf5
 add_library(halmd_utility_lua_program_options
   program_options.cpp
 )
+target_link_libraries(halmd_utility_lua_program_options
+  halmd_utility_program_options
+)
 add_library(halmd_utility_lua_signal
   signal.cpp
 )
