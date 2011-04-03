@@ -93,8 +93,12 @@ elseif(CMAKE_CXX_COMPILER_ID STREQUAL "XL")
     set(CMAKE_CXX_FLAGS "-qrtti=all" CACHE STRING
       "Flags used by the compiler during all build types." FORCE)
   endif()
+  # We only need object-level inlining (opposed to link-time optimization),
+  # therefore we follow the recommendation for XL 11 that -qipa=inline is
+  # deprecated, and use -qinline instead.
+  # http://publib.boulder.ibm.com/infocenter/iadthelp/v8r0/index.jsp?topic=/com.ibm.xlcpp111.linux.doc/compiler_ref/opt_ipa.html
   if(CMAKE_CXX_FLAGS_RELEASE STREQUAL "${CMAKE_CXX_FLAGS_RELEASE_INIT}")
-    set(CMAKE_CXX_FLAGS_RELEASE "-O4 -DNDEBUG -qstrict=all" CACHE STRING
+    set(CMAKE_CXX_FLAGS_RELEASE "-O4 -DNDEBUG -qstrict=all -qnoipa -qinline" CACHE STRING
       "Flags used by the compiler during Release builds" FORCE)
   endif()
   if(CMAKE_CXX_FLAGS_MINSIZEREL STREQUAL "${CMAKE_CXX_FLAGS_MINSIZEREL_INIT}")
