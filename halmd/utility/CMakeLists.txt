@@ -1,13 +1,13 @@
 add_library(halmd_utility_hostname
   hostname.cpp
 )
-halmd_add_module(halmd_utility_options_parser
+add_library(halmd_utility_options_parser
   options_parser.cpp
 )
 add_library(halmd_utility_posix_signal
   posix_signal.cpp
 )
-halmd_add_module(halmd_utility_profiler
+add_library(halmd_utility_profiler
   profiler.cpp
 )
 

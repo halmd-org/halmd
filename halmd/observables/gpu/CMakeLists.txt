@@ -1,12 +1,12 @@
-halmd_add_module(halmd_observables_gpu_density_mode
+add_library(halmd_observables_gpu_density_mode
   density_mode.cpp
   density_mode_kernel.cu
 )
-halmd_add_module(halmd_observables_gpu_phase_space
+add_library(halmd_observables_gpu_phase_space
   phase_space.cpp
   phase_space_kernel.cu
 )
-halmd_add_module(halmd_observables_gpu_thermodynamics
+add_library(halmd_observables_gpu_thermodynamics
   thermodynamics.cpp
   thermodynamics_kernel.cu
 )

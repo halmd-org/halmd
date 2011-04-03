@@ -1,3 +1,3 @@
-halmd_add_module(halmd_observables_host_samples_phase_space
+add_library(halmd_observables_host_samples_phase_space
   phase_space.cpp
 )

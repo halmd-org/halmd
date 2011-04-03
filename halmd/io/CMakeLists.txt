@@ -1,4 +1,4 @@
-halmd_add_module(halmd_io_logger
+add_library(halmd_io_logger
   logger.cpp
 )
 

@@ -1,4 +1,4 @@
-halmd_add_module(halmd_io_profiling_writer
+add_library(halmd_io_profiling_writer
   writer.cpp
 )
 

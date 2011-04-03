@@ -1,4 +1,4 @@
-halmd_add_module(halmd_random_gpu_random
+add_library(halmd_random_gpu_random
   rand48_kernel.cu
   random_kernel.cu
   random.cpp

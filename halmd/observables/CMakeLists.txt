@@ -1,16 +1,16 @@
-halmd_add_module(halmd_observables_density_mode
+add_library(halmd_observables_density_mode
   density_mode.cpp
 )
-halmd_add_module(halmd_observables_phase_space
+add_library(halmd_observables_phase_space
   phase_space.cpp
 )
-halmd_add_module(halmd_observables_sampler
+add_library(halmd_observables_sampler
   sampler.cpp
 )
-halmd_add_module(halmd_observables_ssf
+add_library(halmd_observables_ssf
   ssf.cpp
 )
-halmd_add_module(halmd_observables_thermodynamics
+add_library(halmd_observables_thermodynamics
   thermodynamics.cpp
 )
 

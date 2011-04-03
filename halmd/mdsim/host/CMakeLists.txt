@@ -1,13 +1,13 @@
-halmd_add_module(halmd_mdsim_host_force
+add_library(halmd_mdsim_host_force
   force.cpp
 )
-halmd_add_module(halmd_mdsim_host_neighbour
+add_library(halmd_mdsim_host_neighbour
   neighbour.cpp
 )
-halmd_add_module(halmd_mdsim_host_particle
+add_library(halmd_mdsim_host_particle
   particle.cpp
 )
-halmd_add_module(halmd_mdsim_host_velocity
+add_library(halmd_mdsim_host_velocity
   velocity.cpp
 )
 
