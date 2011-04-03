@@ -161,7 +161,7 @@ void logger::luaopen(lua_State* L)
     ];
 }
 
-HALMD_LUA_API int luaopen_libhalmd_logger(lua_State* L)
+HALMD_LUA_API int luaopen_libhalmd_io_logger(lua_State* L)
 {
     logger::luaopen(L);
     return 0;

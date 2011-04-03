@@ -29,7 +29,7 @@
 
 using namespace boost::numeric::ublas;
 
-HALMD_LUA_API int luaopen_libhalmd_ublas(lua_State* L)
+HALMD_LUA_API int luaopen_libhalmd_utility_lua_ublas(lua_State* L)
 {
     using namespace luabind;
     module(L, "libhalmd")

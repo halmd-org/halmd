@@ -25,7 +25,7 @@
 namespace halmd
 {
 
-HALMD_LUA_API int luaopen_libhalmd_signal(lua_State* L)
+HALMD_LUA_API int luaopen_libhalmd_utility_lua_signal(lua_State* L)
 {
     using namespace luabind;
     module(L, "libhalmd")

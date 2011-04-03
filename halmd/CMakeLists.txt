@@ -20,7 +20,7 @@ set(HALMD_MODULES
   halmd_mdsim_core
   halmd_mdsim_force
   halmd_mdsim_integrator
-  halmd_mdsim_integrators
+  halmd_mdsim_integrators_nvt
   halmd_mdsim_neighbour
   halmd_mdsim_particle
   halmd_mdsim_position

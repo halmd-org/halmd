@@ -295,7 +295,7 @@ void options_parser::luaopen(lua_State* L)
     ];
 }
 
-HALMD_LUA_API int luaopen_libhalmd_options_parser(lua_State* L)
+HALMD_LUA_API int luaopen_libhalmd_utility_options_parser(lua_State* L)
 {
     options_parser::luaopen(L);
     return 0;

@@ -81,7 +81,7 @@ struct any_converter::convert<void>
     }
 };
 
-HALMD_LUA_API int luaopen_libhalmd_any_converter(lua_State* L)
+HALMD_LUA_API int luaopen_libhalmd_utility_lua_any_converter(lua_State* L)
 {
     using namespace luabind;
 

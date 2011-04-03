@@ -119,7 +119,7 @@ static void po_add_options_description(
 /**
  * register Boost Program_otions with Lua
  */
-HALMD_LUA_API int luaopen_libhalmd_po(lua_State* L)
+HALMD_LUA_API int luaopen_libhalmd_utility_lua_program_options(lua_State* L)
 {
     using namespace luabind;
     module(L, "libhalmd")

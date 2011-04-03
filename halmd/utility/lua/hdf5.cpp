@@ -79,7 +79,7 @@ static int translate_h5_exception(lua_State* L, H5::Exception const& e)
 /**
  * Register HDF5 classes and functions with Lua
  */
-HALMD_LUA_API int luaopen_libhalmd_h5(lua_State* L)
+HALMD_LUA_API int luaopen_libhalmd_utility_lua_hdf5(lua_State* L)
 {
     using namespace luabind;
     register_exception_handler<H5::Exception>(&translate_h5_exception);
