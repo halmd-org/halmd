@@ -103,7 +103,11 @@ elseif(CMAKE_CXX_COMPILER_ID STREQUAL "XL")
   endif()
   if(CMAKE_CXX_FLAGS_RELEASE STREQUAL "${CMAKE_CXX_FLAGS_RELEASE_INIT}")
     set(CMAKE_CXX_FLAGS_RELEASE "-O4 -DNDEBUG -qhot -qstrict=all" CACHE STRING
-      "Flags used by the compiler during release builds" FORCE)
+      "Flags used by the compiler during Release builds" FORCE)
+  endif()
+  if(CMAKE_CXX_FLAGS_RELWITHDEBINFO STREQUAL "${CMAKE_CXX_FLAGS_RELWITHDEBINFO_INIT}")
+    set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "-g -O2 -qstrict=all" CACHE STRING
+      "Flags used by the compiler during RelWithDebInfo builds" FORCE)
   endif()
 else()
   message(WARNING "Unsupported CXX compiler: ${CMAKE_CXX_COMPILER_ID}")
