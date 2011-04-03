@@ -1,3 +1,3 @@
-add_library(halmd_observables_gpu_samples_phase_space
+add_library(halmd_observables_gpu_samples
   phase_space.cpp
 )

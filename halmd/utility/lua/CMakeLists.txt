@@ -1,15 +1,7 @@
-add_library(halmd_utility_lua_any_converter
+add_library(halmd_utility_lua
   any_converter.cpp
-)
-add_library(halmd_utility_lua_hdf5
   hdf5.cpp
-)
-add_library(halmd_utility_lua_program_options
   program_options.cpp
-)
-add_library(halmd_utility_lua_signal
   signal.cpp
-)
-add_library(halmd_utility_lua_ublas
   ublas.cpp
 )

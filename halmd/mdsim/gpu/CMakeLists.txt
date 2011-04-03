@@ -1,15 +1,9 @@
-add_library(halmd_mdsim_gpu_force
+add_library(halmd_mdsim_gpu
   force.cpp
-)
-add_library(halmd_mdsim_gpu_neighbour
   neighbour.cpp
   neighbour_kernel.cu
-)
-add_library(halmd_mdsim_gpu_particle
   particle.cpp
   particle_kernel.cu
-)
-add_library(halmd_mdsim_gpu_velocity
   velocity.cpp
   velocity_kernel.cu
 )

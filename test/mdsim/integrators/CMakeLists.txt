@@ -2,35 +2,32 @@ add_executable(test_integrator_verlet_nvt_andersen
   verlet_nvt_andersen.cpp
 )
 target_link_libraries(test_integrator_verlet_nvt_andersen
-  halmd_mdsim_host_forces_zero
-  halmd_mdsim_host_integrators_verlet_nvt_andersen
-  halmd_mdsim_host_particle
-  halmd_mdsim_host_positions_lattice
-  halmd_mdsim_host_velocities_boltzmann
-  halmd_mdsim_host_velocity
-  halmd_observables_host_thermodynamics
-  halmd_random_host_random
+  halmd_mdsim_host_forces
+  halmd_mdsim_host_integrators
+  halmd_mdsim_host_positions
+  halmd_mdsim_host_velocities
+  halmd_mdsim_host
+  halmd_observables_host
+  halmd_random_host
 )
 if(WITH_CUDA)
   target_link_libraries(test_integrator_verlet_nvt_andersen
-    halmd_mdsim_gpu_forces_zero
-    halmd_mdsim_gpu_integrators_verlet_nvt_andersen
-    halmd_mdsim_gpu_particle
-    halmd_mdsim_gpu_positions_lattice
-    halmd_mdsim_gpu_velocities_boltzmann
-    halmd_mdsim_gpu_velocity
-    halmd_observables_gpu_thermodynamics
-    halmd_random_gpu_random
-    halmd_utility_gpu_device
+    halmd_mdsim_gpu_forces
+    halmd_mdsim_gpu_integrators
+    halmd_mdsim_gpu_positions
+    halmd_mdsim_gpu_velocities
+    halmd_mdsim_gpu
+    halmd_observables_gpu
+    halmd_random_gpu
+    halmd_utility_gpu
   )
 endif(WITH_CUDA)
 target_link_libraries(test_integrator_verlet_nvt_andersen
-  halmd_io_logger
-  halmd_mdsim_box
-  halmd_mdsim_core
-  halmd_mdsim_particle
-  halmd_observables_thermodynamics
-  halmd_utility_profiler
+  halmd_io
+  halmd_mdsim
+  halmd_random
+  halmd_observables
+  halmd_utility
   ${HALMD_COMMON_LIBRARIES}
   ${HALMD_TEST_LIBRARIES}
 )

@@ -2,7 +2,7 @@ add_executable(test_pick_lattice_points
   pick_lattice_points.cpp
 )
 target_link_libraries(test_pick_lattice_points
-  halmd_io_logger
+  halmd_io
   ${HALMD_COMMON_LIBRARIES}
   ${HALMD_TEST_LIBRARIES}
 )

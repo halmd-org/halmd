@@ -2,22 +2,20 @@ add_executable(test_dependency_injection
   dependency_injection.cpp
 )
 target_link_libraries(test_dependency_injection
-  halmd_mdsim_host_integrators_verlet
-  halmd_mdsim_host_particle
+  halmd_mdsim_host_integrators
+  halmd_mdsim_host
 )
 if(WITH_CUDA)
   target_link_libraries(test_dependency_injection
-    halmd_mdsim_gpu_integrators_verlet
-    halmd_mdsim_gpu_particle
-    halmd_utility_gpu_device
+    halmd_mdsim_gpu_integrators
+    halmd_mdsim_gpu
+    halmd_utility_gpu
   )
 endif(WITH_CUDA)
 target_link_libraries(test_dependency_injection
-  halmd_io_logger
-  halmd_mdsim_integrator
-  halmd_mdsim_particle
-  halmd_mdsim_box
-  halmd_utility_profiler
+  halmd_io
+  halmd_mdsim
+  halmd_utility
   test_tools_lua
   ${HALMD_COMMON_LIBRARIES}
   ${HALMD_TEST_LIBRARIES}
@@ -29,7 +27,7 @@ add_executable(test_map_converter
   map_converter.cpp
 )
 target_link_libraries(test_map_converter
-  halmd_utility_lua_any_converter
+  halmd_utility_lua
   test_tools_lua
   ${Boost_PROGRAM_OPTIONS_LIBRARY}
   ${HALMD_TEST_LIBRARIES}
