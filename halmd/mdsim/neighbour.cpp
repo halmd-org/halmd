@@ -19,7 +19,7 @@
 
 #include <halmd/io/logger.hpp>
 #include <halmd/mdsim/neighbour.hpp>
-#include <halmd/utility/lua_wrapper/lua_wrapper.hpp>
+#include <halmd/utility/lua/lua.hpp>
 
 using namespace boost;
 using namespace std;
@@ -34,35 +34,23 @@ void neighbour<dimension>::luaopen(lua_State* L)
 {
     using namespace luabind;
     static string class_name("neighbour_" + lexical_cast<string>(dimension) + "_");
-    module(L)
+    module(L, "libhalmd")
     [
-        namespace_("halmd_wrapper")
+        namespace_("mdsim")
         [
-            namespace_("mdsim")
-            [
-                class_<neighbour, shared_ptr<neighbour> >(class_name.c_str())
-                    .def("check", &neighbour::check)
-                    .def("update", &neighbour::update)
-            ]
+            class_<neighbour, shared_ptr<neighbour> >(class_name.c_str())
+                .def("check", &neighbour::check)
+                .def("update", &neighbour::update)
         ]
     ];
 }
 
-namespace // limit symbols to translation unit
+HALMD_LUA_API int luaopen_libhalmd_mdsim_neighbour(lua_State* L)
 {
-
-__attribute__((constructor)) void register_lua()
-{
-    lua_wrapper::register_(0) //< distance to base class
-    [
-        &neighbour<3>::luaopen
-    ]
-    [
-        &neighbour<2>::luaopen
-    ];
+    neighbour<3>::luaopen(L);
+    neighbour<2>::luaopen(L);
+    return 0;
 }
-
-} // namespace
 
 template class neighbour<3>;
 template class neighbour<2>;

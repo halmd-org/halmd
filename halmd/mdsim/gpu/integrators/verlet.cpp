@@ -23,7 +23,7 @@
 
 #include <halmd/io/logger.hpp>
 #include <halmd/mdsim/gpu/integrators/verlet.hpp>
-#include <halmd/utility/lua_wrapper/lua_wrapper.hpp>
+#include <halmd/utility/lua/lua.hpp>
 #include <halmd/utility/scoped_timer.hpp>
 #include <halmd/utility/timer.hpp>
 
@@ -165,42 +165,30 @@ void verlet<dimension, float_type>::luaopen(lua_State* L)
 {
     using namespace luabind;
     static string class_name(module_name() + ("_" + lexical_cast<string>(dimension) + "_"));
-    module(L)
+    module(L, "libhalmd")
     [
-        namespace_("halmd_wrapper")
+        namespace_("mdsim")
         [
-            namespace_("mdsim")
+            namespace_("gpu")
             [
-                namespace_("gpu")
+                namespace_("integrators")
                 [
-                    namespace_("integrators")
-                    [
-                        class_<verlet, shared_ptr<_Base>, bases<_Base> >(class_name.c_str())
-                            .def(constructor<shared_ptr<particle_type>, shared_ptr<box_type>, double>())
-                            .def("register_runtimes", &verlet::register_runtimes)
-                            .property("module_name", &module_name_wrapper<dimension, float_type>)
-                    ]
+                    class_<verlet, shared_ptr<_Base>, bases<_Base> >(class_name.c_str())
+                        .def(constructor<shared_ptr<particle_type>, shared_ptr<box_type>, double>())
+                        .def("register_runtimes", &verlet::register_runtimes)
+                        .property("module_name", &module_name_wrapper<dimension, float_type>)
                 ]
             ]
         ]
     ];
 }
 
-namespace // limit symbols to translation unit
+HALMD_LUA_API int luaopen_libhalmd_mdsim_gpu_integrators_verlet(lua_State* L)
 {
-
-__attribute__((constructor)) void register_lua()
-{
-    lua_wrapper::register_(1) //< distance of derived to base class
-    [
-        &verlet<3, float>::luaopen
-    ]
-    [
-        &verlet<2, float>::luaopen
-    ];
+    verlet<3, float>::luaopen(L);
+    verlet<2, float>::luaopen(L);
+    return 0;
 }
-
-} // namespace
 
 // explicit instantiation
 template class verlet<3, float>;

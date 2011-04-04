@@ -18,7 +18,7 @@
  */
 
 #include <halmd/io/logger.hpp>
-#include <halmd/utility/lua_wrapper/lua_wrapper.hpp>
+#include <halmd/utility/lua/lua.hpp>
 #include <halmd/utility/profiler.hpp>
 #include <halmd/utility/timer.hpp>
 
@@ -48,31 +48,21 @@ void profiler::register_runtime(accumulator_type const& runtime, string const& t
 void profiler::luaopen(lua_State* L)
 {
     using namespace luabind;
-    module(L)
+    module(L, "libhalmd")
     [
-        namespace_("halmd_wrapper")
+        namespace_("utility")
         [
-            namespace_("utility")
-            [
-                class_<profiler, shared_ptr<profiler> >("profiler")
-                    .def(constructor<writers_type, string>())
-            ]
+            class_<profiler, shared_ptr<profiler> >("profiler")
+                .def(constructor<writers_type, string>())
         ]
     ];
 }
 
-namespace // limit symbols to translation unit
+HALMD_LUA_API int luaopen_libhalmd_utility_profiler(lua_State* L)
 {
-
-__attribute__((constructor)) void register_lua()
-{
-    lua_wrapper::register_(0) //< distance of derived to base class
-    [
-        &profiler::luaopen
-    ];
+    profiler::luaopen(L);
+    return 0;
 }
-
-} // namespace
 
 } // namespace utility
 

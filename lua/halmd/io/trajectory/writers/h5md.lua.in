@@ -32,12 +32,12 @@ local parameter = halmd.parameter
 -- grab C++ wrappers
 local h5md_wrapper = {
     host = {
-        [2] = halmd_wrapper.io.trajectory.writers.h5md_2_double_
-      , [3] = halmd_wrapper.io.trajectory.writers.h5md_3_double_
+        [2] = libhalmd.io.trajectory.writers.h5md_2_double_
+      , [3] = libhalmd.io.trajectory.writers.h5md_3_double_
     }
   , gpu = {
-        [2] = halmd_wrapper.io.trajectory.writers.h5md_2_float_
-      , [3] = halmd_wrapper.io.trajectory.writers.h5md_3_float_
+        [2] = libhalmd.io.trajectory.writers.h5md_2_float_
+      , [3] = libhalmd.io.trajectory.writers.h5md_3_float_
     }
 }
 -- grab standard library

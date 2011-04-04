@@ -30,6 +30,7 @@
 #include <halmd/mdsim/core.hpp>
 #include <halmd/numeric/accumulator.hpp>
 #include <test/modules.hpp>
+#include <test/tools/init.hpp>
 
 using namespace boost;
 using namespace halmd;
@@ -386,7 +387,7 @@ void thermodynamics(string const& backend)
     }
 }
 
-static void __attribute__((constructor)) init_unit_test_suite()
+HALMD_TEST_INIT( init_unit_test_suite )
 {
     using namespace boost::assign;
     using namespace boost::unit_test;

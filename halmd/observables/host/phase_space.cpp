@@ -19,7 +19,7 @@
 
 #include <halmd/io/logger.hpp>
 #include <halmd/observables/host/phase_space.hpp>
-#include <halmd/utility/lua_wrapper/lua_wrapper.hpp>
+#include <halmd/utility/lua/lua.hpp>
 
 using namespace boost;
 using namespace std;
@@ -55,10 +55,18 @@ void phase_space<dimension, float_type>::acquire(double time)
     LOG_TRACE("[phase_space] acquire sample");
 
     for (size_t i = 0; i < particle->nbox; ++i) {
+        unsigned int type = particle->type[i];
+        unsigned int tag = particle->tag[i];
+
         // periodically extended particle position
-        (*sample->r[particle->type[i]])[particle->tag[i]] = particle->r[i] + element_prod(particle->image[i], box->length());
+        assert(type < sample->r.size());
+        assert(tag < sample->r[type]->size());
+        (*sample->r[type])[tag] = particle->r[i] + element_prod(particle->image[i], box->length());
+
         // particle velocity
-        (*sample->v[particle->type[i]])[particle->tag[i]] = particle->v[i];
+        assert(type < sample->v.size());
+        assert(tag < sample->v[type]->size());
+        (*sample->v[type])[tag] = particle->v[i];
     }
     sample->time = time;
 }
@@ -68,7 +76,7 @@ void phase_space<dimension, float_type>::luaopen(lua_State* L)
 {
     using namespace luabind;
     static string class_name("phase_space_" + lexical_cast<string>(dimension) + "_");
-    module(L, "halmd_wrapper")
+    module(L, "libhalmd")
     [
         namespace_("observables")
         [
@@ -85,30 +93,17 @@ void phase_space<dimension, float_type>::luaopen(lua_State* L)
     ];
 }
 
-namespace // limit symbols to translation unit
+HALMD_LUA_API int luaopen_libhalmd_observables_host_phase_space(lua_State* L)
 {
-
-__attribute__((constructor)) void register_lua()
-{
-    lua_wrapper::register_(1) //< distance of derived to base class
 #ifndef USE_HOST_SINGLE_PRECISION
-    [
-        &phase_space<3, double>::luaopen
-    ]
-    [
-        &phase_space<2, double>::luaopen
-    ];
+    phase_space<3, double>::luaopen(L);
+    phase_space<2, double>::luaopen(L);
 #else
-    [
-        &phase_space<3, float>::luaopen
-    ]
-    [
-        &phase_space<2, float>::luaopen
-    ];
+    phase_space<3, float>::luaopen(L);
+    phase_space<2, float>::luaopen(L);
 #endif
+    return 0;
 }
-
-} // namespace
 
 // explicit instantiation
 #ifndef USE_HOST_SINGLE_PRECISION

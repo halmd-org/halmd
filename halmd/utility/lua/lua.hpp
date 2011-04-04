@@ -17,29 +17,24 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef HALMD_UTILITY_LUA_WRAPPER_LUA_WRAPPER_HPP
-#define HALMD_UTILITY_LUA_WRAPPER_LUA_WRAPPER_HPP
+#ifndef HALMD_UTILITY_LUA_LUA_HPP
+#define HALMD_UTILITY_LUA_LUA_HPP
 
+#include <boost/lexical_cast.hpp> // Lua class names from template parameters
 #include <boost/shared_ptr.hpp> // pointer holder for luabind::class_
 #include <lua.hpp>
 #include <luabind/luabind.hpp>
 #include <luabind/exception_handler.hpp>
 #include <luabind/shared_ptr_converter.hpp> //< boost::shared_ptr up- and down-casts
 
-#include <halmd/utility/lua_wrapper/any_converter.hpp>
-#include <halmd/utility/lua_wrapper/array_converter.hpp>
-#include <halmd/utility/lua_wrapper/fixed_vector_converter.hpp>
-#include <halmd/utility/lua_wrapper/long_long_converter.hpp>
-#include <halmd/utility/lua_wrapper/map_converter.hpp>
-#include <halmd/utility/lua_wrapper/optional_converter.hpp>
-#include <halmd/utility/lua_wrapper/registry.hpp>
-#include <halmd/utility/lua_wrapper/ublas.hpp>
-#include <halmd/utility/lua_wrapper/vector_converter.hpp>
+#include <halmd/config.hpp> // HALMD_LUA_API
+#include <halmd/utility/lua/array_converter.hpp>
+#include <halmd/utility/lua/error.hpp>
+#include <halmd/utility/lua/fixed_vector_converter.hpp>
+#include <halmd/utility/lua/long_long_converter.hpp>
+#include <halmd/utility/lua/map_converter.hpp>
+#include <halmd/utility/lua/optional_converter.hpp>
+#include <halmd/utility/lua/ublas.hpp>
+#include <halmd/utility/lua/vector_converter.hpp>
 
-/**
- * @namespace halmd::lua_wrapper
- *
- * Lua C++ wrapper extensions
- */
-
-#endif /* ! HALMD_UTILITY_LUA_WRAPPER_LUA_WRAPPER_HPP */
+#endif /* ! HALMD_UTILITY_LUA_LUA_HPP */

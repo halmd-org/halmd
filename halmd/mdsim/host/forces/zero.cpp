@@ -22,7 +22,7 @@
 #include <string>
 
 #include <halmd/mdsim/host/forces/zero.hpp>
-#include <halmd/utility/lua_wrapper/lua_wrapper.hpp>
+#include <halmd/utility/lua/lua.hpp>
 
 using namespace boost;
 using namespace std;
@@ -53,7 +53,7 @@ void zero<dimension, float_type>::luaopen(lua_State* L)
     typedef typename _Base::_Base _Base_Base;
     using namespace luabind;
     static string class_name("zero_" + lexical_cast<string>(dimension) + "_");
-    module(L, "halmd_wrapper")
+    module(L, "libhalmd")
     [
         namespace_("mdsim")
         [
@@ -72,30 +72,17 @@ void zero<dimension, float_type>::luaopen(lua_State* L)
     ];
 }
 
-namespace // limit symbols to translation unit
+HALMD_LUA_API int luaopen_libhalmd_mdsim_host_forces_zero(lua_State* L)
 {
-
-__attribute__((constructor)) void register_lua()
-{
-    lua_wrapper::register_(2) //< distance of derived to base class
 #ifndef USE_HOST_SINGLE_PRECISION
-    [
-        &zero<3, double>::luaopen
-    ]
-    [
-        &zero<2, double>::luaopen
-    ];
+    zero<3, double>::luaopen(L);
+    zero<2, double>::luaopen(L);
 #else
-    [
-        &zero<3, float>::luaopen
-    ]
-    [
-        &zero<2, float>::luaopen
-    ];
+    zero<3, float>::luaopen(L);
+    zero<2, float>::luaopen(L);
 #endif
+    return 0;
 }
-
-} // namespace
 
 // explicit instantiation
 #ifndef USE_HOST_SINGLE_PRECISION

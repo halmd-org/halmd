@@ -26,6 +26,7 @@
 #ifdef __CUDACC__
 # include <cuda_runtime.h> // signbit
 #else
+# include <boost/math/special_functions/sign.hpp> // std::signbit is not portable
 # include <cmath>
 # include <algorithm>
 #endif
@@ -48,7 +49,7 @@ namespace detail
 #ifdef __CUDACC__
 using algorithm::gpu::swap;
 #else
-using std::signbit;
+using boost::math::signbit;
 using std::swap;
 #endif
 

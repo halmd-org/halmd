@@ -25,7 +25,7 @@
 #include <halmd/io/logger.hpp>
 #include <halmd/mdsim/gpu/particle.hpp>
 #include <halmd/mdsim/gpu/particle_kernel.hpp>
-#include <halmd/utility/lua_wrapper/lua_wrapper.hpp>
+#include <halmd/utility/lua/lua.hpp>
 
 using namespace boost;
 using namespace std;
@@ -119,40 +119,28 @@ void particle<dimension, float_type>::luaopen(lua_State* L)
 {
     using namespace luabind;
     static string class_name("particle_" + lexical_cast<string>(dimension) + "_");
-    module(L)
+    module(L, "libhalmd")
     [
-        namespace_("halmd_wrapper")
+        namespace_("mdsim")
         [
-            namespace_("mdsim")
+            namespace_("gpu")
             [
-                namespace_("gpu")
-                [
-                    class_<particle, shared_ptr<_Base>, _Base>(class_name.c_str())
-                        .def(constructor<
-                            shared_ptr<device_type>
-                          , vector<unsigned int> const&
-                        >())
-                ]
+                class_<particle, shared_ptr<_Base>, _Base>(class_name.c_str())
+                    .def(constructor<
+                        shared_ptr<device_type>
+                      , vector<unsigned int> const&
+                    >())
             ]
         ]
     ];
 }
 
-namespace // limit symbols to translation unit
+HALMD_LUA_API int luaopen_libhalmd_mdsim_gpu_particle(lua_State* L)
 {
-
-__attribute__((constructor)) void register_lua()
-{
-    lua_wrapper::register_(1) //< distance of derived to base class
-    [
-        &particle<3, float>::luaopen
-    ]
-    [
-        &particle<2, float>::luaopen
-    ];
+    particle<3, float>::luaopen(L);
+    particle<2, float>::luaopen(L);
+    return 0;
 }
-
-} // namespace
 
 // explicit instantiation
 template class particle<3, float>;

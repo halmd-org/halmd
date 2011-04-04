@@ -20,7 +20,7 @@
 #include <boost/bind.hpp>
 
 #include <halmd/io/trajectory/writer.hpp>
-#include <halmd/utility/lua_wrapper/lua_wrapper.hpp>
+#include <halmd/utility/lua/lua.hpp>
 
 using namespace boost;
 using namespace std;
@@ -42,42 +42,26 @@ void writer<dimension>::luaopen(lua_State* L)
 {
     using namespace luabind;
     static string class_name("writer_" + lexical_cast<string>(dimension) + "_");
-    module(L)
+    module(L, "libhalmd")
     [
-        namespace_("halmd_wrapper")
+        namespace_("io")
         [
-            namespace_("io")
+            namespace_("trajectory")
             [
-                namespace_("trajectory")
-                [
-                    class_<writer, shared_ptr<writer> >(class_name.c_str())
-                        .property("append", &append_wrapper<writer>)
-                        .def("on_append", &writer::on_append)
-                        .scope
-                        [
-                            class_<slot_function_type>("slot_function_type")
-                        ]
-                ]
+                class_<writer, shared_ptr<writer> >(class_name.c_str())
+                    .property("append", &append_wrapper<writer>)
+                    .def("on_append", &writer::on_append)
             ]
         ]
     ];
 }
 
-namespace // limit symbols to translation unit
+HALMD_LUA_API int luaopen_libhalmd_io_trajectory_writer(lua_State* L)
 {
-
-__attribute__((constructor)) void register_lua()
-{
-    lua_wrapper::register_(0) //< distance of derived to base class
-    [
-        &writer<3>::luaopen
-    ]
-    [
-        &writer<2>::luaopen
-    ];
+    writer<3>::luaopen(L);
+    writer<2>::luaopen(L);
+    return 0;
 }
-
-} // namespace
 
 }} // namespace io::trajectory
 

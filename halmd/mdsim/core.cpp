@@ -21,7 +21,7 @@
 
 #include <halmd/io/logger.hpp>
 #include <halmd/mdsim/core.hpp>
-#include <halmd/utility/lua_wrapper/lua_wrapper.hpp>
+#include <halmd/utility/lua/lua.hpp>
 #include <halmd/utility/scoped_timer.hpp>
 #include <halmd/utility/timer.hpp>
 
@@ -114,47 +114,35 @@ void core<dimension>::luaopen(lua_State* L)
 {
     using namespace luabind;
     static string class_name("core_" + lexical_cast<string>(dimension) + "_");
-    module(L)
+    module(L, "libhalmd")
     [
-        namespace_("halmd_wrapper")
+        namespace_("mdsim")
         [
-            namespace_("mdsim")
-            [
-                class_<core, shared_ptr<core> >(class_name.c_str())
-                    .def(constructor<>())
-                    .def("register_runtimes", &core::register_runtimes)
-                    .def_readwrite("particle", &core::particle)
-                    .def_readwrite("box", &core::box)
-                    .def_readwrite("force", &core::force)
-                    .def_readwrite("neighbour", &core::neighbour)
-                    .def_readwrite("sort", &core::sort)
-                    .def_readwrite("integrator", &core::integrator)
-                    .def_readwrite("position", &core::position)
-                    .def_readwrite("velocity", &core::velocity)
-                    .property("dimension", &get_dimension<dimension>)
-                    .property("step_counter", &core::step_counter)
-                    .def("prepare", &core::prepare)
-                    .def("mdstep", &core::mdstep)
-            ]
+            class_<core, shared_ptr<core> >(class_name.c_str())
+                .def(constructor<>())
+                .def("register_runtimes", &core::register_runtimes)
+                .def_readwrite("particle", &core::particle)
+                .def_readwrite("box", &core::box)
+                .def_readwrite("force", &core::force)
+                .def_readwrite("neighbour", &core::neighbour)
+                .def_readwrite("sort", &core::sort)
+                .def_readwrite("integrator", &core::integrator)
+                .def_readwrite("position", &core::position)
+                .def_readwrite("velocity", &core::velocity)
+                .property("dimension", &get_dimension<dimension>)
+                .property("step_counter", &core::step_counter)
+                .def("prepare", &core::prepare)
+                .def("mdstep", &core::mdstep)
         ]
     ];
 }
 
-namespace // limit symbols to translation unit
+HALMD_LUA_API int luaopen_libhalmd_mdsim_core(lua_State* L)
 {
-
-__attribute__((constructor)) void register_lua()
-{
-    lua_wrapper::register_(0) //< distance of derived to base class
-    [
-        &core<3>::luaopen
-    ]
-    [
-        &core<2>::luaopen
-    ];
+    core<3>::luaopen(L);
+    core<2>::luaopen(L);
+    return 0;
 }
-
-} // namespace
 
 // explicit instantiation
 template class core<3>;

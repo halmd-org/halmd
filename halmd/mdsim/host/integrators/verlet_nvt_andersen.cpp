@@ -23,7 +23,7 @@
 
 #include <halmd/io/logger.hpp>
 #include <halmd/mdsim/host/integrators/verlet_nvt_andersen.hpp>
-#include <halmd/utility/lua_wrapper/lua_wrapper.hpp>
+#include <halmd/utility/lua/lua.hpp>
 #include <halmd/utility/scoped_timer.hpp>
 #include <halmd/utility/timer.hpp>
 
@@ -151,61 +151,45 @@ void verlet_nvt_andersen<dimension, float_type>::luaopen(lua_State* L)
     typedef typename _Base::_Base _Base_Base;
     using namespace luabind;
     static string class_name(module_name() + ("_" + lexical_cast<string>(dimension) + "_"));
-    module(L)
+    module(L, "libhalmd")
     [
-        namespace_("halmd_wrapper")
+        namespace_("mdsim")
         [
-            namespace_("mdsim")
+            namespace_("host")
             [
-                namespace_("host")
+                namespace_("integrators")
                 [
-                    namespace_("integrators")
-                    [
-                        class_<
-                            verlet_nvt_andersen
-                          , shared_ptr<_Base_Base>
-                          , bases<_Base_Base, _Base>
-                        >(class_name.c_str())
-                            .def(constructor<
-                                shared_ptr<particle_type>
-                              , shared_ptr<box_type>
-                              , shared_ptr<random_type>
-                              , float_type, float_type, float_type>()
-                            )
-                            .def("register_runtimes", &verlet_nvt_andersen::register_runtimes)
-                            .property("collision_rate", &verlet_nvt_andersen::collision_rate)
-                            .property("module_name", &module_name_wrapper<dimension, float_type>)
-                    ]
+                    class_<
+                        verlet_nvt_andersen
+                      , shared_ptr<_Base_Base>
+                      , bases<_Base_Base, _Base>
+                    >(class_name.c_str())
+                        .def(constructor<
+                            shared_ptr<particle_type>
+                          , shared_ptr<box_type>
+                          , shared_ptr<random_type>
+                          , float_type, float_type, float_type>()
+                        )
+                        .def("register_runtimes", &verlet_nvt_andersen::register_runtimes)
+                        .property("collision_rate", &verlet_nvt_andersen::collision_rate)
+                        .property("module_name", &module_name_wrapper<dimension, float_type>)
                 ]
             ]
         ]
     ];
 }
 
-namespace // limit symbols to translation unit
+HALMD_LUA_API int luaopen_libhalmd_mdsim_host_integrators_verlet_nvt_andersen(lua_State* L)
 {
-
-__attribute__((constructor)) void register_lua()
-{
-    lua_wrapper::register_(2) //< distance of derived to base class
 #ifndef USE_HOST_SINGLE_PRECISION
-    [
-        &verlet_nvt_andersen<3, double>::luaopen
-    ]
-    [
-        &verlet_nvt_andersen<2, double>::luaopen
-    ];
+    verlet_nvt_andersen<3, double>::luaopen(L);
+    verlet_nvt_andersen<2, double>::luaopen(L);
 #else
-    [
-        &verlet_nvt_andersen<3, float>::luaopen
-    ]
-    [
-        &verlet_nvt_andersen<2, float>::luaopen
-    ];
+    verlet_nvt_andersen<3, float>::luaopen(L);
+    verlet_nvt_andersen<2, float>::luaopen(L);
 #endif
+    return 0;
 }
-
-} // namespace
 
 // explicit instantiation
 #ifndef USE_HOST_SINGLE_PRECISION

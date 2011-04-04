@@ -20,7 +20,7 @@
 require("halmd.modules")
 
 -- grab C++ wrappers
-local log_wrapper = halmd_wrapper.io.profiling.writers.log
+local log_wrapper = libhalmd.io.profiling.writers.log
 -- grab standard library
 local assert = assert
 

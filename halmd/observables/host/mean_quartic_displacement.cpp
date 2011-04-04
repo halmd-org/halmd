@@ -18,7 +18,7 @@
  */
 
 #include <halmd/observables/host/mean_quartic_displacement.hpp>
-#include <halmd/utility/lua_wrapper/lua_wrapper.hpp>
+#include <halmd/utility/lua/lua.hpp>
 
 using namespace boost;
 using namespace std;
@@ -60,7 +60,7 @@ void mean_quartic_displacement<dimension, float_type>::luaopen(lua_State* L)
 {
     using namespace luabind;
     static string class_name("mean_quartic_displacement_" + lexical_cast<string>(dimension) + "_");
-    module(L, "halmd_wrapper")
+    module(L, "libhalmd")
     [
         namespace_("observables")
         [
@@ -73,30 +73,17 @@ void mean_quartic_displacement<dimension, float_type>::luaopen(lua_State* L)
     ];
 }
 
-namespace // limit symbols to translation unit
+HALMD_LUA_API int luaopen_libhalmd_observables_host_mean_quartic_displacement(lua_State* L)
 {
-
-__attribute__((constructor)) void register_lua()
-{
-    lua_wrapper::register_(1) //< distance of derived to base class
 #ifndef USE_HOST_SINGLE_PRECISION
-    [
-        &mean_quartic_displacement<3, double>::luaopen
-    ]
-    [
-        &mean_quartic_displacement<2, double>::luaopen
-    ];
+    mean_quartic_displacement<3, double>::luaopen(L);
+    mean_quartic_displacement<2, double>::luaopen(L);
 #else
-    [
-        &mean_quartic_displacement<3, float>::luaopen
-    ]
-    [
-        &mean_quartic_displacement<2, float>::luaopen
-    ];
+    mean_quartic_displacement<3, float>::luaopen(L);
+    mean_quartic_displacement<2, float>::luaopen(L);
 #endif
+    return 0;
 }
-
-} // namespace
 
 // explicit instantiation
 #ifndef USE_HOST_SINGLE_PRECISION

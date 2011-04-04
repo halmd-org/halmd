@@ -22,7 +22,7 @@
 #include <halmd/io/logger.hpp>
 #include <halmd/mdsim/gpu/positions/phase_space.hpp>
 #include <halmd/mdsim/gpu/positions/phase_space_kernel.hpp>
-#include <halmd/utility/lua_wrapper/lua_wrapper.hpp>
+#include <halmd/utility/lua/lua.hpp>
 
 namespace halmd
 {
@@ -100,45 +100,32 @@ void phase_space<dimension, float_type>::luaopen(lua_State* L)
 {
     using namespace luabind;
     static string class_name("phase_space_" + lexical_cast<string>(dimension) + "_");
-    module(L)
+    module(L, "libhalmd")
     [
-        namespace_("halmd_wrapper")
+        namespace_("mdsim")
         [
-            namespace_("mdsim")
+            namespace_("gpu")
             [
-                namespace_("gpu")
+                namespace_("positions")
                 [
-                    namespace_("positions")
-                    [
-                        class_<phase_space, shared_ptr<_Base>, _Base>(class_name.c_str())
-                            .def(constructor<
-                                 shared_ptr<particle_type>
-                               , shared_ptr<box_type>
-                               , shared_ptr<sample_type>
-                            >())
-                    ]
+                    class_<phase_space, shared_ptr<_Base>, _Base>(class_name.c_str())
+                        .def(constructor<
+                             shared_ptr<particle_type>
+                           , shared_ptr<box_type>
+                           , shared_ptr<sample_type>
+                        >())
                 ]
             ]
         ]
     ];
 }
 
-
-namespace // limit symbols to translation unit
+HALMD_LUA_API int luaopen_libhalmd_mdsim_gpu_positions_phase_space(lua_State* L)
 {
-
-__attribute__((constructor)) void register_lua()
-{
-    lua_wrapper::register_(1) //< distance of derived to base class
-    [
-        &phase_space<3, float>::luaopen
-    ]
-    [
-        &phase_space<2, float>::luaopen
-    ];
+    phase_space<3, float>::luaopen(L);
+    phase_space<2, float>::luaopen(L);
+    return 0;
 }
-
-} // namespace
 
 // explicit instantiation
 template class phase_space<3, float>;

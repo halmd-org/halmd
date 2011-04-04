@@ -28,11 +28,11 @@ local mdsim = halmd.mdsim
 local observables = halmd.observables
 -- grab C++ wrappers
 local ssf_wrapper = {
-    [2] = halmd_wrapper.observables.ssf_2_
-  , [3] = halmd_wrapper.observables.ssf_3_
+    [2] = libhalmd.observables.ssf_2_
+  , [3] = libhalmd.observables.ssf_3_
 }
-local h5 = halmd_wrapper.h5
-local po = halmd_wrapper.po
+local h5 = libhalmd.h5
+local po = libhalmd.po
 -- grab standard library
 local assert = assert
 
@@ -49,7 +49,7 @@ function new(args)
     local tolerance = args.tolerance or 0.01 -- default value
     local maximum_count = args.maximum_count or 7 -- default value
     local wavenumbers = args.wavenumbers
-    local maximum_wavenumber = args.maximum_wavenumber
+    local maximum_wavenumber = args.maximum_wavenumber or 12.6 -- default value, approx. 4π
 
     -- dependency injection
     local core = mdsim.core()
@@ -64,18 +64,12 @@ function new(args)
           , tolerance = tolerance
           , maximum_count = maximum_count
         }
-    elseif maximum_wavenumber then
+    else -- use maximum_wavenumber
         wavevector = wavevector{
             maximum_wavenumber = maximum_wavenumber
           , tolerance = tolerance
           , maximum_count = maximum_count
         }
-    else
-        wavevector = nil
-    end
-
-    if not wavevector then
-        return nil
     end
 
     -- construct density_mode module

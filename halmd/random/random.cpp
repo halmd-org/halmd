@@ -18,7 +18,7 @@
  */
 
 #include <halmd/random/random.hpp>
-#include <halmd/utility/lua_wrapper/lua_wrapper.hpp>
+#include <halmd/utility/lua/lua.hpp>
 #include <halmd/utility/read_integer.hpp>
 
 using namespace boost;
@@ -32,34 +32,24 @@ namespace random
 void random::luaopen(lua_State* L)
 {
     using namespace luabind;
-    module(L)
+    module(L, "libhalmd")
     [
-        namespace_("halmd_wrapper")
+        namespace_("random")
         [
-            namespace_("random")
-            [
-                class_<random, shared_ptr<random> >("random")
-                    .scope
-                    [
-                        def("read_integer", &read_integer<unsigned int>)
-                    ]
-            ]
+            class_<random, shared_ptr<random> >("random")
+                .scope
+                [
+                    def("read_integer", &read_integer<unsigned int>)
+                ]
         ]
     ];
 }
 
-namespace // limit symbols to translation unit
+HALMD_LUA_API int luaopen_libhalmd_random_random(lua_State* L)
 {
-
-__attribute__((constructor)) void register_lua()
-{
-    lua_wrapper::register_(0) //< distance of derived to base class
-    [
-        &random::luaopen
-    ];
+    random::luaopen(L);
+    return 0;
 }
-
-} // namespace
 
 } // namespace random
 

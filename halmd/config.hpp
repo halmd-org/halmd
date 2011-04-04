@@ -20,6 +20,8 @@
 #ifndef HALMD_CONFIG_HPP
 #define HALMD_CONFIG_HPP
 
+#define HALMD_LUA_API extern "C"
+
 #ifdef __CUDACC__
 
 #define HALMD_GPU_ENABLED __device__

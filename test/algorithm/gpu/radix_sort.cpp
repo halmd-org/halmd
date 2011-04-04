@@ -34,6 +34,7 @@
 #include <halmd/random/gpu/random_kernel.hpp>
 #include <halmd/utility/timer.hpp>
 #include <test/tools/cuda.hpp>
+#include <test/tools/init.hpp>
 
 BOOST_GLOBAL_FIXTURE( set_cuda_device );
 
@@ -98,7 +99,7 @@ void compare_radix_sort( size_t count )
                         "GPU and CPU element mismatch");
 }
 
-static void __attribute__((constructor)) init_unit_test_suite()
+HALMD_TEST_INIT( init_unit_test_suite )
 {
     using namespace boost::unit_test::framework;
     using namespace boost::assign;

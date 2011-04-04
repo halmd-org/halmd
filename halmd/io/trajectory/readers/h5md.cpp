@@ -23,7 +23,7 @@
 #include <halmd/io/trajectory/readers/h5md.hpp>
 #include <halmd/io/utility/hdf5.hpp>
 #include <halmd/utility/demangle.hpp>
-#include <halmd/utility/lua_wrapper/lua_wrapper.hpp>
+#include <halmd/utility/lua/lua.hpp>
 
 using namespace boost;
 using namespace std;
@@ -87,8 +87,8 @@ h5md<dimension, float_type>::h5md(
         H5::DataSet r = type.openDataSet("position");
         H5::DataSet v = type.openDataSet("velocity");
 
-        h5xx::read_dataset(r, &*sample->r[i], offset_);
-        h5xx::read_dataset(v, &*sample->v[i], offset_);
+        h5xx::read_dataset(r, sample->r[i].get(), offset_);
+        h5xx::read_dataset(v, sample->v[i].get(), offset_);
     }
 
     H5::DataSet t = root.openDataSet("time");
@@ -102,54 +102,38 @@ void h5md<dimension, float_type>::luaopen(lua_State* L)
 {
     using namespace luabind;
     static string class_name("h5md_" + lexical_cast<string>(dimension) + "_" + demangled_name<float_type>() + "_");
-    module(L)
+    module(L, "libhalmd")
     [
-        namespace_("halmd_wrapper")
+        namespace_("io")
         [
-            namespace_("io")
+            namespace_("trajectory")
             [
-                namespace_("trajectory")
+                namespace_("readers")
                 [
-                    namespace_("readers")
-                    [
-                        class_<h5md, shared_ptr<_Base>, _Base>(class_name.c_str())
-                            .def(constructor<
-                                shared_ptr<sample_type>
-                                , string const&
-                                , ssize_t
-                            >())
-                            .scope
-                            [
-                                def("format", &h5md::format)
-                            ]
-                    ]
+                    class_<h5md, shared_ptr<_Base>, _Base>(class_name.c_str())
+                        .def(constructor<
+                            shared_ptr<sample_type>
+                            , string const&
+                            , ssize_t
+                        >())
+                        .scope
+                        [
+                            def("format", &h5md::format)
+                        ]
                 ]
             ]
         ]
     ];
 }
 
-namespace // limit symbols to translation unit
+HALMD_LUA_API int luaopen_libhalmd_io_trajectory_readers_h5md(lua_State* L)
 {
-
-__attribute__((constructor)) void register_lua()
-{
-    lua_wrapper::register_(1) //< distance of derived to base class
-    [
-        &h5md<3, double>::luaopen
-    ]
-    [
-        &h5md<2, double>::luaopen
-    ]
-    [
-        &h5md<3, float>::luaopen
-    ]
-    [
-        &h5md<2, float>::luaopen
-    ];
+    h5md<3, double>::luaopen(L);
+    h5md<2, double>::luaopen(L);
+    h5md<3, float>::luaopen(L);
+    h5md<2, float>::luaopen(L);
+    return 0;
 }
-
-} // namespace
 
 }}} // namespace io::trajectory::readers
 

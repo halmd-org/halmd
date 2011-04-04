@@ -17,25 +17,14 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef HALMD_UTILITY_LUA_WRAPPER_PROGRAM_OPTIONS_HPP
-#define HALMD_UTILITY_LUA_WRAPPER_PROGRAM_OPTIONS_HPP
+#ifndef HALMD_UTILITY_LUA_PROGRAM_OPTIONS_HPP
+#define HALMD_UTILITY_LUA_PROGRAM_OPTIONS_HPP
 
 #include <boost/algorithm/string/replace.hpp>
 #include <boost/program_options/variables_map.hpp>
 #include <luabind/luabind.hpp>
 
-#include <halmd/utility/lua_wrapper/any_converter.hpp>
-
-namespace halmd
-{
-namespace lua_wrapper { namespace program_options
-{
-
-int luaopen(lua_State* L);
-
-}} // namespace lua_wrapper::program_options
-
-} // namespace halmd
+#include <halmd/utility/lua/any_converter.hpp>
 
 namespace luabind
 {
@@ -69,4 +58,4 @@ struct default_converter<boost::program_options::variables_map const&>
 
 } // namespace luabind
 
-#endif /* ! HALMD_UTILITY_LUA_WRAPPER_PROGRAM_OPTIONS_HPP */
+#endif /* ! HALMD_UTILITY_LUA_PROGRAM_OPTIONS_HPP */

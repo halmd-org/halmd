@@ -26,7 +26,7 @@
 
 #include <halmd/io/logger.hpp>
 #include <halmd/mdsim/particle.hpp>
-#include <halmd/utility/lua_wrapper/lua_wrapper.hpp>
+#include <halmd/utility/lua/lua.hpp>
 
 using namespace boost;
 using namespace boost::algorithm;
@@ -36,14 +36,6 @@ namespace halmd
 {
 namespace mdsim
 {
-
-/**
- * Register option value types with Lua
- */
-static __attribute__((constructor)) void register_option_converters()
-{
-    register_any_converter<boost::multi_array<unsigned int, 1> >();
-}
 
 /**
  * Construct microscopic system state.
@@ -78,36 +70,24 @@ void particle<dimension>::luaopen(lua_State* L)
 {
     using namespace luabind;
     static string class_name("particle_" + lexical_cast<string>(dimension) + "_");
-    module(L)
+    module(L, "libhalmd")
     [
-        namespace_("halmd_wrapper")
+        namespace_("mdsim")
         [
-            namespace_("mdsim")
-            [
-                class_<particle, shared_ptr<particle> >(class_name.c_str())
-                    .def_readonly("nbox", &particle::nbox)
-                    .def_readonly("ntype", &particle::ntype)
-                    .def_readonly("ntypes", &particle::ntypes)
-            ]
+            class_<particle, shared_ptr<particle> >(class_name.c_str())
+                .def_readonly("nbox", &particle::nbox)
+                .def_readonly("ntype", &particle::ntype)
+                .def_readonly("ntypes", &particle::ntypes)
         ]
     ];
 }
 
-namespace // limit symbols to translation unit
+HALMD_LUA_API int luaopen_libhalmd_mdsim_particle(lua_State* L)
 {
-
-__attribute__((constructor)) void register_lua()
-{
-    lua_wrapper::register_(0) //< distance of derived to base class
-    [
-        &particle<3>::luaopen
-    ]
-    [
-        &particle<2>::luaopen
-    ];
+    particle<3>::luaopen(L);
+    particle<2>::luaopen(L);
+    return 0;
 }
-
-} // namespace
 
 // explicit instantiation
 template class particle<3>;

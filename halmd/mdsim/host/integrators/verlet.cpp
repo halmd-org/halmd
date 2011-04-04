@@ -23,7 +23,7 @@
 
 #include <halmd/io/logger.hpp>
 #include <halmd/mdsim/host/integrators/verlet.hpp>
-#include <halmd/utility/lua_wrapper/lua_wrapper.hpp>
+#include <halmd/utility/lua/lua.hpp>
 
 using namespace boost;
 using namespace std;
@@ -93,54 +93,38 @@ void verlet<dimension, float_type>::luaopen(lua_State* L)
 {
     using namespace luabind;
     static string class_name(module_name() + ("_" + lexical_cast<string>(dimension) + "_"));
-    module(L)
+    module(L, "libhalmd")
     [
-        namespace_("halmd_wrapper")
+        namespace_("mdsim")
         [
-            namespace_("mdsim")
+            namespace_("host")
             [
-                namespace_("host")
+                namespace_("integrators")
                 [
-                    namespace_("integrators")
-                    [
-                        class_<verlet, shared_ptr<_Base>, bases<_Base> >(class_name.c_str())
-                            .def(constructor<
-                                shared_ptr<particle_type>
-                              , shared_ptr<box_type>
-                              , double>()
-                            )
-                            .property("module_name", &module_name_wrapper<dimension, float_type>)
-                    ]
+                    class_<verlet, shared_ptr<_Base>, bases<_Base> >(class_name.c_str())
+                        .def(constructor<
+                            shared_ptr<particle_type>
+                          , shared_ptr<box_type>
+                          , double>()
+                        )
+                        .property("module_name", &module_name_wrapper<dimension, float_type>)
                 ]
             ]
         ]
     ];
 }
 
-namespace // limit symbols to translation unit
+HALMD_LUA_API int luaopen_libhalmd_mdsim_host_integrators_verlet(lua_State* L)
 {
-
-__attribute__((constructor)) void register_lua()
-{
-    lua_wrapper::register_(1) //< distance of derived to base class
 #ifndef USE_HOST_SINGLE_PRECISION
-    [
-        &verlet<3, double>::luaopen
-    ]
-    [
-        &verlet<2, double>::luaopen
-    ];
+    verlet<3, double>::luaopen(L);
+    verlet<2, double>::luaopen(L);
 #else
-    [
-        &verlet<3, float>::luaopen
-    ]
-    [
-        &verlet<2, float>::luaopen
-    ];
+    verlet<3, float>::luaopen(L);
+    verlet<2, float>::luaopen(L);
 #endif
+    return 0;
 }
-
-} // namespace
 
 // explicit instantiation
 #ifndef USE_HOST_SINGLE_PRECISION

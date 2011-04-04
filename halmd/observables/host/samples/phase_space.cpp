@@ -21,7 +21,7 @@
 
 #include <halmd/observables/host/samples/phase_space.hpp>
 #include <halmd/utility/demangle.hpp>
-#include <halmd/utility/lua_wrapper/lua_wrapper.hpp>
+#include <halmd/utility/lua/lua.hpp>
 
 using namespace boost;
 using namespace std;
@@ -50,7 +50,7 @@ void phase_space<dimension, float_type>::luaopen(lua_State* L)
 {
     using namespace luabind;
     static string class_name("phase_space_" + lexical_cast<string>(dimension) + "_" + demangled_name<float_type>() + "_");
-    module(L, "halmd_wrapper")
+    module(L, "libhalmd")
     [
         namespace_("observables")
         [
@@ -66,29 +66,16 @@ void phase_space<dimension, float_type>::luaopen(lua_State* L)
     ];
 }
 
-namespace // limit symbols to translation unit
+HALMD_LUA_API int luaopen_libhalmd_observables_host_samples_phase_space(lua_State* L)
 {
-
-__attribute__((constructor)) void register_lua()
-{
-    lua_wrapper::register_(0) //< distance of derived to base class
 #ifndef USE_HOST_SINGLE_PRECISION
-    [
-        &phase_space<3, double>::luaopen
-    ]
-    [
-        &phase_space<2, double>::luaopen
-    ]
+    phase_space<3, double>::luaopen(L);
+    phase_space<2, double>::luaopen(L);
 #endif
-    [
-        &phase_space<3, float>::luaopen
-    ]
-    [
-        &phase_space<2, float>::luaopen
-    ];
+    phase_space<3, float>::luaopen(L);
+    phase_space<2, float>::luaopen(L);
+    return 0;
 }
-
-} // namespace
 
 #ifndef USE_HOST_SINGLE_PRECISION
 template class phase_space<3, double>;

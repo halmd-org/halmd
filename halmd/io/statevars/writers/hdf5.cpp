@@ -22,7 +22,7 @@
 #include <halmd/io/logger.hpp>
 #include <halmd/io/statevars/writers/hdf5.hpp>
 #include <halmd/io/utility/hdf5.hpp>
-#include <halmd/utility/lua_wrapper/lua_wrapper.hpp>
+#include <halmd/utility/lua/lua.hpp>
 #include <halmd/utility/demangle.hpp>
 
 using namespace boost;
@@ -233,42 +233,30 @@ void hdf5<dimension>::luaopen(lua_State* L)
 {
     using namespace luabind;
     static string class_name("hdf5_" + lexical_cast<string>(dimension) + "_");
-    module(L)
+    module(L, "libhalmd")
     [
-        namespace_("halmd_wrapper")
+        namespace_("io")
         [
-            namespace_("io")
+            namespace_("statevars")
             [
-                namespace_("statevars")
+                namespace_("writers")
                 [
-                    namespace_("writers")
-                    [
-                        class_<hdf5, shared_ptr<_Base>, _Base>(class_name.c_str())
-                            .def(constructor<string const&>())
-                            .def("file", &hdf5::file)
-                    ]
+                    class_<hdf5, shared_ptr<_Base>, _Base>(class_name.c_str())
+                        .def(constructor<string const&>())
+                        .def("file", &hdf5::file)
                 ]
             ]
         ]
     ];
 }
 
-namespace // limit symbols to translation unit
+HALMD_LUA_API int luaopen_libhalmd_io_statevars_writers_hdf5(lua_State* L)
 {
-
-__attribute__((constructor)) void register_lua()
-{
-    lua_wrapper::register_(1) //< distance of derived to base class
-    [
-        &hdf5<3>::luaopen
-    ]
-    [
-        &hdf5<2>::luaopen
-    ];
+    hdf5<3>::luaopen(L);
+    hdf5<2>::luaopen(L);
+    return 0;
 }
 
-} // namespace
-
-}}} // namespace io::profiling::writers
+}}} // namespace io::statevars::writers
 
 } // namespace halmd

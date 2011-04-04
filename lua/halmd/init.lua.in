@@ -47,7 +47,7 @@ local profiling = halmd.io.profiling
 local statevars = halmd.io.statevars
 local trajectory = halmd.io.trajectory
 -- grab C++ wrappers
-local po = halmd_wrapper.po
+local po = libhalmd.po
 -- grab standard library
 local assert = assert
 local pairs = pairs
@@ -80,16 +80,14 @@ function new(args)
 
     -- Optionally sample macroscopic state variables.
     if args.state_vars then
-        sampler:on_sample(observables.thermodynamics().sample, args.state_vars)
+        local thermodynamics = observables.thermodynamics()
+        sampler:on_prepare(thermodynamics.prepare, args.state_vars)
+        sampler:on_sample(thermodynamics.sample, args.state_vars)
     end
 
     -- Optionally sample static structure factor.
     if args.state_vars then -- FIXME args.ssf
-        -- FIXME do not return nil in observables.ssf()
-        local ssf = observables.ssf()
-        if ssf then
-            sampler:on_sample(ssf.sample, args.state_vars)
-        end
+        sampler:on_sample(observables.ssf().sample, args.state_vars)
     end
 
     -- FIXME connect revised writer to thermodynamics and ssf

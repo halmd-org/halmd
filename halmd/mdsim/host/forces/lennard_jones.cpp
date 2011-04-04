@@ -24,7 +24,7 @@
 #include <halmd/io/logger.hpp>
 #include <halmd/io/utility/hdf5.hpp>
 #include <halmd/mdsim/host/forces/lennard_jones.hpp>
-#include <halmd/utility/lua_wrapper/lua_wrapper.hpp>
+#include <halmd/utility/lua/lua.hpp>
 
 using namespace boost;
 using namespace boost::assign;
@@ -85,7 +85,7 @@ template <typename float_type>
 void lennard_jones<float_type>::luaopen(lua_State* L)
 {
     using namespace luabind;
-    module(L, "halmd_wrapper")
+    module(L, "libhalmd")
     [
         namespace_("mdsim")
         [
@@ -110,32 +110,18 @@ void lennard_jones<float_type>::luaopen(lua_State* L)
     ];
 }
 
-namespace // limit symbols to translation unit
-{
-
-__attribute__((constructor)) void register_lua()
+HALMD_LUA_API int luaopen_libhalmd_mdsim_host_forces_lennard_jones(lua_State* L)
 {
 #ifndef USE_HOST_SINGLE_PRECISION
     typedef double float_type;
 #else
     typedef float float_type;
 #endif
-
-    lua_wrapper::register_(0) //< distance of derived to base class
-    [
-        &lennard_jones<float_type>::luaopen
-    ];
-
-    lua_wrapper::register_(2) //< distance of derived to base class
-    [
-        &pair_trunc<3, float_type, lennard_jones<float_type> >::luaopen
-    ]
-    [
-        &pair_trunc<2, float_type, lennard_jones<float_type> >::luaopen
-    ];
+    lennard_jones<float_type>::luaopen(L);
+    pair_trunc<3, float_type, lennard_jones<float_type> >::luaopen(L);
+    pair_trunc<2, float_type, lennard_jones<float_type> >::luaopen(L);
+    return 0;
 }
-
-} // namespace
 
 // explicit instantiation
 #ifndef USE_HOST_SINGLE_PRECISION

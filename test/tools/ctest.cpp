@@ -19,6 +19,7 @@
 
 #include <boost/test/test_tools.hpp>
 #include <boost/test/unit_test_suite.hpp>
+#include <halmd/version.h>
 
 /**
  * Print CTEST_FULL_OUTPUT to avoid ctest truncation of output.
@@ -30,6 +31,7 @@ struct ctest_full_output
     ctest_full_output()
     {
         BOOST_TEST_MESSAGE( "Avoid ctest truncation of output: CTEST_FULL_OUTPUT" );
+        BOOST_TEST_MESSAGE( PROJECT_NAME " " PROGRAM_VERSION );
     }
 };
 

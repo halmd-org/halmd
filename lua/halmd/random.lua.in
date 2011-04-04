@@ -28,14 +28,14 @@ local device = halmd.device
 local log = halmd.log
 -- grab C++ wrappers
 local random_wrapper = {
-    host = halmd_wrapper.host.random
-  , read_integer = halmd_wrapper.random.random.read_integer
+    host = libhalmd.host.random
+  , read_integer = libhalmd.random.random.read_integer
 }
-if halmd_wrapper.gpu then
-    random_wrapper.gpu = halmd_wrapper.gpu.random
+if libhalmd.gpu then
+    random_wrapper.gpu = libhalmd.gpu.random
 end
-local h5 = halmd_wrapper.h5
-local po = halmd_wrapper.po
+local h5 = libhalmd.h5
+local po = libhalmd.po
 -- grab standard library
 local assert = assert
 local error = error

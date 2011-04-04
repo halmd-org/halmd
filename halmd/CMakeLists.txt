@@ -1,69 +1,75 @@
-set(HALMD_MODULES
-  halmd_io
-  halmd_io_profiling
-  halmd_io_profiling_writers
-  halmd_io_statevars
-  halmd_io_statevars_writers
-  halmd_io_trajectory
-  halmd_io_trajectory_readers
-  halmd_io_trajectory_writers
-  halmd_mdsim
-  halmd_mdsim_host
-  halmd_mdsim_host_forces
-  halmd_mdsim_host_integrators
-  halmd_mdsim_host_positions
-  halmd_mdsim_host_sorts
-  halmd_mdsim_host_velocities
-  halmd_mdsim_integrators
-  halmd_observables
-  halmd_observables_host
-  halmd_observables_host_samples
-  halmd_observables_samples
-  halmd_observables_utility
-  halmd_random
-  halmd_random_host
-  halmd_utility
-  halmd_utility_lua_wrapper
-  )
-if(WITH_CUDA)
-  set(HALMD_MODULES
-    ${HALMD_MODULES}
-    halmd_mdsim_gpu
-    halmd_mdsim_gpu_forces
-    halmd_mdsim_gpu_integrators
-    halmd_mdsim_gpu_positions
-    halmd_mdsim_gpu_sorts
-    halmd_mdsim_gpu_velocities
-    halmd_observables_gpu
-    halmd_observables_gpu_samples
-    halmd_random_gpu
-    halmd_utility_gpu
-    )
-endif(WITH_CUDA)
+##
+# Add HALMD library target
+#
+# This macro is a wrapper around add_library, which further adds the
+# library target name to a global property list of HALMD libraries.
+# The HALMD executable is linked against these libraries.
+#
+macro(halmd_add_library TARGET)
+  set_property(GLOBAL APPEND PROPERTY HALMD_LIBRARIES ${TARGET})
+  add_library(${TARGET} ${ARGN})
+endmacro()
 
-configure_file(version.h.in version.h ESCAPE_QUOTES @ONLY)
+##
+# Add HALMD modules
+#
+# This macro adds all arguments to a global property list of HALMD modules.
+# This list is used to generate calls to luaopen_<module> functions, which
+# exports a C++ module into the Lua interpreter.
+#
+# Base classes must be ordered *before* derived classes, otherwise
+# Luabind will throw an assertion error or cause a segmentation fault.
+#
+macro(halmd_add_modules)
+  set_property(GLOBAL APPEND PROPERTY HALMD_MODULES ${ARGN})
+endmacro()
 
-if(NOT HALMD_BACKEND_EXECUTABLES)
-  add_executable(halmd
-    main.cpp
-    runner.cpp
-    script.cpp
-  )
-  target_link_libraries(halmd
-    -Wl,-whole-archive
-    ${HALMD_MODULES}
-    -Wl,-no-whole-archive
-    halmd_utility_program_options
-    ${HALMD_COMMON_LIBRARIES}
-    )
-  install(TARGETS halmd
-    RUNTIME DESTINATION bin
-    )
-endif(NOT HALMD_BACKEND_EXECUTABLES)
-
+##
+# HALMD C++ modules
+#
+halmd_add_modules(
+  libhalmd_runner
+)
 add_subdirectory(algorithm)
 add_subdirectory(io)
 add_subdirectory(mdsim)
 add_subdirectory(observables)
 add_subdirectory(random)
 add_subdirectory(utility)
+
+##
+# Generate Lua binding function calls from module target sources
+#
+get_property(HALMD_MODULES GLOBAL PROPERTY HALMD_MODULES)
+
+foreach(source modules.hpp modules.cpp)
+  file(STRINGS "${source}.in" lines REGEX "@MODULE@" LIMIT_COUNT 1)
+  foreach(line ${lines})
+    if(line MATCHES "^(.*)@MODULE@(.*)$")
+      string(REPLACE ";" "${CMAKE_MATCH_2}\n${CMAKE_MATCH_1}" MODULE "${HALMD_MODULES}")
+    endif()
+  endforeach()
+  configure_file("${source}.in" "${source}" @ONLY)
+  set(MODULE)
+endforeach()
+
+configure_file(version.h.in version.h ESCAPE_QUOTES @ONLY)
+
+##
+# Add HALMD executable target
+#
+get_property(HALMD_LIBRARIES GLOBAL PROPERTY HALMD_LIBRARIES)
+
+add_executable(halmd
+  main.cpp
+  "${CMAKE_CURRENT_BINARY_DIR}/modules.cpp"
+  runner.cpp
+  script.cpp
+)
+target_link_libraries(halmd
+  ${HALMD_LIBRARIES}
+  ${HALMD_COMMON_LIBRARIES}
+)
+install(TARGETS halmd
+  RUNTIME DESTINATION bin
+)

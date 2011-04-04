@@ -18,21 +18,20 @@
  */
 
 #include <iomanip>
+#include <luabind/luabind.hpp>
 #include <sstream>
 #include <stdint.h> // <cstdint> is C++0x
 
-#include <halmd/utility/lua_wrapper/array_converter.hpp>
-#include <halmd/utility/lua_wrapper/long_long_converter.hpp> // *int64_t on x86
-#include <halmd/utility/lua_wrapper/map_converter.hpp>
-#include <halmd/utility/lua_wrapper/program_options.hpp>
+#include <halmd/config.hpp>
+#include <halmd/utility/lua/array_converter.hpp>
+#include <halmd/utility/lua/long_long_converter.hpp> // *int64_t on x86
+#include <halmd/utility/lua/map_converter.hpp>
 #include <halmd/utility/program_options/program_options.hpp>
 
 using namespace boost;
 using namespace std;
 
 namespace halmd
-{
-namespace lua_wrapper { namespace program_options
 {
 
 template <typename T>
@@ -120,10 +119,10 @@ static void po_add_options_description(
 /**
  * register Boost Program_otions with Lua
  */
-int luaopen(lua_State* L)
+HALMD_LUA_API int luaopen_libhalmd_utility_lua_program_options(lua_State* L)
 {
     using namespace luabind;
-    module(L, "halmd_wrapper")
+    module(L, "libhalmd")
     [
         namespace_("po")
         [
@@ -212,7 +211,5 @@ int luaopen(lua_State* L)
     ];
     return 0;
 }
-
-}} // namespace lua_wrapper::program_options
 
 } // namespace halmd

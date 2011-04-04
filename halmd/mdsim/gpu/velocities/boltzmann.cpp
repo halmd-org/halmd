@@ -19,7 +19,7 @@
 
 #include <halmd/io/logger.hpp>
 #include <halmd/mdsim/gpu/velocities/boltzmann.hpp>
-#include <halmd/utility/lua_wrapper/lua_wrapper.hpp>
+#include <halmd/utility/lua/lua.hpp>
 
 using namespace boost;
 using namespace std;
@@ -145,46 +145,34 @@ void boltzmann<dimension, float_type, RandomNumberGenerator>::luaopen(lua_State*
     typedef typename _Base::_Base _Base_Base;
     using namespace luabind;
     static string class_name(module_name() + ("_" + lexical_cast<string>(dimension) + "_"));
-    module(L)
+    module(L, "libhalmd")
     [
-        namespace_("halmd_wrapper")
+        namespace_("mdsim")
         [
-            namespace_("mdsim")
+            namespace_("gpu")
             [
-                namespace_("gpu")
+                namespace_("velocities")
                 [
-                    namespace_("velocities")
-                    [
-                        class_<boltzmann, shared_ptr<_Base_Base>, bases<_Base_Base, _Base> >(class_name.c_str())
-                            .def(constructor<
-                                 shared_ptr<particle_type>
-                               , shared_ptr<random_type>
-                               , double
-                             >())
-                            .property("temperature", &boltzmann::temperature)
-                            .property("module_name", &module_name_wrapper<dimension, float_type, RandomNumberGenerator>)
-                    ]
+                    class_<boltzmann, shared_ptr<_Base_Base>, bases<_Base_Base, _Base> >(class_name.c_str())
+                        .def(constructor<
+                             shared_ptr<particle_type>
+                           , shared_ptr<random_type>
+                           , double
+                         >())
+                        .property("temperature", &boltzmann::temperature)
+                        .property("module_name", &module_name_wrapper<dimension, float_type, RandomNumberGenerator>)
                 ]
             ]
         ]
     ];
 }
 
-namespace // limit symbols to translation unit
+HALMD_LUA_API int luaopen_libhalmd_mdsim_gpu_velocities_boltzmann(lua_State* L)
 {
-
-__attribute__((constructor)) void register_lua()
-{
-    lua_wrapper::register_(2) //< distance of derived to base class
-    [
-        &boltzmann<3, float, random::gpu::rand48>::luaopen
-    ]
-    [
-        &boltzmann<2, float, random::gpu::rand48>::luaopen
-    ];
+    boltzmann<3, float, random::gpu::rand48>::luaopen(L);
+    boltzmann<2, float, random::gpu::rand48>::luaopen(L);
+    return 0;
 }
-
-} // namespace
 
 // explicit instantiation
 template class boltzmann<3, float, random::gpu::rand48>;

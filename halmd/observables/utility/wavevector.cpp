@@ -19,13 +19,14 @@
 
 #include <boost/bind.hpp>
 #include <cmath>
+#include <exception>
 #include <iterator>
 #include <sstream>
 
 #include <halmd/algorithm/host/pick_lattice_points.hpp>
 #include <halmd/io/logger.hpp>
 #include <halmd/observables/utility/wavevector.hpp>
-#include <halmd/utility/lua_wrapper/lua_wrapper.hpp>
+#include <halmd/utility/lua/lua.hpp>
 
 using namespace boost;
 using namespace std;
@@ -112,6 +113,11 @@ void wavevector<dimension>::init_()
         }
     }
 
+    if (wavenumber_.empty()) {
+        LOG_WARNING("Wavenumber grid is empty.");
+        throw std::logic_error("Constraints on wavevectors are incompatible with geometry of simulation box.");
+    }
+
     LOG_DEBUG("total number of wavevectors: " << wavevector_.size());
 }
 
@@ -120,50 +126,38 @@ void wavevector<dimension>::luaopen(lua_State* L)
 {
     using namespace luabind;
     static string class_name("wavevector_" + lexical_cast<string>(dimension) + "_");
-    module(L)
+    module(L, "libhalmd")
     [
-        namespace_("halmd_wrapper")
+        namespace_("observables")
         [
-            namespace_("observables")
+            namespace_("utility")
             [
-                namespace_("utility")
-                [
-                    class_<wavevector, shared_ptr<wavevector> >(class_name.c_str())
-                        .def(constructor<
-                             vector<double> const&
-                           , vector_type const&
-                           , double, unsigned int
-                        >())
-                        .def(constructor<
-                             double
-                           , vector_type const&
-                           , double, unsigned int
-                        >())
-                        .property("wavenumber", &wavevector::wavenumber)
-                        .property("value", &wavevector::value)
-                        .property("tolerance", &wavevector::tolerance)
-                        .property("maximum_count", &wavevector::maximum_count)
-                ]
+                class_<wavevector, shared_ptr<wavevector> >(class_name.c_str())
+                    .def(constructor<
+                         vector<double> const&
+                       , vector_type const&
+                       , double, unsigned int
+                    >())
+                    .def(constructor<
+                         double
+                       , vector_type const&
+                       , double, unsigned int
+                    >())
+                    .property("wavenumber", &wavevector::wavenumber)
+                    .property("value", &wavevector::value)
+                    .property("tolerance", &wavevector::tolerance)
+                    .property("maximum_count", &wavevector::maximum_count)
             ]
         ]
     ];
 }
 
-namespace // limit symbols to translation unit
+HALMD_LUA_API int luaopen_libhalmd_observables_utility_wavevector(lua_State* L)
 {
-
-__attribute__((constructor)) void register_lua()
-{
-    lua_wrapper::register_(0) //< distance of derived to base class
-    [
-        &wavevector<3>::luaopen
-    ]
-    [
-        &wavevector<2>::luaopen
-    ];
+    wavevector<3>::luaopen(L);
+    wavevector<2>::luaopen(L);
+    return 0;
 }
-
-} // namespace
 
 // explicit instantiation
 template class wavevector<3>;

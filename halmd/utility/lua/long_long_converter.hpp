@@ -17,8 +17,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef HALMD_UTILITY_LUA_WRAPPER_LONG_LONG_CONVERTER_HPP
-#define HALMD_UTILITY_LUA_WRAPPER_LONG_LONG_CONVERTER_HPP
+#ifndef HALMD_UTILITY_LUA_LONG_LONG_CONVERTER_HPP
+#define HALMD_UTILITY_LUA_LONG_LONG_CONVERTER_HPP
 
 #include <luabind/luabind.hpp>
 
@@ -88,4 +88,4 @@ struct default_converter<unsigned long long const&>
 
 } // namespace luabind
 
-#endif /* ! HALMD_UTILITY_LUA_WRAPPER_LONG_LONG_CONVERTER_HPP */
+#endif /* ! HALMD_UTILITY_LUA_LONG_LONG_CONVERTER_HPP */

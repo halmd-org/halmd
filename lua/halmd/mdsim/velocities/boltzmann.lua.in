@@ -30,18 +30,18 @@ local device = halmd.device
 -- grab C++ wrappers
 local boltzmann_wrapper = {
     host = {
-        [2] = halmd_wrapper.mdsim.host.velocities.boltzmann_2_
-      , [3] = halmd_wrapper.mdsim.host.velocities.boltzmann_3_
+        [2] = libhalmd.mdsim.host.velocities.boltzmann_2_
+      , [3] = libhalmd.mdsim.host.velocities.boltzmann_3_
     }
 }
-if halmd_wrapper.mdsim.gpu then
+if libhalmd.mdsim.gpu then
     boltzmann_wrapper.gpu = {
-        [2] = halmd_wrapper.mdsim.gpu.velocities.boltzmann_2_
-      , [3] = halmd_wrapper.mdsim.gpu.velocities.boltzmann_3_
+        [2] = libhalmd.mdsim.gpu.velocities.boltzmann_2_
+      , [3] = libhalmd.mdsim.gpu.velocities.boltzmann_3_
     }
 end
-local h5 = halmd_wrapper.h5
-local po = halmd_wrapper.po
+local h5 = libhalmd.h5
+local po = libhalmd.po
 -- grab standard library
 local assert = assert
 

@@ -25,7 +25,7 @@
 
 #include <halmd/io/logger.hpp>
 #include <halmd/mdsim/gpu/neighbour.hpp>
-#include <halmd/utility/lua_wrapper/lua_wrapper.hpp>
+#include <halmd/utility/lua/lua.hpp>
 #include <halmd/utility/scoped_timer.hpp>
 #include <halmd/utility/timer.hpp>
 
@@ -309,46 +309,34 @@ void neighbour<dimension, float_type>::luaopen(lua_State* L)
 {
     using namespace luabind;
     static string class_name("neighbour_" + lexical_cast<string>(dimension) + "_");
-    module(L)
+    module(L, "libhalmd")
     [
-        namespace_("halmd_wrapper")
+        namespace_("mdsim")
         [
-            namespace_("mdsim")
+            namespace_("gpu")
             [
-                namespace_("gpu")
-                [
-                    class_<neighbour, shared_ptr<_Base>, _Base>(class_name.c_str())
-                        .def(constructor<
-                            shared_ptr<particle_type>
-                          , shared_ptr<box_type>
-                          , matrix_type const&
-                          , double
-                          , double
-                        >())
-                        .def("register_runtimes", &neighbour::register_runtimes)
-                        .property("r_skin", &neighbour::r_skin)
-                        .property("cell_occupancy", &neighbour::cell_occupancy)
-                ]
+                class_<neighbour, shared_ptr<_Base>, _Base>(class_name.c_str())
+                    .def(constructor<
+                        shared_ptr<particle_type>
+                      , shared_ptr<box_type>
+                      , matrix_type const&
+                      , double
+                      , double
+                    >())
+                    .def("register_runtimes", &neighbour::register_runtimes)
+                    .property("r_skin", &neighbour::r_skin)
+                    .property("cell_occupancy", &neighbour::cell_occupancy)
             ]
         ]
     ];
 }
 
-namespace // limit symbols to translation unit
+HALMD_LUA_API int luaopen_libhalmd_mdsim_gpu_neighbour(lua_State* L)
 {
-
-__attribute__((constructor)) void register_lua()
-{
-    lua_wrapper::register_(1) //< distance of derived to base class
-    [
-        &neighbour<3, float>::luaopen
-    ]
-    [
-        &neighbour<2, float>::luaopen
-    ];
+    neighbour<3, float>::luaopen(L);
+    neighbour<2, float>::luaopen(L);
+    return 0;
 }
-
-} // namespace
 
 // explicit instantiation
 template class neighbour<3, float>;

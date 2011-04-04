@@ -22,15 +22,14 @@
 
 #include <halmd/io/logger.hpp>
 #include <halmd/script.hpp>
-#include <halmd/utility/lua_wrapper/error.hpp>
-#include <halmd/utility/lua_wrapper/hdf5.hpp>
-#include <halmd/utility/lua_wrapper/lua_wrapper.hpp>
-#include <halmd/utility/lua_wrapper/program_options.hpp>
-#include <halmd/utility/lua_wrapper/ublas.hpp>
+#include <halmd/utility/lua/lua.hpp>
+#include <halmd/utility/lua/program_options.hpp>
 #include <halmd/version.h>
 
 using namespace boost;
 using namespace std;
+
+HALMD_LUA_API int luaopen_libhalmd(lua_State* L);
 
 namespace halmd
 {
@@ -74,11 +73,9 @@ void script::package_path()
     // search for Lua scripts in installation prefix
     lua_pushliteral(L, ";" HALMD_INSTALL_PREFIX "/share/?.lua");
     lua_pushliteral(L, ";" HALMD_INSTALL_PREFIX "/share/?/init.lua");
-    lua_pushliteral(L, ";" HALMD_INSTALL_PREFIX "/lib/?.lua");
-    lua_pushliteral(L, ";" HALMD_INSTALL_PREFIX "/lib/?/init.lua");
 
     // append above literals to default package.path
-    lua_concat(L, 7);
+    lua_concat(L, 5);
     // set new package.path
     lua_rawset(L, -3);
     // remove table "package"
@@ -94,15 +91,13 @@ void script::load_wrapper()
 {
     lua_State* L = get_pointer(L_); //< get raw pointer for Lua C API
 
-    luabind::open(L); //< setup global structures and Lua class support
+    using namespace luabind;
 
-    luabind::bind_class_info(L); //< class_info(), class_names()
+    open(L); //< setup global structures and Lua class support
 
-    lua_wrapper::open(L); //< register HALMD Lua wrappers
+    bind_class_info(L); //< class_info(), class_names()
 
-    lua_wrapper::hdf5::luaopen(L);
-    lua_wrapper::program_options::luaopen(L);
-    lua_wrapper::ublas::luaopen(L);
+    luaopen_libhalmd(L);
 }
 
 /**
@@ -116,7 +111,7 @@ void script::load_library()
 
     try {
 #ifndef NDEBUG
-        lua_wrapper::scoped_pcall_callback pcall_callback(&traceback);
+        scoped_pcall_callback pcall_callback(&traceback);
 #endif
         call_function<void>(L, "require", "halmd");
     }
@@ -142,7 +137,7 @@ void script::options(options_parser& parser)
     object options(globals(L)["halmd"]["option"]["get"]);
     try {
 #ifndef NDEBUG
-        lua_wrapper::scoped_pcall_callback pcall_callback(&traceback);
+        scoped_pcall_callback pcall_callback(&traceback);
 #endif
         call_function<void>(options, ref(parser));
     }
@@ -165,7 +160,7 @@ void script::parsed(po::variables_map const& vm)
     object options(globals(L)["halmd"]["option"]["set"]);
     try {
 #ifndef NDEBUG
-        lua_wrapper::scoped_pcall_callback pcall_callback(&traceback);
+        scoped_pcall_callback pcall_callback(&traceback);
 #endif
         call_function<void>(options, vm);
     }
@@ -189,7 +184,7 @@ shared_ptr<runner> script::run()
     shared_ptr<runner> sampler;
     try {
 #ifndef NDEBUG
-        lua_wrapper::scoped_pcall_callback pcall_callback(&traceback);
+        scoped_pcall_callback pcall_callback(&traceback);
 #endif
         sampler = call_function<shared_ptr<runner> >(L, "halmd");
     }

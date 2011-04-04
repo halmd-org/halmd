@@ -21,7 +21,7 @@
 
 #include <halmd/io/logger.hpp>
 #include <halmd/observables/host/density_mode.hpp>
-#include <halmd/utility/lua_wrapper/lua_wrapper.hpp>
+#include <halmd/utility/lua/lua.hpp>
 #include <halmd/utility/scoped_timer.hpp>
 #include <halmd/utility/timer.hpp>
 
@@ -108,50 +108,34 @@ void density_mode<dimension, float_type>::luaopen(lua_State* L)
 {
     using namespace luabind;
     static string class_name("density_mode_" + lexical_cast<string>(dimension) + "_");
-    module(L)
+    module(L, "libhalmd")
     [
-        namespace_("halmd_wrapper")
+        namespace_("observables")
         [
-            namespace_("observables")
+            namespace_("host")
             [
-                namespace_("host")
-                [
-                    class_<density_mode, shared_ptr<_Base>, _Base>(class_name.c_str())
-                        .def(constructor<
-                            shared_ptr<phase_space_type>
-                          , shared_ptr<wavevector_type>
-                        >())
-                        .def("register_runtimes", &density_mode::register_runtimes)
-                ]
+                class_<density_mode, shared_ptr<_Base>, _Base>(class_name.c_str())
+                    .def(constructor<
+                        shared_ptr<phase_space_type>
+                      , shared_ptr<wavevector_type>
+                    >())
+                    .def("register_runtimes", &density_mode::register_runtimes)
             ]
         ]
     ];
 }
 
-namespace  // limit symbols to translation unit
+HALMD_LUA_API int luaopen_libhalmd_observables_host_density_mode(lua_State* L)
 {
-
-__attribute__ ((constructor)) void register_lua()
-{
-    lua_wrapper::register_(1)	//< distance of derived to base class
 #ifndef USE_HOST_SINGLE_PRECISION
-    [
-        &density_mode<3, double>::luaopen
-    ]
-    [
-        &density_mode<2, double>::luaopen
-    ];
+    density_mode<3, double>::luaopen(L);
+    density_mode<2, double>::luaopen(L);
 #else
-    [
-        &density_mode<3, float>::luaopen
-    ]
-    [
-        &density_mode<2, float>::luaopen
-    ];
+    density_mode<3, float>::luaopen(L);
+    density_mode<2, float>::luaopen(L);
 #endif
+    return 0;
 }
-
-}  // namespace
 
 // explicit instantiation
 #ifndef USE_HOST_SINGLE_PRECISION

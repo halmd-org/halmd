@@ -21,7 +21,7 @@
 #include <string>
 
 #include <halmd/observables/samples/density_mode.hpp>
-#include <halmd/utility/lua_wrapper/lua_wrapper.hpp>
+#include <halmd/utility/lua/lua.hpp>
 
 using namespace boost;
 using namespace std;
@@ -49,7 +49,7 @@ void density_mode<dimension>::luaopen(lua_State* L)
 {
     using namespace luabind;
     static string class_name("density_mode_" + lexical_cast<string>(dimension) + "_");
-    module(L, "halmd_wrapper")
+    module(L, "libhalmd")
     [
         namespace_("observables")
         [
@@ -62,21 +62,12 @@ void density_mode<dimension>::luaopen(lua_State* L)
     ];
 }
 
-namespace // limit symbols to translation unit
+HALMD_LUA_API int luaopen_libhalmd_observables_samples_density_mode(lua_State* L)
 {
-
-__attribute__((constructor)) void register_lua()
-{
-    lua_wrapper::register_(0) //< distance of derived to base class
-    [
-        &density_mode<3>::luaopen
-    ]
-    [
-        &density_mode<2>::luaopen
-    ];
+    density_mode<3>::luaopen(L);
+    density_mode<2>::luaopen(L);
+    return 0;
 }
-
-} // namespace
 
 template class density_mode<3>;
 template class density_mode<2>;

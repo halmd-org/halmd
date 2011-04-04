@@ -17,21 +17,21 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef HALMD_UTILITY_LUA_WRAPPER_MAP_CONVERTER_HPP
-#define HALMD_UTILITY_LUA_WRAPPER_MAP_CONVERTER_HPP
+#ifndef HALMD_UTILITY_LUA_VECTOR_CONVERTER_HPP
+#define HALMD_UTILITY_LUA_VECTOR_CONVERTER_HPP
 
 #include <luabind/luabind.hpp>
-#include <map>
+#include <vector>
 
 namespace luabind
 {
 
 /**
- * Luabind converter for STL map
+ * Luabind converter for STL vector
  */
-template <typename Key, typename T>
-struct default_converter<std::map<Key, T> >
-  : native_converter_base<std::map<Key, T> >
+template <typename T>
+struct default_converter<std::vector<T> >
+  : native_converter_base<std::vector<T> >
 {
 
     //! compute Lua to C++ conversion score
@@ -41,32 +41,32 @@ struct default_converter<std::map<Key, T> >
     }
 
     //! convert from Lua to C++
-    std::map<Key, T> from(lua_State* L, int index)
+    std::vector<T> from(lua_State* L, int index)
     {
-        std::map<Key, T> m;
+        std::vector<T> v;
         for (iterator i(object(from_stack(L, index))), end; i != end; ++i) {
-            m[object_cast<Key>(i.key())] = object_cast<T>(*i);
+            v.push_back(object_cast<T>(*i));
         }
-        return m;
+        return v;
     }
 
     //! convert from C++ to Lua
-    void to(lua_State* L, std::map<Key, T> const& m)
+    void to(lua_State* L, std::vector<T> const& v)
     {
         object table = newtable(L);
-        typename std::map<Key, T>::const_iterator i, end = m.end();
-        for (i = m.begin(); i != end; ++i) {
+        for (std::size_t i = 0; i < v.size(); ++i) {
             // default_converter<T> only invoked with reference wrapper
-            table[i->first] = boost::cref(i->second);
+            table[i + 1] = boost::cref(v[i]);
         }
         table.push(L);
     }
 };
 
-template <typename Key, typename T>
-struct default_converter<std::map<Key, T> const&>
-  : default_converter<std::map<Key, T> > {};
+template <typename T>
+struct default_converter<std::vector<T> const&>
+  : default_converter<std::vector<T> > {};
+
 
 } // namespace luabind
 
-#endif /* ! HALMD_UTILITY_LUA_WRAPPER_MAP_CONVERTER_HPP */
+#endif /* ! HALMD_UTILITY_LUA_VECTOR_CONVERTER_HPP */

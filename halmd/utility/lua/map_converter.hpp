@@ -17,25 +17,21 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef HALMD_UTILITY_LUA_WRAPPER_FIXED_VECTOR_CONVERTER_HPP
-#define HALMD_UTILITY_LUA_WRAPPER_FIXED_VECTOR_CONVERTER_HPP
+#ifndef HALMD_UTILITY_LUA_MAP_CONVERTER_HPP
+#define HALMD_UTILITY_LUA_MAP_CONVERTER_HPP
 
-#include <algorithm>
-#include <boost/bind.hpp>
-#include <boost/iterator/transform_iterator.hpp>
 #include <luabind/luabind.hpp>
-
-#include <halmd/numeric/blas/fixed_vector.hpp>
+#include <map>
 
 namespace luabind
 {
 
 /**
- * Luabind converter for fixed-size algebraic vector
+ * Luabind converter for STL map
  */
-template <typename T, std::size_t N>
-struct default_converter<halmd::fixed_vector<T, N> >
-  : native_converter_base<halmd::fixed_vector<T, N> >
+template <typename Key, typename T>
+struct default_converter<std::map<Key, T> >
+  : native_converter_base<std::map<Key, T> >
 {
 
     //! compute Lua to C++ conversion score
@@ -45,33 +41,32 @@ struct default_converter<halmd::fixed_vector<T, N> >
     }
 
     //! convert from Lua to C++
-    halmd::fixed_vector<T, N> from(lua_State* L, int index)
+    std::map<Key, T> from(lua_State* L, int index)
     {
-        halmd::fixed_vector<T, N> v;
-        object table(from_stack(L, index));
-        for (std::size_t i = 0; i < v.size(); ++i) {
-            v[i] = object_cast<T>(table[i + 1]);
+        std::map<Key, T> m;
+        for (iterator i(object(from_stack(L, index))), end; i != end; ++i) {
+            m[object_cast<Key>(i.key())] = object_cast<T>(*i);
         }
-        return v;
+        return m;
     }
 
     //! convert from C++ to Lua
-    void to(lua_State* L, halmd::fixed_vector<T, N> const& v)
+    void to(lua_State* L, std::map<Key, T> const& m)
     {
         object table = newtable(L);
-        for (std::size_t i = 0; i < v.size(); ++i) {
+        typename std::map<Key, T>::const_iterator i, end = m.end();
+        for (i = m.begin(); i != end; ++i) {
             // default_converter<T> only invoked with reference wrapper
-            table[i + 1] = boost::cref(v[i]);
+            table[i->first] = boost::cref(i->second);
         }
         table.push(L);
     }
 };
 
-template <typename T, std::size_t N>
-struct default_converter<halmd::fixed_vector<T, N> const&>
-  : default_converter<halmd::fixed_vector<T, N> > {};
-
+template <typename Key, typename T>
+struct default_converter<std::map<Key, T> const&>
+  : default_converter<std::map<Key, T> > {};
 
 } // namespace luabind
 
-#endif /* ! HALMD_UTILITY_LUA_WRAPPER_FIXED_VECTOR_CONVERTER_HPP */
+#endif /* ! HALMD_UTILITY_LUA_MAP_CONVERTER_HPP */

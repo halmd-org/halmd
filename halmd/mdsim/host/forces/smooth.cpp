@@ -21,7 +21,7 @@
 
 #include <halmd/io/logger.hpp>
 #include <halmd/mdsim/host/forces/smooth.hpp>
-#include <halmd/utility/lua_wrapper/lua_wrapper.hpp>
+#include <halmd/utility/lua/lua.hpp>
 
 using namespace boost;
 using namespace std;
@@ -48,49 +48,33 @@ void smooth<dimension, float_type>::luaopen(lua_State* L)
 {
     using namespace luabind;
     static string class_name("smooth_" + lexical_cast<string>(dimension) + "_");
-    module(L)
+    module(L, "libhalmd")
     [
-        namespace_("halmd_wrapper")
+        namespace_("mdsim")
         [
-            namespace_("mdsim")
+            namespace_("host")
             [
-                namespace_("host")
+                namespace_("forces")
                 [
-                    namespace_("forces")
-                    [
-                        class_<smooth, shared_ptr<smooth> >(class_name.c_str())
-                            .def(constructor<double>())
-                    ]
+                    class_<smooth, shared_ptr<smooth> >(class_name.c_str())
+                        .def(constructor<double>())
                 ]
             ]
         ]
     ];
 }
 
-namespace // limit symbols to translation unit
+HALMD_LUA_API int luaopen_libhalmd_mdsim_host_forces_smooth(lua_State* L)
 {
-
-__attribute__((constructor)) void register_lua()
-{
-    lua_wrapper::register_(2) //< distance of derived to base class
 #ifndef USE_HOST_SINGLE_PRECISION
-    [
-        &smooth<3, double>::luaopen
-    ]
-    [
-        &smooth<2, double>::luaopen
-    ];
+    smooth<3, double>::luaopen(L);
+    smooth<2, double>::luaopen(L);
 #else
-    [
-        &smooth<3, float>::luaopen
-    ]
-    [
-        &smooth<2, float>::luaopen
-    ];
+    smooth<3, float>::luaopen(L);
+    smooth<2, float>::luaopen(L);
 #endif
+    return 0;
 }
-
-} // namespace
 
 // explicit instantiation
 #ifndef USE_HOST_SINGLE_PRECISION

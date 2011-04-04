@@ -18,7 +18,7 @@
  */
 
 #include <halmd/mdsim/gpu/force.hpp>
-#include <halmd/utility/lua_wrapper/lua_wrapper.hpp>
+#include <halmd/utility/lua/lua.hpp>
 
 using namespace boost;
 using namespace std;
@@ -33,36 +33,24 @@ void force<dimension, float_type>::luaopen(lua_State* L)
 {
     using namespace luabind;
     static string class_name("force_" + lexical_cast<string>(dimension) + "_");
-    module(L)
+    module(L, "libhalmd")
     [
-        namespace_("halmd_wrapper")
+        namespace_("mdsim")
         [
-            namespace_("mdsim")
+            namespace_("gpu")
             [
-                namespace_("gpu")
-                [
-                    class_<force, shared_ptr<_Base>, _Base>(class_name.c_str())
-                ]
+                class_<force, shared_ptr<_Base>, _Base>(class_name.c_str())
             ]
         ]
     ];
 }
 
-namespace // limit symbols to translation unit
+HALMD_LUA_API int luaopen_libhalmd_mdsim_gpu_force(lua_State* L)
 {
-
-__attribute__((constructor)) void register_lua()
-{
-    lua_wrapper::register_(1) //< distance of derived to base class
-    [
-        &force<3, float>::luaopen
-    ]
-    [
-        &force<2, float>::luaopen
-    ];
+    force<3, float>::luaopen(L);
+    force<2, float>::luaopen(L);
+    return 0;
 }
-
-} // namespace
 
 }} // namespace mdsim::gpu
 

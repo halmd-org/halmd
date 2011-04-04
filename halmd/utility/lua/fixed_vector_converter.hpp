@@ -17,41 +17,27 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef HALMD_UTILITY_LUA_WRAPPER_UBLAS_HPP
-#define HALMD_UTILITY_LUA_WRAPPER_UBLAS_HPP
+#ifndef HALMD_UTILITY_LUA_FIXED_VECTOR_CONVERTER_HPP
+#define HALMD_UTILITY_LUA_FIXED_VECTOR_CONVERTER_HPP
 
+#include <algorithm>
+#include <boost/bind.hpp>
+#include <boost/iterator/transform_iterator.hpp>
 #include <luabind/luabind.hpp>
 
-namespace halmd
-{
-namespace lua_wrapper { namespace ublas
-{
-
-int luaopen(lua_State* L);
-
-}} // namespace lua_wrapper::ublas
-
-} // namespace luabind
-
-namespace boost { namespace numeric { namespace ublas
-{
-
-// forward declaration
-template <typename T, typename A>
-struct unbounded_array;
-
-}}} // namespace boost::numeric::ublas
+#include <halmd/numeric/blas/fixed_vector.hpp>
 
 namespace luabind
 {
 
 /**
- * Luabind converter for Boost uBLAS unbounded storage array
+ * Luabind converter for fixed-size algebraic vector
  */
-template <typename T, typename A>
-struct default_converter<boost::numeric::ublas::unbounded_array<T, A> >
-  : native_converter_base<boost::numeric::ublas::unbounded_array<T, A> >
+template <typename T, std::size_t N>
+struct default_converter<halmd::fixed_vector<T, N> >
+  : native_converter_base<halmd::fixed_vector<T, N> >
 {
+
     //! compute Lua to C++ conversion score
     static int compute_score(lua_State* L, int index)
     {
@@ -59,10 +45,9 @@ struct default_converter<boost::numeric::ublas::unbounded_array<T, A> >
     }
 
     //! convert from Lua to C++
-    boost::numeric::ublas::unbounded_array<T, A> from(lua_State* L, int index)
+    halmd::fixed_vector<T, N> from(lua_State* L, int index)
     {
-        std::size_t size = luaL_getn(L, index);
-        boost::numeric::ublas::unbounded_array<T, A> v(size);
+        halmd::fixed_vector<T, N> v;
         object table(from_stack(L, index));
         for (std::size_t i = 0; i < v.size(); ++i) {
             v[i] = object_cast<T>(table[i + 1]);
@@ -71,7 +56,7 @@ struct default_converter<boost::numeric::ublas::unbounded_array<T, A> >
     }
 
     //! convert from C++ to Lua
-    void to(lua_State* L, boost::numeric::ublas::unbounded_array<T, A> const& v)
+    void to(lua_State* L, halmd::fixed_vector<T, N> const& v)
     {
         object table = newtable(L);
         for (std::size_t i = 0; i < v.size(); ++i) {
@@ -82,10 +67,11 @@ struct default_converter<boost::numeric::ublas::unbounded_array<T, A> >
     }
 };
 
-template <typename T, typename A>
-struct default_converter<boost::numeric::ublas::unbounded_array<T, A> const&>
-  : default_converter<boost::numeric::ublas::unbounded_array<T, A> > {};
+template <typename T, std::size_t N>
+struct default_converter<halmd::fixed_vector<T, N> const&>
+  : default_converter<halmd::fixed_vector<T, N> > {};
+
 
 } // namespace luabind
 
-#endif /* ! HALMD_UTILITY_LUA_WRAPPER_UBLAS_HPP */
+#endif /* ! HALMD_UTILITY_LUA_FIXED_VECTOR_CONVERTER_HPP */

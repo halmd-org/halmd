@@ -25,8 +25,8 @@ require("halmd.mdsim.core")
 local mdsim = halmd.mdsim
 -- grab C++ wrappers
 local wavevector_wrapper = {
-    [2] = halmd_wrapper.observables.utility.wavevector_2_
-  , [3] = halmd_wrapper.observables.utility.wavevector_3_
+    [2] = libhalmd.observables.utility.wavevector_2_
+  , [3] = libhalmd.observables.utility.wavevector_3_
 }
 -- grab standard library
 local assert = assert
@@ -49,6 +49,7 @@ function new(args)
     local maximum_wavenumber = args.maximum_wavenumber
     local tolerance = assert(args.tolerance)
     local maximum_count = assert(args.maximum_count)
+    assert(wavenumber or maximum_wavenumber)
 
     -- dependency injection
     local core = mdsim.core()
@@ -60,7 +61,5 @@ function new(args)
         return wavevector(wavenumber, box.length, tolerance, maximum_count)
     elseif maximum_wavenumber then
         return wavevector(maximum_wavenumber, box.length, tolerance, maximum_count)
-    else
-        return nil
     end
 end

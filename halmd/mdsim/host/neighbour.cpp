@@ -25,7 +25,7 @@
 
 #include <halmd/io/logger.hpp>
 #include <halmd/mdsim/host/neighbour.hpp>
-#include <halmd/utility/lua_wrapper/lua_wrapper.hpp>
+#include <halmd/utility/lua/lua.hpp>
 
 using namespace boost;
 using namespace std;
@@ -189,7 +189,10 @@ void neighbour<dimension, float_type>::compute_cell_neighbours(size_t i, cell_li
 {
     BOOST_FOREACH(size_t j, c) {
         // skip identical particle and particle pair permutations if same cell
-        if (same_cell && particle->tag[j] <= particle->tag[i]) {
+        if (same_cell
+         && particle->type[j] <= particle->type[i] //< lexical order of (type, tag)
+         && particle->tag[j] <= particle->tag[i]
+        ) {
             continue;
         }
 
@@ -217,52 +220,36 @@ void neighbour<dimension, float_type>::luaopen(lua_State* L)
 {
     using namespace luabind;
     static string class_name("neighbour_" + lexical_cast<string>(dimension) + "_");
-    module(L)
+    module(L, "libhalmd")
     [
-        namespace_("halmd_wrapper")
+        namespace_("mdsim")
         [
-            namespace_("mdsim")
+            namespace_("host")
             [
-                namespace_("host")
-                [
-                    class_<neighbour, shared_ptr<_Base>, _Base>(class_name.c_str())
-                        .def(constructor<
-                             shared_ptr<particle_type>
-                           , shared_ptr<box_type>
-                           , matrix_type const&
-                           , double
-                         >())
-                        .property("r_skin", &neighbour::r_skin)
-                ]
+                class_<neighbour, shared_ptr<_Base>, _Base>(class_name.c_str())
+                    .def(constructor<
+                         shared_ptr<particle_type>
+                       , shared_ptr<box_type>
+                       , matrix_type const&
+                       , double
+                     >())
+                    .property("r_skin", &neighbour::r_skin)
             ]
         ]
     ];
 }
 
-namespace // limit symbols to translation unit
+HALMD_LUA_API int luaopen_libhalmd_mdsim_host_neighbour(lua_State* L)
 {
-
-__attribute__((constructor)) void register_lua()
-{
-    lua_wrapper::register_(1) //< distance of derived to base class
 #ifndef USE_HOST_SINGLE_PRECISION
-    [
-        &neighbour<3, double>::luaopen
-    ]
-    [
-        &neighbour<2, double>::luaopen
-    ];
+    neighbour<3, double>::luaopen(L);
+    neighbour<2, double>::luaopen(L);
 #else
-    [
-        &neighbour<3, float>::luaopen
-    ]
-    [
-        &neighbour<2, float>::luaopen
-    ];
+    neighbour<3, float>::luaopen(L);
+    neighbour<2, float>::luaopen(L);
 #endif
+    return 0;
 }
-
-} // namespace
 
 // explicit instantiation
 #ifndef USE_HOST_SINGLE_PRECISION

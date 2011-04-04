@@ -22,7 +22,7 @@
 #include <halmd/io/logger.hpp>
 #include <halmd/io/trajectory/writers/h5md.hpp>
 #include <halmd/io/utility/hdf5.hpp>
-#include <halmd/utility/lua_wrapper/lua_wrapper.hpp>
+#include <halmd/utility/lua/lua.hpp>
 #include <halmd/utility/demangle.hpp>
 
 using namespace boost;
@@ -66,9 +66,9 @@ h5md<dimension, float_type>::h5md(
         H5::DataSet v = h5xx::create_dataset<sample_vector_type>(type, "velocity", size);
 
         // particle positions
-        writers_.push_back(h5xx::make_dataset_writer(r, &*sample->r[i]));
+        writers_.push_back(h5xx::make_dataset_writer(r, sample->r[i].get()));
         // particle velocities
-        writers_.push_back(h5xx::make_dataset_writer(v, &*sample->v[i]));
+        writers_.push_back(h5xx::make_dataset_writer(v, sample->v[i].get()));
     }
 
     // simulation time in reduced units
@@ -107,50 +107,34 @@ void h5md<dimension, float_type>::luaopen(lua_State* L)
 {
     using namespace luabind;
     static string class_name("h5md_" + lexical_cast<string>(dimension) + "_" + demangled_name<float_type>() + "_");
-    module(L)
+    module(L, "libhalmd")
     [
-        namespace_("halmd_wrapper")
+        namespace_("io")
         [
-            namespace_("io")
+            namespace_("trajectory")
             [
-                namespace_("trajectory")
+                namespace_("writers")
                 [
-                    namespace_("writers")
-                    [
-                        class_<h5md, shared_ptr<_Base>, _Base>(class_name.c_str())
-                            .def(constructor<
-                                shared_ptr<sample_type>
-                              , string const&
-                            >())
-                            .def("file", &h5md::file)
-                    ]
+                    class_<h5md, shared_ptr<_Base>, _Base>(class_name.c_str())
+                        .def(constructor<
+                            shared_ptr<sample_type>
+                          , string const&
+                        >())
+                        .def("file", &h5md::file)
                 ]
             ]
         ]
     ];
 }
 
-namespace // limit symbols to translation unit
+HALMD_LUA_API int luaopen_libhalmd_io_trajectory_writers_h5md(lua_State* L)
 {
-
-__attribute__((constructor)) void register_lua()
-{
-    lua_wrapper::register_(1) //< distance of derived to base class
-    [
-        &h5md<3, double>::luaopen
-    ]
-    [
-        &h5md<2, double>::luaopen
-    ]
-    [
-        &h5md<3, float>::luaopen
-    ]
-    [
-        &h5md<2, float>::luaopen
-    ];
+    h5md<3, double>::luaopen(L);
+    h5md<2, double>::luaopen(L);
+    h5md<3, float>::luaopen(L);
+    h5md<2, float>::luaopen(L);
+    return 0;
 }
-
-} // namespace
 
 }}} // namespace io::trajectory::writers
 

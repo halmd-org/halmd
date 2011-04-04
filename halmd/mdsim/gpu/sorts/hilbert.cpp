@@ -25,7 +25,7 @@
 #include <halmd/algorithm/gpu/radix_sort.hpp>
 #include <halmd/io/logger.hpp>
 #include <halmd/mdsim/gpu/sorts/hilbert.hpp>
-#include <halmd/utility/lua_wrapper/lua_wrapper.hpp>
+#include <halmd/utility/lua/lua.hpp>
 #include <halmd/utility/scoped_timer.hpp>
 #include <halmd/utility/timer.hpp>
 
@@ -95,7 +95,7 @@ void hilbert<dimension, float_type>::order()
  * map particles to Hilbert curve
  */
 template <int dimension, typename float_type>
-void hilbert<dimension, float_type>::map(cuda::vector<unsigned int> g_map)
+void hilbert<dimension, float_type>::map(cuda::vector<unsigned int>& g_map)
 {
     scoped_timer<timer> timer_(runtime_.map);
     cuda::configure(particle->dim.grid, particle->dim.block);
@@ -106,7 +106,7 @@ void hilbert<dimension, float_type>::map(cuda::vector<unsigned int> g_map)
  * generate permutation
  */
 template <int dimension, typename float_type>
-void hilbert<dimension, float_type>::permutation(cuda::vector<unsigned int> g_map, cuda::vector<unsigned int> g_index)
+void hilbert<dimension, float_type>::permutation(cuda::vector<unsigned int>& g_map, cuda::vector<unsigned int>& g_index)
 {
     scoped_timer<timer> timer_(runtime_.permutation);
     cuda::configure(particle->dim.grid, particle->dim.block);
@@ -119,7 +119,7 @@ void hilbert<dimension, float_type>::permutation(cuda::vector<unsigned int> g_ma
  * order particles by permutation
  */
 template <int dimension, typename float_type>
-void hilbert<dimension, float_type>::order(cuda::vector<unsigned int> g_index)
+void hilbert<dimension, float_type>::order(cuda::vector<unsigned int> const& g_index)
 {
     scoped_timer<timer> timer_(runtime_.order);
 
@@ -153,45 +153,33 @@ void hilbert<dimension, float_type>::luaopen(lua_State* L)
 {
     using namespace luabind;
     static string class_name("hilbert_" + lexical_cast<string>(dimension) + "_");
-    module(L)
+    module(L, "libhalmd")
     [
-        namespace_("halmd_wrapper")
+        namespace_("mdsim")
         [
-            namespace_("mdsim")
+            namespace_("gpu")
             [
-                namespace_("gpu")
+                namespace_("sorts")
                 [
-                    namespace_("sorts")
-                    [
-                        class_<hilbert, shared_ptr<_Base>, _Base>(class_name.c_str())
-                            .def(constructor<
-                                shared_ptr<particle_type>
-                              , shared_ptr<box_type>
-                            >())
-                            .property("module_name", &module_name_wrapper<dimension, float_type>)
-                            .def("register_runtimes", &hilbert::register_runtimes)
-                    ]
+                    class_<hilbert, shared_ptr<_Base>, _Base>(class_name.c_str())
+                        .def(constructor<
+                            shared_ptr<particle_type>
+                          , shared_ptr<box_type>
+                        >())
+                        .property("module_name", &module_name_wrapper<dimension, float_type>)
+                        .def("register_runtimes", &hilbert::register_runtimes)
                 ]
             ]
         ]
     ];
 }
 
-namespace // limit symbols to translation unit
+HALMD_LUA_API int luaopen_libhalmd_mdsim_gpu_sorts_hilbert(lua_State* L)
 {
-
-__attribute__((constructor)) void register_lua()
-{
-    lua_wrapper::register_(1) //< distance of derived to base class
-    [
-        &hilbert<3, float>::luaopen
-    ]
-    [
-        &hilbert<2, float>::luaopen
-    ];
+    hilbert<3, float>::luaopen(L);
+    hilbert<2, float>::luaopen(L);
+    return 0;
 }
-
-} // namespace
 
 // explicit instantiation
 template class hilbert<3, float>;

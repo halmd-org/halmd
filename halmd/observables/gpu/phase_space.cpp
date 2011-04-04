@@ -23,7 +23,7 @@
 #include <halmd/mdsim/gpu/particle_kernel.cuh>
 #include <halmd/observables/gpu/phase_space.hpp>
 #include <halmd/observables/gpu/phase_space_kernel.hpp>
-#include <halmd/utility/lua_wrapper/lua_wrapper.hpp>
+#include <halmd/utility/lua/lua.hpp>
 
 using namespace boost;
 using namespace std;
@@ -141,7 +141,7 @@ void phase_space<gpu::samples::phase_space<dimension, float_type> >::luaopen(lua
 {
     using namespace luabind;
     static string class_name("phase_space_" + lexical_cast<string>(dimension) + "_");
-    module(L, "halmd_wrapper")
+    module(L, "libhalmd")
     [
         namespace_("observables")
         [
@@ -166,7 +166,7 @@ void phase_space<host::samples::phase_space<dimension, float_type> >::luaopen(lu
 {
     using namespace luabind;
     static string class_name("phase_space_" + lexical_cast<string>(dimension) + "_");
-    module(L, "halmd_wrapper")
+    module(L, "libhalmd")
     [
         namespace_("observables")
         [
@@ -186,27 +186,14 @@ void phase_space<host::samples::phase_space<dimension, float_type> >::luaopen(lu
     ];
 }
 
-namespace // limit symbols to translation unit
+HALMD_LUA_API int luaopen_libhalmd_observables_gpu_phase_space(lua_State* L)
 {
-
-__attribute__((constructor)) void register_lua()
-{
-    lua_wrapper::register_(1) //< distance of derived to base class
-    [
-        &phase_space<gpu::samples::phase_space<3, float> >::luaopen
-    ]
-    [
-        &phase_space<gpu::samples::phase_space<2, float> >::luaopen
-    ]
-    [
-        &phase_space<host::samples::phase_space<3, float> >::luaopen
-    ]
-    [
-        &phase_space<host::samples::phase_space<2, float> >::luaopen
-    ];
+    phase_space<gpu::samples::phase_space<3, float> >::luaopen(L);
+    phase_space<gpu::samples::phase_space<2, float> >::luaopen(L);
+    phase_space<host::samples::phase_space<3, float> >::luaopen(L);
+    phase_space<host::samples::phase_space<2, float> >::luaopen(L);
+    return 0;
 }
-
-} // namespace
 
 // explicit instantiation
 template class phase_space<gpu::samples::phase_space<3, float> >;

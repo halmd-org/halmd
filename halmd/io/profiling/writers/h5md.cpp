@@ -19,7 +19,7 @@
 
 #include <halmd/io/logger.hpp>
 #include <halmd/io/profiling/writers/h5md.hpp>
-#include <halmd/utility/lua_wrapper/lua_wrapper.hpp>
+#include <halmd/utility/lua/lua.hpp>
 
 using namespace boost;
 using namespace std;
@@ -110,38 +110,28 @@ void h5md::write()
 void h5md::luaopen(lua_State* L)
 {
     using namespace luabind;
-    module(L)
+    module(L, "libhalmd")
     [
-        namespace_("halmd_wrapper")
+        namespace_("io")
         [
-            namespace_("io")
+            namespace_("profiling")
             [
-                namespace_("profiling")
+                namespace_("writers")
                 [
-                    namespace_("writers")
-                    [
-                        class_<h5md, shared_ptr<_Base>, _Base>("h5md")
-                            .def(constructor<string const&>())
-                            .def("file", &h5md::file)
-                    ]
+                    class_<h5md, shared_ptr<_Base>, _Base>("h5md")
+                        .def(constructor<string const&>())
+                        .def("file", &h5md::file)
                 ]
             ]
         ]
     ];
 }
 
-namespace // limit symbols to translation unit
+HALMD_LUA_API int luaopen_libhalmd_io_profiling_writers_h5md(lua_State* L)
 {
-
-__attribute__((constructor)) void register_lua()
-{
-    lua_wrapper::register_(1) //< distance of derived to base class
-    [
-        &h5md::luaopen
-    ];
+    h5md::luaopen(L);
+    return 0;
 }
-
-} // namespace
 
 }}} // namespace io::profiling::writers
 

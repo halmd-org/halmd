@@ -45,7 +45,6 @@ public:
     typedef utility::profiler profiler_type;
     typedef halmd::signal<void (double)> signal_type;
     typedef typename signal_type::slot_function_type slot_function_type;
-    typedef std::pair<slot_function_type, slot_function_type> slot_function_pair_type;
 
     struct runtime
     {
@@ -59,7 +58,6 @@ public:
     void on_start(slot_function_type const& slot);
     void on_prepare(slot_function_type const& slot, uint64_t interval);
     void on_sample(slot_function_type const& slot, uint64_t interval);
-    void on_sample(slot_function_pair_type const& slot, uint64_t interval);
     void on_finish(slot_function_type const& slot);
     static void luaopen(lua_State* L);
 

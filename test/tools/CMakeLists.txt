@@ -13,3 +13,25 @@ target_link_libraries(test_tools_lua
 add_library(test_tools_ctest SHARED
   ctest.cpp
 )
+target_link_libraries(test_tools_ctest
+  ${Boost_UNIT_TEST_FRAMEWORK_LIBRARY}
+)
+# The jfs2 filesystem on AIX has the nerving property that
+# one cannot overwrite a shared library that has been used
+# previously, even if the executable is not running anymore.
+# We therefore delete the target output before linking.
+get_target_property(LOCATION test_tools_ctest LOCATION)
+add_custom_command(TARGET test_tools_ctest PRE_LINK
+  COMMAND "${CMAKE_COMMAND}" -E remove -f "${LOCATION}"
+)
+
+add_executable(test_init
+  init.cpp
+  init_duplicate.cpp
+)
+target_link_libraries(test_init
+  ${HALMD_TEST_LIBRARIES}
+)
+add_test(init
+  test_init --log_level=test_suite
+)

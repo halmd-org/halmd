@@ -24,12 +24,8 @@ require("halmd.mdsim.forces")
 -- grab modules
 local mdsim = halmd.mdsim
 -- grab C++ wrappers
-local force_wrapper = {
-    [2] = halmd_wrapper.mdsim.force_2_
-  , [3] = halmd_wrapper.mdsim.force_3_
-}
-local h5 = halmd_wrapper.h5
-local po = halmd_wrapper.po
+local h5 = libhalmd.h5
+local po = libhalmd.po
 -- grab standard library
 local assert = assert
 local pairs = pairs

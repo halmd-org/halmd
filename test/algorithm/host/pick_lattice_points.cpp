@@ -21,13 +21,13 @@
 #include <boost/test/unit_test.hpp>
 
 #include <boost/assign.hpp>
-#include <boost/foreach.hpp>
 #include <boost/shared_ptr.hpp>
 #include <iterator>
 #include <numeric>
 
 #include <halmd/algorithm/host/pick_lattice_points.hpp>
 #include <halmd/numeric/blas/fixed_vector.hpp>
+#include <test/tools/init.hpp>
 
 using namespace boost;
 using namespace boost::assign;
@@ -44,35 +44,79 @@ void pick_lattice_points()
 #ifdef NDEBUG
         logger::warning
 #else
-        logger::trace
+        logger::debug
 #endif
     );
 
     typedef fixed_vector<double, dimension> vector_type;
     typedef fixed_vector<unsigned int, dimension> index_type;
 
-    vector<double> radii = list_of(0.3)(0.7)(1.0)(1.5)(2.0)(25.0);
-    const vector_type unit_cell =
-        (dimension == 3) ? list_of(.5)(.5)(.2) : list_of(.3)(.3);
     double epsilon = 0.05;
-    unsigned int max_count = 10;
+    unsigned int max_count = 7;
+    const vector_type unit_cell =
+        (dimension == 3) ? list_of(2)(3)(5) : list_of(1)(1);
+
+    vector<double> radii = list_of(.5)(1)(1.5)(1.91)(2)(2.7)(3)(3)(4)(5)(30);
+    vector<unsigned int> count = (dimension == 3)
+        ? list_of(0)(0)(0)(1)(1)(0)(2)(2)(1)(2)(max_count)
+        : list_of(0)(2)(0)(2)(2)(1)(4)(4)(4)(6)(max_count);
+
+    multimap<double, vector_type> lattice_points;
+
+    // call with empty list of radii
+    BOOST_MESSAGE("test empty range");
+    vector<double> empty_range;
+    pick_lattice_points_from_shell(
+        empty_range.begin(), empty_range.end()
+      , inserter(lattice_points, lattice_points.begin())
+      , unit_cell, epsilon, max_count
+    );
+    BOOST_CHECK_EQUAL(lattice_points.size(), 0);
+
+    // call with zero box size
+    BOOST_MESSAGE("test zero box size");
+    pick_lattice_points_from_shell(
+        radii.begin(), radii.end()
+      , inserter(lattice_points, lattice_points.begin())
+      , vector_type(0), epsilon, max_count
+    );
+    BOOST_CHECK_EQUAL(lattice_points.size(), 0);
+
+    // call with zero tolerance
+    BOOST_MESSAGE("test zero tolerance");
+    pick_lattice_points_from_shell(
+        radii.begin(), radii.end()
+      , inserter(lattice_points, lattice_points.begin())
+      , unit_cell, 0., max_count //< tolerance must be a floating-point type!
+    );
+    BOOST_CHECK_EQUAL(lattice_points.size(), (dimension == 3) ? 11 : 18);
+    lattice_points.clear();
+
+    // call with zero max_count
+    BOOST_MESSAGE("test zero max_count");
+    pick_lattice_points_from_shell(
+        radii.begin(), radii.end()
+      , inserter(lattice_points, lattice_points.begin())
+      , unit_cell, epsilon, 0
+    );
+    BOOST_CHECK_EQUAL(lattice_points.size(), 0);
 
     // construct lattice points
-    multimap<double, vector_type> lattice_points;
+    BOOST_MESSAGE("construct lattice points");
     pick_lattice_points_from_shell(
         radii.begin(), radii.end()
       , inserter(lattice_points, lattice_points.begin())
       , unit_cell, epsilon, max_count
     );
+    BOOST_CHECK_EQUAL(lattice_points.size(), (dimension == 3) ? 14 : 28);  // not equal to sum(count)
 
-    // check conditions on constructed lattice points
-    BOOST_FOREACH (double r, radii) {
+    // check conditions and counts on constructed lattice points
+    for (unsigned int i = 0; i < radii.size(); ++i) {
+        double r = radii[i];
         // check total count per shell
-        unsigned count = lattice_points.count(r);
-        BOOST_CHECK(count <= max_count);
-        if (!count) {
-            BOOST_TEST_MESSAGE("No lattice points compatible with r ≈ " << r);
-        }
+        unsigned int c = lattice_points.count(r);
+        BOOST_CHECK_MESSAGE(c == count[i], c << " != " << count[i] << " for r = " << r);
+        BOOST_CHECK_MESSAGE(c <= max_count, "count(r = " << r << ") = " << c);
 
         typedef typename multimap<double, vector_type>::const_iterator iterator_type;
         typedef pair<iterator_type, iterator_type> range_type;
@@ -92,7 +136,7 @@ void pick_lattice_points()
     }
 }
 
-static void __attribute__((constructor)) init_unit_test_suite()
+HALMD_TEST_INIT( init_unit_test_suite )
 {
     using namespace boost::unit_test::framework;
 

@@ -30,16 +30,16 @@ local observables = halmd.observables
 -- grab C++ wrappers
 local density_mode_wrapper = {
     host = {
-        [2] = halmd_wrapper.observables.host.density_mode_2_
-      , [3] = halmd_wrapper.observables.host.density_mode_3_
+        [2] = libhalmd.observables.host.density_mode_2_
+      , [3] = libhalmd.observables.host.density_mode_3_
     }
-  , [2] = halmd_wrapper.observables.density_mode_2_
-  , [3] = halmd_wrapper.observables.density_mode_3_
+  , [2] = libhalmd.observables.density_mode_2_
+  , [3] = libhalmd.observables.density_mode_3_
 }
-if halmd_wrapper.observables.gpu then
+if libhalmd.observables.gpu then
     density_mode_wrapper.gpu = {
-        [2] = halmd_wrapper.observables.gpu.density_mode_2_
-      , [3] = halmd_wrapper.observables.gpu.density_mode_3_
+        [2] = libhalmd.observables.gpu.density_mode_2_
+      , [3] = libhalmd.observables.gpu.density_mode_3_
     }
 end
 -- grab standard library

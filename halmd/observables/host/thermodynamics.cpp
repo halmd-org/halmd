@@ -18,7 +18,7 @@
  */
 
 #include <halmd/observables/host/thermodynamics.hpp>
-#include <halmd/utility/lua_wrapper/lua_wrapper.hpp>
+#include <halmd/utility/lua/lua.hpp>
 
 using namespace boost;
 using namespace std;
@@ -93,50 +93,34 @@ void thermodynamics<dimension, float_type>::luaopen(lua_State* L)
 {
     using namespace luabind;
     static string class_name("thermodynamics_" + lexical_cast<string>(dimension) + "_");
-    module(L)
+    module(L, "libhalmd")
     [
-        namespace_("halmd_wrapper")
+        namespace_("observables")
         [
-            namespace_("observables")
+            namespace_("host")
             [
-                namespace_("host")
-                [
-                    class_<thermodynamics, shared_ptr<_Base>, _Base>(class_name.c_str())
-                        .def(constructor<
-                            shared_ptr<particle_type>
-                          , shared_ptr<box_type>
-                          , shared_ptr<force_type>
-                        >())
-                ]
+                class_<thermodynamics, shared_ptr<_Base>, _Base>(class_name.c_str())
+                    .def(constructor<
+                        shared_ptr<particle_type>
+                      , shared_ptr<box_type>
+                      , shared_ptr<force_type>
+                    >())
             ]
         ]
     ];
 }
 
-namespace // limit symbols to translation unit
+HALMD_LUA_API int luaopen_libhalmd_observables_host_thermodynamics(lua_State* L)
 {
-
-__attribute__((constructor)) void register_lua()
-{
-    lua_wrapper::register_(1) //< distance of derived to base class
 #ifndef USE_HOST_SINGLE_PRECISION
-    [
-        &thermodynamics<3, double>::luaopen
-    ]
-    [
-        &thermodynamics<2, double>::luaopen
-    ];
+    thermodynamics<3, double>::luaopen(L);
+    thermodynamics<2, double>::luaopen(L);
 #else
-    [
-        &thermodynamics<3, float>::luaopen
-    ]
-    [
-        &thermodynamics<2, float>::luaopen
-    ];
+    thermodynamics<3, float>::luaopen(L);
+    thermodynamics<2, float>::luaopen(L);
 #endif
+    return 0;
 }
-
-} // namespace
 
 // explicit instantiation
 #ifndef USE_HOST_SINGLE_PRECISION

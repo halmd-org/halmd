@@ -33,6 +33,9 @@ else()
   set(PROGRAM_DATE "unknown date")
 endif()
 
+# Output source version for Dashboard test reports
+message(STATUS "Building HALMD ${PROGRAM_VERSION}")
+
 if(NOT HALMD_DOC_ONLY)
 
 project(HALMD CXX)
@@ -55,9 +58,9 @@ if(NOT DEFINED Boost_USE_MULTITHREADED)
   set(Boost_USE_MULTITHREADED FALSE)
 endif(NOT DEFINED Boost_USE_MULTITHREADED)
 
-find_package(Boost 1.39.0 QUIET REQUIRED COMPONENTS
+find_package(Boost 1.39.0 QUIET REQUIRED
+  date_time
   filesystem
-  log
   program_options
   system
   thread
@@ -68,24 +71,80 @@ find_package(HDF5 QUIET REQUIRED)
 find_package(Lua51 QUIET REQUIRED)
 find_package(Luabind QUIET REQUIRED)
 
-if(NOT CMAKE_BUILD_TYPE)
-  set(CMAKE_BUILD_TYPE "Release")
-endif(NOT CMAKE_BUILD_TYPE)
+# Boost.Log fails to compile with XL C++ compiler on AIX.
+if(NOT CMAKE_CXX_PLATFORM_ID STREQUAL "AIX")
+  find_package(Boost QUIET REQUIRED log)
+else()
+  message(WARNING "Boost.Log is not available on this platform.")
+endif()
 
-if(NOT CMAKE_CXX_FLAGS)
-  set(CMAKE_CXX_FLAGS "-fPIC -Wall")
-endif(NOT CMAKE_CXX_FLAGS)
+if(CMAKE_BUILD_TYPE STREQUAL "${CMAKE_BUILD_TYPE_INIT}")
+  set(CMAKE_BUILD_TYPE "Release" CACHE STRING
+    "Choose the type of build, options are: Debug Release RelWithDebInfo MinSizeRel." FORCE)
+endif()
+
+if(CMAKE_CXX_COMPILER_ID MATCHES "^(GNU|Clang|Intel)$")
+  if(CMAKE_CXX_FLAGS STREQUAL "${CMAKE_CXX_FLAGS_INIT}")
+    set(CMAKE_CXX_FLAGS "-fPIC -Wall" CACHE STRING
+      "Flags used by the compiler during all build types." FORCE)
+  endif()
+elseif(CMAKE_CXX_COMPILER_ID STREQUAL "XL")
+  if(CMAKE_CXX_FLAGS STREQUAL "${CMAKE_CXX_FLAGS_INIT}")
+    set(CMAKE_CXX_FLAGS "-qrtti=all" CACHE STRING
+      "Flags used by the compiler during all build types." FORCE)
+  endif()
+  # We only need object-level inlining (opposed to link-time optimization),
+  # therefore we follow the recommendation for XL 11 that -qipa=inline is
+  # deprecated, and use -qinline instead.
+  # http://publib.boulder.ibm.com/infocenter/iadthelp/v8r0/index.jsp?topic=/com.ibm.xlcpp111.linux.doc/compiler_ref/opt_ipa.html
+  if(CMAKE_CXX_FLAGS_RELEASE STREQUAL "${CMAKE_CXX_FLAGS_RELEASE_INIT}")
+    set(CMAKE_CXX_FLAGS_RELEASE "-O4 -DNDEBUG -qstrict=all -qnoipa -qinline" CACHE STRING
+      "Flags used by the compiler during Release builds" FORCE)
+  endif()
+  if(CMAKE_CXX_FLAGS_MINSIZEREL STREQUAL "${CMAKE_CXX_FLAGS_MINSIZEREL_INIT}")
+    set(CMAKE_CXX_FLAGS_MINSIZEREL "${CMAKE_CXX_FLAGS_RELEASE}" CACHE STRING
+      "Flags used by the compiler during MinSizeRel builds" FORCE)
+  endif()
+  if(CMAKE_CXX_FLAGS_RELWITHDEBINFO STREQUAL "${CMAKE_CXX_FLAGS_RELWITHDEBINFO_INIT}")
+    set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "-g -O2 -qstrict=all" CACHE STRING
+      "Flags used by the compiler during RelWithDebInfo builds" FORCE)
+  endif()
+else()
+  message(WARNING "Unsupported CXX compiler: ${CMAKE_CXX_COMPILER_ID}")
+endif()
+
+if(CMAKE_CXX_PLATFORM_ID STREQUAL "Linux")
+  if(CMAKE_EXE_LINKER_FLAGS STREQUAL "${CMAKE_EXE_LINKER_FLAGS_INIT}")
+    set(CMAKE_EXE_LINKER_FLAGS "-Wl,--as-needed" CACHE STRING
+      "Flags used by the linker." FORCE)
+  endif()
+  if(CMAKE_SHARED_LINKER_FLAGS STREQUAL "${CMAKE_SHARED_LINKER_FLAGS_INIT}")
+    set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS}" CACHE STRING
+      "Flags used by the linker during the creation of shared libraries." FORCE)
+  endif()
+elseif(CMAKE_CXX_PLATFORM_ID STREQUAL "AIX")
+  # The combined flags -qtwolink -Wl,-bweaklocal instruct the AIX linker
+  # to discard unreferenced objects of an archive, which is needed to
+  # avoid undefined symbol errors when linking the unit tests.
+  # -qnoipa is needed to disable link-time IPA, which breaks -qtwolink.
+  if(CMAKE_EXE_LINKER_FLAGS STREQUAL "${CMAKE_EXE_LINKER_FLAGS_INIT}")
+    set(CMAKE_EXE_LINKER_FLAGS "-qtwolink -Wl,-bweaklocal -qnoipa" CACHE STRING
+      "Flags used by the linker." FORCE)
+  endif()
+  if(CMAKE_SHARED_LINKER_FLAGS STREQUAL "${CMAKE_SHARED_LINKER_FLAGS_INIT}")
+    set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS}" CACHE STRING
+      "Flags used by the linker during the creation of shared libraries." FORCE)
+  endif()
+endif()
 
 if(CUDA_FOUND AND NOT HALMD_USE_STATIC_LIBS)
   set(WITH_CUDA TRUE)
   enable_language(CUDA)
 
-  if(NOT CMAKE_CUDA_FLAGS)
-    set(CMAKE_CUDA_FLAGS "-Xcompiler -fPIC -Xptxas -v --host-compilation=c -arch sm_12")
-  endif(NOT CMAKE_CUDA_FLAGS)
-
-  set(CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS}" CACHE STRING
-    "Flags used by the compiler during all build types." FORCE)
+  if(CMAKE_CUDA_FLAGS STREQUAL "${CMAKE_CUDA_FLAGS_INIT}")
+    set(CMAKE_CUDA_FLAGS "-Xcompiler -fPIC -Xptxas -v --host-compilation=c -arch sm_12" CACHE STRING
+      "Flags used by the compiler during all build types." FORCE)
+  endif()
 
   add_definitions(-DWITH_CUDA)
 else(CUDA_FOUND AND NOT HALMD_USE_STATIC_LIBS)
@@ -158,6 +217,7 @@ if(HALMD_VARIANT_HOST_SINGLE_PRECISION)
 endif(HALMD_VARIANT_HOST_SINGLE_PRECISION)
 
 set(HALMD_COMMON_LIBRARIES
+  ${Boost_DATE_TIME_LIBRARY}
   ${Boost_LOG_LIBRARY}
   ${Boost_PROGRAM_OPTIONS_LIBRARY}
   ${Boost_FILESYSTEM_LIBRARY}

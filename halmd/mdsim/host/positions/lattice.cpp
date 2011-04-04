@@ -26,7 +26,7 @@
 
 #include <halmd/io/logger.hpp>
 #include <halmd/mdsim/host/positions/lattice.hpp>
-#include <halmd/utility/lua_wrapper/lua_wrapper.hpp>
+#include <halmd/utility/lua/lua.hpp>
 
 using namespace boost;
 using namespace std;
@@ -63,18 +63,20 @@ lattice<dimension, float_type>::lattice(
 template <int dimension, typename float_type>
 void lattice<dimension, float_type>::set()
 {
-    // randomise particle types if there are more than 1
-    if (particle->ntypes.size() > 1) {
-        LOG("randomly permuting particle types");
-        random->shuffle(particle->type.begin(), particle->type.end());
-    }
-
     assert(particle->r.size() == particle->nbox);
 
     // assign fcc lattice points to a fraction of the particles in a slab at the centre
     vector_type length = element_prod(box->length(), slab_);
     vector_type offset = -length / 2;
     fcc(particle->r.begin(), particle->r.end(), length, offset);
+
+    // randomise particle positions if there is more than 1 particle type
+    // FIXME this requires a subsequent sort
+    // FIXME this will fail greatly once we support polymers
+    if (particle->ntypes.size() > 1) {
+        LOG("randomly permuting particle positions");
+        random->shuffle(particle->r.begin(), particle->r.end());
+    }
 
     // assign particle image vectors
     fill(particle->image.begin(), particle->image.end(), 0);
@@ -187,56 +189,40 @@ void lattice<dimension, float_type>::luaopen(lua_State* L)
 {
     using namespace luabind;
     static string class_name(module_name() + ("_" + lexical_cast<string>(dimension) + "_"));
-    module(L)
+    module(L, "libhalmd")
     [
-        namespace_("halmd_wrapper")
+        namespace_("mdsim")
         [
-            namespace_("mdsim")
+            namespace_("host")
             [
-                namespace_("host")
+                namespace_("positions")
                 [
-                    namespace_("positions")
-                    [
-                        class_<lattice, shared_ptr<_Base>, _Base>(class_name.c_str())
-                            .def(constructor<
-                                 shared_ptr<particle_type>
-                               , shared_ptr<box_type>
-                               , shared_ptr<random_type>
-                               , vector_type const&
-                            >())
-                            .property("slab", &lattice::slab)
-                            .property("module_name", &module_name_wrapper<dimension, float_type>)
-                    ]
+                    class_<lattice, shared_ptr<_Base>, _Base>(class_name.c_str())
+                        .def(constructor<
+                             shared_ptr<particle_type>
+                           , shared_ptr<box_type>
+                           , shared_ptr<random_type>
+                           , vector_type const&
+                        >())
+                        .property("slab", &lattice::slab)
+                        .property("module_name", &module_name_wrapper<dimension, float_type>)
                 ]
             ]
         ]
     ];
 }
 
-namespace // limit symbols to translation unit
+HALMD_LUA_API int luaopen_libhalmd_mdsim_host_positions_lattice(lua_State* L)
 {
-
-__attribute__((constructor)) void register_lua()
-{
-    lua_wrapper::register_(1) //< distance of derived to base class
 #ifndef USE_HOST_SINGLE_PRECISION
-    [
-        &lattice<3, double>::luaopen
-    ]
-    [
-        &lattice<2, double>::luaopen
-    ];
+    lattice<3, double>::luaopen(L);
+    lattice<2, double>::luaopen(L);
 #else
-    [
-        &lattice<3, float>::luaopen
-    ]
-    [
-        &lattice<2, float>::luaopen
-    ];
+    lattice<3, float>::luaopen(L);
+    lattice<2, float>::luaopen(L);
 #endif
+    return 0;
 }
-
-} // namespace
 
 // explicit instantiation
 #ifndef USE_HOST_SINGLE_PRECISION

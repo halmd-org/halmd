@@ -24,7 +24,7 @@ require("halmd.parameter")
 -- grab modules
 local parameter = halmd.parameter
 -- grab C++ wrappers
-local h5md_wrapper = halmd_wrapper.io.profiling.writers.h5md
+local h5md_wrapper = libhalmd.io.profiling.writers.h5md
 -- grab standard library
 local assert = assert
 

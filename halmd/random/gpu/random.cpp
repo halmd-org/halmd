@@ -21,7 +21,7 @@
 #include <halmd/random/gpu/rand48.hpp>
 #include <halmd/random/gpu/random.hpp>
 #include <halmd/random/gpu/random_kernel.hpp>
-#include <halmd/utility/lua_wrapper/lua_wrapper.hpp>
+#include <halmd/utility/lua/lua.hpp>
 
 using namespace boost;
 using namespace std;
@@ -110,41 +110,31 @@ void random<RandomNumberGenerator>::luaopen(lua_State* L)
 {
     using namespace luabind;
     static string class_name(RandomNumberGenerator::name());
-    module(L)
+    module(L, "libhalmd")
     [
-        namespace_("halmd_wrapper")
+        namespace_("gpu")
         [
-            namespace_("gpu")
+            namespace_("random")
             [
-                namespace_("random")
-                [
-                    class_<random, shared_ptr<_Base>, _Base>(class_name.c_str())
-                        .def(constructor<
-                             shared_ptr<device_type>
-                           , unsigned int
-                           , unsigned int
-                           , unsigned int
-                         >())
-                        .property("blocks", &random::blocks)
-                        .property("threads", &random::threads)
-                ]
+                class_<random, shared_ptr<_Base>, _Base>(class_name.c_str())
+                    .def(constructor<
+                         shared_ptr<device_type>
+                       , unsigned int
+                       , unsigned int
+                       , unsigned int
+                     >())
+                    .property("blocks", &random::blocks)
+                    .property("threads", &random::threads)
             ]
         ]
     ];
 }
 
-namespace // limit symbols to translation unit
+HALMD_LUA_API int luaopen_libhalmd_random_gpu_random(lua_State* L)
 {
-
-__attribute__((constructor)) void register_lua()
-{
-    lua_wrapper::register_(1) //< distance of derived to base class
-    [
-        &random<rand48>::luaopen
-    ];
+    random<rand48>::luaopen(L);
+    return 0;
 }
-
-} // namespace
 
 }} // namespace random::gpu
 

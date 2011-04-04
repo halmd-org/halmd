@@ -22,7 +22,7 @@
 #include <halmd/io/logger.hpp>
 #include <halmd/io/utility/hdf5.hpp>
 #include <halmd/mdsim/box.hpp>
-#include <halmd/utility/lua_wrapper/lua_wrapper.hpp>
+#include <halmd/utility/lua/lua.hpp>
 
 using namespace boost;
 using namespace std;
@@ -74,37 +74,25 @@ void box<dimension>::luaopen(lua_State* L)
 {
     using namespace luabind;
     static string class_name("box_" + lexical_cast<string>(dimension) + "_");
-    module(L)
+    module(L, "libhalmd")
     [
-        namespace_("halmd_wrapper")
+        namespace_("mdsim")
         [
-            namespace_("mdsim")
-            [
-                class_<box, shared_ptr<box> >(class_name.c_str())
-                    .def(constructor<shared_ptr<particle_type>, vector_type const&>())
-                    .def(constructor<shared_ptr<particle_type>, double, vector_type const&>())
-                    .property("length", &box::length)
-                    .property("density", &box::density)
-            ]
+            class_<box, shared_ptr<box> >(class_name.c_str())
+                .def(constructor<shared_ptr<particle_type>, vector_type const&>())
+                .def(constructor<shared_ptr<particle_type>, double, vector_type const&>())
+                .property("length", &box::length)
+                .property("density", &box::density)
         ]
     ];
 }
 
-namespace // limit symbols to translation unit
+HALMD_LUA_API int luaopen_libhalmd_mdsim_box(lua_State* L)
 {
-
-__attribute__((constructor)) void register_lua()
-{
-    lua_wrapper::register_(0) //< distance of derived to base class
-    [
-        &box<3>::luaopen
-    ]
-    [
-        &box<2>::luaopen
-    ];
+    box<3>::luaopen(L);
+    box<2>::luaopen(L);
+    return 0;
 }
-
-} // namespace
 
 // explicit instantiation
 template class box<3>;

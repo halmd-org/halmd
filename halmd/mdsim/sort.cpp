@@ -19,7 +19,7 @@
 
 #include <halmd/io/logger.hpp>
 #include <halmd/mdsim/sort.hpp>
-#include <halmd/utility/lua_wrapper/lua_wrapper.hpp>
+#include <halmd/utility/lua/lua.hpp>
 
 using namespace boost;
 using namespace std;
@@ -34,34 +34,22 @@ void sort<dimension>::luaopen(lua_State* L)
 {
     using namespace luabind;
     static string class_name("sort_" + lexical_cast<string>(dimension) + "_");
-    module(L)
+    module(L, "libhalmd")
     [
-        namespace_("halmd_wrapper")
+        namespace_("mdsim")
         [
-            namespace_("mdsim")
-            [
-                class_<sort, shared_ptr<sort> >(class_name.c_str())
-                    .def("order", &sort::order)
-            ]
+            class_<sort, shared_ptr<sort> >(class_name.c_str())
+                .def("order", &sort::order)
         ]
     ];
 }
 
-namespace // limit symbols to translation unit
+HALMD_LUA_API int luaopen_libhalmd_mdsim_sort(lua_State* L)
 {
-
-__attribute__((constructor)) void register_lua()
-{
-    lua_wrapper::register_(0) //< distance of derived to base class
-    [
-        &sort<3>::luaopen
-    ]
-    [
-        &sort<2>::luaopen
-    ];
+    sort<3>::luaopen(L);
+    sort<2>::luaopen(L);
+    return 0;
 }
-
-} // namespace
 
 } // namespace mdsim
 

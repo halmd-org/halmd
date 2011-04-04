@@ -27,13 +27,13 @@ local device = halmd.device
 local mdsim = halmd.mdsim
 -- grab C++ wrappers
 local power_law_wrapper = {
-    host = halmd_wrapper.mdsim.host.forces.power_law
+    host = libhalmd.mdsim.host.forces.power_law
 }
-if halmd_wrapper.mdsim.gpu then
-    power_law_wrapper.gpu = halmd_wrapper.mdsim.gpu.forces.power_law
+if libhalmd.mdsim.gpu then
+    power_law_wrapper.gpu = libhalmd.mdsim.gpu.forces.power_law
 end
-local h5 = halmd_wrapper.h5
-local po = halmd_wrapper.po
+local h5 = libhalmd.h5
+local po = libhalmd.po
 -- grab standard library
 local assert = assert
 

@@ -21,7 +21,7 @@
 
 #include <halmd/io/logger.hpp>
 #include <halmd/mdsim/host/velocity.hpp>
-#include <halmd/utility/lua_wrapper/lua_wrapper.hpp>
+#include <halmd/utility/lua/lua.hpp>
 
 using namespace boost;
 using namespace std;
@@ -80,45 +80,29 @@ void velocity<dimension, float_type>::luaopen(lua_State* L)
 {
     using namespace luabind;
     static string class_name("velocity_" + lexical_cast<string>(dimension) + "_");
-    module(L)
+    module(L, "libhalmd")
     [
-        namespace_("halmd_wrapper")
+        namespace_("mdsim")
         [
-            namespace_("mdsim")
+            namespace_("host")
             [
-                namespace_("host")
-                [
-                    class_<velocity, shared_ptr<_Base>, bases<_Base> >(class_name.c_str())
-                ]
+                class_<velocity, shared_ptr<_Base>, bases<_Base> >(class_name.c_str())
             ]
         ]
     ];
 }
 
-namespace // limit symbols to translation unit
+HALMD_LUA_API int luaopen_libhalmd_mdsim_host_velocity(lua_State* L)
 {
-
-__attribute__((constructor)) void register_lua()
-{
-    lua_wrapper::register_(1) //< distance of derived to base class
 #ifndef USE_HOST_SINGLE_PRECISION
-    [
-        &velocity<3, double>::luaopen
-    ]
-    [
-        &velocity<2, double>::luaopen
-    ];
+    velocity<3, double>::luaopen(L);
+    velocity<2, double>::luaopen(L);
 #else
-    [
-        &velocity<3, float>::luaopen
-    ]
-    [
-        &velocity<2, float>::luaopen
-    ];
+    velocity<3, float>::luaopen(L);
+    velocity<2, float>::luaopen(L);
 #endif
+    return 0;
 }
-
-} // namespace
 
 #ifndef USE_HOST_SINGLE_PRECISION
 template class velocity<3, double>;

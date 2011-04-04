@@ -25,8 +25,8 @@ require("halmd.mdsim.core")
 local mdsim = halmd.mdsim
 -- grab C++ wrappers
 local density_mode_wrapper = {
-    [2] = halmd_wrapper.observables.samples.density_mode_2_
-  , [3] = halmd_wrapper.observables.samples.density_mode_3_
+    [2] = libhalmd.observables.samples.density_mode_2_
+  , [3] = libhalmd.observables.samples.density_mode_3_
 }
 -- grab standard library
 local assert = assert

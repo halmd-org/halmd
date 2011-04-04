@@ -18,7 +18,7 @@
  */
 
 #include <halmd/observables/host/velocity_autocorrelation.hpp>
-#include <halmd/utility/lua_wrapper/lua_wrapper.hpp>
+#include <halmd/utility/lua/lua.hpp>
 
 using namespace boost;
 using namespace std;
@@ -56,7 +56,7 @@ void velocity_autocorrelation<dimension, float_type>::luaopen(lua_State* L)
 {
     using namespace luabind;
     static string class_name("velocity_autocorrelation_" + lexical_cast<string>(dimension) + "_");
-    module(L, "halmd_wrapper")
+    module(L, "libhalmd")
     [
         namespace_("observables")
         [
@@ -69,30 +69,17 @@ void velocity_autocorrelation<dimension, float_type>::luaopen(lua_State* L)
     ];
 }
 
-namespace // limit symbols to translation unit
+HALMD_LUA_API int luaopen_libhalmd_observables_host_velocity_autocorrelation(lua_State* L)
 {
-
-__attribute__((constructor)) void register_lua()
-{
-    lua_wrapper::register_(1) //< distance of derived to base class
 #ifndef USE_HOST_SINGLE_PRECISION
-    [
-        &velocity_autocorrelation<3, double>::luaopen
-    ]
-    [
-        &velocity_autocorrelation<2, double>::luaopen
-    ];
+    velocity_autocorrelation<3, double>::luaopen(L);
+    velocity_autocorrelation<2, double>::luaopen(L);
 #else
-    [
-        &velocity_autocorrelation<3, float>::luaopen
-    ]
-    [
-        &velocity_autocorrelation<2, float>::luaopen
-    ];
+    velocity_autocorrelation<3, float>::luaopen(L);
+    velocity_autocorrelation<2, float>::luaopen(L);
 #endif
+    return 0;
 }
-
-} // namespace
 
 // explicit instantiation
 #ifndef USE_HOST_SINGLE_PRECISION

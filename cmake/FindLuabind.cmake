@@ -4,7 +4,6 @@
 #  LUABIND_FOUND
 #  LUABIND_INCLUDE_DIR
 #  LUABIND_LIBRARY
-#  LUABIND_LIBRARY_DEBUG
 
 #=============================================================================
 # Copyright 2002-2009 Kitware, Inc.
@@ -27,7 +26,7 @@ find_path(LUABIND_INCLUDE_DIR luabind/luabind.hpp
 )
 
 if(LUABIND_USE_STATIC_LIBS)
-  set( _LUABIND_ORIG_CMAKE_FIND_LIBRARY_SUFFIXES ${CMAKE_FIND_LIBRARY_SUFFIXES})
+  set(_LUABIND_ORIG_CMAKE_FIND_LIBRARY_SUFFIXES ${CMAKE_FIND_LIBRARY_SUFFIXES})
   if(WIN32)
     set(CMAKE_FIND_LIBRARY_SUFFIXES .lib .a ${CMAKE_FIND_LIBRARY_SUFFIXES})
   else()
@@ -35,13 +34,13 @@ if(LUABIND_USE_STATIC_LIBS)
   endif()
 endif()
 
-find_library(LUABIND_LIBRARY NAMES luabind
-  HINTS
-  $ENV{LUABIND_DIR}
-  PATH_SUFFIXES lib64 lib
-)
+if(LUABIND_USE_DEBUG_LIBS)
+  set(_LUABIND_LIBRARY_NAME luabindd)
+else()
+  set(_LUABIND_LIBRARY_NAME luabind)
+endif()
 
-find_library(LUABIND_LIBRARY_DEBUG NAMES luabindd
+find_library(LUABIND_LIBRARY NAMES ${_LUABIND_LIBRARY_NAME}
   HINTS
   $ENV{LUABIND_DIR}
   PATH_SUFFIXES lib64 lib
@@ -56,11 +55,9 @@ include(FindPackageHandleStandardArgs)
 find_package_handle_standard_args(Luabind DEFAULT_MSG
   LUABIND_INCLUDE_DIR
   LUABIND_LIBRARY
-  # LUABIND_LIBRARY_DEBUG optional
 )
 
 mark_as_advanced(
   LUABIND_INCLUDE_DIR
   LUABIND_LIBRARY
-  LUABIND_LIBRARY_DEBUG
 )

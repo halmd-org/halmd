@@ -29,7 +29,7 @@
 #include <halmd/mdsim/gpu/force.hpp>
 #include <halmd/mdsim/gpu/forces/pair_trunc_kernel.hpp>
 #include <halmd/mdsim/gpu/particle.hpp>
-#include <halmd/utility/lua_wrapper/lua_wrapper.hpp>
+#include <halmd/utility/lua/lua.hpp>
 #include <halmd/utility/profiler.hpp>
 #include <halmd/utility/scoped_timer.hpp>
 #include <halmd/utility/timer.hpp>
@@ -202,7 +202,7 @@ void pair_trunc<dimension, float_type, potential_type>::luaopen(lua_State* L)
     typedef typename _Base::_Base _Base_Base;
     using namespace luabind;
     static std::string class_name("pair_trunc_" + boost::lexical_cast<std::string>(dimension) + "_");
-    module(L, "halmd_wrapper")
+    module(L, "libhalmd")
     [
         namespace_("mdsim")
         [

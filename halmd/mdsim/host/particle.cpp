@@ -25,7 +25,7 @@
 #include <halmd/algorithm/host/permute.hpp>
 #include <halmd/io/logger.hpp>
 #include <halmd/mdsim/host/particle.hpp>
-#include <halmd/utility/lua_wrapper/lua_wrapper.hpp>
+#include <halmd/utility/lua/lua.hpp>
 
 using namespace boost;
 using namespace std;
@@ -60,16 +60,16 @@ particle<dimension, float_type>::particle(vector<unsigned int> const& particles)
 template <unsigned int dimension, typename float_type>
 void particle<dimension, float_type>::set()
 {
-    // assign particle tags
-    copy(
-        counting_iterator<size_t>(0)
-      , counting_iterator<size_t>(nbox)
-      , tag.begin()
-    );
-
-    // assign particle types
-    for (size_t j = 0, i = 0; j < ntype; i += ntypes[j], ++j) {
-        fill_n(&type[i], ntypes[j], j);
+    // handle each type separately
+    for (size_t i = 0, j = 0; j < ntype; i += ntypes[j], ++j) {
+        // assign particle types
+        fill_n(type.begin() + i, ntypes[j], j);
+        // assign particle tags
+        copy(
+            counting_iterator<size_t>(0)
+          , counting_iterator<size_t>(ntypes[j])
+          , tag.begin() + i
+        );
     }
 }
 
@@ -95,46 +95,30 @@ void particle<dimension, float_type>::luaopen(lua_State* L)
 {
     using namespace luabind;
     static string class_name("particle_" + lexical_cast<string>(dimension) + "_");
-    module(L)
+    module(L, "libhalmd")
     [
-        namespace_("halmd_wrapper")
+        namespace_("mdsim")
         [
-            namespace_("mdsim")
+            namespace_("host")
             [
-                namespace_("host")
-                [
-                    class_<particle, shared_ptr<_Base>, _Base>(class_name.c_str())
-                        .def(constructor<vector<unsigned int> const&>())
-                ]
+                class_<particle, shared_ptr<_Base>, _Base>(class_name.c_str())
+                    .def(constructor<vector<unsigned int> const&>())
             ]
         ]
     ];
 }
 
-namespace // limit symbols to translation unit
+HALMD_LUA_API int luaopen_libhalmd_mdsim_host_particle(lua_State* L)
 {
-
-__attribute__((constructor)) void register_lua()
-{
-    lua_wrapper::register_(1) //< distance of derived to base class
 #ifndef USE_HOST_SINGLE_PRECISION
-    [
-        &particle<3, double>::luaopen
-    ]
-    [
-        &particle<2, double>::luaopen
-    ];
+    particle<3, double>::luaopen(L);
+    particle<2, double>::luaopen(L);
 #else
-    [
-        &particle<3, float>::luaopen
-    ]
-    [
-        &particle<2, float>::luaopen
-    ];
+    particle<3, float>::luaopen(L);
+    particle<2, float>::luaopen(L);
 #endif
+    return 0;
 }
-
-} // namespace
 
 // explicit instantiation
 #ifndef USE_HOST_SINGLE_PRECISION

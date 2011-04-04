@@ -21,7 +21,7 @@
 
 #include <halmd/io/logger.hpp>
 #include <halmd/observables/sampler.hpp>
-#include <halmd/utility/lua_wrapper/lua_wrapper.hpp>
+#include <halmd/utility/lua/lua.hpp>
 #include <halmd/utility/scoped_timer.hpp>
 #include <halmd/utility/timer.hpp>
 
@@ -123,20 +123,6 @@ void sampler<dimension>::on_sample(slot_function_type const& slot, uint64_t inte
 }
 
 /**
- * Connect pair of slots to signals emitted before and after MD integration step
- */
-template <int dimension>
-void sampler<dimension>::on_sample(slot_function_pair_type const& slot, uint64_t interval)
-{
-    on_prepare_.connect(
-        bind(&sampler::prepare, this, slot.first, interval, _1)
-    );
-    on_sample_.connect(
-        bind(&sampler::sample, this, slot.second, interval, _1)
-    );
-}
-
-/**
  * Connect slot to signal emitted after finishing simulation run
  */
 template <int dimension>
@@ -174,47 +160,29 @@ void sampler<dimension>::luaopen(lua_State* L)
 {
     using namespace luabind;
     static string class_name("sampler_" + lexical_cast<string>(dimension) + "_");
-    module(L)
+    module(L, "libhalmd")
     [
-        namespace_("halmd_wrapper")
-        [
-            class_<sampler, shared_ptr<runner>, runner>(class_name.c_str())
-                .def(constructor<
-                    shared_ptr<core_type>
-                  , uint64_t
-                >())
-                .def("register_runtimes", &sampler::register_runtimes)
-                .property("steps", &sampler::steps)
-                .property("total_time", &sampler::total_time)
-                .def("on_start", &sampler::on_start)
-                .def("on_finish", &sampler::on_finish)
-                .def("on_prepare", &sampler::on_prepare)
-                .def("on_sample", static_cast<void (sampler::*)(slot_function_type const&, uint64_t)>(&sampler::on_sample))
-                .def("on_sample", static_cast<void (sampler::*)(slot_function_pair_type const&, uint64_t)>(&sampler::on_sample))
-                .scope
-                [
-                    class_<slot_function_type>("slot_function_type")
-                  , class_<slot_function_pair_type>("slot_function_pair_type")
-                ]
-        ]
+        class_<sampler, shared_ptr<runner>, runner>(class_name.c_str())
+            .def(constructor<
+                shared_ptr<core_type>
+              , uint64_t
+            >())
+            .def("register_runtimes", &sampler::register_runtimes)
+            .property("steps", &sampler::steps)
+            .property("total_time", &sampler::total_time)
+            .def("on_start", &sampler::on_start)
+            .def("on_finish", &sampler::on_finish)
+            .def("on_prepare", &sampler::on_prepare)
+            .def("on_sample", &sampler::on_sample)
     ];
 }
 
-namespace // limit symbols to translation unit
+HALMD_LUA_API int luaopen_libhalmd_observables_sampler(lua_State* L)
 {
-
-__attribute__((constructor)) void register_lua()
-{
-    lua_wrapper::register_(1) //< distance of derived to base class
-    [
-        &sampler<3>::luaopen
-    ]
-    [
-        &sampler<2>::luaopen
-    ];
+    sampler<3>::luaopen(L);
+    sampler<2>::luaopen(L);
+    return 0;
 }
-
-} // namespace
 
 // explicit instantiation
 template class sampler<3>;

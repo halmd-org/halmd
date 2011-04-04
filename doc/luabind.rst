@@ -35,7 +35,7 @@ programme execution starts. ::
 
     // from file halmd/mdsim/integrator.cpp
 
-    #include <halmd/utility/lua_wrapper/lua_wrapper.hpp>
+    #include <halmd/utility/lua/lua.hpp>
 
     template <int dimension>
     void integrator<dimension>::luaopen(lua_State* L)
@@ -46,7 +46,7 @@ programme execution starts. ::
         // register a new Lua module
         module(L)
         [
-            namespace_("halmd_wrapper")
+            namespace_("libhalmd")
             [
                 namespace_("mdsim")
                 [
@@ -60,30 +60,19 @@ programme execution starts. ::
         ];
     }
 
-    namespace // limit symbols to translation unit
+    HALMD_LUA_API int luaopen_libhalmd_mdsim_integrator()
     {
-
-    __attribute__((constructor)) void register_lua()
-    {
-        lua_wrapper::register_(0) //< distance of derived to base class
-        [
-            &integrator<3>::luaopen
-        ]
-        [
-            &integrator<2>::luaopen
-        ];
+        integrator<3>::luaopen(L);
+        integrator<2>::luaopen(L);
+        return 0;
     }
-
-    } // namespace
 
 **FIXME** explain the template arguments of ``class_``
 
 **FIXME** explain the differences between property, def, def_readonly, add
 comments in code sample
 
-**FIXME** explain ``lua_wrapper::register_``
-
-**FIXME** why is the anonymous namespace necessary?
+**FIXME** explain ``HALMD_LUA_API``
 
 The actual class for the Verlet module derives from its abstract interface
 class. Again, it has a static method ``luaopen``. Its constructor describes the
@@ -145,7 +134,7 @@ method ``module_name``. ::
         // register a new Lua module
         module(L)
         [
-            namespace_("halmd_wrapper")
+            namespace_("libhalmd")
             [
                 namespace_("mdsim")
                 [
@@ -167,18 +156,11 @@ method ``module_name``. ::
         ];
     }
 
-    namespace // limit symbols to translation unit
+    HALMD_LUA_API int luaopen_libhalmd_mdsim_integrators_verlet()
     {
-
-    __attribute__((constructor)) void register_lua()
-    {
-        lua_wrapper::register_(1) //< distance of derived to base class
-        [
-            &verlet<3, double>::luaopen
-        ]
-        [
-            &verlet<2, double>::luaopen
-        ];
+        verlet<3, double>::luaopen(L);
+        verlet<2, double>::luaopen(L);
+        return 0;
     }
 
 **FIXME** explain the three template arguments of ``class_``
@@ -192,7 +174,7 @@ deficiency of luabind?
 ::
 
     require("halmd.mdsim.integrator")
-    integrator = assert(halmd_wrapper.mdsim.host.integrators.verlet_2_)
+    integrator = assert(libhalmd.mdsim.host.integrators.verlet_2_)
     print(integrator.module_name())
     instance = integrator(particle, box, 0.001)
     instance:integrate()

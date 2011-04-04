@@ -24,7 +24,7 @@
 
 #include <halmd/io/logger.hpp>
 #include <halmd/observables/ssf.hpp>
-#include <halmd/utility/lua_wrapper/lua_wrapper.hpp>
+#include <halmd/utility/lua/lua.hpp>
 #include <halmd/utility/scoped_timer.hpp>
 #include <halmd/utility/timer.hpp>
 
@@ -189,47 +189,31 @@ void ssf<dimension>::luaopen(lua_State* L)
 {
     using namespace luabind;
     static string class_name("ssf_" + lexical_cast<string>(dimension) + "_");
-    module(L)
+    module(L, "libhalmd")
     [
-        namespace_("halmd_wrapper")
+        namespace_("observables")
         [
-            namespace_("observables")
-            [
-                class_<ssf, shared_ptr<ssf> >(class_name.c_str())
-                    .def(constructor<
-                        shared_ptr<density_mode_type>
-                      , unsigned int
-                    >())
-                    .def("register_runtimes", &ssf::register_runtimes)
-                    .def("register_observables", &ssf::register_observables)
-                    .property("value", &ssf::value)
-                    .property("wavevector", &ssf::wavevector)
-                    .property("sample", &sample_wrapper<ssf>)
-                    .def("on_sample", &ssf::on_sample)
-                    .scope
-                    [
-                        class_<slot_function_type>("slot_function_type")
-                    ]
-            ]
+            class_<ssf, shared_ptr<ssf> >(class_name.c_str())
+                .def(constructor<
+                    shared_ptr<density_mode_type>
+                  , unsigned int
+                >())
+                .def("register_runtimes", &ssf::register_runtimes)
+                .def("register_observables", &ssf::register_observables)
+                .property("value", &ssf::value)
+                .property("wavevector", &ssf::wavevector)
+                .property("sample", &sample_wrapper<ssf>)
+                .def("on_sample", &ssf::on_sample)
         ]
     ];
 }
 
-namespace // limit symbols to translation unit
+HALMD_LUA_API int luaopen_libhalmd_observables_ssf(lua_State* L)
 {
-
-__attribute__((constructor)) void register_lua()
-{
-    lua_wrapper::register_(0) //< distance of derived to base class
-    [
-        &ssf<3>::luaopen
-    ]
-    [
-        &ssf<2>::luaopen
-    ];
+    ssf<3>::luaopen(L);
+    ssf<2>::luaopen(L);
+    return 0;
 }
-
-} // namespace
 
 // explicit instantiation
 template class ssf<3>;

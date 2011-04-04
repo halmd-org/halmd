@@ -27,7 +27,7 @@
 #include <halmd/io/logger.hpp>
 #include <halmd/mdsim/gpu/positions/lattice_kernel.hpp>
 #include <halmd/mdsim/gpu/positions/lattice.hpp>
-#include <halmd/utility/lua_wrapper/lua_wrapper.hpp>
+#include <halmd/utility/lua/lua.hpp>
 #include <halmd/utility/scoped_timer.hpp>
 #include <halmd/utility/timer.hpp>
 
@@ -75,12 +75,6 @@ void lattice<dimension, float_type, RandomNumberGenerator>::register_runtimes(pr
 template <int dimension, typename float_type, typename RandomNumberGenerator>
 void lattice<dimension, float_type, RandomNumberGenerator>::set()
 {
-    // randomise particle types if there are more than 1
-    if (particle->ntypes.size() > 1) {
-        LOG("randomly permuting particle types");
-        random->shuffle(particle->g_r);
-    }
-
 #ifdef USE_VERLET_DSFUN
     // set hi parts of dsfloat values to zero
     cuda::memset(particle->g_r, 0, particle->g_r.capacity());
@@ -94,6 +88,14 @@ void lattice<dimension, float_type, RandomNumberGenerator>::set()
 
     float4* r_it = particle->g_r.data(); // use pointer as substitute for missing iterator
     fcc(r_it, r_it + particle->nbox, length, offset);
+
+    // randomise particle positions if there is more than 1 particle type
+    // FIXME this requires a subsequent sort
+    // FIXME this will fail greatly once we support polymers
+    if (particle->ntypes.size() > 1) {
+        LOG("randomly permuting particle positions");
+        random->shuffle(particle->g_r);
+    }
 
     // reset particle image vectors
     cuda::memset(particle->g_image, 0, particle->g_image.capacity());
@@ -207,48 +209,36 @@ void lattice<dimension, float_type, RandomNumberGenerator>::luaopen(lua_State* L
 {
     using namespace luabind;
     static string class_name(module_name() + ("_" + lexical_cast<string>(dimension) + "_"));
-    module(L)
+    module(L, "libhalmd")
     [
-        namespace_("halmd_wrapper")
+        namespace_("mdsim")
         [
-            namespace_("mdsim")
+            namespace_("gpu")
             [
-                namespace_("gpu")
+                namespace_("positions")
                 [
-                    namespace_("positions")
-                    [
-                        class_<lattice, shared_ptr<_Base>, bases<_Base> >(class_name.c_str())
-                            .def(constructor<
-                                 shared_ptr<particle_type>
-                               , shared_ptr<box_type>
-                               , shared_ptr<random_type>
-                               , typename box_type::vector_type const&
-                             >())
-                            .property("slab", &lattice::slab)
-                            .def("register_runtimes", &lattice::register_runtimes)
-                            .property("module_name", &module_name_wrapper<dimension, float_type, RandomNumberGenerator>)
-                    ]
+                    class_<lattice, shared_ptr<_Base>, bases<_Base> >(class_name.c_str())
+                        .def(constructor<
+                             shared_ptr<particle_type>
+                           , shared_ptr<box_type>
+                           , shared_ptr<random_type>
+                           , typename box_type::vector_type const&
+                         >())
+                        .property("slab", &lattice::slab)
+                        .def("register_runtimes", &lattice::register_runtimes)
+                        .property("module_name", &module_name_wrapper<dimension, float_type, RandomNumberGenerator>)
                 ]
             ]
         ]
     ];
 }
 
-namespace // limit symbols to translation unit
+HALMD_LUA_API int luaopen_libhalmd_mdsim_gpu_positions_lattice(lua_State* L)
 {
-
-__attribute__((constructor)) void register_lua()
-{
-    lua_wrapper::register_(1) //< distance of derived to base class
-    [
-        &lattice<3, float, random::gpu::rand48>::luaopen
-    ]
-    [
-        &lattice<2, float, random::gpu::rand48>::luaopen
-    ];
+    lattice<3, float, random::gpu::rand48>::luaopen(L);
+    lattice<2, float, random::gpu::rand48>::luaopen(L);
+    return 0;
 }
-
-} // namespace
 
 // explicit instantiation
 template class lattice<3, float, random::gpu::rand48>;

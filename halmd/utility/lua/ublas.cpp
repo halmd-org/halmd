@@ -24,19 +24,15 @@
 #include <luabind/luabind.hpp>
 #include <luabind/operator.hpp>
 
-#include <halmd/utility/lua_wrapper/ublas.hpp>
+#include <halmd/config.hpp>
+#include <halmd/utility/lua/ublas.hpp>
 
 using namespace boost::numeric::ublas;
 
-namespace halmd
-{
-namespace lua_wrapper { namespace ublas
-{
-
-int luaopen(lua_State* L)
+HALMD_LUA_API int luaopen_libhalmd_utility_lua_ublas(lua_State* L)
 {
     using namespace luabind;
-    module(L, "halmd_wrapper")
+    module(L, "libhalmd")
     [
         namespace_("ublas")
         [
@@ -75,7 +71,3 @@ int luaopen(lua_State* L)
     ];
     return 0;
 }
-
-}} // namespace lua_wrapper::ublas
-
-} // namespace luabind

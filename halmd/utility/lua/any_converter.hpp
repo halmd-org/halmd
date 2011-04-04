@@ -1,5 +1,5 @@
 /*
- * Copyright © 2010  Peter Colberg
+ * Copyright © 2010-2011  Peter Colberg
  *
  * This file is part of HALMD.
  *
@@ -17,20 +17,30 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef HALMD_UTILITY_LUA_WRAPPER_HDF5_HPP
-#define HALMD_UTILITY_LUA_WRAPPER_HDF5_HPP
+#ifndef HALMD_UTILITY_LUA_ANY_CONVERTER_HPP
+#define HALMD_UTILITY_LUA_ANY_CONVERTER_HPP
 
-#include <lua.hpp>
+#include <boost/any.hpp>
+#include <luabind/luabind.hpp>
 
-namespace halmd
+namespace luabind
 {
-namespace lua_wrapper { namespace hdf5
+
+/**
+ * Luabind converter for boost::any
+ */
+template <>
+struct default_converter<boost::any>
+  : native_converter_base<boost::any>
 {
+    //! convert from C++ to Lua
+    static void to(lua_State* L, boost::any const& any);
+};
 
-int luaopen(lua_State* L);
+template <>
+struct default_converter<boost::any const&>
+  : default_converter<boost::any> {};
 
-}} // namespace lua_wrapper::hdf5
+} // namespace luabind
 
-} // namespace halmd
-
-#endif /* ! HALMD_UTILITY_LUA_WRAPPER_HDF5_HPP */
+#endif /* ! HALMD_UTILITY_LUA_ANY_CONVERTER_HPP */

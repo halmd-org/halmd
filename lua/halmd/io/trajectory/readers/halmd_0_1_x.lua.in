@@ -30,16 +30,16 @@ local observables = halmd.observables
 -- grab C++ wrappers
 local reader_wrapper = {
     host = {
-        [2] = halmd_wrapper.io.trajectory.readers.halmd_0_1_x_2_double_
-      , [3] = halmd_wrapper.io.trajectory.readers.halmd_0_1_x_3_double_
+        [2] = libhalmd.io.trajectory.readers.halmd_0_1_x_2_double_
+      , [3] = libhalmd.io.trajectory.readers.halmd_0_1_x_3_double_
     }
   , gpu = {
-        [2] = halmd_wrapper.io.trajectory.readers.halmd_0_1_x_2_float_
-      , [3] = halmd_wrapper.io.trajectory.readers.halmd_0_1_x_3_float_
+        [2] = libhalmd.io.trajectory.readers.halmd_0_1_x_2_float_
+      , [3] = libhalmd.io.trajectory.readers.halmd_0_1_x_3_float_
     }
 }
-local h5 = halmd_wrapper.h5
-local po = halmd_wrapper.po
+local h5 = libhalmd.h5
+local po = libhalmd.po
 -- grab standard library
 local assert = assert
 local error = error

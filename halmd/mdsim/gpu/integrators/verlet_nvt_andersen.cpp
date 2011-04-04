@@ -23,7 +23,7 @@
 
 #include <halmd/io/logger.hpp>
 #include <halmd/mdsim/gpu/integrators/verlet_nvt_andersen.hpp>
-#include <halmd/utility/lua_wrapper/lua_wrapper.hpp>
+#include <halmd/utility/lua/lua.hpp>
 #include <halmd/utility/scoped_timer.hpp>
 #include <halmd/utility/timer.hpp>
 
@@ -202,52 +202,40 @@ luaopen(lua_State* L)
     typedef typename _Base::_Base _Base_Base;
     using namespace luabind;
     static string class_name(module_name() + ("_" + lexical_cast<string>(dimension) + "_"));
-    module(L)
+    module(L, "libhalmd")
     [
-        namespace_("halmd_wrapper")
+        namespace_("mdsim")
         [
-            namespace_("mdsim")
+            namespace_("gpu")
             [
-                namespace_("gpu")
+                namespace_("integrators")
                 [
-                    namespace_("integrators")
-                    [
-                        class_<
-                            verlet_nvt_andersen
-                          , shared_ptr<_Base_Base>
-                          , bases<_Base_Base, _Base>
-                        >(class_name.c_str())
-                            .def(constructor<
-                                shared_ptr<particle_type>
-                              , shared_ptr<box_type>
-                              , shared_ptr<random_type>
-                              , float_type, float_type, float_type>()
-                            )
-                            .def("register_runtimes", &verlet_nvt_andersen::register_runtimes)
-                            .property("collision_rate", &verlet_nvt_andersen::collision_rate)
-                            .property("module_name", &module_name_wrapper<dimension, float_type, RandomNumberGenerator>)
-                    ]
+                    class_<
+                        verlet_nvt_andersen
+                      , shared_ptr<_Base_Base>
+                      , bases<_Base_Base, _Base>
+                    >(class_name.c_str())
+                        .def(constructor<
+                            shared_ptr<particle_type>
+                          , shared_ptr<box_type>
+                          , shared_ptr<random_type>
+                          , float_type, float_type, float_type>()
+                        )
+                        .def("register_runtimes", &verlet_nvt_andersen::register_runtimes)
+                        .property("collision_rate", &verlet_nvt_andersen::collision_rate)
+                        .property("module_name", &module_name_wrapper<dimension, float_type, RandomNumberGenerator>)
                 ]
             ]
         ]
     ];
 }
 
-namespace // limit symbols to translation unit
+HALMD_LUA_API int luaopen_libhalmd_mdsim_gpu_integrators_verlet_nvt_andersen(lua_State* L)
 {
-
-__attribute__((constructor)) void register_lua()
-{
-    lua_wrapper::register_(2) //< distance of derived to base class
-    [
-        &verlet_nvt_andersen<3, float, random::gpu::rand48>::luaopen
-    ]
-    [
-        &verlet_nvt_andersen<2, float, random::gpu::rand48>::luaopen
-    ];
+    verlet_nvt_andersen<3, float, random::gpu::rand48>::luaopen(L);
+    verlet_nvt_andersen<2, float, random::gpu::rand48>::luaopen(L);
+    return 0;
 }
-
-} // namespace
 
 // explicit instantiation
 template class verlet_nvt_andersen<3, float, random::gpu::rand48>;

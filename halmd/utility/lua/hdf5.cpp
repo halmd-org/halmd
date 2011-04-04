@@ -21,16 +21,14 @@
 #include <luabind/luabind.hpp>
 #include <luabind/exception_handler.hpp>
 
-#include <halmd/utility/lua_wrapper/hdf5.hpp>
-#include <halmd/utility/lua_wrapper/long_long_converter.hpp> // *int64_t on x86
-#include <halmd/utility/lua_wrapper/vector_converter.hpp>
+#include <halmd/config.hpp>
+#include <halmd/utility/lua/long_long_converter.hpp> // *int64_t on x86
+#include <halmd/utility/lua/vector_converter.hpp>
 
 using namespace boost;
 using namespace std;
 
 namespace halmd
-{
-namespace lua_wrapper { namespace hdf5
 {
 
 /**
@@ -81,11 +79,11 @@ static int translate_h5_exception(lua_State* L, H5::Exception const& e)
 /**
  * Register HDF5 classes and functions with Lua
  */
-int luaopen(lua_State* L)
+HALMD_LUA_API int luaopen_libhalmd_utility_lua_hdf5(lua_State* L)
 {
     using namespace luabind;
     register_exception_handler<H5::Exception>(&translate_h5_exception);
-    module(L, "halmd_wrapper")
+    module(L, "libhalmd")
     [
         namespace_("h5")
         [
@@ -159,7 +157,5 @@ int luaopen(lua_State* L)
     ];
     return 0;
 }
-
-}} // namespace lua_wrapper::hdf5
 
 } // namespace halmd

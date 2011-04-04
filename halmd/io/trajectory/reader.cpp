@@ -18,7 +18,7 @@
  */
 
 #include <halmd/io/trajectory/reader.hpp>
-#include <halmd/utility/lua_wrapper/lua_wrapper.hpp>
+#include <halmd/utility/lua/lua.hpp>
 
 using namespace boost;
 using namespace std;
@@ -33,36 +33,24 @@ void reader<dimension>::luaopen(lua_State* L)
 {
     using namespace luabind;
     static string class_name("reader_" + lexical_cast<string>(dimension) + "_");
-    module(L)
+    module(L, "libhalmd")
     [
-        namespace_("halmd_wrapper")
+        namespace_("io")
         [
-            namespace_("io")
+            namespace_("trajectory")
             [
-                namespace_("trajectory")
-                [
-                    class_<reader, shared_ptr<reader> >(class_name.c_str())
-                ]
+                class_<reader, shared_ptr<reader> >(class_name.c_str())
             ]
         ]
     ];
 }
 
-namespace // limit symbols to translation unit
+HALMD_LUA_API int luaopen_libhalmd_io_trajectory_reader(lua_State* L)
 {
-
-__attribute__((constructor)) void register_lua()
-{
-    lua_wrapper::register_(0) //< distance of derived to base class
-    [
-        &reader<3>::luaopen
-    ]
-    [
-        &reader<2>::luaopen
-    ];
+    reader<3>::luaopen(L);
+    reader<2>::luaopen(L);
+    return 0;
 }
-
-} // namespace
 
 }} // namespace io::trajectory
 

@@ -19,7 +19,7 @@
 
 #include <halmd/io/logger.hpp>
 #include <halmd/mdsim/velocity.hpp>
-#include <halmd/utility/lua_wrapper/lua_wrapper.hpp>
+#include <halmd/utility/lua/lua.hpp>
 
 using namespace boost;
 using namespace std;
@@ -34,34 +34,22 @@ void velocity<dimension>::luaopen(lua_State* L)
 {
     using namespace luabind;
     static string class_name("velocity_" + lexical_cast<string>(dimension) + "_");
-    module(L)
+    module(L, "libhalmd")
     [
-        namespace_("halmd_wrapper")
+        namespace_("mdsim")
         [
-            namespace_("mdsim")
-            [
-                class_<velocity, shared_ptr<velocity> >(class_name.c_str())
-                    .def("set", &velocity::set)
-            ]
+            class_<velocity, shared_ptr<velocity> >(class_name.c_str())
+                .def("set", &velocity::set)
         ]
     ];
 }
 
-namespace // limit symbols to translation unit
+HALMD_LUA_API int luaopen_libhalmd_mdsim_velocity(lua_State* L)
 {
-
-__attribute__((constructor)) void register_lua()
-{
-    lua_wrapper::register_(0) //< distance of derived to base class
-    [
-        &velocity<3>::luaopen
-    ]
-    [
-        &velocity<2>::luaopen
-    ];
+    velocity<3>::luaopen(L);
+    velocity<2>::luaopen(L);
+    return 0;
 }
-
-} // namespace
 
 template class velocity<3>;
 template class velocity<2>;

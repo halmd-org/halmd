@@ -18,7 +18,7 @@
  */
 
 #include <halmd/io/profiling/writer.hpp>
-#include <halmd/utility/lua_wrapper/lua_wrapper.hpp>
+#include <halmd/utility/lua/lua.hpp>
 #include <halmd/utility/signal.hpp>
 
 using namespace boost;
@@ -39,34 +39,24 @@ write_wrapper(shared_ptr<writer_type> writer)
 void writer::luaopen(lua_State* L)
 {
     using namespace luabind;
-    module(L)
+    module(L, "libhalmd")
     [
-        namespace_("halmd_wrapper")
+        namespace_("io")
         [
-            namespace_("io")
+            namespace_("profiling")
             [
-                namespace_("profiling")
-                [
-                    class_<writer, shared_ptr<writer> >("writer")
-                        .property("write", &write_wrapper<writer>)
-                ]
+                class_<writer, shared_ptr<writer> >("writer")
+                    .property("write", &write_wrapper<writer>)
             ]
         ]
     ];
 }
 
-namespace // limit symbols to translation unit
+HALMD_LUA_API int luaopen_libhalmd_io_profiling_writer(lua_State* L)
 {
-
-__attribute__((constructor)) void register_lua()
-{
-    lua_wrapper::register_(0) //< distance of derived to base class
-    [
-        &writer::luaopen
-    ];
+    writer::luaopen(L);
+    return 0;
 }
-
-} // namespace
 
 }} // namespace io::profiling
 

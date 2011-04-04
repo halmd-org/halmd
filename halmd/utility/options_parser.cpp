@@ -20,7 +20,7 @@
 #include <boost/tuple/tuple.hpp>
 #include <fstream>
 
-#include <halmd/utility/lua_wrapper/lua_wrapper.hpp>
+#include <halmd/utility/lua/lua.hpp>
 #include <halmd/utility/options_parser.hpp>
 
 using namespace boost;
@@ -287,7 +287,7 @@ void options_parser::parse_config_file(std::string const& file_name, po::variabl
 void options_parser::luaopen(lua_State* L)
 {
     using namespace luabind;
-    module(L, "halmd_wrapper")
+    module(L, "libhalmd")
     [
         class_<options_parser>("options_parser")
             .def("add", (void (options_parser::*)(po::options_description const&)) &options_parser::add)
@@ -295,17 +295,10 @@ void options_parser::luaopen(lua_State* L)
     ];
 }
 
-namespace // limit symbols to translation unit
+HALMD_LUA_API int luaopen_libhalmd_utility_options_parser(lua_State* L)
 {
-
-__attribute__((constructor)) void register_lua()
-{
-    lua_wrapper::register_(0) //< distance of derived to base class
-    [
-        &options_parser::luaopen
-    ];
+    options_parser::luaopen(L);
+    return 0;
 }
-
-} // namespace
 
 } // namespace halmd

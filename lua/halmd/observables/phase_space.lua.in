@@ -31,19 +31,19 @@ local observables = halmd.observables
 local phase_space_wrapper = { host }
 phase_space_wrapper.host = {
     host = {
-        [2] = halmd_wrapper.observables.host.phase_space_2_
-      , [3] = halmd_wrapper.observables.host.phase_space_3_
+        [2] = libhalmd.observables.host.phase_space_2_
+      , [3] = libhalmd.observables.host.phase_space_3_
     }
 }
-if halmd_wrapper.observables.gpu then
+if libhalmd.observables.gpu then
     phase_space_wrapper.gpu = { host, gpu }
     phase_space_wrapper.gpu.host = {
-        [2] = halmd_wrapper.observables.gpu.host.phase_space_2_
-      , [3] = halmd_wrapper.observables.gpu.host.phase_space_3_
+        [2] = libhalmd.observables.gpu.host.phase_space_2_
+      , [3] = libhalmd.observables.gpu.host.phase_space_3_
     }
     phase_space_wrapper.gpu.gpu = {
-        [2] = halmd_wrapper.observables.gpu.gpu.phase_space_2_
-      , [3] = halmd_wrapper.observables.gpu.gpu.phase_space_3_
+        [2] = libhalmd.observables.gpu.gpu.phase_space_2_
+      , [3] = libhalmd.observables.gpu.gpu.phase_space_3_
     }
 end
 -- grab standard library

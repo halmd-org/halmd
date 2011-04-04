@@ -27,8 +27,8 @@ local mdsim = halmd.mdsim
 local parameter = halmd.parameter
 -- grab C++ wrappers
 local hdf5_wrapper = {
-    [2] = halmd_wrapper.io.statevars.writers.hdf5_2_
-  , [3] = halmd_wrapper.io.statevars.writers.hdf5_3_
+    [2] = libhalmd.io.statevars.writers.hdf5_2_
+  , [3] = libhalmd.io.statevars.writers.hdf5_3_
 }
 -- grab standard library
 local assert = assert

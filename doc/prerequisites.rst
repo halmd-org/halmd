@@ -1,5 +1,5 @@
 Prerequisites
-=============
+*************
 
 This section is a step-by-step guide to installing the necessary dependencies to
 compile HALMD from source. Be sure to check if your distribution ships with any
@@ -30,6 +30,8 @@ Instead of setting CMAKE_PREFIX_PATH manually, you would include the package dir
    export CMAKE_PREFIX_PATH="${HOME}/usr/lua-5.1.4${CMAKE_PREFIX_PATH+:$CMAKE_PREFIX_PATH}"
    export CMAKE_PREFIX_PATH="${HOME}/usr/luabind-0.9.1${CMAKE_PREFIX_PATH+:$CMAKE_PREFIX_PATH}"
 
+GNU/Linux
+=========
 
 CMake
 -----
@@ -109,7 +111,7 @@ In the Boost source directory, bootstrap the build with ::
 
 Compile Boost using ::
 
-   ./bjam
+   ./bjam cxxflags=-fPIC
 
 This compiles both dynamic and static libraries.
 
@@ -127,7 +129,7 @@ This compiles both dynamic and static libraries.
 
 Install the Boost libraries into your packages directory::
 
-   ./bjam install --prefix=$HOME/usr/boost_1_46_1
+   ./bjam cxxflags=-fPIC install --prefix=$HOME/usr/boost_1_46_1
 
 Include Boost in your shell environment, by adding to ~/.bashrc::
 
@@ -191,13 +193,13 @@ Get the latest `Luabind source package`_, currently `Luabind 0.9.1`_.
    ``/tmp/boost_1_46_1/bjam``. This directory also has to be passed to bjam
    during Luabind build using the environment variable ``BOOST_ROOT``.
 
-Compile a statically linked release build of the Luabind library with ::
+Compile statically linked release and debug variants of the Luabind library with ::
 
-   BOOST_ROOT=/tmp/boost_1_46_1 LUA_PATH=~/usr/lua-5.1.4 /tmp/boost_1_46_1/bjam link=static variant=release
+   BOOST_ROOT=/tmp/boost_1_46_1 LUA_PATH=~/usr/lua-5.1.4 /tmp/boost_1_46_1/bjam cxxflags=-fPIC link=static variant=release variant=debug
 
 Install the Luabind library into your packages directory::
 
-   BOOST_ROOT=/tmp/boost_1_46_1 LUA_PATH=~/usr/lua-5.1.4 /tmp/boost_1_46_1/bjam link=static variant=release install --prefix=$HOME/usr/luabind-0.9.1
+   BOOST_ROOT=/tmp/boost_1_46_1 LUA_PATH=~/usr/lua-5.1.4 /tmp/boost_1_46_1/bjam cxxflags=-fPIC link=static variant=release variant=debug install --prefix=$HOME/usr/luabind-0.9.1
 
 (Note that bjam does not replace ~ with your home directory, use ``$HOME`` instead.)
 
@@ -216,7 +218,7 @@ Get the latest `HDF5 source package`_, currently `HDF5 1.8.6`_.
 
 Prepare a statically linked build of the HDF5 C and C++ library with ::
 
-   ./configure --enable-cxx --enable-static --disable-shared --prefix=$HOME/usr/hdf5-1.8.6
+   CFLAGS=-fPIC CXXFLAGS=-fPIC ./configure --enable-cxx --enable-static --disable-shared --prefix=$HOME/usr/hdf5-1.8.6
 
 .. note:: Compiling HDF5 with C++ support disables multi-threading.
 
@@ -262,4 +264,37 @@ Include Sphinx in your shell environment, by adding to ~/.bashrc::
 
    export PATH="${HOME}/usr/Sphinx-1.0.7/bin${PATH+:$PATH}"
    export PYTHONPATH="${HOME}/usr/Sphinx-1.0.7/lib/python2.5/site-packages${PYTHONPATH+:$PYTHONPATH}"
+
+AIX
+===
+
+Boost
+-----
+
+Compile and install Boost using ::
+
+   ./bjam --toolset=vacpp address-model=64 cxxflags=-qrtti=all install --prefix=$HOME/usr/powerpc-ibm-aix5.3/boost_1_46_1
+
+Lua
+---
+
+Compile the Lua library ::
+
+   make aix
+
+
+Luabind
+-------
+
+Compile and install the Luabind library ::
+
+   BOOST_ROOT=/tmp/boost_1_46_1 LUA_PATH=~/usr/powerpc-ibm-aix5.3/lua-5.1.4 /tmp/boost_1_46_1/bjam --toolset=vacpp address-model=64 cxxflags=-qrtti=all link=static variant=release variant=debug install --prefix=$HOME/usr/powerpc-ibm-aix5.3/luabind-0.9.1
+
+
+HDF5
+----
+
+Prepare a statically linked build of the HDF5 C and C++ library with ::
+
+   CC=xlc_r CXX=xlC_r CXXFLAGS=-qrtti=all ./configure --enable-cxx --enable-static --disable-shared --prefix=$HOME/usr/powerpc-ibm-aix5.3/hdf5-1.8.6
 

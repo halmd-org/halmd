@@ -1,5 +1,5 @@
 /*
- * Copyright © 2010  Peter Colberg
+ * Copyright © 2011  Peter Colberg
  *
  * This file is part of HALMD.
  *
@@ -17,56 +17,50 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef HALMD_UTILITY_LUA_WRAPPER_VECTOR_CONVERTER_HPP
-#define HALMD_UTILITY_LUA_WRAPPER_VECTOR_CONVERTER_HPP
+#ifndef HALMD_UTILITY_LUA_OPTIONAL_CONVERTER_HPP
+#define HALMD_UTILITY_LUA_OPTIONAL_CONVERTER_HPP
 
+#include <boost/optional.hpp>
 #include <luabind/luabind.hpp>
-#include <vector>
 
 namespace luabind
 {
 
 /**
- * Luabind converter for STL vector
+ * Luabind converter for Boost.Optional
  */
 template <typename T>
-struct default_converter<std::vector<T> >
-  : native_converter_base<std::vector<T> >
+struct default_converter<boost::optional<T> >
+  : native_converter_base<boost::optional<T> >
 {
-
     //! compute Lua to C++ conversion score
     static int compute_score(lua_State* L, int index)
     {
-        return lua_type(L, index) == LUA_TTABLE ? 0 : -1;
+        return luabind::object_cast_nothrow<T>(from_stack(L, index)) ? 0 : -1;
     }
 
     //! convert from Lua to C++
-    std::vector<T> from(lua_State* L, int index)
+    boost::optional<T> from(lua_State* L, int index)
     {
-        std::vector<T> v;
-        for (iterator i(object(from_stack(L, index))), end; i != end; ++i) {
-            v.push_back(object_cast<T>(*i));
-        }
-        return v;
+        return luabind::object_cast<T>(from_stack(L, index));
     }
 
     //! convert from C++ to Lua
-    void to(lua_State* L, std::vector<T> const& v)
+    void to(lua_State* L, boost::optional<T> const& value)
     {
-        object table = newtable(L);
-        for (std::size_t i = 0; i < v.size(); ++i) {
-            // default_converter<T> only invoked with reference wrapper
-            table[i + 1] = boost::cref(v[i]);
+        if (value) {
+            luabind::detail::convert_to_lua(L, *value);
         }
-        table.push(L);
+        else {
+            lua_pushnil(L);
+        }
     }
 };
 
 template <typename T>
-struct default_converter<std::vector<T> const&>
-  : default_converter<std::vector<T> > {};
-
+struct default_converter<boost::optional<T> const&>
+  : default_converter<boost::optional<T> > {};
 
 } // namespace luabind
 
-#endif /* ! HALMD_UTILITY_LUA_WRAPPER_VECTOR_CONVERTER_HPP */
+#endif /* ! HALMD_UTILITY_LUA_OPTIONAL_CONVERTER_HPP */

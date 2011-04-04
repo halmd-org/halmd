@@ -29,20 +29,20 @@ local mdsim = halmd.mdsim
 local phase_space_wrapper = {
     host = {
         host = {
-            [2] = halmd_wrapper.observables.host.samples.phase_space_2_double_
-          , [3] = halmd_wrapper.observables.host.samples.phase_space_3_double_
+            [2] = libhalmd.observables.host.samples.phase_space_2_double_
+          , [3] = libhalmd.observables.host.samples.phase_space_3_double_
         }
     }
 }
-if halmd_wrapper.observables.gpu then
+if libhalmd.observables.gpu then
     phase_space_wrapper.gpu = {
         host = {
-            [2] = halmd_wrapper.observables.host.samples.phase_space_2_float_
-          , [3] = halmd_wrapper.observables.host.samples.phase_space_3_float_
+            [2] = libhalmd.observables.host.samples.phase_space_2_float_
+          , [3] = libhalmd.observables.host.samples.phase_space_3_float_
         }
       , gpu = {
-            [2] = halmd_wrapper.observables.gpu.samples.phase_space_2_
-          , [3] = halmd_wrapper.observables.gpu.samples.phase_space_3_
+            [2] = libhalmd.observables.gpu.samples.phase_space_2_
+          , [3] = libhalmd.observables.gpu.samples.phase_space_3_
         }
     }
 end

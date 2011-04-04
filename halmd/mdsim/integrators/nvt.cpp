@@ -18,7 +18,7 @@
  */
 
 #include <halmd/mdsim/integrators/nvt.hpp>
-#include <halmd/utility/lua_wrapper/lua_wrapper.hpp>
+#include <halmd/utility/lua/lua.hpp>
 
 using namespace boost;
 using namespace std;
@@ -33,40 +33,29 @@ void nvt<dimension>::luaopen(lua_State* L)
 {
     using namespace luabind;
     static string class_name("nvt_" + lexical_cast<string>(dimension) + "_");
-    module(L)
+    module(L, "libhalmd")
     [
-        namespace_("halmd_wrapper")
+        namespace_("mdsim")
         [
-            namespace_("mdsim")
+            namespace_("integrators")
             [
-                namespace_("integrators")
-                [
-                    class_<nvt, shared_ptr<_Base>, bases<_Base> >(class_name.c_str())
-                        .property(
-                            "temperature"
-                          , (double (nvt::*)() const) &nvt::temperature
-                        )
-                ]
+                class_<nvt, shared_ptr<_Base>, bases<_Base> >(class_name.c_str())
+                    .property(
+                        "temperature"
+                      , (double (nvt::*)() const) &nvt::temperature
+                    )
             ]
         ]
     ];
 }
 
-namespace // limit symbols to translation unit
+HALMD_LUA_API int luaopen_libhalmd_mdsim_integrators_nvt(lua_State* L)
 {
-
-__attribute__((constructor)) void register_lua()
-{
-    lua_wrapper::register_(1) //< distance of derived to base class
-    [
-        &nvt<3>::luaopen
-    ]
-    [
-        &nvt<2>::luaopen
-    ];
+    nvt<3>::luaopen(L);
+    nvt<2>::luaopen(L);
+    return 0;
 }
 
-} // namespace
 // explicit instantiation
 template class nvt<3>;
 template class nvt<2>;
