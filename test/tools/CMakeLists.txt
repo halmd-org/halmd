@@ -22,7 +22,7 @@ target_link_libraries(test_tools_ctest
 # We therefore delete the target output before linking.
 get_target_property(LOCATION test_tools_ctest LOCATION)
 add_custom_command(TARGET test_tools_ctest PRE_LINK
-  COMMAND cmake -E remove -f "${LOCATION}"
+  COMMAND "${CMAKE_COMMAND}" -E remove -f "${LOCATION}"
 )
 
 add_executable(test_init
