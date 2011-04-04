@@ -113,16 +113,7 @@ else()
   message(WARNING "Unsupported CXX compiler: ${CMAKE_CXX_COMPILER_ID}")
 endif()
 
-if(CMAKE_CXX_PLATFORM_ID STREQUAL "Linux")
-  if(CMAKE_EXE_LINKER_FLAGS STREQUAL "${CMAKE_EXE_LINKER_FLAGS_INIT}")
-    set(CMAKE_EXE_LINKER_FLAGS "-Wl,--as-needed" CACHE STRING
-      "Flags used by the linker." FORCE)
-  endif()
-  if(CMAKE_SHARED_LINKER_FLAGS STREQUAL "${CMAKE_SHARED_LINKER_FLAGS_INIT}")
-    set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS}" CACHE STRING
-      "Flags used by the linker during the creation of shared libraries." FORCE)
-  endif()
-elseif(CMAKE_CXX_PLATFORM_ID STREQUAL "AIX")
+if(CMAKE_CXX_PLATFORM_ID STREQUAL "AIX")
   # The combined flags -qtwolink -Wl,-bweaklocal instruct the AIX linker
   # to discard unreferenced objects of an archive, which is needed to
   # avoid undefined symbol errors when linking the unit tests.
