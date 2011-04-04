@@ -23,7 +23,7 @@
 
 #include <halmd/io/logger.hpp>
 #include <halmd/mdsim/gpu/integrators/verlet_nvt_hoover.hpp>
-#include <halmd/utility/lua_wrapper/lua_wrapper.hpp>
+#include <halmd/utility/lua/lua.hpp>
 #include <halmd/utility/scoped_timer.hpp>
 #include <halmd/utility/timer.hpp>
 
@@ -282,62 +282,51 @@ static char const* module_name_wrapper(verlet_nvt_hoover<dimension, float_type> 
 }
 
 template <int dimension, typename float_type>
-void verlet_nvt_hoover<dimension, float_type>::
-luaopen(lua_State* L)
+void verlet_nvt_hoover<dimension, float_type>::luaopen(lua_State* L)
 {
     typedef typename _Base::_Base _Base_Base;
     using namespace luabind;
     static string class_name(module_name() + ("_" + lexical_cast<string>(dimension) + "_"));
-    module(L)
+    module(L, "libhalmd")
     [
-        namespace_("halmd_wrapper")
+        namespace_("mdsim")
         [
-            namespace_("mdsim")
+            namespace_("gpu")
             [
-                namespace_("gpu")
+                namespace_("integrators")
                 [
-                    namespace_("integrators")
-                    [
-                        class_<
-                            verlet_nvt_hoover
-                          , shared_ptr<_Base_Base>
-                          , bases<_Base_Base, _Base>
-                        >(class_name.c_str())
-                            .def(constructor<
-                                shared_ptr<particle_type>
-                              , shared_ptr<box_type>
-                              , float_type, float_type, float_type
-                            >())
-                            .def("register_runtimes", &verlet_nvt_hoover::register_runtimes)
-                            .def("register_observables", &verlet_nvt_hoover::register_observables)
-                            .def_readonly("mass", (fixed_vector<double, 2> const& (verlet_nvt_hoover::*)() const)&verlet_nvt_hoover::mass) // FIXME make read/write
-                            .def_readonly("resonance_frequency", &verlet_nvt_hoover::resonance_frequency)
-                            .def_readonly("en_nhc", &verlet_nvt_hoover::en_nhc)
-                            .property("module_name", &module_name_wrapper<dimension, float_type>)
-                    ]
+                    class_<
+                        verlet_nvt_hoover
+                      , shared_ptr<_Base_Base>
+                      , bases<_Base_Base, _Base>
+                    >(class_name.c_str())
+                        .def(constructor<
+                            shared_ptr<particle_type>
+                          , shared_ptr<box_type>
+                          , float_type, float_type, float_type
+                        >())
+                        .def("register_runtimes", &verlet_nvt_hoover::register_runtimes)
+                        .def("register_observables", &verlet_nvt_hoover::register_observables)
+                        .property("mass", (fixed_vector<double, 2> const& (verlet_nvt_hoover::*)() const)&verlet_nvt_hoover::mass) // FIXME make read/write
+                        .property("resonance_frequency", &verlet_nvt_hoover::resonance_frequency)
+                        .property("en_nhc", &verlet_nvt_hoover::en_nhc)
+                        .property("module_name", &module_name_wrapper<dimension, float_type>)
                 ]
             ]
         ]
     ];
 }
 
-static __attribute__((constructor)) void register_lua()
+HALMD_LUA_API int luaopen_libhalmd_mdsim_gpu_integrators_verlet_nvt_hoover(lua_State* L)
 {
-    lua_wrapper::register_(2) //< distance of derived to base class
-    [
 #ifdef USE_VERLET_DSFUN
-        &verlet_nvt_hoover<3, double>::luaopen
+    verlet_nvt_hoover<3, double>::luaopen(L);
+    verlet_nvt_hoover<2, double>::luaopen(L);
 #else
-        &verlet_nvt_hoover<3, float>::luaopen
+    verlet_nvt_hoover<3, float>::luaopen(L);
+    verlet_nvt_hoover<2, float>::luaopen(L);
 #endif
-    ]
-    [
-#ifdef USE_VERLET_DSFUN
-        &verlet_nvt_hoover<2, double>::luaopen
-#else
-        &verlet_nvt_hoover<2, float>::luaopen
-#endif
-    ];
+    return 0;
 }
 
 // explicit instantiation

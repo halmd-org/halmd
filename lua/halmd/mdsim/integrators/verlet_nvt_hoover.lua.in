@@ -17,28 +17,30 @@
 -- along with this program.  If not, see <http://www.gnu.org/licenses/>.
 --
 
+require("halmd.device")
+require("halmd.mdsim.core")
+
 require("halmd.modules")
 
--- grab environment
+-- grab modules
+local device = halmd.device
+local mdsim = halmd.mdsim
+-- grab C++ wrappers
 local verlet_nvt_hoover_wrapper = {
     host = {
-        [2] = halmd_wrapper.mdsim.host.integrators.verlet_nvt_hoover_2_
-      , [3] = halmd_wrapper.mdsim.host.integrators.verlet_nvt_hoover_3_
+        [2] = libhalmd.mdsim.host.integrators.verlet_nvt_hoover_2_
+      , [3] = libhalmd.mdsim.host.integrators.verlet_nvt_hoover_3_
     }
 }
-if halmd_wrapper.mdsim.gpu then
+if libhalmd.mdsim.gpu then
     verlet_nvt_hoover_wrapper.gpu = {
-        [2] = halmd_wrapper.mdsim.gpu.integrators.verlet_nvt_hoover_2_
-      , [3] = halmd_wrapper.mdsim.gpu.integrators.verlet_nvt_hoover_3_
+        [2] = libhalmd.mdsim.gpu.integrators.verlet_nvt_hoover_2_
+      , [3] = libhalmd.mdsim.gpu.integrators.verlet_nvt_hoover_3_
     }
 end
-local mdsim = {
-  core = require("halmd.mdsim.core")
-}
-local device = require("halmd.device")
-local random = require("halmd.random")
-local h5 = halmd_wrapper.h5
-local po = halmd_wrapper.po
+local h5 = libhalmd.h5
+local po = libhalmd.po
+-- grab standard library
 local assert = assert
 
 module("halmd.mdsim.integrators.verlet_nvt_hoover", halmd.modules.register)

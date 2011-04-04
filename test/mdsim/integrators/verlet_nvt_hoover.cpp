@@ -37,6 +37,7 @@
 #include <halmd/mdsim/core.hpp>
 #include <halmd/numeric/accumulator.hpp>
 #include <test/modules.hpp>
+#include <test/tools/init.hpp>
 
 using namespace boost;
 using namespace boost::assign;
@@ -275,7 +276,7 @@ void verlet_nvt_hoover(string const& backend)
     BOOST_CHECK_CLOSE_FRACTION(cv, .5 * dimension, rel_cv_limit);
 }
 
-static void __attribute__((constructor)) init_unit_test_suite()
+HALMD_TEST_INIT( init_unit_test_suite )
 {
     using namespace boost::assign;
     using namespace boost::unit_test;
