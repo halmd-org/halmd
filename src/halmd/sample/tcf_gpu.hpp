@@ -28,10 +28,12 @@
 #include <vector>
 
 #include <cuda_wrapper.hpp>
+#include <halmd/algorithm/radix_sort.hpp>
 #include <halmd/math/vector2d.hpp>
 #include <halmd/math/vector3d.hpp>
 #include <halmd/mdsim/sample.hpp>
 #include <halmd/mdsim/traits.hpp>
+#include <halmd/sample/gpu/vacf_filter.hpp>
 #include <halmd/sample/gpu/tcf.hpp>
 #include <halmd/sample/tcf_base.hpp>
 
@@ -165,7 +167,7 @@ struct mean_square_displacement<tcf_gpu_sample> : correlation_function<tcf_gpu_s
         g_var.resize((last.first - first.first) * BLOCKS);
         h_var.resize(g_var.size());
 
-        // compute mean square displacements on GPU
+        // compute mean-squar displacements on GPU
         for (sample = first.first, count = g_count.data(), mean = g_mean.data(), var = g_var.data(); sample != last.first; ++sample, count += BLOCKS, mean += BLOCKS, var += BLOCKS) {
             cuda::configure(BLOCKS, THREADS);
             _gpu::mean_square_displacement(*(*sample)[type].r, *(*first.first)[type].r, count, mean, var, (*sample)[type].r->size());
@@ -174,7 +176,7 @@ struct mean_square_displacement<tcf_gpu_sample> : correlation_function<tcf_gpu_s
         cuda::copy(g_count, h_count);
         cuda::copy(g_mean, h_mean);
         cuda::copy(g_var, h_var);
-        // accumulate mean square displacements on host
+        // accumulate mean-square displacements on host
         for (sample = first.first, count0 = h_count.data(), mean = h_mean.data(), var = h_var.data(); sample != last.first; ++sample, ++result, count0 += BLOCKS) {
             for (count = count0; count != count0 + BLOCKS; ++count, ++mean, ++var) {
                 *result += accumulator_type(*count, *mean, *var);
@@ -308,6 +310,479 @@ struct velocity_autocorrelation<tcf_gpu_sample> : correlation_function<tcf_gpu_s
 };
 
 /**
+ * correlation functions sorted by squared displacements
+ */
+template <>
+struct sorted_by_msd<tcf_gpu_sample> : correlation_function<tcf_gpu_sample>
+{
+    /** block sample results */
+    boost::multi_array<cuda::vector<float4>, 2> result;
+
+    enum { BLOCKS = gpu::vacf_filter<>::BLOCKS };
+    enum { THREADS = gpu::vacf_filter<>::THREADS };
+    enum { RADIX_SORT_THREADS = 16 << DEVICE_SCALE };
+
+    /** maximum squared displacement per block */
+    cuda::vector<float> g_msd;
+    /** sort indices */
+    cuda::vector<unsigned int> g_index;
+    /** GPU radix sort */
+    radix_sort<float4> radix;
+
+    sorted_by_msd() : g_msd(BLOCKS) {}
+
+    /**
+     * autocorrelate samples in block
+     */
+    template <typename input_iterator, typename output_iterator>
+    void operator()(input_iterator const& first, input_iterator const& last, output_iterator result)
+    {
+        typedef typename input_iterator::first_type sample_iterator;
+        typedef typename sample_iterator::value_type::value_type sample_type;
+        typedef typename output_iterator::value_type accumulator_type;
+        enum { dimension = sample_type::vector_type::static_size };
+
+        sample_iterator sample;
+
+        for (sample = first.first, /* ignore zero MSD */ ++sample, ++result; sample != last.first; ++sample, ++result) {
+            (*result).resize((*sample)[type].v->size());
+            cuda::configure(BLOCKS, THREADS);
+            gpu::vacf_filter<dimension>::accumulate(
+                *(*sample)[type].r
+              , *(*first.first)[type].r
+              , *(*sample)[type].v
+              , *(*first.first)[type].v
+              , (*sample)[type].v->size()
+              , *result
+              , g_msd
+            );
+
+            g_index.resize((*sample)[type].v->size());
+            cuda::configure(BLOCKS, THREADS);
+            gpu::vacf_filter<dimension>::assign_index_from_msd(
+                *(*sample)[type].r
+              , *(*first.first)[type].r
+              , (*sample)[type].v->size()
+              , g_msd
+              , g_index
+            );
+
+            radix.resize((*sample)[type].v->size(), RADIX_SORT_THREADS);
+            radix(g_index, *result);
+        }
+        cuda::thread::synchronize();
+    }
+};
+
+/**
+ * mean-square displacement of given fraction(s) of most mobile particles
+ */
+template <>
+struct mean_square_displacement_mobile<tcf_gpu_sample> : correlation_function<tcf_gpu_sample>
+{
+    /** block sample results */
+    tcf_binary_result_type result;
+
+    std::vector<float> mobile_fraction; //< set by tcf_add_mobile_particle_filter
+
+    /** device and host memory for accumulators */
+    cuda::vector<unsigned int> g_count;
+    cuda::host::vector<unsigned int> h_count;
+    cuda::vector<dsfloat> g_mean;
+    cuda::host::vector<dsfloat> h_mean;
+    cuda::vector<dsfloat> g_var;
+    cuda::host::vector<dsfloat> h_var;
+
+    char const* name() const { return "MSD_MOBILE"; }
+
+    /**
+     * autocorrelate samples in block
+     */
+    template <typename input_iterator, typename output_iterator>
+    void operator()(input_iterator const& first, input_iterator const& last, output_iterator const& result)
+    {
+        typedef typename output_iterator::value_type result_vector;
+        typedef typename output_iterator::value_type::value_type accumulator_type;
+        enum { BLOCKS = gpu::tcf_base::BLOCKS };
+        enum { THREADS = gpu::tcf_base::THREADS };
+
+        input_iterator sample;
+        output_iterator result0;
+        std::vector<float>::const_iterator vv;
+        unsigned int *count, *count0;
+        dsfloat *mean, *var;
+
+        // allocate device and host memory for accumulators, if necessary
+        g_count.resize((last - first) * BLOCKS);
+        h_count.resize(g_count.size());
+        g_mean.resize((last - first) * BLOCKS);
+        h_mean.resize(g_mean.size());
+        g_var.resize((last - first) * BLOCKS);
+        h_var.resize(g_var.size());
+
+        for (vv = mobile_fraction.begin(); vv != mobile_fraction.end(); ++vv) {
+            // copy constants to GPU
+            cuda::copy(*vv, gpu::tcf_base::mobile_fraction);
+            // compute mean-square displacements on GPU
+            for (sample = first, count = g_count.data(), mean = g_mean.data(), var = g_var.data(); sample != last; ++sample, count += BLOCKS, mean += BLOCKS, var += BLOCKS) {
+                cuda::configure(BLOCKS, THREADS);
+                gpu::tcf_base::mean_square_displacement_mobile::accumulate(*sample, count, mean, var, (*sample).size());
+            }
+            // copy accumulator block results from GPU to host
+            cuda::copy(g_count, h_count);
+            cuda::copy(g_mean, h_mean);
+            cuda::copy(g_var, h_var);
+            // accumulate mean-square displacements on host
+            for (sample = first, result0 = result, count0 = h_count.data(), mean = h_mean.data(), var = h_var.data(); sample != last; ++sample, ++result0, count0 += BLOCKS) {
+                for (count = count0; count != count0 + BLOCKS; ++count, ++mean, ++var) {
+                    *(result0->begin() + (vv - mobile_fraction.begin())) += accumulator_type(*count, *mean, *var);
+                }
+            }
+        }
+    }
+};
+
+/**
+ * mean-square displacement of given fraction(s) of most immobile particles
+ */
+template <>
+struct mean_square_displacement_immobile<tcf_gpu_sample> : correlation_function<tcf_gpu_sample>
+{
+    /** block sample results */
+    tcf_binary_result_type result;
+
+    std::vector<float> immobile_fraction; //< set by tcf_add_immobile_particle_filter
+
+    /** device and host memory for accumulators */
+    cuda::vector<unsigned int> g_count;
+    cuda::host::vector<unsigned int> h_count;
+    cuda::vector<dsfloat> g_mean;
+    cuda::host::vector<dsfloat> h_mean;
+    cuda::vector<dsfloat> g_var;
+    cuda::host::vector<dsfloat> h_var;
+
+    char const* name() const { return "MSD_IMMOBILE"; }
+
+    /**
+     * autocorrelate samples in block
+     */
+    template <typename input_iterator, typename output_iterator>
+    void operator()(input_iterator const& first, input_iterator const& last, output_iterator const& result)
+    {
+        typedef typename output_iterator::value_type result_vector;
+        typedef typename output_iterator::value_type::value_type accumulator_type;
+        enum { BLOCKS = gpu::tcf_base::BLOCKS };
+        enum { THREADS = gpu::tcf_base::THREADS };
+
+        input_iterator sample;
+        output_iterator result0;
+        std::vector<float>::const_iterator vv;
+        unsigned int *count, *count0;
+        dsfloat *mean, *var;
+
+        // allocate device and host memory for accumulators, if necessary
+        g_count.resize((last - first) * BLOCKS);
+        h_count.resize(g_count.size());
+        g_mean.resize((last - first) * BLOCKS);
+        h_mean.resize(g_mean.size());
+        g_var.resize((last - first) * BLOCKS);
+        h_var.resize(g_var.size());
+
+        for (vv = immobile_fraction.begin(); vv != immobile_fraction.end(); ++vv) {
+            // copy constants to GPU
+            cuda::copy(*vv, gpu::tcf_base::immobile_fraction);
+            // compute mean-square displacements on GPU
+            for (sample = first, count = g_count.data(), mean = g_mean.data(), var = g_var.data(); sample != last; ++sample, count += BLOCKS, mean += BLOCKS, var += BLOCKS) {
+                cuda::configure(BLOCKS, THREADS);
+                gpu::tcf_base::mean_square_displacement_immobile::accumulate(*sample, count, mean, var, (*sample).size());
+            }
+            // copy accumulator block results from GPU to host
+            cuda::copy(g_count, h_count);
+            cuda::copy(g_mean, h_mean);
+            cuda::copy(g_var, h_var);
+            // accumulate mean-square displacements on host
+            for (sample = first, result0 = result, count0 = h_count.data(), mean = h_mean.data(), var = h_var.data(); sample != last; ++sample, ++result0, count0 += BLOCKS) {
+                for (count = count0; count != count0 + BLOCKS; ++count, ++mean, ++var) {
+                    *(result0->begin() + (vv - immobile_fraction.begin())) += accumulator_type(*count, *mean, *var);
+                }
+            }
+        }
+    }
+};
+
+/**
+ * mean quartic displacement of given fraction(s) of most mobile particles
+ */
+template <>
+struct mean_quartic_displacement_mobile<tcf_gpu_sample> : correlation_function<tcf_gpu_sample>
+{
+    /** block sample results */
+    tcf_binary_result_type result;
+
+    std::vector<float> mobile_fraction; //< set by tcf_add_mobile_particle_filter
+
+    /** device and host memory for accumulators */
+    cuda::vector<unsigned int> g_count;
+    cuda::host::vector<unsigned int> h_count;
+    cuda::vector<dsfloat> g_mean;
+    cuda::host::vector<dsfloat> h_mean;
+    cuda::vector<dsfloat> g_var;
+    cuda::host::vector<dsfloat> h_var;
+
+    char const* name() const { return "MQD_MOBILE"; }
+
+    /**
+     * autocorrelate samples in block
+     */
+    template <typename input_iterator, typename output_iterator>
+    void operator()(input_iterator const& first, input_iterator const& last, output_iterator const& result)
+    {
+        typedef typename output_iterator::value_type result_vector;
+        typedef typename output_iterator::value_type::value_type accumulator_type;
+        enum { BLOCKS = gpu::tcf_base::BLOCKS };
+        enum { THREADS = gpu::tcf_base::THREADS };
+
+        input_iterator sample;
+        output_iterator result0;
+        std::vector<float>::const_iterator vv;
+        unsigned int *count, *count0;
+        dsfloat *mean, *var;
+
+        // allocate device and host memory for accumulators, if necessary
+        g_count.resize((last - first) * BLOCKS);
+        h_count.resize(g_count.size());
+        g_mean.resize((last - first) * BLOCKS);
+        h_mean.resize(g_mean.size());
+        g_var.resize((last - first) * BLOCKS);
+        h_var.resize(g_var.size());
+
+        for (vv = mobile_fraction.begin(); vv != mobile_fraction.end(); ++vv) {
+            // copy constants to GPU
+            cuda::copy(*vv, gpu::tcf_base::mobile_fraction);
+            // compute mean quartic displacements on GPU
+            for (sample = first, count = g_count.data(), mean = g_mean.data(), var = g_var.data(); sample != last; ++sample, count += BLOCKS, mean += BLOCKS, var += BLOCKS) {
+                cuda::configure(BLOCKS, THREADS);
+                gpu::tcf_base::mean_quartic_displacement_mobile::accumulate(*sample, count, mean, var, (*sample).size());
+            }
+            // copy accumulator block results from GPU to host
+            cuda::copy(g_count, h_count);
+            cuda::copy(g_mean, h_mean);
+            cuda::copy(g_var, h_var);
+            // accumulate mean quartic displacements on host
+            for (sample = first, result0 = result, count0 = h_count.data(), mean = h_mean.data(), var = h_var.data(); sample != last; ++sample, ++result0, count0 += BLOCKS) {
+                for (count = count0; count != count0 + BLOCKS; ++count, ++mean, ++var) {
+                    *(result0->begin() + (vv - mobile_fraction.begin())) += accumulator_type(*count, *mean, *var);
+                }
+            }
+        }
+    }
+};
+
+/**
+ * mean quartic displacement of given fraction(s) of most immobile particles
+ */
+template <>
+struct mean_quartic_displacement_immobile<tcf_gpu_sample> : correlation_function<tcf_gpu_sample>
+{
+    /** block sample results */
+    tcf_binary_result_type result;
+
+    std::vector<float> immobile_fraction; //< set by tcf_add_immobile_particle_filter
+
+    /** device and host memory for accumulators */
+    cuda::vector<unsigned int> g_count;
+    cuda::host::vector<unsigned int> h_count;
+    cuda::vector<dsfloat> g_mean;
+    cuda::host::vector<dsfloat> h_mean;
+    cuda::vector<dsfloat> g_var;
+    cuda::host::vector<dsfloat> h_var;
+
+    char const* name() const { return "MQD_IMMOBILE"; }
+
+    /**
+     * autocorrelate samples in block
+     */
+    template <typename input_iterator, typename output_iterator>
+    void operator()(input_iterator const& first, input_iterator const& last, output_iterator const& result)
+    {
+        typedef typename output_iterator::value_type result_vector;
+        typedef typename output_iterator::value_type::value_type accumulator_type;
+        enum { BLOCKS = gpu::tcf_base::BLOCKS };
+        enum { THREADS = gpu::tcf_base::THREADS };
+
+        input_iterator sample;
+        output_iterator result0;
+        std::vector<float>::const_iterator vv;
+        unsigned int *count, *count0;
+        dsfloat *mean, *var;
+
+        // allocate device and host memory for accumulators, if necessary
+        g_count.resize((last - first) * BLOCKS);
+        h_count.resize(g_count.size());
+        g_mean.resize((last - first) * BLOCKS);
+        h_mean.resize(g_mean.size());
+        g_var.resize((last - first) * BLOCKS);
+        h_var.resize(g_var.size());
+
+        for (vv = immobile_fraction.begin(); vv != immobile_fraction.end(); ++vv) {
+            // copy constants to GPU
+            cuda::copy(*vv, gpu::tcf_base::immobile_fraction);
+            // compute mean quartic displacements on GPU
+            for (sample = first, count = g_count.data(), mean = g_mean.data(), var = g_var.data(); sample != last; ++sample, count += BLOCKS, mean += BLOCKS, var += BLOCKS) {
+                cuda::configure(BLOCKS, THREADS);
+                gpu::tcf_base::mean_quartic_displacement_immobile::accumulate(*sample, count, mean, var, (*sample).size());
+            }
+            // copy accumulator block results from GPU to host
+            cuda::copy(g_count, h_count);
+            cuda::copy(g_mean, h_mean);
+            cuda::copy(g_var, h_var);
+            // accumulate mean quartic displacements on host
+            for (sample = first, result0 = result, count0 = h_count.data(), mean = h_mean.data(), var = h_var.data(); sample != last; ++sample, ++result0, count0 += BLOCKS) {
+                for (count = count0; count != count0 + BLOCKS; ++count, ++mean, ++var) {
+                    *(result0->begin() + (vv - immobile_fraction.begin())) += accumulator_type(*count, *mean, *var);
+                }
+            }
+        }
+    }
+};
+
+/**
+ * velocity autocorrelation of given fraction(s) of most mobile particles
+ */
+template <>
+struct velocity_autocorrelation_mobile<tcf_gpu_sample> : correlation_function<tcf_gpu_sample>
+{
+    /** block sample results */
+    tcf_binary_result_type result;
+
+    std::vector<float> mobile_fraction; //< set by tcf_add_mobile_particle_filter
+
+    /** device and host memory for accumulators */
+    cuda::vector<unsigned int> g_count;
+    cuda::host::vector<unsigned int> h_count;
+    cuda::vector<dsfloat> g_mean;
+    cuda::host::vector<dsfloat> h_mean;
+    cuda::vector<dsfloat> g_var;
+    cuda::host::vector<dsfloat> h_var;
+
+    char const* name() const { return "VAC_MOBILE"; }
+
+    /**
+     * autocorrelate samples in block
+     */
+    template <typename input_iterator, typename output_iterator>
+    void operator()(input_iterator const& first, input_iterator const& last, output_iterator const& result)
+    {
+        typedef typename output_iterator::value_type result_vector;
+        typedef typename output_iterator::value_type::value_type accumulator_type;
+        enum { BLOCKS = gpu::tcf_base::BLOCKS };
+        enum { THREADS = gpu::tcf_base::THREADS };
+
+        input_iterator sample;
+        output_iterator result0;
+        std::vector<float>::const_iterator vv;
+        unsigned int *count, *count0;
+        dsfloat *mean, *var;
+
+        // allocate device and host memory for accumulators, if necessary
+        g_count.resize((last - first) * BLOCKS);
+        h_count.resize(g_count.size());
+        g_mean.resize((last - first) * BLOCKS);
+        h_mean.resize(g_mean.size());
+        g_var.resize((last - first) * BLOCKS);
+        h_var.resize(g_var.size());
+
+        for (vv = mobile_fraction.begin(); vv != mobile_fraction.end(); ++vv) {
+            // copy constants to GPU
+            cuda::copy(*vv, gpu::tcf_base::mobile_fraction);
+            // compute velocity autocorrelations on GPU
+            for (sample = first, count = g_count.data(), mean = g_mean.data(), var = g_var.data(); sample != last; ++sample, count += BLOCKS, mean += BLOCKS, var += BLOCKS) {
+                cuda::configure(BLOCKS, THREADS);
+                gpu::tcf_base::velocity_autocorrelation_mobile::accumulate(*sample, count, mean, var, (*sample).size());
+            }
+            // copy accumulator block results from GPU to host
+            cuda::copy(g_count, h_count);
+            cuda::copy(g_mean, h_mean);
+            cuda::copy(g_var, h_var);
+            // accumulate velocity autocorrelations on host
+            for (sample = first, result0 = result, count0 = h_count.data(), mean = h_mean.data(), var = h_var.data(); sample != last; ++sample, ++result0, count0 += BLOCKS) {
+                for (count = count0; count != count0 + BLOCKS; ++count, ++mean, ++var) {
+                    *(result0->begin() + (vv - mobile_fraction.begin())) += accumulator_type(*count, *mean, *var);
+                }
+            }
+        }
+    }
+};
+
+/**
+ * velocity autocorrelation of given fraction(s) of most immobile particles
+ */
+template <>
+struct velocity_autocorrelation_immobile<tcf_gpu_sample> : correlation_function<tcf_gpu_sample>
+{
+    /** block sample results */
+    tcf_binary_result_type result;
+
+    std::vector<float> immobile_fraction; //< set by tcf_add_immobile_particle_filter
+
+    /** device and host memory for accumulators */
+    cuda::vector<unsigned int> g_count;
+    cuda::host::vector<unsigned int> h_count;
+    cuda::vector<dsfloat> g_mean;
+    cuda::host::vector<dsfloat> h_mean;
+    cuda::vector<dsfloat> g_var;
+    cuda::host::vector<dsfloat> h_var;
+
+    char const* name() const { return "VAC_IMMOBILE"; }
+
+    /**
+     * autocorrelate samples in block
+     */
+    template <typename input_iterator, typename output_iterator>
+    void operator()(input_iterator const& first, input_iterator const& last, output_iterator const& result)
+    {
+        typedef typename output_iterator::value_type result_vector;
+        typedef typename output_iterator::value_type::value_type accumulator_type;
+        enum { BLOCKS = gpu::tcf_base::BLOCKS };
+        enum { THREADS = gpu::tcf_base::THREADS };
+
+        input_iterator sample;
+        output_iterator result0;
+        std::vector<float>::const_iterator vv;
+        unsigned int *count, *count0;
+        dsfloat *mean, *var;
+
+        // allocate device and host memory for accumulators, if necessary
+        g_count.resize((last - first) * BLOCKS);
+        h_count.resize(g_count.size());
+        g_mean.resize((last - first) * BLOCKS);
+        h_mean.resize(g_mean.size());
+        g_var.resize((last - first) * BLOCKS);
+        h_var.resize(g_var.size());
+
+        for (vv = immobile_fraction.begin(); vv != immobile_fraction.end(); ++vv) {
+            // copy constants to GPU
+            cuda::copy(*vv, gpu::tcf_base::immobile_fraction);
+            // compute velocity autocorrelations on GPU
+            for (sample = first, count = g_count.data(), mean = g_mean.data(), var = g_var.data(); sample != last; ++sample, count += BLOCKS, mean += BLOCKS, var += BLOCKS) {
+                cuda::configure(BLOCKS, THREADS);
+                gpu::tcf_base::velocity_autocorrelation_immobile::accumulate(*sample, count, mean, var, (*sample).size());
+            }
+            // copy accumulator block results from GPU to host
+            cuda::copy(g_count, h_count);
+            cuda::copy(g_mean, h_mean);
+            cuda::copy(g_var, h_var);
+            // accumulate velocity autocorrelations on host
+            for (sample = first, result0 = result, count0 = h_count.data(), mean = h_mean.data(), var = h_var.data(); sample != last; ++sample, ++result0, count0 += BLOCKS) {
+                for (count = count0; count != count0 + BLOCKS; ++count, ++mean, ++var) {
+                    *(result0->begin() + (vv - immobile_fraction.begin())) += accumulator_type(*count, *mean, *var);
+                }
+            }
+        }
+    }
+};
+
+/**
  * self-intermediate scattering function
  */
 template <>
@@ -384,7 +859,14 @@ typedef boost::mpl::push_back<_tcf_gpu_types_2, intermediate_scattering_function
 typedef boost::mpl::push_back<_tcf_gpu_types_3, self_intermediate_scattering_function<tcf_gpu_sample> >::type _tcf_gpu_types_4;
 typedef boost::mpl::push_back<_tcf_gpu_types_4, squared_self_intermediate_scattering_function<tcf_gpu_sample> >::type _tcf_gpu_types_5;
 typedef boost::mpl::push_back<_tcf_gpu_types_5, virial_stress<tcf_gpu_sample> >::type _tcf_gpu_types_6;
-typedef boost::mpl::push_back<_tcf_gpu_types_6, helfand_moment<tcf_gpu_sample> >::type tcf_gpu_types;
+typedef boost::mpl::push_back<_tcf_gpu_types_6, helfand_moment<tcf_gpu_sample> >::type _tcf_gpu_types_7;
+typedef boost::mpl::push_back<_tcf_gpu_types_7, sorted_by_msd<tcf_gpu_sample> >::type _tcf_gpu_types_8;
+typedef boost::mpl::push_back<_tcf_gpu_types_8, mean_square_displacement_mobile<tcf_gpu_sample> >::type _tcf_gpu_types_9;
+typedef boost::mpl::push_back<_tcf_gpu_types_9, mean_square_displacement_immobile<tcf_gpu_sample> >::type _tcf_gpu_types_10;
+typedef boost::mpl::push_back<_tcf_gpu_types_10, mean_quartic_displacement_mobile<tcf_gpu_sample> >::type _tcf_gpu_types_11;
+typedef boost::mpl::push_back<_tcf_gpu_types_11, mean_quartic_displacement_immobile<tcf_gpu_sample> >::type _tcf_gpu_types_12;
+typedef boost::mpl::push_back<_tcf_gpu_types_12, velocity_autocorrelation_mobile<tcf_gpu_sample> >::type _tcf_gpu_types_13;
+typedef boost::mpl::push_back<_tcf_gpu_types_13, velocity_autocorrelation_immobile<tcf_gpu_sample> >::type tcf_gpu_types;
 
 } // namespace halmd
 

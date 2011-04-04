@@ -242,6 +242,30 @@ void correlation<dimension>::add_host_correlation_functions(size_t types)
 }
 
 /**
+ * add fraction of most mobile particles
+ */
+template <int dimension>
+void correlation<dimension>::add_mobile_particle_filter(float fraction)
+{
+    LOG("filter correlations using the " << fraction * 100 << "% most mobile particles");
+    foreach (tcf_variant& tcf, m_tcf) {
+        boost::apply_visitor(tcf_add_mobile_particle_filter(fraction), tcf);
+    }
+}
+
+/**
+ * add fraction of most immobile particles
+ */
+template <int dimension>
+void correlation<dimension>::add_immobile_particle_filter(float fraction)
+{
+    LOG("filter correlations using the " << fraction * 100 << "% most immobile particles");
+    foreach (tcf_variant& tcf, m_tcf) {
+        boost::apply_visitor(tcf_add_immobile_particle_filter(fraction), tcf);
+    }
+}
+
+/**
  * create HDF5 correlations output file
  */
 template <int dimension>
@@ -384,7 +408,7 @@ template <int dimension>
 void correlation<dimension>::autocorrelate_block(unsigned int n)
 {
     foreach (tcf_variant& tcf, m_tcf) {
-        boost::apply_visitor(tcf_correlate_block(n, m_q_vector), tcf, m_block[n]);
+        boost::apply_visitor(tcf_correlate_block(n, m_q_vector, m_tcf), tcf, m_block[n]);
     }
 }
 

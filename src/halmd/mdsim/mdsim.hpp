@@ -363,6 +363,28 @@ mdsim<mdsim_backend>::mdsim(options const& opt) : m_opt(opt)
         else {
             throw std::logic_error("unknown correlation function backend: " + backend);
         }
+
+        if (!m_opt["mobile-particle-fraction"].empty()) {
+            boost::multi_array<float, 1> mobile_particle_fraction(
+                m_opt["mobile-particle-fraction"].as<boost::multi_array<float, 1> >()
+            );
+            std::for_each(
+                mobile_particle_fraction.begin()
+              , mobile_particle_fraction.end()
+              , boost::bind(&correlation<dimension>::add_mobile_particle_filter, &m_corr, _1)
+            );
+        }
+        if (!m_opt["immobile-particle-fraction"].empty())
+        {
+            boost::multi_array<float, 1> immobile_particle_fraction(
+                m_opt["immobile-particle-fraction"].as<boost::multi_array<float, 1> >()
+            );
+            std::for_each(
+                immobile_particle_fraction.begin()
+              , immobile_particle_fraction.end()
+              , boost::bind(&correlation<dimension>::add_immobile_particle_filter, &m_corr, _1)
+            );
+        }
     }
 }
 
