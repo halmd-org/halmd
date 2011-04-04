@@ -23,7 +23,6 @@
 #include <boost/foreach.hpp>
 #include <boost/numeric/ublas/symmetric.hpp>
 #include <lua.hpp>
-#include <utility> // pair
 #include <vector>
 
 #include <halmd/io/statevars/writer.hpp>
@@ -55,7 +54,6 @@ public:
     typedef halmd::utility::profiler profiler_type;
     typedef typename mdsim::type_traits<dimension, double>::vector_type vector_type;
     typedef typename signal<void (double)>::slot_function_type slot_function_type;
-    typedef std::pair<slot_function_type, slot_function_type> slot_function_pair_type;
 
     struct runtime
     {
