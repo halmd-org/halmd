@@ -169,7 +169,7 @@ void ssf(string const& backend)
     shared_ptr<ssf_type> ssf = make_shared<ssf_type>(density_mode, particle->nbox);
 
     // generate lattices
-    LOG_DEBUG("set particle tags");
+    BOOST_TEST_MESSAGE("set particle tags");
     particle->set();
     BOOST_TEST_MESSAGE("generate fcc lattice");
     position->set();
@@ -199,7 +199,7 @@ void ssf(string const& backend)
         // convert boost::array to fixed_vector for output
         fixed_vector<double, 3> S_q;
         copy(result[i].begin(), result[i].end(), S_q.begin());
-        LOG_TRACE(
+        BOOST_TEST_MESSAGE(
             "S(q = " <<  q << "): " << S_q
          << "; expected: S_q = " << get<1>(ssf_ref[i]) << " (count: " << get<2>(ssf_ref[i]) << ")"
         );
