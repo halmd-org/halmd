@@ -1,6 +1,14 @@
 ##
 # HALMD unit tests
 #
+
+# Link unit tests against the test_tools_logger library,
+# which enables logging to console for HALMD modules.
+set(HALMD_TEST_LIBRARIES
+  ${HALMD_TEST_LIBRARIES}
+  test_tools_logger
+)
+
 add_subdirectory(algorithm)
 add_subdirectory(h5xx)
 add_subdirectory(io)
