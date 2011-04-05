@@ -1,5 +1,5 @@
-Developer's guide
-=================
+Redmine
+=======
 
 Ticketing system
 ----------------
@@ -11,15 +11,3 @@ reference a ticket or ``closes #no`` to close it, for example ::
    This commit refs #1, #2 and fixes #3.
 
 http://www.redmine.org/wiki/redmine/RedmineSettings#Referencing-issues-in-commit-messages
-
-Coding conventions
-------------------
-
-Please refer to the document on :doc:`coding conventions <style>`.
-
-
-Luabind
--------
-
-The *Luabind* library is used to export C++ classes to the Lua scripting
-interface. Please refer to the :doc:`Short guide on Luabind <luabind>`.
