@@ -29,10 +29,14 @@
 # include <boost/log/sources/record_ostream.hpp>
 # include <boost/log/sources/severity_logger.hpp>
 #else /* ! _AIX */
+# include <boost/date_time.hpp>
+# include <boost/date_time/microsec_time_clock.hpp>
 # include <iostream>
 #endif /* ! _AIX */
 #include <lua.hpp>
 #include <string>
+
+#define TIMESTAMP_FORMAT "%d-%m-%Y %H:%M:%S.%f"
 
 namespace halmd
 {
@@ -106,42 +110,52 @@ static inline std::ostream& operator<<(std::ostream& os, logger::severity_level 
 
 #ifndef _AIX
 
-# define __HALMD_LOG__(__level__, __format__)           \
-    do {                                                \
-        BOOST_LOG_SEV(                                  \
-            ::halmd::logger::get()                      \
-          , ::halmd::logger::__level__                  \
-          ) << __format__;                              \
+# define __HALMD_LOG__(__level__, __format__)                           \
+    do {                                                                \
+        BOOST_LOG_SEV(                                                  \
+            ::halmd::logger::get()                                      \
+          , ::halmd::logger::__level__                                  \
+          ) << __format__;                                              \
     } while(0)
 
-# define __HALMD_LOG_ONCE__(__level__, __format__)      \
-    do {                                                \
-        static bool __logged__ = false;                 \
-        if (!__logged__) {                              \
-            BOOST_LOG_SEV(                              \
-                ::halmd::logger::get()                  \
-              , ::halmd::logger::__level__              \
-              ) << __format__;                          \
-            __logged__ = true;                          \
-        }                                               \
+# define __HALMD_LOG_ONCE__(__level__, __format__)                      \
+    do {                                                                \
+        static bool __logged__ = false;                                 \
+        if (!__logged__) {                                              \
+            BOOST_LOG_SEV(                                              \
+                ::halmd::logger::get()                                  \
+              , ::halmd::logger::__level__                              \
+              ) << __format__;                                          \
+            __logged__ = true;                                          \
+        }                                                               \
     } while(0)
 
 #else /* ! _AIX */
 
-# define __HALMD_LOG__(__level__, __format__)           \
-    do {                                                \
-        std::cout << ::halmd::logger::__level__         \
-                  << __format__ << std::endl;           \
+# define __HALMD_LOG__(__level__, __format__)                           \
+    do {                                                                \
+        using namespace boost::posix_time;                              \
+        ptime t = microsec_clock::local_time();                         \
+        time_facet* facet(new time_facet(TIMESTAMP_FORMAT));            \
+        std::cout.imbue(std::locale(std::cout.getloc(), facet));        \
+        std::cout << "[" << t << "] "                                   \
+                  << ::halmd::logger::__level__                         \
+                  << __format__ << std::endl;                           \
     } while(0)
 
-# define __HALMD_LOG_ONCE__(__level__, __format__)      \
-    do {                                                \
-        static bool __logged__ = false;                 \
-        if (!__logged__) {                              \
-            std::cout << ::halmd::logger::__level__     \
-                      << __format__ << std::endl;       \
-            __logged__ = true;                          \
-        }                                               \
+# define __HALMD_LOG_ONCE__(__level__, __format__)                      \
+    do {                                                                \
+        static bool __logged__ = false;                                 \
+        if (!__logged__) {                                              \
+            using namespace boost::posix_time;                          \
+            ptime t = microsec_clock::local_time();                     \
+            time_facet* facet(new time_facet(TIMESTAMP_FORMAT));        \
+            std::cout.imbue(std::locale(std::cout.getloc(), facet));    \
+            std::cout << "[" << t << "] "                               \
+                      << ::halmd::logger::__level__                     \
+                      << __format__ << std::endl;                       \
+            __logged__ = true;                                          \
+        }                                                               \
     } while(0)
 
 #endif /* ! _AIX */
