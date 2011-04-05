@@ -79,7 +79,7 @@ void boltzmann(string const& backend)
     velocity = make_boltzmann(backend, particle, random, temp);
 
     // generate velocity distribution
-    LOG_DEBUG("set particle tags");
+    BOOST_TEST_MESSAGE("set particle tags");
     particle->set();
     BOOST_TEST_MESSAGE("generate Maxwell-Boltzmann distribution");
     velocity->set();

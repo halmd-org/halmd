@@ -132,13 +132,13 @@ void lattice(string const& backend)
         make_lattice(backend, particle, box, random, slab);
 
     // generate lattices
-    LOG_DEBUG("set particle tags");
+    BOOST_TEST_MESSAGE("set particle tags");
     particle->set();
     BOOST_TEST_MESSAGE("generate fcc lattice");
     position->set();
 
     // acquire phase space samples
-    LOG_DEBUG("acquire phase space sample");
+    BOOST_TEST_MESSAGE("acquire phase space sample");
     shared_ptr<observables::host::samples::phase_space<dimension, double> > sample_host;
 #ifdef WITH_CUDA
     shared_ptr<observables::host::samples::phase_space<dimension, float> > sample_gpu;
