@@ -20,7 +20,6 @@ if(WITH_CUDA)
   )
 endif(WITH_CUDA)
 target_link_libraries(test_unit_mdsim_velocities_boltzmann
-  halmd_io
   halmd_mdsim
   halmd_observables
   halmd_random

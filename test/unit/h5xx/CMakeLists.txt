@@ -2,7 +2,6 @@ add_executable(test_unit_h5xx
   h5xx.cpp
 )
 target_link_libraries(test_unit_h5xx
-  halmd_io
   ${HALMD_COMMON_LIBRARIES}
   ${HALMD_TEST_LIBRARIES}
 )

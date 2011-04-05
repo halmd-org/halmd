@@ -13,7 +13,6 @@ if(WITH_CUDA)
   )
 endif(WITH_CUDA)
 target_link_libraries(test_unit_utility_lua_dependency_injection
-  halmd_io
   halmd_mdsim
   halmd_utility
   test_tools_lua

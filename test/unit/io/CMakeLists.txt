@@ -2,7 +2,6 @@ add_executable(test_unit_io_logger
   logger.cpp
 )
 target_link_libraries(test_unit_io_logger
-  halmd_io
   ${HALMD_COMMON_LIBRARIES}
   ${HALMD_TEST_LIBRARIES}
 )
@@ -17,7 +16,6 @@ target_link_libraries(test_unit_io_profiling_writers
   halmd_io_profiling_writers
   halmd_io_profiling
   halmd_utility
-  halmd_io
   ${HALMD_COMMON_LIBRARIES}
   ${HALMD_TEST_LIBRARIES}
 )
