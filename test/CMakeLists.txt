@@ -27,21 +27,11 @@ set(HALMD_TEST_LIBRARIES
   ${Boost_UNIT_TEST_FRAMEWORK_LIBRARY}
 )
 
+##
+# HALMD test suite
 #
-# Include unit tests
-#
-
-add_subdirectory(algorithm)
-add_subdirectory(h5xx)
-add_subdirectory(io)
-add_subdirectory(mdsim)
-add_subdirectory(numeric)
-add_subdirectory(observables)
+add_subdirectory(integration)
+add_subdirectory(lua)
 add_subdirectory(performance)
-add_subdirectory(random)
 add_subdirectory(tools)
-add_subdirectory(utility)
-
-if(WITH_CUDA)
-  add_subdirectory(cuda_wrapper)
-endif(WITH_CUDA)
+add_subdirectory(unit)

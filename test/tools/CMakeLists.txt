@@ -1,3 +1,6 @@
+##
+# HALMD test tools
+#
 add_library(test_tools_lua
   lua.cpp
 )
@@ -41,17 +44,17 @@ configure_file(
   test_tools_ctest_linking.cmake
   @ONLY
 )
-add_test(ctest_linking
+add_test(tools/ctest_linking
   test_tools_ctest_linking.cmake
 )
 
-add_executable(test_init
+add_executable(test_tools_init
   init.cpp
   init_duplicate.cpp
 )
-target_link_libraries(test_init
+target_link_libraries(test_tools_init
   ${HALMD_TEST_LIBRARIES}
 )
-add_test(init
-  test_init --log_level=test_suite
+add_test(tools/init
+  test_tools_init --log_level=test_suite
 )
