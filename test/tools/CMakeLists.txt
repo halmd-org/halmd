@@ -58,23 +58,3 @@ target_link_libraries(test_tools_init
 add_test(tools/init
   test_tools_init --log_level=test_suite
 )
-
-add_library(test_tools_logger SHARED
-  logger.cpp
-)
-target_link_libraries(test_tools_logger
-  halmd_io
-  ${Boost_DATE_TIME_LIBRARY}
-  ${Boost_LOG_LIBRARY}
-  ${Boost_SYSTEM_LIBRARY}
-  ${Boost_THREAD_LIBRARY}
-  ${Boost_UNIT_TEST_FRAMEWORK_LIBRARY}
-  ${LUABIND_LIBRARY}
-  ${LUA_LIBRARIES}
-)
-get_target_property(
-  TEST_TOOLS_LOGGER_LOCATION test_tools_logger LOCATION
-)
-add_custom_command(TARGET test_tools_logger PRE_LINK
-  COMMAND "${CMAKE_COMMAND}" -E remove -f "${TEST_TOOLS_LOGGER_LOCATION}"
-)
