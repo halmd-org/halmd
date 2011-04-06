@@ -31,6 +31,7 @@
 #include <string>
 #include <utility>
 
+#include <halmd/io/logger.hpp>
 #include <halmd/numeric/accumulator.hpp>
 #include <test/unit/modules.hpp>
 #include <test/tools/init.hpp>
@@ -110,6 +111,16 @@ void lattice(string const& backend)
     // adjust density to make sure that the slab can accomodate an fcc lattice with the
     // same lattice spacing (a mismatch is a likely reason for failure of the test)
     density *= slab_vol_frac;
+
+    // enable logging to console
+    shared_ptr<logger> log(new logger);
+    log->log_to_console(
+#ifdef NDEBUG
+        logger::warning
+#else
+        logger::debug
+#endif
+    );
 
     BOOST_TEST_MESSAGE("#particles: " << npart << ", #unit cells: " << ncell <<
                        ", lattice constant: " << lattice_constant << ", slab extents: " << slab);
