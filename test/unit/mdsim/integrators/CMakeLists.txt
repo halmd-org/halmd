@@ -23,6 +23,7 @@ if(WITH_CUDA)
   )
 endif(WITH_CUDA)
 target_link_libraries(test_unit_mdsim_integrators_verlet_nvt_andersen
+  halmd_io
   halmd_mdsim
   halmd_random
   halmd_observables

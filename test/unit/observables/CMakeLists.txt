@@ -24,6 +24,7 @@ if(WITH_CUDA)
   )
 endif(WITH_CUDA)
 target_link_libraries(test_unit_observables_thermodynamics
+  halmd_io
   halmd_mdsim
   halmd_observables
   halmd_random
@@ -68,6 +69,7 @@ if(WITH_CUDA)
   )
 endif(WITH_CUDA)
 target_link_libraries(test_unit_observables_ssf
+  halmd_io
   halmd_mdsim
   halmd_observables
   halmd_observables_samples
