@@ -2,7 +2,6 @@ DOXYFILE_ENCODING      = UTF-8
 PROJECT_NAME           = @PROJECT_NAME@
 PROJECT_NUMBER         = @PROGRAM_VERSION@
 GENERATE_LATEX         = NO
-LATEX_CMD_NAME         = /bin/true
 GENERATE_MAN           = NO
 GENERATE_RTF           = NO
 CASE_SENSE_NAMES       = NO
