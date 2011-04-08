@@ -20,10 +20,12 @@
 require("halmd.modules")
 require("halmd.mdsim.core")
 require("halmd.observables.runtime_estimate")
+require("halmd.utility.timer_service")
 
 -- grab modules
 local mdsim = halmd.mdsim
 local observables = halmd.observables
+local utility = halmd.utility
 -- grab C++ wrappers
 local sampler_wrapper = {
     [2] = libhalmd.sampler_2_
@@ -56,6 +58,9 @@ function new(args)
 
     -- construct sampler module
     local sampler = assert(sampler_wrapper[dimension])(core, steps)
+
+    -- process timer service every step
+    sampler:on_sample(utility.timer_service().process, 1)
 
     -- construct and connect runtime estimator.
     local runtime_estimate = observables.runtime_estimate{
