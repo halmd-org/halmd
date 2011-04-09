@@ -22,7 +22,12 @@ import sys, os
 
 # Add any Sphinx extension module names here, as strings. They can be extensions
 # coming with Sphinx (named 'sphinx.ext.*') or your custom ones.
-extensions = ['sphinx.ext.pngmath', 'sphinx.ext.graphviz', 'sphinx.ext.todo']
+extensions = [
+    'sphinx.ext.pngmath',
+    'sphinx.ext.graphviz',
+    'sphinx.ext.todo',
+    'breathe',
+]
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['@CMAKE_CURRENT_SOURCE_DIR@/_templates']
@@ -227,3 +232,14 @@ graphviz_dot = '@DOXYGEN_DOT_EXECUTABLE@'
 
 # Include todo and todolist in output. the default is False.
 todo_include_todos = True
+
+# -- Options for Doxygen to Sphinx bridge
+
+# Project names with paths to the folder containing the doxygen output.
+breathe_projects = { "halmd": "@CMAKE_CURRENT_BINARY_DIR@/_build/xml/" }
+
+# Project used when the project is not specified in a directive.
+breathe_default_project = "halmd"
+
+# Domains for particular files according to their extension.
+breathe_domain_by_extension = { "hpp": "cpp", "cu": "cpp", "cuh": "cpp" }
