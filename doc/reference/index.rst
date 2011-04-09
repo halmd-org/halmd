@@ -3,4 +3,7 @@
 Reference
 =========
 
-.. doxygenindex::
+.. toctree::
+   :maxdepth: 2
+
+   modules
