@@ -81,9 +81,11 @@ end
 -- read module parameters from HDF5 group
 --
 function read_parameters(args, group)
-    -- args.length is optional parameter
-    args.density = group:read_attribute("density", h5.float())
-    -- FIXME args.ratios = group:read_attribute("ratios", h5.float_array())
+    -- upon continuation from a phase space sample, the box is set up from
+    -- the absolute edge lengths and the particle number (which is read by
+    -- the particle module). The presence of 'length' supersedes the options
+    -- 'density' and 'ratios' (see function 'new').
+    args.length = group:read_attribute("length", h5.float_array())
 end
 
 --
@@ -95,5 +97,4 @@ end
 function write_parameters(box, group)
     group:write_attribute("length", h5.float_array(), box.length)
     group:write_attribute("density", h5.float(), box.density)
-    -- FIXME group:write_attribute("ratios", h5.float_array(), box.ratios)
 end
