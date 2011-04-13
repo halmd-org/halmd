@@ -50,9 +50,12 @@ phase_space<dimension, float_type>::phase_space(
 template <int dimension, typename float_type>
 void phase_space<dimension, float_type>::set()
 {
+    LOG("set particle positions from phase space sample");
+
     // assign particle coordinates
     for (size_t j = 0, i = 0; j < particle->ntype; i += particle->ntypes[j], ++j) {
-        copy(sample->r[j]->begin(), sample->r[j]->end(), &particle->r[i]);
+        assert(sample->r[j]->size() + i <= particle->r.size());
+        copy(sample->r[j]->begin(), sample->r[j]->end(), particle->r.begin() + i);
     }
 
     // shift particle positions to range (-L/2, L/2)
@@ -62,8 +65,6 @@ void phase_space<dimension, float_type>::set()
 
     // assign particle image vectors
     fill(particle->image.begin(), particle->image.end(), 0);
-
-    LOG("set particle positions from phase space sample");
 }
 
 template <int dimension, typename float_type>
