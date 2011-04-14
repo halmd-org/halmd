@@ -121,6 +121,7 @@ device::device(vector<int> devices, unsigned int threads)
  */
 device::~device()
 {
+    LOG_DEBUG("Detach from CUDA device context");
     cuda::thread::exit();
 }
 
