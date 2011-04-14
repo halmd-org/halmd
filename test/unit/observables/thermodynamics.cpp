@@ -175,6 +175,7 @@ void ideal_gas(string const& backend)
         backend
       , core->particle
       , core->box
+      , core->clock
       , core->force
     );
 
@@ -284,7 +285,7 @@ void thermodynamics(string const& backend)
 
     // measure thermodynamic properties
     shared_ptr<observables::thermodynamics<dimension> > thermodynamics =
-        make_thermodynamics(backend, core->particle, core->box, core->force);
+        make_thermodynamics(backend, core->particle, core->box, core->clock, core->force);
 
     // stochastic thermostat => centre particle velocities around zero
     core->velocity->shift(-thermodynamics->v_cm());

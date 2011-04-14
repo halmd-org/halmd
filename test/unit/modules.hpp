@@ -29,6 +29,7 @@
 
 #include <halmd/numeric/blas/fixed_vector.hpp>
 #include <halmd/mdsim/box.hpp>
+#include <halmd/mdsim/clock.hpp>
 #include <halmd/mdsim/host/forces/lennard_jones.hpp>
 #include <halmd/mdsim/host/forces/zero.hpp>
 #include <halmd/mdsim/host/integrators/verlet.hpp>
@@ -407,6 +408,7 @@ boost::shared_ptr<observables::thermodynamics<dimension> > make_thermodynamics(
     std::string const& backend
   , boost::shared_ptr<mdsim::particle<dimension> > particle
   , boost::shared_ptr<mdsim::box<dimension> > box
+  , boost::shared_ptr<mdsim::clock> clock
   , boost::shared_ptr<mdsim::force<dimension> > force
 )
 {
@@ -415,6 +417,7 @@ boost::shared_ptr<observables::thermodynamics<dimension> > make_thermodynamics(
         return boost::make_shared<observables::gpu::thermodynamics<dimension, float> >(
             boost::dynamic_pointer_cast<mdsim::gpu::particle<dimension, float> >(particle)
           , box
+          , clock
           , boost::dynamic_pointer_cast<mdsim::gpu::force<dimension, float> >(force)
         );
     }
@@ -423,6 +426,7 @@ boost::shared_ptr<observables::thermodynamics<dimension> > make_thermodynamics(
         return boost::make_shared<observables::host::thermodynamics<dimension, double> >(
             boost::dynamic_pointer_cast<mdsim::host::particle<dimension, double> >(particle)
           , box
+          , clock
           , boost::dynamic_pointer_cast<mdsim::host::force<dimension, double> >(force)
         );
     }

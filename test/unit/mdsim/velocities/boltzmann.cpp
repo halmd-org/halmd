@@ -78,11 +78,12 @@ void boltzmann(string const& backend)
         make_boltzmann(backend, particle, random, 0);        // actual temperature is set below
 
     shared_ptr<mdsim::box<dimension> > box = make_box(particle, density);
+    shared_ptr<mdsim::clock> clock = make_shared<mdsim::clock>();
 
     // measure velocity distribution via thermodynamics module
     shared_ptr<observables::thermodynamics<dimension> > thermodynamics =
         make_thermodynamics(
-            backend, particle, box
+            backend, particle, box, clock
           , make_zero_force<dimension>(backend, particle)
         );
 

@@ -103,7 +103,7 @@ void verlet_nvt_andersen(string const& backend)
 
     // use thermodynamics module to measure temperature (velocity distribution)
     shared_ptr<observables::thermodynamics<dimension> > thermodynamics =
-        make_thermodynamics(backend, core->particle, core->box, core->force);
+        make_thermodynamics(backend, core->particle, core->box, core->clock, core->force);
 
     // run for Δt*=500
     uint64_t steps = static_cast<uint64_t>(ceil(500 / timestep));
