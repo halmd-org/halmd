@@ -75,9 +75,9 @@ public:
     void register_runtimes(profiler_type& profiler);
 
     /**
-    * compute density modes from phase space sample and store with given time stamp
+    * compute density modes from phase space sample and store with given time stamp (simulation step)
     */
-    virtual void acquire(double time);
+    virtual void acquire(uint64_t step);
 
     virtual void on_acquire(slot_function_type const& slot)
     {
@@ -90,10 +90,10 @@ public:
         return rho_sample_.rho;
     }
 
-    //! returns simulation time when sample was taken
-    virtual double time() const
+    //! returns simulation step when sample was taken
+    virtual uint64_t step() const
     {
-        return rho_sample_.time;
+        return rho_sample_.step;
     }
 
     //! returns wavevector object

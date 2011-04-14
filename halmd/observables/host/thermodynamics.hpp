@@ -41,6 +41,7 @@ public:
     typedef observables::thermodynamics<dimension> _Base;
     typedef mdsim::host::particle<dimension, float_type> particle_type;
     typedef typename _Base::box_type box_type;
+    typedef typename _Base::core_type core_type;
     typedef mdsim::host::force<dimension, float_type> force_type;
     typedef typename particle_type::vector_type vector_type;
 
@@ -52,11 +53,12 @@ public:
     thermodynamics(
         boost::shared_ptr<particle_type> particle
       , boost::shared_ptr<box_type> box
+      , boost::shared_ptr<core_type> core
       , boost::shared_ptr<force_type> force
     );
 
     virtual void prepare();
-    virtual void sample(double);
+    virtual void sample(uint64_t step);
 
     virtual double en_kin();
     virtual vector_type v_cm();

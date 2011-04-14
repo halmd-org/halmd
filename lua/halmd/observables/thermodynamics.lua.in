@@ -57,7 +57,7 @@ function new(args)
     local force = assert(core.force)
 
     if not device() then
-        return thermodynamics_wrapper.host[dimension](particle, box, force)
+        return thermodynamics_wrapper.host[dimension](particle, box, core, force)
     end
-    return thermodynamics_wrapper.gpu[dimension](particle, box, force)
+    return thermodynamics_wrapper.gpu[dimension](particle, box, core, force)
 end

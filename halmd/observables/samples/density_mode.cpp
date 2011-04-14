@@ -18,6 +18,7 @@
  */
 
 #include <boost/lexical_cast.hpp>
+#include <limits>
 #include <string>
 
 #include <halmd/observables/samples/density_mode.hpp>
@@ -36,7 +37,7 @@ density_mode<dimension>::density_mode(unsigned int ntype, unsigned int nq)
   // allocate sample pointers
   : rho(ntype)
   // initialise attributes
-  , time(-1) //< any value < 0.
+  , step(numeric_limits<uint64_t>::max())
 {
     // allocate memory for each particle type
     for (unsigned int i = 0; i < ntype; ++i) {

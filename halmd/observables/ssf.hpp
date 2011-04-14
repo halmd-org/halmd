@@ -53,7 +53,7 @@ public:
     typedef io::statevars::writer<dimension> writer_type;
     typedef observables::density_mode<dimension> density_mode_type;
     typedef halmd::utility::profiler profiler_type;
-    typedef halmd::signal<void (double)> signal_type;
+    typedef halmd::signal<void (uint64_t)> signal_type;
     typedef typename signal_type::slot_function_type slot_function_type;
 
     typedef boost::array<double, 3> result_type;
@@ -77,8 +77,8 @@ public:
     virtual void register_runtimes(profiler_type& profiler);
     virtual void register_observables(writer_type& writer);
 
-    // compute ssf from sample of density Fourier modes and store with given time
-    virtual void sample(double time);
+    // compute ssf from sample of density Fourier modes and store with given simulation step
+    virtual void sample(uint64_t step);
 
     virtual void on_sample(slot_function_type const& slot)
     {
@@ -115,8 +115,8 @@ protected:
     std::vector<std::vector<result_type> > value_;
     /** result accumulators */
     std::vector<std::vector<accumulator<double> > > result_accumulator_;
-    /** store time to be passed to HDF5 writer */
-    double time_;
+    /** time stamp of data (simulation step) */
+    uint64_t step_;
     /** profiling runtime accumulators */
     runtime runtime_;
 

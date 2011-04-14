@@ -31,7 +31,7 @@ namespace io { namespace trajectory
 {
 
 template <typename writer_type>
-typename signal<void (double)>::slot_function_type
+typename signal<void (uint64_t)>::slot_function_type
 append_wrapper(shared_ptr<writer_type> writer)
 {
     return bind(&writer_type::append, writer, _1);

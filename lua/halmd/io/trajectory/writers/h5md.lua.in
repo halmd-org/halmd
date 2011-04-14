@@ -62,9 +62,9 @@ function new(args)
 
     local writer
     if not device() then
-        writer = h5md_wrapper.host[dimension](sample, file_name)
+        writer = h5md_wrapper.host[dimension](sample, core, file_name)
     else
-        writer = h5md_wrapper.gpu[dimension](sample, file_name)
+        writer = h5md_wrapper.gpu[dimension](sample, core, file_name)
     end
 
     parameter.register_writer(writer)

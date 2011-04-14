@@ -20,6 +20,7 @@
 #ifndef HALMD_OBSERVABLES_SAMPLER_HPP
 #define HALMD_OBSERVABLES_SAMPLER_HPP
 
+#include <stdint.h>
 #include <lua.hpp>
 #include <utility> // pair
 
@@ -43,7 +44,7 @@ class sampler
 public:
     typedef mdsim::core<dimension> core_type;
     typedef utility::profiler profiler_type;
-    typedef halmd::signal<void (double)> signal_type;
+    typedef halmd::signal<void (uint64_t)> signal_type;
     typedef typename signal_type::slot_function_type slot_function_type;
 
     struct runtime
@@ -72,8 +73,8 @@ public:
     }
 
 private:
-    void prepare(slot_function_type const& slot, uint64_t interval, double time) const;
-    void sample(slot_function_type const& slot, uint64_t interval, double time) const;
+    void prepare(slot_function_type const& slot, uint64_t interval, uint64_t step) const;
+    void sample(slot_function_type const& slot, uint64_t interval, uint64_t step) const;
 
     /** Molecular Dynamics simulation core */
     boost::shared_ptr<core_type> core_;

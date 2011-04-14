@@ -67,28 +67,28 @@ void sampler<dimension>::run()
 
     LOG("setting up simulation box");
 
-    on_prepare_(core_->time());
+    on_prepare_(core_->step_counter());
     core_->prepare();
-    on_sample_(core_->time());
+    on_sample_(core_->step_counter());
 
-    on_start_(core_->time());
+    on_start_(core_->step_counter());
 
     LOG("starting simulation run");
     {
         scoped_timer<timer> timer_(runtime_.total);
 
         while (core_->step_counter() < steps_) {
-            on_prepare_(core_->time());
+            on_prepare_(core_->step_counter() + 1); //< step counter is increased by call to mdstep()
 
             // perform complete MD integration step
             core_->mdstep();
 
-            on_sample_(core_->time());
+            on_sample_(core_->step_counter());
         }
     }
     LOG("finished simulation run");
 
-    on_finish_(core_->time());
+    on_finish_(core_->step_counter());
 }
 
 /**
@@ -135,11 +135,10 @@ void sampler<dimension>::on_finish(slot_function_type const& slot)
  * Forward signal to slot at given interval
  */
 template <int dimension>
-void sampler<dimension>::prepare(slot_function_type const& slot, uint64_t interval, double time) const
+void sampler<dimension>::prepare(slot_function_type const& slot, uint64_t interval, uint64_t step) const
 {
-    uint64_t step = core_->step_counter(); // FIXME +1 if not core->prepare()
     if (step == 0 || step % interval == 0 || step == steps_) {
-        slot(time);
+        slot(step);
     }
 }
 
@@ -147,11 +146,10 @@ void sampler<dimension>::prepare(slot_function_type const& slot, uint64_t interv
  * Forward signal to slot at given interval
  */
 template <int dimension>
-void sampler<dimension>::sample(slot_function_type const& slot, uint64_t interval, double time) const
+void sampler<dimension>::sample(slot_function_type const& slot, uint64_t interval, uint64_t step) const
 {
-    uint64_t step = core_->step_counter();
     if (step == 0 || step % interval == 0 || step == steps_) {
-        slot(time);
+        slot(step);
     }
 }
 

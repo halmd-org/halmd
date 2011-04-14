@@ -59,11 +59,11 @@ void density_mode<dimension, float_type>::register_runtimes(profiler_type& profi
  * Acquire sample of all density modes from phase space sample
  */
 template <int dimension, typename float_type>
-void density_mode<dimension, float_type>::acquire(double time)
+void density_mode<dimension, float_type>::acquire(uint64_t step)
 {
     scoped_timer<timer> timer_(runtime_.sample);
 
-    if (rho_sample_.time == time) {
+    if (rho_sample_.step == step) {
         LOG_TRACE("[density_mode] sample is up to date");
         return;
     }
@@ -72,11 +72,11 @@ void density_mode<dimension, float_type>::acquire(double time)
     typedef typename density_mode_sample_type::mode_vector_type mode_vector_type;
 
     // trigger update of phase space sample
-    on_acquire_(time);
+    on_acquire_(step);
 
     LOG_TRACE("[density_mode] acquire sample");
 
-    if (phase_space_->sample->time != time) {
+    if (phase_space_->sample->step != step) {
         throw logic_error("host phase space sample was not updated");
     }
 
@@ -100,7 +100,7 @@ void density_mode<dimension, float_type>::acquire(double time)
         }
         ++type;
     }
-    rho_sample_.time = time;
+    rho_sample_.step = step;
 }
 
 template <int dimension, typename float_type>

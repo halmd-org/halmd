@@ -27,6 +27,7 @@
 #include <h5xx/h5xx.hpp>
 
 #include <halmd/io/trajectory/writer.hpp>
+#include <halmd/mdsim/core.hpp>
 #include <halmd/observables/host/samples/phase_space.hpp>
 
 namespace halmd
@@ -41,6 +42,7 @@ class h5md
 public:
     typedef trajectory::writer<dimension> _Base;
     typedef observables::host::samples::phase_space<dimension, float_type> sample_type;
+    typedef mdsim::core<dimension> core_type;
     typedef typename sample_type::sample_vector sample_vector_type;
     typedef typename sample_vector_type::value_type vector_type;
     typedef typename _Base::signal_type signal_type;
@@ -50,12 +52,14 @@ public:
 
     h5md(
         boost::shared_ptr<sample_type> sample
+      , boost::shared_ptr<core_type> core
       , std::string const& file_name
     );
-    virtual void append(double time);
+    virtual void append(uint64_t step);
     virtual void flush();
 
     boost::shared_ptr<sample_type> sample;
+    boost::shared_ptr<core_type> core;
 
     H5::H5File const& file() const
     {
@@ -70,6 +74,8 @@ public:
 private:
     /** H5MD file */
     H5::H5File file_;
+    /** storage for simulation time */
+    double time_;
     /** dataset write functors */
     std::vector<boost::function<void ()> > writers_;
 

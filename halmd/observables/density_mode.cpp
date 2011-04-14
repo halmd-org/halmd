@@ -33,7 +33,7 @@ namespace observables
 {
 
 template <typename density_mode_type>
-typename signal<void (double)>::slot_function_type
+typename signal<void (uint64_t)>::slot_function_type
 acquire_wrapper(shared_ptr<density_mode_type> density_mode)
 {
     return bind(&density_mode_type::acquire, density_mode, _1);

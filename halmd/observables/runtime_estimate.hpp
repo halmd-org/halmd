@@ -21,6 +21,7 @@
 #define HALMD_OBSERVABLES_RUNTIME_ESTIMATE_HPP
 
 #include <lua.hpp>
+#include <stdint.h>
 #include <string>
 #include <sys/time.h>
 
@@ -40,15 +41,15 @@ namespace observables
 class runtime_estimate
 {
 public:
-    typedef halmd::signal<void (double)> signal_type;
+    typedef halmd::signal<void (uint64_t)> signal_type;
     typedef signal_type::slot_function_type slot_function_type;
 
     static void luaopen(lua_State* L);
 
-    runtime_estimate(uint64_t total_steps, uint64_t current_step, double timestep);
+    runtime_estimate(uint64_t total_steps, uint64_t current_step);
 
     // estimate remaining runtime and output to log file
-    virtual void sample(double time) const;
+    virtual void sample(uint64_t step) const;
 
     virtual void on_sample(slot_function_type const& slot)
     {
@@ -66,8 +67,6 @@ protected:
     uint64_t step_start_;
     /** simulation step counter at finish */
     uint64_t step_stop_;
-    /** FIXME timestep of the integrator */
-    double timestep_;
     /** wall clock time when simulation was started */
     timeval start_time_;
 
