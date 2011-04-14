@@ -34,10 +34,12 @@ namespace halmd
 namespace observables
 {
 
-runtime_estimate::runtime_estimate(uint64_t total_steps, uint64_t current_step)
+runtime_estimate::runtime_estimate(shared_ptr<clock_type> clock, uint64_t total_steps, uint64_t step_start)
+  // dependency injection
+  : clock(clock)
   // initialise members
-  : step_start_(current_step)
-  , step_stop_(current_step + total_steps)
+  , step_start_(step_start)
+  , step_stop_(step_start + total_steps)
 {
     gettimeofday(&start_time_, NULL);
 }
@@ -45,8 +47,9 @@ runtime_estimate::runtime_estimate(uint64_t total_steps, uint64_t current_step)
 /**
  * trigger estimate of remaining runtime and output to log file
  */
-void runtime_estimate::sample(uint64_t step) const
+void runtime_estimate::sample() const
 {
+    uint64_t step = clock->step();
     if (step > step_start_) {
         double eta = value(step);
         LOG(format_time(eta, 1) << " estimated remaining runtime at step " << step);
@@ -92,11 +95,10 @@ string runtime_estimate::format_time(double time, unsigned int prec)
 }
 
 
-template <typename runtime_estimate_type>
-typename runtime_estimate_type::slot_function_type
-sample_wrapper(shared_ptr<runtime_estimate_type> runtime_estimate)
+runtime_estimate::slot_function_type
+sample_wrapper(shared_ptr<runtime_estimate> instance)
 {
-    return bind(&runtime_estimate_type::sample, runtime_estimate, _1);
+    return bind(&runtime_estimate::sample, instance);
 }
 
 void runtime_estimate::luaopen(lua_State* L)
@@ -108,8 +110,11 @@ void runtime_estimate::luaopen(lua_State* L)
         namespace_("observables")
         [
             class_<runtime_estimate, shared_ptr<runtime_estimate> >(class_name.c_str())
-                .def(constructor<uint64_t, uint64_t>())
-                .property("sample", &sample_wrapper<runtime_estimate>)
+                .def(constructor<
+                    shared_ptr<clock_type>
+                  , uint64_t, uint64_t
+                >())
+                .property("sample", &sample_wrapper)
                 .property("value", &runtime_estimate::value)
                 .def("on_sample", &runtime_estimate::on_sample)
         ]

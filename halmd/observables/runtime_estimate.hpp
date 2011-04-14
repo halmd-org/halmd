@@ -20,11 +20,13 @@
 #ifndef HALMD_OBSERVABLES_RUNTIME_ESTIMATE_HPP
 #define HALMD_OBSERVABLES_RUNTIME_ESTIMATE_HPP
 
+#include <boost/shared_ptr.hpp>
 #include <lua.hpp>
 #include <stdint.h>
 #include <string>
 #include <sys/time.h>
 
+#include <halmd/mdsim/clock.hpp>
 #include <halmd/utility/signal.hpp>
 
 namespace halmd
@@ -41,15 +43,22 @@ namespace observables
 class runtime_estimate
 {
 public:
-    typedef halmd::signal<void (uint64_t)> signal_type;
+    typedef halmd::mdsim::clock clock_type;
+    typedef halmd::signal<void ()> signal_type;
     typedef signal_type::slot_function_type slot_function_type;
 
     static void luaopen(lua_State* L);
 
-    runtime_estimate(uint64_t total_steps, uint64_t current_step);
+    boost::shared_ptr<clock_type> clock;
+
+    runtime_estimate(
+        boost::shared_ptr<clock_type> clock
+      , uint64_t total_steps
+      , uint64_t step_start
+    );
 
     // estimate remaining runtime and output to log file
-    virtual void sample(uint64_t step) const;
+    virtual void sample() const;
 
     virtual void on_sample(slot_function_type const& slot)
     {

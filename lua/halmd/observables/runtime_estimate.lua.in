@@ -19,6 +19,10 @@
 
 require("halmd.modules")
 
+require("halmd.mdsim.core")
+
+-- grab modules
+local mdsim = halmd.mdsim
 -- grab C++ wrappers
 local runtime_estimate_wrapper = libhalmd.observables.runtime_estimate_
 -- grab standard library
@@ -36,11 +40,15 @@ module("halmd.observables.runtime_estimate", halmd.modules.register)
 -- @returns instance of runtime_estimate module
 --
 function new(args)
-    -- dependency injection
+    -- parameters
     local total_steps = assert(args.total_steps)
     local current_step = assert(args.current_step)
 
-    return assert(runtime_estimate_wrapper)(total_steps, current_step)
+    -- dependency injection
+    local core = mdsim.core()
+    local clock = assert(core.clock)
+
+    return assert(runtime_estimate_wrapper)(clock, total_steps, current_step)
 end
 
 --

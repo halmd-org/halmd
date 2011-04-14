@@ -67,7 +67,8 @@ function new(args)
         total_steps = steps
       , current_step = core.step
     }
-    sampler:on_sample(runtime_estimate.sample, steps / 100)
+    local timer_service = utility.timer_service()
+    timer_service:on_periodic(runtime_estimate.sample, 15 * 60) -- every 15 minutes
 
     return sampler
 end

@@ -24,7 +24,6 @@ require("halmd.singleton")
 local timer_service = libhalmd.utility.timer_service
 -- grab standard library
 local assert = assert
-local math = math
 
 module("halmd.utility.timer_service", halmd.modules.register, halmd.singleton)
 
