@@ -41,7 +41,7 @@ public:
     typedef observables::thermodynamics<dimension> _Base;
     typedef mdsim::host::particle<dimension, float_type> particle_type;
     typedef typename _Base::box_type box_type;
-    typedef typename _Base::core_type core_type;
+    typedef typename _Base::clock_type clock_type;
     typedef mdsim::host::force<dimension, float_type> force_type;
     typedef typename particle_type::vector_type vector_type;
 
@@ -53,7 +53,7 @@ public:
     thermodynamics(
         boost::shared_ptr<particle_type> particle
       , boost::shared_ptr<box_type> box
-      , boost::shared_ptr<core_type> core
+      , boost::shared_ptr<clock_type> clock
       , boost::shared_ptr<force_type> force
     );
 

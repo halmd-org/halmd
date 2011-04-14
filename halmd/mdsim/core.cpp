@@ -38,9 +38,8 @@ namespace mdsim
  */
 template <int dimension>
 core<dimension>::core()
-  // initialise attributes
-  : step_counter_(0)
-  , time_(0)
+  // dependency injection
+  : clock(make_shared<clock_type>())
 {
     LOG("dimension of positional coordinates: " << dimension);
 }
@@ -82,7 +81,7 @@ void core<dimension>::mdstep()
 {
     scoped_timer<timer> timer_(runtime_.mdstep);
 
-    LOG_TRACE("performing MD step #" << step_counter_ + 1); //< output 1-based counter consistent with output files
+    LOG_TRACE("performing MD step #" << clock->step() + 1); //< output 1-based counter consistent with output files
 
     integrator->integrate();
     if (neighbour && neighbour->check()) {
@@ -94,10 +93,7 @@ void core<dimension>::mdstep()
     force->compute();
     integrator->finalize();
 
-    // increment step counter
-    step_counter_++;
-    // update simulation time
-    time_ = step_counter_ * integrator->timestep();
+    clock->advance(integrator->timestep()); // FIXME move to beginning of function?
 }
 
 /**
@@ -129,8 +125,9 @@ void core<dimension>::luaopen(lua_State* L)
                 .def_readwrite("integrator", &core::integrator)
                 .def_readwrite("position", &core::position)
                 .def_readwrite("velocity", &core::velocity)
+                .def_readonly("clock", &core::clock)
                 .property("dimension", &get_dimension<dimension>)
-                .property("step_counter", &core::step_counter)
+                .property("step", &core::step)
                 .def("prepare", &core::prepare)
                 .def("mdstep", &core::mdstep)
         ]

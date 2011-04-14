@@ -27,7 +27,7 @@
 
 #include <halmd/io/statevars/writer.hpp>
 #include <halmd/mdsim/box.hpp>
-#include <halmd/mdsim/core.hpp>
+#include <halmd/mdsim/clock.hpp>
 #include <halmd/mdsim/type_traits.hpp>
 #include <halmd/numeric/blas/blas.hpp>
 #include <halmd/utility/profiler.hpp>
@@ -52,7 +52,7 @@ class thermodynamics
 public:
     typedef io::statevars::writer<dimension> writer_type;
     typedef mdsim::box<dimension> box_type;
-    typedef mdsim::core<dimension> core_type;
+    typedef mdsim::clock clock_type;
     typedef halmd::utility::profiler profiler_type;
     typedef typename mdsim::type_traits<dimension, double>::vector_type vector_type;
     typedef typename signal<void (uint64_t)>::slot_function_type slot_function_type;
@@ -64,13 +64,13 @@ public:
     };
 
     boost::shared_ptr<box_type> box;
-    boost::shared_ptr<core_type> core;
+    boost::shared_ptr<clock_type> clock;
 
     static void luaopen(lua_State* L);
 
     thermodynamics(
         boost::shared_ptr<box_type> box
-      , boost::shared_ptr<core_type> core
+      , boost::shared_ptr<clock_type> clock
     );
     virtual ~thermodynamics() {}
     void register_runtimes(profiler_type& profiler);

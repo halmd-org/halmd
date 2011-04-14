@@ -65,7 +65,7 @@ function new(args)
     -- construct and connect runtime estimator.
     local runtime_estimate = observables.runtime_estimate{
         total_steps = steps
-      , current_step = core.step_counter
+      , current_step = core.step
     }
     sampler:on_sample(runtime_estimate.sample, steps / 100)
 

@@ -39,11 +39,11 @@ namespace io { namespace trajectory { namespace writers
 template <int dimension, typename float_type>
 h5md<dimension, float_type>::h5md(
     shared_ptr<sample_type> sample
-  , shared_ptr<core_type> core
+  , shared_ptr<clock_type> clock
   , string const& file_name
 )
   : sample(sample)
-  , core(core)
+  , clock(clock)
   , file_(file_name, H5F_ACC_TRUNC)
   , time_(-1)
 {
@@ -92,7 +92,7 @@ void h5md<dimension, float_type>::append(uint64_t step)
     }
 
     // retrieve current simulation time
-    time_ = core->time();
+    time_ = clock->time();
 
     BOOST_FOREACH (boost::function<void ()> const& writer, writers_) {
         writer();
@@ -124,7 +124,7 @@ void h5md<dimension, float_type>::luaopen(lua_State* L)
                     class_<h5md, shared_ptr<_Base>, _Base>(class_name.c_str())
                         .def(constructor<
                             shared_ptr<sample_type>
-                          , shared_ptr<core_type>
+                          , shared_ptr<clock_type>
                           , string const&
                         >())
                         .def("file", &h5md::file)

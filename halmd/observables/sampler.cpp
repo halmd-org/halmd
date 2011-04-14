@@ -67,28 +67,28 @@ void sampler<dimension>::run()
 
     LOG("setting up simulation box");
 
-    on_prepare_(core_->step_counter());
+    on_prepare_(core_->step());
     core_->prepare();
-    on_sample_(core_->step_counter());
+    on_sample_(core_->step());
 
-    on_start_(core_->step_counter());
+    on_start_(core_->step());
 
     LOG("starting simulation run");
     {
         scoped_timer<timer> timer_(runtime_.total);
 
-        while (core_->step_counter() < steps_) {
-            on_prepare_(core_->step_counter() + 1); //< step counter is increased by call to mdstep()
+        while (core_->step() < steps_) {
+            on_prepare_(core_->step() + 1); //< step counter is increased by call to mdstep()
 
             // perform complete MD integration step
             core_->mdstep();
 
-            on_sample_(core_->step_counter());
+            on_sample_(core_->step());
         }
     }
     LOG("finished simulation run");
 
-    on_finish_(core_->step_counter());
+    on_finish_(core_->step());
 }
 
 /**

@@ -36,11 +36,11 @@ namespace observables
 template <int dimension>
 thermodynamics<dimension>::thermodynamics(
     shared_ptr<box_type> box
-  , shared_ptr<core_type> core
+  , shared_ptr<clock_type> clock
 )
   // dependency injection
   : box(box)
-  , core(core)
+  , clock(clock)
   // initialise members
   , step_(numeric_limits<uint64_t>::max())
 {
@@ -61,7 +61,7 @@ void thermodynamics<dimension>::register_runtimes(profiler_type& profiler)
 template <int dimension>
 void thermodynamics<dimension>::register_observables(writer_type& writer)
 {
-    writer.register_observable("TIME", &time_, "simulation time"); //< FIXME move time to mdsim::core
+    writer.register_observable("TIME", &time_, "simulation time"); //< FIXME move time to mdsim::clock
     writer.register_observable("EPOT", &en_pot_, "mean potential energy per particle");
     writer.register_observable("EKIN", &en_kin_, "mean kinetic energy per particle");
     writer.register_observable("ETOT", &en_tot_, "mean total energy per particle");
@@ -96,7 +96,7 @@ void thermodynamics<dimension>::sample(uint64_t step)
     density_ = box->density(); //< FIXME why is this duplicated in thermodynamics?
     pressure_ = density_ * (temp_ + virial() / dimension);
     hypervirial_ = hypervirial();
-    time_ = core->time();
+    time_ = clock->time();
     step_ = step;
 }
 

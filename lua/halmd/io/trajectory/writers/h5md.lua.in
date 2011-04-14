@@ -52,6 +52,7 @@ function new(args)
     -- dependency injection
     local core = mdsim.core()
     local dimension = assert(core.dimension)
+    local clock = assert(core.clock)
     local sample = assert(observables.samples.phase_space{ memory = "host" })
 
     -- command line options
@@ -62,9 +63,9 @@ function new(args)
 
     local writer
     if not device() then
-        writer = h5md_wrapper.host[dimension](sample, core, file_name)
+        writer = h5md_wrapper.host[dimension](sample, clock, file_name)
     else
-        writer = h5md_wrapper.gpu[dimension](sample, core, file_name)
+        writer = h5md_wrapper.gpu[dimension](sample, clock, file_name)
     end
 
     parameter.register_writer(writer)
