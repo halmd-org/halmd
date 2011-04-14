@@ -28,7 +28,6 @@
 #include <halmd/mdsim/gpu/integrators/verlet_kernel.hpp>
 #include <halmd/mdsim/gpu/particle.hpp>
 #include <halmd/mdsim/integrator.hpp>
-#include <halmd/utility/gpu/device.hpp>
 #include <halmd/utility/profiler.hpp>
 
 namespace halmd
@@ -59,7 +58,6 @@ public:
 
     boost::shared_ptr<particle_type> particle;
     boost::shared_ptr<box_type> box;
-    boost::shared_ptr<device_type> device;
 
     /** CUDA C++ wrapper */
     verlet_wrapper<dimension> const* wrapper;

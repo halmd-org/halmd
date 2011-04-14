@@ -2,7 +2,6 @@ DOXYFILE_ENCODING      = UTF-8
 PROJECT_NAME           = @PROJECT_NAME@
 PROJECT_NUMBER         = @PROGRAM_VERSION@
 GENERATE_LATEX         = NO
-LATEX_CMD_NAME         = /bin/true
 GENERATE_MAN           = NO
 GENERATE_RTF           = NO
 CASE_SENSE_NAMES       = NO
@@ -20,3 +19,5 @@ FILE_PATTERNS          = *.cpp *.hpp *.cu *.cuh
 EXCLUDE_PATTERNS       = */deprecated/* */test/*
 HIDE_UNDOC_MEMBERS     = YES
 HIDE_UNDOC_CLASSES     = YES
+ALIASES                = "rst=\verbatim embed:rst"
+ALIASES               += "endrst=\endverbatim"

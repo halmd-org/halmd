@@ -19,9 +19,13 @@
 
 require("halmd.modules")
 require("halmd.mdsim.core")
+require("halmd.observables.runtime_estimate")
+require("halmd.utility.timer_service")
 
 -- grab modules
 local mdsim = halmd.mdsim
+local observables = halmd.observables
+local utility = halmd.utility
 -- grab C++ wrappers
 local sampler_wrapper = {
     [2] = libhalmd.sampler_2_
@@ -48,11 +52,25 @@ function new(args)
     local steps = args.steps or 10000 -- default value
     local time = args.time -- optional
 
-    local sampler = sampler_wrapper[dimension]
     if time then
         steps = math.floor((time / integrator.timestep) + 0.5)
     end
-    return sampler(core, steps)
+
+    -- construct sampler module
+    local sampler = assert(sampler_wrapper[dimension])(core, steps)
+
+    -- process timer service every step
+    sampler:on_sample(utility.timer_service().process, 1)
+
+    -- construct and connect runtime estimator.
+    local runtime_estimate = observables.runtime_estimate{
+        total_steps = steps
+      , current_step = core.step
+    }
+    local timer_service = utility.timer_service()
+    timer_service:on_periodic(runtime_estimate.sample, 15 * 60) -- every 15 minutes
+
+    return sampler
 end
 
 --

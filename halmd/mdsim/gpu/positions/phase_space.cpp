@@ -59,17 +59,19 @@ phase_space<dimension, float_type>::phase_space(
 template <int dimension, typename float_type>
 void phase_space<dimension, float_type>::set()
 {
+    LOG("set particle positions from phase space sample");
+
     // assign particle coordinates
     for (size_t j = 0, i = 0; j < particle->ntype; i += particle->ntypes[j], ++j) {
-        copy(sample->r[j]->begin(), sample->r[j]->end(), &particle->h_r[i]);
+        assert(sample->r[j]->size() + i <= particle->h_r.size());
+        copy(sample->r[j]->begin(), sample->r[j]->end(), particle->h_r.begin() + i);
     }
 
-#ifdef USE_VERLET_DSFUN
-    // erase particle position vectors (double-single precision)
-    cuda::memset(particle->g_r, 0, particle->g_r.capacity());
-#endif
-
     try {
+#ifdef USE_VERLET_DSFUN
+        // erase particle position vectors (double-single precision)
+        cuda::memset(particle->g_r, 0, particle->g_r.capacity());
+#endif
         cuda::copy(particle->h_r, particle->g_r);
     }
     catch (cuda::error const&)
@@ -91,8 +93,6 @@ void phase_space<dimension, float_type>::set()
 
     // assign particle image vectors
     cuda::memset(particle->g_image, 0, particle->g_image.capacity());
-
-    LOG("set particle positions from phase space sample");
 }
 
 template <int dimension, typename float_type>

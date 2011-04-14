@@ -20,6 +20,7 @@
 #include <boost/bind.hpp>
 #include <functional>
 #include <iterator>
+#include <limits>
 #include <string>
 
 #include <halmd/io/logger.hpp>
@@ -45,7 +46,7 @@ ssf<dimension>::ssf(
   : density_mode(density_mode)
   // initialise members
   , npart_(npart)
-  , time_(-1)
+  , step_(numeric_limits<uint64_t>::max())
 {
     // allocate memory
     unsigned int nq = density_mode->wavenumber().size();
@@ -100,19 +101,19 @@ void ssf<dimension>::register_observables(writer_type& writer)
  * compute SSF from sample of density Fourier modes
  */
 template <int dimension>
-void ssf<dimension>::sample(double time)
+void ssf<dimension>::sample(uint64_t step)
 {
-    if (time_ == time) {
+    if (step_ == step) {
         LOG_TRACE("[ssf] sample is up to date");
         return;
     }
 
     // acquire sample of density modes
-    on_sample_(time);
+    on_sample_(step);
 
     LOG_TRACE("[ssf] sampling");
 
-    if (density_mode->time() != time) {
+    if (density_mode->step() != step) {
         throw logic_error("density modes sample was not updated");
     }
 
@@ -130,7 +131,7 @@ void ssf<dimension>::sample(double time)
             v[2] = static_cast<double>(count(acc));
         }
     }
-    time_ = time;   // store time for writer functions
+    step_ = step;   // store simulation step as time stamp
 }
 
 /**

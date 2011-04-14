@@ -53,7 +53,7 @@ public:
       , boost::shared_ptr<particle_type> particle
       , boost::shared_ptr<box_type> box
     );
-    virtual void acquire(double time);
+    virtual void acquire(uint64_t step);
 };
 
 }} // namespace observables::host

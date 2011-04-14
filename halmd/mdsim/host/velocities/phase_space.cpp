@@ -50,11 +50,12 @@ phase_space<dimension, float_type>::phase_space(
 template <int dimension, typename float_type>
 void phase_space<dimension, float_type>::set()
 {
-    for (size_t j = 0, i = 0; j < particle->ntype; i += particle->ntypes[j], ++j) {
-        copy(sample->v[j]->begin(), sample->v[j]->end(), &particle->v[i]);
-    }
-
     LOG("set particle velocities from phase space sample");
+
+    for (size_t j = 0, i = 0; j < particle->ntype; i += particle->ntypes[j], ++j) {
+        assert(sample->v[j]->size() + i <= particle->v.size());
+        copy(sample->v[j]->begin(), sample->v[j]->end(), particle->v.begin() + i);
+    }
 }
 
 template <int dimension, typename float_type>

@@ -54,10 +54,11 @@ function new(args)
     local dimension = assert(core.dimension)
     local particle = assert(core.particle)
     local box = assert(core.box)
+    local clock = assert(core.clock)
     local force = assert(core.force)
 
     if not device() then
-        return thermodynamics_wrapper.host[dimension](particle, box, force)
+        return thermodynamics_wrapper.host[dimension](particle, box, clock, force)
     end
-    return thermodynamics_wrapper.gpu[dimension](particle, box, force)
+    return thermodynamics_wrapper.gpu[dimension](particle, box, clock, force)
 end

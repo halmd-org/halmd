@@ -1,0 +1,37 @@
+add_executable(test_unit_utility_lua_dependency_injection
+  dependency_injection.cpp
+)
+target_link_libraries(test_unit_utility_lua_dependency_injection
+  halmd_mdsim_host_integrators
+  halmd_mdsim_host
+)
+if(WITH_CUDA)
+  target_link_libraries(test_unit_utility_lua_dependency_injection
+    halmd_mdsim_gpu_integrators
+    halmd_mdsim_gpu
+    halmd_utility_gpu
+  )
+endif(WITH_CUDA)
+target_link_libraries(test_unit_utility_lua_dependency_injection
+  halmd_io
+  halmd_mdsim
+  halmd_utility
+  test_tools_lua
+  ${HALMD_COMMON_LIBRARIES}
+  ${HALMD_TEST_LIBRARIES}
+)
+add_test(unit/utility/lua/dependency_injection
+  test_unit_utility_lua_dependency_injection --log_level=test_suite
+)
+add_executable(test_unit_utility_lua_map_converter
+  map_converter.cpp
+)
+target_link_libraries(test_unit_utility_lua_map_converter
+  halmd_utility_lua
+  test_tools_lua
+  ${Boost_PROGRAM_OPTIONS_LIBRARY}
+  ${HALMD_TEST_LIBRARIES}
+)
+add_test(unit/utility/lua/map_converter
+  test_unit_utility_lua_map_converter --log_level=test_suite
+)

@@ -45,9 +45,9 @@ phase_space<dimension, float_type>::phase_space(
  * Sample phase_space
  */
 template <int dimension, typename float_type>
-void phase_space<dimension, float_type>::acquire(double time)
+void phase_space<dimension, float_type>::acquire(uint64_t step)
 {
-    if (sample->time == time) {
+    if (sample->step == step) {
         LOG_TRACE("[phase_space] sample is up to date");
         return;
     }
@@ -68,7 +68,7 @@ void phase_space<dimension, float_type>::acquire(double time)
         assert(tag < sample->v[type]->size());
         (*sample->v[type])[tag] = particle->v[i];
     }
-    sample->time = time;
+    sample->step = step;
 }
 
 template <int dimension, typename float_type>

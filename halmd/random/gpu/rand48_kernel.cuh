@@ -27,6 +27,7 @@
 #ifndef HALMD_RANDOM_GPU_RAND48_KERNEL_CUH
 #define HALMD_RANDOM_GPU_RAND48_KERNEL_CUH
 
+#include <halmd/config.hpp>
 #include <halmd/numeric/mp/uint48.hpp>
 
 namespace halmd
@@ -39,7 +40,7 @@ struct rand48_rng
     /** per-thread generator state type */
     typedef ushort3 state_type;
 
-    state_type& operator[](unsigned int thread) const
+    HALMD_GPU_ENABLED state_type& operator[](unsigned int thread) const
     {
         return g_state[thread];
     }

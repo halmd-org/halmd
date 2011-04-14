@@ -70,9 +70,9 @@ phase_space<host::samples::phase_space<dimension, float_type> >::phase_space(
  * Sample phase_space
  */
 template <int dimension, typename float_type>
-void phase_space<gpu::samples::phase_space<dimension, float_type> >::acquire(double time)
+void phase_space<gpu::samples::phase_space<dimension, float_type> >::acquire(uint64_t step)
 {
-    if (sample->time == time) {
+    if (sample->step == step) {
         LOG_TRACE("[phase_space] sample is up to date");
         return;
     }
@@ -93,16 +93,16 @@ void phase_space<gpu::samples::phase_space<dimension, float_type> >::acquire(dou
         g_index += ntype;
     }
 
-    sample->time = time;
+    sample->step = step;
 }
 
 /**
  * Sample phase_space
  */
 template <int dimension, typename float_type>
-void phase_space<host::samples::phase_space<dimension, float_type> >::acquire(double time)
+void phase_space<host::samples::phase_space<dimension, float_type> >::acquire(uint64_t step)
 {
-    if (sample->time == time) {
+    if (sample->step == step) {
         LOG_TRACE("[phase_space] sample is up to date");
         return;
     }
@@ -133,7 +133,7 @@ void phase_space<host::samples::phase_space<dimension, float_type> >::acquire(do
         // particle velocity
         (*sample->v[type])[tag] = v;
     }
-    sample->time = time;
+    sample->step = step;
 }
 
 template <int dimension, typename float_type>

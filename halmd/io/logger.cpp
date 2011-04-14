@@ -36,8 +36,6 @@
 using namespace boost;
 using namespace std;
 
-#define TIMESTAMP_FORMAT "%d-%m-%Y %H:%M:%S.%f"
-
 namespace halmd
 {
 
@@ -135,7 +133,11 @@ static void log_wrapper(char const* message)
 #ifndef _AIX
     BOOST_LOG_SEV(logger::get(), level) << message;
 #else
-    cout << level << message << endl;
+    using namespace boost::posix_time;
+    ptime t = microsec_clock::local_time();
+    time_facet* facet(new time_facet(TIMESTAMP_FORMAT));
+    cout.imbue(locale(cout.getloc(), facet));
+    cout << "[" << t << "] " << level << message << endl;
 #endif
 }
 

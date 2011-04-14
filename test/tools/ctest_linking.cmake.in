@@ -1,0 +1,40 @@
+#!@CMAKE_COMMAND@ -P
+#
+# Copyright © 2011  Peter Colberg
+#
+# This file is part of HALMD.
+#
+# HALMD is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+#
+
+execute_process(
+  COMMAND "@TEST_TOOLS_CTEST_LINKING_LOCATION@" --log_level=message
+  RESULT_VARIABLE CTEST_LINKING_STATUS
+  OUTPUT_VARIABLE CTEST_LINKING_OUTPUT
+  ERROR_VARIABLE CTEST_LINKING_OUTPUT
+  OUTPUT_STRIP_TRAILING_WHITESPACE
+)
+
+message("${CTEST_LINKING_OUTPUT}")
+
+if(NOT CTEST_LINKING_STATUS STREQUAL "0")
+  message(SEND_ERROR "test execution failed")
+endif()
+if(NOT CTEST_LINKING_OUTPUT MATCHES "CTEST_FULL_OUTPUT")
+  message(SEND_ERROR "CTEST_FULL_OUTPUT missing in output")
+endif()
+string(REGEX REPLACE "([.()])" "\\\\\\1" HALMD_VERSION_REGEX "@PROJECT_NAME@ @PROGRAM_VERSION@")
+if(NOT CTEST_LINKING_OUTPUT MATCHES "${HALMD_VERSION_REGEX}")
+  message(SEND_ERROR "output does not match @PROJECT_NAME@ @PROGRAM_VERSION@")
+endif()

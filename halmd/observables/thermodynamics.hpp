@@ -23,11 +23,11 @@
 #include <boost/foreach.hpp>
 #include <boost/numeric/ublas/symmetric.hpp>
 #include <lua.hpp>
-#include <utility> // pair
 #include <vector>
 
 #include <halmd/io/statevars/writer.hpp>
 #include <halmd/mdsim/box.hpp>
+#include <halmd/mdsim/clock.hpp>
 #include <halmd/mdsim/type_traits.hpp>
 #include <halmd/numeric/blas/blas.hpp>
 #include <halmd/utility/profiler.hpp>
@@ -52,10 +52,10 @@ class thermodynamics
 public:
     typedef io::statevars::writer<dimension> writer_type;
     typedef mdsim::box<dimension> box_type;
+    typedef mdsim::clock clock_type;
     typedef halmd::utility::profiler profiler_type;
     typedef typename mdsim::type_traits<dimension, double>::vector_type vector_type;
-    typedef typename signal<void (double)>::slot_function_type slot_function_type;
-    typedef std::pair<slot_function_type, slot_function_type> slot_function_pair_type;
+    typedef typename signal<void (uint64_t)>::slot_function_type slot_function_type;
 
     struct runtime
     {
@@ -64,11 +64,13 @@ public:
     };
 
     boost::shared_ptr<box_type> box;
+    boost::shared_ptr<clock_type> clock;
 
     static void luaopen(lua_State* L);
 
     thermodynamics(
         boost::shared_ptr<box_type> box
+      , boost::shared_ptr<clock_type> clock
     );
     virtual ~thermodynamics() {}
     void register_runtimes(profiler_type& profiler);
@@ -76,8 +78,8 @@ public:
 
     // preparations before MD step
     virtual void prepare() = 0;
-    // sample macroscopic state variables and store with given time
-    virtual void sample(double time);
+    // sample macroscopic state variables and store with given simulation step
+    virtual void sample(uint64_t step);
 
     /** potential energy per particle */
     virtual double en_pot() = 0;
@@ -114,6 +116,8 @@ private:
     double density_;
     double hypervirial_;
     double time_;
+    /** time stamp of data */
+    uint64_t step_;
 
     // profiling runtime accumulators
     runtime runtime_;

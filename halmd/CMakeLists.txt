@@ -73,3 +73,18 @@ target_link_libraries(halmd
 install(TARGETS halmd
   RUNTIME DESTINATION bin
 )
+
+# On Linux, add --Wl,--as-needed to the link flags of the halmd executable.
+# This makes distribution packagers happy, as the halmd binary will only
+# reference the actually used libraries, which allows for minimal package
+# dependencies of the halmd package. The HALMD_COMMON_LIBRARIES variable
+# contains more libraries than needed in most cases, to support linking
+# Boost and HDF5 libraries statically.
+#
+# Note that -Wl,--as-needed must not be set globally, the unit tests
+# have to be build _without_ this flag. Otherwise fixtures in linked
+# shared test libraries will be silently discarded by the linker.
+#
+if(CMAKE_CXX_PLATFORM_ID STREQUAL "Linux")
+  set_target_properties(halmd PROPERTIES LINK_FLAGS "-Wl,--as-needed")
+endif()

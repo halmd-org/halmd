@@ -1,0 +1,50 @@
+Test suite
+**********
+
+Structure
+=========
+
+The test suite is divided into the following components.
+
+.. rubric:: test/integration
+
+Integration tests. These tests run HALMD for a given set of command-line
+parameters or Lua input script, and verify the obtained results. The test
+execution is done with CMake scripts, the result verification with
+Boost Test.
+
+.. rubric:: test/lua
+
+Lua unit tests. Unit tests of pure Lua components using Boost Test.
+
+.. rubric:: test/performance
+
+Performance tests of individual HALMD components or the HALMD executable.
+
+.. rubric:: test/tools
+
+Testing tools, e.g. test fixtures used in multiple tests.
+
+.. rubric:: test/unit
+
+C++ unit tests. These minimal tests verify individual HALMD components.
+
+Naming conventions
+==================
+
+* Set **BOOST_TEST_MODULE** to the basename of the test source file ::
+
+    #define BOOST_TEST_MODULE lattice
+
+* Use full path (with “test”) to the test in the **executable name** ::
+
+    add_executable(test_unit_mdsim_positions_lattice
+        lattice.cpp
+    )
+
+* Use full path (without “test”) to the test in the **CMake test name** ::
+
+    add_test(unit/mdsim/positions/lattice
+        test_unit_mdsim_positions_lattice --log_level=test_suite
+    )
+

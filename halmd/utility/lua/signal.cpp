@@ -18,6 +18,7 @@
  */
 
 #include <luabind/luabind.hpp>
+#include <stdint.h>
 
 #include <halmd/config.hpp>
 #include <halmd/utility/signal.hpp>
@@ -36,11 +37,11 @@ HALMD_LUA_API int luaopen_libhalmd_utility_lua_signal(lua_State* L)
                 class_<signal<void ()>::slot_function_type>("slot_function_type")
                     .def("__call", &signal<void ()>::slot_function_type::operator())
             ]
-      , class_<signal<void (double)> >("signal__double__")
+      , class_<signal<void (uint64_t)> >("signal__uint64_t__")
             .scope
             [
-                class_<signal<void (double)>::slot_function_type>("slot_function_type")
-                    .def("__call", &signal<void (double)>::slot_function_type::operator())
+                class_<signal<void (uint64_t)>::slot_function_type>("slot_function_type")
+                    .def("__call", &signal<void (uint64_t)>::slot_function_type::operator())
             ]
     ];
     return 0;

@@ -23,6 +23,7 @@
 #include <boost/shared_ptr.hpp>
 
 #include <halmd/mdsim/box.hpp>
+#include <halmd/mdsim/clock.hpp>
 #include <halmd/mdsim/force.hpp>
 #include <halmd/mdsim/integrator.hpp>
 #include <halmd/mdsim/neighbour.hpp>
@@ -51,6 +52,7 @@ public:
     typedef mdsim::integrator<dimension> integrator_type;
     typedef mdsim::position<dimension> position_type;
     typedef mdsim::velocity<dimension> velocity_type;
+    typedef mdsim::clock clock_type;
     typedef utility::profiler profiler_type;
 
     struct runtime
@@ -75,26 +77,16 @@ public:
     boost::shared_ptr<integrator_type> integrator;
     boost::shared_ptr<position_type> position;
     boost::shared_ptr<velocity_type> velocity;
+    const boost::shared_ptr<clock_type> clock;
 
-    //! returns MD step counter
-    uint64_t step_counter() const
-    {
-        return step_counter_;
-    }
-
-    //! returns MD time
-    double time() const
-    {
-        return time_;
+    //! return current simulation step
+    uint64_t step() const {
+        return clock->step();
     }
 
 private:
     /** profiling runtime accumulators */
     runtime runtime_;
-    /** MD step counter */
-    uint64_t step_counter_;
-    /** MD time */
-    double time_;
 };
 
 } // namespace mdsim

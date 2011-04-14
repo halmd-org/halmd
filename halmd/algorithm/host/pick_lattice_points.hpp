@@ -85,7 +85,10 @@ pick_lattice_points_from_shell(
     // determine maximum sum of Miller indices that fits in the range of radii
     // (e_i) × (h,k,l) ≤ r_max ⇒ (h,k,l)_i ≤ r_max / e_i ⇒ h+k+l ≤ r_max × sum(1/e_i)
     float_type r_max = *max_element(radius_begin, radius_end) * (1 + tolerance);
-    index_type miller_sum_max = static_cast<index_type>(element_div(vector_type(r_max), unit_cell));
+    index_type miller_sum_max;
+    for (unsigned int j = 0; j < dimension; ++j) {
+        miller_sum_max[j] = (unit_cell[j] == 0) ? 0 : static_cast<unsigned int>(r_max / unit_cell[j]);
+    }
     // compute partial sum: miller_sum_max = (h_max, h_max + k_max, h_max + k_max + l_max)
     partial_sum(miller_sum_max.begin(), miller_sum_max.end(), miller_sum_max.begin());
     LOG_DEBUG("generate lattice points with a maximum sum of Miller indices: " << miller_sum_max[dimension-1]);

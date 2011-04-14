@@ -33,14 +33,14 @@ template <int dimension>
 class writer
 {
 public:
-    typedef halmd::signal<void (double)> signal_type;
+    typedef halmd::signal<void (uint64_t)> signal_type;
     typedef typename signal_type::slot_function_type slot_function_type;
 
     static void luaopen(lua_State* L);
 
     writer() {}
     virtual ~writer() {}
-    virtual void append(double time) = 0;
+    virtual void append(uint64_t step) = 0;
     virtual void flush() = 0;
 
     virtual void on_append(slot_function_type const& slot) = 0;

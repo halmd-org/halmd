@@ -50,16 +50,18 @@ phase_space<dimension, float_type>::phase_space(
 template <int dimension, typename float_type>
 void phase_space<dimension, float_type>::set()
 {
+    LOG("set particle velocities from phase space sample");
+
     for (size_t j = 0, i = 0; j < particle->ntype; i += particle->ntypes[j], ++j) {
-        copy(sample->v[j]->begin(), sample->v[j]->end(), &particle->h_v[i]);
+        assert(sample->v[j]->size() + i <= particle->h_v.size());
+        copy(sample->v[j]->begin(), sample->v[j]->end(), particle->h_v.begin() + i);
     }
 
-#ifdef USE_VERLET_DSFUN
-    // erase particle velocity vectors (double-single precision)
-    cuda::memset(particle->g_v, 0, particle->g_v.capacity());
-#endif
-
     try {
+#ifdef USE_VERLET_DSFUN
+        // erase particle velocity vectors (double-single precision)
+        cuda::memset(particle->g_v, 0, particle->g_v.capacity());
+#endif
         cuda::copy(particle->h_v, particle->g_v);
     }
     catch (cuda::error const&)
@@ -67,8 +69,6 @@ void phase_space<dimension, float_type>::set()
         LOG_ERROR("[phase_space] failed to copy particle velocities to GPU");
         throw;
     }
-
-    LOG("set particle velocities from phase space sample");
 }
 
 template <int dimension, typename float_type>

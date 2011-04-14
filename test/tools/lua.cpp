@@ -17,7 +17,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "test/tools/lua.hpp"
+#include <test/tools/lua.hpp>
 
 /**
  * Initialize Lua state.

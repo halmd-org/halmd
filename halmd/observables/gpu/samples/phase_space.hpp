@@ -22,6 +22,7 @@
 
 #include <cuda_wrapper/cuda_wrapper.hpp>
 #include <lua.hpp>
+#include <stdint.h>
 #include <vector>
 
 #include <halmd/mdsim/type_traits.hpp>
@@ -49,8 +50,8 @@ public:
     sample_vector_ptr_vector r;
     /** particle velocities */
     sample_vector_ptr_vector v;
-    /** simulation time when sample was taken */
-    double time;
+    /** simulation step when sample was taken */
+    uint64_t step;
 
     static void luaopen(lua_State* L);
 

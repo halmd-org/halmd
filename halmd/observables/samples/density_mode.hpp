@@ -22,6 +22,7 @@
 
 #include <boost/shared_ptr.hpp>
 #include <complex>
+#include <stdint.h>
 #include <lua.hpp>
 #include <vector>
 
@@ -55,8 +56,8 @@ public:
      *  for wavevector @f$ \vec q = wavevector[j] @f$ and particle types @f$ i @f$
      */
     mode_vector_vector_type rho;
-    /** simulation time when sample was taken */
-    double time;
+    /** simulation step when sample was taken */
+    uint64_t step;
 
     static void luaopen(lua_State* L);
 

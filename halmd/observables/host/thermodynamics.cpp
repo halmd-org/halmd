@@ -32,9 +32,10 @@ template <int dimension, typename float_type>
 thermodynamics<dimension, float_type>::thermodynamics(
     shared_ptr<particle_type> particle
   , shared_ptr<box_type> box
+  , shared_ptr<clock_type> clock
   , shared_ptr<force_type> force
 )
-  : _Base(box)
+  : _Base(box, clock)
   // dependency injection
   , particle(particle)
   , force(force)
@@ -59,9 +60,9 @@ void thermodynamics<dimension, float_type>::prepare()
  * unset flag for auxiliary variables of force module at the end
  */
 template <int dimension, typename float_type>
-void thermodynamics<dimension, float_type>::sample(double time)
+void thermodynamics<dimension, float_type>::sample(uint64_t step)
 {
-    _Base::sample(time);
+    _Base::sample(step);
     force->aux_disable();
 }
 
@@ -103,6 +104,7 @@ void thermodynamics<dimension, float_type>::luaopen(lua_State* L)
                     .def(constructor<
                         shared_ptr<particle_type>
                       , shared_ptr<box_type>
+                      , shared_ptr<clock_type>
                       , shared_ptr<force_type>
                     >())
             ]
