@@ -228,6 +228,12 @@ graphviz_dot = '@DOXYGEN_DOT_EXECUTABLE@'
 # Include todo and todolist in output. the default is False.
 todo_include_todos = True
 
+# -- Options for manpage builder -----------------------------------------------
+
+man_pages = [
+    ('contents', 'halmd', u'@PROGRAM_DESC@', u'Peter Colberg and Felix Höfling', '1'),
+]
+
 # -- Global Sphinx setup -------------------------------------------------------
 
 def setup(app):
