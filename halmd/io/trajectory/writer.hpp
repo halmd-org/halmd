@@ -21,6 +21,7 @@
 #define HALMD_IO_TRAJECTORY_WRITER_HPP
 
 #include <lua.hpp>
+#include <stdint.h>
 
 #include <halmd/utility/signal.hpp>
 
