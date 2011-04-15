@@ -27,9 +27,12 @@ set(HALMD_TEST_LIBRARIES
   ${Boost_UNIT_TEST_FRAMEWORK_LIBRARY}
 )
 
+set(HALMD_TEST_CMAKE_BINARY_DIR "@CMAKE_BINARY_DIR@/test/cmake")
+
 ##
 # HALMD test suite
 #
+add_subdirectory(cmake)
 add_subdirectory(integration)
 add_subdirectory(lua)
 add_subdirectory(performance)
