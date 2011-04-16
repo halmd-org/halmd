@@ -154,7 +154,7 @@ void wavevector<dimension>::luaopen(lua_State* L)
                     .property("wavenumber", &wavevector::wavenumber)
                     .property("value", &wavevector::value)
                     .property("tolerance", &wavevector::tolerance)
-                    .property("maximum_count", &wavevector::maximum_count)
+                    .property("max_count", &wavevector::max_count)
             ]
         ]
     ];

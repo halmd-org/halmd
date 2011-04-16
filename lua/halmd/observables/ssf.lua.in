@@ -111,7 +111,7 @@ end
 --
 function read_parameters(args, group)
     args.tolerance = group:read_attribute("tolerance", h5.float())
-    args.maximum_count = group:read_attribute("maximum_count", h5.uint())
+    args.max_count = group:read_attribute("max_count", h5.uint())
 end
 
 --
@@ -123,5 +123,5 @@ end
 function write_parameters(ssf, group)
     -- wavenumbers are stored along with the ssf data, e.g., in structure/ssf/wavenumber
     group:write_attribute("tolerance", h5.float(), ssf.wavevector.tolerance)
-    group:write_attribute("maximum_count", h5.uint(), ssf.wavevector.maximum_count)
+    group:write_attribute("max_count", h5.uint(), ssf.wavevector.max_count)
 end

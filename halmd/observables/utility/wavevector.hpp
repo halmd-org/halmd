@@ -76,7 +76,7 @@ public:
     }
 
     //! returns maximum count of wavevectors per wavenumber
-    unsigned int maximum_count() const
+    unsigned int max_count() const
     {
         return max_count_;
     }
