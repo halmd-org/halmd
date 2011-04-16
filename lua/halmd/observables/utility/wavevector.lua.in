@@ -36,20 +36,22 @@ module("halmd.observables.utility.wavevector", halmd.modules.register)
 --
 -- construct instance of wavevector module
 --
--- @param args                  parameter table:
---     args.wavenumber          list of wavenumbers, or alternatively:
---     args.maximum_wavenumber  maximum wavenumber of linearly spaced grid
---     args.tolerance           relative tolerance on wavevector magnitude
---     args.maximum_count        maximum number of wavevectors per wavenumber shell
+-- @param args parameter table:
+--     args.wavenumber      list of wavenumbers, or alternatively:
+--     args.max_wavenumber  maximum wavenumber of semi-linearly spaced grid
+--     args.decimation      decimation of wavenumber grid (0=disabled, 1=logarithmic, ...)
+--     args.tolerance       relative tolerance on wavevector magnitude
+--     args.max_count       maximum number of wavevectors per wavenumber shell
 -- @returns instance of wavevector module
 --
 function new(args)
     -- options
     local wavenumber = args.wavenumber
-    local maximum_wavenumber = args.maximum_wavenumber
+    local max_wavenumber = args.max_wavenumber
+    local decimation = args.decimation or 0 -- default value: disable decimation
     local tolerance = assert(args.tolerance)
-    local maximum_count = assert(args.maximum_count)
-    assert(wavenumber or maximum_wavenumber)
+    local max_count = assert(args.max_count)
+    assert(wavenumber or max_wavenumber)
 
     -- dependency injection
     local core = mdsim.core()
@@ -58,8 +60,8 @@ function new(args)
 
     local wavevector = assert(wavevector_wrapper[dimension])
     if wavenumber then
-        return wavevector(wavenumber, box.length, tolerance, maximum_count)
-    elseif maximum_wavenumber then
-        return wavevector(maximum_wavenumber, box.length, tolerance, maximum_count)
+        return wavevector(wavenumber, box.length, tolerance, max_count)
+    else
+        return wavevector(max_wavenumber, decimation, box.length, tolerance, max_count)
     end
 end
