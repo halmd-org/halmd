@@ -101,7 +101,7 @@ neighbour<dimension, float_type>::neighbour(
     LOG_DEBUG("desired values for number of cells: " << ncell_);
     LOG_DEBUG("upper bound on number of cells: " << ncell_max);
     // respect upper bound
-    ncell_ = min(ncell_, ncell_max);
+    ncell_ = element_min(ncell_, ncell_max);
 
     // compute derived values
     size_t ncells = accumulate(ncell_.begin(), ncell_.end(), 1, multiplies<size_t>());
