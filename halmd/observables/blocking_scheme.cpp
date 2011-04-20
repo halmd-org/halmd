@@ -19,7 +19,7 @@
 
 #include <boost/shared_ptr.hpp>
 
-#include <halmd/observables/samples/blocking_scheme.hpp>
+#include <halmd/observables/blocking_scheme.hpp>
 #include <halmd/utility/lua/lua.hpp>
 
 using namespace boost;
@@ -30,7 +30,8 @@ namespace halmd
 namespace observables
 {
 
-blocking_scheme::blocking_scheme()
+blocking_scheme::blocking_scheme(shared_ptr<block_sample_type> block_sample)
+  : block_sample_(block_sample)
 {
 }
 
@@ -42,7 +43,7 @@ HALMD_LUA_API int luaopen_libhalmd_observables_blocking_scheme(lua_State* L)
         namespace_("observables")
         [
             class_<blocking_scheme, shared_ptr<blocking_scheme> >("blocking_scheme")
-                .def(constructor<>())
+                .def(constructor<shared_ptr<blocking_scheme::block_sample_type> >())
         ]
     ];
     return 0;

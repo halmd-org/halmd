@@ -20,8 +20,9 @@
 #ifndef HALMD_OBSERVABLES_BLOCKING_SCHEME_HPP
 #define HALMD_OBSERVABLES_BLOCKING_SCHEME_HPP
 
-#include <cstddef> // std::size_t
-#include <lua.hpp>
+#include <boost/shared_ptr.hpp>
+
+#include <halmd/observables/samples/blocking_scheme.hpp>
 
 namespace halmd
 {
@@ -31,9 +32,12 @@ namespace observables
 class blocking_scheme
 {
 public:
-    typedef std::size_t block_index;
+    typedef samples::blocking_scheme_base block_sample_type;
 
-    blocking_scheme();
+    blocking_scheme(boost::shared_ptr<block_sample_type> block_sample);
+
+private:
+    boost::shared_ptr<block_sample_type> block_sample_;
 };
 
 } // namespace observables
