@@ -40,9 +40,9 @@ public:
     virtual void push_back(std::size_t index) = 0;
     virtual void pop_front(std::size_t index) = 0;
     virtual void clear(std::size_t index) = 0;
-    virtual bool full(std::size_t index) = 0;
-    virtual bool empty(std::size_t index) = 0;
-    virtual std::size_t size(std::size_t index) = 0;
+    virtual bool full(std::size_t index) const = 0;
+    virtual bool empty(std::size_t index) const = 0;
+    virtual std::size_t size(std::size_t index) const = 0;
 };
 
 template <typename sample_type>
@@ -64,9 +64,9 @@ public:
     virtual void push_back(std::size_t index);
     virtual void pop_front(std::size_t index);
     virtual void clear(std::size_t index);
-    virtual bool full(std::size_t index);
-    virtual bool empty(std::size_t index);
-    virtual std::size_t size(std::size_t index);
+    virtual bool full(std::size_t index) const;
+    virtual bool empty(std::size_t index) const;
+    virtual std::size_t size(std::size_t index) const;
 
     /**
      * This function is inlined by the correlation function.
@@ -117,21 +117,21 @@ void blocking_scheme<sample_type>::clear(std::size_t index)
 }
 
 template <typename sample_type>
-bool blocking_scheme<sample_type>::full(std::size_t index)
+bool blocking_scheme<sample_type>::full(std::size_t index) const
 {
     assert(index < blocks_.size());
     return blocks_[index].full();
 }
 
 template <typename sample_type>
-bool blocking_scheme<sample_type>::empty(std::size_t index)
+bool blocking_scheme<sample_type>::empty(std::size_t index) const
 {
     assert(index < blocks_.size());
     return blocks_[index].empty();
 }
 
 template <typename sample_type>
-std::size_t blocking_scheme<sample_type>::size(std::size_t index)
+std::size_t blocking_scheme<sample_type>::size(std::size_t index) const
 {
     assert(index < blocks_.size());
     return blocks_[index].size();
