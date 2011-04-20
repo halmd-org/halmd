@@ -21,6 +21,7 @@
 #include <limits>
 #include <string>
 
+#include <halmd/observables/samples/blocking_scheme.hpp>
 #include <halmd/observables/samples/density_mode.hpp>
 #include <halmd/utility/lua/lua.hpp>
 
@@ -67,11 +68,15 @@ HALMD_LUA_API int luaopen_libhalmd_observables_samples_density_mode(lua_State* L
 {
     density_mode<3>::luaopen(L);
     density_mode<2>::luaopen(L);
+    observables::samples::blocking_scheme<density_mode<3> >::luaopen(L, "blocking_scheme_density_mode_3_");
+    observables::samples::blocking_scheme<density_mode<2> >::luaopen(L, "blocking_scheme_density_mode_2_");
     return 0;
 }
 
 template class density_mode<3>;
 template class density_mode<2>;
+template class observables::samples::blocking_scheme<density_mode<3> >;
+template class observables::samples::blocking_scheme<density_mode<2> >;
 
 }} // namespace observables::samples
 
