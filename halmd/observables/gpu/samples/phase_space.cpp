@@ -18,6 +18,7 @@
  */
 
 #include <halmd/observables/gpu/samples/phase_space.hpp>
+#include <halmd/observables/samples/blocking_scheme.hpp>
 #include <halmd/utility/lua/lua.hpp>
 
 using namespace boost;
@@ -67,11 +68,15 @@ HALMD_LUA_API int luaopen_libhalmd_observables_gpu_samples_phase_space(lua_State
 {
     phase_space<3, float>::luaopen(L);
     phase_space<2, float>::luaopen(L);
+    observables::samples::blocking_scheme<phase_space<3, float> >::luaopen(L, "blocking_scheme_gpu_phase_space_3_");
+    observables::samples::blocking_scheme<phase_space<2, float> >::luaopen(L, "blocking_scheme_gpu_phase_space_2_");
     return 0;
 }
 
 template class phase_space<3, float>;
 template class phase_space<2, float>;
+template class observables::samples::blocking_scheme<phase_space<3, float> >;
+template class observables::samples::blocking_scheme<phase_space<2, float> >;
 
 }}} // namespace observables::gpu::samples
 

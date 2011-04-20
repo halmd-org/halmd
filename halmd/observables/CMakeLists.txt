@@ -17,9 +17,9 @@ halmd_add_modules(
   libhalmd_observables_thermodynamics
 )
 
+add_subdirectory(samples)
 if(WITH_CUDA)
   add_subdirectory(gpu)
 endif(WITH_CUDA)
 add_subdirectory(host)
-add_subdirectory(samples)
 add_subdirectory(utility)

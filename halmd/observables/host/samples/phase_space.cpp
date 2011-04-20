@@ -20,6 +20,7 @@
 #include <limits>
 
 #include <halmd/observables/host/samples/phase_space.hpp>
+#include <halmd/observables/samples/blocking_scheme.hpp>
 #include <halmd/utility/demangle.hpp>
 #include <halmd/utility/lua/lua.hpp>
 
@@ -74,6 +75,12 @@ HALMD_LUA_API int luaopen_libhalmd_observables_host_samples_phase_space(lua_Stat
 #endif
     phase_space<3, float>::luaopen(L);
     phase_space<2, float>::luaopen(L);
+#ifndef USE_HOST_SINGLE_PRECISION
+    observables::samples::blocking_scheme<phase_space<3, double> >::luaopen(L, "blocking_scheme_host_phase_space_3_double_");
+    observables::samples::blocking_scheme<phase_space<2, double> >::luaopen(L, "blocking_scheme_host_phase_space_2_double_");
+#endif
+    observables::samples::blocking_scheme<phase_space<3, float> >::luaopen(L, "blocking_scheme_host_phase_space_3_float_");
+    observables::samples::blocking_scheme<phase_space<2, float> >::luaopen(L, "blocking_scheme_host_phase_space_2_float_");
     return 0;
 }
 
@@ -83,6 +90,12 @@ template class phase_space<2, double>;
 #endif
 template class phase_space<3, float>;
 template class phase_space<2, float>;
+#ifndef USE_HOST_SINGLE_PRECISION
+template class observables::samples::blocking_scheme<phase_space<3, double> >;
+template class observables::samples::blocking_scheme<phase_space<2, double> >;
+#endif
+template class observables::samples::blocking_scheme<phase_space<3, float> >;
+template class observables::samples::blocking_scheme<phase_space<2, float> >;
 
 }}} // namespace observables::host::samples
 
