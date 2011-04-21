@@ -25,7 +25,6 @@
 #include <boost/multi_array.hpp>
 #include <exception>
 #include <fstream>
-#include <iostream>
 
 #include <halmd/io/logger.hpp>
 #include <halmd/utility/gpu/device.hpp>
@@ -122,9 +121,7 @@ device::device(vector<int> devices, unsigned int threads)
  */
 device::~device()
 {
-#ifndef NDEBUG //< calling LOG_DEBUG at this stage may not be safe (causing a segmentation fault)
-    cerr << "[DEBUG] Detach from CUDA device context" << endl;
-#endif
+    LOG_DEBUG("Detach from CUDA device context");
     cuda::thread::exit();
 }
 
