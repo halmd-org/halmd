@@ -53,7 +53,7 @@ int main(int argc, char **argv)
 #ifdef NDEBUG
     try {
 #endif
-        static script script; //< load Lua script engine
+        script script; //< load Lua script engine
 
         //
         // assemble program options
