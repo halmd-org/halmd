@@ -162,9 +162,7 @@ On **32-bit platforms**, compile the Lua library with ::
 
 On **64-bit platforms**, include the ``-fPIC`` flag using ::
 
-   make linux CFLAGS='-fPIC -O2 -Wall $(MYCFLAGS)'
-
-(Note the single quotes to prevent the shell from swallowing $.)
+   make linux CFLAGS="-DLUA_USE_LINUX -fPIC -O2 -Wall"
 
 Install the Lua library into your packages directory::
 
