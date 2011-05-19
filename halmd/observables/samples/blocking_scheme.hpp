@@ -54,6 +54,8 @@ public:
     virtual bool empty(std::size_t index) const = 0;
     /** returns number of data points stored at level 'index' */
     virtual std::size_t size(std::size_t index) const = 0;
+    /** returns number of coarse-graining levels */
+    virtual std::size_t count() const = 0;
 };
 
 /**
@@ -82,6 +84,7 @@ public:
     virtual bool full(std::size_t index) const;
     virtual bool empty(std::size_t index) const;
     virtual std::size_t size(std::size_t index) const;
+    virtual std::size_t count() const;
 
     /**
      * This function is inlined by the correlation function.
@@ -156,6 +159,12 @@ std::size_t blocking_scheme<sample_type>::size(std::size_t index) const
 {
     assert(index < blocks_.size());
     return blocks_[index].size();
+}
+
+template <typename sample_type>
+std::size_t blocking_scheme<sample_type>::count() const
+{
+    return blocks_.size();
 }
 
 template <typename sample_type>
