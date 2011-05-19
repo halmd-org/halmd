@@ -1,5 +1,5 @@
 /*
- * Copyright © 2011  Peter Colberg
+ * Copyright © 2011  Peter Colberg and Felix Höfling
  *
  * This file is part of HALMD.
  *
@@ -23,21 +23,64 @@
 #include <boost/shared_ptr.hpp>
 
 #include <halmd/observables/samples/blocking_scheme.hpp>
+#include <halmd/utility/signal.hpp>
 
 namespace halmd
 {
 namespace observables { namespace dynamics
 {
 
+/**
+ * Store input samples (phase space, density modes, ...) in a
+ * coarse-grained block structure and provide a signal
+ * on_correlate_block which correlation functions connect to.
+ */
 class blocking_scheme
 {
 public:
     typedef samples::blocking_scheme_base block_sample_type;
+    typedef halmd::signal<void (uint64_t)> signal_type;
+    typedef signal_type::slot_function_type slot_function_type;
 
-    blocking_scheme(boost::shared_ptr<block_sample_type> block_sample);
+    /**
+     *  @param block_sample shared pointer to block structure of input samples
+     *  @param factor       coarse-graining factor between levels (i, i+2)
+     *  @param shift        coarse-graining shift between odd and even levels
+     */
+    blocking_scheme(
+        boost::shared_ptr<block_sample_type> block_sample
+      , unsigned int factor
+      , unsigned int shift
+    );
+
+    /** acquire and store current data from input sample,
+     *  emit on_correlate_block for each full coarse-graining level
+     */
+    void acquire(uint64_t step);
+
+    /** compute remaining correlations of partially filled coarse-graining levels */
+    void finalise(uint64_t);
+
+    /** signal is emitted for preparation of input sample */
+    void on_acquire(slot_function_type const& slot)
+    {
+        on_acquire_.connect(slot);
+    }
+
+    /** signal is emitted on a full block and carries its level index */
+    void on_correlate_block(slot_function_type const& slot)
+    {
+        on_correlate_block_.connect(slot);
+    }
 
 private:
     boost::shared_ptr<block_sample_type> block_sample_;
+
+    /** sampling intervals for each coarse-graining level */
+    std::vector<unsigned int> interval_;
+
+    signal_type on_acquire_;
+    signal_type on_correlate_block_;
 };
 
 }} // namespace observables::dynamics
