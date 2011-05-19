@@ -73,11 +73,19 @@ HALMD_LUA_API int luaopen_libhalmd_observables_gpu_samples_phase_space(lua_State
     return 0;
 }
 
+// explicit instantiation
 template class phase_space<3, float>;
 template class phase_space<2, float>;
-template class observables::samples::blocking_scheme<phase_space<3, float> >;
-template class observables::samples::blocking_scheme<phase_space<2, float> >;
 
 }}} // namespace observables::gpu::samples
+
+namespace observables { namespace samples
+{
+
+// explicit instantiation
+template class blocking_scheme<observables::gpu::samples::phase_space<3, float> >;
+template class blocking_scheme<observables::gpu::samples::phase_space<2, float> >;
+
+}} // namespace observables::samples
 
 } // namespace halmd

@@ -84,19 +84,27 @@ HALMD_LUA_API int luaopen_libhalmd_observables_host_samples_phase_space(lua_Stat
     return 0;
 }
 
+// explicit instantiation
 #ifndef USE_HOST_SINGLE_PRECISION
 template class phase_space<3, double>;
 template class phase_space<2, double>;
 #endif
 template class phase_space<3, float>;
 template class phase_space<2, float>;
-#ifndef USE_HOST_SINGLE_PRECISION
-template class observables::samples::blocking_scheme<phase_space<3, double> >;
-template class observables::samples::blocking_scheme<phase_space<2, double> >;
-#endif
-template class observables::samples::blocking_scheme<phase_space<3, float> >;
-template class observables::samples::blocking_scheme<phase_space<2, float> >;
 
 }}} // namespace observables::host::samples
+
+namespace observables { namespace samples
+{
+
+// explicit instantiation
+#ifndef USE_HOST_SINGLE_PRECISION
+template class blocking_scheme<observables::host::samples::phase_space<3, double> >;
+template class blocking_scheme<observables::host::samples::phase_space<2, double> >;
+#endif
+template class blocking_scheme<observables::host::samples::phase_space<3, float> >;
+template class blocking_scheme<observables::host::samples::phase_space<2, float> >;
+
+}} // namespace observables::samples
 
 } // namespace halmd
