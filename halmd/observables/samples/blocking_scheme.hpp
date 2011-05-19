@@ -1,5 +1,5 @@
 /*
- * Copyright © 2011  Peter Colberg
+ * Copyright © 2011  Peter Colberg and Felix Höfling
  *
  * This file is part of HALMD.
  *
@@ -34,17 +34,32 @@ namespace halmd
 namespace observables { namespace samples
 {
 
+/**
+ * Abstract base class that defines the interface of the blocking scheme
+ * that represents the input data on different coarse-graining levels.
+ * Each level roughly models a circular buffer.
+ */
 class blocking_scheme_base
 {
 public:
+    /** append the current input data to level 'index' */
     virtual void push_back(std::size_t index) = 0;
+    /** drop the first entry at level 'index' */
     virtual void pop_front(std::size_t index) = 0;
+    /** clear the data of level 'index' */
     virtual void clear(std::size_t index) = 0;
+    /** returns true if level 'index' is full */
     virtual bool full(std::size_t index) const = 0;
+    /** returns true if level 'index' contains no data */
     virtual bool empty(std::size_t index) const = 0;
+    /** returns number of data points stored at level 'index' */
     virtual std::size_t size(std::size_t index) const = 0;
 };
 
+/**
+ * Represents a set of coarse-grained blocks of input samples
+ * of type sample_type, e.g., phase space or density modes.
+ */
 template <typename sample_type>
 class blocking_scheme
   : public blocking_scheme_base
@@ -84,6 +99,12 @@ private:
     std::vector<block_type> blocks_;
 };
 
+
+/**
+ * @param sample shared pointer to the current input sample
+ * @param count  number of coarse-graining levels
+ * @param size   maximum size of each coarse-graining level
+ */
 template <typename sample_type>
 blocking_scheme<sample_type>::blocking_scheme(
     boost::shared_ptr<sample_type const> sample
