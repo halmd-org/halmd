@@ -17,7 +17,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <halmd/observables/host/mean_square_displacement.hpp>
+#include <halmd/observables/host/dynamics/mean_square_displacement.hpp>
 #include <halmd/utility/lua/lua.hpp>
 
 using namespace boost;
@@ -25,7 +25,7 @@ using namespace std;
 
 namespace halmd
 {
-namespace observables { namespace host
+namespace observables { namespace host { namespace dynamics
 {
 
 /**
@@ -64,14 +64,17 @@ void mean_square_displacement<dimension, float_type>::luaopen(lua_State* L)
         [
             namespace_("host")
             [
-                class_<mean_square_displacement>(class_name.c_str())
-                    .def(constructor<>())
+                namespace_("dynamics")
+                [
+                    class_<mean_square_displacement>(class_name.c_str())
+                        .def(constructor<>())
+                ]
             ]
         ]
     ];
 }
 
-HALMD_LUA_API int luaopen_libhalmd_observables_host_mean_square_displacement(lua_State* L)
+HALMD_LUA_API int luaopen_libhalmd_observables_host_dynamics_mean_square_displacement(lua_State* L)
 {
 #ifndef USE_HOST_SINGLE_PRECISION
     mean_square_displacement<3, double>::luaopen(L);
@@ -92,6 +95,6 @@ template class mean_square_displacement<3, float>;
 template class mean_square_displacement<2, float>;
 #endif
 
-}} // namespace observables::host
+}}} // namespace observables::host::dynamics
 
 } // namespace halmd

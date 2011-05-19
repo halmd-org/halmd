@@ -1,5 +1,4 @@
 halmd_add_library(halmd_observables
-  blocking_scheme.cpp
   density_mode.cpp
   runtime_estimate.cpp
   phase_space.cpp
@@ -8,7 +7,6 @@ halmd_add_library(halmd_observables
   thermodynamics.cpp
 )
 halmd_add_modules(
-  libhalmd_observables_blocking_scheme
   libhalmd_observables_density_mode
   libhalmd_observables_runtime_estimate
   libhalmd_observables_phase_space
@@ -17,9 +15,10 @@ halmd_add_modules(
   libhalmd_observables_thermodynamics
 )
 
-add_subdirectory(samples)
+add_subdirectory(samples) # must appear first in order to register blocking_scheme_base before blocking_scheme
+add_subdirectory(dynamics)
+add_subdirectory(host)
 if(WITH_CUDA)
   add_subdirectory(gpu)
 endif(WITH_CUDA)
-add_subdirectory(host)
 add_subdirectory(utility)

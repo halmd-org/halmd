@@ -17,8 +17,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef HALMD_OBSERVABLES_HOST_MEAN_SQUARE_DISPLACEMENT_HPP
-#define HALMD_OBSERVABLES_HOST_MEAN_SQUARE_DISPLACEMENT_HPP
+#ifndef HALMD_OBSERVABLES_HOST_DYNAMICS_MEAN_QUARTIC_DISPLACEMENT_HPP
+#define HALMD_OBSERVABLES_HOST_DYNAMICS_MEAN_QUARTIC_DISPLACEMENT_HPP
 
 #include <lua.hpp>
 
@@ -27,14 +27,14 @@
 
 namespace halmd
 {
-namespace observables { namespace host
+namespace observables { namespace host { namespace dynamics
 {
 
 /**
- * Mean-square displacement
+ * Mean-quartic displacement
  */
 template <int dimension, typename float_type>
-class mean_square_displacement
+class mean_quartic_displacement
 {
 public:
     typedef host::samples::phase_space<dimension, float_type> phase_space_type;
@@ -44,12 +44,12 @@ public:
 
     static void luaopen(lua_State* L);
 
-    mean_square_displacement() {}
+    mean_quartic_displacement() {}
     result_type compute(sample_vector const& first, sample_vector const& second);
 };
 
-}} // namespace observables::host
+}}} // namespace observables::host::dynamics
 
 } // namespace halmd
 
-#endif /* ! HALMD_OBSERVABLES_HOST_MEAN_SQUARE_DISPLACEMENT_HPP */
+#endif /* ! HALMD_OBSERVABLES_HOST_DYNAMICS_MEAN_QUARTIC_DISPLACEMENT_HPP */

@@ -17,7 +17,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <halmd/observables/host/mean_quartic_displacement.hpp>
+#include <halmd/observables/host/dynamics/mean_quartic_displacement.hpp>
 #include <halmd/utility/lua/lua.hpp>
 
 using namespace boost;
@@ -25,7 +25,7 @@ using namespace std;
 
 namespace halmd
 {
-namespace observables { namespace host
+namespace observables { namespace host { namespace dynamics
 {
 
 /**
@@ -66,14 +66,17 @@ void mean_quartic_displacement<dimension, float_type>::luaopen(lua_State* L)
         [
             namespace_("host")
             [
-                class_<mean_quartic_displacement>(class_name.c_str())
-                    .def(constructor<>())
+                namespace_("dynamics")
+                [
+                    class_<mean_quartic_displacement>(class_name.c_str())
+                        .def(constructor<>())
+                ]
             ]
         ]
     ];
 }
 
-HALMD_LUA_API int luaopen_libhalmd_observables_host_mean_quartic_displacement(lua_State* L)
+HALMD_LUA_API int luaopen_libhalmd_observables_host_dynamics_mean_quartic_displacement(lua_State* L)
 {
 #ifndef USE_HOST_SINGLE_PRECISION
     mean_quartic_displacement<3, double>::luaopen(L);
@@ -94,6 +97,6 @@ template class mean_quartic_displacement<3, float>;
 template class mean_quartic_displacement<2, float>;
 #endif
 
-}} // namespace observables::host
+}}} // namespace observables::host::dynamics
 
 } // namespace halmd

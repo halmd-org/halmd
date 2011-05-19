@@ -17,38 +17,31 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#ifndef HALMD_OBSERVABLES_DYNAMICS_BLOCKING_SCHEME_HPP
+#define HALMD_OBSERVABLES_DYNAMICS_BLOCKING_SCHEME_HPP
+
 #include <boost/shared_ptr.hpp>
 
-#include <halmd/observables/blocking_scheme.hpp>
-#include <halmd/utility/lua/lua.hpp>
-
-using namespace boost;
-using namespace std;
+#include <halmd/observables/samples/blocking_scheme.hpp>
 
 namespace halmd
 {
-namespace observables
+namespace observables { namespace dynamics
 {
 
-blocking_scheme::blocking_scheme(shared_ptr<block_sample_type> block_sample)
-  : block_sample_(block_sample)
+class blocking_scheme
 {
-}
+public:
+    typedef samples::blocking_scheme_base block_sample_type;
 
-HALMD_LUA_API int luaopen_libhalmd_observables_blocking_scheme(lua_State* L)
-{
-    using namespace luabind;
-    module(L, "libhalmd")
-    [
-        namespace_("observables")
-        [
-            class_<blocking_scheme, shared_ptr<blocking_scheme> >("blocking_scheme")
-                .def(constructor<shared_ptr<blocking_scheme::block_sample_type> >())
-        ]
-    ];
-    return 0;
-}
+    blocking_scheme(boost::shared_ptr<block_sample_type> block_sample);
 
-} // namespace observables
+private:
+    boost::shared_ptr<block_sample_type> block_sample_;
+};
+
+}} // namespace observables::dynamics
 
 } // namespace halmd
+
+#endif /* ! HALMD_OBSERVABLES_DYNAMICS_BLOCKING_SCHEME_HPP */
