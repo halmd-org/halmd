@@ -22,7 +22,9 @@
 
 #include <boost/shared_ptr.hpp>
 #include <boost/multi_array.hpp>
+#include <set>
 
+#include <halmd/observables/dynamics/correlation.hpp>
 #include <halmd/observables/samples/blocking_scheme.hpp>
 #include <halmd/utility/signal.hpp>
 
@@ -32,9 +34,12 @@ namespace observables { namespace dynamics
 {
 
 /**
- * Store input samples (phase space, density modes, ...) in a
- * coarse-grained block structure and provide a signal
- * on_correlate_block which correlation functions connect to.
+ * Store input samples (phase space, density modes, ...) in
+ * coarse-grained block structures and trigger computation of
+ * time correlation functions.
+ *
+ * The module is driven by connecting to the signal on_sample,
+ * time correlation functions are registered by the method add().
  */
 class blocking_scheme
 {
@@ -44,48 +49,57 @@ public:
     typedef signal_type::slot_function_type slot_function_type;
 
     /**
-     *  @param block_sample shared pointer to block structure of input samples
-     *  @param factor       coarse-graining factor between levels (i, i+2)
+     *  @param block_count  number of blocks, i.e., coarse-graining levels
+     *  @param block_size   size of each block, determines coarse-graining factor
      *  @param shift        coarse-graining shift between odd and even levels
      *  @param resolution   time resolution of level 0
      */
     blocking_scheme(
-        boost::shared_ptr<block_sample_type> block_sample
-      , unsigned int factor
+        unsigned int block_count
+      , unsigned int block_size
       , unsigned int shift
       , double resolution
     );
 
+    /** add a time correlation function along with its blocked input data */
+    void add(
+        boost::shared_ptr<correlation> tcf
+      , boost::shared_ptr<block_sample_type> block_sample
+    )
+    {
+        tcf_.insert(tcf);
+        block_sample_.insert(block_sample);
+    }
+
     /** acquire and store current data from input sample,
      *  emit on_correlate_block for each full coarse-graining level
      */
-    void acquire(uint64_t step);
+    void sample(uint64_t step);
 
     /** compute remaining correlations of partially filled coarse-graining levels */
-    void finalise(uint64_t);
+    void finalise(uint64_t step);
 
-    /** signal is emitted for preparation of input sample */
-    void on_acquire(slot_function_type const& slot)
+    /** signal triggers preparation of input sample */
+    void on_sample(slot_function_type const& slot)
     {
-        on_acquire_.connect(slot);
-    }
-
-    /** signal is emitted on a full block and carries its level index */
-    void on_correlate_block(slot_function_type const& slot)
-    {
-        on_correlate_block_.connect(slot);
+        on_sample_.connect(slot);
     }
 
 private:
-    boost::shared_ptr<block_sample_type> block_sample_;
+    /** set of time correlation functions */
+    std::set<boost::shared_ptr<correlation> > tcf_;
+    /** set of block structures holding the input samples (e.g., phase space point, density modes)
+     *
+     * We use std::set since it is a Unique Container.
+     */
+    std::set<boost::shared_ptr<block_sample_type> > block_sample_;
 
     /** sampling intervals for each coarse-graining level */
     std::vector<unsigned int> interval_;
     /** time grid of the resulting correlation functions */
     boost::multi_array<double, 2> time_;
 
-    signal_type on_acquire_;
-    signal_type on_correlate_block_;
+    signal_type on_sample_;
 };
 
 }} // namespace observables::dynamics

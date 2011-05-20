@@ -17,7 +17,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <boost/shared_ptr.hpp>
+#include <boost/foreach.hpp>
 
 #include <halmd/io/logger.hpp>
 #include <halmd/observables/dynamics/blocking_scheme.hpp>
@@ -32,76 +32,92 @@ namespace observables { namespace dynamics
 {
 
 blocking_scheme::blocking_scheme(
-    shared_ptr<block_sample_type> block_sample
-  , unsigned int factor
+    unsigned int block_count
+  , unsigned int block_size
   , unsigned int shift
   , double resolution
 )
-  // dependency injection
-  : block_sample_(block_sample)
   // memory allocation
-  , interval_(block_sample_->count())
-  , time_(boost::extents[block_sample_->count()][block_sample_->block_size()])
+  : interval_(block_count)
+  , time_(boost::extents[block_count][block_size])
 {
     // setup sampling intervals for each level
-    interval_.reserve(block_sample_->count());
+    interval_.reserve(block_count);
     unsigned int i = 1;
-    for (unsigned int level = 0; level < block_sample_->count(); level += 2) {
+    for (unsigned int level = 0; level < block_count; level += 2) {
         interval_.push_back(i);           // even levels
         interval_.push_back(i * shift);   // odd levels
-        i *= factor;
+        i *= block_size;
     }
 
     // construct associated time grid
-    unsigned int block_length = time_.shape()[1];
-    for (unsigned int i = 0; i < interval_.size(); ++i) {
-        for (unsigned int j = 0; j < block_length; ++j) {
+    for (unsigned int i = 0; i < block_count; ++i) {
+        for (unsigned int j = 0; j < block_size; ++j) {
             time_[i][j] = interval_[i] * j;
         }
     }
 }
 
-void blocking_scheme::acquire(uint64_t step)
+void blocking_scheme::sample(uint64_t step)
 {
     // trigger update of input sample(s)
-    on_acquire_(step);
+    on_sample_(step);
 
-    LOG_TRACE("[blocking_scheme] acquire current sample");
+    LOG_TRACE("[blocking_scheme] append sample at step " << step);
+
+    std::vector<unsigned int> full_block;
 
     // iterate over all coarse-graining levels
-    for (unsigned int i = 0; i < block_sample_->count(); ++i) {
+    for (unsigned int i = 0; i < interval_.size(); ++i) {
         if (step % interval_[i] == 0) {
-            // append current sample to block
+            // append current sample to block at level 'i' for each sample type
             LOG_TRACE("[blocking_scheme] append sample to block level " << i);
-            block_sample_->push_back(i);
-            if (block_sample_->full(i)) {
-                // correlate block data with first entry
-                on_correlate_block_(i);
-                // discard first entry
-                block_sample_->pop_front(i);
+            BOOST_FOREACH(shared_ptr<block_sample_type> block_sample, block_sample_) {
+                block_sample->push_back(i);
+            }
+
+            // process data if block at level 'i' is full
+            if (block_sample_.begin()->get()->full(i)) {
+                // call all registered correlation modules
+                // and correlate block data with first entry
+                BOOST_FOREACH(shared_ptr<correlation> tcf, tcf_) {
+                    tcf->compute(i);
+                }
+
+                // discard first entry at level 'i' for each block structure
+                BOOST_FOREACH(shared_ptr<block_sample_type> block_sample, block_sample_) {
+                    block_sample->pop_front(i);
+                }
             }
         }
     }
 }
 
-void blocking_scheme::finalise(uint64_t)
+void blocking_scheme::finalise(uint64_t step)
 {
     // iterate over all coarse-graining levels
-    for (unsigned int i = 0; i < block_sample_->count(); ++i) {
-        while (!block_sample_->empty(i)) {
-            // correlate block data with first entry
-            on_correlate_block_(i);
-            // discard first entry
-            block_sample_->pop_front(i);
+    for (unsigned int i = 0; i < interval_.size(); ++i) {
+        // process remaining data at level 'i'
+        while (!block_sample_.begin()->get()->empty(i)) {
+            // call all registered correlation modules
+            // and correlate block data with first entry
+            BOOST_FOREACH(shared_ptr<correlation> tcf, tcf_) {
+                tcf->compute(i);
+            }
+
+            // discard first entry at level 'i' for each block structure
+            BOOST_FOREACH(shared_ptr<block_sample_type> block_sample, block_sample_) {
+                block_sample->pop_front(i);
+            }
         }
     }
 }
 
 template <typename T>
 typename signal<void (uint64_t)>::slot_function_type
-acquire_wrapper(shared_ptr<T> module)
+sample_wrapper(shared_ptr<T> module)
 {
-    return bind(&T::acquire, module, _1);
+    return bind(&T::sample, module, _1);
 }
 
 template <typename T>
@@ -120,15 +136,14 @@ HALMD_LUA_API int luaopen_libhalmd_observables_dynamics_blocking_scheme(lua_Stat
         [
             namespace_("dynamics")
             [
-                class_<blocking_scheme, shared_ptr<blocking_scheme> >("blocking_scheme")
+                class_<blocking_scheme, shared_ptr<blocking_scheme> >("blocking_scheme_")
                     .def(constructor<
-                        shared_ptr<blocking_scheme::block_sample_type>
-                      , unsigned int, unsigned int, double
+                        unsigned int, unsigned int, unsigned int, double
                     >())
-                    .property("acquire", &acquire_wrapper<blocking_scheme>)
                     .property("finalise", &finalise_wrapper<blocking_scheme>)
-                    .def("on_acquire", &blocking_scheme::on_acquire)
-                    .def("on_correlate_block", &blocking_scheme::on_correlate_block)
+                    .property("sample", &sample_wrapper<blocking_scheme>)
+                    .def("add", &blocking_scheme::add)
+                    .def("on_sample", &blocking_scheme::on_sample)
             ]
         ]
     ];
