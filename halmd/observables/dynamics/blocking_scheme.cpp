@@ -35,20 +35,29 @@ blocking_scheme::blocking_scheme(
     shared_ptr<block_sample_type> block_sample
   , unsigned int factor
   , unsigned int shift
+  , double resolution
 )
   // dependency injection
   : block_sample_(block_sample)
-  // member initialisation
+  // memory allocation
   , interval_(block_sample_->count())
+  , time_(boost::extents[block_sample_->count()][block_sample_->block_size()])
 {
     // setup sampling intervals for each level
     interval_.reserve(block_sample_->count());
     unsigned int i = 1;
-    for (unsigned int level = 0; level < block_sample_->count(); level += 2)
-    {
+    for (unsigned int level = 0; level < block_sample_->count(); level += 2) {
         interval_.push_back(i);           // even levels
         interval_.push_back(i * shift);   // odd levels
         i *= factor;
+    }
+
+    // construct associated time grid
+    unsigned int block_length = time_.shape()[1];
+    for (unsigned int i = 0; i < interval_.size(); ++i) {
+        for (unsigned int j = 0; j < block_length; ++j) {
+            time_[i][j] = interval_[i] * j;
+        }
     }
 }
 
@@ -114,7 +123,7 @@ HALMD_LUA_API int luaopen_libhalmd_observables_dynamics_blocking_scheme(lua_Stat
                 class_<blocking_scheme, shared_ptr<blocking_scheme> >("blocking_scheme")
                     .def(constructor<
                         shared_ptr<blocking_scheme::block_sample_type>
-                      , unsigned int, unsigned int
+                      , unsigned int, unsigned int, double
                     >())
                     .property("acquire", &acquire_wrapper<blocking_scheme>)
                     .property("finalise", &finalise_wrapper<blocking_scheme>)

@@ -21,6 +21,7 @@
 #define HALMD_OBSERVABLES_DYNAMICS_BLOCKING_SCHEME_HPP
 
 #include <boost/shared_ptr.hpp>
+#include <boost/multi_array.hpp>
 
 #include <halmd/observables/samples/blocking_scheme.hpp>
 #include <halmd/utility/signal.hpp>
@@ -46,11 +47,13 @@ public:
      *  @param block_sample shared pointer to block structure of input samples
      *  @param factor       coarse-graining factor between levels (i, i+2)
      *  @param shift        coarse-graining shift between odd and even levels
+     *  @param resolution   time resolution of level 0
      */
     blocking_scheme(
         boost::shared_ptr<block_sample_type> block_sample
       , unsigned int factor
       , unsigned int shift
+      , double resolution
     );
 
     /** acquire and store current data from input sample,
@@ -78,6 +81,8 @@ private:
 
     /** sampling intervals for each coarse-graining level */
     std::vector<unsigned int> interval_;
+    /** time grid of the resulting correlation functions */
+    boost::multi_array<double, 2> time_;
 
     signal_type on_acquire_;
     signal_type on_correlate_block_;
