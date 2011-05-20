@@ -56,6 +56,8 @@ public:
     virtual std::size_t size(std::size_t index) const = 0;
     /** returns number of coarse-graining levels */
     virtual std::size_t count() const = 0;
+    /** returns size of coarse-graining blocks */
+    virtual std::size_t block_size() const = 0;
 };
 
 /**
@@ -85,6 +87,7 @@ public:
     virtual bool empty(std::size_t index) const;
     virtual std::size_t size(std::size_t index) const;
     virtual std::size_t count() const;
+    virtual std::size_t block_size() const;
 
     /**
      * This function is inlined by the correlation function.
@@ -165,6 +168,13 @@ template <typename sample_type>
 std::size_t blocking_scheme<sample_type>::count() const
 {
     return blocks_.size();
+}
+
+template <typename sample_type>
+std::size_t blocking_scheme<sample_type>::block_size() const
+{
+    assert(!blocks_.empty());
+    return blocks_[0].size(); // choose level 0 as representative
 }
 
 template <typename sample_type>
