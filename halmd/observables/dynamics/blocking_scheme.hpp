@@ -61,13 +61,15 @@ public:
       , double resolution
     );
 
-    /** add a time correlation function along with its blocked input data */
-    void add(
-        boost::shared_ptr<correlation> tcf
-      , boost::shared_ptr<block_sample_type> block_sample
-    )
+    /** add a time correlation function */
+    void add_correlation(boost::shared_ptr<correlation_base> tcf)
     {
         tcf_.insert(tcf);
+    }
+
+    /** add blocked input data, e.g., phase space points or density modes */
+    void add_data(boost::shared_ptr<block_sample_type> block_sample)
+    {
         block_sample_.insert(block_sample);
     }
 
@@ -87,7 +89,7 @@ public:
 
 private:
     /** set of time correlation functions */
-    std::set<boost::shared_ptr<correlation> > tcf_;
+    std::set<boost::shared_ptr<correlation_base> > tcf_;
     /** set of block structures holding the input samples (e.g., phase space point, density modes)
      *
      * We use std::set since it is a Unique Container.

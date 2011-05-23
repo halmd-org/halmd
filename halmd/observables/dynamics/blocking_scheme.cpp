@@ -63,24 +63,34 @@ void blocking_scheme::sample(uint64_t step)
     // trigger update of input sample(s)
     on_sample_(step);
 
-    LOG_TRACE("[blocking_scheme] append sample at step " << step);
+    LOG_TRACE("[blocking_scheme] append sample(s) at step " << step);
 
-    std::vector<unsigned int> full_block;
+    // check integrity of input data
+    BOOST_FOREACH(shared_ptr<block_sample_type> block_sample, block_sample_) {
+        if (block_sample->timestamp() != step) {
+            throw logic_error("input sample was not updated");
+        }
+//         block_sample->make_copy();
+    }
 
     // iterate over all coarse-graining levels
     for (unsigned int i = 0; i < interval_.size(); ++i) {
         if (step % interval_[i] == 0) {
             // append current sample to block at level 'i' for each sample type
-            LOG_TRACE("[blocking_scheme] append sample to block level " << i);
+            LOG_TRACE("[blocking_scheme] append sample(s) to blocking level " << i);
             BOOST_FOREACH(shared_ptr<block_sample_type> block_sample, block_sample_) {
                 block_sample->push_back(i);
             }
 
             // process data if block at level 'i' is full
+            //
+            // Checking the first blocking scheme only is sufficient,
+            // since all of them are modified synchronously
             if (block_sample_.begin()->get()->full(i)) {
                 // call all registered correlation modules
                 // and correlate block data with first entry
-                BOOST_FOREACH(shared_ptr<correlation> tcf, tcf_) {
+                LOG_TRACE("[blocking_scheme] compute correlations at blocking level " << i);
+                BOOST_FOREACH(shared_ptr<correlation_base> tcf, tcf_) {
                     tcf->compute(i);
                 }
 
@@ -99,9 +109,10 @@ void blocking_scheme::finalise(uint64_t step)
     for (unsigned int i = 0; i < interval_.size(); ++i) {
         // process remaining data at level 'i'
         while (!block_sample_.begin()->get()->empty(i)) {
+            LOG_TRACE("[blocking_scheme] compute correlations at blocking level " << i);
             // call all registered correlation modules
             // and correlate block data with first entry
-            BOOST_FOREACH(shared_ptr<correlation> tcf, tcf_) {
+            BOOST_FOREACH(shared_ptr<correlation_base> tcf, tcf_) {
                 tcf->compute(i);
             }
 
@@ -137,12 +148,11 @@ HALMD_LUA_API int luaopen_libhalmd_observables_dynamics_blocking_scheme(lua_Stat
             namespace_("dynamics")
             [
                 class_<blocking_scheme, shared_ptr<blocking_scheme> >("blocking_scheme_")
-                    .def(constructor<
-                        unsigned int, unsigned int, unsigned int, double
-                    >())
+                    .def(constructor<unsigned int, unsigned int, unsigned int, double>())
                     .property("finalise", &finalise_wrapper<blocking_scheme>)
                     .property("sample", &sample_wrapper<blocking_scheme>)
-                    .def("add", &blocking_scheme::add)
+                    .def("add_correlation", &blocking_scheme::add_correlation)
+                    .def("add_data", &blocking_scheme::add_data)
                     .def("on_sample", &blocking_scheme::on_sample)
             ]
         ]
