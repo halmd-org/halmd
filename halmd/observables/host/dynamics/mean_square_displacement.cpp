@@ -28,29 +28,25 @@ namespace halmd
 namespace observables { namespace host { namespace dynamics
 {
 
-/**
- * Compute mean-square displacement of two position sample vectors.
- *
- * @param first particles positions of one species at time t1
- * @param second particles positions of one species at time t2
- * @returns accumulated mean-square displacement
- */
 template <int dimension, typename float_type>
 typename mean_square_displacement<dimension, float_type>::result_type
 mean_square_displacement<dimension, float_type>::compute(
-    sample_vector const& first
-  , sample_vector const& second
+    sample_type const& first
+  , sample_type const& second
 )
 {
-    result_type acc;
-    typename sample_vector::const_iterator r2, r1, end = first.end();
-    for (r2 = first.begin(), r1 = second.begin(); r2 != end; ++r2, ++r1) {
-        // displacement of particle
-        vector_type dr = *r1 - *r2;
+    typedef typename sample_type::vector_type vector_type;
+
+    result_type acc = 0;
+
+    typename sample_type::sample_vector::const_iterator r1, r2, end = first.r[type_]->end();
+    for (r1 = first.r[type_]->begin(), r2 = second.r[type_]->begin(); r1 != end; ++r1, ++r2) {
+        // displacement of particle: R(t2) - R(t1)
+        vector_type dr = *r2 - *r1;
         // accumulate square displacement
-        acc(inner_prod(dr, dr));
+        acc += inner_prod(dr, dr);
     }
-    return acc;
+    return acc / first.r[type_]->size();
 }
 
 template <int dimension, typename float_type>
@@ -67,7 +63,7 @@ void mean_square_displacement<dimension, float_type>::luaopen(lua_State* L)
                 namespace_("dynamics")
                 [
                     class_<mean_square_displacement>(class_name.c_str())
-                        .def(constructor<>())
+                        .def(constructor<size_t>())
                 ]
             ]
         ]

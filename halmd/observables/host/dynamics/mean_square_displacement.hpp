@@ -22,7 +22,6 @@
 
 #include <lua.hpp>
 
-#include <halmd/numeric/accumulator.hpp>
 #include <halmd/observables/host/samples/phase_space.hpp>
 
 namespace halmd
@@ -37,15 +36,30 @@ template <int dimension, typename float_type>
 class mean_square_displacement
 {
 public:
-    typedef host::samples::phase_space<dimension, float_type> phase_space_type;
-    typedef typename phase_space_type::vector_type vector_type;
-    typedef typename phase_space_type::sample_vector sample_vector;
-    typedef accumulator<float_type> result_type;
+    typedef host::samples::phase_space<dimension, float_type> sample_type;
+    typedef double result_type;
+
+    static char const* abbrev_name() { return "MSD"; }
+    static char const* module_name() { return "mean_square_displacement"; }
 
     static void luaopen(lua_State* L);
 
-    mean_square_displacement() {}
-    result_type compute(sample_vector const& first, sample_vector const& second);
+    /**
+     * @param type particle type for which the computation is done
+     */
+    mean_square_displacement(size_t type) : type_(type) {}
+
+    /**
+     * Compute mean-square displacement from two phase space samples
+     *
+     * @param first  phase space sample at initial time t1
+     * @param second phase space sample at later time t2
+     * @returns MSD at lag time t2 - t1, averaged over all particles of specified type
+     */
+    result_type compute(sample_type const& first, sample_type const& second);
+
+private:
+    size_t type_;
 };
 
 }}} // namespace observables::host::dynamics
