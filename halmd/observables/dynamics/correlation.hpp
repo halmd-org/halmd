@@ -22,7 +22,10 @@
 
 #include <boost/shared_ptr.hpp>
 #include <boost/multi_array.hpp>
+#include <lua.hpp>
 
+#include <halmd/io/logger.hpp>
+#include <halmd/numeric/accumulator.hpp>
 #include <halmd/observables/samples/blocking_scheme.hpp>
 
 namespace halmd
@@ -49,35 +52,95 @@ template <typename tcf_type>
 class correlation
   : public correlation_base
 {
+public:
+    typedef correlation_base _Base;
     typedef typename tcf_type::sample_type sample_type;
     typedef typename tcf_type::result_type result_type;
     typedef observables::samples::blocking_scheme<sample_type> block_sample_type;
+    typedef boost::multi_array<accumulator<result_type>, 2> block_result_type;
 
-    correlation(boost::shared_ptr<block_sample_type> block_sample);
+    static void luaopen(lua_State* L, char const* class_name);
+
+    correlation(
+        boost::shared_ptr<tcf_type> tcf
+      , boost::shared_ptr<block_sample_type> block_sample
+    );
     virtual ~correlation() {}
 
     virtual void compute(unsigned int level);
 
 private:
+    /** block structure holding the input data */
     boost::shared_ptr<block_sample_type> block_sample_;
-    boost::multi_array<result_type, 2> result_;
+    /** functor performing the specific computation */
+    boost::shared_ptr<tcf_type> tcf_;
+
+    /** block structures holding accumulated result values */
+    block_result_type result_;
 };
 
 template <typename tcf_type>
-correlation<tcf_type>::correlation(boost::shared_ptr<block_sample_type> block_sample)
+correlation<tcf_type>::correlation(
+    boost::shared_ptr<tcf_type> tcf
+  , boost::shared_ptr<block_sample_type> block_sample
+)
   // dependency injection
   : block_sample_(block_sample)
+  , tcf_(tcf)
   // memory allocation
-  , result_(boost::extents[block_sample->block_count()][block_sample->block_size()])
+  , result_(boost::extents[block_sample->count()][block_sample->block_size()])
 {
 }
 
 template <typename tcf_type>
 void correlation<tcf_type>::compute(unsigned int level)
 {
-    // TODO
-    // input: iterate over block_sample_->index[level]
-    // output: iterate over result_[level]
+    LOG_TRACE("[" << tcf_type::module_name() << "]: compute correlations at level " << level);
+
+    typedef typename block_sample_type::block_type block_type;
+    typedef typename block_type::const_iterator input_iterator;
+    typedef typename block_result_type::reference::iterator output_iterator;
+
+    // iterate over block and correlate the first entry (at time t1)
+    // with all entries (at t1 + n * Δt), accumulate result for each lag time
+    block_type const& block = block_sample_->index(level);
+    input_iterator first = block.begin();
+    output_iterator out = result_[level].begin();
+    for (input_iterator second = first; second != block.end(); ++second) {
+        // call TCF-specific compute routine and
+        // store result in output accumulator
+        (*out++)(tcf_->compute(*first, *second));
+    }
+}
+
+template <typename tcf_type>
+static char const* module_name_wrapper(correlation<tcf_type> const&)
+{
+    return tcf_type::module_name();
+}
+
+template <typename tcf_type>
+void correlation<tcf_type>::luaopen(lua_State* L, char const* class_name)
+{
+    using namespace luabind;
+    module(L, "libhalmd")
+    [
+        namespace_("observables")
+        [
+            namespace_("dynamics")
+            [
+                namespace_("correlation")
+                [
+                    class_<correlation, boost::shared_ptr<_Base>, _Base>(class_name)
+                        .def(constructor<
+                            boost::shared_ptr<tcf_type>
+                          , boost::shared_ptr<block_sample_type>
+                        >())
+                        .property("module_name", &module_name_wrapper<tcf_type>)
+                ]
+            ]
+        ]
+    ];
 }
 
 }} // namespace observables::dynamics
