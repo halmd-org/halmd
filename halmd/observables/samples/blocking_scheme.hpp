@@ -25,6 +25,7 @@
 #include <cassert>
 #include <cstddef> // std::size_t
 #include <lua.hpp>
+#include <stdint.h> // uint64_t
 #include <vector>
 
 #include <halmd/utility/lua/lua.hpp>
@@ -58,6 +59,8 @@ public:
     virtual std::size_t count() const = 0;
     /** returns size of coarse-graining blocks */
     virtual std::size_t block_size() const = 0;
+    /** returns time stamp (aka integration step) of the current sample */
+    virtual uint64_t timestamp() const = 0;
 };
 
 /**
@@ -88,6 +91,7 @@ public:
     virtual std::size_t size(std::size_t index) const;
     virtual std::size_t count() const;
     virtual std::size_t block_size() const;
+    virtual uint64_t timestamp() const;
 
     /**
      * This function is inlined by the correlation function.
@@ -176,6 +180,14 @@ std::size_t blocking_scheme<sample_type>::block_size() const
     assert(!blocks_.empty());
     return blocks_[0].size(); // choose level 0 as representative
 }
+
+template <typename sample_type>
+uint64_t blocking_scheme<sample_type>::timestamp() const
+{
+    // return integration step at which sample data were taken
+    return sample_->step;
+}
+
 
 template <typename sample_type>
 void blocking_scheme<sample_type>::luaopen(lua_State* L, char const* class_name)
