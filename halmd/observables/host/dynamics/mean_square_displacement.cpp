@@ -17,6 +17,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <halmd/observables/dynamics/correlation.hpp>
 #include <halmd/observables/host/dynamics/mean_square_displacement.hpp>
 #include <halmd/utility/lua/lua.hpp>
 
@@ -68,6 +69,7 @@ void mean_square_displacement<dimension, float_type>::luaopen(lua_State* L)
             ]
         ]
     ];
+    observables::dynamics::correlation<mean_square_displacement>::luaopen(L, ("host_" + class_name).c_str());
 }
 
 HALMD_LUA_API int luaopen_libhalmd_observables_host_dynamics_mean_square_displacement(lua_State* L)
@@ -92,5 +94,19 @@ template class mean_square_displacement<2, float>;
 #endif
 
 }}} // namespace observables::host::dynamics
+
+namespace observables { namespace dynamics
+{
+
+// explicit instantiation
+#ifndef USE_HOST_SINGLE_PRECISION
+template class correlation<host::dynamics::mean_square_displacement<3, double> >;
+template class correlation<host::dynamics::mean_square_displacement<2, double> >;
+#else
+template class correlation<host::dynamics::mean_square_displacement<3, float> >;
+template class correlation<host::dynamics::mean_square_displacement<2, float> >;
+#endif
+
+}} // namespace observables::dynamics
 
 } // namespace halmd
