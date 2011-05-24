@@ -59,7 +59,7 @@ public:
     typedef observables::samples::blocking_scheme<sample_type> block_sample_type;
     typedef boost::multi_array<accumulator<result_type>, 2> block_result_type;
 
-    static void luaopen(lua_State* L, char const* class_name);
+    static void luaopen(lua_State* L, char const* scope, char const* class_name);
 
     correlation(
         boost::shared_ptr<tcf_type> tcf
@@ -120,7 +120,7 @@ static char const* module_name_wrapper(correlation<tcf_type> const&)
 }
 
 template <typename tcf_type>
-void correlation<tcf_type>::luaopen(lua_State* L, char const* class_name)
+void correlation<tcf_type>::luaopen(lua_State* L, char const* scope, char const* class_name)
 {
     using namespace luabind;
     module(L, "libhalmd")
@@ -131,12 +131,15 @@ void correlation<tcf_type>::luaopen(lua_State* L, char const* class_name)
             [
                 namespace_("correlation")
                 [
-                    class_<correlation, boost::shared_ptr<_Base>, _Base>(class_name)
-                        .def(constructor<
-                            boost::shared_ptr<tcf_type>
-                          , boost::shared_ptr<block_sample_type>
-                        >())
-                        .property("module_name", &module_name_wrapper<tcf_type>)
+                    namespace_(scope)
+                    [
+                        class_<correlation, boost::shared_ptr<_Base>, _Base>(class_name)
+                            .def(constructor<
+                                boost::shared_ptr<tcf_type>
+                              , boost::shared_ptr<block_sample_type>
+                            >())
+                            .property("module_name", &module_name_wrapper<tcf_type>)
+                    ]
                 ]
             ]
         ]
