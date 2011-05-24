@@ -1,5 +1,5 @@
 /*
- * Copyright © 2008-2010  Peter Colberg
+ * Copyright © 2008-2011  Peter Colberg and Felix Höfling
  *
  * This file is part of HALMD.
  *
@@ -55,6 +55,9 @@ public:
     static void luaopen(lua_State* L);
 
     phase_space(std::vector<unsigned int> ntypes);
+
+    /** free shared pointers and re-allocate memory, values are not initialised */
+    void reset();
 };
 
 }}} // namespace observables::host::samples

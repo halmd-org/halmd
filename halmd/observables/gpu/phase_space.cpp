@@ -1,5 +1,5 @@
 /*
- * Copyright © 2008-2010  Peter Colberg and Felix Höfling
+ * Copyright © 2008-2011  Peter Colberg and Felix Höfling
  *
  * This file is part of HALMD.
  *
@@ -79,6 +79,10 @@ void phase_space<gpu::samples::phase_space<dimension, float_type> >::acquire(uin
 
     LOG_TRACE("[phase_space] acquire GPU sample");
 
+    // re-allocate memory which allows modules (e.g., dynamics::blocking_scheme)
+    // to hold a previous copy of the sample
+    sample->reset();
+
     phase_space_wrapper<dimension>::kernel.r.bind(particle->g_r);
     phase_space_wrapper<dimension>::kernel.image.bind(particle->g_image);
     phase_space_wrapper<dimension>::kernel.v.bind(particle->g_v);
@@ -120,6 +124,10 @@ void phase_space<host::samples::phase_space<dimension, float_type> >::acquire(ui
         LOG_ERROR("failed to copy phase space from GPU to host");
         throw;
     }
+
+    // re-allocate memory which allows modules (e.g., dynamics::blocking_scheme)
+    // to hold a previous copy of the sample
+    sample->reset();
 
     for (size_t i = 0; i < particle->nbox; ++i) {
         unsigned int type, tag;

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2008-2010  Peter Colberg and Felix Höfling
+ * Copyright © 2008-2011  Peter Colberg and Felix Höfling
  *
  * This file is part of HALMD.
  *
@@ -53,6 +53,10 @@ void phase_space<dimension, float_type>::acquire(uint64_t step)
     }
 
     LOG_TRACE("[phase_space] acquire sample");
+
+    // re-allocate memory which allows modules (e.g., dynamics::blocking_scheme)
+    // to hold a previous copy of the sample
+    sample->reset();
 
     for (size_t i = 0; i < particle->nbox; ++i) {
         unsigned int type = particle->type[i];
