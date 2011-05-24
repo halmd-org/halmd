@@ -27,6 +27,7 @@
 #include <halmd/observables/gpu/samples/phase_space.hpp>
 #include <halmd/observables/host/samples/phase_space.hpp>
 #include <halmd/observables/phase_space.hpp>
+#include <halmd/utility/profiler.hpp>
 
 namespace halmd
 {
@@ -47,14 +48,22 @@ public:
     typedef observables::phase_space<dimension> _Base;
     typedef gpu::samples::phase_space<dimension, float_type> sample_type;
     typedef mdsim::gpu::particle<dimension, float_type> particle_type;
-    typedef typename particle_type::vector_type vector_type;
     typedef mdsim::box<dimension> box_type;
+    typedef halmd::utility::profiler profiler_type;
+    typedef typename particle_type::vector_type vector_type;
+
+    struct runtime
+    {
+        typedef typename profiler_type::accumulator_type accumulator_type;
+        accumulator_type acquire;
+    };
 
     boost::shared_ptr<sample_type> sample;
     boost::shared_ptr<particle_type> particle;
     boost::shared_ptr<box_type> box;
 
     static void luaopen(lua_State* L);
+    virtual void register_runtimes(profiler_type& profiler);
 
     phase_space(
         boost::shared_ptr<sample_type> sample
@@ -62,6 +71,10 @@ public:
       , boost::shared_ptr<box_type> box
     );
     virtual void acquire(uint64_t step);
+
+private:
+    /** profiling runtime accumulators */
+    runtime runtime_;
 };
 
 /**
@@ -76,13 +89,21 @@ public:
     typedef host::samples::phase_space<dimension, float_type> sample_type;
     typedef mdsim::gpu::particle<dimension, float_type> particle_type;
     typedef mdsim::box<dimension> box_type;
+    typedef halmd::utility::profiler profiler_type;
     typedef fixed_vector<float_type, dimension> vector_type;
+
+    struct runtime
+    {
+        typedef typename profiler_type::accumulator_type accumulator_type;
+        accumulator_type acquire;
+    };
 
     boost::shared_ptr<sample_type> sample;
     boost::shared_ptr<particle_type> particle;
     boost::shared_ptr<box_type> box;
 
     static void luaopen(lua_State* L);
+    virtual void register_runtimes(profiler_type& profiler);
 
     phase_space(
         boost::shared_ptr<sample_type> sample
@@ -90,6 +111,10 @@ public:
       , boost::shared_ptr<box_type> box
     );
     virtual void acquire(uint64_t step);
+
+private:
+    /** profiling runtime accumulators */
+    runtime runtime_;
 };
 
 }} // namespace observables::gpu

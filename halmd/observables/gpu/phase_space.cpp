@@ -24,6 +24,8 @@
 #include <halmd/observables/gpu/phase_space.hpp>
 #include <halmd/observables/gpu/phase_space_kernel.hpp>
 #include <halmd/utility/lua/lua.hpp>
+#include <halmd/utility/scoped_timer.hpp>
+#include <halmd/utility/timer.hpp>
 
 using namespace boost;
 using namespace std;
@@ -65,6 +67,20 @@ phase_space<host::samples::phase_space<dimension, float_type> >::phase_space(
 {
 }
 
+/**
+ * register module runtime accumulators
+ */
+template <int dimension, typename float_type>
+void phase_space<gpu::samples::phase_space<dimension, float_type> >::register_runtimes(profiler_type& profiler)
+{
+    profiler.register_runtime(runtime_.acquire, "acquire", "acquisition of phase space sample on device");
+}
+
+template <int dimension, typename float_type>
+void phase_space<host::samples::phase_space<dimension, float_type> >::register_runtimes(profiler_type& profiler)
+{
+    profiler.register_runtime(runtime_.acquire, "acquire", "acquisition of phase space sample on host");
+}
 
 /**
  * Sample phase_space
@@ -72,6 +88,8 @@ phase_space<host::samples::phase_space<dimension, float_type> >::phase_space(
 template <int dimension, typename float_type>
 void phase_space<gpu::samples::phase_space<dimension, float_type> >::acquire(uint64_t step)
 {
+    scoped_timer<timer> timer_(runtime_.acquire);
+
     if (sample->step == step) {
         LOG_TRACE("[phase_space] sample is up to date");
         return;
@@ -106,6 +124,8 @@ void phase_space<gpu::samples::phase_space<dimension, float_type> >::acquire(uin
 template <int dimension, typename float_type>
 void phase_space<host::samples::phase_space<dimension, float_type> >::acquire(uint64_t step)
 {
+    scoped_timer<timer> timer_(runtime_.acquire);
+
     if (sample->step == step) {
         LOG_TRACE("[phase_space] sample is up to date");
         return;
@@ -163,6 +183,7 @@ void phase_space<gpu::samples::phase_space<dimension, float_type> >::luaopen(lua
                            , shared_ptr<particle_type>
                            , shared_ptr<box_type>
                         >())
+                        .def("register_runtimes", &phase_space::register_runtimes)
                 ]
             ]
         ]
@@ -188,6 +209,7 @@ void phase_space<host::samples::phase_space<dimension, float_type> >::luaopen(lu
                            , shared_ptr<particle_type>
                            , shared_ptr<box_type>
                         >())
+                        .def("register_runtimes", &phase_space::register_runtimes)
                 ]
             ]
         ]
