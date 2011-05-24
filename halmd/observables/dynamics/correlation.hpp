@@ -53,7 +53,6 @@ class correlation
   : public correlation_base
 {
 public:
-    typedef correlation_base _Base;
     typedef typename tcf_type::sample_type sample_type;
     typedef typename tcf_type::result_type result_type;
     typedef observables::samples::blocking_scheme<sample_type> block_sample_type;
@@ -70,6 +69,8 @@ public:
     virtual void compute(unsigned int level);
 
 private:
+    typedef correlation_base _Base;
+
     /** block structure holding the input data */
     boost::shared_ptr<block_sample_type> block_sample_;
     /** functor performing the specific computation */
