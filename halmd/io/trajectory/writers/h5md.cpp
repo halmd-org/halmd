@@ -65,18 +65,13 @@ h5md<dimension, float_type>::h5md(
             type = root;
         }
         size_t size = sample->r[i]->size();
-        H5::DataSet r = h5xx::create_dataset<sample_vector_type>(type, "position", size);
-        H5::DataSet v = h5xx::create_dataset<sample_vector_type>(type, "velocity", size);
-
-        // particle positions
-        writers_.push_back(h5xx::make_dataset_writer(r, sample->r[i].get()));
-        // particle velocities
-        writers_.push_back(h5xx::make_dataset_writer(v, sample->v[i].get()));
+        // create and store datasets
+        position_.push_back(h5xx::create_dataset<sample_vector_type>(type, "position", size));
+        velocity_.push_back(h5xx::create_dataset<sample_vector_type>(type, "velocity", size));
     }
 
-    // simulation time in reduced units
-    H5::DataSet t = h5xx::create_dataset<double>(root, "time");
-    writers_.push_back(h5xx::make_dataset_writer(t, &time_));
+    // store data set for simulation time in reduced units
+    time_ = h5xx::create_dataset<double>(root, "time");
 }
 
 /**
@@ -91,12 +86,18 @@ void h5md<dimension, float_type>::append(uint64_t step)
         throw logic_error("phase space sample was not updated");
     }
 
-    // retrieve current simulation time
-    time_ = clock->time();
-
-    BOOST_FOREACH (boost::function<void ()> const& writer, writers_) {
-        writer();
+    // write particle positions
+    for (size_t i = 0; i < position_.size(); ++i) {
+        h5xx::write_dataset(position_[i], *sample->r[i]);
     }
+
+    // write particle velocities
+    for (size_t i = 0; i < velocity_.size(); ++i) {
+        h5xx::write_dataset(velocity_[i], *sample->v[i]);
+    }
+
+    // write current simulation time
+    h5xx::write_dataset(time_, clock->time());
 }
 
 /**

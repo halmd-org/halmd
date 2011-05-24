@@ -20,15 +20,13 @@
 #ifndef HALMD_IO_TRAJECTORY_H5MD_WRITER_HPP
 #define HALMD_IO_TRAJECTORY_H5MD_WRITER_HPP
 
-#include <boost/bind.hpp>
-#include <boost/unordered_map.hpp>
-#include <lua.hpp>
-
 #include <h5xx/h5xx.hpp>
+#include <lua.hpp>
 
 #include <halmd/io/trajectory/writer.hpp>
 #include <halmd/mdsim/clock.hpp>
 #include <halmd/observables/host/samples/phase_space.hpp>
+#include <halmd/utility/signal.hpp>
 
 namespace halmd
 {
@@ -76,10 +74,13 @@ public:
 private:
     /** H5MD file */
     H5::H5File file_;
-    /** storage for simulation time */
-    double time_;
-    /** dataset write functors */
-    std::vector<boost::function<void ()> > writers_;
+
+    /** datasets for positions */
+    std::vector<H5::DataSet> position_;
+    /** datasets for velocities */
+    std::vector<H5::DataSet> velocity_;
+    /** dataset for simulation time */
+    H5::DataSet time_;
 
     signal_type on_append_;
 };
