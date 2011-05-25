@@ -73,9 +73,34 @@ particle<dimension, float_type>::particle(
     // in cuda::copy or cuda::memset calls.
     //
     try {
+#ifdef USE_VERLET_DSFUN
+        //
+        // Double-single precision requires two single precision
+        // "words" per coordinate. We use the first part of a GPU
+        // vector for the higher (most significant) words of all
+        // particle positions or velocities, and the second part for
+        // the lower (least significant) words.
+        //
+        // The additional memory is allocated using reserve(), which
+        // increases the capacity() without changing the size().
+        //
+        // Take care to pass capacity() as an argument to cuda::copy
+        // or cuda::memset calls if needed, as the lower words will
+        // be ignored in the operation.
+        //
+        // Particle images remain in single precision as they
+        // contain integer values, and otherwise would not matter
+        // for the long-time stability of the integrator.
+        //
+        LOG("integrate using double-single precision");
+        g_r.reserve(2 * dim.threads());
+        g_v.reserve(2 * dim.threads());
+#else
+        LOG_WARNING("integrate using single precision");
         g_r.reserve(dim.threads());
-        g_image.reserve(dim.threads());
         g_v.reserve(dim.threads());
+#endif
+        g_image.reserve(dim.threads());
         g_f.reserve(dim.threads());
         g_index.reserve(dim.threads());
     }
