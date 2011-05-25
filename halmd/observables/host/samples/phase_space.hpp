@@ -58,8 +58,15 @@ public:
 
     phase_space(std::vector<unsigned int> ntypes);
 
-    /** free shared pointers and re-allocate memory, values are not initialised */
-    void reset();
+    /**
+     * Free shared pointers and re-allocate memory
+     * if containers are shared with some other object.
+     *
+     * Values are not initialised.
+     *
+     * @param force if true then enforce reallocation
+     */
+    void reset(bool force=false);
 };
 
 template <int dimension, typename float_type>
@@ -77,14 +84,18 @@ inline phase_space<dimension, float_type>::phase_space(std::vector<unsigned int>
 }
 
 template <int dimension, typename float_type>
-inline void phase_space<dimension, float_type>::reset()
+inline void phase_space<dimension, float_type>::reset(bool force)
 {
     // free shared pointers and re-allocate memory
     for (size_t i = 0; i < r.size(); ++i) {
-        r[i].reset(new sample_vector(r[i]->size()));
+        if (force || !r[i].unique()) {
+            r[i].reset(new sample_vector(r[i]->size()));
+        }
     }
     for (size_t i = 0; i < v.size(); ++i) {
-        v[i].reset(new sample_vector(v[i]->size()));
+        if (force || !v[i].unique()) {
+            v[i].reset(new sample_vector(v[i]->size()));
+        }
     }
     // make time stamp invalid
     step = std::numeric_limits<uint64_t>::max();
