@@ -128,11 +128,11 @@ void correlation<tcf_type>::luaopen(lua_State* L, char const* scope, char const*
     [
         namespace_("observables")
         [
-            namespace_("dynamics")
+            namespace_(scope)
             [
-                namespace_("correlation")
+                namespace_("dynamics")
                 [
-                    namespace_(scope)
+                    namespace_("correlations")
                     [
                         class_<correlation, boost::shared_ptr<_Base>, _Base>(class_name)
                             .def(constructor<
