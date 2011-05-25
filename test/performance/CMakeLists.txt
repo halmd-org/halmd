@@ -22,3 +22,17 @@ target_link_libraries(test_performance_function_calls
 add_test(performance/function_calls
   test_performance_function_calls --log_level=message
 )
+
+# memory allocation
+if(WITH_CUDA)
+  add_executable(test_performance_memory_allocation
+    memory_allocation.cpp
+  )
+  target_link_libraries(test_performance_memory_allocation
+    ${HALMD_COMMON_LIBRARIES}
+    ${HALMD_TEST_LIBRARIES}
+  )
+  add_test(performance/memory_allocation
+    test_performance_memory_allocation --log_level=message
+  )
+endif(WITH_CUDA)
