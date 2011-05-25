@@ -27,6 +27,7 @@
 #include <vector>
 
 #include <halmd/numeric/blas/fixed_vector.hpp>
+#include <halmd/utility/raw_allocator.hpp>
 
 namespace halmd
 {
@@ -40,7 +41,7 @@ public:
     typedef fixed_vector<float_type, dimension> vector_type;
 
     /** sample vector type for all particles of a species */
-    typedef std::vector<vector_type> sample_vector;
+    typedef std::vector<vector_type, raw_allocator<vector_type> > sample_vector;
     /** sample pointer type for all particle of a species */
     typedef boost::shared_ptr<sample_vector> sample_vector_ptr;
     /** sample pointer type for all species */
