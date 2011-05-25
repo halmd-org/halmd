@@ -56,6 +56,7 @@ public:
     {
         typedef typename profiler_type::accumulator_type accumulator_type;
         accumulator_type acquire;
+        accumulator_type reset;
     };
 
     boost::shared_ptr<sample_type> sample;
@@ -96,6 +97,7 @@ public:
     {
         typedef typename profiler_type::accumulator_type accumulator_type;
         accumulator_type acquire;
+        accumulator_type reset;
     };
 
     boost::shared_ptr<sample_type> sample;

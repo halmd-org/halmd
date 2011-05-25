@@ -50,6 +50,7 @@ template <int dimension, typename float_type>
 void phase_space<dimension, float_type>::register_runtimes(profiler_type& profiler)
 {
     profiler.register_runtime(runtime_.acquire, "acquire", "acquisition of phase space sample");
+    profiler.register_runtime(runtime_.reset, "reset", "reset phase space sample");
 }
 
 /**
@@ -69,7 +70,10 @@ void phase_space<dimension, float_type>::acquire(uint64_t step)
 
     // re-allocate memory which allows modules (e.g., dynamics::blocking_scheme)
     // to hold a previous copy of the sample
-    sample->reset();
+    {
+        scoped_timer<timer> timer_(runtime_.reset);
+        sample->reset();
+    }
 
     for (size_t i = 0; i < particle->nbox; ++i) {
         unsigned int type = particle->type[i];

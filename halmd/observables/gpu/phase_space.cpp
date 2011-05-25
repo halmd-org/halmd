@@ -74,12 +74,14 @@ template <int dimension, typename float_type>
 void phase_space<gpu::samples::phase_space<dimension, float_type> >::register_runtimes(profiler_type& profiler)
 {
     profiler.register_runtime(runtime_.acquire, "acquire", "acquisition of phase space sample on device");
+    profiler.register_runtime(runtime_.reset, "reset", "reset phase space sample on device");
 }
 
 template <int dimension, typename float_type>
 void phase_space<host::samples::phase_space<dimension, float_type> >::register_runtimes(profiler_type& profiler)
 {
     profiler.register_runtime(runtime_.acquire, "acquire", "acquisition of phase space sample on host");
+    profiler.register_runtime(runtime_.reset, "reset", "reset phase space sample on host");
 }
 
 /**
@@ -99,7 +101,10 @@ void phase_space<gpu::samples::phase_space<dimension, float_type> >::acquire(uin
 
     // re-allocate memory which allows modules (e.g., dynamics::blocking_scheme)
     // to hold a previous copy of the sample
-    sample->reset();
+    {
+        scoped_timer<timer> timer_(runtime_.reset);
+        sample->reset();
+    }
 
     phase_space_wrapper<dimension>::kernel.r.bind(particle->g_r);
     phase_space_wrapper<dimension>::kernel.image.bind(particle->g_image);
@@ -147,7 +152,10 @@ void phase_space<host::samples::phase_space<dimension, float_type> >::acquire(ui
 
     // re-allocate memory which allows modules (e.g., dynamics::blocking_scheme)
     // to hold a previous copy of the sample
-    sample->reset();
+    {
+        scoped_timer<timer> timer_(runtime_.reset);
+        sample->reset();
+    }
 
     for (size_t i = 0; i < particle->nbox; ++i) {
         unsigned int type, tag;
