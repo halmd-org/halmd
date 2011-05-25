@@ -21,6 +21,7 @@
 #define HALMD_OBSERVABLES_HOST_SAMPLES_PHASE_SPACE_HPP
 
 #include <boost/shared_ptr.hpp>
+#include <limits>
 #include <lua.hpp>
 #include <stdint.h>
 #include <vector>
@@ -59,6 +60,34 @@ public:
     /** free shared pointers and re-allocate memory, values are not initialised */
     void reset();
 };
+
+template <int dimension, typename float_type>
+inline phase_space<dimension, float_type>::phase_space(std::vector<unsigned int> ntypes)
+  // allocate sample pointers
+  : r(ntypes.size())
+  , v(ntypes.size())
+  // initialise attributes
+  , step(std::numeric_limits<uint64_t>::max())
+{
+    for (size_t i = 0; i < ntypes.size(); ++i) {
+        r[i].reset(new sample_vector(ntypes[i]));
+        v[i].reset(new sample_vector(ntypes[i]));
+    }
+}
+
+template <int dimension, typename float_type>
+inline void phase_space<dimension, float_type>::reset()
+{
+    // free shared pointers and re-allocate memory
+    for (size_t i = 0; i < r.size(); ++i) {
+        r[i].reset(new sample_vector(r[i]->size()));
+    }
+    for (size_t i = 0; i < v.size(); ++i) {
+        v[i].reset(new sample_vector(v[i]->size()));
+    }
+    // make time stamp invalid
+    step = std::numeric_limits<uint64_t>::max();
+}
 
 }}} // namespace observables::host::samples
 

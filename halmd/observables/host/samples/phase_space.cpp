@@ -33,34 +33,6 @@ namespace observables { namespace host { namespace samples
 {
 
 template <int dimension, typename float_type>
-phase_space<dimension, float_type>::phase_space(vector<unsigned int> ntypes)
-  // allocate sample pointers
-  : r(ntypes.size())
-  , v(ntypes.size())
-  // initialise attributes
-  , step(numeric_limits<uint64_t>::max())
-{
-    for (size_t i = 0; i < ntypes.size(); ++i) {
-        r[i].reset(new sample_vector(ntypes[i]));
-        v[i].reset(new sample_vector(ntypes[i]));
-    }
-}
-
-template <int dimension, typename float_type>
-void phase_space<dimension, float_type>::reset()
-{
-    // free shared pointers and re-allocate memory
-    for (size_t i = 0; i < r.size(); ++i) {
-        r[i].reset(new sample_vector(r[i]->size()));
-    }
-    for (size_t i = 0; i < v.size(); ++i) {
-        v[i].reset(new sample_vector(v[i]->size()));
-    }
-    // make time stamp invalid
-    step = numeric_limits<uint64_t>::max();
-}
-
-template <int dimension, typename float_type>
 void phase_space<dimension, float_type>::luaopen(lua_State* L)
 {
     using namespace luabind;
