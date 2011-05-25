@@ -87,7 +87,7 @@ density_mode<dimension, float_type>::density_mode(
 template <int dimension, typename float_type>
 void density_mode<dimension, float_type>::register_runtimes(profiler_type& profiler)
 {
-    profiler.register_runtime(runtime_.sample, "sample", "computation of density modes");
+    profiler.register_runtime(runtime_.acquire, "acquire", "computation of density modes");
 }
 
 /**
@@ -96,7 +96,7 @@ void density_mode<dimension, float_type>::register_runtimes(profiler_type& profi
 template <int dimension, typename float_type>
 void density_mode<dimension, float_type>::acquire(uint64_t step)
 {
-    scoped_timer<timer> timer_(runtime_.sample);
+    scoped_timer<timer> timer_(runtime_.acquire);
 
     if (rho_sample_.step == step) {
         LOG_TRACE("[density_mode] sample is up to date");
@@ -114,6 +114,10 @@ void density_mode<dimension, float_type>::acquire(uint64_t step)
     if (phase_space_->sample->step != step) {
         throw logic_error("GPU phase space sample was not updated");
     }
+
+    // re-allocate memory which allows modules (e.g., dynamics::blocking_scheme)
+    // to hold a previous copy of the sample
+    rho_sample_.reset();
 
     // compute density modes separately for each particle type
     // 1st loop: iterate over particle types

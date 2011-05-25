@@ -58,7 +58,7 @@ public:
     struct runtime
     {
         typedef typename profiler_type::accumulator_type accumulator_type;
-        accumulator_type sample;
+        accumulator_type acquire;
     };
 
     static void luaopen(lua_State* L);
