@@ -51,7 +51,6 @@ public:
 
     device(std::vector<int> devices, unsigned int threads);
     ~device();
-    unsigned int threads() { return threads_; }
 
     static std::string nvidia_driver_version();
     static std::string compute_version();
@@ -60,9 +59,21 @@ public:
     static std::string cuda_runtime_version();
 #endif
 
+    cuda::device::properties const& properties() const
+    {
+        return prop_;
+    }
+
+    unsigned int threads() const
+    {
+        return threads_;
+    }
+
 private:
     /** number of CUDA threads per block */
     unsigned int threads_;
+    /** device properties */
+    cuda::device::properties prop_;
     /** selected CUDA device context */
     boost::shared_ptr<cuda::driver::context> context_;
 };
