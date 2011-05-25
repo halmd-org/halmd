@@ -18,7 +18,6 @@
  */
 
 #include <boost/lexical_cast.hpp>
-#include <limits>
 #include <string>
 
 #include <halmd/observables/samples/blocking_scheme.hpp>
@@ -32,19 +31,6 @@ namespace halmd
 {
 namespace observables { namespace samples
 {
-
-template <int dimension>
-density_mode<dimension>::density_mode(unsigned int ntype, unsigned int nq)
-  // allocate sample pointers
-  : rho(ntype)
-  // initialise attributes
-  , step(numeric_limits<uint64_t>::max())
-{
-    // allocate memory for each particle type
-    for (unsigned int i = 0; i < ntype; ++i) {
-        rho[i].reset(new mode_vector_type(nq));
-    }
-}
 
 template <int dimension>
 void density_mode<dimension>::luaopen(lua_State* L)
