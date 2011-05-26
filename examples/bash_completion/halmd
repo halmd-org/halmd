@@ -6,7 +6,8 @@ _halmd()
     declare -A modules
 
     COMPREPLY=()
-    _get_comp_words_by_ref cur prev
+    cur="${COMP_WORDS[COMP_CWORD]}"
+    prev="${COMP_WORDS[COMP_CWORD - 1]}"
 
     for module in $( "$1" --help | sed -ne 's/^\([^ ]*\):$/\1/p' ); do
         modules[$module]=$module
