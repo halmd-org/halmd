@@ -1,6 +1,5 @@
 # halmd(1) completion
 
-have halmd &&
 _halmd()
 {
     local cur prev module modules
