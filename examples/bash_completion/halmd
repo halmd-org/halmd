@@ -3,11 +3,11 @@
 have halmd &&
 _halmd()
 {
-    local cur module modules
+    local cur prev module modules
     declare -A modules
 
     COMPREPLY=()
-    _get_comp_words_by_ref cur
+    _get_comp_words_by_ref cur prev
 
     for module in $(halmd --help | sed -ne 's/^\([^ ]*\):$/\1/p'); do
         modules[$module]=$module
@@ -21,6 +21,11 @@ _halmd()
     done
 
     _expand || return 0
+
+    if [ "$prev" == "--file" ]; then
+        _filedir
+        return 0
+    fi
 
     if [ -z "$module" ]; then
         COMPREPLY=( $( compgen -W "$( halmd --help | \
