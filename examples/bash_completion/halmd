@@ -8,7 +8,7 @@ _halmd()
     COMPREPLY=()
     _get_comp_words_by_ref cur prev
 
-    for module in $(halmd --help | sed -ne 's/^\([^ ]*\):$/\1/p'); do
+    for module in $( "$1" --help | sed -ne 's/^\([^ ]*\):$/\1/p' ); do
         modules[$module]=$module
     done
 
@@ -27,16 +27,16 @@ _halmd()
     fi
 
     if [ -z "$module" ]; then
-        COMPREPLY=( $( compgen -W "$( halmd --help | \
+        COMPREPLY=( $( compgen -W "$( "$1" --help | \
             sed -e '1d' -e '/^[^ ]/,$d' -ne 's/ *-\([^ ]*\).*/-\1/p' | \
             sort -u )" -- "$cur" ) )
     else
-        COMPREPLY=( $( compgen -W "$( halmd --help | \
+        COMPREPLY=( $( compgen -W "$( "$1" --help | \
             sed -e "1,/^$module:/d" -e '/^[^ ]/,$d' -ne 's/ *-\([^ ]*\).*/-\1/p' | \
             sort -u )" -- "$cur" ) )
     fi
     if [[ "$cur" != -* ]]; then
-        COMPREPLY=( ${COMPREPLY[@]} $( compgen -W "$(halmd --help | \
+        COMPREPLY=( ${COMPREPLY[@]} $( compgen -W "$( "$1" --help | \
             sed -ne 's/^\([^ ]*\):$/\1/p' | \
             sort -u )" -- "$cur" ) )
     fi
