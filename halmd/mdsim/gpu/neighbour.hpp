@@ -39,10 +39,6 @@ namespace halmd
 namespace mdsim { namespace gpu
 {
 
-// forward declaration
-template <int dimension, typename float_type>
-class force;
-
 template <int dimension, typename float_type>
 class neighbour
   : public mdsim::neighbour<dimension>
