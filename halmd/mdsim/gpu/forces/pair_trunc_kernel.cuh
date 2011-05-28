@@ -60,7 +60,7 @@ template <
 >
 __global__ void compute(
     gpu_vector_type* g_f
-  , unsigned int* g_neighbour
+  , unsigned int const* g_neighbour
   , float* g_en_pot
   , stress_tensor_type* g_stress_pot
   , float* g_hypervirial

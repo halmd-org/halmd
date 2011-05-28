@@ -146,23 +146,22 @@ neighbour<dimension, float_type>::neighbour(
     assert(dimension <= 4);
     float_type neighbour_sphere = unit_sphere[dimension] * pow(r_cut_max + r_skin_, dimension);
     // number of placeholders per neighbour list
-    particle->neighbour_size =
-        static_cast<size_t>(ceil(neighbour_sphere * (box->density() / nu_cell_eff)));
+    size_ = static_cast<size_t>(ceil(neighbour_sphere * (box->density() / nu_cell_eff)));
     // at least cell_size (or warp_size?) placeholders
     // FIXME what is a sensible lower bound?
-    particle->neighbour_size = max(particle->neighbour_size, (unsigned)cell_size_);
+    size_ = max(size_, (unsigned)cell_size_);
     // number of neighbour lists
-    particle->neighbour_stride = particle->dim.threads();
+    stride_ = particle->dim.threads();
     // allocate neighbour lists
-    particle->g_neighbour.resize(particle->neighbour_stride * particle->neighbour_size);
+    g_neighbour_.resize(stride_ * size_);
 
     LOG("neighbour list skin: " << r_skin_);
-    LOG("number of placeholders per neighbour list: " << particle->neighbour_size);
+    LOG("number of placeholders per neighbour list: " << size_);
 
     try {
         cuda::copy(rr_cut_skin_.data(), g_rr_cut_skin_);
-        cuda::copy(particle->neighbour_size, get_neighbour_kernel<dimension>().neighbour_size);
-        cuda::copy(particle->neighbour_stride, get_neighbour_kernel<dimension>().neighbour_stride);
+        cuda::copy(size_, get_neighbour_kernel<dimension>().neighbour_size);
+        cuda::copy(stride_, get_neighbour_kernel<dimension>().neighbour_stride);
     }
     catch (cuda::error const&) {
         LOG_ERROR("failed to copy neighbour list parameters to device symbols");
@@ -290,7 +289,7 @@ void neighbour<dimension, float_type>::update_neighbours()
     scoped_timer<timer> timer_(runtime_.update_neighbours);
 
     // mark neighbour list placeholders as virtual particles
-    cuda::memset(particle->g_neighbour, 0xFF);
+    cuda::memset(g_neighbour_, 0xFF);
     // build neighbour lists
     cuda::vector<int> g_ret(1);
     cuda::host::vector<int> h_ret(1);
@@ -298,7 +297,7 @@ void neighbour<dimension, float_type>::update_neighbours()
     cuda::configure(dim_cell_.grid, dim_cell_.block, cell_size_ * (2 + dimension) * sizeof(int));
     get_neighbour_kernel<dimension>().r.bind(particle->g_r);
     get_neighbour_kernel<dimension>().rr_cut_skin.bind(g_rr_cut_skin_);
-    get_neighbour_kernel<dimension>().update_neighbours(g_ret, particle->g_neighbour, g_cell_);
+    get_neighbour_kernel<dimension>().update_neighbours(g_ret, g_neighbour_, g_cell_);
     cuda::thread::synchronize();
     cuda::copy(g_ret, h_ret);
     if (h_ret.front() != EXIT_SUCCESS) {

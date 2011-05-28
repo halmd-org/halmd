@@ -87,13 +87,6 @@ public:
     using _Base::ntype;
     /** number of particles per type */
     using _Base::ntypes;
-
-    /** neighbour lists */
-    cuda::vector<unsigned int> g_neighbour;
-    /** number of placeholders per neighbour list */
-    unsigned int neighbour_size;
-    /** neighbour list stride */
-    unsigned int neighbour_stride;
 };
 
 }} // namespace mdsim::gpu

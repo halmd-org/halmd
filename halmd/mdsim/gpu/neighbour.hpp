@@ -105,6 +105,30 @@ public:
         return nu_cell_;
     }
 
+    /**
+     * neighbour lists
+     */
+    cuda::vector<unsigned int> const& g_neighbour() const
+    {
+       return g_neighbour_;
+    }
+
+    /**
+     * number of placeholders per neighbour list
+     */
+    unsigned int size() const
+    {
+        return size_;
+    }
+
+    /**
+     * neighbour list stride
+     */
+    unsigned int stride() const
+    {
+        return stride_;
+    }
+
 protected:
     friend class sort::hilbert<dimension, float_type>; //< FIXME public interface
 
@@ -150,6 +174,13 @@ protected:
     cuda::vector<unsigned int> g_cell_permutation_;
     /** cell offsets in sorted particle list */
     cuda::vector<unsigned int> g_cell_offset_;
+
+    /** neighbour lists */
+    cuda::vector<unsigned int> g_neighbour_;
+    /** number of placeholders per neighbour list */
+    unsigned int size_;
+    /** neighbour list stride */
+    unsigned int stride_;
 
     /** profiling runtime accumulators */
     runtime runtime_;
