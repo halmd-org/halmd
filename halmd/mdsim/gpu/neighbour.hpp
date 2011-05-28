@@ -43,12 +43,6 @@ namespace mdsim { namespace gpu
 template <int dimension, typename float_type>
 class force;
 
-namespace sort
-{
-template <int dimension, typename float_type>
-class hilbert;
-}
-
 template <int dimension, typename float_type>
 class neighbour
   : public mdsim::neighbour<dimension>
@@ -130,8 +124,6 @@ public:
     }
 
 protected:
-    friend class sort::hilbert<dimension, float_type>; //< FIXME public interface
-
     static displacement_impl_type get_displacement_impl(int threads);
     void update_cells();
     void update_neighbours();
