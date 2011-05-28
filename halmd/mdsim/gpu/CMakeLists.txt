@@ -1,5 +1,7 @@
 halmd_add_library(halmd_mdsim_gpu
   force.cpp
+  maximum_squared_displacement.cpp
+  maximum_squared_displacement_kernel.cu
   neighbour.cpp
   neighbour_kernel.cu
   particle.cpp
@@ -9,6 +11,7 @@ halmd_add_library(halmd_mdsim_gpu
 )
 halmd_add_modules(
   libhalmd_mdsim_gpu_force
+  libhalmd_mdsim_gpu_maximum_squared_displacement
   libhalmd_mdsim_gpu_neighbour
   libhalmd_mdsim_gpu_particle
   libhalmd_mdsim_gpu_velocity
