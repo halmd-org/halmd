@@ -9,8 +9,8 @@ parts of the MD integration step. HALMD is freely available and licensed under
 the GPL.
 
 HALMD is written and developed by
-`Peter Colberg<http://www.chem.utoronto.ca/~pcolberg>`_ and
-`Felix Höfling<http://www.mf.mpg.de/mpg/websiteMetallforschung/english/instForschungsthemen/instForschungsgruppen/abteilung6/020_Mitarbeiter/hoefling>`_.
+`Peter Colberg <http://www.chem.utoronto.ca/~pcolberg>`_ and
+`Felix Höfling <http://www.mf.mpg.de/mpg/websiteMetallforschung/english/instForschungsthemen/instForschungsgruppen/abteilung6/020_Mitarbeiter/hoefling>`_.
 
 .. note::
 
