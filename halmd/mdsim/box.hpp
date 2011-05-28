@@ -52,9 +52,17 @@ public:
       , vector_type const& ratios
     );
 
-    vector_type const& length() { return length_; }
-    double density() { return density_; }
-    double volume()
+    vector_type const& length() const
+    {
+        return length_;
+    }
+
+    double density() const
+    {
+        return density_;
+    }
+
+    double volume() const
     {
         return std::accumulate(length_.begin(), length_.end(), 1., std::multiplies<double>());
     }
@@ -62,7 +70,10 @@ public:
     template <typename T>
     T reduce_periodic(T& r) const;
 
-    vector_type origin() const { return -length_half_; }
+    vector_type origin() const
+    {
+        return -length_half_;
+    }
 
 protected:
     /** edge lengths of cuboid */
