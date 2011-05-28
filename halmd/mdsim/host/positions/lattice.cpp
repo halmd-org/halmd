@@ -134,9 +134,14 @@ void lattice<dimension, float_type>::fcc(
         }
         typename vector_type::iterator it = max_element(t.begin(), t.end());
         a = *it;
-        unsigned int m = n[it - t.begin()];
-        n = static_cast<index_type>(length / a); //< recompute to preserve aspect ratios of box
-        n[it - t.begin()] = m + 1;               //< ensure increment of at least one component
+        // recompute n to preserve aspect ratios of box, ensure that
+        // no compoment decreases and that at least one component
+        // is incremented
+        index_type m = n;
+        n = element_max(m, static_cast<index_type>(length / a));
+        if (m == n) {
+            n += index_type(1);
+        }
     }
     LOG("placing particles on fcc lattice: a = " << a);
     LOG_DEBUG("number of fcc unit cells: " << n);
