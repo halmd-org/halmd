@@ -49,7 +49,6 @@ class pair_trunc
 {
 public:
     typedef mdsim::gpu::force<dimension, float_type> _Base;
-    typedef typename _Base::matrix_type matrix_type;
     typedef typename _Base::vector_type vector_type;
     typedef typename _Base::gpu_stress_tensor_type gpu_stress_tensor_type;
     typedef gpu::particle<dimension, float> particle_type;
@@ -80,12 +79,6 @@ public:
     );
     inline virtual void compute();
     inline void register_runtimes(profiler_type& profiler);
-
-    //! returns potential cutoff distance
-    matrix_type const& r_cut()
-    {
-        return potential->r_cut();
-    }
 
     //! enable computation of auxiliary variables
     virtual void aux_enable()
@@ -228,7 +221,6 @@ void pair_trunc<dimension, float_type, potential_type>::luaopen(lua_State* L)
                               , boost::shared_ptr<neighbour_type const>
                             >())
                             .def("register_runtimes", &pair_trunc::register_runtimes)
-                            .property("r_cut", &pair_trunc::r_cut)
                             .property("module_name", &module_name_wrapper<dimension, float_type, potential_type>)
                     ]
                 ]
