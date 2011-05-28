@@ -68,7 +68,7 @@ function new(args)
     else
         pair_trunc = assert(pair_trunc_wrapper.host[dimension][force])
     end
-    local force = pair_trunc(potential, particle, box)
+    local force = pair_trunc(potential, particle, box, neighbour)
 
     local core = mdsim.core()
     -- connect force to core
