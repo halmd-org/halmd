@@ -42,26 +42,26 @@ namespace mdsim { namespace gpu
  */
 template <int dimension, typename float_type>
 neighbour<dimension, float_type>::neighbour(
-    shared_ptr<particle_type> particle
-  , shared_ptr<box_type> box
-  , shared_ptr<binning_type> binning
+    shared_ptr<particle_type const> particle
+  , shared_ptr<box_type const> box
+  , shared_ptr<binning_type const> binning
   , matrix_type const& r_cut
   , double skin
   , double cell_occupancy
 )
   // dependency injection
-  : particle(particle)
-  , box(box)
-  , binning(binning)
+  : particle_(particle)
+  , box_(box)
+  , binning_(binning)
   // allocate parameters
   , r_skin_(skin)
-  , rr_cut_skin_(particle->ntype, particle->ntype)
+  , rr_cut_skin_(particle_->ntype, particle_->ntype)
   , g_rr_cut_skin_(rr_cut_skin_.data().size())
   , nu_cell_(cell_occupancy) // FIXME neighbour list occupancy
 {
     typename matrix_type::value_type r_cut_max = 0;
-    for (size_t i = 0; i < particle->ntype; ++i) {
-        for (size_t j = i; j < particle->ntype; ++j) {
+    for (size_t i = 0; i < particle_->ntype; ++i) {
+        for (size_t j = i; j < particle_->ntype; ++j) {
             rr_cut_skin_(i, j) = std::pow(r_cut(i, j) + r_skin_, 2);
             r_cut_max = max(r_cut(i, j), r_cut_max);
         }
@@ -73,12 +73,12 @@ neighbour<dimension, float_type>::neighbour(
     assert(dimension <= 4);
     float_type neighbour_sphere = unit_sphere[dimension] * pow(r_cut_max + r_skin_, dimension);
     // number of placeholders per neighbour list
-    size_ = static_cast<size_t>(ceil(neighbour_sphere * (box->density() / binning->effective_cell_occupancy())));
+    size_ = static_cast<size_t>(ceil(neighbour_sphere * (box_->density() / binning_->effective_cell_occupancy())));
     // at least cell_size (or warp_size?) placeholders
     // FIXME what is a sensible lower bound?
-    size_ = max(size_, binning->cell_size());
+    size_ = max(size_, binning_->cell_size());
     // number of neighbour lists
-    stride_ = particle->dim.threads();
+    stride_ = particle_->dim.threads();
     // allocate neighbour lists
     g_neighbour_.resize(stride_ * size_);
 
@@ -86,9 +86,9 @@ neighbour<dimension, float_type>::neighbour(
     LOG("number of placeholders per neighbour list: " << size_);
 
     try {
-        cuda::copy(particle->nbox, get_neighbour_kernel<dimension>().nbox);
-        cuda::copy(binning->ncell(), get_neighbour_kernel<dimension>().ncell);
-        cuda::copy(static_cast<vector_type>(box->length()), get_neighbour_kernel<dimension>().box_length);
+        cuda::copy(particle_->nbox, get_neighbour_kernel<dimension>().nbox);
+        cuda::copy(binning_->ncell(), get_neighbour_kernel<dimension>().ncell);
+        cuda::copy(static_cast<vector_type>(box_->length()), get_neighbour_kernel<dimension>().box_length);
         cuda::copy(rr_cut_skin_.data(), g_rr_cut_skin_);
         cuda::copy(size_, get_neighbour_kernel<dimension>().neighbour_size);
         cuda::copy(stride_, get_neighbour_kernel<dimension>().neighbour_stride);
@@ -122,10 +122,10 @@ void neighbour<dimension, float_type>::update()
     cuda::vector<int> g_ret(1);
     cuda::host::vector<int> h_ret(1);
     cuda::memset(g_ret, EXIT_SUCCESS);
-    cuda::configure(binning->dim_cell().grid, binning->dim_cell().block, binning->cell_size() * (2 + dimension) * sizeof(int));
-    get_neighbour_kernel<dimension>().r.bind(particle->g_r);
+    cuda::configure(binning_->dim_cell().grid, binning_->dim_cell().block, binning_->cell_size() * (2 + dimension) * sizeof(int));
+    get_neighbour_kernel<dimension>().r.bind(particle_->g_r);
     get_neighbour_kernel<dimension>().rr_cut_skin.bind(g_rr_cut_skin_);
-    get_neighbour_kernel<dimension>().update_neighbours(g_ret, g_neighbour_, binning->g_cell());
+    get_neighbour_kernel<dimension>().update_neighbours(g_ret, g_neighbour_, binning_->g_cell());
     cuda::thread::synchronize();
     cuda::copy(g_ret, h_ret);
     if (h_ret.front() != EXIT_SUCCESS) {
@@ -146,9 +146,9 @@ void neighbour<dimension, float_type>::luaopen(lua_State* L)
             [
                 class_<neighbour, shared_ptr<_Base>, _Base>(class_name.c_str())
                     .def(constructor<
-                        shared_ptr<particle_type>
-                      , shared_ptr<box_type>
-                      , shared_ptr<binning_type>
+                        shared_ptr<particle_type const>
+                      , shared_ptr<box_type const>
+                      , shared_ptr<binning_type const>
                       , matrix_type const&
                       , double
                       , double

@@ -55,16 +55,12 @@ public:
         accumulator_type update;
     };
 
-    boost::shared_ptr<particle_type> particle;
-    boost::shared_ptr<box_type> box;
-    boost::shared_ptr<binning_type> binning;
-
     static void luaopen(lua_State* L);
 
     neighbour(
-        boost::shared_ptr<particle_type> particle
-      , boost::shared_ptr<box_type> box
-      , boost::shared_ptr<binning_type> binning
+        boost::shared_ptr<particle_type const> particle
+      , boost::shared_ptr<box_type const> box
+      , boost::shared_ptr<binning_type const> binning
       , matrix_type const& r_cut
       , double skin
       , double cell_occupancy
@@ -108,7 +104,11 @@ public:
         return stride_;
     }
 
-protected:
+private:
+    boost::shared_ptr<particle_type const> particle_;
+    boost::shared_ptr<box_type const> box_;
+    boost::shared_ptr<binning_type const> binning_;
+
     /** neighbour list skin in MD units */
     float_type r_skin_;
     /** half neighbour list skin */
