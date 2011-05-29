@@ -48,20 +48,11 @@ public:
     typedef fixed_vector<unsigned int, dimension> cell_size_type;
     typedef fixed_vector<int, dimension> cell_diff_type;
 
-    struct runtime
-    {
-        typedef typename profiler_type::accumulator_type accumulator_type;
-        accumulator_type update;
-    };
-
-    boost::shared_ptr<particle_type> particle;
-    boost::shared_ptr<box_type> box;
-
     static void luaopen(lua_State* L);
 
     binning(
-        boost::shared_ptr<particle_type> particle
-      , boost::shared_ptr<box_type> box
+        boost::shared_ptr<particle_type const> particle
+      , boost::shared_ptr<box_type const> box
       , matrix_type const& r_cut
       , double skin
       , double cell_occupancy
@@ -117,7 +108,16 @@ public:
         return g_cell_;
     }
 
-protected:
+private:
+    struct runtime
+    {
+        typedef typename profiler_type::accumulator_type accumulator_type;
+        accumulator_type update;
+    };
+
+    boost::shared_ptr<particle_type const> particle_;
+    boost::shared_ptr<box_type const> box_;
+
     /** neighbour list skin in MD units */
     float_type r_skin_;
     /** half neighbour list skin */

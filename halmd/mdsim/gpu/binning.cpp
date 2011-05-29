@@ -44,25 +44,25 @@ namespace mdsim { namespace gpu
  */
 template <int dimension, typename float_type>
 binning<dimension, float_type>::binning(
-    shared_ptr<particle_type> particle
-  , shared_ptr<box_type> box
+    shared_ptr<particle_type const> particle
+  , shared_ptr<box_type const> box
   , matrix_type const& r_cut
   , double skin
   , double cell_occupancy
 )
   // dependency injection
-  : particle(particle)
-  , box(box)
+  : particle_(particle)
+  , box_(box)
   // allocate parameters
   , r_skin_(skin)
   , rr_skin_half_(pow(r_skin_ / 2, 2))
-  , rr_cut_skin_(particle->ntype, particle->ntype)
+  , rr_cut_skin_(particle_->ntype, particle_->ntype)
   , nu_cell_(cell_occupancy)
-  , sort_(particle->nbox, particle->dim.threads_per_block())
+  , sort_(particle_->nbox, particle_->dim.threads_per_block())
 {
     typename matrix_type::value_type r_cut_max = 0;
-    for (size_t i = 0; i < particle->ntype; ++i) {
-        for (size_t j = i; j < particle->ntype; ++j) {
+    for (size_t i = 0; i < particle_->ntype; ++i) {
+        for (size_t j = i; j < particle_->ntype; ++j) {
             rr_cut_skin_(i, j) = std::pow(r_cut(i, j) + r_skin_, 2);
             r_cut_max = max(r_cut(i, j), r_cut_max);
         }
@@ -83,12 +83,12 @@ binning<dimension, float_type>::binning(
     //
     // upper bound on ncell_ provided by 1)
     cell_size_type ncell_max =
-        static_cast<cell_size_type>(box->length() / (r_cut_max + r_skin_));
+        static_cast<cell_size_type>(box_->length() / (r_cut_max + r_skin_));
     // determine optimal value from 2,3) together with b,c)
     size_t warp_size = cuda::device::properties(cuda::device::get()).warp_size();
-    double nwarps = particle->nbox / (nu_cell_ * warp_size);
-    double volume = accumulate(box->length().begin(), box->length().end(), 1., multiplies<double>());
-    ncell_ = static_cast<cell_size_type>(ceil(box->length() * pow(nwarps / volume, 1./dimension)));
+    double nwarps = particle_->nbox / (nu_cell_ * warp_size);
+    double volume = accumulate(box_->length().begin(), box_->length().end(), 1., multiplies<double>());
+    ncell_ = static_cast<cell_size_type>(ceil(box_->length() * pow(nwarps / volume, 1./dimension)));
     LOG_DEBUG("desired values for number of cells: " << ncell_);
     LOG_DEBUG("upper bound on number of cells: " << ncell_max);
     // respect upper bound
@@ -98,7 +98,7 @@ binning<dimension, float_type>::binning(
     size_t ncells = accumulate(ncell_.begin(), ncell_.end(), 1, multiplies<size_t>());
     cell_size_ = warp_size * static_cast<size_t>(ceil(nwarps / ncells));
     vector_type cell_length_ =
-        element_div(static_cast<vector_type>(box->length()), static_cast<vector_type>(ncell_));
+        element_div(static_cast<vector_type>(box_->length()), static_cast<vector_type>(ncell_));
     dim_cell_ = cuda::config(
         dim3(
              accumulate(ncell_.begin(), ncell_.end() - 1, 1, multiplies<size_t>())
@@ -115,11 +115,11 @@ binning<dimension, float_type>::binning(
     LOG("number of cells per dimension: " << ncell_);
     LOG("cell edge lengths: " << cell_length_);
     LOG("desired average cell occupancy: " << nu_cell_);
-    nu_cell_eff_ = static_cast<double>(particle->nbox) / dim_cell_.threads();
+    nu_cell_eff_ = static_cast<double>(particle_->nbox) / dim_cell_.threads();
     LOG("effective average cell occupancy: " << nu_cell_eff_);
 
     try {
-        cuda::copy(particle->nbox, get_binning_kernel<dimension>().nbox);
+        cuda::copy(particle_->nbox, get_binning_kernel<dimension>().nbox);
         cuda::copy(static_cast<fixed_vector<uint, dimension> >(ncell_), get_binning_kernel<dimension>().ncell);
         cuda::copy(cell_length_, get_binning_kernel<dimension>().cell_length);
     }
@@ -131,10 +131,10 @@ binning<dimension, float_type>::binning(
     try {
         g_cell_.resize(dim_cell_.threads());
         g_cell_offset_.resize(dim_cell_.blocks_per_grid());
-        g_cell_index_.reserve(particle->dim.threads());
-        g_cell_index_.resize(particle->nbox);
-        g_cell_permutation_.reserve(particle->dim.threads());
-        g_cell_permutation_.resize(particle->nbox);
+        g_cell_index_.reserve(particle_->dim.threads());
+        g_cell_index_.resize(particle_->nbox);
+        g_cell_permutation_.reserve(particle_->dim.threads());
+        g_cell_permutation_.resize(particle_->nbox);
     }
     catch (cuda::error const&) {
         LOG_ERROR("failed to allocate cell placeholders in global device memory");
@@ -160,17 +160,17 @@ void binning<dimension, float_type>::update()
     scoped_timer<timer> timer_(runtime_.update);
 
     // compute cell indices for particle positions
-    cuda::configure(particle->dim.grid, particle->dim.block);
-    get_binning_kernel<dimension>().compute_cell(particle->g_r, g_cell_index_);
+    cuda::configure(particle_->dim.grid, particle_->dim.block);
+    get_binning_kernel<dimension>().compute_cell(particle_->g_r, g_cell_index_);
 
     // generate permutation
-    cuda::configure(particle->dim.grid, particle->dim.block);
+    cuda::configure(particle_->dim.grid, particle_->dim.block);
     get_binning_kernel<dimension>().gen_index(g_cell_permutation_);
     sort_(g_cell_index_, g_cell_permutation_);
 
     // compute global cell offsets in sorted particle list
     cuda::memset(g_cell_offset_, 0xFF);
-    cuda::configure(particle->dim.grid, particle->dim.block);
+    cuda::configure(particle_->dim.grid, particle_->dim.block);
     get_binning_kernel<dimension>().find_cell_offset(g_cell_index_, g_cell_offset_);
 
     // assign particles to cells
@@ -198,8 +198,8 @@ void binning<dimension, float_type>::luaopen(lua_State* L)
             [
                 class_<binning, shared_ptr<binning> >(class_name.c_str())
                     .def(constructor<
-                        shared_ptr<particle_type>
-                      , shared_ptr<box_type>
+                        shared_ptr<particle_type const>
+                      , shared_ptr<box_type const>
                       , matrix_type const&
                       , double
                       , double
