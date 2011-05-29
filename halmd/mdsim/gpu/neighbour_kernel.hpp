@@ -1,5 +1,5 @@
 /*
- * Copyright © 2008-2010  Peter Colberg
+ * Copyright © 2008-2011  Peter Colberg
  *
  * This file is part of HALMD.
  *
@@ -33,7 +33,6 @@ struct neighbour_wrapper
 {
     typedef typename type_traits<dimension, float>::gpu::vector_type vector_type;
     typedef typename type_traits<dimension, unsigned int>::gpu::vector_type cell_index_type;
-    typedef cuda::function<void (float4* g_r, float4* g_r0, float* g_rr)> displacement_impl_type;
 
     /** (cutoff lengths + neighbour list skin)² */
     cuda::texture<float> rr_cut_skin;
@@ -49,20 +48,8 @@ struct neighbour_wrapper
     cuda::texture<float4> r;
     /** cubic box edgle length */
     cuda::symbol<vector_type> box_length;
-    /** cell edge lengths */
-    cuda::symbol<vector_type> cell_length;
-    /** assign particles to cells */
-    cuda::function<void (int*, unsigned int const*, unsigned int const*, unsigned int const*, unsigned int*)> assign_cells;
-    /** compute global cell offsets in particle list */
-    cuda::function<void (unsigned int*, unsigned int*)> find_cell_offset;
-    /** generate ascending index sequence */
-    cuda::function<void (unsigned int*)> gen_index;
     /** update neighbour lists */
     cuda::function<void (int*, unsigned int*, unsigned int const*)> update_neighbours;
-    /** compute cell indices for particle positions */
-    cuda::function<void (float4 const*, unsigned int*)> compute_cell;
-    /** maximum squared particle distance */
-    displacement_impl_type displacement_impl[5];
 
     static neighbour_wrapper kernel;
 };

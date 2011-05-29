@@ -81,6 +81,42 @@ public:
         return nu_cell_;
     }
 
+    //! returns average effective cell occupancy
+    float_type effective_cell_occupancy() const
+    {
+        return nu_cell_eff_;
+    }
+
+    //! returns cell size
+    unsigned int cell_size() const
+    {
+        return cell_size_;
+    }
+
+    /**
+     * number of cells per dimension
+     */
+    cell_size_type ncell() const
+    {
+        return ncell_;
+    }
+
+    /**
+     * cell kernel dimensions
+     */
+    cuda::config const& dim_cell() const
+    {
+        return dim_cell_;
+    }
+
+    /**
+     * cell lists
+     */
+    cuda::vector<unsigned int> const& g_cell() const
+    {
+        return g_cell_;
+    }
+
 protected:
     /** neighbour list skin in MD units */
     float_type r_skin_;
@@ -90,10 +126,12 @@ protected:
     matrix_type rr_cut_skin_;
     /** average desired cell occupancy */
     float_type nu_cell_;
+    /** average effective cell occupancy */
+    float_type nu_cell_eff_;
     /** number of cells per dimension */
     cell_size_type ncell_;
     /** number of placeholders per cell */
-    size_t cell_size_;
+    unsigned int cell_size_;
     /** cell edge lengths */
     vector_type cell_length_;
     /** CUDA cell kernel execution configuration */

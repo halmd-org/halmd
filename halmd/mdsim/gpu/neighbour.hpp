@@ -1,5 +1,5 @@
 /*
- * Copyright © 2008-2010  Peter Colberg and Felix Höfling
+ * Copyright © 2008-2011  Peter Colberg and Felix Höfling
  *
  * This file is part of HALMD.
  *
@@ -20,15 +20,12 @@
 #ifndef HALMD_MDSIM_GPU_NEIGHBOUR_HPP
 #define HALMD_MDSIM_GPU_NEIGHBOUR_HPP
 
-#include <boost/array.hpp>
-#include <boost/multi_array.hpp>
 #include <boost/numeric/ublas/symmetric.hpp>
 #include <boost/shared_ptr.hpp>
 #include <lua.hpp>
-#include <vector>
 
-#include <halmd/algorithm/gpu/radix_sort.hpp>
 #include <halmd/mdsim/box.hpp>
+#include <halmd/mdsim/gpu/binning.hpp>
 #include <halmd/mdsim/gpu/neighbour_kernel.hpp>
 #include <halmd/mdsim/gpu/particle.hpp>
 #include <halmd/mdsim/neighbour.hpp>
@@ -49,39 +46,31 @@ public:
     typedef typename particle_type::vector_type vector_type;
     typedef boost::numeric::ublas::symmetric_matrix<float_type, boost::numeric::ublas::lower> matrix_type;
     typedef mdsim::box<dimension> box_type;
+    typedef gpu::binning<dimension, float_type> binning_type;
     typedef utility::profiler profiler_type;
-
-    typedef typename neighbour_wrapper<dimension>::displacement_impl_type displacement_impl_type;
-
-    typedef fixed_vector<unsigned int, dimension> cell_size_type;
-    typedef fixed_vector<int, dimension> cell_diff_type;
 
     struct runtime
     {
         typedef typename profiler_type::accumulator_type accumulator_type;
-        accumulator_type check;
-        accumulator_type update_cells;
-        accumulator_type update_neighbours;
+        accumulator_type update;
     };
 
     boost::shared_ptr<particle_type> particle;
     boost::shared_ptr<box_type> box;
-
-    cuda::config dim_reduce;
-    displacement_impl_type const displacement_impl;
+    boost::shared_ptr<binning_type> binning;
 
     static void luaopen(lua_State* L);
 
     neighbour(
         boost::shared_ptr<particle_type> particle
       , boost::shared_ptr<box_type> box
+      , boost::shared_ptr<binning_type> binning
       , matrix_type const& r_cut
       , double skin
       , double cell_occupancy
     );
     void register_runtimes(profiler_type& profiler);
     virtual void update();
-    virtual bool check();
 
     //! returns neighbour list skin in MD units
     float_type r_skin() const
@@ -120,13 +109,6 @@ public:
     }
 
 protected:
-    static displacement_impl_type get_displacement_impl(int threads);
-    void update_cells();
-    void update_neighbours();
-//     void update_cell_neighbours(cell_size_type const& i);
-//     template <bool same_cell>
-//     void compute_cell_neighbours(size_t i, cell_list& c);
-
     /** neighbour list skin in MD units */
     float_type r_skin_;
     /** half neighbour list skin */
@@ -135,33 +117,14 @@ protected:
     matrix_type rr_cut_skin_;
     /** (cutoff lengths + neighbour list skin)² */
     cuda::vector<float_type> g_rr_cut_skin_;
-    /** average desired cell occupancy */
+    /** FIXME average desired cell occupancy */
     float_type nu_cell_;
-    /** number of cells per dimension */
-    cell_size_type ncell_;
-    /** number of placeholders per cell */
-    size_t cell_size_;
-    /** cell edge lengths */
-    vector_type cell_length_;
-    /** CUDA cell kernel execution configuration */
-    cuda::config dim_cell_;
     /** particle positions at last neighbour list update */
     cuda::vector<float4> g_r0_;
     /** block-reduced squared particle distances */
     cuda::vector<float> g_rr_;
     /** block-reduced squared particle distances */
     cuda::host::vector<float> h_rr_;
-    /** cell lists in global device memory */
-    cuda::vector<unsigned int> g_cell_;
-
-    /** GPU radix sort */
-    algorithm::gpu::radix_sort<unsigned int> sort_;
-    /** cell indices for particles */
-    cuda::vector<unsigned int> g_cell_index_;
-    /** particle permutation */
-    cuda::vector<unsigned int> g_cell_permutation_;
-    /** cell offsets in sorted particle list */
-    cuda::vector<unsigned int> g_cell_offset_;
 
     /** neighbour lists */
     cuda::vector<unsigned int> g_neighbour_;

@@ -17,7 +17,6 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <halmd/io/logger.hpp>
 #include <halmd/mdsim/neighbour.hpp>
 #include <halmd/utility/lua/lua.hpp>
 
@@ -39,8 +38,6 @@ void neighbour<dimension>::luaopen(lua_State* L)
         namespace_("mdsim")
         [
             class_<neighbour, shared_ptr<neighbour> >(class_name.c_str())
-                .def("check", &neighbour::check)
-                .def("update", &neighbour::update)
         ]
     ];
 }

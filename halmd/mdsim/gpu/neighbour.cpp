@@ -1,5 +1,5 @@
 /*
- * Copyright © 2008-2010  Peter Colberg and Felix Höfling
+ * Copyright © 2008-2011  Peter Colberg and Felix Höfling
  *
  * This file is part of HALMD.
  *
@@ -16,12 +16,6 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-
-#include <algorithm>
-#include <boost/bind.hpp>
-#include <boost/foreach.hpp>
-#include <boost/range/iterator_range.hpp>
-#include <exception>
 
 #include <halmd/io/logger.hpp>
 #include <halmd/mdsim/gpu/neighbour.hpp>
@@ -50,6 +44,7 @@ template <int dimension, typename float_type>
 neighbour<dimension, float_type>::neighbour(
     shared_ptr<particle_type> particle
   , shared_ptr<box_type> box
+  , shared_ptr<binning_type> binning
   , matrix_type const& r_cut
   , double skin
   , double cell_occupancy
@@ -57,19 +52,12 @@ neighbour<dimension, float_type>::neighbour(
   // dependency injection
   : particle(particle)
   , box(box)
-  // select thread-dependent reduction kernel
-  , dim_reduce(64, (64 << DEVICE_SCALE))
-  , displacement_impl(get_displacement_impl(dim_reduce.threads_per_block()))
+  , binning(binning)
   // allocate parameters
   , r_skin_(skin)
-  , rr_skin_half_(pow(r_skin_ / 2, 2))
   , rr_cut_skin_(particle->ntype, particle->ntype)
   , g_rr_cut_skin_(rr_cut_skin_.data().size())
-  , nu_cell_(cell_occupancy)
-  , g_r0_(particle->nbox)
-  , g_rr_(dim_reduce.blocks_per_grid())
-  , h_rr_(g_rr_.size())
-  , sort_(particle->nbox, particle->dim.threads_per_block())
+  , nu_cell_(cell_occupancy) // FIXME neighbour list occupancy
 {
     typename matrix_type::value_type r_cut_max = 0;
     for (size_t i = 0; i < particle->ntype; ++i) {
@@ -78,67 +66,6 @@ neighbour<dimension, float_type>::neighbour(
             r_cut_max = max(r_cut(i, j), r_cut_max);
         }
     }
-    // find an optimal(?) cell size
-    // ideally, we would like to have warp_size placeholders per cell
-    //
-    // definitions:
-    // a) n_cell = L_box / cell_length   (for each dimension)
-    // b) #cells = prod(n_cell)
-    // c) #particles = #cells × cell_size × ν_eff
-    //
-    // constraints:
-    // 1) cell_length > r_c + r_skin  (potential cutoff + neighbour list skin)
-    // 2) cell_size is a (small) multiple of warp_size
-    // 3) n_cell respects the aspect ratios of the simulation box
-    // 4) ν_eff ≤ ν  (actual vs. desired occupancy)
-    //
-    // upper bound on ncell_ provided by 1)
-    cell_size_type ncell_max =
-        static_cast<cell_size_type>(box->length() / (r_cut_max + r_skin_));
-    // determine optimal value from 2,3) together with b,c)
-    size_t warp_size = cuda::device::properties(cuda::device::get()).warp_size();
-    double nwarps = particle->nbox / (nu_cell_ * warp_size);
-    double volume = accumulate(box->length().begin(), box->length().end(), 1., multiplies<double>());
-    ncell_ = static_cast<cell_size_type>(ceil(box->length() * pow(nwarps / volume, 1./dimension)));
-    LOG_DEBUG("desired values for number of cells: " << ncell_);
-    LOG_DEBUG("upper bound on number of cells: " << ncell_max);
-    // respect upper bound
-    ncell_ = element_min(ncell_, ncell_max);
-
-    // compute derived values
-    size_t ncells = accumulate(ncell_.begin(), ncell_.end(), 1, multiplies<size_t>());
-    cell_size_ = warp_size * static_cast<size_t>(ceil(nwarps / ncells));
-    vector_type cell_length_ =
-        element_div(static_cast<vector_type>(box->length()), static_cast<vector_type>(ncell_));
-    dim_cell_ = cuda::config(
-        dim3(
-             accumulate(ncell_.begin(), ncell_.end() - 1, 1, multiplies<size_t>())
-           , ncell_.back()
-        )
-      , cell_size_
-    );
-
-    if (*min_element(ncell_.begin(), ncell_.end()) < 3) {
-        throw std::logic_error("number of cells per dimension must be at least 3");
-    }
-
-    LOG("number of placeholders per cell: " << cell_size_);
-    LOG("number of cells per dimension: " << ncell_);
-    LOG("cell edge lengths: " << cell_length_);
-    LOG("desired average cell occupancy: " << nu_cell_);
-    double nu_cell_eff = static_cast<double>(particle->nbox) / dim_cell_.threads();
-    LOG("effective average cell occupancy: " << nu_cell_eff);
-
-    try {
-        cuda::copy(particle->nbox, get_neighbour_kernel<dimension>().nbox);
-        cuda::copy(static_cast<fixed_vector<uint, dimension> >(ncell_), get_neighbour_kernel<dimension>().ncell);
-        cuda::copy(cell_length_, get_neighbour_kernel<dimension>().cell_length);
-        cuda::copy(static_cast<vector_type>(box->length()), get_neighbour_kernel<dimension>().box_length);
-    }
-    catch (cuda::error const&) {
-        LOG_ERROR("failed to copy cell parameters to device symbols");
-        throw;
-    }
 
     // volume of n-dimensional sphere with neighbour list radius
     // volume of unit sphere: V_d = π^(d/2) / Γ(1+d/2), Γ(1) = 1, Γ(1/2) = √π
@@ -146,10 +73,10 @@ neighbour<dimension, float_type>::neighbour(
     assert(dimension <= 4);
     float_type neighbour_sphere = unit_sphere[dimension] * pow(r_cut_max + r_skin_, dimension);
     // number of placeholders per neighbour list
-    size_ = static_cast<size_t>(ceil(neighbour_sphere * (box->density() / nu_cell_eff)));
+    size_ = static_cast<size_t>(ceil(neighbour_sphere * (box->density() / binning->effective_cell_occupancy())));
     // at least cell_size (or warp_size?) placeholders
     // FIXME what is a sensible lower bound?
-    size_ = max(size_, (unsigned)cell_size_);
+    size_ = max(size_, binning->cell_size());
     // number of neighbour lists
     stride_ = particle->dim.threads();
     // allocate neighbour lists
@@ -159,25 +86,15 @@ neighbour<dimension, float_type>::neighbour(
     LOG("number of placeholders per neighbour list: " << size_);
 
     try {
+        cuda::copy(particle->nbox, get_neighbour_kernel<dimension>().nbox);
+        cuda::copy(binning->ncell(), get_neighbour_kernel<dimension>().ncell);
+        cuda::copy(static_cast<vector_type>(box->length()), get_neighbour_kernel<dimension>().box_length);
         cuda::copy(rr_cut_skin_.data(), g_rr_cut_skin_);
         cuda::copy(size_, get_neighbour_kernel<dimension>().neighbour_size);
         cuda::copy(stride_, get_neighbour_kernel<dimension>().neighbour_stride);
     }
     catch (cuda::error const&) {
         LOG_ERROR("failed to copy neighbour list parameters to device symbols");
-        throw;
-    }
-
-    try {
-        g_cell_.resize(dim_cell_.threads());
-        g_cell_offset_.resize(dim_cell_.blocks_per_grid());
-        g_cell_index_.reserve(particle->dim.threads());
-        g_cell_index_.resize(particle->nbox);
-        g_cell_permutation_.reserve(particle->dim.threads());
-        g_cell_permutation_.resize(particle->nbox);
-    }
-    catch (cuda::error const&) {
-        LOG_ERROR("failed to allocate cell placeholders in global device memory");
         throw;
     }
 }
@@ -188,9 +105,7 @@ neighbour<dimension, float_type>::neighbour(
 template <int dimension, typename float_type>
 void neighbour<dimension, float_type>::register_runtimes(profiler_type& profiler)
 {
-    profiler.register_runtime(runtime_.check, "check", "neighbour update criterion");
-    profiler.register_runtime(runtime_.update_cells, "update_cells", "cell lists update");
-    profiler.register_runtime(runtime_.update_neighbours, "update_neighbours", "neighbour lists update");
+    profiler.register_runtime(runtime_.update, "update", "neighbour lists update");
 }
 
 /**
@@ -199,94 +114,7 @@ void neighbour<dimension, float_type>::register_runtimes(profiler_type& profiler
 template <int dimension, typename float_type>
 void neighbour<dimension, float_type>::update()
 {
-    // rebuild cell lists
-    update_cells();
-    // rebuild neighbour lists
-    update_neighbours();
-    // make snapshot of absolute particle displacements
-    cuda::copy(particle->g_r, g_r0_);
-}
-
-template <int dimension, typename float_type>
-typename neighbour_wrapper<dimension>::displacement_impl_type
-neighbour<dimension, float_type>::get_displacement_impl(int threads)
-{
-    switch (threads) {
-      case 512:
-        return neighbour_wrapper<dimension>::kernel.displacement_impl[0];
-      case 256:
-        return neighbour_wrapper<dimension>::kernel.displacement_impl[1];
-      case 128:
-        return neighbour_wrapper<dimension>::kernel.displacement_impl[2];
-      case 64:
-        return neighbour_wrapper<dimension>::kernel.displacement_impl[3];
-      case 32:
-        return neighbour_wrapper<dimension>::kernel.displacement_impl[4];
-      default:
-        throw std::logic_error("invalid reduction thread count");
-    }
-}
-
-/**
- * Check if neighbour list update is needed
- */
-template <int dimension, typename float_type>
-bool neighbour<dimension, float_type>::check()
-{
-    scoped_timer<timer> timer_(runtime_.check);
-    try {
-        cuda::configure(dim_reduce.grid, dim_reduce.block, dim_reduce.threads_per_block() * sizeof(float));
-        displacement_impl(particle->g_r, g_r0_, g_rr_);
-        cuda::copy(g_rr_, h_rr_);
-    }
-    catch (cuda::error const&) {
-        LOG_ERROR("failed to reduce squared particle displacements on GPU");
-        throw;
-    }
-    return *max_element(h_rr_.begin(), h_rr_.end()) > rr_skin_half_;
-}
-
-/**
- * Update cell lists
- */
-template <int dimension, typename float_type>
-void neighbour<dimension, float_type>::update_cells()
-{
-    scoped_timer<timer> timer_(runtime_.update_cells);
-
-    // compute cell indices for particle positions
-    cuda::configure(particle->dim.grid, particle->dim.block);
-    get_neighbour_kernel<dimension>().compute_cell(particle->g_r, g_cell_index_);
-
-    // generate permutation
-    cuda::configure(particle->dim.grid, particle->dim.block);
-    get_neighbour_kernel<dimension>().gen_index(g_cell_permutation_);
-    sort_(g_cell_index_, g_cell_permutation_);
-
-    // compute global cell offsets in sorted particle list
-    cuda::memset(g_cell_offset_, 0xFF);
-    cuda::configure(particle->dim.grid, particle->dim.block);
-    get_neighbour_kernel<dimension>().find_cell_offset(g_cell_index_, g_cell_offset_);
-
-    // assign particles to cells
-    cuda::vector<int> g_ret(1);
-    cuda::host::vector<int> h_ret(1);
-    cuda::memset(g_ret, EXIT_SUCCESS);
-    cuda::configure(dim_cell_.grid, dim_cell_.block);
-    get_neighbour_kernel<dimension>().assign_cells(g_ret, g_cell_index_, g_cell_offset_, g_cell_permutation_, g_cell_);
-    cuda::copy(g_ret, h_ret);
-    if (h_ret.front() != EXIT_SUCCESS) {
-        throw std::runtime_error("overcrowded placeholders in cell lists update");
-    }
-}
-
-/**
- * Update neighbour lists
- */
-template <int dimension, typename float_type>
-void neighbour<dimension, float_type>::update_neighbours()
-{
-    scoped_timer<timer> timer_(runtime_.update_neighbours);
+    scoped_timer<timer> timer_(runtime_.update);
 
     // mark neighbour list placeholders as virtual particles
     cuda::memset(g_neighbour_, 0xFF);
@@ -294,10 +122,10 @@ void neighbour<dimension, float_type>::update_neighbours()
     cuda::vector<int> g_ret(1);
     cuda::host::vector<int> h_ret(1);
     cuda::memset(g_ret, EXIT_SUCCESS);
-    cuda::configure(dim_cell_.grid, dim_cell_.block, cell_size_ * (2 + dimension) * sizeof(int));
+    cuda::configure(binning->dim_cell().grid, binning->dim_cell().block, binning->cell_size() * (2 + dimension) * sizeof(int));
     get_neighbour_kernel<dimension>().r.bind(particle->g_r);
     get_neighbour_kernel<dimension>().rr_cut_skin.bind(g_rr_cut_skin_);
-    get_neighbour_kernel<dimension>().update_neighbours(g_ret, g_neighbour_, g_cell_);
+    get_neighbour_kernel<dimension>().update_neighbours(g_ret, g_neighbour_, binning->g_cell());
     cuda::thread::synchronize();
     cuda::copy(g_ret, h_ret);
     if (h_ret.front() != EXIT_SUCCESS) {
@@ -320,6 +148,7 @@ void neighbour<dimension, float_type>::luaopen(lua_State* L)
                     .def(constructor<
                         shared_ptr<particle_type>
                       , shared_ptr<box_type>
+                      , shared_ptr<binning_type>
                       , matrix_type const&
                       , double
                       , double

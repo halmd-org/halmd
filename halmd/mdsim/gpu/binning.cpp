@@ -115,8 +115,8 @@ binning<dimension, float_type>::binning(
     LOG("number of cells per dimension: " << ncell_);
     LOG("cell edge lengths: " << cell_length_);
     LOG("desired average cell occupancy: " << nu_cell_);
-    double nu_cell_eff = static_cast<double>(particle->nbox) / dim_cell_.threads();
-    LOG("effective average cell occupancy: " << nu_cell_eff);
+    nu_cell_eff_ = static_cast<double>(particle->nbox) / dim_cell_.threads();
+    LOG("effective average cell occupancy: " << nu_cell_eff_);
 
     try {
         cuda::copy(particle->nbox, get_binning_kernel<dimension>().nbox);
