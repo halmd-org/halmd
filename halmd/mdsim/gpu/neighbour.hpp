@@ -41,19 +41,12 @@ class neighbour
   : public mdsim::neighbour<dimension>
 {
 public:
-    typedef mdsim::neighbour<dimension> _Base;
     typedef gpu::particle<dimension, float_type> particle_type;
     typedef typename particle_type::vector_type vector_type;
     typedef boost::numeric::ublas::symmetric_matrix<float_type, boost::numeric::ublas::lower> matrix_type;
     typedef mdsim::box<dimension> box_type;
     typedef gpu::binning<dimension, float_type> binning_type;
     typedef utility::profiler profiler_type;
-
-    struct runtime
-    {
-        typedef typename profiler_type::accumulator_type accumulator_type;
-        accumulator_type update;
-    };
 
     static void luaopen(lua_State* L);
 
@@ -105,6 +98,14 @@ public:
     }
 
 private:
+    typedef mdsim::neighbour<dimension> _Base;
+
+    struct runtime
+    {
+        typedef typename profiler_type::accumulator_type accumulator_type;
+        accumulator_type update;
+    };
+
     boost::shared_ptr<particle_type const> particle_;
     boost::shared_ptr<box_type const> box_;
     boost::shared_ptr<binning_type const> binning_;
