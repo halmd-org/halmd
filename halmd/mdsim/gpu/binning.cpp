@@ -17,12 +17,14 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <boost/bind.hpp>
 #include <exception>
 
 #include <halmd/io/logger.hpp>
 #include <halmd/mdsim/gpu/binning.hpp>
 #include <halmd/utility/lua/lua.hpp>
 #include <halmd/utility/scoped_timer.hpp>
+#include <halmd/utility/signal.hpp>
 #include <halmd/utility/timer.hpp>
 
 using namespace boost;
@@ -185,6 +187,13 @@ void binning<dimension, float_type>::update()
     }
 }
 
+template <typename binning_type>
+typename signal<void ()>::slot_function_type
+wrap_update(shared_ptr<binning_type> binning)
+{
+    return bind(&binning_type::update, binning);
+}
+
 template <int dimension, typename float_type>
 void binning<dimension, float_type>::luaopen(lua_State* L)
 {
@@ -205,6 +214,7 @@ void binning<dimension, float_type>::luaopen(lua_State* L)
                       , double
                     >())
                     .def("register_runtimes", &binning::register_runtimes)
+                    .property("update", &wrap_update<binning>)
                     .property("r_skin", &binning::r_skin)
                     .property("cell_occupancy", &binning::cell_occupancy)
             ]
