@@ -1,5 +1,5 @@
 --
--- Copyright © 2010  Peter Colberg
+-- Copyright © 2010-2011  Peter Colberg
 --
 -- This file is part of HALMD.
 --
@@ -17,14 +17,14 @@
 -- along with this program.  If not, see <http://www.gnu.org/licenses/>.
 --
 
+require("halmd.mdsim.clock")
 require("halmd.modules")
 require("halmd.singleton")
 
+-- grab modules
+local mdsim = halmd.mdsim
 -- grab C++ wrappers
-local core_wrapper = {
-    [2] = libhalmd.mdsim.core_2_
-  , [3] = libhalmd.mdsim.core_3_
-}
+local core_wrapper = libhalmd.mdsim.core
 -- grab standard library
 local assert = assert
 
@@ -34,8 +34,6 @@ module("halmd.mdsim.core", halmd.modules.register, halmd.singleton)
 -- construct core module
 --
 function new(args)
-    local dimension = assert(args.dimension)
-    local core = core_wrapper[dimension]()
-    assert(core.dimension == dimension)
-    return core
+    local clock = mdsim.clock() -- singleton
+    return core_wrapper(clock)
 end
