@@ -1,5 +1,5 @@
 --
--- Copyright © 2010  Peter Colberg
+-- Copyright © 2010-2011  Peter Colberg
 --
 -- This file is part of HALMD.
 --
@@ -18,13 +18,11 @@
 --
 
 require("halmd.device")
-require("halmd.mdsim.core")
 require("halmd.modules")
 require("halmd.singleton")
 
 -- grab modules
 local device = halmd.device
-local mdsim = halmd.mdsim
 -- grab C++ wrappers
 local particle_wrapper = {
     host = {
@@ -44,7 +42,6 @@ local h5 = libhalmd.h5
 local po = libhalmd.po
 -- grab standard library
 local assert = assert
-local print = print
 
 module("halmd.mdsim.particle", halmd.modules.register, halmd.singleton)
 
@@ -63,11 +60,6 @@ function new(args)
     else
         particle = particle_wrapper.host[dimension](npart)
     end
-
-    local core = mdsim.core() -- singleton
-    -- connect particle to core
-    core.particle = particle
-
     return particle
 end
 
@@ -93,7 +85,7 @@ end
 --
 -- write module parameters to HDF5 group
 --
--- @param core module instance
+-- @param particle module instance
 -- @param group HDF5 group
 --
 function write_parameters(particle, group)
