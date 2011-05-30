@@ -72,7 +72,7 @@ function new(args)
 
     local core = mdsim.core()
     -- connect force to core
-    core.force = force
+    core:on_force(force.compute)
 
     return force
 end
