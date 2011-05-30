@@ -54,8 +54,13 @@ module("halmd", halmd.modules.register)
 -- Construct simulation
 --
 function new(args)
+    -- create simulation box with particles
     mdsim.box()
+    -- add integrator
     mdsim.integrator()
+    -- enable particle sorting *before* force computation
+    mdsim.sort()
+    -- add force
     mdsim.force()
 
     local reader = trajectory.reader()
