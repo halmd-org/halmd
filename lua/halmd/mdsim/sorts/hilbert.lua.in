@@ -52,16 +52,19 @@ function new(args)
     local particle = mdsim.particle() -- singleton
     local dimension = assert(particle.dimension)
     local box = mdsim.box() -- singleton
-    local core = mdsim.core()
-    local neighbour = assert(core.neighbour)
 
+    local hilbert
     if device() then
-        local hilbert = assert(hilbert_wrapper.gpu[dimension])
-        return hilbert(particle, box)
+        hilbert = assert(hilbert_wrapper.gpu[dimension])
     else
-        local hilbert = assert(hilbert_wrapper.host[dimension])
-        return hilbert(particle, box, neighbour)
+        hilbert = assert(hilbert_wrapper.host[dimension])
     end
+    local sort = hilbert(particle, box)
+
+    local core = mdsim.core()
+    core:on_prepend_force(sort.order)
+
+    return sort
 end
 
 --
