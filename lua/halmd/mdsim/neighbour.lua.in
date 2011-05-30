@@ -1,5 +1,5 @@
 --
--- Copyright © 2010  Peter Colberg
+-- Copyright © 2010-2011  Peter Colberg
 --
 -- This file is part of HALMD.
 --
@@ -18,9 +18,10 @@
 --
 
 require("halmd.device")
+require("halmd.mdsim.binning")
+require("halmd.mdsim.box")
 require("halmd.mdsim.core")
 require("halmd.mdsim.particle")
-require("halmd.mdsim.sort")
 require("halmd.modules")
 
 -- grab modules
@@ -52,27 +53,27 @@ module("halmd.mdsim.neighbour", halmd.modules.register)
 -- @param r_cut symmetric matrix with potential cutoff radii
 --
 function new(args)
+    -- cutoff radius matrix of truncated potential
     local r_cut = assert(args.r_cut)
+    -- neighbour list skin
     local skin = args.skin or 0.5 -- default value
 
     -- dependency injection
     local particle = mdsim.particle() -- singleton
     local dimension = assert(particle.dimension)
     local box = mdsim.box() -- singleton
+    local binning = mdsim.binning{ r_cut = r_cut, skin = skin }
 
     local neighbour
     if device() then
         local occupancy = args.occupancy or 0.4 -- default value
-        neighbour = neighbour_wrapper.gpu[dimension](particle, box, r_cut, skin, occupancy)
+        neighbour = neighbour_wrapper.gpu[dimension](particle, box, binning, r_cut, skin, occupancy)
     else
-        neighbour = neighbour_wrapper.host[dimension](particle, box, r_cut, skin)
+        neighbour = neighbour_wrapper.host[dimension](particle, box, binning, r_cut, skin)
     end
 
     local core = mdsim.core()
-    -- connect neighbour to core
-    core.neighbour = neighbour
-    -- enable particle sorting
-    core.sort = mdsim.sort()
+    core:on_prepend_force(neighbour.update)
 
     return neighbour
 end
