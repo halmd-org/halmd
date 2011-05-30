@@ -17,8 +17,11 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <boost/bind.hpp>
+
 #include <halmd/mdsim/neighbour.hpp>
 #include <halmd/utility/lua/lua.hpp>
+#include <halmd/utility/signal.hpp>
 
 using namespace boost;
 using namespace std;
@@ -27,6 +30,13 @@ namespace halmd
 {
 namespace mdsim
 {
+
+template <typename neighbour_type>
+typename signal<void ()>::slot_function_type
+wrap_update(shared_ptr<neighbour_type> neighbour)
+{
+    return bind(&neighbour_type::update, neighbour);
+}
 
 template <int dimension>
 void neighbour<dimension>::luaopen(lua_State* L)
@@ -38,6 +48,7 @@ void neighbour<dimension>::luaopen(lua_State* L)
         namespace_("mdsim")
         [
             class_<neighbour, shared_ptr<neighbour> >(class_name.c_str())
+                .property("update", &wrap_update<neighbour>)
         ]
     ];
 }
