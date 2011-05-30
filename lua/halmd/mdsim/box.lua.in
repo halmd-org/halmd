@@ -1,5 +1,5 @@
 --
--- Copyright © 2010  Peter Colberg
+-- Copyright © 2010-2011  Peter Colberg
 --
 -- This file is part of HALMD.
 --
@@ -48,10 +48,9 @@ function new(args)
     local ratios = args.ratios or {}
     local length = args.length -- optional
 
-    local core = mdsim.core{ dimension = dimension }
     local particle = mdsim.particle{ dimension = dimension }
 
-    local box = box_wrapper[dimension]
+    local box = assert(box_wrapper[dimension])
     if length then
         -- complete missing values by repeating the last entry
         for i = #length + 1, dimension do
