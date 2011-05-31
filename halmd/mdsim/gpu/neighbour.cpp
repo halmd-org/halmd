@@ -114,6 +114,8 @@ void neighbour<dimension, float_type>::register_runtimes(profiler_type& profiler
 template <int dimension, typename float_type>
 void neighbour<dimension, float_type>::update()
 {
+    LOG_TRACE("update neighbour lists");
+
     scoped_timer<timer> timer_(runtime_.update);
 
     // mark neighbour list placeholders as virtual particles
