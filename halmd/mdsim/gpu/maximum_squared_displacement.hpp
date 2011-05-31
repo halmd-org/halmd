@@ -68,9 +68,9 @@ private:
     boost::shared_ptr<particle_type const> particle_;
     boost::shared_ptr<box_type const> box_;
 
+    cuda::config dim_reduce_;
     static displacement_impl_type get_displacement_impl(int threads);
     displacement_impl_type displacement_impl_;
-    cuda::config dim_reduce_;
 
     /** particle positions at last maximum displacement list update */
     cuda::vector<float4> g_r0_;
