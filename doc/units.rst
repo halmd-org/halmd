@@ -6,8 +6,7 @@ Propagation laws
 
 .. glossary::
 
-velocity-Verlet algorithm
--------------------------
+ velocity-Verlet algorithm
   .. math::
     :nowrap:
 

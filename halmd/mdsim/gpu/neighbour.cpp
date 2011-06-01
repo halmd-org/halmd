@@ -89,19 +89,21 @@ neighbour<dimension, float_type>::neighbour(
     // constraints:
     // 1) cell_length > r_c + r_skin  (potential cutoff + neighbour list skin)
     // 2) cell_size is a (small) multiple of warp_size
-    // 3) ν_eff ≤ ν  (actual vs. desired occupancy)
+    // 3) n_cell respects the aspect ratios of the simulation box
+    // 4) ν_eff ≤ ν  (actual vs. desired occupancy)
     //
     // upper bound on ncell_ provided by 1)
     cell_size_type ncell_max =
         static_cast<cell_size_type>(box->length() / (r_cut_max + r_skin_));
-    // determine optimal value from 2) together with b,c)
+    // determine optimal value from 2,3) together with b,c)
     size_t warp_size = cuda::device::properties(cuda::device::get()).warp_size();
     double nwarps = particle->nbox / (nu_cell_ * warp_size);
-    ncell_ = static_cast<cell_size_type>(ceil(pow(nwarps, 1./dimension)));
+    double volume = accumulate(box->length().begin(), box->length().end(), 1., multiplies<double>());
+    ncell_ = static_cast<cell_size_type>(ceil(box->length() * pow(nwarps / volume, 1./dimension)));
     LOG_DEBUG("desired values for number of cells: " << ncell_);
     LOG_DEBUG("upper bound on number of cells: " << ncell_max);
     // respect upper bound
-    ncell_ = min(ncell_, ncell_max);
+    ncell_ = element_min(ncell_, ncell_max);
 
     // compute derived values
     size_t ncells = accumulate(ncell_.begin(), ncell_.end(), 1, multiplies<size_t>());

@@ -49,31 +49,6 @@ verlet<dimension, float_type>::verlet(
 {
     this->timestep(timestep);
 
-#ifdef USE_VERLET_DSFUN
-    //
-    // Double-single precision requires two single precision
-    // "words" per coordinate. We use the first part of a GPU
-    // vector for the higher (most significant) words of all
-    // particle positions or velocities, and the second part for
-    // the lower (least significant) words.
-    //
-    // The additional memory is allocated using reserve(), which
-    // increases the capacity() without changing the size().
-    //
-    // Take care to pass capacity() as an argument to cuda::copy
-    // or cuda::memset calls if needed, as the lower words will
-    // be ignored in the operation.
-    //
-    LOG("using velocity-Verlet integration in double-single precision");
-    particle->g_r.reserve(2 * particle->dim.threads());
-    // particle images remain in single precision as they
-    // contain integer values (and otherwise would not matter
-    // for the long-time stability of the Verlet integrator)
-    particle->g_v.reserve(2 * particle->dim.threads());
-#else
-    LOG_WARNING("using velocity-Verlet integration in single precision");
-#endif
-
     try {
         cuda::copy(static_cast<vector_type>(box->length()), wrapper->box_length);
     }

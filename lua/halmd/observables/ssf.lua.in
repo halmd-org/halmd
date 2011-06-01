@@ -46,10 +46,11 @@ module("halmd.observables.ssf", halmd.modules.register)
 --
 function new(args)
     -- command line options
-    local tolerance = args.tolerance or 0.01 -- default value
-    local maximum_count = args.maximum_count or 7 -- default value
     local wavenumbers = args.wavenumbers
-    local maximum_wavenumber = args.maximum_wavenumber or 12.6 -- default value, approx. 4π
+    local max_wavenumber = args.max_wavenumber or 12.6 -- default value, approx. 4π
+    local decimation = args.decimation or 10 -- default value
+    local tolerance = args.tolerance or 0.01 -- default value
+    local max_count = args.max_count or 7 -- default value
 
     -- dependency injection
     local core = mdsim.core()
@@ -62,13 +63,14 @@ function new(args)
         wavevector = wavevector{
             wavenumber = wavenumbers
           , tolerance = tolerance
-          , maximum_count = maximum_count
+          , max_count = max_count
         }
     else -- use maximum_wavenumber
         wavevector = wavevector{
-            maximum_wavenumber = maximum_wavenumber
+            max_wavenumber = max_wavenumber
+          , decimation = decimation
           , tolerance = tolerance
-          , maximum_count = maximum_count
+          , max_count = max_count
         }
     end
 
@@ -97,10 +99,11 @@ end
 -- @param desc po.options_description
 --
 function options(desc)
-    desc:add("wavenumbers", po.float_array():conflicts("maximum-wavenumber"), "list of wavenumbers")
-    desc:add("maximum-wavenumber", po.float():conflicts("wavenumbers"), "maximum wavenumber of linearly spaced grid")
+    desc:add("wavenumbers", po.float_array():conflicts("max-wavenumber"), "list of wavenumbers")
+    desc:add("max-wavenumber", po.float():conflicts("wavenumbers"), "maximum wavenumber of semi-linearly spaced grid")
+    desc:add("decimation", po.uint():conflicts("wavenumbers"), "decimation of wavenumber grid")
     desc:add("tolerance", po.float(), "relative tolerance on wavevector magnitude")
-    desc:add("maximum-count", po.uint(), "maximum number of wavevectors per wavenumber shell")
+    desc:add("max-count", po.uint(), "maximum number of wavevectors per wavenumber shell")
 end
 
 --
@@ -108,7 +111,7 @@ end
 --
 function read_parameters(args, group)
     args.tolerance = group:read_attribute("tolerance", h5.float())
-    args.maximum_count = group:read_attribute("maximum_count", h5.uint())
+    args.max_count = group:read_attribute("max_count", h5.uint())
 end
 
 --
@@ -120,5 +123,5 @@ end
 function write_parameters(ssf, group)
     -- wavenumbers are stored along with the ssf data, e.g., in structure/ssf/wavenumber
     group:write_attribute("tolerance", h5.float(), ssf.wavevector.tolerance)
-    group:write_attribute("maximum_count", h5.uint(), ssf.wavevector.maximum_count)
+    group:write_attribute("max_count", h5.uint(), ssf.wavevector.max_count)
 end

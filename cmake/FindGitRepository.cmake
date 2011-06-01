@@ -73,7 +73,7 @@ macro(git_repository DIR PREFIX)
 
   # Parse committer date
   execute_process(
-    COMMAND "${GIT_EXECUTABLE}" log -1 --pretty=%cD HEAD
+    COMMAND "${GIT_EXECUTABLE}" log -1 --pretty=format:%cD HEAD
     WORKING_DIRECTORY "${DIR}"
     RESULT_VARIABLE _GIT_STATUS
     OUTPUT_VARIABLE ${PREFIX}_GIT_COMMITTER_DATE

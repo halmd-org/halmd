@@ -40,9 +40,6 @@ require("halmd.observables.sampler")
 require("halmd.observables.ssf")
 require("halmd.observables.thermodynamics")
 
-require("halmd.random") -- FIXME see below
-local random = halmd.random
-
 -- grab modules
 local mdsim = halmd.mdsim
 local observables = halmd.observables
@@ -109,10 +106,6 @@ function new(args)
     for _, writer in pairs(profiling_writers) do
         sampler:on_finish(writer.write)
     end
-
-    -- FIXME instantiation of the singleton 'random' ensures that the CUDA device
-    -- context is not released prematurely (i.e., upon returning to script::load_library())
-    random{ seed = 42 }
 
     -- Pass sampler from Lua to C++, to run the simulation outside of Lua.
     return sampler

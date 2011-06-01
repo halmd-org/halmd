@@ -13,5 +13,5 @@ HALMD documentation
    data
    units
    reference/index
-   developer/contents
+   developer/index
 

@@ -1,0 +1,53 @@
+#!@CMAKE_COMMAND@ -P
+#
+# Copyright © 2011  Peter Colberg
+#
+# This file is part of HALMD.
+#
+# HALMD is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+#
+
+##
+# Test trajectory continuation for Lennard-Jones fluid
+#
+# This test is related to HALMD bug #69.
+#
+# FIXME test both GPU and host backends with the same script
+# FIXME write C++ test to compare trajectory outputs
+#
+
+set(CMAKE_MODULE_PATH "@HALMD_TEST_CMAKE_BINARY_DIR@")
+
+include(execute_halmd)
+
+set(OUTPUT_PREFIX "@CMAKE_CURRENT_BINARY_DIR@/lennard_jones")
+
+execute_halmd(
+  --verbose --verbose
+  --output "${OUTPUT_PREFIX}"
+  --steps 1000
+  sampler --trajectory=1000
+)
+
+execute_halmd(
+  --verbose --verbose
+  --output "${OUTPUT_PREFIX}_continued"
+  trajectory --file "${OUTPUT_PREFIX}.trj"
+)
+
+file(REMOVE
+  "${OUTPUT_PREFIX}.trj"
+  "${OUTPUT_PREFIX}.log"
+  "${OUTPUT_PREFIX}_continued.log"
+)

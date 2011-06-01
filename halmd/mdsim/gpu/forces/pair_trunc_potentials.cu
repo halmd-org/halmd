@@ -29,4 +29,5 @@
 // address in memory.
 
 #include <halmd/mdsim/gpu/forces/lennard_jones_kernel.cuh>
+#include <halmd/mdsim/gpu/forces/lennard_jones_simple_kernel.cuh>
 #include <halmd/mdsim/gpu/forces/morse_kernel.cuh>

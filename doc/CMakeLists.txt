@@ -132,6 +132,33 @@ if(GENERATE_DOC)
     DESTINATION "share/doc/halmd"
   )
 
+  # HTML output directory
+  set(SPHINX_MAN_DIR "${CMAKE_CURRENT_BINARY_DIR}/man")
+  # This target builds a manual page using Sphinx.
+
+  add_custom_target(halmd_doc_man ALL
+    ${SPHINX_EXECUTABLE}
+      -q -b man
+      -c "${BINARY_BUILD_DIR}"
+      -d "${SPHINX_CACHE_DIR}"
+      "${SOURCES_DIR}"
+      "${SPHINX_MAN_DIR}"
+    COMMENT "Building manual page with Sphinx"
+  )
+  list(APPEND CLEAN_FILES
+    "${SPHINX_MAN_DIR}"
+  )
+  add_dependencies(halmd_doc_man
+    halmd_doc_sources
+  )
+  # serialize Sphinx targets to avoid cache conflicts in parallel builds
+  add_dependencies(halmd_doc_man
+    halmd_doc_html
+  )
+  install(FILES "${SPHINX_MAN_DIR}/halmd.1"
+    DESTINATION "share/man/man1"
+  )
+
   # This target builds PDF documentation using Sphinx and LaTeX.
   if(PDFLATEX_COMPILER)
     # PDF output directory
@@ -158,7 +185,7 @@ if(GENERATE_DOC)
     )
     # serialize Sphinx targets to avoid cache conflicts in parallel builds
     add_dependencies(halmd_doc_pdf
-      halmd_doc_html
+      halmd_doc_man
     )
     install(FILES "${SPHINX_PDF_DIR}/halmd.pdf"
       DESTINATION "share/doc/halmd"

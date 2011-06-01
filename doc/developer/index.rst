@@ -5,6 +5,7 @@ Developer guide
    :maxdepth: 2
 
    luabind
+   module
    redmine
    style
    testing

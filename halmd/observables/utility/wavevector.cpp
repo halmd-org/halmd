@@ -59,6 +59,7 @@ wavevector<dimension>::wavevector(
 template <int dimension>
 wavevector<dimension>::wavevector(
     double max_wavenumber
+  , unsigned int decimation
   , vector_type const& box_length
   , double tolerance
   , unsigned int max_count
@@ -70,10 +71,17 @@ wavevector<dimension>::wavevector(
 {
     LOG("maximum wavenumber: " << max_wavenumber);
 
-    // set up linearly spaced wavenumber grid
-    double q_min = 2 * M_PI / norm_inf(box_length_); // norm_inf returns the maximum coordinate
-    for (double q = q_min; q < max_wavenumber; q += q_min) {
+    // set up semi-linearly spaced wavenumber grid
+    // determine q_min for the initial spacing
+    double h = 2 * M_PI / norm_inf(box_length_); //< norm_inf returns the maximum coordinate
+    unsigned int i = 0;
+    for (double q = h; q < max_wavenumber; ) {
         wavenumber_.push_back(q);
+        q += h;
+        // double grid spacing after every 'decimation' number of points
+        if (decimation > 0 && ++i % decimation == 0) {
+            h *= 2;
+        }
     }
 
     init_();
@@ -139,14 +147,14 @@ void wavevector<dimension>::luaopen(lua_State* L)
                        , double, unsigned int
                     >())
                     .def(constructor<
-                         double
+                         double, unsigned int
                        , vector_type const&
                        , double, unsigned int
                     >())
                     .property("wavenumber", &wavevector::wavenumber)
                     .property("value", &wavevector::value)
                     .property("tolerance", &wavevector::tolerance)
-                    .property("maximum_count", &wavevector::maximum_count)
+                    .property("max_count", &wavevector::max_count)
             ]
         ]
     ];

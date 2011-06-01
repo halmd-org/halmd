@@ -25,7 +25,6 @@
 #include <boost/multi_array.hpp>
 #include <exception>
 #include <fstream>
-#include <iostream>
 
 #include <halmd/io/logger.hpp>
 #include <halmd/utility/gpu/device.hpp>
@@ -83,32 +82,33 @@ device::device(vector<int> devices, unsigned int threads)
     }
 
     LOG("CUDA device: " << cuda::driver::context::device());
-    cuda::device::properties prop(cuda::driver::context::device());
 
-    LOG("CUDA device name: " << prop.name());
-    LOG("CUDA device total global memory: " << prop.total_global_mem() << " bytes");
-    LOG("CUDA device shared memory per block: " << prop.shared_mem_per_block() << " bytes");
-    LOG("CUDA device registers per block: " << prop.regs_per_block());
-    LOG("CUDA device warp size: " << prop.warp_size());
-    LOG("CUDA device maximum number of threads per block: " << prop.max_threads_per_block());
-    LOG("CUDA device total constant memory: " << prop.total_const_mem());
-    LOG("CUDA device major revision: " << prop.major());
-    LOG("CUDA device minor revision: " << prop.minor());
-    LOG("CUDA device clock frequency: " << prop.clock_rate() << " kHz");
-    LOG("CUDA device compute capability: " << prop.major() << "." << prop.minor());
+    prop_ = cuda::device::properties(cuda::driver::context::device());
+
+    LOG("CUDA device name: " << prop_.name());
+    LOG("CUDA device total global memory: " << prop_.total_global_mem() << " bytes");
+    LOG("CUDA device shared memory per block: " << prop_.shared_mem_per_block() << " bytes");
+    LOG("CUDA device registers per block: " << prop_.regs_per_block());
+    LOG("CUDA device warp size: " << prop_.warp_size());
+    LOG("CUDA device maximum number of threads per block: " << prop_.max_threads_per_block());
+    LOG("CUDA device total constant memory: " << prop_.total_const_mem());
+    LOG("CUDA device major revision: " << prop_.major());
+    LOG("CUDA device minor revision: " << prop_.minor());
+    LOG("CUDA device clock frequency: " << prop_.clock_rate() << " kHz");
+    LOG("CUDA device compute capability: " << prop_.major() << "." << prop_.minor());
 
     LOG("CUDA compute version: " << device::compute_version());
 
     if (threads_ < 1) {
         throw runtime_error("invalid number of CUDA threads");
     }
-    if (threads_ > prop.max_threads_per_block()) {
+    if (threads_ > prop_.max_threads_per_block()) {
         throw runtime_error("number of CUDA threads exceeds maximum number of threads per block");
     }
     if (threads_ & (threads_ - 1)) {
         LOG_WARNING("number of CUDA threads not a power of 2");
     }
-    if (threads_ % prop.warp_size()) {
+    if (threads_ % prop_.warp_size()) {
         LOG_WARNING("number of CUDA threads not a multiple of warp size");
     }
 
@@ -122,9 +122,7 @@ device::device(vector<int> devices, unsigned int threads)
  */
 device::~device()
 {
-#ifndef NDEBUG //< calling LOG_DEBUG at this stage may not be safe (causing a segmentation fault)
-    cerr << "[DEBUG] Detach from CUDA device context" << endl;
-#endif
+    LOG_DEBUG("detach from CUDA device context");
     cuda::thread::exit();
 }
 

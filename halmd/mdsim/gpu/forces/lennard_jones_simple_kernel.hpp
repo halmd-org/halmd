@@ -1,5 +1,5 @@
 /*
- * Copyright © 2008-2010  Peter Colberg
+ * Copyright © 2008-2011  Peter Colberg and Felix Höfling
  *
  * This file is part of HALMD.
  *
@@ -17,38 +17,32 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef HALMD_IO_TRAJECTORY_WRITER_HPP
-#define HALMD_IO_TRAJECTORY_WRITER_HPP
+#ifndef HALMD_MDSIM_GPU_FORCES_LENNARD_JONES_SIMPLE_KERNEL_HPP
+#define HALMD_MDSIM_GPU_FORCES_LENNARD_JONES_SIMPLE_KERNEL_HPP
 
-#include <lua.hpp>
-#include <stdint.h>
-
-#include <halmd/utility/signal.hpp>
+#include <cuda_wrapper/cuda_wrapper.hpp>
 
 namespace halmd
 {
-namespace io { namespace trajectory
+namespace mdsim { namespace gpu { namespace forces
+{
+namespace lennard_jones_simple_kernel
 {
 
-template <int dimension>
-class writer
+// forward declaration for host code
+class lennard_jones_simple;
+
+} // namespace lennard_jones_kernel
+
+struct lennard_jones_simple_wrapper
 {
-public:
-    typedef halmd::signal<void (uint64_t)> signal_type;
-    typedef typename signal_type::slot_function_type slot_function_type;
-
-    static void luaopen(lua_State* L);
-
-    writer() {}
-    virtual ~writer() {}
-    virtual void append(uint64_t step) = 0;
-    virtual void flush() = 0;
-
-    virtual void on_append(slot_function_type const& slot) = 0;
+    /** Lennard-Jones potential parameters */
+    static cuda::symbol<float> rr_cut;
+    static cuda::symbol<float> en_cut;
 };
 
-}} // namespace io::trajectory
+}}} // namespace mdsim::gpu::forces
 
 } // namespace halmd
 
-#endif /* ! HALMD_IO_TRAJECTORY_WRITER_HPP */
+#endif /* ! HALMD_MDSIM_GPU_FORCES_LENNARD_JONES_KERNEL_HPP */

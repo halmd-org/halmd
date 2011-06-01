@@ -1,0 +1,39 @@
+#!@CMAKE_COMMAND@ -P
+#
+# Copyright © 2011  Peter Colberg
+#
+# This file is part of HALMD.
+#
+# HALMD is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+#
+
+##
+# Execute HALMD binary with given arguments
+#
+# FIXME use --verbose --verbose by default
+# FIXME support QUIET option to disable --verbose --verbose
+# FIXME optionally capture stdout/stderr to variable
+#
+macro(execute_halmd ARGS)
+  execute_process(
+    COMMAND "@CMAKE_BINARY_DIR@/halmd/halmd" ${ARGN}
+    RESULT_VARIABLE ${OUTPUT_PREFIX}_STATUS
+    WORKING_DIRECTORY "@CMAKE_BINARY_DIR@/halmd"
+  )
+
+  if(NOT ${OUTPUT_PREFIX}_STATUS STREQUAL "0")
+    message(SEND_ERROR "halmd execution failed")
+  endif()
+
+endmacro()

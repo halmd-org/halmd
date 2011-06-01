@@ -24,8 +24,8 @@ local setmetatable = setmetatable
 
 module("halmd.singleton")
 
--- weak references to C++ singleton instances by Lua module
-local singletons = setmetatable({}, { __mode = "v" })
+-- references to C++ singleton instances by Lua module
+local singletons = {}
 
 --
 -- register Lua module as C++ singleton instance creator
