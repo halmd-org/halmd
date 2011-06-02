@@ -75,7 +75,7 @@ function new(args)
 
     local core = mdsim.core()
     -- connect position to core
-    core.position = position
+    core:on_prepare(position.set)
 
     return position
 end

@@ -18,11 +18,13 @@
 --
 
 require("halmd.device")
+require("halmd.mdsim.core")
 require("halmd.modules")
 require("halmd.singleton")
 
 -- grab modules
 local device = halmd.device
+local mdsim = halmd.mdsim
 -- grab C++ wrappers
 local particle_wrapper = {
     host = {
@@ -60,6 +62,11 @@ function new(args)
     else
         particle = particle_wrapper.host[dimension](npart)
     end
+
+    local core = mdsim.core()
+    -- set particle types at the beginning of system preparation
+    core:on_prepend_prepare(particle.set)
+
     return particle
 end
 

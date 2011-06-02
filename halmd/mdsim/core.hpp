@@ -59,6 +59,21 @@ public:
         return runtime_;
     }
 
+    void on_prepend_prepare(slot_function_type const& slot)
+    {
+        on_prepend_prepare_.connect(slot);
+    }
+
+    void on_prepare(slot_function_type const& slot)
+    {
+        on_prepare_.connect(slot);
+    }
+
+    void on_append_prepare(slot_function_type const& slot)
+    {
+        on_append_prepare_.connect(slot);
+    }
+
     void on_prepend_integrate(slot_function_type const& slot)
     {
         on_prepend_integrate_.connect(slot);
@@ -106,6 +121,9 @@ public:
 
 private:
     boost::shared_ptr<clock_type> clock_;
+    signal_type on_prepend_prepare_;
+    signal_type on_prepare_;
+    signal_type on_append_prepare_;
     signal_type on_prepend_integrate_;
     signal_type on_integrate_;
     signal_type on_append_integrate_;

@@ -58,9 +58,9 @@ void core::prepare()
 {
     scoped_timer<timer> timer_(runtime_.prepare);
 
-    on_prepend_force_();
-    on_force_();
-    on_append_force_();
+    on_prepend_prepare_();
+    on_prepare_();
+    on_append_prepare_();
 }
 
 /**
@@ -98,6 +98,9 @@ HALMD_LUA_API int luaopen_libhalmd_mdsim_core(lua_State* L)
                 .def("register_runtimes", &core::register_runtimes)
                 .def("prepare", &core::prepare)
                 .def("mdstep", &core::mdstep)
+                .def("on_prepend_prepare", &core::on_prepend_prepare)
+                .def("on_prepare", &core::on_prepare)
+                .def("on_append_prepare", &core::on_append_prepare)
                 .def("on_prepend_integrate", &core::on_prepend_integrate)
                 .def("on_integrate", &core::on_integrate)
                 .def("on_append_integrate", &core::on_append_integrate)

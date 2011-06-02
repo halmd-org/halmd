@@ -71,7 +71,10 @@ function new(args)
     local force = pair_trunc(potential, particle, box, neighbour)
 
     local core = mdsim.core()
-    -- connect force to core
+    -- system preparation
+    core:on_append_prepare(force.compute)
+
+    -- compute forces every step
     core:on_force(force.compute)
 
     return force
