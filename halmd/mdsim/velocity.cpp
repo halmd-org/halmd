@@ -17,9 +17,11 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <halmd/io/logger.hpp>
+#include <boost/bind.hpp>
+
 #include <halmd/mdsim/velocity.hpp>
 #include <halmd/utility/lua/lua.hpp>
+#include <halmd/utility/signal.hpp>
 
 using namespace boost;
 using namespace std;
@@ -28,6 +30,13 @@ namespace halmd
 {
 namespace mdsim
 {
+
+template <typename velocity>
+typename signal<void ()>::slot_function_type
+wrap_set(shared_ptr<velocity> self)
+{
+    return bind(&velocity::set, self);
+}
 
 template <int dimension>
 void velocity<dimension>::luaopen(lua_State* L)
@@ -39,7 +48,7 @@ void velocity<dimension>::luaopen(lua_State* L)
         namespace_("mdsim")
         [
             class_<velocity, shared_ptr<velocity> >(class_name.c_str())
-                .def("set", &velocity::set)
+                .property("set", &wrap_set<velocity>)
         ]
     ];
 }
