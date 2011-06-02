@@ -19,7 +19,6 @@
 
 require("halmd.device")
 require("halmd.mdsim.box")
-require("halmd.mdsim.core")
 require("halmd.mdsim.particle")
 require("halmd.modules")
 
@@ -67,15 +66,10 @@ function new(args)
     if device() then
         local occupancy = args.occupancy or 0.4 -- default value
 
-        binning = binning_wrapper.gpu[dimension](particle, box, r_cut, skin, occupancy)
+        return binning_wrapper.gpu[dimension](particle, box, r_cut, skin, occupancy)
     else
-        binning = binning_wrapper.host[dimension](particle, box, r_cut, skin)
+        return binning_wrapper.host[dimension](particle, box, r_cut, skin)
     end
-
-    local core = mdsim.core()
-    core:on_prepend_force(binning.update)
-
-    return binning
 end
 
 --

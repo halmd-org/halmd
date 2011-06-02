@@ -59,12 +59,7 @@ function new(args)
     else
         hilbert = assert(hilbert_wrapper.host[dimension])
     end
-    local sort = hilbert(particle, box)
-
-    local core = mdsim.core()
-    core:on_prepend_force(sort.order)
-
-    return sort
+    return hilbert(particle, box)
 end
 
 --

@@ -21,7 +21,9 @@ require("halmd.device")
 require("halmd.mdsim.binning")
 require("halmd.mdsim.box")
 require("halmd.mdsim.core")
+require("halmd.mdsim.maximum_squared_displacement")
 require("halmd.mdsim.particle")
+require("halmd.mdsim.sort")
 require("halmd.modules")
 
 -- grab modules
@@ -40,10 +42,12 @@ if libhalmd.mdsim.gpu then
       , [3] = libhalmd.mdsim.gpu.neighbour_3_
     }
 end
+local predicates = libhalmd.predicates
 local h5 = libhalmd.h5
 local po = libhalmd.po
 -- grab standard library
 local assert = assert
+local math = math
 
 module("halmd.mdsim.neighbour", halmd.modules.register)
 
@@ -62,8 +66,11 @@ function new(args)
     local particle = mdsim.particle() -- singleton
     local dimension = assert(particle.dimension)
     local box = mdsim.box() -- singleton
+
+    -- domain decomposition
     local binning = mdsim.binning{ r_cut = r_cut, skin = skin }
 
+    -- neighbour lists
     local neighbour
     if device() then
         local occupancy = args.occupancy or 0.4 -- default value
@@ -72,8 +79,22 @@ function new(args)
         neighbour = neighbour_wrapper.host[dimension](particle, box, binning, r_cut, skin)
     end
 
-    local core = mdsim.core()
-    core:on_prepend_force(neighbour.update)
+    -- particle sorting
+    local sort = mdsim.sort()
+    -- maximum squared displacement computation
+    local maximum_squared_displacement = mdsim.maximum_squared_displacement()
+    -- compare maximum squared displacement to squared half skin size
+    local limit = math.pow(neighbour.r_skin / 2, 2)
+    local greater = predicates.greater(maximum_squared_displacement.compute, limit)
+
+    -- evaluate maximum squared displacement every step
+    mdsim.core():on_prepend_force(greater.evaluate)
+
+    -- if maximum squared displacement is greater than squared half skin size:
+    greater:on_greater(sort.order)
+    greater:on_greater(binning.update)
+    greater:on_greater(neighbour.update)
+    greater:on_greater(maximum_squared_displacement.zero)
 
     return neighbour
 end

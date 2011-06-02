@@ -58,8 +58,6 @@ function new(args)
     mdsim.box()
     -- add integrator
     mdsim.integrator()
-    -- enable particle sorting *before* force computation
-    mdsim.sort()
     -- add force
     mdsim.force()
 
