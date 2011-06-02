@@ -19,13 +19,12 @@
 
 #include <algorithm>
 #include <boost/bind.hpp>
-#include <boost/foreach.hpp>
-#include <boost/range/iterator_range.hpp>
 #include <exception>
 
 #include <halmd/io/logger.hpp>
 #include <halmd/mdsim/gpu/maximum_squared_displacement.hpp>
 #include <halmd/utility/lua/lua.hpp>
+#include <halmd/utility/predicates/greater.hpp>
 #include <halmd/utility/scoped_timer.hpp>
 #include <halmd/utility/timer.hpp>
 
@@ -133,6 +132,20 @@ float_type maximum_squared_displacement<dimension, float_type>::compute()
 }
 
 template <int dimension, typename float_type>
+static typename signal<void ()>::slot_function_type
+wrap_zero(shared_ptr<maximum_squared_displacement<dimension, float_type> > self)
+{
+    return bind(&maximum_squared_displacement<dimension, float_type>::zero, self);
+}
+
+template <int dimension, typename float_type>
+static typename predicates::greater<float_type>::function_type
+wrap_compute(shared_ptr<maximum_squared_displacement<dimension, float_type> > self)
+{
+    return bind(&maximum_squared_displacement<dimension, float_type>::compute, self);
+}
+
+template <int dimension, typename float_type>
 void maximum_squared_displacement<dimension, float_type>::luaopen(lua_State* L)
 {
     using namespace luabind;
@@ -149,6 +162,8 @@ void maximum_squared_displacement<dimension, float_type>::luaopen(lua_State* L)
                       , shared_ptr<box_type const>
                     >())
                     .def("register_runtimes", &maximum_squared_displacement::register_runtimes)
+                    .property("zero", &wrap_zero<dimension, float_type>)
+                    .property("compute", &wrap_compute<dimension, float_type>)
             ]
         ]
     ];
