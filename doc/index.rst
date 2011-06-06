@@ -10,6 +10,7 @@ HALMD documentation
    usage
    faq
    validation
+   benchmarks
    data
    units
    developer/index

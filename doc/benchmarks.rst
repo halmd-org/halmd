@@ -7,7 +7,7 @@ Simple Lennard-Jones fluid in 3 dimensions
 Parameters:
 
     * 64,000 particles, number density :math:`\rho = 0.2\sigma^3`
-    * force: lennard_jones_simple (:math:`r_c = 2.5\sigma, r_skin = 0.5\sigma`)
+    * force: lennard_jones_simple (:math:`r_c = 2.5\sigma, r_\text{skin} = 0.5\sigma`)
     * integrator: verlet (NVE, double-single precision, :math:`\delta t^* = 0.002`)
 
 +--------------------+-------------------------------+------------------+
