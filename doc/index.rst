@@ -12,6 +12,5 @@ HALMD documentation
    validation
    data
    units
-   reference/index
    developer/index
 
