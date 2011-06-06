@@ -37,7 +37,7 @@ namespace observables
  * Initialize simulation
  */
 sampler::sampler(
-    shared_ptr<clock_type> clock
+    shared_ptr<clock_type const> clock
   , shared_ptr<core_type> core
   , step_type steps
 )
@@ -152,7 +152,7 @@ HALMD_LUA_API int luaopen_libhalmd_observables_sampler(lua_State* L)
     [
         class_<sampler, shared_ptr<sampler> >("sampler")
             .def(constructor<
-                shared_ptr<sampler::clock_type>
+                shared_ptr<sampler::clock_type const>
               , shared_ptr<sampler::core_type>
               , sampler::step_type
             >())

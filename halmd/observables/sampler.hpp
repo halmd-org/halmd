@@ -53,7 +53,7 @@ public:
     };
 
     sampler(
-        boost::shared_ptr<clock_type> clock
+        boost::shared_ptr<clock_type const> clock
       , boost::shared_ptr<core_type> core
       , step_type steps
     );
@@ -81,7 +81,7 @@ private:
     void sample(slot_function_type const& slot, step_type interval, step_type step) const;
 
     /** Molecular Dynamics simulation clock */
-    boost::shared_ptr<clock_type> clock_;
+    boost::shared_ptr<clock_type const> clock_;
     /** Molecular Dynamics simulation core */
     boost::shared_ptr<core_type> core_;
     /** total number of integration steps */
