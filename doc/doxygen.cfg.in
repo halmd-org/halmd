@@ -1,6 +1,8 @@
 DOXYFILE_ENCODING      = UTF-8
 PROJECT_NAME           = @PROJECT_NAME@
 PROJECT_NUMBER         = @PROGRAM_VERSION@
+PROJECT_BRIEF          = @PROGRAM_DESC@
+PROJECT_LOGO           = @CMAKE_CURRENT_SOURCE_DIR@/_static/halmd_logo_small.png
 GENERATE_LATEX         = NO
 GENERATE_MAN           = NO
 GENERATE_RTF           = NO
