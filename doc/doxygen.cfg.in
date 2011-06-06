@@ -1,5 +1,5 @@
 CASE_SENSE_NAMES       = NO
-CLASS_DIAGRAMS         = YES
+CLASS_DIAGRAMS         = NO
 DOXYFILE_ENCODING      = UTF-8
 EXCLUDE_PATTERNS       = */deprecated/* */test/*
 EXTRACT_ALL            = YES
@@ -10,7 +10,7 @@ GENERATE_LATEX         = NO
 GENERATE_MAN           = NO
 GENERATE_RTF           = NO
 GENERATE_XML           = NO
-HAVE_DOT               = YES
+HAVE_DOT               = NO
 HIDE_UNDOC_CLASSES     = NO
 HIDE_UNDOC_MEMBERS     = NO
 HTML_OUTPUT            = @CMAKE_CURRENT_BINARY_DIR@/html/reference
