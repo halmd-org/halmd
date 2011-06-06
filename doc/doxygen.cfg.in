@@ -2,6 +2,7 @@ CASE_SENSE_NAMES       = NO
 CLASS_DIAGRAMS         = NO
 DOXYFILE_ENCODING      = UTF-8
 EXCLUDE_PATTERNS       = */deprecated/* */test/*
+EXCLUDE_SYMBOLS        = detail
 EXTRACT_ALL            = YES
 FILE_PATTERNS          = *.cpp *.hpp *.cu *.cuh
 FULL_PATH_NAMES        = YES
