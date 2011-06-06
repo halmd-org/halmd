@@ -14,3 +14,4 @@ HALMD documentation
    units
    developer/index
 
+* `C++ API reference <reference/index.html>`_
