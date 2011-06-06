@@ -44,13 +44,13 @@ public:
     struct runtime_type
     {
         typedef profiler_type::accumulator_type accumulator_type;
-        accumulator_type prepare;
+        accumulator_type setup;
         accumulator_type mdstep;
     };
 
     core(boost::shared_ptr<clock_type> clock);
     void register_runtimes(profiler_type& profiler) const;
-    void prepare();
+    void setup();
     void mdstep();
 
     /** profiling runtime accumulators */
@@ -59,19 +59,19 @@ public:
         return runtime_;
     }
 
-    void on_prepend_prepare(slot_function_type const& slot)
+    void on_prepend_setup(slot_function_type const& slot)
     {
-        on_prepend_prepare_.connect(slot);
+        on_prepend_setup_.connect(slot);
     }
 
-    void on_prepare(slot_function_type const& slot)
+    void on_setup(slot_function_type const& slot)
     {
-        on_prepare_.connect(slot);
+        on_setup_.connect(slot);
     }
 
-    void on_append_prepare(slot_function_type const& slot)
+    void on_append_setup(slot_function_type const& slot)
     {
-        on_append_prepare_.connect(slot);
+        on_append_setup_.connect(slot);
     }
 
     void on_prepend_integrate(slot_function_type const& slot)
@@ -121,9 +121,9 @@ public:
 
 private:
     boost::shared_ptr<clock_type> clock_;
-    signal_type on_prepend_prepare_;
-    signal_type on_prepare_;
-    signal_type on_append_prepare_;
+    signal_type on_prepend_setup_;
+    signal_type on_setup_;
+    signal_type on_append_setup_;
     signal_type on_prepend_integrate_;
     signal_type on_integrate_;
     signal_type on_append_integrate_;

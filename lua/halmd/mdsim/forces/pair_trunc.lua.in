@@ -72,7 +72,7 @@ function new(args)
 
     local core = mdsim.core()
     -- system preparation
-    core:on_append_prepare(force.compute)
+    core:on_append_setup(force.compute)
 
     -- compute forces every step
     core:on_force(force.compute)

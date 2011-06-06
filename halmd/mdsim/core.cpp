@@ -47,20 +47,20 @@ core::core(shared_ptr<clock_type> clock)
  */
 void core::register_runtimes(profiler_type& profiler) const
 {
-    profiler.register_runtime(runtime_.prepare, "prepare", "microscopic state preparation");
+    profiler.register_runtime(runtime_.setup, "setup", "microscopic state preparation");
     profiler.register_runtime(runtime_.mdstep, "mdstep", "MD integration step");
 }
 
 /**
  * Prepare microscopic system state
  */
-void core::prepare()
+void core::setup()
 {
-    scoped_timer<timer> timer_(runtime_.prepare);
+    scoped_timer<timer> timer_(runtime_.setup);
 
-    on_prepend_prepare_();
-    on_prepare_();
-    on_append_prepare_();
+    on_prepend_setup_();
+    on_setup_();
+    on_append_setup_();
 }
 
 /**
@@ -96,11 +96,11 @@ HALMD_LUA_API int luaopen_libhalmd_mdsim_core(lua_State* L)
             class_<core, shared_ptr<core> >("core")
                 .def(constructor<shared_ptr<core::clock_type> >())
                 .def("register_runtimes", &core::register_runtimes)
-                .def("prepare", &core::prepare)
+                .def("setup", &core::setup)
                 .def("mdstep", &core::mdstep)
-                .def("on_prepend_prepare", &core::on_prepend_prepare)
-                .def("on_prepare", &core::on_prepare)
-                .def("on_append_prepare", &core::on_append_prepare)
+                .def("on_prepend_setup", &core::on_prepend_setup)
+                .def("on_setup", &core::on_setup)
+                .def("on_append_setup", &core::on_append_setup)
                 .def("on_prepend_integrate", &core::on_prepend_integrate)
                 .def("on_integrate", &core::on_integrate)
                 .def("on_append_integrate", &core::on_append_integrate)

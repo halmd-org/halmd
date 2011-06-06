@@ -86,10 +86,10 @@ function new(args)
 
     -- system preparation after setting positions and velocities
     local core = mdsim.core()
-    core:on_append_prepare(sort.order)
-    core:on_append_prepare(binning.update)
-    core:on_append_prepare(neighbour.update)
-    core:on_append_prepare(maximum_squared_displacement.zero)
+    core:on_append_setup(sort.order)
+    core:on_append_setup(binning.update)
+    core:on_append_setup(neighbour.update)
+    core:on_append_setup(maximum_squared_displacement.zero)
 
     -- compare maximum squared displacement to squared half skin size
     local limit = math.pow(neighbour.r_skin / 2, 2)

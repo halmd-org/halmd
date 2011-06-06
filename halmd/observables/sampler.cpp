@@ -66,7 +66,7 @@ void sampler::run()
     LOG("setting up simulation box");
 
     on_prepare_(clock_->step());
-    core_->prepare();
+    core_->setup();
     on_sample_(clock_->step());
 
     on_start_(clock_->step());
