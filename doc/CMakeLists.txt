@@ -53,7 +53,9 @@ configure_file(doxygen.cfg.in doxygen.cfg)
 add_custom_target(halmd_doc_reference ALL
   COMMAND "${DOXYGEN}" doxygen.cfg
   COMMENT "Build HALMD C++ API reference"
-  DEPENDS halmd_doc_html
+)
+add_dependencies(halmd_doc_reference
+  halmd_doc_html
 )
 
 install(DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/html"
@@ -67,7 +69,9 @@ add_custom_target(halmd_doc_man ALL
     "${CMAKE_CURRENT_SOURCE_DIR}"
     "${CMAKE_CURRENT_BINARY_DIR}/man"
   COMMENT "Build HALMD man page"
-  DEPENDS halmd_doc_html
+)
+add_dependencies(halmd_doc_man
+  halmd_doc_html
 )
 
 install(FILES "${CMAKE_CURRENT_BINARY_DIR}/man/halmd.1"
@@ -81,11 +85,13 @@ add_custom_target(halmd_doc_pdf ALL
     "${CMAKE_CURRENT_SOURCE_DIR}"
     "${CMAKE_CURRENT_BINARY_DIR}/pdf"
   COMMENT "Build HALMD PDF documentation"
-  DEPENDS halmd_doc_man
 )
 add_custom_command(TARGET halmd_doc_pdf POST_BUILD
   COMMAND ${CMAKE_MAKE_PROGRAM} LATEXOPTS=-interaction=batchmode
   WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/pdf"
+)
+add_dependencies(halmd_doc_pdf
+  halmd_doc_man
 )
 
 install(FILES "${CMAKE_CURRENT_BINARY_DIR}/pdf/halmd.pdf"
