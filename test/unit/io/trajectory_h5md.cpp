@@ -40,6 +40,7 @@
 
 using namespace boost;
 using namespace halmd;
+using namespace halmd::io; // avoid ambiguity of io:: between halmd::io and boost::io
 using namespace std;
 
 template <int dimension>
@@ -108,8 +109,8 @@ void h5md(std::vector<unsigned int> const& ntypes)
 
     // write single-precision sample to file
     shared_ptr<mdsim::clock> clock = make_shared<mdsim::clock>();
-    shared_ptr<io::trajectory::writer<dimension> > writer =
-        make_shared<io::trajectory::writers::h5md<dimension, float> >(float_sample, clock, filename);
+    shared_ptr<trajectory::writer<dimension> > writer =
+        make_shared<trajectory::writers::h5md<dimension, float> >(float_sample, clock, filename);
 
     writer->append(0);
     writer->flush();
@@ -118,7 +119,7 @@ void h5md(std::vector<unsigned int> const& ntypes)
     // resetting the shared_ptr first closes the HDF5 file
     writer.reset();
     writer =
-        make_shared<io::trajectory::writers::h5md<dimension, double> >(double_sample, clock, filename);
+        make_shared<trajectory::writers::h5md<dimension, double> >(double_sample, clock, filename);
 
     writer->append(clock->step());
     writer->flush();
@@ -133,14 +134,14 @@ void h5md(std::vector<unsigned int> const& ntypes)
     writer->flush();
 
     // test integrity of H5MD file
-    bool is_h5md = io::trajectory::readers::h5md<dimension, double>::format(filename);
+    bool is_h5md = trajectory::readers::h5md<dimension, double>::format(filename);
     BOOST_CHECK(is_h5md);
 
     // read phase space sample #1 from file in double precision
     // reading is done upon construction, so we use an unnamed, temporary reader object
     // allocate memory for reading back the phase space sample
     shared_ptr<double_sample_type> double_sample_ = make_shared<double_sample_type>(ntypes);
-    io::trajectory::readers::h5md<dimension, double>(double_sample_, filename, 1);
+    trajectory::readers::h5md<dimension, double>(double_sample_, filename, 1);
 
     // check binary equality of written and read data
     for (unsigned int type = 0; type < ntypes.size(); ++type) {
@@ -159,7 +160,7 @@ void h5md(std::vector<unsigned int> const& ntypes)
 
     // read phase space sample #0 from file in single precision
     shared_ptr<float_sample_type> float_sample_ = make_shared<float_sample_type>(ntypes);
-    io::trajectory::readers::h5md<dimension, float>(float_sample_, filename, 0);
+    trajectory::readers::h5md<dimension, float>(float_sample_, filename, 0);
 
     // check binary equality of written and read data,
     // note that float_sample was not modified and thus corresponds to #0
