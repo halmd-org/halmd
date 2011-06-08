@@ -20,6 +20,7 @@
 #include <algorithm>
 
 #include <halmd/io/logger.hpp>
+#include <halmd/mdsim/gpu/particle_kernel.cuh>
 #include <halmd/mdsim/gpu/positions/phase_space.hpp>
 #include <halmd/mdsim/gpu/positions/phase_space_kernel.hpp>
 #include <halmd/utility/lua/lua.hpp>
@@ -61,10 +62,16 @@ void phase_space<dimension, float_type>::set()
 {
     LOG("set particle positions from phase space sample");
 
-    // assign particle coordinates
-    for (size_t j = 0, i = 0; j < particle->ntype; i += particle->ntypes[j], ++j) {
-        assert(sample->r[j]->size() + i <= particle->h_r.size());
-        copy(sample->r[j]->begin(), sample->r[j]->end(), particle->h_r.begin() + i);
+    // assign particle coordinates and types
+    size_t n = 0; // indicates the boundary to the next particle type
+    for (size_t j = 0, i = 0; j < particle->ntype; ++j) {
+        typename sample_type::sample_vector const& r_sample = *sample->r[j];
+        n += particle->ntypes[j];
+        assert(particle->ntypes[j] == r_sample.size());
+        assert(i + n <= particle->h_r.size());
+        for (size_t k = 0; i < n; ++i, ++k) {
+            particle->h_r[i] = particle_kernel::tagged<vector_type>(r_sample[k], j);
+        }
     }
 
     try {
