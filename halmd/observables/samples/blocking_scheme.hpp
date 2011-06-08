@@ -26,6 +26,7 @@
 #include <cstddef> // std::size_t
 #include <lua.hpp>
 #include <stdint.h> // uint64_t
+#include <string>
 #include <vector>
 
 #include <halmd/utility/lua/lua.hpp>
@@ -76,7 +77,7 @@ public:
     typedef typename block_type::iterator block_iterator;
     typedef typename block_type::const_iterator block_const_iterator;
 
-    static void luaopen(lua_State* L, char const* class_name);
+    static void luaopen(lua_State* L, char const* scope, char const* sample_name);
 
     blocking_scheme(
         boost::shared_ptr<sample_type const> sample
@@ -190,21 +191,25 @@ uint64_t blocking_scheme<sample_type>::timestamp() const
 
 
 template <typename sample_type>
-void blocking_scheme<sample_type>::luaopen(lua_State* L, char const* class_name)
+void blocking_scheme<sample_type>::luaopen(lua_State* L, char const* scope, char const* sample_name)
 {
     using namespace luabind;
+    static std::string class_name(static_cast<std::string>("blocking_scheme_") + sample_name);
     module(L, "libhalmd")
     [
         namespace_("observables")
         [
-            namespace_("samples")
+            namespace_(scope)
             [
-                class_<blocking_scheme, boost::shared_ptr<_Base>, _Base>(class_name)
-                    .def(constructor<
-                        boost::shared_ptr<sample_type const>
-                      , std::size_t
-                      , std::size_t
-                    >())
+                namespace_("samples")
+                [
+                    class_<blocking_scheme, boost::shared_ptr<_Base>, _Base>(class_name.c_str())
+                        .def(constructor<
+                            boost::shared_ptr<sample_type const>
+                          , std::size_t
+                          , std::size_t
+                        >())
+                ]
             ]
         ]
     ];

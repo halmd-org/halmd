@@ -51,6 +51,7 @@ void phase_space<dimension, float_type>::luaopen(lua_State* L)
             ]
         ]
     ];
+    observables::samples::blocking_scheme<phase_space>::luaopen(L, "host", class_name.c_str());
 }
 
 HALMD_LUA_API int luaopen_libhalmd_observables_host_samples_phase_space(lua_State* L)
@@ -61,12 +62,6 @@ HALMD_LUA_API int luaopen_libhalmd_observables_host_samples_phase_space(lua_Stat
 #endif
     phase_space<3, float>::luaopen(L);
     phase_space<2, float>::luaopen(L);
-#ifndef USE_HOST_SINGLE_PRECISION
-    observables::samples::blocking_scheme<phase_space<3, double> >::luaopen(L, "blocking_scheme_host_phase_space_3_double_");
-    observables::samples::blocking_scheme<phase_space<2, double> >::luaopen(L, "blocking_scheme_host_phase_space_2_double_");
-#endif
-    observables::samples::blocking_scheme<phase_space<3, float> >::luaopen(L, "blocking_scheme_host_phase_space_3_float_");
-    observables::samples::blocking_scheme<phase_space<2, float> >::luaopen(L, "blocking_scheme_host_phase_space_2_float_");
     return 0;
 }
 

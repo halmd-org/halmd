@@ -48,14 +48,13 @@ void density_mode<dimension>::luaopen(lua_State* L)
             ]
         ]
     ];
+    observables::samples::blocking_scheme<density_mode>::luaopen(L, "host", class_name.c_str());
 }
 
 HALMD_LUA_API int luaopen_libhalmd_observables_samples_density_mode(lua_State* L)
 {
     density_mode<3>::luaopen(L);
     density_mode<2>::luaopen(L);
-    observables::samples::blocking_scheme<density_mode<3> >::luaopen(L, "blocking_scheme_density_mode_3_");
-    observables::samples::blocking_scheme<density_mode<2> >::luaopen(L, "blocking_scheme_density_mode_2_");
     return 0;
 }
 
