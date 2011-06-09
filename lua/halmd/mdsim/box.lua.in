@@ -49,6 +49,8 @@ function new(args)
     local length = args.length -- optional
 
     local particle = mdsim.particle{ dimension = dimension }
+    -- total number of particles in box
+    local nbox = assert(particle.nbox)
 
     local box = assert(box_wrapper[dimension])
     if length then
@@ -56,13 +58,13 @@ function new(args)
         for i = #length + 1, dimension do
             length[i] = length[#length]
         end
-        return box(particle, length)
+        return box(nbox, length)
     else
         -- fill up missing values with 1
         for i = #ratios + 1, dimension do
             ratios[i] = 1 -- `neutral' aspect ratio
         end
-        return box(particle, density, ratios)
+        return box(nbox, density, ratios)
     end
 end
 

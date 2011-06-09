@@ -37,14 +37,15 @@ namespace mdsim
  */
 template <int dimension>
 box<dimension>::box(
-    shared_ptr<particle_type> particle
+    size_t nbox
   , vector_type const& length
 )
   : length_(length)
   , length_half_(0.5 * length_)
 {
-    density_ = particle->nbox / volume();
+    density_ = nbox / volume();
 
+    LOG("total number of particles: " << nbox);
     LOG("number density: " << density_);
     LOG("edge lengths of simulation box: " << length_);
 }
@@ -54,17 +55,18 @@ box<dimension>::box(
  */
 template <int dimension>
 box<dimension>::box(
-    shared_ptr<particle_type> particle
+    size_t nbox
   , double density
   , vector_type const& ratios
 )
   : density_(density)
 {
-    double volume = particle->nbox / density;
+    double volume = nbox / density;
     double det = accumulate(ratios.begin(), ratios.end(), 1., multiplies<double>());
     length_ = ratios * pow(volume / det, 1. / dimension);
     length_half_ = .5 * length_;
 
+    LOG("total number of particles: " << nbox);
     LOG("number density: " << density_);
     LOG("edge lengths of simulation box: " << length_);
 }
@@ -85,8 +87,8 @@ void box<dimension>::luaopen(lua_State* L)
         namespace_("mdsim")
         [
             class_<box, shared_ptr<box> >(class_name.c_str())
-                .def(constructor<shared_ptr<particle_type>, vector_type const&>())
-                .def(constructor<shared_ptr<particle_type>, double, vector_type const&>())
+                .def(constructor<size_t, vector_type const&>())
+                .def(constructor<size_t, double, vector_type const&>())
                 .property("dimension", &wrap_dimension<dimension>)
                 .property("length", &box::length)
                 .property("density", &box::density)

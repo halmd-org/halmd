@@ -25,7 +25,6 @@
 #include <functional>
 #include <lua.hpp>
 
-#include <halmd/mdsim/particle.hpp>
 #include <halmd/mdsim/type_traits.hpp>
 
 namespace halmd
@@ -40,14 +39,13 @@ public:
     static void luaopen(lua_State* L);
 
     typedef typename type_traits<dimension, double>::vector_type vector_type;
-    typedef mdsim::particle<dimension> particle_type;
 
     box(
-        boost::shared_ptr<particle_type> particle
+        size_t nbox
       , vector_type const& length
     );
     box(
-        boost::shared_ptr<particle_type> particle
+        size_t nbox
       , double density
       , vector_type const& ratios
     );
