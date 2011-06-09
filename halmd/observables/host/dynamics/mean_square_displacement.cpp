@@ -17,6 +17,9 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <boost/lexical_cast.hpp>
+#include <string>
+
 #include <halmd/observables/dynamics/correlation.hpp>
 #include <halmd/observables/host/dynamics/mean_square_displacement.hpp>
 #include <halmd/utility/lua/lua.hpp>
@@ -51,10 +54,22 @@ mean_square_displacement<dimension, float_type>::compute(
 }
 
 template <int dimension, typename float_type>
+char const* mean_square_displacement<dimension, float_type>::class_name()
+{
+    static string class_name(static_cast<string>(module_name()) + "_" + lexical_cast<string>(dimension) + "_");
+    return class_name.c_str();
+}
+
+template <int dimension, typename float_type>
+static char const* class_name_wrapper(mean_square_displacement<dimension, float_type> const&)
+{
+    return mean_square_displacement<dimension, float_type>::class_name();
+}
+
+template <int dimension, typename float_type>
 void mean_square_displacement<dimension, float_type>::luaopen(lua_State* L)
 {
     using namespace luabind;
-    static string class_name("mean_square_displacement_" + lexical_cast<string>(dimension) + "_");
     module(L, "libhalmd")
     [
         namespace_("observables")
@@ -63,13 +78,14 @@ void mean_square_displacement<dimension, float_type>::luaopen(lua_State* L)
             [
                 namespace_("dynamics")
                 [
-                    class_<mean_square_displacement>(class_name.c_str())
+                    class_<mean_square_displacement>(class_name())
                         .def(constructor<size_t>())
+                        .property("class_name", &class_name_wrapper<dimension, float_type>)
                 ]
             ]
         ]
     ];
-    observables::dynamics::correlation<mean_square_displacement>::luaopen(L, "host", class_name.c_str());
+    observables::dynamics::correlation<mean_square_displacement>::luaopen(L, "host", class_name());
 }
 
 HALMD_LUA_API int luaopen_libhalmd_observables_host_dynamics_mean_square_displacement(lua_State* L)

@@ -39,10 +39,10 @@ public:
     typedef host::samples::phase_space<dimension, float_type> sample_type;
     typedef double result_type;
 
-    static char const* abbrev_name() { return "MSD"; }
     static char const* module_name() { return "mean_square_displacement"; }
 
     static void luaopen(lua_State* L);
+    static char const* class_name();
 
     /**
      * @param type particle type for which the computation is done
