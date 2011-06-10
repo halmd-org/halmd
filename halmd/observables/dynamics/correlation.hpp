@@ -1,5 +1,5 @@
 /*
- * Copyright © 2011  Peter Colberg and Felix Höfling
+ * Copyright © 2011  Felix Höfling
  *
  * This file is part of HALMD.
  *
@@ -22,11 +22,11 @@
 
 #include <boost/shared_ptr.hpp>
 #include <boost/multi_array.hpp>
-#include <set>
+#include <lua.hpp>
 
-#include <halmd/observables/dynamics/tcf.hpp>
+#include <halmd/io/logger.hpp>
+#include <halmd/numeric/accumulator.hpp>
 #include <halmd/observables/samples/blocking_scheme.hpp>
-#include <halmd/utility/signal.hpp>
 
 namespace halmd
 {
@@ -34,76 +34,125 @@ namespace observables { namespace dynamics
 {
 
 /**
- * Store input samples (phase space, density modes, ...) in
- * coarse-grained block structures and trigger computation of
- * time correlation functions.
- *
- * The module is driven by connecting to the signal on_sample,
- * time correlation functions and blocked data are registered
- * by the methods add_function() and add_data().
+ * Store input samples (phase space, density modes, ...) in a
+ * coarse-grained block structure and provide a signal
+ * on_correlate_block which correlation functions connect to.
  */
-class correlation
+class correlation_base
 {
 public:
-    typedef samples::blocking_scheme_base block_sample_type;
-    typedef halmd::signal<void (uint64_t)> signal_type;
-    typedef signal_type::slot_function_type slot_function_type;
+    correlation_base() {}
+    virtual ~correlation_base() {}
 
-    /**
-     *  @param block_count  number of blocks, i.e., coarse-graining levels
-     *  @param block_size   size of each block, determines coarse-graining factor
-     *  @param shift        coarse-graining shift between odd and even levels
-     *  @param resolution   time resolution of level 0
-     */
+    /** compute correlations at the given coarse-graining level */
+    virtual void compute(unsigned int level) = 0;
+};
+
+template <typename tcf_type>
+class correlation
+  : public correlation_base
+{
+public:
+    typedef typename tcf_type::sample_type sample_type;
+    typedef typename tcf_type::result_type result_type;
+    typedef observables::samples::blocking_scheme<sample_type> block_sample_type;
+    typedef boost::multi_array<accumulator<result_type>, 2> block_result_type;
+
+    static void luaopen(lua_State* L, char const* scope, char const* class_name);
+
     correlation(
-        unsigned int block_count
-      , unsigned int block_size
-      , unsigned int shift
-      , double resolution
+        boost::shared_ptr<tcf_type> tcf
+      , boost::shared_ptr<block_sample_type> block_sample
     );
+    virtual ~correlation() {}
 
-    /** add a time correlation function */
-    void add_function(boost::shared_ptr<tcf_base> tcf)
-    {
-        tcf_.insert(tcf);
-    }
-
-    /** add blocked input data, e.g., phase space points or density modes */
-    void add_data(boost::shared_ptr<block_sample_type> block_sample)
-    {
-        block_sample_.insert(block_sample);
-    }
-
-    /** acquire and store current data from input sample,
-     *  emit on_correlate_block for each full coarse-graining level
-     */
-    void sample(uint64_t step);
-
-    /** compute remaining correlations of partially filled coarse-graining levels */
-    void finalise(uint64_t step);
-
-    /** signal triggers preparation of input sample */
-    void on_sample(slot_function_type const& slot)
-    {
-        on_sample_.connect(slot);
-    }
+    virtual void compute(unsigned int level);
 
 private:
-    /** set of time correlation functions */
-    std::set<boost::shared_ptr<tcf_base> > tcf_;
-    /** set of block structures holding the input samples (e.g., phase space point, density modes)
-     *
-     * We use std::set since it is a Unique Container.
-     */
-    std::set<boost::shared_ptr<block_sample_type> > block_sample_;
+    typedef correlation_base _Base;
 
-    /** sampling intervals for each coarse-graining level */
-    std::vector<unsigned int> interval_;
-    /** time grid of the resulting correlation functions */
-    boost::multi_array<double, 2> time_;
+    /** block structure holding the input data */
+    boost::shared_ptr<block_sample_type> block_sample_;
+    /** functor performing the specific computation */
+    boost::shared_ptr<tcf_type> tcf_;
 
-    signal_type on_sample_;
+    /** block structures holding accumulated result values */
+    block_result_type result_;
 };
+
+template <typename tcf_type>
+correlation<tcf_type>::correlation(
+    boost::shared_ptr<tcf_type> tcf
+  , boost::shared_ptr<block_sample_type> block_sample
+)
+  // dependency injection
+  : block_sample_(block_sample)
+  , tcf_(tcf)
+  // memory allocation
+  , result_(boost::extents[block_sample->count()][block_sample->block_size()])
+{
+}
+
+template <typename tcf_type>
+void correlation<tcf_type>::compute(unsigned int level)
+{
+    LOG_TRACE("[" << tcf_type::module_name() << "]: compute correlations at level " << level);
+
+    typedef typename block_sample_type::block_type block_type;
+    typedef typename block_type::const_iterator input_iterator;
+    typedef typename block_result_type::reference::iterator output_iterator;
+
+    // iterate over block and correlate the first entry (at time t1)
+    // with all entries (at t1 + n * Δt), accumulate result for each lag time
+    block_type const& block = block_sample_->index(level);
+    input_iterator first = block.begin();
+    output_iterator out = result_[level].begin();
+    for (input_iterator second = first; second != block.end(); ++second) {
+        // call TCF-specific compute routine and
+        // store result in output accumulator
+        (*out++)(tcf_->compute(*first, *second));
+    }
+}
+
+template <typename tcf_type>
+static char const* module_name_wrapper(correlation<tcf_type> const&)
+{
+    return tcf_type::module_name();
+}
+
+template <typename tcf_type>
+static char const* class_name_wrapper(correlation<tcf_type> const&)
+{
+    return tcf_type::class_name();
+}
+
+template <typename tcf_type>
+void correlation<tcf_type>::luaopen(lua_State* L, char const* scope, char const* class_name)
+{
+    using namespace luabind;
+    module(L, "libhalmd")
+    [
+        namespace_("observables")
+        [
+            namespace_(scope)
+            [
+                namespace_("dynamics")
+                [
+                    namespace_("correlation")
+                    [
+                        class_<correlation, boost::shared_ptr<_Base>, _Base>(class_name)
+                            .def(constructor<
+                                boost::shared_ptr<tcf_type>
+                              , boost::shared_ptr<block_sample_type>
+                            >())
+                            .property("module_name", &module_name_wrapper<tcf_type>)
+                            .property("class_name", &class_name_wrapper<tcf_type>)
+                    ]
+                ]
+            ]
+        ]
+    ];
+}
 
 }} // namespace observables::dynamics
 

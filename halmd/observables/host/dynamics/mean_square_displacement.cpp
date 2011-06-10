@@ -20,7 +20,7 @@
 #include <boost/lexical_cast.hpp>
 #include <string>
 
-#include <halmd/observables/dynamics/tcf.hpp>
+#include <halmd/observables/dynamics/correlation.hpp>
 #include <halmd/observables/host/dynamics/mean_square_displacement.hpp>
 #include <halmd/utility/lua/lua.hpp>
 
@@ -85,7 +85,7 @@ void mean_square_displacement<dimension, float_type>::luaopen(lua_State* L)
             ]
         ]
     ];
-    observables::dynamics::tcf<mean_square_displacement>::luaopen(L, "host", class_name());
+    observables::dynamics::correlation<mean_square_displacement>::luaopen(L, "host", class_name());
 }
 
 HALMD_LUA_API int luaopen_libhalmd_observables_host_dynamics_mean_square_displacement(lua_State* L)
@@ -116,11 +116,11 @@ namespace observables { namespace dynamics
 
 // explicit instantiation
 #ifndef USE_HOST_SINGLE_PRECISION
-template class tcf<host::dynamics::mean_square_displacement<3, double> >;
-template class tcf<host::dynamics::mean_square_displacement<2, double> >;
+template class correlation<host::dynamics::mean_square_displacement<3, double> >;
+template class correlation<host::dynamics::mean_square_displacement<2, double> >;
 #else
-template class tcf<host::dynamics::mean_square_displacement<3, float> >;
-template class tcf<host::dynamics::mean_square_displacement<2, float> >;
+template class correlation<host::dynamics::mean_square_displacement<3, float> >;
+template class correlation<host::dynamics::mean_square_displacement<2, float> >;
 #endif
 
 }} // namespace observables::dynamics
