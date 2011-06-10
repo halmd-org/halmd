@@ -26,7 +26,6 @@
 #include <cstddef> // std::size_t
 #include <lua.hpp>
 #include <stdint.h> // uint64_t
-#include <string>
 #include <vector>
 
 #include <halmd/utility/lua/lua.hpp>
@@ -77,7 +76,7 @@ public:
     typedef typename block_type::iterator block_iterator;
     typedef typename block_type::const_iterator block_const_iterator;
 
-    static void luaopen(lua_State* L, char const* scope, char const* sample_name);
+    static void luaopen(lua_State* L, char const* scope);
 
     blocking_scheme(
         boost::shared_ptr<sample_type const> sample
@@ -189,12 +188,16 @@ uint64_t blocking_scheme<sample_type>::timestamp() const
     return sample_->step;
 }
 
+template <typename sample_type>
+static char const* sample_name_wrapper(blocking_scheme<sample_type> const&)
+{
+    return sample_type::class_name();
+}
 
 template <typename sample_type>
-void blocking_scheme<sample_type>::luaopen(lua_State* L, char const* scope, char const* sample_name)
+void blocking_scheme<sample_type>::luaopen(lua_State* L, char const* scope)
 {
     using namespace luabind;
-    static std::string class_name(static_cast<std::string>("blocking_scheme_") + sample_name);
     module(L, "libhalmd")
     [
         namespace_("observables")
@@ -203,12 +206,16 @@ void blocking_scheme<sample_type>::luaopen(lua_State* L, char const* scope, char
             [
                 namespace_("samples")
                 [
-                    class_<blocking_scheme, boost::shared_ptr<_Base>, _Base>(class_name.c_str())
-                        .def(constructor<
-                            boost::shared_ptr<sample_type const>
-                          , std::size_t
-                          , std::size_t
-                        >())
+                    namespace_("blocking_scheme")
+                    [
+                        class_<blocking_scheme, boost::shared_ptr<_Base>, _Base>(sample_type::class_name())
+                            .def(constructor<
+                                boost::shared_ptr<sample_type const>
+                              , std::size_t
+                              , std::size_t
+                            >())
+                            .property("sample_name", &sample_name_wrapper<sample_type>)
+                    ]
                 ]
             ]
         ]

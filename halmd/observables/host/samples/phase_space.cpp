@@ -17,7 +17,9 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <boost/lexical_cast.hpp>
 #include <limits>
+#include <string>
 
 #include <halmd/observables/host/samples/phase_space.hpp>
 #include <halmd/observables/samples/blocking_scheme.hpp>
@@ -33,10 +35,18 @@ namespace observables { namespace host { namespace samples
 {
 
 template <int dimension, typename float_type>
+char const* phase_space<dimension, float_type>::class_name()
+{
+    static string class_name(
+        "phase_space_" + lexical_cast<string>(dimension) + "_" + demangled_name<float_type>() + "_"
+    );
+    return class_name.c_str();
+}
+
+template <int dimension, typename float_type>
 void phase_space<dimension, float_type>::luaopen(lua_State* L)
 {
     using namespace luabind;
-    static string class_name("phase_space_" + lexical_cast<string>(dimension) + "_" + demangled_name<float_type>() + "_");
     module(L, "libhalmd")
     [
         namespace_("observables")
@@ -45,13 +55,13 @@ void phase_space<dimension, float_type>::luaopen(lua_State* L)
             [
                 namespace_("samples")
                 [
-                    class_<phase_space, shared_ptr<phase_space> >(class_name.c_str())
+                    class_<phase_space, shared_ptr<phase_space> >(class_name())
                         .def(constructor<vector<unsigned int> >())
                 ]
             ]
         ]
     ];
-    observables::samples::blocking_scheme<phase_space>::luaopen(L, "host", class_name.c_str());
+    observables::samples::blocking_scheme<phase_space>::luaopen(L, "host");
 }
 
 HALMD_LUA_API int luaopen_libhalmd_observables_host_samples_phase_space(lua_State* L)

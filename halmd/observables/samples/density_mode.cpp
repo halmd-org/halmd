@@ -33,22 +33,28 @@ namespace observables { namespace samples
 {
 
 template <int dimension>
+char const* density_mode<dimension>::class_name()
+{
+    static string class_name("density_mode_" + lexical_cast<string>(dimension) + "_");
+    return class_name.c_str();
+}
+
+template <int dimension>
 void density_mode<dimension>::luaopen(lua_State* L)
 {
     using namespace luabind;
-    static string class_name("density_mode_" + lexical_cast<string>(dimension) + "_");
     module(L, "libhalmd")
     [
         namespace_("observables")
         [
             namespace_("samples")
             [
-                class_<density_mode, shared_ptr<density_mode> >(class_name.c_str())
+                class_<density_mode, shared_ptr<density_mode> >(class_name())
                     .def(constructor<unsigned int, unsigned int>())
             ]
         ]
     ];
-    observables::samples::blocking_scheme<density_mode>::luaopen(L, "host", class_name.c_str());
+    observables::samples::blocking_scheme<density_mode>::luaopen(L, "host");
 }
 
 HALMD_LUA_API int luaopen_libhalmd_observables_samples_density_mode(lua_State* L)
