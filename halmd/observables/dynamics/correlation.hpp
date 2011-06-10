@@ -115,15 +115,21 @@ void correlation<tcf_type>::compute(unsigned int level)
 }
 
 template <typename tcf_type>
+static char const* class_name_wrapper(correlation<tcf_type> const&)
+{
+    return tcf_type::class_name();
+}
+
+template <typename tcf_type>
 static char const* module_name_wrapper(correlation<tcf_type> const&)
 {
     return tcf_type::module_name();
 }
 
 template <typename tcf_type>
-static char const* class_name_wrapper(correlation<tcf_type> const&)
+static char const* sample_name_wrapper(correlation<tcf_type> const&)
 {
-    return tcf_type::class_name();
+    return tcf_type::sample_type::class_name();
 }
 
 template <typename tcf_type>
@@ -145,8 +151,9 @@ void correlation<tcf_type>::luaopen(lua_State* L, char const* scope)
                                 boost::shared_ptr<tcf_type>
                               , boost::shared_ptr<block_sample_type>
                             >())
-                            .property("module_name", &module_name_wrapper<tcf_type>)
                             .property("class_name", &class_name_wrapper<tcf_type>)
+                            .property("module_name", &module_name_wrapper<tcf_type>)
+                            .property("sample_name", &sample_name_wrapper<tcf_type>)
                     ]
                 ]
             ]
