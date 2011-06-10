@@ -23,6 +23,7 @@
 #include <boost/shared_ptr.hpp>
 #include <boost/multi_array.hpp>
 #include <set>
+#include <stdint.h> // uint64_t
 
 #include <halmd/observables/dynamics/correlation.hpp>
 #include <halmd/observables/samples/blocking_scheme.hpp>
@@ -49,16 +50,17 @@ public:
     typedef signal_type::slot_function_type slot_function_type;
 
     /**
-     *  @param block_count  number of blocks, i.e., coarse-graining levels
-     *  @param block_size   size of each block, determines coarse-graining factor
-     *  @param shift        coarse-graining shift between odd and even levels
-     *  @param resolution   time resolution of level 0
+     *  @param maximum_lag_time   maximum lag time for dynamic correlations
+     *  @param resolution         time resolution of lowest level
+     *  @param block_size         size of each block, determines coarse-graining factor
+     *  @param shift              coarse-graining shift between odd and even levels,
+     *                            if 0 it is computed as sqrt(block_size)
      */
     blocking_scheme(
-        unsigned int block_count
-      , unsigned int block_size
-      , unsigned int shift
+        double maximum_lag_time
       , double resolution
+      , unsigned int block_size
+      , unsigned int shift = 0
     );
 
     /** add a time correlation function */
@@ -97,7 +99,7 @@ private:
     std::set<boost::shared_ptr<block_sample_type> > block_sample_;
 
     /** sampling intervals for each coarse-graining level */
-    std::vector<unsigned int> interval_;
+    std::vector<uint64_t> interval_;
     /** time grid of the resulting correlation functions */
     boost::multi_array<double, 2> time_;
 

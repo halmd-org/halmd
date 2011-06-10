@@ -18,6 +18,7 @@
  */
 
 #include <boost/foreach.hpp>
+#include <exception>
 
 #include <halmd/io/logger.hpp>
 #include <halmd/observables/dynamics/blocking_scheme.hpp>
@@ -32,25 +33,48 @@ namespace observables { namespace dynamics
 {
 
 blocking_scheme::blocking_scheme(
-    unsigned int block_count
+    double maximum_lag_time
+  , double resolution
   , unsigned int block_size
   , unsigned int shift
-  , double resolution
 )
-  // memory allocation
-  : interval_(block_count)
-  , time_(boost::extents[block_count][block_size])
 {
-    // setup sampling intervals for each level
-    interval_.reserve(block_count);
-    unsigned int i = 1;
-    for (unsigned int level = 0; level < block_count; level += 2) {
-        interval_.push_back(i);           // even levels
-        interval_.push_back(i * shift);   // odd levels
-        i *= block_size;
+    LOG("[dynamic correlations] size of coarse-graining blocks: " << block_size);
+    if (block_size < 2) {
+        throw std::logic_error("Minimum block size is 2.");
     }
 
+    // optionally, compute shift of shifted coarse-graining levels ('odd' levels)
+    if (shift == 0) {
+        shift = static_cast<unsigned int>(std::sqrt(block_size));
+    }
+    assert(shift > 0);
+
+    // report shift only if shifted blocks ('odd' levels) are enabled
+    if (shift > 1) {
+        LOG("[dynamic correlations] coarse-graining shift: " << shift);
+    }
+    else {
+        LOG_DEBUG("[dynamic correlations] disable shifted coarse-graining blocks");
+    }
+
+    // set up sampling intervals for each level
+    uint64_t max_interval =
+        static_cast<uint64_t>(maximum_lag_time / resolution) / 2; // we need at least 2 data points per level
+    uint64_t s = 1;
+    while (s * shift < max_interval)
+    {
+        interval_.push_back(s);               // even levels
+        if (shift > 1) {                      // skip if blocks would be identical
+            interval_.push_back(s * shift);   // odd levels
+        }
+        s *= block_size;
+    }
+    unsigned int block_count = interval_.size();
+    LOG("[dynamic correlations] number of coarse-graining blocks: " << block_count);
+
     // construct associated time grid
+    time_.resize(boost::extents[block_count][block_size]);
     for (unsigned int i = 0; i < block_count; ++i) {
         for (unsigned int j = 0; j < block_size; ++j) {
             time_[i][j] = interval_[i] * j;
@@ -148,7 +172,7 @@ HALMD_LUA_API int luaopen_libhalmd_observables_dynamics_blocking_scheme(lua_Stat
             namespace_("dynamics")
             [
                 class_<blocking_scheme, shared_ptr<blocking_scheme> >("blocking_scheme_")
-                    .def(constructor<unsigned int, unsigned int, unsigned int, double>())
+                    .def(constructor<double, double, unsigned int, unsigned int>())
                     .property("finalise", &finalise_wrapper<blocking_scheme>)
                     .property("sample", &sample_wrapper<blocking_scheme>)
                     .def("add_correlation", &blocking_scheme::add_correlation)
