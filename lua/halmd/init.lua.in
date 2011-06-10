@@ -36,6 +36,7 @@ require("halmd.mdsim.particle")
 require("halmd.mdsim.position")
 require("halmd.mdsim.sort")
 require("halmd.mdsim.velocity")
+require("halmd.observables.dynamics.correlation")
 require("halmd.observables.sampler")
 require("halmd.observables.ssf")
 require("halmd.observables.thermodynamics")
@@ -90,6 +91,15 @@ function new(args)
         sampler:on_sample(observables.ssf().sample, args.state_vars)
     end
 
+    -- Optionally compute time-correlation functions.
+    if args.correlation then
+        local correlation = observables.dynamics.correlation{
+            maximum_time = sampler.total_time
+          , resolution = args.correlation * core.integrator.timestep
+        }
+        sampler:on_sample(correlation.sample, args.correlation)
+    end
+
     -- FIXME connect revised writer to thermodynamics and ssf
     if args.state_vars then
         sampler:on_sample(statevars.writer().write, args.state_vars)
@@ -120,7 +130,8 @@ namespace = "sampler"
 -- @param desc po.options_description
 --
 function options(desc, globals)
-    -- FIXME desc:add("ssf", po.uint64(), "sample interval for static structure factor")
-    desc:add("state-vars", po.uint64(), "sample interval for macroscopic state variables")
-    desc:add("trajectory", po.uint64(), "sample interval for trajectory")
+    -- FIXME desc:add("ssf", po.uint64(), "sampling interval for static structure factor")
+    desc:add("correlation", po.uint64(), "sampling interval for time-correlation functions")
+    desc:add("state-vars", po.uint64(), "sampling interval for macroscopic state variables")
+    desc:add("trajectory", po.uint64(), "sampling interval for trajectory")
 end

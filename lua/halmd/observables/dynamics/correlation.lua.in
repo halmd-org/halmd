@@ -1,0 +1,100 @@
+--
+-- Copyright © 2010-2011  Peter Colberg and Felix Höfling
+--
+-- This file is part of HALMD.
+--
+-- HALMD is free software: you can redistribute it and/or modify
+-- it under the terms of the GNU General Public License as published by
+-- the Free Software Foundation, either version 3 of the License, or
+-- (at your option) any later version.
+--
+-- This program is distributed in the hope that it will be useful,
+-- but WITHOUT ANY WARRANTY; without even the implied warranty of
+-- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+-- GNU General Public License for more details.
+--
+-- You should have received a copy of the GNU General Public License
+-- along with this program.  If not, see <http://www.gnu.org/licenses/>.
+--
+
+require("halmd.modules")
+
+require("halmd.device")
+require("halmd.observables.dynamics.correlations")
+
+-- grab modules
+local device = halmd.device
+local observables = halmd.observables
+-- grab C++ wrappers
+local blocking_scheme_wrapper = libhalmd.observables.dynamics.blocking_scheme_
+local correlation_wrapper = {
+    host = libhalmd.observables.host.dynamics.correlation
+}
+if libhalmd.observables.gpu then
+--     correlation_wrapper.gpu = libhalmd.observables.gpu.dynamics.correlation
+end
+local po = libhalmd.po
+-- grab standard library
+local assert = assert
+local pairs = pairs
+local print = print
+
+module("halmd.observables.dynamics.correlation", halmd.modules.register)
+
+--
+-- construct module blocking_scheme and add time correlation functions
+-- @param args   parameter table
+--   maximum_time  maximum lag time for which correlations are computed
+--   resolution    time resolution of level 0 (determined by sampling rate)
+--   size          size of each block, determines coarse-graining factor
+--   shift         coarse-graining shift between odd and even levels
+--   compute       table of time correlations functions to be computed
+-- @returns instance of blocking_scheme module
+--
+function new(args)
+    local maximum_time = assert(args.maximum_time)
+    local resolution = assert(args.resolution)
+    local size  = args.size or 10 -- default value
+    local shift = args.shift or 0 -- default value
+
+    -- construct driver module blocking_scheme
+    local blocking_scheme = assert(blocking_scheme_wrapper)(maximum_time, resolution, size, shift)
+
+    -- add time correlation functions
+    -- FIXME at the moment, we support only 1 tcf
+    if args.compute
+    then
+        -- split off an optional spezies parameter from option value
+        local tcf = assert(observables.dynamics.correlations[args.compute])()
+
+        local correlation = assert(correlation_wrapper[device() and "gpu" or "host"][tcf.class_name])
+--         local block_sample = assert(block_sample_wrapper[tcf.sample_name])
+--         correlation = correlation(tcf, block_sample)
+
+        blocking_scheme:add_correlation(correlation)
+--         blocking_scheme:add_data(block_sample)
+    end
+
+    return blocking_scheme
+end
+
+--
+-- assemble module options
+--
+-- @param desc po.options_description
+--
+function options(desc)
+
+    -- choices for tcf module with descriptions
+    local choices = {}
+    for tcf, module in pairs(observables.dynamics.correlations) do
+        if module.name then
+            choices[tcf] = module.name()
+        end
+    end
+
+    desc:add("size", po.uint(), "block size, corresponds to coarse-graining factor")
+    desc:add("shift", po.uint(), "coarse-graining shift between adjacent blocking levels")
+    -- FIXME allow for multiple occurences of option 'compute'
+    desc:add("compute", po.string():choices(choices), "specify time correlation function to be computed")
+end
