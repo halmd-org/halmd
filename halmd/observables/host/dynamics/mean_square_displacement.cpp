@@ -85,7 +85,7 @@ void mean_square_displacement<dimension, float_type>::luaopen(lua_State* L)
             ]
         ]
     ];
-    observables::dynamics::correlation<mean_square_displacement>::luaopen(L, "host", class_name());
+    observables::dynamics::correlation<mean_square_displacement>::luaopen(L, "host");
 }
 
 HALMD_LUA_API int luaopen_libhalmd_observables_host_dynamics_mean_square_displacement(lua_State* L)

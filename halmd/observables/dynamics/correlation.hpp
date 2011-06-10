@@ -58,7 +58,7 @@ public:
     typedef observables::samples::blocking_scheme<sample_type> block_sample_type;
     typedef boost::multi_array<accumulator<result_type>, 2> block_result_type;
 
-    static void luaopen(lua_State* L, char const* scope, char const* class_name);
+    static void luaopen(lua_State* L, char const* scope);
 
     correlation(
         boost::shared_ptr<tcf_type> tcf
@@ -127,7 +127,7 @@ static char const* class_name_wrapper(correlation<tcf_type> const&)
 }
 
 template <typename tcf_type>
-void correlation<tcf_type>::luaopen(lua_State* L, char const* scope, char const* class_name)
+void correlation<tcf_type>::luaopen(lua_State* L, char const* scope)
 {
     using namespace luabind;
     module(L, "libhalmd")
@@ -140,7 +140,7 @@ void correlation<tcf_type>::luaopen(lua_State* L, char const* scope, char const*
                 [
                     namespace_("correlation")
                     [
-                        class_<correlation, boost::shared_ptr<_Base>, _Base>(class_name)
+                        class_<correlation, boost::shared_ptr<_Base>, _Base>(tcf_type::class_name())
                             .def(constructor<
                                 boost::shared_ptr<tcf_type>
                               , boost::shared_ptr<block_sample_type>
