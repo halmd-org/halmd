@@ -18,10 +18,18 @@
 --
 
 -- grab standard library
+local next = next
 local pairs = pairs
 local table = table
 
 module("halmd.utility")
+
+--
+-- Test if table is empty
+--
+function empty(t)
+  return next(t) == nil
+end
 
 --
 -- Returns table with sorted keys of table t as values
