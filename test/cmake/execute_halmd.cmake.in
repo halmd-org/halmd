@@ -37,3 +37,5 @@ macro(execute_halmd)
   endif()
 
 endmacro()
+
+message("Avoid ctest truncation of output: CTEST_FULL_OUTPUT")
