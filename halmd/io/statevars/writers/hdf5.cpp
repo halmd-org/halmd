@@ -257,6 +257,9 @@ HALMD_LUA_API int luaopen_libhalmd_io_statevars_writers_hdf5(lua_State* L)
     return 0;
 }
 
+template class hdf5<3>;
+template class hdf5<2>;
+
 }}} // namespace io::statevars::writers
 
 } // namespace halmd

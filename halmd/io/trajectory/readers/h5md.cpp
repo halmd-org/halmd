@@ -135,6 +135,11 @@ HALMD_LUA_API int luaopen_libhalmd_io_trajectory_readers_h5md(lua_State* L)
     return 0;
 }
 
+template class h5md<3, double>;
+template class h5md<2, double>;
+template class h5md<3, float>;
+template class h5md<2, float>;
+
 }}} // namespace io::trajectory::readers
 
 } // namespace halmd
