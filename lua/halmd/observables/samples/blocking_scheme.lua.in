@@ -1,0 +1,63 @@
+--
+-- Copyright © 2011  Felix Höfling
+--
+-- This file is part of HALMD.
+--
+-- HALMD is free software: you can redistribute it and/or modify
+-- it under the terms of the GNU General Public License as published by
+-- the Free Software Foundation, either version 3 of the License, or
+-- (at your option) any later version.
+--
+-- This program is distributed in the hope that it will be useful,
+-- but WITHOUT ANY WARRANTY; without even the implied warranty of
+-- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+-- GNU General Public License for more details.
+--
+-- You should have received a copy of the GNU General Public License
+-- along with this program.  If not, see <http://www.gnu.org/licenses/>.
+--
+
+require("halmd.modules")
+
+require("halmd.device")
+
+-- grab modules
+local device = halmd.device
+-- grab C++ wrappers
+local blocking_scheme_wrapper = {
+    host = libhalmd.observables.host.samples.blocking_scheme
+}
+if libhalmd.observables.gpu then
+    blocking_scheme_wrapper.gpu = libhalmd.observables.gpu.samples.blocking_scheme
+end
+-- grab standard library
+local assert = assert
+
+module("halmd.observables.samples.blocking_scheme", halmd.modules.register)
+
+-- singleton
+local blocking_scheme = { host = {}, gpu = {} }
+
+--
+-- construct blocking_scheme module
+--
+-- @param args    parameter table
+--   args.name    name of sample module
+--   args.sample  sample module, the pointer serves as index to the list of singletons
+--   args.count   total count of blocks
+--   args.size    size of each coarse-graining block
+--
+function new(args)
+    local name = assert(args.name)
+    local sample = assert(args.sample)
+    local count = assert(args.count)
+    local size = assert(args.size)
+
+    local memory = device() and "gpu" or "host"
+
+    if not blocking_scheme[memory][sample] then
+        local blocking_scheme_ = assert(blocking_scheme_wrapper[memory][name])
+        blocking_scheme[memory][sample] = blocking_scheme_(sample, count, size)
+    end
+    return blocking_scheme[memory][sample]
+end
