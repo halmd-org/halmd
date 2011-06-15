@@ -72,6 +72,8 @@ public:
     /** add blocked input data, e.g., phase space points or density modes */
     void add_data(boost::shared_ptr<block_sample_type> block_sample)
     {
+        assert(block_sample->count() == count());
+        assert(block_sample->block_size() == block_size_);
         block_sample_.insert(block_sample);
     }
 
@@ -89,6 +91,24 @@ public:
         on_sample_.connect(slot);
     }
 
+    /** returns block size, i.e., the length of the coarse-graining levels */
+    unsigned int block_size() const
+    {
+        return block_size_;
+    }
+
+    /** returns block count, i.e., the number of coarse-graining levels */
+    unsigned int count() const
+    {
+        return interval_.size();
+    }
+
+    /** returns block-wise time grid for correlation functions */
+    boost::multi_array<double, 2> const& time() const
+    {
+        return time_;
+    }
+
 private:
     /** set of time correlation functions */
     std::set<boost::shared_ptr<correlation_base> > tcf_;
@@ -98,6 +118,8 @@ private:
      */
     std::set<boost::shared_ptr<block_sample_type> > block_sample_;
 
+    /** size (length) of the coarse-graining levels */
+    unsigned int block_size_;
     /** sampling intervals for each coarse-graining level */
     std::vector<uint64_t> interval_;
     /** time grid of the resulting correlation functions */

@@ -38,15 +38,17 @@ blocking_scheme::blocking_scheme(
   , unsigned int block_size
   , unsigned int shift
 )
+  // member initialisation
+  : block_size_(block_size)
 {
-    LOG("[dynamic correlations] size of coarse-graining blocks: " << block_size);
-    if (block_size < 2) {
+    LOG("[dynamic correlations] size of coarse-graining blocks: " << block_size_);
+    if (block_size_ < 2) {
         throw std::logic_error("Minimum block size is 2.");
     }
 
     // optionally, compute shift of shifted coarse-graining levels ('odd' levels)
     if (shift == 0) {
-        shift = static_cast<unsigned int>(std::sqrt(block_size));
+        shift = static_cast<unsigned int>(std::sqrt(block_size_));
     }
     assert(shift > 0);
 
@@ -68,15 +70,15 @@ blocking_scheme::blocking_scheme(
         if (shift > 1) {                      // skip if blocks would be identical
             interval_.push_back(s * shift);   // odd levels
         }
-        s *= block_size;
+        s *= block_size_;
     }
     unsigned int block_count = interval_.size();
     LOG("[dynamic correlations] number of coarse-graining blocks: " << block_count);
 
     // construct associated time grid
-    time_.resize(boost::extents[block_count][block_size]);
+    time_.resize(boost::extents[block_count][block_size_]);
     for (unsigned int i = 0; i < block_count; ++i) {
-        for (unsigned int j = 0; j < block_size; ++j) {
+        for (unsigned int j = 0; j < block_size_; ++j) {
             time_[i][j] = interval_[i] * j;
         }
     }
@@ -175,6 +177,9 @@ HALMD_LUA_API int luaopen_libhalmd_observables_dynamics_blocking_scheme(lua_Stat
                     .def(constructor<double, double, unsigned int, unsigned int>())
                     .property("finalise", &finalise_wrapper<blocking_scheme>)
                     .property("sample", &sample_wrapper<blocking_scheme>)
+                    .property("block_size", &blocking_scheme::block_size)
+                    .property("count", &blocking_scheme::count)
+                    .property("time", &blocking_scheme::time)
                     .def("add_correlation", &blocking_scheme::add_correlation)
                     .def("add_data", &blocking_scheme::add_data)
                     .def("on_sample", &blocking_scheme::on_sample)
