@@ -178,7 +178,7 @@ template <typename sample_type>
 std::size_t blocking_scheme<sample_type>::block_size() const
 {
     assert(!blocks_.empty());
-    return blocks_[0].size(); // choose level 0 as representative
+    return blocks_[0].capacity(); // choose level 0 as representative
 }
 
 template <typename sample_type>
