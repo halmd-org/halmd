@@ -21,12 +21,12 @@ require("halmd.modules")
 
 require("halmd.device")
 require("halmd.mdsim.core")
-require("halmd.observables.dynamics")
+require("halmd.observables.samples.phase_space")
 
 -- grab modules
 local device = halmd.device
 local mdsim = halmd.mdsim
-local dynamics = halmd.observables.dynamics
+local observables = halmd.observables
 -- grab C++ wrappers
 local msd_wrapper = {
     host = {
@@ -53,7 +53,7 @@ module("halmd.observables.dynamics.correlations.mean_square_displacement", halmd
 --
 -- @param args parameter tabletype_
 --   spezies   particle spezies (type) for which the computation is done
--- @returns instance of msd module
+-- @returns instance of msd module, instance of phase space sample
 --
 function new(args)
     -- command line options
@@ -62,10 +62,15 @@ function new(args)
     -- dependency injection
     local core = mdsim.core()
     local dimension = assert(core.dimension)
+    local backend = device() and "gpu" or "host"
 
     -- construct msd module
-    local msd = assert(msd_wrapper[device() and "gpu" or "host"][dimension])
-    return msd(spezies)
+    local msd = assert(msd_wrapper[backend][dimension])(spezies)
+
+    -- obtain appropriate phase space sample
+    local sample = assert(observables.samples.phase_space{ memory = backend })
+
+    return msd, sample
 end
 
 --
