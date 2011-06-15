@@ -83,6 +83,9 @@ function new(args)
         -- register correlation function and data with blocking scheme
         blocking_scheme:add_correlation(correlation)
         blocking_scheme:add_data(block_sample)
+
+        -- update input data before computation of correlations
+--        blocking_scheme:on_sample(sample.acquire) -- FIXME needs, e.g., observables.phase_space, not samples.phase_space
     end
 
     return blocking_scheme
