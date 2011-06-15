@@ -98,6 +98,8 @@ function new(args)
           , resolution = args.correlation * core.integrator.timestep
         }
         sampler:on_sample(correlation.sample, args.correlation)
+        sampler:on_finish(correlation.finalise)
+--         sampler:on_finish(correlation.writer().write)
     end
 
     -- FIXME connect revised writer to thermodynamics and ssf
