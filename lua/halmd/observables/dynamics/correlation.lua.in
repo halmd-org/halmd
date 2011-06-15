@@ -21,6 +21,7 @@ require("halmd.modules")
 
 require("halmd.device")
 require("halmd.observables.dynamics.correlations")
+require("halmd.observables.samples.blocking_scheme")
 
 -- grab modules
 local device = halmd.device
@@ -37,7 +38,6 @@ local po = libhalmd.po
 -- grab standard library
 local assert = assert
 local pairs = pairs
-local print = print
 
 module("halmd.observables.dynamics.correlation", halmd.modules.register)
 
@@ -59,20 +59,31 @@ function new(args)
 
     -- construct driver module blocking_scheme
     local blocking_scheme = assert(blocking_scheme_wrapper)(maximum_time, resolution, size, shift)
+    local block_count = blocking_scheme.count
 
     -- add time correlation functions
     -- FIXME at the moment, we support only 1 tcf
     if args.compute
     then
-        -- split off an optional spezies parameter from option value
-        local tcf = assert(observables.dynamics.correlations[args.compute])()
+        -- construct the tcf functor and obtain the appropriate data sample
+        local tcf, sample = assert(observables.dynamics.correlations[args.compute])()
+        assert(sample)
 
+        -- construct or retrieve associated blocking scheme for sample data
+        local block_sample = assert(observables.samples.blocking_scheme{
+            name = tcf.sample_name
+          , sample = sample
+          , count = block_count
+          , size = size
+        })
+
+        -- construct correlation function
         local correlation = assert(correlation_wrapper[device() and "gpu" or "host"][tcf.class_name])
---         local block_sample = assert(block_sample_wrapper[tcf.sample_name])
---         correlation = correlation(tcf, block_sample)
+        correlation = correlation(tcf, block_sample)
 
+        -- register correlation function and data with blocking scheme
         blocking_scheme:add_correlation(correlation)
---         blocking_scheme:add_data(block_sample)
+        blocking_scheme:add_data(block_sample)
     end
 
     return blocking_scheme
