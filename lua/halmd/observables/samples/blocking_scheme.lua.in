@@ -42,13 +42,11 @@ local blocking_scheme = { host = {}, gpu = {} }
 -- construct blocking_scheme module
 --
 -- @param args    parameter table
---   args.name    name of sample module
 --   args.sample  sample module, the pointer serves as index to the list of singletons
 --   args.count   total count of blocks
 --   args.size    size of each coarse-graining block
 --
 function new(args)
-    local name = assert(args.name)
     local sample = assert(args.sample)
     local count = assert(args.count)
     local size = assert(args.size)
@@ -56,6 +54,7 @@ function new(args)
     local memory = device() and "gpu" or "host"
 
     if not blocking_scheme[memory][sample] then
+        local name = assert(sample.class_name)
         local blocking_scheme_ = assert(blocking_scheme_wrapper[memory][name])
         blocking_scheme[memory][sample] = blocking_scheme_(sample, count, size)
     end

@@ -44,6 +44,12 @@ char const* phase_space<dimension, float_type>::class_name()
 }
 
 template <int dimension, typename float_type>
+static char const* class_name_wrapper(phase_space<dimension, float_type> const&)
+{
+    return phase_space<dimension, float_type>::class_name();
+}
+
+template <int dimension, typename float_type>
 void phase_space<dimension, float_type>::luaopen(lua_State* L)
 {
     using namespace luabind;
@@ -57,6 +63,7 @@ void phase_space<dimension, float_type>::luaopen(lua_State* L)
                 [
                     class_<phase_space, shared_ptr<phase_space> >(class_name())
                         .def(constructor<vector<unsigned int> >())
+                        .property("class_name", &class_name_wrapper<dimension, float_type>)
                 ]
             ]
         ]

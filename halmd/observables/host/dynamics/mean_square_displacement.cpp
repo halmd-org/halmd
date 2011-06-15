@@ -67,7 +67,7 @@ mean_square_displacement<dimension, float_type>::compute(
 template <int dimension, typename float_type>
 char const* mean_square_displacement<dimension, float_type>::class_name()
 {
-    static string class_name(static_cast<string>(module_name()) + "_" + lexical_cast<string>(dimension) + "_");
+    static string class_name(module_name() + ("_" + lexical_cast<string>(dimension) + "_"));
     return class_name.c_str();
 }
 
@@ -75,12 +75,6 @@ template <int dimension, typename float_type>
 static char const* class_name_wrapper(mean_square_displacement<dimension, float_type> const&)
 {
     return mean_square_displacement<dimension, float_type>::class_name();
-}
-
-template <int dimension, typename float_type>
-static char const* sample_name_wrapper(mean_square_displacement<dimension, float_type> const&)
-{
-    return mean_square_displacement<dimension, float_type>::sample_type::class_name();
 }
 
 template <int dimension, typename float_type>
@@ -98,7 +92,6 @@ void mean_square_displacement<dimension, float_type>::luaopen(lua_State* L)
                     class_<mean_square_displacement>(class_name())
                         .def(constructor<size_t>())
                         .property("class_name", &class_name_wrapper<dimension, float_type>)
-                        .property("sample_name", &sample_name_wrapper<dimension, float_type>)
                 ]
             ]
         ]

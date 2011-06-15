@@ -40,6 +40,12 @@ char const* density_mode<dimension>::class_name()
 }
 
 template <int dimension>
+static char const* class_name_wrapper(density_mode<dimension> const&)
+{
+    return density_mode<dimension>::class_name();
+}
+
+template <int dimension>
 void density_mode<dimension>::luaopen(lua_State* L)
 {
     using namespace luabind;
@@ -51,6 +57,7 @@ void density_mode<dimension>::luaopen(lua_State* L)
             [
                 class_<density_mode, shared_ptr<density_mode> >(class_name())
                     .def(constructor<unsigned int, unsigned int>())
+                    .property("class_name", &class_name_wrapper<dimension>)
             ]
         ]
     ];

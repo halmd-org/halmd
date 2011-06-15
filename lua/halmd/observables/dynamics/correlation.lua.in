@@ -71,8 +71,7 @@ function new(args)
 
         -- construct or retrieve associated blocking scheme for sample data
         local block_sample = assert(observables.samples.blocking_scheme{
-            name = tcf.sample_name
-          , sample = sample
+            sample = sample
           , count = block_count
           , size = size
         })
