@@ -47,7 +47,7 @@ public:
     /**
      * @param type particle type for which the computation is done
      */
-    mean_square_displacement(size_t type) : type_(type) {}
+    mean_square_displacement(size_t type);
 
     /**
      * Compute mean-square displacement from two phase space samples

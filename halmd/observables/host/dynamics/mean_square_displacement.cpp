@@ -20,6 +20,7 @@
 #include <boost/lexical_cast.hpp>
 #include <string>
 
+#include <halmd/io/logger.hpp>
 #include <halmd/observables/dynamics/correlation.hpp>
 #include <halmd/observables/host/dynamics/mean_square_displacement.hpp>
 #include <halmd/utility/lua/lua.hpp>
@@ -31,6 +32,16 @@ namespace halmd
 {
 namespace observables { namespace host { namespace dynamics
 {
+
+template <int dimension, typename float_type>
+mean_square_displacement<dimension, float_type>::mean_square_displacement(
+    size_t type
+)
+  // member initialisation
+  : type_(type)
+{
+    LOG("initialise mean-square displacement of " << string(1, 'A' + type) << " particles");
+}
 
 template <int dimension, typename float_type>
 typename mean_square_displacement<dimension, float_type>::result_type
@@ -67,6 +78,12 @@ static char const* class_name_wrapper(mean_square_displacement<dimension, float_
 }
 
 template <int dimension, typename float_type>
+static char const* sample_name_wrapper(mean_square_displacement<dimension, float_type> const&)
+{
+    return mean_square_displacement<dimension, float_type>::sample_type::class_name();
+}
+
+template <int dimension, typename float_type>
 void mean_square_displacement<dimension, float_type>::luaopen(lua_State* L)
 {
     using namespace luabind;
@@ -81,6 +98,7 @@ void mean_square_displacement<dimension, float_type>::luaopen(lua_State* L)
                     class_<mean_square_displacement>(class_name())
                         .def(constructor<size_t>())
                         .property("class_name", &class_name_wrapper<dimension, float_type>)
+                        .property("sample_name", &sample_name_wrapper<dimension, float_type>)
                 ]
             ]
         ]
