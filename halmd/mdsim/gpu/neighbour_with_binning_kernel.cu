@@ -18,7 +18,7 @@
  */
 
 #include <halmd/mdsim/gpu/box_kernel.cuh>
-#include <halmd/mdsim/gpu/neighbour_kernel.hpp>
+#include <halmd/mdsim/gpu/neighbour_with_binning_kernel.hpp>
 #include <halmd/mdsim/gpu/particle_kernel.cuh>
 #include <halmd/numeric/blas/blas.hpp>
 #include <halmd/utility/gpu/thread.cuh>
@@ -27,12 +27,10 @@
 using namespace halmd::mdsim::gpu::particle_kernel;
 using namespace halmd::utility::gpu;
 
-namespace halmd
-{
-namespace mdsim { namespace gpu
-{
-namespace neighbour_kernel
-{
+namespace halmd {
+namespace mdsim {
+namespace gpu {
+namespace neighbour_with_binning_kernel {
 
 /** (cutoff lengths + neighbour list skin)² */
 texture<float> rr_cut_skin_;
@@ -223,23 +221,23 @@ self:
     }
 }
 
-} // namespace neighbour_kernel
+} // namespace neighbour_with_binning_kernel
 
 template <int dimension>
-neighbour_wrapper<dimension> neighbour_wrapper<dimension>::kernel = {
-    neighbour_kernel::rr_cut_skin_
-  , get<dimension>(neighbour_kernel::ncell_)
-  , neighbour_kernel::neighbour_size_
-  , neighbour_kernel::neighbour_stride_
-  , neighbour_kernel::nbox_
-  , neighbour_kernel::r_
-  , get<dimension>(neighbour_kernel::box_length_)
-  , neighbour_kernel::update_neighbours<dimension>
+neighbour_with_binning_wrapper<dimension> neighbour_with_binning_wrapper<dimension>::kernel = {
+    neighbour_with_binning_kernel::rr_cut_skin_
+  , get<dimension>(neighbour_with_binning_kernel::ncell_)
+  , neighbour_with_binning_kernel::neighbour_size_
+  , neighbour_with_binning_kernel::neighbour_stride_
+  , neighbour_with_binning_kernel::nbox_
+  , neighbour_with_binning_kernel::r_
+  , get<dimension>(neighbour_with_binning_kernel::box_length_)
+  , neighbour_with_binning_kernel::update_neighbours<dimension>
 };
 
-template class neighbour_wrapper<3>;
-template class neighbour_wrapper<2>;
+template class neighbour_with_binning_wrapper<3>;
+template class neighbour_with_binning_wrapper<2>;
 
-}} //namespace mdsim::gpu
-
-} //namespace halmd
+} // namespace gpu
+} // namespace mdsim
+} // namespace halmd

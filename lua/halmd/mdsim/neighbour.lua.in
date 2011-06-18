@@ -38,8 +38,8 @@ local neighbour_wrapper = {
 }
 if libhalmd.mdsim.gpu then
     neighbour_wrapper.gpu = {
-        [2] = libhalmd.mdsim.gpu.neighbour_2_
-      , [3] = libhalmd.mdsim.gpu.neighbour_3_
+        [2] = libhalmd.mdsim.gpu.neighbour_with_binning_2_
+      , [3] = libhalmd.mdsim.gpu.neighbour_with_binning_3_
     }
 end
 local predicates = libhalmd.predicates

@@ -53,7 +53,7 @@ public:
     typedef typename _Base::gpu_stress_tensor_type gpu_stress_tensor_type;
     typedef gpu::particle<dimension, float> particle_type;
     typedef mdsim::box<dimension> box_type;
-    typedef gpu::neighbour<dimension, float_type> neighbour_type;
+    typedef gpu::neighbour neighbour_type;
     typedef utility::profiler profiler_type;
 
     typedef typename potential_type::gpu_potential_type gpu_potential_type;
