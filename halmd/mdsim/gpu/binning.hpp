@@ -120,10 +120,6 @@ private:
 
     /** neighbour list skin in MD units */
     float_type r_skin_;
-    /** half neighbour list skin */
-    float_type rr_skin_half_;
-    /** (cutoff lengths + neighbour list skin)² */
-    matrix_type rr_cut_skin_;
     /** average desired cell occupancy */
     float_type nu_cell_;
     /** average effective cell occupancy */

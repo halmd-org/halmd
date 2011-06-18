@@ -57,15 +57,12 @@ binning<dimension, float_type>::binning(
   , box_(box)
   // allocate parameters
   , r_skin_(skin)
-  , rr_skin_half_(pow(r_skin_ / 2, 2))
-  , rr_cut_skin_(particle_->ntype, particle_->ntype)
   , nu_cell_(cell_occupancy)
   , sort_(particle_->nbox, particle_->dim.threads_per_block())
 {
     typename matrix_type::value_type r_cut_max = 0;
     for (size_t i = 0; i < particle_->ntype; ++i) {
         for (size_t j = i; j < particle_->ntype; ++j) {
-            rr_cut_skin_(i, j) = std::pow(r_cut(i, j) + r_skin_, 2);
             r_cut_max = max(r_cut(i, j), r_cut_max);
         }
     }
