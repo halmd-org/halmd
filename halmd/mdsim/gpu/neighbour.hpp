@@ -112,21 +112,12 @@ private:
 
     /** neighbour list skin in MD units */
     float_type r_skin_;
-    /** half neighbour list skin */
-    float_type rr_skin_half_;
     /** (cutoff lengths + neighbour list skin)² */
     matrix_type rr_cut_skin_;
     /** (cutoff lengths + neighbour list skin)² */
     cuda::vector<float_type> g_rr_cut_skin_;
     /** FIXME average desired cell occupancy */
     float_type nu_cell_;
-    /** particle positions at last neighbour list update */
-    cuda::vector<float4> g_r0_;
-    /** block-reduced squared particle distances */
-    cuda::vector<float> g_rr_;
-    /** block-reduced squared particle distances */
-    cuda::host::vector<float> h_rr_;
-
     /** neighbour lists */
     cuda::vector<unsigned int> g_neighbour_;
     /** number of placeholders per neighbour list */
