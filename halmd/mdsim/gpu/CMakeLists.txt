@@ -7,6 +7,8 @@ halmd_add_library(halmd_mdsim_gpu
   neighbour.cpp
   neighbour_with_binning.cpp
   neighbour_with_binning_kernel.cu
+  neighbour_without_binning.cpp
+  neighbour_without_binning_kernel.cu
   particle.cpp
   particle_kernel.cu
   velocity.cpp
@@ -18,6 +20,7 @@ halmd_add_modules(
   libhalmd_mdsim_gpu_maximum_squared_displacement
   libhalmd_mdsim_gpu_neighbour
   libhalmd_mdsim_gpu_neighbour_with_binning
+  libhalmd_mdsim_gpu_neighbour_without_binning
   libhalmd_mdsim_gpu_particle
   libhalmd_mdsim_gpu_velocity
 )
