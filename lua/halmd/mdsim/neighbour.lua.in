@@ -30,16 +30,21 @@ require("halmd.modules")
 local device = halmd.device
 local mdsim = halmd.mdsim
 -- grab C++ wrappers
-local neighbour_wrapper = {
+local neighbour_with_binning_wrapper = {
     host = {
         [2] = libhalmd.mdsim.host.neighbour_2_
       , [3] = libhalmd.mdsim.host.neighbour_3_
     }
 }
+local neighbour_without_binning_wrapper = {}
 if libhalmd.mdsim.gpu then
-    neighbour_wrapper.gpu = {
+    neighbour_with_binning_wrapper.gpu = {
         [2] = libhalmd.mdsim.gpu.neighbour_with_binning_2_
       , [3] = libhalmd.mdsim.gpu.neighbour_with_binning_3_
+    }
+    neighbour_without_binning_wrapper.gpu = {
+        [2] = libhalmd.mdsim.gpu.neighbour_without_binning_2_
+      , [3] = libhalmd.mdsim.gpu.neighbour_without_binning_3_
     }
 end
 local predicates = libhalmd.predicates
@@ -68,15 +73,22 @@ function new(args)
     local box = mdsim.box() -- singleton
 
     -- domain decomposition
-    local binning = mdsim.binning{ r_cut = r_cut, skin = skin }
+    local binning
+    if not args.disable_binning then
+        binning = mdsim.binning{ r_cut = r_cut, skin = skin }
+    end
 
     -- neighbour lists
     local neighbour
     if device() then
         local occupancy = args.occupancy or 0.4 -- default value
-        neighbour = neighbour_wrapper.gpu[dimension](particle, box, binning, r_cut, skin, occupancy)
+        if binning then
+            neighbour = neighbour_with_binning_wrapper.gpu[dimension](particle, box, binning, r_cut, skin, occupancy)
+        else
+            neighbour = neighbour_without_binning_wrapper.gpu[dimension](particle, particle, box, r_cut, skin, occupancy)
+        end
     else
-        neighbour = neighbour_wrapper.host[dimension](particle, box, binning, r_cut, skin)
+        neighbour = neighbour_with_binning_wrapper.host[dimension](particle, box, binning, r_cut, skin)
     end
 
     -- particle sorting
@@ -87,7 +99,9 @@ function new(args)
     -- system preparation after setting positions and velocities
     local core = mdsim.core()
     core:on_append_setup(sort.order)
-    core:on_append_setup(binning.update)
+    if binning then
+        core:on_append_setup(binning.update)
+    end
     core:on_append_setup(neighbour.update)
     core:on_append_setup(maximum_squared_displacement.zero)
 
@@ -100,7 +114,9 @@ function new(args)
 
     -- if maximum squared displacement is greater than squared half skin size:
     greater:on_greater(sort.order)
-    greater:on_greater(binning.update)
+    if binning then
+        greater:on_greater(binning.update)
+    end
     greater:on_greater(neighbour.update)
     greater:on_greater(maximum_squared_displacement.zero)
 
@@ -114,9 +130,10 @@ end
 --
 function options(desc)
     desc:add("skin", po.float(), "neighbour list skin")
-    if neighbour_wrapper.gpu then
+    if neighbour_with_binning_wrapper.gpu then
         desc:add("occupancy", po.float(), "desired average cell occupancy")
     end
+    desc:add("disable-binning", po.bool_switch(), "disable domain decomposition")
 end
 
 --
@@ -124,7 +141,7 @@ end
 --
 function read_parameters(args, group)
     args.skin = group:read_attribute("skin", h5.float())
-    if neighbour_wrapper.gpu then
+    if neighbour_with_binning_wrapper.gpu then
         args.occupancy = group:read_attribute("occupancy", h5.float())
     end
 end
