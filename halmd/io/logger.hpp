@@ -27,6 +27,7 @@
 #include <boost/log/sinks/text_ostream_backend.hpp>
 #include <boost/log/sources/record_ostream.hpp>
 #include <boost/log/sources/severity_logger.hpp>
+#include <boost/noncopyable.hpp>
 #include <lua.hpp>
 
 namespace halmd
@@ -34,6 +35,7 @@ namespace halmd
 
 //! Logger
 class logger
+  : boost::noncopyable
 {
 public:
     //! logging severity levels
