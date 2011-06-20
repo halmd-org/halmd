@@ -26,7 +26,6 @@
 #include <string>
 #include <utility>
 
-#include <halmd/io/logger.hpp>
 #include <halmd/mdsim/core.hpp>
 #include <halmd/numeric/accumulator.hpp>
 #include <test/unit/modules.hpp>
@@ -98,16 +97,6 @@ void ideal_gas(string const& backend)
     if (dimension == 3) {
         box_ratios[2] = 1.01;
     }
-
-    // enable logging to console
-    shared_ptr<logger> log(new logger);
-    log->log_to_console(
-#ifdef NDEBUG
-        logger::warning
-#else
-        logger::debug
-#endif
-    );
 
     BOOST_TEST_MESSAGE("using backend '" << backend << "' in " <<
                        dimension << " dimensions");
@@ -221,16 +210,6 @@ void thermodynamics(string const& backend)
     }
 
     using namespace boost::assign;
-
-    // enable logging to console
-    shared_ptr<logger> log(new logger);
-    log->log_to_console(
-#ifdef NDEBUG
-        logger::warning
-#else
-        logger::debug
-#endif
-    );
 
     BOOST_TEST_MESSAGE("using backend '" << backend << "' in " <<
                        dimension << " dimensions");

@@ -25,7 +25,6 @@
 #include <limits>
 #include <string>
 
-#include <halmd/io/logger.hpp>
 #include <halmd/mdsim/type_traits.hpp>
 #include <test/unit/modules.hpp>
 #include <test/tools/init.hpp>
@@ -52,16 +51,6 @@ void boltzmann(string const& backend)
     double temp = 2.0;
     double density = 0.3;
     char const* random_file = "/dev/urandom";
-
-    // enable logging to console
-    shared_ptr<logger> log(new logger);
-    log->log_to_console(
-#ifdef NDEBUG
-        logger::warning
-#else
-        logger::debug
-#endif
-    );
 
     // init modules
     BOOST_TEST_MESSAGE("initialise modules");

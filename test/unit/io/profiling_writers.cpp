@@ -27,7 +27,6 @@
 #include <map>
 #include <stdio.h>
 
-#include <halmd/io/logger.hpp>
 #include <halmd/io/profiling/writers/log.hpp>
 #include <halmd/io/profiling/writers/h5md.hpp>
 #include <halmd/utility/profiler.hpp>
@@ -53,10 +52,6 @@ struct timer_map
 BOOST_AUTO_TEST_CASE( test_profiling_writers )
 {
     string const file_name("test_io_logger.prf");
-
-    // enable logging to console
-    static logger log;
-    log.log_to_console(logger::debug);
 
     using namespace halmd::io::profiling;
     using namespace boost::assign;

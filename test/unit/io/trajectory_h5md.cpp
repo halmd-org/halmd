@@ -31,7 +31,6 @@
 #include <vector>
 #include <stdint.h>
 
-#include <halmd/io/logger.hpp>
 #include <halmd/io/trajectory/readers/h5md.hpp>
 #include <halmd/io/trajectory/writers/h5md.hpp>
 #include <halmd/mdsim/clock.hpp>
@@ -55,16 +54,6 @@ void h5md(std::vector<unsigned int> const& ntypes)
     string const filename("test_io_trajectory_h5md.trj");
 
     BOOST_MESSAGE("Testing " << ntypes.size() << " particle types");
-
-    // enable logging to console
-    shared_ptr<logger> log(new logger);
-    log->log_to_console(
-#ifdef NDEBUG
-        logger::warning
-#else
-        logger::debug
-#endif
-    );
 
     // construct phase space sample and fill with positions and velocities
     shared_ptr<double_sample_type> double_sample = make_shared<double_sample_type>(ntypes);

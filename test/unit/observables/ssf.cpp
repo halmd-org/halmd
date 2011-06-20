@@ -28,7 +28,6 @@
 #include <string>
 #include <utility>
 
-#include <halmd/io/logger.hpp>
 #include <halmd/observables/utility/wavevector.hpp>
 #include <test/unit/modules.hpp>
 #include <test/tools/init.hpp>
@@ -60,16 +59,6 @@ void ssf(string const& backend)
     float density = 0.3;
     float lattice_constant = pow(nunit_cell / density, 1.f / dimension);
     char const* random_file = "/dev/urandom";
-
-    // enable logging to console
-    shared_ptr<logger> log(new logger);
-    log->log_to_console(
-#ifdef NDEBUG
-        logger::warning
-#else
-        logger::debug
-#endif
-    );
 
     BOOST_TEST_MESSAGE("#particles: " << npart << ", #unit cells: " << ncell <<
                        ", lattice constant: " << lattice_constant);

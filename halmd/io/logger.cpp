@@ -1,5 +1,5 @@
 /*
- * Copyright © 2008-2010  Peter Colberg
+ * Copyright © 2008-2011  Peter Colberg
  *
  * This file is part of HALMD.
  *
@@ -35,8 +35,6 @@ using namespace boost;
 using namespace boost::log;
 using namespace std;
 
-#define TIMESTAMP_FORMAT "%d-%m-%Y %H:%M:%S.%f"
-
 namespace halmd
 {
 
@@ -70,82 +68,72 @@ logger::logger()
       , attributes::local_clock()
 #endif
     );
+#ifdef NDEBUG
+    logger::open_console(info);
+#else
+    logger::open_console(debug);
+#endif
 }
 
-/**
- * enable logger to console
- *
- * @param level logger severity level
- *
- * FIXME repeated calls of this function if public
- */
-void logger::log_to_console(severity_level level)
+void logger::open_console(severity_level level)
 {
-    shared_ptr<console_backend> backend(make_shared<console_backend>());
+    shared_ptr<console_backend_type> backend(make_shared<console_backend_type>());
     backend->add_stream(
         shared_ptr<ostream>(&clog, empty_deleter())
     );
     backend->set_formatter(
         formatters::format("[%1%] %2%%3%")
-            % formatters::date_time("TimeStamp", keywords::format = TIMESTAMP_FORMAT)
+            % formatters::date_time("TimeStamp", keywords::format = logger::timestamp())
             % formatters::attr<severity_level>("Severity")
             % formatters::message()
     );
     backend->auto_flush(true);
 
     core::get()->remove_sink(console_);
-    console_ = make_shared<console_sink>(backend);
+    console_ = make_shared<console_sink_type>(backend);
     console_->set_filter(
         filters::attr<severity_level>("Severity") <= level
     );
     core::get()->add_sink(console_);
 }
 
-/**
- * enable logger to file
- *
- * @param level logger severity level
- *
- * FIXME repeated calls of this function if public
- */
-void logger::log_to_file(severity_level level, string file_name)
+void logger::close_console()
 {
-    shared_ptr<file_backend> backend(
-        make_shared<file_backend>(
+    core::get()->remove_sink(console_);
+}
+
+void logger::open_file(string file_name, severity_level level)
+{
+    shared_ptr<file_backend_type> backend(
+        make_shared<file_backend_type>(
             keywords::file_name = file_name
         )
     );
     backend->set_formatter(
         formatters::format("[%1%] %2%%3%")
-            % formatters::date_time("TimeStamp", keywords::format = TIMESTAMP_FORMAT)
+            % formatters::date_time("TimeStamp", keywords::format = logger::timestamp())
             % formatters::attr<severity_level>("Severity")
             % formatters::message()
     );
     backend->auto_flush(true);
 
     core::get()->remove_sink(file_);
-    file_ = make_shared<file_sink>(backend);
+    file_ = make_shared<file_sink_type>(backend);
     file_->set_filter(
         filters::attr<severity_level>("Severity") <= level
     );
     core::get()->add_sink(file_);
 }
 
-/**
- * remove sinks from logger core singleton
- */
-logger::~logger()
+void logger::close_file()
 {
-    core::get()->remove_sink(console_);
     core::get()->remove_sink(file_);
 }
 
-sources::severity_logger<logger::severity_level> logger::logger_;
-
-template <enum logger::severity_level level>
+template <logger::severity_level level>
 static void log_wrapper(char const* message)
 {
-    BOOST_LOG_SEV(logger::get(), level) << message;
+    HALMD_LOG(level, message);
 }
 
 void logger::luaopen(lua_State* L)

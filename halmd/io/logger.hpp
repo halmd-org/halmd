@@ -1,5 +1,5 @@
 /*
- * Copyright © 2008-2010  Peter Colberg
+ * Copyright © 2008-2011  Peter Colberg
  *
  * This file is part of HALMD.
  *
@@ -32,9 +32,11 @@
 namespace halmd
 {
 
+//! Logger
 class logger
 {
 public:
+    //! logging severity levels
     enum severity_level
     {
         fatal,
@@ -44,70 +46,94 @@ public:
         debug,
         trace,
     };
+    //! logger source type
+    typedef boost::log::sources::severity_logger<severity_level> logger_type;
 
-    typedef boost::log::sinks::text_ostream_backend console_backend;
-    typedef boost::log::sinks::synchronous_sink<console_backend> console_sink;
-    typedef boost::log::sinks::text_file_backend file_backend;
-    typedef boost::log::sinks::synchronous_sink<file_backend> file_sink;
-
+    //! open log to console
+    void open_console(severity_level level);
+    //! close log to console
+    void close_console();
+    //! open log to file
+    void open_file(std::string file_name, severity_level level);
+    //! close log to file
+    void close_file();
+    //! Lua bindings
     static void luaopen(lua_State* L);
 
-    logger();
-    ~logger();
-    void log_to_console(severity_level level);
-    void log_to_file(severity_level level, std::string file_name);
-
-    static boost::log::sources::severity_logger<severity_level>& get()
+    //! get logger source
+    logger_type& get()
     {
        return logger_;
     }
 
-private:
-    static boost::log::sources::severity_logger<severity_level> logger_;
+    //! get logger singleton instance
+    static logger& instance()
+    {
+        static logger logger_;
+        return logger_;
+    }
 
-    boost::shared_ptr<console_sink> console_;
-    boost::shared_ptr<file_sink> file_;
+private:
+    typedef boost::log::sinks::text_ostream_backend console_backend_type;
+    typedef boost::log::sinks::synchronous_sink<console_backend_type> console_sink_type;
+    typedef boost::log::sinks::text_file_backend file_backend_type;
+    typedef boost::log::sinks::synchronous_sink<file_backend_type> file_sink_type;
+
+    //! initialize logger
+    logger();
+
+    //! log timestamp format
+    static char const* timestamp()
+    {
+        return "%d-%m-%Y %H:%M:%S.%f";
+    }
+
+    //! logger source
+    boost::log::sources::severity_logger<severity_level> logger_;
+    //! console sink
+    boost::shared_ptr<console_sink_type> console_;
+    //! file sink
+    boost::shared_ptr<file_sink_type> file_;
 };
 
-#define __HALMD_LOG__(__level__, __format__)            \
-    do {                                                \
+#define HALMD_LOG(level, format)                        \
+{                                                       \
+    BOOST_LOG_SEV(                                      \
+        halmd::logger::instance().get()                 \
+      , level                                           \
+    ) << format;                                        \
+}
+
+#define HALMD_LOG_ONCE(level, format)                   \
+{                                                       \
+    static bool logged = false;                         \
+    if (!logged) {                                      \
         BOOST_LOG_SEV(                                  \
-            ::halmd::logger::get()                      \
-          , ::halmd::logger::__level__                  \
-          ) << __format__;                              \
-    } while(0)
+            halmd::logger::instance().get()             \
+          , level                                       \
+        ) << format;                                    \
+        logged = true;                                  \
+    }                                                   \
+}
 
-#define __HALMD_LOG_ONCE__(__level__, __format__)       \
-    do {                                                \
-        static bool __logged__ = false;                 \
-        if (!__logged__) {                              \
-            BOOST_LOG_SEV(                              \
-                ::halmd::logger::get()                  \
-              , ::halmd::logger::__level__              \
-              ) << __format__;                          \
-            __logged__ = true;                          \
-        }                                               \
-    } while(0)
-
-#define LOG_FATAL(__format__)           __HALMD_LOG__(fatal, __format__)
-#define LOG_FATAL_ONCE(__format__)      __HALMD_LOG_ONCE__(fatal, __format__)
-#define LOG_ERROR(__format__)           __HALMD_LOG__(error, __format__)
-#define LOG_ERROR_ONCE(__format__)      __HALMD_LOG_ONCE__(error, __format__)
-#define LOG_WARNING(__format__)         __HALMD_LOG__(warning, __format__)
-#define LOG_WARNING_ONCE(__format__)    __HALMD_LOG_ONCE__(warning, __format__)
-#define LOG(__format__)                 __HALMD_LOG__(info, __format__)
-#define LOG_ONCE(__format__)            __HALMD_LOG_ONCE__(info, __format__)
-
+#define LOG_FATAL(format)           HALMD_LOG(halmd::logger::fatal, format)
+#define LOG_FATAL_ONCE(format)      HALMD_LOG_ONCE(halmd::logger::fatal, format)
+#define LOG_ERROR(format)           HALMD_LOG(halmd::logger::error, format)
+#define LOG_ERROR_ONCE(format)      HALMD_LOG_ONCE(halmd::logger::error, format)
+#define LOG_WARNING(format)         HALMD_LOG(halmd::logger::warning, format)
+#define LOG_WARNING_ONCE(format)    HALMD_LOG_ONCE(halmd::logger::warning, format)
+#define LOG(format)                 HALMD_LOG(halmd::logger::info, format)
+#define LOG_ONCE(format)            HALMD_LOG_ONCE(halmd::logger::info, format)
 #ifndef NDEBUG
-# define LOG_DEBUG(__format__)          __HALMD_LOG__(debug, __format__)
-# define LOG_DEBUG_ONCE(__format__)     __HALMD_LOG_ONCE__(debug, __format__)
-# define LOG_TRACE(__format__)          __HALMD_LOG__(trace, __format__)
-# define LOG_TRACE_ONCE(__format__)     __HALMD_LOG_ONCE__(trace, __format__)
+# define LOG_DEBUG(format)          HALMD_LOG(halmd::logger::debug, format)
+# define LOG_DEBUG_ONCE(format)     HALMD_LOG_ONCE(halmd::logger::debug, format)
+# define LOG_TRACE(format)          HALMD_LOG(halmd::logger::trace, format)
+# define LOG_TRACE_ONCE(format)     HALMD_LOG_ONCE(halmd::logger::trace, format)
 #else
-# define LOG_DEBUG(__format__)
-# define LOG_DEBUG_ONCE(__format__)
-# define LOG_TRACE(__format__)
-# define LOG_TRACE_ONCE(__format__)
+# define LOG_DEBUG(format)
+# define LOG_DEBUG_ONCE(format)
+# define LOG_TRACE(format)
+# define LOG_TRACE_ONCE(format)
 #endif
 
 } // namespace halmd
