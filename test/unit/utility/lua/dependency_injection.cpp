@@ -49,10 +49,10 @@ namespace test_dummy
 
     struct box
     {
-        box(shared_ptr<particle> particle)
+        box(shared_ptr<test_dummy::particle> particle)
           : particle(particle) {}
 
-        shared_ptr<particle> particle;
+        shared_ptr<test_dummy::particle> particle;
     };
 
     struct integrator
@@ -63,10 +63,10 @@ namespace test_dummy
     struct verlet_host
       : integrator
     {
-        verlet_host(shared_ptr<particle_host> particle)
+        verlet_host(shared_ptr<test_dummy::particle_host> particle)
           : particle(particle) {}
 
-        shared_ptr<particle_host> particle;
+        shared_ptr<test_dummy::particle_host> particle;
     };
 
 } // namespace test_dummy
