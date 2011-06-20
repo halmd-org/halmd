@@ -24,9 +24,9 @@
 #include <lua.hpp>
 #include <luabind/luabind.hpp>
 
-#define LUA_WARN( str )         BOOST_WARN_MESSAGE( dostring( str ), error(L) )
-#define LUA_CHECK( str )        BOOST_CHECK_MESSAGE( dostring( str ), error(L) )
-#define LUA_REQUIRE( str )      BOOST_REQUIRE_MESSAGE( dostring( str ), error(L) )
+#define LUA_WARN( str )         BOOST_WARN_MESSAGE( lua_test_fixture::dostring( str ), lua_test_fixture::error(lua_test_fixture::L) )
+#define LUA_CHECK( str )        BOOST_CHECK_MESSAGE( lua_test_fixture::dostring( str ), lua_test_fixture::error(lua_test_fixture::L) )
+#define LUA_REQUIRE( str )      BOOST_REQUIRE_MESSAGE( lua_test_fixture::dostring( str ), lua_test_fixture::error(lua_test_fixture::L) )
 
 /**
  * Lua test fixture.
