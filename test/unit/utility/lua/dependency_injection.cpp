@@ -20,18 +20,8 @@
 #define BOOST_TEST_MODULE dependency_injection
 #include <boost/test/unit_test.hpp>
 
-#include <halmd/mdsim/box.hpp>
-#include <halmd/mdsim/host/integrators/verlet.hpp>
-#include <halmd/mdsim/host/particle.hpp>
-#include <halmd/modules.hpp>
 #include <halmd/utility/lua/lua.hpp>
 #include <test/tools/lua.hpp>
-#ifdef WITH_CUDA
-# include <halmd/mdsim/gpu/integrators/verlet.hpp>
-# include <halmd/mdsim/gpu/particle.hpp>
-# include <halmd/utility/gpu/device.hpp>
-# include <test/tools/cuda.hpp>
-#endif
 
 /**
  * This test checks the dependency injection of C++ modules from Lua.
@@ -98,51 +88,3 @@ BOOST_FIXTURE_TEST_CASE( dummy, lua_test_fixture )
     LUA_CHECK( "integrator = assert2(verlet_host(particle))" );
     LUA_CHECK( "assert(integrator.particle)" );
 }
-
-/**
- * Test dependency injection using manually registered HALMD modules.
- *
- * This version uses the host modules.
- */
-BOOST_FIXTURE_TEST_CASE( libhalmd_mdsim_host, lua_test_fixture )
-{
-    luaopen_libhalmd_mdsim_particle(L);
-    luaopen_libhalmd_mdsim_host_particle(L);
-    luaopen_libhalmd_mdsim_box(L);
-    luaopen_libhalmd_mdsim_integrator(L);
-    luaopen_libhalmd_mdsim_host_integrators_verlet(L);
-
-    LUA_REQUIRE( "assert2 = function(...) assert(...) return assert(...) end" );
-
-    LUA_CHECK( "particle = assert2(libhalmd.mdsim.host.particle_3_({ 1000 }))" );
-    LUA_CHECK( "box = assert2(libhalmd.mdsim.box_3_(particle, { 10, 10, 10 }))" );
-    LUA_CHECK( "integrator = assert2(libhalmd.mdsim.host.integrators.verlet_3_(particle, box, 0.001))" );
-}
-
-#ifdef WITH_CUDA
-
-struct lua_cuda_fixture : lua_test_fixture, set_cuda_device {};
-
-/**
- * Test dependency injection using manually registered HALMD modules.
- *
- * This version uses the GPU modules.
- */
-BOOST_FIXTURE_TEST_CASE( libhalmd_mdsim_gpu, lua_cuda_fixture )
-{
-    luaopen_libhalmd_mdsim_particle(L);
-    luaopen_libhalmd_mdsim_gpu_particle(L);
-    luaopen_libhalmd_mdsim_box(L);
-    luaopen_libhalmd_mdsim_integrator(L);
-    luaopen_libhalmd_mdsim_gpu_integrators_verlet(L);
-    luaopen_libhalmd_utility_gpu_device(L);
-
-    LUA_REQUIRE( "assert2 = function(...) assert(...) return assert(...) end" );
-
-    LUA_CHECK( "device = assert2(libhalmd.utility.gpu.device({}, 128))" );
-    LUA_CHECK( "particle = assert2(libhalmd.mdsim.gpu.particle_3_(device, { 1000 }))" );
-    LUA_CHECK( "box = assert2(libhalmd.mdsim.box_3_(particle, { 10, 10, 10 }))" );
-    LUA_CHECK( "integrator = assert2(libhalmd.mdsim.gpu.integrators.verlet_3_(particle, box, 0.001))" );
-}
-
-#endif /* WITH_CUDA */
