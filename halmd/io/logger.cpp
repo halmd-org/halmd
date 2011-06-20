@@ -100,6 +100,7 @@ void logger::open_console(severity_level level)
 void logger::close_console()
 {
     core::get()->remove_sink(console_);
+    console_.reset();
 }
 
 void logger::open_file(string file_name, severity_level level)
@@ -128,6 +129,7 @@ void logger::open_file(string file_name, severity_level level)
 void logger::close_file()
 {
     core::get()->remove_sink(file_);
+    file_.reset();
 }
 
 template <logger::severity_level level>
