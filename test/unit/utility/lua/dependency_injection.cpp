@@ -47,6 +47,14 @@ namespace test_dummy
 
     struct particle_host : particle {};
 
+    struct box
+    {
+        box(shared_ptr<particle> particle)
+          : particle(particle) {}
+
+        shared_ptr<particle> particle;
+    };
+
     struct integrator
     {
         virtual ~integrator() {}
@@ -63,28 +71,45 @@ namespace test_dummy
 
 } // namespace test_dummy
 
+struct bind_test_dummy : lua_test_fixture
+{
+    bind_test_dummy()
+    {
+        using namespace luabind;
+        using namespace test_dummy;
+        module(L, "test_dummy")
+        [
+            class_<particle>("particle")
+
+          , class_<particle_host, shared_ptr<particle>, particle>("particle_host")
+                .def(constructor<>())
+
+          , class_<box, shared_ptr<box> >("box")
+                .def(constructor<shared_ptr<particle> >())
+                .def_readonly("particle", &box::particle)
+
+          , class_<integrator>("integrator")
+
+          , class_<verlet_host, shared_ptr<integrator>, integrator>("verlet_host")
+                .def(constructor<shared_ptr<particle_host> >())
+                .def_readonly("particle", &verlet_host::particle)
+        ];
+    }
+};
+
 /**
  * Test dependency injection using test dummy modules.
  */
-BOOST_FIXTURE_TEST_CASE( dummy, lua_test_fixture )
+BOOST_FIXTURE_TEST_CASE( shared_ptr_casts, bind_test_dummy )
 {
-    using namespace test_dummy;
-    using namespace luabind;
-
     LUA_REQUIRE( "assert2 = function(...) assert(...) return assert(...) end" );
 
-    module(L)
-    [
-        class_<particle, shared_ptr<particle> >("particle")
-      , class_<particle_host, shared_ptr<particle>, particle>("particle_host")
-            .def(constructor<>())
-      , class_<integrator, shared_ptr<integrator> >("integrator")
-      , class_<verlet_host, shared_ptr<integrator>, integrator>("verlet_host")
-            .def(constructor<shared_ptr<particle_host> >())
-            .def_readonly("particle", &verlet_host::particle)
-    ];
-
-    LUA_CHECK( "particle = assert2(particle_host())" );
-    LUA_CHECK( "integrator = assert2(verlet_host(particle))" );
+    // create instance of derived class
+    LUA_CHECK( "particle = assert2(test_dummy.particle_host())" );
+    // pass to constructor as base class shared_ptr
+    LUA_CHECK( "box = assert2(test_dummy.box(particle))" );
+    LUA_CHECK( "assert(box.particle)" );
+    // pass to constructor as dervived class shared_ptr
+    LUA_CHECK( "integrator = assert2(test_dummy.verlet_host(particle))" );
     LUA_CHECK( "assert(integrator.particle)" );
 }
