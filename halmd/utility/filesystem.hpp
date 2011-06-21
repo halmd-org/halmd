@@ -21,6 +21,7 @@
 #define HALMD_UTILITY_FILESYSTEM_HPP
 
 #include <boost/filesystem.hpp>
+#include <cassert>
 
 namespace halmd
 {
@@ -37,6 +38,23 @@ inline std::string absolute_path(std::string const& path)
 #else
     return boost::filesystem::complete(path).string();
 #endif
+}
+
+/**
+ * returns true if first path contains second path
+ */
+inline bool contains_path(boost::filesystem::path const& p1, boost::filesystem::path const& p2)
+{
+    assert( p1.is_absolute() );
+    assert( p2.is_absolute() );
+    boost::filesystem::path p(p2);
+    while (!p.empty()) {
+        if (boost::filesystem::equivalent(p1, p)) {
+            return true;
+        }
+        p = p.parent_path();
+    }
+    return false;
 }
 
 } // namespace halmd
