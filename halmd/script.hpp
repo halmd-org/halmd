@@ -20,6 +20,7 @@
 #ifndef HALMD_SCRIPT_HPP
 #define HALMD_SCRIPT_HPP
 
+#include <boost/noncopyable.hpp>
 #include <lua.hpp>
 
 #include <halmd/runner.hpp>
@@ -32,18 +33,22 @@ namespace halmd
  * HALMD scripting engine
  */
 class script
+  : boost::noncopyable
 {
 public:
     script();
+    virtual ~script();
     void options(options_parser& parser);
     void parsed(po::variables_map const& vm);
     boost::shared_ptr<runner> run();
 
     static int traceback(lua_State* L);
 
-private:
-    boost::shared_ptr<lua_State> L_; //< Lua state
+    //! Lua state
+    // Expose Lua state for convenient use in unit tests.
+    lua_State* const L;
 
+private:
     void package_path();
     void load_wrapper();
     void load_library();

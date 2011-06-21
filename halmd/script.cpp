@@ -36,10 +36,8 @@ namespace halmd
 {
 
 script::script()
-  : L_(luaL_newstate(), lua_close) //< create Lua state
+  : L(luaL_newstate()) //< create Lua state
 {
-    lua_State* L = get_pointer(L_); //< get raw pointer for Lua C API
-
     luaL_openlibs(L); //< load Lua standard libraries
 
     package_path(); //< set Lua package path
@@ -49,6 +47,11 @@ script::script()
     load_library(); //< load HALMD Lua library
 }
 
+script::~script()
+{
+    lua_close(L);
+}
+
 /**
  * Set Lua package path
  *
@@ -56,8 +59,6 @@ script::script()
  */
 void script::package_path()
 {
-    lua_State* L = get_pointer(L_); //< get raw pointer for Lua C API
-
     // push table "package"
     lua_getglobal(L, "package");
     // push key for rawset
@@ -98,8 +99,6 @@ void script::package_path()
  */
 void script::load_wrapper()
 {
-    lua_State* L = get_pointer(L_); //< get raw pointer for Lua C API
-
     using namespace luabind;
 
     open(L); //< setup global structures and Lua class support
@@ -114,8 +113,6 @@ void script::load_wrapper()
  */
 void script::load_library()
 {
-    lua_State* L = get_pointer(L_); //< get raw pointer for Lua C API
-
     using namespace luabind;
 
     try {
@@ -136,8 +133,6 @@ void script::load_library()
  */
 void script::options(options_parser& parser)
 {
-    lua_State* L = get_pointer(L_); //< get raw pointer for Lua C API
-
     using namespace luabind;
 
     // retrieve the Lua function before the try-catch block
@@ -162,8 +157,6 @@ void script::options(options_parser& parser)
  */
 void script::parsed(po::variables_map const& vm)
 {
-    lua_State* L = get_pointer(L_); //< get raw pointer for Lua C API
-
     using namespace luabind;
 
     object options(globals(L)["halmd"]["option"]["set"]);
@@ -185,8 +178,6 @@ void script::parsed(po::variables_map const& vm)
  */
 shared_ptr<runner> script::run()
 {
-    lua_State* L = get_pointer(L_); //< get raw pointer for Lua C API
-
     using namespace luabind;
 
     // runner is non-template base class to template sampler
