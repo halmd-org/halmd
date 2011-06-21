@@ -618,8 +618,8 @@ BOOST_AUTO_TEST_CASE( halmd_signal9 )
 
 BOOST_AUTO_TEST_CASE( halmd_signal_proxy )
 {
-    typedef halmd::signal<void ()> signal_type;
     typedef halmd::signal_proxy<void ()> signal_proxy_type;
+    typedef signal_proxy_type::signal_type signal_type;
 
     signal_type sig;
     BOOST_CHECK( sig.empty() );
