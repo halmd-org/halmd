@@ -57,10 +57,18 @@ function new(args)
     local particle = assert(core.particle)
     local box = assert(core.box)
 
-    if not device() then
-        return verlet_wrapper.host[dimension](particle, box, timestep)
+    local verlet
+    if device() then
+        verlet = assert(verlet_wrapper.gpu[dimension])
+    else
+        verlet = assert(verlet_wrapper.host[dimension])
     end
-    return verlet_wrapper.gpu[dimension](particle, box, timestep)
+    local integrator = verlet(particle, box, timestep)
+
+    -- connect integrator to core
+    core.integrator = integrator
+
+    return integrator
 end
 
 --

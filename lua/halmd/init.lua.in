@@ -61,7 +61,7 @@ function new(args)
     local core = mdsim.core() -- singleton
     core.particle = mdsim.particle()
     core.box = mdsim.box()
-    core.integrator = mdsim.integrator()
+    mdsim.integrator()
     core.force = mdsim.force()
     core.neighbour = mdsim.neighbour()
     core.sort = mdsim.sort()
