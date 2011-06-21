@@ -48,30 +48,30 @@ module("halmd.mdsim.neighbour", halmd.modules.register)
 --
 -- construct neighbour module
 --
+-- @param r_cut symmetric matrix with potential cutoff radii
+--
 function new(args)
+    local r_cut = assert(args.r_cut)
+    local skin = args.skin or 0.5 -- default value
+
     -- dependency injection
     local core = mdsim.core()
     local dimension = assert(core.dimension)
     local particle = assert(core.particle)
     local box = assert(core.box)
-    local force = assert(core.force)
 
-    -- neighbour module is only needed if truncated pair force
-    local r_cut = force.r_cut
-    if not r_cut then
-        return nil
-    end
-
-    -- command line options
-    local skin = args.skin or 0.5 -- default value
-
+    local neighbour
     if device() then
         local occupancy = args.occupancy or 0.4 -- default value
-
-        return neighbour_wrapper.gpu[dimension](particle, box, r_cut, skin, occupancy)
+        neighbour = neighbour_wrapper.gpu[dimension](particle, box, r_cut, skin, occupancy)
     else
-        return neighbour_wrapper.host[dimension](particle, box, r_cut, skin)
+        neighbour = neighbour_wrapper.host[dimension](particle, box, r_cut, skin)
     end
+
+    -- connect neighbour to core
+    core.neighbour = neighbour
+
+    return neighbour
 end
 
 --

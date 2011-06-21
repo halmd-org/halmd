@@ -21,6 +21,7 @@ require("halmd.modules")
 
 require("halmd.device")
 require("halmd.mdsim.core")
+require("halmd.mdsim.neighbour")
 
 -- grab modules
 local device = halmd.device
@@ -57,6 +58,9 @@ function new(args)
     local dimension = assert(core.dimension)
     local particle = assert(core.particle)
     local box = assert(core.box)
+
+    -- create neighbour lists with cutoff radii of potential
+    local neighbour = mdsim.neighbour{ r_cut = potential.r_cut }
 
     local pair_trunc
     if device() then
