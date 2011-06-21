@@ -17,10 +17,10 @@
 -- along with this program.  If not, see <http://www.gnu.org/licenses/>.
 --
 
-require("halmd.modules")
-
 require("halmd.device")
 require("halmd.mdsim.core")
+require("halmd.modules")
+require("halmd.singleton")
 
 -- grab modules
 local device = halmd.device
@@ -46,7 +46,7 @@ local po = libhalmd.po
 local assert = assert
 local print = print
 
-module("halmd.mdsim.particle", halmd.modules.register)
+module("halmd.mdsim.particle", halmd.modules.register, halmd.singleton)
 
 --
 -- construct particle module
