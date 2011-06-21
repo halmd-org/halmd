@@ -30,7 +30,7 @@ namespace halmd
  *
  * @param path relative or absolute path
  */
-std::string absolute_path(std::string const& path)
+inline std::string absolute_path(std::string const& path)
 {
 #if defined(BOOST_FILESYSTEM_VERSION) && BOOST_FILESYSTEM_VERSION >= 3
     return boost::filesystem::absolute(path).string();
