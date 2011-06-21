@@ -52,12 +52,7 @@ function new(args)
     local dimension = assert(core.dimension)
     local particle = assert(core.particle)
     local box = assert(core.box)
-
-    -- check if neighbour module is available
-    local neighbour = core.neighbour
-    if not neighbour then
-        return nil
-    end
+    local neighbour = assert(core.neighbour)
 
     if device() then
         local hilbert = assert(hilbert_wrapper.gpu[dimension])

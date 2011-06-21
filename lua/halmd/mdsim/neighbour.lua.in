@@ -21,6 +21,7 @@ require("halmd.modules")
 
 require("halmd.device")
 require("halmd.mdsim.core")
+require("halmd.mdsim.sort")
 
 -- grab modules
 local device = halmd.device
@@ -70,6 +71,8 @@ function new(args)
 
     -- connect neighbour to core
     core.neighbour = neighbour
+    -- enable particle sorting
+    core.sort = mdsim.sort()
 
     return neighbour
 end
