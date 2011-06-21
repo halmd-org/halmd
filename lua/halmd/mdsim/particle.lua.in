@@ -51,9 +51,10 @@ module("halmd.mdsim.particle", halmd.modules.register, halmd.singleton)
 --
 -- construct particle module
 --
+-- @param dimension dimension of positional coordinates
+--
 function new(args)
-    local core = mdsim.core() -- singleton
-    local dimension = assert(core.dimension)
+    local dimension = assert(args.dimension)
     local npart = args.particles or { 1000 } -- default value
 
     local particle
@@ -63,6 +64,7 @@ function new(args)
         particle = particle_wrapper.host[dimension](npart)
     end
 
+    local core = mdsim.core() -- singleton
     -- connect particle to core
     core.particle = particle
 

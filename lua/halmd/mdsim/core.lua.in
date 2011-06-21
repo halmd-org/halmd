@@ -25,11 +25,8 @@ local core_wrapper = {
     [2] = libhalmd.mdsim.core_2_
   , [3] = libhalmd.mdsim.core_3_
 }
-local h5 = libhalmd.h5
-local po = libhalmd.po
 -- grab standard library
 local assert = assert
-local error = error
 
 module("halmd.mdsim.core", halmd.modules.register, halmd.singleton)
 
@@ -37,43 +34,8 @@ module("halmd.mdsim.core", halmd.modules.register, halmd.singleton)
 -- construct core module
 --
 function new(args)
-    local dimension = args.dimension or 3 -- default value
+    local dimension = assert(args.dimension)
     local core = core_wrapper[dimension]()
     assert(core.dimension == dimension)
     return core
-end
-
--- override default parameter namespace
-namespace = "box"
-
---
--- assemble module options
---
--- @param desc po.options_description
---
-function options(desc)
-    desc:add("dimension", po.uint():notifier(function(value)
-
-        if not core_wrapper[value] then
-            error(("invalid dimension '%d'"):format(value), 0)
-        end
-
-    end), "dimension of positional coordinates")
-end
-
---
--- read module parameters from HDF5 group
---
-function read_parameters(args, group)
-    args.dimension = group:read_attribute("dimension", h5.uint())
-end
-
---
--- write module parameters to HDF5 group
---
--- @param core module instance
--- @param group HDF5 group
---
-function write_parameters(core, group)
-    group:write_attribute("dimension", h5.uint(), core.dimension)
 end
