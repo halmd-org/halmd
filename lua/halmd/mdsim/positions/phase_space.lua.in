@@ -64,5 +64,10 @@ function new(args)
     else
         phase_space = phase_space_wrapper.host[dimension]
     end
-    return phase_space(particle, box, sample)
+    local position = phase_space(particle, box, sample)
+
+    -- connect position to core
+    core.position = position
+
+    return position
 end

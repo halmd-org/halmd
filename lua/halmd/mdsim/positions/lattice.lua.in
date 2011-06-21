@@ -71,7 +71,12 @@ function new(args)
     else
         lattice = lattice_wrapper.host[dimension]
     end
-    return lattice(particle, box, random, slab)
+    local position = lattice(particle, box, random, slab)
+
+    -- connect position to core
+    core.position = position
+
+    return position
 end
 
 --

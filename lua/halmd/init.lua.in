@@ -67,7 +67,7 @@ function new(args)
     core.sort = mdsim.sort()
 
     local reader = trajectory.reader()
-    core.position = mdsim.position{ reader = reader }
+    mdsim.position{ reader = reader }
     core.velocity = mdsim.velocity{ reader = reader }
 
     -- Construct sampler.
