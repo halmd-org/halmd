@@ -70,6 +70,12 @@ box<dimension>::box(
 }
 
 template <int dimension>
+static int wrap_dimension(box<dimension> const&)
+{
+    return dimension;
+}
+
+template <int dimension>
 void box<dimension>::luaopen(lua_State* L)
 {
     using namespace luabind;
@@ -81,6 +87,7 @@ void box<dimension>::luaopen(lua_State* L)
             class_<box, shared_ptr<box> >(class_name.c_str())
                 .def(constructor<shared_ptr<particle_type>, vector_type const&>())
                 .def(constructor<shared_ptr<particle_type>, double, vector_type const&>())
+                .property("dimension", &wrap_dimension<dimension>)
                 .property("length", &box::length)
                 .property("density", &box::density)
         ]
