@@ -17,9 +17,8 @@
 -- along with this program.  If not, see <http://www.gnu.org/licenses/>.
 --
 
+require("halmd.mdsim.particle")
 require("halmd.modules")
-
-require("halmd.mdsim.core")
 require("halmd.parameter")
 
 -- grab modules
@@ -39,8 +38,8 @@ module("halmd.io.statevars.writers.hdf5", halmd.modules.register)
 -- construct HDF5 statevars writer module
 --
 function new(args)
-    local core = mdsim.core()
-    local dimension = assert(core.dimension)
+    local particle = mdsim.particle()
+    local dimension = assert(particle.dimension)
 
     -- command line options
     local output = assert(args.output)
