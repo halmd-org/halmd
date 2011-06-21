@@ -57,7 +57,12 @@ function new(args)
     else
         zero = assert(zero_wrapper.gpu[dimension])
     end
-    return zero(particle)
+    local force = zero(particle)
+
+    -- connect force to core
+    core.force = force
+
+    return force
 end
 
 --

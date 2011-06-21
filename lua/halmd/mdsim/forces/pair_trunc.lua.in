@@ -64,5 +64,10 @@ function new(args)
     else
         pair_trunc = assert(pair_trunc_wrapper.host[dimension][force])
     end
-    return pair_trunc(potential, particle, box)
+    local force = pair_trunc(potential, particle, box)
+
+    -- connect force to core
+    core.force = force
+
+    return force
 end

@@ -62,7 +62,7 @@ function new(args)
     core.particle = mdsim.particle()
     core.box = mdsim.box()
     mdsim.integrator()
-    core.force = mdsim.force()
+    mdsim.force()
     core.neighbour = mdsim.neighbour()
     core.sort = mdsim.sort()
 
