@@ -26,24 +26,29 @@
 namespace halmd
 {
 
-HALMD_LUA_API int luaopen_libhalmd_utility_lua_signal(lua_State* L)
+template <typename Signature>
+static void luaopen_signal_proxy(lua_State* L, char const* class_name)
 {
     using namespace luabind;
     module(L, "libhalmd")
     [
-        class_<signal<void ()> >("signal__void__")
+        class_<signal_proxy<Signature> >(class_name)
             .scope
             [
-                class_<signal<void ()>::slot_function_type>("slot_function_type")
-                    .def("__call", &signal<void ()>::slot_function_type::operator())
+                class_<typename signal_proxy<Signature>::connection>("connection")
+
+              , class_<typename signal_proxy<Signature>::slot_function_type>("slot_function_type")
+                    .def("__call", &signal_proxy<Signature>::slot_function_type::operator())
             ]
-      , class_<signal<void (uint64_t)> >("signal__uint64_t__")
-            .scope
-            [
-                class_<signal<void (uint64_t)>::slot_function_type>("slot_function_type")
-                    .def("__call", &signal<void (uint64_t)>::slot_function_type::operator())
-            ]
+            .def("connect", &signal_proxy<Signature>::connect)
+            .def("disconnect", &signal_proxy<Signature>::disconnect)
     ];
+}
+
+HALMD_LUA_API int luaopen_libhalmd_utility_lua_signal(lua_State* L)
+{
+    luaopen_signal_proxy<void ()>(L, "signal_proxy__void__");
+    luaopen_signal_proxy<void (uint64_t)>(L, "signal_proxy__uint64_t__");
     return 0;
 }
 
