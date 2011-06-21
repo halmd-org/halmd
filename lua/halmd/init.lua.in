@@ -57,7 +57,7 @@ module("halmd", halmd.modules.register)
 --
 function new(args)
     local core = mdsim.core() -- singleton
-    core.particle = mdsim.particle()
+    mdsim.particle()
     core.box = mdsim.box()
     mdsim.integrator()
     mdsim.force()

@@ -56,10 +56,17 @@ function new(args)
     local dimension = assert(core.dimension)
     local npart = args.particles or { 1000 } -- default value
 
-    if not device() then
-        return particle_wrapper.host[dimension](npart)
+    local particle
+    if device() then
+        particle = particle_wrapper.gpu[dimension](device(), npart)
+    else
+        particle = particle_wrapper.host[dimension](npart)
     end
-    return particle_wrapper.gpu[dimension](device(), npart)
+
+    -- connect particle to core
+    core.particle = particle
+
+    return particle
 end
 
 -- override default parameter namespace
