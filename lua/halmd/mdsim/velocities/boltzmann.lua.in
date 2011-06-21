@@ -65,7 +65,12 @@ function new(args)
     else
         boltzmann = boltzmann_wrapper.host[dimension]
     end
-    return boltzmann(particle, random, temperature)
+    local velocity = boltzmann(particle, random, temperature)
+
+    -- connect velocity to core
+    core.velocity = velocity
+
+    return velocity
 end
 
 --

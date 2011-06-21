@@ -68,7 +68,7 @@ function new(args)
 
     local reader = trajectory.reader()
     mdsim.position{ reader = reader }
-    core.velocity = mdsim.velocity{ reader = reader }
+    mdsim.velocity{ reader = reader }
 
     -- Construct sampler.
     local sampler = observables.sampler()

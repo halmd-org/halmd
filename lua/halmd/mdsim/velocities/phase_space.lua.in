@@ -63,5 +63,10 @@ function new(args)
     else
         phase_space = phase_space_wrapper.host[dimension]
     end
-    return phase_space(particle, sample)
+    local velocity = phase_space(particle, sample)
+
+    -- connect velocity to core
+    core.velocity = velocity
+
+    return velocity
 end
