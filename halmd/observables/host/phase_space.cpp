@@ -72,6 +72,12 @@ void phase_space<dimension, float_type>::acquire(uint64_t step)
 }
 
 template <int dimension, typename float_type>
+static int wrap_dimension(phase_space<dimension, float_type> const&)
+{
+    return dimension;
+}
+
+template <int dimension, typename float_type>
 void phase_space<dimension, float_type>::luaopen(lua_State* L)
 {
     using namespace luabind;
@@ -88,6 +94,7 @@ void phase_space<dimension, float_type>::luaopen(lua_State* L)
                        , shared_ptr<particle_type>
                        , shared_ptr<box_type>
                     >())
+                    .property("dimension", &wrap_dimension<dimension, float_type>)
             ]
         ]
     ];
