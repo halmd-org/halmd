@@ -52,8 +52,7 @@ public:
     typedef gpu::phase_space<gpu::samples::phase_space<dimension, float_type> > phase_space_type;
     typedef density_mode_wrapper<dimension> wrapper_type;
     typedef halmd::utility::profiler profiler_type;
-    typedef typename _Base::signal_type signal_type;
-    typedef typename _Base::slot_function_type slot_function_type;
+    typedef typename _Base::signal_proxy_type signal_proxy_type;
 
     typedef typename mdsim::type_traits<dimension, float>::vector_type vector_type;
     typedef typename mdsim::type_traits<dimension, float>::gpu::coalesced_vector_type gpu_vector_type;
@@ -79,9 +78,9 @@ public:
     */
     virtual void acquire(uint64_t step);
 
-    virtual void on_acquire(slot_function_type const& slot)
+    virtual signal_proxy_type on_acquire()
     {
-        on_acquire_.connect(slot);
+        return on_acquire_;
     }
 
     //! returns nested list of density modes
@@ -109,6 +108,8 @@ public:
     }
 
 protected:
+    typedef typename signal_proxy_type::signal_type signal_type;
+
     boost::shared_ptr<phase_space_type> phase_space_;
     boost::shared_ptr<wavevector_type> wavevector_;
 
