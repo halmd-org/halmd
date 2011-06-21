@@ -22,6 +22,7 @@
 
 #include <boost/noncopyable.hpp>
 #include <lua.hpp>
+#include <string>
 
 #include <halmd/runner.hpp>
 #include <halmd/utility/options_parser.hpp>
@@ -38,6 +39,7 @@ class script
 public:
     script();
     virtual ~script();
+    void dofile(std::string const& file_name);
     void options(options_parser& parser);
     void parsed(po::variables_map const& vm);
     boost::shared_ptr<runner> run();

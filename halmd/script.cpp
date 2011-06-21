@@ -128,6 +128,21 @@ void script::load_library()
     }
 }
 
+/*
+ * Load and execute Lua script
+ */
+void script::dofile(string const& file_name)
+{
+    // error handler passed to lua_pcall as last argument
+    lua_pushcfunction(L, &script::traceback);
+
+    if (luaL_loadfile(L, file_name.c_str()) || lua_pcall(L, 0, 0, 1)) {
+        LOG_ERROR(lua_tostring(L, -1));
+        lua_pop(L, 1); //< remove error message
+        throw runtime_error("failed to load Lua script");
+    }
+}
+
 /**
  * Assemble program options
  */
