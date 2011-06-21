@@ -18,6 +18,7 @@
 --
 
 require("halmd.modules")
+require("halmd.singleton")
 
 require("halmd.mdsim.core")
 
@@ -33,7 +34,7 @@ local po = libhalmd.po
 -- grab standard library
 local assert = assert
 
-module("halmd.mdsim.box", halmd.modules.register)
+module("halmd.mdsim.box", halmd.modules.register, halmd.singleton)
 
 --
 -- construct box module instance
