@@ -139,6 +139,12 @@ void particle<dimension, float_type>::set()
     }
 }
 
+template <int dimension, typename float_type>
+static int wrap_dimension(particle<dimension, float_type> const&)
+{
+    return dimension;
+}
+
 template <unsigned int dimension, typename float_type>
 void particle<dimension, float_type>::luaopen(lua_State* L)
 {
@@ -155,6 +161,7 @@ void particle<dimension, float_type>::luaopen(lua_State* L)
                         shared_ptr<device_type>
                       , vector<unsigned int> const&
                     >())
+                    .property("dimension", &wrap_dimension<dimension, float_type>)
             ]
         ]
     ];

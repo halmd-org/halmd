@@ -90,6 +90,12 @@ void particle<dimension, float_type>::rearrange(std::vector<unsigned int> const&
     // no permutation of neighbour lists
 }
 
+template <int dimension, typename float_type>
+static int wrap_dimension(particle<dimension, float_type> const&)
+{
+    return dimension;
+}
+
 template <unsigned int dimension, typename float_type>
 void particle<dimension, float_type>::luaopen(lua_State* L)
 {
@@ -103,6 +109,7 @@ void particle<dimension, float_type>::luaopen(lua_State* L)
             [
                 class_<particle, shared_ptr<_Base>, _Base>(class_name.c_str())
                     .def(constructor<vector<unsigned int> const&>())
+                    .property("dimension", &wrap_dimension<dimension, float_type>)
             ]
         ]
     ];
