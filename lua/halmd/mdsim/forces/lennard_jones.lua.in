@@ -17,10 +17,9 @@
 -- along with this program.  If not, see <http://www.gnu.org/licenses/>.
 --
 
-require("halmd.modules")
-
 require("halmd.device")
-require("halmd.mdsim.core")
+require("halmd.mdsim.particle")
+require("halmd.modules")
 
 -- grab modules
 local device = halmd.device
@@ -47,8 +46,7 @@ function new(args)
     local epsilon = args.epsilon or { 1.0, 1.5, 0.5 } -- default value
     local sigma = args.sigma or { 1.0, 0.8, 0.88 } -- default value
 
-    local core = mdsim.core()
-    local particle = assert(core.particle)
+    local particle = mdsim.particle() -- singleton
 
     local lennard_jones
     if device() then

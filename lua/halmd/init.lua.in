@@ -28,7 +28,6 @@ require("halmd.io.statevars.writer")
 require("halmd.io.trajectory.reader")
 require("halmd.io.trajectory.writer")
 require("halmd.mdsim.box")
-require("halmd.mdsim.core")
 require("halmd.mdsim.force")
 require("halmd.mdsim.integrator")
 require("halmd.mdsim.particle")
@@ -56,9 +55,8 @@ module("halmd", halmd.modules.register)
 -- Construct simulation
 --
 function new(args)
-    local core = mdsim.core() -- singleton
     mdsim.particle()
-    core.box = mdsim.box()
+    mdsim.box()
     mdsim.integrator()
     mdsim.force()
 

@@ -17,10 +17,11 @@
 -- along with this program.  If not, see <http://www.gnu.org/licenses/>.
 --
 
-require("halmd.modules")
-
 require("halmd.device")
+require("halmd.mdsim.box")
 require("halmd.mdsim.core")
+require("halmd.mdsim.particle")
+require("halmd.modules")
 require("halmd.random")
 
 -- grab modules
@@ -54,10 +55,9 @@ function new(args)
     local slab = args.slab or {} -- optional
 
     -- dependency injection
-    local core = mdsim.core()
-    local dimension = assert(core.dimension)
-    local particle = assert(core.particle)
-    local box = assert(core.box)
+    local particle = mdsim.particle() -- singleton
+    local dimension = assert(particle.dimension)
+    local box = mdsim.box() -- singleton
     local random = assert(random())
 
     -- fill up missing values with 1
@@ -73,6 +73,7 @@ function new(args)
     end
     local position = lattice(particle, box, random, slab)
 
+    local core = mdsim.core()
     -- connect position to core
     core.position = position
 

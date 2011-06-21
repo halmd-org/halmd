@@ -17,10 +17,11 @@
 -- along with this program.  If not, see <http://www.gnu.org/licenses/>.
 --
 
-require("halmd.modules")
-
 require("halmd.device")
+require("halmd.mdsim.box")
 require("halmd.mdsim.core")
+require("halmd.mdsim.particle")
+require("halmd.modules")
 require("halmd.random")
 
 -- grab modules
@@ -56,10 +57,9 @@ function new(args)
     local collision_rate = args.collision_rate or 10 -- default value
 
     -- dependency injection
-    local core = mdsim.core()
-    local dimension = assert(core.dimension)
-    local particle = assert(core.particle)
-    local box = assert(core.box)
+    local particle = mdsim.particle() -- singleton
+    local dimension = assert(particle.dimension)
+    local box = mdsim.box() -- singleton
     local random = assert(random())
 
     local andersen
@@ -70,6 +70,7 @@ function new(args)
     end
     local integrator = andersen(particle, box, random, timestep, temperature, collision_rate)
 
+    local core = mdsim.core()
     -- connect integrator to core
     core.integrator = integrator
 

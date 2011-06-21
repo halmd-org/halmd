@@ -17,10 +17,9 @@
 -- along with this program.  If not, see <http://www.gnu.org/licenses/>.
 --
 
+require("halmd.mdsim.particle")
 require("halmd.modules")
 require("halmd.singleton")
-
-require("halmd.mdsim.core")
 
 -- grab modules
 local mdsim = halmd.mdsim
@@ -47,9 +46,8 @@ function new(args)
     local ratios = args.ratios or {}
     local length = args.length -- optional
 
-    local core = mdsim.core()
-    local dimension = assert(core.dimension)
-    local particle = assert(core.particle)
+    local particle = mdsim.particle() -- singleton
+    local dimension = assert(particle.dimension)
 
     local box = box_wrapper[dimension]
     if length then

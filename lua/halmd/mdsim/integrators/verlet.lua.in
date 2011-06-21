@@ -17,10 +17,11 @@
 -- along with this program.  If not, see <http://www.gnu.org/licenses/>.
 --
 
-require("halmd.modules")
-
 require("halmd.device")
+require("halmd.mdsim.box")
 require("halmd.mdsim.core")
+require("halmd.mdsim.particle")
+require("halmd.modules")
 
 -- grab modules
 local device = halmd.device
@@ -52,10 +53,9 @@ function new(args)
     local timestep = args.timestep or 0.001 -- default value
 
     -- dependency injection
-    local core = mdsim.core()
-    local dimension = assert(core.dimension)
-    local particle = assert(core.particle)
-    local box = assert(core.box)
+    local particle = mdsim.particle() -- singleton
+    local dimension = assert(particle.dimension)
+    local box = mdsim.box() -- singleton
 
     local verlet
     if device() then
@@ -65,6 +65,7 @@ function new(args)
     end
     local integrator = verlet(particle, box, timestep)
 
+    local core = mdsim.core()
     -- connect integrator to core
     core.integrator = integrator
 

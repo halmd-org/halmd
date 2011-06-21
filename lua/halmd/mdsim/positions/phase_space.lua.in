@@ -17,10 +17,11 @@
 -- along with this program.  If not, see <http://www.gnu.org/licenses/>.
 --
 
-require("halmd.modules")
-
 require("halmd.device")
+require("halmd.mdsim.box")
 require("halmd.mdsim.core")
+require("halmd.mdsim.particle")
+require("halmd.modules")
 require("halmd.observables.samples.phase_space")
 
 -- grab modules
@@ -52,10 +53,9 @@ module("halmd.mdsim.positions.phase_space", halmd.modules.register)
 --
 function new(args)
     -- dependency injection
-    local core = mdsim.core()
-    local dimension = assert(core.dimension)
-    local particle = assert(core.particle)
-    local box = assert(core.box)
+    local particle = mdsim.particle() -- singleton
+    local dimension = assert(particle.dimension)
+    local box = mdsim.box() -- singleton
     local sample = assert(observables.samples.phase_space{ memory = "host" })
 
     local phase_space
@@ -66,6 +66,7 @@ function new(args)
     end
     local position = phase_space(particle, box, sample)
 
+    local core = mdsim.core()
     -- connect position to core
     core.position = position
 
