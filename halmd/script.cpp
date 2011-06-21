@@ -22,6 +22,7 @@
 
 #include <halmd/io/logger.hpp>
 #include <halmd/script.hpp>
+#include <halmd/utility/filesystem.hpp>
 #include <halmd/utility/lua/lua.hpp>
 #include <halmd/utility/lua/program_options.hpp>
 #include <halmd/version.h>
@@ -66,16 +67,24 @@ void script::package_path()
     // get default package.path
     lua_rawget(L, -3);
 
-    // search for Lua scripts in build tree using relative path
-    lua_pushliteral(L, ";" "../lua/?.lua");
-    lua_pushliteral(L, ";" "../lua/?/init.lua");
+    // absolute path to HALMD build tree
+    filesystem::path build_path(HALMD_BINARY_DIR);
+    // absolute path to initial current working directory
+    filesystem::path initial_path(filesystem::initial_path());
 
-    // search for Lua scripts in installation prefix
-    lua_pushliteral(L, ";" HALMD_INSTALL_PREFIX "/share/?.lua");
-    lua_pushliteral(L, ";" HALMD_INSTALL_PREFIX "/share/?/init.lua");
+    if (contains_path(build_path, initial_path)) {
+        // search for Lua scripts in build tree using relative path
+        lua_pushliteral(L, ";" HALMD_BINARY_DIR "/lua/?.lua");
+        lua_pushliteral(L, ";" HALMD_BINARY_DIR "/lua/?/init.lua");
+    }
+    else {
+        // search for Lua scripts in installation prefix
+        lua_pushliteral(L, ";" HALMD_INSTALL_PREFIX "/share/?.lua");
+        lua_pushliteral(L, ";" HALMD_INSTALL_PREFIX "/share/?/init.lua");
+    }
 
     // append above literals to default package.path
-    lua_concat(L, 5);
+    lua_concat(L, 3);
     // set new package.path
     lua_rawset(L, -3);
     // remove table "package"
