@@ -21,6 +21,7 @@
 #include <luabind/class_info.hpp>
 
 #include <halmd/io/logger.hpp>
+#include <halmd/observables/sampler.hpp>
 #include <halmd/script.hpp>
 #include <halmd/utility/filesystem.hpp>
 #include <halmd/utility/lua/lua.hpp>
@@ -189,17 +190,16 @@ void script::parsed(po::variables_map const& vm)
 /**
  * Run simulation
  */
-shared_ptr<runner> script::run()
+void script::run()
 {
     using namespace luabind;
 
-    // runner is non-template base class to template sampler
-    shared_ptr<runner> sampler;
+    shared_ptr<observables::sampler> sampler;
     try {
 #ifndef NDEBUG
         scoped_pcall_callback pcall_callback(&traceback);
 #endif
-        sampler = call_function<shared_ptr<runner> >(L, "halmd");
+        sampler = call_function<shared_ptr<observables::sampler> >(L, "halmd");
     }
     catch (luabind::error const& e) {
         LOG_ERROR(lua_tostring(e.state(), -1));
@@ -213,7 +213,7 @@ shared_ptr<runner> script::run()
     // garbage collector now.
     lua_gc(L, LUA_GCCOLLECT, 0);
 
-    return sampler;
+    sampler->run();
 }
 
 /**

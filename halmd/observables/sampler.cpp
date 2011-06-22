@@ -150,7 +150,7 @@ HALMD_LUA_API int luaopen_libhalmd_observables_sampler(lua_State* L)
     using namespace luabind;
     module(L, "libhalmd")
     [
-        class_<sampler, shared_ptr<runner>, runner>("sampler")
+        class_<sampler, shared_ptr<sampler> >("sampler")
             .def(constructor<
                 shared_ptr<sampler::clock_type>
               , shared_ptr<sampler::core_type>

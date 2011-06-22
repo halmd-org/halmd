@@ -27,9 +27,6 @@ endmacro()
 ##
 # HALMD C++ modules
 #
-halmd_add_modules(
-  libhalmd_runner
-)
 add_subdirectory(algorithm)
 add_subdirectory(io)
 add_subdirectory(mdsim)
@@ -62,7 +59,6 @@ get_property(HALMD_LIBRARIES GLOBAL PROPERTY HALMD_LIBRARIES)
 
 add_library(libhalmd SHARED
   "${CMAKE_CURRENT_BINARY_DIR}/modules.cpp"
-  runner.cpp
   script.cpp
 )
 set_target_properties(libhalmd PROPERTIES

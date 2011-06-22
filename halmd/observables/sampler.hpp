@@ -24,7 +24,6 @@
 
 #include <halmd/mdsim/clock.hpp>
 #include <halmd/mdsim/core.hpp>
-#include <halmd/runner.hpp>
 #include <halmd/utility/profiler.hpp>
 #include <halmd/utility/signal.hpp>
 
@@ -37,7 +36,6 @@ namespace observables
  * Sampler to run Molecular Dynamics simulation
  */
 class sampler
-  : public runner
 {
 public:
     typedef mdsim::clock clock_type;
