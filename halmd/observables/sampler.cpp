@@ -36,14 +36,15 @@ namespace observables
 /**
  * Initialize simulation
  */
-template <int dimension>
-sampler<dimension>::sampler(
-    shared_ptr<core_type> core
-  , uint64_t steps
+sampler::sampler(
+    shared_ptr<clock_type> clock
+  , shared_ptr<core_type> core
+  , step_type steps
 )
-  : core_(core)
+  : clock_(clock)
+  , core_(core)
   , steps_(steps)
-  , total_time_(steps_ * core_->integrator->timestep())
+  , total_time_(steps_ * clock_->timestep())
 {
     LOG("number of integration steps: " << steps_);
     LOG("integration time: " << total_time_);
@@ -52,8 +53,7 @@ sampler<dimension>::sampler(
 /**
  * register module runtime accumulators
  */
-template <int dimension>
-void sampler<dimension>::register_runtimes(profiler_type& profiler)
+void sampler::register_runtimes(profiler_type& profiler)
 {
     profiler.register_runtime(runtime_.total, "total", "total simulation runtime");
 }
@@ -61,41 +61,38 @@ void sampler<dimension>::register_runtimes(profiler_type& profiler)
 /**
  * Run simulation
  */
-template <int dimension>
-void sampler<dimension>::run()
+void sampler::run()
 {
-
     LOG("setting up simulation box");
 
-    on_prepare_(core_->step());
+    on_prepare_(clock_->step());
     core_->prepare();
-    on_sample_(core_->step());
+    on_sample_(clock_->step());
 
-    on_start_(core_->step());
+    on_start_(clock_->step());
 
     LOG("starting simulation run");
     {
         scoped_timer<timer> timer_(runtime_.total);
 
-        while (core_->step() < steps_) {
-            on_prepare_(core_->step() + 1); //< step counter is increased by call to mdstep()
+        while (clock_->step() < steps_) {
+            on_prepare_(clock_->step() + 1); //< step counter is increased by call to mdstep()
 
             // perform complete MD integration step
             core_->mdstep();
 
-            on_sample_(core_->step());
+            on_sample_(clock_->step());
         }
     }
     LOG("finished simulation run");
 
-    on_finish_(core_->step());
+    on_finish_(clock_->step());
 }
 
 /**
  * Connect slot to signal emitted before starting simulation run
  */
-template <int dimension>
-void sampler<dimension>::on_start(slot_function_type const& slot)
+void sampler::on_start(slot_function_type const& slot)
 {
     on_start_.connect(slot);
 }
@@ -103,8 +100,7 @@ void sampler<dimension>::on_start(slot_function_type const& slot)
 /**
  * Connect slot to signal emitted before MD integration step
  */
-template <int dimension>
-void sampler<dimension>::on_prepare(slot_function_type const& slot, uint64_t interval)
+void sampler::on_prepare(slot_function_type const& slot, step_type interval)
 {
     on_prepare_.connect(
         bind(&sampler::prepare, this, slot, interval, _1)
@@ -114,8 +110,7 @@ void sampler<dimension>::on_prepare(slot_function_type const& slot, uint64_t int
 /**
  * Connect slot to signal emitted after MD integration step
  */
-template <int dimension>
-void sampler<dimension>::on_sample(slot_function_type const& slot, uint64_t interval)
+void sampler::on_sample(slot_function_type const& slot, step_type interval)
 {
     on_sample_.connect(
         bind(&sampler::sample, this, slot, interval, _1)
@@ -125,8 +120,7 @@ void sampler<dimension>::on_sample(slot_function_type const& slot, uint64_t inte
 /**
  * Connect slot to signal emitted after finishing simulation run
  */
-template <int dimension>
-void sampler<dimension>::on_finish(slot_function_type const& slot)
+void sampler::on_finish(slot_function_type const& slot)
 {
     on_finish_.connect(slot);
 }
@@ -134,8 +128,7 @@ void sampler<dimension>::on_finish(slot_function_type const& slot)
 /**
  * Forward signal to slot at given interval
  */
-template <int dimension>
-void sampler<dimension>::prepare(slot_function_type const& slot, uint64_t interval, uint64_t step) const
+void sampler::prepare(slot_function_type const& slot, step_type interval, step_type step) const
 {
     if (step == 0 || step % interval == 0 || step == steps_) {
         slot(step);
@@ -145,46 +138,34 @@ void sampler<dimension>::prepare(slot_function_type const& slot, uint64_t interv
 /**
  * Forward signal to slot at given interval
  */
-template <int dimension>
-void sampler<dimension>::sample(slot_function_type const& slot, uint64_t interval, uint64_t step) const
+void sampler::sample(slot_function_type const& slot, step_type interval, step_type step) const
 {
     if (step == 0 || step % interval == 0 || step == steps_) {
         slot(step);
     }
 }
 
-template <int dimension>
-void sampler<dimension>::luaopen(lua_State* L)
+HALMD_LUA_API int luaopen_libhalmd_observables_sampler(lua_State* L)
 {
     using namespace luabind;
-    static string class_name("sampler_" + lexical_cast<string>(dimension) + "_");
     module(L, "libhalmd")
     [
-        class_<sampler, shared_ptr<runner>, runner>(class_name.c_str())
+        class_<sampler, shared_ptr<runner>, runner>("sampler")
             .def(constructor<
-                shared_ptr<core_type>
-              , uint64_t
+                shared_ptr<sampler::clock_type>
+              , shared_ptr<sampler::core_type>
+              , sampler::step_type
             >())
             .def("register_runtimes", &sampler::register_runtimes)
-            .property("steps", &sampler::steps)
-            .property("total_time", &sampler::total_time)
             .def("on_start", &sampler::on_start)
             .def("on_finish", &sampler::on_finish)
             .def("on_prepare", &sampler::on_prepare)
             .def("on_sample", &sampler::on_sample)
+            .property("steps", &sampler::steps)
+            .property("total_time", &sampler::total_time)
     ];
-}
-
-HALMD_LUA_API int luaopen_libhalmd_observables_sampler(lua_State* L)
-{
-    sampler<3>::luaopen(L);
-    sampler<2>::luaopen(L);
     return 0;
 }
-
-// explicit instantiation
-template class sampler<3>;
-template class sampler<2>;
 
 } // namespace observables
 

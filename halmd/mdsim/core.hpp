@@ -22,16 +22,9 @@
 
 #include <boost/shared_ptr.hpp>
 
-#include <halmd/mdsim/box.hpp>
 #include <halmd/mdsim/clock.hpp>
-#include <halmd/mdsim/force.hpp>
-#include <halmd/mdsim/integrator.hpp>
-#include <halmd/mdsim/neighbour.hpp>
-#include <halmd/mdsim/particle.hpp>
-#include <halmd/mdsim/position.hpp>
-#include <halmd/mdsim/sort.hpp>
-#include <halmd/mdsim/velocity.hpp>
 #include <halmd/utility/profiler.hpp>
+#include <halmd/utility/signal.hpp>
 
 /** HAL’s MD package */
 namespace halmd
@@ -40,53 +33,89 @@ namespace halmd
 namespace mdsim
 {
 
-template <int dimension>
 class core
 {
 public:
-    typedef mdsim::particle<dimension> particle_type;
-    typedef mdsim::force<dimension> force_type;
-    typedef mdsim::box<dimension> box_type;
-    typedef mdsim::neighbour<dimension> neighbour_type;
-    typedef mdsim::sort<dimension> sort_type;
-    typedef mdsim::integrator<dimension> integrator_type;
-    typedef mdsim::position<dimension> position_type;
-    typedef mdsim::velocity<dimension> velocity_type;
+    typedef halmd::signal<void ()> signal_type;
+    typedef signal_type::slot_function_type slot_function_type;
     typedef mdsim::clock clock_type;
     typedef utility::profiler profiler_type;
 
-    struct runtime
+    struct runtime_type
     {
-        typedef typename profiler_type::accumulator_type accumulator_type;
+        typedef profiler_type::accumulator_type accumulator_type;
         accumulator_type prepare;
         accumulator_type mdstep;
     };
 
-    static void luaopen(lua_State* L);
-
-    core();
-    void register_runtimes(profiler_type& profiler);
+    core(boost::shared_ptr<clock_type> clock);
+    void register_runtimes(profiler_type& profiler) const;
     void prepare();
     void mdstep();
 
-    boost::shared_ptr<particle_type> particle;
-    boost::shared_ptr<box_type> box;
-    boost::shared_ptr<force_type> force;
-    boost::shared_ptr<neighbour_type> neighbour;
-    boost::shared_ptr<sort_type> sort;
-    boost::shared_ptr<integrator_type> integrator;
-    boost::shared_ptr<position_type> position;
-    boost::shared_ptr<velocity_type> velocity;
-    const boost::shared_ptr<clock_type> clock;
+    /** profiling runtime accumulators */
+    runtime_type const& runtime() const
+    {
+        return runtime_;
+    }
 
-    //! return current simulation step
-    uint64_t step() const {
-        return clock->step();
+    void on_prepend_integrate(slot_function_type const& slot)
+    {
+        on_prepend_integrate_.connect(slot);
+    }
+
+    void on_integrate(slot_function_type const& slot)
+    {
+        on_integrate_.connect(slot);
+    }
+
+    void on_append_integrate(slot_function_type const& slot)
+    {
+        on_append_integrate_.connect(slot);
+    }
+
+    void on_prepend_force(slot_function_type const& slot)
+    {
+        on_prepend_force_.connect(slot);
+    }
+
+    void on_force(slot_function_type const& slot)
+    {
+        on_force_.connect(slot);
+    }
+
+    void on_append_force(slot_function_type const& slot)
+    {
+        on_append_force_.connect(slot);
+    }
+
+    void on_prepend_finalize(slot_function_type const& slot)
+    {
+        on_prepend_finalize_.connect(slot);
+    }
+
+    void on_finalize(slot_function_type const& slot)
+    {
+        on_finalize_.connect(slot);
+    }
+
+    void on_append_finalize(slot_function_type const& slot)
+    {
+        on_append_finalize_.connect(slot);
     }
 
 private:
-    /** profiling runtime accumulators */
-    runtime runtime_;
+    boost::shared_ptr<clock_type> clock_;
+    signal_type on_prepend_integrate_;
+    signal_type on_integrate_;
+    signal_type on_append_integrate_;
+    signal_type on_prepend_force_;
+    signal_type on_force_;
+    signal_type on_append_force_;
+    signal_type on_prepend_finalize_;
+    signal_type on_finalize_;
+    signal_type on_append_finalize_;
+    runtime_type runtime_;
 };
 
 } // namespace mdsim

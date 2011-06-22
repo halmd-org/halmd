@@ -36,19 +36,16 @@ namespace mdsim
 /**
  * Initialize simulation
  */
-template <int dimension>
-core<dimension>::core()
+core::core(shared_ptr<clock_type> clock)
   // dependency injection
-  : clock(make_shared<clock_type>())
+  : clock_(clock)
 {
-    LOG("dimension of positional coordinates: " << dimension);
 }
 
 /**
  * register module runtime accumulators
  */
-template <int dimension>
-void core<dimension>::register_runtimes(profiler_type& profiler)
+void core::register_runtimes(profiler_type& profiler) const
 {
     profiler.register_runtime(runtime_.prepare, "prepare", "microscopic state preparation");
     profiler.register_runtime(runtime_.mdstep, "mdstep", "MD integration step");
@@ -57,93 +54,63 @@ void core<dimension>::register_runtimes(profiler_type& profiler)
 /**
  * Prepare microscopic system state
  */
-template <int dimension>
-void core<dimension>::prepare()
+void core::prepare()
 {
     scoped_timer<timer> timer_(runtime_.prepare);
-    particle->set();
-    position->set();
-    velocity->set();
-    if (neighbour) {
-        if (sort) {
-            sort->order();
-        }
-        neighbour->update();
-    }
-    force->compute();
+
+    on_prepend_force_();
+    on_force_();
+    on_append_force_();
 }
 
 /**
  * Perform a single MD integration step
  */
-template <int dimension>
-void core<dimension>::mdstep()
+void core::mdstep()
 {
     scoped_timer<timer> timer_(runtime_.mdstep);
 
-    LOG_TRACE("performing MD step #" << clock->step() + 1); //< output 1-based counter consistent with output files
+    // increment 1-based simulation step
+    clock_->advance();
 
-    integrator->integrate();
-    if (neighbour && neighbour->check()) {
-        if (sort) {
-            sort->order();
-        }
-        neighbour->update();
-    }
-    force->compute();
-    integrator->finalize();
+    LOG_TRACE("performing MD step #" << clock_->step());
 
-    clock->advance(integrator->timestep()); // FIXME move to beginning of function?
-}
-
-/**
- * wrap dimension template parameter for Lua
- */
-template <int dimension>
-static int get_dimension(core<dimension> const&)
-{
-    return dimension;
-}
-
-template <int dimension>
-void core<dimension>::luaopen(lua_State* L)
-{
-    using namespace luabind;
-    static string class_name("core_" + lexical_cast<string>(dimension) + "_");
-    module(L, "libhalmd")
-    [
-        namespace_("mdsim")
-        [
-            class_<core, shared_ptr<core> >(class_name.c_str())
-                .def(constructor<>())
-                .def("register_runtimes", &core::register_runtimes)
-                .def_readwrite("particle", &core::particle)
-                .def_readwrite("box", &core::box)
-                .def_readwrite("force", &core::force)
-                .def_readwrite("neighbour", &core::neighbour)
-                .def_readwrite("sort", &core::sort)
-                .def_readwrite("integrator", &core::integrator)
-                .def_readwrite("position", &core::position)
-                .def_readwrite("velocity", &core::velocity)
-                .def_readonly("clock", &core::clock)
-                .property("dimension", &get_dimension<dimension>)
-                .property("step", &core::step)
-                .def("prepare", &core::prepare)
-                .def("mdstep", &core::mdstep)
-        ]
-    ];
+    on_prepend_integrate_();
+    on_integrate_();
+    on_append_integrate_();
+    on_prepend_force_();
+    on_force_();
+    on_append_force_();
+    on_prepend_finalize_();
+    on_finalize_();
+    on_append_finalize_();
 }
 
 HALMD_LUA_API int luaopen_libhalmd_mdsim_core(lua_State* L)
 {
-    core<3>::luaopen(L);
-    core<2>::luaopen(L);
+    using namespace luabind;
+    module(L, "libhalmd")
+    [
+        namespace_("mdsim")
+        [
+            class_<core, shared_ptr<core> >("core")
+                .def(constructor<shared_ptr<core::clock_type> >())
+                .def("register_runtimes", &core::register_runtimes)
+                .def("prepare", &core::prepare)
+                .def("mdstep", &core::mdstep)
+                .def("on_prepend_integrate", &core::on_prepend_integrate)
+                .def("on_integrate", &core::on_integrate)
+                .def("on_append_integrate", &core::on_append_integrate)
+                .def("on_prepend_force", &core::on_prepend_force)
+                .def("on_force", &core::on_force)
+                .def("on_append_force", &core::on_append_force)
+                .def("on_prepend_finalize", &core::on_prepend_finalize)
+                .def("on_finalize", &core::on_finalize)
+                .def("on_append_finalize", &core::on_append_finalize)
+        ]
+    ];
     return 0;
 }
-
-// explicit instantiation
-template class core<3>;
-template class core<2>;
 
 } // namespace mdsim
 
