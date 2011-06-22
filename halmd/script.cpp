@@ -43,8 +43,6 @@ script::script()
     package_path(); //< set Lua package path
 
     load_wrapper(); //< load HALMD Lua C++ wrapper
-
-    load_library(); //< load HALMD Lua library
 }
 
 script::~script()

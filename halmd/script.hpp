@@ -40,6 +40,7 @@ public:
     script();
     virtual ~script();
     void dofile(std::string const& file_name);
+    void load_library();
     void options(options_parser& parser);
     void parsed(po::variables_map const& vm);
     boost::shared_ptr<runner> run();
@@ -53,7 +54,6 @@ public:
 private:
     void package_path();
     void load_wrapper();
-    void load_library();
 };
 
 } // namespace halmd

@@ -48,6 +48,7 @@ int main(int argc, char **argv)
 {
     try {
         script script; //< load Lua script engine
+        script.load_library();
 
         //
         // assemble program options
