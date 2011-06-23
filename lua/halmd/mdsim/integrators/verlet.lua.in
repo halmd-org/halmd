@@ -19,6 +19,7 @@
 
 require("halmd.device")
 require("halmd.mdsim.box")
+require("halmd.mdsim.clock")
 require("halmd.mdsim.core")
 require("halmd.mdsim.particle")
 require("halmd.modules")
@@ -40,7 +41,6 @@ if libhalmd.mdsim.gpu then
     }
 end
 local h5 = libhalmd.h5
-local po = libhalmd.po
 -- grab standard library
 local assert = assert
 
@@ -50,12 +50,12 @@ module("halmd.mdsim.integrators.verlet", halmd.modules.register)
 -- construct verlet module
 --
 function new(args)
-    local timestep = args.timestep or 0.001 -- default value
-
     -- dependency injection
     local particle = mdsim.particle() -- singleton
     local dimension = assert(particle.dimension)
     local box = mdsim.box() -- singleton
+    local clock = mdsim.clock() -- singleton
+    local timestep = assert(clock.timestep)
 
     local verlet
     if device() then
@@ -78,22 +78,6 @@ end
 --
 function name()
     return "Velocity-Verlet integrator"
-end
-
---
--- assemble module options
---
--- @param desc po.options_description
---
-function options(desc)
-    desc:add("timestep", po.float(), "integration timestep")
-end
-
---
--- read module parameters from HDF5 group
---
-function read_parameters(args, group)
-    args.timestep = group:read_attribute("timestep", h5.float())
 end
 
 --

@@ -19,6 +19,7 @@
 
 require("halmd.device")
 require("halmd.mdsim.box")
+require("halmd.mdsim.clock")
 require("halmd.mdsim.core")
 require("halmd.mdsim.particle")
 require("halmd.modules")
@@ -52,7 +53,6 @@ module("halmd.mdsim.integrators.verlet_nvt_andersen", halmd.modules.register)
 -- construct verlet_nvt_andersen module
 --
 function new(args)
-    local timestep = args.timestep or 0.01 -- default value
     local temperature = args.temperature or 1.12 -- default value
     local collision_rate = args.collision_rate or 10 -- default value
 
@@ -61,6 +61,8 @@ function new(args)
     local dimension = assert(particle.dimension)
     local box = mdsim.box() -- singleton
     local random = assert(random())
+    local clock = mdsim.clock() -- singleton
+    local timestep = assert(clock.timestep)
 
     local andersen
     if device() then
@@ -90,7 +92,6 @@ end
 -- @param desc po.options_description
 --
 function options(desc)
-    desc:add("timestep", po.float(), "integration timestep")
     desc:add("temperature", po.float(), "thermostat temperature")
     desc:add("collision-rate", po.float(), "collision rate for Andersen thermostat")
 end
@@ -99,7 +100,6 @@ end
 -- read module parameters from HDF5 group
 --
 function read_parameters(args, group)
-    args.timestep = group:read_attribute("timestep", h5.float())
     args.temperature = group:read_attribute("temperature", h5.float())
     args.collision_rate = group:read_attribute("collision_rate", h5.float())
 end
