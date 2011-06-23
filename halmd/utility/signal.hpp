@@ -39,6 +39,37 @@ namespace halmd
 template <typename T>
 class signal;
 
+/**
+ * Signal proxy
+ *
+ * This class proxies access to a signal, by wrapping signal::connect and
+ * signal::disconnect. This allows a subscriber to connect and disconnect
+ * a slot, but prevents it from invoking the signal.
+ */
+template <typename T>
+class signal_proxy
+{
+public:
+    typedef signal<T> signal_type;
+    typedef typename signal_type::slot_function_type slot_function_type;
+    typedef typename signal_type::connection connection;
+
+    connection connect(slot_function_type const& slot)
+    {
+        return signal_.connect(slot);
+    }
+
+    void disconnect(connection const& c)
+    {
+        signal_.disconnect(c);
+    }
+
+    signal_proxy(signal_type& signal) : signal_(signal) {}
+
+private:
+    signal_type& signal_;
+};
+
 template <typename SlotFunction>
 class signal_base
 {
