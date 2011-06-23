@@ -41,7 +41,7 @@ namespace mdsim { namespace host
  */
 template <int dimension, typename float_type>
 neighbour<dimension, float_type>::neighbour(
-    shared_ptr<particle_type> particle
+    shared_ptr<particle_type const> particle
   , shared_ptr<box_type const> box
   , shared_ptr<binning_type const> binning
   , matrix_type const& r_cut
@@ -52,6 +52,7 @@ neighbour<dimension, float_type>::neighbour(
   , box_(box)
   , binning_(binning)
   // allocate parameters
+  , neighbour_(particle_->nbox)
   , r_skin_(skin)
   , rr_cut_skin_(particle_->ntype, particle_->ntype)
 {
@@ -101,7 +102,7 @@ void neighbour<dimension, float_type>::update_cell_neighbours(cell_size_type con
 
     BOOST_FOREACH(size_t p, cell(i)) {
         // empty neighbour list of particle
-        particle_->neighbour[p].clear();
+        neighbour_[p].clear();
 
         cell_diff_type j;
         for (j[0] = -1; j[0] <= 1; ++j[0]) {
@@ -165,7 +166,7 @@ void neighbour<dimension, float_type>::compute_cell_neighbours(size_t i, cell_li
         }
 
         // add particle to neighbour list
-        particle_->neighbour[i].push_back(j);
+        neighbour_[i].push_back(j);
     }
 }
 
@@ -182,7 +183,7 @@ void neighbour<dimension, float_type>::luaopen(lua_State* L)
             [
                 class_<neighbour, shared_ptr<_Base>, _Base>(class_name.c_str())
                     .def(constructor<
-                         shared_ptr<particle_type>
+                         shared_ptr<particle_type const>
                        , shared_ptr<box_type const>
                        , shared_ptr<binning_type const>
                        , matrix_type const&

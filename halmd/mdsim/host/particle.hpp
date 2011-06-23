@@ -38,7 +38,6 @@ class particle
 public:
     typedef mdsim::particle<dimension> _Base;
     typedef typename type_traits<dimension, float_type>::vector_type vector_type;
-    typedef std::vector<unsigned int> neighbour_list;
 
     static void luaopen(lua_State* L);
 
@@ -58,8 +57,6 @@ public:
     std::vector<unsigned int> tag;
     /** types */
     std::vector<unsigned int> type;
-    /** neighbour lists */
-    std::vector<neighbour_list> neighbour;
 
     /** number of particles in simulation box */
     using _Base::nbox;

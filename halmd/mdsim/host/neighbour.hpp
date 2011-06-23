@@ -45,11 +45,12 @@ public:
     typedef boost::numeric::ublas::symmetric_matrix<float_type, boost::numeric::ublas::lower> matrix_type;
     typedef mdsim::box<dimension> box_type;
     typedef host::binning<dimension, float_type> binning_type;
+    typedef std::vector<unsigned int> neighbour_list;
 
     static void luaopen(lua_State* L);
 
     neighbour(
-        boost::shared_ptr<particle_type> particle
+        boost::shared_ptr<particle_type const> particle
       , boost::shared_ptr<box_type const> box
       , boost::shared_ptr<binning_type const> binning
       , matrix_type const& r_cut
@@ -63,13 +64,19 @@ public:
         return r_skin_;
     }
 
+    //! returns neighbour lists
+    std::vector<neighbour_list> const& lists() const
+    {
+        return neighbour_;
+    }
+
 private:
     typedef typename binning_type::cell_size_type cell_size_type;
     typedef typename binning_type::cell_diff_type cell_diff_type;
     typedef typename binning_type::cell_list cell_list;
     typedef typename binning_type::cell_lists cell_lists;
 
-    boost::shared_ptr<particle_type> particle_;
+    boost::shared_ptr<particle_type const> particle_;
     boost::shared_ptr<box_type const> box_;
     boost::shared_ptr<binning_type const> binning_;
 
@@ -77,6 +84,8 @@ private:
     template <bool same_cell>
     void compute_cell_neighbours(size_t i, cell_list const& c);
 
+    /** neighbour lists */
+    std::vector<neighbour_list> neighbour_;
     /** neighbour list skin in MD units */
     float_type r_skin_;
     /** (cutoff lengths + neighbour list skin)² */
