@@ -66,7 +66,7 @@ function new(args)
 
     local core = mdsim.core()
     -- connect velocity to core
-    core.velocity = velocity
+    core:on_setup(velocity.set)
 
     return velocity
 end

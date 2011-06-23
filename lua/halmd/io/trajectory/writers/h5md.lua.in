@@ -18,7 +18,7 @@
 --
 
 require("halmd.device")
-require("halmd.mdsim.core")
+require("halmd.mdsim.clock")
 require("halmd.modules")
 require("halmd.observables.samples.phase_space")
 require("halmd.parameter")
@@ -51,8 +51,7 @@ function new(args)
     -- dependency injection
     local sample = assert(observables.samples.phase_space{ memory = "host" })
     local dimension = assert(sample.dimension)
-    local core = mdsim.core()
-    local clock = assert(core.clock)
+    local clock = mdsim.clock() -- singleton
 
     -- command line options
     local output = assert(args.output)
