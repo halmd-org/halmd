@@ -59,8 +59,8 @@ function new(args)
     local force = zero(particle)
 
     local core = mdsim.core()
-    -- connect force to core
-    core.force = force
+    -- system preparation
+    core:on_append_setup(force.compute)
 
     return force
 end
