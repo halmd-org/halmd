@@ -18,6 +18,7 @@
 --
 
 require("halmd.device")
+require("halmd.mdsim.binning")
 require("halmd.mdsim.box")
 require("halmd.mdsim.core")
 require("halmd.mdsim.particle")
@@ -53,13 +54,14 @@ function new(args)
     local dimension = assert(particle.dimension)
     local box = mdsim.box() -- singleton
 
-    local hilbert
+    local sort
     if device() then
-        hilbert = assert(hilbert_wrapper.gpu[dimension])
+        sort = assert(hilbert_wrapper.gpu[dimension])(particle, box)
     else
-        hilbert = assert(hilbert_wrapper.host[dimension])
+        local binning = mdsim.binning() -- singleton
+        sort = assert(hilbert_wrapper.host[dimension])(particle, box, binning)
     end
-    return hilbert(particle, box)
+    return sort
 end
 
 --

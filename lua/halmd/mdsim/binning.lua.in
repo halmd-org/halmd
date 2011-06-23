@@ -43,7 +43,7 @@ local po = libhalmd.po
 -- grab standard library
 local assert = assert
 
-module("halmd.mdsim.binning", halmd.modules.register)
+module("halmd.mdsim.binning", halmd.modules.register, halmd.singleton)
 
 --
 -- construct binning module
