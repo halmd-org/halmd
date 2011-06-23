@@ -615,37 +615,3 @@ BOOST_AUTO_TEST_CASE( halmd_signal9 )
     BOOST_CHECK_EQUAL( counter1.count(), result<signal_type>(2, 3) );
     BOOST_CHECK_EQUAL( counter2.count(), result<signal_type>(1, 1) );
 }
-
-BOOST_AUTO_TEST_CASE( halmd_signal_proxy )
-{
-    typedef halmd::signal<void ()> signal_type;
-    typedef halmd::signal_proxy<void ()> signal_proxy_type;
-
-    signal_type sig;
-    BOOST_CHECK( sig.empty() );
-    BOOST_CHECK_EQUAL( sig.num_slots(), 0LU );
-
-    signal_counter0 counter1, counter2;
-    signal_proxy_type sig_proxy(sig);
-    sig_proxy.connect(ref(counter1));
-    sig_proxy.connect(ref(counter1));
-    signal_type::connection c = sig_proxy.connect(ref(counter2));
-    sig_proxy.connect(ref(counter1));
-
-    BOOST_CHECK( !sig.empty() );
-    BOOST_CHECK_EQUAL( sig.num_slots(), 4LU );
-    BOOST_CHECK_EQUAL( counter1.count(), result<signal_type>(0, 3) );
-    BOOST_CHECK_EQUAL( counter2.count(), result<signal_type>(0, 1) );
-
-    sig();
-    BOOST_CHECK_EQUAL( counter1.count(), result<signal_type>(1, 3) );
-    BOOST_CHECK_EQUAL( counter2.count(), result<signal_type>(1, 1) );
-
-    sig_proxy.disconnect(c);
-    BOOST_CHECK( !sig.empty() );
-    BOOST_CHECK_EQUAL( sig.num_slots(), 3LU );
-
-    sig();
-    BOOST_CHECK_EQUAL( counter1.count(), result<signal_type>(2, 3) );
-    BOOST_CHECK_EQUAL( counter2.count(), result<signal_type>(1, 1) );
-}
