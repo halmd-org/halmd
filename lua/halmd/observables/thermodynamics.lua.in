@@ -20,6 +20,7 @@
 require("halmd.device")
 require("halmd.mdsim.box")
 require("halmd.mdsim.core")
+require("halmd.mdsim.force")
 require("halmd.mdsim.particle")
 require("halmd.modules")
 
@@ -54,9 +55,8 @@ function new(args)
     local particle = mdsim.particle() -- singleton
     local dimension = assert(particle.dimension)
     local box = mdsim.box() -- singleton
-    local core = mdsim.core()
-    local clock = assert(core.clock)
-    local force = assert(core.force)
+    local clock = mdsim.clock() -- singleton
+    local force = mdsim.force() -- singleton
 
     if not device() then
         return thermodynamics_wrapper.host[dimension](particle, box, clock, force)
