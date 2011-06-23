@@ -1,6 +1,7 @@
 halmd_add_library(halmd_mdsim_host
   binning.cpp
   force.cpp
+  maximum_squared_displacement.cpp
   neighbour.cpp
   particle.cpp
   velocity.cpp
@@ -8,6 +9,7 @@ halmd_add_library(halmd_mdsim_host
 halmd_add_modules(
   libhalmd_mdsim_host_binning
   libhalmd_mdsim_host_force
+  libhalmd_mdsim_host_maximum_squared_displacement
   libhalmd_mdsim_host_neighbour
   libhalmd_mdsim_host_particle
   libhalmd_mdsim_host_velocity

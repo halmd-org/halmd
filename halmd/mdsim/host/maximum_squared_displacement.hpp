@@ -17,8 +17,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef HALMD_MDSIM_HOST_BINNING_HPP
-#define HALMD_MDSIM_HOST_BINNING_HPP
+#ifndef HALMD_MDSIM_HOST_MAXIMUM_SQUARED_DISPLACEMENT_HPP
+#define HALMD_MDSIM_HOST_MAXIMUM_SQUARED_DISPLACEMENT_HPP
 
 #include <boost/multi_array.hpp>
 #include <boost/numeric/ublas/symmetric.hpp>
@@ -27,6 +27,7 @@
 #include <vector>
 
 #include <halmd/mdsim/box.hpp>
+#include <halmd/mdsim/host/force.hpp>
 #include <halmd/mdsim/host/particle.hpp>
 
 namespace halmd {
@@ -34,68 +35,34 @@ namespace mdsim {
 namespace host {
 
 template <int dimension, typename float_type>
-class binning
+class maximum_squared_displacement
 {
 public:
     typedef host::particle<dimension, float_type> particle_type;
     typedef typename particle_type::vector_type vector_type;
-    typedef boost::numeric::ublas::symmetric_matrix<float_type, boost::numeric::ublas::lower> matrix_type;
     typedef mdsim::box<dimension> box_type;
 
-    typedef std::vector<unsigned int> cell_list;
-    typedef boost::multi_array<cell_list, dimension> cell_lists;
-    typedef fixed_vector<size_t, dimension> cell_size_type;
-    typedef fixed_vector<ssize_t, dimension> cell_diff_type;
 
     static void luaopen(lua_State* L);
 
-    binning(
+    maximum_squared_displacement(
         boost::shared_ptr<particle_type const> particle
       , boost::shared_ptr<box_type const> box
-      , matrix_type const& r_cut
-      , float_type skin
     );
-    virtual void update();
-
-    //! returns neighbour list skin in MD units
-    float_type r_skin() const
-    {
-        return r_skin_;
-    }
-
-    //! cell edge length
-    vector_type const& cell_length() const
-    {
-        return cell_length_;
-    }
-
-    //! number of cells per dimension
-    cell_size_type ncell() const
-    {
-        return ncell_;
-    }
-
-    //! get cell lists
-    cell_lists const& cell() const
-    {
-        return cell_;
-    }
+    void zero();
+    float_type compute();
 
 private:
     //! system state
     boost::shared_ptr<particle_type const> particle_;
-    /** neighbour list skin in MD units */
-    float_type r_skin_;
-    /** cell lists */
-    cell_lists cell_;
-    /** number of cells per dimension */
-    cell_size_type ncell_;
-    /** cell edge lengths */
-    vector_type cell_length_;
+    //! simulation box
+    boost::shared_ptr<box_type const> box_;
+    /* particle positions at last maximum_squared_displacement list update */
+    std::vector<vector_type> r0_;
 };
 
 } // namespace host
 } // namespace mdsim
 } // namespace halmd
 
-#endif /* ! HALMD_MDSIM_HOST_BINNING_HPP */
+#endif /* ! HALMD_MDSIM_HOST_MAXIMUM_SQUARED_DISPLACEMENT_HPP */
