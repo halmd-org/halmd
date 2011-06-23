@@ -97,7 +97,7 @@ void h5md(std::vector<unsigned int> const& ntypes)
     float_sample->step = double_sample->step;
 
     // write single-precision sample to file
-    shared_ptr<mdsim::clock> clock = make_shared<mdsim::clock>();
+    shared_ptr<mdsim::clock> clock = make_shared<mdsim::clock>(1); // bogus time-step
     shared_ptr<trajectory::writer<dimension> > writer =
         make_shared<trajectory::writers::h5md<dimension, float> >(float_sample, clock, filename);
 
@@ -114,7 +114,7 @@ void h5md(std::vector<unsigned int> const& ntypes)
     writer->flush();
 
     // simulate an integration step for the very first particle
-    clock->advance(1);
+    clock->advance();
     (*double_sample->r[0])[0] += (*double_sample->v[0])[0];
     (*double_sample->v[0])[0] = double_vector_type(sqrt(2));
     double_sample->step = clock->step();
