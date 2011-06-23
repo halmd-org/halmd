@@ -52,7 +52,7 @@ void density_mode<dimension>::luaopen(lua_State* L)
                 .property("value", &density_mode::value)
                 .property("wavenumber", &density_mode::wavenumber)
                 .property("acquire", &acquire_wrapper<density_mode>)
-                .property("on_acquire", &density_mode::on_acquire)
+                .def("on_acquire", &density_mode::on_acquire)
         ]
     ];
 }

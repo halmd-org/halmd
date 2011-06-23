@@ -49,7 +49,8 @@ public:
     typedef typename _Base::wavevector_type wavevector_type;
     typedef host::phase_space<dimension, float_type> phase_space_type;
     typedef halmd::utility::profiler profiler_type;
-    typedef typename _Base::signal_proxy_type signal_proxy_type;
+    typedef typename _Base::signal_type signal_type;
+    typedef typename _Base::slot_function_type slot_function_type;
 
     typedef fixed_vector<float_type, dimension> vector_type;
     typedef typename density_mode_sample_type::mode_type mode_type;
@@ -74,9 +75,9 @@ public:
     */
     virtual void acquire(uint64_t step);
 
-    virtual signal_proxy_type on_acquire()
+    virtual void on_acquire(slot_function_type const& slot)
     {
-        return on_acquire_;
+        on_acquire_.connect(slot);
     }
 
     //! returns nested list of density modes
@@ -104,8 +105,6 @@ public:
     }
 
 protected:
-    typedef typename signal_proxy_type::signal_type signal_type;
-
     boost::shared_ptr<phase_space_type> phase_space_;
     boost::shared_ptr<wavevector_type> wavevector_;
 

@@ -46,14 +46,15 @@ public:
     typedef observables::samples::density_mode<dimension> density_mode_sample_type;
     typedef typename density_mode_sample_type::mode_vector_vector_type result_type;
     typedef observables::utility::wavevector<dimension> wavevector_type;
-    typedef halmd::signal_proxy<void (uint64_t)> signal_proxy_type;
+    typedef halmd::signal<void (uint64_t)> signal_type;
+    typedef typename signal_type::slot_function_type slot_function_type;
 
     static void luaopen(lua_State* L);
 
     density_mode() {}
     virtual ~density_mode() {}
     virtual void acquire(uint64_t step) = 0;
-    virtual signal_proxy_type on_acquire() = 0;
+    virtual void on_acquire(slot_function_type const& slot) = 0;
     virtual uint64_t step() const = 0;
     virtual result_type const& value() const = 0;
     virtual wavevector_type const& wavevector() const = 0;

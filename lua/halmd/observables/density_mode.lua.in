@@ -72,7 +72,7 @@ function new(args)
     local density_mode = density_mode_wrapper(phase_space, wavevector)
 
     -- acquire phase space before acquiring density modes
-    density_mode.on_acquire:connect(phase_space.acquire)
+    density_mode:on_acquire(phase_space.acquire)
 
     return density_mode
 end
