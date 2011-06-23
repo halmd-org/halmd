@@ -1,5 +1,5 @@
 /*
- * Copyright © 2008-2010  Peter Colberg
+ * Copyright © 2008-2011  Peter Colberg
  *
  * This file is part of HALMD.
  *
@@ -20,30 +20,19 @@
 #ifndef HALMD_MDSIM_HOST_NEIGHBOUR_HPP
 #define HALMD_MDSIM_HOST_NEIGHBOUR_HPP
 
-#include <boost/multi_array.hpp>
 #include <boost/numeric/ublas/symmetric.hpp>
 #include <boost/shared_ptr.hpp>
 #include <lua.hpp>
 #include <vector>
 
 #include <halmd/mdsim/box.hpp>
-#include <halmd/mdsim/host/force.hpp>
+#include <halmd/mdsim/host/binning.hpp>
 #include <halmd/mdsim/host/particle.hpp>
 #include <halmd/mdsim/neighbour.hpp>
 
-namespace halmd
-{
-namespace mdsim { namespace host
-{
-
-namespace sorts
-{
-
-// forward declaration
-template <int dimension, typename float_type>
-class hilbert;
-
-}
+namespace halmd {
+namespace mdsim {
+namespace host {
 
 template <int dimension, typename float_type>
 class neighbour
@@ -55,25 +44,18 @@ public:
     typedef typename particle_type::vector_type vector_type;
     typedef boost::numeric::ublas::symmetric_matrix<float_type, boost::numeric::ublas::lower> matrix_type;
     typedef mdsim::box<dimension> box_type;
-
-    typedef typename particle_type::neighbour_list cell_list;
-    typedef boost::multi_array<cell_list, dimension> cell_lists;
-    typedef fixed_vector<size_t, dimension> cell_size_type;
-    typedef fixed_vector<ssize_t, dimension> cell_diff_type;
-
-    boost::shared_ptr<particle_type> particle;
-    boost::shared_ptr<box_type> box;
+    typedef host::binning<dimension, float_type> binning_type;
 
     static void luaopen(lua_State* L);
 
     neighbour(
         boost::shared_ptr<particle_type> particle
-      , boost::shared_ptr<box_type> box
+      , boost::shared_ptr<box_type const> box
+      , boost::shared_ptr<binning_type const> binning
       , matrix_type const& r_cut
       , double skin
     );
     virtual void update();
-    virtual bool check();
 
     //! returns neighbour list skin in MD units
     float_type r_skin() const
@@ -81,32 +63,28 @@ public:
         return r_skin_;
     }
 
-protected:
-    friend class sorts::hilbert<dimension, float_type>; //< public interface
+private:
+    typedef typename binning_type::cell_size_type cell_size_type;
+    typedef typename binning_type::cell_diff_type cell_diff_type;
+    typedef typename binning_type::cell_list cell_list;
+    typedef typename binning_type::cell_lists cell_lists;
 
-    void update_cells();
+    boost::shared_ptr<particle_type> particle_;
+    boost::shared_ptr<box_type const> box_;
+    boost::shared_ptr<binning_type const> binning_;
+
     void update_cell_neighbours(cell_size_type const& i);
     template <bool same_cell>
-    void compute_cell_neighbours(size_t i, cell_list& c);
+    void compute_cell_neighbours(size_t i, cell_list const& c);
 
     /** neighbour list skin in MD units */
     float_type r_skin_;
     /** (cutoff lengths + neighbour list skin)² */
     matrix_type rr_cut_skin_;
-    /** cell lists */
-    cell_lists cell_;
-    /** number of cells per dimension */
-    cell_size_type ncell_;
-    /** cell edge lengths */
-    vector_type cell_length_;
-    /** half neighbour list skin */
-    float_type r_skin_half_;
-    /** particle positions at last neighbour list update */
-    std::vector<vector_type> r0_;
 };
 
-}} // namespace mdsim::host
-
+} // namespace host
+} // namespace mdsim
 } // namespace halmd
 
 #endif /* ! HALMD_MDSIM_HOST_NEIGHBOUR_HPP */
