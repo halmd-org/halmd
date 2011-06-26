@@ -64,8 +64,8 @@ function new(args)
 
     local binning
     if device() then
-        local occupancy = args.occupancy or 0.4 -- default value
-
+        local defaults = assert(binning_wrapper.gpu[dimension].defaults)
+        local occupancy = args.occupancy or defaults.occupancy()
         return binning_wrapper.gpu[dimension](particle, box, r_cut, skin, occupancy)
     else
         return binning_wrapper.host[dimension](particle, box, r_cut, skin)

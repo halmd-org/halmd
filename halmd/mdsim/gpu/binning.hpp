@@ -44,6 +44,7 @@ public:
     typedef boost::numeric::ublas::symmetric_matrix<float_type, boost::numeric::ublas::lower> matrix_type;
     typedef mdsim::box<dimension> box_type;
     typedef utility::profiler profiler_type;
+    struct defaults;
 
     typedef fixed_vector<unsigned int, dimension> cell_size_type;
     typedef fixed_vector<int, dimension> cell_diff_type;
@@ -55,7 +56,7 @@ public:
       , boost::shared_ptr<box_type const> box
       , matrix_type const& r_cut
       , double skin
-      , double cell_occupancy
+      , double cell_occupancy = defaults::occupancy()
     );
     void register_runtimes(profiler_type& profiler);
     void update();
@@ -146,6 +147,14 @@ private:
 
     /** profiling runtime accumulators */
     runtime runtime_;
+};
+
+template <int dimension, typename float_type>
+struct binning<dimension, float_type>::defaults
+{
+    static float_type occupancy() {
+        return 0.4;
+    }
 };
 
 }} // namespace mdsim::gpu
