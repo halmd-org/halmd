@@ -29,7 +29,6 @@
 #include <halmd/algorithm/gpu/radix_sort.hpp>
 #include <halmd/io/logger.hpp>
 #include <halmd/random/gpu/rand48.hpp>
-#include <halmd/random/random.hpp>
 
 namespace halmd
 {
@@ -38,11 +37,8 @@ namespace random { namespace gpu
 
 template <typename RandomNumberGenerator>
 class random
-  : public halmd::random::random
 {
 public:
-    typedef halmd::random::random _Base;
-
     typedef typename RandomNumberGenerator::rng_type rng_type;
     struct defaults;
 

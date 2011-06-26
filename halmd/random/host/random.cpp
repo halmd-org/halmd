@@ -20,7 +20,6 @@
 #include <halmd/io/logger.hpp>
 #include <halmd/random/host/random.hpp>
 #include <halmd/utility/lua/lua.hpp>
-#include <halmd/utility/read_integer.hpp>
 
 using namespace boost;
 using namespace std;
@@ -45,7 +44,7 @@ void random::luaopen(lua_State* L)
         [
             namespace_("random")
             [
-                class_<random, shared_ptr<_Base>, bases<_Base> >("gfsr4")
+                class_<random, shared_ptr<random> >("gfsr4")
                     .def(constructor<unsigned int>())
                     .scope
                     [

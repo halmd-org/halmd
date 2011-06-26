@@ -114,7 +114,7 @@ void random<RandomNumberGenerator>::luaopen(lua_State* L)
         [
             namespace_("random")
             [
-                class_<random, shared_ptr<_Base>, _Base>(class_name.c_str())
+                class_<random, shared_ptr<random> >(class_name.c_str())
                     .def(constructor<
                          unsigned int
                        , unsigned int

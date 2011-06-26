@@ -31,7 +31,6 @@
 #include <utility>
 
 #include <halmd/numeric/blas/fixed_vector.hpp>
-#include <halmd/random/random.hpp>
 
 namespace halmd
 {
@@ -39,10 +38,8 @@ namespace random { namespace host
 {
 
 class random
-  : public halmd::random::random
 {
 public:
-    typedef halmd::random::random _Base;
     typedef boost::mt19937 random_generator; // FIXME template parameter
     struct defaults
     {
