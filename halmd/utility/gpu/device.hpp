@@ -55,18 +55,10 @@ public:
     static std::string cuda_driver_version();
     static std::string cuda_runtime_version();
 #endif
-
-    cuda::device::properties const& properties() const
-    {
-        return prop_;
-    }
-
     //! validate CUDA execution configuration
     static cuda::config const& validate(cuda::config const& dim);
 
 private:
-    /** device properties */
-    cuda::device::properties prop_;
     /** selected CUDA device context */
     boost::shared_ptr<cuda::driver::context> context_;
 };

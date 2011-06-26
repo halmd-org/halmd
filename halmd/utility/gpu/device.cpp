@@ -77,22 +77,19 @@ device::device(vector<int> devices)
         }
     }
 
-    LOG("CUDA device: " << cuda::driver::context::device());
+    LOG("GPU: " << cuda::driver::context::device());
 
-    prop_ = cuda::device::properties(cuda::driver::context::device());
+    cuda::device::properties prop = cuda::driver::context::device();
 
-    LOG("CUDA device name: " << prop_.name());
-    LOG("CUDA device total global memory: " << prop_.total_global_mem() << " bytes");
-    LOG("CUDA device shared memory per block: " << prop_.shared_mem_per_block() << " bytes");
-    LOG("CUDA device registers per block: " << prop_.regs_per_block());
-    LOG("CUDA device warp size: " << prop_.warp_size());
-    LOG("CUDA device maximum number of threads per block: " << prop_.max_threads_per_block());
-    LOG("CUDA device total constant memory: " << prop_.total_const_mem());
-    LOG("CUDA device major revision: " << prop_.major());
-    LOG("CUDA device minor revision: " << prop_.minor());
-    LOG("CUDA device clock frequency: " << prop_.clock_rate() << " kHz");
-    LOG("CUDA device compute capability: " << prop_.major() << "." << prop_.minor());
-
+    LOG("GPU name: " << prop.name());
+    LOG("GPU total global memory: " << prop.total_global_mem() << " bytes");
+    LOG("GPU shared memory per block: " << prop.shared_mem_per_block() << " bytes");
+    LOG("GPU registers per block: " << prop.regs_per_block());
+    LOG("GPU warp size: " << prop.warp_size());
+    LOG("GPU maximum number of threads per block: " << prop.max_threads_per_block());
+    LOG("GPU total constant memory: " << prop.total_const_mem());
+    LOG("GPU clock frequency: " << prop.clock_rate() << " kHz");
+    LOG("CUDA compute capability: " << prop.major() << "." << prop.minor());
     LOG("CUDA compute version: " << device::compute_version());
 }
 
