@@ -1,5 +1,5 @@
 /*
- * Copyright © 2008-2010  Peter Colberg
+ * Copyright © 2008-2011  Peter Colberg
  *
  * This file is part of HALMD.
  *
@@ -47,6 +47,14 @@ void random::luaopen(lua_State* L)
             [
                 class_<random, shared_ptr<_Base>, bases<_Base> >("gfsr4")
                     .def(constructor<unsigned int>())
+                    .scope
+                    [
+                        class_<defaults>("defaults")
+                            .scope
+                            [
+                                def("seed", &defaults::seed)
+                            ]
+                    ]
             ]
         ]
     ];

@@ -128,7 +128,8 @@ void random<RandomNumberGenerator>::luaopen(lua_State* L)
                         class_<defaults>("defaults")
                             .scope
                             [
-                                def("threads", &defaults::threads)
+                                def("seed", &defaults::seed)
+                              , def("threads", &defaults::threads)
                               , def("blocks", &defaults::blocks)
                               , def("shuffle_threads", &defaults::shuffle_threads)
                             ]

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2008-2010  Peter Colberg
+ * Copyright © 2008-2011  Peter Colberg
  *
  * This file is part of HALMD.
  *
@@ -22,6 +22,7 @@
 
 #include <algorithm>
 #include <boost/random/mersenne_twister.hpp>
+#include <boost/nondet_random.hpp> // boost::random_device
 #include <boost/random/uniform_01.hpp>
 #include <boost/random/uniform_int.hpp>
 #include <boost/random/variate_generator.hpp>
@@ -43,10 +44,19 @@ class random
 public:
     typedef halmd::random::random _Base;
     typedef boost::mt19937 random_generator; // FIXME template parameter
+    struct defaults
+    {
+        //! Get seed from non-deterministic random number generator.
+        // boost::random_device reads from /dev/urandom on GNU/Linux,
+        // and the default cryptographic service provider on Windows.
+        static unsigned int seed() {
+            return boost::random_device()();
+        }
+    };
 
     static void luaopen(lua_State* L);
 
-    random(unsigned int seed);
+    random(unsigned int seed = defaults::seed());
 
     template <typename input_iterator>
     void shuffle(input_iterator first, input_iterator last);

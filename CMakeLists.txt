@@ -63,6 +63,7 @@ find_package(Boost 1.39.0 QUIET REQUIRED COMPONENTS
   filesystem
   log
   program_options
+  random
   system
   thread
   unit_test_framework
@@ -205,6 +206,7 @@ set(HALMD_COMMON_LIBRARIES
   ${Boost_DATE_TIME_LIBRARY}
   ${Boost_LOG_LIBRARY}
   ${Boost_PROGRAM_OPTIONS_LIBRARY}
+  ${Boost_RANDOM_LIBRARY}
   ${Boost_FILESYSTEM_LIBRARY}
   ${Boost_SYSTEM_LIBRARY}
   ${Boost_THREAD_LIBRARY}
