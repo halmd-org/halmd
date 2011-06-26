@@ -78,121 +78,6 @@ inline double adiabatic_compressibility_nve(
       return 1 / (2. / dimension * temp * density + press + hypervirial * density - x);
 }
 
-/** test Verlet integrator: 'ideal' gas without interactions (setting ε=0) */
-
-template <int dimension>
-void ideal_gas(string const& backend)
-{
-    using namespace boost::assign;
-
-    float density = 1.;
-    float temp = 1.;
-    float rc = .1;
-    double timestep = 0.001;
-    unsigned int npart = 1000;
-    unsigned int random_seed = 42;
-    fixed_vector<double, dimension> box_ratios;
-    box_ratios[0] = 1;
-    box_ratios[1] = 2;
-    if (dimension == 3) {
-        box_ratios[2] = 1.01;
-    }
-
-    BOOST_TEST_MESSAGE("using backend '" << backend << "' in " <<
-                       dimension << " dimensions");
-
-#ifdef WITH_CUDA
-    shared_ptr<utility::gpu::device> device = make_device(backend);
-#endif /* WITH_CUDA */
-    shared_ptr<halmd::random::random> random = make_random(
-        backend
-      , random_seed
-    );
-
-    // init core module
-    BOOST_TEST_MESSAGE("initialise simulation modules");
-    shared_ptr<mdsim::core<dimension> > core(new mdsim::core<dimension>);
-    core->particle = make_particle<dimension>(
-        backend
-      , npart
-    );
-    core->box = make_shared<mdsim::box<dimension> >(
-        core->particle
-      , density
-      , box_ratios
-    );
-    core->integrator = make_verlet_integrator<dimension>(
-        backend
-      , core->particle
-      , core->box
-      , timestep
-    );
-    core->force = make_lennard_jones_force<dimension>(
-        backend
-      , core->particle
-      , core->box
-      , list_of(rc)(rc)(rc)      /* cutoff */
-      , list_of(0.f)(0.f)(0.f)   /* epsilon */
-      , list_of(1.f)(0.f)(0.f)   /* sigma */
-    );
-    core->neighbour = make_neighbour(
-        backend
-      , core->particle
-      , core->box
-      , core->force
-    );
-    core->position = make_lattice(
-        backend
-      , core->particle
-      , core->box
-      , random
-    );
-    core->velocity = make_boltzmann(
-        backend
-      , core->particle
-      , random
-      , temp
-    );
-
-    // prepare system with Maxwell-Boltzmann distributed velocities
-    BOOST_TEST_MESSAGE("assign positions and velocities");
-    core->force->aux_enable();              // enable computation of potential energy
-    core->prepare();
-
-    // measure thermodynamic properties
-    shared_ptr<observables::thermodynamics<dimension> > thermodynamics = make_thermodynamics(
-        backend
-      , core->particle
-      , core->box
-      , core->clock
-      , core->force
-    );
-
-    const double vcm_limit = (backend == "gpu") ? 0.1 * eps_float : eps;
-    BOOST_CHECK_SMALL(norm_inf(thermodynamics->v_cm()), vcm_limit);
-
-    double en_tot = thermodynamics->en_tot();
-
-    // microcanonical simulation run
-    BOOST_TEST_MESSAGE("run NVE simulation");
-    uint64_t steps = 1000;
-    core->force->aux_disable();             // disable auxiliary variables
-    for (uint64_t i = 0; i < steps; ++i) {
-        // last step: evaluate auxiliary variables (potential energy, virial, ...)
-        if (i == steps - 1) {
-            core->force->aux_enable();
-        }
-        core->mdstep();
-    }
-
-    BOOST_CHECK_SMALL(norm_inf(thermodynamics->v_cm()), vcm_limit);
-    BOOST_CHECK_CLOSE_FRACTION(en_tot, thermodynamics->en_tot(), 10 * eps);
-
-    BOOST_CHECK_CLOSE_FRACTION(temp, (float)thermodynamics->temp(), eps_float);
-    BOOST_CHECK_CLOSE_FRACTION(density, (float)thermodynamics->density(), eps_float);
-    BOOST_CHECK_CLOSE_FRACTION(thermodynamics->pressure() / temp / density, 1., eps_float);
-}
-
 template <int dimension>
 void thermodynamics(string const& backend)
 {
@@ -384,11 +269,9 @@ HALMD_TEST_INIT( init_unit_test_suite )
     test_suite* ts1 = BOOST_TEST_SUITE( "host" );
 
     test_suite* ts11 = BOOST_TEST_SUITE( "2d" );
-    ts11->add( BOOST_PARAM_TEST_CASE( &ideal_gas<2>, backend.begin(), backend.begin() + 1 ) );
     ts11->add( BOOST_PARAM_TEST_CASE( &thermodynamics<2>, backend.begin(), backend.begin() + 1 ) );
 
     test_suite* ts12 = BOOST_TEST_SUITE( "3d" );
-    ts12->add( BOOST_PARAM_TEST_CASE( &ideal_gas<3>, backend.begin(), backend.begin() + 1 ) );
     ts12->add( BOOST_PARAM_TEST_CASE( &thermodynamics<3>, backend.begin(), backend.begin() + 1 ) );
 
     ts1->add( ts11 );
@@ -398,11 +281,9 @@ HALMD_TEST_INIT( init_unit_test_suite )
     test_suite* ts2 = BOOST_TEST_SUITE( "gpu" );
 
     test_suite* ts21 = BOOST_TEST_SUITE( "2d" );
-    ts21->add( BOOST_PARAM_TEST_CASE( &ideal_gas<2>, backend.begin() + 1, backend.end() ) );
     ts21->add( BOOST_PARAM_TEST_CASE( &thermodynamics<2>, backend.begin() + 1, backend.end() ) );
 
     test_suite* ts22 = BOOST_TEST_SUITE( "3d" );
-    ts22->add( BOOST_PARAM_TEST_CASE( &ideal_gas<3>, backend.begin() + 1, backend.end() ) );
     ts22->add( BOOST_PARAM_TEST_CASE( &thermodynamics<3>, backend.begin() + 1, backend.end() ) );
 
     ts2->add( ts21 );
