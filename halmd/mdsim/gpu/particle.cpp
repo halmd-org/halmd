@@ -1,5 +1,5 @@
 /*
- * Copyright © 2008-2010  Peter Colberg and Felix Höfling
+ * Copyright © 2008-2011  Peter Colberg and Felix Höfling
  *
  * This file is part of HALMD.
  *
@@ -25,6 +25,7 @@
 #include <halmd/io/logger.hpp>
 #include <halmd/mdsim/gpu/particle.hpp>
 #include <halmd/mdsim/gpu/particle_kernel.hpp>
+#include <halmd/utility/gpu/device.hpp>
 #include <halmd/utility/lua/lua.hpp>
 
 using namespace boost;
@@ -42,12 +43,12 @@ namespace mdsim { namespace gpu
  */
 template <unsigned int dimension, typename float_type>
 particle<dimension, float_type>::particle(
-    shared_ptr<device_type> device
-  , vector<unsigned int> const& particles
+    vector<unsigned int> const& particles
+  , unsigned int threads
 )
   : _Base(particles)
   // default CUDA kernel execution dimensions
-  , dim(cuda::config((nbox + device->threads() - 1) / device->threads(), device->threads()))
+  , dim(device::validate(cuda::config((nbox + threads - 1) / threads, threads)))
   // allocate global device memory
   , g_r(nbox)
   , g_image(nbox)
@@ -157,11 +158,16 @@ void particle<dimension, float_type>::luaopen(lua_State* L)
             namespace_("gpu")
             [
                 class_<particle, shared_ptr<_Base>, _Base>(class_name.c_str())
-                    .def(constructor<
-                        shared_ptr<device_type>
-                      , vector<unsigned int> const&
-                    >())
+                    .def(constructor<vector<unsigned int> const&>())
+                    .def(constructor<vector<unsigned int> const&, unsigned int>())
                     .property("dimension", &wrap_dimension<dimension, float_type>)
+                    .scope[
+                        class_<defaults>("defaults")
+                            .scope
+                            [
+                                def("threads", &defaults::threads)
+                            ]
+                    ]
             ]
         ]
     ];

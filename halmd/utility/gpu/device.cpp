@@ -1,5 +1,5 @@
 /*
- * Copyright © 2008-2010  Peter Colberg
+ * Copyright © 2008-2011  Peter Colberg
  *
  * This file is part of HALMD.
  *
@@ -36,16 +36,12 @@ using namespace boost;
 using namespace boost::algorithm;
 using namespace std;
 
-namespace halmd
-{
-namespace utility { namespace gpu
-{
+namespace halmd {
 
 /**
  * Initialize CUDA device
  */
-device::device(vector<int> devices, unsigned int threads)
-  : threads_(threads)
+device::device(vector<int> devices)
 {
     try {
         LOG("NVIDIA driver version: " << device::nvidia_driver_version());
@@ -98,21 +94,6 @@ device::device(vector<int> devices, unsigned int threads)
     LOG("CUDA device compute capability: " << prop_.major() << "." << prop_.minor());
 
     LOG("CUDA compute version: " << device::compute_version());
-
-    if (threads_ < 1) {
-        throw runtime_error("invalid number of CUDA threads");
-    }
-    if (threads_ > prop_.max_threads_per_block()) {
-        throw runtime_error("number of CUDA threads exceeds maximum number of threads per block");
-    }
-    if (threads_ & (threads_ - 1)) {
-        LOG_WARNING("number of CUDA threads not a power of 2");
-    }
-    if (threads_ % prop_.warp_size()) {
-        LOG_WARNING("number of CUDA threads not a multiple of warp size");
-    }
-
-    LOG("number of CUDA threads: " << threads_);
 }
 
 /**
@@ -124,6 +105,26 @@ device::~device()
 {
     LOG_DEBUG("detach from CUDA device context");
     cuda::thread::exit();
+}
+
+cuda::config const& device::validate(cuda::config const& dim)
+{
+    cuda::device::properties prop = cuda::driver::context::device();
+    unsigned int threads = dim.threads_per_block();
+
+    if (threads < 1) {
+        throw runtime_error("invalid number of GPU threads: " + lexical_cast<string>(threads));
+    }
+    if (threads > prop.max_threads_per_block()) {
+        throw runtime_error("number of GPU threads exceeds maximum threads per block: " + lexical_cast<string>(threads));
+    }
+    if (threads % prop.warp_size()) {
+        throw runtime_error("number of GPU threads not a multiple of warp size: " + lexical_cast<string>(threads));
+    }
+    if (threads & (threads - 1)) {
+        LOG_WARNING("number of GPU threads not a power of 2: " << threads);
+    }
+    return dim;
 }
 
 /**
@@ -210,8 +211,8 @@ void device::luaopen(lua_State* L)
             namespace_("gpu")
             [
                 class_<device, shared_ptr<device> >("device")
-                    .def(constructor<vector<int>, unsigned int>())
-                    .property("threads", &device::threads)
+                    .def(constructor<vector<int> >())
+                    .def(constructor<>())
                     .scope
                     [
                         def("nvidia_driver_version", &device::nvidia_driver_version)
@@ -230,7 +231,5 @@ HALMD_LUA_API int luaopen_libhalmd_utility_gpu_device(lua_State* L)
     device::luaopen(L);
     return 0;
 }
-
-}} // namespace utility::gpu
 
 } // namespace halmd

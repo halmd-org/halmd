@@ -58,7 +58,11 @@ function new(args)
 
     local particle
     if device() then
-        particle = particle_wrapper.gpu[dimension](device(), npart)
+        if args.threads then
+            particle = particle_wrapper.gpu[dimension](npart, args.threads)
+        else
+            particle = particle_wrapper.gpu[dimension](npart)
+        end
     else
         particle = particle_wrapper.host[dimension](npart)
     end
@@ -80,6 +84,9 @@ namespace = "box"
 --
 function options(desc)
     desc:add("particles", po.uint_array(), "number of particles")
+    if particle_wrapper.gpu then
+        desc:add("threads", po.uint(), "number of CUDA threads per block")
+    end
 end
 
 --
