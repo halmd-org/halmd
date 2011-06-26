@@ -1,5 +1,5 @@
 /*
- * Copyright © 2010  Peter Colberg and Felix Höfling
+ * Copyright © 2010-2011  Peter Colberg and Felix Höfling
  *
  * This file is part of HALMD.
  *
@@ -32,15 +32,14 @@ namespace random { namespace gpu
 
 template <typename RandomNumberGenerator>
 random<RandomNumberGenerator>::random(
-    shared_ptr<device_type> device
-  , unsigned int seed
+    unsigned int seed
   , unsigned int blocks
   , unsigned int threads
+  , unsigned int shuffle_threads
 )
-  // dependency injection
-  : device(device)
   // allocate random number generator state
-  , rng(blocks, threads)
+  : rng(blocks, threads)
+  , shuffle_threads_(shuffle_threads)
 {
     LOG("random number generator seed: " << seed);
     try {
@@ -117,13 +116,23 @@ void random<RandomNumberGenerator>::luaopen(lua_State* L)
             [
                 class_<random, shared_ptr<_Base>, _Base>(class_name.c_str())
                     .def(constructor<
-                         shared_ptr<device_type>
+                         unsigned int
                        , unsigned int
                        , unsigned int
                        , unsigned int
                      >())
                     .property("blocks", &random::blocks)
                     .property("threads", &random::threads)
+                    .scope
+                    [
+                        class_<defaults>("defaults")
+                            .scope
+                            [
+                                def("threads", &defaults::threads)
+                              , def("blocks", &defaults::blocks)
+                              , def("shuffle_threads", &defaults::shuffle_threads)
+                            ]
+                    ]
             ]
         ]
     ];

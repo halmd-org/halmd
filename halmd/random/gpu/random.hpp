@@ -1,5 +1,5 @@
 /*
- * Copyright © 2010  Peter Colberg and Felix Höfling
+ * Copyright © 2010-2011  Peter Colberg and Felix Höfling
  *
  * This file is part of HALMD.
  *
@@ -29,7 +29,6 @@
 #include <halmd/io/logger.hpp>
 #include <halmd/random/gpu/rand48.hpp>
 #include <halmd/random/random.hpp>
-#include <halmd/utility/gpu/device.hpp>
 
 namespace halmd
 {
@@ -44,19 +43,17 @@ public:
     typedef halmd::random::random _Base;
 
     typedef typename RandomNumberGenerator::rng_type rng_type;
-    typedef utility::gpu::device device_type;
-
-    boost::shared_ptr<device_type> device;
+    struct defaults;
 
     RandomNumberGenerator rng; //< FIXME private?
 
     static void luaopen(lua_State* L);
 
     random(
-        boost::shared_ptr<device_type> device
-      , unsigned int seed
-      , unsigned int blocks
-      , unsigned int threads
+        unsigned int seed
+      , unsigned int blocks = defaults::blocks()
+      , unsigned int threads = defaults::threads()
+      , unsigned int shuffle_threads = defaults::shuffle_threads()
     );
 
     //
@@ -79,6 +76,23 @@ public:
     {
         return rng.dim.threads_per_block();
     }
+
+private:
+    unsigned int shuffle_threads_;
+};
+
+template <typename RandomNumberGenerator>
+struct random<RandomNumberGenerator>::defaults
+{
+    static unsigned int blocks() {
+        return 32;
+    }
+    static unsigned int threads() {
+        return 32 << DEVICE_SCALE;
+    }
+    static unsigned int shuffle_threads() {
+        return 128;
+    }
 };
 
 /**
@@ -95,14 +109,14 @@ void random<RandomNumberGenerator>::shuffle(Sequence& g_val)
     // allocate device memory
     try {
         g_sort_index.resize(g_val.size());
-        g_sort_index.reserve(device->threads());
+        g_sort_index.reserve(shuffle_threads_);
     }
     catch (cuda::error const&) {
         LOG_ERROR("failed to allocate global device memory in random::shuffle");
         throw;
     }
 
-    sort_type sort(g_val.size(), device->threads());
+    sort_type sort(g_val.size(), shuffle_threads_);
     try {
         get(g_sort_index);
         sort(g_sort_index, g_val);
