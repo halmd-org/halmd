@@ -46,6 +46,7 @@ public:
     typedef mdsim::box<dimension> box_type;
     typedef gpu::binning<dimension, float_type> binning_type;
     typedef utility::profiler profiler_type;
+    struct defaults;
 
     static void luaopen(lua_State* L);
 
@@ -55,7 +56,7 @@ public:
       , boost::shared_ptr<binning_type const> binning
       , matrix_type const& r_cut
       , double skin
-      , double cell_occupancy
+      , double cell_occupancy = defaults::occupancy()
     );
     void register_runtimes(profiler_type& profiler);
     void update();
@@ -126,6 +127,14 @@ private:
 
     /** profiling runtime accumulators */
     runtime runtime_;
+};
+
+template <int dimension, typename float_type>
+struct neighbour_with_binning<dimension, float_type>::defaults
+{
+    static float_type occupancy() {
+        return 0.4;
+    }
 };
 
 } // namespace gpu

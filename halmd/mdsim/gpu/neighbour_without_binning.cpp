@@ -170,6 +170,13 @@ void neighbour_without_binning<dimension, float_type>::luaopen(lua_State* L)
                     .property("update", &wrap_update<neighbour_without_binning>)
                     .property("r_skin", &neighbour_without_binning::r_skin)
                     .property("cell_occupancy", &neighbour_without_binning::cell_occupancy)
+                    .scope[
+                        class_<defaults>("defaults")
+                            .scope
+                            [
+                                def("occupancy", &defaults::occupancy)
+                            ]
+                    ]
             ]
         ]
     ];
