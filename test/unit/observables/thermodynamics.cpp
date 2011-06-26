@@ -19,21 +19,42 @@
 
 #define BOOST_TEST_MODULE thermodynamics
 #include <boost/test/unit_test.hpp>
-#include <boost/test/parameterized_test.hpp>
 
+#include <boost/make_shared.hpp>
 #include <limits>
-#include <map>
-#include <string>
-#include <utility>
 
+#include <halmd/mdsim/box.hpp>
+#include <halmd/mdsim/clock.hpp>
 #include <halmd/mdsim/core.hpp>
+#include <halmd/mdsim/host/forces/lennard_jones.hpp>
+#include <halmd/mdsim/host/integrators/verlet.hpp>
+#include <halmd/mdsim/host/integrators/verlet_nvt_andersen.hpp>
+#include <halmd/mdsim/host/maximum_squared_displacement.hpp>
+#include <halmd/mdsim/host/neighbour.hpp>
+#include <halmd/mdsim/host/particle.hpp>
+#include <halmd/mdsim/host/positions/lattice.hpp>
+#include <halmd/mdsim/host/velocities/boltzmann.hpp>
 #include <halmd/numeric/accumulator.hpp>
-#include <test/unit/modules.hpp>
-#include <test/tools/init.hpp>
+#include <halmd/observables/host/thermodynamics.hpp>
+#include <halmd/random/host/random.hpp>
+#include <halmd/utility/predicates/greater.hpp>
+#ifdef WITH_CUDA
+# include <halmd/mdsim/gpu/forces/lennard_jones.hpp>
+# include <halmd/mdsim/gpu/integrators/verlet.hpp>
+# include <halmd/mdsim/gpu/integrators/verlet_nvt_andersen.hpp>
+# include <halmd/mdsim/gpu/particle.hpp>
+# include <halmd/mdsim/gpu/maximum_squared_displacement.hpp>
+# include <halmd/mdsim/gpu/neighbour_with_binning.hpp>
+# include <halmd/mdsim/gpu/positions/lattice.hpp>
+# include <halmd/mdsim/gpu/velocities/boltzmann.hpp>
+# include <halmd/observables/gpu/thermodynamics.hpp>
+# include <halmd/random/gpu/random.hpp>
+# include <halmd/utility/gpu/device.hpp>
+#endif
 
 using namespace boost;
+using namespace boost::assign; // list_of
 using namespace halmd;
-using namespace halmd::test;
 using namespace std;
 
 /**
@@ -78,83 +99,93 @@ inline double adiabatic_compressibility_nve(
       return 1 / (2. / dimension * temp * density + press + hypervirial * density - x);
 }
 
-template <int dimension>
-void thermodynamics(string const& backend)
+template <typename modules_type>
+struct lennard_jones_fluid
 {
-    float density = 0.3;
-    float temp = 3.0;
-    float rc = 4.0;
-    double timestep = 0.001;
-    unsigned npart = (backend == "gpu") ? 4000 : 1500;
-    char const* random_file = "/dev/urandom";
+    typedef typename modules_type::box_type box_type;
+    typedef typename modules_type::potential_type potential_type;
+    typedef typename modules_type::force_type force_type;
+    typedef typename modules_type::binning_type binning_type;
+    typedef typename modules_type::neighbour_type neighbour_type;
+    typedef typename modules_type::msd_type msd_type;
+    typedef typename modules_type::nve_integrator_type nve_integrator_type;
+    typedef typename modules_type::nvt_integrator_type nvt_integrator_type;
+    typedef typename modules_type::particle_type particle_type;
+    typedef typename modules_type::position_type position_type;
+    typedef typename modules_type::random_type random_type;
+    typedef typename modules_type::thermodynamics_type thermodynamics_type;
+    typedef typename modules_type::velocity_type velocity_type;
+    static bool const gpu = modules_type::gpu;
+
+    typedef mdsim::clock clock_type;
+    typedef typename clock_type::time_type time_type;
+    typedef typename clock_type::step_type step_type;
+    typedef mdsim::core core_type;
+    typedef typename particle_type::vector_type vector_type;
+    typedef typename vector_type::value_type float_type;
+    static unsigned int const dimension = vector_type::static_size;
+    typedef mdsim::integrator<dimension> integrator_type;
+    typedef predicates::greater<float_type> greater_type;
+
+    float density;
+    float temp;
+    float rc;
+    float epsilon;
+    float sigma;
+    float skin;
+    double timestep;
+    unsigned npart;
     fixed_vector<double, dimension> box_ratios;
-    box_ratios[0] = 1;
-    box_ratios[1] = 2;
-    if (dimension == 3) {
-        box_ratios[2] = 1.01;
-    }
+    fixed_vector<double, dimension> slab;
 
-    using namespace boost::assign;
+    shared_ptr<box_type> box;
+    shared_ptr<clock_type> clock;
+    shared_ptr<core_type> core;
+    shared_ptr<potential_type> potential;
+    shared_ptr<force_type> force;
+    shared_ptr<binning_type> binning;
+    shared_ptr<neighbour_type> neighbour;
+    shared_ptr<msd_type> msd;
+    shared_ptr<integrator_type> integrator;
+    shared_ptr<particle_type> particle;
+    shared_ptr<position_type> position;
+    shared_ptr<random_type> random;
+    shared_ptr<thermodynamics_type> thermodynamics;
+    shared_ptr<velocity_type> velocity;
 
-    BOOST_TEST_MESSAGE("using backend '" << backend << "' in " <<
-                       dimension << " dimensions");
+    void test();
+    lennard_jones_fluid();
+    void connect();
+};
 
-#ifdef WITH_CUDA
-    shared_ptr<utility::gpu::device> device = make_device(backend);
-#endif /* WITH_CUDA */
-    shared_ptr<halmd::random::random> random = make_random(
-        backend
-      , random_file
-    );
-
-    BOOST_TEST_MESSAGE("initialise simulation modules");
-    // init core module and all dependencies
-    shared_ptr<mdsim::core<dimension> > core(new mdsim::core<dimension>);
-
-    core->particle = make_particle<dimension>(backend, npart);
-
-    core->box = make_box<dimension>(core->particle, density, box_ratios);
-
-    core->integrator = make_verlet_nvt_andersen_integrator<dimension>(
-        backend, core->particle, core->box, random
+template <typename modules_type>
+void lennard_jones_fluid<modules_type>::test()
+{
+    // create NVT integrator
+    integrator = make_shared<nvt_integrator_type>(
+        particle, box, random
       , 0.005 /* time step */, temp, 1. /* collision rate */
     );
-
-    core->force = make_lennard_jones_force<dimension>(
-        backend, core->particle, core->box
-      , list_of(rc)(rc)(rc)     /* cutoff */
-      , list_of(1.f)(0.f)(0.f)  /* epsilon */
-      , list_of(1.f)(0.f)(0.f)  /* sigma */
-    );
-
-    core->neighbour = make_neighbour(backend, core->particle, core->box, core->force);
-
-    core->position = make_lattice(backend, core->particle, core->box, random);
-
-    core->velocity = make_boltzmann(backend, core->particle, random, temp);
+    // create core and connect module slots to core signals
+    this->connect();
 
     // relax configuration and thermalise at given temperature, run for t*=30
     BOOST_TEST_MESSAGE("thermalise initial state at T=" << temp);
-    core->prepare();
-    uint64_t steps = static_cast<uint64_t>(ceil(30 / core->integrator->timestep()));
-    for (uint64_t i = 0; i < steps; ++i) {
+    core->setup();
+    step_type steps = static_cast<step_type>(ceil(30 / integrator->timestep()));
+    for (step_type i = 0; i < steps; ++i) {
         core->mdstep();
     }
 
     // set different timestep and choose NVE integrator
-    core->integrator = make_verlet_integrator<dimension>(
-        backend, core->particle, core->box, timestep
-    );
-    BOOST_CHECK_CLOSE_FRACTION(core->integrator->timestep(), timestep, eps_float);
-
-    // measure thermodynamic properties
-    shared_ptr<observables::thermodynamics<dimension> > thermodynamics =
-        make_thermodynamics(backend, core->particle, core->box, core->clock, core->force);
+    integrator = make_shared<nve_integrator_type>(particle, box, timestep);
+    // recreate core and connect module slots to core signals
+    this->connect();
 
     // stochastic thermostat => centre particle velocities around zero
-    core->velocity->shift(-thermodynamics->v_cm());
+    velocity->shift(-thermodynamics->v_cm());
 
-    const double vcm_limit = (backend == "gpu") ? 0.1 * eps_float : 20 * eps;
+    const double vcm_limit = gpu ? 0.1 * eps_float : 20 * eps;
     BOOST_CHECK_SMALL(norm_inf(thermodynamics->v_cm()), vcm_limit);
 
     // take averages of fluctuating quantities,
@@ -162,12 +193,12 @@ void thermodynamics(string const& backend)
 
     // equilibration run, measure temperature in second half
     BOOST_TEST_MESSAGE("equilibrate initial state");
-    steps = static_cast<uint64_t>(ceil(30 / timestep));
-    uint64_t period = static_cast<uint64_t>(round(.01 / timestep));
-    core->force->aux_disable();                     // disable auxiliary variables
-    for (uint64_t i = 0; i < steps; ++i) {
+    steps = static_cast<step_type>(ceil(30 / timestep));
+    step_type period = static_cast<step_type>(round(.01 / timestep));
+    force->aux_disable();                     // disable auxiliary variables
+    for (step_type i = 0; i < steps; ++i) {
         if (i == steps - 1) {
-            core->force->aux_enable();              // enable auxiliary variables in last step
+            force->aux_enable();              // enable auxiliary variables in last step
         }
         core->mdstep();
         if(i > steps/2 && i % period == 0) {
@@ -179,7 +210,7 @@ void thermodynamics(string const& backend)
     // rescale velocities to match the exact temperature
     double v_scale = sqrt(temp / mean(temp_));
     BOOST_TEST_MESSAGE("rescale velocities by factor " << v_scale);
-    core->velocity->rescale(v_scale);
+    velocity->rescale(v_scale);
 
     double en_tot = thermodynamics->en_tot();
     double max_en_diff = 0; // maximal absolut deviation from initial total energy
@@ -187,13 +218,13 @@ void thermodynamics(string const& backend)
 
     // microcanonical simulation run
     BOOST_TEST_MESSAGE("run NVE simulation");
-    steps = static_cast<uint64_t>(ceil(60 / timestep));
-    period = static_cast<uint64_t>(round(.05 / timestep));
-    core->force->aux_disable();
-    for (uint64_t i = 0; i < steps; ++i) {
+    steps = static_cast<step_type>(ceil(60 / timestep));
+    period = static_cast<step_type>(round(0.05 / timestep));
+    force->aux_disable();
+    for (step_type i = 0; i < steps; ++i) {
         // turn on evaluation of potential energy, virial, etc.
         if(i % period == 0) {
-            core->force->aux_enable();
+            force->aux_enable();
         }
 
         // perform MD step
@@ -206,7 +237,7 @@ void thermodynamics(string const& backend)
             en_pot(thermodynamics->en_pot());
             hypervir(thermodynamics->hypervirial());
             max_en_diff = max(abs(thermodynamics->en_tot() - en_tot), max_en_diff);
-            core->force->aux_disable();
+            force->aux_disable();
         }
     }
     BOOST_CHECK_SMALL(norm_inf(thermodynamics->v_cm()), vcm_limit);
@@ -218,7 +249,7 @@ void thermodynamics(string const& backend)
     BOOST_CHECK_SMALL(max_en_diff / fabs(en_tot), en_limit);
 
     // allow larger tolerance for the host simulation with fewer particles
-    BOOST_CHECK_CLOSE_FRACTION(temp, mean(temp_), (backend == "gpu") ? 3e-3 : 6e-3);
+    BOOST_CHECK_CLOSE_FRACTION(temp, mean(temp_), gpu ? 3e-3 : 6e-3);
     BOOST_CHECK_CLOSE_FRACTION(density, (float)thermodynamics->density(), eps_float);
 
     if (dimension == 3) {
@@ -244,54 +275,128 @@ void thermodynamics(string const& backend)
         // values from Johnson et al.: P = 1.023, Epot = -1.673  (Npart = 864)
         // values from RFA theory (Ayadim et al.): P = 1.0245, Epot = -1.6717
         // (allow larger tolerance for the host simulation with fewer particles)
-        BOOST_CHECK_CLOSE_FRACTION(mean(press), 1.023, (backend == "gpu") ? 3e-3 : 6e-3);
-        BOOST_CHECK_CLOSE_FRACTION(mean(en_pot), -1.673, (backend == "gpu") ? 2e-3 : 4e-3);
+        BOOST_CHECK_CLOSE_FRACTION(mean(press), 1.023, gpu ? 3e-3 : 6e-3);
+        BOOST_CHECK_CLOSE_FRACTION(mean(en_pot), -1.673, gpu ? 2e-3 : 4e-3);
         // our own measurements using HAL's MD package FIXME find reference values
-        BOOST_CHECK_CLOSE_FRACTION(cV, 1.648, (backend == "gpu") ? 1e-2 : 3e-2);
+        BOOST_CHECK_CLOSE_FRACTION(cV, 1.648, gpu ? 1e-2 : 3e-2);
         BOOST_CHECK_CLOSE_FRACTION(chi_S, 0.35, 0.2);
     }
 }
 
-HALMD_TEST_INIT( init_unit_test_suite )
+template <typename modules_type>
+lennard_jones_fluid<modules_type>::lennard_jones_fluid()
 {
-    using namespace boost::assign;
-    using namespace boost::unit_test;
-    using namespace boost::unit_test::framework;
+    BOOST_TEST_MESSAGE("initialise simulation modules");
 
-    // parametrize specific program options
-    vector<string> backend = list_of
-        ("host")
-#ifdef WITH_CUDA
-        ("gpu")
-#endif /* WITH_CUDA */
-        ;
+    // set module parameters
+    density = 0.3;
+    temp = 3;
+    rc = 4;
+    epsilon = 1;
+    sigma = 1;
+    skin = 0.5;
+    timestep = 0.001;
+    npart = gpu ? 4000 : 1500;
+    box_ratios = (dimension == 3) ? list_of(1)(2)(1.01) : list_of(1)(2);
+    slab = 1;
 
-    test_suite* ts1 = BOOST_TEST_SUITE( "host" );
+    vector<unsigned int> npart_vector = list_of(npart);
+    boost::array<float, 3> rc_array = list_of(rc)(rc)(rc);
+    boost::array<float, 3> epsilon_array = list_of(epsilon)(0.f)(0.f);
+    boost::array<float, 3> sigma_array = list_of(sigma)(0.f)(0.f);
 
-    test_suite* ts11 = BOOST_TEST_SUITE( "2d" );
-    ts11->add( BOOST_PARAM_TEST_CASE( &thermodynamics<2>, backend.begin(), backend.begin() + 1 ) );
-
-    test_suite* ts12 = BOOST_TEST_SUITE( "3d" );
-    ts12->add( BOOST_PARAM_TEST_CASE( &thermodynamics<3>, backend.begin(), backend.begin() + 1 ) );
-
-    ts1->add( ts11 );
-    ts1->add( ts12 );
-
-#ifdef WITH_CUDA
-    test_suite* ts2 = BOOST_TEST_SUITE( "gpu" );
-
-    test_suite* ts21 = BOOST_TEST_SUITE( "2d" );
-    ts21->add( BOOST_PARAM_TEST_CASE( &thermodynamics<2>, backend.begin() + 1, backend.end() ) );
-
-    test_suite* ts22 = BOOST_TEST_SUITE( "3d" );
-    ts22->add( BOOST_PARAM_TEST_CASE( &thermodynamics<3>, backend.begin() + 1, backend.end() ) );
-
-    ts2->add( ts21 );
-    ts2->add( ts22 );
-#endif /* WITH_CUDA */
-
-    master_test_suite().add( ts1 );
-#ifdef WITH_CUDA
-    master_test_suite().add( ts2 );
-#endif /* WITH_CUDA */
+    // create modules
+    random = make_shared<random_type>();
+    particle = make_shared<particle_type>(npart_vector);
+    box = make_shared<box_type>(npart, density, box_ratios);
+    potential = make_shared<potential_type>(particle->ntype, rc_array, epsilon_array, sigma_array);
+    binning = make_shared<binning_type>(particle, box, potential->r_cut(), skin);
+    neighbour = make_shared<neighbour_type>(particle, box, binning, potential->r_cut(), skin);
+    position = make_shared<position_type>(particle, box, random, slab);
+    velocity = make_shared<velocity_type>(particle, random, temp);
+    force = make_shared<force_type>(potential, particle, box, neighbour);
+    clock = make_shared<clock_type>(timestep);
+    thermodynamics = make_shared<thermodynamics_type>(particle, box, clock, force);
+    msd = make_shared<msd_type>(particle, box);
 }
+
+template <typename modules_type>
+void lennard_jones_fluid<modules_type>::connect()
+{
+    core = make_shared<core_type>(clock);
+    // system preparation
+    core->on_prepend_setup( bind(&particle_type::set, particle) );
+    core->on_setup( bind(&position_type::set, position) );
+    core->on_setup( bind(&velocity_type::set, velocity) );
+    core->on_append_setup( bind(&msd_type::zero, msd) );
+    core->on_append_setup( bind(&binning_type::update, binning) );
+    core->on_append_setup( bind(&neighbour_type::update, neighbour) );
+    core->on_append_setup( bind(&force_type::compute, force) );
+
+    // integration step
+    core->on_integrate( bind(&integrator_type::integrate, integrator) );
+    core->on_force( bind(&force_type::compute, force) );
+    core->on_finalize( bind(&integrator_type::finalize, integrator) );
+
+    // update neighbour lists if maximum squared displacement is greater than (skin/2)²
+    float_type limit = pow(neighbour->r_skin() / 2, 2);
+    shared_ptr<greater_type> greater = make_shared<greater_type>( bind(&msd_type::compute, msd), limit );
+    greater->on_greater( bind(&msd_type::zero, msd) );
+    greater->on_greater( bind(&binning_type::update, binning) );
+    greater->on_greater( bind(&neighbour_type::update, neighbour) );
+    core->on_prepend_force( bind(&greater_type::evaluate, greater) );
+}
+
+template <int dimension, typename float_type>
+struct host_modules
+{
+    typedef mdsim::box<dimension> box_type;
+    typedef mdsim::host::forces::lennard_jones<float_type> potential_type;
+    typedef mdsim::host::forces::pair_trunc<dimension, float_type, potential_type> force_type;
+    typedef mdsim::host::binning<dimension, float_type> binning_type;
+    typedef mdsim::host::neighbour<dimension, float_type> neighbour_type;
+    typedef mdsim::host::maximum_squared_displacement<dimension, float_type> msd_type;
+    typedef mdsim::host::integrators::verlet<dimension, float_type> nve_integrator_type;
+    typedef mdsim::host::integrators::verlet_nvt_andersen<dimension, float_type> nvt_integrator_type;
+    typedef mdsim::host::particle<dimension, float_type> particle_type;
+    typedef mdsim::host::positions::lattice<dimension, float_type> position_type;
+    typedef halmd::random::host::random random_type;
+    typedef mdsim::host::velocities::boltzmann<dimension, float_type> velocity_type;
+    typedef observables::host::thermodynamics<dimension, float_type> thermodynamics_type;
+    static bool const gpu = false;
+};
+
+BOOST_AUTO_TEST_CASE( lennard_jones_fluid_host_2d ) {
+    lennard_jones_fluid<host_modules<2, double> >().test();
+}
+BOOST_AUTO_TEST_CASE( lennard_jones_fluid_host_3d ) {
+    lennard_jones_fluid<host_modules<3, double> >().test();
+}
+
+#ifdef WITH_CUDA
+template <int dimension, typename float_type>
+struct gpu_modules
+{
+    typedef mdsim::box<dimension> box_type;
+    typedef mdsim::gpu::forces::lennard_jones<float_type> potential_type;
+    typedef mdsim::gpu::forces::pair_trunc<dimension, float_type, potential_type> force_type;
+    typedef mdsim::gpu::binning<dimension, float_type> binning_type;
+    typedef mdsim::gpu::neighbour_with_binning<dimension, float_type> neighbour_type;
+    typedef mdsim::gpu::maximum_squared_displacement<dimension, float_type> msd_type;
+    typedef mdsim::gpu::integrators::verlet<dimension, float_type> nve_integrator_type;
+    typedef mdsim::gpu::integrators::verlet_nvt_andersen<dimension, float_type, halmd::random::gpu::rand48> nvt_integrator_type;
+    typedef mdsim::gpu::particle<dimension, float_type> particle_type;
+    typedef mdsim::gpu::positions::lattice<dimension, float_type, halmd::random::gpu::rand48> position_type;
+    typedef halmd::random::gpu::random<halmd::random::gpu::rand48> random_type;
+    typedef observables::gpu::thermodynamics<dimension, float_type> thermodynamics_type;
+    typedef mdsim::gpu::velocities::boltzmann<dimension, float_type, halmd::random::gpu::rand48> velocity_type;
+    static bool const gpu = true;
+};
+
+BOOST_FIXTURE_TEST_CASE( lennard_jones_fluid_gpu_2d, device ) {
+    lennard_jones_fluid<gpu_modules<2, float> >().test();
+}
+BOOST_FIXTURE_TEST_CASE( lennard_jones_fluid_gpu_3d, device ) {
+    lennard_jones_fluid<gpu_modules<3, float> >().test();
+}
+#endif // WITH_CUDA
