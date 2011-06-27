@@ -17,6 +17,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <boost/nondet_random.hpp> // boost::random_device
+
 #include <halmd/random/gpu/rand48.hpp>
 #include <halmd/random/gpu/random.hpp>
 #include <halmd/random/gpu/random_kernel.hpp>
@@ -101,6 +103,26 @@ void random<RandomNumberGenerator>::normal(cuda::vector<float>& g_v, float mean,
         LOG_ERROR("failed to fill vector with normal random numbers");
         throw;
     }
+}
+
+//! Get seed from non-deterministic random number generator.
+// boost::random_device reads from /dev/urandom on GNU/Linux,
+// and the default cryptographic service provider on Windows.
+template <typename RandomNumberGenerator>
+unsigned int random<RandomNumberGenerator>::defaults::seed() {
+    return boost::random_device()();
+}
+template <typename RandomNumberGenerator>
+unsigned int random<RandomNumberGenerator>::defaults::blocks() {
+    return 32;
+}
+template <typename RandomNumberGenerator>
+unsigned int random<RandomNumberGenerator>::defaults::threads() {
+    return 32 << DEVICE_SCALE;
+}
+template <typename RandomNumberGenerator>
+unsigned int random<RandomNumberGenerator>::defaults::shuffle_threads() {
+    return 128;
 }
 
 template <typename RandomNumberGenerator>

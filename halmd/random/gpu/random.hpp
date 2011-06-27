@@ -21,7 +21,6 @@
 #define HALMD_RANDOM_GPU_RANDOM_HPP
 
 #include <algorithm>
-#include <boost/nondet_random.hpp> // boost::random_device
 #include <boost/shared_ptr.hpp>
 #include <lua.hpp>
 #include <iterator>
@@ -81,21 +80,10 @@ private:
 template <typename RandomNumberGenerator>
 struct random<RandomNumberGenerator>::defaults
 {
-    //! Get seed from non-deterministic random number generator.
-    // boost::random_device reads from /dev/urandom on GNU/Linux,
-    // and the default cryptographic service provider on Windows.
-    static unsigned int seed() {
-        return boost::random_device()();
-    }
-    static unsigned int blocks() {
-        return 32;
-    }
-    static unsigned int threads() {
-        return 32 << DEVICE_SCALE;
-    }
-    static unsigned int shuffle_threads() {
-        return 128;
-    }
+    static unsigned int seed();
+    static unsigned int blocks();
+    static unsigned int threads();
+    static unsigned int shuffle_threads();
 };
 
 /**
