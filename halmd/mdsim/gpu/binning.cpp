@@ -194,6 +194,11 @@ wrap_update(shared_ptr<binning_type> binning)
 }
 
 template <int dimension, typename float_type>
+float_type binning<dimension, float_type>::defaults::occupancy() {
+    return 0.4;
+}
+
+template <int dimension, typename float_type>
 void binning<dimension, float_type>::luaopen(lua_State* L)
 {
     using namespace luabind;

@@ -152,9 +152,7 @@ private:
 template <int dimension, typename float_type>
 struct binning<dimension, float_type>::defaults
 {
-    static float_type occupancy() {
-        return 0.4;
-    }
+    static float_type occupancy();
 };
 
 }} // namespace mdsim::gpu
