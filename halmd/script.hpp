@@ -52,7 +52,6 @@ public:
 
 private:
     void package_path();
-    void load_wrapper();
 };
 
 } // namespace halmd

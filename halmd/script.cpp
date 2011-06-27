@@ -18,7 +18,6 @@
  */
 
 #include <boost/bind.hpp>
-#include <luabind/class_info.hpp>
 
 #include <halmd/io/logger.hpp>
 #include <halmd/observables/sampler.hpp>
@@ -43,7 +42,7 @@ script::script()
 
     package_path(); //< set Lua package path
 
-    load_wrapper(); //< load HALMD Lua C++ wrapper
+    luaopen_libhalmd(L); //< load HALMD Lua C++ wrapper
 }
 
 script::~script()
@@ -89,22 +88,6 @@ void script::package_path()
     lua_rawset(L, -3);
     // remove table "package"
     lua_pop(L, 1);
-}
-
-/**
- * Load HALMD Lua wrapper
- *
- * Register C++ classes with Lua.
- */
-void script::load_wrapper()
-{
-    using namespace luabind;
-
-    open(L); //< setup global structures and Lua class support
-
-    bind_class_info(L); //< class_info(), class_names()
-
-    luaopen_libhalmd(L);
 }
 
 /**
