@@ -145,6 +145,11 @@ wrap_update(shared_ptr<neighbour_type> neighbour)
 }
 
 template <int dimension, typename float_type>
+float_type neighbour_with_binning<dimension, float_type>::defaults::occupancy() {
+    return 0.4;
+}
+
+template <int dimension, typename float_type>
 void neighbour_with_binning<dimension, float_type>::luaopen(lua_State* L)
 {
     using namespace luabind;
