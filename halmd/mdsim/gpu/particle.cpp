@@ -140,6 +140,11 @@ void particle<dimension, float_type>::set()
     }
 }
 
+template <unsigned int dimension, typename float_type>
+unsigned int particle<dimension, float_type>::defaults::threads() {
+    return 128;
+}
+
 template <int dimension, typename float_type>
 static int wrap_dimension(particle<dimension, float_type> const&)
 {

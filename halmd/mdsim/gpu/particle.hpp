@@ -91,9 +91,7 @@ public:
 template <unsigned int dimension, typename float_type>
 struct particle<dimension, float_type>::defaults
 {
-    static unsigned int threads() {
-        return 128;
-    }
+    static unsigned int threads();
 };
 
 }} // namespace mdsim::gpu
