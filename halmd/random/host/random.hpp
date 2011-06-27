@@ -22,7 +22,6 @@
 
 #include <algorithm>
 #include <boost/random/mersenne_twister.hpp>
-#include <boost/nondet_random.hpp> // boost::random_device
 #include <boost/random/uniform_01.hpp>
 #include <boost/random/uniform_int.hpp>
 #include <boost/random/variate_generator.hpp>
@@ -43,12 +42,7 @@ public:
     typedef boost::mt19937 random_generator; // FIXME template parameter
     struct defaults
     {
-        //! Get seed from non-deterministic random number generator.
-        // boost::random_device reads from /dev/urandom on GNU/Linux,
-        // and the default cryptographic service provider on Windows.
-        static unsigned int seed() {
-            return boost::random_device()();
-        }
+        static unsigned int seed();
     };
 
     static void luaopen(lua_State* L);
