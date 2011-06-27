@@ -24,7 +24,6 @@
 package.path = "@CMAKE_BINARY_DIR@/lua/?.lua;@CMAKE_BINARY_DIR@/lua/?/init.lua"
 package.cpath = "@CMAKE_BINARY_DIR@/halmd/?@CMAKE_SHARED_LIBRARY_SUFFIX@"
 
-require("libhalmd")
 require("halmd")
 
 local sampler = halmd()
