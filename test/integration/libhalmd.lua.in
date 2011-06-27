@@ -28,3 +28,4 @@ require("libhalmd")
 require("halmd")
 
 local sampler = halmd()
+sampler:run()

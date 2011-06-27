@@ -161,6 +161,7 @@ HALMD_LUA_API int luaopen_libhalmd_observables_sampler(lua_State* L)
             .def("on_finish", &sampler::on_finish)
             .def("on_prepare", &sampler::on_prepare)
             .def("on_sample", &sampler::on_sample)
+            .def("run", &sampler::run)
             .property("steps", &sampler::steps)
             .property("total_time", &sampler::total_time)
     ];
