@@ -66,6 +66,7 @@ set_target_properties(libhalmd PROPERTIES
 )
 target_link_libraries(libhalmd
   ${HALMD_LIBRARIES}
+  ${HALMD_COMMON_LIBRARIES}
 )
 install(TARGETS libhalmd
   LIBRARY DESTINATION lib
@@ -76,7 +77,6 @@ add_executable(halmd
 )
 target_link_libraries(halmd
   libhalmd
-  ${HALMD_COMMON_LIBRARIES}
 )
 install(TARGETS halmd
   RUNTIME DESTINATION bin
