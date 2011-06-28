@@ -81,8 +81,13 @@ fetch-cmake: .fetch-cmake
 
 extract-cmake: .extract-cmake
 
-.build-cmake: .extract-cmake
+.configure-cmake: .extract-cmake
 	cd $(CMAKE_BUILD_DIR) && ./configure --prefix=$(PREFIX)/$(CMAKE_INSTALL_DIR)
+	@$(TOUCH) $@
+
+configure-cmake: .configure-cmake
+
+.build-cmake: .configure-cmake
 	cd $(CMAKE_BUILD_DIR) && make $(PARALLEL_BUILD_FLAGS)
 	@$(TOUCH) $@
 
@@ -93,6 +98,7 @@ install-cmake: .build-cmake
 
 clean-cmake:
 	@$(RM) .build-cmake
+	@$(RM) .configure-cmake
 	@$(RM) .extract-cmake
 	$(RM) $(CMAKE_BUILD_DIR)
 
