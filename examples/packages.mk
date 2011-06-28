@@ -82,12 +82,14 @@ fetch-cmake: .fetch-cmake
 extract-cmake: .extract-cmake
 
 .configure-cmake: .extract-cmake
+	@$(RM) $@
 	cd $(CMAKE_BUILD_DIR) && ./configure --prefix=$(PREFIX)/$(CMAKE_INSTALL_DIR)
 	@$(TOUCH) $@
 
 configure-cmake: .configure-cmake
 
 .build-cmake: .configure-cmake
+	@$(RM) $@
 	cd $(CMAKE_BUILD_DIR) && make $(PARALLEL_BUILD_FLAGS)
 	@$(TOUCH) $@
 
@@ -139,6 +141,7 @@ fetch-lua: .fetch-lua
 extract-lua: .extract-lua
 
 .build-lua: .extract-lua
+	@$(RM) $@
 	cd $(LUA_BUILD_DIR) && make linux CFLAGS="$(LUA_CFLAGS)"
 	@$(TOUCH) $@
 
@@ -191,12 +194,14 @@ fetch-boost: .fetch-boost
 extract-boost: .extract-boost
 
 .configure-boost: .extract-boost
+	@$(RM) $@
 	cd $(BOOST_BUILD_DIR) && ./bootstrap.sh
 	@$(TOUCH) $@
 
 configure-boost: .configure-boost
 
 .build-boost: .configure-boost
+	@$(RM) $@
 	cd $(BOOST_BUILD_DIR) && ./bjam cxxflags="$(BOOST_CXXFLAGS)" $(PARALLEL_BUILD_FLAGS)
 	@$(TOUCH) $@
 
@@ -250,6 +255,7 @@ fetch-luabind: .fetch-luabind
 extract-luabind: .extract-luabind
 
 .build-luabind: .extract-luabind .configure-boost
+	@$(RM) $@
 	cd $(LUABIND_BUILD_DIR) && BOOST_ROOT=$(CURDIR)/$(BOOST_BUILD_DIR) LUA_PATH=$(CURDIR)/$(LUABIND_BUILD_DIR)/lua $(CURDIR)/$(BOOST_BUILD_DIR)/bjam $(LUABIND_BUILD_FLAGS) $(PARALLEL_BUILD_FLAGS)
 	@$(TOUCH) $@
 
@@ -297,12 +303,14 @@ fetch-hdf5: .fetch-hdf5
 extract-hdf5: .extract-hdf5
 
 .configure-hdf5: .extract-hdf5
+	@$(RM) $@
 	cd $(HDF5_BUILD_DIR) && CFLAGS="$(HDF5_CFLAGS)" CXXFLAGS="$(HDF5_CXXFLAGS)" ./configure $(HDF5_CONFIGURE_FLAGS) --prefix=$(PREFIX)/$(HDF5_INSTALL_DIR)
 	@$(TOUCH) $@
 
 configure-hdf5: .configure-hdf5
 
 .build-hdf5: .configure-hdf5
+	@$(RM) $@
 	cd $(HDF5_BUILD_DIR) && make $(PARALLEL_BUILD_FLAGS)
 	@$(TOUCH) $@
 
