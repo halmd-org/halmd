@@ -48,6 +48,8 @@ clean: clean-cmake clean-cmake clean-lua clean-boost clean-luabind clean-hdf5
 
 distclean: distclean-cmake distclean-cmake distclean-lua distclean-boost distclean-luabind distclean-hdf5
 
+env: env-cmake env-cmake env-lua env-boost env-luabind env-hdf5
+
 ##
 ## CMake with CMake-CUDA patch
 ##
@@ -110,6 +112,12 @@ distclean-cmake: clean-cmake
 	$(RM) $(CMAKE_LIB64_PATCH)
 	$(RM) $(CMAKE_CUDA_PATCH)
 
+env-cmake:
+	@echo
+	@echo '# add CMake $(CMAKE_VERSION) to environment'
+	@echo 'export PATH="$(PREFIX)/$(CMAKE_INSTALL_DIR)/bin$${PATH+:$$PATH}"'
+	@echo 'export MANPATH="$(PREFIX)/$(CMAKE_INSTALL_DIR)/man$${MANPATH+:$$MANPATH}"'
+
 ##
 ## Lua
 ##
@@ -160,18 +168,26 @@ distclean-lua: clean-lua
 	$(RM) $(LUA_TARBALL)
 	$(RM) $(LUA_PATCH)
 
+env-lua:
+	@echo
+	@echo '# add Lua $(LUA_VERSION) to environment'
+	@echo 'export PATH="$(PREFIX)/$(LUA_INSTALL_DIR)/bin$${PATH+:$$PATH}"'
+	@echo 'export MANPATH="$(PREFIX)/$(LUA_INSTALL_DIR)/man$${MANPATH+:$$MANPATH}"'
+	@echo 'export CMAKE_PREFIX_PATH="$(PREFIX)/$(LUA_INSTALL_DIR)$${CMAKE_PREFIX_PATH+:$$CMAKE_PREFIX_PATH}"'
+
 ##
 ## Boost C++ libraries with Boost.Log
 ##
 
-BOOST_VERSION = 1_46_1
-BOOST_TARBALL = boost_$(BOOST_VERSION).tar.gz
+BOOST_VERSION = 1.46.1
+BOOST_RELEASE = 1_46_1
+BOOST_TARBALL = boost_$(BOOST_RELEASE).tar.gz
 BOOST_TARBALL_URL = http://sourceforge.net/projects/boost/files/boost/1.46.1/$(BOOST_TARBALL)
 BOOST_LOG_TARBALL = boost-log.tar
 BOOST_LOG_TARBALL_URL = http://boost-log.svn.sourceforge.net/viewvc/boost-log/trunk/boost-log/?view=tar
 BOOST_LOG_DIR = boost-log
-BOOST_BUILD_DIR = boost_$(BOOST_VERSION)
-BOOST_INSTALL_DIR = boost_$(BOOST_VERSION)
+BOOST_BUILD_DIR = boost_$(BOOST_RELEASE)
+BOOST_INSTALL_DIR = boost_$(BOOST_RELEASE)
 BOOST_CXXFLAGS = -fPIC
 
 .fetch-boost:
@@ -220,6 +236,14 @@ distclean-boost: clean-boost
 	@$(RM) .fetch-boost
 	$(RM) $(BOOST_TARBALL)
 	$(RM) $(BOOST_LOG_TARBALL)
+
+env-boost:
+	@echo
+	@echo '# add Boost $(BOOST_VERSION) to environment'
+	@echo 'export PATH="$(PREFIX)/$(BOOST_INSTALL_DIR)/bin$${PATH+:$$PATH}"'
+	@echo 'export LD_LIBRARY_PATH="$(PREFIX)/$(BOOST_INSTALL_DIR)/lib$${LD_LIBRARY_PATH+:$$LD_LIBRARY_PATH}"'
+	@echo 'export PYTHONPATH="$(PREFIX)/$(BOOST_INSTALL_DIR)/lib$${PYTHONPATH+:$$PYTHONPATH}"'
+	@echo 'export CMAKE_PREFIX_PATH="$(PREFIX)/$(BOOST_INSTALL_DIR)$${CMAKE_PREFIX_PATH+:$$CMAKE_PREFIX_PATH}"'
 
 ##
 ## Luabind library with Clang C++ compiler fix
@@ -273,6 +297,12 @@ distclean-luabind: clean-luabind
 	@$(RM) .fetch-luabind
 	$(RM) $(LUABIND_TARBALL)
 	$(RM) $(LUABIND_PATCH)
+
+env-luabind:
+	@echo
+	@echo '# add Luabind $(LUABIND_VERSION) to environment'
+	@echo 'export LD_LIBRARY_PATH="$(PREFIX)/$(LUABIND_INSTALL_DIR)/lib$${LD_LIBRARY_PATH+:$$LD_LIBRARY_PATH}"'
+	@echo 'export CMAKE_PREFIX_PATH="$(PREFIX)/$(LUABIND_INSTALL_DIR)$${CMAKE_PREFIX_PATH+:$$CMAKE_PREFIX_PATH}"'
 
 ##
 ## HDF5 C++ library
@@ -328,3 +358,10 @@ clean-hdf5:
 distclean-hdf5: clean-hdf5
 	@$(RM) .fetch-hdf5
 	$(RM) $(HDF5_TARBALL)
+
+env-hdf5:
+	@echo
+	@echo '# add HDF5 $(HDF5_VERSION) to environment'
+	@echo 'export PATH="$(PREFIX)/$(HDF5_INSTALL_DIR)/bin$${PATH+:$$PATH}"'
+	@echo 'export LD_LIBRARY_PATH="$(PREFIX)/$(HDF5_INSTALL_DIR)/lib$${LD_LIBRARY_PATH+:$$LD_LIBRARY_PATH}"'
+	@echo 'export CMAKE_PREFIX_PATH="$(PREFIX)/$(HDF5_INSTALL_DIR)$${CMAKE_PREFIX_PATH+:$$CMAKE_PREFIX_PATH}"'
