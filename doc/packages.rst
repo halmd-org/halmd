@@ -67,3 +67,17 @@ To compile as a non-root user and install as root::
 
   make -f .../halmd/examples/packages.mk PREFIX=/opt
   sudo make -f .../halmd/examples/packages.mk install PREFIX=/opt
+
+
+Troubleshooting
+---------------
+
+There are some requirements to ensure a smooth run of packages.mk:
+
+    - a recent C++ compiler (e.g., GCC)
+    - some standard tools: wget, tar, gzip, rm, cp, touch, patch
+    - Boost requires a development package of the bzip2 library (files ``bzlib.h`` and ``libbz2.so``)
+
+The bzip2 library is necessary for Boost.IOStreams. As HAL's MD package does
+not make use of this library, you may opt to compile Boost without bzip2
+support by prepending ``NO_BZIP2=1`` to the make command.
