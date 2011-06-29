@@ -6,6 +6,7 @@ HALMD documentation
 
    readme
    prerequisites
+   packages
    install
    usage
    faq
