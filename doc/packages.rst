@@ -29,6 +29,8 @@ The packages makefile provides many more rules than just ``install``::
 
   make -f .../halmd/examples/packages.mk TAB TAB
 
+::
+
   build              clean-luabind      env-boost          fetch-boost
   build-boost        configure-boost    env-cmake          fetch-cmake
   build-cmake        configure-cmake    env-hdf5           fetch-hdf5
