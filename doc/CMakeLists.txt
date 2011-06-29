@@ -35,7 +35,6 @@ if(PDFLATEX_COMPILER)
   add_custom_target(halmd_doc_pdf ALL
     ${CMAKE_MAKE_PROGRAM}
     -C ${CMAKE_CURRENT_BINARY_DIR}/latex
-    LATEXOPTS=-interaction=batchmode
     COMMENT "Building pdf documentation"
     )
   add_dependencies(halmd_doc_pdf halmd_doc_latex)
