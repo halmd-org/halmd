@@ -252,3 +252,4 @@ def setup(app):
     tex_replacements.append((u'⁸', u'\ensuremath{^8}'))
     tex_replacements.append((u'⁹', u'\ensuremath{^9}'))
     tex_replacements.append((u'⁻', u'\ensuremath{^-}'))
+    tex_replacements.append((u'⁺', u'\ensuremath{^+}'))
