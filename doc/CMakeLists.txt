@@ -87,7 +87,7 @@ add_custom_target(halmd_doc_pdf ALL
   COMMENT "Build HALMD PDF documentation"
 )
 add_custom_command(TARGET halmd_doc_pdf POST_BUILD
-  COMMAND ${CMAKE_MAKE_PROGRAM} LATEXOPTS=-interaction=batchmode
+  COMMAND ${CMAKE_MAKE_PROGRAM}
   WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/pdf"
 )
 add_dependencies(halmd_doc_pdf
