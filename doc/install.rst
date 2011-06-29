@@ -164,14 +164,6 @@ Compilation is done using make, which supports parallel builds::
 
   nice make -j4
 
-Individual backends may be compiled selectively::
-
-  nice make -j4 halmd halmd_gpu_neighbour halmd_host
-
-Note that due to extensive use of C++ templates, a **single compiler process**
-may easily consume **more than 500MB of memory**, so be sure to adjust the
-number of parallel builds to the available resources.
-
 
 Updating the build tree
 -----------------------
