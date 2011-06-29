@@ -3,7 +3,7 @@ Installing prerequisites with packages.mk
 
 This guide describes an easy way of installing all packages required for HALMD,
 so you, a novice HALMD user, may continue right away to installing HALMD itself.
-To find out more about the packages used by HALMD, see the :ref:`prerequisites`.
+To find out more about the packages used by HALMD, see :ref:`prerequisites`.
 
 Quick Start Guide
 -----------------
@@ -14,7 +14,7 @@ Create and change to a new directory (preferably on a local disk)::
 
 Download, compile (with 4 processes) and install required packages to ``~/opt``::
 
-  make -f .../halmd/examples/packages.mk CONCURRENCY_LEVEL=4 install
+  nice make -f .../halmd/examples/packages.mk CONCURRENCY_LEVEL=4 install
 
 Add packages to shell environment::
 
