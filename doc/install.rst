@@ -18,6 +18,8 @@ HALMD is known to compile with these C++ compilers.
   - GCC 4.4.4 on RHEL 6.0 (x86_64)
   - GCC 4.4.3 on Ubuntu 10.04 LTS (x86_64)
 
+  Note that CUDA ≤ 3.0 is not compatible with GCC 4.4.
+
 * GCC 4.3
 
   - GCC 4.3.3 on Ubuntu 9.04 (x86_64)
