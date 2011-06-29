@@ -49,7 +49,7 @@ You may choose to install only selected dependencies::
 
 To compile and install to a path other than ``~/opt``::
 
-  make -f .../halmd/examples/packages.mk install PREFIX=/install/path
+  make -f .../halmd/examples/packages.mk install PREFIX=~/pkg/debian6.0-x86_64
 
 If you wish to first download all packages::
 
