@@ -68,7 +68,7 @@ void phase_space<dimension, float_type>::set()
         typename sample_type::sample_vector const& r_sample = *sample->r[j];
         n += particle->ntypes[j];
         assert(particle->ntypes[j] == r_sample.size());
-        assert(i + n <= particle->h_r.size());
+        assert(n <= particle->h_r.size());
         for (size_t k = 0; i < n; ++i, ++k) {
             particle->h_r[i] = particle_kernel::tagged<vector_type>(r_sample[k], j);
         }
