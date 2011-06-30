@@ -89,7 +89,8 @@ void lattice<dimension, float_type, RandomNumberGenerator>::set()
     // FIXME this will fail greatly once we support polymers
     if (particle->ntypes.size() > 1) {
         LOG("randomly permuting particle positions");
-        random->shuffle(particle->g_r);
+        random->shuffle(particle->g_r); //< this shuffles the types as well
+        particle->set();                //< assign new tags and types
     }
 
     // reset particle image vectors
