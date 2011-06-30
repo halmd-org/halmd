@@ -18,6 +18,8 @@ HALMD is known to compile with these C++ compilers.
   - GCC 4.4.4 on RHEL 6.0 (x86_64)
   - GCC 4.4.3 on Ubuntu 10.04 LTS (x86_64)
 
+  Note that CUDA ≤ 3.0 is not compatible with GCC 4.4.
+
 * GCC 4.3
 
   - GCC 4.3.3 on Ubuntu 9.04 (x86_64)
@@ -161,14 +163,6 @@ This will detect all necessary software, and then generate the make files.
 Compilation is done using make, which supports parallel builds::
 
   nice make -j4
-
-Individual backends may be compiled selectively::
-
-  nice make -j4 halmd halmd_gpu_neighbour halmd_host
-
-Note that due to extensive use of C++ templates, a **single compiler process**
-may easily consume **more than 500MB of memory**, so be sure to adjust the
-number of parallel builds to the available resources.
 
 
 Updating the build tree

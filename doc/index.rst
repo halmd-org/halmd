@@ -6,12 +6,14 @@ HALMD documentation
 
    readme
    prerequisites
+   packages
    install
    usage
    faq
    validation
+   benchmarks
    data
    units
-   reference/index
    developer/index
 
+* `C++ API reference <reference/index.html>`_

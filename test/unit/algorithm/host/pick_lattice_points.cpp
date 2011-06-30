@@ -38,16 +38,6 @@ using namespace std;
 template <int dimension>
 void pick_lattice_points()
 {
-    // enable logging to console
-    shared_ptr<logger> log(new logger);
-    log->log_to_console(
-#ifdef NDEBUG
-        logger::warning
-#else
-        logger::debug
-#endif
-    );
-
     typedef fixed_vector<double, dimension> vector_type;
     typedef fixed_vector<unsigned int, dimension> index_type;
 

@@ -22,12 +22,7 @@ import sys, os
 
 # Add any Sphinx extension module names here, as strings. They can be extensions
 # coming with Sphinx (named 'sphinx.ext.*') or your custom ones.
-extensions = [
-    'sphinx.ext.pngmath',
-    'sphinx.ext.graphviz',
-    'sphinx.ext.todo',
-    'breathe',
-]
+extensions = ['sphinx.ext.pngmath', 'sphinx.ext.graphviz', 'sphinx.ext.todo']
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['@CMAKE_CURRENT_SOURCE_DIR@/_templates']
@@ -239,17 +234,6 @@ man_pages = [
     ('index', 'halmd', u'@PROGRAM_DESC@', u'Peter Colberg and Felix Höfling', '1'),
 ]
 
-# -- Options for Doxygen to Sphinx bridge
-
-# Project names with paths to the folder containing the doxygen output.
-breathe_projects = { "halmd": "@CMAKE_CURRENT_BINARY_DIR@/_build/xml/" }
-
-# Project used when the project is not specified in a directive.
-breathe_default_project = "halmd"
-
-# Domains for particular files according to their extension.
-breathe_domain_by_extension = { "hpp": "cpp", "cu": "cpp", "cuh": "cpp" }
-
 # -- Global Sphinx setup -------------------------------------------------------
 
 def setup(app):
@@ -267,3 +251,5 @@ def setup(app):
     tex_replacements.append((u'⁷', u'\ensuremath{^7}'))
     tex_replacements.append((u'⁸', u'\ensuremath{^8}'))
     tex_replacements.append((u'⁹', u'\ensuremath{^9}'))
+    tex_replacements.append((u'⁻', u'\ensuremath{^-}'))
+    tex_replacements.append((u'⁺', u'\ensuremath{^+}'))

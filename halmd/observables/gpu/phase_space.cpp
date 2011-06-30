@@ -128,9 +128,15 @@ void phase_space<host::samples::phase_space<dimension, float_type> >::acquire(ui
         tie(v, tag) = untagged<vector_type>(particle->h_v[i]);
         vector_type image = particle->h_image[i];
         vector_type L = static_cast<vector_type>(box->length());
+
         // periodically extended particle position
+        assert(type < sample->r.size());
+        assert(tag < sample->r[type]->size());
         (*sample->r[type])[tag] = r + element_prod(image, L);
+
         // particle velocity
+        assert(type < sample->v.size());
+        assert(tag < sample->v[type]->size());
         (*sample->v[type])[tag] = v;
     }
     sample->step = step;

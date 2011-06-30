@@ -1,5 +1,5 @@
 /*
- * Copyright © 2008-2010  Peter Colberg and Felix Höfling
+ * Copyright © 2008-2011  Peter Colberg and Felix Höfling
  *
  * This file is part of HALMD.
  *
@@ -46,10 +46,6 @@ using namespace std;
  */
 int main(int argc, char **argv)
 {
-    static logger log;
-
-    log.log_to_console(logger::trace); //< facilitate debugging
-
     try {
         script script; //< load Lua script engine
 
@@ -123,14 +119,14 @@ int main(int argc, char **argv)
             return EXIT_SUCCESS;
         }
 
-        log.log_to_console(
+        logger::instance().open_console(
             static_cast<logger::severity_level>(vm["verbose"].as<int>())
         );
-        log.log_to_file(
-            static_cast<logger::severity_level>(
+        logger::instance().open_file(
+            vm["output"].as<string>() + ".log"
+          , static_cast<logger::severity_level>(
                 max(vm["verbose"].as<int>(), static_cast<int>(logger::info))
             )
-          , vm["output"].as<string>() + ".log"
         );
 
         LOG(PROJECT_NAME " (" PROGRAM_DESC ") " PROGRAM_VERSION);

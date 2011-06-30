@@ -21,6 +21,7 @@
 #define HALMD_IO_TRAJECTORY_READERS_H5MD_HPP
 
 #include <boost/optional.hpp>
+#include <h5xx/h5xx.hpp>
 #include <lua.hpp>
 
 #include <halmd/io/trajectory/reader.hpp>

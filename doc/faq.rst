@@ -29,7 +29,7 @@ FAQ
   passed to cmake, or in CMAKE_CUDA_FLAGS using ccmake.
 
 **nvcc fails with error: inline function ‘__signbit’ cannot be declared weak**
-  CUDA 2.3 (or less) is not compatible with GCC 4.4.
+  CUDA 3.0 (or less) is not compatible with GCC 4.4.
   As a work around install GCC 4.3 and place symlinks in the default CUDA
   compiler directory, e.g. if the CUDA toolkit is located in ``/opt/cuda``,
   symlink ``/opt/cuda/bin/{gcc,g++}`` to ``/usr/bin/{gcc,g++}-4.3``, respectively.

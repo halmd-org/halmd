@@ -1,4 +1,0 @@
-IO
-==
-
-.. doxygenclass:: halmd::logger

@@ -25,7 +25,7 @@
 # FIXME support QUIET option to disable --verbose --verbose
 # FIXME optionally capture stdout/stderr to variable
 #
-macro(execute_halmd ARGS)
+macro(execute_halmd)
   execute_process(
     COMMAND "@CMAKE_BINARY_DIR@/halmd/halmd" ${ARGN}
     RESULT_VARIABLE ${OUTPUT_PREFIX}_STATUS

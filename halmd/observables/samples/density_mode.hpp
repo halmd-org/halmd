@@ -52,7 +52,7 @@ public:
     typedef std::vector<boost::shared_ptr<mode_vector_type> > mode_vector_vector_type;
 
     /**
-     *  nested list of density modes, @f$ \text{rho[i][j]} = \rho_{\vec q}^{(i)} = @f$
+     *  nested list of density modes, @f$ rho[i][j] = \rho_{\vec q}^{(i)} = @f$
      *  for wavevector @f$ \vec q = wavevector[j] @f$ and particle types @f$ i @f$
      */
     mode_vector_vector_type rho;

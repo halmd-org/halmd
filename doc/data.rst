@@ -55,34 +55,34 @@ To inspect only the structure of a file, ommitting the data, use::
   h5dump -A file
 
 
-Using Python and PyTables
--------------------------
+Using Python and h5py
+---------------------
 
-PyTables is a python module wrapping the HDF5 library. It is based on NumPy,
-which implements a MATLAB-like interface to multi-dimensional arrays.
-This is where the HDF5 format reveals its true strength, as NumPy allows
-arbitrary transformations of HDF5 datasets, all while using a real programming
-language.
+`h5py <http://alfven.org/wp/hdf5-for-python>`_ is a python module wrapping the
+HDF5 library. It is based on NumPy, which implements a MATLAB-like interface to
+multi-dimensional arrays.  This is where the HDF5 format reveals its true
+strength, as NumPy allows arbitrary transformations of HDF5 datasets, all while
+using a real programming language.
 
 As a simple example, we open a HDF5 file and print a dataset::
 
-  import tables
-  f = tables.openFile("file")
-  d = f.root.path.to.dataset[:]
+  import h5py
+  f = h5py.File("file", "r")
+  d = f["path/to/dataset"]
   print d
+  print d[0:5]
   f.close()
 
-Attributes may be read with the _v_attrs class member::
+Attributes may be read with the attrs class member::
 
-  print f.root.param.mdsim._v_attrs.dimension
-  print f.root.param.program._v_attrs.version
+  print f["param"].attrs["file_version"]
+  print f["param/box"].attrs.keys()
+  print f["param/box"].attrs["dimension"]
 
 
 For further information, refer to the `Numpy and Scipy Documentation
-<http://docs.scipy.org/doc/>`_ and the `PyTables User's Manual
-<http://www.pytables.org/moin/HowToUse>`_.
-
-A last hint: Try ``ipython``, an interactive python shell with auto-completion.
+<http://docs.scipy.org/doc/>`_ and the `HDF5 for Python Documentation
+<http://h5py.alfven.org/docs>`_.
 
 
 File formats

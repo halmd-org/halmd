@@ -22,9 +22,8 @@
 
 #include <boost/bind.hpp>
 #include <boost/unordered_map.hpp>
-#include <lua.hpp>
-
 #include <h5xx/h5xx.hpp>
+#include <lua.hpp>
 
 #include <halmd/io/trajectory/writer.hpp>
 #include <halmd/mdsim/clock.hpp>
