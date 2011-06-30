@@ -1,5 +1,5 @@
 /*
- * Copyright © 2008-2010  Peter Colberg and Felix Höfling
+ * Copyright © 2008-2011  Peter Colberg and Felix Höfling
  *
  * This file is part of HALMD.
  *
@@ -75,11 +75,6 @@ void lattice<dimension, float_type, RandomNumberGenerator>::register_runtimes(pr
 template <int dimension, typename float_type, typename RandomNumberGenerator>
 void lattice<dimension, float_type, RandomNumberGenerator>::set()
 {
-#ifdef USE_VERLET_DSFUN
-    // set hi parts of dsfloat values to zero
-    cuda::memset(particle->g_r, 0, particle->g_r.capacity());
-#endif
-
     assert(particle->g_r.size() == particle->nbox);
 
     // assign fcc lattice points to a fraction of the particles in a slab at the centre
