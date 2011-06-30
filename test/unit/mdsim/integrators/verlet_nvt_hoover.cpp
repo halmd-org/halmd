@@ -33,7 +33,6 @@
 
 #include <iomanip>
 
-#include <halmd/io/logger.hpp>
 #include <halmd/mdsim/core.hpp>
 #include <halmd/numeric/accumulator.hpp>
 #include <test/unit/modules.hpp>
@@ -75,16 +74,6 @@ void verlet_nvt_hoover(string const& backend)
     char const* random_file = "/dev/urandom";
     fixed_vector<double, dimension> box_ratios =
         (dimension == 3) ? list_of(1.)(2.)(1.01) : list_of(1.)(2.);
-
-    // enable logging to console
-    shared_ptr<logger> log(new logger);
-    log->log_to_console(
-#ifdef NDEBUG
-        logger::warning
-#else
-        logger::debug
-#endif
-    );
 
     BOOST_TEST_MESSAGE("using backend '" << backend << "' in " <<
                        dimension << " dimensions");
