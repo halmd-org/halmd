@@ -175,7 +175,7 @@ env-lua:
 BOOST_VERSION = 1.46.1
 BOOST_RELEASE = 1_46_1
 BOOST_TARBALL = boost_$(BOOST_RELEASE).tar.gz
-BOOST_TARBALL_URL = http://sourceforge.net/projects/boost/files/boost/1.46.1/$(BOOST_TARBALL)
+BOOST_TARBALL_URL = http://sourceforge.net/projects/boost/files/boost/$(BOOST_VERSION)/$(BOOST_TARBALL)
 BOOST_LOG_TARBALL = boost-log.tar
 BOOST_LOG_TARBALL_URL = http://boost-log.svn.sourceforge.net/viewvc/boost-log/trunk/boost-log/?view=tar
 BOOST_LOG_DIR = boost-log
