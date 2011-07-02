@@ -65,7 +65,6 @@ CMAKE_BUILD_DIR = cmake-$(CMAKE_VERSION)
 CMAKE_INSTALL_DIR = cmake-cuda-$(CMAKE_VERSION)
 
 .fetch-cmake:
-	@$(RM) $@
 	$(WGET) $(CMAKE_TARBALL_URL)
 	$(WGET) $(CMAKE_LIB64_PATCH_URL)
 	$(WGET) $(CMAKE_CUDA_PATCH_URL)
@@ -74,7 +73,6 @@ CMAKE_INSTALL_DIR = cmake-cuda-$(CMAKE_VERSION)
 fetch-cmake: .fetch-cmake
 
 .extract-cmake: .fetch-cmake
-	@$(RM) $@
 	$(RM) $(CMAKE_BUILD_DIR)
 	$(TAR) -xzf $(CMAKE_TARBALL)
 	cd $(CMAKE_BUILD_DIR) && $(PATCH) -p1 < $(CURDIR)/$(CMAKE_CUDA_PATCH)
@@ -84,14 +82,12 @@ fetch-cmake: .fetch-cmake
 extract-cmake: .extract-cmake
 
 .configure-cmake: .extract-cmake
-	@$(RM) $@
 	cd $(CMAKE_BUILD_DIR) && ./configure --prefix=$(PREFIX)/$(CMAKE_INSTALL_DIR)
 	@$(TOUCH) $@
 
 configure-cmake: .configure-cmake
 
 .build-cmake: .configure-cmake
-	@$(RM) $@
 	cd $(CMAKE_BUILD_DIR) && make $(PARALLEL_BUILD_FLAGS)
 	@$(TOUCH) $@
 
@@ -132,7 +128,6 @@ LUA_INSTALL_DIR = lua-$(LUA_VERSION)
 LUA_CFLAGS = -DLUA_USE_LINUX -fPIC -O2 -Wall
 
 .fetch-lua:
-	@$(RM) $@
 	$(WGET) $(LUA_TARBALL_URL)
 	$(WGET) $(LUA_PATCH_URL)
 	@$(TOUCH) $@
@@ -140,7 +135,6 @@ LUA_CFLAGS = -DLUA_USE_LINUX -fPIC -O2 -Wall
 fetch-lua: .fetch-lua
 
 .extract-lua: .fetch-lua
-	@$(RM) $@
 	$(RM) $(LUA_BUILD_DIR)
 	$(TAR) -xzf $(LUA_TARBALL)
 	cd $(LUA_BUILD_DIR)/src && $(PATCH) -p0 < $(CURDIR)/$(LUA_PATCH)
@@ -149,7 +143,6 @@ fetch-lua: .fetch-lua
 extract-lua: .extract-lua
 
 .build-lua: .extract-lua
-	@$(RM) $@
 	cd $(LUA_BUILD_DIR) && make linux CFLAGS="$(LUA_CFLAGS)"
 	@$(TOUCH) $@
 
@@ -191,7 +184,6 @@ BOOST_INSTALL_DIR = boost_$(BOOST_RELEASE)
 BOOST_CXXFLAGS = -fPIC
 
 .fetch-boost:
-	@$(RM) $@
 	$(WGET) $(BOOST_TARBALL_URL)
 	$(WGET) -O $(BOOST_LOG_TARBALL) $(BOOST_LOG_TARBALL_URL)
 	@$(TOUCH) $@
@@ -199,7 +191,6 @@ BOOST_CXXFLAGS = -fPIC
 fetch-boost: .fetch-boost
 
 .extract-boost: .fetch-boost
-	@$(RM) $@
 	$(RM) $(BOOST_BUILD_DIR) $(BOOST_LOG_DIR)
 	$(TAR) -xzf $(BOOST_TARBALL)
 	$(TAR) -xf $(BOOST_LOG_TARBALL)
@@ -210,14 +201,12 @@ fetch-boost: .fetch-boost
 extract-boost: .extract-boost
 
 .configure-boost: .extract-boost
-	@$(RM) $@
 	cd $(BOOST_BUILD_DIR) && ./bootstrap.sh
 	@$(TOUCH) $@
 
 configure-boost: .configure-boost
 
 .build-boost: .configure-boost
-	@$(RM) $@
 	cd $(BOOST_BUILD_DIR) && ./bjam cxxflags="$(BOOST_CXXFLAGS)" $(PARALLEL_BUILD_FLAGS)
 	@$(TOUCH) $@
 
@@ -259,7 +248,6 @@ LUABIND_BUILD_FLAGS = cxxflags=-fPIC link=static variant=release variant=debug
 LUABIND_INSTALL_DIR = luabind-$(LUABIND_VERSION)
 
 .fetch-luabind:
-	@$(RM) $@
 	$(WGET) $(LUABIND_TARBALL_URL)
 	$(WGET) $(LUABIND_PATCH_URL)
 	@$(TOUCH) $@
@@ -267,7 +255,6 @@ LUABIND_INSTALL_DIR = luabind-$(LUABIND_VERSION)
 fetch-luabind: .fetch-luabind
 
 .extract-luabind: .fetch-luabind .build-lua
-	@$(RM) $@
 	$(RM) $(LUABIND_BUILD_DIR)
 	$(TAR) -xzf $(LUABIND_TARBALL)
 	cd $(LUABIND_BUILD_DIR) && $(PATCH) -p1 < $(CURDIR)/$(LUABIND_PATCH)
@@ -279,7 +266,6 @@ fetch-luabind: .fetch-luabind
 extract-luabind: .extract-luabind
 
 .build-luabind: .extract-luabind .configure-boost
-	@$(RM) $@
 	cd $(LUABIND_BUILD_DIR) && BOOST_ROOT=$(CURDIR)/$(BOOST_BUILD_DIR) LUA_PATH=$(CURDIR)/$(LUABIND_BUILD_DIR)/lua $(CURDIR)/$(BOOST_BUILD_DIR)/bjam $(LUABIND_BUILD_FLAGS) $(PARALLEL_BUILD_FLAGS)
 	@$(TOUCH) $@
 
@@ -318,14 +304,12 @@ HDF5_CFLAGS = -fPIC
 HDF5_CXXFLAGS = -fPIC
 
 .fetch-hdf5:
-	@$(RM) $@
 	$(WGET) $(HDF5_TARBALL_URL)
 	@$(TOUCH) $@
 
 fetch-hdf5: .fetch-hdf5
 
 .extract-hdf5: .fetch-hdf5
-	@$(RM) $@
 	$(RM) $(HDF5_BUILD_DIR)
 	$(TAR) -xjf $(HDF5_TARBALL)
 	@$(TOUCH) $@
@@ -333,14 +317,12 @@ fetch-hdf5: .fetch-hdf5
 extract-hdf5: .extract-hdf5
 
 .configure-hdf5: .extract-hdf5
-	@$(RM) $@
 	cd $(HDF5_BUILD_DIR) && CFLAGS="$(HDF5_CFLAGS)" CXXFLAGS="$(HDF5_CXXFLAGS)" ./configure $(HDF5_CONFIGURE_FLAGS) --prefix=$(PREFIX)/$(HDF5_INSTALL_DIR)
 	@$(TOUCH) $@
 
 configure-hdf5: .configure-hdf5
 
 .build-hdf5: .configure-hdf5
-	@$(RM) $@
 	cd $(HDF5_BUILD_DIR) && make $(PARALLEL_BUILD_FLAGS)
 	@$(TOUCH) $@
 
