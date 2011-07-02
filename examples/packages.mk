@@ -62,7 +62,7 @@ CMAKE_CUDA_PATCH_URL = http://sourceforge.net/projects/halmd/files/patches/$(CMA
 CMAKE_LIB64_PATCH = cmake_find_library_lib64_in_cxx_project.patch
 CMAKE_LIB64_PATCH_URL = http://sourceforge.net/projects/halmd/files/patches/$(CMAKE_LIB64_PATCH)
 CMAKE_BUILD_DIR = cmake-$(CMAKE_VERSION)
-CMAKE_INSTALL_DIR = cmake-cuda-$(CMAKE_VERSION)
+CMAKE_INSTALL_DIR = cmake-$(CMAKE_VERSION)
 
 .fetch-cmake:
 	$(WGET) $(CMAKE_TARBALL_URL)
