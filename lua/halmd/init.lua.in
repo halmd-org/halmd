@@ -28,13 +28,9 @@ require("halmd.io.statevars.writer")
 require("halmd.io.trajectory.reader")
 require("halmd.io.trajectory.writer")
 require("halmd.mdsim.box")
-require("halmd.mdsim.core")
 require("halmd.mdsim.force")
 require("halmd.mdsim.integrator")
-require("halmd.mdsim.neighbour")
-require("halmd.mdsim.particle")
 require("halmd.mdsim.position")
-require("halmd.mdsim.sort")
 require("halmd.mdsim.velocity")
 require("halmd.observables.sampler")
 require("halmd.observables.ssf")
@@ -58,17 +54,16 @@ module("halmd", halmd.modules.register)
 -- Construct simulation
 --
 function new(args)
-    local core = mdsim.core() -- singleton
-    core.particle = mdsim.particle()
-    core.box = mdsim.box()
-    core.integrator = mdsim.integrator()
-    core.force = mdsim.force()
-    core.neighbour = mdsim.neighbour()
-    core.sort = mdsim.sort()
+    -- create simulation box with particles
+    mdsim.box()
+    -- add integrator
+    mdsim.integrator()
+    -- add force
+    mdsim.force()
 
     local reader = trajectory.reader()
-    core.position = mdsim.position{ reader = reader }
-    core.velocity = mdsim.velocity{ reader = reader }
+    mdsim.position{ reader = reader }
+    mdsim.velocity{ reader = reader }
 
     -- Construct sampler.
     local sampler = observables.sampler()

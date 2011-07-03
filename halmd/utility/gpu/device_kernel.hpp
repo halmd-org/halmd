@@ -22,19 +22,12 @@
 
 #include <cuda_wrapper/cuda_wrapper.hpp>
 
-namespace halmd
-{
-namespace utility { namespace gpu
-{
-namespace device_wrapper
-{
+namespace halmd {
+namespace device_wrapper {
 
 extern cuda::function<void (int*)> arch;
 
 } // namespace device_wrapper
-
-}} // namespace utility::gpu
-
 } // namespace halmd
 
 #endif /* HALMD_UTILITY_GPU_DEVICE_KERNEL_HPP */

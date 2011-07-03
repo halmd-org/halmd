@@ -36,7 +36,6 @@ public:
     neighbour() {}
     virtual ~neighbour() {}
     virtual void update() = 0;
-    virtual bool check() = 0;
 };
 
 } // namespace mdsim

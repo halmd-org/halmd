@@ -17,9 +17,8 @@
 -- along with this program.  If not, see <http://www.gnu.org/licenses/>.
 --
 
-require("halmd.modules")
-
 require("halmd.mdsim.integrators")
+require("halmd.modules")
 
 -- grab modules
 local mdsim = halmd.mdsim

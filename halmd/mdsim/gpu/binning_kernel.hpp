@@ -1,5 +1,5 @@
 /*
- * Copyright © 2008-2010  Peter Colberg
+ * Copyright © 2008-2011  Peter Colberg
  *
  * This file is part of HALMD.
  *
@@ -17,8 +17,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef HALMD_MDSIM_GPU_NEIGHBOUR_KERNEL_HPP
-#define HALMD_MDSIM_GPU_NEIGHBOUR_KERNEL_HPP
+#ifndef HALMD_MDSIM_GPU_BINNING_KERNEL_HPP
+#define HALMD_MDSIM_GPU_BINNING_KERNEL_HPP
 
 #include <cuda_wrapper/cuda_wrapper.hpp>
 #include <halmd/mdsim/type_traits.hpp>
@@ -29,26 +29,15 @@ namespace mdsim { namespace gpu
 {
 
 template <int dimension>
-struct neighbour_wrapper
+struct binning_wrapper
 {
     typedef typename type_traits<dimension, float>::gpu::vector_type vector_type;
     typedef typename type_traits<dimension, unsigned int>::gpu::vector_type cell_index_type;
-    typedef cuda::function<void (float4* g_r, float4* g_r0, float* g_rr)> displacement_impl_type;
 
-    /** (cutoff lengths + neighbour list skin)² */
-    cuda::texture<float> rr_cut_skin;
     /** number of cells per dimension */
     cuda::symbol<cell_index_type> ncell;
-    /** neighbour list length */
-    cuda::symbol<unsigned int> neighbour_size;
-    /** neighbour list stride */
-    cuda::symbol<unsigned int> neighbour_stride;
     /** number of particles in simulation box */
     cuda::symbol<unsigned int> nbox;
-    /** positions, tags */
-    cuda::texture<float4> r;
-    /** cubic box edgle length */
-    cuda::symbol<vector_type> box_length;
     /** cell edge lengths */
     cuda::symbol<vector_type> cell_length;
     /** assign particles to cells */
@@ -57,24 +46,20 @@ struct neighbour_wrapper
     cuda::function<void (unsigned int*, unsigned int*)> find_cell_offset;
     /** generate ascending index sequence */
     cuda::function<void (unsigned int*)> gen_index;
-    /** update neighbour lists */
-    cuda::function<void (int*, unsigned int*, unsigned int const*)> update_neighbours;
     /** compute cell indices for particle positions */
     cuda::function<void (float4 const*, unsigned int*)> compute_cell;
-    /** maximum squared particle distance */
-    displacement_impl_type displacement_impl[5];
 
-    static neighbour_wrapper kernel;
+    static binning_wrapper kernel;
 };
 
 template <int dimension>
-neighbour_wrapper<dimension> const& get_neighbour_kernel()
+binning_wrapper<dimension> const& get_binning_kernel()
 {
-    return neighbour_wrapper<dimension>::kernel;
+    return binning_wrapper<dimension>::kernel;
 }
 
 }} // namespace mdsim::gpu
 
 } // namespace halmd
 
-#endif /* ! HALMD_MDSIM_GPU_NEIGHBOUR_KERNEL_HPP */
+#endif /* ! HALMD_MDSIM_GPU_BINNING_KERNEL_HPP */

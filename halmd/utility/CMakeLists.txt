@@ -12,6 +12,7 @@ halmd_add_modules(
 )
 
 add_subdirectory(lua)
+add_subdirectory(predicates)
 add_subdirectory(program_options)
 if(WITH_CUDA)
   add_subdirectory(gpu)

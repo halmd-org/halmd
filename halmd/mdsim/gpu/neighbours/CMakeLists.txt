@@ -1,0 +1,10 @@
+halmd_add_library(halmd_mdsim_gpu_neighbours
+  from_binning.cpp
+  from_binning_kernel.cu
+  from_particle.cpp
+  from_particle_kernel.cu
+)
+halmd_add_modules(
+  libhalmd_mdsim_gpu_neighbours_from_binning
+  libhalmd_mdsim_gpu_neighbours_from_particle
+)

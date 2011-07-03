@@ -1,5 +1,5 @@
 /*
- * Copyright © 2011  Felix Höfling
+ * Copyright © 2011  Felix Höfling and Peter Colberg
  *
  * This file is part of HALMD.
  *
@@ -19,40 +19,41 @@
 
 #include <boost/shared_ptr.hpp>
 
+#include <halmd/io/logger.hpp>
 #include <halmd/mdsim/clock.hpp>
 #include <halmd/utility/lua/lua.hpp>
 
 using namespace boost;
+using namespace std;
 
 namespace halmd
 {
 namespace mdsim
 {
 
-clock::clock()
+clock::clock(time_type timestep)
   // initialise attributes
   : step_(0)
   , time_(0)
-{}
+  , timestep_(timestep)
+{
+    LOG("simulation time-step: " << timestep_);
+}
 
-void clock::luaopen(lua_State* L)
+HALMD_LUA_API int luaopen_libhalmd_mdsim_clock(lua_State* L)
 {
     using namespace luabind;
     module(L, "libhalmd")
     [
         namespace_("mdsim")
         [
-            class_<clock, shared_ptr<clock> >("clock_")
-                .def(constructor<>())
+            class_<clock, shared_ptr<clock> >("clock")
+                .def(constructor<clock::time_type>())
                 .property("step", &clock::step)
                 .property("time", &clock::time)
+                .property("timestep", &clock::timestep)
         ]
     ];
-}
-
-HALMD_LUA_API int luaopen_libhalmd_mdsim_clock(lua_State* L)
-{
-    clock::luaopen(L);
     return 0;
 }
 

@@ -17,9 +17,12 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <boost/bind.hpp>
+
 #include <halmd/io/logger.hpp>
 #include <halmd/mdsim/integrator.hpp>
 #include <halmd/utility/lua/lua.hpp>
+#include <halmd/utility/signal.hpp>
 
 using namespace boost;
 using namespace std;
@@ -28,6 +31,20 @@ namespace halmd
 {
 namespace mdsim
 {
+
+template <typename integrator_type>
+typename signal<void ()>::slot_function_type
+wrap_integrate(shared_ptr<integrator_type> integrator)
+{
+    return bind(&integrator_type::integrate, integrator);
+}
+
+template <typename integrator_type>
+typename signal<void ()>::slot_function_type
+wrap_finalize(shared_ptr<integrator_type> integrator)
+{
+    return bind(&integrator_type::finalize, integrator);
+}
 
 template <int dimension>
 void integrator<dimension>::luaopen(lua_State* L)
@@ -40,8 +57,8 @@ void integrator<dimension>::luaopen(lua_State* L)
         [
             class_<integrator, shared_ptr<integrator> >(class_name.c_str())
                 .property("timestep", static_cast<double (integrator::*)() const>(&integrator::timestep), static_cast<void (integrator::*)(double)>(&integrator::timestep))
-                .def("integrate", &integrator::integrate)
-                .def("finalize", &integrator::finalize)
+                .property("integrate", &wrap_integrate<integrator>)
+                .property("finalize", &wrap_finalize<integrator>)
         ]
     ];
 }

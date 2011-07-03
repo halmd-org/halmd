@@ -17,10 +17,8 @@
 -- along with this program.  If not, see <http://www.gnu.org/licenses/>.
 --
 
-require("halmd.modules")
-
 require("halmd.device")
-require("halmd.mdsim.core")
+require("halmd.modules")
 require("halmd.observables.samples.phase_space")
 
 -- grab modules
@@ -60,8 +58,7 @@ function new(args)
     local offset = assert(args.offset)
 
     local sample = assert(observables.samples.phase_space{ memory = "host" })
-    local core = assert(mdsim.core())
-    local dimension = assert(core.dimension)
+    local dimension = assert(sample.dimension)
 
     local h5md
     if device() then

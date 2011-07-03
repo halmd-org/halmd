@@ -1,5 +1,5 @@
 /*
- * Copyright © 2008-2010  Peter Colberg
+ * Copyright © 2008-2011  Peter Colberg
  *
  * This file is part of HALMD.
  *
@@ -25,10 +25,7 @@
 
 #include <cuda_wrapper/cuda_wrapper.hpp>
 
-namespace halmd
-{
-namespace utility { namespace gpu
-{
+namespace halmd {
 
 /**
  * The gpu::device module selects a GPU from the pool of available
@@ -49,7 +46,7 @@ class device
 public:
     static void luaopen(lua_State* L);
 
-    device(std::vector<int> devices, unsigned int threads);
+    device(std::vector<int> devices = std::vector<int>());
     ~device();
 
     static std::string nvidia_driver_version();
@@ -58,27 +55,13 @@ public:
     static std::string cuda_driver_version();
     static std::string cuda_runtime_version();
 #endif
-
-    cuda::device::properties const& properties() const
-    {
-        return prop_;
-    }
-
-    unsigned int threads() const
-    {
-        return threads_;
-    }
+    //! validate CUDA execution configuration
+    static cuda::config const& validate(cuda::config const& dim);
 
 private:
-    /** number of CUDA threads per block */
-    unsigned int threads_;
-    /** device properties */
-    cuda::device::properties prop_;
     /** selected CUDA device context */
     boost::shared_ptr<cuda::driver::context> context_;
 };
-
-}} // namespace utility::gpu
 
 } // namespace halmd
 

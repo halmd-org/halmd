@@ -17,9 +17,12 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <boost/bind.hpp>
+
 #include <halmd/io/logger.hpp>
 #include <halmd/mdsim/sort.hpp>
 #include <halmd/utility/lua/lua.hpp>
+#include <halmd/utility/signal.hpp>
 
 using namespace boost;
 using namespace std;
@@ -28,6 +31,13 @@ namespace halmd
 {
 namespace mdsim
 {
+
+template <typename sort_type>
+typename signal<void ()>::slot_function_type
+wrap_order(shared_ptr<sort_type> sort)
+{
+    return bind(&sort_type::order, sort);
+}
 
 template <int dimension>
 void sort<dimension>::luaopen(lua_State* L)
@@ -39,7 +49,7 @@ void sort<dimension>::luaopen(lua_State* L)
         namespace_("mdsim")
         [
             class_<sort, shared_ptr<sort> >(class_name.c_str())
-                .def("order", &sort::order)
+                .property("order", &wrap_order<sort>)
         ]
     ];
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2008-2010  Peter Colberg
+ * Copyright © 2008-2011  Peter Colberg
  *
  * This file is part of HALMD.
  *
@@ -26,7 +26,6 @@
 #include <cuda_wrapper/cuda_wrapper.hpp>
 #include <halmd/mdsim/particle.hpp>
 #include <halmd/mdsim/type_traits.hpp>
-#include <halmd/utility/gpu/device.hpp>
 
 namespace halmd
 {
@@ -41,13 +40,13 @@ public:
     typedef mdsim::particle<dimension> _Base;
     typedef typename type_traits<dimension, float_type>::vector_type vector_type;
     typedef typename type_traits<dimension, float>::gpu::coalesced_vector_type gpu_vector_type;
-    typedef utility::gpu::device device_type;
+    struct defaults;
 
     static void luaopen(lua_State* L);
 
     particle(
-        boost::shared_ptr<device_type> device
-      , std::vector<unsigned int> const& particles
+        std::vector<unsigned int> const& particles
+      , unsigned int threads = defaults::threads()
     );
     virtual void set();
     virtual void rearrange(std::vector<unsigned int> const& index) {} // TODO
@@ -87,13 +86,12 @@ public:
     using _Base::ntype;
     /** number of particles per type */
     using _Base::ntypes;
+};
 
-    /** neighbour lists */
-    cuda::vector<unsigned int> g_neighbour;
-    /** number of placeholders per neighbour list */
-    unsigned int neighbour_size;
-    /** neighbour list stride */
-    unsigned int neighbour_stride;
+template <unsigned int dimension, typename float_type>
+struct particle<dimension, float_type>::defaults
+{
+    static unsigned int threads();
 };
 
 }} // namespace mdsim::gpu

@@ -17,10 +17,12 @@
 -- along with this program.  If not, see <http://www.gnu.org/licenses/>.
 --
 
-require("halmd.modules")
-
 require("halmd.device")
+require("halmd.mdsim.box")
+require("halmd.mdsim.clock")
 require("halmd.mdsim.core")
+require("halmd.mdsim.particle")
+require("halmd.modules")
 
 -- grab modules
 local device = halmd.device
@@ -39,7 +41,6 @@ if libhalmd.mdsim.gpu then
     }
 end
 local h5 = libhalmd.h5
-local po = libhalmd.po
 -- grab standard library
 local assert = assert
 
@@ -49,18 +50,27 @@ module("halmd.mdsim.integrators.verlet", halmd.modules.register)
 -- construct verlet module
 --
 function new(args)
-    local timestep = args.timestep or 0.001 -- default value
-
     -- dependency injection
-    local core = mdsim.core()
-    local dimension = assert(core.dimension)
-    local particle = assert(core.particle)
-    local box = assert(core.box)
+    local particle = mdsim.particle() -- singleton
+    local dimension = assert(particle.dimension)
+    local box = mdsim.box() -- singleton
+    local clock = mdsim.clock() -- singleton
+    local timestep = assert(clock.timestep)
 
-    if not device() then
-        return verlet_wrapper.host[dimension](particle, box, timestep)
+    local verlet
+    if device() then
+        verlet = assert(verlet_wrapper.gpu[dimension])
+    else
+        verlet = assert(verlet_wrapper.host[dimension])
     end
-    return verlet_wrapper.gpu[dimension](particle, box, timestep)
+    local integrator = verlet(particle, box, timestep)
+
+    local core = mdsim.core()
+    -- connect integrator to core
+    core:on_integrate(integrator.integrate)
+    core:on_finalize(integrator.finalize)
+
+    return integrator
 end
 
 --
@@ -68,22 +78,6 @@ end
 --
 function name()
     return "Velocity-Verlet integrator"
-end
-
---
--- assemble module options
---
--- @param desc po.options_description
---
-function options(desc)
-    desc:add("timestep", po.float(), "integration timestep")
-end
-
---
--- read module parameters from HDF5 group
---
-function read_parameters(args, group)
-    args.timestep = group:read_attribute("timestep", h5.float())
 end
 
 --

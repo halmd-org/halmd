@@ -28,6 +28,7 @@
 #include <halmd/mdsim/box.hpp>
 #include <halmd/mdsim/gpu/force.hpp>
 #include <halmd/mdsim/gpu/forces/pair_trunc_kernel.hpp>
+#include <halmd/mdsim/gpu/neighbour.hpp>
 #include <halmd/mdsim/gpu/particle.hpp>
 #include <halmd/utility/lua/lua.hpp>
 #include <halmd/utility/profiler.hpp>
@@ -48,11 +49,11 @@ class pair_trunc
 {
 public:
     typedef mdsim::gpu::force<dimension, float_type> _Base;
-    typedef typename _Base::matrix_type matrix_type;
     typedef typename _Base::vector_type vector_type;
     typedef typename _Base::gpu_stress_tensor_type gpu_stress_tensor_type;
     typedef gpu::particle<dimension, float> particle_type;
     typedef mdsim::box<dimension> box_type;
+    typedef gpu::neighbour neighbour_type;
     typedef utility::profiler profiler_type;
 
     typedef typename potential_type::gpu_potential_type gpu_potential_type;
@@ -74,15 +75,10 @@ public:
         boost::shared_ptr<potential_type> potential
       , boost::shared_ptr<particle_type> particle
       , boost::shared_ptr<box_type> box
+      , boost::shared_ptr<neighbour_type const> neighbour
     );
     inline virtual void compute();
     inline void register_runtimes(profiler_type& profiler);
-
-    //! returns potential cutoff distance
-    matrix_type const& r_cut()
-    {
-        return potential->r_cut();
-    }
 
     //! enable computation of auxiliary variables
     virtual void aux_enable()
@@ -121,6 +117,9 @@ public:
     }
 
 private:
+    /** neighbour lists */
+    boost::shared_ptr<neighbour_type const> neighbour_;
+
     /** flag for switching the computation of auxiliary variables in function compute() */
     bool aux_flag_;
     /** potential energy for each particle */
@@ -138,12 +137,14 @@ pair_trunc<dimension, float_type, potential_type>::pair_trunc(
     boost::shared_ptr<potential_type> potential
   , boost::shared_ptr<particle_type> particle
   , boost::shared_ptr<box_type> box
+  , boost::shared_ptr<neighbour_type const> neighbour
   // FIXME , boost::shared_ptr<smooth_type> smooth
 )
   // dependency injection
   : potential(potential)
   , particle(particle)
   , box(box)
+  , neighbour_(neighbour)
   // member initalisation
   , aux_flag_(true)          //< enable everything by default
   // memory allocation
@@ -162,20 +163,20 @@ void pair_trunc<dimension, float_type, potential_type>::compute()
 {
     scoped_timer<timer> timer_(runtime_.compute);
 
-    cuda::copy(particle->neighbour_size, gpu_wrapper::kernel.neighbour_size);
-    cuda::copy(particle->neighbour_stride, gpu_wrapper::kernel.neighbour_stride);
+    cuda::copy(neighbour_->size(), gpu_wrapper::kernel.neighbour_size);
+    cuda::copy(neighbour_->stride(), gpu_wrapper::kernel.neighbour_stride);
     gpu_wrapper::kernel.r.bind(particle->g_r);
     potential->bind_textures();
 
     cuda::configure(particle->dim.grid, particle->dim.block);
     if (!aux_flag_) {
         gpu_wrapper::kernel.compute(
-            particle->g_f, particle->g_neighbour, g_en_pot_, g_stress_pot_, g_hypervirial_
+            particle->g_f, neighbour_->g_neighbour(), g_en_pot_, g_stress_pot_, g_hypervirial_
         );
     }
     else {
         gpu_wrapper::kernel.compute_aux(
-            particle->g_f, particle->g_neighbour, g_en_pot_, g_stress_pot_, g_hypervirial_
+            particle->g_f, neighbour_->g_neighbour(), g_en_pot_, g_stress_pot_, g_hypervirial_
         );
     }
     cuda::thread::synchronize();
@@ -217,9 +218,9 @@ void pair_trunc<dimension, float_type, potential_type>::luaopen(lua_State* L)
                                 boost::shared_ptr<potential_type>
                               , boost::shared_ptr<particle_type>
                               , boost::shared_ptr<box_type>
+                              , boost::shared_ptr<neighbour_type const>
                             >())
                             .def("register_runtimes", &pair_trunc::register_runtimes)
-                            .property("r_cut", &pair_trunc::r_cut)
                             .property("module_name", &module_name_wrapper<dimension, float_type, potential_type>)
                     ]
                 ]

@@ -17,11 +17,11 @@
 -- along with this program.  If not, see <http://www.gnu.org/licenses/>.
 --
 
-require("halmd.modules")
-
-require("halmd.mdsim.core")
-require("halmd.random")
 require("halmd.device")
+require("halmd.mdsim.core")
+require("halmd.mdsim.particle")
+require("halmd.modules")
+require("halmd.random")
 
 -- grab modules
 local mdsim = halmd.mdsim
@@ -54,9 +54,8 @@ function new(args)
     local temperature = args.temperature or 1.12 -- default value
 
     -- dependency injection
-    local core = mdsim.core()
-    local dimension = assert(core.dimension)
-    local particle = assert(core.particle)
+    local particle = mdsim.particle() -- singleton
+    local dimension = assert(particle.dimension)
     local random = assert(random())
 
     local boltzmann
@@ -65,7 +64,13 @@ function new(args)
     else
         boltzmann = boltzmann_wrapper.host[dimension]
     end
-    return boltzmann(particle, random, temperature)
+    local velocity = boltzmann(particle, random, temperature)
+
+    local core = mdsim.core()
+    -- connect velocity to core
+    core:on_setup(velocity.set)
+
+    return velocity
 end
 
 --

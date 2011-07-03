@@ -58,11 +58,12 @@ if(NOT DEFINED Boost_USE_MULTITHREADED)
   set(Boost_USE_MULTITHREADED FALSE)
 endif(NOT DEFINED Boost_USE_MULTITHREADED)
 
-find_package(Boost 1.39.0 QUIET REQUIRED COMPONENTS
+find_package(Boost 1.43.0 QUIET REQUIRED COMPONENTS
   date_time
   filesystem
   log
   program_options
+  random
   system
   thread
   unit_test_framework
@@ -205,6 +206,7 @@ set(HALMD_COMMON_LIBRARIES
   ${Boost_DATE_TIME_LIBRARY}
   ${Boost_LOG_LIBRARY}
   ${Boost_PROGRAM_OPTIONS_LIBRARY}
+  ${Boost_RANDOM_LIBRARY}
   ${Boost_FILESYSTEM_LIBRARY}
   ${Boost_SYSTEM_LIBRARY}
   ${Boost_THREAD_LIBRARY}

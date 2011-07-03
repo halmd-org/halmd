@@ -19,6 +19,11 @@
 
 require("halmd.hooks")
 
+-- load HALMD Lua extension module if not compiled in statically
+if not libhalmd then
+    require("libhalmd")
+end
+
 -- grab modules
 local hooks = halmd.hooks
 -- grab standard library

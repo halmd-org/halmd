@@ -1,5 +1,5 @@
 /*
- * Copyright © 2008-2010  Peter Colberg
+ * Copyright © 2008-2011  Peter Colberg
  *
  * This file is part of HALMD.
  *
@@ -17,10 +17,11 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <boost/nondet_random.hpp> // boost::random_device
+
 #include <halmd/io/logger.hpp>
 #include <halmd/random/host/random.hpp>
 #include <halmd/utility/lua/lua.hpp>
-#include <halmd/utility/read_integer.hpp>
 
 using namespace boost;
 using namespace std;
@@ -36,6 +37,13 @@ random::random(unsigned int seed)
     rng_.seed(seed);
 }
 
+//! Get seed from non-deterministic random number generator.
+// boost::random_device reads from /dev/urandom on GNU/Linux,
+// and the default cryptographic service provider on Windows.
+unsigned int random::defaults::seed() {
+    return boost::random_device()();
+}
+
 void random::luaopen(lua_State* L)
 {
     using namespace luabind;
@@ -45,8 +53,16 @@ void random::luaopen(lua_State* L)
         [
             namespace_("random")
             [
-                class_<random, shared_ptr<_Base>, bases<_Base> >("gfsr4")
+                class_<random, shared_ptr<random> >("gfsr4")
                     .def(constructor<unsigned int>())
+                    .scope
+                    [
+                        class_<defaults>("defaults")
+                            .scope
+                            [
+                                def("seed", &defaults::seed)
+                            ]
+                    ]
             ]
         ]
     ];

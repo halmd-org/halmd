@@ -1,5 +1,5 @@
 --
--- Copyright © 2010  Peter Colberg
+-- Copyright © 2010-2011  Peter Colberg
 --
 -- This file is part of HALMD.
 --
@@ -29,7 +29,6 @@ local log = halmd.log
 -- grab C++ wrappers
 local random_wrapper = {
     host = libhalmd.host.random
-  , read_integer = libhalmd.random.random.read_integer
 }
 if libhalmd.gpu then
     random_wrapper.gpu = libhalmd.gpu.random
@@ -39,7 +38,6 @@ local po = libhalmd.po
 -- grab standard library
 local assert = assert
 local error = error
-local io = io
 
 module("halmd.random", halmd.modules.register, halmd.singleton)
 
@@ -47,18 +45,18 @@ module("halmd.random", halmd.modules.register, halmd.singleton)
 -- construct random module
 --
 function new(args)
-    local file = args.file or "/dev/random" -- default value
-    local seed = args.seed -- optional
-    local blocks = args.blocks or 32 -- default value
-    local threads = args.threads or 256 -- default value FIXME DEVICE_SCALE
-
-    if not seed then
-        log.info("reading integer seed from file: " .. file)
-        seed = random_wrapper.read_integer(file)
+    local defaults
+    if device() then
+        defaults = assert(random_wrapper.gpu.rand48.defaults)
+    else
+        defaults = assert(random_wrapper.host.gfsr4.defaults)
     end
-    local device = device()
-    if device then
-        return random_wrapper.gpu.rand48(device, seed, blocks, threads)
+    local seed = args.seed or defaults.seed()
+    if device() then
+        local blocks = args.blocks or defaults.blocks()
+        local threads = args.threads or defaults.threads()
+        local shuffle_threads = defaults.shuffle_threads()
+        return random_wrapper.gpu.rand48(seed, blocks, threads, shuffle_threads)
     else
         return random_wrapper.host.gfsr4(seed)
     end
@@ -71,17 +69,6 @@ end
 --
 function options(desc)
     desc:add("seed", po.uint(), "random number generator integer seed")
-    desc:add("file", po.string():conflicts("seed"):notifier(function(value)
-
-        -- check whether file exists and is readable
-        local file, message = io.open(value)
-        if not file then
-            error(message, 0)
-        end
-        file:close()
-
-    end), "read random seed from file")
-
     if random_wrapper.gpu then
         desc:add("blocks", po.uint(), "number of CUDA blocks")
         desc:add("threads", po.uint(), "number of CUDA threads per block")

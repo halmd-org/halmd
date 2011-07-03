@@ -1,5 +1,5 @@
 /*
- * Copyright © 2008-2010  Peter Colberg
+ * Copyright © 2008-2011  Peter Colberg
  *
  * This file is part of HALMD.
  *
@@ -17,11 +17,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <algorithm>
-#include <boost/bind.hpp>
 #include <boost/foreach.hpp>
-#include <boost/range/iterator_range.hpp>
-#include <exception>
 
 #include <halmd/io/logger.hpp>
 #include <halmd/mdsim/host/neighbour.hpp>
@@ -45,41 +41,32 @@ namespace mdsim { namespace host
  */
 template <int dimension, typename float_type>
 neighbour<dimension, float_type>::neighbour(
-    shared_ptr<particle_type> particle
-  , shared_ptr<box_type> box
+    shared_ptr<particle_type const> particle
+  , shared_ptr<box_type const> box
+  , shared_ptr<binning_type const> binning
   , matrix_type const& r_cut
   , double skin
 )
   // dependency injection
-  : particle(particle)
-  , box(box)
+  : particle_(particle)
+  , box_(box)
+  , binning_(binning)
   // allocate parameters
+  , neighbour_(particle_->nbox)
   , r_skin_(skin)
-  , rr_cut_skin_(particle->ntype, particle->ntype)
-  , r0_(particle->nbox)
+  , rr_cut_skin_(particle_->ntype, particle_->ntype)
 {
-    matrix_type r_cut_skin(particle->ntype, particle->ntype);
+    matrix_type r_cut_skin(particle_->ntype, particle_->ntype);
     typename matrix_type::value_type r_cut_max = 0;
-    for (size_t i = 0; i < particle->ntype; ++i) {
-        for (size_t j = i; j < particle->ntype; ++j) {
+    for (size_t i = 0; i < particle_->ntype; ++i) {
+        for (size_t j = i; j < particle_->ntype; ++j) {
             r_cut_skin(i, j) = r_cut(i, j) + r_skin_;
             rr_cut_skin_(i, j) = std::pow(r_cut_skin(i, j), 2);
             r_cut_max = max(r_cut_skin(i, j), r_cut_max);
         }
     }
-    vector_type L = box->length();
-    ncell_ = static_cast<cell_size_type>(L / r_cut_max);
-    if (*min_element(ncell_.begin(), ncell_.end()) < 3) {
-        LOG_DEBUG("number of cells per dimension (untruncated): " << L / r_cut_max);
-        throw logic_error("less than least 3 cells per dimension");
-    }
-    cell_.resize(ncell_);
-    cell_length_ = element_div(L, static_cast<vector_type>(ncell_));
-    r_skin_half_ = r_skin_ / 2;
 
     LOG("neighbour list skin: " << r_skin_);
-    LOG("number of cells per dimension: " << ncell_);
-    LOG("cell edge lengths: " << cell_length_);
 }
 
 /**
@@ -88,14 +75,12 @@ neighbour<dimension, float_type>::neighbour(
 template <int dimension, typename float_type>
 void neighbour<dimension, float_type>::update()
 {
-    // rebuild cell lists
-    update_cells();
-    // rebuild neighbour lists
+    cell_size_type const& ncell = binning_->ncell();
     cell_size_type i;
-    for (i[0] = 0; i[0] < ncell_[0]; ++i[0]) {
-        for (i[1] = 0; i[1] < ncell_[1]; ++i[1]) {
+    for (i[0] = 0; i[0] < ncell[0]; ++i[0]) {
+        for (i[1] = 0; i[1] < ncell[1]; ++i[1]) {
             if (dimension == 3) {
-                for (i[2] = 0; i[2] < ncell_[2]; ++i[2]) {
+                for (i[2] = 0; i[2] < ncell[2]; ++i[2]) {
                     update_cell_neighbours(i);
                 }
             }
@@ -103,39 +88,6 @@ void neighbour<dimension, float_type>::update()
                 update_cell_neighbours(i);
             }
         }
-    }
-    // make snapshot of absolute particle displacements
-    copy(particle->r.begin(), particle->r.end(), r0_.begin());
-}
-
-/**
- * Check if neighbour list update is needed
- */
-template <int dimension, typename float_type>
-bool neighbour<dimension, float_type>::check()
-{
-    float_type rr_max = 0;
-    for (size_t i = 0; i < particle->nbox; ++i) {
-        vector_type r = particle->r[i] - r0_[i];
-        box->reduce_periodic(r);
-        rr_max = max(rr_max, inner_prod(r, r));
-    }
-    return sqrt(rr_max) > r_skin_half_;
-}
-
-/**
- * Update cell lists
- */
-template <int dimension, typename float_type>
-void neighbour<dimension, float_type>::update_cells()
-{
-    // empty cell lists without memory reallocation
-    for_each(cell_.data(), cell_.data() + cell_.num_elements(), bind(&cell_list::clear, _1));
-    // add particles to cells
-    for (size_t i = 0; i < particle->nbox; ++i) {
-        vector_type const& r = particle->r[i];
-        cell_size_type index = element_mod(static_cast<cell_size_type>(element_div(r, cell_length_) + static_cast<vector_type>(ncell_)), ncell_);
-        cell_(index).push_back(i);
     }
 }
 
@@ -145,9 +97,12 @@ void neighbour<dimension, float_type>::update_cells()
 template <int dimension, typename float_type>
 void neighbour<dimension, float_type>::update_cell_neighbours(cell_size_type const& i)
 {
-    BOOST_FOREACH(size_t p, cell_(i)) {
+    cell_lists const& cell = binning_->cell();
+    cell_size_type const& ncell = binning_->ncell();
+
+    BOOST_FOREACH(size_t p, cell(i)) {
         // empty neighbour list of particle
-        particle->neighbour[p].clear();
+        neighbour_[p].clear();
 
         cell_diff_type j;
         for (j[0] = -1; j[0] <= 1; ++j[0]) {
@@ -159,8 +114,8 @@ void neighbour<dimension, float_type>::update_cell_neighbours(cell_size_type con
                             goto self;
                         }
                         // update neighbour list of particle
-                        cell_size_type k = element_mod(static_cast<cell_size_type>(static_cast<cell_diff_type>(i + ncell_) + j), ncell_);
-                        compute_cell_neighbours<false>(p, cell_(k));
+                        cell_size_type k = element_mod(static_cast<cell_size_type>(static_cast<cell_diff_type>(i + ncell) + j), ncell);
+                        compute_cell_neighbours<false>(p, cell(k));
                     }
                 }
                 else {
@@ -169,14 +124,14 @@ void neighbour<dimension, float_type>::update_cell_neighbours(cell_size_type con
                         goto self;
                     }
                     // update neighbour list of particle
-                    cell_size_type k = element_mod(static_cast<cell_size_type>(static_cast<cell_diff_type>(i + ncell_) + j), ncell_);
-                    compute_cell_neighbours<false>(p, cell_(k));
+                    cell_size_type k = element_mod(static_cast<cell_size_type>(static_cast<cell_diff_type>(i + ncell) + j), ncell);
+                    compute_cell_neighbours<false>(p, cell(k));
                 }
             }
         }
 self:
         // visit this cell
-        compute_cell_neighbours<true>(p, cell_(i));
+        compute_cell_neighbours<true>(p, cell(i));
     }
 }
 
@@ -185,23 +140,23 @@ self:
  */
 template <int dimension, typename float_type>
 template <bool same_cell>
-void neighbour<dimension, float_type>::compute_cell_neighbours(size_t i, cell_list& c)
+void neighbour<dimension, float_type>::compute_cell_neighbours(size_t i, cell_list const& c)
 {
     BOOST_FOREACH(size_t j, c) {
         // skip identical particle and particle pair permutations if same cell
         if (same_cell
-         && particle->type[j] <= particle->type[i] //< lexical order of (type, tag)
-         && particle->tag[j] <= particle->tag[i]
+         && particle_->type[j] <= particle_->type[i] //< lexical order of (type, tag)
+         && particle_->tag[j] <= particle_->tag[i]
         ) {
             continue;
         }
 
         // particle distance vector
-        vector_type r = particle->r[i] - particle->r[j];
-        box->reduce_periodic(r);
+        vector_type r = particle_->r[i] - particle_->r[j];
+        box_->reduce_periodic(r);
         // particle types
-        size_t a = particle->type[i];
-        size_t b = particle->type[j];
+        size_t a = particle_->type[i];
+        size_t b = particle_->type[j];
         // squared particle distance
         float_type rr = inner_prod(r, r);
 
@@ -211,7 +166,7 @@ void neighbour<dimension, float_type>::compute_cell_neighbours(size_t i, cell_li
         }
 
         // add particle to neighbour list
-        particle->neighbour[i].push_back(j);
+        neighbour_[i].push_back(j);
     }
 }
 
@@ -228,8 +183,9 @@ void neighbour<dimension, float_type>::luaopen(lua_State* L)
             [
                 class_<neighbour, shared_ptr<_Base>, _Base>(class_name.c_str())
                     .def(constructor<
-                         shared_ptr<particle_type>
-                       , shared_ptr<box_type>
+                         shared_ptr<particle_type const>
+                       , shared_ptr<box_type const>
+                       , shared_ptr<binning_type const>
                        , matrix_type const&
                        , double
                      >())
@@ -260,6 +216,6 @@ template class neighbour<3, float>;
 template class neighbour<2, float>;
 #endif
 
-}} // namespace mdsim::host
-
+} // namespace host
+} // namespace mdsim
 } // namespace halmd
