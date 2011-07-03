@@ -58,7 +58,7 @@ if(NOT DEFINED Boost_USE_MULTITHREADED)
   set(Boost_USE_MULTITHREADED FALSE)
 endif(NOT DEFINED Boost_USE_MULTITHREADED)
 
-find_package(Boost 1.39.0 QUIET REQUIRED COMPONENTS
+find_package(Boost 1.43.0 QUIET REQUIRED COMPONENTS
   date_time
   filesystem
   log
