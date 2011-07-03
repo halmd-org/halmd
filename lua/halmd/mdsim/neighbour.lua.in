@@ -30,21 +30,21 @@ require("halmd.modules")
 local device = halmd.device
 local mdsim = halmd.mdsim
 -- grab C++ wrappers
-local neighbour_with_binning_wrapper = {
+local neighbour_from_binning = {
     host = {
         [2] = libhalmd.mdsim.host.neighbour_2_
       , [3] = libhalmd.mdsim.host.neighbour_3_
     }
 }
-local neighbour_without_binning_wrapper = {}
+local neighbour_from_particle = {}
 if libhalmd.mdsim.gpu then
-    neighbour_with_binning_wrapper.gpu = {
-        [2] = libhalmd.mdsim.gpu.neighbour_with_binning_2_
-      , [3] = libhalmd.mdsim.gpu.neighbour_with_binning_3_
+    neighbour_from_binning.gpu = {
+        [2] = libhalmd.mdsim.gpu.neighbours.from_binning_2_
+      , [3] = libhalmd.mdsim.gpu.neighbours.from_binning_3_
     }
-    neighbour_without_binning_wrapper.gpu = {
-        [2] = libhalmd.mdsim.gpu.neighbour_without_binning_2_
-      , [3] = libhalmd.mdsim.gpu.neighbour_without_binning_3_
+    neighbour_from_particle.gpu = {
+        [2] = libhalmd.mdsim.gpu.neighbours.from_particle_2_
+      , [3] = libhalmd.mdsim.gpu.neighbours.from_particle_3_
     }
 end
 local predicates = libhalmd.predicates
@@ -82,9 +82,9 @@ function new(args)
     local neighbour
     if device() then
         if binning then
-            neighbour = assert(neighbour_with_binning_wrapper.gpu[dimension])
+            neighbour = assert(neighbour_from_binning.gpu[dimension])
         else
-            neighbour = assert(neighbour_without_binning_wrapper.gpu[dimension])
+            neighbour = assert(neighbour_from_particle.gpu[dimension])
         end
         local defaults = assert(neighbour.defaults)
         local occupancy = args.occupancy or defaults.occupancy()
@@ -94,7 +94,7 @@ function new(args)
             neighbour = neighbour(particle, particle, box, r_cut, skin, occupancy)
         end
     else
-        neighbour = neighbour_with_binning_wrapper.host[dimension](particle, box, binning, r_cut, skin)
+        neighbour = neighbour_from_binning.host[dimension](particle, box, binning, r_cut, skin)
     end
 
     -- particle sorting
@@ -136,7 +136,7 @@ end
 --
 function options(desc)
     desc:add("skin", po.float(), "neighbour list skin")
-    if neighbour_with_binning_wrapper.gpu then
+    if neighbour_from_binning.gpu then
         desc:add("occupancy", po.float(), "desired average cell occupancy")
     end
     desc:add("disable-binning", po.bool_switch(), "disable domain decomposition")
@@ -147,7 +147,7 @@ end
 --
 function read_parameters(args, group)
     args.skin = group:read_attribute("skin", h5.float())
-    if neighbour_with_binning_wrapper.gpu then
+    if neighbour_from_binning.gpu then
         args.occupancy = group:read_attribute("occupancy", h5.float())
     end
 end

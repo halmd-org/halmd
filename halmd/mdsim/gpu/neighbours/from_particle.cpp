@@ -20,7 +20,8 @@
 #include <boost/bind.hpp>
 
 #include <halmd/io/logger.hpp>
-#include <halmd/mdsim/gpu/neighbour_without_binning.hpp>
+#include <halmd/mdsim/gpu/neighbours/from_particle.hpp>
+#include <halmd/mdsim/gpu/neighbours/from_particle_kernel.hpp>
 #include <halmd/utility/lua/lua.hpp>
 #include <halmd/utility/scoped_timer.hpp>
 #include <halmd/utility/signal.hpp>
@@ -32,6 +33,7 @@ using namespace std;
 namespace halmd {
 namespace mdsim {
 namespace gpu {
+namespace neighbours {
 
 /**
  * construct neighbour list module
@@ -43,7 +45,7 @@ namespace gpu {
  * @param cell_occupancy desired average cell occupancy
  */
 template <int dimension, typename float_type>
-neighbour_without_binning<dimension, float_type>::neighbour_without_binning(
+from_particle<dimension, float_type>::from_particle(
     shared_ptr<particle_type const> particle1
   , shared_ptr<particle_type const> particle2
   , shared_ptr<box_type const> box
@@ -93,7 +95,7 @@ neighbour_without_binning<dimension, float_type>::neighbour_without_binning(
  * register module runtime accumulators
  */
 template <int dimension, typename float_type>
-void neighbour_without_binning<dimension, float_type>::register_runtimes(profiler_type& profiler)
+void from_particle<dimension, float_type>::register_runtimes(profiler_type& profiler)
 {
     profiler.register_runtime(runtime_.update, "update", "neighbour lists update");
 }
@@ -102,7 +104,7 @@ void neighbour_without_binning<dimension, float_type>::register_runtimes(profile
  * Update neighbour lists
  */
 template <int dimension, typename float_type>
-void neighbour_without_binning<dimension, float_type>::update()
+void from_particle<dimension, float_type>::update()
 {
     LOG_TRACE("update neighbour lists");
 
@@ -114,13 +116,13 @@ void neighbour_without_binning<dimension, float_type>::update()
     cuda::vector<int> g_overflow(1);
     cuda::host::vector<int> h_overflow(1);
     cuda::memset(g_overflow, 0);
-    get_neighbour_without_binning_kernel<dimension>().rr_cut_skin.bind(g_rr_cut_skin_);
+    get_from_particle_kernel<dimension>().rr_cut_skin.bind(g_rr_cut_skin_);
     cuda::configure(
         particle1_->dim.grid
       , particle1_->dim.block
       , particle1_->dim.threads_per_block() * (sizeof(unsigned int) + sizeof(vector_type))
     );
-    get_neighbour_without_binning_kernel<dimension>().update(
+    get_from_particle_kernel<dimension>().update(
         particle1_->g_r
       , particle1_->nbox
       , particle2_->g_r
@@ -147,57 +149,61 @@ wrap_update(shared_ptr<neighbour_type> neighbour)
 }
 
 template <int dimension, typename float_type>
-float_type neighbour_without_binning<dimension, float_type>::defaults::occupancy() {
+float_type from_particle<dimension, float_type>::defaults::occupancy() {
     return 0.4;
 }
 
 template <int dimension, typename float_type>
-void neighbour_without_binning<dimension, float_type>::luaopen(lua_State* L)
+void from_particle<dimension, float_type>::luaopen(lua_State* L)
 {
     using namespace luabind;
-    static string class_name("neighbour_without_binning_" + lexical_cast<string>(dimension) + "_");
+    static string class_name("from_particle_" + lexical_cast<string>(dimension) + "_");
     module(L, "libhalmd")
     [
         namespace_("mdsim")
         [
             namespace_("gpu")
             [
-                class_<neighbour_without_binning, shared_ptr<_Base>, _Base>(class_name.c_str())
-                    .def(constructor<
-                        shared_ptr<particle_type const>
-                      , shared_ptr<particle_type const>
-                      , shared_ptr<box_type const>
-                      , matrix_type const&
-                      , double
-                      , double
-                    >())
-                    .def("register_runtimes", &neighbour_without_binning::register_runtimes)
-                    .property("update", &wrap_update<neighbour_without_binning>)
-                    .property("r_skin", &neighbour_without_binning::r_skin)
-                    .property("cell_occupancy", &neighbour_without_binning::cell_occupancy)
-                    .scope[
-                        class_<defaults>("defaults")
-                            .scope
-                            [
-                                def("occupancy", &defaults::occupancy)
-                            ]
-                    ]
+                namespace_("neighbours")
+                [
+                    class_<from_particle, shared_ptr<_Base>, _Base>(class_name.c_str())
+                        .def(constructor<
+                            shared_ptr<particle_type const>
+                          , shared_ptr<particle_type const>
+                          , shared_ptr<box_type const>
+                          , matrix_type const&
+                          , double
+                          , double
+                        >())
+                        .def("register_runtimes", &from_particle::register_runtimes)
+                        .property("update", &wrap_update<from_particle>)
+                        .property("r_skin", &from_particle::r_skin)
+                        .property("cell_occupancy", &from_particle::cell_occupancy)
+                        .scope[
+                            class_<defaults>("defaults")
+                                .scope
+                                [
+                                    def("occupancy", &defaults::occupancy)
+                                ]
+                        ]
+                ]
             ]
         ]
     ];
 }
 
-HALMD_LUA_API int luaopen_libhalmd_mdsim_gpu_neighbour_without_binning(lua_State* L)
+HALMD_LUA_API int luaopen_libhalmd_mdsim_gpu_neighbours_from_particle(lua_State* L)
 {
-    neighbour_without_binning<3, float>::luaopen(L);
-    neighbour_without_binning<2, float>::luaopen(L);
+    from_particle<3, float>::luaopen(L);
+    from_particle<2, float>::luaopen(L);
     return 0;
 }
 
 // explicit instantiation
-template class neighbour_without_binning<3, float>;
-template class neighbour_without_binning<2, float>;
+template class from_particle<3, float>;
+template class from_particle<2, float>;
 
+} // namespace neighbours
 } // namespace gpu
 } // namespace mdsim
 } // namespace halmd

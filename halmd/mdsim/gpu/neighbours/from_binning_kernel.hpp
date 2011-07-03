@@ -17,8 +17,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef HALMD_MDSIM_GPU_NEIGHBOUR_WITH_BINNING_KERNEL_HPP
-#define HALMD_MDSIM_GPU_NEIGHBOUR_WITH_BINNING_KERNEL_HPP
+#ifndef HALMD_MDSIM_GPU_NEIGHBOURS_FROM_BINNING_KERNEL_HPP
+#define HALMD_MDSIM_GPU_NEIGHBOURS_FROM_BINNING_KERNEL_HPP
 
 #include <cuda_wrapper/cuda_wrapper.hpp>
 #include <halmd/mdsim/type_traits.hpp>
@@ -26,9 +26,10 @@
 namespace halmd {
 namespace mdsim {
 namespace gpu {
+namespace neighbours {
 
 template <int dimension>
-struct neighbour_with_binning_wrapper
+struct from_binning_wrapper
 {
     typedef typename type_traits<dimension, float>::gpu::vector_type vector_type;
     typedef typename type_traits<dimension, unsigned int>::gpu::vector_type cell_index_type;
@@ -50,17 +51,18 @@ struct neighbour_with_binning_wrapper
     /** update neighbour lists */
     cuda::function<void (int*, unsigned int*, unsigned int const*)> update_neighbours;
 
-    static neighbour_with_binning_wrapper kernel;
+    static from_binning_wrapper kernel;
 };
 
 template <int dimension>
-neighbour_with_binning_wrapper<dimension> const& get_neighbour_with_binning_kernel()
+from_binning_wrapper<dimension> const& get_from_binning_kernel()
 {
-    return neighbour_with_binning_wrapper<dimension>::kernel;
+    return from_binning_wrapper<dimension>::kernel;
 }
 
+} // namespace neighbours
 } // namespace gpu
 } // namespace mdsim
 } // namespace halmd
 
-#endif /* ! HALMD_MDSIM_GPU_NEIGHBOUR_WITH_BINNING_KERNEL_HPP */
+#endif /* ! HALMD_MDSIM_GPU_NEIGHBOURS_FROM_BINNING_KERNEL_HPP */

@@ -18,7 +18,7 @@
  */
 
 #include <halmd/mdsim/gpu/box_kernel.cuh>
-#include <halmd/mdsim/gpu/neighbour_without_binning_kernel.hpp>
+#include <halmd/mdsim/gpu/neighbours/from_particle_kernel.hpp>
 #include <halmd/mdsim/gpu/particle_kernel.cuh>
 #include <halmd/numeric/blas/blas.hpp>
 #include <halmd/utility/gpu/thread.cuh>
@@ -30,7 +30,8 @@ using namespace halmd::utility::gpu;
 namespace halmd {
 namespace mdsim {
 namespace gpu {
-namespace neighbour_without_binning_kernel {
+namespace neighbours {
+namespace from_particle_kernel {
 
 /** (cutoff lengths + neighbour list skin)² */
 texture<float> rr_cut_skin_;
@@ -109,17 +110,18 @@ __global__ void update(
     }
 }
 
-} // namespace neighbour_without_binning_kernel
+} // namespace from_particle_kernel
 
 template <int dimension>
-neighbour_without_binning_wrapper<dimension> neighbour_without_binning_wrapper<dimension>::kernel = {
-    neighbour_without_binning_kernel::rr_cut_skin_
-  , neighbour_without_binning_kernel::update<fixed_vector<float, dimension> >
+from_particle_wrapper<dimension> from_particle_wrapper<dimension>::kernel = {
+    from_particle_kernel::rr_cut_skin_
+  , from_particle_kernel::update<fixed_vector<float, dimension> >
 };
 
-template class neighbour_without_binning_wrapper<3>;
-template class neighbour_without_binning_wrapper<2>;
+template class from_particle_wrapper<3>;
+template class from_particle_wrapper<2>;
 
+} // namespace neighbours
 } // namespace gpu
 } // namespace mdsim
 } // namespace halmd

@@ -44,7 +44,7 @@
 # include <halmd/mdsim/gpu/integrators/verlet_nvt_andersen.hpp>
 # include <halmd/mdsim/gpu/particle.hpp>
 # include <halmd/mdsim/gpu/maximum_squared_displacement.hpp>
-# include <halmd/mdsim/gpu/neighbour_with_binning.hpp>
+# include <halmd/mdsim/gpu/neighbours/from_binning.hpp>
 # include <halmd/mdsim/gpu/positions/lattice.hpp>
 # include <halmd/mdsim/gpu/velocities/boltzmann.hpp>
 # include <halmd/observables/gpu/thermodynamics.hpp>
@@ -381,7 +381,7 @@ struct gpu_modules
     typedef mdsim::gpu::forces::lennard_jones<float_type> potential_type;
     typedef mdsim::gpu::forces::pair_trunc<dimension, float_type, potential_type> force_type;
     typedef mdsim::gpu::binning<dimension, float_type> binning_type;
-    typedef mdsim::gpu::neighbour_with_binning<dimension, float_type> neighbour_type;
+    typedef mdsim::gpu::neighbours::from_binning<dimension, float_type> neighbour_type;
     typedef mdsim::gpu::maximum_squared_displacement<dimension, float_type> msd_type;
     typedef mdsim::gpu::integrators::verlet<dimension, float_type> nve_integrator_type;
     typedef mdsim::gpu::integrators::verlet_nvt_andersen<dimension, float_type, halmd::random::gpu::rand48> nvt_integrator_type;

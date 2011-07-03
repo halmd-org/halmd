@@ -17,26 +17,39 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef HALMD_MDSIM_GPU_NEIGHBOUR_WITH_BINNING_HPP
-#define HALMD_MDSIM_GPU_NEIGHBOUR_WITH_BINNING_HPP
+#ifndef HALMD_MDSIM_GPU_NEIGHBOURS_FROM_PARTICLE_HPP
+#define HALMD_MDSIM_GPU_NEIGHBOURS_FROM_PARTICLE_HPP
 
 #include <boost/numeric/ublas/symmetric.hpp>
 #include <boost/shared_ptr.hpp>
 #include <lua.hpp>
 
 #include <halmd/mdsim/box.hpp>
-#include <halmd/mdsim/gpu/binning.hpp>
 #include <halmd/mdsim/gpu/neighbour.hpp>
-#include <halmd/mdsim/gpu/neighbour_with_binning_kernel.hpp>
 #include <halmd/mdsim/gpu/particle.hpp>
 #include <halmd/utility/profiler.hpp>
 
 namespace halmd {
 namespace mdsim {
 namespace gpu {
+namespace neighbours {
 
+/**
+ * Neighbour lists without binning
+ *
+ * This module builds neighbour lists by direct iteration over all
+ * particles, which scales as O(N^2) with the number of particles N.
+ * The GPU kernel uses shared memory to share particle coordinates between
+ * threads of a block, as described in the section “N-squared MD” in
+ *
+ * J. A. van Meel, A. Arnold, D. Frenkel, S.F. Portegies Zwart and R. G.
+ * Belleman, Harvesting graphics power for MD simulations, Molecular
+ * Simulation, 34 (3) 259-266 (2008)
+ * http://dx.doi.org/10.1080/08927020701744295
+ * http://arxiv.org/abs/0709.3225
+ */
 template <int dimension, typename float_type>
-class neighbour_with_binning
+class from_particle
   : public gpu::neighbour
 {
 public:
@@ -44,16 +57,15 @@ public:
     typedef typename particle_type::vector_type vector_type;
     typedef boost::numeric::ublas::symmetric_matrix<float_type, boost::numeric::ublas::lower> matrix_type;
     typedef mdsim::box<dimension> box_type;
-    typedef gpu::binning<dimension, float_type> binning_type;
     typedef utility::profiler profiler_type;
     struct defaults;
 
     static void luaopen(lua_State* L);
 
-    neighbour_with_binning(
-        boost::shared_ptr<particle_type const> particle
+    from_particle(
+        boost::shared_ptr<particle_type const> particle1
+      , boost::shared_ptr<particle_type const> particle2
       , boost::shared_ptr<box_type const> box
-      , boost::shared_ptr<binning_type const> binning
       , matrix_type const& r_cut
       , double skin
       , double cell_occupancy = defaults::occupancy()
@@ -106,9 +118,9 @@ private:
         accumulator_type update;
     };
 
-    boost::shared_ptr<particle_type const> particle_;
+    boost::shared_ptr<particle_type const> particle1_;
+    boost::shared_ptr<particle_type const> particle2_;
     boost::shared_ptr<box_type const> box_;
-    boost::shared_ptr<binning_type const> binning_;
 
     /** neighbour list skin in MD units */
     float_type r_skin_;
@@ -130,13 +142,14 @@ private:
 };
 
 template <int dimension, typename float_type>
-struct neighbour_with_binning<dimension, float_type>::defaults
+struct from_particle<dimension, float_type>::defaults
 {
     static float_type occupancy();
 };
 
+} // namespace neighbours
 } // namespace gpu
 } // namespace mdsim
 } // namespace halmd
 
-#endif /* ! HALMD_MDSIM_GPU_NEIGHBOUR_WITH_BINNING_HPP */
+#endif /* ! HALMD_MDSIM_GPU_NEIGHBOURS_FROM_PARTICLE_HPP */

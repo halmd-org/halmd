@@ -20,7 +20,8 @@
 #include <boost/bind.hpp>
 
 #include <halmd/io/logger.hpp>
-#include <halmd/mdsim/gpu/neighbour_with_binning.hpp>
+#include <halmd/mdsim/gpu/neighbours/from_binning.hpp>
+#include <halmd/mdsim/gpu/neighbours/from_binning_kernel.hpp>
 #include <halmd/utility/lua/lua.hpp>
 #include <halmd/utility/scoped_timer.hpp>
 #include <halmd/utility/signal.hpp>
@@ -32,6 +33,7 @@ using namespace std;
 namespace halmd {
 namespace mdsim {
 namespace gpu {
+namespace neighbours {
 
 /**
  * construct neighbour list module
@@ -43,7 +45,7 @@ namespace gpu {
  * @param cell_occupancy desired average cell occupancy
  */
 template <int dimension, typename float_type>
-neighbour_with_binning<dimension, float_type>::neighbour_with_binning(
+from_binning<dimension, float_type>::from_binning(
     shared_ptr<particle_type const> particle
   , shared_ptr<box_type const> box
   , shared_ptr<binning_type const> binning
@@ -88,12 +90,12 @@ neighbour_with_binning<dimension, float_type>::neighbour_with_binning(
     LOG("number of placeholders per neighbour list: " << size_);
 
     try {
-        cuda::copy(particle_->nbox, get_neighbour_with_binning_kernel<dimension>().nbox);
-        cuda::copy(binning_->ncell(), get_neighbour_with_binning_kernel<dimension>().ncell);
-        cuda::copy(static_cast<vector_type>(box_->length()), get_neighbour_with_binning_kernel<dimension>().box_length);
+        cuda::copy(particle_->nbox, get_from_binning_kernel<dimension>().nbox);
+        cuda::copy(binning_->ncell(), get_from_binning_kernel<dimension>().ncell);
+        cuda::copy(static_cast<vector_type>(box_->length()), get_from_binning_kernel<dimension>().box_length);
         cuda::copy(rr_cut_skin_.data(), g_rr_cut_skin_);
-        cuda::copy(size_, get_neighbour_with_binning_kernel<dimension>().neighbour_size);
-        cuda::copy(stride_, get_neighbour_with_binning_kernel<dimension>().neighbour_stride);
+        cuda::copy(size_, get_from_binning_kernel<dimension>().neighbour_size);
+        cuda::copy(stride_, get_from_binning_kernel<dimension>().neighbour_stride);
     }
     catch (cuda::error const&) {
         LOG_ERROR("failed to copy neighbour list parameters to device symbols");
@@ -105,7 +107,7 @@ neighbour_with_binning<dimension, float_type>::neighbour_with_binning(
  * register module runtime accumulators
  */
 template <int dimension, typename float_type>
-void neighbour_with_binning<dimension, float_type>::register_runtimes(profiler_type& profiler)
+void from_binning<dimension, float_type>::register_runtimes(profiler_type& profiler)
 {
     profiler.register_runtime(runtime_.update, "update", "neighbour lists update");
 }
@@ -114,7 +116,7 @@ void neighbour_with_binning<dimension, float_type>::register_runtimes(profiler_t
  * Update neighbour lists
  */
 template <int dimension, typename float_type>
-void neighbour_with_binning<dimension, float_type>::update()
+void from_binning<dimension, float_type>::update()
 {
     LOG_TRACE("update neighbour lists");
 
@@ -127,9 +129,9 @@ void neighbour_with_binning<dimension, float_type>::update()
     cuda::host::vector<int> h_ret(1);
     cuda::memset(g_ret, EXIT_SUCCESS);
     cuda::configure(binning_->dim_cell().grid, binning_->dim_cell().block, binning_->cell_size() * (2 + dimension) * sizeof(int));
-    get_neighbour_with_binning_kernel<dimension>().r.bind(particle_->g_r);
-    get_neighbour_with_binning_kernel<dimension>().rr_cut_skin.bind(g_rr_cut_skin_);
-    get_neighbour_with_binning_kernel<dimension>().update_neighbours(g_ret, g_neighbour_, binning_->g_cell());
+    get_from_binning_kernel<dimension>().r.bind(particle_->g_r);
+    get_from_binning_kernel<dimension>().rr_cut_skin.bind(g_rr_cut_skin_);
+    get_from_binning_kernel<dimension>().update_neighbours(g_ret, g_neighbour_, binning_->g_cell());
     cuda::thread::synchronize();
     cuda::copy(g_ret, h_ret);
     if (h_ret.front() != EXIT_SUCCESS) {
@@ -145,57 +147,61 @@ wrap_update(shared_ptr<neighbour_type> neighbour)
 }
 
 template <int dimension, typename float_type>
-float_type neighbour_with_binning<dimension, float_type>::defaults::occupancy() {
+float_type from_binning<dimension, float_type>::defaults::occupancy() {
     return 0.4;
 }
 
 template <int dimension, typename float_type>
-void neighbour_with_binning<dimension, float_type>::luaopen(lua_State* L)
+void from_binning<dimension, float_type>::luaopen(lua_State* L)
 {
     using namespace luabind;
-    static string class_name("neighbour_with_binning_" + lexical_cast<string>(dimension) + "_");
+    static string class_name("from_binning_" + lexical_cast<string>(dimension) + "_");
     module(L, "libhalmd")
     [
         namespace_("mdsim")
         [
             namespace_("gpu")
             [
-                class_<neighbour_with_binning, shared_ptr<_Base>, _Base>(class_name.c_str())
-                    .def(constructor<
-                        shared_ptr<particle_type const>
-                      , shared_ptr<box_type const>
-                      , shared_ptr<binning_type const>
-                      , matrix_type const&
-                      , double
-                      , double
-                    >())
-                    .def("register_runtimes", &neighbour_with_binning::register_runtimes)
-                    .property("update", &wrap_update<neighbour_with_binning>)
-                    .property("r_skin", &neighbour_with_binning::r_skin)
-                    .property("cell_occupancy", &neighbour_with_binning::cell_occupancy)
-                    .scope[
-                        class_<defaults>("defaults")
-                            .scope
-                            [
-                                def("occupancy", &defaults::occupancy)
-                            ]
-                    ]
+                namespace_("neighbours")
+                [
+                    class_<from_binning, shared_ptr<_Base>, _Base>(class_name.c_str())
+                        .def(constructor<
+                            shared_ptr<particle_type const>
+                          , shared_ptr<box_type const>
+                          , shared_ptr<binning_type const>
+                          , matrix_type const&
+                          , double
+                          , double
+                        >())
+                        .def("register_runtimes", &from_binning::register_runtimes)
+                        .property("update", &wrap_update<from_binning>)
+                        .property("r_skin", &from_binning::r_skin)
+                        .property("cell_occupancy", &from_binning::cell_occupancy)
+                        .scope[
+                            class_<defaults>("defaults")
+                                .scope
+                                [
+                                    def("occupancy", &defaults::occupancy)
+                                ]
+                        ]
+                ]
             ]
         ]
     ];
 }
 
-HALMD_LUA_API int luaopen_libhalmd_mdsim_gpu_neighbour_with_binning(lua_State* L)
+HALMD_LUA_API int luaopen_libhalmd_mdsim_gpu_neighbours_from_binning(lua_State* L)
 {
-    neighbour_with_binning<3, float>::luaopen(L);
-    neighbour_with_binning<2, float>::luaopen(L);
+    from_binning<3, float>::luaopen(L);
+    from_binning<2, float>::luaopen(L);
     return 0;
 }
 
 // explicit instantiation
-template class neighbour_with_binning<3, float>;
-template class neighbour_with_binning<2, float>;
+template class from_binning<3, float>;
+template class from_binning<2, float>;
 
+} // namespace neighbours
 } // namespace gpu
 } // namespace mdsim
 } // namespace halmd

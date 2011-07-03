@@ -17,8 +17,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef HALMD_MDSIM_GPU_NEIGHBOUR_WITHOUT_BINNING_KERNEL_HPP
-#define HALMD_MDSIM_GPU_NEIGHBOUR_WITHOUT_BINNING_KERNEL_HPP
+#ifndef HALMD_MDSIM_GPU_NEIGHBOURS_FROM_PARTICLE_KERNEL_HPP
+#define HALMD_MDSIM_GPU_NEIGHBOURS_FROM_PARTICLE_KERNEL_HPP
 
 #include <cuda_wrapper/cuda_wrapper.hpp>
 #include <halmd/mdsim/type_traits.hpp>
@@ -26,9 +26,10 @@
 namespace halmd {
 namespace mdsim {
 namespace gpu {
+namespace neighbours {
 
 template <int dimension>
-struct neighbour_without_binning_wrapper
+struct from_particle_wrapper
 {
     /** (cutoff lengths + neighbour list skin)² */
     cuda::texture<float> rr_cut_skin;
@@ -45,17 +46,18 @@ struct neighbour_without_binning_wrapper
       , int*
     )> update;
 
-    static neighbour_without_binning_wrapper kernel;
+    static from_particle_wrapper kernel;
 };
 
 template <int dimension>
-neighbour_without_binning_wrapper<dimension> const& get_neighbour_without_binning_kernel()
+from_particle_wrapper<dimension> const& get_from_particle_kernel()
 {
-    return neighbour_without_binning_wrapper<dimension>::kernel;
+    return from_particle_wrapper<dimension>::kernel;
 }
 
+} // namespace neighbours
 } // namespace gpu
 } // namespace mdsim
 } // namespace halmd
 
-#endif /* ! HALMD_MDSIM_GPU_NEIGHBOUR_WITHOUT_BINNING_KERNEL_HPP */
+#endif /* ! HALMD_MDSIM_GPU_NEIGHBOURS_FROM_PARTICLE_KERNEL_HPP */
