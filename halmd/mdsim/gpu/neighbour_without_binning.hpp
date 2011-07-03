@@ -34,6 +34,20 @@ namespace halmd {
 namespace mdsim {
 namespace gpu {
 
+/**
+ * Neighbour lists without binning
+ *
+ * This module builds neighbour lists by direct iteration over all
+ * particles, which scales as O(N^2) with the number of particles N.
+ * The GPU kernel uses shared memory to share particle coordinates between
+ * threads of a block, as described in the section “N-squared MD” in
+ *
+ * J. A. van Meel, A. Arnold, D. Frenkel, S.F. Portegies Zwart and R. G.
+ * Belleman, Harvesting graphics power for MD simulations, Molecular
+ * Simulation, 34 (3) 259-266 (2008)
+ * http://dx.doi.org/10.1080/08927020701744295
+ * http://arxiv.org/abs/0709.3225
+ */
 template <int dimension, typename float_type>
 class neighbour_without_binning
   : public gpu::neighbour
