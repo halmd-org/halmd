@@ -50,6 +50,7 @@ void sort<dimension>::luaopen(lua_State* L)
         [
             class_<sort, shared_ptr<sort> >(class_name.c_str())
                 .property("order", &wrap_order<sort>)
+                .def("on_order", &sort::on_order)
         ]
     ];
 }

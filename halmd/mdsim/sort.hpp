@@ -21,6 +21,7 @@
 #define HALMD_MDSIM_SORT_HPP
 
 #include <lua.hpp>
+#include <halmd/utility/signal.hpp>
 
 namespace halmd
 {
@@ -31,11 +32,15 @@ template <int dimension>
 class sort
 {
 public:
+    typedef halmd::signal<void ()> signal_type;
+    typedef typename signal_type::slot_function_type slot_function_type;
+
     static void luaopen(lua_State* L);
 
     sort() {}
     virtual ~sort() {}
     virtual void order() = 0;
+    virtual void on_order(slot_function_type const& slot) = 0;
 };
 
 } // namespace mdsim

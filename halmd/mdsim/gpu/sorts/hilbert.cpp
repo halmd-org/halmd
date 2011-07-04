@@ -89,6 +89,7 @@ void hilbert<dimension, float_type>::order()
         this->permutation(g_map, particle->g_index);
     }
     this->order(particle->g_index);
+    on_order_();
 }
 
 /**

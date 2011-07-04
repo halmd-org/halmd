@@ -42,6 +42,8 @@ public:
     typedef typename particle_type::vector_type vector_type;
     typedef mdsim::box<dimension> box_type;
     typedef host::binning<dimension, float_type> binning_type;
+    typedef typename _Base::signal_type signal_type;
+    typedef typename _Base::slot_function_type slot_function_type;
 
     static char const* module_name() { return "hilbert"; }
 
@@ -53,6 +55,11 @@ public:
       , boost::shared_ptr<binning_type> binning
     );
     virtual void order();
+
+    virtual void on_order(slot_function_type const& slot)
+    {
+        on_order_.connect(slot);
+    }
 
 private:
     typedef typename binning_type::cell_size_type cell_size_type;
@@ -67,6 +74,8 @@ private:
 
     /** 1-dimensional Hilbert curve mapping of cell lists */
     std::vector<cell_list const*> map_;
+    /** signal emitted after particle ordering */
+    signal_type on_order_;
 };
 
 } // namespace sorts

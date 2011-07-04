@@ -102,6 +102,7 @@ void hilbert<dimension, float_type>::order()
     }
     // reorder particles in memory
     particle_->rearrange(index);
+    on_order_();
 }
 
 /**
