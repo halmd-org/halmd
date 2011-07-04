@@ -58,9 +58,9 @@ public:
     );
 
     // estimate remaining runtime and output to log file
-    virtual void sample() const;
+    void sample() const;
 
-    virtual void on_sample(slot_function_type const& slot)
+    void on_sample(slot_function_type const& slot)
     {
         on_sample_.connect(slot);
     }
