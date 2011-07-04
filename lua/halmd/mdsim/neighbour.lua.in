@@ -101,15 +101,16 @@ function new(args)
     local sort = mdsim.sort()
     -- maximum squared displacement computation
     local maximum_squared_displacement = mdsim.maximum_squared_displacement()
+    -- after particle sorting:
+    sort:on_order(maximum_squared_displacement.zero)
+    if binning then
+        sort:on_order(binning.update)
+    end
+    sort:on_order(neighbour.update)
 
     -- system preparation after setting positions and velocities
     local core = mdsim.core()
     core:on_append_setup(sort.order)
-    if binning then
-        core:on_append_setup(binning.update)
-    end
-    core:on_append_setup(neighbour.update)
-    core:on_append_setup(maximum_squared_displacement.zero)
 
     -- compare maximum squared displacement to squared half skin size
     local limit = math.pow(neighbour.r_skin / 2, 2)
@@ -117,14 +118,8 @@ function new(args)
 
     -- evaluate maximum squared displacement every step
     core:on_prepend_force(greater.evaluate)
-
     -- if maximum squared displacement is greater than squared half skin size:
     greater:on_greater(sort.order)
-    if binning then
-        greater:on_greater(binning.update)
-    end
-    greater:on_greater(neighbour.update)
-    greater:on_greater(maximum_squared_displacement.zero)
 
     return neighbour
 end
