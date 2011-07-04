@@ -57,7 +57,7 @@ public:
       , boost::shared_ptr<core_type> core
       , step_type steps
     );
-    virtual void run();
+    void run();
     void register_runtimes(profiler_type& profiler);
     void on_start(slot_function_type const& slot);
     void on_prepare(slot_function_type const& slot, step_type interval);
