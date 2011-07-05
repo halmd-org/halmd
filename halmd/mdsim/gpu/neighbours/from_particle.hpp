@@ -71,7 +71,7 @@ public:
       , double cell_occupancy = defaults::occupancy()
     );
     void register_runtimes(profiler_type& profiler);
-    void update();
+    virtual void update();
 
     //! returns neighbour list skin in MD units
     float_type r_skin() const
@@ -110,8 +110,6 @@ public:
     }
 
 private:
-    typedef gpu::neighbour _Base;
-
     struct runtime
     {
         typedef typename profiler_type::accumulator_type accumulator_type;

@@ -25,7 +25,6 @@
 namespace halmd {
 namespace mdsim {
 
-template <int dimension>
 class neighbour
 {
 public:

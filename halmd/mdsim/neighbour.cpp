@@ -36,16 +36,14 @@ wrap_update(shared_ptr<neighbour_type> neighbour)
     return bind(&neighbour_type::update, neighbour);
 }
 
-template <int dimension>
-void neighbour<dimension>::luaopen(lua_State* L)
+void neighbour::luaopen(lua_State* L)
 {
     using namespace luabind;
-    static string class_name("neighbour_" + lexical_cast<string>(dimension) + "_");
     module(L, "libhalmd")
     [
         namespace_("mdsim")
         [
-            class_<neighbour, shared_ptr<neighbour> >(class_name.c_str())
+            class_<neighbour>("neighbour")
                 .property("update", &wrap_update<neighbour>)
         ]
     ];
@@ -53,13 +51,9 @@ void neighbour<dimension>::luaopen(lua_State* L)
 
 HALMD_LUA_API int luaopen_libhalmd_mdsim_neighbour(lua_State* L)
 {
-    neighbour<3>::luaopen(L);
-    neighbour<2>::luaopen(L);
+    neighbour::luaopen(L);
     return 0;
 }
-
-template class neighbour<3>;
-template class neighbour<2>;
 
 } // namespace mdsim
 } // namespace halmd

@@ -180,7 +180,7 @@ void neighbour<dimension, float_type>::luaopen(lua_State* L)
         [
             namespace_("host")
             [
-                class_<neighbour, shared_ptr<_Base>, _Base>(class_name.c_str())
+                class_<neighbour, shared_ptr<mdsim::neighbour>, mdsim::neighbour>(class_name.c_str())
                     .def(constructor<
                          shared_ptr<particle_type const>
                        , shared_ptr<box_type const>

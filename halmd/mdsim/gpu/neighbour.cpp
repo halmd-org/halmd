@@ -36,7 +36,7 @@ void neighbour::luaopen(lua_State* L)
         [
             namespace_("gpu")
             [
-                class_<neighbour>("neighbour")
+                class_<neighbour, mdsim::neighbour>("neighbour")
             ]
         ]
     ];

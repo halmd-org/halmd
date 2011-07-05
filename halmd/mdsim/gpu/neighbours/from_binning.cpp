@@ -139,13 +139,6 @@ void from_binning<dimension, float_type>::update()
     }
 }
 
-template <typename neighbour_type>
-typename signal<void ()>::slot_function_type
-wrap_update(shared_ptr<neighbour_type> neighbour)
-{
-    return bind(&neighbour_type::update, neighbour);
-}
-
 template <int dimension, typename float_type>
 float_type from_binning<dimension, float_type>::defaults::occupancy() {
     return 0.4;
@@ -164,7 +157,7 @@ void from_binning<dimension, float_type>::luaopen(lua_State* L)
             [
                 namespace_("neighbours")
                 [
-                    class_<from_binning, shared_ptr<_Base>, _Base>(class_name.c_str())
+                    class_<from_binning, shared_ptr<mdsim::neighbour>, mdsim::neighbour>(class_name.c_str())
                         .def(constructor<
                             shared_ptr<particle_type const>
                           , shared_ptr<box_type const>
@@ -174,7 +167,6 @@ void from_binning<dimension, float_type>::luaopen(lua_State* L)
                           , double
                         >())
                         .def("register_runtimes", &from_binning::register_runtimes)
-                        .property("update", &wrap_update<from_binning>)
                         .property("r_skin", &from_binning::r_skin)
                         .property("cell_occupancy", &from_binning::cell_occupancy)
                         .scope[

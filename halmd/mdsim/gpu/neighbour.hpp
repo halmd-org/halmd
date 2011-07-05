@@ -23,6 +23,7 @@
 #include <lua.hpp>
 
 #include <cuda_wrapper/cuda_wrapper.hpp>
+#include <halmd/mdsim/neighbour.hpp>
 
 namespace halmd {
 namespace mdsim {
@@ -35,10 +36,9 @@ namespace gpu {
  * neighbour lists for force modules with truncated potentials.
  */
 class neighbour
+  : public mdsim::neighbour
 {
 public:
-    /** virtual base class destructor */
-    virtual ~neighbour() {}
     /** Lua bindings */
     static void luaopen(lua_State* L);
     /** neighbour lists */

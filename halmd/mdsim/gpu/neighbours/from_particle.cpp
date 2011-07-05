@@ -141,13 +141,6 @@ void from_particle<dimension, float_type>::update()
     }
 }
 
-template <typename neighbour_type>
-typename signal<void ()>::slot_function_type
-wrap_update(shared_ptr<neighbour_type> neighbour)
-{
-    return bind(&neighbour_type::update, neighbour);
-}
-
 template <int dimension, typename float_type>
 float_type from_particle<dimension, float_type>::defaults::occupancy() {
     return 0.4;
@@ -166,7 +159,7 @@ void from_particle<dimension, float_type>::luaopen(lua_State* L)
             [
                 namespace_("neighbours")
                 [
-                    class_<from_particle, shared_ptr<_Base>, _Base>(class_name.c_str())
+                    class_<from_particle, shared_ptr<mdsim::neighbour>, mdsim::neighbour>(class_name.c_str())
                         .def(constructor<
                             shared_ptr<particle_type const>
                           , shared_ptr<particle_type const>
@@ -176,7 +169,6 @@ void from_particle<dimension, float_type>::luaopen(lua_State* L)
                           , double
                         >())
                         .def("register_runtimes", &from_particle::register_runtimes)
-                        .property("update", &wrap_update<from_particle>)
                         .property("r_skin", &from_particle::r_skin)
                         .property("cell_occupancy", &from_particle::cell_occupancy)
                         .scope[

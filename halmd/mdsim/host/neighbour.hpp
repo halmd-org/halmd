@@ -36,10 +36,9 @@ namespace host {
 
 template <int dimension, typename float_type>
 class neighbour
-  : public mdsim::neighbour<dimension>
+  : public mdsim::neighbour
 {
 public:
-    typedef mdsim::neighbour<dimension> _Base;
     typedef host::particle<dimension, float_type> particle_type;
     typedef typename particle_type::vector_type vector_type;
     typedef boost::numeric::ublas::symmetric_matrix<float_type, boost::numeric::ublas::lower> matrix_type;
