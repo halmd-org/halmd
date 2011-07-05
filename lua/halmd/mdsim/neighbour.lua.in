@@ -97,15 +97,18 @@ function new(args)
         neighbour = neighbour_from_binning.host[dimension](particle, box, binning, r_cut, skin)
     end
 
+    -- if needed, bin particles before neighbour list update
+    if binning then
+        neighbour:on_update(binning.update)
+    end
+
     -- particle sorting
     local sort = mdsim.sort()
     -- maximum squared displacement computation
     local maximum_squared_displacement = mdsim.maximum_squared_displacement()
-    -- after particle sorting:
+
+    -- after particle sorting, take a snapshot of coordinates and update neighbour lists
     sort:on_order(maximum_squared_displacement.zero)
-    if binning then
-        sort:on_order(binning.update)
-    end
     sort:on_order(neighbour.update)
 
     -- system preparation after setting positions and velocities
