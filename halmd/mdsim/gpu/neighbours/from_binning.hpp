@@ -47,6 +47,8 @@ public:
     typedef gpu::binning<dimension, float_type> binning_type;
     typedef utility::profiler profiler_type;
     struct defaults;
+    typedef typename from_binning::signal_type signal_type;
+    typedef typename from_binning::slot_function_type slot_function_type;
 
     static void luaopen(lua_State* L);
 
@@ -60,6 +62,11 @@ public:
     );
     void register_runtimes(profiler_type& profiler);
     virtual void update();
+
+    virtual void on_update(slot_function_type const& slot)
+    {
+        on_update_.connect(slot);
+    }
 
     //! returns neighbour list skin in MD units
     float_type r_skin() const
@@ -125,6 +132,8 @@ private:
 
     /** profiling runtime accumulators */
     runtime runtime_;
+    /** signal emitted before neighbour list update */
+    signal_type on_update_;
 };
 
 template <int dimension, typename float_type>

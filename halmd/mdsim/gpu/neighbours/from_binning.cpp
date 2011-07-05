@@ -118,6 +118,12 @@ void from_binning<dimension, float_type>::register_runtimes(profiler_type& profi
 template <int dimension, typename float_type>
 void from_binning<dimension, float_type>::update()
 {
+    // Emit on_update signal, which may be connected e.g. to the binning
+    // update slot. We don't call binning::update directly, since the order
+    // of calls is setup at the Lua level, and it allows us to pass binning
+    // as a const dependency.
+    on_update_();
+
     LOG_TRACE("update neighbour lists");
 
     scoped_timer<timer> timer_(runtime_.update);

@@ -45,6 +45,8 @@ public:
     typedef mdsim::box<dimension> box_type;
     typedef host::binning<dimension, float_type> binning_type;
     typedef std::vector<unsigned int> neighbour_list;
+    typedef typename neighbour::signal_type signal_type;
+    typedef typename neighbour::slot_function_type slot_function_type;
 
     static void luaopen(lua_State* L);
 
@@ -56,6 +58,11 @@ public:
       , double skin
     );
     virtual void update();
+
+    virtual void on_update(slot_function_type const& slot)
+    {
+        on_update_.connect(slot);
+    }
 
     //! returns neighbour list skin in MD units
     float_type r_skin() const
@@ -89,6 +96,8 @@ private:
     float_type r_skin_;
     /** (cutoff lengths + neighbour list skin)² */
     matrix_type rr_cut_skin_;
+    /** signal emitted before neighbour list update */
+    signal_type on_update_;
 };
 
 } // namespace host
