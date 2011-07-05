@@ -26,10 +26,9 @@
 using namespace boost;
 using namespace std;
 
-namespace halmd
-{
-namespace random { namespace host
-{
+namespace halmd {
+namespace random {
+namespace host {
 
 random::random(unsigned int seed)
 {
@@ -74,6 +73,6 @@ HALMD_LUA_API int luaopen_libhalmd_random_host_random(lua_State* L)
     return 0;
 }
 
-}} // namespace random::host
-
+} // namespace random
+} // namespace host
 } // namespace halmd

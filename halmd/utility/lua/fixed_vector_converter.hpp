@@ -27,8 +27,7 @@
 
 #include <halmd/numeric/blas/fixed_vector.hpp>
 
-namespace luabind
-{
+namespace luabind {
 
 /**
  * Luabind converter for fixed-size algebraic vector

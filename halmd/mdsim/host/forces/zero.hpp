@@ -26,10 +26,10 @@
 #include <halmd/mdsim/host/force.hpp>
 #include <halmd/mdsim/host/particle.hpp>
 
-namespace halmd
-{
-namespace mdsim { namespace host { namespace forces
-{
+namespace halmd {
+namespace mdsim {
+namespace host {
+namespace forces {
 
 /**
  * zero force (noninteracting particles)
@@ -82,8 +82,9 @@ public:
     }
 };
 
-}}} // namespace mdsim::host::forces
-
+} // namespace mdsim
+} // namespace host
+} // namespace forces
 } // namespace halmd
 
 #endif /* ! HALMD_MDSIM_HOST_FORCES_ZERO_HPP */

@@ -30,10 +30,10 @@
 #include <halmd/random/gpu/random.hpp>
 #include <halmd/utility/profiler.hpp>
 
-namespace halmd
-{
-namespace mdsim { namespace gpu { namespace positions
-{
+namespace halmd {
+namespace mdsim {
+namespace gpu {
+namespace positions {
 
 template <int dimension, typename float_type, typename RandomNumberGenerator>
 class lattice
@@ -92,8 +92,9 @@ private:
     runtime runtime_;
 };
 
-}}} // namespace mdsim::gpu::positions
-
+} // namespace mdsim
+} // namespace gpu
+} // namespace positions
 } // namespace halmd
 
 #endif /* ! HALMD_MDSIM_GPU_POSITIONS_LATTICE_HPP */

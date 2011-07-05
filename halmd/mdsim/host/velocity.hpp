@@ -25,10 +25,9 @@
 #include <halmd/mdsim/host/particle.hpp>
 #include <halmd/mdsim/velocity.hpp>
 
-namespace halmd
-{
-namespace mdsim { namespace host
-{
+namespace halmd {
+namespace mdsim {
+namespace host {
 
 template <int dimension, typename float_type>
 class velocity
@@ -51,8 +50,8 @@ public:
     virtual void shift_rescale(vector_type const& delta, double factor);
 };
 
-}} // namespace mdsim::host
-
+} // namespace mdsim
+} // namespace host
 } // namespace halmd
 
 #endif /* ! HALMD_MDSIM_HOST_VELOCITY_HPP */

@@ -33,10 +33,8 @@
 #include <halmd/utility/profiler.hpp>
 #include <halmd/utility/signal.hpp>
 
-namespace halmd
-{
-namespace observables
-{
+namespace halmd {
+namespace observables {
 
 /**
  * compute thermodynamic state variables such as pressure,
@@ -124,7 +122,6 @@ private:
 };
 
 } // namespace observables
-
 } // namespace halmd
 
 #endif /* ! HALMD_OBSERVABLES_THERMODYNAMICS_HPP */

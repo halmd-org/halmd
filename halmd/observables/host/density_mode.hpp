@@ -28,10 +28,9 @@
 #include <halmd/observables/utility/wavevector.hpp>
 #include <halmd/utility/profiler.hpp>
 
-namespace halmd
-{
-namespace observables { namespace host
-{
+namespace halmd {
+namespace observables {
+namespace host {
 
 /**
  *  compute Fourier modes of the particle density
@@ -116,8 +115,8 @@ protected:
     signal_type on_acquire_;
 };
 
-}} // namespace observables::host
-
-}  // namespace halmd
+} // namespace observables
+} // namespace host
+} // namespace halmd
 
 #endif /* ! HALMD_OBSERVABLES_HOST_DENSITY_MODE_HPP */

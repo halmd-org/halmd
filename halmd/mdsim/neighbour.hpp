@@ -22,10 +22,8 @@
 
 #include <lua.hpp>
 
-namespace halmd
-{
-namespace mdsim
-{
+namespace halmd {
+namespace mdsim {
 
 template <int dimension>
 class neighbour
@@ -39,7 +37,6 @@ public:
 };
 
 } // namespace mdsim
-
 } // namespace halmd
 
 #endif /* ! HALMD_MDSIM_NEIGHBOUR_HPP */

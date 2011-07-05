@@ -27,10 +27,10 @@
 #include <halmd/io/trajectory/reader.hpp>
 #include <halmd/observables/host/samples/phase_space.hpp>
 
-namespace halmd
-{
-namespace io { namespace trajectory { namespace readers
-{
+namespace halmd {
+namespace io {
+namespace trajectory {
+namespace readers {
 
 /**
  * H5MD trajectory file reader
@@ -63,8 +63,9 @@ private:
     ssize_t const offset_;
 };
 
-}}} // namespace io::trajectory::readers
-
+} // namespace io
+} // namespace trajectory
+} // namespace readers
 } // namespace halmd
 
 #endif /* ! HALMD_IO_TRAJECTORY_READERS_H5MD_HPP */

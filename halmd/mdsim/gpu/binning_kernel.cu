@@ -25,12 +25,10 @@
 using namespace halmd::mdsim::gpu::particle_kernel;
 using namespace halmd::utility::gpu;
 
-namespace halmd
-{
-namespace mdsim { namespace gpu
-{
-namespace binning_kernel
-{
+namespace halmd {
+namespace mdsim {
+namespace gpu {
+namespace binning_kernel {
 
 /** number of particles in simulation box */
 __constant__ unsigned int nbox_;
@@ -149,6 +147,6 @@ binning_wrapper<dimension> binning_wrapper<dimension>::kernel = {
 template class binning_wrapper<3>;
 template class binning_wrapper<2>;
 
-}} //namespace mdsim::gpu
-
-} //namespace halmd
+} // namespace gpu
+} // namespace mdsim
+} // namespace halmd

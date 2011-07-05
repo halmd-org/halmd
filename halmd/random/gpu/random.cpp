@@ -27,10 +27,9 @@
 using namespace boost;
 using namespace std;
 
-namespace halmd
-{
-namespace random { namespace gpu
-{
+namespace halmd {
+namespace random {
+namespace gpu {
 
 template <typename RandomNumberGenerator>
 random<RandomNumberGenerator>::random(
@@ -167,8 +166,8 @@ HALMD_LUA_API int luaopen_libhalmd_random_gpu_random(lua_State* L)
     return 0;
 }
 
-}} // namespace random::gpu
-
+} // namespace random
+} // namespace gpu
 template class random::gpu::random<random::gpu::rand48>;
 
 } // namespace halmd

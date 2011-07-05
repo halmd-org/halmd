@@ -29,10 +29,10 @@
 #include <halmd/config.hpp>
 #include <halmd/numeric/mp/dsfloat.hpp>
 
-namespace halmd
-{
-namespace detail { namespace numeric { namespace blas
-{
+namespace halmd {
+namespace detail {
+namespace numeric {
+namespace blas {
 
 #ifndef __CUDACC__
 
@@ -97,8 +97,9 @@ struct fixed_array_pod_type<dsfloat>
 
 #endif /* __CUDACC__ */
 
-}}} // namespace detail::numeric::blas
-
+} // namespace detail
+} // namespace numeric
+} // namespace blas
 } // namespace halmd
 
 #endif /* ! HALMD_NUMERIC_BLAS_FIXED_ARRAY_HPP */

@@ -28,8 +28,7 @@
 using namespace boost;
 using namespace std;
 
-namespace halmd
-{
+namespace halmd {
 
 // FIXME error code handling (with boost::system::system_error)
 

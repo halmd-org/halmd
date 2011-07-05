@@ -31,10 +31,9 @@
 using namespace boost;
 using namespace std;
 
-namespace halmd
-{
-namespace mdsim { namespace gpu
-{
+namespace halmd {
+namespace mdsim {
+namespace gpu {
 
 /**
  * construct maximum displacement module
@@ -180,6 +179,6 @@ HALMD_LUA_API int luaopen_libhalmd_mdsim_gpu_maximum_squared_displacement(lua_St
 template class maximum_squared_displacement<3, float>;
 template class maximum_squared_displacement<2, float>;
 
-}} // namespace mdsim::gpu
-
+} // namespace mdsim
+} // namespace gpu
 } // namespace halmd

@@ -22,10 +22,8 @@
 
 #include <stdint.h> // uint64_t
 
-namespace halmd
-{
-namespace mdsim
-{
+namespace halmd {
+namespace mdsim {
 
 /**
  * The clock module contains the current simulation step and time.
@@ -76,7 +74,6 @@ private:
 };
 
 } // namespace mdsim
-
 } // namespace halmd
 
 #endif /* ! HALMD_MDSIM_CLOCK_HPP */

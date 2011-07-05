@@ -24,10 +24,8 @@
 
 #include <halmd/mdsim/type_traits.hpp>
 
-namespace halmd
-{
-namespace mdsim
-{
+namespace halmd {
+namespace mdsim {
 
 template <int dimension>
 class velocity
@@ -46,7 +44,6 @@ public:
 };
 
 } // namespace mdsim
-
 } // namespace halmd
 
 #endif /* ! HALMD_MDSIM_VELOCITY_HPP */

@@ -28,10 +28,10 @@
 using namespace boost;
 using namespace std;
 
-namespace halmd
-{
-namespace io { namespace trajectory { namespace readers
-{
+namespace halmd {
+namespace io {
+namespace trajectory {
+namespace readers {
 
 /**
  * check whether file is in HALMD 0.1.x format
@@ -158,6 +158,7 @@ HALMD_LUA_API int luaopen_libhalmd_io_trajectory_readers_halmd_0_1_x(lua_State* 
     return 0;
 }
 
-}}} // namespace io::trajectory::readers
-
+} // namespace io
+} // namespace trajectory
+} // namespace readers
 } // namespace halmd

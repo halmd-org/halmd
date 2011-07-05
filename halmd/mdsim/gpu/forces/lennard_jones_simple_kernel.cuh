@@ -25,12 +25,11 @@
 #include <halmd/numeric/blas/blas.hpp>
 #include <halmd/utility/gpu/variant.cuh>
 
-namespace halmd
-{
-namespace mdsim { namespace gpu { namespace forces
-{
-namespace lennard_jones_simple_kernel
-{
+namespace halmd {
+namespace mdsim {
+namespace gpu {
+namespace forces {
+namespace lennard_jones_simple_kernel {
 
 /** Lennard-Jones potential parameters: rr_cut, en_cut */
 static __constant__ float rr_cut_;
@@ -93,8 +92,9 @@ cuda::symbol<float> lennard_jones_simple_wrapper::en_cut = lennard_jones_simple_
 template class pair_trunc_wrapper<3, lennard_jones_simple_kernel::lennard_jones_simple>;
 template class pair_trunc_wrapper<2, lennard_jones_simple_kernel::lennard_jones_simple>;
 
-}}} // namespace mdsim::gpu::forces
-
+} // namespace mdsim
+} // namespace gpu
+} // namespace forces
 } // namespace halmd
 
 #endif /* ! HALMD_MDSIM_GPU_FORCES_LENNARD_JONES_SIMPLE_KERNEL_CUH */

@@ -28,10 +28,8 @@
 #include <halmd/observables/utility/wavevector.hpp>
 #include <halmd/utility/signal.hpp>
 
-namespace halmd
-{
-namespace observables
-{
+namespace halmd {
+namespace observables {
 
 /**
  *  compute Fourier modes of the particle density
@@ -62,7 +60,6 @@ public:
 };
 
 } // namespace observables
-
 } // namespace halmd
 
 #endif /* ! HALMD_OBSERVABLES_DENSITY_MODE_HPP */

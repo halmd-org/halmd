@@ -34,10 +34,10 @@
 #include <halmd/numeric/blas/blas.hpp>
 #include <halmd/numeric/mp/dsfloat.hpp>
 
-namespace halmd
-{
-namespace mdsim { namespace gpu { namespace particle_kernel
-{
+namespace halmd {
+namespace mdsim {
+namespace gpu {
+namespace particle_kernel {
 
 /** placeholder particle */
 enum { PLACEHOLDER = -1U };
@@ -229,8 +229,9 @@ untagged(float4 const& hi, float4 const& lo)
 
 #endif /* __CUDACC__ */
 
-}}} // namespace mdsim::gpu::particle_kernel
-
+} // namespace mdsim
+} // namespace gpu
+} // namespace particle_kernel
 } // namespace halmd
 
 #endif /* ! HALMD_MDSIM_GPU_PARTICLE_KERNEL_CUH */

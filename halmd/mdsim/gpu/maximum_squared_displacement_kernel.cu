@@ -28,12 +28,10 @@ using namespace halmd::algorithm::gpu;
 using namespace halmd::mdsim::gpu::particle_kernel;
 using namespace halmd::utility::gpu;
 
-namespace halmd
-{
-namespace mdsim { namespace gpu
-{
-namespace maximum_squared_displacement_kernel
-{
+namespace halmd {
+namespace mdsim {
+namespace gpu {
+namespace maximum_squared_displacement_kernel {
 
 /** number of particles in simulation box */
 __constant__ unsigned int nbox_;
@@ -93,6 +91,6 @@ maximum_squared_displacement_wrapper<dimension> maximum_squared_displacement_wra
 template class maximum_squared_displacement_wrapper<3>;
 template class maximum_squared_displacement_wrapper<2>;
 
-}} //namespace mdsim::gpu
-
+} //namespace gpu
+} //namespace mdsim
 } //namespace halmd

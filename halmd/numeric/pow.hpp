@@ -22,8 +22,7 @@
 
 #include <halmd/config.hpp>
 
-namespace halmd
-{
+namespace halmd {
 
 /**
  * efficient (but not most) exponentiation with integer power

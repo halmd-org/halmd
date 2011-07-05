@@ -23,10 +23,10 @@
 #include <cuda_wrapper/cuda_wrapper.hpp>
 #include <halmd/mdsim/type_traits.hpp>
 
-namespace halmd
-{
-namespace mdsim { namespace gpu { namespace integrators
-{
+namespace halmd {
+namespace mdsim {
+namespace gpu {
+namespace integrators {
 
 template <int dimension>
 struct verlet_wrapper
@@ -46,8 +46,9 @@ struct verlet_wrapper
     static verlet_wrapper const wrapper;
 };
 
-}}} // namespace mdsim::gpu::integrators
-
+} // namespace mdsim
+} // namespace gpu
+} // namespace integrators
 } // namespace halmd
 
 #endif /* ! HALMD_MDSIM_GPU_INTEGRATOR_VERLET_KERNEL_HPP */

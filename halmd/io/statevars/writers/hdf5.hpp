@@ -26,10 +26,10 @@
 
 #include <halmd/io/statevars/writer.hpp>
 
-namespace halmd
-{
-namespace io { namespace statevars { namespace writers
-{
+namespace halmd {
+namespace io {
+namespace statevars {
+namespace writers {
 
 /**
  * Write results for macroscopic state variables to an HDF5 file.
@@ -106,8 +106,9 @@ private:
     std::vector<writer_functor> writer_;
 };
 
-}}} // namespace io::statevars::writers
-
+} // namespace io
+} // namespace statevars
+} // namespace writers
 } // namespace halmd
 
 #endif /* ! HALMD_IO_STATEVARS_HDF5_HPP */

@@ -24,10 +24,9 @@
 
 #include <halmd/mdsim/type_traits.hpp>
 
-namespace halmd
-{
-namespace observables { namespace gpu
-{
+namespace halmd {
+namespace observables {
+namespace gpu {
 
 template <int dimension>
 struct density_mode_wrapper
@@ -53,8 +52,8 @@ density_mode_wrapper<dimension> const& get_density_mode_kernel()
     return density_mode_wrapper<dimension>::kernel;
 }
 
-}} // namespace observables::gpu
-
+} // namespace observables
+} // namespace gpu
 } // namespace halmd
 
 #endif /* ! HALMD_OBSERVABLES_GPU_DENSITY_MODE_KERNEL_CUH */

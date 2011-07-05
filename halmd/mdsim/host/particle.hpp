@@ -26,10 +26,9 @@
 #include <halmd/mdsim/particle.hpp>
 #include <halmd/mdsim/type_traits.hpp>
 
-namespace halmd
-{
-namespace mdsim { namespace host
-{
+namespace halmd {
+namespace mdsim {
+namespace host {
 
 template <unsigned int dimension, typename float_type>
 class particle
@@ -66,8 +65,8 @@ public:
     using _Base::ntypes;
 };
 
-}} // namespace mdsim::host
-
+} // namespace mdsim
+} // namespace host
 } // namespace halmd
 
 #endif /* ! HALMD_MDSIM_HOST_PARTICLE_HPP */

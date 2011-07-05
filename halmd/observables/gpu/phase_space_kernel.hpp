@@ -24,10 +24,9 @@
 
 #include <halmd/mdsim/type_traits.hpp>
 
-namespace halmd
-{
-namespace observables { namespace gpu
-{
+namespace halmd {
+namespace observables {
+namespace gpu {
 
 template <int dimension>
 struct phase_space_wrapper
@@ -55,8 +54,8 @@ phase_space_wrapper<dimension> const& get_phase_space_kernel()
     return phase_space_wrapper<dimension>::kernel;
 }
 
-}} // namespace observables::gpu
-
+} // namespace observables
+} // namespace gpu
 } // namespace halmd
 
 #endif /* ! HALMD_OBSERVABLES_GPU_PHASE_SPACE_KERNEL_CUH */

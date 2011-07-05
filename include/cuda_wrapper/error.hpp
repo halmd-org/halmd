@@ -40,8 +40,7 @@
     } while(0)
 
 
-namespace cuda
-{
+namespace cuda {
 
 /*
  * CUDA error handling

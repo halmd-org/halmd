@@ -41,8 +41,8 @@
     } while(0)
 
 
-namespace cuda { namespace driver
-{
+namespace cuda {
+namespace driver {
 
 class error : public std::exception
 {
@@ -117,6 +117,7 @@ public:
     }
 };
 
-}} // namespace cuda::driver
+} // namespace driver
+} // namespace cuda
 
 #endif /* ! CUDA_DRIVER_ERROR_HPP */

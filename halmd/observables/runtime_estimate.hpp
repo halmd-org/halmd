@@ -29,10 +29,8 @@
 #include <halmd/mdsim/clock.hpp>
 #include <halmd/utility/signal.hpp>
 
-namespace halmd
-{
-namespace observables
-{
+namespace halmd {
+namespace observables {
 
 /**
  * estimate remaining runtime until programme completion
@@ -83,7 +81,6 @@ protected:
 };
 
 } // namespace observables
-
 } // namespace halmd
 
 #endif /* ! HALMD_OBSERVABLES_RUNTIME_ESTIMATE_HPP */

@@ -26,8 +26,7 @@
 
 #include <halmd/utility/signal.hpp>
 
-namespace halmd
-{
+namespace halmd {
 
 /**
  * POSIX signal handler

@@ -27,10 +27,8 @@
 
 #include <halmd/mdsim/type_traits.hpp>
 
-namespace halmd
-{
-namespace mdsim
-{
+namespace halmd {
+namespace mdsim {
 
 template <int dimension>
 class box
@@ -114,7 +112,6 @@ inline T box<dimension>::reduce_periodic(T& r) const
 }
 
 } // namespace mdsim
-
 } // namespace halmd
 
 #endif /* ! HALMD_MDSIM_BOX_HPP */

@@ -27,10 +27,10 @@
 #include <halmd/mdsim/host/particle.hpp>
 #include <halmd/mdsim/integrator.hpp>
 
-namespace halmd
-{
-namespace mdsim { namespace host { namespace integrators
-{
+namespace halmd {
+namespace mdsim {
+namespace host {
+namespace integrators {
 
 template <int dimension, typename float_type>
 class verlet
@@ -71,8 +71,9 @@ protected:
     float_type timestep_half_;
 };
 
-}}} // namespace mdsim::host::integrators
-
+} // namespace mdsim
+} // namespace host
+} // namespace integrators
 } // namespace halmd
 
 #endif /* ! HALMD_MDSIM_HOST_INTEGRATORS_VERLET_HPP */

@@ -26,10 +26,10 @@
 #include <halmd/mdsim/gpu/force.hpp>
 #include <halmd/mdsim/gpu/particle.hpp>
 
-namespace halmd
-{
-namespace mdsim { namespace gpu { namespace forces
-{
+namespace halmd {
+namespace mdsim {
+namespace gpu {
+namespace forces {
 
 /**
  * zero force (noninteracting particles)
@@ -90,8 +90,9 @@ protected:
     cuda::vector<float> g_hypervirial_;
 };
 
-}}} // namespace mdsim::gpu::forces
-
+} // namespace mdsim
+} // namespace gpu
+} // namespace forces
 } // namespace halmd
 
 #endif /* ! HALMD_MDSIM_GPU_FORCES_ZERO_HPP */

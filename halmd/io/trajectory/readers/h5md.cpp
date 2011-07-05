@@ -28,10 +28,10 @@
 using namespace boost;
 using namespace std;
 
-namespace halmd
-{
-namespace io { namespace trajectory { namespace readers
-{
+namespace halmd {
+namespace io {
+namespace trajectory {
+namespace readers {
 
 /**
  * check whether file is in H5MD format
@@ -140,6 +140,7 @@ template class h5md<2, double>;
 template class h5md<3, float>;
 template class h5md<2, float>;
 
-}}} // namespace io::trajectory::readers
-
+} // namespace io
+} // namespace trajectory
+} // namespace readers
 } // namespace halmd

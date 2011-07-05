@@ -23,8 +23,7 @@
 #include <halmd/config.hpp>
 #include <halmd/utility/signal.hpp>
 
-namespace halmd
-{
+namespace halmd {
 
 HALMD_LUA_API int luaopen_libhalmd_utility_lua_signal(lua_State* L)
 {

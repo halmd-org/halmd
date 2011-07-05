@@ -37,10 +37,9 @@
 
 // we support n-tuples for n=1, 2, 3
 
-namespace halmd
-{
-namespace algorithm { namespace gpu
-{
+namespace halmd {
+namespace algorithm {
+namespace gpu {
 
 // forward declaration
 template <typename T0, typename T1 = void, typename T2 = void>
@@ -195,8 +194,8 @@ __device__ tuple<T0&, T1&, T2&> tie(T0& t0, T1& t1, T2& t2)
     return tuple<T0&, T1&, T2&>(t0, t1, t2);
 }
 
-}} // namespace algorithm::gpu
-
+} // namespace algorithm
+} // namespace gpu
 } // namespace halmd
 
 #endif /* ! HALMD_ALGORITHM_GPU_TUPLE_CUH */

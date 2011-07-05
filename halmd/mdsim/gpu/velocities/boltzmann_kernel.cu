@@ -32,12 +32,11 @@ using namespace halmd::random::gpu;
 // Maxwell-Boltzmann distribution at accurate temperature
 //
 
-namespace halmd
-{
-namespace mdsim { namespace gpu { namespace velocities
-{
-namespace boltzmann_kernel
-{
+namespace halmd {
+namespace mdsim {
+namespace gpu {
+namespace velocities {
+namespace boltzmann_kernel {
 
 // random number generator parameters
 static __constant__ random_number_generator rng;
@@ -204,6 +203,7 @@ template class boltzmann_wrapper<3, float, random::gpu::rand48_rng>;
 template class boltzmann_wrapper<2, float, random::gpu::rand48_rng>;
 #endif
 
-}}} // namespace mdsim::gpu::velocities
-
+} // namespace mdsim
+} // namespace gpu
+} // namespace velocities
 } // namespace halmd

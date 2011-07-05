@@ -28,10 +28,10 @@
 using namespace boost;
 using namespace std;
 
-namespace halmd
-{
-namespace mdsim { namespace host { namespace integrators
-{
+namespace halmd {
+namespace mdsim {
+namespace host {
+namespace integrators {
 
 template <int dimension, typename float_type>
 verlet<dimension, float_type>::verlet(
@@ -135,6 +135,7 @@ template class verlet<3, float>;
 template class verlet<2, float>;
 #endif
 
-}}} // namespace mdsim::host::integrators
-
+} // namespace mdsim
+} // namespace host
+} // namespace integrators
 } // namespace halmd

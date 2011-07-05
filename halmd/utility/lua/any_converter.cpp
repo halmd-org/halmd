@@ -46,8 +46,7 @@
 using namespace boost;
 using namespace std;
 
-namespace halmd
-{
+namespace halmd {
 
 class any_converter
   : public map<luabind::type_id, void (*)(lua_State* L, any const&)>
@@ -157,8 +156,7 @@ HALMD_LUA_API int luaopen_libhalmd_utility_lua_any_converter(lua_State* L)
 
 } // namespace halmd
 
-namespace luabind
-{
+namespace luabind {
 
 //! convert from C++ to Lua
 void default_converter<any>::to(lua_State* L, any const& value)

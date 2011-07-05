@@ -23,10 +23,8 @@
 #include <lua.hpp>
 #include <halmd/utility/signal.hpp>
 
-namespace halmd
-{
-namespace mdsim
-{
+namespace halmd {
+namespace mdsim {
 
 template <int dimension>
 class sort
@@ -44,7 +42,6 @@ public:
 };
 
 } // namespace mdsim
-
 } // namespace halmd
 
 #endif /* ! HALMD_MDSIM_SORT_HPP */

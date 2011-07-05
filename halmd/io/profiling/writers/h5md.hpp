@@ -25,10 +25,10 @@
 #include <h5xx/h5xx.hpp>
 #include <halmd/io/profiling/writer.hpp>
 
-namespace halmd
-{
-namespace io { namespace profiling { namespace writers
-{
+namespace halmd {
+namespace io {
+namespace profiling {
+namespace writers {
 
 /**
  * This module writes runtime accumulator results to an H5MD file.
@@ -68,8 +68,9 @@ private:
     std::vector<writer_functor> writer_;
 };
 
-}}} // namespace io::profiling::writers
-
+} // namespace io
+} // namespace profiling
+} // namespace writers
 } // namespace halmd
 
 #endif /* ! HALMD_IO_PROFILING_H5MD_HPP */

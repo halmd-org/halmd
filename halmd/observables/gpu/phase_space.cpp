@@ -28,10 +28,9 @@
 using namespace boost;
 using namespace std;
 
-namespace halmd
-{
-namespace observables { namespace gpu
-{
+namespace halmd {
+namespace observables {
+namespace gpu {
 
 template <int dimension, typename float_type>
 phase_space<gpu::samples::phase_space<dimension, float_type> >::phase_space(
@@ -221,6 +220,6 @@ template class phase_space<gpu::samples::phase_space<2, float> >;
 template class phase_space<host::samples::phase_space<3, float> >;
 template class phase_space<host::samples::phase_space<2, float> >;
 
-}} // namespace observables::gpu
-
+} // namespace observables
+} // namespace gpu
 } // namespace halmd

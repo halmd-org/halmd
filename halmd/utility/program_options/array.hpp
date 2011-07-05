@@ -26,8 +26,7 @@
 #include <boost/multi_array.hpp>
 #include <vector>
 
-namespace std
-{
+namespace std {
 
 /**
  * extract comma-separated option values into fixed-size array

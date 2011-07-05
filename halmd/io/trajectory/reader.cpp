@@ -23,10 +23,9 @@
 using namespace boost;
 using namespace std;
 
-namespace halmd
-{
-namespace io { namespace trajectory
-{
+namespace halmd {
+namespace io {
+namespace trajectory {
 
 template <int dimension>
 void reader<dimension>::luaopen(lua_State* L)
@@ -52,6 +51,6 @@ HALMD_LUA_API int luaopen_libhalmd_io_trajectory_reader(lua_State* L)
     return 0;
 }
 
-}} // namespace io::trajectory
-
+} // namespace io
+} // namespace trajectory
 } // namespace halmd

@@ -26,10 +26,9 @@
 using namespace boost;
 using namespace std;
 
-namespace halmd
-{
-namespace mdsim { namespace host
-{
+namespace halmd {
+namespace mdsim {
+namespace host {
 
 /**
  * construct neighbour list module

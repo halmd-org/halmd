@@ -22,8 +22,7 @@
 
 #include <luabind/luabind.hpp>
 
-namespace halmd
-{
+namespace halmd {
 
 /**
  * set lua_pcall error handler within current scope

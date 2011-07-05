@@ -30,10 +30,9 @@
 using namespace boost;
 using namespace std;
 
-namespace halmd
-{
-namespace mdsim { namespace host
-{
+namespace halmd {
+namespace mdsim {
+namespace host {
 
 /**
  * Allocate microscopic system state.
@@ -134,6 +133,6 @@ template class particle<3, float>;
 template class particle<2, float>;
 #endif
 
-}} // namespace mdsim::host
-
+} // namespace mdsim
+} // namespace host
 } // namespace halmd

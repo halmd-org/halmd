@@ -30,10 +30,10 @@
 #include <halmd/mdsim/integrator.hpp>
 #include <halmd/utility/profiler.hpp>
 
-namespace halmd
-{
-namespace mdsim { namespace gpu { namespace integrators
-{
+namespace halmd {
+namespace mdsim {
+namespace gpu {
+namespace integrators {
 
 template <int dimension, typename float_type>
 class verlet
@@ -88,8 +88,9 @@ private:
     runtime runtime_;
 };
 
-}}} // namespace mdsim::gpu::integrators
-
+} // namespace mdsim
+} // namespace gpu
+} // namespace integrators
 } // namespace halmd
 
 #endif /* ! HALMD_MDSIM_GPU_INTEGRATORS_VERLET_HPP */

@@ -33,10 +33,8 @@ using namespace boost;
 using namespace boost::algorithm;
 using namespace std;
 
-namespace halmd
-{
-namespace mdsim
-{
+namespace halmd {
+namespace mdsim {
 
 /**
  * Construct microscopic system state.
@@ -104,5 +102,4 @@ template class particle<3>;
 template class particle<2>;
 
 } // namespace mdsim
-
 } // namespace halmd

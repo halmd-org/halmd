@@ -22,30 +22,33 @@
 
 #include <h5xx/h5xx.hpp>
 
-namespace halmd
-{
-namespace detail { namespace numeric { namespace blas
-{
+namespace halmd {
+namespace detail {
+namespace numeric {
+namespace blas {
 
 // forward declaration
 template <typename T, size_t N>
 struct fixed_vector;
 
-}}} // namespace detail::numeric::blas
-
+} // namespace detail
+} // namespace numeric
+} // namespace blas
 } // namespace halmd
 
-namespace boost { namespace numeric { namespace ublas
-{
+namespace boost {
+namespace numeric {
+namespace ublas {
 
 // forward declaration
 template <typename T, typename Alloc>
 class unbounded_array;
 
-}}} // namespace boost::numeric::ublas
+} // namespace boost
+} // namespace numeric
+} // namespace ublas
 
-namespace h5xx
-{
+namespace h5xx {
 
 template <typename T, size_t N>
 struct is_array<halmd::detail::numeric::blas::fixed_vector<T, N> >

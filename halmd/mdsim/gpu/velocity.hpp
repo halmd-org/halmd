@@ -25,10 +25,9 @@
 #include <halmd/mdsim/gpu/particle.hpp>
 #include <halmd/mdsim/velocity.hpp>
 
-namespace halmd
-{
-namespace mdsim { namespace gpu
-{
+namespace halmd {
+namespace mdsim {
+namespace gpu {
 
 template <int dimension, typename float_type>
 class velocity
@@ -54,8 +53,8 @@ private:
     cuda::config dim_;
 };
 
-}} // namespace mdsim::gpu
-
+} // namespace mdsim
+} // namespace gpu
 } // namespace halmd
 
 #endif /* ! HALMD_MDSIM_GPU_VELOCITY_HPP */

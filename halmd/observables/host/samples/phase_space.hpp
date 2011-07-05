@@ -27,10 +27,10 @@
 
 #include <halmd/numeric/blas/fixed_vector.hpp>
 
-namespace halmd
-{
-namespace observables { namespace host { namespace samples
-{
+namespace halmd {
+namespace observables {
+namespace host {
+namespace samples {
 
 template <int dimension, typename float_type>
 class phase_space
@@ -57,8 +57,9 @@ public:
     phase_space(std::vector<unsigned int> ntypes);
 };
 
-}}} // namespace observables::host::samples
-
+} // namespace observables
+} // namespace host
+} // namespace samples
 } // namespace halmd
 
 #endif /* ! HALMD_OBSERVABLES_HOST_SAMPLES_PHASE_SPACE_HPP */

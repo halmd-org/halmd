@@ -29,10 +29,10 @@
 #include <halmd/mdsim/position.hpp>
 #include <halmd/random/host/random.hpp>
 
-namespace halmd
-{
-namespace mdsim { namespace host { namespace positions
-{
+namespace halmd {
+namespace mdsim {
+namespace host {
+namespace positions {
 
 template <int dimension, typename float_type>
 class lattice
@@ -78,8 +78,9 @@ private:
     );
 };
 
-}}} // namespace mdsim::host::positions
-
+} // namespace mdsim
+} // namespace host
+} // namespace positions
 } // namespace halmd
 
 #endif /* ! HALMD_MDSIM_HOST_POSITIONS_LATTICE_HPP */

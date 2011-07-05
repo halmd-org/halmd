@@ -27,10 +27,8 @@
 using namespace boost;
 using namespace std;
 
-namespace halmd
-{
-namespace mdsim
-{
+namespace halmd {
+namespace mdsim {
 
 template <typename sort_type>
 typename signal<void ()>::slot_function_type
@@ -63,5 +61,4 @@ HALMD_LUA_API int luaopen_libhalmd_mdsim_sort(lua_State* L)
 }
 
 } // namespace mdsim
-
 } // namespace halmd

@@ -33,10 +33,9 @@
 #include <halmd/numeric/blas/blas.hpp>
 #include <halmd/numeric/gcd.hpp>
 
-namespace halmd
-{
-namespace algorithm { namespace host
-{
+namespace halmd {
+namespace algorithm {
+namespace host {
 
 /**
  *  pick (almost) equally distributed lattice points from a concentric shell
@@ -150,8 +149,8 @@ pick_lattice_points_from_shell(
     );
 }
 
-}} // namespace algorithm::host
-
+} // namespace algorithm
+} // namespace host
 } // namespace halmd
 
 #endif /* ! HALMD_ALGORITHM_HOST_PICK_LATTICE_POINTS_HPP */

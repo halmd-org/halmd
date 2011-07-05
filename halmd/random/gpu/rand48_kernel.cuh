@@ -30,10 +30,9 @@
 #include <halmd/config.hpp>
 #include <halmd/numeric/mp/uint48.hpp>
 
-namespace halmd
-{
-namespace random { namespace gpu
-{
+namespace halmd {
+namespace random {
+namespace gpu {
 
 struct rand48_rng
 {
@@ -75,8 +74,8 @@ inline __device__ unsigned int get(rand48_rng const& rng, rand48_rng::state_type
     return variate;
 }
 
-}} // namespace random::gpu
-
+} // namespace random
+} // namespace gpu
 } // namespace halmd
 
 #endif /* ! HALMD_RANDOM_GPU_RAND48_KERNEL_CUH */

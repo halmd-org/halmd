@@ -23,10 +23,9 @@
 #include <cuda_wrapper/cuda_wrapper.hpp>
 #include <halmd/mdsim/type_traits.hpp>
 
-namespace halmd
-{
-namespace mdsim { namespace gpu
-{
+namespace halmd {
+namespace mdsim {
+namespace gpu {
 
 template <int dimension>
 struct maximum_squared_displacement_wrapper
@@ -50,8 +49,8 @@ maximum_squared_displacement_wrapper<dimension> const& get_maximum_squared_displ
     return maximum_squared_displacement_wrapper<dimension>::kernel;
 }
 
-}} // namespace mdsim::gpu
-
+} // namespace mdsim
+} // namespace gpu
 } // namespace halmd
 
 #endif /* ! HALMD_MDSIM_GPU_MAXIMUM_SQUARED_DISPLACEMENT_KERNEL_HPP */

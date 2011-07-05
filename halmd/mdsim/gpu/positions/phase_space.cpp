@@ -25,10 +25,10 @@
 #include <halmd/mdsim/gpu/positions/phase_space_kernel.hpp>
 #include <halmd/utility/lua/lua.hpp>
 
-namespace halmd
-{
-namespace mdsim { namespace gpu { namespace positions
-{
+namespace halmd {
+namespace mdsim {
+namespace gpu {
+namespace positions {
 
 using namespace boost;
 using namespace std;
@@ -138,6 +138,7 @@ HALMD_LUA_API int luaopen_libhalmd_mdsim_gpu_positions_phase_space(lua_State* L)
 template class phase_space<3, float>;
 template class phase_space<2, float>;
 
-}}} // namespace mdsim::gpu::positions
-
+} // namespace mdsim
+} // namespace gpu
+} // namespace positions
 } // namespace halmd

@@ -23,10 +23,9 @@
 using namespace boost;
 using namespace std;
 
-namespace halmd
-{
-namespace observables { namespace host
-{
+namespace halmd {
+namespace observables {
+namespace host {
 
 template <int dimension, typename float_type>
 thermodynamics<dimension, float_type>::thermodynamics(
@@ -133,6 +132,6 @@ template class thermodynamics<3, float>;
 template class thermodynamics<2, float>;
 #endif
 
-}} // namespace observables::host
-
+} // namespace observables
+} // namespace host
 } // namespace halmd

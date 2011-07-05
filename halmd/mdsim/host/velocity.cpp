@@ -26,10 +26,9 @@
 using namespace boost;
 using namespace std;
 
-namespace halmd
-{
-namespace mdsim { namespace host
-{
+namespace halmd {
+namespace mdsim {
+namespace host {
 
 template <int dimension, typename float_type>
 velocity<dimension, float_type>::velocity(
@@ -112,6 +111,6 @@ template class velocity<3, float>;
 template class velocity<2, float>;
 #endif
 
-}} // namespace mdsim::host
-
+} // namespace mdsim
+} // namespace host
 } // namespace halmd

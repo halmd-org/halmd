@@ -22,10 +22,10 @@
 
 #include <lua.hpp>
 
-namespace halmd
-{
-namespace mdsim { namespace host { namespace forces
-{
+namespace halmd {
+namespace mdsim {
+namespace host {
+namespace forces {
 
 /**
  * provide functions to make the potential @f$C^2@f$-smooth
@@ -74,8 +74,9 @@ void smooth<dimension, float_type>::compute(
     en_pot = h0_r * en_pot;
 }
 
-}}} // namespace mdsim::host::forces
-
+} // namespace mdsim
+} // namespace host
+} // namespace forces
 } // namespace halmd
 
 #endif /* ! HALMD_MDSIM_HOST_FORCES_SMOOTH_HPP */

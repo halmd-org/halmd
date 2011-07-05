@@ -26,10 +26,9 @@ using namespace boost;
 using namespace std;
 using namespace halmd::algorithm::gpu;
 
-namespace halmd
-{
-namespace observables { namespace gpu
-{
+namespace halmd {
+namespace observables {
+namespace gpu {
 
 template <int dimension, typename float_type>
 thermodynamics<dimension, float_type>::thermodynamics(
@@ -163,6 +162,6 @@ HALMD_LUA_API int luaopen_libhalmd_observables_gpu_thermodynamics(lua_State* L)
 template class thermodynamics<3, float>;
 template class thermodynamics<2, float>;
 
-}} // namespace observables::gpu
-
+} // namespace observables
+} // namespace gpu
 } // namespace halmd

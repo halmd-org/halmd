@@ -29,10 +29,10 @@ using namespace boost;
 using namespace boost::algorithm;
 using namespace std;
 
-namespace halmd
-{
-namespace io { namespace statevars { namespace writers
-{
+namespace halmd {
+namespace io {
+namespace statevars {
+namespace writers {
 
 /**
  * open HDF5 file for writing
@@ -260,6 +260,7 @@ HALMD_LUA_API int luaopen_libhalmd_io_statevars_writers_hdf5(lua_State* L)
 template class hdf5<3>;
 template class hdf5<2>;
 
-}}} // namespace io::statevars::writers
-
+} // namespace io
+} // namespace statevars
+} // namespace writers
 } // namespace halmd

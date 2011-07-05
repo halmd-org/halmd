@@ -27,10 +27,10 @@
 #include <halmd/mdsim/gpu/forces/pair_trunc.hpp>
 #include <halmd/mdsim/gpu/forces/morse_kernel.hpp>
 
-namespace halmd
-{
-namespace mdsim { namespace gpu { namespace forces
-{
+namespace halmd {
+namespace mdsim {
+namespace gpu {
+namespace forces {
 
 /**
  * define Morse potential and parameters
@@ -118,8 +118,9 @@ private:
     cuda::vector<float> g_rr_cut_;
 };
 
-}}} // namespace mdsim::gpu::forces
-
+} // namespace mdsim
+} // namespace gpu
+} // namespace forces
 } // namespace halmd
 
 #endif /* ! HALMD_MDSIM_GPU_FORCES_MORSE_HPP */

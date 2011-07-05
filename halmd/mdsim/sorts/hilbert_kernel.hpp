@@ -36,14 +36,11 @@
 # include <halmd/algorithm/gpu/bits.cuh> // swap
 #endif
 
-namespace halmd
-{
-namespace mdsim { namespace sorts
-{
-namespace hilbert_kernel
-{
-namespace detail
-{
+namespace halmd {
+namespace mdsim {
+namespace sorts {
+namespace hilbert_kernel {
+namespace detail {
 
 // import into detail namespace
 #ifdef __CUDACC__
@@ -246,9 +243,8 @@ HALMD_GPU_ENABLED unsigned int map(vector_type r, unsigned int depth)
 }
 
 } // namespace hilbert_kernel
-
-}} // namespace mdsim::sorts
-
+} // namespace mdsim
+} // namespace sorts
 } // namespace halmd
 
 #endif /* ! HALMD_MDSIM_SORTS_HILBERT_KERNEL_HPP */

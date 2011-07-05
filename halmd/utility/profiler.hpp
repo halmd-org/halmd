@@ -27,10 +27,8 @@
 #include <halmd/io/profiling/writer.hpp>
 #include <halmd/numeric/accumulator.hpp>
 
-namespace halmd
-{
-namespace utility
-{
+namespace halmd {
+namespace utility {
 
 class profiler
 {
@@ -49,7 +47,6 @@ private:
 };
 
 } // namespace utility
-
 } // namespace halmd
 
 #endif /* ! HALMD_UTILITY_PROFILER_HPP */

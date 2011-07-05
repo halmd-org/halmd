@@ -29,10 +29,9 @@
 #include <halmd/io/logger.hpp>
 #include <halmd/random/gpu/rand48.hpp>
 
-namespace halmd
-{
-namespace random { namespace gpu
-{
+namespace halmd {
+namespace random {
+namespace gpu {
 
 template <typename RandomNumberGenerator>
 class random
@@ -119,8 +118,8 @@ void random<RandomNumberGenerator>::shuffle(Sequence& g_val)
     }
 }
 
-}} // namespace random::gpu
-
+} // namespace random
+} // namespace gpu
 } // namespace halmd
 
 #endif /* ! HALMD_RANDOM_GPU_RANDOM_HPP */

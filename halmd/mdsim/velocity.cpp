@@ -26,10 +26,8 @@
 using namespace boost;
 using namespace std;
 
-namespace halmd
-{
-namespace mdsim
-{
+namespace halmd {
+namespace mdsim {
 
 template <typename velocity>
 typename signal<void ()>::slot_function_type
@@ -64,5 +62,4 @@ template class velocity<3>;
 template class velocity<2>;
 
 } // namespace mdsim
-
 } // namespace halmd

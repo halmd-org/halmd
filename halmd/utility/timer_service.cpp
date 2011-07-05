@@ -25,10 +25,8 @@
 using namespace boost;
 using namespace std;
 
-namespace halmd
-{
-namespace utility
-{
+namespace halmd {
+namespace utility {
 
 /**
  * Register callback to be invoked periodically.
@@ -83,5 +81,4 @@ HALMD_LUA_API int luaopen_libhalmd_utility_timer_service(lua_State* L)
 }
 
 } // namespace utility
-
 } // namespace halmd

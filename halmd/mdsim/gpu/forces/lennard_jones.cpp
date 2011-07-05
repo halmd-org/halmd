@@ -33,10 +33,10 @@ using namespace boost;
 using namespace boost::numeric::ublas;
 using namespace std;
 
-namespace halmd
-{
-namespace mdsim { namespace gpu { namespace forces
-{
+namespace halmd {
+namespace mdsim {
+namespace gpu {
+namespace forces {
 
 /**
  * Initialise Lennard-Jones potential parameters
@@ -140,6 +140,7 @@ template class lennard_jones<float>;
 template class pair_trunc<3, float, lennard_jones<float> >;
 template class pair_trunc<2, float, lennard_jones<float> >;
 
-}}} // namespace mdsim::gpu::forces
-
+} // namespace mdsim
+} // namespace gpu
+} // namespace forces
 } // namespace halmd

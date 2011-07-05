@@ -30,10 +30,9 @@
 #include <halmd/mdsim/gpu/particle.hpp>
 #include <halmd/utility/profiler.hpp>
 
-namespace halmd
-{
-namespace mdsim { namespace gpu
-{
+namespace halmd {
+namespace mdsim {
+namespace gpu {
 
 template <int dimension, typename float_type>
 class binning
@@ -155,8 +154,8 @@ struct binning<dimension, float_type>::defaults
     static float_type occupancy();
 };
 
-}} // namespace mdsim::gpu
-
+} // namespace mdsim
+} // namespace gpu
 } // namespace halmd
 
 #endif /* ! HALMD_MDSIM_GPU_BINNING_HPP */

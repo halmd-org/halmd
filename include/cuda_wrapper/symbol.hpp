@@ -27,8 +27,7 @@
 # include <cuda_wrapper/error.hpp>
 #endif
 
-namespace cuda
-{
+namespace cuda {
 
 /**
  * CUDA device symbol constant

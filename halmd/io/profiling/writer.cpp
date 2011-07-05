@@ -24,10 +24,9 @@
 using namespace boost;
 using namespace std;
 
-namespace halmd
-{
-namespace io { namespace profiling
-{
+namespace halmd {
+namespace io {
+namespace profiling {
 
 template <typename writer_type>
 typename signal<void (uint64_t)>::slot_function_type
@@ -58,7 +57,7 @@ HALMD_LUA_API int luaopen_libhalmd_io_profiling_writer(lua_State* L)
     return 0;
 }
 
-}} // namespace io::profiling
-
+} // namespace io
+} // namespace profiling
 } // namespace halmd
 

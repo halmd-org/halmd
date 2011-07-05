@@ -26,8 +26,7 @@
 
 #include <halmd/utility/options_parser.hpp>
 
-namespace halmd
-{
+namespace halmd {
 
 /**
  * HALMD scripting engine

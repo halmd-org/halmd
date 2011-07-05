@@ -28,10 +28,8 @@
 using namespace boost;
 using namespace std;
 
-namespace halmd
-{
-namespace observables
-{
+namespace halmd {
+namespace observables {
 
 /**
  * Initialize simulation
@@ -169,5 +167,4 @@ HALMD_LUA_API int luaopen_libhalmd_observables_sampler(lua_State* L)
 }
 
 } // namespace observables
-
 } // namespace halmd

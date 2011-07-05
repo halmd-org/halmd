@@ -27,10 +27,8 @@
 using namespace boost;
 using namespace std;
 
-namespace halmd
-{
-namespace mdsim
-{
+namespace halmd {
+namespace mdsim {
 
 /**
  * Set box edge lengths
@@ -108,5 +106,4 @@ template class box<3>;
 template class box<2>;
 
 } // namespace mdsim
-
 } // namespace halmd

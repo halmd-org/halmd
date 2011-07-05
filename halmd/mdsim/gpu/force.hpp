@@ -26,10 +26,9 @@
 #include <halmd/mdsim/force.hpp>
 #include <halmd/mdsim/type_traits.hpp>
 
-namespace halmd
-{
-namespace mdsim { namespace gpu
-{
+namespace halmd {
+namespace mdsim {
+namespace gpu {
 
 template <int dimension, typename float_type>
 class force
@@ -50,8 +49,8 @@ public:
     virtual cuda::vector<float> const& hypervirial() = 0;
 };
 
-}} // namespace mdsim::gpu
-
+} // namespace mdsim
+} // namespace gpu
 } // namespace halmd
 
 #endif /* ! HALMD_MDSIM_GPU_FORCE_HPP */

@@ -21,8 +21,7 @@
 
 #include <halmd/utility/hostname.hpp>
 
-namespace halmd
-{
+namespace halmd {
 
 /**
  * resolve fully qualified host name

@@ -25,10 +25,9 @@
 
 #include <halmd/utility/signal.hpp>
 
-namespace halmd
-{
-namespace io { namespace trajectory
-{
+namespace halmd {
+namespace io {
+namespace trajectory {
 
 template <int dimension>
 class writer
@@ -47,8 +46,8 @@ public:
     virtual void on_append(slot_function_type const& slot) = 0;
 };
 
-}} // namespace io::trajectory
-
+} // namespace io
+} // namespace trajectory
 } // namespace halmd
 
 #endif /* ! HALMD_IO_TRAJECTORY_WRITER_HPP */

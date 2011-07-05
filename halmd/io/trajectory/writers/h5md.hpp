@@ -29,10 +29,10 @@
 #include <halmd/mdsim/clock.hpp>
 #include <halmd/observables/host/samples/phase_space.hpp>
 
-namespace halmd
-{
-namespace io { namespace trajectory { namespace writers
-{
+namespace halmd {
+namespace io {
+namespace trajectory {
+namespace writers {
 
 template <int dimension, typename float_type>
 class h5md
@@ -83,8 +83,9 @@ private:
     signal_type on_append_;
 };
 
-}}} // namespace io::trajectory::writers
-
+} // namespace io
+} // namespace trajectory
+} // namespace writers
 } // namespace halmd
 
 #endif /* ! HALMD_IO_TRAJECTORY_H5MD_WRITER_HPP */

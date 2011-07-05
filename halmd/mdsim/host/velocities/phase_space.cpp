@@ -27,10 +27,10 @@
 using namespace boost;
 using namespace std;
 
-namespace halmd
-{
-namespace mdsim { namespace host { namespace velocities
-{
+namespace halmd {
+namespace mdsim {
+namespace host {
+namespace velocities {
 
 template <int dimension, typename float_type>
 phase_space<dimension, float_type>::phase_space(
@@ -103,6 +103,7 @@ template class phase_space<3, float>;
 template class phase_space<2, float>;
 #endif
 
-}}} // namespace mdsim::host::velocities
-
+} // namespace mdsim
+} // namespace host
+} // namespace velocities
 } // namespace halmd

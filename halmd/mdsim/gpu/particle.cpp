@@ -31,10 +31,9 @@
 using namespace boost;
 using namespace std;
 
-namespace halmd
-{
-namespace mdsim { namespace gpu
-{
+namespace halmd {
+namespace mdsim {
+namespace gpu {
 
 /**
  * Allocate microscopic system state.
@@ -189,6 +188,6 @@ HALMD_LUA_API int luaopen_libhalmd_mdsim_gpu_particle(lua_State* L)
 template class particle<3, float>;
 template class particle<2, float>;
 
-}} // namespace mdsim::gpu
-
+} // namespace mdsim
+} // namespace gpu
 } // namespace halmd

@@ -28,12 +28,10 @@
 using namespace halmd::mdsim::gpu::particle_kernel; //< untagged
 using namespace halmd::utility::gpu; //< variant, map, pair
 
-namespace halmd
-{
-namespace observables { namespace gpu
-{
-namespace density_mode_kernel
-{
+namespace halmd {
+namespace observables {
+namespace gpu {
+namespace density_mode_kernel {
 
 // pass wavevectors via texture
 texture<variant<map<pair<int_<3>, float4>, pair<int_<2>, float2> > > > q_;
@@ -196,6 +194,6 @@ density_mode_wrapper<dimension> const density_mode_wrapper<dimension>::kernel = 
 template class density_mode_wrapper<3>;
 template class density_mode_wrapper<2>;
 
-}} // namespace observables::gpu
-
+} // namespace observables
+} // namespace gpu
 } // namespace halmd

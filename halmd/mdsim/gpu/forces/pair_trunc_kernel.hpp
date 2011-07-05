@@ -23,10 +23,10 @@
 #include <cuda_wrapper/cuda_wrapper.hpp>
 #include <halmd/mdsim/type_traits.hpp>
 
-namespace halmd
-{
-namespace mdsim { namespace gpu { namespace forces
-{
+namespace halmd {
+namespace mdsim {
+namespace gpu {
+namespace forces {
 
 template <int dimension, typename potential_type>
 struct pair_trunc_wrapper
@@ -51,8 +51,9 @@ struct pair_trunc_wrapper
     static pair_trunc_wrapper const kernel;
 };
 
-}}} // namespace mdsim::gpu::forces
-
+} // namespace mdsim
+} // namespace gpu
+} // namespace forces
 } // namespace halmd
 
 #endif  /* ! HALMD_MDSIM_GPU_FORCES_PAIR_TRUNC_KERNEL_HPP */

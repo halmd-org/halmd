@@ -31,10 +31,9 @@
 
 #include <halmd/numeric/blas/fixed_vector.hpp>
 
-namespace halmd
-{
-namespace random { namespace host
-{
+namespace halmd {
+namespace random {
+namespace host {
 
 class random
 {
@@ -203,8 +202,8 @@ void random::unit_vector(fixed_vector<value_type, 4>& v)
     v[3] *= s;
 }
 
-}} // namespace random::host
-
+} // namespace random
+} // namespace host
 } // namespace halmd
 
 #endif /* ! HALMD_RANDOM_HOST_RANDOM_HPP */

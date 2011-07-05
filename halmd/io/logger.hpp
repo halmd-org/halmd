@@ -30,8 +30,7 @@
 #include <boost/noncopyable.hpp>
 #include <lua.hpp>
 
-namespace halmd
-{
+namespace halmd {
 
 //! Logger
 class logger

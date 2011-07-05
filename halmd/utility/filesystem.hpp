@@ -23,8 +23,7 @@
 #include <boost/filesystem.hpp>
 #include <cassert>
 
-namespace halmd
-{
+namespace halmd {
 
 /**
  * returns absolute filesystem path

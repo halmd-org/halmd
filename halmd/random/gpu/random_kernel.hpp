@@ -22,10 +22,9 @@
 
 #include <cuda_wrapper/cuda_wrapper.hpp>
 
-namespace halmd
-{
-namespace random { namespace gpu
-{
+namespace halmd {
+namespace random {
+namespace gpu {
 
 template <typename RandomNumberGenerator>
 struct random_wrapper
@@ -43,8 +42,8 @@ random_wrapper<RandomNumberGenerator> const& get_random_kernel()
     return random_wrapper<RandomNumberGenerator>::kernel;
 }
 
-}} // namespace random::gpu
-
+} // namespace random
+} // namespace gpu
 } // namespace halmd
 
 #endif /* ! HALMD_RANDOM_GPU_RANDOM_KERNEL_HPP */

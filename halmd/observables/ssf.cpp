@@ -32,10 +32,8 @@
 using namespace boost;
 using namespace std;
 
-namespace halmd
-{
-namespace observables
-{
+namespace halmd {
+namespace observables {
 
 template <int dimension>
 ssf<dimension>::ssf(
@@ -221,5 +219,4 @@ template class ssf<3>;
 template class ssf<2>;
 
 } // namespace observables
-
 } // namespace halmd

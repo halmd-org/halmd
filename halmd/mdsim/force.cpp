@@ -26,10 +26,8 @@
 using namespace boost;
 using namespace std;
 
-namespace halmd
-{
-namespace mdsim
-{
+namespace halmd {
+namespace mdsim {
 
 template <typename integrator_type>
 typename signal<void ()>::slot_function_type
@@ -65,5 +63,4 @@ template class force<3>;
 template class force<2>;
 
 } // namespace mdsim
-
 } // namespace halmd

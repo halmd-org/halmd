@@ -23,8 +23,7 @@
 #include <boost/function.hpp>
 #include <list>
 
-namespace halmd
-{
+namespace halmd {
 
 /**
  * Signal implements callbacks with multiple targets.

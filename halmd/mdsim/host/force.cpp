@@ -23,10 +23,9 @@
 using namespace boost;
 using namespace std;
 
-namespace halmd
-{
-namespace mdsim { namespace host
-{
+namespace halmd {
+namespace mdsim {
+namespace host {
 
 template <int dimension, typename float_type>
 void force<dimension, float_type>::luaopen(lua_State* L)
@@ -57,6 +56,6 @@ HALMD_LUA_API int luaopen_libhalmd_mdsim_host_force(lua_State* L)
     return 0;
 }
 
-}} // namespace mdsim::host
-
+} // namespace mdsim
+} // namespace host
 } // namespace halmd

@@ -32,10 +32,10 @@
 # include <boost/tuple/tuple.hpp>
 #endif
 
-namespace halmd
-{
-namespace detail { namespace numeric { namespace mp
-{
+namespace halmd {
+namespace detail {
+namespace numeric {
+namespace mp {
 
 #ifdef __CUDACC__
 using algorithm::gpu::tuple;
@@ -271,8 +271,9 @@ inline HALMD_GPU_ENABLED dsfloat min(dsfloat const& v, dsfloat const& w)
     return v.hi == w.hi ? (v.lo <= w.lo ? v : w) : (v.hi < w.hi ? v : w);
 }
 
-}}} // namespace detail::numeric::mp
-
+} // namespace detail
+} // namespace numeric
+} // namespace mp
 // import into top-level namespace
 using detail::numeric::mp::dsfloat;
 

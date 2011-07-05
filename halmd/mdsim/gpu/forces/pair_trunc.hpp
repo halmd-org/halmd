@@ -35,10 +35,10 @@
 #include <halmd/utility/scoped_timer.hpp>
 #include <halmd/utility/timer.hpp>
 
-namespace halmd
-{
-namespace mdsim { namespace gpu { namespace forces
-{
+namespace halmd {
+namespace mdsim {
+namespace gpu {
+namespace forces {
 
 /**
  * class template for modules implementing short ranged potential forces
@@ -229,8 +229,9 @@ void pair_trunc<dimension, float_type, potential_type>::luaopen(lua_State* L)
     ];
 }
 
-}}} // namespace mdsim::gpu::forces
-
+} // namespace mdsim
+} // namespace gpu
+} // namespace forces
 } // namespace halmd
 
 #endif /* ! HALMD_MDSIM_GPU_FORCES_LJ_HPP */

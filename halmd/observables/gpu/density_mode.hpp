@@ -30,10 +30,9 @@
 #include <halmd/observables/utility/wavevector.hpp>
 #include <halmd/utility/profiler.hpp>
 
-namespace halmd
-{
-namespace observables { namespace gpu
-{
+namespace halmd {
+namespace observables {
+namespace gpu {
 
 /**
  *  compute Fourier modes of the particle density
@@ -139,8 +138,8 @@ protected:
     signal_type on_acquire_;
 };
 
-}} // namespace observables::gpu
-
+} // namespace observables
+} // namespace gpu
 }  // namespace halmd
 
 #endif /* ! HALMD_OBSERVABLES_GPU_DENSITY_MODE_HPP */

@@ -30,10 +30,10 @@
 using namespace boost;
 using namespace std;
 
-namespace halmd
-{
-namespace mdsim { namespace gpu { namespace integrators
-{
+namespace halmd {
+namespace mdsim {
+namespace gpu {
+namespace integrators {
 
 template <int dimension, typename float_type, typename RandomNumberGenerator>
 verlet_nvt_andersen<dimension, float_type, RandomNumberGenerator>::
@@ -216,6 +216,7 @@ HALMD_LUA_API int luaopen_libhalmd_mdsim_gpu_integrators_verlet_nvt_andersen(lua
 template class verlet_nvt_andersen<3, float, random::gpu::rand48>;
 template class verlet_nvt_andersen<2, float, random::gpu::rand48>;
 
-}}} // namespace mdsim::gpu::integrators
-
+} // namespace mdsim
+} // namespace gpu
+} // namespace integrators
 } // namespace halmd

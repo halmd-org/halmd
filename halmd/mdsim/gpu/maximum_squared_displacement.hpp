@@ -28,10 +28,9 @@
 #include <halmd/mdsim/gpu/particle.hpp>
 #include <halmd/utility/profiler.hpp>
 
-namespace halmd
-{
-namespace mdsim { namespace gpu
-{
+namespace halmd {
+namespace mdsim {
+namespace gpu {
 
 /**
  * Compute maximum squared displacement
@@ -83,8 +82,8 @@ private:
     runtime runtime_;
 };
 
-}} // namespace mdsim::gpu
-
+} // namespace mdsim
+} // namespace gpu
 } // namespace halmd
 
 #endif /* ! HALMD_MDSIM_GPU_MAXIMUM_SQUARED_DISPLACEMENT_HPP */

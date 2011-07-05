@@ -23,10 +23,8 @@
 #include <stdint.h>
 #include <lua.hpp>
 
-namespace halmd
-{
-namespace observables
-{
+namespace halmd {
+namespace observables {
 
 template <int dimension>
 class phase_space
@@ -40,7 +38,6 @@ public:
 };
 
 } // namespace observables
-
 } // namespace halmd
 
 #endif /* ! HALMD_OBSERVABLES_PHASE_SPACE_HPP */

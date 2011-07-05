@@ -22,10 +22,9 @@
 
 #include <vector>
 
-namespace halmd
-{
-namespace algorithm { namespace host
-{
+namespace halmd {
+namespace algorithm {
+namespace host {
 
 /*
  * Permute sequence in-place according to integer index sequence
@@ -56,8 +55,8 @@ void permute(input_iterator first, input_iterator last, index_iterator index)
     }
 }
 
-}} // namespace algorithm::host
-
+} // namespace algorithm
+} // namespace host
 } // namespace halmd
 
 #endif /* ! HALMD_ALGORITHM_HOST_PERMUTE_HPP */

@@ -33,10 +33,10 @@ using namespace boost;
 using namespace halmd::algorithm::gpu;
 using namespace std;
 
-namespace halmd
-{
-namespace mdsim { namespace gpu { namespace sorts
-{
+namespace halmd {
+namespace mdsim {
+namespace gpu {
+namespace sorts {
 
 template <int dimension, typename float_type>
 hilbert<dimension, float_type>::hilbert(
@@ -186,6 +186,7 @@ HALMD_LUA_API int luaopen_libhalmd_mdsim_gpu_sorts_hilbert(lua_State* L)
 template class hilbert<3, float>;
 template class hilbert<2, float>;
 
-}}} // namespace mdsim::gpu::sorts
-
+} // namespace mdsim
+} // namespace gpu
+} // namespace sorts
 } // namespace halmd

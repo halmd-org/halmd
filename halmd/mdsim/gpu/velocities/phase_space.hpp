@@ -26,10 +26,10 @@
 #include <halmd/mdsim/gpu/velocity.hpp>
 #include <halmd/observables/host/samples/phase_space.hpp>
 
-namespace halmd
-{
-namespace mdsim { namespace gpu { namespace velocities
-{
+namespace halmd {
+namespace mdsim {
+namespace gpu {
+namespace velocities {
 
 template <int dimension, typename float_type>
 class phase_space
@@ -53,8 +53,9 @@ public:
     virtual void set();
 };
 
-}}} // namespace mdsim::gpu::velocities
-
+} // namespace mdsim
+} // namespace gpu
+} // namespace velocities
 } // namespace halmd
 
 #endif /* ! HALMD_MDSIM_GPU_VELOCITIES_PHASE_SPACE_HPP */

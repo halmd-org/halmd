@@ -20,10 +20,8 @@
 #ifndef HALMD_NUMERIC_BLAS_SYMMETRIC_MATRIX_HPP
 #define HALMD_NUMERIC_BLAS_SYMMETRIC_MATRIX_HPP
 
-namespace halmd
-{
-namespace symmetric_matrix
-{
+namespace halmd {
+namespace symmetric_matrix {
 
 /**
  * Compute storage index for lower symmetric matrix
@@ -36,7 +34,6 @@ inline HALMD_GPU_ENABLED unsigned int lower_index(unsigned int row, unsigned int
 }
 
 } // namespace symmetric_matrix
-
 } // namespace halmd
 
 #endif /* ! HALMD_NUMERIC_BLAS_SYMMETRIC_MATRIX_HPP */

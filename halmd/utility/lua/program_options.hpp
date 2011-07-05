@@ -26,8 +26,7 @@
 
 #include <halmd/utility/lua/any_converter.hpp>
 
-namespace luabind
-{
+namespace luabind {
 
 /**
  * Luabind converter for Boost.Program_options variables_map

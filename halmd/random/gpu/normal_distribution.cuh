@@ -29,10 +29,9 @@
 
 #include <halmd/algorithm/gpu/tuple.cuh>
 
-namespace halmd
-{
-namespace random { namespace gpu
-{
+namespace halmd {
+namespace random {
+namespace gpu {
 
 using algorithm::gpu::tuple;
 using algorithm::gpu::make_tuple;
@@ -77,8 +76,8 @@ inline __device__ tuple<float, float> normal(
     return make_tuple(variate1, variate2);
 }
 
-}} // namespace random::gpu
-
+} // namespace random
+} // namespace gpu
 } // namespace halmd
 
 #endif /* ! HALMD_RANDOM_GPU_NORMAL_DISTRIBUTION_CUH */

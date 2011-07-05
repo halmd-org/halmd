@@ -24,10 +24,9 @@
 using namespace boost;
 using namespace std;
 
-namespace halmd
-{
-namespace observables { namespace host
-{
+namespace halmd {
+namespace observables {
+namespace host {
 
 template <int dimension, typename float_type>
 phase_space<dimension, float_type>::phase_space(
@@ -121,6 +120,6 @@ template class phase_space<3, float>;
 template class phase_space<2, float>;
 #endif
 
-}} // namespace observables::host
-
+} // namespace observables
+} // namespace host
 } // namespace halmd

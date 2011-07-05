@@ -27,10 +27,8 @@
 #include <halmd/utility/profiler.hpp>
 #include <halmd/utility/signal.hpp>
 
-namespace halmd
-{
-namespace observables
-{
+namespace halmd {
+namespace observables {
 
 /**
  * Sampler to run Molecular Dynamics simulation
@@ -101,7 +99,6 @@ private:
 };
 
 } // namespace observables
-
 } // namespace halmd
 
 #endif /* ! HALMD_OBSERVABLES_SAMPLER_HPP */

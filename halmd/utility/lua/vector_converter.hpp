@@ -23,8 +23,7 @@
 #include <luabind/luabind.hpp>
 #include <vector>
 
-namespace luabind
-{
+namespace luabind {
 
 /**
  * Luabind converter for STL vector
@@ -65,7 +64,6 @@ struct default_converter<std::vector<T> >
 template <typename T>
 struct default_converter<std::vector<T> const&>
   : default_converter<std::vector<T> > {};
-
 
 } // namespace luabind
 

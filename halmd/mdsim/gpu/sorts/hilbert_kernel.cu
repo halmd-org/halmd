@@ -32,12 +32,11 @@ using namespace halmd::algorithm::gpu;
 using namespace halmd::mdsim::gpu::particle_kernel;
 using namespace halmd::utility::gpu;
 
-namespace halmd
-{
-namespace mdsim { namespace gpu { namespace sorts
-{
-namespace hilbert_kernel
-{
+namespace halmd {
+namespace mdsim {
+namespace gpu {
+namespace sorts {
+namespace hilbert_kernel {
 
 /** Hilbert space-filling curve recursion depth */
 __constant__ unsigned int depth_;
@@ -148,6 +147,7 @@ hilbert_wrapper<dimension> const hilbert_wrapper<dimension>::kernel = {
 template class hilbert_wrapper<3>;
 template class hilbert_wrapper<2>;
 
-}}} // namespace mdsim::gpu::sorts
-
+} // namespace mdsim
+} // namespace gpu
+} // namespace sorts
 } // namespace halmd

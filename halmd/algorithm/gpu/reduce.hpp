@@ -30,10 +30,9 @@
 #include <cuda_wrapper/cuda_wrapper.hpp>
 #include <halmd/algorithm/gpu/reduce_kernel.hpp>
 
-namespace halmd
-{
-namespace algorithm { namespace gpu
-{
+namespace halmd {
+namespace algorithm {
+namespace gpu {
 
 template <
     typename reduce_transform
@@ -149,8 +148,8 @@ struct reduce_blocks<max_, host_output_type>
     }
 };
 
-}} // namespace algorithm::gpu
-
+} // namespace algorithm
+} // namespace gpu
 } // namespace halmd
 
 #endif /* ! HALMD_ALGORITHM_GPU_REDUCE_HPP */

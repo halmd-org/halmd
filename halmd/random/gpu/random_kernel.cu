@@ -23,12 +23,10 @@
 #include <halmd/random/gpu/random_kernel.hpp>
 #include <halmd/utility/gpu/thread.cuh>
 
-namespace halmd
-{
-namespace random { namespace gpu
-{
-namespace random_kernel
-{
+namespace halmd {
+namespace random {
+namespace gpu {
+namespace random_kernel {
 
 // random number generator parameters
 static __constant__ random_number_generator rng;
@@ -97,6 +95,6 @@ random_wrapper<Rng> const random_wrapper<Rng>::kernel = {
 
 template class random_wrapper<random::gpu::rand48_rng>;
 
-}} // namespace random::gpu
-
+} // namespace random
+} // namespace gpu
 } // namespace halmd

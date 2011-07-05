@@ -25,8 +25,7 @@
 
 #include <halmd/utility/program_options/program_options.hpp>
 
-namespace halmd
-{
+namespace halmd {
 
 /**
  * Command-line options parser

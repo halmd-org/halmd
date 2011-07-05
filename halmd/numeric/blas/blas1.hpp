@@ -23,10 +23,10 @@
 #include <halmd/config.hpp>
 #include <halmd/numeric/blas/fixed_vector.hpp>
 
-namespace halmd
-{
-namespace detail { namespace numeric { namespace blas
-{
+namespace halmd {
+namespace detail {
+namespace numeric {
+namespace blas {
 
 /** provide functionality of BLAS Level 1 */
 
@@ -92,8 +92,9 @@ inline HALMD_GPU_ENABLED size_t index_norm_inf(fixed_vector<T, N> const& v)
 
 /** TODO: implement plane rotations */
 
-}}} // namespace detail::numeric::blas
-
+} // namespace detail
+} // namespace numeric
+} // namespace blas
 } // namespace halmd
 
 #endif /* ! HALMD_NUMERIC_BLAS_BLAS1_HPP */

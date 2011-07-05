@@ -22,10 +22,8 @@
 
 #include <lua.hpp>
 
-namespace halmd
-{
-namespace mdsim
-{
+namespace halmd {
+namespace mdsim {
 
 /**
  * The force module computes all interparticle forces.
@@ -50,7 +48,6 @@ public:
 };
 
 } // namespace mdsim
-
 } // namespace halmd
 
 #endif /* ! HALMD_MDSIM_FORCE_HPP */

@@ -27,11 +27,9 @@
 #include <halmd/utility/signal.hpp>
 
 /** HAL’s MD package */
-namespace halmd
-{
+namespace halmd {
 /** Molecular Dynamics simulation modules */
-namespace mdsim
-{
+namespace mdsim {
 
 class core
 {
@@ -137,7 +135,6 @@ private:
 };
 
 } // namespace mdsim
-
 } // namespace halmd
 
 #endif /* ! HALMD_MDSIM_CORE_HPP */

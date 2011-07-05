@@ -27,10 +27,9 @@
 #include <halmd/mdsim/particle.hpp>
 #include <halmd/mdsim/type_traits.hpp>
 
-namespace halmd
-{
-namespace mdsim { namespace gpu
-{
+namespace halmd {
+namespace mdsim {
+namespace gpu {
 
 template <unsigned int dimension, typename float_type>
 class particle
@@ -94,8 +93,8 @@ struct particle<dimension, float_type>::defaults
     static unsigned int threads();
 };
 
-}} // namespace mdsim::gpu
-
+} // namespace mdsim
+} // namespace gpu
 } // namespace halmd
 
 #endif /* ! HALMD_MDSIM_GPU_PARTICLE_HPP */

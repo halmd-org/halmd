@@ -26,10 +26,8 @@
 #include <halmd/io/logger.hpp>
 #include <halmd/utility/signal.hpp>
 
-namespace halmd
-{
-namespace utility
-{
+namespace halmd {
+namespace utility {
 
 /**
  * This class provides a periodic timer service.
@@ -69,7 +67,6 @@ private:
 };
 
 } // namespace utility
-
 } // namespace halmd
 
 #endif /* ! HALMD_UTILITY_TIMER_SERVICE_HPP */

@@ -26,10 +26,8 @@
 using namespace boost;
 using namespace std;
 
-namespace halmd
-{
-namespace mdsim
-{
+namespace halmd {
+namespace mdsim {
 
 clock::clock(time_type timestep)
   // initialise attributes
@@ -58,5 +56,4 @@ HALMD_LUA_API int luaopen_libhalmd_mdsim_clock(lua_State* L)
 }
 
 } // namespace mdsim
-
 } // namespace halmd

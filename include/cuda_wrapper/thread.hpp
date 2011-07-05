@@ -29,8 +29,7 @@
 
 #include <cuda_wrapper/error.hpp>
 
-namespace cuda
-{
+namespace cuda {
 
 class thread
 {
@@ -52,6 +51,6 @@ public:
     }
 };
 
-}
+} // namespace cuda
 
 #endif /* ! CUDA_THREAD_HPP */

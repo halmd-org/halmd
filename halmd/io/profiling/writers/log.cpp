@@ -29,8 +29,7 @@
 using namespace boost;
 using namespace std;
 
-namespace std // needed for Boost.Log << 1.0
-{
+namespace std { // needed for Boost.Log << 1.0
 
 using namespace halmd;
 
@@ -75,10 +74,10 @@ static ostream& operator<<(ostream& os, accumulator<T> const& acc)
 
 } // namespace std
 
-namespace halmd
-{
-namespace io { namespace profiling { namespace writers
-{
+namespace halmd {
+namespace io {
+namespace profiling {
+namespace writers {
 
 /**
  * compare total accumulated runtimes of acc_desc_pairs
@@ -131,6 +130,7 @@ HALMD_LUA_API int luaopen_libhalmd_io_profiling_writers_log(lua_State* L)
     return 0;
 }
 
-}}} // namespace io::profiling::writers
-
+} // namespace io
+} // namespace profiling
+} // namespace writers
 } // namespace halmd

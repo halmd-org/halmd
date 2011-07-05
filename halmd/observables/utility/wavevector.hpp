@@ -26,10 +26,9 @@
 
 #include <halmd/numeric/blas/fixed_vector.hpp>
 
-namespace halmd
-{
-namespace observables { namespace utility
-{
+namespace halmd {
+namespace observables {
+namespace utility {
 
 /**
  * construct set of wavevector shells compatible with the reciprocal
@@ -112,8 +111,8 @@ protected:
     map_type wavevector_;
 };
 
-}} // namespace observables::utility
-
+} // namespace observables
+} // namespace utility
 } // namespace halmd
 
 #endif /* ! HALMD_OBSERVABLES_UTILITY_WAVEVECTOR_HPP */

@@ -27,10 +27,10 @@
 using namespace boost;
 using namespace std;
 
-namespace halmd
-{
-namespace mdsim { namespace host { namespace forces
-{
+namespace halmd {
+namespace mdsim {
+namespace host {
+namespace forces {
 
 template <int dimension, typename float_type>
 zero<dimension, float_type>::zero(shared_ptr<particle_type> particle)
@@ -93,6 +93,7 @@ template class zero<3, float>;
 template class zero<2, float>;
 #endif
 
-}}} // namespace mdsim::host::forces
-
+} // namespace mdsim
+} // namespace host
+} // namespace forces
 } // namespace halmd

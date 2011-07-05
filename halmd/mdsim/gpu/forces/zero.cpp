@@ -27,10 +27,10 @@
 using namespace boost;
 using namespace std;
 
-namespace halmd
-{
-namespace mdsim { namespace gpu { namespace forces
-{
+namespace halmd {
+namespace mdsim {
+namespace gpu {
+namespace forces {
 
 template <int dimension, typename float_type>
 zero<dimension, float_type>::zero(shared_ptr<particle_type> particle)
@@ -90,6 +90,7 @@ HALMD_LUA_API int luaopen_libhalmd_mdsim_gpu_forces_zero(lua_State* L)
 template class zero<3, float>;
 template class zero<2, float>;
 
-}}} // namespace mdsim::gpu::forces
-
+} // namespace mdsim
+} // namespace gpu
+} // namespace forces
 } // namespace halmd

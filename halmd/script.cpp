@@ -32,8 +32,7 @@ using namespace std;
 
 HALMD_LUA_API int luaopen_libhalmd(lua_State* L);
 
-namespace halmd
-{
+namespace halmd {
 
 script::script()
   : L(luaL_newstate()) //< create Lua state

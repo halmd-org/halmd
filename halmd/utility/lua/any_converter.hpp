@@ -23,8 +23,7 @@
 #include <boost/any.hpp>
 #include <luabind/luabind.hpp>
 
-namespace luabind
-{
+namespace luabind {
 
 /**
  * Luabind converter for boost::any

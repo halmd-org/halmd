@@ -23,8 +23,7 @@
 #include <cstddef>
 #include <cuda.h>
 
-namespace cuda
-{
+namespace cuda {
 
 #if (CUDA_VERSION >= 3020)
 typedef std::size_t size_type;

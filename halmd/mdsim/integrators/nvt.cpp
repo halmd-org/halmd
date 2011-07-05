@@ -23,10 +23,9 @@
 using namespace boost;
 using namespace std;
 
-namespace halmd
-{
-namespace mdsim { namespace integrators
-{
+namespace halmd {
+namespace mdsim {
+namespace integrators {
 
 template <int dimension>
 void nvt<dimension>::luaopen(lua_State* L)
@@ -60,6 +59,6 @@ HALMD_LUA_API int luaopen_libhalmd_mdsim_integrators_nvt(lua_State* L)
 template class nvt<3>;
 template class nvt<2>;
 
-}} // namespace mdsim::integrators
-
+} // namespace mdsim
+} // namespace integrators
 } // namespace halmd

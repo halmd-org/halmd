@@ -28,10 +28,10 @@
 #include <halmd/mdsim/sort.hpp>
 #include <halmd/utility/profiler.hpp>
 
-namespace halmd
-{
-namespace mdsim { namespace gpu { namespace sorts
-{
+namespace halmd {
+namespace mdsim {
+namespace gpu {
+namespace sorts {
 
 template <int dimension, typename float_type>
 class hilbert
@@ -87,8 +87,9 @@ private:
     signal_type on_order_;
 };
 
-}}} // namespace mdsim::gpu::sorts
-
+} // namespace mdsim
+} // namespace gpu
+} // namespace sorts
 } // namespace halmd
 
 #endif /* ! HALMD_MDSIM_GPU_SORTS_HILBERT_HPP */

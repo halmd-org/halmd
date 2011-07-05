@@ -26,10 +26,9 @@
 #include <halmd/algorithm/gpu/scan.hpp>
 #include <halmd/random/gpu/rand48_kernel.hpp>
 
-namespace halmd
-{
-namespace random { namespace gpu
-{
+namespace halmd {
+namespace random {
+namespace gpu {
 
 /**
  * Parallelized rand48 random number generator for CUDA
@@ -92,8 +91,8 @@ private:
     rand48_rng rng_;
 };
 
-}} // namespace random::gpu
-
+} // namespace random
+} // namespace gpu
 } // namespace halmd
 
 #endif /* ! HALMD_RANDOM_GPU_RAND48_HPP */

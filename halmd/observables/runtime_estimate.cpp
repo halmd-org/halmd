@@ -29,10 +29,8 @@
 using namespace boost;
 using namespace std;
 
-namespace halmd
-{
-namespace observables
-{
+namespace halmd {
+namespace observables {
 
 runtime_estimate::runtime_estimate(shared_ptr<clock_type> clock, uint64_t total_steps, uint64_t step_start)
   // dependency injection
@@ -128,5 +126,4 @@ HALMD_LUA_API int luaopen_libhalmd_observables_runtime_estimate(lua_State* L)
 }
 
 } // namespace observables
-
 } // namespace halmd

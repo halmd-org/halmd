@@ -28,10 +28,9 @@
 #include <cuda_wrapper/driver/error.hpp>
 #include <cuda_wrapper/traits.hpp>
 
-namespace cuda
-{
-namespace driver { namespace mem
-{
+namespace cuda {
+namespace driver {
+namespace mem {
 
 /**
  * get total memory in bytes of current CUDA context
@@ -63,8 +62,8 @@ inline size_type free()
     return free;
 }
 
-}} // namespace driver::mem
-
+} // namespace mem
+} // namespace driver
 } // namespace cuda
 
 #endif /* ! CUDA_DRIVER_MEM_HPP */

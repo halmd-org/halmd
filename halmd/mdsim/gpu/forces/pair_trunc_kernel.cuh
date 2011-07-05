@@ -32,12 +32,11 @@
 using namespace halmd::mdsim::gpu::particle_kernel;
 using namespace halmd::utility::gpu;
 
-namespace halmd
-{
-namespace mdsim { namespace gpu { namespace forces
-{
-namespace pair_trunc_kernel
-{
+namespace halmd {
+namespace mdsim {
+namespace gpu {
+namespace forces {
+namespace pair_trunc_kernel {
 
 /** number of placeholders per neighbour list */
 static __constant__ unsigned int neighbour_size_;
@@ -150,8 +149,9 @@ pair_trunc_wrapper<dimension, potential_type>::kernel = {
   , pair_trunc_kernel::r_
 };
 
-}}} // namespace mdsim::gpu::forces
-
+} // namespace mdsim
+} // namespace gpu
+} // namespace forces
 } // namespace halmd
 
 #endif /* ! HALMD_MDSIM_GPU_FORCES_PAIR_TRUNC_KERNEL_CUH */

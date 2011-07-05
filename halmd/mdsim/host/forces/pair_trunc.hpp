@@ -37,10 +37,10 @@
 #include <halmd/utility/scoped_timer.hpp>
 #include <halmd/utility/timer.hpp>
 
-namespace halmd
-{
-namespace mdsim { namespace host { namespace forces
-{
+namespace halmd {
+namespace mdsim {
+namespace host {
+namespace forces {
 
 /**
  * template class for modules implementing short ranged potential forces
@@ -297,8 +297,9 @@ void pair_trunc<dimension, float_type, potential_type>::luaopen(lua_State* L)
     ];
 }
 
-}}} // namespace mdsim::host::forces
-
+} // namespace mdsim
+} // namespace host
+} // namespace forces
 } // namespace halmd
 
 #endif /* ! HALMD_MDSIM_HOST_FORCES_PAIR_TRUNC_HPP */

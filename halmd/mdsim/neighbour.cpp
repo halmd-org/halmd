@@ -26,10 +26,8 @@
 using namespace boost;
 using namespace std;
 
-namespace halmd
-{
-namespace mdsim
-{
+namespace halmd {
+namespace mdsim {
 
 template <typename neighbour_type>
 typename signal<void ()>::slot_function_type
@@ -64,5 +62,4 @@ template class neighbour<3>;
 template class neighbour<2>;
 
 } // namespace mdsim
-
 } // namespace halmd

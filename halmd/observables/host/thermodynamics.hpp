@@ -28,10 +28,9 @@
 #include <halmd/mdsim/host/force.hpp>
 #include <halmd/mdsim/host/particle.hpp>
 
-namespace halmd
-{
-namespace observables { namespace host
-{
+namespace halmd {
+namespace observables {
+namespace host {
 
 template <int dimension, typename float_type>
 class thermodynamics
@@ -88,8 +87,8 @@ public:
     }
 };
 
-}} // namespace observables::host
-
+} // namespace observables
+} // namespace host
 } // namespace halmd
 
 #endif /* ! HALMD_OBSERVABLES_THERMODYNAMICS_HPP */

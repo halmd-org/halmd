@@ -28,10 +28,8 @@
 using namespace boost;
 using namespace std;
 
-namespace halmd
-{
-namespace mdsim
-{
+namespace halmd {
+namespace mdsim {
 
 /**
  * Initialize simulation
@@ -116,5 +114,4 @@ HALMD_LUA_API int luaopen_libhalmd_mdsim_core(lua_State* L)
 }
 
 } // namespace mdsim
-
 } // namespace halmd

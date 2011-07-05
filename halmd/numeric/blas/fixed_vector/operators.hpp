@@ -36,10 +36,10 @@
 
 #include <halmd/config.hpp>
 
-namespace halmd
-{
-namespace detail { namespace numeric { namespace blas
-{
+namespace halmd {
+namespace detail {
+namespace numeric {
+namespace blas {
 
 HALMD_GPU_USING(algorithm::gpu::tuple, boost::tuple);
 HALMD_GPU_USING(algorithm::gpu::tie, boost::tie);
@@ -510,8 +510,9 @@ inline std::istream& operator>>(std::istream& is, fixed_vector<T, N>& v)
 
 #endif /* ! __CUDACC__ */
 
-}}} // namespace detail::numeric::blas
-
+} // namespace detail
+} // namespace numeric
+} // namespace blas
 // import into top-level namespace
 using detail::numeric::blas::fixed_vector;
 

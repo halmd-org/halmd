@@ -29,10 +29,10 @@
 #include <halmd/numeric/mp/dsfloat.hpp>
 #include <halmd/random/gpu/random.hpp>
 
-namespace halmd
-{
-namespace mdsim { namespace gpu { namespace velocities
-{
+namespace halmd {
+namespace mdsim {
+namespace gpu {
+namespace velocities {
 
 template <int dimension, typename float_type, typename RandomNumberGenerator>
 class boltzmann
@@ -84,8 +84,9 @@ protected:
     cuda::vector<dsfloat> g_vv_;
 };
 
-}}} // namespace mdsim::gpu::velocities
-
+} // namespace mdsim
+} // namespace gpu
+} // namespace velocities
 } // namespace halmd
 
 #endif /* ! HALMD_MDSIM_GPU_VELOCITIES_BOLTZMANN_HPP */
