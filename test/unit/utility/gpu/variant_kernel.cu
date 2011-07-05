@@ -27,9 +27,6 @@
 
 #include <test/unit/utility/gpu/variant_kernel.hpp>
 
-namespace variant_kernel
-{
-
 /**
  * Returns alignment of type in first element of result array.
  *
@@ -52,13 +49,11 @@ __global__ void sizeof_(size_t* result)
     *result = boost::mpl::sizeof_<T>::value;
 }
 
-} // namespace variant_kernel
-
 // wrap test kernels for arbitrary type
 template <typename T>
 prerequisites_wrapper<T> prerequisites_wrapper<T>::kernel = {
-    &variant_kernel::alignment_of<T>
-  , &variant_kernel::sizeof_<T>
+    &::alignment_of<T>
+  , &::sizeof_<T>
 };
 
 // instantiate test kernels for specific types

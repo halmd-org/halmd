@@ -20,14 +20,21 @@
 #define BOOST_TEST_MODULE dsfun
 #include <boost/test/unit_test.hpp>
 
+#include <cuda_wrapper/cuda_wrapper.hpp>
+#include <halmd/numeric/mp/dsfloat.hpp>
 #include <test/tools/cuda.hpp>
-#include <test/unit/numeric/mp/dsfun_kernel.hpp>
 
 #define BLOCKS 4096
 #define THREADS 128
 
 using namespace halmd;
-using namespace halmd::test;
+
+extern cuda::function<void (dsfloat const*, dsfloat const*, dsfloat*)> kernel_add;
+extern cuda::function<void (dsfloat const*, dsfloat const*, dsfloat*)> kernel_sub;
+extern cuda::function<void (dsfloat const*, dsfloat const*, dsfloat*)> kernel_mul;
+extern cuda::function<void (float const*, float const*, dsfloat*)> kernel_mulss;
+extern cuda::function<void (dsfloat const*, dsfloat const*, dsfloat*)> kernel_div;
+extern cuda::function<void (dsfloat const*, dsfloat*)> kernel_sqrt;
 
 BOOST_GLOBAL_FIXTURE( set_cuda_device );
 

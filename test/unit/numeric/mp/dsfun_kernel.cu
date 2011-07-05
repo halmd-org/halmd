@@ -17,14 +17,11 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <test/unit/numeric/mp/dsfun_kernel.hpp>
+#include <cuda_wrapper/cuda_wrapper.hpp>
+#include <halmd/numeric/mp/dsfloat.hpp>
 
+using halmd::dsfloat;
 using halmd::detail::numeric::mp::dsmulss;
-
-namespace halmd
-{
-namespace test
-{
 
 /**
  * DSFUN addition test
@@ -88,7 +85,3 @@ cuda::function<void (dsfloat const*, dsfloat const*, dsfloat*)> kernel_mul(__ker
 cuda::function<void (float const*, float const*, dsfloat*)> kernel_mulss(__kernel_mulss);
 cuda::function<void (dsfloat const*, dsfloat const*, dsfloat*)> kernel_div(__kernel_div);
 cuda::function<void (dsfloat const*, dsfloat*)> kernel_sqrt(__kernel_sqrt);
-
-} // namespace test
-
-} // namespace halmd

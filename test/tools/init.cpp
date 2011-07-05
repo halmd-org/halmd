@@ -75,12 +75,11 @@ HALMD_TEST_INIT( append_vector )
     vector().push_back(M_PI_4);
 }
 
-namespace halmd
-{
+namespace test_init {
 
 HALMD_TEST_INIT( append_vector )
 {
     vector().push_back(M_1_PI);
 }
 
-} // namespace halmd
+} // namespace test_init

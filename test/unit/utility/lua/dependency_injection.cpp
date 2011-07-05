@@ -38,36 +38,36 @@ using namespace std;
 /**
  * A hierarchy of test dummy modules.
  */
-namespace test_dummy
+namespace test_dummy {
+
+struct particle
 {
-    struct particle
-    {
-        virtual ~particle() {}
-    };
+    virtual ~particle() {}
+};
 
-    struct particle_host : particle {};
+struct particle_host : particle {};
 
-    struct box
-    {
-        box(shared_ptr<test_dummy::particle> particle)
-          : particle(particle) {}
+struct box
+{
+    box(shared_ptr<test_dummy::particle> particle)
+      : particle(particle) {}
 
-        shared_ptr<test_dummy::particle> particle;
-    };
+    shared_ptr<test_dummy::particle> particle;
+};
 
-    struct integrator
-    {
-        virtual ~integrator() {}
-    };
+struct integrator
+{
+    virtual ~integrator() {}
+};
 
-    struct verlet_host
-      : integrator
-    {
-        verlet_host(shared_ptr<test_dummy::particle_host> particle)
-          : particle(particle) {}
+struct verlet_host
+  : integrator
+{
+    verlet_host(shared_ptr<test_dummy::particle_host> particle)
+      : particle(particle) {}
 
-        shared_ptr<test_dummy::particle_host> particle;
-    };
+    shared_ptr<test_dummy::particle_host> particle;
+};
 
 } // namespace test_dummy
 
