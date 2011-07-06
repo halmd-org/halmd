@@ -39,27 +39,31 @@ namespace host {
  */
 template <int dimension, typename float_type>
 neighbour<dimension, float_type>::neighbour(
-    shared_ptr<particle_type const> particle
+    shared_ptr<particle_type const> particle1
+  , shared_ptr<particle_type const> particle2
+  , shared_ptr<binning_type const> binning1
+  , shared_ptr<binning_type const> binning2
   , shared_ptr<box_type const> box
-  , shared_ptr<binning_type const> binning
   , matrix_type const& r_cut
   , double skin
   , shared_ptr<logger> logger
 )
   // dependency injection
-  : particle_(particle)
+  : particle1_(particle1)
+  , particle2_(particle2)
+  , binning1_(binning1)
+  , binning2_(binning2)
   , box_(box)
-  , binning_(binning)
   , logger_(logger)
   // allocate parameters
-  , neighbour_(particle_->nbox)
+  , neighbour_(particle1_->nbox)
   , r_skin_(skin)
-  , rr_cut_skin_(particle_->ntype, particle_->ntype)
+  , rr_cut_skin_(particle1_->ntype, particle1_->ntype)
 {
-    matrix_type r_cut_skin(particle_->ntype, particle_->ntype);
+    matrix_type r_cut_skin(particle1_->ntype, particle1_->ntype);
     typename matrix_type::value_type r_cut_max = 0;
-    for (size_t i = 0; i < particle_->ntype; ++i) {
-        for (size_t j = i; j < particle_->ntype; ++j) {
+    for (size_t i = 0; i < particle1_->ntype; ++i) {
+        for (size_t j = i; j < particle1_->ntype; ++j) {
             r_cut_skin(i, j) = r_cut(i, j) + r_skin_;
             rr_cut_skin_(i, j) = std::pow(r_cut_skin(i, j), 2);
             r_cut_max = max(r_cut_skin(i, j), r_cut_max);
@@ -85,7 +89,7 @@ void neighbour<dimension, float_type>::update()
 
     scoped_timer_type timer(runtime_.update);
 
-    cell_size_type const& ncell = binning_->ncell();
+    cell_size_type const& ncell = binning1_->ncell();
     cell_size_type i;
     for (i[0] = 0; i[0] < ncell[0]; ++i[0]) {
         for (i[1] = 0; i[1] < ncell[1]; ++i[1]) {
@@ -107,10 +111,11 @@ void neighbour<dimension, float_type>::update()
 template <int dimension, typename float_type>
 void neighbour<dimension, float_type>::update_cell_neighbours(cell_size_type const& i)
 {
-    cell_lists const& cell = binning_->cell();
-    cell_size_type const& ncell = binning_->ncell();
+    cell_size_type const& ncell = binning1_->ncell();
+    cell_lists const& cell1 = binning1_->cell();
+    cell_lists const& cell2 = binning2_->cell();
 
-    BOOST_FOREACH(size_t p, cell(i)) {
+    BOOST_FOREACH(size_t p, cell1(i)) {
         // empty neighbour list of particle
         neighbour_[p].clear();
 
@@ -125,7 +130,7 @@ void neighbour<dimension, float_type>::update_cell_neighbours(cell_size_type con
                         }
                         // update neighbour list of particle
                         cell_size_type k = element_mod(static_cast<cell_size_type>(static_cast<cell_diff_type>(i + ncell) + j), ncell);
-                        compute_cell_neighbours<false>(p, cell(k));
+                        compute_cell_neighbours<false>(p, cell2(k));
                     }
                 }
                 else {
@@ -135,13 +140,13 @@ void neighbour<dimension, float_type>::update_cell_neighbours(cell_size_type con
                     }
                     // update neighbour list of particle
                     cell_size_type k = element_mod(static_cast<cell_size_type>(static_cast<cell_diff_type>(i + ncell) + j), ncell);
-                    compute_cell_neighbours<false>(p, cell(k));
+                    compute_cell_neighbours<false>(p, cell2(k));
                 }
             }
         }
 self:
         // visit this cell
-        compute_cell_neighbours<true>(p, cell(i));
+        compute_cell_neighbours<true>(p, cell2(i));
     }
 }
 
@@ -152,21 +157,23 @@ template <int dimension, typename float_type>
 template <bool same_cell>
 void neighbour<dimension, float_type>::compute_cell_neighbours(size_t i, cell_list const& c)
 {
+    vector<vector_type> const& r1 = particle1_->r;
+    vector<vector_type> const& r2 = particle2_->r;
+    vector<unsigned int> const& type1 = particle1_->type;
+    vector<unsigned int> const& type2 = particle2_->type;
+
     BOOST_FOREACH(size_t j, c) {
         // skip identical particle and particle pair permutations if same cell
-        if (same_cell
-         && particle_->type[j] <= particle_->type[i] //< lexical order of (type, tag)
-         && particle_->tag[j] <= particle_->tag[i]
-        ) {
+        if (same_cell && particle1_ == particle2_ && j <= i) {
             continue;
         }
 
         // particle distance vector
-        vector_type r = particle_->r[i] - particle_->r[j];
+        vector_type r = r1[i] - r2[j];
         box_->reduce_periodic(r);
         // particle types
-        size_t a = particle_->type[i];
-        size_t b = particle_->type[j];
+        size_t a = type1[i];
+        size_t b = type2[j];
         // squared particle distance
         float_type rr = inner_prod(r, r);
 
@@ -194,8 +201,10 @@ void neighbour<dimension, float_type>::luaopen(lua_State* L)
                 class_<neighbour, shared_ptr<mdsim::neighbour>, mdsim::neighbour>(class_name.c_str())
                     .def(constructor<
                         shared_ptr<particle_type const>
-                      , shared_ptr<box_type const>
+                      , shared_ptr<particle_type const>
                       , shared_ptr<binning_type const>
+                      , shared_ptr<binning_type const>
+                      , shared_ptr<box_type const>
                       , matrix_type const&
                       , double
                       , shared_ptr<logger_type>

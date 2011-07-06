@@ -55,9 +55,11 @@ public:
     static void luaopen(lua_State* L);
 
     neighbour(
-        boost::shared_ptr<particle_type const> particle
+        boost::shared_ptr<particle_type const> particle1
+      , boost::shared_ptr<particle_type const> particle2
+      , boost::shared_ptr<binning_type const> binning1
+      , boost::shared_ptr<binning_type const> binning2
       , boost::shared_ptr<box_type const> box
-      , boost::shared_ptr<binning_type const> binning
       , matrix_type const& r_cut
       , double skin
       , boost::shared_ptr<logger_type> logger = boost::make_shared<logger_type>()
@@ -96,9 +98,11 @@ private:
     typedef typename binning_type::cell_list cell_list;
     typedef typename binning_type::cell_lists cell_lists;
 
-    boost::shared_ptr<particle_type const> particle_;
+    boost::shared_ptr<particle_type const> particle1_;
+    boost::shared_ptr<particle_type const> particle2_;
+    boost::shared_ptr<binning_type const> binning1_;
+    boost::shared_ptr<binning_type const> binning2_;
     boost::shared_ptr<box_type const> box_;
-    boost::shared_ptr<binning_type const> binning_;
     boost::shared_ptr<logger_type> logger_;
 
     void update_cell_neighbours(cell_size_type const& i);
