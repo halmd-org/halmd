@@ -1,3 +1,5 @@
+add_subdirectory(writers)
+
 add_executable(test_unit_io_logger
   logger.cpp
 )
