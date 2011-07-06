@@ -81,9 +81,9 @@ __global__ void compute(
     fixed_vector<float, (dimension - 1) * dimension / 2 + 1> stress_pot = 0;
 #ifdef USE_FORCE_DSFUN
     // force sum
-    fixed_vector<dsfloat, dimension> f = 0;
+    fixed_vector<dsfloat, dimension> f = static_cast<vector_type>(g_f[i]);
 #else
-    vector_type f = 0;
+    vector_type f = static_cast<vector_type>(g_f[i]);
 #endif
 
     for (unsigned int k = 0; k < neighbour_size_; ++k) {
