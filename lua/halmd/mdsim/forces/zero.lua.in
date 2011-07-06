@@ -19,7 +19,6 @@
 
 require("halmd.device")
 require("halmd.mdsim.core")
-require("halmd.mdsim.particle")
 require("halmd.modules")
 
 -- grab modules
@@ -47,7 +46,7 @@ module("halmd.mdsim.forces.zero", halmd.modules.register)
 -- construct zero module
 --
 function new(args)
-    local particle = mdsim.particle() -- singleton
+    local particle = assert(args.particle)
     local dimension = assert(particle.dimension)
 
     local zero
