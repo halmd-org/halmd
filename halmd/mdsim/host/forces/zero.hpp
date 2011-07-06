@@ -1,5 +1,5 @@
 /*
- * Copyright © 2010-2011  Felix Höfling
+ * Copyright © 2010-2011  Felix Höfling and Peter Colberg
  *
  * This file is part of HALMD.
  *
@@ -51,9 +51,8 @@ public:
     static void luaopen(lua_State* L);
 
     zero(boost::shared_ptr<particle_type> particle);
-
-    // there's nothing to compute
-    virtual void compute() {}
+    /** zero particle forces */
+    virtual void compute();
 
     // nothing to enable or disable
     virtual void aux_enable() {}

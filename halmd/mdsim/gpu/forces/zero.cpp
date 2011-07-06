@@ -1,5 +1,5 @@
 /*
- * Copyright © 2010  Felix Höfling
+ * Copyright © 2010-2011  Felix Höfling and Peter Colberg
  *
  * This file is part of HALMD.
  *
@@ -21,6 +21,7 @@
 #include <boost/shared_ptr.hpp>
 #include <string>
 
+#include <halmd/io/logger.hpp>
 #include <halmd/mdsim/gpu/forces/zero.hpp>
 #include <halmd/utility/lua/lua.hpp>
 
@@ -41,11 +42,16 @@ zero<dimension, float_type>::zero(shared_ptr<particle_type> particle)
   , g_stress_pot_(particle->dim.threads())
   , g_hypervirial_(particle->dim.threads())
 {
-    // initialise particle forces, potential energy, and stress tensor to zero
-    cuda::memset(particle->g_f, 0);
     cuda::memset(g_en_pot_, 0);
     cuda::memset(g_stress_pot_, 0);
     cuda::memset(g_hypervirial_, 0);
+}
+
+template <int dimension, typename float_type>
+void zero<dimension, float_type>::compute()
+{
+    LOG_TRACE("zero particle forces");
+    cuda::memset(particle->g_f, 0);
 }
 
 template <int dimension, typename float_type>
