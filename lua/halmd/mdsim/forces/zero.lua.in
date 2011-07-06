@@ -59,8 +59,10 @@ function new(args)
     local force = zero(particle)
 
     local core = mdsim.core()
-    -- system preparation
-    core:on_append_setup{force.compute, tracker = force}
+    -- zero forces as early as possible during system preparation
+    core:on_prepend_setup{force.compute, tracker = force}
+    -- zero forces before adding partial forces of each potential
+    core:on_prepend_force{force.compute, tracker = force}
 
     return force
 end
