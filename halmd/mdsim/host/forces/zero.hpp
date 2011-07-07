@@ -43,6 +43,7 @@ public:
     typedef typename _Base::stress_tensor_type stress_tensor_type;
 
     typedef host::particle<dimension, float_type> particle_type;
+    typedef typename particle_type::vector_type vector_type;
 
     static char const* module_name() { return "zero"; }
 
