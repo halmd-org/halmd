@@ -40,7 +40,7 @@ void host(size_t size)
 {
     typedef float float_type;
     std::vector<float_type> a(size);
-    size_t iterations = std::min(16384UL, (1UL << 28) / size);
+    size_t iterations = std::min(4096UL, (1UL << 28) / size);
     BOOST_TEST_MESSAGE("Measuring execution times over " << iterations << " iterations"
         << " for zeroing " << size << " floats"
     );
@@ -79,7 +79,7 @@ void gpu(size_t size)
 {
     typedef float float_type;
     cuda::vector<float_type> a(size);
-    size_t iterations = std::min(16384UL, (1UL << 28) / size);
+    size_t iterations = std::min(4096UL, (1UL << 28) / size);
     BOOST_TEST_MESSAGE("Measuring execution times over " << iterations << " iterations"
         << " for zeroing " << size << " floats"
     );
