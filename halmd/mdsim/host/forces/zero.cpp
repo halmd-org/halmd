@@ -44,9 +44,7 @@ template <int dimension, typename float_type>
 void zero<dimension, float_type>::compute()
 {
     LOG_TRACE("zero particle forces");
-    memset(&particle->f.front(), 0, sizeof(vector_type) * particle->f.size());
-    assert(particle->f[0] == vector_type(0)); // ensure IEEE 754 conformity
-//     fill(particle->f.begin(), particle->f.end(), 0);
+    fill(particle->f.begin(), particle->f.end(), 0);
 }
 
 template <int dimension, typename float_type>
