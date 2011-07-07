@@ -47,8 +47,8 @@ public:
     typedef gpu::binning<dimension, float_type> binning_type;
     typedef utility::profiler profiler_type;
     struct defaults;
-    typedef typename from_binning::signal_type signal_type;
-    typedef typename from_binning::slot_function_type slot_function_type;
+    typedef typename from_binning::signal_type signal_type; // import type from base class
+    typedef typename from_binning::slot_function_type slot_function_type; // import type from base class
 
     static void luaopen(lua_State* L);
 
