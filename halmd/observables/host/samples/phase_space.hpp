@@ -1,5 +1,5 @@
 /*
- * Copyright © 2008-2010  Peter Colberg
+ * Copyright © 2008-2011  Peter Colberg
  *
  * This file is part of HALMD.
  *
@@ -20,6 +20,7 @@
 #ifndef HALMD_OBSERVABLES_HOST_SAMPLES_PHASE_SPACE_HPP
 #define HALMD_OBSERVABLES_HOST_SAMPLES_PHASE_SPACE_HPP
 
+#include <boost/function.hpp>
 #include <boost/shared_ptr.hpp>
 #include <lua.hpp>
 #include <stdint.h>
@@ -55,6 +56,18 @@ public:
     static void luaopen(lua_State* L);
 
     phase_space(std::vector<unsigned int> ntypes);
+    /** get particle positions of given type */
+    sample_vector const& get_position(unsigned int type) const;
+    /** get particle velocities of given type */
+    sample_vector const& get_velocity(unsigned int type) const;
+    /** set particle positions of given type */
+    void set_position(unsigned int type, sample_vector const& position);
+    /** set particle velocities of given type */
+    void set_velocity(unsigned int type, sample_vector const& velocity);
+    /** set particle positions of given type from slot */
+    void set_position(unsigned int type, boost::function<void (sample_vector&)> const& slot);
+    /** set particle velocities of given type from slot */
+    void set_velocity(unsigned int type, boost::function<void (sample_vector&)> const& slot);
 };
 
 } // namespace observables
