@@ -24,7 +24,9 @@
 #include <boost/bind.hpp>
 #include <boost/make_shared.hpp>
 #include <cmath>
+#include <functional> // std::multiplies
 #include <limits>
+#include <numeric> // std::accumulate
 
 #include <halmd/mdsim/box.hpp>
 #include <halmd/mdsim/host/particle.hpp>
