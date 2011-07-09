@@ -25,39 +25,40 @@
 #include <boost/shared_ptr.hpp>
 #include <ctime>
 
-#include <halmd/io/writers/h5md.hpp>
+#include <halmd/io/writers/h5md/file.hpp>
 
 using namespace boost;
 using namespace halmd;
 using namespace halmd::io; // avoid ambiguity of io:: between halmd::io and boost::io
 using namespace std;
 
-struct writer
+struct create_file
 {
-    typedef writers::h5md::version_type version_type;
+    typedef writers::h5md::file file_type;
+    typedef file_type::version_type version_type;
     /** create H5MD file */
-    writer() {
-        file = make_shared<writers::h5md>("h5md.h5");
+    create_file() {
+        file = make_shared<file_type>("h5md.h5");
     }
     /** close and unlink H5MD file */
-    ~writer() {
+    ~create_file() {
         file.reset();
         filesystem::remove("h5md.h5");
     }
-    shared_ptr<writers::h5md> file;
+    shared_ptr<file_type> file;
 };
 
-BOOST_FIXTURE_TEST_CASE( check_version, writer )
+BOOST_FIXTURE_TEST_CASE( check_version, create_file )
 {
-    H5::Group attr = file->file().openGroup("h5md");
+    H5::Group attr = file->root().openGroup("h5md");
     version_type version = h5xx::read_attribute<version_type>(attr, "version");
     BOOST_CHECK_EQUAL( version[0], file->version()[0] );
     BOOST_CHECK_EQUAL( version[1], file->version()[1] );
 }
 
-BOOST_FIXTURE_TEST_CASE( read_attributes, writer )
+BOOST_FIXTURE_TEST_CASE( read_attributes, create_file )
 {
-    H5::Group attr = file->file().openGroup("h5md");
+    H5::Group attr = file->root().openGroup("h5md");
     version_type version = h5xx::read_attribute<version_type>(attr, "version");
     BOOST_TEST_MESSAGE( "H5MD major version:\t" << version[0] );
     BOOST_TEST_MESSAGE( "H5MD minor version:\t" << version[1] );
@@ -69,12 +70,12 @@ BOOST_FIXTURE_TEST_CASE( read_attributes, writer )
     BOOST_TEST_MESSAGE( "H5MD creator version:\t" << h5xx::read_attribute<string>(attr, "creator_version") );
 }
 
-BOOST_FIXTURE_TEST_CASE( flush_file, writer )
+BOOST_FIXTURE_TEST_CASE( flush_file, create_file )
 {
     BOOST_CHECK_NO_THROW( file->flush() );
 }
 
-BOOST_FIXTURE_TEST_CASE( close_file, writer )
+BOOST_FIXTURE_TEST_CASE( close_file, create_file )
 {
     BOOST_CHECK_NO_THROW( file->close() );
 }

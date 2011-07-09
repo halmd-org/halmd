@@ -17,8 +17,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef HALMD_IO_WRITERS_H5MD_HPP
-#define HALMD_IO_WRITERS_H5MD_HPP
+#ifndef HALMD_IO_WRITERS_H5MD_FILE_HPP
+#define HALMD_IO_WRITERS_H5MD_FILE_HPP
 
 #include <boost/array.hpp>
 #include <lua.hpp>
@@ -28,6 +28,7 @@
 namespace halmd {
 namespace io {
 namespace writers {
+namespace h5md {
 
 /**
  * H5MD file writer
@@ -35,31 +36,22 @@ namespace writers {
  * This class provides a common base for all H5MD file writers.
  * It creates the H5MD file and writes the H5MD attributes.
  */
-class h5md
+class file
 {
 public:
     /** H5MD major and minor file version type */
     typedef boost::array<int, 2> version_type;
 
     /** create H5MD file */
-    h5md(std::string const& path);
+    file(std::string const& path);
     /** flush file to disk */
     void flush();
     /** explicitly close file */
     void close();
-
-    /** get HDF5 file object */
-    H5::H5File const& file() const
-    {
-        return file_;
-    }
-
+    /** get HDF5 root group */
+    H5::Group root() const;
     /** get file pathname */
-    std::string path() const
-    {
-        return file_.getFileName();
-    }
-
+    std::string path() const;
     /** get H5MD file version */
     static version_type version();
     /** Lua bindings */
@@ -70,8 +62,9 @@ private:
     H5::H5File file_;
 };
 
+} // namespace h5md
 } // namespace writers
 } // namespace io
 } // namespace halmd
 
-#endif /* ! HALMD_IO_WRITERS_H5MD_HPP */
+#endif /* ! HALMD_IO_WRITERS_H5MD_FILE_HPP */
