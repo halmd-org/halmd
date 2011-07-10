@@ -37,11 +37,14 @@ namespace halmd {
 script::script()
   : L(luaL_newstate()) //< create Lua state
 {
-    luaL_openlibs(L); //< load Lua standard libraries
-
-    package_path(); //< set Lua package path
-
-    luaopen_libhalmd(L); //< load HALMD Lua C++ wrapper
+    // load Lua standard libraries
+    luaL_openlibs(L);
+    // set Lua package path
+    package_path();
+    // print Lua stack trace on error
+    luabind::set_pcall_callback(&script::traceback);
+    // load HALMD Lua C++ wrapper
+    luaopen_libhalmd(L);
 }
 
 script::~script()
@@ -97,9 +100,6 @@ void script::load_library()
     using namespace luabind;
 
     try {
-#ifndef NDEBUG
-        scoped_pcall_callback pcall_callback(&traceback);
-#endif
         call_function<void>(L, "require", "halmd");
     }
     catch (luabind::error const& e) {
@@ -136,9 +136,6 @@ void script::options(options_parser& parser)
     // call_function throws an exception
     object options(globals(L)["halmd"]["option"]["get"]);
     try {
-#ifndef NDEBUG
-        scoped_pcall_callback pcall_callback(&traceback);
-#endif
         call_function<void>(options, ref(parser));
     }
     catch (luabind::error const& e) {
@@ -157,9 +154,6 @@ void script::parsed(po::variables_map const& vm)
 
     object options(globals(L)["halmd"]["option"]["set"]);
     try {
-#ifndef NDEBUG
-        scoped_pcall_callback pcall_callback(&traceback);
-#endif
         call_function<void>(options, vm);
     }
     catch (luabind::error const& e) {
@@ -178,9 +172,6 @@ void script::run()
 
     shared_ptr<observables::sampler> sampler;
     try {
-#ifndef NDEBUG
-        scoped_pcall_callback pcall_callback(&traceback);
-#endif
         sampler = call_function<shared_ptr<observables::sampler> >(L, "halmd");
     }
     catch (luabind::error const& e) {
