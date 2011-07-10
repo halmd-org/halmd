@@ -50,16 +50,27 @@ protected:
 
 public:
     typedef SlotFunction slot_function_type;
-    typedef typename slot_type::iterator connection;
+
+    class connection
+    {
+    public:
+        void disconnect()
+        {
+            slots_.erase(iter_);
+        }
+
+    private:
+        friend class signal_base;
+
+        connection(slot_type& slots, slot_iterator iter) : slots_(slots), iter_(iter) {}
+
+        slot_type& slots_;
+        slot_iterator iter_;
+    };
 
     connection connect(slot_function_type const& slot)
     {
-        return slots_.insert(slots_.end(), slot);
-    }
-
-    void disconnect(connection const& c)
-    {
-        slots_.erase(c);
+        return connection(slots_, slots_.insert(slots_.end(), slot));
     }
 
     void disconnect_all_slots()
