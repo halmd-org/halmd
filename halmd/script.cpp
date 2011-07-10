@@ -43,6 +43,8 @@ script::script()
     package_path();
     // print Lua stack trace on error
     luabind::set_pcall_callback(&script::traceback);
+    // translate C++ standard exceptions into error messages
+    register_exception_handlers();
     // load HALMD Lua C++ wrapper
     luaopen_libhalmd(L);
 }
@@ -204,6 +206,85 @@ int script::traceback(lua_State* L)
     lua_call(L, 0, 1);
     lua_concat(L, 3);
     return 1;
+}
+
+static void translate_logic_error(lua_State* L, logic_error const& e)
+{
+    lua_pushliteral(L, "Logic error: ");
+    lua_pushstring(L, e.what());
+    lua_concat(L, 2);
+}
+
+static void translate_domain_error(lua_State* L, domain_error const& e)
+{
+    lua_pushliteral(L, "Domain error: ");
+    lua_pushstring(L, e.what());
+    lua_concat(L, 2);
+}
+
+static void translate_invalid_argument(lua_State* L, invalid_argument const& e)
+{
+    lua_pushliteral(L, "Invalid argument: ");
+    lua_pushstring(L, e.what());
+    lua_concat(L, 2);
+}
+
+static void translate_length_error(lua_State* L, length_error const& e)
+{
+    lua_pushliteral(L, "Length error: ");
+    lua_pushstring(L, e.what());
+    lua_concat(L, 2);
+}
+
+static void translate_out_of_range(lua_State* L, out_of_range const& e)
+{
+    lua_pushliteral(L, "Out-of-range error: ");
+    lua_pushstring(L, e.what());
+    lua_concat(L, 2);
+}
+
+static void translate_runtime_error(lua_State* L, runtime_error const& e)
+{
+    lua_pushliteral(L, "Runtime error: ");
+    lua_pushstring(L, e.what());
+    lua_concat(L, 2);
+}
+
+static void translate_range_error(lua_State* L, range_error const& e)
+{
+    lua_pushliteral(L, "Range error: ");
+    lua_pushstring(L, e.what());
+    lua_concat(L, 2);
+}
+
+static void translate_overflow_error(lua_State* L, overflow_error const& e)
+{
+    lua_pushliteral(L, "Overflow error: ");
+    lua_pushstring(L, e.what());
+    lua_concat(L, 2);
+}
+
+static void translate_underflow_error(lua_State* L, underflow_error const& e)
+{
+    lua_pushliteral(L, "Underflow error: ");
+    lua_pushstring(L, e.what());
+    lua_concat(L, 2);
+}
+
+void script::register_exception_handlers()
+{
+    // C++ standard exceptions
+    // http://www.cplusplus.com/reference/std/stdexcept/
+    using namespace luabind;
+    register_exception_handler<logic_error>(&translate_logic_error);
+    register_exception_handler<domain_error>(&translate_domain_error);
+    register_exception_handler<invalid_argument>(&translate_invalid_argument);
+    register_exception_handler<length_error>(&translate_length_error);
+    register_exception_handler<out_of_range>(&translate_out_of_range);
+    register_exception_handler<runtime_error>(&translate_runtime_error);
+    register_exception_handler<range_error>(&translate_range_error);
+    register_exception_handler<overflow_error>(&translate_overflow_error);
+    register_exception_handler<underflow_error>(&translate_underflow_error);
 }
 
 } // namespace halmd
