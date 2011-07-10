@@ -19,8 +19,8 @@
 
 #include <algorithm>
 #include <boost/bind.hpp>
-#include <cassert>
 #include <limits>
+#include <stdexcept>
 
 #include <halmd/observables/host/samples/phase_space.hpp>
 #include <halmd/utility/demangle.hpp>
@@ -54,12 +54,13 @@ static int wrap_dimension(phase_space<dimension, float_type> const&)
     return dimension;
 }
 
-
 template <int dimension, typename float_type>
 typename phase_space<dimension, float_type>::sample_vector const&
 phase_space<dimension, float_type>::get_position(unsigned int type) const
 {
-    assert(type < r.size());
+    if (!(type < r.size())) {
+        throw invalid_argument("particle type");
+    }
     return *r[type];
 }
 
@@ -67,37 +68,57 @@ template <int dimension, typename float_type>
 typename phase_space<dimension, float_type>::sample_vector const&
 phase_space<dimension, float_type>::get_velocity(unsigned int type) const
 {
-    assert(type < v.size());
+    if (!(type < v.size())) {
+        throw invalid_argument("particle type");
+    }
     return *v[type];
 }
 
 template <int dimension, typename float_type>
 void phase_space<dimension, float_type>::set_position(unsigned int type, sample_vector const& position)
 {
-    assert(type < r.size());
-    assert(position.size() == r[type]->size());
+    if (!(type < r.size())) {
+        throw invalid_argument("particle type");
+    }
+    if (position.size() < r[type]->size()) {
+        throw invalid_argument("too few particle positions");
+    }
+    if (position.size() > r[type]->size()) {
+        throw invalid_argument("too many particle positions");
+    }
     copy(position.begin(), position.end(), r[type]->begin());
 }
 
 template <int dimension, typename float_type>
 void phase_space<dimension, float_type>::set_velocity(unsigned int type, sample_vector const& velocity)
 {
-    assert(type < r.size());
-    assert(velocity.size() == v[type]->size());
+    if (!(type < r.size())) {
+        throw invalid_argument("particle type");
+    }
+    if (velocity.size() < v[type]->size()) {
+        throw invalid_argument("too few particle velocities");
+    }
+    if (velocity.size() > v[type]->size()) {
+        throw invalid_argument("too many particle velocities");
+    }
     copy(velocity.begin(), velocity.end(), v[type]->begin());
 }
 
 template <int dimension, typename float_type>
 void phase_space<dimension, float_type>::set_position(unsigned int type, function<void (sample_vector&)> const& slot)
 {
-    assert(type < r.size());
+    if (!(type < r.size())) {
+        throw invalid_argument("particle type");
+    }
     slot(*r[type]);
 }
 
 template <int dimension, typename float_type>
 void phase_space<dimension, float_type>::set_velocity(unsigned int type, function<void (sample_vector&)> const& slot)
 {
-    assert(type < v.size());
+    if (!(type < v.size())) {
+        throw invalid_argument("particle type");
+    }
     slot(*v[type]);
 }
 
