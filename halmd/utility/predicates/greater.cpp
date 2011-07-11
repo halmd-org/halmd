@@ -67,8 +67,8 @@ void greater<value_type>::luaopen(lua_State* L, char const* class_name)
 
 HALMD_LUA_API int luaopen_libhalmd_utility_predicates_greater(lua_State* L)
 {
-    greater<double>::luaopen(L, "greater__double__");
-    greater<float>::luaopen(L, "greater__float__");
+    greater<double>::luaopen(L, "greater<double>");
+    greater<float>::luaopen(L, "greater<float>");
     return 0;
 }
 
