@@ -70,24 +70,27 @@ function new(args)
 
     -- Optionally write trajectory.
     if args.trajectory then
-        sampler:on_sample(trajectory.writer().append, args.trajectory)
+        local writer = trajectory.writer()
+        sampler:on_sample{writer.append, args.trajectory, tracker = writer}
     end
 
     -- Optionally sample macroscopic state variables.
     if args.state_vars then
         local thermodynamics = observables.thermodynamics()
-        sampler:on_prepare(thermodynamics.prepare, args.state_vars)
-        sampler:on_sample(thermodynamics.sample, args.state_vars)
+        sampler:on_prepare{thermodynamics.prepare, args.state_vars, tracker = thermodynamics}
+        sampler:on_sample{thermodynamics.sample, args.state_vars, tracker = thermodynamics}
     end
 
     -- Optionally sample static structure factor.
     if args.state_vars then -- FIXME args.ssf
-        sampler:on_sample(observables.ssf().sample, args.state_vars)
+        local ssf = observables.ssf()
+        sampler:on_sample{ssf.sample, args.state_vars, tracker = ssf}
     end
 
     -- FIXME connect revised writer to thermodynamics and ssf
     if args.state_vars then
-        sampler:on_sample(statevars.writer().write, args.state_vars)
+        local writer = statevars.writer()
+        sampler:on_sample{writer.write, args.state_vars, tracker = writer}
     end
 
     -- Construct profiling writers.
@@ -99,7 +102,7 @@ function new(args)
     -- From the table of profiling writers, add each profiling writer
     -- to the sampler, to invoke write after the simulation is finished.
     for _, writer in pairs(profiling_writers) do
-        sampler:on_finish(writer.write)
+        sampler:on_finish{writer.write, tracker = writer}
     end
 
     -- Pass sampler from Lua to C++, to run the simulation outside of Lua.
