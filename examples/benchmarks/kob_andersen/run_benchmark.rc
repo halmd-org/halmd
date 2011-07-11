@@ -1,0 +1,13 @@
+steps=10000
+output=benchmark_N64000_rho0.2_%Y%m%d
+integrator=verlet
+timestep=0.001
+
+[trajectory]
+file=equilibration_N64000_rho1.2.trj
+
+[sampler]
+trajectory=10000
+
+[neighbour]
+occupancy=0.4
