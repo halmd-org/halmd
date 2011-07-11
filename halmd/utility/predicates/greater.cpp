@@ -31,7 +31,7 @@ namespace predicates {
 
 template <typename greater_type>
 static typename greater_type::slot_function_type
-wrap_evaluate(shared_ptr<greater_type> greater)
+wrap_evaluate(shared_ptr<greater_type const> greater)
 {
     return bind(&greater_type::evaluate, greater);
 }

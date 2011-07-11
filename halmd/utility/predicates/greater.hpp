@@ -36,14 +36,14 @@ public:
     typedef signal_type::slot_function_type slot_function_type;
     typedef boost::function0<value_type> function_type;
 
-    greater(function_type func, value_type value) : func_(func), value_(value) {}
+    greater(function_type const& func, value_type const& value) : func_(func), value_(value) {}
 
     void on_greater(slot_function_type const& slot)
     {
         on_greater_.connect(slot);
     }
 
-    void evaluate()
+    void evaluate() const
     {
         if (func_() > value_) {
             on_greater_();
