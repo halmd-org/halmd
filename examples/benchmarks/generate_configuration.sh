@@ -24,15 +24,11 @@
 
 if [ "$1" = "--help" ]
 then
-    echo -e "Usage: generate_configuration.sh BENCHMARK_NAME DEVICE_NAME SUFFIX\n"
+    echo -e "Usage: generate_configuration.sh BENCHMARK_NAME\n"
     exit
 fi
 
-DEVICE_NAME=`nvidia-smi -a | sed -ne '/Product Name/{s/.*Tesla \([A-Z][0-9]\+\).*/\1/p;q}'`
-
 BENCHMARK_NAME=${1:-"lennard_jones"}
-DEVICE_NAME=${2:-`nvidia-smi -a | sed -ne '/Product Name/{s/.*Tesla \([A-Z][0-9]\+\).*/\1/p;q}'`}
-BENCHMARK_TAG="${DEVICE_NAME}${3:+_$3}"
 
 INPUT_DIR=$PWD
 WORKING_DIR=$PWD/data
