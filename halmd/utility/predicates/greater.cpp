@@ -37,6 +37,13 @@ wrap_evaluate(shared_ptr<greater_type> greater)
 }
 
 template <typename value_type>
+static shared_ptr<greater<value_type> >
+wrap_greater(typename greater<value_type>::function_type const& func, value_type const& value)
+{
+    return make_shared<greater<value_type> >(func, value);
+}
+
+template <typename value_type>
 void greater<value_type>::luaopen(lua_State* L, char const* class_name)
 {
     using namespace luabind;
@@ -53,7 +60,7 @@ void greater<value_type>::luaopen(lua_State* L, char const* class_name)
                         .def("__call", &function_type::operator())
                 ]
 
-          , def("greater", &make_shared<greater, function_type, value_type>)
+          , def("greater", &wrap_greater<value_type>)
         ]
     ];
 }
