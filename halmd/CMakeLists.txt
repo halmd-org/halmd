@@ -63,6 +63,8 @@ add_library(libhalmd SHARED
 )
 set_target_properties(libhalmd PROPERTIES
   PREFIX ""
+  # http://www.cmake.org/Wiki/CMake_FAQ#Why_are_libraries_linked_to_my_shared_library_included_when_something_links_to_it.3F
+  LINK_INTERFACE_LIBRARIES ""
 )
 target_link_libraries(libhalmd
   ${HALMD_LIBRARIES}
@@ -77,6 +79,7 @@ add_executable(halmd
 )
 target_link_libraries(halmd
   libhalmd
+  halmd_utility # needed for halmd::host_name
 )
 install(TARGETS halmd
   RUNTIME DESTINATION bin
