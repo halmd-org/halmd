@@ -57,5 +57,15 @@ __global__ void fill_if(float* g_a, unsigned int size, float value)
     }
 }
 
+/**
+ * fill float array with a given value without any conditions,
+ * this kernel requires GTDIM = capacity(g_a)
+ */
+__global__ void fill_all(float* g_a, float value)
+{
+    g_a[GTID] = value;
+}
+
 cuda::function<void (float*, unsigned int, float)> fill_loop_kernel(&fill_loop);
 cuda::function<void (float*, unsigned int, float)> fill_if_kernel(&fill_if);
+cuda::function<void (float*, float)> fill_all_kernel(&fill_all);

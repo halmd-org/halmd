@@ -89,10 +89,12 @@ void gpu(size_t size)
     if (dim.blocks_per_grid() > 65535) {
         return;
     }
+    a.reserve(dim.threads()); // increase capacity for proper use of unconditioned 'fill_all' kernel
     BOOST_TEST_MESSAGE("Using " << dim.threads_per_block() << " threads in each of " << dim.blocks_per_grid() << " blocks");
 
     double fill_loop = 0;
     double fill_if = 0;
+    double fill_all = 0;
     double memset = 0;
 
     for (size_t i = 0; i < iterations; ++i) {
@@ -104,9 +106,17 @@ void gpu(size_t size)
 
         timer.restart();
         cuda::configure(dim.grid, dim.block);
+        assert(a.size() <= dim.threads());
         fill_if_kernel(a, a.size(), 0);
         cuda::thread::synchronize();
         fill_if += timer.elapsed();
+
+        timer.restart();
+        assert(a.capacity() == dim.threads());
+        cuda::configure(dim.grid, dim.block);
+        fill_all_kernel(a, 0);
+        cuda::thread::synchronize();
+        fill_all += timer.elapsed();
 
         timer.restart();
         cuda::memset(a, 0);
@@ -115,13 +125,15 @@ void gpu(size_t size)
 
     fill_loop /= iterations;
     fill_if /= iterations;
+    fill_all /= iterations;
     memset /= iterations;
-    BOOST_TEST_MESSAGE("fill kernel (with loop): " << fill_loop * 1e3 << " ms");
-    BOOST_TEST_MESSAGE("fill kernel (with if): " << fill_if * 1e3 << " ms");
+    BOOST_TEST_MESSAGE("fill kernel (with loop): " << fill_loop * 1e3 << " ms" << " (× " << fill_loop/fill_all << ")");
+    BOOST_TEST_MESSAGE("fill kernel (with if): " << fill_if * 1e3 << " ms" << " (× " << fill_if/fill_all << ")");
+    BOOST_TEST_MESSAGE("fill kernel (unconditioned): " << fill_all * 1e3 << " ms");
     BOOST_TEST_MESSAGE("cuda::memset: " << memset * 1e3 << " ms");
-    double gain = fill_if / memset;
+    double gain = fill_all / memset;
     BOOST_CHECK(gain > 1); // we expect memset to be faster than fill_if
-    BOOST_TEST_MESSAGE("gain factor of using memset over fill kernel (with if): " << gain);
+    BOOST_TEST_MESSAGE("gain factor of using memset over fill kernel (unconditioned): " << gain);
 }
 
 #endif // WITH_CUDA

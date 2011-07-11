@@ -24,5 +24,6 @@
 
 extern cuda::function<void (float*, unsigned int, float)> fill_loop_kernel;
 extern cuda::function<void (float*, unsigned int, float)> fill_if_kernel;
+extern cuda::function<void (float*, float)> fill_all_kernel;
 
 #endif /* ! HALMD_TEST_PERFORMANCE_FILL_KERNEL_HPP */
