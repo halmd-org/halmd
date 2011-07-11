@@ -24,7 +24,7 @@
 
 if [ "$1" = "--help" ]
 then
-    echo -e "Usage: run_benchmark.sh BENCHMARK_NAME COUNT DEVICE_NAME SUFFIX\n"
+    echo -e "Usage: run_benchmark.sh [BENCHMARK_NAME [COUNT [DEVICE_NAME [SUFFIX [HALMD_OPTIONS]]]]]\n"
     exit
 fi
 
@@ -32,6 +32,7 @@ BENCHMARK_NAME=${1:-"lennard_jones"}
 COUNT=${2:-5}
 DEVICE_NAME=${3:-$(nvidia-smi -a | sed -ne '/Product Name/{s/.*Tesla \([A-Z][0-9]\+\).*/\1/p;q}')}
 SUFFIX=${4:+_$4}
+HALMD_OPTIONS=$5
 HALMD_VERSION=$(halmd --version | sed -e '1s/.*-g\([a-z0-9]\+\) (.*)$/\1/;q')
 BENCHMARK_TAG="${DEVICE_NAME}_${HALMD_VERSION}${SUFFIX}"
 
@@ -46,10 +47,11 @@ PREVIOUS_OUTPUT_PREFIX="${OUTPUT_DIR}/configuration"
 for I in $(seq $COUNT)
 do
     OUTPUT_PREFIX="${OUTPUT_DIR}/benchmark_${BENCHMARK_TAG}-${I}"
-    echo halmd \
+    halmd \
       --verbose \
       --config "${CONFIG_DIR}/run_benchmark.rc" \
       --output "${OUTPUT_PREFIX}" \
+      ${HALMD_OPTIONS} \
       trajectory --file "${PREVIOUS_OUTPUT_PREFIX}.trj"
 
     PREVIOUS_OUTPUT_PREFIX="${OUTPUT_PREFIX}"

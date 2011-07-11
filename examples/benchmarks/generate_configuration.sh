@@ -24,11 +24,12 @@
 
 if [ "$1" = "--help" ]
 then
-    echo -e "Usage: generate_configuration.sh BENCHMARK_NAME\n"
+    echo -e "Usage: generate_configuration.sh [BENCHMARK_NAME [HALMD_OPTIONS]]\n"
     exit
 fi
 
 BENCHMARK_NAME=${1:-"lennard_jones"}
+HALMD_OPTIONS=$2
 
 INPUT_DIR=$PWD
 WORKING_DIR=$PWD/data
@@ -40,4 +41,5 @@ OUTPUT_PREFIX="${OUTPUT_DIR}/configuration"
 halmd \
   --verbose \
   --config "${CONFIG_DIR}/generate_configuration.rc" \
-  --output "${OUTPUT_PREFIX}"
+  --output "${OUTPUT_PREFIX}" \
+  ${HALMD_OPTIONS}
