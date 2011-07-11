@@ -22,6 +22,7 @@ require("halmd.modules")
 require("halmd.singleton")
 
 -- grab modules
+local signals = require("halmd.modules.signals")
 local mdsim = halmd.mdsim
 -- grab C++ wrappers
 local core_wrapper = libhalmd.mdsim.core
@@ -37,3 +38,16 @@ function new(args)
     local clock = mdsim.clock() -- singleton
     return core_wrapper(clock)
 end
+
+-- patch C++ objects with signal connection handlers
+-- @see module halmd.modules.signals
+--
+-- For an example, this allows disconnecting an NVT integrator after
+-- thermalising the system, and continuing with an NVE integrator for
+-- the production run:
+--
+--   local integrator = mdsim.integrators.verlet_nvt_andersen{}
+--   integrator:disconnect()
+--   mdsim.integrator.verlet{}
+--
+signals.patch(_M)

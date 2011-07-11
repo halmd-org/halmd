@@ -69,7 +69,7 @@ function new(args)
 
     local core = mdsim.core()
     -- set particle types at the beginning of system preparation
-    core:on_prepend_setup(particle.set)
+    core:on_prepend_setup{particle.set, tracker = particle}
 
     return particle
 end

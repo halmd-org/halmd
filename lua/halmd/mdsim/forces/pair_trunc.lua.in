@@ -70,12 +70,16 @@ function new(args)
     end
     local force = pair_trunc(potential, particle, box, neighbour)
 
+    -- move tracked signal connections from neighbour to force;
+    -- on force:disconnect() the core signals connections of
+    -- both force and neighbour will be disconnected
+    neighbour:reconnect(force)
+
     local core = mdsim.core()
     -- system preparation
-    core:on_append_setup(force.compute)
-
+    core:on_append_setup{force.compute, tracker = force}
     -- compute forces every step
-    core:on_force(force.compute)
+    core:on_force{force.compute, tracker = force}
 
     return force
 end
