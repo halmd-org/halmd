@@ -41,8 +41,6 @@ local observables = halmd.observables
 local profiling = halmd.io.profiling
 local trajectory = halmd.io.trajectory
 local writers = halmd.io.writers
--- grab C++ wrappers
-local po = libhalmd.po
 -- grab standard library
 local assert = assert
 local pairs = pairs
@@ -88,17 +86,4 @@ function new(args)
 
     -- Pass sampler from Lua to C++, to run the simulation outside of Lua.
     return sampler
-end
-
--- override module namespace
-namespace = "sampler"
-
---
--- assemble module options
---
--- @param desc po.options_description
---
-function options(desc, globals)
-    -- FIXME desc:add("ssf", po.uint64(), "sample interval for static structure factor")
-    desc:add("state-vars", po.uint64(), "sample interval for macroscopic state variables")
 end
