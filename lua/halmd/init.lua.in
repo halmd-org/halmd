@@ -26,7 +26,7 @@ require("halmd.parameter")
 require("halmd.io.profiling.writer")
 require("halmd.io.statevars.writer")
 require("halmd.io.trajectory.reader")
-require("halmd.io.trajectory.writer")
+require("halmd.io.writers.trajectory")
 require("halmd.mdsim.box")
 require("halmd.mdsim.force")
 require("halmd.mdsim.integrator")
@@ -42,6 +42,7 @@ local observables = halmd.observables
 local profiling = halmd.io.profiling
 local statevars = halmd.io.statevars
 local trajectory = halmd.io.trajectory
+local writers = halmd.io.writers
 -- grab C++ wrappers
 local po = libhalmd.po
 -- grab standard library
@@ -68,10 +69,8 @@ function new(args)
     -- Construct sampler.
     local sampler = observables.sampler()
 
-    -- Optionally write trajectory.
-    if args.trajectory then
-        sampler:on_sample(trajectory.writer().append, args.trajectory)
-    end
+    -- Write trajectory to H5MD file.
+    writers.trajectory{}
 
     -- Optionally sample macroscopic state variables.
     if args.state_vars then
@@ -117,5 +116,4 @@ namespace = "sampler"
 function options(desc, globals)
     -- FIXME desc:add("ssf", po.uint64(), "sample interval for static structure factor")
     desc:add("state-vars", po.uint64(), "sample interval for macroscopic state variables")
-    desc:add("trajectory", po.uint64(), "sample interval for trajectory")
 end
