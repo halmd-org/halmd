@@ -7,5 +7,4 @@ halmd_add_modules(
 
 add_subdirectory(profiling)
 add_subdirectory(trajectory)
-add_subdirectory(statevars)
 add_subdirectory(writers)

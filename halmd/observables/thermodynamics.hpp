@@ -25,7 +25,6 @@
 #include <lua.hpp>
 #include <vector>
 
-#include <halmd/io/statevars/writer.hpp>
 #include <halmd/mdsim/box.hpp>
 #include <halmd/mdsim/clock.hpp>
 #include <halmd/mdsim/type_traits.hpp>
@@ -48,7 +47,6 @@ template <int dimension>
 class thermodynamics
 {
 public:
-    typedef io::statevars::writer<dimension> writer_type;
     typedef mdsim::box<dimension> box_type;
     typedef mdsim::clock clock_type;
     typedef halmd::utility::profiler profiler_type;
@@ -72,7 +70,6 @@ public:
     );
     virtual ~thermodynamics() {}
     void register_runtimes(profiler_type& profiler);
-    virtual void register_observables(writer_type& writer);
 
     // preparations before MD step
     virtual void prepare() = 0;

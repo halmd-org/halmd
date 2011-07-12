@@ -54,22 +54,6 @@ void thermodynamics<dimension>::register_runtimes(profiler_type& profiler)
 }
 
 /**
- * register observables
- */
-template <int dimension>
-void thermodynamics<dimension>::register_observables(writer_type& writer)
-{
-    writer.register_observable("TIME", &time_, "simulation time"); //< FIXME move time to mdsim::clock
-    writer.register_observable("EPOT", &en_pot_, "mean potential energy per particle");
-    writer.register_observable("EKIN", &en_kin_, "mean kinetic energy per particle");
-    writer.register_observable("ETOT", &en_tot_, "mean total energy per particle");
-    writer.register_observable("VCM", &v_cm_, "centre-of-mass velocity");
-    writer.register_observable("PRESS", &pressure_, "virial pressure");
-    writer.register_observable("XVIR", &hypervirial_, "hypervirial sum ");
-    writer.register_observable("TEMP", &temp_, "temperature");
-}
-
-/**
  * Sample macroscopic state variables
  *
  * Compute state variables and take care that expensive functions are
@@ -179,7 +163,6 @@ void thermodynamics<dimension>::luaopen(lua_State* L)
         [
             class_<thermodynamics, shared_ptr<thermodynamics> >(class_name.c_str())
                 .def("register_runtimes", &thermodynamics::register_runtimes)
-                .def("register_observables", &thermodynamics::register_observables)
                 .property("prepare", &prepare_wrapper<thermodynamics>)
                 .property("sample", &sample_wrapper<thermodynamics>)
                 .property("en_kin", &wrap_en_kin<thermodynamics>)

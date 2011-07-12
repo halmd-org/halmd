@@ -71,33 +71,6 @@ void ssf<dimension>::register_runtimes(profiler_type& profiler)
 }
 
 /**
- * register observables
- */
-template <int dimension>
-void ssf<dimension>::register_observables(writer_type& writer)
-{
-    string root("structure/ssf/");
-    // write wavenumbers only once
-    writer.write_dataset(root + "wavenumber", density_mode->wavenumber(), "wavenumber grid");
-
-    // register output writers for all partial structure factors
-    unsigned char ntype = static_cast<unsigned char>(density_mode->value().size());
-    assert('A' + density_mode->value().size() <= 'Z' + 1);
-    unsigned int k = 0;
-    for (unsigned char i = 0; i < ntype; ++i) {
-        for (unsigned char j = i; j < ntype; ++j, ++k) {
-            string label;
-            label += 'A' + i;
-            label += 'A' + j;
-            writer.register_observable(
-                root + label, &value_[k]
-              , "partial static structure factor S_" + label + " (value, error, count)"
-            );
-        }
-    }
-}
-
-/**
  * compute SSF from sample of density Fourier modes
  */
 template <int dimension>
@@ -225,7 +198,6 @@ void ssf<dimension>::luaopen(lua_State* L)
                   , unsigned int
                 >())
                 .def("register_runtimes", &ssf::register_runtimes)
-                .def("register_observables", &ssf::register_observables)
                 .def("value", &wrap_value<ssf>)
                 .property("wavevector", &ssf::wavevector)
                 .property("sample", &sample_wrapper<ssf>)

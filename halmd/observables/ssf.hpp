@@ -24,7 +24,6 @@
 #include <lua.hpp>
 #include <vector>
 
-#include <halmd/io/statevars/writer.hpp>
 #include <halmd/numeric/blas/fixed_vector.hpp>
 #include <halmd/observables/density_mode.hpp>
 #include <halmd/utility/profiler.hpp>
@@ -48,7 +47,6 @@ template <int dimension>
 class ssf
 {
 public:
-    typedef io::statevars::writer<dimension> writer_type;
     typedef observables::density_mode<dimension> density_mode_type;
     typedef halmd::utility::profiler profiler_type;
     typedef halmd::signal<void (uint64_t)> signal_type;
@@ -73,7 +71,6 @@ public:
     );
     virtual ~ssf() {}
     virtual void register_runtimes(profiler_type& profiler);
-    virtual void register_observables(writer_type& writer);
 
     // compute ssf from sample of density Fourier modes and store with given simulation step
     virtual void sample(uint64_t step);
