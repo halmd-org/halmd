@@ -21,6 +21,7 @@ require("halmd.modules")
 require("halmd.mdsim.clock")
 require("halmd.mdsim.core")
 require("halmd.observables.runtime_estimate")
+require("halmd.singleton")
 require("halmd.utility.timer_service")
 
 -- grab modules
@@ -35,7 +36,7 @@ local po = libhalmd.po
 local assert = assert
 local math = math
 
-module("halmd.observables.sampler", halmd.modules.register)
+module("halmd.observables.sampler", halmd.modules.register, halmd.singleton)
 
 --
 -- construct sampler module
