@@ -71,13 +71,8 @@ function new(args)
 
     -- Write trajectory to H5MD file.
     writers.trajectory{}
-
-    -- Optionally sample macroscopic state variables.
-    if args.state_vars then
-        local thermodynamics = observables.thermodynamics()
-        sampler:on_prepare(thermodynamics.prepare, args.state_vars)
-        sampler:on_sample(thermodynamics.sample, args.state_vars)
-    end
+    -- Sample macroscopic state variables.
+    observables.thermodynamics{}
 
     -- Optionally sample static structure factor.
     if args.state_vars then -- FIXME args.ssf
