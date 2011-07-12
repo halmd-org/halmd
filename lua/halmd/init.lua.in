@@ -24,7 +24,6 @@ require("halmd.option")
 require("halmd.parameter")
 
 require("halmd.io.profiling.writer")
-require("halmd.io.statevars.writer")
 require("halmd.io.trajectory.reader")
 require("halmd.io.writers.trajectory")
 require("halmd.mdsim.box")
@@ -40,7 +39,6 @@ require("halmd.observables.thermodynamics")
 local mdsim = halmd.mdsim
 local observables = halmd.observables
 local profiling = halmd.io.profiling
-local statevars = halmd.io.statevars
 local trajectory = halmd.io.trajectory
 local writers = halmd.io.writers
 -- grab C++ wrappers
@@ -73,16 +71,8 @@ function new(args)
     writers.trajectory{}
     -- Sample macroscopic state variables.
     observables.thermodynamics{}
-
-    -- Optionally sample static structure factor.
-    if args.state_vars then -- FIXME args.ssf
-        sampler:on_sample(observables.ssf().sample, args.state_vars)
-    end
-
-    -- FIXME connect revised writer to thermodynamics and ssf
-    if args.state_vars then
-        sampler:on_sample(statevars.writer().write, args.state_vars)
-    end
+    -- Sample static structure factor.
+    observables.ssf{}
 
     -- Construct profiling writers.
     --

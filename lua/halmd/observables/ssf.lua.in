@@ -17,14 +17,17 @@
 -- along with this program.  If not, see <http://www.gnu.org/licenses/>.
 --
 
+require("halmd.io.writers.observable")
 require("halmd.mdsim.particle")
 require("halmd.modules")
 require("halmd.observables.density_mode")
+require("halmd.observables.sampler")
 require("halmd.observables.utility.wavevector")
 
 -- grab modules
 local mdsim = halmd.mdsim
 local observables = halmd.observables
+local writers = halmd.io.writers
 -- grab C++ wrappers
 local ssf_wrapper = {
     [2] = libhalmd.observables.ssf_2_
@@ -34,6 +37,7 @@ local h5 = libhalmd.h5
 local po = libhalmd.po
 -- grab standard library
 local assert = assert
+local string = string
 
 module("halmd.observables.ssf", halmd.modules.register)
 
@@ -45,6 +49,7 @@ module("halmd.observables.ssf", halmd.modules.register)
 --
 function new(args)
     -- command line options
+    local every = args.every or 1000 -- default value
     local wavenumbers = args.wavenumbers
     local max_wavenumber = args.max_wavenumber or 12.6 -- default value, approx. 4π
     local decimation = args.decimation or 10 -- default value
@@ -81,6 +86,26 @@ function new(args)
     -- acquire density modes before sampling static structure factor
     ssf:on_sample(density_mode.acquire)
 
+    local sampler = observables.sampler() -- singleton
+    local file = writers.observable() -- singleton
+
+    -- write wavenumbers only once
+    local writer = file:writer{location = {"structure", "ssf"}, mode = "truncate"}
+    writer:on_write(density_mode.wavenumber, {"wavenumber"})
+    sampler:on_start(writer.write)
+
+    -- write all partial structure factors
+    local writer = file:writer{location = {"structure", "ssf"}, mode = "append"}
+    writer:on_prepend_write(ssf.sample)
+    for i = 0, particle.ntype - 1 do
+        local species1 = string.char(string.byte("A") + i)
+        for j = i, particle.ntype - 1 do
+            local species2 = string.char(string.byte("A") + j)
+            writer:on_write(ssf:value(i, j), {species1, species2})
+        end
+    end
+    sampler:on_sample(writer.write, every)
+
     return ssf
 end
 
@@ -97,6 +122,7 @@ end
 -- @param desc po.options_description
 --
 function options(desc)
+    desc:add("every", po.uint64(), "sample interval for static structure factor")
     desc:add("wavenumbers", po.float_array():conflicts("max-wavenumber"), "list of wavenumbers")
     desc:add("max-wavenumber", po.float():conflicts("wavenumbers"), "maximum wavenumber of semi-linearly spaced grid")
     desc:add("decimation", po.uint():conflicts("wavenumbers"), "decimation of wavenumber grid")
