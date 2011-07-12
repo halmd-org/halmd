@@ -17,6 +17,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <boost/array.hpp>
 #include <boost/function.hpp>
 #include <luabind/luabind.hpp>
 #include <vector>
@@ -87,6 +88,10 @@ HALMD_LUA_API int luaopen_libhalmd_utility_lua_function(lua_State* L)
       , slot( function<vector<fixed_vector<double, 2> > const& ()> )
       , slot( function<vector<fixed_vector<double, 3> > ()> )
       , slot( function<vector<fixed_vector<double, 3> > const& ()> )
+      , slot( function<vector<array<float, 3> > ()> )
+      , slot( function<vector<array<float, 3> > const& ()> )
+      , slot( function<vector<array<double, 3> > ()> )
+      , slot( function<vector<array<double, 3> > const& ()> )
       , slot( function<void (float&)> )
       , slot( function<void (double&)> )
       , slot( function<void (fixed_vector<float, 2>&)> )
@@ -99,6 +104,8 @@ HALMD_LUA_API int luaopen_libhalmd_utility_lua_function(lua_State* L)
       , slot( function<void (vector<fixed_vector<float, 3> >&)> )
       , slot( function<void (vector<fixed_vector<double, 2> >&)> )
       , slot( function<void (vector<fixed_vector<double, 3> >&)> )
+      , slot( function<void (vector<array<float, 3> >&)> )
+      , slot( function<void (vector<array<double, 3> >&)> )
     ];
     return 0;
 }
