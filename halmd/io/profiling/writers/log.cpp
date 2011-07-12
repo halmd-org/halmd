@@ -80,12 +80,22 @@ namespace profiling {
 namespace writers {
 
 /**
+ * return total runtime from runtime accumulator:
+ * average time per call × number of calls
+ */
+template <typename accumulator_type>
+typename accumulator_type::value_type total_runtime(accumulator_type const& a)
+{
+    return mean(a) * count(a);
+}
+
+/**
  * compare total accumulated runtimes of acc_desc_pairs
  */
 template <typename T>
 bool less_total_runtime(T x, T y)
 {
-    return mean(*x.first) * count(*x.first) < mean(*y.first) * count(*y.first);
+    return total_runtime(*x.first) < total_runtime(*y.first);
 }
 
 /**
@@ -100,8 +110,12 @@ void log::write()
       , bind(&less_total_runtime<acc_desc_pair_type>, _1, _2)
     );
 
+    double maximum_runtime = total_runtime(*accumulators_.back().first);
     BOOST_FOREACH(acc_desc_pair_type const& x, accumulators_) {
-        LOG(x.second << ": " << *x.first);
+        double fraction = total_runtime(*x.first) / maximum_runtime;
+        LOG(x.second << ": " << *x.first
+            << " [" << fixed << setprecision(1) << fraction * 100 << "%]"
+        );
     }
 }
 
