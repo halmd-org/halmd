@@ -89,6 +89,9 @@ public:
         return value_;
     }
 
+    //! returns static structure factor for given type pair
+    std::vector<result_type> const& value(unsigned int type1, unsigned int type2) const;
+
     //! returns instance of wavevector class used to compute the ssf
     typename density_mode_type::wavevector_type const& wavevector() const
     {

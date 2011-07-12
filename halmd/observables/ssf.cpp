@@ -17,10 +17,12 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <algorithm>
 #include <boost/bind.hpp>
 #include <functional>
 #include <iterator>
 #include <limits>
+#include <stdexcept>
 #include <string>
 
 #include <halmd/io/logger.hpp>
@@ -176,6 +178,31 @@ void ssf<dimension>::compute_()
     }
 }
 
+template <int dimension>
+vector<typename ssf<dimension>::result_type> const&
+ssf<dimension>::value(unsigned int type1, unsigned int type2) const
+{
+    unsigned int ntype = density_mode->value().size();
+    if (!(type1 < ntype)) {
+        throw invalid_argument("first particle type");
+    }
+    if (!(type2 < ntype)) {
+        throw invalid_argument("second particle type");
+    }
+    unsigned int i = min(type1, type2);
+    unsigned int j = max(type1, type2);
+    unsigned int k = j + i * ntype - (i * (i + 1)) / 2;
+    assert(k < value_.size());
+    return value_[k];
+}
+
+template <typename ssf_type>
+static function<vector<typename ssf_type::result_type> const& ()>
+wrap_value(shared_ptr<ssf_type const> ssf, unsigned int type1, unsigned int type2)
+{
+    return bind(static_cast<vector<typename ssf_type::result_type> const& (ssf_type::*)(unsigned int, unsigned int) const>(&ssf_type::value), ssf, type1, type2);
+}
+
 template <typename ssf_type>
 typename ssf_type::slot_function_type
 sample_wrapper(shared_ptr<ssf_type> ssf)
@@ -199,7 +226,7 @@ void ssf<dimension>::luaopen(lua_State* L)
                 >())
                 .def("register_runtimes", &ssf::register_runtimes)
                 .def("register_observables", &ssf::register_observables)
-                .property("value", &ssf::value)
+                .def("value", &wrap_value<ssf>)
                 .property("wavevector", &ssf::wavevector)
                 .property("sample", &sample_wrapper<ssf>)
                 .def("on_sample", &ssf::on_sample)
