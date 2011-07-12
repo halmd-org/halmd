@@ -112,6 +112,62 @@ sample_wrapper(shared_ptr<thermodynamics_type> thermodynamics)
     return bind(&thermodynamics_type::sample, thermodynamics, _1);
 }
 
+template <typename thermodynamics_type>
+static function<double ()>
+wrap_en_tot(shared_ptr<thermodynamics_type> thermodynamics)
+{
+    return bind(&thermodynamics_type::en_tot, thermodynamics);
+}
+
+template <typename thermodynamics_type>
+static function<double ()>
+wrap_en_pot(shared_ptr<thermodynamics_type> thermodynamics)
+{
+    return bind(&thermodynamics_type::en_pot, thermodynamics);
+}
+
+template <typename thermodynamics_type>
+static function<double ()>
+wrap_en_kin(shared_ptr<thermodynamics_type> thermodynamics)
+{
+    return bind(&thermodynamics_type::en_kin, thermodynamics);
+}
+
+template <typename thermodynamics_type>
+static function<typename thermodynamics_type::vector_type ()>
+wrap_v_cm(shared_ptr<thermodynamics_type> thermodynamics)
+{
+    return bind(&thermodynamics_type::v_cm, thermodynamics);
+}
+
+template <typename thermodynamics_type>
+static function<double ()>
+wrap_temp(shared_ptr<thermodynamics_type> thermodynamics)
+{
+    return bind(&thermodynamics_type::temp, thermodynamics);
+}
+
+template <typename thermodynamics_type>
+static function<double ()>
+wrap_pressure(shared_ptr<thermodynamics_type> thermodynamics)
+{
+    return bind(&thermodynamics_type::pressure, thermodynamics);
+}
+
+template <typename thermodynamics_type>
+static function<double ()>
+wrap_virial(shared_ptr<thermodynamics_type> thermodynamics)
+{
+    return bind(&thermodynamics_type::virial, thermodynamics);
+}
+
+template <typename thermodynamics_type>
+static function<double ()>
+wrap_hypervirial(shared_ptr<thermodynamics_type> thermodynamics)
+{
+    return bind(&thermodynamics_type::hypervirial, thermodynamics);
+}
+
 template <int dimension>
 void thermodynamics<dimension>::luaopen(lua_State* L)
 {
@@ -126,14 +182,14 @@ void thermodynamics<dimension>::luaopen(lua_State* L)
                 .def("register_observables", &thermodynamics::register_observables)
                 .property("prepare", &prepare_wrapper<thermodynamics>)
                 .property("sample", &sample_wrapper<thermodynamics>)
-                .property("en_kin", &thermodynamics::en_kin)
-                .property("en_pot", &thermodynamics::en_pot)
-                .property("en_tot", &thermodynamics::en_tot)
-                .property("pressure", &thermodynamics::pressure)
-                .property("temp", &thermodynamics::temp)
-                .property("v_cm", &thermodynamics::v_cm)
-                .property("virial", &thermodynamics::virial)
-                .property("hypervirial", &thermodynamics::hypervirial)
+                .property("en_kin", &wrap_en_kin<thermodynamics>)
+                .property("en_pot", &wrap_en_pot<thermodynamics>)
+                .property("en_tot", &wrap_en_tot<thermodynamics>)
+                .property("pressure", &wrap_pressure<thermodynamics>)
+                .property("temp", &wrap_temp<thermodynamics>)
+                .property("v_cm", &wrap_v_cm<thermodynamics>)
+                .property("virial", &wrap_virial<thermodynamics>)
+                .property("hypervirial", &wrap_hypervirial<thermodynamics>)
         ]
     ];
 }
