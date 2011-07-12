@@ -17,6 +17,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <boost/bind.hpp>
+#include <boost/function.hpp>
 #include <boost/lexical_cast.hpp>
 #include <string>
 
@@ -37,6 +39,13 @@ acquire_wrapper(shared_ptr<density_mode_type> density_mode)
     return bind(&density_mode_type::acquire, density_mode, _1);
 }
 
+template <typename density_mode_type>
+static function<vector<double> const& ()>
+wrap_wavenumber(shared_ptr<density_mode_type const> density_mode)
+{
+    return bind(&density_mode_type::wavenumber, density_mode);
+}
+
 template <int dimension>
 void density_mode<dimension>::luaopen(lua_State* L)
 {
@@ -48,7 +57,7 @@ void density_mode<dimension>::luaopen(lua_State* L)
         [
             class_<density_mode, shared_ptr<density_mode> >(class_name.c_str())
                 .property("value", &density_mode::value)
-                .property("wavenumber", &density_mode::wavenumber)
+                .property("wavenumber", &wrap_wavenumber<density_mode>)
                 .property("acquire", &acquire_wrapper<density_mode>)
                 .def("on_acquire", &density_mode::on_acquire)
         ]
