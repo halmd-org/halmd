@@ -1,14 +1,14 @@
-steps=10000
-output=equilibration_N64000_rho1.2
+steps=20000
+output=equilibration_N256000_rho1.2
 integrator=verlet_nvt_andersen
 timestep=0.005
 
 [box]
-particles=51200,12800
+particles=204800,51200
 density=1.2
 
 [verlet_nvt_andersen]
-temperature=1.0
+temperature=0.7
 
 [lennard_jones]
 cutoff=2.5,2.5,2.5
@@ -16,10 +16,10 @@ epsilon=1,.5,1.5
 sigma=1,.88,.8
 
 [boltzmann]
-temperature=1.0
+temperature=0.7
 
 [sampler]
-trajectory=10000
+trajectory=20000
 
 [neighbour]
 skin=0.5
