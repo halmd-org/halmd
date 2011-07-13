@@ -40,11 +40,11 @@ namespace halmd {
 // slot with a signal. Luabind will then print all supported
 // slot types, with the exact slot signatures.
 //
-#define slot(...)                                               \
+#define SLOT(...)                                               \
     class_<__VA_ARGS__>(#__VA_ARGS__)                           \
         .def("__call", &__VA_ARGS__::operator())                \
 
-#define conn(...)                                               \
+#define CONNECTION(...)                                         \
     class_<__VA_ARGS__>(#__VA_ARGS__)                           \
         .def("disconnect", &__VA_ARGS__::disconnect)            \
 
@@ -61,10 +61,10 @@ HALMD_LUA_API int luaopen_libhalmd_utility_lua_signal(lua_State* L)
     using namespace luabind;
     module(L, "libhalmd")
     [
-        slot( signal<void ()>::slot_function_type )
-      , slot( signal<void (uint64_t)>::slot_function_type )
-      , conn( signal<void ()>::connection )
-      , conn( signal<void (uint64_t)>::connection )
+        SLOT( signal<void ()>::slot_function_type )
+      , SLOT( signal<void (uint64_t)>::slot_function_type )
+      , CONNECTION( signal<void ()>::connection )
+      , CONNECTION( signal<void (uint64_t)>::connection )
     ];
     return 0;
 }
