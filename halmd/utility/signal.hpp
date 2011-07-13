@@ -30,10 +30,10 @@ namespace halmd {
 /**
  * Signal implements callbacks with multiple targets.
  *
- * This class mimics a subset of the boost::signal interface. Many features
- * of boost::signal such as return values, connection management and object
- * tracking are not implemented. The benefit of using this minimal signal
- * class is performance close to that of boost::function calls.
+ * This class mimics a subset of the boost::signal interface. Some advanced
+ * features of boost::signal such as return values and object tracking are
+ * not implemented. The benefit of using this minimal signal class is
+ * performance close to that of boost::function calls.
  *
  * http://www.boost.org/doc/libs/release/doc/html/signals.html
  */
@@ -62,6 +62,7 @@ public:
             slot_pointer slots = slots_.lock();
             if (slots) {
                 slots->erase(iter_);
+                slots_.reset();
             }
         }
 
@@ -83,7 +84,7 @@ public:
 
     void disconnect_all_slots()
     {
-        slots_->clear();
+        slots_.reset(new slot_type);
     }
 
     bool empty() const
