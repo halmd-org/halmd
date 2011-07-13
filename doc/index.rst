@@ -6,11 +6,10 @@ HALMD documentation
 
    readme
    installation/index
-   usage
+   usage/index
    faq
    validation
    benchmarks
-   data
    units
    developer/index
 

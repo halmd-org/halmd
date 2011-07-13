@@ -1,5 +1,5 @@
-Data files
-**********
+HDF5 data files
+***************
 
 Why HDF5?
 =========
