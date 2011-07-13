@@ -181,8 +181,9 @@ string device::cuda_driver_version()
  */
 string device::cuda_runtime_version()
 {
-    int major = cuda::version() / 1000;
-    int minor = cuda::version() / 10 % 10;
+    int version = cuda::version();
+    int major = version / 1000;
+    int minor = version / 10 % 10;
     return lexical_cast<string>(major) + "." + lexical_cast<string>(minor);
 }
 
