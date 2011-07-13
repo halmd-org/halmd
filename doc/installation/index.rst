@@ -4,7 +4,7 @@ Installation
 .. toctree::
    :maxdepth: 2
 
-   git
+   download
    packages
    prerequisites
-   install
+   build

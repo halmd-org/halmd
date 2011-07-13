@@ -1,4 +1,4 @@
-.. _installation:
+.. _build:
 
 Building HAL's MD package
 *************************
