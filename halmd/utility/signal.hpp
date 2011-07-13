@@ -21,6 +21,8 @@
 #define HALMD_UTILITY_SIGNAL_HPP
 
 #include <boost/function.hpp>
+#include <boost/shared_ptr.hpp>
+#include <boost/weak_ptr.hpp>
 #include <list>
 
 namespace halmd {
@@ -43,10 +45,11 @@ class signal_base
 {
 protected:
     typedef std::list<SlotFunction> slot_type;
+    typedef boost::shared_ptr<slot_type> slot_pointer;
     typedef typename slot_type::iterator slot_iterator;
     typedef typename slot_type::const_iterator slot_const_iterator;
 
-    slot_type slots_;
+    slot_pointer slots_;
 
 public:
     typedef SlotFunction slot_function_type;
@@ -56,36 +59,41 @@ public:
     public:
         void disconnect()
         {
-            slots_.erase(iter_);
+            slot_pointer slots = slots_.lock();
+            if (slots) {
+                slots->erase(iter_);
+            }
         }
 
     private:
         friend class signal_base;
 
-        connection(slot_type& slots, slot_iterator iter) : slots_(slots), iter_(iter) {}
+        connection(slot_pointer slots, slot_iterator iter) : slots_(slots), iter_(iter) {}
 
-        slot_type& slots_;
+        boost::weak_ptr<slot_type> slots_;
         slot_iterator iter_;
     };
 
+    signal_base() : slots_(new slot_type) {}
+
     connection connect(slot_function_type const& slot)
     {
-        return connection(slots_, slots_.insert(slots_.end(), slot));
+        return connection(slots_, slots_->insert(slots_->end(), slot));
     }
 
     void disconnect_all_slots()
     {
-        slots_.clear();
+        slots_->clear();
     }
 
     bool empty() const
     {
-        return slots_.empty();
+        return slots_->empty();
     }
 
     std::size_t num_slots() const
     {
-        return slots_.size();
+        return slots_->size();
     }
 };
 
@@ -96,7 +104,7 @@ class signal0
 public:
     T0 operator()() const
     {
-        for (slot_const_iterator f = this->slots_.begin(); f != this->slots_.end(); ++f) {
+        for (slot_const_iterator f = this->slots_->begin(); f != this->slots_->end(); ++f) {
             (*f)();
         }
     }
@@ -112,7 +120,7 @@ class signal1
 public:
     T0 operator()(T1 arg1) const
     {
-        for (slot_const_iterator f = this->slots_.begin(); f != this->slots_.end(); ++f) {
+        for (slot_const_iterator f = this->slots_->begin(); f != this->slots_->end(); ++f) {
             (*f)(arg1);
         }
     }
@@ -128,7 +136,7 @@ class signal2
 public:
     T0 operator()(T1 arg1, T2 arg2) const
     {
-        for (slot_const_iterator f = this->slots_.begin(); f != this->slots_.end(); ++f) {
+        for (slot_const_iterator f = this->slots_->begin(); f != this->slots_->end(); ++f) {
             (*f)(arg1, arg2);
         }
     }
@@ -144,7 +152,7 @@ class signal3
 public:
     T0 operator()(T1 arg1, T2 arg2, T3 arg3) const
     {
-        for (slot_const_iterator f = this->slots_.begin(); f != this->slots_.end(); ++f) {
+        for (slot_const_iterator f = this->slots_->begin(); f != this->slots_->end(); ++f) {
             (*f)(arg1, arg2, arg3);
         }
     }
@@ -160,7 +168,7 @@ class signal4
 public:
     T0 operator()(T1 arg1, T2 arg2, T3 arg3, T4 arg4) const
     {
-        for (slot_const_iterator f = this->slots_.begin(); f != this->slots_.end(); ++f) {
+        for (slot_const_iterator f = this->slots_->begin(); f != this->slots_->end(); ++f) {
             (*f)(arg1, arg2, arg3, arg4);
         }
     }
@@ -176,7 +184,7 @@ class signal5
 public:
     T0 operator()(T1 arg1, T2 arg2, T3 arg3, T4 arg4, T5 arg5) const
     {
-        for (slot_const_iterator f = this->slots_.begin(); f != this->slots_.end(); ++f) {
+        for (slot_const_iterator f = this->slots_->begin(); f != this->slots_->end(); ++f) {
             (*f)(arg1, arg2, arg3, arg4, arg5);
         }
     }
@@ -192,7 +200,7 @@ class signal6
 public:
     T0 operator()(T1 arg1, T2 arg2, T3 arg3, T4 arg4, T5 arg5, T6 arg6) const
     {
-        for (slot_const_iterator f = this->slots_.begin(); f != this->slots_.end(); ++f) {
+        for (slot_const_iterator f = this->slots_->begin(); f != this->slots_->end(); ++f) {
             (*f)(arg1, arg2, arg3, arg4, arg5, arg6);
         }
     }
@@ -208,7 +216,7 @@ class signal7
 public:
     T0 operator()(T1 arg1, T2 arg2, T3 arg3, T4 arg4, T5 arg5, T6 arg6, T7 arg7) const
     {
-        for (slot_const_iterator f = this->slots_.begin(); f != this->slots_.end(); ++f) {
+        for (slot_const_iterator f = this->slots_->begin(); f != this->slots_->end(); ++f) {
             (*f)(arg1, arg2, arg3, arg4, arg5, arg6, arg7);
         }
     }
@@ -224,7 +232,7 @@ class signal8
 public:
     T0 operator()(T1 arg1, T2 arg2, T3 arg3, T4 arg4, T5 arg5, T6 arg6, T7 arg7, T8 arg8) const
     {
-        for (slot_const_iterator f = this->slots_.begin(); f != this->slots_.end(); ++f) {
+        for (slot_const_iterator f = this->slots_->begin(); f != this->slots_->end(); ++f) {
             (*f)(arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8);
         }
     }
@@ -240,7 +248,7 @@ class signal9
 public:
     T0 operator()(T1 arg1, T2 arg2, T3 arg3, T4 arg4, T5 arg5, T6 arg6, T7 arg7, T8 arg8, T9 arg9) const
     {
-        for (slot_const_iterator f = this->slots_.begin(); f != this->slots_.end(); ++f) {
+        for (slot_const_iterator f = this->slots_->begin(); f != this->slots_->end(); ++f) {
             (*f)(arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9);
         }
     }
