@@ -31,6 +31,10 @@ local lennard_jones_wrapper = {
 if libhalmd.mdsim.gpu then
     lennard_jones_wrapper.gpu = libhalmd.mdsim.gpu.forces.lennard_jones
 end
+local lennard_jones_simple_wrapper = {}
+if libhalmd.mdsim.gpu then
+    lennard_jones_simple_wrapper.gpu = libhalmd.mdsim.gpu.forces.lennard_jones_simple
+end
 local h5 = libhalmd.h5
 local po = libhalmd.po
 -- grab standard library
@@ -49,13 +53,16 @@ function new(args)
     local particle = mdsim.particle() -- singleton
     local logger = assert(args.logger)
 
-    local lennard_jones
-    if device() then
-        lennard_jones = assert(lennard_jones_wrapper.gpu)
+    local potential
+    -- select optimised GPU version if 1 species and ε=1, σ=1
+    if device() and particle.ntype == 1 and epsilon[1] == 1 and sigma[1] == 1 then
+        local lennard_jones_simple = assert(lennard_jones_simple_wrapper.gpu)
+        potential = lennard_jones_simple(cutoff[1], logger)
     else
-        lennard_jones = assert(lennard_jones_wrapper.host)
+        local lennard_jones = assert(lennard_jones_wrapper[device() and "gpu" or "host"])
+        potential = lennard_jones(particle.ntype, cutoff, epsilon, sigma, logger)
     end
-    return lennard_jones(particle.ntype, cutoff, epsilon, sigma, logger)
+    return potential
 end
 
 --
