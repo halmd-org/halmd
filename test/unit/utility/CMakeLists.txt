@@ -17,6 +17,11 @@ target_link_libraries(test_unit_utility_signal
 add_test(unit/utility/signal
   test_unit_utility_signal --log_level=test_suite
 )
+# If the signal unit tests fail, they might fail with *** glibc detected ***
+# memory corruption errors, which would freeze the test program infinitely.
+set_property(TEST unit/utility/signal
+  PROPERTY TIMEOUT 5
+)
 
 add_executable(test_unit_utility_options_parser
   options_parser.cpp
