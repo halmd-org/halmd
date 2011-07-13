@@ -3,9 +3,98 @@
 Prerequisites
 *************
 
-This section is a step-by-step guide to installing the necessary dependencies to
-compile HALMD from source. Be sure to check if your distribution ships with any
-of these packages before attempting to compile them yourself.
+This section is a step-by-step guide to installing the necessary dependencies
+to compile HALMD from source. Be sure to check if your distribution ships with
+any of these packages before attempting to compile them yourself. Before
+proceeding, be aware of the section :ref:`packages`.
+
+Software prerequisites
+======================
+
+These software packages are required for compilation:
+
+* `NVIDIA CUDA toolkit <http://www.nvidia.com/object/cuda_get.html>`_ >= 1.1
+
+  For Tesla C1060 or GeForce GT200-based cards, **CUDA 2.2 or 2.3 is recommended**.
+
+  With CUDA 2.1 we experienced minor performance degradation on a GeForce GTX 280.
+
+  HALMD has proven to run reliably over 10⁸ or more integration steps using
+  CUDA driver version 185.18.36 (with CUDA 2.0 or 2.2 runtime) and 190.42 (with
+  CUDA 2.3 runtime). Always look for the newest NVIDIA driver version on the
+  `NVIDIA Linux driver website <http://www.nvidia.com/object/unix.html>`_, as
+  the CUDA driver accompanying a CUDA toolkit is not updated and may contain
+  serious bugs, e.g. that cause hanging GPU kernels.
+
+* `CMake <http://www.cmake.org/>`_ >= 2.8.0 with custom CUDA compiler support patch
+
+  The patched CMake version, which adds native CUDA language support, is
+  available at ::
+
+    git://git.colberg.org/gpgpu/cmake-cuda
+
+  To obtain the CUDA patch relative to the newestest supported CMake version ::
+
+    git diff cmake..master
+
+  Alternatively, you can use (or self-compile) these Debian packages:
+
+  * `CMakeCUDA packages for Debian squeeze/sid
+    <http://colberg.org/debian/pool/main/c/cmake>`_
+
+  * `CMakeCUDA packages for Ubuntu karmic
+    <http://colberg.org/ubuntu/pool/main/c/cmake>`_
+
+  .. note::
+
+     This patch adds *native* CUDA source file compilation and linking support
+     to CMake and is not to be confused nor compatible with the CUDA module in
+     CMake 2.8.
+
+* `Boost C++ Libraries <http://www.boost.org/>`_ >= 1.42.0
+
+  In addition, the proposed `Boost.Log <http://boost-log.sourceforge.net/>`_
+  library is needed, which is acquired with ::
+
+    svn co http://boost-log.svn.sourceforge.net/svnroot/boost-log/trunk/boost-log
+
+  To compile the Boost.Log library, copy the directories ``boost/log`` and
+  ``libs/log`` to the respective paths in the Boost source tree and
+  `compile Boost
+  <http://www.boost.org/doc/libs/1_41_0/more/getting_started/unix-variants.html#easy-build-and-install>`_
+  following the standard installation procedure.
+
+  Alternatively, you can use (or self-compile) these Debian packages:
+
+  * `Boost packages with Boost.Log for Debian etch
+    <http://colberg.org/debian/pool/main/b/boost1.42>`_
+
+  * `Boost packages with Boost.Log for Ubuntu jaunty
+    <http://colberg.org/ubuntu/pool/main/b/boost1.42>`_
+
+* `HDF5 C++ Library <http://www.hdfgroup.org/HDF5/>`_ >= 1.6.6
+
+* `Git <http://git-scm.com/>`_ >= 1.5.6.2
+
+
+To optionally generate documentation in HTML and PDF format:
+
+* `Sphinx documentation generator <http://sphinx.pocoo.org/>`_ >= 0.6.1
+
+* LaTeX including pdflatex and dvipng
+
+* graphviz
+
+Overview
+========
+
+  * :ref:`prerequisites-cuda` ≥ 3.1
+  * :ref:`prerequisites-cmake` ≥ 2.8 with native CUDA support
+  * :ref:`prerequisites-boost` ≥ 1.43, supplemented by Boost.Log
+  * :ref:`prerequisites-lua` ≥ 5.1
+  * :ref:`prerequisites-luabind` ≥ 0.9
+  * :ref:`prerequisites-hdf5` ≥ 1.8
+  * :ref:`prerequisites-sphinx`
 
 .. tip::
 
@@ -35,8 +124,17 @@ Instead of setting CMAKE_PREFIX_PATH manually, you would include the package dir
 GNU/Linux
 =========
 
+.. _prerequisites-cuda:
+
+CUDA
+----
+
+.. _prerequisites-cmake:
+
 CMake
 -----
+
+The build process of HALMD depends on CMake, a cross-platform, open-source build system.
 
 Get the latest `CMake source package`_, currently `CMake 2.8.4`_.
 
@@ -79,8 +177,12 @@ Include CMake in your shell environment, by adding to ~/.bashrc::
    export MANPATH="${HOME}/usr/cmake-cuda-2.8.4/man${MANPATH+:$MANPATH}"
 
 
-Boost
------
+.. _prerequisites-boost:
+
+Boost C++ libraries
+-------------------
+
+The C++ part of HALMD makes use of a variety of libraries in the Boost C++ collection.
 
 Get the latest `Boost source package`_, currently `Boost 1.46.1`_.
 
@@ -139,8 +241,12 @@ Include Boost in your shell environment, by adding to ~/.bashrc::
    export LD_LIBRARY_PATH="${HOME}/usr/boost_1_46_1/lib${LD_LIBRARY_PATH+:$LD_LIBRARY_PATH}"
 
 
-Lua
----
+.. _prerequisites-lua:
+
+Lua interpreter
+---------------
+
+A simulation with HALMD is setup and configured by means of the Lua scripting language. The fast and lightweight Lua interpreter is embedded in the HALMD executable.
 
 Get the latest Lua source package from the `Lua download`_ page, currently `Lua 5.1.4`_.
 
@@ -177,8 +283,12 @@ Include Lua in your shell environment, by adding to ~/.bashrc::
    export MANPATH="${HOME}/usr/lua-5.1.4/man${MANPATH+:$MANPATH}"
 
 
-Luabind
--------
+.. _prerequisites-luabind:
+
+Luabind library
+---------------
+
+Luabind is used to create bindings between C++ objects and Lua modules.
 
 Get the latest `Luabind source package`_, currently `Luabind 0.9.1`_.
 
@@ -208,8 +318,14 @@ Include Luabind in your shell environment, by adding to ~/.bashrc::
    export CMAKE_PREFIX_PATH="${HOME}/usr/luabind-0.9.1${CMAKE_PREFIX_PATH+:$CMAKE_PREFIX_PATH}"
 
 
-HDF5
-----
+.. _prerequisites-hdf5:
+
+HDF5 library
+------------
+
+"HDF5 is a data model, library, and file format for storing and managing data.
+It supports an unlimited variety of datatypes, and is designed for flexible and
+efficient I/O and for high volume and complex data."
 
 Get the latest `HDF5 source package`_, currently `HDF5 1.8.6`_.
 
@@ -236,8 +352,13 @@ Include HDF5 in your shell environment, by adding to ~/.bashrc::
    export CMAKE_PREFIX_PATH="${HOME}/usr/hdf5-1.8.6${CMAKE_PREFIX_PATH+:$CMAKE_PREFIX_PATH}"
 
 
-Sphinx
-------
+.. _prerequisites-sphinx:
+
+Sphinx documentation generator
+------------------------------
+
+"Sphinx is a tool that makes it easy to create intelligent and beautiful
+documentation."
 
 Get the latest `Sphinx source package`_, currently `Sphinx 1.0.7`_.
 

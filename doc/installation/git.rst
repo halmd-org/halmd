@@ -1,7 +1,10 @@
 .. _download:
 
-Getting the source code
-***********************
+Downloading the source code
+***************************
+
+Cloning the repository
+======================
 
 HALMD is maintained in a public `Git <http://git-scm.com/>`_ repository ::
 
@@ -10,6 +13,22 @@ HALMD is maintained in a public `Git <http://git-scm.com/>`_ repository ::
 In case you are behind a firewall that blocks the git protocol port, use ::
 
   git clone http://git.halmd.org/halmd.git
+
+This will create a directory ``halmd``, which holds a hidden copy of the
+repository and a working copy of the source files.
+
+
+Selecting a release version
+===========================
+
+By default, the above command yields the tip of the development branch.
+A specific release version is checked out by ::
+
+  git checkout TAG
+
+where ``TAG`` is a valid release tag as listed from ::
+
+  git tag -n3
 
 
 Git tutorials

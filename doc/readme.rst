@@ -75,10 +75,3 @@ HAL's MD package employs
   separate executables,
 
 * easily extensible template-based C++ code.
-
-
-Getting HAL's MD package
-========================
-
-Please refer to the :ref:`Download section <download>`.
-

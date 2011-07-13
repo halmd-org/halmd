@@ -5,9 +5,7 @@ HALMD documentation
    :maxdepth: 2
 
    readme
-   prerequisites
-   packages
-   install
+   installation/index
    usage
    faq
    validation
