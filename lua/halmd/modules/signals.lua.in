@@ -40,7 +40,7 @@
 -- A tracker may track an arbitrary number of signal connections.
 -- Further the tracked connections may be moved to another module:
 --
---   neighbour:reconnect(force)
+--   neighbour:move_connections(force)
 --
 -- This allows tracking connections of different modules with a single
 -- module, with disconnection of a module along with its dependencies:
@@ -61,7 +61,7 @@ local connections = setmetatable({}, { __mode = "k" })
 -- forward declarations of internal module functions
 local track
 local disconnect
-local reconnect
+local move_connections
 
 -- append connection to the connection table of tracker
 function track(tracker, conn)
@@ -70,7 +70,7 @@ function track(tracker, conn)
     if not connections[tracker] then
         connections[tracker] = {}
         tracker.disconnect = disconnect
-        tracker.reconnect = reconnect
+        tracker.move_connections = move_connections
     end
     table.insert(connections[tracker], conn)
 end
@@ -83,11 +83,11 @@ function disconnect(tracker)
     end
     connections[tracker] = nil
     tracker.disconnect = nil
-    tracker.reconnect = nil
+    tracker.move_connections = nil
 end
 
 -- move connections from tracker to destination tracker
-function reconnect(tracker, destination)
+function move_connections(tracker, destination)
     assert(tracker, "missing tracker")
     assert(destination, "missing destination tracker")
     for _, c in pairs(connections[tracker]) do
@@ -95,7 +95,7 @@ function reconnect(tracker, destination)
     end
     connections[tracker] = nil
     tracker.disconnect = nil
-    tracker.reconnect = nil
+    tracker.move_connections = nil
 end
 
 -- patch C++ objects with signal connection handlers

@@ -73,7 +73,7 @@ function new(args)
     -- move tracked signal connections from neighbour to force;
     -- on force:disconnect() the core signals connections of
     -- both force and neighbour will be disconnected
-    neighbour:reconnect(force)
+    neighbour:move_connections(force)
 
     local core = mdsim.core()
     -- system preparation
