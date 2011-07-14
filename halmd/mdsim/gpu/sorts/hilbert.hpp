@@ -47,6 +47,7 @@ public:
     typedef hilbert_wrapper<dimension> wrapper_type;
     typedef typename _Base::signal_type signal_type;
     typedef typename _Base::slot_function_type slot_function_type;
+    typedef typename _Base::connection_type connection_type;
 
     struct runtime
     {
@@ -69,9 +70,9 @@ public:
     void register_runtimes(profiler_type& profiler);
     virtual void order();
 
-    virtual void on_order(slot_function_type const& slot)
+    virtual connection_type on_order(slot_function_type const& slot)
     {
-        on_order_.connect(slot);
+        return on_order_.connect(slot);
     }
 
 private:

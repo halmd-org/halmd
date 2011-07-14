@@ -48,6 +48,7 @@ public:
 
     typedef typename _Base::signal_type signal_type;
     typedef typename _Base::slot_function_type slot_function_type;
+    typedef typename _Base::connection_type connection_type;
 
     static void luaopen(lua_State* L);
 
@@ -67,9 +68,9 @@ public:
         return file_;
     }
 
-    virtual void on_append(slot_function_type const& slot)
+    virtual connection_type on_append(slot_function_type const& slot)
     {
-        on_append_.connect(slot);
+        return on_append_.connect(slot);
     }
 
 private:

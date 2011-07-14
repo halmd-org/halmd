@@ -53,6 +53,7 @@ public:
     typedef halmd::utility::profiler profiler_type;
     typedef typename _Base::signal_type signal_type;
     typedef typename _Base::slot_function_type slot_function_type;
+    typedef typename _Base::connection_type connection_type;
 
     typedef typename mdsim::type_traits<dimension, float>::vector_type vector_type;
     typedef typename mdsim::type_traits<dimension, float>::gpu::coalesced_vector_type gpu_vector_type;
@@ -78,9 +79,9 @@ public:
     */
     virtual void acquire(uint64_t step);
 
-    virtual void on_acquire(slot_function_type const& slot)
+    virtual connection_type on_acquire(slot_function_type const& slot)
     {
-        on_acquire_.connect(slot);
+        return on_acquire_.connect(slot);
     }
 
     //! returns nested list of density modes

@@ -32,13 +32,14 @@ class sort
 public:
     typedef halmd::signal<void ()> signal_type;
     typedef typename signal_type::slot_function_type slot_function_type;
+    typedef typename signal_type::connection connection_type;
 
     static void luaopen(lua_State* L);
 
     sort() {}
     virtual ~sort() {}
     virtual void order() = 0;
-    virtual void on_order(slot_function_type const& slot) = 0;
+    virtual connection_type on_order(slot_function_type const& slot) = 0;
 };
 
 } // namespace mdsim

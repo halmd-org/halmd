@@ -61,6 +61,7 @@ public:
     struct defaults;
     typedef typename from_particle::signal_type signal_type; // import type from base class
     typedef typename from_particle::slot_function_type slot_function_type; // import type from base class
+    typedef typename from_particle::connection_type connection_type; // import type from base class
 
     static void luaopen(lua_State* L);
 
@@ -75,9 +76,9 @@ public:
     void register_runtimes(profiler_type& profiler);
     virtual void update();
 
-    virtual void on_update(slot_function_type const& slot)
+    virtual connection_type on_update(slot_function_type const& slot)
     {
-        on_update_.connect(slot);
+        return on_update_.connect(slot);
     }
 
     //! returns neighbour list skin in MD units

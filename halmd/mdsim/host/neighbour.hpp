@@ -47,6 +47,7 @@ public:
     typedef std::vector<unsigned int> neighbour_list;
     typedef typename neighbour::signal_type signal_type;
     typedef typename neighbour::slot_function_type slot_function_type;
+    typedef typename neighbour::connection_type connection_type;
 
     static void luaopen(lua_State* L);
 
@@ -59,9 +60,9 @@ public:
     );
     virtual void update();
 
-    virtual void on_update(slot_function_type const& slot)
+    virtual connection_type on_update(slot_function_type const& slot)
     {
-        on_update_.connect(slot);
+        return on_update_.connect(slot);
     }
 
     //! returns neighbour list skin in MD units

@@ -36,11 +36,12 @@ class posix_signal
 public:
     typedef halmd::signal<void (int)> handler_type;
     typedef handler_type::slot_function_type slot_function_type;
+    typedef handler_type::connection connection_type;
     typedef boost::unordered_map<int, handler_type> handler_map_type;
 
     posix_signal();
     ~posix_signal();
-    void on_signal(int signum, slot_function_type const& slot);
+    connection_type on_signal(int signum, slot_function_type const& slot);
     void wait() const;
     bool poll() const;
     static std::string name(int signum);
