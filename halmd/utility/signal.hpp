@@ -44,7 +44,17 @@ template <typename SlotFunction>
 class signal_base
 {
 protected:
+    /**
+     * As storage for the slots, we use a linked list instead of a vector,
+     * which guarantees that an iterator to an inserted slot remains valid
+     * as long as the slot is not removed from the list, i.e. the iterator
+     * remains valid after insertion or removal of other slots.
+     */
     typedef std::list<SlotFunction> slots_type;
+    /**
+     * The list of slots is held with a shared pointer, which allows
+     * tracking the slots with a weak pointer in connection objects.
+     */
     typedef boost::shared_ptr<slots_type> slots_pointer;
     typedef typename slots_type::iterator slots_iterator;
     typedef typename slots_type::const_iterator slots_const_iterator;
@@ -54,9 +64,35 @@ protected:
 public:
     typedef SlotFunction slot_function_type;
 
+    /**
+     * Slot-to-signal connection
+     *
+     * This class manages the connection of a single slot to a signal
+     * *independent* of the lifetime of the signal. We employ a weak
+     * pointer to observe the shared pointer holding the slots in the
+     * signal object.
+     * A weak pointer is locked to retrieve a shared pointer to the
+     * referenced object. If the weak pointer does not observe an
+     * object, lock() will return an empty shared pointer instead.
+     * This is the case if (1) we erase() the slot using the stored
+     * iterator and reset() the weak pointer, (2) all slots are
+     * disconnected from the signal with disconnect_all_slots()
+     * by reallocating the slots list, or (3) the signal object
+     * along with the slots list is deconstructed. Thus the state of
+     * the weak pointer reflects the validity of the connection object.
+     */
     class connection
     {
     public:
+        /**
+         * disconnect slot from signal
+         *
+         * This method may be invoked multiple times. Repeated calls to
+         * disconnect() will be silently ignored, similar to the behaviour
+         * of boost::signals::connection::disconnect(). In particular, this
+         * method may be called even when the signal no longer exists, or
+         * when all slots have been removed with disconnect_all_slots().
+         */
         void disconnect()
         {
             slots_pointer slots = slots_.lock();
@@ -67,6 +103,9 @@ public:
         }
 
     private:
+        /**
+         * Only the signal object should be able to construct a connection.
+         */
         friend class signal_base;
 
         connection(slots_pointer slots, slots_iterator iter) : slots_(slots), iter_(iter) {}
@@ -77,21 +116,38 @@ public:
 
     signal_base() : slots_(new slots_type) {}
 
+    /**
+     * connect slot to signal
+     */
     connection connect(slot_function_type const& slot)
     {
         return connection(slots_, slots_->insert(slots_->end(), slot));
     }
 
+    /**
+     * disconnect all slots
+     *
+     * Instead of clearing the list of slots, we reallocate the list,
+     * which breaks the link between weak pointers in connection objects
+     * and the shared_ptr in signal holding the slots, and enables
+     * connection objects to ignore calls to connection::disconnect().
+     */
     void disconnect_all_slots()
     {
         slots_.reset(new slots_type);
     }
 
+    /**
+     * returns true if list of slots is empty, false otherwise
+     */
     bool empty() const
     {
         return slots_->empty();
     }
 
+    /**
+     * returns number of connected slots
+     */
     std::size_t num_slots() const
     {
         return slots_->size();
