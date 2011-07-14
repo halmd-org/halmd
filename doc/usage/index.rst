@@ -6,5 +6,6 @@ Usage
 
    start
    hdf5
+   plotting
    multi-gpu
 

@@ -87,8 +87,5 @@ or look at a specific data set ::
 
   h5dump -d EPOT halmd_20110713_161511.msv | less
 
-Very convenient and powerful access to the HDF5 output files is provided by the
-Python packages `h5py <http://alfven.org/wp/hdf5-for-python>`_ together with
-`PyLab <http://www.scipy.org/PyLab>`_. An examplary Python script for
-accessing, post-processing and plotting the output data is provided in
-the sources at ``examples/plotting/plot_h5md.py``.
+For a more advanced inspection and analysis of the HDF5 output files, see :ref:`plotting`.
+
