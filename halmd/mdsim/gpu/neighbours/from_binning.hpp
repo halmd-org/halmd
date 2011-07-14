@@ -39,6 +39,9 @@ template <int dimension, typename float_type>
 class from_binning
   : public gpu::neighbour
 {
+private:
+    typedef gpu::neighbour _Base;
+
 public:
     typedef gpu::particle<dimension, float_type> particle_type;
     typedef typename particle_type::vector_type vector_type;
@@ -47,9 +50,9 @@ public:
     typedef gpu::binning<dimension, float_type> binning_type;
     typedef utility::profiler profiler_type;
     struct defaults;
-    typedef typename from_binning::signal_type signal_type; // import type from base class
-    typedef typename from_binning::slot_function_type slot_function_type; // import type from base class
-    typedef typename from_binning::connection_type connection_type; // import type from base class
+    typedef typename _Base::signal_type signal_type;
+    typedef typename _Base::slot_function_type slot_function_type;
+    typedef typename _Base::connection_type connection_type;
 
     static void luaopen(lua_State* L);
 
