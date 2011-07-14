@@ -1,5 +1,5 @@
 /*
- * Copyright © 2010  Felix Höfling and Peter Colberg
+ * Copyright © 2010-2011  Felix Höfling and Peter Colberg
  *
  * This file is part of HALMD.
  *
@@ -23,25 +23,40 @@
 
 #include <boost/assign.hpp>
 #include <boost/bind.hpp>
-#include <boost/foreach.hpp>
-#include <boost/function.hpp>
-#include <cmath>
+#include <boost/make_shared.hpp>
 #include <limits>
-#include <map>
-#include <string>
-#include <utility>
-
 #include <iomanip>
 
+#include <halmd/mdsim/box.hpp>
+#include <halmd/mdsim/clock.hpp>
 #include <halmd/mdsim/core.hpp>
+#include <halmd/mdsim/host/forces/lennard_jones.hpp>
+#include <halmd/mdsim/host/integrators/verlet_nvt_hoover.hpp>
+#include <halmd/mdsim/host/maximum_squared_displacement.hpp>
+#include <halmd/mdsim/host/neighbour.hpp>
+#include <halmd/mdsim/host/particle.hpp>
+#include <halmd/mdsim/host/positions/lattice.hpp>
+#include <halmd/mdsim/host/velocities/boltzmann.hpp>
 #include <halmd/numeric/accumulator.hpp>
-#include <test/unit/modules.hpp>
-#include <test/tools/init.hpp>
+#include <halmd/observables/host/thermodynamics.hpp>
+#include <halmd/random/host/random.hpp>
+#include <halmd/utility/predicates/greater.hpp>
+#ifdef WITH_CUDA
+# include <halmd/mdsim/gpu/forces/lennard_jones.hpp>
+# include <halmd/mdsim/gpu/integrators/verlet_nvt_hoover.hpp>
+# include <halmd/mdsim/gpu/maximum_squared_displacement.hpp>
+# include <halmd/mdsim/gpu/neighbours/from_binning.hpp>
+# include <halmd/mdsim/gpu/particle.hpp>
+# include <halmd/mdsim/gpu/positions/lattice.hpp>
+# include <halmd/mdsim/gpu/velocities/boltzmann.hpp>
+# include <halmd/observables/gpu/thermodynamics.hpp>
+# include <halmd/random/gpu/random.hpp>
+# include <halmd/utility/gpu/device.hpp>
+#endif
 
 using namespace boost;
-using namespace boost::assign;
+using namespace boost::assign; // list_of
 using namespace halmd;
-using namespace halmd::test;
 using namespace std;
 
 /**
@@ -59,58 +74,68 @@ inline double heat_capacity_nvt(double var_en_pot, double var_en_kin, double tem
     return npart * (var_en_pot + var_en_kin) / (temperature * temperature);
 }
 
-template <int dimension>
-void verlet_nvt_hoover(string const& backend)
+/** test Verlet integrator: 'ideal' gas without interactions (setting ε=0) */
+
+template <typename modules_type>
+struct verlet_nvt_hoover
+{
+    typedef typename modules_type::box_type box_type;
+    typedef typename modules_type::potential_type potential_type;
+    typedef typename modules_type::force_type force_type;
+    typedef typename modules_type::binning_type binning_type;
+    typedef typename modules_type::neighbour_type neighbour_type;
+    typedef typename modules_type::max_displacement_type max_displacement_type;
+    typedef typename modules_type::integrator_type integrator_type;
+    typedef typename modules_type::particle_type particle_type;
+    typedef typename modules_type::position_type position_type;
+    typedef typename modules_type::random_type random_type;
+    typedef typename modules_type::thermodynamics_type thermodynamics_type;
+    typedef typename modules_type::velocity_type velocity_type;
+    static bool const gpu = modules_type::gpu;
+
+    typedef mdsim::clock clock_type;
+    typedef typename clock_type::time_type time_type;
+    typedef typename clock_type::step_type step_type;
+    typedef mdsim::core core_type;
+    typedef typename particle_type::vector_type vector_type;
+    typedef typename vector_type::value_type float_type;
+    typedef predicates::greater<float_type> greater_type;
+    static unsigned int const dimension = vector_type::static_size;
+
+    float temp;
+    float start_temp;
+    float density;
+    unsigned int npart;
+    double timestep;
+    double resonance_frequency;
+    fixed_vector<double, dimension> box_ratios;
+    float skin;
+
+    shared_ptr<box_type> box;
+    shared_ptr<clock_type> clock;
+    shared_ptr<core_type> core;
+    shared_ptr<potential_type> potential;
+    shared_ptr<force_type> force;
+    shared_ptr<binning_type> binning;
+    shared_ptr<neighbour_type> neighbour;
+    shared_ptr<max_displacement_type> max_displacement;
+    shared_ptr<integrator_type> integrator;
+    shared_ptr<particle_type> particle;
+    shared_ptr<position_type> position;
+    shared_ptr<random_type> random;
+    shared_ptr<thermodynamics_type> thermodynamics;
+    shared_ptr<velocity_type> velocity;
+
+    void test();
+    verlet_nvt_hoover();
+    void connect();
+};
+
+template <typename modules_type>
+void verlet_nvt_hoover<modules_type>::test()
 {
     typedef typename mdsim::type_traits<dimension, double>::vector_type vector_type;
     typedef typename mdsim::type_traits<dimension, float>::vector_type gpu_vector_type;
-
-    float temp = 1.;
-    float start_temp = 3.;
-    float density = 0.1;
-    unsigned npart = (backend == "gpu") ? 1500 : 1500;
-    double timestep = 0.002;
-    double resonance_frequency = 5.;
-    char const* random_file = "/dev/urandom";
-    fixed_vector<double, dimension> box_ratios =
-        (dimension == 3) ? list_of(1.)(2.)(1.01) : list_of(1.)(2.);
-
-    BOOST_TEST_MESSAGE("using backend '" << backend << "' in " <<
-                       dimension << " dimensions");
-
-#ifdef WITH_CUDA
-    shared_ptr<utility::gpu::device> device = make_device(backend);
-#endif /* WITH_CUDA */
-    shared_ptr<halmd::random::random> random = make_random(backend, random_file);
-
-    BOOST_TEST_MESSAGE("initialise simulation modules");
-    // init core module and all dependencies
-    shared_ptr<mdsim::core<dimension> > core(new mdsim::core<dimension>);
-
-    core->particle = make_particle<dimension>(backend, npart);
-
-    core->box = make_box<dimension>(core->particle, density, box_ratios);
-
-    core->integrator = make_verlet_nvt_hoover_integrator<dimension, double>(
-        backend, core->particle, core->box, timestep, temp, resonance_frequency
-    );
-
-    core->force = make_lennard_jones_force<dimension>(
-        backend, core->particle, core->box
-      , list_of(pow(2.f, 1.f/6))(0.f)(0.f)     /* cutoff, WCA potential */
-      , list_of(1.f)(0.f)(0.f)                 /* epsilon */
-      , list_of(1.f)(0.f)(0.f)                 /* sigma */
-    );
-
-    core->neighbour = make_neighbour(backend, core->particle, core->box, core->force);
-
-    core->position = make_lattice(backend, core->particle, core->box, random);
-
-    core->velocity = make_boltzmann(backend, core->particle, random, start_temp);
-
-    // use thermodynamics module to measure temperature (velocity distribution)
-    shared_ptr<observables::thermodynamics<dimension> > thermodynamics =
-        make_thermodynamics(backend, core->particle, core->box, core->clock, core->force);
 
     // run for Δt*=500
     uint64_t steps = static_cast<uint64_t>(ceil(500 / timestep));
@@ -124,8 +149,8 @@ void verlet_nvt_hoover(string const& backend)
     double max_en_diff = 0;                       // integral of motion: Hamiltonian extended by NHC terms
 
     BOOST_TEST_MESSAGE("prepare system");
-    core->force->aux_enable();                    //< enable computation of potential energy
-    core->prepare();
+    force->aux_enable();                    //< enable computation of potential energy
+    core->setup();
 
     // equilibrate the system,
     // this avoids a jump in the conserved energy at the very beginning
@@ -135,26 +160,14 @@ void verlet_nvt_hoover(string const& backend)
     }
 
     // compute modified Hamiltonian
-    double en_nhc0 = thermodynamics->en_tot();
-    if (backend == "gpu") {
-#ifdef WITH_CUDA
-        typedef mdsim::gpu::integrators::verlet_nvt_hoover<dimension, double> integrator_type;
-        shared_ptr<integrator_type> integrator = dynamic_pointer_cast<integrator_type>(core->integrator);
-        en_nhc0 += integrator->en_nhc();
-#endif
-    }
-    else if (backend == "host") {
-        typedef mdsim::host::integrators::verlet_nvt_hoover<dimension, double> integrator_type;
-        shared_ptr<integrator_type> integrator = dynamic_pointer_cast<integrator_type>(core->integrator);
-        en_nhc0 += integrator->en_nhc();
-    }
+    double en_nhc0 = thermodynamics->en_tot() + integrator->en_nhc();
 
     BOOST_TEST_MESSAGE("run NVT integrator over " << steps << " steps");
-    core->force->aux_disable();
+    force->aux_disable();
     for (uint64_t i = 0; i < steps; ++i) {
         // enable auxiliary variables in force module
         if(i % period == 0) {
-            core->force->aux_enable();
+            force->aux_enable();
         }
 
         // perform MD step
@@ -173,46 +186,28 @@ void verlet_nvt_hoover(string const& backend)
             }
 
             // compute modified Hamiltonian
-            double en_nhc_;
-            fixed_vector<double, 2> xi(0), v_xi(0);
-            en_nhc_ = thermodynamics->en_tot();
-            if (backend == "gpu") {
-#ifdef WITH_CUDA
-                typedef mdsim::gpu::integrators::verlet_nvt_hoover<dimension, double> integrator_type;
-                shared_ptr<integrator_type> integrator = dynamic_pointer_cast<integrator_type>(core->integrator);
-                xi = integrator->xi;
-                v_xi = integrator->v_xi;
-                en_nhc_ += integrator->en_nhc();
-#endif
-            }
-            else if (backend == "host") {
-                typedef mdsim::host::integrators::verlet_nvt_hoover<dimension, double> integrator_type;
-                shared_ptr<integrator_type> integrator = dynamic_pointer_cast<integrator_type>(core->integrator);
-                xi = integrator->xi;
-                v_xi = integrator->v_xi;
-                en_nhc_ += integrator->en_nhc();
-            }
+            double en_nhc_ = thermodynamics->en_tot() + integrator->en_nhc();
             LOG_TRACE(setprecision(12)
                 << "en_nhc: " << i * timestep
                 << " " << en_nhc_ << " " << thermodynamics->temp()
-                << " " << xi[0] << " " << xi[1] << " " << v_xi[0] << " " << v_xi[1]
+                << " " << integrator->xi << " " << integrator->v_xi
                 << setprecision(6)
             );
             max_en_diff = max(abs(en_nhc_ - en_nhc0), max_en_diff);
-            core->force->aux_disable();
+            force->aux_disable();
         }
     }
 
     //
     // test conservation of pseudo-Hamiltonian
     //
-    const double en_limit = max(2e-5, steps * 1e-12);
+    const double en_limit = max(3e-5, steps * 1e-12);
     BOOST_CHECK_SMALL(max_en_diff / fabs(en_nhc0), en_limit);
 
     //
     // test conservation of total momentum
     //
-    double vcm_limit = (backend == "gpu") ? 0.1 * eps_float : 20 * eps;
+    double vcm_limit = gpu ? 0.1 * eps_float : 20 * eps;
     BOOST_TEST_MESSAGE("Absolute limit on centre-of-mass velocity: " << vcm_limit);
     for (unsigned int i = 0; i < dimension; ++i) {
         BOOST_CHECK_SMALL(mean(v_cm[i]), vcm_limit);
@@ -265,47 +260,123 @@ void verlet_nvt_hoover(string const& backend)
     BOOST_CHECK_CLOSE_FRACTION(cv, .5 * dimension, rel_cv_limit);
 }
 
-HALMD_TEST_INIT( init_unit_test_suite )
+template <typename modules_type>
+verlet_nvt_hoover<modules_type>::verlet_nvt_hoover()
 {
-    using namespace boost::assign;
-    using namespace boost::unit_test;
-    using namespace boost::unit_test::framework;
+    BOOST_TEST_MESSAGE("initialise simulation modules");
 
-    // parametrize specific program options
-    vector<string> backend = list_of
-        ("host")
-#ifdef WITH_CUDA
-        ("gpu")
-#endif /* WITH_CUDA */
-        ;
+    // set module parameters
+    temp = 1.;
+    start_temp = 3.;
+    density = 0.1;
+    npart = 1500;
+    timestep = 0.002;
+    resonance_frequency = 5.;
+    box_ratios = (dimension == 3) ? list_of(1.)(2.)(1.01) : list_of(1.)(2.);
+    skin = 0.5;
 
-    test_suite* ts1 = BOOST_TEST_SUITE( "verlet_nvt_hoover" );
+    vector<unsigned int> npart_vector = list_of(npart);
 
-    test_suite* ts11 = BOOST_TEST_SUITE( "host" );
+    // create modules
+    particle = make_shared<particle_type>(npart_vector);
+    box = make_shared<box_type>(npart, density, box_ratios);
+    random = make_shared<random_type>();
+    integrator = make_shared<integrator_type>(particle, box, timestep, temp, resonance_frequency);
+    potential = make_shared<potential_type>(
+        particle->ntype
+      , list_of(pow(2.f, 1.f/6))(0.f)(0.f)     /* cutoff, WCA potential */
+      , list_of(1.f)(0.f)(0.f)                 /* epsilon */
+      , list_of(1.f)(0.f)(0.f)                 /* sigma */
+    );
+    binning = make_shared<binning_type>(particle, box, potential->r_cut(), skin);
+    neighbour = make_shared<neighbour_type>(particle, box, binning, potential->r_cut(), skin);
+    force = make_shared<force_type>(potential, particle, box, neighbour);
+    position = make_shared<position_type>(particle, box, random, 1);
+    velocity = make_shared<velocity_type>(particle, random, start_temp);
+    clock = make_shared<clock_type>(timestep);
+    thermodynamics = make_shared<thermodynamics_type>(particle, box, clock, force);
+    max_displacement = make_shared<max_displacement_type>(particle, box);
 
-    test_suite* ts111 = BOOST_TEST_SUITE( "2d" );
-    ts111->add( BOOST_PARAM_TEST_CASE( &verlet_nvt_hoover<2>, backend.begin(), backend.begin() + 1 ) );
-
-    test_suite* ts112 = BOOST_TEST_SUITE( "3d" );
-    ts112->add( BOOST_PARAM_TEST_CASE( &verlet_nvt_hoover<3>, backend.begin(), backend.begin() + 1 ) );
-
-    ts11->add( ts111 );
-    ts11->add( ts112 );
-    ts1->add( ts11 );
-
-#ifdef WITH_CUDA
-    test_suite* ts12 = BOOST_TEST_SUITE( "gpu" );
-
-    test_suite* ts121 = BOOST_TEST_SUITE( "2d" );
-    ts121->add( BOOST_PARAM_TEST_CASE( &verlet_nvt_hoover<2>, backend.begin() + 1, backend.end() ) );
-
-    test_suite* ts122 = BOOST_TEST_SUITE( "3d" );
-    ts122->add( BOOST_PARAM_TEST_CASE( &verlet_nvt_hoover<3>, backend.begin() + 1, backend.end() ) );
-
-    ts12->add( ts121 );
-    ts12->add( ts122 );
-    ts1->add( ts12 );
-#endif
-
-    master_test_suite().add( ts1 );
+    // create core and connect module slots to core signals
+    this->connect();
 }
+
+template <typename modules_type>
+void verlet_nvt_hoover<modules_type>::connect()
+{
+    core = make_shared<core_type>(clock);
+    // system preparation
+    core->on_prepend_setup( bind(&particle_type::set, particle) );
+    core->on_setup( bind(&position_type::set, position) );
+    core->on_setup( bind(&velocity_type::set, velocity) );
+    core->on_append_setup( bind(&max_displacement_type::zero, max_displacement) );
+    core->on_append_setup( bind(&binning_type::update, binning) );
+    core->on_append_setup( bind(&neighbour_type::update, neighbour) );
+    core->on_append_setup( bind(&force_type::compute, force) );
+
+    // integration step
+    core->on_integrate( bind(&integrator_type::integrate, integrator) );
+    core->on_force( bind(&force_type::compute, force) );
+    core->on_finalize( bind(&integrator_type::finalize, integrator) );
+
+    // update neighbour lists if maximum squared displacement is greater than (skin/2)²
+    float_type limit = pow(neighbour->r_skin() / 2, 2);
+    shared_ptr<greater_type> greater =
+        make_shared<greater_type>(bind(&max_displacement_type::compute, max_displacement), limit);
+    greater->on_greater( bind(&max_displacement_type::zero, max_displacement) );
+    greater->on_greater( bind(&binning_type::update, binning) );
+    greater->on_greater( bind(&neighbour_type::update, neighbour) );
+    core->on_prepend_force( bind(&greater_type::evaluate, greater) );
+}
+
+template <int dimension, typename float_type>
+struct host_modules
+{
+    typedef mdsim::box<dimension> box_type;
+    typedef mdsim::host::forces::lennard_jones<float_type> potential_type;
+    typedef mdsim::host::forces::pair_trunc<dimension, float_type, potential_type> force_type;
+    typedef mdsim::host::binning<dimension, float_type> binning_type;
+    typedef mdsim::host::neighbour<dimension, float_type> neighbour_type;
+    typedef mdsim::host::maximum_squared_displacement<dimension, float_type> max_displacement_type;
+    typedef mdsim::host::integrators::verlet_nvt_hoover<dimension, float_type> integrator_type;
+    typedef mdsim::host::particle<dimension, float_type> particle_type;
+    typedef mdsim::host::positions::lattice<dimension, float_type> position_type;
+    typedef halmd::random::host::random random_type;
+    typedef mdsim::host::velocities::boltzmann<dimension, float_type> velocity_type;
+    typedef observables::host::thermodynamics<dimension, float_type> thermodynamics_type;
+    static bool const gpu = false;
+};
+
+BOOST_AUTO_TEST_CASE( verlet_nvt_hoover_host_2d ) {
+    verlet_nvt_hoover<host_modules<2, double> >().test();
+}
+BOOST_AUTO_TEST_CASE( verlet_nvt_hoover_host_3d ) {
+    verlet_nvt_hoover<host_modules<3, double> >().test();
+}
+
+#ifdef WITH_CUDA
+template <int dimension, typename float_type>
+struct gpu_modules
+{
+    typedef mdsim::box<dimension> box_type;
+    typedef mdsim::gpu::forces::lennard_jones<float_type> potential_type;
+    typedef mdsim::gpu::forces::pair_trunc<dimension, float_type, potential_type> force_type;
+    typedef mdsim::gpu::binning<dimension, float_type> binning_type;
+    typedef mdsim::gpu::neighbours::from_binning<dimension, float_type> neighbour_type;
+    typedef mdsim::gpu::maximum_squared_displacement<dimension, float_type> max_displacement_type;
+    typedef mdsim::gpu::integrators::verlet_nvt_hoover<dimension, double> integrator_type;
+    typedef mdsim::gpu::particle<dimension, float_type> particle_type;
+    typedef mdsim::gpu::positions::lattice<dimension, float_type, halmd::random::gpu::rand48> position_type;
+    typedef halmd::random::gpu::random<halmd::random::gpu::rand48> random_type;
+    typedef observables::gpu::thermodynamics<dimension, float_type> thermodynamics_type;
+    typedef mdsim::gpu::velocities::boltzmann<dimension, float_type, halmd::random::gpu::rand48> velocity_type;
+    static bool const gpu = true;
+};
+
+BOOST_FIXTURE_TEST_CASE( verlet_nvt_hoover_gpu_2d, device ) {
+    verlet_nvt_hoover<gpu_modules<2, float> >().test();
+}
+BOOST_FIXTURE_TEST_CASE( verlet_nvt_hoover_gpu_3d, device ) {
+    verlet_nvt_hoover<gpu_modules<3, float> >().test();
+}
+#endif // WITH_CUDA
