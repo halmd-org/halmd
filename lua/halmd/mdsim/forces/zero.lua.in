@@ -60,7 +60,7 @@ function new(args)
 
     local core = mdsim.core()
     -- system preparation
-    core:on_append_setup(force.compute)
+    core:on_append_setup{force.compute, tracker = force}
 
     return force
 end

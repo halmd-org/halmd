@@ -74,8 +74,8 @@ function new(args)
 
     local core = mdsim.core()
     -- connect integrator to core
-    core:on_integrate(integrator.integrate)
-    core:on_finalize(integrator.finalize)
+    core:on_integrate{integrator.integrate, tracker = integrator}
+    core:on_finalize{integrator.finalize, tracker = integrator}
 
     return integrator
 end

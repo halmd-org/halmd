@@ -24,6 +24,7 @@ require("halmd.observables.runtime_estimate")
 require("halmd.utility.timer_service")
 
 -- grab modules
+local signals = require("halmd.modules.signals")
 local mdsim = halmd.mdsim
 local observables = halmd.observables
 local utility = halmd.utility
@@ -69,6 +70,10 @@ function new(args)
 
     return sampler
 end
+
+-- patch C++ objects with signal connection handlers
+-- @see module halmd.modules.signals
+signals.patch(_M)
 
 --
 -- assemble module options
