@@ -18,8 +18,9 @@ The group of global options must precede module-specific options, which are
 introduced by their respective module name.
 
 
-A first example
----------------
+A first example: Lennard-Jones fluids
+-------------------------------------
+
 
 Many simulation scenarios can be controlled by command line options, there is
 no need to setup a separate simulation script. Let us consider a simple fluid
@@ -91,4 +92,3 @@ Python packages `h5py <http://alfven.org/wp/hdf5-for-python>`_ together with
 `PyLab <http://www.scipy.org/PyLab>`_. An examplary Python script for
 accessing, post-processing and plotting the output data is provided in
 the sources at ``examples/plotting/plot_h5md.py``.
-
