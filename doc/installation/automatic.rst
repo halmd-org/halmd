@@ -1,11 +1,12 @@
-.. _packages:
+.. _automatic:
 
-Automatic installation of build prerequisites
-=============================================
+Automatic installation
+======================
 
 This guide describes an easy and automated way of installing all packages
-required for building HALMD.  To find out more about the required
-packages, see :ref:`prerequisites`.
+required for building HALMD.  To find out more about the required packages, see
+:ref:`prerequisites`; details of the installation process are given in
+:ref:`manual`.
 
 Quick Start Guide
 -----------------
