@@ -27,21 +27,10 @@ require("halmd.modules")
 -- grab modules
 local device = halmd.device
 local mdsim = halmd.mdsim
--- grab C++ wrappers
-local pair_trunc_wrapper = {
-    host = {
-        [2] = libhalmd.mdsim.host.forces.pair_trunc_2_
-      , [3] = libhalmd.mdsim.host.forces.pair_trunc_3_
-    }
-}
-if libhalmd.mdsim.gpu then
-    pair_trunc_wrapper.gpu = {
-        [2] = libhalmd.mdsim.gpu.forces.pair_trunc_2_
-      , [3] = libhalmd.mdsim.gpu.forces.pair_trunc_3_
-    }
-end
-local property = property
+local forces = libhalmd.mdsim.forces
+
 -- grab standard library
+local property = property
 local assert = assert
 
 module("halmd.mdsim.forces.pair_trunc", halmd.modules.register)
@@ -63,13 +52,8 @@ function new(args)
     -- create neighbour lists with cutoff radii of potential
     local neighbour = mdsim.neighbour{ r_cut = potential.r_cut }
 
-    local pair_trunc
-    if device() then
-        pair_trunc = assert(pair_trunc_wrapper.gpu[dimension][force])
-    else
-        pair_trunc = assert(pair_trunc_wrapper.host[dimension][force])
-    end
-    local force = pair_trunc(potential, particle, box, neighbour)
+    -- construct force module
+    local force = assert(forces.pair_trunc)(potential, particle, box, neighbour)
 
     -- move tracked signal connections from neighbour to force;
     -- on force:disconnect() the core signals connections of

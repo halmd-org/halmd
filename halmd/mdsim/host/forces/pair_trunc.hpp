@@ -255,6 +255,20 @@ static char const* module_name_wrapper(pair_trunc<dimension, float_type, potenti
 }
 
 template <int dimension, typename float_type, typename potential_type>
+static boost::shared_ptr<pair_trunc<dimension, float_type, potential_type> >
+wrap_pair_trunc(
+    boost::shared_ptr<potential_type> potential
+  , boost::shared_ptr<typename pair_trunc<dimension, float_type, potential_type>::particle_type> particle
+  , boost::shared_ptr<typename pair_trunc<dimension, float_type, potential_type>::box_type> box
+  , boost::shared_ptr<typename pair_trunc<dimension, float_type, potential_type>::neighbour_type const> neighbour
+)
+{
+    return boost::make_shared<
+        pair_trunc<dimension, float_type, potential_type>
+    >(potential, particle, box, neighbour);
+}
+
+template <int dimension, typename float_type, typename potential_type>
 void pair_trunc<dimension, float_type, potential_type>::luaopen(lua_State* L)
 {
     typedef typename _Base::_Base _Base_Base;
@@ -287,6 +301,11 @@ void pair_trunc<dimension, float_type, potential_type>::luaopen(lua_State* L)
                             .def_readonly("runtime", &pair_trunc::runtime_)
                     ]
                 ]
+            ]
+
+          , namespace_("forces")
+            [
+                def("pair_trunc", &wrap_pair_trunc<dimension, float_type, potential_type>)
             ]
         ]
     ];
