@@ -29,10 +29,10 @@
 using namespace boost;
 using namespace std;
 
-namespace halmd
-{
-namespace mdsim { namespace gpu { namespace forces
-{
+namespace halmd {
+namespace mdsim {
+namespace gpu {
+namespace forces {
 
 /**
  * Initialise Lennard-Jones potential parameters
@@ -91,6 +91,7 @@ template class lennard_jones_simple<float>;
 template class pair_trunc<3, float, lennard_jones_simple<float> >;
 template class pair_trunc<2, float, lennard_jones_simple<float> >;
 
-}}} // namespace mdsim::gpu::forces
-
+} // namespace mdsim
+} // namespace gpu
+} // namespace forces
 } // namespace halmd

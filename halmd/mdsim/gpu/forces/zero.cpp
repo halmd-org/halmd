@@ -1,5 +1,5 @@
 /*
- * Copyright © 2010  Felix Höfling
+ * Copyright © 2010-2011  Felix Höfling and Peter Colberg
  *
  * This file is part of HALMD.
  *
@@ -21,16 +21,17 @@
 #include <boost/shared_ptr.hpp>
 #include <string>
 
+#include <halmd/io/logger.hpp>
 #include <halmd/mdsim/gpu/forces/zero.hpp>
 #include <halmd/utility/lua/lua.hpp>
 
 using namespace boost;
 using namespace std;
 
-namespace halmd
-{
-namespace mdsim { namespace gpu { namespace forces
-{
+namespace halmd {
+namespace mdsim {
+namespace gpu {
+namespace forces {
 
 template <int dimension, typename float_type>
 zero<dimension, float_type>::zero(shared_ptr<particle_type> particle)
@@ -41,11 +42,16 @@ zero<dimension, float_type>::zero(shared_ptr<particle_type> particle)
   , g_stress_pot_(particle->dim.threads())
   , g_hypervirial_(particle->dim.threads())
 {
-    // initialise particle forces, potential energy, and stress tensor to zero
-    cuda::memset(particle->g_f, 0);
     cuda::memset(g_en_pot_, 0);
     cuda::memset(g_stress_pot_, 0);
     cuda::memset(g_hypervirial_, 0);
+}
+
+template <int dimension, typename float_type>
+void zero<dimension, float_type>::compute()
+{
+    LOG_TRACE("zero particle forces");
+    cuda::memset(particle->g_f, 0);
 }
 
 template <int dimension, typename float_type>
@@ -90,6 +96,7 @@ HALMD_LUA_API int luaopen_libhalmd_mdsim_gpu_forces_zero(lua_State* L)
 template class zero<3, float>;
 template class zero<2, float>;
 
-}}} // namespace mdsim::gpu::forces
-
+} // namespace mdsim
+} // namespace gpu
+} // namespace forces
 } // namespace halmd

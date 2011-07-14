@@ -30,10 +30,10 @@
 #include <halmd/mdsim/integrator.hpp>
 #include <halmd/utility/profiler.hpp>
 
-namespace halmd
-{
-namespace mdsim { namespace gpu { namespace integrators
-{
+namespace halmd {
+namespace mdsim {
+namespace gpu {
+namespace integrators {
 
 template <int dimension, typename float_type>
 class verlet
@@ -43,7 +43,6 @@ public:
     typedef mdsim::integrator<dimension> _Base;
     typedef gpu::particle<dimension, float_type> particle_type;
     typedef mdsim::box<dimension> box_type;
-    typedef utility::gpu::device device_type;
     typedef utility::profiler profiler_type;
     typedef typename particle_type::vector_type vector_type;
 
@@ -89,8 +88,9 @@ private:
     runtime runtime_;
 };
 
-}}} // namespace mdsim::gpu::integrators
-
+} // namespace mdsim
+} // namespace gpu
+} // namespace integrators
 } // namespace halmd
 
 #endif /* ! HALMD_MDSIM_GPU_INTEGRATORS_VERLET_HPP */

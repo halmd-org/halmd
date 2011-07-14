@@ -26,10 +26,9 @@
 #include <halmd/mdsim/type_traits.hpp>
 #include <halmd/numeric/accumulator.hpp>
 
-namespace halmd
-{
-namespace io { namespace statevars
-{
+namespace halmd {
+namespace io {
+namespace statevars {
 
 /**
  * Abstract base class of a writer of macroscopic state variables.
@@ -95,8 +94,8 @@ protected:
     ) = 0;
 };
 
-}} // namespace io::statevars
-
+} // namespace io
+} // namespace statevars
 } // namespace halmd
 
 #endif /* ! HALMD_IO_STATEVARS_WRITER_HPP */

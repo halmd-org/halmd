@@ -24,10 +24,10 @@
 using namespace boost;
 using namespace std;
 
-namespace halmd
-{
-namespace io { namespace profiling { namespace writers
-{
+namespace halmd {
+namespace io {
+namespace profiling {
+namespace writers {
 
 /**
  * open H5MD file for writing
@@ -133,6 +133,7 @@ HALMD_LUA_API int luaopen_libhalmd_io_profiling_writers_h5md(lua_State* L)
     return 0;
 }
 
-}}} // namespace io::profiling::writers
-
+} // namespace io
+} // namespace profiling
+} // namespace writers
 } // namespace halmd

@@ -30,12 +30,11 @@ using namespace halmd::utility::gpu;
 /** cuboid box edge length */
 static __constant__ variant<map<pair<int_<3>, float3>, pair<int_<2>, float2> > > box_length_;
 
-namespace halmd
-{
-namespace mdsim { namespace gpu { namespace positions
-{
-namespace phase_space_kernel
-{
+namespace halmd {
+namespace mdsim {
+namespace gpu {
+namespace positions {
+namespace phase_space_kernel {
 
 /**
  * shift particle positions to range (-L/2, L/2)
@@ -67,6 +66,7 @@ phase_space_wrapper<dimension> const phase_space_wrapper<dimension>::kernel = {
 template class phase_space_wrapper<3>;
 template class phase_space_wrapper<2>;
 
-}}} // namespace mdsim::gpu::positions
-
+} // namespace mdsim
+} // namespace gpu
+} // namespace positions
 } // namespace halmd

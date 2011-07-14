@@ -1,5 +1,5 @@
 /*
- * Copyright © 2008-2010  Peter Colberg
+ * Copyright © 2008-2011  Peter Colberg
  *
  * This file is part of HALMD.
  *
@@ -30,23 +30,23 @@
 #include <utility>
 
 #include <halmd/numeric/blas/fixed_vector.hpp>
-#include <halmd/random/random.hpp>
 
-namespace halmd
-{
-namespace random { namespace host
-{
+namespace halmd {
+namespace random {
+namespace host {
 
 class random
-  : public halmd::random::random
 {
 public:
-    typedef halmd::random::random _Base;
     typedef boost::mt19937 random_generator; // FIXME template parameter
+    struct defaults
+    {
+        static unsigned int seed();
+    };
 
     static void luaopen(lua_State* L);
 
-    random(unsigned int seed);
+    random(unsigned int seed = defaults::seed());
 
     template <typename input_iterator>
     void shuffle(input_iterator first, input_iterator last);
@@ -202,8 +202,8 @@ void random::unit_vector(fixed_vector<value_type, 4>& v)
     v[3] *= s;
 }
 
-}} // namespace random::host
-
+} // namespace random
+} // namespace host
 } // namespace halmd
 
 #endif /* ! HALMD_RANDOM_HOST_RANDOM_HPP */

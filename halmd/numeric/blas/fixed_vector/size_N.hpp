@@ -26,10 +26,10 @@
 #include <halmd/config.hpp>
 #include <halmd/numeric/blas/fixed_array.hpp>
 
-namespace halmd
-{
-namespace detail { namespace numeric { namespace blas
-{
+namespace halmd {
+namespace detail {
+namespace numeric {
+namespace blas {
 
 /**
  * N-dimensional vector of arbitrary value type
@@ -69,8 +69,9 @@ struct fixed_vector
     }
 };
 
-}}} // namespace detail::numeric::blas
-
+} // namespace detail
+} // namespace numeric
+} // namespace blas
 // import into top-level namespace
 using detail::numeric::blas::fixed_vector;
 

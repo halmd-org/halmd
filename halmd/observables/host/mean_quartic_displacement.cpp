@@ -23,10 +23,9 @@
 using namespace boost;
 using namespace std;
 
-namespace halmd
-{
-namespace observables { namespace host
-{
+namespace halmd {
+namespace observables {
+namespace host {
 
 /**
  * Compute mean-quartic displacement of two position sample vectors.
@@ -94,6 +93,6 @@ template class mean_quartic_displacement<3, float>;
 template class mean_quartic_displacement<2, float>;
 #endif
 
-}} // namespace observables::host
-
+} // namespace observables
+} // namespace host
 } // namespace halmd

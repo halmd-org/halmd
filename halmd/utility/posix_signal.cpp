@@ -28,8 +28,7 @@
 using namespace boost;
 using namespace std;
 
-namespace halmd
-{
+namespace halmd {
 
 // FIXME error code handling (with boost::system::system_error)
 
@@ -50,7 +49,8 @@ posix_signal::~posix_signal()
  * @param signum signal number (> 0)
  * @param slot signal handler function or functor
  */
-void posix_signal::on_signal(int signum, slot_function_type const& slot)
+posix_signal::connection_type
+posix_signal::on_signal(int signum, slot_function_type const& slot)
 {
     handler_map_type::iterator it;
     bool inserted;
@@ -59,7 +59,7 @@ void posix_signal::on_signal(int signum, slot_function_type const& slot)
         sigaddset(&set_, signum);
         pthread_sigmask(SIG_BLOCK, &set_, NULL);
     }
-    it->second.connect(slot);
+    return it->second.connect(slot);
 }
 
 /**

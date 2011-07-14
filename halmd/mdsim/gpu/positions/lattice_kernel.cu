@@ -32,12 +32,11 @@ using namespace boost;
 using namespace halmd::mdsim::gpu::particle_kernel;
 using namespace halmd::utility::gpu;
 
-namespace halmd
-{
-namespace mdsim { namespace gpu { namespace positions
-{
-namespace lattice_kernel
-{
+namespace halmd {
+namespace mdsim {
+namespace gpu {
+namespace positions {
+namespace lattice_kernel {
 
 using boost::mpl::int_;
 
@@ -148,6 +147,7 @@ lattice_wrapper<dimension> const lattice_wrapper<dimension>::kernel = {
 template class lattice_wrapper<3>;
 template class lattice_wrapper<2>;
 
-}}} // namespace mdsim::gpu::positions
-
+} // namespace mdsim
+} // namespace gpu
+} // namespace positions
 } // namespace halmd

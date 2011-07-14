@@ -25,10 +25,9 @@
 using namespace boost;
 using namespace std;
 
-namespace halmd
-{
-namespace io { namespace trajectory
-{
+namespace halmd {
+namespace io {
+namespace trajectory {
 
 template <typename writer_type>
 typename signal<void (uint64_t)>::slot_function_type
@@ -63,6 +62,6 @@ HALMD_LUA_API int luaopen_libhalmd_io_trajectory_writer(lua_State* L)
     return 0;
 }
 
-}} // namespace io::trajectory
-
+} // namespace io
+} // namespace trajectory
 } // namespace halmd

@@ -23,10 +23,10 @@
 #include <cuda_wrapper/cuda_wrapper.hpp>
 #include <halmd/mdsim/type_traits.hpp>
 
-namespace halmd
-{
-namespace mdsim { namespace gpu { namespace positions
-{
+namespace halmd {
+namespace mdsim {
+namespace gpu {
+namespace positions {
 
 template <int dimension>
 struct phase_space_wrapper
@@ -38,8 +38,9 @@ struct phase_space_wrapper
     static phase_space_wrapper const kernel;
 };
 
-}}} // namespace mdsim::gpu::positions
-
+} // namespace mdsim
+} // namespace gpu
+} // namespace positions
 } // namespace halmd
 
 #endif /* ! HALMD_MDSIM_GPU_POSITIONS_PHASE_SPACE_KERNEL_HPP */

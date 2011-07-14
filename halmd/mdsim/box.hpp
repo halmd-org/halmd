@@ -25,13 +25,10 @@
 #include <functional>
 #include <lua.hpp>
 
-#include <halmd/mdsim/particle.hpp>
 #include <halmd/mdsim/type_traits.hpp>
 
-namespace halmd
-{
-namespace mdsim
-{
+namespace halmd {
+namespace mdsim {
 
 template <int dimension>
 class box
@@ -40,21 +37,28 @@ public:
     static void luaopen(lua_State* L);
 
     typedef typename type_traits<dimension, double>::vector_type vector_type;
-    typedef mdsim::particle<dimension> particle_type;
 
     box(
-        boost::shared_ptr<particle_type> particle
+        size_t nbox
       , vector_type const& length
     );
     box(
-        boost::shared_ptr<particle_type> particle
+        size_t nbox
       , double density
       , vector_type const& ratios
     );
 
-    vector_type const& length() { return length_; }
-    double density() { return density_; }
-    double volume()
+    vector_type const& length() const
+    {
+        return length_;
+    }
+
+    double density() const
+    {
+        return density_;
+    }
+
+    double volume() const
     {
         return std::accumulate(length_.begin(), length_.end(), 1., std::multiplies<double>());
     }
@@ -62,7 +66,10 @@ public:
     template <typename T>
     T reduce_periodic(T& r) const;
 
-    vector_type origin() const { return -length_half_; }
+    vector_type origin() const
+    {
+        return -length_half_;
+    }
 
 protected:
     /** edge lengths of cuboid */
@@ -105,7 +112,6 @@ inline T box<dimension>::reduce_periodic(T& r) const
 }
 
 } // namespace mdsim
-
 } // namespace halmd
 
 #endif /* ! HALMD_MDSIM_BOX_HPP */

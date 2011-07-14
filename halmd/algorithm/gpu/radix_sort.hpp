@@ -26,10 +26,9 @@
 #include <halmd/algorithm/gpu/radix_sort_kernel.hpp>
 #include <halmd/algorithm/gpu/scan.hpp>
 
-namespace halmd
-{
-namespace algorithm { namespace gpu
-{
+namespace halmd {
+namespace algorithm {
+namespace gpu {
 
 /*
  * Parallel radix sort
@@ -114,8 +113,8 @@ private:
     val_vector g_val;
 };
 
-}} // namespace algorithm::gpu
-
+} // namespace algorithm
+} // namespace gpu
 } // namespace halmd
 
 #endif /* ! HALMD_ALGORITHM_GPU_RADIX_SORT_HPP */

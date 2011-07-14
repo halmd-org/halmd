@@ -31,10 +31,10 @@ using namespace boost::assign;
 using namespace boost::numeric::ublas;
 using namespace std;
 
-namespace halmd
-{
-namespace mdsim { namespace host { namespace forces
-{
+namespace halmd {
+namespace mdsim {
+namespace host {
+namespace forces {
 
 /**
  * Initialise Morse potential parameters
@@ -138,6 +138,7 @@ template class pair_trunc<3, float, morse<float> >;
 template class pair_trunc<2, float, morse<float> >;
 #endif
 
-}}} // namespace mdsim::host::forces
-
+} // namespace mdsim
+} // namespace host
+} // namespace forces
 } // namespace halmd

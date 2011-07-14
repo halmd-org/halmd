@@ -6,6 +6,15 @@ configure_file(
   test_integration_continuation_lennard_jones.cmake
   @ONLY
 )
-add_test(integration/continuation/lennard_jones
-  test_integration_continuation_lennard_jones.cmake
+add_test(integration/continuation/lennard_jones/host/2d
+  @CMAKE_COMMAND@ -DDIMENSION=2 -DUSE_HOST=1 -P test_integration_continuation_lennard_jones.cmake
+)
+add_test(integration/continuation/lennard_jones/host/3d
+  @CMAKE_COMMAND@ -DDIMENSION=3 -DUSE_HOST=1 -P test_integration_continuation_lennard_jones.cmake
+)
+add_test(integration/continuation/lennard_jones/gpu/2d
+  @CMAKE_COMMAND@ -DDIMENSION=2 -P test_integration_continuation_lennard_jones.cmake
+)
+add_test(integration/continuation/lennard_jones/gpu/3d
+  @CMAKE_COMMAND@ -DDIMENSION=3 -P test_integration_continuation_lennard_jones.cmake
 )

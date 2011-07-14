@@ -24,8 +24,7 @@
 #include <boost/multi_array.hpp>
 #include <luabind/luabind.hpp>
 
-namespace luabind
-{
+namespace luabind {
 
 /**
  * Luabind converter for Boost array

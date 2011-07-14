@@ -28,10 +28,8 @@
 using namespace boost;
 using namespace std;
 
-namespace halmd
-{
-namespace observables
-{
+namespace halmd {
+namespace observables {
 
 template <int dimension>
 thermodynamics<dimension>::thermodynamics(
@@ -152,5 +150,4 @@ template class thermodynamics<3>;
 template class thermodynamics<2>;
 
 } // namespace observables
-
 } // namespace halmd

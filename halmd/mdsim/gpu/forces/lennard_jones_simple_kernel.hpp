@@ -22,12 +22,11 @@
 
 #include <cuda_wrapper/cuda_wrapper.hpp>
 
-namespace halmd
-{
-namespace mdsim { namespace gpu { namespace forces
-{
-namespace lennard_jones_simple_kernel
-{
+namespace halmd {
+namespace mdsim {
+namespace gpu {
+namespace forces {
+namespace lennard_jones_simple_kernel {
 
 // forward declaration for host code
 class lennard_jones_simple;
@@ -41,8 +40,9 @@ struct lennard_jones_simple_wrapper
     static cuda::symbol<float> en_cut;
 };
 
-}}} // namespace mdsim::gpu::forces
-
+} // namespace mdsim
+} // namespace gpu
+} // namespace forces
 } // namespace halmd
 
 #endif /* ! HALMD_MDSIM_GPU_FORCES_LENNARD_JONES_KERNEL_HPP */

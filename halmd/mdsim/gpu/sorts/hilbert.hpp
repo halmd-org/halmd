@@ -28,10 +28,10 @@
 #include <halmd/mdsim/sort.hpp>
 #include <halmd/utility/profiler.hpp>
 
-namespace halmd
-{
-namespace mdsim { namespace gpu { namespace sorts
-{
+namespace halmd {
+namespace mdsim {
+namespace gpu {
+namespace sorts {
 
 template <int dimension, typename float_type>
 class hilbert
@@ -45,6 +45,9 @@ public:
     typedef mdsim::box<dimension> box_type;
     typedef utility::profiler profiler_type;
     typedef hilbert_wrapper<dimension> wrapper_type;
+    typedef typename _Base::signal_type signal_type;
+    typedef typename _Base::slot_function_type slot_function_type;
+    typedef typename _Base::connection_type connection_type;
 
     struct runtime
     {
@@ -67,6 +70,11 @@ public:
     void register_runtimes(profiler_type& profiler);
     virtual void order();
 
+    virtual connection_type on_order(slot_function_type const& slot)
+    {
+        return on_order_.connect(slot);
+    }
+
 private:
     void map(cuda::vector<unsigned int>& g_map);
     void permutation(cuda::vector<unsigned int>& g_map, cuda::vector<unsigned int>& g_index);
@@ -76,10 +84,13 @@ private:
     unsigned int depth_;
     /** profiling runtime accumulators */
     runtime runtime_;
+    /** signal emitted after particle ordering */
+    signal_type on_order_;
 };
 
-}}} // namespace mdsim::gpu::sorts
-
+} // namespace mdsim
+} // namespace gpu
+} // namespace sorts
 } // namespace halmd
 
 #endif /* ! HALMD_MDSIM_GPU_SORTS_HILBERT_HPP */

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2010  Peter Colberg
+ * Copyright © 2011  Felix Höfling
  *
  * This file is part of HALMD.
  *
@@ -17,27 +17,13 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef HALMD_RANDOM_RANDOM_HPP
-#define HALMD_RANDOM_RANDOM_HPP
+#ifndef HALMD_TEST_PERFORMANCE_FILL_KERNEL_HPP
+#define HALMD_TEST_PERFORMANCE_FILL_KERNEL_HPP
 
-#include <lua.hpp>
+#include <cuda_wrapper/cuda_wrapper.hpp>
 
-namespace halmd
-{
-namespace random
-{
+extern cuda::function<void (float*, unsigned int, float)> fill_loop_kernel;
+extern cuda::function<void (float*, unsigned int, float)> fill_if_kernel;
+extern cuda::function<void (float*, float)> fill_all_kernel;
 
-class random
-{
-public:
-    static void luaopen(lua_State* L);
-
-    random() {}
-    virtual ~random() {}
-};
-
-} // namespace random
-
-} // namespace halmd
-
-#endif /* ! HALMD_RANDOM_RANDOM_HPP */
+#endif /* ! HALMD_TEST_PERFORMANCE_FILL_KERNEL_HPP */

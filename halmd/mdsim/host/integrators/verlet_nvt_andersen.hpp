@@ -29,10 +29,10 @@
 #include <halmd/random/host/random.hpp>
 #include <halmd/utility/profiler.hpp>
 
-namespace halmd
-{
-namespace mdsim { namespace host { namespace integrators
-{
+namespace halmd {
+namespace mdsim {
+namespace host {
+namespace integrators {
 
 template <int dimension, typename float_type>
 class verlet_nvt_andersen
@@ -110,8 +110,9 @@ protected:
     runtime runtime_;
 };
 
-}}} // namespace mdsim::host::integrators
-
+} // namespace mdsim
+} // namespace host
+} // namespace integrators
 } // namespace halmd
 
 #endif /* ! HALMD_MDSIM_HOST_INTEGRATORS_VERLET_NVT_ANDERSEN_HPP */

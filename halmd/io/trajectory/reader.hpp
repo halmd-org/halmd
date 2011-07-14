@@ -22,10 +22,9 @@
 
 #include <lua.hpp>
 
-namespace halmd
-{
-namespace io { namespace trajectory
-{
+namespace halmd {
+namespace io {
+namespace trajectory {
 
 template <int dimension>
 class reader
@@ -37,8 +36,8 @@ public:
     virtual ~reader() {}
 };
 
-}} // namespace io::trajectory
-
+} // namespace io
+} // namespace trajectory
 } // namespace halmd
 
 #endif /* ! HALMD_IO_TRAJECTORY_READER_HPP */

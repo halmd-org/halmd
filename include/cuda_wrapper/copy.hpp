@@ -33,8 +33,7 @@
 #include <cuda_wrapper/symbol.hpp>
 #include <cuda_wrapper/vector.hpp>
 
-namespace cuda
-{
+namespace cuda {
 
 // import into current namespace
 using boost::function_requires;

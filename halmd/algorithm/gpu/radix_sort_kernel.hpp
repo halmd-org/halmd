@@ -22,10 +22,9 @@
 
 #include <cuda_wrapper/cuda_wrapper.hpp>
 
-namespace halmd
-{
-namespace algorithm { namespace gpu
-{
+namespace halmd {
+namespace algorithm {
+namespace gpu {
 
 enum {
     // number of threads in half-warp
@@ -56,8 +55,8 @@ radix_sort_wrapper<T> const& get_radix_sort_kernel()
     return radix_sort_wrapper<T>::kernel;
 }
 
-}} // namespace algorithm::gpu
-
+} // namespace algorithm
+} // namespace gpu
 } // namespace halmd
 
 #endif /* ! HALMD_ALGORITHM_GPU_RADIX_SORT_KERNEL_HPP */

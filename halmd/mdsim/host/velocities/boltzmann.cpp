@@ -27,10 +27,10 @@
 using namespace boost;
 using namespace std;
 
-namespace halmd
-{
-namespace mdsim { namespace host { namespace velocities
-{
+namespace halmd {
+namespace mdsim {
+namespace host {
+namespace velocities {
 
 template <int dimension, typename float_type>
 boltzmann<dimension, float_type>::boltzmann(
@@ -157,6 +157,7 @@ template class boltzmann<3, float>;
 template class boltzmann<2, float>;
 #endif
 
-}}} // namespace mdsim::host::velocities
-
+} // namespace mdsim
+} // namespace host
+} // namespace velocities
 } // namespace halmd

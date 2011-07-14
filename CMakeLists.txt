@@ -58,11 +58,12 @@ if(NOT DEFINED Boost_USE_MULTITHREADED)
   set(Boost_USE_MULTITHREADED FALSE)
 endif(NOT DEFINED Boost_USE_MULTITHREADED)
 
-find_package(Boost 1.39.0 QUIET REQUIRED COMPONENTS
+find_package(Boost 1.43.0 QUIET REQUIRED COMPONENTS
   date_time
   filesystem
   log
   program_options
+  random
   system
   thread
   unit_test_framework
@@ -201,10 +202,30 @@ if(HALMD_VARIANT_HOST_SINGLE_PRECISION)
   add_definitions(-DUSE_HOST_SINGLE_PRECISION)
 endif(HALMD_VARIANT_HOST_SINGLE_PRECISION)
 
+# set appropriate RPATH on installed binaries as well as in build tree
+#
+# see http://www.vtk.org/Wiki/CMake_RPATH_handling
+#
+# use, i.e. don't skip, the full RPATH for the build tree
+set(CMAKE_SKIP_BUILD_RPATH  FALSE)
+# when building, don't use the install RPATH already
+# (but later on when installing)
+set(CMAKE_BUILD_WITH_INSTALL_RPATH FALSE) 
+set(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib")
+# add the automatically determined parts of the RPATH
+# which point to directories outside the build tree to the install RPATH
+set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
+# the RPATH to be used when installing, but only if it's not a system directory
+list(FIND CMAKE_PLATFORM_IMPLICIT_LINK_DIRECTORIES "${CMAKE_INSTALL_PREFIX}/lib" isSystemDir)
+if("${isSystemDir}" STREQUAL "-1")
+   set(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib")
+endif("${isSystemDir}" STREQUAL "-1")
+
 set(HALMD_COMMON_LIBRARIES
   ${Boost_DATE_TIME_LIBRARY}
   ${Boost_LOG_LIBRARY}
   ${Boost_PROGRAM_OPTIONS_LIBRARY}
+  ${Boost_RANDOM_LIBRARY}
   ${Boost_FILESYSTEM_LIBRARY}
   ${Boost_SYSTEM_LIBRARY}
   ${Boost_THREAD_LIBRARY}

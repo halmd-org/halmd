@@ -17,10 +17,19 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <lua.hpp>
+#include <luabind/luabind.hpp>
+#include <luabind/class_info.hpp>
+
 #include <halmd/modules.hpp>
 
 HALMD_LUA_API int luaopen_libhalmd(lua_State* L)
 {
+    // setup global structures and Lua class support
+    luabind::open(L);
+    // class_info(), class_names()
+    luabind::bind_class_info(L);
+    // bind HALMD C++ modules
     luaopen_@MODULE@(L);
     return 0;
 }

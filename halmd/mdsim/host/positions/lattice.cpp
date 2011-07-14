@@ -31,10 +31,10 @@
 using namespace boost;
 using namespace std;
 
-namespace halmd
-{
-namespace mdsim { namespace host { namespace positions
-{
+namespace halmd {
+namespace mdsim {
+namespace host {
+namespace positions {
 
 template <int dimension, typename float_type>
 lattice<dimension, float_type>::lattice(
@@ -238,6 +238,7 @@ template class lattice<3, float>;
 template class lattice<2, float>;
 #endif
 
-}}} // namespace mdsim::host::positions
-
+} // namespace mdsim
+} // namespace host
+} // namespace positions
 } // namespace halmd

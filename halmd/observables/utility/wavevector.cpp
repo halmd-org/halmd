@@ -31,10 +31,9 @@
 using namespace boost;
 using namespace std;
 
-namespace halmd
-{
-namespace observables { namespace utility
-{
+namespace halmd {
+namespace observables {
+namespace utility {
 
 template <int dimension>
 wavevector<dimension>::wavevector(
@@ -171,6 +170,6 @@ HALMD_LUA_API int luaopen_libhalmd_observables_utility_wavevector(lua_State* L)
 template class wavevector<3>;
 template class wavevector<2>;
 
-}} // namespace observables::utility
-
+} // namespace observables
+} // namespace utility
 } // namespace halmd

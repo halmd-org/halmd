@@ -28,10 +28,9 @@
 using namespace boost;
 using namespace std;
 
-namespace halmd
-{
-namespace observables { namespace gpu
-{
+namespace halmd {
+namespace observables {
+namespace gpu {
 
 template <int dimension, typename float_type>
 phase_space<gpu::samples::phase_space<dimension, float_type> >::phase_space(
@@ -143,6 +142,12 @@ void phase_space<host::samples::phase_space<dimension, float_type> >::acquire(ui
 }
 
 template <int dimension, typename float_type>
+static int wrap_gpu_dimension(phase_space<gpu::samples::phase_space<dimension, float_type> > const&)
+{
+    return dimension;
+}
+
+template <int dimension, typename float_type>
 void phase_space<gpu::samples::phase_space<dimension, float_type> >::luaopen(lua_State* L)
 {
     using namespace luabind;
@@ -161,10 +166,17 @@ void phase_space<gpu::samples::phase_space<dimension, float_type> >::luaopen(lua
                            , shared_ptr<particle_type>
                            , shared_ptr<box_type>
                         >())
+                        .property("dimension", &wrap_gpu_dimension<dimension, float_type>)
                 ]
             ]
         ]
     ];
+}
+
+template <int dimension, typename float_type>
+static int wrap_host_dimension(phase_space<host::samples::phase_space<dimension, float_type> > const&)
+{
+    return dimension;
 }
 
 template <int dimension, typename float_type>
@@ -186,6 +198,7 @@ void phase_space<host::samples::phase_space<dimension, float_type> >::luaopen(lu
                            , shared_ptr<particle_type>
                            , shared_ptr<box_type>
                         >())
+                        .property("dimension", &wrap_host_dimension<dimension, float_type>)
                 ]
             ]
         ]
@@ -207,6 +220,6 @@ template class phase_space<gpu::samples::phase_space<2, float> >;
 template class phase_space<host::samples::phase_space<3, float> >;
 template class phase_space<host::samples::phase_space<2, float> >;
 
-}} // namespace observables::gpu
-
+} // namespace observables
+} // namespace gpu
 } // namespace halmd

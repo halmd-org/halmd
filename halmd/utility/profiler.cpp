@@ -25,10 +25,8 @@
 using namespace boost;
 using namespace std;
 
-namespace halmd
-{
-namespace utility
-{
+namespace halmd {
+namespace utility {
 
 profiler::profiler(writers_type writer, string const& group)
   : writer_(writer)
@@ -65,5 +63,4 @@ HALMD_LUA_API int luaopen_libhalmd_utility_profiler(lua_State* L)
 }
 
 } // namespace utility
-
 } // namespace halmd

@@ -1,0 +1,178 @@
+.. _build:
+
+Building HAL's MD package
+*************************
+
+Compilation and Installation
+============================
+
+HALMD uses `CMake <http://www.cmake.org/>`_ to generate its make files, which is
+similar to the more commonly used Autotools suite recognisable by the
+``configure`` script accompanying a software package, but much faster and much
+easier to develop with.
+
+With cmake, out-of-tree compilation is preferred, so we generate the compilation
+or build tree in a separate directory. This allows one to have multiple builds
+of the same software at the same time, for example a release build with
+aggressive optimisation and a debug build including debugging symbols. Note that
+the build directory may be a subdirectory in the source tree.
+
+Setting up the build tree
+-------------------------
+
+In the cloned HALMD repository, switch to a new build directory::
+
+  mkdir -p build/release && cd build/release
+
+If the third-party packages are installed in standard locations, run ::
+
+  cmake ../..
+
+This will detect all necessary software, and then generate the make files. If
+third-party packages are not found in standard locations, make sure to
+correctly set the environment variable ``CMAKE_PREFIX_PATH``, see
+:ref:`prerequisites`.
+
+Compilation
+-----------
+
+Compilation is done using make, which supports parallel builds::
+
+  nice make -j4
+
+The default installation directory is ``/usr/local``, which may be adjusted by invoking ::
+
+  cmake -DCMAKE_INSTALL_PREFIX=$HOME/opt/halmd-version ../..
+
+For compilation and subsequent installation type::
+
+  nice make -j4 install
+
+
+Further CMake configuration
+---------------------------
+
+Compilation flags may be configured via CMake's text mode interface::
+
+  ccmake .
+
+To finish configuration, hit "c" and "g" to apply and recompile with make.
+Alternatively, you may use CMake's graphical interface::
+
+  cmake-gui .
+
+The following switch displays the actual commands invoked by make::
+
+  CMAKE_VERBOSE_MAKEFILE	ON
+
+An installation prefix may be specified as following::
+
+  CMAKE_INSTALL_PREFIX		/your/home/directory/usr
+
+The compiled program is then installed into this tree by ::
+
+  nice make -j4 install
+
+
+Updating the build tree
+-----------------------
+
+After checking out to a different version (or more recent Git commit), **switch
+to the build directory** (e.g., ``build/release``) and run::
+
+  cmake .
+
+This instructs CMake to regenerate the build tree using the configuration from the
+previous run of CMake. Then compile with ``make`` as usual.
+
+
+Setting build parameters
+------------------------
+
+Parameters may be passed to cmake as environment variables or cache variables.
+
+Environment variables are prepended to the cmake command::
+
+  CXXFLAGS="-fPIC -Wall" cmake ../..
+
+:doc:`cmake/env_vars`
+
+Cache variables are appended using the -D option::
+
+  cmake -DCMAKE_BUILD_TYPE=Release ../..
+
+:doc:`cmake/cache_vars`
+
+The following example demonstrates how to compile separate, dynamically linked
+executables for each backend, which are statically linked to all libraries except the
+standard C and C++ libraries::
+
+  CXXFLAGS="-fPIC -Wall"
+  NVCCFLAGS="-Xcompiler -fPIC -Xptxas -v --host-compilation=c -arch sm_12" \
+  cmake \
+      -DCMAKE_BUILD_TYPE=Release \
+      ../..
+
+The options given here correspond to the default values.
+
+
+Testing
+=======
+
+HALMD includes an extensive, preliminary test suite, which may be started in
+the build tree by ::
+
+  ctest
+
+
+Supported compilers
+===================
+
+HALMD is known to compile with these C++ compilers.
+
+* GCC 4.6
+
+  - GCC 4.6.0 (upstream) on CentOS 5.3 (x86_64)
+
+* GCC 4.4
+
+  - GCC 4.4.5 on Debian GNU/Linux squeeze (x86 and x86_64)
+  - GCC 4.4.4 on RHEL 6.0 (x86_64)
+  - GCC 4.4.3 on Ubuntu 10.04 LTS (x86_64)
+
+  Note that CUDA ≤ 3.0 is not compatible with GCC 4.4.
+
+* GCC 4.3
+
+  - GCC 4.3.3 on Ubuntu 9.04 (x86_64)
+  - GCC 4.3.2 on Debian GNU/Linux 5.0 (x86_64)
+
+* GCC 4.1
+
+  - GCC 4.1.2 on CentOS 5.3 (x86_64)
+
+* Clang 2.8 (requires latest `Luabind source`_)
+
+  - Clang 2.8 (upstream) on RHEL 6.0 (x86_64)
+
+* Intel C++ compiler (requires latest `Luabind source`_)
+
+  - Intel C++ compiler 11.1 on CentOS 5.3 (x86_64)
+  - Intel C++ compiler 12.0 on CentOS 5.3 (x86_64)
+
+* XL C++
+
+  - XL C++ 11.1 on AIX 5.3 (POWER6)
+
+.. _Luabind source: https://github.com/luabind/luabind
+
+The following C++ compilers **fail** to compile HALMD.
+
+* Clang ≤ 2.7
+
+  - Clang 2.7 on Debian GNU/Linux squeeze (x86_64)
+
+* XL C++
+
+  - XL C++ 10.1 on AIX 5.3 (POWER6)
+

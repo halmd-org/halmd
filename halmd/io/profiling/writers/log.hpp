@@ -26,10 +26,10 @@
 
 #include <halmd/io/profiling/writer.hpp>
 
-namespace halmd
-{
-namespace io { namespace profiling { namespace writers
-{
+namespace halmd {
+namespace io {
+namespace profiling {
+namespace writers {
 
 /**
  * This module writes runtime accumulator results to the log.
@@ -65,8 +65,9 @@ private:
     std::vector<acc_desc_pair_type> accumulators_;
 };
 
-}}} // namespace io::profiling::writers
-
+} // namespace io
+} // namespace profiling
+} // namespace writers
 } // namespace halmd
 
 #endif /* ! HALMD_IO_PROFILING_LOG_HPP */

@@ -28,10 +28,9 @@
 #include <halmd/observables/utility/wavevector.hpp>
 #include <halmd/utility/profiler.hpp>
 
-namespace halmd
-{
-namespace observables { namespace host
-{
+namespace halmd {
+namespace observables {
+namespace host {
 
 /**
  *  compute Fourier modes of the particle density
@@ -51,6 +50,7 @@ public:
     typedef halmd::utility::profiler profiler_type;
     typedef typename _Base::signal_type signal_type;
     typedef typename _Base::slot_function_type slot_function_type;
+    typedef typename _Base::connection_type connection_type;
 
     typedef fixed_vector<float_type, dimension> vector_type;
     typedef typename density_mode_sample_type::mode_type mode_type;
@@ -75,9 +75,9 @@ public:
     */
     virtual void acquire(uint64_t step);
 
-    virtual void on_acquire(slot_function_type const& slot)
+    virtual connection_type on_acquire(slot_function_type const& slot)
     {
-        on_acquire_.connect(slot);
+        return on_acquire_.connect(slot);
     }
 
     //! returns nested list of density modes
@@ -116,8 +116,8 @@ protected:
     signal_type on_acquire_;
 };
 
-}} // namespace observables::host
-
-}  // namespace halmd
+} // namespace observables
+} // namespace host
+} // namespace halmd
 
 #endif /* ! HALMD_OBSERVABLES_HOST_DENSITY_MODE_HPP */

@@ -30,10 +30,10 @@
 using namespace boost;
 using namespace std;
 
-namespace halmd
-{
-namespace mdsim { namespace host { namespace integrators
-{
+namespace halmd {
+namespace mdsim {
+namespace host {
+namespace integrators {
 
 template <int dimension, typename float_type>
 verlet_nvt_andersen<dimension, float_type>::verlet_nvt_andersen(
@@ -200,6 +200,7 @@ template class verlet_nvt_andersen<3, float>;
 template class verlet_nvt_andersen<2, float>;
 #endif
 
-}}} // namespace mdsim::host::integrators
-
+} // namespace mdsim
+} // namespace host
+} // namespace integrators
 } // namespace halmd

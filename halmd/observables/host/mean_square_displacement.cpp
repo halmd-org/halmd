@@ -23,10 +23,9 @@
 using namespace boost;
 using namespace std;
 
-namespace halmd
-{
-namespace observables { namespace host
-{
+namespace halmd {
+namespace observables {
+namespace host {
 
 /**
  * Compute mean-square displacement of two position sample vectors.
@@ -92,6 +91,6 @@ template class mean_square_displacement<3, float>;
 template class mean_square_displacement<2, float>;
 #endif
 
-}} // namespace observables::host
-
+} // namespace observables
+} // namespace host
 } // namespace halmd

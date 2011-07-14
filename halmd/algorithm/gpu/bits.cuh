@@ -24,10 +24,9 @@
 // Bits and pieces used in GPU algorithms
 //
 
-namespace halmd
-{
-namespace algorithm { namespace gpu
-{
+namespace halmd {
+namespace algorithm {
+namespace gpu {
 
 /**
  * swap arguments
@@ -41,8 +40,8 @@ __device__ __host__ void swap(T& a, T& b)
 }
 
 
-}} // namespace algorithm::gpu
-
+} // namespace algorithm
+} // namespace gpu
 } // namespace halmd
 
 #endif /* ! HALMD_ALGORITHM_GPU_BITS_CUH */

@@ -1,18 +1,19 @@
-.. _prerequisites:
+.. _manual:
 
-Prerequisites
-*************
+Manual installation
+===================
 
-This section is a step-by-step guide to installing the necessary dependencies to
-compile HALMD from source. Be sure to check if your distribution ships with any
-of these packages before attempting to compile them yourself.
+This section is a step-by-step guide for manual installation of the required
+build dependencies of HALMD. Be sure to check if your distribution ships with
+any of these packages before attempting to compile them yourself. Before
+proceeding, be aware of the section :ref:`automatic`.
 
 .. tip::
 
    When installing third-party packages, it is advisable to put them into
    separate directories. If you install software only for yourself, use package
-   directories of the form ``~/usr/PKGNAME-PKGVERSION``, for example
-   ``~/usr/boost-1.46.1`` or ``~/usr/Sphinx-1.0.4``. If you install software
+   directories of the form ``~/opt/PKGNAME-PKGVERSION``, for example
+   ``~/opt/boost-1.46.1`` or ``~/opt/Sphinx-1.0.4``. If you install software
    system-wide as the root user, use ``/opt/PKGNAME-PKGVERSION``.
    This simple scheme allows you to have multiple versions of a package, or
    remove a package without impacting others.
@@ -23,20 +24,22 @@ For example, if Boost, Lua and Luabind are installed in your home directory,
 CUDA is installed system-wide, and the HALMD source is in ``~/projects/halmd``,
 the initial cmake command might look like this ::
 
-   CMAKE_PREFIX_PATH=~/usr/boost_1_46_1:/opt/cuda-3.1:~/usr/lua-5.1.4:~/usr/luabind-0.9.1 cmake ~/projects/halmd
+   CMAKE_PREFIX_PATH=~/opt/boost_1_46_1:/opt/cuda-3.1:~/opt/lua-5.1.4:~/opt/luabind-0.9.1 cmake ~/projects/halmd
 
 Instead of setting CMAKE_PREFIX_PATH manually, you would include the package directories in your ~/.bashrc (or your favourite shell's equivalent) ::
 
-   export CMAKE_PREFIX_PATH="${HOME}/usr/boost_1_46_1${CMAKE_PREFIX_PATH+:$CMAKE_PREFIX_PATH}"
+   export CMAKE_PREFIX_PATH="${HOME}/opt/boost_1_46_1${CMAKE_PREFIX_PATH+:$CMAKE_PREFIX_PATH}"
    export CMAKE_PREFIX_PATH="/opt/cuda-3.1${CMAKE_PREFIX_PATH+:$CMAKE_PREFIX_PATH}"
-   export CMAKE_PREFIX_PATH="${HOME}/usr/lua-5.1.4${CMAKE_PREFIX_PATH+:$CMAKE_PREFIX_PATH}"
-   export CMAKE_PREFIX_PATH="${HOME}/usr/luabind-0.9.1${CMAKE_PREFIX_PATH+:$CMAKE_PREFIX_PATH}"
+   export CMAKE_PREFIX_PATH="${HOME}/opt/lua-5.1.4${CMAKE_PREFIX_PATH+:$CMAKE_PREFIX_PATH}"
+   export CMAKE_PREFIX_PATH="${HOME}/opt/luabind-0.9.1${CMAKE_PREFIX_PATH+:$CMAKE_PREFIX_PATH}"
 
 GNU/Linux
-=========
+---------
 
 CMake
------
+^^^^^
+
+The build process of HALMD depends on CMake, a cross-platform, open-source build system.
 
 Get the latest `CMake source package`_, currently `CMake 2.8.4`_.
 
@@ -63,7 +66,7 @@ Extract the CMake source package, and apply the patches in the CMake source dire
 
 Prepare the CMake build with ::
 
-   ./configure --prefix=$HOME/usr/cmake-cuda-2.8.4
+   ./configure --prefix=$HOME/opt/cmake-cuda-2.8.4
 
 Compile CMake with ::
 
@@ -75,12 +78,12 @@ Install CMake into your packages directory::
 
 Include CMake in your shell environment, by adding to ~/.bashrc::
 
-   export PATH="${HOME}/usr/cmake-cuda-2.8.4/bin${PATH+:$PATH}"
-   export MANPATH="${HOME}/usr/cmake-cuda-2.8.4/man${MANPATH+:$MANPATH}"
+   export PATH="${HOME}/opt/cmake-cuda-2.8.4/bin${PATH+:$PATH}"
+   export MANPATH="${HOME}/opt/cmake-cuda-2.8.4/man${MANPATH+:$MANPATH}"
 
 
-Boost
------
+Boost C++ libraries
+^^^^^^^^^^^^^^^^^^^
 
 Get the latest `Boost source package`_, currently `Boost 1.46.1`_.
 
@@ -131,16 +134,16 @@ This compiles both dynamic and static libraries.
 
 Install the Boost libraries into your packages directory::
 
-   ./bjam cxxflags=-fPIC install --prefix=$HOME/usr/boost_1_46_1
+   ./bjam cxxflags=-fPIC install --prefix=$HOME/opt/boost_1_46_1
 
 Include Boost in your shell environment, by adding to ~/.bashrc::
 
-   export CMAKE_PREFIX_PATH="${HOME}/usr/boost_1_46_1${CMAKE_PREFIX_PATH+:$CMAKE_PREFIX_PATH}"
-   export LD_LIBRARY_PATH="${HOME}/usr/boost_1_46_1/lib${LD_LIBRARY_PATH+:$LD_LIBRARY_PATH}"
+   export CMAKE_PREFIX_PATH="${HOME}/opt/boost_1_46_1${CMAKE_PREFIX_PATH+:$CMAKE_PREFIX_PATH}"
+   export LD_LIBRARY_PATH="${HOME}/opt/boost_1_46_1/lib${LD_LIBRARY_PATH+:$LD_LIBRARY_PATH}"
 
 
-Lua
----
+Lua interpreter
+^^^^^^^^^^^^^^^
 
 Get the latest Lua source package from the `Lua download`_ page, currently `Lua 5.1.4`_.
 
@@ -168,17 +171,17 @@ On **64-bit platforms**, include the ``-fPIC`` flag using ::
 
 Install the Lua library into your packages directory::
 
-   make install INSTALL_TOP=~/usr/lua-5.1.4
+   make install INSTALL_TOP=~/opt/lua-5.1.4
 
 Include Lua in your shell environment, by adding to ~/.bashrc::
 
-   export CMAKE_PREFIX_PATH="${HOME}/usr/lua-5.1.4${CMAKE_PREFIX_PATH+:$CMAKE_PREFIX_PATH}"
-   export PATH="${HOME}/usr/lua-5.1.4/bin${PATH+:$PATH}"
-   export MANPATH="${HOME}/usr/lua-5.1.4/man${MANPATH+:$MANPATH}"
+   export CMAKE_PREFIX_PATH="${HOME}/opt/lua-5.1.4${CMAKE_PREFIX_PATH+:$CMAKE_PREFIX_PATH}"
+   export PATH="${HOME}/opt/lua-5.1.4/bin${PATH+:$PATH}"
+   export MANPATH="${HOME}/opt/lua-5.1.4/man${MANPATH+:$MANPATH}"
 
 
-Luabind
--------
+Luabind library
+^^^^^^^^^^^^^^^
 
 Get the latest `Luabind source package`_, currently `Luabind 0.9.1`_.
 
@@ -195,21 +198,21 @@ Get the latest `Luabind source package`_, currently `Luabind 0.9.1`_.
 
 Compile statically linked release and debug variants of the Luabind library with ::
 
-   BOOST_ROOT=/tmp/boost_1_46_1 LUA_PATH=~/usr/lua-5.1.4 /tmp/boost_1_46_1/bjam cxxflags=-fPIC link=static variant=release variant=debug
+   BOOST_ROOT=/tmp/boost_1_46_1 LUA_PATH=~/opt/lua-5.1.4 /tmp/boost_1_46_1/bjam cxxflags=-fPIC link=static variant=release variant=debug
 
 Install the Luabind library into your packages directory::
 
-   BOOST_ROOT=/tmp/boost_1_46_1 LUA_PATH=~/usr/lua-5.1.4 /tmp/boost_1_46_1/bjam cxxflags=-fPIC link=static variant=release variant=debug install --prefix=$HOME/usr/luabind-0.9.1
+   BOOST_ROOT=/tmp/boost_1_46_1 LUA_PATH=~/opt/lua-5.1.4 /tmp/boost_1_46_1/bjam cxxflags=-fPIC link=static variant=release variant=debug install --prefix=$HOME/opt/luabind-0.9.1
 
 (Note that bjam does not replace ~ with your home directory, use ``$HOME`` instead.)
 
 Include Luabind in your shell environment, by adding to ~/.bashrc::
 
-   export CMAKE_PREFIX_PATH="${HOME}/usr/luabind-0.9.1${CMAKE_PREFIX_PATH+:$CMAKE_PREFIX_PATH}"
+   export CMAKE_PREFIX_PATH="${HOME}/opt/luabind-0.9.1${CMAKE_PREFIX_PATH+:$CMAKE_PREFIX_PATH}"
 
 
-HDF5
-----
+HDF5 library
+^^^^^^^^^^^^
 
 Get the latest `HDF5 source package`_, currently `HDF5 1.8.6`_.
 
@@ -218,7 +221,7 @@ Get the latest `HDF5 source package`_, currently `HDF5 1.8.6`_.
 
 Prepare a statically linked build of the HDF5 C and C++ library with ::
 
-   CFLAGS=-fPIC CXXFLAGS=-fPIC ./configure --enable-cxx --enable-static --disable-shared --prefix=$HOME/usr/hdf5-1.8.6
+   CFLAGS=-fPIC CXXFLAGS=-fPIC ./configure --enable-cxx --enable-static --disable-shared --prefix=$HOME/opt/hdf5-1.8.6
 
 .. note:: Compiling HDF5 with C++ support disables multi-threading.
 
@@ -232,12 +235,12 @@ Install the HDF5 libraries into your packages directory::
 
 Include HDF5 in your shell environment, by adding to ~/.bashrc::
 
-   export PATH="${HOME}/usr/hdf5-1.8.6/bin${PATH+:$PATH}"
-   export CMAKE_PREFIX_PATH="${HOME}/usr/hdf5-1.8.6${CMAKE_PREFIX_PATH+:$CMAKE_PREFIX_PATH}"
+   export PATH="${HOME}/opt/hdf5-1.8.6/bin${PATH+:$PATH}"
+   export CMAKE_PREFIX_PATH="${HOME}/opt/hdf5-1.8.6${CMAKE_PREFIX_PATH+:$CMAKE_PREFIX_PATH}"
 
 
-Sphinx
-------
+Sphinx documentation generator
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Get the latest `Sphinx source package`_, currently `Sphinx 1.0.7`_.
 
@@ -250,33 +253,33 @@ Query your Python version ::
 
 Create a package directory for Sphinx using the Python major and minor version ::
 
-   mkdir -p $HOME/usr/Sphinx-1.0.7/lib/python2.5/site-packages
+   mkdir -p $HOME/opt/Sphinx-1.0.7/lib/python2.5/site-packages
 
 Add the package directory to the PYTHON_PATH environment variable ::
 
-   export PYTHONPATH="${HOME}/usr/Sphinx-1.0.7/lib/python2.5/site-packages${PYTHONPATH+:$PYTHONPATH}"
+   export PYTHONPATH="${HOME}/opt/Sphinx-1.0.7/lib/python2.5/site-packages${PYTHONPATH+:$PYTHONPATH}"
 
 Install Sphinx into your packages directory ::
 
-   python setup.py install --prefix=$HOME/usr/Sphinx-1.0.7
+   python setup.py install --prefix=$HOME/opt/Sphinx-1.0.7
 
 Include Sphinx in your shell environment, by adding to ~/.bashrc::
 
-   export PATH="${HOME}/usr/Sphinx-1.0.7/bin${PATH+:$PATH}"
-   export PYTHONPATH="${HOME}/usr/Sphinx-1.0.7/lib/python2.5/site-packages${PYTHONPATH+:$PYTHONPATH}"
+   export PATH="${HOME}/opt/Sphinx-1.0.7/bin${PATH+:$PATH}"
+   export PYTHONPATH="${HOME}/opt/Sphinx-1.0.7/lib/python2.5/site-packages${PYTHONPATH+:$PYTHONPATH}"
 
 AIX
-===
+---
 
 Boost
------
+^^^^^
 
 Compile and install Boost using ::
 
-   ./bjam --toolset=vacpp address-model=64 cxxflags=-qrtti=all install --prefix=$HOME/usr/powerpc-ibm-aix5.3/boost_1_46_1
+   ./bjam --toolset=vacpp address-model=64 cxxflags=-qrtti=all install --prefix=$HOME/opt/powerpc-ibm-aix5.3/boost_1_46_1
 
 Lua
----
+^^^
 
 Compile the Lua library ::
 
@@ -284,17 +287,17 @@ Compile the Lua library ::
 
 
 Luabind
--------
+^^^^^^^
 
 Compile and install the Luabind library ::
 
-   BOOST_ROOT=/tmp/boost_1_46_1 LUA_PATH=~/usr/powerpc-ibm-aix5.3/lua-5.1.4 /tmp/boost_1_46_1/bjam --toolset=vacpp address-model=64 cxxflags=-qrtti=all link=static variant=release variant=debug install --prefix=$HOME/usr/powerpc-ibm-aix5.3/luabind-0.9.1
+   BOOST_ROOT=/tmp/boost_1_46_1 LUA_PATH=~/opt/powerpc-ibm-aix5.3/lua-5.1.4 /tmp/boost_1_46_1/bjam --toolset=vacpp address-model=64 cxxflags=-qrtti=all link=static variant=release variant=debug install --prefix=$HOME/opt/powerpc-ibm-aix5.3/luabind-0.9.1
 
 
 HDF5
-----
+^^^^
 
 Prepare a statically linked build of the HDF5 C and C++ library with ::
 
-   CC=xlc_r CXX=xlC_r CXXFLAGS=-qrtti=all ./configure --enable-cxx --enable-static --disable-shared --prefix=$HOME/usr/powerpc-ibm-aix5.3/hdf5-1.8.6
+   CC=xlc_r CXX=xlC_r CXXFLAGS=-qrtti=all ./configure --enable-cxx --enable-static --disable-shared --prefix=$HOME/opt/powerpc-ibm-aix5.3/hdf5-1.8.6
 

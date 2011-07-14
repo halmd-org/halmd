@@ -28,10 +28,9 @@
 #include <halmd/observables/host/samples/phase_space.hpp>
 #include <halmd/observables/phase_space.hpp>
 
-namespace halmd
-{
-namespace observables { namespace gpu
-{
+namespace halmd {
+namespace observables {
+namespace gpu {
 
 template <typename sample_type>
 class phase_space;
@@ -92,8 +91,8 @@ public:
     virtual void acquire(uint64_t step);
 };
 
-}} // namespace observables::gpu
-
+} // namespace observables
+} // namespace gpu
 } // namespace halmd
 
 #endif /* ! HALMD_OBSERVABLES_GPU_PHASE_SPACE_HPP */

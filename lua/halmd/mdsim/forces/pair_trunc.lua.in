@@ -17,10 +17,12 @@
 -- along with this program.  If not, see <http://www.gnu.org/licenses/>.
 --
 
-require("halmd.modules")
-
 require("halmd.device")
+require("halmd.mdsim.box")
 require("halmd.mdsim.core")
+require("halmd.mdsim.neighbour")
+require("halmd.mdsim.particle")
+require("halmd.modules")
 
 -- grab modules
 local device = halmd.device
@@ -53,10 +55,12 @@ function new(args)
     local force = assert(args.force)
     local potential = assert(args.potential)
 
-    local core = mdsim.core()
-    local dimension = assert(core.dimension)
-    local particle = assert(core.particle)
-    local box = assert(core.box)
+    local particle = mdsim.particle() -- singleton
+    local dimension = assert(particle.dimension)
+    local box = mdsim.box() -- singleton
+
+    -- create neighbour lists with cutoff radii of potential
+    local neighbour = mdsim.neighbour{ r_cut = potential.r_cut }
 
     local pair_trunc
     if device() then
@@ -64,5 +68,18 @@ function new(args)
     else
         pair_trunc = assert(pair_trunc_wrapper.host[dimension][force])
     end
-    return pair_trunc(potential, particle, box)
+    local force = pair_trunc(potential, particle, box, neighbour)
+
+    -- move tracked signal connections from neighbour to force;
+    -- on force:disconnect() the core signals connections of
+    -- both force and neighbour will be disconnected
+    neighbour:move_connections(force)
+
+    local core = mdsim.core()
+    -- system preparation
+    core:on_append_setup{force.compute, tracker = force}
+    -- compute forces every step
+    core:on_force{force.compute, tracker = force}
+
+    return force
 end

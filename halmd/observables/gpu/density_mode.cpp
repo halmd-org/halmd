@@ -28,10 +28,9 @@
 using namespace boost;
 using namespace std;
 
-namespace halmd
-{
-namespace observables { namespace gpu
-{
+namespace halmd {
+namespace observables {
+namespace gpu {
 
 template <int dimension, typename float_type>
 density_mode<dimension, float_type>::density_mode(

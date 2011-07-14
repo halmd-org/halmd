@@ -24,8 +24,7 @@
 #include <sstream>
 #include <string>
 
-namespace halmd
-{
+namespace halmd {
 
 /**
  * returns formatted current local time

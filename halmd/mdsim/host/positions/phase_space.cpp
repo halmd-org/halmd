@@ -23,10 +23,10 @@
 #include <halmd/mdsim/host/positions/phase_space.hpp>
 #include <halmd/utility/lua/lua.hpp>
 
-namespace halmd
-{
-namespace mdsim { namespace host { namespace positions
-{
+namespace halmd {
+namespace mdsim {
+namespace host {
+namespace positions {
 
 using namespace boost;
 using namespace std;
@@ -113,6 +113,7 @@ template class phase_space<3, float>;
 template class phase_space<2, float>;
 #endif
 
-}}} // namespace mdsim::host::positions
-
+} // namespace mdsim
+} // namespace host
+} // namespace positions
 } // namespace halmd

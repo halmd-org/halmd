@@ -35,10 +35,10 @@
 # include <boost/tuple/tuple.hpp>
 #endif
 
-namespace halmd
-{
-namespace detail { namespace numeric { namespace blas
-{
+namespace halmd {
+namespace detail {
+namespace numeric {
+namespace blas {
 
 #ifdef WITH_CUDA
 HALMD_GPU_USING(algorithm::gpu::tuple, boost::tuple);
@@ -492,8 +492,9 @@ tuple<double4, double2> split(fixed_vector<double, 6> const& v)
 
 #endif  // __CUDACC__
 
-}}} // namespace detail::numeric::blas
-
+} // namespace detail
+} // namespace numeric
+} // namespace blas
 } // namespace halmd
 
 #endif /* ! HALMD_NUMERIC_BLAS_FIXED_VECTOR_SIZE_6_HPP */

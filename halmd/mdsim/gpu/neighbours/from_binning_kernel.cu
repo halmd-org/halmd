@@ -1,5 +1,5 @@
 /*
- * Copyright © 2008-2010  Peter Colberg
+ * Copyright © 2008-2011  Peter Colberg
  *
  * This file is part of HALMD.
  *
@@ -17,26 +17,21 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <float.h>
-
-#include <halmd/algorithm/gpu/reduction.cuh>
 #include <halmd/mdsim/gpu/box_kernel.cuh>
-#include <halmd/mdsim/gpu/neighbour_kernel.hpp>
+#include <halmd/mdsim/gpu/neighbours/from_binning_kernel.hpp>
 #include <halmd/mdsim/gpu/particle_kernel.cuh>
 #include <halmd/numeric/blas/blas.hpp>
 #include <halmd/utility/gpu/thread.cuh>
 #include <halmd/utility/gpu/variant.cuh>
 
-using namespace halmd::algorithm::gpu;
 using namespace halmd::mdsim::gpu::particle_kernel;
 using namespace halmd::utility::gpu;
 
-namespace halmd
-{
-namespace mdsim { namespace gpu
-{
-namespace neighbour_kernel
-{
+namespace halmd {
+namespace mdsim {
+namespace gpu {
+namespace neighbours {
+namespace from_binning_kernel {
 
 /** (cutoff lengths + neighbour list skin)² */
 texture<float> rr_cut_skin_;
@@ -50,8 +45,6 @@ __constant__ unsigned int nbox_;
 __constant__ variant<map<pair<int_<3>, float3>, pair<int_<2>, float2> > > box_length_;
 /** number of cells per dimension */
 __constant__ variant<map<pair<int_<3>, uint3>, pair<int_<2>, uint2> > > ncell_;
-/** cell edge lengths */
-__constant__ variant<map<pair<int_<3>, float3>, pair<int_<2>, float2> > > cell_length_;
 /** positions, tags */
 texture<float4> r_;
 
@@ -229,167 +222,24 @@ self:
     }
 }
 
-/**
- * compute cell indices for given particle positions
- */
-template <
-    typename cell_size_type // work around "lower_constant: bad kind" bug in CUDA 2.3
-  , typename vector_type
->
-__device__ inline unsigned int compute_cell_index(vector_type r)
-{
-    enum { dimension = vector_type::static_size };
-
-    vector_type cell_length = get<dimension>(cell_length_);
-    cell_size_type ncell = get<dimension>(ncell_);
-    cell_size_type index = element_mod(
-        static_cast<cell_size_type>(element_div(r, cell_length) + static_cast<vector_type>(ncell))
-      , ncell
-    );
-    // FIXME check PTX to ensure CUDA unrolls this loop
-    unsigned int offset = index[dimension - 1];
-    for (int i = dimension - 2; i >= 0; i--) {
-        offset *= ncell[i];
-        offset += index[i];
-    }
-    return offset;
-}
-
-/**
- * compute cell indices for particle positions
- */
-template <unsigned int dimension>
-__global__ void compute_cell(float4 const* g_r, unsigned int* g_cell)
-{
-    fixed_vector<float, dimension> r;
-    unsigned int type;
-    tie(r, type) = untagged<fixed_vector<float, dimension> >(g_r[GTID]);
-    g_cell[GTID] = compute_cell_index<fixed_vector<unsigned int, dimension> >(r);
-}
-
-/**
- * compute global cell offsets in particle list
- */
-__global__ void find_cell_offset(unsigned int* g_cell, unsigned int* g_cell_offset)
-{
-    const unsigned int j = g_cell[GTID];
-    const unsigned int k = (GTID > 0 && GTID < nbox_) ? g_cell[GTID - 1] : j;
-
-    if (GTID == 0 || k < j) {
-        // particle marks the start of a cell
-        g_cell_offset[j] = GTID;
-    }
-}
-
-/**
- * assign particles to cells
- */
-__global__ void assign_cells(
-  int* g_ret,
-  unsigned int const* g_cell,
-  unsigned int const* g_cell_offset,
-  unsigned int const* g_itag,
-  unsigned int* g_otag)
-{
-    __shared__ unsigned int s_offset[1];
-
-    if (threadIdx.x == 0) {
-        s_offset[0] = g_cell_offset[BID];
-    }
-    __syncthreads();
-    // global offset of first particle in this block's cell
-    const unsigned int offset = s_offset[0];
-    // global offset of this thread's particle
-    const unsigned int n = offset + threadIdx.x;
-    // mark as virtual particle
-    unsigned int tag = PLACEHOLDER;
-    // mark as real particle if appropriate
-    if (offset != PLACEHOLDER && n < nbox_ && g_cell[n] == BID) {
-        tag = g_itag[n];
-    }
-    // return failure if any cell list is fully occupied
-    if (tag != PLACEHOLDER && (threadIdx.x + 1) == blockDim.x) {
-        *g_ret = EXIT_FAILURE;
-    }
-    // store particle in this block's cell
-    g_otag[BID * blockDim.x + threadIdx.x] = tag;
-}
-
-/**
- * generate ascending index sequence
- */
-__global__ void gen_index(unsigned int* g_index)
-{
-    g_index[GTID] = (GTID < nbox_) ? GTID : 0;
-}
-
-/**
- * maximum squared particle distance
- */
-template <
-    typename vector_type
-  , int threads
->
-__global__ void displacement(float4* g_r, float4* g_r0, typename vector_type::value_type* g_rr)
-{
-    typedef typename vector_type::value_type float_type;
-    enum { dimension = vector_type::static_size };
-
-    extern __shared__ char __s_array[]; // CUDA 3.0/3.1 breaks template __shared__ type
-    float_type* const s_rr = reinterpret_cast<float_type*>(__s_array);
-    float_type rr = 0;
-
-    for (uint i = GTID; i < nbox_; i += GTDIM) {
-        vector_type r;
-        unsigned int type;
-        tie(r, type) = untagged<vector_type>(g_r[i]);
-        vector_type r0;
-        tie(r0, type) = untagged<vector_type>(g_r0[i]);
-        r -= r0;
-        box_kernel::reduce_periodic(r, static_cast<vector_type>(get<dimension>(box_length_)));
-        rr = max(rr, inner_prod(r, r));
-    }
-
-    // reduced values for this thread
-    s_rr[TID] = rr;
-    __syncthreads();
-
-    // reduce values for all threads in block with the maximum function
-    reduce<threads / 2, max_>(rr, s_rr);
-
-    if (TID < 1) {
-        // store block reduced value in global memory
-        g_rr[blockIdx.x] = rr;
-    }
-}
-
-} // namespace neighbour_kernel
+} // namespace from_binning_kernel
 
 template <int dimension>
-neighbour_wrapper<dimension> neighbour_wrapper<dimension>::kernel = {
-    neighbour_kernel::rr_cut_skin_
-  , get<dimension>(neighbour_kernel::ncell_)
-  , neighbour_kernel::neighbour_size_
-  , neighbour_kernel::neighbour_stride_
-  , neighbour_kernel::nbox_
-  , neighbour_kernel::r_
-  , get<dimension>(neighbour_kernel::box_length_)
-  , get<dimension>(neighbour_kernel::cell_length_)
-  , neighbour_kernel::assign_cells
-  , neighbour_kernel::find_cell_offset
-  , neighbour_kernel::gen_index
-  , neighbour_kernel::update_neighbours<dimension>
-  , neighbour_kernel::compute_cell<dimension>
-  , neighbour_kernel::displacement<fixed_vector<float, dimension>, 512>
-  , neighbour_kernel::displacement<fixed_vector<float, dimension>, 256>
-  , neighbour_kernel::displacement<fixed_vector<float, dimension>, 128>
-  , neighbour_kernel::displacement<fixed_vector<float, dimension>, 64>
-  , neighbour_kernel::displacement<fixed_vector<float, dimension>, 32>
+from_binning_wrapper<dimension> from_binning_wrapper<dimension>::kernel = {
+    from_binning_kernel::rr_cut_skin_
+  , get<dimension>(from_binning_kernel::ncell_)
+  , from_binning_kernel::neighbour_size_
+  , from_binning_kernel::neighbour_stride_
+  , from_binning_kernel::nbox_
+  , from_binning_kernel::r_
+  , get<dimension>(from_binning_kernel::box_length_)
+  , from_binning_kernel::update_neighbours<dimension>
 };
 
-template class neighbour_wrapper<3>;
-template class neighbour_wrapper<2>;
+template class from_binning_wrapper<3>;
+template class from_binning_wrapper<2>;
 
-}} //namespace mdsim::gpu
-
-} //namespace halmd
+} // namespace neighbours
+} // namespace gpu
+} // namespace mdsim
+} // namespace halmd

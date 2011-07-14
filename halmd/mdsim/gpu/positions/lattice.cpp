@@ -34,10 +34,10 @@
 using namespace boost;
 using namespace std;
 
-namespace halmd
-{
-namespace mdsim { namespace gpu { namespace positions
-{
+namespace halmd {
+namespace mdsim {
+namespace gpu {
+namespace positions {
 
 template <int dimension, typename float_type, typename RandomNumberGenerator>
 lattice<dimension, float_type, RandomNumberGenerator>::lattice(
@@ -245,6 +245,7 @@ HALMD_LUA_API int luaopen_libhalmd_mdsim_gpu_positions_lattice(lua_State* L)
 template class lattice<3, float, random::gpu::rand48>;
 template class lattice<2, float, random::gpu::rand48>;
 
-}}} // namespace mdsim::gpu::positions
-
+} // namespace mdsim
+} // namespace gpu
+} // namespace positions
 } // namespace halmd

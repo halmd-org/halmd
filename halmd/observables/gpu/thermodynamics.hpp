@@ -29,10 +29,9 @@
 #include <halmd/mdsim/gpu/particle.hpp>
 #include <halmd/observables/thermodynamics.hpp>
 
-namespace halmd
-{
-namespace observables { namespace gpu
-{
+namespace halmd {
+namespace observables {
+namespace gpu {
 
 template <int dimension, typename float_type>
 class thermodynamics
@@ -110,8 +109,8 @@ private:
     > sum_stress_tensor_diagonal_;
 };
 
-}} // namespace observables::gpu
-
+} // namespace observables
+} // namespace gpu
 } // namespace halmd
 
 #endif /* ! HALMD_OBSERVABLES_THERMODYNAMICS_HPP */

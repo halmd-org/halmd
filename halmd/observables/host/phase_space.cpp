@@ -24,10 +24,9 @@
 using namespace boost;
 using namespace std;
 
-namespace halmd
-{
-namespace observables { namespace host
-{
+namespace halmd {
+namespace observables {
+namespace host {
 
 template <int dimension, typename float_type>
 phase_space<dimension, float_type>::phase_space(
@@ -72,6 +71,12 @@ void phase_space<dimension, float_type>::acquire(uint64_t step)
 }
 
 template <int dimension, typename float_type>
+static int wrap_dimension(phase_space<dimension, float_type> const&)
+{
+    return dimension;
+}
+
+template <int dimension, typename float_type>
 void phase_space<dimension, float_type>::luaopen(lua_State* L)
 {
     using namespace luabind;
@@ -88,6 +93,7 @@ void phase_space<dimension, float_type>::luaopen(lua_State* L)
                        , shared_ptr<particle_type>
                        , shared_ptr<box_type>
                     >())
+                    .property("dimension", &wrap_dimension<dimension, float_type>)
             ]
         ]
     ];
@@ -114,6 +120,6 @@ template class phase_space<3, float>;
 template class phase_space<2, float>;
 #endif
 
-}} // namespace observables::host
-
+} // namespace observables
+} // namespace host
 } // namespace halmd

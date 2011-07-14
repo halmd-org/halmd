@@ -22,8 +22,7 @@
 
 #include <luabind/luabind.hpp>
 
-namespace luabind
-{
+namespace luabind {
 
 /**
  * Luabind converter for long long integer
@@ -84,7 +83,6 @@ struct default_converter<unsigned long long>
 template <>
 struct default_converter<unsigned long long const&>
   : default_converter<unsigned long long> {};
-
 
 } // namespace luabind
 

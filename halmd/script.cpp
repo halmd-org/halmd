@@ -18,10 +18,11 @@
  */
 
 #include <boost/bind.hpp>
-#include <luabind/class_info.hpp>
 
 #include <halmd/io/logger.hpp>
+#include <halmd/observables/sampler.hpp>
 #include <halmd/script.hpp>
+#include <halmd/utility/filesystem.hpp>
 #include <halmd/utility/lua/lua.hpp>
 #include <halmd/utility/lua/program_options.hpp>
 #include <halmd/version.h>
@@ -31,21 +32,21 @@ using namespace std;
 
 HALMD_LUA_API int luaopen_libhalmd(lua_State* L);
 
-namespace halmd
-{
+namespace halmd {
 
 script::script()
-  : L_(luaL_newstate(), lua_close) //< create Lua state
+  : L(luaL_newstate()) //< create Lua state
 {
-    lua_State* L = get_pointer(L_); //< get raw pointer for Lua C API
-
     luaL_openlibs(L); //< load Lua standard libraries
 
     package_path(); //< set Lua package path
 
-    load_wrapper(); //< load HALMD Lua C++ wrapper
+    luaopen_libhalmd(L); //< load HALMD Lua C++ wrapper
+}
 
-    load_library(); //< load HALMD Lua library
+script::~script()
+{
+    lua_close(L);
 }
 
 /**
@@ -55,8 +56,6 @@ script::script()
  */
 void script::package_path()
 {
-    lua_State* L = get_pointer(L_); //< get raw pointer for Lua C API
-
     // push table "package"
     lua_getglobal(L, "package");
     // push key for rawset
@@ -66,16 +65,24 @@ void script::package_path()
     // get default package.path
     lua_rawget(L, -3);
 
-    // search for Lua scripts in build tree using relative path
-    lua_pushliteral(L, ";" "../lua/?.lua");
-    lua_pushliteral(L, ";" "../lua/?/init.lua");
+    // absolute path to HALMD build tree
+    filesystem::path build_path(HALMD_BINARY_DIR);
+    // absolute path to initial current working directory
+    filesystem::path initial_path(filesystem::initial_path());
 
-    // search for Lua scripts in installation prefix
-    lua_pushliteral(L, ";" HALMD_INSTALL_PREFIX "/share/?.lua");
-    lua_pushliteral(L, ";" HALMD_INSTALL_PREFIX "/share/?/init.lua");
+    if (contains_path(build_path, initial_path)) {
+        // search for Lua scripts in build tree using relative path
+        lua_pushliteral(L, ";" HALMD_BINARY_DIR "/lua/?.lua");
+        lua_pushliteral(L, ";" HALMD_BINARY_DIR "/lua/?/init.lua");
+    }
+    else {
+        // search for Lua scripts in installation prefix
+        lua_pushliteral(L, ";" HALMD_INSTALL_PREFIX "/share/?.lua");
+        lua_pushliteral(L, ";" HALMD_INSTALL_PREFIX "/share/?/init.lua");
+    }
 
     // append above literals to default package.path
-    lua_concat(L, 5);
+    lua_concat(L, 3);
     // set new package.path
     lua_rawset(L, -3);
     // remove table "package"
@@ -83,30 +90,10 @@ void script::package_path()
 }
 
 /**
- * Load HALMD Lua wrapper
- *
- * Register C++ classes with Lua.
- */
-void script::load_wrapper()
-{
-    lua_State* L = get_pointer(L_); //< get raw pointer for Lua C API
-
-    using namespace luabind;
-
-    open(L); //< setup global structures and Lua class support
-
-    bind_class_info(L); //< class_info(), class_names()
-
-    luaopen_libhalmd(L);
-}
-
-/**
  * Load HALMD Lua library
  */
 void script::load_library()
 {
-    lua_State* L = get_pointer(L_); //< get raw pointer for Lua C API
-
     using namespace luabind;
 
     try {
@@ -122,13 +109,26 @@ void script::load_library()
     }
 }
 
+/*
+ * Load and execute Lua script
+ */
+void script::dofile(string const& file_name)
+{
+    // error handler passed to lua_pcall as last argument
+    lua_pushcfunction(L, &script::traceback);
+
+    if (luaL_loadfile(L, file_name.c_str()) || lua_pcall(L, 0, 0, 1)) {
+        LOG_ERROR(lua_tostring(L, -1));
+        lua_pop(L, 1); //< remove error message
+        throw runtime_error("failed to load Lua script");
+    }
+}
+
 /**
  * Assemble program options
  */
 void script::options(options_parser& parser)
 {
-    lua_State* L = get_pointer(L_); //< get raw pointer for Lua C API
-
     using namespace luabind;
 
     // retrieve the Lua function before the try-catch block
@@ -153,8 +153,6 @@ void script::options(options_parser& parser)
  */
 void script::parsed(po::variables_map const& vm)
 {
-    lua_State* L = get_pointer(L_); //< get raw pointer for Lua C API
-
     using namespace luabind;
 
     object options(globals(L)["halmd"]["option"]["set"]);
@@ -174,19 +172,16 @@ void script::parsed(po::variables_map const& vm)
 /**
  * Run simulation
  */
-shared_ptr<runner> script::run()
+void script::run()
 {
-    lua_State* L = get_pointer(L_); //< get raw pointer for Lua C API
-
     using namespace luabind;
 
-    // runner is non-template base class to template sampler
-    shared_ptr<runner> sampler;
+    shared_ptr<observables::sampler> sampler;
     try {
 #ifndef NDEBUG
         scoped_pcall_callback pcall_callback(&traceback);
 #endif
-        sampler = call_function<shared_ptr<runner> >(L, "halmd");
+        sampler = call_function<shared_ptr<observables::sampler> >(L, "halmd");
     }
     catch (luabind::error const& e) {
         LOG_ERROR(lua_tostring(e.state(), -1));
@@ -200,7 +195,7 @@ shared_ptr<runner> script::run()
     // garbage collector now.
     lua_gc(L, LUA_GCCOLLECT, 0);
 
-    return sampler;
+    sampler->run();
 }
 
 /**

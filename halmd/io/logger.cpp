@@ -35,8 +35,7 @@ using namespace boost;
 using namespace boost::log;
 using namespace std;
 
-namespace halmd
-{
+namespace halmd {
 
 static inline ostream& operator<<(ostream& os, logger::severity_level level)
 {

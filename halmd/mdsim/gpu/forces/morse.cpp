@@ -34,10 +34,10 @@ using namespace boost;
 using namespace boost::numeric::ublas;
 using namespace std;
 
-namespace halmd
-{
-namespace mdsim { namespace gpu { namespace forces
-{
+namespace halmd {
+namespace mdsim {
+namespace gpu {
+namespace forces {
 
 /**
  * Initialise parameters of the potential
@@ -146,6 +146,7 @@ template class morse<float>;
 template class pair_trunc<3, float, morse<float> >;
 template class pair_trunc<2, float, morse<float> >;
 
-}}} // namespace mdsim::gpu::forces
-
+} // namespace mdsim
+} // namespace gpu
+} // namespace forces
 } // namespace halmd

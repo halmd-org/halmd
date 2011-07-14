@@ -23,10 +23,10 @@
 #include <cuda_wrapper/cuda_wrapper.hpp>
 #include <halmd/mdsim/type_traits.hpp>
 
-namespace halmd
-{
-namespace mdsim { namespace gpu { namespace integrators
-{
+namespace halmd {
+namespace mdsim {
+namespace gpu {
+namespace integrators {
 
 template <int dimension, typename rng_type>
 struct verlet_nvt_andersen_wrapper
@@ -52,8 +52,9 @@ struct verlet_nvt_andersen_wrapper
     static verlet_nvt_andersen_wrapper const kernel;
 };
 
-}}} // namespace mdsim::gpu::integrators
-
+} // namespace mdsim
+} // namespace gpu
+} // namespace integrators
 } // namespace halmd
 
 #endif /* ! HALMD_MDSIM_GPU_INTEGRATOR_VERLET_NVT_ANDERSEN_KERNEL_HPP */

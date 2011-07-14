@@ -22,17 +22,19 @@
 
 #include <luabind/luabind.hpp>
 
-namespace boost { namespace numeric { namespace ublas
-{
+namespace boost {
+namespace numeric {
+namespace ublas {
 
 // forward declaration
 template <typename T, typename A>
 struct unbounded_array;
 
-}}} // namespace boost::numeric::ublas
+} // namespace ublas
+} // namespace numeric
+} // namespace boost
 
-namespace luabind
-{
+namespace luabind {
 
 /**
  * Luabind converter for Boost uBLAS unbounded storage array

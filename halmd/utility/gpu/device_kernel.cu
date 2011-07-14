@@ -19,12 +19,8 @@
 
 #include <halmd/utility/gpu/device_kernel.hpp>
 
-namespace halmd
-{
-namespace utility { namespace gpu
-{
-namespace device_kernel
-{
+namespace halmd {
+namespace device_kernel {
 
 __global__ void arch(int* g_arch)
 {
@@ -35,13 +31,9 @@ __global__ void arch(int* g_arch)
 
 } // namespace device_kernel
 
-namespace device_wrapper
-{
+namespace device_wrapper {
 
 cuda::function<void (int*)> arch(device_kernel::arch);
 
 } // namespace device_wrapper
-
-}} // namespace utility::gpu
-
 } // namespace halmd

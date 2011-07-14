@@ -26,10 +26,8 @@ using namespace boost;
 using namespace boost::program_options;
 using namespace std;
 
-namespace halmd
-{
-namespace po
-{
+namespace halmd {
+namespace po {
 
 /**
  * extends boost::program_options::store with conflicting/dependent options
@@ -97,5 +95,4 @@ void store(wparsed_options const& options, variables_map& vm)
 }
 
 } // namespace po
-
 } // namespace halmd

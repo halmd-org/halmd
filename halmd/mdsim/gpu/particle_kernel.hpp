@@ -22,10 +22,9 @@
 
 #include <cuda_wrapper/cuda_wrapper.hpp>
 
-namespace halmd
-{
-namespace mdsim { namespace gpu
-{
+namespace halmd {
+namespace mdsim {
+namespace gpu {
 
 template <int dimension>
 struct particle_wrapper
@@ -43,8 +42,8 @@ particle_wrapper<dimension> const& get_particle_kernel()
     return particle_wrapper<dimension>::kernel;
 }
 
-}} // namespace mdsim::gpu
-
+} // namespace mdsim
+} // namespace gpu
 } // namespace halmd
 
 #endif /* ! HALMD_MDSIM_GPU_PARTICLE_KERNEL_HPP */

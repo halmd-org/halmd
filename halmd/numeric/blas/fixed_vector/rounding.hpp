@@ -31,10 +31,10 @@
 
 #include <halmd/config.hpp>
 
-namespace halmd
-{
-namespace detail { namespace numeric { namespace blas
-{
+namespace halmd {
+namespace detail {
+namespace numeric {
+namespace blas {
 
 #ifdef __CUDACC__
 
@@ -295,8 +295,9 @@ fixed_vector<unsigned int, N> __float2uint_rz(fixed_vector<float, N> const& v)
 
 #endif /* ! __CUDACC__ */
 
-}}} // namespace detail::numeric::blas
-
+} // namespace detail
+} // namespace numeric
+} // namespace blas
 // import into top-level namespace
 using detail::numeric::blas::fixed_vector;
 

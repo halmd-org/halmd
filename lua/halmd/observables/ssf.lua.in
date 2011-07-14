@@ -17,9 +17,8 @@
 -- along with this program.  If not, see <http://www.gnu.org/licenses/>.
 --
 
+require("halmd.mdsim.particle")
 require("halmd.modules")
-
-require("halmd.mdsim.core")
 require("halmd.observables.density_mode")
 require("halmd.observables.utility.wavevector")
 
@@ -53,9 +52,8 @@ function new(args)
     local max_count = args.max_count or 7 -- default value
 
     -- dependency injection
-    local core = mdsim.core()
-    local dimension = assert(core.dimension)
-    local particle = assert(core.particle)
+    local particle = mdsim.particle() -- singleton
+    local dimension = assert(particle.dimension)
 
     -- construct local wavevector module
     local wavevector = assert(observables.utility.wavevector)

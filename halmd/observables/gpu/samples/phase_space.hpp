@@ -27,10 +27,10 @@
 
 #include <halmd/mdsim/type_traits.hpp>
 
-namespace halmd
-{
-namespace observables { namespace gpu { namespace samples
-{
+namespace halmd {
+namespace observables {
+namespace gpu {
+namespace samples {
 
 template <int dimension, typename float_type>
 class phase_space
@@ -58,8 +58,9 @@ public:
     phase_space(std::vector<unsigned int> ntypes);
 };
 
-}}} // namespace observables::gpu::samples
-
+} // namespace observables
+} // namespace gpu
+} // namespace samples
 } // namespace halmd
 
 #endif /* ! HALMD_OBSERVABLES_GPU_SAMPLES_PHASE_SPACE_HPP */

@@ -43,10 +43,10 @@
 // porting further DSFUN routines to CUDA was straight-forward.
 //
 
-namespace halmd
-{
-namespace detail { namespace numeric { namespace mp
-{
+namespace halmd {
+namespace detail {
+namespace numeric {
+namespace mp {
 
 //
 // The DSFUN Fortran 90 package is accompanied by the following license.
@@ -318,8 +318,9 @@ inline HALMD_GPU_ENABLED void dssqrt(float& dsb0, float& dsb1, float const dsa0,
     dsadd(dsb0, dsb1, s00, s01, s10, s11);
 }
 
-}}} // namespace detail::numeric::mp
-
+} // namespace detail
+} // namespace numeric
+} // namespace mp
 } // namespace halmd
 
 #endif /* ! HALMD_NUMERIC_MP_DSFUN_CUH */

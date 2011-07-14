@@ -28,10 +28,10 @@
 #include <halmd/mdsim/host/velocity.hpp>
 #include <halmd/random/host/random.hpp>
 
-namespace halmd
-{
-namespace mdsim { namespace host { namespace velocities
-{
+namespace halmd {
+namespace mdsim {
+namespace host {
+namespace velocities {
 
 template <int dimension, typename float_type>
 class boltzmann
@@ -73,8 +73,9 @@ protected:
     float_type temp_;
 };
 
-}}} // namespace mdsim::host::velocities
-
+} // namespace mdsim
+} // namespace host
+} // namespace velocities
 } // namespace halmd
 
 #endif /* ! HALMD_MDSIM_HOST_VELOCITIES_BOLTZMANN_HPP */

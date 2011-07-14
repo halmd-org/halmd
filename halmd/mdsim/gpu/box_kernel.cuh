@@ -20,8 +20,10 @@
 #ifndef HALMD_MDSIM_GPU_BOX_KERNEL_CUH
 #define HALMD_MDSIM_GPU_BOX_KERNEL_CUH
 
-namespace halmd { namespace mdsim { namespace gpu { namespace box_kernel
-{
+namespace halmd {
+namespace mdsim {
+namespace gpu {
+namespace box_kernel {
 
 /**
  * enforce periodic boundary conditions on argument
@@ -41,6 +43,9 @@ __device__ inline vector_type_ reduce_periodic(
     return image;
 }
 
-}}}} // namespace halmd::mdsim::gpu::box_kernel
+} // namespace box_kernel
+} // namespace gpu
+} // namespace mdsim
+} // namespace halmd
 
 #endif /* ! HALMD_MDSIM_GPU_BOX_KERNEL_CUH */

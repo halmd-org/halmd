@@ -28,21 +28,13 @@
 #include <halmd/utility/program_options/typed_value.hpp>
 #include <halmd/utility/program_options/variables_map.hpp>
 
-namespace halmd
-{
-/**
- * Program Options
- *
- * This namespace contains extensions to the Boost Program Options library.
- */
-namespace po
-{
+namespace halmd {
+namespace po {
 
 // import Boost Program Options into this namespace for convenience
 using namespace boost::program_options;
 
 } // namespace po
-
 } // namespace halmd
 
 #endif /* ! HALMD_UTILITY_PROGRAM_OPTIONS_PROGRAM_OPTIONS_HPP */

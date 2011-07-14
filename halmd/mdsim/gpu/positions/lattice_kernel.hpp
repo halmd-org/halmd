@@ -23,10 +23,10 @@
 #include <cuda_wrapper/cuda_wrapper.hpp>
 #include <halmd/mdsim/type_traits.hpp>
 
-namespace halmd
-{
-namespace mdsim { namespace gpu { namespace positions
-{
+namespace halmd {
+namespace mdsim {
+namespace gpu {
+namespace positions {
 
 template <int dimension>
 struct lattice_wrapper
@@ -50,8 +50,9 @@ lattice_wrapper<dimension> const& get_lattice_kernel()
     return lattice_wrapper<dimension>::kernel;
 }
 
-}}} // namespace mdsim::gpu::positions
-
+} // namespace mdsim
+} // namespace gpu
+} // namespace positions
 } // namespace halmd
 
 #endif /* ! HALMD_MDSIM_GPU_POSITIONS_LATTICE_KERNEL_HPP */

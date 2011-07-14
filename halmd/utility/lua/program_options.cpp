@@ -31,8 +31,7 @@
 using namespace boost;
 using namespace std;
 
-namespace halmd
-{
+namespace halmd {
 
 template <typename T>
 static po::extended_typed_value<T>* po_value()

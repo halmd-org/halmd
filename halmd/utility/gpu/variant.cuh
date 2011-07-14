@@ -31,10 +31,9 @@
 #include <boost/type_traits/is_same.hpp>
 #include <boost/utility/enable_if.hpp>
 
-namespace halmd
-{
-namespace utility { namespace gpu
-{
+namespace halmd {
+namespace utility {
+namespace gpu {
 
 // import into current namespace
 using boost::mpl::set;
@@ -42,8 +41,7 @@ using boost::mpl::map;
 using boost::mpl::pair;
 using boost::mpl::int_;
 
-namespace detail
-{
+namespace detail {
 
 template <
     typename Sequence
@@ -221,8 +219,8 @@ inline get(texture<variant<Sequence>, dim, mode> const& value)
     >(value);
 }
 
-}} // namespace utility::gpu
-
+} // namespace gpu
+} // namespace utility
 } // namespace halmd
 
 #endif /* ! HALMD_UTILITY_GPU_VARIANT_CUH */

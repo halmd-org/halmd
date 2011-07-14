@@ -23,10 +23,10 @@
 using namespace boost;
 using namespace std;
 
-namespace halmd
-{
-namespace observables { namespace gpu { namespace samples
-{
+namespace halmd {
+namespace observables {
+namespace gpu {
+namespace samples {
 
 template <int dimension, typename float_type>
 phase_space<dimension, float_type>::phase_space(vector<unsigned int> ntypes)
@@ -40,6 +40,12 @@ phase_space<dimension, float_type>::phase_space(vector<unsigned int> ntypes)
         r[i].reset(new sample_vector(ntypes[i]));
         v[i].reset(new sample_vector(ntypes[i]));
     }
+}
+
+template <int dimension, typename float_type>
+static int wrap_dimension(phase_space<dimension, float_type> const&)
+{
+    return dimension;
 }
 
 template <int dimension, typename float_type>
@@ -57,6 +63,7 @@ void phase_space<dimension, float_type>::luaopen(lua_State* L)
                 [
                     class_<phase_space, shared_ptr<phase_space> >(class_name.c_str())
                         .def(constructor<vector<unsigned int> >())
+                        .property("dimension", &wrap_dimension<dimension, float_type>)
                 ]
             ]
         ]
@@ -73,6 +80,7 @@ HALMD_LUA_API int luaopen_libhalmd_observables_gpu_samples_phase_space(lua_State
 template class phase_space<3, float>;
 template class phase_space<2, float>;
 
-}}} // namespace observables::gpu::samples
-
+} // namespace observables
+} // namespace gpu
+} // namespace samples
 } // namespace halmd

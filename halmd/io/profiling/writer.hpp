@@ -26,18 +26,16 @@
 
 #include <halmd/numeric/accumulator.hpp>
 
-namespace halmd
-{
-namespace utility
-{
+namespace halmd {
+namespace utility {
 
 // forward declaration
 class profiler;
 
 } // namespace utility
 
-namespace io { namespace profiling
-{
+namespace io {
+namespace profiling {
 
 /**
  * Abstract base class of a profiler writer.
@@ -60,8 +58,8 @@ public:
     ) = 0;
 };
 
-}} // namespace io::profiling
-
+} // namespace io
+} // namespace profiling
 } // namespace halmd
 
 #endif /* ! HALMD_IO_PROFILING_WRITER_HPP */

@@ -24,12 +24,10 @@
 #include <halmd/algorithm/gpu/scan_kernel.hpp>
 #include <halmd/numeric/zero.hpp>
 
-namespace halmd
-{
-namespace algorithm { namespace gpu
-{
-namespace scan_kernel
-{
+namespace halmd {
+namespace algorithm {
+namespace gpu {
+namespace scan_kernel {
 
 /**
  * blockwise parallel exclusive prefix sum
@@ -166,8 +164,8 @@ scan_wrapper<T> const scan_wrapper<T>::kernel = {
   , scan_kernel::block_prefix_sum
 };
 
-}} // namespace algorithm::gpu
-
+} // namespace algorithm
+} // namespace gpu
 } // namespace halmd
 
 #endif /* ! HALMD_ALGORITHM_GPU_SCAN_KERNEL_CUH */

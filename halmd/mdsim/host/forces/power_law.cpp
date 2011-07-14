@@ -30,10 +30,10 @@ using namespace boost;
 using namespace boost::numeric::ublas;
 using namespace std;
 
-namespace halmd
-{
-namespace mdsim { namespace host { namespace forces
-{
+namespace halmd {
+namespace mdsim {
+namespace host {
+namespace forces {
 
 /**
  * Initialise potential parameters
@@ -136,6 +136,7 @@ template class pair_trunc<3, float, power_law<float> >;
 template class pair_trunc<2, float, power_law<float> >;
 #endif
 
-}}} // namespace mdsim::host::forces
-
+} // namespace mdsim
+} // namespace host
+} // namespace forces
 } // namespace halmd

@@ -22,12 +22,11 @@
 
 #include <halmd/mdsim/gpu/box_kernel.cuh>
 
-namespace halmd
-{
-namespace mdsim { namespace gpu { namespace integrators
-{
-namespace verlet_kernel
-{
+namespace halmd {
+namespace mdsim {
+namespace gpu {
+namespace integrators {
+namespace verlet_kernel {
 
 /**
  * First leapfrog half-step of velocity-Verlet algorithm
@@ -59,9 +58,9 @@ __device__ void finalize(
 }
 
 } // namespace verlet_kernel
-
-}}} // namespace mdsim::gpu::integrators
-
+} // namespace mdsim
+} // namespace gpu
+} // namespace integrators
 } // namespace halmd
 
 #endif /* ! HALMD_MDSIM_GPU_INTEGRATOR_VERLET_KERNEL_CUH */

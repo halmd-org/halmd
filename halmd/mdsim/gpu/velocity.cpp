@@ -26,10 +26,9 @@
 using namespace boost;
 using namespace std;
 
-namespace halmd
-{
-namespace mdsim { namespace gpu
-{
+namespace halmd {
+namespace mdsim {
+namespace gpu {
 
 template <int dimension, typename float_type>
 velocity<dimension, float_type>::velocity(
@@ -116,6 +115,6 @@ HALMD_LUA_API int luaopen_libhalmd_mdsim_gpu_velocity(lua_State* L)
 template class velocity<3, float>;
 template class velocity<2, float>;
 
-}} // namespace mdsim::gpu
-
+} // namespace mdsim
+} // namespace gpu
 } // namespace halmd

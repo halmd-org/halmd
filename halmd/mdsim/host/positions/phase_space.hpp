@@ -28,10 +28,10 @@
 #include <halmd/mdsim/position.hpp>
 #include <halmd/observables/host/samples/phase_space.hpp>
 
-namespace halmd
-{
-namespace mdsim { namespace host { namespace positions
-{
+namespace halmd {
+namespace mdsim {
+namespace host {
+namespace positions {
 
 template <int dimension, typename float_type>
 class phase_space
@@ -58,8 +58,9 @@ public:
     virtual void set();
 };
 
-}}} // namespace mdsim::host::positions
-
+} // namespace mdsim
+} // namespace host
+} // namespace positions
 } // namespace halmd
 
 #endif /* ! HALMD_MDSIM_HOST_POSITIONS_PHASE_SPACE_HPP */

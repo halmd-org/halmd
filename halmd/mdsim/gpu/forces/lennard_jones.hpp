@@ -27,10 +27,10 @@
 #include <halmd/mdsim/gpu/forces/pair_trunc.hpp>
 #include <halmd/mdsim/gpu/forces/lennard_jones_kernel.hpp>
 
-namespace halmd
-{
-namespace mdsim { namespace gpu { namespace forces
-{
+namespace halmd {
+namespace mdsim {
+namespace gpu {
+namespace forces {
 
 /**
  * define Lennard-Jones potential and parameters
@@ -109,8 +109,9 @@ private:
     cuda::vector<float4> g_param_;
 };
 
-}}} // namespace mdsim::gpu::forces
-
+} // namespace mdsim
+} // namespace gpu
+} // namespace forces
 } // namespace halmd
 
 #endif /* ! HALMD_MDSIM_GPU_FORCES_LENNARD_JONES_HPP */

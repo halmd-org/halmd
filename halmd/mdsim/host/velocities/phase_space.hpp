@@ -26,10 +26,10 @@
 #include <halmd/mdsim/host/velocity.hpp>
 #include <halmd/observables/host/samples/phase_space.hpp>
 
-namespace halmd
-{
-namespace mdsim { namespace host { namespace velocities
-{
+namespace halmd {
+namespace mdsim {
+namespace host {
+namespace velocities {
 
 template <int dimension, typename float_type>
 class phase_space
@@ -53,8 +53,9 @@ public:
     virtual void set();
 };
 
-}}} // namespace mdsim::host::velocities
-
+} // namespace mdsim
+} // namespace host
+} // namespace velocities
 } // namespace halmd
 
 #endif /* ! HALMD_MDSIM_HOST_VELOCITIES_PHASE_SPACE_HPP */

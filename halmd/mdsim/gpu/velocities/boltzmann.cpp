@@ -24,10 +24,10 @@
 using namespace boost;
 using namespace std;
 
-namespace halmd
-{
-namespace mdsim { namespace gpu { namespace velocities
-{
+namespace halmd {
+namespace mdsim {
+namespace gpu {
+namespace velocities {
 
 template <int dimension, typename float_type, typename RandomNumberGenerator>
 boltzmann<dimension, float_type, RandomNumberGenerator>::boltzmann(
@@ -178,6 +178,7 @@ HALMD_LUA_API int luaopen_libhalmd_mdsim_gpu_velocities_boltzmann(lua_State* L)
 template class boltzmann<3, float, random::gpu::rand48>;
 template class boltzmann<2, float, random::gpu::rand48>;
 
-}}} // namespace mdsim::gpu::velocities
-
+} // namespace mdsim
+} // namespace gpu
+} // namespace velocities
 } // namespace halmd

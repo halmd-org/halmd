@@ -1,5 +1,5 @@
 /*
- * Copyright © 2011  Felix Höfling
+ * Copyright © 2011  Felix Höfling and Peter Colberg
  *
  * This file is part of HALMD.
  *
@@ -20,55 +20,60 @@
 #ifndef HALMD_MDSIM_CLOCK_HPP
 #define HALMD_MDSIM_CLOCK_HPP
 
-#include <lua.hpp>
-#include <stdint.h>
+#include <stdint.h> // uint64_t
 
-namespace halmd
-{
-namespace mdsim
-{
+namespace halmd {
+namespace mdsim {
 
 /**
- * The module contains the current simulation step and time.
- *
- * The main purpose of this class is to separate it from the
- * dimension-dependent mdsim::core module.
- **/
+ * The clock module contains the current simulation step and time.
+ */
 class clock
 {
 public:
-    static void luaopen(lua_State* L);
+    /** simulation step counter type */
+    typedef uint64_t step_type;
+    /** simulation time type */
+    typedef double time_type;
 
-    clock();
+    clock(time_type timestep);
 
-    //! advance clock by one step and given time increment
-    void advance(double timestep)
+    /** advance clock by one step */
+    void advance()
     {
         ++step_;
-        time_ += timestep;
+        // multiply instead of increment to avoid accumulated summation errors
+        time_ = step_ * timestep_;
     }
 
-    //! returns MD step counter
-    uint64_t step() const
+    /** MD step counter */
+    step_type step() const
     {
         return step_;
     }
 
-    //! returns MD time
-    double time() const
+    /** MD time */
+    time_type time() const
     {
         return time_;
     }
 
+    /** MD timestep */
+    time_type timestep() const
+    {
+        return timestep_;
+    }
+
 private:
     /** step counter */
-    uint64_t step_;
+    step_type step_;
     /** simulation time */
-    double time_;
+    time_type time_;
+    /** timestep */
+    time_type timestep_;
 };
 
 } // namespace mdsim
-
 } // namespace halmd
 
 #endif /* ! HALMD_MDSIM_CLOCK_HPP */

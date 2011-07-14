@@ -23,8 +23,7 @@
 #include <boost/optional.hpp>
 #include <luabind/luabind.hpp>
 
-namespace luabind
-{
+namespace luabind {
 
 /**
  * Luabind converter for Boost.Optional

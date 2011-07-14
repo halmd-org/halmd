@@ -33,8 +33,7 @@
 
 #include <cuda_wrapper/error.hpp>
 
-namespace cuda
-{
+namespace cuda {
 
 using std::size_t;
 using std::ptrdiff_t;
@@ -125,6 +124,6 @@ inline bool operator!=(const allocator<_Tp>&, const allocator<_Tp>&)
     return false;
 }
 
-}
+} // namespace cuda
 
 #endif

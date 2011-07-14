@@ -28,10 +28,10 @@
 using namespace boost;
 using namespace std;
 
-namespace halmd
-{
-namespace io { namespace trajectory { namespace writers
-{
+namespace halmd {
+namespace io {
+namespace trajectory {
+namespace writers {
 
 /**
  * read sample from H5MD trajectory file
@@ -148,6 +148,7 @@ template class h5md<2, double>;
 template class h5md<3, float>;
 template class h5md<2, float>;
 
-}}} // namespace io::trajectory::writers
-
+} // namespace io
+} // namespace trajectory
+} // namespace writers
 } // namespace halmd

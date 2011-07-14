@@ -24,8 +24,7 @@
 #include <boost/multi_array.hpp>
 #include <vector>
 
-namespace halmd
-{
+namespace halmd {
 
 /**
  * Make 1-dimensional boost::multi_array from std::vector

@@ -26,14 +26,12 @@
 
 #include <halmd/numeric/blas/blas.hpp>
 
-namespace halmd
-{
-namespace mdsim
-{
+namespace halmd {
+namespace mdsim {
 
 #ifdef WITH_CUDA
-namespace detail { namespace gpu
-{
+namespace detail {
+namespace gpu {
 
 /**
  * basic GPU vector types
@@ -103,7 +101,6 @@ struct type_traits
 };
 
 } // namespace mdsim
-
 } // namespace halmd
 
 #endif /* ! HALMD_MDSIM_TYPE_TRAITS_HPP */

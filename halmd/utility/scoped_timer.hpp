@@ -23,8 +23,7 @@
 #include <boost/bind.hpp>
 #include <boost/function.hpp>
 
-namespace halmd
-{
+namespace halmd {
 
 /**
  * Scoped timer

@@ -25,12 +25,10 @@
 
 using namespace halmd::utility::gpu; //< variant, map, pair
 
-namespace halmd
-{
-namespace observables { namespace gpu
-{
-namespace phase_space_kernel
-{
+namespace halmd {
+namespace observables {
+namespace gpu {
+namespace phase_space_kernel {
 
 /** positions, types */
 texture<float4> r_;
@@ -81,6 +79,6 @@ phase_space_wrapper<dimension> const phase_space_wrapper<dimension>::kernel = {
 template class phase_space_wrapper<3>;
 template class phase_space_wrapper<2>;
 
-}} // namespace observables::gpu
-
+} // namespace observables
+} // namespace gpu
 } // namespace halmd

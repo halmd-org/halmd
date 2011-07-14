@@ -1,5 +1,5 @@
 --
--- Copyright © 2010  Peter Colberg
+-- Copyright © 2010-2011  Peter Colberg
 --
 -- This file is part of HALMD.
 --
@@ -17,9 +17,9 @@
 -- along with this program.  If not, see <http://www.gnu.org/licenses/>.
 --
 
+require("halmd.mdsim.particle")
 require("halmd.modules")
-
-require("halmd.mdsim.core")
+require("halmd.singleton")
 
 -- grab modules
 local mdsim = halmd.mdsim
@@ -32,8 +32,9 @@ local h5 = libhalmd.h5
 local po = libhalmd.po
 -- grab standard library
 local assert = assert
+local error = error
 
-module("halmd.mdsim.box", halmd.modules.register)
+module("halmd.mdsim.box", halmd.modules.register, halmd.singleton)
 
 --
 -- construct box module instance
@@ -42,27 +43,28 @@ module("halmd.mdsim.box", halmd.modules.register)
 -- @returns box module instance
 --
 function new(args)
+    local dimension = args.dimension or 3 -- default value
     local density = args.density or 0.75 -- default value
     local ratios = args.ratios or {}
     local length = args.length -- optional
 
-    local core = mdsim.core()
-    local dimension = assert(core.dimension)
-    local particle = assert(core.particle)
+    local particle = mdsim.particle{ dimension = dimension }
+    -- total number of particles in box
+    local nbox = assert(particle.nbox)
 
-    local box = box_wrapper[dimension]
+    local box = assert(box_wrapper[dimension])
     if length then
         -- complete missing values by repeating the last entry
         for i = #length + 1, dimension do
             length[i] = length[#length]
         end
-        return box(particle, length)
+        return box(nbox, length)
     else
         -- fill up missing values with 1
         for i = #ratios + 1, dimension do
             ratios[i] = 1 -- `neutral' aspect ratio
         end
-        return box(particle, density, ratios)
+        return box(nbox, density, ratios)
     end
 end
 
@@ -72,6 +74,13 @@ end
 -- @param desc po.options_description
 --
 function options(desc)
+    desc:add("dimension", po.uint():notifier(function(value)
+
+        if not box_wrapper[value] then
+            error(("invalid dimension '%d'"):format(value), 0)
+        end
+
+    end), "dimension of positional coordinates")
     desc:add("length", po.float_array():conflicts("density"), "edge lengths of simulation box")
     desc:add("density", po.float(), "particle density")
     desc:add("ratios", po.float_array():conflicts("length"), "relative aspect ratios of simulation box")
@@ -81,6 +90,7 @@ end
 -- read module parameters from HDF5 group
 --
 function read_parameters(args, group)
+    args.dimension = group:read_attribute("dimension", h5.uint())
     -- upon continuation from a phase space sample, the box is set up from
     -- the absolute edge lengths and the particle number (which is read by
     -- the particle module). The presence of 'length' supersedes the options
@@ -95,6 +105,7 @@ end
 -- @param group HDF5 group
 --
 function write_parameters(box, group)
+    group:write_attribute("dimension", h5.uint(), box.dimension)
     group:write_attribute("length", h5.float_array(), box.length)
     group:write_attribute("density", h5.float(), box.density)
 end

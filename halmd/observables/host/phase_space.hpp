@@ -27,10 +27,9 @@
 #include <halmd/observables/host/samples/phase_space.hpp>
 #include <halmd/observables/phase_space.hpp>
 
-namespace halmd
-{
-namespace observables { namespace host
-{
+namespace halmd {
+namespace observables {
+namespace host {
 
 template <int dimension, typename float_type>
 class phase_space
@@ -56,8 +55,8 @@ public:
     virtual void acquire(uint64_t step);
 };
 
-}} // namespace observables::host
-
+} // namespace observables
+} // namespace host
 } // namespace halmd
 
 #endif /* ! HALMD_OBSERVABLES_HOST_PHASE_SPACE_HPP */

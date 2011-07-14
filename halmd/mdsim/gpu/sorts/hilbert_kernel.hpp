@@ -24,10 +24,10 @@
 
 #include <halmd/mdsim/type_traits.hpp>
 
-namespace halmd
-{
-namespace mdsim { namespace gpu { namespace sorts
-{
+namespace halmd {
+namespace mdsim {
+namespace gpu {
+namespace sorts {
 
 template <int dimension>
 struct hilbert_wrapper
@@ -61,8 +61,9 @@ hilbert_wrapper<dimension> const& get_hilbert_kernel()
     return hilbert_wrapper<dimension>::kernel;
 }
 
-}}} // namespace mdsim::gpu::sorts
-
+} // namespace mdsim
+} // namespace gpu
+} // namespace sorts
 } // namespace halmd
 
 #endif /* ! HALMD_MDSIM_GPU_SORTS_HILBERT_KERNEL_HPP */

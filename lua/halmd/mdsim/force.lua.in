@@ -17,9 +17,9 @@
 -- along with this program.  If not, see <http://www.gnu.org/licenses/>.
 --
 
-require("halmd.modules")
-
 require("halmd.mdsim.forces")
+require("halmd.modules")
+require("halmd.singleton")
 
 -- grab modules
 local mdsim = halmd.mdsim
@@ -30,7 +30,7 @@ local po = libhalmd.po
 local assert = assert
 local pairs = pairs
 
-module("halmd.mdsim.force", halmd.modules.register)
+module("halmd.mdsim.force", halmd.modules.register, halmd.singleton)
 
 --
 -- construct force module

@@ -26,10 +26,8 @@
 #include <halmd/io/logger.hpp>
 #include <halmd/utility/signal.hpp>
 
-namespace halmd
-{
-namespace utility
-{
+namespace halmd {
+namespace utility {
 
 /**
  * This class provides a periodic timer service.
@@ -41,7 +39,9 @@ namespace utility
 class timer_service
 {
 public:
-    typedef signal<void ()>::slot_function_type slot_function_type;
+    typedef signal<void ()> signal_type;
+    typedef signal_type::slot_function_type slot_function_type;
+    typedef signal_type::connection connection_type;
 
     void on_periodic(slot_function_type const& slot, std::time_t interval);
     void process();
@@ -69,7 +69,6 @@ private:
 };
 
 } // namespace utility
-
 } // namespace halmd
 
 #endif /* ! HALMD_UTILITY_TIMER_SERVICE_HPP */

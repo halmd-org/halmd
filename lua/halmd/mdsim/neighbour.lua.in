@@ -1,5 +1,5 @@
 --
--- Copyright © 2010  Peter Colberg
+-- Copyright © 2010-2011  Peter Colberg
 --
 -- This file is part of HALMD.
 --
@@ -17,61 +17,114 @@
 -- along with this program.  If not, see <http://www.gnu.org/licenses/>.
 --
 
-require("halmd.modules")
-
 require("halmd.device")
+require("halmd.mdsim.binning")
+require("halmd.mdsim.box")
 require("halmd.mdsim.core")
+require("halmd.mdsim.maximum_squared_displacement")
+require("halmd.mdsim.particle")
+require("halmd.mdsim.sort")
+require("halmd.modules")
 
 -- grab modules
 local device = halmd.device
 local mdsim = halmd.mdsim
 -- grab C++ wrappers
-local neighbour_wrapper = {
+local neighbour_from_binning = {
     host = {
         [2] = libhalmd.mdsim.host.neighbour_2_
       , [3] = libhalmd.mdsim.host.neighbour_3_
     }
 }
+local neighbour_from_particle = {}
 if libhalmd.mdsim.gpu then
-    neighbour_wrapper.gpu = {
-        [2] = libhalmd.mdsim.gpu.neighbour_2_
-      , [3] = libhalmd.mdsim.gpu.neighbour_3_
+    neighbour_from_binning.gpu = {
+        [2] = libhalmd.mdsim.gpu.neighbours.from_binning_2_
+      , [3] = libhalmd.mdsim.gpu.neighbours.from_binning_3_
+    }
+    neighbour_from_particle.gpu = {
+        [2] = libhalmd.mdsim.gpu.neighbours.from_particle_2_
+      , [3] = libhalmd.mdsim.gpu.neighbours.from_particle_3_
     }
 end
+local predicates = libhalmd.predicates
 local h5 = libhalmd.h5
 local po = libhalmd.po
 -- grab standard library
 local assert = assert
+local math = math
 
 module("halmd.mdsim.neighbour", halmd.modules.register)
 
 --
 -- construct neighbour module
 --
+-- @param r_cut symmetric matrix with potential cutoff radii
+--
 function new(args)
-    -- dependency injection
-    local core = mdsim.core()
-    local dimension = assert(core.dimension)
-    local particle = assert(core.particle)
-    local box = assert(core.box)
-    local force = assert(core.force)
-
-    -- neighbour module is only needed if truncated pair force
-    local r_cut = force.r_cut
-    if not r_cut then
-        return nil
-    end
-
-    -- command line options
+    -- cutoff radius matrix of truncated potential
+    local r_cut = assert(args.r_cut)
+    -- neighbour list skin
     local skin = args.skin or 0.5 -- default value
 
-    if device() then
-        local occupancy = args.occupancy or 0.4 -- default value
+    -- dependency injection
+    local particle = mdsim.particle() -- singleton
+    local dimension = assert(particle.dimension)
+    local box = mdsim.box() -- singleton
 
-        return neighbour_wrapper.gpu[dimension](particle, box, r_cut, skin, occupancy)
-    else
-        return neighbour_wrapper.host[dimension](particle, box, r_cut, skin)
+    -- domain decomposition
+    local binning
+    if not args.disable_binning then
+        binning = mdsim.binning{ r_cut = r_cut, skin = skin }
     end
+
+    -- neighbour lists
+    local neighbour
+    if device() then
+        if binning then
+            neighbour = assert(neighbour_from_binning.gpu[dimension])
+        else
+            neighbour = assert(neighbour_from_particle.gpu[dimension])
+        end
+        local defaults = assert(neighbour.defaults)
+        local occupancy = args.occupancy or defaults.occupancy()
+        if binning then
+            neighbour = neighbour(particle, box, binning, r_cut, skin, occupancy)
+        else
+            neighbour = neighbour(particle, particle, box, r_cut, skin, occupancy)
+        end
+    else
+        neighbour = neighbour_from_binning.host[dimension](particle, box, binning, r_cut, skin)
+    end
+
+    -- if needed, bin particles before neighbour list update
+    if binning then
+        neighbour:on_update(binning.update)
+    end
+
+    -- particle sorting
+    local sort = mdsim.sort()
+    -- maximum squared displacement computation
+    local maximum_squared_displacement = mdsim.maximum_squared_displacement()
+
+    -- after particle sorting, take a snapshot of coordinates and update neighbour lists
+    sort:on_order(maximum_squared_displacement.zero)
+    sort:on_order(neighbour.update)
+
+    -- system preparation after setting positions and velocities
+    local core = mdsim.core()
+    core:on_append_setup{sort.order, tracker = neighbour}
+
+    -- compare maximum squared displacement to squared half skin size
+    local limit = math.pow(neighbour.r_skin / 2, 2)
+    local greater = predicates.greater(maximum_squared_displacement.compute, limit)
+
+    -- evaluate maximum squared displacement every step
+    core:on_prepend_force{greater.evaluate, tracker = neighbour}
+    -- if maximum squared displacement is greater than squared half skin size:
+    greater:on_greater(sort.order)
+
+    return neighbour
 end
 
 --
@@ -81,9 +134,10 @@ end
 --
 function options(desc)
     desc:add("skin", po.float(), "neighbour list skin")
-    if neighbour_wrapper.gpu then
+    if neighbour_from_binning.gpu then
         desc:add("occupancy", po.float(), "desired average cell occupancy")
     end
+    desc:add("disable-binning", po.bool_switch(), "disable domain decomposition")
 end
 
 --
@@ -91,7 +145,7 @@ end
 --
 function read_parameters(args, group)
     args.skin = group:read_attribute("skin", h5.float())
-    if neighbour_wrapper.gpu then
+    if neighbour_from_binning.gpu then
         args.occupancy = group:read_attribute("occupancy", h5.float())
     end
 end

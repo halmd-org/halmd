@@ -23,10 +23,9 @@
 #include <boost/type_traits/is_same.hpp>
 #include <boost/utility/enable_if.hpp>
 
-namespace halmd
-{
-namespace algorithm { namespace gpu
-{
+namespace halmd {
+namespace algorithm {
+namespace gpu {
 
 using boost::disable_if;
 using boost::enable_if;
@@ -128,8 +127,8 @@ transform(T v1, T v2)
     return max(v1, v2);
 }
 
-}} // namespace algorithm::gpu
-
+} // namespace algorithm
+} // namespace gpu
 } // namespace halmd
 
 #endif /* ! HALMD_ALGORITHM_GPU_TRANSFORM_CUH */

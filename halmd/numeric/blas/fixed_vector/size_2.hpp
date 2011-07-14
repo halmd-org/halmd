@@ -31,10 +31,10 @@
 #include <halmd/numeric/blas/fixed_vector/size_N.hpp>
 #include <halmd/numeric/mp/dsfloat.hpp>
 
-namespace halmd
-{
-namespace detail { namespace numeric { namespace blas
-{
+namespace halmd {
+namespace detail {
+namespace numeric {
+namespace blas {
 
 /**
  * Two-dimensional single precision floating-point vector
@@ -432,8 +432,9 @@ struct fixed_vector<double, 2>
 #endif /* HALMD_GPU_DOUBLE_PRECISION */
 };
 
-}}} // namespace detail::numeric::blas
-
+} // namespace detail
+} // namespace numeric
+} // namespace blas
 } // namespace halmd
 
 #endif /* ! HALMD_NUMERIC_BLAS_FIXED_VECTOR_SIZE_2_HPP */

@@ -25,16 +25,16 @@
 using namespace boost;
 using namespace std;
 
-namespace halmd
-{
-namespace utility
-{
+namespace halmd {
+namespace utility {
 
 /**
  * Register callback to be invoked periodically.
  *
  * @param interval periodic interval in seconds
  * @param slot callback function or functor
+ *
+ * FIXME return connection
  */
 void timer_service::on_periodic(slot_function_type const& slot, time_t interval)
 {
@@ -83,5 +83,4 @@ HALMD_LUA_API int luaopen_libhalmd_utility_timer_service(lua_State* L)
 }
 
 } // namespace utility
-
 } // namespace halmd

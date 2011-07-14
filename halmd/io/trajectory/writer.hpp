@@ -25,10 +25,9 @@
 
 #include <halmd/utility/signal.hpp>
 
-namespace halmd
-{
-namespace io { namespace trajectory
-{
+namespace halmd {
+namespace io {
+namespace trajectory {
 
 template <int dimension>
 class writer
@@ -36,6 +35,7 @@ class writer
 public:
     typedef halmd::signal<void (uint64_t)> signal_type;
     typedef typename signal_type::slot_function_type slot_function_type;
+    typedef typename signal_type::connection connection_type;
 
     static void luaopen(lua_State* L);
 
@@ -44,11 +44,11 @@ public:
     virtual void append(uint64_t step) = 0;
     virtual void flush() = 0;
 
-    virtual void on_append(slot_function_type const& slot) = 0;
+    virtual connection_type on_append(slot_function_type const& slot) = 0;
 };
 
-}} // namespace io::trajectory
-
+} // namespace io
+} // namespace trajectory
 } // namespace halmd
 
 #endif /* ! HALMD_IO_TRAJECTORY_WRITER_HPP */

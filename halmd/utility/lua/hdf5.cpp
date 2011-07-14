@@ -28,8 +28,7 @@
 using namespace boost;
 using namespace std;
 
-namespace halmd
-{
+namespace halmd {
 
 /**
  * Wrap C++ type for Luabind function overloading

@@ -57,11 +57,9 @@ def main():
     pressure, pressure_err = compute_average(array(H5["PRESS"])[range[0]:range[1]], 'Pressure')
     epot, epot_err = compute_average(array(H5["EPOT"])[range[0]:range[1]], 'Potential energy')
 
-    # plot potential energy
+    # select data for plotting the potential energy as function of time
     x = array(H5["TIME"])[range[0]:range[1]]
     y = array(H5["EPOT"])[range[0]:range[1]]
-    if not args.no_plot:
-        plot(x, y, '-b', label=args.input)
 
     # append plot data to file
     if args.dump:
@@ -71,14 +69,17 @@ def main():
         print >>f, '\n'
         f.close()
 
-    # plot mean value for comparison
+    # generate plot
     if not args.no_plot:
+        # plot potential energy versus time
+        plot(x, y, '-b', label=args.input)
+
+        # plot mean value for comparison
         x = linspace(min(x), max(x), num=50)
         y = zeros_like(x) + epot
         plot(x, y, ':k')
 
-    # add axes labels and finalise plot
-    if not args.no_plot:
+        # add axes labels and finalise plot
         axis('tight')
         xlabel(r'Time $t$')
         ylabel(r'Potential energy $E_\mathrm{pot}$')

@@ -42,12 +42,11 @@ using namespace halmd::mdsim::gpu::particle_kernel;
 using namespace halmd::random::gpu;
 using namespace halmd::utility::gpu;
 
-namespace halmd
-{
-namespace mdsim { namespace gpu { namespace integrators
-{
-namespace verlet_nvt_andersen_kernel
-{
+namespace halmd {
+namespace mdsim {
+namespace gpu {
+namespace integrators {
+namespace verlet_nvt_andersen_kernel {
 
 /** integration time-step */
 static __constant__ float timestep_;
@@ -235,6 +234,7 @@ verlet_nvt_andersen_wrapper<dimension, rng_type>::kernel = {
 template class verlet_nvt_andersen_wrapper<3, random::gpu::rand48_rng>;
 template class verlet_nvt_andersen_wrapper<2, random::gpu::rand48_rng>;
 
-}}} // namespace mdsim::gpu::integrators
-
+} // namespace mdsim
+} // namespace gpu
+} // namespace integrators
 } // namespace halmd

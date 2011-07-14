@@ -25,10 +25,9 @@
 #include <halmd/numeric/accumulator.hpp>
 #include <halmd/observables/host/samples/phase_space.hpp>
 
-namespace halmd
-{
-namespace observables { namespace host
-{
+namespace halmd {
+namespace observables {
+namespace host {
 
 /**
  * Mean-quartic displacement
@@ -48,8 +47,8 @@ public:
     result_type compute(sample_vector const& first, sample_vector const& second);
 };
 
-}} // namespace observables::host
-
+} // namespace observables
+} // namespace host
 } // namespace halmd
 
 #endif /* ! HALMD_OBSERVABLES_HOST_MEAN_QUARTIC_DISPLACEMENT_HPP */

@@ -26,8 +26,7 @@
 using namespace boost;
 using namespace std;
 
-namespace halmd
-{
+namespace halmd {
 
 /**
  * Add module-independent program options.

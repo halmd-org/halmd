@@ -25,8 +25,7 @@
 #include <ctime>
 #include <limits>
 
-namespace halmd
-{
+namespace halmd {
 
 /**
  * High-resolution timer

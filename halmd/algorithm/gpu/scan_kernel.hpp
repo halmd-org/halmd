@@ -22,10 +22,9 @@
 
 #include <cuda_wrapper/cuda_wrapper.hpp>
 
-namespace halmd
-{
-namespace algorithm { namespace gpu
-{
+namespace halmd {
+namespace algorithm {
+namespace gpu {
 
 enum {
     // number of shared memory banks
@@ -55,8 +54,8 @@ scan_wrapper<T> const& get_scan_kernel()
     return scan_wrapper<T>::kernel;
 }
 
-}} // namespace algorithm::gpu
-
+} // namespace algorithm
+} // namespace gpu
 } // namespace halmd
 
 #endif /* ! HALMD_ALGORITHM_GPU_SCAN_KERNEL_HPP */

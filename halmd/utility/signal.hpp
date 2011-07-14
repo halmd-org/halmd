@@ -21,18 +21,19 @@
 #define HALMD_UTILITY_SIGNAL_HPP
 
 #include <boost/function.hpp>
+#include <boost/shared_ptr.hpp>
+#include <boost/weak_ptr.hpp>
 #include <list>
 
-namespace halmd
-{
+namespace halmd {
 
 /**
  * Signal implements callbacks with multiple targets.
  *
- * This class mimics a subset of the boost::signal interface. Many features
- * of boost::signal such as return values, connection management and object
- * tracking are not implemented. The benefit of using this minimal signal
- * class is performance close to that of boost::function calls.
+ * This class mimics a subset of the boost::signal interface. Some advanced
+ * features of boost::signal such as return values and object tracking are
+ * not implemented. The benefit of using this minimal signal class is
+ * performance close to that of boost::function calls.
  *
  * http://www.boost.org/doc/libs/release/doc/html/signals.html
  */
@@ -43,39 +44,113 @@ template <typename SlotFunction>
 class signal_base
 {
 protected:
-    typedef std::list<SlotFunction> slot_type;
-    typedef typename slot_type::iterator slot_iterator;
-    typedef typename slot_type::const_iterator slot_const_iterator;
+    /**
+     * As storage for the slots, we use a linked list instead of a vector,
+     * which guarantees that an iterator to an inserted slot remains valid
+     * as long as the slot is not removed from the list, i.e. the iterator
+     * remains valid after insertion or removal of other slots.
+     */
+    typedef std::list<SlotFunction> slots_type;
+    /**
+     * The list of slots is held with a shared pointer, which allows
+     * tracking the slots with a weak pointer in connection objects.
+     */
+    typedef boost::shared_ptr<slots_type> slots_pointer;
+    typedef typename slots_type::iterator slots_iterator;
+    typedef typename slots_type::const_iterator slots_const_iterator;
 
-    slot_type slots_;
+    slots_pointer slots_;
 
 public:
     typedef SlotFunction slot_function_type;
-    typedef typename slot_type::iterator connection;
 
+    /**
+     * Slot-to-signal connection
+     *
+     * This class manages the connection of a single slot to a signal
+     * *independent* of the lifetime of the signal. We employ a weak
+     * pointer to observe the shared pointer holding the slots in the
+     * signal object.
+     * A weak pointer is locked to retrieve a shared pointer to the
+     * referenced object. If the weak pointer does not observe an
+     * object, lock() will return an empty shared pointer instead.
+     * This is the case if (1) we erase() the slot using the stored
+     * iterator and reset() the weak pointer, (2) all slots are
+     * disconnected from the signal with disconnect_all_slots()
+     * by reallocating the slots list, or (3) the signal object
+     * along with the slots list is deconstructed. Thus the state of
+     * the weak pointer reflects the validity of the connection object.
+     */
+    class connection
+    {
+    public:
+        /**
+         * disconnect slot from signal
+         *
+         * This method may be invoked multiple times. Repeated calls to
+         * disconnect() will be silently ignored, similar to the behaviour
+         * of boost::signals::connection::disconnect(). In particular, this
+         * method may be called even when the signal no longer exists, or
+         * when all slots have been removed with disconnect_all_slots().
+         */
+        void disconnect()
+        {
+            slots_pointer slots = slots_.lock();
+            if (slots) {
+                slots->erase(iter_);
+                slots_.reset();
+            }
+        }
+
+    private:
+        /**
+         * Only the signal object should be able to construct a connection.
+         */
+        friend class signal_base;
+
+        connection(slots_pointer slots, slots_iterator iter) : slots_(slots), iter_(iter) {}
+
+        boost::weak_ptr<slots_type> slots_;
+        slots_iterator iter_;
+    };
+
+    signal_base() : slots_(new slots_type) {}
+
+    /**
+     * connect slot to signal
+     */
     connection connect(slot_function_type const& slot)
     {
-        return slots_.insert(slots_.end(), slot);
+        return connection(slots_, slots_->insert(slots_->end(), slot));
     }
 
-    void disconnect(connection const& c)
-    {
-        slots_.erase(c);
-    }
-
+    /**
+     * disconnect all slots
+     *
+     * Instead of clearing the list of slots, we reallocate the list,
+     * which breaks the link between weak pointers in connection objects
+     * and the shared_ptr in signal holding the slots, and enables
+     * connection objects to ignore calls to connection::disconnect().
+     */
     void disconnect_all_slots()
     {
-        slots_.clear();
+        slots_.reset(new slots_type);
     }
 
+    /**
+     * returns true if list of slots is empty, false otherwise
+     */
     bool empty() const
     {
-        return slots_.empty();
+        return slots_->empty();
     }
 
+    /**
+     * returns number of connected slots
+     */
     std::size_t num_slots() const
     {
-        return slots_.size();
+        return slots_->size();
     }
 };
 
@@ -86,13 +161,13 @@ class signal0
 public:
     T0 operator()() const
     {
-        for (slot_const_iterator f = this->slots_.begin(); f != this->slots_.end(); ++f) {
+        for (slots_const_iterator f = this->slots_->begin(); f != this->slots_->end(); ++f) {
             (*f)();
         }
     }
 
-protected:
-    typedef typename signal0::slot_const_iterator slot_const_iterator;
+private:
+    typedef typename signal0::slots_const_iterator slots_const_iterator;
 };
 
 template <typename T0, typename T1>
@@ -102,13 +177,13 @@ class signal1
 public:
     T0 operator()(T1 arg1) const
     {
-        for (slot_const_iterator f = this->slots_.begin(); f != this->slots_.end(); ++f) {
+        for (slots_const_iterator f = this->slots_->begin(); f != this->slots_->end(); ++f) {
             (*f)(arg1);
         }
     }
 
-protected:
-    typedef typename signal1::slot_const_iterator slot_const_iterator;
+private:
+    typedef typename signal1::slots_const_iterator slots_const_iterator;
 };
 
 template <typename T0, typename T1, typename T2>
@@ -118,13 +193,13 @@ class signal2
 public:
     T0 operator()(T1 arg1, T2 arg2) const
     {
-        for (slot_const_iterator f = this->slots_.begin(); f != this->slots_.end(); ++f) {
+        for (slots_const_iterator f = this->slots_->begin(); f != this->slots_->end(); ++f) {
             (*f)(arg1, arg2);
         }
     }
 
-protected:
-    typedef typename signal2::slot_const_iterator slot_const_iterator;
+private:
+    typedef typename signal2::slots_const_iterator slots_const_iterator;
 };
 
 template <typename T0, typename T1, typename T2, typename T3>
@@ -134,13 +209,13 @@ class signal3
 public:
     T0 operator()(T1 arg1, T2 arg2, T3 arg3) const
     {
-        for (slot_const_iterator f = this->slots_.begin(); f != this->slots_.end(); ++f) {
+        for (slots_const_iterator f = this->slots_->begin(); f != this->slots_->end(); ++f) {
             (*f)(arg1, arg2, arg3);
         }
     }
 
-protected:
-    typedef typename signal3::slot_const_iterator slot_const_iterator;
+private:
+    typedef typename signal3::slots_const_iterator slots_const_iterator;
 };
 
 template <typename T0, typename T1, typename T2, typename T3, typename T4>
@@ -150,13 +225,13 @@ class signal4
 public:
     T0 operator()(T1 arg1, T2 arg2, T3 arg3, T4 arg4) const
     {
-        for (slot_const_iterator f = this->slots_.begin(); f != this->slots_.end(); ++f) {
+        for (slots_const_iterator f = this->slots_->begin(); f != this->slots_->end(); ++f) {
             (*f)(arg1, arg2, arg3, arg4);
         }
     }
 
-protected:
-    typedef typename signal4::slot_const_iterator slot_const_iterator;
+private:
+    typedef typename signal4::slots_const_iterator slots_const_iterator;
 };
 
 template <typename T0, typename T1, typename T2, typename T3, typename T4, typename T5>
@@ -166,13 +241,13 @@ class signal5
 public:
     T0 operator()(T1 arg1, T2 arg2, T3 arg3, T4 arg4, T5 arg5) const
     {
-        for (slot_const_iterator f = this->slots_.begin(); f != this->slots_.end(); ++f) {
+        for (slots_const_iterator f = this->slots_->begin(); f != this->slots_->end(); ++f) {
             (*f)(arg1, arg2, arg3, arg4, arg5);
         }
     }
 
-protected:
-    typedef typename signal5::slot_const_iterator slot_const_iterator;
+private:
+    typedef typename signal5::slots_const_iterator slots_const_iterator;
 };
 
 template <typename T0, typename T1, typename T2, typename T3, typename T4, typename T5, typename T6>
@@ -182,13 +257,13 @@ class signal6
 public:
     T0 operator()(T1 arg1, T2 arg2, T3 arg3, T4 arg4, T5 arg5, T6 arg6) const
     {
-        for (slot_const_iterator f = this->slots_.begin(); f != this->slots_.end(); ++f) {
+        for (slots_const_iterator f = this->slots_->begin(); f != this->slots_->end(); ++f) {
             (*f)(arg1, arg2, arg3, arg4, arg5, arg6);
         }
     }
 
-protected:
-    typedef typename signal6::slot_const_iterator slot_const_iterator;
+private:
+    typedef typename signal6::slots_const_iterator slots_const_iterator;
 };
 
 template <typename T0, typename T1, typename T2, typename T3, typename T4, typename T5, typename T6, typename T7>
@@ -198,13 +273,13 @@ class signal7
 public:
     T0 operator()(T1 arg1, T2 arg2, T3 arg3, T4 arg4, T5 arg5, T6 arg6, T7 arg7) const
     {
-        for (slot_const_iterator f = this->slots_.begin(); f != this->slots_.end(); ++f) {
+        for (slots_const_iterator f = this->slots_->begin(); f != this->slots_->end(); ++f) {
             (*f)(arg1, arg2, arg3, arg4, arg5, arg6, arg7);
         }
     }
 
-protected:
-    typedef typename signal7::slot_const_iterator slot_const_iterator;
+private:
+    typedef typename signal7::slots_const_iterator slots_const_iterator;
 };
 
 template <typename T0, typename T1, typename T2, typename T3, typename T4, typename T5, typename T6, typename T7, typename T8>
@@ -214,13 +289,13 @@ class signal8
 public:
     T0 operator()(T1 arg1, T2 arg2, T3 arg3, T4 arg4, T5 arg5, T6 arg6, T7 arg7, T8 arg8) const
     {
-        for (slot_const_iterator f = this->slots_.begin(); f != this->slots_.end(); ++f) {
+        for (slots_const_iterator f = this->slots_->begin(); f != this->slots_->end(); ++f) {
             (*f)(arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8);
         }
     }
 
-protected:
-    typedef typename signal8::slot_const_iterator slot_const_iterator;
+private:
+    typedef typename signal8::slots_const_iterator slots_const_iterator;
 };
 
 template <typename T0, typename T1, typename T2, typename T3, typename T4, typename T5, typename T6, typename T7, typename T8, typename T9>
@@ -230,13 +305,13 @@ class signal9
 public:
     T0 operator()(T1 arg1, T2 arg2, T3 arg3, T4 arg4, T5 arg5, T6 arg6, T7 arg7, T8 arg8, T9 arg9) const
     {
-        for (slot_const_iterator f = this->slots_.begin(); f != this->slots_.end(); ++f) {
+        for (slots_const_iterator f = this->slots_->begin(); f != this->slots_->end(); ++f) {
             (*f)(arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9);
         }
     }
 
-protected:
-    typedef typename signal9::slot_const_iterator slot_const_iterator;
+private:
+    typedef typename signal9::slots_const_iterator slots_const_iterator;
 };
 
 template <>

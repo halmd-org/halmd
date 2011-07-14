@@ -1,5 +1,5 @@
 /*
- * Copyright © 2010-2011  Felix Höfling
+ * Copyright © 2010-2011  Felix Höfling and Peter Colberg
  *
  * This file is part of HALMD.
  *
@@ -26,10 +26,10 @@
 #include <halmd/mdsim/host/force.hpp>
 #include <halmd/mdsim/host/particle.hpp>
 
-namespace halmd
-{
-namespace mdsim { namespace host { namespace forces
-{
+namespace halmd {
+namespace mdsim {
+namespace host {
+namespace forces {
 
 /**
  * zero force (noninteracting particles)
@@ -51,9 +51,8 @@ public:
     static void luaopen(lua_State* L);
 
     zero(boost::shared_ptr<particle_type> particle);
-
-    // there's nothing to compute
-    virtual void compute() {}
+    /** zero particle forces */
+    virtual void compute();
 
     // nothing to enable or disable
     virtual void aux_enable() {}
@@ -82,8 +81,9 @@ public:
     }
 };
 
-}}} // namespace mdsim::host::forces
-
+} // namespace mdsim
+} // namespace host
+} // namespace forces
 } // namespace halmd
 
 #endif /* ! HALMD_MDSIM_HOST_FORCES_ZERO_HPP */

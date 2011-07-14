@@ -23,10 +23,8 @@
 #include <boost/program_options.hpp>
 #include <boost/version.hpp>
 
-namespace halmd
-{
-namespace po
-{
+namespace halmd {
+namespace po {
 
 class extended_value_semantic
 {
@@ -170,7 +168,6 @@ inline extended_typed_value<bool>* bool_switch()
 }
 
 } // namespace po
-
 } // namespace halmd
 
 #endif /* ! HALMD_UTILITY_PROGRAM_OPTIONS_TYPED_VALUE_HPP */

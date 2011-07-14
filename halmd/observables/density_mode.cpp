@@ -27,10 +27,8 @@
 using namespace boost;
 using namespace std;
 
-namespace halmd
-{
-namespace observables
-{
+namespace halmd {
+namespace observables {
 
 template <typename density_mode_type>
 typename signal<void (uint64_t)>::slot_function_type
@@ -65,5 +63,4 @@ HALMD_LUA_API int luaopen_libhalmd_observables_density_mode(lua_State* L)
 }
 
 } // namespace observables
-
 } // namespace halmd

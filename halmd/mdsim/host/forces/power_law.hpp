@@ -28,10 +28,10 @@
 #include <halmd/mdsim/host/forces/smooth.hpp>
 #include <halmd/numeric/pow.hpp>
 
-namespace halmd
-{
-namespace mdsim { namespace host { namespace forces
-{
+namespace halmd {
+namespace mdsim {
+namespace host {
+namespace forces {
 
 /**
  * A power-law potential @f$ r^{-n} @f$ is often used for
@@ -219,8 +219,9 @@ private:
     matrix_type en_cut_;
 };
 
-}}} // namespace mdsim::host::forces
-
+} // namespace mdsim
+} // namespace host
+} // namespace forces
 } // namespace halmd
 
 #endif /* ! HALMD_MDSIM_HOST_FORCES_POWER_LAW_HPP */

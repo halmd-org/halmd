@@ -30,8 +30,7 @@
 # include <cxxabi.h>
 #endif // __GNUC__
 
-namespace halmd
-{
+namespace halmd {
 
 /**
  * return type name in human readable format

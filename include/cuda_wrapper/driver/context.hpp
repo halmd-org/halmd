@@ -26,8 +26,8 @@
 
 #include <cuda_wrapper/driver/error.hpp>
 
-namespace cuda { namespace driver
-{
+namespace cuda {
+namespace driver {
 
 /**
  * CUDA context management
@@ -105,6 +105,7 @@ private:
     boost::shared_ptr<CUcontext> m_ctx;
 };
 
-}} // namespace cuda::driver
+} // namespace driver
+} // namespace cuda
 
 #endif /* ! CUDA_DRIVER_CONTEXT_HPP */

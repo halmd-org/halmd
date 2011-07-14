@@ -30,10 +30,8 @@
 #include <halmd/utility/profiler.hpp>
 #include <halmd/utility/signal.hpp>
 
-namespace halmd
-{
-namespace observables
-{
+namespace halmd {
+namespace observables {
 
 /**
  * compute partial static structure factors
@@ -55,6 +53,7 @@ public:
     typedef halmd::utility::profiler profiler_type;
     typedef halmd::signal<void (uint64_t)> signal_type;
     typedef typename signal_type::slot_function_type slot_function_type;
+    typedef typename signal_type::connection connection_type;
 
     typedef boost::array<double, 3> result_type;
     typedef fixed_vector<double, dimension> vector_type;
@@ -80,9 +79,9 @@ public:
     // compute ssf from sample of density Fourier modes and store with given simulation step
     virtual void sample(uint64_t step);
 
-    virtual void on_sample(slot_function_type const& slot)
+    virtual connection_type on_sample(slot_function_type const& slot)
     {
-        on_sample_.connect(slot);
+        return on_sample_.connect(slot);
     }
 
     //! returns last computed values for static structure factor
@@ -124,7 +123,6 @@ protected:
 };
 
 } // namespace observables
-
 } // namespace halmd
 
 #endif /* ! HALMD_OBSERVABLES_SSF_HPP */

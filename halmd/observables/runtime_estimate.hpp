@@ -29,10 +29,8 @@
 #include <halmd/mdsim/clock.hpp>
 #include <halmd/utility/signal.hpp>
 
-namespace halmd
-{
-namespace observables
-{
+namespace halmd {
+namespace observables {
 
 /**
  * estimate remaining runtime until programme completion
@@ -46,6 +44,7 @@ public:
     typedef halmd::mdsim::clock clock_type;
     typedef halmd::signal<void ()> signal_type;
     typedef signal_type::slot_function_type slot_function_type;
+    typedef signal_type::connection connection_type;
 
     static void luaopen(lua_State* L);
 
@@ -58,11 +57,11 @@ public:
     );
 
     // estimate remaining runtime and output to log file
-    virtual void sample() const;
+    void sample() const;
 
-    virtual void on_sample(slot_function_type const& slot)
+    connection_type on_sample(slot_function_type const& slot)
     {
-        on_sample_.connect(slot);
+        return on_sample_.connect(slot);
     }
 
     //! returns estimate on remaining runtime in seconds based on number of completed simulation steps
@@ -83,7 +82,6 @@ protected:
 };
 
 } // namespace observables
-
 } // namespace halmd
 
 #endif /* ! HALMD_OBSERVABLES_RUNTIME_ESTIMATE_HPP */

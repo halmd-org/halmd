@@ -25,12 +25,11 @@
 #include <halmd/numeric/blas/blas.hpp>
 #include <halmd/utility/gpu/variant.cuh>
 
-namespace halmd
-{
-namespace mdsim { namespace gpu { namespace forces
-{
-namespace morse_kernel
-{
+namespace halmd {
+namespace mdsim {
+namespace gpu {
+namespace forces {
+namespace morse_kernel {
 
 /** array of potential parameters for all combinations of particle types */
 static texture<float4> param_;
@@ -105,8 +104,9 @@ cuda::texture<float> morse_wrapper::rr_cut = morse_kernel::rr_cut_;
 template class pair_trunc_wrapper<3, morse_kernel::morse>;
 template class pair_trunc_wrapper<2, morse_kernel::morse>;
 
-}}} // namespace mdsim::gpu::forces
-
+} // namespace mdsim
+} // namespace gpu
+} // namespace forces
 } // namespace halmd
 
 #endif /* ! HALMD_MDSIM_GPU_FORCES_MORSE_KERNEL_CUH */

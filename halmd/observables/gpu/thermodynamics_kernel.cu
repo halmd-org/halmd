@@ -23,12 +23,10 @@
 
 using namespace halmd::algorithm::gpu;
 
-namespace halmd
-{
-namespace observables { namespace gpu
-{
-namespace thermodynamics_kernel
-{
+namespace halmd {
+namespace observables {
+namespace gpu {
+namespace thermodynamics_kernel {
 
 #if 0
 /**
@@ -89,8 +87,8 @@ __global__ void reduce_types(coalesced_input_type const* g_in,
 #endif
 
 } // namespace thermodynamics_kernel
-
-}} // namespace observables::gpu
+} // namespace observables
+} // namespace gpu
 
 template class reduce_wrapper<
     sum_                        // reduce_transform

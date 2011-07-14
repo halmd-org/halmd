@@ -30,10 +30,9 @@
 using namespace boost;
 using namespace std;
 
-namespace halmd
-{
-namespace mdsim { namespace host
-{
+namespace halmd {
+namespace mdsim {
+namespace host {
 
 /**
  * Allocate microscopic system state.
@@ -50,7 +49,6 @@ particle<dimension, float_type>::particle(vector<unsigned int> const& particles)
   , f(nbox)
   , tag(nbox)
   , type(nbox)
-  , neighbour(nbox)
 {
 }
 
@@ -87,7 +85,12 @@ void particle<dimension, float_type>::rearrange(std::vector<unsigned int> const&
     // no permutation of forces
     algorithm::host::permute(tag.begin(), tag.end(), index.begin());
     algorithm::host::permute(type.begin(), type.end(), index.begin());
-    // no permutation of neighbour lists
+}
+
+template <int dimension, typename float_type>
+static int wrap_dimension(particle<dimension, float_type> const&)
+{
+    return dimension;
 }
 
 template <unsigned int dimension, typename float_type>
@@ -103,6 +106,7 @@ void particle<dimension, float_type>::luaopen(lua_State* L)
             [
                 class_<particle, shared_ptr<_Base>, _Base>(class_name.c_str())
                     .def(constructor<vector<unsigned int> const&>())
+                    .property("dimension", &wrap_dimension<dimension, float_type>)
             ]
         ]
     ];
@@ -129,6 +133,6 @@ template class particle<3, float>;
 template class particle<2, float>;
 #endif
 
-}} // namespace mdsim::host
-
+} // namespace mdsim
+} // namespace host
 } // namespace halmd

@@ -25,8 +25,8 @@
 
 #include <cuda_wrapper/driver/error.hpp>
 
-namespace cuda { namespace driver
-{
+namespace cuda {
+namespace driver {
 
 #if (CUDA_VERSION >= 2020)
 
@@ -42,6 +42,7 @@ inline int version()
 
 #endif /* CUDA_VERSION >= 2020 */
 
-}} // namespace cuda::driver
+} // namespace driver
+} // namespace cuda
 
 #endif /* ! CUDA_DRIVER_VERSION_HPP */

@@ -1,5 +1,5 @@
 --
--- Copyright © 2010  Peter Colberg
+-- Copyright © 2010-2011  Peter Colberg
 --
 -- This file is part of HALMD.
 --
@@ -17,10 +17,10 @@
 -- along with this program.  If not, see <http://www.gnu.org/licenses/>.
 --
 
-require("halmd.modules")
-
 require("halmd.device")
 require("halmd.mdsim.core")
+require("halmd.modules")
+require("halmd.singleton")
 
 -- grab modules
 local device = halmd.device
@@ -44,22 +44,34 @@ local h5 = libhalmd.h5
 local po = libhalmd.po
 -- grab standard library
 local assert = assert
-local print = print
 
-module("halmd.mdsim.particle", halmd.modules.register)
+module("halmd.mdsim.particle", halmd.modules.register, halmd.singleton)
 
 --
 -- construct particle module
 --
+-- @param dimension dimension of positional coordinates
+--
 function new(args)
-    local core = mdsim.core() -- singleton
-    local dimension = assert(core.dimension)
+    local dimension = assert(args.dimension)
     local npart = args.particles or { 1000 } -- default value
 
-    if not device() then
-        return particle_wrapper.host[dimension](npart)
+    local particle
+    if device() then
+        if args.threads then
+            particle = particle_wrapper.gpu[dimension](npart, args.threads)
+        else
+            particle = particle_wrapper.gpu[dimension](npart)
+        end
+    else
+        particle = particle_wrapper.host[dimension](npart)
     end
-    return particle_wrapper.gpu[dimension](device(), npart)
+
+    local core = mdsim.core()
+    -- set particle types at the beginning of system preparation
+    core:on_prepend_setup{particle.set, tracker = particle}
+
+    return particle
 end
 
 -- override default parameter namespace
@@ -72,6 +84,9 @@ namespace = "box"
 --
 function options(desc)
     desc:add("particles", po.uint_array(), "number of particles")
+    if particle_wrapper.gpu then
+        desc:add("threads", po.uint(), "number of CUDA threads per block")
+    end
 end
 
 --
@@ -84,7 +99,7 @@ end
 --
 -- write module parameters to HDF5 group
 --
--- @param core module instance
+-- @param particle module instance
 -- @param group HDF5 group
 --
 function write_parameters(particle, group)

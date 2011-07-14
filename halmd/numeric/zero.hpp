@@ -22,8 +22,7 @@
 
 #include <halmd/config.hpp>
 
-namespace halmd
-{
+namespace halmd {
 
 /**
  * Helper to initialize arbitrary value to zero.

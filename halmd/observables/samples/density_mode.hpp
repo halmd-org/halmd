@@ -28,10 +28,9 @@
 
 #include <halmd/numeric/blas/fixed_vector.hpp>
 
-namespace halmd
-{
-namespace observables { namespace samples
-{
+namespace halmd {
+namespace observables {
+namespace samples {
 
 /**
  *  data structure for storing Fourier modes of the particle density
@@ -70,8 +69,8 @@ public:
     density_mode(unsigned int ntype, unsigned int nq);
 };
 
-}} // namespace observables::samples
-
+} // namespace observables
+} // namespace samples
 } // namespace halmd
 
 #endif /* ! HALMD_OBSERVABLES_SAMPLES_DENSITY_MODE_HPP */

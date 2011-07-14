@@ -23,12 +23,10 @@
 
 using namespace halmd::mdsim::gpu::particle_kernel;
 
-namespace halmd
-{
-namespace mdsim { namespace gpu
-{
-namespace velocity_kernel
-{
+namespace halmd {
+namespace mdsim {
+namespace gpu {
+namespace velocity_kernel {
 
 /** number of particles in simulation box */
 static __constant__ unsigned int nbox_;
@@ -135,6 +133,6 @@ velocity_wrapper<dimension> const velocity_wrapper<dimension>::kernel = {
 template class velocity_wrapper<3>;
 template class velocity_wrapper<2>;
 
-}} // namespace mdsim::gpu
-
+} // namespace mdsim
+} // namespace gpu
 } // namespace halmd

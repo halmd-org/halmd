@@ -29,10 +29,10 @@
 #include <halmd/mdsim/clock.hpp>
 #include <halmd/observables/host/samples/phase_space.hpp>
 
-namespace halmd
-{
-namespace io { namespace trajectory { namespace writers
-{
+namespace halmd {
+namespace io {
+namespace trajectory {
+namespace writers {
 
 template <int dimension, typename float_type>
 class h5md
@@ -48,6 +48,7 @@ public:
 
     typedef typename _Base::signal_type signal_type;
     typedef typename _Base::slot_function_type slot_function_type;
+    typedef typename _Base::connection_type connection_type;
 
     static void luaopen(lua_State* L);
 
@@ -67,9 +68,9 @@ public:
         return file_;
     }
 
-    virtual void on_append(slot_function_type const& slot)
+    virtual connection_type on_append(slot_function_type const& slot)
     {
-        on_append_.connect(slot);
+        return on_append_.connect(slot);
     }
 
 private:
@@ -83,8 +84,9 @@ private:
     signal_type on_append_;
 };
 
-}}} // namespace io::trajectory::writers
-
+} // namespace io
+} // namespace trajectory
+} // namespace writers
 } // namespace halmd
 
 #endif /* ! HALMD_IO_TRAJECTORY_H5MD_WRITER_HPP */

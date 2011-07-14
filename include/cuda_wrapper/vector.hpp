@@ -25,8 +25,7 @@
 #include <boost/shared_ptr.hpp>
 #include <boost/utility.hpp>
 
-namespace cuda
-{
+namespace cuda {
 
 /**
  * CUDA global device memory vector
