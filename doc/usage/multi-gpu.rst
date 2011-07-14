@@ -36,11 +36,11 @@ You may also directly use the preload library::
 
 nvlock is available at ::
 
-  git://git.colberg.org/gpgpu/nvlock
+  git://git.colberg.org/nvcuda-tools
 
 or using the "dumb" HTTP protocol ::
 
-  http://git.colberg.org/gpgpu/nvlock
+  http://git.colberg.org/nvcuda-tools
 
 and is compiled with ::
 
