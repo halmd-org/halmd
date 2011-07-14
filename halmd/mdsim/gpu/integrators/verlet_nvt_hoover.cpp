@@ -30,10 +30,10 @@
 using namespace boost;
 using namespace std;
 
-namespace halmd
-{
-namespace mdsim { namespace gpu { namespace integrators
-{
+namespace halmd {
+namespace mdsim {
+namespace gpu {
+namespace integrators {
 
 template <int dimension, typename float_type>
 verlet_nvt_hoover<dimension, float_type>::
@@ -313,6 +313,7 @@ template class verlet_nvt_hoover<3, float>;
 template class verlet_nvt_hoover<2, float>;
 #endif
 
-}}} // namespace mdsim::gpu::integrators
-
+} // namespace integrators
+} // namespace gpu
+} // namespace mdsim
 } // namespace halmd

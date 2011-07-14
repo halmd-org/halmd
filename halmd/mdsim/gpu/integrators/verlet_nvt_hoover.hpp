@@ -34,10 +34,10 @@
 #include <halmd/numeric/mp/dsfloat.hpp>
 #include <halmd/utility/profiler.hpp>
 
-namespace halmd
-{
-namespace mdsim { namespace gpu { namespace integrators
-{
+namespace halmd {
+namespace mdsim {
+namespace gpu {
+namespace integrators {
 
 template <int dimension, typename float_type>
 class verlet_nvt_hoover
@@ -159,8 +159,9 @@ private:
     runtime runtime_;
 };
 
-}}} // namespace mdsim::gpu::integrators
-
+} // namespace integrators
+} // namespace gpu
+} // namespace mdsim
 } // namespace halmd
 
 #endif /* ! HALMD_MDSIM_GPU_INTEGRATORS_VERLET_NVT_HOOVER_HPP */
