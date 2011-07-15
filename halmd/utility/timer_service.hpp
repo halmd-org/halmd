@@ -38,13 +38,10 @@ namespace utility {
  */
 class timer_service
 {
-private:
-    typedef signal<void ()> signal_type;
-
 public:
-    typedef signal_type::slot_function_type slot_function_type;
-    typedef signal_type::connection connection_type;
     typedef std::time_t time_type;
+    typedef signal<void ()>::slot_function_type slot_function_type;
+    typedef signal<void (time_type const&)>::connection connection_type;
 
     /** connect slot to be invoked periodically */
     connection_type on_periodic(slot_function_type const& slot, time_type interval);
@@ -60,7 +57,7 @@ private:
     struct event
     {
         /** process event */
-        void operator()();
+        void operator()(time_type const& time);
         /** time in seconds since the epoch */
         time_type time_;
         /** time interval in seconds */
@@ -69,7 +66,7 @@ private:
         slot_function_type slot_;
     };
 
-    signal_type on_periodic_;
+    signal<void (time_type const&)> on_periodic_;
 };
 
 } // namespace utility

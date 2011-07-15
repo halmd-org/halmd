@@ -17,6 +17,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <ctime> // std::time_t
 #include <luabind/luabind.hpp>
 #include <stdint.h>
 
@@ -65,6 +66,7 @@ HALMD_LUA_API int luaopen_libhalmd_utility_lua_signal(lua_State* L)
       , SLOT( signal<void (uint64_t)>::slot_function_type )
       , CONNECTION( signal<void ()>::connection )
       , CONNECTION( signal<void (uint64_t)>::connection )
+      , CONNECTION( signal<void (std::time_t const&)>::connection )
     ];
     return 0;
 }

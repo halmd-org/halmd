@@ -40,12 +40,12 @@ timer_service::on_periodic(slot_function_type const& slot, time_type interval)
 
 void timer_service::process()
 {
-    on_periodic_();
+    on_periodic_(time(0));
 }
 
-void timer_service::event::operator()()
+void timer_service::event::operator()(time_type const& time)
 {
-    if (time(0) >= time_) {
+    if (time >= time_) {
         slot_();
         time_ += interval_;
     }
