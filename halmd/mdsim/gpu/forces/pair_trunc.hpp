@@ -41,7 +41,7 @@ namespace forces {
 /**
  * class template for modules implementing short ranged potential forces
  */
-template <int dimension, typename float_type, typename potential_type>
+template <int dimension, typename float_type, typename potential_type_>
 class pair_trunc
   : public mdsim::gpu::force<dimension, float_type>
 {
@@ -49,6 +49,7 @@ public:
     typedef mdsim::gpu::force<dimension, float_type> _Base;
     typedef typename _Base::vector_type vector_type;
     typedef typename _Base::gpu_stress_tensor_type gpu_stress_tensor_type;
+    typedef potential_type_ potential_type;
     typedef gpu::particle<dimension, float> particle_type;
     typedef mdsim::box<dimension> box_type;
     typedef gpu::neighbour neighbour_type;
@@ -186,18 +187,15 @@ static char const* module_name_wrapper(pair_trunc<dimension, float_type, potenti
     return potential_type::module_name();
 }
 
-template <int dimension, typename float_type, typename potential_type>
-static boost::shared_ptr<pair_trunc<dimension, float_type, potential_type> >
-wrap_pair_trunc(
-    boost::shared_ptr<potential_type> potential
-  , boost::shared_ptr<typename pair_trunc<dimension, float_type, potential_type>::particle_type> particle
-  , boost::shared_ptr<typename pair_trunc<dimension, float_type, potential_type>::box_type> box
-  , boost::shared_ptr<typename pair_trunc<dimension, float_type, potential_type>::neighbour_type const> neighbour
+template <typename pair_trunc_type>
+static boost::shared_ptr<pair_trunc_type> wrap_make_shared(
+    boost::shared_ptr<typename pair_trunc_type::potential_type> potential
+  , boost::shared_ptr<typename pair_trunc_type::particle_type> particle
+  , boost::shared_ptr<typename pair_trunc_type::box_type> box
+  , boost::shared_ptr<typename pair_trunc_type::neighbour_type const> neighbour
 )
 {
-    return boost::make_shared<
-        pair_trunc<dimension, float_type, potential_type>
-    >(potential, particle, box, neighbour);
+    return boost::make_shared<pair_trunc_type>(potential, particle, box, neighbour);
 }
 
 template <int dimension, typename float_type, typename potential_type>
@@ -236,7 +234,7 @@ void pair_trunc<dimension, float_type, potential_type>::luaopen(lua_State* L)
 
           , namespace_("forces")
             [
-                def("pair_trunc", &wrap_pair_trunc<dimension, float_type, potential_type>)
+                def("pair_trunc", &wrap_make_shared<pair_trunc>)
             ]
         ]
     ];
