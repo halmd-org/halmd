@@ -27,6 +27,7 @@
 #include <halmd/utility/lua/lua.hpp>
 
 using namespace boost;
+using namespace boost::numeric::ublas;
 using namespace std;
 
 namespace halmd {
@@ -41,6 +42,9 @@ template <typename float_type>
 lennard_jones_simple<float_type>::lennard_jones_simple(float_type cutoff)
   // allocate potential parameters
   : r_cut_(1, 1)
+  // initialise constant members
+  , epsilon_(scalar_matrix<float_type>(1, 1, 1)) // ε=1
+  , sigma_(scalar_matrix<float_type>(1, 1, 1)) // σ=1
 {
     r_cut_(0, 0) = cutoff;
     rr_cut_ = cutoff * cutoff;
@@ -71,7 +75,11 @@ void lennard_jones_simple<float_type>::luaopen(lua_State* L)
                 [
                     class_<lennard_jones_simple, shared_ptr<lennard_jones_simple> >(module_name())
                         .def(constructor<float_type>())
-                        .property("r_cut", (matrix_type const& (lennard_jones_simple::*)() const) &lennard_jones_simple::r_cut)
+                        // provide Lua interface coherent with lennard_jones
+                        .property("r_cut", &lennard_jones_simple::r_cut)
+                        .property("r_cut_sigma", &lennard_jones_simple::r_cut) // note σ=1
+                        .property("epsilon", &lennard_jones_simple::epsilon)
+                        .property("sigma", &lennard_jones_simple::sigma)
                 ]
             ]
         ]

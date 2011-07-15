@@ -59,6 +59,16 @@ public:
         return r_cut_;
     }
 
+    matrix_type const& epsilon() const
+    {
+        return epsilon_;
+    }
+
+    matrix_type const& sigma() const
+    {
+        return sigma_;
+    }
+
 private:
     /** cutoff length in MD units, r_cut() must return a matrix */
     matrix_type r_cut_;
@@ -66,6 +76,10 @@ private:
     float_type rr_cut_;
     /** potential energy at cutoff length in MD units */
     float_type en_cut_;
+    /** potential well depths in MD units, for coherence with lennard_jones only */
+    const matrix_type epsilon_;
+    /** pair separation in MD units, for coherence with lennard_jones only */
+    const matrix_type sigma_;
 };
 
 } // namespace mdsim
