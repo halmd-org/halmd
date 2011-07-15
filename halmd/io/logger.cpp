@@ -20,6 +20,7 @@
 // increase compiler compatibility, e.g. with Clang 2.8
 #define BOOST_LOG_NO_UNSPECIFIED_BOOL
 #include <boost/log/attributes/clock.hpp>
+#include <boost/log/attributes/constant.hpp>
 #include <boost/log/filters/attr.hpp>
 #include <boost/log/formatters/attr.hpp>
 #include <boost/log/formatters/date_time.hpp>
@@ -135,6 +136,12 @@ static void wrap_log(char const* message)
     HALMD_LOG(level, message);
 }
 
+template <typename T>
+static void wrap_add_attribute(logger& logger_, string const& attr, T const& value)
+{
+    logger_.add_attribute(attr, attributes::constant<T>(value));
+}
+
 void logging::luaopen(lua_State* L)
 {
     using namespace luabind;
@@ -143,6 +150,8 @@ void logging::luaopen(lua_State* L)
         namespace_("io")
         [
             class_<logger, shared_ptr<logger> >("logger")
+                .def(constructor<>())
+                .def("add_attribute", &wrap_add_attribute<string>)
 
           , namespace_("logging")
             [
