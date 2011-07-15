@@ -20,7 +20,7 @@
 -- grab modules
 -- grab C++ wrappers
 -- grab standard library
-local logger_wrapper = libhalmd.io.logger
+local logging_wrapper = libhalmd.io.logging
 local setmetatable = setmetatable
 local rawset = rawset
 local rawget = rawget
@@ -35,7 +35,7 @@ setmetatable(_M, {
     -- @param level Logging severity level
     --
     __index = function(self, level)
-        local wrapper = logger_wrapper[level]
+        local wrapper = logging_wrapper[level]
         local log
         if wrapper then
             log = function(message, ...)

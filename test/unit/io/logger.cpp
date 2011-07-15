@@ -76,8 +76,8 @@ private:
 //! check that logger instance is a singleton
 BOOST_AUTO_TEST_CASE( instance )
 {
-    logger& instance1 = logger::instance();
-    logger& instance2 = logger::instance();
+    logging& instance1 = logging::get();
+    logging& instance2 = logging::get();
     BOOST_CHECK_EQUAL( &instance1, &instance2 );
 }
 
@@ -98,20 +98,20 @@ BOOST_FIXTURE_TEST_CASE( default_log_level, console )
 //! check for duplicate output
 BOOST_AUTO_TEST_CASE( duplicate_output )
 {
-    logger& log = logger::instance();
+    logging& log = logging::get();
     log.close_console();
     {
         console cons;
         LOG("info");
         BOOST_CHECK_EQUAL( count_lines(cons.stream()), 0 );
     }
-    log.open_console(logger::info);
+    log.open_console(logging::info);
     {
         console cons;
         LOG("info");
         BOOST_CHECK_EQUAL( count_lines(cons.stream()), 1 );
     }
-    log.open_console(logger::info);
+    log.open_console(logging::info);
     {
         console cons;
         LOG("info");
@@ -126,9 +126,9 @@ BOOST_AUTO_TEST_CASE( log_levels )
 
     // sweep all verbosities
     for (int log_level = -1; log_level <= 5; log_level++) {
-        logger::severity_level s = static_cast<logger::severity_level>(log_level);
-        logger::instance().open_console(s);
-        logger::instance().open_file(logfile, s);
+        logging::severity_level s = static_cast<logging::severity_level>(log_level);
+        logging::get().open_console(s);
+        logging::get().open_file(logfile, s);
 
         // capture console output
         console cons;
@@ -142,7 +142,7 @@ BOOST_AUTO_TEST_CASE( log_levels )
 
         fstream file(logfile.c_str());
 #ifdef NDEBUG
-        int max_level = min(log_level, static_cast<int>(logger::info));
+        int max_level = min(log_level, static_cast<int>(logging::info));
         BOOST_CHECK_EQUAL( count_lines(file), max_level + 1 );
         BOOST_CHECK_EQUAL( count_lines(cons.stream()), max_level + 1 );
 #else
@@ -150,8 +150,8 @@ BOOST_AUTO_TEST_CASE( log_levels )
         BOOST_CHECK_EQUAL( count_lines(cons.stream()), log_level + 1 );
 #endif
 
-        logger::instance().close_console();
-        logger::instance().close_file();
+        logging::get().close_console();
+        logging::get().close_file();
     }
 
     remove(logfile.c_str());

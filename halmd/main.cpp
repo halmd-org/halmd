@@ -71,7 +71,7 @@ int main(int argc, char **argv)
              "output file prefix")
             ("config,c", po::value<string>(),
              "parameter input file")
-            ("verbose,v", po::accum_value<int>()->default_value(logger::warning),
+            ("verbose,v", po::accum_value<int>()->default_value(logging::warning),
              "increase verbosity")
             ("version",
              "output version and exit")
@@ -120,13 +120,13 @@ int main(int argc, char **argv)
             return EXIT_SUCCESS;
         }
 
-        logger::instance().open_console(
-            static_cast<logger::severity_level>(vm["verbose"].as<int>())
+        logging::get().open_console(
+            static_cast<logging::severity_level>(vm["verbose"].as<int>())
         );
-        logger::instance().open_file(
+        logging::get().open_file(
             vm["output"].as<string>() + ".log"
-          , static_cast<logger::severity_level>(
-                max(vm["verbose"].as<int>(), static_cast<int>(logger::info))
+          , static_cast<logging::severity_level>(
+                max(vm["verbose"].as<int>(), static_cast<int>(logging::info))
             )
         );
 
