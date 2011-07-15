@@ -55,7 +55,7 @@ static H5::DataSet create_dataset(
   , function<T ()> const&
 )
 {
-    return h5xx::create_dataset<T>(group, name, 1);
+    return h5xx::create_unique_dataset<T>(group, name);
 }
 
 template <typename T>
@@ -65,7 +65,7 @@ static H5::DataSet create_dataset(
   , function<T const& ()> const&
 )
 {
-    return h5xx::create_dataset<T>(group, name, 1);
+    return h5xx::create_unique_dataset<T>(group, name);
 }
 
 template <typename T>
@@ -75,7 +75,7 @@ static H5::DataSet create_dataset(
   , function<T& ()> const&
 )
 {
-    return h5xx::create_dataset<T>(group, name, 1);
+    return h5xx::create_unique_dataset<T>(group, name);
 }
 
 template <typename T>
@@ -86,7 +86,7 @@ static H5::DataSet create_dataset(
 )
 {
     vector<T> data = slot();
-    return h5xx::create_dataset<vector<T> >(group, name, data.size(), 1);
+    return h5xx::create_unique_dataset<vector<T> >(group, name, data.size());
 }
 
 template <typename T>
@@ -97,7 +97,7 @@ static H5::DataSet create_dataset(
 )
 {
     vector<T> const& data = slot();
-    return h5xx::create_dataset<vector<T> >(group, name, data.size(), 1);
+    return h5xx::create_unique_dataset<vector<T> >(group, name, data.size());
 }
 
 template <typename T>
@@ -108,14 +108,14 @@ static H5::DataSet create_dataset(
 )
 {
     vector<T>& data = slot();
-    return h5xx::create_dataset<vector<T> >(group, name, data.size(), 1);
+    return h5xx::create_unique_dataset<vector<T> >(group, name, data.size());
 }
 
 template <typename slot_type>
 static void write_dataset(H5::DataSet dataset, slot_type const& slot)
 {
     typename slot_type::result_type data = slot();
-    h5xx::write_dataset(dataset, data, 0);
+    h5xx::write_unique_dataset(dataset, data);
 }
 
 template <typename slot_type>
