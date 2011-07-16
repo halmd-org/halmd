@@ -32,15 +32,16 @@ namespace gpu {
 
 template <int dimension, typename float_type>
 thermodynamics<dimension, float_type>::thermodynamics(
-    shared_ptr<particle_type> particle
-  , shared_ptr<box_type> box
-  , shared_ptr<clock_type> clock
+    shared_ptr<particle_type const> particle
+  , shared_ptr<box_type const> box
+  , shared_ptr<clock_type const> clock
   , shared_ptr<force_type> force
+  , shared_ptr<logger_type> logger
 )
-  : _Base(box, clock)
+  : _Base(box, clock, logger)
   // dependency injection
-  , particle(particle)
-  , force(force)
+  , particle_(particle)
+  , force_(force)
   // memory allocation in functors
   , sum_velocity_square_()
   , sum_velocity_vector_()
@@ -59,7 +60,7 @@ thermodynamics<dimension, float_type>::thermodynamics(
 template <int dimension, typename float_type>
 void thermodynamics<dimension, float_type>::prepare()
 {
-    force->aux_enable();
+    force_->aux_enable();
 }
 
 /**
@@ -70,7 +71,7 @@ template <int dimension, typename float_type>
 void thermodynamics<dimension, float_type>::sample(uint64_t step)
 {
     _Base::sample(step);
-    force->aux_disable();
+    force_->aux_disable();
 }
 
 /**
@@ -79,7 +80,7 @@ void thermodynamics<dimension, float_type>::sample(uint64_t step)
 template <int dimension, typename float_type>
 double thermodynamics<dimension, float_type>::en_kin()
 {
-    return .5 * sum_velocity_square_(particle->g_v) / particle->nbox;
+    return .5 * sum_velocity_square_(particle_->g_v) / particle_->nbox;
 }
 
 /**
@@ -89,7 +90,7 @@ template <int dimension, typename float_type>
 typename thermodynamics<dimension, float_type>::vector_type
 thermodynamics<dimension, float_type>::v_cm()
 {
-    return sum_velocity_vector_(particle->g_v) / particle->nbox;
+    return sum_velocity_vector_(particle_->g_v) / particle_->nbox;
 }
 
 /**
@@ -98,10 +99,10 @@ thermodynamics<dimension, float_type>::v_cm()
 template <int dimension, typename float_type>
 double thermodynamics<dimension, float_type>::en_pot()
 {
-    if (!force->aux_flag()) {
+    if (!force_->aux_flag()) {
         throw std::logic_error("Potential energy not enabled in force module");
     }
-    return sum_scalar_(force->potential_energy()) / particle->nbox;
+    return sum_scalar_(force_->potential_energy()) / particle_->nbox;
 }
 
 /**
@@ -110,10 +111,10 @@ double thermodynamics<dimension, float_type>::en_pot()
 template <int dimension, typename float_type>
 double thermodynamics<dimension, float_type>::virial()
 {
-    if (!force->aux_flag()) {
+    if (!force_->aux_flag()) {
         throw std::logic_error("Stress tensor not enabled in force module");
     }
-    return sum_stress_tensor_diagonal_(force->stress_tensor_pot()) / particle->nbox;
+    return sum_stress_tensor_diagonal_(force_->stress_tensor_pot()) / particle_->nbox;
 }
 
 /**
@@ -122,10 +123,10 @@ double thermodynamics<dimension, float_type>::virial()
 template <int dimension, typename float_type>
 double thermodynamics<dimension, float_type>::hypervirial()
 {
-    if (!force->aux_flag()) {
+    if (!force_->aux_flag()) {
         throw std::logic_error("Hypervirial not enabled in force module");
     }
-    return sum_scalar_(force->hypervirial()) / particle->nbox;
+    return sum_scalar_(force_->hypervirial()) / particle_->nbox;
 }
 
 template <int dimension, typename float_type>
@@ -145,6 +146,7 @@ void thermodynamics<dimension, float_type>::luaopen(lua_State* L)
                       , shared_ptr<box_type>
                       , shared_ptr<clock_type>
                       , shared_ptr<force_type>
+                      , shared_ptr<logger_type>
                     >())
             ]
         ]

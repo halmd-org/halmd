@@ -19,7 +19,6 @@
 
 #include <limits>
 
-#include <halmd/io/logger.hpp>
 #include <halmd/observables/thermodynamics.hpp>
 #include <halmd/utility/lua/lua.hpp>
 #include <halmd/utility/scoped_timer.hpp>
@@ -33,12 +32,14 @@ namespace observables {
 
 template <int dimension>
 thermodynamics<dimension>::thermodynamics(
-    shared_ptr<box_type> box
-  , shared_ptr<clock_type> clock
+    shared_ptr<box_type const> box
+  , shared_ptr<clock_type const> clock
+  , shared_ptr<logger_type> logger
 )
   // dependency injection
-  : box(box)
-  , clock(clock)
+  : box_(box)
+  , clock_(clock)
+  , logger_(logger)
   // initialise members
   , step_(numeric_limits<uint64_t>::max())
 {
@@ -79,11 +80,11 @@ template <int dimension>
 void thermodynamics<dimension>::sample(uint64_t step)
 {
     if (step_ == step) {
-        LOG_TRACE("[thermodynamics] sample is up to date");
+        LOG_TRACE("sample is up to date");
         return;
     }
 
-    LOG_TRACE("[thermodynamics] acquire sample");
+    LOG_TRACE("acquire sample");
 
     scoped_timer<timer> timer_(runtime_.sample);
     en_pot_ = en_pot();
@@ -91,10 +92,10 @@ void thermodynamics<dimension>::sample(uint64_t step)
     v_cm_ = v_cm();
     en_tot_ = en_pot_ + en_kin_;
     temp_ = 2 * en_kin_ / dimension;
-    density_ = box->density(); //< FIXME why is this duplicated in thermodynamics?
+    density_ = box_->density(); //< FIXME why is this duplicated in thermodynamics?
     pressure_ = density_ * (temp_ + virial() / dimension);
     hypervirial_ = hypervirial();
-    time_ = clock->time();
+    time_ = clock_->time();
     step_ = step;
 }
 

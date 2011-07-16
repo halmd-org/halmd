@@ -25,6 +25,7 @@
 #include <lua.hpp>
 #include <vector>
 
+#include <halmd/io/logger.hpp>
 #include <halmd/io/statevars/writer.hpp>
 #include <halmd/mdsim/box.hpp>
 #include <halmd/mdsim/clock.hpp>
@@ -51,6 +52,7 @@ public:
     typedef io::statevars::writer<dimension> writer_type;
     typedef mdsim::box<dimension> box_type;
     typedef mdsim::clock clock_type;
+    typedef logger logger_type;
     typedef halmd::utility::profiler profiler_type;
     typedef typename mdsim::type_traits<dimension, double>::vector_type vector_type;
     typedef typename signal<void (uint64_t)>::slot_function_type slot_function_type;
@@ -61,14 +63,12 @@ public:
         accumulator_type sample;
     };
 
-    boost::shared_ptr<box_type> box;
-    boost::shared_ptr<clock_type> clock;
-
     static void luaopen(lua_State* L);
 
     thermodynamics(
-        boost::shared_ptr<box_type> box
-      , boost::shared_ptr<clock_type> clock
+        boost::shared_ptr<box_type const> box
+      , boost::shared_ptr<clock_type const> clock
+      , boost::shared_ptr<logger_type> logger
     );
     virtual ~thermodynamics() {}
     void register_runtimes(profiler_type& profiler);
@@ -93,17 +93,21 @@ public:
     /** total pressure */
     double pressure()
     {
-        return box->density() * (temp() + virial() / dimension);
+        return box_->density() * (temp() + virial() / dimension);
     }
 
     /** system temperature */
     double temp() { return 2 * en_kin() / dimension; }
     /** particle density */
-    double density() { return box->density(); }
+    double density() { return box_->density(); }
     /** total energy per particle */
     double en_tot() { return en_pot() + en_kin(); }
 
 private:
+    boost::shared_ptr<box_type const> box_;
+    boost::shared_ptr<clock_type const> clock_;
+    boost::shared_ptr<logger_type> logger_;
+
     // sample() passes values to HDF5 writer via a fixed location in memory
     double en_pot_;
     double en_kin_;
