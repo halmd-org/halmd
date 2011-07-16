@@ -22,6 +22,7 @@
 #include <boost/log/attributes/clock.hpp>
 #include <boost/log/attributes/constant.hpp>
 #include <boost/log/filters/attr.hpp>
+#include <boost/log/filters/has_attr.hpp>
 #include <boost/log/formatters/attr.hpp>
 #include <boost/log/formatters/date_time.hpp>
 #include <boost/log/formatters/format.hpp>
@@ -126,6 +127,16 @@ void logging::set_formatter(shared_ptr<backend_type> backend) const
            [
                formatters::stream << " [" << formatters::attr<logging::severity_level>("Severity") << "]"
            ]
+        << formatters::if_(filters::has_attr("Module"))
+           [
+               formatters::stream
+                   << " " << formatters::attr("Module")
+                   << formatters::if_(filters::has_attr("Tag"))
+                      [
+                          formatters::stream << "[" << formatters::attr("Tag") << "]"
+                      ]
+                   << ":"
+           ]
         << " " << formatters::message()
     );
 }
@@ -152,6 +163,7 @@ void logging::luaopen(lua_State* L)
             class_<logger, shared_ptr<logger> >("logger")
                 .def(constructor<>())
                 .def("add_attribute", &wrap_add_attribute<string>)
+                .def("add_attribute", &wrap_add_attribute<int>)
 
           , namespace_("logging")
             [
