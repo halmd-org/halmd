@@ -1,5 +1,5 @@
 /*
- * Copyright © 2008-2010  Peter Colberg and Felix Höfling
+ * Copyright © 2008-2011  Peter Colberg and Felix Höfling
  *
  * This file is part of HALMD.
  *
@@ -17,7 +17,6 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <halmd/io/logger.hpp>
 #include <halmd/observables/host/phase_space.hpp>
 #include <halmd/utility/lua/lua.hpp>
 
@@ -31,12 +30,14 @@ namespace host {
 template <int dimension, typename float_type>
 phase_space<dimension, float_type>::phase_space(
     shared_ptr<sample_type> sample
-  , shared_ptr<particle_type> particle
-  , shared_ptr<box_type> box
+  , shared_ptr<particle_type const> particle
+  , shared_ptr<box_type const> box
+  , shared_ptr<logger_type> logger
 )
-  : sample(sample)
-  , particle(particle)
-  , box(box)
+  : sample_(sample)
+  , particle_(particle)
+  , box_(box)
+  , logger_(logger)
 {
 }
 
@@ -46,28 +47,28 @@ phase_space<dimension, float_type>::phase_space(
 template <int dimension, typename float_type>
 void phase_space<dimension, float_type>::acquire(uint64_t step)
 {
-    if (sample->step == step) {
-        LOG_TRACE("[phase_space] sample is up to date");
+    if (sample_->step == step) {
+        LOG_TRACE("sample is up to date");
         return;
     }
 
-    LOG_TRACE("[phase_space] acquire sample");
+    LOG_TRACE("acquire sample");
 
-    for (size_t i = 0; i < particle->nbox; ++i) {
-        unsigned int type = particle->type[i];
-        unsigned int tag = particle->tag[i];
+    for (size_t i = 0; i < particle_->nbox; ++i) {
+        unsigned int type = particle_->type[i];
+        unsigned int tag = particle_->tag[i];
 
         // periodically extended particle position
-        assert(type < sample->r.size());
-        assert(tag < sample->r[type]->size());
-        (*sample->r[type])[tag] = particle->r[i] + element_prod(particle->image[i], box->length());
+        assert(type < sample_->r.size());
+        assert(tag < sample_->r[type]->size());
+        (*sample_->r[type])[tag] = particle_->r[i] + element_prod(particle_->image[i], box_->length());
 
         // particle velocity
-        assert(type < sample->v.size());
-        assert(tag < sample->v[type]->size());
-        (*sample->v[type])[tag] = particle->v[i];
+        assert(type < sample_->v.size());
+        assert(tag < sample_->v[type]->size());
+        (*sample_->v[type])[tag] = particle_->v[i];
     }
-    sample->step = step;
+    sample_->step = step;
 }
 
 template <int dimension, typename float_type>
@@ -90,8 +91,9 @@ void phase_space<dimension, float_type>::luaopen(lua_State* L)
                 class_<phase_space, shared_ptr<_Base>, _Base>(class_name.c_str())
                     .def(constructor<
                          shared_ptr<sample_type>
-                       , shared_ptr<particle_type>
-                       , shared_ptr<box_type>
+                       , shared_ptr<particle_type const>
+                       , shared_ptr<box_type const>
+                       , shared_ptr<logger_type>
                     >())
                     .property("dimension", &wrap_dimension<dimension, float_type>)
             ]

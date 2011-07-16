@@ -1,5 +1,5 @@
 /*
- * Copyright © 2008-2010  Peter Colberg and Felix Höfling
+ * Copyright © 2008-2011  Peter Colberg and Felix Höfling
  *
  * This file is part of HALMD.
  *
@@ -22,6 +22,7 @@
 
 #include <lua.hpp>
 
+#include <halmd/io/logger.hpp>
 #include <halmd/mdsim/box.hpp>
 #include <halmd/mdsim/host/particle.hpp>
 #include <halmd/observables/host/samples/phase_space.hpp>
@@ -40,19 +41,23 @@ public:
     typedef host::samples::phase_space<dimension, float_type> sample_type;
     typedef mdsim::host::particle<dimension, float_type> particle_type;
     typedef mdsim::box<dimension> box_type;
-
-    boost::shared_ptr<sample_type> sample;
-    boost::shared_ptr<particle_type> particle;
-    boost::shared_ptr<box_type> box;
+    typedef logger logger_type;
 
     static void luaopen(lua_State* L);
 
     phase_space(
         boost::shared_ptr<sample_type> sample
-      , boost::shared_ptr<particle_type> particle
-      , boost::shared_ptr<box_type> box
+      , boost::shared_ptr<particle_type const> particle
+      , boost::shared_ptr<box_type const> box
+      , boost::shared_ptr<logger_type> logger = boost::make_shared<logger_type>()
     );
     virtual void acquire(uint64_t step);
+
+private:
+    boost::shared_ptr<sample_type> sample_;
+    boost::shared_ptr<particle_type const> particle_;
+    boost::shared_ptr<box_type const> box_;
+    boost::shared_ptr<logger_type> logger_;
 };
 
 } // namespace observables
