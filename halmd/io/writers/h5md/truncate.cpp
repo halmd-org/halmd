@@ -18,7 +18,6 @@
  */
 
 #include <boost/algorithm/string/join.hpp>
-#include <boost/range/iterator_range.hpp>
 #include <luabind/luabind.hpp>
 #include <luabind/out_value_policy.hpp>
 #include <stdexcept>
@@ -128,17 +127,7 @@ void truncate::on_write(
     if (location.size() < 1) {
         throw invalid_argument("dataset location");
     }
-    H5::Group group;
-    if (location.size() > 1) {
-        group = h5xx::open_group(
-            group_
-          , join(make_iterator_range(location.begin(), location.end() - 1), "/")
-        );
-    }
-    else {
-        group = group_;
-    }
-    dataset = create_dataset(group, location.back(), slot);
+    dataset = create_dataset(group_, join(location, "/"), slot);
     on_write_.connect(bind(&write_dataset<slot_type>, dataset, slot));
 }
 
