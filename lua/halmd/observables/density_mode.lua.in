@@ -20,6 +20,7 @@
 require("halmd.device")
 require("halmd.modules")
 require("halmd.observables.phase_space")
+require("halmd.observables.samples.phase_space")
 
 -- grab modules
 local device = halmd.device
@@ -56,21 +57,28 @@ function new(args)
     -- dependency injection
     local wavevector = assert(args.wavevector)
 
-    local phase_space
+    local sample
     if device() then
-        phase_space = assert(observables.phase_space{ memory = "gpu" })
+        sample = assert(observables.samples.phase_space{ memory = "gpu" })
     else
-        phase_space = assert(observables.phase_space{ memory = "host" })
+        sample = assert(observables.samples.phase_space{ memory = "host" })
     end
 
-    local dimension = assert(phase_space.dimension)
+    local dimension = assert(sample.dimension)
     local density_mode
     if device() then
         density_mode = assert(density_mode_wrapper.gpu[dimension])
     else
         density_mode = assert(density_mode_wrapper.host[dimension])
     end
-    local observable = density_mode(phase_space, wavevector)
+    local observable = density_mode(sample, wavevector)
+
+    local phase_space
+    if device() then
+        phase_space = assert(observables.phase_space{ memory = "gpu" })
+    else
+        phase_space = assert(observables.phase_space{ memory = "host" })
+    end
 
     -- acquire phase space before acquiring density modes
     observable:on_acquire(phase_space.acquire)

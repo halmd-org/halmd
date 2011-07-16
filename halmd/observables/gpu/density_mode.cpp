@@ -32,8 +32,8 @@ namespace gpu {
 
 template <int dimension, typename float_type>
 density_mode<dimension, float_type>::density_mode(
-    shared_ptr<phase_space_type> phase_space
-  , shared_ptr<wavevector_type> wavevector
+    shared_ptr<phase_space_type const> phase_space
+  , shared_ptr<wavevector_type const> wavevector
 )
     // dependency injection
   : phase_space_(phase_space)
@@ -42,7 +42,7 @@ density_mode<dimension, float_type>::density_mode(
   , nq_(wavevector_->value().size())
   , dim_(50, 64 << DEVICE_SCALE) // at most 512 threads per block
     // memory allocation
-  , rho_sample_(phase_space_->sample->r.size(), nq_)
+  , rho_sample_(phase_space_->r.size(), nq_)
   , g_q_(nq_)
   , g_sin_block_(nq_ * dim_.blocks_per_grid()), g_cos_block_(nq_ * dim_.blocks_per_grid())
   , g_sin_(nq_), g_cos_(nq_)
@@ -100,7 +100,7 @@ void density_mode<dimension, float_type>::acquire(uint64_t step)
         return;
     }
 
-    typedef typename phase_space_type::sample_type::sample_vector_ptr positions_vector_ptr_type;
+    typedef typename phase_space_type::sample_vector_ptr positions_vector_ptr_type;
     typedef typename density_mode_sample_type::mode_vector_type mode_vector_type;
 
     // trigger update of phase space sample
@@ -108,13 +108,13 @@ void density_mode<dimension, float_type>::acquire(uint64_t step)
 
     LOG_TRACE("[density_mode] acquire sample");
 
-    if (phase_space_->sample->step != step) {
+    if (phase_space_->step != step) {
         throw logic_error("GPU phase space sample was not updated");
     }
 
     // compute density modes separately for each particle type
     // 1st loop: iterate over particle types
-    for (unsigned int type = 0; type < phase_space_->sample->r.size(); ++type) {
+    for (unsigned int type = 0; type < phase_space_->r.size(); ++type) {
         mode_vector_type& rho = *rho_sample_.rho[type]; //< dereference shared_ptr
         try {
             cuda::configure(dim_.grid, dim_.block);
@@ -122,7 +122,7 @@ void density_mode<dimension, float_type>::acquire(uint64_t step)
 
             // compute exp(i q·r) for all wavevector/particle pairs and perform block sums
             wrapper_type::kernel.compute(
-                *phase_space_->sample->r[type], phase_space_->sample->r[type]->size()
+                *phase_space_->r[type], phase_space_->r[type]->size()
               , g_sin_block_, g_cos_block_);
             cuda::thread::synchronize();
 
@@ -161,8 +161,8 @@ void density_mode<dimension, float_type>::luaopen(lua_State* L)
             [
                 class_<density_mode, shared_ptr<_Base>, _Base>(class_name.c_str())
                     .def(constructor<
-                        shared_ptr<phase_space_type>
-                      , shared_ptr<wavevector_type>
+                        shared_ptr<phase_space_type const>
+                      , shared_ptr<wavevector_type const>
                     >())
                     .def("register_runtimes", &density_mode::register_runtimes)
             ]

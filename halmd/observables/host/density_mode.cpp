@@ -34,14 +34,14 @@ namespace host {
 
 template <int dimension, typename float_type>
 density_mode<dimension, float_type>::density_mode(
-    shared_ptr<phase_space_type> phase_space
-  , shared_ptr<wavevector_type> wavevector
+    shared_ptr<phase_space_type const> phase_space
+  , shared_ptr<wavevector_type const> wavevector
 )
     // dependency injection
   : phase_space_(phase_space)
   , wavevector_(wavevector)
     // memory allocation
-  , rho_sample_(phase_space_->sample->r.size(), wavevector_->value().size())
+  , rho_sample_(phase_space_->r.size(), wavevector_->value().size())
 {
 }
 
@@ -67,7 +67,7 @@ void density_mode<dimension, float_type>::acquire(uint64_t step)
         return;
     }
 
-    typedef typename phase_space_type::sample_type::sample_vector_ptr positions_vector_ptr_type;
+    typedef typename phase_space_type::sample_vector_ptr positions_vector_ptr_type;
     typedef typename density_mode_sample_type::mode_vector_type mode_vector_type;
 
     // trigger update of phase space sample
@@ -75,14 +75,14 @@ void density_mode<dimension, float_type>::acquire(uint64_t step)
 
     LOG_TRACE("[density_mode] acquire sample");
 
-    if (phase_space_->sample->step != step) {
+    if (phase_space_->step != step) {
         throw logic_error("host phase space sample was not updated");
     }
 
     // compute density modes separately for each particle type
     // 1st loop: iterate over particle types
     unsigned int type = 0;
-    BOOST_FOREACH (positions_vector_ptr_type const r_sample, phase_space_->sample->r) {
+    BOOST_FOREACH (positions_vector_ptr_type const r_sample, phase_space_->r) {
         mode_vector_type& rho_vector = *rho_sample_.rho[type]; //< dereference shared_ptr
         // initialise result array
         fill(rho_vector.begin(), rho_vector.end(), 0);
@@ -115,8 +115,8 @@ void density_mode<dimension, float_type>::luaopen(lua_State* L)
             [
                 class_<density_mode, shared_ptr<_Base>, _Base>(class_name.c_str())
                     .def(constructor<
-                        shared_ptr<phase_space_type>
-                      , shared_ptr<wavevector_type>
+                        shared_ptr<phase_space_type const>
+                      , shared_ptr<wavevector_type const>
                     >())
                     .def("register_runtimes", &density_mode::register_runtimes)
             ]

@@ -26,7 +26,7 @@
 #include <halmd/mdsim/type_traits.hpp>
 #include <halmd/observables/density_mode.hpp>
 #include <halmd/observables/gpu/density_mode_kernel.hpp>
-#include <halmd/observables/gpu/phase_space.hpp>
+#include <halmd/observables/gpu/samples/phase_space.hpp>
 #include <halmd/observables/utility/wavevector.hpp>
 #include <halmd/utility/profiler.hpp>
 
@@ -48,7 +48,7 @@ public:
     typedef observables::density_mode<dimension> _Base;
     typedef typename _Base::density_mode_sample_type density_mode_sample_type;
     typedef typename _Base::wavevector_type wavevector_type;
-    typedef gpu::phase_space<gpu::samples::phase_space<dimension, float_type> > phase_space_type;
+    typedef gpu::samples::phase_space<dimension, float_type> phase_space_type;
     typedef density_mode_wrapper<dimension> wrapper_type;
     typedef halmd::utility::profiler profiler_type;
     typedef typename _Base::signal_type signal_type;
@@ -68,8 +68,8 @@ public:
     static void luaopen(lua_State* L);
 
     density_mode(
-        boost::shared_ptr<phase_space_type> phase_space
-      , boost::shared_ptr<wavevector_type> wavevector
+        boost::shared_ptr<phase_space_type const> phase_space
+      , boost::shared_ptr<wavevector_type const> wavevector
     );
 
     void register_runtimes(profiler_type& profiler);
@@ -108,9 +108,9 @@ public:
         return wavevector_->wavenumber();
     }
 
-protected:
-    boost::shared_ptr<phase_space_type> phase_space_;
-    boost::shared_ptr<wavevector_type> wavevector_;
+private:
+    boost::shared_ptr<phase_space_type const> phase_space_;
+    boost::shared_ptr<wavevector_type const> wavevector_;
 
     /** total number of wavevectors */
     unsigned int nq_;
