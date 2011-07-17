@@ -21,7 +21,6 @@
 #include <cmath>
 #include <string>
 
-#include <halmd/io/logger.hpp>
 #include <halmd/io/utility/hdf5.hpp>
 #include <halmd/mdsim/host/forces/power_law.hpp>
 #include <halmd/utility/lua/lua.hpp>
@@ -45,6 +44,7 @@ power_law<float_type>::power_law(
   , array<float, 3> const& cutoff
   , array<float, 3> const& epsilon
   , array<float, 3> const& sigma
+  , shared_ptr<logger_type> logger
 )
   // allocate potential parameters
   : index_(index)
@@ -54,6 +54,7 @@ power_law<float_type>::power_law(
   , r_cut_sigma_(ntype, ntype)
   , rr_cut_(ntype, ntype)
   , en_cut_(scalar_matrix<float_type>(ntype, ntype, 0))
+  , logger_(logger)
 {
     // FIXME support any number of types
     for (unsigned i = 0; i < std::min(ntype, 2U); ++i) {
@@ -100,6 +101,7 @@ void power_law<float_type>::luaopen(lua_State* L)
                           , array<float, 3> const&
                           , array<float, 3> const&
                           , array<float, 3> const&
+                          , shared_ptr<logger_type>
                         >())
                         .property("index", &power_law::index)
                         .property("r_cut", (matrix_type const& (power_law::*)() const) &power_law::r_cut)

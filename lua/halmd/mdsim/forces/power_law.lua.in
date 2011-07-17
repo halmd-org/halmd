@@ -48,6 +48,7 @@ function new(args)
     local sigma = args.sigma or { 1.0, 0.8, 0.88 } -- default value
 
     local particle = mdsim.particle() -- singleton
+    local logger = assert(args.logger)
 
     local power_law
     if device() then
@@ -55,7 +56,7 @@ function new(args)
     else
         power_law = assert(power_law_wrapper.host)
     end
-    return power_law(particle.ntype, index, cutoff, epsilon, sigma)
+    return power_law(particle.ntype, index, cutoff, epsilon, sigma, logger)
 end
 
 --
