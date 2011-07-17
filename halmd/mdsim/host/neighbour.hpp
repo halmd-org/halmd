@@ -20,11 +20,13 @@
 #ifndef HALMD_MDSIM_HOST_NEIGHBOUR_HPP
 #define HALMD_MDSIM_HOST_NEIGHBOUR_HPP
 
+#include <boost/make_shared.hpp>
 #include <boost/numeric/ublas/symmetric.hpp>
 #include <boost/shared_ptr.hpp>
 #include <lua.hpp>
 #include <vector>
 
+#include <halmd/io/logger.hpp>
 #include <halmd/mdsim/box.hpp>
 #include <halmd/mdsim/host/binning.hpp>
 #include <halmd/mdsim/host/particle.hpp>
@@ -48,6 +50,7 @@ public:
     typedef typename neighbour::signal_type signal_type;
     typedef typename neighbour::slot_function_type slot_function_type;
     typedef typename neighbour::connection_type connection_type;
+    typedef logger logger_type;
 
     static void luaopen(lua_State* L);
 
@@ -57,6 +60,7 @@ public:
       , boost::shared_ptr<binning_type const> binning
       , matrix_type const& r_cut
       , double skin
+      , boost::shared_ptr<logger_type> logger = boost::make_shared<logger_type>()
     );
     virtual void update();
 
@@ -86,6 +90,7 @@ private:
     boost::shared_ptr<particle_type const> particle_;
     boost::shared_ptr<box_type const> box_;
     boost::shared_ptr<binning_type const> binning_;
+    boost::shared_ptr<logger_type> logger_;
 
     void update_cell_neighbours(cell_size_type const& i);
     template <bool same_cell>

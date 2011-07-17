@@ -95,7 +95,7 @@ function new(args)
             neighbour = neighbour(particle, particle, box, r_cut, skin, logger, occupancy)
         end
     else
-        neighbour = neighbour_from_binning.host[dimension](particle, box, binning, r_cut, skin)
+        neighbour = neighbour_from_binning.host[dimension](particle, box, binning, r_cut, skin, logger)
     end
 
     -- if needed, bin particles before neighbour list update
