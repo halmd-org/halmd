@@ -19,7 +19,6 @@
 
 #include <boost/bind.hpp>
 
-#include <halmd/io/logger.hpp>
 #include <halmd/mdsim/gpu/neighbours/from_particle.hpp>
 #include <halmd/mdsim/gpu/neighbours/from_particle_kernel.hpp>
 #include <halmd/utility/lua/lua.hpp>
@@ -51,12 +50,14 @@ from_particle<dimension, float_type>::from_particle(
   , shared_ptr<box_type const> box
   , matrix_type const& r_cut
   , double skin
+  , shared_ptr<logger> logger
   , double cell_occupancy
 )
   // dependency injection
   : particle1_(particle1)
   , particle2_(particle2)
   , box_(box)
+  , logger_(logger)
   // allocate parameters
   , r_skin_(skin)
   , rr_cut_skin_(particle2_->ntype, particle2_->ntype)
@@ -142,7 +143,7 @@ void from_particle<dimension, float_type>::update()
     cuda::copy(g_overflow, h_overflow);
     cuda::thread::synchronize();
     if (h_overflow.front() > 0) {
-        LOG_ERROR("[neighbour] failed to bin " << h_overflow.front() << " particles");
+        LOG_ERROR("failed to bin " << h_overflow.front() << " particles");
         throw runtime_error("neighbour list occupancy too large");
     }
 }
@@ -172,6 +173,7 @@ void from_particle<dimension, float_type>::luaopen(lua_State* L)
                           , shared_ptr<box_type const>
                           , matrix_type const&
                           , double
+                          , shared_ptr<logger_type>
                           , double
                         >())
                         .def("register_runtimes", &from_particle::register_runtimes)

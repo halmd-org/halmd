@@ -19,7 +19,6 @@
 
 #include <boost/bind.hpp>
 
-#include <halmd/io/logger.hpp>
 #include <halmd/mdsim/gpu/neighbours/from_binning.hpp>
 #include <halmd/mdsim/gpu/neighbours/from_binning_kernel.hpp>
 #include <halmd/utility/lua/lua.hpp>
@@ -51,12 +50,14 @@ from_binning<dimension, float_type>::from_binning(
   , shared_ptr<binning_type const> binning
   , matrix_type const& r_cut
   , double skin
+  , shared_ptr<logger> logger
   , double cell_occupancy
 )
   // dependency injection
   : particle_(particle)
   , box_(box)
   , binning_(binning)
+  , logger_(logger)
   // allocate parameters
   , r_skin_(skin)
   , rr_cut_skin_(particle_->ntype, particle_->ntype)
@@ -170,6 +171,7 @@ void from_binning<dimension, float_type>::luaopen(lua_State* L)
                           , shared_ptr<binning_type const>
                           , matrix_type const&
                           , double
+                          , shared_ptr<logger_type>
                           , double
                         >())
                         .def("register_runtimes", &from_binning::register_runtimes)

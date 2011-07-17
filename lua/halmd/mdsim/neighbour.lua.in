@@ -71,6 +71,7 @@ function new(args)
     local particle = mdsim.particle() -- singleton
     local dimension = assert(particle.dimension)
     local box = mdsim.box() -- singleton
+    local logger = assert(args.logger)
 
     -- domain decomposition
     local binning
@@ -89,9 +90,9 @@ function new(args)
         local defaults = assert(neighbour.defaults)
         local occupancy = args.occupancy or defaults.occupancy()
         if binning then
-            neighbour = neighbour(particle, box, binning, r_cut, skin, occupancy)
+            neighbour = neighbour(particle, box, binning, r_cut, skin, logger, occupancy)
         else
-            neighbour = neighbour(particle, particle, box, r_cut, skin, occupancy)
+            neighbour = neighbour(particle, particle, box, r_cut, skin, logger, occupancy)
         end
     else
         neighbour = neighbour_from_binning.host[dimension](particle, box, binning, r_cut, skin)
