@@ -49,7 +49,7 @@ phase_space<dimension, float_type>::phase_space(
     }
     catch (cuda::error const&)
     {
-        LOG_ERROR("[phase_space] failed to copy box length to GPU");
+        LOG_ERROR("failed to copy box length to GPU");
         throw;
     }
 }
@@ -83,7 +83,7 @@ void phase_space<dimension, float_type>::set()
     }
     catch (cuda::error const&)
     {
-        LOG_ERROR("[phase_space] failed to copy particle positions to GPU");
+        LOG_ERROR("failed to copy particle positions to GPU");
         throw;
     }
 
@@ -94,7 +94,7 @@ void phase_space<dimension, float_type>::set()
     }
     catch (cuda::error const&)
     {
-        LOG_ERROR("[phase_space] failed to reduce particle positions on GPU");
+        LOG_ERROR("failed to reduce particle positions on GPU");
         throw;
     }
 

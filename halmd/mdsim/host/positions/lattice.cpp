@@ -24,7 +24,6 @@
 #include <limits>
 #include <numeric>
 
-#include <halmd/io/logger.hpp>
 #include <halmd/mdsim/host/positions/lattice.hpp>
 #include <halmd/utility/lua/lua.hpp>
 
@@ -39,15 +38,17 @@ namespace positions {
 template <int dimension, typename float_type>
 lattice<dimension, float_type>::lattice(
     shared_ptr<particle_type> particle
-  , shared_ptr<box_type> box
+  , shared_ptr<box_type const> box
   , shared_ptr<random_type> random
   , vector_type const& slab
+  , shared_ptr<logger_type> logger
 )
   // dependency injection
-  : particle(particle)
-  , box(box)
-  , random(random)
+  : particle_(particle)
+  , box_(box)
+  , random_(random)
   , slab_(slab)
+  , logger_(logger)
 {
     if (*min_element(slab_.begin(), slab_.end()) <= 0 ||
         *max_element(slab_.begin(), slab_.end()) > 1
@@ -63,23 +64,23 @@ lattice<dimension, float_type>::lattice(
 template <int dimension, typename float_type>
 void lattice<dimension, float_type>::set()
 {
-    assert(particle->r.size() == particle->nbox);
+    assert(particle_->r.size() == particle_->nbox);
 
     // assign fcc lattice points to a fraction of the particles in a slab at the centre
-    vector_type length = element_prod(box->length(), slab_);
+    vector_type length = element_prod(box_->length(), slab_);
     vector_type offset = -length / 2;
-    fcc(particle->r.begin(), particle->r.end(), length, offset);
+    fcc(particle_->r.begin(), particle_->r.end(), length, offset);
 
     // randomise particle positions if there is more than 1 particle type
     // FIXME this requires a subsequent sort
     // FIXME this will fail greatly once we support polymers
-    if (particle->ntypes.size() > 1) {
+    if (particle_->ntypes.size() > 1) {
         LOG("randomly permuting particle positions");
-        random->shuffle(particle->r.begin(), particle->r.end());
+        random_->shuffle(particle_->r.begin(), particle_->r.end());
     }
 
     // assign particle image vectors
-    fill(particle->image.begin(), particle->image.end(), 0);
+    fill(particle_->image.begin(), particle_->image.end(), 0);
 }
 
 /**
@@ -205,9 +206,10 @@ void lattice<dimension, float_type>::luaopen(lua_State* L)
                     class_<lattice, shared_ptr<_Base>, _Base>(class_name.c_str())
                         .def(constructor<
                              shared_ptr<particle_type>
-                           , shared_ptr<box_type>
+                           , shared_ptr<box_type const>
                            , shared_ptr<random_type>
                            , vector_type const&
+                           , shared_ptr<logger_type>
                         >())
                         .property("slab", &lattice::slab)
                         .property("module_name", &module_name_wrapper<dimension, float_type>)
