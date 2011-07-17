@@ -63,6 +63,7 @@ function new(args)
     local random = assert(random())
     local clock = mdsim.clock() -- singleton
     local timestep = assert(clock.timestep)
+    local logger = assert(args.logger)
 
     local andersen
     if device() then
@@ -70,7 +71,7 @@ function new(args)
     else
         andersen = verlet_nvt_andersen_wrapper.host[dimension]
     end
-    local integrator = andersen(particle, box, random, timestep, temperature, collision_rate)
+    local integrator = andersen(particle, box, random, timestep, temperature, collision_rate, logger)
 
     local core = mdsim.core()
     -- connect integrator to core

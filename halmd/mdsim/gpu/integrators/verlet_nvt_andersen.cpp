@@ -21,7 +21,6 @@
 #include <cmath>
 #include <string>
 
-#include <halmd/io/logger.hpp>
 #include <halmd/mdsim/gpu/integrators/verlet_nvt_andersen.hpp>
 #include <halmd/utility/lua/lua.hpp>
 #include <halmd/utility/scoped_timer.hpp>
@@ -39,15 +38,17 @@ template <int dimension, typename float_type, typename RandomNumberGenerator>
 verlet_nvt_andersen<dimension, float_type, RandomNumberGenerator>::
 verlet_nvt_andersen(
     shared_ptr<particle_type> particle
-  , shared_ptr<box_type> box
+  , shared_ptr<box_type const> box
   , shared_ptr<random_type> random
   , float_type timestep, float_type temperature, float_type coll_rate
+  , shared_ptr<logger_type> logger
 )
   // dependency injection
-  : particle(particle)
-  , box(box)
-  , random(random)
+  : particle_(particle)
+  , box_(box)
+  , random_(random)
   , coll_rate_(coll_rate)
+  , logger_(logger)
 {
     this->timestep(timestep);
     this->temperature(temperature);
@@ -55,8 +56,8 @@ verlet_nvt_andersen(
 
     // copy parameters to CUDA device
     try {
-        cuda::copy(static_cast<vector_type>(box->length()), wrapper_type::kernel.box_length);
-        cuda::copy(random->rng.rng(), wrapper_type::kernel.rng);
+        cuda::copy(static_cast<vector_type>(box_->length()), wrapper_type::kernel.box_length);
+        cuda::copy(random_->rng.rng(), wrapper_type::kernel.rng);
     }
     catch (cuda::error const&) {
         LOG_ERROR("failed to initialize Verlet integrator symbols");
@@ -125,9 +126,9 @@ integrate()
 {
     try {
         scoped_timer<timer> timer_(runtime_.integrate);
-        cuda::configure(particle->dim.grid, particle->dim.block);
+        cuda::configure(particle_->dim.grid, particle_->dim.block);
         wrapper_type::kernel.integrate(
-            particle->g_r, particle->g_image, particle->g_v, particle->g_f);
+            particle_->g_r, particle_->g_image, particle_->g_v, particle_->g_f);
         cuda::thread::synchronize();
     }
     catch (cuda::error const&) {
@@ -151,10 +152,10 @@ finalize()
         scoped_timer<timer> timer_(runtime_.finalize);
         // use CUDA execution dimensions of 'random' since
         // the kernel makes use of the random number generator
-        cuda::configure(random->rng.dim.grid, random->rng.dim.block);
+        cuda::configure(random_->rng.dim.grid, random_->rng.dim.block);
         wrapper_type::kernel.finalize(
-            particle->g_v, particle->g_f
-          , particle->nbox, particle->dim.threads()
+            particle_->g_v, particle_->g_f
+          , particle_->nbox, particle_->dim.threads()
         );
         cuda::thread::synchronize();
     }
@@ -174,7 +175,6 @@ template <int dimension, typename float_type, typename RandomNumberGenerator>
 void verlet_nvt_andersen<dimension, float_type, RandomNumberGenerator>::
 luaopen(lua_State* L)
 {
-    typedef typename _Base::_Base _Base_Base;
     using namespace luabind;
     static string class_name(module_name() + ("_" + lexical_cast<string>(dimension) + "_"));
     module(L, "libhalmd")
@@ -185,17 +185,16 @@ luaopen(lua_State* L)
             [
                 namespace_("integrators")
                 [
-                    class_<
-                        verlet_nvt_andersen
-                      , shared_ptr<_Base_Base>
-                      , bases<_Base_Base, _Base>
-                    >(class_name.c_str())
+                    class_<verlet_nvt_andersen, shared_ptr<_Base>, _Base>(class_name.c_str())
                         .def(constructor<
                             shared_ptr<particle_type>
-                          , shared_ptr<box_type>
+                          , shared_ptr<box_type const>
                           , shared_ptr<random_type>
-                          , float_type, float_type, float_type>()
-                        )
+                          , float_type
+                          , float_type
+                          , float_type
+                          , shared_ptr<logger_type>
+                        >())
                         .def("register_runtimes", &verlet_nvt_andersen::register_runtimes)
                         .property("collision_rate", &verlet_nvt_andersen::collision_rate)
                         .property("module_name", &module_name_wrapper<dimension, float_type, RandomNumberGenerator>)

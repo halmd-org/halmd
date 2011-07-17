@@ -20,10 +20,11 @@
 #ifndef HALMD_MDSIM_GPU_INTEGRATORS_VERLET_NVT_ANDERSEN_HPP
 #define HALMD_MDSIM_GPU_INTEGRATORS_VERLET_NVT_ANDERSEN_HPP
 
+#include <boost/make_shared.hpp>
 #include <lua.hpp>
 
 #include <cuda_wrapper/cuda_wrapper.hpp>
-
+#include <halmd/io/logger.hpp>
 #include <halmd/mdsim/box.hpp>
 #include <halmd/mdsim/gpu/integrators/verlet_nvt_andersen_kernel.hpp>
 #include <halmd/mdsim/gpu/particle.hpp>
@@ -45,6 +46,7 @@ public:
     typedef gpu::particle<dimension, float_type> particle_type;
     typedef mdsim::box<dimension> box_type;
     typedef random::gpu::random<RandomNumberGenerator> random_type;
+    typedef logger logger_type;
     typedef utility::profiler profiler_type;
     typedef typename particle_type::vector_type vector_type;
     typedef typename random_type::rng_type rng_type;
@@ -59,19 +61,16 @@ public:
 
     static char const* module_name() { return "verlet_nvt_andersen"; }
 
-    boost::shared_ptr<particle_type> particle;
-    boost::shared_ptr<box_type> box;
-    boost::shared_ptr<random_type> random;
-
     static void luaopen(lua_State* L);
 
     verlet_nvt_andersen(
         boost::shared_ptr<particle_type> particle
-      , boost::shared_ptr<box_type> box
+      , boost::shared_ptr<box_type const> box
       , boost::shared_ptr<random_type> random
       , float_type timestep
       , float_type temperature
       , float_type coll_rate
+      , boost::shared_ptr<logger_type> logger = boost::make_shared<logger_type>()
     );
     void register_runtimes(profiler_type& profiler);
     virtual void integrate();
@@ -98,6 +97,9 @@ public:
     }
 
 private:
+    boost::shared_ptr<particle_type> particle_;
+    boost::shared_ptr<box_type const> box_;
+    boost::shared_ptr<random_type> random_;
     /** integration time-step */
     float_type timestep_;
     /** half time-step */
@@ -112,6 +114,8 @@ private:
     float_type coll_prob_;
     /** profiling runtime accumulators */
     runtime runtime_;
+    /** module logger */
+    boost::shared_ptr<logger_type> logger_;
 };
 
 } // namespace mdsim
