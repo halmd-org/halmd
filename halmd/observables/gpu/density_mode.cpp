@@ -17,8 +17,6 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <boost/foreach.hpp>
-
 #include <halmd/io/logger.hpp>
 #include <halmd/observables/gpu/density_mode.hpp>
 #include <halmd/utility/lua/lua.hpp>
@@ -116,41 +114,36 @@ void density_mode<dimension, float_type>::acquire(uint64_t step)
 
     // compute density modes separately for each particle type
     // 1st loop: iterate over particle types
-    unsigned int type = 0;
-    BOOST_FOREACH (positions_vector_ptr_type const r_sample, phase_space_->sample->r) {
+    for (unsigned int type = 0; type < phase_space_->sample->r.size(); ++type) {
         mode_vector_type& rho = *rho_sample_.rho[type]; //< dereference shared_ptr
-        if (type ==  0) {
-            try {
-                cuda::configure(dim_.grid, dim_.block);
-                wrapper_type::kernel.q.bind(g_q_);
+        try {
+            cuda::configure(dim_.grid, dim_.block);
+            wrapper_type::kernel.q.bind(g_q_);
 
-                // compute exp(i q·r) for all wavevector/particle pairs and perform block sums
-                // FIXME pass r_sample->r[type] instead of particle->g_r
-                wrapper_type::kernel.compute(
-                    phase_space_->particle->g_r, phase_space_->particle->nbox
-                  , g_sin_block_, g_cos_block_);
-                cuda::thread::synchronize();
+            // compute exp(i q·r) for all wavevector/particle pairs and perform block sums
+            wrapper_type::kernel.compute(
+                *phase_space_->sample->r[type], phase_space_->sample->r[type]->size()
+              , g_sin_block_, g_cos_block_);
+            cuda::thread::synchronize();
 
-                // finalise block sums for each wavevector
-                cuda::configure(
-                    nq_                        // #blocks: one per wavevector
-                  , dim_.block                 // #threads per block, must be a power of 2
-                );
-                wrapper_type::kernel.finalise(g_sin_block_, g_cos_block_, g_sin_, g_cos_, dim_.blocks_per_grid());
-            }
-            catch (cuda::error const&) {
-                LOG_ERROR("failed to compute density modes on GPU");
-                throw;
-            }
-
-            // copy data from device and store in density_mode sample
-            cuda::copy(g_sin_, h_sin_);
-            cuda::copy(g_cos_, h_cos_);
-            for (unsigned int i = 0; i < nq_; ++i) {
-                rho[i] = mode_type(h_cos_[i], -h_sin_[i]);
-            }
+            // finalise block sums for each wavevector
+            cuda::configure(
+                nq_                        // #blocks: one per wavevector
+              , dim_.block                 // #threads per block, must be a power of 2
+            );
+            wrapper_type::kernel.finalise(g_sin_block_, g_cos_block_, g_sin_, g_cos_, dim_.blocks_per_grid());
         }
-        ++type;
+        catch (cuda::error const&) {
+            LOG_ERROR("failed to compute density modes on GPU");
+            throw;
+        }
+
+        // copy data from device and store in density_mode sample
+        cuda::copy(g_sin_, h_sin_);
+        cuda::copy(g_cos_, h_cos_);
+        for (unsigned int i = 0; i < nq_; ++i) {
+            rho[i] = mode_type(h_cos_[i], -h_sin_[i]);
+        }
     }
     rho_sample_.step = step;
 }
