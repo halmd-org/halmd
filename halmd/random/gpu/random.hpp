@@ -21,6 +21,7 @@
 #define HALMD_RANDOM_GPU_RANDOM_HPP
 
 #include <algorithm>
+#include <boost/make_shared.hpp>
 #include <boost/shared_ptr.hpp>
 #include <lua.hpp>
 #include <iterator>
@@ -38,14 +39,14 @@ class random
 {
 public:
     typedef typename RandomNumberGenerator::rng_type rng_type;
+    typedef logger logger_type;
     struct defaults;
-
-    RandomNumberGenerator rng; //< FIXME private?
 
     static void luaopen(lua_State* L);
 
     random(
         unsigned int seed = defaults::seed()
+      , boost::shared_ptr<logger_type> logger = boost::make_shared<logger_type>()
       , unsigned int blocks = defaults::blocks()
       , unsigned int threads = defaults::threads()
       , unsigned int shuffle_threads = defaults::shuffle_threads()
@@ -64,15 +65,24 @@ public:
 
     unsigned int blocks()
     {
-        return rng.dim.blocks_per_grid();
+        return rng_.dim.blocks_per_grid();
     }
 
     unsigned int threads()
     {
-        return rng.dim.threads_per_block();
+        return rng_.dim.threads_per_block();
+    }
+
+    RandomNumberGenerator const& rng()
+    {
+        return rng_;
     }
 
 private:
+    /** pseudo-random number generator */
+    RandomNumberGenerator rng_;
+    /** module logger */
+    boost::shared_ptr<logger_type> logger_;
     unsigned int shuffle_threads_;
 };
 

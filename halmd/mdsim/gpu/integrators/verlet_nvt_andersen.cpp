@@ -57,7 +57,7 @@ verlet_nvt_andersen(
     // copy parameters to CUDA device
     try {
         cuda::copy(static_cast<vector_type>(box_->length()), wrapper_type::kernel.box_length);
-        cuda::copy(random_->rng.rng(), wrapper_type::kernel.rng);
+        cuda::copy(random_->rng().rng(), wrapper_type::kernel.rng);
     }
     catch (cuda::error const&) {
         LOG_ERROR("failed to initialize Verlet integrator symbols");
@@ -152,7 +152,7 @@ finalize()
         scoped_timer<timer> timer_(runtime_.finalize);
         // use CUDA execution dimensions of 'random' since
         // the kernel makes use of the random number generator
-        cuda::configure(random_->rng.dim.grid, random_->rng.dim.block);
+        cuda::configure(random_->rng().dim.grid, random_->rng().dim.block);
         wrapper_type::kernel.finalize(
             particle_->g_v, particle_->g_f
           , particle_->nbox, particle_->dim.threads()

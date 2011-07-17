@@ -34,18 +34,20 @@ namespace gpu {
 template <typename RandomNumberGenerator>
 random<RandomNumberGenerator>::random(
     unsigned int seed
+  , shared_ptr<logger_type> logger
   , unsigned int blocks
   , unsigned int threads
   , unsigned int shuffle_threads
 )
   // allocate random number generator state
-  : rng(blocks, threads)
+  : rng_(blocks, threads)
+  , logger_(logger)
   , shuffle_threads_(shuffle_threads)
 {
     LOG("random number generator seed: " << seed);
     try {
-        rng.seed(seed);
-        cuda::copy(rng.rng(), get_random_kernel<rng_type>().rng);
+        rng_.seed(seed);
+        cuda::copy(rng_.rng(), get_random_kernel<rng_type>().rng);
     }
     catch (cuda::error const&) {
         LOG_ERROR("failed to seed random number generator");
@@ -60,7 +62,7 @@ template <typename RandomNumberGenerator>
 void random<RandomNumberGenerator>::uniform(cuda::vector<float>& g_v)
 {
     try {
-        cuda::configure(rng.dim.grid, rng.dim.block);
+        cuda::configure(rng_.dim.grid, rng_.dim.block);
         get_random_kernel<rng_type>().uniform(g_v, g_v.size());
         cuda::thread::synchronize();
     }
@@ -77,7 +79,7 @@ template <typename RandomNumberGenerator>
 void random<RandomNumberGenerator>::get(cuda::vector<unsigned int>& g_v)
 {
     try {
-        cuda::configure(rng.dim.grid, rng.dim.block);
+        cuda::configure(rng_.dim.grid, rng_.dim.block);
         get_random_kernel<rng_type>().get(g_v, g_v.size());
         cuda::thread::synchronize();
     }
@@ -94,7 +96,7 @@ template <typename RandomNumberGenerator>
 void random<RandomNumberGenerator>::normal(cuda::vector<float>& g_v, float mean, float sigma)
 {
     try {
-        cuda::configure(rng.dim.grid, rng.dim.block);
+        cuda::configure(rng_.dim.grid, rng_.dim.block);
         get_random_kernel<rng_type>().normal(g_v, g_v.size(), mean, sigma);
         cuda::thread::synchronize();
     }
@@ -137,10 +139,11 @@ void random<RandomNumberGenerator>::luaopen(lua_State* L)
             [
                 class_<random, shared_ptr<random> >(class_name.c_str())
                     .def(constructor<
-                         unsigned int
-                       , unsigned int
-                       , unsigned int
-                       , unsigned int
+                        unsigned int
+                      , shared_ptr<logger_type>
+                      , unsigned int
+                      , unsigned int
+                      , unsigned int
                      >())
                     .property("blocks", &random::blocks)
                     .property("threads", &random::threads)

@@ -19,7 +19,6 @@
 
 #include <boost/nondet_random.hpp> // boost::random_device
 
-#include <halmd/io/logger.hpp>
 #include <halmd/random/host/random.hpp>
 #include <halmd/utility/lua/lua.hpp>
 
@@ -30,7 +29,11 @@ namespace halmd {
 namespace random {
 namespace host {
 
-random::random(unsigned int seed)
+random::random(
+    unsigned int seed
+  , shared_ptr<logger_type> logger
+)
+  : logger_(logger)
 {
     LOG("random number generator seed: " << seed);
     rng_.seed(seed);
@@ -53,7 +56,10 @@ void random::luaopen(lua_State* L)
             namespace_("random")
             [
                 class_<random, shared_ptr<random> >("gfsr4")
-                    .def(constructor<unsigned int>())
+                    .def(constructor<
+                        unsigned int
+                      , shared_ptr<logger_type>
+                    >())
                     .scope
                     [
                         class_<defaults>("defaults")

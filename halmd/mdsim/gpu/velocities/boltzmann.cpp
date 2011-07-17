@@ -41,15 +41,15 @@ boltzmann<dimension, float_type, RandomNumberGenerator>::boltzmann(
   , random_(random)
   , logger_(logger)
   // select thread-dependent implementation
-  , gaussian_impl_(get_gaussian_impl(random_->rng.dim.threads_per_block()))
+  , gaussian_impl_(get_gaussian_impl(random_->rng().dim.threads_per_block()))
   // set parameters
   , temp_(temperature)
   // allocate GPU memory
-  , g_vcm_(2 * random_->rng.dim.blocks_per_grid())
-  , g_vv_(random_->rng.dim.blocks_per_grid())
+  , g_vcm_(2 * random_->rng().dim.blocks_per_grid())
+  , g_vv_(random_->rng().dim.blocks_per_grid())
 {
     // copy random number generator parameters to GPU
-    cuda::copy(random_->rng.rng(), wrapper_type::kernel.rng);
+    cuda::copy(random_->rng().rng(), wrapper_type::kernel.rng);
 
     LOG("Boltzmann velocity distribution temperature: T = " << temp_);
 }
@@ -93,9 +93,9 @@ void boltzmann<dimension, float_type, RandomNumberGenerator>::set()
     // generate Maxwell-Boltzmann distributed velocities,
     // assuming equal (unit) mass for all particle types
     cuda::configure(
-        random_->rng.dim.grid
-      , random_->rng.dim.block
-      , random_->rng.dim.threads_per_block() * (1 + dimension) * sizeof(dsfloat)
+        random_->rng().dim.grid
+      , random_->rng().dim.block
+      , random_->rng().dim.threads_per_block() * (1 + dimension) * sizeof(dsfloat)
     );
     gaussian_impl_(
         particle_->g_v
