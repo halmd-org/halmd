@@ -79,7 +79,13 @@ add_executable(halmd
 )
 target_link_libraries(halmd
   libhalmd
-  halmd_utility # needed for halmd::host_name
+  # needed for halmd::host_name
+  halmd_utility
+  # with newer version of GNU ld, indirect linking through intermediate
+  # libraries does not work anymore, so we have to explicitly link halmd
+  # against common libraries
+  # http://fedoraproject.org/wiki/UnderstandingDSOLinkChange
+  ${HALMD_COMMON_LIBRARIES}
 )
 install(TARGETS halmd
   RUNTIME DESTINATION bin
