@@ -1,5 +1,5 @@
 /*
- * Copyright © 2008-2010  Peter Colberg
+ * Copyright © 2008-2011  Peter Colberg
  *
  * This file is part of HALMD.
  *
@@ -20,10 +20,12 @@
 #ifndef HALMD_MDSIM_HOST_VELOCITIES_BOLTZMANN_HPP
 #define HALMD_MDSIM_HOST_VELOCITIES_BOLTZMANN_HPP
 
+#include <boost/make_shared.hpp>
 #include <boost/shared_ptr.hpp>
 #include <lua.hpp>
 #include <utility>
 
+#include <halmd/io/logger.hpp>
 #include <halmd/mdsim/host/particle.hpp>
 #include <halmd/mdsim/host/velocity.hpp>
 #include <halmd/random/host/random.hpp>
@@ -42,11 +44,9 @@ public:
     typedef host::particle<dimension, float_type> particle_type;
     typedef typename particle_type::vector_type vector_type;
     typedef random::host::random random_type;
+    typedef logger logger_type;
 
     static char const* module_name() { return "boltzmann"; }
-
-    boost::shared_ptr<particle_type> particle;
-    boost::shared_ptr<random_type> random;
 
     static void luaopen(lua_State* L);
 
@@ -54,6 +54,7 @@ public:
         boost::shared_ptr<particle_type> particle
       , boost::shared_ptr<random_type> random
       , double temperature
+      , boost::shared_ptr<logger_type> logger = boost::make_shared<logger_type>()
     );
     virtual void set();
 
@@ -68,7 +69,10 @@ public:
       * return mean velocity and mean-square velocity */
     std::pair<vector_type, float_type> gaussian(float_type sigma);
 
-protected:
+private:
+    boost::shared_ptr<particle_type> particle_;
+    boost::shared_ptr<random_type> random_;
+    boost::shared_ptr<logger_type> logger_;
     /** temperature */
     float_type temp_;
 };
