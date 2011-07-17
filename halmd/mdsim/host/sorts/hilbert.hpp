@@ -22,6 +22,8 @@
 
 #include <lua.hpp>
 
+#include <boost/make_shared.hpp>
+#include <halmd/io/logger.hpp>
 #include <halmd/mdsim/box.hpp>
 #include <halmd/mdsim/host/binning.hpp>
 #include <halmd/mdsim/host/particle.hpp>
@@ -45,6 +47,7 @@ public:
     typedef typename _Base::signal_type signal_type;
     typedef typename _Base::slot_function_type slot_function_type;
     typedef typename _Base::connection_type connection_type;
+    typedef logger logger_type;
 
     static char const* module_name() { return "hilbert"; }
 
@@ -54,6 +57,7 @@ public:
         boost::shared_ptr<particle_type> particle
       , boost::shared_ptr<box_type const> box
       , boost::shared_ptr<binning_type> binning
+      , boost::shared_ptr<logger_type> logger = boost::make_shared<logger_type>()
     );
     virtual void order();
 
@@ -77,6 +81,8 @@ private:
     std::vector<cell_list const*> map_;
     /** signal emitted after particle ordering */
     signal_type on_order_;
+    /** module logger */
+    boost::shared_ptr<logger_type> logger_;
 };
 
 } // namespace sorts
