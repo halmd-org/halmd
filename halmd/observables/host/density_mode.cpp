@@ -19,7 +19,6 @@
 
 #include <boost/foreach.hpp>
 
-#include <halmd/io/logger.hpp>
 #include <halmd/observables/host/density_mode.hpp>
 #include <halmd/utility/lua/lua.hpp>
 #include <halmd/utility/scoped_timer.hpp>
@@ -36,10 +35,12 @@ template <int dimension, typename float_type>
 density_mode<dimension, float_type>::density_mode(
     shared_ptr<phase_space_type const> phase_space
   , shared_ptr<wavevector_type const> wavevector
+  , shared_ptr<logger_type> logger
 )
     // dependency injection
   : phase_space_(phase_space)
   , wavevector_(wavevector)
+  , logger_(logger)
     // memory allocation
   , rho_sample_(phase_space_->r.size(), wavevector_->value().size())
 {
@@ -63,7 +64,7 @@ void density_mode<dimension, float_type>::acquire(uint64_t step)
     scoped_timer<timer> timer_(runtime_.sample);
 
     if (rho_sample_.step == step) {
-        LOG_TRACE("[density_mode] sample is up to date");
+        LOG_TRACE("sample is up to date");
         return;
     }
 
@@ -73,7 +74,7 @@ void density_mode<dimension, float_type>::acquire(uint64_t step)
     // trigger update of phase space sample
     on_acquire_(step);
 
-    LOG_TRACE("[density_mode] acquire sample");
+    LOG_TRACE("acquire sample");
 
     if (phase_space_->step != step) {
         throw logic_error("host phase space sample was not updated");
@@ -117,6 +118,7 @@ void density_mode<dimension, float_type>::luaopen(lua_State* L)
                     .def(constructor<
                         shared_ptr<phase_space_type const>
                       , shared_ptr<wavevector_type const>
+                      , shared_ptr<logger_type>
                     >())
                     .def("register_runtimes", &density_mode::register_runtimes)
             ]

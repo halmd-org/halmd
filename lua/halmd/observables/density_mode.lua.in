@@ -63,15 +63,16 @@ function new(args)
     else
         sample = assert(observables.samples.phase_space{ memory = "host" })
     end
-
     local dimension = assert(sample.dimension)
+    local logger = assert(args.logger)
+
     local density_mode
     if device() then
         density_mode = assert(density_mode_wrapper.gpu[dimension])
     else
         density_mode = assert(density_mode_wrapper.host[dimension])
     end
-    local observable = density_mode(sample, wavevector)
+    local observable = density_mode(sample, wavevector, logger)
 
     local phase_space
     if device() then

@@ -20,9 +20,11 @@
 #ifndef HALMD_OBSERVABLES_GPU_DENSITY_MODE_HPP
 #define HALMD_OBSERVABLES_GPU_DENSITY_MODE_HPP
 
+#include <boost/make_shared.hpp>
 #include <cuda_wrapper/cuda_wrapper.hpp>
 #include <lua.hpp>
 
+#include <halmd/io/logger.hpp>
 #include <halmd/mdsim/type_traits.hpp>
 #include <halmd/observables/density_mode.hpp>
 #include <halmd/observables/gpu/density_mode_kernel.hpp>
@@ -50,6 +52,7 @@ public:
     typedef typename _Base::wavevector_type wavevector_type;
     typedef gpu::samples::phase_space<dimension, float_type> phase_space_type;
     typedef density_mode_wrapper<dimension> wrapper_type;
+    typedef logger logger_type;
     typedef halmd::utility::profiler profiler_type;
     typedef typename _Base::signal_type signal_type;
     typedef typename _Base::slot_function_type slot_function_type;
@@ -70,6 +73,7 @@ public:
     density_mode(
         boost::shared_ptr<phase_space_type const> phase_space
       , boost::shared_ptr<wavevector_type const> wavevector
+      , boost::shared_ptr<logger_type> logger = boost::make_shared<logger_type>()
     );
 
     void register_runtimes(profiler_type& profiler);
@@ -111,6 +115,7 @@ public:
 private:
     boost::shared_ptr<phase_space_type const> phase_space_;
     boost::shared_ptr<wavevector_type const> wavevector_;
+    boost::shared_ptr<logger_type> logger_;
 
     /** total number of wavevectors */
     unsigned int nq_;

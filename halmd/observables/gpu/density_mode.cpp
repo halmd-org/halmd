@@ -17,7 +17,6 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <halmd/io/logger.hpp>
 #include <halmd/observables/gpu/density_mode.hpp>
 #include <halmd/utility/lua/lua.hpp>
 #include <halmd/utility/scoped_timer.hpp>
@@ -34,10 +33,12 @@ template <int dimension, typename float_type>
 density_mode<dimension, float_type>::density_mode(
     shared_ptr<phase_space_type const> phase_space
   , shared_ptr<wavevector_type const> wavevector
+  , shared_ptr<logger_type> logger
 )
     // dependency injection
   : phase_space_(phase_space)
   , wavevector_(wavevector)
+  , logger_(logger)
     // member initialisation
   , nq_(wavevector_->value().size())
   , dim_(50, 64 << DEVICE_SCALE) // at most 512 threads per block
@@ -64,7 +65,7 @@ density_mode<dimension, float_type>::density_mode(
         cuda::copy(q, g_q_);
     }
     catch (cuda::error const&) {
-        LOG_ERROR("[density_mode] failed to initialise device constants");
+        LOG_ERROR("failed to initialise device constants");
         throw;
     }
 
@@ -73,7 +74,7 @@ density_mode<dimension, float_type>::density_mode(
         cuda::copy(nq_, wrapper_type::kernel.nq);
     }
     catch (cuda::error const&) {
-        LOG_ERROR("[density_mode] failed to initialise device constants");
+        LOG_ERROR("failed to initialise device constants");
         throw;
     }
 }
@@ -96,7 +97,7 @@ void density_mode<dimension, float_type>::acquire(uint64_t step)
     scoped_timer<timer> timer_(runtime_.sample);
 
     if (rho_sample_.step == step) {
-        LOG_TRACE("[density_mode] sample is up to date");
+        LOG_TRACE("sample is up to date");
         return;
     }
 
@@ -106,7 +107,7 @@ void density_mode<dimension, float_type>::acquire(uint64_t step)
     // trigger update of phase space sample
     on_acquire_(step);
 
-    LOG_TRACE("[density_mode] acquire sample");
+    LOG_TRACE("acquire sample");
 
     if (phase_space_->step != step) {
         throw logic_error("GPU phase space sample was not updated");
@@ -163,6 +164,7 @@ void density_mode<dimension, float_type>::luaopen(lua_State* L)
                     .def(constructor<
                         shared_ptr<phase_space_type const>
                       , shared_ptr<wavevector_type const>
+                      , shared_ptr<logger_type>
                     >())
                     .def("register_runtimes", &density_mode::register_runtimes)
             ]
