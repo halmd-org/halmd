@@ -57,6 +57,7 @@ function new(args)
     local dimension = assert(particle.dimension)
     local box = mdsim.box() -- singleton
     local sample = assert(observables.samples.phase_space{ memory = "host" })
+    local logger = assert(args.logger)
 
     local phase_space
     if device() then
@@ -64,7 +65,7 @@ function new(args)
     else
         phase_space = phase_space_wrapper.host[dimension]
     end
-    local position = phase_space(particle, box, sample)
+    local position = phase_space(particle, box, sample, logger)
 
     local core = mdsim.core()
     -- connect position to core
