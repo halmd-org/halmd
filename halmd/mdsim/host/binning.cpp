@@ -21,7 +21,6 @@
 #include <boost/bind.hpp>
 #include <exception>
 
-#include <halmd/io/logger.hpp>
 #include <halmd/mdsim/host/binning.hpp>
 #include <halmd/utility/lua/lua.hpp>
 #include <halmd/utility/signal.hpp>
@@ -47,9 +46,11 @@ binning<dimension, float_type>::binning(
   , shared_ptr<box_type const> box
   , matrix_type const& r_cut
   , float_type skin
+  , shared_ptr<logger_type> logger
 )
   // dependency injection
   : particle_(particle)
+  , logger_(logger)
   // allocate parameters
   , r_skin_(skin)
 {
@@ -111,10 +112,11 @@ void binning<dimension, float_type>::luaopen(lua_State* L)
             [
                 class_<binning, shared_ptr<binning> >(class_name.c_str())
                     .def(constructor<
-                         shared_ptr<particle_type const>
-                       , shared_ptr<box_type const>
-                       , matrix_type const&
-                       , float_type
+                        shared_ptr<particle_type const>
+                      , shared_ptr<box_type const>
+                      , matrix_type const&
+                      , float_type
+                      , shared_ptr<logger_type>
                      >())
                     .property("update", &wrap_update<binning>)
                     .property("r_skin", &binning::r_skin)
