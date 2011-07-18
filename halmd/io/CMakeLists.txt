@@ -6,5 +6,6 @@ halmd_add_modules(
 )
 
 add_subdirectory(profiling)
+add_subdirectory(readers)
 add_subdirectory(trajectory)
 add_subdirectory(writers)
