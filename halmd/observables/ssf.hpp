@@ -21,9 +21,11 @@
 #define HALMD_OBSERVABLES_SSF_HPP
 
 #include <boost/array.hpp>
+#include <boost/make_shared.hpp>
 #include <lua.hpp>
 #include <vector>
 
+#include <halmd/io/logger.hpp>
 #include <halmd/io/statevars/writer.hpp>
 #include <halmd/numeric/blas/fixed_vector.hpp>
 #include <halmd/observables/density_mode.hpp>
@@ -50,6 +52,7 @@ class ssf
 public:
     typedef io::statevars::writer<dimension> writer_type;
     typedef observables::density_mode<dimension> density_mode_type;
+    typedef logger logger_type;
     typedef halmd::utility::profiler profiler_type;
     typedef halmd::signal<void (uint64_t)> signal_type;
     typedef typename signal_type::slot_function_type slot_function_type;
@@ -64,22 +67,20 @@ public:
         accumulator_type sample;
     };
 
-    boost::shared_ptr<density_mode_type> density_mode;
-
     static void luaopen(lua_State* L);
 
     ssf(
-        boost::shared_ptr<density_mode_type> density_mode
+        boost::shared_ptr<density_mode_type const> density_mode
       , unsigned int npart
+      , boost::shared_ptr<logger_type> logger = boost::make_shared<logger_type>()
     );
-    virtual ~ssf() {}
-    virtual void register_runtimes(profiler_type& profiler);
-    virtual void register_observables(writer_type& writer);
+    void register_runtimes(profiler_type& profiler);
+    void register_observables(writer_type& writer);
 
     // compute ssf from sample of density Fourier modes and store with given simulation step
-    virtual void sample(uint64_t step);
+    void sample(uint64_t step);
 
-    virtual connection_type on_sample(slot_function_type const& slot)
+    connection_type on_sample(slot_function_type const& slot)
     {
         return on_sample_.connect(slot);
     }
@@ -93,12 +94,15 @@ public:
     //! returns instance of wavevector class used to compute the ssf
     typename density_mode_type::wavevector_type const& wavevector() const
     {
-        return density_mode->wavevector();
+        return density_mode_->wavevector();
     }
 
-protected:
+private:
+    boost::shared_ptr<density_mode_type const> density_mode_;
+    boost::shared_ptr<logger_type> logger_;
+
     /** compute static structure factor and update result accumulators */
-    virtual void compute_();
+    void compute_();
 
     /** total number of particles, required for normalisation */
     unsigned int npart_;

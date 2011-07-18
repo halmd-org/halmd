@@ -23,7 +23,6 @@
 #include <limits>
 #include <string>
 
-#include <halmd/io/logger.hpp>
 #include <halmd/observables/ssf.hpp>
 #include <halmd/utility/lua/lua.hpp>
 #include <halmd/utility/scoped_timer.hpp>
@@ -37,18 +36,20 @@ namespace observables {
 
 template <int dimension>
 ssf<dimension>::ssf(
-    shared_ptr<density_mode_type> density_mode
+    shared_ptr<density_mode_type const> density_mode
   , unsigned int npart
+  , shared_ptr<logger_type> logger
 )
   // dependency injection
-  : density_mode(density_mode)
+  : density_mode_(density_mode)
+  , logger_(logger)
   // initialise members
   , npart_(npart)
   , step_(numeric_limits<uint64_t>::max())
 {
     // allocate memory
-    unsigned int nq = density_mode->wavenumber().size();
-    unsigned int ntype = density_mode->value().size();
+    unsigned int nq = density_mode_->wavenumber().size();
+    unsigned int ntype = density_mode_->value().size();
     unsigned int nssf = ntype * (ntype + 1) / 2; //< number of partial structure factors
 
     value_.resize(nssf);
@@ -76,11 +77,11 @@ void ssf<dimension>::register_observables(writer_type& writer)
 {
     string root("structure/ssf/");
     // write wavenumbers only once
-    writer.write_dataset(root + "wavenumber", density_mode->wavenumber(), "wavenumber grid");
+    writer.write_dataset(root + "wavenumber", density_mode_->wavenumber(), "wavenumber grid");
 
     // register output writers for all partial structure factors
-    unsigned char ntype = static_cast<unsigned char>(density_mode->value().size());
-    assert('A' + density_mode->value().size() <= 'Z' + 1);
+    unsigned char ntype = static_cast<unsigned char>(density_mode_->value().size());
+    assert('A' + density_mode_->value().size() <= 'Z' + 1);
     unsigned int k = 0;
     for (unsigned char i = 0; i < ntype; ++i) {
         for (unsigned char j = i; j < ntype; ++j, ++k) {
@@ -102,16 +103,16 @@ template <int dimension>
 void ssf<dimension>::sample(uint64_t step)
 {
     if (step_ == step) {
-        LOG_TRACE("[ssf] sample is up to date");
+        LOG_TRACE("sample is up to date");
         return;
     }
 
     // acquire sample of density modes
     on_sample_(step);
 
-    LOG_TRACE("[ssf] sampling");
+    LOG_TRACE("sampling");
 
-    if (density_mode->step() != step) {
+    if (density_mode_->step() != step) {
         throw logic_error("density modes sample was not updated");
     }
 
@@ -147,15 +148,15 @@ void ssf<dimension>::compute_()
     typedef std::vector<accumulator<double> >::iterator result_iterator;
 
     // perform computation of partial SSF for all combinations of particle types
-    wavevector_map_type const& wavevector = density_mode->wavevector().value();
+    wavevector_map_type const& wavevector = density_mode_->wavevector().value();
     if (wavevector.empty()) return; // nothing to do
 
-    unsigned int ntype = density_mode->value().size();
+    unsigned int ntype = density_mode_->value().size();
     unsigned int k = 0;
     for (unsigned char i = 0; i < ntype; ++i) {
         for (unsigned char j = i; j < ntype; ++j, ++k) {
-            rho_iterator rho_q0 = density_mode->value()[i]->begin();
-            rho_iterator rho_q1 = density_mode->value()[j]->begin();
+            rho_iterator rho_q0 = density_mode_->value()[i]->begin();
+            rho_iterator rho_q1 = density_mode_->value()[j]->begin();
             result_iterator result = result_accumulator_[k].begin();
 
             // accumulate products of density modes with equal wavenumber,
@@ -194,8 +195,9 @@ void ssf<dimension>::luaopen(lua_State* L)
         [
             class_<ssf, shared_ptr<ssf> >(class_name.c_str())
                 .def(constructor<
-                    shared_ptr<density_mode_type>
+                    shared_ptr<density_mode_type const>
                   , unsigned int
+                  , shared_ptr<logger_type>
                 >())
                 .def("register_runtimes", &ssf::register_runtimes)
                 .def("register_observables", &ssf::register_observables)

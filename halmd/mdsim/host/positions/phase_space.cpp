@@ -19,7 +19,6 @@
 
 #include <algorithm>
 
-#include <halmd/io/logger.hpp>
 #include <halmd/mdsim/host/positions/phase_space.hpp>
 #include <halmd/utility/lua/lua.hpp>
 
@@ -34,13 +33,15 @@ using namespace std;
 template <int dimension, typename float_type>
 phase_space<dimension, float_type>::phase_space(
     shared_ptr<particle_type> particle
-  , shared_ptr<box_type> box
-  , shared_ptr<sample_type> sample
+  , shared_ptr<box_type const> box
+  , shared_ptr<sample_type const> sample
+  , shared_ptr<logger_type> logger
 )
   // dependency injection
-  : particle(particle)
-  , box(box)
-  , sample(sample)
+  : particle_(particle)
+  , box_(box)
+  , sample_(sample)
+  , logger_(logger)
 {
 }
 
@@ -53,14 +54,14 @@ void phase_space<dimension, float_type>::set()
     LOG("set particle positions from phase space sample");
 
     // assign particle coordinates
-    for (size_t j = 0, i = 0; j < particle->ntype; i += particle->ntypes[j], ++j) {
-        assert(sample->r[j]->size() + i <= particle->r.size());
-        copy(sample->r[j]->begin(), sample->r[j]->end(), particle->r.begin() + i);
+    for (size_t j = 0, i = 0; j < particle_->ntype; i += particle_->ntypes[j], ++j) {
+        assert(sample_->r[j]->size() + i <= particle_->r.size());
+        copy(sample_->r[j]->begin(), sample_->r[j]->end(), particle_->r.begin() + i);
     }
 
     // shift particle positions to range (-L/2, L/2)
-    for (size_t i = 0; i < particle->nbox; ++i) {
-        particle->image[i] = box->reduce_periodic(particle->r[i]);
+    for (size_t i = 0; i < particle_->nbox; ++i) {
+        particle_->image[i] = box_->reduce_periodic(particle_->r[i]);
     }
 }
 
@@ -80,8 +81,9 @@ void phase_space<dimension, float_type>::luaopen(lua_State* L)
                     class_<phase_space, shared_ptr<_Base>, _Base>(class_name.c_str())
                         .def(constructor<
                              shared_ptr<particle_type>
-                           , shared_ptr<box_type>
-                           , shared_ptr<sample_type>
+                           , shared_ptr<box_type const>
+                           , shared_ptr<sample_type const>
+                           , shared_ptr<logger_type>
                         >())
                 ]
             ]

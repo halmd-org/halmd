@@ -19,7 +19,6 @@
 
 #include <boost/foreach.hpp>
 
-#include <halmd/io/logger.hpp>
 #include <halmd/mdsim/host/neighbour.hpp>
 #include <halmd/utility/lua/lua.hpp>
 
@@ -45,11 +44,13 @@ neighbour<dimension, float_type>::neighbour(
   , shared_ptr<binning_type const> binning
   , matrix_type const& r_cut
   , double skin
+  , shared_ptr<logger> logger
 )
   // dependency injection
   : particle_(particle)
   , box_(box)
   , binning_(binning)
+  , logger_(logger)
   // allocate parameters
   , neighbour_(particle_->nbox)
   , r_skin_(skin)
@@ -190,11 +191,12 @@ void neighbour<dimension, float_type>::luaopen(lua_State* L)
             [
                 class_<neighbour, shared_ptr<mdsim::neighbour>, mdsim::neighbour>(class_name.c_str())
                     .def(constructor<
-                         shared_ptr<particle_type const>
-                       , shared_ptr<box_type const>
-                       , shared_ptr<binning_type const>
-                       , matrix_type const&
-                       , double
+                        shared_ptr<particle_type const>
+                      , shared_ptr<box_type const>
+                      , shared_ptr<binning_type const>
+                      , matrix_type const&
+                      , double
+                      , shared_ptr<logger_type>
                      >())
                     .property("r_skin", &neighbour::r_skin)
             ]

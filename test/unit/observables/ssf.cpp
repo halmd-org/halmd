@@ -148,7 +148,7 @@ void lattice<modules_type>::test()
     wavevector = make_shared<wavevector_type>(wavenumber, box->length(), 1e-6, 2 * dimension); // FIXME tolerance, see above
 
     // construct modules for density modes and static structure factor
-    density_mode = make_shared<density_mode_type>(phase_space, wavevector);
+    density_mode = make_shared<density_mode_type>(sample, wavevector);
     ssf = make_shared<ssf_type>(density_mode, particle->nbox);
 
     // generate lattices

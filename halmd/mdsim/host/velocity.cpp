@@ -19,7 +19,6 @@
 
 #include <boost/foreach.hpp>
 
-#include <halmd/io/logger.hpp>
 #include <halmd/mdsim/host/velocity.hpp>
 #include <halmd/utility/lua/lua.hpp>
 
@@ -33,9 +32,11 @@ namespace host {
 template <int dimension, typename float_type>
 velocity<dimension, float_type>::velocity(
     shared_ptr<particle_type> particle
+  , shared_ptr<logger_type> logger
 )
   // dependency injection
-  : particle(particle)
+  : particle_(particle)
+  , logger_(logger)
 {
 }
 
@@ -45,7 +46,7 @@ velocity<dimension, float_type>::velocity(
 template <int dimension, typename float_type>
 void velocity<dimension, float_type>::rescale(double factor)
 {
-    BOOST_FOREACH (vector_type& v, particle->v) {
+    BOOST_FOREACH (vector_type& v, particle_->v) {
         v *= factor;
     }
     LOG("velocities rescaled by factor " << factor);
@@ -57,7 +58,7 @@ void velocity<dimension, float_type>::rescale(double factor)
 template <int dimension, typename float_type>
 void velocity<dimension, float_type>::shift(vector_type const& delta)
 {
-    BOOST_FOREACH (vector_type& v, particle->v) {
+    BOOST_FOREACH (vector_type& v, particle_->v) {
         v += delta;
     }
 }
@@ -68,7 +69,7 @@ void velocity<dimension, float_type>::shift(vector_type const& delta)
 template <int dimension, typename float_type>
 void velocity<dimension, float_type>::shift_rescale(vector_type const& delta, double factor)
 {
-    BOOST_FOREACH (vector_type& v, particle->v) {
+    BOOST_FOREACH (vector_type& v, particle_->v) {
         v += delta;
         v *= factor;
     }

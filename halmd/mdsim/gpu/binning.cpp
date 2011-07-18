@@ -20,7 +20,6 @@
 #include <boost/bind.hpp>
 #include <exception>
 
-#include <halmd/io/logger.hpp>
 #include <halmd/mdsim/gpu/binning.hpp>
 #include <halmd/utility/lua/lua.hpp>
 #include <halmd/utility/scoped_timer.hpp>
@@ -49,11 +48,13 @@ binning<dimension, float_type>::binning(
   , shared_ptr<box_type const> box
   , matrix_type const& r_cut
   , double skin
+  , shared_ptr<logger_type> logger
   , double cell_occupancy
 )
   // dependency injection
   : particle_(particle)
   , box_(box)
+  , logger_(logger)
   // allocate parameters
   , r_skin_(skin)
   , nu_cell_(cell_occupancy)
@@ -214,6 +215,7 @@ void binning<dimension, float_type>::luaopen(lua_State* L)
                       , shared_ptr<box_type const>
                       , matrix_type const&
                       , double
+                      , shared_ptr<logger_type>
                       , double
                     >())
                     .def("register_runtimes", &binning::register_runtimes)

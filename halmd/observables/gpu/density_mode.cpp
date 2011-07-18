@@ -17,9 +17,6 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <boost/foreach.hpp>
-
-#include <halmd/io/logger.hpp>
 #include <halmd/observables/gpu/density_mode.hpp>
 #include <halmd/utility/lua/lua.hpp>
 #include <halmd/utility/scoped_timer.hpp>
@@ -34,17 +31,19 @@ namespace gpu {
 
 template <int dimension, typename float_type>
 density_mode<dimension, float_type>::density_mode(
-    shared_ptr<phase_space_type> phase_space
-  , shared_ptr<wavevector_type> wavevector
+    shared_ptr<phase_space_type const> phase_space
+  , shared_ptr<wavevector_type const> wavevector
+  , shared_ptr<logger_type> logger
 )
     // dependency injection
   : phase_space_(phase_space)
   , wavevector_(wavevector)
+  , logger_(logger)
     // member initialisation
   , nq_(wavevector_->value().size())
   , dim_(50, 64 << DEVICE_SCALE) // at most 512 threads per block
     // memory allocation
-  , rho_sample_(phase_space_->sample->r.size(), nq_)
+  , rho_sample_(phase_space_->r.size(), nq_)
   , g_q_(nq_)
   , g_sin_block_(nq_ * dim_.blocks_per_grid()), g_cos_block_(nq_ * dim_.blocks_per_grid())
   , g_sin_(nq_), g_cos_(nq_)
@@ -66,7 +65,7 @@ density_mode<dimension, float_type>::density_mode(
         cuda::copy(q, g_q_);
     }
     catch (cuda::error const&) {
-        LOG_ERROR("[density_mode] failed to initialise device constants");
+        LOG_ERROR("failed to initialise device constants");
         throw;
     }
 
@@ -75,7 +74,7 @@ density_mode<dimension, float_type>::density_mode(
         cuda::copy(nq_, wrapper_type::kernel.nq);
     }
     catch (cuda::error const&) {
-        LOG_ERROR("[density_mode] failed to initialise device constants");
+        LOG_ERROR("failed to initialise device constants");
         throw;
     }
 }
@@ -98,59 +97,54 @@ void density_mode<dimension, float_type>::acquire(uint64_t step)
     scoped_timer<timer> timer_(runtime_.sample);
 
     if (rho_sample_.step == step) {
-        LOG_TRACE("[density_mode] sample is up to date");
+        LOG_TRACE("sample is up to date");
         return;
     }
 
-    typedef typename phase_space_type::sample_type::sample_vector_ptr positions_vector_ptr_type;
+    typedef typename phase_space_type::sample_vector_ptr positions_vector_ptr_type;
     typedef typename density_mode_sample_type::mode_vector_type mode_vector_type;
 
     // trigger update of phase space sample
     on_acquire_(step);
 
-    LOG_TRACE("[density_mode] acquire sample");
+    LOG_TRACE("acquire sample");
 
-    if (phase_space_->sample->step != step) {
+    if (phase_space_->step != step) {
         throw logic_error("GPU phase space sample was not updated");
     }
 
     // compute density modes separately for each particle type
     // 1st loop: iterate over particle types
-    unsigned int type = 0;
-    BOOST_FOREACH (positions_vector_ptr_type const r_sample, phase_space_->sample->r) {
+    for (unsigned int type = 0; type < phase_space_->r.size(); ++type) {
         mode_vector_type& rho = *rho_sample_.rho[type]; //< dereference shared_ptr
-        if (type ==  0) {
-            try {
-                cuda::configure(dim_.grid, dim_.block);
-                wrapper_type::kernel.q.bind(g_q_);
+        try {
+            cuda::configure(dim_.grid, dim_.block);
+            wrapper_type::kernel.q.bind(g_q_);
 
-                // compute exp(i q·r) for all wavevector/particle pairs and perform block sums
-                // FIXME pass r_sample->r[type] instead of particle->g_r
-                wrapper_type::kernel.compute(
-                    phase_space_->particle->g_r, phase_space_->particle->nbox
-                  , g_sin_block_, g_cos_block_);
-                cuda::thread::synchronize();
+            // compute exp(i q·r) for all wavevector/particle pairs and perform block sums
+            wrapper_type::kernel.compute(
+                *phase_space_->r[type], phase_space_->r[type]->size()
+              , g_sin_block_, g_cos_block_);
+            cuda::thread::synchronize();
 
-                // finalise block sums for each wavevector
-                cuda::configure(
-                    nq_                        // #blocks: one per wavevector
-                  , dim_.block                 // #threads per block, must be a power of 2
-                );
-                wrapper_type::kernel.finalise(g_sin_block_, g_cos_block_, g_sin_, g_cos_, dim_.blocks_per_grid());
-            }
-            catch (cuda::error const&) {
-                LOG_ERROR("failed to compute density modes on GPU");
-                throw;
-            }
-
-            // copy data from device and store in density_mode sample
-            cuda::copy(g_sin_, h_sin_);
-            cuda::copy(g_cos_, h_cos_);
-            for (unsigned int i = 0; i < nq_; ++i) {
-                rho[i] = mode_type(h_cos_[i], -h_sin_[i]);
-            }
+            // finalise block sums for each wavevector
+            cuda::configure(
+                nq_                        // #blocks: one per wavevector
+              , dim_.block                 // #threads per block, must be a power of 2
+            );
+            wrapper_type::kernel.finalise(g_sin_block_, g_cos_block_, g_sin_, g_cos_, dim_.blocks_per_grid());
         }
-        ++type;
+        catch (cuda::error const&) {
+            LOG_ERROR("failed to compute density modes on GPU");
+            throw;
+        }
+
+        // copy data from device and store in density_mode sample
+        cuda::copy(g_sin_, h_sin_);
+        cuda::copy(g_cos_, h_cos_);
+        for (unsigned int i = 0; i < nq_; ++i) {
+            rho[i] = mode_type(h_cos_[i], -h_sin_[i]);
+        }
     }
     rho_sample_.step = step;
 }
@@ -168,8 +162,9 @@ void density_mode<dimension, float_type>::luaopen(lua_State* L)
             [
                 class_<density_mode, shared_ptr<_Base>, _Base>(class_name.c_str())
                     .def(constructor<
-                        shared_ptr<phase_space_type>
-                      , shared_ptr<wavevector_type>
+                        shared_ptr<phase_space_type const>
+                      , shared_ptr<wavevector_type const>
+                      , shared_ptr<logger_type>
                     >())
                     .def("register_runtimes", &density_mode::register_runtimes)
             ]

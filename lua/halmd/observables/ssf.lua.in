@@ -54,6 +54,7 @@ function new(args)
     -- dependency injection
     local particle = mdsim.particle() -- singleton
     local dimension = assert(particle.dimension)
+    local logger = assert(args.logger)
 
     -- construct local wavevector module
     local wavevector = assert(observables.utility.wavevector)
@@ -76,7 +77,7 @@ function new(args)
     local density_mode = assert(observables.density_mode{ wavevector = wavevector })
 
     -- construct ssf module
-    local ssf = assert(ssf_wrapper[dimension])(density_mode, particle.nbox)
+    local ssf = assert(ssf_wrapper[dimension])(density_mode, particle.nbox, logger)
 
     -- acquire density modes before sampling static structure factor
     ssf:on_sample(density_mode.acquire)

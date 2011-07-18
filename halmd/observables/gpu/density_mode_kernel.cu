@@ -18,14 +18,12 @@
  */
 
 #include <halmd/numeric/blas/blas.hpp>
-#include <halmd/mdsim/gpu/particle_kernel.cuh>
 #include <halmd/observables/gpu/density_mode_kernel.hpp>
 #include <halmd/utility/gpu/thread.cuh>
 #include <halmd/utility/gpu/variant.cuh>
 
 #define MAX_BLOCK_SIZE 512
 
-using namespace halmd::mdsim::gpu::particle_kernel; //< untagged
 using namespace halmd::utility::gpu; //< variant, map, pair
 
 namespace halmd {
@@ -99,8 +97,8 @@ __device__ sum_reduce_type sum_reduce_select[] = {
  *
  *  @returns block sums of sin(q·r), cos(q·r) for each wavevector
  */
-template <typename vector_type>
-__global__ void compute(float4 const* g_r, uint npart, float* g_sin_block, float* g_cos_block)
+template <typename vector_type, typename coalesced_vector_type>
+__global__ void compute(coalesced_vector_type const* g_r, uint npart, float* g_sin_block, float* g_cos_block)
 {
     enum { dimension = vector_type::static_size };
 
@@ -114,9 +112,7 @@ __global__ void compute(float4 const* g_r, uint npart, float* g_sin_block, float
         cos_[TID] = 0;
         for (uint j = GTID; j < npart; j += GTDIM) {
             // retrieve particle position
-            unsigned int type;
-            vector_type r;
-            tie(r, type) = untagged<vector_type>(g_r[j]);
+            vector_type r = g_r[j];
 
             float q_r = inner_prod(q, r);
             sin_[TID] += sin(q_r);

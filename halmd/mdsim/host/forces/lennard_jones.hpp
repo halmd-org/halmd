@@ -21,10 +21,12 @@
 #define HALMD_MDSIM_HOST_FORCES_LENNARD_JONES_HPP
 
 #include <boost/assign.hpp>
+#include <boost/make_shared.hpp>
 #include <boost/numeric/ublas/symmetric.hpp>
 #include <boost/tuple/tuple.hpp>
 #include <lua.hpp>
 
+#include <halmd/io/logger.hpp>
 #include <halmd/mdsim/host/forces/pair_trunc.hpp>
 #include <halmd/mdsim/host/forces/smooth.hpp>
 
@@ -41,6 +43,7 @@ class lennard_jones
 {
 public:
     typedef boost::numeric::ublas::symmetric_matrix<float_type, boost::numeric::ublas::lower> matrix_type;
+    typedef logger logger_type;
 
     static char const* name() { return "Lennard-Jones"; }
     static char const* module_name() { return "lennard_jones"; }
@@ -52,6 +55,7 @@ public:
       , boost::array<float, 3> const& cutoff
       , boost::array<float, 3> const& epsilon
       , boost::array<float, 3> const& sigma
+      , boost::shared_ptr<logger_type> logger = boost::make_shared<logger_type>()
     );
 
     /** compute potential and its derivative at squared distance 'rr' for particles of type 'a' and 'b' */
@@ -113,6 +117,8 @@ private:
     matrix_type sigma2_;
     /** potential energy at cutoff length in MD units */
     matrix_type en_cut_;
+    /** module logger */
+    boost::shared_ptr<logger_type> logger_;
 };
 
 } // namespace mdsim

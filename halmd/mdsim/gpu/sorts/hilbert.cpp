@@ -23,7 +23,6 @@
 #include <cmath>
 
 #include <halmd/algorithm/gpu/radix_sort.hpp>
-#include <halmd/io/logger.hpp>
 #include <halmd/mdsim/gpu/sorts/hilbert.hpp>
 #include <halmd/utility/lua/lua.hpp>
 #include <halmd/utility/scoped_timer.hpp>
@@ -41,10 +40,12 @@ namespace sorts {
 template <int dimension, typename float_type>
 hilbert<dimension, float_type>::hilbert(
     shared_ptr<particle_type> particle
-  , shared_ptr<box_type> box
+  , shared_ptr<box_type const> box
+  , shared_ptr<logger_type> logger
 )
   // dependency injection
-  : particle(particle)
+  : particle_(particle)
+  , logger_(logger)
 {
     // FIXME set Hilbert space-filling curve recursion depth
     float_type max_length = *max_element(box->length().begin(), box->length().end());
@@ -52,14 +53,14 @@ hilbert<dimension, float_type>::hilbert(
     // 32-bit integer for 2D/3D Hilbert code allows a maximum of 16/10 levels
     depth_ = std::min((dimension == 3) ? 10U : 16U, depth_);
 
-    LOG("[hilbert] vertex recursion depth: " << depth_);
+    LOG("vertex recursion depth: " << depth_);
 
     try {
         cuda::copy(static_cast<vector_type>(box->length()), wrapper_type::kernel.box_length);
         cuda::copy(depth_, wrapper_type::kernel.depth);
     }
     catch (cuda::error const&) {
-        LOG_ERROR("[hilbert] failed to copy parameters to device");
+        LOG_ERROR("failed to copy parameters to device");
         throw;
     }
 }
@@ -81,14 +82,14 @@ void hilbert<dimension, float_type>::register_runtimes(profiler_type& profiler)
 template <int dimension, typename float_type>
 void hilbert<dimension, float_type>::order()
 {
-    LOG_TRACE("[hilbert] order particles");
+    LOG_TRACE("order particles");
     {
-        cuda::vector<unsigned int> g_map(particle->nbox);
-        g_map.reserve(particle->g_r.capacity());
+        cuda::vector<unsigned int> g_map(particle_->nbox);
+        g_map.reserve(particle_->g_r.capacity());
         this->map(g_map);
-        this->permutation(g_map, particle->g_index);
+        this->permutation(g_map, particle_->g_index);
     }
-    this->order(particle->g_index);
+    this->order(particle_->g_index);
     on_order_();
 }
 
@@ -99,8 +100,8 @@ template <int dimension, typename float_type>
 void hilbert<dimension, float_type>::map(cuda::vector<unsigned int>& g_map)
 {
     scoped_timer<timer> timer_(runtime_.map);
-    cuda::configure(particle->dim.grid, particle->dim.block);
-    wrapper_type::kernel.map(particle->g_r, g_map);
+    cuda::configure(particle_->dim.grid, particle_->dim.block);
+    wrapper_type::kernel.map(particle_->g_r, g_map);
 }
 
 /**
@@ -110,9 +111,9 @@ template <int dimension, typename float_type>
 void hilbert<dimension, float_type>::permutation(cuda::vector<unsigned int>& g_map, cuda::vector<unsigned int>& g_index)
 {
     scoped_timer<timer> timer_(runtime_.permutation);
-    cuda::configure(particle->dim.grid, particle->dim.block);
+    cuda::configure(particle_->dim.grid, particle_->dim.block);
     wrapper_type::kernel.gen_index(g_index);
-    radix_sort<unsigned int> sort(particle->nbox, particle->dim.threads_per_block());
+    radix_sort<unsigned int> sort(particle_->nbox, particle_->dim.threads_per_block());
     sort(g_map, g_index);
 }
 
@@ -124,23 +125,23 @@ void hilbert<dimension, float_type>::order(cuda::vector<unsigned int> const& g_i
 {
     scoped_timer<timer> timer_(runtime_.order);
 
-    cuda::vector<float4> g_r(particle->g_r.size());
-    cuda::vector<gpu_vector_type> g_image(particle->g_image.size());
-    cuda::vector<float4> g_v(particle->g_v.size());
+    cuda::vector<float4> g_r(particle_->g_r.size());
+    cuda::vector<gpu_vector_type> g_image(particle_->g_image.size());
+    cuda::vector<float4> g_v(particle_->g_v.size());
 
-    g_r.reserve(particle->g_r.capacity());
-    g_image.reserve(particle->g_image.capacity());
-    g_v.reserve(particle->g_v.capacity());
+    g_r.reserve(particle_->g_r.capacity());
+    g_image.reserve(particle_->g_image.capacity());
+    g_v.reserve(particle_->g_v.capacity());
 
-    cuda::configure(particle->dim.grid, particle->dim.block);
-    wrapper_type::kernel.r.bind(particle->g_r);
-    wrapper_type::kernel.image.bind(particle->g_image);
-    wrapper_type::kernel.v.bind(particle->g_v);
+    cuda::configure(particle_->dim.grid, particle_->dim.block);
+    wrapper_type::kernel.r.bind(particle_->g_r);
+    wrapper_type::kernel.image.bind(particle_->g_image);
+    wrapper_type::kernel.v.bind(particle_->g_v);
     wrapper_type::kernel.order_particles(g_index, g_r, g_image, g_v);
 
-    g_r.swap(particle->g_r);
-    g_image.swap(particle->g_image);
-    g_v.swap(particle->g_v);
+    g_r.swap(particle_->g_r);
+    g_image.swap(particle_->g_image);
+    g_v.swap(particle_->g_v);
 }
 
 template <int dimension, typename float_type>
@@ -165,7 +166,8 @@ void hilbert<dimension, float_type>::luaopen(lua_State* L)
                     class_<hilbert, shared_ptr<_Base>, _Base>(class_name.c_str())
                         .def(constructor<
                             shared_ptr<particle_type>
-                          , shared_ptr<box_type>
+                          , shared_ptr<box_type const>
+                          , shared_ptr<logger_type>
                         >())
                         .property("module_name", &module_name_wrapper<dimension, float_type>)
                         .def("register_runtimes", &hilbert::register_runtimes)

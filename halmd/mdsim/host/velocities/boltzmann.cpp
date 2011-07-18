@@ -1,5 +1,5 @@
 /*
- * Copyright © 2008-2010  Peter Colberg
+ * Copyright © 2008-2011  Peter Colberg
  *
  * This file is part of HALMD.
  *
@@ -20,7 +20,6 @@
 #include <boost/foreach.hpp>
 #include <boost/tuple/tuple.hpp>
 
-#include <halmd/io/logger.hpp>
 #include <halmd/mdsim/host/velocities/boltzmann.hpp>
 #include <halmd/utility/lua/lua.hpp>
 
@@ -37,11 +36,13 @@ boltzmann<dimension, float_type>::boltzmann(
     shared_ptr<particle_type> particle
   , shared_ptr<random_type> random
   , double temperature
+  , shared_ptr<logger_type> logger
 )
-  : _Base(particle)
+  : _Base(particle, logger)
   // dependency injection
-  , particle(particle)
-  , random(random)
+  , particle_(particle)
+  , random_(random)
+  , logger_(logger)
   // set parameters
   , temp_(temperature)
 {
@@ -82,10 +83,10 @@ inline boltzmann<dimension, float_type>::gaussian(float_type sigma)
     float_type r = 0;
     bool r_valid = false;
 
-    BOOST_FOREACH (vector_type& v, particle->v) {
+    BOOST_FOREACH (vector_type& v, particle_->v) {
         // assign two components at a time
         for (unsigned i=0; i < dimension-1; i+=2) {
-            tie(v[i], v[i+1]) = random->normal(sigma);
+            tie(v[i], v[i+1]) = random_->normal(sigma);
         }
         // handle last component separately for odd dimensions
         if (dimension % 2 == 1) {
@@ -93,7 +94,7 @@ inline boltzmann<dimension, float_type>::gaussian(float_type sigma)
                 v[dimension-1] = r;
             }
             else {
-                tie(v[dimension-1], r) = random->normal(sigma);
+                tie(v[dimension-1], r) = random_->normal(sigma);
             }
             r_valid = !r_valid;
         }
@@ -101,8 +102,8 @@ inline boltzmann<dimension, float_type>::gaussian(float_type sigma)
         vv += inner_prod(v, v);
     }
 
-    v_cm /= particle->v.size();
-    vv /= particle->v.size();
+    v_cm /= particle_->v.size();
+    vv /= particle_->v.size();
     return make_pair(v_cm, vv);
 }
 
@@ -127,7 +128,12 @@ void boltzmann<dimension, float_type>::luaopen(lua_State* L)
                 namespace_("velocities")
                 [
                     class_<boltzmann, shared_ptr<_Base_Base>, bases<_Base_Base, _Base> >(class_name.c_str())
-                        .def(constructor<shared_ptr<particle_type>, shared_ptr<random_type>, double>())
+                        .def(constructor<
+                            shared_ptr<particle_type>
+                           , shared_ptr<random_type>
+                           , double
+                           , shared_ptr<logger_type>
+                        >())
                         .property("temperature", &boltzmann::temperature)
                         .property("module_name", &module_name_wrapper<dimension, float_type>)
                 ]

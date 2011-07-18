@@ -20,10 +20,12 @@
 #ifndef HALMD_MDSIM_GPU_BINNING_HPP
 #define HALMD_MDSIM_GPU_BINNING_HPP
 
+#include <boost/make_shared.hpp>
 #include <boost/numeric/ublas/symmetric.hpp>
 #include <boost/shared_ptr.hpp>
 #include <lua.hpp>
 
+#include <halmd/io/logger.hpp>
 #include <halmd/algorithm/gpu/radix_sort.hpp>
 #include <halmd/mdsim/box.hpp>
 #include <halmd/mdsim/gpu/binning_kernel.hpp>
@@ -44,6 +46,7 @@ public:
     typedef mdsim::box<dimension> box_type;
     typedef utility::profiler profiler_type;
     struct defaults;
+    typedef logger logger_type;
 
     typedef fixed_vector<unsigned int, dimension> cell_size_type;
     typedef fixed_vector<int, dimension> cell_diff_type;
@@ -55,6 +58,7 @@ public:
       , boost::shared_ptr<box_type const> box
       , matrix_type const& r_cut
       , double skin
+      , boost::shared_ptr<logger_type> logger = boost::make_shared<logger_type>()
       , double cell_occupancy = defaults::occupancy()
     );
     void register_runtimes(profiler_type& profiler);
@@ -117,7 +121,8 @@ private:
 
     boost::shared_ptr<particle_type const> particle_;
     boost::shared_ptr<box_type const> box_;
-
+    /** module logger */
+    boost::shared_ptr<logger_type> logger_;
     /** neighbour list skin in MD units */
     float_type r_skin_;
     /** average desired cell occupancy */

@@ -47,6 +47,7 @@ function new(args)
     local sigma = args.sigma or { 1.0, 0.8, 0.88 } -- default value
 
     local particle = mdsim.particle() -- singleton
+    local logger = assert(args.logger)
 
     local lennard_jones
     if device() then
@@ -54,7 +55,7 @@ function new(args)
     else
         lennard_jones = assert(lennard_jones_wrapper.host)
     end
-    return lennard_jones(particle.ntype, cutoff, epsilon, sigma)
+    return lennard_jones(particle.ntype, cutoff, epsilon, sigma, logger)
 end
 
 --

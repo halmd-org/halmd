@@ -57,6 +57,7 @@ function new(args)
     local particle = mdsim.particle() -- singleton
     local dimension = assert(particle.dimension)
     local random = assert(random())
+    local logger = assert(args.logger)
 
     local boltzmann
     if device() then
@@ -64,7 +65,7 @@ function new(args)
     else
         boltzmann = boltzmann_wrapper.host[dimension]
     end
-    local velocity = boltzmann(particle, random, temperature)
+    local velocity = boltzmann(particle, random, temperature, logger)
 
     local core = mdsim.core()
     -- connect velocity to core

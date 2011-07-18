@@ -23,7 +23,6 @@
 #include <cmath>
 #include <string>
 
-#include <halmd/io/logger.hpp>
 #include <halmd/io/utility/hdf5.hpp>
 #include <halmd/mdsim/gpu/forces/morse.hpp>
 #include <halmd/mdsim/gpu/forces/morse_kernel.hpp>
@@ -49,6 +48,7 @@ morse<float_type>::morse(
   , array<float, 3> const& epsilon
   , array<float, 3> const& sigma
   , array<float, 3> const& r_min
+  , shared_ptr<logger_type> logger
 )
   // allocate potential parameters
   : epsilon_(scalar_matrix<float_type>(ntype, ntype, 1))
@@ -60,6 +60,7 @@ morse<float_type>::morse(
   , rr_cut_(ntype, ntype)
   , g_param_(epsilon_.data().size())
   , g_rr_cut_(epsilon_.data().size())
+  , logger_(logger)
 {
     // FIXME support any number of types
     for (unsigned i = 0; i < std::min(ntype, 2U); ++i) {
@@ -121,6 +122,7 @@ void morse<float_type>::luaopen(lua_State* L)
                           , array<float, 3> const&
                           , array<float, 3> const&
                           , array<float, 3> const&
+                          , shared_ptr<logger_type>
                         >())
                         .property("r_cut", (matrix_type const& (morse::*)() const) &morse::r_cut)
                         .property("r_cut_sigma", &morse::r_cut_sigma)

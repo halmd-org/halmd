@@ -52,14 +52,18 @@ function new(args)
         defaults = assert(random_wrapper.host.gfsr4.defaults)
     end
     local seed = args.seed or defaults.seed()
+    local logger = assert(args.logger)
+
+    local random
     if device() then
         local blocks = args.blocks or defaults.blocks()
         local threads = args.threads or defaults.threads()
         local shuffle_threads = defaults.shuffle_threads()
-        return random_wrapper.gpu.rand48(seed, blocks, threads, shuffle_threads)
+        random = random_wrapper.gpu.rand48(seed, logger, blocks, threads, shuffle_threads)
     else
-        return random_wrapper.host.gfsr4(seed)
+        random = random_wrapper.host.gfsr4(seed, logger)
     end
+    return random
 end
 
 --

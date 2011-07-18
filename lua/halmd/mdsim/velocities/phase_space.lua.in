@@ -55,6 +55,7 @@ function new(args)
     local particle = mdsim.particle() -- singleton
     local dimension = assert(particle.dimension)
     local sample = assert(observables.samples.phase_space{ memory = "host" })
+    local logger = assert(args.logger)
 
     local phase_space
     if device() then
@@ -62,7 +63,7 @@ function new(args)
     else
         phase_space = phase_space_wrapper.host[dimension]
     end
-    local velocity = phase_space(particle, sample)
+    local velocity = phase_space(particle, sample, logger)
 
     local core = mdsim.core()
     -- connect velocity to core

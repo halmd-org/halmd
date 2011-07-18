@@ -57,9 +57,10 @@ function new(args)
     local box = mdsim.box() -- singleton
     local clock = mdsim.clock() -- singleton
     local force = mdsim.force() -- singleton
+    local logger = assert(args.logger)
 
     if not device() then
-        return thermodynamics_wrapper.host[dimension](particle, box, clock, force)
+        return thermodynamics_wrapper.host[dimension](particle, box, clock, force, logger)
     end
-    return thermodynamics_wrapper.gpu[dimension](particle, box, clock, force)
+    return thermodynamics_wrapper.gpu[dimension](particle, box, clock, force, logger)
 end

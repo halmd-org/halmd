@@ -20,10 +20,12 @@
 #ifndef HALMD_MDSIM_GPU_NEIGHBOURS_FROM_PARTICLE_HPP
 #define HALMD_MDSIM_GPU_NEIGHBOURS_FROM_PARTICLE_HPP
 
+#include <boost/make_shared.hpp>
 #include <boost/numeric/ublas/symmetric.hpp>
 #include <boost/shared_ptr.hpp>
 #include <lua.hpp>
 
+#include <halmd/io/logger.hpp>
 #include <halmd/mdsim/box.hpp>
 #include <halmd/mdsim/gpu/neighbour.hpp>
 #include <halmd/mdsim/gpu/particle.hpp>
@@ -65,6 +67,7 @@ public:
     typedef typename _Base::signal_type signal_type;
     typedef typename _Base::slot_function_type slot_function_type;
     typedef typename _Base::connection_type connection_type;
+    typedef logger logger_type;
 
     static void luaopen(lua_State* L);
 
@@ -74,6 +77,7 @@ public:
       , boost::shared_ptr<box_type const> box
       , matrix_type const& r_cut
       , double skin
+      , boost::shared_ptr<logger_type> logger = boost::make_shared<logger_type>()
       , double cell_occupancy = defaults::occupancy()
     );
     void register_runtimes(profiler_type& profiler);
@@ -130,6 +134,7 @@ private:
     boost::shared_ptr<particle_type const> particle1_;
     boost::shared_ptr<particle_type const> particle2_;
     boost::shared_ptr<box_type const> box_;
+    boost::shared_ptr<logger_type> logger_;
 
     /** neighbour list skin in MD units */
     float_type r_skin_;
