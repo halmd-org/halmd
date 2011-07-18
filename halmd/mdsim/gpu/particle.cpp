@@ -120,7 +120,7 @@ particle<dimension, float_type>::particle(
 }
 
 /**
- * set particle tags and types
+ * set particle tags and types, initialise g_index
  */
 template <unsigned int dimension, typename float_type>
 void particle<dimension, float_type>::set()
@@ -131,6 +131,9 @@ void particle<dimension, float_type>::set()
         cuda::copy(ntypes, g_ntypes);
         get_particle_kernel<dimension>().ntypes.bind(g_ntypes);
         get_particle_kernel<dimension>().tag(g_r, g_v);
+
+        cuda::configure(dim.grid, dim.block);
+        get_particle_kernel<dimension>().gen_index(g_index);
         cuda::thread::synchronize();
     }
     catch (cuda::error const&) {
