@@ -90,16 +90,13 @@ void phase_space<dimension, float_type>::set()
     // shift particle positions to range (-L/2, L/2)
     try {
         cuda::configure(particle->dim.grid, particle->dim.block);
-        phase_space_wrapper<dimension>::kernel.reduce_periodic(particle->g_r);
+        phase_space_wrapper<dimension>::kernel.reduce_periodic(particle->g_r, particle->g_image);
     }
     catch (cuda::error const&)
     {
         LOG_ERROR("[phase_space] failed to reduce particle positions on GPU");
         throw;
     }
-
-    // assign particle image vectors
-    cuda::memset(particle->g_image, 0, particle->g_image.capacity());
 }
 
 template <int dimension, typename float_type>

@@ -60,11 +60,8 @@ void phase_space<dimension, float_type>::set()
 
     // shift particle positions to range (-L/2, L/2)
     for (size_t i = 0; i < particle->nbox; ++i) {
-        box->reduce_periodic(particle->r[i]);
+        particle->image[i] = box->reduce_periodic(particle->r[i]);
     }
-
-    // assign particle image vectors
-    fill(particle->image.begin(), particle->image.end(), 0);
 }
 
 template <int dimension, typename float_type>

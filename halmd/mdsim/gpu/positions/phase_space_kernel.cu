@@ -38,9 +38,11 @@ namespace phase_space_kernel {
 
 /**
  * shift particle positions to range (-L/2, L/2)
+ *
+ * FIXME move to box_kernel.cuh
  */
-template <typename vector_type>
-__global__ void reduce_periodic(float4* g_r)
+template <typename vector_type, typename coalesced_vector_type>
+__global__ void reduce_periodic(float4* g_r, coalesced_vector_type* g_image)
 {
     enum { dimension = vector_type::static_size };
 
@@ -50,8 +52,9 @@ __global__ void reduce_periodic(float4* g_r)
 
     vector_type box_length = get<dimension>(box_length_);
 
-    box_kernel::reduce_periodic(r, box_length);
+    vector_type image = box_kernel::reduce_periodic(r, box_length);
 
+    g_image[GTID] = image;
     g_r[GTID] = tagged(r, type);
 }
 

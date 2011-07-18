@@ -31,10 +31,11 @@ namespace positions {
 template <int dimension>
 struct phase_space_wrapper
 {
+    typedef typename type_traits<dimension, float>::gpu::coalesced_vector_type coalesced_vector_type;
     typedef typename type_traits<dimension, float>::gpu::vector_type vector_type;
 
     cuda::symbol<vector_type> box_length;
-    cuda::function<void (float4*)> reduce_periodic;
+    cuda::function<void (float4*, coalesced_vector_type*)> reduce_periodic;
     static phase_space_wrapper const kernel;
 };
 
