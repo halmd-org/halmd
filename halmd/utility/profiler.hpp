@@ -26,6 +26,8 @@
 
 #include <halmd/io/profiling/writer.hpp>
 #include <halmd/numeric/accumulator.hpp>
+#include <halmd/utility/scoped_timer.hpp>
+#include <halmd/utility/timer.hpp>
 
 namespace halmd {
 namespace utility {
@@ -33,8 +35,11 @@ namespace utility {
 class profiler
 {
 public:
+    typedef timer timer_type;
+    typedef accumulator<double> accumulator_type;
+    typedef scoped_timer<timer_type> scoped_timer_type;
+
     typedef io::profiling::writer writer_type;
-    typedef writer_type::accumulator_type accumulator_type;
     typedef std::vector<boost::shared_ptr<writer_type> > writers_type;
 
     static void luaopen(lua_State* L);

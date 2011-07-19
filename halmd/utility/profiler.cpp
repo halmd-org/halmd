@@ -32,7 +32,7 @@ profiler::profiler(writers_type writer, string const& group)
   : writer_(writer)
   , group_(group)
 {
-    LOG_ONCE("timer resolution: " << 1.E9 * timer::elapsed_min() << " ns");
+    LOG_ONCE("timer resolution: " << 1.E9 * timer_type::elapsed_min() << " ns");
 }
 
 void profiler::register_runtime(accumulator_type const& runtime, string const& tag, std::string const& desc)
