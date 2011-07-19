@@ -172,8 +172,8 @@ env-lua:
 ## Boost C++ libraries with Boost.Log
 ##
 
-BOOST_VERSION = 1.46.1
-BOOST_RELEASE = 1_46_1
+BOOST_VERSION = 1.47.0
+BOOST_RELEASE = 1_47_0
 BOOST_TARBALL = boost_$(BOOST_RELEASE).tar.gz
 BOOST_TARBALL_URL = http://sourceforge.net/projects/boost/files/boost/$(BOOST_VERSION)/$(BOOST_TARBALL)
 BOOST_LOG_TARBALL = boost-log.tar
