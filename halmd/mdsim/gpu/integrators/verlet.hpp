@@ -79,6 +79,8 @@ public:
 private:
     boost::shared_ptr<particle_type> particle_;
     boost::shared_ptr<box_type const> box_;
+    /** module logger */
+    boost::shared_ptr<logger_type> logger_;
     /** CUDA C++ wrapper */
     verlet_wrapper<dimension> const* wrapper_;
     /** integration time-step */
@@ -87,8 +89,6 @@ private:
     float_type timestep_half_;
     /** profiling runtime accumulators */
     runtime runtime_;
-    /** module logger */
-    boost::shared_ptr<logger_type> logger_;
 };
 
 } // namespace mdsim
