@@ -50,8 +50,8 @@ lattice<dimension, float_type, RandomNumberGenerator>::lattice(
   : particle_(particle)
   , box_(box)
   , random_(random)
-  , slab_(slab)
   , logger_(logger)
+  , slab_(slab)
 {
     if (*min_element(slab_.begin(), slab_.end()) <= 0 ||
         *max_element(slab_.begin(), slab_.end()) > 1
