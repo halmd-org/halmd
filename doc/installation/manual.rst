@@ -13,7 +13,7 @@ proceeding, be aware of the section :ref:`automatic`.
    When installing third-party packages, it is advisable to put them into
    separate directories. If you install software only for yourself, use package
    directories of the form ``~/opt/PKGNAME-PKGVERSION``, for example
-   ``~/opt/boost-1.46.1`` or ``~/opt/Sphinx-1.0.4``. If you install software
+   ``~/opt/boost-1.47.0`` or ``~/opt/Sphinx-1.0.4``. If you install software
    system-wide as the root user, use ``/opt/PKGNAME-PKGVERSION``.
    This simple scheme allows you to have multiple versions of a package, or
    remove a package without impacting others.
@@ -24,11 +24,11 @@ For example, if Boost, Lua and Luabind are installed in your home directory,
 CUDA is installed system-wide, and the HALMD source is in ``~/projects/halmd``,
 the initial cmake command might look like this ::
 
-   CMAKE_PREFIX_PATH=~/opt/boost_1_46_1:/opt/cuda-3.1:~/opt/lua-5.1.4:~/opt/luabind-0.9.1 cmake ~/projects/halmd
+   CMAKE_PREFIX_PATH=~/opt/boost_1_47_0:/opt/cuda-3.1:~/opt/lua-5.1.4:~/opt/luabind-0.9.1 cmake ~/projects/halmd
 
 Instead of setting CMAKE_PREFIX_PATH manually, you would include the package directories in your ~/.bashrc (or your favourite shell's equivalent) ::
 
-   export CMAKE_PREFIX_PATH="${HOME}/opt/boost_1_46_1${CMAKE_PREFIX_PATH+:$CMAKE_PREFIX_PATH}"
+   export CMAKE_PREFIX_PATH="${HOME}/opt/boost_1_47_0${CMAKE_PREFIX_PATH+:$CMAKE_PREFIX_PATH}"
    export CMAKE_PREFIX_PATH="/opt/cuda-3.1${CMAKE_PREFIX_PATH+:$CMAKE_PREFIX_PATH}"
    export CMAKE_PREFIX_PATH="${HOME}/opt/lua-5.1.4${CMAKE_PREFIX_PATH+:$CMAKE_PREFIX_PATH}"
    export CMAKE_PREFIX_PATH="${HOME}/opt/luabind-0.9.1${CMAKE_PREFIX_PATH+:$CMAKE_PREFIX_PATH}"
@@ -85,10 +85,10 @@ Include CMake in your shell environment, by adding to ~/.bashrc::
 Boost C++ libraries
 ^^^^^^^^^^^^^^^^^^^
 
-Get the latest `Boost source package`_, currently `Boost 1.46.1`_.
+Get the latest `Boost source package`_, currently `Boost 1.47.0`_.
 
 .. _Boost source package: http://www.boost.org/users/download
-.. _Boost 1.46.1: http://sourceforge.net/projects/boost/files/boost/1.46.1/boost_1_46_1.tar.bz2
+.. _Boost 1.47.0: http://sourceforge.net/projects/boost/files/boost/1.47.0/boost_1_47_0.tar.bz2
 
 Get the latest `Boost.Log source package`_ from the upstream repository.
 
@@ -107,8 +107,8 @@ We will build Boost and Boost.Log in a single step, therefore extract both
 source packages and copy the Boost.Log headers and library sources to the
 Boost source directory using ::
 
-   cp -r boost-log/boost/log boost_1_46_1/boost/
-   cp -r boost-log/libs/log boost_1_46_1/libs/
+   cp -r boost-log/boost/log boost_1_47_0/boost/
+   cp -r boost-log/libs/log boost_1_47_0/libs/
 
 In the Boost source directory, bootstrap the build with ::
 
@@ -134,12 +134,12 @@ This compiles both dynamic and static libraries.
 
 Install the Boost libraries into your packages directory::
 
-   ./bjam cxxflags=-fPIC install --prefix=$HOME/opt/boost_1_46_1
+   ./bjam cxxflags=-fPIC install --prefix=$HOME/opt/boost_1_47_0
 
 Include Boost in your shell environment, by adding to ~/.bashrc::
 
-   export CMAKE_PREFIX_PATH="${HOME}/opt/boost_1_46_1${CMAKE_PREFIX_PATH+:$CMAKE_PREFIX_PATH}"
-   export LD_LIBRARY_PATH="${HOME}/opt/boost_1_46_1/lib${LD_LIBRARY_PATH+:$LD_LIBRARY_PATH}"
+   export CMAKE_PREFIX_PATH="${HOME}/opt/boost_1_47_0${CMAKE_PREFIX_PATH+:$CMAKE_PREFIX_PATH}"
+   export LD_LIBRARY_PATH="${HOME}/opt/boost_1_47_0/lib${LD_LIBRARY_PATH+:$LD_LIBRARY_PATH}"
 
 
 Lua interpreter
@@ -193,16 +193,16 @@ Get the latest `Luabind source package`_, currently `Luabind 0.9.1`_.
    Luabind is based on the Boost C++ libraries and uses boost-jam as its
    build tool. After bootstrapping Boost following the instructions above, the
    bjam executable is found in the top-level source directory, for example
-   ``/tmp/boost_1_46_1/bjam``. This directory also has to be passed to bjam
+   ``/tmp/boost_1_47_0/bjam``. This directory also has to be passed to bjam
    during Luabind build using the environment variable ``BOOST_ROOT``.
 
 Compile statically linked release and debug variants of the Luabind library with ::
 
-   BOOST_ROOT=/tmp/boost_1_46_1 LUA_PATH=~/opt/lua-5.1.4 /tmp/boost_1_46_1/bjam cxxflags=-fPIC link=static variant=release variant=debug
+   BOOST_ROOT=/tmp/boost_1_47_0 LUA_PATH=~/opt/lua-5.1.4 /tmp/boost_1_47_0/bjam cxxflags=-fPIC link=static variant=release variant=debug
 
 Install the Luabind library into your packages directory::
 
-   BOOST_ROOT=/tmp/boost_1_46_1 LUA_PATH=~/opt/lua-5.1.4 /tmp/boost_1_46_1/bjam cxxflags=-fPIC link=static variant=release variant=debug install --prefix=$HOME/opt/luabind-0.9.1
+   BOOST_ROOT=/tmp/boost_1_47_0 LUA_PATH=~/opt/lua-5.1.4 /tmp/boost_1_47_0/bjam cxxflags=-fPIC link=static variant=release variant=debug install --prefix=$HOME/opt/luabind-0.9.1
 
 (Note that bjam does not replace ~ with your home directory, use ``$HOME`` instead.)
 
@@ -276,7 +276,7 @@ Boost
 
 Compile and install Boost using ::
 
-   ./bjam --toolset=vacpp address-model=64 cxxflags=-qrtti=all install --prefix=$HOME/opt/powerpc-ibm-aix5.3/boost_1_46_1
+   ./bjam --toolset=vacpp address-model=64 cxxflags=-qrtti=all install --prefix=$HOME/opt/powerpc-ibm-aix5.3/boost_1_47_0
 
 Lua
 ^^^
@@ -291,7 +291,7 @@ Luabind
 
 Compile and install the Luabind library ::
 
-   BOOST_ROOT=/tmp/boost_1_46_1 LUA_PATH=~/opt/powerpc-ibm-aix5.3/lua-5.1.4 /tmp/boost_1_46_1/bjam --toolset=vacpp address-model=64 cxxflags=-qrtti=all link=static variant=release variant=debug install --prefix=$HOME/opt/powerpc-ibm-aix5.3/luabind-0.9.1
+   BOOST_ROOT=/tmp/boost_1_47_0 LUA_PATH=~/opt/powerpc-ibm-aix5.3/lua-5.1.4 /tmp/boost_1_47_0/bjam --toolset=vacpp address-model=64 cxxflags=-qrtti=all link=static variant=release variant=debug install --prefix=$HOME/opt/powerpc-ibm-aix5.3/luabind-0.9.1
 
 
 HDF5
