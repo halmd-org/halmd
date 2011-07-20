@@ -61,7 +61,18 @@ void phase_space<dimension, float_type>::set()
 
     // shift particle positions to range (-L/2, L/2)
     for (size_t i = 0; i < particle_->nbox; ++i) {
-        particle_->image[i] = box_->reduce_periodic(particle_->r[i]);
+        vector_type& r = particle_->r[i];
+        vector_type& image = particle_->image[i] = 0;
+
+        // The host implementation of reduce_periodic wraps the position at
+        // most once around the box. This is more efficient during the
+        // simulation. For setting arbitrary particle positions, however, we
+        // must ensure that the final position is actually inside the periodic
+        // box.
+        vector_type a;
+        do {
+            image += (a = box_->reduce_periodic(r));
+        } while(a != vector_type(0));
     }
 }
 
