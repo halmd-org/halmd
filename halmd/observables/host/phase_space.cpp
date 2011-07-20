@@ -61,7 +61,8 @@ void phase_space<dimension, float_type>::acquire(uint64_t step)
         // periodically extended particle position
         assert(type < sample_->r.size());
         assert(tag < sample_->r[type]->size());
-        (*sample_->r[type])[tag] = particle_->r[i] + element_prod(particle_->image[i], box_->length());
+        vector_type& r = (*sample_->r[type])[tag] = particle_->r[i];
+        box_->extend_periodic(r, particle_->image[i]);
 
         // particle velocity
         assert(type < sample_->v.size());

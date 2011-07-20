@@ -66,6 +66,9 @@ public:
     template <typename T>
     T reduce_periodic(T& r) const;
 
+    template <typename T>
+    void extend_periodic(T& r, T const& image) const;
+
     vector_type origin() const
     {
         return -length_half_;
@@ -109,6 +112,19 @@ inline T box<dimension>::reduce_periodic(T& r) const
             image[j] = 0;
     }
     return image;
+}
+
+/**
+ * extend periodically reduced distance vector by image vector
+ *
+ * This is the inverse of reduce_periodic.
+ *
+ * A GPU version is found in halmd/mdsim/gpu/box_kernel.cuh
+ */
+template <int dimension> template <typename T>
+inline void box<dimension>::extend_periodic(T& r, T const& image) const
+{
+    r += element_prod(image, static_cast<T>(length_));
 }
 
 } // namespace mdsim

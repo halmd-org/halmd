@@ -42,6 +42,7 @@ public:
     typedef mdsim::host::particle<dimension, float_type> particle_type;
     typedef mdsim::box<dimension> box_type;
     typedef logger logger_type;
+    typedef typename sample_type::vector_type vector_type;
 
     static void luaopen(lua_State* L);
 
