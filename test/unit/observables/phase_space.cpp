@@ -137,10 +137,10 @@ void phase_space<modules_type>::test()
         for (unsigned int j = 0; j < npart[i]; ++j) { // iterate over particles
             vector_type& r = (*input_sample->r[i])[j];
             vector_type& v = (*input_sample->v[i])[j];
-            r[0] = static_cast<float_type>(i);
+            r[0] = float_type(j) + float_type(1) / (i + 1); //< a large, non-integer value
             r[1] = 0;
             r[dimension - 1] = - static_cast<float_type>(j);
-            v[0] = float_type(1) / (i + 1);
+            v[0] = static_cast<float_type>(i);
             v[1] = 0;
             v[dimension - 1] = float_type(1) / (j + 1);
         }
@@ -180,8 +180,13 @@ phase_space<modules_type>::phase_space()
     BOOST_TEST_MESSAGE("initialise simulation modules");
 
     // set module parameters
-    npart = list_of(1024)(512)(30); //< choose last value smaller than warp size
-    box_length = fixed_vector<double, dimension>(15); //< small enough to have some overflow from the periodic box
+    npart = list_of(1024)(512)(30)(1); //< choose a value smaller than warp size and some limiting values
+
+    // choose a box length with is not an exactly representable as a
+    // floating-point number and which is small enough to have some overflow
+    // from the periodic box. In addition, some of the coordinates should sit
+    // precisely at the edge.
+    box_length = fixed_vector<double, dimension>(40./3);
 
     // create modules
     particle = make_shared<particle_type>(npart);
