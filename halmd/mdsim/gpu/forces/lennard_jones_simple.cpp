@@ -58,6 +58,7 @@ lennard_jones_simple<float_type>::lennard_jones_simple(
     float_type r6i_cut = rri_cut * rri_cut * rri_cut;
     en_cut_ = 4 * r6i_cut * (r6i_cut - 1);
 
+    LOG("using optimised version for a single species with ε=1, σ=1");
     LOG("potential cutoff length: r_c = " << r_cut_(0, 0));
     LOG("potential cutoff energy: U = " << en_cut_);
 
