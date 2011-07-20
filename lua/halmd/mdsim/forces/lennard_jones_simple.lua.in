@@ -37,10 +37,11 @@ module("halmd.mdsim.forces.lennard_jones_simple", halmd.modules.register)
 --
 function new(args)
     local cutoff = args.cutoff or 2.5 -- default value
+    local logger = assert(args.logger)
 
     assert(device())
     local lennard_jones_simple = assert(lennard_jones_simple_wrapper.gpu)
-    return lennard_jones_simple(cutoff)
+    return lennard_jones_simple(cutoff, logger)
 end
 
 --

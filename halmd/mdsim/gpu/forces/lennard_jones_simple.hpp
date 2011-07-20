@@ -20,10 +20,12 @@
 #ifndef HALMD_MDSIM_GPU_FORCES_LENNARD_JONES_SIMPLE_HPP
 #define HALMD_MDSIM_GPU_FORCES_LENNARD_JONES_SIMPLE_HPP
 
+#include <boost/make_shared.hpp>
 #include <boost/numeric/ublas/symmetric.hpp>
 #include <cuda_wrapper/cuda_wrapper.hpp>
 #include <lua.hpp>
 
+#include <halmd/io/logger.hpp>
 #include <halmd/mdsim/gpu/forces/pair_trunc.hpp>
 #include <halmd/mdsim/gpu/forces/lennard_jones_simple_kernel.hpp>
 
@@ -45,12 +47,16 @@ class lennard_jones_simple
 public:
     typedef lennard_jones_simple_kernel::lennard_jones_simple gpu_potential_type;
     typedef boost::numeric::ublas::symmetric_matrix<float_type, boost::numeric::ublas::lower> matrix_type;
+    typedef logger logger_type;
 
     static char const* module_name() { return "lennard_jones_simple"; }
 
     static void luaopen(lua_State* L);
 
-    lennard_jones_simple(float_type cutoff);
+    lennard_jones_simple(
+        float_type cutoff
+      , boost::shared_ptr<logger_type> logger = boost::make_shared<logger_type>()
+    );
 
     void bind_textures() const {}
 
@@ -80,6 +86,8 @@ private:
     const matrix_type epsilon_;
     /** pair separation in MD units, for coherence with lennard_jones only */
     const matrix_type sigma_;
+    /** module logger */
+    boost::shared_ptr<logger_type> logger_;
 };
 
 } // namespace mdsim
