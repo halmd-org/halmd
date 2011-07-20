@@ -135,6 +135,12 @@ void thermodynamics<dimension>::luaopen(lua_State* L)
                 .property("v_cm", &thermodynamics::v_cm)
                 .property("virial", &thermodynamics::virial)
                 .property("hypervirial", &thermodynamics::hypervirial)
+                .scope
+                [
+                    class_<runtime>("runtime")
+                        .def_readonly("sample", &runtime::sample)
+                ]
+                .def_readonly("runtime", &thermodynamics::runtime_)
         ]
     ];
 }

@@ -179,13 +179,18 @@ void from_particle<dimension, float_type>::luaopen(lua_State* L)
                         .def("register_runtimes", &from_particle::register_runtimes)
                         .property("r_skin", &from_particle::r_skin)
                         .property("cell_occupancy", &from_particle::cell_occupancy)
-                        .scope[
+                        .scope
+                        [
                             class_<defaults>("defaults")
                                 .scope
                                 [
                                     def("occupancy", &defaults::occupancy)
                                 ]
+
+                          , class_<runtime>("runtime")
+                                .def_readonly("update", &runtime::update)
                         ]
+                        .def_readonly("runtime", &from_particle::runtime_)
                 ]
             ]
         ]

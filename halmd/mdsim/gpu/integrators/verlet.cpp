@@ -158,6 +158,13 @@ void verlet<dimension, float_type>::luaopen(lua_State* L)
                         >())
                         .def("register_runtimes", &verlet::register_runtimes)
                         .property("module_name", &module_name_wrapper<dimension, float_type>)
+                        .scope
+                        [
+                            class_<runtime>("runtime")
+                                .def_readonly("integrate", &runtime::integrate)
+                                .def_readonly("finalize", &runtime::finalize)
+                        ]
+                        .def_readonly("runtime", &verlet::runtime_)
                 ]
             ]
         ]

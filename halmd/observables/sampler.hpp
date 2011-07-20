@@ -75,6 +75,9 @@ public:
         return total_time_;
     }
 
+    /** Lua bindings */
+    static void luaopen(lua_State* L);
+
 private:
     void prepare(slot_function_type const& slot, step_type interval, step_type step) const;
     void sample(slot_function_type const& slot, step_type interval, step_type step) const;

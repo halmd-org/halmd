@@ -163,6 +163,13 @@ void maximum_squared_displacement<dimension, float_type>::luaopen(lua_State* L)
                     .def("register_runtimes", &maximum_squared_displacement::register_runtimes)
                     .property("zero", &wrap_zero<dimension, float_type>)
                     .property("compute", &wrap_compute<dimension, float_type>)
+                    .scope
+                    [
+                        class_<runtime>("runtime")
+                            .def_readonly("zero", &runtime::zero)
+                            .def_readonly("compute", &runtime::compute)
+                    ]
+                    .def_readonly("runtime", &maximum_squared_displacement::runtime_)
             ]
         ]
     ];

@@ -222,13 +222,18 @@ void binning<dimension, float_type>::luaopen(lua_State* L)
                     .property("update", &wrap_update<binning>)
                     .property("r_skin", &binning::r_skin)
                     .property("cell_occupancy", &binning::cell_occupancy)
-                    .scope[
+                    .scope
+                    [
                         class_<defaults>("defaults")
                             .scope
                             [
                                 def("occupancy", &defaults::occupancy)
                             ]
+
+                      , class_<runtime>("runtime")
+                            .def_readonly("update", &runtime::update)
                     ]
+                    .def_readonly("runtime", &binning::runtime_)
             ]
         ]
     ];

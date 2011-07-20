@@ -230,6 +230,12 @@ void lattice<dimension, float_type, RandomNumberGenerator>::luaopen(lua_State* L
                         .property("slab", &lattice::slab)
                         .def("register_runtimes", &lattice::register_runtimes)
                         .property("module_name", &module_name_wrapper<dimension, float_type, RandomNumberGenerator>)
+                        .scope
+                        [
+                            class_<runtime>("runtime")
+                                .def_readonly("set", &runtime::set)
+                        ]
+                        .def_readonly("runtime", &lattice::runtime_)
                 ]
             ]
         ]

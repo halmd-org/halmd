@@ -40,7 +40,7 @@ public:
     typedef mdsim::clock clock_type;
     typedef utility::profiler profiler_type;
 
-    struct runtime_type
+    struct runtime
     {
         typedef profiler_type::accumulator_type accumulator_type;
         accumulator_type setup;
@@ -51,12 +51,6 @@ public:
     void register_runtimes(profiler_type& profiler) const;
     void setup();
     void mdstep();
-
-    /** profiling runtime accumulators */
-    runtime_type const& runtime() const
-    {
-        return runtime_;
-    }
 
     connection_type on_prepend_setup(slot_function_type const& slot)
     {
@@ -118,6 +112,9 @@ public:
         return on_append_finalize_.connect(slot);
     }
 
+    /** Lua bindings */
+    static void luaopen(lua_State* L);
+
 private:
     boost::shared_ptr<clock_type> clock_;
     signal_type on_prepend_setup_;
@@ -132,7 +129,7 @@ private:
     signal_type on_prepend_finalize_;
     signal_type on_finalize_;
     signal_type on_append_finalize_;
-    runtime_type runtime_;
+    runtime runtime_;
 };
 
 } // namespace mdsim

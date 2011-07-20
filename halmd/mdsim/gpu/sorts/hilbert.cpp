@@ -171,6 +171,14 @@ void hilbert<dimension, float_type>::luaopen(lua_State* L)
                         >())
                         .property("module_name", &module_name_wrapper<dimension, float_type>)
                         .def("register_runtimes", &hilbert::register_runtimes)
+                        .scope
+                        [
+                            class_<runtime>("runtime")
+                                .def_readonly("map", &runtime::map)
+                                .def_readonly("permutation", &runtime::permutation)
+                                .def_readonly("order", &runtime::order)
+                        ]
+                        .def_readonly("runtime", &hilbert::runtime_)
                 ]
             ]
         ]

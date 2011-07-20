@@ -177,13 +177,18 @@ void from_binning<dimension, float_type>::luaopen(lua_State* L)
                         .def("register_runtimes", &from_binning::register_runtimes)
                         .property("r_skin", &from_binning::r_skin)
                         .property("cell_occupancy", &from_binning::cell_occupancy)
-                        .scope[
+                        .scope
+                        [
                             class_<defaults>("defaults")
                                 .scope
                                 [
                                     def("occupancy", &defaults::occupancy)
                                 ]
+
+                          , class_<runtime>("runtime")
+                                .def_readonly("update", &runtime::update)
                         ]
+                        .def_readonly("runtime", &from_binning::runtime_)
                 ]
             ]
         ]

@@ -290,6 +290,12 @@ void pair_trunc<dimension, float_type, potential_type>::luaopen(lua_State* L)
                             .def("register_runtimes", &pair_trunc::register_runtimes)
                             .property("r_cut", &pair_trunc::r_cut)
                             .property("module_name", &module_name_wrapper<dimension, float_type, potential_type>)
+                            .scope
+                            [
+                                class_<runtime>("runtime")
+                                    .def_readonly("compute", &runtime::compute)
+                            ]
+                            .def_readonly("runtime", &pair_trunc::runtime_)
                     ]
                 ]
             ]

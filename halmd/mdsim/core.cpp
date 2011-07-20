@@ -84,7 +84,7 @@ void core::mdstep()
     on_append_finalize_();
 }
 
-HALMD_LUA_API int luaopen_libhalmd_mdsim_core(lua_State* L)
+void core::luaopen(lua_State* L)
 {
     using namespace luabind;
     module(L, "libhalmd")
@@ -108,8 +108,20 @@ HALMD_LUA_API int luaopen_libhalmd_mdsim_core(lua_State* L)
                 .def("on_prepend_finalize", &core::on_prepend_finalize)
                 .def("on_finalize", &core::on_finalize)
                 .def("on_append_finalize", &core::on_append_finalize)
+                .scope
+                [
+                    class_<runtime>("runtime")
+                        .def_readonly("setup", &runtime::setup)
+                        .def_readonly("mdstep", &runtime::mdstep)
+                ]
+                .def_readonly("runtime", &core::runtime_)
         ]
     ];
+}
+
+HALMD_LUA_API int luaopen_libhalmd_mdsim_core(lua_State* L)
+{
+    core::luaopen(L);
     return 0;
 }
 

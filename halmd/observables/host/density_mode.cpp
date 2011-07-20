@@ -121,6 +121,12 @@ void density_mode<dimension, float_type>::luaopen(lua_State* L)
                       , shared_ptr<logger_type>
                     >())
                     .def("register_runtimes", &density_mode::register_runtimes)
+                    .scope
+                    [
+                        class_<runtime>("runtime")
+                            .def_readonly("sample", &runtime::sample)
+                    ]
+                    .def_readonly("runtime", &density_mode::runtime_)
             ]
         ]
     ];

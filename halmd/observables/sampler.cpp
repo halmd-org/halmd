@@ -139,7 +139,7 @@ void sampler::sample(slot_function_type const& slot, step_type interval, step_ty
     }
 }
 
-HALMD_LUA_API int luaopen_libhalmd_observables_sampler(lua_State* L)
+void sampler::luaopen(lua_State* L)
 {
     using namespace luabind;
     module(L, "libhalmd")
@@ -158,7 +158,18 @@ HALMD_LUA_API int luaopen_libhalmd_observables_sampler(lua_State* L)
             .def("run", &sampler::run)
             .property("steps", &sampler::steps)
             .property("total_time", &sampler::total_time)
+            .scope
+            [
+                class_<runtime>("runtime")
+                    .def_readonly("total", &runtime::total)
+            ]
+            .def_readonly("runtime", &sampler::runtime_)
     ];
+}
+
+HALMD_LUA_API int luaopen_libhalmd_observables_sampler(lua_State* L)
+{
+    sampler::luaopen(L);
     return 0;
 }
 

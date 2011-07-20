@@ -205,6 +205,12 @@ void ssf<dimension>::luaopen(lua_State* L)
                 .property("wavevector", &ssf::wavevector)
                 .property("sample", &sample_wrapper<ssf>)
                 .def("on_sample", &ssf::on_sample)
+                .scope
+                [
+                    class_<runtime>("runtime")
+                        .def_readonly("sample", &runtime::sample)
+                ]
+                .def_readonly("runtime", &ssf::runtime_)
         ]
     ];
 }
