@@ -30,6 +30,7 @@
 #include <halmd/io/logger.hpp>
 #include <halmd/mdsim/box.hpp>
 #include <halmd/mdsim/host/particle.hpp>
+#include <halmd/utility/profiler.hpp>
 
 namespace halmd {
 namespace mdsim {
@@ -86,6 +87,15 @@ public:
     }
 
 private:
+    typedef utility::profiler profiler_type;
+    typedef typename profiler_type::accumulator_type accumulator_type;
+    typedef typename profiler_type::scoped_timer_type scoped_timer_type;
+
+    struct runtime
+    {
+        accumulator_type update;
+    };
+
     //! system state
     boost::shared_ptr<particle_type const> particle_;
     /** module logger */
@@ -98,6 +108,8 @@ private:
     cell_size_type ncell_;
     /** cell edge lengths */
     vector_type cell_length_;
+    /** profiling runtime accumulators */
+    runtime runtime_;
 };
 
 } // namespace host
