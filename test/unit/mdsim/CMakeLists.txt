@@ -5,7 +5,7 @@ add_subdirectory(velocities)
 # module box
 add_executable(test_unit_mdsim_box
   box.cpp
-  box_kernel.cu # FIXME WITH_CUDA guards
+  box_kernel.cu
 )
 target_link_libraries(test_unit_mdsim_box
   libhalmd
