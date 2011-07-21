@@ -22,6 +22,7 @@ require("halmd.modules")
 -- command-line options override H5MD file parameters
 require("halmd.option")
 require("halmd.parameter")
+require("halmd.log")
 
 require("halmd.io.statevars.writer")
 require("halmd.io.trajectory.reader")
