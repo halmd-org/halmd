@@ -1,5 +1,5 @@
 /*
- * Copyright © 2008-2010  Peter Colberg
+ * Copyright © 2008-2011  Peter Colberg
  *
  * This file is part of HALMD.
  *
@@ -62,6 +62,7 @@ void verlet<dimension, float_type>::timestep(double timestep)
 template <int dimension, typename float_type>
 void verlet<dimension, float_type>::integrate()
 {
+    scoped_timer_type timer(runtime_.integrate);
     for (size_t i = 0; i < particle_->nbox; ++i) {
         vector_type& v = particle_->v[i] += particle_->f[i] * timestep_half_;
         vector_type& r = particle_->r[i] += v * timestep_;
@@ -78,6 +79,7 @@ void verlet<dimension, float_type>::integrate()
 template <int dimension, typename float_type>
 void verlet<dimension, float_type>::finalize()
 {
+    scoped_timer_type timer(runtime_.finalize);
     for (size_t i = 0; i < particle_->nbox; ++i) {
         particle_->v[i] += particle_->f[i] * timestep_half_;
     }
@@ -110,6 +112,13 @@ void verlet<dimension, float_type>::luaopen(lua_State* L)
                           , shared_ptr<logger_type>
                         >())
                         .property("module_name", &module_name_wrapper<dimension, float_type>)
+                        .scope
+                        [
+                            class_<runtime>("runtime")
+                                .def_readonly("integrate", &runtime::integrate)
+                                .def_readonly("finalize", &runtime::finalize)
+                        ]
+                        .def_readonly("runtime", &verlet::runtime_)
                 ]
             ]
         ]
