@@ -53,6 +53,8 @@ void phase_space<dimension, float_type>::set()
 {
     LOG("set particle velocities from phase space sample");
 
+    scoped_timer_type timer(runtime_.set);
+
     for (size_t j = 0, i = 0; j < particle_->ntype; i += particle_->ntypes[j], ++j) {
         assert(sample_->v[j]->size() + i <= particle_->v.size());
         copy(sample_->v[j]->begin(), sample_->v[j]->end(), particle_->v.begin() + i);
@@ -78,6 +80,12 @@ void phase_space<dimension, float_type>::luaopen(lua_State* L)
                            , shared_ptr<sample_type const>
                            , shared_ptr<logger_type>
                         >())
+                        .scope
+                        [
+                            class_<runtime>("runtime")
+                                .def_readonly("set", &runtime::set)
+                        ]
+                        .def_readonly("runtime", &phase_space::runtime_)
                 ]
             ]
         ]
