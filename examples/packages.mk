@@ -511,3 +511,57 @@ env-python-sphinx:
 	@echo '# add python-sphinx $(PYTHON_SPHINX_VERSION) to environment'
 	@echo 'export PATH="$(PREFIX)/$(PYTHON_SPHINX_INSTALL_DIR)/bin$${PATH+:$$PATH}"'
 	@echo 'export PYTHONPATH="$(PYTHON_SPHINX_PYTHONPATH)$${PYTHONPATH+:$$PYTHONPATH}"'
+
+##
+## Doxygen
+##
+
+DOXYGEN_VERSION = 1.7.4
+DOXYGEN_TARBALL = doxygen-$(DOXYGEN_VERSION).src.tar.gz
+DOXYGEN_TARBALL_URL = http://ftp.stack.nl/pub/users/dimitri/$(DOXYGEN_TARBALL)
+DOXYGEN_BUILD_DIR = doxygen-$(DOXYGEN_VERSION)
+DOXYGEN_INSTALL_DIR = doxygen-$(DOXYGEN_VERSION)
+
+.fetch-doxygen:
+	$(WGET) $(DOXYGEN_TARBALL_URL)
+	@$(TOUCH) $@
+
+fetch-doxygen: .fetch-doxygen
+
+.extract-doxygen: .fetch-doxygen
+	$(RM) $(DOXYGEN_BUILD_DIR)
+	$(TAR) -xzf $(DOXYGEN_TARBALL)
+	@$(TOUCH) $@
+
+extract-doxygen: .extract-doxygen
+
+.configure-doxygen: .extract-doxygen
+	cd $(DOXYGEN_BUILD_DIR) && ./configure --prefix $(PREFIX)/$(DOXYGEN_INSTALL_DIR)
+	@$(TOUCH) $@
+
+configure-doxygen: .configure-doxygen
+
+.build-doxygen: .configure-doxygen
+	cd $(DOXYGEN_BUILD_DIR) && make $(PARALLEL_BUILD_FLAGS)
+	@$(TOUCH) $@
+
+build-doxygen: .build-doxygen
+
+install-doxygen: .build-doxygen
+	cd $(DOXYGEN_BUILD_DIR) && make install
+
+clean-doxygen:
+	@$(RM) .build-doxygen
+	@$(RM) .configure-doxygen
+	@$(RM) .extract-doxygen
+	$(RM) $(DOXYGEN_BUILD_DIR)
+
+distclean-doxygen: clean-doxygen
+	@$(RM) .fetch-doxygen
+	$(RM) $(DOXYGEN_TARBALL)
+
+env-doxygen:
+	@echo
+	@echo '# add Doxygen $(DOXYGEN_VERSION) to environment'
+	@echo 'export PATH="$(PREFIX)/$(DOXYGEN_INSTALL_DIR)/bin$${PATH+:$$PATH}"'
+	@echo 'export MANPATH="$(PREFIX)/$(DOXYGEN_INSTALL_DIR)/man$${MANPATH+:$$MANPATH}"'
