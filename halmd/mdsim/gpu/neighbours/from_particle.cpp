@@ -22,9 +22,7 @@
 #include <halmd/mdsim/gpu/neighbours/from_particle.hpp>
 #include <halmd/mdsim/gpu/neighbours/from_particle_kernel.hpp>
 #include <halmd/utility/lua/lua.hpp>
-#include <halmd/utility/scoped_timer.hpp>
 #include <halmd/utility/signal.hpp>
-#include <halmd/utility/timer.hpp>
 
 using namespace boost;
 using namespace std;
@@ -115,7 +113,7 @@ void from_particle<dimension, float_type>::update()
 
     LOG_TRACE("update neighbour lists");
 
-    scoped_timer<timer> timer_(runtime_.update);
+    scoped_timer_type timer(runtime_.update);
 
     // mark neighbour list placeholders as virtual particles
     cuda::memset(g_neighbour_, 0xFF);

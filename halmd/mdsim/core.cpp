@@ -22,8 +22,6 @@
 #include <halmd/io/logger.hpp>
 #include <halmd/mdsim/core.hpp>
 #include <halmd/utility/lua/lua.hpp>
-#include <halmd/utility/scoped_timer.hpp>
-#include <halmd/utility/timer.hpp>
 
 using namespace boost;
 using namespace std;
@@ -54,7 +52,7 @@ void core::register_runtimes(profiler_type& profiler) const
  */
 void core::setup()
 {
-    scoped_timer<timer> timer_(runtime_.setup);
+    scoped_timer_type timer(runtime_.setup);
 
     on_prepend_setup_();
     on_setup_();
@@ -66,7 +64,7 @@ void core::setup()
  */
 void core::mdstep()
 {
-    scoped_timer<timer> timer_(runtime_.mdstep);
+    scoped_timer_type timer(runtime_.mdstep);
 
     // increment 1-based simulation step
     clock_->advance();

@@ -23,8 +23,6 @@
 
 #include <halmd/mdsim/host/integrators/verlet_nvt_andersen.hpp>
 #include <halmd/utility/lua/lua.hpp>
-#include <halmd/utility/scoped_timer.hpp>
-#include <halmd/utility/timer.hpp>
 
 using namespace boost;
 using namespace std;
@@ -91,7 +89,7 @@ void verlet_nvt_andersen<dimension, float_type>::temperature(double temperature)
 template <int dimension, typename float_type>
 void verlet_nvt_andersen<dimension, float_type>::integrate()
 {
-    scoped_timer<timer> timer_(runtime_.integrate);
+    scoped_timer_type timer(runtime_.integrate);
 
     for (size_t i = 0; i < particle_->nbox; ++i) {
         vector_type& v = particle_->v[i] += particle_->f[i] * timestep_half_;
@@ -109,7 +107,7 @@ void verlet_nvt_andersen<dimension, float_type>::integrate()
 template <int dimension, typename float_type>
 void verlet_nvt_andersen<dimension, float_type>::finalize()
 {
-    scoped_timer<timer> timer_(runtime_.finalize);
+    scoped_timer_type timer(runtime_.finalize);
 
     // cache random numbers
     float_type rng_cache = 0;

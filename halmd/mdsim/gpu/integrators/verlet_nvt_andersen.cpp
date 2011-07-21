@@ -23,8 +23,6 @@
 
 #include <halmd/mdsim/gpu/integrators/verlet_nvt_andersen.hpp>
 #include <halmd/utility/lua/lua.hpp>
-#include <halmd/utility/scoped_timer.hpp>
-#include <halmd/utility/timer.hpp>
 
 using namespace boost;
 using namespace std;
@@ -125,7 +123,7 @@ void verlet_nvt_andersen<dimension, float_type, RandomNumberGenerator>::
 integrate()
 {
     try {
-        scoped_timer<timer> timer_(runtime_.integrate);
+        scoped_timer_type timer(runtime_.integrate);
         cuda::configure(particle_->dim.grid, particle_->dim.block);
         wrapper_type::kernel.integrate(
             particle_->g_r, particle_->g_image, particle_->g_v, particle_->g_f);
@@ -149,7 +147,7 @@ finalize()
     // which saves one additional read of the forces plus the additional kernel execution
     // and scheduling
     try {
-        scoped_timer<timer> timer_(runtime_.finalize);
+        scoped_timer_type timer(runtime_.finalize);
         // use CUDA execution dimensions of 'random' since
         // the kernel makes use of the random number generator
         cuda::configure(random_->rng().dim.grid, random_->rng().dim.block);

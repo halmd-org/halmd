@@ -32,8 +32,6 @@
 #include <halmd/mdsim/gpu/particle.hpp>
 #include <halmd/utility/lua/lua.hpp>
 #include <halmd/utility/profiler.hpp>
-#include <halmd/utility/scoped_timer.hpp>
-#include <halmd/utility/timer.hpp>
 
 namespace halmd {
 namespace mdsim {
@@ -117,6 +115,8 @@ public:
     }
 
 private:
+    typedef typename profiler_type::scoped_timer_type scoped_timer_type;
+
     /** neighbour lists */
     boost::shared_ptr<neighbour_type const> neighbour_;
 
@@ -161,7 +161,7 @@ pair_trunc<dimension, float_type, potential_type>::pair_trunc(
 template <int dimension, typename float_type, typename potential_type>
 void pair_trunc<dimension, float_type, potential_type>::compute()
 {
-    scoped_timer<timer> timer_(runtime_.compute);
+    scoped_timer_type timer(runtime_.compute);
 
     cuda::copy(neighbour_->size(), gpu_wrapper::kernel.neighbour_size);
     cuda::copy(neighbour_->stride(), gpu_wrapper::kernel.neighbour_stride);

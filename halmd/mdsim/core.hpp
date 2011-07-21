@@ -116,6 +116,8 @@ public:
     static void luaopen(lua_State* L);
 
 private:
+    typedef profiler_type::scoped_timer_type scoped_timer_type;
+
     boost::shared_ptr<clock_type> clock_;
     signal_type on_prepend_setup_;
     signal_type on_setup_;

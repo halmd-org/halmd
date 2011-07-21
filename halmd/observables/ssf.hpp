@@ -98,6 +98,8 @@ public:
     }
 
 private:
+    typedef profiler_type::scoped_timer_type scoped_timer_type;
+
     boost::shared_ptr<density_mode_type const> density_mode_;
     boost::shared_ptr<logger_type> logger_;
 

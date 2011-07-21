@@ -34,8 +34,6 @@
 #include <halmd/mdsim/host/particle.hpp>
 #include <halmd/utility/lua/lua.hpp>
 #include <halmd/utility/profiler.hpp>
-#include <halmd/utility/scoped_timer.hpp>
-#include <halmd/utility/timer.hpp>
 
 namespace halmd {
 namespace mdsim {
@@ -127,6 +125,8 @@ public:
     }
 
 private:
+    typedef typename profiler_type::scoped_timer_type scoped_timer_type;
+
     boost::shared_ptr<neighbour_type const> neighbour_;
 
     /** flag for switching the computation of auxiliary variables in function compute() */
@@ -177,7 +177,7 @@ void pair_trunc<dimension, float_type, potential_type>::register_runtimes(profil
 template <int dimension, typename float_type, typename potential_type>
 void pair_trunc<dimension, float_type, potential_type>::compute()
 {
-    scoped_timer<timer> timer_(runtime_.compute);
+    scoped_timer_type timer(runtime_.compute);
 
     // call implementation which fits to current value of aux_flag_
     if (!aux_flag_) {

@@ -22,9 +22,7 @@
 
 #include <halmd/mdsim/gpu/binning.hpp>
 #include <halmd/utility/lua/lua.hpp>
-#include <halmd/utility/scoped_timer.hpp>
 #include <halmd/utility/signal.hpp>
-#include <halmd/utility/timer.hpp>
 
 using namespace boost;
 using namespace std;
@@ -158,7 +156,7 @@ void binning<dimension, float_type>::update()
 {
     LOG_TRACE("update cell lists");
 
-    scoped_timer<timer> timer_(runtime_.update);
+    scoped_timer_type timer(runtime_.update);
 
     // compute cell indices for particle positions
     cuda::configure(particle_->dim.grid, particle_->dim.block);

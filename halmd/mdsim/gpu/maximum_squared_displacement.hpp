@@ -56,6 +56,7 @@ public:
 private:
     typedef typename particle_type::vector_type vector_type;
     typedef typename maximum_squared_displacement_wrapper<dimension>::displacement_impl_type displacement_impl_type;
+    typedef typename profiler_type::scoped_timer_type scoped_timer_type;
 
     struct runtime
     {

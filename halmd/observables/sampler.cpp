@@ -22,8 +22,6 @@
 #include <halmd/io/logger.hpp>
 #include <halmd/observables/sampler.hpp>
 #include <halmd/utility/lua/lua.hpp>
-#include <halmd/utility/scoped_timer.hpp>
-#include <halmd/utility/timer.hpp>
 
 using namespace boost;
 using namespace std;
@@ -71,7 +69,7 @@ void sampler::run()
 
     LOG("starting simulation run");
     {
-        scoped_timer<timer> timer_(runtime_.total);
+        scoped_timer_type timer(runtime_.total);
 
         while (clock_->step() < steps_) {
             on_prepare_(clock_->step() + 1); //< step counter is increased by call to mdstep()

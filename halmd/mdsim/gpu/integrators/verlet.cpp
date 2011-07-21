@@ -23,8 +23,6 @@
 
 #include <halmd/mdsim/gpu/integrators/verlet.hpp>
 #include <halmd/utility/lua/lua.hpp>
-#include <halmd/utility/scoped_timer.hpp>
-#include <halmd/utility/timer.hpp>
 
 using namespace boost;
 using namespace std;
@@ -96,7 +94,7 @@ template <int dimension, typename float_type>
 void verlet<dimension, float_type>::integrate()
 {
     try {
-        scoped_timer<timer> timer_(runtime_.integrate);
+        scoped_timer_type timer(runtime_.integrate);
         cuda::configure(particle_->dim.grid, particle_->dim.block);
         wrapper_->integrate(
             particle_->g_r, particle_->g_image, particle_->g_v, particle_->g_f);
@@ -119,7 +117,7 @@ void verlet<dimension, float_type>::finalize()
     // which saves one additional read of the forces plus the additional kernel execution
     // and scheduling
     try {
-        scoped_timer<timer> timer_(runtime_.finalize);
+        scoped_timer_type timer(runtime_.finalize);
         cuda::configure(particle_->dim.grid, particle_->dim.block);
         wrapper_->finalize(particle_->g_v, particle_->g_f);
         cuda::thread::synchronize();

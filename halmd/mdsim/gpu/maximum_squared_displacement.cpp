@@ -25,8 +25,6 @@
 #include <halmd/mdsim/gpu/maximum_squared_displacement.hpp>
 #include <halmd/utility/lua/lua.hpp>
 #include <halmd/utility/predicates/greater.hpp>
-#include <halmd/utility/scoped_timer.hpp>
-#include <halmd/utility/timer.hpp>
 
 using namespace boost;
 using namespace std;
@@ -105,7 +103,7 @@ void maximum_squared_displacement<dimension, float_type>::zero()
 {
     LOG_TRACE("zero maximum squared displacement");
 
-    scoped_timer<timer> timer_(runtime_.zero);
+    scoped_timer_type timer(runtime_.zero);
     cuda::copy(particle_->g_r, g_r0_);
 }
 
@@ -117,7 +115,7 @@ float_type maximum_squared_displacement<dimension, float_type>::compute()
 {
     LOG_TRACE("compute maximum squared displacement");
 
-    scoped_timer<timer> timer_(runtime_.compute);
+    scoped_timer_type timer(runtime_.compute);
     try {
         cuda::configure(dim_reduce_.grid, dim_reduce_.block, dim_reduce_.threads_per_block() * sizeof(float));
         displacement_impl_(particle_->g_r, g_r0_, g_rr_);

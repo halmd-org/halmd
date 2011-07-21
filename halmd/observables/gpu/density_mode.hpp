@@ -113,6 +113,8 @@ public:
     }
 
 private:
+    typedef typename profiler_type::scoped_timer_type scoped_timer_type;
+
     boost::shared_ptr<phase_space_type const> phase_space_;
     boost::shared_ptr<wavevector_type const> wavevector_;
     boost::shared_ptr<logger_type> logger_;

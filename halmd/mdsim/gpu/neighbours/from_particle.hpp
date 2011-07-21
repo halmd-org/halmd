@@ -125,6 +125,8 @@ public:
     }
 
 private:
+    typedef typename profiler_type::scoped_timer_type scoped_timer_type;
+
     struct runtime
     {
         typedef typename profiler_type::accumulator_type accumulator_type;

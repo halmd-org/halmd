@@ -25,8 +25,6 @@
 #include <halmd/algorithm/gpu/radix_sort.hpp>
 #include <halmd/mdsim/gpu/sorts/hilbert.hpp>
 #include <halmd/utility/lua/lua.hpp>
-#include <halmd/utility/scoped_timer.hpp>
-#include <halmd/utility/timer.hpp>
 
 using namespace boost;
 using namespace halmd::algorithm::gpu;
@@ -99,7 +97,7 @@ void hilbert<dimension, float_type>::order()
 template <int dimension, typename float_type>
 void hilbert<dimension, float_type>::map(cuda::vector<unsigned int>& g_map)
 {
-    scoped_timer<timer> timer_(runtime_.map);
+    scoped_timer_type timer(runtime_.map);
     cuda::configure(particle_->dim.grid, particle_->dim.block);
     wrapper_type::kernel.map(particle_->g_r, g_map);
 }
@@ -110,7 +108,7 @@ void hilbert<dimension, float_type>::map(cuda::vector<unsigned int>& g_map)
 template <int dimension, typename float_type>
 void hilbert<dimension, float_type>::permutation(cuda::vector<unsigned int>& g_map, cuda::vector<unsigned int>& g_index)
 {
-    scoped_timer<timer> timer_(runtime_.permutation);
+    scoped_timer_type timer(runtime_.permutation);
     cuda::configure(particle_->dim.grid, particle_->dim.block);
     wrapper_type::kernel.gen_index(g_index);
     radix_sort<unsigned int> sort(particle_->nbox, particle_->dim.threads_per_block());
@@ -123,8 +121,7 @@ void hilbert<dimension, float_type>::permutation(cuda::vector<unsigned int>& g_m
 template <int dimension, typename float_type>
 void hilbert<dimension, float_type>::order(cuda::vector<unsigned int> const& g_index)
 {
-    scoped_timer<timer> timer_(runtime_.order);
-
+    scoped_timer_type timer(runtime_.order);
     cuda::vector<float4> g_r(particle_->g_r.size());
     cuda::vector<gpu_vector_type> g_image(particle_->g_image.size());
     cuda::vector<float4> g_v(particle_->g_v.size());

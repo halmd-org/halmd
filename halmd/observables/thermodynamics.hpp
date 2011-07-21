@@ -104,6 +104,8 @@ public:
     double en_tot() { return en_pot() + en_kin(); }
 
 private:
+    typedef profiler_type::scoped_timer_type scoped_timer_type;
+
     boost::shared_ptr<box_type const> box_;
     boost::shared_ptr<clock_type const> clock_;
     boost::shared_ptr<logger_type> logger_;

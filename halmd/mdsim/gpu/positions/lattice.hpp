@@ -75,6 +75,8 @@ public:
     typename box_type::vector_type const& slab() const { return slab_; }
 
 private:
+    typedef typename profiler_type::scoped_timer_type scoped_timer_type;
+
     boost::shared_ptr<particle_type> particle_;
     boost::shared_ptr<box_type const> box_;
     boost::shared_ptr<random_type> random_;

@@ -78,6 +78,8 @@ public:
     }
 
 private:
+    typedef typename profiler_type::scoped_timer_type scoped_timer_type;
+
     void map(cuda::vector<unsigned int>& g_map);
     void permutation(cuda::vector<unsigned int>& g_map, cuda::vector<unsigned int>& g_index);
     void order(cuda::vector<unsigned int> const& g_index);

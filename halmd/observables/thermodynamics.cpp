@@ -21,8 +21,6 @@
 
 #include <halmd/observables/thermodynamics.hpp>
 #include <halmd/utility/lua/lua.hpp>
-#include <halmd/utility/scoped_timer.hpp>
-#include <halmd/utility/timer.hpp>
 
 using namespace boost;
 using namespace std;
@@ -86,7 +84,7 @@ void thermodynamics<dimension>::sample(uint64_t step)
 
     LOG_TRACE("acquire sample");
 
-    scoped_timer<timer> timer_(runtime_.sample);
+    scoped_timer_type timer(runtime_.sample);
     en_pot_ = en_pot();
     en_kin_ = en_kin();
     v_cm_ = v_cm();

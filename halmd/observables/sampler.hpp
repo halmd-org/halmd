@@ -79,6 +79,8 @@ public:
     static void luaopen(lua_State* L);
 
 private:
+    typedef profiler_type::scoped_timer_type scoped_timer_type;
+
     void prepare(slot_function_type const& slot, step_type interval, step_type step) const;
     void sample(slot_function_type const& slot, step_type interval, step_type step) const;
 

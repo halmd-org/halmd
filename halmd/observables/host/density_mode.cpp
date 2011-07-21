@@ -21,8 +21,6 @@
 
 #include <halmd/observables/host/density_mode.hpp>
 #include <halmd/utility/lua/lua.hpp>
-#include <halmd/utility/scoped_timer.hpp>
-#include <halmd/utility/timer.hpp>
 
 using namespace boost;
 using namespace std;
@@ -61,7 +59,7 @@ void density_mode<dimension, float_type>::register_runtimes(profiler_type& profi
 template <int dimension, typename float_type>
 void density_mode<dimension, float_type>::acquire(uint64_t step)
 {
-    scoped_timer<timer> timer_(runtime_.sample);
+    scoped_timer_type timer(runtime_.sample);
 
     if (rho_sample_.step == step) {
         LOG_TRACE("sample is up to date");

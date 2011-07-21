@@ -25,8 +25,6 @@
 
 #include <halmd/observables/ssf.hpp>
 #include <halmd/utility/lua/lua.hpp>
-#include <halmd/utility/scoped_timer.hpp>
-#include <halmd/utility/timer.hpp>
 
 using namespace boost;
 using namespace std;
@@ -139,7 +137,7 @@ void ssf<dimension>::sample(uint64_t step)
 template <int dimension>
 void ssf<dimension>::compute_()
 {
-    scoped_timer<timer> timer_(runtime_.sample);
+    scoped_timer_type timer(runtime_.sample);
 
     typedef typename density_mode_type::result_type::value_type::element_type rho_vector_type;
     typedef typename density_mode_type::wavevector_type::map_type wavevector_map_type;
