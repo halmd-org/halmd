@@ -62,7 +62,7 @@ CMAKE_CUDA_PATCH_URL = http://sourceforge.net/projects/halmd/files/patches/$(CMA
 CMAKE_LIB64_PATCH = cmake_find_library_lib64_in_cxx_project.patch
 CMAKE_LIB64_PATCH_URL = http://sourceforge.net/projects/halmd/files/patches/$(CMAKE_LIB64_PATCH)
 CMAKE_BUILD_DIR = cmake-$(CMAKE_VERSION)
-CMAKE_INSTALL_DIR = cmake-$(CMAKE_VERSION)
+CMAKE_INSTALL_DIR = $(PREFIX)/cmake-$(CMAKE_VERSION)
 
 .fetch-cmake:
 	$(WGET) $(CMAKE_TARBALL_URL)
@@ -82,7 +82,7 @@ fetch-cmake: .fetch-cmake
 extract-cmake: .extract-cmake
 
 .configure-cmake: .extract-cmake
-	cd $(CMAKE_BUILD_DIR) && ./configure --prefix=$(PREFIX)/$(CMAKE_INSTALL_DIR)
+	cd $(CMAKE_BUILD_DIR) && ./configure --prefix=$(CMAKE_INSTALL_DIR)
 	@$(TOUCH) $@
 
 configure-cmake: .configure-cmake
@@ -111,8 +111,8 @@ distclean-cmake: clean-cmake
 env-cmake:
 	@echo
 	@echo '# add CMake $(CMAKE_VERSION) to environment'
-	@echo 'export PATH="$(PREFIX)/$(CMAKE_INSTALL_DIR)/bin$${PATH+:$$PATH}"'
-	@echo 'export MANPATH="$(PREFIX)/$(CMAKE_INSTALL_DIR)/man$${MANPATH+:$$MANPATH}"'
+	@echo 'export PATH="$(CMAKE_INSTALL_DIR)/bin$${PATH+:$$PATH}"'
+	@echo 'export MANPATH="$(CMAKE_INSTALL_DIR)/man$${MANPATH+:$$MANPATH}"'
 
 ##
 ## Lua
@@ -124,7 +124,7 @@ LUA_TARBALL_URL = http://www.lua.org/ftp/$(LUA_TARBALL)
 LUA_PATCH = patch-lua-5.1.4-2
 LUA_PATCH_URL = http://www.lua.org/ftp/$(LUA_PATCH)
 LUA_BUILD_DIR = lua-$(LUA_VERSION)
-LUA_INSTALL_DIR = lua-$(LUA_VERSION)
+LUA_INSTALL_DIR = $(PREFIX)/lua-$(LUA_VERSION)
 LUA_CFLAGS = -DLUA_USE_LINUX -fPIC -O2 -Wall
 
 .fetch-lua:
@@ -149,7 +149,7 @@ extract-lua: .extract-lua
 build-lua: .build-lua
 
 install-lua: .build-lua
-	cd $(LUA_BUILD_DIR) && make install INSTALL_TOP=$(PREFIX)/$(LUA_INSTALL_DIR)
+	cd $(LUA_BUILD_DIR) && make install INSTALL_TOP=$(LUA_INSTALL_DIR)
 
 clean-lua:
 	@$(RM) .build-lua
@@ -164,9 +164,9 @@ distclean-lua: clean-lua
 env-lua:
 	@echo
 	@echo '# add Lua $(LUA_VERSION) to environment'
-	@echo 'export PATH="$(PREFIX)/$(LUA_INSTALL_DIR)/bin$${PATH+:$$PATH}"'
-	@echo 'export MANPATH="$(PREFIX)/$(LUA_INSTALL_DIR)/man$${MANPATH+:$$MANPATH}"'
-	@echo 'export CMAKE_PREFIX_PATH="$(PREFIX)/$(LUA_INSTALL_DIR)$${CMAKE_PREFIX_PATH+:$$CMAKE_PREFIX_PATH}"'
+	@echo 'export PATH="$(LUA_INSTALL_DIR)/bin$${PATH+:$$PATH}"'
+	@echo 'export MANPATH="$(LUA_INSTALL_DIR)/man$${MANPATH+:$$MANPATH}"'
+	@echo 'export CMAKE_PREFIX_PATH="$(LUA_INSTALL_DIR)$${CMAKE_PREFIX_PATH+:$$CMAKE_PREFIX_PATH}"'
 
 ##
 ## Boost C++ libraries with Boost.Log
@@ -180,7 +180,7 @@ BOOST_LOG_TARBALL = boost-log.tar
 BOOST_LOG_TARBALL_URL = http://boost-log.svn.sourceforge.net/viewvc/boost-log/trunk/boost-log/?view=tar
 BOOST_LOG_DIR = boost-log
 BOOST_BUILD_DIR = boost_$(BOOST_RELEASE)
-BOOST_INSTALL_DIR = boost_$(BOOST_RELEASE)
+BOOST_INSTALL_DIR = $(PREFIX)/boost_$(BOOST_RELEASE)
 BOOST_CXXFLAGS = -fPIC
 
 .fetch-boost:
@@ -213,7 +213,7 @@ configure-boost: .configure-boost
 build-boost: .build-boost
 
 install-boost: .build-boost
-	cd $(BOOST_BUILD_DIR) && ./bjam cxxflags="$(BOOST_CXXFLAGS)" install --prefix=$(PREFIX)/$(BOOST_INSTALL_DIR)
+	cd $(BOOST_BUILD_DIR) && ./bjam cxxflags="$(BOOST_CXXFLAGS)" install --prefix=$(BOOST_INSTALL_DIR)
 
 clean-boost:
 	@$(RM) .build-boost
@@ -229,10 +229,10 @@ distclean-boost: clean-boost
 env-boost:
 	@echo
 	@echo '# add Boost $(BOOST_VERSION) to environment'
-	@echo 'export PATH="$(PREFIX)/$(BOOST_INSTALL_DIR)/bin$${PATH+:$$PATH}"'
-	@echo 'export LD_LIBRARY_PATH="$(PREFIX)/$(BOOST_INSTALL_DIR)/lib$${LD_LIBRARY_PATH+:$$LD_LIBRARY_PATH}"'
-	@echo 'export PYTHONPATH="$(PREFIX)/$(BOOST_INSTALL_DIR)/lib$${PYTHONPATH+:$$PYTHONPATH}"'
-	@echo 'export CMAKE_PREFIX_PATH="$(PREFIX)/$(BOOST_INSTALL_DIR)$${CMAKE_PREFIX_PATH+:$$CMAKE_PREFIX_PATH}"'
+	@echo 'export PATH="$(BOOST_INSTALL_DIR)/bin$${PATH+:$$PATH}"'
+	@echo 'export LD_LIBRARY_PATH="$(BOOST_INSTALL_DIR)/lib$${LD_LIBRARY_PATH+:$$LD_LIBRARY_PATH}"'
+	@echo 'export PYTHONPATH="$(BOOST_INSTALL_DIR)/lib$${PYTHONPATH+:$$PYTHONPATH}"'
+	@echo 'export CMAKE_PREFIX_PATH="$(BOOST_INSTALL_DIR)$${CMAKE_PREFIX_PATH+:$$CMAKE_PREFIX_PATH}"'
 
 ##
 ## Luabind library with Clang C++ compiler fix
@@ -245,7 +245,7 @@ LUABIND_PATCH = luabind_proper_forward_declarations_for_clang.patch
 LUABIND_PATCH_URL = http://sourceforge.net/projects/halmd/files/patches/$(LUABIND_PATCH)
 LUABIND_BUILD_DIR = luabind-$(LUABIND_VERSION)
 LUABIND_BUILD_FLAGS = cxxflags=-fPIC link=static variant=release variant=debug
-LUABIND_INSTALL_DIR = luabind-$(LUABIND_VERSION)
+LUABIND_INSTALL_DIR = $(PREFIX)/luabind-$(LUABIND_VERSION)
 
 .fetch-luabind:
 	$(WGET) $(LUABIND_TARBALL_URL)
@@ -272,7 +272,7 @@ extract-luabind: .extract-luabind
 build-luabind: .build-luabind
 
 install-luabind: .build-luabind
-	cd $(LUABIND_BUILD_DIR) && BOOST_ROOT=$(CURDIR)/$(BOOST_BUILD_DIR) LUA_PATH=$(CURDIR)/$(LUABIND_BUILD_DIR)/lua $(CURDIR)/$(BOOST_BUILD_DIR)/bjam $(LUABIND_BUILD_FLAGS) install --prefix=$(PREFIX)/$(LUABIND_INSTALL_DIR)
+	cd $(LUABIND_BUILD_DIR) && BOOST_ROOT=$(CURDIR)/$(BOOST_BUILD_DIR) LUA_PATH=$(CURDIR)/$(LUABIND_BUILD_DIR)/lua $(CURDIR)/$(BOOST_BUILD_DIR)/bjam $(LUABIND_BUILD_FLAGS) install --prefix=$(LUABIND_INSTALL_DIR)
 
 clean-luabind:
 	@$(RM) .build-luabind
@@ -287,8 +287,8 @@ distclean-luabind: clean-luabind
 env-luabind:
 	@echo
 	@echo '# add Luabind $(LUABIND_VERSION) to environment'
-	@echo 'export LD_LIBRARY_PATH="$(PREFIX)/$(LUABIND_INSTALL_DIR)/lib$${LD_LIBRARY_PATH+:$$LD_LIBRARY_PATH}"'
-	@echo 'export CMAKE_PREFIX_PATH="$(PREFIX)/$(LUABIND_INSTALL_DIR)$${CMAKE_PREFIX_PATH+:$$CMAKE_PREFIX_PATH}"'
+	@echo 'export LD_LIBRARY_PATH="$(LUABIND_INSTALL_DIR)/lib$${LD_LIBRARY_PATH+:$$LD_LIBRARY_PATH}"'
+	@echo 'export CMAKE_PREFIX_PATH="$(LUABIND_INSTALL_DIR)$${CMAKE_PREFIX_PATH+:$$CMAKE_PREFIX_PATH}"'
 
 ##
 ## HDF5 C++ library
@@ -298,7 +298,7 @@ HDF5_VERSION = 1.8.7
 HDF5_TARBALL = hdf5-$(HDF5_VERSION).tar.bz2
 HDF5_TARBALL_URL = http://www.hdfgroup.org/ftp/HDF5/current/src/$(HDF5_TARBALL)
 HDF5_BUILD_DIR = hdf5-$(HDF5_VERSION)
-HDF5_INSTALL_DIR = hdf5-$(HDF5_VERSION)
+HDF5_INSTALL_DIR = $(PREFIX)/hdf5-$(HDF5_VERSION)
 HDF5_CONFIGURE_FLAGS = --enable-cxx --enable-static --disable-shared
 HDF5_CFLAGS = -fPIC
 HDF5_CXXFLAGS = -fPIC
@@ -317,7 +317,7 @@ fetch-hdf5: .fetch-hdf5
 extract-hdf5: .extract-hdf5
 
 .configure-hdf5: .extract-hdf5
-	cd $(HDF5_BUILD_DIR) && CFLAGS="$(HDF5_CFLAGS)" CXXFLAGS="$(HDF5_CXXFLAGS)" ./configure $(HDF5_CONFIGURE_FLAGS) --prefix=$(PREFIX)/$(HDF5_INSTALL_DIR)
+	cd $(HDF5_BUILD_DIR) && CFLAGS="$(HDF5_CFLAGS)" CXXFLAGS="$(HDF5_CXXFLAGS)" ./configure $(HDF5_CONFIGURE_FLAGS) --prefix=$(HDF5_INSTALL_DIR)
 	@$(TOUCH) $@
 
 configure-hdf5: .configure-hdf5
@@ -344,9 +344,9 @@ distclean-hdf5: clean-hdf5
 env-hdf5:
 	@echo
 	@echo '# add HDF5 $(HDF5_VERSION) to environment'
-	@echo 'export PATH="$(PREFIX)/$(HDF5_INSTALL_DIR)/bin$${PATH+:$$PATH}"'
-	@echo 'export LD_LIBRARY_PATH="$(PREFIX)/$(HDF5_INSTALL_DIR)/lib$${LD_LIBRARY_PATH+:$$LD_LIBRARY_PATH}"'
-	@echo 'export CMAKE_PREFIX_PATH="$(PREFIX)/$(HDF5_INSTALL_DIR)$${CMAKE_PREFIX_PATH+:$$CMAKE_PREFIX_PATH}"'
+	@echo 'export PATH="$(HDF5_INSTALL_DIR)/bin$${PATH+:$$PATH}"'
+	@echo 'export LD_LIBRARY_PATH="$(HDF5_INSTALL_DIR)/lib$${LD_LIBRARY_PATH+:$$LD_LIBRARY_PATH}"'
+	@echo 'export CMAKE_PREFIX_PATH="$(HDF5_INSTALL_DIR)$${CMAKE_PREFIX_PATH+:$$CMAKE_PREFIX_PATH}"'
 
 ##
 ## Git version control
@@ -359,7 +359,7 @@ GIT_TARBALL_URL = http://kernel.org/pub/software/scm/git/$(GIT_TARBALL)
 GIT_MANPAGES_TARBALL_URL = http://kernel.org/pub/software/scm/git/$(GIT_MANPAGES_TARBALL)
 GIT_BUILD_DIR = git-$(GIT_VERSION)
 GIT_CONFIGURE_FLAGS = --without-python
-GIT_INSTALL_DIR = git-$(GIT_VERSION)
+GIT_INSTALL_DIR = $(PREFIX)/git-$(GIT_VERSION)
 
 .fetch-git:
 	$(WGET) $(GIT_TARBALL_URL)
@@ -376,7 +376,7 @@ fetch-git: .fetch-git
 extract-git: .extract-git
 
 .configure-git: .extract-git
-	cd $(GIT_BUILD_DIR) && ./configure $(GIT_CONFIGURE_FLAGS) --prefix=$(PREFIX)/$(GIT_INSTALL_DIR)
+	cd $(GIT_BUILD_DIR) && ./configure $(GIT_CONFIGURE_FLAGS) --prefix=$(GIT_INSTALL_DIR)
 	@$(TOUCH) $@
 
 configure-git: .configure-git
@@ -389,8 +389,8 @@ build-git: .build-git
 
 install-git: .build-git
 	cd $(GIT_BUILD_DIR) && make install
-	install -d $(PREFIX)/$(GIT_INSTALL_DIR)/share/man
-	cd $(PREFIX)/$(GIT_INSTALL_DIR)/share/man && $(TAR) -xjf $(CURDIR)/$(GIT_MANPAGES_TARBALL)
+	install -d $(GIT_INSTALL_DIR)/share/man
+	cd $(GIT_INSTALL_DIR)/share/man && $(TAR) -xjf $(CURDIR)/$(GIT_MANPAGES_TARBALL)
 
 clean-git:
 	@$(RM) .build-git
@@ -406,8 +406,8 @@ distclean-git: clean-git
 env-git:
 	@echo
 	@echo '# add Git $(GIT_VERSION) to environment'
-	@echo 'export PATH="$(PREFIX)/$(GIT_INSTALL_DIR)/bin$${PATH+:$$PATH}"'
-	@echo 'export MANPATH="$(PREFIX)/$(GIT_INSTALL_DIR)/share/man$${MANPATH+:$$MANPATH}"'
+	@echo 'export PATH="$(GIT_INSTALL_DIR)/bin$${PATH+:$$PATH}"'
+	@echo 'export MANPATH="$(GIT_INSTALL_DIR)/share/man$${MANPATH+:$$MANPATH}"'
 
 ##
 ## htop
@@ -417,7 +417,7 @@ HTOP_VERSION = 0.9
 HTOP_TARBALL = htop-$(HTOP_VERSION).tar.gz
 HTOP_TARBALL_URL = http://sourceforge.net/projects/htop/files/htop/0.9/$(HTOP_TARBALL)
 HTOP_BUILD_DIR = htop-$(HTOP_VERSION)
-HTOP_INSTALL_DIR = htop-$(HTOP_VERSION)
+HTOP_INSTALL_DIR = $(PREFIX)/htop-$(HTOP_VERSION)
 
 .fetch-htop:
 	$(WGET) $(HTOP_TARBALL_URL)
@@ -433,7 +433,7 @@ fetch-htop: .fetch-htop
 extract-htop: .extract-htop
 
 .configure-htop: .extract-htop
-	cd $(HTOP_BUILD_DIR) && ./configure --prefix=$(PREFIX)/$(HTOP_INSTALL_DIR)
+	cd $(HTOP_BUILD_DIR) && ./configure --prefix=$(HTOP_INSTALL_DIR)
 	@$(TOUCH) $@
 
 configure-htop: .configure-htop
@@ -460,8 +460,8 @@ distclean-htop: clean-htop
 env-htop:
 	@echo
 	@echo '# add htop $(HTOP_VERSION) to environment'
-	@echo 'export PATH="$(PREFIX)/$(HTOP_INSTALL_DIR)/bin$${PATH+:$$PATH}"'
-	@echo 'export MANPATH="$(PREFIX)/$(HTOP_INSTALL_DIR)/share/man$${MANPATH+:$$MANPATH}"'
+	@echo 'export PATH="$(HTOP_INSTALL_DIR)/bin$${PATH+:$$PATH}"'
+	@echo 'export MANPATH="$(HTOP_INSTALL_DIR)/share/man$${MANPATH+:$$MANPATH}"'
 
 ##
 ## python-sphinx
@@ -471,8 +471,8 @@ PYTHON_SPHINX_VERSION = 1.0.7
 PYTHON_SPHINX_TARBALL = Sphinx-$(PYTHON_SPHINX_VERSION).tar.gz
 PYTHON_SPHINX_TARBALL_URL = http://pypi.python.org/packages/source/S/Sphinx/$(PYTHON_SPHINX_TARBALL)
 PYTHON_SPHINX_BUILD_DIR = Sphinx-$(PYTHON_SPHINX_VERSION)
-PYTHON_SPHINX_INSTALL_DIR = python-sphinx-$(PYTHON_SPHINX_VERSION)
-PYTHON_SPHINX_PYTHONPATH = $(PREFIX)/$(PYTHON_SPHINX_INSTALL_DIR)/lib/python
+PYTHON_SPHINX_INSTALL_DIR = $(PREFIX)/python-sphinx-$(PYTHON_SPHINX_VERSION)
+PYTHON_SPHINX_PYTHONPATH = $(PYTHON_SPHINX_INSTALL_DIR)/lib/python
 
 .fetch-python-sphinx:
 	$(WGET) $(PYTHON_SPHINX_TARBALL_URL)
@@ -495,7 +495,7 @@ build-python-sphinx: .build-python-sphinx
 
 install-python-sphinx: .build-python-sphinx
 	install -d $(PYTHON_SPHINX_PYTHONPATH)
-	cd $(PYTHON_SPHINX_BUILD_DIR) && PYTHONPATH="$(PYTHON_SPHINX_PYTHONPATH)$${PYTHONPATH+:$$PYTHONPATH}" python setup.py install --home=$(PREFIX)/$(PYTHON_SPHINX_INSTALL_DIR)
+	cd $(PYTHON_SPHINX_BUILD_DIR) && PYTHONPATH="$(PYTHON_SPHINX_PYTHONPATH)$${PYTHONPATH+:$$PYTHONPATH}" python setup.py install --home=$(PYTHON_SPHINX_INSTALL_DIR)
 
 clean-python-sphinx:
 	@$(RM) .build-python-sphinx
@@ -509,7 +509,7 @@ distclean-python-sphinx: clean-python-sphinx
 env-python-sphinx:
 	@echo
 	@echo '# add python-sphinx $(PYTHON_SPHINX_VERSION) to environment'
-	@echo 'export PATH="$(PREFIX)/$(PYTHON_SPHINX_INSTALL_DIR)/bin$${PATH+:$$PATH}"'
+	@echo 'export PATH="$(PYTHON_SPHINX_INSTALL_DIR)/bin$${PATH+:$$PATH}"'
 	@echo 'export PYTHONPATH="$(PYTHON_SPHINX_PYTHONPATH)$${PYTHONPATH+:$$PYTHONPATH}"'
 
 ##
@@ -520,7 +520,7 @@ DOXYGEN_VERSION = 1.7.4
 DOXYGEN_TARBALL = doxygen-$(DOXYGEN_VERSION).src.tar.gz
 DOXYGEN_TARBALL_URL = http://ftp.stack.nl/pub/users/dimitri/$(DOXYGEN_TARBALL)
 DOXYGEN_BUILD_DIR = doxygen-$(DOXYGEN_VERSION)
-DOXYGEN_INSTALL_DIR = doxygen-$(DOXYGEN_VERSION)
+DOXYGEN_INSTALL_DIR = $(PREFIX)/doxygen-$(DOXYGEN_VERSION)
 
 .fetch-doxygen:
 	$(WGET) $(DOXYGEN_TARBALL_URL)
@@ -536,7 +536,7 @@ fetch-doxygen: .fetch-doxygen
 extract-doxygen: .extract-doxygen
 
 .configure-doxygen: .extract-doxygen
-	cd $(DOXYGEN_BUILD_DIR) && ./configure --prefix $(PREFIX)/$(DOXYGEN_INSTALL_DIR)
+	cd $(DOXYGEN_BUILD_DIR) && ./configure --prefix $(DOXYGEN_INSTALL_DIR)
 	@$(TOUCH) $@
 
 configure-doxygen: .configure-doxygen
@@ -563,8 +563,8 @@ distclean-doxygen: clean-doxygen
 env-doxygen:
 	@echo
 	@echo '# add Doxygen $(DOXYGEN_VERSION) to environment'
-	@echo 'export PATH="$(PREFIX)/$(DOXYGEN_INSTALL_DIR)/bin$${PATH+:$$PATH}"'
-	@echo 'export MANPATH="$(PREFIX)/$(DOXYGEN_INSTALL_DIR)/man$${MANPATH+:$$MANPATH}"'
+	@echo 'export PATH="$(DOXYGEN_INSTALL_DIR)/bin$${PATH+:$$PATH}"'
+	@echo 'export MANPATH="$(DOXYGEN_INSTALL_DIR)/man$${MANPATH+:$$MANPATH}"'
 
 ##
 ## Graphviz
@@ -575,7 +575,7 @@ GRAPHVIZ_TARBALL = graphviz-$(GRAPHVIZ_VERSION).tar.gz
 GRAPHVIZ_TARBALL_URL = http://www.graphviz.org/pub/graphviz/stable/SOURCES/$(GRAPHVIZ_TARBALL)
 GRAPHVIZ_BUILD_DIR = graphviz-$(GRAPHVIZ_VERSION)
 GRAPHVIZ_CONFIGURE_FLAGS = --with-qt=no --enable-swig=no --enable-python=no
-GRAPHVIZ_INSTALL_DIR = graphviz-$(GRAPHVIZ_VERSION)
+GRAPHVIZ_INSTALL_DIR = $(PREFIX)/graphviz-$(GRAPHVIZ_VERSION)
 
 .fetch-graphviz:
 	$(WGET) $(GRAPHVIZ_TARBALL_URL)
@@ -591,7 +591,7 @@ fetch-graphviz: .fetch-graphviz
 extract-graphviz: .extract-graphviz
 
 .configure-graphviz: .extract-graphviz
-	cd $(GRAPHVIZ_BUILD_DIR) && ./configure $(GRAPHVIZ_CONFIGURE_FLAGS) --prefix=$(PREFIX)/$(GRAPHVIZ_INSTALL_DIR)
+	cd $(GRAPHVIZ_BUILD_DIR) && ./configure $(GRAPHVIZ_CONFIGURE_FLAGS) --prefix=$(GRAPHVIZ_INSTALL_DIR)
 	@$(TOUCH) $@
 
 configure-graphviz: .configure-graphviz
@@ -618,5 +618,5 @@ distclean-graphviz: clean-graphviz
 env-graphviz:
 	@echo
 	@echo '# add Graphviz $(GRAPHVIZ_VERSION) to environment'
-	@echo 'export PATH="$(PREFIX)/$(GRAPHVIZ_INSTALL_DIR)/bin$${PATH+:$$PATH}"'
-	@echo 'export MANPATH="$(PREFIX)/$(GRAPHVIZ_INSTALL_DIR)/share/man$${MANPATH+:$$MANPATH}"'
+	@echo 'export PATH="$(GRAPHVIZ_INSTALL_DIR)/bin$${PATH+:$$PATH}"'
+	@echo 'export MANPATH="$(GRAPHVIZ_INSTALL_DIR)/share/man$${MANPATH+:$$MANPATH}"'
