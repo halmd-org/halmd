@@ -89,3 +89,10 @@ function new(args)
 
     return force
 end
+
+--
+-- connect runtime accumulators to module profiler
+--
+function profile(self, profiler)
+    profiler:on_profile{self, compute = "computation of " .. self.potential.name .. " forces"}
+end
