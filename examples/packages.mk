@@ -347,3 +347,63 @@ env-hdf5:
 	@echo 'export PATH="$(PREFIX)/$(HDF5_INSTALL_DIR)/bin$${PATH+:$$PATH}"'
 	@echo 'export LD_LIBRARY_PATH="$(PREFIX)/$(HDF5_INSTALL_DIR)/lib$${LD_LIBRARY_PATH+:$$LD_LIBRARY_PATH}"'
 	@echo 'export CMAKE_PREFIX_PATH="$(PREFIX)/$(HDF5_INSTALL_DIR)$${CMAKE_PREFIX_PATH+:$$CMAKE_PREFIX_PATH}"'
+
+##
+## Git version control
+##
+
+GIT_VERSION = 1.7.6
+GIT_TARBALL = git-$(GIT_VERSION).tar.bz2
+GIT_MANPAGES_TARBALL = git-manpages-$(GIT_VERSION).tar.bz2
+GIT_TARBALL_URL = http://kernel.org/pub/software/scm/git/$(GIT_TARBALL)
+GIT_MANPAGES_TARBALL_URL = http://kernel.org/pub/software/scm/git/$(GIT_MANPAGES_TARBALL)
+GIT_BUILD_DIR = git-$(GIT_VERSION)
+GIT_INSTALL_DIR = git-$(GIT_VERSION)
+
+.fetch-git:
+	$(WGET) $(GIT_TARBALL_URL)
+	$(WGET) $(GIT_MANPAGES_TARBALL_URL)
+	@$(TOUCH) $@
+
+fetch-git: .fetch-git
+
+.extract-git: .fetch-git
+	$(RM) $(GIT_BUILD_DIR)
+	$(TAR) -xjf $(GIT_TARBALL)
+	@$(TOUCH) $@
+
+extract-git: .extract-git
+
+.configure-git: .extract-git
+	cd $(GIT_BUILD_DIR) && ./configure --prefix=$(PREFIX)/$(GIT_INSTALL_DIR)
+	@$(TOUCH) $@
+
+configure-git: .configure-git
+
+.build-git: .configure-git
+	cd $(GIT_BUILD_DIR) && make $(PARALLEL_BUILD_FLAGS)
+	@$(TOUCH) $@
+
+build-git: .build-git
+
+install-git: .build-git
+	cd $(GIT_BUILD_DIR) && make install
+	install -d $(PREFIX)/$(GIT_INSTALL_DIR)/share/man
+	cd $(PREFIX)/$(GIT_INSTALL_DIR)/share/man && $(TAR) -xjf $(CURDIR)/$(GIT_MANPAGES_TARBALL)
+
+clean-git:
+	@$(RM) .build-git
+	@$(RM) .configure-git
+	@$(RM) .extract-git
+	$(RM) $(GIT_BUILD_DIR)
+
+distclean-git: clean-git
+	@$(RM) .fetch-git
+	$(RM) $(GIT_TARBALL)
+	$(RM) $(GIT_MANPAGES_TARBALL)
+
+env-git:
+	@echo
+	@echo '# add Git $(GIT_VERSION) to environment'
+	@echo 'export PATH="$(PREFIX)/$(GIT_INSTALL_DIR)/bin$${PATH+:$$PATH}"'
+	@echo 'export MANPATH="$(PREFIX)/$(GIT_INSTALL_DIR)/share/man$${MANPATH+:$$MANPATH}"'
