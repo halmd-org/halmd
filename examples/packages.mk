@@ -38,17 +38,17 @@ PATCH = patch
 ## define top-level targets
 ##
 
-build: build-cmake build-cmake build-lua build-boost build-luabind build-hdf5
+build: build-cmake build-lua build-boost build-luabind build-hdf5
 
-fetch: fetch-cmake fetch-cmake fetch-lua fetch-boost fetch-luabind fetch-hdf5
+fetch: fetch-cmake fetch-lua fetch-boost fetch-luabind fetch-hdf5
 
-install: install-cmake install-cmake install-lua install-boost install-luabind install-hdf5
+install: install-cmake install-lua install-boost install-luabind install-hdf5
 
-clean: clean-cmake clean-cmake clean-lua clean-boost clean-luabind clean-hdf5
+clean: clean-cmake clean-lua clean-boost clean-luabind clean-hdf5
 
-distclean: distclean-cmake distclean-cmake distclean-lua distclean-boost distclean-luabind distclean-hdf5
+distclean: distclean-cmake distclean-lua distclean-boost distclean-luabind distclean-hdf5
 
-env: env-cmake env-cmake env-lua env-boost env-luabind env-hdf5
+env: env-cmake env-lua env-boost env-luabind env-hdf5
 
 ##
 ## CMake with CMake-CUDA patch
