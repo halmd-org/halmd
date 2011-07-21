@@ -565,3 +565,58 @@ env-doxygen:
 	@echo '# add Doxygen $(DOXYGEN_VERSION) to environment'
 	@echo 'export PATH="$(PREFIX)/$(DOXYGEN_INSTALL_DIR)/bin$${PATH+:$$PATH}"'
 	@echo 'export MANPATH="$(PREFIX)/$(DOXYGEN_INSTALL_DIR)/man$${MANPATH+:$$MANPATH}"'
+
+##
+## Graphviz
+##
+
+GRAPHVIZ_VERSION = 2.28.0
+GRAPHVIZ_TARBALL = graphviz-$(GRAPHVIZ_VERSION).tar.gz
+GRAPHVIZ_TARBALL_URL = http://www.graphviz.org/pub/graphviz/stable/SOURCES/$(GRAPHVIZ_TARBALL)
+GRAPHVIZ_BUILD_DIR = graphviz-$(GRAPHVIZ_VERSION)
+GRAPHVIZ_CONFIGURE_FLAGS = --with-qt=no --enable-swig=no --enable-python=no
+GRAPHVIZ_INSTALL_DIR = graphviz-$(GRAPHVIZ_VERSION)
+
+.fetch-graphviz:
+	$(WGET) $(GRAPHVIZ_TARBALL_URL)
+	@$(TOUCH) $@
+
+fetch-graphviz: .fetch-graphviz
+
+.extract-graphviz: .fetch-graphviz
+	$(RM) $(GRAPHVIZ_BUILD_DIR)
+	$(TAR) -xzf $(GRAPHVIZ_TARBALL)
+	@$(TOUCH) $@
+
+extract-graphviz: .extract-graphviz
+
+.configure-graphviz: .extract-graphviz
+	cd $(GRAPHVIZ_BUILD_DIR) && ./configure $(GRAPHVIZ_CONFIGURE_FLAGS) --prefix=$(PREFIX)/$(GRAPHVIZ_INSTALL_DIR)
+	@$(TOUCH) $@
+
+configure-graphviz: .configure-graphviz
+
+.build-graphviz: .configure-graphviz
+	cd $(GRAPHVIZ_BUILD_DIR) && make $(PARALLEL_BUILD_FLAGS)
+	@$(TOUCH) $@
+
+build-graphviz: .build-graphviz
+
+install-graphviz: .build-graphviz
+	cd $(GRAPHVIZ_BUILD_DIR) && make install
+
+clean-graphviz:
+	@$(RM) .build-graphviz
+	@$(RM) .configure-graphviz
+	@$(RM) .extract-graphviz
+	$(RM) $(GRAPHVIZ_BUILD_DIR)
+
+distclean-graphviz: clean-graphviz
+	@$(RM) .fetch-graphviz
+	$(RM) $(GRAPHVIZ_TARBALL)
+
+env-graphviz:
+	@echo
+	@echo '# add Graphviz $(GRAPHVIZ_VERSION) to environment'
+	@echo 'export PATH="$(PREFIX)/$(GRAPHVIZ_INSTALL_DIR)/bin$${PATH+:$$PATH}"'
+	@echo 'export MANPATH="$(PREFIX)/$(GRAPHVIZ_INSTALL_DIR)/share/man$${MANPATH+:$$MANPATH}"'
