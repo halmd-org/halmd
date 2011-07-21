@@ -65,7 +65,6 @@ public:
       , double timestep
       , boost::shared_ptr<logger_type> logger = boost::make_shared<logger_type>()
     );
-    void register_runtimes(profiler_type& profiler);
     virtual void integrate();
     virtual void finalize();
     virtual void timestep(double timestep);

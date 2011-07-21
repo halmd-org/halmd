@@ -59,15 +59,6 @@ ssf<dimension>::ssf(
 }
 
 /**
- * register module runtime accumulators
- */
-template <int dimension>
-void ssf<dimension>::register_runtimes(profiler_type& profiler)
-{
-    profiler.register_runtime(runtime_.sample, "sample", "computation of static structure factor");
-}
-
-/**
  * register observables
  */
 template <int dimension>
@@ -197,7 +188,6 @@ void ssf<dimension>::luaopen(lua_State* L)
                   , unsigned int
                   , shared_ptr<logger_type>
                 >())
-                .def("register_runtimes", &ssf::register_runtimes)
                 .def("register_observables", &ssf::register_observables)
                 .property("value", &ssf::value)
                 .property("wavevector", &ssf::wavevector)

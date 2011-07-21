@@ -91,15 +91,6 @@ from_particle<dimension, float_type>::from_particle(
 }
 
 /**
- * register module runtime accumulators
- */
-template <int dimension, typename float_type>
-void from_particle<dimension, float_type>::register_runtimes(profiler_type& profiler)
-{
-    profiler.register_runtime(runtime_.update, "update", "neighbour lists update");
-}
-
-/**
  * Update neighbour lists
  */
 template <int dimension, typename float_type>
@@ -174,7 +165,6 @@ void from_particle<dimension, float_type>::luaopen(lua_State* L)
                           , shared_ptr<logger_type>
                           , double
                         >())
-                        .def("register_runtimes", &from_particle::register_runtimes)
                         .property("r_skin", &from_particle::r_skin)
                         .property("cell_occupancy", &from_particle::cell_occupancy)
                         .scope

@@ -47,14 +47,6 @@ sampler::sampler(
 }
 
 /**
- * register module runtime accumulators
- */
-void sampler::register_runtimes(profiler_type& profiler)
-{
-    profiler.register_runtime(runtime_.total, "total", "total simulation runtime");
-}
-
-/**
  * Run simulation
  */
 void sampler::run()
@@ -148,7 +140,6 @@ void sampler::luaopen(lua_State* L)
               , shared_ptr<sampler::core_type>
               , sampler::step_type
             >())
-            .def("register_runtimes", &sampler::register_runtimes)
             .def("on_start", &sampler::on_start)
             .def("on_finish", &sampler::on_finish)
             .def("on_prepare", &sampler::on_prepare)

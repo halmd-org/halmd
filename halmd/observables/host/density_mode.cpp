@@ -45,15 +45,6 @@ density_mode<dimension, float_type>::density_mode(
 }
 
 /**
- * register module runtime accumulators
- */
-template <int dimension, typename float_type>
-void density_mode<dimension, float_type>::register_runtimes(profiler_type& profiler)
-{
-    profiler.register_runtime(runtime_.sample, "sample", "computation of density modes");
-}
-
-/**
  * Acquire sample of all density modes from phase space sample
  */
 template <int dimension, typename float_type>
@@ -118,7 +109,6 @@ void density_mode<dimension, float_type>::luaopen(lua_State* L)
                       , shared_ptr<wavevector_type const>
                       , shared_ptr<logger_type>
                     >())
-                    .def("register_runtimes", &density_mode::register_runtimes)
                     .scope
                     [
                         class_<runtime>("runtime")

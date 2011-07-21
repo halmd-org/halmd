@@ -70,7 +70,6 @@ public:
       , boost::shared_ptr<logger_type> logger = boost::make_shared<logger_type>()
     );
     virtual void set();
-    void register_runtimes(profiler_type& profiler);
 
     typename box_type::vector_type const& slab() const { return slab_; }
 

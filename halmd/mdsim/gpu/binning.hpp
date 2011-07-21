@@ -61,7 +61,6 @@ public:
       , boost::shared_ptr<logger_type> logger = boost::make_shared<logger_type>()
       , double cell_occupancy = defaults::occupancy()
     );
-    void register_runtimes(profiler_type& profiler);
     void update();
 
     //! returns neighbour list skin in MD units

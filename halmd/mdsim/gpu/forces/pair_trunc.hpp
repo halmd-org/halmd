@@ -76,7 +76,6 @@ public:
       , boost::shared_ptr<neighbour_type const> neighbour
     );
     inline virtual void compute();
-    inline void register_runtimes(profiler_type& profiler);
 
     //! enable computation of auxiliary variables
     virtual void aux_enable()
@@ -182,15 +181,6 @@ void pair_trunc<dimension, float_type, potential_type>::compute()
     cuda::thread::synchronize();
 }
 
-/**
- * register module runtime accumulators
- */
-template <int dimension, typename float_type, typename potential_type>
-void pair_trunc<dimension, float_type, potential_type>::register_runtimes(profiler_type& profiler)
-{
-    profiler.register_runtime(runtime_.compute, "compute", std::string("computation of ") + potential_type::name() + " forces");
-}
-
 template <int dimension, typename float_type, typename potential_type>
 static char const* module_name_wrapper(pair_trunc<dimension, float_type, potential_type> const&)
 {
@@ -220,7 +210,6 @@ void pair_trunc<dimension, float_type, potential_type>::luaopen(lua_State* L)
                               , boost::shared_ptr<box_type>
                               , boost::shared_ptr<neighbour_type const>
                             >())
-                            .def("register_runtimes", &pair_trunc::register_runtimes)
                             .property("module_name", &module_name_wrapper<dimension, float_type, potential_type>)
                             .scope
                             [

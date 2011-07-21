@@ -44,15 +44,6 @@ thermodynamics<dimension>::thermodynamics(
 }
 
 /**
- * register module runtime accumulators
- */
-template <int dimension>
-void thermodynamics<dimension>::register_runtimes(profiler_type& profiler)
-{
-    profiler.register_runtime(runtime_.sample, "sample", "computation of macroscopic state variables");
-}
-
-/**
  * register observables
  */
 template <int dimension>
@@ -121,7 +112,6 @@ void thermodynamics<dimension>::luaopen(lua_State* L)
         namespace_("observables")
         [
             class_<thermodynamics, shared_ptr<thermodynamics> >(class_name.c_str())
-                .def("register_runtimes", &thermodynamics::register_runtimes)
                 .def("register_observables", &thermodynamics::register_observables)
                 .property("prepare", &prepare_wrapper<thermodynamics>)
                 .property("sample", &sample_wrapper<thermodynamics>)

@@ -64,17 +64,6 @@ hilbert<dimension, float_type>::hilbert(
 }
 
 /**
- * register module runtime accumulators
- */
-template <int dimension, typename float_type>
-void hilbert<dimension, float_type>::register_runtimes(profiler_type& profiler)
-{
-    profiler.register_runtime(runtime_.map, "map", "map particles to Hilbert curve");
-    profiler.register_runtime(runtime_.permutation, "permutation", "generate permutation");
-    profiler.register_runtime(runtime_.order, "order", "order particles by permutation");
-}
-
-/**
  * Order particles after Hilbert space-filling curve
  */
 template <int dimension, typename float_type>
@@ -167,7 +156,6 @@ void hilbert<dimension, float_type>::luaopen(lua_State* L)
                           , shared_ptr<logger_type>
                         >())
                         .property("module_name", &module_name_wrapper<dimension, float_type>)
-                        .def("register_runtimes", &hilbert::register_runtimes)
                         .scope
                         [
                             class_<runtime>("runtime")

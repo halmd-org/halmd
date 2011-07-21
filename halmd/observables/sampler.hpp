@@ -57,7 +57,6 @@ public:
       , step_type steps
     );
     void run();
-    void register_runtimes(profiler_type& profiler);
     connection_type on_start(slot_function_type const& slot);
     connection_type on_prepare(slot_function_type const& slot, step_type interval);
     connection_type on_sample(slot_function_type const& slot, step_type interval);

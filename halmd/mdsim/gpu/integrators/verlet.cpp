@@ -78,16 +78,6 @@ void verlet<dimension, float_type>::timestep(double timestep)
 }
 
 /**
- * register module runtime accumulators
- */
-template <int dimension, typename float_type>
-void verlet<dimension, float_type>::register_runtimes(profiler_type& profiler)
-{
-    profiler.register_runtime(runtime_.integrate, "integrate", "first half-step of velocity-Verlet");
-    profiler.register_runtime(runtime_.finalize, "finalize", "second half-step of velocity-Verlet");
-}
-
-/**
  * First leapfrog half-step of velocity-Verlet algorithm
  */
 template <int dimension, typename float_type>
@@ -154,7 +144,6 @@ void verlet<dimension, float_type>::luaopen(lua_State* L)
                           , double
                           , shared_ptr<logger_type>
                         >())
-                        .def("register_runtimes", &verlet::register_runtimes)
                         .property("module_name", &module_name_wrapper<dimension, float_type>)
                         .scope
                         [

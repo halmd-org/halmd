@@ -103,15 +103,6 @@ from_binning<dimension, float_type>::from_binning(
 }
 
 /**
- * register module runtime accumulators
- */
-template <int dimension, typename float_type>
-void from_binning<dimension, float_type>::register_runtimes(profiler_type& profiler)
-{
-    profiler.register_runtime(runtime_.update, "update", "neighbour lists update");
-}
-
-/**
  * Update neighbour lists
  */
 template <int dimension, typename float_type>
@@ -172,7 +163,6 @@ void from_binning<dimension, float_type>::luaopen(lua_State* L)
                           , shared_ptr<logger_type>
                           , double
                         >())
-                        .def("register_runtimes", &from_binning::register_runtimes)
                         .property("r_skin", &from_binning::r_skin)
                         .property("cell_occupancy", &from_binning::cell_occupancy)
                         .scope

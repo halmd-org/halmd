@@ -105,17 +105,6 @@ temperature(double temperature)
 }
 
 /**
- * register module runtime accumulators
- */
-template <int dimension, typename float_type, typename RandomNumberGenerator>
-void verlet_nvt_andersen<dimension, float_type, RandomNumberGenerator>::
-register_runtimes(profiler_type& profiler)
-{
-    profiler.register_runtime(runtime_.integrate, "integrate", "first half-step of velocity-Verlet");
-    profiler.register_runtime(runtime_.finalize, "finalize", "second half-step of velocity-Verlet (+ Andersen thermostat)");
-}
-
-/**
  * First leapfrog half-step of velocity-Verlet algorithm
  */
 template <int dimension, typename float_type, typename RandomNumberGenerator>
@@ -193,7 +182,6 @@ luaopen(lua_State* L)
                           , float_type
                           , shared_ptr<logger_type>
                         >())
-                        .def("register_runtimes", &verlet_nvt_andersen::register_runtimes)
                         .property("collision_rate", &verlet_nvt_andersen::collision_rate)
                         .property("module_name", &module_name_wrapper<dimension, float_type, RandomNumberGenerator>)
                         .scope

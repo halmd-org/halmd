@@ -62,15 +62,6 @@ lattice<dimension, float_type, RandomNumberGenerator>::lattice(
     }
 }
 
-/**
- * register module runtime accumulators
- */
-template <int dimension, typename float_type, typename RandomNumberGenerator>
-void lattice<dimension, float_type, RandomNumberGenerator>::register_runtimes(profiler_type& profiler)
-{
-    profiler.register_runtime(runtime_.set, "set", "setting particle positions on lattice");
-}
-
 template <int dimension, typename float_type, typename RandomNumberGenerator>
 void lattice<dimension, float_type, RandomNumberGenerator>::set()
 {
@@ -227,7 +218,6 @@ void lattice<dimension, float_type, RandomNumberGenerator>::luaopen(lua_State* L
                            , shared_ptr<logger_type>
                          >())
                         .property("slab", &lattice::slab)
-                        .def("register_runtimes", &lattice::register_runtimes)
                         .property("module_name", &module_name_wrapper<dimension, float_type, RandomNumberGenerator>)
                         .scope
                         [

@@ -48,7 +48,6 @@ public:
     };
 
     core(boost::shared_ptr<clock_type> clock);
-    void register_runtimes(profiler_type& profiler) const;
     void setup();
     void mdstep();
 

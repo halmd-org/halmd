@@ -71,7 +71,6 @@ public:
       , boost::shared_ptr<logger_type> logger
     );
     virtual ~thermodynamics() {}
-    void register_runtimes(profiler_type& profiler);
     virtual void register_observables(writer_type& writer);
 
     // preparations before MD step

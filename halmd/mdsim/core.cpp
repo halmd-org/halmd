@@ -39,15 +39,6 @@ core::core(shared_ptr<clock_type> clock)
 }
 
 /**
- * register module runtime accumulators
- */
-void core::register_runtimes(profiler_type& profiler) const
-{
-    profiler.register_runtime(runtime_.setup, "setup", "microscopic state preparation");
-    profiler.register_runtime(runtime_.mdstep, "mdstep", "MD integration step");
-}
-
-/**
  * Prepare microscopic system state
  */
 void core::setup()
@@ -91,7 +82,6 @@ void core::luaopen(lua_State* L)
         [
             class_<core, shared_ptr<core> >("core")
                 .def(constructor<shared_ptr<core::clock_type> >())
-                .def("register_runtimes", &core::register_runtimes)
                 .def("setup", &core::setup)
                 .def("mdstep", &core::mdstep)
                 .def("on_prepend_setup", &core::on_prepend_setup)

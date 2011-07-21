@@ -49,7 +49,6 @@ public:
         boost::shared_ptr<particle_type const> particle
       , boost::shared_ptr<box_type const> box
     );
-    void register_runtimes(profiler_type& profiler);
     void zero();
     float_type compute();
 

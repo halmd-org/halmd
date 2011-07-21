@@ -74,7 +74,6 @@ public:
       , unsigned int npart
       , boost::shared_ptr<logger_type> logger = boost::make_shared<logger_type>()
     );
-    void register_runtimes(profiler_type& profiler);
     void register_observables(writer_type& writer);
 
     // compute ssf from sample of density Fourier modes and store with given simulation step

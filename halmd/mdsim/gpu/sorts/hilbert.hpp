@@ -69,7 +69,6 @@ public:
       , boost::shared_ptr<box_type const> box
       , boost::shared_ptr<logger_type> logger = boost::make_shared<logger_type>()
     );
-    void register_runtimes(profiler_type& profiler);
     virtual void order();
 
     virtual connection_type on_order(slot_function_type const& slot)

@@ -76,8 +76,6 @@ public:
       , boost::shared_ptr<logger_type> logger = boost::make_shared<logger_type>()
     );
 
-    void register_runtimes(profiler_type& profiler);
-
     /**
     * compute density modes from phase space sample and store with given time stamp (simulation step)
     */

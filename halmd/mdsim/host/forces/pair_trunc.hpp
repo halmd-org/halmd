@@ -80,7 +80,6 @@ public:
       // FIXME , boost::shared_ptr<smooth_type> smooth
     );
     inline virtual void compute();
-    inline void register_runtimes(profiler_type& profiler);
 
     //! return potential cutoffs
     virtual matrix_type const& r_cut()
@@ -160,15 +159,6 @@ pair_trunc<dimension, float_type, potential_type>::pair_trunc(
   // member initialisation
   , aux_flag_(true)          //< enable everything by default
 {}
-
-/**
- * register module runtime accumulators
- */
-template <int dimension, typename float_type, typename potential_type>
-void pair_trunc<dimension, float_type, potential_type>::register_runtimes(profiler_type& profiler)
-{
-    profiler.register_runtime(runtime_.compute, "compute", std::string("computation of ") + potential_type::name() + " forces");
-}
 
 /**
  * Compute pair forces and auxiliary variables if desired, e.g.,
@@ -287,7 +277,6 @@ void pair_trunc<dimension, float_type, potential_type>::luaopen(lua_State* L)
                               , boost::shared_ptr<box_type>
                               , boost::shared_ptr<neighbour_type const>
                             >())
-                            .def("register_runtimes", &pair_trunc::register_runtimes)
                             .property("r_cut", &pair_trunc::r_cut)
                             .property("module_name", &module_name_wrapper<dimension, float_type, potential_type>)
                             .scope

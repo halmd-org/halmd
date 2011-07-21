@@ -54,16 +54,6 @@ verlet_nvt_andersen<dimension, float_type>::verlet_nvt_andersen(
     LOG("collision rate with heat bath: " << coll_rate_);
 }
 
-/**
- * register module runtime accumulators
- */
-template <int dimension, typename float_type>
-void verlet_nvt_andersen<dimension, float_type>::register_runtimes(profiler_type& profiler)
-{
-    profiler.register_runtime(runtime_.integrate, "integrate", "first half-step of velocity-Verlet");
-    profiler.register_runtime(runtime_.finalize, "finalize", "second half-step of velocity-Verlet");
-}
-
 template <int dimension, typename float_type>
 void verlet_nvt_andersen<dimension, float_type>::timestep(double timestep)
 {
@@ -169,7 +159,6 @@ void verlet_nvt_andersen<dimension, float_type>::luaopen(lua_State* L)
                           , float_type
                           , shared_ptr<logger_type>
                         >())
-                        .def("register_runtimes", &verlet_nvt_andersen::register_runtimes)
                         .property("collision_rate", &verlet_nvt_andersen::collision_rate)
                         .property("module_name", &module_name_wrapper<dimension, float_type>)
                         .scope

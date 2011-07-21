@@ -65,16 +65,6 @@ maximum_squared_displacement<dimension, float_type>::maximum_squared_displacemen
     }
 }
 
-/**
- * register module runtime accumulators
- */
-template <int dimension, typename float_type>
-void maximum_squared_displacement<dimension, float_type>::register_runtimes(profiler_type& profiler)
-{
-    profiler.register_runtime(runtime_.zero, "zero", "zero maximum displacement");
-    profiler.register_runtime(runtime_.compute, "compute", "compute maximum displacement");
-}
-
 template <int dimension, typename float_type>
 typename maximum_squared_displacement_wrapper<dimension>::displacement_impl_type
 maximum_squared_displacement<dimension, float_type>::get_displacement_impl(int threads)
@@ -158,7 +148,6 @@ void maximum_squared_displacement<dimension, float_type>::luaopen(lua_State* L)
                         shared_ptr<particle_type const>
                       , shared_ptr<box_type const>
                     >())
-                    .def("register_runtimes", &maximum_squared_displacement::register_runtimes)
                     .property("zero", &wrap_zero<dimension, float_type>)
                     .property("compute", &wrap_compute<dimension, float_type>)
                     .scope

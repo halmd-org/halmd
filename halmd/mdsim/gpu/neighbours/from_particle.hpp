@@ -80,7 +80,6 @@ public:
       , boost::shared_ptr<logger_type> logger = boost::make_shared<logger_type>()
       , double cell_occupancy = defaults::occupancy()
     );
-    void register_runtimes(profiler_type& profiler);
     virtual void update();
 
     virtual connection_type on_update(slot_function_type const& slot)
