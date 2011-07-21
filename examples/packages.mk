@@ -461,3 +461,52 @@ env-htop:
 	@echo '# add htop $(HTOP_VERSION) to environment'
 	@echo 'export PATH="$(PREFIX)/$(HTOP_INSTALL_DIR)/bin$${PATH+:$$PATH}"'
 	@echo 'export MANPATH="$(PREFIX)/$(HTOP_INSTALL_DIR)/share/man$${MANPATH+:$$MANPATH}"'
+
+##
+## python-sphinx
+##
+
+PYTHON_SPHINX_VERSION = 1.0.7
+PYTHON_SPHINX_TARBALL = Sphinx-$(PYTHON_SPHINX_VERSION).tar.gz
+PYTHON_SPHINX_TARBALL_URL = http://pypi.python.org/packages/source/S/Sphinx/$(PYTHON_SPHINX_TARBALL)
+PYTHON_SPHINX_BUILD_DIR = Sphinx-$(PYTHON_SPHINX_VERSION)
+PYTHON_SPHINX_INSTALL_DIR = python-sphinx-$(PYTHON_SPHINX_VERSION)
+PYTHON_SPHINX_PYTHONPATH = $(PREFIX)/$(PYTHON_SPHINX_INSTALL_DIR)/lib/python
+
+.fetch-python-sphinx:
+	$(WGET) $(PYTHON_SPHINX_TARBALL_URL)
+	@$(TOUCH) $@
+
+fetch-python-sphinx: .fetch-python-sphinx
+
+.extract-python-sphinx: .fetch-python-sphinx
+	$(RM) $(PYTHON_SPHINX_BUILD_DIR)
+	$(TAR) -xzf $(PYTHON_SPHINX_TARBALL)
+	@$(TOUCH) $@
+
+extract-python-sphinx: .extract-python-sphinx
+
+.build-python-sphinx: .extract-python-sphinx
+	cd $(PYTHON_SPHINX_BUILD_DIR) && python setup.py build
+	@$(TOUCH) $@
+
+build-python-sphinx: .build-python-sphinx
+
+install-python-sphinx: .build-python-sphinx
+	install -d $(PYTHON_SPHINX_PYTHONPATH)
+	cd $(PYTHON_SPHINX_BUILD_DIR) && PYTHONPATH="$(PYTHON_SPHINX_PYTHONPATH)$${PYTHONPATH+:$$PYTHONPATH}" python setup.py install --home=$(PREFIX)/$(PYTHON_SPHINX_INSTALL_DIR)
+
+clean-python-sphinx:
+	@$(RM) .build-python-sphinx
+	@$(RM) .extract-python-sphinx
+	$(RM) $(PYTHON_SPHINX_BUILD_DIR)
+
+distclean-python-sphinx: clean-python-sphinx
+	@$(RM) .fetch-python-sphinx
+	$(RM) $(PYTHON_SPHINX_TARBALL)
+
+env-python-sphinx:
+	@echo
+	@echo '# add python-sphinx $(PYTHON_SPHINX_VERSION) to environment'
+	@echo 'export PATH="$(PREFIX)/$(PYTHON_SPHINX_INSTALL_DIR)/bin$${PATH+:$$PATH}"'
+	@echo 'export PYTHONPATH="$(PYTHON_SPHINX_PYTHONPATH)$${PYTHONPATH+:$$PYTHONPATH}"'
