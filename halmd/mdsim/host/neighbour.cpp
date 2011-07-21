@@ -83,6 +83,8 @@ void neighbour<dimension, float_type>::update()
 
     LOG_TRACE("update neighbour lists");
 
+    scoped_timer_type timer(runtime_.update);
+
     cell_size_type const& ncell = binning_->ncell();
     cell_size_type i;
     for (i[0] = 0; i[0] < ncell[0]; ++i[0]) {
@@ -199,6 +201,12 @@ void neighbour<dimension, float_type>::luaopen(lua_State* L)
                       , shared_ptr<logger_type>
                      >())
                     .property("r_skin", &neighbour::r_skin)
+                    .scope
+                    [
+                        class_<runtime>("runtime")
+                            .def_readonly("update", &runtime::update)
+                    ]
+                    .def_readonly("runtime", &neighbour::runtime_)
             ]
         ]
     ];

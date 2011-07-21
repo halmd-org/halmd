@@ -31,6 +31,7 @@
 #include <halmd/mdsim/host/binning.hpp>
 #include <halmd/mdsim/host/particle.hpp>
 #include <halmd/mdsim/neighbour.hpp>
+#include <halmd/utility/profiler.hpp>
 
 namespace halmd {
 namespace mdsim {
@@ -82,6 +83,15 @@ public:
     }
 
 private:
+    typedef utility::profiler profiler_type;
+    typedef typename profiler_type::accumulator_type accumulator_type;
+    typedef typename profiler_type::scoped_timer_type scoped_timer_type;
+
+    struct runtime
+    {
+        accumulator_type update;
+    };
+
     typedef typename binning_type::cell_size_type cell_size_type;
     typedef typename binning_type::cell_diff_type cell_diff_type;
     typedef typename binning_type::cell_list cell_list;
@@ -104,6 +114,8 @@ private:
     matrix_type rr_cut_skin_;
     /** signal emitted before neighbour list update */
     signal_type on_update_;
+    /** profiling runtime accumulators */
+    runtime runtime_;
 };
 
 } // namespace host
