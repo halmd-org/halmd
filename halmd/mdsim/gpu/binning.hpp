@@ -44,7 +44,6 @@ public:
     typedef typename particle_type::vector_type vector_type;
     typedef boost::numeric::ublas::symmetric_matrix<float_type, boost::numeric::ublas::lower> matrix_type;
     typedef mdsim::box<dimension> box_type;
-    typedef utility::profiler profiler_type;
     struct defaults;
     typedef logger logger_type;
 
@@ -112,11 +111,12 @@ public:
     }
 
 private:
+    typedef utility::profiler profiler_type;
+    typedef typename profiler_type::accumulator_type accumulator_type;
     typedef typename profiler_type::scoped_timer_type scoped_timer_type;
 
     struct runtime
     {
-        typedef typename profiler_type::accumulator_type accumulator_type;
         accumulator_type update;
     };
 
@@ -149,7 +149,6 @@ private:
     cuda::vector<unsigned int> g_cell_permutation_;
     /** cell offsets in sorted particle list */
     cuda::vector<unsigned int> g_cell_offset_;
-
     /** profiling runtime accumulators */
     runtime runtime_;
 };

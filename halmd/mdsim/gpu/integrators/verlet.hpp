@@ -1,5 +1,5 @@
 /*
- * Copyright © 2008-2010  Peter Colberg and Felix Höfling
+ * Copyright © 2008-2011  Peter Colberg and Felix Höfling
  *
  * This file is part of HALMD.
  *
@@ -45,15 +45,7 @@ public:
     typedef gpu::particle<dimension, float_type> particle_type;
     typedef mdsim::box<dimension> box_type;
     typedef logger logger_type;
-    typedef utility::profiler profiler_type;
     typedef typename particle_type::vector_type vector_type;
-
-    struct runtime
-    {
-        typedef typename profiler_type::accumulator_type accumulator_type;
-        accumulator_type integrate;
-        accumulator_type finalize;
-    };
 
     static char const* module_name() { return "verlet"; }
 
@@ -76,7 +68,15 @@ public:
     }
 
 private:
+    typedef utility::profiler profiler_type;
+    typedef typename profiler_type::accumulator_type accumulator_type;
     typedef typename profiler_type::scoped_timer_type scoped_timer_type;
+
+    struct runtime
+    {
+        accumulator_type integrate;
+        accumulator_type finalize;
+    };
 
     boost::shared_ptr<particle_type> particle_;
     boost::shared_ptr<box_type const> box_;

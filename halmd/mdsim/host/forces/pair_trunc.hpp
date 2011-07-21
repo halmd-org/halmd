@@ -57,13 +57,6 @@ public:
     typedef mdsim::box<dimension> box_type;
     typedef host::neighbour<dimension, float_type> neighbour_type;
     typedef host::forces::smooth<dimension, float_type> smooth_type;
-    typedef utility::profiler profiler_type;
-
-    struct runtime
-    {
-        typedef typename profiler_type::accumulator_type accumulator_type;
-        accumulator_type compute;
-    };
 
     boost::shared_ptr<potential_type> potential;
     boost::shared_ptr<particle_type> particle;
@@ -124,7 +117,14 @@ public:
     }
 
 private:
+    typedef utility::profiler profiler_type;
+    typedef typename profiler_type::accumulator_type accumulator_type;
     typedef typename profiler_type::scoped_timer_type scoped_timer_type;
+
+    struct runtime
+    {
+        accumulator_type compute;
+    };
 
     boost::shared_ptr<neighbour_type const> neighbour_;
 

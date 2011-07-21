@@ -53,15 +53,8 @@ public:
     typedef mdsim::box<dimension> box_type;
     typedef mdsim::clock clock_type;
     typedef logger logger_type;
-    typedef halmd::utility::profiler profiler_type;
     typedef typename mdsim::type_traits<dimension, double>::vector_type vector_type;
     typedef typename signal<void (uint64_t)>::slot_function_type slot_function_type;
-
-    struct runtime
-    {
-        typedef typename profiler_type::accumulator_type accumulator_type;
-        accumulator_type sample;
-    };
 
     static void luaopen(lua_State* L);
 
@@ -103,7 +96,14 @@ public:
     double en_tot() { return en_pot() + en_kin(); }
 
 private:
+    typedef halmd::utility::profiler profiler_type;
+    typedef profiler_type::accumulator_type accumulator_type;
     typedef profiler_type::scoped_timer_type scoped_timer_type;
+
+    struct runtime
+    {
+        accumulator_type sample;
+    };
 
     boost::shared_ptr<box_type const> box_;
     boost::shared_ptr<clock_type const> clock_;

@@ -45,20 +45,11 @@ public:
     typedef typename particle_type::vector_type vector_type;
     typedef typename particle_type::gpu_vector_type gpu_vector_type;
     typedef mdsim::box<dimension> box_type;
-    typedef utility::profiler profiler_type;
     typedef hilbert_wrapper<dimension> wrapper_type;
     typedef typename _Base::signal_type signal_type;
     typedef typename _Base::slot_function_type slot_function_type;
     typedef typename _Base::connection_type connection_type;
     typedef logger logger_type;
-
-    struct runtime
-    {
-        typedef typename profiler_type::accumulator_type accumulator_type;
-        accumulator_type map;
-        accumulator_type permutation;
-        accumulator_type order;
-    };
 
     static char const* module_name() { return "hilbert"; }
 
@@ -77,7 +68,16 @@ public:
     }
 
 private:
+    typedef utility::profiler profiler_type;
+    typedef typename profiler_type::accumulator_type accumulator_type;
     typedef typename profiler_type::scoped_timer_type scoped_timer_type;
+
+    struct runtime
+    {
+        accumulator_type map;
+        accumulator_type permutation;
+        accumulator_type order;
+    };
 
     void map(cuda::vector<unsigned int>& g_map);
     void permutation(cuda::vector<unsigned int>& g_map, cuda::vector<unsigned int>& g_index);
@@ -86,12 +86,12 @@ private:
     boost::shared_ptr<particle_type> particle_;
     /** recursion depth */
     unsigned int depth_;
-    /** profiling runtime accumulators */
-    runtime runtime_;
     /** signal emitted after particle ordering */
     signal_type on_order_;
     /** module logger */
     boost::shared_ptr<logger_type> logger_;
+    /** profiling runtime accumulators */
+    runtime runtime_;
 };
 
 } // namespace mdsim

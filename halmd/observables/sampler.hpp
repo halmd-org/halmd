@@ -40,16 +40,9 @@ public:
     typedef clock_type::step_type step_type;
     typedef clock_type::time_type time_type;
     typedef mdsim::core core_type;
-    typedef utility::profiler profiler_type;
     typedef halmd::signal<void (step_type)> signal_type;
     typedef signal_type::slot_function_type slot_function_type;
     typedef signal_type::connection connection_type;
-
-    struct runtime
-    {
-        typedef profiler_type::accumulator_type accumulator_type;
-        accumulator_type total;
-    };
 
     sampler(
         boost::shared_ptr<clock_type const> clock
@@ -78,7 +71,14 @@ public:
     static void luaopen(lua_State* L);
 
 private:
+    typedef utility::profiler profiler_type;
+    typedef profiler_type::accumulator_type accumulator_type;
     typedef profiler_type::scoped_timer_type scoped_timer_type;
+
+    struct runtime
+    {
+        accumulator_type total;
+    };
 
     void prepare(slot_function_type const& slot, step_type interval, step_type step) const;
     void sample(slot_function_type const& slot, step_type interval, step_type step) const;
