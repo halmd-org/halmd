@@ -1,5 +1,5 @@
 /*
- * Copyright © 2008-2010  Peter Colberg and Felix Höfling
+ * Copyright © 2008-2011  Peter Colberg and Felix Höfling
  *
  * This file is part of HALMD.
  *
@@ -30,6 +30,7 @@
 #include <halmd/mdsim/host/particle.hpp>
 #include <halmd/mdsim/position.hpp>
 #include <halmd/random/host/random.hpp>
+#include <halmd/utility/profiler.hpp>
 
 namespace halmd {
 namespace mdsim {
@@ -64,6 +65,15 @@ public:
     vector_type const& slab() const { return slab_; }
 
 private:
+    typedef utility::profiler profiler_type;
+    typedef typename profiler_type::accumulator_type accumulator_type;
+    typedef typename profiler_type::scoped_timer_type scoped_timer_type;
+
+    struct runtime
+    {
+        accumulator_type set;
+    };
+
     boost::shared_ptr<particle_type> particle_;
     boost::shared_ptr<box_type const> box_;
     boost::shared_ptr<random_type> random_;
@@ -80,6 +90,9 @@ private:
         position_iterator first, position_iterator last
       , vector_type const& length, vector_type const& offset
     );
+
+    /** profiling runtime accumulators */
+    runtime runtime_;
 };
 
 } // namespace mdsim
