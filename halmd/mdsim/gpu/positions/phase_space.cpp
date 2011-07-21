@@ -63,6 +63,8 @@ void phase_space<dimension, float_type>::set()
 {
     LOG("set particle positions from phase space sample");
 
+    scoped_timer_type timer(runtime_.set);
+
     // assign particle coordinates and types
     size_t n = 0; // indicates the boundary to the next particle type
     for (size_t j = 0, i = 0; j < particle_->ntype; ++j) {
@@ -120,6 +122,12 @@ void phase_space<dimension, float_type>::luaopen(lua_State* L)
                            , shared_ptr<sample_type const>
                            , shared_ptr<logger_type>
                         >())
+                        .scope
+                        [
+                            class_<runtime>("runtime")
+                                .def_readonly("set", &runtime::set)
+                        ]
+                        .def_readonly("runtime", &phase_space::runtime_)
                 ]
             ]
         ]

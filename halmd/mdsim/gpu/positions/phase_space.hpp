@@ -29,6 +29,7 @@
 #include <halmd/mdsim/gpu/particle.hpp>
 #include <halmd/mdsim/position.hpp>
 #include <halmd/observables/host/samples/phase_space.hpp>
+#include <halmd/utility/profiler.hpp>
 
 namespace halmd {
 namespace mdsim {
@@ -58,10 +59,21 @@ public:
     virtual void set();
 
 private:
+    typedef utility::profiler profiler_type;
+    typedef typename profiler_type::accumulator_type accumulator_type;
+    typedef typename profiler_type::scoped_timer_type scoped_timer_type;
+
+    struct runtime
+    {
+        accumulator_type set;
+    };
+
     boost::shared_ptr<particle_type> particle_;
     boost::shared_ptr<box_type const> box_;
     boost::shared_ptr<sample_type const> sample_;
     boost::shared_ptr<logger_type> logger_;
+    /** profiling runtime accumulators */
+    runtime runtime_;
 };
 
 } // namespace mdsim
