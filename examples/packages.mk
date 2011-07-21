@@ -358,6 +358,7 @@ GIT_MANPAGES_TARBALL = git-manpages-$(GIT_VERSION).tar.bz2
 GIT_TARBALL_URL = http://kernel.org/pub/software/scm/git/$(GIT_TARBALL)
 GIT_MANPAGES_TARBALL_URL = http://kernel.org/pub/software/scm/git/$(GIT_MANPAGES_TARBALL)
 GIT_BUILD_DIR = git-$(GIT_VERSION)
+GIT_CONFIGURE_FLAGS = --without-python
 GIT_INSTALL_DIR = git-$(GIT_VERSION)
 
 .fetch-git:
@@ -375,7 +376,7 @@ fetch-git: .fetch-git
 extract-git: .extract-git
 
 .configure-git: .extract-git
-	cd $(GIT_BUILD_DIR) && ./configure --prefix=$(PREFIX)/$(GIT_INSTALL_DIR)
+	cd $(GIT_BUILD_DIR) && ./configure $(GIT_CONFIGURE_FLAGS) --prefix=$(PREFIX)/$(GIT_INSTALL_DIR)
 	@$(TOUCH) $@
 
 configure-git: .configure-git
