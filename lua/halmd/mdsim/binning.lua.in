@@ -67,10 +67,18 @@ function new(args)
     if device() then
         local defaults = assert(binning_wrapper.gpu[dimension].defaults)
         local occupancy = args.occupancy or defaults.occupancy()
-        return binning_wrapper.gpu[dimension](particle, box, r_cut, skin, logger, occupancy)
+        binning = binning_wrapper.gpu[dimension](particle, box, r_cut, skin, logger, occupancy)
     else
-        return binning_wrapper.host[dimension](particle, box, r_cut, skin, logger)
+        binning = binning_wrapper.host[dimension](particle, box, r_cut, skin, logger)
     end
+    return binning
+end
+
+--
+-- connect runtime accumulators to module profiler
+--
+function profile(self, profiler)
+    profiler:on_profile{self, update = "cell lists update"}
 end
 
 --

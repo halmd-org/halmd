@@ -75,6 +75,13 @@ function new(args)
 end
 
 --
+-- connect runtime accumulators to module profiler
+--
+function profile(self, profiler)
+    profiler:on_profile{self, set = "setting particle velocities from Boltzmann distribution"}
+end
+
+--
 -- returns module description
 --
 function name()

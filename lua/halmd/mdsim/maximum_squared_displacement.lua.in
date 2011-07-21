@@ -60,3 +60,11 @@ function new(args)
     end
     return maximum_squared_displacement(particle, box)
 end
+
+--
+-- connect runtime accumulators to module profiler
+--
+function profile(self, profiler)
+    profiler:on_profile{self, zero = "zero maximum displacement"}
+    profiler:on_profile{self, compute = "compute maximum displacement"}
+end
