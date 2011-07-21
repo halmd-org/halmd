@@ -28,6 +28,7 @@
 #include <halmd/mdsim/host/binning.hpp>
 #include <halmd/mdsim/host/particle.hpp>
 #include <halmd/mdsim/sort.hpp>
+#include <halmd/utility/profiler.hpp>
 
 namespace halmd {
 namespace mdsim {
@@ -70,6 +71,16 @@ private:
     typedef typename binning_type::cell_size_type cell_size_type;
     typedef typename binning_type::cell_list cell_list;
     typedef typename binning_type::cell_lists cell_lists;
+    typedef utility::profiler profiler_type;
+    typedef typename profiler_type::accumulator_type accumulator_type;
+    typedef typename profiler_type::scoped_timer_type scoped_timer_type;
+
+    struct runtime
+    {
+        accumulator_type order;
+        accumulator_type map;
+        accumulator_type permute;
+    };
 
     unsigned int map(vector_type r, unsigned int depth);
 
@@ -83,6 +94,8 @@ private:
     signal_type on_order_;
     /** module logger */
     boost::shared_ptr<logger_type> logger_;
+    /** profiling runtime accumulators */
+    runtime runtime_;
 };
 
 } // namespace sorts

@@ -74,9 +74,9 @@ private:
 
     struct runtime
     {
-        accumulator_type map;
-        accumulator_type permutation;
         accumulator_type order;
+        accumulator_type map;
+        accumulator_type permute;
     };
 
     void map(cuda::vector<unsigned int>& g_map);
