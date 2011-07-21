@@ -3,10 +3,16 @@ add_subdirectory(positions)
 add_subdirectory(velocities)
 
 # module box
-add_executable(test_unit_mdsim_box
-  box.cpp
-  box_kernel.cu
+if (WITH_CUDA)
+  add_executable(test_unit_mdsim_box
+    box.cpp
+    box_kernel.cu
 )
+else (WITH_CUDA)
+  add_executable(test_unit_mdsim_box
+    box.cpp
+)
+endif (WITH_CUDA)
 target_link_libraries(test_unit_mdsim_box
   libhalmd
   ${HALMD_COMMON_LIBRARIES}
