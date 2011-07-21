@@ -50,7 +50,6 @@ public:
 
     static void luaopen(lua_State* L);
 
-    static char const* name() { return "power law"; }
     static char const* module_name() { return "power_law"; }
 
     power_law(

@@ -46,7 +46,6 @@ public:
     typedef lennard_jones_simple_kernel::lennard_jones_simple gpu_potential_type;
     typedef boost::numeric::ublas::symmetric_matrix<float_type, boost::numeric::ublas::lower> matrix_type;
 
-    static char const* name() { return "Lennard-Jones"; }
     static char const* module_name() { return "lennard_jones_simple"; }
 
     static void luaopen(lua_State* L);
