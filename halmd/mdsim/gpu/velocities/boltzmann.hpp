@@ -30,6 +30,7 @@
 #include <halmd/mdsim/gpu/velocities/boltzmann_kernel.hpp>
 #include <halmd/numeric/mp/dsfloat.hpp>
 #include <halmd/random/gpu/random.hpp>
+#include <halmd/utility/profiler.hpp>
 
 namespace halmd {
 namespace mdsim {
@@ -76,6 +77,15 @@ public:
     static gaussian_impl_type get_gaussian_impl(int threads);
 
 private:
+    typedef utility::profiler profiler_type;
+    typedef typename profiler_type::accumulator_type accumulator_type;
+    typedef typename profiler_type::scoped_timer_type scoped_timer_type;
+
+    struct runtime
+    {
+        accumulator_type set;
+    };
+
     boost::shared_ptr<particle_type> particle_;
     boost::shared_ptr<random_type> random_;
     boost::shared_ptr<logger_type> logger_;
@@ -86,6 +96,8 @@ private:
     cuda::vector<gpu_vector_type> g_vcm_;
     /** block sum of squared velocity */
     cuda::vector<dsfloat> g_vv_;
+    /** profiling runtime accumulators */
+    runtime runtime_;
 };
 
 } // namespace mdsim

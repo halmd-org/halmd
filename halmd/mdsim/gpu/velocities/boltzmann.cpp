@@ -90,6 +90,8 @@ boltzmann<dimension, float_type, RandomNumberGenerator>::get_gaussian_impl(int t
 template <int dimension, typename float_type, typename RandomNumberGenerator>
 void boltzmann<dimension, float_type, RandomNumberGenerator>::set()
 {
+    scoped_timer_type timer(runtime_.set);
+
     // generate Maxwell-Boltzmann distributed velocities,
     // assuming equal (unit) mass for all particle types
     cuda::configure(
@@ -163,6 +165,12 @@ void boltzmann<dimension, float_type, RandomNumberGenerator>::luaopen(lua_State*
                          >())
                         .property("temperature", &boltzmann::temperature)
                         .property("module_name", &module_name_wrapper<dimension, float_type, RandomNumberGenerator>)
+                        .scope
+                        [
+                            class_<runtime>("runtime")
+                                .def_readonly("set", &runtime::set)
+                        ]
+                        .def_readonly("runtime", &boltzmann::runtime_)
                 ]
             ]
         ]
