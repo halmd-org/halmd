@@ -30,7 +30,7 @@ struct box_kernel_wrapper
     typedef typename halmd::mdsim::type_traits<dimension, float_type>::vector_type vector_type;
     typedef typename halmd::mdsim::type_traits<dimension, float_type>::gpu::coalesced_vector_type coalesced_vector_type;
 
-    cuda::function <void (coalesced_vector_type*, coalesced_vector_type*, const vector_type)> reduce_periodic;
+    cuda::function <void (coalesced_vector_type*, coalesced_vector_type*, const vector_type, const unsigned int)> reduce_periodic;
 
     static box_kernel_wrapper kernel;
 };

@@ -107,8 +107,9 @@ void periodic_host()
         for (unsigned int i = 0; i < dimension; ++i) {
             BOOST_CHECK_MESSAGE(
                 // FIXME the epsilon-tolerance appears a bit weird here
-                r1[i] >= -length[i] / 2 - epsilon && r1[i] < length[i] / 2 + epsilon
-              , "position (" << r1 << ") is outside of the simulation box [(" << -length / 2 << "), (" << length / 2 << ")]"
+                r1[i] >= length[i] * (-.5 - epsilon) && r1[i] < length[i] * (.5 + epsilon)
+              , "coordinate " << i << " of (" << r1 << ") is outside of the simulation box"
+                << " [(" << -length / 2 << "), (" << length / 2 << ")]"
             );
         }
 
@@ -156,22 +157,25 @@ void periodic_gpu()
         position += list_of(-0.001)(1.)(1000.);
         position += list_of(0.001)(-.1)(-500.);
     }
+    unsigned int npos = position.size();
+
+    // allocate device memory and host memory for conversion to GPU type
+    cuda::host::vector<coalesced_vector_type> h_position(npos);
+    cuda::host::vector<coalesced_vector_type> h_reduced(npos);
+    cuda::vector<coalesced_vector_type> g_position(npos);
+    cuda::vector<coalesced_vector_type> g_reduced(npos);
 
     // allocate memory for conversion to GPU type and transfer positions to device
-    cuda::host::vector<coalesced_vector_type> h_position(position.size());
-    cuda::vector<coalesced_vector_type> g_position(position.size());
     std::copy(position.begin(), position.end(), h_position.begin());
     cuda::copy(h_position, g_position);
 
-    // allocate GPU memory for the results
-    cuda::host::vector<coalesced_vector_type> h_reduced(position.size());
-    cuda::vector<coalesced_vector_type> g_reduced(position.size());
-    g_position.reserve(warp_size);
-    g_reduced.reserve(warp_size);
-
     // call reduce_periodic kernel
-    cuda::configure(dim3(1), dim3(position.capacity())); // one block
-    box_kernel_wrapper<dimension, float_type>::kernel.reduce_periodic(g_position, g_reduced, length);
+    cuda::config config((npos + warp_size - 1) / warp_size, warp_size);
+    BOOST_MESSAGE("kernel reduce_periodic: using " << config.blocks_per_grid() << " block with "
+        << config.threads_per_block() << " threads"
+    );
+    cuda::configure(config.grid, config.block);
+    box_kernel_wrapper<dimension, float_type>::kernel.reduce_periodic(g_position, g_reduced, length, npos);
     cuda::thread::synchronize();
 
     // copy results back to host (but don't convert to vector_type)
@@ -185,8 +189,9 @@ void periodic_gpu()
         for (unsigned int j = 0; j < dimension; ++j) {
             BOOST_CHECK_MESSAGE(
                 // FIXME the epsilon-tolerance appears a bit weird here
-                r1[j] >= -length[j] / 2 - epsilon && r1[j] < length[j] / 2 + epsilon
-              , "position (" << r1 << ") is outside of the simulation box [(" << -length / 2 << "), (" << length / 2 << ")]"
+                r1[j] >= length[j] * (-.5 - epsilon) && r1[j] < length[j] * (.5 + epsilon)
+              , "coordinate " << j << " of (" << r1 << ") is outside of the simulation box"
+                << " [(" << -length / 2 << "), (" << length / 2 << ")]"
             );
         }
 
@@ -218,10 +223,8 @@ BOOST_AUTO_TEST_CASE(box_periodic_host_3d) {
 #ifdef WITH_CUDA
 BOOST_FIXTURE_TEST_CASE(box_periodic_gpu_2d, device) {
     periodic_gpu<2, float>();
-//     periodic_gpu<2, dsfloat>();
 }
 BOOST_FIXTURE_TEST_CASE(box_periodic_gpu_3d, device) {
     periodic_gpu<3, float>();
-//     periodic_gpu<3, dsfloat>();
 }
 #endif

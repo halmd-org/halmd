@@ -41,16 +41,22 @@ using namespace halmd::mdsim::gpu;
  * fill float array with a given value using a loop
  */
 template <typename coalesced_vector_type, typename vector_type>
-__global__ void reduce_periodic(coalesced_vector_type* g_r, coalesced_vector_type* g_reduced, const vector_type length)
+__global__ void reduce_periodic(
+    coalesced_vector_type* g_r
+  , coalesced_vector_type* g_reduced
+  , const vector_type length
+  , const unsigned int size)
 {
     const unsigned int i = GTID;
 
-    vector_type r = g_r[i];
-    vector_type image = box_kernel::reduce_periodic(r, length);
-    g_reduced[i] = r;
+    if (i < size) {
+        vector_type r = g_r[i];
+        vector_type image = box_kernel::reduce_periodic(r, length);
+        g_reduced[i] = r;
 
-    box_kernel::extend_periodic(r, image, length);
-    g_r[i] = r;
+        box_kernel::extend_periodic(r, image, length);
+        g_r[i] = r;
+    }
 }
 
 } // namespace box
