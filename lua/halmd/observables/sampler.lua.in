@@ -21,15 +21,14 @@ require("halmd.modules")
 require("halmd.mdsim.clock")
 require("halmd.mdsim.core")
 require("halmd.observables.runtime_estimate")
+require("halmd.utility.profiler")
+require("halmd.utility.timer_service")
 
 -- grab modules
 local signals = require("halmd.modules.signals")
 local mdsim = halmd.mdsim
 local observables = halmd.observables
-local utility = {
-    timer_service = require("halmd.utility.timer_service")
-  , profiler = require("halmd.utility.profiler")
-}
+local utility = halmd.utility
 -- grab C++ wrappers
 local sampler_wrapper = libhalmd.sampler
 local h5 = libhalmd.h5
@@ -80,6 +79,13 @@ end
 -- patch C++ objects with signal connection handlers
 -- @see module halmd.modules.signals
 signals.patch(_M)
+
+--
+-- connect runtime accumulators to module profiler
+--
+function profile(self, profiler)
+    profiler:on_profile{self, total = "total simulation runtime"}
+end
 
 --
 -- assemble module options
