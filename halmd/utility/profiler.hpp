@@ -1,5 +1,5 @@
 /*
- * Copyright © 2010-2011  Peter Colberg
+ * Copyright © 2010-2011  Peter Colberg and Felix Höfling
  *
  * This file is part of HALMD.
  *
@@ -20,13 +20,12 @@
 #ifndef HALMD_UTILITY_PROFILER_HPP
 #define HALMD_UTILITY_PROFILER_HPP
 
-#include <boost/shared_ptr.hpp>
 #include <lua.hpp>
 #include <vector>
 
-#include <halmd/io/profiling/writer.hpp>
 #include <halmd/numeric/accumulator.hpp>
 #include <halmd/utility/scoped_timer.hpp>
+#include <halmd/utility/signal.hpp>
 #include <halmd/utility/timer.hpp>
 
 namespace halmd {
@@ -34,21 +33,51 @@ namespace utility {
 
 class profiler
 {
+private:
+    typedef signal<void ()> signal_type;
+
 public:
     typedef timer timer_type;
     typedef accumulator<double> accumulator_type;
     typedef scoped_timer<timer_type> scoped_timer_type;
+    typedef signal_type::slot_function_type slot_function_type;
+    typedef signal_type::connection connection_type;
 
-    typedef io::profiling::writer writer_type;
-    typedef std::vector<boost::shared_ptr<writer_type> > writers_type;
-
+    /** logs timer resolution */
+    profiler();
+    /** connect accumulator for profiling */
+    connection_type on_profile(boost::shared_ptr<accumulator_type> acc, std::string const& desc);
+    /** connect to signal emitted before profiling */
+    signal<void (uint64_t)>::connection on_prepend_profile(signal<void (uint64_t)>::slot_function_type const& slot);
+    /** connect to signal emitted after profiling */
+    signal<void (uint64_t)>::connection on_append_profile(signal<void (uint64_t)>::slot_function_type const& slot);
+    /** profile */
+    void profile(uint64_t step);
+    /** Lua bindings */
     static void luaopen(lua_State* L);
-    profiler(writers_type writer, std::string const& group);
-    void register_runtime(accumulator_type const& runtime, std::string const& tag, std::string const& desc);
 
 private:
-    writers_type writer_;
-    std::string group_;
+    /** pair type for accumulator with description */
+    typedef std::pair<accumulator_type, std::string> accumulator_pair_type;
+
+    /**
+     * push copy of accumulator into container, and *reset* accumulator
+     */
+    void push(boost::shared_ptr<accumulator_type> acc, std::string const& desc);
+    /**
+     * write log entries for all runtime accumulators,
+     * sorted by their total accumulated runtime
+     */
+    void log();
+
+    /** signal emitted before profiling */
+    signal<void (uint64_t)> on_prepend_profile_;
+    /** signal emitted for profiling */
+    signal_type on_profile_;
+    /** signal emitted after profiling */
+    signal<void (uint64_t)> on_append_profile_;
+    /** accumulators with descriptions */
+    std::vector<accumulator_pair_type> accumulators_;
 };
 
 } // namespace utility
