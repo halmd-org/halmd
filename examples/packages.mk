@@ -407,3 +407,57 @@ env-git:
 	@echo '# add Git $(GIT_VERSION) to environment'
 	@echo 'export PATH="$(PREFIX)/$(GIT_INSTALL_DIR)/bin$${PATH+:$$PATH}"'
 	@echo 'export MANPATH="$(PREFIX)/$(GIT_INSTALL_DIR)/share/man$${MANPATH+:$$MANPATH}"'
+
+##
+## htop
+##
+
+HTOP_VERSION = 0.9
+HTOP_TARBALL = htop-$(HTOP_VERSION).tar.gz
+HTOP_TARBALL_URL = http://sourceforge.net/projects/htop/files/htop/0.9/$(HTOP_TARBALL)
+HTOP_BUILD_DIR = htop-$(HTOP_VERSION)
+HTOP_INSTALL_DIR = htop-$(HTOP_VERSION)
+
+.fetch-htop:
+	$(WGET) $(HTOP_TARBALL_URL)
+	@$(TOUCH) $@
+
+fetch-htop: .fetch-htop
+
+.extract-htop: .fetch-htop
+	$(RM) $(HTOP_BUILD_DIR)
+	$(TAR) -xzf $(HTOP_TARBALL)
+	@$(TOUCH) $@
+
+extract-htop: .extract-htop
+
+.configure-htop: .extract-htop
+	cd $(HTOP_BUILD_DIR) && ./configure --prefix=$(PREFIX)/$(HTOP_INSTALL_DIR)
+	@$(TOUCH) $@
+
+configure-htop: .configure-htop
+
+.build-htop: .configure-htop
+	cd $(HTOP_BUILD_DIR) && make $(PARALLEL_BUILD_FLAGS)
+	@$(TOUCH) $@
+
+build-htop: .build-htop
+
+install-htop: .build-htop
+	cd $(HTOP_BUILD_DIR) && make install
+
+clean-htop:
+	@$(RM) .build-htop
+	@$(RM) .configure-htop
+	@$(RM) .extract-htop
+	$(RM) $(HTOP_BUILD_DIR)
+
+distclean-htop: clean-htop
+	@$(RM) .fetch-htop
+	$(RM) $(HTOP_TARBALL)
+
+env-htop:
+	@echo
+	@echo '# add htop $(HTOP_VERSION) to environment'
+	@echo 'export PATH="$(PREFIX)/$(HTOP_INSTALL_DIR)/bin$${PATH+:$$PATH}"'
+	@echo 'export MANPATH="$(PREFIX)/$(HTOP_INSTALL_DIR)/share/man$${MANPATH+:$$MANPATH}"'
