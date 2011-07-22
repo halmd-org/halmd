@@ -124,10 +124,6 @@ public:
      * and slots::end(), therefore declare const_iterator public.
      */
     typedef typename slots_type::const_iterator const_iterator;
-    /**
-     * FIXME deprecated
-     */
-    typedef halmd::connection connection;
 
     slots() : slots_(new slots_type) {}
 

@@ -36,69 +36,68 @@ class core
 public:
     typedef halmd::signal<void ()> signal_type;
     typedef signal_type::slot_function_type slot_function_type;
-    typedef signal_type::connection connection_type;
     typedef mdsim::clock clock_type;
 
     core(boost::shared_ptr<clock_type> clock);
     void setup();
     void mdstep();
 
-    connection_type on_prepend_setup(slot_function_type const& slot)
+    connection on_prepend_setup(slot_function_type const& slot)
     {
         return on_prepend_setup_.connect(slot);
     }
 
-    connection_type on_setup(slot_function_type const& slot)
+    connection on_setup(slot_function_type const& slot)
     {
         return on_setup_.connect(slot);
     }
 
-    connection_type on_append_setup(slot_function_type const& slot)
+    connection on_append_setup(slot_function_type const& slot)
     {
         return on_append_setup_.connect(slot);
     }
 
-    connection_type on_prepend_integrate(slot_function_type const& slot)
+    connection on_prepend_integrate(slot_function_type const& slot)
     {
         return on_prepend_integrate_.connect(slot);
     }
 
-    connection_type on_integrate(slot_function_type const& slot)
+    connection on_integrate(slot_function_type const& slot)
     {
         return on_integrate_.connect(slot);
     }
 
-    connection_type on_append_integrate(slot_function_type const& slot)
+    connection on_append_integrate(slot_function_type const& slot)
     {
         return on_append_integrate_.connect(slot);
     }
 
-    connection_type on_prepend_force(slot_function_type const& slot)
+    connection on_prepend_force(slot_function_type const& slot)
     {
         return on_prepend_force_.connect(slot);
     }
 
-    connection_type on_force(slot_function_type const& slot)
+    connection on_force(slot_function_type const& slot)
     {
         return on_force_.connect(slot);
     }
 
-    connection_type on_append_force(slot_function_type const& slot)
+    connection on_append_force(slot_function_type const& slot)
     {
         return on_append_force_.connect(slot);
     }
 
-    connection_type on_prepend_finalize(slot_function_type const& slot)
+    connection on_prepend_finalize(slot_function_type const& slot)
     {
         return on_prepend_finalize_.connect(slot);
     }
 
-    connection_type on_finalize(slot_function_type const& slot)
+    connection on_finalize(slot_function_type const& slot)
     {
         return on_finalize_.connect(slot);
     }
 
-    connection_type on_append_finalize(slot_function_type const& slot)
+    connection on_append_finalize(slot_function_type const& slot)
     {
         return on_append_finalize_.connect(slot);
     }

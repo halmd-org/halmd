@@ -34,12 +34,11 @@ class greater
 public:
     typedef halmd::signal<void ()> signal_type;
     typedef signal_type::slot_function_type slot_function_type;
-    typedef signal_type::connection connection_type;
     typedef boost::function0<value_type> function_type;
 
     greater(function_type const& func, value_type const& value) : func_(func), value_(value) {}
 
-    connection_type on_greater(slot_function_type const& slot)
+    connection on_greater(slot_function_type const& slot)
     {
         return on_greater_.connect(slot);
     }

@@ -55,7 +55,6 @@ public:
     typedef logger logger_type;
     typedef halmd::signal<void (uint64_t)> signal_type;
     typedef typename signal_type::slot_function_type slot_function_type;
-    typedef typename signal_type::connection connection_type;
 
     typedef boost::array<double, 3> result_type;
     typedef fixed_vector<double, dimension> vector_type;
@@ -72,7 +71,7 @@ public:
     // compute ssf from sample of density Fourier modes and store with given simulation step
     void sample(uint64_t step);
 
-    connection_type on_sample(slot_function_type const& slot)
+    connection on_sample(slot_function_type const& slot)
     {
         return on_sample_.connect(slot);
     }

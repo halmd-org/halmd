@@ -52,7 +52,6 @@ public:
     typedef logger logger_type;
     typedef typename _Base::signal_type signal_type;
     typedef typename _Base::slot_function_type slot_function_type;
-    typedef typename _Base::connection_type connection_type;
 
     typedef fixed_vector<float_type, dimension> vector_type;
     typedef typename density_mode_sample_type::mode_type mode_type;
@@ -70,7 +69,7 @@ public:
     */
     virtual void acquire(uint64_t step);
 
-    virtual connection_type on_acquire(slot_function_type const& slot)
+    virtual connection on_acquire(slot_function_type const& slot)
     {
         return on_acquire_.connect(slot);
     }

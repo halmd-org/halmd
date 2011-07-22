@@ -80,7 +80,7 @@ void sampler::run()
 /**
  * Connect slot to signal emitted before starting simulation run
  */
-sampler::connection_type sampler::on_start(slot_function_type const& slot)
+connection sampler::on_start(slot_function_type const& slot)
 {
     return on_start_.connect(slot);
 }
@@ -88,7 +88,7 @@ sampler::connection_type sampler::on_start(slot_function_type const& slot)
 /**
  * Connect slot to signal emitted before MD integration step
  */
-sampler::connection_type sampler::on_prepare(slot_function_type const& slot, step_type interval)
+connection sampler::on_prepare(slot_function_type const& slot, step_type interval)
 {
     return on_prepare_.connect(bind(&sampler::prepare, this, slot, interval, _1));
 }
@@ -96,7 +96,7 @@ sampler::connection_type sampler::on_prepare(slot_function_type const& slot, ste
 /**
  * Connect slot to signal emitted after MD integration step
  */
-sampler::connection_type sampler::on_sample(slot_function_type const& slot, step_type interval)
+connection sampler::on_sample(slot_function_type const& slot, step_type interval)
 {
     return on_sample_.connect(bind(&sampler::sample, this, slot, interval, _1));
 }
@@ -104,7 +104,7 @@ sampler::connection_type sampler::on_sample(slot_function_type const& slot, step
 /**
  * Connect slot to signal emitted after finishing simulation run
  */
-sampler::connection_type sampler::on_finish(slot_function_type const& slot)
+connection sampler::on_finish(slot_function_type const& slot)
 {
     return on_finish_.connect(slot);
 }

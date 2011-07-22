@@ -42,7 +42,6 @@ public:
     typedef mdsim::core core_type;
     typedef halmd::signal<void (step_type)> signal_type;
     typedef signal_type::slot_function_type slot_function_type;
-    typedef signal_type::connection connection_type;
 
     sampler(
         boost::shared_ptr<clock_type const> clock
@@ -50,10 +49,10 @@ public:
       , step_type steps
     );
     void run();
-    connection_type on_start(slot_function_type const& slot);
-    connection_type on_prepare(slot_function_type const& slot, step_type interval);
-    connection_type on_sample(slot_function_type const& slot, step_type interval);
-    connection_type on_finish(slot_function_type const& slot);
+    connection on_start(slot_function_type const& slot);
+    connection on_prepare(slot_function_type const& slot, step_type interval);
+    connection on_sample(slot_function_type const& slot, step_type interval);
+    connection on_finish(slot_function_type const& slot);
 
     /** total number of integration steps */
     step_type steps() const

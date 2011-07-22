@@ -53,7 +53,6 @@ public:
     struct defaults;
     typedef typename _Base::signal_type signal_type;
     typedef typename _Base::slot_function_type slot_function_type;
-    typedef typename _Base::connection_type connection_type;
     typedef logger logger_type;
 
     static void luaopen(lua_State* L);
@@ -69,7 +68,7 @@ public:
     );
     virtual void update();
 
-    virtual connection_type on_update(slot_function_type const& slot)
+    virtual connection on_update(slot_function_type const& slot)
     {
         return on_update_.connect(slot);
     }

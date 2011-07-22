@@ -41,16 +41,15 @@ public:
     typedef accumulator<double> accumulator_type;
     typedef scoped_timer<timer_type> scoped_timer_type;
     typedef signal_type::slot_function_type slot_function_type;
-    typedef signal_type::connection connection_type;
 
     /** logs timer resolution */
     profiler();
     /** connect accumulator for profiling */
-    connection_type on_profile(boost::shared_ptr<accumulator_type> acc, std::string const& desc);
+    connection on_profile(boost::shared_ptr<accumulator_type> acc, std::string const& desc);
     /** connect to signal emitted before profiling */
-    signal<void (uint64_t)>::connection on_prepend_profile(signal<void (uint64_t)>::slot_function_type const& slot);
+    connection on_prepend_profile(signal<void (uint64_t)>::slot_function_type const& slot);
     /** connect to signal emitted after profiling */
-    signal<void (uint64_t)>::connection on_append_profile(signal<void (uint64_t)>::slot_function_type const& slot);
+    connection on_append_profile(signal<void (uint64_t)>::slot_function_type const& slot);
     /** profile */
     void profile(uint64_t step);
     /** Lua bindings */

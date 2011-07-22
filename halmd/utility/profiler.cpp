@@ -37,17 +37,17 @@ profiler::profiler()
     LOG("profiler timer resolution: " << 1.E9 * timer_type::elapsed_min() << " ns");
 }
 
-profiler::connection_type profiler::on_profile(shared_ptr<accumulator_type> acc, string const& desc)
+connection profiler::on_profile(shared_ptr<accumulator_type> acc, string const& desc)
 {
     return on_profile_.connect(bind(&profiler::push, this, acc, desc));
 }
 
-signal<void (uint64_t)>::connection profiler::on_prepend_profile(signal<void (uint64_t)>::slot_function_type const& slot)
+connection profiler::on_prepend_profile(signal<void (uint64_t)>::slot_function_type const& slot)
 {
     return on_prepend_profile_.connect(slot);
 }
 
-signal<void (uint64_t)>::connection profiler::on_append_profile(signal<void (uint64_t)>::slot_function_type const& slot)
+connection profiler::on_append_profile(signal<void (uint64_t)>::slot_function_type const& slot)
 {
     return on_append_profile_.connect(slot);
 }
