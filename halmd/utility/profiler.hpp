@@ -21,7 +21,6 @@
 #define HALMD_UTILITY_PROFILER_HPP
 
 #include <lua.hpp>
-#include <vector>
 
 #include <halmd/numeric/accumulator.hpp>
 #include <halmd/utility/scoped_timer.hpp>
@@ -31,10 +30,32 @@
 namespace halmd {
 namespace utility {
 
+/**
+ * Module runtime profiler
+ *
+ * This class manages the runtime accumulators scattered over the
+ * HALMD modules. It allows granular profiling, i.e. only a subset
+ * of accumulators may be registered with the profiler.
+ *
+ * In the modules, accumulators are defined as member variables in a
+ * runtime struct, and exported with Luabind's .def_readonly(). The
+ * profiler Lua module then calls the profile() function of a module,
+ * which calls profiler:on_profile for each accumulator along with
+ * a description.
+ *
+ * Profiler holds the accumulators as shared pointers. Lua automatically
+ * creates a shared pointer of an accumulator when calling on_profile,
+ * and Lua will keep alive the module which contains the accumulator
+ * as long as the shared pointer is held by profiler.
+ *
+ * We allow disconnection of accumulators by use of the halmd::slots
+ * container, which returns a connection object when an accumulator
+ * is connected (i.e. inserted).
+ */
 class profiler
 {
 private:
-    typedef signal<void ()> signal_type;
+    typedef signal<void (uint64_t)> signal_type;
 
 public:
     typedef timer timer_type;
@@ -47,36 +68,28 @@ public:
     /** connect accumulator for profiling */
     connection on_profile(boost::shared_ptr<accumulator_type> acc, std::string const& desc);
     /** connect to signal emitted before profiling */
-    connection on_prepend_profile(signal<void (uint64_t)>::slot_function_type const& slot);
+    connection on_prepend_profile(slot_function_type const& slot);
     /** connect to signal emitted after profiling */
-    connection on_append_profile(signal<void (uint64_t)>::slot_function_type const& slot);
-    /** profile */
+    connection on_append_profile(slot_function_type const& slot);
+    /** log and reset runtime accumulators */
     void profile(uint64_t step);
     /** Lua bindings */
     static void luaopen(lua_State* L);
 
 private:
-    /** pair type for accumulator with description */
-    typedef std::pair<accumulator_type, std::string> accumulator_pair_type;
+    /** accumulator with description */
+    typedef std::pair<boost::shared_ptr<accumulator_type>, std::string> accumulator_pair_type;
+    typedef slots<accumulator_pair_type> slots_type;
+    typedef slots_type::const_iterator slots_const_iterator;
 
-    /**
-     * push copy of accumulator into container, and *reset* accumulator
-     */
-    void push(boost::shared_ptr<accumulator_type> acc, std::string const& desc);
-    /**
-     * write log entries for all runtime accumulators,
-     * sorted by their total accumulated runtime
-     */
-    void log();
+    void log() const;
 
+    /** accumulators slots */
+    slots_type accumulators_;
     /** signal emitted before profiling */
-    signal<void (uint64_t)> on_prepend_profile_;
-    /** signal emitted for profiling */
-    signal_type on_profile_;
+    signal_type on_prepend_profile_;
     /** signal emitted after profiling */
-    signal<void (uint64_t)> on_append_profile_;
-    /** accumulators with descriptions */
-    std::vector<accumulator_pair_type> accumulators_;
+    signal_type on_append_profile_;
 };
 
 } // namespace utility

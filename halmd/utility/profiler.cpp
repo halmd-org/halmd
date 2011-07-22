@@ -17,10 +17,11 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <algorithm>
 #include <boost/bind.hpp>
 #include <boost/foreach.hpp>
-#include <cassert>
 #include <iomanip>
+#include <vector>
 
 #include <halmd/io/logger.hpp>
 #include <halmd/utility/lua/lua.hpp>
@@ -39,15 +40,15 @@ profiler::profiler()
 
 connection profiler::on_profile(shared_ptr<accumulator_type> acc, string const& desc)
 {
-    return on_profile_.connect(bind(&profiler::push, this, acc, desc));
+    return accumulators_.connect(make_pair(acc, desc));
 }
 
-connection profiler::on_prepend_profile(signal<void (uint64_t)>::slot_function_type const& slot)
+connection profiler::on_prepend_profile(slot_function_type const& slot)
 {
     return on_prepend_profile_.connect(slot);
 }
 
-connection profiler::on_append_profile(signal<void (uint64_t)>::slot_function_type const& slot)
+connection profiler::on_append_profile(slot_function_type const& slot)
 {
     return on_append_profile_.connect(slot);
 }
@@ -55,18 +56,11 @@ connection profiler::on_append_profile(signal<void (uint64_t)>::slot_function_ty
 void profiler::profile(uint64_t step)
 {
     on_prepend_profile_(step);
-    assert(accumulators_.empty());
-    on_profile_();
-    assert(accumulators_.size() == on_profile_.num_slots());
     log();
-    accumulators_.clear();
+    for (slots_const_iterator acc = accumulators_.begin(); acc != accumulators_.end(); ++acc) {
+        acc->first->reset();
+    }
     on_append_profile_(step);
-}
-
-void profiler::push(shared_ptr<accumulator_type> acc, string const& desc)
-{
-    accumulators_.push_back(make_pair(*acc, desc));
-    acc->reset();
 }
 
 /**
@@ -113,40 +107,45 @@ static ostream& operator<<(ostream& os, accumulator<value_type> const& acc)
  * average time per call × number of calls
  */
 template <typename accumulator_type>
-static typename accumulator_type::value_type total_runtime(accumulator_type const& acc)
+inline typename accumulator_type::value_type total_runtime(accumulator_type const& acc)
 {
     return mean(acc) * count(acc);
 }
 
 /**
- * compare total accumulated runtimes of accumulator_pairs
+ * compare total accumulated runtimes of accumulators
  */
-template <typename accumulator_pair_type>
-static bool less_total_runtime(accumulator_pair_type const& acc1, accumulator_pair_type const& acc2)
+struct less_total_runtime
 {
-    return total_runtime(acc1.first) < total_runtime(acc2.first);
-}
+    template <typename accumulator_pair_type>
+    bool operator()(accumulator_pair_type const& acc1, accumulator_pair_type const& acc2) const
+    {
+        return total_runtime(*acc1.first) < total_runtime(*acc2.first);
+    }
+};
 
-void profiler::log()
+/**
+ * write log entries for all runtime accumulators,
+ * sorted by their total accumulated runtime
+ */
+void profiler::log() const
 {
     if (accumulators_.empty()) return;
 
-    stable_sort(
-        accumulators_.begin()
-      , accumulators_.end()
-      , bind(&less_total_runtime<accumulator_pair_type>, _1, _2)
-    );
+    vector<accumulator_pair_type> accumulators(accumulators_.begin(), accumulators_.end());
 
-    double maximum_runtime = total_runtime(accumulators_.back().first);
-    BOOST_FOREACH(accumulator_pair_type const& acc, accumulators_) {
-        double fraction = total_runtime(acc.first) / maximum_runtime;
-        LOG(acc.second << ": " << acc.first
+    stable_sort(accumulators.begin(), accumulators.end(), less_total_runtime());
+
+    double maximum_runtime = total_runtime(*accumulators.back().first);
+    BOOST_FOREACH(accumulator_pair_type const& acc, accumulators) {
+        double fraction = total_runtime(*acc.first) / maximum_runtime;
+        LOG(acc.second << ": " << *acc.first
             << " [" << fixed << setprecision(1) << fraction * 100 << "%]"
         );
     }
 }
 
-static signal<void (uint64_t)>::slot_function_type
+static profiler::slot_function_type
 wrap_profile(shared_ptr<profiler> instance)
 {
     return bind(&profiler::profile, instance, _1);
