@@ -82,7 +82,9 @@ function new(args)
     -- compute forces every step
     core:on_force{force.compute, tracker = force}
 
-    -- store potential Lua object as read-only property
+    -- store potential Lua object (which contains the C++ object) as a
+    -- read-only Lua property, so we access it in pair_trunc.profile
+    -- and retrieve the name of the potential for the log description
     force.potential = property(function(self)
         return potential
     end)

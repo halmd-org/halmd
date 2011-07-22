@@ -43,7 +43,9 @@ function new(args)
 
     local potential = potential()
 
-    -- store potential name as read-only property
+    -- pair_trunc.profile registers its compute runtime accumulator
+    -- with a description that contains the name of the potential,
+    -- therefore store the potential name as a read-only Lua property
     potential.name = property(name)
 
     if potential.r_cut then
