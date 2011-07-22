@@ -1,5 +1,5 @@
 /*
- * Copyright © 2008-2010  Peter Colberg and Felix Höfling
+ * Copyright © 2008-2011  Peter Colberg and Felix Höfling
  *
  * This file is part of HALMD.
  *
@@ -23,8 +23,6 @@
 
 #include <halmd/mdsim/gpu/integrators/verlet_nvt_andersen.hpp>
 #include <halmd/utility/lua/lua.hpp>
-#include <halmd/utility/scoped_timer.hpp>
-#include <halmd/utility/timer.hpp>
 
 using namespace boost;
 using namespace std;
@@ -107,17 +105,6 @@ temperature(double temperature)
 }
 
 /**
- * register module runtime accumulators
- */
-template <int dimension, typename float_type, typename RandomNumberGenerator>
-void verlet_nvt_andersen<dimension, float_type, RandomNumberGenerator>::
-register_runtimes(profiler_type& profiler)
-{
-    profiler.register_runtime(runtime_.integrate, "integrate", "first half-step of velocity-Verlet");
-    profiler.register_runtime(runtime_.finalize, "finalize", "second half-step of velocity-Verlet (+ Andersen thermostat)");
-}
-
-/**
  * First leapfrog half-step of velocity-Verlet algorithm
  */
 template <int dimension, typename float_type, typename RandomNumberGenerator>
@@ -125,7 +112,7 @@ void verlet_nvt_andersen<dimension, float_type, RandomNumberGenerator>::
 integrate()
 {
     try {
-        scoped_timer<timer> timer_(runtime_.integrate);
+        scoped_timer_type timer(runtime_.integrate);
         cuda::configure(particle_->dim.grid, particle_->dim.block);
         wrapper_type::kernel.integrate(
             particle_->g_r, particle_->g_image, particle_->g_v, particle_->g_f);
@@ -149,7 +136,7 @@ finalize()
     // which saves one additional read of the forces plus the additional kernel execution
     // and scheduling
     try {
-        scoped_timer<timer> timer_(runtime_.finalize);
+        scoped_timer_type timer(runtime_.finalize);
         // use CUDA execution dimensions of 'random' since
         // the kernel makes use of the random number generator
         cuda::configure(random_->rng().dim.grid, random_->rng().dim.block);
@@ -195,9 +182,15 @@ luaopen(lua_State* L)
                           , float_type
                           , shared_ptr<logger_type>
                         >())
-                        .def("register_runtimes", &verlet_nvt_andersen::register_runtimes)
                         .property("collision_rate", &verlet_nvt_andersen::collision_rate)
                         .property("module_name", &module_name_wrapper<dimension, float_type, RandomNumberGenerator>)
+                        .scope
+                        [
+                            class_<runtime>("runtime")
+                                .def_readonly("integrate", &runtime::integrate)
+                                .def_readonly("finalize", &runtime::finalize)
+                        ]
+                        .def_readonly("runtime", &verlet_nvt_andersen::runtime_)
                 ]
             ]
         ]

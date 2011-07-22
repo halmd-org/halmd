@@ -129,6 +129,13 @@ function new(args)
 end
 
 --
+-- connect runtime accumulators to module profiler
+--
+function profile(self, profiler)
+    profiler:on_profile{self, update = "neighbour lists update"}
+end
+
+--
 -- assemble module options
 --
 -- @param desc po.options_description

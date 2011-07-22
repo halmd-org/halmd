@@ -71,3 +71,10 @@ function new(args)
 
     return velocity
 end
+
+--
+-- connect runtime accumulators to module profiler
+--
+function profile(self, profiler)
+    profiler:on_profile{self, set = "setting particle velocities from sample"}
+end

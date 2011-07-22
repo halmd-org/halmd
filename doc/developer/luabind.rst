@@ -1,5 +1,5 @@
 Short guide on Luabind
-----------------------
+======================
 
 The *Luabind* library is used to export C++ classes to the Lua scripting
 interface.
@@ -182,3 +182,49 @@ deficiency of luabind?
 
 **FIXME** when do you use a ``.`` and when a ``:`` for member access? Like ``core:run()`` but ``integrator.module_name()``?
 
+Lua properties
+--------------
+
+When an object is created from a C++ class registered with Luabind,
+Luabind actually creates a C++ object representation object that
+wraps this C++ object. This means Luabind C++ objects may be extended
+in Lua with arbitrary member functions or variables. One method of
+extending a C++ object is with Luabind's ``property()`` function, which
+works analogous to Luabind's C++ ``.property()``. Properties may be
+read-only or read-write.
+
+In the first example, we create an object from the C++ class
+``potential_module``, and add a read-only Lua property
+``potential.name``. This is done by calling ``property()`` with a
+function as its first argument, where the function itself receives the
+object (``self``) and returns the property value (``"Lennard Jones"``).
+Note how we do not give this getter function a name, but conveniently
+define an unnamed function within the ``property()`` call.
+
+.. code-block:: lua
+
+   local potential = libhalmd.potential_module()
+
+   -- set read-only Lua property
+   potential.name = property(function(self)
+       return "Lennard Jones"
+   end)
+
+In the second example, we add a read-write Lua property. We declare a
+local variable ``name``, which is referenced by the local functions
+``get_name`` and ``set_name``. In C++ language terms, you may consider
+``name`` a private member variable. To add the read-write property, we
+pass the getter and setter functions to ``property()`` as first and
+second argument, respectively.
+
+.. code-block:: lua
+
+   -- set read-write Lua property
+   local name
+   local function get_name(self)
+       return name
+   end
+   local function set_name(self, value)
+       name = value
+   end
+   potential.name = property(get_name, set_name)

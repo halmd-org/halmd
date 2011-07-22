@@ -50,19 +50,11 @@ public:
     typedef typename _Base::wavevector_type wavevector_type;
     typedef host::samples::phase_space<dimension, float_type> phase_space_type;
     typedef logger logger_type;
-    typedef halmd::utility::profiler profiler_type;
     typedef typename _Base::signal_type signal_type;
     typedef typename _Base::slot_function_type slot_function_type;
-    typedef typename _Base::connection_type connection_type;
 
     typedef fixed_vector<float_type, dimension> vector_type;
     typedef typename density_mode_sample_type::mode_type mode_type;
-
-    struct runtime
-    {
-        typedef typename profiler_type::accumulator_type accumulator_type;
-        accumulator_type sample;
-    };
 
     static void luaopen(lua_State* L);
 
@@ -72,14 +64,12 @@ public:
       , boost::shared_ptr<logger_type> logger = boost::make_shared<logger_type>()
     );
 
-    void register_runtimes(profiler_type& profiler);
-
     /**
     * compute density modes from phase space sample and store with given time stamp
     */
     virtual void acquire(uint64_t step);
 
-    virtual connection_type on_acquire(slot_function_type const& slot)
+    virtual connection on_acquire(slot_function_type const& slot)
     {
         return on_acquire_.connect(slot);
     }
@@ -109,6 +99,15 @@ public:
     }
 
 private:
+    typedef halmd::utility::profiler profiler_type;
+    typedef typename profiler_type::accumulator_type accumulator_type;
+    typedef typename profiler_type::scoped_timer_type scoped_timer_type;
+
+    struct runtime
+    {
+        accumulator_type sample;
+    };
+
     boost::shared_ptr<phase_space_type const> phase_space_;
     boost::shared_ptr<wavevector_type const> wavevector_;
     boost::shared_ptr<logger_type> logger_;

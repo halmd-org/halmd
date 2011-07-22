@@ -82,6 +82,10 @@ binning<dimension, float_type>::binning(
 template <int dimension, typename float_type>
 void binning<dimension, float_type>::update()
 {
+    LOG_TRACE("update cell lists");
+
+    scoped_timer_type timer(runtime_.update);
+
     // empty cell lists without memory reallocation
     for_each(cell_.data(), cell_.data() + cell_.num_elements(), bind(&cell_list::clear, _1));
     // add particles to cells
@@ -120,6 +124,12 @@ void binning<dimension, float_type>::luaopen(lua_State* L)
                      >())
                     .property("update", &wrap_update<binning>)
                     .property("r_skin", &binning::r_skin)
+                    .scope
+                    [
+                        class_<runtime>("runtime")
+                            .def_readonly("update", &runtime::update)
+                    ]
+                    .def_readonly("runtime", &binning::runtime_)
             ]
         ]
     ];

@@ -22,8 +22,8 @@ require("halmd.modules")
 -- command-line options override H5MD file parameters
 require("halmd.option")
 require("halmd.parameter")
+require("halmd.log")
 
-require("halmd.io.profiling.writer")
 require("halmd.io.statevars.writer")
 require("halmd.io.trajectory.reader")
 require("halmd.io.trajectory.writer")
@@ -39,7 +39,6 @@ require("halmd.observables.thermodynamics")
 -- grab modules
 local mdsim = halmd.mdsim
 local observables = halmd.observables
-local profiling = halmd.io.profiling
 local statevars = halmd.io.statevars
 local trajectory = halmd.io.trajectory
 -- grab C++ wrappers
@@ -91,18 +90,6 @@ function new(args)
     if args.state_vars then
         local writer = statevars.writer()
         sampler:on_sample{writer.write, args.state_vars, tracker = writer}
-    end
-
-    -- Construct profiling writers.
-    --
-    -- The profiling writers write profiling run times for registered
-    -- modules to the log file, and optionally a H5MD file.
-    local profiling_writers = profiling.writer()
-
-    -- From the table of profiling writers, add each profiling writer
-    -- to the sampler, to invoke write after the simulation is finished.
-    for _, writer in pairs(profiling_writers) do
-        sampler:on_finish{writer.write, tracker = writer}
     end
 
     -- Pass sampler from Lua to C++, to run the simulation outside of Lua.

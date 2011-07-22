@@ -59,8 +59,18 @@ function new(args)
     local force = mdsim.force() -- singleton
     local logger = assert(args.logger)
 
-    if not device() then
-        return thermodynamics_wrapper.host[dimension](particle, box, clock, force, logger)
+    local observable
+    if device() then
+        observable = thermodynamics_wrapper.gpu[dimension](particle, box, clock, force, logger)
+    else
+        observable = thermodynamics_wrapper.host[dimension](particle, box, clock, force, logger)
     end
-    return thermodynamics_wrapper.gpu[dimension](particle, box, clock, force, logger)
+    return observable
+end
+
+--
+-- connect runtime accumulators to module profiler
+--
+function profile(self, profiler)
+    profiler:on_profile{self, sample = "computation of macroscopic state variables"}
 end

@@ -28,8 +28,7 @@ using namespace std;
 namespace halmd {
 namespace utility {
 
-timer_service::connection_type
-timer_service::on_periodic(slot_function_type const& slot, time_type interval)
+connection timer_service::on_periodic(slot_function_type const& slot, time_type interval)
 {
     event e;
     e.time_ = time(0) + interval;

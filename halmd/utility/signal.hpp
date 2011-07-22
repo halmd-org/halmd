@@ -40,29 +40,36 @@ namespace halmd {
 template <typename T>
 class signal;
 
-template <typename SlotFunction>
-class signal_base
+/**
+ * Slot to slots container connection
+ *
+ * The connection is a slot itself, so it may be connected to
+ * a signal<void ()>, to disconnect this slot when invoked.
+ */
+typedef boost::function0<void> connection;
+
+template <typename T>
+class slots
 {
-protected:
+private:
     /**
      * As storage for the slots, we use a linked list instead of a vector,
      * which guarantees that an iterator to an inserted slot remains valid
      * as long as the slot is not removed from the list, i.e. the iterator
      * remains valid after insertion or removal of other slots.
      */
-    typedef std::list<SlotFunction> slots_type;
+    typedef std::list<T> slots_type;
     /**
      * The list of slots is held with a shared pointer, which allows
      * tracking the slots with a weak pointer in connection objects.
      */
     typedef boost::shared_ptr<slots_type> slots_pointer;
-    typedef typename slots_type::iterator slots_iterator;
-    typedef typename slots_type::const_iterator slots_const_iterator;
-
-    slots_pointer slots_;
-
-public:
-    typedef SlotFunction slot_function_type;
+    /**
+     * We do not provide write access to the list container,
+     * to ensure that connection iterators remain valid,
+     * therefore declare iterator private.
+     */
+    typedef typename slots_type::iterator iterator;
 
     /**
      * Slot-to-signal connection
@@ -81,19 +88,19 @@ public:
      * along with the slots list is deconstructed. Thus the state of
      * the weak pointer reflects the validity of the connection object.
      */
-    class connection
+    class connection_
     {
     public:
         /**
-         * disconnect slot from signal
+         * disconnect slot from slots container
          *
          * This method may be invoked multiple times. Repeated calls to
          * disconnect() will be silently ignored, similar to the behaviour
          * of boost::signals::connection::disconnect(). In particular, this
-         * method may be called even when the signal no longer exists, or
-         * when all slots have been removed with disconnect_all_slots().
+         * method may be called even if the slots container no longer exists,
+         * or if all slots have been removed with disconnect_all_slots().
          */
-        void disconnect()
+        void operator()()
         {
             slots_pointer slots = slots_.lock();
             if (slots) {
@@ -102,26 +109,30 @@ public:
             }
         }
 
+        connection_(slots_pointer slots, iterator iter) : slots_(slots), iter_(iter) {}
+
     private:
-        /**
-         * Only the signal object should be able to construct a connection.
-         */
-        friend class signal_base;
-
-        connection(slots_pointer slots, slots_iterator iter) : slots_(slots), iter_(iter) {}
-
         boost::weak_ptr<slots_type> slots_;
-        slots_iterator iter_;
+        iterator iter_;
     };
 
-    signal_base() : slots_(new slots_type) {}
+    slots_pointer slots_;
+
+public:
+    /**
+     * We provide read access to the list container with slots::begin()
+     * and slots::end(), therefore declare const_iterator public.
+     */
+    typedef typename slots_type::const_iterator const_iterator;
+
+    slots() : slots_(new slots_type) {}
 
     /**
      * connect slot to signal
      */
-    connection connect(slot_function_type const& slot)
+    connection connect(T const& slot)
     {
-        return connection(slots_, slots_->insert(slots_->end(), slot));
+        return connection_(slots_, slots_->insert(slots_->end(), slot));
     }
 
     /**
@@ -152,166 +163,182 @@ public:
     {
         return slots_->size();
     }
+
+    /**
+     * returns const iterator to first slot
+     */
+    const_iterator begin() const
+    {
+        return slots_->begin();
+    }
+
+    /**
+     * returns const iterator one past last slot
+     */
+    const_iterator end() const
+    {
+        return slots_->end();
+    }
 };
 
 template <typename T0>
 class signal0
-  : public signal_base<boost::function0<T0> >
+  : public slots<boost::function0<T0> >
 {
 public:
+    typedef boost::function0<T0> slot_function_type;
+    typedef typename slots<slot_function_type>::const_iterator const_iterator;
+
     T0 operator()() const
     {
-        for (slots_const_iterator f = this->slots_->begin(); f != this->slots_->end(); ++f) {
+        for (const_iterator f = this->begin(); f != this->end(); ++f) {
             (*f)();
         }
     }
-
-private:
-    typedef typename signal0::slots_const_iterator slots_const_iterator;
 };
 
 template <typename T0, typename T1>
 class signal1
-  : public signal_base<boost::function1<T0, T1> >
+  : public slots<boost::function1<T0, T1> >
 {
 public:
+    typedef boost::function1<T0, T1> slot_function_type;
+    typedef typename slots<slot_function_type>::const_iterator const_iterator;
+
     T0 operator()(T1 arg1) const
     {
-        for (slots_const_iterator f = this->slots_->begin(); f != this->slots_->end(); ++f) {
+        for (const_iterator f = this->begin(); f != this->end(); ++f) {
             (*f)(arg1);
         }
     }
-
-private:
-    typedef typename signal1::slots_const_iterator slots_const_iterator;
 };
 
 template <typename T0, typename T1, typename T2>
 class signal2
-  : public signal_base<boost::function2<T0, T1, T2> >
+  : public slots<boost::function2<T0, T1, T2> >
 {
 public:
+    typedef boost::function2<T0, T1, T2> slot_function_type;
+    typedef typename slots<slot_function_type>::const_iterator const_iterator;
+
     T0 operator()(T1 arg1, T2 arg2) const
     {
-        for (slots_const_iterator f = this->slots_->begin(); f != this->slots_->end(); ++f) {
+        for (const_iterator f = this->begin(); f != this->end(); ++f) {
             (*f)(arg1, arg2);
         }
     }
-
-private:
-    typedef typename signal2::slots_const_iterator slots_const_iterator;
 };
 
 template <typename T0, typename T1, typename T2, typename T3>
 class signal3
-  : public signal_base<boost::function3<T0, T1, T2, T3> >
+  : public slots<boost::function3<T0, T1, T2, T3> >
 {
 public:
+    typedef boost::function3<T0, T1, T2, T3> slot_function_type;
+    typedef typename slots<slot_function_type>::const_iterator const_iterator;
+
     T0 operator()(T1 arg1, T2 arg2, T3 arg3) const
     {
-        for (slots_const_iterator f = this->slots_->begin(); f != this->slots_->end(); ++f) {
+        for (const_iterator f = this->begin(); f != this->end(); ++f) {
             (*f)(arg1, arg2, arg3);
         }
     }
-
-private:
-    typedef typename signal3::slots_const_iterator slots_const_iterator;
 };
 
 template <typename T0, typename T1, typename T2, typename T3, typename T4>
 class signal4
-  : public signal_base<boost::function4<T0, T1, T2, T3, T4> >
+  : public slots<boost::function4<T0, T1, T2, T3, T4> >
 {
 public:
+    typedef boost::function4<T0, T1, T2, T3, T4> slot_function_type;
+    typedef typename slots<slot_function_type>::const_iterator const_iterator;
+
     T0 operator()(T1 arg1, T2 arg2, T3 arg3, T4 arg4) const
     {
-        for (slots_const_iterator f = this->slots_->begin(); f != this->slots_->end(); ++f) {
+        for (const_iterator f = this->begin(); f != this->end(); ++f) {
             (*f)(arg1, arg2, arg3, arg4);
         }
     }
-
-private:
-    typedef typename signal4::slots_const_iterator slots_const_iterator;
 };
 
 template <typename T0, typename T1, typename T2, typename T3, typename T4, typename T5>
 class signal5
-  : public signal_base<boost::function5<T0, T1, T2, T3, T4, T5> >
+  : public slots<boost::function5<T0, T1, T2, T3, T4, T5> >
 {
 public:
+    typedef boost::function5<T0, T1, T2, T3, T4, T5> slot_function_type;
+    typedef typename slots<slot_function_type>::const_iterator const_iterator;
+
     T0 operator()(T1 arg1, T2 arg2, T3 arg3, T4 arg4, T5 arg5) const
     {
-        for (slots_const_iterator f = this->slots_->begin(); f != this->slots_->end(); ++f) {
+        for (const_iterator f = this->begin(); f != this->end(); ++f) {
             (*f)(arg1, arg2, arg3, arg4, arg5);
         }
     }
-
-private:
-    typedef typename signal5::slots_const_iterator slots_const_iterator;
 };
 
 template <typename T0, typename T1, typename T2, typename T3, typename T4, typename T5, typename T6>
 class signal6
-  : public signal_base<boost::function6<T0, T1, T2, T3, T4, T5, T6> >
+  : public slots<boost::function6<T0, T1, T2, T3, T4, T5, T6> >
 {
 public:
+    typedef boost::function6<T0, T1, T2, T3, T4, T5, T6> slot_function_type;
+    typedef typename slots<slot_function_type>::const_iterator const_iterator;
+
     T0 operator()(T1 arg1, T2 arg2, T3 arg3, T4 arg4, T5 arg5, T6 arg6) const
     {
-        for (slots_const_iterator f = this->slots_->begin(); f != this->slots_->end(); ++f) {
+        for (const_iterator f = this->begin(); f != this->end(); ++f) {
             (*f)(arg1, arg2, arg3, arg4, arg5, arg6);
         }
     }
-
-private:
-    typedef typename signal6::slots_const_iterator slots_const_iterator;
 };
 
 template <typename T0, typename T1, typename T2, typename T3, typename T4, typename T5, typename T6, typename T7>
 class signal7
-  : public signal_base<boost::function7<T0, T1, T2, T3, T4, T5, T6, T7> >
+  : public slots<boost::function7<T0, T1, T2, T3, T4, T5, T6, T7> >
 {
 public:
+    typedef boost::function7<T0, T1, T2, T3, T4, T5, T6, T7> slot_function_type;
+    typedef typename slots<slot_function_type>::const_iterator const_iterator;
+
     T0 operator()(T1 arg1, T2 arg2, T3 arg3, T4 arg4, T5 arg5, T6 arg6, T7 arg7) const
     {
-        for (slots_const_iterator f = this->slots_->begin(); f != this->slots_->end(); ++f) {
+        for (const_iterator f = this->begin(); f != this->end(); ++f) {
             (*f)(arg1, arg2, arg3, arg4, arg5, arg6, arg7);
         }
     }
-
-private:
-    typedef typename signal7::slots_const_iterator slots_const_iterator;
 };
 
 template <typename T0, typename T1, typename T2, typename T3, typename T4, typename T5, typename T6, typename T7, typename T8>
 class signal8
-  : public signal_base<boost::function8<T0, T1, T2, T3, T4, T5, T6, T7, T8> >
+  : public slots<boost::function8<T0, T1, T2, T3, T4, T5, T6, T7, T8> >
 {
 public:
+    typedef boost::function8<T0, T1, T2, T3, T4, T5, T6, T7, T8> slot_function_type;
+    typedef typename slots<slot_function_type>::const_iterator const_iterator;
+
     T0 operator()(T1 arg1, T2 arg2, T3 arg3, T4 arg4, T5 arg5, T6 arg6, T7 arg7, T8 arg8) const
     {
-        for (slots_const_iterator f = this->slots_->begin(); f != this->slots_->end(); ++f) {
+        for (const_iterator f = this->begin(); f != this->end(); ++f) {
             (*f)(arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8);
         }
     }
-
-private:
-    typedef typename signal8::slots_const_iterator slots_const_iterator;
 };
 
 template <typename T0, typename T1, typename T2, typename T3, typename T4, typename T5, typename T6, typename T7, typename T8, typename T9>
 class signal9
-  : public signal_base<boost::function9<T0, T1, T2, T3, T4, T5, T6, T7, T8, T9> >
+  : public slots<boost::function9<T0, T1, T2, T3, T4, T5, T6, T7, T8, T9> >
 {
 public:
+    typedef boost::function9<T0, T1, T2, T3, T4, T5, T6, T7, T8, T9> slot_function_type;
+    typedef typename slots<slot_function_type>::const_iterator const_iterator;
+
     T0 operator()(T1 arg1, T2 arg2, T3 arg3, T4 arg4, T5 arg5, T6 arg6, T7 arg7, T8 arg8, T9 arg9) const
     {
-        for (slots_const_iterator f = this->slots_->begin(); f != this->slots_->end(); ++f) {
+        for (const_iterator f = this->begin(); f != this->end(); ++f) {
             (*f)(arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9);
         }
     }
-
-private:
-    typedef typename signal9::slots_const_iterator slots_const_iterator;
 };
 
 template <>

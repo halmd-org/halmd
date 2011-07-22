@@ -25,8 +25,6 @@
 #include <halmd/mdsim/gpu/maximum_squared_displacement.hpp>
 #include <halmd/utility/lua/lua.hpp>
 #include <halmd/utility/predicates/greater.hpp>
-#include <halmd/utility/scoped_timer.hpp>
-#include <halmd/utility/timer.hpp>
 
 using namespace boost;
 using namespace std;
@@ -67,16 +65,6 @@ maximum_squared_displacement<dimension, float_type>::maximum_squared_displacemen
     }
 }
 
-/**
- * register module runtime accumulators
- */
-template <int dimension, typename float_type>
-void maximum_squared_displacement<dimension, float_type>::register_runtimes(profiler_type& profiler)
-{
-    profiler.register_runtime(runtime_.zero, "zero", "zero maximum displacement");
-    profiler.register_runtime(runtime_.compute, "compute", "compute maximum displacement");
-}
-
 template <int dimension, typename float_type>
 typename maximum_squared_displacement_wrapper<dimension>::displacement_impl_type
 maximum_squared_displacement<dimension, float_type>::get_displacement_impl(int threads)
@@ -105,7 +93,7 @@ void maximum_squared_displacement<dimension, float_type>::zero()
 {
     LOG_TRACE("zero maximum squared displacement");
 
-    scoped_timer<timer> timer_(runtime_.zero);
+    scoped_timer_type timer(runtime_.zero);
     cuda::copy(particle_->g_r, g_r0_);
 }
 
@@ -117,7 +105,7 @@ float_type maximum_squared_displacement<dimension, float_type>::compute()
 {
     LOG_TRACE("compute maximum squared displacement");
 
-    scoped_timer<timer> timer_(runtime_.compute);
+    scoped_timer_type timer(runtime_.compute);
     try {
         cuda::configure(dim_reduce_.grid, dim_reduce_.block, dim_reduce_.threads_per_block() * sizeof(float));
         displacement_impl_(particle_->g_r, g_r0_, g_rr_);
@@ -160,9 +148,15 @@ void maximum_squared_displacement<dimension, float_type>::luaopen(lua_State* L)
                         shared_ptr<particle_type const>
                       , shared_ptr<box_type const>
                     >())
-                    .def("register_runtimes", &maximum_squared_displacement::register_runtimes)
                     .property("zero", &wrap_zero<dimension, float_type>)
                     .property("compute", &wrap_compute<dimension, float_type>)
+                    .scope
+                    [
+                        class_<runtime>("runtime")
+                            .def_readonly("zero", &runtime::zero)
+                            .def_readonly("compute", &runtime::compute)
+                    ]
+                    .def_readonly("runtime", &maximum_squared_displacement::runtime_)
             ]
         ]
     ];

@@ -22,9 +22,7 @@
 #include <halmd/mdsim/gpu/neighbours/from_binning.hpp>
 #include <halmd/mdsim/gpu/neighbours/from_binning_kernel.hpp>
 #include <halmd/utility/lua/lua.hpp>
-#include <halmd/utility/scoped_timer.hpp>
 #include <halmd/utility/signal.hpp>
-#include <halmd/utility/timer.hpp>
 
 using namespace boost;
 using namespace std;
@@ -105,15 +103,6 @@ from_binning<dimension, float_type>::from_binning(
 }
 
 /**
- * register module runtime accumulators
- */
-template <int dimension, typename float_type>
-void from_binning<dimension, float_type>::register_runtimes(profiler_type& profiler)
-{
-    profiler.register_runtime(runtime_.update, "update", "neighbour lists update");
-}
-
-/**
  * Update neighbour lists
  */
 template <int dimension, typename float_type>
@@ -127,7 +116,7 @@ void from_binning<dimension, float_type>::update()
 
     LOG_TRACE("update neighbour lists");
 
-    scoped_timer<timer> timer_(runtime_.update);
+    scoped_timer_type timer(runtime_.update);
 
     // mark neighbour list placeholders as virtual particles
     cuda::memset(g_neighbour_, 0xFF);
@@ -174,16 +163,20 @@ void from_binning<dimension, float_type>::luaopen(lua_State* L)
                           , shared_ptr<logger_type>
                           , double
                         >())
-                        .def("register_runtimes", &from_binning::register_runtimes)
                         .property("r_skin", &from_binning::r_skin)
                         .property("cell_occupancy", &from_binning::cell_occupancy)
-                        .scope[
+                        .scope
+                        [
                             class_<defaults>("defaults")
                                 .scope
                                 [
                                     def("occupancy", &defaults::occupancy)
                                 ]
+
+                          , class_<runtime>("runtime")
+                                .def_readonly("update", &runtime::update)
                         ]
+                        .def_readonly("runtime", &from_binning::runtime_)
                 ]
             ]
         ]

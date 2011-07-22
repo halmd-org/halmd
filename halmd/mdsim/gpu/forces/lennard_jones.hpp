@@ -45,7 +45,6 @@ public:
     typedef boost::numeric::ublas::symmetric_matrix<float_type, boost::numeric::ublas::lower> matrix_type;
     typedef logger logger_type;
 
-    static char const* name() { return "Lennard-Jones"; }
     static char const* module_name() { return "lennard_jones"; }
 
     static void luaopen(lua_State* L);

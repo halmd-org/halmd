@@ -27,8 +27,6 @@
 #include <halmd/mdsim/gpu/positions/lattice_kernel.hpp>
 #include <halmd/mdsim/gpu/positions/lattice.hpp>
 #include <halmd/utility/lua/lua.hpp>
-#include <halmd/utility/scoped_timer.hpp>
-#include <halmd/utility/timer.hpp>
 
 using namespace boost;
 using namespace std;
@@ -62,15 +60,6 @@ lattice<dimension, float_type, RandomNumberGenerator>::lattice(
     if (*min_element(slab_.begin(), slab_.end()) < 1) {
         LOG("restrict initial particle positions to slab: " << slab_);
     }
-}
-
-/**
- * register module runtime accumulators
- */
-template <int dimension, typename float_type, typename RandomNumberGenerator>
-void lattice<dimension, float_type, RandomNumberGenerator>::register_runtimes(profiler_type& profiler)
-{
-    profiler.register_runtime(runtime_.set, "set", "setting particle positions on lattice");
 }
 
 template <int dimension, typename float_type, typename RandomNumberGenerator>
@@ -136,6 +125,8 @@ void lattice<dimension, float_type, RandomNumberGenerator>::fcc(
   , gpu_vector_type const& length, gpu_vector_type const& offset
 )
 {
+    scoped_timer_type timer(runtime_.set);
+
     // determine maximal lattice constant
     // use the same floating point precision as the CUDA device,
     // assign lattice coordinates to (sub-)volume of the box
@@ -188,7 +179,6 @@ void lattice<dimension, float_type, RandomNumberGenerator>::fcc(
 
     cuda::thread::synchronize();
     try {
-        scoped_timer<timer> timer_(runtime_.set);
         cuda::configure(particle_->dim.grid, particle_->dim.block);
         kernel.fcc(first, npart, a, skip);
         cuda::thread::synchronize();
@@ -228,8 +218,13 @@ void lattice<dimension, float_type, RandomNumberGenerator>::luaopen(lua_State* L
                            , shared_ptr<logger_type>
                          >())
                         .property("slab", &lattice::slab)
-                        .def("register_runtimes", &lattice::register_runtimes)
                         .property("module_name", &module_name_wrapper<dimension, float_type, RandomNumberGenerator>)
+                        .scope
+                        [
+                            class_<runtime>("runtime")
+                                .def_readonly("set", &runtime::set)
+                        ]
+                        .def_readonly("runtime", &lattice::runtime_)
                 ]
             ]
         ]

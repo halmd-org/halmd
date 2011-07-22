@@ -46,14 +46,13 @@ public:
     typedef observables::utility::wavevector<dimension> wavevector_type;
     typedef halmd::signal<void (uint64_t)> signal_type;
     typedef typename signal_type::slot_function_type slot_function_type;
-    typedef typename signal_type::connection connection_type;
 
     static void luaopen(lua_State* L);
 
     density_mode() {}
     virtual ~density_mode() {}
     virtual void acquire(uint64_t step) = 0;
-    virtual connection_type on_acquire(slot_function_type const& slot) = 0;
+    virtual connection on_acquire(slot_function_type const& slot) = 0;
     virtual uint64_t step() const = 0;
     virtual result_type const& value() const = 0;
     virtual wavevector_type const& wavevector() const = 0;

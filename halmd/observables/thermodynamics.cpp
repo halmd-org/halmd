@@ -21,8 +21,6 @@
 
 #include <halmd/observables/thermodynamics.hpp>
 #include <halmd/utility/lua/lua.hpp>
-#include <halmd/utility/scoped_timer.hpp>
-#include <halmd/utility/timer.hpp>
 
 using namespace boost;
 using namespace std;
@@ -43,15 +41,6 @@ thermodynamics<dimension>::thermodynamics(
   // initialise members
   , step_(numeric_limits<uint64_t>::max())
 {
-}
-
-/**
- * register module runtime accumulators
- */
-template <int dimension>
-void thermodynamics<dimension>::register_runtimes(profiler_type& profiler)
-{
-    profiler.register_runtime(runtime_.sample, "sample", "computation of macroscopic state variables");
 }
 
 /**
@@ -86,7 +75,7 @@ void thermodynamics<dimension>::sample(uint64_t step)
 
     LOG_TRACE("acquire sample");
 
-    scoped_timer<timer> timer_(runtime_.sample);
+    scoped_timer_type timer(runtime_.sample);
     en_pot_ = en_pot();
     en_kin_ = en_kin();
     v_cm_ = v_cm();
@@ -123,7 +112,6 @@ void thermodynamics<dimension>::luaopen(lua_State* L)
         namespace_("observables")
         [
             class_<thermodynamics, shared_ptr<thermodynamics> >(class_name.c_str())
-                .def("register_runtimes", &thermodynamics::register_runtimes)
                 .def("register_observables", &thermodynamics::register_observables)
                 .property("prepare", &prepare_wrapper<thermodynamics>)
                 .property("sample", &sample_wrapper<thermodynamics>)
@@ -135,6 +123,12 @@ void thermodynamics<dimension>::luaopen(lua_State* L)
                 .property("v_cm", &thermodynamics::v_cm)
                 .property("virial", &thermodynamics::virial)
                 .property("hypervirial", &thermodynamics::hypervirial)
+                .scope
+                [
+                    class_<runtime>("runtime")
+                        .def_readonly("sample", &runtime::sample)
+                ]
+                .def_readonly("runtime", &thermodynamics::runtime_)
         ]
     ];
 }

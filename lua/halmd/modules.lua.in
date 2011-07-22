@@ -25,7 +25,6 @@ if not libhalmd then
 end
 
 -- grab modules
-local log = require("halmd.log")
 local hooks = halmd.hooks
 -- grab standard library
 local ipairs = ipairs
@@ -92,8 +91,7 @@ function register(module)
             return value
         end
 
-        local logger = log.logger{module = module}
-        local args = setmetatable({logger = logger}, {__index = param})
+        local args = setmetatable({}, {__index = param})
         local object = module.new(args)
         if object then
             hooks.register_object(object, module)

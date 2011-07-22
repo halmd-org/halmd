@@ -29,6 +29,7 @@
 #include <halmd/mdsim/host/particle.hpp>
 #include <halmd/mdsim/host/velocity.hpp>
 #include <halmd/random/host/random.hpp>
+#include <halmd/utility/profiler.hpp>
 
 namespace halmd {
 namespace mdsim {
@@ -70,11 +71,22 @@ public:
     std::pair<vector_type, float_type> gaussian(float_type sigma);
 
 private:
+    typedef utility::profiler profiler_type;
+    typedef typename profiler_type::accumulator_type accumulator_type;
+    typedef typename profiler_type::scoped_timer_type scoped_timer_type;
+
+    struct runtime
+    {
+        accumulator_type set;
+    };
+
     boost::shared_ptr<particle_type> particle_;
     boost::shared_ptr<random_type> random_;
     boost::shared_ptr<logger_type> logger_;
     /** temperature */
     float_type temp_;
+    /** profiling runtime accumulators */
+    runtime runtime_;
 };
 
 } // namespace mdsim

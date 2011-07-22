@@ -31,6 +31,7 @@
 #include <halmd/mdsim/host/binning.hpp>
 #include <halmd/mdsim/host/particle.hpp>
 #include <halmd/mdsim/neighbour.hpp>
+#include <halmd/utility/profiler.hpp>
 
 namespace halmd {
 namespace mdsim {
@@ -49,7 +50,6 @@ public:
     typedef std::vector<unsigned int> neighbour_list;
     typedef typename neighbour::signal_type signal_type;
     typedef typename neighbour::slot_function_type slot_function_type;
-    typedef typename neighbour::connection_type connection_type;
     typedef logger logger_type;
 
     static void luaopen(lua_State* L);
@@ -64,7 +64,7 @@ public:
     );
     virtual void update();
 
-    virtual connection_type on_update(slot_function_type const& slot)
+    virtual connection on_update(slot_function_type const& slot)
     {
         return on_update_.connect(slot);
     }
@@ -82,6 +82,15 @@ public:
     }
 
 private:
+    typedef utility::profiler profiler_type;
+    typedef typename profiler_type::accumulator_type accumulator_type;
+    typedef typename profiler_type::scoped_timer_type scoped_timer_type;
+
+    struct runtime
+    {
+        accumulator_type update;
+    };
+
     typedef typename binning_type::cell_size_type cell_size_type;
     typedef typename binning_type::cell_diff_type cell_diff_type;
     typedef typename binning_type::cell_list cell_list;
@@ -104,6 +113,8 @@ private:
     matrix_type rr_cut_skin_;
     /** signal emitted before neighbour list update */
     signal_type on_update_;
+    /** profiling runtime accumulators */
+    runtime runtime_;
 };
 
 } // namespace host

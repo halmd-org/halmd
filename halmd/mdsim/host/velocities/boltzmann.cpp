@@ -55,6 +55,8 @@ boltzmann<dimension, float_type>::boltzmann(
 template <int dimension, typename float_type>
 void boltzmann<dimension, float_type>::set()
 {
+    scoped_timer_type timer(runtime_.set);
+
     // assuming equal (unit) mass for all particle types
     vector_type v_cm;
     float_type vv;
@@ -136,6 +138,12 @@ void boltzmann<dimension, float_type>::luaopen(lua_State* L)
                         >())
                         .property("temperature", &boltzmann::temperature)
                         .property("module_name", &module_name_wrapper<dimension, float_type>)
+                        .scope
+                        [
+                            class_<runtime>("runtime")
+                                .def_readonly("set", &runtime::set)
+                        ]
+                        .def_readonly("runtime", &boltzmann::runtime_)
                 ]
             ]
         ]

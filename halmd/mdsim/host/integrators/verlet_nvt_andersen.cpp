@@ -1,5 +1,5 @@
 /*
- * Copyright © 2008-2010  Peter Colberg and Felix Höfling
+ * Copyright © 2008-2011  Peter Colberg and Felix Höfling
  *
  * This file is part of HALMD.
  *
@@ -23,8 +23,6 @@
 
 #include <halmd/mdsim/host/integrators/verlet_nvt_andersen.hpp>
 #include <halmd/utility/lua/lua.hpp>
-#include <halmd/utility/scoped_timer.hpp>
-#include <halmd/utility/timer.hpp>
 
 using namespace boost;
 using namespace std;
@@ -56,16 +54,6 @@ verlet_nvt_andersen<dimension, float_type>::verlet_nvt_andersen(
     LOG("collision rate with heat bath: " << coll_rate_);
 }
 
-/**
- * register module runtime accumulators
- */
-template <int dimension, typename float_type>
-void verlet_nvt_andersen<dimension, float_type>::register_runtimes(profiler_type& profiler)
-{
-    profiler.register_runtime(runtime_.integrate, "integrate", "first half-step of velocity-Verlet");
-    profiler.register_runtime(runtime_.finalize, "finalize", "second half-step of velocity-Verlet");
-}
-
 template <int dimension, typename float_type>
 void verlet_nvt_andersen<dimension, float_type>::timestep(double timestep)
 {
@@ -91,7 +79,7 @@ void verlet_nvt_andersen<dimension, float_type>::temperature(double temperature)
 template <int dimension, typename float_type>
 void verlet_nvt_andersen<dimension, float_type>::integrate()
 {
-    scoped_timer<timer> timer_(runtime_.integrate);
+    scoped_timer_type timer(runtime_.integrate);
 
     for (size_t i = 0; i < particle_->nbox; ++i) {
         vector_type& v = particle_->v[i] += particle_->f[i] * timestep_half_;
@@ -109,7 +97,7 @@ void verlet_nvt_andersen<dimension, float_type>::integrate()
 template <int dimension, typename float_type>
 void verlet_nvt_andersen<dimension, float_type>::finalize()
 {
-    scoped_timer<timer> timer_(runtime_.finalize);
+    scoped_timer_type timer(runtime_.finalize);
 
     // cache random numbers
     float_type rng_cache = 0;
@@ -171,9 +159,15 @@ void verlet_nvt_andersen<dimension, float_type>::luaopen(lua_State* L)
                           , float_type
                           , shared_ptr<logger_type>
                         >())
-                        .def("register_runtimes", &verlet_nvt_andersen::register_runtimes)
                         .property("collision_rate", &verlet_nvt_andersen::collision_rate)
                         .property("module_name", &module_name_wrapper<dimension, float_type>)
+                        .scope
+                        [
+                            class_<runtime>("runtime")
+                                .def_readonly("integrate", &runtime::integrate)
+                                .def_readonly("finalize", &runtime::finalize)
+                        ]
+                        .def_readonly("runtime", &verlet_nvt_andersen::runtime_)
                 ]
             ]
         ]

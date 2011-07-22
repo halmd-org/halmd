@@ -41,10 +41,9 @@ class timer_service
 public:
     typedef std::time_t time_type;
     typedef signal<void ()>::slot_function_type slot_function_type;
-    typedef signal<void (time_type const&)>::connection connection_type;
 
     /** connect slot to be invoked periodically */
-    connection_type on_periodic(slot_function_type const& slot, time_type interval);
+    connection on_periodic(slot_function_type const& slot, time_type interval);
     /** process timer event queue */
     void process();
     /** Lua bindings */

@@ -45,10 +45,6 @@ namespace halmd {
     class_<__VA_ARGS__>(#__VA_ARGS__)                           \
         .def("__call", &__VA_ARGS__::operator())                \
 
-#define CONNECTION(...)                                         \
-    class_<__VA_ARGS__>(#__VA_ARGS__)                           \
-        .def("disconnect", &__VA_ARGS__::disconnect)            \
-
 /**
  * Lua bindings for halmd::signal<>::slot_function_type.
  *
@@ -64,9 +60,6 @@ HALMD_LUA_API int luaopen_libhalmd_utility_lua_signal(lua_State* L)
     [
         SLOT( signal<void ()>::slot_function_type )
       , SLOT( signal<void (uint64_t)>::slot_function_type )
-      , CONNECTION( signal<void ()>::connection )
-      , CONNECTION( signal<void (uint64_t)>::connection )
-      , CONNECTION( signal<void (std::time_t const&)>::connection )
     ];
     return 0;
 }

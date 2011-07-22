@@ -53,19 +53,11 @@ public:
     typedef io::statevars::writer<dimension> writer_type;
     typedef observables::density_mode<dimension> density_mode_type;
     typedef logger logger_type;
-    typedef halmd::utility::profiler profiler_type;
     typedef halmd::signal<void (uint64_t)> signal_type;
     typedef typename signal_type::slot_function_type slot_function_type;
-    typedef typename signal_type::connection connection_type;
 
     typedef boost::array<double, 3> result_type;
     typedef fixed_vector<double, dimension> vector_type;
-
-    struct runtime
-    {
-        typedef typename profiler_type::accumulator_type accumulator_type;
-        accumulator_type sample;
-    };
 
     static void luaopen(lua_State* L);
 
@@ -74,13 +66,12 @@ public:
       , unsigned int npart
       , boost::shared_ptr<logger_type> logger = boost::make_shared<logger_type>()
     );
-    void register_runtimes(profiler_type& profiler);
     void register_observables(writer_type& writer);
 
     // compute ssf from sample of density Fourier modes and store with given simulation step
     void sample(uint64_t step);
 
-    connection_type on_sample(slot_function_type const& slot)
+    connection on_sample(slot_function_type const& slot)
     {
         return on_sample_.connect(slot);
     }
@@ -98,6 +89,15 @@ public:
     }
 
 private:
+    typedef halmd::utility::profiler profiler_type;
+    typedef profiler_type::accumulator_type accumulator_type;
+    typedef profiler_type::scoped_timer_type scoped_timer_type;
+
+    struct runtime
+    {
+        accumulator_type sample;
+    };
+
     boost::shared_ptr<density_mode_type const> density_mode_;
     boost::shared_ptr<logger_type> logger_;
 

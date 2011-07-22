@@ -40,6 +40,7 @@ if libhalmd.mdsim.gpu then
       , [3] = libhalmd.mdsim.gpu.forces.pair_trunc_3_
     }
 end
+local property = property
 -- grab standard library
 local assert = assert
 
@@ -81,5 +82,19 @@ function new(args)
     -- compute forces every step
     core:on_force{force.compute, tracker = force}
 
+    -- store potential Lua object (which contains the C++ object) as a
+    -- read-only Lua property, so we access it in pair_trunc.profile
+    -- and retrieve the name of the potential for the log description
+    force.potential = property(function(self)
+        return potential
+    end)
+
     return force
+end
+
+--
+-- connect runtime accumulators to module profiler
+--
+function profile(self, profiler)
+    profiler:on_profile{self, compute = "computation of " .. self.potential.name .. " forces"}
 end

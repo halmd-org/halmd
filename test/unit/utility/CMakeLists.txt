@@ -8,6 +8,18 @@ add_test(unit/utility/demangle
   test_unit_utility_demangle --log_level=message
 )
 
+add_executable(test_unit_utility_profiler
+  profiler.cpp
+)
+target_link_libraries(test_unit_utility_profiler
+  libhalmd
+  ${HALMD_COMMON_LIBRARIES}
+  ${HALMD_TEST_LIBRARIES}
+)
+add_test(unit/utility/profiler
+  test_unit_utility_profiler --log_level=test_suite
+)
+
 add_executable(test_unit_utility_signal
   signal.cpp
 )

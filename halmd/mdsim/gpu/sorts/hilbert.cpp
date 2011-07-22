@@ -25,8 +25,6 @@
 #include <halmd/algorithm/gpu/radix_sort.hpp>
 #include <halmd/mdsim/gpu/sorts/hilbert.hpp>
 #include <halmd/utility/lua/lua.hpp>
-#include <halmd/utility/scoped_timer.hpp>
-#include <halmd/utility/timer.hpp>
 
 using namespace boost;
 using namespace halmd::algorithm::gpu;
@@ -66,17 +64,6 @@ hilbert<dimension, float_type>::hilbert(
 }
 
 /**
- * register module runtime accumulators
- */
-template <int dimension, typename float_type>
-void hilbert<dimension, float_type>::register_runtimes(profiler_type& profiler)
-{
-    profiler.register_runtime(runtime_.map, "map", "map particles to Hilbert curve");
-    profiler.register_runtime(runtime_.permutation, "permutation", "generate permutation");
-    profiler.register_runtime(runtime_.order, "order", "order particles by permutation");
-}
-
-/**
  * Order particles after Hilbert space-filling curve
  */
 template <int dimension, typename float_type>
@@ -84,12 +71,16 @@ void hilbert<dimension, float_type>::order()
 {
     LOG_TRACE("order particles");
     {
-        cuda::vector<unsigned int> g_map(particle_->nbox);
-        g_map.reserve(particle_->g_r.capacity());
-        this->map(g_map);
-        this->permutation(g_map, particle_->g_index);
+        scoped_timer_type timer(runtime_.order);
+        {
+
+            cuda::vector<unsigned int> g_map(particle_->nbox);
+            g_map.reserve(particle_->g_r.capacity());
+            this->map(g_map);
+            this->permutation(g_map, particle_->g_index);
+        }
+        this->order(particle_->g_index);
     }
-    this->order(particle_->g_index);
     on_order_();
 }
 
@@ -99,7 +90,7 @@ void hilbert<dimension, float_type>::order()
 template <int dimension, typename float_type>
 void hilbert<dimension, float_type>::map(cuda::vector<unsigned int>& g_map)
 {
-    scoped_timer<timer> timer_(runtime_.map);
+    scoped_timer_type timer(runtime_.map);
     cuda::configure(particle_->dim.grid, particle_->dim.block);
     wrapper_type::kernel.map(particle_->g_r, g_map);
 }
@@ -110,7 +101,6 @@ void hilbert<dimension, float_type>::map(cuda::vector<unsigned int>& g_map)
 template <int dimension, typename float_type>
 void hilbert<dimension, float_type>::permutation(cuda::vector<unsigned int>& g_map, cuda::vector<unsigned int>& g_index)
 {
-    scoped_timer<timer> timer_(runtime_.permutation);
     cuda::configure(particle_->dim.grid, particle_->dim.block);
     wrapper_type::kernel.gen_index(g_index);
     radix_sort<unsigned int> sort(particle_->nbox, particle_->dim.threads_per_block());
@@ -123,8 +113,7 @@ void hilbert<dimension, float_type>::permutation(cuda::vector<unsigned int>& g_m
 template <int dimension, typename float_type>
 void hilbert<dimension, float_type>::order(cuda::vector<unsigned int> const& g_index)
 {
-    scoped_timer<timer> timer_(runtime_.order);
-
+    scoped_timer_type timer(runtime_.permute);
     cuda::vector<float4> g_r(particle_->g_r.size());
     cuda::vector<gpu_vector_type> g_image(particle_->g_image.size());
     cuda::vector<float4> g_v(particle_->g_v.size());
@@ -170,7 +159,14 @@ void hilbert<dimension, float_type>::luaopen(lua_State* L)
                           , shared_ptr<logger_type>
                         >())
                         .property("module_name", &module_name_wrapper<dimension, float_type>)
-                        .def("register_runtimes", &hilbert::register_runtimes)
+                        .scope
+                        [
+                            class_<runtime>("runtime")
+                                .def_readonly("order", &runtime::order)
+                                .def_readonly("map", &runtime::map)
+                                .def_readonly("permute", &runtime::permute)
+                        ]
+                        .def_readonly("runtime", &hilbert::runtime_)
                 ]
             ]
         ]

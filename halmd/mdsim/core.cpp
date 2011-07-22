@@ -22,8 +22,6 @@
 #include <halmd/io/logger.hpp>
 #include <halmd/mdsim/core.hpp>
 #include <halmd/utility/lua/lua.hpp>
-#include <halmd/utility/scoped_timer.hpp>
-#include <halmd/utility/timer.hpp>
 
 using namespace boost;
 using namespace std;
@@ -41,20 +39,11 @@ core::core(shared_ptr<clock_type> clock)
 }
 
 /**
- * register module runtime accumulators
- */
-void core::register_runtimes(profiler_type& profiler) const
-{
-    profiler.register_runtime(runtime_.setup, "setup", "microscopic state preparation");
-    profiler.register_runtime(runtime_.mdstep, "mdstep", "MD integration step");
-}
-
-/**
  * Prepare microscopic system state
  */
 void core::setup()
 {
-    scoped_timer<timer> timer_(runtime_.setup);
+    scoped_timer_type timer(runtime_.setup);
 
     on_prepend_setup_();
     on_setup_();
@@ -66,7 +55,7 @@ void core::setup()
  */
 void core::mdstep()
 {
-    scoped_timer<timer> timer_(runtime_.mdstep);
+    scoped_timer_type timer(runtime_.mdstep);
 
     // increment 1-based simulation step
     clock_->advance();
@@ -84,7 +73,7 @@ void core::mdstep()
     on_append_finalize_();
 }
 
-HALMD_LUA_API int luaopen_libhalmd_mdsim_core(lua_State* L)
+void core::luaopen(lua_State* L)
 {
     using namespace luabind;
     module(L, "libhalmd")
@@ -93,7 +82,6 @@ HALMD_LUA_API int luaopen_libhalmd_mdsim_core(lua_State* L)
         [
             class_<core, shared_ptr<core> >("core")
                 .def(constructor<shared_ptr<core::clock_type> >())
-                .def("register_runtimes", &core::register_runtimes)
                 .def("setup", &core::setup)
                 .def("mdstep", &core::mdstep)
                 .def("on_prepend_setup", &core::on_prepend_setup)
@@ -108,8 +96,20 @@ HALMD_LUA_API int luaopen_libhalmd_mdsim_core(lua_State* L)
                 .def("on_prepend_finalize", &core::on_prepend_finalize)
                 .def("on_finalize", &core::on_finalize)
                 .def("on_append_finalize", &core::on_append_finalize)
+                .scope
+                [
+                    class_<runtime>("runtime")
+                        .def_readonly("setup", &runtime::setup)
+                        .def_readonly("mdstep", &runtime::mdstep)
+                ]
+                .def_readonly("runtime", &core::runtime_)
         ]
     ];
+}
+
+HALMD_LUA_API int luaopen_libhalmd_mdsim_core(lua_State* L)
+{
+    core::luaopen(L);
     return 0;
 }
 

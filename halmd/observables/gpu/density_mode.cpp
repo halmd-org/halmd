@@ -19,8 +19,6 @@
 
 #include <halmd/observables/gpu/density_mode.hpp>
 #include <halmd/utility/lua/lua.hpp>
-#include <halmd/utility/scoped_timer.hpp>
-#include <halmd/utility/timer.hpp>
 
 using namespace boost;
 using namespace std;
@@ -80,21 +78,12 @@ density_mode<dimension, float_type>::density_mode(
 }
 
 /**
- * register module runtime accumulators
- */
-template <int dimension, typename float_type>
-void density_mode<dimension, float_type>::register_runtimes(profiler_type& profiler)
-{
-    profiler.register_runtime(runtime_.sample, "sample", "computation of density modes");
-}
-
-/**
  * Acquire sample of all density modes from phase space sample
  */
 template <int dimension, typename float_type>
 void density_mode<dimension, float_type>::acquire(uint64_t step)
 {
-    scoped_timer<timer> timer_(runtime_.sample);
+    scoped_timer_type timer(runtime_.sample);
 
     if (rho_sample_.step == step) {
         LOG_TRACE("sample is up to date");
@@ -166,7 +155,12 @@ void density_mode<dimension, float_type>::luaopen(lua_State* L)
                       , shared_ptr<wavevector_type const>
                       , shared_ptr<logger_type>
                     >())
-                    .def("register_runtimes", &density_mode::register_runtimes)
+                    .scope
+                    [
+                        class_<runtime>("runtime")
+                            .def_readonly("sample", &runtime::sample)
+                    ]
+                    .def_readonly("runtime", &density_mode::runtime_)
             ]
         ]
     ];

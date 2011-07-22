@@ -25,8 +25,6 @@
 
 #include <halmd/observables/ssf.hpp>
 #include <halmd/utility/lua/lua.hpp>
-#include <halmd/utility/scoped_timer.hpp>
-#include <halmd/utility/timer.hpp>
 
 using namespace boost;
 using namespace std;
@@ -58,15 +56,6 @@ ssf<dimension>::ssf(
         value_[i].resize(nq);
         result_accumulator_[i].resize(nq);
     }
-}
-
-/**
- * register module runtime accumulators
- */
-template <int dimension>
-void ssf<dimension>::register_runtimes(profiler_type& profiler)
-{
-    profiler.register_runtime(runtime_.sample, "sample", "computation of static structure factor");
 }
 
 /**
@@ -139,7 +128,7 @@ void ssf<dimension>::sample(uint64_t step)
 template <int dimension>
 void ssf<dimension>::compute_()
 {
-    scoped_timer<timer> timer_(runtime_.sample);
+    scoped_timer_type timer(runtime_.sample);
 
     typedef typename density_mode_type::result_type::value_type::element_type rho_vector_type;
     typedef typename density_mode_type::wavevector_type::map_type wavevector_map_type;
@@ -199,12 +188,17 @@ void ssf<dimension>::luaopen(lua_State* L)
                   , unsigned int
                   , shared_ptr<logger_type>
                 >())
-                .def("register_runtimes", &ssf::register_runtimes)
                 .def("register_observables", &ssf::register_observables)
                 .property("value", &ssf::value)
                 .property("wavevector", &ssf::wavevector)
                 .property("sample", &sample_wrapper<ssf>)
                 .def("on_sample", &ssf::on_sample)
+                .scope
+                [
+                    class_<runtime>("runtime")
+                        .def_readonly("sample", &runtime::sample)
+                ]
+                .def_readonly("runtime", &ssf::runtime_)
         ]
     ];
 }

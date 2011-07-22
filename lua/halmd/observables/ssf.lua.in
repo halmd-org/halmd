@@ -86,6 +86,13 @@ function new(args)
 end
 
 --
+-- connect runtime accumulators to module profiler
+--
+function profile(self, profiler)
+    profiler:on_profile{self, sample = "computation of static structure factor"}
+end
+
+--
 -- returns module description
 --
 function name()

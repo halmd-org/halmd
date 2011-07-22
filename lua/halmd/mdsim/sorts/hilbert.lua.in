@@ -62,7 +62,17 @@ function new(args)
         local binning = mdsim.binning() -- singleton
         sort = assert(hilbert_wrapper.host[dimension])(particle, box, binning, logger)
     end
+
     return sort
+end
+
+--
+-- connect runtime accumulators to module profiler
+--
+function profile(self, profiler)
+    profiler:on_profile{self, order = "order particles by permutation"}
+    profiler:on_profile{self, map = "map particles to Hilbert curve"}
+    profiler:on_profile{self, permute = "generate permutation"}
 end
 
 --
