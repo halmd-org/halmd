@@ -109,6 +109,14 @@ particle<dimension, float_type>::particle(
         throw;
     }
 
+    // initialise 'ghost' particles to zero
+    // this avoids potential nonsense computations resulting in denormalised numbers
+    cuda::memset(g_r, 0, g_r.capacity());
+    cuda::memset(g_v, 0, g_v.capacity());
+    cuda::memset(g_f, 0, g_f.capacity());
+    cuda::memset(g_image, 0, g_image.capacity());
+    cuda::memset(g_index, 0, g_index.capacity());
+
     try {
         cuda::copy(nbox, get_particle_kernel<dimension>().nbox);
         cuda::copy(ntype, get_particle_kernel<dimension>().ntype);
