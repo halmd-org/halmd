@@ -79,7 +79,7 @@ end
 function disconnect(tracker)
     assert(tracker, "missing tracker")
     for _, c in pairs(connections[tracker]) do
-        c:disconnect()
+        c()
     end
     connections[tracker] = nil
     tracker.disconnect = nil

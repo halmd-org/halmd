@@ -40,6 +40,14 @@ namespace halmd {
 template <typename T>
 class signal;
 
+/**
+ * Slot to slots container connection
+ *
+ * The connection is a slot itself, so it may be connected to
+ * a signal<void ()>, to disconnect this slot when invoked.
+ */
+typedef boost::function0<void> connection;
+
 template <typename T>
 class slots
 {
@@ -63,15 +71,6 @@ private:
      */
     typedef typename slots_type::iterator iterator;
 
-    slots_pointer slots_;
-
-public:
-    /**
-     * We provide read access to the list container with slots::begin()
-     * and slots::end(), therefore declare const_iterator public.
-     */
-    typedef typename slots_type::const_iterator const_iterator;
-
     /**
      * Slot-to-signal connection
      *
@@ -89,19 +88,19 @@ public:
      * along with the slots list is deconstructed. Thus the state of
      * the weak pointer reflects the validity of the connection object.
      */
-    class connection
+    class connection_
     {
     public:
         /**
-         * disconnect slot from signal
+         * disconnect slot from slots container
          *
          * This method may be invoked multiple times. Repeated calls to
          * disconnect() will be silently ignored, similar to the behaviour
          * of boost::signals::connection::disconnect(). In particular, this
-         * method may be called even when the signal no longer exists, or
-         * when all slots have been removed with disconnect_all_slots().
+         * method may be called even if the slots container no longer exists,
+         * or if all slots have been removed with disconnect_all_slots().
          */
-        void disconnect()
+        void operator()()
         {
             slots_pointer slots = slots_.lock();
             if (slots) {
@@ -110,17 +109,25 @@ public:
             }
         }
 
+        connection_(slots_pointer slots, iterator iter) : slots_(slots), iter_(iter) {}
+
     private:
-        /**
-         * Only the signal object should be able to construct a connection.
-         */
-        friend class slots;
-
-        connection(slots_pointer slots, iterator iter) : slots_(slots), iter_(iter) {}
-
         boost::weak_ptr<slots_type> slots_;
         iterator iter_;
     };
+
+    slots_pointer slots_;
+
+public:
+    /**
+     * We provide read access to the list container with slots::begin()
+     * and slots::end(), therefore declare const_iterator public.
+     */
+    typedef typename slots_type::const_iterator const_iterator;
+    /**
+     * FIXME deprecated
+     */
+    typedef halmd::connection connection;
 
     slots() : slots_(new slots_type) {}
 
@@ -129,7 +136,7 @@ public:
      */
     connection connect(T const& slot)
     {
-        return connection(slots_, slots_->insert(slots_->end(), slot));
+        return connection_(slots_, slots_->insert(slots_->end(), slot));
     }
 
     /**
