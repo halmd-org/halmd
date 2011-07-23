@@ -40,13 +40,72 @@ namespace halmd {
 template <typename T>
 class signal;
 
+// forward declaration
+template <typename T>
+class slots;
+
 /**
- * Slot to slots container connection
+ * Slot-to-signal connection
  *
- * The connection is a slot itself, so it may be connected to
- * a signal<void ()>, to disconnect this slot when invoked.
+ * This class manages the connection of a single slot to a signal
+ * *independent* of the lifetime of the signal. We employ a weak
+ * pointer to observe the shared pointer holding the slots in the
+ * signal object.
+ * A weak pointer is locked to retrieve a shared pointer to the
+ * referenced object. If the weak pointer does not observe an
+ * object, lock() will return an empty shared pointer instead.
+ * This is the case if (1) we erase() the slot using the stored
+ * iterator and reset() the weak pointer, (2) all slots are
+ * disconnected from the signal with disconnect_all_slots()
+ * by reallocating the slots list, or (3) the signal object
+ * along with the slots list is deconstructed. Thus the state of
+ * the weak pointer reflects the validity of the connection object.
  */
-typedef boost::function0<void> connection;
+class connection
+{
+private:
+    typedef boost::shared_ptr<void> slots_pointer;
+    typedef boost::function<void (slots_pointer)> function_type;
+
+public:
+    /**
+     * disconnect slot from slots container
+     *
+     * This method may be invoked multiple times. Repeated calls to
+     * disconnect() will be silently ignored, similar to the behaviour
+     * of boost::signals::connection::disconnect(). In particular, this
+     * method may be called even if the slots container no longer exists,
+     * or if all slots have been removed with disconnect_all_slots().
+     */
+    void disconnect()
+    {
+        slots_pointer slots = slots_.lock();
+        if (slots) {
+            disconnect_(slots);
+            slots_.reset();
+        }
+    }
+
+    /**
+     * returns true if slot is connected to slots container, false otherwise
+     */
+    bool connected() const
+    {
+        return slots_.lock();
+    }
+
+private:
+    /**
+     * Only a slots object should be able to construct a connection.
+     */
+    template <typename T>
+    friend class slots;
+
+    connection(slots_pointer slots, function_type c) : slots_(slots), disconnect_(c) {}
+
+    boost::weak_ptr<void> slots_;
+    function_type disconnect_;
+};
 
 template <typename T>
 class slots
@@ -72,47 +131,23 @@ private:
     typedef typename slots_type::iterator iterator;
 
     /**
-     * Slot-to-signal connection
-     *
-     * This class manages the connection of a single slot to a signal
-     * *independent* of the lifetime of the signal. We employ a weak
-     * pointer to observe the shared pointer holding the slots in the
-     * signal object.
-     * A weak pointer is locked to retrieve a shared pointer to the
-     * referenced object. If the weak pointer does not observe an
-     * object, lock() will return an empty shared pointer instead.
-     * This is the case if (1) we erase() the slot using the stored
-     * iterator and reset() the weak pointer, (2) all slots are
-     * disconnected from the signal with disconnect_all_slots()
-     * by reallocating the slots list, or (3) the signal object
-     * along with the slots list is deconstructed. Thus the state of
-     * the weak pointer reflects the validity of the connection object.
+     * This class disconnects the stored slot from the slots container.
+     * It is wrapped as a type-independent function object for use in
+     * a connection object, which triggers the disconnect only if the
+     * slot and the slots container still exist.
      */
-    class connection_
+    class disconnector
     {
     public:
-        /**
-         * disconnect slot from slots container
-         *
-         * This method may be invoked multiple times. Repeated calls to
-         * disconnect() will be silently ignored, similar to the behaviour
-         * of boost::signals::connection::disconnect(). In particular, this
-         * method may be called even if the slots container no longer exists,
-         * or if all slots have been removed with disconnect_all_slots().
-         */
-        void operator()()
+        void operator()(boost::shared_ptr<void> slots)
         {
-            slots_pointer slots = slots_.lock();
-            if (slots) {
-                slots->erase(iter_);
-                slots_.reset();
-            }
+            slots_pointer slots_ = boost::static_pointer_cast<slots_type>(slots);
+            slots_->erase(iter_);
         }
 
-        connection_(slots_pointer slots, iterator iter) : slots_(slots), iter_(iter) {}
+        disconnector(iterator iter) : iter_(iter) {}
 
     private:
-        boost::weak_ptr<slots_type> slots_;
         iterator iter_;
     };
 
@@ -132,7 +167,8 @@ public:
      */
     connection connect(T const& slot)
     {
-        return connection_(slots_, slots_->insert(slots_->end(), slot));
+        iterator iter = slots_->insert(slots_->end(), slot);
+        return connection(slots_, disconnector(iter));
     }
 
     /**

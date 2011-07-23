@@ -206,6 +206,10 @@ BOOST_AUTO_TEST_CASE( halmd_signal0 )
     connection conn2 = sig.connect(ref(counter1));
     connection conn3 = sig.connect(ref(counter2));
     connection conn4 = sig.connect(ref(counter1));
+    BOOST_CHECK( conn1.connected() );
+    BOOST_CHECK( conn2.connected() );
+    BOOST_CHECK( conn3.connected() );
+    BOOST_CHECK( conn4.connected() );
 
     BOOST_CHECK( !immutable_sig.empty() );
     BOOST_CHECK_EQUAL( immutable_sig.num_slots(), 4LU );
@@ -216,9 +220,10 @@ BOOST_AUTO_TEST_CASE( halmd_signal0 )
     BOOST_CHECK_EQUAL( counter1.count(), result<signal_type>(1, 3) );
     BOOST_CHECK_EQUAL( counter2.count(), result<signal_type>(1, 1) );
 
-    BOOST_CHECK_NO_THROW( conn3() );
+    BOOST_CHECK_NO_THROW( conn3.disconnect() );
+    BOOST_CHECK( !conn3.connected() );
     // duplicate disconnect of connection should be silently ignored
-    BOOST_CHECK_NO_THROW( conn3() );
+    BOOST_CHECK_NO_THROW( conn3.disconnect() );
     BOOST_CHECK( !immutable_sig.empty() );
     BOOST_CHECK_EQUAL( immutable_sig.num_slots(), 3LU );
 
@@ -227,8 +232,11 @@ BOOST_AUTO_TEST_CASE( halmd_signal0 )
     BOOST_CHECK_EQUAL( counter2.count(), result<signal_type>(1, 1) );
 
     BOOST_CHECK_NO_THROW( sig.disconnect_all_slots() );
+    BOOST_CHECK( !conn1.connected() );
+    BOOST_CHECK( !conn2.connected() );
+    BOOST_CHECK( !conn4.connected() );
     // duplicate disconnect of connection should be silently ignored
-    BOOST_CHECK_NO_THROW( conn4() )
+    BOOST_CHECK_NO_THROW( conn4.disconnect() )
     BOOST_CHECK( immutable_sig.empty() );
     BOOST_CHECK_EQUAL( immutable_sig.num_slots(), 0LU );
 
@@ -238,8 +246,8 @@ BOOST_AUTO_TEST_CASE( halmd_signal0 )
 
     // disconnect of connection to nonexistent signal should be silently ignored
     sig = signal_type();
-    BOOST_CHECK_NO_THROW( conn1() );
-    BOOST_CHECK_NO_THROW( conn2() );
+    BOOST_CHECK_NO_THROW( conn1.disconnect() );
+    BOOST_CHECK_NO_THROW( conn2.disconnect() );
 }
 
 BOOST_AUTO_TEST_CASE( halmd_signal1 )
@@ -256,6 +264,10 @@ BOOST_AUTO_TEST_CASE( halmd_signal1 )
     connection conn2 = sig.connect(ref(counter1));
     connection conn3 = sig.connect(ref(counter2));
     connection conn4 = sig.connect(ref(counter1));
+    BOOST_CHECK( conn1.connected() );
+    BOOST_CHECK( conn2.connected() );
+    BOOST_CHECK( conn3.connected() );
+    BOOST_CHECK( conn4.connected() );
 
     BOOST_CHECK( !immutable_sig.empty() );
     BOOST_CHECK_EQUAL( immutable_sig.num_slots(), 4LU );
@@ -266,9 +278,10 @@ BOOST_AUTO_TEST_CASE( halmd_signal1 )
     BOOST_CHECK_EQUAL( counter1.count(), result<signal_type>(1, 3) );
     BOOST_CHECK_EQUAL( counter2.count(), result<signal_type>(1, 1) );
 
-    BOOST_CHECK_NO_THROW( conn3() );
+    BOOST_CHECK_NO_THROW( conn3.disconnect() );
+    BOOST_CHECK( !conn3.connected() );
     // duplicate disconnect of connection should be silently ignored
-    BOOST_CHECK_NO_THROW( conn3() );
+    BOOST_CHECK_NO_THROW( conn3.disconnect() );
     BOOST_CHECK( !immutable_sig.empty() );
     BOOST_CHECK_EQUAL( immutable_sig.num_slots(), 3LU );
 
@@ -277,8 +290,11 @@ BOOST_AUTO_TEST_CASE( halmd_signal1 )
     BOOST_CHECK_EQUAL( counter2.count(), result<signal_type>(1, 1) );
 
     BOOST_CHECK_NO_THROW( sig.disconnect_all_slots() );
+    BOOST_CHECK( !conn1.connected() );
+    BOOST_CHECK( !conn2.connected() );
+    BOOST_CHECK( !conn4.connected() );
     // duplicate disconnect of connection should be silently ignored
-    BOOST_CHECK_NO_THROW( conn4() )
+    BOOST_CHECK_NO_THROW( conn4.disconnect() )
     BOOST_CHECK( immutable_sig.empty() );
     BOOST_CHECK_EQUAL( immutable_sig.num_slots(), 0LU );
 
@@ -288,8 +304,8 @@ BOOST_AUTO_TEST_CASE( halmd_signal1 )
 
     // disconnect of connection to nonexistent signal should be silently ignored
     sig = signal_type();
-    BOOST_CHECK_NO_THROW( conn1() );
-    BOOST_CHECK_NO_THROW( conn2() );
+    BOOST_CHECK_NO_THROW( conn1.disconnect() );
+    BOOST_CHECK_NO_THROW( conn2.disconnect() );
 }
 
 BOOST_AUTO_TEST_CASE( halmd_signal2 )
@@ -306,6 +322,10 @@ BOOST_AUTO_TEST_CASE( halmd_signal2 )
     connection conn2 = sig.connect(ref(counter1));
     connection conn3 = sig.connect(ref(counter2));
     connection conn4 = sig.connect(ref(counter1));
+    BOOST_CHECK( conn1.connected() );
+    BOOST_CHECK( conn2.connected() );
+    BOOST_CHECK( conn3.connected() );
+    BOOST_CHECK( conn4.connected() );
 
     BOOST_CHECK( !immutable_sig.empty() );
     BOOST_CHECK_EQUAL( immutable_sig.num_slots(), 4LU );
@@ -316,9 +336,10 @@ BOOST_AUTO_TEST_CASE( halmd_signal2 )
     BOOST_CHECK_EQUAL( counter1.count(), result<signal_type>(1, 3) );
     BOOST_CHECK_EQUAL( counter2.count(), result<signal_type>(1, 1) );
 
-    BOOST_CHECK_NO_THROW( conn3() );
+    BOOST_CHECK_NO_THROW( conn3.disconnect() );
+    BOOST_CHECK( !conn3.connected() );
     // duplicate disconnect of connection should be silently ignored
-    BOOST_CHECK_NO_THROW( conn3() );
+    BOOST_CHECK_NO_THROW( conn3.disconnect() );
     BOOST_CHECK( !immutable_sig.empty() );
     BOOST_CHECK_EQUAL( immutable_sig.num_slots(), 3LU );
 
@@ -327,8 +348,11 @@ BOOST_AUTO_TEST_CASE( halmd_signal2 )
     BOOST_CHECK_EQUAL( counter2.count(), result<signal_type>(1, 1) );
 
     BOOST_CHECK_NO_THROW( sig.disconnect_all_slots() );
+    BOOST_CHECK( !conn1.connected() );
+    BOOST_CHECK( !conn2.connected() );
+    BOOST_CHECK( !conn4.connected() );
     // duplicate disconnect of connection should be silently ignored
-    BOOST_CHECK_NO_THROW( conn4() )
+    BOOST_CHECK_NO_THROW( conn4.disconnect() )
     BOOST_CHECK( immutable_sig.empty() );
     BOOST_CHECK_EQUAL( immutable_sig.num_slots(), 0LU );
 
@@ -338,8 +362,8 @@ BOOST_AUTO_TEST_CASE( halmd_signal2 )
 
     // disconnect of connection to nonexistent signal should be silently ignored
     sig = signal_type();
-    BOOST_CHECK_NO_THROW( conn1() );
-    BOOST_CHECK_NO_THROW( conn2() );
+    BOOST_CHECK_NO_THROW( conn1.disconnect() );
+    BOOST_CHECK_NO_THROW( conn2.disconnect() );
 }
 
 BOOST_AUTO_TEST_CASE( halmd_signal3 )
@@ -356,6 +380,10 @@ BOOST_AUTO_TEST_CASE( halmd_signal3 )
     connection conn2 = sig.connect(ref(counter1));
     connection conn3 = sig.connect(ref(counter2));
     connection conn4 = sig.connect(ref(counter1));
+    BOOST_CHECK( conn1.connected() );
+    BOOST_CHECK( conn2.connected() );
+    BOOST_CHECK( conn3.connected() );
+    BOOST_CHECK( conn4.connected() );
 
     BOOST_CHECK( !immutable_sig.empty() );
     BOOST_CHECK_EQUAL( immutable_sig.num_slots(), 4LU );
@@ -366,9 +394,10 @@ BOOST_AUTO_TEST_CASE( halmd_signal3 )
     BOOST_CHECK_EQUAL( counter1.count(), result<signal_type>(1, 3) );
     BOOST_CHECK_EQUAL( counter2.count(), result<signal_type>(1, 1) );
 
-    BOOST_CHECK_NO_THROW( conn3() );
+    BOOST_CHECK_NO_THROW( conn3.disconnect() );
+    BOOST_CHECK( !conn3.connected() );
     // duplicate disconnect of connection should be silently ignored
-    BOOST_CHECK_NO_THROW( conn3() );
+    BOOST_CHECK_NO_THROW( conn3.disconnect() );
     BOOST_CHECK( !immutable_sig.empty() );
     BOOST_CHECK_EQUAL( immutable_sig.num_slots(), 3LU );
 
@@ -377,8 +406,11 @@ BOOST_AUTO_TEST_CASE( halmd_signal3 )
     BOOST_CHECK_EQUAL( counter2.count(), result<signal_type>(1, 1) );
 
     BOOST_CHECK_NO_THROW( sig.disconnect_all_slots() );
+    BOOST_CHECK( !conn1.connected() );
+    BOOST_CHECK( !conn2.connected() );
+    BOOST_CHECK( !conn4.connected() );
     // duplicate disconnect of connection should be silently ignored
-    BOOST_CHECK_NO_THROW( conn4() )
+    BOOST_CHECK_NO_THROW( conn4.disconnect() )
     BOOST_CHECK( immutable_sig.empty() );
     BOOST_CHECK_EQUAL( immutable_sig.num_slots(), 0LU );
 
@@ -388,8 +420,8 @@ BOOST_AUTO_TEST_CASE( halmd_signal3 )
 
     // disconnect of connection to nonexistent signal should be silently ignored
     sig = signal_type();
-    BOOST_CHECK_NO_THROW( conn1() );
-    BOOST_CHECK_NO_THROW( conn2() );
+    BOOST_CHECK_NO_THROW( conn1.disconnect() );
+    BOOST_CHECK_NO_THROW( conn2.disconnect() );
 }
 
 BOOST_AUTO_TEST_CASE( halmd_signal4 )
@@ -406,6 +438,10 @@ BOOST_AUTO_TEST_CASE( halmd_signal4 )
     connection conn2 = sig.connect(ref(counter1));
     connection conn3 = sig.connect(ref(counter2));
     connection conn4 = sig.connect(ref(counter1));
+    BOOST_CHECK( conn1.connected() );
+    BOOST_CHECK( conn2.connected() );
+    BOOST_CHECK( conn3.connected() );
+    BOOST_CHECK( conn4.connected() );
 
     BOOST_CHECK( !immutable_sig.empty() );
     BOOST_CHECK_EQUAL( immutable_sig.num_slots(), 4LU );
@@ -418,9 +454,10 @@ BOOST_AUTO_TEST_CASE( halmd_signal4 )
     BOOST_CHECK_EQUAL( counter1.count(), result<signal_type>(1, 3) );
     BOOST_CHECK_EQUAL( counter2.count(), result<signal_type>(1, 1) );
 
-    BOOST_CHECK_NO_THROW( conn3() );
+    BOOST_CHECK_NO_THROW( conn3.disconnect() );
+    BOOST_CHECK( !conn3.connected() );
     // duplicate disconnect of connection should be silently ignored
-    BOOST_CHECK_NO_THROW( conn3() );
+    BOOST_CHECK_NO_THROW( conn3.disconnect() );
     BOOST_CHECK( !immutable_sig.empty() );
     BOOST_CHECK_EQUAL( immutable_sig.num_slots(), 3LU );
 
@@ -429,8 +466,11 @@ BOOST_AUTO_TEST_CASE( halmd_signal4 )
     BOOST_CHECK_EQUAL( counter2.count(), result<signal_type>(1, 1) );
 
     BOOST_CHECK_NO_THROW( sig.disconnect_all_slots() );
+    BOOST_CHECK( !conn1.connected() );
+    BOOST_CHECK( !conn2.connected() );
+    BOOST_CHECK( !conn4.connected() );
     // duplicate disconnect of connection should be silently ignored
-    BOOST_CHECK_NO_THROW( conn4() )
+    BOOST_CHECK_NO_THROW( conn4.disconnect() )
     BOOST_CHECK( immutable_sig.empty() );
     BOOST_CHECK_EQUAL( immutable_sig.num_slots(), 0LU );
 
@@ -440,8 +480,8 @@ BOOST_AUTO_TEST_CASE( halmd_signal4 )
 
     // disconnect of connection to nonexistent signal should be silently ignored
     sig = signal_type();
-    BOOST_CHECK_NO_THROW( conn1() );
-    BOOST_CHECK_NO_THROW( conn2() );
+    BOOST_CHECK_NO_THROW( conn1.disconnect() );
+    BOOST_CHECK_NO_THROW( conn2.disconnect() );
 }
 
 BOOST_AUTO_TEST_CASE( halmd_signal5 )
@@ -458,6 +498,10 @@ BOOST_AUTO_TEST_CASE( halmd_signal5 )
     connection conn2 = sig.connect(ref(counter1));
     connection conn3 = sig.connect(ref(counter2));
     connection conn4 = sig.connect(ref(counter1));
+    BOOST_CHECK( conn1.connected() );
+    BOOST_CHECK( conn2.connected() );
+    BOOST_CHECK( conn3.connected() );
+    BOOST_CHECK( conn4.connected() );
 
     BOOST_CHECK( !immutable_sig.empty() );
     BOOST_CHECK_EQUAL( immutable_sig.num_slots(), 4LU );
@@ -468,9 +512,10 @@ BOOST_AUTO_TEST_CASE( halmd_signal5 )
     BOOST_CHECK_EQUAL( counter1.count(), result<signal_type>(1, 3) );
     BOOST_CHECK_EQUAL( counter2.count(), result<signal_type>(1, 1) );
 
-    BOOST_CHECK_NO_THROW( conn3() );
+    BOOST_CHECK_NO_THROW( conn3.disconnect() );
+    BOOST_CHECK( !conn3.connected() );
     // duplicate disconnect of connection should be silently ignored
-    BOOST_CHECK_NO_THROW( conn3() );
+    BOOST_CHECK_NO_THROW( conn3.disconnect() );
     BOOST_CHECK( !immutable_sig.empty() );
     BOOST_CHECK_EQUAL( immutable_sig.num_slots(), 3LU );
 
@@ -479,8 +524,11 @@ BOOST_AUTO_TEST_CASE( halmd_signal5 )
     BOOST_CHECK_EQUAL( counter2.count(), result<signal_type>(1, 1) );
 
     BOOST_CHECK_NO_THROW( sig.disconnect_all_slots() );
+    BOOST_CHECK( !conn1.connected() );
+    BOOST_CHECK( !conn2.connected() );
+    BOOST_CHECK( !conn4.connected() );
     // duplicate disconnect of connection should be silently ignored
-    BOOST_CHECK_NO_THROW( conn4() )
+    BOOST_CHECK_NO_THROW( conn4.disconnect() )
     BOOST_CHECK( immutable_sig.empty() );
     BOOST_CHECK_EQUAL( immutable_sig.num_slots(), 0LU );
 
@@ -490,8 +538,8 @@ BOOST_AUTO_TEST_CASE( halmd_signal5 )
 
     // disconnect of connection to nonexistent signal should be silently ignored
     sig = signal_type();
-    BOOST_CHECK_NO_THROW( conn1() );
-    BOOST_CHECK_NO_THROW( conn2() );
+    BOOST_CHECK_NO_THROW( conn1.disconnect() );
+    BOOST_CHECK_NO_THROW( conn2.disconnect() );
 }
 
 BOOST_AUTO_TEST_CASE( halmd_signal6 )
@@ -508,6 +556,10 @@ BOOST_AUTO_TEST_CASE( halmd_signal6 )
     connection conn2 = sig.connect(ref(counter1));
     connection conn3 = sig.connect(ref(counter2));
     connection conn4 = sig.connect(ref(counter1));
+    BOOST_CHECK( conn1.connected() );
+    BOOST_CHECK( conn2.connected() );
+    BOOST_CHECK( conn3.connected() );
+    BOOST_CHECK( conn4.connected() );
 
     BOOST_CHECK( !immutable_sig.empty() );
     BOOST_CHECK_EQUAL( immutable_sig.num_slots(), 4LU );
@@ -518,9 +570,10 @@ BOOST_AUTO_TEST_CASE( halmd_signal6 )
     BOOST_CHECK_EQUAL( counter1.count(), result<signal_type>(1, 3) );
     BOOST_CHECK_EQUAL( counter2.count(), result<signal_type>(1, 1) );
 
-    BOOST_CHECK_NO_THROW( conn3() );
+    BOOST_CHECK_NO_THROW( conn3.disconnect() );
+    BOOST_CHECK( !conn3.connected() );
     // duplicate disconnect of connection should be silently ignored
-    BOOST_CHECK_NO_THROW( conn3() );
+    BOOST_CHECK_NO_THROW( conn3.disconnect() );
     BOOST_CHECK( !immutable_sig.empty() );
     BOOST_CHECK_EQUAL( immutable_sig.num_slots(), 3LU );
 
@@ -529,8 +582,11 @@ BOOST_AUTO_TEST_CASE( halmd_signal6 )
     BOOST_CHECK_EQUAL( counter2.count(), result<signal_type>(1, 1) );
 
     BOOST_CHECK_NO_THROW( sig.disconnect_all_slots() );
+    BOOST_CHECK( !conn1.connected() );
+    BOOST_CHECK( !conn2.connected() );
+    BOOST_CHECK( !conn4.connected() );
     // duplicate disconnect of connection should be silently ignored
-    BOOST_CHECK_NO_THROW( conn4() )
+    BOOST_CHECK_NO_THROW( conn4.disconnect() )
     BOOST_CHECK( immutable_sig.empty() );
     BOOST_CHECK_EQUAL( immutable_sig.num_slots(), 0LU );
 
@@ -540,8 +596,8 @@ BOOST_AUTO_TEST_CASE( halmd_signal6 )
 
     // disconnect of connection to nonexistent signal should be silently ignored
     sig = signal_type();
-    BOOST_CHECK_NO_THROW( conn1() );
-    BOOST_CHECK_NO_THROW( conn2() );
+    BOOST_CHECK_NO_THROW( conn1.disconnect() );
+    BOOST_CHECK_NO_THROW( conn2.disconnect() );
 }
 
 BOOST_AUTO_TEST_CASE( halmd_signal7 )
@@ -558,6 +614,10 @@ BOOST_AUTO_TEST_CASE( halmd_signal7 )
     connection conn2 = sig.connect(ref(counter1));
     connection conn3 = sig.connect(ref(counter2));
     connection conn4 = sig.connect(ref(counter1));
+    BOOST_CHECK( conn1.connected() );
+    BOOST_CHECK( conn2.connected() );
+    BOOST_CHECK( conn3.connected() );
+    BOOST_CHECK( conn4.connected() );
 
     BOOST_CHECK( !immutable_sig.empty() );
     BOOST_CHECK_EQUAL( immutable_sig.num_slots(), 4LU );
@@ -570,9 +630,10 @@ BOOST_AUTO_TEST_CASE( halmd_signal7 )
     BOOST_CHECK_EQUAL( counter1.count(), result<signal_type>(1, 3) );
     BOOST_CHECK_EQUAL( counter2.count(), result<signal_type>(1, 1) );
 
-    BOOST_CHECK_NO_THROW( conn3() );
+    BOOST_CHECK_NO_THROW( conn3.disconnect() );
+    BOOST_CHECK( !conn3.connected() );
     // duplicate disconnect of connection should be silently ignored
-    BOOST_CHECK_NO_THROW( conn3() );
+    BOOST_CHECK_NO_THROW( conn3.disconnect() );
     BOOST_CHECK( !immutable_sig.empty() );
     BOOST_CHECK_EQUAL( immutable_sig.num_slots(), 3LU );
 
@@ -581,8 +642,11 @@ BOOST_AUTO_TEST_CASE( halmd_signal7 )
     BOOST_CHECK_EQUAL( counter2.count(), result<signal_type>(1, 1) );
 
     BOOST_CHECK_NO_THROW( sig.disconnect_all_slots() );
+    BOOST_CHECK( !conn1.connected() );
+    BOOST_CHECK( !conn2.connected() );
+    BOOST_CHECK( !conn4.connected() );
     // duplicate disconnect of connection should be silently ignored
-    BOOST_CHECK_NO_THROW( conn4() )
+    BOOST_CHECK_NO_THROW( conn4.disconnect() )
     BOOST_CHECK( immutable_sig.empty() );
     BOOST_CHECK_EQUAL( immutable_sig.num_slots(), 0LU );
 
@@ -592,8 +656,8 @@ BOOST_AUTO_TEST_CASE( halmd_signal7 )
 
     // disconnect of connection to nonexistent signal should be silently ignored
     sig = signal_type();
-    BOOST_CHECK_NO_THROW( conn1() );
-    BOOST_CHECK_NO_THROW( conn2() );
+    BOOST_CHECK_NO_THROW( conn1.disconnect() );
+    BOOST_CHECK_NO_THROW( conn2.disconnect() );
 }
 
 BOOST_AUTO_TEST_CASE( halmd_signal8 )
@@ -610,6 +674,10 @@ BOOST_AUTO_TEST_CASE( halmd_signal8 )
     connection conn2 = sig.connect(ref(counter1));
     connection conn3 = sig.connect(ref(counter2));
     connection conn4 = sig.connect(ref(counter1));
+    BOOST_CHECK( conn1.connected() );
+    BOOST_CHECK( conn2.connected() );
+    BOOST_CHECK( conn3.connected() );
+    BOOST_CHECK( conn4.connected() );
 
     BOOST_CHECK( !immutable_sig.empty() );
     BOOST_CHECK_EQUAL( immutable_sig.num_slots(), 4LU );
@@ -620,9 +688,10 @@ BOOST_AUTO_TEST_CASE( halmd_signal8 )
     BOOST_CHECK_EQUAL( counter1.count(), result<signal_type>(1, 3) );
     BOOST_CHECK_EQUAL( counter2.count(), result<signal_type>(1, 1) );
 
-    BOOST_CHECK_NO_THROW( conn3() );
+    BOOST_CHECK_NO_THROW( conn3.disconnect() );
+    BOOST_CHECK( !conn3.connected() );
     // duplicate disconnect of connection should be silently ignored
-    BOOST_CHECK_NO_THROW( conn3() );
+    BOOST_CHECK_NO_THROW( conn3.disconnect() );
     BOOST_CHECK( !immutable_sig.empty() );
     BOOST_CHECK_EQUAL( immutable_sig.num_slots(), 3LU );
 
@@ -631,8 +700,11 @@ BOOST_AUTO_TEST_CASE( halmd_signal8 )
     BOOST_CHECK_EQUAL( counter2.count(), result<signal_type>(1, 1) );
 
     BOOST_CHECK_NO_THROW( sig.disconnect_all_slots() );
+    BOOST_CHECK( !conn1.connected() );
+    BOOST_CHECK( !conn2.connected() );
+    BOOST_CHECK( !conn4.connected() );
     // duplicate disconnect of connection should be silently ignored
-    BOOST_CHECK_NO_THROW( conn4() )
+    BOOST_CHECK_NO_THROW( conn4.disconnect() )
     BOOST_CHECK( immutable_sig.empty() );
     BOOST_CHECK_EQUAL( immutable_sig.num_slots(), 0LU );
 
@@ -642,8 +714,8 @@ BOOST_AUTO_TEST_CASE( halmd_signal8 )
 
     // disconnect of connection to nonexistent signal should be silently ignored
     sig = signal_type();
-    BOOST_CHECK_NO_THROW( conn1() );
-    BOOST_CHECK_NO_THROW( conn2() );
+    BOOST_CHECK_NO_THROW( conn1.disconnect() );
+    BOOST_CHECK_NO_THROW( conn2.disconnect() );
 }
 
 BOOST_AUTO_TEST_CASE( halmd_signal9 )
@@ -660,6 +732,10 @@ BOOST_AUTO_TEST_CASE( halmd_signal9 )
     connection conn2 = sig.connect(ref(counter1));
     connection conn3 = sig.connect(ref(counter2));
     connection conn4 = sig.connect(ref(counter1));
+    BOOST_CHECK( conn1.connected() );
+    BOOST_CHECK( conn2.connected() );
+    BOOST_CHECK( conn3.connected() );
+    BOOST_CHECK( conn4.connected() );
 
     BOOST_CHECK( !immutable_sig.empty() );
     BOOST_CHECK_EQUAL( immutable_sig.num_slots(), 4LU );
@@ -670,9 +746,10 @@ BOOST_AUTO_TEST_CASE( halmd_signal9 )
     BOOST_CHECK_EQUAL( counter1.count(), result<signal_type>(1, 3) );
     BOOST_CHECK_EQUAL( counter2.count(), result<signal_type>(1, 1) );
 
-    BOOST_CHECK_NO_THROW( conn3() );
+    BOOST_CHECK_NO_THROW( conn3.disconnect() );
+    BOOST_CHECK( !conn3.connected() );
     // duplicate disconnect of connection should be silently ignored
-    BOOST_CHECK_NO_THROW( conn3() );
+    BOOST_CHECK_NO_THROW( conn3.disconnect() );
     BOOST_CHECK( !immutable_sig.empty() );
     BOOST_CHECK_EQUAL( immutable_sig.num_slots(), 3LU );
 
@@ -681,8 +758,11 @@ BOOST_AUTO_TEST_CASE( halmd_signal9 )
     BOOST_CHECK_EQUAL( counter2.count(), result<signal_type>(1, 1) );
 
     BOOST_CHECK_NO_THROW( sig.disconnect_all_slots() );
+    BOOST_CHECK( !conn1.connected() );
+    BOOST_CHECK( !conn2.connected() );
+    BOOST_CHECK( !conn4.connected() );
     // duplicate disconnect of connection should be silently ignored
-    BOOST_CHECK_NO_THROW( conn4() )
+    BOOST_CHECK_NO_THROW( conn4.disconnect() )
     BOOST_CHECK( immutable_sig.empty() );
     BOOST_CHECK_EQUAL( immutable_sig.num_slots(), 0LU );
 
@@ -692,6 +772,6 @@ BOOST_AUTO_TEST_CASE( halmd_signal9 )
 
     // disconnect of connection to nonexistent signal should be silently ignored
     sig = signal_type();
-    BOOST_CHECK_NO_THROW( conn1() );
-    BOOST_CHECK_NO_THROW( conn2() );
+    BOOST_CHECK_NO_THROW( conn1.disconnect() );
+    BOOST_CHECK_NO_THROW( conn2.disconnect() );
 }
