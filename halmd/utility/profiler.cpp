@@ -139,8 +139,8 @@ void profiler::log() const
     double maximum_runtime = total_runtime(*accumulators.back().first);
     BOOST_FOREACH(accumulator_pair_type const& acc, accumulators) {
         double fraction = total_runtime(*acc.first) / maximum_runtime;
-        LOG(acc.second << ": " << *acc.first
-            << " [" << fixed << setprecision(1) << fraction * 100 << "%]"
+        LOG("[" << setw(5) << fixed << setprecision(1) << fraction * 100 << "%] "
+            << acc.second << ": " << *acc.first
         );
     }
 }
