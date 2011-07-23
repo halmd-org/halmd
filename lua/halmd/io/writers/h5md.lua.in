@@ -70,10 +70,10 @@ function new(args)
         local mode = assert(args.mode, "missing mode")
         if mode == "append" then
             local clock = mdsim.clock() -- singleton
-            writer = h5md.append(self, args.location, clock)
+            writer = h5md.append(self.root, args.location, clock)
 
         elseif mode == "truncate" then
-            writer = h5md.truncate(self, args.location)
+            writer = h5md.truncate(self.root, args.location)
 
         else
             error("invalid mode: " .. mode)

@@ -22,7 +22,7 @@
 
 #include <lua.hpp>
 
-#include <halmd/io/writers/h5md/file.hpp>
+#include <h5xx/h5xx.hpp>
 #include <halmd/mdsim/clock.hpp>
 #include <halmd/utility/signal.hpp>
 
@@ -49,7 +49,6 @@ namespace h5md {
 class append
 {
 public:
-    typedef h5md::file file_type;
     typedef mdsim::clock clock_type;
     typedef clock_type::step_type step_type;
     typedef clock_type::time_type time_type;
@@ -58,7 +57,7 @@ public:
 
     /** open writer group and create time and step datasets */
     append(
-        file_type const& file
+        H5::Group const& root
       , std::vector<std::string> const& location
       , boost::shared_ptr<clock_type const> clock
     );

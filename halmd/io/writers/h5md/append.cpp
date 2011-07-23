@@ -38,7 +38,7 @@ namespace writers {
 namespace h5md {
 
 append::append(
-    file_type const& file
+    H5::Group const& root
   , vector<string> const& location
   , shared_ptr<clock_type const> clock
 )
@@ -47,7 +47,7 @@ append::append(
     if (location.size() < 1) {
         throw invalid_argument("group location");
     }
-    group_ = h5xx::open_group(file.root(), join(location, "/"));
+    group_ = h5xx::open_group(root, join(location, "/"));
     step_ = h5xx::create_dataset<step_type>(group_, "step");
     time_ = h5xx::create_dataset<time_type>(group_, "time");
     group_.unlink("step");
@@ -183,7 +183,7 @@ void append::luaopen(lua_State* L)
                 namespace_("h5md")
                 [
                     class_<append, shared_ptr<append> >("append")
-                        .def(constructor<file const&, vector<string> const&, shared_ptr<clock_type const> >())
+                        .def(constructor<H5::Group const&, vector<string> const&, shared_ptr<clock_type const> >())
                         .property("write", &wrap_write)
                         .def("on_write", &append::on_write<function<float ()> >, pure_out_value(_2))
                         .def("on_write", &append::on_write<function<double ()> >, pure_out_value(_2))

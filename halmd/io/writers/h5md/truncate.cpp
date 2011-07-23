@@ -37,14 +37,14 @@ namespace writers {
 namespace h5md {
 
 truncate::truncate(
-    file_type const& file
+    H5::Group const& root
   , vector<string> const& location
 )
 {
     if (location.size() < 1) {
         throw invalid_argument("group location");
     }
-    group_ = h5xx::open_group(file.root(), join(location, "/"));
+    group_ = h5xx::open_group(root, join(location, "/"));
 }
 
 template <typename T>
@@ -166,7 +166,7 @@ void truncate::luaopen(lua_State* L)
                 namespace_("h5md")
                 [
                     class_<truncate, shared_ptr<truncate> >("truncate")
-                        .def(constructor<file const&, vector<string> const&>())
+                        .def(constructor<H5::Group const&, vector<string> const&>())
                         .property("write", &wrap_write)
                         .def("on_write", &truncate::on_write<function<float ()> >, pure_out_value(_2))
                         .def("on_write", &truncate::on_write<function<double ()> >, pure_out_value(_2))

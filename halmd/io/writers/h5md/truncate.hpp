@@ -22,7 +22,7 @@
 
 #include <lua.hpp>
 
-#include <halmd/io/writers/h5md/file.hpp>
+#include <h5xx/h5xx.hpp>
 #include <halmd/utility/signal.hpp>
 
 namespace halmd {
@@ -46,13 +46,12 @@ namespace h5md {
 class truncate
 {
 public:
-    typedef h5md::file file_type;
     typedef signal<void ()> signal_type;
     typedef signal_type::slot_function_type slot_function_type;
 
     /** open writer group */
     truncate(
-        file_type const& file
+        H5::Group const& root
       , std::vector<std::string> const& location
     );
     /** write datasets */
