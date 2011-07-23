@@ -65,7 +65,7 @@ class connection
 {
 private:
     typedef boost::shared_ptr<void> slots_pointer;
-    typedef boost::function<void (slots_pointer)> function_type;
+    typedef boost::function<void (slots_pointer)> disconnector_type;
 
 public:
     /**
@@ -101,10 +101,10 @@ private:
     template <typename T>
     friend class slots;
 
-    connection(slots_pointer slots, function_type c) : slots_(slots), disconnect_(c) {}
+    connection(slots_pointer slots, disconnector_type c) : slots_(slots), disconnect_(c) {}
 
     boost::weak_ptr<void> slots_;
-    function_type disconnect_;
+    disconnector_type disconnect_;
 };
 
 template <typename T>
