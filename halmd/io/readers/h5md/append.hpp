@@ -49,11 +49,13 @@ namespace h5md {
  */
 class append
 {
-public:
+private:
     typedef mdsim::clock clock_type;
+    typedef signal<void ()> signal_type;
+
+public:
     typedef clock_type::step_type step_type;
     typedef clock_type::time_type time_type;
-    typedef signal<void ()> signal_type;
     typedef signal_type::slot_function_type slot_function_type;
     typedef H5::Group subgroup_type;
 
@@ -68,29 +70,41 @@ public:
         subgroup_type& group
       , boost::function<T ()> const& slot
       , std::vector<std::string> const& location
-      , hsize_t index
     );
     /** connect slot called before reading */
     void on_prepend_read(slot_function_type const& slot);
     /** connect slot called after reading */
     void on_append_read(slot_function_type const& slot);
-    /** append datasets */
-    void read();
+    /** read at given step offset */
+    void read_step(step_type step);
+    /** read at given time offset */
+    void read_time(time_type time);
     /** Lua bindings */
     static void luaopen(lua_State* L);
 
 private:
+    typedef boost::function<hsize_t (H5::Group const& group)> index_function_type;
+
     template <typename T>
     static void read_dataset(
         H5::DataSet dataset
       , boost::function<T ()> const& slot
-      , hsize_t index
+      , index_function_type const& index
+      , H5::Group const& group
+    );
+    static hsize_t read_step_index(
+        step_type step
+      , H5::Group const& group
+    );
+    static hsize_t read_time_index(
+        time_type time
+      , H5::Group const& group
     );
 
     /** reader group */
     H5::Group group_;
     /** signal emitted for reading datasets */
-    signal_type on_read_;
+    signal<void (index_function_type const&)> on_read_;
     /** signal emitted before reading datasets */
     signal_type on_prepend_read_;
     /** signal emitted before after datasets */

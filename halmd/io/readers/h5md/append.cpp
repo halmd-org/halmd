@@ -17,7 +17,11 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <algorithm>
 #include <boost/algorithm/string/join.hpp> // boost::join
+#include <boost/bind.hpp>
+#include <boost/lambda/lambda.hpp>
+#include <boost/tuple/tuple.hpp> // boost::tie
 #include <luabind/luabind.hpp>
 #include <luabind/out_value_policy.hpp>
 #include <stdexcept>
@@ -51,7 +55,6 @@ void append::on_read(
     subgroup_type& group
   , function<T ()> const& slot
   , vector<string> const& location
-  , hsize_t index
 )
 {
     if (location.size() < 1) {
@@ -59,7 +62,7 @@ void append::on_read(
     }
     group = h5xx::open_group(group_, join(location, "/"));
     H5::DataSet dataset = group.openDataSet("samples");
-    on_read_.connect(bind(&read_dataset<T>, dataset, slot, index));
+    on_read_.connect(bind(&read_dataset<T>, dataset, slot, _1, group));
 }
 
 void append::on_prepend_read(slot_function_type const& slot)
@@ -72,10 +75,17 @@ void append::on_append_read(slot_function_type const& slot)
     on_append_read_.connect(slot);
 }
 
-void append::read()
+void append::read_step(step_type step)
 {
     on_prepend_read_();
-    on_read_();
+    on_read_(bind(&read_step_index, step, _1));
+    on_append_read_();
+}
+
+void append::read_time(time_type time)
+{
+    on_prepend_read_();
+    on_read_(bind(&read_time_index, time, _1));
     on_append_read_();
 }
 
@@ -83,17 +93,72 @@ template <typename T>
 void append::read_dataset(
     H5::DataSet dataset
   , function<T ()> const& slot
-  , hsize_t index
+  , index_function_type const& index
+  , H5::Group const& group
 )
 {
     T data = slot();
-    h5xx::read_dataset(dataset, &data, index);
+    h5xx::read_dataset(dataset, &data, index(group));
+}
+
+hsize_t append::read_step_index(
+    step_type step
+  , H5::Group const& group
+)
+{
+    H5::DataSet dataset = group.openDataSet("step");
+    std::vector<step_type> steps;
+    h5xx::read_unique_dataset(dataset, &steps);
+    std::vector<step_type>::const_iterator first, last;
+    tie(first, last) = equal_range(steps.begin(), steps.end(), step);
+    if (first == last) {
+        LOG_ERROR("no step " << step << " in dataset " << h5xx::path(dataset));
+        throw domain_error("nonexistent step");
+    }
+    if (last - first > 1) {
+        LOG_ERROR("ambiguous step " << step << " in dataset " << h5xx::path(dataset));
+        throw domain_error("ambiguous step");
+    }
+    return first - steps.begin();
+}
+
+hsize_t append::read_time_index(
+    time_type time
+  , H5::Group const& group
+)
+{
+    H5::DataSet dataset = group.openDataSet("time");
+    time_type timestep = h5xx::read_attribute<time_type>(dataset, "timestep");
+    std::vector<time_type> times;
+    h5xx::read_unique_dataset(dataset, &times);
+    std::vector<time_type>::const_iterator first, last;
+    tie(first, last) = equal_range(
+        times.begin()
+      , times.end()
+      , time
+      , lambda::_1 + (timestep / 2) < lambda::_2
+    );
+    if (first == last) {
+        LOG_ERROR("no time " << time << " in dataset " << h5xx::path(dataset));
+        throw domain_error("nonexistent time");
+    }
+    if (last - first > 1) {
+        LOG_ERROR("ambiguous time " << time << " in dataset " << h5xx::path(dataset));
+        throw domain_error("ambiguous time");
+    }
+    return first - times.begin();
 }
 
 static append::slot_function_type
-wrap_read(shared_ptr<append> instance)
+wrap_read_step(shared_ptr<append> instance, append::step_type step)
 {
-    return bind(&append::read, instance);
+    return bind(&append::read_step, instance, step);
+}
+
+static append::slot_function_type
+wrap_read_time(shared_ptr<append> instance, append::time_type time)
+{
+    return bind(&append::read_time, instance, time);
 }
 
 void append::luaopen(lua_State* L)
@@ -109,7 +174,6 @@ void append::luaopen(lua_State* L)
                 [
                     class_<append, shared_ptr<append> >("append")
                         .def(constructor<H5::Group const&, vector<string> const&>())
-                        .property("read", &wrap_read)
                         .def("on_read", &append::on_read<float&>, pure_out_value(_2))
                         .def("on_read", &append::on_read<double&>, pure_out_value(_2))
                         .def("on_read", &append::on_read<fixed_vector<float, 2>&>, pure_out_value(_2))
@@ -126,6 +190,8 @@ void append::luaopen(lua_State* L)
                         .def("on_read", &append::on_read<vector<array<double, 3> >&>, pure_out_value(_2))
                         .def("on_prepend_read", &append::on_prepend_read)
                         .def("on_append_read", &append::on_append_read)
+                        .def("read_step", &wrap_read_step)
+                        .def("read_time", &wrap_read_time)
                 ]
             ]
         ]

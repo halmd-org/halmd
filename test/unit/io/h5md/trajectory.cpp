@@ -70,7 +70,7 @@ void on_write_sample(shared_ptr<sample_type> sample, shared_ptr<writer_type> wri
 }
 
 template <typename sample_type, typename reader_type>
-void on_read_sample(shared_ptr<sample_type> sample, shared_ptr<reader_type> reader, hsize_t index)
+void on_read_sample(shared_ptr<sample_type> sample, shared_ptr<reader_type> reader)
 {
     typedef typename sample_type::sample_vector sample_vector;
     typedef sample_vector& (sample_type::*getter_type)(unsigned int);
@@ -82,13 +82,11 @@ void on_read_sample(shared_ptr<sample_type> sample, shared_ptr<reader_type> read
             position
           , bind(static_cast<getter_type>(&sample_type::position), sample, i)
           , list_of(types[i])("position")
-          , index
         );
         reader->template on_read<sample_vector&>(
             velocity
           , bind(static_cast<getter_type>(&sample_type::velocity), sample, i)
           , list_of(types[i])("velocity")
-          , index
         );
         BOOST_CHECK_EQUAL(h5xx::path(position), "/trajectory/" + types[i] + "/position");
         BOOST_CHECK_EQUAL(h5xx::path(velocity), "/trajectory/" + types[i] + "/velocity");
@@ -152,7 +150,8 @@ void h5md(vector<unsigned int> const& ntypes)
     float_sample->step = double_sample->step;
 
     // write single-precision sample to file
-    shared_ptr<mdsim::clock> clock = make_shared<mdsim::clock>(1); // bogus time-step
+    // use time-step not exactly representable as float-point value
+    shared_ptr<mdsim::clock> clock = make_shared<mdsim::clock>(1/6.);
     shared_ptr<writers::h5md::file> writer_file =
         make_shared<writers::h5md::file>(filename);
     shared_ptr<writers::h5md::append> writer =
@@ -204,9 +203,9 @@ void h5md(vector<unsigned int> const& ntypes)
     shared_ptr<readers::h5md::append> reader =
         make_shared<readers::h5md::append>(reader_file->root(), list_of("trajectory"));
 
-    on_read_sample(double_sample_, reader, 1);
+    on_read_sample(double_sample_, reader);
 
-    reader->read();
+    reader->read_time(0.1667);
 
     // check binary equality of written and read data
     for (unsigned int type = 0; type < ntypes.size(); ++type) {
@@ -227,18 +226,13 @@ void h5md(vector<unsigned int> const& ntypes)
     // read phase space sample #0 from file in single precision
     shared_ptr<float_sample_type> float_sample_ = make_shared<float_sample_type>(ntypes);
 
-    reader.reset();
-    reader_file.reset();
-    reader_file = make_shared<readers::h5md::file>(filename);
-    reader = make_shared<readers::h5md::append>(reader_file->root(), list_of("trajectory"));
-
     // deconstruct file module to check that the HDF5 library
     // keeps the file open if reader module still exists
     reader_file.reset();
 
-    on_read_sample(float_sample_, reader, 0);
+    on_read_sample(float_sample_, reader);
 
-    reader->read();
+    reader->read_time(0);
 
     // check binary equality of written and read data,
     // note that float_sample was not modified and thus corresponds to #0
