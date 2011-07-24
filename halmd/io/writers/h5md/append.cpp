@@ -53,6 +53,47 @@ append::append(
 }
 
 template <typename T>
+void append::on_write(
+    H5::Group& group
+  , function<T ()> const& slot
+  , vector<string> const& location
+)
+{
+    if (location.size() < 1) {
+        throw invalid_argument("dataset location");
+    }
+    group = h5xx::open_group(group_, join(location, "/"));
+    H5::DataSet dataset = create_dataset(group, "samples", slot);
+    h5xx::link(step_, group, "step");
+    h5xx::link(time_, group, "time");
+    on_write_.connect(bind(&write_dataset<T>, dataset, slot));
+}
+
+void append::on_prepend_write(signal<void (uint64_t)>::slot_function_type const& slot)
+{
+    on_prepend_write_.connect(slot);
+}
+
+void append::on_append_write(signal<void (uint64_t)>::slot_function_type const& slot)
+{
+    on_append_write_.connect(slot);
+}
+
+void append::write(uint64_t step)
+{
+    on_prepend_write_(step);
+    write_step_time();
+    on_write_();
+    on_append_write_(step);
+}
+
+void append::write_step_time()
+{
+    h5xx::write_dataset(step_, clock_->step());
+    h5xx::write_dataset(time_, clock_->time());
+}
+
+template <typename T>
 H5::DataSet append::create_dataset(
     H5::Group const& group
   , string const& name
@@ -123,47 +164,6 @@ void append::write_dataset(
 {
     T data = slot();
     h5xx::write_dataset(dataset, data);
-}
-
-template <typename T>
-void append::on_write(
-    H5::Group& group
-  , function<T ()> const& slot
-  , vector<string> const& location
-)
-{
-    if (location.size() < 1) {
-        throw invalid_argument("dataset location");
-    }
-    group = h5xx::open_group(group_, join(location, "/"));
-    H5::DataSet dataset = create_dataset(group, "samples", slot);
-    h5xx::link(step_, group, "step");
-    h5xx::link(time_, group, "time");
-    on_write_.connect(bind(&write_dataset<T>, dataset, slot));
-}
-
-void append::on_prepend_write(signal<void (uint64_t)>::slot_function_type const& slot)
-{
-    on_prepend_write_.connect(slot);
-}
-
-void append::on_append_write(signal<void (uint64_t)>::slot_function_type const& slot)
-{
-    on_append_write_.connect(slot);
-}
-
-void append::write(uint64_t step)
-{
-    on_prepend_write_(step);
-    write_step_time();
-    on_write_();
-    on_append_write_(step);
-}
-
-void append::write_step_time()
-{
-    h5xx::write_dataset(step_, clock_->step());
-    h5xx::write_dataset(time_, clock_->time());
 }
 
 static signal<void (uint64_t)>::slot_function_type

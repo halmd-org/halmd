@@ -62,8 +62,6 @@ public:
       , std::vector<std::string> const& location
       , boost::shared_ptr<clock_type const> clock
     );
-    /** append datasets */
-    void write(uint64_t step);
     /** connect data slot for writing dataset */
     template <typename T>
     void on_write(
@@ -75,6 +73,8 @@ public:
     void on_prepend_write(signal<void (uint64_t)>::slot_function_type const& slot);
     /** connect slot called after writing */
     void on_append_write(signal<void (uint64_t)>::slot_function_type const& slot);
+    /** append datasets */
+    void write(uint64_t step);
     /** Lua bindings */
     static void luaopen(lua_State* L);
 

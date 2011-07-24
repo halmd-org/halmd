@@ -47,6 +47,37 @@ truncate::truncate(
 }
 
 template <typename T>
+void truncate::on_write(
+    H5::DataSet& dataset
+  , function<T ()> const& slot
+  , vector<string> const& location
+)
+{
+    if (location.size() < 1) {
+        throw invalid_argument("dataset location");
+    }
+    dataset = create_dataset(group_, join(location, "/"), slot);
+    on_write_.connect(bind(&write_dataset<T>, dataset, slot));
+}
+
+void truncate::on_prepend_write(signal<void (uint64_t)>::slot_function_type const& slot)
+{
+    on_prepend_write_.connect(slot);
+}
+
+void truncate::on_append_write(signal<void (uint64_t)>::slot_function_type const& slot)
+{
+    on_append_write_.connect(slot);
+}
+
+void truncate::write(uint64_t step)
+{
+    on_prepend_write_(step);
+    on_write_();
+    on_append_write_(step);
+}
+
+template <typename T>
 H5::DataSet truncate::create_dataset(
     H5::Group const& group
   , string const& name
@@ -117,37 +148,6 @@ void truncate::write_dataset(
 {
     T data = slot();
     h5xx::write_unique_dataset(dataset, data);
-}
-
-template <typename T>
-void truncate::on_write(
-    H5::DataSet& dataset
-  , function<T ()> const& slot
-  , vector<string> const& location
-)
-{
-    if (location.size() < 1) {
-        throw invalid_argument("dataset location");
-    }
-    dataset = create_dataset(group_, join(location, "/"), slot);
-    on_write_.connect(bind(&write_dataset<T>, dataset, slot));
-}
-
-void truncate::on_prepend_write(signal<void (uint64_t)>::slot_function_type const& slot)
-{
-    on_prepend_write_.connect(slot);
-}
-
-void truncate::on_append_write(signal<void (uint64_t)>::slot_function_type const& slot)
-{
-    on_append_write_.connect(slot);
-}
-
-void truncate::write(uint64_t step)
-{
-    on_prepend_write_(step);
-    on_write_();
-    on_append_write_(step);
 }
 
 static signal<void (uint64_t)>::slot_function_type
