@@ -181,8 +181,15 @@ void h5md(vector<unsigned int> const& ntypes)
     (*double_sample->v[0])[0] = double_vector_type(sqrt(2));
     double_sample->step = clock->step();
 
+    // deconstruct the file module before writing
+    // the HDF5 library will keep the file open as long as groups
+    // or datasets are open, which is the case for the writer
+    writer_file.reset();
+
     writer->write(clock->step());
-    writer_file->flush();
+
+    // deconstruct the writer to flush and close the HDF5 file
+    writer.reset();
 
     // test integrity of H5MD file
     BOOST_CHECK(readers::h5md::file::check(filename));
@@ -225,6 +232,10 @@ void h5md(vector<unsigned int> const& ntypes)
     reader_file = make_shared<readers::h5md::file>(filename);
     reader = make_shared<readers::h5md::append>(reader_file->root(), list_of("trajectory"));
 
+    // deconstruct file module to check that the HDF5 library
+    // keeps the file open if reader module still exists
+    reader_file.reset();
+
     read_sample(float_sample_, reader, 0);
 
     reader->read(clock->step());
@@ -247,10 +258,7 @@ void h5md(vector<unsigned int> const& ntypes)
     }
 
     // close and remove file
-    writer.reset();
-    writer_file.reset();
     reader.reset();
-    reader_file.reset();
 #ifdef NDEBUG
     remove(filename.c_str());
 #endif
