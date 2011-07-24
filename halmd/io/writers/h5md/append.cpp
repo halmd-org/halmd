@@ -17,8 +17,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <boost/algorithm/string/join.hpp>
-#include <boost/range/iterator_range.hpp>
+#include <boost/algorithm/string/join.hpp> // boost::join
 #include <luabind/luabind.hpp>
 #include <luabind/out_value_policy.hpp>
 #include <stdexcept>
@@ -29,7 +28,6 @@
 #include <halmd/utility/lua/lua.hpp>
 
 using namespace boost;
-using namespace boost::algorithm; // join
 using namespace std;
 
 namespace halmd {
