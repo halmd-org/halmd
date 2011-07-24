@@ -1,5 +1,3 @@
-add_subdirectory(writers)
-
 add_executable(test_unit_io_logger
   logger.cpp
 )
@@ -27,17 +25,4 @@ add_test(unit/io/profiling_writers
   test_unit_io_profiling_writers --log_level=test_suite
 )
 
-add_executable(test_unit_io_trajectory_h5md
-  trajectory_h5md.cpp
-)
-target_link_libraries(test_unit_io_trajectory_h5md
-  libhalmd
-  ${HALMD_COMMON_LIBRARIES}
-  ${HALMD_TEST_LIBRARIES}
-)
-add_test(unit/io/trajectory_h5md/2d
-  test_unit_io_trajectory_h5md --run_test=trajectory_h5md/2d --log_level=test_suite
-)
-add_test(unit/io/trajectory_h5md/3d
-  test_unit_io_trajectory_h5md --run_test=trajectory_h5md/3d --log_level=test_suite
-)
+add_subdirectory(h5md)

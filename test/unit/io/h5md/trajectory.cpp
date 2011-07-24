@@ -17,7 +17,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#define BOOST_TEST_MODULE trajectory_h5md
+#define BOOST_TEST_MODULE trajectory
 #include <boost/test/unit_test.hpp>
 #include <boost/test/parameterized_test.hpp>
 
@@ -106,7 +106,7 @@ void h5md(vector<unsigned int> const& ntypes)
     typedef fixed_vector<float, dimension> float_vector_type;
     typedef fixed_vector<double, dimension> double_vector_type;
 
-    string const filename("test_io_trajectory_h5md.trj");
+    string const filename("test_io_h5md_trajectory.trj");
 
     BOOST_MESSAGE("Testing " << ntypes.size() << " particle types");
 
@@ -272,16 +272,12 @@ HALMD_TEST_INIT( init_unit_test_suite )
     vector<vector<unsigned int> > ntypes;
     ntypes += list_of(1), list_of(1)(10), list_of(1)(10)(100);
 
-    test_suite* ts = BOOST_TEST_SUITE( "trajectory_h5md" );
-
     test_suite* ts1 = BOOST_TEST_SUITE( "2d" );
     ts1->add( BOOST_PARAM_TEST_CASE( &h5md<2>, ntypes.begin(), ntypes.end() ) );
 
     test_suite* ts2 = BOOST_TEST_SUITE( "3d" );
     ts2->add( BOOST_PARAM_TEST_CASE( &h5md<3>, ntypes.begin(), ntypes.end() ) );
 
-    ts->add( ts1 );
-    ts->add( ts2 );
-
-    master_test_suite().add( ts );
+    master_test_suite().add( ts1 );
+    master_test_suite().add( ts2 );
 }

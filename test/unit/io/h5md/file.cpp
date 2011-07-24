@@ -17,7 +17,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#define BOOST_TEST_MODULE h5md
+#define BOOST_TEST_MODULE file
 #include <boost/test/unit_test.hpp>
 
 #include <boost/filesystem.hpp>
