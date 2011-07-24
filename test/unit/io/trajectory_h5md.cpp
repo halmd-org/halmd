@@ -46,7 +46,7 @@ using namespace std;
 array<string, 3> const types = {{ "A", "B", "C" }};
 
 template <typename sample_type, typename writer_type>
-void write_sample(shared_ptr<sample_type> sample, shared_ptr<writer_type> writer)
+void on_write_sample(shared_ptr<sample_type> sample, shared_ptr<writer_type> writer)
 {
     typedef typename sample_type::sample_vector sample_vector;
     typedef sample_vector const& (sample_type::*getter_type)(unsigned int) const;
@@ -70,7 +70,7 @@ void write_sample(shared_ptr<sample_type> sample, shared_ptr<writer_type> writer
 }
 
 template <typename sample_type, typename reader_type>
-void read_sample(shared_ptr<sample_type> sample, shared_ptr<reader_type> reader, hsize_t index)
+void on_read_sample(shared_ptr<sample_type> sample, shared_ptr<reader_type> reader, hsize_t index)
 {
     typedef typename sample_type::sample_vector sample_vector;
     typedef sample_vector& (sample_type::*getter_type)(unsigned int);
@@ -158,7 +158,7 @@ void h5md(vector<unsigned int> const& ntypes)
     shared_ptr<writers::h5md::append> writer =
         make_shared<writers::h5md::append>(writer_file->root(), list_of("trajectory"), clock);
 
-    write_sample(float_sample, writer);
+    on_write_sample(float_sample, writer);
 
     writer->write(clock->step());
     writer_file->flush();
@@ -170,7 +170,7 @@ void h5md(vector<unsigned int> const& ntypes)
     writer_file = make_shared<writers::h5md::file>(filename);
     writer = make_shared<writers::h5md::append>(writer_file->root(), list_of("trajectory"), clock);
 
-    write_sample(double_sample, writer);
+    on_write_sample(double_sample, writer);
 
     writer->write(clock->step());
     writer_file->flush();
@@ -204,7 +204,7 @@ void h5md(vector<unsigned int> const& ntypes)
     shared_ptr<readers::h5md::append> reader =
         make_shared<readers::h5md::append>(reader_file->root(), list_of("trajectory"));
 
-    read_sample(double_sample_, reader, 1);
+    on_read_sample(double_sample_, reader, 1);
 
     reader->read(clock->step());
 
@@ -236,7 +236,7 @@ void h5md(vector<unsigned int> const& ntypes)
     // keeps the file open if reader module still exists
     reader_file.reset();
 
-    read_sample(float_sample_, reader, 0);
+    on_read_sample(float_sample_, reader, 0);
 
     reader->read(clock->step());
 
