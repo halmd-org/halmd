@@ -20,6 +20,7 @@
 #ifndef HALMD_IO_WRITERS_H5MD_TRUNCATE_HPP
 #define HALMD_IO_WRITERS_H5MD_TRUNCATE_HPP
 
+#include <boost/function.hpp>
 #include <lua.hpp>
 
 #include <h5xx/h5xx.hpp>
@@ -57,10 +58,10 @@ public:
     /** write datasets */
     void write(uint64_t step);
     /** connect data slot for writing */
-    template <typename slot_type>
+    template <typename T>
     void on_write(
         H5::DataSet& dataset
-      , slot_type const& slot
+      , boost::function<T ()> const& slot
       , std::vector<std::string> const& location
     );
     /** connect slot called before writing */
@@ -107,10 +108,10 @@ private:
       , std::string const& name
       , boost::function<std::vector<T>& ()> const& slot
     );
-    template <typename slot_type>
+    template <typename T>
     static void write_dataset(
         H5::DataSet dataset
-      , slot_type const& slot
+      , boost::function<T ()> const& slot
     );
 
     /** writer group */

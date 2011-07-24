@@ -20,6 +20,7 @@
 #ifndef HALMD_IO_WRITERS_H5MD_APPEND_HPP
 #define HALMD_IO_WRITERS_H5MD_APPEND_HPP
 
+#include <boost/function.hpp>
 #include <lua.hpp>
 
 #include <h5xx/h5xx.hpp>
@@ -64,10 +65,10 @@ public:
     /** append datasets */
     void write(uint64_t step);
     /** connect data slot for writing dataset */
-    template <typename slot_type>
+    template <typename T>
     void on_write(
         H5::Group& group
-      , slot_type const& slot
+      , boost::function<T ()> const& slot
       , std::vector<std::string> const& location
     );
     /** connect slot called before writing */
@@ -117,10 +118,10 @@ private:
       , std::string const& name
       , boost::function<std::vector<T>& ()> const& slot
     );
-    template <typename slot_type>
+    template <typename T>
     static void write_dataset(
         H5::DataSet dataset
-      , slot_type const& slot
+      , boost::function<T ()> const& slot
     );
 
     /** writer group */

@@ -115,20 +115,20 @@ H5::DataSet append::create_dataset(
     return h5xx::create_dataset<vector<T> >(group, name, data.size());
 }
 
-template <typename slot_type>
+template <typename T>
 void append::write_dataset(
     H5::DataSet dataset
-  , slot_type const& slot
+  , function<T ()> const& slot
 )
 {
-    typename slot_type::result_type data = slot();
+    T data = slot();
     h5xx::write_dataset(dataset, data);
 }
 
-template <typename slot_type>
+template <typename T>
 void append::on_write(
     H5::Group& group
-  , slot_type const& slot
+  , function<T ()> const& slot
   , vector<string> const& location
 )
 {
@@ -139,7 +139,7 @@ void append::on_write(
     H5::DataSet dataset = create_dataset(group, "samples", slot);
     h5xx::link(step_, group, "step");
     h5xx::link(time_, group, "time");
-    on_write_.connect(bind(&write_dataset<slot_type>, dataset, slot));
+    on_write_.connect(bind(&write_dataset<T>, dataset, slot));
 }
 
 void append::on_prepend_write(signal<void (uint64_t)>::slot_function_type const& slot)
@@ -186,34 +186,34 @@ void append::luaopen(lua_State* L)
                     class_<append, shared_ptr<append> >("append")
                         .def(constructor<H5::Group const&, vector<string> const&, shared_ptr<clock_type const> >())
                         .property("write", &wrap_write)
-                        .def("on_write", &append::on_write<function<float ()> >, pure_out_value(_2))
-                        .def("on_write", &append::on_write<function<double ()> >, pure_out_value(_2))
-                        .def("on_write", &append::on_write<function<float const&()> >, pure_out_value(_2))
-                        .def("on_write", &append::on_write<function<double const&()> >, pure_out_value(_2))
-                        .def("on_write", &append::on_write<function<fixed_vector<float, 2> ()> >, pure_out_value(_2))
-                        .def("on_write", &append::on_write<function<fixed_vector<float, 3> ()> >, pure_out_value(_2))
-                        .def("on_write", &append::on_write<function<fixed_vector<double, 2> ()> >, pure_out_value(_2))
-                        .def("on_write", &append::on_write<function<fixed_vector<double, 3> ()> >, pure_out_value(_2))
-                        .def("on_write", &append::on_write<function<fixed_vector<float, 2> const& ()> >, pure_out_value(_2))
-                        .def("on_write", &append::on_write<function<fixed_vector<float, 3> const& ()> >, pure_out_value(_2))
-                        .def("on_write", &append::on_write<function<fixed_vector<double, 2> const& ()> >, pure_out_value(_2))
-                        .def("on_write", &append::on_write<function<fixed_vector<double, 3> const& ()> >, pure_out_value(_2))
-                        .def("on_write", &append::on_write<function<vector<float> ()> >, pure_out_value(_2))
-                        .def("on_write", &append::on_write<function<vector<double> ()> >, pure_out_value(_2))
-                        .def("on_write", &append::on_write<function<vector<float> const&()> >, pure_out_value(_2))
-                        .def("on_write", &append::on_write<function<vector<double> const&()> >, pure_out_value(_2))
-                        .def("on_write", &append::on_write<function<vector<fixed_vector<float, 2> > ()> >, pure_out_value(_2))
-                        .def("on_write", &append::on_write<function<vector<fixed_vector<float, 3> > ()> >, pure_out_value(_2))
-                        .def("on_write", &append::on_write<function<vector<fixed_vector<double, 2> > ()> >, pure_out_value(_2))
-                        .def("on_write", &append::on_write<function<vector<fixed_vector<double, 3> > ()> >, pure_out_value(_2))
-                        .def("on_write", &append::on_write<function<vector<fixed_vector<float, 2> > const& ()> >, pure_out_value(_2))
-                        .def("on_write", &append::on_write<function<vector<fixed_vector<float, 3> > const& ()> >, pure_out_value(_2))
-                        .def("on_write", &append::on_write<function<vector<fixed_vector<double, 2> > const& ()> >, pure_out_value(_2))
-                        .def("on_write", &append::on_write<function<vector<fixed_vector<double, 3> > const& ()> >, pure_out_value(_2))
-                        .def("on_write", &append::on_write<function<vector<array<float, 3> > ()> >, pure_out_value(_2))
-                        .def("on_write", &append::on_write<function<vector<array<double, 3> > ()> >, pure_out_value(_2))
-                        .def("on_write", &append::on_write<function<vector<array<float, 3> > const& ()> >, pure_out_value(_2))
-                        .def("on_write", &append::on_write<function<vector<array<double, 3> > const& ()> >, pure_out_value(_2))
+                        .def("on_write", &append::on_write<float>, pure_out_value(_2))
+                        .def("on_write", &append::on_write<double>, pure_out_value(_2))
+                        .def("on_write", &append::on_write<float const&>, pure_out_value(_2))
+                        .def("on_write", &append::on_write<double const&>, pure_out_value(_2))
+                        .def("on_write", &append::on_write<fixed_vector<float, 2> >, pure_out_value(_2))
+                        .def("on_write", &append::on_write<fixed_vector<float, 3> >, pure_out_value(_2))
+                        .def("on_write", &append::on_write<fixed_vector<double, 2> >, pure_out_value(_2))
+                        .def("on_write", &append::on_write<fixed_vector<double, 3> >, pure_out_value(_2))
+                        .def("on_write", &append::on_write<fixed_vector<float, 2> const&>, pure_out_value(_2))
+                        .def("on_write", &append::on_write<fixed_vector<float, 3> const&>, pure_out_value(_2))
+                        .def("on_write", &append::on_write<fixed_vector<double, 2> const&>, pure_out_value(_2))
+                        .def("on_write", &append::on_write<fixed_vector<double, 3> const&>, pure_out_value(_2))
+                        .def("on_write", &append::on_write<vector<float> >, pure_out_value(_2))
+                        .def("on_write", &append::on_write<vector<double> >, pure_out_value(_2))
+                        .def("on_write", &append::on_write<vector<float> const&>, pure_out_value(_2))
+                        .def("on_write", &append::on_write<vector<double> const&>, pure_out_value(_2))
+                        .def("on_write", &append::on_write<vector<fixed_vector<float, 2> > >, pure_out_value(_2))
+                        .def("on_write", &append::on_write<vector<fixed_vector<float, 3> > >, pure_out_value(_2))
+                        .def("on_write", &append::on_write<vector<fixed_vector<double, 2> > >, pure_out_value(_2))
+                        .def("on_write", &append::on_write<vector<fixed_vector<double, 3> > >, pure_out_value(_2))
+                        .def("on_write", &append::on_write<vector<fixed_vector<float, 2> > const&>, pure_out_value(_2))
+                        .def("on_write", &append::on_write<vector<fixed_vector<float, 3> > const&>, pure_out_value(_2))
+                        .def("on_write", &append::on_write<vector<fixed_vector<double, 2> > const&>, pure_out_value(_2))
+                        .def("on_write", &append::on_write<vector<fixed_vector<double, 3> > const&>, pure_out_value(_2))
+                        .def("on_write", &append::on_write<vector<array<float, 3> > >, pure_out_value(_2))
+                        .def("on_write", &append::on_write<vector<array<double, 3> > >, pure_out_value(_2))
+                        .def("on_write", &append::on_write<vector<array<float, 3> > const&>, pure_out_value(_2))
+                        .def("on_write", &append::on_write<vector<array<double, 3> > const&>, pure_out_value(_2))
                         .def("on_prepend_write", &append::on_prepend_write)
                         .def("on_append_write", &append::on_append_write)
                 ]

@@ -109,20 +109,20 @@ H5::DataSet truncate::create_dataset(
     return h5xx::create_unique_dataset<vector<T> >(group, name, data.size());
 }
 
-template <typename slot_type>
+template <typename T>
 void truncate::write_dataset(
     H5::DataSet dataset
-  , slot_type const& slot
+  , function<T ()> const& slot
 )
 {
-    typename slot_type::result_type data = slot();
+    T data = slot();
     h5xx::write_unique_dataset(dataset, data);
 }
 
-template <typename slot_type>
+template <typename T>
 void truncate::on_write(
     H5::DataSet& dataset
-  , slot_type const& slot
+  , function<T ()> const& slot
   , vector<string> const& location
 )
 {
@@ -130,7 +130,7 @@ void truncate::on_write(
         throw invalid_argument("dataset location");
     }
     dataset = create_dataset(group_, join(location, "/"), slot);
-    on_write_.connect(bind(&write_dataset<slot_type>, dataset, slot));
+    on_write_.connect(bind(&write_dataset<T>, dataset, slot));
 }
 
 void truncate::on_prepend_write(signal<void (uint64_t)>::slot_function_type const& slot)
@@ -170,34 +170,34 @@ void truncate::luaopen(lua_State* L)
                     class_<truncate, shared_ptr<truncate> >("truncate")
                         .def(constructor<H5::Group const&, vector<string> const&>())
                         .property("write", &wrap_write)
-                        .def("on_write", &truncate::on_write<function<float ()> >, pure_out_value(_2))
-                        .def("on_write", &truncate::on_write<function<double ()> >, pure_out_value(_2))
-                        .def("on_write", &truncate::on_write<function<float const&()> >, pure_out_value(_2))
-                        .def("on_write", &truncate::on_write<function<double const&()> >, pure_out_value(_2))
-                        .def("on_write", &truncate::on_write<function<fixed_vector<float, 2> ()> >, pure_out_value(_2))
-                        .def("on_write", &truncate::on_write<function<fixed_vector<float, 3> ()> >, pure_out_value(_2))
-                        .def("on_write", &truncate::on_write<function<fixed_vector<double, 2> ()> >, pure_out_value(_2))
-                        .def("on_write", &truncate::on_write<function<fixed_vector<double, 3> ()> >, pure_out_value(_2))
-                        .def("on_write", &truncate::on_write<function<fixed_vector<float, 2> const& ()> >, pure_out_value(_2))
-                        .def("on_write", &truncate::on_write<function<fixed_vector<float, 3> const& ()> >, pure_out_value(_2))
-                        .def("on_write", &truncate::on_write<function<fixed_vector<double, 2> const& ()> >, pure_out_value(_2))
-                        .def("on_write", &truncate::on_write<function<fixed_vector<double, 3> const& ()> >, pure_out_value(_2))
-                        .def("on_write", &truncate::on_write<function<vector<float> ()> >, pure_out_value(_2))
-                        .def("on_write", &truncate::on_write<function<vector<double> ()> >, pure_out_value(_2))
-                        .def("on_write", &truncate::on_write<function<vector<float> const&()> >, pure_out_value(_2))
-                        .def("on_write", &truncate::on_write<function<vector<double> const&()> >, pure_out_value(_2))
-                        .def("on_write", &truncate::on_write<function<vector<fixed_vector<float, 2> > ()> >, pure_out_value(_2))
-                        .def("on_write", &truncate::on_write<function<vector<fixed_vector<float, 3> > ()> >, pure_out_value(_2))
-                        .def("on_write", &truncate::on_write<function<vector<fixed_vector<double, 2> > ()> >, pure_out_value(_2))
-                        .def("on_write", &truncate::on_write<function<vector<fixed_vector<double, 3> > ()> >, pure_out_value(_2))
-                        .def("on_write", &truncate::on_write<function<vector<fixed_vector<float, 2> > const& ()> >, pure_out_value(_2))
-                        .def("on_write", &truncate::on_write<function<vector<fixed_vector<float, 3> > const& ()> >, pure_out_value(_2))
-                        .def("on_write", &truncate::on_write<function<vector<fixed_vector<double, 2> > const& ()> >, pure_out_value(_2))
-                        .def("on_write", &truncate::on_write<function<vector<fixed_vector<double, 3> > const& ()> >, pure_out_value(_2))
-                        .def("on_write", &truncate::on_write<function<vector<array<float, 3> > ()> >, pure_out_value(_2))
-                        .def("on_write", &truncate::on_write<function<vector<array<double, 3> > ()> >, pure_out_value(_2))
-                        .def("on_write", &truncate::on_write<function<vector<array<float, 3> > const& ()> >, pure_out_value(_2))
-                        .def("on_write", &truncate::on_write<function<vector<array<double, 3> > const& ()> >, pure_out_value(_2))
+                        .def("on_write", &truncate::on_write<float>, pure_out_value(_2))
+                        .def("on_write", &truncate::on_write<double>, pure_out_value(_2))
+                        .def("on_write", &truncate::on_write<float const&>, pure_out_value(_2))
+                        .def("on_write", &truncate::on_write<double const&>, pure_out_value(_2))
+                        .def("on_write", &truncate::on_write<fixed_vector<float, 2> >, pure_out_value(_2))
+                        .def("on_write", &truncate::on_write<fixed_vector<float, 3> >, pure_out_value(_2))
+                        .def("on_write", &truncate::on_write<fixed_vector<double, 2> >, pure_out_value(_2))
+                        .def("on_write", &truncate::on_write<fixed_vector<double, 3> >, pure_out_value(_2))
+                        .def("on_write", &truncate::on_write<fixed_vector<float, 2> const&>, pure_out_value(_2))
+                        .def("on_write", &truncate::on_write<fixed_vector<float, 3> const&>, pure_out_value(_2))
+                        .def("on_write", &truncate::on_write<fixed_vector<double, 2> const&>, pure_out_value(_2))
+                        .def("on_write", &truncate::on_write<fixed_vector<double, 3> const&>, pure_out_value(_2))
+                        .def("on_write", &truncate::on_write<vector<float> >, pure_out_value(_2))
+                        .def("on_write", &truncate::on_write<vector<double> >, pure_out_value(_2))
+                        .def("on_write", &truncate::on_write<vector<float> const&>, pure_out_value(_2))
+                        .def("on_write", &truncate::on_write<vector<double> const&>, pure_out_value(_2))
+                        .def("on_write", &truncate::on_write<vector<fixed_vector<float, 2> > >, pure_out_value(_2))
+                        .def("on_write", &truncate::on_write<vector<fixed_vector<float, 3> > >, pure_out_value(_2))
+                        .def("on_write", &truncate::on_write<vector<fixed_vector<double, 2> > >, pure_out_value(_2))
+                        .def("on_write", &truncate::on_write<vector<fixed_vector<double, 3> > >, pure_out_value(_2))
+                        .def("on_write", &truncate::on_write<vector<fixed_vector<float, 2> > const&>, pure_out_value(_2))
+                        .def("on_write", &truncate::on_write<vector<fixed_vector<float, 3> > const&>, pure_out_value(_2))
+                        .def("on_write", &truncate::on_write<vector<fixed_vector<double, 2> > const&>, pure_out_value(_2))
+                        .def("on_write", &truncate::on_write<vector<fixed_vector<double, 3> > const&>, pure_out_value(_2))
+                        .def("on_write", &truncate::on_write<vector<array<float, 3> > >, pure_out_value(_2))
+                        .def("on_write", &truncate::on_write<vector<array<double, 3> > >, pure_out_value(_2))
+                        .def("on_write", &truncate::on_write<vector<array<float, 3> > const&>, pure_out_value(_2))
+                        .def("on_write", &truncate::on_write<vector<array<double, 3> > const&>, pure_out_value(_2))
                         .def("on_prepend_write", &truncate::on_prepend_write)
                         .def("on_append_write", &truncate::on_append_write)
                 ]
