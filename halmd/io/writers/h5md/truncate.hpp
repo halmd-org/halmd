@@ -71,6 +71,48 @@ public:
     static void luaopen(lua_State* L);
 
 private:
+    template <typename T>
+    static H5::DataSet create_dataset(
+        H5::Group const& group
+      , std::string const& name
+      , boost::function<T ()> const&
+    );
+    template <typename T>
+    static H5::DataSet create_dataset(
+        H5::Group const& group
+      , std::string const& name
+      , boost::function<T const& ()> const&
+    );
+    template <typename T>
+    static H5::DataSet create_dataset(
+        H5::Group const& group
+      , std::string const& name
+      , boost::function<T& ()> const&
+    );
+    template <typename T>
+    static H5::DataSet create_dataset(
+        H5::Group const& group
+      , std::string const& name
+      , boost::function<std::vector<T> ()> const& slot
+    );
+    template <typename T>
+    static H5::DataSet create_dataset(
+        H5::Group const& group
+      , std::string const& name
+      , boost::function<std::vector<T> const& ()> const& slot
+    );
+    template <typename T>
+    static H5::DataSet create_dataset(
+        H5::Group const& group
+      , std::string const& name
+      , boost::function<std::vector<T>& ()> const& slot
+    );
+    template <typename slot_type>
+    static void write_dataset(
+        H5::DataSet dataset
+      , slot_type const& slot
+    );
+
     /** writer group */
     H5::Group group_;
     /** signal emitted for writing datasets */

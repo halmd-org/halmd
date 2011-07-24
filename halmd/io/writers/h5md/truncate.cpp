@@ -48,7 +48,7 @@ truncate::truncate(
 }
 
 template <typename T>
-static H5::DataSet create_dataset(
+H5::DataSet truncate::create_dataset(
     H5::Group const& group
   , string const& name
   , function<T ()> const&
@@ -58,7 +58,7 @@ static H5::DataSet create_dataset(
 }
 
 template <typename T>
-static H5::DataSet create_dataset(
+H5::DataSet truncate::create_dataset(
     H5::Group const& group
   , string const& name
   , function<T const& ()> const&
@@ -68,7 +68,7 @@ static H5::DataSet create_dataset(
 }
 
 template <typename T>
-static H5::DataSet create_dataset(
+H5::DataSet truncate::create_dataset(
     H5::Group const& group
   , string const& name
   , function<T& ()> const&
@@ -78,7 +78,7 @@ static H5::DataSet create_dataset(
 }
 
 template <typename T>
-static H5::DataSet create_dataset(
+H5::DataSet truncate::create_dataset(
     H5::Group const& group
   , string const& name
   , function<vector<T> ()> const& slot
@@ -89,7 +89,7 @@ static H5::DataSet create_dataset(
 }
 
 template <typename T>
-static H5::DataSet create_dataset(
+H5::DataSet truncate::create_dataset(
     H5::Group const& group
   , string const& name
   , function<vector<T> const& ()> const& slot
@@ -100,7 +100,7 @@ static H5::DataSet create_dataset(
 }
 
 template <typename T>
-static H5::DataSet create_dataset(
+H5::DataSet truncate::create_dataset(
     H5::Group const& group
   , string const& name
   , function<vector<T>& ()> const& slot
@@ -111,7 +111,10 @@ static H5::DataSet create_dataset(
 }
 
 template <typename slot_type>
-static void write_dataset(H5::DataSet dataset, slot_type const& slot)
+void truncate::write_dataset(
+    H5::DataSet dataset
+  , slot_type const& slot
+)
 {
     typename slot_type::result_type data = slot();
     h5xx::write_unique_dataset(dataset, data);
