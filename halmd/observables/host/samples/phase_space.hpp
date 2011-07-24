@@ -56,18 +56,14 @@ public:
     static void luaopen(lua_State* L);
 
     phase_space(std::vector<unsigned int> ntypes);
-    /** get particle positions of given type */
-    sample_vector const& get_position(unsigned int type) const;
-    /** get particle velocities of given type */
-    sample_vector const& get_velocity(unsigned int type) const;
-    /** set particle positions of given type */
-    void set_position(unsigned int type, sample_vector const& position);
-    /** set particle velocities of given type */
-    void set_velocity(unsigned int type, sample_vector const& velocity);
-    /** set particle positions of given type from slot */
-    void set_position(unsigned int type, boost::function<void (sample_vector&)> const& slot);
-    /** set particle velocities of given type from slot */
-    void set_velocity(unsigned int type, boost::function<void (sample_vector&)> const& slot);
+    /** get read-only particle positions of given type */
+    sample_vector const& position(unsigned int type) const;
+    /** get read-only particle velocities of given type */
+    sample_vector const& velocity(unsigned int type) const;
+    /** get read-write particle positions of given type */
+    sample_vector& position(unsigned int type);
+    /** get read-write particle velocities of given type */
+    sample_vector& velocity(unsigned int type);
 };
 
 } // namespace observables

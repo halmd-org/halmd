@@ -56,7 +56,7 @@ static int wrap_dimension(phase_space<dimension, float_type> const&)
 
 template <int dimension, typename float_type>
 typename phase_space<dimension, float_type>::sample_vector const&
-phase_space<dimension, float_type>::get_position(unsigned int type) const
+phase_space<dimension, float_type>::position(unsigned int type) const
 {
     if (!(type < r.size())) {
         throw invalid_argument("particle type");
@@ -66,7 +66,7 @@ phase_space<dimension, float_type>::get_position(unsigned int type) const
 
 template <int dimension, typename float_type>
 typename phase_space<dimension, float_type>::sample_vector const&
-phase_space<dimension, float_type>::get_velocity(unsigned int type) const
+phase_space<dimension, float_type>::velocity(unsigned int type) const
 {
     if (!(type < v.size())) {
         throw invalid_argument("particle type");
@@ -75,65 +75,39 @@ phase_space<dimension, float_type>::get_velocity(unsigned int type) const
 }
 
 template <int dimension, typename float_type>
-void phase_space<dimension, float_type>::set_position(unsigned int type, sample_vector const& position)
+typename phase_space<dimension, float_type>::sample_vector&
+phase_space<dimension, float_type>::position(unsigned int type)
 {
     if (!(type < r.size())) {
         throw invalid_argument("particle type");
     }
-    if (position.size() < r[type]->size()) {
-        throw invalid_argument("too few particle positions");
-    }
-    if (position.size() > r[type]->size()) {
-        throw invalid_argument("too many particle positions");
-    }
-    copy(position.begin(), position.end(), r[type]->begin());
+    return *r[type];
 }
 
 template <int dimension, typename float_type>
-void phase_space<dimension, float_type>::set_velocity(unsigned int type, sample_vector const& velocity)
-{
-    if (!(type < r.size())) {
-        throw invalid_argument("particle type");
-    }
-    if (velocity.size() < v[type]->size()) {
-        throw invalid_argument("too few particle velocities");
-    }
-    if (velocity.size() > v[type]->size()) {
-        throw invalid_argument("too many particle velocities");
-    }
-    copy(velocity.begin(), velocity.end(), v[type]->begin());
-}
-
-template <int dimension, typename float_type>
-void phase_space<dimension, float_type>::set_position(unsigned int type, function<void (sample_vector&)> const& slot)
-{
-    if (!(type < r.size())) {
-        throw invalid_argument("particle type");
-    }
-    slot(*r[type]);
-}
-
-template <int dimension, typename float_type>
-void phase_space<dimension, float_type>::set_velocity(unsigned int type, function<void (sample_vector&)> const& slot)
+typename phase_space<dimension, float_type>::sample_vector&
+phase_space<dimension, float_type>::velocity(unsigned int type)
 {
     if (!(type < v.size())) {
         throw invalid_argument("particle type");
     }
-    slot(*v[type]);
+    return *v[type];
 }
 
 template <typename phase_space_type>
-static function<typename phase_space_type::sample_vector const& ()>
-wrap_get_position(shared_ptr<phase_space_type const> phase_space, unsigned int type)
+static function<typename phase_space_type::sample_vector& ()>
+wrap_position(shared_ptr<phase_space_type> phase_space, unsigned int type)
 {
-    return bind(&phase_space_type::get_position, phase_space, type);
+    typedef typename phase_space_type::sample_vector& (phase_space_type::*getter_type)(unsigned int);
+    return bind(static_cast<getter_type>(&phase_space_type::position), phase_space, type);
 }
 
 template <typename phase_space_type>
-static function<typename phase_space_type::sample_vector const& ()>
-wrap_get_velocity(shared_ptr<phase_space_type const> phase_space, unsigned int type)
+static function<typename phase_space_type::sample_vector& ()>
+wrap_velocity(shared_ptr<phase_space_type> phase_space, unsigned int type)
 {
-    return bind(&phase_space_type::get_velocity, phase_space, type);
+    typedef typename phase_space_type::sample_vector& (phase_space_type::*getter_type)(unsigned int);
+    return bind(static_cast<getter_type>(&phase_space_type::velocity), phase_space, type);
 }
 
 template <int dimension, typename float_type>
@@ -152,12 +126,8 @@ void phase_space<dimension, float_type>::luaopen(lua_State* L)
                     class_<phase_space, shared_ptr<phase_space> >(class_name.c_str())
                         .def(constructor<vector<unsigned int> >())
                         .property("dimension", &wrap_dimension<dimension, float_type>)
-                        .def("position", &wrap_get_position<phase_space>)
-                        .def("velocity", &wrap_get_velocity<phase_space>)
-                        .def("set_position", static_cast<void (phase_space::*)(unsigned int, sample_vector const&)>(&phase_space::set_position))
-                        .def("set_position", static_cast<void (phase_space::*)(unsigned int, function<void (sample_vector&)> const&)>(&phase_space::set_position))
-                        .def("set_velocity", static_cast<void (phase_space::*)(unsigned int, sample_vector const&)>(&phase_space::set_velocity))
-                        .def("set_velocity", static_cast<void (phase_space::*)(unsigned int, function<void (sample_vector&)> const&)>(&phase_space::set_velocity))
+                        .def("position", &wrap_position<phase_space>)
+                        .def("velocity", &wrap_velocity<phase_space>)
                 ]
             ]
         ]
