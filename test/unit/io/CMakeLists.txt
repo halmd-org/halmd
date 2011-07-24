@@ -31,13 +31,7 @@ add_executable(test_unit_io_trajectory_h5md
   trajectory_h5md.cpp
 )
 target_link_libraries(test_unit_io_trajectory_h5md
-  halmd_io_trajectory_readers
-  halmd_io_trajectory_writers
-  halmd_io_trajectory
-  halmd_mdsim
-  halmd_observables_host_samples
-  halmd_utility
-  halmd_io
+  libhalmd
   ${HALMD_COMMON_LIBRARIES}
   ${HALMD_TEST_LIBRARIES}
 )
