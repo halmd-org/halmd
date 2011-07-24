@@ -55,6 +55,7 @@ public:
     typedef clock_type::time_type time_type;
     typedef signal<void ()> signal_type;
     typedef signal_type::slot_function_type slot_function_type;
+    typedef H5::Group subgroup_type;
 
     /** open writer group and create time and step datasets */
     append(
@@ -65,7 +66,7 @@ public:
     /** connect data slot for writing dataset */
     template <typename T>
     void on_write(
-        H5::Group& group
+        subgroup_type& group
       , boost::function<T ()> const& slot
       , std::vector<std::string> const& location
     );

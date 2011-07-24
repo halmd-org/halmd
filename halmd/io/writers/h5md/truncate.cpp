@@ -48,7 +48,7 @@ truncate::truncate(
 
 template <typename T>
 void truncate::on_write(
-    H5::DataSet& dataset
+    subgroup_type& dataset
   , function<T ()> const& slot
   , vector<string> const& location
 )

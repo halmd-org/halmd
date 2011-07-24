@@ -54,7 +54,7 @@ append::append(
 
 template <typename T>
 void append::on_write(
-    H5::Group& group
+    subgroup_type& group
   , function<T ()> const& slot
   , vector<string> const& location
 )

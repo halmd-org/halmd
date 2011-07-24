@@ -49,6 +49,7 @@ class truncate
 public:
     typedef signal<void ()> signal_type;
     typedef signal_type::slot_function_type slot_function_type;
+    typedef H5::DataSet subgroup_type;
 
     /** open writer group */
     truncate(
@@ -58,7 +59,7 @@ public:
     /** connect data slot for writing */
     template <typename T>
     void on_write(
-        H5::DataSet& dataset
+        subgroup_type& dataset
       , boost::function<T ()> const& slot
       , std::vector<std::string> const& location
     );
