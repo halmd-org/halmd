@@ -124,6 +124,7 @@ hsize_t append::read_step_index(
         LOG_ERROR("ambiguous step " << step << " in dataset " << h5xx::path(dataset));
         throw domain_error("ambiguous step");
     }
+    LOG("reading " << h5xx::path(group) << " at step " << *first);
     return first - steps.begin();
 }
 
@@ -155,6 +156,7 @@ hsize_t append::read_time_index(
         LOG_ERROR("ambiguous time " << time << " in dataset " << h5xx::path(dataset));
         throw domain_error("ambiguous time");
     }
+    LOG("reading " << h5xx::path(group) << " at time " << *first);
     return first - times.begin();
 }
 
