@@ -22,6 +22,7 @@
 
 #include <halmd/io/utility/hdf5.hpp>
 #include <halmd/io/writers/h5md/file.hpp>
+#include <halmd/utility/filesystem.hpp>
 #include <halmd/utility/lua/lua.hpp>
 #include <halmd/utility/signal.hpp>
 #include <halmd/version.h>
@@ -46,6 +47,8 @@ file::file(string const& path)
     h5xx::write_attribute(attr, "creator", PROGRAM_NAME);
     h5xx::write_attribute(attr, "creator_version", PROGRAM_VERSION);
     h5xx::write_attribute(attr, "version", file::version());
+
+    LOG("write to H5MD file: " << absolute_path(file_.getFileName()));
 }
 
 void file::flush()

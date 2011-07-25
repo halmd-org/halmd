@@ -21,6 +21,7 @@
 
 #include <halmd/io/utility/hdf5.hpp>
 #include <halmd/io/readers/h5md/file.hpp>
+#include <halmd/utility/filesystem.hpp>
 #include <halmd/utility/lua/lua.hpp>
 #include <halmd/utility/signal.hpp>
 #include <halmd/version.h>
@@ -54,6 +55,8 @@ file::file(string const& path)
     creator_ = h5xx::read_attribute<string>(attr, "creator");
     creator_version_ = h5xx::read_attribute<string>(attr, "creator_version");
     version_ = h5xx::read_attribute<version_type>(attr, "version");
+
+    LOG("read from H5MD file: " << absolute_path(file_.getFileName()));
 }
 
 void file::close()
