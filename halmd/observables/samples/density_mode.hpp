@@ -22,10 +22,10 @@
 
 #include <boost/shared_ptr.hpp>
 #include <complex>
-#include <stdint.h>
 #include <lua.hpp>
 #include <vector>
 
+#include <halmd/mdsim/clock.hpp>
 #include <halmd/numeric/blas/fixed_vector.hpp>
 
 namespace halmd {
@@ -41,9 +41,13 @@ namespace samples {
 template <int dimension>
 class density_mode
 {
+private:
+    typedef mdsim::clock clock_type;
+
 public:
     typedef fixed_vector<double, dimension> vector_type;
     typedef std::complex<double> mode_type;
+    typedef typename clock_type::step_type step_type;
 
     /** density modes of a single particle type, one entry per wavevector */
     typedef std::vector<mode_type> mode_vector_type;
@@ -56,7 +60,7 @@ public:
      */
     mode_vector_vector_type rho;
     /** simulation step when sample was taken */
-    uint64_t step;
+    step_type step;
 
     static void luaopen(lua_State* L);
 

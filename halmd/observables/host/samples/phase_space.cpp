@@ -40,7 +40,7 @@ phase_space<dimension, float_type>::phase_space(vector<unsigned int> ntypes)
   : r(ntypes.size())
   , v(ntypes.size())
   // initialise attributes
-  , step(numeric_limits<uint64_t>::max())
+  , step(numeric_limits<step_type>::max())
 {
     for (size_t i = 0; i < ntypes.size(); ++i) {
         r[i].reset(new sample_vector(ntypes[i]));

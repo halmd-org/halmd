@@ -26,6 +26,7 @@
 #include <stdint.h>
 #include <vector>
 
+#include <halmd/mdsim/clock.hpp>
 #include <halmd/numeric/blas/fixed_vector.hpp>
 
 namespace halmd {
@@ -36,8 +37,12 @@ namespace samples {
 template <int dimension, typename float_type>
 class phase_space
 {
+private:
+    typedef mdsim::clock clock_type;
+
 public:
     typedef fixed_vector<float_type, dimension> vector_type;
+    typedef typename clock_type::step_type step_type;
 
     /** sample vector type for all particles of a species */
     typedef std::vector<vector_type> sample_vector;
@@ -51,7 +56,7 @@ public:
     /** particle velocities */
     sample_vector_ptr_vector v;
     /** simulation step when sample was taken */
-    uint64_t step;
+    step_type step;
 
     static void luaopen(lua_State* L);
 

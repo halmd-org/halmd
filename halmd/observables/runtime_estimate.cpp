@@ -32,7 +32,11 @@ using namespace std;
 namespace halmd {
 namespace observables {
 
-runtime_estimate::runtime_estimate(shared_ptr<clock_type> clock, uint64_t total_steps, uint64_t step_start)
+runtime_estimate::runtime_estimate(
+    shared_ptr<clock_type> clock
+  , step_type total_steps
+  , step_type step_start
+)
   // dependency injection
   : clock(clock)
   // initialise members
@@ -47,7 +51,7 @@ runtime_estimate::runtime_estimate(shared_ptr<clock_type> clock, uint64_t total_
  */
 void runtime_estimate::sample() const
 {
-    uint64_t step = clock->step();
+    step_type step = clock->step();
     if (step > step_start_) {
         double eta = value(step);
         LOG(format_time(eta, 1) << " estimated remaining runtime at step " << step);
@@ -57,7 +61,7 @@ void runtime_estimate::sample() const
 /**
  * estimate remaining runtime
  */
-double runtime_estimate::value(uint64_t step) const
+double runtime_estimate::value(step_type step) const
 {
     // return if called at initial step
     if (step == step_start_) {
@@ -110,7 +114,8 @@ void runtime_estimate::luaopen(lua_State* L)
             class_<runtime_estimate, shared_ptr<runtime_estimate> >(class_name.c_str())
                 .def(constructor<
                     shared_ptr<clock_type>
-                  , uint64_t, uint64_t
+                  , step_type
+                  , step_type
                 >())
                 .property("sample", &sample_wrapper)
                 .property("value", &runtime_estimate::value)
