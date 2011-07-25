@@ -56,6 +56,8 @@ private:
 public:
     typedef clock_type::step_type step_type;
     typedef clock_type::time_type time_type;
+    typedef clock_type::step_difference_type step_difference_type;
+    typedef clock_type::time_difference_type time_difference_type;
     typedef signal_type::slot_function_type slot_function_type;
     typedef H5::Group subgroup_type;
 
@@ -76,9 +78,9 @@ public:
     /** connect slot called after reading */
     void on_append_read(slot_function_type const& slot);
     /** read at given step offset */
-    void read_step(step_type step);
+    void read_step(step_difference_type offset);
     /** read at given time offset */
-    void read_time(time_type time);
+    void read_time(time_difference_type offset);
     /** Lua bindings */
     static void luaopen(lua_State* L);
 
@@ -93,11 +95,11 @@ private:
       , H5::Group const& group
     );
     static hsize_t read_step_index(
-        step_type step
+        step_difference_type offset
       , H5::Group const& group
     );
     static hsize_t read_time_index(
-        time_type time
+        time_difference_type offset
       , H5::Group const& group
     );
 

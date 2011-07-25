@@ -35,6 +35,10 @@ public:
     typedef uint64_t step_type;
     /** simulation time type */
     typedef double time_type;
+    /** difference between two simulation step counts */
+    typedef int64_t step_difference_type;
+    /** difference between two simulation times */
+    typedef double time_difference_type;
 
     clock(time_type timestep);
 

@@ -22,6 +22,7 @@
 #include <boost/bind.hpp>
 #include <boost/lambda/lambda.hpp>
 #include <boost/tuple/tuple.hpp> // boost::tie
+#include <cmath> // std::signbit
 #include <luabind/luabind.hpp>
 #include <luabind/out_value_policy.hpp>
 #include <stdexcept>
@@ -75,17 +76,17 @@ void append::on_append_read(slot_function_type const& slot)
     on_append_read_.connect(slot);
 }
 
-void append::read_step(step_type step)
+void append::read_step(step_difference_type offset)
 {
     on_prepend_read_();
-    on_read_(bind(&read_step_index, step, _1));
+    on_read_(bind(&read_step_index, offset, _1));
     on_append_read_();
 }
 
-void append::read_time(time_type time)
+void append::read_time(time_difference_type offset)
 {
     on_prepend_read_();
-    on_read_(bind(&read_time_index, time, _1));
+    on_read_(bind(&read_time_index, offset, _1));
     on_append_read_();
 }
 
@@ -102,13 +103,17 @@ void append::read_dataset(
 }
 
 hsize_t append::read_step_index(
-    step_type step
+    step_difference_type offset
   , H5::Group const& group
 )
 {
     H5::DataSet dataset = group.openDataSet("step");
     std::vector<step_type> steps;
     h5xx::read_unique_dataset(dataset, &steps);
+    if (steps.size() < 1) {
+        throw runtime_error("empty step dataset");
+    }
+    step_type step = (offset < 0) ? (offset + steps.back() + 1) : offset;
     std::vector<step_type>::const_iterator first, last;
     tie(first, last) = equal_range(steps.begin(), steps.end(), step);
     if (first == last) {
@@ -123,7 +128,7 @@ hsize_t append::read_step_index(
 }
 
 hsize_t append::read_time_index(
-    time_type time
+    time_difference_type offset
   , H5::Group const& group
 )
 {
@@ -131,6 +136,10 @@ hsize_t append::read_time_index(
     time_type timestep = h5xx::read_attribute<time_type>(dataset, "timestep");
     std::vector<time_type> times;
     h5xx::read_unique_dataset(dataset, &times);
+    if (times.size() < 1) {
+        throw runtime_error("empty time dataset");
+    }
+    time_type time = signbit(offset) ? (offset + times.back()) : offset;
     std::vector<time_type>::const_iterator first, last;
     tie(first, last) = equal_range(
         times.begin()
@@ -150,15 +159,15 @@ hsize_t append::read_time_index(
 }
 
 static append::slot_function_type
-wrap_read_step(shared_ptr<append> instance, append::step_type step)
+wrap_read_step(shared_ptr<append> instance, append::step_difference_type offset)
 {
-    return bind(&append::read_step, instance, step);
+    return bind(&append::read_step, instance, offset);
 }
 
 static append::slot_function_type
-wrap_read_time(shared_ptr<append> instance, append::time_type time)
+wrap_read_time(shared_ptr<append> instance, append::time_difference_type offset)
 {
-    return bind(&append::read_time, instance, time);
+    return bind(&append::read_time, instance, offset);
 }
 
 void append::luaopen(lua_State* L)
