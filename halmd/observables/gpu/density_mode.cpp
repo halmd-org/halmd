@@ -36,10 +36,12 @@ template <int dimension, typename float_type>
 density_mode<dimension, float_type>::density_mode(
     shared_ptr<phase_space_type> phase_space
   , shared_ptr<wavevector_type> wavevector
+  , shared_ptr<clock_type const> clock
 )
     // dependency injection
   : phase_space_(phase_space)
   , wavevector_(wavevector)
+  , clock_(clock)
     // member initialisation
   , nq_(wavevector_->value().size())
   , dim_(50, 64 << DEVICE_SCALE) // at most 512 threads per block
@@ -93,11 +95,11 @@ void density_mode<dimension, float_type>::register_runtimes(profiler_type& profi
  * Acquire sample of all density modes from phase space sample
  */
 template <int dimension, typename float_type>
-void density_mode<dimension, float_type>::acquire(uint64_t step)
+void density_mode<dimension, float_type>::acquire()
 {
     scoped_timer<timer> timer_(runtime_.sample);
 
-    if (rho_sample_.step == step) {
+    if (rho_sample_.step == clock_->step()) {
         LOG_TRACE("[density_mode] sample is up to date");
         return;
     }
@@ -106,11 +108,11 @@ void density_mode<dimension, float_type>::acquire(uint64_t step)
     typedef typename density_mode_sample_type::mode_vector_type mode_vector_type;
 
     // trigger update of phase space sample
-    on_acquire_(step);
+    on_acquire_();
 
     LOG_TRACE("[density_mode] acquire sample");
 
-    if (phase_space_->sample->step != step) {
+    if (phase_space_->sample->step != clock_->step()) {
         throw logic_error("GPU phase space sample was not updated");
     }
 
@@ -152,7 +154,7 @@ void density_mode<dimension, float_type>::acquire(uint64_t step)
         }
         ++type;
     }
-    rho_sample_.step = step;
+    rho_sample_.step = clock_->step();
 }
 
 template <int dimension, typename float_type>
@@ -170,6 +172,7 @@ void density_mode<dimension, float_type>::luaopen(lua_State* L)
                     .def(constructor<
                         shared_ptr<phase_space_type>
                       , shared_ptr<wavevector_type>
+                      , shared_ptr<clock_type const>
                     >())
                     .def("register_runtimes", &density_mode::register_runtimes)
             ]

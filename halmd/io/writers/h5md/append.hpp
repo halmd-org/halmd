@@ -49,11 +49,12 @@ namespace h5md {
  */
 class append
 {
+private:
+    typedef signal<void ()> signal_type;
 public:
     typedef mdsim::clock clock_type;
     typedef clock_type::step_type step_type;
     typedef clock_type::time_type time_type;
-    typedef signal<void ()> signal_type;
     typedef signal_type::slot_function_type slot_function_type;
     typedef H5::Group subgroup_type;
 
@@ -71,11 +72,11 @@ public:
       , std::vector<std::string> const& location
     );
     /** connect slot called before writing */
-    void on_prepend_write(signal<void (uint64_t)>::slot_function_type const& slot);
+    void on_prepend_write(slot_function_type const& slot);
     /** connect slot called after writing */
-    void on_append_write(signal<void (uint64_t)>::slot_function_type const& slot);
+    void on_append_write(slot_function_type const& slot);
     /** append datasets */
-    void write(uint64_t step);
+    void write();
     /** Lua bindings */
     static void luaopen(lua_State* L);
 
@@ -130,9 +131,9 @@ private:
     /** signal emitted for writing datasets */
     signal_type on_write_;
     /** signal emitted before writing datasets */
-    signal<void (uint64_t)> on_prepend_write_;
+    signal_type on_prepend_write_;
     /** signal emitted before after datasets */
-    signal<void (uint64_t)> on_append_write_;
+    signal_type on_append_write_;
     /** simulation step and time */
     boost::shared_ptr<clock_type const> clock_;
     /** shared step dataset */

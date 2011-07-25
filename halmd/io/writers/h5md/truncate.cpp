@@ -60,21 +60,21 @@ void truncate::on_write(
     on_write_.connect(bind(&write_dataset<T>, dataset, slot));
 }
 
-void truncate::on_prepend_write(signal<void (uint64_t)>::slot_function_type const& slot)
+void truncate::on_prepend_write(slot_function_type const& slot)
 {
     on_prepend_write_.connect(slot);
 }
 
-void truncate::on_append_write(signal<void (uint64_t)>::slot_function_type const& slot)
+void truncate::on_append_write(slot_function_type const& slot)
 {
     on_append_write_.connect(slot);
 }
 
-void truncate::write(uint64_t step)
+void truncate::write()
 {
-    on_prepend_write_(step);
+    on_prepend_write_();
     on_write_();
-    on_append_write_(step);
+    on_append_write_();
 }
 
 template <typename T>
@@ -150,10 +150,10 @@ void truncate::write_dataset(
     h5xx::write_unique_dataset(dataset, data);
 }
 
-static signal<void (uint64_t)>::slot_function_type
+static truncate::slot_function_type
 wrap_write(shared_ptr<truncate> instance)
 {
-    return bind(&truncate::write, instance, _1);
+    return bind(&truncate::write, instance);
 }
 
 void truncate::luaopen(lua_State* L)

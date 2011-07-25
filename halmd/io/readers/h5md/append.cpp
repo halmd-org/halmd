@@ -62,21 +62,21 @@ void append::on_read(
     on_read_.connect(bind(&read_dataset<T>, dataset, slot, index));
 }
 
-void append::on_prepend_read(signal<void (uint64_t)>::slot_function_type const& slot)
+void append::on_prepend_read(slot_function_type const& slot)
 {
     on_prepend_read_.connect(slot);
 }
 
-void append::on_append_read(signal<void (uint64_t)>::slot_function_type const& slot)
+void append::on_append_read(slot_function_type const& slot)
 {
     on_append_read_.connect(slot);
 }
 
-void append::read(uint64_t step)
+void append::read()
 {
-    on_prepend_read_(step);
+    on_prepend_read_();
     on_read_();
-    on_append_read_(step);
+    on_append_read_();
 }
 
 template <typename T>
@@ -90,10 +90,10 @@ void append::read_dataset(
     h5xx::read_dataset(dataset, &data, index);
 }
 
-static signal<void (uint64_t)>::slot_function_type
+static append::slot_function_type
 wrap_read(shared_ptr<append> instance)
 {
-    return bind(&append::read, instance, _1);
+    return bind(&append::read, instance);
 }
 
 void append::luaopen(lua_State* L)

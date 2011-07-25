@@ -49,9 +49,10 @@ class thermodynamics
 public:
     typedef mdsim::box<dimension> box_type;
     typedef mdsim::clock clock_type;
+    typedef typename clock_type::step_type step_type;
     typedef halmd::utility::profiler profiler_type;
     typedef typename mdsim::type_traits<dimension, double>::vector_type vector_type;
-    typedef typename signal<void (uint64_t)>::slot_function_type slot_function_type;
+    typedef typename signal<void ()>::slot_function_type slot_function_type;
 
     struct runtime
     {
@@ -74,7 +75,7 @@ public:
     // preparations before MD step
     virtual void prepare() = 0;
     // sample macroscopic state variables and store with given simulation step
-    virtual void sample(uint64_t step);
+    virtual void sample();
 
     /** potential energy per particle */
     virtual double en_pot() = 0;
@@ -112,7 +113,7 @@ private:
     double hypervirial_;
     double time_;
     /** time stamp of data */
-    uint64_t step_;
+    step_type step_;
 
     // profiling runtime accumulators
     runtime runtime_;

@@ -71,11 +71,11 @@ public:
       , hsize_t index
     );
     /** connect slot called before reading */
-    void on_prepend_read(signal<void (uint64_t)>::slot_function_type const& slot);
+    void on_prepend_read(slot_function_type const& slot);
     /** connect slot called after reading */
-    void on_append_read(signal<void (uint64_t)>::slot_function_type const& slot);
+    void on_append_read(slot_function_type const& slot);
     /** append datasets */
-    void read(uint64_t step);
+    void read();
     /** Lua bindings */
     static void luaopen(lua_State* L);
 
@@ -92,9 +92,9 @@ private:
     /** signal emitted for reading datasets */
     signal_type on_read_;
     /** signal emitted before reading datasets */
-    signal<void (uint64_t)> on_prepend_read_;
+    signal_type on_prepend_read_;
     /** signal emitted before after datasets */
-    signal<void (uint64_t)> on_append_read_;
+    signal_type on_append_read_;
 };
 
 } // namespace h5md

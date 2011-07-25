@@ -40,13 +40,15 @@ namespace observables {
 template <int dimension>
 ssf<dimension>::ssf(
     shared_ptr<density_mode_type> density_mode
+  , shared_ptr<clock_type const> clock
   , unsigned int npart
 )
   // dependency injection
   : density_mode(density_mode)
+  , clock_(clock)
   // initialise members
   , npart_(npart)
-  , step_(numeric_limits<uint64_t>::max())
+  , step_(numeric_limits<step_type>::max())
 {
     // allocate memory
     unsigned int nq = density_mode->wavenumber().size();
@@ -74,19 +76,19 @@ void ssf<dimension>::register_runtimes(profiler_type& profiler)
  * compute SSF from sample of density Fourier modes
  */
 template <int dimension>
-void ssf<dimension>::sample(uint64_t step)
+void ssf<dimension>::sample()
 {
-    if (step_ == step) {
+    if (step_ == clock_->step()) {
         LOG_TRACE("[ssf] sample is up to date");
         return;
     }
 
     // acquire sample of density modes
-    on_sample_(step);
+    on_sample_();
 
     LOG_TRACE("[ssf] sampling");
 
-    if (density_mode->step() != step) {
+    if (density_mode->step() != clock_->step()) {
         throw logic_error("density modes sample was not updated");
     }
 
@@ -104,7 +106,7 @@ void ssf<dimension>::sample(uint64_t step)
             v[2] = static_cast<double>(count(acc));
         }
     }
-    step_ = step;   // store simulation step as time stamp
+    step_ = clock_->step();   // store simulation step as time stamp
 }
 
 /**
@@ -180,7 +182,7 @@ template <typename ssf_type>
 typename ssf_type::slot_function_type
 sample_wrapper(shared_ptr<ssf_type> ssf)
 {
-    return bind(&ssf_type::sample, ssf, _1);
+    return bind(&ssf_type::sample, ssf);
 }
 
 template <int dimension>
@@ -195,6 +197,7 @@ void ssf<dimension>::luaopen(lua_State* L)
             class_<ssf, shared_ptr<ssf> >(class_name.c_str())
                 .def(constructor<
                     shared_ptr<density_mode_type>
+                  , shared_ptr<clock_type const>
                   , unsigned int
                 >())
                 .def("register_runtimes", &ssf::register_runtimes)

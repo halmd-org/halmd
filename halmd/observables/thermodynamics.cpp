@@ -40,7 +40,7 @@ thermodynamics<dimension>::thermodynamics(
   : box(box)
   , clock(clock)
   // initialise members
-  , step_(numeric_limits<uint64_t>::max())
+  , step_(numeric_limits<step_type>::max())
 {
 }
 
@@ -60,9 +60,9 @@ void thermodynamics<dimension>::register_runtimes(profiler_type& profiler)
  * called only once.
  */
 template <int dimension>
-void thermodynamics<dimension>::sample(uint64_t step)
+void thermodynamics<dimension>::sample()
 {
-    if (step_ == step) {
+    if (step_ == clock->step()) {
         LOG_TRACE("[thermodynamics] sample is up to date");
         return;
     }
@@ -79,7 +79,7 @@ void thermodynamics<dimension>::sample(uint64_t step)
     pressure_ = density_ * (temp_ + virial() / dimension);
     hypervirial_ = hypervirial();
     time_ = clock->time();
-    step_ = step;
+    step_ = clock->step();
 }
 
 template <typename thermodynamics_type>
@@ -93,7 +93,7 @@ template <typename thermodynamics_type>
 typename thermodynamics_type::slot_function_type
 sample_wrapper(shared_ptr<thermodynamics_type> thermodynamics)
 {
-    return bind(&thermodynamics_type::sample, thermodynamics, _1);
+    return bind(&thermodynamics_type::sample, thermodynamics);
 }
 
 template <typename thermodynamics_type>

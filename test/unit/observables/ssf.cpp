@@ -29,6 +29,7 @@
 #include <numeric> // std::accumulate
 
 #include <halmd/mdsim/box.hpp>
+#include <halmd/mdsim/clock.hpp>
 #include <halmd/mdsim/host/particle.hpp>
 #include <halmd/mdsim/host/positions/lattice.hpp>
 #include <halmd/numeric/accumulator.hpp>
@@ -74,6 +75,7 @@ struct lattice
     static unsigned int const dimension = vector_type::static_size;
     typedef observables::utility::wavevector<dimension> wavevector_type;
     typedef observables::ssf<dimension> ssf_type;
+    typedef mdsim::clock clock_type;
 
     fixed_vector<unsigned, dimension> ncell;
     unsigned nunit_cell;
@@ -91,6 +93,7 @@ struct lattice
     shared_ptr<wavevector_type> wavevector;
     shared_ptr<density_mode_type> density_mode;
     shared_ptr<ssf_type> ssf;
+    shared_ptr<clock_type> clock;
 
     void test();
     lattice();
@@ -150,8 +153,8 @@ void lattice<modules_type>::test()
     wavevector = make_shared<wavevector_type>(wavenumber, box->length(), 1e-6, 2 * dimension); // FIXME tolerance, see above
 
     // construct modules for density modes and static structure factor
-    density_mode = make_shared<density_mode_type>(phase_space, wavevector);
-    ssf = make_shared<ssf_type>(density_mode, particle->nbox);
+    density_mode = make_shared<density_mode_type>(phase_space, wavevector, clock);
+    ssf = make_shared<ssf_type>(density_mode, clock, particle->nbox);
 
     // generate lattices
     BOOST_TEST_MESSAGE("set particle tags");
@@ -161,15 +164,15 @@ void lattice<modules_type>::test()
 
     // acquire phase space sample
     BOOST_TEST_MESSAGE("acquire phase space sample");
-    phase_space->acquire(0);
+    phase_space->acquire();
 
     // compute density modes
     BOOST_TEST_MESSAGE("compute density modes");
-    density_mode->acquire(0);
+    density_mode->acquire();
 
     // compute static structure factor
     BOOST_TEST_MESSAGE("compute static structure factor");
-    ssf->sample(0);
+    ssf->sample();
     vector<typename ssf_type::result_type> const& result = ssf->value()[0]; // particle type 0
     BOOST_CHECK(result.size() == ssf_ref.size());
 
@@ -231,7 +234,8 @@ lattice<modules_type>::lattice()
     random = make_shared<random_type>();
     position = make_shared<position_type>(particle, box, random, slab);
     sample = make_shared<sample_type>(particle->ntypes);
-    phase_space = make_shared<phase_space_type>(sample, particle, box);
+    clock = make_shared<clock_type>(0); // bogus time-step
+    phase_space = make_shared<phase_space_type>(sample, particle, box, clock);
 }
 
 template <int dimension, typename float_type>

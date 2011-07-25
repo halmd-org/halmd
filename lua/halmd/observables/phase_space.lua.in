@@ -19,6 +19,7 @@
 
 require("halmd.device")
 require("halmd.mdsim.box")
+require("halmd.mdsim.clock")
 require("halmd.mdsim.particle")
 require("halmd.modules")
 require("halmd.observables.samples.phase_space")
@@ -65,6 +66,7 @@ function new(args)
     local particle = mdsim.particle() -- singleton
     local dimension = assert(particle.dimension)
     local box = mdsim.box() -- singleton
+    local clock = mdsim.clock() -- singleton
     local sample = assert(observables.samples.phase_space{ memory = memory })
 
     local phase_space
@@ -73,5 +75,5 @@ function new(args)
     else
         phase_space = assert(phase_space_wrapper.host[memory][dimension])
     end
-    return phase_space(sample, particle, box)
+    return phase_space(sample, particle, box, clock)
 end

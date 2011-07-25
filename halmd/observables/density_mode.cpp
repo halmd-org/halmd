@@ -33,10 +33,10 @@ namespace halmd {
 namespace observables {
 
 template <typename density_mode_type>
-typename signal<void (uint64_t)>::slot_function_type
+typename density_mode_type::slot_function_type
 acquire_wrapper(shared_ptr<density_mode_type> density_mode)
 {
-    return bind(&density_mode_type::acquire, density_mode, _1);
+    return bind(&density_mode_type::acquire, density_mode);
 }
 
 template <typename density_mode_type>

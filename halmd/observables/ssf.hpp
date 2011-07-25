@@ -24,6 +24,7 @@
 #include <lua.hpp>
 #include <vector>
 
+#include <halmd/mdsim/clock.hpp>
 #include <halmd/numeric/blas/fixed_vector.hpp>
 #include <halmd/observables/density_mode.hpp>
 #include <halmd/utility/profiler.hpp>
@@ -46,10 +47,14 @@ namespace observables {
 template <int dimension>
 class ssf
 {
+private:
+    typedef halmd::signal<void ()> signal_type;
+
 public:
     typedef observables::density_mode<dimension> density_mode_type;
+    typedef mdsim::clock clock_type;
+    typedef typename clock_type::step_type step_type;
     typedef halmd::utility::profiler profiler_type;
-    typedef halmd::signal<void (uint64_t)> signal_type;
     typedef typename signal_type::slot_function_type slot_function_type;
 
     typedef boost::array<double, 3> result_type;
@@ -67,13 +72,14 @@ public:
 
     ssf(
         boost::shared_ptr<density_mode_type> density_mode
+      , boost::shared_ptr<clock_type const> clock
       , unsigned int npart
     );
     virtual ~ssf() {}
     virtual void register_runtimes(profiler_type& profiler);
 
     // compute ssf from sample of density Fourier modes and store with given simulation step
-    virtual void sample(uint64_t step);
+    virtual void sample();
 
     virtual void on_sample(slot_function_type const& slot)
     {
@@ -99,6 +105,7 @@ protected:
     /** compute static structure factor and update result accumulators */
     virtual void compute_();
 
+    boost::shared_ptr<clock_type const> clock_;
     /** total number of particles, required for normalisation */
     unsigned int npart_;
 
@@ -114,7 +121,7 @@ protected:
     /** result accumulators */
     std::vector<std::vector<accumulator<double> > > result_accumulator_;
     /** time stamp of data (simulation step) */
-    uint64_t step_;
+    step_type step_;
     /** profiling runtime accumulators */
     runtime runtime_;
 

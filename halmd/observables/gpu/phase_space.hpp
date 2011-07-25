@@ -23,6 +23,7 @@
 #include <lua.hpp>
 
 #include <halmd/mdsim/box.hpp>
+#include <halmd/mdsim/clock.hpp>
 #include <halmd/mdsim/gpu/particle.hpp>
 #include <halmd/observables/gpu/samples/phase_space.hpp>
 #include <halmd/observables/host/samples/phase_space.hpp>
@@ -48,6 +49,7 @@ public:
     typedef mdsim::gpu::particle<dimension, float_type> particle_type;
     typedef typename particle_type::vector_type vector_type;
     typedef mdsim::box<dimension> box_type;
+    typedef mdsim::clock clock_type;
 
     boost::shared_ptr<sample_type> sample;
     boost::shared_ptr<particle_type> particle;
@@ -59,8 +61,12 @@ public:
         boost::shared_ptr<sample_type> sample
       , boost::shared_ptr<particle_type> particle
       , boost::shared_ptr<box_type> box
+      , boost::shared_ptr<clock_type const> clock
     );
-    virtual void acquire(uint64_t step);
+    virtual void acquire();
+
+private:
+    boost::shared_ptr<clock_type const> clock_;
 };
 
 /**
@@ -76,6 +82,7 @@ public:
     typedef mdsim::gpu::particle<dimension, float_type> particle_type;
     typedef mdsim::box<dimension> box_type;
     typedef fixed_vector<float_type, dimension> vector_type;
+    typedef mdsim::clock clock_type;
 
     boost::shared_ptr<sample_type> sample;
     boost::shared_ptr<particle_type> particle;
@@ -87,8 +94,12 @@ public:
         boost::shared_ptr<sample_type> sample
       , boost::shared_ptr<particle_type> particle
       , boost::shared_ptr<box_type> box
+      , boost::shared_ptr<clock_type const> clock
     );
-    virtual void acquire(uint64_t step);
+    virtual void acquire();
+
+private:
+    boost::shared_ptr<clock_type const> clock_;
 };
 
 } // namespace observables

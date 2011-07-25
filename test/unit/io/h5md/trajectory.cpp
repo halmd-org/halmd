@@ -160,7 +160,7 @@ void h5md(vector<unsigned int> const& ntypes)
 
     on_write_sample(float_sample, writer);
 
-    writer->write(clock->step());
+    writer->write();
     writer_file->flush();
 
     // overwrite with double-precision data,
@@ -172,7 +172,7 @@ void h5md(vector<unsigned int> const& ntypes)
 
     on_write_sample(double_sample, writer);
 
-    writer->write(clock->step());
+    writer->write();
     writer_file->flush();
 
     // simulate an integration step for the very first particle
@@ -186,7 +186,7 @@ void h5md(vector<unsigned int> const& ntypes)
     // or datasets are open, which is the case for the writer
     writer_file.reset();
 
-    writer->write(clock->step());
+    writer->write();
 
     // deconstruct the writer to flush and close the HDF5 file
     writer.reset();
@@ -206,7 +206,7 @@ void h5md(vector<unsigned int> const& ntypes)
 
     on_read_sample(double_sample_, reader, 1);
 
-    reader->read(clock->step());
+    reader->read();
 
     // check binary equality of written and read data
     for (unsigned int type = 0; type < ntypes.size(); ++type) {
@@ -238,7 +238,7 @@ void h5md(vector<unsigned int> const& ntypes)
 
     on_read_sample(float_sample_, reader, 0);
 
-    reader->read(clock->step());
+    reader->read();
 
     // check binary equality of written and read data,
     // note that float_sample was not modified and thus corresponds to #0

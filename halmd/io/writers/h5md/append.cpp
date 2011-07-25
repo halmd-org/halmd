@@ -69,22 +69,22 @@ void append::on_write(
     on_write_.connect(bind(&write_dataset<T>, dataset, slot));
 }
 
-void append::on_prepend_write(signal<void (uint64_t)>::slot_function_type const& slot)
+void append::on_prepend_write(slot_function_type const& slot)
 {
     on_prepend_write_.connect(slot);
 }
 
-void append::on_append_write(signal<void (uint64_t)>::slot_function_type const& slot)
+void append::on_append_write(slot_function_type const& slot)
 {
     on_append_write_.connect(slot);
 }
 
-void append::write(uint64_t step)
+void append::write()
 {
-    on_prepend_write_(step);
+    on_prepend_write_();
     write_step_time();
     on_write_();
-    on_append_write_(step);
+    on_append_write_();
 }
 
 void append::write_step_time()
@@ -166,10 +166,10 @@ void append::write_dataset(
     h5xx::write_dataset(dataset, data);
 }
 
-static signal<void (uint64_t)>::slot_function_type
+static append::slot_function_type
 wrap_write(shared_ptr<append> instance)
 {
-    return bind(&append::write, instance, _1);
+    return bind(&append::write, instance);
 }
 
 void append::luaopen(lua_State* L)

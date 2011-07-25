@@ -18,6 +18,7 @@
 --
 
 require("halmd.io.writers.observable")
+require("halmd.mdsim.clock")
 require("halmd.mdsim.particle")
 require("halmd.modules")
 require("halmd.observables.density_mode")
@@ -57,6 +58,7 @@ function new(args)
     local max_count = args.max_count or 7 -- default value
 
     -- dependency injection
+    local clock = mdsim.clock() -- singleton
     local particle = mdsim.particle() -- singleton
     local dimension = assert(particle.dimension)
 
@@ -81,7 +83,7 @@ function new(args)
     local density_mode = assert(observables.density_mode{ wavevector = wavevector })
 
     -- construct ssf module
-    local ssf = assert(ssf_wrapper[dimension])(density_mode, particle.nbox)
+    local ssf = assert(ssf_wrapper[dimension])(density_mode, clock, particle.nbox)
 
     -- acquire density modes before sampling static structure factor
     ssf:on_sample(density_mode.acquire)

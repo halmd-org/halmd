@@ -58,7 +58,7 @@ void timer_service::process()
     }
 }
 
-signal<void (uint64_t)>::slot_function_type
+signal<void ()>::slot_function_type
 process_wrapper(shared_ptr<timer_service> ts)
 {
     return bind(&timer_service::process, ts);

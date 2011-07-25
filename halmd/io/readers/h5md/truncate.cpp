@@ -60,21 +60,21 @@ void truncate::on_read(
     on_read_.connect(bind(&read_dataset<T>, dataset, slot));
 }
 
-void truncate::on_prepend_read(signal<void (uint64_t)>::slot_function_type const& slot)
+void truncate::on_prepend_read(slot_function_type const& slot)
 {
     on_prepend_read_.connect(slot);
 }
 
-void truncate::on_append_read(signal<void (uint64_t)>::slot_function_type const& slot)
+void truncate::on_append_read(slot_function_type const& slot)
 {
     on_append_read_.connect(slot);
 }
 
-void truncate::read(uint64_t step)
+void truncate::read()
 {
-    on_prepend_read_(step);
+    on_prepend_read_();
     on_read_();
-    on_append_read_(step);
+    on_append_read_();
 }
 
 template <typename T>
@@ -87,10 +87,10 @@ void truncate::read_dataset(
     h5xx::read_unique_dataset(dataset, &data);
 }
 
-static signal<void (uint64_t)>::slot_function_type
+static truncate::slot_function_type
 wrap_read(shared_ptr<truncate> instance)
 {
-    return bind(&truncate::read, instance, _1);
+    return bind(&truncate::read, instance);
 }
 
 void truncate::luaopen(lua_State* L)

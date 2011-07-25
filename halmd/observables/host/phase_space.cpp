@@ -33,10 +33,12 @@ phase_space<dimension, float_type>::phase_space(
     shared_ptr<sample_type> sample
   , shared_ptr<particle_type> particle
   , shared_ptr<box_type> box
+  , shared_ptr<clock_type const> clock
 )
   : sample(sample)
   , particle(particle)
   , box(box)
+  , clock_(clock)
 {
 }
 
@@ -44,9 +46,9 @@ phase_space<dimension, float_type>::phase_space(
  * Sample phase_space
  */
 template <int dimension, typename float_type>
-void phase_space<dimension, float_type>::acquire(uint64_t step)
+void phase_space<dimension, float_type>::acquire()
 {
-    if (sample->step == step) {
+    if (sample->step == clock_->step()) {
         LOG_TRACE("[phase_space] sample is up to date");
         return;
     }
@@ -67,7 +69,7 @@ void phase_space<dimension, float_type>::acquire(uint64_t step)
         assert(tag < sample->v[type]->size());
         (*sample->v[type])[tag] = particle->v[i];
     }
-    sample->step = step;
+    sample->step = clock_->step();
 }
 
 template <int dimension, typename float_type>
@@ -92,6 +94,7 @@ void phase_space<dimension, float_type>::luaopen(lua_State* L)
                          shared_ptr<sample_type>
                        , shared_ptr<particle_type>
                        , shared_ptr<box_type>
+                       , shared_ptr<clock_type const>
                     >())
                     .property("dimension", &wrap_dimension<dimension, float_type>)
             ]
