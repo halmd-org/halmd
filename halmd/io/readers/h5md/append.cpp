@@ -98,8 +98,7 @@ void append::read_dataset(
   , H5::Group const& group
 )
 {
-    T data = slot();
-    h5xx::read_dataset(dataset, &data, index(group));
+    h5xx::read_dataset(dataset, &slot(), index(group));
 }
 
 hsize_t append::read_step_index(

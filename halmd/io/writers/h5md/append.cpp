@@ -163,8 +163,7 @@ void append::write_dataset(
   , function<T ()> const& slot
 )
 {
-    T data = slot();
-    h5xx::write_dataset(dataset, data);
+    h5xx::write_dataset(dataset, slot());
 }
 
 static append::slot_function_type

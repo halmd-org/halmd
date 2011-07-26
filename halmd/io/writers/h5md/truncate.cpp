@@ -146,8 +146,7 @@ void truncate::write_dataset(
   , function<T ()> const& slot
 )
 {
-    T data = slot();
-    h5xx::write_unique_dataset(dataset, data);
+    h5xx::write_unique_dataset(dataset, slot());
 }
 
 static truncate::slot_function_type

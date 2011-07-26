@@ -83,8 +83,7 @@ void truncate::read_dataset(
   , function<T ()> const& slot
 )
 {
-    T data = slot();
-    h5xx::read_unique_dataset(dataset, &data);
+    h5xx::read_unique_dataset(dataset, &slot());
 }
 
 static truncate::slot_function_type
