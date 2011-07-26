@@ -43,23 +43,18 @@ lennard_jones_simple<float_type>::lennard_jones_simple(
     float_type cutoff
   , shared_ptr<logger_type> logger
 )
-  // allocate potential parameters
-  : r_cut_(1, 1)
-  // initialise constant members
-  , epsilon_(scalar_matrix<float_type>(1, 1, 1)) // ε=1
-  , sigma_(scalar_matrix<float_type>(1, 1, 1)) // σ=1
+  // initialise members
+  : r_cut_(cutoff)
+  , rr_cut_(cutoff * cutoff)
   , logger_(logger)
 {
-    r_cut_(0, 0) = cutoff;
-    rr_cut_ = cutoff * cutoff;
-
     // energy shift due to truncation at cutoff length
     float_type rri_cut = 1 / rr_cut_;
     float_type r6i_cut = rri_cut * rri_cut * rri_cut;
     en_cut_ = 4 * r6i_cut * (r6i_cut - 1);
 
     LOG("using optimised version for a single species with ε=1, σ=1");
-    LOG("potential cutoff length: r_c = " << r_cut_(0, 0));
+    LOG("potential cutoff length: r_c = " << r_cut_);
     LOG("potential cutoff energy: U = " << en_cut_);
 
     cuda::copy(rr_cut_, lennard_jones_simple_wrapper::rr_cut);

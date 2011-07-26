@@ -36,9 +36,9 @@ namespace forces {
 
 /**
  * define Lennard-Jones potential and parameters
- * for a single species
+ * for a single species (consituting a "simple liquid")
  *
- * The usual LJ units are employed, only parameter is
+ * The usual LJ units are employed, the only parameter is
  * the potential cutoff.
  */
 template <typename float_type>
@@ -60,32 +60,37 @@ public:
 
     void bind_textures() const {}
 
-    matrix_type const& r_cut() const
+    matrix_type r_cut() const
     {
-        return r_cut_;
+        // construct 1×1 matrix with cutoff
+        matrix_type A(1, 1);
+        A(0, 0) = r_cut_;
+        return A;
     }
 
-    matrix_type const& epsilon() const
+    matrix_type epsilon() const
     {
-        return epsilon_;
+        // construct 1×1 matrix with ε=1
+        matrix_type A(1, 1);
+        A(0, 0) = 1;
+        return A;
     }
 
-    matrix_type const& sigma() const
+    matrix_type sigma() const
     {
-        return sigma_;
+        // construct 1×1 matrix with σ=1
+        matrix_type A(1, 1);
+        A(0, 0) = 1;
+        return A;
     }
 
 private:
     /** cutoff length in MD units, r_cut() must return a matrix */
-    matrix_type r_cut_;
+    float_type r_cut_;
     /** square of cutoff length */
     float_type rr_cut_;
     /** potential energy at cutoff length in MD units */
     float_type en_cut_;
-    /** potential well depths in MD units, for coherence with lennard_jones only */
-    const matrix_type epsilon_;
-    /** pair separation in MD units, for coherence with lennard_jones only */
-    const matrix_type sigma_;
     /** module logger */
     boost::shared_ptr<logger_type> logger_;
 };
