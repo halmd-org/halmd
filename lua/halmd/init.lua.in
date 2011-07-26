@@ -58,6 +58,7 @@ function new(args)
     -- add force
     mdsim.force()
 
+    -- FIXME HALMD parameters are read too late
     local reader = readers.trajectory()
     mdsim.position{ reader = reader }
     mdsim.velocity{ reader = reader }
