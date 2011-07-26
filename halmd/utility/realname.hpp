@@ -23,9 +23,11 @@
 #include <boost/system/error_code.hpp>
 #include <boost/system/system_error.hpp>
 #include <pwd.h>
+#include <string>
 #include <stdexcept> // std::runtime_error
 #include <sys/types.h>
 #include <unistd.h>
+#include <vector>
 
 namespace halmd {
 
