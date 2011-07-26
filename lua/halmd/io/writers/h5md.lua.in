@@ -1,5 +1,5 @@
 --
--- Copyright © 2011  Peter Colberg
+-- Copyright © 2010-2011  Peter Colberg
 --
 -- This file is part of HALMD.
 --
@@ -17,16 +17,19 @@
 -- along with this program.  If not, see <http://www.gnu.org/licenses/>.
 --
 
-require("halmd.modules")
+require("halmd.hooks")
 require("halmd.mdsim.clock")
+require("halmd.modules")
 
 -- grab modules
+local hooks = halmd.hooks
 local mdsim = halmd.mdsim
 -- grab C++ modules
 local h5md = libhalmd.io.writers.h5md
 -- grab standard library
 local assert = assert
 local error = error
+local setmetatable = setmetatable
 local type = type
 
 module("halmd.io.writers.h5md", halmd.modules.register)
@@ -80,6 +83,35 @@ function new(args)
         end
         return writer
     end
+
+    -- create parameter group
+    local param = file.root:open_group("halmd")
+
+    -- register hook to write HALMD parameters
+    hooks.register_module_hook(function(module, object)
+        local write_parameters = module.write_parameters
+        if write_parameters then
+            --
+            -- If write_parameters only stores global parameters, or stores
+            -- no parameters at all, the module's HDF5 parameter group would
+            -- remain empty. Therefore we delay creation by creating or opening
+            -- the group upon access of its methods.
+            --
+            local group = setmetatable({}, {
+                __index = function(self, name)
+                    local namespace = assert(module.namespace)
+                    local group = param:open_group(namespace)
+                    local method = group[name]
+                    if method then
+                        return function(self, ...)
+                            method(group, ...)
+                        end
+                    end
+                end
+            })
+            write_parameters(object, group, param)
+        end
+    end)
 
     return file
 end
