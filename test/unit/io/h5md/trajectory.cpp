@@ -226,6 +226,10 @@ void h5md(vector<unsigned int> const& ntypes)
     // read phase space sample #0 from file in single precision
     shared_ptr<float_sample_type> float_sample_ = make_shared<float_sample_type>(ntypes);
 
+    // reconstruct the reader to replace slots to double with float sample
+    reader.reset();
+    reader = make_shared<readers::h5md::append>(reader_file->root(), list_of("trajectory"));
+
     // deconstruct file module to check that the HDF5 library
     // keeps the file open if reader module still exists
     reader_file.reset();
