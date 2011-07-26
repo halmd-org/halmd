@@ -56,6 +56,16 @@ public:
     typedef clock_type::step_type step_type;
     typedef clock_type::time_type time_type;
     typedef signal_type::slot_function_type slot_function_type;
+    /**
+     * For the truncate reader/writer, a subgroup is defined as the dataset
+     * which contains the data to be read or written.
+     * For the append reader/writer, a subgroup is defined as the group
+     * contains the data to be read or written. Additional attributes
+     * should always be attached to the subgroup, never the samples
+     * dataset.
+     * To give both writers the same API for convenient use in template
+     * functions in C++ unit tests, we define a subgroup type.
+     */
     typedef H5::Group subgroup_type;
 
     /** open writer group and create time and step datasets */
