@@ -19,8 +19,6 @@
 
 require("halmd.modules")
 
-require("halmd.parameter")
-
 -- grab modules
 local parameter = halmd.parameter
 -- grab C++ wrappers
@@ -38,8 +36,6 @@ function new(args)
     local output = assert(args.output)
 
     local writer = h5md_wrapper(output .. ".prf")
-
-    parameter.register_writer(writer)
 
     return writer
 end
