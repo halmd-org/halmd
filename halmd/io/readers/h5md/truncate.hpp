@@ -39,10 +39,10 @@ namespace h5md {
  * H5MD group. A dataset within this group is created by connecting a
  * data slot to the on_read signal.
  *
- * The reader provides a common write slot, which may be connected to
- * the sampler to write to the datasets at a fixed interval. Further
- * signals on_prepend_read and on_append_read are provided to call
- * arbitrary slots before and after reading.
+ * The reader provides a common read slot, which may be connected to
+ * another module to read the datasets. Further signals on_prepend_read
+ * and on_append_read are provided to call arbitrary slots before and
+ * after reading.
  */
 class truncate
 {
@@ -78,7 +78,7 @@ public:
     void on_prepend_read(slot_function_type const& slot);
     /** connect slot called after reading */
     void on_append_read(slot_function_type const& slot);
-    /** write datasets */
+    /** read datasets */
     void read();
     /** Lua bindings */
     static void luaopen(lua_State* L);

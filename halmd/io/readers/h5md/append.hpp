@@ -38,12 +38,11 @@ namespace h5md {
  * This module implements collective reading from one or multiple H5MD
  * datasets, where each dataset is a time series. Upon initialisation,
  * the reader is assigned a collective H5MD group. A dataset within this
- * group is created by connecting a data slot to the on_read signal.
- * All datasets share common step and time datasets, which are linked
- * into each dataset group upon connection.
+ * group is opened by connecting a data slot to the on_read signal.
  *
- * The reader provides a common write slot, which may be connected to
- * the sampler to write to the datasets at a fixed interval. Further
+ * The reader provides a common read slot, which may be connected to
+ * another module to read the datasets at a given step or time, e.g.
+ * to core:on_prepend_setup for reading a phase space sample. Further
  * signals on_prepend_read and on_append_read are provided to call
  * arbitrary slots before and after reading.
  */
@@ -88,9 +87,9 @@ public:
     void on_prepend_read(slot_function_type const& slot);
     /** connect slot called after reading */
     void on_append_read(slot_function_type const& slot);
-    /** read at given step offset */
+    /** read datasets at given step offset */
     void read_at_step(step_difference_type offset);
-    /** read at given time offset */
+    /** read datasets at given time offset */
     void read_at_time(time_difference_type offset);
     /** Lua bindings */
     static void luaopen(lua_State* L);
