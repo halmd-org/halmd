@@ -62,8 +62,7 @@ void append::on_read(
         throw invalid_argument("dataset location");
     }
     group = h5xx::open_group(group_, join(location, "/"));
-    H5::DataSet dataset = group.openDataSet("samples");
-    on_read_.connect(bind(&read_dataset<T>, dataset, slot, _1, group));
+    on_read_.connect(bind(&read_dataset<T>, group, slot, _1));
 }
 
 void append::on_prepend_read(slot_function_type const& slot)
@@ -92,12 +91,12 @@ void append::read_time(time_difference_type offset)
 
 template <typename T>
 void append::read_dataset(
-    H5::DataSet dataset
+    H5::Group const& group
   , function<T ()> const& slot
   , index_function_type const& index
-  , H5::Group const& group
 )
 {
+    H5::DataSet dataset = group.openDataSet("samples");
     h5xx::read_dataset(dataset, &slot(), index(group));
 }
 

@@ -89,10 +89,9 @@ private:
 
     template <typename T>
     static void read_dataset(
-        H5::DataSet dataset
+        H5::Group const& group
       , boost::function<T ()> const& slot
       , index_function_type const& index
-      , H5::Group const& group
     );
     static hsize_t read_step_index(
         step_difference_type offset
