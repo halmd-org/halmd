@@ -21,6 +21,7 @@
 #define HALMD_MDSIM_GPU_FORCES_LENNARD_JONES_SIMPLE_HPP
 
 #include <boost/make_shared.hpp>
+#include <boost/numeric/ublas/matrix.hpp>
 #include <boost/numeric/ublas/symmetric.hpp>
 #include <cuda_wrapper/cuda_wrapper.hpp>
 #include <lua.hpp>
@@ -62,26 +63,20 @@ public:
 
     matrix_type r_cut() const
     {
-        // construct 1×1 matrix with cutoff
-        matrix_type A(1, 1);
-        A(0, 0) = r_cut_;
-        return A;
+        using boost::numeric::ublas::scalar_matrix;
+        return scalar_matrix<float_type>(1, 1, r_cut_); //< construct 1×1 matrix with cutoff
     }
 
     matrix_type epsilon() const
     {
-        // construct 1×1 matrix with ε=1
-        matrix_type A(1, 1);
-        A(0, 0) = 1;
-        return A;
+        using boost::numeric::ublas::scalar_matrix;
+        return scalar_matrix<float_type>(1, 1, 1); //< construct 1×1 matrix with ε=1
     }
 
     matrix_type sigma() const
     {
-        // construct 1×1 matrix with σ=1
-        matrix_type A(1, 1);
-        A(0, 0) = 1;
-        return A;
+        using boost::numeric::ublas::scalar_matrix;
+        return scalar_matrix<float_type>(1, 1, 1); //< construct 1×1 matrix with σ=1
     }
 
 private:
