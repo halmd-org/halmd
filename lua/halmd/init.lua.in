@@ -24,7 +24,7 @@ require("halmd.option")
 require("halmd.parameter")
 
 require("halmd.io.profiling.writer")
-require("halmd.io.trajectory.reader")
+require("halmd.io.readers.trajectory")
 require("halmd.io.writers.trajectory")
 require("halmd.mdsim.box")
 require("halmd.mdsim.force")
@@ -39,7 +39,7 @@ require("halmd.observables.thermodynamics")
 local mdsim = halmd.mdsim
 local observables = halmd.observables
 local profiling = halmd.io.profiling
-local trajectory = halmd.io.trajectory
+local readers = halmd.io.readers
 local writers = halmd.io.writers
 -- grab standard library
 local assert = assert
@@ -58,7 +58,7 @@ function new(args)
     -- add force
     mdsim.force()
 
-    local reader = trajectory.reader()
+    local reader = readers.trajectory()
     mdsim.position{ reader = reader }
     mdsim.velocity{ reader = reader }
 
