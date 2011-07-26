@@ -63,10 +63,10 @@ function new(args)
         -- read phase space sample before system preparation
         local core = mdsim.core() -- singleton
         if args.time then
-            core:on_prepend_setup(reader:read_time(args.time))
+            core:on_prepend_setup(reader:read_at_time(args.time))
         else
             -- read sample at last step by default
-            core:on_prepend_setup(reader:read_step(args.step or -1))
+            core:on_prepend_setup(reader:read_at_step(args.step or -1))
         end
 
         return reader

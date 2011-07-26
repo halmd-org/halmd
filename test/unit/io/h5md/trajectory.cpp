@@ -205,7 +205,7 @@ void h5md(vector<unsigned int> const& ntypes)
 
     on_read_sample(double_sample_, reader);
 
-    reader->read_time(0.1667);
+    reader->read_at_time(0.1667);
 
     // check binary equality of written and read data
     for (unsigned int type = 0; type < ntypes.size(); ++type) {
@@ -236,7 +236,7 @@ void h5md(vector<unsigned int> const& ntypes)
 
     on_read_sample(float_sample_, reader);
 
-    reader->read_time(0);
+    reader->read_at_time(0);
 
     // check binary equality of written and read data,
     // note that float_sample was not modified and thus corresponds to #0

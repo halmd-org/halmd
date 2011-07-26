@@ -75,14 +75,14 @@ void append::on_append_read(slot_function_type const& slot)
     on_append_read_.connect(slot);
 }
 
-void append::read_step(step_difference_type offset)
+void append::read_at_step(step_difference_type offset)
 {
     on_prepend_read_();
     on_read_(bind(&read_step_index, offset, _1));
     on_append_read_();
 }
 
-void append::read_time(time_difference_type offset)
+void append::read_at_time(time_difference_type offset)
 {
     on_prepend_read_();
     on_read_(bind(&read_time_index, offset, _1));
@@ -159,15 +159,15 @@ hsize_t append::read_time_index(
 }
 
 static append::slot_function_type
-wrap_read_step(shared_ptr<append> instance, append::step_difference_type offset)
+wrap_read_at_step(shared_ptr<append> instance, append::step_difference_type offset)
 {
-    return bind(&append::read_step, instance, offset);
+    return bind(&append::read_at_step, instance, offset);
 }
 
 static append::slot_function_type
-wrap_read_time(shared_ptr<append> instance, append::time_difference_type offset)
+wrap_read_at_time(shared_ptr<append> instance, append::time_difference_type offset)
 {
-    return bind(&append::read_time, instance, offset);
+    return bind(&append::read_at_time, instance, offset);
 }
 
 void append::luaopen(lua_State* L)
@@ -199,8 +199,8 @@ void append::luaopen(lua_State* L)
                         .def("on_read", &append::on_read<vector<array<double, 3> >&>, pure_out_value(_2))
                         .def("on_prepend_read", &append::on_prepend_read)
                         .def("on_append_read", &append::on_append_read)
-                        .def("read_step", &wrap_read_step)
-                        .def("read_time", &wrap_read_time)
+                        .def("read_at_step", &wrap_read_at_step)
+                        .def("read_at_time", &wrap_read_at_time)
                 ]
             ]
         ]

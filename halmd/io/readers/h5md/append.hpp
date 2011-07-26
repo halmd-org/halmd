@@ -78,9 +78,9 @@ public:
     /** connect slot called after reading */
     void on_append_read(slot_function_type const& slot);
     /** read at given step offset */
-    void read_step(step_difference_type offset);
+    void read_at_step(step_difference_type offset);
     /** read at given time offset */
-    void read_time(time_difference_type offset);
+    void read_at_time(time_difference_type offset);
     /** Lua bindings */
     static void luaopen(lua_State* L);
 
