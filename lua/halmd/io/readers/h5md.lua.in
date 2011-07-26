@@ -1,0 +1,64 @@
+--
+-- Copyright © 2011  Peter Colberg
+--
+-- This file is part of HALMD.
+--
+-- HALMD is free software: you can redistribute it and/or modify
+-- it under the terms of the GNU General Public License as published by
+-- the Free Software Foundation, either version 3 of the License, or
+-- (at your option) any later version.
+--
+-- This program is distributed in the hope that it will be useful,
+-- but WITHOUT ANY WARRANTY; without even the implied warranty of
+-- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+-- GNU General Public License for more details.
+--
+-- You should have received a copy of the GNU General Public License
+-- along with this program.  If not, see <http://www.gnu.org/licenses/>.
+--
+
+require("halmd.modules")
+
+-- grab C++ modules
+local h5md = libhalmd.io.readers.h5md
+-- grab standard library
+local assert = assert
+local error = error
+local type = type
+
+module("halmd.io.readers.h5md", halmd.modules.register)
+
+-- function to check file format
+check = h5md.file.check
+
+--
+-- construct H5MD reader
+--
+function new(args)
+    local path = assert(args.path, "missing path")
+    local file = h5md.file(path)
+
+    -- extend H5MD file with a file:reader method
+    --
+    -- This function wraps the constructors of h5md::append and h5md::truncate,
+    -- which allows modules to construct a collective dataset reader without
+    -- knowledge of the file format.
+    --
+    file.reader = function(self, args)
+        assert(type(args) == "table", "missing argument table")
+        local location = assert(args.location, "missing location")
+        local mode = assert(args.mode, "missing mode")
+
+        local reader
+        if mode == "append" then
+            reader = h5md.append(self.root, location)
+        elseif mode == "truncate" then
+            reader = h5md.truncate(self.root, location)
+        else
+            error("invalid mode: " .. mode)
+        end
+        return reader
+    end
+
+    return file
+end
