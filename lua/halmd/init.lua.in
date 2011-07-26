@@ -22,6 +22,7 @@ require("halmd.modules")
 -- command-line options override H5MD file parameters
 require("halmd.option")
 
+require("halmd.device")
 require("halmd.io.profiling.writer")
 require("halmd.io.readers.trajectory")
 require("halmd.io.writers.trajectory")
@@ -50,17 +51,21 @@ module("halmd", halmd.modules.register)
 -- Construct simulation
 --
 function new(args)
+    -- load the device module to log (optional) GPU properties
+    device() -- singleton
+    -- open (optional) H5MD file and read simulation parameters
+    local reader = readers.trajectory()
+
     -- create simulation box with particles
     mdsim.box()
     -- add integrator
     mdsim.integrator()
     -- add force
     mdsim.force()
-
-    -- FIXME HALMD parameters are read too late
-    local reader = readers.trajectory()
-    mdsim.position{ reader = reader }
-    mdsim.velocity{ reader = reader }
+    -- set initial particle positions (optionally from reader)
+    mdsim.position{reader = reader}
+    -- set initial particle velocities (optionally from reader)
+    mdsim.velocity{reader = reader}
 
     -- Construct sampler.
     local sampler = observables.sampler()

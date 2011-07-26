@@ -21,7 +21,6 @@ require("halmd.device")
 require("halmd.mdsim.core")
 require("halmd.mdsim.particle")
 require("halmd.modules")
-require("halmd.observables.samples.phase_space")
 
 -- grab modules
 local device = halmd.device
@@ -54,7 +53,7 @@ function new(args)
     -- dependency injection
     local particle = mdsim.particle() -- singleton
     local dimension = assert(particle.dimension)
-    local sample = assert(observables.samples.phase_space{ memory = "host" })
+    local sample = assert(args.sample)
 
     local phase_space
     if device() then

@@ -29,6 +29,7 @@ local mdsim = halmd.mdsim
 local observables = halmd.observables
 -- grab C++ wrappers
 local po = libhalmd.po
+local property = property
 -- grab standard library
 local assert = assert
 local error = error
@@ -48,26 +49,48 @@ function new(args)
     if reader then
         -- open trajectory file
         local file = reader{path = assert(args.file)}
-
-        local sample = observables.samples.phase_space{ memory = "host" } -- singleton
-        local particle = mdsim.particle() -- singleton
-
-        -- read phase space sample
+        -- open trajectory group
         local reader = file:reader{location = {"trajectory"}, mode = "append"}
-        for i = 0, particle.ntype - 1 do
-            local species = string.char(string.byte("A") + i)
-            reader:on_read(sample:position(i), {species, "position"})
-            reader:on_read(sample:velocity(i), {species, "velocity"})
-        end
 
-        -- read phase space sample before system preparation
-        local core = mdsim.core() -- singleton
-        if args.time then
-            core:on_prepend_setup(reader:read_at_time(args.time))
-        else
-            -- read sample at last step by default
-            core:on_prepend_setup(reader:read_at_step(args.step or -1))
-        end
+        --
+        -- extend with reader.sample property
+        --
+        -- The H5MD file needs to be opened before loading mdsim modules,
+        -- as readers.h5md retrieves the simulation parameters from the
+        -- parameter group within the file. However, the reader requires an
+        -- allocated phase space sample with the correct number of particle
+        -- species. To disentangle these requirements, we delay the connection
+        -- of the phase space sample to reader, through encapsulation in a
+        -- property reader.sample. If the position and/or velocity module
+        -- accesses reader.sample, the sample's data slots will be connected to
+        -- the reader. We cache the sample in a variable outside the property
+        -- to ensure that this happens only once.
+        --
+        local sample
+
+        reader.sample = property(function(self)
+            if not sample then
+                sample = observables.samples.phase_space{ memory = "host" } -- singleton
+                local particle = mdsim.particle() -- singleton
+
+                -- read phase space sample
+                for i = 0, particle.ntype - 1 do
+                    local species = string.char(string.byte("A") + i)
+                    self:on_read(sample:position(i), {species, "position"})
+                    self:on_read(sample:velocity(i), {species, "velocity"})
+                end
+
+                -- read phase space sample before system preparation
+                local core = mdsim.core() -- singleton
+                if args.time then
+                    core:on_prepend_setup(self:read_at_time(args.time))
+                else
+                    -- read sample at last step by default
+                    core:on_prepend_setup(self:read_at_step(args.step or -1))
+                end
+            end
+            return sample
+        end)
 
         return reader
     end
