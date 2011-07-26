@@ -55,6 +55,7 @@ file::file(string const& path)
     creator_ = h5xx::read_attribute<string>(attr, "creator");
     creator_version_ = h5xx::read_attribute<string>(attr, "creator_version");
     version_ = h5xx::read_attribute<version_type>(attr, "version");
+    author_ = h5xx::read_attribute<string>(attr, "author");
 
     LOG("read from H5MD file: " << absolute_path(file_.getFileName()));
 }

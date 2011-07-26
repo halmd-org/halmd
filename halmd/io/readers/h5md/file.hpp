@@ -79,6 +79,12 @@ public:
         return version_;
     }
 
+    /** get H5MD file author */
+    std::string const& author() const
+    {
+        return author_;
+    }
+
 private:
     /** H5MD file */
     H5::H5File file_;
@@ -90,6 +96,8 @@ private:
     std::string creator_version_;
     /** H5MD file version */
     version_type version_;
+    /** H5MD file author */
+    std::string author_;
 };
 
 } // namespace h5md

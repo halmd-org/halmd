@@ -24,6 +24,7 @@
 #include <halmd/io/writers/h5md/file.hpp>
 #include <halmd/utility/filesystem.hpp>
 #include <halmd/utility/lua/lua.hpp>
+#include <halmd/utility/realname.hpp>
 #include <halmd/utility/signal.hpp>
 #include <halmd/version.h>
 
@@ -47,6 +48,7 @@ file::file(string const& path)
     h5xx::write_attribute(attr, "creator", PROGRAM_NAME);
     h5xx::write_attribute(attr, "creator_version", PROGRAM_VERSION);
     h5xx::write_attribute(attr, "version", file::version());
+    h5xx::write_attribute(attr, "author", file::author());
 
     LOG("write to H5MD file: " << absolute_path(file_.getFileName()));
 }
@@ -75,6 +77,11 @@ file::version_type file::version()
 {
     version_type version = {{ 0, 0 }};
     return version;
+}
+
+std::string file::author()
+{
+    return realname();
 }
 
 static signal<void ()>::slot_function_type

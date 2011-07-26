@@ -54,6 +54,8 @@ public:
     std::string path() const;
     /** get H5MD file version */
     static version_type version();
+    /** get H5MD file author */
+    static std::string author();
     /** Lua bindings */
     static void luaopen(lua_State* L);
 
