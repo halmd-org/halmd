@@ -23,6 +23,7 @@
 #include <boost/lambda/lambda.hpp>
 #include <boost/tuple/tuple.hpp> // boost::tie
 #include <cmath> // std::signbit
+#include <limits>
 #include <luabind/luabind.hpp>
 #include <luabind/out_value_policy.hpp>
 #include <stdexcept>
@@ -100,6 +101,11 @@ void append::read_dataset(
     h5xx::read_dataset(dataset, &slot(), index(group));
 }
 
+/**
+ * Given a positive or negative step offset and a H5MD time series group,
+ * this function returns the corresponding dataset index. If the offset is
+ * negative, the last step incremented by one will be added to the offset.
+ */
 hsize_t append::read_step_index(
     step_difference_type offset
   , H5::Group const& group
@@ -126,13 +132,26 @@ hsize_t append::read_step_index(
     return first - steps.begin();
 }
 
+/**
+ * Given a positive or negative time offset and a H5MD time series group,
+ * this function returns the corresponding dataset index. If the offset is
+ * negative, the last time will be added to the offset. As a special case,
+ * note that the floating-point value 0.0 is different from -0.0, therefore
+ * -0.0 may be used to refer exactly to the last time.
+ *
+ * When comparing two floating-point time values, we need to consider rounding
+ * errors, as the total time calculated by mdsim::clock during the simulation
+ * may be subject to other rounding errors than the time supplied by the caller
+ * of append::read_at_time. To be strict but not too strict, we consider times
+ * that differ less than a tolerance of 100 × (double precision floating-point
+ * machine epsilon) × (minimum of two times) as equal.
+ */
 hsize_t append::read_time_index(
     time_difference_type offset
   , H5::Group const& group
 )
 {
     H5::DataSet dataset = group.openDataSet("time");
-    time_type timestep = h5xx::read_attribute<time_type>(dataset, "timestep");
     std::vector<time_type> times;
     h5xx::read_unique_dataset(dataset, &times);
     if (times.size() < 1) {
@@ -144,7 +163,7 @@ hsize_t append::read_time_index(
         times.begin()
       , times.end()
       , time
-      , lambda::_1 + (timestep / 2) < lambda::_2
+      , lambda::_1 * (1 + 100 * numeric_limits<time_type>::epsilon()) < lambda::_2
     );
     if (first == last) {
         LOG_ERROR("no time " << time << " in dataset " << h5xx::path(dataset));

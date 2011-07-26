@@ -48,7 +48,6 @@ append::append(
     group_ = h5xx::open_group(root, join(location, "/"));
     step_ = h5xx::create_dataset<step_type>(group_, "step");
     time_ = h5xx::create_dataset<time_type>(group_, "time");
-    h5xx::write_attribute(time_, "timestep", clock_->timestep());
     group_.unlink("step");
     group_.unlink("time");
 }

@@ -205,7 +205,8 @@ void h5md(vector<unsigned int> const& ntypes)
 
     on_read_sample(double_sample_, reader);
 
-    reader->read_at_time(0.1667);
+    // read at time 1/6. with maximum tolerated rounding error of 100 × 1/6. × epsilon
+    reader->read_at_time(0.16666666666667);
 
     // check binary equality of written and read data
     for (unsigned int type = 0; type < ntypes.size(); ++type) {
