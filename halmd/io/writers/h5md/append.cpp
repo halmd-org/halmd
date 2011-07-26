@@ -171,6 +171,14 @@ wrap_write(shared_ptr<append> instance)
     return bind(&append::write, instance);
 }
 
+/**
+ * As write slots we support functors with return by copy, return by const
+ * reference and return by non-const reference. Non-const references are
+ * supported since it is not possible to bind more than one data slot
+ * under the same property name to Lua, therefore for modules with
+ * read-write data (e.g. samples::host::phase_space) we bind only the
+ * read-write slot returning a non-const reference.
+ */
 void append::luaopen(lua_State* L)
 {
     using namespace luabind;
