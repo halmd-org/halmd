@@ -219,6 +219,16 @@ void pair_trunc<dimension, float_type, potential_type>::luaopen(lua_State* L)
                     ]
                 ]
             ]
+
+          , namespace_("forces")
+            [
+                def("pair_trunc", &boost::make_shared<pair_trunc,
+                    boost::shared_ptr<potential_type>
+                  , boost::shared_ptr<particle_type>
+                  , boost::shared_ptr<box_type>
+                  , boost::shared_ptr<neighbour_type const>
+                >)
+            ]
         ]
     ];
 }

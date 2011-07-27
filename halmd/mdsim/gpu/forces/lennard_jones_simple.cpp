@@ -27,6 +27,7 @@
 #include <halmd/utility/lua/lua.hpp>
 
 using namespace boost;
+using namespace boost::numeric::ublas;
 using namespace std;
 
 namespace halmd {
@@ -38,19 +39,22 @@ namespace forces {
  * Initialise Lennard-Jones potential parameters
  */
 template <typename float_type>
-lennard_jones_simple<float_type>::lennard_jones_simple(float_type cutoff)
-  // allocate potential parameters
-  : r_cut_(1, 1)
+lennard_jones_simple<float_type>::lennard_jones_simple(
+    float_type cutoff
+  , shared_ptr<logger_type> logger
+)
+  // initialise members
+  : r_cut_(cutoff)
+  , rr_cut_(cutoff * cutoff)
+  , logger_(logger)
 {
-    r_cut_(0, 0) = cutoff;
-    rr_cut_ = cutoff * cutoff;
-
     // energy shift due to truncation at cutoff length
     float_type rri_cut = 1 / rr_cut_;
     float_type r6i_cut = rri_cut * rri_cut * rri_cut;
     en_cut_ = 4 * r6i_cut * (r6i_cut - 1);
 
-    LOG("potential cutoff length: r_c = " << r_cut_(0, 0));
+    LOG("using optimised version for a single species with ε=1, σ=1");
+    LOG("potential cutoff length: r_c = " << r_cut_);
     LOG("potential cutoff energy: U = " << en_cut_);
 
     cuda::copy(rr_cut_, lennard_jones_simple_wrapper::rr_cut);
@@ -70,8 +74,15 @@ void lennard_jones_simple<float_type>::luaopen(lua_State* L)
                 namespace_("forces")
                 [
                     class_<lennard_jones_simple, shared_ptr<lennard_jones_simple> >(module_name())
-                        .def(constructor<float_type>())
-                        .property("r_cut", (matrix_type const& (lennard_jones_simple::*)() const) &lennard_jones_simple::r_cut)
+                        .def(constructor<
+                            float_type
+                          , shared_ptr<logger_type>
+                        >())
+                        // provide Lua interface coherent with lennard_jones
+                        .property("r_cut", &lennard_jones_simple::r_cut)
+                        .property("r_cut_sigma", &lennard_jones_simple::r_cut) // note σ=1
+                        .property("epsilon", &lennard_jones_simple::epsilon)
+                        .property("sigma", &lennard_jones_simple::sigma)
                 ]
             ]
         ]
