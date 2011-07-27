@@ -71,15 +71,15 @@ public:
     );
     /** connect data slot for writing */
     template <typename T>
-    void on_write(
+    connection on_write(
         subgroup_type& dataset
       , boost::function<T ()> const& slot
       , std::vector<std::string> const& location
     );
     /** connect slot called before writing */
-    void on_prepend_write(slot_function_type const& slot);
+    connection on_prepend_write(slot_function_type const& slot);
     /** connect slot called after writing */
-    void on_append_write(slot_function_type const& slot);
+    connection on_append_write(slot_function_type const& slot);
     /** write datasets */
     void write();
     /** Lua bindings */

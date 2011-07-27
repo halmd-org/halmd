@@ -47,7 +47,7 @@ truncate::truncate(
 }
 
 template <typename T>
-void truncate::on_read(
+connection truncate::on_read(
     subgroup_type& dataset
   , function<T ()> const& slot
   , vector<string> const& location
@@ -57,17 +57,17 @@ void truncate::on_read(
         throw invalid_argument("dataset location");
     }
     dataset = group_.openDataSet(join(location, "/"));
-    on_read_.connect(bind(&read_dataset<T>, dataset, slot));
+    return on_read_.connect(bind(&read_dataset<T>, dataset, slot));
 }
 
-void truncate::on_prepend_read(slot_function_type const& slot)
+connection truncate::on_prepend_read(slot_function_type const& slot)
 {
-    on_prepend_read_.connect(slot);
+    return on_prepend_read_.connect(slot);
 }
 
-void truncate::on_append_read(slot_function_type const& slot)
+connection truncate::on_append_read(slot_function_type const& slot)
 {
-    on_append_read_.connect(slot);
+    return on_append_read_.connect(slot);
 }
 
 void truncate::read()

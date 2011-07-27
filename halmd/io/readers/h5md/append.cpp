@@ -53,7 +53,7 @@ append::append(
 }
 
 template <typename T>
-void append::on_read(
+connection append::on_read(
     subgroup_type& group
   , function<T ()> const& slot
   , vector<string> const& location
@@ -63,17 +63,17 @@ void append::on_read(
         throw invalid_argument("dataset location");
     }
     group = h5xx::open_group(group_, join(location, "/"));
-    on_read_.connect(bind(&read_dataset<T>, group, slot, _1));
+    return on_read_.connect(bind(&read_dataset<T>, group, slot, _1));
 }
 
-void append::on_prepend_read(slot_function_type const& slot)
+connection append::on_prepend_read(slot_function_type const& slot)
 {
-    on_prepend_read_.connect(slot);
+    return on_prepend_read_.connect(slot);
 }
 
-void append::on_append_read(slot_function_type const& slot)
+connection append::on_append_read(slot_function_type const& slot)
 {
-    on_append_read_.connect(slot);
+    return on_append_read_.connect(slot);
 }
 
 void append::read_at_step(step_difference_type offset)

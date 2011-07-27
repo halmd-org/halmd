@@ -53,7 +53,7 @@ append::append(
 }
 
 template <typename T>
-void append::on_write(
+connection append::on_write(
     subgroup_type& group
   , function<T ()> const& slot
   , vector<string> const& location
@@ -66,17 +66,17 @@ void append::on_write(
     H5::DataSet dataset = create_dataset(group, "samples", slot);
     h5xx::link(step_, group, "step");
     h5xx::link(time_, group, "time");
-    on_write_.connect(bind(&write_dataset<T>, dataset, slot));
+    return on_write_.connect(bind(&write_dataset<T>, dataset, slot));
 }
 
-void append::on_prepend_write(slot_function_type const& slot)
+connection append::on_prepend_write(slot_function_type const& slot)
 {
-    on_prepend_write_.connect(slot);
+    return on_prepend_write_.connect(slot);
 }
 
-void append::on_append_write(slot_function_type const& slot)
+connection append::on_append_write(slot_function_type const& slot)
 {
-    on_append_write_.connect(slot);
+    return on_append_write_.connect(slot);
 }
 
 void append::write()

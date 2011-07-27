@@ -47,7 +47,7 @@ truncate::truncate(
 }
 
 template <typename T>
-void truncate::on_write(
+connection truncate::on_write(
     subgroup_type& dataset
   , function<T ()> const& slot
   , vector<string> const& location
@@ -57,17 +57,17 @@ void truncate::on_write(
         throw invalid_argument("dataset location");
     }
     dataset = create_dataset(group_, join(location, "/"), slot);
-    on_write_.connect(bind(&write_dataset<T>, dataset, slot));
+    return on_write_.connect(bind(&write_dataset<T>, dataset, slot));
 }
 
-void truncate::on_prepend_write(slot_function_type const& slot)
+connection truncate::on_prepend_write(slot_function_type const& slot)
 {
-    on_prepend_write_.connect(slot);
+    return on_prepend_write_.connect(slot);
 }
 
-void truncate::on_append_write(slot_function_type const& slot)
+connection truncate::on_append_write(slot_function_type const& slot)
 {
-    on_append_write_.connect(slot);
+    return on_append_write_.connect(slot);
 }
 
 void truncate::write()

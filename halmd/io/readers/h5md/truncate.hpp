@@ -69,15 +69,15 @@ public:
     );
     /** connect data slot for reading */
     template <typename T>
-    void on_read(
+    connection on_read(
         subgroup_type& dataset
       , boost::function<T ()> const& slot
       , std::vector<std::string> const& location
     );
     /** connect slot called before reading */
-    void on_prepend_read(slot_function_type const& slot);
+    connection on_prepend_read(slot_function_type const& slot);
     /** connect slot called after reading */
-    void on_append_read(slot_function_type const& slot);
+    connection on_append_read(slot_function_type const& slot);
     /** read datasets */
     void read();
     /** Lua bindings */
