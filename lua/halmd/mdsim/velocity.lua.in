@@ -68,7 +68,7 @@ end
 -- @param group HDF5 group
 --
 function write_parameters(self, group, globals)
-    if self.module_name then
-        globals:write_attribute("velocity", h5.string(), self.module_name)
+    if self.module ~= velocities.phase_space then
+        globals:write_attribute("velocity", h5.string(), self.module.namespace)
     end
 end

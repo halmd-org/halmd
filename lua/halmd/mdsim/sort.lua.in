@@ -71,5 +71,5 @@ end
 -- @param group HDF5 group
 --
 function write_parameters(sort, group, globals)
-    globals:write_attribute("sort", h5.string(), sort.module_name)
+    globals:write_attribute("sort", h5.string(), sort.module.namespace)
 end

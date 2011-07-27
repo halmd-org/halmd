@@ -86,5 +86,5 @@ end
 -- @param group HDF5 group
 --
 function write_parameters(force, group, globals)
-    globals:write_attribute("force", h5.string(), force.module_name)
+    globals:write_attribute("force", h5.string(), force.potential.module.namespace)
 end
