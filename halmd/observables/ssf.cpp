@@ -17,10 +17,12 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <algorithm>
 #include <boost/bind.hpp>
 #include <functional>
 #include <iterator>
 #include <limits>
+#include <stdexcept>
 #include <string>
 
 #include <halmd/observables/ssf.hpp>
@@ -35,15 +37,17 @@ namespace observables {
 template <int dimension>
 ssf<dimension>::ssf(
     shared_ptr<density_mode_type const> density_mode
+  , shared_ptr<clock_type const> clock
   , unsigned int npart
   , shared_ptr<logger_type> logger
 )
   // dependency injection
   : density_mode_(density_mode)
+  , clock_(clock)
   , logger_(logger)
   // initialise members
   , npart_(npart)
-  , step_(numeric_limits<uint64_t>::max())
+  , step_(numeric_limits<step_type>::max())
 {
     // allocate memory
     unsigned int nq = density_mode_->wavenumber().size();
@@ -59,49 +63,22 @@ ssf<dimension>::ssf(
 }
 
 /**
- * register observables
- */
-template <int dimension>
-void ssf<dimension>::register_observables(writer_type& writer)
-{
-    string root("structure/ssf/");
-    // write wavenumbers only once
-    writer.write_dataset(root + "wavenumber", density_mode_->wavenumber(), "wavenumber grid");
-
-    // register output writers for all partial structure factors
-    unsigned char ntype = static_cast<unsigned char>(density_mode_->value().size());
-    assert('A' + density_mode_->value().size() <= 'Z' + 1);
-    unsigned int k = 0;
-    for (unsigned char i = 0; i < ntype; ++i) {
-        for (unsigned char j = i; j < ntype; ++j, ++k) {
-            string label;
-            label += 'A' + i;
-            label += 'A' + j;
-            writer.register_observable(
-                root + label, &value_[k]
-              , "partial static structure factor S_" + label + " (value, error, count)"
-            );
-        }
-    }
-}
-
-/**
  * compute SSF from sample of density Fourier modes
  */
 template <int dimension>
-void ssf<dimension>::sample(uint64_t step)
+void ssf<dimension>::sample()
 {
-    if (step_ == step) {
+    if (step_ == clock_->step()) {
         LOG_TRACE("sample is up to date");
         return;
     }
 
     // acquire sample of density modes
-    on_sample_(step);
+    on_sample_();
 
     LOG_TRACE("sampling");
 
-    if (density_mode_->step() != step) {
+    if (density_mode_->step() != clock_->step()) {
         throw logic_error("density modes sample was not updated");
     }
 
@@ -119,7 +96,7 @@ void ssf<dimension>::sample(uint64_t step)
             v[2] = static_cast<double>(count(acc));
         }
     }
-    step_ = step;   // store simulation step as time stamp
+    step_ = clock_->step();   // store simulation step as time stamp
 }
 
 /**
@@ -166,11 +143,36 @@ void ssf<dimension>::compute_()
     }
 }
 
+template <int dimension>
+vector<typename ssf<dimension>::result_type> const&
+ssf<dimension>::value(unsigned int type1, unsigned int type2) const
+{
+    unsigned int ntype = density_mode_->value().size();
+    if (!(type1 < ntype)) {
+        throw invalid_argument("first particle type");
+    }
+    if (!(type2 < ntype)) {
+        throw invalid_argument("second particle type");
+    }
+    unsigned int i = min(type1, type2);
+    unsigned int j = max(type1, type2);
+    unsigned int k = j + i * ntype - (i * (i + 1)) / 2;
+    assert(k < value_.size());
+    return value_[k];
+}
+
+template <typename ssf_type>
+static function<vector<typename ssf_type::result_type> const& ()>
+wrap_value(shared_ptr<ssf_type const> ssf, unsigned int type1, unsigned int type2)
+{
+    return bind(static_cast<vector<typename ssf_type::result_type> const& (ssf_type::*)(unsigned int, unsigned int) const>(&ssf_type::value), ssf, type1, type2);
+}
+
 template <typename ssf_type>
 typename ssf_type::slot_function_type
 sample_wrapper(shared_ptr<ssf_type> ssf)
 {
-    return bind(&ssf_type::sample, ssf, _1);
+    return bind(&ssf_type::sample, ssf);
 }
 
 template <int dimension>
@@ -185,11 +187,11 @@ void ssf<dimension>::luaopen(lua_State* L)
             class_<ssf, shared_ptr<ssf> >(class_name.c_str())
                 .def(constructor<
                     shared_ptr<density_mode_type const>
+                  , shared_ptr<clock_type const>
                   , unsigned int
                   , shared_ptr<logger_type>
                 >())
-                .def("register_observables", &ssf::register_observables)
-                .property("value", &ssf::value)
+                .def("value", &wrap_value<ssf>)
                 .property("wavevector", &ssf::wavevector)
                 .property("sample", &sample_wrapper<ssf>)
                 .def("on_sample", &ssf::on_sample)

@@ -59,7 +59,6 @@ HALMD_LUA_API int luaopen_libhalmd_utility_lua_signal(lua_State* L)
     module(L, "libhalmd")
     [
         SLOT( signal<void ()>::slot_function_type )
-      , SLOT( signal<void (uint64_t)>::slot_function_type )
 
       , class_<connection>("connection")
             .def("disconnect", &connection::disconnect)

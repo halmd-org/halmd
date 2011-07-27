@@ -24,6 +24,7 @@
 #include <lua.hpp>
 #include <vector>
 
+#include <halmd/mdsim/clock.hpp>
 #include <halmd/observables/samples/density_mode.hpp>
 #include <halmd/observables/utility/wavevector.hpp>
 #include <halmd/utility/signal.hpp>
@@ -40,20 +41,24 @@ namespace observables {
 template <int dimension>
 class density_mode
 {
+private:
+    typedef signal<void ()> signal_type;
+    typedef mdsim::clock clock_type;
+
 public:
     typedef observables::samples::density_mode<dimension> density_mode_sample_type;
     typedef typename density_mode_sample_type::mode_vector_vector_type result_type;
     typedef observables::utility::wavevector<dimension> wavevector_type;
-    typedef halmd::signal<void (uint64_t)> signal_type;
     typedef typename signal_type::slot_function_type slot_function_type;
+    typedef typename clock_type::step_type step_type;
 
     static void luaopen(lua_State* L);
 
     density_mode() {}
     virtual ~density_mode() {}
-    virtual void acquire(uint64_t step) = 0;
+    virtual void acquire() = 0;
     virtual connection on_acquire(slot_function_type const& slot) = 0;
-    virtual uint64_t step() const = 0;
+    virtual step_type step() const = 0;
     virtual result_type const& value() const = 0;
     virtual wavevector_type const& wavevector() const = 0;
     virtual std::vector<double> const& wavenumber() const = 0;

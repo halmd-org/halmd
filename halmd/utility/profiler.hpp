@@ -55,7 +55,7 @@ namespace utility {
 class profiler
 {
 private:
-    typedef signal<void (uint64_t)> signal_type;
+    typedef signal<void ()> signal_type;
 
 public:
     typedef timer timer_type;
@@ -72,7 +72,7 @@ public:
     /** connect to signal emitted after profiling */
     connection on_append_profile(slot_function_type const& slot);
     /** log and reset runtime accumulators */
-    void profile(uint64_t step);
+    void profile();
     /** Lua bindings */
     static void luaopen(lua_State* L);
 

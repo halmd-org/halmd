@@ -21,12 +21,11 @@ require("halmd.modules")
 
 -- command-line options override H5MD file parameters
 require("halmd.option")
-require("halmd.parameter")
 require("halmd.log")
 
-require("halmd.io.statevars.writer")
-require("halmd.io.trajectory.reader")
-require("halmd.io.trajectory.writer")
+require("halmd.device")
+require("halmd.io.readers.trajectory")
+require("halmd.io.writers.trajectory")
 require("halmd.mdsim.box")
 require("halmd.mdsim.force")
 require("halmd.mdsim.integrator")
@@ -39,10 +38,8 @@ require("halmd.observables.thermodynamics")
 -- grab modules
 local mdsim = halmd.mdsim
 local observables = halmd.observables
-local statevars = halmd.io.statevars
-local trajectory = halmd.io.trajectory
--- grab C++ wrappers
-local po = libhalmd.po
+local readers = halmd.io.readers
+local writers = halmd.io.writers
 -- grab standard library
 local assert = assert
 local pairs = pairs
@@ -53,59 +50,32 @@ module("halmd", halmd.modules.register)
 -- Construct simulation
 --
 function new(args)
+    -- load the device module to log (optional) GPU properties
+    device() -- singleton
+    -- open (optional) H5MD file and read simulation parameters
+    local reader = readers.trajectory()
+
     -- create simulation box with particles
     mdsim.box()
     -- add integrator
     mdsim.integrator()
     -- add force
     mdsim.force()
-
-    local reader = trajectory.reader()
-    mdsim.position{ reader = reader }
-    mdsim.velocity{ reader = reader }
+    -- set initial particle positions (optionally from reader)
+    mdsim.position{reader = reader}
+    -- set initial particle velocities (optionally from reader)
+    mdsim.velocity{reader = reader}
 
     -- Construct sampler.
     local sampler = observables.sampler()
 
-    -- Optionally write trajectory.
-    if args.trajectory then
-        local writer = trajectory.writer()
-        sampler:on_sample{writer.append, args.trajectory, tracker = writer}
-    end
-
-    -- Optionally sample macroscopic state variables.
-    if args.state_vars then
-        local thermodynamics = observables.thermodynamics()
-        sampler:on_prepare{thermodynamics.prepare, args.state_vars, tracker = thermodynamics}
-        sampler:on_sample{thermodynamics.sample, args.state_vars, tracker = thermodynamics}
-    end
-
-    -- Optionally sample static structure factor.
-    if args.state_vars then -- FIXME args.ssf
-        local ssf = observables.ssf()
-        sampler:on_sample{ssf.sample, args.state_vars, tracker = ssf}
-    end
-
-    -- FIXME connect revised writer to thermodynamics and ssf
-    if args.state_vars then
-        local writer = statevars.writer()
-        sampler:on_sample{writer.write, args.state_vars, tracker = writer}
-    end
+    -- Write trajectory to H5MD file.
+    writers.trajectory{}
+    -- Sample macroscopic state variables.
+    observables.thermodynamics{}
+    -- Sample static structure factor.
+    observables.ssf{}
 
     -- Pass sampler from Lua to C++, to run the simulation outside of Lua.
     return sampler
-end
-
--- override module namespace
-namespace = "sampler"
-
---
--- assemble module options
---
--- @param desc po.options_description
---
-function options(desc, globals)
-    -- FIXME desc:add("ssf", po.uint64(), "sample interval for static structure factor")
-    desc:add("state-vars", po.uint64(), "sample interval for macroscopic state variables")
-    desc:add("trajectory", po.uint64(), "sample interval for trajectory")
 end

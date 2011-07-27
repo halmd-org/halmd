@@ -59,7 +59,7 @@ public:
     );
 
     virtual void prepare();
-    virtual void sample(uint64_t step);
+    virtual void sample();
 
     virtual double en_kin();
     virtual vector_type v_cm();

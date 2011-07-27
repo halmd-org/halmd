@@ -50,7 +50,7 @@ void timer_service::event::operator()(time_type const& time)
     }
 }
 
-signal<void (uint64_t)>::slot_function_type
+signal<void ()>::slot_function_type
 wrap_process(shared_ptr<timer_service> ts)
 {
     return bind(&timer_service::process, ts);

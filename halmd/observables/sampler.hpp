@@ -35,12 +35,14 @@ namespace observables {
  */
 class sampler
 {
+private:
+    typedef halmd::signal<void ()> signal_type;
+
 public:
     typedef mdsim::clock clock_type;
     typedef clock_type::step_type step_type;
     typedef clock_type::time_type time_type;
     typedef mdsim::core core_type;
-    typedef halmd::signal<void (step_type)> signal_type;
     typedef signal_type::slot_function_type slot_function_type;
 
     sampler(
@@ -79,8 +81,8 @@ private:
         accumulator_type total;
     };
 
-    void prepare(slot_function_type const& slot, step_type interval, step_type step) const;
-    void sample(slot_function_type const& slot, step_type interval, step_type step) const;
+    void prepare(slot_function_type const& slot, step_type interval) const;
+    void sample(slot_function_type const& slot, step_type interval) const;
 
     /** Molecular Dynamics simulation clock */
     boost::shared_ptr<clock_type const> clock_;

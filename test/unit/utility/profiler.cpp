@@ -67,7 +67,7 @@ BOOST_AUTO_TEST_CASE( test_profiler )
             (*timers.timer2)(n * x);
         }
 
-        profiler->profile(0);
+        profiler->profile();
     }
 
     // FIXME add some tests here (e.g. line counting of log file)

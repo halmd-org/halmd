@@ -26,7 +26,6 @@
 #include <vector>
 
 #include <halmd/io/logger.hpp>
-#include <halmd/io/statevars/writer.hpp>
 #include <halmd/mdsim/box.hpp>
 #include <halmd/mdsim/clock.hpp>
 #include <halmd/mdsim/type_traits.hpp>
@@ -49,12 +48,12 @@ template <int dimension>
 class thermodynamics
 {
 public:
-    typedef io::statevars::writer<dimension> writer_type;
     typedef mdsim::box<dimension> box_type;
     typedef mdsim::clock clock_type;
+    typedef typename clock_type::step_type step_type;
     typedef logger logger_type;
     typedef typename mdsim::type_traits<dimension, double>::vector_type vector_type;
-    typedef typename signal<void (uint64_t)>::slot_function_type slot_function_type;
+    typedef typename signal<void ()>::slot_function_type slot_function_type;
 
     static void luaopen(lua_State* L);
 
@@ -63,13 +62,11 @@ public:
       , boost::shared_ptr<clock_type const> clock
       , boost::shared_ptr<logger_type> logger
     );
-    virtual ~thermodynamics() {}
-    virtual void register_observables(writer_type& writer);
 
     // preparations before MD step
     virtual void prepare() = 0;
     // sample macroscopic state variables and store with given simulation step
-    virtual void sample(uint64_t step);
+    virtual void sample();
 
     /** potential energy per particle */
     virtual double en_pot() = 0;
@@ -120,7 +117,7 @@ private:
     double hypervirial_;
     double time_;
     /** time stamp of data */
-    uint64_t step_;
+    step_type step_;
 
     // profiling runtime accumulators
     runtime runtime_;

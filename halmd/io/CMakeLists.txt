@@ -5,5 +5,5 @@ halmd_add_modules(
   libhalmd_io_logger
 )
 
-add_subdirectory(trajectory)
-add_subdirectory(statevars)
+add_subdirectory(readers)
+add_subdirectory(writers)

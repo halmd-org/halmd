@@ -18,6 +18,7 @@
 --
 
 require("halmd.device")
+require("halmd.mdsim.clock")
 require("halmd.modules")
 require("halmd.observables.phase_space")
 require("halmd.observables.samples.phase_space")
@@ -56,6 +57,7 @@ module("halmd.observables.density_mode", halmd.modules.register)
 function new(args)
     -- dependency injection
     local wavevector = assert(args.wavevector)
+    local clock = mdsim.clock() -- singleton
 
     local sample
     if device() then
@@ -72,7 +74,7 @@ function new(args)
     else
         density_mode = assert(density_mode_wrapper.host[dimension])
     end
-    local observable = density_mode(sample, wavevector, logger)
+    local observable = density_mode(sample, wavevector, clock, logger)
 
     local phase_space
     if device() then

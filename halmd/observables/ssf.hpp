@@ -26,7 +26,7 @@
 #include <vector>
 
 #include <halmd/io/logger.hpp>
-#include <halmd/io/statevars/writer.hpp>
+#include <halmd/mdsim/clock.hpp>
 #include <halmd/numeric/blas/fixed_vector.hpp>
 #include <halmd/observables/density_mode.hpp>
 #include <halmd/utility/profiler.hpp>
@@ -49,11 +49,14 @@ namespace observables {
 template <int dimension>
 class ssf
 {
+private:
+    typedef halmd::signal<void ()> signal_type;
+
 public:
-    typedef io::statevars::writer<dimension> writer_type;
     typedef observables::density_mode<dimension> density_mode_type;
+    typedef mdsim::clock clock_type;
+    typedef typename clock_type::step_type step_type;
     typedef logger logger_type;
-    typedef halmd::signal<void (uint64_t)> signal_type;
     typedef typename signal_type::slot_function_type slot_function_type;
 
     typedef boost::array<double, 3> result_type;
@@ -63,13 +66,12 @@ public:
 
     ssf(
         boost::shared_ptr<density_mode_type const> density_mode
+      , boost::shared_ptr<clock_type const> clock
       , unsigned int npart
       , boost::shared_ptr<logger_type> logger = boost::make_shared<logger_type>()
     );
-    void register_observables(writer_type& writer);
-
     // compute ssf from sample of density Fourier modes and store with given simulation step
-    void sample(uint64_t step);
+    virtual void sample();
 
     connection on_sample(slot_function_type const& slot)
     {
@@ -81,6 +83,9 @@ public:
     {
         return value_;
     }
+
+    //! returns static structure factor for given type pair
+    std::vector<result_type> const& value(unsigned int type1, unsigned int type2) const;
 
     //! returns instance of wavevector class used to compute the ssf
     typename density_mode_type::wavevector_type const& wavevector() const
@@ -99,6 +104,7 @@ private:
     };
 
     boost::shared_ptr<density_mode_type const> density_mode_;
+    boost::shared_ptr<clock_type const> clock_;
     boost::shared_ptr<logger_type> logger_;
 
     /** compute static structure factor and update result accumulators */
@@ -119,7 +125,7 @@ private:
     /** result accumulators */
     std::vector<std::vector<accumulator<double> > > result_accumulator_;
     /** time stamp of data (simulation step) */
-    uint64_t step_;
+    step_type step_;
     /** profiling runtime accumulators */
     runtime runtime_;
 

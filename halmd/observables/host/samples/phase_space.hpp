@@ -1,5 +1,5 @@
 /*
- * Copyright © 2008-2010  Peter Colberg
+ * Copyright © 2008-2011  Peter Colberg
  *
  * This file is part of HALMD.
  *
@@ -20,11 +20,13 @@
 #ifndef HALMD_OBSERVABLES_HOST_SAMPLES_PHASE_SPACE_HPP
 #define HALMD_OBSERVABLES_HOST_SAMPLES_PHASE_SPACE_HPP
 
+#include <boost/function.hpp>
 #include <boost/shared_ptr.hpp>
 #include <lua.hpp>
 #include <stdint.h>
 #include <vector>
 
+#include <halmd/mdsim/clock.hpp>
 #include <halmd/numeric/blas/fixed_vector.hpp>
 
 namespace halmd {
@@ -35,8 +37,12 @@ namespace samples {
 template <int dimension, typename float_type>
 class phase_space
 {
+private:
+    typedef mdsim::clock clock_type;
+
 public:
     typedef fixed_vector<float_type, dimension> vector_type;
+    typedef typename clock_type::step_type step_type;
 
     /** sample vector type for all particles of a species */
     typedef std::vector<vector_type> sample_vector;
@@ -50,11 +56,19 @@ public:
     /** particle velocities */
     sample_vector_ptr_vector v;
     /** simulation step when sample was taken */
-    uint64_t step;
+    step_type step;
 
     static void luaopen(lua_State* L);
 
     phase_space(std::vector<unsigned int> ntypes);
+    /** get read-only particle positions of given type */
+    sample_vector const& position(unsigned int type) const;
+    /** get read-only particle velocities of given type */
+    sample_vector const& velocity(unsigned int type) const;
+    /** get read-write particle positions of given type */
+    sample_vector& position(unsigned int type);
+    /** get read-write particle velocities of given type */
+    sample_vector& velocity(unsigned int type);
 };
 
 } // namespace observables

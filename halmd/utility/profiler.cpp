@@ -53,14 +53,14 @@ connection profiler::on_append_profile(slot_function_type const& slot)
     return on_append_profile_.connect(slot);
 }
 
-void profiler::profile(uint64_t step)
+void profiler::profile()
 {
-    on_prepend_profile_(step);
+    on_prepend_profile_();
     log();
     for (slots_const_iterator acc = accumulators_.begin(); acc != accumulators_.end(); ++acc) {
         acc->first->reset();
     }
-    on_append_profile_(step);
+    on_append_profile_();
 }
 
 /**
@@ -148,7 +148,7 @@ void profiler::log() const
 static profiler::slot_function_type
 wrap_profile(shared_ptr<profiler> instance)
 {
-    return bind(&profiler::profile, instance, _1);
+    return bind(&profiler::profile, instance);
 }
 
 void profiler::luaopen(lua_State* L)

@@ -26,6 +26,7 @@
 #include <limits>
 
 #include <halmd/mdsim/box.hpp>
+#include <halmd/mdsim/clock.hpp>
 #include <halmd/mdsim/host/particle.hpp>
 #include <halmd/mdsim/host/positions/phase_space.hpp>
 #include <halmd/mdsim/host/velocities/phase_space.hpp>
@@ -109,6 +110,7 @@ struct phase_space
     typedef typename modules_type::output_sample_type output_sample_type;
     static bool const gpu = modules_type::gpu;
 
+    typedef mdsim::clock clock_type;
     typedef typename particle_type::vector_type vector_type;
     typedef typename vector_type::value_type float_type;
     enum { dimension = vector_type::static_size };
@@ -117,6 +119,7 @@ struct phase_space
     typename box_type::vector_type box_length;
 
     shared_ptr<box_type> box;
+    shared_ptr<clock_type> clock;
     shared_ptr<particle_type> particle;
     shared_ptr<position_type> position;
     shared_ptr<velocity_type> velocity;
@@ -155,7 +158,8 @@ void phase_space<modules_type>::test()
     // TODO
 
     // acquire sample from particle, construct temporary sampler module
-    phase_space_type(output_sample, particle, box).acquire(1);
+    clock->advance();
+    phase_space_type(output_sample, particle, box, clock).acquire();
     BOOST_CHECK(output_sample->step == 1);
 
     // compare output and input, copy GPU sample to host before
@@ -195,6 +199,7 @@ phase_space<modules_type>::phase_space()
     output_sample = make_shared<output_sample_type>(npart);
     position = make_shared<position_type>(particle, box, input_sample);
     velocity = make_shared<velocity_type>(particle, input_sample);
+    clock = make_shared<clock_type>(0); // bogus time-step
 
     // set particle tags and types
     particle->set();

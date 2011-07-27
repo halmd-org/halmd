@@ -31,11 +31,13 @@ template <int dimension, typename float_type>
 density_mode<dimension, float_type>::density_mode(
     shared_ptr<phase_space_type const> phase_space
   , shared_ptr<wavevector_type const> wavevector
+  , shared_ptr<clock_type const> clock
   , shared_ptr<logger_type> logger
 )
     // dependency injection
   : phase_space_(phase_space)
   , wavevector_(wavevector)
+  , clock_(clock)
   , logger_(logger)
     // member initialisation
   , nq_(wavevector_->value().size())
@@ -81,11 +83,11 @@ density_mode<dimension, float_type>::density_mode(
  * Acquire sample of all density modes from phase space sample
  */
 template <int dimension, typename float_type>
-void density_mode<dimension, float_type>::acquire(uint64_t step)
+void density_mode<dimension, float_type>::acquire()
 {
     scoped_timer_type timer(runtime_.sample);
 
-    if (rho_sample_.step == step) {
+    if (rho_sample_.step == clock_->step()) {
         LOG_TRACE("sample is up to date");
         return;
     }
@@ -94,11 +96,11 @@ void density_mode<dimension, float_type>::acquire(uint64_t step)
     typedef typename density_mode_sample_type::mode_vector_type mode_vector_type;
 
     // trigger update of phase space sample
-    on_acquire_(step);
+    on_acquire_();
 
     LOG_TRACE("acquire sample");
 
-    if (phase_space_->step != step) {
+    if (phase_space_->step != clock_->step()) {
         throw logic_error("GPU phase space sample was not updated");
     }
 
@@ -135,7 +137,7 @@ void density_mode<dimension, float_type>::acquire(uint64_t step)
             rho[i] = mode_type(h_cos_[i], -h_sin_[i]);
         }
     }
-    rho_sample_.step = step;
+    rho_sample_.step = clock_->step();
 }
 
 template <int dimension, typename float_type>
@@ -153,6 +155,7 @@ void density_mode<dimension, float_type>::luaopen(lua_State* L)
                     .def(constructor<
                         shared_ptr<phase_space_type const>
                       , shared_ptr<wavevector_type const>
+                      , shared_ptr<clock_type const>
                       , shared_ptr<logger_type>
                     >())
                     .scope

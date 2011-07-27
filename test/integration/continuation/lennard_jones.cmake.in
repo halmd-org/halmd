@@ -51,7 +51,7 @@ execute_halmd(
   --steps 1000
   "${BACKEND_OPTION}"
   box --dimension "${DIMENSION}"--particles=100,200 --density 0.1
-  sampler --trajectory=1000
+  trajectory --every=1000
 )
 
 execute_halmd(
@@ -60,7 +60,7 @@ execute_halmd(
   --steps 1000
   "${BACKEND_OPTION}"
   trajectory --file "${OUTPUT_PREFIX}.trj"
-  sampler --trajectory=1000
+  trajectory --every=1000
 )
 
 file(REMOVE

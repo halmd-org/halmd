@@ -23,6 +23,7 @@
 #include <lua.hpp>
 
 #include <halmd/mdsim/box.hpp>
+#include <halmd/mdsim/clock.hpp>
 #include <halmd/mdsim/gpu/particle.hpp>
 #include <halmd/observables/gpu/samples/phase_space.hpp>
 #include <halmd/observables/host/samples/phase_space.hpp>
@@ -47,6 +48,7 @@ public:
     typedef gpu::samples::phase_space<dimension, float_type> sample_type;
     typedef mdsim::gpu::particle<dimension, float_type> particle_type;
     typedef mdsim::box<dimension> box_type;
+    typedef mdsim::clock clock_type;
     typedef logger logger_type;
     typedef typename sample_type::vector_type vector_type;
 
@@ -56,14 +58,16 @@ public:
         boost::shared_ptr<sample_type> sample
       , boost::shared_ptr<particle_type const> particle
       , boost::shared_ptr<box_type const> box
+      , boost::shared_ptr<clock_type const> clock
       , boost::shared_ptr<logger_type> logger = boost::make_shared<logger_type>()
     );
-    virtual void acquire(uint64_t step);
+    virtual void acquire();
 
 private:
     boost::shared_ptr<sample_type> sample_;
     boost::shared_ptr<particle_type const> particle_;
     boost::shared_ptr<box_type const> box_;
+    boost::shared_ptr<clock_type const> clock_;
     boost::shared_ptr<logger_type> logger_;
 };
 
@@ -81,6 +85,7 @@ public:
     typedef mdsim::box<dimension> box_type;
     typedef fixed_vector<float_type, dimension> vector_type;
     typedef logger logger_type;
+    typedef mdsim::clock clock_type;
 
     static void luaopen(lua_State* L);
 
@@ -88,14 +93,16 @@ public:
         boost::shared_ptr<sample_type> sample
       , boost::shared_ptr<particle_type /* FIXME const */> particle
       , boost::shared_ptr<box_type const> box
+      , boost::shared_ptr<clock_type const> clock
       , boost::shared_ptr<logger_type> logger = boost::make_shared<logger_type>()
     );
-    virtual void acquire(uint64_t step);
+    virtual void acquire();
 
 private:
     boost::shared_ptr<sample_type> sample_;
     boost::shared_ptr<particle_type /* FIXME const */> particle_;
     boost::shared_ptr<box_type const> box_;
+    boost::shared_ptr<clock_type const> clock_;
     boost::shared_ptr<logger_type> logger_;
 };
 

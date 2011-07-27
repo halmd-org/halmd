@@ -25,6 +25,7 @@
 #include <lua.hpp>
 
 #include <halmd/io/logger.hpp>
+#include <halmd/mdsim/clock.hpp>
 #include <halmd/mdsim/type_traits.hpp>
 #include <halmd/observables/density_mode.hpp>
 #include <halmd/observables/gpu/density_mode_kernel.hpp>
@@ -46,15 +47,19 @@ template <int dimension, typename float_type>
 class density_mode
   : public observables::density_mode<dimension>
 {
-public:
+private:
     typedef observables::density_mode<dimension> _Base;
+    typedef signal<void ()> signal_type;
+
+public:
     typedef typename _Base::density_mode_sample_type density_mode_sample_type;
     typedef typename _Base::wavevector_type wavevector_type;
     typedef gpu::samples::phase_space<dimension, float_type> phase_space_type;
     typedef density_mode_wrapper<dimension> wrapper_type;
     typedef logger logger_type;
-    typedef typename _Base::signal_type signal_type;
     typedef typename _Base::slot_function_type slot_function_type;
+    typedef mdsim::clock clock_type;
+    typedef typename clock_type::step_type step_type;
 
     typedef typename mdsim::type_traits<dimension, float>::vector_type vector_type;
     typedef typename mdsim::type_traits<dimension, float>::gpu::coalesced_vector_type gpu_vector_type;
@@ -65,13 +70,14 @@ public:
     density_mode(
         boost::shared_ptr<phase_space_type const> phase_space
       , boost::shared_ptr<wavevector_type const> wavevector
+      , boost::shared_ptr<clock_type const> clock
       , boost::shared_ptr<logger_type> logger = boost::make_shared<logger_type>()
     );
 
     /**
     * compute density modes from phase space sample and store with given time stamp (simulation step)
     */
-    virtual void acquire(uint64_t step);
+    virtual void acquire();
 
     virtual connection on_acquire(slot_function_type const& slot)
     {
@@ -85,7 +91,7 @@ public:
     }
 
     //! returns simulation step when sample was taken
-    virtual uint64_t step() const
+    virtual step_type step() const
     {
         return rho_sample_.step;
     }
@@ -114,6 +120,7 @@ private:
 
     boost::shared_ptr<phase_space_type const> phase_space_;
     boost::shared_ptr<wavevector_type const> wavevector_;
+    boost::shared_ptr<clock_type const> clock_;
     boost::shared_ptr<logger_type> logger_;
 
     /** total number of wavevectors */

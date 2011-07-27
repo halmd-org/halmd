@@ -37,11 +37,13 @@ phase_space<gpu::samples::phase_space<dimension, float_type> >::phase_space(
     shared_ptr<sample_type> sample
   , shared_ptr<particle_type const> particle
   , shared_ptr<box_type const> box
+  , shared_ptr<clock_type const> clock
   , shared_ptr<logger_type> logger
 )
   : sample_(sample)
   , particle_(particle)
   , box_(box)
+  , clock_(clock)
   , logger_(logger)
 {
     try {
@@ -59,11 +61,13 @@ phase_space<host::samples::phase_space<dimension, float_type> >::phase_space(
     shared_ptr<sample_type> sample
   , shared_ptr<particle_type /* FIXME const */> particle
   , shared_ptr<box_type const> box
+  , shared_ptr<clock_type const> clock
   , shared_ptr<logger_type> logger
 )
   : sample_(sample)
   , particle_(particle)
   , box_(box)
+  , clock_(clock)
   , logger_(logger)
 {
 }
@@ -73,9 +77,9 @@ phase_space<host::samples::phase_space<dimension, float_type> >::phase_space(
  * Sample phase_space
  */
 template <int dimension, typename float_type>
-void phase_space<gpu::samples::phase_space<dimension, float_type> >::acquire(uint64_t step)
+void phase_space<gpu::samples::phase_space<dimension, float_type> >::acquire()
 {
-    if (sample_->step == step) {
+    if (sample_->step == clock_->step()) {
         LOG_TRACE("sample is up to date");
         return;
     }
@@ -96,16 +100,16 @@ void phase_space<gpu::samples::phase_space<dimension, float_type> >::acquire(uin
         g_index += ntype;
     }
 
-    sample_->step = step;
+    sample_->step = clock_->step();
 }
 
 /**
  * Sample phase_space
  */
 template <int dimension, typename float_type>
-void phase_space<host::samples::phase_space<dimension, float_type> >::acquire(uint64_t step)
+void phase_space<host::samples::phase_space<dimension, float_type> >::acquire()
 {
-    if (sample_->step == step) {
+    if (sample_->step == clock_->step()) {
         LOG_TRACE("sample is up to date");
         return;
     }
@@ -142,7 +146,7 @@ void phase_space<host::samples::phase_space<dimension, float_type> >::acquire(ui
         assert(tag < sample_->v[type]->size());
         (*sample_->v[type])[tag] = v;
     }
-    sample_->step = step;
+    sample_->step = clock_->step();
 }
 
 template <int dimension, typename float_type>
@@ -169,6 +173,7 @@ void phase_space<gpu::samples::phase_space<dimension, float_type> >::luaopen(lua
                              shared_ptr<sample_type>
                            , shared_ptr<particle_type const>
                            , shared_ptr<box_type const>
+                           , shared_ptr<clock_type const>
                            , shared_ptr<logger_type>
                         >())
                         .property("dimension", &wrap_gpu_dimension<dimension, float_type>)
@@ -202,6 +207,7 @@ void phase_space<host::samples::phase_space<dimension, float_type> >::luaopen(lu
                              shared_ptr<sample_type>
                            , shared_ptr<particle_type /* FIXME const */>
                            , shared_ptr<box_type const>
+                           , shared_ptr<clock_type const>
                            , shared_ptr<logger_type>
                         >())
                         .property("dimension", &wrap_host_dimension<dimension, float_type>)

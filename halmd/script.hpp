@@ -22,6 +22,7 @@
 
 #include <boost/noncopyable.hpp>
 #include <lua.hpp>
+#include <stdexcept>
 #include <string>
 
 #include <halmd/utility/options_parser.hpp>
@@ -51,6 +52,7 @@ public:
 
 private:
     void package_path();
+    static void register_exception_handlers();
 };
 
 } // namespace halmd

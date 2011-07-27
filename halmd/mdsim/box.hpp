@@ -1,5 +1,5 @@
 /*
- * Copyright © 2008-2010  Peter Colberg and Felix Höfling
+ * Copyright © 2008-2011  Peter Colberg and Felix Höfling
  *
  * This file is part of HALMD.
  *
@@ -20,10 +20,8 @@
 #ifndef HALMD_MDSIM_BOX_HPP
 #define HALMD_MDSIM_BOX_HPP
 
-#include <boost/multi_array.hpp>
-#include <numeric>
-#include <functional>
 #include <lua.hpp>
+#include <vector>
 
 #include <halmd/mdsim/type_traits.hpp>
 
@@ -58,23 +56,20 @@ public:
         return density_;
     }
 
-    double volume() const
-    {
-        return std::accumulate(length_.begin(), length_.end(), 1., std::multiplies<double>());
-    }
-
     template <typename T>
     T reduce_periodic(T& r) const;
 
     template <typename T>
     void extend_periodic(T& r, T const& image) const;
 
-    vector_type origin() const
-    {
-        return -length_half_;
-    }
+    /** get origin */
+    vector_type origin() const;
+    /** get edge vectors */
+    std::vector<vector_type> edges() const;
+    /** get volume */
+    double volume() const;
 
-protected:
+private:
     /** edge lengths of cuboid */
     vector_type length_;
     /** number density */

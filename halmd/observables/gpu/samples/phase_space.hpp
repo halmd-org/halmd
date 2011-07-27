@@ -25,6 +25,7 @@
 #include <stdint.h>
 #include <vector>
 
+#include <halmd/mdsim/clock.hpp>
 #include <halmd/mdsim/type_traits.hpp>
 
 namespace halmd {
@@ -35,9 +36,13 @@ namespace samples {
 template <int dimension, typename float_type>
 class phase_space
 {
+private:
+    typedef mdsim::clock clock_type;
+
 public:
     typedef typename mdsim::type_traits<dimension, float_type>::vector_type vector_type;
     typedef typename mdsim::type_traits<dimension, float_type>::gpu::coalesced_vector_type gpu_vector_type;
+    typedef typename clock_type::step_type step_type;
 
     /** sample vector type for all particles of a species */
     typedef cuda::vector<gpu_vector_type> sample_vector;
@@ -51,7 +56,7 @@ public:
     /** particle velocities */
     sample_vector_ptr_vector v;
     /** simulation step when sample was taken */
-    uint64_t step;
+    step_type step;
 
     static void luaopen(lua_State* L);
 

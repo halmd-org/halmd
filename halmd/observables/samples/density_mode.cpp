@@ -36,7 +36,7 @@ density_mode<dimension>::density_mode(unsigned int ntype, unsigned int nq)
   // allocate sample pointers
   : rho(ntype)
   // initialise attributes
-  , step(numeric_limits<uint64_t>::max())
+  , step(numeric_limits<step_type>::max())
 {
     // allocate memory for each particle type
     for (unsigned int i = 0; i < ntype; ++i) {

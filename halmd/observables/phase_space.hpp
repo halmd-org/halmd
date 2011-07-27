@@ -20,7 +20,6 @@
 #ifndef HALMD_OBSERVABLES_PHASE_SPACE_HPP
 #define HALMD_OBSERVABLES_PHASE_SPACE_HPP
 
-#include <stdint.h>
 #include <lua.hpp>
 
 namespace halmd {
@@ -34,7 +33,7 @@ public:
 
     phase_space() {}
     virtual ~phase_space() {};
-    virtual void acquire(uint64_t step) = 0;
+    virtual void acquire() = 0;
 };
 
 } // namespace observables
