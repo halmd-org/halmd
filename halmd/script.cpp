@@ -172,7 +172,7 @@ void script::run()
     using namespace luabind;
 
     try {
-        slot_function_type slot = call_function<slot_function_type>(L, "setup");
+        slot_function_type slot = resume_function<slot_function_type>(L, "setup");
 
         // Some C++ modules are only needed during the Lua script stage,
         // e.g. the trajectory reader. To make sure these modules are
@@ -181,6 +181,15 @@ void script::run()
         lua_gc(L, LUA_GCCOLLECT, 0);
 
         slot();
+
+        while (lua_status(L) == LUA_YIELD)
+        {
+            slot_function_type slot = resume<slot_function_type>(L);
+
+            lua_gc(L, LUA_GCCOLLECT, 0);
+
+            slot();
+        }
     }
     catch (luabind::error const& e) {
         LOG_ERROR(lua_tostring(e.state(), -1));
