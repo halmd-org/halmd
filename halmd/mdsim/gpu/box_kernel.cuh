@@ -26,7 +26,7 @@ namespace gpu {
 namespace box_kernel {
 
 /**
- * enforce periodic boundary conditions on argument
+ * enforce periodic boundary conditions on first argument
  *
  * map coordinates to (-L[i]/2, L[i]/2)
  * which is appropriate too for relative vectors
@@ -41,6 +41,20 @@ __device__ inline vector_type_ reduce_periodic(
     vector_type_ image = rint(fdivide(static_cast<vector_type_>(r), L));
     r -= element_prod(image, L);
     return image;
+}
+
+/**
+ * extend periodically reduced distance vector by image vector
+ *
+ * This is the inverse of reduce_periodic.
+ */
+template <typename vector_type, typename vector_type_>
+__device__ inline void extend_periodic(
+  vector_type& r,
+  vector_type_ const& image,
+  vector_type_ const& L)
+{
+    r += element_prod(image, L);
 }
 
 } // namespace box_kernel

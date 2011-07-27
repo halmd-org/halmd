@@ -45,3 +45,33 @@ if(WITH_CUDA)
     test_unit_observables_ssf --run_test=ssf_gpu_3d --log_level=test_suite
   )
 endif(WITH_CUDA)
+
+# phase space sampler
+add_executable(test_unit_observables_phase_space
+  phase_space.cpp
+)
+target_link_libraries(test_unit_observables_phase_space
+  libhalmd
+  ${HALMD_COMMON_LIBRARIES}
+  ${HALMD_TEST_LIBRARIES}
+)
+add_test(unit/observables/phase_space/host/2d
+  test_unit_observables_phase_space --run_test=phase_space_host_2d --log_level=test_suite
+)
+add_test(unit/observables/phase_space/host/3d
+  test_unit_observables_phase_space --run_test=phase_space_host_3d --log_level=test_suite
+)
+if(WITH_CUDA)
+  add_test(unit/observables/phase_space/gpu/host/2d
+    test_unit_observables_phase_space --run_test=phase_space_gpu_host_2d --log_level=test_suite
+  )
+  add_test(unit/observables/phase_space/gpu/host/3d
+    test_unit_observables_phase_space --run_test=phase_space_gpu_host_3d --log_level=test_suite
+  )
+  add_test(unit/observables/phase_space/gpu/gpu/2d
+    test_unit_observables_phase_space --run_test=phase_space_gpu_gpu_2d --log_level=test_suite
+  )
+  add_test(unit/observables/phase_space/gpu/gpu/3d
+    test_unit_observables_phase_space --run_test=phase_space_gpu_gpu_3d --log_level=test_suite
+  )
+endif(WITH_CUDA)

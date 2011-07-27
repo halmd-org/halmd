@@ -1,5 +1,5 @@
 /*
- * Copyright © 2008-2010  Peter Colberg and Felix Höfling
+ * Copyright © 2008-2011  Peter Colberg and Felix Höfling
  *
  * This file is part of HALMD.
  *
@@ -20,14 +20,17 @@
 #ifndef HALMD_MDSIM_GPU_VELOCITIES_BOLTZMANN_HPP
 #define HALMD_MDSIM_GPU_VELOCITIES_BOLTZMANN_HPP
 
+#include <boost/make_shared.hpp>
 #include <lua.hpp>
 #include <utility>
 
+#include <halmd/io/logger.hpp>
 #include <halmd/mdsim/gpu/particle.hpp>
 #include <halmd/mdsim/gpu/velocity.hpp>
 #include <halmd/mdsim/gpu/velocities/boltzmann_kernel.hpp>
 #include <halmd/numeric/mp/dsfloat.hpp>
 #include <halmd/random/gpu/random.hpp>
+#include <halmd/utility/profiler.hpp>
 
 namespace halmd {
 namespace mdsim {
@@ -51,11 +54,9 @@ public:
     typedef boltzmann_wrapper<dimension, float, rng_type> wrapper_type;
 #endif
     typedef typename wrapper_type::gaussian_impl_type gaussian_impl_type;
+    typedef logger logger_type;
 
     static char const* module_name() { return "boltzmann"; }
-
-    boost::shared_ptr<particle_type> particle;
-    boost::shared_ptr<random_type> random;
 
     static void luaopen(lua_State* L);
 
@@ -63,6 +64,7 @@ public:
         boost::shared_ptr<particle_type> particle
       , boost::shared_ptr<random_type> random
       , double temperature
+      , boost::shared_ptr<logger_type> logger = boost::make_shared<logger_type>()
     );
     virtual void set();
 
@@ -72,16 +74,30 @@ public:
         return temp_;
     }
 
-    gaussian_impl_type const gaussian_impl;
     static gaussian_impl_type get_gaussian_impl(int threads);
 
-protected:
+private:
+    typedef utility::profiler profiler_type;
+    typedef typename profiler_type::accumulator_type accumulator_type;
+    typedef typename profiler_type::scoped_timer_type scoped_timer_type;
+
+    struct runtime
+    {
+        accumulator_type set;
+    };
+
+    boost::shared_ptr<particle_type> particle_;
+    boost::shared_ptr<random_type> random_;
+    boost::shared_ptr<logger_type> logger_;
+    gaussian_impl_type const gaussian_impl_;
     /** temperature */
     float_type temp_;
     /** block sum of velocity */
     cuda::vector<gpu_vector_type> g_vcm_;
     /** block sum of squared velocity */
     cuda::vector<dsfloat> g_vv_;
+    /** profiling runtime accumulators */
+    runtime runtime_;
 };
 
 } // namespace mdsim

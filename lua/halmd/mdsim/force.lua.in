@@ -29,6 +29,7 @@ local po = libhalmd.po
 -- grab standard library
 local assert = assert
 local pairs = pairs
+local property = property
 
 module("halmd.mdsim.force", halmd.modules.register, halmd.singleton)
 
@@ -38,8 +39,15 @@ module("halmd.mdsim.force", halmd.modules.register, halmd.singleton)
 function new(args)
     local force = args.force or "lennard_jones" -- default value
     local potential = assert(mdsim.forces[force])
+    local name = assert(potential.name) -- function
 
     local potential = potential()
+
+    -- pair_trunc.profile registers its compute runtime accumulator
+    -- with a description that contains the name of the potential,
+    -- therefore store the potential name as a read-only Lua property
+    potential.name = property(name)
+
     if potential.r_cut then
         return mdsim.forces.pair_trunc{ force = force, potential = potential }
     end

@@ -33,6 +33,7 @@ struct particle_wrapper
     cuda::symbol<unsigned int> ntype;
     cuda::texture<unsigned int> ntypes;
     cuda::function<void (float4*, float4*)> tag;
+    cuda::function<void (unsigned int*)> gen_index;
     static particle_wrapper const kernel;
 };
 

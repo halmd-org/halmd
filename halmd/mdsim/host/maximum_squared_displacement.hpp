@@ -29,6 +29,7 @@
 #include <halmd/mdsim/box.hpp>
 #include <halmd/mdsim/host/force.hpp>
 #include <halmd/mdsim/host/particle.hpp>
+#include <halmd/utility/profiler.hpp>
 
 namespace halmd {
 namespace mdsim {
@@ -53,12 +54,24 @@ public:
     float_type compute();
 
 private:
+    typedef utility::profiler profiler_type;
+    typedef typename profiler_type::accumulator_type accumulator_type;
+    typedef typename profiler_type::scoped_timer_type scoped_timer_type;
+
+    struct runtime
+    {
+        accumulator_type zero;
+        accumulator_type compute;
+    };
+
     //! system state
     boost::shared_ptr<particle_type const> particle_;
     //! simulation box
     boost::shared_ptr<box_type const> box_;
     /* particle positions at last maximum_squared_displacement list update */
     std::vector<vector_type> r0_;
+    /** profiling runtime accumulators */
+    runtime runtime_;
 };
 
 } // namespace host

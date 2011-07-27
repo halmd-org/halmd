@@ -20,10 +20,12 @@
 #ifndef HALMD_MDSIM_GPU_BINNING_HPP
 #define HALMD_MDSIM_GPU_BINNING_HPP
 
+#include <boost/make_shared.hpp>
 #include <boost/numeric/ublas/symmetric.hpp>
 #include <boost/shared_ptr.hpp>
 #include <lua.hpp>
 
+#include <halmd/io/logger.hpp>
 #include <halmd/algorithm/gpu/radix_sort.hpp>
 #include <halmd/mdsim/box.hpp>
 #include <halmd/mdsim/gpu/binning_kernel.hpp>
@@ -42,8 +44,8 @@ public:
     typedef typename particle_type::vector_type vector_type;
     typedef boost::numeric::ublas::symmetric_matrix<float_type, boost::numeric::ublas::lower> matrix_type;
     typedef mdsim::box<dimension> box_type;
-    typedef utility::profiler profiler_type;
     struct defaults;
+    typedef logger logger_type;
 
     typedef fixed_vector<unsigned int, dimension> cell_size_type;
     typedef fixed_vector<int, dimension> cell_diff_type;
@@ -55,9 +57,9 @@ public:
       , boost::shared_ptr<box_type const> box
       , matrix_type const& r_cut
       , double skin
+      , boost::shared_ptr<logger_type> logger = boost::make_shared<logger_type>()
       , double cell_occupancy = defaults::occupancy()
     );
-    void register_runtimes(profiler_type& profiler);
     void update();
 
     //! returns neighbour list skin in MD units
@@ -109,15 +111,19 @@ public:
     }
 
 private:
+    typedef utility::profiler profiler_type;
+    typedef typename profiler_type::accumulator_type accumulator_type;
+    typedef typename profiler_type::scoped_timer_type scoped_timer_type;
+
     struct runtime
     {
-        typedef typename profiler_type::accumulator_type accumulator_type;
         accumulator_type update;
     };
 
     boost::shared_ptr<particle_type const> particle_;
     boost::shared_ptr<box_type const> box_;
-
+    /** module logger */
+    boost::shared_ptr<logger_type> logger_;
     /** neighbour list skin in MD units */
     float_type r_skin_;
     /** average desired cell occupancy */
@@ -143,7 +149,6 @@ private:
     cuda::vector<unsigned int> g_cell_permutation_;
     /** cell offsets in sorted particle list */
     cuda::vector<unsigned int> g_cell_offset_;
-
     /** profiling runtime accumulators */
     runtime runtime_;
 };

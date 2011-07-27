@@ -20,10 +20,13 @@
 #ifndef HALMD_MDSIM_GPU_FORCES_LENNARD_JONES_SIMPLE_HPP
 #define HALMD_MDSIM_GPU_FORCES_LENNARD_JONES_SIMPLE_HPP
 
+#include <boost/make_shared.hpp>
+#include <boost/numeric/ublas/matrix.hpp>
 #include <boost/numeric/ublas/symmetric.hpp>
 #include <cuda_wrapper/cuda_wrapper.hpp>
 #include <lua.hpp>
 
+#include <halmd/io/logger.hpp>
 #include <halmd/mdsim/gpu/forces/pair_trunc.hpp>
 #include <halmd/mdsim/gpu/forces/lennard_jones_simple_kernel.hpp>
 
@@ -34,9 +37,9 @@ namespace forces {
 
 /**
  * define Lennard-Jones potential and parameters
- * for a single species
+ * for a single species (consituting a "simple liquid")
  *
- * The usual LJ units are employed, only parameter is
+ * The usual LJ units are employed, the only parameter is
  * the potential cutoff.
  */
 template <typename float_type>
@@ -45,28 +48,46 @@ class lennard_jones_simple
 public:
     typedef lennard_jones_simple_kernel::lennard_jones_simple gpu_potential_type;
     typedef boost::numeric::ublas::symmetric_matrix<float_type, boost::numeric::ublas::lower> matrix_type;
+    typedef logger logger_type;
 
-    static char const* name() { return "Lennard-Jones"; }
     static char const* module_name() { return "lennard_jones_simple"; }
 
     static void luaopen(lua_State* L);
 
-    lennard_jones_simple(float_type cutoff);
+    lennard_jones_simple(
+        float_type cutoff
+      , boost::shared_ptr<logger_type> logger = boost::make_shared<logger_type>()
+    );
 
     void bind_textures() const {}
 
-    matrix_type const& r_cut() const
+    matrix_type r_cut() const
     {
-        return r_cut_;
+        using boost::numeric::ublas::scalar_matrix;
+        return scalar_matrix<float_type>(1, 1, r_cut_); //< construct 1×1 matrix with cutoff
+    }
+
+    matrix_type epsilon() const
+    {
+        using boost::numeric::ublas::scalar_matrix;
+        return scalar_matrix<float_type>(1, 1, 1); //< construct 1×1 matrix with ε=1
+    }
+
+    matrix_type sigma() const
+    {
+        using boost::numeric::ublas::scalar_matrix;
+        return scalar_matrix<float_type>(1, 1, 1); //< construct 1×1 matrix with σ=1
     }
 
 private:
     /** cutoff length in MD units, r_cut() must return a matrix */
-    matrix_type r_cut_;
+    float_type r_cut_;
     /** square of cutoff length */
     float_type rr_cut_;
     /** potential energy at cutoff length in MD units */
     float_type en_cut_;
+    /** module logger */
+    boost::shared_ptr<logger_type> logger_;
 };
 
 } // namespace mdsim

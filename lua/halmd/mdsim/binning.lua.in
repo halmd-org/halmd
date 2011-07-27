@@ -58,6 +58,7 @@ function new(args)
     local particle = mdsim.particle() -- singleton
     local dimension = assert(particle.dimension)
     local box = mdsim.box() -- singleton
+    local logger = assert(args.logger)
 
     -- command line options
     local skin = args.skin or 0.5 -- default value
@@ -66,10 +67,18 @@ function new(args)
     if device() then
         local defaults = assert(binning_wrapper.gpu[dimension].defaults)
         local occupancy = args.occupancy or defaults.occupancy()
-        return binning_wrapper.gpu[dimension](particle, box, r_cut, skin, occupancy)
+        binning = binning_wrapper.gpu[dimension](particle, box, r_cut, skin, logger, occupancy)
     else
-        return binning_wrapper.host[dimension](particle, box, r_cut, skin)
+        binning = binning_wrapper.host[dimension](particle, box, r_cut, skin, logger)
     end
+    return binning
+end
+
+--
+-- connect runtime accumulators to module profiler
+--
+function profile(self, profiler)
+    profiler:on_profile{self, update = "cell lists update"}
 end
 
 --

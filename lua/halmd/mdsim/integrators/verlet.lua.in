@@ -56,6 +56,7 @@ function new(args)
     local box = mdsim.box() -- singleton
     local clock = mdsim.clock() -- singleton
     local timestep = assert(clock.timestep)
+    local logger = assert(args.logger)
 
     local verlet
     if device() then
@@ -63,7 +64,7 @@ function new(args)
     else
         verlet = assert(verlet_wrapper.host[dimension])
     end
-    local integrator = verlet(particle, box, timestep)
+    local integrator = verlet(particle, box, timestep, logger)
 
     local core = mdsim.core()
     -- connect integrator to core
@@ -71,6 +72,14 @@ function new(args)
     core:on_finalize{integrator.finalize, tracker = integrator}
 
     return integrator
+end
+
+--
+-- connect runtime accumulators to module profiler
+--
+function profile(self, profiler)
+    profiler:on_profile{self, integrate = "first half-step of velocity-Verlet"}
+    profiler:on_profile{self, finalize = "second half-step of velocity-Verlet"}
 end
 
 --

@@ -24,12 +24,9 @@
 #include <limits>
 #include <numeric>
 
-#include <halmd/io/logger.hpp>
 #include <halmd/mdsim/gpu/positions/lattice_kernel.hpp>
 #include <halmd/mdsim/gpu/positions/lattice.hpp>
 #include <halmd/utility/lua/lua.hpp>
-#include <halmd/utility/scoped_timer.hpp>
-#include <halmd/utility/timer.hpp>
 
 using namespace boost;
 using namespace std;
@@ -42,14 +39,16 @@ namespace positions {
 template <int dimension, typename float_type, typename RandomNumberGenerator>
 lattice<dimension, float_type, RandomNumberGenerator>::lattice(
     shared_ptr<particle_type> particle
-  , shared_ptr<box_type> box
+  , shared_ptr<box_type const> box
   , shared_ptr<random_type> random
   , typename box_type::vector_type const& slab
+  , shared_ptr<logger_type> logger
 )
   // dependency injection
-  : particle(particle)
-  , box(box)
-  , random(random)
+  : particle_(particle)
+  , box_(box)
+  , random_(random)
+  , logger_(logger)
   , slab_(slab)
 {
     if (*min_element(slab_.begin(), slab_.end()) <= 0 ||
@@ -63,38 +62,29 @@ lattice<dimension, float_type, RandomNumberGenerator>::lattice(
     }
 }
 
-/**
- * register module runtime accumulators
- */
-template <int dimension, typename float_type, typename RandomNumberGenerator>
-void lattice<dimension, float_type, RandomNumberGenerator>::register_runtimes(profiler_type& profiler)
-{
-    profiler.register_runtime(runtime_.set, "set", "setting particle positions on lattice");
-}
-
 template <int dimension, typename float_type, typename RandomNumberGenerator>
 void lattice<dimension, float_type, RandomNumberGenerator>::set()
 {
-    assert(particle->g_r.size() == particle->nbox);
+    assert(particle_->g_r.size() == particle_->nbox);
 
     // assign fcc lattice points to a fraction of the particles in a slab at the centre
-    gpu_vector_type length = static_cast<gpu_vector_type>(element_prod(box->length(), slab_));
+    gpu_vector_type length = static_cast<gpu_vector_type>(element_prod(box_->length(), slab_));
     gpu_vector_type offset = -length / 2;
 
-    float4* r_it = particle->g_r.data(); // use pointer as substitute for missing iterator
-    fcc(r_it, r_it + particle->nbox, length, offset);
+    float4* r_it = particle_->g_r.data(); // use pointer as substitute for missing iterator
+    fcc(r_it, r_it + particle_->nbox, length, offset);
 
     // randomise particle positions if there is more than 1 particle type
     // FIXME this requires a subsequent sort
     // FIXME this will fail greatly once we support polymers
-    if (particle->ntypes.size() > 1) {
+    if (particle_->ntypes.size() > 1) {
         LOG("randomly permuting particle positions");
-        random->shuffle(particle->g_r); //< this shuffles the types as well
-        particle->set();                //< assign new tags and types
+        random_->shuffle(particle_->g_r); //< this shuffles the types as well
+        particle_->set();                //< assign new tags and types
     }
 
     // reset particle image vectors
-    cuda::memset(particle->g_image, 0, particle->g_image.capacity());
+    cuda::memset(particle_->g_image, 0, particle_->g_image.capacity());
 }
 
 /**
@@ -135,6 +125,8 @@ void lattice<dimension, float_type, RandomNumberGenerator>::fcc(
   , gpu_vector_type const& length, gpu_vector_type const& offset
 )
 {
+    scoped_timer_type timer(runtime_.set);
+
     // determine maximal lattice constant
     // use the same floating point precision as the CUDA device,
     // assign lattice coordinates to (sub-)volume of the box
@@ -187,8 +179,7 @@ void lattice<dimension, float_type, RandomNumberGenerator>::fcc(
 
     cuda::thread::synchronize();
     try {
-        scoped_timer<timer> timer_(runtime_.set);
-        cuda::configure(particle->dim.grid, particle->dim.block);
+        cuda::configure(particle_->dim.grid, particle_->dim.block);
         kernel.fcc(first, npart, a, skip);
         cuda::thread::synchronize();
     }
@@ -221,13 +212,19 @@ void lattice<dimension, float_type, RandomNumberGenerator>::luaopen(lua_State* L
                     class_<lattice, shared_ptr<_Base>, bases<_Base> >(class_name.c_str())
                         .def(constructor<
                              shared_ptr<particle_type>
-                           , shared_ptr<box_type>
+                           , shared_ptr<box_type const>
                            , shared_ptr<random_type>
                            , typename box_type::vector_type const&
+                           , shared_ptr<logger_type>
                          >())
                         .property("slab", &lattice::slab)
-                        .def("register_runtimes", &lattice::register_runtimes)
                         .property("module_name", &module_name_wrapper<dimension, float_type, RandomNumberGenerator>)
+                        .scope
+                        [
+                            class_<runtime>("runtime")
+                                .def_readonly("set", &runtime::set)
+                        ]
+                        .def_readonly("runtime", &lattice::runtime_)
                 ]
             ]
         ]

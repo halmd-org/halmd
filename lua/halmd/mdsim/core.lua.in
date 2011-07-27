@@ -51,3 +51,11 @@ end
 --   mdsim.integrator.verlet{}
 --
 signals.patch(_M)
+
+--
+-- connect runtime accumulators to module profiler
+--
+function profile(self, profiler)
+    profiler:on_profile{self, setup = "microscopic state preparation"}
+    profiler:on_profile{self, mdstep = "MD integration step"}
+end

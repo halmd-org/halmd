@@ -20,12 +20,9 @@
 #include <boost/bind.hpp>
 #include <exception>
 
-#include <halmd/io/logger.hpp>
 #include <halmd/mdsim/gpu/binning.hpp>
 #include <halmd/utility/lua/lua.hpp>
-#include <halmd/utility/scoped_timer.hpp>
 #include <halmd/utility/signal.hpp>
-#include <halmd/utility/timer.hpp>
 
 using namespace boost;
 using namespace std;
@@ -49,11 +46,13 @@ binning<dimension, float_type>::binning(
   , shared_ptr<box_type const> box
   , matrix_type const& r_cut
   , double skin
+  , shared_ptr<logger_type> logger
   , double cell_occupancy
 )
   // dependency injection
   : particle_(particle)
   , box_(box)
+  , logger_(logger)
   // allocate parameters
   , r_skin_(skin)
   , nu_cell_(cell_occupancy)
@@ -141,15 +140,6 @@ binning<dimension, float_type>::binning(
 }
 
 /**
- * register module runtime accumulators
- */
-template <int dimension, typename float_type>
-void binning<dimension, float_type>::register_runtimes(profiler_type& profiler)
-{
-    profiler.register_runtime(runtime_.update, "update", "cell lists update");
-}
-
-/**
  * Update cell lists
  */
 template <int dimension, typename float_type>
@@ -157,7 +147,7 @@ void binning<dimension, float_type>::update()
 {
     LOG_TRACE("update cell lists");
 
-    scoped_timer<timer> timer_(runtime_.update);
+    scoped_timer_type timer(runtime_.update);
 
     // compute cell indices for particle positions
     cuda::configure(particle_->dim.grid, particle_->dim.block);
@@ -214,19 +204,24 @@ void binning<dimension, float_type>::luaopen(lua_State* L)
                       , shared_ptr<box_type const>
                       , matrix_type const&
                       , double
+                      , shared_ptr<logger_type>
                       , double
                     >())
-                    .def("register_runtimes", &binning::register_runtimes)
                     .property("update", &wrap_update<binning>)
                     .property("r_skin", &binning::r_skin)
                     .property("cell_occupancy", &binning::cell_occupancy)
-                    .scope[
+                    .scope
+                    [
                         class_<defaults>("defaults")
                             .scope
                             [
                                 def("occupancy", &defaults::occupancy)
                             ]
+
+                      , class_<runtime>("runtime")
+                            .def_readonly("update", &runtime::update)
                     ]
+                    .def_readonly("runtime", &binning::runtime_)
             ]
         ]
     ];

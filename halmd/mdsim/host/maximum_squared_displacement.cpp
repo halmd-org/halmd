@@ -52,6 +52,7 @@ maximum_squared_displacement<dimension, float_type>::maximum_squared_displacemen
 template <int dimension, typename float_type>
 void maximum_squared_displacement<dimension, float_type>::zero()
 {
+    scoped_timer_type timer(runtime_.zero);
     copy(particle_->r.begin(), particle_->r.end(), r0_.begin());
 }
 
@@ -61,6 +62,7 @@ void maximum_squared_displacement<dimension, float_type>::zero()
 template <int dimension, typename float_type>
 float_type maximum_squared_displacement<dimension, float_type>::compute()
 {
+    scoped_timer_type timer(runtime_.compute);
     float_type rr_max = 0;
     for (size_t i = 0; i < particle_->nbox; ++i) {
         vector_type r = particle_->r[i] - r0_[i];
@@ -102,6 +104,13 @@ void maximum_squared_displacement<dimension, float_type>::luaopen(lua_State* L)
                      >())
                     .property("zero", &wrap_zero<dimension, float_type>)
                     .property("compute", &wrap_compute<dimension, float_type>)
+                    .scope
+                    [
+                        class_<runtime>("runtime")
+                            .def_readonly("zero", &runtime::zero)
+                            .def_readonly("compute", &runtime::compute)
+                    ]
+                    .def_readonly("runtime", &maximum_squared_displacement::runtime_)
             ]
         ]
     ];

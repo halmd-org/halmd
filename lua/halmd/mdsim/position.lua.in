@@ -17,12 +17,11 @@
 -- along with this program.  If not, see <http://www.gnu.org/licenses/>.
 --
 
+require("halmd.mdsim.positions")
 require("halmd.modules")
 
-require("halmd.mdsim.positions")
-
 -- grab modules
-local mdsim = halmd.mdsim
+local positions = halmd.mdsim.positions
 -- grab C++ wrappers
 local h5 = libhalmd.h5
 local po = libhalmd.po
@@ -36,13 +35,12 @@ module("halmd.mdsim.position", halmd.modules.register)
 -- construct position module
 --
 function new(args)
-    local position
-    if args.reader then
-        position = args.position or "phase_space"
-    else
-        position = args.position or "lattice" -- default value
+    local position = args.position or "lattice" -- default value
+    local reader = args.reader
+    if reader and not args.position then
+        return positions.phase_space{sample = reader.position}
     end
-    return mdsim.positions[position]()
+    return positions[position]()
 end
 
 --
@@ -54,7 +52,7 @@ function options(desc, globals)
 
     -- position module choices with descriptions
     local choices = {}
-    for position, module in pairs(mdsim.positions) do
+    for position, module in pairs(positions) do
         if module.name then
             choices[position] = module.name()
         end

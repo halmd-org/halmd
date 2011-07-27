@@ -1,2 +1,0 @@
-require("halmd.io.profiling.writers.h5md")
-require("halmd.io.profiling.writers.log")

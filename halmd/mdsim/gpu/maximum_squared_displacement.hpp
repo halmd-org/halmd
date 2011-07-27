@@ -41,7 +41,6 @@ class maximum_squared_displacement
 public:
     typedef gpu::particle<dimension, float_type> particle_type;
     typedef mdsim::box<dimension> box_type;
-    typedef utility::profiler profiler_type;
 
     static void luaopen(lua_State* L);
 
@@ -49,17 +48,18 @@ public:
         boost::shared_ptr<particle_type const> particle
       , boost::shared_ptr<box_type const> box
     );
-    void register_runtimes(profiler_type& profiler);
     void zero();
     float_type compute();
 
 private:
     typedef typename particle_type::vector_type vector_type;
     typedef typename maximum_squared_displacement_wrapper<dimension>::displacement_impl_type displacement_impl_type;
+    typedef utility::profiler profiler_type;
+    typedef typename profiler_type::accumulator_type accumulator_type;
+    typedef typename profiler_type::scoped_timer_type scoped_timer_type;
 
     struct runtime
     {
-        typedef typename profiler_type::accumulator_type accumulator_type;
         accumulator_type zero;
         accumulator_type compute;
     };
@@ -77,7 +77,6 @@ private:
     cuda::vector<float> g_rr_;
     /** block-reduced squared particle distances */
     cuda::host::vector<float> h_rr_;
-
     /** profiling runtime accumulators */
     runtime runtime_;
 };

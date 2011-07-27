@@ -25,9 +25,12 @@
 #include <boost/foreach.hpp>
 #include <boost/make_shared.hpp>
 #include <cmath>
+#include <functional> // std::multiplies
 #include <limits>
+#include <numeric> // std::accumulate
 
 #include <halmd/mdsim/box.hpp>
+#include <halmd/mdsim/clock.hpp>
 #include <halmd/mdsim/host/particle.hpp>
 #include <halmd/mdsim/host/positions/lattice.hpp>
 #include <halmd/numeric/accumulator.hpp>
@@ -91,6 +94,7 @@ struct lattice
     typedef typename vector_type::value_type float_type;
     static unsigned int const dimension = vector_type::static_size;
     static bool const gpu = modules_type::gpu;
+    typedef mdsim::clock clock_type;
 
     fixed_vector<unsigned, dimension> ncell;
     unsigned nunit_cell;
@@ -105,6 +109,7 @@ struct lattice
     shared_ptr<random_type> random;
     shared_ptr<sample_type> sample;
     shared_ptr<phase_space_type> phase_space;
+    shared_ptr<clock_type> clock;
 
     void test();
     lattice();
@@ -124,7 +129,7 @@ void lattice<modules_type>::test()
 
     // acquire phase space samples
     BOOST_TEST_MESSAGE("acquire phase space sample");
-    phase_space->acquire(0);
+    phase_space->acquire();
 
     // compute static structure factors for a set of wavenumbers
     // which are points of the reciprocal lattice
@@ -210,7 +215,8 @@ lattice<modules_type>::lattice()
     random = make_shared<random_type>();
     position = make_shared<position_type>(particle, box, random, slab);
     sample = make_shared<sample_type>(particle->ntypes);
-    phase_space = make_shared<phase_space_type>(sample, particle, box);
+    clock = make_shared<clock_type>(0); // bogus time-step
+    phase_space = make_shared<phase_space_type>(sample, particle, box, clock);
 }
 
 template <int dimension, typename float_type>

@@ -17,6 +17,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <halmd/mdsim/gpu/box_kernel.cuh>
 #include <halmd/mdsim/gpu/particle_kernel.cuh>
 #include <halmd/numeric/blas/blas.hpp>
 #include <halmd/observables/gpu/phase_space_kernel.hpp>
@@ -24,6 +25,7 @@
 #include <halmd/utility/gpu/variant.cuh>
 
 using namespace halmd::utility::gpu; //< variant, map, pair
+using namespace halmd::mdsim::gpu; //< namespace box_kernel
 
 namespace halmd {
 namespace observables {
@@ -57,10 +59,12 @@ __global__ void sample(unsigned int const* g_index, T* g_or, T* g_ov, unsigned i
         vector_type r, v;
         tie(r, type) = untagged<vector_type>(tex1Dfetch(r_, j));
         tie(v, tag) = untagged<vector_type>(tex1Dfetch(v_, j));
+        // extend particle positions in periodic box
         vector_type image = tex1Dfetch(get<dimension>(image_), j);
         vector_type L = get<dimension>(box_length_);
+        box_kernel::extend_periodic(r, image, L);
         // store particle in global memory
-        g_or[GTID] = r + element_prod(L, image);
+        g_or[GTID] = r;
         g_ov[GTID] = v;
     }
 }

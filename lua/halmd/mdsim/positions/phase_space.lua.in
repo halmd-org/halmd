@@ -22,7 +22,6 @@ require("halmd.mdsim.box")
 require("halmd.mdsim.core")
 require("halmd.mdsim.particle")
 require("halmd.modules")
-require("halmd.observables.samples.phase_space")
 
 -- grab modules
 local device = halmd.device
@@ -56,7 +55,8 @@ function new(args)
     local particle = mdsim.particle() -- singleton
     local dimension = assert(particle.dimension)
     local box = mdsim.box() -- singleton
-    local sample = assert(observables.samples.phase_space{ memory = "host" })
+    local sample = assert(args.sample)
+    local logger = assert(args.logger)
 
     local phase_space
     if device() then
@@ -64,11 +64,18 @@ function new(args)
     else
         phase_space = phase_space_wrapper.host[dimension]
     end
-    local position = phase_space(particle, box, sample)
+    local position = phase_space(particle, box, sample, logger)
 
     local core = mdsim.core()
     -- connect position to core
     core:on_setup{position.set, tracker = particle}
 
     return position
+end
+
+--
+-- connect runtime accumulators to module profiler
+--
+function profile(self, profiler)
+    profiler:on_profile{self, set = "setting particle positions from sample"}
 end

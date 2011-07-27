@@ -1,5 +1,5 @@
 /*
- * Copyright © 2008-2010  Peter Colberg
+ * Copyright © 2008-2011  Peter Colberg
  *
  * This file is part of HALMD.
  *
@@ -17,7 +17,10 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <algorithm>
+#include <boost/bind.hpp>
 #include <limits>
+#include <stdexcept>
 
 #include <halmd/observables/host/samples/phase_space.hpp>
 #include <halmd/utility/demangle.hpp>
@@ -37,7 +40,7 @@ phase_space<dimension, float_type>::phase_space(vector<unsigned int> ntypes)
   : r(ntypes.size())
   , v(ntypes.size())
   // initialise attributes
-  , step(numeric_limits<uint64_t>::max())
+  , step(numeric_limits<step_type>::max())
 {
     for (size_t i = 0; i < ntypes.size(); ++i) {
         r[i].reset(new sample_vector(ntypes[i]));
@@ -49,6 +52,62 @@ template <int dimension, typename float_type>
 static int wrap_dimension(phase_space<dimension, float_type> const&)
 {
     return dimension;
+}
+
+template <int dimension, typename float_type>
+typename phase_space<dimension, float_type>::sample_vector const&
+phase_space<dimension, float_type>::position(unsigned int type) const
+{
+    if (!(type < r.size())) {
+        throw invalid_argument("particle type");
+    }
+    return *r[type];
+}
+
+template <int dimension, typename float_type>
+typename phase_space<dimension, float_type>::sample_vector const&
+phase_space<dimension, float_type>::velocity(unsigned int type) const
+{
+    if (!(type < v.size())) {
+        throw invalid_argument("particle type");
+    }
+    return *v[type];
+}
+
+template <int dimension, typename float_type>
+typename phase_space<dimension, float_type>::sample_vector&
+phase_space<dimension, float_type>::position(unsigned int type)
+{
+    if (!(type < r.size())) {
+        throw invalid_argument("particle type");
+    }
+    return *r[type];
+}
+
+template <int dimension, typename float_type>
+typename phase_space<dimension, float_type>::sample_vector&
+phase_space<dimension, float_type>::velocity(unsigned int type)
+{
+    if (!(type < v.size())) {
+        throw invalid_argument("particle type");
+    }
+    return *v[type];
+}
+
+template <typename phase_space_type>
+static function<typename phase_space_type::sample_vector& ()>
+wrap_position(shared_ptr<phase_space_type> phase_space, unsigned int type)
+{
+    typedef typename phase_space_type::sample_vector& (phase_space_type::*getter_type)(unsigned int);
+    return bind(static_cast<getter_type>(&phase_space_type::position), phase_space, type);
+}
+
+template <typename phase_space_type>
+static function<typename phase_space_type::sample_vector& ()>
+wrap_velocity(shared_ptr<phase_space_type> phase_space, unsigned int type)
+{
+    typedef typename phase_space_type::sample_vector& (phase_space_type::*getter_type)(unsigned int);
+    return bind(static_cast<getter_type>(&phase_space_type::velocity), phase_space, type);
 }
 
 template <int dimension, typename float_type>
@@ -67,6 +126,8 @@ void phase_space<dimension, float_type>::luaopen(lua_State* L)
                     class_<phase_space, shared_ptr<phase_space> >(class_name.c_str())
                         .def(constructor<vector<unsigned int> >())
                         .property("dimension", &wrap_dimension<dimension, float_type>)
+                        .def("position", &wrap_position<phase_space>)
+                        .def("velocity", &wrap_velocity<phase_space>)
                 ]
             ]
         ]

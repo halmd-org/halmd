@@ -1,5 +1,5 @@
 /*
- * Copyright © 2008-2010  Peter Colberg
+ * Copyright © 2008-2011  Peter Colberg
  *
  * This file is part of HALMD.
  *
@@ -21,7 +21,6 @@
 #include <cmath>
 #include <string>
 
-#include <halmd/io/logger.hpp>
 #include <halmd/mdsim/host/integrators/verlet.hpp>
 #include <halmd/utility/lua/lua.hpp>
 
@@ -36,12 +35,14 @@ namespace integrators {
 template <int dimension, typename float_type>
 verlet<dimension, float_type>::verlet(
     shared_ptr<particle_type> particle
-  , shared_ptr<box_type> box
+  , shared_ptr<box_type const> box
   , double timestep
+  , shared_ptr<logger_type> logger
 )
   // dependency injection
-  : particle(particle)
-  , box(box)
+  : particle_(particle)
+  , box_(box)
+  , logger_(logger)
 {
     this->timestep(timestep);
 }
@@ -61,13 +62,14 @@ void verlet<dimension, float_type>::timestep(double timestep)
 template <int dimension, typename float_type>
 void verlet<dimension, float_type>::integrate()
 {
-    for (size_t i = 0; i < particle->nbox; ++i) {
-        vector_type& v = particle->v[i] += particle->f[i] * timestep_half_;
-        vector_type& r = particle->r[i] += v * timestep_;
+    scoped_timer_type timer(runtime_.integrate);
+    for (size_t i = 0; i < particle_->nbox; ++i) {
+        vector_type& v = particle_->v[i] += particle_->f[i] * timestep_half_;
+        vector_type& r = particle_->r[i] += v * timestep_;
         // enforce periodic boundary conditions
         // TODO: reduction is now to (-L/2, L/2) instead of (0, L) as before
         // check that this is OK
-        particle->image[i] += box->reduce_periodic(r);
+        particle_->image[i] += box_->reduce_periodic(r);
     }
 }
 
@@ -77,8 +79,9 @@ void verlet<dimension, float_type>::integrate()
 template <int dimension, typename float_type>
 void verlet<dimension, float_type>::finalize()
 {
-    for (size_t i = 0; i < particle->nbox; ++i) {
-        particle->v[i] += particle->f[i] * timestep_half_;
+    scoped_timer_type timer(runtime_.finalize);
+    for (size_t i = 0; i < particle_->nbox; ++i) {
+        particle_->v[i] += particle_->f[i] * timestep_half_;
     }
 }
 
@@ -101,13 +104,21 @@ void verlet<dimension, float_type>::luaopen(lua_State* L)
             [
                 namespace_("integrators")
                 [
-                    class_<verlet, shared_ptr<_Base>, bases<_Base> >(class_name.c_str())
+                    class_<verlet, shared_ptr<_Base>, _Base>(class_name.c_str())
                         .def(constructor<
                             shared_ptr<particle_type>
-                          , shared_ptr<box_type>
-                          , double>()
-                        )
+                          , shared_ptr<box_type const>
+                          , double
+                          , shared_ptr<logger_type>
+                        >())
                         .property("module_name", &module_name_wrapper<dimension, float_type>)
+                        .scope
+                        [
+                            class_<runtime>("runtime")
+                                .def_readonly("integrate", &runtime::integrate)
+                                .def_readonly("finalize", &runtime::finalize)
+                        ]
+                        .def_readonly("runtime", &verlet::runtime_)
                 ]
             ]
         ]

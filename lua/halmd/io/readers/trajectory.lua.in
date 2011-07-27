@@ -1,0 +1,148 @@
+--
+-- Copyright © 2010-2011  Peter Colberg
+--
+-- This file is part of HALMD.
+--
+-- HALMD is free software: you can redistribute it and/or modify
+-- it under the terms of the GNU General Public License as published by
+-- the Free Software Foundation, either version 3 of the License, or
+-- (at your option) any later version.
+--
+-- This program is distributed in the hope that it will be useful,
+-- but WITHOUT ANY WARRANTY; without even the implied warranty of
+-- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+-- GNU General Public License for more details.
+--
+-- You should have received a copy of the GNU General Public License
+-- along with this program.  If not, see <http://www.gnu.org/licenses/>.
+--
+
+require("halmd.io.readers")
+require("halmd.mdsim.core")
+require("halmd.mdsim.particle")
+require("halmd.modules")
+require("halmd.observables.samples.phase_space")
+
+-- grab modules
+local readers = halmd.io.readers
+local mdsim = halmd.mdsim
+local observables = halmd.observables
+-- grab C++ wrappers
+local po = libhalmd.po
+local property = property
+-- grab standard library
+local assert = assert
+local error = error
+local io = io
+local pairs = pairs
+local string = string
+
+module("halmd.io.readers.trajectory", halmd.modules.register)
+
+-- detected file reader module
+local reader
+
+--
+-- construct trajectory reader module
+--
+function new(args)
+    if reader then
+        local time = args.time
+        local step = args.step or -1 --default value
+
+        -- open trajectory file
+        local file = reader{path = assert(args.file)}
+        -- open trajectory group
+        local reader = file:reader{location = {"trajectory"}, mode = "append"}
+        -- read phase space sample before system preparation
+        local core = mdsim.core() -- singleton
+        if time then
+            core:on_prepend_setup{reader:read_at_time(time), tracker = reader}
+        else
+            -- read sample at last step by default
+            core:on_prepend_setup{reader:read_at_step(step), tracker = reader}
+        end
+
+        --
+        -- extend with reader.position and reader.velocity
+        --
+        -- The H5MD file needs to be opened before loading mdsim modules,
+        -- as readers.h5md retrieves the simulation parameters from the
+        -- parameter group within the file. However, the reader requires an
+        -- allocated phase space sample with the correct number of particle
+        -- species. To disentangle these requirements, we delay the connection
+        -- of the phase space sample to reader, through encapsulation in the
+        -- properties reader.position and reader.velocity. If the position
+        -- and/or velocity module accesses reader.position/velocity, the
+        -- sample's position/velocity slots will be connected to the reader.
+        -- We cache the sample in a variable outside the property to ensure
+        -- that this happens only once.
+        --
+
+        -- convert (0-based) species index to name
+        local function species(index)
+            return string.char(string.byte("A") + index)
+        end
+
+        -- connect position data slots of phase space sample for reading
+        local sample
+        reader.position = property(function(self)
+            if not sample then
+                sample = observables.samples.phase_space{memory = "host"}
+                local particle = mdsim.particle() -- singleton
+                for i = 0, particle.ntype - 1 do
+                    self:on_read(sample:position(i), {species(i), "position"})
+                end
+            end
+            return sample
+        end)
+
+        -- connect velocity data slots of phase space sample for reading
+        local sample
+        reader.velocity = property(function(self)
+            if not sample then
+                sample = observables.samples.phase_space{memory = "host"}
+                local particle = mdsim.particle() -- singleton
+                for i = 0, particle.ntype - 1 do
+                    self:on_read(sample:velocity(i), {species(i), "velocity"})
+                end
+            end
+            return sample
+        end)
+
+        return reader
+    end
+end
+
+--
+-- assemble module options
+--
+-- @param desc po.options_description
+--
+function options(desc)
+    desc:add("file", po.string():notifier(function(value)
+
+        -- check whether file exists and is readable
+        local file, message = io.open(value)
+        if not file then
+            error(message, 0)
+        end
+        file:close()
+
+        -- check for reader that can handle file format
+        for _, module in pairs(readers) do
+            local check = module.check
+            if check and check(value) then
+                reader = module
+                break
+            end
+        end
+        if not reader then
+            error(value .. ": unknown trajectory file format", 0)
+        end
+
+    end), "trajectory input file")
+
+    desc:add("step", po.int64(), "read phase space sample at step")
+    desc:add("time", po.float():conflicts("step"), "read phase space sample at time")
+end

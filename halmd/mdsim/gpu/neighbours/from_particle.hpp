@@ -20,10 +20,12 @@
 #ifndef HALMD_MDSIM_GPU_NEIGHBOURS_FROM_PARTICLE_HPP
 #define HALMD_MDSIM_GPU_NEIGHBOURS_FROM_PARTICLE_HPP
 
+#include <boost/make_shared.hpp>
 #include <boost/numeric/ublas/symmetric.hpp>
 #include <boost/shared_ptr.hpp>
 #include <lua.hpp>
 
+#include <halmd/io/logger.hpp>
 #include <halmd/mdsim/box.hpp>
 #include <halmd/mdsim/gpu/neighbour.hpp>
 #include <halmd/mdsim/gpu/particle.hpp>
@@ -52,16 +54,18 @@ template <int dimension, typename float_type>
 class from_particle
   : public gpu::neighbour
 {
+private:
+    typedef gpu::neighbour _Base;
+
 public:
     typedef gpu::particle<dimension, float_type> particle_type;
     typedef typename particle_type::vector_type vector_type;
     typedef boost::numeric::ublas::symmetric_matrix<float_type, boost::numeric::ublas::lower> matrix_type;
     typedef mdsim::box<dimension> box_type;
-    typedef utility::profiler profiler_type;
     struct defaults;
-    typedef typename from_particle::signal_type signal_type; // import type from base class
-    typedef typename from_particle::slot_function_type slot_function_type; // import type from base class
-    typedef typename from_particle::connection_type connection_type; // import type from base class
+    typedef typename _Base::signal_type signal_type;
+    typedef typename _Base::slot_function_type slot_function_type;
+    typedef logger logger_type;
 
     static void luaopen(lua_State* L);
 
@@ -71,12 +75,12 @@ public:
       , boost::shared_ptr<box_type const> box
       , matrix_type const& r_cut
       , double skin
+      , boost::shared_ptr<logger_type> logger = boost::make_shared<logger_type>()
       , double cell_occupancy = defaults::occupancy()
     );
-    void register_runtimes(profiler_type& profiler);
     virtual void update();
 
-    virtual connection_type on_update(slot_function_type const& slot)
+    virtual connection on_update(slot_function_type const& slot)
     {
         return on_update_.connect(slot);
     }
@@ -118,15 +122,19 @@ public:
     }
 
 private:
+    typedef utility::profiler profiler_type;
+    typedef typename profiler_type::accumulator_type accumulator_type;
+    typedef typename profiler_type::scoped_timer_type scoped_timer_type;
+
     struct runtime
     {
-        typedef typename profiler_type::accumulator_type accumulator_type;
         accumulator_type update;
     };
 
     boost::shared_ptr<particle_type const> particle1_;
     boost::shared_ptr<particle_type const> particle2_;
     boost::shared_ptr<box_type const> box_;
+    boost::shared_ptr<logger_type> logger_;
 
     /** neighbour list skin in MD units */
     float_type r_skin_;
@@ -142,7 +150,6 @@ private:
     unsigned int size_;
     /** neighbour list stride */
     unsigned int stride_;
-
     /** profiling runtime accumulators */
     runtime runtime_;
     /** signal emitted before neighbour list update */

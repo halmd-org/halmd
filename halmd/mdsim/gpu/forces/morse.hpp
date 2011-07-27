@@ -20,10 +20,12 @@
 #ifndef HALMD_MDSIM_GPU_FORCES_MORSE_HPP
 #define HALMD_MDSIM_GPU_FORCES_MORSE_HPP
 
+#include <boost/make_shared.hpp>
 #include <boost/numeric/ublas/symmetric.hpp>
 #include <cuda_wrapper/cuda_wrapper.hpp>
 #include <lua.hpp>
 
+#include <halmd/io/logger.hpp>
 #include <halmd/mdsim/gpu/forces/pair_trunc.hpp>
 #include <halmd/mdsim/gpu/forces/morse_kernel.hpp>
 
@@ -41,8 +43,8 @@ class morse
 public:
     typedef morse_kernel::morse gpu_potential_type;
     typedef boost::numeric::ublas::symmetric_matrix<float_type, boost::numeric::ublas::lower> matrix_type;
+    typedef logger logger_type;
 
-    static char const* name() { return "Morse"; }
     static char const* module_name() { return "morse"; }
 
     static void luaopen(lua_State* L);
@@ -53,6 +55,7 @@ public:
       , boost::array<float, 3> const& epsilon
       , boost::array<float, 3> const& sigma
       , boost::array<float, 3> const& r_min
+      , boost::shared_ptr<logger_type> logger = boost::make_shared<logger_type>()
     );
 
     /** bind textures before kernel invocation */
@@ -116,6 +119,8 @@ private:
     cuda::vector<float4> g_param_;
     /** squared cutoff radius at CUDA device */
     cuda::vector<float> g_rr_cut_;
+    /** module logger */
+    boost::shared_ptr<logger_type> logger_;
 };
 
 } // namespace mdsim

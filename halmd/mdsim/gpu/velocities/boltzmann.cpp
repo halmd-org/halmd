@@ -1,5 +1,5 @@
 /*
- * Copyright © 2008-2010  Peter Colberg and Felix Höfling
+ * Copyright © 2008-2011  Peter Colberg and Felix Höfling
  *
  * This file is part of HALMD.
  *
@@ -17,7 +17,6 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <halmd/io/logger.hpp>
 #include <halmd/mdsim/gpu/velocities/boltzmann.hpp>
 #include <halmd/utility/lua/lua.hpp>
 
@@ -34,21 +33,23 @@ boltzmann<dimension, float_type, RandomNumberGenerator>::boltzmann(
     shared_ptr<particle_type> particle
   , shared_ptr<random_type> random
   , double temperature
+  , shared_ptr<logger_type> logger
 )
-  : _Base(particle)
+  : _Base(particle, logger)
   // dependency injection
-  , particle(particle)
-  , random(random)
+  , particle_(particle)
+  , random_(random)
+  , logger_(logger)
   // select thread-dependent implementation
-  , gaussian_impl(get_gaussian_impl(random->rng.dim.threads_per_block()))
+  , gaussian_impl_(get_gaussian_impl(random_->rng().dim.threads_per_block()))
   // set parameters
   , temp_(temperature)
   // allocate GPU memory
-  , g_vcm_(2 * random->rng.dim.blocks_per_grid())
-  , g_vv_(random->rng.dim.blocks_per_grid())
+  , g_vcm_(2 * random_->rng().dim.blocks_per_grid())
+  , g_vv_(random_->rng().dim.blocks_per_grid())
 {
     // copy random number generator parameters to GPU
-    cuda::copy(random->rng.rng(), wrapper_type::kernel.rng);
+    cuda::copy(random_->rng().rng(), wrapper_type::kernel.rng);
 
     LOG("Boltzmann velocity distribution temperature: T = " << temp_);
 }
@@ -89,17 +90,19 @@ boltzmann<dimension, float_type, RandomNumberGenerator>::get_gaussian_impl(int t
 template <int dimension, typename float_type, typename RandomNumberGenerator>
 void boltzmann<dimension, float_type, RandomNumberGenerator>::set()
 {
+    scoped_timer_type timer(runtime_.set);
+
     // generate Maxwell-Boltzmann distributed velocities,
     // assuming equal (unit) mass for all particle types
     cuda::configure(
-        random->rng.dim.grid
-      , random->rng.dim.block
-      , random->rng.dim.threads_per_block() * (1 + dimension) * sizeof(dsfloat)
+        random_->rng().dim.grid
+      , random_->rng().dim.block
+      , random_->rng().dim.threads_per_block() * (1 + dimension) * sizeof(dsfloat)
     );
-    gaussian_impl(
-        particle->g_v
-      , particle->nbox
-      , particle->dim.threads()
+    gaussian_impl_(
+        particle_->g_v
+      , particle_->nbox
+      , particle_->dim.threads()
       , temp_
       , g_vcm_
       , g_vv_
@@ -109,14 +112,14 @@ void boltzmann<dimension, float_type, RandomNumberGenerator>::set()
     // set center of mass velocity to zero and
     // rescale velocities to accurate temperature
     cuda::configure(
-        particle->dim.grid
-      , particle->dim.block
+        particle_->dim.grid
+      , particle_->dim.block
       , g_vv_.size() * (1 + dimension) * sizeof(dsfloat)
     );
     wrapper_type::kernel.shift_rescale(
-        particle->g_v
-      , particle->nbox
-      , particle->dim.threads()
+        particle_->g_v
+      , particle_->nbox
+      , particle_->dim.threads()
       , temp_
       , g_vcm_
       , g_vv_
@@ -158,9 +161,16 @@ void boltzmann<dimension, float_type, RandomNumberGenerator>::luaopen(lua_State*
                              shared_ptr<particle_type>
                            , shared_ptr<random_type>
                            , double
+                           , shared_ptr<logger_type>
                          >())
                         .property("temperature", &boltzmann::temperature)
                         .property("module_name", &module_name_wrapper<dimension, float_type, RandomNumberGenerator>)
+                        .scope
+                        [
+                            class_<runtime>("runtime")
+                                .def_readonly("set", &runtime::set)
+                        ]
+                        .def_readonly("runtime", &boltzmann::runtime_)
                 ]
             ]
         ]

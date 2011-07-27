@@ -20,14 +20,17 @@
 #ifndef HALMD_MDSIM_HOST_BINNING_HPP
 #define HALMD_MDSIM_HOST_BINNING_HPP
 
+#include <boost/make_shared.hpp>
 #include <boost/multi_array.hpp>
 #include <boost/numeric/ublas/symmetric.hpp>
 #include <boost/shared_ptr.hpp>
 #include <lua.hpp>
 #include <vector>
 
+#include <halmd/io/logger.hpp>
 #include <halmd/mdsim/box.hpp>
 #include <halmd/mdsim/host/particle.hpp>
+#include <halmd/utility/profiler.hpp>
 
 namespace halmd {
 namespace mdsim {
@@ -41,6 +44,7 @@ public:
     typedef typename particle_type::vector_type vector_type;
     typedef boost::numeric::ublas::symmetric_matrix<float_type, boost::numeric::ublas::lower> matrix_type;
     typedef mdsim::box<dimension> box_type;
+    typedef logger logger_type;
 
     typedef std::vector<unsigned int> cell_list;
     typedef boost::multi_array<cell_list, dimension> cell_lists;
@@ -54,6 +58,7 @@ public:
       , boost::shared_ptr<box_type const> box
       , matrix_type const& r_cut
       , float_type skin
+      , boost::shared_ptr<logger_type> logger = boost::make_shared<logger_type>()
     );
     virtual void update();
 
@@ -82,8 +87,19 @@ public:
     }
 
 private:
+    typedef utility::profiler profiler_type;
+    typedef typename profiler_type::accumulator_type accumulator_type;
+    typedef typename profiler_type::scoped_timer_type scoped_timer_type;
+
+    struct runtime
+    {
+        accumulator_type update;
+    };
+
     //! system state
     boost::shared_ptr<particle_type const> particle_;
+    /** module logger */
+    boost::shared_ptr<logger_type> logger_;
     /** neighbour list skin in MD units */
     float_type r_skin_;
     /** cell lists */
@@ -92,6 +108,8 @@ private:
     cell_size_type ncell_;
     /** cell edge lengths */
     vector_type cell_length_;
+    /** profiling runtime accumulators */
+    runtime runtime_;
 };
 
 } // namespace host

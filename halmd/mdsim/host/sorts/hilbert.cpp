@@ -22,7 +22,6 @@
 #include <boost/foreach.hpp>
 #include <cmath>
 
-#include <halmd/io/logger.hpp>
 #include <halmd/mdsim/host/sorts/hilbert.hpp>
 #include <halmd/mdsim/sorts/hilbert_kernel.hpp>
 #include <halmd/utility/lua/lua.hpp>
@@ -40,11 +39,13 @@ hilbert<dimension, float_type>::hilbert(
     shared_ptr<particle_type> particle
   , shared_ptr<box_type const> box
   , shared_ptr<binning_type> binning
+  , shared_ptr<logger_type> logger
 )
   // dependency injection
   : particle_(particle)
   , box_(box)
   , binning_(binning)
+  , logger_(logger)
 {
     cell_size_type const& ncell = binning_->ncell();
     vector_type const& cell_length = binning_->cell_length();
@@ -56,7 +57,7 @@ hilbert<dimension, float_type>::hilbert(
     // 32-bit integer for 2D Hilbert code allows a maximum of 16/10 levels
     depth = min((dimension == 3) ? 10U : 16U, depth);
 
-    LOG("Hilbert vertex recursion depth: " << depth);
+    LOG("vertex recursion depth: " << depth);
 
     // generate 1-dimensional Hilbert curve mapping of cell lists
     typedef std::pair<cell_list const*, unsigned int> pair;
@@ -90,18 +91,27 @@ hilbert<dimension, float_type>::hilbert(
 template <int dimension, typename float_type>
 void hilbert<dimension, float_type>::order()
 {
-    // particle binning
-    binning_->update();
-    // generate index sequence according to Hilbert-sorted cells
-    std::vector<unsigned int> index;
-    index.reserve(particle_->nbox);
-    BOOST_FOREACH(cell_list const* cell, map_) {
-        BOOST_FOREACH(unsigned int p, *cell) {
-            index.push_back(p);
+    {
+        scoped_timer_type timer(runtime_.order);
+        std::vector<unsigned int> index;
+        {
+            scoped_timer_type timer(runtime_.map);
+            // particle binning
+            binning_->update();
+            // generate index sequence according to Hilbert-sorted cells
+            index.reserve(particle_->nbox);
+            BOOST_FOREACH(cell_list const* cell, map_) {
+                BOOST_FOREACH(unsigned int p, *cell) {
+                    index.push_back(p);
+                }
+            }
+        }
+        {
+            scoped_timer_type timer(runtime_.permute);
+            // reorder particles in memory
+            particle_->rearrange(index);
         }
     }
-    // reorder particles in memory
-    particle_->rearrange(index);
     on_order_();
 }
 
@@ -140,8 +150,17 @@ void hilbert<dimension, float_type>::luaopen(lua_State* L)
                             shared_ptr<particle_type>
                           , shared_ptr<box_type const>
                           , shared_ptr<binning_type>
+                          , shared_ptr<logger_type>
                         >())
                         .property("module_name", &module_name_wrapper<dimension, float_type>)
+                        .scope
+                        [
+                            class_<runtime>("runtime")
+                                .def_readonly("order", &runtime::order)
+                                .def_readonly("map", &runtime::map)
+                                .def_readonly("permute", &runtime::permute)
+                        ]
+                        .def_readonly("runtime", &hilbert::runtime_)
                 ]
             ]
         ]

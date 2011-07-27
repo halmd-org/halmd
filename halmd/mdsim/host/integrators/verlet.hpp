@@ -1,5 +1,5 @@
 /*
- * Copyright © 2008-2010  Peter Colberg
+ * Copyright © 2008-2011  Peter Colberg
  *
  * This file is part of HALMD.
  *
@@ -20,12 +20,15 @@
 #ifndef HALMD_MDSIM_HOST_INTEGRATORS_VERLET_HPP
 #define HALMD_MDSIM_HOST_INTEGRATORS_VERLET_HPP
 
+#include <boost/make_shared.hpp>
 #include <boost/shared_ptr.hpp>
 #include <lua.hpp>
 
+#include <halmd/io/logger.hpp>
 #include <halmd/mdsim/box.hpp>
 #include <halmd/mdsim/host/particle.hpp>
 #include <halmd/mdsim/integrator.hpp>
+#include <halmd/utility/profiler.hpp>
 
 namespace halmd {
 namespace mdsim {
@@ -41,18 +44,17 @@ public:
     typedef host::particle<dimension, float_type> particle_type;
     typedef typename particle_type::vector_type vector_type;
     typedef mdsim::box<dimension> box_type;
+    typedef logger logger_type;
 
     static char const* module_name() { return "verlet"; }
-
-    boost::shared_ptr<particle_type> particle;
-    boost::shared_ptr<box_type> box;
 
     static void luaopen(lua_State* L);
 
     verlet(
         boost::shared_ptr<particle_type> particle
-      , boost::shared_ptr<box_type> box
+      , boost::shared_ptr<box_type const> box
       , double timestep
+      , boost::shared_ptr<logger_type> logger = boost::make_shared<logger_type>()
     );
     virtual void integrate();
     virtual void finalize();
@@ -64,11 +66,27 @@ public:
         return timestep_;
     }
 
-protected:
+private:
+    typedef utility::profiler profiler_type;
+    typedef typename profiler_type::accumulator_type accumulator_type;
+    typedef typename profiler_type::scoped_timer_type scoped_timer_type;
+
+    struct runtime
+    {
+        accumulator_type integrate;
+        accumulator_type finalize;
+    };
+
+    boost::shared_ptr<particle_type> particle_;
+    boost::shared_ptr<box_type const> box_;
     /** integration time-step */
     float_type timestep_;
     /** half time-step */
     float_type timestep_half_;
+    /** module logger */
+    boost::shared_ptr<logger_type> logger_;
+    /** profiling runtime accumulators */
+    runtime runtime_;
 };
 
 } // namespace mdsim

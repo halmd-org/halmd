@@ -128,7 +128,7 @@ if(CUDA_FOUND AND NOT HALMD_USE_STATIC_LIBS)
   enable_language(CUDA)
 
   if(CMAKE_CUDA_FLAGS STREQUAL "${CMAKE_CUDA_FLAGS_INIT}")
-    set(CMAKE_CUDA_FLAGS "-Xcompiler -fPIC -Xptxas -v --host-compilation=c -arch sm_12" CACHE STRING
+    set(CMAKE_CUDA_FLAGS "-Xcompiler -fPIC -Xptxas -v -arch sm_12" CACHE STRING
       "Flags used by the compiler during all build types." FORCE)
   endif()
 

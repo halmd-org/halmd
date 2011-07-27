@@ -20,10 +20,12 @@
 #ifndef HALMD_MDSIM_HOST_FORCES_POWER_LAW_HPP
 #define HALMD_MDSIM_HOST_FORCES_POWER_LAW_HPP
 
+#include <boost/make_shared.hpp>
 #include <boost/numeric/ublas/symmetric.hpp>
 #include <boost/tuple/tuple.hpp>
 #include <lua.hpp>
 
+#include <halmd/io/logger.hpp>
 #include <halmd/mdsim/host/forces/pair_trunc.hpp>
 #include <halmd/mdsim/host/forces/smooth.hpp>
 #include <halmd/numeric/pow.hpp>
@@ -44,10 +46,10 @@ class power_law
 {
 public:
     typedef boost::numeric::ublas::symmetric_matrix<float_type, boost::numeric::ublas::lower> matrix_type;
+    typedef logger logger_type;
 
     static void luaopen(lua_State* L);
 
-    static char const* name() { return "power law"; }
     static char const* module_name() { return "power_law"; }
 
     power_law(
@@ -56,6 +58,7 @@ public:
       , boost::array<float, 3> const& cutoff
       , boost::array<float, 3> const& epsilon
       , boost::array<float, 3> const& sigma
+      , boost::shared_ptr<logger_type> logger = boost::make_shared<logger_type>()
     );
 
     /**
@@ -217,6 +220,8 @@ private:
     matrix_type rr_cut_;
     /** potential energy at cutoff in MD units */
     matrix_type en_cut_;
+    /** module logger */
+    boost::shared_ptr<logger_type> logger_;
 };
 
 } // namespace mdsim

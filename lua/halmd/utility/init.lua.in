@@ -59,3 +59,14 @@ function sorted(t)
         return nil
     end
 end
+
+--
+-- Returns table with keys as values and values as keys
+--
+function reverse(t)
+    local result = {}
+    for k, v in pairs(t) do
+        result[v] = k
+    end
+    return result
+end

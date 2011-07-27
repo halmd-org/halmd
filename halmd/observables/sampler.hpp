@@ -35,21 +35,15 @@ namespace observables {
  */
 class sampler
 {
+private:
+    typedef halmd::signal<void ()> signal_type;
+
 public:
     typedef mdsim::clock clock_type;
     typedef clock_type::step_type step_type;
     typedef clock_type::time_type time_type;
     typedef mdsim::core core_type;
-    typedef utility::profiler profiler_type;
-    typedef halmd::signal<void (step_type)> signal_type;
     typedef signal_type::slot_function_type slot_function_type;
-    typedef signal_type::connection connection_type;
-
-    struct runtime
-    {
-        typedef profiler_type::accumulator_type accumulator_type;
-        accumulator_type total;
-    };
 
     sampler(
         boost::shared_ptr<clock_type const> clock
@@ -57,11 +51,10 @@ public:
       , step_type steps
     );
     void run();
-    void register_runtimes(profiler_type& profiler);
-    connection_type on_start(slot_function_type const& slot);
-    connection_type on_prepare(slot_function_type const& slot, step_type interval);
-    connection_type on_sample(slot_function_type const& slot, step_type interval);
-    connection_type on_finish(slot_function_type const& slot);
+    connection on_start(slot_function_type const& slot);
+    connection on_prepare(slot_function_type const& slot, step_type interval);
+    connection on_sample(slot_function_type const& slot, step_type interval);
+    connection on_finish(slot_function_type const& slot);
 
     /** total number of integration steps */
     step_type steps() const
@@ -75,9 +68,21 @@ public:
         return total_time_;
     }
 
+    /** Lua bindings */
+    static void luaopen(lua_State* L);
+
 private:
-    void prepare(slot_function_type const& slot, step_type interval, step_type step) const;
-    void sample(slot_function_type const& slot, step_type interval, step_type step) const;
+    typedef utility::profiler profiler_type;
+    typedef profiler_type::accumulator_type accumulator_type;
+    typedef profiler_type::scoped_timer_type scoped_timer_type;
+
+    struct runtime
+    {
+        accumulator_type total;
+    };
+
+    void prepare(slot_function_type const& slot, step_type interval) const;
+    void sample(slot_function_type const& slot, step_type interval) const;
 
     /** Molecular Dynamics simulation clock */
     boost::shared_ptr<clock_type const> clock_;

@@ -20,8 +20,10 @@
 #ifndef HALMD_MDSIM_GPU_SORTS_HILBERT_HPP
 #define HALMD_MDSIM_GPU_SORTS_HILBERT_HPP
 
+#include <boost/make_shared.hpp>
 #include <lua.hpp>
 
+#include <halmd/io/logger.hpp>
 #include <halmd/mdsim/box.hpp>
 #include <halmd/mdsim/gpu/particle.hpp>
 #include <halmd/mdsim/gpu/sorts/hilbert_kernel.hpp>
@@ -43,49 +45,52 @@ public:
     typedef typename particle_type::vector_type vector_type;
     typedef typename particle_type::gpu_vector_type gpu_vector_type;
     typedef mdsim::box<dimension> box_type;
-    typedef utility::profiler profiler_type;
     typedef hilbert_wrapper<dimension> wrapper_type;
     typedef typename _Base::signal_type signal_type;
     typedef typename _Base::slot_function_type slot_function_type;
-    typedef typename _Base::connection_type connection_type;
-
-    struct runtime
-    {
-        typedef typename profiler_type::accumulator_type accumulator_type;
-        accumulator_type map;
-        accumulator_type permutation;
-        accumulator_type order;
-    };
+    typedef logger logger_type;
 
     static char const* module_name() { return "hilbert"; }
-
-    boost::shared_ptr<particle_type> particle;
 
     static void luaopen(lua_State* L);
 
     hilbert(
         boost::shared_ptr<particle_type> particle
-      , boost::shared_ptr<box_type> box
+      , boost::shared_ptr<box_type const> box
+      , boost::shared_ptr<logger_type> logger = boost::make_shared<logger_type>()
     );
-    void register_runtimes(profiler_type& profiler);
     virtual void order();
 
-    virtual connection_type on_order(slot_function_type const& slot)
+    virtual connection on_order(slot_function_type const& slot)
     {
         return on_order_.connect(slot);
     }
 
 private:
+    typedef utility::profiler profiler_type;
+    typedef typename profiler_type::accumulator_type accumulator_type;
+    typedef typename profiler_type::scoped_timer_type scoped_timer_type;
+
+    struct runtime
+    {
+        accumulator_type order;
+        accumulator_type map;
+        accumulator_type permute;
+    };
+
     void map(cuda::vector<unsigned int>& g_map);
     void permutation(cuda::vector<unsigned int>& g_map, cuda::vector<unsigned int>& g_index);
     void order(cuda::vector<unsigned int> const& g_index);
 
+    boost::shared_ptr<particle_type> particle_;
     /** recursion depth */
     unsigned int depth_;
-    /** profiling runtime accumulators */
-    runtime runtime_;
     /** signal emitted after particle ordering */
     signal_type on_order_;
+    /** module logger */
+    boost::shared_ptr<logger_type> logger_;
+    /** profiling runtime accumulators */
+    runtime runtime_;
 };
 
 } // namespace mdsim

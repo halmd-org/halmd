@@ -1,5 +1,5 @@
 /*
- * Copyright © 2008-2010  Peter Colberg and Felix Höfling
+ * Copyright © 2008-2011  Peter Colberg and Felix Höfling
  *
  * This file is part of HALMD.
  *
@@ -20,9 +20,11 @@
 #ifndef HALMD_MDSIM_GPU_POSITIONS_LATTICE_HPP
 #define HALMD_MDSIM_GPU_POSITIONS_LATTICE_HPP
 
+#include <boost/make_shared.hpp>
 #include <lua.hpp>
 #include <vector>
 
+#include <halmd/io/logger.hpp>
 #include <halmd/mdsim/box.hpp>
 #include <halmd/mdsim/gpu/particle.hpp>
 #include <halmd/mdsim/position.hpp>
@@ -44,37 +46,40 @@ public:
     typedef gpu::particle<dimension, float_type> particle_type;
     typedef mdsim::box<dimension> box_type;
     typedef random::gpu::random<RandomNumberGenerator> random_type;
-    typedef utility::profiler profiler_type;
+    typedef logger logger_type;
     typedef typename particle_type::vector_type vector_type;
     typedef typename type_traits<dimension, float>::vector_type gpu_vector_type;
     typedef typename type_traits<dimension, unsigned int>::vector_type index_type;
 
-    struct runtime
-    {
-        typedef typename profiler_type::accumulator_type accumulator_type;
-        accumulator_type set;
-    };
-
     static char const* module_name() { return "lattice"; }
-
-    boost::shared_ptr<particle_type> particle;
-    boost::shared_ptr<box_type> box;
-    boost::shared_ptr<random_type> random;
 
     static void luaopen(lua_State* L);
 
     lattice(
         boost::shared_ptr<particle_type> particle
-      , boost::shared_ptr<box_type> box
+      , boost::shared_ptr<box_type const> box
       , boost::shared_ptr<random_type> random
       , typename box_type::vector_type const& slab
+      , boost::shared_ptr<logger_type> logger = boost::make_shared<logger_type>()
     );
     virtual void set();
-    void register_runtimes(profiler_type& profiler);
 
     typename box_type::vector_type const& slab() const { return slab_; }
 
 private:
+    typedef utility::profiler profiler_type;
+    typedef typename profiler_type::accumulator_type accumulator_type;
+    typedef typename profiler_type::scoped_timer_type scoped_timer_type;
+
+    struct runtime
+    {
+        accumulator_type set;
+    };
+
+    boost::shared_ptr<particle_type> particle_;
+    boost::shared_ptr<box_type const> box_;
+    boost::shared_ptr<random_type> random_;
+    boost::shared_ptr<logger_type> logger_;
     /** slab extents for each direction as fraction of the edge length of the box */
     typename box_type::vector_type slab_;
 

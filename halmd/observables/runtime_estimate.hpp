@@ -40,11 +40,13 @@ namespace observables {
  */
 class runtime_estimate
 {
+private:
+    typedef halmd::signal<void ()> signal_type;
+
 public:
     typedef halmd::mdsim::clock clock_type;
-    typedef halmd::signal<void ()> signal_type;
+    typedef clock_type::step_type step_type;
     typedef signal_type::slot_function_type slot_function_type;
-    typedef signal_type::connection connection_type;
 
     static void luaopen(lua_State* L);
 
@@ -52,14 +54,14 @@ public:
 
     runtime_estimate(
         boost::shared_ptr<clock_type> clock
-      , uint64_t total_steps
-      , uint64_t step_start
+      , step_type total_steps
+      , step_type step_start
     );
 
     // estimate remaining runtime and output to log file
     void sample() const;
 
-    connection_type on_sample(slot_function_type const& slot)
+    connection on_sample(slot_function_type const& slot)
     {
         return on_sample_.connect(slot);
     }

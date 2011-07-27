@@ -31,7 +31,6 @@ class neighbour
 public:
     typedef halmd::signal<void ()> signal_type;
     typedef signal_type::slot_function_type slot_function_type;
-    typedef signal_type::connection connection_type;
 
     static void luaopen(lua_State* L);
 
@@ -39,7 +38,7 @@ public:
     virtual ~neighbour() {}
     virtual void update() = 0;
     /** add slot to be run before neighbour list update */
-    virtual connection_type on_update(slot_function_type const& slot) = 0;
+    virtual connection on_update(slot_function_type const& slot) = 0;
 };
 
 } // namespace mdsim

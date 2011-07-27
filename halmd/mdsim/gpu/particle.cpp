@@ -109,6 +109,14 @@ particle<dimension, float_type>::particle(
         throw;
     }
 
+    // initialise 'ghost' particles to zero
+    // this avoids potential nonsense computations resulting in denormalised numbers
+    cuda::memset(g_r, 0, g_r.capacity());
+    cuda::memset(g_v, 0, g_v.capacity());
+    cuda::memset(g_f, 0, g_f.capacity());
+    cuda::memset(g_image, 0, g_image.capacity());
+    cuda::memset(g_index, 0, g_index.capacity());
+
     try {
         cuda::copy(nbox, get_particle_kernel<dimension>().nbox);
         cuda::copy(ntype, get_particle_kernel<dimension>().ntype);
@@ -120,7 +128,7 @@ particle<dimension, float_type>::particle(
 }
 
 /**
- * set particle tags and types
+ * set particle tags and types, initialise g_index
  */
 template <unsigned int dimension, typename float_type>
 void particle<dimension, float_type>::set()
@@ -131,6 +139,9 @@ void particle<dimension, float_type>::set()
         cuda::copy(ntypes, g_ntypes);
         get_particle_kernel<dimension>().ntypes.bind(g_ntypes);
         get_particle_kernel<dimension>().tag(g_r, g_v);
+
+        cuda::configure(dim.grid, dim.block);
+        get_particle_kernel<dimension>().gen_index(g_index);
         cuda::thread::synchronize();
     }
     catch (cuda::error const&) {

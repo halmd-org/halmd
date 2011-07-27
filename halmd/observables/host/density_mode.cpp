@@ -19,11 +19,8 @@
 
 #include <boost/foreach.hpp>
 
-#include <halmd/io/logger.hpp>
 #include <halmd/observables/host/density_mode.hpp>
 #include <halmd/utility/lua/lua.hpp>
-#include <halmd/utility/scoped_timer.hpp>
-#include <halmd/utility/timer.hpp>
 
 using namespace boost;
 using namespace std;
@@ -34,55 +31,50 @@ namespace host {
 
 template <int dimension, typename float_type>
 density_mode<dimension, float_type>::density_mode(
-    shared_ptr<phase_space_type> phase_space
-  , shared_ptr<wavevector_type> wavevector
+    shared_ptr<phase_space_type const> phase_space
+  , shared_ptr<wavevector_type const> wavevector
+  , shared_ptr<clock_type const> clock
+  , shared_ptr<logger_type> logger
 )
     // dependency injection
   : phase_space_(phase_space)
   , wavevector_(wavevector)
+  , clock_(clock)
+  , logger_(logger)
     // memory allocation
-  , rho_sample_(phase_space_->sample->r.size(), wavevector_->value().size())
+  , rho_sample_(phase_space_->r.size(), wavevector_->value().size())
 {
-}
-
-/**
- * register module runtime accumulators
- */
-template <int dimension, typename float_type>
-void density_mode<dimension, float_type>::register_runtimes(profiler_type& profiler)
-{
-    profiler.register_runtime(runtime_.sample, "sample", "computation of density modes");
 }
 
 /**
  * Acquire sample of all density modes from phase space sample
  */
 template <int dimension, typename float_type>
-void density_mode<dimension, float_type>::acquire(uint64_t step)
+void density_mode<dimension, float_type>::acquire()
 {
-    scoped_timer<timer> timer_(runtime_.sample);
+    scoped_timer_type timer(runtime_.sample);
 
-    if (rho_sample_.step == step) {
-        LOG_TRACE("[density_mode] sample is up to date");
+    if (rho_sample_.step == clock_->step()) {
+        LOG_TRACE("sample is up to date");
         return;
     }
 
-    typedef typename phase_space_type::sample_type::sample_vector_ptr positions_vector_ptr_type;
+    typedef typename phase_space_type::sample_vector_ptr positions_vector_ptr_type;
     typedef typename density_mode_sample_type::mode_vector_type mode_vector_type;
 
     // trigger update of phase space sample
-    on_acquire_(step);
+    on_acquire_();
 
-    LOG_TRACE("[density_mode] acquire sample");
+    LOG_TRACE("acquire sample");
 
-    if (phase_space_->sample->step != step) {
+    if (phase_space_->step != clock_->step()) {
         throw logic_error("host phase space sample was not updated");
     }
 
     // compute density modes separately for each particle type
     // 1st loop: iterate over particle types
     unsigned int type = 0;
-    BOOST_FOREACH (positions_vector_ptr_type const r_sample, phase_space_->sample->r) {
+    BOOST_FOREACH (positions_vector_ptr_type const r_sample, phase_space_->r) {
         mode_vector_type& rho_vector = *rho_sample_.rho[type]; //< dereference shared_ptr
         // initialise result array
         fill(rho_vector.begin(), rho_vector.end(), 0);
@@ -99,7 +91,7 @@ void density_mode<dimension, float_type>::acquire(uint64_t step)
         }
         ++type;
     }
-    rho_sample_.step = step;
+    rho_sample_.step = clock_->step();
 }
 
 template <int dimension, typename float_type>
@@ -115,10 +107,17 @@ void density_mode<dimension, float_type>::luaopen(lua_State* L)
             [
                 class_<density_mode, shared_ptr<_Base>, _Base>(class_name.c_str())
                     .def(constructor<
-                        shared_ptr<phase_space_type>
-                      , shared_ptr<wavevector_type>
+                        shared_ptr<phase_space_type const>
+                      , shared_ptr<wavevector_type const>
+                      , shared_ptr<clock_type const>
+                      , shared_ptr<logger_type>
                     >())
-                    .def("register_runtimes", &density_mode::register_runtimes)
+                    .scope
+                    [
+                        class_<runtime>("runtime")
+                            .def_readonly("sample", &runtime::sample)
+                    ]
+                    .def_readonly("runtime", &density_mode::runtime_)
             ]
         ]
     ];

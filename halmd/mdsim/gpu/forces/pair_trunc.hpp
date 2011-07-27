@@ -32,8 +32,6 @@
 #include <halmd/mdsim/gpu/particle.hpp>
 #include <halmd/utility/lua/lua.hpp>
 #include <halmd/utility/profiler.hpp>
-#include <halmd/utility/scoped_timer.hpp>
-#include <halmd/utility/timer.hpp>
 
 namespace halmd {
 namespace mdsim {
@@ -54,16 +52,8 @@ public:
     typedef gpu::particle<dimension, float> particle_type;
     typedef mdsim::box<dimension> box_type;
     typedef gpu::neighbour neighbour_type;
-    typedef utility::profiler profiler_type;
-
     typedef typename potential_type::gpu_potential_type gpu_potential_type;
     typedef pair_trunc_wrapper<dimension, gpu_potential_type> gpu_wrapper;
-
-    struct runtime
-    {
-        typedef typename profiler_type::accumulator_type accumulator_type;
-        accumulator_type compute;
-    };
 
     boost::shared_ptr<potential_type> potential;
     boost::shared_ptr<particle_type> particle;
@@ -78,7 +68,6 @@ public:
       , boost::shared_ptr<neighbour_type const> neighbour
     );
     inline virtual void compute();
-    inline void register_runtimes(profiler_type& profiler);
 
     //! enable computation of auxiliary variables
     virtual void aux_enable()
@@ -117,6 +106,15 @@ public:
     }
 
 private:
+    typedef utility::profiler profiler_type;
+    typedef typename profiler_type::accumulator_type accumulator_type;
+    typedef typename profiler_type::scoped_timer_type scoped_timer_type;
+
+    struct runtime
+    {
+        accumulator_type compute;
+    };
+
     /** neighbour lists */
     boost::shared_ptr<neighbour_type const> neighbour_;
 
@@ -161,7 +159,7 @@ pair_trunc<dimension, float_type, potential_type>::pair_trunc(
 template <int dimension, typename float_type, typename potential_type>
 void pair_trunc<dimension, float_type, potential_type>::compute()
 {
-    scoped_timer<timer> timer_(runtime_.compute);
+    scoped_timer_type timer(runtime_.compute);
 
     cuda::copy(neighbour_->size(), gpu_wrapper::kernel.neighbour_size);
     cuda::copy(neighbour_->stride(), gpu_wrapper::kernel.neighbour_stride);
@@ -180,15 +178,6 @@ void pair_trunc<dimension, float_type, potential_type>::compute()
         );
     }
     cuda::thread::synchronize();
-}
-
-/**
- * register module runtime accumulators
- */
-template <int dimension, typename float_type, typename potential_type>
-void pair_trunc<dimension, float_type, potential_type>::register_runtimes(profiler_type& profiler)
-{
-    profiler.register_runtime(runtime_.compute, "compute", std::string("computation of ") + potential_type::name() + " forces");
 }
 
 template <int dimension, typename float_type, typename potential_type>
@@ -220,10 +209,25 @@ void pair_trunc<dimension, float_type, potential_type>::luaopen(lua_State* L)
                               , boost::shared_ptr<box_type>
                               , boost::shared_ptr<neighbour_type const>
                             >())
-                            .def("register_runtimes", &pair_trunc::register_runtimes)
                             .property("module_name", &module_name_wrapper<dimension, float_type, potential_type>)
+                            .scope
+                            [
+                                class_<runtime>("runtime")
+                                    .def_readonly("compute", &runtime::compute)
+                            ]
+                            .def_readonly("runtime", &pair_trunc::runtime_)
                     ]
                 ]
+            ]
+
+          , namespace_("forces")
+            [
+                def("pair_trunc", &boost::make_shared<pair_trunc,
+                    boost::shared_ptr<potential_type>
+                  , boost::shared_ptr<particle_type>
+                  , boost::shared_ptr<box_type>
+                  , boost::shared_ptr<neighbour_type const>
+                >)
             ]
         ]
     ];

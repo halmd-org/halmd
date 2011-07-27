@@ -20,11 +20,15 @@
 // increase compiler compatibility, e.g. with Clang 2.8
 #define BOOST_LOG_NO_UNSPECIFIED_BOOL
 #include <boost/log/attributes/clock.hpp>
+#include <boost/log/attributes/constant.hpp>
 #include <boost/log/filters/attr.hpp>
+#include <boost/log/filters/has_attr.hpp>
 #include <boost/log/formatters/attr.hpp>
 #include <boost/log/formatters/date_time.hpp>
 #include <boost/log/formatters/format.hpp>
+#include <boost/log/formatters/if.hpp>
 #include <boost/log/formatters/message.hpp>
+#include <boost/log/formatters/stream.hpp>
 #include <boost/log/utility/empty_deleter.hpp>
 #include <boost/version.hpp>
 
@@ -37,55 +41,23 @@ using namespace std;
 
 namespace halmd {
 
-static inline ostream& operator<<(ostream& os, logger::severity_level level)
+logging::logging()
 {
-    switch (level)
-    {
-      case logger::trace:
-        os << "[TRACE] "; break;
-      case logger::debug:
-        os << "[DEBUG] "; break;
-      case logger::warning:
-        os << "[WARNING] "; break;
-      case logger::error:
-        os << "[ERROR] "; break;
-      case logger::fatal:
-        os << "[FATAL] "; break;
-      default:
-        break;
-    }
-    return os;
-}
-
-logger::logger()
-{
-    core::get()->add_global_attribute(
-        "TimeStamp"
-#ifdef BOOST_LOG_ATTRIBUTE_HPP_INCLUDED_ // Boost.Log < r479 (SVN)
-      , make_shared<attributes::local_clock>()
-#else
-      , attributes::local_clock()
-#endif
-    );
+    core::get()->add_global_attribute("TimeStamp", attributes::local_clock());
 #ifdef NDEBUG
-    logger::open_console(info);
+    logging::open_console(info);
 #else
-    logger::open_console(debug);
+    logging::open_console(debug);
 #endif
 }
 
-void logger::open_console(severity_level level)
+void logging::open_console(severity_level level)
 {
     shared_ptr<console_backend_type> backend(make_shared<console_backend_type>());
     backend->add_stream(
         shared_ptr<ostream>(&clog, empty_deleter())
     );
-    backend->set_formatter(
-        formatters::format("[%1%] %2%%3%")
-            % formatters::date_time("TimeStamp", keywords::format = logger::timestamp())
-            % formatters::attr<severity_level>("Severity")
-            % formatters::message()
-    );
+    set_formatter(backend);
     backend->auto_flush(true);
 
     core::get()->remove_sink(console_);
@@ -96,25 +68,20 @@ void logger::open_console(severity_level level)
     core::get()->add_sink(console_);
 }
 
-void logger::close_console()
+void logging::close_console()
 {
     core::get()->remove_sink(console_);
     console_.reset();
 }
 
-void logger::open_file(string file_name, severity_level level)
+void logging::open_file(string file_name, severity_level level)
 {
     shared_ptr<file_backend_type> backend(
         make_shared<file_backend_type>(
             keywords::file_name = file_name
         )
     );
-    backend->set_formatter(
-        formatters::format("[%1%] %2%%3%")
-            % formatters::date_time("TimeStamp", keywords::format = logger::timestamp())
-            % formatters::attr<severity_level>("Severity")
-            % formatters::message()
-    );
+    set_formatter(backend);
     backend->auto_flush(true);
 
     core::get()->remove_sink(file_);
@@ -125,43 +92,102 @@ void logger::open_file(string file_name, severity_level level)
     core::get()->add_sink(file_);
 }
 
-void logger::close_file()
+void logging::close_file()
 {
     core::get()->remove_sink(file_);
     file_.reset();
 }
 
-template <logger::severity_level level>
-static void log_wrapper(char const* message)
+static inline ostream& operator<<(ostream& os, logging::severity_level level)
+{
+    switch (level)
+    {
+      case logging::trace:
+        os << "TRACE"; break;
+      case logging::debug:
+        os << "DEBUG"; break;
+      case logging::warning:
+        os << "WARNING"; break;
+      case logging::error:
+        os << "ERROR"; break;
+      case logging::fatal:
+        os << "FATAL"; break;
+      default:
+        os << static_cast<int>(level); break;
+    }
+    return os;
+}
+
+template <typename backend_type>
+void logging::set_formatter(shared_ptr<backend_type> backend) const
+{
+    backend->set_formatter(formatters::stream
+        << formatters::date_time("TimeStamp", "[%d-%m-%Y %H:%M:%S.%f]")
+        << formatters::if_(filters::attr<severity_level>("Severity") != logging::info)
+           [
+               formatters::stream << " [" << formatters::attr<logging::severity_level>("Severity") << "]"
+           ]
+        << formatters::if_(filters::has_attr("Module"))
+           [
+               formatters::stream
+                   << " " << formatters::attr("Module")
+                   << formatters::if_(filters::has_attr("Tag"))
+                      [
+                          formatters::stream << "[" << formatters::attr("Tag") << "]"
+                      ]
+                   << ":"
+           ]
+        << " " << formatters::message()
+    );
+}
+
+template <logging::severity_level level>
+static void wrap_log(char const* message)
 {
     HALMD_LOG(level, message);
 }
 
-void logger::luaopen(lua_State* L)
+template <typename T>
+static void wrap_add_attribute(logger& logger_, string const& attr, T const& value)
+{
+    logger_.add_attribute(attr, attributes::constant<T>(value));
+}
+
+void logging::luaopen(lua_State* L)
 {
     using namespace luabind;
     module(L, "libhalmd")
     [
         namespace_("io")
         [
-            namespace_("logger")
+            class_<logger, shared_ptr<logger> >("logger")
+                .def(constructor<>())
+                .def("add_attribute", &wrap_add_attribute<string>)
+                .def("add_attribute", &wrap_add_attribute<int>)
+
+          , namespace_("logging")
             [
-                def("fatal", &log_wrapper<logger::fatal>)
-              , def("error", &log_wrapper<logger::error>)
-              , def("warning", &log_wrapper<logger::warning>)
-              , def("info", &log_wrapper<logger::info>)
+                def("fatal", &wrap_log<logging::fatal>)
+              , def("error", &wrap_log<logging::error>)
+              , def("warning", &wrap_log<logging::warning>)
+              , def("info", &wrap_log<logging::info>)
 #ifndef NDEBUG
-              , def("debug", &log_wrapper<logger::debug>)
-              , def("trace", &log_wrapper<logger::trace>)
+              , def("debug", &wrap_log<logging::debug>)
+              , def("trace", &wrap_log<logging::trace>)
 #endif
             ]
         ]
     ];
 }
 
+/** define logging singleton instance */
+logging logging::logging_;
+/** define global logger source */
+shared_ptr<logger> const logger_ = make_shared<logger>();
+
 HALMD_LUA_API int luaopen_libhalmd_io_logger(lua_State* L)
 {
-    logger::luaopen(L);
+    logging::luaopen(L);
     return 0;
 }
 

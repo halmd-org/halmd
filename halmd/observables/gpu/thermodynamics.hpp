@@ -20,6 +20,7 @@
 #ifndef HALMD_OBSERVABLES_GPU_THERMODYNAMICS_HPP
 #define HALMD_OBSERVABLES_GPU_THERMODYNAMICS_HPP
 
+#include <boost/make_shared.hpp>
 #include <boost/numeric/ublas/symmetric.hpp>
 #include <lua.hpp>
 #include <vector>
@@ -37,28 +38,29 @@ template <int dimension, typename float_type>
 class thermodynamics
     : public observables::thermodynamics<dimension>
 {
-public:
+private:
     typedef observables::thermodynamics<dimension> _Base;
+
+public:
     typedef typename _Base::vector_type vector_type;
     typedef mdsim::gpu::particle<dimension, float_type> particle_type;
     typedef typename _Base::box_type box_type;
     typedef typename _Base::clock_type clock_type;
     typedef mdsim::gpu::force<dimension, float_type> force_type;
-
-    boost::shared_ptr<particle_type> particle;
-    boost::shared_ptr<force_type> force;
+    typedef typename _Base::logger_type logger_type;
 
     static void luaopen(lua_State* L);
 
     thermodynamics(
-        boost::shared_ptr<particle_type> particle
-      , boost::shared_ptr<box_type> box
-      , boost::shared_ptr<clock_type> clock
+        boost::shared_ptr<particle_type const> particle
+      , boost::shared_ptr<box_type const> box
+      , boost::shared_ptr<clock_type const> clock
       , boost::shared_ptr<force_type> force
+      , boost::shared_ptr<logger_type> logger = boost::make_shared<logger_type>()
     );
 
     virtual void prepare();
-    virtual void sample(uint64_t step);
+    virtual void sample();
 
     virtual double en_kin();
     virtual vector_type v_cm();
@@ -67,6 +69,9 @@ public:
     virtual double hypervirial();
 
 private:
+    boost::shared_ptr<particle_type const> particle_;
+    boost::shared_ptr<force_type> force_;
+
     /** functors for reduce kernels */
     algorithm::gpu::reduce<
         algorithm::gpu::sum_                    // reduce_transform

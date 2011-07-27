@@ -91,7 +91,7 @@ function register(module)
             return value
         end
 
-        local args = setmetatable({}, { __index = param })
+        local args = setmetatable({}, {__index = param})
         local object = module.new(args)
         if object then
             hooks.register_object(object, module)

@@ -59,6 +59,7 @@ function new(args)
     local dimension = assert(particle.dimension)
     local box = mdsim.box() -- singleton
     local random = assert(random())
+    local logger = assert(args.logger)
 
     -- fill up missing values with 1
     for i = #slab + 1, dimension do
@@ -71,13 +72,20 @@ function new(args)
     else
         lattice = lattice_wrapper.host[dimension]
     end
-    local position = lattice(particle, box, random, slab)
+    local position = lattice(particle, box, random, slab, logger)
 
     local core = mdsim.core()
     -- connect position to core
     core:on_setup{position.set, tracker = position}
 
     return position
+end
+
+--
+-- connect runtime accumulators to module profiler
+--
+function profile(self, profiler)
+    profiler:on_profile{self, set = "setting particle positions on lattice"}
 end
 
 --
