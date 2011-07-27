@@ -72,6 +72,9 @@ function setup()
     -- Sample static structure factor.
     observables.ssf{}
 
-    -- Pass sampler from Lua to C++, to run the simulation outside of Lua.
+    -- yield sampler.setup slot from Lua to C++ to setup simulation box
+    coroutine.yield(sampler.setup)
+
+    -- return sampler.run slot from Lua to C++ to run simulation
     return sampler.run
 end

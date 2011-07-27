@@ -47,16 +47,22 @@ sampler::sampler(
 }
 
 /**
- * Run simulation
+ * Setup simulation box
  */
-void sampler::run()
+void sampler::setup()
 {
     LOG("setting up simulation box");
 
     on_prepare_();
     core_->setup();
     on_sample_();
+}
 
+/**
+ * Run simulation
+ */
+void sampler::run()
+{
     on_start_();
 
     LOG("starting simulation run");
@@ -137,6 +143,12 @@ wrap_run(shared_ptr<sampler> self)
     return bind(&sampler::run, self);
 }
 
+sampler::slot_function_type
+wrap_setup(shared_ptr<sampler> self)
+{
+    return bind(&sampler::setup, self);
+}
+
 void sampler::luaopen(lua_State* L)
 {
     using namespace luabind;
@@ -152,6 +164,7 @@ void sampler::luaopen(lua_State* L)
             .def("on_finish", &sampler::on_finish)
             .def("on_prepare", &sampler::on_prepare)
             .def("on_sample", &sampler::on_sample)
+            .property("setup", &wrap_setup)
             .property("run", &wrap_run)
             .property("steps", &sampler::steps)
             .property("total_time", &sampler::total_time)
