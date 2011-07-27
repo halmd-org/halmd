@@ -67,6 +67,9 @@ function new(args)
         -- to ensure that this happens only once.
         --
         local sample
+        -- capture module parameters, instead of entire args table
+        local time = args.time
+        local step = args.step or -1 --default value
 
         reader.sample = property(function(self)
             if not sample then
@@ -82,11 +85,11 @@ function new(args)
 
                 -- read phase space sample before system preparation
                 local core = mdsim.core() -- singleton
-                if args.time then
-                    core:on_prepend_setup(self:read_at_time(args.time))
+                if time then
+                    core:on_prepend_setup(self:read_at_time(time))
                 else
                     -- read sample at last step by default
-                    core:on_prepend_setup(self:read_at_step(args.step or -1))
+                    core:on_prepend_setup(self:read_at_step(step))
                 end
             end
             return sample
