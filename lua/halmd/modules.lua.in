@@ -26,6 +26,8 @@ end
 
 -- grab modules
 local hooks = halmd.hooks
+-- grab C++ API
+local property = property
 -- grab standard library
 local ipairs = ipairs
 local rawset = rawset
@@ -94,6 +96,11 @@ function register(module)
         local args = setmetatable({}, {__index = param})
         local object = module.new(args)
         if object then
+            -- store Lua module that created C++ module as read-only property
+            if not object.module then
+                object.module = property(function() return module end)
+            end
+
             hooks.register_object(object, module)
         end
         return object
