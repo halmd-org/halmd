@@ -67,8 +67,8 @@ function new(args)
     core:on_force{force.compute, tracker = force}
 
     -- store potential Lua object (which contains the C++ object) as a
-    -- read-only Lua property, so we access it in pair_trunc.profile
-    -- and retrieve the name of the potential for the log description
+    -- read-only Lua property, so we may read it in pair_trunc.profile
+    -- and retrieve the description of the potential for the log entry
     force.potential = property(function(self)
         return potential
     end)
@@ -80,5 +80,5 @@ end
 -- connect runtime accumulators to module profiler
 --
 function profile(self, profiler)
-    profiler:on_profile{self, compute = "computation of " .. self.potential.name .. " forces"}
+    profiler:on_profile{self, compute = "computation of " .. self.potential.module.description() .. " forces"}
 end

@@ -119,6 +119,6 @@ end
 --
 -- returns module description
 --
-function name()
+function description()
     return "H5MD file format"
 end

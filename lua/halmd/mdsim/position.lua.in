@@ -53,8 +53,8 @@ function options(desc, globals)
     -- position module choices with descriptions
     local choices = {}
     for position, module in pairs(positions) do
-        if module.name then
-            choices[position] = module.name()
+        if module.description then
+            choices[position] = module.description()
         end
     end
 

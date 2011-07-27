@@ -62,7 +62,7 @@ end
 --
 -- returns module description
 --
-function name()
+function description()
     return "Morse potential"
 end
 

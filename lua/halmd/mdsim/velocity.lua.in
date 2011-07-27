@@ -53,8 +53,8 @@ function options(desc, globals)
     -- velocity module choices with descriptions
     local choices = {}
     for velocity, module in pairs(velocities) do
-        if module.name then
-            choices[velocity] = module.name()
+        if module.description then
+            choices[velocity] = module.description()
         end
     end
 

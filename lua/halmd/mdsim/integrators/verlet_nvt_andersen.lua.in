@@ -92,7 +92,7 @@ end
 --
 -- returns module description
 --
-function name()
+function description()
     return "Velocity-Verlet integrator with Andersen thermostat"
 end
 

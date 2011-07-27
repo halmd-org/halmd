@@ -84,7 +84,7 @@ end
 --
 -- returns module description
 --
-function name()
+function description()
     return "Boltzmann distribution"
 end
 

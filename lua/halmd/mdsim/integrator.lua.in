@@ -49,8 +49,8 @@ function options(desc, globals)
     -- integrator module choices with descriptions
     local choices = {}
     for integrator, module in pairs(integrators) do
-        if module.name then
-            choices[integrator] = module.name()
+        if module.description then
+            choices[integrator] = module.description()
         end
     end
 

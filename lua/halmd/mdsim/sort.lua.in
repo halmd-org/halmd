@@ -49,8 +49,8 @@ function options(desc, globals)
     -- sort module choices with descriptions
     local choices = {}
     for sort, module in pairs(sorts) do
-        if module.name then
-            choices[sort] = module.name()
+        if module.description then
+            choices[sort] = module.description()
         end
     end
 

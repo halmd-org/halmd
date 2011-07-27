@@ -125,7 +125,7 @@ end
 --
 -- returns module description
 --
-function name()
+function description()
     return "static structure factor"
 end
 

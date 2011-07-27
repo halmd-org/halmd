@@ -88,8 +88,8 @@ function options(desc)
     -- writer module choices with descriptions
     local choices = {}
     for writer, module in pairs(writers) do
-        if module.name then
-            choices[writer] = module.name()
+        if module.description then
+            choices[writer] = module.description()
         end
     end
 

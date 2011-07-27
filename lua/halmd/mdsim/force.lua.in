@@ -38,16 +38,7 @@ module("halmd.mdsim.force", halmd.modules.register, halmd.singleton)
 --
 function new(args)
     local force = args.force or "lennard_jones" -- default value
-    local potential = assert(forces[force])
-    local name = assert(potential.name) -- function
-
-    local potential = potential()
-
-    -- pair_trunc.profile registers its compute runtime accumulator
-    -- with a description that contains the name of the potential,
-    -- therefore store the potential name as a read-only Lua property
-    potential.name = property(name)
-
+    local potential = assert(forces[force])()
     if potential.r_cut then
         return forces.pair_trunc{force = force, potential = potential}
     end
@@ -64,8 +55,8 @@ function options(desc, globals)
     -- force module choices with descriptions
     local choices = {}
     for force, module in pairs(forces) do
-        if module.name then
-            choices[force] = module.name()
+        if module.description then
+            choices[force] = module.description()
         end
     end
 
