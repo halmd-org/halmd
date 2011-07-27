@@ -73,8 +73,8 @@ function setup()
     observables.ssf{}
 
     -- yield sampler.setup slot from Lua to C++ to setup simulation box
-    coroutine.yield(sampler.setup)
+    coroutine.yield(sampler:setup())
 
     -- return sampler.run slot from Lua to C++ to run simulation
-    return sampler.run
+    return sampler:run()
 end
