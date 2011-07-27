@@ -172,7 +172,7 @@ void script::run()
     using namespace luabind;
 
     try {
-        slot_function_type slot = resume_function<slot_function_type>(L, "setup");
+        slot_function_type slot = resume_function<slot_function_type>(L, "script");
 
         // Some C++ modules are only needed during the Lua script stage,
         // e.g. the trajectory reader. To make sure these modules are
