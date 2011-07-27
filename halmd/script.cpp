@@ -20,7 +20,6 @@
 #include <boost/bind.hpp>
 
 #include <halmd/io/logger.hpp>
-#include <halmd/observables/sampler.hpp>
 #include <halmd/script.hpp>
 #include <halmd/utility/filesystem.hpp>
 #include <halmd/utility/lua/lua.hpp>
@@ -172,23 +171,22 @@ void script::run()
 {
     using namespace luabind;
 
-    shared_ptr<observables::sampler> sampler;
     try {
-        sampler = call_function<shared_ptr<observables::sampler> >(L, "halmd");
+        slot_function_type slot = call_function<slot_function_type>(L, "setup");
+
+        // Some C++ modules are only needed during the Lua script stage,
+        // e.g. the trajectory reader. To make sure these modules are
+        // destructed before running the simulation, invoke the Lua
+        // garbage collector now.
+        lua_gc(L, LUA_GCCOLLECT, 0);
+
+        slot();
     }
     catch (luabind::error const& e) {
         LOG_ERROR(lua_tostring(e.state(), -1));
         lua_pop(e.state(), 1); //< remove error message
         throw;
     }
-
-    // Some C++ modules are only needed during the Lua script stage,
-    // e.g. the trajectory reader. To make sure these modules are
-    // destructed before running the simulation, invoke the Lua
-    // garbage collector now.
-    lua_gc(L, LUA_GCCOLLECT, 0);
-
-    sampler->run();
 }
 
 /**

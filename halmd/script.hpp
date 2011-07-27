@@ -26,6 +26,7 @@
 #include <string>
 
 #include <halmd/utility/options_parser.hpp>
+#include <halmd/utility/signal.hpp>
 
 namespace halmd {
 
@@ -51,6 +52,8 @@ public:
     lua_State* const L;
 
 private:
+    typedef signal<void ()>::slot_function_type slot_function_type;
+
     void package_path();
     static void register_exception_handlers();
 };

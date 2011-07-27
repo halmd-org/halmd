@@ -36,20 +36,16 @@ require("halmd.observables.ssf")
 require("halmd.observables.thermodynamics")
 
 -- grab modules
+local device = halmd.device
 local mdsim = halmd.mdsim
 local observables = halmd.observables
 local readers = halmd.io.readers
 local writers = halmd.io.writers
--- grab standard library
-local assert = assert
-local pairs = pairs
-
-module("halmd", halmd.modules.register)
 
 --
--- Construct simulation
+-- Setup simulation
 --
-function new(args)
+function setup()
     -- load the device module to log (optional) GPU properties
     device() -- singleton
     -- open (optional) H5MD file and read simulation parameters
@@ -77,5 +73,5 @@ function new(args)
     observables.ssf{}
 
     -- Pass sampler from Lua to C++, to run the simulation outside of Lua.
-    return sampler
+    return sampler.run
 end

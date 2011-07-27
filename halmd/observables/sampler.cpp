@@ -131,6 +131,12 @@ void sampler::sample(slot_function_type const& slot, step_type interval) const
     }
 }
 
+sampler::slot_function_type
+wrap_run(shared_ptr<sampler> self)
+{
+    return bind(&sampler::run, self);
+}
+
 void sampler::luaopen(lua_State* L)
 {
     using namespace luabind;
@@ -146,7 +152,7 @@ void sampler::luaopen(lua_State* L)
             .def("on_finish", &sampler::on_finish)
             .def("on_prepare", &sampler::on_prepare)
             .def("on_sample", &sampler::on_sample)
-            .def("run", &sampler::run)
+            .property("run", &wrap_run)
             .property("steps", &sampler::steps)
             .property("total_time", &sampler::total_time)
             .scope
