@@ -38,7 +38,7 @@ function new(args)
     local position = args.position or "lattice" -- default value
     local reader = args.reader
     if reader and not args.position then
-        return positions.phase_space{sample = reader.sample}
+        return positions.phase_space{sample = reader.position}
     end
     return positions[position]()
 end

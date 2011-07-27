@@ -38,7 +38,7 @@ function new(args)
     local velocity = args.velocity or "boltzmann" -- default value
     local reader = args.reader
     if reader and not args.velocity then
-        return velocities.phase_space{sample = reader.sample}
+        return velocities.phase_space{sample = reader.velocity}
     end
     return velocities[velocity]()
 end

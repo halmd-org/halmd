@@ -47,49 +47,64 @@ local reader
 --
 function new(args)
     if reader then
+        local time = args.time
+        local step = args.step or -1 --default value
+
         -- open trajectory file
         local file = reader{path = assert(args.file)}
         -- open trajectory group
         local reader = file:reader{location = {"trajectory"}, mode = "append"}
+        -- read phase space sample before system preparation
+        local core = mdsim.core() -- singleton
+        if time then
+            core:on_prepend_setup(reader:read_at_time(time))
+        else
+            -- read sample at last step by default
+            core:on_prepend_setup(reader:read_at_step(step))
+        end
 
         --
-        -- extend with reader.sample property
+        -- extend with reader.position and reader.velocity
         --
         -- The H5MD file needs to be opened before loading mdsim modules,
         -- as readers.h5md retrieves the simulation parameters from the
         -- parameter group within the file. However, the reader requires an
         -- allocated phase space sample with the correct number of particle
         -- species. To disentangle these requirements, we delay the connection
-        -- of the phase space sample to reader, through encapsulation in a
-        -- property reader.sample. If the position and/or velocity module
-        -- accesses reader.sample, the sample's data slots will be connected to
-        -- the reader. We cache the sample in a variable outside the property
-        -- to ensure that this happens only once.
+        -- of the phase space sample to reader, through encapsulation in the
+        -- properties reader.position and reader.velocity. If the position
+        -- and/or velocity module accesses reader.position/velocity, the
+        -- sample's position/velocity slots will be connected to the reader.
+        -- We cache the sample in a variable outside the property to ensure
+        -- that this happens only once.
         --
+
+        -- convert (0-based) species index to name
+        local function species(index)
+            return string.char(string.byte("A") + index)
+        end
+
+        -- connect position data slots of phase space sample for reading
         local sample
-        -- capture module parameters, instead of entire args table
-        local time = args.time
-        local step = args.step or -1 --default value
-
-        reader.sample = property(function(self)
+        reader.position = property(function(self)
             if not sample then
-                sample = observables.samples.phase_space{ memory = "host" } -- singleton
+                sample = observables.samples.phase_space{memory = "host"}
                 local particle = mdsim.particle() -- singleton
-
-                -- read phase space sample
                 for i = 0, particle.ntype - 1 do
-                    local species = string.char(string.byte("A") + i)
-                    self:on_read(sample:position(i), {species, "position"})
-                    self:on_read(sample:velocity(i), {species, "velocity"})
+                    self:on_read(sample:position(i), {species(i), "position"})
                 end
+            end
+            return sample
+        end)
 
-                -- read phase space sample before system preparation
-                local core = mdsim.core() -- singleton
-                if time then
-                    core:on_prepend_setup(self:read_at_time(time))
-                else
-                    -- read sample at last step by default
-                    core:on_prepend_setup(self:read_at_step(step))
+        -- connect velocity data slots of phase space sample for reading
+        local sample
+        reader.velocity = property(function(self)
+            if not sample then
+                sample = observables.samples.phase_space{memory = "host"}
+                local particle = mdsim.particle() -- singleton
+                for i = 0, particle.ntype - 1 do
+                    self:on_read(sample:velocity(i), {species(i), "velocity"})
                 end
             end
             return sample
