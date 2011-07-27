@@ -20,13 +20,13 @@
 #ifndef HALMD_MDSIM_GPU_INTEGRATORS_VERLET_NVT_HOOVER_HPP
 #define HALMD_MDSIM_GPU_INTEGRATORS_VERLET_NVT_HOOVER_HPP
 
+#include <boost/make_shared.hpp>
 #include <boost/mpl/if.hpp>
 #include <boost/type_traits/is_same.hpp>
-#include <cuda_wrapper/cuda_wrapper.hpp>
 #include <lua.hpp>
 
 #include <halmd/algorithm/gpu/reduce.hpp>
-#include <halmd/io/statevars/writer.hpp>
+#include <halmd/io/logger.hpp>
 #include <halmd/mdsim/box.hpp>
 #include <halmd/mdsim/gpu/integrators/verlet_nvt_hoover_kernel.hpp>
 #include <halmd/mdsim/gpu/particle.hpp>
@@ -47,40 +47,25 @@ public:
     typedef mdsim::integrators::nvt<dimension> _Base;
     typedef gpu::particle<dimension, float> particle_type;
     typedef mdsim::box<dimension> box_type;
-    typedef io::statevars::writer<dimension> writer_type;
-    typedef utility::profiler profiler_type;
+    typedef logger logger_type;
 
     typedef typename particle_type::vector_type vector_type;
     typedef typename boost::mpl::if_<
         boost::is_same<float_type, double>, dsfloat, float_type
     >::type gpu_float_type;
-    typedef verlet_nvt_hoover_wrapper<dimension, gpu_float_type> wrapper_type;
-
-    struct runtime
-    {
-        typedef typename profiler_type::accumulator_type accumulator_type;
-        accumulator_type integrate;
-        accumulator_type finalize;
-        accumulator_type propagate;
-        accumulator_type rescale;
-    };
 
     static char const* module_name() { return "verlet_nvt_hoover"; }
-
-    boost::shared_ptr<particle_type> particle;
-    boost::shared_ptr<box_type> box;
 
     static void luaopen(lua_State* L);
 
     verlet_nvt_hoover(
         boost::shared_ptr<particle_type> particle
-      , boost::shared_ptr<box_type> box
+      , boost::shared_ptr<box_type const> box
       , float_type timestep
       , float_type temperature
       , float_type resonance_frequency
+      , boost::shared_ptr<logger_type> logger = boost::make_shared<logger_type>()
     );
-    void register_runtimes(profiler_type& profiler);
-    void register_observables(writer_type& writer);
 
     virtual void integrate();
     virtual void finalize();
@@ -118,13 +103,36 @@ public:
         return en_nhc_;
     }
 
-    /** chain of heat bath variables */
+    /**
+     * chain of heat bath variables
+     *
+     * In analogy with the particle positions and velocities, these variables are accessible to the public.
+     */
     fixed_vector<float_type, 2> xi;
     fixed_vector<float_type, 2> v_xi;
 
 private:
+    typedef verlet_nvt_hoover_wrapper<dimension, gpu_float_type> wrapper_type;
+    typedef utility::profiler profiler_type;
+    typedef typename profiler_type::accumulator_type accumulator_type;
+    typedef typename profiler_type::scoped_timer_type scoped_timer_type;
+
+    struct runtime
+    {
+        accumulator_type integrate;
+        accumulator_type finalize;
+        accumulator_type propagate;
+        accumulator_type rescale;
+    };
+
     /** propagate chain of Nosé-Hoover variables */
     float_type propagate_chain();
+
+    /** module dependencies */
+    boost::shared_ptr<particle_type> particle_;
+    boost::shared_ptr<box_type const> box_;
+    /** module logger */
+    boost::shared_ptr<logger_type> logger_;
 
     /** integration time-step */
     float_type timestep_;

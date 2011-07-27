@@ -22,11 +22,8 @@
 #include <cmath>
 #include <string>
 
-#include <halmd/io/logger.hpp>
 #include <halmd/mdsim/host/integrators/verlet_nvt_hoover.hpp>
 #include <halmd/utility/lua/lua.hpp>
-#include <halmd/utility/scoped_timer.hpp>
-#include <halmd/utility/timer.hpp>
 
 using namespace boost;
 using namespace std;
@@ -39,17 +36,20 @@ namespace mdsim { namespace host { namespace integrators
 template <int dimension, typename float_type>
 verlet_nvt_hoover<dimension, float_type>::verlet_nvt_hoover(
     shared_ptr<particle_type> particle
-  , shared_ptr<box_type> box
+  , shared_ptr<box_type const> box
   , float_type timestep
   , float_type temperature
   , float_type resonance_frequency
+  , shared_ptr<logger_type> logger
 )
-  // dependency injection
-  : particle(particle)
-  , box(box)
-  // member initialisation
-  , xi(0)
+  // public member initialisation
+  : xi(0)
   , v_xi(0)
+  // dependency injection
+  , particle_(particle)
+  , box_(box)
+  , logger_(logger)
+  // member initialisation
   , en_nhc_(0)
   , resonance_frequency_(resonance_frequency)
 {
@@ -60,24 +60,13 @@ verlet_nvt_hoover<dimension, float_type>::verlet_nvt_hoover(
 }
 
 /**
- * register module runtime accumulators
- */
-template <int dimension, typename float_type>
-void verlet_nvt_hoover<dimension, float_type>::register_runtimes(profiler_type& profiler)
-{
-    profiler.register_runtime(runtime_.integrate, "integrate", "first half-step of velocity-Verlet (+ Nosé-Hoover chain)");
-    profiler.register_runtime(runtime_.finalize, "finalize", "second half-step of velocity-Verlet (+ Nosé-Hoover chain)");
-    profiler.register_runtime(runtime_.propagate, "propagate", "propagate Nosé-Hoover chain");
-}
-
-/**
  * register observables
- */
 template <int dimension, typename float_type>
 void verlet_nvt_hoover<dimension, float_type>::register_observables(writer_type& writer)
 {
     writer.register_observable("ENHC", &en_nhc_, "energy of Nosé-Hoover chain variables per particle");
 }
+ */
 
 template <int dimension, typename float_type>
 void verlet_nvt_hoover<dimension, float_type>::timestep(double timestep)
@@ -94,19 +83,19 @@ template <int dimension, typename float_type>
 void verlet_nvt_hoover<dimension, float_type>::temperature(double temperature)
 {
     temperature_ = static_cast<float_type>(temperature);
-    en_kin_target_2_ = dimension * particle->nbox * temperature_;
+    en_kin_target_2_ = dimension * particle_->nbox * temperature_;
 
     // follow Martyna et al. [J. Chem. Phys. 97, 2635 (1992)]
     // for the masses of the heat bath variables
     float_type omega_sq = pow(2 * M_PI * resonance_frequency_, 2);
-    unsigned int dof = dimension * particle->nbox;
+    unsigned int dof = dimension * particle_->nbox;
     fixed_vector<float_type, 2> mass;
     mass[0] = dof * temperature_ / omega_sq;
     mass[1] = temperature_ / omega_sq;
     this->mass(mass);
 
     LOG("temperature of heat bath: " << temperature_);
-    LOG_DEBUG("target kinetic energy: " << en_kin_target_2_ / particle->nbox);
+    LOG_DEBUG("target kinetic energy: " << en_kin_target_2_ / particle_->nbox);
 }
 
 template <int dimension, typename float_type>
@@ -123,17 +112,17 @@ mass(fixed_vector<double, 2> const& mass)
 template <int dimension, typename float_type>
 void verlet_nvt_hoover<dimension, float_type>::integrate()
 {
-    scoped_timer<timer> timer_(runtime_.integrate);
+    scoped_timer_type timer(runtime_.integrate);
 
     propagate_chain();
 
-    for (size_t i = 0; i < particle->nbox; ++i) {
-        vector_type& v = particle->v[i] += particle->f[i] * timestep_half_;
-        vector_type& r = particle->r[i] += v * timestep_;
+    for (size_t i = 0; i < particle_->nbox; ++i) {
+        vector_type& v = particle_->v[i] += particle_->f[i] * timestep_half_;
+        vector_type& r = particle_->r[i] += v * timestep_;
         // enforce periodic boundary conditions
         // TODO: reduction is now to (-L/2, L/2) instead of (0, L) as before
         // check that this is OK
-        particle->image[i] += box->reduce_periodic(r);
+        particle_->image[i] += box_->reduce_periodic(r);
     }
 }
 
@@ -143,21 +132,21 @@ void verlet_nvt_hoover<dimension, float_type>::integrate()
 template <int dimension, typename float_type>
 void verlet_nvt_hoover<dimension, float_type>::finalize()
 {
-    scoped_timer<timer> timer_(runtime_.finalize);
+    scoped_timer_type timer(runtime_.finalize);
 
     // loop over all particles
-    for (size_t i = 0; i < particle->nbox; ++i) {
-        particle->v[i] += particle->f[i] * timestep_half_;
+    for (size_t i = 0; i < particle_->nbox; ++i) {
+        particle_->v[i] += particle_->f[i] * timestep_half_;
     }
 
     propagate_chain();
 
     // compute energy contribution of chain variables
-    en_nhc_ = temperature_ * (dimension * particle->nbox * xi[0] + xi[1]);
+    en_nhc_ = temperature_ * (dimension * particle_->nbox * xi[0] + xi[1]);
     for (unsigned int i = 0; i < 2; ++i ) {
         en_nhc_ += mass_xi_[i] * v_xi[i] * v_xi[i] / 2;
     }
-    en_nhc_ /= particle->nbox;
+    en_nhc_ /= particle_->nbox;
 }
 
 /**
@@ -166,11 +155,11 @@ void verlet_nvt_hoover<dimension, float_type>::finalize()
 template <int dimension, typename float_type>
 void verlet_nvt_hoover<dimension, float_type>::propagate_chain()
 {
-    scoped_timer<timer> timer_(runtime_.propagate);
+    scoped_timer_type timer(runtime_.propagate);
 
     // compute total kinetic energy (multiplied by 2)
     float_type en_kin_2 = 0;
-    BOOST_FOREACH(vector_type const& v, particle->v) {
+    BOOST_FOREACH(vector_type const& v, particle_->v) {
         // assuming unit mass for all particle types
         en_kin_2 += inner_prod(v, v);
     }
@@ -189,7 +178,7 @@ void verlet_nvt_hoover<dimension, float_type>::propagate_chain()
 
     // rescale velocities and kinetic energy
     float_type s = exp(-v_xi[0] * timestep_half_);
-    BOOST_FOREACH(vector_type& v, particle->v) {
+    BOOST_FOREACH(vector_type& v, particle_->v) {
         v *= s;
     }
     en_kin_2 *= s * s;
@@ -231,15 +220,25 @@ void verlet_nvt_hoover<dimension, float_type>::luaopen(lua_State* L)
                     >(class_name.c_str())
                         .def(constructor<
                             shared_ptr<particle_type>
-                          , shared_ptr<box_type>
+                          , shared_ptr<box_type const>
                           , float_type, float_type, float_type
+                          , shared_ptr<logger_type>
                         >())
-                        .def("register_runtimes", &verlet_nvt_hoover::register_runtimes)
-                        .def("register_observables", &verlet_nvt_hoover::register_observables)
+                        .property("xi", &verlet_nvt_hoover::xi)
+                        .property("v_xi", &verlet_nvt_hoover::v_xi)
                         .property("mass", (fixed_vector<double, 2> const& (verlet_nvt_hoover::*)() const)&verlet_nvt_hoover::mass) // FIXME make read/write
                         .property("resonance_frequency", &verlet_nvt_hoover::resonance_frequency)
                         .property("en_nhc", &verlet_nvt_hoover::en_nhc)
                         .property("module_name", &module_name_wrapper<dimension, float_type>)
+                        .scope
+                        [
+                            class_<runtime>("runtime")
+                                .def_readonly("integrate", &runtime::integrate)
+                                .def_readonly("finalize", &runtime::finalize)
+                                .def_readonly("propagate", &runtime::propagate)
+                                .def_readonly("rescale", &runtime::rescale) //< for compatibility with GPU backend
+                        ]
+                        .def_readonly("runtime", &verlet_nvt_hoover::runtime_)
                 ]
             ]
         ]

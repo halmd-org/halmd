@@ -18,8 +18,10 @@
 --
 
 require("halmd.device")
+require("halmd.mdsim.box")
+require("halmd.mdsim.clock")
 require("halmd.mdsim.core")
-
+require("halmd.mdsim.particle")
 require("halmd.modules")
 
 -- grab modules
@@ -49,23 +51,41 @@ module("halmd.mdsim.integrators.verlet_nvt_hoover", halmd.modules.register)
 -- construct verlet_nvt_hoover module
 --
 function new(args)
-    local timestep = args.timestep or 0.001 -- default value
     local temperature = args.temperature or 1.12 -- default value
     local resonance_frequency = args.resonance_frequency or 5 -- default value
+    local logger = assert(args.logger)
 
     -- dependency injection
-    local core = mdsim.core()
-    local dimension = assert(core.dimension)
-    local particle = assert(core.particle)
-    local box = assert(core.box)
+    local particle = mdsim.particle() -- singleton
+    local dimension = assert(particle.dimension)
+    local box = mdsim.box() -- singleton
+    local clock = mdsim.clock() -- singleton
+    local timestep = assert(clock.timestep)
 
-    local integrator
+    local verlet_nvt_hoover
     if device() then
-        integrator = verlet_nvt_hoover_wrapper.gpu[dimension]
+        verlet_nvt_hoover = verlet_nvt_hoover_wrapper.gpu[dimension]
     else
-        integrator = verlet_nvt_hoover_wrapper.host[dimension]
+        verlet_nvt_hoover = verlet_nvt_hoover_wrapper.host[dimension]
     end
-    return integrator(particle, box, timestep, temperature, resonance_frequency)
+    local integrator = verlet_nvt_hoover(particle, box, timestep, temperature, resonance_frequency, logger)
+
+    -- connect integrator to core
+    local core = mdsim.core()
+    core:on_integrate{integrator.integrate, tracker = integrator}
+    core:on_finalize{integrator.finalize, tracker = integrator}
+
+    return integrator
+end
+
+--
+-- connect runtime accumulators to module profiler
+--
+function profile(self, profiler)
+    profiler:on_profile{self, integrate = "first half-step of velocity-Verlet (+ Nosé-Hoover chain)"}
+    profiler:on_profile{self, finalize = "second half-step of velocity-Verlet (+ Nosé-Hoover chain)"}
+    profiler:on_profile{self, propagate = "propagate Nosé-Hoover chain"}
+    profiler:on_profile{self, rescale = "rescale velocities in Nosé-Hoover thermostat"}
 end
 
 --
