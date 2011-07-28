@@ -63,7 +63,11 @@ void logging::open_console(severity_level level)
     core::get()->remove_sink(console_);
     console_ = make_shared<console_sink_type>(backend);
     console_->set_filter(
+#ifdef NDEBUG
+        filters::attr<severity_level>("Severity") <= min(level, info)
+#else
         filters::attr<severity_level>("Severity") <= level
+#endif
     );
     core::get()->add_sink(console_);
 }
@@ -87,7 +91,11 @@ void logging::open_file(string file_name, severity_level level)
     core::get()->remove_sink(file_);
     file_ = make_shared<file_sink_type>(backend);
     file_->set_filter(
+#ifdef NDEBUG
+        filters::attr<severity_level>("Severity") <= min(level, info)
+#else
         filters::attr<severity_level>("Severity") <= level
+#endif
     );
     core::get()->add_sink(file_);
 }
