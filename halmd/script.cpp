@@ -209,10 +209,7 @@ void script::run()
     // push HALMD script function onto stack
     script_.push(L);
     if (lua_isnil(L, -1)) {
-        throw runtime_error("missing return value from HALMD script");
-    }
-    if (!lua_isfunction(L, -1)) {
-        throw runtime_error("non-callable return value from HALMD script");
+        throw runtime_error("missing callable return value from HALMD script");
     }
 
     int status;
