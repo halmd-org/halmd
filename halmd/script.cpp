@@ -101,7 +101,7 @@ void script::load_library()
     using namespace luabind;
 
     try {
-        call_function<void>(L, "require", "halmd");
+        call_function<void>(L, "require", "halmd.default");
     }
     catch (luabind::error const& e) {
         LOG_ERROR(lua_tostring(L, -1));
