@@ -166,36 +166,67 @@ void script::parsed(po::variables_map const& vm)
 
 /**
  * Run simulation
+ *
+ * While the simulation is setup with Lua scripting, it entirely runs in
+ * C++, outside of the Lua interpreter. This avoids unnecessary Lua errors
+ * in case a C++ exception is thrown inside a module, e.g. if a defect GPU
+ * fails during a long simulation run and a CUDA error is thrown. Further
+ * it simplifies stack tracebacks when running inside a debugger.
+ *
+ * To allow the script to run multiple partial simulations, we use Lua
+ * coroutines. The Lua function script() is started, and executes until
+ * returning or yielding a slot, e.g. sampler.run. The slot is then
+ * executed in outside of the Lua interpreter. If the function has
+ * yielded, it is then resumed. The Lua function finishes on return
+ * of the last slot.
+ *
+ * We use the Lua C API instead of luabind::resume_function and
+ * luabind::resume, as the latter do not handle errors properly,
+ * but abort with an assertion error (or segmentation fault if
+ * compiled with NDEBUG).
  */
 void script::run()
 {
     using namespace luabind;
 
-    try {
-        slot_function_type slot = resume_function<slot_function_type>(L, "script");
+    // create a new Lua thread
+    // The wrapper ensures that the thread is released for garbage
+    // collection in case a C++ exception is thrown. Note that the
+    // new thread is immediately popped from the stack.
+    script::thread thread(L);
+
+    // push Lua function onto stack
+    lua_getglobal(thread.L, "script");
+    int status;
+    do {
+        // if Lua function is on top of the stack, create a new coroutine
+        // from it, otherwise resume execution of the existing coroutine
+        status = lua_resume(thread.L, 0);
+
+        // lua_resume returns 0 on success, LUA_YIELD if the function
+        // has yielded, and other values if an error occurred
+        if (status != 0 && status != LUA_YIELD) {
+            script::traceback(thread.L);
+            LOG_ERROR(lua_tostring(thread.L, -1));
+            lua_pop(thread.L, 1); // remove error message
+            throw runtime_error("failed to run simulation script");
+        }
+
+        // we expect a slot as the return or yield value
+        object ret(from_stack(thread.L, -1));
+        lua_pop(thread.L, 1);
+        slot_function_type slot = object_cast<slot_function_type>(ret);
 
         // Some C++ modules are only needed during the Lua script stage,
         // e.g. the trajectory reader. To make sure these modules are
         // destructed before running the simulation, invoke the Lua
         // garbage collector now.
-        lua_gc(L, LUA_GCCOLLECT, 0);
+        lua_gc(thread.L, LUA_GCCOLLECT, 0);
 
+        // execute the slot, e.g. sampler.setup or sampler.run
         slot();
-
-        while (lua_status(L) == LUA_YIELD)
-        {
-            slot_function_type slot = resume<slot_function_type>(L);
-
-            lua_gc(L, LUA_GCCOLLECT, 0);
-
-            slot();
-        }
     }
-    catch (luabind::error const& e) {
-        LOG_ERROR(lua_tostring(e.state(), -1));
-        lua_pop(e.state(), 1); //< remove error message
-        throw;
-    }
+    while (status == LUA_YIELD);
 }
 
 /**
