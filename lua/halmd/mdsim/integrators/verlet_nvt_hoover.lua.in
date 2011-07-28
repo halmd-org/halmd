@@ -114,7 +114,7 @@ end
 --
 -- returns module description
 --
-function name()
+function description()
     return "Thermostatted velocity-Verlet integrator using a Nosé-Hoover chain"
 end
 
