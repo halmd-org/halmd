@@ -1,5 +1,5 @@
 /*
- * Copyright © 2008-2010  Peter Colberg and Felix Höfling
+ * Copyright © 2010-2011  Peter Colberg
  *
  * This file is part of HALMD.
  *
@@ -37,6 +37,58 @@ class script
   : boost::noncopyable
 {
 public:
+    /**
+     * Lua thread
+     *
+     * This class provides a RAII-safe wrapper around a Lua thread.
+     * Lua threads allow functions, or coroutines, to run concurrently.
+     * In contrast to operating systems threads, however, only one
+     * function is running at any time. While one function is running,
+     * all other functions wait for it to yield or return. A function
+     * that has yielded continues execution after being resumed by
+     * another function.
+     *
+     * http://www.lua.org/pil/9.html
+     * http://www.lua.org/manual/5.1/manual.html#2.11
+     */
+    class thread
+      : boost::noncopyable
+    {
+    public:
+        /**
+         * Create a Lua thread with lua_newthread, which pushes the new
+         * thread onto the stack. Create a reference to the thread, which
+         * also pops the thread from the stack. The reference ensures that
+         * the thread is not garbage collected.
+         */
+        thread(lua_State* L) : L(lua_newthread(L)) , L_(L)
+        {
+            ref_ = luaL_ref(L_, LUA_REGISTRYINDEX);
+        }
+
+        /**
+         * Destroy the reference to the thread, which releases the thread
+         * for garbage collection.
+         */
+        ~thread()
+        {
+            luaL_unref(L_, LUA_REGISTRYINDEX, ref_);
+        }
+
+        /**
+         * Lua state of the thread. The thread state shares the global
+         * variables with the master state, but has its own execution
+         * stack.
+         */
+        lua_State* const L;
+
+    private:
+        /** master Lua state */
+        lua_State* L_;
+        /** reference to Lua thread */
+        int ref_;
+    };
+
     script();
     virtual ~script();
     void dofile(std::string const& file_name);
