@@ -23,6 +23,7 @@
 #include <boost/noncopyable.hpp>
 #include <boost/shared_ptr.hpp>
 #include <lua.hpp>
+#include <luabind/luabind.hpp> // luabind::object
 #include <stdexcept>
 #include <string>
 
@@ -111,6 +112,8 @@ private:
 
     /** RAII wrapper of Lua state */
     boost::shared_ptr<lua_State const> const L_;
+    /** Lua script function */
+    luabind::object script_;
 };
 
 } // namespace halmd

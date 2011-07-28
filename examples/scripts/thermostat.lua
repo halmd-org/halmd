@@ -45,7 +45,7 @@ local writers = halmd.io.writers
 --
 -- Setup and run simulation
 --
-function script()
+local function run_thermostat()
     -- load the device module to log (optional) GPU properties
     device() -- singleton
     -- open (optional) H5MD file and read simulation parameters
@@ -87,3 +87,5 @@ function script()
     -- yield sampler.run slot from Lua to C++ to run simulation
     coroutine.yield(sampler:run())
 end
+
+return run_thermostat

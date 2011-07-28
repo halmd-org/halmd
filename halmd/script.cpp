@@ -102,7 +102,7 @@ void script::load_library()
     using namespace luabind;
 
     try {
-        call_function<void>(L, "require", "halmd.default");
+        script_ = call_function<object>(L, "require", "halmd.default");
     }
     catch (luabind::error const& e) {
         LOG_ERROR(lua_tostring(L, -1));
@@ -116,14 +116,22 @@ void script::load_library()
  */
 void script::dofile(string const& file_name)
 {
+    using namespace luabind;
+
     // error handler passed to lua_pcall as last argument
     lua_pushcfunction(L, &script::traceback);
 
-    if (luaL_loadfile(L, file_name.c_str()) || lua_pcall(L, 0, 0, 1)) {
+    if (luaL_loadfile(L, file_name.c_str()) || lua_pcall(L, 0, 1, 1)) {
         LOG_ERROR(lua_tostring(L, -1));
         lua_pop(L, 1); //< remove error message
         throw runtime_error("failed to load Lua script");
     }
+
+    // store return value of script as HALMD script function
+    // this function will be called later in script::run,
+    // after the command-line options have been parsed
+    script_ = object(from_stack(L, -1));
+    lua_pop(L, 1);
 }
 
 /**
@@ -198,8 +206,15 @@ void script::run()
     // to prevent errors due to accidental use of master state
     lua_State* const L = thread.L;
 
-    // push Lua function onto stack
-    lua_getglobal(L, "script");
+    // push HALMD script function onto stack
+    script_.push(L);
+    if (lua_isnil(L, -1)) {
+        throw runtime_error("missing return value from HALMD script");
+    }
+    if (!lua_isfunction(L, -1)) {
+        throw runtime_error("non-callable return value from HALMD script");
+    }
+
     int status;
     do {
         // if Lua function is on top of the stack, create a new coroutine
