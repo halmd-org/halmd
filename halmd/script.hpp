@@ -21,6 +21,7 @@
 #define HALMD_SCRIPT_HPP
 
 #include <boost/noncopyable.hpp>
+#include <boost/shared_ptr.hpp>
 #include <lua.hpp>
 #include <stdexcept>
 #include <string>
@@ -90,7 +91,6 @@ public:
     };
 
     script();
-    virtual ~script();
     void dofile(std::string const& file_name);
     void load_library();
     void options(options_parser& parser);
@@ -108,6 +108,9 @@ private:
 
     void package_path();
     static void register_exception_handlers();
+
+    /** RAII wrapper of Lua state */
+    boost::shared_ptr<lua_State const> const L_;
 };
 
 } // namespace halmd

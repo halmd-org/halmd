@@ -34,7 +34,13 @@ HALMD_LUA_API int luaopen_libhalmd(lua_State* L);
 namespace halmd {
 
 script::script()
-  : L(luaL_newstate()) //< create Lua state
+    // create Lua state, returns raw pointer
+  : L(luaL_newstate())
+    // wrap Lua state with boost::shared_ptr, and use lua_close as deleter
+    // this ensure that any class member variables declared *after* the
+    // wrapper L_ will be deconstructed *before* the Lua state,
+    // e.g. the Lua script function captured from the HALMD script
+  , L_(L, lua_close)
 {
     // load Lua standard libraries
     luaL_openlibs(L);
@@ -46,11 +52,6 @@ script::script()
     register_exception_handlers();
     // load HALMD Lua C++ wrapper
     luaopen_libhalmd(L);
-}
-
-script::~script()
-{
-    lua_close(L);
 }
 
 /**
