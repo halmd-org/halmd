@@ -194,14 +194,17 @@ void script::run()
     // collection in case a C++ exception is thrown. Note that the
     // new thread is immediately popped from the stack.
     script::thread thread(L);
+    // override class member L to master state with thread state,
+    // to prevent errors due to accidental use of master state
+    lua_State* const L = thread.L;
 
     // push Lua function onto stack
-    lua_getglobal(thread.L, "script");
+    lua_getglobal(L, "script");
     int status;
     do {
         // if Lua function is on top of the stack, create a new coroutine
         // from it, otherwise resume execution of the existing coroutine
-        status = lua_resume(thread.L, 0);
+        status = lua_resume(L, 0);
 
         // lua_resume returns
         //  - 0 if the function has returned successfully
@@ -212,23 +215,23 @@ void script::run()
         }
         else if (status == LUA_YIELD) {
             // we expect a slot as the yield value
-            object ret(from_stack(thread.L, -1));
-            lua_pop(thread.L, 1);
+            object ret(from_stack(L, -1));
+            lua_pop(L, 1);
             slot_function_type slot = object_cast<slot_function_type>(ret);
 
             // Some C++ modules are only needed during the Lua script stage,
             // e.g. the trajectory reader. To make sure these modules are
             // destructed before running the simulation, invoke the Lua
             // garbage collector now.
-            lua_gc(thread.L, LUA_GCCOLLECT, 0);
+            lua_gc(L, LUA_GCCOLLECT, 0);
 
             // execute the slot, e.g. sampler.setup or sampler.run
             slot();
         }
         else {
-            script::traceback(thread.L);
-            LOG_ERROR(lua_tostring(thread.L, -1));
-            lua_pop(thread.L, 1); // remove error message
+            script::traceback(L);
+            LOG_ERROR(lua_tostring(L, -1));
+            lua_pop(L, 1); // remove error message
             throw runtime_error("failed to run simulation script");
         }
     }
