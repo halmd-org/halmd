@@ -17,23 +17,7 @@
 -- along with this program.  If not, see <http://www.gnu.org/licenses/>.
 --
 
-require("halmd.modules")
-
--- command-line options override H5MD file parameters
-require("halmd.option")
-require("halmd.log")
-
-require("halmd.device")
-require("halmd.io.readers.trajectory")
-require("halmd.io.writers.trajectory")
-require("halmd.mdsim.box")
-require("halmd.mdsim.force")
-require("halmd.mdsim.integrator")
-require("halmd.mdsim.position")
-require("halmd.mdsim.velocity")
-require("halmd.observables.sampler")
-require("halmd.observables.ssf")
-require("halmd.observables.thermodynamics")
+local halmd = require("halmd")
 
 -- grab modules
 local device = halmd.device
