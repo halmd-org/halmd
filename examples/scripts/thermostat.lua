@@ -84,6 +84,6 @@ function script()
     -- Sample static structure factor.
     observables.ssf{}
 
-    -- return sampler.run slot from Lua to C++ to run simulation
-    return sampler:run()
+    -- yield sampler.run slot from Lua to C++ to run simulation
+    coroutine.yield(sampler:run())
 end
