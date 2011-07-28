@@ -67,7 +67,7 @@ function new(args)
     local dimension = assert(particle.dimension)
     local box = mdsim.box() -- singleton
     local clock = mdsim.clock() -- singleton
-    local sample = assert(observables.samples.phase_space{ memory = memory })
+    local sample = assert(observables.samples.phase_space{memory = memory})
     local logger = assert(args.logger)
 
     local phase_space

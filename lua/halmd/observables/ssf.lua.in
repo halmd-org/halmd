@@ -81,7 +81,7 @@ function new(args)
     end
 
     -- construct density_mode module
-    local density_mode = assert(observables.density_mode{ wavevector = wavevector })
+    local density_mode = assert(observables.density_mode{wavevector = wavevector})
 
     -- construct ssf module
     local ssf = assert(ssf_wrapper[dimension])(density_mode, clock, particle.nbox, logger)

@@ -48,7 +48,7 @@ function new(args)
     local ratios = args.ratios or {}
     local length = args.length -- optional
 
-    local particle = mdsim.particle{ dimension = dimension }
+    local particle = mdsim.particle{dimension = dimension}
     -- total number of particles in box
     local nbox = assert(particle.nbox)
 

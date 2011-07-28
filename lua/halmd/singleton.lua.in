@@ -54,4 +54,4 @@ local function register(module)
 
 end
 
-setmetatable(_M, { __call = function(self, module) register(module) end })
+setmetatable(_M, {__call = function(self, module) register(module) end})

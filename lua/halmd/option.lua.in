@@ -41,10 +41,10 @@ function parameters(module)
     if module.options then
         local vm = vm[module.namespace]
         if vm then
-            return setmetatable({}, { __index = vm })
+            return setmetatable({}, {__index = vm})
         end
     end
-    return setmetatable({}, { __index = globals })
+    return setmetatable({}, {__index = globals})
 end
 
 --
@@ -81,6 +81,6 @@ function set(args)
     end
 
     for _, v in pairs(vm) do
-        setmetatable(v, { __index = globals })
+        setmetatable(v, {__index = globals})
     end
 end

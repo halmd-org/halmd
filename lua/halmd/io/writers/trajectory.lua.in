@@ -49,8 +49,8 @@ function new(args)
     local file = writers[format]{path = args.output .. ".trj"}
 
     -- FIXME share phase_space instance with observables::host::density_mode
-    local phase_space = assert(observables.phase_space{ memory = "host" })
-    local sample = observables.samples.phase_space{ memory = "host" } -- singleton
+    local phase_space = assert(observables.phase_space{memory = "host"})
+    local sample = observables.samples.phase_space{memory = "host"} -- singleton
     local particle = mdsim.particle() -- singleton
     local box = mdsim.box() -- singleton
     local sampler = observables.sampler() -- singleton

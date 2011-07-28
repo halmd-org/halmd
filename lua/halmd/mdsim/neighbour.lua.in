@@ -76,7 +76,7 @@ function new(args)
     -- domain decomposition
     local binning
     if not args.disable_binning then
-        binning = mdsim.binning{ r_cut = r_cut, skin = skin }
+        binning = mdsim.binning{r_cut = r_cut, skin = skin}
     end
 
     -- neighbour lists

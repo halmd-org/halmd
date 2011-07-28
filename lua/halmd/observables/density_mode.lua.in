@@ -61,9 +61,9 @@ function new(args)
 
     local sample
     if device() then
-        sample = assert(observables.samples.phase_space{ memory = "gpu" })
+        sample = assert(observables.samples.phase_space{memory = "gpu"})
     else
-        sample = assert(observables.samples.phase_space{ memory = "host" })
+        sample = assert(observables.samples.phase_space{memory = "host"})
     end
     local dimension = assert(sample.dimension)
     local logger = assert(args.logger)
@@ -78,9 +78,9 @@ function new(args)
 
     local phase_space
     if device() then
-        phase_space = assert(observables.phase_space{ memory = "gpu" })
+        phase_space = assert(observables.phase_space{memory = "gpu"})
     else
-        phase_space = assert(observables.phase_space{ memory = "host" })
+        phase_space = assert(observables.phase_space{memory = "host"})
     end
 
     -- acquire phase space before acquiring density modes

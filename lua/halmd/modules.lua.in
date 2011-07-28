@@ -111,7 +111,7 @@ function register(module)
         namespace = module._NAME:match("[^.]+$")
     }
 
-    setmetatable(module, { __call = new, __index = defaults })
+    setmetatable(module, {__call = new, __index = defaults})
 end
 
 --

@@ -50,7 +50,7 @@ function new(args)
     local box = mdsim.box() -- singleton
 
     -- create neighbour lists with cutoff radii of potential
-    local neighbour = mdsim.neighbour{ r_cut = potential.r_cut }
+    local neighbour = mdsim.neighbour{r_cut = potential.r_cut}
 
     -- construct force module
     local force = assert(forces.pair_trunc)(potential, particle, box, neighbour)
