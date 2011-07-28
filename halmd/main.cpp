@@ -54,7 +54,7 @@ int main(int argc, char **argv)
         //
         options_parser parser;
         parser.add_options()
-            ("script", po::value<string>(), "HALMD script filename")
+            ("script", po::value<string>(), "HALMD script file")
             ;
 
         po::variables_map vm;
