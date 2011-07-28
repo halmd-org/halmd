@@ -41,7 +41,7 @@ endif()
 execute_halmd(
   --verbose --verbose
   --output "${OUTPUT_PREFIX}"
-  --steps 3000
+  --steps 500
   "${BACKEND_OPTION}"
   --script "${HALMD_SCRIPT}"
 )

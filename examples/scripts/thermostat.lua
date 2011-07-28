@@ -58,12 +58,12 @@ local function run_thermostat()
     coroutine.yield(sampler:setup())
 
     -- thermostat system in NVT ensemble
-    coroutine.yield(sampler:run(1000)) -- FIXME custom thermostat steps option
+    coroutine.yield(sampler:run(100)) -- FIXME custom thermostat steps option
 
     -- equilibrate system in NVE ensemble
     thermostat:disconnect()
     mdsim.integrator{}
-    coroutine.yield(sampler:run(1000)) -- FIXME custom equilibrate steps option
+    coroutine.yield(sampler:run(200)) -- FIXME custom equilibrate steps option
 
     -- Sample static structure factor.
     observables.ssf{}
