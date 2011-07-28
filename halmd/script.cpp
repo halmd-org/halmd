@@ -198,13 +198,26 @@ void script::run()
     using namespace luabind;
 
     // create a new Lua thread
-    // The wrapper ensures that the thread is released for garbage
-    // collection in case a C++ exception is thrown. Note that the
-    // new thread is immediately popped from the stack.
-    script::thread thread(L);
-    // override class member L to master state with thread state,
+    //
+    // Lua threads allow functions, or coroutines, to run concurrently.
+    // In contrast to operating systems threads, however, only one
+    // function is running at any time. While one function is running,
+    // all other functions wait for it to yield or return. A function
+    // that has yielded continues execution after being resumed by
+    // another function.
+    //
+    // http://www.lua.org/pil/9.html
+    // http://www.lua.org/manual/5.1/manual.html#2.11
+    //
+    // override member pointer L to master state with thread state,
     // to prevent errors due to accidental use of master state
-    lua_State* const L = thread.L;
+    lua_State* const L = lua_newthread(script::L);
+
+    // The object wrapper ensures that the thread is released for garbage
+    // collection in case a C++ exception is thrown. Note that the new
+    // thread is immediately popped from the stack.
+    object thread(from_stack(script::L, -1));
+    lua_pop(script::L, 1);
 
     // push HALMD script function onto stack
     script_.push(L);
