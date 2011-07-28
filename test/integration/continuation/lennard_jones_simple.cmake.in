@@ -19,9 +19,8 @@
 #
 
 ##
-# Test trajectory continuation for Lennard-Jones fluid
-#
-# This test is related to HALMD bug #69.
+# Test trajectory continuation for a simple, one-component Lennard-Jones fluid
+# where the optimised module for the GPU backend is used
 #
 # FIXME write C++ test to compare trajectory outputs
 #
@@ -30,13 +29,13 @@ set(CMAKE_MODULE_PATH "@HALMD_TEST_CMAKE_BINARY_DIR@")
 
 include(execute_halmd)
 
-set(OUTPUT_PREFIX "@CMAKE_CURRENT_BINARY_DIR@/lennard_jones")
+set(OUTPUT_PREFIX "@CMAKE_CURRENT_BINARY_DIR@/lennard_jones_simple")
 
 if(DEFINED USE_HOST)
     set(BACKEND_OPTION "--disable-gpu")
-    message(STATUS "Using host backend")
+    message(STATUS "Using host backend for continuation")
 else()
-    message(STATUS "Using GPU backend")
+    message(STATUS "Using GPU backend for continuation")
 endif()
 
 if(NOT DEFINED DIMENSION)
@@ -49,8 +48,7 @@ execute_halmd(
   --verbose
   --output "${OUTPUT_PREFIX}"
   --steps 1000
-  "${BACKEND_OPTION}"
-  box --dimension "${DIMENSION}"--particles=100,200,1 --density 0.1
+  box --dimension "${DIMENSION}"--particles=300 --density 0.1
   trajectory --every=1000
 )
 
