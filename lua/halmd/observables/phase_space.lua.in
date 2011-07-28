@@ -29,22 +29,24 @@ local device = halmd.device
 local mdsim = halmd.mdsim
 local observables = halmd.observables
 -- grab C++ wrappers
-local phase_space_wrapper = { host }
-phase_space_wrapper.host = {
+local phase_space_wrapper = {
     host = {
-        [2] = libhalmd.observables.host.phase_space_2_
-      , [3] = libhalmd.observables.host.phase_space_3_
+        host = {
+            [2] = libhalmd.observables.host.phase_space_2_
+          , [3] = libhalmd.observables.host.phase_space_3_
+        }
     }
 }
 if libhalmd.observables.gpu then
-    phase_space_wrapper.gpu = { host, gpu }
-    phase_space_wrapper.gpu.host = {
-        [2] = libhalmd.observables.gpu.host.phase_space_2_
-      , [3] = libhalmd.observables.gpu.host.phase_space_3_
-    }
-    phase_space_wrapper.gpu.gpu = {
-        [2] = libhalmd.observables.gpu.gpu.phase_space_2_
-      , [3] = libhalmd.observables.gpu.gpu.phase_space_3_
+    phase_space_wrapper.gpu = {
+        host = {
+            [2] = libhalmd.observables.gpu.host.phase_space_2_
+          , [3] = libhalmd.observables.gpu.host.phase_space_3_
+        }
+      , gpu = {
+            [2] = libhalmd.observables.gpu.gpu.phase_space_2_
+          , [3] = libhalmd.observables.gpu.gpu.phase_space_3_
+        }
     }
 end
 -- grab standard library
