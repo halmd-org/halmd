@@ -62,7 +62,7 @@ public:
          * also pops the thread from the stack. The reference ensures that
          * the thread is not garbage collected.
          */
-        thread(lua_State* L) : L(lua_newthread(L)) , L_(L)
+        explicit thread(lua_State* L) : L(lua_newthread(L)) , L_(L)
         {
             ref_ = luaL_ref(L_, LUA_REGISTRYINDEX);
         }
