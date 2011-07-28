@@ -48,12 +48,31 @@ int main(int argc, char **argv)
 {
     try {
         script script; //< load Lua script engine
-        script.load_library();
 
         //
         // assemble program options
         //
         options_parser parser;
+        parser.add_options()
+            ("script", po::value<string>(), "HALMD script filename")
+            ;
+
+        po::variables_map vm;
+        try {
+            parser.parse_command_line(argc, argv, vm, true);
+        }
+        catch (po::error const& e) {
+            cerr << PROGRAM_NAME ": " << e.what() << endl;
+            cerr << "Try `" PROGRAM_NAME " --help' for more information." << endl;
+            return EXIT_FAILURE;
+        }
+
+        if (vm.count("script")) {
+            script.dofile(vm["script"].as<string>());
+        }
+        else {
+            script.load_library();
+        }
 
         script.options(parser);
 
@@ -82,7 +101,6 @@ int main(int argc, char **argv)
         //
         // parse program options from command line and config file
         //
-        po::variables_map vm;
         try {
             parser.parse_command_line(argc, argv, vm);
 
