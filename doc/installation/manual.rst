@@ -41,32 +41,25 @@ CMake
 
 The build process of HALMD depends on CMake, a cross-platform, open-source build system.
 
-Get the latest `CMake source package`_, currently `CMake 2.8.4`_.
+Get the latest `CMake source package`_, currently `CMake 2.8.5`_.
 
-Get the latest `CMake-CUDA`_ patch, currently `CMake-CUDA 2.8.4-1`_.
-
-To fix a bug with `lib64 paths in CXX-only projects`_, get this `CMake patch`_.
+Get the latest `CMake-CUDA`_ patch, currently `CMake-CUDA 2.8.5-0`_.
 
 .. _CMake source package: http://cmake.org/cmake/resources/software.html
 
-.. _CMake 2.8.4: http://www.cmake.org/files/v2.8/cmake-2.8.4.tar.gz
+.. _CMake 2.8.5: http://www.cmake.org/files/v2.8/cmake-2.8.5.tar.gz
 
 .. _CMake-CUDA: http://software.colberg.org/projects/cmake-cuda
 
-.. _CMake-CUDA 2.8.4-1: https://software.colberg.org/attachments/download/20/CMake-CUDA-2.8.4-1-g2ed3c7a.patch
-
-.. _lib64 paths in CXX-only projects: http://public.kitware.com/Bug/view.php?id=10813#c25824
-
-.. _CMake patch: http://public.kitware.com/Bug/file_download.php?file_id=3759&type=bug
+.. _CMake-CUDA 2.8.5-0: http://sourceforge.net/projects/halmd/files/patches/cmake-cuda-2.8.5-0-gda84f60.patch
 
 Extract the CMake source package, and apply the patches in the CMake source directory with ::
 
-   patch -p1 < ../cmake-cuda-2.8.4.patch
-   patch -p1 < ../cmake_add_lib64_prefix_for_any_language.patch
+   patch -p1 < ../cmake-cuda-2.8.5-0-gda84f60.patch
 
 Prepare the CMake build with ::
 
-   ./configure --prefix=$HOME/opt/cmake-cuda-2.8.4
+   ./configure --prefix=$HOME/opt/cmake-2.8.5
 
 Compile CMake with ::
 
@@ -78,8 +71,8 @@ Install CMake into your packages directory::
 
 Include CMake in your shell environment, by adding to ~/.bashrc::
 
-   export PATH="${HOME}/opt/cmake-cuda-2.8.4/bin${PATH+:$PATH}"
-   export MANPATH="${HOME}/opt/cmake-cuda-2.8.4/man${MANPATH+:$MANPATH}"
+   export PATH="${HOME}/opt/cmake-2.8.5/bin${PATH+:$PATH}"
+   export MANPATH="${HOME}/opt/cmake-2.8.5/man${MANPATH+:$MANPATH}"
 
 
 Boost C++ libraries
