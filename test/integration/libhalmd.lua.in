@@ -24,7 +24,25 @@
 package.path = "@CMAKE_BINARY_DIR@/lua/?.lua;@CMAKE_BINARY_DIR@/lua/?/init.lua"
 package.cpath = "@CMAKE_BINARY_DIR@/halmd/?@CMAKE_SHARED_LIBRARY_SUFFIX@"
 
-require("halmd")
+local halmd = require("halmd")
 
-local sampler = halmd()
-sampler:run()
+-- load the device module to log (optional) GPU properties
+halmd.device() -- singleton
+-- create simulation box with particles
+halmd.mdsim.box()
+-- add integrator
+halmd.mdsim.integrator()
+-- add force
+halmd.mdsim.force()
+-- set initial particle positions
+halmd.mdsim.position()
+-- set initial particle velocities
+halmd.mdsim.velocity()
+
+-- Construct sampler.
+local sampler = halmd.observables.sampler{steps = 100}
+
+-- setup simulation box
+sampler:setup()()
+-- run simulation
+sampler:run()()
