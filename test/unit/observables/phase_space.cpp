@@ -166,15 +166,14 @@ void phase_space<modules_type>::test()
     shared_ptr<observables::host::samples::phase_space<dimension, float_type> > result
         = copy_sample(output_sample);
     for (unsigned int i = 0; i < npart.size(); ++i) { // iterate over particle species
-        BOOST_CHECK(result->r[i]->size() == input_sample->r[i]->size());
-        BOOST_CHECK_MESSAGE(std::equal(
-            result->r[i]->begin(), result->r[i]->end(), input_sample->r[i]->begin()
-        ), "positions mismatch");
-
-        BOOST_CHECK(result->v[i]->size() == input_sample->v[i]->size());
-        BOOST_CHECK_MESSAGE(std::equal(
-            result->v[i]->begin(), result->v[i]->end(), input_sample->v[i]->begin()
-        ), "velocities mismatch");
+        BOOST_CHECK_EQUAL_COLLECTIONS(
+            result->r[i]->begin(), result->r[i]->end()
+          , input_sample->r[i]->begin(), input_sample->r[i]->end()
+        );
+        BOOST_CHECK_EQUAL_COLLECTIONS(
+            result->v[i]->begin(), result->v[i]->end()
+          , input_sample->v[i]->begin(), input_sample->v[i]->end()
+        );
     }
 }
 
