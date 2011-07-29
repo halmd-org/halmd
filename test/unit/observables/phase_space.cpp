@@ -20,6 +20,7 @@
 #define BOOST_TEST_MODULE phase_space
 #include <boost/test/unit_test.hpp>
 
+#include <algorithm> // std::max
 #include <boost/assign.hpp>
 #include <boost/foreach.hpp>
 #include <boost/make_shared.hpp>
@@ -133,6 +134,8 @@ struct phase_space
 template <typename modules_type>
 void phase_space<modules_type>::test()
 {
+    float_type const epsilon = numeric_limits<float_type>::epsilon();
+
     // prepare input sample
     for (unsigned int i = 0; i < npart.size(); ++i) { // iterate over particle species
         BOOST_CHECK(input_sample->r[i]->size() == npart[i]);
@@ -166,10 +169,15 @@ void phase_space<modules_type>::test()
     shared_ptr<observables::host::samples::phase_space<dimension, float_type> > result
         = copy_sample(output_sample);
     for (unsigned int i = 0; i < npart.size(); ++i) { // iterate over particle species
-        BOOST_CHECK_EQUAL_COLLECTIONS(
-            result->r[i]->begin(), result->r[i]->end()
-          , input_sample->r[i]->begin(), input_sample->r[i]->end()
-        );
+        // compare positions with a tolerance due to mapping to and from the periodic box
+        typename input_sample_type::sample_vector const& result_position = *result->r[i];
+        typename input_sample_type::sample_vector const& input_position = *input_sample->r[i];
+        float_type tolerance = std::max(norm_inf(input_position[i]) * epsilon, epsilon);
+        BOOST_CHECK_EQUAL(result_position.size(), npart[i]);
+        for (unsigned int j = 0; j < npart[i]; ++j) {
+            BOOST_CHECK_SMALL(norm_inf(result_position[i] - input_position[i]), tolerance);
+        }
+        // compare velocities directly as they should not have been modified
         BOOST_CHECK_EQUAL_COLLECTIONS(
             result->v[i]->begin(), result->v[i]->end()
           , input_sample->v[i]->begin(), input_sample->v[i]->end()
