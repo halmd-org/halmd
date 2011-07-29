@@ -54,19 +54,16 @@ env: env-cmake env-lua env-boost env-luabind env-hdf5
 ## CMake with CMake-CUDA patch
 ##
 
-CMAKE_VERSION = 2.8.4
+CMAKE_VERSION = 2.8.5
 CMAKE_TARBALL = cmake-$(CMAKE_VERSION).tar.gz
 CMAKE_TARBALL_URL = http://www.cmake.org/files/v2.8/$(CMAKE_TARBALL)
-CMAKE_CUDA_PATCH = cmake-cuda-2.8.4-1-g2ed3c7a.patch
+CMAKE_CUDA_PATCH = cmake-cuda-2.8.5-0-gda84f60.patch
 CMAKE_CUDA_PATCH_URL = http://sourceforge.net/projects/halmd/files/patches/$(CMAKE_CUDA_PATCH)
-CMAKE_LIB64_PATCH = cmake_find_library_lib64_in_cxx_project.patch
-CMAKE_LIB64_PATCH_URL = http://sourceforge.net/projects/halmd/files/patches/$(CMAKE_LIB64_PATCH)
 CMAKE_BUILD_DIR = cmake-$(CMAKE_VERSION)
 CMAKE_INSTALL_DIR = $(PREFIX)/cmake-$(CMAKE_VERSION)
 
 .fetch-cmake:
 	$(WGET) $(CMAKE_TARBALL_URL)
-	$(WGET) $(CMAKE_LIB64_PATCH_URL)
 	$(WGET) $(CMAKE_CUDA_PATCH_URL)
 	@$(TOUCH) $@
 
@@ -76,7 +73,6 @@ fetch-cmake: .fetch-cmake
 	$(RM) $(CMAKE_BUILD_DIR)
 	$(TAR) -xzf $(CMAKE_TARBALL)
 	cd $(CMAKE_BUILD_DIR) && $(PATCH) -p1 < $(CURDIR)/$(CMAKE_CUDA_PATCH)
-	cd $(CMAKE_BUILD_DIR) && $(PATCH) -p1 < $(CURDIR)/$(CMAKE_LIB64_PATCH)
 	@$(TOUCH) $@
 
 extract-cmake: .extract-cmake
@@ -105,7 +101,6 @@ clean-cmake:
 distclean-cmake: clean-cmake
 	@$(RM) .fetch-cmake
 	$(RM) $(CMAKE_TARBALL)
-	$(RM) $(CMAKE_LIB64_PATCH)
 	$(RM) $(CMAKE_CUDA_PATCH)
 
 env-cmake:
