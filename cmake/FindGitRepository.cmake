@@ -59,9 +59,9 @@ macro(git_repository DIR PREFIX)
     string(REGEX REPLACE "^refs/heads/" "" ${PREFIX}_GIT_BRANCH "${_GIT_SYMBOLIC_REF}")
   endif()
 
-  # Parse commit tag
+  # Parse commit tag, match only version tags
   execute_process(
-    COMMAND "${GIT_EXECUTABLE}" describe --always HEAD
+    COMMAND "${GIT_EXECUTABLE}" describe --match=[0-9]* --always HEAD
     WORKING_DIRECTORY "${DIR}"
     RESULT_VARIABLE _GIT_STATUS
     OUTPUT_VARIABLE ${PREFIX}_GIT_COMMIT_TAG
