@@ -178,8 +178,13 @@ Luabind library
 
 Get the latest `Luabind source package`_, currently `Luabind 0.9.1`_.
 
+Get a `patch for the cast graph cache bug in Luabind 0.9.1`_. This bug
+manifests itself with ambiguous overload errors or segmentation faults
+due to casts of a Lua value to a mismatching C++ type.
+
 .. _Luabind source package: http://sourceforge.net/projects/luabind/files/luabind
 .. _Luabind 0.9.1: http://sourceforge.net/projects/luabind/files/luabind/0.9.1/luabind-0.9.1.tar.gz
+.. _patch for the cast graph cache bug in Luabind 0.9.1: http://sourceforge.net/projects/halmd/files/patches/luabind_cast_graph_cache_invalid_cast_fix.patch
 
 .. note::
 
@@ -188,6 +193,10 @@ Get the latest `Luabind source package`_, currently `Luabind 0.9.1`_.
    bjam executable is found in the top-level source directory, for example
    ``/tmp/boost_1_47_0/bjam``. This directory also has to be passed to bjam
    during Luabind build using the environment variable ``BOOST_ROOT``.
+
+Patch the Luabind source to fix the cast graph cache bug::
+
+   patch -p1 < ../luabind_cast_graph_cache_invalid_cast_fix.patch
 
 Compile statically linked release and debug variants of the Luabind library with ::
 
