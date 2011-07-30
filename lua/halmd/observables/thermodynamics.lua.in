@@ -21,7 +21,6 @@ require("halmd.device")
 require("halmd.io.writers.observable")
 require("halmd.mdsim.box")
 require("halmd.mdsim.core")
-require("halmd.mdsim.force")
 require("halmd.mdsim.particle")
 require("halmd.modules")
 require("halmd.observables.sampler")
@@ -63,7 +62,7 @@ function new(args)
     local dimension = assert(particle.dimension)
     local box = mdsim.box() -- singleton
     local clock = mdsim.clock() -- singleton
-    local force = mdsim.force() -- singleton
+    local force = assert(args.force)
     local logger = assert(args.logger)
 
     local observable

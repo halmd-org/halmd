@@ -40,7 +40,7 @@ local function run_thermostat()
     -- add integrator
     local thermostat = mdsim.integrator{integrator = "verlet_nvt_andersen"}
     -- add force
-    mdsim.force()
+    local force = mdsim.force()
     -- set initial particle positions (optionally from reader)
     mdsim.position{reader = reader}
     -- set initial particle velocities (optionally from reader)
@@ -52,7 +52,7 @@ local function run_thermostat()
     -- Write trajectory to H5MD file.
     writers.trajectory{}
     -- Sample macroscopic state variables.
-    observables.thermodynamics{}
+    observables.thermodynamics{force = force}
 
     -- yield sampler.setup slot from Lua to C++ to setup simulation box
     coroutine.yield(sampler:setup())

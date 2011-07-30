@@ -19,7 +19,6 @@
 
 require("halmd.mdsim.forces")
 require("halmd.modules")
-require("halmd.singleton")
 
 -- grab modules
 local forces = halmd.mdsim.forces
@@ -31,7 +30,7 @@ local assert = assert
 local pairs = pairs
 local property = property
 
-module("halmd.mdsim.force", halmd.modules.register, halmd.singleton)
+module("halmd.mdsim.force", halmd.modules.register)
 
 --
 -- construct force module

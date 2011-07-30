@@ -40,7 +40,7 @@ local function script()
     -- add integrator
     mdsim.integrator()
     -- add force
-    mdsim.force()
+    local force = mdsim.force()
     -- set initial particle positions (optionally from reader)
     mdsim.position{reader = reader}
     -- set initial particle velocities (optionally from reader)
@@ -52,7 +52,7 @@ local function script()
     -- Write trajectory to H5MD file.
     writers.trajectory{}
     -- Sample macroscopic state variables.
-    observables.thermodynamics{}
+    observables.thermodynamics{force = force}
     -- Sample static structure factor.
     observables.ssf{}
 
