@@ -165,6 +165,13 @@ static wrap_finalise(shared_ptr<blocking_scheme> self)
     return bind(&blocking_scheme::finalise, self);
 }
 
+static function<blocking_scheme::block_time_type const& ()>
+wrap_time(shared_ptr<blocking_scheme> self)
+{
+    return bind(&blocking_scheme::time, self);
+}
+
+
 void blocking_scheme::luaopen(lua_State* L)
 {
     using namespace luabind;
@@ -187,7 +194,7 @@ void blocking_scheme::luaopen(lua_State* L)
                     .property("sample", &wrap_sample)
                     .property("block_size", &blocking_scheme::block_size)
                     .property("count", &blocking_scheme::count)
-                    .property("time", &blocking_scheme::time)
+                    .property("time", &wrap_time)
                     .def("add_correlation", &blocking_scheme::add_correlation)
                     .def("add_data", &blocking_scheme::add_data)
                     .def("on_sample", &blocking_scheme::on_sample)

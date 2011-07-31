@@ -56,6 +56,7 @@ public:
     typedef clock_type::step_type step_type;
     typedef clock_type::time_type time_type;
     typedef logger logger_type;
+    typedef boost::multi_array<time_type, 2> block_time_type;
 
     /**
      *  @param maximum_lag_time   maximum lag time for dynamic correlations
@@ -114,7 +115,7 @@ public:
     }
 
     /** returns block-wise time grid for correlation functions */
-    boost::multi_array<time_type, 2> const& time() const
+    block_time_type const& time() const
     {
         return time_;
     }
@@ -139,7 +140,7 @@ private:
     /** sampling intervals for each coarse-graining level */
     std::vector<step_type> interval_;
     /** time grid of the resulting correlation functions */
-    boost::multi_array<time_type, 2> time_;
+    block_time_type time_;
 
     signal_type on_sample_;
 };
