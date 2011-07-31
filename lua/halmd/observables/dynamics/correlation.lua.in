@@ -32,12 +32,7 @@ local observables = halmd.observables
 local writers = halmd.io.writers
 -- grab C++ wrappers
 local blocking_scheme_wrapper = libhalmd.observables.dynamics.blocking_scheme_
-local correlation_wrapper = {
-    host = libhalmd.observables.host.dynamics.correlation
-}
-if libhalmd.observables.gpu then
---     correlation_wrapper.gpu = libhalmd.observables.gpu.dynamics.correlation
-end
+local correlation_wrapper = libhalmd.observables.dynamics.correlation
 local po = libhalmd.po
 -- grab standard library
 local assert = assert
@@ -88,8 +83,7 @@ function new(args)
         })
 
         -- construct correlation function
-        local correlation = assert(correlation_wrapper[device() and "gpu" or "host"][tcf.class_name])
-        correlation = correlation(tcf, block_sample)
+        local correlation = assert(correlation_wrapper)(tcf, block_sample)
 
         -- register correlation function and data with blocking scheme
         blocking_scheme:add_correlation(correlation)

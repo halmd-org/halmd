@@ -22,6 +22,7 @@
 
 #include <boost/bind.hpp>
 #include <boost/function.hpp>
+#include <boost/make_shared.hpp>
 #include <boost/shared_ptr.hpp>
 #include <boost/multi_array.hpp>
 #include <lua.hpp>
@@ -29,6 +30,7 @@
 #include <halmd/io/logger.hpp>
 #include <halmd/numeric/accumulator.hpp>
 #include <halmd/observables/samples/blocking_scheme.hpp>
+#include <halmd/utility/demangle.hpp>
 
 namespace halmd {
 namespace observables {
@@ -65,7 +67,7 @@ public:
     typedef boost::multi_array<typename accumulator_type::value_type, 2> block_error_type;
     typedef boost::multi_array<typename accumulator_type::size_type, 2> block_count_type;
 
-    static void luaopen(lua_State* L, char const* scope);
+    static void luaopen(lua_State* L);
 
     correlation(
         boost::shared_ptr<tcf_type> tcf
@@ -208,32 +210,28 @@ static char const* sample_name_wrapper(correlation<tcf_type> const&)
 }
 
 template <typename tcf_type>
-void correlation<tcf_type>::luaopen(lua_State* L, char const* scope)
+void correlation<tcf_type>::luaopen(lua_State* L)
 {
     using namespace luabind;
+    static std::string const class_name(demangled_name<correlation>());
     module(L, "libhalmd")
     [
         namespace_("observables")
         [
-            namespace_(scope)
+            namespace_("dynamics")
             [
-                namespace_("dynamics")
-                [
-                    namespace_("correlation")
-                    [
-                        class_<correlation, boost::shared_ptr<_Base>, _Base>(tcf_type::class_name())
-                            .def(constructor<
-                                boost::shared_ptr<tcf_type>
-                              , boost::shared_ptr<block_sample_type>
-                            >())
-                            .property("mean", &wrap_mean<correlation>)
-                            .property("error", &wrap_error<correlation>)
-                            .property("count", &wrap_count<correlation>)
-                            .property("class_name", &class_name_wrapper<tcf_type>)
-                            .property("module_name", &module_name_wrapper<tcf_type>)
-                            .property("sample_name", &sample_name_wrapper<tcf_type>)
-                    ]
-                ]
+                class_<correlation, _Base>(class_name.c_str())
+                    .property("mean", &wrap_mean<correlation>)
+                    .property("error", &wrap_error<correlation>)
+                    .property("count", &wrap_count<correlation>)
+                    .property("class_name", &class_name_wrapper<tcf_type>)
+                    .property("module_name", &module_name_wrapper<tcf_type>)
+                    .property("sample_name", &sample_name_wrapper<tcf_type>)
+
+              , def("correlation", &boost::make_shared<correlation
+                  , boost::shared_ptr<tcf_type>
+                  , boost::shared_ptr<block_sample_type>
+                >)
             ]
         ]
     ];
