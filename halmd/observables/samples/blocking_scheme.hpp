@@ -30,10 +30,9 @@
 
 #include <halmd/utility/lua/lua.hpp>
 
-namespace halmd
-{
-namespace observables { namespace samples
-{
+namespace halmd {
+namespace observables {
+namespace samples {
 
 /**
  * Abstract base class that defines the interface of the blocking scheme
@@ -222,8 +221,8 @@ void blocking_scheme<sample_type>::luaopen(lua_State* L, char const* scope)
     ];
 }
 
-}} // namespace observables::samples
-
+} // namespace samples
+} // namespace observables
 } // namespace halmd
 
 #endif /* ! HALMD_OBSERVABLES_SAMPLES_BLOCKING_SCHEME_HPP */

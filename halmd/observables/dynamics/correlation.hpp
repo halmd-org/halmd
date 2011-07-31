@@ -28,10 +28,9 @@
 #include <halmd/numeric/accumulator.hpp>
 #include <halmd/observables/samples/blocking_scheme.hpp>
 
-namespace halmd
-{
-namespace observables { namespace dynamics
-{
+namespace halmd {
+namespace observables {
+namespace dynamics {
 
 /**
  * Store input samples (phase space, density modes, ...) in a
@@ -161,8 +160,8 @@ void correlation<tcf_type>::luaopen(lua_State* L, char const* scope)
     ];
 }
 
-}} // namespace observables::dynamics
-
+} // namespace dynamics
+} // namespace observables
 } // namespace halmd
 
 #endif /* ! HALMD_OBSERVABLES_DYNAMICS_CORRELATION_HPP */

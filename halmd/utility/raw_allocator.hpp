@@ -35,10 +35,9 @@
 #include <cstdlib>
 #include <new>
 
-namespace halmd
-{
-namespace detail { namespace utility
-{
+namespace halmd {
+namespace detail {
+namespace utility {
 
 using std::size_t;
 using std::ptrdiff_t;
@@ -123,7 +122,8 @@ inline bool operator!=(const raw_allocator<_Tp>&, const raw_allocator<_Tp>&)
     return false;
 }
 
-}} // namespace detail::utility
+} // namespace utility
+} // namespace detail
 
 // import into top-level namespace
 using detail::utility::raw_allocator;

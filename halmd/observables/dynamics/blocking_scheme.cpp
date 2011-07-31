@@ -26,10 +26,9 @@
 using namespace boost;
 using namespace std;
 
-namespace halmd
-{
-namespace observables { namespace dynamics
-{
+namespace halmd {
+namespace observables {
+namespace dynamics {
 
 blocking_scheme::blocking_scheme(
     shared_ptr<clock_type const> clock
@@ -203,6 +202,6 @@ HALMD_LUA_API int luaopen_libhalmd_observables_dynamics_blocking_scheme(lua_Stat
     return 0;
 }
 
-}} // namespace observables::dynamics
-
+} // namespace dynamics
+} // namespace observables
 } // namespace halmd

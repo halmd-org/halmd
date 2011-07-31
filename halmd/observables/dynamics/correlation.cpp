@@ -21,10 +21,9 @@
 
 using namespace boost;
 
-namespace halmd
-{
-namespace observables { namespace dynamics
-{
+namespace halmd {
+namespace observables {
+namespace dynamics {
 
 HALMD_LUA_API int luaopen_libhalmd_observables_dynamics_correlation(lua_State* L)
 {
@@ -42,6 +41,6 @@ HALMD_LUA_API int luaopen_libhalmd_observables_dynamics_correlation(lua_State* L
     return 0;
 }
 
-}} // namespace observables::dynamics
-
+} // namespace dynamics
+} // namespace observables
 } // namespace halmd

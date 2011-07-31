@@ -24,10 +24,10 @@
 
 #include <halmd/observables/host/samples/phase_space.hpp>
 
-namespace halmd
-{
-namespace observables { namespace host { namespace dynamics
-{
+namespace halmd {
+namespace observables {
+namespace host {
+namespace dynamics {
 
 /**
  * Mean-square displacement
@@ -62,8 +62,9 @@ private:
     size_t type_;
 };
 
-}}} // namespace observables::host::dynamics
-
+} // namespace dynamics
+} // namespace host
+} // namespace observables
 } // namespace halmd
 
 #endif /* ! HALMD_OBSERVABLES_HOST_DYNAMICS_MEAN_SQUARE_DISPLACEMENT_HPP */

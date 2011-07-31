@@ -32,10 +32,9 @@
 #include <halmd/observables/samples/blocking_scheme.hpp>
 #include <halmd/utility/signal.hpp>
 
-namespace halmd
-{
-namespace observables { namespace dynamics
-{
+namespace halmd {
+namespace observables {
+namespace dynamics {
 
 /**
  * Store input samples (phase space, density modes, ...) in
@@ -145,8 +144,8 @@ private:
     signal_type on_sample_;
 };
 
-}} // namespace observables::dynamics
-
+} // namespace dynamics
+} // namespace observables
 } // namespace halmd
 
 #endif /* ! HALMD_OBSERVABLES_DYNAMICS_BLOCKING_SCHEME_HPP */

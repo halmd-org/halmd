@@ -22,10 +22,9 @@
 using namespace boost;
 using namespace std;
 
-namespace halmd
-{
-namespace observables { namespace samples
-{
+namespace halmd {
+namespace observables {
+namespace samples {
 
 HALMD_LUA_API int luaopen_libhalmd_observables_samples_blocking_scheme(lua_State* L)
 {
@@ -43,6 +42,6 @@ HALMD_LUA_API int luaopen_libhalmd_observables_samples_blocking_scheme(lua_State
     return 0;
 }
 
-}} // namespace observables::samples
-
+} // namespace samples
+} // namespace observables
 } // namespace halmd

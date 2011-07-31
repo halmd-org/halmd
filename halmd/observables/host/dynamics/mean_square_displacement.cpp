@@ -28,10 +28,10 @@
 using namespace boost;
 using namespace std;
 
-namespace halmd
-{
-namespace observables { namespace host { namespace dynamics
-{
+namespace halmd {
+namespace observables {
+namespace host {
+namespace dynamics {
 
 template <int dimension, typename float_type>
 mean_square_displacement<dimension, float_type>::mean_square_displacement(
@@ -120,9 +120,10 @@ template class mean_square_displacement<3, float>;
 template class mean_square_displacement<2, float>;
 #endif
 
-}}} // namespace observables::host::dynamics
+} // namespace dynamics
+} // namespace host
 
-namespace observables { namespace dynamics
+namespace dynamics
 {
 
 // explicit instantiation
@@ -134,6 +135,6 @@ template class correlation<host::dynamics::mean_square_displacement<3, float> >;
 template class correlation<host::dynamics::mean_square_displacement<2, float> >;
 #endif
 
-}} // namespace observables::dynamics
-
+} // namespace dynamics
+} // namespace observables
 } // namespace halmd
