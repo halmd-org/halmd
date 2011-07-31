@@ -22,9 +22,10 @@
 
 #include <boost/shared_ptr.hpp>
 #include <boost/multi_array.hpp>
+#include <lua.hpp>
 #include <set>
-#include <stdint.h> // uint64_t
 
+#include <halmd/mdsim/clock.hpp>
 #include <halmd/observables/dynamics/correlation.hpp>
 #include <halmd/observables/samples/blocking_scheme.hpp>
 #include <halmd/utility/signal.hpp>
@@ -44,10 +45,15 @@ namespace observables { namespace dynamics
  */
 class blocking_scheme
 {
+private:
+    typedef halmd::signal<void ()> signal_type;
+
 public:
     typedef samples::blocking_scheme_base block_sample_type;
-    typedef halmd::signal<void (uint64_t)> signal_type;
     typedef signal_type::slot_function_type slot_function_type;
+    typedef mdsim::clock clock_type;
+    typedef clock_type::step_type step_type;
+    typedef clock_type::time_type time_type;
 
     /**
      *  @param maximum_lag_time   maximum lag time for dynamic correlations
@@ -57,7 +63,8 @@ public:
      *                            if 0 it is computed as sqrt(block_size)
      */
     blocking_scheme(
-        double maximum_lag_time
+        boost::shared_ptr<clock_type const> clock
+      , double maximum_lag_time
       , double resolution
       , unsigned int block_size
       , unsigned int shift = 0
@@ -80,10 +87,10 @@ public:
     /** acquire and store current data from input sample,
      *  emit on_correlate_block for each full coarse-graining level
      */
-    void sample(uint64_t step);
+    void sample();
 
     /** compute remaining correlations of partially filled coarse-graining levels */
-    void finalise(uint64_t step);
+    void finalise();
 
     /** signal triggers preparation of input sample */
     void on_sample(slot_function_type const& slot)
@@ -104,12 +111,17 @@ public:
     }
 
     /** returns block-wise time grid for correlation functions */
-    boost::multi_array<double, 2> const& time() const
+    boost::multi_array<time_type, 2> const& time() const
     {
         return time_;
     }
 
+    /** Lua bindings */
+    static void luaopen(lua_State* L);
+
 private:
+    /** simulation clock */
+    boost::shared_ptr<clock_type const> clock_;
     /** set of time correlation functions */
     std::set<boost::shared_ptr<correlation_base> > tcf_;
     /** set of block structures holding the input samples (e.g., phase space point, density modes)
@@ -117,13 +129,12 @@ private:
      * We use std::set since it is a Unique Container.
      */
     std::set<boost::shared_ptr<block_sample_type> > block_sample_;
-
     /** size (length) of the coarse-graining levels */
     unsigned int block_size_;
     /** sampling intervals for each coarse-graining level */
-    std::vector<uint64_t> interval_;
+    std::vector<step_type> interval_;
     /** time grid of the resulting correlation functions */
-    boost::multi_array<double, 2> time_;
+    boost::multi_array<time_type, 2> time_;
 
     signal_type on_sample_;
 };

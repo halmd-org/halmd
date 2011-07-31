@@ -33,13 +33,15 @@ namespace observables { namespace dynamics
 {
 
 blocking_scheme::blocking_scheme(
-    double maximum_lag_time
+    shared_ptr<clock_type const> clock
+  , double maximum_lag_time
   , double resolution
   , unsigned int block_size
   , unsigned int shift
 )
   // member initialisation
-  : block_size_(block_size)
+  : clock_(clock)
+  , block_size_(block_size)
 {
     LOG("[dynamic correlations] size of coarse-graining blocks: " << block_size_);
     if (block_size_ < 2) {
@@ -61,9 +63,9 @@ blocking_scheme::blocking_scheme(
     }
 
     // set up sampling intervals for each level
-    uint64_t max_interval =
-        static_cast<uint64_t>(maximum_lag_time / resolution) / 2; // we need at least 2 data points per level
-    uint64_t s = 1;
+    step_type max_interval =
+        static_cast<step_type>(maximum_lag_time / resolution) / 2; // we need at least 2 data points per level
+    step_type s = 1;
     while (s * shift < max_interval)
     {
         interval_.push_back(s);               // even levels
@@ -84,14 +86,15 @@ blocking_scheme::blocking_scheme(
     }
 }
 
-void blocking_scheme::sample(uint64_t step)
+void blocking_scheme::sample()
 {
     // trigger update of input sample(s)
-    on_sample_(step);
+    on_sample_();
 
-    LOG_TRACE("[blocking_scheme] append sample(s) at step " << step);
+    LOG_TRACE("[blocking_scheme] append sample(s)");
 
     // check integrity of input data
+    step_type step = clock_->step();
     BOOST_FOREACH(shared_ptr<block_sample_type> block_sample, block_sample_) {
         if (block_sample->timestamp() != step) {
             throw logic_error("input sample was not updated");
@@ -129,7 +132,7 @@ void blocking_scheme::sample(uint64_t step)
     }
 }
 
-void blocking_scheme::finalise(uint64_t step)
+void blocking_scheme::finalise()
 {
     // iterate over all coarse-graining levels
     for (unsigned int i = 0; i < interval_.size(); ++i) {
@@ -150,21 +153,19 @@ void blocking_scheme::finalise(uint64_t step)
     }
 }
 
-template <typename T>
-typename signal<void (uint64_t)>::slot_function_type
-sample_wrapper(shared_ptr<T> module)
+blocking_scheme::slot_function_type
+static wrap_sample(shared_ptr<blocking_scheme> self)
 {
-    return bind(&T::sample, module, _1);
+    return bind(&blocking_scheme::sample, self);
 }
 
-template <typename T>
-typename signal<void (uint64_t)>::slot_function_type
-finalise_wrapper(shared_ptr<T> module)
+blocking_scheme::slot_function_type
+static wrap_finalise(shared_ptr<blocking_scheme> self)
 {
-    return bind(&T::finalise, module, _1);
+    return bind(&blocking_scheme::finalise, self);
 }
 
-HALMD_LUA_API int luaopen_libhalmd_observables_dynamics_blocking_scheme(lua_State* L)
+void blocking_scheme::luaopen(lua_State* L)
 {
     using namespace luabind;
     module(L, "libhalmd")
@@ -174,9 +175,15 @@ HALMD_LUA_API int luaopen_libhalmd_observables_dynamics_blocking_scheme(lua_Stat
             namespace_("dynamics")
             [
                 class_<blocking_scheme, shared_ptr<blocking_scheme> >("blocking_scheme_")
-                    .def(constructor<double, double, unsigned int, unsigned int>())
-                    .property("finalise", &finalise_wrapper<blocking_scheme>)
-                    .property("sample", &sample_wrapper<blocking_scheme>)
+                    .def(constructor<
+                        shared_ptr<clock_type const>
+                      , double
+                      , double
+                      , unsigned int
+                      , unsigned int
+                    >())
+                    .property("finalise", &wrap_finalise)
+                    .property("sample", &wrap_sample)
                     .property("block_size", &blocking_scheme::block_size)
                     .property("count", &blocking_scheme::count)
                     .property("time", &blocking_scheme::time)
@@ -186,6 +193,11 @@ HALMD_LUA_API int luaopen_libhalmd_observables_dynamics_blocking_scheme(lua_Stat
             ]
         ]
     ];
+}
+
+HALMD_LUA_API int luaopen_libhalmd_observables_dynamics_blocking_scheme(lua_State* L)
+{
+    blocking_scheme::luaopen(L);
     return 0;
 }
 
