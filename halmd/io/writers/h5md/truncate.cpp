@@ -21,6 +21,7 @@
 #include <luabind/luabind.hpp>
 #include <luabind/out_value_policy.hpp>
 #include <stdexcept>
+#include <stdint.h> // uint64_t
 
 #include <halmd/io/utility/hdf5.hpp>
 #include <halmd/io/writers/h5md/truncate.hpp>
@@ -255,6 +256,24 @@ void truncate::luaopen(lua_State* L)
                         .def("on_write", &truncate::on_write<vector<array<double, 3> > >, pure_out_value(_2))
                         .def("on_write", &truncate::on_write<vector<array<double, 3> >&>, pure_out_value(_2))
                         .def("on_write", &truncate::on_write<vector<array<double, 3> > const&>, pure_out_value(_2))
+                        .def("on_write", &truncate::on_write<multi_array<float, 2> >, pure_out_value(_2))
+                        .def("on_write", &truncate::on_write<multi_array<float, 2>&>, pure_out_value(_2))
+                        .def("on_write", &truncate::on_write<multi_array<float, 2> const&>, pure_out_value(_2))
+                        .def("on_write", &truncate::on_write<multi_array<float, 3> >, pure_out_value(_2))
+                        .def("on_write", &truncate::on_write<multi_array<float, 3>&>, pure_out_value(_2))
+                        .def("on_write", &truncate::on_write<multi_array<float, 3> const&>, pure_out_value(_2))
+                        .def("on_write", &truncate::on_write<multi_array<double, 2> >, pure_out_value(_2))
+                        .def("on_write", &truncate::on_write<multi_array<double, 2>&>, pure_out_value(_2))
+                        .def("on_write", &truncate::on_write<multi_array<double, 2> const&>, pure_out_value(_2))
+                        .def("on_write", &truncate::on_write<multi_array<double, 3> >, pure_out_value(_2))
+                        .def("on_write", &truncate::on_write<multi_array<double, 3>&>, pure_out_value(_2))
+                        .def("on_write", &truncate::on_write<multi_array<double, 3> const&>, pure_out_value(_2))
+                        .def("on_write", &truncate::on_write<multi_array<uint64_t, 2> >, pure_out_value(_2))
+                        .def("on_write", &truncate::on_write<multi_array<uint64_t, 2>&>, pure_out_value(_2))
+                        .def("on_write", &truncate::on_write<multi_array<uint64_t, 2> const&>, pure_out_value(_2))
+                        .def("on_write", &truncate::on_write<multi_array<uint64_t, 3> >, pure_out_value(_2))
+                        .def("on_write", &truncate::on_write<multi_array<uint64_t, 3>&>, pure_out_value(_2))
+                        .def("on_write", &truncate::on_write<multi_array<uint64_t, 3> const&>, pure_out_value(_2))
                         .def("on_prepend_write", &truncate::on_prepend_write)
                         .def("on_append_write", &truncate::on_append_write)
                 ]

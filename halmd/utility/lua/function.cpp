@@ -18,8 +18,10 @@
  */
 
 #include <boost/array.hpp>
+#include <boost/multi_array.hpp>
 #include <boost/function.hpp>
 #include <luabind/luabind.hpp>
+#include <stdint.h> // uint64_t
 #include <vector>
 
 #include <halmd/config.hpp>
@@ -115,6 +117,24 @@ HALMD_LUA_API int luaopen_libhalmd_utility_lua_function(lua_State* L)
       , SLOT( function<vector<array<double, 3> > ()> )
       , SLOT( function<vector<array<double, 3> >& ()> )
       , SLOT( function<vector<array<double, 3> > const& ()> )
+      , SLOT( function<multi_array<float, 2> ()> )
+      , SLOT( function<multi_array<float, 2>& ()> )
+      , SLOT( function<multi_array<float, 2> const& ()> )
+      , SLOT( function<multi_array<float, 3> ()> )
+      , SLOT( function<multi_array<float, 3>& ()> )
+      , SLOT( function<multi_array<float, 3> const& ()> )
+      , SLOT( function<multi_array<double, 2> ()> )
+      , SLOT( function<multi_array<double, 2>& ()> )
+      , SLOT( function<multi_array<double, 2> const& ()> )
+      , SLOT( function<multi_array<double, 3> ()> )
+      , SLOT( function<multi_array<double, 3>& ()> )
+      , SLOT( function<multi_array<double, 3> const& ()> )
+      , SLOT( function<multi_array<uint64_t, 2> ()> )
+      , SLOT( function<multi_array<uint64_t, 2>& ()> )
+      , SLOT( function<multi_array<uint64_t, 2> const& ()> )
+      , SLOT( function<multi_array<uint64_t, 3> ()> )
+      , SLOT( function<multi_array<uint64_t, 3>& ()> )
+      , SLOT( function<multi_array<uint64_t, 3> const& ()> )
     ];
     return 0;
 }
