@@ -198,12 +198,6 @@ static char const* module_name_wrapper(correlation<tcf_type> const&)
 }
 
 template <typename tcf_type>
-static char const* sample_name_wrapper(correlation<tcf_type> const&)
-{
-    return tcf_type::sample_type::class_name();
-}
-
-template <typename tcf_type>
 void correlation<tcf_type>::luaopen(lua_State* L)
 {
     using namespace luabind;
@@ -219,7 +213,6 @@ void correlation<tcf_type>::luaopen(lua_State* L)
                     .property("error", &wrap_error<correlation>)
                     .property("count", &wrap_count<correlation>)
                     .property("module_name", &module_name_wrapper<tcf_type>)
-                    .property("sample_name", &sample_name_wrapper<tcf_type>)
 
               , def("correlation", &boost::make_shared<correlation
                   , boost::shared_ptr<tcf_type>
