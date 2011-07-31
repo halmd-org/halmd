@@ -104,23 +104,23 @@ private:
       , std::string const& name
       , boost::function<T& ()> const&
     );
-    template <typename T>
+    template <typename T, typename Alloc>
     static H5::DataSet create_dataset(
         H5::Group const& group
       , std::string const& name
-      , boost::function<std::vector<T> ()> const& slot
+      , boost::function<std::vector<T, Alloc> ()> const& slot
     );
-    template <typename T>
+    template <typename T, typename Alloc>
     static H5::DataSet create_dataset(
         H5::Group const& group
       , std::string const& name
-      , boost::function<std::vector<T> const& ()> const& slot
+      , boost::function<std::vector<T, Alloc> const& ()> const& slot
     );
-    template <typename T>
+    template <typename T, typename Alloc>
     static H5::DataSet create_dataset(
         H5::Group const& group
       , std::string const& name
-      , boost::function<std::vector<T>& ()> const& slot
+      , boost::function<std::vector<T, Alloc>& ()> const& slot
     );
     template <typename T>
     static void write_dataset(

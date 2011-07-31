@@ -123,37 +123,34 @@ H5::DataSet append::create_dataset(
     return h5xx::create_dataset<T>(group, name);
 }
 
-template <typename T>
+template <typename T, typename Alloc>
 H5::DataSet append::create_dataset(
     H5::Group const& group
   , string const& name
-  , function<vector<T> ()> const& slot
+  , function<vector<T, Alloc> ()> const& slot
 )
 {
-    vector<T> data = slot();
-    return h5xx::create_dataset<vector<T> >(group, name, data.size());
+    return h5xx::create_dataset<vector<T, Alloc> >(group, name, slot().size());
 }
 
-template <typename T>
+template <typename T, typename Alloc>
 H5::DataSet append::create_dataset(
     H5::Group const& group
   , string const& name
-  , function<vector<T> const& ()> const& slot
+  , function<vector<T, Alloc> const& ()> const& slot
 )
 {
-    vector<T> const& data = slot();
-    return h5xx::create_dataset<vector<T> >(group, name, data.size());
+    return h5xx::create_dataset<vector<T, Alloc> >(group, name, slot().size());
 }
 
-template <typename T>
+template <typename T, typename Alloc>
 H5::DataSet append::create_dataset(
     H5::Group const& group
   , string const& name
-  , function<vector<T>& ()> const& slot
+  , function<vector<T, Alloc>& ()> const& slot
 )
 {
-    vector<T>& data = slot();
-    return h5xx::create_dataset<vector<T> >(group, name, data.size());
+    return h5xx::create_dataset<vector<T, Alloc> >(group, name, slot().size());
 }
 
 template <typename T>
