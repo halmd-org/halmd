@@ -18,6 +18,7 @@
 --
 
 require("halmd.device")
+require("halmd.io.writers.observable")
 require("halmd.mdsim.clock")
 require("halmd.modules")
 require("halmd.observables.dynamics.correlations")
@@ -28,6 +29,7 @@ require("halmd.observables.sampler")
 local device = halmd.device
 local mdsim = halmd.mdsim
 local observables = halmd.observables
+local writers = halmd.io.writers
 -- grab C++ wrappers
 local blocking_scheme_wrapper = libhalmd.observables.dynamics.blocking_scheme_
 local correlation_wrapper = {
@@ -67,6 +69,9 @@ function new(args)
     local blocking_scheme = assert(blocking_scheme_wrapper)(clock, maximum_time, resolution, size, shift, logger)
     local block_count = blocking_scheme.count
 
+    local file = writers.observable() -- singleton
+    local writer = file:writer{location = {"dynamics", "correlation"}, mode = "truncate"}
+
     -- add time correlation functions
     -- FIXME at the moment, we support only 1 tcf
     if args.compute
@@ -93,11 +98,17 @@ function new(args)
         -- update input data before computation of correlations
         local sampler = assert(tcf.sampler)
         blocking_scheme:on_sample(sampler.acquire)
+
+        -- write correlation function results
+        writer:on_write(correlation.mean, {tcf.class_name, "mean"})
+        writer:on_write(correlation.error, {tcf.class_name, "error"})
+        writer:on_write(correlation.count, {tcf.class_name, "count"})
     end
 
     -- connect to sampler
     sampler:on_sample{blocking_scheme.sample, every, tracker = blocking_scheme}
-    sampler:on_finish{blocking_scheme.finalise, tracker = blocking_scheme}
+    sampler:on_finish{writer.write, tracker = blocking_scheme}
+    writer:on_prepend_write(blocking_scheme.finalise)
 
     return blocking_scheme
 end

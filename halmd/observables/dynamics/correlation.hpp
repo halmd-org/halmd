@@ -20,6 +20,8 @@
 #ifndef HALMD_OBSERVABLES_DYNAMICS_CORRELATION_HPP
 #define HALMD_OBSERVABLES_DYNAMICS_CORRELATION_HPP
 
+#include <boost/bind.hpp>
+#include <boost/function.hpp>
 #include <boost/shared_ptr.hpp>
 #include <boost/multi_array.hpp>
 #include <lua.hpp>
@@ -166,6 +168,27 @@ correlation<tcf_type>::count()
     return count_;
 }
 
+template <typename correlation_type>
+static boost::function<typename correlation_type::block_mean_type const& ()>
+wrap_mean(boost::shared_ptr<correlation_type> self)
+{
+    return boost::bind(&correlation_type::mean, self);
+}
+
+template <typename correlation_type>
+static boost::function<typename correlation_type::block_error_type const& ()>
+wrap_error(boost::shared_ptr<correlation_type> self)
+{
+    return boost::bind(&correlation_type::error, self);
+}
+
+template <typename correlation_type>
+static boost::function<typename correlation_type::block_count_type const& ()>
+wrap_count(boost::shared_ptr<correlation_type> self)
+{
+    return boost::bind(&correlation_type::count, self);
+}
+
 template <typename tcf_type>
 static char const* class_name_wrapper(correlation<tcf_type> const&)
 {
@@ -203,6 +226,9 @@ void correlation<tcf_type>::luaopen(lua_State* L, char const* scope)
                                 boost::shared_ptr<tcf_type>
                               , boost::shared_ptr<block_sample_type>
                             >())
+                            .property("mean", &wrap_mean<correlation>)
+                            .property("error", &wrap_error<correlation>)
+                            .property("count", &wrap_count<correlation>)
                             .property("class_name", &class_name_wrapper<tcf_type>)
                             .property("module_name", &module_name_wrapper<tcf_type>)
                             .property("sample_name", &sample_name_wrapper<tcf_type>)
