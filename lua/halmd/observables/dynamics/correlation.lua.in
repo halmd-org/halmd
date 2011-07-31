@@ -91,7 +91,8 @@ function new(args)
         blocking_scheme:add_data(block_sample)
 
         -- update input data before computation of correlations
---        blocking_scheme:on_sample(sample.acquire) -- FIXME needs, e.g., observables.phase_space, not samples.phase_space
+        local sampler = assert(tcf.sampler)
+        blocking_scheme:on_sample(sampler.acquire)
     end
 
     -- connect to sampler
