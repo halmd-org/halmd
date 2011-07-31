@@ -19,10 +19,6 @@
 
 require("halmd.modules")
 
-require("halmd.device")
-
--- grab modules
-local device = halmd.device
 -- grab C++ wrappers
 local blocking_scheme_wrapper = libhalmd.observables.samples.blocking_scheme
 -- grab standard library
@@ -31,7 +27,7 @@ local assert = assert
 module("halmd.observables.samples.blocking_scheme", halmd.modules.register)
 
 -- singleton
-local blocking_scheme = { host = {}, gpu = {} }
+local blocking_scheme = {}
 
 --
 -- construct blocking_scheme module
@@ -46,10 +42,8 @@ function new(args)
     local count = assert(args.count)
     local size = assert(args.size)
 
-    local memory = device() and "gpu" or "host"
-
-    if not blocking_scheme[memory][sample] then
-        blocking_scheme[memory][sample] = assert(blocking_scheme_wrapper)(sample, count, size)
+    if not blocking_scheme[sample] then
+        blocking_scheme[sample] = assert(blocking_scheme_wrapper)(sample, count, size)
     end
-    return blocking_scheme[memory][sample]
+    return blocking_scheme[sample]
 end
