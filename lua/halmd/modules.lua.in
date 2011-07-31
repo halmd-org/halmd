@@ -73,20 +73,20 @@ function register(module)
         --
         local param = function(self, key)
             local value
+
+            -- script parameter
+            if args then
+                value = args[key]
+            end
+
             -- parameters providers
             for _, provider in ipairs(providers) do
                 local parameters = provider.parameters(module)
                 if parameters then
-                    value = parameters[key]
-                    if value then
-                        break
-                    end
+                    value = value or parameters[key]
                 end
             end
-            -- script parameter
-            if args and not value then
-                value = args[key]
-            end
+
             -- cache parameter
             rawset(self, key, value)
 
