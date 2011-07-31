@@ -20,11 +20,13 @@
 #ifndef HALMD_OBSERVABLES_DYNAMICS_BLOCKING_SCHEME_HPP
 #define HALMD_OBSERVABLES_DYNAMICS_BLOCKING_SCHEME_HPP
 
+#include <boost/make_shared.hpp>
 #include <boost/shared_ptr.hpp>
 #include <boost/multi_array.hpp>
 #include <lua.hpp>
 #include <set>
 
+#include <halmd/io/logger.hpp>
 #include <halmd/mdsim/clock.hpp>
 #include <halmd/observables/dynamics/correlation.hpp>
 #include <halmd/observables/samples/blocking_scheme.hpp>
@@ -54,6 +56,7 @@ public:
     typedef mdsim::clock clock_type;
     typedef clock_type::step_type step_type;
     typedef clock_type::time_type time_type;
+    typedef logger logger_type;
 
     /**
      *  @param maximum_lag_time   maximum lag time for dynamic correlations
@@ -68,6 +71,7 @@ public:
       , double resolution
       , unsigned int block_size
       , unsigned int shift = 0
+      , boost::shared_ptr<logger_type> logger = boost::make_shared<logger_type>()
     );
 
     /** add a time correlation function */
@@ -122,6 +126,8 @@ public:
 private:
     /** simulation clock */
     boost::shared_ptr<clock_type const> clock_;
+    /** module logger */
+    boost::shared_ptr<logger_type> logger_;
     /** set of time correlation functions */
     std::set<boost::shared_ptr<correlation_base> > tcf_;
     /** set of block structures holding the input samples (e.g., phase space point, density modes)

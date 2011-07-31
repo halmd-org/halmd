@@ -20,7 +20,6 @@
 #include <boost/foreach.hpp>
 #include <exception>
 
-#include <halmd/io/logger.hpp>
 #include <halmd/observables/dynamics/blocking_scheme.hpp>
 #include <halmd/utility/lua/lua.hpp>
 
@@ -38,12 +37,14 @@ blocking_scheme::blocking_scheme(
   , double resolution
   , unsigned int block_size
   , unsigned int shift
+  , shared_ptr<logger_type> logger
 )
   // member initialisation
   : clock_(clock)
   , block_size_(block_size)
+  , logger_(logger)
 {
-    LOG("[dynamic correlations] size of coarse-graining blocks: " << block_size_);
+    LOG("size of coarse-graining blocks: " << block_size_);
     if (block_size_ < 2) {
         throw std::logic_error("Minimum block size is 2.");
     }
@@ -56,10 +57,10 @@ blocking_scheme::blocking_scheme(
 
     // report shift only if shifted blocks ('odd' levels) are enabled
     if (shift > 1) {
-        LOG("[dynamic correlations] coarse-graining shift: " << shift);
+        LOG("coarse-graining shift: " << shift);
     }
     else {
-        LOG_DEBUG("[dynamic correlations] disable shifted coarse-graining blocks");
+        LOG_DEBUG("disable shifted coarse-graining blocks");
     }
 
     // set up sampling intervals for each level
@@ -75,7 +76,7 @@ blocking_scheme::blocking_scheme(
         s *= block_size_;
     }
     unsigned int block_count = interval_.size();
-    LOG("[dynamic correlations] number of coarse-graining blocks: " << block_count);
+    LOG("number of coarse-graining blocks: " << block_count);
 
     // construct associated time grid
     time_.resize(boost::extents[block_count][block_size_]);
@@ -91,7 +92,7 @@ void blocking_scheme::sample()
     // trigger update of input sample(s)
     on_sample_();
 
-    LOG_TRACE("[blocking_scheme] append sample(s)");
+    LOG_TRACE("append sample(s)");
 
     // check integrity of input data
     step_type step = clock_->step();
@@ -106,7 +107,7 @@ void blocking_scheme::sample()
     for (unsigned int i = 0; i < interval_.size(); ++i) {
         if (step % interval_[i] == 0) {
             // append current sample to block at level 'i' for each sample type
-            LOG_TRACE("[blocking_scheme] append sample(s) to blocking level " << i);
+            LOG_TRACE("append sample(s) to blocking level " << i);
             BOOST_FOREACH(shared_ptr<block_sample_type> block_sample, block_sample_) {
                 block_sample->push_back(i);
             }
@@ -118,7 +119,7 @@ void blocking_scheme::sample()
             if (block_sample_.begin()->get()->full(i)) {
                 // call all registered correlation modules
                 // and correlate block data with first entry
-                LOG_TRACE("[blocking_scheme] compute correlations at blocking level " << i);
+                LOG_TRACE("compute correlations at blocking level " << i);
                 BOOST_FOREACH(shared_ptr<correlation_base> tcf, tcf_) {
                     tcf->compute(i);
                 }
@@ -138,7 +139,7 @@ void blocking_scheme::finalise()
     for (unsigned int i = 0; i < interval_.size(); ++i) {
         // process remaining data at level 'i'
         while (!block_sample_.begin()->get()->empty(i)) {
-            LOG_TRACE("[blocking_scheme] compute correlations at blocking level " << i);
+            LOG_TRACE("compute correlations at blocking level " << i);
             // call all registered correlation modules
             // and correlate block data with first entry
             BOOST_FOREACH(shared_ptr<correlation_base> tcf, tcf_) {
@@ -181,6 +182,7 @@ void blocking_scheme::luaopen(lua_State* L)
                       , double
                       , unsigned int
                       , unsigned int
+                      , shared_ptr<logger_type>
                     >())
                     .property("finalise", &wrap_finalise)
                     .property("sample", &wrap_sample)
