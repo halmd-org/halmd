@@ -42,6 +42,8 @@ class correlation_base
 public:
     correlation_base() {}
     virtual ~correlation_base() {}
+    /** Lua bindings */
+    static void luaopen(lua_State* L);
 
     /** compute correlations at the given coarse-graining level */
     virtual void compute(unsigned int level) = 0;

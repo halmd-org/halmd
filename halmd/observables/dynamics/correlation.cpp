@@ -25,7 +25,7 @@ namespace halmd {
 namespace observables {
 namespace dynamics {
 
-HALMD_LUA_API int luaopen_libhalmd_observables_dynamics_correlation(lua_State* L)
+void correlation_base::luaopen(lua_State* L)
 {
     using namespace luabind;
     module(L, "libhalmd")
@@ -34,10 +34,15 @@ HALMD_LUA_API int luaopen_libhalmd_observables_dynamics_correlation(lua_State* L
         [
             namespace_("dynamics")
             [
-                class_<correlation_base, shared_ptr<correlation_base> >("correlation_base")
+                class_<correlation_base>("correlation_base")
             ]
         ]
     ];
+}
+
+HALMD_LUA_API int luaopen_libhalmd_observables_dynamics_correlation(lua_State* L)
+{
+    correlation_base::luaopen(L);
     return 0;
 }
 
