@@ -18,11 +18,13 @@
  */
 
 #include <boost/lexical_cast.hpp>
+#include <boost/make_shared.hpp>
 #include <string>
 
 #include <halmd/io/logger.hpp>
 #include <halmd/observables/dynamics/correlation.hpp>
 #include <halmd/observables/host/dynamics/mean_square_displacement.hpp>
+#include <halmd/utility/demangle.hpp>
 #include <halmd/utility/lua/lua.hpp>
 
 using namespace boost;
@@ -64,35 +66,27 @@ mean_square_displacement<dimension, float_type>::compute(
     return acc / first.r[type_]->size();
 }
 
-template <int dimension, typename float_type>
-char const* mean_square_displacement<dimension, float_type>::class_name()
+template <typename tcf_type>
+static shared_ptr<tcf_type>
+wrap_tcf(size_t type, typename tcf_type::sample_type const&)
 {
-    static string class_name(module_name() + ("_" + lexical_cast<string>(dimension) + "_"));
-    return class_name.c_str();
-}
-
-template <int dimension, typename float_type>
-static char const* class_name_wrapper(mean_square_displacement<dimension, float_type> const&)
-{
-    return mean_square_displacement<dimension, float_type>::class_name();
+    return make_shared<tcf_type>(type);
 }
 
 template <int dimension, typename float_type>
 void mean_square_displacement<dimension, float_type>::luaopen(lua_State* L)
 {
     using namespace luabind;
+    static string const class_name(demangled_name<mean_square_displacement>());
     module(L, "libhalmd")
     [
         namespace_("observables")
         [
-            namespace_("host")
+            namespace_("dynamics")
             [
-                namespace_("dynamics")
-                [
-                    class_<mean_square_displacement>(class_name())
-                        .def(constructor<size_t>())
-                        .property("class_name", &class_name_wrapper<dimension, float_type>)
-                ]
+                class_<mean_square_displacement>(class_name.c_str())
+
+              , def("mean_square_displacement", &wrap_tcf<mean_square_displacement>)
             ]
         ]
     ];

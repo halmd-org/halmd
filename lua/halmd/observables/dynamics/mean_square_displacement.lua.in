@@ -26,19 +26,7 @@ require("halmd.observables.samples.phase_space")
 local device = halmd.device
 local observables = halmd.observables
 -- grab C++ wrappers
-local msd_wrapper = {
-    host = {
-        [2] = libhalmd.observables.host.dynamics.mean_square_displacement_2_
-      , [3] = libhalmd.observables.host.dynamics.mean_square_displacement_3_
-    }
-}
-if libhalmd.observables.gpu then
-    msd_wrapper.gpu = {
---        [2] = libhalmd.observables.gpu.dynamics.mean_square_displacement_2_
---      , [3] = libhalmd.observables.gpu.dynamics.mean_square_displacement_3_
-    }
-end
-
+local msd_wrapper = libhalmd.observables.dynamics.mean_square_displacement
 local h5 = libhalmd.h5
 local po = libhalmd.po
 local property = property
@@ -62,7 +50,7 @@ function new(args)
     local sample = observables.samples.phase_space{memory = backend}
     local dimension = assert(sample.dimension)
     -- construct msd module
-    local msd = assert(msd_wrapper[backend][dimension])(species)
+    local msd = assert(msd_wrapper)(species, sample)
 
     -- extend msd module with read-only sample property
     msd.sample = property(function(self)
