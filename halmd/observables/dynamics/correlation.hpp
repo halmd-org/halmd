@@ -56,8 +56,12 @@ class correlation
 public:
     typedef typename tcf_type::sample_type sample_type;
     typedef typename tcf_type::result_type result_type;
+    typedef accumulator<result_type> accumulator_type;
     typedef observables::samples::blocking_scheme<sample_type> block_sample_type;
-    typedef boost::multi_array<accumulator<result_type>, 2> block_result_type;
+    typedef boost::multi_array<accumulator_type, 2> block_result_type;
+    typedef boost::multi_array<typename accumulator_type::value_type, 2> block_mean_type;
+    typedef boost::multi_array<typename accumulator_type::value_type, 2> block_error_type;
+    typedef boost::multi_array<typename accumulator_type::size_type, 2> block_count_type;
 
     static void luaopen(lua_State* L, char const* scope);
 
@@ -68,6 +72,9 @@ public:
     virtual ~correlation() {}
 
     virtual void compute(unsigned int level);
+    block_mean_type const& mean();
+    block_error_type const& error();
+    block_count_type const& count();
 
 private:
     typedef correlation_base _Base;
@@ -76,9 +83,14 @@ private:
     boost::shared_ptr<block_sample_type> block_sample_;
     /** functor performing the specific computation */
     boost::shared_ptr<tcf_type> tcf_;
-
     /** block structures holding accumulated result values */
     block_result_type result_;
+    /** mean values */
+    block_mean_type mean_;
+    /** standard error of mean */
+    block_error_type error_;
+    /** accumulator count */
+    block_count_type count_;
 };
 
 template <typename tcf_type>
@@ -91,6 +103,9 @@ correlation<tcf_type>::correlation(
   , tcf_(tcf)
   // memory allocation
   , result_(boost::extents[block_sample->count()][block_sample->block_size()])
+  , mean_(boost::extents[block_sample->count()][block_sample->block_size()])
+  , error_(boost::extents[block_sample->count()][block_sample->block_size()])
+  , count_(boost::extents[block_sample->count()][block_sample->block_size()])
 {
 }
 
@@ -113,6 +128,42 @@ void correlation<tcf_type>::compute(unsigned int level)
         // store result in output accumulator
         (*out++)(tcf_->compute(*first, *second));
     }
+}
+
+template <typename tcf_type>
+typename correlation<tcf_type>::block_mean_type const&
+correlation<tcf_type>::mean()
+{
+    for (std::size_t i = 0; i < result_.shape()[0]; ++i) {
+        for (std::size_t j = 0; j < result_.shape()[1]; ++j) {
+            mean_[i][j] = detail::numeric::mean(result_[i][j]);
+        }
+    }
+    return mean_;
+}
+
+template <typename tcf_type>
+typename correlation<tcf_type>::block_error_type const&
+correlation<tcf_type>::error()
+{
+    for (std::size_t i = 0; i < result_.shape()[0]; ++i) {
+        for (std::size_t j = 0; j < result_.shape()[1]; ++j) {
+            error_[i][j] = error_of_mean(result_[i][j]);
+        }
+    }
+    return error_;
+}
+
+template <typename tcf_type>
+typename correlation<tcf_type>::block_count_type const&
+correlation<tcf_type>::count()
+{
+    for (std::size_t i = 0; i < result_.shape()[0]; ++i) {
+        for (std::size_t j = 0; j < result_.shape()[1]; ++j) {
+            count_[i][j] = detail::numeric::count(result_[i][j]);
+        }
+    }
+    return count_;
 }
 
 template <typename tcf_type>
