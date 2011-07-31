@@ -1,6 +1,6 @@
 #!@CMAKE_COMMAND@ -P
 #
-# Copyright © 2011  Peter Colberg
+# Copyright © 2011  Peter Colberg and Felix Höfling
 #
 # This file is part of HALMD.
 #
@@ -23,7 +23,6 @@
 #
 # This test is related to HALMD bug #69.
 #
-# FIXME test both GPU and host backends with the same script
 # FIXME write C++ test to compare trajectory outputs
 #
 
@@ -33,21 +32,43 @@ include(execute_halmd)
 
 set(OUTPUT_PREFIX "@CMAKE_CURRENT_BINARY_DIR@/lennard_jones")
 
+if(DEFINED USE_HOST)
+    if (WITH_CUDA)
+        set(BACKEND_OPTION "--disable-gpu")
+    endif (WITH_CUDA)
+    message(STATUS "Using host backend")
+else()
+    message(STATUS "Using GPU backend")
+endif()
+
+if(NOT DEFINED DIMENSION)
+    message(FATAL_ERROR "Variable DIMENSION undefined")
+else()
+    message(STATUS "Space dimension: ${DIMENSION}")
+endif()
+
+# FIXME add third particle species with N=1 once supported, see commit 1f91762
 execute_halmd(
-  --verbose --verbose
+  --verbose
   --output "${OUTPUT_PREFIX}"
   --steps 1000
-  sampler --trajectory=1000
+  "${BACKEND_OPTION}"
+  box --dimension "${DIMENSION}"--particles=100,200 --density 0.1
+  trajectory --every=1000
 )
 
 execute_halmd(
-  --verbose --verbose
+  --verbose
   --output "${OUTPUT_PREFIX}_continued"
+  --steps 1000
+  "${BACKEND_OPTION}"
   trajectory --file "${OUTPUT_PREFIX}.trj"
+  trajectory --every=1000
 )
 
 file(REMOVE
   "${OUTPUT_PREFIX}.trj"
   "${OUTPUT_PREFIX}.log"
   "${OUTPUT_PREFIX}_continued.log"
+  "${OUTPUT_PREFIX}_continued.trj"
 )

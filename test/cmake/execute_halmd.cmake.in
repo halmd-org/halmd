@@ -25,11 +25,10 @@
 # FIXME support QUIET option to disable --verbose --verbose
 # FIXME optionally capture stdout/stderr to variable
 #
-macro(execute_halmd ARGS)
+macro(execute_halmd)
   execute_process(
     COMMAND "@CMAKE_BINARY_DIR@/halmd/halmd" ${ARGN}
     RESULT_VARIABLE ${OUTPUT_PREFIX}_STATUS
-    WORKING_DIRECTORY "@CMAKE_BINARY_DIR@/halmd"
   )
 
   if(NOT ${OUTPUT_PREFIX}_STATUS STREQUAL "0")
@@ -37,3 +36,5 @@ macro(execute_halmd ARGS)
   endif()
 
 endmacro()
+
+message("Avoid ctest truncation of output: CTEST_FULL_OUTPUT")

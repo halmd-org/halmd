@@ -1,5 +1,5 @@
 /*
- * Copyright © 2008-2009  Peter Colberg and Felix Höfling
+ * Copyright © 2008-2011  Peter Colberg and Felix Höfling
  *
  * This file is part of HALMD.
  *
@@ -24,6 +24,7 @@
 #include <halmd/mdsim/gpu/particle_kernel.cuh>
 #include <halmd/mdsim/gpu/positions/lattice_kernel.hpp>
 #include <halmd/numeric/blas/blas.hpp>
+#include <halmd/numeric/mp/dsfloat.hpp>
 #include <halmd/utility/gpu/thread.cuh>
 #include <halmd/utility/gpu/variant.cuh>
 
@@ -31,12 +32,11 @@ using namespace boost;
 using namespace halmd::mdsim::gpu::particle_kernel;
 using namespace halmd::utility::gpu;
 
-namespace halmd
-{
-namespace mdsim { namespace gpu { namespace positions
-{
-namespace lattice_kernel
-{
+namespace halmd {
+namespace mdsim {
+namespace gpu {
+namespace positions {
+namespace lattice_kernel {
 
 using boost::mpl::int_;
 
@@ -91,33 +91,41 @@ template <
   , void (*primitive)(
         unsigned int
       , fixed_vector<unsigned int, vector_type::static_size> const&
-      , vector_type&
+      , fixed_vector<float, vector_type::static_size> &
     )
 >
 __global__ void lattice(float4* g_r, uint npart, float a, uint skip)
 {
     enum { dimension = vector_type::static_size };
+    unsigned int const threads = GTDIM;
 
-    for (uint i = GTID; i < npart; i += GTDIM) {
+    for (uint i = GTID; i < npart; i += threads) {
 
         // load particle type
         vector_type r;
         unsigned int type;
+#ifdef USE_VERLET_DSFUN
+        tie(r, type) = untagged<vector_type>(g_r[i], g_r[i + threads]);
+#else
         tie(r, type) = untagged<vector_type>(g_r[i]);
+#endif
 
         // introduce a vacancy after every (skip - 1) particles
         uint nvacancies = (skip > 1) ? (i / (skip - 1)) : 0;
 
         // compute primitive lattice vector
-        primitive(i + nvacancies, get<dimension>(ncell_), r);
+        fixed_vector<float, dimension> e;
+        primitive(i + nvacancies, get<dimension>(ncell_), e);
 
-        // scale with lattice constant
-        r *= a;
+        // scale with lattice constant and shift origin of lattice to offset
+        fixed_vector<float, dimension> offset = get<dimension>(offset_);
+        r = e * a + offset; //< cast sum to dsfloat-based type
 
-        // shift origin of lattice to offset
-        r += vector_type(get<dimension>(offset_));
-
+#ifdef USE_VERLET_DSFUN
+        tie(g_r[i], g_r[i + threads]) = tagged(r, type);
+#else
         g_r[i] = tagged(r, type);
+#endif
     }
 }
 
@@ -127,13 +135,19 @@ template <int dimension>
 lattice_wrapper<dimension> const lattice_wrapper<dimension>::kernel = {
     get<dimension>(lattice_kernel::offset_)
   , get<dimension>(lattice_kernel::ncell_)
+#ifdef USE_VERLET_DSFUN
+  , lattice_kernel::lattice<fixed_vector<dsfloat, dimension>, lattice_kernel::fcc>
+  , lattice_kernel::lattice<fixed_vector<dsfloat, dimension>, lattice_kernel::sc>
+#else
   , lattice_kernel::lattice<fixed_vector<float, dimension>, lattice_kernel::fcc>
   , lattice_kernel::lattice<fixed_vector<float, dimension>, lattice_kernel::sc>
+#endif
 };
 
 template class lattice_wrapper<3>;
 template class lattice_wrapper<2>;
 
-}}} // namespace mdsim::gpu::positions
-
+} // namespace mdsim
+} // namespace gpu
+} // namespace positions
 } // namespace halmd

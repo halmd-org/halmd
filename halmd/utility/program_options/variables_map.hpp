@@ -22,10 +22,8 @@
 
 #include <boost/program_options.hpp>
 
-namespace halmd
-{
-namespace po
-{
+namespace halmd {
+namespace po {
 
 void store(
     boost::program_options::basic_parsed_options<char> const& options
@@ -39,7 +37,6 @@ void store(
 );
 
 } // namespace po
-
 } // namespace halmd
 
 #endif /* ! HALMD_UTILITY_PROGRAM_OPTIONS_VARIABLES_MAP_HPP */

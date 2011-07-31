@@ -25,8 +25,7 @@
 
 #include <cuda_wrapper/error.hpp>
 
-namespace cuda
-{
+namespace cuda {
 
 #if (CUDART_VERSION >= 2020)
 
@@ -42,6 +41,6 @@ inline int version()
 
 #endif /* CUDART_VERSION >= 2020 */
 
-}
+} // namespace cuda
 
 #endif /* ! CUDA_VERSION_HPP */

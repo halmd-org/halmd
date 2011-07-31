@@ -29,10 +29,8 @@
 #include <halmd/mdsim/clock.hpp>
 #include <halmd/utility/signal.hpp>
 
-namespace halmd
-{
-namespace observables
-{
+namespace halmd {
+namespace observables {
 
 /**
  * estimate remaining runtime until programme completion
@@ -42,9 +40,12 @@ namespace observables
  */
 class runtime_estimate
 {
+private:
+    typedef halmd::signal<void ()> signal_type;
+
 public:
     typedef halmd::mdsim::clock clock_type;
-    typedef halmd::signal<void ()> signal_type;
+    typedef clock_type::step_type step_type;
     typedef signal_type::slot_function_type slot_function_type;
 
     static void luaopen(lua_State* L);
@@ -53,16 +54,16 @@ public:
 
     runtime_estimate(
         boost::shared_ptr<clock_type> clock
-      , uint64_t total_steps
-      , uint64_t step_start
+      , step_type total_steps
+      , step_type step_start
     );
 
     // estimate remaining runtime and output to log file
-    virtual void sample() const;
+    void sample() const;
 
-    virtual void on_sample(slot_function_type const& slot)
+    connection on_sample(slot_function_type const& slot)
     {
-        on_sample_.connect(slot);
+        return on_sample_.connect(slot);
     }
 
     //! returns estimate on remaining runtime in seconds based on number of completed simulation steps
@@ -83,7 +84,6 @@ protected:
 };
 
 } // namespace observables
-
 } // namespace halmd
 
 #endif /* ! HALMD_OBSERVABLES_RUNTIME_ESTIMATE_HPP */

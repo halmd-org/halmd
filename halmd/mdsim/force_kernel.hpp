@@ -22,10 +22,8 @@
 
 #include <halmd/mdsim/type_traits.hpp>
 
-namespace halmd
-{
-namespace mdsim
-{
+namespace halmd {
+namespace mdsim {
 
 /**
  * Trace and off-diagonal elements of distance tensor
@@ -53,7 +51,6 @@ make_stress_tensor(float_type rr, fixed_vector<float_type, 2> const& r)
 }
 
 } // namespace mdsim
-
 } // namespace halmd
 
 #endif /* ! HALMD_MDSIM_FORCE_KERNEL_HPP */

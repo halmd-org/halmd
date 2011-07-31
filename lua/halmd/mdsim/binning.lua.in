@@ -1,0 +1,115 @@
+--
+-- Copyright © 2010-2011  Peter Colberg
+--
+-- This file is part of HALMD.
+--
+-- HALMD is free software: you can redistribute it and/or modify
+-- it under the terms of the GNU General Public License as published by
+-- the Free Software Foundation, either version 3 of the License, or
+-- (at your option) any later version.
+--
+-- This program is distributed in the hope that it will be useful,
+-- but WITHOUT ANY WARRANTY; without even the implied warranty of
+-- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+-- GNU General Public License for more details.
+--
+-- You should have received a copy of the GNU General Public License
+-- along with this program.  If not, see <http://www.gnu.org/licenses/>.
+--
+
+require("halmd.device")
+require("halmd.mdsim.box")
+require("halmd.mdsim.particle")
+require("halmd.modules")
+
+-- grab modules
+local device = halmd.device
+local mdsim = halmd.mdsim
+-- grab C++ wrappers
+local binning_wrapper = {
+    host = {
+        [2] = libhalmd.mdsim.host.binning_2_
+      , [3] = libhalmd.mdsim.host.binning_3_
+    }
+}
+if libhalmd.mdsim.gpu then
+    binning_wrapper.gpu = {
+        [2] = libhalmd.mdsim.gpu.binning_2_
+      , [3] = libhalmd.mdsim.gpu.binning_3_
+    }
+end
+local h5 = libhalmd.h5
+local po = libhalmd.po
+-- grab standard library
+local assert = assert
+
+module("halmd.mdsim.binning", halmd.modules.register, halmd.singleton)
+
+--
+-- construct binning module
+--
+function new(args)
+    -- cutoff radius matrix of truncated potential
+    local r_cut = assert(args.r_cut)
+    -- neighbour list skin
+    local skin = assert(args.skin)
+
+    -- dependency injection
+    local particle = mdsim.particle() -- singleton
+    local dimension = assert(particle.dimension)
+    local box = mdsim.box() -- singleton
+    local logger = assert(args.logger)
+
+    -- command line options
+    local skin = args.skin or 0.5 -- default value
+
+    local binning
+    if device() then
+        local defaults = assert(binning_wrapper.gpu[dimension].defaults)
+        local occupancy = args.occupancy or defaults.occupancy()
+        binning = binning_wrapper.gpu[dimension](particle, box, r_cut, skin, logger, occupancy)
+    else
+        binning = binning_wrapper.host[dimension](particle, box, r_cut, skin, logger)
+    end
+    return binning
+end
+
+--
+-- connect runtime accumulators to module profiler
+--
+function profile(self, profiler)
+    profiler:on_profile{self, update = "cell lists update"}
+end
+
+--
+-- assemble module options
+--
+-- @param desc po.options_description
+--
+function options(desc)
+    if binning_wrapper.gpu then
+        desc:add("occupancy", po.float(), "desired average cell occupancy")
+    end
+end
+
+--
+-- read module parameters from HDF5 group
+--
+function read_parameters(args, group)
+    if binning_wrapper.gpu then
+        args.occupancy = group:read_attribute("occupancy", h5.float())
+    end
+end
+
+--
+-- write module parameters to HDF5 group
+--
+-- @param binning module instance
+-- @param group HDF5 group
+--
+function write_parameters(binning, group)
+    group:write_attribute("skin", h5.float(), binning.r_skin)
+    if binning.cell_occupancy then
+        group:write_attribute("occupancy", h5.float(), binning.cell_occupancy)
+    end
+end

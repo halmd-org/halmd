@@ -20,12 +20,10 @@
 #include <halmd/algorithm/gpu/radix_sort_kernel.hpp>
 #include <halmd/algorithm/gpu/scan_kernel.cuh>
 
-namespace halmd
-{
-namespace algorithm { namespace gpu
-{
-namespace radix_sort_kernel
-{
+namespace halmd {
+namespace algorithm {
+namespace gpu {
+namespace radix_sort_kernel {
 
 /**
  * atomically add value to 32-bit word in shared memory
@@ -181,7 +179,8 @@ template class radix_sort_wrapper<unsigned int>;
 template class radix_sort_wrapper<float4>;
 template class radix_sort_wrapper<float2>;
 
-}} // namespace algorithm::gpu
+} // namespace algorithm
+} // namespace gpu
 
 template class algorithm::gpu::scan_wrapper<unsigned int>;
 

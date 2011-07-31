@@ -17,11 +17,11 @@
 -- along with this program.  If not, see <http://www.gnu.org/licenses/>.
 --
 
-require("halmd.modules")
-
 require("halmd.device")
-require("halmd.mdsim.core")
+require("halmd.mdsim.clock")
+require("halmd.modules")
 require("halmd.observables.phase_space")
+require("halmd.observables.samples.phase_space")
 
 -- grab modules
 local device = halmd.device
@@ -56,23 +56,42 @@ module("halmd.observables.density_mode", halmd.modules.register)
 --
 function new(args)
     -- dependency injection
-    local core = mdsim.core()
-    local dimension = assert(core.dimension)
     local wavevector = assert(args.wavevector)
+    local clock = mdsim.clock() -- singleton
+
+    local sample
+    if device() then
+        sample = assert(observables.samples.phase_space{memory = "gpu"})
+    else
+        sample = assert(observables.samples.phase_space{memory = "host"})
+    end
+    local dimension = assert(sample.dimension)
+    local logger = assert(args.logger)
+
+    local density_mode
+    if device() then
+        density_mode = assert(density_mode_wrapper.gpu[dimension])
+    else
+        density_mode = assert(density_mode_wrapper.host[dimension])
+    end
+    local observable = density_mode(sample, wavevector, clock, logger)
 
     local phase_space
     if device() then
-        density_mode_wrapper = assert(density_mode_wrapper.gpu[dimension])
-        phase_space = assert(observables.phase_space{ memory = "gpu" })
+        phase_space = assert(observables.phase_space{memory = "gpu"})
     else
-        density_mode_wrapper = assert(density_mode_wrapper.host[dimension])
-        phase_space = assert(observables.phase_space{ memory = "host" })
+        phase_space = assert(observables.phase_space{memory = "host"})
     end
 
-    local density_mode = density_mode_wrapper(phase_space, wavevector)
-
     -- acquire phase space before acquiring density modes
-    density_mode:on_acquire(phase_space.acquire)
+    observable:on_acquire(phase_space.acquire)
 
-    return density_mode
+    return observable
+end
+
+--
+-- connect runtime accumulators to module profiler
+--
+function profile(self, profiler)
+    profiler:on_profile{self, acquire = "computation of density modes"}
 end

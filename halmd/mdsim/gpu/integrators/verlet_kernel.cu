@@ -31,12 +31,11 @@ using namespace boost::mpl;
 using namespace halmd::mdsim::gpu::particle_kernel;
 using namespace halmd::utility::gpu;
 
-namespace halmd
-{
-namespace mdsim { namespace gpu { namespace integrators
-{
-namespace verlet_kernel
-{
+namespace halmd {
+namespace mdsim {
+namespace gpu {
+namespace integrators {
+namespace verlet_kernel {
 
 /** integration time-step */
 static __constant__ float timestep_;
@@ -134,6 +133,7 @@ verlet_wrapper<dimension> const verlet_wrapper<dimension>::wrapper = {
 template class verlet_wrapper<3>;
 template class verlet_wrapper<2>;
 
-}}} // namespace mdsim::gpu::integrators
-
+} // namespace mdsim
+} // namespace gpu
+} // namespace integrators
 } // namespace halmd

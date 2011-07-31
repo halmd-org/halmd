@@ -21,26 +21,27 @@
 #define HALMD_MDSIM_NEIGHBOUR_HPP
 
 #include <lua.hpp>
+#include <halmd/utility/signal.hpp>
 
-namespace halmd
-{
-namespace mdsim
-{
+namespace halmd {
+namespace mdsim {
 
-template <int dimension>
 class neighbour
 {
 public:
+    typedef halmd::signal<void ()> signal_type;
+    typedef signal_type::slot_function_type slot_function_type;
+
     static void luaopen(lua_State* L);
 
     neighbour() {}
     virtual ~neighbour() {}
     virtual void update() = 0;
-    virtual bool check() = 0;
+    /** add slot to be run before neighbour list update */
+    virtual connection on_update(slot_function_type const& slot) = 0;
 };
 
 } // namespace mdsim
-
 } // namespace halmd
 
 #endif /* ! HALMD_MDSIM_NEIGHBOUR_HPP */

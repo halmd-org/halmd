@@ -22,15 +22,18 @@
 
 #include <lua.hpp>
 
+#include <boost/make_shared.hpp>
+#include <halmd/io/logger.hpp>
 #include <halmd/mdsim/box.hpp>
-#include <halmd/mdsim/host/neighbour.hpp>
+#include <halmd/mdsim/host/binning.hpp>
 #include <halmd/mdsim/host/particle.hpp>
 #include <halmd/mdsim/sort.hpp>
+#include <halmd/utility/profiler.hpp>
 
-namespace halmd
-{
-namespace mdsim { namespace host { namespace sorts
-{
+namespace halmd {
+namespace mdsim {
+namespace host {
+namespace sorts {
 
 template <int dimension, typename float_type>
 class hilbert
@@ -41,35 +44,62 @@ public:
     typedef host::particle<dimension, float_type> particle_type;
     typedef typename particle_type::vector_type vector_type;
     typedef mdsim::box<dimension> box_type;
-    typedef host::neighbour<dimension, float_type> neighbour_type;
-
-    typedef typename neighbour_type::cell_list cell_list;
-    typedef typename neighbour_type::cell_size_type cell_size_type;
+    typedef host::binning<dimension, float_type> binning_type;
+    typedef typename _Base::signal_type signal_type;
+    typedef typename _Base::slot_function_type slot_function_type;
+    typedef logger logger_type;
 
     static char const* module_name() { return "hilbert"; }
-
-    boost::shared_ptr<particle_type> particle;
-    boost::shared_ptr<box_type> box;
-    boost::shared_ptr<neighbour_type> neighbour;
 
     static void luaopen(lua_State* L);
 
     hilbert(
         boost::shared_ptr<particle_type> particle
-      , boost::shared_ptr<box_type> box
-      , boost::shared_ptr<neighbour_type> neighbour
+      , boost::shared_ptr<box_type const> box
+      , boost::shared_ptr<binning_type> binning
+      , boost::shared_ptr<logger_type> logger = boost::make_shared<logger_type>()
     );
     virtual void order();
 
-protected:
+    virtual connection on_order(slot_function_type const& slot)
+    {
+        return on_order_.connect(slot);
+    }
+
+private:
+    typedef typename binning_type::cell_size_type cell_size_type;
+    typedef typename binning_type::cell_list cell_list;
+    typedef typename binning_type::cell_lists cell_lists;
+    typedef utility::profiler profiler_type;
+    typedef typename profiler_type::accumulator_type accumulator_type;
+    typedef typename profiler_type::scoped_timer_type scoped_timer_type;
+
+    struct runtime
+    {
+        accumulator_type order;
+        accumulator_type map;
+        accumulator_type permute;
+    };
+
     unsigned int map(vector_type r, unsigned int depth);
 
+    boost::shared_ptr<particle_type> particle_;
+    boost::shared_ptr<box_type const> box_;
+    boost::shared_ptr<binning_type> binning_;
+
     /** 1-dimensional Hilbert curve mapping of cell lists */
-    std::vector<cell_list*> cell_;
+    std::vector<cell_list const*> map_;
+    /** signal emitted after particle ordering */
+    signal_type on_order_;
+    /** module logger */
+    boost::shared_ptr<logger_type> logger_;
+    /** profiling runtime accumulators */
+    runtime runtime_;
 };
 
-}}} // namespace mdsim::host::sorts
-
+} // namespace sorts
+} // namespace host
+} // namespace mdsim
 } // namespace halmd
 
 #endif /* ! HALMD_MDSIM_HOST_SORT_HILBERT_HPP */

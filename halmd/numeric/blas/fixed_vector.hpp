@@ -28,8 +28,7 @@
 #include <halmd/numeric/blas/fixed_vector/operators.hpp>
 #include <halmd/numeric/blas/fixed_vector/rounding.hpp>
 
-namespace halmd
-{
+namespace halmd {
 
 // import into top-level namespace
 using detail::numeric::blas::fixed_vector;

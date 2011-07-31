@@ -1,5 +1,5 @@
 /*
- * Copyright © 2008-2010  Peter Colberg
+ * Copyright © 2008-2011  Peter Colberg
  *
  * This file is part of HALMD.
  *
@@ -27,15 +27,14 @@
 #include <halmd/io/logger.hpp>
 #include <halmd/mdsim/particle.hpp>
 #include <halmd/utility/lua/lua.hpp>
+#include <halmd/utility/signal.hpp>
 
 using namespace boost;
 using namespace boost::algorithm;
 using namespace std;
 
-namespace halmd
-{
-namespace mdsim
-{
+namespace halmd {
+namespace mdsim {
 
 /**
  * Construct microscopic system state.
@@ -65,6 +64,14 @@ particle<dimension>::particle(vector<unsigned int> const& particles)
     LOG("number of particles per type: " << join(ntypes_, " "));
 }
 
+template <typename particle_type>
+typename signal<void ()>::slot_function_type
+wrap_set(shared_ptr<particle_type> particle)
+{
+    return bind(&particle_type::set, particle);
+}
+
+
 template <int dimension>
 void particle<dimension>::luaopen(lua_State* L)
 {
@@ -75,6 +82,7 @@ void particle<dimension>::luaopen(lua_State* L)
         namespace_("mdsim")
         [
             class_<particle, shared_ptr<particle> >(class_name.c_str())
+                .property("set", &wrap_set<particle>)
                 .def_readonly("nbox", &particle::nbox)
                 .def_readonly("ntype", &particle::ntype)
                 .def_readonly("ntypes", &particle::ntypes)
@@ -94,5 +102,4 @@ template class particle<3>;
 template class particle<2>;
 
 } // namespace mdsim
-
 } // namespace halmd

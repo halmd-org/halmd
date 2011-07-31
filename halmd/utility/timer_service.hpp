@@ -21,15 +21,13 @@
 #define HALMD_UTILITY_TIMER_SERVICE_HPP
 
 #include <ctime>
-#include <queue>
+#include <lua.hpp>
 
 #include <halmd/io/logger.hpp>
 #include <halmd/utility/signal.hpp>
 
-namespace halmd
-{
-namespace utility
-{
+namespace halmd {
+namespace utility {
 
 /**
  * This class provides a periodic timer service.
@@ -41,35 +39,36 @@ namespace utility
 class timer_service
 {
 public:
+    typedef std::time_t time_type;
     typedef signal<void ()>::slot_function_type slot_function_type;
 
-    void on_periodic(slot_function_type const& slot, std::time_t interval);
+    /** connect slot to be invoked periodically */
+    connection on_periodic(slot_function_type const& slot, time_type interval);
+    /** process timer event queue */
     void process();
+    /** Lua bindings */
+    static void luaopen(lua_State* L);
 
 private:
+    /**
+     * Periodic timed event
+     */
     struct event
     {
-        /** absolute time in seconds since the epoch */
-        std::time_t time;
-        /** timer interval in seconds */
-        std::time_t interval;
-        /** call function or functor */
-        slot_function_type slot;
+        /** process event */
+        void operator()(time_type const& time);
+        /** time in seconds since the epoch */
+        time_type time_;
+        /** time interval in seconds */
+        time_type interval_;
+        /** slot */
+        slot_function_type slot_;
     };
 
-    struct greater
-    {
-        bool operator()(event const& e1, event const& e2) const
-        {
-            return e1.time > e2.time;
-        }
-    };
-
-    std::priority_queue<event, std::vector<event>, greater> queue_;
+    signal<void (time_type const&)> on_periodic_;
 };
 
 } // namespace utility
-
 } // namespace halmd
 
 #endif /* ! HALMD_UTILITY_TIMER_SERVICE_HPP */

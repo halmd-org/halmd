@@ -27,8 +27,7 @@
 
 #include <halmd/numeric/blas/fixed_vector.hpp>
 
-namespace luabind
-{
+namespace luabind {
 
 /**
  * Luabind converter for fixed-size algebraic vector
@@ -41,7 +40,7 @@ struct default_converter<halmd::fixed_vector<T, N> >
     //! compute Lua to C++ conversion score
     static int compute_score(lua_State* L, int index)
     {
-        return lua_type(L, index) == LUA_TTABLE ? 0 : -1;
+        return lua_type(L, index) == LUA_TTABLE && lua_objlen(L, index) == N ? 0 : -1;
     }
 
     //! convert from Lua to C++

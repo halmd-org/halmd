@@ -30,18 +30,19 @@ using namespace halmd::utility::gpu;
 /** cuboid box edge length */
 static __constant__ variant<map<pair<int_<3>, float3>, pair<int_<2>, float2> > > box_length_;
 
-namespace halmd
-{
-namespace mdsim { namespace gpu { namespace positions
-{
-namespace phase_space_kernel
-{
+namespace halmd {
+namespace mdsim {
+namespace gpu {
+namespace positions {
+namespace phase_space_kernel {
 
 /**
  * shift particle positions to range (-L/2, L/2)
+ *
+ * FIXME move to box_kernel.cuh
  */
-template <typename vector_type>
-__global__ void reduce_periodic(float4* g_r)
+template <typename vector_type, typename coalesced_vector_type>
+__global__ void reduce_periodic(float4* g_r, coalesced_vector_type* g_image)
 {
     enum { dimension = vector_type::static_size };
 
@@ -51,8 +52,9 @@ __global__ void reduce_periodic(float4* g_r)
 
     vector_type box_length = get<dimension>(box_length_);
 
-    box_kernel::reduce_periodic(r, box_length);
+    vector_type image = box_kernel::reduce_periodic(r, box_length);
 
+    g_image[GTID] = image;
     g_r[GTID] = tagged(r, type);
 }
 
@@ -67,6 +69,7 @@ phase_space_wrapper<dimension> const phase_space_wrapper<dimension>::kernel = {
 template class phase_space_wrapper<3>;
 template class phase_space_wrapper<2>;
 
-}}} // namespace mdsim::gpu::positions
-
+} // namespace mdsim
+} // namespace gpu
+} // namespace positions
 } // namespace halmd

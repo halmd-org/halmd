@@ -1,5 +1,5 @@
 /*
- * Copyright © 2010-2011  Peter Colberg
+ * Copyright © 2010-2011  Peter Colberg and Felix Höfling
  *
  * This file is part of HALMD.
  *
@@ -20,36 +20,79 @@
 #ifndef HALMD_UTILITY_PROFILER_HPP
 #define HALMD_UTILITY_PROFILER_HPP
 
-#include <boost/shared_ptr.hpp>
 #include <lua.hpp>
-#include <vector>
 
-#include <halmd/io/profiling/writer.hpp>
 #include <halmd/numeric/accumulator.hpp>
+#include <halmd/utility/scoped_timer.hpp>
+#include <halmd/utility/signal.hpp>
+#include <halmd/utility/timer.hpp>
 
-namespace halmd
-{
-namespace utility
-{
+namespace halmd {
+namespace utility {
 
+/**
+ * Module runtime profiler
+ *
+ * This class manages the runtime accumulators scattered over the
+ * HALMD modules. It allows granular profiling, i.e. only a subset
+ * of accumulators may be registered with the profiler.
+ *
+ * In the modules, accumulators are defined as member variables in a
+ * runtime struct, and exported with Luabind's .def_readonly(). The
+ * profiler Lua module then calls the profile() function of a module,
+ * which calls profiler:on_profile for each accumulator along with
+ * a description.
+ *
+ * Profiler holds the accumulators as shared pointers. Lua automatically
+ * creates a shared pointer of an accumulator when calling on_profile,
+ * and Lua will keep alive the module which contains the accumulator
+ * as long as the shared pointer is held by profiler.
+ *
+ * We allow disconnection of accumulators by use of the halmd::slots
+ * container, which returns a connection object when an accumulator
+ * is connected (i.e. inserted).
+ */
 class profiler
 {
-public:
-    typedef io::profiling::writer writer_type;
-    typedef writer_type::accumulator_type accumulator_type;
-    typedef std::vector<boost::shared_ptr<writer_type> > writers_type;
+private:
+    typedef signal<void ()> signal_type;
 
+public:
+    typedef timer timer_type;
+    typedef accumulator<double> accumulator_type;
+    typedef scoped_timer<timer_type> scoped_timer_type;
+    typedef signal_type::slot_function_type slot_function_type;
+
+    /** logs timer resolution */
+    profiler();
+    /** connect accumulator for profiling */
+    connection on_profile(boost::shared_ptr<accumulator_type> acc, std::string const& desc);
+    /** connect to signal emitted before profiling */
+    connection on_prepend_profile(slot_function_type const& slot);
+    /** connect to signal emitted after profiling */
+    connection on_append_profile(slot_function_type const& slot);
+    /** log and reset runtime accumulators */
+    void profile();
+    /** Lua bindings */
     static void luaopen(lua_State* L);
-    profiler(writers_type writer, std::string const& group);
-    void register_runtime(accumulator_type const& runtime, std::string const& tag, std::string const& desc);
 
 private:
-    writers_type writer_;
-    std::string group_;
+    /** accumulator with description */
+    typedef std::pair<boost::shared_ptr<accumulator_type>, std::string> accumulator_pair_type;
+    typedef slots<accumulator_pair_type> slots_type;
+    typedef slots_type::const_iterator slots_const_iterator;
+
+    void log() const;
+
+    /** accumulators slots */
+    slots_type accumulators_;
+    /** signal emitted before profiling */
+    signal_type on_prepend_profile_;
+    /** signal emitted after profiling */
+    signal_type on_append_profile_;
 };
 
 } // namespace utility
-
 } // namespace halmd
 
 #endif /* ! HALMD_UTILITY_PROFILER_HPP */

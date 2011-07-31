@@ -1,0 +1,85 @@
+--
+-- Copyright © 2011  Peter Colberg
+--
+-- This file is part of HALMD.
+--
+-- HALMD is free software: you can redistribute it and/or modify
+-- it under the terms of the GNU General Public License as published by
+-- the Free Software Foundation, either version 3 of the License, or
+-- (at your option) any later version.
+--
+-- This program is distributed in the hope that it will be useful,
+-- but WITHOUT ANY WARRANTY; without even the implied warranty of
+-- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+-- GNU General Public License for more details.
+--
+-- You should have received a copy of the GNU General Public License
+-- along with this program.  If not, see <http://www.gnu.org/licenses/>.
+--
+
+require("halmd.hooks")
+require("halmd.modules")
+require("halmd.singleton")
+require("halmd.utility")
+
+-- grab Lua modules
+local hooks = halmd.hooks
+local signals = require("halmd.modules.signals")
+local utility = halmd.utility
+-- grab C++ modules
+local class_info = class_info
+local profiler_wrapper = libhalmd.utility.profiler
+-- grab standard library
+local error = error
+local pairs = pairs
+local table = table
+
+module("halmd.utility.profiler", halmd.modules.register, halmd.singleton)
+
+--
+-- construct profiler module
+--
+function new(args)
+    return profiler_wrapper()
+end
+
+-- patch C++ objects with signal connection handlers
+-- @see module halmd.modules.signals
+signals.patch(_M)
+
+hooks.register_object_hook(function(object, module)
+    local profile = module.profile
+    if profile then
+        -- module profiler
+        local profiler = {}
+
+        --
+        -- profiler:on_profile takes a single unnamed argument, which is the
+        -- module to be profiled, and arbitrary many named arguments, with
+        -- each the name of a runtime accumulator and its description
+        --
+        function profiler:on_profile(args)
+            local object = table.remove(args, 1)
+            if not object then
+                error("missing argument: profiled module", 2)
+            end
+
+            for acc, desc in pairs(args) do
+                local runtime = object.runtime
+                if not runtime then
+                    error("missing runtime struct in module", 2)
+                end
+                local class = class_info(runtime)
+                local attrs = utility.reverse(class.attributes)
+                if not attrs[acc] then
+                    error("undefined runtime accumulator: " .. acc, 2)
+                end
+                local profiler = _M() -- singleton
+                profiler:on_profile{runtime[acc], desc, tracker = object}
+            end
+        end
+
+        -- connect runtime accumulators of object to profiler
+        profile(object, profiler)
+    end
+end)

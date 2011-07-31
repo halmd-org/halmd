@@ -20,25 +20,31 @@
 #ifndef HALMD_OBSERVABLES_HOST_SAMPLES_PHASE_SPACE_HPP
 #define HALMD_OBSERVABLES_HOST_SAMPLES_PHASE_SPACE_HPP
 
+#include <boost/function.hpp>
 #include <boost/shared_ptr.hpp>
 #include <limits>
 #include <lua.hpp>
 #include <stdint.h>
 #include <vector>
 
+#include <halmd/mdsim/clock.hpp>
 #include <halmd/numeric/blas/fixed_vector.hpp>
 #include <halmd/utility/raw_allocator.hpp>
 
-namespace halmd
-{
-namespace observables { namespace host { namespace samples
-{
+namespace halmd {
+namespace observables {
+namespace host {
+namespace samples {
 
 template <int dimension, typename float_type>
 class phase_space
 {
+private:
+    typedef mdsim::clock clock_type;
+
 public:
     typedef fixed_vector<float_type, dimension> vector_type;
+    typedef typename clock_type::step_type step_type;
 
     /** sample vector type for all particles of a species */
     typedef std::vector<vector_type, raw_allocator<vector_type> > sample_vector;
@@ -52,7 +58,7 @@ public:
     /** particle velocities */
     sample_vector_ptr_vector v;
     /** simulation step when sample was taken */
-    uint64_t step;
+    step_type step;
 
     static void luaopen(lua_State* L);
     static char const* class_name();
@@ -68,6 +74,15 @@ public:
      * @param force if true then enforce reallocation
      */
     void reset(bool force=false);
+
+    /** get read-only particle positions of given type */
+    sample_vector const& position(unsigned int type) const;
+    /** get read-only particle velocities of given type */
+    sample_vector const& velocity(unsigned int type) const;
+    /** get read-write particle positions of given type */
+    sample_vector& position(unsigned int type);
+    /** get read-write particle velocities of given type */
+    sample_vector& velocity(unsigned int type);
 };
 
 template <int dimension, typename float_type>
@@ -76,7 +91,7 @@ inline phase_space<dimension, float_type>::phase_space(std::vector<unsigned int>
   : r(ntypes.size())
   , v(ntypes.size())
   // initialise attributes
-  , step(std::numeric_limits<uint64_t>::max())
+  , step(std::numeric_limits<step_type>::max())
 {
     for (size_t i = 0; i < ntypes.size(); ++i) {
         r[i].reset(new sample_vector(ntypes[i]));
@@ -99,11 +114,12 @@ inline void phase_space<dimension, float_type>::reset(bool force)
         }
     }
     // make time stamp invalid
-    step = std::numeric_limits<uint64_t>::max();
+    step = std::numeric_limits<step_type>::max();
 }
 
-}}} // namespace observables::host::samples
-
+} // namespace samples
+} // namespace host
+} // namespace observables
 } // namespace halmd
 
 #endif /* ! HALMD_OBSERVABLES_HOST_SAMPLES_PHASE_SPACE_HPP */

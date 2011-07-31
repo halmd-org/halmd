@@ -26,10 +26,9 @@
 #include <halmd/mdsim/type_traits.hpp>
 #include <halmd/numeric/mp/dsfloat.hpp>
 
-namespace halmd
-{
-namespace mdsim { namespace gpu
-{
+namespace halmd {
+namespace mdsim {
+namespace gpu {
 
 template <int dimension>
 struct velocity_wrapper
@@ -48,8 +47,8 @@ velocity_wrapper<dimension> const& get_velocity_kernel()
     return velocity_wrapper<dimension>::kernel;
 }
 
-}} // namespace mdsim::gpu
-
+} // namespace mdsim
+} // namespace gpu
 } // namespace halmd
 
 #endif /* ! HALMD_MDSIM_GPU_VELOCITY_KERNEL_HPP */

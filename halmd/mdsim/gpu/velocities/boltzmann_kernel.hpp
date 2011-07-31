@@ -30,10 +30,10 @@
 // Maxwell-Boltzmann distribution at accurate temperature
 //
 
-namespace halmd
-{
-namespace mdsim { namespace gpu { namespace velocities
-{
+namespace halmd {
+namespace mdsim {
+namespace gpu {
+namespace velocities {
 
 template <
     int dimension
@@ -54,8 +54,9 @@ struct boltzmann_wrapper
     static boltzmann_wrapper const kernel;
 };
 
-}}} // namespace mdsim::gpu::velocities
-
+} // namespace mdsim
+} // namespace gpu
+} // namespace velocities
 } // namespace halmd
 
 #endif /* ! HALMD_MDSIM_GPU_VELOCITIES_BOLTZMANN_KERNEL_HPP */

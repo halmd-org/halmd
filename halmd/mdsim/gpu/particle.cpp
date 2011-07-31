@@ -1,5 +1,5 @@
 /*
- * Copyright © 2008-2010  Peter Colberg and Felix Höfling
+ * Copyright © 2008-2011  Peter Colberg and Felix Höfling
  *
  * This file is part of HALMD.
  *
@@ -25,15 +25,15 @@
 #include <halmd/io/logger.hpp>
 #include <halmd/mdsim/gpu/particle.hpp>
 #include <halmd/mdsim/gpu/particle_kernel.hpp>
+#include <halmd/utility/gpu/device.hpp>
 #include <halmd/utility/lua/lua.hpp>
 
 using namespace boost;
 using namespace std;
 
-namespace halmd
-{
-namespace mdsim { namespace gpu
-{
+namespace halmd {
+namespace mdsim {
+namespace gpu {
 
 /**
  * Allocate microscopic system state.
@@ -42,12 +42,12 @@ namespace mdsim { namespace gpu
  */
 template <unsigned int dimension, typename float_type>
 particle<dimension, float_type>::particle(
-    shared_ptr<device_type> device
-  , vector<unsigned int> const& particles
+    vector<unsigned int> const& particles
+  , unsigned int threads
 )
   : _Base(particles)
   // default CUDA kernel execution dimensions
-  , dim(cuda::config((nbox + device->threads() - 1) / device->threads(), device->threads()))
+  , dim(device::validate(cuda::config((nbox + threads - 1) / threads, threads)))
   // allocate global device memory
   , g_r(nbox)
   , g_image(nbox)
@@ -73,9 +73,34 @@ particle<dimension, float_type>::particle(
     // in cuda::copy or cuda::memset calls.
     //
     try {
+#ifdef USE_VERLET_DSFUN
+        //
+        // Double-single precision requires two single precision
+        // "words" per coordinate. We use the first part of a GPU
+        // vector for the higher (most significant) words of all
+        // particle positions or velocities, and the second part for
+        // the lower (least significant) words.
+        //
+        // The additional memory is allocated using reserve(), which
+        // increases the capacity() without changing the size().
+        //
+        // Take care to pass capacity() as an argument to cuda::copy
+        // or cuda::memset calls if needed, as the lower words will
+        // be ignored in the operation.
+        //
+        // Particle images remain in single precision as they
+        // contain integer values, and otherwise would not matter
+        // for the long-time stability of the integrator.
+        //
+        LOG("integrate using double-single precision");
+        g_r.reserve(2 * dim.threads());
+        g_v.reserve(2 * dim.threads());
+#else
+        LOG_WARNING("integrate using single precision");
         g_r.reserve(dim.threads());
-        g_image.reserve(dim.threads());
         g_v.reserve(dim.threads());
+#endif
+        g_image.reserve(dim.threads());
         g_f.reserve(dim.threads());
         g_index.reserve(dim.threads());
     }
@@ -83,6 +108,14 @@ particle<dimension, float_type>::particle(
         LOG_ERROR("failed to allocate particles in global device memory");
         throw;
     }
+
+    // initialise 'ghost' particles to zero
+    // this avoids potential nonsense computations resulting in denormalised numbers
+    cuda::memset(g_r, 0, g_r.capacity());
+    cuda::memset(g_v, 0, g_v.capacity());
+    cuda::memset(g_f, 0, g_f.capacity());
+    cuda::memset(g_image, 0, g_image.capacity());
+    cuda::memset(g_index, 0, g_index.capacity());
 
     try {
         cuda::copy(nbox, get_particle_kernel<dimension>().nbox);
@@ -95,7 +128,7 @@ particle<dimension, float_type>::particle(
 }
 
 /**
- * set particle tags and types
+ * set particle tags and types, initialise g_index
  */
 template <unsigned int dimension, typename float_type>
 void particle<dimension, float_type>::set()
@@ -106,12 +139,26 @@ void particle<dimension, float_type>::set()
         cuda::copy(ntypes, g_ntypes);
         get_particle_kernel<dimension>().ntypes.bind(g_ntypes);
         get_particle_kernel<dimension>().tag(g_r, g_v);
+
+        cuda::configure(dim.grid, dim.block);
+        get_particle_kernel<dimension>().gen_index(g_index);
         cuda::thread::synchronize();
     }
     catch (cuda::error const&) {
         LOG_ERROR("failed to set particle tags and types");
         throw;
     }
+}
+
+template <unsigned int dimension, typename float_type>
+unsigned int particle<dimension, float_type>::defaults::threads() {
+    return 128;
+}
+
+template <int dimension, typename float_type>
+static int wrap_dimension(particle<dimension, float_type> const&)
+{
+    return dimension;
 }
 
 template <unsigned int dimension, typename float_type>
@@ -126,10 +173,15 @@ void particle<dimension, float_type>::luaopen(lua_State* L)
             namespace_("gpu")
             [
                 class_<particle, shared_ptr<_Base>, _Base>(class_name.c_str())
-                    .def(constructor<
-                        shared_ptr<device_type>
-                      , vector<unsigned int> const&
-                    >())
+                    .def(constructor<vector<unsigned int> const&>())
+                    .def(constructor<vector<unsigned int> const&, unsigned int>())
+                    .property("dimension", &wrap_dimension<dimension, float_type>)
+                    .scope[
+                        namespace_("defaults")
+                        [
+                            def("threads", &defaults::threads)
+                        ]
+                    ]
             ]
         ]
     ];
@@ -146,6 +198,6 @@ HALMD_LUA_API int luaopen_libhalmd_mdsim_gpu_particle(lua_State* L)
 template class particle<3, float>;
 template class particle<2, float>;
 
-}} // namespace mdsim::gpu
-
+} // namespace mdsim
+} // namespace gpu
 } // namespace halmd

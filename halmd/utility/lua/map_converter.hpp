@@ -23,8 +23,7 @@
 #include <luabind/luabind.hpp>
 #include <map>
 
-namespace luabind
-{
+namespace luabind {
 
 /**
  * Luabind converter for STL map

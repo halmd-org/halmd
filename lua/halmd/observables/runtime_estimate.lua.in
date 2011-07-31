@@ -19,7 +19,7 @@
 
 require("halmd.modules")
 
-require("halmd.mdsim.core")
+require("halmd.mdsim.clock")
 
 -- grab modules
 local mdsim = halmd.mdsim
@@ -45,8 +45,7 @@ function new(args)
     local current_step = assert(args.current_step)
 
     -- dependency injection
-    local core = mdsim.core()
-    local clock = assert(core.clock)
+    local clock = mdsim.clock()
 
     return assert(runtime_estimate_wrapper)(clock, total_steps, current_step)
 end
@@ -54,6 +53,6 @@ end
 --
 -- returns module description
 --
-function name()
+function description()
     return "runtime estimate"
 end

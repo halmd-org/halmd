@@ -22,12 +22,11 @@
 
 #include <cuda_wrapper/cuda_wrapper.hpp>
 
-namespace halmd
-{
-namespace mdsim { namespace gpu { namespace forces
-{
-namespace lennard_jones_kernel
-{
+namespace halmd {
+namespace mdsim {
+namespace gpu {
+namespace forces {
+namespace lennard_jones_kernel {
 
 /**
  * indices of potential parameters
@@ -50,8 +49,9 @@ struct lennard_jones_wrapper
     static cuda::texture<float4> param;
 };
 
-}}} // namespace mdsim::gpu::forces
-
+} // namespace mdsim
+} // namespace gpu
+} // namespace forces
 } // namespace halmd
 
 #endif /* ! HALMD_MDSIM_GPU_FORCES_LENNARD_JONES_KERNEL_HPP */

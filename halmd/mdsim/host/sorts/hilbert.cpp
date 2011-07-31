@@ -22,7 +22,6 @@
 #include <boost/foreach.hpp>
 #include <cmath>
 
-#include <halmd/io/logger.hpp>
 #include <halmd/mdsim/host/sorts/hilbert.hpp>
 #include <halmd/mdsim/sorts/hilbert_kernel.hpp>
 #include <halmd/utility/lua/lua.hpp>
@@ -30,54 +29,60 @@
 using namespace boost;
 using namespace std;
 
-namespace halmd
-{
-namespace mdsim { namespace host { namespace sorts
-{
+namespace halmd {
+namespace mdsim {
+namespace host {
+namespace sorts {
 
 template <int dimension, typename float_type>
 hilbert<dimension, float_type>::hilbert(
     shared_ptr<particle_type> particle
-  , shared_ptr<box_type> box
-  , shared_ptr<neighbour_type> neighbour
+  , shared_ptr<box_type const> box
+  , shared_ptr<binning_type> binning
+  , shared_ptr<logger_type> logger
 )
   // dependency injection
-  : particle(particle)
-  , box(box)
-  , neighbour(neighbour)
+  : particle_(particle)
+  , box_(box)
+  , binning_(binning)
+  , logger_(logger)
 {
+    cell_size_type const& ncell = binning_->ncell();
+    vector_type const& cell_length = binning_->cell_length();
+    cell_lists const& cell = binning_->cell();
+
     // set Hilbert space-filling curve recursion depth
-    unsigned int ncell = *max_element(neighbour->ncell_.begin(), neighbour->ncell_.end());
-    unsigned int depth = static_cast<int>(std::ceil(std::log(static_cast<double>(ncell)) / M_LN2));
+    unsigned int ncell_max = *max_element(ncell.begin(), ncell.end());
+    unsigned int depth = static_cast<int>(std::ceil(std::log(static_cast<double>(ncell_max)) / M_LN2));
     // 32-bit integer for 2D Hilbert code allows a maximum of 16/10 levels
     depth = min((dimension == 3) ? 10U : 16U, depth);
 
-    LOG("Hilbert vertex recursion depth: " << depth);
+    LOG("vertex recursion depth: " << depth);
 
     // generate 1-dimensional Hilbert curve mapping of cell lists
-    typedef std::pair<cell_list*, unsigned int> pair;
+    typedef std::pair<cell_list const*, unsigned int> pair;
     std::vector<pair> pairs;
     cell_size_type x;
-    for (x[0] = 0; x[0] < neighbour->ncell_[0]; ++x[0]) {
-        for (x[1] = 0; x[1] < neighbour->ncell_[1]; ++x[1]) {
+    for (x[0] = 0; x[0] < ncell[0]; ++x[0]) {
+        for (x[1] = 0; x[1] < ncell[1]; ++x[1]) {
             if (dimension == 3) {
-                for (x[2] = 0; x[2] < neighbour->ncell_[2]; ++x[2]) {
+                for (x[2] = 0; x[2] < ncell[2]; ++x[2]) {
                     vector_type r(x);
-                    r = element_prod(r + vector_type(0.5), neighbour->cell_length_);
-                    pairs.push_back(std::make_pair(&neighbour->cell_(x), map(r, depth)));
+                    r = element_prod(r + vector_type(0.5), cell_length);
+                    pairs.push_back(std::make_pair(&cell(x), map(r, depth)));
                 }
             }
             else {
                 vector_type r(x);
-                r = element_prod(r + vector_type(0.5), neighbour->cell_length_);
-                pairs.push_back(std::make_pair(&neighbour->cell_(x), map(r, depth)));
+                r = element_prod(r + vector_type(0.5), cell_length);
+                pairs.push_back(std::make_pair(&cell(x), map(r, depth)));
             }
         }
     }
     stable_sort(pairs.begin(), pairs.end(), bind(&pair::second, _1) < bind(&pair::second, _2));
-    cell_.clear();
-    cell_.reserve(neighbour->cell_.size());
-    transform(pairs.begin(), pairs.end(), back_inserter(cell_), bind(&pair::first, _1));
+    map_.clear();
+    map_.reserve(cell.size());
+    transform(pairs.begin(), pairs.end(), back_inserter(map_), bind(&pair::first, _1));
 }
 
 /**
@@ -86,18 +91,28 @@ hilbert<dimension, float_type>::hilbert(
 template <int dimension, typename float_type>
 void hilbert<dimension, float_type>::order()
 {
-    // particle binning
-    neighbour->update_cells();
-    // generate index sequence according to Hilbert-sorted cells
-    std::vector<unsigned int> index;
-    index.reserve(particle->nbox);
-    BOOST_FOREACH(cell_list* cell, cell_) {
-        BOOST_FOREACH(unsigned int p, *cell) {
-            index.push_back(p);
+    {
+        scoped_timer_type timer(runtime_.order);
+        std::vector<unsigned int> index;
+        {
+            scoped_timer_type timer(runtime_.map);
+            // particle binning
+            binning_->update();
+            // generate index sequence according to Hilbert-sorted cells
+            index.reserve(particle_->nbox);
+            BOOST_FOREACH(cell_list const* cell, map_) {
+                BOOST_FOREACH(unsigned int p, *cell) {
+                    index.push_back(p);
+                }
+            }
+        }
+        {
+            scoped_timer_type timer(runtime_.permute);
+            // reorder particles in memory
+            particle_->rearrange(index);
         }
     }
-    // reorder particles in memory
-    particle->rearrange(index);
+    on_order_();
 }
 
 /**
@@ -106,7 +121,7 @@ void hilbert<dimension, float_type>::order()
 template <int dimension, typename float_type>
 unsigned int hilbert<dimension, float_type>::map(vector_type r, unsigned int depth)
 {
-    r = element_div(r, static_cast<vector_type>(box->length()));
+    r = element_div(r, static_cast<vector_type>(box_->length()));
 
     return mdsim::sorts::hilbert_kernel::map(r, depth);
 }
@@ -133,10 +148,19 @@ void hilbert<dimension, float_type>::luaopen(lua_State* L)
                     class_<hilbert, shared_ptr<_Base>, _Base>(class_name.c_str())
                         .def(constructor<
                             shared_ptr<particle_type>
-                          , shared_ptr<box_type>
-                          , shared_ptr<neighbour_type>
+                          , shared_ptr<box_type const>
+                          , shared_ptr<binning_type>
+                          , shared_ptr<logger_type>
                         >())
                         .property("module_name", &module_name_wrapper<dimension, float_type>)
+                        .scope
+                        [
+                            class_<runtime>("runtime")
+                                .def_readonly("order", &runtime::order)
+                                .def_readonly("map", &runtime::map)
+                                .def_readonly("permute", &runtime::permute)
+                        ]
+                        .def_readonly("runtime", &hilbert::runtime_)
                 ]
             ]
         ]
@@ -164,6 +188,7 @@ template class hilbert<3, float>;
 template class hilbert<2, float>;
 #endif
 
-}}} // namespace mdsim::host::sorts
-
+} // namespace sorts
+} // namespace host
+} // namespace mdsim
 } // namespace halmd

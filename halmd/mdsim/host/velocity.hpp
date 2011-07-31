@@ -20,15 +20,16 @@
 #ifndef HALMD_MDSIM_HOST_VELOCITY_HPP
 #define HALMD_MDSIM_HOST_VELOCITY_HPP
 
+#include <boost/make_shared.hpp>
 #include <lua.hpp>
 
+#include <halmd/io/logger.hpp>
 #include <halmd/mdsim/host/particle.hpp>
 #include <halmd/mdsim/velocity.hpp>
 
-namespace halmd
-{
-namespace mdsim { namespace host
-{
+namespace halmd {
+namespace mdsim {
+namespace host {
 
 template <int dimension, typename float_type>
 class velocity
@@ -38,21 +39,25 @@ public:
     typedef mdsim::velocity<dimension> _Base;
     typedef host::particle<dimension, float_type> particle_type;
     typedef typename _Base::vector_type vector_type;
-
-    boost::shared_ptr<particle_type> particle;
+    typedef logger logger_type;
 
     static void luaopen(lua_State* L);
 
     velocity(
         boost::shared_ptr<particle_type> particle
+      , boost::shared_ptr<logger_type> logger = boost::make_shared<logger_type>()
     );
     virtual void rescale(double factor);
     virtual void shift(vector_type const& delta);
     virtual void shift_rescale(vector_type const& delta, double factor);
+
+private:
+    boost::shared_ptr<particle_type> particle_;
+    boost::shared_ptr<logger_type> logger_;
 };
 
-}} // namespace mdsim::host
-
+} // namespace mdsim
+} // namespace host
 } // namespace halmd
 
 #endif /* ! HALMD_MDSIM_HOST_VELOCITY_HPP */

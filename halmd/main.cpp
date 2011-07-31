@@ -1,5 +1,5 @@
 /*
- * Copyright © 2008-2010  Peter Colberg and Felix Höfling
+ * Copyright © 2008-2011  Peter Colberg and Felix Höfling
  *
  * This file is part of HALMD.
  *
@@ -46,19 +46,33 @@ using namespace std;
  */
 int main(int argc, char **argv)
 {
-    static logger log;
-
-    log.log_to_console(logger::trace); //< facilitate debugging
-
-#ifdef NDEBUG
     try {
-#endif
-        static script script; //< load Lua script engine
+        script script; //< load Lua script engine
 
         //
         // assemble program options
         //
         options_parser parser;
+        parser.add_options()
+            ("script", po::value<string>(), "HALMD script file")
+            ;
+
+        po::variables_map vm;
+        try {
+            parser.parse_command_line(argc, argv, vm, true);
+        }
+        catch (po::error const& e) {
+            cerr << PROGRAM_NAME ": " << e.what() << endl;
+            cerr << "Try `" PROGRAM_NAME " --help' for more information." << endl;
+            return EXIT_FAILURE;
+        }
+
+        if (vm.count("script")) {
+            script.dofile(vm["script"].as<string>());
+        }
+        else {
+            script.load_library();
+        }
 
         script.options(parser);
 
@@ -76,7 +90,7 @@ int main(int argc, char **argv)
              "output file prefix")
             ("config,c", po::value<string>(),
              "parameter input file")
-            ("verbose,v", po::accum_value<int>()->default_value(logger::warning),
+            ("verbose,v", po::accum_value<int>()->default_value(logging::warning),
              "increase verbosity")
             ("version",
              "output version and exit")
@@ -87,7 +101,6 @@ int main(int argc, char **argv)
         //
         // parse program options from command line and config file
         //
-        po::variables_map vm;
         try {
             parser.parse_command_line(argc, argv, vm);
 
@@ -125,14 +138,14 @@ int main(int argc, char **argv)
             return EXIT_SUCCESS;
         }
 
-        log.log_to_console(
-            static_cast<logger::severity_level>(vm["verbose"].as<int>())
+        logging::get().open_console(
+            static_cast<logging::severity_level>(vm["verbose"].as<int>())
         );
-        log.log_to_file(
-            static_cast<logger::severity_level>(
-                max(vm["verbose"].as<int>(), static_cast<int>(logger::info))
+        logging::get().open_file(
+            vm["output"].as<string>() + ".log"
+          , static_cast<logging::severity_level>(
+                max(vm["verbose"].as<int>(), static_cast<int>(logging::info))
             )
-          , vm["output"].as<string>() + ".log"
         );
 
         LOG(PROJECT_NAME " (" PROGRAM_DESC ") " PROGRAM_VERSION);
@@ -145,10 +158,7 @@ int main(int argc, char **argv)
 
         script.parsed(vm); //< pass command line options to Lua
 
-        shared_ptr<runner> sampler(script.run());
-
-        sampler->run();
-#ifdef NDEBUG
+        script.run();
     }
     catch (std::exception const& e) {
         LOG_ERROR(e.what());
@@ -160,7 +170,6 @@ int main(int argc, char **argv)
         LOG_WARNING(PROJECT_NAME " aborted");
         return EXIT_FAILURE;
     }
-#endif /* NDEBUG */
 
     LOG(PROJECT_NAME " exit");
     return EXIT_SUCCESS;

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2011  Felix Höfling
+ * Copyright © 2011  Felix Höfling and Peter Colberg
  *
  * This file is part of HALMD.
  *
@@ -19,24 +19,37 @@
 
 #define BOOST_TEST_MODULE ssf
 #include <boost/test/unit_test.hpp>
-#include <boost/test/parameterized_test.hpp>
 
 #include <boost/assign.hpp>
 #include <boost/bind.hpp>
+#include <boost/make_shared.hpp>
 #include <cmath>
+#include <functional> // std::multiplies
 #include <limits>
-#include <string>
-#include <utility>
+#include <numeric> // std::accumulate
 
-#include <halmd/io/logger.hpp>
+#include <halmd/mdsim/box.hpp>
+#include <halmd/mdsim/clock.hpp>
+#include <halmd/mdsim/host/particle.hpp>
+#include <halmd/mdsim/host/positions/lattice.hpp>
+#include <halmd/numeric/accumulator.hpp>
+#include <halmd/observables/host/density_mode.hpp>
+#include <halmd/observables/host/phase_space.hpp>
+#include <halmd/observables/ssf.hpp>
 #include <halmd/observables/utility/wavevector.hpp>
-#include <test/unit/modules.hpp>
-#include <test/tools/init.hpp>
+#include <halmd/random/host/random.hpp>
+#ifdef WITH_CUDA
+# include <halmd/mdsim/gpu/particle.hpp>
+# include <halmd/mdsim/gpu/positions/lattice.hpp>
+# include <halmd/observables/gpu/density_mode.hpp>
+# include <halmd/observables/gpu/phase_space.hpp>
+# include <halmd/random/gpu/random.hpp>
+# include <halmd/utility/gpu/device.hpp>
+#endif
 
 using namespace boost;
-using namespace boost::assign;
+using namespace boost::assign; // list_of
 using namespace halmd;
-using namespace halmd::test;
 using namespace std;
 
 /**
@@ -45,72 +58,52 @@ using namespace std;
  * The test is analogous to the one for mdsim/positions/lattice, where the structure
  * factor was computed manually to check the generation of an fcc lattice.
  */
-template <int dimension>
-void ssf(string const& backend)
+
+template <typename modules_type>
+struct lattice
 {
-    typedef fixed_vector<double, dimension> vector_type;
+    typedef typename modules_type::box_type box_type;
+    typedef typename modules_type::particle_type particle_type;
+    typedef typename modules_type::position_type position_type;
+    typedef typename modules_type::random_type random_type;
+    typedef typename modules_type::sample_type sample_type;
+    typedef typename modules_type::phase_space_type phase_space_type;
+    typedef typename modules_type::density_mode_type density_mode_type;
+    static bool const gpu = modules_type::gpu;
+    typedef typename particle_type::vector_type vector_type;
+    typedef typename vector_type::value_type float_type;
+    static unsigned int const dimension = vector_type::static_size;
+    typedef observables::utility::wavevector<dimension> wavevector_type;
+    typedef observables::ssf<dimension> ssf_type;
+    typedef mdsim::clock clock_type;
 
-    fixed_vector<unsigned, dimension> ncell =
-        (dimension == 3) ? list_of(6)(12)(12) : list_of(4)(1024);
-    if (dimension == 3 && backend == "gpu") {
-        ncell[0] *= 19; // prime
-    }
-    unsigned nunit_cell = (dimension == 3) ? 4 : 2;  //< number of particles per unit cell
-    unsigned npart = nunit_cell * accumulate(ncell.begin(), ncell.end(), 1, multiplies<unsigned>());
-    float density = 0.3;
-    float lattice_constant = pow(nunit_cell / density, 1.f / dimension);
-    char const* random_file = "/dev/urandom";
+    fixed_vector<unsigned, dimension> ncell;
+    unsigned nunit_cell;
+    unsigned npart;
+    float density;
+    float lattice_constant;
+    fixed_vector<double, dimension> slab;
 
-    // enable logging to console
-    shared_ptr<logger> log(new logger);
-    log->log_to_console(
-#ifdef NDEBUG
-        logger::warning
-#else
-        logger::debug
-#endif
-    );
+    shared_ptr<box_type> box;
+    shared_ptr<particle_type> particle;
+    shared_ptr<position_type> position;
+    shared_ptr<random_type> random;
+    shared_ptr<sample_type> sample;
+    shared_ptr<phase_space_type> phase_space;
+    shared_ptr<wavevector_type> wavevector;
+    shared_ptr<density_mode_type> density_mode;
+    shared_ptr<ssf_type> ssf;
+    shared_ptr<clock_type> clock;
 
+    void test();
+    lattice();
+};
+
+template <typename modules_type>
+void lattice<modules_type>::test()
+{
     BOOST_TEST_MESSAGE("#particles: " << npart << ", #unit cells: " << ncell <<
                        ", lattice constant: " << lattice_constant);
-
-    // init modules
-    BOOST_TEST_MESSAGE("initialise modules");
-#ifdef WITH_CUDA
-    shared_ptr<utility::gpu::device> device = make_device(backend);
-#endif /* WITH_CUDA */
-
-    shared_ptr<halmd::random::random> random = make_random(backend, random_file);
-
-    shared_ptr<mdsim::particle<dimension> > particle =
-        make_particle<dimension>(backend, npart);
-
-    shared_ptr<mdsim::box<dimension> > box =
-        make_box<dimension>(particle, density, static_cast<vector_type>(ncell));
-
-    shared_ptr<mdsim::position<dimension> > position =
-        make_lattice(backend, particle, box, random);
-
-    // construct phase space sampler
-    shared_ptr<observables::host::samples::phase_space<dimension, double> > sample_host;
-#ifdef WITH_CUDA
-    shared_ptr<observables::gpu::samples::phase_space<dimension, float> > sample_gpu;
-#endif
-    shared_ptr<observables::phase_space<dimension> > phase_space;
-    if (backend == "host") {
-        sample_host = make_shared<observables::host::samples::phase_space<dimension, double> >(
-            particle->ntypes
-        );
-        phase_space = make_phase_space_host(sample_host, particle, box);
-    }
-#ifdef WITH_CUDA
-    else if (backend == "gpu") {
-        sample_gpu = make_shared<observables::gpu::samples::phase_space<dimension, float> >(
-            particle->ntypes
-        );
-        phase_space = make_phase_space_gpu(sample_gpu, particle, box);
-    }
-#endif
 
     // list of reference results: (wavenumber, ssf, count)
     // S_q = {N if h,k,l all even or odd; 0 if h,k,l mixed parity}
@@ -132,11 +125,11 @@ void ssf(string const& backend)
         ssf_ref.push_back(make_tuple(sqrt(256.) * q_lat, npart / 2., 4));// hkl = (0,16), (16,0), approx.: (4, 1), (8, 1)
     }
     else if (dimension == 3) {
-        if (backend == "host") {
+        if (!gpu) {
             ssf_ref.push_back(make_tuple(q_lat / ncell[1], 0, 2));         // hkl = (0, 0, 1/12), (0, 1/12, 0)
             ssf_ref.push_back(make_tuple(q_lat / ncell[0], 0, 3));         // hkl = (1/6, 0, 0), (0, 2/12, 0), (0, 0, 2/12)
         }
-        else if (backend == "gpu") {
+        else {
             ssf_ref.push_back(make_tuple(q_lat / ncell[0], 0, 1));         // hkl = (1/(6*19), 0, 0)
             ssf_ref.push_back(make_tuple(q_lat / ncell[1], 0, 2));         // hkl = (0, 1/12, 0), (0, 0, 1/12)
         }
@@ -157,16 +150,11 @@ void ssf(string const& backend)
     double const& (*get0)(tuple<double, double, unsigned>::inherited const&) = &boost::get<0>;
     transform(ssf_ref.begin(), ssf_ref.end(), wavenumber.begin(), bind(get0, _1));
 
-    typedef observables::utility::wavevector<dimension> wavevector_type;
-    shared_ptr<wavevector_type> wavevector =
-        make_shared<wavevector_type>(wavenumber, box->length(), 1e-6, 2 * dimension); // FIXME tolerance, see above
+    wavevector = make_shared<wavevector_type>(wavenumber, box->length(), 1e-6, 2 * dimension); // FIXME tolerance, see above
 
     // construct modules for density modes and static structure factor
-    shared_ptr<observables::density_mode<dimension> > density_mode =
-        make_density_mode(backend, phase_space, wavevector);
-
-    typedef observables::ssf<dimension> ssf_type;
-    shared_ptr<ssf_type> ssf = make_shared<ssf_type>(density_mode, particle->nbox);
+    density_mode = make_shared<density_mode_type>(sample, wavevector, clock);
+    ssf = make_shared<ssf_type>(density_mode, clock, particle->nbox);
 
     // generate lattices
     BOOST_TEST_MESSAGE("set particle tags");
@@ -176,20 +164,20 @@ void ssf(string const& backend)
 
     // acquire phase space sample
     BOOST_TEST_MESSAGE("acquire phase space sample");
-    phase_space->acquire(0);
+    phase_space->acquire();
 
     // compute density modes
     BOOST_TEST_MESSAGE("compute density modes");
-    density_mode->acquire(0);
+    density_mode->acquire();
 
     // compute static structure factor
     BOOST_TEST_MESSAGE("compute static structure factor");
-    ssf->sample(0);
+    ssf->sample();
     vector<typename ssf_type::result_type> const& result = ssf->value()[0]; // particle type 0
     BOOST_CHECK(result.size() == ssf_ref.size());
 
     // compare with reference values
-    double eps = (backend == "gpu") ? 100 * numeric_limits<float>::epsilon() : numeric_limits<double>::epsilon();
+    double eps = gpu ? 100 * numeric_limits<float>::epsilon() : numeric_limits<double>::epsilon();
     for (unsigned i = 0; i < result.size(); ++i) {
         // check wavenumber
         double q = ssf->wavevector().wavenumber()[i];
@@ -224,47 +212,70 @@ void ssf(string const& backend)
     }
 }
 
-HALMD_TEST_INIT( init_unit_test_suite )
+template <typename modules_type>
+lattice<modules_type>::lattice()
 {
-    using namespace boost::assign;
-    using namespace boost::unit_test;
-    using namespace boost::unit_test::framework;
+    BOOST_TEST_MESSAGE("initialise simulation modules");
 
-    // parametrize specific program options
-    vector<string> backend = list_of
-        ("host")
-#ifdef WITH_CUDA
-        ("gpu")
-#endif /* WITH_CUDA */
-        ;
+    ncell = (dimension == 3) ? list_of(6)(12)(12) : list_of(4)(1024);
+    if (dimension == 3 && gpu) {
+        ncell[0] *= 19; // prime
+    }
+    nunit_cell = (dimension == 3) ? 4 : 2;  //< number of particles per unit cell
+    npart = nunit_cell * accumulate(ncell.begin(), ncell.end(), 1, multiplies<unsigned>());
+    density = 0.3;
+    lattice_constant = pow(nunit_cell / density, 1.f / dimension);
+    slab = 1;
 
-    test_suite* ts1 = BOOST_TEST_SUITE( "ssf" );
+    vector<unsigned int> npart_vector = list_of(npart);
 
-    test_suite* ts11 = BOOST_TEST_SUITE( "host" );
-
-    test_suite* ts111 = BOOST_TEST_SUITE( "2d" );
-    ts111->add( BOOST_PARAM_TEST_CASE( &ssf<2>, backend.begin(), backend.begin() + 1 ) );
-
-    test_suite* ts112 = BOOST_TEST_SUITE( "3d" );
-    ts112->add( BOOST_PARAM_TEST_CASE( &ssf<3>, backend.begin(), backend.begin() + 1 ) );
-
-    ts11->add( ts111 );
-    ts11->add( ts112 );
-    ts1->add( ts11 );
-
-#ifdef WITH_CUDA
-    test_suite* ts12 = BOOST_TEST_SUITE( "gpu" );
-
-    test_suite* ts121 = BOOST_TEST_SUITE( "2d" );
-    ts121->add( BOOST_PARAM_TEST_CASE( &ssf<2>, backend.begin() + 1, backend.end() ) );
-
-    test_suite* ts122 = BOOST_TEST_SUITE( "3d" );
-    ts122->add( BOOST_PARAM_TEST_CASE( &ssf<3>, backend.begin() + 1, backend.end() ) );
-
-    ts12->add( ts121 );
-    ts12->add( ts122 );
-    ts1->add( ts12 );
-#endif
-
-    master_test_suite().add( ts1 );
+    particle = make_shared<particle_type>(npart_vector);
+    box = make_shared<box_type>(npart, density, fixed_vector<double, dimension>(ncell));
+    random = make_shared<random_type>();
+    position = make_shared<position_type>(particle, box, random, slab);
+    sample = make_shared<sample_type>(particle->ntypes);
+    clock = make_shared<clock_type>(0); // bogus time-step
+    phase_space = make_shared<phase_space_type>(sample, particle, box, clock);
 }
+
+template <int dimension, typename float_type>
+struct host_modules
+{
+    typedef mdsim::box<dimension> box_type;
+    typedef mdsim::host::particle<dimension, float_type> particle_type;
+    typedef mdsim::host::positions::lattice<dimension, float_type> position_type;
+    typedef halmd::random::host::random random_type;
+    typedef observables::host::samples::phase_space<dimension, float_type> sample_type;
+    typedef observables::host::phase_space<dimension, float_type> phase_space_type;
+    typedef observables::host::density_mode<dimension, float_type> density_mode_type;
+    static bool const gpu = false;
+};
+
+BOOST_AUTO_TEST_CASE( ssf_host_2d ) {
+    lattice<host_modules<2, double> >().test();
+}
+BOOST_AUTO_TEST_CASE( ssf_host_3d ) {
+    lattice<host_modules<3, double> >().test();
+}
+
+#ifdef WITH_CUDA
+template <int dimension, typename float_type>
+struct gpu_modules
+{
+    typedef mdsim::box<dimension> box_type;
+    typedef mdsim::gpu::particle<dimension, float_type> particle_type;
+    typedef mdsim::gpu::positions::lattice<dimension, float_type, halmd::random::gpu::rand48> position_type;
+    typedef halmd::random::gpu::random<halmd::random::gpu::rand48> random_type;
+    typedef observables::gpu::samples::phase_space<dimension, float_type> sample_type;
+    typedef observables::gpu::phase_space<sample_type> phase_space_type;
+    typedef observables::gpu::density_mode<dimension, float_type> density_mode_type;
+    static bool const gpu = true;
+};
+
+BOOST_FIXTURE_TEST_CASE( ssf_gpu_2d, device ) {
+    lattice<gpu_modules<2, float> >().test();
+}
+BOOST_FIXTURE_TEST_CASE( ssf_gpu_3d, device ) {
+    lattice<gpu_modules<3, float> >().test();
+}
+#endif // WITH_CUDA

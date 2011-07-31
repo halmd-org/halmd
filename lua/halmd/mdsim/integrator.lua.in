@@ -17,12 +17,11 @@
 -- along with this program.  If not, see <http://www.gnu.org/licenses/>.
 --
 
+require("halmd.mdsim.integrators")
 require("halmd.modules")
 
-require("halmd.mdsim.integrators")
-
 -- grab modules
-local mdsim = halmd.mdsim
+local integrators = halmd.mdsim.integrators
 -- grab C++ wrappers
 local h5 = libhalmd.h5
 local po = libhalmd.po
@@ -37,7 +36,7 @@ module("halmd.mdsim.integrator", halmd.modules.register)
 --
 function new(args)
     local integrator = args.integrator or "verlet" --default value
-    return mdsim.integrators[integrator]()
+    return integrators[integrator]()
 end
 
 --
@@ -49,9 +48,9 @@ function options(desc, globals)
 
     -- integrator module choices with descriptions
     local choices = {}
-    for integrator, module in pairs(mdsim.integrators) do
-        if module.name then
-            choices[integrator] = module.name()
+    for integrator, module in pairs(integrators) do
+        if module.description then
+            choices[integrator] = module.description()
         end
     end
 
@@ -72,5 +71,5 @@ end
 -- @param group HDF5 group
 --
 function write_parameters(integrator, group, globals)
-    globals:write_attribute("integrator", h5.string(), integrator.module_name)
+    globals:write_attribute("integrator", h5.string(), integrator.module.namespace)
 end

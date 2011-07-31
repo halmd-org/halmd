@@ -21,19 +21,19 @@
 #define HALMD_OBSERVABLES_SSF_HPP
 
 #include <boost/array.hpp>
+#include <boost/make_shared.hpp>
 #include <lua.hpp>
 #include <vector>
 
-#include <halmd/io/statevars/writer.hpp>
+#include <halmd/io/logger.hpp>
+#include <halmd/mdsim/clock.hpp>
 #include <halmd/numeric/blas/fixed_vector.hpp>
 #include <halmd/observables/density_mode.hpp>
 #include <halmd/utility/profiler.hpp>
 #include <halmd/utility/signal.hpp>
 
-namespace halmd
-{
-namespace observables
-{
+namespace halmd {
+namespace observables {
 
 /**
  * compute partial static structure factors
@@ -49,40 +49,33 @@ namespace observables
 template <int dimension>
 class ssf
 {
+private:
+    typedef halmd::signal<void ()> signal_type;
+
 public:
-    typedef io::statevars::writer<dimension> writer_type;
     typedef observables::density_mode<dimension> density_mode_type;
-    typedef halmd::utility::profiler profiler_type;
-    typedef halmd::signal<void (uint64_t)> signal_type;
+    typedef mdsim::clock clock_type;
+    typedef typename clock_type::step_type step_type;
+    typedef logger logger_type;
     typedef typename signal_type::slot_function_type slot_function_type;
 
     typedef boost::array<double, 3> result_type;
     typedef fixed_vector<double, dimension> vector_type;
 
-    struct runtime
-    {
-        typedef typename profiler_type::accumulator_type accumulator_type;
-        accumulator_type sample;
-    };
-
-    boost::shared_ptr<density_mode_type> density_mode;
-
     static void luaopen(lua_State* L);
 
     ssf(
-        boost::shared_ptr<density_mode_type> density_mode
+        boost::shared_ptr<density_mode_type const> density_mode
+      , boost::shared_ptr<clock_type const> clock
       , unsigned int npart
+      , boost::shared_ptr<logger_type> logger = boost::make_shared<logger_type>()
     );
-    virtual ~ssf() {}
-    virtual void register_runtimes(profiler_type& profiler);
-    virtual void register_observables(writer_type& writer);
-
     // compute ssf from sample of density Fourier modes and store with given simulation step
-    virtual void sample(uint64_t step);
+    virtual void sample();
 
-    virtual void on_sample(slot_function_type const& slot)
+    connection on_sample(slot_function_type const& slot)
     {
-        on_sample_.connect(slot);
+        return on_sample_.connect(slot);
     }
 
     //! returns last computed values for static structure factor
@@ -91,15 +84,31 @@ public:
         return value_;
     }
 
+    //! returns static structure factor for given type pair
+    std::vector<result_type> const& value(unsigned int type1, unsigned int type2) const;
+
     //! returns instance of wavevector class used to compute the ssf
     typename density_mode_type::wavevector_type const& wavevector() const
     {
-        return density_mode->wavevector();
+        return density_mode_->wavevector();
     }
 
-protected:
+private:
+    typedef halmd::utility::profiler profiler_type;
+    typedef profiler_type::accumulator_type accumulator_type;
+    typedef profiler_type::scoped_timer_type scoped_timer_type;
+
+    struct runtime
+    {
+        accumulator_type sample;
+    };
+
+    boost::shared_ptr<density_mode_type const> density_mode_;
+    boost::shared_ptr<clock_type const> clock_;
+    boost::shared_ptr<logger_type> logger_;
+
     /** compute static structure factor and update result accumulators */
-    virtual void compute_();
+    void compute_();
 
     /** total number of particles, required for normalisation */
     unsigned int npart_;
@@ -116,7 +125,7 @@ protected:
     /** result accumulators */
     std::vector<std::vector<accumulator<double> > > result_accumulator_;
     /** time stamp of data (simulation step) */
-    uint64_t step_;
+    step_type step_;
     /** profiling runtime accumulators */
     runtime runtime_;
 
@@ -124,7 +133,6 @@ protected:
 };
 
 } // namespace observables
-
 } // namespace halmd
 
 #endif /* ! HALMD_OBSERVABLES_SSF_HPP */

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2008-2010  Peter Colberg and Felix Höfling
+ * Copyright © 2008-2011  Peter Colberg and Felix Höfling
  *
  * This file is part of HALMD.
  *
@@ -23,16 +23,16 @@
 #include <lua.hpp>
 
 #include <halmd/mdsim/box.hpp>
+#include <halmd/mdsim/clock.hpp>
 #include <halmd/mdsim/gpu/particle.hpp>
 #include <halmd/observables/gpu/samples/phase_space.hpp>
 #include <halmd/observables/host/samples/phase_space.hpp>
 #include <halmd/observables/phase_space.hpp>
 #include <halmd/utility/profiler.hpp>
 
-namespace halmd
-{
-namespace observables { namespace gpu
-{
+namespace halmd {
+namespace observables {
+namespace gpu {
 
 template <typename sample_type>
 class phase_space;
@@ -49,31 +49,38 @@ public:
     typedef gpu::samples::phase_space<dimension, float_type> sample_type;
     typedef mdsim::gpu::particle<dimension, float_type> particle_type;
     typedef mdsim::box<dimension> box_type;
+    typedef mdsim::clock clock_type;
+    typedef logger logger_type;
+    typedef typename sample_type::vector_type vector_type;
+
+    static void luaopen(lua_State* L);
+
+    phase_space(
+        boost::shared_ptr<sample_type> sample
+      , boost::shared_ptr<particle_type const> particle
+      , boost::shared_ptr<box_type const> box
+      , boost::shared_ptr<clock_type const> clock
+      , boost::shared_ptr<logger_type> logger = boost::make_shared<logger_type>()
+    );
+    virtual void acquire();
+
+private:
     typedef halmd::utility::profiler profiler_type;
-    typedef typename particle_type::vector_type vector_type;
+    typedef typename profiler_type::accumulator_type accumulator_type;
+    typedef typename profiler_type::scoped_timer_type scoped_timer_type;
 
     struct runtime
     {
-        typedef typename profiler_type::accumulator_type accumulator_type;
         accumulator_type acquire;
         accumulator_type reset;
     };
 
-    boost::shared_ptr<sample_type> sample;
-    boost::shared_ptr<particle_type> particle;
-    boost::shared_ptr<box_type> box;
-
-    static void luaopen(lua_State* L);
-    virtual void register_runtimes(profiler_type& profiler);
-
-    phase_space(
-        boost::shared_ptr<sample_type> sample
-      , boost::shared_ptr<particle_type> particle
-      , boost::shared_ptr<box_type> box
-    );
-    virtual void acquire(uint64_t step);
-
 private:
+    boost::shared_ptr<sample_type> sample_;
+    boost::shared_ptr<particle_type const> particle_;
+    boost::shared_ptr<box_type const> box_;
+    boost::shared_ptr<clock_type const> clock_;
+    boost::shared_ptr<logger_type> logger_;
     /** profiling runtime accumulators */
     runtime runtime_;
 };
@@ -90,37 +97,43 @@ public:
     typedef host::samples::phase_space<dimension, float_type> sample_type;
     typedef mdsim::gpu::particle<dimension, float_type> particle_type;
     typedef mdsim::box<dimension> box_type;
-    typedef halmd::utility::profiler profiler_type;
     typedef fixed_vector<float_type, dimension> vector_type;
+    typedef logger logger_type;
+    typedef mdsim::clock clock_type;
+
+    static void luaopen(lua_State* L);
+
+    phase_space(
+        boost::shared_ptr<sample_type> sample
+      , boost::shared_ptr<particle_type /* FIXME const */> particle
+      , boost::shared_ptr<box_type const> box
+      , boost::shared_ptr<clock_type const> clock
+      , boost::shared_ptr<logger_type> logger = boost::make_shared<logger_type>()
+    );
+    virtual void acquire();
+
+private:
+    typedef halmd::utility::profiler profiler_type;
+    typedef typename profiler_type::accumulator_type accumulator_type;
+    typedef typename profiler_type::scoped_timer_type scoped_timer_type;
 
     struct runtime
     {
-        typedef typename profiler_type::accumulator_type accumulator_type;
         accumulator_type acquire;
         accumulator_type reset;
     };
 
-    boost::shared_ptr<sample_type> sample;
-    boost::shared_ptr<particle_type> particle;
-    boost::shared_ptr<box_type> box;
-
-    static void luaopen(lua_State* L);
-    virtual void register_runtimes(profiler_type& profiler);
-
-    phase_space(
-        boost::shared_ptr<sample_type> sample
-      , boost::shared_ptr<particle_type> particle
-      , boost::shared_ptr<box_type> box
-    );
-    virtual void acquire(uint64_t step);
-
-private:
+    boost::shared_ptr<sample_type> sample_;
+    boost::shared_ptr<particle_type /* FIXME const */> particle_;
+    boost::shared_ptr<box_type const> box_;
+    boost::shared_ptr<clock_type const> clock_;
+    boost::shared_ptr<logger_type> logger_;
     /** profiling runtime accumulators */
     runtime runtime_;
 };
 
-}} // namespace observables::gpu
-
+} // namespace observables
+} // namespace gpu
 } // namespace halmd
 
 #endif /* ! HALMD_OBSERVABLES_GPU_PHASE_SPACE_HPP */

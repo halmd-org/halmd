@@ -25,8 +25,8 @@
 
 #include <cuda_wrapper/host/allocator.hpp>
 
-namespace cuda { namespace host
-{
+namespace cuda {
+namespace host {
 
 /**
  * CUDA page-locked host memory vector
@@ -77,6 +77,7 @@ public:
 #endif
 };
 
-}} // namespace cuda::host
+} // namespace host
+} // namespace cuda
 
 #endif /* ! CUDA_HOST_VECTOR_HPP */

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2008-2010  Peter Colberg and Felix Höfling
+ * Copyright © 2008-2011  Peter Colberg and Felix Höfling
  *
  * This file is part of HALMD.
  *
@@ -21,61 +21,35 @@
 #include <cmath>
 #include <string>
 
-#include <halmd/io/logger.hpp>
 #include <halmd/mdsim/gpu/integrators/verlet.hpp>
 #include <halmd/utility/lua/lua.hpp>
-#include <halmd/utility/scoped_timer.hpp>
-#include <halmd/utility/timer.hpp>
 
 using namespace boost;
 using namespace std;
 
-namespace halmd
-{
-namespace mdsim { namespace gpu { namespace integrators
-{
+namespace halmd {
+namespace mdsim {
+namespace gpu {
+namespace integrators {
 
 template <int dimension, typename float_type>
 verlet<dimension, float_type>::verlet(
     shared_ptr<particle_type> particle
-  , shared_ptr<box_type> box
+  , shared_ptr<box_type const> box
   , double timestep
+  , shared_ptr<logger_type> logger
 )
   // dependency injection
-  : particle(particle)
-  , box(box)
+  : particle_(particle)
+  , box_(box)
+  , logger_(logger)
   // reference CUDA C++ verlet_wrapper
-  , wrapper(&verlet_wrapper<dimension>::wrapper)
+  , wrapper_(&verlet_wrapper<dimension>::wrapper)
 {
     this->timestep(timestep);
 
-#ifdef USE_VERLET_DSFUN
-    //
-    // Double-single precision requires two single precision
-    // "words" per coordinate. We use the first part of a GPU
-    // vector for the higher (most significant) words of all
-    // particle positions or velocities, and the second part for
-    // the lower (least significant) words.
-    //
-    // The additional memory is allocated using reserve(), which
-    // increases the capacity() without changing the size().
-    //
-    // Take care to pass capacity() as an argument to cuda::copy
-    // or cuda::memset calls if needed, as the lower words will
-    // be ignored in the operation.
-    //
-    LOG("using velocity-Verlet integration in double-single precision");
-    particle->g_r.reserve(2 * particle->dim.threads());
-    // particle images remain in single precision as they
-    // contain integer values (and otherwise would not matter
-    // for the long-time stability of the Verlet integrator)
-    particle->g_v.reserve(2 * particle->dim.threads());
-#else
-    LOG_WARNING("using velocity-Verlet integration in single precision");
-#endif
-
     try {
-        cuda::copy(static_cast<vector_type>(box->length()), wrapper->box_length);
+        cuda::copy(static_cast<vector_type>(box_->length()), wrapper_->box_length);
     }
     catch (cuda::error const&) {
         LOG_ERROR("failed to initialize Verlet integrator symbols");
@@ -93,7 +67,7 @@ void verlet<dimension, float_type>::timestep(double timestep)
     timestep_half_ = 0.5 * timestep_;
 
     try {
-        cuda::copy(timestep_, wrapper->timestep);
+        cuda::copy(timestep_, wrapper_->timestep);
     }
     catch (cuda::error const&) {
         LOG_ERROR("failed to initialize Verlet integrator symbols");
@@ -104,26 +78,16 @@ void verlet<dimension, float_type>::timestep(double timestep)
 }
 
 /**
- * register module runtime accumulators
- */
-template <int dimension, typename float_type>
-void verlet<dimension, float_type>::register_runtimes(profiler_type& profiler)
-{
-    profiler.register_runtime(runtime_.integrate, "integrate", "first half-step of velocity-Verlet");
-    profiler.register_runtime(runtime_.finalize, "finalize", "second half-step of velocity-Verlet");
-}
-
-/**
  * First leapfrog half-step of velocity-Verlet algorithm
  */
 template <int dimension, typename float_type>
 void verlet<dimension, float_type>::integrate()
 {
     try {
-        scoped_timer<timer> timer_(runtime_.integrate);
-        cuda::configure(particle->dim.grid, particle->dim.block);
-        wrapper->integrate(
-            particle->g_r, particle->g_image, particle->g_v, particle->g_f);
+        scoped_timer_type timer(runtime_.integrate);
+        cuda::configure(particle_->dim.grid, particle_->dim.block);
+        wrapper_->integrate(
+            particle_->g_r, particle_->g_image, particle_->g_v, particle_->g_f);
         cuda::thread::synchronize();
     }
     catch (cuda::error const&) {
@@ -143,9 +107,9 @@ void verlet<dimension, float_type>::finalize()
     // which saves one additional read of the forces plus the additional kernel execution
     // and scheduling
     try {
-        scoped_timer<timer> timer_(runtime_.finalize);
-        cuda::configure(particle->dim.grid, particle->dim.block);
-        wrapper->finalize(particle->g_v, particle->g_f);
+        scoped_timer_type timer(runtime_.finalize);
+        cuda::configure(particle_->dim.grid, particle_->dim.block);
+        wrapper_->finalize(particle_->g_v, particle_->g_f);
         cuda::thread::synchronize();
     }
     catch (cuda::error const&) {
@@ -173,10 +137,21 @@ void verlet<dimension, float_type>::luaopen(lua_State* L)
             [
                 namespace_("integrators")
                 [
-                    class_<verlet, shared_ptr<_Base>, bases<_Base> >(class_name.c_str())
-                        .def(constructor<shared_ptr<particle_type>, shared_ptr<box_type>, double>())
-                        .def("register_runtimes", &verlet::register_runtimes)
+                    class_<verlet, shared_ptr<_Base>, _Base>(class_name.c_str())
+                        .def(constructor<
+                            shared_ptr<particle_type>
+                          , shared_ptr<box_type const>
+                          , double
+                          , shared_ptr<logger_type>
+                        >())
                         .property("module_name", &module_name_wrapper<dimension, float_type>)
+                        .scope
+                        [
+                            class_<runtime>("runtime")
+                                .def_readonly("integrate", &runtime::integrate)
+                                .def_readonly("finalize", &runtime::finalize)
+                        ]
+                        .def_readonly("runtime", &verlet::runtime_)
                 ]
             ]
         ]
@@ -194,6 +169,7 @@ HALMD_LUA_API int luaopen_libhalmd_mdsim_gpu_integrators_verlet(lua_State* L)
 template class verlet<3, float>;
 template class verlet<2, float>;
 
-}}} // namespace mdsim::gpu::integrators
-
+} // namespace mdsim
+} // namespace gpu
+} // namespace integrators
 } // namespace halmd

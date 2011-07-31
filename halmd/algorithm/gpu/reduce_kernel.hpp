@@ -23,10 +23,9 @@
 #include <cuda_wrapper/cuda_wrapper.hpp>
 #include <halmd/algorithm/gpu/transform.cuh>
 
-namespace halmd
-{
-namespace algorithm { namespace gpu
-{
+namespace halmd {
+namespace algorithm {
+namespace gpu {
 
 template <
     typename reduce_transform
@@ -47,8 +46,8 @@ struct reduce_wrapper
     static reduce_wrapper const kernel;
 };
 
-}} // namespace algorithm::gpu
-
+} // namespace algorithm
+} // namespace gpu
 } // namespace halmd
 
 #endif /* ! HALMD_ALGORITHM_GPU_REDUCE_KERNEL_HPP */

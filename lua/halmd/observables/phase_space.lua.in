@@ -17,10 +17,11 @@
 -- along with this program.  If not, see <http://www.gnu.org/licenses/>.
 --
 
-require("halmd.modules")
-
 require("halmd.device")
-require("halmd.mdsim.core")
+require("halmd.mdsim.box")
+require("halmd.mdsim.clock")
+require("halmd.mdsim.particle")
+require("halmd.modules")
 require("halmd.observables.samples.phase_space")
 
 -- grab modules
@@ -28,22 +29,24 @@ local device = halmd.device
 local mdsim = halmd.mdsim
 local observables = halmd.observables
 -- grab C++ wrappers
-local phase_space_wrapper = { host }
-phase_space_wrapper.host = {
+local phase_space_wrapper = {
     host = {
-        [2] = libhalmd.observables.host.phase_space_2_
-      , [3] = libhalmd.observables.host.phase_space_3_
+        host = {
+            [2] = libhalmd.observables.host.phase_space_2_
+          , [3] = libhalmd.observables.host.phase_space_3_
+        }
     }
 }
 if libhalmd.observables.gpu then
-    phase_space_wrapper.gpu = { host, gpu }
-    phase_space_wrapper.gpu.host = {
-        [2] = libhalmd.observables.gpu.host.phase_space_2_
-      , [3] = libhalmd.observables.gpu.host.phase_space_3_
-    }
-    phase_space_wrapper.gpu.gpu = {
-        [2] = libhalmd.observables.gpu.gpu.phase_space_2_
-      , [3] = libhalmd.observables.gpu.gpu.phase_space_3_
+    phase_space_wrapper.gpu = {
+        host = {
+            [2] = libhalmd.observables.gpu.host.phase_space_2_
+          , [3] = libhalmd.observables.gpu.host.phase_space_3_
+        }
+      , gpu = {
+            [2] = libhalmd.observables.gpu.gpu.phase_space_2_
+          , [3] = libhalmd.observables.gpu.gpu.phase_space_3_
+        }
     }
 end
 -- grab standard library
@@ -62,11 +65,12 @@ function new(args)
     local memory = assert(args.memory)
 
     -- dependency injection
-    local core = mdsim.core()
-    local dimension = assert(core.dimension)
-    local particle = assert(core.particle)
-    local box = assert(core.box)
-    local sample = assert(observables.samples.phase_space{ memory = memory })
+    local particle = mdsim.particle() -- singleton
+    local dimension = assert(particle.dimension)
+    local box = mdsim.box() -- singleton
+    local clock = mdsim.clock() -- singleton
+    local sample = assert(observables.samples.phase_space{memory = memory})
+    local logger = assert(args.logger)
 
     local phase_space
     if device() then
@@ -74,5 +78,13 @@ function new(args)
     else
         phase_space = assert(phase_space_wrapper.host[memory][dimension])
     end
-    return phase_space(sample, particle, box)
+    return phase_space(sample, particle, box, clock, logger)
+end
+
+--
+-- connect runtime accumulators to module profiler
+--
+function profile(self, profiler)
+    profiler:on_profile{self, acquire = "acquisition of phase space sample on device"}
+    profiler:on_profile{self, reset = "reset phase space sample on device"}
 end

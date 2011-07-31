@@ -23,22 +23,22 @@
 using namespace boost;
 using namespace std;
 
-namespace halmd
-{
-namespace observables { namespace host
-{
+namespace halmd {
+namespace observables {
+namespace host {
 
 template <int dimension, typename float_type>
 thermodynamics<dimension, float_type>::thermodynamics(
-    shared_ptr<particle_type> particle
-  , shared_ptr<box_type> box
-  , shared_ptr<clock_type> clock
+    shared_ptr<particle_type const> particle
+  , shared_ptr<box_type const> box
+  , shared_ptr<clock_type const> clock
   , shared_ptr<force_type> force
+  , shared_ptr<logger_type> logger
 )
-  : _Base(box, clock)
+  : _Base(box, clock, logger)
   // dependency injection
-  , particle(particle)
-  , force(force)
+  , particle_(particle)
+  , force_(force)
 {
 }
 
@@ -52,7 +52,7 @@ thermodynamics<dimension, float_type>::thermodynamics(
 template <int dimension, typename float_type>
 void thermodynamics<dimension, float_type>::prepare()
 {
-    force->aux_enable();
+    force_->aux_enable();
 }
 
 /**
@@ -60,10 +60,10 @@ void thermodynamics<dimension, float_type>::prepare()
  * unset flag for auxiliary variables of force module at the end
  */
 template <int dimension, typename float_type>
-void thermodynamics<dimension, float_type>::sample(uint64_t step)
+void thermodynamics<dimension, float_type>::sample()
 {
-    _Base::sample(step);
-    force->aux_disable();
+    _Base::sample();
+    force_->aux_disable();
 }
 
 template <int dimension, typename float_type>
@@ -71,11 +71,11 @@ double thermodynamics<dimension, float_type>::en_kin()
 {
     // compute mean-square velocity
     double vv = 0;
-    BOOST_FOREACH(vector_type const& v, particle->v) {
+    BOOST_FOREACH(vector_type const& v, particle_->v) {
         // assuming unit mass for all particle types
         vv += inner_prod(v, v);
     }
-    return .5 * vv / particle->nbox;
+    return .5 * vv / particle_->nbox;
 }
 
 template <int dimension, typename float_type>
@@ -83,10 +83,10 @@ typename thermodynamics<dimension, float_type>::vector_type thermodynamics<dimen
 {
     // compute mean velocity
     vector_type v_cm_(0.);
-    BOOST_FOREACH(vector_type const& v, particle->v) {
+    BOOST_FOREACH(vector_type const& v, particle_->v) {
         v_cm_ += v;
     }
-    return v_cm_ / particle->nbox;
+    return v_cm_ / particle_->nbox;
 }
 
 template <int dimension, typename float_type>
@@ -102,10 +102,11 @@ void thermodynamics<dimension, float_type>::luaopen(lua_State* L)
             [
                 class_<thermodynamics, shared_ptr<_Base>, _Base>(class_name.c_str())
                     .def(constructor<
-                        shared_ptr<particle_type>
-                      , shared_ptr<box_type>
-                      , shared_ptr<clock_type>
+                        shared_ptr<particle_type const>
+                      , shared_ptr<box_type const>
+                      , shared_ptr<clock_type const>
                       , shared_ptr<force_type>
+                      , shared_ptr<logger_type>
                     >())
             ]
         ]
@@ -133,6 +134,6 @@ template class thermodynamics<3, float>;
 template class thermodynamics<2, float>;
 #endif
 
-}} // namespace observables::host
-
+} // namespace observables
+} // namespace host
 } // namespace halmd

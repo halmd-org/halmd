@@ -23,10 +23,9 @@
 #include <cuda_wrapper/cuda_wrapper.hpp>
 #include <halmd/random/gpu/rand48_kernel.cuh>
 
-namespace halmd
-{
-namespace random { namespace gpu
-{
+namespace halmd {
+namespace random {
+namespace gpu {
 
 /**
  * CUDA C++ wrapper
@@ -44,8 +43,8 @@ inline rand48_wrapper const& get_rand48_kernel()
     return rand48_wrapper::kernel;
 }
 
-}} // namespace random::gpu
-
+} // namespace random
+} // namespace gpu
 } // namespace halmd
 
 #endif /* ! HALMD_RANDOM_GPU_RAND48_KERNEL_HPP */

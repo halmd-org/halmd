@@ -1,5 +1,5 @@
 /*
- * Copyright © 2010  Felix Höfling and Peter Colberg
+ * Copyright © 2010-2011  Felix Höfling and Peter Colberg
  *
  * This file is part of HALMD.
  *
@@ -19,104 +19,102 @@
 
 #define BOOST_TEST_MODULE verlet_nvt_andersen
 #include <boost/test/unit_test.hpp>
-#include <boost/test/parameterized_test.hpp>
 
 #include <boost/assign.hpp>
 #include <boost/bind.hpp>
-#include <boost/foreach.hpp>
-#include <boost/function.hpp>
+#include <boost/make_shared.hpp>
 #include <cmath>
-#include <limits>
-#include <map>
-#include <string>
-#include <utility>
 
-#include <halmd/io/logger.hpp>
+#include <halmd/mdsim/box.hpp>
+#include <halmd/mdsim/clock.hpp>
 #include <halmd/mdsim/core.hpp>
+#include <halmd/mdsim/host/forces/zero.hpp>
+#include <halmd/mdsim/host/integrators/verlet_nvt_andersen.hpp>
+#include <halmd/mdsim/host/particle.hpp>
+#include <halmd/mdsim/host/positions/lattice.hpp>
+#include <halmd/mdsim/host/velocities/boltzmann.hpp>
 #include <halmd/numeric/accumulator.hpp>
-#include <test/unit/modules.hpp>
-#include <test/tools/init.hpp>
+#include <halmd/observables/host/thermodynamics.hpp>
+#include <halmd/random/host/random.hpp>
+#ifdef WITH_CUDA
+# include <halmd/mdsim/gpu/forces/zero.hpp>
+# include <halmd/mdsim/gpu/integrators/verlet_nvt_andersen.hpp>
+# include <halmd/mdsim/gpu/particle.hpp>
+# include <halmd/mdsim/gpu/positions/lattice.hpp>
+# include <halmd/mdsim/gpu/velocities/boltzmann.hpp>
+# include <halmd/observables/gpu/thermodynamics.hpp>
+# include <halmd/random/gpu/random.hpp>
+# include <halmd/utility/gpu/device.hpp>
+#endif
 
 using namespace boost;
-using namespace boost::assign;
+using namespace boost::assign; // list_of
 using namespace halmd;
-using namespace halmd::test;
 using namespace std;
 
 /**
- * test NVT verlet integrator with stochastic Andersen thermostat
+ * test NVT Verlet integrator with stochastic Andersen thermostat
  */
-
-const double eps = numeric_limits<double>::epsilon();
-const float eps_float = numeric_limits<float>::epsilon();
-
-template <int dimension>
-void verlet_nvt_andersen(string const& backend)
+template <typename modules_type>
+struct verlet_nvt_andersen
 {
-    typedef typename mdsim::type_traits<dimension, double>::vector_type vector_type;
-    typedef typename mdsim::type_traits<dimension, float>::vector_type gpu_vector_type;
+    typedef typename modules_type::box_type box_type;
+    typedef typename modules_type::force_type force_type;
+    typedef typename modules_type::integrator_type integrator_type;
+    typedef typename modules_type::particle_type particle_type;
+    typedef typename modules_type::position_type position_type;
+    typedef typename modules_type::random_type random_type;
+    typedef typename modules_type::thermodynamics_type thermodynamics_type;
+    typedef typename modules_type::velocity_type velocity_type;
+    static bool const gpu = modules_type::gpu;
 
-    float temp = 1.;
-    float density = 0.3;
-    unsigned npart = (backend == "gpu") ? 5000 : 1500;
-    double timestep = 0.01;
-    double coll_rate = 10;
-    char const* random_file = "/dev/urandom";
-    fixed_vector<double, dimension> box_ratios =
-        (dimension == 3) ? list_of(1.)(2.)(1.01) : list_of(1.)(2.);
+    typedef typename particle_type::vector_type vector_type;
+    typedef typename vector_type::value_type float_type;
+    static unsigned int const dimension = vector_type::static_size;
+    typedef mdsim::clock clock_type;
+    typedef typename clock_type::time_type time_type;
+    typedef typename clock_type::step_type step_type;
+    typedef mdsim::core core_type;
 
-    // enable logging to console
-    shared_ptr<logger> log(new logger);
-    log->log_to_console(
-#ifdef NDEBUG
-        logger::warning
-#else
-        logger::debug
-#endif
-    );
+    time_type timestep;
+    float density;
+    float temp;
+    double coll_rate;
+    unsigned int npart;
+    fixed_vector<double, dimension> box_ratios;
+    fixed_vector<double, dimension> slab;
 
-    BOOST_TEST_MESSAGE("using backend '" << backend << "' in " <<
-                       dimension << " dimensions");
+    shared_ptr<box_type> box;
+    shared_ptr<clock_type> clock;
+    shared_ptr<core_type> core;
+    shared_ptr<force_type> force;
+    shared_ptr<integrator_type> integrator;
+    shared_ptr<particle_type> particle;
+    shared_ptr<position_type> position;
+    shared_ptr<random_type> random;
+    shared_ptr<thermodynamics_type> thermodynamics;
+    shared_ptr<velocity_type> velocity;
 
-#ifdef WITH_CUDA
-    shared_ptr<utility::gpu::device> device = make_device(backend);
-#endif /* WITH_CUDA */
-    shared_ptr<halmd::random::random> random = make_random(backend, random_file);
+    void test();
+    verlet_nvt_andersen();
+    void connect();
+};
 
-    BOOST_TEST_MESSAGE("initialise simulation modules");
-    // init core module and all dependencies
-    shared_ptr<mdsim::core<dimension> > core(new mdsim::core<dimension>);
-
-    core->particle = make_particle<dimension>(backend, npart);
-
-    core->box = make_box<dimension>(core->particle, density, box_ratios);
-
-    core->integrator = make_verlet_nvt_andersen_integrator<dimension>(
-        backend, core->particle, core->box, random, timestep, temp, coll_rate
-    );
-
-    core->force = make_zero_force<dimension>(backend, core->particle);
-
-    core->position = make_lattice(backend, core->particle, core->box, random);
-
-    core->velocity = make_boltzmann(backend, core->particle, random, temp);
-
-    // use thermodynamics module to measure temperature (velocity distribution)
-    shared_ptr<observables::thermodynamics<dimension> > thermodynamics =
-        make_thermodynamics(backend, core->particle, core->box, core->clock, core->force);
-
+template <typename modules_type>
+void verlet_nvt_andersen<modules_type>::test()
+{
     // run for Δt*=500
-    uint64_t steps = static_cast<uint64_t>(ceil(500 / timestep));
+    step_type steps = static_cast<step_type>(ceil(500 / timestep));
     // ensure that sampling period is sufficiently large such that
     // the samples can be considered independent
-    uint64_t period = static_cast<uint64_t>(round(3. / (coll_rate * timestep)));
+    step_type period = static_cast<step_type>(round(3. / (coll_rate * timestep)));
     accumulator<double> temp_;
     array<accumulator<double>, dimension> v_cm;   //< accumulate velocity component-wise
 
-    core->force->aux_disable();                   //< we don't need potential energy, pressure, etc.
-    core->prepare();
+    force->aux_disable();                   //< we don't need potential energy, pressure, etc.
+    core->setup();
     BOOST_TEST_MESSAGE("run NVT integrator over " << steps << " steps");
-    for (uint64_t i = 0; i < steps; ++i) {
+    for (step_type i = 0; i < steps; ++i) {
         core->mdstep();
         if(i % period == 0) {
             temp_(thermodynamics->temp());
@@ -177,47 +175,91 @@ void verlet_nvt_andersen(string const& backend)
     BOOST_CHECK_CLOSE_FRACTION(cv, .5 * dimension, rel_cv_limit);
 }
 
-HALMD_TEST_INIT( init_unit_test_suite )
+template <typename modules_type>
+verlet_nvt_andersen<modules_type>::verlet_nvt_andersen()
 {
-    using namespace boost::assign;
-    using namespace boost::unit_test;
-    using namespace boost::unit_test::framework;
+    BOOST_TEST_MESSAGE("initialise simulation modules");
 
-    // parametrize specific program options
-    vector<string> backend = list_of
-        ("host")
-#ifdef WITH_CUDA
-        ("gpu")
-#endif /* WITH_CUDA */
-        ;
+    // set module parameters
+    density = 0.3;
+    timestep = 0.01;
+    temp = 1;
+    coll_rate = 10;
+    npart = gpu ? 5000 : 1500;
+    box_ratios = (dimension == 3) ? list_of(1.)(2.)(1.01) : list_of(1.)(2.);
+    slab = 1;
 
-    test_suite* ts1 = BOOST_TEST_SUITE( "verlet_nvt_andersen" );
+    vector<unsigned int> npart_vector = list_of(npart);
 
-    test_suite* ts11 = BOOST_TEST_SUITE( "host" );
+    // create modules
+    particle = make_shared<particle_type>(npart_vector);
+    box = make_shared<box_type>(npart, density, box_ratios);
+    random = make_shared<random_type>();
+    position = make_shared<position_type>(particle, box, random, slab);
+    velocity = make_shared<velocity_type>(particle, random, temp);
+    integrator = make_shared<integrator_type>(particle, box, random, timestep, temp, coll_rate);
+    force = make_shared<force_type>(particle);
+    clock = make_shared<clock_type>(timestep);
+    thermodynamics = make_shared<thermodynamics_type>(particle, box, clock, force);
 
-    test_suite* ts111 = BOOST_TEST_SUITE( "2d" );
-    ts111->add( BOOST_PARAM_TEST_CASE( &verlet_nvt_andersen<2>, backend.begin(), backend.begin() + 1 ) );
-
-    test_suite* ts112 = BOOST_TEST_SUITE( "3d" );
-    ts112->add( BOOST_PARAM_TEST_CASE( &verlet_nvt_andersen<3>, backend.begin(), backend.begin() + 1 ) );
-
-    ts11->add( ts111 );
-    ts11->add( ts112 );
-    ts1->add( ts11 );
-
-#ifdef WITH_CUDA
-    test_suite* ts12 = BOOST_TEST_SUITE( "gpu" );
-
-    test_suite* ts121 = BOOST_TEST_SUITE( "2d" );
-    ts121->add( BOOST_PARAM_TEST_CASE( &verlet_nvt_andersen<2>, backend.begin() + 1, backend.end() ) );
-
-    test_suite* ts122 = BOOST_TEST_SUITE( "3d" );
-    ts122->add( BOOST_PARAM_TEST_CASE( &verlet_nvt_andersen<3>, backend.begin() + 1, backend.end() ) );
-
-    ts12->add( ts121 );
-    ts12->add( ts122 );
-    ts1->add( ts12 );
-#endif
-
-    master_test_suite().add( ts1 );
+    // create core and connect module slots to core signals
+    this->connect();
 }
+
+template <typename modules_type>
+void verlet_nvt_andersen<modules_type>::connect()
+{
+    core = make_shared<core_type>(clock);
+    // system preparation
+    core->on_prepend_setup( bind(&particle_type::set, particle) );
+    core->on_setup( bind(&position_type::set, position) );
+    core->on_setup( bind(&velocity_type::set, velocity) );
+    core->on_append_setup( bind(&force_type::compute, force) );
+    // integration step
+    core->on_integrate( bind(&integrator_type::integrate, integrator) );
+    core->on_finalize( bind(&integrator_type::finalize, integrator) );
+}
+
+template <int dimension, typename float_type>
+struct host_modules
+{
+    typedef mdsim::box<dimension> box_type;
+    typedef mdsim::host::forces::zero<dimension, float_type> force_type;
+    typedef mdsim::host::integrators::verlet_nvt_andersen<dimension, float_type> integrator_type;
+    typedef mdsim::host::particle<dimension, float_type> particle_type;
+    typedef mdsim::host::positions::lattice<dimension, float_type> position_type;
+    typedef halmd::random::host::random random_type;
+    typedef mdsim::host::velocities::boltzmann<dimension, float_type> velocity_type;
+    typedef observables::host::thermodynamics<dimension, float_type> thermodynamics_type;
+    static bool const gpu = false;
+};
+
+BOOST_AUTO_TEST_CASE( verlet_nvt_andersen_host_2d ) {
+    verlet_nvt_andersen<host_modules<2, double> >().test();
+}
+BOOST_AUTO_TEST_CASE( verlet_nvt_andersen_host_3d ) {
+    verlet_nvt_andersen<host_modules<3, double> >().test();
+}
+
+#ifdef WITH_CUDA
+template <int dimension, typename float_type>
+struct gpu_modules
+{
+    typedef mdsim::box<dimension> box_type;
+    typedef mdsim::gpu::forces::zero<dimension, float_type> force_type;
+    typedef mdsim::gpu::integrators::verlet_nvt_andersen<dimension, float_type, halmd::random::gpu::rand48> integrator_type;
+    typedef mdsim::gpu::particle<dimension, float_type> particle_type;
+    typedef mdsim::gpu::positions::lattice<dimension, float_type, halmd::random::gpu::rand48> position_type;
+    typedef halmd::random::gpu::random<halmd::random::gpu::rand48> random_type;
+    typedef observables::gpu::thermodynamics<dimension, float_type> thermodynamics_type;
+    typedef mdsim::gpu::velocities::boltzmann<dimension, float_type, halmd::random::gpu::rand48> velocity_type;
+    static bool const gpu = true;
+};
+
+BOOST_FIXTURE_TEST_CASE( verlet_nvt_andersen_gpu_2d, device ) {
+    verlet_nvt_andersen<gpu_modules<2, float> >().test();
+}
+BOOST_FIXTURE_TEST_CASE( verlet_nvt_andersen_gpu_3d, device ) {
+    verlet_nvt_andersen<gpu_modules<3, float> >().test();
+}
+#endif // WITH_CUDA

@@ -1,0 +1,124 @@
+--
+-- Copyright © 2010-2011  Peter Colberg
+--
+-- This file is part of HALMD.
+--
+-- HALMD is free software: you can redistribute it and/or modify
+-- it under the terms of the GNU General Public License as published by
+-- the Free Software Foundation, either version 3 of the License, or
+-- (at your option) any later version.
+--
+-- This program is distributed in the hope that it will be useful,
+-- but WITHOUT ANY WARRANTY; without even the implied warranty of
+-- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+-- GNU General Public License for more details.
+--
+-- You should have received a copy of the GNU General Public License
+-- along with this program.  If not, see <http://www.gnu.org/licenses/>.
+--
+
+require("halmd.hooks")
+require("halmd.mdsim.clock")
+require("halmd.modules")
+
+-- grab modules
+local hooks = halmd.hooks
+local mdsim = halmd.mdsim
+-- grab C++ modules
+local h5md = libhalmd.io.writers.h5md
+-- grab standard library
+local assert = assert
+local error = error
+local setmetatable = setmetatable
+local type = type
+
+module("halmd.io.writers.h5md", halmd.modules.register)
+
+--
+-- construct H5MD writer
+--
+function new(args)
+    local path = assert(args.path, "missing path")
+    local file = h5md.file(path)
+
+    -- extend H5MD file with a file:writer method
+    --
+    -- This function wraps the constructors of h5md::append and h5md::truncate,
+    -- which allows observable modules to construct a collective dataset writer
+    -- without knowledge of the file format.
+    --
+    -- Example for creating and using a truncate writer:
+    --
+    --   local writer = file:writer{location = {"trajectory", "box"}, mode = "truncate"}
+    --   writer:on_write(box.origin, {"offset"})
+    --   writer:on_write(box.edges, {"edges"})
+    --
+    --   local sampler = observables.sampler{} -- singleton
+    --   sampler:on_start(writer.write)
+    --
+    -- Example for creating and using an append writer:
+    --
+    --   local writer = file:writer{location = {"observables"}, mode = "append"}
+    --   writer:on_prepend_write(observable.sample)
+    --   writer:on_write(observable.en_pot, {"potential_energy"})
+    --   writer:on_write(observable.en_kin, {"kinetic_energy"})
+    --   writer:on_write(observable.en_tot, {"total_energy"})
+    --
+    --   local sampler = observables.sampler{} -- singleton
+    --   sampler:on_start(writer.write)
+    --
+    file.writer = function(self, args)
+        assert(type(args) == "table", "missing argument table")
+        local writer
+        local mode = assert(args.mode, "missing mode")
+        if mode == "append" then
+            local clock = mdsim.clock() -- singleton
+            writer = h5md.append(self.root, args.location, clock)
+
+        elseif mode == "truncate" then
+            writer = h5md.truncate(self.root, args.location)
+
+        else
+            error("invalid mode: " .. mode)
+        end
+        return writer
+    end
+
+    -- create parameter group
+    local param = file.root:open_group("halmd")
+
+    -- register hook to write HALMD parameters
+    hooks.register_module_hook(function(module, object)
+        local write_parameters = module.write_parameters
+        if write_parameters then
+            --
+            -- If write_parameters only stores global parameters, or stores
+            -- no parameters at all, the module's HDF5 parameter group would
+            -- remain empty. Therefore we delay creation by creating or opening
+            -- the group upon access of its methods.
+            --
+            local group = setmetatable({}, {
+                __index = function(self, name)
+                    local namespace = assert(module.namespace)
+                    local group = param:open_group(namespace)
+                    local method = group[name]
+                    if method then
+                        return function(self, ...)
+                            method(group, ...)
+                        end
+                    end
+                end
+            })
+            write_parameters(object, group, param)
+        end
+    end)
+
+    return file
+end
+
+--
+-- returns module description
+--
+function description()
+    return "H5MD file format"
+end

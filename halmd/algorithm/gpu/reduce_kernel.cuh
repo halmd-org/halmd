@@ -23,12 +23,10 @@
 #include <halmd/algorithm/gpu/reduction.cuh>
 #include <halmd/utility/gpu/thread.cuh>
 
-namespace halmd
-{
-namespace algorithm { namespace gpu
-{
-namespace reduce_kernel
-{
+namespace halmd {
+namespace algorithm {
+namespace gpu {
+namespace reduce_kernel {
 
 /**
  * parallel reduction
@@ -85,6 +83,6 @@ reduce_wrapper<BOOST_PP_ENUM_PARAMS(7, T)> const reduce_wrapper<BOOST_PP_ENUM_PA
   , reduce_kernel::reduce<BOOST_PP_ENUM_PARAMS(7, T),  32>
 };
 
-}} // namespace algorithm::gpu
-
+} // namespace algorithm
+} // namespace gpu
 } // namespace halmd

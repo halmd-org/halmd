@@ -30,8 +30,7 @@
 
 #include <h5xx/ctype.hpp>
 
-namespace h5xx
-{
+namespace h5xx {
 
 using h5xx::detail::ctype; // FIXME HDF5 C++ to C transition
 
@@ -74,6 +73,16 @@ inline std::list<std::string> split_path(std::string const& path_string)
     }
 
     return groups;
+}
+
+/**
+ * hard link HDF5 object into the given group with given name
+ */
+inline void link(H5::H5Object const& object, H5::Group const& group, std::string const& name)
+{
+    if (0 > H5Lcreate_hard(object.getId(), ".", group.getId(), name.c_str(), H5P_DEFAULT, H5P_DEFAULT)) {
+        throw error("failed to link object");
+    }
 }
 
 /**

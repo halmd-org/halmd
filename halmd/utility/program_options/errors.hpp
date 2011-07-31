@@ -22,10 +22,8 @@
 
 #include <boost/program_options.hpp>
 
-namespace halmd
-{
-namespace po
-{
+namespace halmd {
+namespace po {
 
 class conflicting_option
   : public boost::program_options::error
@@ -66,7 +64,6 @@ private:
 };
 
 } // namespace po
-
 } // namespace halmd
 
 #endif /* ! HALMD_UTILITY_PROGRAM_OPTIONS_ERRORS_HPP */

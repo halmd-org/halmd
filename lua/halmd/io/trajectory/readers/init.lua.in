@@ -1,2 +1,0 @@
-require("halmd.io.trajectory.readers.h5md")
-require("halmd.io.trajectory.readers.halmd_0_1_x")

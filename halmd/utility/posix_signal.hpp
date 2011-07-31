@@ -26,8 +26,7 @@
 
 #include <halmd/utility/signal.hpp>
 
-namespace halmd
-{
+namespace halmd {
 
 /**
  * POSIX signal handler
@@ -41,7 +40,7 @@ public:
 
     posix_signal();
     ~posix_signal();
-    void on_signal(int signum, slot_function_type const& slot);
+    connection on_signal(int signum, slot_function_type const& slot);
     void wait() const;
     bool poll() const;
     static std::string name(int signum);

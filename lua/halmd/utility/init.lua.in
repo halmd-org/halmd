@@ -1,0 +1,72 @@
+--
+-- Copyright © 2011  Peter Colberg
+--
+-- This file is part of HALMD.
+--
+-- HALMD is free software: you can redistribute it and/or modify
+-- it under the terms of the GNU General Public License as published by
+-- the Free Software Foundation, either version 3 of the License, or
+-- (at your option) any later version.
+--
+-- This program is distributed in the hope that it will be useful,
+-- but WITHOUT ANY WARRANTY; without even the implied warranty of
+-- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+-- GNU General Public License for more details.
+--
+-- You should have received a copy of the GNU General Public License
+-- along with this program.  If not, see <http://www.gnu.org/licenses/>.
+--
+
+-- grab standard library
+local next = next
+local pairs = pairs
+local table = table
+
+module("halmd.utility")
+
+--
+-- Test if table is empty
+--
+function empty(t)
+  return next(t) == nil
+end
+
+--
+-- Returns table with sorted keys of table t as values
+--
+function keys(t)
+    local keys = {}
+    for k, v in pairs(t) do
+        table.insert(keys, k)
+    end
+    table.sort(keys)
+    return keys
+end
+
+--
+-- Returns iterator over pairs of table t sorted by key
+--
+function sorted(t)
+    local keys = keys(t)
+    local i = 0
+    local n = table.getn(keys)
+    return function()
+        i = i + 1
+        if i <= n then
+            local k = keys[i]
+            return k, t[k]
+        end
+        return nil
+    end
+end
+
+--
+-- Returns table with keys as values and values as keys
+--
+function reverse(t)
+    local result = {}
+    for k, v in pairs(t) do
+        result[v] = k
+    end
+    return result
+end

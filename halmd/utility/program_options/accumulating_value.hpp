@@ -24,10 +24,8 @@
 
 #include <halmd/utility/program_options/typed_value.hpp>
 
-namespace halmd
-{
-namespace po
-{
+namespace halmd {
+namespace po {
 
 /**
  * Accumulating program option value
@@ -93,7 +91,6 @@ accumulating_value<T>* accum_value()
 }
 
 } // namespace po
-
 } // namespace halmd
 
 #endif /* ! HALMD_UTILITY_PROGRAM_OPTIONS_ACCUMULATING_VALUE_HPP */

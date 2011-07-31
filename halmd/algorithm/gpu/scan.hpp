@@ -25,10 +25,9 @@
 
 #include <halmd/algorithm/gpu/scan_kernel.hpp>
 
-namespace halmd
-{
-namespace algorithm { namespace gpu
-{
+namespace halmd {
+namespace algorithm {
+namespace gpu {
 
 /*
  * Parallel exclusive prefix sum
@@ -99,8 +98,8 @@ private:
     std::vector<uint> blocks;
 };
 
-}} // namespace algorithm::gpu
-
+} // namespace algorithm
+} // namespace gpu
 } // namespace halmd
 
 #endif /* ! HALMD_ALGORITHM_GPU_SCAN_HPP */

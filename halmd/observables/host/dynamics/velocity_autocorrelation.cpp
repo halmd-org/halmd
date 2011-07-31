@@ -23,10 +23,10 @@
 using namespace boost;
 using namespace std;
 
-namespace halmd
-{
-namespace observables { namespace host { namespace dynamics
-{
+namespace halmd {
+namespace observables {
+namespace host {
+namespace dynamics {
 
 /**
  * Compute velocity autocorrelation of two velocity sample vectors.
@@ -93,6 +93,7 @@ template class velocity_autocorrelation<3, float>;
 template class velocity_autocorrelation<2, float>;
 #endif
 
-}}} // namespace observables::host::dynamics
-
+} // namespace dynamics
+} // namespace host
+} // namespace observables
 } // namespace halmd

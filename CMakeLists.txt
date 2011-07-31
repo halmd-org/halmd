@@ -40,6 +40,11 @@ if(NOT HALMD_DOC_ONLY)
 
 project(HALMD CXX)
 
+if(CMAKE_BUILD_TYPE STREQUAL "${CMAKE_BUILD_TYPE_INIT}")
+  set(CMAKE_BUILD_TYPE "Release" CACHE STRING
+    "Choose the type of build, options are: Debug Release RelWithDebInfo MinSizeRel." FORCE)
+endif()
+
 if (HALMD_USE_STATIC_LIBS)
   set(HALMD_USE_STATIC_LIBS TRUE CACHE INTERNAL
     "Build statically linked backend executables")
@@ -58,10 +63,19 @@ if(NOT DEFINED Boost_USE_MULTITHREADED)
   set(Boost_USE_MULTITHREADED FALSE)
 endif(NOT DEFINED Boost_USE_MULTITHREADED)
 
-find_package(Boost 1.39.0 QUIET REQUIRED
+# Use Luabind debug library if build type is not Release.
+# The debug variant has many assert() statements, e.g. to check
+# for duplicate class registration, or missing base classes.
+if(NOT CMAKE_BUILD_TYPE STREQUAL "Release")
+  set(LUABIND_USE_DEBUG_LIBS TRUE)
+endif()
+
+find_package(Boost 1.43.0 QUIET REQUIRED COMPONENTS
   date_time
   filesystem
+  log
   program_options
+  random
   system
   thread
   unit_test_framework
@@ -70,18 +84,6 @@ find_package(CUDA QUIET)
 find_package(HDF5 QUIET REQUIRED)
 find_package(Lua51 QUIET REQUIRED)
 find_package(Luabind QUIET REQUIRED)
-
-# Boost.Log fails to compile with XL C++ compiler on AIX.
-if(NOT CMAKE_CXX_PLATFORM_ID STREQUAL "AIX")
-  find_package(Boost QUIET REQUIRED log)
-else()
-  message(WARNING "Boost.Log is not available on this platform.")
-endif()
-
-if(CMAKE_BUILD_TYPE STREQUAL "${CMAKE_BUILD_TYPE_INIT}")
-  set(CMAKE_BUILD_TYPE "Release" CACHE STRING
-    "Choose the type of build, options are: Debug Release RelWithDebInfo MinSizeRel." FORCE)
-endif()
 
 if(CMAKE_CXX_COMPILER_ID MATCHES "^(GNU|Clang|Intel)$")
   if(CMAKE_CXX_FLAGS STREQUAL "${CMAKE_CXX_FLAGS_INIT}")
@@ -133,7 +135,7 @@ if(CUDA_FOUND AND NOT HALMD_USE_STATIC_LIBS)
   enable_language(CUDA)
 
   if(CMAKE_CUDA_FLAGS STREQUAL "${CMAKE_CUDA_FLAGS_INIT}")
-    set(CMAKE_CUDA_FLAGS "-Xcompiler -fPIC -Xptxas -v --host-compilation=c -arch sm_12" CACHE STRING
+    set(CMAKE_CUDA_FLAGS "-Xcompiler -fPIC -Xptxas -v -arch sm_12" CACHE STRING
       "Flags used by the compiler during all build types." FORCE)
   endif()
 
@@ -207,10 +209,30 @@ if(HALMD_VARIANT_HOST_SINGLE_PRECISION)
   add_definitions(-DUSE_HOST_SINGLE_PRECISION)
 endif(HALMD_VARIANT_HOST_SINGLE_PRECISION)
 
+# set appropriate RPATH on installed binaries as well as in build tree
+#
+# see http://www.vtk.org/Wiki/CMake_RPATH_handling
+#
+# use, i.e. don't skip, the full RPATH for the build tree
+set(CMAKE_SKIP_BUILD_RPATH  FALSE)
+# when building, don't use the install RPATH already
+# (but later on when installing)
+set(CMAKE_BUILD_WITH_INSTALL_RPATH FALSE) 
+set(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib")
+# add the automatically determined parts of the RPATH
+# which point to directories outside the build tree to the install RPATH
+set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
+# the RPATH to be used when installing, but only if it's not a system directory
+list(FIND CMAKE_PLATFORM_IMPLICIT_LINK_DIRECTORIES "${CMAKE_INSTALL_PREFIX}/lib" isSystemDir)
+if("${isSystemDir}" STREQUAL "-1")
+   set(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib")
+endif("${isSystemDir}" STREQUAL "-1")
+
 set(HALMD_COMMON_LIBRARIES
   ${Boost_DATE_TIME_LIBRARY}
   ${Boost_LOG_LIBRARY}
   ${Boost_PROGRAM_OPTIONS_LIBRARY}
+  ${Boost_RANDOM_LIBRARY}
   ${Boost_FILESYSTEM_LIBRARY}
   ${Boost_SYSTEM_LIBRARY}
   ${Boost_THREAD_LIBRARY}

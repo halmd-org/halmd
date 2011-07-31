@@ -26,16 +26,14 @@
 using namespace boost;
 using namespace std;
 
-namespace halmd
-{
-namespace observables
-{
+namespace halmd {
+namespace observables {
 
 template <typename phase_space_type>
-typename signal<void (uint64_t)>::slot_function_type
+typename signal<void ()>::slot_function_type
 acquire_wrapper(shared_ptr<phase_space_type> phase_space)
 {
-    return bind(&phase_space_type::acquire, phase_space, _1);
+    return bind(&phase_space_type::acquire, phase_space);
 }
 
 template <int dimension>
@@ -61,5 +59,4 @@ HALMD_LUA_API int luaopen_libhalmd_observables_phase_space(lua_State* L)
 }
 
 } // namespace observables
-
 } // namespace halmd

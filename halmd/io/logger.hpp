@@ -1,5 +1,5 @@
 /*
- * Copyright © 2008-2010  Peter Colberg
+ * Copyright © 2008-2011  Peter Colberg
  *
  * This file is part of HALMD.
  *
@@ -20,30 +20,43 @@
 #ifndef HALMD_IO_LOGGER_HPP
 #define HALMD_IO_LOGGER_HPP
 
-#ifndef _AIX
 // increase compiler compatibility, e.g. with Clang 2.8
-# define BOOST_LOG_NO_UNSPECIFIED_BOOL
-# include <boost/log/sinks/sync_frontend.hpp>
-# include <boost/log/sinks/text_file_backend.hpp>
-# include <boost/log/sinks/text_ostream_backend.hpp>
-# include <boost/log/sources/record_ostream.hpp>
-# include <boost/log/sources/severity_logger.hpp>
-#else /* ! _AIX */
-# include <boost/date_time.hpp>
-# include <boost/date_time/microsec_time_clock.hpp>
-# include <iostream>
-#endif /* ! _AIX */
+#define BOOST_LOG_NO_UNSPECIFIED_BOOL
+#include <boost/log/sinks/sync_frontend.hpp>
+#include <boost/log/sinks/text_file_backend.hpp>
+#include <boost/log/sinks/text_ostream_backend.hpp>
+#include <boost/log/sources/record_ostream.hpp>
+#include <boost/log/sources/severity_logger.hpp>
+#include <boost/noncopyable.hpp>
+#include <boost/shared_ptr.hpp>
 #include <lua.hpp>
-#include <string>
 
-#define TIMESTAMP_FORMAT "%d-%m-%Y %H:%M:%S.%f"
+namespace halmd {
 
-namespace halmd
-{
-
-class logger
+/**
+ * Logging to console and file
+ *
+ * This class implements a logging interface with severity levels.
+ * More accurately it adds a console and a file sink to the log core,
+ * and supports discarding messages below a desired severity level.
+ *
+ * We use the Boost.Log library, which differentiates between log
+ * sources and log sinks. The logging class handles only log sinks,
+ * and therefore is needed only to setup logging console and file.
+ *
+ * http://boost-log.sourceforge.net/
+ */
+class logging
+  : boost::noncopyable
 {
 public:
+    /**
+     * Log severity levels
+     *
+     * Note that lower severity levels follow *after* higher severity
+     * levels, which makes it more convenient to parse the severity
+     * level from an integer option value.
+     */
     enum severity_level
     {
         fatal,
@@ -54,131 +67,120 @@ public:
         trace,
     };
 
-#ifndef _AIX
-    typedef boost::log::sinks::text_ostream_backend console_backend;
-    typedef boost::log::sinks::synchronous_sink<console_backend> console_sink;
-    typedef boost::log::sinks::text_file_backend file_backend;
-    typedef boost::log::sinks::synchronous_sink<file_backend> file_sink;
-#endif /* ! _AIX */
-
+    /**
+     * open log to console with given severity level
+     *
+     * This method may be called repeatedly to set a different severity level.
+     */
+    void open_console(severity_level level);
+    /** close log to console */
+    void close_console();
+    /**
+     * open log to file with given severity level
+     *
+     * This method may be called repeatedly to set a different severity level.
+     */
+    void open_file(std::string file_name, severity_level level);
+    /** close log to file */
+    void close_file();
+    /** Lua bindings */
     static void luaopen(lua_State* L);
 
-#ifndef _AIX
-    logger();
-    ~logger();
-    void log_to_console(severity_level level);
-    void log_to_file(severity_level level, std::string file_name);
-
-    static boost::log::sources::severity_logger<severity_level>& get()
+    /**
+     * get logger singleton instance
+     *
+     * To ensure that logging is enabled by default, which is especially
+     * convenient in the unit tests, we make logging a singleton instance.
+     */
+    static logging& get()
     {
-       return logger_;
+        return logging_;
     }
-#else
-    logger() {}
-    void log_to_console(severity_level level) {}
-    void log_to_file(severity_level level, std::string file_name) {}
-#endif /* ! _AIX */
 
 private:
-#ifndef _AIX
-    static boost::log::sources::severity_logger<severity_level> logger_;
+    typedef boost::log::sinks::text_ostream_backend console_backend_type;
+    typedef boost::log::sinks::synchronous_sink<console_backend_type> console_sink_type;
+    typedef boost::log::sinks::text_file_backend file_backend_type;
+    typedef boost::log::sinks::synchronous_sink<file_backend_type> file_sink_type;
 
-    boost::shared_ptr<console_sink> console_;
-    boost::shared_ptr<file_sink> file_;
-#endif /* ! _AIX */
+    /**
+     * Opens log to console with level logging::info if compiled
+     * without debugging (-DNDEBUG), and logging::debug otherwise.
+     *
+     * This method is declared as private to ensure that logging
+     * remains a singleton instance.
+     */
+    logging();
+    /** set log output format of backend */
+    template <typename backend_type>
+    void set_formatter(boost::shared_ptr<backend_type> backend) const;
+
+    /** console log sink */
+    boost::shared_ptr<console_sink_type> console_;
+    /** file log sink */
+    boost::shared_ptr<file_sink_type> file_;
+    /** singleton instance */
+    static logging logging_;
 };
 
-static inline std::ostream& operator<<(std::ostream& os, logger::severity_level level)
-{
-    switch (level)
-    {
-      case logger::trace:
-        os << "[TRACE] "; break;
-      case logger::debug:
-        os << "[DEBUG] "; break;
-      case logger::warning:
-        os << "[WARNING] "; break;
-      case logger::error:
-        os << "[ERROR] "; break;
-      case logger::fatal:
-        os << "[FATAL] "; break;
-      default:
-        break;
-    }
-    return os;
+/**
+ * Logger source type with severity levels
+ *
+ * This type may be used by modules to declare there own logger.
+ */
+typedef boost::log::sources::severity_logger<logging::severity_level> logger;
+
+/**
+ * Default logger source
+ *
+ * We provide a default logger source for use with the LOG* macros.
+ * For maximum convenience, this logger is declared as a variable
+ * instead of function. If a module should use its own logger, e.g.
+ * to add attributes such as the module name, one may conveniently
+ * declare a class member logger_, which overrides halmd::logger_.
+ *
+ * As module loggers will be created in Lua to automatically add
+ * attributes such as the module name, we declare logger_ as a
+ * shared_ptr, which allows passing it to the module constructor
+ * (loggers have no copy constructor). As a safety measure we
+ * declare the shared_ptr as const, while the logger itself is
+ * mutable.
+ */
+extern boost::shared_ptr<logger> const logger_;
+
+#define HALMD_LOG(level, format)                        \
+{                                                       \
+    using namespace halmd;                              \
+    BOOST_LOG_SEV(*logger_, level) << format;           \
+}                                                       \
+
+#define HALMD_LOG_ONCE(level, format)                   \
+{                                                       \
+    static bool logged = false;                         \
+    if (!logged) {                                      \
+        HALMD_LOG(level, format)                        \
+        logged = true;                                  \
+    }                                                   \
 }
 
-#ifndef _AIX
-
-# define __HALMD_LOG__(__level__, __format__)                           \
-    do {                                                                \
-        BOOST_LOG_SEV(                                                  \
-            ::halmd::logger::get()                                      \
-          , ::halmd::logger::__level__                                  \
-          ) << __format__;                                              \
-    } while(0)
-
-# define __HALMD_LOG_ONCE__(__level__, __format__)                      \
-    do {                                                                \
-        static bool __logged__ = false;                                 \
-        if (!__logged__) {                                              \
-            BOOST_LOG_SEV(                                              \
-                ::halmd::logger::get()                                  \
-              , ::halmd::logger::__level__                              \
-              ) << __format__;                                          \
-            __logged__ = true;                                          \
-        }                                                               \
-    } while(0)
-
-#else /* ! _AIX */
-
-# define __HALMD_LOG__(__level__, __format__)                           \
-    do {                                                                \
-        using namespace boost::posix_time;                              \
-        ptime t = microsec_clock::local_time();                         \
-        time_facet* facet(new time_facet(TIMESTAMP_FORMAT));            \
-        std::cout.imbue(std::locale(std::cout.getloc(), facet));        \
-        std::cout << "[" << t << "] "                                   \
-                  << ::halmd::logger::__level__                         \
-                  << __format__ << std::endl;                           \
-    } while(0)
-
-# define __HALMD_LOG_ONCE__(__level__, __format__)                      \
-    do {                                                                \
-        static bool __logged__ = false;                                 \
-        if (!__logged__) {                                              \
-            using namespace boost::posix_time;                          \
-            ptime t = microsec_clock::local_time();                     \
-            time_facet* facet(new time_facet(TIMESTAMP_FORMAT));        \
-            std::cout.imbue(std::locale(std::cout.getloc(), facet));    \
-            std::cout << "[" << t << "] "                               \
-                      << ::halmd::logger::__level__                     \
-                      << __format__ << std::endl;                       \
-            __logged__ = true;                                          \
-        }                                                               \
-    } while(0)
-
-#endif /* ! _AIX */
-
-#define LOG_FATAL(__format__)           __HALMD_LOG__(fatal, __format__)
-#define LOG_FATAL_ONCE(__format__)      __HALMD_LOG_ONCE__(fatal, __format__)
-#define LOG_ERROR(__format__)           __HALMD_LOG__(error, __format__)
-#define LOG_ERROR_ONCE(__format__)      __HALMD_LOG_ONCE__(error, __format__)
-#define LOG_WARNING(__format__)         __HALMD_LOG__(warning, __format__)
-#define LOG_WARNING_ONCE(__format__)    __HALMD_LOG_ONCE__(warning, __format__)
-#define LOG(__format__)                 __HALMD_LOG__(info, __format__)
-#define LOG_ONCE(__format__)            __HALMD_LOG_ONCE__(info, __format__)
-
+#define LOG_FATAL(format)           HALMD_LOG(logging::fatal, format)
+#define LOG_FATAL_ONCE(format)      HALMD_LOG_ONCE(logging::fatal, format)
+#define LOG_ERROR(format)           HALMD_LOG(logging::error, format)
+#define LOG_ERROR_ONCE(format)      HALMD_LOG_ONCE(logging::error, format)
+#define LOG_WARNING(format)         HALMD_LOG(logging::warning, format)
+#define LOG_WARNING_ONCE(format)    HALMD_LOG_ONCE(logging::warning, format)
+#define LOG(format)                 HALMD_LOG(logging::info, format)
+#define LOG_ONCE(format)            HALMD_LOG_ONCE(logging::info, format)
 #ifndef NDEBUG
-# define LOG_DEBUG(__format__)          __HALMD_LOG__(debug, __format__)
-# define LOG_DEBUG_ONCE(__format__)     __HALMD_LOG_ONCE__(debug, __format__)
-# define LOG_TRACE(__format__)          __HALMD_LOG__(trace, __format__)
-# define LOG_TRACE_ONCE(__format__)     __HALMD_LOG_ONCE__(trace, __format__)
+# define LOG_DEBUG(format)          HALMD_LOG(logging::debug, format)
+# define LOG_DEBUG_ONCE(format)     HALMD_LOG_ONCE(logging::debug, format)
+# define LOG_TRACE(format)          HALMD_LOG(logging::trace, format)
+# define LOG_TRACE_ONCE(format)     HALMD_LOG_ONCE(logging::trace, format)
 #else
-# define LOG_DEBUG(__format__)
-# define LOG_DEBUG_ONCE(__format__)
-# define LOG_TRACE(__format__)
-# define LOG_TRACE_ONCE(__format__)
+# define LOG_DEBUG(format)
+# define LOG_DEBUG_ONCE(format)
+# define LOG_TRACE(format)
+# define LOG_TRACE_ONCE(format)
 #endif
 
 } // namespace halmd

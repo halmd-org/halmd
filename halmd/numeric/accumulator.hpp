@@ -30,10 +30,9 @@
 
 #include <halmd/config.hpp>
 
-namespace halmd
-{
-namespace detail { namespace numeric
-{
+namespace halmd {
+namespace detail {
+namespace numeric {
 
 /**
  * Accumulator with statistical evaluation functions
@@ -166,7 +165,8 @@ HALMD_GPU_ENABLED T error_of_mean(accumulator<T> const& acc)
     return sqrt((acc.v_ / acc.n_) / (acc.n_ - 1));
 }
 
-}} // namespace detail::numeric
+} // namespace detail
+} // namespace numeric
 
 // import into top-level namespace
 using detail::numeric::accumulator;

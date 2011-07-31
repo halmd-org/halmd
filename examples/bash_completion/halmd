@@ -1,0 +1,53 @@
+# halmd(1) completion
+
+_halmd()
+{
+    local cur prev module modules
+    declare -A modules
+
+    COMPREPLY=()
+    cur="${COMP_WORDS[COMP_CWORD]}"
+    prev="${COMP_WORDS[COMP_CWORD - 1]}"
+
+    for module in $( "$1" --help | sed -ne 's/^\([^ ]*\):$/\1/p' ); do
+        modules[$module]=$module
+    done
+
+    module=""
+    for word in ${COMP_WORDS[@]}; do
+        if [ "${modules[$word]}" == "$word" ]; then
+            module=$word
+        fi
+    done
+
+    _expand || return 0
+
+    if [ "$prev" == "--file" ]; then
+        _filedir
+        return 0
+    fi
+
+    if [ -z "$module" ]; then
+        COMPREPLY=( $( compgen -W "$( "$1" --help | \
+            sed -e '1d' -e '/^[^ ]/,$d' -ne 's/ *-\([^ ]*\).*/-\1/p' | \
+            sort -u )" -- "$cur" ) )
+    else
+        COMPREPLY=( $( compgen -W "$( "$1" --help | \
+            sed -e "1,/^$module:/d" -e '/^[^ ]/,$d' -ne 's/ *-\([^ ]*\).*/-\1/p' | \
+            sort -u )" -- "$cur" ) )
+    fi
+    if [[ "$cur" != -* ]]; then
+        COMPREPLY=( ${COMPREPLY[@]} $( compgen -W "$( "$1" --help | \
+            sed -ne 's/^\([^ ]*\):$/\1/p' | \
+            sort -u )" -- "$cur" ) )
+    fi
+} &&
+complete -F _halmd -o filenames halmd
+
+# Local variables:
+# mode: shell-script
+# sh-basic-offset: 4
+# sh-indent-comment: t
+# indent-tabs-mode: nil
+# End:
+# ex: ts=4 sw=4 et filetype=sh

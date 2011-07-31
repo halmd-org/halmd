@@ -25,7 +25,7 @@
 #include <lua.hpp>
 #include <vector>
 
-#include <halmd/io/statevars/writer.hpp>
+#include <halmd/io/logger.hpp>
 #include <halmd/mdsim/box.hpp>
 #include <halmd/mdsim/clock.hpp>
 #include <halmd/mdsim/type_traits.hpp>
@@ -33,10 +33,8 @@
 #include <halmd/utility/profiler.hpp>
 #include <halmd/utility/signal.hpp>
 
-namespace halmd
-{
-namespace observables
-{
+namespace halmd {
+namespace observables {
 
 /**
  * compute thermodynamic state variables such as pressure,
@@ -50,36 +48,25 @@ template <int dimension>
 class thermodynamics
 {
 public:
-    typedef io::statevars::writer<dimension> writer_type;
     typedef mdsim::box<dimension> box_type;
     typedef mdsim::clock clock_type;
-    typedef halmd::utility::profiler profiler_type;
+    typedef typename clock_type::step_type step_type;
+    typedef logger logger_type;
     typedef typename mdsim::type_traits<dimension, double>::vector_type vector_type;
-    typedef typename signal<void (uint64_t)>::slot_function_type slot_function_type;
-
-    struct runtime
-    {
-        typedef typename profiler_type::accumulator_type accumulator_type;
-        accumulator_type sample;
-    };
-
-    boost::shared_ptr<box_type> box;
-    boost::shared_ptr<clock_type> clock;
+    typedef typename signal<void ()>::slot_function_type slot_function_type;
 
     static void luaopen(lua_State* L);
 
     thermodynamics(
-        boost::shared_ptr<box_type> box
-      , boost::shared_ptr<clock_type> clock
+        boost::shared_ptr<box_type const> box
+      , boost::shared_ptr<clock_type const> clock
+      , boost::shared_ptr<logger_type> logger
     );
-    virtual ~thermodynamics() {}
-    void register_runtimes(profiler_type& profiler);
-    virtual void register_observables(writer_type& writer);
 
     // preparations before MD step
     virtual void prepare() = 0;
     // sample macroscopic state variables and store with given simulation step
-    virtual void sample(uint64_t step);
+    virtual void sample();
 
     /** potential energy per particle */
     virtual double en_pot() = 0;
@@ -95,17 +82,30 @@ public:
     /** total pressure */
     double pressure()
     {
-        return box->density() * (temp() + virial() / dimension);
+        return box_->density() * (temp() + virial() / dimension);
     }
 
     /** system temperature */
     double temp() { return 2 * en_kin() / dimension; }
     /** particle density */
-    double density() { return box->density(); }
+    double density() { return box_->density(); }
     /** total energy per particle */
     double en_tot() { return en_pot() + en_kin(); }
 
 private:
+    typedef halmd::utility::profiler profiler_type;
+    typedef profiler_type::accumulator_type accumulator_type;
+    typedef profiler_type::scoped_timer_type scoped_timer_type;
+
+    struct runtime
+    {
+        accumulator_type sample;
+    };
+
+    boost::shared_ptr<box_type const> box_;
+    boost::shared_ptr<clock_type const> clock_;
+    boost::shared_ptr<logger_type> logger_;
+
     // sample() passes values to HDF5 writer via a fixed location in memory
     double en_pot_;
     double en_kin_;
@@ -117,14 +117,13 @@ private:
     double hypervirial_;
     double time_;
     /** time stamp of data */
-    uint64_t step_;
+    step_type step_;
 
     // profiling runtime accumulators
     runtime runtime_;
 };
 
 } // namespace observables
-
 } // namespace halmd
 
 #endif /* ! HALMD_OBSERVABLES_THERMODYNAMICS_HPP */

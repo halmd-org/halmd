@@ -27,10 +27,9 @@
 using namespace boost;
 using namespace std;
 
-namespace halmd
-{
-namespace observables { namespace samples
-{
+namespace halmd {
+namespace observables {
+namespace samples {
 
 template <int dimension>
 char const* density_mode<dimension>::class_name()
@@ -73,9 +72,9 @@ HALMD_LUA_API int luaopen_libhalmd_observables_samples_density_mode(lua_State* L
 
 template class density_mode<3>;
 template class density_mode<2>;
-template class observables::samples::blocking_scheme<density_mode<3> >;
-template class observables::samples::blocking_scheme<density_mode<2> >;
+template class blocking_scheme<density_mode<3> >;
+template class blocking_scheme<density_mode<2> >;
 
-}} // namespace observables::samples
-
+} // namespace samples
+} // namespace observables
 } // namespace halmd

@@ -5,13 +5,12 @@ HALMD documentation
    :maxdepth: 2
 
    readme
-   prerequisites
-   install
-   usage
+   installation/index
+   usage/index
    faq
    validation
-   data
+   benchmarks
    units
-   reference/index
    developer/index
 
+* `C++ API reference <reference/index.html>`_

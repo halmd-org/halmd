@@ -24,8 +24,7 @@
 
 #include <halmd/config.hpp>
 
-namespace halmd
-{
+namespace halmd {
 
 /**
  * determine greatest common divisor of two integer numbers using

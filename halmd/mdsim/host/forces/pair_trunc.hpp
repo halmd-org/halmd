@@ -30,16 +30,15 @@
 #include <halmd/mdsim/force_kernel.hpp>
 #include <halmd/mdsim/host/force.hpp>
 #include <halmd/mdsim/host/forces/smooth.hpp>
+#include <halmd/mdsim/host/neighbour.hpp>
 #include <halmd/mdsim/host/particle.hpp>
 #include <halmd/utility/lua/lua.hpp>
 #include <halmd/utility/profiler.hpp>
-#include <halmd/utility/scoped_timer.hpp>
-#include <halmd/utility/timer.hpp>
 
-namespace halmd
-{
-namespace mdsim { namespace host { namespace forces
-{
+namespace halmd {
+namespace mdsim {
+namespace host {
+namespace forces {
 
 /**
  * template class for modules implementing short ranged potential forces
@@ -56,14 +55,8 @@ public:
 
     typedef host::particle<dimension, float_type> particle_type;
     typedef mdsim::box<dimension> box_type;
+    typedef host::neighbour<dimension, float_type> neighbour_type;
     typedef host::forces::smooth<dimension, float_type> smooth_type;
-    typedef utility::profiler profiler_type;
-
-    struct runtime
-    {
-        typedef typename profiler_type::accumulator_type accumulator_type;
-        accumulator_type compute;
-    };
 
     boost::shared_ptr<potential_type> potential;
     boost::shared_ptr<particle_type> particle;
@@ -76,10 +69,10 @@ public:
         boost::shared_ptr<potential_type> potential
       , boost::shared_ptr<particle_type> particle
       , boost::shared_ptr<box_type> box
+      , boost::shared_ptr<neighbour_type const> neighbour
       // FIXME , boost::shared_ptr<smooth_type> smooth
     );
     inline virtual void compute();
-    inline void register_runtimes(profiler_type& profiler);
 
     //! return potential cutoffs
     virtual matrix_type const& r_cut()
@@ -123,7 +116,18 @@ public:
         return hypervirial_;
     }
 
-protected:
+private:
+    typedef utility::profiler profiler_type;
+    typedef typename profiler_type::accumulator_type accumulator_type;
+    typedef typename profiler_type::scoped_timer_type scoped_timer_type;
+
+    struct runtime
+    {
+        accumulator_type compute;
+    };
+
+    boost::shared_ptr<neighbour_type const> neighbour_;
+
     /** flag for switching the computation of auxiliary variables in function compute() */
     bool aux_flag_;
     /** average potential energy per particle */
@@ -144,24 +148,17 @@ pair_trunc<dimension, float_type, potential_type>::pair_trunc(
     boost::shared_ptr<potential_type> potential
   , boost::shared_ptr<particle_type> particle
   , boost::shared_ptr<box_type> box
+  , boost::shared_ptr<neighbour_type const> neighbour
   // FIXME , boost::shared_ptr<smooth_type> smooth
 )
   // dependency injection
   : potential(potential)
   , particle(particle)
   , box(box)
+  , neighbour_(neighbour)
   // member initialisation
   , aux_flag_(true)          //< enable everything by default
 {}
-
-/**
- * register module runtime accumulators
- */
-template <int dimension, typename float_type, typename potential_type>
-void pair_trunc<dimension, float_type, potential_type>::register_runtimes(profiler_type& profiler)
-{
-    profiler.register_runtime(runtime_.compute, "compute", std::string("computation of ") + potential_type::name() + " forces");
-}
 
 /**
  * Compute pair forces and auxiliary variables if desired, e.g.,
@@ -170,7 +167,7 @@ void pair_trunc<dimension, float_type, potential_type>::register_runtimes(profil
 template <int dimension, typename float_type, typename potential_type>
 void pair_trunc<dimension, float_type, potential_type>::compute()
 {
-    scoped_timer<timer> timer_(runtime_.compute);
+    scoped_timer_type timer(runtime_.compute);
 
     // call implementation which fits to current value of aux_flag_
     if (!aux_flag_) {
@@ -195,9 +192,11 @@ void pair_trunc<dimension, float_type, potential_type>::compute_impl_()
         hypervirial_ = 0;
     }
 
+    std::vector<typename neighbour_type::neighbour_list> const& lists = neighbour_->lists();
+
     for (size_t i = 0; i < particle->nbox; ++i) {
         // calculate pairwise Lennard-Jones force with neighbour particles
-        BOOST_FOREACH(size_t j, particle->neighbour[i]) {
+        BOOST_FOREACH(size_t j, lists[i]) {
             // particle distance vector
             vector_type r = particle->r[i] - particle->r[j];
             box->reduce_periodic(r);
@@ -276,19 +275,36 @@ void pair_trunc<dimension, float_type, potential_type>::luaopen(lua_State* L)
                                 boost::shared_ptr<potential_type>
                               , boost::shared_ptr<particle_type>
                               , boost::shared_ptr<box_type>
+                              , boost::shared_ptr<neighbour_type const>
                             >())
-                            .def("register_runtimes", &pair_trunc::register_runtimes)
                             .property("r_cut", &pair_trunc::r_cut)
                             .property("module_name", &module_name_wrapper<dimension, float_type, potential_type>)
+                            .scope
+                            [
+                                class_<runtime>("runtime")
+                                    .def_readonly("compute", &runtime::compute)
+                            ]
+                            .def_readonly("runtime", &pair_trunc::runtime_)
                     ]
                 ]
+            ]
+
+          , namespace_("forces")
+            [
+                def("pair_trunc", &boost::make_shared<pair_trunc,
+                    boost::shared_ptr<potential_type>
+                  , boost::shared_ptr<particle_type>
+                  , boost::shared_ptr<box_type>
+                  , boost::shared_ptr<neighbour_type const>
+                >)
             ]
         ]
     ];
 }
 
-}}} // namespace mdsim::host::forces
-
+} // namespace mdsim
+} // namespace host
+} // namespace forces
 } // namespace halmd
 
 #endif /* ! HALMD_MDSIM_HOST_FORCES_PAIR_TRUNC_HPP */

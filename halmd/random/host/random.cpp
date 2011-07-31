@@ -1,5 +1,5 @@
 /*
- * Copyright © 2008-2010  Peter Colberg
+ * Copyright © 2008-2011  Peter Colberg
  *
  * This file is part of HALMD.
  *
@@ -17,23 +17,33 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <halmd/io/logger.hpp>
+#include <boost/nondet_random.hpp> // boost::random_device
+
 #include <halmd/random/host/random.hpp>
 #include <halmd/utility/lua/lua.hpp>
-#include <halmd/utility/read_integer.hpp>
 
 using namespace boost;
 using namespace std;
 
-namespace halmd
-{
-namespace random { namespace host
-{
+namespace halmd {
+namespace random {
+namespace host {
 
-random::random(unsigned int seed)
+random::random(
+    unsigned int seed
+  , shared_ptr<logger_type> logger
+)
+  : logger_(logger)
 {
     LOG("random number generator seed: " << seed);
     rng_.seed(seed);
+}
+
+//! Get seed from non-deterministic random number generator.
+// boost::random_device reads from /dev/urandom on GNU/Linux,
+// and the default cryptographic service provider on Windows.
+unsigned int random::defaults::seed() {
+    return boost::random_device()();
 }
 
 void random::luaopen(lua_State* L)
@@ -45,8 +55,19 @@ void random::luaopen(lua_State* L)
         [
             namespace_("random")
             [
-                class_<random, shared_ptr<_Base>, bases<_Base> >("gfsr4")
-                    .def(constructor<unsigned int>())
+                class_<random, shared_ptr<random> >("gfsr4")
+                    .def(constructor<
+                        unsigned int
+                      , shared_ptr<logger_type>
+                    >())
+                    .scope
+                    [
+                        class_<defaults>("defaults")
+                            .scope
+                            [
+                                def("seed", &defaults::seed)
+                            ]
+                    ]
             ]
         ]
     ];
@@ -58,6 +79,6 @@ HALMD_LUA_API int luaopen_libhalmd_random_host_random(lua_State* L)
     return 0;
 }
 
-}} // namespace random::host
-
+} // namespace random
+} // namespace host
 } // namespace halmd

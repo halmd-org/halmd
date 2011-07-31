@@ -24,10 +24,9 @@
 
 #include <halmd/mdsim/integrator.hpp>
 
-namespace halmd
-{
-namespace mdsim { namespace integrators
-{
+namespace halmd {
+namespace mdsim {
+namespace integrators {
 
 template <int dimension>
 class nvt : public integrator<dimension>
@@ -43,8 +42,8 @@ public:
     virtual void temperature(double temperature) = 0;
 };
 
-}} // namespace mdsim::integrators
-
+} // namespace mdsim
+} // namespace integrators
 } // namespace halmd
 
 #endif /* ! HALMD_MDSIM_INTEGRATORS_NVT_HPP */

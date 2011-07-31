@@ -17,14 +17,19 @@
 -- along with this program.  If not, see <http://www.gnu.org/licenses/>.
 --
 
-require("halmd.modules")
-
 require("halmd.device")
+require("halmd.io.writers.observable")
+require("halmd.mdsim.box")
 require("halmd.mdsim.core")
+require("halmd.mdsim.particle")
+require("halmd.modules")
+require("halmd.observables.sampler")
 
 -- grab modules
 local device = halmd.device
 local mdsim = halmd.mdsim
+local observables = halmd.observables
+local writers = halmd.io.writers
 -- grab C++ wrappers
 local thermodynamics_wrapper = {
     host = {
@@ -40,6 +45,7 @@ if libhalmd.observables.gpu then
       , [3] = libhalmd.observables.gpu.thermodynamics_3_
     }
 end
+local po = libhalmd.po
 -- grab standard library
 local assert = assert
 
@@ -49,16 +55,52 @@ module("halmd.observables.thermodynamics", halmd.modules.register)
 -- construct thermodynamics module
 --
 function new(args)
-    -- dependency injection
-    local core = mdsim.core()
-    local dimension = assert(core.dimension)
-    local particle = assert(core.particle)
-    local box = assert(core.box)
-    local clock = assert(core.clock)
-    local force = assert(core.force)
+    local every = args.every or 100 -- default value
 
-    if not device() then
-        return thermodynamics_wrapper.host[dimension](particle, box, clock, force)
+    -- dependency injection
+    local particle = mdsim.particle() -- singleton
+    local dimension = assert(particle.dimension)
+    local box = mdsim.box() -- singleton
+    local clock = mdsim.clock() -- singleton
+    local force = assert(args.force)
+    local logger = assert(args.logger)
+
+    local observable
+    if device() then
+        observable = thermodynamics_wrapper.gpu[dimension](particle, box, clock, force, logger)
+    else
+        observable = thermodynamics_wrapper.host[dimension](particle, box, clock, force, logger)
     end
-    return thermodynamics_wrapper.gpu[dimension](particle, box, clock, force)
+
+    local file = writers.observable() -- singleton
+    local writer = file:writer{location = {"observables"}, mode = "append"}
+    writer:on_write(observable.en_pot, {"potential_energy"})
+    writer:on_write(observable.en_kin, {"kinetic_energy"})
+    writer:on_write(observable.en_tot, {"total_energy"})
+    writer:on_write(observable.v_cm, {"center_of_mass_velocity"})
+    writer:on_write(observable.pressure, {"pressure"})
+    writer:on_write(observable.temp, {"temperature"})
+    writer:on_write(observable.virial, {"virial"})
+    writer:on_write(observable.hypervirial, {"hypervirial"})
+
+    local sampler = observables.sampler() -- singleton
+    sampler:on_prepare{observable.prepare, every, tracker = observable}
+    sampler:on_sample{writer.write, every, tracker = observable}
+
+    return observable
+end
+
+--
+-- connect runtime accumulators to module profiler
+--
+function profile(self, profiler)
+    profiler:on_profile{self, sample = "computation of macroscopic state variables"}
+end
+
+-- assemble module options
+--
+-- @param desc po.options_description
+--
+function options(desc)
+    desc:add("every", po.uint64(), "sample interval for macroscopic state variables")
 end

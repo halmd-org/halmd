@@ -1,5 +1,5 @@
 /*
- * Copyright © 2010  Felix Höfling
+ * Copyright © 2011  Felix Höfling and Peter Colberg
  *
  * This file is part of HALMD.
  *
@@ -21,23 +21,29 @@
 #include <boost/shared_ptr.hpp>
 #include <string>
 
+#include <halmd/io/logger.hpp>
 #include <halmd/mdsim/host/forces/zero.hpp>
 #include <halmd/utility/lua/lua.hpp>
 
 using namespace boost;
 using namespace std;
 
-namespace halmd
-{
-namespace mdsim { namespace host { namespace forces
-{
+namespace halmd {
+namespace mdsim {
+namespace host {
+namespace forces {
 
 template <int dimension, typename float_type>
 zero<dimension, float_type>::zero(shared_ptr<particle_type> particle)
   // dependency injection
   : particle(particle)
 {
-    // initialise particle forces to zero
+}
+
+template <int dimension, typename float_type>
+void zero<dimension, float_type>::compute()
+{
+    LOG_TRACE("zero particle forces");
     fill(particle->f.begin(), particle->f.end(), 0);
 }
 
@@ -93,6 +99,7 @@ template class zero<3, float>;
 template class zero<2, float>;
 #endif
 
-}}} // namespace mdsim::host::forces
-
+} // namespace mdsim
+} // namespace host
+} // namespace forces
 } // namespace halmd

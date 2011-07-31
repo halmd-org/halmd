@@ -19,20 +19,31 @@
 
 #define BOOST_TEST_MODULE boltzmann
 #include <boost/test/unit_test.hpp>
-#include <boost/test/parameterized_test.hpp>
 
 #include <boost/assign.hpp>
+#include <boost/make_shared.hpp>
 #include <limits>
-#include <string>
 
-#include <halmd/io/logger.hpp>
-#include <halmd/mdsim/type_traits.hpp>
-#include <test/unit/modules.hpp>
-#include <test/tools/init.hpp>
+#include <halmd/mdsim/box.hpp>
+#include <halmd/mdsim/clock.hpp>
+#include <halmd/mdsim/host/forces/zero.hpp>
+#include <halmd/mdsim/host/particle.hpp>
+#include <halmd/mdsim/host/velocities/boltzmann.hpp>
+#include <halmd/numeric/accumulator.hpp>
+#include <halmd/observables/host/thermodynamics.hpp>
+#include <halmd/random/host/random.hpp>
+#ifdef WITH_CUDA
+# include <halmd/mdsim/gpu/forces/zero.hpp>
+# include <halmd/mdsim/gpu/particle.hpp>
+# include <halmd/mdsim/gpu/velocities/boltzmann.hpp>
+# include <halmd/observables/gpu/thermodynamics.hpp>
+# include <halmd/random/gpu/random.hpp>
+# include <halmd/utility/gpu/device.hpp>
+#endif
 
 using namespace boost;
+using namespace boost::assign; // list_of
 using namespace halmd;
-using namespace halmd::test;
 using namespace std;
 
 const double eps = numeric_limits<double>::epsilon();
@@ -42,54 +53,40 @@ const float eps_float = numeric_limits<float>::epsilon();
  * test initialisation of particle velocities: boltzmann module
  */
 
-template <int dimension>
-void boltzmann(string const& backend)
+template <typename modules_type>
+struct boltzmann
 {
-    typedef typename mdsim::type_traits<dimension, double>::vector_type vector_type;
-    typedef typename mdsim::type_traits<dimension, float>::vector_type gpu_vector_type;
+    typedef typename modules_type::box_type box_type;
+    typedef typename modules_type::force_type force_type;
+    typedef typename modules_type::particle_type particle_type;
+    typedef typename modules_type::random_type random_type;
+    typedef typename modules_type::thermodynamics_type thermodynamics_type;
+    typedef typename modules_type::velocity_type velocity_type;
+    typedef mdsim::clock clock_type;
+    typedef typename particle_type::vector_type vector_type;
+    typedef typename vector_type::value_type float_type;
+    static unsigned int const dimension = vector_type::static_size;
+    static bool const gpu = modules_type::gpu;
 
-    unsigned npart = (backend == "gpu") ? 10000 : 3000;
-    double temp = 2.0;
-    double density = 0.3;
-    char const* random_file = "/dev/urandom";
+    unsigned npart;
+    double temp;
+    double density;
 
-    // enable logging to console
-    shared_ptr<logger> log(new logger);
-    log->log_to_console(
-#ifdef NDEBUG
-        logger::warning
-#else
-        logger::debug
-#endif
-    );
+    shared_ptr<box_type> box;
+    shared_ptr<clock_type> clock;
+    shared_ptr<force_type> force;
+    shared_ptr<particle_type> particle;
+    shared_ptr<random_type> random;
+    shared_ptr<thermodynamics_type> thermodynamics;
+    shared_ptr<velocity_type> velocity;
 
-    // init modules
-    BOOST_TEST_MESSAGE("initialise modules");
-#ifdef WITH_CUDA
-    shared_ptr<utility::gpu::device> device = make_device(backend);
-#endif /* WITH_CUDA */
+    void test();
+    boltzmann();
+};
 
-    shared_ptr<halmd::random::random> random = make_random(backend, random_file);
-
-    shared_ptr<mdsim::particle<dimension> > particle =
-        make_particle<dimension>(backend, npart);
-
-    shared_ptr<mdsim::velocity<dimension> > velocity =
-        make_boltzmann(backend, particle, random, 0);        // actual temperature is set below
-
-    shared_ptr<mdsim::box<dimension> > box = make_box(particle, density);
-    shared_ptr<mdsim::clock> clock = make_shared<mdsim::clock>();
-
-    // measure velocity distribution via thermodynamics module
-    shared_ptr<observables::thermodynamics<dimension> > thermodynamics =
-        make_thermodynamics(
-            backend, particle, box, clock
-          , make_zero_force<dimension>(backend, particle)
-        );
-
-    // destroy and reconstruct module
-    velocity = make_boltzmann(backend, particle, random, temp);
-
+template <typename modules_type>
+void boltzmann<modules_type>::test()
+{
     // generate velocity distribution
     BOOST_TEST_MESSAGE("set particle tags");
     particle->set();
@@ -122,9 +119,9 @@ void boltzmann(string const& backend)
     BOOST_CHECK_CLOSE_FRACTION(thermodynamics->temp(), scale * scale * temp, rel_temp_limit);
 
     // shift mean velocity to zero
-    vector_type v_cm = thermodynamics->v_cm();
+    fixed_vector<double, dimension> v_cm = thermodynamics->v_cm();
     velocity->shift(-v_cm);
-    vcm_limit = (backend == "gpu") ? 0.1 * eps_float : 2 * eps;
+    vcm_limit = gpu ? 0.1 * eps_float : 2 * eps;
     BOOST_CHECK_SMALL(norm_inf(thermodynamics->v_cm()), vcm_limit);
 
     // first shift, then rescale in one step
@@ -133,47 +130,62 @@ void boltzmann(string const& backend)
     BOOST_CHECK_SMALL(norm_inf(thermodynamics->v_cm() - v_cm), vcm_limit);
 }
 
-HALMD_TEST_INIT( init_unit_test_suite )
+template <typename modules_type>
+boltzmann<modules_type>::boltzmann()
 {
-    using namespace boost::assign;
-    using namespace boost::unit_test;
-    using namespace boost::unit_test::framework;
+    BOOST_TEST_MESSAGE("initialise simulation modules");
 
-    // parametrize specific program options
-    vector<string> backend = list_of
-        ("host")
-#ifdef WITH_CUDA
-        ("gpu")
-#endif /* WITH_CUDA */
-        ;
+    npart = gpu ? 10000 : 3000;
+    temp = 2.0;
+    density = 0.3;
 
-    test_suite* ts1 = BOOST_TEST_SUITE( "boltzmann" );
+    vector<unsigned int> npart_vector = list_of(npart);
 
-    test_suite* ts11 = BOOST_TEST_SUITE( "host" );
-
-    test_suite* ts111 = BOOST_TEST_SUITE( "2d" );
-    ts111->add( BOOST_PARAM_TEST_CASE( &boltzmann<2>, backend.begin(), backend.begin() + 1 ) );
-
-    test_suite* ts112 = BOOST_TEST_SUITE( "3d" );
-    ts112->add( BOOST_PARAM_TEST_CASE( &boltzmann<3>, backend.begin(), backend.begin() + 1 ) );
-
-    ts11->add( ts111 );
-    ts11->add( ts112 );
-    ts1->add( ts11 );
-
-#ifdef WITH_CUDA
-    test_suite* ts12 = BOOST_TEST_SUITE( "gpu" );
-
-    test_suite* ts121 = BOOST_TEST_SUITE( "2d" );
-    ts121->add( BOOST_PARAM_TEST_CASE( &boltzmann<2>, backend.begin() + 1, backend.end() ) );
-
-    test_suite* ts122 = BOOST_TEST_SUITE( "3d" );
-    ts122->add( BOOST_PARAM_TEST_CASE( &boltzmann<3>, backend.begin() + 1, backend.end() ) );
-
-    ts12->add( ts121 );
-    ts12->add( ts122 );
-    ts1->add( ts12 );
-#endif
-
-    master_test_suite().add( ts1 );
+    particle = make_shared<particle_type>(npart_vector);
+    box = make_shared<box_type>(npart, density);
+    random = make_shared<random_type>();
+    velocity = make_shared<velocity_type>(particle, random, temp);
+    force = make_shared<force_type>(particle);
+    clock = make_shared<clock_type>(0); // bogus time-step
+    thermodynamics = make_shared<thermodynamics_type>(particle, box, clock, force);
 }
+
+template <int dimension, typename float_type>
+struct host_modules
+{
+    typedef mdsim::box<dimension> box_type;
+    typedef mdsim::host::forces::zero<dimension, float_type> force_type;
+    typedef mdsim::host::particle<dimension, float_type> particle_type;
+    typedef halmd::random::host::random random_type;
+    typedef mdsim::host::velocities::boltzmann<dimension, float_type> velocity_type;
+    typedef observables::host::thermodynamics<dimension, float_type> thermodynamics_type;
+    static bool const gpu = false;
+};
+
+BOOST_AUTO_TEST_CASE( boltzmann_host_2d ) {
+    boltzmann<host_modules<2, double> >().test();
+}
+BOOST_AUTO_TEST_CASE( boltzmann_host_3d ) {
+    boltzmann<host_modules<3, double> >().test();
+}
+
+#ifdef WITH_CUDA
+template <int dimension, typename float_type>
+struct gpu_modules
+{
+    typedef mdsim::box<dimension> box_type;
+    typedef mdsim::gpu::forces::zero<dimension, float_type> force_type;
+    typedef mdsim::gpu::particle<dimension, float_type> particle_type;
+    typedef halmd::random::gpu::random<halmd::random::gpu::rand48> random_type;
+    typedef observables::gpu::thermodynamics<dimension, float_type> thermodynamics_type;
+    typedef mdsim::gpu::velocities::boltzmann<dimension, float_type, halmd::random::gpu::rand48> velocity_type;
+    static bool const gpu = true;
+};
+
+BOOST_FIXTURE_TEST_CASE( boltzmann_gpu_2d, device ) {
+    boltzmann<gpu_modules<2, float> >().test();
+}
+BOOST_FIXTURE_TEST_CASE( boltzmann_gpu_3d, device ) {
+    boltzmann<gpu_modules<3, float> >().test();
+}
+#endif // WITH_CUDA

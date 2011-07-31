@@ -27,8 +27,7 @@
 
 #include <cuda_wrapper/error.hpp>
 
-namespace cuda
-{
+namespace cuda {
 
 #if (CUDART_VERSION >= 1010)
 
@@ -102,6 +101,6 @@ private:
 
 #endif /* CUDART_VERSION >= 1010 */
 
-}
+} // namespace cuda
 
 #endif /* ! CUDA_STREAM_HPP */

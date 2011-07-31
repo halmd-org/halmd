@@ -17,12 +17,11 @@
 -- along with this program.  If not, see <http://www.gnu.org/licenses/>.
 --
 
+require("halmd.mdsim.velocities")
 require("halmd.modules")
 
-require("halmd.mdsim.velocities")
-
 -- grab modules
-local mdsim = halmd.mdsim
+local velocities = halmd.mdsim.velocities
 -- grab C++ wrappers
 local h5 = libhalmd.h5
 local po = libhalmd.po
@@ -36,13 +35,12 @@ module("halmd.mdsim.velocity", halmd.modules.register)
 -- construct velocity module
 --
 function new(args)
-    local velocity
-    if args.reader then
-        velocity = args.velocity or "phase_space"
-    else
-        velocity = args.velocity or "boltzmann" -- default value
+    local velocity = args.velocity or "boltzmann" -- default value
+    local reader = args.reader
+    if reader and not args.velocity then
+        return velocities.phase_space{sample = reader.velocity}
     end
-    return mdsim.velocities[velocity]()
+    return velocities[velocity]()
 end
 
 --
@@ -54,9 +52,9 @@ function options(desc, globals)
 
     -- velocity module choices with descriptions
     local choices = {}
-    for velocity, module in pairs(mdsim.velocities) do
-        if module.name then
-            choices[velocity] = module.name()
+    for velocity, module in pairs(velocities) do
+        if module.description then
+            choices[velocity] = module.description()
         end
     end
 
@@ -70,7 +68,7 @@ end
 -- @param group HDF5 group
 --
 function write_parameters(self, group, globals)
-    if self.module_name then
-        globals:write_attribute("velocity", h5.string(), self.module_name)
+    if self.module ~= velocities.phase_space then
+        globals:write_attribute("velocity", h5.string(), self.module.namespace)
     end
 end

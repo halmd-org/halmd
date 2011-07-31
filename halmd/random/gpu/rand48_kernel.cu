@@ -28,12 +28,10 @@
 #include <halmd/random/gpu/rand48_kernel.hpp>
 #include <halmd/utility/gpu/thread.cuh>
 
-namespace halmd
-{
-namespace random { namespace gpu
-{
-namespace rand48_kernel
-{
+namespace halmd {
+namespace random {
+namespace gpu {
+namespace rand48_kernel {
 
 /*
  * This is a parallel version of the Unix rand48 generator for CUDA.
@@ -110,7 +108,8 @@ rand48_wrapper const rand48_wrapper::kernel = {
   , rand48_kernel::seed
 };
 
-}} // namespace random::gpu
+} // namespace random
+} // namespace gpu
 
 template class algorithm::gpu::scan_wrapper<uint48>;
 

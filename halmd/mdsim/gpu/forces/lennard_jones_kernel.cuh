@@ -25,12 +25,11 @@
 #include <halmd/numeric/blas/blas.hpp>
 #include <halmd/utility/gpu/variant.cuh>
 
-namespace halmd
-{
-namespace mdsim { namespace gpu { namespace forces
-{
-namespace lennard_jones_kernel
-{
+namespace halmd {
+namespace mdsim {
+namespace gpu {
+namespace forces {
+namespace lennard_jones_kernel {
 
 /** array of Lennard-Jones potential parameters for all combinations of particle types */
 static texture<float4> param_;
@@ -97,8 +96,9 @@ cuda::texture<float4> lennard_jones_wrapper::param = lennard_jones_kernel::param
 template class pair_trunc_wrapper<3, lennard_jones_kernel::lennard_jones>;
 template class pair_trunc_wrapper<2, lennard_jones_kernel::lennard_jones>;
 
-}}} // namespace mdsim::gpu::forces
-
+} // namespace mdsim
+} // namespace gpu
+} // namespace forces
 } // namespace halmd
 
 #endif /* ! HALMD_MDSIM_GPU_FORCES_LENNARD_JONES_KERNEL_CUH */

@@ -17,9 +17,8 @@
 -- along with this program.  If not, see <http://www.gnu.org/licenses/>.
 --
 
+require("halmd.mdsim.particle")
 require("halmd.modules")
-
-require("halmd.mdsim.core")
 
 -- grab modules
 local mdsim = halmd.mdsim
@@ -37,9 +36,8 @@ module("halmd.observables.samples.density_mode", halmd.modules.register)
 -- construct density_mode module
 --
 function new()
-    local core = assert(mdsim.core())
-    local particle = assert(core.particle)
-    local dimension = assert(core.dimension)
+    local particle = mdsim.particle() -- singleton
+    local dimension = assert(particle.dimension)
 
     sample = assert(density_mode_wrapper[dimension](#particle.ntypes))
 end

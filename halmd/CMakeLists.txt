@@ -27,9 +27,6 @@ endmacro()
 ##
 # HALMD C++ modules
 #
-halmd_add_modules(
-  libhalmd_runner
-)
 add_subdirectory(algorithm)
 add_subdirectory(io)
 add_subdirectory(mdsim)
@@ -60,14 +57,34 @@ configure_file(version.h.in version.h ESCAPE_QUOTES @ONLY)
 #
 get_property(HALMD_LIBRARIES GLOBAL PROPERTY HALMD_LIBRARIES)
 
-add_executable(halmd
-  main.cpp
+add_library(libhalmd SHARED
   "${CMAKE_CURRENT_BINARY_DIR}/modules.cpp"
-  runner.cpp
   script.cpp
 )
-target_link_libraries(halmd
+set_target_properties(libhalmd PROPERTIES
+  PREFIX ""
+  # http://www.cmake.org/Wiki/CMake_FAQ#Why_are_libraries_linked_to_my_shared_library_included_when_something_links_to_it.3F
+  LINK_INTERFACE_LIBRARIES ""
+)
+target_link_libraries(libhalmd
   ${HALMD_LIBRARIES}
+  ${HALMD_COMMON_LIBRARIES}
+)
+install(TARGETS libhalmd
+  LIBRARY DESTINATION lib
+)
+
+add_executable(halmd
+  main.cpp
+)
+target_link_libraries(halmd
+  libhalmd
+  # needed for halmd::host_name
+  halmd_utility
+  # with newer version of GNU ld, indirect linking through intermediate
+  # libraries does not work anymore, so we have to explicitly link halmd
+  # against common libraries
+  # http://fedoraproject.org/wiki/UnderstandingDSOLinkChange
   ${HALMD_COMMON_LIBRARIES}
 )
 install(TARGETS halmd

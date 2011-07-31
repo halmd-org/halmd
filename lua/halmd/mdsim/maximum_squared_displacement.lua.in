@@ -1,0 +1,70 @@
+--
+-- Copyright © 2011  Peter Colberg
+--
+-- This file is part of HALMD.
+--
+-- HALMD is free software: you can redistribute it and/or modify
+-- it under the terms of the GNU General Public License as published by
+-- the Free Software Foundation, either version 3 of the License, or
+-- (at your option) any later version.
+--
+-- This program is distributed in the hope that it will be useful,
+-- but WITHOUT ANY WARRANTY; without even the implied warranty of
+-- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+-- GNU General Public License for more details.
+--
+-- You should have received a copy of the GNU General Public License
+-- along with this program.  If not, see <http://www.gnu.org/licenses/>.
+--
+
+require("halmd.device")
+require("halmd.mdsim.box")
+require("halmd.mdsim.particle")
+require("halmd.modules")
+
+-- grab modules
+local device = halmd.device
+local mdsim = halmd.mdsim
+-- grab C++ wrappers
+local maximum_squared_displacement_wrapper = {
+    host = {
+        [2] = libhalmd.mdsim.host.maximum_squared_displacement_2_
+      , [3] = libhalmd.mdsim.host.maximum_squared_displacement_3_
+    }
+}
+if libhalmd.mdsim.gpu then
+    maximum_squared_displacement_wrapper.gpu = {
+        [2] = libhalmd.mdsim.gpu.maximum_squared_displacement_2_
+      , [3] = libhalmd.mdsim.gpu.maximum_squared_displacement_3_
+    }
+end
+-- grab standard library
+local assert = assert
+
+module("halmd.mdsim.maximum_squared_displacement", halmd.modules.register)
+
+--
+-- construct maximum_squared_displacement module
+--
+function new(args)
+    -- dependency injection
+    local particle = mdsim.particle() -- singleton
+    local dimension = assert(particle.dimension)
+    local box = mdsim.box() -- singleton
+
+    local maximum_squared_displacement
+    if device() then
+        maximum_squared_displacement = assert(maximum_squared_displacement_wrapper.gpu[dimension])
+    else
+        maximum_squared_displacement = assert(maximum_squared_displacement_wrapper.host[dimension])
+    end
+    return maximum_squared_displacement(particle, box)
+end
+
+--
+-- connect runtime accumulators to module profiler
+--
+function profile(self, profiler)
+    profiler:on_profile{self, zero = "zero maximum displacement"}
+    profiler:on_profile{self, compute = "compute maximum displacement"}
+end

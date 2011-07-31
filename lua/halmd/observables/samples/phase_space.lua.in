@@ -17,10 +17,9 @@
 -- along with this program.  If not, see <http://www.gnu.org/licenses/>.
 --
 
-require("halmd.modules")
-
 require("halmd.device")
-require("halmd.mdsim.core")
+require("halmd.mdsim.particle")
+require("halmd.modules")
 
 -- grab modules
 local device = halmd.device
@@ -64,9 +63,8 @@ function new(args)
     local memory = assert(args.memory)
 
     if not sample[memory] then
-        local core = assert(mdsim.core())
-        local particle = assert(core.particle)
-        local dimension = assert(core.dimension)
+        local particle = mdsim.particle() -- singleton
+        local dimension = assert(particle.dimension)
 
         local phase_space
         if device() then

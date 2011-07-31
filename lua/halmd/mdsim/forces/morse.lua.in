@@ -17,10 +17,9 @@
 -- along with this program.  If not, see <http://www.gnu.org/licenses/>.
 --
 
-require("halmd.modules")
-
 require("halmd.device")
-require("halmd.mdsim.core")
+require("halmd.mdsim.particle")
+require("halmd.modules")
 
 -- grab modules
 local device = halmd.device
@@ -43,13 +42,13 @@ module("halmd.mdsim.forces.morse", halmd.modules.register)
 -- construct Morse module
 --
 function new(args)
-    local cutoff = args.cutoff or { 2.5, 2.5, 2.5 } -- default value
-    local epsilon = args.epsilon or { 1.0, 1.5, 0.5 } -- default value
-    local sigma = args.sigma or { 1.0, 0.8, 0.88 } -- default value
-    local minimum = args.minimum or { 2.0, 1.6, 1.78 } -- default value
+    local cutoff = args.cutoff or {2.5, 2.5, 2.5} -- default value
+    local epsilon = args.epsilon or {1.0, 1.5, 0.5} -- default value
+    local sigma = args.sigma or {1.0, 0.8, 0.88} -- default value
+    local minimum = args.minimum or {2.0, 1.6, 1.78} -- default value
 
-    local core = mdsim.core()
-    local particle = assert(core.particle)
+    local particle = mdsim.particle() -- singleton
+    local logger = assert(args.logger)
 
     local morse
     if device() then
@@ -57,13 +56,13 @@ function new(args)
     else
         morse = assert(morse_wrapper.host)
     end
-    return morse(particle.ntype, cutoff, epsilon, sigma, minimum)
+    return morse(particle.ntype, cutoff, epsilon, sigma, minimum, logger)
 end
 
 --
 -- returns module description
 --
-function name()
+function description()
     return "Morse potential"
 end
 

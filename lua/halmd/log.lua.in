@@ -17,16 +17,28 @@
 -- along with this program.  If not, see <http://www.gnu.org/licenses/>.
 --
 
--- grab modules
+require("halmd.modules")
+
 -- grab C++ wrappers
--- grab standard library
 local logger_wrapper = libhalmd.io.logger
-local setmetatable = setmetatable
-local rawset = rawset
+local logging_wrapper = libhalmd.io.logging
+-- grab standard library
+local assert = assert
 local rawget = rawget
+local rawset = rawset
+local setmetatable = setmetatable
 local tostring = tostring
 
-module("halmd.log")
+module("halmd.log", halmd.modules.provider)
+
+--
+-- provide module logger
+--
+function parameters(module)
+    local logger = logger_wrapper()
+    logger:add_attribute("Module", assert(module.namespace))
+    return {logger = logger}
+end
 
 setmetatable(_M, {
     --
@@ -35,7 +47,7 @@ setmetatable(_M, {
     -- @param level Logging severity level
     --
     __index = function(self, level)
-        local wrapper = logger_wrapper[level]
+        local wrapper = logging_wrapper[level]
         local log
         if wrapper then
             log = function(message, ...)

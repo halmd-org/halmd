@@ -17,7 +17,6 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <halmd/io/logger.hpp>
 #include <halmd/mdsim/gpu/velocity.hpp>
 #include <halmd/mdsim/gpu/velocity_kernel.hpp>
 #include <halmd/numeric/mp/dsfloat.hpp>
@@ -26,21 +25,22 @@
 using namespace boost;
 using namespace std;
 
-namespace halmd
-{
-namespace mdsim { namespace gpu
-{
+namespace halmd {
+namespace mdsim {
+namespace gpu {
 
 template <int dimension, typename float_type>
 velocity<dimension, float_type>::velocity(
     shared_ptr<particle_type> particle
+  , shared_ptr<logger_type> logger
 )
   // dependency injection
-  : particle(particle)
+  : particle_(particle)
+  , logger_(logger)
   // set parameters
-  , dim_(particle->dim) // FIXME not used?
+  , dim_(particle_->dim) // FIXME not used?
 {
-    cuda::copy(particle->nbox, get_velocity_kernel<dimension>().nbox);
+    cuda::copy(particle_->nbox, get_velocity_kernel<dimension>().nbox);
 }
 
 /**
@@ -52,8 +52,8 @@ void velocity<dimension, float_type>::rescale(double factor)
     LOG_TRACE("rescale particle velocities by a factor of " << factor);
     cuda::configure(dim_.grid, dim_.block);
     get_velocity_kernel<dimension>().rescale(
-        particle->g_v
-      , particle->dim.threads()
+        particle_->g_v
+      , particle_->dim.threads()
       , factor
     );
 }
@@ -67,8 +67,8 @@ void velocity<dimension, float_type>::shift(vector_type const& delta)
     LOG_TRACE("shift particle velocities by " << delta);
     cuda::configure(dim_.grid, dim_.block);
     get_velocity_kernel<dimension>().shift(
-        particle->g_v
-      , particle->dim.threads()
+        particle_->g_v
+      , particle_->dim.threads()
       , delta
     );
 }
@@ -82,8 +82,8 @@ void velocity<dimension, float_type>::shift_rescale(vector_type const& delta, do
     LOG_TRACE("shift particle velocities by " << delta << " and rescale by a factor of " << factor);
     cuda::configure(dim_.grid, dim_.block);
     get_velocity_kernel<dimension>().shift_rescale(
-        particle->g_v
-      , particle->dim.threads()
+        particle_->g_v
+      , particle_->dim.threads()
       , delta
       , factor
     );
@@ -116,6 +116,6 @@ HALMD_LUA_API int luaopen_libhalmd_mdsim_gpu_velocity(lua_State* L)
 template class velocity<3, float>;
 template class velocity<2, float>;
 
-}} // namespace mdsim::gpu
-
+} // namespace mdsim
+} // namespace gpu
 } // namespace halmd

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2008-2010  Peter Colberg and Felix Höfling
+ * Copyright © 2010-2011  Peter Colberg
  *
  * This file is part of HALMD.
  *
@@ -20,33 +20,48 @@
 #ifndef HALMD_SCRIPT_HPP
 #define HALMD_SCRIPT_HPP
 
+#include <boost/noncopyable.hpp>
+#include <boost/shared_ptr.hpp>
 #include <lua.hpp>
+#include <luabind/luabind.hpp> // luabind::object
+#include <stdexcept>
+#include <string>
 
-#include <halmd/runner.hpp>
 #include <halmd/utility/options_parser.hpp>
+#include <halmd/utility/signal.hpp>
 
-namespace halmd
-{
+namespace halmd {
 
 /**
  * HALMD scripting engine
  */
 class script
+  : boost::noncopyable
 {
 public:
     script();
+    void dofile(std::string const& file_name);
+    void load_library();
     void options(options_parser& parser);
     void parsed(po::variables_map const& vm);
-    boost::shared_ptr<runner> run();
+    void run();
 
     static int traceback(lua_State* L);
 
+    //! Lua state
+    // Expose Lua state for convenient use in unit tests.
+    lua_State* const L;
+
 private:
-    boost::shared_ptr<lua_State> L_; //< Lua state
+    typedef signal<void ()>::slot_function_type slot_function_type;
 
     void package_path();
-    void load_wrapper();
-    void load_library();
+    static void register_exception_handlers();
+
+    /** RAII wrapper of Lua state */
+    boost::shared_ptr<lua_State const> const L_;
+    /** Lua script function */
+    luabind::object script_;
 };
 
 } // namespace halmd

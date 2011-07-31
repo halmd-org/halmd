@@ -1,5 +1,5 @@
 /*
- * Copyright © 2008-2010  Peter Colberg and Felix Höfling
+ * Copyright © 2008-2011  Peter Colberg and Felix Höfling
  *
  * This file is part of HALMD.
  *
@@ -21,46 +21,37 @@
 #include <cmath>
 #include <string>
 
-#include <halmd/io/logger.hpp>
 #include <halmd/mdsim/host/integrators/verlet_nvt_andersen.hpp>
 #include <halmd/utility/lua/lua.hpp>
-#include <halmd/utility/scoped_timer.hpp>
-#include <halmd/utility/timer.hpp>
 
 using namespace boost;
 using namespace std;
 
-namespace halmd
-{
-namespace mdsim { namespace host { namespace integrators
-{
+namespace halmd {
+namespace mdsim {
+namespace host {
+namespace integrators {
 
 template <int dimension, typename float_type>
 verlet_nvt_andersen<dimension, float_type>::verlet_nvt_andersen(
     shared_ptr<particle_type> particle
-  , shared_ptr<box_type> box
+  , shared_ptr<box_type const> box
   , shared_ptr<random_type> random
-  , float_type timestep, float_type temperature, float_type coll_rate
+  , float_type timestep
+  , float_type temperature
+  , float_type coll_rate
+  , shared_ptr<logger_type> logger
 )
   // dependency injection
-  : particle(particle)
-  , box(box)
-  , random(random)
+  : particle_(particle)
+  , box_(box)
+  , random_(random)
   , coll_rate_(coll_rate)
+  , logger_(logger)
 {
     this->timestep(timestep);
     this->temperature(temperature);
     LOG("collision rate with heat bath: " << coll_rate_);
-}
-
-/**
- * register module runtime accumulators
- */
-template <int dimension, typename float_type>
-void verlet_nvt_andersen<dimension, float_type>::register_runtimes(profiler_type& profiler)
-{
-    profiler.register_runtime(runtime_.integrate, "integrate", "first half-step of velocity-Verlet");
-    profiler.register_runtime(runtime_.finalize, "finalize", "second half-step of velocity-Verlet");
 }
 
 template <int dimension, typename float_type>
@@ -88,15 +79,15 @@ void verlet_nvt_andersen<dimension, float_type>::temperature(double temperature)
 template <int dimension, typename float_type>
 void verlet_nvt_andersen<dimension, float_type>::integrate()
 {
-    scoped_timer<timer> timer_(runtime_.integrate);
+    scoped_timer_type timer(runtime_.integrate);
 
-    for (size_t i = 0; i < particle->nbox; ++i) {
-        vector_type& v = particle->v[i] += particle->f[i] * timestep_half_;
-        vector_type& r = particle->r[i] += v * timestep_;
+    for (size_t i = 0; i < particle_->nbox; ++i) {
+        vector_type& v = particle_->v[i] += particle_->f[i] * timestep_half_;
+        vector_type& r = particle_->r[i] += v * timestep_;
         // enforce periodic boundary conditions
         // TODO: reduction is now to (-L/2, L/2) instead of (0, L) as before
         // check that this is OK
-        particle->image[i] += box->reduce_periodic(r);
+        particle_->image[i] += box_->reduce_periodic(r);
     }
 }
 
@@ -106,24 +97,24 @@ void verlet_nvt_andersen<dimension, float_type>::integrate()
 template <int dimension, typename float_type>
 void verlet_nvt_andersen<dimension, float_type>::finalize()
 {
-    scoped_timer<timer> timer_(runtime_.finalize);
+    scoped_timer_type timer(runtime_.finalize);
 
     // cache random numbers
     float_type rng_cache = 0;
     bool rng_cache_valid = false;
 
     // loop over all particles
-    for (size_t i = 0; i < particle->nbox; ++i) {
+    for (size_t i = 0; i < particle_->nbox; ++i) {
         // is deterministic step?
-        if (random->uniform<float_type>() > coll_prob_) {
-            particle->v[i] += particle->f[i] * timestep_half_;
+        if (random_->uniform<float_type>() > coll_prob_) {
+            particle_->v[i] += particle_->f[i] * timestep_half_;
         }
         // stochastic coupling with heat bath
         else {
             // assign two velocity components at a time
-            vector_type& v = particle->v[i];
+            vector_type& v = particle_->v[i];
             for (unsigned i=0; i < dimension-1; i+=2) {
-                tie(v[i], v[i+1]) = random->normal(sqrt_temperature_);
+                tie(v[i], v[i+1]) = random_->normal(sqrt_temperature_);
             }
             // handle last component separately for odd dimensions
             if (dimension % 2 == 1) {
@@ -131,7 +122,7 @@ void verlet_nvt_andersen<dimension, float_type>::finalize()
                     v[dimension-1] = rng_cache;
                 }
                 else {
-                    tie(v[dimension-1], rng_cache) = random->normal(sqrt_temperature_);
+                    tie(v[dimension-1], rng_cache) = random_->normal(sqrt_temperature_);
                 }
                 rng_cache_valid = !rng_cache_valid;
             }
@@ -148,7 +139,6 @@ static char const* module_name_wrapper(verlet_nvt_andersen<dimension, float_type
 template <int dimension, typename float_type>
 void verlet_nvt_andersen<dimension, float_type>::luaopen(lua_State* L)
 {
-    typedef typename _Base::_Base _Base_Base;
     using namespace luabind;
     static string class_name(module_name() + ("_" + lexical_cast<string>(dimension) + "_"));
     module(L, "libhalmd")
@@ -159,20 +149,25 @@ void verlet_nvt_andersen<dimension, float_type>::luaopen(lua_State* L)
             [
                 namespace_("integrators")
                 [
-                    class_<
-                        verlet_nvt_andersen
-                      , shared_ptr<_Base_Base>
-                      , bases<_Base_Base, _Base>
-                    >(class_name.c_str())
+                    class_<verlet_nvt_andersen, shared_ptr<_Base>, _Base>(class_name.c_str())
                         .def(constructor<
                             shared_ptr<particle_type>
-                          , shared_ptr<box_type>
+                          , shared_ptr<box_type const>
                           , shared_ptr<random_type>
-                          , float_type, float_type, float_type>()
-                        )
-                        .def("register_runtimes", &verlet_nvt_andersen::register_runtimes)
+                          , float_type
+                          , float_type
+                          , float_type
+                          , shared_ptr<logger_type>
+                        >())
                         .property("collision_rate", &verlet_nvt_andersen::collision_rate)
                         .property("module_name", &module_name_wrapper<dimension, float_type>)
+                        .scope
+                        [
+                            class_<runtime>("runtime")
+                                .def_readonly("integrate", &runtime::integrate)
+                                .def_readonly("finalize", &runtime::finalize)
+                        ]
+                        .def_readonly("runtime", &verlet_nvt_andersen::runtime_)
                 ]
             ]
         ]
@@ -200,6 +195,7 @@ template class verlet_nvt_andersen<3, float>;
 template class verlet_nvt_andersen<2, float>;
 #endif
 
-}}} // namespace mdsim::host::integrators
-
+} // namespace mdsim
+} // namespace host
+} // namespace integrators
 } // namespace halmd

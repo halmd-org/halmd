@@ -26,8 +26,7 @@
 
 #include <cuda_wrapper/error.hpp>
 
-namespace cuda
-{
+namespace cuda {
 
 /**
  * CUDA device management

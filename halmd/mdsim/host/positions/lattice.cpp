@@ -1,5 +1,5 @@
 /*
- * Copyright © 2008-2010  Peter Colberg and Felix Höfling
+ * Copyright © 2008-2011  Peter Colberg and Felix Höfling
  *
  * This file is part of HALMD.
  *
@@ -24,29 +24,30 @@
 #include <limits>
 #include <numeric>
 
-#include <halmd/io/logger.hpp>
 #include <halmd/mdsim/host/positions/lattice.hpp>
 #include <halmd/utility/lua/lua.hpp>
 
 using namespace boost;
 using namespace std;
 
-namespace halmd
-{
-namespace mdsim { namespace host { namespace positions
-{
+namespace halmd {
+namespace mdsim {
+namespace host {
+namespace positions {
 
 template <int dimension, typename float_type>
 lattice<dimension, float_type>::lattice(
     shared_ptr<particle_type> particle
-  , shared_ptr<box_type> box
+  , shared_ptr<box_type const> box
   , shared_ptr<random_type> random
   , vector_type const& slab
+  , shared_ptr<logger_type> logger
 )
   // dependency injection
-  : particle(particle)
-  , box(box)
-  , random(random)
+  : particle_(particle)
+  , box_(box)
+  , random_(random)
+  , logger_(logger)
   , slab_(slab)
 {
     if (*min_element(slab_.begin(), slab_.end()) <= 0 ||
@@ -63,23 +64,23 @@ lattice<dimension, float_type>::lattice(
 template <int dimension, typename float_type>
 void lattice<dimension, float_type>::set()
 {
-    assert(particle->r.size() == particle->nbox);
+    assert(particle_->r.size() == particle_->nbox);
 
     // assign fcc lattice points to a fraction of the particles in a slab at the centre
-    vector_type length = element_prod(box->length(), slab_);
+    vector_type length = element_prod(box_->length(), slab_);
     vector_type offset = -length / 2;
-    fcc(particle->r.begin(), particle->r.end(), length, offset);
+    fcc(particle_->r.begin(), particle_->r.end(), length, offset);
 
     // randomise particle positions if there is more than 1 particle type
     // FIXME this requires a subsequent sort
     // FIXME this will fail greatly once we support polymers
-    if (particle->ntypes.size() > 1) {
+    if (particle_->ntypes.size() > 1) {
         LOG("randomly permuting particle positions");
-        random->shuffle(particle->r.begin(), particle->r.end());
+        random_->shuffle(particle_->r.begin(), particle_->r.end());
     }
 
     // assign particle image vectors
-    fill(particle->image.begin(), particle->image.end(), 0);
+    fill(particle_->image.begin(), particle_->image.end(), 0);
 }
 
 /**
@@ -121,6 +122,8 @@ void lattice<dimension, float_type>::fcc(
 {
     typedef fixed_vector<unsigned int, dimension> index_type;
 
+    scoped_timer_type timer(runtime_.set);
+
     LOG_TRACE("generating fcc lattice for " << last - first << " particles, box: " << length << ", offset: " << offset);
     size_t npart = last - first;
     double u = (dimension == 3) ? 4 : 2;
@@ -134,9 +137,14 @@ void lattice<dimension, float_type>::fcc(
         }
         typename vector_type::iterator it = max_element(t.begin(), t.end());
         a = *it;
-        unsigned int m = n[it - t.begin()];
-        n = static_cast<index_type>(length / a); //< recompute to preserve aspect ratios of box
-        n[it - t.begin()] = m + 1;               //< ensure increment of at least one component
+        // recompute n to preserve aspect ratios of box, ensure that
+        // no compoment decreases and that at least one component
+        // is incremented
+        index_type m = n;
+        n = element_max(m, static_cast<index_type>(length / a));
+        if (m == n) {
+            n += index_type(1);
+        }
     }
     LOG("placing particles on fcc lattice: a = " << a);
     LOG_DEBUG("number of fcc unit cells: " << n);
@@ -200,12 +208,19 @@ void lattice<dimension, float_type>::luaopen(lua_State* L)
                     class_<lattice, shared_ptr<_Base>, _Base>(class_name.c_str())
                         .def(constructor<
                              shared_ptr<particle_type>
-                           , shared_ptr<box_type>
+                           , shared_ptr<box_type const>
                            , shared_ptr<random_type>
                            , vector_type const&
+                           , shared_ptr<logger_type>
                         >())
                         .property("slab", &lattice::slab)
                         .property("module_name", &module_name_wrapper<dimension, float_type>)
+                        .scope
+                        [
+                            class_<runtime>("runtime")
+                                .def_readonly("set", &runtime::set)
+                        ]
+                        .def_readonly("runtime", &lattice::runtime_)
                 ]
             ]
         ]
@@ -233,6 +248,7 @@ template class lattice<3, float>;
 template class lattice<2, float>;
 #endif
 
-}}} // namespace mdsim::host::positions
-
+} // namespace mdsim
+} // namespace host
+} // namespace positions
 } // namespace halmd

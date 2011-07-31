@@ -1,5 +1,5 @@
 /*
- * Copyright © 2008-2010  Peter Colberg and Felix Höfling
+ * Copyright © 2008-2011  Peter Colberg and Felix Höfling
  *
  * This file is part of HALMD.
  *
@@ -20,18 +20,13 @@
 #ifndef HALMD_MDSIM_BOX_HPP
 #define HALMD_MDSIM_BOX_HPP
 
-#include <boost/multi_array.hpp>
-#include <numeric>
-#include <functional>
 #include <lua.hpp>
+#include <vector>
 
-#include <halmd/mdsim/particle.hpp>
 #include <halmd/mdsim/type_traits.hpp>
 
-namespace halmd
-{
-namespace mdsim
-{
+namespace halmd {
+namespace mdsim {
 
 template <int dimension>
 class box
@@ -40,31 +35,41 @@ public:
     static void luaopen(lua_State* L);
 
     typedef typename type_traits<dimension, double>::vector_type vector_type;
-    typedef mdsim::particle<dimension> particle_type;
 
     box(
-        boost::shared_ptr<particle_type> particle
+        size_t nbox
       , vector_type const& length
     );
     box(
-        boost::shared_ptr<particle_type> particle
+        size_t nbox
       , double density
       , vector_type const& ratios
     );
 
-    vector_type const& length() { return length_; }
-    double density() { return density_; }
-    double volume()
+    vector_type const& length() const
     {
-        return std::accumulate(length_.begin(), length_.end(), 1., std::multiplies<double>());
+        return length_;
+    }
+
+    double density() const
+    {
+        return density_;
     }
 
     template <typename T>
     T reduce_periodic(T& r) const;
 
-    vector_type origin() const { return -length_half_; }
+    template <typename T>
+    void extend_periodic(T& r, T const& image) const;
 
-protected:
+    /** get origin */
+    vector_type origin() const;
+    /** get edge vectors */
+    std::vector<vector_type> edges() const;
+    /** get volume */
+    double volume() const;
+
+private:
     /** edge lengths of cuboid */
     vector_type length_;
     /** number density */
@@ -104,8 +109,20 @@ inline T box<dimension>::reduce_periodic(T& r) const
     return image;
 }
 
-} // namespace mdsim
+/**
+ * extend periodically reduced distance vector by image vector
+ *
+ * This is the inverse of reduce_periodic.
+ *
+ * A GPU version is found in halmd/mdsim/gpu/box_kernel.cuh
+ */
+template <int dimension> template <typename T>
+inline void box<dimension>::extend_periodic(T& r, T const& image) const
+{
+    r += element_prod(image, static_cast<T>(length_));
+}
 
+} // namespace mdsim
 } // namespace halmd
 
 #endif /* ! HALMD_MDSIM_BOX_HPP */

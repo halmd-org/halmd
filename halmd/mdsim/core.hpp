@@ -22,75 +22,117 @@
 
 #include <boost/shared_ptr.hpp>
 
-#include <halmd/mdsim/box.hpp>
 #include <halmd/mdsim/clock.hpp>
-#include <halmd/mdsim/force.hpp>
-#include <halmd/mdsim/integrator.hpp>
-#include <halmd/mdsim/neighbour.hpp>
-#include <halmd/mdsim/particle.hpp>
-#include <halmd/mdsim/position.hpp>
-#include <halmd/mdsim/sort.hpp>
-#include <halmd/mdsim/velocity.hpp>
 #include <halmd/utility/profiler.hpp>
+#include <halmd/utility/signal.hpp>
 
 /** HAL’s MD package */
-namespace halmd
-{
+namespace halmd {
 /** Molecular Dynamics simulation modules */
-namespace mdsim
-{
+namespace mdsim {
 
-template <int dimension>
 class core
 {
 public:
-    typedef mdsim::particle<dimension> particle_type;
-    typedef mdsim::force<dimension> force_type;
-    typedef mdsim::box<dimension> box_type;
-    typedef mdsim::neighbour<dimension> neighbour_type;
-    typedef mdsim::sort<dimension> sort_type;
-    typedef mdsim::integrator<dimension> integrator_type;
-    typedef mdsim::position<dimension> position_type;
-    typedef mdsim::velocity<dimension> velocity_type;
+    typedef halmd::signal<void ()> signal_type;
+    typedef signal_type::slot_function_type slot_function_type;
     typedef mdsim::clock clock_type;
+
+    core(boost::shared_ptr<clock_type> clock);
+    void setup();
+    void mdstep();
+
+    connection on_prepend_setup(slot_function_type const& slot)
+    {
+        return on_prepend_setup_.connect(slot);
+    }
+
+    connection on_setup(slot_function_type const& slot)
+    {
+        return on_setup_.connect(slot);
+    }
+
+    connection on_append_setup(slot_function_type const& slot)
+    {
+        return on_append_setup_.connect(slot);
+    }
+
+    connection on_prepend_integrate(slot_function_type const& slot)
+    {
+        return on_prepend_integrate_.connect(slot);
+    }
+
+    connection on_integrate(slot_function_type const& slot)
+    {
+        return on_integrate_.connect(slot);
+    }
+
+    connection on_append_integrate(slot_function_type const& slot)
+    {
+        return on_append_integrate_.connect(slot);
+    }
+
+    connection on_prepend_force(slot_function_type const& slot)
+    {
+        return on_prepend_force_.connect(slot);
+    }
+
+    connection on_force(slot_function_type const& slot)
+    {
+        return on_force_.connect(slot);
+    }
+
+    connection on_append_force(slot_function_type const& slot)
+    {
+        return on_append_force_.connect(slot);
+    }
+
+    connection on_prepend_finalize(slot_function_type const& slot)
+    {
+        return on_prepend_finalize_.connect(slot);
+    }
+
+    connection on_finalize(slot_function_type const& slot)
+    {
+        return on_finalize_.connect(slot);
+    }
+
+    connection on_append_finalize(slot_function_type const& slot)
+    {
+        return on_append_finalize_.connect(slot);
+    }
+
+    /** Lua bindings */
+    static void luaopen(lua_State* L);
+
+private:
     typedef utility::profiler profiler_type;
+    typedef profiler_type::accumulator_type accumulator_type;
+    typedef profiler_type::scoped_timer_type scoped_timer_type;
 
     struct runtime
     {
-        typedef typename profiler_type::accumulator_type accumulator_type;
-        accumulator_type prepare;
+        accumulator_type setup;
         accumulator_type mdstep;
     };
 
-    static void luaopen(lua_State* L);
-
-    core();
-    void register_runtimes(profiler_type& profiler);
-    void prepare();
-    void mdstep();
-
-    boost::shared_ptr<particle_type> particle;
-    boost::shared_ptr<box_type> box;
-    boost::shared_ptr<force_type> force;
-    boost::shared_ptr<neighbour_type> neighbour;
-    boost::shared_ptr<sort_type> sort;
-    boost::shared_ptr<integrator_type> integrator;
-    boost::shared_ptr<position_type> position;
-    boost::shared_ptr<velocity_type> velocity;
-    const boost::shared_ptr<clock_type> clock;
-
-    //! return current simulation step
-    uint64_t step() const {
-        return clock->step();
-    }
-
-private:
-    /** profiling runtime accumulators */
+    boost::shared_ptr<clock_type> clock_;
+    signal_type on_prepend_setup_;
+    signal_type on_setup_;
+    signal_type on_append_setup_;
+    signal_type on_prepend_integrate_;
+    signal_type on_integrate_;
+    signal_type on_append_integrate_;
+    signal_type on_prepend_force_;
+    signal_type on_force_;
+    signal_type on_append_force_;
+    signal_type on_prepend_finalize_;
+    signal_type on_finalize_;
+    signal_type on_append_finalize_;
     runtime runtime_;
 };
 
 } // namespace mdsim
-
 } // namespace halmd
 
 #endif /* ! HALMD_MDSIM_CORE_HPP */

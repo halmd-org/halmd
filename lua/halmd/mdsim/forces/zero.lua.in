@@ -17,10 +17,10 @@
 -- along with this program.  If not, see <http://www.gnu.org/licenses/>.
 --
 
-require("halmd.modules")
-
 require("halmd.device")
 require("halmd.mdsim.core")
+require("halmd.mdsim.particle")
+require("halmd.modules")
 
 -- grab modules
 local device = halmd.device
@@ -47,9 +47,8 @@ module("halmd.mdsim.forces.zero", halmd.modules.register)
 -- construct zero module
 --
 function new(args)
-    local core = mdsim.core()
-    local dimension = assert(core.dimension)
-    local particle = assert(core.particle)
+    local particle = mdsim.particle() -- singleton
+    local dimension = assert(particle.dimension)
 
     local zero
     if not device() then
@@ -57,12 +56,18 @@ function new(args)
     else
         zero = assert(zero_wrapper.gpu[dimension])
     end
-    return zero(particle)
+    local force = zero(particle)
+
+    local core = mdsim.core()
+    -- system preparation
+    core:on_append_setup{force.compute, tracker = force}
+
+    return force
 end
 
 --
 -- returns module description
 --
-function name()
+function description()
     return "Zero potential (no interaction)"
 end

@@ -30,27 +30,30 @@
 using namespace boost;
 using namespace std;
 
-namespace halmd
-{
-namespace observables { namespace gpu
-{
+namespace halmd {
+namespace observables {
+namespace gpu {
 
 template <int dimension, typename float_type>
 phase_space<gpu::samples::phase_space<dimension, float_type> >::phase_space(
     shared_ptr<sample_type> sample
-  , shared_ptr<particle_type> particle
-  , shared_ptr<box_type> box
+  , shared_ptr<particle_type const> particle
+  , shared_ptr<box_type const> box
+  , shared_ptr<clock_type const> clock
+  , shared_ptr<logger_type> logger
 )
-  : sample(sample)
-  , particle(particle)
-  , box(box)
+  : sample_(sample)
+  , particle_(particle)
+  , box_(box)
+  , clock_(clock)
+  , logger_(logger)
 {
     try {
-        cuda::copy(static_cast<vector_type>(box->length()), phase_space_wrapper<dimension>::kernel.box_length);
+        cuda::copy(static_cast<vector_type>(box_->length()), phase_space_wrapper<dimension>::kernel.box_length);
     }
     catch (cuda::error const&)
     {
-        LOG_ERROR("[phase_space] failed to copy box length to GPU");
+        LOG_ERROR("failed to copy box length to GPU");
         throw;
     }
 }
@@ -58,92 +61,79 @@ phase_space<gpu::samples::phase_space<dimension, float_type> >::phase_space(
 template <int dimension, typename float_type>
 phase_space<host::samples::phase_space<dimension, float_type> >::phase_space(
     shared_ptr<sample_type> sample
-  , shared_ptr<particle_type> particle
-  , shared_ptr<box_type> box
+  , shared_ptr<particle_type /* FIXME const */> particle
+  , shared_ptr<box_type const> box
+  , shared_ptr<clock_type const> clock
+  , shared_ptr<logger_type> logger
 )
-  : sample(sample)
-  , particle(particle)
-  , box(box)
+  : sample_(sample)
+  , particle_(particle)
+  , box_(box)
+  , clock_(clock)
+  , logger_(logger)
 {
-}
-
-/**
- * register module runtime accumulators
- */
-template <int dimension, typename float_type>
-void phase_space<gpu::samples::phase_space<dimension, float_type> >::register_runtimes(profiler_type& profiler)
-{
-    profiler.register_runtime(runtime_.acquire, "acquire", "acquisition of phase space sample on device");
-    profiler.register_runtime(runtime_.reset, "reset", "reset phase space sample on device");
-}
-
-template <int dimension, typename float_type>
-void phase_space<host::samples::phase_space<dimension, float_type> >::register_runtimes(profiler_type& profiler)
-{
-    profiler.register_runtime(runtime_.acquire, "acquire", "acquisition of phase space sample on host");
-    profiler.register_runtime(runtime_.reset, "reset", "reset phase space sample on host");
 }
 
 /**
  * Sample phase_space
  */
 template <int dimension, typename float_type>
-void phase_space<gpu::samples::phase_space<dimension, float_type> >::acquire(uint64_t step)
+void phase_space<gpu::samples::phase_space<dimension, float_type> >::acquire()
 {
-    scoped_timer<timer> timer_(runtime_.acquire);
+    scoped_timer_type timer(runtime_.acquire);
 
-    if (sample->step == step) {
-        LOG_TRACE("[phase_space] sample is up to date");
+    if (sample_->step == clock_->step()) {
+        LOG_TRACE("sample is up to date");
         return;
     }
 
-    LOG_TRACE("[phase_space] acquire GPU sample");
+    LOG_TRACE("acquire GPU sample");
 
     // re-allocate memory which allows modules (e.g., dynamics::blocking_scheme)
     // to hold a previous copy of the sample
     {
-        scoped_timer<timer> timer_(runtime_.reset);
-        sample->reset();
+        scoped_timer_type timer(runtime_.reset);
+        sample_->reset();
     }
 
-    phase_space_wrapper<dimension>::kernel.r.bind(particle->g_r);
-    phase_space_wrapper<dimension>::kernel.image.bind(particle->g_image);
-    phase_space_wrapper<dimension>::kernel.v.bind(particle->g_v);
+    phase_space_wrapper<dimension>::kernel.r.bind(particle_->g_r);
+    phase_space_wrapper<dimension>::kernel.image.bind(particle_->g_image);
+    phase_space_wrapper<dimension>::kernel.v.bind(particle_->g_v);
 
-    unsigned int threads = particle->dim.threads_per_block();
-    unsigned int* g_index = particle->g_index.data();
+    unsigned int threads = particle_->dim.threads_per_block();
+    unsigned int const* g_index = particle_->g_index.data();
 
-    for (size_t i = 0; i < particle->ntypes.size(); ++i) {
-        unsigned int ntype = particle->ntypes[i];
+    for (size_t i = 0; i < particle_->ntypes.size(); ++i) {
+        unsigned int ntype = particle_->ntypes[i];
         cuda::configure((ntype + threads - 1) / threads, threads);
-        phase_space_wrapper<dimension>::kernel.sample(g_index, *sample->r[i], *sample->v[i], ntype);
+        phase_space_wrapper<dimension>::kernel.sample(g_index, *sample_->r[i], *sample_->v[i], ntype);
         g_index += ntype;
     }
 
-    sample->step = step;
+    sample_->step = clock_->step();
 }
 
 /**
  * Sample phase_space
  */
 template <int dimension, typename float_type>
-void phase_space<host::samples::phase_space<dimension, float_type> >::acquire(uint64_t step)
+void phase_space<host::samples::phase_space<dimension, float_type> >::acquire()
 {
-    scoped_timer<timer> timer_(runtime_.acquire);
+    scoped_timer_type timer(runtime_.acquire);
 
-    if (sample->step == step) {
-        LOG_TRACE("[phase_space] sample is up to date");
+    if (sample_->step == clock_->step()) {
+        LOG_TRACE("sample is up to date");
         return;
     }
 
-    LOG_TRACE("[phase_space] acquire host sample");
+    LOG_TRACE("acquire host sample");
 
     using mdsim::gpu::particle_kernel::untagged;
 
     try {
-        cuda::copy(particle->g_r, particle->h_r);
-        cuda::copy(particle->g_image, particle->h_image);
-        cuda::copy(particle->g_v, particle->h_v);
+        cuda::copy(particle_->g_r, particle_->h_r);
+        cuda::copy(particle_->g_image, particle_->h_image);
+        cuda::copy(particle_->g_v, particle_->h_v);
     }
     catch (cuda::error const&) {
         LOG_ERROR("failed to copy phase space from GPU to host");
@@ -153,23 +143,35 @@ void phase_space<host::samples::phase_space<dimension, float_type> >::acquire(ui
     // re-allocate memory which allows modules (e.g., dynamics::blocking_scheme)
     // to hold a previous copy of the sample
     {
-        scoped_timer<timer> timer_(runtime_.reset);
-        sample->reset();
+        scoped_timer_type timer(runtime_.reset);
+        sample_->reset();
     }
 
-    for (size_t i = 0; i < particle->nbox; ++i) {
+    for (size_t i = 0; i < particle_->nbox; ++i) {
         unsigned int type, tag;
         vector_type r, v;
-        tie(r, type) = untagged<vector_type>(particle->h_r[i]);
-        tie(v, tag) = untagged<vector_type>(particle->h_v[i]);
-        vector_type image = particle->h_image[i];
-        vector_type L = static_cast<vector_type>(box->length());
+        tie(r, type) = untagged<vector_type>(particle_->h_r[i]);
+        tie(v, tag) = untagged<vector_type>(particle_->h_v[i]);
+        vector_type image = particle_->h_image[i];
+
         // periodically extended particle position
-        (*sample->r[type])[tag] = r + element_prod(image, L);
+        assert(type < sample_->r.size());
+        assert(tag < sample_->r[type]->size());
+        box_->extend_periodic(r, image);
+        (*sample_->r[type])[tag] = r;
+
         // particle velocity
-        (*sample->v[type])[tag] = v;
+        assert(type < sample_->v.size());
+        assert(tag < sample_->v[type]->size());
+        (*sample_->v[type])[tag] = v;
     }
-    sample->step = step;
+    sample_->step = clock_->step();
+}
+
+template <int dimension, typename float_type>
+static int wrap_gpu_dimension(phase_space<gpu::samples::phase_space<dimension, float_type> > const&)
+{
+    return dimension;
 }
 
 template <int dimension, typename float_type>
@@ -188,14 +190,29 @@ void phase_space<gpu::samples::phase_space<dimension, float_type> >::luaopen(lua
                     class_<phase_space, shared_ptr<_Base>, _Base>(class_name.c_str())
                         .def(constructor<
                              shared_ptr<sample_type>
-                           , shared_ptr<particle_type>
-                           , shared_ptr<box_type>
+                           , shared_ptr<particle_type const>
+                           , shared_ptr<box_type const>
+                           , shared_ptr<clock_type const>
+                           , shared_ptr<logger_type>
                         >())
-                        .def("register_runtimes", &phase_space::register_runtimes)
+                        .property("dimension", &wrap_gpu_dimension<dimension, float_type>)
+                        .scope
+                        [
+                            class_<runtime>("runtime")
+                                .def_readonly("acquire", &runtime::acquire)
+                                .def_readonly("reset", &runtime::reset)
+                        ]
+                        .def_readonly("runtime", &phase_space::runtime_)
                 ]
             ]
         ]
     ];
+}
+
+template <int dimension, typename float_type>
+static int wrap_host_dimension(phase_space<host::samples::phase_space<dimension, float_type> > const&)
+{
+    return dimension;
 }
 
 template <int dimension, typename float_type>
@@ -214,10 +231,19 @@ void phase_space<host::samples::phase_space<dimension, float_type> >::luaopen(lu
                     class_<phase_space, shared_ptr<_Base>, _Base>(class_name.c_str())
                         .def(constructor<
                              shared_ptr<sample_type>
-                           , shared_ptr<particle_type>
-                           , shared_ptr<box_type>
+                           , shared_ptr<particle_type /* FIXME const */>
+                           , shared_ptr<box_type const>
+                           , shared_ptr<clock_type const>
+                           , shared_ptr<logger_type>
                         >())
-                        .def("register_runtimes", &phase_space::register_runtimes)
+                        .property("dimension", &wrap_host_dimension<dimension, float_type>)
+                        .scope
+                        [
+                            class_<runtime>("runtime")
+                                .def_readonly("acquire", &runtime::acquire)
+                                .def_readonly("reset", &runtime::reset)
+                        ]
+                        .def_readonly("runtime", &phase_space::runtime_)
                 ]
             ]
         ]
@@ -239,6 +265,6 @@ template class phase_space<gpu::samples::phase_space<2, float> >;
 template class phase_space<host::samples::phase_space<3, float> >;
 template class phase_space<host::samples::phase_space<2, float> >;
 
-}} // namespace observables::gpu
-
+} // namespace observables
+} // namespace gpu
 } // namespace halmd

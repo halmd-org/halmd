@@ -1,5 +1,5 @@
 /*
- * Copyright © 2010  Peter Colberg and Felix Höfling
+ * Copyright © 2010-2011  Peter Colberg and Felix Höfling
  *
  * This file is part of HALMD.
  *
@@ -21,6 +21,7 @@
 #define HALMD_RANDOM_GPU_RANDOM_HPP
 
 #include <algorithm>
+#include <boost/make_shared.hpp>
 #include <boost/shared_ptr.hpp>
 #include <lua.hpp>
 #include <iterator>
@@ -28,35 +29,27 @@
 #include <halmd/algorithm/gpu/radix_sort.hpp>
 #include <halmd/io/logger.hpp>
 #include <halmd/random/gpu/rand48.hpp>
-#include <halmd/random/random.hpp>
-#include <halmd/utility/gpu/device.hpp>
 
-namespace halmd
-{
-namespace random { namespace gpu
-{
+namespace halmd {
+namespace random {
+namespace gpu {
 
 template <typename RandomNumberGenerator>
 class random
-  : public halmd::random::random
 {
 public:
-    typedef halmd::random::random _Base;
-
     typedef typename RandomNumberGenerator::rng_type rng_type;
-    typedef utility::gpu::device device_type;
-
-    boost::shared_ptr<device_type> device;
-
-    RandomNumberGenerator rng; //< FIXME private?
+    typedef logger logger_type;
+    struct defaults;
 
     static void luaopen(lua_State* L);
 
     random(
-        boost::shared_ptr<device_type> device
-      , unsigned int seed
-      , unsigned int blocks
-      , unsigned int threads
+        unsigned int seed = defaults::seed()
+      , boost::shared_ptr<logger_type> logger = boost::make_shared<logger_type>()
+      , unsigned int blocks = defaults::blocks()
+      , unsigned int threads = defaults::threads()
+      , unsigned int shuffle_threads = defaults::shuffle_threads()
     );
 
     //
@@ -72,13 +65,34 @@ public:
 
     unsigned int blocks()
     {
-        return rng.dim.blocks_per_grid();
+        return rng_.dim.blocks_per_grid();
     }
 
     unsigned int threads()
     {
-        return rng.dim.threads_per_block();
+        return rng_.dim.threads_per_block();
     }
+
+    RandomNumberGenerator const& rng()
+    {
+        return rng_;
+    }
+
+private:
+    /** pseudo-random number generator */
+    RandomNumberGenerator rng_;
+    /** module logger */
+    boost::shared_ptr<logger_type> logger_;
+    unsigned int shuffle_threads_;
+};
+
+template <typename RandomNumberGenerator>
+struct random<RandomNumberGenerator>::defaults
+{
+    static unsigned int seed();
+    static unsigned int blocks();
+    static unsigned int threads();
+    static unsigned int shuffle_threads();
 };
 
 /**
@@ -95,14 +109,14 @@ void random<RandomNumberGenerator>::shuffle(Sequence& g_val)
     // allocate device memory
     try {
         g_sort_index.resize(g_val.size());
-        g_sort_index.reserve(device->threads());
+        g_sort_index.reserve(shuffle_threads_);
     }
     catch (cuda::error const&) {
         LOG_ERROR("failed to allocate global device memory in random::shuffle");
         throw;
     }
 
-    sort_type sort(g_val.size(), device->threads());
+    sort_type sort(g_val.size(), shuffle_threads_);
     try {
         get(g_sort_index);
         sort(g_sort_index, g_val);
@@ -114,8 +128,8 @@ void random<RandomNumberGenerator>::shuffle(Sequence& g_val)
     }
 }
 
-}} // namespace random::gpu
-
+} // namespace random
+} // namespace gpu
 } // namespace halmd
 
 #endif /* ! HALMD_RANDOM_GPU_RANDOM_HPP */

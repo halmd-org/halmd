@@ -32,8 +32,7 @@
  * CUDA texture management
  */
 
-namespace cuda
-{
+namespace cuda {
 
 template <
     typename T
@@ -80,6 +79,6 @@ private:
     cudaChannelFormatDesc const cd;
 };
 
-}
+} // namespace cuda
 
 #endif /* ! CUDA_TEXTURE_HPP */

@@ -25,12 +25,10 @@
 
 using namespace halmd::algorithm::gpu;
 
-namespace halmd
-{
-namespace mdsim { namespace gpu
-{
-namespace particle_kernel
-{
+namespace halmd {
+namespace mdsim {
+namespace gpu {
+namespace particle_kernel {
 
 /** number of particles in simulation box */
 static __constant__ unsigned int nbox_;
@@ -70,6 +68,14 @@ __global__ void tag(coalesced_vector_type* g_r, coalesced_vector_type* g_v)
     g_v[GTID] = tagged(v, tag);
 }
 
+/**
+ * generate ascending index sequence
+ */
+__global__ void gen_index(unsigned int* g_index)
+{
+    g_index[GTID] = (GTID < nbox_) ? GTID : 0;
+}
+
 } // namespace particle_kernel
 
 template <int dimension>
@@ -78,11 +84,12 @@ particle_wrapper<dimension> const particle_wrapper<dimension>::kernel = {
   , particle_kernel::ntype_
   , particle_kernel::ntypes_
   , particle_kernel::tag<fixed_vector<float, dimension> >
+  , particle_kernel::gen_index
 };
 
 template class particle_wrapper<3>;
 template class particle_wrapper<2>;
 
-}} // namespace mdsim::gpu
-
+} // namespace mdsim
+} // namespace gpu
 } // namespace halmd

@@ -17,32 +17,52 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <ctime> // std::time_t
 #include <luabind/luabind.hpp>
 #include <stdint.h>
 
 #include <halmd/config.hpp>
 #include <halmd/utility/signal.hpp>
 
-namespace halmd
-{
+namespace halmd {
 
+// This macro uses __VA_ARGS__ to support template types with commas.
+// __VA_ARGS__ is part of the C99 standard, and will be part of C++0x,
+// therefore most C++ compilers already support __VA_ARGS__ as an
+// extension. This was tested with GCC 4.4 and Clang 2.9.
+//
+// The stringification turns the C++ type name into a Lua class name.
+// A Lua class name may be any string of characters, e.g. spaces,
+// commas, brackets or ampersands. As the registered classes are
+// never constructed in Lua, but returned from C++ modules, the
+// class names only have informational purposes. Use of the full
+// C++ type name is especially useful for debugging parameter
+// mismatches, e.g. if the user tries to register an unsupported
+// slot with a signal. Luabind will then print all supported
+// slot types, with the exact slot signatures.
+//
+#define SLOT(...)                                               \
+    class_<__VA_ARGS__>(#__VA_ARGS__)                           \
+        .def("__call", &__VA_ARGS__::operator())                \
+
+/**
+ * Lua bindings for halmd::signal<>::slot_function_type.
+ *
+ * This function registers all slot types used in HALMD for connecting
+ * module methods to signals. This allows retrieving a slot from a C++
+ * module in Lua, and registering it with a signal in another module,
+ * or running the slot directly in Lua.
+ */
 HALMD_LUA_API int luaopen_libhalmd_utility_lua_signal(lua_State* L)
 {
     using namespace luabind;
     module(L, "libhalmd")
     [
-        class_<signal<void ()> >("signal__void__")
-            .scope
-            [
-                class_<signal<void ()>::slot_function_type>("slot_function_type")
-                    .def("__call", &signal<void ()>::slot_function_type::operator())
-            ]
-      , class_<signal<void (uint64_t)> >("signal__uint64_t__")
-            .scope
-            [
-                class_<signal<void (uint64_t)>::slot_function_type>("slot_function_type")
-                    .def("__call", &signal<void (uint64_t)>::slot_function_type::operator())
-            ]
+        SLOT( signal<void ()>::slot_function_type )
+
+      , class_<connection>("connection")
+            .def("disconnect", &connection::disconnect)
+            .def("connected", &connection::connected)
     ];
     return 0;
 }

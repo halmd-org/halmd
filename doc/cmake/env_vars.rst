@@ -11,7 +11,7 @@ Useful environment variables for CMake
    NVCCFLAGS
      Compilation flags for CUDA compiler.
 
-     Recommended value is ``NVCCFLAGS="-Xcompiler -fPIC -Xptxas -v --host-compilation=c"``.
+     Recommended value is ``NVCCFLAGS="-Xcompiler -fPIC -Xptxas -v -arch sm_12"``.
 
    CUDA_INSTALL_PREFIX
      Path to CUDA toolkit.

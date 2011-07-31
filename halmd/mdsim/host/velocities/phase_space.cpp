@@ -1,5 +1,5 @@
 /*
- * Copyright © 2008-2010  Peter Colberg
+ * Copyright © 2008-2011  Peter Colberg
  *
  * This file is part of HALMD.
  *
@@ -20,27 +20,28 @@
 #include <algorithm>
 #include <boost/iterator/counting_iterator.hpp>
 
-#include <halmd/io/logger.hpp>
 #include <halmd/mdsim/host/velocities/phase_space.hpp>
 #include <halmd/utility/lua/lua.hpp>
 
 using namespace boost;
 using namespace std;
 
-namespace halmd
-{
-namespace mdsim { namespace host { namespace velocities
-{
+namespace halmd {
+namespace mdsim {
+namespace host {
+namespace velocities {
 
 template <int dimension, typename float_type>
 phase_space<dimension, float_type>::phase_space(
     shared_ptr<particle_type> particle
-  , shared_ptr<sample_type> sample
+  , shared_ptr<sample_type const> sample
+  , shared_ptr<logger_type> logger
 )
-  : _Base(particle)
+  : _Base(particle, logger)
   // dependency injection
-  , particle(particle)
-  , sample(sample)
+  , particle_(particle)
+  , sample_(sample)
+  , logger_(logger)
 {
 }
 
@@ -52,9 +53,11 @@ void phase_space<dimension, float_type>::set()
 {
     LOG("set particle velocities from phase space sample");
 
-    for (size_t j = 0, i = 0; j < particle->ntype; i += particle->ntypes[j], ++j) {
-        assert(sample->v[j]->size() + i <= particle->v.size());
-        copy(sample->v[j]->begin(), sample->v[j]->end(), particle->v.begin() + i);
+    scoped_timer_type timer(runtime_.set);
+
+    for (size_t j = 0, i = 0; j < particle_->ntype; i += particle_->ntypes[j], ++j) {
+        assert(sample_->v[j]->size() + i <= particle_->v.size());
+        copy(sample_->v[j]->begin(), sample_->v[j]->end(), particle_->v.begin() + i);
     }
 }
 
@@ -74,8 +77,15 @@ void phase_space<dimension, float_type>::luaopen(lua_State* L)
                     class_<phase_space, shared_ptr<_Base>, _Base>(class_name.c_str())
                         .def(constructor<
                              shared_ptr<particle_type>
-                           , shared_ptr<sample_type>
+                           , shared_ptr<sample_type const>
+                           , shared_ptr<logger_type>
                         >())
+                        .scope
+                        [
+                            class_<runtime>("runtime")
+                                .def_readonly("set", &runtime::set)
+                        ]
+                        .def_readonly("runtime", &phase_space::runtime_)
                 ]
             ]
         ]
@@ -103,6 +113,7 @@ template class phase_space<3, float>;
 template class phase_space<2, float>;
 #endif
 
-}}} // namespace mdsim::host::velocities
-
+} // namespace mdsim
+} // namespace host
+} // namespace velocities
 } // namespace halmd

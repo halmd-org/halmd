@@ -17,10 +17,9 @@
 -- along with this program.  If not, see <http://www.gnu.org/licenses/>.
 --
 
-require("halmd.modules")
-
 require("halmd.device")
-require("halmd.mdsim.core")
+require("halmd.mdsim.particle")
+require("halmd.modules")
 
 -- grab modules
 local device = halmd.device
@@ -44,12 +43,12 @@ module("halmd.mdsim.forces.power_law", halmd.modules.register)
 --
 function new(args)
     local index = args.index or 12 -- default value
-    local cutoff = args.cutoff or { 2.5, 2.5, 2.5 } -- default value
-    local epsilon = args.epsilon or { 1.0, 1.5, 0.5 } -- default value
-    local sigma = args.sigma or { 1.0, 0.8, 0.88 } -- default value
+    local cutoff = args.cutoff or {2.5, 2.5, 2.5} -- default value
+    local epsilon = args.epsilon or {1.0, 1.5, 0.5} -- default value
+    local sigma = args.sigma or {1.0, 0.8, 0.88} -- default value
 
-    local core = mdsim.core()
-    local particle = assert(core.particle)
+    local particle = mdsim.particle() -- singleton
+    local logger = assert(args.logger)
 
     local power_law
     if device() then
@@ -57,13 +56,13 @@ function new(args)
     else
         power_law = assert(power_law_wrapper.host)
     end
-    return power_law(particle.ntype, index, cutoff, epsilon, sigma)
+    return power_law(particle.ntype, index, cutoff, epsilon, sigma, logger)
 end
 
 --
 -- returns module description
 --
-function name()
+function description()
     return "Power law potential"
 end
 

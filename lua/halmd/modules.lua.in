@@ -19,8 +19,15 @@
 
 require("halmd.hooks")
 
+-- load HALMD Lua extension module if not compiled in statically
+if not libhalmd then
+    require("libhalmd")
+end
+
 -- grab modules
 local hooks = halmd.hooks
+-- grab C++ API
+local property = property
 -- grab standard library
 local ipairs = ipairs
 local rawset = rawset
@@ -86,9 +93,14 @@ function register(module)
             return value
         end
 
-        local args = setmetatable({}, { __index = param })
+        local args = setmetatable({}, {__index = param})
         local object = module.new(args)
         if object then
+            -- store Lua module that created C++ module as read-only property
+            if not object.module then
+                object.module = property(function() return module end)
+            end
+
             hooks.register_object(object, module)
         end
         return object
@@ -99,7 +111,7 @@ function register(module)
         namespace = module._NAME:match("[^.]+$")
     }
 
-    setmetatable(module, { __call = new, __index = defaults })
+    setmetatable(module, {__call = new, __index = defaults})
 end
 
 --

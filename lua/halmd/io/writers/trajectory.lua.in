@@ -1,0 +1,97 @@
+--
+-- Copyright © 2010-2011  Peter Colberg
+--
+-- This file is part of HALMD.
+--
+-- HALMD is free software: you can redistribute it and/or modify
+-- it under the terms of the GNU General Public License as published by
+-- the Free Software Foundation, either version 3 of the License, or
+-- (at your option) any later version.
+--
+-- This program is distributed in the hope that it will be useful,
+-- but WITHOUT ANY WARRANTY; without even the implied warranty of
+-- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+-- GNU General Public License for more details.
+--
+-- You should have received a copy of the GNU General Public License
+-- along with this program.  If not, see <http://www.gnu.org/licenses/>.
+--
+
+require("halmd.io.writers")
+require("halmd.mdsim.box")
+require("halmd.mdsim.particle")
+require("halmd.modules")
+require("halmd.observables.phase_space")
+require("halmd.observables.sampler")
+require("halmd.observables.samples.phase_space")
+
+-- grab modules
+local writers = halmd.io.writers
+local mdsim = halmd.mdsim
+local observables = halmd.observables
+-- grab C++ wrappers
+local po = libhalmd.po
+-- grab standard library
+local assert = assert
+local pairs = pairs
+local string = string
+
+module("halmd.io.writers.trajectory", halmd.modules.register)
+
+--
+-- construct trajectory writer module
+--
+function new(args)
+    local every = args.every or 1000 -- default value
+    local format = args.format or "h5md" -- default value
+
+    -- create trajectory file
+    local file = writers[format]{path = args.output .. ".trj"}
+
+    -- FIXME share phase_space instance with observables::host::density_mode
+    local phase_space = assert(observables.phase_space{memory = "host"})
+    local sample = observables.samples.phase_space{memory = "host"} -- singleton
+    local particle = mdsim.particle() -- singleton
+    local box = mdsim.box() -- singleton
+    local sampler = observables.sampler() -- singleton
+
+    -- sample and write phase space at fixed interval
+    local writer = file:writer{location = {"trajectory"}, mode = "append" }
+    writer:on_prepend_write(phase_space.acquire)
+    for i = 0, particle.ntype - 1 do
+        local species = string.char(string.byte("A") + i)
+        writer:on_write(sample:position(i), {species, "position"})
+        writer:on_write(sample:velocity(i), {species, "velocity"})
+    end
+    sampler:on_sample{writer.write, every, tracker = writer}
+
+    -- write box edge vectors and offset to trajectory group
+    --
+    -- @future time series for NPT ensemble
+    --
+    local writer = file:writer{location = {"trajectory", "box"}, mode = "truncate"}
+    writer:on_write(box.edges, {"edges"})
+    writer:on_write(box.origin, {"offset"})
+    sampler:on_start{writer.write, tracker = writer}
+
+    return writer
+end
+
+--
+-- assemble module options
+--
+-- @param desc po.options_description
+--
+function options(desc)
+    desc:add("every", po.uint64(), "sample interval for trajectory")
+
+    -- writer module choices with descriptions
+    local choices = {}
+    for writer, module in pairs(writers) do
+        if module.description then
+            choices[writer] = module.description()
+        end
+    end
+
+    desc:add("format", po.string():choices(choices), "output file format")
+end

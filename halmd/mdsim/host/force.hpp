@@ -26,10 +26,9 @@
 #include <halmd/mdsim/force.hpp>
 #include <halmd/mdsim/type_traits.hpp>
 
-namespace halmd
-{
-namespace mdsim { namespace host
-{
+namespace halmd {
+namespace mdsim {
+namespace host {
 
 template <int dimension, typename float_type>
 class force
@@ -50,8 +49,8 @@ public:
     virtual double hypervirial() = 0;
 };
 
-}} // namespace mdsim::host
-
+} // namespace mdsim
+} // namespace host
 } // namespace halmd
 
 #endif /* ! HALMD_MDSIM_HOST_FORCE_HPP */

@@ -21,17 +21,19 @@
 #define HALMD_MDSIM_HOST_FORCES_MORSE_HPP
 
 #include <boost/assign.hpp>
+#include <boost/make_shared.hpp>
 #include <boost/numeric/ublas/symmetric.hpp>
 #include <boost/tuple/tuple.hpp>
 #include <lua.hpp>
 
+#include <halmd/io/logger.hpp>
 #include <halmd/mdsim/host/forces/pair_trunc.hpp>
 #include <halmd/mdsim/host/forces/smooth.hpp>
 
-namespace halmd
-{
-namespace mdsim { namespace host { namespace forces
-{
+namespace halmd {
+namespace mdsim {
+namespace host {
+namespace forces {
 
 /**
  * define Morse potential and parameters
@@ -41,8 +43,8 @@ class morse
 {
 public:
     typedef boost::numeric::ublas::symmetric_matrix<float_type, boost::numeric::ublas::lower> matrix_type;
+    typedef logger logger_type;
 
-    static char const* name() { return "Morse"; }
     static char const* module_name() { return "morse"; }
 
     static void luaopen(lua_State* L);
@@ -52,6 +54,7 @@ public:
       , boost::array<float, 3> const& epsilon
       , boost::array<float, 3> const& sigma
       , boost::array<float, 3> const& r_min
+      , boost::shared_ptr<logger_type> logger = boost::make_shared<logger_type>()
     );
 
     /**
@@ -125,10 +128,13 @@ private:
     matrix_type r_cut_sigma_;
     /** square of cutoff radius */
     matrix_type rr_cut_;
+    /** module logger */
+    boost::shared_ptr<logger_type> logger_;
 };
 
-}}} // namespace mdsim::host::forces
-
+} // namespace mdsim
+} // namespace host
+} // namespace forces
 } // namespace halmd
 
 #endif /* ! HALMD_MDSIM_HOST_FORCES_MORSE_HPP */

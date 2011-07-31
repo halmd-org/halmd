@@ -17,8 +17,11 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <algorithm>
+#include <boost/bind.hpp>
 #include <boost/lexical_cast.hpp>
 #include <limits>
+#include <stdexcept>
 #include <string>
 
 #include <halmd/observables/host/samples/phase_space.hpp>
@@ -29,10 +32,10 @@
 using namespace boost;
 using namespace std;
 
-namespace halmd
-{
-namespace observables { namespace host { namespace samples
-{
+namespace halmd {
+namespace observables {
+namespace host {
+namespace samples {
 
 template <int dimension, typename float_type>
 char const* phase_space<dimension, float_type>::class_name()
@@ -50,6 +53,68 @@ static char const* class_name_wrapper(phase_space<dimension, float_type> const&)
 }
 
 template <int dimension, typename float_type>
+static int wrap_dimension(phase_space<dimension, float_type> const&)
+{
+    return dimension;
+}
+
+template <int dimension, typename float_type>
+typename phase_space<dimension, float_type>::sample_vector const&
+phase_space<dimension, float_type>::position(unsigned int type) const
+{
+    if (!(type < r.size())) {
+        throw invalid_argument("particle type");
+    }
+    return *r[type];
+}
+
+template <int dimension, typename float_type>
+typename phase_space<dimension, float_type>::sample_vector const&
+phase_space<dimension, float_type>::velocity(unsigned int type) const
+{
+    if (!(type < v.size())) {
+        throw invalid_argument("particle type");
+    }
+    return *v[type];
+}
+
+template <int dimension, typename float_type>
+typename phase_space<dimension, float_type>::sample_vector&
+phase_space<dimension, float_type>::position(unsigned int type)
+{
+    if (!(type < r.size())) {
+        throw invalid_argument("particle type");
+    }
+    return *r[type];
+}
+
+template <int dimension, typename float_type>
+typename phase_space<dimension, float_type>::sample_vector&
+phase_space<dimension, float_type>::velocity(unsigned int type)
+{
+    if (!(type < v.size())) {
+        throw invalid_argument("particle type");
+    }
+    return *v[type];
+}
+
+template <typename phase_space_type>
+static function<typename phase_space_type::sample_vector& ()>
+wrap_position(shared_ptr<phase_space_type> phase_space, unsigned int type)
+{
+    typedef typename phase_space_type::sample_vector& (phase_space_type::*getter_type)(unsigned int);
+    return bind(static_cast<getter_type>(&phase_space_type::position), phase_space, type);
+}
+
+template <typename phase_space_type>
+static function<typename phase_space_type::sample_vector& ()>
+wrap_velocity(shared_ptr<phase_space_type> phase_space, unsigned int type)
+{
+    typedef typename phase_space_type::sample_vector& (phase_space_type::*getter_type)(unsigned int);
+    return bind(static_cast<getter_type>(&phase_space_type::velocity), phase_space, type);
+}
+
+template <int dimension, typename float_type>
 void phase_space<dimension, float_type>::luaopen(lua_State* L)
 {
     using namespace luabind;
@@ -64,6 +129,9 @@ void phase_space<dimension, float_type>::luaopen(lua_State* L)
                     class_<phase_space, shared_ptr<phase_space> >(class_name())
                         .def(constructor<vector<unsigned int> >())
                         .property("class_name", &class_name_wrapper<dimension, float_type>)
+                        .property("dimension", &wrap_dimension<dimension, float_type>)
+                        .def("position", &wrap_position<phase_space>)
+                        .def("velocity", &wrap_velocity<phase_space>)
                 ]
             ]
         ]
@@ -90,19 +158,20 @@ template class phase_space<2, double>;
 template class phase_space<3, float>;
 template class phase_space<2, float>;
 
-}}} // namespace observables::host::samples
+} // namespace samples
+} // namespace host
 
-namespace observables { namespace samples
+namespace samples
 {
 
 // explicit instantiation
 #ifndef USE_HOST_SINGLE_PRECISION
-template class blocking_scheme<observables::host::samples::phase_space<3, double> >;
-template class blocking_scheme<observables::host::samples::phase_space<2, double> >;
+template class blocking_scheme<host::samples::phase_space<3, double> >;
+template class blocking_scheme<host::samples::phase_space<2, double> >;
 #endif
-template class blocking_scheme<observables::host::samples::phase_space<3, float> >;
-template class blocking_scheme<observables::host::samples::phase_space<2, float> >;
+template class blocking_scheme<host::samples::phase_space<3, float> >;
+template class blocking_scheme<host::samples::phase_space<2, float> >;
 
-}} // namespace observables::samples
-
+} // namespace samples
+} // namespace observables
 } // namespace halmd

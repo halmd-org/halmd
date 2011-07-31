@@ -23,23 +23,25 @@
 #include <cuda_wrapper/cuda_wrapper.hpp>
 #include <halmd/mdsim/type_traits.hpp>
 
-namespace halmd
-{
-namespace mdsim { namespace gpu { namespace positions
-{
+namespace halmd {
+namespace mdsim {
+namespace gpu {
+namespace positions {
 
 template <int dimension>
 struct phase_space_wrapper
 {
+    typedef typename type_traits<dimension, float>::gpu::coalesced_vector_type coalesced_vector_type;
     typedef typename type_traits<dimension, float>::gpu::vector_type vector_type;
 
     cuda::symbol<vector_type> box_length;
-    cuda::function<void (float4*)> reduce_periodic;
+    cuda::function<void (float4*, coalesced_vector_type*)> reduce_periodic;
     static phase_space_wrapper const kernel;
 };
 
-}}} // namespace mdsim::gpu::positions
-
+} // namespace mdsim
+} // namespace gpu
+} // namespace positions
 } // namespace halmd
 
 #endif /* ! HALMD_MDSIM_GPU_POSITIONS_PHASE_SPACE_KERNEL_HPP */

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2010  Peter Colberg and Felix Höfling
+ * Copyright © 2010-2011  Peter Colberg and Felix Höfling
  *
  * This file is part of HALMD.
  *
@@ -17,6 +17,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <boost/nondet_random.hpp> // boost::random_device
+
 #include <halmd/random/gpu/rand48.hpp>
 #include <halmd/random/gpu/random.hpp>
 #include <halmd/random/gpu/random_kernel.hpp>
@@ -25,27 +27,27 @@
 using namespace boost;
 using namespace std;
 
-namespace halmd
-{
-namespace random { namespace gpu
-{
+namespace halmd {
+namespace random {
+namespace gpu {
 
 template <typename RandomNumberGenerator>
 random<RandomNumberGenerator>::random(
-    shared_ptr<device_type> device
-  , unsigned int seed
+    unsigned int seed
+  , shared_ptr<logger_type> logger
   , unsigned int blocks
   , unsigned int threads
+  , unsigned int shuffle_threads
 )
-  // dependency injection
-  : device(device)
   // allocate random number generator state
-  , rng(blocks, threads)
+  : rng_(blocks, threads)
+  , logger_(logger)
+  , shuffle_threads_(shuffle_threads)
 {
     LOG("random number generator seed: " << seed);
     try {
-        rng.seed(seed);
-        cuda::copy(rng.rng(), get_random_kernel<rng_type>().rng);
+        rng_.seed(seed);
+        cuda::copy(rng_.rng(), get_random_kernel<rng_type>().rng);
     }
     catch (cuda::error const&) {
         LOG_ERROR("failed to seed random number generator");
@@ -60,7 +62,7 @@ template <typename RandomNumberGenerator>
 void random<RandomNumberGenerator>::uniform(cuda::vector<float>& g_v)
 {
     try {
-        cuda::configure(rng.dim.grid, rng.dim.block);
+        cuda::configure(rng_.dim.grid, rng_.dim.block);
         get_random_kernel<rng_type>().uniform(g_v, g_v.size());
         cuda::thread::synchronize();
     }
@@ -77,7 +79,7 @@ template <typename RandomNumberGenerator>
 void random<RandomNumberGenerator>::get(cuda::vector<unsigned int>& g_v)
 {
     try {
-        cuda::configure(rng.dim.grid, rng.dim.block);
+        cuda::configure(rng_.dim.grid, rng_.dim.block);
         get_random_kernel<rng_type>().get(g_v, g_v.size());
         cuda::thread::synchronize();
     }
@@ -94,7 +96,7 @@ template <typename RandomNumberGenerator>
 void random<RandomNumberGenerator>::normal(cuda::vector<float>& g_v, float mean, float sigma)
 {
     try {
-        cuda::configure(rng.dim.grid, rng.dim.block);
+        cuda::configure(rng_.dim.grid, rng_.dim.block);
         get_random_kernel<rng_type>().normal(g_v, g_v.size(), mean, sigma);
         cuda::thread::synchronize();
     }
@@ -102,6 +104,26 @@ void random<RandomNumberGenerator>::normal(cuda::vector<float>& g_v, float mean,
         LOG_ERROR("failed to fill vector with normal random numbers");
         throw;
     }
+}
+
+//! Get seed from non-deterministic random number generator.
+// boost::random_device reads from /dev/urandom on GNU/Linux,
+// and the default cryptographic service provider on Windows.
+template <typename RandomNumberGenerator>
+unsigned int random<RandomNumberGenerator>::defaults::seed() {
+    return boost::random_device()();
+}
+template <typename RandomNumberGenerator>
+unsigned int random<RandomNumberGenerator>::defaults::blocks() {
+    return 32;
+}
+template <typename RandomNumberGenerator>
+unsigned int random<RandomNumberGenerator>::defaults::threads() {
+    return 32 << DEVICE_SCALE;
+}
+template <typename RandomNumberGenerator>
+unsigned int random<RandomNumberGenerator>::defaults::shuffle_threads() {
+    return 128;
 }
 
 template <typename RandomNumberGenerator>
@@ -115,15 +137,27 @@ void random<RandomNumberGenerator>::luaopen(lua_State* L)
         [
             namespace_("random")
             [
-                class_<random, shared_ptr<_Base>, _Base>(class_name.c_str())
+                class_<random, shared_ptr<random> >(class_name.c_str())
                     .def(constructor<
-                         shared_ptr<device_type>
-                       , unsigned int
-                       , unsigned int
-                       , unsigned int
+                        unsigned int
+                      , shared_ptr<logger_type>
+                      , unsigned int
+                      , unsigned int
+                      , unsigned int
                      >())
                     .property("blocks", &random::blocks)
                     .property("threads", &random::threads)
+                    .scope
+                    [
+                        class_<defaults>("defaults")
+                            .scope
+                            [
+                                def("seed", &defaults::seed)
+                              , def("threads", &defaults::threads)
+                              , def("blocks", &defaults::blocks)
+                              , def("shuffle_threads", &defaults::shuffle_threads)
+                            ]
+                    ]
             ]
         ]
     ];
@@ -135,8 +169,8 @@ HALMD_LUA_API int luaopen_libhalmd_random_gpu_random(lua_State* L)
     return 0;
 }
 
-}} // namespace random::gpu
-
+} // namespace random
+} // namespace gpu
 template class random::gpu::random<random::gpu::rand48>;
 
 } // namespace halmd

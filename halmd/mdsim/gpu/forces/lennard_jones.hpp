@@ -20,17 +20,19 @@
 #ifndef HALMD_MDSIM_GPU_FORCES_LENNARD_JONES_HPP
 #define HALMD_MDSIM_GPU_FORCES_LENNARD_JONES_HPP
 
+#include <boost/make_shared.hpp>
 #include <boost/numeric/ublas/symmetric.hpp>
 #include <cuda_wrapper/cuda_wrapper.hpp>
 #include <lua.hpp>
 
+#include <halmd/io/logger.hpp>
 #include <halmd/mdsim/gpu/forces/pair_trunc.hpp>
 #include <halmd/mdsim/gpu/forces/lennard_jones_kernel.hpp>
 
-namespace halmd
-{
-namespace mdsim { namespace gpu { namespace forces
-{
+namespace halmd {
+namespace mdsim {
+namespace gpu {
+namespace forces {
 
 /**
  * define Lennard-Jones potential and parameters
@@ -41,8 +43,8 @@ class lennard_jones
 public:
     typedef lennard_jones_kernel::lennard_jones gpu_potential_type;
     typedef boost::numeric::ublas::symmetric_matrix<float_type, boost::numeric::ublas::lower> matrix_type;
+    typedef logger logger_type;
 
-    static char const* name() { return "Lennard-Jones"; }
     static char const* module_name() { return "lennard_jones"; }
 
     static void luaopen(lua_State* L);
@@ -52,6 +54,7 @@ public:
       , boost::array<float, 3> const& cutoff
       , boost::array<float, 3> const& epsilon
       , boost::array<float, 3> const& sigma
+      , boost::shared_ptr<logger_type> logger = boost::make_shared<logger_type>()
     );
 
     /** bind textures before kernel invocation */
@@ -107,10 +110,13 @@ private:
     matrix_type en_cut_;
     /** potential parameters at CUDA device */
     cuda::vector<float4> g_param_;
+    /** module logger */
+    boost::shared_ptr<logger_type> logger_;
 };
 
-}}} // namespace mdsim::gpu::forces
-
+} // namespace mdsim
+} // namespace gpu
+} // namespace forces
 } // namespace halmd
 
 #endif /* ! HALMD_MDSIM_GPU_FORCES_LENNARD_JONES_HPP */

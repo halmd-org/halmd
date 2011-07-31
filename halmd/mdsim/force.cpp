@@ -17,16 +17,24 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <boost/bind.hpp>
+
 #include <halmd/mdsim/force.hpp>
 #include <halmd/utility/lua/lua.hpp>
+#include <halmd/utility/signal.hpp>
 
 using namespace boost;
 using namespace std;
 
-namespace halmd
+namespace halmd {
+namespace mdsim {
+
+template <typename integrator_type>
+typename signal<void ()>::slot_function_type
+wrap_compute(shared_ptr<integrator_type> integrator)
 {
-namespace mdsim
-{
+    return bind(&integrator_type::compute, integrator);
+}
 
 template <int dimension>
 void force<dimension>::luaopen(lua_State* L)
@@ -38,7 +46,7 @@ void force<dimension>::luaopen(lua_State* L)
         namespace_("mdsim")
         [
             class_<force, shared_ptr<force> >(class_name.c_str())
-                .def("compute", &force::compute)
+                .property("compute", &wrap_compute<force>)
         ]
     ];
 }
@@ -55,5 +63,4 @@ template class force<3>;
 template class force<2>;
 
 } // namespace mdsim
-
 } // namespace halmd

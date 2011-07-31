@@ -20,11 +20,13 @@
 #ifndef HALMD_MDSIM_GPU_BOX_KERNEL_CUH
 #define HALMD_MDSIM_GPU_BOX_KERNEL_CUH
 
-namespace halmd { namespace mdsim { namespace gpu { namespace box_kernel
-{
+namespace halmd {
+namespace mdsim {
+namespace gpu {
+namespace box_kernel {
 
 /**
- * enforce periodic boundary conditions on argument
+ * enforce periodic boundary conditions on first argument
  *
  * map coordinates to (-L[i]/2, L[i]/2)
  * which is appropriate too for relative vectors
@@ -41,6 +43,23 @@ __device__ inline vector_type_ reduce_periodic(
     return image;
 }
 
-}}}} // namespace halmd::mdsim::gpu::box_kernel
+/**
+ * extend periodically reduced distance vector by image vector
+ *
+ * This is the inverse of reduce_periodic.
+ */
+template <typename vector_type, typename vector_type_>
+__device__ inline void extend_periodic(
+  vector_type& r,
+  vector_type_ const& image,
+  vector_type_ const& L)
+{
+    r += element_prod(image, L);
+}
+
+} // namespace box_kernel
+} // namespace gpu
+} // namespace mdsim
+} // namespace halmd
 
 #endif /* ! HALMD_MDSIM_GPU_BOX_KERNEL_CUH */

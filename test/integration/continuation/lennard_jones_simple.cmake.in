@@ -1,0 +1,71 @@
+#!@CMAKE_COMMAND@ -P
+#
+# Copyright © 2011  Peter Colberg and Felix Höfling
+#
+# This file is part of HALMD.
+#
+# HALMD is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+#
+
+##
+# Test trajectory continuation for a simple, one-component Lennard-Jones fluid
+# where the optimised module for the GPU backend is used
+#
+# FIXME write C++ test to compare trajectory outputs
+#
+
+set(CMAKE_MODULE_PATH "@HALMD_TEST_CMAKE_BINARY_DIR@")
+
+include(execute_halmd)
+
+set(OUTPUT_PREFIX "@CMAKE_CURRENT_BINARY_DIR@/lennard_jones_simple")
+
+if(DEFINED USE_HOST)
+    if (WITH_CUDA)
+        set(BACKEND_OPTION "--disable-gpu")
+    endif (WITH_CUDA)
+    message(STATUS "Using host backend for continuation")
+else()
+    message(STATUS "Using GPU backend for continuation")
+endif()
+
+if(NOT DEFINED DIMENSION)
+    message(FATAL_ERROR "Variable DIMENSION undefined")
+else()
+    message(STATUS "Space dimension: ${DIMENSION}")
+endif()
+
+execute_halmd(
+  --verbose
+  --output "${OUTPUT_PREFIX}"
+  --steps 1000
+  box --dimension "${DIMENSION}"--particles=300 --density 0.1
+  trajectory --every=1000
+)
+
+execute_halmd(
+  --verbose
+  --output "${OUTPUT_PREFIX}_continued"
+  --steps 1000
+  "${BACKEND_OPTION}"
+  trajectory --file "${OUTPUT_PREFIX}.trj"
+  trajectory --every=1000
+)
+
+file(REMOVE
+  "${OUTPUT_PREFIX}.trj"
+  "${OUTPUT_PREFIX}.log"
+  "${OUTPUT_PREFIX}_continued.log"
+  "${OUTPUT_PREFIX}_continued.trj"
+)

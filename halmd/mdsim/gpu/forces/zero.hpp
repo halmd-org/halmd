@@ -1,5 +1,5 @@
 /*
- * Copyright © 2010-2011  Felix Höfling
+ * Copyright © 2010-2011  Felix Höfling and Peter Colberg
  *
  * This file is part of HALMD.
  *
@@ -26,10 +26,10 @@
 #include <halmd/mdsim/gpu/force.hpp>
 #include <halmd/mdsim/gpu/particle.hpp>
 
-namespace halmd
-{
-namespace mdsim { namespace gpu { namespace forces
-{
+namespace halmd {
+namespace mdsim {
+namespace gpu {
+namespace forces {
 
 /**
  * zero force (noninteracting particles)
@@ -49,11 +49,10 @@ public:
     boost::shared_ptr<particle_type> particle;
 
     static void luaopen(lua_State* L);
-
+    /** zero potential energy, stress tensor and hypervirial */
     zero(boost::shared_ptr<particle_type> particle);
-
-    // there's nothing to compute
-    virtual void compute() {}
+    /** zero particle forces */
+    virtual void compute();
 
     // nothing to enable or disable
     virtual void aux_enable() {}
@@ -90,8 +89,9 @@ protected:
     cuda::vector<float> g_hypervirial_;
 };
 
-}}} // namespace mdsim::gpu::forces
-
+} // namespace mdsim
+} // namespace gpu
+} // namespace forces
 } // namespace halmd
 
 #endif /* ! HALMD_MDSIM_GPU_FORCES_ZERO_HPP */

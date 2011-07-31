@@ -17,40 +17,41 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <algorithm>
 #include <boost/bind.hpp>
 #include <functional>
 #include <iterator>
 #include <limits>
+#include <stdexcept>
 #include <string>
 
-#include <halmd/io/logger.hpp>
 #include <halmd/observables/ssf.hpp>
 #include <halmd/utility/lua/lua.hpp>
-#include <halmd/utility/scoped_timer.hpp>
-#include <halmd/utility/timer.hpp>
 
 using namespace boost;
 using namespace std;
 
-namespace halmd
-{
-namespace observables
-{
+namespace halmd {
+namespace observables {
 
 template <int dimension>
 ssf<dimension>::ssf(
-    shared_ptr<density_mode_type> density_mode
+    shared_ptr<density_mode_type const> density_mode
+  , shared_ptr<clock_type const> clock
   , unsigned int npart
+  , shared_ptr<logger_type> logger
 )
   // dependency injection
-  : density_mode(density_mode)
+  : density_mode_(density_mode)
+  , clock_(clock)
+  , logger_(logger)
   // initialise members
   , npart_(npart)
-  , step_(numeric_limits<uint64_t>::max())
+  , step_(numeric_limits<step_type>::max())
 {
     // allocate memory
-    unsigned int nq = density_mode->wavenumber().size();
-    unsigned int ntype = density_mode->value().size();
+    unsigned int nq = density_mode_->wavenumber().size();
+    unsigned int ntype = density_mode_->value().size();
     unsigned int nssf = ntype * (ntype + 1) / 2; //< number of partial structure factors
 
     value_.resize(nssf);
@@ -62,58 +63,22 @@ ssf<dimension>::ssf(
 }
 
 /**
- * register module runtime accumulators
- */
-template <int dimension>
-void ssf<dimension>::register_runtimes(profiler_type& profiler)
-{
-    profiler.register_runtime(runtime_.sample, "sample", "computation of static structure factor");
-}
-
-/**
- * register observables
- */
-template <int dimension>
-void ssf<dimension>::register_observables(writer_type& writer)
-{
-    string root("structure/ssf/");
-    // write wavenumbers only once
-    writer.write_dataset(root + "wavenumber", density_mode->wavenumber(), "wavenumber grid");
-
-    // register output writers for all partial structure factors
-    unsigned char ntype = static_cast<unsigned char>(density_mode->value().size());
-    assert('A' + density_mode->value().size() <= 'Z' + 1);
-    unsigned int k = 0;
-    for (unsigned char i = 0; i < ntype; ++i) {
-        for (unsigned char j = i; j < ntype; ++j, ++k) {
-            string label;
-            label += 'A' + i;
-            label += 'A' + j;
-            writer.register_observable(
-                root + label, &value_[k]
-              , "partial static structure factor S_" + label + " (value, error, count)"
-            );
-        }
-    }
-}
-
-/**
  * compute SSF from sample of density Fourier modes
  */
 template <int dimension>
-void ssf<dimension>::sample(uint64_t step)
+void ssf<dimension>::sample()
 {
-    if (step_ == step) {
-        LOG_TRACE("[ssf] sample is up to date");
+    if (step_ == clock_->step()) {
+        LOG_TRACE("sample is up to date");
         return;
     }
 
     // acquire sample of density modes
-    on_sample_(step);
+    on_sample_();
 
-    LOG_TRACE("[ssf] sampling");
+    LOG_TRACE("sampling");
 
-    if (density_mode->step() != step) {
+    if (density_mode_->step() != clock_->step()) {
         throw logic_error("density modes sample was not updated");
     }
 
@@ -131,7 +96,7 @@ void ssf<dimension>::sample(uint64_t step)
             v[2] = static_cast<double>(count(acc));
         }
     }
-    step_ = step;   // store simulation step as time stamp
+    step_ = clock_->step();   // store simulation step as time stamp
 }
 
 /**
@@ -140,7 +105,7 @@ void ssf<dimension>::sample(uint64_t step)
 template <int dimension>
 void ssf<dimension>::compute_()
 {
-    scoped_timer<timer> timer_(runtime_.sample);
+    scoped_timer_type timer(runtime_.sample);
 
     typedef typename density_mode_type::result_type::value_type::element_type rho_vector_type;
     typedef typename density_mode_type::wavevector_type::map_type wavevector_map_type;
@@ -149,15 +114,15 @@ void ssf<dimension>::compute_()
     typedef std::vector<accumulator<double> >::iterator result_iterator;
 
     // perform computation of partial SSF for all combinations of particle types
-    wavevector_map_type const& wavevector = density_mode->wavevector().value();
+    wavevector_map_type const& wavevector = density_mode_->wavevector().value();
     if (wavevector.empty()) return; // nothing to do
 
-    unsigned int ntype = density_mode->value().size();
+    unsigned int ntype = density_mode_->value().size();
     unsigned int k = 0;
     for (unsigned char i = 0; i < ntype; ++i) {
         for (unsigned char j = i; j < ntype; ++j, ++k) {
-            rho_iterator rho_q0 = density_mode->value()[i]->begin();
-            rho_iterator rho_q1 = density_mode->value()[j]->begin();
+            rho_iterator rho_q0 = density_mode_->value()[i]->begin();
+            rho_iterator rho_q1 = density_mode_->value()[j]->begin();
             result_iterator result = result_accumulator_[k].begin();
 
             // accumulate products of density modes with equal wavenumber,
@@ -178,11 +143,36 @@ void ssf<dimension>::compute_()
     }
 }
 
+template <int dimension>
+vector<typename ssf<dimension>::result_type> const&
+ssf<dimension>::value(unsigned int type1, unsigned int type2) const
+{
+    unsigned int ntype = density_mode_->value().size();
+    if (!(type1 < ntype)) {
+        throw invalid_argument("first particle type");
+    }
+    if (!(type2 < ntype)) {
+        throw invalid_argument("second particle type");
+    }
+    unsigned int i = min(type1, type2);
+    unsigned int j = max(type1, type2);
+    unsigned int k = j + i * ntype - (i * (i + 1)) / 2;
+    assert(k < value_.size());
+    return value_[k];
+}
+
+template <typename ssf_type>
+static function<vector<typename ssf_type::result_type> const& ()>
+wrap_value(shared_ptr<ssf_type const> ssf, unsigned int type1, unsigned int type2)
+{
+    return bind(static_cast<vector<typename ssf_type::result_type> const& (ssf_type::*)(unsigned int, unsigned int) const>(&ssf_type::value), ssf, type1, type2);
+}
+
 template <typename ssf_type>
 typename ssf_type::slot_function_type
 sample_wrapper(shared_ptr<ssf_type> ssf)
 {
-    return bind(&ssf_type::sample, ssf, _1);
+    return bind(&ssf_type::sample, ssf);
 }
 
 template <int dimension>
@@ -196,15 +186,21 @@ void ssf<dimension>::luaopen(lua_State* L)
         [
             class_<ssf, shared_ptr<ssf> >(class_name.c_str())
                 .def(constructor<
-                    shared_ptr<density_mode_type>
+                    shared_ptr<density_mode_type const>
+                  , shared_ptr<clock_type const>
                   , unsigned int
+                  , shared_ptr<logger_type>
                 >())
-                .def("register_runtimes", &ssf::register_runtimes)
-                .def("register_observables", &ssf::register_observables)
-                .property("value", &ssf::value)
+                .def("value", &wrap_value<ssf>)
                 .property("wavevector", &ssf::wavevector)
                 .property("sample", &sample_wrapper<ssf>)
                 .def("on_sample", &ssf::on_sample)
+                .scope
+                [
+                    class_<runtime>("runtime")
+                        .def_readonly("sample", &runtime::sample)
+                ]
+                .def_readonly("runtime", &ssf::runtime_)
         ]
     ];
 }
@@ -221,5 +217,4 @@ template class ssf<3>;
 template class ssf<2>;
 
 } // namespace observables
-
 } // namespace halmd

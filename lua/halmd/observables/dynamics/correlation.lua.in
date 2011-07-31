@@ -17,14 +17,16 @@
 -- along with this program.  If not, see <http://www.gnu.org/licenses/>.
 --
 
-require("halmd.modules")
-
 require("halmd.device")
+require("halmd.mdsim.clock")
+require("halmd.modules")
 require("halmd.observables.dynamics.correlations")
 require("halmd.observables.samples.blocking_scheme")
+require("halmd.observables.sampler")
 
 -- grab modules
 local device = halmd.device
+local mdsim = halmd.mdsim
 local observables = halmd.observables
 -- grab C++ wrappers
 local blocking_scheme_wrapper = libhalmd.observables.dynamics.blocking_scheme_
@@ -52,12 +54,15 @@ module("halmd.observables.dynamics.correlation", halmd.modules.register)
 -- @returns instance of blocking_scheme module
 --
 function new(args)
-    local maximum_time = assert(args.maximum_time)
-    local resolution = assert(args.resolution)
+    local every = args.every or 100 -- default value
     local size  = args.size or 10 -- default value
     local shift = args.shift or 0 -- default value
 
     -- construct driver module blocking_scheme
+    local clock = mdsim.clock() -- singleton
+    local sampler = observables.sampler() -- singleton
+    local maximum_time = assert(sampler.total_time)
+    local resolution = clock.timestep * every
     local blocking_scheme = assert(blocking_scheme_wrapper)(maximum_time, resolution, size, shift)
     local block_count = blocking_scheme.count
 
@@ -88,6 +93,10 @@ function new(args)
 --        blocking_scheme:on_sample(sample.acquire) -- FIXME needs, e.g., observables.phase_space, not samples.phase_space
     end
 
+    -- connect to sampler
+    sampler:on_sample{blocking_scheme.sample, every, tracker = blocking_scheme}
+    sampler:on_finish{blocking_scheme.finalise, tracker = blocking_scheme}
+
     return blocking_scheme
 end
 
@@ -106,6 +115,7 @@ function options(desc)
         end
     end
 
+    desc:add("every", po.uint64(), "sampling interval for time-correlation functions")
     desc:add("size", po.uint(), "block size, corresponds to coarse-graining factor")
     desc:add("shift", po.uint(), "coarse-graining shift between adjacent blocking levels")
     -- FIXME allow for multiple occurences of option 'compute'

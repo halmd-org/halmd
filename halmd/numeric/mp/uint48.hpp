@@ -29,8 +29,7 @@
 // Theiler and Brian Gough and is licensed under the GPL v3 or later.
 //
 
-namespace halmd
-{
+namespace halmd {
 
 /**
  * We define an 48 bit integer type, along with multiply-add and

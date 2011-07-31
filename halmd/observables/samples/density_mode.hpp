@@ -22,18 +22,17 @@
 
 #include <boost/shared_ptr.hpp>
 #include <complex>
-#include <stdint.h>
 #include <limits>
 #include <lua.hpp>
 #include <vector>
 
+#include <halmd/mdsim/clock.hpp>
 #include <halmd/numeric/blas/fixed_vector.hpp>
 #include <halmd/utility/raw_allocator.hpp>
 
-namespace halmd
-{
-namespace observables { namespace samples
-{
+namespace halmd {
+namespace observables {
+namespace samples {
 
 /**
  *  data structure for storing Fourier modes of the particle density
@@ -44,9 +43,13 @@ namespace observables { namespace samples
 template <int dimension>
 class density_mode
 {
+private:
+    typedef mdsim::clock clock_type;
+
 public:
     typedef fixed_vector<double, dimension> vector_type;
     typedef std::complex<double> mode_type;
+    typedef typename clock_type::step_type step_type;
 
     /** density modes of a single particle type, one entry per wavevector */
     typedef std::vector<mode_type, raw_allocator<mode_type> > mode_vector_type;
@@ -54,12 +57,12 @@ public:
     typedef std::vector<boost::shared_ptr<mode_vector_type> > mode_vector_vector_type;
 
     /**
-     *  nested list of density modes, @f$ \text{rho[i][j]} = \rho_{\vec q}^{(i)} = @f$
+     *  nested list of density modes, @f$ rho[i][j] = \rho_{\vec q}^{(i)} = @f$
      *  for wavevector @f$ \vec q = wavevector[j] @f$ and particle types @f$ i @f$
      */
     mode_vector_vector_type rho;
     /** simulation step when sample was taken */
-    uint64_t step;
+    step_type step;
 
     static void luaopen(lua_State* L);
     static const char* class_name();
@@ -88,7 +91,7 @@ inline density_mode<dimension>::density_mode(unsigned int ntype, unsigned int nq
   // allocate sample pointers
   : rho(ntype)
   // initialise attributes
-  , step(std::numeric_limits<uint64_t>::max())
+  , step(std::numeric_limits<step_type>::max())
 {
     // allocate memory for each particle type
     for (unsigned int i = 0; i < ntype; ++i) {
@@ -106,11 +109,11 @@ inline void density_mode<dimension>::reset(bool force)
         }
     }
     // make time stamp invalid
-    step = std::numeric_limits<uint64_t>::max();
+    step = std::numeric_limits<step_type>::max();
 }
 
-}} // namespace observables::samples
-
+} // namespace samples
+} // namespace observables
 } // namespace halmd
 
 #endif /* ! HALMD_OBSERVABLES_SAMPLES_DENSITY_MODE_HPP */

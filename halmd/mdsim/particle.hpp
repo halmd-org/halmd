@@ -23,10 +23,8 @@
 #include <lua.hpp>
 #include <vector>
 
-namespace halmd
-{
-namespace mdsim
-{
+namespace halmd {
+namespace mdsim {
 
 /**
  * The particle module describes the current microsopic state of the system.
@@ -53,7 +51,6 @@ public:
 };
 
 } // namespace mdsim
-
 } // namespace halmd
 
 #endif /* ! HALMD_MDSIM_PARTICLE_HPP */

@@ -1,5 +1,5 @@
 Short guide on Luabind
-----------------------
+======================
 
 The *Luabind* library is used to export C++ classes to the Lua scripting
 interface.
@@ -182,3 +182,96 @@ deficiency of luabind?
 
 **FIXME** when do you use a ``.`` and when a ``:`` for member access? Like ``core:run()`` but ``integrator.module_name()``?
 
+Lua properties
+--------------
+
+When an object is created from a C++ class registered with Luabind,
+Luabind actually creates a C++ object representation object that
+wraps this C++ object. This means Luabind C++ objects may be extended
+in Lua with arbitrary member functions or variables. One method of
+extending a C++ object is with Luabind's ``property()`` function, which
+works analogous to Luabind's C++ ``.property()``. Properties may be
+read-only or read-write.
+
+In the first example, we create an object from the C++ class
+``potential_module``, and add a read-only Lua property
+``potential.name``. This is done by calling ``property()`` with a
+function as its first argument, where the function itself receives the
+object (``self``) and returns the property value (``"Lennard Jones"``).
+Note how we do not give this getter function a name, but conveniently
+define an unnamed function within the ``property()`` call.
+
+.. code-block:: lua
+
+   local potential = libhalmd.potential_module()
+
+   -- set read-only Lua property
+   potential.name = property(function(self)
+       return "Lennard Jones"
+   end)
+
+In the second example, we add a read-write Lua property. We declare a
+local variable ``name``, which is referenced by the local functions
+``get_name`` and ``set_name``. In C++ language terms, you may consider
+``name`` a private member variable. To add the read-write property, we
+pass the getter and setter functions to ``property()`` as first and
+second argument, respectively.
+
+.. code-block:: lua
+
+   -- set read-write Lua property
+   local name
+   local function get_name(self)
+       return name
+   end
+   local function set_name(self, value)
+       name = value
+   end
+   potential.name = property(get_name, set_name)
+
+
+Debugging C++ types with class_info
+-----------------------------------
+
+Luabind provides a function ``class_info``, which queries the class type of a
+Lua value. This is especially useful to debug ``No matching overload found``
+errors, where the Lua value provided as an argument to a C++ function does not
+match the function signature(s).
+
+``class_info`` returns an object with the properties ``name``, ``methods``
+and ``attributes``. In this example, we inspect a thermodynamics object:
+
+.. code-block:: lua
+
+   local thermodynamics = halmd.observables.thermodynamics{}
+   local c = class_info(thermodynamics)
+   print(c.name)                -- thermodynamics_3_
+   print(c.methods)             -- table: 0x1637390
+   print(c.attributes)          -- table: 0x16373e0
+
+The thermodynamics class only exports a constructor function:
+
+.. code-block:: lua
+
+   for k, v in pairs(class_info(thermodynamics).methods) do
+       print(k, v)
+   end
+   -- __init  function: 0x10fd410
+
+Its object provides signal slots and read-only data slots:
+
+.. code-block:: lua
+
+   for k, v in pairs(class_info(thermodynamics).attributes) do
+       print(k, v, class_info(thermodynamics[v]).name)
+   end
+   -- 1       en_kin          function<double ()>
+   -- 2       en_tot          function<double ()>
+   -- 3       prepare         signal<void ()>::slot_function_type
+   -- 4       en_pot          function<double ()>
+   -- 5       virial          function<double ()>
+   -- 6       pressure        function<double ()>
+   -- 7       sample          signal<void ()>::slot_function_type
+   -- 8       temp            function<double ()>
+   -- 9       hypervirial     function<double ()>
+   -- 10      v_cm            function<fixed_vector<double, 3> ()>
