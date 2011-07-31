@@ -66,8 +66,8 @@ function new(args)
     if args.compute
     then
         -- construct the tcf functor and obtain the appropriate data sample
-        local tcf, sample = assert(observables.dynamics.correlations[args.compute])()
-        assert(sample)
+        local tcf = assert(observables.dynamics.correlations[args.compute])()
+        local sample = assert(tcf.sample)
 
         -- construct or retrieve associated blocking scheme for sample data
         local block_sample = assert(observables.samples.blocking_scheme{
