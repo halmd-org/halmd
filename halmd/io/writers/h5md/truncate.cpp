@@ -26,6 +26,7 @@
 #include <halmd/io/writers/h5md/truncate.hpp>
 #include <halmd/numeric/blas/fixed_vector.hpp>
 #include <halmd/utility/lua/lua.hpp>
+#include <halmd/utility/raw_allocator.hpp>
 
 using namespace boost;
 using namespace std;
@@ -210,6 +211,14 @@ void truncate::luaopen(lua_State* L)
                         .def("on_write", &truncate::on_write<vector<fixed_vector<double, 3> > >, pure_out_value(_2))
                         .def("on_write", &truncate::on_write<vector<fixed_vector<double, 3> >&>, pure_out_value(_2))
                         .def("on_write", &truncate::on_write<vector<fixed_vector<double, 3> > const&>, pure_out_value(_2))
+                        .def("on_write", &truncate::on_write<vector<fixed_vector<float, 2>, raw_allocator<fixed_vector<float, 2> > >&>, pure_out_value(_2))
+                        .def("on_write", &truncate::on_write<vector<fixed_vector<float, 2>, raw_allocator<fixed_vector<float, 2> > > const&>, pure_out_value(_2))
+                        .def("on_write", &truncate::on_write<vector<fixed_vector<float, 3>, raw_allocator<fixed_vector<float, 3> > >&>, pure_out_value(_2))
+                        .def("on_write", &truncate::on_write<vector<fixed_vector<float, 3>, raw_allocator<fixed_vector<float, 3> > > const&>, pure_out_value(_2))
+                        .def("on_write", &truncate::on_write<vector<fixed_vector<double, 2>, raw_allocator<fixed_vector<double, 2> > >&>, pure_out_value(_2))
+                        .def("on_write", &truncate::on_write<vector<fixed_vector<double, 2>, raw_allocator<fixed_vector<double, 2> > > const&>, pure_out_value(_2))
+                        .def("on_write", &truncate::on_write<vector<fixed_vector<double, 3>, raw_allocator<fixed_vector<double, 3> > >&>, pure_out_value(_2))
+                        .def("on_write", &truncate::on_write<vector<fixed_vector<double, 3>, raw_allocator<fixed_vector<double, 3> > > const&>, pure_out_value(_2))
                         .def("on_write", &truncate::on_write<vector<array<float, 3> > >, pure_out_value(_2))
                         .def("on_write", &truncate::on_write<vector<array<float, 3> >&>, pure_out_value(_2))
                         .def("on_write", &truncate::on_write<vector<array<float, 3> > const&>, pure_out_value(_2))

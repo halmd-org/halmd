@@ -26,6 +26,7 @@
 #include <halmd/numeric/blas/fixed_vector.hpp>
 #include <halmd/utility/lua/fixed_vector_converter.hpp>
 #include <halmd/utility/lua/vector_converter.hpp>
+#include <halmd/utility/raw_allocator.hpp>
 
 using namespace boost;
 using namespace std;
@@ -100,6 +101,14 @@ HALMD_LUA_API int luaopen_libhalmd_utility_lua_function(lua_State* L)
       , SLOT( function<vector<fixed_vector<double, 3> > ()> )
       , SLOT( function<vector<fixed_vector<double, 3> >& ()> )
       , SLOT( function<vector<fixed_vector<double, 3> > const& ()> )
+      , SLOT( function<vector<fixed_vector<float, 2>, raw_allocator<fixed_vector<float, 2> > >& ()> )
+      , SLOT( function<vector<fixed_vector<float, 2>, raw_allocator<fixed_vector<float, 2> > > const& ()> )
+      , SLOT( function<vector<fixed_vector<float, 3>, raw_allocator<fixed_vector<float, 3> > >& ()> )
+      , SLOT( function<vector<fixed_vector<float, 3>, raw_allocator<fixed_vector<float, 3> > > const& ()> )
+      , SLOT( function<vector<fixed_vector<double, 2>, raw_allocator<fixed_vector<double, 2> > >& ()> )
+      , SLOT( function<vector<fixed_vector<double, 2>, raw_allocator<fixed_vector<double, 2> > > const& ()> )
+      , SLOT( function<vector<fixed_vector<double, 3>, raw_allocator<fixed_vector<double, 3> > >& ()> )
+      , SLOT( function<vector<fixed_vector<double, 3>, raw_allocator<fixed_vector<double, 3> > > const& ()> )
       , SLOT( function<vector<array<float, 3> > ()> )
       , SLOT( function<vector<array<float, 3> >& ()> )
       , SLOT( function<vector<array<float, 3> > const& ()> )
