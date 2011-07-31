@@ -154,6 +154,37 @@ H5::DataSet append::create_dataset(
     return h5xx::create_dataset<vector<T, Alloc> >(group, name, slot().size());
 }
 
+template <typename T, std::size_t N, typename Alloc>
+H5::DataSet append::create_dataset(
+    H5::Group const& group
+  , string const& name
+  , function<multi_array<T, N, Alloc> ()> const& slot
+)
+{
+    return h5xx::create_unique_dataset<multi_array<T, N, Alloc> >(group, name, slot().shape());
+}
+
+template <typename T, size_t N, typename Alloc>
+H5::DataSet append::create_dataset(
+    H5::Group const& group
+  , string const& name
+  , function<multi_array<T, N, Alloc> const& ()> const& slot
+)
+{
+    return h5xx::create_unique_dataset<multi_array<T, N, Alloc> >(group, name, slot().shape());
+}
+
+template <typename T, size_t N, typename Alloc>
+H5::DataSet append::create_dataset(
+    H5::Group const& group
+  , string const& name
+  , function<multi_array<T, N, Alloc>& ()> const& slot
+)
+{
+    return h5xx::create_unique_dataset<multi_array<T, N, Alloc> >(group, name, slot().shape());
+}
+
+
 template <typename T>
 void append::write_dataset(
     H5::DataSet dataset

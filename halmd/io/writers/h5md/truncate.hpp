@@ -21,6 +21,7 @@
 #define HALMD_IO_WRITERS_H5MD_TRUNCATE_HPP
 
 #include <boost/function.hpp>
+#include <boost/multi_array.hpp>
 #include <lua.hpp>
 
 #include <h5xx/h5xx.hpp>
@@ -121,6 +122,24 @@ private:
         H5::Group const& group
       , std::string const& name
       , boost::function<std::vector<T, Alloc>& ()> const& slot
+    );
+    template <typename T, std::size_t N, typename Alloc>
+    static H5::DataSet create_dataset(
+        H5::Group const& group
+      , std::string const& name
+      , boost::function<boost::multi_array<T, N, Alloc> ()> const& slot
+    );
+    template <typename T, std::size_t N, typename Alloc>
+    static H5::DataSet create_dataset(
+        H5::Group const& group
+      , std::string const& name
+      , boost::function<boost::multi_array<T, N, Alloc> const& ()> const& slot
+    );
+    template <typename T, std::size_t N, typename Alloc>
+    static H5::DataSet create_dataset(
+        H5::Group const& group
+      , std::string const& name
+      , boost::function<boost::multi_array<T, N, Alloc>& ()> const& slot
     );
     template <typename T>
     static void write_dataset(
