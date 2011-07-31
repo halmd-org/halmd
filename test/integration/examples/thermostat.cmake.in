@@ -44,6 +44,7 @@ execute_halmd(
   --steps 500
   "${BACKEND_OPTION}"
   --script "${HALMD_SCRIPT}"
+  box --dimension "${DIMENSION}"
 )
 
 file(REMOVE
