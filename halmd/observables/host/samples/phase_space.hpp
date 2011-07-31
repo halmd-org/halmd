@@ -61,7 +61,6 @@ public:
     step_type step;
 
     static void luaopen(lua_State* L);
-    static char const* class_name();
 
     phase_space(std::vector<unsigned int> ntypes);
 

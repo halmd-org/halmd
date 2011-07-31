@@ -65,7 +65,6 @@ public:
     step_type step;
 
     static void luaopen(lua_State* L);
-    static const char* class_name();
 
     /**
      * construct sample of given size

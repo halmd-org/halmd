@@ -38,21 +38,6 @@ namespace host {
 namespace samples {
 
 template <int dimension, typename float_type>
-char const* phase_space<dimension, float_type>::class_name()
-{
-    static string class_name(
-        "phase_space_" + lexical_cast<string>(dimension) + "_" + demangled_name<float_type>() + "_"
-    );
-    return class_name.c_str();
-}
-
-template <int dimension, typename float_type>
-static char const* class_name_wrapper(phase_space<dimension, float_type> const&)
-{
-    return phase_space<dimension, float_type>::class_name();
-}
-
-template <int dimension, typename float_type>
 static int wrap_dimension(phase_space<dimension, float_type> const&)
 {
     return dimension;
@@ -118,6 +103,7 @@ template <int dimension, typename float_type>
 void phase_space<dimension, float_type>::luaopen(lua_State* L)
 {
     using namespace luabind;
+    static string const class_name("phase_space_" + lexical_cast<string>(dimension) + "_" + demangled_name<float_type>() + "_");
     module(L, "libhalmd")
     [
         namespace_("observables")
@@ -126,9 +112,8 @@ void phase_space<dimension, float_type>::luaopen(lua_State* L)
             [
                 namespace_("samples")
                 [
-                    class_<phase_space, shared_ptr<phase_space> >(class_name())
+                    class_<phase_space, shared_ptr<phase_space> >(class_name.c_str())
                         .def(constructor<vector<unsigned int> >())
-                        .property("class_name", &class_name_wrapper<dimension, float_type>)
                         .property("dimension", &wrap_dimension<dimension, float_type>)
                         .def("position", &wrap_position<phase_space>)
                         .def("velocity", &wrap_velocity<phase_space>)
