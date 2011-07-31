@@ -22,12 +22,14 @@
 
 // Boost 1.37.0, or patch from http://svn.boost.org/trac/boost/ticket/1852
 #include <boost/circular_buffer.hpp>
+#include <boost/make_shared.hpp>
 #include <cassert>
 #include <cstddef> // std::size_t
 #include <lua.hpp>
 #include <stdint.h> // uint64_t
 #include <vector>
 
+#include <halmd/utility/demangle.hpp>
 #include <halmd/utility/lua/lua.hpp>
 
 namespace halmd {
@@ -75,7 +77,7 @@ public:
     typedef typename block_type::iterator block_iterator;
     typedef typename block_type::const_iterator block_const_iterator;
 
-    static void luaopen(lua_State* L, char const* scope);
+    static void luaopen(lua_State* L);
 
     blocking_scheme(
         boost::shared_ptr<sample_type const> sample
@@ -188,34 +190,23 @@ uint64_t blocking_scheme<sample_type>::timestamp() const
 }
 
 template <typename sample_type>
-static char const* sample_name_wrapper(blocking_scheme<sample_type> const&)
-{
-    return sample_type::class_name();
-}
-
-template <typename sample_type>
-void blocking_scheme<sample_type>::luaopen(lua_State* L, char const* scope)
+void blocking_scheme<sample_type>::luaopen(lua_State* L)
 {
     using namespace luabind;
+    static std::string const class_name(demangled_name<blocking_scheme>());
     module(L, "libhalmd")
     [
         namespace_("observables")
         [
-            namespace_(scope)
+            namespace_("samples")
             [
-                namespace_("samples")
-                [
-                    namespace_("blocking_scheme")
-                    [
-                        class_<blocking_scheme, boost::shared_ptr<_Base>, _Base>(sample_type::class_name())
-                            .def(constructor<
-                                boost::shared_ptr<sample_type const>
-                              , std::size_t
-                              , std::size_t
-                            >())
-                            .property("sample_name", &sample_name_wrapper<sample_type>)
-                    ]
-                ]
+                class_<blocking_scheme, _Base>(class_name.c_str())
+
+              , def("blocking_scheme", &boost::make_shared<blocking_scheme
+                  , boost::shared_ptr<sample_type const>
+                  , std::size_t
+                  , std::size_t
+                >)
             ]
         ]
     ];

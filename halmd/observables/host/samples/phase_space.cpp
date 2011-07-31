@@ -143,13 +143,13 @@ HALMD_LUA_API int luaopen_libhalmd_observables_host_samples_phase_space(lua_Stat
 #ifndef USE_HOST_SINGLE_PRECISION
     phase_space<3, double>::luaopen(L);
     phase_space<2, double>::luaopen(L);
-    observables::samples::blocking_scheme<phase_space<3, double> >::luaopen(L, "host");
-    observables::samples::blocking_scheme<phase_space<2, double> >::luaopen(L, "host");
+    observables::samples::blocking_scheme<phase_space<3, double> >::luaopen(L);
+    observables::samples::blocking_scheme<phase_space<2, double> >::luaopen(L);
 #endif
     phase_space<3, float>::luaopen(L);
     phase_space<2, float>::luaopen(L);
-    observables::samples::blocking_scheme<phase_space<3, float> >::luaopen(L, "host");
-    observables::samples::blocking_scheme<phase_space<2, float> >::luaopen(L, "host");
+    observables::samples::blocking_scheme<phase_space<3, float> >::luaopen(L);
+    observables::samples::blocking_scheme<phase_space<2, float> >::luaopen(L);
     return 0;
 }
 

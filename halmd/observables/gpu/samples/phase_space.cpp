@@ -77,8 +77,8 @@ HALMD_LUA_API int luaopen_libhalmd_observables_gpu_samples_phase_space(lua_State
 {
     phase_space<3, float>::luaopen(L);
     phase_space<2, float>::luaopen(L);
-    observables::samples::blocking_scheme<phase_space<3, float> >::luaopen(L, "gpu");
-    observables::samples::blocking_scheme<phase_space<2, float> >::luaopen(L, "gpu");
+    observables::samples::blocking_scheme<phase_space<3, float> >::luaopen(L);
+    observables::samples::blocking_scheme<phase_space<2, float> >::luaopen(L);
     return 0;
 }
 
