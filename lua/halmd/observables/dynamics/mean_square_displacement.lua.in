@@ -53,12 +53,12 @@ module("halmd.observables.dynamics.correlations.mean_square_displacement", halmd
 -- construct instance of msd module
 --
 -- @param args parameter tabletype_
---   spezies   particle spezies (type) for which the computation is done
+--   species   particle species (type) for which the computation is done
 -- @returns instance of msd module, instance of phase space sample
 --
 function new(args)
     -- command line options
-    local spezies = args.spezies or 0 -- default value
+    local species = args.species or 0 -- default value
 
     -- dependency injection
     local core = mdsim.core()
@@ -66,7 +66,7 @@ function new(args)
     local backend = device() and "gpu" or "host"
 
     -- construct msd module
-    local msd = assert(msd_wrapper[backend][dimension])(spezies)
+    local msd = assert(msd_wrapper[backend][dimension])(species)
     -- obtain appropriate phase space sample
     local sample = assert(observables.samples.phase_space{ memory = backend })
     -- extend msd module with read-only sample property
