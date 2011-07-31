@@ -20,19 +20,17 @@
 require("halmd.modules")
 
 require("halmd.device")
-require("halmd.mdsim.core")
 require("halmd.observables.samples.phase_space")
 
 -- grab modules
 local device = halmd.device
-local mdsim = halmd.mdsim
 local observables = halmd.observables
 -- grab C++ wrappers
 local msd_wrapper = {
     host = {
         [2] = libhalmd.observables.host.dynamics.mean_square_displacement_2_
       , [3] = libhalmd.observables.host.dynamics.mean_square_displacement_3_
-}
+    }
 }
 if libhalmd.observables.gpu then
     msd_wrapper.gpu = {
@@ -59,16 +57,12 @@ module("halmd.observables.dynamics.correlations.mean_square_displacement", halmd
 function new(args)
     -- command line options
     local species = args.species or 0 -- default value
-
-    -- dependency injection
-    local core = mdsim.core()
-    local dimension = assert(core.dimension)
+    -- obtain appropriate phase space sample
     local backend = device() and "gpu" or "host"
-
+    local sample = observables.samples.phase_space{memory = backend}
+    local dimension = assert(sample.dimension)
     -- construct msd module
     local msd = assert(msd_wrapper[backend][dimension])(species)
-    -- obtain appropriate phase space sample
-    local sample = assert(observables.samples.phase_space{ memory = backend })
     -- extend msd module with read-only sample property
     msd.sample = property(function(self) return sample end)
 
