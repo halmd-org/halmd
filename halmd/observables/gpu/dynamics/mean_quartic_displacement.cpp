@@ -17,9 +17,17 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <algorithm>
+#include <boost/lexical_cast.hpp>
+#include <boost/make_shared.hpp>
+#include <cassert>
+#include <stdexcept>
+#include <string>
+
 #include <halmd/io/logger.hpp>
 #include <halmd/observables/dynamics/correlation.hpp>
-#include <halmd/observables/host/dynamics/mean_quartic_displacement.hpp>
+#include <halmd/observables/gpu/dynamics/mean_quartic_displacement.hpp>
+#include <halmd/utility/demangle.hpp>
 #include <halmd/utility/lua/lua.hpp>
 
 using namespace boost;
@@ -27,26 +35,36 @@ using namespace std;
 
 namespace halmd {
 namespace observables {
-namespace host {
+namespace gpu {
 namespace dynamics {
 
 template <int dimension, typename float_type>
 mean_quartic_displacement<dimension, float_type>::mean_quartic_displacement(
     size_t type
+  , unsigned int blocks
+  , unsigned int threads
 )
   // member initialisation
   : type_(type)
+  , blocks_(blocks)
+  , threads_(threads)
+  , compute_(select_compute(threads_))
+  , g_acc_(blocks_)
+  , h_acc_(blocks_)
 {
     LOG("initialise mean-quartic displacement of " << string(1, 'A' + type) << " particles");
 }
 
-/**
- * Compute mean-quartic displacement of two position sample vectors.
- *
- * @param first particles positions of one species at time t1
- * @param second particles positions of one species at time t2
- * @returns accumulated mean-quartic displacement
- */
+template <int dimension, typename float_type>
+unsigned int mean_quartic_displacement<dimension, float_type>::defaults::blocks() {
+    return 32;
+}
+
+template <int dimension, typename float_type>
+unsigned int mean_quartic_displacement<dimension, float_type>::defaults::threads() {
+    return 32 << DEVICE_SCALE;
+}
+
 template <int dimension, typename float_type>
 typename mean_quartic_displacement<dimension, float_type>::accumulator_type
 mean_quartic_displacement<dimension, float_type>::compute(
@@ -54,14 +72,35 @@ mean_quartic_displacement<dimension, float_type>::compute(
   , sample_type const& second
 )
 {
-    accumulator_type acc;
-    typename sample_type::sample_vector::const_iterator r1, r2, end = first.r[type_]->end();
-    for (r1 = first.r[type_]->begin(), r2 = second.r[type_]->begin(); r1 != end; ++r1, ++r2) {
-        // accumulate quartic displacement
-        acc(correlate_function_type()(*r1, *r2));
-    }
-    return acc;
+    cuda::configure(blocks_, threads_);
+    sample_vector_type const& r1 = *first.r[type_];
+    sample_vector_type const& r2 = *second.r[type_];
+    assert(r1.size() == r2.size());
+    compute_(r1, r2, r1.size(), g_acc_);
+    cuda::copy(g_acc_, h_acc_); // implicit synchronize
+    return for_each(h_acc_.begin(), h_acc_.end(), accumulator_type());
 }
+
+template <int dimension, typename float_type>
+typename mean_quartic_displacement<dimension, float_type>::compute_function_type
+mean_quartic_displacement<dimension, float_type>::select_compute(unsigned int threads)
+{
+    switch (threads) {
+        case 512:
+            return mean_quartic_displacement_wrapper<dimension, 512>::wrapper.compute;
+        case 256:
+            return mean_quartic_displacement_wrapper<dimension, 256>::wrapper.compute;
+        case 128:
+            return mean_quartic_displacement_wrapper<dimension, 128>::wrapper.compute;
+        case 64:
+            return mean_quartic_displacement_wrapper<dimension, 64>::wrapper.compute;
+        case 32:
+            return mean_quartic_displacement_wrapper<dimension, 32>::wrapper.compute;
+        default:
+            throw invalid_argument("number of threads");
+    }
+}
+
 
 template <typename tcf_type>
 static shared_ptr<tcf_type>
@@ -74,7 +113,7 @@ template <int dimension, typename float_type>
 void mean_quartic_displacement<dimension, float_type>::luaopen(lua_State* L)
 {
     using namespace luabind;
-    static string class_name("mean_quartic_displacement_" + lexical_cast<string>(dimension) + "_");
+    static string const class_name(demangled_name<mean_quartic_displacement>());
     module(L, "libhalmd")
     [
         namespace_("observables")
@@ -89,45 +128,28 @@ void mean_quartic_displacement<dimension, float_type>::luaopen(lua_State* L)
     ];
 }
 
-HALMD_LUA_API int luaopen_libhalmd_observables_host_dynamics_mean_quartic_displacement(lua_State* L)
+HALMD_LUA_API int luaopen_libhalmd_observables_gpu_dynamics_mean_quartic_displacement(lua_State* L)
 {
-#ifndef USE_HOST_SINGLE_PRECISION
-    mean_quartic_displacement<3, double>::luaopen(L);
-    mean_quartic_displacement<2, double>::luaopen(L);
-    observables::dynamics::correlation<mean_quartic_displacement<3, double> >::luaopen(L);
-    observables::dynamics::correlation<mean_quartic_displacement<2, double> >::luaopen(L);
-#else
     mean_quartic_displacement<3, float>::luaopen(L);
     mean_quartic_displacement<2, float>::luaopen(L);
     observables::dynamics::correlation<mean_quartic_displacement<3, float> >::luaopen(L);
     observables::dynamics::correlation<mean_quartic_displacement<2, float> >::luaopen(L);
-#endif
     return 0;
 }
 
 // explicit instantiation
-#ifndef USE_HOST_SINGLE_PRECISION
-template class mean_quartic_displacement<3, double>;
-template class mean_quartic_displacement<2, double>;
-#else
 template class mean_quartic_displacement<3, float>;
 template class mean_quartic_displacement<2, float>;
-#endif
 
 } // namespace dynamics
-} // namespace host
+} // namespace gpu
 
 namespace dynamics
 {
 
 // explicit instantiation
-#ifndef USE_HOST_SINGLE_PRECISION
-template class correlation<host::dynamics::mean_quartic_displacement<3, double> >;
-template class correlation<host::dynamics::mean_quartic_displacement<2, double> >;
-#else
-template class correlation<host::dynamics::mean_quartic_displacement<3, float> >;
-template class correlation<host::dynamics::mean_quartic_displacement<2, float> >;
-#endif
+template class correlation<gpu::dynamics::mean_quartic_displacement<3, float> >;
+template class correlation<gpu::dynamics::mean_quartic_displacement<2, float> >;
 
 } // namespace dynamics
 } // namespace observables
