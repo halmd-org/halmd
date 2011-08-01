@@ -24,9 +24,12 @@ require("halmd.modules")
 require("halmd.observables.dynamics.correlations")
 require("halmd.observables.samples.blocking_scheme")
 require("halmd.observables.sampler")
+require("halmd.utility")
 
 -- grab modules
+local correlations = halmd.observables.dynamics.correlations
 local device = halmd.device
+local keys = halmd.utility.keys
 local mdsim = halmd.mdsim
 local observables = halmd.observables
 local writers = halmd.io.writers
@@ -68,11 +71,10 @@ function new(args)
     local writer = file:writer{location = {"dynamics"}, mode = "truncate"}
 
     -- add time correlation functions
-    -- FIXME at the moment, we support only 1 tcf
-    if args.compute
-    then
+    local selections = args.compute or keys(correlations) -- default value
+    for i = 1, #selections do
         -- construct the tcf functor and obtain the appropriate data sample
-        local tcf = assert(observables.dynamics.correlations[args.compute])()
+        local tcf = assert(correlations[selections[i]])()
         local sample = assert(tcf.sample)
 
         -- construct or retrieve associated blocking scheme for sample data
@@ -119,7 +121,7 @@ function options(desc)
 
     -- choices for tcf module with descriptions
     local choices = {}
-    for tcf, module in pairs(observables.dynamics.correlations) do
+    for tcf, module in pairs(correlations) do
         if module.name then
             choices[tcf] = module.name()
         end
@@ -129,5 +131,5 @@ function options(desc)
     desc:add("size", po.uint(), "block size, corresponds to coarse-graining factor")
     desc:add("shift", po.uint(), "coarse-graining shift between adjacent blocking levels")
     -- FIXME allow for multiple occurences of option 'compute'
-    desc:add("compute", po.string():choices(choices), "specify time correlation function to be computed")
+    desc:add("compute", po.composing_string():choices(choices), "specify time correlation function to be computed")
 end
