@@ -18,6 +18,7 @@
  */
 
 #include <boost/foreach.hpp>
+#include <cassert>
 #include <exception>
 
 #include <halmd/observables/dynamics/blocking_scheme.hpp>
@@ -125,6 +126,8 @@ void blocking_scheme::sample()
 
                 // discard first entry at level 'i' for each block structure
                 BOOST_FOREACH(shared_ptr<block_sample_type> block_sample, block_sample_) {
+                    // check for duplicate shared_ptr to the same block sample
+                    assert(block_sample->full(i));
                     block_sample->pop_front(i);
                 }
             }
