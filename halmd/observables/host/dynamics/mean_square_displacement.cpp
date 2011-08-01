@@ -46,24 +46,21 @@ mean_square_displacement<dimension, float_type>::mean_square_displacement(
 }
 
 template <int dimension, typename float_type>
-typename mean_square_displacement<dimension, float_type>::result_type
+typename mean_square_displacement<dimension, float_type>::accumulator_type
 mean_square_displacement<dimension, float_type>::compute(
     sample_type const& first
   , sample_type const& second
 )
 {
-    typedef typename sample_type::vector_type vector_type;
-
-    result_type acc = 0;
-
+    accumulator_type acc;
     typename sample_type::sample_vector::const_iterator r1, r2, end = first.r[type_]->end();
     for (r1 = first.r[type_]->begin(), r2 = second.r[type_]->begin(); r1 != end; ++r1, ++r2) {
         // displacement of particle: R(t2) - R(t1)
         vector_type dr = *r2 - *r1;
         // accumulate square displacement
-        acc += inner_prod(dr, dr);
+        acc(inner_prod(dr, dr));
     }
-    return acc / first.r[type_]->size();
+    return acc;
 }
 
 template <typename tcf_type>
