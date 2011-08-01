@@ -73,7 +73,6 @@ public:
         boost::shared_ptr<tcf_type> tcf
       , boost::shared_ptr<block_sample_type> block_sample
     );
-    virtual ~correlation() {}
 
     virtual void compute(unsigned int level);
     block_mean_type const& mean();
