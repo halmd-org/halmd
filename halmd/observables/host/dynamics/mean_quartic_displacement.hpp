@@ -37,15 +37,18 @@ template <int dimension, typename float_type>
 class mean_quartic_displacement
 {
 public:
-    typedef host::samples::phase_space<dimension, float_type> phase_space_type;
-    typedef typename phase_space_type::vector_type vector_type;
-    typedef typename phase_space_type::sample_vector sample_vector;
-    typedef accumulator<float_type> result_type;
+    typedef host::samples::phase_space<dimension, float_type> sample_type;
+    typedef typename sample_type::vector_type vector_type;
+    typedef double result_type;
+    typedef accumulator<result_type> accumulator_type;
 
     static void luaopen(lua_State* L);
 
-    mean_quartic_displacement() {}
-    result_type compute(sample_vector const& first, sample_vector const& second);
+    mean_quartic_displacement(std::size_t type);
+    accumulator_type compute(sample_type const& first, sample_type const& second);
+
+private:
+    std::size_t type_;
 };
 
 } // namespace dynamics

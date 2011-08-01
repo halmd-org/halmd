@@ -1,0 +1,96 @@
+--
+-- Copyright © 2011  Felix Höfling and Peter Colberg
+--
+-- This file is part of HALMD.
+--
+-- HALMD is free software: you can redistribute it and/or modify
+-- it under the terms of the GNU General Public License as published by
+-- the Free Software Foundation, either version 3 of the License, or
+-- (at your option) any later version.
+--
+-- This program is distributed in the hope that it will be useful,
+-- but WITHOUT ANY WARRANTY; without even the implied warranty of
+-- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+-- GNU General Public License for more details.
+--
+-- You should have received a copy of the GNU General Public License
+-- along with this program.  If not, see <http://www.gnu.org/licenses/>.
+--
+
+require("halmd.device")
+require("halmd.modules")
+require("halmd.observables.phase_space")
+require("halmd.observables.samples.phase_space")
+
+-- grab modules
+local device = halmd.device
+local observables = halmd.observables
+-- grab C++ wrappers
+local mqd_wrapper = libhalmd.observables.dynamics.mean_quartic_displacement
+local h5 = libhalmd.h5
+local po = libhalmd.po
+local property = property
+-- grab standard library
+local assert = assert
+
+module("halmd.observables.dynamics.correlations.mean_quartic_displacement", halmd.modules.register)
+
+--
+-- construct instance of mqd module
+--
+-- @param args parameter tabletype_
+--   species   particle species (type) for which the computation is done
+-- @returns instance of mqd module, instance of phase space sample
+--
+function new(args)
+    -- command line options
+    local species = args.species or 0 -- default value
+    -- obtain appropriate phase space sample
+    local backend = device() and "gpu" or "host"
+    local sample = observables.samples.phase_space{memory = backend}
+    local dimension = assert(sample.dimension)
+    -- construct mqd module
+    local mqd = assert(mqd_wrapper)(species, sample)
+
+    -- extend mqd module with read-only sample property
+    mqd.sample = property(function(self)
+        return sample
+    end)
+    -- obtain phase space sampler
+    local phase_space = observables.phase_space{memory = backend}
+    mqd.sampler = property(function(self)
+        return phase_space
+    end)
+
+    return mqd
+end
+
+--
+-- returns module description
+--
+function name()
+    return "mean-quartic displacement"
+end
+
+--
+-- assemble module options
+--
+-- @param desc po.options_description
+--
+--function options(desc)
+--end
+
+--
+-- read module parameters from HDF5 group
+--
+--function read_parameters(args, group)
+--end
+
+--
+-- write module parameters to HDF5 group
+--
+-- @param ssf     module instance
+-- @param group   HDF5 group
+--
+--function write_parameters(ssf, group)
+--end

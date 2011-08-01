@@ -17,6 +17,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <halmd/io/logger.hpp>
+#include <halmd/observables/dynamics/correlation.hpp>
 #include <halmd/observables/host/dynamics/mean_quartic_displacement.hpp>
 #include <halmd/utility/lua/lua.hpp>
 
@@ -28,6 +30,16 @@ namespace observables {
 namespace host {
 namespace dynamics {
 
+template <int dimension, typename float_type>
+mean_quartic_displacement<dimension, float_type>::mean_quartic_displacement(
+    size_t type
+)
+  // member initialisation
+  : type_(type)
+{
+    LOG("initialise mean-quartic displacement of " << string(1, 'A' + type) << " particles");
+}
+
 /**
  * Compute mean-quartic displacement of two position sample vectors.
  *
@@ -36,15 +48,15 @@ namespace dynamics {
  * @returns accumulated mean-quartic displacement
  */
 template <int dimension, typename float_type>
-typename mean_quartic_displacement<dimension, float_type>::result_type
+typename mean_quartic_displacement<dimension, float_type>::accumulator_type
 mean_quartic_displacement<dimension, float_type>::compute(
-    sample_vector const& first
-  , sample_vector const& second
+    sample_type const& first
+  , sample_type const& second
 )
 {
-    result_type acc;
-    typename sample_vector::const_iterator r2, r1, end = first.end();
-    for (r2 = first.begin(), r1 = second.begin(); r2 != end; ++r2, ++r1) {
+    accumulator_type acc;
+    typename sample_type::sample_vector::const_iterator r1, r2, end = first.r[type_]->end();
+    for (r1 = first.r[type_]->begin(), r2 = second.r[type_]->begin(); r1 != end; ++r1, ++r2) {
         // displacement of particle
         vector_type dr = *r1 - *r2;
         // square displacement
@@ -53,6 +65,13 @@ mean_quartic_displacement<dimension, float_type>::compute(
         acc(rr * rr);
     }
     return acc;
+}
+
+template <typename tcf_type>
+static shared_ptr<tcf_type>
+wrap_tcf(size_t type, typename tcf_type::sample_type const&)
+{
+    return make_shared<tcf_type>(type);
 }
 
 template <int dimension, typename float_type>
@@ -64,13 +83,11 @@ void mean_quartic_displacement<dimension, float_type>::luaopen(lua_State* L)
     [
         namespace_("observables")
         [
-            namespace_("host")
+            namespace_("dynamics")
             [
-                namespace_("dynamics")
-                [
-                    class_<mean_quartic_displacement>(class_name.c_str())
-                        .def(constructor<>())
-                ]
+                class_<mean_quartic_displacement>(class_name.c_str())
+
+              , def("mean_quartic_displacement", &wrap_tcf<mean_quartic_displacement>)
             ]
         ]
     ];
@@ -81,9 +98,13 @@ HALMD_LUA_API int luaopen_libhalmd_observables_host_dynamics_mean_quartic_displa
 #ifndef USE_HOST_SINGLE_PRECISION
     mean_quartic_displacement<3, double>::luaopen(L);
     mean_quartic_displacement<2, double>::luaopen(L);
+    observables::dynamics::correlation<mean_quartic_displacement<3, double> >::luaopen(L);
+    observables::dynamics::correlation<mean_quartic_displacement<2, double> >::luaopen(L);
 #else
     mean_quartic_displacement<3, float>::luaopen(L);
     mean_quartic_displacement<2, float>::luaopen(L);
+    observables::dynamics::correlation<mean_quartic_displacement<3, float> >::luaopen(L);
+    observables::dynamics::correlation<mean_quartic_displacement<2, float> >::luaopen(L);
 #endif
     return 0;
 }
@@ -98,6 +119,20 @@ template class mean_quartic_displacement<2, float>;
 #endif
 
 } // namespace dynamics
-} // namespace observables
 } // namespace host
+
+namespace dynamics
+{
+
+// explicit instantiation
+#ifndef USE_HOST_SINGLE_PRECISION
+template class correlation<host::dynamics::mean_quartic_displacement<3, double> >;
+template class correlation<host::dynamics::mean_quartic_displacement<2, double> >;
+#else
+template class correlation<host::dynamics::mean_quartic_displacement<3, float> >;
+template class correlation<host::dynamics::mean_quartic_displacement<2, float> >;
+#endif
+
+} // namespace dynamics
+} // namespace observables
 } // namespace halmd
