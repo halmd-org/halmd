@@ -100,7 +100,6 @@ void blocking_scheme::sample()
         if (block_sample->timestamp() != step) {
             throw logic_error("input sample was not updated");
         }
-//         block_sample->make_copy();
     }
 
     // iterate over all coarse-graining levels
