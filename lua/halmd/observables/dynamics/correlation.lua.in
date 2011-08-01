@@ -65,7 +65,7 @@ function new(args)
     local block_count = blocking_scheme.count
 
     local file = writers.observable() -- singleton
-    local writer = file:writer{location = {"dynamics", "correlation"}, mode = "truncate"}
+    local writer = file:writer{location = {"dynamics"}, mode = "truncate"}
 
     -- add time correlation functions
     -- FIXME at the moment, we support only 1 tcf
