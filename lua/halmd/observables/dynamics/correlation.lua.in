@@ -94,10 +94,11 @@ function new(args)
         blocking_scheme:on_sample(sampler.acquire)
 
         -- write correlation function results
-        writer:on_write(blocking_scheme.time, {tcf.class_name, "time"}) -- FIXME hardlink
-        writer:on_write(correlation.mean, {tcf.class_name, "mean"})
-        writer:on_write(correlation.error, {tcf.class_name, "error"})
-        writer:on_write(correlation.count, {tcf.class_name, "count"})
+        local name = assert(tcf.module.namespace)
+        writer:on_write(blocking_scheme.time, {name, "time"}) -- FIXME hardlink
+        writer:on_write(correlation.mean, {name, "mean"})
+        writer:on_write(correlation.error, {name, "error"})
+        writer:on_write(correlation.count, {name, "count"})
     end
 
     -- connect to sampler
