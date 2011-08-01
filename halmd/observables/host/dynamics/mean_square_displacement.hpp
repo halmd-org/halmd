@@ -23,6 +23,7 @@
 #include <lua.hpp>
 
 #include <halmd/numeric/accumulator.hpp>
+#include <halmd/observables/dynamics/mean_square_displacement.hpp>
 #include <halmd/observables/host/samples/phase_space.hpp>
 
 namespace halmd {
@@ -59,6 +60,8 @@ public:
     accumulator_type compute(sample_type const& first, sample_type const& second);
 
 private:
+    typedef observables::dynamics::mean_square_displacement<vector_type> correlate_function_type;
+
     size_t type_;
 };
 

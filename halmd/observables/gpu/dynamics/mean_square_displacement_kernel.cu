@@ -17,32 +17,19 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <halmd/observables/dynamics/mean_square_displacement.hpp>
 #include <halmd/observables/gpu/dynamics/mean_square_displacement_kernel.hpp>
 #include <halmd/observables/gpu/dynamics/tagged_particle.cuh>
-#include <halmd/numeric/blas/fixed_vector.hpp>
-#include <halmd/numeric/mp/dsfloat.hpp>
 
 namespace halmd {
 namespace observables {
 namespace gpu {
 namespace dynamics {
 
-template <typename vector_type>
-struct mean_square_displacement_kernel
-{
-    typedef typename vector_type::value_type value_type;
-
-    HALMD_GPU_ENABLED value_type operator()(vector_type const& r1, vector_type const& r2) const
-    {
-        vector_type dr = r2 - r1;
-        return inner_prod(dr, dr);
-    }
-};
-
 template <int dimension, unsigned int threads>
 mean_square_displacement_wrapper<dimension, threads> const
 mean_square_displacement_wrapper<dimension, threads>::wrapper = {
-    accumulate<mean_square_displacement_kernel<vector_type>, threads>
+    accumulate<observables::dynamics::mean_square_displacement<vector_type>, threads>
 };
 
 // explicit template instantiation

@@ -55,10 +55,8 @@ mean_square_displacement<dimension, float_type>::compute(
     accumulator_type acc;
     typename sample_type::sample_vector::const_iterator r1, r2, end = first.r[type_]->end();
     for (r1 = first.r[type_]->begin(), r2 = second.r[type_]->begin(); r1 != end; ++r1, ++r2) {
-        // displacement of particle: R(t2) - R(t1)
-        vector_type dr = *r2 - *r1;
         // accumulate square displacement
-        acc(inner_prod(dr, dr));
+        acc(correlate_function_type()(*r1, *r2));
     }
     return acc;
 }
