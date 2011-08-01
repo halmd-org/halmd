@@ -42,8 +42,6 @@ public:
     typedef double result_type;
     typedef accumulator<result_type> accumulator_type;
 
-    static char const* module_name() { return "mean_square_displacement"; }
-
     static void luaopen(lua_State* L);
 
     /**

@@ -66,12 +66,14 @@ public:
     typedef boost::multi_array<typename accumulator_type::value_type, 2> block_mean_type;
     typedef boost::multi_array<typename accumulator_type::value_type, 2> block_error_type;
     typedef boost::multi_array<typename accumulator_type::size_type, 2> block_count_type;
+    typedef logger logger_type;
 
     static void luaopen(lua_State* L);
 
     correlation(
         boost::shared_ptr<tcf_type> tcf
       , boost::shared_ptr<block_sample_type> block_sample
+      , boost::shared_ptr<logger_type> logger = boost::make_shared<logger_type>()
     );
 
     virtual void compute(unsigned int level);
@@ -86,6 +88,8 @@ private:
     boost::shared_ptr<block_sample_type> block_sample_;
     /** functor performing the specific computation */
     boost::shared_ptr<tcf_type> tcf_;
+    /** module logger */
+    boost::shared_ptr<logger_type> logger_;
     /** block structures holding accumulated result values */
     block_result_type result_;
     /** mean values */
@@ -100,10 +104,12 @@ template <typename tcf_type>
 correlation<tcf_type>::correlation(
     boost::shared_ptr<tcf_type> tcf
   , boost::shared_ptr<block_sample_type> block_sample
+  , boost::shared_ptr<logger_type> logger
 )
   // dependency injection
   : block_sample_(block_sample)
   , tcf_(tcf)
+  , logger_(logger)
   // memory allocation
   , result_(boost::extents[block_sample->count()][block_sample->block_size()])
   , mean_(boost::extents[block_sample->count()][block_sample->block_size()])
@@ -115,7 +121,7 @@ correlation<tcf_type>::correlation(
 template <typename tcf_type>
 void correlation<tcf_type>::compute(unsigned int level)
 {
-    LOG_TRACE("[" << tcf_type::module_name() << "]: compute correlations at level " << level);
+    LOG_TRACE("compute correlations at level " << level);
 
     typedef typename block_sample_type::block_type block_type;
     typedef typename block_type::const_iterator input_iterator;
@@ -191,12 +197,6 @@ wrap_count(boost::shared_ptr<correlation_type> self)
 }
 
 template <typename tcf_type>
-static char const* module_name_wrapper(correlation<tcf_type> const&)
-{
-    return tcf_type::module_name();
-}
-
-template <typename tcf_type>
 void correlation<tcf_type>::luaopen(lua_State* L)
 {
     using namespace luabind;
@@ -211,11 +211,11 @@ void correlation<tcf_type>::luaopen(lua_State* L)
                     .property("mean", &wrap_mean<correlation>)
                     .property("error", &wrap_error<correlation>)
                     .property("count", &wrap_count<correlation>)
-                    .property("module_name", &module_name_wrapper<tcf_type>)
 
               , def("correlation", &boost::make_shared<correlation
                   , boost::shared_ptr<tcf_type>
                   , boost::shared_ptr<block_sample_type>
+                  , boost::shared_ptr<logger_type>
                 >)
             ]
         ]

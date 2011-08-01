@@ -83,7 +83,8 @@ function new(args)
         })
 
         -- construct correlation function
-        local correlation = assert(correlation_wrapper)(tcf, block_sample)
+        local logger = assert(args.logger) -- FIXME use tcf module logger
+        local correlation = assert(correlation_wrapper)(tcf, block_sample, logger)
 
         -- register correlation function and data with blocking scheme
         blocking_scheme:add_correlation(correlation)
