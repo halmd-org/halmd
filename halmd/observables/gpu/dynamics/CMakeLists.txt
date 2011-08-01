@@ -1,4 +1,7 @@
-#halmd_add_library(halmd_observables_gpu_dynamics
-#)
-#halmd_add_modules(
-#)
+halmd_add_library(halmd_observables_gpu_dynamics
+  mean_square_displacement.cpp
+  mean_square_displacement_kernel.cu
+)
+halmd_add_modules(
+  libhalmd_observables_gpu_dynamics_mean_square_displacement
+)
