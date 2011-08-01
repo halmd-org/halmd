@@ -89,7 +89,11 @@ public:
     HALMD_GPU_ENABLED void
     operator()(accumulator<T> const& acc)
     {
-        if (n_ > 0) {
+        // We have to ensure that the sum of both accumulator counts is
+        // non-zero, to avoid division by zero. It suffices to check
+        // that the count of the *added* accumulator is non-zero, as
+        // it may be discarded if empty.
+        if (acc.n_ > 0) {
             typename accumulator<T>::size_type const count = n_ + acc.n_;
             v_ += acc.v_;
             T const diff = m_ - acc.m_;
