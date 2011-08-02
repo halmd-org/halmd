@@ -54,5 +54,5 @@ function options(desc)
         end
     end
 
-    desc:add("format", po.string():choices(choices), "output file format")
+    desc:add("format", po.string():choices(choices), "select output file format")
 end

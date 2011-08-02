@@ -90,5 +90,5 @@ function options(desc, globals)
             choices[tcf] = module.name()
         end
     end
-    globals:add("correlation", po.composing_string():choices(choices), "specify time correlation function to be computed")
+    globals:add("correlation", po.composing_string():choices(choices), "select time correlation function")
 end

@@ -54,7 +54,7 @@ function options(desc, globals)
         end
     end
 
-    globals:add("integrator", po.string():choices(choices), "specify integration module")
+    globals:add("integrator", po.string():choices(choices), "select integration module")
 end
 
 --
