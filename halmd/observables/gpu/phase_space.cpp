@@ -17,12 +17,14 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <boost/make_shared.hpp>
 #include <exception>
 
 #include <halmd/io/logger.hpp>
 #include <halmd/mdsim/gpu/particle_kernel.cuh>
 #include <halmd/observables/gpu/phase_space.hpp>
 #include <halmd/observables/gpu/phase_space_kernel.hpp>
+#include <halmd/utility/demangle.hpp>
 #include <halmd/utility/lua/lua.hpp>
 #include <halmd/utility/scoped_timer.hpp>
 #include <halmd/utility/timer.hpp>
@@ -178,33 +180,28 @@ template <int dimension, typename float_type>
 void phase_space<gpu::samples::phase_space<dimension, float_type> >::luaopen(lua_State* L)
 {
     using namespace luabind;
-    static string class_name("phase_space_" + lexical_cast<string>(dimension) + "_");
+    static string const class_name(demangled_name<phase_space>());
     module(L, "libhalmd")
     [
         namespace_("observables")
         [
-            namespace_("gpu")
-            [
-                namespace_("gpu")
+            class_<phase_space, shared_ptr<_Base>, _Base>(class_name.c_str())
+                .property("dimension", &wrap_gpu_dimension<dimension, float_type>)
+                .scope
                 [
-                    class_<phase_space, shared_ptr<_Base>, _Base>(class_name.c_str())
-                        .def(constructor<
-                             shared_ptr<sample_type>
-                           , shared_ptr<particle_type const>
-                           , shared_ptr<box_type const>
-                           , shared_ptr<clock_type const>
-                           , shared_ptr<logger_type>
-                        >())
-                        .property("dimension", &wrap_gpu_dimension<dimension, float_type>)
-                        .scope
-                        [
-                            class_<runtime>("runtime")
-                                .def_readonly("acquire", &runtime::acquire)
-                                .def_readonly("reset", &runtime::reset)
-                        ]
-                        .def_readonly("runtime", &phase_space::runtime_)
+                    class_<runtime>("runtime")
+                        .def_readonly("acquire", &runtime::acquire)
+                        .def_readonly("reset", &runtime::reset)
                 ]
-            ]
+                .def_readonly("runtime", &phase_space::runtime_)
+
+          , def("phase_space", &make_shared<phase_space
+               , shared_ptr<sample_type>
+               , shared_ptr<particle_type const>
+               , shared_ptr<box_type const>
+               , shared_ptr<clock_type const>
+               , shared_ptr<logger_type>
+            >)
         ]
     ];
 }
@@ -219,33 +216,28 @@ template <int dimension, typename float_type>
 void phase_space<host::samples::phase_space<dimension, float_type> >::luaopen(lua_State* L)
 {
     using namespace luabind;
-    static string class_name("phase_space_" + lexical_cast<string>(dimension) + "_");
+    static string const class_name(demangled_name<phase_space>());
     module(L, "libhalmd")
     [
         namespace_("observables")
         [
-            namespace_("gpu")
-            [
-                namespace_("host")
+            class_<phase_space, shared_ptr<_Base>, _Base>(class_name.c_str())
+                .property("dimension", &wrap_host_dimension<dimension, float_type>)
+                .scope
                 [
-                    class_<phase_space, shared_ptr<_Base>, _Base>(class_name.c_str())
-                        .def(constructor<
-                             shared_ptr<sample_type>
-                           , shared_ptr<particle_type /* FIXME const */>
-                           , shared_ptr<box_type const>
-                           , shared_ptr<clock_type const>
-                           , shared_ptr<logger_type>
-                        >())
-                        .property("dimension", &wrap_host_dimension<dimension, float_type>)
-                        .scope
-                        [
-                            class_<runtime>("runtime")
-                                .def_readonly("acquire", &runtime::acquire)
-                                .def_readonly("reset", &runtime::reset)
-                        ]
-                        .def_readonly("runtime", &phase_space::runtime_)
+                    class_<runtime>("runtime")
+                        .def_readonly("acquire", &runtime::acquire)
+                        .def_readonly("reset", &runtime::reset)
                 ]
-            ]
+                .def_readonly("runtime", &phase_space::runtime_)
+
+          , def("phase_space", &make_shared<phase_space
+               , shared_ptr<sample_type>
+               , shared_ptr<particle_type /* FIXME const */>
+               , shared_ptr<box_type const>
+               , shared_ptr<clock_type const>
+               , shared_ptr<logger_type>
+            >)
         ]
     ];
 }
