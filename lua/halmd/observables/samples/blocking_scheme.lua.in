@@ -18,32 +18,44 @@
 --
 
 require("halmd.modules")
+require("halmd.observables.dynamics.blocking_scheme")
 
 -- grab C++ wrappers
 local blocking_scheme_wrapper = libhalmd.observables.samples.blocking_scheme
+local dynamics = halmd.observables.dynamics
 -- grab standard library
 local assert = assert
 
 module("halmd.observables.samples.blocking_scheme", halmd.modules.register)
 
--- singleton
-local blocking_scheme = {}
+-- block samples by sample
+local block_samples = {}
 
 --
 -- construct blocking_scheme module
 --
 -- @param args    parameter table
 --   args.sample  sample module, the pointer serves as index to the list of singletons
---   args.count   total count of blocks
---   args.size    size of each coarse-graining block
+--   args.sampler sampler module that acquires sample
 --
 function new(args)
     local sample = assert(args.sample)
-    local count = assert(args.count)
-    local size = assert(args.size)
+    local sampler = assert(args.sampler)
 
-    if not blocking_scheme[sample] then
-        blocking_scheme[sample] = assert(blocking_scheme_wrapper)(sample, count, size)
+    local block_sample = block_samples[sample]
+    if not block_sample then
+        local blocking_scheme = dynamics.blocking_scheme() -- singleton
+        local count = assert(blocking_scheme.count)
+        local size = assert(blocking_scheme.block_size)
+        block_sample = assert(blocking_scheme_wrapper)(sample, count, size)
+
+        -- register correlation data with blocking scheme
+        blocking_scheme:add_data(block_sample)
+        -- update input data before computation of correlations
+        blocking_scheme:on_prepend_sample(sampler.acquire)
+
+        -- store block sample for sample
+        block_samples[sample] = block_sample
     end
-    return blocking_scheme[sample]
+    return block_sample
 end

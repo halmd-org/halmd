@@ -1,5 +1,5 @@
 --
--- Copyright © 2010-2011  Peter Colberg and Felix Höfling
+-- Copyright © 2011  Peter Colberg and Felix Höfling
 --
 -- This file is part of HALMD.
 --
@@ -17,24 +17,20 @@
 -- along with this program.  If not, see <http://www.gnu.org/licenses/>.
 --
 
-require("halmd.device")
 require("halmd.io.writers.observable")
-require("halmd.mdsim.clock")
 require("halmd.modules")
+require("halmd.observables.dynamics.blocking_scheme")
 require("halmd.observables.dynamics.correlations")
 require("halmd.observables.samples.blocking_scheme")
-require("halmd.observables.sampler")
 require("halmd.utility")
 
 -- grab modules
 local correlations = halmd.observables.dynamics.correlations
-local device = halmd.device
+local dynamics = halmd.observables.dynamics
 local keys = halmd.utility.keys
-local mdsim = halmd.mdsim
-local observables = halmd.observables
+local samples = halmd.observables.samples
 local writers = halmd.io.writers
 -- grab C++ wrappers
-local blocking_scheme_wrapper = libhalmd.observables.dynamics.blocking_scheme_
 local correlation_wrapper = libhalmd.observables.dynamics.correlation
 local po = libhalmd.po
 -- grab standard library
@@ -44,61 +40,28 @@ local pairs = pairs
 module("halmd.observables.dynamics.correlation", halmd.modules.register)
 
 --
--- construct module blocking_scheme and add time correlation functions
--- @param args   parameter table
---   maximum_time  maximum lag time for which correlations are computed
---   resolution    time resolution of level 0 (determined by sampling rate)
---   size          size of each block, determines coarse-graining factor
---   shift         coarse-graining shift between odd and even levels
---   compute       table of time correlations functions to be computed
--- @returns instance of blocking_scheme module
+-- add time correlation functions to blocking_scheme
 --
 function new(args)
-    local every = args.every or 100 -- default value
-    local size  = args.size or 10 -- default value
-    local shift = args.shift or 0 -- default value
-
-    -- construct driver module blocking_scheme
-    local clock = mdsim.clock() -- singleton
-    local sampler = observables.sampler() -- singleton
-    local maximum_time = assert(sampler.total_time)
-    local resolution = clock.timestep * every
-    local logger = assert(args.logger) -- module logger
-    local blocking_scheme = assert(blocking_scheme_wrapper)(clock, maximum_time, resolution, size, shift, logger)
-    local block_count = blocking_scheme.count
-
-    -- connect to sampler
-    sampler:on_sample{blocking_scheme.sample, every, tracker = blocking_scheme}
-    sampler:on_finish{blocking_scheme.finalise, tracker = blocking_scheme}
-
+    local blocking_scheme = dynamics.blocking_scheme() -- singleton
     local file = writers.observable() -- singleton
     local writer = file:writer{location = {"dynamics"}, mode = "truncate"}
 
     -- add time correlation functions
-    local selections = args.compute or keys(correlations) -- default value
+    local selections = args.correlation or keys(correlations) -- default value
     for i = 1, #selections do
         -- construct the tcf functor and obtain the appropriate data sample
         local tcf = assert(correlations[selections[i]])()
         local sample = assert(tcf.sample)
-
+        local sampler = assert(tcf.sampler)
         -- construct or retrieve associated blocking scheme for sample data
-        local block_sample = assert(observables.samples.blocking_scheme{
-            sample = sample
-          , count = block_count
-          , size = size
-        })
-
+        local block_sample = samples.blocking_scheme{sample = sample, sampler = sampler}
         -- construct correlation function
         local logger = assert(args.logger) -- FIXME use tcf module logger
         local correlation = assert(correlation_wrapper)(tcf, block_sample, logger)
 
-        -- register correlation function and data with blocking scheme
+        -- register correlation function with blocking scheme
         blocking_scheme:add_correlation(correlation)
-        blocking_scheme:add_data(block_sample)
-
-        -- update input data before computation of correlations
-        local sampler = assert(tcf.sampler)
-        blocking_scheme:on_prepend_sample(sampler.acquire)
 
         -- write correlation function results
         local name = assert(tcf.module.namespace)
@@ -119,8 +82,7 @@ end
 --
 -- @param desc po.options_description
 --
-function options(desc)
-
+function options(desc, globals)
     -- choices for tcf module with descriptions
     local choices = {}
     for tcf, module in pairs(correlations) do
@@ -128,10 +90,5 @@ function options(desc)
             choices[tcf] = module.name()
         end
     end
-
-    desc:add("every", po.uint64(), "sampling interval for time-correlation functions")
-    desc:add("size", po.uint(), "block size, corresponds to coarse-graining factor")
-    desc:add("shift", po.uint(), "coarse-graining shift between adjacent blocking levels")
-    -- FIXME allow for multiple occurences of option 'compute'
-    desc:add("compute", po.composing_string():choices(choices), "specify time correlation function to be computed")
+    globals:add("correlation", po.composing_string():choices(choices), "specify time correlation function to be computed")
 end

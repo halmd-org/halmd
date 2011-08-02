@@ -206,7 +206,7 @@ void blocking_scheme::luaopen(lua_State* L)
         [
             namespace_("dynamics")
             [
-                class_<blocking_scheme, shared_ptr<blocking_scheme> >("blocking_scheme_")
+                class_<blocking_scheme, shared_ptr<blocking_scheme> >("blocking_scheme")
                     .def(constructor<
                         shared_ptr<clock_type const>
                       , double
