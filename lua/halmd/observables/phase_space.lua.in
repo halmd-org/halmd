@@ -49,6 +49,7 @@ if libhalmd.observables.gpu then
         }
     }
 end
+local property = property
 -- grab standard library
 local assert = assert
 
@@ -78,13 +79,19 @@ function new(args)
     else
         phase_space = assert(phase_space_wrapper.host[memory][dimension])
     end
-    return phase_space(sample, particle, box, clock, logger)
+    local phase_space = phase_space(sample, particle, box, clock, logger)
+
+    -- store memory as property for profiler description
+    phase_space.memory = property(function(self) return memory end)
+
+    return phase_space
 end
 
 --
 -- connect runtime accumulators to module profiler
 --
 function profile(self, profiler)
-    profiler:on_profile{self, acquire = "acquisition of phase space sample on device"}
-    profiler:on_profile{self, reset = "reset phase space sample on device"}
+    local memory = assert(self.memory)
+    profiler:on_profile{self, acquire = "acquisition of phase space sample on " .. memory}
+    profiler:on_profile{self, reset = "reset phase space sample on " .. memory}
 end
