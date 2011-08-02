@@ -67,6 +67,10 @@ function new(args)
     local blocking_scheme = assert(blocking_scheme_wrapper)(clock, maximum_time, resolution, size, shift, logger)
     local block_count = blocking_scheme.count
 
+    -- connect to sampler
+    sampler:on_sample{blocking_scheme.sample, every, tracker = blocking_scheme}
+    sampler:on_finish{blocking_scheme.finalise, tracker = blocking_scheme}
+
     local file = writers.observable() -- singleton
     local writer = file:writer{location = {"dynamics"}, mode = "truncate"}
 
@@ -94,7 +98,7 @@ function new(args)
 
         -- update input data before computation of correlations
         local sampler = assert(tcf.sampler)
-        blocking_scheme:on_sample(sampler.acquire)
+        blocking_scheme:on_prepend_sample(sampler.acquire)
 
         -- write correlation function results
         local name = assert(tcf.module.namespace)
@@ -104,10 +108,8 @@ function new(args)
         writer:on_write(correlation.count, {name, "count"})
     end
 
-    -- connect to sampler
-    sampler:on_sample{blocking_scheme.sample, every, tracker = blocking_scheme}
-    sampler:on_finish{writer.write, tracker = blocking_scheme}
-    writer:on_prepend_write(blocking_scheme.finalise)
+    -- write correlation results to H5MD file
+    blocking_scheme:on_append_finalise(writer.write)
 
     return blocking_scheme
 end

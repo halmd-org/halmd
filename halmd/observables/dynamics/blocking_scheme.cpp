@@ -90,7 +90,7 @@ blocking_scheme::blocking_scheme(
 void blocking_scheme::sample()
 {
     // trigger update of input sample(s)
-    on_sample_();
+    on_prepend_sample_();
 
     LOG_TRACE("append sample(s)");
 
@@ -132,10 +132,12 @@ void blocking_scheme::sample()
             }
         }
     }
+    on_append_sample_();
 }
 
 void blocking_scheme::finalise()
 {
+    on_prepend_finalise_();
     // iterate over all coarse-graining levels
     for (unsigned int i = 0; i < interval_.size(); ++i) {
         // process remaining data at level 'i'
@@ -153,6 +155,27 @@ void blocking_scheme::finalise()
             }
         }
     }
+    on_append_finalise_();
+}
+
+connection blocking_scheme::on_prepend_sample(slot_function_type const& slot)
+{
+    return on_prepend_sample_.connect(slot);
+}
+
+connection blocking_scheme::on_append_sample(slot_function_type const& slot)
+{
+    return on_append_sample_.connect(slot);
+}
+
+connection blocking_scheme::on_prepend_finalise(slot_function_type const& slot)
+{
+    return on_prepend_finalise_.connect(slot);
+}
+
+connection blocking_scheme::on_append_finalise(slot_function_type const& slot)
+{
+    return on_append_finalise_.connect(slot);
 }
 
 blocking_scheme::slot_function_type
@@ -199,7 +222,10 @@ void blocking_scheme::luaopen(lua_State* L)
                     .property("time", &wrap_time)
                     .def("add_correlation", &blocking_scheme::add_correlation)
                     .def("add_data", &blocking_scheme::add_data)
-                    .def("on_sample", &blocking_scheme::on_sample)
+                    .def("on_prepend_sample", &blocking_scheme::on_prepend_sample)
+                    .def("on_append_sample", &blocking_scheme::on_append_sample)
+                    .def("on_prepend_finalise", &blocking_scheme::on_prepend_finalise)
+                    .def("on_append_finalise", &blocking_scheme::on_append_finalise)
             ]
         ]
     ];

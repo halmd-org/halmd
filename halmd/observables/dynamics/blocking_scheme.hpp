@@ -97,10 +97,13 @@ public:
     void finalise();
 
     /** signal triggers preparation of input sample */
-    void on_sample(slot_function_type const& slot)
-    {
-        on_sample_.connect(slot);
-    }
+    connection on_prepend_sample(slot_function_type const& slot);
+    /** signal emitted after appending sample(s) to block */
+    connection on_append_sample(slot_function_type const& slot);
+    /** signal emitted before finalise */
+    connection on_prepend_finalise(slot_function_type const& slot);
+    /** signal emitted after finalise */
+    connection on_append_finalise(slot_function_type const& slot);
 
     /** returns block size, i.e., the length of the coarse-graining levels */
     unsigned int block_size() const
@@ -141,8 +144,14 @@ private:
     std::vector<step_type> interval_;
     /** time grid of the resulting correlation functions */
     block_time_type time_;
-
-    signal_type on_sample_;
+    /** signal triggers preparation of input sample */
+    signal_type on_prepend_sample_;
+    /** signal emitted after appending sample(s) to block */
+    signal_type on_append_sample_;
+    /** signal emitted before finalise */
+    signal_type on_prepend_finalise_;
+    /** signal emitted after finalise */
+    signal_type on_append_finalise_;
 };
 
 } // namespace dynamics
