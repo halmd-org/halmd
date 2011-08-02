@@ -87,6 +87,18 @@ blocking_scheme::blocking_scheme(
     }
 }
 
+connection blocking_scheme::on_correlate(shared_ptr<correlation_base> tcf)
+{
+    return tcf_.connect(tcf);
+}
+
+connection blocking_scheme::on_sample(shared_ptr<block_sample_type> block_sample)
+{
+    assert(block_sample->count() == count());
+    assert(block_sample->block_size() == block_size_);
+    return block_sample_.connect(block_sample);
+}
+
 void blocking_scheme::sample()
 {
     // trigger update of input sample(s)
@@ -196,7 +208,6 @@ wrap_time(shared_ptr<blocking_scheme> self)
     return bind(&blocking_scheme::time, self);
 }
 
-
 void blocking_scheme::luaopen(lua_State* L)
 {
     using namespace luabind;
@@ -220,8 +231,8 @@ void blocking_scheme::luaopen(lua_State* L)
                     .property("block_size", &blocking_scheme::block_size)
                     .property("count", &blocking_scheme::count)
                     .property("time", &wrap_time)
-                    .def("add_correlation", &blocking_scheme::add_correlation)
-                    .def("add_data", &blocking_scheme::add_data)
+                    .def("on_correlate", &blocking_scheme::on_correlate)
+                    .def("on_sample", &blocking_scheme::on_sample)
                     .def("on_prepend_sample", &blocking_scheme::on_prepend_sample)
                     .def("on_append_sample", &blocking_scheme::on_append_sample)
                     .def("on_prepend_finalise", &blocking_scheme::on_prepend_finalise)

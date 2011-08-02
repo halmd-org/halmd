@@ -24,7 +24,6 @@
 #include <boost/shared_ptr.hpp>
 #include <boost/multi_array.hpp>
 #include <lua.hpp>
-#include <set>
 
 #include <halmd/io/logger.hpp>
 #include <halmd/mdsim/clock.hpp>
@@ -75,18 +74,9 @@ public:
     );
 
     /** add a time correlation function */
-    void add_correlation(boost::shared_ptr<correlation_base> tcf)
-    {
-        tcf_.insert(tcf);
-    }
-
+    connection on_correlate(boost::shared_ptr<correlation_base> tcf);
     /** add blocked input data, e.g., phase space points or density modes */
-    void add_data(boost::shared_ptr<block_sample_type> block_sample)
-    {
-        assert(block_sample->count() == count());
-        assert(block_sample->block_size() == block_size_);
-        block_sample_.insert(block_sample);
-    }
+    connection on_sample(boost::shared_ptr<block_sample_type> block_sample);
 
     /** acquire and store current data from input sample,
      *  emit on_correlate_block for each full coarse-graining level
@@ -132,12 +122,12 @@ private:
     /** module logger */
     boost::shared_ptr<logger_type> logger_;
     /** set of time correlation functions */
-    std::set<boost::shared_ptr<correlation_base> > tcf_;
+    slots<boost::shared_ptr<correlation_base> > tcf_;
     /** set of block structures holding the input samples (e.g., phase space point, density modes)
      *
      * We use std::set since it is a Unique Container.
      */
-    std::set<boost::shared_ptr<block_sample_type> > block_sample_;
+    slots<boost::shared_ptr<block_sample_type> > block_sample_;
     /** size (length) of the coarse-graining levels */
     unsigned int block_size_;
     /** sampling intervals for each coarse-graining level */

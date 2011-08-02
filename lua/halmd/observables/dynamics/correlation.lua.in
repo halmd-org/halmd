@@ -61,7 +61,7 @@ function new(args)
         local correlation = assert(correlation_wrapper)(tcf, block_sample, logger)
 
         -- register correlation function with blocking scheme
-        blocking_scheme:add_correlation(correlation)
+        blocking_scheme:on_correlate(correlation)
 
         -- write correlation function results
         local name = assert(tcf.module.namespace)

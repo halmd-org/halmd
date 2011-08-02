@@ -50,7 +50,7 @@ function new(args)
         block_sample = assert(blocking_scheme_wrapper)(sample, count, size)
 
         -- register correlation data with blocking scheme
-        blocking_scheme:add_data(block_sample)
+        blocking_scheme:on_sample(block_sample)
         -- update input data before computation of correlations
         blocking_scheme:on_prepend_sample(sampler.acquire)
 
