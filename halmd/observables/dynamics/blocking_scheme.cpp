@@ -82,7 +82,7 @@ blocking_scheme::blocking_scheme(
     time_.resize(boost::extents[block_count][block_size_]);
     for (unsigned int i = 0; i < block_count; ++i) {
         for (unsigned int j = 0; j < block_size_; ++j) {
-            time_[i][j] = interval_[i] * j;
+            time_[i][j] = (interval_[i] * j) * clock_->timestep();
         }
     }
 }
