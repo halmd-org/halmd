@@ -620,3 +620,63 @@ env-graphviz:
 	@echo '# add Graphviz $(GRAPHVIZ_VERSION) to environment'
 	@echo 'export PATH="$(GRAPHVIZ_INSTALL_DIR)/bin$${PATH+:$$PATH}"'
 	@echo 'export MANPATH="$(GRAPHVIZ_INSTALL_DIR)/share/man$${MANPATH+:$$MANPATH}"'
+
+##
+## Clang C++ compiler
+##
+
+CLANG_VERSION = 2.9
+LLVM_TARBALL = llvm-$(CLANG_VERSION).tgz
+LLVM_TARBALL_URL = http://llvm.org/releases/$(CLANG_VERSION)/$(LLVM_TARBALL)
+CLANG_TARBALL = clang-$(CLANG_VERSION).tgz
+CLANG_TARBALL_URL = http://llvm.org/releases/$(CLANG_VERSION)/$(CLANG_TARBALL)
+CLANG_BUILD_DIR = llvm-$(CLANG_VERSION)
+CLANG_CONFIGURE_FLAGS = --enable-optimized
+CLANG_INSTALL_DIR = $(PREFIX)/clang-$(CLANG_VERSION)
+
+.fetch-clang:
+	$(WGET) $(LLVM_TARBALL_URL)
+	$(WGET) $(CLANG_TARBALL_URL)
+	@$(TOUCH) $@
+
+fetch-clang: .fetch-clang
+
+.extract-clang: .fetch-clang
+	$(RM) $(CLANG_BUILD_DIR)
+	$(TAR) -xzf $(LLVM_TARBALL)
+	cd $(CLANG_BUILD_DIR)/tools && $(TAR) -xzf $(CURDIR)/$(CLANG_TARBALL) && mv clang-$(CLANG_VERSION) clang
+	@$(TOUCH) $@
+
+extract-clang: .extract-clang
+
+.configure-clang: .extract-clang
+	cd $(CLANG_BUILD_DIR) && ./configure $(CLANG_CONFIGURE_FLAGS) --prefix=$(CLANG_INSTALL_DIR)
+	@$(TOUCH) $@
+
+configure-clang: .configure-clang
+
+.build-clang: .configure-clang
+	cd $(CLANG_BUILD_DIR) && make $(PARALLEL_BUILD_FLAGS)
+	@$(TOUCH) $@
+
+build-clang: .build-clang
+
+install-clang: .build-clang
+	cd $(CLANG_BUILD_DIR) && make install
+
+clean-clang:
+	@$(RM) .build-clang
+	@$(RM) .configure-clang
+	@$(RM) .extract-clang
+	$(RM) $(CLANG_BUILD_DIR)
+
+distclean-clang: clean-clang
+	@$(RM) .fetch-clang
+	$(RM) $(LLVM_TARBALL)
+	$(RM) $(CLANG_TARBALL)
+
+env-clang:
+	@echo
+	@echo '# add Clang $(CLANG_VERSION) to environment'
+	@echo 'export PATH="$(CLANG_INSTALL_DIR)/bin$${PATH+:$$PATH}"'
+	@echo 'export MANPATH="$(CLANG_INSTALL_DIR)/share/man$${MANPATH+:$$MANPATH}"'
