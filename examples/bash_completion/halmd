@@ -105,7 +105,7 @@ _halmd ()
                             return 0
                             ;;
 
-                        @("$prev"?( \[ --+([-[:alnum:]]) \])|-[[:alpha:]] \[ "$prev" \])\ arg*\ file)
+                        @("$prev"?( \[ --+([-[:alnum:]]) \])|-[[:alpha:]] \[ "$prev" \])\ arg*\ file?(s))
                             _filedir
                             compopt +o nospace
                             return 0
