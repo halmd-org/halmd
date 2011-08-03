@@ -100,22 +100,22 @@ _halmd ()
             *)
                 if [ "$section" = "$module" ]; then
                     case $line in
-                        @("$prev"?( \[ --+([-[:alnum:]]) \])|-[[:alpha:]] \[ "$prev" \])\ arg+(\ )select*)
+                        @("$prev"?( \[ --+([-[:alnum:]]) \])|-[[:alnum:]] \[ "$prev" \])\ arg+(\ )select*)
                             _halmd_comp_choices "$program" "$module" "$prev"
                             return 0
                             ;;
 
-                        @("$prev"?( \[ --+([-[:alnum:]]) \])|-[[:alpha:]] \[ "$prev" \])\ arg*\ file?(s))
+                        @("$prev"?( \[ --+([-[:alnum:]]) \])|-[[:alnum:]] \[ "$prev" \])\ arg*\ file?(s))
                             _filedir
                             compopt +o nospace
                             return 0
                             ;;
 
-                        @("$prev"?( \[ --+([-[:alnum:]]) \])|-[[:alpha:]] \[ "$prev" \])\ arg*)
+                        @("$prev"?( \[ --+([-[:alnum:]]) \])|-[[:alnum:]] \[ "$prev" \])\ arg*)
                             return 0
                             ;;
 
-                        -[[:alpha:]]\ \[\ --+([-[:alnum:]])\ \]\ arg*)
+                        -[[:alnum:]]\ \[\ --+([-[:alnum:]])\ \]\ arg*)
                             local lopt="--${line#*--}"
                             options=( "${options[@]}" "${lopt%% *}=" )
                             ;;
@@ -124,7 +124,7 @@ _halmd ()
                             options=( "${options[@]}" "${line%% *}=" )
                             ;;
 
-                        -[[:alpha:]]\ \[\ --+([-[:alnum:]])\ \]\ *)
+                        -[[:alnum:]]\ \[\ --+([-[:alnum:]])\ \]\ *)
                             local lopt="--${line#*--}"
                             options=( "${options[@]}" "${lopt%% *}" )
                             ;;
