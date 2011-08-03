@@ -41,8 +41,8 @@ blocking_scheme::blocking_scheme(
 )
   // member initialisation
   : clock_(clock)
-  , block_size_(block_size)
   , logger_(logger)
+  , block_size_(block_size)
 {
     LOG("size of coarse-graining blocks: " << block_size_);
     if (block_size_ < 2) {
