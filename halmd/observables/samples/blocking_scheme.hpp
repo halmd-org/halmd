@@ -26,9 +26,9 @@
 #include <cassert>
 #include <cstddef> // std::size_t
 #include <lua.hpp>
-#include <stdint.h> // uint64_t
 #include <vector>
 
+#include <halmd/mdsim/clock.hpp>
 #include <halmd/utility/demangle.hpp>
 #include <halmd/utility/lua/lua.hpp>
 
@@ -44,6 +44,8 @@ namespace samples {
 class blocking_scheme_base
 {
 public:
+    typedef mdsim::clock::step_type step_type;
+
     /** append the current input data to level 'index' */
     virtual void push_back(std::size_t index) = 0;
     /** drop the first entry at level 'index' */
@@ -61,7 +63,7 @@ public:
     /** returns size of coarse-graining blocks */
     virtual std::size_t block_size() const = 0;
     /** returns integration step of the current sample */
-    virtual uint64_t step() const = 0;
+    virtual step_type step() const = 0;
 };
 
 /**
@@ -72,10 +74,14 @@ template <typename sample_type>
 class blocking_scheme
   : public blocking_scheme_base
 {
+private:
+    typedef blocking_scheme_base _Base;
+
 public:
     typedef boost::circular_buffer<sample_type> block_type;
     typedef typename block_type::iterator block_iterator;
     typedef typename block_type::const_iterator block_const_iterator;
+    typedef typename _Base::step_type step_type;
 
     static void luaopen(lua_State* L);
 
@@ -92,7 +98,7 @@ public:
     virtual std::size_t size(std::size_t index) const;
     virtual std::size_t count() const;
     virtual std::size_t block_size() const;
-    virtual uint64_t step() const;
+    virtual step_type step() const;
 
     /**
      * This function is inlined by the correlation function.
@@ -104,8 +110,6 @@ public:
     }
 
 private:
-    typedef blocking_scheme_base _Base;
-
     boost::shared_ptr<sample_type const> sample_;
     std::vector<block_type> blocks_;
 };
@@ -183,7 +187,8 @@ std::size_t blocking_scheme<sample_type>::block_size() const
 }
 
 template <typename sample_type>
-uint64_t blocking_scheme<sample_type>::step() const
+typename blocking_scheme<sample_type>::step_type
+blocking_scheme<sample_type>::step() const
 {
     // return integration step at which sample data were taken
     return sample_->step;
