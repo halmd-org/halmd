@@ -1,48 +1,147 @@
-# halmd(1) completion
+#!bash
+#
+# Copyright © 2011  Peter Colberg
+#
+# This file is part of HALMD.
+#
+# HALMD is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+#
 
-_halmd()
+shopt -s extglob
+
+_halmd_comp_words ()
 {
-    local cur prev module modules
+    local IFS=' '$'\t'$'\n'
+    for option in "$@"; do
+        case "$option" in
+            *=) echo "$option" ;;
+            *)  echo "$option " ;;
+        esac
+    done
+}
+
+_halmd_comp ()
+{
+    local IFS=$'\n'
+    COMPREPLY=( $( compgen -W "$( _halmd_comp_words "$@" )" -- "$cur" ) )
+}
+
+_halmd_comp_choices ()
+{
+    local program="$1" module="$2" option="$3" choices=() choice=false
+    while read line ; do
+        case "$line" in
+            *:)
+                choice=true
+                ;;
+            +([[:word:]])\ *)
+                if [ "$choice" = true ]; then
+                    choices=( ${choices[@]} ${line%% *} )
+                fi
+                ;;
+            *)
+                if [ "$choice" = true ] && [ -z "$line" ]; then
+                    break
+                fi
+                ;;
+        esac
+    done < <("$program" $module $option help 2>&1)
+    _halmd_comp "${choices[@]}"
+}
+
+_halmd ()
+{
+    local program="$1"
+    local description="$("$program" --help)"
+
+    local modules
     declare -A modules
+    while read line ; do
+        case $line in
+            +([[:word:]]):)
+                modules[${line%:}]=true
+                ;;
+        esac
+    done < <(echo "$description")
+
+    local module="" word_prev=""
+    for word in ${COMP_WORDS[@]}; do
+        if [ "$word_prev" != "=" ] && [ "${modules[$word]}" = true ]; then
+            module="$word"
+        fi
+        word_prev="$word"
+    done
+
+    local cur="${COMP_WORDS[COMP_CWORD]%=}"
+    local prev="${COMP_WORDS[COMP_CWORD - 1]%=}"
+    prev="${prev:-${COMP_WORDS[COMP_CWORD - 2]}}"
 
     COMPREPLY=()
-    cur="${COMP_WORDS[COMP_CWORD]}"
-    prev="${COMP_WORDS[COMP_CWORD - 1]}"
 
-    for module in $( "$1" --help | sed -ne 's/^\([^ ]*\):$/\1/p' ); do
-        modules[$module]=$module
-    done
+    local options=() section=""
+    while read line ; do
+        case "$line" in
+            +([[:word:]]):)
+                section="${line%:}"
+                options=( "${options[@]}" "${section}" )
+                ;;
 
-    module=""
-    for word in ${COMP_WORDS[@]}; do
-        if [ "${modules[$word]}" == "$word" ]; then
-            module=$word
-        fi
-    done
+            *)
+                if [ "$section" = "$module" ]; then
+                    case $line in
+                        @("$prev"?( \[ --+([-[:alnum:]]) \])|-[[:alpha:]] \[ "$prev" \])\ arg+(\ )select*)
+                            _halmd_comp_choices "$program" "$module" "$prev"
+                            return 0
+                            ;;
 
-    _expand || return 0
+                        @("$prev"?( \[ --+([-[:alnum:]]) \])|-[[:alpha:]] \[ "$prev" \])\ arg*\ file)
+                            _filedir
+                            compopt +o nospace
+                            return 0
+                            ;;
 
-    if [ "$prev" == "--file" ]; then
-        _filedir
-        return 0
-    fi
+                        @("$prev"?( \[ --+([-[:alnum:]]) \])|-[[:alpha:]] \[ "$prev" \])\ arg*)
+                            return 0
+                            ;;
 
-    if [ -z "$module" ]; then
-        COMPREPLY=( $( compgen -W "$( "$1" --help | \
-            sed -e '1d' -e '/^[^ ]/,$d' -ne 's/ *-\([^ ]*\).*/-\1/p' | \
-            sort -u )" -- "$cur" ) )
-    else
-        COMPREPLY=( $( compgen -W "$( "$1" --help | \
-            sed -e "1,/^$module:/d" -e '/^[^ ]/,$d' -ne 's/ *-\([^ ]*\).*/-\1/p' | \
-            sort -u )" -- "$cur" ) )
-    fi
-    if [[ "$cur" != -* ]]; then
-        COMPREPLY=( ${COMPREPLY[@]} $( compgen -W "$( "$1" --help | \
-            sed -ne 's/^\([^ ]*\):$/\1/p' | \
-            sort -u )" -- "$cur" ) )
-    fi
+                        -[[:alpha:]]\ \[\ --+([-[:alnum:]])\ \]\ arg*)
+                            local lopt="--${line#*--}"
+                            options=( "${options[@]}" "${lopt%% *}=" )
+                            ;;
+
+                        --+([-[:alnum:]])\ arg*)
+                            options=( "${options[@]}" "${line%% *}=" )
+                            ;;
+
+                        -[[:alpha:]]\ \[\ --+([-[:alnum:]])\ \]\ *)
+                            local lopt="--${line#*--}"
+                            options=( "${options[@]}" "${lopt%% *}" )
+                            ;;
+
+                        --+([-[:alnum:]])\ *)
+                            options=( "${options[@]}" "${line%% *}" )
+                            ;;
+                    esac
+                fi
+                ;;
+        esac
+    done < <(echo "$description")
+
+    _halmd_comp "${options[@]}"
+
 } &&
-complete -F _halmd -o filenames halmd
+complete -F _halmd -o nospace halmd
 
 # Local variables:
 # mode: shell-script
