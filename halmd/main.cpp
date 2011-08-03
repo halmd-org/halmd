@@ -87,7 +87,7 @@ int main(int argc, char **argv)
                      )
                  )
              ),
-             "output file prefix")
+             "prefix of output files")
             ("config,c", po::value<string>(),
              "parameter input file")
             ("verbose,v", po::accum_value<int>()->default_value(logging::warning),
