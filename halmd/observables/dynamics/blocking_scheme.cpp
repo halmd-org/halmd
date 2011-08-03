@@ -65,8 +65,9 @@ blocking_scheme::blocking_scheme(
 
     // set up sampling intervals for each level
     step_type max_interval =
-        static_cast<step_type>(maximum_lag_time / resolution) / 2; // we need at least 2 data points per level
-    step_type s = 1;
+        static_cast<step_type>(maximum_lag_time / clock_->timestep()) / 2; // we need at least 2 data points per level
+    step_type s =
+        static_cast<step_type>(resolution / clock_->timestep());
     while (s * shift < max_interval)
     {
         interval_.push_back(s);               // even levels
