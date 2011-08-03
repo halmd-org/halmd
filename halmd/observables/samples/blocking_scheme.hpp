@@ -60,8 +60,8 @@ public:
     virtual std::size_t count() const = 0;
     /** returns size of coarse-graining blocks */
     virtual std::size_t block_size() const = 0;
-    /** returns time stamp (aka integration step) of the current sample */
-    virtual uint64_t timestamp() const = 0;
+    /** returns integration step of the current sample */
+    virtual uint64_t step() const = 0;
 };
 
 /**
@@ -92,7 +92,7 @@ public:
     virtual std::size_t size(std::size_t index) const;
     virtual std::size_t count() const;
     virtual std::size_t block_size() const;
-    virtual uint64_t timestamp() const;
+    virtual uint64_t step() const;
 
     /**
      * This function is inlined by the correlation function.
@@ -183,7 +183,7 @@ std::size_t blocking_scheme<sample_type>::block_size() const
 }
 
 template <typename sample_type>
-uint64_t blocking_scheme<sample_type>::timestamp() const
+uint64_t blocking_scheme<sample_type>::step() const
 {
     // return integration step at which sample data were taken
     return sample_->step;

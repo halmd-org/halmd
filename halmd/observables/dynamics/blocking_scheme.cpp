@@ -109,7 +109,7 @@ void blocking_scheme::sample()
     // check integrity of input data
     step_type step = clock_->step();
     BOOST_FOREACH(shared_ptr<block_sample_type> block_sample, block_sample_) {
-        if (block_sample->timestamp() != step) {
+        if (block_sample->step() != step) {
             throw logic_error("input sample was not updated");
         }
     }
