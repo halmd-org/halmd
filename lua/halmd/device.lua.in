@@ -32,6 +32,13 @@ local assert = assert
 module("halmd.device", halmd.modules.register, halmd.singleton)
 
 --
+-- query whether HALMD is compiled with GPU support
+--
+function with_gpu()
+    return device_wrapper ~= nil
+end
+
+--
 -- construct device module
 --
 function new(args)
@@ -54,7 +61,7 @@ namespace = "gpu"
 -- @param desc po.options_description
 --
 function options(desc, globals)
-    if device_wrapper then
+    if with_gpu() then
         desc:add("devices", po.int_array(), "CUDA device(s)")
         globals:add("disable-gpu", po.bool_switch(), "disable GPU acceleration")
     end

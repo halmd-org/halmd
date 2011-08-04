@@ -78,7 +78,9 @@ end
 -- @param desc po.options_description
 --
 function options(desc)
-    desc:add("disable-gpu", po.bool_switch(), "disable GPU acceleration")
+    if device.with_gpu() then
+        desc:add("disable-gpu", po.bool_switch(), "disable GPU acceleration")
+    end
 end
 
 --
