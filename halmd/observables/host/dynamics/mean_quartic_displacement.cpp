@@ -91,28 +91,22 @@ void mean_quartic_displacement<dimension, float_type>::luaopen(lua_State* L)
 
 HALMD_LUA_API int luaopen_libhalmd_observables_host_dynamics_mean_quartic_displacement(lua_State* L)
 {
-#ifndef USE_HOST_SINGLE_PRECISION
     mean_quartic_displacement<3, double>::luaopen(L);
     mean_quartic_displacement<2, double>::luaopen(L);
-    observables::dynamics::correlation<mean_quartic_displacement<3, double> >::luaopen(L);
-    observables::dynamics::correlation<mean_quartic_displacement<2, double> >::luaopen(L);
-#else
     mean_quartic_displacement<3, float>::luaopen(L);
     mean_quartic_displacement<2, float>::luaopen(L);
+    observables::dynamics::correlation<mean_quartic_displacement<3, double> >::luaopen(L);
+    observables::dynamics::correlation<mean_quartic_displacement<2, double> >::luaopen(L);
     observables::dynamics::correlation<mean_quartic_displacement<3, float> >::luaopen(L);
     observables::dynamics::correlation<mean_quartic_displacement<2, float> >::luaopen(L);
-#endif
     return 0;
 }
 
 // explicit instantiation
-#ifndef USE_HOST_SINGLE_PRECISION
 template class mean_quartic_displacement<3, double>;
 template class mean_quartic_displacement<2, double>;
-#else
 template class mean_quartic_displacement<3, float>;
 template class mean_quartic_displacement<2, float>;
-#endif
 
 } // namespace dynamics
 } // namespace host
@@ -121,13 +115,10 @@ namespace dynamics
 {
 
 // explicit instantiation
-#ifndef USE_HOST_SINGLE_PRECISION
 template class correlation<host::dynamics::mean_quartic_displacement<3, double> >;
 template class correlation<host::dynamics::mean_quartic_displacement<2, double> >;
-#else
 template class correlation<host::dynamics::mean_quartic_displacement<3, float> >;
 template class correlation<host::dynamics::mean_quartic_displacement<2, float> >;
-#endif
 
 } // namespace dynamics
 } // namespace observables

@@ -46,7 +46,7 @@ function new(args)
     -- command line options
     local species = args.species or 0 -- default value
     -- obtain appropriate phase space sample
-    local backend = device() and "gpu" or "host"
+    local backend = device() and not args.disable_gpu and "gpu" or "host"
     local sample = observables.samples.phase_space{memory = backend}
     local dimension = assert(sample.dimension)
     -- construct vac module
@@ -77,8 +77,9 @@ end
 --
 -- @param desc po.options_description
 --
---function options(desc)
---end
+function options(desc)
+    desc:add("disable-gpu", po.bool_switch(), "disable GPU acceleration")
+end
 
 --
 -- read module parameters from HDF5 group

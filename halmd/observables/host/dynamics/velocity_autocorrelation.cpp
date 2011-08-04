@@ -91,28 +91,22 @@ void velocity_autocorrelation<dimension, float_type>::luaopen(lua_State* L)
 
 HALMD_LUA_API int luaopen_libhalmd_observables_host_dynamics_velocity_autocorrelation(lua_State* L)
 {
-#ifndef USE_HOST_SINGLE_PRECISION
     velocity_autocorrelation<3, double>::luaopen(L);
     velocity_autocorrelation<2, double>::luaopen(L);
-    observables::dynamics::correlation<velocity_autocorrelation<3, double> >::luaopen(L);
-    observables::dynamics::correlation<velocity_autocorrelation<2, double> >::luaopen(L);
-#else
     velocity_autocorrelation<3, float>::luaopen(L);
     velocity_autocorrelation<2, float>::luaopen(L);
+    observables::dynamics::correlation<velocity_autocorrelation<3, double> >::luaopen(L);
+    observables::dynamics::correlation<velocity_autocorrelation<2, double> >::luaopen(L);
     observables::dynamics::correlation<velocity_autocorrelation<3, float> >::luaopen(L);
     observables::dynamics::correlation<velocity_autocorrelation<2, float> >::luaopen(L);
-#endif
     return 0;
 }
 
 // explicit instantiation
-#ifndef USE_HOST_SINGLE_PRECISION
 template class velocity_autocorrelation<3, double>;
 template class velocity_autocorrelation<2, double>;
-#else
 template class velocity_autocorrelation<3, float>;
 template class velocity_autocorrelation<2, float>;
-#endif
 
 } // namespace dynamics
 } // namespace host
@@ -121,13 +115,10 @@ namespace dynamics
 {
 
 // explicit instantiation
-#ifndef USE_HOST_SINGLE_PRECISION
 template class correlation<host::dynamics::velocity_autocorrelation<3, double> >;
 template class correlation<host::dynamics::velocity_autocorrelation<2, double> >;
-#else
 template class correlation<host::dynamics::velocity_autocorrelation<3, float> >;
 template class correlation<host::dynamics::velocity_autocorrelation<2, float> >;
-#endif
 
 } // namespace dynamics
 } // namespace observables

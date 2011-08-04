@@ -89,28 +89,22 @@ void mean_square_displacement<dimension, float_type>::luaopen(lua_State* L)
 
 HALMD_LUA_API int luaopen_libhalmd_observables_host_dynamics_mean_square_displacement(lua_State* L)
 {
-#ifndef USE_HOST_SINGLE_PRECISION
     mean_square_displacement<3, double>::luaopen(L);
     mean_square_displacement<2, double>::luaopen(L);
-    observables::dynamics::correlation<mean_square_displacement<3, double> >::luaopen(L);
-    observables::dynamics::correlation<mean_square_displacement<2, double> >::luaopen(L);
-#else
     mean_square_displacement<3, float>::luaopen(L);
     mean_square_displacement<2, float>::luaopen(L);
+    observables::dynamics::correlation<mean_square_displacement<3, double> >::luaopen(L);
+    observables::dynamics::correlation<mean_square_displacement<2, double> >::luaopen(L);
     observables::dynamics::correlation<mean_square_displacement<3, float> >::luaopen(L);
     observables::dynamics::correlation<mean_square_displacement<2, float> >::luaopen(L);
-#endif
     return 0;
 }
 
 // explicit instantiation
-#ifndef USE_HOST_SINGLE_PRECISION
 template class mean_square_displacement<3, double>;
 template class mean_square_displacement<2, double>;
-#else
 template class mean_square_displacement<3, float>;
 template class mean_square_displacement<2, float>;
-#endif
 
 } // namespace dynamics
 } // namespace host
