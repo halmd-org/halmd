@@ -72,6 +72,13 @@ public:
      * @param force if true then enforce reallocation
      */
     void reset(bool force=false);
+
+#ifndef NDEBUG
+    /** get particle positions of given type */
+    std::vector<vector_type> position(unsigned int type) const;
+    /** get particle velocities of given type */
+    std::vector<vector_type> velocity(unsigned int type) const;
+#endif
 };
 
 template <int dimension, typename float_type>
