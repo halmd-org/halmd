@@ -82,5 +82,5 @@ end
 -- connect runtime accumulators to module profiler
 --
 function profile(self, profiler)
-    profiler:on_profile{self, compute = "computation of " .. self.tcf.module.description()}
+    profiler:on_profile{self, tcf = "computation of " .. self.tcf.module.description()}
 end

@@ -90,7 +90,7 @@ private:
     struct runtime
     {
         typedef utility::profiler::accumulator_type accumulator_type;
-        accumulator_type compute;
+        accumulator_type tcf;
     };
 
     /** block structure holding the input data */
@@ -133,8 +133,6 @@ correlation<tcf_type>::correlation(
 template <typename tcf_type>
 void correlation<tcf_type>::compute(unsigned int level)
 {
-    scoped_timer_type timer(runtime_.compute);
-
     LOG_TRACE("compute correlations at level " << level);
 
     typedef typename block_sample_type::block_type block_type;
@@ -147,6 +145,7 @@ void correlation<tcf_type>::compute(unsigned int level)
     input_iterator first = block.begin();
     output_iterator out = result_[level].begin();
     for (input_iterator second = first; second != block.end(); ++second) {
+        scoped_timer_type timer(runtime_.tcf);
         // call TCF-specific compute routine and
         // store result in output accumulator
         (*out++)(tcf_->compute(*first, *second));
@@ -228,7 +227,7 @@ void correlation<tcf_type>::luaopen(lua_State* L)
                     .scope
                     [
                         class_<runtime>("runtime")
-                            .def_readonly("compute", &runtime::compute)
+                            .def_readonly("tcf", &runtime::tcf)
                     ]
                     .def_readonly("runtime", &correlation::runtime_)
 
