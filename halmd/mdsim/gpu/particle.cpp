@@ -156,6 +156,22 @@ void particle<dimension, float_type>::set()
  * rearrange particles by permutation
  */
 template <unsigned int dimension, typename float_type>
+void particle<dimension, float_type>::rearrange(std::vector<unsigned int> const& index)
+{
+    // copy index array from host to GPU,
+    // ensure that the GPU array has size dim.threads()
+    // with the excess fields initialised to 0
+    assert(index.size() == nbox);
+    cuda::vector<unsigned int> g_index(index.size());
+    g_index.reserve(dim.threads());
+    cuda::memset(g_index, 0, g_index.capacity()); // FIXME support offset in cuda::memset
+    cuda::copy(index, g_index);
+
+    // call GPU version of rearrange()
+    rearrange(g_index);
+}
+
+template <unsigned int dimension, typename float_type>
 void particle<dimension, float_type>::rearrange(cuda::vector<unsigned int> const& g_index)
 {
     scoped_timer_type timer(runtime_.rearrange);
