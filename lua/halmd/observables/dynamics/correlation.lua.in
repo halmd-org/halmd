@@ -77,3 +77,10 @@ function new(args)
 
     return correlation
 end
+
+--
+-- connect runtime accumulators to module profiler
+--
+function profile(self, profiler)
+    profiler:on_profile{self, compute = "computation of " .. self.tcf.module.description()}
+end

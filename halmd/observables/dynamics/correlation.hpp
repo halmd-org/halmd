@@ -31,6 +31,7 @@
 #include <halmd/numeric/accumulator.hpp>
 #include <halmd/observables/samples/blocking_scheme.hpp>
 #include <halmd/utility/demangle.hpp>
+#include <halmd/utility/profiler.hpp>
 
 namespace halmd {
 namespace observables {
@@ -83,6 +84,14 @@ public:
 
 private:
     typedef correlation_base _Base;
+    typedef utility::profiler profiler_type;
+    typedef profiler_type::scoped_timer_type scoped_timer_type;
+
+    struct runtime
+    {
+        typedef utility::profiler::accumulator_type accumulator_type;
+        accumulator_type compute;
+    };
 
     /** block structure holding the input data */
     boost::shared_ptr<block_sample_type> block_sample_;
@@ -98,6 +107,9 @@ private:
     block_error_type error_;
     /** accumulator count */
     block_count_type count_;
+
+    /** profiling runtime accumulators */
+    runtime runtime_;
 };
 
 template <typename tcf_type>
@@ -121,6 +133,8 @@ correlation<tcf_type>::correlation(
 template <typename tcf_type>
 void correlation<tcf_type>::compute(unsigned int level)
 {
+    scoped_timer_type timer(runtime_.compute);
+
     LOG_TRACE("compute correlations at level " << level);
 
     typedef typename block_sample_type::block_type block_type;
@@ -211,6 +225,12 @@ void correlation<tcf_type>::luaopen(lua_State* L)
                     .property("mean", &wrap_mean<correlation>)
                     .property("error", &wrap_error<correlation>)
                     .property("count", &wrap_count<correlation>)
+                    .scope
+                    [
+                        class_<runtime>("runtime")
+                            .def_readonly("compute", &runtime::compute)
+                    ]
+                    .def_readonly("runtime", &correlation::runtime_)
 
               , def("correlation", &boost::make_shared<correlation
                   , boost::shared_ptr<tcf_type>
