@@ -80,6 +80,10 @@ private:
     struct runtime
     {
         accumulator_type total;
+        accumulator_type start;
+        accumulator_type prepare;
+        accumulator_type sample;
+        accumulator_type finish;
     };
 
     void prepare(slot_function_type const& slot, step_type interval) const;
