@@ -22,8 +22,10 @@
 #include <halmd/mdsim/gpu/particle_kernel.hpp>
 #include <halmd/numeric/blas/blas.hpp>
 #include <halmd/utility/gpu/thread.cuh>
+#include <halmd/utility/gpu/variant.cuh>
 
 using namespace halmd::algorithm::gpu;
+using namespace halmd::utility::gpu;
 
 namespace halmd {
 namespace mdsim {
@@ -36,6 +38,12 @@ static __constant__ unsigned int nbox_;
 static __constant__ unsigned int ntype_;
 /** number of particles per type */
 static texture<unsigned int> ntypes_;
+/** positions, types */
+static texture<float4> r_;
+/** minimum image vectors */
+static texture<variant<map<pair<int_<3>, float4>, pair<int_<2>, float2> > > > image_;
+/** velocities, tags */
+static texture<float4> v_;
 
 /**
  * set particle tags and types
@@ -76,6 +84,47 @@ __global__ void gen_index(unsigned int* g_index)
     g_index[GTID] = (GTID < nbox_) ? GTID : 0;
 }
 
+/**
+ * rearrange particles by a given permutation
+ */
+template <typename vector_type, typename aligned_vector_type>
+__global__ void rearrange(
+    unsigned int const* g_index
+  , float4* g_r
+  , aligned_vector_type* g_image
+  , float4* g_v
+  , unsigned int* g_tag
+)
+{
+    enum { dimension = vector_type::static_size };
+
+    unsigned int const i = g_index[GTID];
+    {
+        vector_type r;
+        unsigned int type;
+#ifdef USE_VERLET_DSFUN
+        tie(r, type) = untagged<vector_type>(tex1Dfetch(r_, i), tex1Dfetch(r_, i + GTDIM));
+        tie(g_r[GTID], g_r[GTID + GTDIM]) = tagged(r, type);
+#else
+        tie(r, type) = untagged<vector_type>(tex1Dfetch(r_, i));
+        g_r[GTID] = tagged(r, type);
+#endif
+    }
+    {
+        vector_type v;
+        unsigned int tag;
+#ifdef USE_VERLET_DSFUN
+        tie(v, tag) = untagged<vector_type>(tex1Dfetch(v_, i), tex1Dfetch(v_, i + GTDIM));
+        tie(g_v[GTID], g_v[GTID + GTDIM]) = tagged(v, tag);
+#else
+        tie(v, tag) = untagged<vector_type>(tex1Dfetch(v_, i));
+        g_v[GTID] = tagged(v, tag);
+#endif
+        g_tag[GTID] = tag;
+    }
+    g_image[GTID] = tex1Dfetch(get<dimension>(image_), i);
+}
+
 } // namespace particle_kernel
 
 template <int dimension>
@@ -83,8 +132,16 @@ particle_wrapper<dimension> const particle_wrapper<dimension>::kernel = {
     particle_kernel::nbox_
   , particle_kernel::ntype_
   , particle_kernel::ntypes_
+  , particle_kernel::r_
+  , get<dimension>(particle_kernel::image_)
+  , particle_kernel::v_
   , particle_kernel::tag<fixed_vector<float, dimension> >
   , particle_kernel::gen_index
+#ifdef USE_VERLET_DSFUN
+  , particle_kernel::rearrange<fixed_vector<dsfloat, dimension> >
+#else
+  , particle_kernel::rearrange<fixed_vector<float, dimension> >
+#endif
 };
 
 template class particle_wrapper<3>;

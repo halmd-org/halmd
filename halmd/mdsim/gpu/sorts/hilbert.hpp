@@ -75,12 +75,10 @@ private:
     {
         accumulator_type order;
         accumulator_type map;
-        accumulator_type permute;
     };
 
     void map(cuda::vector<unsigned int>& g_map);
     void permutation(cuda::vector<unsigned int>& g_map, cuda::vector<unsigned int>& g_index);
-    void order(cuda::vector<unsigned int> const& g_index);
 
     boost::shared_ptr<particle_type> particle_;
     /** recursion depth */

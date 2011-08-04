@@ -72,7 +72,6 @@ end
 function profile(self, profiler)
     profiler:on_profile{self, order = "order particles by permutation"}
     profiler:on_profile{self, map = "map particles to Hilbert curve"}
-    profiler:on_profile{self, permute = "generate permutation"}
 end
 
 --

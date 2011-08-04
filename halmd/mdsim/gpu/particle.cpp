@@ -22,6 +22,7 @@
 #include <exception>
 #include <numeric>
 
+#include <halmd/algorithm/gpu/radix_sort.hpp>
 #include <halmd/io/logger.hpp>
 #include <halmd/mdsim/gpu/particle.hpp>
 #include <halmd/mdsim/gpu/particle_kernel.hpp>
@@ -29,6 +30,7 @@
 #include <halmd/utility/lua/lua.hpp>
 
 using namespace boost;
+using namespace halmd::algorithm::gpu; // radix_sort
 using namespace std;
 
 namespace halmd {
@@ -150,6 +152,39 @@ void particle<dimension, float_type>::set()
     }
 }
 
+/**
+ * rearrange particles by permutation
+ */
+template <unsigned int dimension, typename float_type>
+void particle<dimension, float_type>::rearrange(cuda::vector<unsigned int> const& g_index)
+{
+    scoped_timer_type timer(runtime_.rearrange);
+    cuda::vector<float4> g_r_buf(nbox);
+    cuda::vector<gpu_vector_type> g_image_buf(nbox);
+    cuda::vector<float4> g_v_buf(nbox);
+    cuda::vector<unsigned int> g_tag(nbox);
+
+    g_r_buf.reserve(g_r.capacity());
+    g_image_buf.reserve(g_image.capacity());
+    g_v_buf.reserve(g_v.capacity());
+    g_tag.reserve(g_reverse_tag.capacity());
+
+    cuda::configure(dim.grid, dim.block);
+    get_particle_kernel<dimension>().r.bind(g_r);
+    get_particle_kernel<dimension>().image.bind(g_image);
+    get_particle_kernel<dimension>().v.bind(g_v);
+    get_particle_kernel<dimension>().rearrange(g_index, g_r_buf, g_image_buf, g_v_buf, g_tag);
+
+    g_r_buf.swap(g_r);
+    g_image_buf.swap(g_image);
+    g_v_buf.swap(g_v);
+
+    radix_sort<unsigned int> sort(nbox, dim.threads_per_block());
+    cuda::configure(dim.grid, dim.block);
+    get_particle_kernel<dimension>().gen_index(g_reverse_tag);
+    sort(g_tag, g_reverse_tag);
+}
+
 template <unsigned int dimension, typename float_type>
 unsigned int particle<dimension, float_type>::defaults::threads() {
     return 128;
@@ -181,7 +216,10 @@ void particle<dimension, float_type>::luaopen(lua_State* L)
                         [
                             def("threads", &defaults::threads)
                         ]
+                      , class_<runtime>("runtime")
+                            .def_readonly("rearrange", &runtime::rearrange)
                     ]
+                    .def_readonly("runtime", &particle::runtime_)
             ]
         ]
     ];
