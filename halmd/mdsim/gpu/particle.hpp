@@ -49,7 +49,6 @@ public:
       , unsigned int threads = defaults::threads()
     );
     virtual void set();
-    virtual void rearrange(std::vector<unsigned int> const& index) {} // TODO
     void rearrange(cuda::vector<unsigned int> const& g_index);
 
     /** grid and block dimensions for CUDA calls */

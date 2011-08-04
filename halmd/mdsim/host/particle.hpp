@@ -43,7 +43,7 @@ public:
 
     particle(std::vector<unsigned int> const& particles);
     virtual void set();
-    virtual void rearrange(std::vector<unsigned int> const& index);
+    void rearrange(std::vector<unsigned int> const& index);
 
     /** positions, reduced to extended domain box */
     std::vector<vector_type> r;
