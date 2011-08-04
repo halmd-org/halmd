@@ -1,5 +1,5 @@
 /*
- * Copyright © 2010  Peter Colberg
+ * Copyright © 2010-2011  Peter Colberg and Felix Höfling
  *
  * This file is part of HALMD.
  *
@@ -98,18 +98,16 @@ __global__ void rearrange(
 {
     enum { dimension = vector_type::static_size };
 
-    unsigned int const i = g_index[GTID];
-    {
-        vector_type r;
-        unsigned int type;
+    int const i = g_index[GTID];
+
+    // copy position including type, and image vector
+    g_r[GTID] = tex1Dfetch(r_, i);
 #ifdef USE_VERLET_DSFUN
-        tie(r, type) = untagged<vector_type>(tex1Dfetch(r_, i), tex1Dfetch(r_, i + GTDIM));
-        tie(g_r[GTID], g_r[GTID + GTDIM]) = tagged(r, type);
-#else
-        tie(r, type) = untagged<vector_type>(tex1Dfetch(r_, i));
-        g_r[GTID] = tagged(r, type);
+    g_r[GTID + GTDIM] = tex1Dfetch(r_, i + GTDIM);
 #endif
-    }
+    g_image[GTID] = tex1Dfetch(get<dimension>(image_), i);
+
+    // copy velocity, but split off tag and store separately
     {
         vector_type v;
         unsigned int tag;
@@ -122,7 +120,6 @@ __global__ void rearrange(
 #endif
         g_tag[GTID] = tag;
     }
-    g_image[GTID] = tex1Dfetch(get<dimension>(image_), i);
 }
 
 } // namespace particle_kernel
