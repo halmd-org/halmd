@@ -119,12 +119,12 @@ void hilbert<dimension, float_type>::order(cuda::vector<unsigned int> const& g_i
     cuda::vector<float4> g_r(particle_->g_r.size());
     cuda::vector<gpu_vector_type> g_image(particle_->g_image.size());
     cuda::vector<float4> g_v(particle_->g_v.size());
-    cuda::vector<unsigned int> g_tag(particle_->g_tag.size());
+    cuda::vector<unsigned int> g_tag(particle_->g_reverse_tag.size());
 
     g_r.reserve(particle_->g_r.capacity());
     g_image.reserve(particle_->g_image.capacity());
     g_v.reserve(particle_->g_v.capacity());
-    g_tag.reserve(particle_->g_tag.capacity());
+    g_tag.reserve(particle_->g_reverse_tag.capacity());
 
     cuda::configure(particle_->dim.grid, particle_->dim.block);
     wrapper_type::kernel.r.bind(particle_->g_r);
@@ -135,7 +135,6 @@ void hilbert<dimension, float_type>::order(cuda::vector<unsigned int> const& g_i
     g_r.swap(particle_->g_r);
     g_image.swap(particle_->g_image);
     g_v.swap(particle_->g_v);
-    cuda::copy(g_tag, particle_->g_tag);
 
     radix_sort<unsigned int> sort(particle_->nbox, particle_->dim.threads_per_block());
     cuda::configure(particle_->dim.grid, particle_->dim.block);

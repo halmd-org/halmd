@@ -53,7 +53,6 @@ particle<dimension, float_type>::particle(
   , g_image(nbox)
   , g_v(nbox)
   , g_f(nbox)
-  , g_tag(nbox)
   , g_reverse_tag(nbox)
   // allocate page-locked host memory
   , h_r(nbox)
@@ -103,7 +102,6 @@ particle<dimension, float_type>::particle(
 #endif
         g_image.reserve(dim.threads());
         g_f.reserve(dim.threads());
-        g_tag.reserve(dim.threads());
         g_reverse_tag.reserve(dim.threads());
     }
     catch (cuda::error const&) {
@@ -117,7 +115,6 @@ particle<dimension, float_type>::particle(
     cuda::memset(g_v, 0, g_v.capacity());
     cuda::memset(g_f, 0, g_f.capacity());
     cuda::memset(g_image, 0, g_image.capacity());
-    cuda::memset(g_tag, 0, g_tag.capacity());
     cuda::memset(g_reverse_tag, 0, g_reverse_tag.capacity());
 
     try {
@@ -143,8 +140,6 @@ void particle<dimension, float_type>::set()
         get_particle_kernel<dimension>().ntypes.bind(g_ntypes);
         get_particle_kernel<dimension>().tag(g_r, g_v);
 
-        cuda::configure(dim.grid, dim.block);
-        get_particle_kernel<dimension>().gen_index(g_tag);
         cuda::configure(dim.grid, dim.block);
         get_particle_kernel<dimension>().gen_index(g_reverse_tag);
         cuda::thread::synchronize();
