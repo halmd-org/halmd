@@ -53,7 +53,8 @@ particle<dimension, float_type>::particle(
   , g_image(nbox)
   , g_v(nbox)
   , g_f(nbox)
-  , g_index(nbox)
+  , g_tag(nbox)
+  , g_reverse_tag(nbox)
   // allocate page-locked host memory
   , h_r(nbox)
   , h_image(nbox)
@@ -102,7 +103,8 @@ particle<dimension, float_type>::particle(
 #endif
         g_image.reserve(dim.threads());
         g_f.reserve(dim.threads());
-        g_index.reserve(dim.threads());
+        g_tag.reserve(dim.threads());
+        g_reverse_tag.reserve(dim.threads());
     }
     catch (cuda::error const&) {
         LOG_ERROR("failed to allocate particles in global device memory");
@@ -115,7 +117,8 @@ particle<dimension, float_type>::particle(
     cuda::memset(g_v, 0, g_v.capacity());
     cuda::memset(g_f, 0, g_f.capacity());
     cuda::memset(g_image, 0, g_image.capacity());
-    cuda::memset(g_index, 0, g_index.capacity());
+    cuda::memset(g_tag, 0, g_tag.capacity());
+    cuda::memset(g_reverse_tag, 0, g_reverse_tag.capacity());
 
     try {
         cuda::copy(nbox, get_particle_kernel<dimension>().nbox);
@@ -128,7 +131,7 @@ particle<dimension, float_type>::particle(
 }
 
 /**
- * set particle tags and types, initialise g_index
+ * set particle tags and types
  */
 template <unsigned int dimension, typename float_type>
 void particle<dimension, float_type>::set()
@@ -141,7 +144,9 @@ void particle<dimension, float_type>::set()
         get_particle_kernel<dimension>().tag(g_r, g_v);
 
         cuda::configure(dim.grid, dim.block);
-        get_particle_kernel<dimension>().gen_index(g_index);
+        get_particle_kernel<dimension>().gen_index(g_tag);
+        cuda::configure(dim.grid, dim.block);
+        get_particle_kernel<dimension>().gen_index(g_reverse_tag);
         cuda::thread::synchronize();
     }
     catch (cuda::error const&) {

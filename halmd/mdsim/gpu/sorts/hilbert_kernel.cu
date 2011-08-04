@@ -95,6 +95,7 @@ __global__ void order_particles(
   , float4* g_r
   , aligned_vector_type* g_image
   , float4* g_v
+  , unsigned int* g_tag
 )
 {
     enum { dimension = vector_type::static_size };
@@ -121,6 +122,7 @@ __global__ void order_particles(
         tie(v, tag) = untagged<vector_type>(tex1Dfetch(v_, i));
         g_v[GTID] = tagged(v, tag);
 #endif
+        g_tag[GTID] = tag;
     }
     g_image[GTID] = tex1Dfetch(get<dimension>(image_), i);
 }

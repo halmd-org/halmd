@@ -103,13 +103,13 @@ void phase_space<gpu::samples::phase_space<dimension, float_type> >::acquire()
     phase_space_wrapper<dimension>::kernel.v.bind(particle_->g_v);
 
     unsigned int threads = particle_->dim.threads_per_block();
-    unsigned int const* g_index = particle_->g_index.data();
+    unsigned int const* g_reverse_tag = particle_->g_reverse_tag.data();
 
     for (size_t i = 0; i < particle_->ntypes.size(); ++i) {
         unsigned int ntype = particle_->ntypes[i];
         cuda::configure((ntype + threads - 1) / threads, threads);
-        phase_space_wrapper<dimension>::kernel.sample(g_index, *sample_->r[i], *sample_->v[i], ntype);
-        g_index += ntype;
+        phase_space_wrapper<dimension>::kernel.sample(g_reverse_tag, *sample_->r[i], *sample_->v[i], ntype);
+        g_reverse_tag += ntype;
     }
 
     sample_->step = clock_->step();

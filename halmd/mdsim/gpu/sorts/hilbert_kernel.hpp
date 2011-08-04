@@ -50,7 +50,7 @@ struct hilbert_wrapper
     /** generate ascending index sequence */
     cuda::function<void (unsigned int*)> gen_index;
     /** order particles after given permutation */
-    cuda::function<void (unsigned int const*, float4*, aligned_vector_type*, float4*)> order_particles;
+    cuda::function<void (unsigned int const*, float4*, aligned_vector_type*, float4*, unsigned int*)> order_particles;
 
     static hilbert_wrapper const kernel;
 };

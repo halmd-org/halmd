@@ -65,8 +65,10 @@ public:
     cuda::vector<float4> g_v;
     /** forces */
     cuda::vector<gpu_vector_type> g_f;
-    /** particle indices ordered by species */
-    cuda::vector<unsigned int> g_index;
+    /** particle tags */
+    cuda::vector<unsigned int> g_tag;
+    /** reverse particle tags */
+    cuda::vector<unsigned int> g_reverse_tag;
 
     //
     // particles in page-locked host memory
