@@ -27,7 +27,6 @@ local device = halmd.device
 local observables = halmd.observables
 -- grab C++ wrappers
 local vac_wrapper = libhalmd.observables.dynamics.velocity_autocorrelation
-local h5 = libhalmd.h5
 local po = libhalmd.po
 local property = property
 -- grab standard library
@@ -68,7 +67,7 @@ end
 --
 -- returns module description
 --
-function name()
+function description()
     return "velocity autocorrelation"
 end
 
@@ -82,18 +81,3 @@ function options(desc)
         desc:add("disable-gpu", po.bool_switch(), "disable GPU acceleration")
     end
 end
-
---
--- read module parameters from HDF5 group
---
---function read_parameters(args, group)
---end
-
---
--- write module parameters to HDF5 group
---
--- @param ssf     module instance
--- @param group   HDF5 group
---
---function write_parameters(ssf, group)
---end

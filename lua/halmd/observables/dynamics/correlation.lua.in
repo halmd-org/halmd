@@ -22,73 +22,58 @@ require("halmd.modules")
 require("halmd.observables.dynamics.blocking_scheme")
 require("halmd.observables.dynamics.correlations")
 require("halmd.observables.samples.blocking_scheme")
-require("halmd.utility")
 
 -- grab modules
 local correlations = halmd.observables.dynamics.correlations
 local dynamics = halmd.observables.dynamics
-local keys = halmd.utility.keys
 local samples = halmd.observables.samples
 local writers = halmd.io.writers
 -- grab C++ wrappers
 local correlation_wrapper = libhalmd.observables.dynamics.correlation
 local po = libhalmd.po
+local property = property
 -- grab standard library
 local assert = assert
-local pairs = pairs
 
 module("halmd.observables.dynamics.correlation", halmd.modules.register)
 
 --
--- add time correlation functions to blocking_scheme
+-- add time correlation function to blocking_scheme
+--
+-- @param args parameter table
+--   name   trajectory correlation function (e.g. "mean_square_displacement")
 --
 function new(args)
+    local name = assert(args.correlation)
+
     local blocking_scheme = dynamics.blocking_scheme() -- singleton
     local file = writers.observable() -- singleton
     local writer = file:writer{location = {"dynamics"}, mode = "truncate"}
 
-    -- add time correlation functions
-    local selections = args.correlation or keys(correlations) -- default value
-    for i = 1, #selections do
-        -- construct the tcf functor and obtain the appropriate data sample
-        local tcf = assert(correlations[selections[i]])()
-        local sample = assert(tcf.sample)
-        local sampler = assert(tcf.sampler)
-        -- construct or retrieve associated blocking scheme for sample data
-        local block_sample = samples.blocking_scheme{sample = sample, sampler = sampler}
-        -- construct correlation function
-        local logger = assert(args.logger) -- FIXME use tcf module logger
-        local correlation = assert(correlation_wrapper)(tcf, block_sample, logger)
+    -- construct the tcf functor and obtain the appropriate data sample
+    local tcf = assert(correlations[name])()
+    local sample = assert(tcf.sample)
+    local sampler = assert(tcf.sampler)
+    -- construct or retrieve associated blocking scheme for sample data
+    local block_sample = samples.blocking_scheme{sample = sample, sampler = sampler}
+    -- construct correlation function
+    local logger = assert(args.logger) -- FIXME use tcf module logger
+    local correlation = assert(correlation_wrapper)(tcf, block_sample, logger)
 
-        -- register correlation function with blocking scheme
-        blocking_scheme:on_correlate(correlation)
+    -- register correlation function with blocking scheme
+    blocking_scheme:on_correlate(correlation)
 
-        -- write correlation function results
-        local name = assert(tcf.module.namespace)
-        writer:on_write(blocking_scheme.time, {name, "time"}) -- FIXME hardlink
-        writer:on_write(correlation.mean, {name, "mean"})
-        writer:on_write(correlation.error, {name, "error"})
-        writer:on_write(correlation.count, {name, "count"})
-    end
+    -- write correlation function results
+    writer:on_write(blocking_scheme.time, {name, "time"}) -- FIXME hardlink
+    writer:on_write(correlation.mean, {name, "mean"})
+    writer:on_write(correlation.error, {name, "error"})
+    writer:on_write(correlation.count, {name, "count"})
 
     -- write correlation results to H5MD file
     blocking_scheme:on_append_finalise(writer.write)
 
-    return blocking_scheme
-end
+    -- store tcf module for profiler description
+    correlation.tcf = property(function(self) return tcf end)
 
---
--- assemble module options
---
--- @param desc po.options_description
---
-function options(desc, globals)
-    -- choices for tcf module with descriptions
-    local choices = {}
-    for tcf, module in pairs(correlations) do
-        if module.name then
-            choices[tcf] = module.name()
-        end
-    end
-    globals:add("correlation", po.composing_string():choices(choices), "select time correlation function")
+    return correlation
 end
