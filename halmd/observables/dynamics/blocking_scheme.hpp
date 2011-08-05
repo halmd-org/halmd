@@ -117,7 +117,10 @@ public:
     static void luaopen(lua_State* L);
 
 private:
-    /** simulation clock */
+    /** compute correlations and discard first entry */
+    void process(unsigned int level);
+
+     /** simulation clock */
     boost::shared_ptr<clock_type const> clock_;
     /** module logger */
     boost::shared_ptr<logger_type> logger_;

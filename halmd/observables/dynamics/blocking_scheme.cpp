@@ -114,6 +114,11 @@ void blocking_scheme::sample()
             throw logic_error("input sample was not updated");
         }
     }
+    // check for duplicate shared_ptr to the same block sample,
+    // which would result in duplicate push and pop operations
+#ifndef NDEBUG
+// FIXME    assert(is_unique(block_sample_.begin(), block_sample_.end()));
+#endif
 
     // iterate over all coarse-graining levels
     for (unsigned int i = 0; i < interval_.size(); ++i) {
@@ -129,19 +134,7 @@ void blocking_scheme::sample()
             // Checking the first blocking scheme only is sufficient,
             // since all of them are modified synchronously
             if (!block_sample_.empty() && (*block_sample_.begin())->full(i)) {
-                // call all registered correlation modules
-                // and correlate block data with first entry
-                LOG_TRACE("compute correlations at blocking level " << i);
-                BOOST_FOREACH(shared_ptr<correlation_base> tcf, tcf_) {
-                    tcf->compute(i);
-                }
-
-                // discard first entry at level 'i' for each block structure
-                BOOST_FOREACH(shared_ptr<block_sample_type> block_sample, block_sample_) {
-                    // check for duplicate shared_ptr to the same block sample
-                    assert(block_sample->full(i));
-                    block_sample->pop_front(i);
-                }
+                process(i);
             }
         }
     }
@@ -155,20 +148,25 @@ void blocking_scheme::finalise()
     for (unsigned int i = 0; i < interval_.size(); ++i) {
         // process remaining data at level 'i'
         while (!block_sample_.empty() && !(*block_sample_.begin())->empty(i)) {
-            LOG_TRACE("compute correlations at blocking level " << i);
-            // call all registered correlation modules
-            // and correlate block data with first entry
-            BOOST_FOREACH(shared_ptr<correlation_base> tcf, tcf_) {
-                tcf->compute(i);
-            }
-
-            // discard first entry at level 'i' for each block structure
-            BOOST_FOREACH(shared_ptr<block_sample_type> block_sample, block_sample_) {
-                block_sample->pop_front(i);
-            }
+            process(i);
         }
     }
     on_append_finalise_();
+}
+
+void blocking_scheme::process(unsigned int level)
+{
+    // call all registered correlation modules
+    // and correlate block data with first entry
+    LOG_TRACE("compute correlations at blocking level " << level);
+    BOOST_FOREACH(shared_ptr<correlation_base> tcf, tcf_) {
+        tcf->compute(level);
+    }
+
+    // discard first entry at level 'i' for each block structure
+    BOOST_FOREACH(shared_ptr<block_sample_type> block_sample, block_sample_) {
+        block_sample->pop_front(level);
+    }
 }
 
 connection blocking_scheme::on_prepend_sample(slot_function_type const& slot)
