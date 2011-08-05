@@ -176,7 +176,7 @@ BOOST_LOG_TARBALL_URL = http://boost-log.svn.sourceforge.net/viewvc/boost-log/tr
 BOOST_LOG_DIR = boost-log
 BOOST_BUILD_DIR = boost_$(BOOST_RELEASE)
 BOOST_INSTALL_DIR = $(PREFIX)/boost_$(BOOST_RELEASE)
-BOOST_CXXFLAGS = -fPIC
+BOOST_BUILD_FLAGS = cxxflags=-fPIC --without-python
 
 .fetch-boost:
 	$(WGET) $(BOOST_TARBALL_URL)
@@ -202,13 +202,13 @@ extract-boost: .extract-boost
 configure-boost: .configure-boost
 
 .build-boost: .configure-boost
-	cd $(BOOST_BUILD_DIR) && ./bjam cxxflags="$(BOOST_CXXFLAGS)" $(PARALLEL_BUILD_FLAGS)
+	cd $(BOOST_BUILD_DIR) && ./bjam $(BOOST_BUILD_FLAGS) $(PARALLEL_BUILD_FLAGS)
 	@$(TOUCH) $@
 
 build-boost: .build-boost
 
 install-boost: .build-boost
-	cd $(BOOST_BUILD_DIR) && ./bjam cxxflags="$(BOOST_CXXFLAGS)" install --prefix=$(BOOST_INSTALL_DIR)
+	cd $(BOOST_BUILD_DIR) && ./bjam $(BOOST_BUILD_FLAGS) install --prefix=$(BOOST_INSTALL_DIR)
 
 clean-boost:
 	@$(RM) .build-boost
