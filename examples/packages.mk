@@ -680,3 +680,56 @@ env-clang:
 	@echo '# add Clang $(CLANG_VERSION) to environment'
 	@echo 'export PATH="$(CLANG_INSTALL_DIR)/bin$${PATH+:$$PATH}"'
 	@echo 'export MANPATH="$(CLANG_INSTALL_DIR)/share/man$${MANPATH+:$$MANPATH}"'
+##
+## GNU Parallel
+##
+
+GNU_PARALLEL_VERSION = 20110722
+GNU_PARALLEL_TARBALL = parallel-$(GNU_PARALLEL_VERSION).tar.bz2
+GNU_PARALLEL_TARBALL_URL = http://ftp.gnu.org/gnu/parallel/$(GNU_PARALLEL_TARBALL)
+GNU_PARALLEL_BUILD_DIR = parallel-$(GNU_PARALLEL_VERSION)
+GNU_PARALLEL_INSTALL_DIR = $(PREFIX)/parallel-$(GNU_PARALLEL_VERSION)
+
+.fetch-gnu-parallel:
+	$(WGET) $(GNU_PARALLEL_TARBALL_URL)
+	@$(TOUCH) $@
+
+fetch-gnu-parallel: .fetch-gnu-parallel
+
+.extract-gnu-parallel: .fetch-gnu-parallel
+	$(RM) $(GNU_PARALLEL_BUILD_DIR)
+	$(TAR) -xjf $(GNU_PARALLEL_TARBALL)
+	@$(TOUCH) $@
+
+extract-gnu-parallel: .extract-gnu-parallel
+
+.configure-gnu-parallel: .extract-gnu-parallel
+	cd $(GNU_PARALLEL_BUILD_DIR) && ./configure --prefix=$(GNU_PARALLEL_INSTALL_DIR)
+	@$(TOUCH) $@
+
+configure-gnu-parallel: .configure-gnu-parallel
+
+.build-gnu-parallel: .configure-gnu-parallel
+	cd $(GNU_PARALLEL_BUILD_DIR) && make $(PARALLEL_BUILD_FLAGS)
+	@$(TOUCH) $@
+
+build-gnu-parallel: .build-gnu-parallel
+
+install-gnu-parallel: .build-gnu-parallel
+	cd $(GNU_PARALLEL_BUILD_DIR) && make install
+
+clean-gnu-parallel:
+	@$(RM) .build-gnu-parallel
+	@$(RM) .configure-gnu-parallel
+	@$(RM) .extract-gnu-parallel
+	$(RM) $(GNU_PARALLEL_BUILD_DIR)
+
+distclean-gnu-parallel: clean-gnu-parallel
+	@$(RM) .fetch-gnu-parallel
+	$(RM) $(GNU_PARALLEL_TARBALL)
+
+env-gnu-parallel:
+	@echo
+	@echo '# add GNU Parallel $(GNU_PARALLEL_VERSION) to environment'
+	@echo 'export PATH="$(GNU_PARALLEL_INSTALL_DIR)/bin$${PATH+:$$PATH}"'
+	@echo 'export MANPATH="$(GNU_PARALLEL_INSTALL_DIR)/share/man$${MANPATH+:$$MANPATH}"'
