@@ -63,6 +63,7 @@ public:
      *  @param block_size         size of each block, determines coarse-graining factor
      *  @param shift              coarse-graining shift between odd and even levels,
      *                            if 0 it is computed as sqrt(block_size)
+     *  @param separation         minimal sample separation for time averages (in simulation steps)
      */
     blocking_scheme(
         boost::shared_ptr<clock_type const> clock
@@ -70,6 +71,7 @@ public:
       , double resolution
       , unsigned int block_size
       , unsigned int shift = 0
+      , unsigned int separation = 1
       , boost::shared_ptr<logger_type> logger = boost::make_shared<logger_type>()
     );
 
@@ -107,6 +109,12 @@ public:
         return interval_.size();
     }
 
+    /** returns minimal sample separation for time averages */
+    unsigned int separation() const
+    {
+        return separation_;
+    }
+
     /** returns block-wise time grid for correlation functions */
     block_time_type const& time() const
     {
@@ -133,8 +141,12 @@ private:
     slots<boost::shared_ptr<block_sample_type> > block_sample_;
     /** size (length) of the coarse-graining levels */
     unsigned int block_size_;
+    /** minimal separation of samples in simulation steps */
+    unsigned int separation_;
     /** sampling intervals for each coarse-graining level */
     std::vector<step_type> interval_;
+    /** time origin of next correlations to compute for each coarse-graining level */
+    std::vector<step_type> origin_;
     /** time grid of the resulting correlation functions */
     block_time_type time_;
     /** signal triggers preparation of input sample */

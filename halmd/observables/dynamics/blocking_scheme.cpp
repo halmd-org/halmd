@@ -37,12 +37,14 @@ blocking_scheme::blocking_scheme(
   , double resolution
   , unsigned int block_size
   , unsigned int shift
+  , unsigned int separation
   , shared_ptr<logger_type> logger
 )
   // member initialisation
   : clock_(clock)
   , logger_(logger)
   , block_size_(block_size)
+  , separation_(separation)
 {
     LOG("size of coarse-graining blocks: " << block_size_);
     if (block_size_ < 2) {
@@ -63,6 +65,8 @@ blocking_scheme::blocking_scheme(
         LOG_DEBUG("disable shifted coarse-graining blocks");
     }
 
+    LOG("minimal separation of samples in time: " << separation_ * resolution);
+
     // set up sampling intervals for each level
     step_type max_interval =
         static_cast<step_type>(maximum_lag_time / clock_->timestep()) / 2; // we need at least 2 data points per level
@@ -78,6 +82,9 @@ blocking_scheme::blocking_scheme(
     }
     unsigned int block_count = interval_.size();
     LOG("number of coarse-graining blocks: " << block_count);
+
+    // setup initial time origin for each level
+    origin_.resize(block_count, 0);
 
     // construct associated time grid
     time_.resize(boost::extents[block_count][block_size_]);
@@ -102,6 +109,7 @@ connection blocking_scheme::on_sample(shared_ptr<block_sample_type> block_sample
 
 void blocking_scheme::sample()
 {
+    // FIXME only if needed
     // trigger update of input sample(s)
     on_prepend_sample_();
 
@@ -122,7 +130,7 @@ void blocking_scheme::sample()
 
     // iterate over all coarse-graining levels
     for (unsigned int i = 0; i < interval_.size(); ++i) {
-        if (step % interval_[i] == 0) {
+        if (step % interval_[i] == 0 && step >= origin_[i]) {
             // append current sample to block at level 'i' for each sample type
             LOG_TRACE("append sample(s) to blocking level " << i);
             BOOST_FOREACH(shared_ptr<block_sample_type> block_sample, block_sample_) {
@@ -158,14 +166,25 @@ void blocking_scheme::process(unsigned int level)
 {
     // call all registered correlation modules
     // and correlate block data with first entry
-    LOG_TRACE("compute correlations at blocking level " << level);
+    LOG_TRACE("compute correlations at blocking level " << level << " from step " << origin_[level]);
     BOOST_FOREACH(shared_ptr<correlation_base> tcf, tcf_) {
         tcf->compute(level);
     }
 
-    // discard first entry at level 'i' for each block structure
+    // update time origin for next computation at this level
+    //
+    // make sure that the new origin is a multiple of this level's sampling interval
+    // and at least incremented by one interval
+    unsigned int skip = max((separation_ + interval_[level] - 1) / interval_[level], step_type(1));
+    origin_[level] += skip * interval_[level];
+
+    // for each block structure, discard all entries earlier
+    // than the new time origin at this level
+    LOG_TRACE("discard first " << skip << " entries at level " << level);
     BOOST_FOREACH(shared_ptr<block_sample_type> block_sample, block_sample_) {
-        block_sample->pop_front(level);
+        for (unsigned int k = 0; k < skip && !block_sample->empty(level); ++k) {
+            block_sample->pop_front(level);
+        }
     }
 }
 
@@ -223,11 +242,13 @@ void blocking_scheme::luaopen(lua_State* L)
                       , double
                       , unsigned int
                       , unsigned int
+                      , unsigned int
                       , shared_ptr<logger_type>
                     >())
                     .property("finalise", &wrap_finalise)
                     .property("sample", &wrap_sample)
                     .property("block_size", &blocking_scheme::block_size)
+                    .property("separation", &blocking_scheme::separation)
                     .property("count", &blocking_scheme::count)
                     .property("time", &wrap_time)
                     .def("on_correlate", &blocking_scheme::on_correlate)
