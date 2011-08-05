@@ -17,6 +17,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <algorithm>
 #include <boost/foreach.hpp>
 #include <cassert>
 #include <exception>
@@ -97,6 +98,7 @@ connection blocking_scheme::on_sample(shared_ptr<block_sample_type> block_sample
 {
     assert(block_sample->count() == count());
     assert(block_sample->block_size() == block_size_);
+    assert(find(block_sample_.begin(), block_sample_.end(), block_sample) == block_sample_.end());
     return block_sample_.connect(block_sample);
 }
 
