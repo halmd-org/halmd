@@ -91,6 +91,7 @@ blocking_scheme::blocking_scheme(
 
 connection blocking_scheme::on_correlate(shared_ptr<correlation_base> tcf)
 {
+    assert(find(tcf_.begin(), tcf_.end(), tcf) == tcf_.end());
     return tcf_.connect(tcf);
 }
 
