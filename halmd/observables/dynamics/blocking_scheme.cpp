@@ -106,6 +106,8 @@ connection blocking_scheme::on_sample(shared_ptr<block_sample_type> block_sample
 {
     assert(block_sample->count() == count());
     assert(block_sample->block_size() == block_size_);
+    // check for duplicate shared_ptr to the same block sample,
+    // which would result in duplicate push and pop operations
     assert(find(block_sample_.begin(), block_sample_.end(), block_sample) == block_sample_.end());
     return block_sample_.connect(block_sample);
 }
@@ -125,11 +127,6 @@ void blocking_scheme::sample()
             throw logic_error("input sample was not updated");
         }
     }
-    // check for duplicate shared_ptr to the same block sample,
-    // which would result in duplicate push and pop operations
-#ifndef NDEBUG
-// FIXME    assert(is_unique(block_sample_.begin(), block_sample_.end()));
-#endif
 
     // iterate over all coarse-graining levels
     for (unsigned int i = 0; i < interval_.size(); ++i) {
