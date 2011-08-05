@@ -128,7 +128,7 @@ void blocking_scheme::sample()
             //
             // Checking the first blocking scheme only is sufficient,
             // since all of them are modified synchronously
-            if ((*block_sample_.begin())->full(i)) {
+            if (!block_sample_.empty() && (*block_sample_.begin())->full(i)) {
                 // call all registered correlation modules
                 // and correlate block data with first entry
                 LOG_TRACE("compute correlations at blocking level " << i);
@@ -154,7 +154,7 @@ void blocking_scheme::finalise()
     // iterate over all coarse-graining levels
     for (unsigned int i = 0; i < interval_.size(); ++i) {
         // process remaining data at level 'i'
-        while (!(*block_sample_.begin())->empty(i)) {
+        while (!block_sample_.empty() && !(*block_sample_.begin())->empty(i)) {
             LOG_TRACE("compute correlations at blocking level " << i);
             // call all registered correlation modules
             // and correlate block data with first entry
