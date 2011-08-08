@@ -44,6 +44,8 @@ public:
 
     /** connect slot to be invoked periodically */
     connection on_periodic(slot_function_type const& slot, time_type interval);
+    /** connect slot to be invoked periodically, starting at given relative time */
+    connection on_periodic(slot_function_type const& slot, time_type interval, time_type start);
     /** process timer event queue */
     void process();
     /** Lua bindings */
