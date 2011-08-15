@@ -54,7 +54,7 @@ add_executable(test_unit_utility_posix_signal
   posix_signal.cpp
 )
 target_link_libraries(test_unit_utility_posix_signal
-  halmd_utility
+  libhalmd
   ${HALMD_COMMON_LIBRARIES}
   ${HALMD_TEST_LIBRARIES}
 )

@@ -21,6 +21,7 @@
 #include <boost/lexical_cast.hpp>
 #include <boost/tuple/tuple.hpp>
 
+#include <halmd/io/logger.hpp>
 #include <halmd/utility/lua/lua.hpp>
 #include <halmd/utility/posix_signal.hpp>
 
@@ -131,6 +132,7 @@ void posix_signal::handle(int signum) const
     if (it == handler_.end()) {
         throw std::logic_error("blocked unregistered signal " + name(signum));
     }
+    LOG_WARNING("process received signal " << name(signum));
     it->second(signum);
 }
 
