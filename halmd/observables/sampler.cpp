@@ -139,19 +139,19 @@ void sampler::sample(slot_function_type const& slot, step_type interval) const
     }
 }
 
-sampler::slot_function_type
+static sampler::slot_function_type
 wrap_run(shared_ptr<sampler> self, sampler::step_type steps)
 {
     return bind(&sampler::run, self, steps);
 }
 
-sampler::slot_function_type
+static sampler::slot_function_type
 wrap_run_default_steps(shared_ptr<sampler> self)
 {
     return bind(&sampler::run, self, 0);
 }
 
-sampler::slot_function_type
+static sampler::slot_function_type
 wrap_setup(shared_ptr<sampler> self)
 {
     return bind(&sampler::setup, self);
