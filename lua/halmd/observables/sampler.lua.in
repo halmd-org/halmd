@@ -68,7 +68,8 @@ function new(args)
       , current_step = clock.step
     }
     local timer_service = utility.timer_service()
-    timer_service:on_periodic(runtime_estimate.sample, 15 * 60) -- every 15 minutes
+    -- every 15 minutes, start at 15 seconds
+    timer_service:on_periodic(runtime_estimate.sample, 15 * 60, 15)
 
     -- connect profiler to sampler
     local profiler = utility.profiler() -- singleton
