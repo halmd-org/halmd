@@ -93,12 +93,11 @@ wrap_estimate(shared_ptr<runtime_estimate> instance)
 void runtime_estimate::luaopen(lua_State* L)
 {
     using namespace luabind;
-    static string class_name("runtime_estimate_");
     module(L, "libhalmd")
     [
         namespace_("observables")
         [
-            class_<runtime_estimate, shared_ptr<runtime_estimate> >(class_name.c_str())
+            class_<runtime_estimate, shared_ptr<runtime_estimate> >("runtime_estimate")
                 .def(constructor<
                     shared_ptr<clock_type>
                   , step_type

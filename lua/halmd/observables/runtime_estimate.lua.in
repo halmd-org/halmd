@@ -24,7 +24,7 @@ require("halmd.mdsim.clock")
 -- grab modules
 local mdsim = halmd.mdsim
 -- grab C++ wrappers
-local runtime_estimate_wrapper = libhalmd.observables.runtime_estimate_
+local runtime_estimate_wrapper = libhalmd.observables.runtime_estimate
 -- grab standard library
 local assert = assert
 
