@@ -22,6 +22,7 @@
 
 #include <boost/unordered_map.hpp>
 #include <csignal>
+#include <lua.hpp>
 #include <string>
 
 #include <halmd/utility/signal.hpp>
@@ -44,6 +45,7 @@ public:
     void wait() const;
     bool poll() const;
     static std::string name(int signum);
+    static void luaopen(lua_State* L);
 
 private:
     void handle(int signum) const;

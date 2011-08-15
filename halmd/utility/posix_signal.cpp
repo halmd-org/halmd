@@ -17,12 +17,11 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef HALMD_MDSIM_HPP
-#define HALMD_MDSIM_HPP
-
+#include <boost/bind.hpp>
 #include <boost/lexical_cast.hpp>
 #include <boost/tuple/tuple.hpp>
 
+#include <halmd/utility/lua/lua.hpp>
 #include <halmd/utility/posix_signal.hpp>
 
 using namespace boost;
@@ -135,6 +134,58 @@ void posix_signal::handle(int signum) const
     it->second(signum);
 }
 
-} // namespace halmd
+static connection
+wrap_on_signal(posix_signal& self, int signum, signal<void ()>::slot_function_type const& slot)
+{
+    return self.on_signal(signum, bind(&signal<void ()>::slot_function_type::operator(), slot));
+}
 
-#endif /* ! HALMD_MDSIM_HPP */
+static signal<void ()>::slot_function_type
+wrap_wait(shared_ptr<posix_signal> self)
+{
+    return bind(&posix_signal::wait, self);
+}
+
+static signal<void ()>::slot_function_type
+wrap_poll(shared_ptr<posix_signal> self)
+{
+    return bind(&posix_signal::poll, self);
+}
+
+void posix_signal::luaopen(lua_State* L)
+{
+    using namespace luabind;
+    module(L, "libhalmd")
+    [
+        namespace_("utility")
+        [
+            class_<posix_signal, shared_ptr<posix_signal> >("posix_signal")
+                .def(constructor<>())
+                .def("on_signal", &wrap_on_signal)
+                .property("wait", &wrap_wait)
+                .property("poll", &wrap_poll)
+                .enum_("signals")
+                [
+                    value("SIGHUP", SIGHUP)
+                  , value("SIGINT", SIGINT)
+                  , value("SIGQUIT", SIGQUIT)
+                  , value("SIGALRM", SIGALRM)
+                  , value("SIGTERM", SIGTERM)
+                  , value("SIGUSR1", SIGUSR1)
+                  , value("SIGUSR2", SIGUSR2)
+                  , value("SIGCONT", SIGCONT)
+                  , value("SIGTSTP", SIGTSTP)
+                  , value("SIGTTIN", SIGTTIN)
+                  , value("SIGTTOU", SIGTTOU)
+                ]
+        ]
+    ];
+}
+
+HALMD_LUA_API int luaopen_libhalmd_utility_posix_signal(lua_State* L)
+{
+    posix_signal::luaopen(L);
+    return 0;
+}
+
+} // namespace halmd

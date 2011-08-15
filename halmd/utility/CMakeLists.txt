@@ -7,6 +7,7 @@ halmd_add_library(halmd_utility
 )
 halmd_add_modules(
   libhalmd_utility_options_parser
+  libhalmd_utility_posix_signal
   libhalmd_utility_profiler
   libhalmd_utility_timer_service
 )
