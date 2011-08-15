@@ -20,14 +20,14 @@
 #ifndef HALMD_OBSERVABLES_RUNTIME_ESTIMATE_HPP
 #define HALMD_OBSERVABLES_RUNTIME_ESTIMATE_HPP
 
+#include <boost/circular_buffer.hpp>
 #include <boost/shared_ptr.hpp>
 #include <lua.hpp>
-#include <stdint.h>
 #include <string>
-#include <sys/time.h>
 
 #include <halmd/mdsim/clock.hpp>
 #include <halmd/utility/signal.hpp>
+#include <halmd/utility/timer.hpp>
 
 namespace halmd {
 namespace observables {
@@ -50,37 +50,28 @@ public:
 
     static void luaopen(lua_State* L);
 
-    boost::shared_ptr<clock_type> clock;
-
     runtime_estimate(
         boost::shared_ptr<clock_type> clock
       , step_type total_steps
-      , step_type step_start
     );
-
-    // estimate remaining runtime and output to log file
-    void sample() const;
-
-    connection on_sample(slot_function_type const& slot)
-    {
-        return on_sample_.connect(slot);
-    }
-
-    //! returns estimate on remaining runtime in seconds based on number of completed simulation steps
-    double value(uint64_t step) const;
-
-    //! format time given in seconds, second argument specificies precision
+    /** sample current real-time and simulation step */
+    void sample();
+    /** log estimate of remaining runtime */
+    void estimate() const;
+    /** format time given in seconds, second argument specificies precision */
     static std::string format_time(double time, unsigned int prec);
 
-protected:
-    /** simulation step counter at start */
-    uint64_t step_start_;
-    /** simulation step counter at finish */
-    uint64_t step_stop_;
-    /** wall clock time when simulation was started */
-    timeval start_time_;
+private:
+    typedef std::pair<timer, step_type> timer_pair_type;
 
-    signal_type on_sample_;
+    /** simulation clock */
+    boost::shared_ptr<clock_type> clock_;
+    /** simulation step counter at start */
+    step_type step_start_;
+    /** simulation step counter at finish */
+    step_type step_stop_;
+    /** pairs of timer and simulation step */
+    boost::circular_buffer<timer_pair_type> timer_;
 };
 
 } // namespace observables

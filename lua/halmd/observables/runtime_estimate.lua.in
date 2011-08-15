@@ -42,12 +42,11 @@ module("halmd.observables.runtime_estimate", halmd.modules.register)
 function new(args)
     -- parameters
     local total_steps = assert(args.total_steps)
-    local current_step = assert(args.current_step)
 
     -- dependency injection
     local clock = mdsim.clock()
 
-    return assert(runtime_estimate_wrapper)(clock, total_steps, current_step)
+    return assert(runtime_estimate_wrapper)(clock, total_steps)
 end
 
 --

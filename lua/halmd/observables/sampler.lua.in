@@ -63,13 +63,12 @@ function new(args)
     sampler:on_sample(utility.timer_service().process, 1)
 
     -- construct and connect runtime estimator.
-    local runtime_estimate = observables.runtime_estimate{
-        total_steps = steps
-      , current_step = clock.step
-    }
-    local timer_service = utility.timer_service()
-    -- every 15 minutes, start at 15 seconds
-    timer_service:on_periodic(runtime_estimate.sample, 15 * 60, 15)
+    local runtime_estimate = observables.runtime_estimate{total_steps = steps}
+    local timer_service = utility.timer_service() -- singleton
+    -- sample every minute, start at 0 seconds
+    timer_service:on_periodic(runtime_estimate.sample, 60, 0)
+    -- log estimate every 15 minutes, start at 10 seconds
+    timer_service:on_periodic(runtime_estimate.estimate, 15 * 60, 10)
 
     -- connect profiler to sampler
     local profiler = utility.profiler() -- singleton
