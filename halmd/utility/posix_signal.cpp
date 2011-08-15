@@ -99,8 +99,6 @@ string posix_signal::name(int signum)
         return "SIGHUP";
       case SIGINT:
         return "SIGINT";
-      case SIGQUIT:
-        return "SIGQUIT";
       case SIGALRM:
         return "SIGALRM";
       case SIGTERM:
@@ -183,7 +181,6 @@ void posix_signal::luaopen(lua_State* L)
                 [
                     value("SIGHUP", SIGHUP)
                   , value("SIGINT", SIGINT)
-                  , value("SIGQUIT", SIGQUIT)
                   , value("SIGALRM", SIGALRM)
                   , value("SIGTERM", SIGTERM)
                   , value("SIGUSR1", SIGUSR1)

@@ -45,7 +45,6 @@ end
 
 -- add supported POSIX signals to Lua module interface
 SIGHUP  = posix_signal.SIGHUP
-SIGQUIT = posix_signal.SIGQUIT
 SIGALRM = posix_signal.SIGALRM
 SIGUSR1 = posix_signal.SIGUSR1
 SIGUSR2 = posix_signal.SIGUSR2

@@ -130,7 +130,6 @@ HALMD_TEST_INIT( init_unit_test_suite )
     vector<int> const signum = list_of
         (SIGHUP)
         (SIGINT)
-        (SIGQUIT)
         (SIGALRM)
         (SIGTERM)
         (SIGUSR1)
