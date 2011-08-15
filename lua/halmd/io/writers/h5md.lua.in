@@ -20,10 +20,12 @@
 require("halmd.hooks")
 require("halmd.mdsim.clock")
 require("halmd.modules")
+require("halmd.utility.posix_signal")
 
 -- grab modules
 local hooks = halmd.hooks
 local mdsim = halmd.mdsim
+local utility = halmd.utility
 -- grab C++ modules
 local h5md = libhalmd.io.writers.h5md
 -- grab standard library
@@ -112,6 +114,10 @@ function new(args)
             write_parameters(object, group, param)
         end
     end)
+
+    -- flush H5MD file to disk on SIGUSR2
+    local posix_signal = utility.posix_signal() -- singleton
+    posix_signal:on_signal(utility.posix_signal.SIGUSR2, file.flush)
 
     return file
 end
