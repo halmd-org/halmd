@@ -17,10 +17,14 @@
 -- along with this program.  If not, see <http://www.gnu.org/licenses/>.
 --
 
+require("halmd.mdsim.clock")
 require("halmd.modules")
 require("halmd.singleton")
 
+-- grab modules
+local mdsim = halmd.mdsim
 -- grab C++ wrappers
+local abort = assert(libhalmd.utility.abort)
 local posix_signal = assert(libhalmd.utility.posix_signal)
 
 module("halmd.utility.posix_signal", halmd.modules.register, halmd.singleton)
@@ -29,15 +33,20 @@ module("halmd.utility.posix_signal", halmd.modules.register, halmd.singleton)
 -- construct POSIX signal handler
 --
 function new(args)
-    return posix_signal()
+    local signal_handler = posix_signal()
+
+    -- gracefully abort simulation on SIGTERM or SIGINT
+    local abort = abort(mdsim.clock())
+    signal_handler:on_signal(posix_signal.SIGTERM, abort)
+    signal_handler:on_signal(posix_signal.SIGINT, abort)
+
+    return signal_handler
 end
 
 -- add supported POSIX signals to Lua module interface
 SIGHUP  = posix_signal.SIGHUP
-SIGINT  = posix_signal.SIGINT
 SIGQUIT = posix_signal.SIGQUIT
 SIGALRM = posix_signal.SIGALRM
-SIGTERM = posix_signal.SIGTERM
 SIGUSR1 = posix_signal.SIGUSR1
 SIGUSR2 = posix_signal.SIGUSR2
 SIGCONT = posix_signal.SIGCONT

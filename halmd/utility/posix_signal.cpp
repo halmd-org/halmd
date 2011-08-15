@@ -22,6 +22,7 @@
 #include <boost/tuple/tuple.hpp>
 
 #include <halmd/io/logger.hpp>
+#include <halmd/mdsim/clock.hpp>
 #include <halmd/utility/lua/lua.hpp>
 #include <halmd/utility/posix_signal.hpp>
 
@@ -154,6 +155,18 @@ wrap_poll(shared_ptr<posix_signal> self)
     return bind(&posix_signal::poll, self);
 }
 
+static void
+abort(shared_ptr<mdsim::clock const> clock)
+{
+    throw runtime_error("gracefully aborting simulation at step " + lexical_cast<string>(clock->step()));
+}
+
+static signal<void ()>::slot_function_type
+wrap_abort(shared_ptr<mdsim::clock const> clock)
+{
+    return bind(&abort, clock);
+}
+
 void posix_signal::luaopen(lua_State* L)
 {
     using namespace luabind;
@@ -180,6 +193,8 @@ void posix_signal::luaopen(lua_State* L)
                   , value("SIGTTIN", SIGTTIN)
                   , value("SIGTTOU", SIGTTOU)
                 ]
+
+          , def("abort", &wrap_abort)
         ]
     ];
 }
