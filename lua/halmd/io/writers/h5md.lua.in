@@ -117,7 +117,7 @@ function new(args)
 
     -- flush H5MD file to disk on SIGUSR2
     local posix_signal = utility.posix_signal() -- singleton
-    posix_signal:on_signal(utility.posix_signal.SIGUSR2, file.flush)
+    posix_signal:on_usr2(file.flush)
 
     return file
 end

@@ -37,18 +37,8 @@ function new(args)
 
     -- gracefully abort simulation on SIGTERM or SIGINT
     local abort = abort(mdsim.clock())
-    signal_handler:on_signal(posix_signal.SIGTERM, abort)
-    signal_handler:on_signal(posix_signal.SIGINT, abort)
+    signal_handler:on_term(abort)
+    signal_handler:on_int(abort)
 
     return signal_handler
 end
-
--- add supported POSIX signals to Lua module interface
-SIGHUP  = posix_signal.SIGHUP
-SIGALRM = posix_signal.SIGALRM
-SIGUSR1 = posix_signal.SIGUSR1
-SIGUSR2 = posix_signal.SIGUSR2
-SIGCONT = posix_signal.SIGCONT
-SIGTSTP = posix_signal.SIGTSTP
-SIGTTIN = posix_signal.SIGTTIN
-SIGTTOU = posix_signal.SIGTTOU

@@ -76,7 +76,7 @@ function new(args)
     -- poll for blocked signals every step
     sampler:on_sample(posix_signal.poll, 1)
     -- log runtime estimate on SIGUSR1
-    posix_signal:on_signal(utility.posix_signal.SIGUSR1, runtime_estimate.estimate)
+    posix_signal:on_usr1(runtime_estimate.estimate)
 
     -- connect profiler to sampler
     local profiler = utility.profiler() -- singleton
