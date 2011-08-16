@@ -96,25 +96,25 @@ string posix_signal::name(int signum)
 {
     switch (signum) {
       case SIGHUP:
-        return "SIGHUP";
+        return "HUP";
       case SIGINT:
-        return "SIGINT";
+        return "INT";
       case SIGALRM:
-        return "SIGALRM";
+        return "ALRM";
       case SIGTERM:
-        return "SIGTERM";
+        return "TERM";
       case SIGUSR1:
-        return "SIGUSR1";
+        return "USR1";
       case SIGUSR2:
-        return "SIGUSR2";
+        return "USR2";
       case SIGCONT:
-        return "SIGCONT";
+        return "CONT";
       case SIGTSTP:
-        return "SIGTSTP";
+        return "TSTP";
       case SIGTTIN:
-        return "SIGTTIN";
+        return "TTIN";
       case SIGTTOU:
-        return "SIGTTOU";
+        return "TTOU";
       default:
         return lexical_cast<string>(signum);
     }
