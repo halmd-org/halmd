@@ -71,7 +71,7 @@ public:
     virtual void finalize();
     virtual void timestep(double timestep);
     virtual void temperature(double temperature);
-    virtual void mass(fixed_vector<double, 2> const& mass);
+    virtual void set_mass(fixed_vector<double, 2> const& mass);
 
     //! returns integration time-step
     virtual double timestep() const

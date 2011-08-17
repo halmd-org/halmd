@@ -92,7 +92,7 @@ void verlet_nvt_hoover<dimension, float_type>::temperature(double temperature)
     fixed_vector<float_type, 2> mass;
     mass[0] = dof * temperature_ / omega_sq;
     mass[1] = temperature_ / omega_sq;
-    this->mass(mass);
+    set_mass(mass);
 
     LOG("temperature of heat bath: " << temperature_);
     LOG_DEBUG("target kinetic energy: " << en_kin_target_2_ / particle_->nbox);
@@ -100,7 +100,7 @@ void verlet_nvt_hoover<dimension, float_type>::temperature(double temperature)
 
 template <int dimension, typename float_type>
 void verlet_nvt_hoover<dimension, float_type>::
-mass(fixed_vector<double, 2> const& mass)
+set_mass(fixed_vector<double, 2> const& mass)
 {
     mass_xi_ = static_cast<fixed_vector<float_type, 2> >(mass);
     LOG("`mass' of heat bath variables: " << mass_xi_);
@@ -226,10 +226,11 @@ void verlet_nvt_hoover<dimension, float_type>::luaopen(lua_State* L)
                         >())
                         .property("xi", &verlet_nvt_hoover::xi)
                         .property("v_xi", &verlet_nvt_hoover::v_xi)
-                        .property("mass", (fixed_vector<double, 2> const& (verlet_nvt_hoover::*)() const)&verlet_nvt_hoover::mass) // FIXME make read/write
+                        .property("mass", &verlet_nvt_hoover::mass)
                         .property("resonance_frequency", &verlet_nvt_hoover::resonance_frequency)
                         .property("en_nhc", &verlet_nvt_hoover::en_nhc)
                         .property("module_name", &module_name_wrapper<dimension, float_type>)
+                        .def("set_mass", &verlet_nvt_hoover::set_mass)
                         .scope
                         [
                             class_<runtime>("runtime")
