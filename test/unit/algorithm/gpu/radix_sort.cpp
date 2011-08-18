@@ -66,6 +66,7 @@ void compare_radix_sort( size_t count )
     double elapsed = timer.elapsed();
     cuda::copy(g_array, h_array2);
 
+    BOOST_TEST_MESSAGE(count << " elements");
     BOOST_TEST_MESSAGE("GPU time: " << std::fixed << std::setprecision(3)
                        << elapsed * 1e3 << " ms");
 
