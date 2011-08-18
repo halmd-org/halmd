@@ -51,6 +51,7 @@ public:
     typedef typename particle_type::vector_type vector_type;
     typedef mdsim::box<dimension> box_type;
     typedef logger logger_type;
+    typedef fixed_vector<float_type, 2> chain_type;
 
     static char const* module_name() { return "verlet_nvt_hoover"; }
 
@@ -69,7 +70,7 @@ public:
     virtual void finalize();
     virtual void timestep(double timestep);
     virtual void temperature(double temperature);
-    virtual void set_mass(fixed_vector<double, 2> const& mass);
+    virtual void set_mass(chain_type const& mass);
 
     //! returns integration time-step
     virtual double timestep() const
@@ -90,7 +91,7 @@ public:
     }
 
     //! returns coupling parameters: `mass' of the heat bath variables
-    fixed_vector<double, 2> const& mass() const
+    chain_type const& mass() const
     {
         return mass_xi_;
     }
@@ -106,8 +107,8 @@ public:
      *
      * In analogy with the particle positions and velocities, these variables are accessible to the public.
      */
-    fixed_vector<float_type, 2> xi;
-    fixed_vector<float_type, 2> v_xi;
+    chain_type xi;
+    chain_type v_xi;
 
 private:
     typedef utility::profiler profiler_type;
@@ -147,7 +148,7 @@ private:
     /** resonance frequency of heat bath, determines coupling parameters below */
     float_type resonance_frequency_;
     /** coupling parameters: `mass' of the heat bath variables */
-    fixed_vector<float_type, 2> mass_xi_;
+    chain_type mass_xi_;
 
     /** profiling runtime accumulators */
     runtime runtime_;

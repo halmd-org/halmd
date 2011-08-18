@@ -121,7 +121,7 @@ temperature(double temperature)
     // for the masses of the heat bath variables
     float_type omega_sq = pow(2 * M_PI * resonance_frequency_, 2);
     unsigned int dof = dimension * particle_->nbox;
-    fixed_vector<float_type, 2> mass;
+    chain_type mass;
     mass[0] = dof * temperature_ / omega_sq;
     mass[1] = temperature_ / omega_sq;
     set_mass(mass);
@@ -132,9 +132,9 @@ temperature(double temperature)
 
 template <int dimension, typename float_type>
 void verlet_nvt_hoover<dimension, float_type>::
-set_mass(fixed_vector<double, 2> const& mass)
+set_mass(chain_type const& mass)
 {
-    mass_xi_ = static_cast<fixed_vector<float_type, 2> >(mass);
+    mass_xi_ = mass;
     LOG("`mass' of heat bath variables: " << mass_xi_);
 }
 
