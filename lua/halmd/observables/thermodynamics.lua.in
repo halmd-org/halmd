@@ -18,7 +18,7 @@
 --
 
 require("halmd.device")
-require("halmd.io.writers.observable")
+require("halmd.io.writers.file")
 require("halmd.mdsim.box")
 require("halmd.mdsim.core")
 require("halmd.mdsim.particle")
@@ -72,7 +72,7 @@ function new(args)
         observable = thermodynamics_wrapper.host[dimension](particle, box, clock, force, logger)
     end
 
-    local file = writers.observable() -- singleton
+    local file = writers.file() -- singleton
     local writer = file:writer{location = {"observables"}, mode = "append"}
     writer:on_write(observable.en_pot, {"potential_energy"})
     writer:on_write(observable.en_kin, {"kinetic_energy"})

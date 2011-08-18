@@ -17,7 +17,7 @@
 -- along with this program.  If not, see <http://www.gnu.org/licenses/>.
 --
 
-require("halmd.io.writers")
+require("halmd.io.writers.file")
 require("halmd.mdsim.box")
 require("halmd.mdsim.particle")
 require("halmd.modules")
@@ -33,7 +33,6 @@ local observables = halmd.observables
 local po = libhalmd.po
 -- grab standard library
 local assert = assert
-local pairs = pairs
 local string = string
 
 module("halmd.io.writers.trajectory", halmd.modules.register)
@@ -43,10 +42,9 @@ module("halmd.io.writers.trajectory", halmd.modules.register)
 --
 function new(args)
     local every = args.every or 1000 -- default value
-    local format = args.format or "h5md" -- default value
 
     -- create trajectory file
-    local file = writers[format]{path = args.output .. ".trj"}
+    local file = writers.file{extension = "trj"}
 
     -- FIXME share phase_space instance with observables::host::density_mode
     local phase_space = assert(observables.phase_space{memory = "host"})
@@ -84,14 +82,4 @@ end
 --
 function options(desc)
     desc:add("every", po.uint64(), "sample interval for trajectory")
-
-    -- writer module choices with descriptions
-    local choices = {}
-    for writer, module in pairs(writers) do
-        if module.description then
-            choices[writer] = module.description()
-        end
-    end
-
-    desc:add("format", po.string():choices(choices), "select output file format")
 end
