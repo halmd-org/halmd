@@ -91,7 +91,7 @@ public:
     }
 
     //! returns coupling parameters: `mass' of the heat bath variables
-    chain_type const& mass() const
+    virtual chain_type const& mass() const
     {
         return mass_xi_;
     }

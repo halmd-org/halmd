@@ -18,6 +18,7 @@
  */
 
 #include <algorithm>
+#include <boost/lambda/lambda.hpp>
 #include <cuda_wrapper/cuda_wrapper.hpp>
 #include <cmath>
 #include <string>
@@ -244,6 +245,27 @@ static char const* module_name_wrapper(verlet_nvt_hoover<dimension, float_type> 
     return verlet_nvt_hoover<dimension, float_type>::module_name();
 }
 
+template <typename integrator_type>
+static function<typename integrator_type::chain_type& ()>
+wrap_xi(shared_ptr<integrator_type> integrator)
+{
+    return lambda::var(integrator->xi);
+}
+
+template <typename integrator_type>
+static function<typename integrator_type::chain_type& ()>
+wrap_v_xi(shared_ptr<integrator_type> integrator)
+{
+    return lambda::var(integrator->v_xi);
+}
+
+template <typename integrator_type>
+static function<double ()>
+wrap_en_nhc(shared_ptr<integrator_type> integrator)
+{
+    return bind(&integrator_type::en_nhc, integrator);
+}
+
 template <int dimension, typename float_type>
 void verlet_nvt_hoover<dimension, float_type>::luaopen(lua_State* L)
 {
@@ -269,11 +291,11 @@ void verlet_nvt_hoover<dimension, float_type>::luaopen(lua_State* L)
                           , float_type, float_type, float_type
                           , shared_ptr<logger_type>
                         >())
-                        .property("xi", &verlet_nvt_hoover::xi)
-                        .property("v_xi", &verlet_nvt_hoover::v_xi)
+                        .property("xi", &wrap_xi<verlet_nvt_hoover>)
+                        .property("v_xi", &wrap_v_xi<verlet_nvt_hoover>)
+                        .property("en_nhc", &wrap_en_nhc<verlet_nvt_hoover>)
                         .property("mass", &verlet_nvt_hoover::mass)
                         .property("resonance_frequency", &verlet_nvt_hoover::resonance_frequency)
-                        .property("en_nhc", &verlet_nvt_hoover::en_nhc)
                         .property("module_name", &module_name_wrapper<dimension, float_type>)
                         .def("set_mass", &verlet_nvt_hoover::set_mass)
                         .scope

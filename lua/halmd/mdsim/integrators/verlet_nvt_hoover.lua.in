@@ -18,15 +18,19 @@
 --
 
 require("halmd.device")
+require("halmd.io.writers")
 require("halmd.mdsim.box")
 require("halmd.mdsim.clock")
 require("halmd.mdsim.core")
 require("halmd.mdsim.particle")
 require("halmd.modules")
+require("halmd.observables.sampler")
 
 -- grab modules
 local device = halmd.device
 local mdsim = halmd.mdsim
+local observables = halmd.observables
+local writers = halmd.io.writers
 -- grab C++ wrappers
 local verlet_nvt_hoover_wrapper = {
     host = {
@@ -53,6 +57,7 @@ module("halmd.mdsim.integrators.verlet_nvt_hoover", halmd.modules.register)
 function new(args)
     local temperature = args.temperature or 1.12 -- default value
     local resonance_frequency = args.resonance_frequency or 5 -- default value
+    local every = args.every or 100 -- default value
     local logger = assert(args.logger)
 
     -- dependency injection
@@ -75,6 +80,22 @@ function new(args)
     core:on_integrate{integrator.integrate, tracker = integrator}
     core:on_finalize{integrator.finalize, tracker = integrator}
 
+    -- connect chain variables to trajectory writers
+    local file = writers.trajectory() -- singleton
+    local writer = file:writer{location = {"trajectory", "nose_hoover"}, mode = "append"}
+    writer:on_write(integrator.xi, {"position"})
+    writer:on_write(integrator.v_xi, {"velocity"})
+    -- connect writer to sampler
+    local sampler = observables.sampler() -- singleton
+    sampler:on_sample{writer.write, every, tracker = integrator}
+
+    -- connect chain energy to observables writers
+    file = writers.observable() -- singleton
+    writer = file:writer{location = {"observables"}, mode = "append"}
+    writer:on_write(integrator.en_nhc, {"total_energy_nose_hoover_chain"})
+    -- connect writer to sampler
+    sampler:on_sample{writer.write, every, tracker = integrator}
+
     return integrator
 end
 
@@ -85,7 +106,9 @@ function profile(self, profiler)
     profiler:on_profile{self, integrate = "first half-step of velocity-Verlet (+ Nosé-Hoover chain)"}
     profiler:on_profile{self, finalize = "second half-step of velocity-Verlet (+ Nosé-Hoover chain)"}
     profiler:on_profile{self, propagate = "propagate Nosé-Hoover chain"}
-    profiler:on_profile{self, rescale = "rescale velocities in Nosé-Hoover thermostat"}
+    if device() then
+        profiler:on_profile{self, rescale = "rescale velocities in Nosé-Hoover thermostat"}
+    end
 end
 
 --
@@ -106,6 +129,7 @@ function options(desc)
     desc:add("resonance-frequency", po.float(), "resonance frequency of heat bath")
 -- FIXME reintroduce mass as alternative to resonance_frequency
 --    desc:add("mass", po.float_array(), "coupling parameters: `mass' of heat bath variables")
+    desc:add("every", po.uint64(), "sample interval for heat bath variables")
 end
 
 --
