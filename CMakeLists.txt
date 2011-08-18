@@ -40,6 +40,11 @@ if(NOT HALMD_DOC_ONLY)
 
 project(HALMD CXX)
 
+if(CMAKE_BUILD_TYPE STREQUAL "${CMAKE_BUILD_TYPE_INIT}")
+  set(CMAKE_BUILD_TYPE "Release" CACHE STRING
+    "Choose the type of build, options are: Debug Release RelWithDebInfo MinSizeRel." FORCE)
+endif()
+
 if (HALMD_USE_STATIC_LIBS)
   set(HALMD_USE_STATIC_LIBS TRUE CACHE INTERNAL
     "Build statically linked backend executables")
@@ -58,6 +63,13 @@ if(NOT DEFINED Boost_USE_MULTITHREADED)
   set(Boost_USE_MULTITHREADED FALSE)
 endif(NOT DEFINED Boost_USE_MULTITHREADED)
 
+# Use Luabind debug library if build type is not Release.
+# The debug variant has many assert() statements, e.g. to check
+# for duplicate class registration, or missing base classes.
+if(NOT CMAKE_BUILD_TYPE STREQUAL "Release")
+  set(LUABIND_USE_DEBUG_LIBS TRUE)
+endif()
+
 find_package(Boost 1.43.0 QUIET REQUIRED COMPONENTS
   date_time
   filesystem
@@ -72,11 +84,6 @@ find_package(CUDA QUIET)
 find_package(HDF5 QUIET REQUIRED)
 find_package(Lua51 QUIET REQUIRED)
 find_package(Luabind QUIET REQUIRED)
-
-if(CMAKE_BUILD_TYPE STREQUAL "${CMAKE_BUILD_TYPE_INIT}")
-  set(CMAKE_BUILD_TYPE "Release" CACHE STRING
-    "Choose the type of build, options are: Debug Release RelWithDebInfo MinSizeRel." FORCE)
-endif()
 
 if(CMAKE_CXX_COMPILER_ID MATCHES "^(GNU|Clang|Intel)$")
   if(CMAKE_CXX_FLAGS STREQUAL "${CMAKE_CXX_FLAGS_INIT}")

@@ -17,12 +17,13 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef HALMD_MDSIM_HPP
-#define HALMD_MDSIM_HPP
-
+#include <boost/bind.hpp>
 #include <boost/lexical_cast.hpp>
 #include <boost/tuple/tuple.hpp>
 
+#include <halmd/io/logger.hpp>
+#include <halmd/mdsim/clock.hpp>
+#include <halmd/utility/lua/lua.hpp>
 #include <halmd/utility/posix_signal.hpp>
 
 using namespace boost;
@@ -95,27 +96,25 @@ string posix_signal::name(int signum)
 {
     switch (signum) {
       case SIGHUP:
-        return "SIGHUP";
+        return "HUP";
       case SIGINT:
-        return "SIGINT";
-      case SIGQUIT:
-        return "SIGQUIT";
+        return "INT";
       case SIGALRM:
-        return "SIGALRM";
+        return "ALRM";
       case SIGTERM:
-        return "SIGTERM";
+        return "TERM";
       case SIGUSR1:
-        return "SIGUSR1";
+        return "USR1";
       case SIGUSR2:
-        return "SIGUSR2";
+        return "USR2";
       case SIGCONT:
-        return "SIGCONT";
+        return "CONT";
       case SIGTSTP:
-        return "SIGTSTP";
+        return "TSTP";
       case SIGTTIN:
-        return "SIGTTIN";
+        return "TTIN";
       case SIGTTOU:
-        return "SIGTTOU";
+        return "TTOU";
       default:
         return lexical_cast<string>(signum);
     }
@@ -132,9 +131,72 @@ void posix_signal::handle(int signum) const
     if (it == handler_.end()) {
         throw std::logic_error("blocked unregistered signal " + name(signum));
     }
+    LOG_WARNING("process received signal " << name(signum));
     it->second(signum);
 }
 
-} // namespace halmd
+template <int signum>
+static connection
+wrap_on_signal(posix_signal& self, signal<void ()>::slot_function_type const& slot)
+{
+    return self.on_signal(signum, bind(&signal<void ()>::slot_function_type::operator(), slot));
+}
 
-#endif /* ! HALMD_MDSIM_HPP */
+static signal<void ()>::slot_function_type
+wrap_wait(shared_ptr<posix_signal> self)
+{
+    return bind(&posix_signal::wait, self);
+}
+
+static signal<void ()>::slot_function_type
+wrap_poll(shared_ptr<posix_signal> self)
+{
+    return bind(&posix_signal::poll, self);
+}
+
+static void
+abort(shared_ptr<mdsim::clock const> clock)
+{
+    throw runtime_error("gracefully aborting simulation at step " + lexical_cast<string>(clock->step()));
+}
+
+static signal<void ()>::slot_function_type
+wrap_abort(shared_ptr<mdsim::clock const> clock)
+{
+    return bind(&abort, clock);
+}
+
+void posix_signal::luaopen(lua_State* L)
+{
+    using namespace luabind;
+    module(L, "libhalmd")
+    [
+        namespace_("utility")
+        [
+            class_<posix_signal, shared_ptr<posix_signal> >("posix_signal")
+                .def(constructor<>())
+                .def("on_hup", &wrap_on_signal<SIGHUP>)
+                .def("on_int", &wrap_on_signal<SIGINT>)
+                .def("on_alrm", &wrap_on_signal<SIGALRM>)
+                .def("on_term", &wrap_on_signal<SIGTERM>)
+                .def("on_usr1", &wrap_on_signal<SIGUSR1>)
+                .def("on_usr2", &wrap_on_signal<SIGUSR2>)
+                .def("on_cont", &wrap_on_signal<SIGCONT>)
+                .def("on_tstp", &wrap_on_signal<SIGTSTP>)
+                .def("on_ttin", &wrap_on_signal<SIGTTIN>)
+                .def("on_ttou", &wrap_on_signal<SIGTTOU>)
+                .property("wait", &wrap_wait)
+                .property("poll", &wrap_poll)
+
+          , def("abort", &wrap_abort)
+        ]
+    ];
+}
+
+HALMD_LUA_API int luaopen_libhalmd_utility_posix_signal(lua_State* L)
+{
+    posix_signal::luaopen(L);
+    return 0;
+}
+
+} // namespace halmd

@@ -35,53 +35,35 @@ namespace observables {
 runtime_estimate::runtime_estimate(
     shared_ptr<clock_type> clock
   , step_type total_steps
-  , step_type step_start
 )
   // dependency injection
-  : clock(clock)
+  : clock_(clock)
   // initialise members
-  , step_start_(step_start)
-  , step_stop_(step_start + total_steps)
+  , step_start_(clock_->step())
+  , step_stop_(step_start_ + total_steps)
+  // A circular buffer of two timer/step samples allows estimating the
+  // runtime in between calls to runtime_estimate::sample, e.g. triggered
+  // by the user through a POSIX signal. For the estimate, the front of
+  // the circular buffer will be used, thus the measured time interval
+  // is at least as long as the sample interval.
+  , timer_(2)
 {
-    gettimeofday(&start_time_, NULL);
 }
 
-/**
- * trigger estimate of remaining runtime and output to log file
- */
-void runtime_estimate::sample() const
+void runtime_estimate::sample()
 {
-    step_type step = clock->step();
-    if (step > step_start_) {
-        double eta = value(step);
-        LOG(format_time(eta, 1) << " estimated remaining runtime at step " << step);
-    }
+    timer_.push_back(make_pair(timer(), clock_->step()));
 }
 
-/**
- * estimate remaining runtime
- */
-double runtime_estimate::value(step_type step) const
+void runtime_estimate::estimate() const
 {
-    // return if called at initial step
-    if (step == step_start_) {
-        return 0;
-    }
-
-    // determine passed wall clock time since start
-    timeval stop_time;
-    gettimeofday(&stop_time, NULL);
-
-    timeval tv;
-    timersub(&stop_time, &start_time_, &tv);
-
-    // linear extrapolation
-    return (tv.tv_sec + tv.tv_usec * 1e-6) * (step_stop_ - step) / (step - step_start_);
+    // linear extrapolation of measured steps to total number of steps
+    timer_pair_type const& timer = timer_.front();
+    step_type const& step = clock_->step();
+    double eta = (timer.first.elapsed() / (step - timer.second)) * (step_stop_ - step);
+    LOG(format_time(eta, 1) << " estimated remaining runtime at step " << step);
 }
 
-/**
- * format time given in seconds
- */
 string runtime_estimate::format_time(double time, unsigned int prec)
 {
     ostringstream os;
@@ -96,30 +78,32 @@ string runtime_estimate::format_time(double time, unsigned int prec)
     return os.str();
 }
 
-
-runtime_estimate::slot_function_type
-sample_wrapper(shared_ptr<runtime_estimate> instance)
+static runtime_estimate::slot_function_type
+wrap_sample(shared_ptr<runtime_estimate> instance)
 {
     return bind(&runtime_estimate::sample, instance);
+}
+
+static runtime_estimate::slot_function_type
+wrap_estimate(shared_ptr<runtime_estimate> instance)
+{
+    return bind(&runtime_estimate::estimate, instance);
 }
 
 void runtime_estimate::luaopen(lua_State* L)
 {
     using namespace luabind;
-    static string class_name("runtime_estimate_");
     module(L, "libhalmd")
     [
         namespace_("observables")
         [
-            class_<runtime_estimate, shared_ptr<runtime_estimate> >(class_name.c_str())
+            class_<runtime_estimate, shared_ptr<runtime_estimate> >("runtime_estimate")
                 .def(constructor<
                     shared_ptr<clock_type>
                   , step_type
-                  , step_type
                 >())
-                .property("sample", &sample_wrapper)
-                .property("value", &runtime_estimate::value)
-                .def("on_sample", &runtime_estimate::on_sample)
+                .property("sample", &wrap_sample)
+                .property("estimate", &wrap_estimate)
         ]
     ];
 }

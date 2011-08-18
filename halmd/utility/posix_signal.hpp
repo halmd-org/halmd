@@ -22,6 +22,7 @@
 
 #include <boost/unordered_map.hpp>
 #include <csignal>
+#include <lua.hpp>
 #include <string>
 
 #include <halmd/utility/signal.hpp>
@@ -33,10 +34,11 @@ namespace halmd {
  */
 class posix_signal
 {
-public:
+private:
     typedef halmd::signal<void (int)> handler_type;
+
+public:
     typedef handler_type::slot_function_type slot_function_type;
-    typedef boost::unordered_map<int, handler_type> handler_map_type;
 
     posix_signal();
     ~posix_signal();
@@ -44,8 +46,11 @@ public:
     void wait() const;
     bool poll() const;
     static std::string name(int signum);
+    static void luaopen(lua_State* L);
 
 private:
+    typedef boost::unordered_map<int, handler_type> handler_map_type;
+
     void handle(int signum) const;
 
     handler_map_type handler_;

@@ -55,6 +55,7 @@ file::file(string const& path)
 
 void file::flush()
 {
+    LOG("flush H5MD file: " << absolute_path(file_.getFileName()));
     file_.flush(H5F_SCOPE_GLOBAL);
 }
 

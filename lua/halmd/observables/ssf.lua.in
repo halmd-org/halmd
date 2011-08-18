@@ -17,7 +17,7 @@
 -- along with this program.  If not, see <http://www.gnu.org/licenses/>.
 --
 
-require("halmd.io.writers.observable")
+require("halmd.io.writers.file")
 require("halmd.mdsim.clock")
 require("halmd.mdsim.particle")
 require("halmd.modules")
@@ -81,7 +81,7 @@ function new(args)
     end
 
     -- construct density_mode module
-    local density_mode = assert(observables.density_mode{ wavevector = wavevector })
+    local density_mode = assert(observables.density_mode{wavevector = wavevector})
 
     -- construct ssf module
     local ssf = assert(ssf_wrapper[dimension])(density_mode, clock, particle.nbox, logger)
@@ -90,7 +90,7 @@ function new(args)
     ssf:on_sample(density_mode.acquire)
 
     local sampler = observables.sampler() -- singleton
-    local file = writers.observable() -- singleton
+    local file = writers.file() -- singleton
 
     -- write wavenumbers only once
     local writer = file:writer{location = {"structure", "ssf"}, mode = "truncate"}
@@ -125,7 +125,7 @@ end
 --
 -- returns module description
 --
-function name()
+function description()
     return "static structure factor"
 end
 

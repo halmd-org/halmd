@@ -18,24 +18,15 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-##
-# Test trajectory continuation for Lennard-Jones fluid
-#
-# This test is related to HALMD bug #69.
-#
-# FIXME write C++ test to compare trajectory outputs
-#
-
 set(CMAKE_MODULE_PATH "@HALMD_TEST_CMAKE_BINARY_DIR@")
 
 include(execute_halmd)
 
-set(OUTPUT_PREFIX "@CMAKE_CURRENT_BINARY_DIR@/lennard_jones")
+set(OUTPUT_PREFIX "@CMAKE_CURRENT_BINARY_DIR@/thermostat")
+set(HALMD_SCRIPT "@CMAKE_SOURCE_DIR@/examples/scripts/thermostat.lua")
 
 if(DEFINED USE_HOST)
-    if (WITH_CUDA)
-        set(BACKEND_OPTION "--disable-gpu")
-    endif (WITH_CUDA)
+    set(BACKEND_OPTION "--disable-gpu")
     message(STATUS "Using host backend")
 else()
     message(STATUS "Using GPU backend")
@@ -47,28 +38,16 @@ else()
     message(STATUS "Space dimension: ${DIMENSION}")
 endif()
 
-# FIXME add third particle species with N=1 once supported, see commit 1f91762
 execute_halmd(
-  --verbose
+  --verbose --verbose
   --output "${OUTPUT_PREFIX}"
-  --steps 1000
+  --steps 500
   "${BACKEND_OPTION}"
-  box --dimension "${DIMENSION}"--particles=100,200 --density 0.1
-  trajectory --every=1000
-)
-
-execute_halmd(
-  --verbose
-  --output "${OUTPUT_PREFIX}_continued"
-  --steps 1000
-  "${BACKEND_OPTION}"
-  trajectory --file "${OUTPUT_PREFIX}.trj"
-  trajectory --every=1000
+  --script "${HALMD_SCRIPT}"
+  box --dimension "${DIMENSION}"
 )
 
 file(REMOVE
   "${OUTPUT_PREFIX}.trj"
   "${OUTPUT_PREFIX}.log"
-  "${OUTPUT_PREFIX}_continued.log"
-  "${OUTPUT_PREFIX}_continued.trj"
 )

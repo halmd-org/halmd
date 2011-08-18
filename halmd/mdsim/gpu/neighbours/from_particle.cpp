@@ -169,11 +169,10 @@ void from_particle<dimension, float_type>::luaopen(lua_State* L)
                         .property("cell_occupancy", &from_particle::cell_occupancy)
                         .scope
                         [
-                            class_<defaults>("defaults")
-                                .scope
-                                [
-                                    def("occupancy", &defaults::occupancy)
-                                ]
+                            namespace_("defaults")
+                            [
+                                def("occupancy", &defaults::occupancy)
+                            ]
 
                           , class_<runtime>("runtime")
                                 .def_readonly("update", &runtime::update)

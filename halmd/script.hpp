@@ -1,5 +1,5 @@
 /*
- * Copyright © 2008-2010  Peter Colberg and Felix Höfling
+ * Copyright © 2010-2011  Peter Colberg
  *
  * This file is part of HALMD.
  *
@@ -21,11 +21,14 @@
 #define HALMD_SCRIPT_HPP
 
 #include <boost/noncopyable.hpp>
+#include <boost/shared_ptr.hpp>
 #include <lua.hpp>
+#include <luabind/luabind.hpp> // luabind::object
 #include <stdexcept>
 #include <string>
 
 #include <halmd/utility/options_parser.hpp>
+#include <halmd/utility/signal.hpp>
 
 namespace halmd {
 
@@ -37,7 +40,6 @@ class script
 {
 public:
     script();
-    virtual ~script();
     void dofile(std::string const& file_name);
     void load_library();
     void options(options_parser& parser);
@@ -51,8 +53,15 @@ public:
     lua_State* const L;
 
 private:
+    typedef signal<void ()>::slot_function_type slot_function_type;
+
     void package_path();
     static void register_exception_handlers();
+
+    /** RAII wrapper of Lua state */
+    boost::shared_ptr<lua_State const> const L_;
+    /** Lua script function */
+    luabind::object script_;
 };
 
 } // namespace halmd

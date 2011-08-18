@@ -54,19 +54,16 @@ env: env-cmake env-lua env-boost env-luabind env-hdf5
 ## CMake with CMake-CUDA patch
 ##
 
-CMAKE_VERSION = 2.8.4
+CMAKE_VERSION = 2.8.5
 CMAKE_TARBALL = cmake-$(CMAKE_VERSION).tar.gz
 CMAKE_TARBALL_URL = http://www.cmake.org/files/v2.8/$(CMAKE_TARBALL)
-CMAKE_CUDA_PATCH = cmake-cuda-2.8.4-1-g2ed3c7a.patch
+CMAKE_CUDA_PATCH = cmake-cuda-2.8.5-0-gda84f60.patch
 CMAKE_CUDA_PATCH_URL = http://sourceforge.net/projects/halmd/files/patches/$(CMAKE_CUDA_PATCH)
-CMAKE_LIB64_PATCH = cmake_find_library_lib64_in_cxx_project.patch
-CMAKE_LIB64_PATCH_URL = http://sourceforge.net/projects/halmd/files/patches/$(CMAKE_LIB64_PATCH)
 CMAKE_BUILD_DIR = cmake-$(CMAKE_VERSION)
 CMAKE_INSTALL_DIR = $(PREFIX)/cmake-$(CMAKE_VERSION)
 
 .fetch-cmake:
 	$(WGET) $(CMAKE_TARBALL_URL)
-	$(WGET) $(CMAKE_LIB64_PATCH_URL)
 	$(WGET) $(CMAKE_CUDA_PATCH_URL)
 	@$(TOUCH) $@
 
@@ -76,7 +73,6 @@ fetch-cmake: .fetch-cmake
 	$(RM) $(CMAKE_BUILD_DIR)
 	$(TAR) -xzf $(CMAKE_TARBALL)
 	cd $(CMAKE_BUILD_DIR) && $(PATCH) -p1 < $(CURDIR)/$(CMAKE_CUDA_PATCH)
-	cd $(CMAKE_BUILD_DIR) && $(PATCH) -p1 < $(CURDIR)/$(CMAKE_LIB64_PATCH)
 	@$(TOUCH) $@
 
 extract-cmake: .extract-cmake
@@ -105,7 +101,6 @@ clean-cmake:
 distclean-cmake: clean-cmake
 	@$(RM) .fetch-cmake
 	$(RM) $(CMAKE_TARBALL)
-	$(RM) $(CMAKE_LIB64_PATCH)
 	$(RM) $(CMAKE_CUDA_PATCH)
 
 env-cmake:
@@ -181,7 +176,7 @@ BOOST_LOG_TARBALL_URL = http://boost-log.svn.sourceforge.net/viewvc/boost-log/tr
 BOOST_LOG_DIR = boost-log
 BOOST_BUILD_DIR = boost_$(BOOST_RELEASE)
 BOOST_INSTALL_DIR = $(PREFIX)/boost_$(BOOST_RELEASE)
-BOOST_CXXFLAGS = -fPIC
+BOOST_BUILD_FLAGS = cxxflags=-fPIC --without-python
 
 .fetch-boost:
 	$(WGET) $(BOOST_TARBALL_URL)
@@ -207,13 +202,13 @@ extract-boost: .extract-boost
 configure-boost: .configure-boost
 
 .build-boost: .configure-boost
-	cd $(BOOST_BUILD_DIR) && ./bjam cxxflags="$(BOOST_CXXFLAGS)" $(PARALLEL_BUILD_FLAGS)
+	cd $(BOOST_BUILD_DIR) && ./bjam $(BOOST_BUILD_FLAGS) $(PARALLEL_BUILD_FLAGS)
 	@$(TOUCH) $@
 
 build-boost: .build-boost
 
 install-boost: .build-boost
-	cd $(BOOST_BUILD_DIR) && ./bjam cxxflags="$(BOOST_CXXFLAGS)" install --prefix=$(BOOST_INSTALL_DIR)
+	cd $(BOOST_BUILD_DIR) && ./bjam $(BOOST_BUILD_FLAGS) install --prefix=$(BOOST_INSTALL_DIR)
 
 clean-boost:
 	@$(RM) .build-boost
@@ -241,15 +236,18 @@ env-boost:
 LUABIND_VERSION = 0.9.1
 LUABIND_TARBALL = luabind-$(LUABIND_VERSION).tar.gz
 LUABIND_TARBALL_URL = http://sourceforge.net/projects/luabind/files/luabind/$(LUABIND_VERSION)/$(LUABIND_TARBALL)
-LUABIND_PATCH = luabind_proper_forward_declarations_for_clang.patch
-LUABIND_PATCH_URL = http://sourceforge.net/projects/halmd/files/patches/$(LUABIND_PATCH)
+LUABIND_CLANG_PATCH = luabind_proper_forward_declarations_for_clang.patch
+LUABIND_CLANG_PATCH_URL = http://sourceforge.net/projects/halmd/files/patches/$(LUABIND_CLANG_PATCH)
+LUABIND_CAST_GRAPH_CACHE_PATCH = luabind_cast_graph_cache_invalid_cast_fix.patch
+LUABIND_CAST_GRAPH_CACHE_PATCH_URL = http://sourceforge.net/projects/halmd/files/patches/$(LUABIND_CAST_GRAPH_CACHE_PATCH)
 LUABIND_BUILD_DIR = luabind-$(LUABIND_VERSION)
 LUABIND_BUILD_FLAGS = cxxflags=-fPIC link=static variant=release variant=debug
 LUABIND_INSTALL_DIR = $(PREFIX)/luabind-$(LUABIND_VERSION)
 
 .fetch-luabind:
 	$(WGET) $(LUABIND_TARBALL_URL)
-	$(WGET) $(LUABIND_PATCH_URL)
+	$(WGET) $(LUABIND_CLANG_PATCH_URL)
+	$(WGET) $(LUABIND_CAST_GRAPH_CACHE_PATCH_URL)
 	@$(TOUCH) $@
 
 fetch-luabind: .fetch-luabind
@@ -257,7 +255,8 @@ fetch-luabind: .fetch-luabind
 .extract-luabind: .fetch-luabind .build-lua
 	$(RM) $(LUABIND_BUILD_DIR)
 	$(TAR) -xzf $(LUABIND_TARBALL)
-	cd $(LUABIND_BUILD_DIR) && $(PATCH) -p1 < $(CURDIR)/$(LUABIND_PATCH)
+	cd $(LUABIND_BUILD_DIR) && $(PATCH) -p1 < $(CURDIR)/$(LUABIND_CLANG_PATCH)
+	cd $(LUABIND_BUILD_DIR) && $(PATCH) -p1 < $(CURDIR)/$(LUABIND_CAST_GRAPH_CACHE_PATCH)
 	mkdir $(LUABIND_BUILD_DIR)/lua
 	ln -s $(CURDIR)/$(LUA_BUILD_DIR)/src $(LUABIND_BUILD_DIR)/lua/include
 	ln -s $(CURDIR)/$(LUA_BUILD_DIR)/src $(LUABIND_BUILD_DIR)/lua/lib
@@ -282,7 +281,8 @@ clean-luabind:
 distclean-luabind: clean-luabind
 	@$(RM) .fetch-luabind
 	$(RM) $(LUABIND_TARBALL)
-	$(RM) $(LUABIND_PATCH)
+	$(RM) $(LUABIND_CLANG_PATCH)
+	$(RM) $(LUABIND_CAST_GRAPH_CACHE_PATCH)
 
 env-luabind:
 	@echo
@@ -620,3 +620,116 @@ env-graphviz:
 	@echo '# add Graphviz $(GRAPHVIZ_VERSION) to environment'
 	@echo 'export PATH="$(GRAPHVIZ_INSTALL_DIR)/bin$${PATH+:$$PATH}"'
 	@echo 'export MANPATH="$(GRAPHVIZ_INSTALL_DIR)/share/man$${MANPATH+:$$MANPATH}"'
+
+##
+## Clang C++ compiler
+##
+
+CLANG_VERSION = 2.9
+LLVM_TARBALL = llvm-$(CLANG_VERSION).tgz
+LLVM_TARBALL_URL = http://llvm.org/releases/$(CLANG_VERSION)/$(LLVM_TARBALL)
+CLANG_TARBALL = clang-$(CLANG_VERSION).tgz
+CLANG_TARBALL_URL = http://llvm.org/releases/$(CLANG_VERSION)/$(CLANG_TARBALL)
+CLANG_BUILD_DIR = llvm-$(CLANG_VERSION)
+CLANG_CONFIGURE_FLAGS = --enable-optimized
+CLANG_INSTALL_DIR = $(PREFIX)/clang-$(CLANG_VERSION)
+
+.fetch-clang:
+	$(WGET) $(LLVM_TARBALL_URL)
+	$(WGET) $(CLANG_TARBALL_URL)
+	@$(TOUCH) $@
+
+fetch-clang: .fetch-clang
+
+.extract-clang: .fetch-clang
+	$(RM) $(CLANG_BUILD_DIR)
+	$(TAR) -xzf $(LLVM_TARBALL)
+	cd $(CLANG_BUILD_DIR)/tools && $(TAR) -xzf $(CURDIR)/$(CLANG_TARBALL) && mv clang-$(CLANG_VERSION) clang
+	@$(TOUCH) $@
+
+extract-clang: .extract-clang
+
+.configure-clang: .extract-clang
+	cd $(CLANG_BUILD_DIR) && ./configure $(CLANG_CONFIGURE_FLAGS) --prefix=$(CLANG_INSTALL_DIR)
+	@$(TOUCH) $@
+
+configure-clang: .configure-clang
+
+.build-clang: .configure-clang
+	cd $(CLANG_BUILD_DIR) && make $(PARALLEL_BUILD_FLAGS)
+	@$(TOUCH) $@
+
+build-clang: .build-clang
+
+install-clang: .build-clang
+	cd $(CLANG_BUILD_DIR) && make install
+
+clean-clang:
+	@$(RM) .build-clang
+	@$(RM) .configure-clang
+	@$(RM) .extract-clang
+	$(RM) $(CLANG_BUILD_DIR)
+
+distclean-clang: clean-clang
+	@$(RM) .fetch-clang
+	$(RM) $(LLVM_TARBALL)
+	$(RM) $(CLANG_TARBALL)
+
+env-clang:
+	@echo
+	@echo '# add Clang $(CLANG_VERSION) to environment'
+	@echo 'export PATH="$(CLANG_INSTALL_DIR)/bin$${PATH+:$$PATH}"'
+	@echo 'export MANPATH="$(CLANG_INSTALL_DIR)/share/man$${MANPATH+:$$MANPATH}"'
+##
+## GNU Parallel
+##
+
+GNU_PARALLEL_VERSION = 20110722
+GNU_PARALLEL_TARBALL = parallel-$(GNU_PARALLEL_VERSION).tar.bz2
+GNU_PARALLEL_TARBALL_URL = http://ftp.gnu.org/gnu/parallel/$(GNU_PARALLEL_TARBALL)
+GNU_PARALLEL_BUILD_DIR = parallel-$(GNU_PARALLEL_VERSION)
+GNU_PARALLEL_INSTALL_DIR = $(PREFIX)/parallel-$(GNU_PARALLEL_VERSION)
+
+.fetch-gnu-parallel:
+	$(WGET) $(GNU_PARALLEL_TARBALL_URL)
+	@$(TOUCH) $@
+
+fetch-gnu-parallel: .fetch-gnu-parallel
+
+.extract-gnu-parallel: .fetch-gnu-parallel
+	$(RM) $(GNU_PARALLEL_BUILD_DIR)
+	$(TAR) -xjf $(GNU_PARALLEL_TARBALL)
+	@$(TOUCH) $@
+
+extract-gnu-parallel: .extract-gnu-parallel
+
+.configure-gnu-parallel: .extract-gnu-parallel
+	cd $(GNU_PARALLEL_BUILD_DIR) && ./configure --prefix=$(GNU_PARALLEL_INSTALL_DIR)
+	@$(TOUCH) $@
+
+configure-gnu-parallel: .configure-gnu-parallel
+
+.build-gnu-parallel: .configure-gnu-parallel
+	cd $(GNU_PARALLEL_BUILD_DIR) && make $(PARALLEL_BUILD_FLAGS)
+	@$(TOUCH) $@
+
+build-gnu-parallel: .build-gnu-parallel
+
+install-gnu-parallel: .build-gnu-parallel
+	cd $(GNU_PARALLEL_BUILD_DIR) && make install
+
+clean-gnu-parallel:
+	@$(RM) .build-gnu-parallel
+	@$(RM) .configure-gnu-parallel
+	@$(RM) .extract-gnu-parallel
+	$(RM) $(GNU_PARALLEL_BUILD_DIR)
+
+distclean-gnu-parallel: clean-gnu-parallel
+	@$(RM) .fetch-gnu-parallel
+	$(RM) $(GNU_PARALLEL_TARBALL)
+
+env-gnu-parallel:
+	@echo
+	@echo '# add GNU Parallel $(GNU_PARALLEL_VERSION) to environment'
+	@echo 'export PATH="$(GNU_PARALLEL_INSTALL_DIR)/bin$${PATH+:$$PATH}"'
+	@echo 'export MANPATH="$(GNU_PARALLEL_INSTALL_DIR)/share/man$${MANPATH+:$$MANPATH}"'

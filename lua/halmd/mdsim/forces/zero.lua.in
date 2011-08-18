@@ -68,6 +68,6 @@ end
 --
 -- returns module description
 --
-function name()
+function description()
     return "Zero potential (no interaction)"
 end

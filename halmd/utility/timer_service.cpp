@@ -30,8 +30,13 @@ namespace utility {
 
 connection timer_service::on_periodic(slot_function_type const& slot, time_type interval)
 {
+    return on_periodic(slot, interval, interval);
+}
+
+connection timer_service::on_periodic(slot_function_type const& slot, time_type interval, time_type start)
+{
     event e;
-    e.time_ = time(0) + interval;
+    e.time_ = time(0) + start;
     e.interval_ = interval;
     e.slot_ = slot;
     return on_periodic_.connect(e);
@@ -50,7 +55,7 @@ void timer_service::event::operator()(time_type const& time)
     }
 }
 
-signal<void ()>::slot_function_type
+static timer_service::slot_function_type
 wrap_process(shared_ptr<timer_service> ts)
 {
     return bind(&timer_service::process, ts);
@@ -65,7 +70,8 @@ void timer_service::luaopen(lua_State* L)
         [
             class_<timer_service, shared_ptr<timer_service> >("timer_service")
                 .def(constructor<>())
-                .def("on_periodic", &timer_service::on_periodic)
+                .def("on_periodic", static_cast<connection (timer_service::*)(slot_function_type const&, time_type)>(&timer_service::on_periodic))
+                .def("on_periodic", static_cast<connection (timer_service::*)(slot_function_type const&, time_type, time_type)>(&timer_service::on_periodic))
                 .property("process", &wrap_process)
         ]
     ];

@@ -228,3 +228,50 @@ second argument, respectively.
        name = value
    end
    potential.name = property(get_name, set_name)
+
+
+Debugging C++ types with class_info
+-----------------------------------
+
+Luabind provides a function ``class_info``, which queries the class type of a
+Lua value. This is especially useful to debug ``No matching overload found``
+errors, where the Lua value provided as an argument to a C++ function does not
+match the function signature(s).
+
+``class_info`` returns an object with the properties ``name``, ``methods``
+and ``attributes``. In this example, we inspect a thermodynamics object:
+
+.. code-block:: lua
+
+   local thermodynamics = halmd.observables.thermodynamics{}
+   local c = class_info(thermodynamics)
+   print(c.name)                -- thermodynamics_3_
+   print(c.methods)             -- table: 0x1637390
+   print(c.attributes)          -- table: 0x16373e0
+
+The thermodynamics class only exports a constructor function:
+
+.. code-block:: lua
+
+   for k, v in pairs(class_info(thermodynamics).methods) do
+       print(k, v)
+   end
+   -- __init  function: 0x10fd410
+
+Its object provides signal slots and read-only data slots:
+
+.. code-block:: lua
+
+   for k, v in pairs(class_info(thermodynamics).attributes) do
+       print(k, v, class_info(thermodynamics[v]).name)
+   end
+   -- 1       en_kin          function<double ()>
+   -- 2       en_tot          function<double ()>
+   -- 3       prepare         signal<void ()>::slot_function_type
+   -- 4       en_pot          function<double ()>
+   -- 5       virial          function<double ()>
+   -- 6       pressure        function<double ()>
+   -- 7       sample          signal<void ()>::slot_function_type
+   -- 8       temp            function<double ()>
+   -- 9       hypervirial     function<double ()>
+   -- 10      v_cm            function<fixed_vector<double, 3> ()>

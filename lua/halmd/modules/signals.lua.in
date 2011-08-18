@@ -56,7 +56,7 @@ local signals = {}
 -- keep connections per tracker in a table with weak keys;
 -- if the tracker goes out of scope, the tracked connections
 -- will be garbage collected
-local connections = setmetatable({}, { __mode = "k" })
+local connections = setmetatable({}, {__mode = "k"})
 
 -- forward declarations of internal module functions
 local track

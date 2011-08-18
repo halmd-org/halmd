@@ -47,23 +47,31 @@ sampler::sampler(
 }
 
 /**
- * Run simulation
+ * Setup simulation box
  */
-void sampler::run()
+void sampler::setup()
 {
     LOG("setting up simulation box");
 
     on_prepare_();
     core_->setup();
     on_sample_();
+}
 
+/**
+ * Run simulation for given number of steps
+ */
+void sampler::run(step_type steps)
+{
     on_start_();
 
     LOG("starting simulation run");
     {
         scoped_timer_type timer(runtime_.total);
 
-        while (clock_->step() < steps_) {
+        step_type limit = steps > 0 ? (clock_->step() + steps) : steps_;
+
+        while (clock_->step() < limit) {
             on_prepare_();
 
             // perform complete MD integration step
@@ -131,6 +139,24 @@ void sampler::sample(slot_function_type const& slot, step_type interval) const
     }
 }
 
+static sampler::slot_function_type
+wrap_run(shared_ptr<sampler> self, sampler::step_type steps)
+{
+    return bind(&sampler::run, self, steps);
+}
+
+static sampler::slot_function_type
+wrap_run_default_steps(shared_ptr<sampler> self)
+{
+    return bind(&sampler::run, self, 0);
+}
+
+static sampler::slot_function_type
+wrap_setup(shared_ptr<sampler> self)
+{
+    return bind(&sampler::setup, self);
+}
+
 void sampler::luaopen(lua_State* L)
 {
     using namespace luabind;
@@ -146,7 +172,9 @@ void sampler::luaopen(lua_State* L)
             .def("on_finish", &sampler::on_finish)
             .def("on_prepare", &sampler::on_prepare)
             .def("on_sample", &sampler::on_sample)
-            .def("run", &sampler::run)
+            .def("setup", &wrap_setup)
+            .def("run", &wrap_run)
+            .def("run", &wrap_run_default_steps)
             .property("steps", &sampler::steps)
             .property("total_time", &sampler::total_time)
             .scope

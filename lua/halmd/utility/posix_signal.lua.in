@@ -1,5 +1,5 @@
 --
--- Copyright © 2011  Felix Höfling
+-- Copyright © 2011  Peter Colberg
 --
 -- This file is part of HALMD.
 --
@@ -17,41 +17,28 @@
 -- along with this program.  If not, see <http://www.gnu.org/licenses/>.
 --
 
-require("halmd.modules")
-
 require("halmd.mdsim.clock")
+require("halmd.modules")
+require("halmd.singleton")
 
 -- grab modules
 local mdsim = halmd.mdsim
 -- grab C++ wrappers
-local runtime_estimate_wrapper = libhalmd.observables.runtime_estimate
--- grab standard library
-local assert = assert
+local abort = assert(libhalmd.utility.abort)
+local posix_signal = assert(libhalmd.utility.posix_signal)
 
-module("halmd.observables.runtime_estimate", halmd.modules.register)
+module("halmd.utility.posix_signal", halmd.modules.register, halmd.singleton)
 
 --
--- construct instance of runtime_estimate module
---
--- @param args parameter table
---      total_steps   number of simulation steps until finish
---      current_step  current value of simulation step counter
---
--- @returns instance of runtime_estimate module
+-- construct POSIX signal handler
 --
 function new(args)
-    -- parameters
-    local total_steps = assert(args.total_steps)
+    local signal_handler = posix_signal()
 
-    -- dependency injection
-    local clock = mdsim.clock()
+    -- gracefully abort simulation on SIGTERM or SIGINT
+    local abort = abort(mdsim.clock())
+    signal_handler:on_term(abort)
+    signal_handler:on_int(abort)
 
-    return assert(runtime_estimate_wrapper)(clock, total_steps)
-end
-
---
--- returns module description
---
-function description()
-    return "runtime estimate"
+    return signal_handler
 end

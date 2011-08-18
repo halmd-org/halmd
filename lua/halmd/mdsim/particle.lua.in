@@ -54,7 +54,7 @@ module("halmd.mdsim.particle", halmd.modules.register, halmd.singleton)
 --
 function new(args)
     local dimension = assert(args.dimension)
-    local npart = args.particles or { 1000 } -- default value
+    local npart = args.particles or {1000} -- default value
 
     local particle
     if device() then

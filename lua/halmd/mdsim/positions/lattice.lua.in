@@ -91,7 +91,7 @@ end
 --
 -- returns module description
 --
-function name()
+function description()
     return "Face-centered cubic lattice"
 end
 

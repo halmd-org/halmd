@@ -98,7 +98,7 @@ po::options_description options_parser::options() const
  * @param args command line arguments (without program name)
  * @param vm variables map to store option values
  */
-void options_parser::parse_command_line(vector<string> const& args, po::variables_map& vm)
+void options_parser::parse_command_line(vector<string> const& args, po::variables_map& vm, bool allow_unregistered)
 {
     // build array of iterators, where each iterator points to
     // command line argument equal to a module namespace
@@ -133,7 +133,7 @@ void options_parser::parse_command_line(vector<string> const& args, po::variable
     {
         po::command_line_parser parser(vector<string>(args.begin(), argp.front()));
         parser.options(globals_);
-        parse_command_line(parser, vm);
+        parse_command_line(parser, vm, allow_unregistered);
     }
 
     // parse module-specific options for each module
@@ -150,7 +150,7 @@ void options_parser::parse_command_line(vector<string> const& args, po::variable
 
             po::command_line_parser parser(argm[i->first]);
             parser.options(i->second);
-            parse_command_line(parser, vm_);
+            parse_command_line(parser, vm_, allow_unregistered);
         }
     }
 }
@@ -164,9 +164,9 @@ void options_parser::parse_command_line(vector<string> const& args, po::variable
  * @param argv command line arguments (first is program name)
  * @param vm variables map to store option values
  */
-void options_parser::parse_command_line(int argc, char** argv, po::variables_map& vm)
+void options_parser::parse_command_line(int argc, char** argv, po::variables_map& vm, bool allow_unregistered)
 {
-    parse_command_line(vector<string>(argv + 1, argv + argc), vm);
+    parse_command_line(vector<string>(argv + 1, argv + argc), vm, allow_unregistered);
 }
 
 /*
@@ -175,12 +175,17 @@ void options_parser::parse_command_line(int argc, char** argv, po::variables_map
  * @param parser command line parser containing options description
  * @param vm variables map to store option values
  */
-void options_parser::parse_command_line(po::command_line_parser& parser, po::variables_map& vm)
+void options_parser::parse_command_line(po::command_line_parser& parser, po::variables_map& vm, bool allow_unregistered)
 {
-    // pass an empty positional options description to the command line
-    // parser to warn the user of unintentional positional options
-    po::positional_options_description pd;
-    parser.positional(pd);
+    if (allow_unregistered) {
+        parser.allow_unregistered();
+    }
+    else {
+        // pass an empty positional options description to the command line
+        // parser to warn the user of unintentional positional options
+        po::positional_options_description pd;
+        parser.positional(pd);
+    }
 
     // disallow abbreviated options, which break forward compatibility of
     // user's scripts as new options are added and create ambiguities

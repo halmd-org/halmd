@@ -53,12 +53,12 @@ function options(desc, globals)
     -- velocity module choices with descriptions
     local choices = {}
     for velocity, module in pairs(velocities) do
-        if module.name then
-            choices[velocity] = module.name()
+        if module.description then
+            choices[velocity] = module.description()
         end
     end
 
-    globals:add("velocity", po.string():choices(choices), "initial particle velocities module")
+    globals:add("velocity", po.string():choices(choices), "select initial particle velocities module")
 end
 
 --
@@ -68,7 +68,7 @@ end
 -- @param group HDF5 group
 --
 function write_parameters(self, group, globals)
-    if self.module_name then
-        globals:write_attribute("velocity", h5.string(), self.module_name)
+    if self.module ~= velocities.phase_space then
+        globals:write_attribute("velocity", h5.string(), self.module.namespace)
     end
 end

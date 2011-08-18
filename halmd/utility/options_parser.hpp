@@ -39,15 +39,15 @@ public:
     void add(po::options_description const& desc, std::string const& section);
     po::options_description options() const;
 
-    void parse_command_line(std::vector<std::string> const& args, po::variables_map& vm);
-    void parse_command_line(int argc, char** argv, po::variables_map& vm);
+    void parse_command_line(std::vector<std::string> const& args, po::variables_map& vm, bool allow_unregistered = false);
+    void parse_command_line(int argc, char** argv, po::variables_map& vm, bool allow_unregistered = false);
     void parse_config_file(std::istream& is, po::variables_map& vm);
     void parse_config_file(std::string const& file_name, po::variables_map& vm);
 
     static void luaopen(lua_State* L);
 
 private:
-    static void parse_command_line(po::command_line_parser& parser, po::variables_map& vm);
+    static void parse_command_line(po::command_line_parser& parser, po::variables_map& vm, bool allow_unregistered);
 
     /** module-independent options */
     po::options_description globals_;

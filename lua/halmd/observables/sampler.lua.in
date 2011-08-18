@@ -22,6 +22,7 @@ require("halmd.mdsim.clock")
 require("halmd.mdsim.core")
 require("halmd.observables.runtime_estimate")
 require("halmd.singleton")
+require("halmd.utility.posix_signal")
 require("halmd.utility.profiler")
 require("halmd.utility.timer_service")
 
@@ -63,12 +64,19 @@ function new(args)
     sampler:on_sample(utility.timer_service().process, 1)
 
     -- construct and connect runtime estimator.
-    local runtime_estimate = observables.runtime_estimate{
-        total_steps = steps
-      , current_step = clock.step
-    }
-    local timer_service = utility.timer_service()
-    timer_service:on_periodic(runtime_estimate.sample, 15 * 60) -- every 15 minutes
+    local runtime_estimate = observables.runtime_estimate{total_steps = steps}
+    local timer_service = utility.timer_service() -- singleton
+    -- sample every minute, start at 0 seconds
+    timer_service:on_periodic(runtime_estimate.sample, 60, 0)
+    -- log estimate every 15 minutes, start at 10 seconds
+    timer_service:on_periodic(runtime_estimate.estimate, 15 * 60, 10)
+
+    -- construct and connect POSIX signal handler
+    local posix_signal = utility.posix_signal()
+    -- poll for blocked signals every step
+    sampler:on_sample(posix_signal.poll, 1)
+    -- log runtime estimate on SIGUSR1
+    posix_signal:on_usr1(runtime_estimate.estimate)
 
     -- connect profiler to sampler
     local profiler = utility.profiler() -- singleton

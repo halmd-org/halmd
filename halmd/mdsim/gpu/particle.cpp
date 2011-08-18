@@ -177,11 +177,10 @@ void particle<dimension, float_type>::luaopen(lua_State* L)
                     .def(constructor<vector<unsigned int> const&, unsigned int>())
                     .property("dimension", &wrap_dimension<dimension, float_type>)
                     .scope[
-                        class_<defaults>("defaults")
-                            .scope
-                            [
-                                def("threads", &defaults::threads)
-                            ]
+                        namespace_("defaults")
+                        [
+                            def("threads", &defaults::threads)
+                        ]
                     ]
             ]
         ]

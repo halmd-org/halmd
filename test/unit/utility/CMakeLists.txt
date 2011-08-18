@@ -54,10 +54,9 @@ add_executable(test_unit_utility_posix_signal
   posix_signal.cpp
 )
 target_link_libraries(test_unit_utility_posix_signal
-  halmd_utility
-  ${Boost_SYSTEM_LIBRARY}
+  libhalmd
+  ${HALMD_COMMON_LIBRARIES}
   ${HALMD_TEST_LIBRARIES}
-  rt
 )
 add_test(unit/utility/posix_signal
   test_unit_utility_posix_signal --log_level=message

@@ -19,10 +19,9 @@
 
 require("halmd.mdsim.forces")
 require("halmd.modules")
-require("halmd.singleton")
 
 -- grab modules
-local mdsim = halmd.mdsim
+local forces = halmd.mdsim.forces
 -- grab C++ wrappers
 local h5 = libhalmd.h5
 local po = libhalmd.po
@@ -31,25 +30,16 @@ local assert = assert
 local pairs = pairs
 local property = property
 
-module("halmd.mdsim.force", halmd.modules.register, halmd.singleton)
+module("halmd.mdsim.force", halmd.modules.register)
 
 --
 -- construct force module
 --
 function new(args)
     local force = args.force or "lennard_jones" -- default value
-    local potential = assert(mdsim.forces[force])
-    local name = assert(potential.name) -- function
-
-    local potential = potential()
-
-    -- pair_trunc.profile registers its compute runtime accumulator
-    -- with a description that contains the name of the potential,
-    -- therefore store the potential name as a read-only Lua property
-    potential.name = property(name)
-
+    local potential = assert(forces[force])()
     if potential.r_cut then
-        return mdsim.forces.pair_trunc{ force = force, potential = potential }
+        return forces.pair_trunc{force = force, potential = potential}
     end
     return potential
 end
@@ -63,13 +53,13 @@ function options(desc, globals)
 
     -- force module choices with descriptions
     local choices = {}
-    for force, module in pairs(mdsim.forces) do
-        if module.name then
-            choices[force] = module.name()
+    for force, module in pairs(forces) do
+        if module.description then
+            choices[force] = module.description()
         end
     end
 
-    globals:add("force", po.string():choices(choices), "specify force module")
+    globals:add("force", po.string():choices(choices), "select force module")
 end
 
 --
@@ -86,5 +76,10 @@ end
 -- @param group HDF5 group
 --
 function write_parameters(force, group, globals)
-    globals:write_attribute("force", h5.string(), force.module_name)
+    local potential = force.potential
+    if potential then
+        globals:write_attribute("force", h5.string(), potential.module.namespace)
+    else
+        globals:write_attribute("force", h5.string(), force.module.namespace)
+    end
 end

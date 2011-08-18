@@ -46,9 +46,9 @@ module("halmd.mdsim.forces.lennard_jones", halmd.modules.register)
 -- construct Lennard-Jones module
 --
 function new(args)
-    local cutoff = args.cutoff or { 2.5, 2.5, 2.5 } -- default value
-    local epsilon = args.epsilon or { 1.0, 1.5, 0.5 } -- default value
-    local sigma = args.sigma or { 1.0, 0.8, 0.88 } -- default value
+    local cutoff = args.cutoff or {2.5, 2.5, 2.5} -- default value
+    local epsilon = args.epsilon or {1.0, 1.5, 0.5} -- default value
+    local sigma = args.sigma or {1.0, 0.8, 0.88} -- default value
 
     local particle = mdsim.particle() -- singleton
     local logger = assert(args.logger)
@@ -68,7 +68,7 @@ end
 --
 -- returns module description
 --
-function name()
+function description()
     return "Lennard-Jones potential"
 end
 

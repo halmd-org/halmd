@@ -19,7 +19,6 @@
 
 require("halmd.io.writers")
 require("halmd.modules")
-require("halmd.singleton")
 
 -- grab modules
 local writers = halmd.io.writers
@@ -29,16 +28,24 @@ local po = libhalmd.po
 local assert = assert
 local pairs = pairs
 
-module("halmd.io.writers.observable", halmd.modules.register, halmd.singleton)
+module("halmd.io.writers.file", halmd.modules.register)
+
+-- file instances by extension
+local files = {}
 
 --
 -- construct observable writer
 --
 function new(args)
     local format = args.format or "h5md" -- default value
-    local writer = assert(writers[format])
-    return writer{path = args.output .. ".obs"}
+    local extension = args.extension or "obs" -- default value
+    if not files[extension] then
+        files[extension] = assert(writers[format]){path = args.output .. "." .. extension}
+    end
+    return files[extension]
 end
+
+namespace = "writer"
 
 --
 -- assemble module options
@@ -49,10 +56,10 @@ function options(desc)
     -- writer module choices with descriptions
     local choices = {}
     for writer, module in pairs(writers) do
-        if module.name then
-            choices[writer] = module.name()
+        if module.description then
+            choices[writer] = module.description()
         end
     end
 
-    desc:add("format", po.string():choices(choices), "output file format")
+    desc:add("format", po.string():choices(choices), "select output file format")
 end

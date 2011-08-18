@@ -35,47 +35,4 @@ require("halmd.observables.sampler")
 require("halmd.observables.ssf")
 require("halmd.observables.thermodynamics")
 
--- grab modules
-local mdsim = halmd.mdsim
-local observables = halmd.observables
-local readers = halmd.io.readers
-local writers = halmd.io.writers
--- grab standard library
-local assert = assert
-local pairs = pairs
-
-module("halmd", halmd.modules.register)
-
---
--- Construct simulation
---
-function new(args)
-    -- load the device module to log (optional) GPU properties
-    device() -- singleton
-    -- open (optional) H5MD file and read simulation parameters
-    local reader = readers.trajectory()
-
-    -- create simulation box with particles
-    mdsim.box()
-    -- add integrator
-    mdsim.integrator()
-    -- add force
-    mdsim.force()
-    -- set initial particle positions (optionally from reader)
-    mdsim.position{reader = reader}
-    -- set initial particle velocities (optionally from reader)
-    mdsim.velocity{reader = reader}
-
-    -- Construct sampler.
-    local sampler = observables.sampler()
-
-    -- Write trajectory to H5MD file.
-    writers.trajectory{}
-    -- Sample macroscopic state variables.
-    observables.thermodynamics{}
-    -- Sample static structure factor.
-    observables.ssf{}
-
-    -- Pass sampler from Lua to C++, to run the simulation outside of Lua.
-    return sampler
-end
+return halmd

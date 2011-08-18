@@ -50,7 +50,8 @@ public:
       , boost::shared_ptr<core_type> core
       , step_type steps
     );
-    void run();
+    void setup();
+    void run(step_type steps);
     connection on_start(slot_function_type const& slot);
     connection on_prepare(slot_function_type const& slot, step_type interval);
     connection on_sample(slot_function_type const& slot, step_type interval);

@@ -43,7 +43,7 @@ function parameters(module)
     if module.read_parameters then
         local vm = vm[module.namespace]
         if vm then
-            return setmetatable({}, { __index = vm })
+            return setmetatable({}, {__index = vm})
         end
     end
 end
