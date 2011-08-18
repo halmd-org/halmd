@@ -60,15 +60,6 @@ verlet_nvt_hoover<dimension, float_type>::verlet_nvt_hoover(
     this->temperature(temperature);
 }
 
-/**
- * register observables
-template <int dimension, typename float_type>
-void verlet_nvt_hoover<dimension, float_type>::register_observables(writer_type& writer)
-{
-    writer.register_observable("ENHC", &en_nhc_, "energy of Nosé-Hoover chain variables per particle");
-}
- */
-
 template <int dimension, typename float_type>
 void verlet_nvt_hoover<dimension, float_type>::timestep(double timestep)
 {
@@ -124,8 +115,6 @@ void verlet_nvt_hoover<dimension, float_type>::integrate()
         vector_type& v = particle_->v[i] += particle_->f[i] * timestep_half_;
         vector_type& r = particle_->r[i] += v * timestep_;
         // enforce periodic boundary conditions
-        // TODO: reduction is now to (-L/2, L/2) instead of (0, L) as before
-        // check that this is OK
         particle_->image[i] += box_->reduce_periodic(r);
     }
 }

@@ -77,15 +77,6 @@ verlet_nvt_hoover(
 }
 
 /**
- * register observables
-template <int dimension, typename float_type>
-void verlet_nvt_hoover<dimension, float_type>::register_observables(writer_type& writer)
-{
-    writer.register_observable("ENHC", &en_nhc_, "energy of Nosé-Hoover chain variables per particle");
-}
- */
-
-/**
  * set integration time-step
  */
 template <int dimension, typename float_type>
