@@ -35,34 +35,53 @@ thermodynamics<dimension, float_type>::thermodynamics(
   , shared_ptr<force_type const> force
   , shared_ptr<logger_type> logger
 )
-  : _Base(box, clock, logger)
+  : _Base(box)
   // dependency injection
   , particle_(particle)
   , force_(force)
+  , logger_(logger)
+  // initialise members
+  , en_kin_(clock)
+  , v_cm_(clock)
 {
 }
 
 template <int dimension, typename float_type>
 double thermodynamics<dimension, float_type>::en_kin()
 {
-    // compute mean-square velocity
-    double vv = 0;
-    BOOST_FOREACH(vector_type const& v, particle_->v) {
-        // assuming unit mass for all particle types
-        vv += inner_prod(v, v);
+    if (!en_kin_.valid()) {
+        LOG_TRACE("acquire kinetic energy");
+
+        scoped_timer_type timer(runtime_.en_kin);
+
+        // compute mean-square velocity
+        double vv = 0;
+        BOOST_FOREACH(vector_type const& v, particle_->v) {
+            // assuming unit mass for all particle types
+            vv += inner_prod(v, v);
+        }
+        en_kin_ = .5 * vv / particle_->nbox;
     }
-    return .5 * vv / particle_->nbox;
+    return en_kin_;
 }
 
 template <int dimension, typename float_type>
-typename thermodynamics<dimension, float_type>::vector_type thermodynamics<dimension, float_type>::v_cm()
+typename thermodynamics<dimension, float_type>::vector_type const&
+thermodynamics<dimension, float_type>::v_cm()
 {
-    // compute mean velocity
-    vector_type v_cm_(0.);
-    BOOST_FOREACH(vector_type const& v, particle_->v) {
-        v_cm_ += v;
+    if (!v_cm_.valid()) {
+        LOG_TRACE("acquire centre-of-mass velocity");
+
+        scoped_timer_type timer(runtime_.v_cm);
+
+        // compute mean velocity
+        vector_type v_cm(0.);
+        BOOST_FOREACH(vector_type const& v, particle_->v) {
+            v_cm += v;
+        }
+        v_cm_ = v_cm / particle_->nbox;
     }
-    return v_cm_ / particle_->nbox;
+    return v_cm_;
 }
 
 template <int dimension, typename float_type>
@@ -84,6 +103,13 @@ void thermodynamics<dimension, float_type>::luaopen(lua_State* L)
                       , shared_ptr<force_type const>
                       , shared_ptr<logger_type>
                     >())
+                    .scope
+                    [
+                        class_<runtime>("runtime")
+                            .def_readonly("en_kin", &runtime::en_kin)
+                            .def_readonly("v_cm", &runtime::v_cm)
+                    ]
+                    .def_readonly("runtime", &thermodynamics::runtime_)
             ]
         ]
     ];

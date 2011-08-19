@@ -38,10 +38,17 @@ thermodynamics<dimension, float_type>::thermodynamics(
   , shared_ptr<force_type const> force
   , shared_ptr<logger_type> logger
 )
-  : _Base(box, clock, logger)
+  : _Base(box)
   // dependency injection
   , particle_(particle)
   , force_(force)
+  , logger_(logger)
+  // initialise members
+  , en_kin_(clock)
+  , v_cm_(clock)
+  , en_pot_(clock)
+  , virial_(clock)
+  , hypervirial_(clock)
   // memory allocation in functors
   , sum_velocity_square_()
   , sum_velocity_vector_()
@@ -56,17 +63,29 @@ thermodynamics<dimension, float_type>::thermodynamics(
 template <int dimension, typename float_type>
 double thermodynamics<dimension, float_type>::en_kin()
 {
-    return .5 * sum_velocity_square_(particle_->g_v) / particle_->nbox;
+    if (!en_kin_.valid()) {
+        LOG_TRACE("acquire kinetic energy");
+
+        scoped_timer_type timer(runtime_.en_kin);
+        en_kin_ = .5 * sum_velocity_square_(particle_->g_v) / particle_->nbox;
+    }
+    return en_kin_;
 }
 
 /**
  * compute mean velocity
  */
 template <int dimension, typename float_type>
-typename thermodynamics<dimension, float_type>::vector_type
+typename thermodynamics<dimension, float_type>::vector_type const&
 thermodynamics<dimension, float_type>::v_cm()
 {
-    return sum_velocity_vector_(particle_->g_v) / particle_->nbox;
+    if (!v_cm_.valid()) {
+        LOG_TRACE("acquire centre-of-mass velocity");
+
+        scoped_timer_type timer(runtime_.v_cm);
+        v_cm_ = sum_velocity_vector_(particle_->g_v) / particle_->nbox;
+    }
+    return v_cm_;
 }
 
 /**
@@ -75,7 +94,13 @@ thermodynamics<dimension, float_type>::v_cm()
 template <int dimension, typename float_type>
 double thermodynamics<dimension, float_type>::en_pot()
 {
-    return sum_scalar_(force_->potential_energy()) / particle_->nbox;
+    if (!en_pot_.valid()) {
+        LOG_TRACE("acquire potential energy");
+
+        scoped_timer_type timer(runtime_.en_pot);
+        en_pot_ = sum_scalar_(force_->potential_energy()) / particle_->nbox;
+    }
+    return en_pot_;
 }
 
 /**
@@ -84,7 +109,13 @@ double thermodynamics<dimension, float_type>::en_pot()
 template <int dimension, typename float_type>
 double thermodynamics<dimension, float_type>::virial()
 {
-    return sum_stress_tensor_diagonal_(force_->stress_tensor_pot()) / particle_->nbox;
+    if (!virial_.valid()) {
+        LOG_TRACE("acquire virial");
+
+        scoped_timer_type timer(runtime_.virial);
+        virial_ = sum_stress_tensor_diagonal_(force_->stress_tensor_pot()) / particle_->nbox;
+    }
+    return virial_;
 }
 
 /**
@@ -93,7 +124,13 @@ double thermodynamics<dimension, float_type>::virial()
 template <int dimension, typename float_type>
 double thermodynamics<dimension, float_type>::hypervirial()
 {
-    return sum_scalar_(force_->hypervirial()) / particle_->nbox;
+    if (!hypervirial_.valid()) {
+        LOG_TRACE("acquire hypervirial");
+
+        scoped_timer_type timer(runtime_.hypervirial);
+        hypervirial_ = sum_scalar_(force_->hypervirial()) / particle_->nbox;
+    }
+    return hypervirial_;
 }
 
 template <int dimension, typename float_type>
@@ -115,6 +152,16 @@ void thermodynamics<dimension, float_type>::luaopen(lua_State* L)
                       , shared_ptr<force_type>
                       , shared_ptr<logger_type>
                     >())
+                    .scope
+                    [
+                        class_<runtime>("runtime")
+                            .def_readonly("en_kin", &runtime::en_kin)
+                            .def_readonly("v_cm", &runtime::v_cm)
+                            .def_readonly("en_pot", &runtime::en_pot)
+                            .def_readonly("virial", &runtime::virial)
+                            .def_readonly("hypervirial", &runtime::hypervirial)
+                    ]
+                    .def_readonly("runtime", &thermodynamics::runtime_)
             ]
         ]
     ];
