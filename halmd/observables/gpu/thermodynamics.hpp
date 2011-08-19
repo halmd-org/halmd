@@ -55,12 +55,9 @@ public:
         boost::shared_ptr<particle_type const> particle
       , boost::shared_ptr<box_type const> box
       , boost::shared_ptr<clock_type const> clock
-      , boost::shared_ptr<force_type> force
+      , boost::shared_ptr<force_type const> force
       , boost::shared_ptr<logger_type> logger = boost::make_shared<logger_type>()
     );
-
-    virtual void prepare();
-    virtual void sample();
 
     virtual double en_kin();
     virtual vector_type v_cm();
@@ -70,7 +67,7 @@ public:
 
 private:
     boost::shared_ptr<particle_type const> particle_;
-    boost::shared_ptr<force_type> force_;
+    boost::shared_ptr<force_type const> force_;
 
     /** functors for reduce kernels */
     algorithm::gpu::reduce<

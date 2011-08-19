@@ -74,6 +74,11 @@ function new(args)
 
     local file = writers.file() -- singleton
     local writer = file:writer{location = {"observables"}, mode = "append"}
+
+    -- evaluate observables before writing
+    writer:on_prepend_write(observable.sample)
+
+    -- connect results with writer
     writer:on_write(observable.en_pot, {"potential_energy"})
     writer:on_write(observable.en_kin, {"kinetic_energy"})
     writer:on_write(observable.en_tot, {"total_energy"})
@@ -83,9 +88,12 @@ function new(args)
     writer:on_write(observable.virial, {"virial"})
     writer:on_write(observable.hypervirial, {"hypervirial"})
 
+    -- connect writer to sampler
     local sampler = observables.sampler() -- singleton
-    sampler:on_prepare{observable.prepare, every, tracker = observable}
     sampler:on_sample{writer.write, every, tracker = observable}
+
+    -- turn on computation of auxiliary variables _before_ force computation
+    sampler:on_prepare{force.aux_enable, every, tracker = observable}
 
     return observable
 end

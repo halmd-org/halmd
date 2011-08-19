@@ -63,8 +63,6 @@ public:
       , boost::shared_ptr<logger_type> logger
     );
 
-    // preparations before MD step
-    virtual void prepare() = 0;
     // sample macroscopic state variables and store with given simulation step
     virtual void sample();
 

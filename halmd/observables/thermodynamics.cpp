@@ -73,13 +73,6 @@ void thermodynamics<dimension>::sample()
 
 template <typename thermodynamics_type>
 typename thermodynamics_type::slot_function_type
-prepare_wrapper(shared_ptr<thermodynamics_type> thermodynamics)
-{
-    return bind(&thermodynamics_type::prepare, thermodynamics);
-}
-
-template <typename thermodynamics_type>
-typename thermodynamics_type::slot_function_type
 sample_wrapper(shared_ptr<thermodynamics_type> thermodynamics)
 {
     return bind(&thermodynamics_type::sample, thermodynamics);
@@ -151,7 +144,6 @@ void thermodynamics<dimension>::luaopen(lua_State* L)
         namespace_("observables")
         [
             class_<thermodynamics, shared_ptr<thermodynamics> >(class_name.c_str())
-                .property("prepare", &prepare_wrapper<thermodynamics>)
                 .property("sample", &sample_wrapper<thermodynamics>)
                 .property("en_kin", &wrap_en_kin<thermodynamics>)
                 .property("en_pot", &wrap_en_pot<thermodynamics>)

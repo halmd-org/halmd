@@ -35,7 +35,7 @@ thermodynamics<dimension, float_type>::thermodynamics(
     shared_ptr<particle_type const> particle
   , shared_ptr<box_type const> box
   , shared_ptr<clock_type const> clock
-  , shared_ptr<force_type> force
+  , shared_ptr<force_type const> force
   , shared_ptr<logger_type> logger
 )
   : _Base(box, clock, logger)
@@ -48,30 +48,6 @@ thermodynamics<dimension, float_type>::thermodynamics(
   , sum_scalar_()
   , sum_stress_tensor_diagonal_()
 {
-}
-
-/**
- * preparations before computation of forces
- *
- * set flag of force module to compute auxiliary
- * variables like potential energy, stress tensor,
- * and hypervirial
- */
-template <int dimension, typename float_type>
-void thermodynamics<dimension, float_type>::prepare()
-{
-    force_->aux_enable();
-}
-
-/**
- * call sample() from base class and
- * unset flags for auxiliary variables of force module at the end
- */
-template <int dimension, typename float_type>
-void thermodynamics<dimension, float_type>::sample()
-{
-    _Base::sample();
-    force_->aux_disable();
 }
 
 /**
