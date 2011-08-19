@@ -67,30 +67,28 @@ public:
     virtual void sample();
 
     /** potential energy per particle */
-    double en_pot() const { return en_pot_; }
+    virtual double en_pot() = 0;
     /** kinetic energy per particle */
-    double en_kin() const { return en_kin_; }
+    virtual double en_kin() = 0;
     /** mean velocity per particle */
-    vector_type const& v_cm() const { return v_cm_; }
+    virtual vector_type v_cm() = 0;
     /** virial sum */
-    double virial() const { return virial_; }
+    virtual double virial() = 0;
     /** hypervirial sum */
-    double hypervirial() const { return hypervirial_; }
-
-    // compute derived quantities on the fly
+    virtual double hypervirial() = 0;
 
     /** total pressure */
-    double pressure() const
+    double pressure()
     {
-        return density() * (temp() + virial() / dimension);
+        return box_->density() * (temp() + virial() / dimension);
     }
 
     /** system temperature */
-    double temp() const { return 2 * en_kin() / dimension; }
+    double temp() { return 2 * en_kin() / dimension; }
     /** particle density */
-    double density() const { return box_->density(); }
+    double density() { return box_->density(); }
     /** total energy per particle */
-    double en_tot() const { return en_pot() + en_kin(); }
+    double en_tot() { return en_pot() + en_kin(); }
 
 private:
     typedef halmd::utility::profiler profiler_type;
@@ -108,18 +106,14 @@ private:
     /** module logger */
     boost::shared_ptr<logger_type> logger_;
 
-    /** backend-specific sampling methods */
-    virtual double compute_en_pot() = 0;
-    virtual double compute_en_kin() = 0;
-    virtual vector_type compute_v_cm() = 0;
-    virtual double compute_virial() = 0;
-    virtual double compute_hypervirial() = 0;
-
     /** sampling results */
     double en_pot_;
     double en_kin_;
+    double en_tot_;
     vector_type v_cm_;
-    double virial_;
+    double pressure_;
+    double temp_;
+    double density_;
     double hypervirial_;
     /** time stamp of data */
     step_type step_;

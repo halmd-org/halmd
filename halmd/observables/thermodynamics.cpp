@@ -45,23 +45,29 @@ thermodynamics<dimension>::thermodynamics(
 
 /**
  * Sample macroscopic state variables
+ *
+ * Compute state variables and take care that expensive functions are
+ * called only once.
  */
 template <int dimension>
 void thermodynamics<dimension>::sample()
 {
     if (step_ == clock_->step()) {
-        LOG_TRACE("samples are up to date");
+        LOG_TRACE("sample is up to date");
         return;
     }
 
-    LOG_TRACE("acquire samples");
+    LOG_TRACE("acquire sample");
 
     scoped_timer_type timer(runtime_.sample);
-    en_pot_ = compute_en_pot();
-    en_kin_ = compute_en_kin();
-    v_cm_ = compute_v_cm();
-    virial_ = compute_virial();
-    hypervirial_ = compute_hypervirial();
+    en_pot_ = en_pot();
+    en_kin_ = en_kin();
+    v_cm_ = v_cm();
+    en_tot_ = en_pot_ + en_kin_;
+    temp_ = 2 * en_kin_ / dimension;
+    density_ = box_->density(); //< FIXME why is this duplicated in thermodynamics?
+    pressure_ = density_ * (temp_ + virial() / dimension);
+    hypervirial_ = hypervirial();
     step_ = clock_->step();
 }
 

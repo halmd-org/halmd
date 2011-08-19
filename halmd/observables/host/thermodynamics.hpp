@@ -58,27 +58,27 @@ public:
       , boost::shared_ptr<logger_type> logger = boost::make_shared<logger_type>()
     );
 
-private:
-    boost::shared_ptr<particle_type const> particle_;
-    boost::shared_ptr<force_type const> force_;
+    virtual double en_kin();
+    virtual vector_type v_cm();
 
-    virtual double compute_en_kin();
-    virtual vector_type compute_v_cm();
-
-    virtual double compute_en_pot()
+    virtual double en_pot()
     {
         return force_->potential_energy();
     }
 
-    virtual double compute_virial()
+    virtual double virial()
     {
         return force_->stress_tensor_pot()[0];
     }
 
-    virtual double compute_hypervirial()
+    virtual double hypervirial()
     {
         return force_->hypervirial();
     }
+
+private:
+    boost::shared_ptr<particle_type const> particle_;
+    boost::shared_ptr<force_type const> force_;
 };
 
 } // namespace observables
