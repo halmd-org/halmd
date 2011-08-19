@@ -102,11 +102,13 @@ private:
         accumulator_type sample;
     };
 
+    /** module dependencies */
     boost::shared_ptr<box_type const> box_;
     boost::shared_ptr<clock_type const> clock_;
+    /** module logger */
     boost::shared_ptr<logger_type> logger_;
 
-    // sample() passes values to HDF5 writer via a fixed location in memory
+    /** sampling results */
     double en_pot_;
     double en_kin_;
     double en_tot_;
@@ -115,11 +117,10 @@ private:
     double temp_;
     double density_;
     double hypervirial_;
-    double time_;
     /** time stamp of data */
     step_type step_;
 
-    // profiling runtime accumulators
+    /** profiling runtime accumulators */
     runtime runtime_;
 };
 

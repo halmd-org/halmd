@@ -68,7 +68,6 @@ void thermodynamics<dimension>::sample()
     density_ = box_->density(); //< FIXME why is this duplicated in thermodynamics?
     pressure_ = density_ * (temp_ + virial() / dimension);
     hypervirial_ = hypervirial();
-    time_ = clock_->time();
     step_ = clock_->step();
 }
 
