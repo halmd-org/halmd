@@ -59,15 +59,16 @@ public:
       , boost::shared_ptr<logger_type> logger = boost::make_shared<logger_type>()
     );
 
-    virtual double en_kin();
-    virtual vector_type v_cm();
-    virtual double en_pot();
-    virtual double virial();
-    virtual double hypervirial();
-
 private:
     boost::shared_ptr<particle_type const> particle_;
     boost::shared_ptr<force_type const> force_;
+
+    /** backend-specific sampling methods */
+    virtual double compute_en_pot();
+    virtual double compute_en_kin();
+    virtual vector_type compute_v_cm();
+    virtual double compute_virial();
+    virtual double compute_hypervirial();
 
     /** functors for reduce kernels */
     algorithm::gpu::reduce<

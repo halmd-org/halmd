@@ -54,7 +54,7 @@ thermodynamics<dimension, float_type>::thermodynamics(
  * compute mean-square velocity
  */
 template <int dimension, typename float_type>
-double thermodynamics<dimension, float_type>::en_kin()
+double thermodynamics<dimension, float_type>::compute_en_kin()
 {
     return .5 * sum_velocity_square_(particle_->g_v) / particle_->nbox;
 }
@@ -64,7 +64,7 @@ double thermodynamics<dimension, float_type>::en_kin()
  */
 template <int dimension, typename float_type>
 typename thermodynamics<dimension, float_type>::vector_type
-thermodynamics<dimension, float_type>::v_cm()
+thermodynamics<dimension, float_type>::compute_v_cm()
 {
     return sum_velocity_vector_(particle_->g_v) / particle_->nbox;
 }
@@ -73,7 +73,7 @@ thermodynamics<dimension, float_type>::v_cm()
  * compute potential energy
  */
 template <int dimension, typename float_type>
-double thermodynamics<dimension, float_type>::en_pot()
+double thermodynamics<dimension, float_type>::compute_en_pot()
 {
     return sum_scalar_(force_->potential_energy()) / particle_->nbox;
 }
@@ -82,7 +82,7 @@ double thermodynamics<dimension, float_type>::en_pot()
  * compute virial sum from potential part of stress tensor
  */
 template <int dimension, typename float_type>
-double thermodynamics<dimension, float_type>::virial()
+double thermodynamics<dimension, float_type>::compute_virial()
 {
     return sum_stress_tensor_diagonal_(force_->stress_tensor_pot()) / particle_->nbox;
 }
@@ -91,7 +91,7 @@ double thermodynamics<dimension, float_type>::virial()
  * compute hypervirial sum
  */
 template <int dimension, typename float_type>
-double thermodynamics<dimension, float_type>::hypervirial()
+double thermodynamics<dimension, float_type>::compute_hypervirial()
 {
     return sum_scalar_(force_->hypervirial()) / particle_->nbox;
 }

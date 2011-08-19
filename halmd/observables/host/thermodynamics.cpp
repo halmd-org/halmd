@@ -43,7 +43,7 @@ thermodynamics<dimension, float_type>::thermodynamics(
 }
 
 template <int dimension, typename float_type>
-double thermodynamics<dimension, float_type>::en_kin()
+double thermodynamics<dimension, float_type>::compute_en_kin()
 {
     // compute mean-square velocity
     double vv = 0;
@@ -55,7 +55,7 @@ double thermodynamics<dimension, float_type>::en_kin()
 }
 
 template <int dimension, typename float_type>
-typename thermodynamics<dimension, float_type>::vector_type thermodynamics<dimension, float_type>::v_cm()
+typename thermodynamics<dimension, float_type>::vector_type thermodynamics<dimension, float_type>::compute_v_cm()
 {
     // compute mean velocity
     vector_type v_cm_(0.);
