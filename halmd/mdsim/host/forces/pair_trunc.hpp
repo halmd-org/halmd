@@ -101,21 +101,21 @@ public:
     }
 
     //! return average potential energy per particle
-    virtual double potential_energy()
+    virtual double potential_energy() const
     {
         assert_aux_flag();
         return en_pot_;
     }
 
     //! potential part of stress tensor
-    virtual stress_tensor_type stress_tensor_pot()
+    virtual stress_tensor_type stress_tensor_pot() const
     {
         assert_aux_flag();
         return stress_pot_;
     }
 
     //! return average potential energy per particle
-    virtual double hypervirial()
+    virtual double hypervirial() const
     {
         assert_aux_flag();
         return hypervirial_;

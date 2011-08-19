@@ -63,19 +63,19 @@ public:
     }
 
     //! returns potential energies of particles
-    virtual cuda::vector<float> const& potential_energy()
+    virtual cuda::vector<float> const& potential_energy() const
     {
         return g_en_pot_;
     }
 
     /** potential part of stress tensors of particles */
-    virtual cuda::vector<gpu_stress_tensor_type> const& stress_tensor_pot()
+    virtual cuda::vector<gpu_stress_tensor_type> const& stress_tensor_pot() const
     {
         return g_stress_pot_;
     }
 
     //! returns hyper virial of particles
-    virtual cuda::vector<float> const& hypervirial()
+    virtual cuda::vector<float> const& hypervirial() const
     {
         return g_hypervirial_;
     }
