@@ -66,25 +66,16 @@ public:
 
     virtual double en_pot()
     {
-        if (!force_->aux_flag()) {
-            throw std::logic_error("Potential energy not enabled in force module");
-        }
         return force_->potential_energy();
     }
 
     virtual double virial()
     {
-        if (!force_->aux_flag()) {
-            throw std::logic_error("Stress tensor not enabled in force module");
-        }
         return force_->stress_tensor_pot()[0];
     }
 
     virtual double hypervirial()
     {
-        if (!force_->aux_flag()) {
-            throw std::logic_error("Hypervirial not enabled in force module");
-        }
         return force_->hypervirial();
     }
 

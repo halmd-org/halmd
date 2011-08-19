@@ -29,11 +29,25 @@ using namespace std;
 namespace halmd {
 namespace mdsim {
 
-template <typename integrator_type>
+template <typename force_type>
 typename signal<void ()>::slot_function_type
-wrap_compute(shared_ptr<integrator_type> integrator)
+wrap_compute(shared_ptr<force_type> force)
 {
-    return bind(&integrator_type::compute, integrator);
+    return bind(&force_type::compute, force);
+}
+
+template <typename force_type>
+typename signal<void ()>::slot_function_type
+wrap_aux_enable(shared_ptr<force_type> force)
+{
+    return bind(&force_type::aux_enable, force);
+}
+
+template <typename force_type>
+typename signal<void ()>::slot_function_type
+wrap_aux_disable(shared_ptr<force_type> force)
+{
+    return bind(&force_type::aux_disable, force);
 }
 
 template <int dimension>
@@ -47,6 +61,8 @@ void force<dimension>::luaopen(lua_State* L)
         [
             class_<force, shared_ptr<force> >(class_name.c_str())
                 .property("compute", &wrap_compute<force>)
+                .property("aux_enable", &wrap_aux_enable<force>)
+                .property("aux_disable", &wrap_aux_disable<force>)
         ]
     ];
 }

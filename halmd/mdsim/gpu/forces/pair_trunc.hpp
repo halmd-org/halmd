@@ -72,12 +72,14 @@ public:
     //! enable computation of auxiliary variables
     virtual void aux_enable()
     {
+        LOG_TRACE("enable computation of auxiliary variables");
         aux_flag_ = true;
     }
 
     //! disable computation of auxiliary variables
     virtual void aux_disable()
     {
+        LOG_TRACE("disable computation of auxiliary variables");
         aux_flag_ = false;
     }
 
@@ -90,18 +92,21 @@ public:
     //! returns potential energies of particles
     virtual cuda::vector<float> const& potential_energy()
     {
+        assert_aux_flag();
         return g_en_pot_;
     }
 
     /** potential part of stress tensors of particles */
     virtual cuda::vector<gpu_stress_tensor_type> const& stress_tensor_pot()
     {
+        assert_aux_flag();
         return g_stress_pot_;
     }
 
     //! returns hyper virial of particles
     virtual cuda::vector<float> const& hypervirial()
     {
+        assert_aux_flag();
         return g_hypervirial_;
     }
 
@@ -114,6 +119,13 @@ private:
     {
         accumulator_type compute;
     };
+
+    void assert_aux_flag() const
+    {
+        if (!aux_flag_) {
+            throw std::logic_error("Auxiliary variables not enabled in force module");
+        }
+    }
 
     /** neighbour lists */
     boost::shared_ptr<neighbour_type const> neighbour_;
@@ -144,7 +156,7 @@ pair_trunc<dimension, float_type, potential_type>::pair_trunc(
   , box(box)
   , neighbour_(neighbour)
   // member initalisation
-  , aux_flag_(true)          //< enable everything by default
+  , aux_flag_(false)          //< disable auxiliary variables by default
   // memory allocation
   , g_en_pot_(particle->dim.threads())
   , g_stress_pot_(particle->dim.threads())

@@ -83,12 +83,14 @@ public:
     //! enable computation of auxiliary variables
     virtual void aux_enable()
     {
+        LOG_TRACE("enable computation of auxiliary variables");
         aux_flag_ = true;
     }
 
     //! disable computation of auxiliary variables
     virtual void aux_disable()
     {
+        LOG_TRACE("disable computation of auxiliary variables");
         aux_flag_ = false;
     }
 
@@ -101,18 +103,21 @@ public:
     //! return average potential energy per particle
     virtual double potential_energy()
     {
+        assert_aux_flag();
         return en_pot_;
     }
 
     //! potential part of stress tensor
     virtual stress_tensor_type stress_tensor_pot()
     {
+        assert_aux_flag();
         return stress_pot_;
     }
 
     //! return average potential energy per particle
     virtual double hypervirial()
     {
+        assert_aux_flag();
         return hypervirial_;
     }
 
@@ -125,6 +130,13 @@ private:
     {
         accumulator_type compute;
     };
+
+    void assert_aux_flag() const
+    {
+        if (!aux_flag_) {
+            throw std::logic_error("Auxiliary variables not enabled in force module");
+        }
+    }
 
     boost::shared_ptr<neighbour_type const> neighbour_;
 
@@ -157,7 +169,7 @@ pair_trunc<dimension, float_type, potential_type>::pair_trunc(
   , box(box)
   , neighbour_(neighbour)
   // member initialisation
-  , aux_flag_(true)          //< enable everything by default
+  , aux_flag_(false)          //< disable auxiliary variables by default
 {}
 
 /**
