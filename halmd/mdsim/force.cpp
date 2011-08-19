@@ -43,13 +43,6 @@ wrap_aux_enable(shared_ptr<force_type> force)
     return bind(&force_type::aux_enable, force);
 }
 
-template <typename force_type>
-typename signal<void ()>::slot_function_type
-wrap_aux_disable(shared_ptr<force_type> force)
-{
-    return bind(&force_type::aux_disable, force);
-}
-
 template <int dimension>
 void force<dimension>::luaopen(lua_State* L)
 {
@@ -62,7 +55,6 @@ void force<dimension>::luaopen(lua_State* L)
             class_<force, shared_ptr<force> >(class_name.c_str())
                 .property("compute", &wrap_compute<force>)
                 .property("aux_enable", &wrap_aux_enable<force>)
-                .property("aux_disable", &wrap_aux_disable<force>)
         ]
     ];
 }

@@ -69,44 +69,35 @@ public:
     );
     inline virtual void compute();
 
-    //! enable computation of auxiliary variables
+    /**
+     * enable computation of auxiliary variables
+     *
+     * The flag is reset by the next call to compute().
+     */
     virtual void aux_enable()
     {
         LOG_TRACE("enable computation of auxiliary variables");
         aux_flag_ = true;
     }
 
-    //! disable computation of auxiliary variables
-    virtual void aux_disable()
-    {
-        LOG_TRACE("disable computation of auxiliary variables");
-        aux_flag_ = false;
-    }
-
-    //! return true if auxiliary variables are computed
-    virtual bool aux_flag() const
-    {
-        return aux_flag_;
-    }
-
     //! returns potential energies of particles
     virtual cuda::vector<float> const& potential_energy() const
     {
-        assert_aux_flag();
+        assert_aux_valid();
         return g_en_pot_;
     }
 
     /** potential part of stress tensors of particles */
     virtual cuda::vector<gpu_stress_tensor_type> const& stress_tensor_pot() const
     {
-        assert_aux_flag();
+        assert_aux_valid();
         return g_stress_pot_;
     }
 
     //! returns hyper virial of particles
     virtual cuda::vector<float> const& hypervirial() const
     {
-        assert_aux_flag();
+        assert_aux_valid();
         return g_hypervirial_;
     }
 
@@ -120,10 +111,10 @@ private:
         accumulator_type compute;
     };
 
-    void assert_aux_flag() const
+    void assert_aux_valid() const
     {
-        if (!aux_flag_) {
-            throw std::logic_error("Auxiliary variables not enabled in force module");
+        if (!aux_valid_) {
+            throw std::logic_error("Auxiliary variables were not enabled in force module.");
         }
     }
 
@@ -132,6 +123,8 @@ private:
 
     /** flag for switching the computation of auxiliary variables in function compute() */
     bool aux_flag_;
+    /** flag indicates that the auxiliary variables were updated by the last call to compute() */
+    bool aux_valid_;
     /** potential energy for each particle */
     cuda::vector<float> g_en_pot_;
     /** potential part of stress tensor for each particle */
@@ -157,6 +150,7 @@ pair_trunc<dimension, float_type, potential_type>::pair_trunc(
   , neighbour_(neighbour)
   // member initalisation
   , aux_flag_(false)          //< disable auxiliary variables by default
+  , aux_valid_(false)
   // memory allocation
   , g_en_pot_(particle->dim.threads())
   , g_stress_pot_(particle->dim.threads())
@@ -166,7 +160,10 @@ pair_trunc<dimension, float_type, potential_type>::pair_trunc(
 }
 
 /**
- * Compute pair forces, potential energy, and potential part of stress tensor
+ * Compute pair forces and, if enabled, auxiliary variables,
+ * i.e., potential energy, potential part of stress tensor
+ *
+ * Reset flag for auxiliary variables.
  */
 template <int dimension, typename float_type, typename potential_type>
 void pair_trunc<dimension, float_type, potential_type>::compute()
@@ -179,6 +176,7 @@ void pair_trunc<dimension, float_type, potential_type>::compute()
     potential->bind_textures();
 
     cuda::configure(particle->dim.grid, particle->dim.block);
+    aux_valid_ = aux_flag_;
     if (!aux_flag_) {
         gpu_wrapper::kernel.compute(
             particle->g_f, neighbour_->g_neighbour(), g_en_pot_, g_stress_pot_, g_hypervirial_
@@ -188,6 +186,7 @@ void pair_trunc<dimension, float_type, potential_type>::compute()
         gpu_wrapper::kernel.compute_aux(
             particle->g_f, neighbour_->g_neighbour(), g_en_pot_, g_stress_pot_, g_hypervirial_
         );
+        aux_flag_ = false;
     }
     cuda::thread::synchronize();
 }

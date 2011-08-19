@@ -54,13 +54,8 @@ public:
     /** zero particle forces */
     virtual void compute();
 
-    // nothing to enable or disable
+    // nothing to enable
     virtual void aux_enable() {}
-    virtual void aux_disable() {}
-    virtual bool aux_flag() const
-    {
-        return true;
-    }
 
     //! return average potential energy per particle
     virtual double potential_energy() const

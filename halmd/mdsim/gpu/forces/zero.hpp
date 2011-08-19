@@ -54,13 +54,8 @@ public:
     /** zero particle forces */
     virtual void compute();
 
-    // nothing to enable or disable
+    // nothing to enable
     virtual void aux_enable() {}
-    virtual void aux_disable() {}
-    virtual bool aux_flag() const
-    {
-        return true;
-    }
 
     //! returns potential energies of particles
     virtual cuda::vector<float> const& potential_energy() const

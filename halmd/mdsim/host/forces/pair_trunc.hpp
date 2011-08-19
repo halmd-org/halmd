@@ -80,44 +80,35 @@ public:
         return potential->r_cut();
     }
 
-    //! enable computation of auxiliary variables
+    /**
+     * enable computation of auxiliary variables
+     *
+     * The flag is reset by the next call to compute().
+     */
     virtual void aux_enable()
     {
         LOG_TRACE("enable computation of auxiliary variables");
         aux_flag_ = true;
     }
 
-    //! disable computation of auxiliary variables
-    virtual void aux_disable()
-    {
-        LOG_TRACE("disable computation of auxiliary variables");
-        aux_flag_ = false;
-    }
-
-    //! return true if auxiliary variables are computed
-    virtual bool aux_flag() const
-    {
-        return aux_flag_;
-    }
-
     //! return average potential energy per particle
     virtual double potential_energy() const
     {
-        assert_aux_flag();
+        assert_aux_valid();
         return en_pot_;
     }
 
     //! potential part of stress tensor
     virtual stress_tensor_type stress_tensor_pot() const
     {
-        assert_aux_flag();
+        assert_aux_valid();
         return stress_pot_;
     }
 
     //! return average potential energy per particle
     virtual double hypervirial() const
     {
-        assert_aux_flag();
+        assert_aux_valid();
         return hypervirial_;
     }
 
@@ -131,10 +122,10 @@ private:
         accumulator_type compute;
     };
 
-    void assert_aux_flag() const
+    void assert_aux_valid() const
     {
-        if (!aux_flag_) {
-            throw std::logic_error("Auxiliary variables not enabled in force module");
+        if (!aux_valid_) {
+            throw std::logic_error("Auxiliary variables were not enabled in force module.");
         }
     }
 
@@ -142,6 +133,8 @@ private:
 
     /** flag for switching the computation of auxiliary variables in function compute() */
     bool aux_flag_;
+    /** flag indicates that the auxiliary variables were updated by the last call to compute() */
+    bool aux_valid_;
     /** average potential energy per particle */
     double en_pot_;
     /** potential part of stress tensor */
@@ -170,11 +163,14 @@ pair_trunc<dimension, float_type, potential_type>::pair_trunc(
   , neighbour_(neighbour)
   // member initialisation
   , aux_flag_(false)          //< disable auxiliary variables by default
+  , aux_valid_(false)
 {}
 
 /**
- * Compute pair forces and auxiliary variables if desired, e.g.,
- * potential energy, potential part of stress tensor
+ * Compute pair forces and, if enabled, auxiliary variables,
+ * i.e., potential energy, potential part of stress tensor
+ *
+ * Reset flag for auxiliary variables.
  */
 template <int dimension, typename float_type, typename potential_type>
 void pair_trunc<dimension, float_type, potential_type>::compute()
@@ -182,11 +178,13 @@ void pair_trunc<dimension, float_type, potential_type>::compute()
     scoped_timer_type timer(runtime_.compute);
 
     // call implementation which fits to current value of aux_flag_
+    aux_valid_ = aux_flag_;
     if (!aux_flag_) {
         compute_impl_<false>();
     }
     else {
         compute_impl_<true>();
+        aux_flag_ = false;
     }
 }
 

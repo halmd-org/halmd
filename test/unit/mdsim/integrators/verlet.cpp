@@ -117,7 +117,6 @@ void ideal_gas<modules_type>::test()
     // microcanonical simulation run
     BOOST_TEST_MESSAGE("run NVE simulation");
     step_type steps = 1000;
-    force->aux_disable();             // disable auxiliary variables
     for (step_type i = 0; i < steps; ++i) {
         // last step: evaluate auxiliary variables (potential energy, virial, ...)
         if (i == steps - 1) {

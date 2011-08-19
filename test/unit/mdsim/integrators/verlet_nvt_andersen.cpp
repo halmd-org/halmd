@@ -111,7 +111,6 @@ void verlet_nvt_andersen<modules_type>::test()
     accumulator<double> temp_;
     array<accumulator<double>, dimension> v_cm;   //< accumulate velocity component-wise
 
-    force->aux_disable();                   //< we don't need potential energy, pressure, etc.
     core->setup();
     BOOST_TEST_MESSAGE("run NVT integrator over " << steps << " steps");
     for (step_type i = 0; i < steps; ++i) {
