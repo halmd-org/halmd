@@ -28,6 +28,7 @@
 #include <halmd/mdsim/host/particle.hpp>
 #include <halmd/observables/host/samples/phase_space.hpp>
 #include <halmd/observables/phase_space.hpp>
+#include <halmd/utility/profiler.hpp>
 
 namespace halmd {
 namespace observables {
@@ -58,11 +59,23 @@ public:
     virtual void acquire();
 
 private:
+    typedef halmd::utility::profiler profiler_type;
+    typedef typename profiler_type::accumulator_type accumulator_type;
+    typedef typename profiler_type::scoped_timer_type scoped_timer_type;
+
+    struct runtime
+    {
+        accumulator_type acquire;
+        accumulator_type reset;
+    };
+
     boost::shared_ptr<sample_type> sample_;
     boost::shared_ptr<particle_type const> particle_;
     boost::shared_ptr<box_type const> box_;
     boost::shared_ptr<clock_type const> clock_;
     boost::shared_ptr<logger_type> logger_;
+    /** profiling runtime accumulators */
+    runtime runtime_;
 };
 
 } // namespace observables

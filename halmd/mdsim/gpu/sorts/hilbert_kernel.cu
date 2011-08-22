@@ -42,12 +42,6 @@ namespace hilbert_kernel {
 __constant__ unsigned int depth_;
 /** cubic box edgle length */
 __constant__ variant<map<pair<int_<3>, float3>, pair<int_<2>, float2> > > box_length_;
-/** positions, types */
-texture<float4> r_;
-/** minimum image vectors */
-texture<variant<map<pair<int_<3>, float4>, pair<int_<2>, float2> > > > image_;
-/** velocities, tags */
-texture<float4> v_;
 
 /**
  * generate Hilbert space-filling curve
@@ -86,61 +80,14 @@ __global__ void gen_index(unsigned int* g_index)
     g_index[GTID] = GTID;
 }
 
-/**
- * order particles after given permutation
- */
-template <typename vector_type, typename aligned_vector_type>
-__global__ void order_particles(
-    unsigned int const* g_index
-  , float4* g_r
-  , aligned_vector_type* g_image
-  , float4* g_v
-)
-{
-    enum { dimension = vector_type::static_size };
-
-    unsigned int i = g_index[GTID];
-    {
-        vector_type r;
-        unsigned int type;
-#ifdef USE_VERLET_DSFUN
-        tie(r, type) = untagged<vector_type>(tex1Dfetch(r_, i), tex1Dfetch(r_, i + GTDIM));
-        tie(g_r[GTID], g_r[GTID + GTDIM]) = tagged(r, type);
-#else
-        tie(r, type) = untagged<vector_type>(tex1Dfetch(r_, i));
-        g_r[GTID] = tagged(r, type);
-#endif
-    }
-    {
-        vector_type v;
-        unsigned int tag;
-#ifdef USE_VERLET_DSFUN
-        tie(v, tag) = untagged<vector_type>(tex1Dfetch(v_, i), tex1Dfetch(v_, i + GTDIM));
-        tie(g_v[GTID], g_v[GTID + GTDIM]) = tagged(v, tag);
-#else
-        tie(v, tag) = untagged<vector_type>(tex1Dfetch(v_, i));
-        g_v[GTID] = tagged(v, tag);
-#endif
-    }
-    g_image[GTID] = tex1Dfetch(get<dimension>(image_), i);
-}
-
 } // namespace hilbert_kernel
 
 template <int dimension>
 hilbert_wrapper<dimension> const hilbert_wrapper<dimension>::kernel = {
     hilbert_kernel::depth_
   , get<dimension>(hilbert_kernel::box_length_)
-  , hilbert_kernel::r_
-  , get<dimension>(hilbert_kernel::image_)
-  , hilbert_kernel::v_
   , hilbert_kernel::map<fixed_vector<float, dimension> >
   , hilbert_kernel::gen_index
-#ifdef USE_VERLET_DSFUN
-  , hilbert_kernel::order_particles<fixed_vector<dsfloat, dimension> >
-#else
-  , hilbert_kernel::order_particles<fixed_vector<float, dimension> >
-#endif
 };
 
 // explicit instantiation

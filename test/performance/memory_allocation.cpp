@@ -17,7 +17,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#define BOOST_TEST_MODULE vector
+#define BOOST_TEST_MODULE memory_allocation
 #include <boost/test/unit_test.hpp>
 #include <boost/test/parameterized_test.hpp>
 #include <cmath>
@@ -32,7 +32,7 @@ BOOST_GLOBAL_FIXTURE( set_cuda_device );
 using namespace halmd;
 
 /**
- * benchmark CUDA memory allocation
+ * benchmark CUDA and host memory allocation via 'vector' containers
  *
  * Memory allocation on the device and of page-locked host memory is
  * tested and benchmarked. It turns out that calls to cudaMallocHost
@@ -42,12 +42,14 @@ using namespace halmd;
  * instead of throwing an exception. The test allocates at most
  * 256 MB of memory.
  */
-void performance(size_t size)
+void vector(size_t size)
 {
     const int count = std::max(8, static_cast<int>(256 / log2(size)));
     double alloc_device = 0;
     double alloc_host = 0;
+    double alloc_host_stl = 0;
     double copy = 0;
+    double copy_stl = 0;
 
     try {
         halmd::timer timer;
@@ -62,17 +64,31 @@ void performance(size_t size)
             cuda::host::vector<char> h_array(size);
             alloc_host += timer.elapsed();
 
+            // allocate conventional host memory
+            timer.restart();
+            std::vector<char> stl_array(size);
+            alloc_host_stl += timer.elapsed();
+
             // copy from device to host
             timer.restart();
             cuda::copy(g_array, h_array);
             copy += timer.elapsed();
+
+            // copy from host to host
+            timer.restart();
+            cuda::copy(h_array, stl_array);
+            copy_stl += timer.elapsed();
         }
         alloc_device /= count;
         alloc_host /= count;
+        alloc_host_stl /= count;
         copy /= count;
+        copy_stl /= count;
         BOOST_TEST_MESSAGE("  allocation of " << size << " bytes on the device: " << alloc_device * 1e3 << " ms");
-        BOOST_TEST_MESSAGE("  allocation of " << size << " bytes on the host: " << alloc_host * 1e3 << " ms");
+        BOOST_TEST_MESSAGE("  allocation of " << size << " bytes on the host (page-locked): " << alloc_host * 1e3 << " ms");
+        BOOST_TEST_MESSAGE("  allocation of " << size << " bytes on the host (STL): " << alloc_host_stl * 1e3 << " ms");
         BOOST_TEST_MESSAGE("  copying of " << size << " bytes (device → host): " << copy * 1e3 << " ms");
+        BOOST_TEST_MESSAGE("  copying of " << size << " bytes (host → host): " << copy_stl * 1e3 << " ms");
     }
     catch (cuda::error const& e) {
         BOOST_CHECK(e.err == cudaErrorMemoryAllocation);
@@ -89,5 +105,5 @@ HALMD_TEST_INIT( init_unit_test_suite )
         sizes.push_back(s);
     }
 
-    master_test_suite().add(BOOST_PARAM_TEST_CASE(&performance, sizes.begin(), sizes.end()));
+    master_test_suite().add(BOOST_PARAM_TEST_CASE(&vector, sizes.begin(), sizes.end()));
 }

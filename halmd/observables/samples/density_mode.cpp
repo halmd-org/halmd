@@ -18,9 +18,9 @@
  */
 
 #include <boost/lexical_cast.hpp>
-#include <limits>
 #include <string>
 
+#include <halmd/observables/samples/blocking_scheme.hpp>
 #include <halmd/observables/samples/density_mode.hpp>
 #include <halmd/utility/lua/lua.hpp>
 
@@ -32,23 +32,10 @@ namespace observables {
 namespace samples {
 
 template <int dimension>
-density_mode<dimension>::density_mode(unsigned int ntype, unsigned int nq)
-  // allocate sample pointers
-  : rho(ntype)
-  // initialise attributes
-  , step(numeric_limits<step_type>::max())
-{
-    // allocate memory for each particle type
-    for (unsigned int i = 0; i < ntype; ++i) {
-        rho[i].reset(new mode_vector_type(nq));
-    }
-}
-
-template <int dimension>
 void density_mode<dimension>::luaopen(lua_State* L)
 {
     using namespace luabind;
-    static string class_name("density_mode_" + lexical_cast<string>(dimension) + "_");
+    static string const class_name("density_mode_" + lexical_cast<string>(dimension) + "_");
     module(L, "libhalmd")
     [
         namespace_("observables")
@@ -66,12 +53,16 @@ HALMD_LUA_API int luaopen_libhalmd_observables_samples_density_mode(lua_State* L
 {
     density_mode<3>::luaopen(L);
     density_mode<2>::luaopen(L);
+    observables::samples::blocking_scheme<density_mode<3> >::luaopen(L);
+    observables::samples::blocking_scheme<density_mode<2> >::luaopen(L);
     return 0;
 }
 
 template class density_mode<3>;
 template class density_mode<2>;
+template class blocking_scheme<density_mode<3> >;
+template class blocking_scheme<density_mode<2> >;
 
-} // namespace observables
 } // namespace samples
+} // namespace observables
 } // namespace halmd

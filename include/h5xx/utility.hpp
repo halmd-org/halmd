@@ -107,8 +107,8 @@ template <typename T>
 struct is_multi_array
   : boost::false_type {};
 
-template <typename T, size_t size>
-struct is_multi_array<boost::multi_array<T, size> >
+template <typename T, size_t size, typename Alloc>
+struct is_multi_array<boost::multi_array<T, size, Alloc> >
   : boost::true_type {};
 
 /**
@@ -120,8 +120,8 @@ template <typename T>
 struct is_vector
   : boost::false_type {};
 
-template <typename T>
-struct is_vector<std::vector<T> >
+template <typename T, typename Alloc>
+struct is_vector<std::vector<T, Alloc> >
   : boost::true_type {};
 
 /**

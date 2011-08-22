@@ -71,15 +71,17 @@ void hilbert<dimension, float_type>::order()
 {
     LOG_TRACE("order particles");
     {
+        cuda::vector<unsigned int> g_index(particle_->nbox);
+        g_index.reserve(particle_->g_r.capacity());
         scoped_timer_type timer(runtime_.order);
         {
 
             cuda::vector<unsigned int> g_map(particle_->nbox);
             g_map.reserve(particle_->g_r.capacity());
             this->map(g_map);
-            this->permutation(g_map, particle_->g_index);
+            this->permutation(g_map, g_index);
         }
-        this->order(particle_->g_index);
+        particle_->rearrange(g_index);
     }
     on_order_();
 }
@@ -105,32 +107,6 @@ void hilbert<dimension, float_type>::permutation(cuda::vector<unsigned int>& g_m
     wrapper_type::kernel.gen_index(g_index);
     radix_sort<unsigned int> sort(particle_->nbox, particle_->dim.threads_per_block());
     sort(g_map, g_index);
-}
-
-/**
- * order particles by permutation
- */
-template <int dimension, typename float_type>
-void hilbert<dimension, float_type>::order(cuda::vector<unsigned int> const& g_index)
-{
-    scoped_timer_type timer(runtime_.permute);
-    cuda::vector<float4> g_r(particle_->g_r.size());
-    cuda::vector<gpu_vector_type> g_image(particle_->g_image.size());
-    cuda::vector<float4> g_v(particle_->g_v.size());
-
-    g_r.reserve(particle_->g_r.capacity());
-    g_image.reserve(particle_->g_image.capacity());
-    g_v.reserve(particle_->g_v.capacity());
-
-    cuda::configure(particle_->dim.grid, particle_->dim.block);
-    wrapper_type::kernel.r.bind(particle_->g_r);
-    wrapper_type::kernel.image.bind(particle_->g_image);
-    wrapper_type::kernel.v.bind(particle_->g_v);
-    wrapper_type::kernel.order_particles(g_index, g_r, g_image, g_v);
-
-    g_r.swap(particle_->g_r);
-    g_image.swap(particle_->g_image);
-    g_v.swap(particle_->g_v);
 }
 
 template <int dimension, typename float_type>
@@ -164,7 +140,6 @@ void hilbert<dimension, float_type>::luaopen(lua_State* L)
                             class_<runtime>("runtime")
                                 .def_readonly("order", &runtime::order)
                                 .def_readonly("map", &runtime::map)
-                                .def_readonly("permute", &runtime::permute)
                         ]
                         .def_readonly("runtime", &hilbert::runtime_)
                 ]

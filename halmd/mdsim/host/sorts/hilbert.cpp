@@ -106,11 +106,9 @@ void hilbert<dimension, float_type>::order()
                 }
             }
         }
-        {
-            scoped_timer_type timer(runtime_.permute);
-            // reorder particles in memory
-            particle_->rearrange(index);
-        }
+
+        // reorder particles in memory
+        particle_->rearrange(index);
     }
     on_order_();
 }
@@ -158,7 +156,6 @@ void hilbert<dimension, float_type>::luaopen(lua_State* L)
                             class_<runtime>("runtime")
                                 .def_readonly("order", &runtime::order)
                                 .def_readonly("map", &runtime::map)
-                                .def_readonly("permute", &runtime::permute)
                         ]
                         .def_readonly("runtime", &hilbert::runtime_)
                 ]

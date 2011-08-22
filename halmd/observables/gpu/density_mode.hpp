@@ -115,7 +115,7 @@ private:
 
     struct runtime
     {
-        accumulator_type sample;
+        accumulator_type acquire;
     };
 
     boost::shared_ptr<phase_space_type const> phase_space_;

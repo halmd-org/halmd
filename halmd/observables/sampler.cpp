@@ -63,7 +63,10 @@ void sampler::setup()
  */
 void sampler::run(step_type steps)
 {
-    on_start_();
+    {
+        scoped_timer_type timer(runtime_.start);
+        on_start_();
+    }
 
     LOG("starting simulation run");
     {
@@ -72,17 +75,26 @@ void sampler::run(step_type steps)
         step_type limit = steps > 0 ? (clock_->step() + steps) : steps_;
 
         while (clock_->step() < limit) {
-            on_prepare_();
+            {
+                scoped_timer_type timer(runtime_.prepare);
+                on_prepare_();
+            }
 
             // perform complete MD integration step
             core_->mdstep();
 
-            on_sample_();
+            {
+                scoped_timer_type timer(runtime_.sample);
+                on_sample_();
+            }
         }
     }
     LOG("finished simulation run");
 
-    on_finish_();
+    {
+        scoped_timer_type timer(runtime_.finish);
+        on_finish_();
+    }
 }
 
 /**
@@ -181,6 +193,10 @@ void sampler::luaopen(lua_State* L)
             [
                 class_<runtime>("runtime")
                     .def_readonly("total", &runtime::total)
+                    .def_readonly("start", &runtime::start)
+                    .def_readonly("prepare", &runtime::prepare)
+                    .def_readonly("sample", &runtime::sample)
+                    .def_readonly("finish", &runtime::finish)
             ]
             .def_readonly("runtime", &sampler::runtime_)
     ];

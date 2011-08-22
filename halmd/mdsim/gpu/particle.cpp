@@ -22,6 +22,7 @@
 #include <exception>
 #include <numeric>
 
+#include <halmd/algorithm/gpu/radix_sort.hpp>
 #include <halmd/io/logger.hpp>
 #include <halmd/mdsim/gpu/particle.hpp>
 #include <halmd/mdsim/gpu/particle_kernel.hpp>
@@ -29,6 +30,7 @@
 #include <halmd/utility/lua/lua.hpp>
 
 using namespace boost;
+using namespace halmd::algorithm::gpu; // radix_sort
 using namespace std;
 
 namespace halmd {
@@ -53,7 +55,7 @@ particle<dimension, float_type>::particle(
   , g_image(nbox)
   , g_v(nbox)
   , g_f(nbox)
-  , g_index(nbox)
+  , g_reverse_tag(nbox)
   // allocate page-locked host memory
   , h_r(nbox)
   , h_image(nbox)
@@ -102,7 +104,7 @@ particle<dimension, float_type>::particle(
 #endif
         g_image.reserve(dim.threads());
         g_f.reserve(dim.threads());
-        g_index.reserve(dim.threads());
+        g_reverse_tag.reserve(dim.threads());
     }
     catch (cuda::error const&) {
         LOG_ERROR("failed to allocate particles in global device memory");
@@ -115,7 +117,7 @@ particle<dimension, float_type>::particle(
     cuda::memset(g_v, 0, g_v.capacity());
     cuda::memset(g_f, 0, g_f.capacity());
     cuda::memset(g_image, 0, g_image.capacity());
-    cuda::memset(g_index, 0, g_index.capacity());
+    cuda::memset(g_reverse_tag, 0, g_reverse_tag.capacity());
 
     try {
         cuda::copy(nbox, get_particle_kernel<dimension>().nbox);
@@ -128,7 +130,7 @@ particle<dimension, float_type>::particle(
 }
 
 /**
- * set particle tags and types, initialise g_index
+ * set particle tags and types
  */
 template <unsigned int dimension, typename float_type>
 void particle<dimension, float_type>::set()
@@ -141,13 +143,46 @@ void particle<dimension, float_type>::set()
         get_particle_kernel<dimension>().tag(g_r, g_v);
 
         cuda::configure(dim.grid, dim.block);
-        get_particle_kernel<dimension>().gen_index(g_index);
+        get_particle_kernel<dimension>().gen_index(g_reverse_tag);
         cuda::thread::synchronize();
     }
     catch (cuda::error const&) {
         LOG_ERROR("failed to set particle tags and types");
         throw;
     }
+}
+
+/**
+ * rearrange particles by permutation
+ */
+template <unsigned int dimension, typename float_type>
+void particle<dimension, float_type>::rearrange(cuda::vector<unsigned int> const& g_index)
+{
+    scoped_timer_type timer(runtime_.rearrange);
+    cuda::vector<float4> g_r_buf(nbox);
+    cuda::vector<gpu_vector_type> g_image_buf(nbox);
+    cuda::vector<float4> g_v_buf(nbox);
+    cuda::vector<unsigned int> g_tag(nbox);
+
+    g_r_buf.reserve(g_r.capacity());
+    g_image_buf.reserve(g_image.capacity());
+    g_v_buf.reserve(g_v.capacity());
+    g_tag.reserve(g_reverse_tag.capacity());
+
+    cuda::configure(dim.grid, dim.block);
+    get_particle_kernel<dimension>().r.bind(g_r);
+    get_particle_kernel<dimension>().image.bind(g_image);
+    get_particle_kernel<dimension>().v.bind(g_v);
+    get_particle_kernel<dimension>().rearrange(g_index, g_r_buf, g_image_buf, g_v_buf, g_tag);
+
+    g_r_buf.swap(g_r);
+    g_image_buf.swap(g_image);
+    g_v_buf.swap(g_v);
+
+    radix_sort<unsigned int> sort(nbox, dim.threads_per_block());
+    cuda::configure(dim.grid, dim.block);
+    get_particle_kernel<dimension>().gen_index(g_reverse_tag);
+    sort(g_tag, g_reverse_tag);
 }
 
 template <unsigned int dimension, typename float_type>
@@ -181,7 +216,10 @@ void particle<dimension, float_type>::luaopen(lua_State* L)
                         [
                             def("threads", &defaults::threads)
                         ]
+                      , class_<runtime>("runtime")
+                            .def_readonly("rearrange", &runtime::rearrange)
                     ]
+                    .def_readonly("runtime", &particle::runtime_)
             ]
         ]
     ];

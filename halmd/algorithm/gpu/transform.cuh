@@ -45,6 +45,7 @@ struct sum_;
 struct complex_sum_;
 struct quaternion_sum_;
 struct max_;
+struct accumulate_;
 
 /**
  * unary transformations
@@ -90,6 +91,13 @@ __device__ typename enable_if<is_same<transform_, trace<3> >, output_type>::type
 transform(input_type v)
 {
     return v[0] + v[1] + v[2];
+}
+
+template <typename transform_, typename T>
+__device__ typename boost::enable_if<boost::is_same<transform_, accumulate_>, void>::type
+transform(T& acc, T&, T const& acc_, T const&)
+{
+    acc(acc_);
 }
 
 /**

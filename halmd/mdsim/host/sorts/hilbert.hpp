@@ -78,7 +78,6 @@ private:
     {
         accumulator_type order;
         accumulator_type map;
-        accumulator_type permute;
     };
 
     unsigned int map(vector_type r, unsigned int depth);

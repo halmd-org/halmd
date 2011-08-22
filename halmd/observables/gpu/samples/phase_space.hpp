@@ -1,5 +1,5 @@
 /*
- * Copyright © 2008-2010  Peter Colberg
+ * Copyright © 2008-2011  Peter Colberg and Felix Höfling
  *
  * This file is part of HALMD.
  *
@@ -21,6 +21,7 @@
 #define HALMD_OBSERVABLES_GPU_SAMPLES_PHASE_SPACE_HPP
 
 #include <cuda_wrapper/cuda_wrapper.hpp>
+#include <limits>
 #include <lua.hpp>
 #include <stdint.h>
 #include <vector>
@@ -61,11 +62,60 @@ public:
     static void luaopen(lua_State* L);
 
     phase_space(std::vector<unsigned int> ntypes);
+
+    /**
+     * Free shared pointers and re-allocate memory
+     * if containers are shared with some other object.
+     *
+     * Values are not initialised.
+     *
+     * @param force if true then enforce reallocation
+     */
+    void reset(bool force=false);
+
+#ifndef NDEBUG
+    /** get particle positions of given type */
+    std::vector<vector_type> position(unsigned int type) const;
+    /** get particle velocities of given type */
+    std::vector<vector_type> velocity(unsigned int type) const;
+#endif
 };
 
-} // namespace observables
-} // namespace gpu
+template <int dimension, typename float_type>
+inline phase_space<dimension, float_type>::phase_space(std::vector<unsigned int> ntypes)
+  // allocate sample pointers
+  : r(ntypes.size())
+  , v(ntypes.size())
+  // initialise attributes
+  , step(std::numeric_limits<step_type>::max())
+{
+    for (size_t i = 0; i < ntypes.size(); ++i) {
+        r[i].reset(new sample_vector(ntypes[i]));
+        v[i].reset(new sample_vector(ntypes[i]));
+    }
+}
+
+template <int dimension, typename float_type>
+inline void phase_space<dimension, float_type>::reset(bool force)
+{
+    // free shared pointers and re-allocate memory
+    for (size_t i = 0; i < r.size(); ++i) {
+        if (force || !r[i].unique()) {
+            r[i].reset(new sample_vector(r[i]->size()));
+        }
+    }
+    for (size_t i = 0; i < v.size(); ++i) {
+        if (force || !v[i].unique()) {
+            v[i].reset(new sample_vector(v[i]->size()));
+        }
+    }
+    // make time stamp invalid
+    step = std::numeric_limits<step_type>::max();
+}
+
 } // namespace samples
+} // namespace gpu
+} // namespace observables
 } // namespace halmd
 
 #endif /* ! HALMD_OBSERVABLES_GPU_SAMPLES_PHASE_SPACE_HPP */

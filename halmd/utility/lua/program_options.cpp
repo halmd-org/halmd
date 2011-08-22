@@ -17,10 +17,14 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <boost/lexical_cast.hpp>
+#include <boost/tuple/tuple.hpp> // boost::tie
 #include <iomanip>
 #include <luabind/luabind.hpp>
+#include <set>
 #include <sstream>
 #include <stdint.h> // <cstdint> is C++0x
+#include <vector>
 
 #include <halmd/config.hpp>
 #include <halmd/utility/lua/array_converter.hpp>
@@ -37,6 +41,12 @@ template <typename T>
 static po::extended_typed_value<T>* po_value()
 {
     return po::value<T>();
+}
+
+template <typename T>
+static po::extended_typed_value<vector<T> >* po_composing_value()
+{
+    return po::value<vector<T> >()->composing();
 }
 
 static po::extended_typed_value<bool>* po_bool_switch()
@@ -98,6 +108,34 @@ static po::extended_typed_value<T>* po_choices(
 )
 {
     return v->notifier(bind(&po_choices_notifier<T>, choices, _1));
+}
+
+template <typename T>
+static void po_composing_choices_notifier(
+    map<T, string> const& choices, vector<T> const& value
+)
+{
+    typename vector<T>::const_iterator i, end = value.end();
+    set<T> unique_values;
+    for (i = value.begin(); i != end; ++i) {
+        // first check that option value is valid choice
+        po_choices_notifier(choices, *i);
+        // check for duplicate option value
+        bool inserted;
+        typename set<T>::const_iterator it;
+        tie(it, inserted) = unique_values.insert(*i);
+        if (!inserted) {
+            throw po::error("duplicate option value '" + lexical_cast<string>(*i) + "'");
+        }
+    }
+}
+
+template <typename T>
+static po::extended_typed_value<vector<T> >* po_composing_choices(
+    po::extended_typed_value<vector<T> >* v, map<T, string> const& choices
+)
+{
+    return v->notifier(bind(&po_composing_choices_notifier<T>, choices, _1));
 }
 
 static void po_add_option_description(
@@ -188,6 +226,37 @@ HALMD_LUA_API int luaopen_libhalmd_utility_lua_program_options(lua_State* L)
                 .def("conflicts", &po::extended_typed_value<multi_array<double, 1> >::conflicts)
                 .def("depends", &po::extended_typed_value<multi_array<double, 1> >::depends)
 
+          , class_<po::extended_typed_value<vector<int> >, po::value_semantic>("typed_composing_value_int")
+                .def("notifier", &po_notifier<vector<int> >)
+                .def("conflicts", &po::extended_typed_value<vector<int> >::conflicts)
+                .def("depends", &po::extended_typed_value<vector<int> >::depends)
+
+          , class_<po::extended_typed_value<vector<unsigned int> >, po::value_semantic>("typed_composing_value_uint")
+                .def("notifier", &po_notifier<vector<unsigned int> >)
+                .def("conflicts", &po::extended_typed_value<vector<unsigned int> >::conflicts)
+                .def("depends", &po::extended_typed_value<vector<unsigned int> >::depends)
+
+          , class_<po::extended_typed_value<vector<int64_t> >, po::value_semantic>("typed_composing_value_int64")
+                .def("notifier", &po_notifier<vector<int64_t> >)
+                .def("conflicts", &po::extended_typed_value<vector<int64_t> >::conflicts)
+                .def("depends", &po::extended_typed_value<vector<int64_t> >::depends)
+
+          , class_<po::extended_typed_value<vector<uint64_t> >, po::value_semantic>("typed_composing_value_uint64")
+                .def("notifier", &po_notifier<vector<uint64_t> >)
+                .def("conflicts", &po::extended_typed_value<vector<uint64_t> >::conflicts)
+                .def("depends", &po::extended_typed_value<vector<uint64_t> >::depends)
+
+          , class_<po::extended_typed_value<vector<double> >, po::value_semantic>("typed_composing_value_float")
+                .def("notifier", &po_notifier<vector<double> >)
+                .def("conflicts", &po::extended_typed_value<vector<double> >::conflicts)
+                .def("depends", &po::extended_typed_value<vector<double> >::depends)
+
+          , class_<po::extended_typed_value<vector<string> >, po::value_semantic>("typed_composing_value_string")
+                .def("notifier", &po_notifier<vector<string> >)
+                .def("conflicts", &po::extended_typed_value<vector<string> >::conflicts)
+                .def("depends", &po::extended_typed_value<vector<string> >::depends)
+                .def("choices", &po_composing_choices<string>)
+
           , def("bool_switch", &po_bool_switch)
           , def("int", &po_value<int>)
           , def("uint", &po_value<unsigned int>)
@@ -200,6 +269,12 @@ HALMD_LUA_API int luaopen_libhalmd_utility_lua_program_options(lua_State* L)
           , def("int64_array", &po_value<multi_array<int64_t, 1> >)
           , def("uint64_array", &po_value<multi_array<uint64_t, 1> >)
           , def("float_array", &po_value<multi_array<double, 1> >)
+          , def("composing_int", &po_composing_value<int>)
+          , def("composing_uint", &po_composing_value<unsigned int>)
+          , def("composing_int64", &po_composing_value<int64_t>)
+          , def("composing_uint64", &po_composing_value<uint64_t>)
+          , def("composing_float", &po_composing_value<double>)
+          , def("composing_string", &po_composing_value<string>)
 
           , class_<po::options_description>("options_description")
                 .def(constructor<>())
