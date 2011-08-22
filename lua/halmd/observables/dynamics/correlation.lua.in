@@ -47,7 +47,7 @@ function new(args)
     local name = assert(args.correlation)
 
     local blocking_scheme = dynamics.blocking_scheme() -- singleton
-    local file = writers.observable() -- singleton
+    local file = writers.file() -- singleton
     local writer = file:writer{location = {"dynamics"}, mode = "truncate"}
 
     -- construct the tcf functor and obtain the appropriate data sample
