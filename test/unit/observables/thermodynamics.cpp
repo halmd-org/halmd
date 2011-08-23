@@ -184,6 +184,7 @@ void lennard_jones_fluid<modules_type>::test()
 
     // stochastic thermostat => centre particle velocities around zero
     velocity->shift(-thermodynamics->v_cm());
+    clock->advance(); //< disable caches in thermodynamics module
 
     const double vcm_limit = gpu ? 0.1 * eps_float : 20 * eps;
     BOOST_CHECK_SMALL(norm_inf(thermodynamics->v_cm()), vcm_limit);
@@ -210,6 +211,7 @@ void lennard_jones_fluid<modules_type>::test()
     double v_scale = sqrt(temp / mean(temp_));
     BOOST_TEST_MESSAGE("rescale velocities by factor " << v_scale);
     velocity->rescale(v_scale);
+    clock->advance(); //< disable caches in thermodynamics module
 
     double en_tot = thermodynamics->en_tot();
     double max_en_diff = 0; // maximal absolut deviation from initial total energy
