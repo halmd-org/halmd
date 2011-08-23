@@ -85,6 +85,13 @@ thermodynamics<dimension, float_type>::v_cm()
 }
 
 template <int dimension, typename float_type>
+void thermodynamics<dimension, float_type>::clear_cache()
+{
+    en_kin_.clear();
+    v_cm_.clear();
+}
+
+template <int dimension, typename float_type>
 void thermodynamics<dimension, float_type>::luaopen(lua_State* L)
 {
     using namespace luabind;

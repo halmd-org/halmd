@@ -68,6 +68,7 @@ public:
     virtual double en_pot();
     virtual double virial();
     virtual double hypervirial();
+    virtual void clear_cache();
 
 private:
     typedef halmd::utility::profiler profiler_type;

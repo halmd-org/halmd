@@ -81,6 +81,8 @@ public:
         return force_->hypervirial();
     }
 
+    virtual void clear_cache();
+
 private:
     typedef halmd::utility::profiler profiler_type;
     typedef profiler_type::accumulator_type accumulator_type;

@@ -67,6 +67,9 @@ public:
     /** hypervirial sum */
     virtual double hypervirial() = 0;
 
+    /** clear all data caches */
+    virtual void clear_cache() = 0;
+
     // compute derived quantities on the fly
 
     /** total pressure */

@@ -109,6 +109,7 @@ void thermodynamics<dimension>::luaopen(lua_State* L)
                 .property("v_cm", &wrap_v_cm<thermodynamics>)
                 .property("virial", &wrap_virial<thermodynamics>)
                 .property("hypervirial", &wrap_hypervirial<thermodynamics>)
+                .def("clear_cache", &thermodynamics::clear_cache)
         ]
     ];
 }

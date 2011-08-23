@@ -133,6 +133,19 @@ double thermodynamics<dimension, float_type>::hypervirial()
     return hypervirial_;
 }
 
+/**
+ * clear data caches
+ */
+template <int dimension, typename float_type>
+void thermodynamics<dimension, float_type>::clear_cache()
+{
+    en_kin_.clear();
+    v_cm_.clear();
+    en_pot_.clear();
+    virial_.clear();
+    hypervirial_.clear();
+}
+
 template <int dimension, typename float_type>
 void thermodynamics<dimension, float_type>::luaopen(lua_State* L)
 {
