@@ -116,19 +116,19 @@ void boltzmann<modules_type>::test()
     // multiplication of the velocities by a constant factor
     double scale = 1.5;
     velocity->rescale(scale);
-    clock->advance(); //< invalidate caches in thermodynamics module
+    thermodynamics->clear_cache(); //< reset caches after rescaling the velocities
     BOOST_CHECK_CLOSE_FRACTION(thermodynamics->temp(), scale * scale * temp, rel_temp_limit);
 
     // shift mean velocity to zero
     fixed_vector<double, dimension> v_cm = thermodynamics->v_cm();
     velocity->shift(-v_cm);
-    clock->advance(); //< invalidate caches in thermodynamics module
+    thermodynamics->clear_cache(); //< reset caches after shifting the velocities
     vcm_limit = gpu ? 0.1 * eps_float : 2 * eps;
     BOOST_CHECK_SMALL(norm_inf(thermodynamics->v_cm()), vcm_limit);
 
     // first shift, then rescale in one step
     velocity->shift_rescale(v_cm, 1 / scale);
-    clock->advance(); //< invalidate caches in thermodynamics module
+    thermodynamics->clear_cache(); //< reset caches after modifying the velocities
     BOOST_CHECK_CLOSE_FRACTION(thermodynamics->temp(), temp, rel_temp_limit);
     BOOST_CHECK_SMALL(norm_inf(thermodynamics->v_cm() - v_cm), vcm_limit);
 }
