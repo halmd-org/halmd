@@ -52,6 +52,12 @@ public:
         return step_ == clock_->step();
     }
 
+    /** Clear data cache */
+    void clear()
+    {
+        step_ = std::numeric_limits<step_type>::max();
+    }
+
     /** Cache passed data by copy and update time stamp from simulation clock. */
     template <typename S>
     T const& operator=(S const& data)
@@ -65,7 +71,7 @@ public:
     operator T const&() const
     {
         if (!valid()) {
-            throw std::logic_error("Reading data from outdated cache.");
+            throw std::logic_error("Reading data from invalid cache.");
         }
         return data_;
     }
