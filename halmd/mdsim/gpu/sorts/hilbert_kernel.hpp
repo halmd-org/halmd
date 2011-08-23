@@ -33,24 +33,15 @@ template <int dimension>
 struct hilbert_wrapper
 {
     typedef typename type_traits<dimension, float>::gpu::vector_type builtin_vector_type;
-    typedef typename type_traits<dimension, float>::gpu::coalesced_vector_type aligned_vector_type;
 
     /** Hilbert space-filling curve recursion depth */
     cuda::symbol<unsigned int> depth;
     /** cubic box edgle length */
     cuda::symbol<builtin_vector_type> box_length;
-    /** positions, types */
-    cuda::texture<float4> r;
-    /** minimum image vectors */
-    cuda::texture<aligned_vector_type> image;
-    /** velocities, tags */
-    cuda::texture<float4> v;
     /** generate Hilbert space-filling curve */
     cuda::function<void (float4 const*, unsigned int*)> map;
     /** generate ascending index sequence */
     cuda::function<void (unsigned int*)> gen_index;
-    /** order particles after given permutation */
-    cuda::function<void (unsigned int const*, float4*, aligned_vector_type*, float4*)> order_particles;
 
     static hilbert_wrapper const kernel;
 };

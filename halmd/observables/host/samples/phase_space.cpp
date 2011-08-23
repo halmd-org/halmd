@@ -1,5 +1,5 @@
 /*
- * Copyright © 2008-2011  Peter Colberg
+ * Copyright © 2008-2011  Peter Colberg and Felix Höfling
  *
  * This file is part of HALMD.
  *
@@ -19,10 +19,13 @@
 
 #include <algorithm>
 #include <boost/bind.hpp>
+#include <boost/lexical_cast.hpp>
 #include <limits>
 #include <stdexcept>
+#include <string>
 
 #include <halmd/observables/host/samples/phase_space.hpp>
+#include <halmd/observables/samples/blocking_scheme.hpp>
 #include <halmd/utility/demangle.hpp>
 #include <halmd/utility/lua/lua.hpp>
 
@@ -33,20 +36,6 @@ namespace halmd {
 namespace observables {
 namespace host {
 namespace samples {
-
-template <int dimension, typename float_type>
-phase_space<dimension, float_type>::phase_space(vector<unsigned int> ntypes)
-  // allocate sample pointers
-  : r(ntypes.size())
-  , v(ntypes.size())
-  // initialise attributes
-  , step(numeric_limits<step_type>::max())
-{
-    for (size_t i = 0; i < ntypes.size(); ++i) {
-        r[i].reset(new sample_vector(ntypes[i]));
-        v[i].reset(new sample_vector(ntypes[i]));
-    }
-}
 
 template <int dimension, typename float_type>
 static int wrap_dimension(phase_space<dimension, float_type> const&)
@@ -114,7 +103,7 @@ template <int dimension, typename float_type>
 void phase_space<dimension, float_type>::luaopen(lua_State* L)
 {
     using namespace luabind;
-    static string class_name("phase_space_" + lexical_cast<string>(dimension) + "_" + demangled_name<float_type>() + "_");
+    static string const class_name("phase_space_" + lexical_cast<string>(dimension) + "_" + demangled_name<float_type>() + "_");
     module(L, "libhalmd")
     [
         namespace_("observables")
@@ -139,12 +128,17 @@ HALMD_LUA_API int luaopen_libhalmd_observables_host_samples_phase_space(lua_Stat
 #ifndef USE_HOST_SINGLE_PRECISION
     phase_space<3, double>::luaopen(L);
     phase_space<2, double>::luaopen(L);
+    observables::samples::blocking_scheme<phase_space<3, double> >::luaopen(L);
+    observables::samples::blocking_scheme<phase_space<2, double> >::luaopen(L);
 #endif
     phase_space<3, float>::luaopen(L);
     phase_space<2, float>::luaopen(L);
+    observables::samples::blocking_scheme<phase_space<3, float> >::luaopen(L);
+    observables::samples::blocking_scheme<phase_space<2, float> >::luaopen(L);
     return 0;
 }
 
+// explicit instantiation
 #ifndef USE_HOST_SINGLE_PRECISION
 template class phase_space<3, double>;
 template class phase_space<2, double>;
@@ -152,7 +146,20 @@ template class phase_space<2, double>;
 template class phase_space<3, float>;
 template class phase_space<2, float>;
 
-} // namespace observables
-} // namespace host
 } // namespace samples
+} // namespace host
+
+namespace samples
+{
+
+// explicit instantiation
+#ifndef USE_HOST_SINGLE_PRECISION
+template class blocking_scheme<host::samples::phase_space<3, double> >;
+template class blocking_scheme<host::samples::phase_space<2, double> >;
+#endif
+template class blocking_scheme<host::samples::phase_space<3, float> >;
+template class blocking_scheme<host::samples::phase_space<2, float> >;
+
+} // namespace samples
+} // namespace observables
 } // namespace halmd

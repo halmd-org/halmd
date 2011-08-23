@@ -1,5 +1,5 @@
 --
--- Copyright © 2010  Peter Colberg
+-- Copyright © 2010-2011  Peter Colberg and Felix Höfling
 --
 -- This file is part of HALMD.
 --
@@ -74,6 +74,8 @@ function new(args)
 
     local file = writers.file() -- singleton
     local writer = file:writer{location = {"observables"}, mode = "append"}
+
+    -- connect results with writer
     writer:on_write(observable.en_pot, {"potential_energy"})
     writer:on_write(observable.en_kin, {"kinetic_energy"})
     writer:on_write(observable.en_tot, {"total_energy"})
@@ -83,9 +85,13 @@ function new(args)
     writer:on_write(observable.virial, {"virial"})
     writer:on_write(observable.hypervirial, {"hypervirial"})
 
+    -- connect writer to sampler
     local sampler = observables.sampler() -- singleton
-    sampler:on_prepare{observable.prepare, every, tracker = observable}
     sampler:on_sample{writer.write, every, tracker = observable}
+
+    -- turn on computation of auxiliary variables _before_ force computation
+    -- in each sampling step
+    sampler:on_prepare{force.aux_enable, every, tracker = observable}
 
     return observable
 end
@@ -94,7 +100,13 @@ end
 -- connect runtime accumulators to module profiler
 --
 function profile(self, profiler)
-    profiler:on_profile{self, sample = "computation of macroscopic state variables"}
+    profiler:on_profile{self, en_kin = "summation of kinetic energy"}
+    profiler:on_profile{self, v_cm = "summation of centre-of-mass velocity"}
+    if device() then
+        profiler:on_profile{self, en_pot = "summation of potential energy"}
+        profiler:on_profile{self, virial = "summation of virial"}
+        profiler:on_profile{self, hypervirial = "summation of hypervirial"}
+    end
 end
 
 -- assemble module options

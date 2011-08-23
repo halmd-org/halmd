@@ -55,6 +55,12 @@ local function script()
     observables.thermodynamics{force = force}
     -- Sample static structure factor.
     observables.ssf{}
+    -- compute mean-square displacement
+    observables.dynamics.correlation{correlation = "mean_square_displacement"}
+    -- compute mean-quartic displacement
+    observables.dynamics.correlation{correlation = "mean_quartic_displacement"}
+    -- compute velocity autocorrelation
+    observables.dynamics.correlation{correlation = "velocity_autocorrelation"}
 
     -- yield sampler.setup slot from Lua to C++ to setup simulation box
     coroutine.yield(sampler:setup())

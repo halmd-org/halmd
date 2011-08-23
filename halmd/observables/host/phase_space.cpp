@@ -17,8 +17,13 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <boost/make_shared.hpp>
+
 #include <halmd/observables/host/phase_space.hpp>
+#include <halmd/utility/demangle.hpp>
 #include <halmd/utility/lua/lua.hpp>
+#include <halmd/utility/scoped_timer.hpp>
+#include <halmd/utility/timer.hpp>
 
 using namespace boost;
 using namespace std;
@@ -49,12 +54,21 @@ phase_space<dimension, float_type>::phase_space(
 template <int dimension, typename float_type>
 void phase_space<dimension, float_type>::acquire()
 {
+    scoped_timer_type timer(runtime_.acquire);
+
     if (sample_->step == clock_->step()) {
         LOG_TRACE("sample is up to date");
         return;
     }
 
     LOG_TRACE("acquire sample");
+
+    // re-allocate memory which allows modules (e.g., dynamics::blocking_scheme)
+    // to hold a previous copy of the sample
+    {
+        scoped_timer_type timer(runtime_.reset);
+        sample_->reset();
+    }
 
     for (size_t i = 0; i < particle_->nbox; ++i) {
         unsigned int type = particle_->type[i];
@@ -84,23 +98,28 @@ template <int dimension, typename float_type>
 void phase_space<dimension, float_type>::luaopen(lua_State* L)
 {
     using namespace luabind;
-    static string class_name("phase_space_" + lexical_cast<string>(dimension) + "_");
+    static string const class_name(demangled_name<phase_space>());
     module(L, "libhalmd")
     [
         namespace_("observables")
         [
-            namespace_("host")
-            [
-                class_<phase_space, shared_ptr<_Base>, _Base>(class_name.c_str())
-                    .def(constructor<
-                         shared_ptr<sample_type>
-                       , shared_ptr<particle_type const>
-                       , shared_ptr<box_type const>
-                       , shared_ptr<clock_type const>
-                       , shared_ptr<logger_type>
-                    >())
-                    .property("dimension", &wrap_dimension<dimension, float_type>)
-            ]
+            class_<phase_space, shared_ptr<_Base>, _Base>(class_name.c_str())
+                .property("dimension", &wrap_dimension<dimension, float_type>)
+                .scope
+                [
+                    class_<runtime>("runtime")
+                        .def_readonly("acquire", &runtime::acquire)
+                        .def_readonly("reset", &runtime::reset)
+                ]
+                .def_readonly("runtime", &phase_space::runtime_)
+
+          , def("phase_space", &make_shared<phase_space
+               , shared_ptr<sample_type>
+               , shared_ptr<particle_type const>
+               , shared_ptr<box_type const>
+               , shared_ptr<clock_type const>
+               , shared_ptr<logger_type>
+            >)
         ]
     ];
 }

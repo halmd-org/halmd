@@ -1,0 +1,86 @@
+--
+-- Copyright © 2011  Peter Colberg and Felix Höfling
+--
+-- This file is part of HALMD.
+--
+-- HALMD is free software: you can redistribute it and/or modify
+-- it under the terms of the GNU General Public License as published by
+-- the Free Software Foundation, either version 3 of the License, or
+-- (at your option) any later version.
+--
+-- This program is distributed in the hope that it will be useful,
+-- but WITHOUT ANY WARRANTY; without even the implied warranty of
+-- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+-- GNU General Public License for more details.
+--
+-- You should have received a copy of the GNU General Public License
+-- along with this program.  If not, see <http://www.gnu.org/licenses/>.
+--
+
+require("halmd.io.writers.observable")
+require("halmd.modules")
+require("halmd.observables.dynamics.blocking_scheme")
+require("halmd.observables.dynamics.correlations")
+require("halmd.observables.samples.blocking_scheme")
+
+-- grab modules
+local correlations = halmd.observables.dynamics.correlations
+local dynamics = halmd.observables.dynamics
+local samples = halmd.observables.samples
+local writers = halmd.io.writers
+-- grab C++ wrappers
+local correlation_wrapper = libhalmd.observables.dynamics.correlation
+local po = libhalmd.po
+local property = property
+-- grab standard library
+local assert = assert
+
+module("halmd.observables.dynamics.correlation", halmd.modules.register)
+
+--
+-- add time correlation function to blocking_scheme
+--
+-- @param args parameter table
+--   name   trajectory correlation function (e.g. "mean_square_displacement")
+--
+function new(args)
+    local name = assert(args.correlation)
+
+    local blocking_scheme = dynamics.blocking_scheme() -- singleton
+    local file = writers.file() -- singleton
+    local writer = file:writer{location = {"dynamics"}, mode = "truncate"}
+
+    -- construct the tcf functor and obtain the appropriate data sample
+    local tcf = assert(correlations[name])()
+    local sample = assert(tcf.sample)
+    local sampler = assert(tcf.sampler)
+    -- construct or retrieve associated blocking scheme for sample data
+    local block_sample = samples.blocking_scheme{sample = sample, sampler = sampler}
+    -- construct correlation function
+    local logger = assert(args.logger) -- FIXME use tcf module logger
+    local correlation = assert(correlation_wrapper)(tcf, block_sample, logger)
+
+    -- register correlation function with blocking scheme
+    blocking_scheme:on_correlate(correlation)
+
+    -- write correlation function results
+    writer:on_write(blocking_scheme.time, {name, "time"}) -- FIXME hardlink
+    writer:on_write(correlation.mean, {name, "mean"})
+    writer:on_write(correlation.error, {name, "error"})
+    writer:on_write(correlation.count, {name, "count"})
+
+    -- write correlation results to H5MD file
+    blocking_scheme:on_append_finalise(writer.write)
+
+    -- store tcf module for profiler description
+    correlation.tcf = property(function(self) return tcf end)
+
+    return correlation
+end
+
+--
+-- connect runtime accumulators to module profiler
+--
+function profile(self, profiler)
+    profiler:on_profile{self, tcf = "computation of " .. self.tcf.module.description()}
+end

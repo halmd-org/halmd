@@ -94,6 +94,10 @@ signals.patch(_M)
 --
 function profile(self, profiler)
     profiler:on_profile{self, total = "total simulation runtime"}
+    profiler:on_profile{self, start = "start-up of simulation"}
+    profiler:on_profile{self, prepare = "preparation for integration step"}
+    profiler:on_profile{self, sample = "evaluation of observables"}
+    profiler:on_profile{self, finish = "finishing simulation"}
 end
 
 --

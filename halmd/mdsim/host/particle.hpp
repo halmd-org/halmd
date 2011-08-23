@@ -25,6 +25,7 @@
 
 #include <halmd/mdsim/particle.hpp>
 #include <halmd/mdsim/type_traits.hpp>
+#include <halmd/utility/profiler.hpp>
 
 namespace halmd {
 namespace mdsim {
@@ -42,7 +43,7 @@ public:
 
     particle(std::vector<unsigned int> const& particles);
     virtual void set();
-    virtual void rearrange(std::vector<unsigned int> const& index);
+    void rearrange(std::vector<unsigned int> const& index);
 
     /** positions, reduced to extended domain box */
     std::vector<vector_type> r;
@@ -63,6 +64,19 @@ public:
     using _Base::ntype;
     /** number of particles per type */
     using _Base::ntypes;
+
+private:
+    typedef utility::profiler profiler_type;
+    typedef typename profiler_type::accumulator_type accumulator_type;
+    typedef typename profiler_type::scoped_timer_type scoped_timer_type;
+
+    struct runtime
+    {
+        accumulator_type rearrange;
+    };
+
+    /** profiling runtime accumulators */
+    runtime runtime_;
 };
 
 } // namespace mdsim

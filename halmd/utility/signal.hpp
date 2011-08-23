@@ -128,7 +128,7 @@ private:
      * to ensure that connection iterators remain valid,
      * therefore declare iterator private.
      */
-    typedef typename slots_type::iterator iterator;
+    typedef typename slots_type::iterator slots_iterator;
 
     /**
      * This class disconnects the stored slot from the slots container.
@@ -145,10 +145,10 @@ private:
             slots_->erase(iter_);
         }
 
-        disconnector(iterator iter) : iter_(iter) {}
+        disconnector(slots_iterator iter) : iter_(iter) {}
 
     private:
-        iterator iter_;
+        slots_iterator iter_;
     };
 
     slots_pointer slots_;
@@ -159,6 +159,13 @@ public:
      * and slots::end(), therefore declare const_iterator public.
      */
     typedef typename slots_type::const_iterator const_iterator;
+    /**
+     * Alias const_iterator as iterator for use with BOOST_FOREACH.
+     *
+     * http://www.boost.org/doc/libs/release/doc/html/foreach/extensibility.html
+     * http://www.boost.org/doc/libs/release/libs/range/doc/html/range/reference/extending/method_1.html
+     */
+    typedef const_iterator iterator;
 
     slots() : slots_(new slots_type) {}
 
@@ -167,7 +174,7 @@ public:
      */
     connection connect(T const& slot)
     {
-        iterator iter = slots_->insert(slots_->end(), slot);
+        slots_iterator iter = slots_->insert(slots_->end(), slot);
         return connection(slots_, disconnector(iter));
     }
 

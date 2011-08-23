@@ -43,8 +43,6 @@ public:
     virtual ~force() {}
     virtual void compute() = 0;
     virtual void aux_enable() = 0;
-    virtual void aux_disable() = 0;
-    virtual bool aux_flag() const = 0;
 };
 
 } // namespace mdsim

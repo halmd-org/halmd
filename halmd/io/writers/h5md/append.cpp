@@ -21,11 +21,13 @@
 #include <luabind/luabind.hpp>
 #include <luabind/out_value_policy.hpp>
 #include <stdexcept>
+#include <stdint.h> // uint64_t
 
 #include <halmd/io/utility/hdf5.hpp>
 #include <halmd/io/writers/h5md/append.hpp>
 #include <halmd/numeric/blas/fixed_vector.hpp>
 #include <halmd/utility/lua/lua.hpp>
+#include <halmd/utility/raw_allocator.hpp>
 
 using namespace boost;
 using namespace std;
@@ -123,38 +125,66 @@ H5::DataSet append::create_dataset(
     return h5xx::create_dataset<T>(group, name);
 }
 
-template <typename T>
+template <typename T, typename Alloc>
 H5::DataSet append::create_dataset(
     H5::Group const& group
   , string const& name
-  , function<vector<T> ()> const& slot
+  , function<vector<T, Alloc> ()> const& slot
 )
 {
-    vector<T> data = slot();
-    return h5xx::create_dataset<vector<T> >(group, name, data.size());
+    return h5xx::create_dataset<vector<T, Alloc> >(group, name, slot().size());
 }
 
-template <typename T>
+template <typename T, typename Alloc>
 H5::DataSet append::create_dataset(
     H5::Group const& group
   , string const& name
-  , function<vector<T> const& ()> const& slot
+  , function<vector<T, Alloc> const& ()> const& slot
 )
 {
-    vector<T> const& data = slot();
-    return h5xx::create_dataset<vector<T> >(group, name, data.size());
+    return h5xx::create_dataset<vector<T, Alloc> >(group, name, slot().size());
 }
 
-template <typename T>
+template <typename T, typename Alloc>
 H5::DataSet append::create_dataset(
     H5::Group const& group
   , string const& name
-  , function<vector<T>& ()> const& slot
+  , function<vector<T, Alloc>& ()> const& slot
 )
 {
-    vector<T>& data = slot();
-    return h5xx::create_dataset<vector<T> >(group, name, data.size());
+    return h5xx::create_dataset<vector<T, Alloc> >(group, name, slot().size());
 }
+
+template <typename T, std::size_t N, typename Alloc>
+H5::DataSet append::create_dataset(
+    H5::Group const& group
+  , string const& name
+  , function<multi_array<T, N, Alloc> ()> const& slot
+)
+{
+    return h5xx::create_unique_dataset<multi_array<T, N, Alloc> >(group, name, slot().shape());
+}
+
+template <typename T, size_t N, typename Alloc>
+H5::DataSet append::create_dataset(
+    H5::Group const& group
+  , string const& name
+  , function<multi_array<T, N, Alloc> const& ()> const& slot
+)
+{
+    return h5xx::create_unique_dataset<multi_array<T, N, Alloc> >(group, name, slot().shape());
+}
+
+template <typename T, size_t N, typename Alloc>
+H5::DataSet append::create_dataset(
+    H5::Group const& group
+  , string const& name
+  , function<multi_array<T, N, Alloc>& ()> const& slot
+)
+{
+    return h5xx::create_unique_dataset<multi_array<T, N, Alloc> >(group, name, slot().shape());
+}
+
 
 template <typename T>
 void append::write_dataset(
@@ -229,12 +259,38 @@ void append::luaopen(lua_State* L)
                         .def("on_write", &append::on_write<vector<fixed_vector<double, 3> > >, pure_out_value(_2))
                         .def("on_write", &append::on_write<vector<fixed_vector<double, 3> >&>, pure_out_value(_2))
                         .def("on_write", &append::on_write<vector<fixed_vector<double, 3> > const&>, pure_out_value(_2))
+                        .def("on_write", &append::on_write<vector<fixed_vector<float, 2>, raw_allocator<fixed_vector<float, 2> > >&>, pure_out_value(_2))
+                        .def("on_write", &append::on_write<vector<fixed_vector<float, 2>, raw_allocator<fixed_vector<float, 2> > > const&>, pure_out_value(_2))
+                        .def("on_write", &append::on_write<vector<fixed_vector<float, 3>, raw_allocator<fixed_vector<float, 3> > >&>, pure_out_value(_2))
+                        .def("on_write", &append::on_write<vector<fixed_vector<float, 3>, raw_allocator<fixed_vector<float, 3> > > const&>, pure_out_value(_2))
+                        .def("on_write", &append::on_write<vector<fixed_vector<double, 2>, raw_allocator<fixed_vector<double, 2> > >&>, pure_out_value(_2))
+                        .def("on_write", &append::on_write<vector<fixed_vector<double, 2>, raw_allocator<fixed_vector<double, 2> > > const&>, pure_out_value(_2))
+                        .def("on_write", &append::on_write<vector<fixed_vector<double, 3>, raw_allocator<fixed_vector<double, 3> > >&>, pure_out_value(_2))
+                        .def("on_write", &append::on_write<vector<fixed_vector<double, 3>, raw_allocator<fixed_vector<double, 3> > > const&>, pure_out_value(_2))
                         .def("on_write", &append::on_write<vector<array<float, 3> > >, pure_out_value(_2))
                         .def("on_write", &append::on_write<vector<array<float, 3> >&>, pure_out_value(_2))
                         .def("on_write", &append::on_write<vector<array<float, 3> > const&>, pure_out_value(_2))
                         .def("on_write", &append::on_write<vector<array<double, 3> > >, pure_out_value(_2))
                         .def("on_write", &append::on_write<vector<array<double, 3> >&>, pure_out_value(_2))
                         .def("on_write", &append::on_write<vector<array<double, 3> > const&>, pure_out_value(_2))
+                        .def("on_write", &append::on_write<multi_array<float, 2> >, pure_out_value(_2))
+                        .def("on_write", &append::on_write<multi_array<float, 2>&>, pure_out_value(_2))
+                        .def("on_write", &append::on_write<multi_array<float, 2> const&>, pure_out_value(_2))
+                        .def("on_write", &append::on_write<multi_array<float, 3> >, pure_out_value(_2))
+                        .def("on_write", &append::on_write<multi_array<float, 3>&>, pure_out_value(_2))
+                        .def("on_write", &append::on_write<multi_array<float, 3> const&>, pure_out_value(_2))
+                        .def("on_write", &append::on_write<multi_array<double, 2> >, pure_out_value(_2))
+                        .def("on_write", &append::on_write<multi_array<double, 2>&>, pure_out_value(_2))
+                        .def("on_write", &append::on_write<multi_array<double, 2> const&>, pure_out_value(_2))
+                        .def("on_write", &append::on_write<multi_array<double, 3> >, pure_out_value(_2))
+                        .def("on_write", &append::on_write<multi_array<double, 3>&>, pure_out_value(_2))
+                        .def("on_write", &append::on_write<multi_array<double, 3> const&>, pure_out_value(_2))
+                        .def("on_write", &append::on_write<multi_array<uint64_t, 2> >, pure_out_value(_2))
+                        .def("on_write", &append::on_write<multi_array<uint64_t, 2>&>, pure_out_value(_2))
+                        .def("on_write", &append::on_write<multi_array<uint64_t, 2> const&>, pure_out_value(_2))
+                        .def("on_write", &append::on_write<multi_array<uint64_t, 3> >, pure_out_value(_2))
+                        .def("on_write", &append::on_write<multi_array<uint64_t, 3>&>, pure_out_value(_2))
+                        .def("on_write", &append::on_write<multi_array<uint64_t, 3> const&>, pure_out_value(_2))
                         .def("on_prepend_write", &append::on_prepend_write)
                         .def("on_append_write", &append::on_append_write)
                 ]

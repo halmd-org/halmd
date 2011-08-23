@@ -44,9 +44,9 @@ public:
     static void luaopen(lua_State* L);
 
     force() {}
-    virtual cuda::vector<float> const& potential_energy() = 0;
-    virtual cuda::vector<gpu_stress_tensor_type> const& stress_tensor_pot() = 0;
-    virtual cuda::vector<float> const& hypervirial() = 0;
+    virtual cuda::vector<float> const& potential_energy() const = 0;
+    virtual cuda::vector<gpu_stress_tensor_type> const& stress_tensor_pot() const = 0;
+    virtual cuda::vector<float> const& hypervirial() const = 0;
 };
 
 } // namespace mdsim

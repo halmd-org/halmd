@@ -12,4 +12,5 @@ halmd_add_modules(
   libhalmd_observables_gpu_thermodynamics
 )
 
+add_subdirectory(dynamics)
 add_subdirectory(samples)

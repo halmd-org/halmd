@@ -45,7 +45,7 @@ __constant__ variant<map<pair<int_<3>, float3>, pair<int_<2>, float2> > > box_le
  * sample phase space for all particle of a single species
  */
 template <typename vector_type, typename T>
-__global__ void sample(unsigned int const* g_index, T* g_or, T* g_ov, unsigned int ntype)
+__global__ void sample(unsigned int const* g_reverse_tag, T* g_r, T* g_v, unsigned int ntype)
 {
     using mdsim::gpu::particle_kernel::untagged;
 
@@ -53,19 +53,19 @@ __global__ void sample(unsigned int const* g_index, T* g_or, T* g_ov, unsigned i
 
     if (GTID < ntype) {
         // permutation index
-        uint const j = g_index[GTID];
+        uint const rtag = g_reverse_tag[GTID];
         // fetch particle from texture caches
         unsigned int tag, type;
         vector_type r, v;
-        tie(r, type) = untagged<vector_type>(tex1Dfetch(r_, j));
-        tie(v, tag) = untagged<vector_type>(tex1Dfetch(v_, j));
+        tie(r, type) = untagged<vector_type>(tex1Dfetch(r_, rtag));
+        tie(v, tag) = untagged<vector_type>(tex1Dfetch(v_, rtag));
         // extend particle positions in periodic box
-        vector_type image = tex1Dfetch(get<dimension>(image_), j);
+        vector_type image = tex1Dfetch(get<dimension>(image_), rtag);
         vector_type L = get<dimension>(box_length_);
         box_kernel::extend_periodic(r, image, L);
         // store particle in global memory
-        g_or[GTID] = r;
-        g_ov[GTID] = v;
+        g_r[GTID] = r;
+        g_v[GTID] = v;
     }
 }
 

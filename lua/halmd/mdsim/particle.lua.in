@@ -74,6 +74,13 @@ function new(args)
     return particle
 end
 
+--
+-- connect runtime accumulators to module profiler
+--
+function profile(self, profiler)
+    profiler:on_profile{self, rearrange = "rearrange particles by permutation"}
+end
+
 -- override default parameter namespace
 namespace = "box"
 

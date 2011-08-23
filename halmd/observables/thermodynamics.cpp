@@ -17,8 +17,6 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <limits>
-
 #include <halmd/observables/thermodynamics.hpp>
 #include <halmd/utility/lua/lua.hpp>
 
@@ -31,59 +29,10 @@ namespace observables {
 template <int dimension>
 thermodynamics<dimension>::thermodynamics(
     shared_ptr<box_type const> box
-  , shared_ptr<clock_type const> clock
-  , shared_ptr<logger_type> logger
 )
   // dependency injection
   : box_(box)
-  , clock_(clock)
-  , logger_(logger)
-  // initialise members
-  , step_(numeric_limits<step_type>::max())
 {
-}
-
-/**
- * Sample macroscopic state variables
- *
- * Compute state variables and take care that expensive functions are
- * called only once.
- */
-template <int dimension>
-void thermodynamics<dimension>::sample()
-{
-    if (step_ == clock_->step()) {
-        LOG_TRACE("sample is up to date");
-        return;
-    }
-
-    LOG_TRACE("acquire sample");
-
-    scoped_timer_type timer(runtime_.sample);
-    en_pot_ = en_pot();
-    en_kin_ = en_kin();
-    v_cm_ = v_cm();
-    en_tot_ = en_pot_ + en_kin_;
-    temp_ = 2 * en_kin_ / dimension;
-    density_ = box_->density(); //< FIXME why is this duplicated in thermodynamics?
-    pressure_ = density_ * (temp_ + virial() / dimension);
-    hypervirial_ = hypervirial();
-    time_ = clock_->time();
-    step_ = clock_->step();
-}
-
-template <typename thermodynamics_type>
-typename thermodynamics_type::slot_function_type
-prepare_wrapper(shared_ptr<thermodynamics_type> thermodynamics)
-{
-    return bind(&thermodynamics_type::prepare, thermodynamics);
-}
-
-template <typename thermodynamics_type>
-typename thermodynamics_type::slot_function_type
-sample_wrapper(shared_ptr<thermodynamics_type> thermodynamics)
-{
-    return bind(&thermodynamics_type::sample, thermodynamics);
 }
 
 template <typename thermodynamics_type>
@@ -152,8 +101,6 @@ void thermodynamics<dimension>::luaopen(lua_State* L)
         namespace_("observables")
         [
             class_<thermodynamics, shared_ptr<thermodynamics> >(class_name.c_str())
-                .property("prepare", &prepare_wrapper<thermodynamics>)
-                .property("sample", &sample_wrapper<thermodynamics>)
                 .property("en_kin", &wrap_en_kin<thermodynamics>)
                 .property("en_pot", &wrap_en_pot<thermodynamics>)
                 .property("en_tot", &wrap_en_tot<thermodynamics>)
@@ -162,12 +109,7 @@ void thermodynamics<dimension>::luaopen(lua_State* L)
                 .property("v_cm", &wrap_v_cm<thermodynamics>)
                 .property("virial", &wrap_virial<thermodynamics>)
                 .property("hypervirial", &wrap_hypervirial<thermodynamics>)
-                .scope
-                [
-                    class_<runtime>("runtime")
-                        .def_readonly("sample", &runtime::sample)
-                ]
-                .def_readonly("runtime", &thermodynamics::runtime_)
+                .def("clear_cache", &thermodynamics::clear_cache)
         ]
     ];
 }

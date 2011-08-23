@@ -25,9 +25,13 @@
 #include <lua.hpp>
 #include <vector>
 
+#include <halmd/io/logger.hpp>
 #include <halmd/observables/thermodynamics.hpp>
+#include <halmd/mdsim/clock.hpp>
 #include <halmd/mdsim/host/force.hpp>
 #include <halmd/mdsim/host/particle.hpp>
+#include <halmd/utility/data_cache.hpp>
+#include <halmd/utility/profiler.hpp>
 
 namespace halmd {
 namespace observables {
@@ -43,9 +47,10 @@ private:
 public:
     typedef mdsim::host::particle<dimension, float_type> particle_type;
     typedef typename _Base::box_type box_type;
-    typedef typename _Base::clock_type clock_type;
+    typedef mdsim::clock clock_type;
     typedef mdsim::host::force<dimension, float_type> force_type;
-    typedef typename _Base::logger_type logger_type;
+    typedef logger logger_type;
+    typedef typename clock_type::step_type step_type;
     typedef typename particle_type::vector_type vector_type;
 
     static void luaopen(lua_State* L);
@@ -54,43 +59,53 @@ public:
         boost::shared_ptr<particle_type const> particle
       , boost::shared_ptr<box_type const> box
       , boost::shared_ptr<clock_type const> clock
-      , boost::shared_ptr<force_type> force
+      , boost::shared_ptr<force_type const> force
       , boost::shared_ptr<logger_type> logger = boost::make_shared<logger_type>()
     );
 
-    virtual void prepare();
-    virtual void sample();
-
     virtual double en_kin();
-    virtual vector_type v_cm();
+    virtual vector_type const& v_cm();
 
     virtual double en_pot()
     {
-        if (!force_->aux_flag()) {
-            throw std::logic_error("Potential energy not enabled in force module");
-        }
         return force_->potential_energy();
     }
 
     virtual double virial()
     {
-        if (!force_->aux_flag()) {
-            throw std::logic_error("Stress tensor not enabled in force module");
-        }
         return force_->stress_tensor_pot()[0];
     }
 
     virtual double hypervirial()
     {
-        if (!force_->aux_flag()) {
-            throw std::logic_error("Hypervirial not enabled in force module");
-        }
         return force_->hypervirial();
     }
 
+    virtual void clear_cache();
+
 private:
+    typedef halmd::utility::profiler profiler_type;
+    typedef profiler_type::accumulator_type accumulator_type;
+    typedef profiler_type::scoped_timer_type scoped_timer_type;
+
+    struct runtime
+    {
+        accumulator_type en_kin;
+        accumulator_type v_cm;
+    };
+
+    /** module dependencies */
     boost::shared_ptr<particle_type const> particle_;
-    boost::shared_ptr<force_type> force_;
+    boost::shared_ptr<force_type const> force_;
+    /** module logger */
+    boost::shared_ptr<logger_type> logger_;
+
+    /** cached results */
+    data_cache<double> en_kin_;
+    data_cache<vector_type> v_cm_;
+
+    /** profiling runtime accumulators */
+    runtime runtime_;
 };
 
 } // namespace observables

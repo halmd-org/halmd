@@ -79,6 +79,8 @@ void particle<dimension, float_type>::set()
 template <unsigned int dimension, typename float_type>
 void particle<dimension, float_type>::rearrange(std::vector<unsigned int> const& index)
 {
+    scoped_timer_type timer(runtime_.rearrange);
+
     algorithm::host::permute(r.begin(), r.end(), index.begin());
     algorithm::host::permute(image.begin(), image.end(), index.begin());
     algorithm::host::permute(v.begin(), v.end(), index.begin());
@@ -107,6 +109,11 @@ void particle<dimension, float_type>::luaopen(lua_State* L)
                 class_<particle, shared_ptr<_Base>, _Base>(class_name.c_str())
                     .def(constructor<vector<unsigned int> const&>())
                     .property("dimension", &wrap_dimension<dimension, float_type>)
+                    .scope[
+                        class_<runtime>("runtime")
+                            .def_readonly("rearrange", &runtime::rearrange)
+                    ]
+                    .def_readonly("runtime", &particle::runtime_)
             ]
         ]
     ];

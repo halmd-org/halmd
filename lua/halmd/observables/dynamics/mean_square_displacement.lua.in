@@ -1,0 +1,83 @@
+--
+-- Copyright © 2011  Felix Höfling and Peter Colberg
+--
+-- This file is part of HALMD.
+--
+-- HALMD is free software: you can redistribute it and/or modify
+-- it under the terms of the GNU General Public License as published by
+-- the Free Software Foundation, either version 3 of the License, or
+-- (at your option) any later version.
+--
+-- This program is distributed in the hope that it will be useful,
+-- but WITHOUT ANY WARRANTY; without even the implied warranty of
+-- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+-- GNU General Public License for more details.
+--
+-- You should have received a copy of the GNU General Public License
+-- along with this program.  If not, see <http://www.gnu.org/licenses/>.
+--
+
+require("halmd.device")
+require("halmd.modules")
+require("halmd.observables.phase_space")
+require("halmd.observables.samples.phase_space")
+
+-- grab modules
+local device = halmd.device
+local observables = halmd.observables
+-- grab C++ wrappers
+local msd_wrapper = libhalmd.observables.dynamics.mean_square_displacement
+local po = libhalmd.po
+local property = property
+-- grab standard library
+local assert = assert
+
+module("halmd.observables.dynamics.correlations.mean_square_displacement", halmd.modules.register)
+
+--
+-- construct instance of msd module
+--
+-- @param args parameter tabletype_
+--   species   particle species (type) for which the computation is done
+-- @returns instance of msd module, instance of phase space sample
+--
+function new(args)
+    -- command line options
+    local species = args.species or 0 -- default value
+    -- obtain appropriate phase space sample
+    local backend = device() and not args.disable_gpu and "gpu" or "host"
+    local sample = observables.samples.phase_space{memory = backend}
+    local dimension = assert(sample.dimension)
+    -- construct msd module
+    local msd = assert(msd_wrapper)(species, sample)
+
+    -- extend msd module with read-only sample property
+    msd.sample = property(function(self)
+        return sample
+    end)
+    -- obtain phase space sampler
+    local phase_space = observables.phase_space{memory = backend}
+    msd.sampler = property(function(self)
+        return phase_space
+    end)
+
+    return msd
+end
+
+--
+-- returns module description
+--
+function description()
+    return "mean-square displacement"
+end
+
+--
+-- assemble module options
+--
+-- @param desc po.options_description
+--
+function options(desc)
+    if device.with_gpu() then
+        desc:add("disable-gpu", po.bool_switch(), "disable GPU acceleration")
+    end
+end

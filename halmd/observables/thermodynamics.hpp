@@ -21,16 +21,12 @@
 #define HALMD_OBSERVABLES_THERMODYNAMICS_HPP
 
 #include <boost/foreach.hpp>
-#include <boost/numeric/ublas/symmetric.hpp>
 #include <lua.hpp>
 #include <vector>
 
-#include <halmd/io/logger.hpp>
 #include <halmd/mdsim/box.hpp>
-#include <halmd/mdsim/clock.hpp>
 #include <halmd/mdsim/type_traits.hpp>
 #include <halmd/numeric/blas/blas.hpp>
-#include <halmd/utility/profiler.hpp>
 #include <halmd/utility/signal.hpp>
 
 namespace halmd {
@@ -49,9 +45,6 @@ class thermodynamics
 {
 public:
     typedef mdsim::box<dimension> box_type;
-    typedef mdsim::clock clock_type;
-    typedef typename clock_type::step_type step_type;
-    typedef logger logger_type;
     typedef typename mdsim::type_traits<dimension, double>::vector_type vector_type;
     typedef typename signal<void ()>::slot_function_type slot_function_type;
 
@@ -59,30 +52,30 @@ public:
 
     thermodynamics(
         boost::shared_ptr<box_type const> box
-      , boost::shared_ptr<clock_type const> clock
-      , boost::shared_ptr<logger_type> logger
     );
 
-    // preparations before MD step
-    virtual void prepare() = 0;
-    // sample macroscopic state variables and store with given simulation step
-    virtual void sample();
+    // basic quantities with backend-specific evaluation
 
     /** potential energy per particle */
     virtual double en_pot() = 0;
     /** kinetic energy per particle */
     virtual double en_kin() = 0;
     /** mean velocity per particle */
-    virtual vector_type v_cm() = 0;
+    virtual vector_type const& v_cm() = 0;
     /** virial sum */
     virtual double virial() = 0;
     /** hypervirial sum */
     virtual double hypervirial() = 0;
 
+    /** clear all data caches */
+    virtual void clear_cache() = 0;
+
+    // compute derived quantities on the fly
+
     /** total pressure */
     double pressure()
     {
-        return box_->density() * (temp() + virial() / dimension);
+        return density() * (temp() + virial() / dimension);
     }
 
     /** system temperature */
@@ -93,34 +86,8 @@ public:
     double en_tot() { return en_pot() + en_kin(); }
 
 private:
-    typedef halmd::utility::profiler profiler_type;
-    typedef profiler_type::accumulator_type accumulator_type;
-    typedef profiler_type::scoped_timer_type scoped_timer_type;
-
-    struct runtime
-    {
-        accumulator_type sample;
-    };
-
+    /** module dependencies */
     boost::shared_ptr<box_type const> box_;
-    boost::shared_ptr<clock_type const> clock_;
-    boost::shared_ptr<logger_type> logger_;
-
-    // sample() passes values to HDF5 writer via a fixed location in memory
-    double en_pot_;
-    double en_kin_;
-    double en_tot_;
-    vector_type v_cm_;
-    double pressure_;
-    double temp_;
-    double density_;
-    double hypervirial_;
-    double time_;
-    /** time stamp of data */
-    step_type step_;
-
-    // profiling runtime accumulators
-    runtime runtime_;
 };
 
 } // namespace observables

@@ -17,7 +17,6 @@
 -- along with this program.  If not, see <http://www.gnu.org/licenses/>.
 --
 
-require("halmd.device")
 require("halmd.mdsim.box")
 require("halmd.mdsim.clock")
 require("halmd.mdsim.particle")
@@ -25,30 +24,11 @@ require("halmd.modules")
 require("halmd.observables.samples.phase_space")
 
 -- grab modules
-local device = halmd.device
 local mdsim = halmd.mdsim
 local observables = halmd.observables
 -- grab C++ wrappers
-local phase_space_wrapper = {
-    host = {
-        host = {
-            [2] = libhalmd.observables.host.phase_space_2_
-          , [3] = libhalmd.observables.host.phase_space_3_
-        }
-    }
-}
-if libhalmd.observables.gpu then
-    phase_space_wrapper.gpu = {
-        host = {
-            [2] = libhalmd.observables.gpu.host.phase_space_2_
-          , [3] = libhalmd.observables.gpu.host.phase_space_3_
-        }
-      , gpu = {
-            [2] = libhalmd.observables.gpu.gpu.phase_space_2_
-          , [3] = libhalmd.observables.gpu.gpu.phase_space_3_
-        }
-    }
-end
+local phase_space_wrapper = assert(libhalmd.observables.phase_space)
+local property = property
 -- grab standard library
 local assert = assert
 
@@ -71,12 +51,19 @@ function new(args)
     local clock = mdsim.clock() -- singleton
     local sample = assert(observables.samples.phase_space{memory = memory})
     local logger = assert(args.logger)
+    local phase_space = phase_space_wrapper(sample, particle, box, clock, logger)
 
-    local phase_space
-    if device() then
-        phase_space = assert(phase_space_wrapper.gpu[memory][dimension])
-    else
-        phase_space = assert(phase_space_wrapper.host[memory][dimension])
-    end
-    return phase_space(sample, particle, box, clock, logger)
+    -- store memory as property for profiler description
+    phase_space.memory = property(function(self) return memory end)
+
+    return phase_space
+end
+
+--
+-- connect runtime accumulators to module profiler
+--
+function profile(self, profiler)
+    local memory = assert(self.memory)
+    profiler:on_profile{self, acquire = "acquisition of phase space sample on " .. memory}
+    profiler:on_profile{self, reset = "reset phase space sample on " .. memory}
 end

@@ -17,38 +17,46 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef HALMD_OBSERVABLES_HOST_MEAN_SQUARE_DISPLACEMENT_HPP
-#define HALMD_OBSERVABLES_HOST_MEAN_SQUARE_DISPLACEMENT_HPP
+#ifndef HALMD_OBSERVABLES_HOST_DYNAMICS_MEAN_QUARTIC_DISPLACEMENT_HPP
+#define HALMD_OBSERVABLES_HOST_DYNAMICS_MEAN_QUARTIC_DISPLACEMENT_HPP
 
 #include <lua.hpp>
 
 #include <halmd/numeric/accumulator.hpp>
+#include <halmd/observables/dynamics/mean_quartic_displacement.hpp>
 #include <halmd/observables/host/samples/phase_space.hpp>
 
 namespace halmd {
 namespace observables {
 namespace host {
+namespace dynamics {
 
 /**
- * Mean-square displacement
+ * Mean-quartic displacement
  */
 template <int dimension, typename float_type>
-class mean_square_displacement
+class mean_quartic_displacement
 {
 public:
-    typedef host::samples::phase_space<dimension, float_type> phase_space_type;
-    typedef typename phase_space_type::vector_type vector_type;
-    typedef typename phase_space_type::sample_vector sample_vector;
-    typedef accumulator<float_type> result_type;
+    typedef host::samples::phase_space<dimension, float_type> sample_type;
+    typedef typename sample_type::vector_type vector_type;
+    typedef double result_type;
+    typedef accumulator<result_type> accumulator_type;
 
     static void luaopen(lua_State* L);
 
-    mean_square_displacement() {}
-    result_type compute(sample_vector const& first, sample_vector const& second);
+    mean_quartic_displacement(std::size_t type);
+    accumulator_type compute(sample_type const& first, sample_type const& second);
+
+private:
+    typedef observables::dynamics::mean_quartic_displacement<vector_type> correlate_function_type;
+
+    std::size_t type_;
 };
 
-} // namespace observables
+} // namespace dynamics
 } // namespace host
+} // namespace observables
 } // namespace halmd
 
-#endif /* ! HALMD_OBSERVABLES_HOST_MEAN_SQUARE_DISPLACEMENT_HPP */
+#endif /* ! HALMD_OBSERVABLES_HOST_DYNAMICS_MEAN_QUARTIC_DISPLACEMENT_HPP */

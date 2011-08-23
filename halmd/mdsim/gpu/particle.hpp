@@ -26,6 +26,7 @@
 #include <cuda_wrapper/cuda_wrapper.hpp>
 #include <halmd/mdsim/particle.hpp>
 #include <halmd/mdsim/type_traits.hpp>
+#include <halmd/utility/profiler.hpp>
 
 namespace halmd {
 namespace mdsim {
@@ -48,7 +49,7 @@ public:
       , unsigned int threads = defaults::threads()
     );
     virtual void set();
-    virtual void rearrange(std::vector<unsigned int> const& index) {} // TODO
+    void rearrange(cuda::vector<unsigned int> const& g_index);
 
     /** grid and block dimensions for CUDA calls */
     cuda::config const dim;
@@ -65,8 +66,8 @@ public:
     cuda::vector<float4> g_v;
     /** forces */
     cuda::vector<gpu_vector_type> g_f;
-    /** particle indices ordered by species */
-    cuda::vector<unsigned int> g_index;
+    /** reverse particle tags */
+    cuda::vector<unsigned int> g_reverse_tag;
 
     //
     // particles in page-locked host memory
@@ -85,6 +86,19 @@ public:
     using _Base::ntype;
     /** number of particles per type */
     using _Base::ntypes;
+
+private:
+    typedef utility::profiler profiler_type;
+    typedef typename profiler_type::accumulator_type accumulator_type;
+    typedef typename profiler_type::scoped_timer_type scoped_timer_type;
+
+    struct runtime
+    {
+        accumulator_type rearrange;
+    };
+
+    /** profiling runtime accumulators */
+    runtime runtime_;
 };
 
 template <unsigned int dimension, typename float_type>

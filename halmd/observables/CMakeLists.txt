@@ -15,9 +15,10 @@ halmd_add_modules(
   libhalmd_observables_thermodynamics
 )
 
+add_subdirectory(samples) # must appear first in order to register blocking_scheme_base before blocking_scheme
+add_subdirectory(dynamics)
+add_subdirectory(host)
 if(WITH_CUDA)
   add_subdirectory(gpu)
 endif(WITH_CUDA)
-add_subdirectory(host)
-add_subdirectory(samples)
 add_subdirectory(utility)

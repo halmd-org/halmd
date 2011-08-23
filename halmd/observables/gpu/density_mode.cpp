@@ -85,7 +85,7 @@ density_mode<dimension, float_type>::density_mode(
 template <int dimension, typename float_type>
 void density_mode<dimension, float_type>::acquire()
 {
-    scoped_timer_type timer(runtime_.sample);
+    scoped_timer_type timer(runtime_.acquire);
 
     if (rho_sample_.step == clock_->step()) {
         LOG_TRACE("sample is up to date");
@@ -103,6 +103,10 @@ void density_mode<dimension, float_type>::acquire()
     if (phase_space_->step != clock_->step()) {
         throw logic_error("GPU phase space sample was not updated");
     }
+
+    // re-allocate memory which allows modules (e.g., dynamics::blocking_scheme)
+    // to hold a previous copy of the sample
+    rho_sample_.reset();
 
     // compute density modes separately for each particle type
     // 1st loop: iterate over particle types
@@ -161,7 +165,7 @@ void density_mode<dimension, float_type>::luaopen(lua_State* L)
                     .scope
                     [
                         class_<runtime>("runtime")
-                            .def_readonly("sample", &runtime::sample)
+                            .def_readonly("acquire", &runtime::acquire)
                     ]
                     .def_readonly("runtime", &density_mode::runtime_)
             ]

@@ -93,5 +93,5 @@ end
 -- connect runtime accumulators to module profiler
 --
 function profile(self, profiler)
-    profiler:on_profile{self, sample = "computation of density modes"}
+    profiler:on_profile{self, acquire = "computation of density modes"}
 end

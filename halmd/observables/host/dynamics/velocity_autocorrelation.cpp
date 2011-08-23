@@ -17,7 +17,9 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <halmd/observables/host/velocity_autocorrelation.hpp>
+#include <halmd/io/logger.hpp>
+#include <halmd/observables/dynamics/correlation.hpp>
+#include <halmd/observables/host/dynamics/velocity_autocorrelation.hpp>
 #include <halmd/utility/lua/lua.hpp>
 
 using namespace boost;
@@ -26,6 +28,17 @@ using namespace std;
 namespace halmd {
 namespace observables {
 namespace host {
+namespace dynamics {
+
+template <int dimension, typename float_type>
+velocity_autocorrelation<dimension, float_type>::velocity_autocorrelation(
+    size_t type
+)
+  // member initialisation
+  : type_(type)
+{
+    LOG("initialise velocity autocorrelation of " << string(1, 'A' + type) << " particles");
+}
 
 /**
  * Compute velocity autocorrelation of two velocity sample vectors.
@@ -35,19 +48,26 @@ namespace host {
  * @returns accumulated velocity autocorrelation
  */
 template <int dimension, typename float_type>
-typename velocity_autocorrelation<dimension, float_type>::result_type
+typename velocity_autocorrelation<dimension, float_type>::accumulator_type
 velocity_autocorrelation<dimension, float_type>::compute(
-    sample_vector const& first
-  , sample_vector const& second
+    sample_type const& first
+  , sample_type const& second
 )
 {
-    result_type acc;
-    typename sample_vector::const_iterator v2, v1, end = first.end();
-    for (v2 = first.begin(), v1 = second.begin(); v2 != end; ++v2, ++v1) {
+    accumulator_type acc;
+    typename sample_type::sample_vector::const_iterator v1, v2, end = first.v[type_]->end();
+    for (v1 = first.v[type_]->begin(), v2 = second.v[type_]->begin(); v1 != end; ++v1, ++v2) {
         // accumulate velocity autocorrelation
-        acc(inner_prod(*v1, *v2));
+        acc(correlate_function_type()(*v1, *v2));
     }
     return acc;
+}
+
+template <typename tcf_type>
+static shared_ptr<tcf_type>
+wrap_tcf(size_t type, typename tcf_type::sample_type const&)
+{
+    return make_shared<tcf_type>(type);
 }
 
 template <int dimension, typename float_type>
@@ -59,36 +79,47 @@ void velocity_autocorrelation<dimension, float_type>::luaopen(lua_State* L)
     [
         namespace_("observables")
         [
-            namespace_("host")
+            namespace_("dynamics")
             [
                 class_<velocity_autocorrelation>(class_name.c_str())
-                    .def(constructor<>())
+
+              , def("velocity_autocorrelation", &wrap_tcf<velocity_autocorrelation>)
             ]
         ]
     ];
 }
 
-HALMD_LUA_API int luaopen_libhalmd_observables_host_velocity_autocorrelation(lua_State* L)
+HALMD_LUA_API int luaopen_libhalmd_observables_host_dynamics_velocity_autocorrelation(lua_State* L)
 {
-#ifndef USE_HOST_SINGLE_PRECISION
     velocity_autocorrelation<3, double>::luaopen(L);
     velocity_autocorrelation<2, double>::luaopen(L);
-#else
     velocity_autocorrelation<3, float>::luaopen(L);
     velocity_autocorrelation<2, float>::luaopen(L);
-#endif
+    observables::dynamics::correlation<velocity_autocorrelation<3, double> >::luaopen(L);
+    observables::dynamics::correlation<velocity_autocorrelation<2, double> >::luaopen(L);
+    observables::dynamics::correlation<velocity_autocorrelation<3, float> >::luaopen(L);
+    observables::dynamics::correlation<velocity_autocorrelation<2, float> >::luaopen(L);
     return 0;
 }
 
 // explicit instantiation
-#ifndef USE_HOST_SINGLE_PRECISION
 template class velocity_autocorrelation<3, double>;
 template class velocity_autocorrelation<2, double>;
-#else
 template class velocity_autocorrelation<3, float>;
 template class velocity_autocorrelation<2, float>;
-#endif
 
-} // namespace observables
+} // namespace dynamics
 } // namespace host
+
+namespace dynamics
+{
+
+// explicit instantiation
+template class correlation<host::dynamics::velocity_autocorrelation<3, double> >;
+template class correlation<host::dynamics::velocity_autocorrelation<2, double> >;
+template class correlation<host::dynamics::velocity_autocorrelation<3, float> >;
+template class correlation<host::dynamics::velocity_autocorrelation<2, float> >;
+
+} // namespace dynamics
+} // namespace observables
 } // namespace halmd

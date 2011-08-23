@@ -54,28 +54,23 @@ public:
     /** zero particle forces */
     virtual void compute();
 
-    // nothing to enable or disable
+    // nothing to enable
     virtual void aux_enable() {}
-    virtual void aux_disable() {}
-    virtual bool aux_flag() const
-    {
-        return true;
-    }
 
     //! return average potential energy per particle
-    virtual double potential_energy()
+    virtual double potential_energy() const
     {
         return 0;
     }
 
     //! potential part of stress tensor
-    virtual stress_tensor_type stress_tensor_pot()
+    virtual stress_tensor_type stress_tensor_pot() const
     {
         return stress_tensor_type(0);
     }
 
     //! return hypervirial per particle
-    virtual double hypervirial()
+    virtual double hypervirial() const
     {
         return 0;
     }

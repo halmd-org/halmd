@@ -184,6 +184,7 @@ void lennard_jones_fluid<modules_type>::test()
 
     // stochastic thermostat => centre particle velocities around zero
     velocity->shift(-thermodynamics->v_cm());
+    thermodynamics->clear_cache(); //< reset caches after shifting the velocities
 
     const double vcm_limit = gpu ? 0.1 * eps_float : 20 * eps;
     BOOST_CHECK_SMALL(norm_inf(thermodynamics->v_cm()), vcm_limit);
@@ -195,7 +196,6 @@ void lennard_jones_fluid<modules_type>::test()
     BOOST_TEST_MESSAGE("equilibrate initial state");
     steps = static_cast<step_type>(ceil(30 / timestep));
     step_type period = static_cast<step_type>(round(.01 / timestep));
-    force->aux_disable();                     // disable auxiliary variables
     for (step_type i = 0; i < steps; ++i) {
         if (i == steps - 1) {
             force->aux_enable();              // enable auxiliary variables in last step
@@ -211,6 +211,7 @@ void lennard_jones_fluid<modules_type>::test()
     double v_scale = sqrt(temp / mean(temp_));
     BOOST_TEST_MESSAGE("rescale velocities by factor " << v_scale);
     velocity->rescale(v_scale);
+    thermodynamics->clear_cache(); //< reset caches after rescaling the velocities
 
     double en_tot = thermodynamics->en_tot();
     double max_en_diff = 0; // maximal absolut deviation from initial total energy
@@ -220,7 +221,6 @@ void lennard_jones_fluid<modules_type>::test()
     BOOST_TEST_MESSAGE("run NVE simulation");
     steps = static_cast<step_type>(ceil(60 / timestep));
     period = static_cast<step_type>(round(0.05 / timestep));
-    force->aux_disable();
     for (step_type i = 0; i < steps; ++i) {
         // turn on evaluation of potential energy, virial, etc.
         if(i % period == 0) {
@@ -237,7 +237,6 @@ void lennard_jones_fluid<modules_type>::test()
             en_pot(thermodynamics->en_pot());
             hypervir(thermodynamics->hypervirial());
             max_en_diff = max(abs(thermodynamics->en_tot() - en_tot), max_en_diff);
-            force->aux_disable();
         }
     }
     BOOST_CHECK_SMALL(norm_inf(thermodynamics->v_cm()), vcm_limit);

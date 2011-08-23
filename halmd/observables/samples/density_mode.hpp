@@ -22,11 +22,13 @@
 
 #include <boost/shared_ptr.hpp>
 #include <complex>
+#include <limits>
 #include <lua.hpp>
 #include <vector>
 
 #include <halmd/mdsim/clock.hpp>
 #include <halmd/numeric/blas/fixed_vector.hpp>
+#include <halmd/utility/raw_allocator.hpp>
 
 namespace halmd {
 namespace observables {
@@ -50,7 +52,7 @@ public:
     typedef typename clock_type::step_type step_type;
 
     /** density modes of a single particle type, one entry per wavevector */
-    typedef std::vector<mode_type> mode_vector_type;
+    typedef std::vector<mode_type, raw_allocator<mode_type> > mode_vector_type;
     /** list of density modes for all particle types */
     typedef std::vector<boost::shared_ptr<mode_vector_type> > mode_vector_vector_type;
 
@@ -71,10 +73,46 @@ public:
      * @param nq    total number of wavevectors
      */
     density_mode(unsigned int ntype, unsigned int nq);
+
+    /**
+     * Free shared pointers and re-allocate memory
+     * if containers are shared with some other object.
+     *
+     * Values are not initialised.
+     *
+     * @param force if true then enforce reallocation
+     */
+    void reset(bool force=false);
 };
 
-} // namespace observables
+template <int dimension>
+inline density_mode<dimension>::density_mode(unsigned int ntype, unsigned int nq)
+  // allocate sample pointers
+  : rho(ntype)
+  // initialise attributes
+  , step(std::numeric_limits<step_type>::max())
+{
+    // allocate memory for each particle type
+    for (unsigned int i = 0; i < ntype; ++i) {
+        rho[i].reset(new mode_vector_type(nq));
+    }
+}
+
+template <int dimension>
+inline void density_mode<dimension>::reset(bool force)
+{
+    // free shared pointers and re-allocate memory
+    for (size_t i = 0; i < rho.size(); ++i) {
+        if (force || !rho[i].unique()) {
+            rho[i].reset(new mode_vector_type(rho[i]->size()));
+        }
+    }
+    // make time stamp invalid
+    step = std::numeric_limits<step_type>::max();
+}
+
 } // namespace samples
+} // namespace observables
 } // namespace halmd
 
 #endif /* ! HALMD_OBSERVABLES_SAMPLES_DENSITY_MODE_HPP */

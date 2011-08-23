@@ -22,6 +22,8 @@
 
 #include <cuda_wrapper/cuda_wrapper.hpp>
 
+#include <halmd/mdsim/type_traits.hpp>
+
 namespace halmd {
 namespace mdsim {
 namespace gpu {
@@ -29,11 +31,23 @@ namespace gpu {
 template <int dimension>
 struct particle_wrapper
 {
+    typedef typename type_traits<dimension, float>::gpu::vector_type vector_type;
+    typedef typename type_traits<dimension, float>::gpu::coalesced_vector_type aligned_vector_type;
+
     cuda::symbol<unsigned int> nbox;
     cuda::symbol<unsigned int> ntype;
     cuda::texture<unsigned int> ntypes;
+    /** positions, types */
+    cuda::texture<float4> r;
+    /** minimum image vectors */
+    cuda::texture<aligned_vector_type> image;
+    /** velocities, tags */
+    cuda::texture<float4> v;
     cuda::function<void (float4*, float4*)> tag;
+    /** generate ascending index sequence */
     cuda::function<void (unsigned int*)> gen_index;
+    /** rearrange particles by a given permutation */
+    cuda::function<void (unsigned int const*, float4*, aligned_vector_type*, float4*, unsigned int*)> rearrange;
     static particle_wrapper const kernel;
 };
 
