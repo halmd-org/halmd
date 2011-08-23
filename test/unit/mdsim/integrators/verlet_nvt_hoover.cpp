@@ -149,13 +149,15 @@ void verlet_nvt_hoover<modules_type>::test()
     double max_en_diff = 0;                       // integral of motion: Hamiltonian extended by NHC terms
 
     BOOST_TEST_MESSAGE("prepare system");
-    force->aux_enable();                    //< enable computation of potential energy
     core->setup();
 
     // equilibrate the system,
     // this avoids a jump in the conserved energy at the very beginning
     BOOST_TEST_MESSAGE("equilibrate over " << steps / 20 << " steps");
     for (uint64_t i = 0; i < steps / 20; ++i) {
+        if (i + 1 == steps / 20) {
+            force->aux_enable();                    //< enable computation of potential energy
+        }
         core->mdstep();
     }
 
@@ -163,7 +165,6 @@ void verlet_nvt_hoover<modules_type>::test()
     double en_nhc0 = thermodynamics->en_tot() + integrator->en_nhc();
 
     BOOST_TEST_MESSAGE("run NVT integrator over " << steps << " steps");
-    force->aux_disable();
     for (uint64_t i = 0; i < steps; ++i) {
         // enable auxiliary variables in force module
         if(i % period == 0) {
@@ -194,7 +195,6 @@ void verlet_nvt_hoover<modules_type>::test()
                 << setprecision(6)
             );
             max_en_diff = max(abs(en_nhc_ - en_nhc0), max_en_diff);
-            force->aux_disable();
         }
     }
 
