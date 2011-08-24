@@ -49,12 +49,15 @@ blocking_scheme::blocking_scheme(
 {
     LOG("size of coarse-graining blocks: " << block_size_);
     if (block_size_ < 2) {
-        throw std::logic_error("Minimum block size is 2.");
+        throw invalid_argument("Minimum size of coarse-graining blocks is 2.");
     }
 
     // optionally, compute shift of shifted coarse-graining levels ('odd' levels)
     if (shift == 0) {
         shift = static_cast<unsigned int>(std::sqrt(block_size_));
+    }
+    else if (shift >= block_size_) {
+        throw invalid_argument("Coarse-graining shift must be less than block size.");
     }
     assert(shift > 0);
 
@@ -63,26 +66,31 @@ blocking_scheme::blocking_scheme(
         LOG("coarse-graining shift: " << shift);
     }
     else {
-        LOG_DEBUG("disable shifted coarse-graining blocks");
+        LOG("disable shifted coarse-graining blocks");
     }
 
     LOG("minimal separation of samples in time: " << separation_ * resolution);
 
     // set up sampling intervals for each level
-    step_type max_interval =
-        static_cast<step_type>(maximum_lag_time / clock_->timestep()) / 2; // we need at least 2 data points per level
-    step_type s =
-        static_cast<step_type>(resolution / clock_->timestep());
-    while (s * shift < max_interval)
+    step_type max_interval = static_cast<step_type>(maximum_lag_time / clock_->timestep());
+    step_type s = static_cast<step_type>(resolution / clock_->timestep());
+    while (s <= max_interval)
     {
         interval_.push_back(s);               // even levels
-        if (shift > 1) {                      // skip if blocks would be identical
-            interval_.push_back(s * shift);   // odd levels
+        if (shift > 1) {                      // odd levels, skip if disabled
+            step_type s_odd = s * shift;
+            if (s_odd <= max_interval) {
+                interval_.push_back(s_odd);
+            }
         }
         s *= block_size_;
     }
     unsigned int block_count = interval_.size();
     LOG("number of coarse-graining blocks: " << block_count);
+    if (block_count == 0) {
+        LOG_WARNING("temporal resolution (" << resolution << ") exceeds simulation time (" << maximum_lag_time << ")");
+        throw invalid_argument("Sampling interval of dynamic correlations is too large.");
+    }
 
     // setup initial time origin for each level
     origin_.resize(block_count, 0);
