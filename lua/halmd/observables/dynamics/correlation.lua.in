@@ -17,7 +17,7 @@
 -- along with this program.  If not, see <http://www.gnu.org/licenses/>.
 --
 
-require("halmd.io.writers.observable")
+require("halmd.io.writers.file")
 require("halmd.modules")
 require("halmd.observables.dynamics.blocking_scheme")
 require("halmd.observables.dynamics.correlations")
