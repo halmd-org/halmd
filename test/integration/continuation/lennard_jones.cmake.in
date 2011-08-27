@@ -51,16 +51,17 @@ endif()
 execute_halmd(
   --verbose
   --output "${OUTPUT_PREFIX}"
-  --steps 1000
+  --steps 500
+  --timestep 0.002
   "${BACKEND_OPTION}"
   box --dimension "${DIMENSION}"--particles=100,200 --density 0.1
-  trajectory --every=1000
+  trajectory --every=500
 )
 
 execute_halmd(
   --verbose
   --output "${OUTPUT_PREFIX}_continued"
-  --steps 1000
+  --time 2
   "${BACKEND_OPTION}"
   trajectory --file "${OUTPUT_PREFIX}.trj"
   trajectory --every=1000
