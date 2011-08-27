@@ -65,7 +65,7 @@ connection append::on_write(
         throw invalid_argument("dataset location");
     }
     group = h5xx::open_group(group_, join(location, "/"));
-    H5::DataSet dataset = create_dataset(group, "samples", slot);
+    H5::DataSet dataset = create_dataset(group, "sample", slot);
     h5xx::link(step_, group, "step");
     h5xx::link(time_, group, "time");
     return on_write_.connect(bind(&write_dataset<T>, dataset, slot));

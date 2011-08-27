@@ -98,7 +98,7 @@ void append::read_dataset(
   , index_function_type const& index
 )
 {
-    H5::DataSet dataset = group.openDataSet("samples");
+    H5::DataSet dataset = group.openDataSet("sample");
     h5xx::read_dataset(dataset, &slot(), index(group));
 }
 
