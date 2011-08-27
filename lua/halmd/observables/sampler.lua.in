@@ -107,7 +107,8 @@ end
 --
 function options(desc, globals)
     globals:add("steps", po.uint64(), "number of simulation steps")
-    globals:add("time", po.float():conflicts("steps"), "total simulation time")
+    -- FIXME global option --time conflicts with trajectory --time in args table
+    -- globals:add("time", po.float():conflicts("steps"), "total simulation time")
 end
 
 --

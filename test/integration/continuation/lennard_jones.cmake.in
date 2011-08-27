@@ -61,7 +61,7 @@ execute_halmd(
 execute_halmd(
   --verbose
   --output "${OUTPUT_PREFIX}_continued"
-  --time 2
+  --steps 1000
   "${BACKEND_OPTION}"
   trajectory --file "${OUTPUT_PREFIX}.trj"
   trajectory --every=1000
