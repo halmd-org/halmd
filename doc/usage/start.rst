@@ -46,7 +46,7 @@ The equivalent parameter configuration file would look like this ::
   force=lennard_jones
   integrator=verlet_nvt_andersen
   timestep=0.005
-  time 50
+  time=50
 
   [box]
   density=0.8
