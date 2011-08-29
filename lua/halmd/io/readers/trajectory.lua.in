@@ -56,12 +56,13 @@ function new(args)
         local reader = file:reader{location = {"trajectory"}, mode = "append"}
         -- read phase space sample before system preparation
         local core = mdsim.core() -- singleton
-        if time then
-            core:on_prepend_setup{reader:read_at_time(time), tracker = reader}
-        else
+-- FIXME the option 'time' conflicts with and is superseded by the global option 'time'
+--        if time then
+--            core:on_prepend_setup{reader:read_at_time(time), tracker = reader}
+--        else
             -- read sample at last step by default
             core:on_prepend_setup{reader:read_at_step(step), tracker = reader}
-        end
+--        end
 
         --
         -- extend with reader.position and reader.velocity
@@ -144,5 +145,6 @@ function options(desc)
     end), "trajectory input file")
 
     desc:add("step", po.int64(), "read phase space sample at step")
-    desc:add("time", po.float():conflicts("step"), "read phase space sample at time")
+-- FIXME this option conflicts with and is superseded by the global option 'time'
+--    desc:add("time", po.float():conflicts("step"), "read phase space sample at time")
 end
