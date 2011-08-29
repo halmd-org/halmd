@@ -30,6 +30,7 @@ set(CMAKE_MODULE_PATH "@HALMD_TEST_CMAKE_BINARY_DIR@")
 include(execute_halmd)
 
 set(OUTPUT_PREFIX "@CMAKE_CURRENT_BINARY_DIR@/lennard_jones_simple")
+set(WITH_CUDA @WITH_CUDA@)
 
 if(DEFINED USE_HOST)
     if (WITH_CUDA)
