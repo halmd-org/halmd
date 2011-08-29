@@ -30,7 +30,7 @@ Equilibration is done with the Andersen thermostat at a temperature
 
   halmd -v \
     --force=lennard_jones --integrator=verlet_nvt_andersen \
-    --timestep 0.005 --steps 10000 \
+    --timestep 0.005 --time 50 \
     box --density 0.8 --particles 20000 \
     verlet_nvt_andersen --temperature 2 \
     sampler --trajectory 10000
@@ -46,7 +46,7 @@ The equivalent parameter configuration file would look like this ::
   force=lennard_jones
   integrator=verlet_nvt_andersen
   timestep=0.005
-  steps=10000
+  time 50
 
   [box]
   density=0.8
@@ -60,7 +60,7 @@ The equivalent parameter configuration file would look like this ::
 
 It is passed directly to HALMD, while parameters may be overwritten: ::
 
-  halmd -v -c example.rc --steps 2000
+  halmd -v -c example.rc --time 10
 
 The trajectory is written every 10,000 steps, i.e., at the beginning and the
 end of the simulation.  The initial configuration of the particles is a fcc
@@ -71,7 +71,7 @@ We may now continue the simulation at constant energy by resuming from the
 trajectory file and selecting a different integrator ::
 
   halmd -v \
-    --integrator=verlet --timestep 0.001 --steps 100000 \
+    --integrator=verlet --timestep 0.001 --time 100 \
     trajectory --file halmd_20110715_160545.trj
     sampler --state-vars 100
 
