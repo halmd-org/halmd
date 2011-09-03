@@ -299,7 +299,7 @@ HDF5_TARBALL = hdf5-$(HDF5_VERSION).tar.bz2
 HDF5_TARBALL_URL = http://www.hdfgroup.org/ftp/HDF5/current/src/$(HDF5_TARBALL)
 HDF5_BUILD_DIR = hdf5-$(HDF5_VERSION)
 HDF5_INSTALL_DIR = $(PREFIX)/hdf5-$(HDF5_VERSION)
-HDF5_CONFIGURE_FLAGS = --enable-cxx --enable-static --disable-shared
+HDF5_CONFIGURE_FLAGS = --enable-cxx
 HDF5_CFLAGS = -fPIC
 HDF5_CXXFLAGS = -fPIC
 
