@@ -278,6 +278,7 @@ add_subdirectory(doc EXCLUDE_FROM_ALL)
 add_subdirectory(halmd)
 add_subdirectory(lua)
 add_subdirectory(test)
+add_subdirectory(libs/h5xx/test)
 
 else(NOT HALMD_DOC_ONLY)
 
