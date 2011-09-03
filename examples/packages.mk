@@ -352,7 +352,7 @@ env-hdf5:
 ## Git version control
 ##
 
-GIT_VERSION = 1.7.6
+GIT_VERSION = 1.7.6.1
 GIT_TARBALL = git-$(GIT_VERSION).tar.bz2
 GIT_MANPAGES_TARBALL = git-manpages-$(GIT_VERSION).tar.bz2
 GIT_TARBALL_URL = http://kernel.org/pub/software/scm/git/$(GIT_TARBALL)
