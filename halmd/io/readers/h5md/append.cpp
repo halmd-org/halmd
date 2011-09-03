@@ -28,6 +28,7 @@
 #include <luabind/out_value_policy.hpp>
 #include <stdexcept>
 
+#include <halmd/io/logger.hpp>
 #include <halmd/io/utility/hdf5.hpp>
 #include <halmd/io/readers/h5md/append.hpp>
 #include <halmd/numeric/blas/fixed_vector.hpp>
