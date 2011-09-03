@@ -48,8 +48,8 @@ append::append(
         throw invalid_argument("group location");
     }
     group_ = h5xx::open_group(root, join(location, "/"));
-    step_ = h5xx::create_dataset<step_type>(group_, "step");
-    time_ = h5xx::create_dataset<time_type>(group_, "time");
+    step_ = h5xx::create_chunked_dataset<step_type>(group_, "step");
+    time_ = h5xx::create_chunked_dataset<time_type>(group_, "time");
     group_.unlink("step");
     group_.unlink("time");
 }
@@ -91,8 +91,8 @@ void append::write()
 
 void append::write_step_time()
 {
-    h5xx::write_dataset(step_, clock_->step());
-    h5xx::write_dataset(time_, clock_->time());
+    h5xx::write_chunked_dataset(step_, clock_->step());
+    h5xx::write_chunked_dataset(time_, clock_->time());
 }
 
 template <typename T>
@@ -102,7 +102,7 @@ H5::DataSet append::create_dataset(
   , function<T ()> const&
 )
 {
-    return h5xx::create_dataset<T>(group, name);
+    return h5xx::create_chunked_dataset<T>(group, name);
 }
 
 template <typename T>
@@ -112,7 +112,7 @@ H5::DataSet append::create_dataset(
   , function<T const& ()> const&
 )
 {
-    return h5xx::create_dataset<T>(group, name);
+    return h5xx::create_chunked_dataset<T>(group, name);
 }
 
 template <typename T>
@@ -122,7 +122,7 @@ H5::DataSet append::create_dataset(
   , function<T& ()> const&
 )
 {
-    return h5xx::create_dataset<T>(group, name);
+    return h5xx::create_chunked_dataset<T>(group, name);
 }
 
 template <typename T, typename Alloc>
@@ -132,7 +132,7 @@ H5::DataSet append::create_dataset(
   , function<vector<T, Alloc> ()> const& slot
 )
 {
-    return h5xx::create_dataset<vector<T, Alloc> >(group, name, slot().size());
+    return h5xx::create_chunked_dataset<vector<T, Alloc> >(group, name, slot().size());
 }
 
 template <typename T, typename Alloc>
@@ -142,7 +142,7 @@ H5::DataSet append::create_dataset(
   , function<vector<T, Alloc> const& ()> const& slot
 )
 {
-    return h5xx::create_dataset<vector<T, Alloc> >(group, name, slot().size());
+    return h5xx::create_chunked_dataset<vector<T, Alloc> >(group, name, slot().size());
 }
 
 template <typename T, typename Alloc>
@@ -152,7 +152,7 @@ H5::DataSet append::create_dataset(
   , function<vector<T, Alloc>& ()> const& slot
 )
 {
-    return h5xx::create_dataset<vector<T, Alloc> >(group, name, slot().size());
+    return h5xx::create_chunked_dataset<vector<T, Alloc> >(group, name, slot().size());
 }
 
 template <typename T, std::size_t N, typename Alloc>
@@ -162,7 +162,7 @@ H5::DataSet append::create_dataset(
   , function<multi_array<T, N, Alloc> ()> const& slot
 )
 {
-    return h5xx::create_dataset<multi_array<T, N, Alloc> >(group, name, slot().shape());
+    return h5xx::create_chunked_dataset<multi_array<T, N, Alloc> >(group, name, slot().shape());
 }
 
 template <typename T, size_t N, typename Alloc>
@@ -172,7 +172,7 @@ H5::DataSet append::create_dataset(
   , function<multi_array<T, N, Alloc> const& ()> const& slot
 )
 {
-    return h5xx::create_dataset<multi_array<T, N, Alloc> >(group, name, slot().shape());
+    return h5xx::create_chunked_dataset<multi_array<T, N, Alloc> >(group, name, slot().shape());
 }
 
 template <typename T, size_t N, typename Alloc>
@@ -182,7 +182,7 @@ H5::DataSet append::create_dataset(
   , function<multi_array<T, N, Alloc>& ()> const& slot
 )
 {
-    return h5xx::create_dataset<multi_array<T, N, Alloc> >(group, name, slot().shape());
+    return h5xx::create_chunked_dataset<multi_array<T, N, Alloc> >(group, name, slot().shape());
 }
 
 
@@ -192,7 +192,7 @@ void append::write_dataset(
   , function<T ()> const& slot
 )
 {
-    h5xx::write_dataset(dataset, slot());
+    h5xx::write_chunked_dataset(dataset, slot());
 }
 
 static append::slot_function_type

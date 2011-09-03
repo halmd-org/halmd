@@ -263,6 +263,7 @@ enable_testing()
 include(CTest)
 
 include_directories(${HALMD_SOURCE_DIR}/include)
+include_directories(${HALMD_SOURCE_DIR}/libs/h5xx)
 include_directories(${HALMD_SOURCE_DIR})
 include_directories(${HALMD_BINARY_DIR})
 include_directories(${Boost_INCLUDE_DIR})

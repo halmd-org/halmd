@@ -100,7 +100,7 @@ void append::read_dataset(
 )
 {
     H5::DataSet dataset = group.openDataSet("sample");
-    h5xx::read_dataset(dataset, &slot(), index(group));
+    h5xx::read_chunked_dataset(dataset, slot(), index(group));
 }
 
 /**
@@ -115,7 +115,7 @@ hsize_t append::read_step_index(
 {
     H5::DataSet dataset = group.openDataSet("step");
     std::vector<step_type> steps;
-    h5xx::read_unique_dataset(dataset, &steps);
+    h5xx::read_dataset(dataset, steps);
     if (steps.size() < 1) {
         throw runtime_error("empty step dataset");
     }
@@ -155,7 +155,7 @@ hsize_t append::read_time_index(
 {
     H5::DataSet dataset = group.openDataSet("time");
     std::vector<time_type> times;
-    h5xx::read_unique_dataset(dataset, &times);
+    h5xx::read_dataset(dataset, times);
     if (times.size() < 1) {
         throw runtime_error("empty time dataset");
     }
