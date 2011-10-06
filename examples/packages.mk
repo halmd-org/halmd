@@ -352,11 +352,11 @@ env-hdf5:
 ## Git version control
 ##
 
-GIT_VERSION = 1.7.6.1
-GIT_TARBALL = git-$(GIT_VERSION).tar.bz2
-GIT_MANPAGES_TARBALL = git-manpages-$(GIT_VERSION).tar.bz2
-GIT_TARBALL_URL = http://kernel.org/pub/software/scm/git/$(GIT_TARBALL)
-GIT_MANPAGES_TARBALL_URL = http://kernel.org/pub/software/scm/git/$(GIT_MANPAGES_TARBALL)
+GIT_VERSION = 1.7.7
+GIT_TARBALL = git-$(GIT_VERSION).tar.gz
+GIT_MANPAGES_TARBALL = git-manpages-$(GIT_VERSION).tar.gz
+GIT_TARBALL_URL = http://git-core.googlecode.com/files/$(GIT_TARBALL)
+GIT_MANPAGES_TARBALL_URL = http://git-core.googlecode.com/files/$(GIT_MANPAGES_TARBALL)
 GIT_BUILD_DIR = git-$(GIT_VERSION)
 GIT_CONFIGURE_FLAGS = --without-python
 GIT_INSTALL_DIR = $(PREFIX)/git-$(GIT_VERSION)
@@ -370,7 +370,7 @@ fetch-git: .fetch-git
 
 .extract-git: .fetch-git
 	$(RM) $(GIT_BUILD_DIR)
-	$(TAR) -xjf $(GIT_TARBALL)
+	$(TAR) -xzf $(GIT_TARBALL)
 	@$(TOUCH) $@
 
 extract-git: .extract-git
@@ -390,7 +390,7 @@ build-git: .build-git
 install-git: .build-git
 	cd $(GIT_BUILD_DIR) && make install
 	install -d $(GIT_INSTALL_DIR)/share/man
-	cd $(GIT_INSTALL_DIR)/share/man && $(TAR) -xjf $(CURDIR)/$(GIT_MANPAGES_TARBALL)
+	cd $(GIT_INSTALL_DIR)/share/man && $(TAR) -xzf $(CURDIR)/$(GIT_MANPAGES_TARBALL)
 
 clean-git:
 	@$(RM) .build-git
