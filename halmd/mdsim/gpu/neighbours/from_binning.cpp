@@ -43,18 +43,20 @@ namespace neighbours {
  */
 template <int dimension, typename float_type>
 from_binning<dimension, float_type>::from_binning(
-    shared_ptr<particle_type const> particle
+    shared_ptr<particle_type const> particle1
+  , shared_ptr<particle_type const> particle2 /* FIXME not implemented */
+  , shared_ptr<binning_type const> binning1
+  , shared_ptr<binning_type const> binning2 /* FIXME not implemented */
   , shared_ptr<box_type const> box
-  , shared_ptr<binning_type const> binning
   , matrix_type const& r_cut
   , double skin
   , shared_ptr<logger> logger
   , double cell_occupancy
 )
   // dependency injection
-  : particle_(particle)
+  : particle_(particle1)
   , box_(box)
-  , binning_(binning)
+  , binning_(binning1)
   , logger_(logger)
   // allocate parameters
   , r_skin_(skin)
@@ -156,8 +158,10 @@ void from_binning<dimension, float_type>::luaopen(lua_State* L)
                     class_<from_binning, shared_ptr<mdsim::neighbour>, mdsim::neighbour>(class_name.c_str())
                         .def(constructor<
                             shared_ptr<particle_type const>
-                          , shared_ptr<box_type const>
+                          , shared_ptr<particle_type const>
                           , shared_ptr<binning_type const>
+                          , shared_ptr<binning_type const>
+                          , shared_ptr<box_type const>
                           , matrix_type const&
                           , double
                           , shared_ptr<logger_type>

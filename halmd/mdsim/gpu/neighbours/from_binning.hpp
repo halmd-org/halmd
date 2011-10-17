@@ -58,9 +58,11 @@ public:
     static void luaopen(lua_State* L);
 
     from_binning(
-        boost::shared_ptr<particle_type const> particle
+        boost::shared_ptr<particle_type const> particle1
+      , boost::shared_ptr<particle_type const> particle2 /* FIXME not implemented */
+      , boost::shared_ptr<binning_type const> binning1
+      , boost::shared_ptr<binning_type const> binning2 /* FIXME not implemented */
       , boost::shared_ptr<box_type const> box
-      , boost::shared_ptr<binning_type const> binning
       , matrix_type const& r_cut
       , double skin
       , boost::shared_ptr<logger_type> logger = boost::make_shared<logger_type>()
