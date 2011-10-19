@@ -55,10 +55,6 @@ public:
     typedef typename potential_type::gpu_potential_type gpu_potential_type;
     typedef pair_trunc_wrapper<dimension, gpu_potential_type> gpu_wrapper;
 
-    boost::shared_ptr<potential_type> potential;
-    boost::shared_ptr<particle_type> particle;
-    boost::shared_ptr<box_type> box;
-
     inline static void luaopen(lua_State* L);
 
     inline pair_trunc(
@@ -118,6 +114,9 @@ private:
         }
     }
 
+    boost::shared_ptr<potential_type> potential_;
+    boost::shared_ptr<particle_type> particle_;
+    boost::shared_ptr<box_type> box_;
     /** neighbour lists */
     boost::shared_ptr<neighbour_type const> neighbour_;
 
@@ -144,19 +143,19 @@ pair_trunc<dimension, float_type, potential_type>::pair_trunc(
   // FIXME , boost::shared_ptr<smooth_type> smooth
 )
   // dependency injection
-  : potential(potential)
-  , particle(particle)
-  , box(box)
+  : potential_(potential)
+  , particle_(particle)
+  , box_(box)
   , neighbour_(neighbour)
   // member initalisation
   , aux_flag_(false)          //< disable auxiliary variables by default
   , aux_valid_(false)
   // memory allocation
-  , g_en_pot_(particle->dim.threads())
-  , g_stress_pot_(particle->dim.threads())
-  , g_hypervirial_(particle->dim.threads())
+  , g_en_pot_(particle_->dim.threads())
+  , g_stress_pot_(particle_->dim.threads())
+  , g_hypervirial_(particle_->dim.threads())
 {
-    cuda::copy(static_cast<vector_type>(box->length()), gpu_wrapper::kernel.box_length);
+    cuda::copy(static_cast<vector_type>(box_->length()), gpu_wrapper::kernel.box_length);
 }
 
 /**
@@ -172,19 +171,19 @@ void pair_trunc<dimension, float_type, potential_type>::compute()
 
     cuda::copy(neighbour_->size(), gpu_wrapper::kernel.neighbour_size);
     cuda::copy(neighbour_->stride(), gpu_wrapper::kernel.neighbour_stride);
-    gpu_wrapper::kernel.r.bind(particle->g_r);
-    potential->bind_textures();
+    gpu_wrapper::kernel.r.bind(particle_->g_r);
+    potential_->bind_textures();
 
-    cuda::configure(particle->dim.grid, particle->dim.block);
+    cuda::configure(particle_->dim.grid, particle_->dim.block);
     aux_valid_ = aux_flag_;
     if (!aux_flag_) {
         gpu_wrapper::kernel.compute(
-            particle->g_f, neighbour_->g_neighbour(), g_en_pot_, g_stress_pot_, g_hypervirial_
+            particle_->g_f, neighbour_->g_neighbour(), g_en_pot_, g_stress_pot_, g_hypervirial_
         );
     }
     else {
         gpu_wrapper::kernel.compute_aux(
-            particle->g_f, neighbour_->g_neighbour(), g_en_pot_, g_stress_pot_, g_hypervirial_
+            particle_->g_f, neighbour_->g_neighbour(), g_en_pot_, g_stress_pot_, g_hypervirial_
         );
         aux_flag_ = false;
     }
