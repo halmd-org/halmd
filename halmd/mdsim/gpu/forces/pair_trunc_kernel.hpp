@@ -46,7 +46,9 @@ struct pair_trunc_wrapper
     /** neighbour list stride */
     cuda::symbol<unsigned int> neighbour_stride;
     /** positions, types */
-    cuda::texture<float4> r;
+    cuda::texture<float4> r1;
+    /** positions, types */
+    cuda::texture<float4> r2;
 
     static pair_trunc_wrapper const kernel;
 };

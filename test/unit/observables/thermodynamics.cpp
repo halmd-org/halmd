@@ -317,7 +317,7 @@ lennard_jones_fluid<modules_type>::lennard_jones_fluid()
     neighbour = make_shared<neighbour_type>(particle, particle, binning, binning, box, potential->r_cut(), skin);
     position = make_shared<position_type>(particle, box, random, slab);
     velocity = make_shared<velocity_type>(particle, random, temp);
-    force = make_shared<force_type>(potential, particle, box, neighbour);
+    force = make_shared<force_type>(potential, particle, particle, box, neighbour);
     zero = make_shared<zero_type>(particle);
     clock = make_shared<clock_type>(timestep);
     thermodynamics = make_shared<thermodynamics_type>(particle, box, clock, force);

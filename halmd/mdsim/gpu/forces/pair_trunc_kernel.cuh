@@ -45,7 +45,9 @@ static __constant__ unsigned int neighbour_stride_;
 /** cuboid box edge length */
 static __constant__ variant<map<pair<int_<3>, float3>, pair<int_<2>, float2> > > box_length_;
 /** positions, types */
-static texture<float4> r_;
+static texture<float4> r1_;
+/** positions, types */
+static texture<float4> r2_;
 
 /**
  * Compute pair forces, potential energy, and stress tensor for all particles
@@ -72,7 +74,7 @@ __global__ void compute(
     // load particle associated with this thread
     unsigned int type1;
     vector_type r1;
-    tie(r1, type1) = untagged<vector_type>(tex1Dfetch(r_, i));
+    tie(r1, type1) = untagged<vector_type>(tex1Dfetch(r1_, i));
 
     // contribution to potential energy and hypervirial
     float en_pot_ = 0;
@@ -97,7 +99,7 @@ __global__ void compute(
         // load particle
         unsigned int type2;
         vector_type r2;
-        tie(r2, type2) = untagged<vector_type>(tex1Dfetch(r_, j));
+        tie(r2, type2) = untagged<vector_type>(tex1Dfetch(r2_, j));
         // pair potential
         potential_type const potential(type1, type2);
 
@@ -146,7 +148,8 @@ pair_trunc_wrapper<dimension, potential_type>::kernel = {
   , get<dimension>(pair_trunc_kernel::box_length_)
   , pair_trunc_kernel::neighbour_size_
   , pair_trunc_kernel::neighbour_stride_
-  , pair_trunc_kernel::r_
+  , pair_trunc_kernel::r1_
+  , pair_trunc_kernel::r2_
 };
 
 } // namespace mdsim

@@ -53,7 +53,7 @@ function new(args)
     local neighbour = mdsim.neighbour{r_cut = potential.r_cut}
 
     -- construct force module
-    local force = assert(forces.pair_trunc)(potential, particle, box, neighbour)
+    local force = assert(forces.pair_trunc)(potential, particle, particle, box, neighbour)
 
     -- move tracked signal connections from neighbour to force;
     -- on force:disconnect() the core signals connections of

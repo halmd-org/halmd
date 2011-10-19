@@ -62,7 +62,8 @@ public:
 
     inline pair_trunc(
         boost::shared_ptr<potential_type> potential
-      , boost::shared_ptr<particle_type> particle
+      , boost::shared_ptr<particle_type> particle1
+      , boost::shared_ptr<particle_type> particle2
       , boost::shared_ptr<box_type> box
       , boost::shared_ptr<neighbour_type const> neighbour
       // FIXME , boost::shared_ptr<smooth_type> smooth
@@ -125,7 +126,8 @@ private:
     }
 
     boost::shared_ptr<potential_type> potential_;
-    boost::shared_ptr<particle_type> particle_;
+    boost::shared_ptr<particle_type> particle1_;
+    boost::shared_ptr<particle_type> particle2_;
     boost::shared_ptr<box_type> box_;
     boost::shared_ptr<smooth_type> smooth_;
     boost::shared_ptr<neighbour_type const> neighbour_;
@@ -150,14 +152,16 @@ private:
 template <int dimension, typename float_type, typename potential_type>
 pair_trunc<dimension, float_type, potential_type>::pair_trunc(
     boost::shared_ptr<potential_type> potential
-  , boost::shared_ptr<particle_type> particle
+  , boost::shared_ptr<particle_type> particle1
+  , boost::shared_ptr<particle_type> particle2
   , boost::shared_ptr<box_type> box
   , boost::shared_ptr<neighbour_type const> neighbour
   // FIXME , boost::shared_ptr<smooth_type> smooth
 )
   // dependency injection
   : potential_(potential)
-  , particle_(particle)
+  , particle1_(particle1)
+  , particle2_(particle2)
   , box_(box)
   , neighbour_(neighbour)
   // member initialisation
@@ -200,15 +204,15 @@ void pair_trunc<dimension, float_type, potential_type>::compute_impl_()
 
     std::vector<typename neighbour_type::neighbour_list> const& lists = neighbour_->lists();
 
-    for (size_t i = 0; i < particle_->nbox; ++i) {
+    for (size_t i = 0; i < particle1_->nbox; ++i) {
         // calculate pairwise Lennard-Jones force with neighbour particles
         BOOST_FOREACH(size_t j, lists[i]) {
             // particle distance vector
-            vector_type r = particle_->r[i] - particle_->r[j];
+            vector_type r = particle1_->r[i] - particle2_->r[j];
             box_->reduce_periodic(r);
             // particle types
-            unsigned a = particle_->type[i];
-            unsigned b = particle_->type[j];
+            unsigned a = particle1_->type[i];
+            unsigned b = particle2_->type[j];
             // squared particle distance
             float_type rr = inner_prod(r, r);
 
@@ -226,8 +230,8 @@ void pair_trunc<dimension, float_type, potential_type>::compute_impl_()
             }
 
             // add force contribution to both particles
-            particle_->f[i] += r * fval;
-            particle_->f[j] -= r * fval;
+            particle1_->f[i] += r * fval;
+            particle2_->f[j] -= r * fval;
 
             if (do_aux) {
                 // add contribution to potential energy
@@ -243,9 +247,9 @@ void pair_trunc<dimension, float_type, potential_type>::compute_impl_()
     }
 
     if (do_aux) {
-        en_pot_ /= particle_->nbox;
-        stress_pot_ /= particle_->nbox;
-        hypervirial_ /= particle_->nbox;
+        en_pot_ /= particle1_->nbox;
+        stress_pot_ /= particle1_->nbox;
+        hypervirial_ /= particle1_->nbox;
 
         // ensure that system is still in valid state
         if (isinf(en_pot_)) {
@@ -280,6 +284,7 @@ void pair_trunc<dimension, float_type, potential_type>::luaopen(lua_State* L)
                             .def(constructor<
                                 boost::shared_ptr<potential_type>
                               , boost::shared_ptr<particle_type>
+                              , boost::shared_ptr<particle_type>
                               , boost::shared_ptr<box_type>
                               , boost::shared_ptr<neighbour_type const>
                             >())
@@ -299,6 +304,7 @@ void pair_trunc<dimension, float_type, potential_type>::luaopen(lua_State* L)
             [
                 def("pair_trunc", &boost::make_shared<pair_trunc,
                     boost::shared_ptr<potential_type>
+                  , boost::shared_ptr<particle_type>
                   , boost::shared_ptr<particle_type>
                   , boost::shared_ptr<box_type>
                   , boost::shared_ptr<neighbour_type const>
