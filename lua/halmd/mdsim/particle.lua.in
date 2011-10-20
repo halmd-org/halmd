@@ -20,7 +20,6 @@
 require("halmd.device")
 require("halmd.mdsim.core")
 require("halmd.modules")
-require("halmd.singleton")
 
 -- grab modules
 local device = halmd.device
@@ -45,7 +44,7 @@ local po = libhalmd.po
 -- grab standard library
 local assert = assert
 
-module("halmd.mdsim.particle", halmd.modules.register, halmd.singleton)
+module("halmd.mdsim.particle", halmd.modules.register)
 
 --
 -- construct particle module
