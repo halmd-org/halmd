@@ -35,8 +35,9 @@ module("halmd.mdsim.integrator", halmd.modules.register)
 -- construct integrator module
 --
 function new(args)
+    local particle = assert(args.particle, "missing parameter: particle")
     local integrator = args.integrator or "verlet" --default value
-    return integrators[integrator]()
+    return integrators[integrator]{particle = particle}
 end
 
 --

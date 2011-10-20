@@ -52,7 +52,7 @@ module("halmd.mdsim.integrators.verlet", halmd.modules.register)
 --
 function new(args)
     -- dependency injection
-    local particle = mdsim.particle() -- singleton
+    local particle = assert(args.particle, "missing parameter: particle")
     local dimension = assert(particle.dimension)
     local box = mdsim.box() -- singleton
     local clock = mdsim.clock() -- singleton
