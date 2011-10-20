@@ -45,13 +45,11 @@ if libhalmd.observables.gpu then
         }
     }
 end
+local property = property
 -- grab standard library
 local assert = assert
 
 module("halmd.observables.samples.phase_space", halmd.modules.register)
-
--- singleton
-local sample = {}
 
 --
 -- construct phase_space module
@@ -60,19 +58,20 @@ local sample = {}
 --   args.memory     specify memory location of sample ("host", "gpu")
 --
 function new(args)
+    local particle = assert(args.particle, "missing parameter: particle")
     local memory = assert(args.memory)
 
-    if not sample[memory] then
-        local particle = mdsim.particle() -- singleton
-        local dimension = assert(particle.dimension)
-
-        local phase_space
-        if device() then
-            phase_space = assert(phase_space_wrapper.gpu[memory][dimension])
-        else
-            phase_space = assert(phase_space_wrapper.host[memory][dimension])
-        end
-        sample[memory] = phase_space(particle.ntypes)
+    local dimension = assert(particle.dimension)
+    local phase_space
+    if device() then
+        phase_space = assert(phase_space_wrapper.gpu[memory][dimension])
+    else
+        phase_space = assert(phase_space_wrapper.host[memory][dimension])
     end
-    return sample[memory]
+    local sample = phase_space(particle.ntypes)
+
+    -- store memory as property for profiler description
+    sample.memory = property(function(self) return memory end)
+
+    return sample
 end

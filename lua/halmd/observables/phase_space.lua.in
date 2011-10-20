@@ -42,19 +42,19 @@ module("halmd.observables.phase_space", halmd.modules.register)
 --
 function new(args)
     -- parameters
+    local particle = assert(args.particle, "missing parameter: particle")
     local memory = assert(args.memory)
 
     -- dependency injection
-    local particle = mdsim.particle() -- singleton
     local dimension = assert(particle.dimension)
     local box = mdsim.box() -- singleton
     local clock = mdsim.clock() -- singleton
-    local sample = assert(observables.samples.phase_space{memory = memory})
+    local sample = assert(observables.samples.phase_space{particle = particle, memory = memory})
     local logger = assert(args.logger)
     local phase_space = phase_space_wrapper(sample, particle, box, clock, logger)
 
-    -- store memory as property for profiler description
-    phase_space.memory = property(function(self) return memory end)
+    -- store phase space sample as property
+    phase_space.sample = property(function(self) return sample end)
 
     return phase_space
 end
@@ -63,7 +63,7 @@ end
 -- connect runtime accumulators to module profiler
 --
 function profile(self, profiler)
-    local memory = assert(self.memory)
+    local memory = assert(self.sample.memory)
     profiler:on_profile{self, acquire = "acquisition of phase space sample on " .. memory}
     profiler:on_profile{self, reset = "reset phase space sample on " .. memory}
 end
