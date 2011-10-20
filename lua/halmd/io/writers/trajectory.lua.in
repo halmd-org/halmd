@@ -41,20 +41,21 @@ module("halmd.io.writers.trajectory", halmd.modules.register)
 -- construct trajectory writer module
 --
 function new(args)
+    local particle = assert(args.particle, "missing parameter: particle")
+    local group = assert(args.group, "missing parameter: group")
     local every = args.every or 1000 -- default value
 
     -- create trajectory file
     local file = writers.file{extension = "trj"}
 
     -- FIXME share phase_space instance with observables::host::density_mode
-    local phase_space = assert(observables.phase_space{memory = "host"})
-    local sample = observables.samples.phase_space{memory = "host"} -- singleton
-    local particle = mdsim.particle() -- singleton
+    local phase_space = assert(observables.phase_space{particle = particle, memory = "host"})
+    local sample = assert(phase_space.sample)
     local box = mdsim.box() -- singleton
     local sampler = observables.sampler() -- singleton
 
     -- sample and write phase space at fixed interval
-    local writer = file:writer{location = {"trajectory"}, mode = "append" }
+    local writer = file:writer{location = {"trajectory", group}, mode = "append" }
     writer:on_prepend_write(phase_space.acquire)
     for i = 0, particle.ntype - 1 do
         local species = string.char(string.byte("A") + i)
