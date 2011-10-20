@@ -35,12 +35,13 @@ module("halmd.mdsim.position", halmd.modules.register)
 -- construct position module
 --
 function new(args)
+    local particle = assert(args.particle, "missing parameter: particle")
     local position = args.position or "lattice" -- default value
     local reader = args.reader
     if reader and not args.position then
-        return positions.phase_space{sample = reader.position}
+        return positions.phase_space{particle = particle, sample = reader.position}
     end
-    return positions[position]()
+    return positions[position]{particle = particle}
 end
 
 --

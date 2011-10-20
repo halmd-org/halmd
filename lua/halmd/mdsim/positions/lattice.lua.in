@@ -52,10 +52,10 @@ module("halmd.mdsim.positions.lattice", halmd.modules.register)
 -- construct lattice module
 --
 function new(args)
+    local particle = assert(args.particle, "missing parameter: particle")
     local slab = args.slab or {} -- optional
 
     -- dependency injection
-    local particle = mdsim.particle() -- singleton
     local dimension = assert(particle.dimension)
     local box = mdsim.box() -- singleton
     local random = assert(random())
