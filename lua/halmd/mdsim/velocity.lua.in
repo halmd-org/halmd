@@ -35,12 +35,13 @@ module("halmd.mdsim.velocity", halmd.modules.register)
 -- construct velocity module
 --
 function new(args)
+    local particle = assert(args.particle, "missing parameter: particle")
     local velocity = args.velocity or "boltzmann" -- default value
     local reader = args.reader
     if reader and not args.velocity then
-        return velocities.phase_space{sample = reader.velocity}
+        return velocities.phase_space{particle = particle, sample = reader.velocity}
     end
-    return velocities[velocity]()
+    return velocities[velocity]{particle = particle}
 end
 
 --

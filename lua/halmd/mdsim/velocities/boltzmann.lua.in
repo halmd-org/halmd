@@ -51,10 +51,10 @@ module("halmd.mdsim.velocities.boltzmann", halmd.modules.register)
 -- construct boltzmann module
 --
 function new(args)
+    local particle = assert(args.particle, "missing parameter: particle")
     local temperature = args.temperature or 1.12 -- default value
 
     -- dependency injection
-    local particle = mdsim.particle() -- singleton
     local dimension = assert(particle.dimension)
     local random = assert(random())
     local logger = assert(args.logger)
