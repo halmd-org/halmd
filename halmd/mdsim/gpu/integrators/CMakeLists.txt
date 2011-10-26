@@ -1,10 +1,13 @@
 halmd_add_library(halmd_mdsim_gpu_integrators
   verlet_kernel.cu
   verlet.cpp
+  euler_kernel.cu
+  euler.cpp
   verlet_nvt_andersen_kernel.cu
   verlet_nvt_andersen.cpp
 )
 halmd_add_modules(
+  libhalmd_mdsim_gpu_integrators_euler
   libhalmd_mdsim_gpu_integrators_verlet
   libhalmd_mdsim_gpu_integrators_verlet_nvt_andersen
 )
