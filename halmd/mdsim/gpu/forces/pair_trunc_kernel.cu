@@ -1,5 +1,5 @@
 /*
- * Copyright © 2010  Peter Colberg
+ * Copyright © 2010-2011  Peter Colberg and Felix Höfling
  *
  * This file is part of HALMD.
  *
@@ -17,6 +17,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+// FIXME is this comment still relevant here?
+//
 // CUDA symbols (__constant__ or __device__ variables at module scope)
 // in different translation units must not have the same name, therefore
 // we need to compile all instantiations of mpc_kernel in the same
@@ -28,6 +30,29 @@
 // symbol, as CUDA addresses a symbol by its mangled C++ name, not its
 // address in memory.
 
-#include <halmd/mdsim/gpu/forces/lennard_jones_kernel.cuh>
-#include <halmd/mdsim/gpu/forces/lennard_jones_simple_kernel.cuh>
-#include <halmd/mdsim/gpu/forces/morse_kernel.cuh>
+#include <halmd/mdsim/gpu/forces/pair_trunc_kernel.cuh>
+
+#include <halmd/mdsim/gpu/potentials/lennard_jones_kernel.cuh>
+#include <halmd/mdsim/gpu/potentials/lennard_jones_simple_kernel.cuh>
+#include <halmd/mdsim/gpu/potentials/morse_kernel.cuh>
+
+namespace halmd {
+namespace mdsim {
+namespace gpu {
+namespace forces {
+
+using namespace potentials;
+
+template class pair_trunc_wrapper<3, lennard_jones_kernel::lennard_jones>;
+template class pair_trunc_wrapper<2, lennard_jones_kernel::lennard_jones>;
+
+template class pair_trunc_wrapper<3, lennard_jones_simple_kernel::lennard_jones_simple>;
+template class pair_trunc_wrapper<2, lennard_jones_simple_kernel::lennard_jones_simple>;
+
+template class pair_trunc_wrapper<3, morse_kernel::morse>;
+template class pair_trunc_wrapper<2, morse_kernel::morse>;
+
+} // namespace forces
+} // namespace gpu
+} // namespace mdsim
+} // namespace halmd

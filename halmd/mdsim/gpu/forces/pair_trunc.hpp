@@ -25,6 +25,7 @@
 #include <lua.hpp>
 #include <string>
 
+#include <halmd/io/logger.hpp>
 #include <halmd/mdsim/box.hpp>
 #include <halmd/mdsim/gpu/force.hpp>
 #include <halmd/mdsim/gpu/forces/pair_trunc_kernel.hpp>

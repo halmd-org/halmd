@@ -1,0 +1,11 @@
+halmd_add_library(halmd_mdsim_gpu_potentials
+  lennard_jones.cpp
+  lennard_jones_simple.cpp
+  morse.cpp
+  potential_symbols.cu
+)
+halmd_add_modules(
+  libhalmd_mdsim_gpu_potentials_lennard_jones
+  libhalmd_mdsim_gpu_potentials_lennard_jones_simple
+  libhalmd_mdsim_gpu_potentials_morse
+)

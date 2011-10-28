@@ -17,19 +17,22 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef HALMD_MDSIM_GPU_FORCES_LENNARD_JONES_KERNEL_CUH
-#define HALMD_MDSIM_GPU_FORCES_LENNARD_JONES_KERNEL_CUH
+#ifndef HALMD_MDSIM_GPU_POTENTIALS_LENNARD_JONES_KERNEL_CUH
+#define HALMD_MDSIM_GPU_POTENTIALS_LENNARD_JONES_KERNEL_CUH
 
-#include <halmd/mdsim/gpu/forces/lennard_jones_kernel.hpp>
-#include <halmd/mdsim/gpu/forces/pair_trunc_kernel.cuh>
+#include <halmd/algorithm/gpu/tuple.cuh>
+#include <halmd/mdsim/gpu/potentials/lennard_jones_kernel.hpp>
 #include <halmd/numeric/blas/blas.hpp>
 #include <halmd/utility/gpu/variant.cuh>
 
 namespace halmd {
 namespace mdsim {
 namespace gpu {
-namespace forces {
+namespace potentials {
 namespace lennard_jones_kernel {
+
+using algorithm::gpu::tuple;
+using algorithm::gpu::make_tuple;
 
 /** array of Lennard-Jones potential parameters for all combinations of particle types */
 static texture<float4> param_;
@@ -90,15 +93,9 @@ private:
 };
 
 } // namespace lennard_jones_kernel
-
-cuda::texture<float4> lennard_jones_wrapper::param = lennard_jones_kernel::param_;
-
-template class pair_trunc_wrapper<3, lennard_jones_kernel::lennard_jones>;
-template class pair_trunc_wrapper<2, lennard_jones_kernel::lennard_jones>;
-
-} // namespace mdsim
+} // namespace potentials
 } // namespace gpu
-} // namespace forces
+} // namespace mdsim
 } // namespace halmd
 
-#endif /* ! HALMD_MDSIM_GPU_FORCES_LENNARD_JONES_KERNEL_CUH */
+#endif /* ! HALMD_MDSIM_GPU_POTENTIALS_LENNARD_JONES_KERNEL_CUH */

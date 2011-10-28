@@ -17,19 +17,22 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef HALMD_MDSIM_GPU_FORCES_LENNARD_JONES_SIMPLE_KERNEL_CUH
-#define HALMD_MDSIM_GPU_FORCES_LENNARD_JONES_SIMPLE_KERNEL_CUH
+#ifndef HALMD_MDSIM_GPU_POTENTIALS_LENNARD_JONES_SIMPLE_KERNEL_CUH
+#define HALMD_MDSIM_GPU_POTENTIALS_LENNARD_JONES_SIMPLE_KERNEL_CUH
 
-#include <halmd/mdsim/gpu/forces/lennard_jones_simple_kernel.hpp>
-#include <halmd/mdsim/gpu/forces/pair_trunc_kernel.cuh>
+#include <halmd/algorithm/gpu/tuple.cuh>
+#include <halmd/mdsim/gpu/potentials/lennard_jones_simple_kernel.hpp>
 #include <halmd/numeric/blas/blas.hpp>
 #include <halmd/utility/gpu/variant.cuh>
 
 namespace halmd {
 namespace mdsim {
 namespace gpu {
-namespace forces {
+namespace potentials {
 namespace lennard_jones_simple_kernel {
+
+using algorithm::gpu::tuple;
+using algorithm::gpu::make_tuple;
 
 /** Lennard-Jones potential parameters: rr_cut, en_cut */
 static __constant__ float rr_cut_;
@@ -85,16 +88,9 @@ public:
 };
 
 } // namespace lennard_jones_simple_kernel
-
-cuda::symbol<float> lennard_jones_simple_wrapper::rr_cut = lennard_jones_simple_kernel::rr_cut_;
-cuda::symbol<float> lennard_jones_simple_wrapper::en_cut = lennard_jones_simple_kernel::en_cut_;
-
-template class pair_trunc_wrapper<3, lennard_jones_simple_kernel::lennard_jones_simple>;
-template class pair_trunc_wrapper<2, lennard_jones_simple_kernel::lennard_jones_simple>;
-
-} // namespace mdsim
+} // namespace potentials
 } // namespace gpu
-} // namespace forces
+} // namespace mdsim
 } // namespace halmd
 
-#endif /* ! HALMD_MDSIM_GPU_FORCES_LENNARD_JONES_SIMPLE_KERNEL_CUH */
+#endif /* ! HALMD_MDSIM_GPU_POTENTIALS_LENNARD_JONES_SIMPLE_KERNEL_CUH */

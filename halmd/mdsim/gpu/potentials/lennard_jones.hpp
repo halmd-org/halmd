@@ -17,8 +17,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef HALMD_MDSIM_GPU_FORCES_LENNARD_JONES_HPP
-#define HALMD_MDSIM_GPU_FORCES_LENNARD_JONES_HPP
+#ifndef HALMD_MDSIM_GPU_POTENTIALS_LENNARD_JONES_HPP
+#define HALMD_MDSIM_GPU_POTENTIALS_LENNARD_JONES_HPP
 
 #include <boost/make_shared.hpp>
 #include <boost/numeric/ublas/symmetric.hpp>
@@ -26,13 +26,12 @@
 #include <lua.hpp>
 
 #include <halmd/io/logger.hpp>
-#include <halmd/mdsim/gpu/forces/pair_trunc.hpp>
-#include <halmd/mdsim/gpu/forces/lennard_jones_kernel.hpp>
+#include <halmd/mdsim/gpu/potentials/lennard_jones_kernel.hpp>
 
 namespace halmd {
 namespace mdsim {
 namespace gpu {
-namespace forces {
+namespace potentials {
 
 /**
  * define Lennard-Jones potential and parameters
@@ -114,9 +113,9 @@ private:
     boost::shared_ptr<logger_type> logger_;
 };
 
-} // namespace mdsim
+} // namespace potentials
 } // namespace gpu
-} // namespace forces
+} // namespace mdsim
 } // namespace halmd
 
-#endif /* ! HALMD_MDSIM_GPU_FORCES_LENNARD_JONES_HPP */
+#endif /* ! HALMD_MDSIM_GPU_POTENTIALS_LENNARD_JONES_HPP */
