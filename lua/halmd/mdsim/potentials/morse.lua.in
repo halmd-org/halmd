@@ -26,17 +26,17 @@ local device = halmd.device
 local mdsim = halmd.mdsim
 -- grab C++ wrappers
 local morse_wrapper = {
-    host = libhalmd.mdsim.host.forces.morse
+    host = libhalmd.mdsim.host.potentials.morse
 }
 if libhalmd.mdsim.gpu then
-    morse_wrapper.gpu = libhalmd.mdsim.gpu.forces.morse
+    morse_wrapper.gpu = libhalmd.mdsim.gpu.potentials.morse
 end
 local h5 = libhalmd.h5
 local po = libhalmd.po
 -- grab standard library
 local assert = assert
 
-module("halmd.mdsim.forces.morse", halmd.modules.register)
+module("halmd.mdsim.potentials.morse", halmd.modules.register)
 
 --
 -- construct Morse module
