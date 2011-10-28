@@ -17,8 +17,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef HALMD_MDSIM_HOST_FORCES_MORSE_HPP
-#define HALMD_MDSIM_HOST_FORCES_MORSE_HPP
+#ifndef HALMD_MDSIM_HOST_POTENTIALS_LENNARD_JONES_HPP
+#define HALMD_MDSIM_HOST_POTENTIALS_LENNARD_JONES_HPP
 
 #include <boost/assign.hpp>
 #include <boost/make_shared.hpp>
@@ -27,53 +27,44 @@
 #include <lua.hpp>
 
 #include <halmd/io/logger.hpp>
-#include <halmd/mdsim/host/forces/pair_trunc.hpp>
-#include <halmd/mdsim/host/forces/smooth.hpp>
 
 namespace halmd {
 namespace mdsim {
 namespace host {
-namespace forces {
+namespace potentials {
 
 /**
- * define Morse potential and parameters
+ * define Lennard-Jones potential and parameters
  */
 template <typename float_type>
-class morse
+class lennard_jones
 {
 public:
     typedef boost::numeric::ublas::symmetric_matrix<float_type, boost::numeric::ublas::lower> matrix_type;
     typedef logger logger_type;
 
-    static char const* module_name() { return "morse"; }
+    static char const* module_name() { return "lennard_jones"; }
 
     static void luaopen(lua_State* L);
-    morse(
+
+    lennard_jones(
         unsigned ntype
       , boost::array<float, 3> const& cutoff
       , boost::array<float, 3> const& epsilon
       , boost::array<float, 3> const& sigma
-      , boost::array<float, 3> const& r_min
       , boost::shared_ptr<logger_type> logger = boost::make_shared<logger_type>()
     );
 
-    /**
-     * Compute force and potential for interaction.
-     *
-     * @param rr squared distance between particles
-     * @param a type of first interacting particle
-     * @param b type of second interacting particle
-     * @returns tuple of unit "force" @f$ -U'(r)/r @f$ and potential @f$ U(r) @f$
-     * and hypervirial @f$ r \partial_r r \partial_r U(r) @f$
-     */
+    /** compute potential and its derivative at squared distance 'rr' for particles of type 'a' and 'b' */
     boost::tuple<float_type, float_type, float_type> operator() (float_type rr, unsigned a, unsigned b)
     {
-        float_type r_sigma = sqrt(rr) / sigma_(a, b);
-        float_type exp_dr = exp(r_min_sigma_(a, b) - r_sigma);
-        float_type eps_exp_dr = epsilon_(a, b) * exp_dr;
-        float_type fval = 2 * eps_exp_dr * (exp_dr - 1) * r_sigma / rr;
-        float_type en_pot = eps_exp_dr * (exp_dr - 2) - en_cut_(a, b);
-        float_type hvir = 2 * eps_exp_dr * r_sigma * ((exp_dr - 1) - r_sigma * (2 * exp_dr - 1));
+        float_type sigma2 = sigma2_(a, b);
+        float_type rri = sigma2 / rr;
+        float_type r6i = rri * rri * rri;
+        float_type eps_r6i = epsilon_(a, b) * r6i;
+        float_type fval = 48 * rri * eps_r6i * (r6i - 0.5) / sigma2;
+        float_type en_pot = 4 * eps_r6i * (r6i - 1) - en_cut_(a, b);
+        float_type hvir = 576 * eps_r6i * (r6i - 0.25);
 
         return boost::make_tuple(fval, en_pot, hvir);
     }
@@ -108,33 +99,28 @@ public:
         return sigma_;
     }
 
-    matrix_type const& r_min_sigma() const
-    {
-        return r_min_sigma_;
-    }
-
 private:
-    /** depths of potential well in MD units */
+    /** potential well depths in MD units */
     matrix_type epsilon_;
-    /** width of potential well in MD units */
+    /** pair separation in MD units */
     matrix_type sigma_;
-    /** position of potential well in units of sigma */
-    matrix_type r_min_sigma_;
+    /** cutoff length in units of sigma */
+    matrix_type r_cut_sigma_;
+    /** cutoff length in MD units */
+    matrix_type r_cut_;
+    /** square of cutoff length */
+    matrix_type rr_cut_;
+    /** square of pair separation */
+    matrix_type sigma2_;
     /** potential energy at cutoff length in MD units */
     matrix_type en_cut_;
-    /** cutoff radius in MD units */
-    matrix_type r_cut_;
-    /** cutoff radius in units of sigma */
-    matrix_type r_cut_sigma_;
-    /** square of cutoff radius */
-    matrix_type rr_cut_;
     /** module logger */
     boost::shared_ptr<logger_type> logger_;
 };
 
-} // namespace mdsim
+} // namespace potentials
 } // namespace host
-} // namespace forces
+} // namespace mdsim
 } // namespace halmd
 
-#endif /* ! HALMD_MDSIM_HOST_FORCES_MORSE_HPP */
+#endif /* ! HALMD_MDSIM_HOST_POTENTIALS_LENNARD_JONES_HPP */

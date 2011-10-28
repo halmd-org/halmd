@@ -17,8 +17,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef HALMD_MDSIM_HOST_FORCES_POWER_LAW_HPP
-#define HALMD_MDSIM_HOST_FORCES_POWER_LAW_HPP
+#ifndef HALMD_MDSIM_HOST_POTENTIALS_POWER_LAW_HPP
+#define HALMD_MDSIM_HOST_POTENTIALS_POWER_LAW_HPP
 
 #include <boost/make_shared.hpp>
 #include <boost/numeric/ublas/symmetric.hpp>
@@ -26,14 +26,12 @@
 #include <lua.hpp>
 
 #include <halmd/io/logger.hpp>
-#include <halmd/mdsim/host/forces/pair_trunc.hpp>
-#include <halmd/mdsim/host/forces/smooth.hpp>
 #include <halmd/numeric/pow.hpp>
 
 namespace halmd {
 namespace mdsim {
 namespace host {
-namespace forces {
+namespace potentials {
 
 /**
  * A power-law potential @f$ r^{-n} @f$ is often used for
@@ -224,9 +222,9 @@ private:
     boost::shared_ptr<logger_type> logger_;
 };
 
-} // namespace mdsim
+} // namespace potentials
 } // namespace host
-} // namespace forces
+} // namespace mdsim
 } // namespace halmd
 
-#endif /* ! HALMD_MDSIM_HOST_FORCES_POWER_LAW_HPP */
+#endif /* ! HALMD_MDSIM_HOST_POTENTIALS_POWER_LAW_HPP */

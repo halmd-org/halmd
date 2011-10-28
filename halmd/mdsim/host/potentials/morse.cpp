@@ -21,8 +21,7 @@
 #include <cmath>
 #include <string>
 
-#include <halmd/io/utility/hdf5.hpp>
-#include <halmd/mdsim/host/forces/morse.hpp>
+#include <halmd/mdsim/host/potentials/morse.hpp>
 #include <halmd/utility/lua/lua.hpp>
 
 using namespace boost;
@@ -33,7 +32,7 @@ using namespace std;
 namespace halmd {
 namespace mdsim {
 namespace host {
-namespace forces {
+namespace potentials {
 
 /**
  * Initialise Morse potential parameters
@@ -94,7 +93,7 @@ void morse<float_type>::luaopen(lua_State* L)
         [
             namespace_("host")
             [
-                namespace_("forces")
+                namespace_("potentials")
                 [
                     class_<morse, shared_ptr<morse> >(module_name())
                         .def(constructor<
@@ -116,31 +115,24 @@ void morse<float_type>::luaopen(lua_State* L)
     ];
 }
 
-HALMD_LUA_API int luaopen_libhalmd_mdsim_host_forces_morse(lua_State* L)
+HALMD_LUA_API int luaopen_libhalmd_mdsim_host_potentials_morse(lua_State* L)
 {
 #ifndef USE_HOST_SINGLE_PRECISION
-    typedef double float_type;
+    morse<double>::luaopen(L);
 #else
-    typedef float float_type;
+    morse<float>::luaopen(L);
 #endif
-    morse<float_type>::luaopen(L);
-    pair_trunc<3, float_type, morse<float_type> >::luaopen(L);
-    pair_trunc<2, float_type, morse<float_type> >::luaopen(L);
     return 0;
 }
 
 // explicit instantiation
 #ifndef USE_HOST_SINGLE_PRECISION
 template class morse<double>;
-template class pair_trunc<3, double, morse<double> >;
-template class pair_trunc<2, double, morse<double> >;
 #else
 template class morse<float>;
-template class pair_trunc<3, float, morse<float> >;
-template class pair_trunc<2, float, morse<float> >;
 #endif
 
-} // namespace mdsim
+} // namespace potentials
 } // namespace host
-} // namespace forces
+} // namespace mdsim
 } // namespace halmd
