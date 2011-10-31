@@ -1,6 +1,5 @@
 halmd_add_library(halmd_mdsim_gpu_forces
   pair_trunc.cpp
-  pair_trunc_kernel.cu
   zero.cpp
 )
 halmd_add_modules(

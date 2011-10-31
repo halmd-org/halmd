@@ -17,10 +17,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef HALMD_MDSIM_GPU_POTENTIALS_MORSE_KERNEL_CUH
-#define HALMD_MDSIM_GPU_POTENTIALS_MORSE_KERNEL_CUH
-
 #include <halmd/algorithm/gpu/tuple.cuh>
+#include <halmd/mdsim/gpu/forces/pair_trunc_kernel.cuh>
 #include <halmd/mdsim/gpu/potentials/morse_kernel.hpp>
 #include <halmd/numeric/blas/blas.hpp>
 #include <halmd/utility/gpu/variant.cuh>
@@ -100,9 +98,22 @@ private:
 };
 
 } // namespace morse_kernel
+
+cuda::texture<float4> morse_wrapper::param = morse_kernel::param_;
+cuda::texture<float> morse_wrapper::rr_cut = morse_kernel::rr_cut_;
+
 } // namespace potentials
+
+// explicit instantiation of force kernels
+namespace forces {
+
+using potentials::morse_kernel::morse;
+
+template class pair_trunc_wrapper<3, morse>;
+template class pair_trunc_wrapper<2, morse>;
+
+} // namespace forces
+
 } // namespace gpu
 } // namespace mdsim
 } // namespace halmd
-
-#endif /* ! HALMD_MDSIM_GPU_POTENTIALS_MORSE_KERNEL_CUH */
