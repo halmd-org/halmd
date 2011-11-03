@@ -1,3 +1,4 @@
 require("halmd.mdsim.potentials.lennard_jones")
+require("halmd.mdsim.potentials.modified_lennard_jones")
 require("halmd.mdsim.potentials.morse")
 require("halmd.mdsim.potentials.power_law")

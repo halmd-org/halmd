@@ -20,6 +20,7 @@
 #include <halmd/mdsim/host/forces/pair_full.hpp>
 #include <halmd/mdsim/host/forces/smooth.hpp>
 #include <halmd/mdsim/host/potentials/lennard_jones.hpp>
+#include <halmd/mdsim/host/potentials/modified_lennard_jones.hpp>
 #include <halmd/mdsim/host/potentials/morse.hpp>
 #include <halmd/mdsim/host/potentials/power_law.hpp>
 #include <halmd/utility/lua/lua.hpp>
@@ -42,6 +43,9 @@ HALMD_LUA_API int luaopen_libhalmd_mdsim_host_forces_pair_full(lua_State* L)
     pair_full<3, float_type, lennard_jones<float_type> >::luaopen(L);
     pair_full<2, float_type, lennard_jones<float_type> >::luaopen(L);
 
+    pair_full<3, float_type, modified_lennard_jones<float_type> >::luaopen(L);
+    pair_full<2, float_type, modified_lennard_jones<float_type> >::luaopen(L);
+
     pair_full<3, float_type, morse<float_type> >::luaopen(L);
     pair_full<2, float_type, morse<float_type> >::luaopen(L);
 
@@ -59,6 +63,9 @@ typedef float float_type;
 
 template class pair_full<3, float_type, lennard_jones<float_type> >;
 template class pair_full<2, float_type, lennard_jones<float_type> >;
+
+template class pair_full<3, float_type, modified_lennard_jones<float_type> >;
+template class pair_full<2, float_type, modified_lennard_jones<float_type> >;
 
 template class pair_full<3, float_type, morse<float_type> >;
 template class pair_full<2, float_type, morse<float_type> >;
