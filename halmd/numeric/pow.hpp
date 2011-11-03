@@ -48,6 +48,24 @@ inline HALMD_GPU_ENABLED float_type fixed_pow(float_type x)
     return y;
 }
 
+/**
+  * CUDA-enabled pow() with a priori unknown integer exponent
+  */
+template <typename float_type>
+inline HALMD_GPU_ENABLED float_type pow(float_type x, unsigned short n)
+{
+    float_type y = (n % 2) ? x : 1;
+
+    while (n >>= 1)
+    {
+        x = x * x;
+        if (n % 2)
+            y = y * x;
+    }
+
+    return y;
+}
+
 } // namespace halmd
 
 #endif /* ! HALMD_NUMERIC_POW_HPP */
