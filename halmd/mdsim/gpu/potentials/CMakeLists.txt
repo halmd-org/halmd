@@ -7,10 +7,13 @@ halmd_add_library(halmd_mdsim_gpu_potentials
   modified_lennard_jones_kernel.cu
   morse.cpp
   morse_kernel.cu
+  power_law.cpp
+  power_law_kernel.cu
 )
 halmd_add_modules(
   libhalmd_mdsim_gpu_potentials_lennard_jones
   libhalmd_mdsim_gpu_potentials_lennard_jones_simple
   libhalmd_mdsim_gpu_potentials_modified_lennard_jones
   libhalmd_mdsim_gpu_potentials_morse
+  libhalmd_mdsim_gpu_potentials_power_law
 )

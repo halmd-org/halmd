@@ -1,5 +1,5 @@
 --
--- Copyright © 2010  Peter Colberg and Felix Höfling
+-- Copyright © 2010-2011  Peter Colberg and Felix Höfling
 --
 -- This file is part of HALMD.
 --
@@ -42,10 +42,10 @@ module("halmd.mdsim.potentials.power_law", halmd.modules.register)
 -- construct power law module
 --
 function new(args)
-    local index = args.index or 12 -- default value
     local cutoff = args.cutoff or {2.5, 2.5, 2.5} -- default value
     local epsilon = args.epsilon or {1.0, 1.5, 0.5} -- default value
     local sigma = args.sigma or {1.0, 0.8, 0.88} -- default value
+    local index = args.index or {12, 12, 12} -- default value
 
     local particle = mdsim.particle() -- singleton
     local logger = assert(args.logger)
@@ -56,7 +56,7 @@ function new(args)
     else
         power_law = assert(power_law_wrapper.host)
     end
-    return power_law(particle.ntype, index, cutoff, epsilon, sigma, logger)
+    return power_law(particle.ntype, cutoff, epsilon, sigma, index, logger)
 end
 
 --
@@ -72,10 +72,10 @@ end
 -- @param desc po.options_description
 --
 function options(desc)
-    desc:add("index", po.uint(), "index of soft power-law potential")
     desc:add("cutoff", po.float_array(), "truncate potential at cutoff radius")
     desc:add("epsilon", po.float_array(), "potential well depths")
     desc:add("sigma", po.float_array(), "collision diameters")
+    desc:add("index", po.uint(), "index of soft power-law potential")
     -- FIXME desc:add("smooth", po.float_array(), "C²-potential smoothing factor")
 end
 
@@ -83,10 +83,10 @@ end
 -- read module parameters from HDF5 group
 --
 function read_parameters(args, group)
-    args.index = group:read_attribute("index", h5.uint())
     -- FIXME args.cutoff = group:read_attribute("cutoff", h5.float_array())
     -- FIXME args.epsilon = group:read_attribute("epsilon", h5.float_array())
     -- FIXME args.sigma = group:read_attribute("sigma", h5.float_array())
+    -- FIXME args.index = group:read_attribute("index", h5.uint_array())
 end
 
 --
@@ -96,8 +96,8 @@ end
 -- @param group HDF5 group
 --
 function write_parameters(power_law, group)
-    group:write_attribute("index", h5.uint(), power_law.index)
     group:write_attribute("cutoff", h5.float_array(), power_law.r_cut_sigma:data())
     group:write_attribute("epsilon", h5.float_array(), power_law.epsilon:data())
     group:write_attribute("sigma", h5.float_array(), power_law.sigma:data())
+    group:write_attribute("index", h5.uint_array(), power_law.index:data())
 end
