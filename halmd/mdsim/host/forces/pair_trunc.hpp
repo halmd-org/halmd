@@ -58,11 +58,6 @@ public:
     typedef host::neighbour<dimension, float_type> neighbour_type;
     typedef host::forces::smooth<dimension, float_type> smooth_type;
 
-    boost::shared_ptr<potential_type> potential;
-    boost::shared_ptr<particle_type> particle;
-    boost::shared_ptr<box_type> box;
-    boost::shared_ptr<smooth_type> smooth;
-
     inline static void luaopen(lua_State* L);
 
     inline pair_trunc(
@@ -77,7 +72,7 @@ public:
     //! return potential cutoffs
     virtual matrix_type const& r_cut()
     {
-        return potential->r_cut();
+        return potential_->r_cut();
     }
 
     /**
@@ -129,6 +124,10 @@ private:
         }
     }
 
+    boost::shared_ptr<potential_type> potential_;
+    boost::shared_ptr<particle_type> particle_;
+    boost::shared_ptr<box_type> box_;
+    boost::shared_ptr<smooth_type> smooth_;
     boost::shared_ptr<neighbour_type const> neighbour_;
 
     /** flag for switching the computation of auxiliary variables in function compute() */
@@ -157,9 +156,9 @@ pair_trunc<dimension, float_type, potential_type>::pair_trunc(
   // FIXME , boost::shared_ptr<smooth_type> smooth
 )
   // dependency injection
-  : potential(potential)
-  , particle(particle)
-  , box(box)
+  : potential_(potential)
+  , particle_(particle)
+  , box_(box)
   , neighbour_(neighbour)
   // member initialisation
   , aux_flag_(false)          //< disable auxiliary variables by default
@@ -193,7 +192,7 @@ template <bool do_aux>
 void pair_trunc<dimension, float_type, potential_type>::compute_impl_()
 {
     // initialise particle forces to zero
-    std::fill(particle->f.begin(), particle->f.end(), 0);
+    std::fill(particle_->f.begin(), particle_->f.end(), 0);
 
     // initialise potential energy and potential part of stress tensor
     if (do_aux) {
@@ -204,34 +203,34 @@ void pair_trunc<dimension, float_type, potential_type>::compute_impl_()
 
     std::vector<typename neighbour_type::neighbour_list> const& lists = neighbour_->lists();
 
-    for (size_t i = 0; i < particle->nbox; ++i) {
+    for (size_t i = 0; i < particle_->nbox; ++i) {
         // calculate pairwise Lennard-Jones force with neighbour particles
         BOOST_FOREACH(size_t j, lists[i]) {
             // particle distance vector
-            vector_type r = particle->r[i] - particle->r[j];
-            box->reduce_periodic(r);
+            vector_type r = particle_->r[i] - particle_->r[j];
+            box_->reduce_periodic(r);
             // particle types
-            unsigned a = particle->type[i];
-            unsigned b = particle->type[j];
+            unsigned a = particle_->type[i];
+            unsigned b = particle_->type[j];
             // squared particle distance
             float_type rr = inner_prod(r, r);
 
             // truncate potential at cutoff length
-            if (rr >= potential->rr_cut(a, b))
+            if (rr >= potential_->rr_cut(a, b))
                 continue;
 
             float_type fval, en_pot, hvir;
-            boost::tie(fval, en_pot, hvir) = (*potential)(rr, a, b);
+            boost::tie(fval, en_pot, hvir) = (*potential_)(rr, a, b);
 
             // optionally smooth potential yielding continuous 2nd derivative
             // FIXME test performance of template versus runtime bool
-            if (smooth) {
-                smooth->compute(std::sqrt(rr), potential->r_cut(a, b), fval, en_pot);
+            if (smooth_) {
+                smooth_->compute(std::sqrt(rr), potential_->r_cut(a, b), fval, en_pot);
             }
 
             // add force contribution to both particles
-            particle->f[i] += r * fval;
-            particle->f[j] -= r * fval;
+            particle_->f[i] += r * fval;
+            particle_->f[j] -= r * fval;
 
             if (do_aux) {
                 // add contribution to potential energy
@@ -247,9 +246,9 @@ void pair_trunc<dimension, float_type, potential_type>::compute_impl_()
     }
 
     if (do_aux) {
-        en_pot_ /= particle->nbox;
-        stress_pot_ /= particle->nbox;
-        hypervirial_ /= particle->nbox;
+        en_pot_ /= particle_->nbox;
+        stress_pot_ /= particle_->nbox;
+        hypervirial_ /= particle_->nbox;
 
         // ensure that system is still in valid state
         if (isinf(en_pot_)) {

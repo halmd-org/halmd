@@ -86,7 +86,7 @@ H5::DataSet truncate::create_dataset(
   , function<T ()> const&
 )
 {
-    return h5xx::create_unique_dataset<T>(group, name);
+    return h5xx::create_dataset<T>(group, name);
 }
 
 template <typename T>
@@ -96,7 +96,7 @@ H5::DataSet truncate::create_dataset(
   , function<T const& ()> const&
 )
 {
-    return h5xx::create_unique_dataset<T>(group, name);
+    return h5xx::create_dataset<T>(group, name);
 }
 
 template <typename T>
@@ -106,7 +106,7 @@ H5::DataSet truncate::create_dataset(
   , function<T& ()> const&
 )
 {
-    return h5xx::create_unique_dataset<T>(group, name);
+    return h5xx::create_dataset<T>(group, name);
 }
 
 template <typename T, typename Alloc>
@@ -116,7 +116,7 @@ H5::DataSet truncate::create_dataset(
   , function<vector<T, Alloc> ()> const& slot
 )
 {
-    return h5xx::create_unique_dataset<vector<T, Alloc> >(group, name, slot().size());
+    return h5xx::create_dataset<vector<T, Alloc> >(group, name, slot().size());
 }
 
 template <typename T, typename Alloc>
@@ -126,7 +126,7 @@ H5::DataSet truncate::create_dataset(
   , function<vector<T, Alloc> const& ()> const& slot
 )
 {
-    return h5xx::create_unique_dataset<vector<T, Alloc> >(group, name, slot().size());
+    return h5xx::create_dataset<vector<T, Alloc> >(group, name, slot().size());
 }
 
 template <typename T, typename Alloc>
@@ -136,7 +136,7 @@ H5::DataSet truncate::create_dataset(
   , function<vector<T, Alloc>& ()> const& slot
 )
 {
-    return h5xx::create_unique_dataset<vector<T, Alloc> >(group, name, slot().size());
+    return h5xx::create_dataset<vector<T, Alloc> >(group, name, slot().size());
 }
 
 template <typename T, std::size_t N, typename Alloc>
@@ -146,7 +146,7 @@ H5::DataSet truncate::create_dataset(
   , function<multi_array<T, N, Alloc> ()> const& slot
 )
 {
-    return h5xx::create_unique_dataset<multi_array<T, N, Alloc> >(group, name, slot().shape());
+    return h5xx::create_dataset<multi_array<T, N, Alloc> >(group, name, slot().shape());
 }
 
 template <typename T, size_t N, typename Alloc>
@@ -156,7 +156,7 @@ H5::DataSet truncate::create_dataset(
   , function<multi_array<T, N, Alloc> const& ()> const& slot
 )
 {
-    return h5xx::create_unique_dataset<multi_array<T, N, Alloc> >(group, name, slot().shape());
+    return h5xx::create_dataset<multi_array<T, N, Alloc> >(group, name, slot().shape());
 }
 
 template <typename T, size_t N, typename Alloc>
@@ -166,7 +166,7 @@ H5::DataSet truncate::create_dataset(
   , function<multi_array<T, N, Alloc>& ()> const& slot
 )
 {
-    return h5xx::create_unique_dataset<multi_array<T, N, Alloc> >(group, name, slot().shape());
+    return h5xx::create_dataset<multi_array<T, N, Alloc> >(group, name, slot().shape());
 }
 
 template <typename T>
@@ -175,7 +175,7 @@ void truncate::write_dataset(
   , function<T ()> const& slot
 )
 {
-    h5xx::write_unique_dataset(dataset, slot());
+    h5xx::write_dataset(dataset, slot());
 }
 
 static truncate::slot_function_type

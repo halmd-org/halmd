@@ -19,6 +19,7 @@
 
 #include <boost/shared_ptr.hpp>
 
+#include <halmd/io/logger.hpp>
 #include <halmd/io/utility/hdf5.hpp>
 #include <halmd/io/readers/h5md/file.hpp>
 #include <halmd/utility/filesystem.hpp>

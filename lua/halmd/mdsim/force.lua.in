@@ -18,10 +18,12 @@
 --
 
 require("halmd.mdsim.forces")
+require("halmd.mdsim.potentials")
 require("halmd.modules")
 
 -- grab modules
 local forces = halmd.mdsim.forces
+local potentials = halmd.mdsim.potentials
 -- grab C++ wrappers
 local h5 = libhalmd.h5
 local po = libhalmd.po
@@ -37,11 +39,12 @@ module("halmd.mdsim.force", halmd.modules.register)
 --
 function new(args)
     local force = args.force or "lennard_jones" -- default value
-    local potential = assert(forces[force])()
-    if potential.r_cut then
-        return forces.pair_trunc{force = force, potential = potential}
+    -- trade a potential for a force
+    local potential = potentials[force]
+    if potential then
+        return forces.pair_trunc{force = force, potential = potential()}
     end
-    return potential
+    return assert(forces[force])()
 end
 
 --
@@ -53,9 +56,14 @@ function options(desc, globals)
 
     -- force module choices with descriptions
     local choices = {}
-    for force, module in pairs(forces) do
+    for name, module in pairs(forces) do
         if module.description then
-            choices[force] = module.description()
+            choices[name] = module.description()
+        end
+    end
+    for name, module in pairs(potentials) do
+        if module.description then
+            choices[name] = module.description()
         end
     end
 

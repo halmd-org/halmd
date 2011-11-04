@@ -112,6 +112,7 @@ public:
 private:
     boost::shared_ptr<sample_type const> sample_;
     std::vector<block_type> blocks_;
+    std::size_t block_size_;
 };
 
 
@@ -128,6 +129,7 @@ blocking_scheme<sample_type>::blocking_scheme(
 )
   : sample_(sample)
   , blocks_(count, block_type(size))
+  , block_size_(size)
 {
 }
 
@@ -182,8 +184,7 @@ std::size_t blocking_scheme<sample_type>::count() const
 template <typename sample_type>
 std::size_t blocking_scheme<sample_type>::block_size() const
 {
-    assert(!blocks_.empty());
-    return blocks_[0].capacity(); // choose level 0 as representative
+    return block_size_;
 }
 
 template <typename sample_type>

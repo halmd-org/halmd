@@ -263,6 +263,7 @@ enable_testing()
 include(CTest)
 
 include_directories(${HALMD_SOURCE_DIR}/include)
+include_directories(${HALMD_SOURCE_DIR}/libs/h5xx)
 include_directories(${HALMD_SOURCE_DIR})
 include_directories(${HALMD_BINARY_DIR})
 include_directories(${Boost_INCLUDE_DIR})
@@ -277,6 +278,7 @@ add_subdirectory(doc EXCLUDE_FROM_ALL)
 add_subdirectory(halmd)
 add_subdirectory(lua)
 add_subdirectory(test)
+add_subdirectory(libs/h5xx/test)
 
 else(NOT HALMD_DOC_ONLY)
 

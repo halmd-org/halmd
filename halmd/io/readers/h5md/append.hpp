@@ -62,9 +62,9 @@ public:
      * For the truncate reader/writer, a subgroup is defined as the dataset
      * which contains the data to be read or written.
      * For the append reader/writer, a subgroup is defined as the group
-     * comprising the samples, time and step datasets, where samples
+     * comprising the sample, time, and step datasets, where sample
      * contains the data to be read or written. Additional attributes
-     * should always be attached to the subgroup, never the samples
+     * should always be attached to the subgroup, never the sample
      * dataset.
      * To give both readers the same API for convenient use in template
      * functions in C++ unit tests, we define a subgroup type.

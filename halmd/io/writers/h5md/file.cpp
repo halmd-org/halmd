@@ -20,6 +20,7 @@
 #include <boost/shared_ptr.hpp>
 #include <ctime>
 
+#include <halmd/io/logger.hpp>
 #include <halmd/io/utility/hdf5.hpp>
 #include <halmd/io/writers/h5md/file.hpp>
 #include <halmd/utility/filesystem.hpp>

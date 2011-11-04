@@ -24,18 +24,21 @@ include(execute_halmd)
 
 set(OUTPUT_PREFIX "@CMAKE_CURRENT_BINARY_DIR@/thermostat")
 set(HALMD_SCRIPT "@CMAKE_SOURCE_DIR@/examples/scripts/thermostat.lua")
+set(WITH_CUDA @WITH_CUDA@)
 
 if(DEFINED USE_HOST)
+  if(WITH_CUDA)
     set(BACKEND_OPTION "--disable-gpu")
-    message(STATUS "Using host backend")
+  endif()
+  message(STATUS "Using host backend")
 else()
-    message(STATUS "Using GPU backend")
+  message(STATUS "Using GPU backend")
 endif()
 
 if(NOT DEFINED DIMENSION)
-    message(FATAL_ERROR "Variable DIMENSION undefined")
+  message(FATAL_ERROR "Variable DIMENSION undefined")
 else()
-    message(STATUS "Space dimension: ${DIMENSION}")
+  message(STATUS "Space dimension: ${DIMENSION}")
 endif()
 
 execute_halmd(
