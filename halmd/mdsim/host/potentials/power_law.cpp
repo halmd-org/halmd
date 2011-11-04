@@ -39,16 +39,17 @@ namespace potentials {
 template <typename float_type>
 power_law<float_type>::power_law(
     unsigned int ntype
-  , int index
   , array<float, 3> const& cutoff
   , array<float, 3> const& epsilon
   , array<float, 3> const& sigma
+  , array<unsigned int, 3> const& index
   , shared_ptr<logger_type> logger
 )
   // allocate potential parameters
-  : index_(index)
-  , epsilon_(scalar_matrix<float_type>(ntype, ntype, 1))
+  : epsilon_(scalar_matrix<float_type>(ntype, ntype, 1))
   , sigma_(scalar_matrix<float_type>(ntype, ntype, 1))
+  , index_(ntype, ntype)
+  , sigma2_(ntype, ntype)
   , r_cut_(ntype, ntype)
   , r_cut_sigma_(ntype, ntype)
   , rr_cut_(ntype, ntype)
@@ -60,6 +61,7 @@ power_law<float_type>::power_law(
         for (unsigned j = i; j < std::min(ntype, 2U); ++j) {
             epsilon_(i, j) = epsilon[i + j];
             sigma_(i, j) = sigma[i + j];
+            index_(i, j) = index[i + j];
             r_cut_sigma_(i, j) = cutoff[i + j];
         }
     }
@@ -67,6 +69,7 @@ power_law<float_type>::power_law(
     // precalculate derived parameters
     for (unsigned i = 0; i < ntype; ++i) {
         for (unsigned j = i; j < ntype; ++j) {
+            sigma2_(i, j) = std::pow(sigma_(i, j), 2);
             r_cut_(i, j) = r_cut_sigma_(i, j) * sigma_(i, j);
             rr_cut_(i, j) = std::pow(r_cut_(i, j), 2);
             // energy shift due to truncation at cutoff length
@@ -74,11 +77,11 @@ power_law<float_type>::power_law(
         }
     }
 
-    LOG("potential: power law index: n = " << index_);
-    LOG("potential: interaction strength ε = " << epsilon_);
-    LOG("potential: interaction range σ = " << sigma_);
-    LOG("potential: cutoff length r_c = " << r_cut_sigma_);
-    LOG("potential: cutoff energy U = " << en_cut_);
+    LOG("interaction strength ε = " << epsilon_);
+    LOG("interaction range σ = " << sigma_);
+    LOG("power law index: n = " << index_);
+    LOG("cutoff length r_c = " << r_cut_sigma_);
+    LOG("cutoff energy U = " << en_cut_);
 }
 
 template <typename float_type>
@@ -96,17 +99,17 @@ void power_law<float_type>::luaopen(lua_State* L)
                     class_<power_law, shared_ptr<power_law> >(module_name())
                         .def(constructor<
                             unsigned int
-                          , int
                           , array<float, 3> const&
                           , array<float, 3> const&
                           , array<float, 3> const&
+                          , array<unsigned int, 3> const&
                           , shared_ptr<logger_type>
                         >())
-                        .property("index", &power_law::index)
                         .property("r_cut", (matrix_type const& (power_law::*)() const) &power_law::r_cut)
                         .property("r_cut_sigma", &power_law::r_cut_sigma)
                         .property("epsilon", &power_law::epsilon)
                         .property("sigma", &power_law::sigma)
+                        .property("index", &power_law::index)
                 ]
             ]
         ]
