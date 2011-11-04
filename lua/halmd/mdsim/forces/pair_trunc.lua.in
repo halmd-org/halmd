@@ -1,5 +1,5 @@
 --
--- Copyright © 2010  Peter Colberg and Felix Höfling
+-- Copyright © 2010-2011  Peter Colberg and Felix Höfling
 --
 -- This file is part of HALMD.
 --
@@ -22,6 +22,7 @@ require("halmd.mdsim.box")
 require("halmd.mdsim.core")
 require("halmd.mdsim.neighbour")
 require("halmd.mdsim.particle")
+require("halmd.mdsim.potential")
 require("halmd.modules")
 
 -- grab modules
@@ -38,12 +39,11 @@ module("halmd.mdsim.forces.pair_trunc", halmd.modules.register)
 --
 -- construct truncated pair force module
 --
--- @param args.force potential name
--- @param args.potential potential module instance
+-- @param args.potential potential name
 --
 function new(args)
-    local force = assert(args.force)
-    local potential = assert(args.potential)
+    -- construct global potential module
+    local potential = mdsim.potential()
 
     local particle = mdsim.particle() -- singleton
     local dimension = assert(particle.dimension)
@@ -80,5 +80,12 @@ end
 -- connect runtime accumulators to module profiler
 --
 function profile(self, profiler)
-    profiler:on_profile{self, compute = "computation of " .. self.potential.module.description() .. " forces"}
+    profiler:on_profile{self, compute = "computation of " .. self.potential.module.description() .. " interaction"}
+end
+
+--
+-- returns module description
+--
+function description()
+    return "Truncated pair interaction"
 end

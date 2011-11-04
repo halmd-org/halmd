@@ -1,2 +1,3 @@
+require("halmd.mdsim.forces.pair_full")
 require("halmd.mdsim.forces.pair_trunc")
 require("halmd.mdsim.forces.zero")
