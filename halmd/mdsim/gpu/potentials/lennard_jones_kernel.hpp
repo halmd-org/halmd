@@ -17,43 +17,41 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef HALMD_MDSIM_GPU_FORCES_MORSE_KERNEL_HPP
-#define HALMD_MDSIM_GPU_FORCES_MORSE_KERNEL_HPP
+#ifndef HALMD_MDSIM_GPU_POTENTIALS_LENNARD_JONES_KERNEL_HPP
+#define HALMD_MDSIM_GPU_POTENTIALS_LENNARD_JONES_KERNEL_HPP
 
 #include <cuda_wrapper/cuda_wrapper.hpp>
 
 namespace halmd {
 namespace mdsim {
 namespace gpu {
-namespace forces {
-namespace morse_kernel {
+namespace potentials {
+namespace lennard_jones_kernel {
 
 /**
- * indices of potential parameters in float4 array
+ * indices of potential parameters
  */
 enum {
-    EPSILON     /**< depth of potential well in MD units */
-  , SIGMA       /**< width of potential well in MD units */
-  , R_MIN_SIGMA /**< position of potential well in units of sigma */
-  , EN_CUT      /**< potential energy at cutoff radius in MD units */
+    RR_CUT      /**< square of cutoff length */
+  , EPSILON     /**< potential well depths in MD units */
+  , SIGMA2      /**< square of pair separation */
+  , EN_CUT      /**< potential energy at cutoff length in MD units */
 };
 
 // forward declaration for host code
-class morse;
+class lennard_jones;
 
-} // namespace morse_kernel
+} // namespace lennard_jones_kernel
 
-struct morse_wrapper
+struct lennard_jones_wrapper
 {
-    /** potential parameters */
+    /** Lennard-Jones potential parameters */
     static cuda::texture<float4> param;
-    /** squared cutoff radius */
-    static cuda::texture<float> rr_cut;
 };
 
-} // namespace mdsim
+} // namespace potentials
 } // namespace gpu
-} // namespace forces
+} // namespace mdsim
 } // namespace halmd
 
-#endif /* ! HALMD_MDSIM_GPU_FORCES_MORSE_KERNEL_HPP */
+#endif /* ! HALMD_MDSIM_GPU_POTENTIALS_LENNARD_JONES_KERNEL_HPP */

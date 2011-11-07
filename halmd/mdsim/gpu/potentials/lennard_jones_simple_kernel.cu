@@ -17,41 +17,39 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef HALMD_MDSIM_GPU_FORCES_LENNARD_JONES_KERNEL_CUH
-#define HALMD_MDSIM_GPU_FORCES_LENNARD_JONES_KERNEL_CUH
-
-#include <halmd/mdsim/gpu/forces/lennard_jones_kernel.hpp>
+#include <halmd/algorithm/gpu/tuple.cuh>
 #include <halmd/mdsim/gpu/forces/pair_trunc_kernel.cuh>
+#include <halmd/mdsim/gpu/potentials/lennard_jones_simple_kernel.hpp>
 #include <halmd/numeric/blas/blas.hpp>
 #include <halmd/utility/gpu/variant.cuh>
 
 namespace halmd {
 namespace mdsim {
 namespace gpu {
-namespace forces {
-namespace lennard_jones_kernel {
+namespace potentials {
+namespace lennard_jones_simple_kernel {
 
-/** array of Lennard-Jones potential parameters for all combinations of particle types */
-static texture<float4> param_;
+using algorithm::gpu::tuple;
+using algorithm::gpu::make_tuple;
+
+/** Lennard-Jones potential parameters: rr_cut, en_cut */
+static __constant__ float rr_cut_;
+static __constant__ float en_cut_;
 
 /**
- * Lennard-Jones interaction of a pair of particles.
+ * Lennard-Jones interaction for a simple fluid of a single species.
  */
-class lennard_jones
+class lennard_jones_simple
 {
 public:
     /**
      * Construct Lennard-Jones pair interaction potential.
      *
-     * Fetch potential parameters from texture cache for particle pair.
-     *
      * @param type1 type of first interacting particle
      * @param type2 type of second interacting particle
      */
-    HALMD_GPU_ENABLED lennard_jones(unsigned int type1, unsigned int type2)
-      : pair_(
-            tex1Dfetch(param_, symmetric_matrix::lower_index(type1, type2))
-        ) {}
+    HALMD_GPU_ENABLED lennard_jones_simple(unsigned int type1, unsigned int type2)
+        {}
 
     /**
      * Check whether particles are in interaction range.
@@ -61,7 +59,7 @@ public:
     template <typename float_type>
     HALMD_GPU_ENABLED bool within_range(float_type rr) const
     {
-        return (rr < pair_[RR_CUT]);
+        return (rr < rr_cut_);
     }
 
     /**
@@ -74,31 +72,36 @@ public:
     template <typename float_type>
     HALMD_GPU_ENABLED tuple<float_type, float_type, float_type> operator()(float_type rr) const
     {
-        float_type rri = pair_[SIGMA2] / rr;
+        const float_type sigma2 = 1;
+        const float_type epsilon = 1;
+        float_type rri = sigma2 / rr;
         float_type ri6 = rri * rri * rri;
-        float_type eps_ri6 = pair_[EPSILON] * ri6;
-        float_type fval = 48 * rri * eps_ri6 * (ri6 - 0.5f) / pair_[SIGMA2];
-        float_type en_pot = 4 * eps_ri6 * (ri6 - 1) - pair_[EN_CUT];
+        float_type eps_ri6 = epsilon * ri6;
+        float_type fval = 48 * rri * eps_ri6 * (ri6 - 0.5f) / sigma2;
+        float_type en_pot = 4 * eps_ri6 * (ri6 - 1) - en_cut_;
         float_type hvir = 576 * eps_ri6 * (ri6 - 0.25f);
 
         return make_tuple(fval, en_pot, hvir);
     }
-
-private:
-    /** potential parameters for particle pair */
-    fixed_vector<float, 4> pair_;
 };
 
-} // namespace lennard_jones_kernel
+} // namespace lennard_jones_simple_kernel
 
-cuda::texture<float4> lennard_jones_wrapper::param = lennard_jones_kernel::param_;
+cuda::symbol<float> lennard_jones_simple_wrapper::rr_cut = lennard_jones_simple_kernel::rr_cut_;
+cuda::symbol<float> lennard_jones_simple_wrapper::en_cut = lennard_jones_simple_kernel::en_cut_;
 
-template class pair_trunc_wrapper<3, lennard_jones_kernel::lennard_jones>;
-template class pair_trunc_wrapper<2, lennard_jones_kernel::lennard_jones>;
+} // namespace potentials
 
-} // namespace mdsim
-} // namespace gpu
+// explicit instantiation of force kernels
+namespace forces {
+
+using potentials::lennard_jones_simple_kernel::lennard_jones_simple;
+
+template class pair_trunc_wrapper<3, lennard_jones_simple>;
+template class pair_trunc_wrapper<2, lennard_jones_simple>;
+
 } // namespace forces
-} // namespace halmd
 
-#endif /* ! HALMD_MDSIM_GPU_FORCES_LENNARD_JONES_KERNEL_CUH */
+} // namespace gpu
+} // namespace mdsim
+} // namespace halmd

@@ -17,8 +17,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef HALMD_MDSIM_GPU_FORCES_LENNARD_JONES_HPP
-#define HALMD_MDSIM_GPU_FORCES_LENNARD_JONES_HPP
+#ifndef HALMD_MDSIM_GPU_POTENTIALS_MORSE_HPP
+#define HALMD_MDSIM_GPU_POTENTIALS_MORSE_HPP
 
 #include <boost/make_shared.hpp>
 #include <boost/numeric/ublas/symmetric.hpp>
@@ -26,41 +26,42 @@
 #include <lua.hpp>
 
 #include <halmd/io/logger.hpp>
-#include <halmd/mdsim/gpu/forces/pair_trunc.hpp>
-#include <halmd/mdsim/gpu/forces/lennard_jones_kernel.hpp>
+#include <halmd/mdsim/gpu/potentials/morse_kernel.hpp>
 
 namespace halmd {
 namespace mdsim {
 namespace gpu {
-namespace forces {
+namespace potentials {
 
 /**
- * define Lennard-Jones potential and parameters
+ * define Morse potential and parameters
  */
 template <typename float_type>
-class lennard_jones
+class morse
 {
 public:
-    typedef lennard_jones_kernel::lennard_jones gpu_potential_type;
+    typedef morse_kernel::morse gpu_potential_type;
     typedef boost::numeric::ublas::symmetric_matrix<float_type, boost::numeric::ublas::lower> matrix_type;
     typedef logger logger_type;
 
-    static char const* module_name() { return "lennard_jones"; }
+    static char const* module_name() { return "morse"; }
 
     static void luaopen(lua_State* L);
 
-    lennard_jones(
+    morse(
         unsigned ntype
       , boost::array<float, 3> const& cutoff
       , boost::array<float, 3> const& epsilon
       , boost::array<float, 3> const& sigma
+      , boost::array<float, 3> const& r_min
       , boost::shared_ptr<logger_type> logger = boost::make_shared<logger_type>()
     );
 
     /** bind textures before kernel invocation */
     void bind_textures() const
     {
-        lennard_jones_wrapper::param.bind(g_param_);
+        morse_wrapper::param.bind(g_param_);
+        morse_wrapper::rr_cut.bind(g_rr_cut_);
     }
 
     matrix_type const& r_cut() const
@@ -93,30 +94,37 @@ public:
         return sigma_;
     }
 
+    matrix_type const& r_min_sigma() const
+    {
+        return r_min_sigma_;
+    }
+
 private:
-    /** potential well depths in MD units */
+    /** depths of potential well in MD units */
     matrix_type epsilon_;
-    /** pair separation in MD units */
+    /** width of potential well in MD units */
     matrix_type sigma_;
-    /** cutoff length in units of sigma */
-    matrix_type r_cut_sigma_;
-    /** cutoff length in MD units */
-    matrix_type r_cut_;
-    /** square of cutoff length */
-    matrix_type rr_cut_;
-    /** square of pair separation */
-    matrix_type sigma2_;
+    /** position of potential well in units of sigma */
+    matrix_type r_min_sigma_;
     /** potential energy at cutoff length in MD units */
     matrix_type en_cut_;
+    /** cutoff radius in MD units */
+    matrix_type r_cut_;
+    /** cutoff radius in units of sigma */
+    matrix_type r_cut_sigma_;
+    /** square of cutoff radius */
+    matrix_type rr_cut_;
     /** potential parameters at CUDA device */
     cuda::vector<float4> g_param_;
+    /** squared cutoff radius at CUDA device */
+    cuda::vector<float> g_rr_cut_;
     /** module logger */
     boost::shared_ptr<logger_type> logger_;
 };
 
-} // namespace mdsim
+} // namespace potentials
 } // namespace gpu
-} // namespace forces
+} // namespace mdsim
 } // namespace halmd
 
-#endif /* ! HALMD_MDSIM_GPU_FORCES_LENNARD_JONES_HPP */
+#endif /* ! HALMD_MDSIM_GPU_POTENTIALS_MORSE_HPP */

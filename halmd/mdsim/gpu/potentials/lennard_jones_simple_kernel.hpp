@@ -1,5 +1,5 @@
 /*
- * Copyright © 2008-2010  Peter Colberg
+ * Copyright © 2008-2011  Peter Colberg and Felix Höfling
  *
  * This file is part of HALMD.
  *
@@ -17,41 +17,32 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef HALMD_MDSIM_GPU_FORCES_LENNARD_JONES_KERNEL_HPP
-#define HALMD_MDSIM_GPU_FORCES_LENNARD_JONES_KERNEL_HPP
+#ifndef HALMD_MDSIM_GPU_POTENTIALS_LENNARD_JONES_SIMPLE_KERNEL_HPP
+#define HALMD_MDSIM_GPU_POTENTIALS_LENNARD_JONES_SIMPLE_KERNEL_HPP
 
 #include <cuda_wrapper/cuda_wrapper.hpp>
 
 namespace halmd {
 namespace mdsim {
 namespace gpu {
-namespace forces {
-namespace lennard_jones_kernel {
-
-/**
- * indices of potential parameters
- */
-enum {
-    RR_CUT      /**< square of cutoff length */
-  , EPSILON     /**< potential well depths in MD units */
-  , SIGMA2      /**< square of pair separation */
-  , EN_CUT      /**< potential energy at cutoff length in MD units */
-};
+namespace potentials {
+namespace lennard_jones_simple_kernel {
 
 // forward declaration for host code
-class lennard_jones;
+class lennard_jones_simple;
 
 } // namespace lennard_jones_kernel
 
-struct lennard_jones_wrapper
+struct lennard_jones_simple_wrapper
 {
     /** Lennard-Jones potential parameters */
-    static cuda::texture<float4> param;
+    static cuda::symbol<float> rr_cut;
+    static cuda::symbol<float> en_cut;
 };
 
-} // namespace mdsim
+} // namespace potentials
 } // namespace gpu
-} // namespace forces
+} // namespace mdsim
 } // namespace halmd
 
-#endif /* ! HALMD_MDSIM_GPU_FORCES_LENNARD_JONES_KERNEL_HPP */
+#endif /* ! HALMD_MDSIM_GPU_POTENTIALS_LENNARD_JONES_KERNEL_HPP */

@@ -21,9 +21,8 @@
 #include <string>
 
 #include <halmd/io/logger.hpp>
-#include <halmd/mdsim/gpu/forces/lennard_jones_simple.hpp>
-#include <halmd/mdsim/gpu/forces/lennard_jones_simple_kernel.hpp>
-#include <halmd/mdsim/gpu/forces/pair_trunc_kernel.hpp>
+#include <halmd/mdsim/gpu/potentials/lennard_jones_simple.hpp>
+#include <halmd/mdsim/gpu/potentials/lennard_jones_simple_kernel.hpp>
 #include <halmd/utility/lua/lua.hpp>
 
 using namespace boost;
@@ -33,7 +32,7 @@ using namespace std;
 namespace halmd {
 namespace mdsim {
 namespace gpu {
-namespace forces {
+namespace potentials {
 
 /**
  * Initialise Lennard-Jones potential parameters
@@ -71,7 +70,7 @@ void lennard_jones_simple<float_type>::luaopen(lua_State* L)
         [
             namespace_("gpu")
             [
-                namespace_("forces")
+                namespace_("potentials")
                 [
                     class_<lennard_jones_simple, shared_ptr<lennard_jones_simple> >(module_name())
                         .def(constructor<
@@ -89,20 +88,16 @@ void lennard_jones_simple<float_type>::luaopen(lua_State* L)
     ];
 }
 
-HALMD_LUA_API int luaopen_libhalmd_mdsim_gpu_forces_lennard_jones_simple(lua_State* L)
+HALMD_LUA_API int luaopen_libhalmd_mdsim_gpu_potentials_lennard_jones_simple(lua_State* L)
 {
     lennard_jones_simple<float>::luaopen(L);
-    pair_trunc<3, float, lennard_jones_simple<float> >::luaopen(L);
-    pair_trunc<2, float, lennard_jones_simple<float> >::luaopen(L);
     return 0;
 }
 
 // explicit instantiation
 template class lennard_jones_simple<float>;
-template class pair_trunc<3, float, lennard_jones_simple<float> >;
-template class pair_trunc<2, float, lennard_jones_simple<float> >;
 
-} // namespace mdsim
+} // namespace potentials
 } // namespace gpu
-} // namespace forces
+} // namespace mdsim
 } // namespace halmd

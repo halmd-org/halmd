@@ -26,7 +26,7 @@
 #include <halmd/mdsim/box.hpp>
 #include <halmd/mdsim/clock.hpp>
 #include <halmd/mdsim/core.hpp>
-#include <halmd/mdsim/host/forces/lennard_jones.hpp>
+#include <halmd/mdsim/host/forces/pair_trunc.hpp>
 #include <halmd/mdsim/host/forces/zero.hpp>
 #include <halmd/mdsim/host/integrators/verlet.hpp>
 #include <halmd/mdsim/host/integrators/verlet_nvt_andersen.hpp>
@@ -34,13 +34,14 @@
 #include <halmd/mdsim/host/neighbour.hpp>
 #include <halmd/mdsim/host/particle.hpp>
 #include <halmd/mdsim/host/positions/lattice.hpp>
+#include <halmd/mdsim/host/potentials/lennard_jones.hpp>
 #include <halmd/mdsim/host/velocities/boltzmann.hpp>
 #include <halmd/numeric/accumulator.hpp>
 #include <halmd/observables/host/thermodynamics.hpp>
 #include <halmd/random/host/random.hpp>
 #include <halmd/utility/predicates/greater.hpp>
 #ifdef WITH_CUDA
-# include <halmd/mdsim/gpu/forces/lennard_jones.hpp>
+# include <halmd/mdsim/gpu/forces/pair_trunc.hpp>
 # include <halmd/mdsim/gpu/forces/zero.hpp>
 # include <halmd/mdsim/gpu/integrators/verlet.hpp>
 # include <halmd/mdsim/gpu/integrators/verlet_nvt_andersen.hpp>
@@ -48,6 +49,7 @@
 # include <halmd/mdsim/gpu/maximum_squared_displacement.hpp>
 # include <halmd/mdsim/gpu/neighbours/from_binning.hpp>
 # include <halmd/mdsim/gpu/positions/lattice.hpp>
+# include <halmd/mdsim/gpu/potentials/lennard_jones.hpp>
 # include <halmd/mdsim/gpu/velocities/boltzmann.hpp>
 # include <halmd/observables/gpu/thermodynamics.hpp>
 # include <halmd/random/gpu/random.hpp>
@@ -357,7 +359,7 @@ template <int dimension, typename float_type>
 struct host_modules
 {
     typedef mdsim::box<dimension> box_type;
-    typedef mdsim::host::forces::lennard_jones<float_type> potential_type;
+    typedef mdsim::host::potentials::lennard_jones<float_type> potential_type;
     typedef mdsim::host::forces::pair_trunc<dimension, float_type, potential_type> force_type;
     typedef mdsim::host::forces::zero<dimension, float_type> zero_type;
     typedef mdsim::host::binning<dimension, float_type> binning_type;
@@ -385,7 +387,7 @@ template <int dimension, typename float_type>
 struct gpu_modules
 {
     typedef mdsim::box<dimension> box_type;
-    typedef mdsim::gpu::forces::lennard_jones<float_type> potential_type;
+    typedef mdsim::gpu::potentials::lennard_jones<float_type> potential_type;
     typedef mdsim::gpu::forces::pair_trunc<dimension, float_type, potential_type> force_type;
     typedef mdsim::gpu::forces::zero<dimension, float_type> zero_type;
     typedef mdsim::gpu::binning<dimension, float_type> binning_type;

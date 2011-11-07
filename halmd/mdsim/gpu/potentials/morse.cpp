@@ -17,15 +17,14 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <algorithm>
 #include <boost/numeric/ublas/io.hpp>
 #include <cuda_wrapper/cuda_wrapper.hpp>
 #include <cmath>
 #include <string>
 
-#include <halmd/io/utility/hdf5.hpp>
-#include <halmd/mdsim/gpu/forces/lennard_jones.hpp>
-#include <halmd/mdsim/gpu/forces/lennard_jones_kernel.hpp>
-#include <halmd/mdsim/gpu/forces/pair_trunc_kernel.hpp>
+#include <halmd/mdsim/gpu/potentials/morse.hpp>
+#include <halmd/mdsim/gpu/potentials/morse_kernel.hpp>
 #include <halmd/utility/lua/lua.hpp>
 
 using namespace boost;
@@ -35,28 +34,30 @@ using namespace std;
 namespace halmd {
 namespace mdsim {
 namespace gpu {
-namespace forces {
+namespace potentials {
 
 /**
- * Initialise Lennard-Jones potential parameters
+ * Initialise parameters of the potential
  */
 template <typename float_type>
-lennard_jones<float_type>::lennard_jones(
+morse<float_type>::morse(
     unsigned ntype
   , array<float, 3> const& cutoff
   , array<float, 3> const& epsilon
   , array<float, 3> const& sigma
+  , array<float, 3> const& r_min
   , shared_ptr<logger_type> logger
 )
   // allocate potential parameters
   : epsilon_(scalar_matrix<float_type>(ntype, ntype, 1))
   , sigma_(scalar_matrix<float_type>(ntype, ntype, 1))
-  , r_cut_sigma_(ntype, ntype)
-  , r_cut_(ntype, ntype)
-  , rr_cut_(ntype, ntype)
-  , sigma2_(ntype, ntype)
+  , r_min_sigma_(ntype, ntype)
   , en_cut_(ntype, ntype)
+  , r_cut_(ntype, ntype)
+  , r_cut_sigma_(ntype, ntype)
+  , rr_cut_(ntype, ntype)
   , g_param_(epsilon_.data().size())
+  , g_rr_cut_(epsilon_.data().size())
   , logger_(logger)
 {
     // FIXME support any number of types
@@ -65,6 +66,7 @@ lennard_jones<float_type>::lennard_jones(
             epsilon_(i, j) = epsilon[i + j];
             sigma_(i, j) = sigma[i + j];
             r_cut_sigma_(i, j) = cutoff[i + j];
+            r_min_sigma_(i, j) = r_min[i + j];
         }
     }
 
@@ -73,34 +75,34 @@ lennard_jones<float_type>::lennard_jones(
         for (unsigned j = i; j < ntype; ++j) {
             r_cut_(i, j) = r_cut_sigma_(i, j) * sigma_(i, j);
             rr_cut_(i, j) = std::pow(r_cut_(i, j), 2);
-            sigma2_(i, j) = std::pow(sigma_(i, j), 2);
             // energy shift due to truncation at cutoff length
-            float_type rri_cut = std::pow(r_cut_sigma_(i, j), -2);
-            float_type r6i_cut = rri_cut * rri_cut * rri_cut;
-            en_cut_(i, j) = 4 * epsilon_(i, j) * r6i_cut * (r6i_cut - 1);
+            float_type a = exp(r_min_sigma_(i, j) - r_cut_sigma_(i, j));
+            en_cut_(i, j) = epsilon_(i, j) * (a - 2) * a;
         }
     }
 
-    LOG("potential well depths: ε = " << epsilon_);
-    LOG("potential core width: σ = " << sigma_);
-    LOG("potential cutoff length: r_c = " << r_cut_sigma_);
-    LOG("potential cutoff energy: U = " << en_cut_);
+    LOG("depth of potential well: ε = " << epsilon_);
+    LOG("width of potential well: σ = " << sigma_);
+    LOG("position of potential well: r_min / σ = " << r_min_sigma_);
+    LOG("cutoff radius of potential: r_c / σ = " << r_cut_sigma_);
+    LOG("potential energy at cutoff: U = " << en_cut_);
 
+    // copy parameters to CUDA device
     cuda::host::vector<float4> param(g_param_.size());
     for (size_t i = 0; i < param.size(); ++i) {
         fixed_vector<float, 4> p;
-        p[lennard_jones_kernel::EPSILON] = epsilon_.data()[i];
-        p[lennard_jones_kernel::RR_CUT] = rr_cut_.data()[i];
-        p[lennard_jones_kernel::SIGMA2] = sigma2_.data()[i];
-        p[lennard_jones_kernel::EN_CUT] = en_cut_.data()[i];
+        p[morse_kernel::EPSILON] = epsilon_.data()[i];
+        p[morse_kernel::SIGMA] = sigma_.data()[i];
+        p[morse_kernel::R_MIN_SIGMA] = r_min_sigma_.data()[i];
+        p[morse_kernel::EN_CUT] = en_cut_.data()[i];
         param[i] = p;
     }
-
     cuda::copy(param, g_param_);
+    cuda::copy(rr_cut_.data(), g_rr_cut_);
 }
 
 template <typename float_type>
-void lennard_jones<float_type>::luaopen(lua_State* L)
+void morse<float_type>::luaopen(lua_State* L)
 {
     using namespace luabind;
     module(L, "libhalmd")
@@ -109,40 +111,38 @@ void lennard_jones<float_type>::luaopen(lua_State* L)
         [
             namespace_("gpu")
             [
-                namespace_("forces")
+                namespace_("potentials")
                 [
-                    class_<lennard_jones, shared_ptr<lennard_jones> >(module_name())
+                    class_<morse, shared_ptr<morse> >(module_name())
                         .def(constructor<
                             unsigned
                           , array<float, 3> const&
                           , array<float, 3> const&
                           , array<float, 3> const&
+                          , array<float, 3> const&
                           , shared_ptr<logger_type>
                         >())
-                        .property("r_cut", (matrix_type const& (lennard_jones::*)() const) &lennard_jones::r_cut)
-                        .property("r_cut_sigma", &lennard_jones::r_cut_sigma)
-                        .property("epsilon", &lennard_jones::epsilon)
-                        .property("sigma", &lennard_jones::sigma)
+                        .property("r_cut", (matrix_type const& (morse::*)() const) &morse::r_cut)
+                        .property("r_cut_sigma", &morse::r_cut_sigma)
+                        .property("epsilon", &morse::epsilon)
+                        .property("sigma", &morse::sigma)
+                        .property("r_min_sigma", &morse::r_min_sigma)
                 ]
             ]
         ]
     ];
 }
 
-HALMD_LUA_API int luaopen_libhalmd_mdsim_gpu_forces_lennard_jones(lua_State* L)
+HALMD_LUA_API int luaopen_libhalmd_mdsim_gpu_potentials_morse(lua_State* L)
 {
-    lennard_jones<float>::luaopen(L);
-    pair_trunc<3, float, lennard_jones<float> >::luaopen(L);
-    pair_trunc<2, float, lennard_jones<float> >::luaopen(L);
+    morse<float>::luaopen(L);
     return 0;
 }
 
 // explicit instantiation
-template class lennard_jones<float>;
-template class pair_trunc<3, float, lennard_jones<float> >;
-template class pair_trunc<2, float, lennard_jones<float> >;
+template class morse<float>;
 
-} // namespace mdsim
+} // namespace potentials
 } // namespace gpu
-} // namespace forces
+} // namespace mdsim
 } // namespace halmd

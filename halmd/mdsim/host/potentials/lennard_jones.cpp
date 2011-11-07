@@ -21,8 +21,7 @@
 #include <cmath>
 #include <string>
 
-#include <halmd/io/utility/hdf5.hpp>
-#include <halmd/mdsim/host/forces/lennard_jones.hpp>
+#include <halmd/mdsim/host/potentials/lennard_jones.hpp>
 #include <halmd/utility/lua/lua.hpp>
 
 using namespace boost;
@@ -33,7 +32,7 @@ using namespace std;
 namespace halmd {
 namespace mdsim {
 namespace host {
-namespace forces {
+namespace potentials {
 
 /**
  * Initialise Lennard-Jones potential parameters
@@ -92,7 +91,7 @@ void lennard_jones<float_type>::luaopen(lua_State* L)
         [
             namespace_("host")
             [
-                namespace_("forces")
+                namespace_("potentials")
                 [
                     class_<lennard_jones, shared_ptr<lennard_jones> >(module_name())
                         .def(constructor<
@@ -112,31 +111,24 @@ void lennard_jones<float_type>::luaopen(lua_State* L)
     ];
 }
 
-HALMD_LUA_API int luaopen_libhalmd_mdsim_host_forces_lennard_jones(lua_State* L)
+HALMD_LUA_API int luaopen_libhalmd_mdsim_host_potentials_lennard_jones(lua_State* L)
 {
 #ifndef USE_HOST_SINGLE_PRECISION
-    typedef double float_type;
+    lennard_jones<double>::luaopen(L);
 #else
-    typedef float float_type;
+    lennard_jones<float>::luaopen(L);
 #endif
-    lennard_jones<float_type>::luaopen(L);
-    pair_trunc<3, float_type, lennard_jones<float_type> >::luaopen(L);
-    pair_trunc<2, float_type, lennard_jones<float_type> >::luaopen(L);
     return 0;
 }
 
 // explicit instantiation
 #ifndef USE_HOST_SINGLE_PRECISION
 template class lennard_jones<double>;
-template class pair_trunc<3, double, lennard_jones<double> >;
-template class pair_trunc<2, double, lennard_jones<double> >;
 #else
 template class lennard_jones<float>;
-template class pair_trunc<3, float, lennard_jones<float> >;
-template class pair_trunc<2, float, lennard_jones<float> >;
 #endif
 
-} // namespace mdsim
+} // namespace potentials
 } // namespace host
-} // namespace forces
+} // namespace mdsim
 } // namespace halmd

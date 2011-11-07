@@ -26,21 +26,21 @@ local device = halmd.device
 local mdsim = halmd.mdsim
 -- grab C++ wrappers
 local lennard_jones_wrapper = {
-    host = libhalmd.mdsim.host.forces.lennard_jones
+    host = libhalmd.mdsim.host.potentials.lennard_jones
 }
 if libhalmd.mdsim.gpu then
-    lennard_jones_wrapper.gpu = libhalmd.mdsim.gpu.forces.lennard_jones
+    lennard_jones_wrapper.gpu = libhalmd.mdsim.gpu.potentials.lennard_jones
 end
 local lennard_jones_simple_wrapper = {}
 if libhalmd.mdsim.gpu then
-    lennard_jones_simple_wrapper.gpu = libhalmd.mdsim.gpu.forces.lennard_jones_simple
+    lennard_jones_simple_wrapper.gpu = libhalmd.mdsim.gpu.potentials.lennard_jones_simple
 end
 local h5 = libhalmd.h5
 local po = libhalmd.po
 -- grab standard library
 local assert = assert
 
-module("halmd.mdsim.forces.lennard_jones", halmd.modules.register)
+module("halmd.mdsim.potentials.lennard_jones", halmd.modules.register)
 
 --
 -- construct Lennard-Jones module
