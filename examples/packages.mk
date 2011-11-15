@@ -54,10 +54,10 @@ env: env-cmake env-lua env-boost env-luabind env-hdf5
 ## CMake with CMake-CUDA patch
 ##
 
-CMAKE_VERSION = 2.8.5
+CMAKE_VERSION = 2.8.6
 CMAKE_TARBALL = cmake-$(CMAKE_VERSION).tar.gz
 CMAKE_TARBALL_URL = http://www.cmake.org/files/v2.8/$(CMAKE_TARBALL)
-CMAKE_CUDA_PATCH = cmake-cuda-2.8.5-0-gda84f60.patch
+CMAKE_CUDA_PATCH = cmake-cuda-2.8.6-0-g4dd63fc.patch
 CMAKE_CUDA_PATCH_URL = http://sourceforge.net/projects/halmd/files/patches/$(CMAKE_CUDA_PATCH)
 CMAKE_BUILD_DIR = cmake-$(CMAKE_VERSION)
 CMAKE_INSTALL_DIR = $(PREFIX)/cmake-$(CMAKE_VERSION)
