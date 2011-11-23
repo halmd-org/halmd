@@ -52,7 +52,7 @@ module("halmd.mdsim.positions.phase_space", halmd.modules.register)
 --
 function new(args)
     -- dependency injection
-    local particle = mdsim.particle() -- singleton
+    local particle = assert(args.particle)
     local dimension = assert(particle.dimension)
     local box = mdsim.box() -- singleton
     local sample = assert(args.sample)
