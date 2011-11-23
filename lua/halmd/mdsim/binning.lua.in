@@ -55,7 +55,7 @@ function new(args)
     local skin = assert(args.skin)
 
     -- dependency injection
-    local particle = mdsim.particle() -- singleton
+    local particle = assert(args.particle)
     local dimension = assert(particle.dimension)
     local box = mdsim.box() -- singleton
     local logger = assert(args.logger)
