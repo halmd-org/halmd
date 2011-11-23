@@ -38,13 +38,14 @@ module("halmd.mdsim.force", halmd.modules.register)
 -- construct force module
 --
 function new(args)
+    local particle = assert(args.particle)
     local force = args.force or "lennard_jones" -- default value
     -- trade a potential for a force
     local potential = potentials[force]
     if potential then
-        return forces.pair_trunc{force = force, potential = potential()}
+        return forces.pair_trunc{particle = particle, force = force, potential = potential{particle = particle}}
     end
-    return assert(forces[force])()
+    return assert(forces[force]){particle = particle}
 end
 
 --

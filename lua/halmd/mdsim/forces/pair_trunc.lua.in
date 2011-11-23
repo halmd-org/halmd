@@ -42,15 +42,15 @@ module("halmd.mdsim.forces.pair_trunc", halmd.modules.register)
 -- @param args.potential potential module instance
 --
 function new(args)
+    local particle = assert(args.particle)
     local force = assert(args.force)
     local potential = assert(args.potential)
 
-    local particle = mdsim.particle() -- singleton
     local dimension = assert(particle.dimension)
     local box = mdsim.box() -- singleton
 
     -- create neighbour lists with cutoff radii of potential
-    local neighbour = mdsim.neighbour{r_cut = potential.r_cut}
+    local neighbour = mdsim.neighbour{particle = particle, r_cut = potential.r_cut}
 
     -- construct force module
     local force = assert(forces.pair_trunc)(potential, particle, particle, box, neighbour)
