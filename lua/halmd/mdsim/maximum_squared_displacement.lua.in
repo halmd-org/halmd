@@ -48,7 +48,7 @@ module("halmd.mdsim.maximum_squared_displacement", halmd.modules.register)
 --
 function new(args)
     -- dependency injection
-    local particle = mdsim.particle() -- singleton
+    local particle = assert(args.particle)
     local dimension = assert(particle.dimension)
     local box = mdsim.box() -- singleton
 
