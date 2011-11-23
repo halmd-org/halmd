@@ -35,8 +35,9 @@ module("halmd.mdsim.sort", halmd.modules.register)
 -- construct sort module
 --
 function new(args)
+    local particle = assert(args.particle)
     local sort = args.sort or "hilbert" -- default value
-    return sorts[sort]()
+    return sorts[sort]{particle = particle}
 end
 
 --
