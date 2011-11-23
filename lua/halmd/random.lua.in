@@ -18,7 +18,6 @@
 --
 
 require("halmd.modules")
-require("halmd.singleton")
 
 require("halmd.device")
 require("halmd.log")
@@ -39,31 +38,40 @@ local po = libhalmd.po
 local assert = assert
 local error = error
 
-module("halmd.random", halmd.modules.register, halmd.singleton)
+module("halmd.random", halmd.modules.register)
+
+-- random number generator singleton per memory type
+local random = {}
 
 --
 -- construct random module
 --
 function new(args)
-    local defaults
-    if device() then
-        defaults = assert(random_wrapper.gpu.rand48.defaults)
-    else
-        defaults = assert(random_wrapper.host.gfsr4.defaults)
+    local memory = args.memory -- optional argument
+    if not memory then
+        memory = device() and "gpu" or "host"
     end
-    local seed = args.seed or defaults.seed()
-    local logger = assert(args.logger)
 
-    local random
-    if device() then
-        local blocks = args.blocks or defaults.blocks()
-        local threads = args.threads or defaults.threads()
-        local shuffle_threads = defaults.shuffle_threads()
-        random = random_wrapper.gpu.rand48(seed, logger, blocks, threads, shuffle_threads)
-    else
-        random = random_wrapper.host.gfsr4(seed, logger)
+    if not random[memory] then
+        local defaults
+        if memory == "gpu" then
+            defaults = assert(random_wrapper.gpu.rand48.defaults)
+        else
+            defaults = assert(random_wrapper.host.gfsr4.defaults)
+        end
+        local seed = args.seed or defaults.seed()
+        local logger = assert(args.logger)
+
+        if memory == "gpu" then
+            local blocks = args.blocks or defaults.blocks()
+            local threads = args.threads or defaults.threads()
+            local shuffle_threads = defaults.shuffle_threads()
+            random[memory] = random_wrapper.gpu.rand48(seed, logger, blocks, threads, shuffle_threads)
+        else
+            random[memory] = random_wrapper.host.gfsr4(seed, logger)
+        end
     end
-    return random
+    return random[memory]
 end
 
 --
