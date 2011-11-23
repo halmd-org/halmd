@@ -47,7 +47,7 @@ function new(args)
     local sigma = args.sigma or {1.0, 0.8, 0.88} -- default value
     local minimum = args.minimum or {2.0, 1.6, 1.78} -- default value
 
-    local particle = mdsim.particle() -- singleton
+    local particle = assert(args.particle)
     local logger = assert(args.logger)
 
     local morse

@@ -47,7 +47,7 @@ function new(args)
     local epsilon = args.epsilon or {1.0, 1.5, 0.5} -- default value
     local sigma = args.sigma or {1.0, 0.8, 0.88} -- default value
 
-    local particle = mdsim.particle() -- singleton
+    local particle = assert(args.particle)
     local logger = assert(args.logger)
 
     local power_law
