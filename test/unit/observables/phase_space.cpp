@@ -174,8 +174,9 @@ void phase_space<modules_type>::test()
         typename input_sample_type::sample_vector const& input_position = *input_sample->r[i];
         BOOST_CHECK_EQUAL(result_position.size(), npart[i]);
         for (unsigned int j = 0; j < npart[i]; ++j) {
-            float_type tolerance = std::max(norm_inf(input_position[j]) * epsilon, epsilon);
-            BOOST_CHECK_SMALL(norm_inf(result_position[j] - input_position[j]), tolerance);
+            for (unsigned int k = 0; k < dimension; ++k) {
+                BOOST_CHECK_CLOSE_FRACTION(result_position[j][k], input_position[j][k], 10 * epsilon);
+            }
         }
         // compare velocities directly as they should not have been modified
         BOOST_CHECK_EQUAL_COLLECTIONS(
