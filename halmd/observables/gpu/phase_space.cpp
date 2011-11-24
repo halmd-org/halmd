@@ -102,15 +102,13 @@ void phase_space<gpu::samples::phase_space<dimension, float_type> >::acquire()
     phase_space_wrapper<dimension>::kernel.image.bind(particle_->g_image);
     phase_space_wrapper<dimension>::kernel.v.bind(particle_->g_v);
 
-    unsigned int threads = particle_->dim.threads_per_block();
-    unsigned int const* g_reverse_tag = particle_->g_reverse_tag.data();
-
-    for (size_t i = 0; i < particle_->ntypes.size(); ++i) {
-        unsigned int ntype = particle_->ntypes[i];
-        cuda::configure((ntype + threads - 1) / threads, threads);
-        phase_space_wrapper<dimension>::kernel.sample(g_reverse_tag, *sample_->r[i], *sample_->v[i], ntype);
-        g_reverse_tag += ntype;
-    }
+    cuda::configure(particle_->dim.grid, particle_->dim.block);
+    phase_space_wrapper<dimension>::kernel.sample(
+        particle_->g_reverse_tag
+      , *sample_->r
+      , *sample_->v
+      , particle_->nbox
+    );
 
     sample_->step = clock_->step();
 }
@@ -157,15 +155,17 @@ void phase_space<host::samples::phase_space<dimension, float_type> >::acquire()
         vector_type image = particle_->h_image[i];
 
         // periodically extended particle position
-        assert(type < sample_->r.size());
-        assert(tag < sample_->r[type]->size());
+        assert(tag < sample_->r->size());
         box_->extend_periodic(r, image);
-        (*sample_->r[type])[tag] = r;
+        (*sample_->r)[tag] = r;
 
         // particle velocity
-        assert(type < sample_->v.size());
-        assert(tag < sample_->v[type]->size());
-        (*sample_->v[type])[tag] = v;
+        assert(tag < sample_->v->size());
+        (*sample_->v)[tag] = v;
+
+        // particle type
+        assert(tag < sample_->type->size());
+        (*sample_->type)[tag] = type;
     }
     sample_->step = clock_->step();
 }

@@ -47,7 +47,7 @@ private:
 
 public:
     typedef observables::samples::density_mode<dimension> density_mode_sample_type;
-    typedef typename density_mode_sample_type::mode_vector_vector_type result_type;
+    typedef typename density_mode_sample_type::mode_vector_type result_type;
     typedef observables::utility::wavevector<dimension> wavevector_type;
     typedef typename signal_type::slot_function_type slot_function_type;
     typedef typename clock_type::step_type step_type;
@@ -59,7 +59,7 @@ public:
     virtual void acquire() = 0;
     virtual connection on_acquire(slot_function_type const& slot) = 0;
     virtual step_type step() const = 0;
-    virtual result_type const& value() const = 0;
+    virtual boost::shared_ptr<result_type> value() const = 0;
     virtual wavevector_type const& wavevector() const = 0;
     virtual std::vector<double> const& wavenumber() const = 0;
 };

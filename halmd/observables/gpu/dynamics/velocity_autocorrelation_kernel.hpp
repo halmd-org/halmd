@@ -33,11 +33,10 @@ namespace dynamics {
 template <int dimension, unsigned int threads>
 struct velocity_autocorrelation_wrapper
 {
-    typedef typename mdsim::type_traits<dimension, float>::gpu::coalesced_vector_type coalesced_vector_type;
     typedef typename mdsim::type_traits<dimension, float>::vector_type vector_type;
     typedef accumulator<dsfloat> accumulator_type;
 
-    cuda::function<void (coalesced_vector_type const*, coalesced_vector_type const*, unsigned int, accumulator_type*)> compute;
+    cuda::function<void (float4 const*, float4 const*, unsigned int, accumulator_type*)> compute;
     static velocity_autocorrelation_wrapper const wrapper;
 };
 

@@ -75,15 +75,17 @@ void phase_space<dimension, float_type>::acquire()
         unsigned int tag = particle_->tag[i];
 
         // periodically extended particle position
-        assert(type < sample_->r.size());
-        assert(tag < sample_->r[type]->size());
-        vector_type& r = (*sample_->r[type])[tag] = particle_->r[i];
+        assert(tag < sample_->r->size());
+        vector_type& r = (*sample_->r)[tag] = particle_->r[i];
         box_->extend_periodic(r, particle_->image[i]);
 
         // particle velocity
-        assert(type < sample_->v.size());
-        assert(tag < sample_->v[type]->size());
-        (*sample_->v[type])[tag] = particle_->v[i];
+        assert(tag < sample_->v->size());
+        (*sample_->v)[tag] = particle_->v[i];
+
+        // particle type
+        assert(tag < sample_->type->size());
+        (*sample_->type)[tag] = type;
     }
     sample_->step = clock_->step();
 }

@@ -45,13 +45,10 @@ public:
 
     static void luaopen(lua_State* L);
 
-    velocity_autocorrelation(std::size_t type);
     accumulator_type compute(sample_type const& first, sample_type const& second);
 
 private:
     typedef observables::dynamics::velocity_autocorrelation<vector_type> correlate_function_type;
-
-    std::size_t type_;
 };
 
 } // namespace dynamics

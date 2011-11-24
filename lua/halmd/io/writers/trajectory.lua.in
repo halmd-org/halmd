@@ -57,11 +57,9 @@ function new(args)
     -- sample and write phase space at fixed interval
     local writer = file:writer{location = {"trajectory", group}, mode = "append" }
     writer:on_prepend_write(phase_space.acquire)
-    for i = 0, particle.ntype - 1 do
-        local species = string.char(string.byte("A") + i)
-        writer:on_write(sample:position(i), {species, "position"})
-        writer:on_write(sample:velocity(i), {species, "velocity"})
-    end
+    writer:on_write(sample.position, {"position"})
+    writer:on_write(sample.velocity, {"velocity"})
+    writer:on_write(sample.types, {"species"})
     sampler:on_sample{writer.write, every, tracker = writer}
 
     -- write box edge vectors and offset to trajectory group

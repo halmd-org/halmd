@@ -44,12 +44,9 @@ static int wrap_dimension(phase_space<dimension, float_type> const&)
 #ifndef NDEBUG
 template <int dimension, typename float_type>
 vector<typename phase_space<dimension, float_type>::vector_type>
-phase_space<dimension, float_type>::position(unsigned int type) const
+phase_space<dimension, float_type>::position() const
 {
-    if (!(type < r.size())) {
-        throw invalid_argument("particle type");
-    }
-    cuda::vector<gpu_vector_type> const& g_r = *r[type];
+    cuda::vector<gpu_vector_type> const& g_r = *r;
     cuda::host::vector<gpu_vector_type> h_r(g_r.size());
     cuda::copy(g_r, h_r);
     vector<vector_type> position(g_r.size());
@@ -59,12 +56,9 @@ phase_space<dimension, float_type>::position(unsigned int type) const
 
 template <int dimension, typename float_type>
 vector<typename phase_space<dimension, float_type>::vector_type>
-phase_space<dimension, float_type>::velocity(unsigned int type) const
+phase_space<dimension, float_type>::velocity() const
 {
-    if (!(type < v.size())) {
-        throw invalid_argument("particle type");
-    }
-    cuda::vector<gpu_vector_type> const& g_v = *v[type];
+    cuda::vector<gpu_vector_type> const& g_v = *v;
     cuda::host::vector<gpu_vector_type> h_v(g_v.size());
     cuda::copy(g_v, h_v);
     vector<vector_type> velocity(g_v.size());
@@ -74,16 +68,16 @@ phase_space<dimension, float_type>::velocity(unsigned int type) const
 
 template <typename phase_space_type>
 static function<vector<typename phase_space_type::vector_type> ()>
-wrap_position(shared_ptr<phase_space_type> self, unsigned int type)
+wrap_position(shared_ptr<phase_space_type> self)
 {
-    return bind(&phase_space_type::position, self, type);
+    return bind(&phase_space_type::position, self);
 }
 
 template <typename phase_space_type>
 static function<vector<typename phase_space_type::vector_type> ()>
-wrap_velocity(shared_ptr<phase_space_type> self, unsigned int type)
+wrap_velocity(shared_ptr<phase_space_type> self)
 {
-    return bind(&phase_space_type::velocity, self, type);
+    return bind(&phase_space_type::velocity, self);
 }
 #endif /* ! NDEBUG */
 
@@ -101,11 +95,11 @@ void phase_space<dimension, float_type>::luaopen(lua_State* L)
                 namespace_("samples")
                 [
                     class_<phase_space, shared_ptr<phase_space> >(class_name.c_str())
-                        .def(constructor<vector<unsigned int> >())
+                        .def(constructor<unsigned int>())
                         .property("dimension", &wrap_dimension<dimension, float_type>)
 #ifndef NDEBUG
-                        .def("position", &wrap_position<phase_space>)
-                        .def("velocity", &wrap_velocity<phase_space>)
+                        .property("position", &wrap_position<phase_space>)
+                        .property("velocity", &wrap_velocity<phase_space>)
 #endif
                 ]
             ]

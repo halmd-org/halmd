@@ -55,10 +55,8 @@ void phase_space<dimension, float_type>::set()
 
     scoped_timer_type timer(runtime_.set);
 
-    for (size_t j = 0, i = 0; j < particle_->ntype; i += particle_->ntypes[j], ++j) {
-        assert(sample_->v[j]->size() + i <= particle_->v.size());
-        copy(sample_->v[j]->begin(), sample_->v[j]->end(), particle_->v.begin() + i);
-    }
+    assert(sample_->v->size() <= particle_->v.size());
+    copy(sample_->v->begin(), sample_->v->end(), particle_->v.begin());
 }
 
 template <int dimension, typename float_type>

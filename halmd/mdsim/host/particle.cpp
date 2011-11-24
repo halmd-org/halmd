@@ -58,17 +58,12 @@ particle<dimension, float_type>::particle(vector<unsigned int> const& particles)
 template <unsigned int dimension, typename float_type>
 void particle<dimension, float_type>::set()
 {
-    // handle each type separately
+    // assign particle types
     for (size_t i = 0, j = 0; j < ntype; i += ntypes[j], ++j) {
-        // assign particle types
         fill_n(type.begin() + i, ntypes[j], j);
-        // assign particle tags
-        copy(
-            counting_iterator<size_t>(0)
-          , counting_iterator<size_t>(ntypes[j])
-          , tag.begin() + i
-        );
     }
+    // assign particle tags
+    copy(counting_iterator<size_t>(0), counting_iterator<size_t>(nbox), tag.begin());
 }
 
 /**

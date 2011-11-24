@@ -51,6 +51,7 @@ private:
 
 public:
     typedef typename _Base::density_mode_sample_type density_mode_sample_type;
+    typedef typename _Base::result_type result_type;
     typedef typename _Base::wavevector_type wavevector_type;
     typedef host::samples::phase_space<dimension, float_type> phase_space_type;
     typedef logger logger_type;
@@ -81,7 +82,7 @@ public:
     }
 
     //! returns nested list of density modes
-    virtual typename _Base::result_type const& value() const
+    virtual boost::shared_ptr<result_type> value() const
     {
         return rho_sample_.rho;
     }

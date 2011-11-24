@@ -46,50 +46,50 @@ using namespace std;
 array<string, 3> const types = {{ "A", "B", "C" }};
 
 template <typename sample_type, typename writer_type>
-void on_write_sample(shared_ptr<sample_type> sample, shared_ptr<writer_type> writer)
+void on_write_sample(vector<shared_ptr<sample_type> > const& sample, shared_ptr<writer_type> writer)
 {
     typedef typename sample_type::sample_vector sample_vector;
-    typedef sample_vector const& (sample_type::*getter_type)(unsigned int) const;
+    typedef sample_vector const& (sample_type::*getter_type)() const;
     typedef typename writer_type::subgroup_type subgroup_type;
 
-    for (unsigned int i = 0; i < sample->r.size(); ++i) {
+    for (unsigned int type = 0; type < sample.size(); ++type) {
         subgroup_type position, velocity;
         writer->template on_write<sample_vector const&>(
             position
-          , bind(static_cast<getter_type>(&sample_type::position), sample, i)
-          , list_of(types[i])("position")
+          , bind(static_cast<getter_type>(&sample_type::position), sample[type])
+          , list_of(types[type])("position")
         );
         writer->template on_write<sample_vector const&>(
             velocity
-          , bind(static_cast<getter_type>(&sample_type::velocity), sample, i)
-          , list_of(types[i])("velocity")
+          , bind(static_cast<getter_type>(&sample_type::velocity), sample[type])
+          , list_of(types[type])("velocity")
         );
-        BOOST_CHECK_EQUAL(h5xx::path(position), "/trajectory/" + types[i] + "/position");
-        BOOST_CHECK_EQUAL(h5xx::path(velocity), "/trajectory/" + types[i] + "/velocity");
+        BOOST_CHECK_EQUAL(h5xx::path(position), "/trajectory/" + types[type] + "/position");
+        BOOST_CHECK_EQUAL(h5xx::path(velocity), "/trajectory/" + types[type] + "/velocity");
     }
 }
 
 template <typename sample_type, typename reader_type>
-void on_read_sample(shared_ptr<sample_type> sample, shared_ptr<reader_type> reader)
+void on_read_sample(vector<shared_ptr<sample_type> > const& sample, shared_ptr<reader_type> reader)
 {
     typedef typename sample_type::sample_vector sample_vector;
-    typedef sample_vector& (sample_type::*getter_type)(unsigned int);
+    typedef sample_vector& (sample_type::*getter_type)();
     typedef typename reader_type::subgroup_type subgroup_type;
 
-    for (unsigned int i = 0; i < sample->r.size(); ++i) {
+    for (unsigned int type = 0; type < sample.size(); ++type) {
         subgroup_type position, velocity;
         reader->template on_read<sample_vector&>(
             position
-          , bind(static_cast<getter_type>(&sample_type::position), sample, i)
-          , list_of(types[i])("position")
+          , bind(static_cast<getter_type>(&sample_type::position), sample[type])
+          , list_of(types[type])("position")
         );
         reader->template on_read<sample_vector&>(
             velocity
-          , bind(static_cast<getter_type>(&sample_type::velocity), sample, i)
-          , list_of(types[i])("velocity")
+          , bind(static_cast<getter_type>(&sample_type::velocity), sample[type])
+          , list_of(types[type])("velocity")
         );
-        BOOST_CHECK_EQUAL(h5xx::path(position), "/trajectory/" + types[i] + "/position");
-        BOOST_CHECK_EQUAL(h5xx::path(velocity), "/trajectory/" + types[i] + "/velocity");
+        BOOST_CHECK_EQUAL(h5xx::path(position), "/trajectory/" + types[type] + "/position");
+        BOOST_CHECK_EQUAL(h5xx::path(velocity), "/trajectory/" + types[type] + "/velocity");
     }
 }
 
@@ -109,10 +109,11 @@ void h5md(vector<unsigned int> const& ntypes)
     BOOST_MESSAGE("Testing " << ntypes.size() << " particle types");
 
     // construct phase space sample and fill with positions and velocities
-    shared_ptr<double_sample_type> double_sample = make_shared<double_sample_type>(ntypes);
+    vector<shared_ptr<double_sample_type> > double_sample;
     for (unsigned int type = 0; type < ntypes.size(); ++type) {
-        double_sample_vector& r_sample = *double_sample->r[type];
-        double_sample_vector& v_sample = *double_sample->v[type];
+        double_sample.push_back(make_shared<double_sample_type>(ntypes[type]));
+        double_sample_vector& r_sample = *double_sample[type]->r;
+        double_sample_vector& v_sample = *double_sample[type]->v;
         for (unsigned int i = 0; i < ntypes[type]; ++i) {
             double_vector_type& r = r_sample[i];
             r[0] = type;
@@ -128,26 +129,27 @@ void h5md(vector<unsigned int> const& ntypes)
                 v[2] = static_cast<double>(1L << (i % 64));
             }
         }
+        double_sample[type]->step = 0;
     }
-    double_sample->step = 0;
 
     // copy sample to single precision
-    shared_ptr<float_sample_type> float_sample = make_shared<float_sample_type>(ntypes);
+    vector<shared_ptr<float_sample_type> > float_sample;
     for (unsigned int type = 0; type < ntypes.size(); ++type) {
+        float_sample.push_back(make_shared<float_sample_type>(ntypes[type]));
         transform(
-            double_sample->r[type]->begin()
-          , double_sample->r[type]->end()
-          , float_sample->r[type]->begin()
+            double_sample[type]->r->begin()
+          , double_sample[type]->r->end()
+          , float_sample[type]->r->begin()
           , lambda::ll_static_cast<float_vector_type>(lambda::_1)
         );
         transform(
-            double_sample->v[type]->begin()
-          , double_sample->v[type]->end()
-          , float_sample->v[type]->begin()
+            double_sample[type]->v->begin()
+          , double_sample[type]->v->end()
+          , float_sample[type]->v->begin()
           , lambda::ll_static_cast<float_vector_type>(lambda::_1)
         );
+        float_sample[type]->step = double_sample[type]->step;
     }
-    float_sample->step = double_sample->step;
 
     // write single-precision sample to file
     // use time-step not exactly representable as float-point value
@@ -176,9 +178,11 @@ void h5md(vector<unsigned int> const& ntypes)
 
     // simulate an integration step for the very first particle
     clock->advance();
-    (*double_sample->r[0])[0] += (*double_sample->v[0])[0];
-    (*double_sample->v[0])[0] = double_vector_type(sqrt(2));
-    double_sample->step = clock->step();
+    (*double_sample[0]->r)[0] += (*double_sample[0]->v)[0];
+    (*double_sample[0]->v)[0] = double_vector_type(sqrt(2));
+    for (unsigned int type = 0; type < ntypes.size(); ++type) {
+        double_sample[type]->step = clock->step();
+    }
 
     // deconstruct the file module before writing
     // the HDF5 library will keep the file open as long as groups
@@ -196,7 +200,10 @@ void h5md(vector<unsigned int> const& ntypes)
     // read phase space sample #1 from file in double precision
     // reading is done upon construction, so we use an unnamed, temporary reader object
     // allocate memory for reading back the phase space sample
-    shared_ptr<double_sample_type> double_sample_ = make_shared<double_sample_type>(ntypes);
+    vector<shared_ptr<double_sample_type> > double_sample_;
+    for (unsigned int type = 0; type < ntypes.size(); ++type) {
+        double_sample_.push_back(make_shared<double_sample_type>(ntypes[type]));
+    }
 
     shared_ptr<readers::h5md::file> reader_file =
         make_shared<readers::h5md::file>(filename);
@@ -211,21 +218,24 @@ void h5md(vector<unsigned int> const& ntypes)
     // check binary equality of written and read data
     for (unsigned int type = 0; type < ntypes.size(); ++type) {
         BOOST_CHECK_EQUAL_COLLECTIONS(
-            double_sample_->r[type]->begin()
-          , double_sample_->r[type]->end()
-          , double_sample->r[type]->begin()
-          , double_sample->r[type]->end()
+            double_sample_[type]->r->begin()
+          , double_sample_[type]->r->end()
+          , double_sample[type]->r->begin()
+          , double_sample[type]->r->end()
         );
         BOOST_CHECK_EQUAL_COLLECTIONS(
-            double_sample_->v[type]->begin()
-          , double_sample_->v[type]->end()
-          , double_sample->v[type]->begin()
-          , double_sample->v[type]->end()
+            double_sample_[type]->v->begin()
+          , double_sample_[type]->v->end()
+          , double_sample[type]->v->begin()
+          , double_sample[type]->v->end()
         );
     }
 
     // read phase space sample #0 from file in single precision
-    shared_ptr<float_sample_type> float_sample_ = make_shared<float_sample_type>(ntypes);
+    vector<shared_ptr<float_sample_type> > float_sample_;
+    for (unsigned int type = 0; type < ntypes.size(); ++type) {
+        float_sample_.push_back(make_shared<float_sample_type>(ntypes[type]));
+    }
 
     // reconstruct the reader to replace slots to double with float sample
     reader.reset();
@@ -243,16 +253,16 @@ void h5md(vector<unsigned int> const& ntypes)
     // note that float_sample was not modified and thus corresponds to #0
     for (unsigned int type = 0; type < ntypes.size(); ++type) {
         BOOST_CHECK_EQUAL_COLLECTIONS(
-            float_sample_->r[type]->begin()
-          , float_sample_->r[type]->end()
-          , float_sample->r[type]->begin()
-          , float_sample->r[type]->end()
+            float_sample_[type]->r->begin()
+          , float_sample_[type]->r->end()
+          , float_sample[type]->r->begin()
+          , float_sample[type]->r->end()
         );
         BOOST_CHECK_EQUAL_COLLECTIONS(
-            float_sample_->v[type]->begin()
-          , float_sample_->v[type]->end()
-          , float_sample->v[type]->begin()
-          , float_sample->v[type]->end()
+            float_sample_[type]->v->begin()
+          , float_sample_[type]->v->end()
+          , float_sample[type]->v->begin()
+          , float_sample[type]->v->end()
         );
     }
 

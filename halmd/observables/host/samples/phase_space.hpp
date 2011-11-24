@@ -48,21 +48,21 @@ public:
 
     /** sample vector type for all particles of a species */
     typedef std::vector<vector_type, raw_allocator<vector_type> > sample_vector;
-    /** sample pointer type for all particle of a species */
-    typedef boost::shared_ptr<sample_vector> sample_vector_ptr;
-    /** sample pointer type for all species */
-    typedef std::vector<sample_vector_ptr> sample_vector_ptr_vector;
+    /** sample vector type for all particles of a species */
+    typedef std::vector<unsigned int, raw_allocator<unsigned int> > type_vector;
 
     /** periodically extended particle positions */
-    sample_vector_ptr_vector r;
+    boost::shared_ptr<sample_vector> r;
     /** particle velocities */
-    sample_vector_ptr_vector v;
+    boost::shared_ptr<sample_vector> v;
+    /** particle types */
+    boost::shared_ptr<type_vector> type;
     /** simulation step when sample was taken */
     step_type step;
 
     static void luaopen(lua_State* L);
 
-    phase_space(std::vector<unsigned int> ntypes);
+    phase_space(unsigned int npart);
 
     /**
      * Free shared pointers and re-allocate memory
@@ -75,42 +75,42 @@ public:
     void reset(bool force=false);
 
     /** get read-only particle positions of given type */
-    sample_vector const& position(unsigned int type) const;
+    sample_vector const& position() const;
     /** get read-only particle velocities of given type */
-    sample_vector const& velocity(unsigned int type) const;
+    sample_vector const& velocity() const;
+    /** get read-only particle types of given type */
+    type_vector const& types() const;
     /** get read-write particle positions of given type */
-    sample_vector& position(unsigned int type);
+    sample_vector& position();
     /** get read-write particle velocities of given type */
-    sample_vector& velocity(unsigned int type);
+    sample_vector& velocity();
+    /** get read-write particle types of given type */
+    type_vector& types();
 };
 
 template <int dimension, typename float_type>
-inline phase_space<dimension, float_type>::phase_space(std::vector<unsigned int> ntypes)
+inline phase_space<dimension, float_type>::phase_space(unsigned int npart)
   // allocate sample pointers
-  : r(ntypes.size())
-  , v(ntypes.size())
+  : r(new sample_vector(npart))
+  , v(new sample_vector(npart))
+  , type(new type_vector(npart))
   // initialise attributes
   , step(std::numeric_limits<step_type>::max())
 {
-    for (size_t i = 0; i < ntypes.size(); ++i) {
-        r[i].reset(new sample_vector(ntypes[i]));
-        v[i].reset(new sample_vector(ntypes[i]));
-    }
 }
 
 template <int dimension, typename float_type>
 inline void phase_space<dimension, float_type>::reset(bool force)
 {
     // free shared pointers and re-allocate memory
-    for (size_t i = 0; i < r.size(); ++i) {
-        if (force || !r[i].unique()) {
-            r[i].reset(new sample_vector(r[i]->size()));
-        }
+    if (force || !r.unique()) {
+        r.reset(new sample_vector(r->size()));
     }
-    for (size_t i = 0; i < v.size(); ++i) {
-        if (force || !v[i].unique()) {
-            v[i].reset(new sample_vector(v[i]->size()));
-        }
+    if (force || !v.unique()) {
+        v.reset(new sample_vector(v->size()));
+    }
+    if (force || !type.unique()) {
+        type.reset(new type_vector(type->size()));
     }
     // make time stamp invalid
     step = std::numeric_limits<step_type>::max();

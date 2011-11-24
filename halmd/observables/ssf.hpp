@@ -65,7 +65,7 @@ public:
     static void luaopen(lua_State* L);
 
     ssf(
-        boost::shared_ptr<density_mode_type const> density_mode
+        std::vector<boost::shared_ptr<density_mode_type const> > const& density_mode
       , boost::shared_ptr<clock_type const> clock
       , unsigned int npart
       , boost::shared_ptr<logger_type> logger = boost::make_shared<logger_type>()
@@ -90,7 +90,7 @@ public:
     //! returns instance of wavevector class used to compute the ssf
     typename density_mode_type::wavevector_type const& wavevector() const
     {
-        return density_mode_->wavevector();
+        return density_mode_.front()->wavevector();
     }
 
 private:
@@ -103,7 +103,7 @@ private:
         accumulator_type sample;
     };
 
-    boost::shared_ptr<density_mode_type const> density_mode_;
+    std::vector<boost::shared_ptr<density_mode_type const> > density_mode_;
     boost::shared_ptr<clock_type const> clock_;
     boost::shared_ptr<logger_type> logger_;
 

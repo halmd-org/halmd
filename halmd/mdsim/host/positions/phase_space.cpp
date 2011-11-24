@@ -56,10 +56,12 @@ void phase_space<dimension, float_type>::set()
     scoped_timer_type timer(runtime_.set);
 
     // assign particle coordinates
-    for (size_t j = 0, i = 0; j < particle_->ntype; i += particle_->ntypes[j], ++j) {
-        assert(sample_->r[j]->size() + i <= particle_->r.size());
-        copy(sample_->r[j]->begin(), sample_->r[j]->end(), particle_->r.begin() + i);
-    }
+    assert(sample_->r->size() <= particle_->r.size());
+    copy(sample_->r->begin(), sample_->r->end(), particle_->r.begin());
+
+    // assign particle types
+    assert(sample_->type->size() <= particle_->type.size());
+    copy(sample_->type->begin(), sample_->type->end(), particle_->type.begin());
 
     // shift particle positions to range (-L/2, L/2)
     for (size_t i = 0; i < particle_->nbox; ++i) {

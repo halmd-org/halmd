@@ -37,19 +37,15 @@ module("halmd.observables.dynamics.correlations.velocity_autocorrelation", halmd
 --
 -- construct instance of vac module
 --
--- @param args parameter tabletype_
---   species   particle species (type) for which the computation is done
 -- @returns instance of vac module, instance of phase space sample
 --
 function new(args)
-    -- command line options
-    local species = args.species or 0 -- default value
     -- obtain appropriate phase space sample
     local backend = device() and not args.disable_gpu and "gpu" or "host"
     local sample = observables.samples.phase_space{memory = backend}
     local dimension = assert(sample.dimension)
     -- construct vac module
-    local vac = assert(vac_wrapper)(species, sample)
+    local vac = assert(vac_wrapper)(sample)
 
     -- extend vac module with read-only sample property
     vac.sample = property(function(self)

@@ -45,13 +45,10 @@ public:
 
     static void luaopen(lua_State* L);
 
-    mean_quartic_displacement(std::size_t type);
     accumulator_type compute(sample_type const& first, sample_type const& second);
 
 private:
     typedef observables::dynamics::mean_quartic_displacement<vector_type> correlate_function_type;
-
-    std::size_t type_;
 };
 
 } // namespace dynamics

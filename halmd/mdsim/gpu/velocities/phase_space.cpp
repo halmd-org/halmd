@@ -57,15 +57,10 @@ void phase_space<dimension, float_type>::set()
     scoped_timer_type timer(runtime_.set);
 
     // assign particle velocities and tags
-    size_t n = 0; // indicates the boundary to the next particle type
-    for (size_t j = 0, i = 0; j < particle_->ntype; ++j) {
-        typename sample_type::sample_vector const& v_sample = *sample_->v[j];
-        n += particle_->ntypes[j];
-        assert(particle_->ntypes[j] == v_sample.size());
-        assert(n <= particle_->h_v.size());
-        for (size_t k = 0; i < n; ++i, ++k) {
-            particle_->h_v[i] = particle_kernel::tagged<vector_type>(v_sample[k], k);
-        }
+    assert(particle_->h_v.size() >= particle_->nbox);
+    assert(sample_->v->size() >= particle_->nbox);
+    for (size_t i = 0; i < particle_->nbox; ++i) {
+        particle_->h_v[i] = particle_kernel::tagged<vector_type>((*sample_->v)[i], i);
     }
 
     try {

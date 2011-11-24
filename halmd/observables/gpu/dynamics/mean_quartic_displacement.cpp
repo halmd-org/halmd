@@ -40,19 +40,16 @@ namespace dynamics {
 
 template <int dimension, typename float_type>
 mean_quartic_displacement<dimension, float_type>::mean_quartic_displacement(
-    size_t type
-  , unsigned int blocks
+    unsigned int blocks
   , unsigned int threads
 )
   // member initialisation
-  : type_(type)
-  , blocks_(blocks)
+  : blocks_(blocks)
   , threads_(threads)
   , compute_(select_compute(threads_))
   , g_acc_(blocks_)
   , h_acc_(blocks_)
 {
-    LOG("initialise mean-quartic displacement of " << string(1, 'A' + type) << " particles");
 }
 
 template <int dimension, typename float_type>
@@ -73,10 +70,8 @@ mean_quartic_displacement<dimension, float_type>::compute(
 )
 {
     cuda::configure(blocks_, threads_);
-    sample_vector_type const& r1 = *first.r[type_];
-    sample_vector_type const& r2 = *second.r[type_];
-    assert(r1.size() == r2.size());
-    compute_(r1, r2, r1.size(), g_acc_);
+    assert(first.r->size() == second.r->size());
+    compute_(*first.r, *second.r, first.r->size(), g_acc_);
     cuda::copy(g_acc_, h_acc_); // implicit synchronize
     return for_each(h_acc_.begin(), h_acc_.end(), accumulator_type());
 }
@@ -101,12 +96,11 @@ mean_quartic_displacement<dimension, float_type>::select_compute(unsigned int th
     }
 }
 
-
 template <typename tcf_type>
 static shared_ptr<tcf_type>
-wrap_tcf(size_t type, typename tcf_type::sample_type const&)
+select_tcf_by_sample(typename tcf_type::sample_type const&)
 {
-    return make_shared<tcf_type>(type);
+    return make_shared<tcf_type>();
 }
 
 template <int dimension, typename float_type>
@@ -122,7 +116,7 @@ void mean_quartic_displacement<dimension, float_type>::luaopen(lua_State* L)
             [
                 class_<mean_quartic_displacement>(class_name.c_str())
 
-              , def("mean_quartic_displacement", &wrap_tcf<mean_quartic_displacement>)
+              , def("mean_quartic_displacement", &select_tcf_by_sample<mean_quartic_displacement>)
             ]
         ]
     ];

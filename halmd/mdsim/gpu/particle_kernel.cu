@@ -59,18 +59,17 @@ __global__ void tag(coalesced_vector_type* g_r, coalesced_vector_type* g_v)
     tie(r, type) = untagged<vector_type>(g_r[GTID]);
     tie(v, tag) = untagged<vector_type>(g_v[GTID]);
 
-    // set particle identifier unique within each particle type,
-    // use a 0-based continuous numbering
-    tag = GTID;
-
-    // set particle type and adjust tag
-    for (type = 0; type < ntype_; ++type) {
+    // set particle type
+    for (type = 0, tag = GTID; type < ntype_; ++type) {
         unsigned int n = tex1Dfetch(ntypes_, type);
         if (tag < n) {
             break;
         }
         tag -= n;
     }
+
+    // set particle identifier
+    tag = GTID;
 
     g_r[GTID] = tagged(r, type);
     g_v[GTID] = tagged(v, tag);

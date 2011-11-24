@@ -37,19 +37,15 @@ module("halmd.observables.dynamics.correlations.mean_quartic_displacement", halm
 --
 -- construct instance of mqd module
 --
--- @param args parameter tabletype_
---   species   particle species (type) for which the computation is done
 -- @returns instance of mqd module, instance of phase space sample
 --
 function new(args)
-    -- command line options
-    local species = args.species or 0 -- default value
     -- obtain appropriate phase space sample
     local backend = device() and not args.disable_gpu and "gpu" or "host"
     local sample = observables.samples.phase_space{memory = backend}
     local dimension = assert(sample.dimension)
     -- construct mqd module
-    local mqd = assert(mqd_wrapper)(species, sample)
+    local mqd = assert(mqd_wrapper)(sample)
 
     -- extend mqd module with read-only sample property
     mqd.sample = property(function(self)

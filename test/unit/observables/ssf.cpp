@@ -154,7 +154,7 @@ void lattice<modules_type>::test()
 
     // construct modules for density modes and static structure factor
     density_mode = make_shared<density_mode_type>(sample, wavevector, clock);
-    ssf = make_shared<ssf_type>(density_mode, clock, particle->nbox);
+    ssf = make_shared<ssf_type>(list_of(density_mode), clock, particle->nbox);
 
     // generate lattices
     BOOST_TEST_MESSAGE("set particle tags");
@@ -233,7 +233,7 @@ lattice<modules_type>::lattice()
     box = make_shared<box_type>(npart, density, fixed_vector<double, dimension>(ncell));
     random = make_shared<random_type>();
     position = make_shared<position_type>(particle, box, random, slab);
-    sample = make_shared<sample_type>(particle->ntypes);
+    sample = make_shared<sample_type>(particle->nbox);
     clock = make_shared<clock_type>(0); // bogus time-step
     phase_space = make_shared<phase_space_type>(sample, particle, box, clock);
 }

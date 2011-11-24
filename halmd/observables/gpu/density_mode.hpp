@@ -41,7 +41,6 @@ namespace gpu {
  *  compute Fourier modes of the particle density
  *
  *  @f$ \rho_{\vec q} = \sum_{i=1}^N \exp(\textrm{i}\vec q \cdot \vec r_i) @f$
- *  for each particle type
  */
 template <int dimension, typename float_type>
 class density_mode
@@ -53,6 +52,7 @@ private:
 
 public:
     typedef typename _Base::density_mode_sample_type density_mode_sample_type;
+    typedef typename _Base::result_type result_type;
     typedef typename _Base::wavevector_type wavevector_type;
     typedef gpu::samples::phase_space<dimension, float_type> phase_space_type;
     typedef density_mode_wrapper<dimension> wrapper_type;
@@ -85,7 +85,7 @@ public:
     }
 
     //! returns nested list of density modes
-    virtual typename _Base::result_type const& value() const
+    virtual boost::shared_ptr<result_type> value() const
     {
         return rho_sample_.rho;
     }

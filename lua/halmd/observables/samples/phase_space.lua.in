@@ -68,7 +68,7 @@ function new(args)
     else
         phase_space = assert(phase_space_wrapper.host[memory][dimension])
     end
-    local sample = phase_space(particle.ntypes)
+    local sample = phase_space(particle.nbox)
 
     -- store memory as property for profiler description
     sample.memory = property(function(self) return memory end)

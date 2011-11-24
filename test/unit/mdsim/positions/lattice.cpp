@@ -64,16 +64,13 @@ vector<double> compute_ssf(
     vector<double> ssf(nq);
     vector<double> cos_(nq, 0);
     vector<double> sin_(nq, 0);
-    size_t npart = 0;
-    for (size_t i = 0; i < sample->r.size(); ++i) {
-        BOOST_FOREACH(typename sample_type::vector_type const& r, *sample->r[i]) {
-            for (unsigned j = 0; j < nq; ++j) {
-                double qr = inner_prod(wavevector[j], static_cast<vector_type>(r));
-                cos_[j] += cos(qr);
-                sin_[j] += sin(qr);
-            }
+    size_t npart = sample->r->size();
+    BOOST_FOREACH(typename sample_type::vector_type const& r, *sample->r) {
+        for (unsigned j = 0; j < nq; ++j) {
+            double qr = inner_prod(wavevector[j], static_cast<vector_type>(r));
+            cos_[j] += cos(qr);
+            sin_[j] += sin(qr);
         }
-        npart += sample->r[i]->size();
     }
     for (size_t j = 0; j < nq; ++j) {
         ssf[j] = (cos_[j] * cos_[j] + sin_[j] * sin_[j]) / npart;
@@ -156,7 +153,7 @@ void lattice<modules_type>::test()
     // centre of mass
     fixed_vector<double, dimension> r_cm(
         accumulate(
-            sample->r[0]->begin(), sample->r[0]->end(), vector_type(0)
+            sample->r->begin(), sample->r->end(), vector_type(0)
           , plus<vector_type>()
         ) / npart
     );
@@ -164,13 +161,13 @@ void lattice<modules_type>::test()
     using namespace halmd::detail::numeric::blas;
     fixed_vector<double, dimension> r_min(
         accumulate(
-            sample->r[0]->begin(), sample->r[0]->end(), vector_type(0)
+            sample->r->begin(), sample->r->end(), vector_type(0)
           , bind(element_min<float_type, dimension>, _1, _2)
         )
     );
     fixed_vector<double, dimension> r_max(
         accumulate(
-            sample->r[0]->begin(), sample->r[0]->end(), vector_type(0)
+            sample->r->begin(), sample->r->end(), vector_type(0)
           , bind(element_max<float_type, dimension>, _1, _2)
         )
     );
@@ -214,7 +211,7 @@ lattice<modules_type>::lattice()
     box = make_shared<box_type>(npart, density, fixed_vector<double, dimension>(ncell));
     random = make_shared<random_type>();
     position = make_shared<position_type>(particle, box, random, slab);
-    sample = make_shared<sample_type>(particle->ntypes);
+    sample = make_shared<sample_type>(particle->nbox);
     clock = make_shared<clock_type>(0); // bogus time-step
     phase_space = make_shared<phase_space_type>(sample, particle, box, clock);
 }

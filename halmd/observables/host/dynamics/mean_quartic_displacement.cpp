@@ -30,16 +30,6 @@ namespace observables {
 namespace host {
 namespace dynamics {
 
-template <int dimension, typename float_type>
-mean_quartic_displacement<dimension, float_type>::mean_quartic_displacement(
-    size_t type
-)
-  // member initialisation
-  : type_(type)
-{
-    LOG("initialise mean-quartic displacement of " << string(1, 'A' + type) << " particles");
-}
-
 /**
  * Compute mean-quartic displacement of two position sample vectors.
  *
@@ -55,8 +45,8 @@ mean_quartic_displacement<dimension, float_type>::compute(
 )
 {
     accumulator_type acc;
-    typename sample_type::sample_vector::const_iterator r1, r2, end = first.r[type_]->end();
-    for (r1 = first.r[type_]->begin(), r2 = second.r[type_]->begin(); r1 != end; ++r1, ++r2) {
+    typename sample_type::sample_vector::const_iterator r1, r2, end = first.r->end();
+    for (r1 = first.r->begin(), r2 = second.r->begin(); r1 != end; ++r1, ++r2) {
         // accumulate quartic displacement
         acc(correlate_function_type()(*r1, *r2));
     }
@@ -65,9 +55,9 @@ mean_quartic_displacement<dimension, float_type>::compute(
 
 template <typename tcf_type>
 static shared_ptr<tcf_type>
-wrap_tcf(size_t type, typename tcf_type::sample_type const&)
+select_tcf_by_sample(typename tcf_type::sample_type const&)
 {
-    return make_shared<tcf_type>(type);
+    return make_shared<tcf_type>();
 }
 
 template <int dimension, typename float_type>
@@ -83,7 +73,7 @@ void mean_quartic_displacement<dimension, float_type>::luaopen(lua_State* L)
             [
                 class_<mean_quartic_displacement>(class_name.c_str())
 
-              , def("mean_quartic_displacement", &wrap_tcf<mean_quartic_displacement>)
+              , def("mean_quartic_displacement", &select_tcf_by_sample<mean_quartic_displacement>)
             ]
         ]
     ];

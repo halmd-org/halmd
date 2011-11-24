@@ -38,7 +38,6 @@ namespace samples {
  *  data structure for storing Fourier modes of the particle density
  *
  *  @f$ \rho_{\vec q} = \sum_{i=1}^N \exp(\textrm{i}\vec q \cdot \vec r_i) @f$
- *  for each particle type
  */
 template <int dimension>
 class density_mode
@@ -51,16 +50,14 @@ public:
     typedef std::complex<double> mode_type;
     typedef typename clock_type::step_type step_type;
 
-    /** density modes of a single particle type, one entry per wavevector */
+    /** density modes, one entry per wavevector */
     typedef std::vector<mode_type, raw_allocator<mode_type> > mode_vector_type;
-    /** list of density modes for all particle types */
-    typedef std::vector<boost::shared_ptr<mode_vector_type> > mode_vector_vector_type;
 
     /**
      *  nested list of density modes, @f$ rho[i][j] = \rho_{\vec q}^{(i)} = @f$
      *  for wavevector @f$ \vec q = wavevector[j] @f$ and particle types @f$ i @f$
      */
-    mode_vector_vector_type rho;
+    boost::shared_ptr<mode_vector_type> rho;
     /** simulation step when sample was taken */
     step_type step;
 
@@ -69,10 +66,9 @@ public:
     /**
      * construct sample of given size
      *
-     * @param ntype number of particle types
      * @param nq    total number of wavevectors
      */
-    density_mode(unsigned int ntype, unsigned int nq);
+    density_mode(unsigned int nq);
 
     /**
      * Free shared pointers and re-allocate memory
@@ -86,26 +82,20 @@ public:
 };
 
 template <int dimension>
-inline density_mode<dimension>::density_mode(unsigned int ntype, unsigned int nq)
-  // allocate sample pointers
-  : rho(ntype)
+inline density_mode<dimension>::density_mode(unsigned int nq)
+  // allocate density modes
+  : rho(new mode_vector_type(nq))
   // initialise attributes
   , step(std::numeric_limits<step_type>::max())
 {
-    // allocate memory for each particle type
-    for (unsigned int i = 0; i < ntype; ++i) {
-        rho[i].reset(new mode_vector_type(nq));
-    }
 }
 
 template <int dimension>
 inline void density_mode<dimension>::reset(bool force)
 {
     // free shared pointers and re-allocate memory
-    for (size_t i = 0; i < rho.size(); ++i) {
-        if (force || !rho[i].unique()) {
-            rho[i].reset(new mode_vector_type(rho[i]->size()));
-        }
+    if (force || !rho.unique()) {
+        rho.reset(new mode_vector_type(rho->size()));
     }
     // make time stamp invalid
     step = std::numeric_limits<step_type>::max();

@@ -82,9 +82,11 @@ function new(args)
 
     -- construct density_mode module
     local density_mode = assert(observables.density_mode{wavevector = wavevector})
+    -- FIXME density modes per species
+    local density_modes = {density_mode}
 
     -- construct ssf module
-    local ssf = assert(ssf_wrapper[dimension])(density_mode, clock, particle.nbox, logger)
+    local ssf = assert(ssf_wrapper[dimension])(density_modes, clock, particle.nbox, logger)
 
     -- acquire density modes before sampling static structure factor
     ssf:on_sample(density_mode.acquire)
@@ -103,10 +105,10 @@ function new(args)
     end
 
     -- write all partial structure factors
-    local writer = file:writer{location = {"structure", "ssf"}, mode = "append"}
+    local writer = file:writer{location = {"structure"}, mode = "append"}
     writer:on_prepend_write(ssf.sample)
-    for i = 0, particle.ntype - 1 do
-        for j = i, particle.ntype - 1 do
+    for i = 0, #density_modes - 1 do
+        for j = i, #density_modes - 1 do
             writer:on_write(ssf:value(i, j), {species(i), species(j)})
         end
     end

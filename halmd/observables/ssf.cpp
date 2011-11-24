@@ -36,7 +36,7 @@ namespace observables {
 
 template <int dimension>
 ssf<dimension>::ssf(
-    shared_ptr<density_mode_type const> density_mode
+    vector<shared_ptr<density_mode_type const> > const& density_mode
   , shared_ptr<clock_type const> clock
   , unsigned int npart
   , shared_ptr<logger_type> logger
@@ -49,9 +49,13 @@ ssf<dimension>::ssf(
   , npart_(npart)
   , step_(numeric_limits<step_type>::max())
 {
+    if (density_mode_.size() < 1) {
+        throw invalid_argument("missing density modes");
+    }
+
     // allocate memory
-    unsigned int nq = density_mode_->wavenumber().size();
-    unsigned int ntype = density_mode_->value().size();
+    unsigned int nq = density_mode_.front()->wavenumber().size();
+    unsigned int ntype = density_mode_.size();
     unsigned int nssf = ntype * (ntype + 1) / 2; //< number of partial structure factors
 
     value_.resize(nssf);
@@ -78,8 +82,10 @@ void ssf<dimension>::sample()
 
     LOG_TRACE("sampling");
 
-    if (density_mode_->step() != clock_->step()) {
-        throw logic_error("density modes sample was not updated");
+    for (size_t i = 0; i < density_mode_.size(); ++i) {
+        if (density_mode_[i]->step() != clock_->step()) {
+            throw logic_error("density modes sample was not updated");
+        }
     }
 
     // compute SSF
@@ -107,22 +113,22 @@ void ssf<dimension>::compute_()
 {
     scoped_timer_type timer(runtime_.sample);
 
-    typedef typename density_mode_type::result_type::value_type::element_type rho_vector_type;
+    typedef typename density_mode_type::result_type rho_vector_type;
     typedef typename density_mode_type::wavevector_type::map_type wavevector_map_type;
     typedef typename rho_vector_type::const_iterator rho_iterator;
     typedef typename wavevector_map_type::const_iterator wavevector_iterator;
     typedef std::vector<accumulator<double> >::iterator result_iterator;
 
     // perform computation of partial SSF for all combinations of particle types
-    wavevector_map_type const& wavevector = density_mode_->wavevector().value();
+    wavevector_map_type const& wavevector = density_mode_.front()->wavevector().value();
     if (wavevector.empty()) return; // nothing to do
 
-    unsigned int ntype = density_mode_->value().size();
+    unsigned int ntype = density_mode_.size();
     unsigned int k = 0;
     for (unsigned char i = 0; i < ntype; ++i) {
         for (unsigned char j = i; j < ntype; ++j, ++k) {
-            rho_iterator rho_q0 = density_mode_->value()[i]->begin();
-            rho_iterator rho_q1 = density_mode_->value()[j]->begin();
+            rho_iterator rho_q0 = density_mode_[i]->value()->begin();
+            rho_iterator rho_q1 = density_mode_[j]->value()->begin();
             result_iterator result = result_accumulator_[k].begin();
 
             // accumulate products of density modes with equal wavenumber,
@@ -147,7 +153,7 @@ template <int dimension>
 vector<typename ssf<dimension>::result_type> const&
 ssf<dimension>::value(unsigned int type1, unsigned int type2) const
 {
-    unsigned int ntype = density_mode_->value().size();
+    unsigned int ntype = density_mode_.size();
     if (!(type1 < ntype)) {
         throw invalid_argument("first particle type");
     }
@@ -186,7 +192,7 @@ void ssf<dimension>::luaopen(lua_State* L)
         [
             class_<ssf, shared_ptr<ssf> >(class_name.c_str())
                 .def(constructor<
-                    shared_ptr<density_mode_type const>
+                    vector<shared_ptr<density_mode_type const> > const&
                   , shared_ptr<clock_type const>
                   , unsigned int
                   , shared_ptr<logger_type>

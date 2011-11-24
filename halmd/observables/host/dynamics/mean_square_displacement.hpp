@@ -46,11 +46,6 @@ public:
     static void luaopen(lua_State* L);
 
     /**
-     * @param type particle type for which the computation is done
-     */
-    mean_square_displacement(size_t type);
-
-    /**
      * Compute mean-square displacement from two phase space samples
      *
      * @param first  phase space sample at initial time t1
@@ -61,8 +56,6 @@ public:
 
 private:
     typedef observables::dynamics::mean_square_displacement<vector_type> correlate_function_type;
-
-    size_t type_;
 };
 
 } // namespace dynamics

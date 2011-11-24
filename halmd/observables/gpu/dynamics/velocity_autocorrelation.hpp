@@ -53,12 +53,8 @@ public:
 
     static void luaopen(lua_State* L);
 
-    /**
-     * @param type particle type for which the computation is done
-     */
     velocity_autocorrelation(
-        size_t type
-      , unsigned int blocks = defaults::blocks()
+        unsigned int blocks = defaults::blocks()
       , unsigned int threads = defaults::threads()
     );
 
@@ -67,18 +63,16 @@ public:
      *
      * @param first  phase space sample at initial time t1
      * @param second phase space sample at later time t2
-     * @returns MSD at lag time t2 - t1, averaged over all particles of specified type
+     * @returns MSD at lag time t2 - t1, averaged over all particles
      */
     accumulator_type compute(sample_type const& first, sample_type const& second);
 
 private:
     typedef accumulator<dsfloat> gpu_accumulator_type;
-    typedef typename mdsim::type_traits<dimension, float>::gpu::coalesced_vector_type coalesced_vector_type;
-    typedef cuda::function<void (coalesced_vector_type const*, coalesced_vector_type const*, unsigned int, gpu_accumulator_type*)> compute_function_type;
+    typedef cuda::function<void (float4 const*, float4 const*, unsigned int, gpu_accumulator_type*)> compute_function_type;
 
     static compute_function_type select_compute(unsigned int threads);
 
-    size_t type_;
     unsigned int blocks_;
     unsigned int threads_;
     compute_function_type compute_;

@@ -45,58 +45,68 @@ static int wrap_dimension(phase_space<dimension, float_type> const&)
 
 template <int dimension, typename float_type>
 typename phase_space<dimension, float_type>::sample_vector const&
-phase_space<dimension, float_type>::position(unsigned int type) const
+phase_space<dimension, float_type>::position() const
 {
-    if (!(type < r.size())) {
-        throw invalid_argument("particle type");
-    }
-    return *r[type];
+    return *r;
 }
 
 template <int dimension, typename float_type>
 typename phase_space<dimension, float_type>::sample_vector const&
-phase_space<dimension, float_type>::velocity(unsigned int type) const
+phase_space<dimension, float_type>::velocity() const
 {
-    if (!(type < v.size())) {
-        throw invalid_argument("particle type");
-    }
-    return *v[type];
+    return *v;
+}
+
+template <int dimension, typename float_type>
+typename phase_space<dimension, float_type>::type_vector const&
+phase_space<dimension, float_type>::types() const
+{
+    return *type;
 }
 
 template <int dimension, typename float_type>
 typename phase_space<dimension, float_type>::sample_vector&
-phase_space<dimension, float_type>::position(unsigned int type)
+phase_space<dimension, float_type>::position()
 {
-    if (!(type < r.size())) {
-        throw invalid_argument("particle type");
-    }
-    return *r[type];
+    return *r;
 }
 
 template <int dimension, typename float_type>
 typename phase_space<dimension, float_type>::sample_vector&
-phase_space<dimension, float_type>::velocity(unsigned int type)
+phase_space<dimension, float_type>::velocity()
 {
-    if (!(type < v.size())) {
-        throw invalid_argument("particle type");
-    }
-    return *v[type];
+    return *v;
+}
+
+template <int dimension, typename float_type>
+typename phase_space<dimension, float_type>::type_vector&
+phase_space<dimension, float_type>::types()
+{
+    return *type;
 }
 
 template <typename phase_space_type>
 static function<typename phase_space_type::sample_vector& ()>
-wrap_position(shared_ptr<phase_space_type> phase_space, unsigned int type)
+wrap_position(shared_ptr<phase_space_type> phase_space)
 {
-    typedef typename phase_space_type::sample_vector& (phase_space_type::*getter_type)(unsigned int);
-    return bind(static_cast<getter_type>(&phase_space_type::position), phase_space, type);
+    typedef typename phase_space_type::sample_vector& (phase_space_type::*getter_type)();
+    return bind(static_cast<getter_type>(&phase_space_type::position), phase_space);
 }
 
 template <typename phase_space_type>
 static function<typename phase_space_type::sample_vector& ()>
-wrap_velocity(shared_ptr<phase_space_type> phase_space, unsigned int type)
+wrap_velocity(shared_ptr<phase_space_type> phase_space)
 {
-    typedef typename phase_space_type::sample_vector& (phase_space_type::*getter_type)(unsigned int);
-    return bind(static_cast<getter_type>(&phase_space_type::velocity), phase_space, type);
+    typedef typename phase_space_type::sample_vector& (phase_space_type::*getter_type)();
+    return bind(static_cast<getter_type>(&phase_space_type::velocity), phase_space);
+}
+
+template <typename phase_space_type>
+static function<typename phase_space_type::type_vector& ()>
+wrap_types(shared_ptr<phase_space_type> phase_space)
+{
+    typedef typename phase_space_type::type_vector& (phase_space_type::*getter_type)();
+    return bind(static_cast<getter_type>(&phase_space_type::types), phase_space);
 }
 
 template <int dimension, typename float_type>
@@ -113,10 +123,11 @@ void phase_space<dimension, float_type>::luaopen(lua_State* L)
                 namespace_("samples")
                 [
                     class_<phase_space, shared_ptr<phase_space> >(class_name.c_str())
-                        .def(constructor<vector<unsigned int> >())
+                        .def(constructor<unsigned int>())
                         .property("dimension", &wrap_dimension<dimension, float_type>)
-                        .def("position", &wrap_position<phase_space>)
-                        .def("velocity", &wrap_velocity<phase_space>)
+                        .property("position", &wrap_position<phase_space>)
+                        .property("velocity", &wrap_velocity<phase_space>)
+                        .property("types", &wrap_types<phase_space>)
                 ]
             ]
         ]

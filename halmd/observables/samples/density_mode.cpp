@@ -43,7 +43,7 @@ void density_mode<dimension>::luaopen(lua_State* L)
             namespace_("samples")
             [
                 class_<density_mode, shared_ptr<density_mode> >(class_name.c_str())
-                    .def(constructor<unsigned int, unsigned int>())
+                    .def(constructor<unsigned int>())
             ]
         ]
     ];

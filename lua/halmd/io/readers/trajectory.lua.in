@@ -90,10 +90,8 @@ function new(args)
         reader.position = property(function(self)
             if not sample then
                 sample = observables.samples.phase_space{memory = "host"}
-                local particle = mdsim.particle() -- singleton
-                for i = 0, particle.ntype - 1 do
-                    self:on_read(sample:position(i), {species(i), "position"})
-                end
+                self:on_read(sample.position, {"position"})
+                self:on_read(sample.types, {"species"})
             end
             return sample
         end)
@@ -103,10 +101,7 @@ function new(args)
         reader.velocity = property(function(self)
             if not sample then
                 sample = observables.samples.phase_space{memory = "host"}
-                local particle = mdsim.particle() -- singleton
-                for i = 0, particle.ntype - 1 do
-                    self:on_read(sample:velocity(i), {species(i), "velocity"})
-                end
+                self:on_read(sample.velocity, {"velocity"})
             end
             return sample
         end)

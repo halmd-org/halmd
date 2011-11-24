@@ -30,16 +30,6 @@ namespace observables {
 namespace host {
 namespace dynamics {
 
-template <int dimension, typename float_type>
-velocity_autocorrelation<dimension, float_type>::velocity_autocorrelation(
-    size_t type
-)
-  // member initialisation
-  : type_(type)
-{
-    LOG("initialise velocity autocorrelation of " << string(1, 'A' + type) << " particles");
-}
-
 /**
  * Compute velocity autocorrelation of two velocity sample vectors.
  *
@@ -55,8 +45,8 @@ velocity_autocorrelation<dimension, float_type>::compute(
 )
 {
     accumulator_type acc;
-    typename sample_type::sample_vector::const_iterator v1, v2, end = first.v[type_]->end();
-    for (v1 = first.v[type_]->begin(), v2 = second.v[type_]->begin(); v1 != end; ++v1, ++v2) {
+    typename sample_type::sample_vector::const_iterator v1, v2, end = first.v->end();
+    for (v1 = first.v->begin(), v2 = second.v->begin(); v1 != end; ++v1, ++v2) {
         // accumulate velocity autocorrelation
         acc(correlate_function_type()(*v1, *v2));
     }
@@ -65,9 +55,9 @@ velocity_autocorrelation<dimension, float_type>::compute(
 
 template <typename tcf_type>
 static shared_ptr<tcf_type>
-wrap_tcf(size_t type, typename tcf_type::sample_type const&)
+select_tcf_by_sample(typename tcf_type::sample_type const&)
 {
-    return make_shared<tcf_type>(type);
+    return make_shared<tcf_type>();
 }
 
 template <int dimension, typename float_type>
@@ -83,7 +73,7 @@ void velocity_autocorrelation<dimension, float_type>::luaopen(lua_State* L)
             [
                 class_<velocity_autocorrelation>(class_name.c_str())
 
-              , def("velocity_autocorrelation", &wrap_tcf<velocity_autocorrelation>)
+              , def("velocity_autocorrelation", &select_tcf_by_sample<velocity_autocorrelation>)
             ]
         ]
     ];

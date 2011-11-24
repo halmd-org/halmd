@@ -42,7 +42,7 @@ density_mode<dimension, float_type>::density_mode(
   , clock_(clock)
   , logger_(logger)
     // memory allocation
-  , rho_sample_(phase_space_->r.size(), wavevector_->value().size())
+  , rho_sample_(wavevector_->value().size())
 {
 }
 
@@ -59,7 +59,6 @@ void density_mode<dimension, float_type>::acquire()
         return;
     }
 
-    typedef typename phase_space_type::sample_vector_ptr positions_vector_ptr_type;
     typedef typename density_mode_sample_type::mode_vector_type mode_vector_type;
 
     // trigger update of phase space sample
@@ -75,25 +74,20 @@ void density_mode<dimension, float_type>::acquire()
     // to hold a previous copy of the sample
     rho_sample_.reset();
 
-    // compute density modes separately for each particle type
-    // 1st loop: iterate over particle types
-    unsigned int type = 0;
-    BOOST_FOREACH (positions_vector_ptr_type const r_sample, phase_space_->r) {
-        mode_vector_type& rho_vector = *rho_sample_.rho[type]; //< dereference shared_ptr
-        // initialise result array
-        fill(rho_vector.begin(), rho_vector.end(), 0);
-        // compute sum of exponentials: rho_q = sum_r exp(-i q·r)
-        // 2nd loop: iterate over particles of the same type
-        BOOST_FOREACH (vector_type const& r, *r_sample) {
-            typename mode_vector_type::iterator rho_q = rho_vector.begin();
-            typedef pair<double, vector_type> map_value_type; // pair: (wavenumber, wavevector)
-            // 3rd loop: iterate over wavevectors
-            BOOST_FOREACH (map_value_type const& q_pair, wavevector_->value()) {
-                float_type q_r = inner_prod(static_cast<vector_type>(q_pair.second), r);
-                *rho_q++ += mode_type(cos(q_r), -sin(q_r));
-            }
+    // compute density modes
+    mode_vector_type& rho_vector = *rho_sample_.rho; //< dereference shared_ptr
+    // initialise result array
+    fill(rho_vector.begin(), rho_vector.end(), 0);
+    // compute sum of exponentials: rho_q = sum_r exp(-i q·r)
+    // 1st loop: iterate over particles
+    BOOST_FOREACH (vector_type const& r, *phase_space_->r) {
+        typename mode_vector_type::iterator rho_q = rho_vector.begin();
+        typedef pair<double, vector_type> map_value_type; // pair: (wavenumber, wavevector)
+        // 2nd loop: iterate over wavevectors
+        BOOST_FOREACH (map_value_type const& q_pair, wavevector_->value()) {
+            float_type q_r = inner_prod(static_cast<vector_type>(q_pair.second), r);
+            *rho_q++ += mode_type(cos(q_r), -sin(q_r));
         }
-        ++type;
     }
     rho_sample_.step = clock_->step();
 }
