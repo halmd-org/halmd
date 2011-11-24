@@ -172,10 +172,10 @@ void phase_space<modules_type>::test()
         // compare positions with a tolerance due to mapping to and from the periodic box
         typename input_sample_type::sample_vector const& result_position = *result->r[i];
         typename input_sample_type::sample_vector const& input_position = *input_sample->r[i];
-        float_type tolerance = std::max(norm_inf(input_position[i]) * epsilon, epsilon);
         BOOST_CHECK_EQUAL(result_position.size(), npart[i]);
         for (unsigned int j = 0; j < npart[i]; ++j) {
-            BOOST_CHECK_SMALL(norm_inf(result_position[i] - input_position[i]), tolerance);
+            float_type tolerance = std::max(norm_inf(input_position[j]) * epsilon, epsilon);
+            BOOST_CHECK_SMALL(norm_inf(result_position[j] - input_position[j]), tolerance);
         }
         // compare velocities directly as they should not have been modified
         BOOST_CHECK_EQUAL_COLLECTIONS(
