@@ -45,12 +45,15 @@ function new(args)
     local particle = assert(args.particle)
     local force = assert(args.force)
     local potential = assert(args.potential)
+    local neighbour = args.neighbour -- optional
 
     local dimension = assert(particle.dimension)
     local box = mdsim.box() -- singleton
 
     -- create neighbour lists with cutoff radii of potential
-    local neighbour = mdsim.neighbour{particle = particle, r_cut = potential.r_cut}
+    if not neighbour then
+        neighbour = mdsim.neighbour{particle = particle, r_cut = potential.r_cut}
+    end
 
     -- construct force module
     local force = assert(forces.pair_trunc)(potential, particle, particle, box, neighbour)
