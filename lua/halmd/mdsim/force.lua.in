@@ -42,7 +42,7 @@ function new(args)
     -- trade a potential for a force
     local potential = potentials[force]
     if potential then
-        return forces.pair_trunc{force = force, potential = potential()}
+        return forces.pair_trunc{potential = potential()}
     end
     return assert(forces[force])()
 end
