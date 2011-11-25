@@ -68,15 +68,16 @@ function new(args)
     local skin = args.skin or 0.5 -- default value
 
     -- dependency injection
-    local particle = assert(args.particle)
-    local dimension = assert(particle.dimension)
+    local particle1 = assert(args.particle or args.particles[1])
+    local particle2 = assert(args.particle or args.particles[2])
     local box = mdsim.box() -- singleton
+    local dimension = assert(box.dimension)
     local logger = assert(args.logger)
 
     -- domain decomposition
     local binning
     if not args.disable_binning then
-        binning = mdsim.binning{particle = particle, r_cut = r_cut, skin = skin}
+        binning = mdsim.binning{particle = particle2, r_cut = r_cut, skin = skin}
     end
 
     -- neighbour lists
@@ -90,12 +91,12 @@ function new(args)
         local defaults = assert(neighbour.defaults)
         local occupancy = args.occupancy or defaults.occupancy()
         if binning then
-            neighbour = neighbour(particle, particle, binning, binning, box, r_cut, skin, logger, occupancy)
+            neighbour = neighbour(particle1, particle2, binning, binning, box, r_cut, skin, logger, occupancy)
         else
-            neighbour = neighbour(particle, particle, box, r_cut, skin, logger, occupancy)
+            neighbour = neighbour(particle1, particle2, box, r_cut, skin, logger, occupancy)
         end
     else
-        neighbour = neighbour_from_binning.host[dimension](particle, particle, binning, binning, box, r_cut, skin, logger)
+        neighbour = neighbour_from_binning.host[dimension](particle1, particle2, binning, binning, box, r_cut, skin, logger)
     end
 
     -- if needed, bin particles before neighbour list update
@@ -104,7 +105,7 @@ function new(args)
     end
 
     -- maximum squared displacement computation
-    local maximum_squared_displacement = mdsim.maximum_squared_displacement{particle = particle}
+    local maximum_squared_displacement = mdsim.maximum_squared_displacement{particle = particle1}
 
     -- compare maximum squared displacement to squared half skin size
     local limit = math.pow(neighbour.r_skin / 2, 2)
@@ -116,7 +117,7 @@ function new(args)
 
     if not args.disable_sorting then
         -- particle sorting
-        local sort = mdsim.sort{particle = particle}
+        local sort = mdsim.sort{particle = particle1}
 
         -- system preparation after setting positions and velocities
         core:on_append_setup{sort.order, tracker = neighbour}
