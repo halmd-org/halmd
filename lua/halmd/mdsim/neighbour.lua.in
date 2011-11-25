@@ -103,27 +103,39 @@ function new(args)
         neighbour:on_update(binning.update)
     end
 
-    -- particle sorting
-    local sort = mdsim.sort{particle = particle}
     -- maximum squared displacement computation
     local maximum_squared_displacement = mdsim.maximum_squared_displacement{particle = particle}
-
-    -- after particle sorting, take a snapshot of coordinates and update neighbour lists
-    sort:on_order(maximum_squared_displacement.zero)
-    sort:on_order(neighbour.update)
-
-    -- system preparation after setting positions and velocities
-    local core = mdsim.core()
-    core:on_append_setup{sort.order, tracker = neighbour}
 
     -- compare maximum squared displacement to squared half skin size
     local limit = math.pow(neighbour.r_skin / 2, 2)
     local greater = predicates.greater(maximum_squared_displacement.compute, limit)
+    local core = mdsim.core()
 
     -- evaluate maximum squared displacement every step
     core:on_prepend_force{greater.evaluate, tracker = neighbour}
-    -- if maximum squared displacement is greater than squared half skin size:
-    greater:on_greater(sort.order)
+
+    if not args.disable_sorting then
+        -- particle sorting
+        local sort = mdsim.sort{particle = particle}
+
+        -- system preparation after setting positions and velocities
+        core:on_append_setup{sort.order, tracker = neighbour}
+
+        -- if maximum squared displacement is greater than squared half skin size:
+        greater:on_greater(sort.order)
+
+        -- after particle sorting, take a snapshot of coordinates and update neighbour lists
+        sort:on_order(maximum_squared_displacement.zero)
+        sort:on_order(neighbour.update)
+    else
+        -- system preparation after setting positions and velocities
+        core:on_append_setup{maximum_squared_displacement.zero, tracker = neighbour}
+        core:on_append_setup{neighbour.update, tracker = neighbour}
+
+        -- if maximum squared displacement is greater than squared half skin size:
+        greater:on_greater(maximum_squared_displacement.zero)
+        greater:on_greater(neighbour.update)
+    end
 
     return neighbour
 end
