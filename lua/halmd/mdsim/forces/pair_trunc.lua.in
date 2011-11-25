@@ -42,21 +42,22 @@ module("halmd.mdsim.forces.pair_trunc", halmd.modules.register)
 -- @param args.potential potential module instance
 --
 function new(args)
-    local particle = assert(args.particle)
+    local particle1 = assert(args.particle or args.particles[1])
+    local particle2 = assert(args.particle or args.particles[2])
     local force = assert(args.force)
     local potential = assert(args.potential)
     local neighbour = args.neighbour -- optional
 
-    local dimension = assert(particle.dimension)
     local box = mdsim.box() -- singleton
+    local dimension = assert(box.dimension)
 
     -- create neighbour lists with cutoff radii of potential
     if not neighbour then
-        neighbour = mdsim.neighbour{particle = particle, r_cut = potential.r_cut}
+        neighbour = mdsim.neighbour{particles = {particle1, particle2}, r_cut = potential.r_cut}
     end
 
     -- construct force module
-    local force = assert(forces.pair_trunc)(potential, particle, particle, box, neighbour)
+    local force = assert(forces.pair_trunc)(potential, particle1, particle2, box, neighbour)
 
     -- move tracked signal connections from neighbour to force;
     -- on force:disconnect() the core signals connections of
