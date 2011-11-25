@@ -54,10 +54,10 @@ env: env-cmake env-lua env-boost env-luabind env-hdf5
 ## CMake with CMake-CUDA patch
 ##
 
-CMAKE_VERSION = 2.8.5
+CMAKE_VERSION = 2.8.6
 CMAKE_TARBALL = cmake-$(CMAKE_VERSION).tar.gz
 CMAKE_TARBALL_URL = http://www.cmake.org/files/v2.8/$(CMAKE_TARBALL)
-CMAKE_CUDA_PATCH = cmake-cuda-2.8.5-0-gda84f60.patch
+CMAKE_CUDA_PATCH = cmake-cuda-2.8.6-0-g4dd63fc.patch
 CMAKE_CUDA_PATCH_URL = http://sourceforge.net/projects/halmd/files/patches/$(CMAKE_CUDA_PATCH)
 CMAKE_BUILD_DIR = cmake-$(CMAKE_VERSION)
 CMAKE_INSTALL_DIR = $(PREFIX)/cmake-$(CMAKE_VERSION)
@@ -167,8 +167,8 @@ env-lua:
 ## Boost C++ libraries with Boost.Log
 ##
 
-BOOST_VERSION = 1.47.0
-BOOST_RELEASE = 1_47_0
+BOOST_VERSION = 1.48.0
+BOOST_RELEASE = 1_48_0
 BOOST_TARBALL = boost_$(BOOST_RELEASE).tar.gz
 BOOST_TARBALL_URL = http://sourceforge.net/projects/boost/files/boost/$(BOOST_VERSION)/$(BOOST_TARBALL)
 BOOST_LOG_TARBALL = boost-log.tar
@@ -352,7 +352,7 @@ env-hdf5:
 ## Git version control
 ##
 
-GIT_VERSION = 1.7.7
+GIT_VERSION = 1.7.7.3
 GIT_TARBALL = git-$(GIT_VERSION).tar.gz
 GIT_MANPAGES_TARBALL = git-manpages-$(GIT_VERSION).tar.gz
 GIT_TARBALL_URL = http://git-core.googlecode.com/files/$(GIT_TARBALL)

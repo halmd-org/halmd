@@ -44,7 +44,6 @@ module("halmd.mdsim.forces.pair_trunc", halmd.modules.register)
 function new(args)
     local particle1 = assert(args.particle or args.particles[1])
     local particle2 = assert(args.particle or args.particles[2])
-    local force = assert(args.force)
     local potential = assert(args.potential)
     local neighbour = args.neighbour -- optional
 
