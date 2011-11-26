@@ -101,7 +101,7 @@ function new(args)
 
     -- if needed, bin particles before neighbour list update
     if binning then
-        neighbour:on_update(binning.update)
+        neighbour:on_prepend_update(binning.update)
     end
 
     -- maximum squared displacement computation

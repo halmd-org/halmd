@@ -70,9 +70,14 @@ public:
     );
     virtual void update();
 
-    virtual connection on_update(slot_function_type const& slot)
+    virtual connection on_prepend_update(slot_function_type const& slot)
     {
-        return on_update_.connect(slot);
+        return on_prepend_update_.connect(slot);
+    }
+
+    virtual connection on_append_update(slot_function_type const& slot)
+    {
+        return on_append_update_.connect(slot);
     }
 
     //! returns neighbour list skin in MD units
@@ -144,7 +149,9 @@ private:
     /** profiling runtime accumulators */
     runtime runtime_;
     /** signal emitted before neighbour list update */
-    signal_type on_update_;
+    signal_type on_prepend_update_;
+    /** signal emitted after neighbour list update */
+    signal_type on_append_update_;
 };
 
 template <int dimension, typename float_type>

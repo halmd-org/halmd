@@ -96,11 +96,11 @@ from_particle<dimension, float_type>::from_particle(
 template <int dimension, typename float_type>
 void from_particle<dimension, float_type>::update()
 {
-    // Emit on_update signal, which may be connected e.g. to the binning
-    // update slot. We don't call binning::update directly, since the order
-    // of calls is setup at the Lua level, and it allows us to pass binning
-    // as a const dependency.
-    on_update_();
+    // Emit on_prepend_update signal, which may be connected e.g. to the
+    // binning update slot. We don't call binning::update directly, since
+    // the order of calls is setup at the Lua level, and it allows us to
+    // pass binning as a const dependency.
+    on_prepend_update_();
 
     LOG_TRACE("update neighbour lists");
 
@@ -135,6 +135,8 @@ void from_particle<dimension, float_type>::update()
         LOG_ERROR("failed to bin " << h_overflow.front() << " particles");
         throw runtime_error("neighbour list occupancy too large");
     }
+
+    on_append_update_();
 }
 
 template <int dimension, typename float_type>

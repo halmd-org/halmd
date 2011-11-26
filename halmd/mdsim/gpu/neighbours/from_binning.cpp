@@ -110,11 +110,11 @@ from_binning<dimension, float_type>::from_binning(
 template <int dimension, typename float_type>
 void from_binning<dimension, float_type>::update()
 {
-    // Emit on_update signal, which may be connected e.g. to the binning
-    // update slot. We don't call binning::update directly, since the order
-    // of calls is setup at the Lua level, and it allows us to pass binning
-    // as a const dependency.
-    on_update_();
+    // Emit on_prepend_update signal, which may be connected e.g. to the
+    // binning update slot. We don't call binning::update directly, since
+    // the order of calls is setup at the Lua level, and it allows us to
+    // pass binning as a const dependency.
+    on_prepend_update_();
 
     LOG_TRACE("update neighbour lists");
 
@@ -135,6 +135,8 @@ void from_binning<dimension, float_type>::update()
     if (h_ret.front() != EXIT_SUCCESS) {
         throw std::runtime_error("overcrowded placeholders in neighbour lists update");
     }
+
+    on_append_update_();
 }
 
 template <int dimension, typename float_type>

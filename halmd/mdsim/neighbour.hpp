@@ -38,7 +38,9 @@ public:
     virtual ~neighbour() {}
     virtual void update() = 0;
     /** add slot to be run before neighbour list update */
-    virtual connection on_update(slot_function_type const& slot) = 0;
+    virtual connection on_prepend_update(slot_function_type const& slot) = 0;
+    /** add slot to be run after neighbour list update */
+    virtual connection on_append_update(slot_function_type const& slot) = 0;
 };
 
 } // namespace mdsim

@@ -45,7 +45,8 @@ void neighbour::luaopen(lua_State* L)
         [
             class_<neighbour>("neighbour")
                 .property("update", &wrap_update<neighbour>)
-                .def("on_update", &neighbour::on_update)
+                .def("on_prepend_update", &neighbour::on_prepend_update)
+                .def("on_append_update", &neighbour::on_append_update)
         ]
     ];
 }
