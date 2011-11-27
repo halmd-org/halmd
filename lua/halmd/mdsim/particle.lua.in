@@ -54,16 +54,17 @@ module("halmd.mdsim.particle", halmd.modules.register)
 function new(args)
     local dimension = assert(args.dimension)
     local npart = args.particles or {1000} -- default value
+    local masses = assert(args.masses)
 
     local particle
     if device() then
         if args.threads then
-            particle = particle_wrapper.gpu[dimension](npart, args.threads)
+            particle = particle_wrapper.gpu[dimension](npart, masses, args.threads)
         else
-            particle = particle_wrapper.gpu[dimension](npart)
+            particle = particle_wrapper.gpu[dimension](npart, masses)
         end
     else
-        particle = particle_wrapper.host[dimension](npart)
+        particle = particle_wrapper.host[dimension](npart, masses)
     end
 
     local core = mdsim.core()

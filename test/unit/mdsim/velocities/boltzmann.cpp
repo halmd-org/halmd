@@ -143,8 +143,9 @@ boltzmann<modules_type>::boltzmann()
     density = 0.3;
 
     vector<unsigned int> npart_vector = list_of(npart);
+    vector<double> mass = list_of(1);
 
-    particle = make_shared<particle_type>(npart_vector);
+    particle = make_shared<particle_type>(npart_vector, mass);
     box = make_shared<box_type>(npart, density);
     random = make_shared<random_type>();
     velocity = make_shared<velocity_type>(particle, random, temp);

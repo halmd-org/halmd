@@ -45,9 +45,10 @@ namespace gpu {
 template <unsigned int dimension, typename float_type>
 particle<dimension, float_type>::particle(
     vector<unsigned int> const& particles
+  , vector<double> const& mass
   , unsigned int threads
 )
-  : _Base(particles)
+  : _Base(particles, mass)
   // default CUDA kernel execution dimensions
   , dim(device::validate(cuda::config((nbox + threads - 1) / threads, threads)))
   // allocate global device memory
@@ -56,6 +57,7 @@ particle<dimension, float_type>::particle(
   , g_v(nbox)
   , g_f(nbox)
   , g_reverse_tag(nbox)
+  , g_mass(ntype)
   // allocate page-locked host memory
   , h_r(nbox)
   , h_image(nbox)
@@ -122,6 +124,7 @@ particle<dimension, float_type>::particle(
     try {
         cuda::copy(nbox, get_particle_kernel<dimension>().nbox);
         cuda::copy(ntype, get_particle_kernel<dimension>().ntype);
+        cuda::copy(vector<float_type>(mass.begin(), mass.end()), g_mass);
     }
     catch (cuda::error const&) {
         LOG_ERROR("failed to copy particle parameters to device symbols");
@@ -208,8 +211,15 @@ void particle<dimension, float_type>::luaopen(lua_State* L)
             namespace_("gpu")
             [
                 class_<particle, shared_ptr<_Base>, _Base>(class_name.c_str())
-                    .def(constructor<vector<unsigned int> const&>())
-                    .def(constructor<vector<unsigned int> const&, unsigned int>())
+                    .def(constructor<
+                         vector<unsigned int> const&
+                       , vector<double> const&
+                     >())
+                    .def(constructor<
+                         vector<unsigned int> const&
+                       , vector<double> const&
+                       , unsigned int
+                     >())
                     .property("dimension", &wrap_dimension<dimension, float_type>)
                     .scope[
                         namespace_("defaults")

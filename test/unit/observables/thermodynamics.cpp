@@ -306,13 +306,14 @@ lennard_jones_fluid<modules_type>::lennard_jones_fluid()
     slab = 1;
 
     vector<unsigned int> npart_vector = list_of(npart);
+    vector<double> mass = list_of(1);
     boost::array<float, 3> rc_array = list_of(rc)(rc)(rc);
     boost::array<float, 3> epsilon_array = list_of(epsilon)(0.f)(0.f);
     boost::array<float, 3> sigma_array = list_of(sigma)(0.f)(0.f);
 
     // create modules
     random = make_shared<random_type>();
-    particle = make_shared<particle_type>(npart_vector);
+    particle = make_shared<particle_type>(npart_vector, mass);
     box = make_shared<box_type>(npart, density, box_ratios);
     potential = make_shared<potential_type>(particle->ntype, rc_array, epsilon_array, sigma_array);
     binning = make_shared<binning_type>(particle, box, potential->r_cut(), skin);

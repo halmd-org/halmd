@@ -46,6 +46,7 @@ public:
 
     particle(
         std::vector<unsigned int> const& particles
+      , std::vector<double> const& mass
       , unsigned int threads = defaults::threads()
     );
     virtual void set();
@@ -68,6 +69,8 @@ public:
     cuda::vector<gpu_vector_type> g_f;
     /** reverse particle tags */
     cuda::vector<unsigned int> g_reverse_tag;
+    /** mass per type */
+    cuda::vector<float_type> g_mass;
 
     //
     // particles in page-locked host memory

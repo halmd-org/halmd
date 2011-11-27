@@ -40,8 +40,11 @@ namespace host {
  * @param particles number of particles per type or species
  */
 template <unsigned int dimension, typename float_type>
-particle<dimension, float_type>::particle(vector<unsigned int> const& particles)
-  : _Base(particles)
+particle<dimension, float_type>::particle(
+    vector<unsigned int> const& particles
+  , vector<double> const& mass
+)
+  : _Base(particles, mass)
   // allocate particle storage
   , r(nbox)
   , image(nbox)
@@ -102,7 +105,10 @@ void particle<dimension, float_type>::luaopen(lua_State* L)
             namespace_("host")
             [
                 class_<particle, shared_ptr<_Base>, _Base>(class_name.c_str())
-                    .def(constructor<vector<unsigned int> const&>())
+                    .def(constructor<
+                        vector<unsigned int> const&
+                      , vector<double> const&
+                    >())
                     .property("dimension", &wrap_dimension<dimension, float_type>)
                     .scope[
                         class_<runtime>("runtime")

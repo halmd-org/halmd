@@ -198,6 +198,7 @@ phase_space<modules_type>::phase_space()
 
     // set module parameters
     npart = list_of(1024)(512)(30)(1); //< choose a value smaller than warp size and some limiting values
+    vector<double> mass = list_of(1)(1)(1)(1);
 
     // choose a box length with is not an exactly representable as a
     // floating-point number and which is small enough to have some overflow
@@ -206,7 +207,7 @@ phase_space<modules_type>::phase_space()
     box_length = fixed_vector<double, dimension>(40./3);
 
     // create modules
-    particle = make_shared<particle_type>(npart);
+    particle = make_shared<particle_type>(npart, mass);
     box = make_shared<box_type>(particle->nbox, box_length);
     input_sample = make_shared<input_sample_type>(particle->nbox);
     output_sample = make_shared<output_sample_type>(particle->nbox);

@@ -41,7 +41,10 @@ public:
 
     static void luaopen(lua_State* L);
 
-    particle(std::vector<unsigned int> const& particles);
+    particle(
+        std::vector<unsigned int> const& particles
+      , std::vector<double> const& mass
+    );
     virtual void set();
     void rearrange(std::vector<unsigned int> const& index);
 
@@ -64,6 +67,8 @@ public:
     using _Base::ntype;
     /** number of particles per type */
     using _Base::ntypes;
+    /** mass per type */
+    using _Base::mass;
 
 private:
     typedef utility::profiler profiler_type;

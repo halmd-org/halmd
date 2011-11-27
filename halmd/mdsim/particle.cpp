@@ -42,13 +42,20 @@ namespace mdsim {
  * @param particles number of particles per type or species
  */
 template <int dimension>
-particle<dimension>::particle(vector<unsigned int> const& particles)
+particle<dimension>::particle(
+    vector<unsigned int> const& particles
+  , vector<double> const& mass
+)
   : nbox(accumulate(particles.begin(), particles.end(), 0))
   , ntype(particles.size())
   , ntypes(particles)
+  , mass(mass)
 {
     if (*min_element(this->ntypes.begin(), this->ntypes.end()) < 1) {
-        throw logic_error("invalid number of particles");
+        throw invalid_argument("number of particles");
+    }
+    if (mass.size() != ntype) {
+        throw invalid_argument("number of masses");
     }
 
     vector<string> ntypes_(ntypes.size());
@@ -58,10 +65,18 @@ particle<dimension>::particle(vector<unsigned int> const& particles)
       , ntypes_.begin()
       , lexical_cast<string, unsigned int>
     );
+    vector<string> mass_(mass.size());
+    transform(
+        mass.begin()
+      , mass.end()
+      , mass_.begin()
+      , lexical_cast<string, double>
+    );
 
     LOG("number of particles: " << nbox);
     LOG("number of particle types: " << ntype);
     LOG("number of particles per type: " << join(ntypes_, " "));
+    LOG("particle masses: " << join(mass_, " "));
 }
 
 template <typename particle_type>
@@ -86,6 +101,7 @@ void particle<dimension>::luaopen(lua_State* L)
                 .def_readonly("nbox", &particle::nbox)
                 .def_readonly("ntype", &particle::ntype)
                 .def_readonly("ntypes", &particle::ntypes)
+                .def_readonly("mass", &particle::mass)
         ]
     ];
 }

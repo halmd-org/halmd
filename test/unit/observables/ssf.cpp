@@ -228,8 +228,9 @@ lattice<modules_type>::lattice()
     slab = 1;
 
     vector<unsigned int> npart_vector = list_of(npart);
+    vector<double> mass = list_of(1);
 
-    particle = make_shared<particle_type>(npart_vector);
+    particle = make_shared<particle_type>(npart_vector, mass);
     box = make_shared<box_type>(npart, density, fixed_vector<double, dimension>(ncell));
     random = make_shared<random_type>();
     position = make_shared<position_type>(particle, box, random, slab);

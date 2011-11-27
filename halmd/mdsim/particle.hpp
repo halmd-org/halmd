@@ -38,7 +38,10 @@ class particle
 public:
     static void luaopen(lua_State* L);
 
-    particle(std::vector<unsigned int> const& particles);
+    particle(
+        std::vector<unsigned int> const& particles
+      , std::vector<double> const& mass
+    );
     virtual ~particle() {}
     virtual void set() = 0;
 
@@ -48,6 +51,8 @@ public:
     unsigned int const ntype;
     /** number of particles per type */
     std::vector<unsigned int> const ntypes;
+    /** mass per type */
+    std::vector<double> const mass;
 };
 
 } // namespace mdsim
