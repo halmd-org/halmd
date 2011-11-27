@@ -36,7 +36,7 @@
 
     /* maximum number of arguments passed to device functions */
     #ifndef CUDA_FUNCTION_MAX_ARGS
-    #define CUDA_FUNCTION_MAX_ARGS 10
+    #define CUDA_FUNCTION_MAX_ARGS 16
     #endif
 
     namespace cuda
