@@ -51,7 +51,7 @@ particle<dimension>::particle(
   , ntypes(particles)
   , mass(mass)
 {
-    if (*min_element(this->ntypes.begin(), this->ntypes.end()) < 1) {
+    if (nbox == 0) {
         throw invalid_argument("number of particles");
     }
     if (mass.size() != ntype) {
