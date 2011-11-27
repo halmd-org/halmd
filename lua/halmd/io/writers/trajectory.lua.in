@@ -31,6 +31,7 @@ local mdsim = halmd.mdsim
 local observables = halmd.observables
 -- grab C++ wrappers
 local po = libhalmd.po
+local h5 = libhalmd.h5
 -- grab standard library
 local assert = assert
 local string = string
@@ -59,8 +60,11 @@ function new(args)
     writer:on_prepend_write(phase_space.acquire)
     writer:on_write(sample.position, {"position"})
     writer:on_write(sample.velocity, {"velocity"})
-    writer:on_write(sample.types, {"species"})
+    local _, species = writer:on_write(sample.types, {"species"})
     sampler:on_sample{writer.write, every, tracker = writer}
+
+    -- store attributes
+    species:write_attribute("mass", h5.float_array(), particle.mass)
 
     -- write box edge vectors and offset to trajectory group
     --
