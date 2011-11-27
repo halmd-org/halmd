@@ -44,6 +44,9 @@ namespace potentials {
 template <typename float_type>
 class lennard_jones_simple
 {
+private:
+    typedef boost::numeric::ublas::scalar_matrix<float_type> scalar_matrix_type;
+
 public:
     typedef lennard_jones_simple_kernel::lennard_jones_simple gpu_potential_type;
     typedef boost::numeric::ublas::symmetric_matrix<float_type, boost::numeric::ublas::lower> matrix_type;
@@ -54,7 +57,8 @@ public:
     static void luaopen(lua_State* L);
 
     lennard_jones_simple(
-        float_type cutoff
+        unsigned int ntype
+      , float_type cutoff
       , boost::shared_ptr<logger_type> logger = boost::make_shared<logger_type>()
     );
 
@@ -62,20 +66,17 @@ public:
 
     matrix_type r_cut() const
     {
-        using boost::numeric::ublas::scalar_matrix;
-        return scalar_matrix<float_type>(1, 1, r_cut_); //< construct 1×1 matrix with cutoff
+        return scalar_matrix_type(ntype_, ntype_, r_cut_);
     }
 
     matrix_type epsilon() const
     {
-        using boost::numeric::ublas::scalar_matrix;
-        return scalar_matrix<float_type>(1, 1, 1); //< construct 1×1 matrix with ε=1
+        return scalar_matrix_type(ntype_, ntype_, 1);
     }
 
     matrix_type sigma() const
     {
-        using boost::numeric::ublas::scalar_matrix;
-        return scalar_matrix<float_type>(1, 1, 1); //< construct 1×1 matrix with σ=1
+        return scalar_matrix_type(ntype_, ntype_, 1);
     }
 
 private:
@@ -85,6 +86,8 @@ private:
     float_type rr_cut_;
     /** potential energy at cutoff length in MD units */
     float_type en_cut_;
+    /** number of particle types */
+    unsigned int ntype_;
     /** module logger */
     boost::shared_ptr<logger_type> logger_;
 };

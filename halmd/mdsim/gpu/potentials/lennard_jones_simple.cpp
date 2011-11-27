@@ -39,12 +39,14 @@ namespace potentials {
  */
 template <typename float_type>
 lennard_jones_simple<float_type>::lennard_jones_simple(
-    float_type cutoff
+    unsigned int ntype
+  , float_type cutoff
   , shared_ptr<logger_type> logger
 )
   // initialise members
   : r_cut_(cutoff)
   , rr_cut_(cutoff * cutoff)
+  , ntype_(ntype)
   , logger_(logger)
 {
     // energy shift due to truncation at cutoff length
@@ -74,7 +76,8 @@ void lennard_jones_simple<float_type>::luaopen(lua_State* L)
                 [
                     class_<lennard_jones_simple, shared_ptr<lennard_jones_simple> >(module_name())
                         .def(constructor<
-                            float_type
+                            unsigned int
+                          , float_type
                           , shared_ptr<logger_type>
                         >())
                         // provide Lua interface coherent with lennard_jones

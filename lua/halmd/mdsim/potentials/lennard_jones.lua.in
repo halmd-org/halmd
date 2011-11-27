@@ -55,9 +55,9 @@ function new(args)
 
     local potential
     -- select optimised GPU version if 1 species and ε=1, σ=1
-    if device() and particle.ntype == 1 and epsilon[1] == 1 and sigma[1] == 1 then
+    if device() and epsilon == 1 and sigma == 1 then
         local lennard_jones_simple = assert(lennard_jones_simple_wrapper.gpu)
-        potential = lennard_jones_simple(cutoff[1], logger)
+        potential = lennard_jones_simple(particle.ntype, cutoff, logger)
     else
         local lennard_jones = assert(lennard_jones_wrapper[device() and "gpu" or "host"])
         potential = lennard_jones(particle.ntype, cutoff, epsilon, sigma, logger)
