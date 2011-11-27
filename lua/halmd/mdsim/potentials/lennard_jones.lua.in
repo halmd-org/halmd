@@ -20,6 +20,7 @@
 require("halmd.device")
 require("halmd.mdsim.particle")
 require("halmd.modules")
+require("halmd.numeric.matrix")
 
 -- grab modules
 local device = halmd.device
@@ -39,6 +40,8 @@ local h5 = libhalmd.h5
 local po = libhalmd.po
 -- grab standard library
 local assert = assert
+local type = type
+local scalar_matrix = scalar_matrix
 
 module("halmd.mdsim.potentials.lennard_jones", halmd.modules.register)
 
@@ -46,21 +49,31 @@ module("halmd.mdsim.potentials.lennard_jones", halmd.modules.register)
 -- construct Lennard-Jones module
 --
 function new(args)
-    local cutoff = args.cutoff or {2.5, 2.5, 2.5} -- default value
-    local epsilon = args.epsilon or {1.0, 1.5, 0.5} -- default value
-    local sigma = args.sigma or {1.0, 0.8, 0.88} -- default value
+    local cutoff = args.cutoff or 2.5 -- default value
+    local epsilon = args.epsilon or 1 -- default value
+    local sigma = args.sigma or 1 -- default value
 
-    local particle = assert(args.particle)
+    local particle1 = assert(args.particle or args.particles[1])
+    local particle2 = assert(args.particle or args.particles[2])
     local logger = assert(args.logger)
 
     local potential
     -- select optimised GPU version if 1 species and ε=1, σ=1
     if device() and epsilon == 1 and sigma == 1 then
         local lennard_jones_simple = assert(lennard_jones_simple_wrapper.gpu)
-        potential = lennard_jones_simple(particle.ntype, cutoff, logger)
+        potential = lennard_jones_simple(particle1.ntype, particle2.ntype, cutoff, logger)
     else
+        if type(cutoff) == "number" then
+            cutoff = scalar_matrix(particle1.ntype, particle2.ntype, cutoff)
+        end
+        if type(epsilon) == "number" then
+            epsilon = scalar_matrix(particle1.ntype, particle2.ntype, epsilon)
+        end
+        if type(sigma) == "number" then
+            sigma = scalar_matrix(particle1.ntype, particle2.ntype, sigma)
+        end
         local lennard_jones = assert(lennard_jones_wrapper[device() and "gpu" or "host"])
-        potential = lennard_jones(particle.ntype, cutoff, epsilon, sigma, logger)
+        potential = lennard_jones(particle1.ntype, particle2.ntype, cutoff, epsilon, sigma, logger)
     end
     return potential
 end
@@ -100,7 +113,7 @@ end
 -- @param group HDF5 group
 --
 function write_parameters(lennard_jones, group)
-    group:write_attribute("cutoff", h5.float_array(), lennard_jones.r_cut_sigma:data())
-    group:write_attribute("epsilon", h5.float_array(), lennard_jones.epsilon:data())
-    group:write_attribute("sigma", h5.float_array(), lennard_jones.sigma:data())
+    -- FIXME :write_attribute("cutoff", h5.float_array(), lennard_jones.r_cut_sigma:data())
+    -- FIXME :write_attribute("epsilon", h5.float_array(), lennard_jones.epsilon:data())
+    -- FIXME :write_attribute("sigma", h5.float_array(), lennard_jones.sigma:data())
 end

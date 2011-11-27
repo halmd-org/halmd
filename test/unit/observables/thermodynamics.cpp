@@ -307,15 +307,18 @@ lennard_jones_fluid<modules_type>::lennard_jones_fluid()
 
     vector<unsigned int> npart_vector = list_of(npart);
     vector<double> mass = list_of(1);
-    boost::array<float, 3> rc_array = list_of(rc)(rc)(rc);
-    boost::array<float, 3> epsilon_array = list_of(epsilon)(0.f)(0.f);
-    boost::array<float, 3> sigma_array = list_of(sigma)(0.f)(0.f);
+    typename potential_type::matrix_type rc_mat(1, 1);
+    typename potential_type::matrix_type epsilon_mat(1, 1);
+    typename potential_type::matrix_type sigma_mat(1, 1);
+    rc_mat(0, 0) = rc;
+    epsilon_mat(0, 0) = epsilon;
+    sigma_mat(0, 0) = sigma;
 
     // create modules
     random = make_shared<random_type>();
     particle = make_shared<particle_type>(npart_vector, mass);
     box = make_shared<box_type>(npart, density, box_ratios);
-    potential = make_shared<potential_type>(particle->ntype, rc_array, epsilon_array, sigma_array);
+    potential = make_shared<potential_type>(particle->ntype, particle->ntype, rc_mat, epsilon_mat, sigma_mat);
     binning = make_shared<binning_type>(particle, box, potential->r_cut(), skin);
     neighbour = make_shared<neighbour_type>(particle, particle, binning, binning, box, potential->r_cut(), skin);
     position = make_shared<position_type>(particle, box, random, slab);

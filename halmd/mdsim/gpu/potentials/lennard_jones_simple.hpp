@@ -22,7 +22,6 @@
 
 #include <boost/make_shared.hpp>
 #include <boost/numeric/ublas/matrix.hpp>
-#include <boost/numeric/ublas/symmetric.hpp>
 #include <cuda_wrapper/cuda_wrapper.hpp>
 #include <lua.hpp>
 
@@ -49,7 +48,7 @@ private:
 
 public:
     typedef lennard_jones_simple_kernel::lennard_jones_simple gpu_potential_type;
-    typedef boost::numeric::ublas::symmetric_matrix<float_type, boost::numeric::ublas::lower> matrix_type;
+    typedef boost::numeric::ublas::matrix<float_type> matrix_type;
     typedef logger logger_type;
 
     static char const* module_name() { return "lennard_jones_simple"; }
@@ -57,7 +56,8 @@ public:
     static void luaopen(lua_State* L);
 
     lennard_jones_simple(
-        unsigned int ntype
+        unsigned int ntype1
+      , unsigned int ntype2
       , float_type cutoff
       , boost::shared_ptr<logger_type> logger = boost::make_shared<logger_type>()
     );
@@ -66,17 +66,17 @@ public:
 
     matrix_type r_cut() const
     {
-        return scalar_matrix_type(ntype_, ntype_, r_cut_);
+        return scalar_matrix_type(ntype1_, ntype2_, r_cut_);
     }
 
     matrix_type epsilon() const
     {
-        return scalar_matrix_type(ntype_, ntype_, 1);
+        return scalar_matrix_type(ntype1_, ntype2_, 1);
     }
 
     matrix_type sigma() const
     {
-        return scalar_matrix_type(ntype_, ntype_, 1);
+        return scalar_matrix_type(ntype1_, ntype2_, 1);
     }
 
 private:
@@ -86,8 +86,10 @@ private:
     float_type rr_cut_;
     /** potential energy at cutoff length in MD units */
     float_type en_cut_;
-    /** number of particle types */
-    unsigned int ntype_;
+    /** number of first particle types */
+    unsigned int ntype1_;
+    /** number of second particle types */
+    unsigned int ntype2_;
     /** module logger */
     boost::shared_ptr<logger_type> logger_;
 };

@@ -65,6 +65,8 @@ __global__ void compute(
   , float* g_en_pot
   , stress_tensor_type* g_stress_pot
   , float* g_hypervirial
+  , unsigned int ntype1
+  , unsigned int ntype2
 )
 {
     enum { dimension = vector_type::static_size };
@@ -101,7 +103,7 @@ __global__ void compute(
         vector_type r2;
         tie(r2, type2) = untagged<vector_type>(tex1Dfetch(r2_, j));
         // pair potential
-        potential_type const potential(type1, type2);
+        potential_type const potential(type1, type2, ntype1, ntype2);
 
         // particle distance vector
         vector_type r = r1 - r2;

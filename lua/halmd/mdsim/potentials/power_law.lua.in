@@ -20,6 +20,7 @@
 require("halmd.device")
 require("halmd.mdsim.particle")
 require("halmd.modules")
+require("halmd.numeric.matrix")
 
 -- grab modules
 local device = halmd.device
@@ -35,6 +36,8 @@ local h5 = libhalmd.h5
 local po = libhalmd.po
 -- grab standard library
 local assert = assert
+local type = type
+local scalar_matrix = scalar_matrix
 
 module("halmd.mdsim.potentials.power_law", halmd.modules.register)
 
@@ -43,12 +46,22 @@ module("halmd.mdsim.potentials.power_law", halmd.modules.register)
 --
 function new(args)
     local index = args.index or 12 -- default value
-    local cutoff = args.cutoff or {2.5, 2.5, 2.5} -- default value
-    local epsilon = args.epsilon or {1.0, 1.5, 0.5} -- default value
-    local sigma = args.sigma or {1.0, 0.8, 0.88} -- default value
+    local cutoff = args.cutoff or 2.5 -- default value
+    local epsilon = args.epsilon or 1 -- default value
+    local sigma = args.sigma or 1 -- default value
 
     local particle = assert(args.particle)
     local logger = assert(args.logger)
+
+    if type(cutoff) == "number" then
+        cutoff = scalar_matrix(particle1.ntype, particle2.ntype, cutoff)
+    end
+    if type(epsilon) == "number" then
+        epsilon = scalar_matrix(particle1.ntype, particle2.ntype, epsilon)
+    end
+    if type(sigma) == "number" then
+        sigma = scalar_matrix(particle1.ntype, particle2.ntype, sigma)
+    end
 
     local power_law
     if device() then
@@ -96,8 +109,8 @@ end
 -- @param group HDF5 group
 --
 function write_parameters(power_law, group)
-    group:write_attribute("index", h5.uint(), power_law.index)
-    group:write_attribute("cutoff", h5.float_array(), power_law.r_cut_sigma:data())
-    group:write_attribute("epsilon", h5.float_array(), power_law.epsilon:data())
-    group:write_attribute("sigma", h5.float_array(), power_law.sigma:data())
+    -- FIXME :write_attribute("index", h5.uint(), power_law.index)
+    -- FIXME :write_attribute("cutoff", h5.float_array(), power_law.r_cut_sigma:data())
+    -- FIXME :write_attribute("epsilon", h5.float_array(), power_law.epsilon:data())
+    -- FIXME :write_attribute("sigma", h5.float_array(), power_law.sigma:data())
 end

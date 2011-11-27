@@ -21,7 +21,7 @@
 #define HALMD_MDSIM_GPU_POTENTIALS_MORSE_HPP
 
 #include <boost/make_shared.hpp>
-#include <boost/numeric/ublas/symmetric.hpp>
+#include <boost/numeric/ublas/matrix.hpp>
 #include <cuda_wrapper/cuda_wrapper.hpp>
 #include <lua.hpp>
 
@@ -41,7 +41,7 @@ class morse
 {
 public:
     typedef morse_kernel::morse gpu_potential_type;
-    typedef boost::numeric::ublas::symmetric_matrix<float_type, boost::numeric::ublas::lower> matrix_type;
+    typedef boost::numeric::ublas::matrix<float_type> matrix_type;
     typedef logger logger_type;
 
     static char const* module_name() { return "morse"; }
@@ -49,11 +49,12 @@ public:
     static void luaopen(lua_State* L);
 
     morse(
-        unsigned ntype
-      , boost::array<float, 3> const& cutoff
-      , boost::array<float, 3> const& epsilon
-      , boost::array<float, 3> const& sigma
-      , boost::array<float, 3> const& r_min
+        unsigned int ntype1
+      , unsigned int ntype2
+      , matrix_type const& cutoff
+      , matrix_type const& epsilon
+      , matrix_type const& sigma
+      , matrix_type const& r_min
       , boost::shared_ptr<logger_type> logger = boost::make_shared<logger_type>()
     );
 

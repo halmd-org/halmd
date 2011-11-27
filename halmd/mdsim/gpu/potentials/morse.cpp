@@ -41,41 +41,29 @@ namespace potentials {
  */
 template <typename float_type>
 morse<float_type>::morse(
-    unsigned ntype
-  , array<float, 3> const& cutoff
-  , array<float, 3> const& epsilon
-  , array<float, 3> const& sigma
-  , array<float, 3> const& r_min
+    unsigned int ntype1
+  , unsigned int ntype2
+  , matrix_type const& cutoff
+  , matrix_type const& epsilon
+  , matrix_type const& sigma
+  , matrix_type const& r_min
   , shared_ptr<logger_type> logger
 )
   // allocate potential parameters
-  : epsilon_(scalar_matrix<float_type>(ntype, ntype, 1))
-  , sigma_(scalar_matrix<float_type>(ntype, ntype, 1))
-  , r_min_sigma_(ntype, ntype)
-  , en_cut_(ntype, ntype)
-  , r_cut_(ntype, ntype)
-  , r_cut_sigma_(ntype, ntype)
-  , rr_cut_(ntype, ntype)
-  , g_param_(epsilon_.data().size())
-  , g_rr_cut_(epsilon_.data().size())
+  : epsilon_(epsilon)
+  , sigma_(sigma)
+  , r_min_sigma_(r_min)
+  , r_cut_sigma_(cutoff)
+  , r_cut_(element_prod(sigma_, r_cut_sigma_))
+  , rr_cut_(element_prod(r_cut_, r_cut_))
+  , en_cut_(ntype1, ntype2)
+  , g_param_(ntype1 * ntype2)
+  , g_rr_cut_(ntype1 * ntype2)
   , logger_(logger)
 {
-    // FIXME support any number of types
-    for (unsigned i = 0; i < std::min(ntype, 2U); ++i) {
-        for (unsigned j = i; j < std::min(ntype, 2U); ++j) {
-            epsilon_(i, j) = epsilon[i + j];
-            sigma_(i, j) = sigma[i + j];
-            r_cut_sigma_(i, j) = cutoff[i + j];
-            r_min_sigma_(i, j) = r_min[i + j];
-        }
-    }
-
-    // precalculate derived parameters
-    for (unsigned i = 0; i < ntype; ++i) {
-        for (unsigned j = i; j < ntype; ++j) {
-            r_cut_(i, j) = r_cut_sigma_(i, j) * sigma_(i, j);
-            rr_cut_(i, j) = std::pow(r_cut_(i, j), 2);
-            // energy shift due to truncation at cutoff length
+    // energy shift due to truncation at cutoff length
+    for (unsigned i = 0; i < ntype1; ++i) {
+        for (unsigned j = 0; j < ntype2; ++j) {
             float_type a = exp(r_min_sigma_(i, j) - r_cut_sigma_(i, j));
             en_cut_(i, j) = epsilon_(i, j) * (a - 2) * a;
         }
@@ -115,11 +103,12 @@ void morse<float_type>::luaopen(lua_State* L)
                 [
                     class_<morse, shared_ptr<morse> >(module_name())
                         .def(constructor<
-                            unsigned
-                          , array<float, 3> const&
-                          , array<float, 3> const&
-                          , array<float, 3> const&
-                          , array<float, 3> const&
+                            unsigned int
+                          , unsigned int
+                          , matrix_type const&
+                          , matrix_type const&
+                          , matrix_type const&
+                          , matrix_type const&
                           , shared_ptr<logger_type>
                         >())
                         .property("r_cut", (matrix_type const& (morse::*)() const) &morse::r_cut)

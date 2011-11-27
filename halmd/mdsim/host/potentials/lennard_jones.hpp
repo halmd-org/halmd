@@ -22,7 +22,7 @@
 
 #include <boost/assign.hpp>
 #include <boost/make_shared.hpp>
-#include <boost/numeric/ublas/symmetric.hpp>
+#include <boost/numeric/ublas/matrix.hpp>
 #include <boost/tuple/tuple.hpp>
 #include <lua.hpp>
 
@@ -40,7 +40,7 @@ template <typename float_type>
 class lennard_jones
 {
 public:
-    typedef boost::numeric::ublas::symmetric_matrix<float_type, boost::numeric::ublas::lower> matrix_type;
+    typedef boost::numeric::ublas::matrix<float_type> matrix_type;
     typedef logger logger_type;
 
     static char const* module_name() { return "lennard_jones"; }
@@ -48,10 +48,11 @@ public:
     static void luaopen(lua_State* L);
 
     lennard_jones(
-        unsigned ntype
-      , boost::array<float, 3> const& cutoff
-      , boost::array<float, 3> const& epsilon
-      , boost::array<float, 3> const& sigma
+        unsigned int ntype1
+      , unsigned int ntype2
+      , matrix_type const& cutoff
+      , matrix_type const& epsilon
+      , matrix_type const& sigma
       , boost::shared_ptr<logger_type> logger = boost::make_shared<logger_type>()
     );
 

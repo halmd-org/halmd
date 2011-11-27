@@ -48,8 +48,11 @@ public:
      * @param type1 type of first interacting particle
      * @param type2 type of second interacting particle
      */
-    HALMD_GPU_ENABLED lennard_jones_simple(unsigned int type1, unsigned int type2)
-        {}
+    HALMD_GPU_ENABLED lennard_jones_simple(
+        unsigned int type1, unsigned int type2
+      , unsigned int ntype1, unsigned int ntype2
+    )
+    {}
 
     /**
      * Check whether particles are in interaction range.

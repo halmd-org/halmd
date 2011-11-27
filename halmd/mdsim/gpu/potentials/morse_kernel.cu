@@ -51,13 +51,13 @@ public:
      * @param type1 type of first interacting particle
      * @param type2 type of second interacting particle
      */
-    HALMD_GPU_ENABLED morse(unsigned int type1, unsigned int type2)
-      : pair_(
-            tex1Dfetch(param_, symmetric_matrix::lower_index(type1, type2))
-        )
-      , pair_rr_cut_(
-            tex1Dfetch(rr_cut_, symmetric_matrix::lower_index(type1, type2))
-        ) {}
+    HALMD_GPU_ENABLED morse(
+        unsigned int type1, unsigned int type2
+      , unsigned int ntype1, unsigned int ntype2
+    )
+      : pair_(tex1Dfetch(param_, type1 * ntype2 + type2))
+      , pair_rr_cut_(tex1Dfetch(rr_cut_, type1 * ntype2 + type2))
+    {}
 
     /**
      * Check whether particles are in interaction range.
