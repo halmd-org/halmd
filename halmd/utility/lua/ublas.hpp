@@ -20,21 +20,100 @@
 #ifndef HALMD_UTILITY_LUA_UBLAS_HPP
 #define HALMD_UTILITY_LUA_UBLAS_HPP
 
+#include <boost/numeric/ublas/matrix.hpp>
+#include <boost/numeric/ublas/matrix_proxy.hpp> // row()
+#include <boost/numeric/ublas/vector.hpp>
+
 #include <luabind/luabind.hpp>
 
-namespace boost {
-namespace numeric {
-namespace ublas {
-
-// forward declaration
-template <typename T, typename A>
-struct unbounded_array;
-
-} // namespace ublas
-} // namespace numeric
-} // namespace boost
-
 namespace luabind {
+
+/**
+ * Luabind converter for Boost uBLAS vector
+ */
+template <typename T, typename A>
+struct default_converter<boost::numeric::ublas::vector<T, A> >
+  : native_converter_base<boost::numeric::ublas::vector<T, A> >
+{
+    //! compute Lua to C++ conversion score
+    static int compute_score(lua_State* L, int index)
+    {
+        return lua_type(L, index) == LUA_TTABLE ? 0 : -1;
+    }
+
+    //! convert from Lua to C++
+    boost::numeric::ublas::vector<T, A> from(lua_State* L, int index)
+    {
+        std::size_t size = luaL_getn(L, index);
+        boost::numeric::ublas::vector<T, A> v(size);
+        object table(from_stack(L, index));
+        for (std::size_t i = 0; i < v.size(); ++i) {
+            v[i] = object_cast<T>(table[i + 1]);
+        }
+        return v;
+    }
+
+    //! convert from C++ to Lua
+    void to(lua_State* L, boost::numeric::ublas::vector<T, A> const& v)
+    {
+        object table = newtable(L);
+        for (std::size_t i = 0; i < v.size(); ++i) {
+            // default_converter<T> only invoked with reference wrapper
+            table[i + 1] = boost::cref(v[i]);
+        }
+        table.push(L);
+    }
+};
+
+template <typename T, typename A>
+struct default_converter<boost::numeric::ublas::vector<T, A> const&>
+  : default_converter<boost::numeric::ublas::vector<T, A> > {};
+
+/**
+ * Luabind converter for Boost uBLAS matrix
+ */
+template <typename T, typename F, typename A>
+struct default_converter<boost::numeric::ublas::matrix<T, F, A> >
+  : native_converter_base<boost::numeric::ublas::matrix<T, F, A> >
+{
+    typedef boost::numeric::ublas::vector<T, A> vector_type;
+    typedef boost::numeric::ublas::matrix<T, F, A> matrix_type;
+
+    //! compute Lua to C++ conversion score
+    static int compute_score(lua_State* L, int index)
+    {
+        return lua_type(L, index) == LUA_TTABLE ? 0 : -1;
+    }
+
+    //! convert from Lua to C++
+    matrix_type from(lua_State* L, int index)
+    {
+        object table(from_stack(L, index));
+        std::size_t rows = luaL_getn(L, index);
+        std::size_t cols = (rows > 0) ? object_cast<vector_type>(table[1]).size() : 0;
+        matrix_type m(rows, cols);
+        for (std::size_t i = 0; i < m.size1(); ++i) {
+            row(m, i) = object_cast<vector_type>(table[i + 1]);
+        }
+        return m;
+    }
+
+    //! convert from C++ to Lua
+    void to(lua_State* L, matrix_type const& m)
+    {
+        object table = newtable(L);
+        for (std::size_t i = 0; i < m.size1(); ++i) {
+            vector_type r = row(m, i);
+            // default_converter<T> only invoked with reference wrapper
+            table[i + 1] = boost::cref(r);
+        }
+        table.push(L);
+    }
+};
+
+template <typename T, typename F, typename A>
+struct default_converter<boost::numeric::ublas::matrix<T, F, A> const&>
+  : default_converter<boost::numeric::ublas::matrix<T, F, A> > {};
 
 /**
  * Luabind converter for Boost uBLAS unbounded storage array
