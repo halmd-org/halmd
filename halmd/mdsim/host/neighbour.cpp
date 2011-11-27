@@ -60,10 +60,10 @@ neighbour<dimension, float_type>::neighbour(
   , r_skin_(skin)
   , rr_cut_skin_(particle1_->ntype, particle1_->ntype)
 {
-    matrix_type r_cut_skin(particle1_->ntype, particle1_->ntype);
+    matrix_type r_cut_skin(r_cut.size1(), r_cut.size2());
     typename matrix_type::value_type r_cut_max = 0;
-    for (size_t i = 0; i < particle1_->ntype; ++i) {
-        for (size_t j = i; j < particle1_->ntype; ++j) {
+    for (size_t i = 0; i < r_cut.size1(); ++i) {
+        for (size_t j = 0; j < r_cut.size2(); ++j) {
             r_cut_skin(i, j) = r_cut(i, j) + r_skin_;
             rr_cut_skin_(i, j) = std::pow(r_cut_skin(i, j), 2);
             r_cut_max = max(r_cut_skin(i, j), r_cut_max);

@@ -89,6 +89,8 @@ __device__ void update_cell_neighbours(
   unsigned int const* g_cell,
   T const& r,
   unsigned int type,
+  unsigned int ntype1,
+  unsigned int ntype2,
   unsigned int const& n,
   unsigned int& count,
   unsigned int* g_neighbour)
@@ -128,7 +130,7 @@ __device__ void update_cell_neighbours(
         float rr = inner_prod(dr, dr);
 
         // enforce cutoff length with neighbour list skin
-        float rr_cut_skin = tex1Dfetch(rr_cut_skin_, symmetric_matrix::lower_index(type, s_type[i]));
+        float rr_cut_skin = tex1Dfetch(rr_cut_skin_, type * ntype2 + s_type[i]);
         if (rr <= rr_cut_skin && count < neighbour_size_) {
             // scattered write to neighbour list
             g_neighbour[count * neighbour_stride_ + n] = m;
@@ -145,7 +147,10 @@ template <unsigned int dimension>
 __global__ void update_neighbours(
   int* g_ret,
   unsigned int* g_neighbour,
-  unsigned int const* g_cell)
+  unsigned int const* g_cell,
+  unsigned int ntype1,
+  unsigned int ntype2
+)
 {
     // load particle from cell placeholder
     unsigned int const n = g_cell[GTID];
@@ -198,8 +203,8 @@ __global__ void update_neighbours(
                         goto self;
                     }
                     // visit 26 neighbour cells, grouped into 13 pairs of mutually opposite cells
-                    update_cell_neighbours<false>(j, g_cell, r, type, n, count, g_neighbour);
-                    update_cell_neighbours<false>(-j, g_cell, r, type, n, count, g_neighbour);
+                    update_cell_neighbours<false>(j, g_cell, r, type, ntype1, ntype2, n, count, g_neighbour);
+                    update_cell_neighbours<false>(-j, g_cell, r, type, ntype1, ntype2, n, count, g_neighbour);
                 }
             }
             else {
@@ -207,14 +212,14 @@ __global__ void update_neighbours(
                     goto self;
                 }
                 // visit 8 neighbour cells, grouped into 4 pairs of mutually opposite cells
-                update_cell_neighbours<false>(j, g_cell, r, type, n, count, g_neighbour);
-                update_cell_neighbours<false>(-j, g_cell, r, type, n, count, g_neighbour);
+                update_cell_neighbours<false>(j, g_cell, r, type, ntype1, ntype2, n, count, g_neighbour);
+                update_cell_neighbours<false>(-j, g_cell, r, type, ntype1, ntype2, n, count, g_neighbour);
             }
         }
     }
 
 self:
-    update_cell_neighbours<true>(j, g_cell, r, type, n, count, g_neighbour);
+    update_cell_neighbours<true>(j, g_cell, r, type, ntype1, ntype2, n, count, g_neighbour);
 
     // return failure if any neighbour list is fully occupied
     if (count == neighbour_size_) {

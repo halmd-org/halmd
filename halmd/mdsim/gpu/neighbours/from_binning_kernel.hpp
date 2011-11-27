@@ -49,7 +49,10 @@ struct from_binning_wrapper
     /** cubic box edgle length */
     cuda::symbol<vector_type> box_length;
     /** update neighbour lists */
-    cuda::function<void (int*, unsigned int*, unsigned int const*)> update_neighbours;
+    cuda::function<void (
+        int*, unsigned int*, unsigned int const*
+      , unsigned int, unsigned int
+    )> update_neighbours;
 
     static from_binning_wrapper kernel;
 };

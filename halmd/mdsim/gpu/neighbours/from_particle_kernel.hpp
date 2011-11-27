@@ -39,6 +39,8 @@ struct from_particle_wrapper
       , unsigned int
       , float4 const*
       , unsigned int
+      , unsigned int
+      , unsigned int
       , fixed_vector<float, dimension>
       , unsigned int*
       , unsigned int

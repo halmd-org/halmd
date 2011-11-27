@@ -42,6 +42,8 @@ __global__ void update(
   , unsigned int npart1
   , float4 const* g_r2
   , unsigned int npart2
+  , unsigned int ntype1
+  , unsigned int ntype2
   , vector_type box_length
   , unsigned int* g_neighbour
   , unsigned int size
@@ -94,7 +96,7 @@ __global__ void update(
             float rr = inner_prod(dr, dr);
 
             // enforce cutoff length with neighbour list skin
-            float rr_cut_skin = tex1Dfetch(rr_cut_skin_, symmetric_matrix::lower_index(type1, type2));
+            float rr_cut_skin = tex1Dfetch(rr_cut_skin_, type1 * ntype2 + type2);
             if (rr > rr_cut_skin) { continue; }
 
             if (count < size) {

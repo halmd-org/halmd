@@ -60,13 +60,13 @@ from_binning<dimension, float_type>::from_binning(
   , logger_(logger)
   // allocate parameters
   , r_skin_(skin)
-  , rr_cut_skin_(particle_->ntype, particle_->ntype)
+  , rr_cut_skin_(r_cut.size1(), r_cut.size2())
   , g_rr_cut_skin_(rr_cut_skin_.data().size())
   , nu_cell_(cell_occupancy) // FIXME neighbour list occupancy
 {
     typename matrix_type::value_type r_cut_max = 0;
-    for (size_t i = 0; i < particle_->ntype; ++i) {
-        for (size_t j = i; j < particle_->ntype; ++j) {
+    for (size_t i = 0; i < r_cut.size1(); ++i) {
+        for (size_t j = 0; j < r_cut.size2(); ++j) {
             rr_cut_skin_(i, j) = std::pow(r_cut(i, j) + r_skin_, 2);
             r_cut_max = max(r_cut(i, j), r_cut_max);
         }
@@ -129,7 +129,10 @@ void from_binning<dimension, float_type>::update()
     cuda::configure(binning_->dim_cell().grid, binning_->dim_cell().block, binning_->cell_size() * (2 + dimension) * sizeof(int));
     get_from_binning_kernel<dimension>().r.bind(particle_->g_r);
     get_from_binning_kernel<dimension>().rr_cut_skin.bind(g_rr_cut_skin_);
-    get_from_binning_kernel<dimension>().update_neighbours(g_ret, g_neighbour_, binning_->g_cell());
+    get_from_binning_kernel<dimension>().update_neighbours(
+        g_ret, g_neighbour_, binning_->g_cell()
+      , rr_cut_skin_.size1(), rr_cut_skin_.size2()
+    );
     cuda::thread::synchronize();
     cuda::copy(g_ret, h_ret);
     if (h_ret.front() != EXIT_SUCCESS) {

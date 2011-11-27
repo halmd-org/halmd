@@ -21,7 +21,7 @@
 #define HALMD_MDSIM_GPU_NEIGHBOURS_FROM_BINNING_HPP
 
 #include <boost/make_shared.hpp>
-#include <boost/numeric/ublas/symmetric.hpp>
+#include <boost/numeric/ublas/matrix.hpp>
 #include <boost/shared_ptr.hpp>
 #include <lua.hpp>
 
@@ -47,7 +47,7 @@ private:
 public:
     typedef gpu::particle<dimension, float_type> particle_type;
     typedef typename particle_type::vector_type vector_type;
-    typedef boost::numeric::ublas::symmetric_matrix<float_type, boost::numeric::ublas::lower> matrix_type;
+    typedef boost::numeric::ublas::matrix<float_type> matrix_type;
     typedef mdsim::box<dimension> box_type;
     typedef gpu::binning<dimension, float_type> binning_type;
     struct defaults;
