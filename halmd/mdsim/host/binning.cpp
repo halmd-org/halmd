@@ -54,10 +54,10 @@ binning<dimension, float_type>::binning(
   // allocate parameters
   , r_skin_(skin)
 {
-    matrix_type r_cut_skin(particle->ntype, particle->ntype);
+    matrix_type r_cut_skin(r_cut.size1(), r_cut.size2());
     typename matrix_type::value_type r_cut_max = 0;
-    for (size_t i = 0; i < particle->ntype; ++i) {
-        for (size_t j = i; j < particle->ntype; ++j) {
+    for (size_t i = 0; i < r_cut.size1(); ++i) {
+        for (size_t j = 0; j < r_cut.size2(); ++j) {
             r_cut_skin(i, j) = r_cut(i, j) + r_skin_;
             r_cut_max = max(r_cut_skin(i, j), r_cut_max);
         }

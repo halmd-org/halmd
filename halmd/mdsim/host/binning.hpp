@@ -22,7 +22,7 @@
 
 #include <boost/make_shared.hpp>
 #include <boost/multi_array.hpp>
-#include <boost/numeric/ublas/symmetric.hpp>
+#include <boost/numeric/ublas/matrix.hpp>
 #include <boost/shared_ptr.hpp>
 #include <lua.hpp>
 #include <vector>
@@ -42,7 +42,7 @@ class binning
 public:
     typedef host::particle<dimension, float_type> particle_type;
     typedef typename particle_type::vector_type vector_type;
-    typedef boost::numeric::ublas::symmetric_matrix<float_type, boost::numeric::ublas::lower> matrix_type;
+    typedef boost::numeric::ublas::matrix<float_type> matrix_type;
     typedef mdsim::box<dimension> box_type;
     typedef logger logger_type;
 

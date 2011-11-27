@@ -58,12 +58,7 @@ binning<dimension, float_type>::binning(
   , nu_cell_(cell_occupancy)
   , sort_(particle_->nbox, particle_->dim.threads_per_block())
 {
-    typename matrix_type::value_type r_cut_max = 0;
-    for (size_t i = 0; i < particle_->ntype; ++i) {
-        for (size_t j = i; j < particle_->ntype; ++j) {
-            r_cut_max = max(r_cut(i, j), r_cut_max);
-        }
-    }
+    float_type r_cut_max = *max_element(r_cut.data().begin(), r_cut.data().end());
     // find an optimal(?) cell size
     // ideally, we would like to have warp_size placeholders per cell
     //
