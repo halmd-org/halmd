@@ -82,7 +82,9 @@ void verlet_nvt_andersen<dimension, float_type>::integrate()
     scoped_timer_type timer(runtime_.integrate);
 
     for (size_t i = 0; i < particle_->nbox; ++i) {
-        vector_type& v = particle_->v[i] += particle_->f[i] * timestep_half_;
+        unsigned int type = particle_->type[i];
+        float_type mass = particle_->mass[type];
+        vector_type& v = particle_->v[i] += particle_->f[i] * timestep_half_ / mass;
         vector_type& r = particle_->r[i] += v * timestep_;
         // enforce periodic boundary conditions
         // TODO: reduction is now to (-L/2, L/2) instead of (0, L) as before
@@ -107,7 +109,9 @@ void verlet_nvt_andersen<dimension, float_type>::finalize()
     for (size_t i = 0; i < particle_->nbox; ++i) {
         // is deterministic step?
         if (random_->uniform<float_type>() > coll_prob_) {
-            particle_->v[i] += particle_->f[i] * timestep_half_;
+            unsigned int type = particle_->type[i];
+            float_type mass = particle_->mass[type];
+            particle_->v[i] += particle_->f[i] * timestep_half_ / mass;
         }
         // stochastic coupling with heat bath
         else {

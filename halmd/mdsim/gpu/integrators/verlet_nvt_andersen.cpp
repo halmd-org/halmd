@@ -113,9 +113,14 @@ integrate()
 {
     try {
         scoped_timer_type timer(runtime_.integrate);
-        cuda::configure(particle_->dim.grid, particle_->dim.block);
+        cuda::configure(
+            particle_->dim.grid, particle_->dim.block
+          , particle_->ntype * sizeof(float)
+        );
         wrapper_type::kernel.integrate(
-            particle_->g_r, particle_->g_image, particle_->g_v, particle_->g_f);
+            particle_->g_r, particle_->g_image, particle_->g_v, particle_->g_f
+          , particle_->g_mass, particle_->ntype
+        );
         cuda::thread::synchronize();
     }
     catch (cuda::error const&) {
@@ -139,9 +144,13 @@ finalize()
         scoped_timer_type timer(runtime_.finalize);
         // use CUDA execution dimensions of 'random' since
         // the kernel makes use of the random number generator
-        cuda::configure(random_->rng().dim.grid, random_->rng().dim.block);
+        cuda::configure(
+            random_->rng().dim.grid, random_->rng().dim.block
+          , particle_->ntype * sizeof(float)
+        );
         wrapper_type::kernel.finalize(
-            particle_->g_v, particle_->g_f
+            particle_->g_r, particle_->g_v, particle_->g_f
+          , particle_->g_mass, particle_->ntype
           , particle_->nbox, particle_->dim.threads()
         );
         cuda::thread::synchronize();

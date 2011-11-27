@@ -72,8 +72,15 @@ __global__ void _integrate(
   , gpu_vector_type* g_image
   , float4* g_v
   , gpu_vector_type const* g_f
+  , float const* g_mass, unsigned int ntype
 )
 {
+    extern __shared__ float s_mass[];
+    if (TID < ntype) {
+        s_mass[TID] = g_mass[TID];
+    }
+    __syncthreads();
+
     unsigned int const i = GTID;
     unsigned int const threads = GTDIM;
     unsigned int type, tag;
@@ -88,8 +95,9 @@ __global__ void _integrate(
     vector_type_ image = g_image[i];
     vector_type_ f = g_f[i];
     vector_type_ L = get<vector_type::static_size>(box_length_);
+    float mass = s_mass[type];
 
-    verlet_kernel::integrate(r, image, v, f, timestep_, L);
+    verlet_kernel::integrate(r, image, v, f, mass, timestep_, L);
 
 #ifdef USE_VERLET_DSFUN
     tie(g_r[i], g_r[i + threads]) = tagged(r, type);
@@ -118,11 +126,19 @@ template <
   , typename gpu_vector_type
 >
 __global__ void _finalize(
-    float4* g_v
+    float4 const* g_r
+  , float4* g_v
   , gpu_vector_type const* g_f
-  , uint npart, uint nplace
+  , float const* g_mass, unsigned int ntype
+  , unsigned int npart, unsigned int nplace
 )
 {
+    extern __shared__ float s_mass[];
+    if (TID < ntype) {
+        s_mass[TID] = g_mass[TID];
+    }
+    __syncthreads();
+
     enum { dimension = vector_type::static_size };
 
     // read random number generator state from global device memory
@@ -144,13 +160,16 @@ __global__ void _finalize(
 
     for (uint i = GTID; i < npart; i += GTDIM) {
         // read velocity from global device memory
-        unsigned int tag;
+        unsigned int tag, type;
         vector_type v;
+        vector_type_ _;
+        tie(_, type) = untagged<vector_type_>(g_r[i]);
 #ifdef USE_VERLET_DSFUN
         tie(v, tag) = untagged<vector_type>(g_v[i], g_v[i + nplace]);
 #else
         tie(v, tag) = untagged<vector_type>(g_v[i]);
 #endif
+        float mass = s_mass[type];
 
         // is this a deterministic step?
         //
@@ -164,7 +183,7 @@ __global__ void _finalize(
             // read force from global device memory
             vector_type_ f = g_f[i];
             // update velocity
-            verlet_kernel::finalize(v, f, timestep_);
+            verlet_kernel::finalize(v, f, mass, timestep_);
         }
         // stochastic coupling with heat bath
         else {

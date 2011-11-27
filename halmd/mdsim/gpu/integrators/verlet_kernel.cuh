@@ -33,14 +33,16 @@ namespace verlet_kernel {
  */
 template <typename vector_type, typename vector_type_>
 __device__ void integrate(
-  vector_type& r,
-  vector_type_& image,
-  vector_type& v,
-  vector_type_ const& f,
-  typename vector_type_::value_type timestep,
-  vector_type_ const& box_length)
+    vector_type& r
+  , vector_type_& image
+  , vector_type& v
+  , vector_type_ const& f
+  , typename vector_type_::value_type mass
+  , typename vector_type_::value_type timestep
+  , vector_type_ const& box_length
+)
 {
-    v += f * (timestep / 2);
+    v += f * (timestep / 2) / mass;
     r += v * timestep;
     image += box_kernel::reduce_periodic(r, box_length);
 }
@@ -50,11 +52,13 @@ __device__ void integrate(
  */
 template <typename vector_type, typename vector_type_>
 __device__ void finalize(
-  vector_type& v,
-  vector_type_ const& f,
-  typename vector_type_::value_type timestep)
+    vector_type& v
+  , vector_type_ const& f
+  , typename vector_type_::value_type mass
+  , typename vector_type_::value_type timestep
+)
 {
-    v += f * (timestep / 2);
+    v += f * (timestep / 2) / mass;
 }
 
 } // namespace verlet_kernel

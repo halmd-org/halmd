@@ -85,9 +85,14 @@ void verlet<dimension, float_type>::integrate()
 {
     try {
         scoped_timer_type timer(runtime_.integrate);
-        cuda::configure(particle_->dim.grid, particle_->dim.block);
+        cuda::configure(
+            particle_->dim.grid, particle_->dim.block
+          , particle_->ntype * sizeof(float)
+        );
         wrapper_->integrate(
-            particle_->g_r, particle_->g_image, particle_->g_v, particle_->g_f);
+            particle_->g_r, particle_->g_image, particle_->g_v
+          , particle_->g_f, particle_->g_mass, particle_->ntype
+        );
         cuda::thread::synchronize();
     }
     catch (cuda::error const&) {
@@ -108,8 +113,14 @@ void verlet<dimension, float_type>::finalize()
     // and scheduling
     try {
         scoped_timer_type timer(runtime_.finalize);
-        cuda::configure(particle_->dim.grid, particle_->dim.block);
-        wrapper_->finalize(particle_->g_v, particle_->g_f);
+        cuda::configure(
+            particle_->dim.grid, particle_->dim.block
+          , particle_->ntype * sizeof(float)
+        );
+        wrapper_->finalize(
+            particle_->g_r, particle_->g_v, particle_->g_f
+          , particle_->g_mass, particle_->ntype
+        );
         cuda::thread::synchronize();
     }
     catch (cuda::error const&) {
