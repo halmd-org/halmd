@@ -222,6 +222,7 @@ void append::luaopen(lua_State* L)
                 [
                     class_<append, shared_ptr<append> >("append")
                         .def(constructor<H5::Group const&, vector<string> const&, shared_ptr<clock_type const> >())
+                        .property("group", &append::group)
                         .property("write", &wrap_write)
                         .def("on_write", &append::on_write<float>, pure_out_value(_2))
                         .def("on_write", &append::on_write<float&>, pure_out_value(_2))

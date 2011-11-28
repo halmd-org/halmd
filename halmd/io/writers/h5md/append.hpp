@@ -91,6 +91,14 @@ public:
     /** Lua bindings */
     static void luaopen(lua_State* L);
 
+    /**
+     * returns writer group
+     */
+    H5::Group const& group() const
+    {
+        return group_;
+    }
+
 private:
     /** append shared step and time datasets */
     void write_step_time();

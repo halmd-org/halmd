@@ -94,6 +94,14 @@ public:
     /** Lua bindings */
     static void luaopen(lua_State* L);
 
+    /**
+     * returns reader group
+     */
+    H5::Group const& group() const
+    {
+        return group_;
+    }
+
 private:
     typedef boost::function<hsize_t (H5::Group const& group)> index_function_type;
 

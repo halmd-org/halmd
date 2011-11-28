@@ -83,6 +83,14 @@ public:
     /** Lua bindings */
     static void luaopen(lua_State* L);
 
+    /**
+     * returns reader group
+     */
+    H5::Group const& group() const
+    {
+        return group_;
+    }
+
 private:
     template <typename T>
     static void read_dataset(

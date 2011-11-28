@@ -204,6 +204,7 @@ void append::luaopen(lua_State* L)
                 [
                     class_<append, shared_ptr<append> >("append")
                         .def(constructor<H5::Group const&, vector<string> const&>())
+                        .property("group", &append::group)
                         .def("on_read", &append::on_read<float&>, pure_out_value(_2))
                         .def("on_read", &append::on_read<double&>, pure_out_value(_2))
                         .def("on_read", &append::on_read<fixed_vector<float, 2>&>, pure_out_value(_2))

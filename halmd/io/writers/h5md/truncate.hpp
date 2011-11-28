@@ -86,6 +86,14 @@ public:
     /** Lua bindings */
     static void luaopen(lua_State* L);
 
+    /**
+     * returns writer group
+     */
+    H5::Group const& group() const
+    {
+        return group_;
+    }
+
 private:
     template <typename T>
     static H5::DataSet create_dataset(

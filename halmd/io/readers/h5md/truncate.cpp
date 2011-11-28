@@ -106,6 +106,7 @@ void truncate::luaopen(lua_State* L)
                 [
                     class_<truncate, shared_ptr<truncate> >("truncate")
                         .def(constructor<H5::Group const&, vector<string> const&>())
+                        .property("group", &truncate::group)
                         .property("read", &wrap_read)
                         .def("on_read", &truncate::on_read<float&>, pure_out_value(_2))
                         .def("on_read", &truncate::on_read<double&>, pure_out_value(_2))
