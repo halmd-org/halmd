@@ -32,12 +32,20 @@ local tostring = tostring
 module("halmd.log", halmd.modules.provider)
 
 --
+-- returns logger with given prefix
+--
+function logger(args)
+    local prefix = assert(args.prefix)
+    local logger = logger_wrapper()
+    logger:add_attribute("Module", prefix)
+    return logger
+end
+
+--
 -- provide module logger
 --
 function parameters(module)
-    local logger = logger_wrapper()
-    logger:add_attribute("Module", assert(module.namespace))
-    return {logger = logger}
+    return {logger = logger{prefix = module.namespace}}
 end
 
 setmetatable(_M, {
