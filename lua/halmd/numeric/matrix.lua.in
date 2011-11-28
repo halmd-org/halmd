@@ -31,3 +31,20 @@ function scalar_matrix(rows, columns, value)
     end
     return mat
 end
+
+--
+-- returns transpose of matrix
+--
+function trans(m)
+    local t = {}
+    for i = 1, #m do
+        local row = m[i]
+        for j = 1, #row do
+            if not t[j] then
+                t[j] = {}
+            end
+            t[j][i] = row[j]
+        end
+    end
+    return t
+end
