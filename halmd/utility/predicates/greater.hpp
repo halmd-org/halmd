@@ -23,6 +23,7 @@
 #include <boost/function.hpp>
 #include <lua.hpp>
 
+#include <halmd/io/logger.hpp>
 #include <halmd/utility/signal.hpp>
 
 namespace halmd {
@@ -45,7 +46,9 @@ public:
 
     void evaluate() const
     {
-        if (func_() > value_) {
+        value_type result = func_();
+        LOG_TRACE("predicate is " << result << " > " << value_);
+        if (result > value_) {
             on_greater_();
         }
     }
