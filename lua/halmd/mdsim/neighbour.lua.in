@@ -18,6 +18,7 @@
 --
 
 require("halmd.device")
+require("halmd.log")
 require("halmd.mdsim.binning")
 require("halmd.mdsim.box")
 require("halmd.mdsim.core")
@@ -29,6 +30,7 @@ require("halmd.modules")
 -- grab modules
 local device = halmd.device
 local mdsim = halmd.mdsim
+local log = halmd.log
 -- grab C++ wrappers
 local neighbour_from_binning = {
     host = {
@@ -53,8 +55,21 @@ local po = libhalmd.po
 -- grab standard library
 local assert = assert
 local math = math
+local property = property
+local table = table
 
 module("halmd.mdsim.neighbour", halmd.modules.register)
+
+--
+-- returns species label given a table of particle instances
+--
+function label(particles)
+    local species = {}
+    for i = 1, #particles do
+        species[i] = "(" .. table.concat(particles[i].label, ",") .. ")"
+    end
+    return table.concat(species, "←")
+end
 
 --
 -- construct neighbour module
@@ -72,7 +87,7 @@ function new(args)
     local particle2 = assert(args.particle or args.particles[2])
     local box = mdsim.box() -- singleton
     local dimension = assert(box.dimension)
-    local logger = assert(args.logger)
+    local logger = log.logger{prefix = "neighbour " .. label({particle1, particle2})}
 
     -- domain decomposition
     local binning
@@ -98,6 +113,11 @@ function new(args)
     else
         neighbour = neighbour_from_binning.host[dimension](particle1, particle2, binning, binning, box, r_cut, skin, logger)
     end
+
+    -- store particle instances as Lua property
+    neighbour.particles = property(function(self)
+        return {particle1, particle2}
+    end)
 
     -- if needed, bin particles before neighbour list update
     if binning then
@@ -145,7 +165,7 @@ end
 -- connect runtime accumulators to module profiler
 --
 function profile(self, profiler)
-    profiler:on_profile{self, update = "neighbour lists update"}
+    profiler:on_profile{self, update = "neighbour lists " .. label(self.particles)}
 end
 
 --
