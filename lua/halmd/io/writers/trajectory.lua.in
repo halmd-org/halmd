@@ -55,17 +55,6 @@ function new(args)
     local box = mdsim.box() -- singleton
     local sampler = observables.sampler() -- singleton
 
-    -- sample and write phase space at fixed interval
-    local writer = file:writer{location = {"trajectory", group}, mode = "append" }
-    writer:on_prepend_write(phase_space.acquire)
-    writer:on_write(sample.position, {"position"})
-    writer:on_write(sample.velocity, {"velocity"})
-    local _, species = writer:on_write(sample.types, {"species"})
-    sampler:on_sample{writer.write, every, tracker = writer}
-
-    -- store attributes
-    species:write_attribute("mass", h5.float_array(), particle.mass)
-
     -- write box edge vectors and offset to trajectory group
     --
     -- @future time series for NPT ensemble
@@ -74,6 +63,17 @@ function new(args)
     writer:on_write(box.edges, {"edges"})
     writer:on_write(box.origin, {"offset"})
     sampler:on_start{writer.write, tracker = writer}
+
+    -- sample and write phase space at fixed interval
+    local writer = file:writer{location = {"trajectory", group}, mode = "append"}
+    writer:on_prepend_write(phase_space.acquire)
+    writer:on_write(sample.position, {"position"})
+    writer:on_write(sample.velocity, {"velocity"})
+    local _, species = writer:on_write(sample.types, {"species"})
+    sampler:on_sample{writer.write, every, tracker = writer}
+
+    -- store attributes
+    species:write_attribute("mass", h5.float_array(), particle.mass)
 
     return writer
 end
