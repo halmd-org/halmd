@@ -31,12 +31,15 @@ template <int dimension>
 struct maximum_squared_displacement_wrapper
 {
     typedef typename type_traits<dimension, float>::gpu::vector_type vector_type;
-    typedef cuda::function<void (float4 const* g_r, float4 const* g_r0, float* g_rr)> displacement_impl_type;
 
-    /** number of particles in simulation box */
-    cuda::symbol<unsigned int> nbox;
-    /** cubic box edgle length */
-    cuda::symbol<vector_type> box_length;
+    typedef cuda::function<void (
+        float4 const* g_r
+      , float4 const* g_r0
+      , float* g_rr
+      , unsigned int
+      , fixed_vector<float, dimension>
+    )> displacement_impl_type;
+
     /** maximum squared particle displacement */
     displacement_impl_type displacement_impl[5];
 
