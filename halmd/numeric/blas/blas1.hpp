@@ -78,10 +78,10 @@ template <typename T, size_t N>
 inline HALMD_GPU_ENABLED size_t index_norm_inf(fixed_vector<T, N> const& v)
 {
     HALMD_GPU_USING(::abs, std::abs);
-    T s = 0;
+    T t = 0;
     size_t k = 0;
     for (size_t i = 0; i < v.size(); ++i) {
-        T t = abs(v[i]);
+        T s = abs(v[i]);
         if (s > t) {
             t = s;
             k = i;
