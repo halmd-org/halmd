@@ -105,7 +105,7 @@ function new(args)
     end
 
     -- write all partial structure factors
-    local writer = file:writer{location = {"structure"}, mode = "append"}
+    local writer = file:writer{location = {"structure", "ssf"}, mode = "append"}
     writer:on_prepend_write(ssf.sample)
     for i = 0, #density_modes - 1 do
         for j = i, #density_modes - 1 do
