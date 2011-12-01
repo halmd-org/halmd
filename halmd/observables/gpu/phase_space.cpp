@@ -136,6 +136,7 @@ void phase_space<host::samples::phase_space<dimension, float_type> >::acquire()
         cuda::copy(particle_->g_r, particle_->h_r);
         cuda::copy(particle_->g_image, particle_->h_image);
         cuda::copy(particle_->g_v, particle_->h_v);
+        cuda::copy(particle_->g_reverse_tag, particle_->h_reverse_tag);
     }
     catch (cuda::error const&) {
         LOG_ERROR("failed to copy phase space from GPU to host");
@@ -149,23 +150,34 @@ void phase_space<host::samples::phase_space<dimension, float_type> >::acquire()
         sample_->reset();
     }
 
-    for (size_t i = 0; i < particle_->nbox; ++i) {
-        unsigned int type, tag;
-        vector_type r, v;
-        tie(r, type) = untagged<vector_type>(particle_->h_r[i]);
-        tie(v, tag) = untagged<vector_type>(particle_->h_v[i]);
-        vector_type image = particle_->h_image[i];
+    // copy particle data type-wise using the same algorithm as on the GPU
 
-        // periodically extended particle position
+    // pointer to beginning of rtag range for a type
+    unsigned int const* h_reverse_tag = particle_->h_reverse_tag.data();
+    for (size_t type = 0; type < particle_->ntypes.size(); ++type) {
+        unsigned int ntype = particle_->ntypes[type];
+
         assert(type < sample_->r.size());
-        assert(tag < sample_->r[type]->size());
-        box_->extend_periodic(r, image);
-        (*sample_->r[type])[tag] = r;
-
-        // particle velocity
         assert(type < sample_->v.size());
-        assert(tag < sample_->v[type]->size());
-        (*sample_->v[type])[tag] = v;
+        assert(ntype == sample_->r[type]->size());
+        assert(ntype == sample_->v[type]->size());
+
+        for (size_t i = 0; i < ntype; ++i) {
+            unsigned int rtag = h_reverse_tag[i];
+            assert(rtag < particle_->nbox);
+
+            // type and tag information stored in h_r and h_v, respectively, is
+            // discarded; instead we use rtag and type.
+            vector_type r = particle_->h_r[rtag];
+            vector_type v = particle_->h_v[rtag];
+            vector_type image = particle_->h_image[rtag];
+
+            // periodically extended particle position
+            box_->extend_periodic(r, image);
+            (*sample_->r[type])[i] = r;
+            (*sample_->v[type])[i] = v;
+        }
+        h_reverse_tag += ntype;
     }
     sample_->step = clock_->step();
 }
