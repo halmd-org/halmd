@@ -134,6 +134,7 @@ void phase_space<host::samples::phase_space<dimension, float_type> >::acquire()
         cuda::copy(particle_->g_r, particle_->h_r);
         cuda::copy(particle_->g_image, particle_->h_image);
         cuda::copy(particle_->g_v, particle_->h_v);
+        cuda::copy(particle_->g_reverse_tag, particle_->h_reverse_tag);
     }
     catch (cuda::error const&) {
         LOG_ERROR("failed to copy phase space from GPU to host");
@@ -147,24 +148,25 @@ void phase_space<host::samples::phase_space<dimension, float_type> >::acquire()
         sample_->reset();
     }
 
-    for (size_t i = 0; i < particle_->nbox; ++i) {
-        unsigned int type, tag;
-        vector_type r, v;
-        tie(r, type) = untagged<vector_type>(particle_->h_r[i]);
-        tie(v, tag) = untagged<vector_type>(particle_->h_v[i]);
-        vector_type image = particle_->h_image[i];
+    // copy particle data using reverse tags as on the GPU
+    for (unsigned int tag = 0; tag < particle_->nbox; ++tag) {
+        unsigned int rtag = particle_->h_reverse_tag[tag];
+        assert(rtag < particle_->nbox);
+
+        vector_type r;
+        unsigned int type;
+        tie(r, type) = untagged<vector_type>(particle_->h_r[rtag]);
+        vector_type v = particle_->h_v[rtag];
+        vector_type image = particle_->h_image[rtag];
+
+        assert(tag < sample_->r->size());
+        assert(tag < sample_->v->size());
+        assert(tag < sample_->type->size());
 
         // periodically extended particle position
-        assert(tag < sample_->r->size());
         box_->extend_periodic(r, image);
         (*sample_->r)[tag] = r;
-
-        // particle velocity
-        assert(tag < sample_->v->size());
         (*sample_->v)[tag] = v;
-
-        // particle type
-        assert(tag < sample_->type->size());
         (*sample_->type)[tag] = type;
     }
     sample_->step = clock_->step();

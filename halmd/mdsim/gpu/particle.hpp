@@ -82,6 +82,8 @@ public:
     cuda::host::vector<gpu_vector_type> h_image;
     /** velocities, tags */
     cuda::host::vector<float4> h_v;
+    /** reverse particle tags */
+    cuda::host::vector<unsigned int> h_reverse_tag;
 
     /** number of particles in simulation box */
     using _Base::nbox;
