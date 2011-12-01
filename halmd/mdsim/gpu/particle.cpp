@@ -60,6 +60,7 @@ particle<dimension, float_type>::particle(
   , h_r(nbox)
   , h_image(nbox)
   , h_v(nbox)
+  , h_reverse_tag(nbox)
 {
     LOG_DEBUG("number of CUDA execution blocks: " << dim.blocks_per_grid());
     LOG_DEBUG("number of CUDA execution threads per block: " << dim.threads_per_block());
