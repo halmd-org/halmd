@@ -628,6 +628,8 @@ env-graphviz:
 CLANG_VERSION = 3.0
 LLVM_TARBALL = llvm-$(CLANG_VERSION).tar.gz
 LLVM_TARBALL_URL = http://llvm.org/releases/$(CLANG_VERSION)/$(LLVM_TARBALL)
+LLVM_OCAML_MAKEFILE_PATCH = llvm_ocaml_makefile.patch
+LLVM_OCAML_MAKEFILE_PATCH_URL = http://llvm.org/bugs/attachment.cgi?id=7625&action=diff&context=patch&collapsed=&headers=1&format=raw
 CLANG_TARBALL = clang-$(CLANG_VERSION).tar.gz
 CLANG_TARBALL_URL = http://llvm.org/releases/$(CLANG_VERSION)/$(CLANG_TARBALL)
 CLANG_BUILD_DIR = llvm-$(CLANG_VERSION).src
@@ -636,6 +638,7 @@ CLANG_INSTALL_DIR = $(PREFIX)/clang-$(CLANG_VERSION)
 
 .fetch-clang:
 	$(WGET) $(LLVM_TARBALL_URL)
+	$(WGET) -O $(LLVM_OCAML_MAKEFILE_PATCH) $(LLVM_OCAML_MAKEFILE_PATCH_URL)
 	$(WGET) $(CLANG_TARBALL_URL)
 	@$(TOUCH) $@
 
@@ -644,6 +647,7 @@ fetch-clang: .fetch-clang
 .extract-clang: .fetch-clang
 	$(RM) $(CLANG_BUILD_DIR)
 	$(TAR) -xzf $(LLVM_TARBALL)
+	cd $(CLANG_BUILD_DIR) && $(PATCH) -p1 < $(CURDIR)/$(LLVM_OCAML_MAKEFILE_PATCH)
 	cd $(CLANG_BUILD_DIR)/tools && $(TAR) -xzf $(CURDIR)/$(CLANG_TARBALL) && mv clang-$(CLANG_VERSION).src clang
 	@$(TOUCH) $@
 
