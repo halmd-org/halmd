@@ -625,12 +625,12 @@ env-graphviz:
 ## Clang C++ compiler
 ##
 
-CLANG_VERSION = 2.9
-LLVM_TARBALL = llvm-$(CLANG_VERSION).tgz
+CLANG_VERSION = 3.0
+LLVM_TARBALL = llvm-$(CLANG_VERSION).tar.gz
 LLVM_TARBALL_URL = http://llvm.org/releases/$(CLANG_VERSION)/$(LLVM_TARBALL)
-CLANG_TARBALL = clang-$(CLANG_VERSION).tgz
+CLANG_TARBALL = clang-$(CLANG_VERSION).tar.gz
 CLANG_TARBALL_URL = http://llvm.org/releases/$(CLANG_VERSION)/$(CLANG_TARBALL)
-CLANG_BUILD_DIR = llvm-$(CLANG_VERSION)
+CLANG_BUILD_DIR = llvm-$(CLANG_VERSION).src
 CLANG_CONFIGURE_FLAGS = --enable-optimized
 CLANG_INSTALL_DIR = $(PREFIX)/clang-$(CLANG_VERSION)
 
@@ -644,7 +644,7 @@ fetch-clang: .fetch-clang
 .extract-clang: .fetch-clang
 	$(RM) $(CLANG_BUILD_DIR)
 	$(TAR) -xzf $(LLVM_TARBALL)
-	cd $(CLANG_BUILD_DIR)/tools && $(TAR) -xzf $(CURDIR)/$(CLANG_TARBALL) && mv clang-$(CLANG_VERSION) clang
+	cd $(CLANG_BUILD_DIR)/tools && $(TAR) -xzf $(CURDIR)/$(CLANG_TARBALL) && mv clang-$(CLANG_VERSION).src clang
 	@$(TOUCH) $@
 
 extract-clang: .extract-clang
