@@ -13,6 +13,7 @@ if(WITH_CUDA)
       )
     target_link_libraries(test_dsfun_${test}
       ${CUDA_LIBRARIES}
+      pthread
       )
     add_test(dsfun_${test} test_dsfun_${test})
   endforeach(test)

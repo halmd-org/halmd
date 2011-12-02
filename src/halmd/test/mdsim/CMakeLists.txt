@@ -7,6 +7,7 @@ if(WITH_CUDA)
     gpu_ljfluid_square
     ${Boost_PROGRAM_OPTIONS_LIBRARY}
     ${CUDA_LIBRARIES}
+    pthread
     )
 
   foreach(dim RANGE 2 3)
@@ -21,6 +22,8 @@ if(WITH_CUDA)
       gpu_rand48
       ${Boost_PROGRAM_OPTIONS_LIBRARY}
       ${CUDA_LIBRARIES}
+      pthread
+      rt
       )
   endforeach(dim)
 endif(WITH_CUDA)

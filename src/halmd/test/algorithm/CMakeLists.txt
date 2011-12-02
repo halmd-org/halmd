@@ -4,6 +4,8 @@ if(WITH_CUDA)
     gpu_prefix_sum
     ${Boost_PROGRAM_OPTIONS_LIBRARY}
     ${CUDA_LIBRARIES}
+    pthread
+    rt
     )
   foreach(count 10000000 1000000 100000 10000 1024 1000 512 100 10 2)
     add_test(parallel_scan_${count} parallel_scan -N${count})
@@ -15,5 +17,7 @@ if(WITH_CUDA)
     gpu_rand48
     ${Boost_PROGRAM_OPTIONS_LIBRARY}
     ${CUDA_LIBRARIES}
+    pthread
+    rt
     )
 endif(WITH_CUDA)
