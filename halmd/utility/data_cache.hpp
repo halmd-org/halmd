@@ -60,7 +60,7 @@ public:
 
     /** Cache passed data by copy and update time stamp from simulation clock. */
     template <typename S>
-    T const& operator=(S const& data)
+    T& operator=(S const& data)
     {
         data_ = data;
         step_ = clock_->step();
