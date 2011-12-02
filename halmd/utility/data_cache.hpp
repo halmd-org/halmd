@@ -21,6 +21,8 @@
 #define HALMD_UTILITY_DATA_CACHE_HPP
 
 #include <boost/shared_ptr.hpp>
+#include <boost/type_traits/is_convertible.hpp>
+#include <boost/utility/enable_if.hpp>
 #include <exception>
 #include <limits>
 
@@ -60,7 +62,8 @@ public:
 
     /** Cache passed data by copy and update time stamp from simulation clock. */
     template <typename S>
-    T& operator=(S const& data)
+    typename boost::enable_if<boost::is_convertible<S, T>, T&>::type
+    operator=(S const& data)
     {
         data_ = data;
         step_ = clock_->step();
