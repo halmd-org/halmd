@@ -29,9 +29,11 @@ namespace observables {
 template <int dimension>
 thermodynamics<dimension>::thermodynamics(
     shared_ptr<box_type const> box
+  , shared_ptr<particle_type const> particle
 )
   // dependency injection
   : box_(box)
+  , particle_(particle)
 {
 }
 

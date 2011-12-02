@@ -25,6 +25,7 @@
 #include <vector>
 
 #include <halmd/mdsim/box.hpp>
+#include <halmd/mdsim/particle.hpp>
 #include <halmd/mdsim/type_traits.hpp>
 #include <halmd/numeric/blas/blas.hpp>
 #include <halmd/utility/signal.hpp>
@@ -45,6 +46,7 @@ class thermodynamics
 {
 public:
     typedef mdsim::box<dimension> box_type;
+    typedef mdsim::particle<dimension> particle_type;
     typedef typename mdsim::type_traits<dimension, double>::vector_type vector_type;
     typedef typename signal<void ()>::slot_function_type slot_function_type;
 
@@ -52,6 +54,7 @@ public:
 
     thermodynamics(
         boost::shared_ptr<box_type const> box
+      , boost::shared_ptr<particle_type const> particle
     );
 
     // basic quantities with backend-specific evaluation
@@ -75,19 +78,21 @@ public:
     /** total pressure */
     double pressure()
     {
-        return density() * (temp() + virial() / dimension);
+        return particle_->nbox / box_->volume() * (temp() + virial() / dimension);
     }
 
     /** system temperature */
     double temp() { return 2 * en_kin() / dimension; }
-    /** particle density */
-    double density() { return box_->density(); }
+    /** number density */
+    double density() { return particle_->nbox / box_->volume(); }
     /** total energy per particle */
     double en_tot() { return en_pot() + en_kin(); }
 
 private:
-    /** module dependencies */
+    /** simulation box */
     boost::shared_ptr<box_type const> box_;
+    /** system state */
+    boost::shared_ptr<particle_type const> particle_;
 };
 
 } // namespace observables
