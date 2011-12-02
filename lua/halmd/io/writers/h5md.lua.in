@@ -28,9 +28,11 @@ local mdsim = halmd.mdsim
 local utility = halmd.utility
 -- grab C++ modules
 local h5md = libhalmd.io.writers.h5md
+local h5 = libhalmd.h5
 -- grab standard library
 local assert = assert
 local error = error
+local io = io
 local setmetatable = setmetatable
 local type = type
 
@@ -88,6 +90,14 @@ function new(args)
 
     -- create parameter group
     local param = file.root:open_group("halmd")
+
+    -- store HALMD script to ease reproducibility
+    if args.script then
+        local f = assert(io.open(args.script, "r"))
+        local s = f:read("*all")
+        f:close()
+        param:write_attribute("script", h5.string(), s)
+    end
 
     -- register hook to write HALMD parameters
     hooks.register_module_hook(function(module, object)
