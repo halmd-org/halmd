@@ -70,16 +70,13 @@ std::istream& operator>>(std::istream& is, boost::numeric::ublas::matrix<T>& val
 template <typename T>
 std::ostream& operator<<(std::ostream& os, boost::numeric::ublas::matrix<T> const& value)
 {
+    namespace ublas = boost::numeric::ublas;
     for (std::size_t i = 0; i < value.size1(); ++i) {
-        for (std::size_t j = 0; j < value.size2(); ++j) {
-            if (j > 0) {
-                os << ',';
-            }
-            else if (i > 0) {
-                os << ':';
-            }
-            os << value(i, j);
+        if (i > 0) {
+            os << ':';
         }
+        ublas::vector<T> const& row = ublas::matrix_row<ublas::matrix<T> const>(value, i);
+        os << row;
     }
     return os;
 }
