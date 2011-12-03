@@ -20,3 +20,14 @@ target_link_libraries(test_unit_utility_program_options_accumulating_value
 add_test(unit/utility/program_options/accumulating_value
   test_unit_utility_program_options_accumulating_value --log_level=test_suite
 )
+add_executable(test_unit_utility_program_options_ublas
+  ublas.cpp
+)
+target_link_libraries(test_unit_utility_program_options_ublas
+  halmd_utility_program_options
+  ${Boost_PROGRAM_OPTIONS_LIBRARY}
+  ${HALMD_TEST_LIBRARIES}
+)
+add_test(unit/utility/program_options/ublas
+  test_unit_utility_program_options_ublas --log_level=test_suite
+)
