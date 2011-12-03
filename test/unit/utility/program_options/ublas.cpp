@@ -52,6 +52,7 @@ BOOST_AUTO_TEST_CASE( matrix_1_by_1 )
     BOOST_CHECK_EQUAL( vm["epsilon"].as<ublas::matrix<float> >().size1(), 1LU );
     BOOST_CHECK_EQUAL( vm["epsilon"].as<ublas::matrix<float> >().size2(), 1LU );
     BOOST_CHECK_CLOSE_FRACTION( vm["epsilon"].as<ublas::matrix<float> >()(0, 0), M_PI, eps );
+    BOOST_MESSAGE( vm["epsilon"].as<ublas::matrix<float> >() );
 }
 
 BOOST_AUTO_TEST_CASE( matrix_1_by_2 )
@@ -72,6 +73,7 @@ BOOST_AUTO_TEST_CASE( matrix_1_by_2 )
     BOOST_CHECK_EQUAL( vm["epsilon"].as<ublas::matrix<float> >().size2(), 2LU );
     BOOST_CHECK_CLOSE_FRACTION( vm["epsilon"].as<ublas::matrix<float> >()(0, 0), M_PI, eps );
     BOOST_CHECK_CLOSE_FRACTION( vm["epsilon"].as<ublas::matrix<float> >()(0, 1), M_E, eps );
+    BOOST_MESSAGE( vm["epsilon"].as<ublas::matrix<float> >() );
 }
 
 BOOST_AUTO_TEST_CASE( matrix_2_by_1 )
@@ -92,6 +94,7 @@ BOOST_AUTO_TEST_CASE( matrix_2_by_1 )
     BOOST_CHECK_EQUAL( vm["epsilon"].as<ublas::matrix<float> >().size2(), 1LU );
     BOOST_CHECK_CLOSE_FRACTION( vm["epsilon"].as<ublas::matrix<float> >()(0, 0), M_PI, eps );
     BOOST_CHECK_CLOSE_FRACTION( vm["epsilon"].as<ublas::matrix<float> >()(1, 0), M_E, eps );
+    BOOST_MESSAGE( vm["epsilon"].as<ublas::matrix<float> >() );
 }
 
 BOOST_AUTO_TEST_CASE( matrix_2_by_2 )
@@ -113,6 +116,7 @@ BOOST_AUTO_TEST_CASE( matrix_2_by_2 )
     BOOST_CHECK_EQUAL( vm["epsilon"].as<ublas::matrix<float> >()(0, 1), 1.2f );
     BOOST_CHECK_EQUAL( vm["epsilon"].as<ublas::matrix<float> >()(1, 0), 2.1f );
     BOOST_CHECK_EQUAL( vm["epsilon"].as<ublas::matrix<float> >()(1, 1), 2.2f );
+    BOOST_MESSAGE( vm["epsilon"].as<ublas::matrix<float> >() );
 }
 
 BOOST_AUTO_TEST_CASE( matrix_throws_invalid_options_value )
@@ -144,6 +148,7 @@ BOOST_AUTO_TEST_CASE( vector_1 )
     BOOST_CHECK_EQUAL( vm.count("epsilon"), 1LU );
     BOOST_CHECK_EQUAL( vm["epsilon"].as<ublas::vector<float> >().size(), 1LU );
     BOOST_CHECK_CLOSE_FRACTION( vm["epsilon"].as<ublas::vector<float> >()(0), M_PI, eps );
+    BOOST_MESSAGE( vm["epsilon"].as<ublas::vector<float> >() );
 }
 
 BOOST_AUTO_TEST_CASE( vector_2 )
@@ -162,6 +167,7 @@ BOOST_AUTO_TEST_CASE( vector_2 )
     BOOST_CHECK_EQUAL( vm["diameter"].as<ublas::vector<float> >().size(), 2LU );
     BOOST_CHECK_EQUAL( vm["diameter"].as<ublas::vector<float> >()(0), 1.1f );
     BOOST_CHECK_EQUAL( vm["diameter"].as<ublas::vector<float> >()(1), 1.2f );
+    BOOST_MESSAGE( vm["diameter"].as<ublas::vector<float> >() );
 }
 
 BOOST_AUTO_TEST_CASE( vector_throws_invalid_options_value )
