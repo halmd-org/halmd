@@ -1,5 +1,5 @@
 /*
- * Copyright © 2008-2010  Peter Colberg and Felix Höfling
+ * Copyright © 2008-2011  Peter Colberg, Felix Höfling, and Michael Kopp
  *
  * This file is part of HALMD.
  *
@@ -35,6 +35,7 @@ using boost::is_same;
  * transformation types
  */
 struct identity_;
+struct negate_;
 struct square_;
 struct sqrt_;
 // FIXME template <int index> struct at_;
@@ -55,6 +56,13 @@ __device__ typename enable_if<is_same<transform_, identity_>, output_type>::type
 transform(input_type v)
 {
     return v;
+}
+
+template <typename transform_, typename input_type, typename output_type>
+__device__ typename enable_if<is_same<transform_, negate_>, output_type>::type
+transform(input_type v)
+{
+    return -v;
 }
 
 template <typename transform_, typename input_type, typename output_type>
