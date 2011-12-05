@@ -26,6 +26,8 @@
 #include <functional>
 #include <limits>
 
+#include<iostream>
+
 #include <halmd/algorithm/gpu/apply_kernel.hpp>
 #include <halmd/mdsim/box.hpp>                          // dependency of euler module
 #include <halmd/mdsim/clock.hpp>                        // dependency of phase_space module
@@ -151,7 +153,7 @@ void test_euler<modules_type>::linear_motion()
     BOOST_CHECK_LT(max_deviation, tolerance);
 }
 
-/** solve the differential equation @f$ \dot r = r @f$ */
+/** solve the differential equation @f$ \dot r = - r @f$ */
 template <typename modules_type>
 void test_euler<modules_type>::overdamped_motion()
 {
@@ -178,8 +180,6 @@ void test_euler<modules_type>::overdamped_motion()
     // particlewise comparison with analytic solution
     // r_n = r_0 * (1 - Δt)^n → r_0 * exp(-n Δt)
     float_type factor = pow(1 - integrator->timestep(), static_cast<double>(steps));
-    float_type tolerance = steps * epsilon() * norm_inf(box->length());
-    tolerance *= gpu ? 100 : 4; // FIXME tolerance appears to be too large
     float_type max_deviation = 0;
     for (size_t i = 0; i < npart; ++i) {
         vector_type const& r0 = (*initial_sample.r[0])[i];
@@ -187,13 +187,17 @@ void test_euler<modules_type>::overdamped_motion()
 
         vector_type r_analytic = r0 * factor;
 
-        // check that maximum deviation of a vector component is less than the tolerance,
-        // use the relative error
-        BOOST_CHECK_SMALL(norm_inf(r_final - r_analytic), norm_inf(r_analytic) * tolerance);
-        max_deviation = std::max(norm_inf(r_final - r_analytic) / norm_inf(r_analytic), max_deviation);
+        // Check that maximum deviation of a vector component is less than the tolerance
+        // the tolerance is computed by summing up all errors:
+        // @f$$ E_{total} = \epsilon \, \sum_n x_n = \epsilon (x_0 - x_n) \frac{1-\Delta t}{\Delta t} @f$$
+        // and @f$\epsilon @f$ is the relative error for one addition.
+        float_type tolerance_step = std::max(dimension * epsilon() * norm_inf(r0 - r_final) * (1 - timestep) / timestep, static_cast<double>(epsilon()));
+        BOOST_CHECK_SMALL(norm_inf(r_final - r_analytic), tolerance_step);
+        max_deviation = std::max(norm_inf(r_final - r_analytic), max_deviation);
+
+        BOOST_TEST_MESSAGE(r0 << '\t' << r_final << '\t' << r_analytic);
     }
-    BOOST_TEST_MESSAGE("Maximum deviation: " << max_deviation << ", tolerance: " << tolerance);
-    BOOST_CHECK_LT(max_deviation, tolerance);
+    BOOST_TEST_MESSAGE("Maximum deviation: " << max_deviation);
 }
 
 /**
@@ -328,6 +332,7 @@ void gpu_modules<dimension, float_type>::set_velocity(shared_ptr<particle_type> 
     //
     // Caveat: overwrites particle tags in g_v (which are not used anyway)
     try {
+        cuda::memset(particle->g_v, 0, particle->g_v.capacity()); // Set high precision bits to zero.
         cuda::configure(particle->dim.grid, particle->dim.block);
         wrapper_type::kernel.apply(particle->g_r, particle->g_v, particle->g_r.size());
         cuda::thread::synchronize();
