@@ -26,6 +26,7 @@
 #include <functional>
 #include <limits>
 
+#include <halmd/algorithm/gpu/apply_kernel.hpp>
 #include <halmd/mdsim/box.hpp>                          // dependency of euler module
 #include <halmd/mdsim/clock.hpp>                        // dependency of phase_space module
 #include <halmd/mdsim/host/integrators/euler.hpp>       // module to be tested
@@ -177,8 +178,8 @@ void test_euler<modules_type>::overdamped_motion()
     // particlewise comparison with analytic solution
     // r_n = r_0 * (1 - Δt)^n → r_0 * exp(-n Δt)
     float_type factor = pow(1 - integrator->timestep(), static_cast<double>(steps));
-    if (gpu) { factor = 1 / factor; } // FIXME GPU version has v = r
-    float_type tolerance = 4 * steps * epsilon() * norm_inf(box->length()); // FIXME tolerance is way too large
+    float_type tolerance = steps * epsilon() * norm_inf(box->length());
+    tolerance *= gpu ? 100 : 4; // FIXME tolerance appears to be too large
     float_type max_deviation = 0;
     for (size_t i = 0; i < npart; ++i) {
         vector_type const& r0 = (*initial_sample.r[0])[i];
@@ -188,7 +189,7 @@ void test_euler<modules_type>::overdamped_motion()
 
         // check that maximum deviation of a vector component is less than the tolerance,
         // use the relative error
-        BOOST_CHECK_SMALL(norm_inf(r_final - r_analytic) / norm_inf(r_analytic), tolerance);
+        BOOST_CHECK_SMALL(norm_inf(r_final - r_analytic), norm_inf(r_analytic) * tolerance);
         max_deviation = std::max(norm_inf(r_final - r_analytic) / norm_inf(r_analytic), max_deviation);
     }
     BOOST_TEST_MESSAGE("Maximum deviation: " << max_deviation << ", tolerance: " << tolerance);
@@ -316,8 +317,25 @@ struct gpu_modules
 template <int dimension, typename float_type>
 void gpu_modules<dimension, float_type>::set_velocity(shared_ptr<particle_type> particle)
 {
-    cuda::copy(particle->g_r, particle->g_v); // Caveat: overwrites particle tags in g_v (which are not used anyway)
-    // FIXME introduce minus sign
+    using namespace algorithm::gpu;
+    typedef typename particle_type::vector_type vector_type;
+    typedef apply_wrapper<negate_, vector_type, float4, vector_type, float4> wrapper_type;
+
+    // copy -g_r[i] to g_v[i]
+    //
+    // The kernel wrapper is declared in algorithm/gpu/apply_kernel.hpp
+    // and the CUDA kernel is instantiated in apply_negate.cu.
+    //
+    // Caveat: overwrites particle tags in g_v (which are not used anyway)
+    try {
+        cuda::configure(particle->dim.grid, particle->dim.block);
+        wrapper_type::kernel.apply(particle->g_r, particle->g_v, particle->g_r.size());
+        cuda::thread::synchronize();
+    }
+    catch (cuda::error const&) {
+        LOG_ERROR("copying negated positions to velocities on GPU failed");
+        throw;
+    }
 }
 
 BOOST_FIXTURE_TEST_CASE( euler_gpu_2d_linear, device ) {

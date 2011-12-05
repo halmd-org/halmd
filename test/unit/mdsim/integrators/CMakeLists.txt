@@ -23,6 +23,7 @@ endif(WITH_CUDA)
 
 add_executable(test_unit_mdsim_integrators_euler
   euler.cpp
+  apply_negate.cu
 )
 target_link_libraries(test_unit_mdsim_integrators_euler
   libhalmd
