@@ -88,8 +88,8 @@ struct test_euler
     typedef typename vector_type::value_type float_type;
     static unsigned int const dimension = vector_type::static_size;
 
+    typedef typename modules_type::numeric_limits numeric_limits;
     static bool const gpu = modules_type::gpu;
-    static float_type epsilon() { return modules_type::epsilon(); }
 
     size_t steps;
     double density;
@@ -135,7 +135,7 @@ void test_euler<modules_type>::linear_motion()
 
     // particlewise comparison with analytic solution
     // the absolute error should be relative to the maximum value, i.e., the box length
-    float_type tolerance = 4 * steps * epsilon() * norm_inf(box->length());
+    float_type tolerance = 4 * steps * numeric_limits::epsilon() * norm_inf(box->length());
     float_type duration = steps * integrator->timestep();
     float_type max_deviation = 0;
     for (size_t i = 0; i < npart; ++i) {
@@ -191,8 +191,8 @@ void test_euler<modules_type>::overdamped_motion()
         // the tolerance is computed by summing up all errors:
         // @f$$ E_{total} = \epsilon \, \sum_n x_n = \epsilon (x_0 - x_n) \frac{1-\Delta t}{\Delta t} @f$$
         // and @f$\epsilon @f$ is the relative error for one addition.
-        float_type tolerance_step = epsilon() * norm_inf(r0 - r_final) * (1 - timestep) / timestep;
-        tolerance_step = std::max(tolerance_step, epsilon());
+        float_type tolerance_step = numeric_limits::epsilon() * norm_inf(r0 - r_final) * (1 - timestep) / timestep;
+        tolerance_step = std::max(tolerance_step, numeric_limits::min()); // avoid "0 < 0"
         BOOST_CHECK_SMALL(norm_inf(r_final - r_analytic), tolerance_step);
         max_deviation = std::max(norm_inf(r_final - r_analytic), max_deviation);
     }
@@ -255,8 +255,9 @@ struct host_modules
     typedef observables::host::samples::phase_space<dimension, float_type> sample_type;
     typedef observables::host::phase_space<dimension, float_type> phase_space_type;
 
+    typedef typename std::numeric_limits<float_type> numeric_limits;
+
     static bool const gpu = false;
-    static float_type epsilon() { return numeric_limits<float_type>::epsilon(); }
 
     static void set_velocity(shared_ptr<particle_type> particle);
 };
@@ -306,11 +307,14 @@ struct gpu_modules
     static bool const gpu = true;
 
 #ifndef USE_VERLET_DSFUN
-    static float_type epsilon() { return numeric_limits<float_type>::epsilon(); }
+    typedef typename std::numeric_limits<float_type> numeric_limits;
 #else
     // FIXME define numeric_limits for dsfloat
     // see, e.g., http://docs.oracle.com/cd/E19957-01/806-3568/ncg_goldberg.html
-    static float_type epsilon() { return 5.68434188608e-14; } // pow(2, -44)
+    struct numeric_limits {
+        static float_type epsilon() { return std::pow(float_type(2), -44); }
+        static float_type min() { return std::numeric_limits<float>::min(); }
+    };
 #endif
 
     static void set_velocity(shared_ptr<particle_type> particle);
