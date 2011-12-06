@@ -191,11 +191,10 @@ void test_euler<modules_type>::overdamped_motion()
         // the tolerance is computed by summing up all errors:
         // @f$$ E_{total} = \epsilon \, \sum_n x_n = \epsilon (x_0 - x_n) \frac{1-\Delta t}{\Delta t} @f$$
         // and @f$\epsilon @f$ is the relative error for one addition.
-        float_type tolerance_step = std::max(dimension * epsilon() * norm_inf(r0 - r_final) * (1 - timestep) / timestep, static_cast<double>(epsilon()));
+        float_type tolerance_step = epsilon() * norm_inf(r0 - r_final) * (1 - timestep) / timestep;
+        tolerance_step = std::max(tolerance_step, epsilon());
         BOOST_CHECK_SMALL(norm_inf(r_final - r_analytic), tolerance_step);
         max_deviation = std::max(norm_inf(r_final - r_analytic), max_deviation);
-
-        BOOST_TEST_MESSAGE(r0 << '\t' << r_final << '\t' << r_analytic);
     }
     BOOST_TEST_MESSAGE("Maximum deviation: " << max_deviation);
 }
@@ -330,11 +329,15 @@ void gpu_modules<dimension, float_type>::set_velocity(shared_ptr<particle_type> 
     // The kernel wrapper is declared in algorithm/gpu/apply_kernel.hpp
     // and the CUDA kernel is instantiated in apply_negate.cu.
     //
+    // If the arrays are stored as two subsequent float4 arrays for
+    // double-single representation, we the negation is applied to both floats
+    // independently (in correspondence to the definition of operator- for
+    // dsfloat).
+    //
     // Caveat: overwrites particle tags in g_v (which are not used anyway)
     try {
-        cuda::memset(particle->g_v, 0, particle->g_v.capacity()); // Set high precision bits to zero.
         cuda::configure(particle->dim.grid, particle->dim.block);
-        wrapper_type::kernel.apply(particle->g_r, particle->g_v, particle->g_r.size());
+        wrapper_type::kernel.apply(particle->g_r, particle->g_v, particle->g_r.capacity());
         cuda::thread::synchronize();
     }
     catch (cuda::error const&) {
