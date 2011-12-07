@@ -1,5 +1,5 @@
 /*
- * Copyright © 2008-2010  Peter Colberg and Felix Höfling
+ * Copyright © 2011  Felix Höfling
  *
  * This file is part of HALMD.
  *
@@ -36,7 +36,7 @@ namespace gpu {
 namespace potentials {
 
 /**
- * Initialise Lennard-Jones potential parameters
+ * Initialise power law potential parameters
  */
 template <typename float_type>
 power_law<float_type>::power_law(

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2008-2010  Peter Colberg
+ * Copyright © 2011  Peter Colbert and Felix Höfling
  *
  * This file is part of HALMD.
  *
@@ -44,7 +44,7 @@ class power_law;
 
 struct power_law_wrapper
 {
-    /** Lennard-Jones potential parameters */
+    /** power law potential parameters */
     static cuda::texture<float4> param;
     /** squared cutoff radius and energy shift */
     static cuda::texture<float2> rr_en_cut;
