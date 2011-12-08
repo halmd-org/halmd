@@ -3,10 +3,12 @@ halmd_add_library(halmd_mdsim_host_potentials
   modified_lennard_jones.cpp
   morse.cpp
   power_law.cpp
+  power_law_with_core.cpp
 )
 halmd_add_modules(
   libhalmd_mdsim_host_potentials_modified_lennard_jones
   libhalmd_mdsim_host_potentials_lennard_jones
   libhalmd_mdsim_host_potentials_morse
   libhalmd_mdsim_host_potentials_power_law
+  libhalmd_mdsim_host_potentials_power_law_with_core
 )

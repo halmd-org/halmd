@@ -1,5 +1,5 @@
 /*
- * Copyright © 2011  Felix Höfling
+ * Copyright © 2011  Michael Kopp
  *
  * This file is part of HALMD.
  *
@@ -22,8 +22,8 @@
 #include <cmath>
 #include <string>
 
-#include <halmd/mdsim/gpu/potentials/power_law.hpp>
-#include <halmd/mdsim/gpu/potentials/power_law_kernel.hpp>
+#include <halmd/mdsim/gpu/potentials/power_law_with_core.hpp>
+#include <halmd/mdsim/gpu/potentials/power_law_with_core_kernel.hpp>
 #include <halmd/utility/lua/lua.hpp>
 
 using namespace boost;
@@ -36,12 +36,18 @@ namespace gpu {
 namespace potentials {
 
 /**
- * Initialise power law potential parameters
+ * Initialise potential parameters for power law with core
+ *
+ * @param cutoff cutoff length in units of sigma
+ * @param core core radius in units of sigma (potential diverges at core radius)
+ * @param epsilon interaction strength in MD units
+ * @param sigma interaction range in MD units
  */
 template <typename float_type>
-power_law<float_type>::power_law(
+power_law_with_core<float_type>::power_law_with_core(
     unsigned ntype
   , array<float, 3> const& cutoff
+  , array<float, 3> const& core
   , array<float, 3> const& epsilon
   , array<float, 3> const& sigma
   , array<unsigned, 3> const& index
@@ -54,6 +60,9 @@ power_law<float_type>::power_law(
   , r_cut_sigma_(ntype, ntype)
   , r_cut_(ntype, ntype)
   , rr_cut_(ntype, ntype)
+  , r_core_sigma_(ntype, ntype)
+  , r_core_(ntype, ntype)
+  , rr_core_(ntype, ntype)
   , sigma2_(ntype, ntype)
   , en_cut_(ntype, ntype)
   , g_param_(epsilon_.data().size())
@@ -67,6 +76,7 @@ power_law<float_type>::power_law(
             sigma_(i, j) = sigma[i + j];
             index_(i, j) = index[i + j];
             r_cut_sigma_(i, j) = cutoff[i + j];
+            r_core_sigma_(i, j) = core[i + j];
         }
     }
 
@@ -75,6 +85,8 @@ power_law<float_type>::power_law(
         for (unsigned j = i; j < ntype; ++j) {
             r_cut_(i, j) = r_cut_sigma_(i, j) * sigma_(i, j);
             rr_cut_(i, j) = std::pow(r_cut_(i, j), 2);
+            r_core_(i, j) = r_core_sigma_(i, j) * sigma_(i, j);
+            rr_core_(i, j) = std::pow(r_core_(i, j), 2);
             sigma2_(i, j) = std::pow(sigma_(i, j), 2);
             // energy shift due to truncation at cutoff length
             float_type ri_cut = 1 / r_cut_sigma_(i, j);
@@ -84,16 +96,18 @@ power_law<float_type>::power_law(
 
     LOG("interaction strength: ε = " << epsilon_);
     LOG("interaction range: σ = " << sigma_);
+    LOG("core radius r_core/σ = " << r_core_sigma_);
     LOG("power law index: n = " << index_);
-    LOG("cutoff length: r_c = " << r_cut_sigma_);
+    LOG("cutoff length: r_c/σ = " << r_cut_sigma_);
     LOG("cutoff energy: U = " << en_cut_);
 
     cuda::host::vector<float4> param(g_param_.size());
     for (size_t i = 0; i < param.size(); ++i) {
         fixed_vector<float, 4> p(0); // initialise unused elements as well
-        p[power_law_kernel::EPSILON] = epsilon_.data()[i];
-        p[power_law_kernel::SIGMA2] = sigma2_.data()[i];
-        p[power_law_kernel::INDEX] = index_.data()[i];
+        p[power_law_with_core_kernel::EPSILON] = epsilon_.data()[i];
+        p[power_law_with_core_kernel::SIGMA2] = sigma2_.data()[i];
+        p[power_law_with_core_kernel::CORE_SIGMA] = r_core_sigma_.data()[i];
+        p[power_law_with_core_kernel::INDEX] = index_.data()[i];
         param[i] = p;
     }
     cuda::copy(param, g_param_);
@@ -107,7 +121,7 @@ power_law<float_type>::power_law(
 }
 
 template <typename float_type>
-void power_law<float_type>::luaopen(lua_State* L)
+void power_law_with_core<float_type>::luaopen(lua_State* L)
 {
     using namespace luabind;
     module(L, "libhalmd")
@@ -118,34 +132,36 @@ void power_law<float_type>::luaopen(lua_State* L)
             [
                 namespace_("potentials")
                 [
-                    class_<power_law, shared_ptr<power_law> >(module_name())
+                    class_<power_law_with_core, shared_ptr<power_law_with_core> >(module_name())
                         .def(constructor<
                             unsigned
+                          , array<float, 3> const&
                           , array<float, 3> const&
                           , array<float, 3> const&
                           , array<float, 3> const&
                           , array<unsigned, 3> const&
                           , shared_ptr<logger_type>
                         >())
-                        .property("r_cut", (matrix_type const& (power_law::*)() const) &power_law::r_cut)
-                        .property("r_cut_sigma", &power_law::r_cut_sigma)
-                        .property("epsilon", &power_law::epsilon)
-                        .property("sigma", &power_law::sigma)
-                        .property("index", &power_law::index)
+                        .property("r_cut", (matrix_type const& (power_law_with_core::*)() const) &power_law_with_core::r_cut)
+                        .property("r_cut_sigma", &power_law_with_core::r_cut_sigma)
+                        .property("r_core_sigma", &power_law_with_core::r_core_sigma)
+                        .property("epsilon", &power_law_with_core::epsilon)
+                        .property("sigma", &power_law_with_core::sigma)
+                        .property("index", &power_law_with_core::index)
                 ]
             ]
         ]
     ];
 }
 
-HALMD_LUA_API int luaopen_libhalmd_mdsim_gpu_potentials_power_law(lua_State* L)
+HALMD_LUA_API int luaopen_libhalmd_mdsim_gpu_potentials_power_law_with_core(lua_State* L)
 {
-    power_law<float>::luaopen(L);
+    power_law_with_core<float>::luaopen(L);
     return 0;
 }
 
 // explicit instantiation
-template class power_law<float>;
+template class power_law_with_core<float>;
 
 } // namespace potentials
 } // namespace gpu

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2011  Felix Höfling
+ * Copyright © 2011  Michael Kopp
  *
  * This file is part of HALMD.
  *
@@ -20,7 +20,7 @@
 #include <halmd/algorithm/gpu/tuple.cuh>
 #include <halmd/mdsim/gpu/forces/pair_full_kernel.cuh>
 #include <halmd/mdsim/gpu/forces/pair_trunc_kernel.cuh>
-#include <halmd/mdsim/gpu/potentials/power_law_kernel.hpp>
+#include <halmd/mdsim/gpu/potentials/power_law_with_core_kernel.hpp>
 #include <halmd/numeric/blas/blas.hpp>
 #include <halmd/numeric/pow.hpp>  // std::pow is not a device function
 #include <halmd/utility/gpu/variant.cuh>
@@ -29,7 +29,7 @@ namespace halmd {
 namespace mdsim {
 namespace gpu {
 namespace potentials {
-namespace power_law_kernel {
+namespace power_law_with_core_kernel {
 
 using algorithm::gpu::tuple;
 using algorithm::gpu::make_tuple;
@@ -42,9 +42,9 @@ static texture<float2> rr_en_cut_;
 /**
  * power law interaction potential of a pair of particles.
  *
- * @f[  U(r) = \epsilon (r/\sigma)^{-n} @f]
+ * @f[  U(r) = \epsilon \left(\frac{\sigma}{r - r_\text{core}}\right)^n @f]
  */
-class power_law
+class power_law_with_core
 {
 public:
     /**
@@ -55,7 +55,7 @@ public:
      * @param type1 type of first interacting particle
      * @param type2 type of second interacting particle
      */
-    HALMD_GPU_ENABLED power_law(unsigned int type1, unsigned int type2)
+    HALMD_GPU_ENABLED power_law_with_core(unsigned int type1, unsigned int type2)
       : pair_(
             tex1Dfetch(param_, symmetric_matrix::lower_index(type1, type2))
         )
@@ -82,25 +82,25 @@ public:
      * and hypervirial @f$ r \partial_r r \partial_r U(r) @f$
      *
      * @f{eqnarray*}{
-     *   - U'(r) / r &=& n r^{-2} \epsilon (r/\sigma)^{-n} \\
-     *   U(r) &=& \epsilon (r/\sigma)^{-n} \\
-     *   r \partial_r r \partial_r U(r) &=& n^2 \epsilon (r/\sigma)^{-n}
+     *   - \frac{U'(r)}{r} &=& n \epsilon \frac{\sigma^n}{r (r-r_\text{core})^{n+1}} = \frac{n}{r(r-r_\text{core})} U(r) \\
+     *   U(r) &=& \epsilon \left(\frac{\sigma}{r - r_\text{core}}\right)^n \\
+     *   r \partial_r r \partial_r U(r) &=& n U(r) \left( \frac{r (r_\text{core} + n r) }{ (r-r_\text{core})^2 } \right)
      * @f}
      */
     template <typename float_type>
     HALMD_GPU_ENABLED tuple<float_type, float_type, float_type> operator()(float_type rr) const
     {
-        float_type rri = pair_[SIGMA2] / rr;
+        float_type rrs = rr / pair_[SIGMA2];
+        // It's not possible to avoid computation of a squareroot as r_core
+        // must be substracted from r but only r*r is passed.
+        float_type rs = sqrt(rrs);
         unsigned short n = static_cast<unsigned short>(pair_[INDEX]);
-        // avoid computation of square root for even powers
-        float_type rni = halmd::pow(rri, n / 2);
-        if (n % 2) {
-            rni *= sqrt(rri); // translates to sqrt.approx.f32 in PTX code for float_type=float (CUDA 3.2)
-        }
-        float_type eps_rni = pair_[EPSILON] * rni;
-        float_type fval = n * eps_rni / rr;
-        float_type en_pot = eps_rni - pair_rr_en_cut_[1];
-        float_type hvir = n * n * eps_rni;
+        float coreS = pair_[CORE_SIGMA];
+        float_type en_pot = pair_[EPSILON] * halmd::pow(rs - coreS, -n);
+        en_pot -= pair_rr_en_cut_[1];
+
+        float_type fval = en_pot * n / (pair_[SIGMA2] * rs * (rs - coreS));
+        float_type hvir = fval * rr * (coreS + n*rs)/(rs - coreS);
 
         return make_tuple(fval, en_pot, hvir);
     }
@@ -112,23 +112,23 @@ private:
     fixed_vector<float, 2> pair_rr_en_cut_;
 };
 
-} // namespace power_law_kernel
+} // namespace power_law_with_core_kernel
 
-cuda::texture<float4> power_law_wrapper::param = power_law_kernel::param_;
-cuda::texture<float2> power_law_wrapper::rr_en_cut = power_law_kernel::rr_en_cut_;
+cuda::texture<float4> power_law_with_core_wrapper::param = power_law_with_core_kernel::param_;
+cuda::texture<float2> power_law_with_core_wrapper::rr_en_cut = power_law_with_core_kernel::rr_en_cut_;
 
 } // namespace potentials
 
 // explicit instantiation of force kernels
 namespace forces {
 
-using potentials::power_law_kernel::power_law;
+using potentials::power_law_with_core_kernel::power_law_with_core;
 
-template class pair_full_wrapper<3, power_law>;
-template class pair_full_wrapper<2, power_law>;
+template class pair_full_wrapper<3, power_law_with_core>;
+template class pair_full_wrapper<2, power_law_with_core>;
 
-template class pair_trunc_wrapper<3, power_law>;
-template class pair_trunc_wrapper<2, power_law>;
+template class pair_trunc_wrapper<3, power_law_with_core>;
+template class pair_trunc_wrapper<2, power_law_with_core>;
 
 } // namespace forces
 

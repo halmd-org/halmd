@@ -1,5 +1,5 @@
 /*
- * Copyright © 2011  Peter Colbert and Felix Höfling
+ * Copyright © 2011  Michael Kopp
  *
  * This file is part of HALMD.
  *
@@ -17,8 +17,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef HALMD_MDSIM_GPU_POTENTIALS_POWER_LAW_KERNEL_HPP
-#define HALMD_MDSIM_GPU_POTENTIALS_POWER_LAW_KERNEL_HPP
+#ifndef HALMD_MDSIM_GPU_POTENTIALS_POWER_LAW_WITH_CORE_KERNEL_HPP
+#define HALMD_MDSIM_GPU_POTENTIALS_POWER_LAW_WITH_CORE_KERNEL_HPP
 
 #include <cuda_wrapper/cuda_wrapper.hpp>
 
@@ -26,7 +26,7 @@ namespace halmd {
 namespace mdsim {
 namespace gpu {
 namespace potentials {
-namespace power_law_kernel {
+namespace power_law_with_core_kernel {
 
 /**
  * indices of potential parameters
@@ -35,16 +35,17 @@ enum {
     EPSILON       /**< potential well depths in MD units */
   , SIGMA2        /**< square of pair separation */
   , INDEX         /**< power law index */
+  , CORE_SIGMA    /**< core radius in units of sigma */
 };
 
 // forward declaration for host code
-class power_law;
+class power_law_with_core;
 
-} // namespace power_law_kernel
+} // namespace power_law_with_core_kernel
 
-struct power_law_wrapper
+struct power_law_with_core_wrapper
 {
-    /** power law potential parameters */
+    /** parameters for power law potential with core */
     static cuda::texture<float4> param;
     /** squared cutoff radius and energy shift */
     static cuda::texture<float2> rr_en_cut;
@@ -55,4 +56,4 @@ struct power_law_wrapper
 } // namespace mdsim
 } // namespace halmd
 
-#endif /* ! HALMD_MDSIM_GPU_POTENTIALS_POWER_LAW_KERNEL_HPP */
+#endif /* ! HALMD_MDSIM_GPU_POTENTIALS_POWER_LAW_WITH_CORE_KERNEL_HPP */
