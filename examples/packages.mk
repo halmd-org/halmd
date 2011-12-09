@@ -54,10 +54,10 @@ env: env-cmake env-lua env-boost env-luabind env-hdf5
 ## CMake with CMake-CUDA patch
 ##
 
-CMAKE_VERSION = 2.8.5
+CMAKE_VERSION = 2.8.6
 CMAKE_TARBALL = cmake-$(CMAKE_VERSION).tar.gz
 CMAKE_TARBALL_URL = http://www.cmake.org/files/v2.8/$(CMAKE_TARBALL)
-CMAKE_CUDA_PATCH = cmake-cuda-2.8.5-0-gda84f60.patch
+CMAKE_CUDA_PATCH = cmake-cuda-2.8.6-0-g4dd63fc.patch
 CMAKE_CUDA_PATCH_URL = http://sourceforge.net/projects/halmd/files/patches/$(CMAKE_CUDA_PATCH)
 CMAKE_BUILD_DIR = cmake-$(CMAKE_VERSION)
 CMAKE_INSTALL_DIR = $(PREFIX)/cmake-$(CMAKE_VERSION)
@@ -167,8 +167,8 @@ env-lua:
 ## Boost C++ libraries with Boost.Log
 ##
 
-BOOST_VERSION = 1.47.0
-BOOST_RELEASE = 1_47_0
+BOOST_VERSION = 1.48.0
+BOOST_RELEASE = 1_48_0
 BOOST_TARBALL = boost_$(BOOST_RELEASE).tar.gz
 BOOST_TARBALL_URL = http://sourceforge.net/projects/boost/files/boost/$(BOOST_VERSION)/$(BOOST_TARBALL)
 BOOST_LOG_TARBALL = boost-log.tar
@@ -352,7 +352,7 @@ env-hdf5:
 ## Git version control
 ##
 
-GIT_VERSION = 1.7.7
+GIT_VERSION = 1.7.7.3
 GIT_TARBALL = git-$(GIT_VERSION).tar.gz
 GIT_MANPAGES_TARBALL = git-manpages-$(GIT_VERSION).tar.gz
 GIT_TARBALL_URL = http://git-core.googlecode.com/files/$(GIT_TARBALL)
@@ -625,17 +625,20 @@ env-graphviz:
 ## Clang C++ compiler
 ##
 
-CLANG_VERSION = 2.9
-LLVM_TARBALL = llvm-$(CLANG_VERSION).tgz
+CLANG_VERSION = 3.0
+LLVM_TARBALL = llvm-$(CLANG_VERSION).tar.gz
 LLVM_TARBALL_URL = http://llvm.org/releases/$(CLANG_VERSION)/$(LLVM_TARBALL)
-CLANG_TARBALL = clang-$(CLANG_VERSION).tgz
+LLVM_OCAML_MAKEFILE_PATCH = llvm_ocaml_makefile.patch
+LLVM_OCAML_MAKEFILE_PATCH_URL = http://llvm.org/bugs/attachment.cgi?id=7625&action=diff&context=patch&collapsed=&headers=1&format=raw
+CLANG_TARBALL = clang-$(CLANG_VERSION).tar.gz
 CLANG_TARBALL_URL = http://llvm.org/releases/$(CLANG_VERSION)/$(CLANG_TARBALL)
-CLANG_BUILD_DIR = llvm-$(CLANG_VERSION)
+CLANG_BUILD_DIR = llvm-$(CLANG_VERSION).src
 CLANG_CONFIGURE_FLAGS = --enable-optimized
 CLANG_INSTALL_DIR = $(PREFIX)/clang-$(CLANG_VERSION)
 
 .fetch-clang:
 	$(WGET) $(LLVM_TARBALL_URL)
+	$(WGET) -O $(LLVM_OCAML_MAKEFILE_PATCH) $(LLVM_OCAML_MAKEFILE_PATCH_URL)
 	$(WGET) $(CLANG_TARBALL_URL)
 	@$(TOUCH) $@
 
@@ -644,7 +647,8 @@ fetch-clang: .fetch-clang
 .extract-clang: .fetch-clang
 	$(RM) $(CLANG_BUILD_DIR)
 	$(TAR) -xzf $(LLVM_TARBALL)
-	cd $(CLANG_BUILD_DIR)/tools && $(TAR) -xzf $(CURDIR)/$(CLANG_TARBALL) && mv clang-$(CLANG_VERSION) clang
+	cd $(CLANG_BUILD_DIR) && $(PATCH) -p1 < $(CURDIR)/$(LLVM_OCAML_MAKEFILE_PATCH)
+	cd $(CLANG_BUILD_DIR)/tools && $(TAR) -xzf $(CURDIR)/$(CLANG_TARBALL) && mv clang-$(CLANG_VERSION).src clang
 	@$(TOUCH) $@
 
 extract-clang: .extract-clang
