@@ -43,7 +43,11 @@ namespace halmd {
 
 logging::logging()
 {
+#ifdef BOOST_LOG_ATTRIBUTE_HPP_INCLUDED_ // Boost.Log < 2.0
+    core::get()->add_global_attribute("TimeStamp", make_shared<attributes::local_clock>());
+#else
     core::get()->add_global_attribute("TimeStamp", attributes::local_clock());
+#endif
 #ifdef NDEBUG
     logging::open_console(info);
 #else
@@ -158,7 +162,11 @@ static void wrap_log(char const* message)
 template <typename T>
 static void wrap_add_attribute(logger& logger_, string const& attr, T const& value)
 {
+#ifdef BOOST_LOG_ATTRIBUTE_HPP_INCLUDED_ // Boost.Log < 2.0
+    logger_.add_attribute(attr, make_shared<attributes::constant<T> >(value));
+#else
     logger_.add_attribute(attr, attributes::constant<T>(value));
+#endif
 }
 
 void logging::luaopen(lua_State* L)
