@@ -80,6 +80,38 @@ void from_particle<dimension, float_type>::update()
 
     scoped_timer_type timer(runtime_.update);
 
+    // whether Newton's third law applies
+    bool const reactio = (particle1_ == particle2_);
+
+    for (size_t i = 0; i < particle1_->nbox; ++i) {
+        // load first particle
+        vector_type r1 = particle1_->r[i];
+        unsigned int type1 = particle1_->type[i];
+
+        // clear particle's neighbour list
+        neighbour_[i].clear();
+
+        for (size_t j = reactio ? (i + 1) : 0; j < particle2_->nbox; ++j) {
+            // load second particle
+            vector_type r2 = particle2_->r[j];
+            unsigned int type2 = particle2_->type[j];
+
+            // particle distance vector
+            vector_type r = r1 - r2;
+            box_->reduce_periodic(r);
+            // squared particle distance
+            float_type rr = inner_prod(r, r);
+
+            // enforce cutoff radius with neighbour list skin
+            if (rr >= rr_cut_skin_(type1, type2)) {
+                continue;
+            }
+
+            // add particle to neighbour list
+            neighbour_[i].push_back(j);
+        }
+    }
+
     on_append_update_();
 }
 
