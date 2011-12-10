@@ -25,6 +25,7 @@
 #include <numeric>
 
 #include <halmd/mdsim/host/positions/lattice.hpp>
+#include <halmd/mdsim/positions/lattice_primitive.hpp>
 #include <halmd/utility/lua/lua.hpp>
 
 using namespace boost;
@@ -169,16 +170,10 @@ void lattice<dimension, float_type>::fcc(
             ++i;
         }
 
-        vector_type& r = *r_it = a;
-        if (dimension == 3) {
-            r[0] *= ((i >> 2) % n[0]) + ((i ^ (i >> 1)) & 1) / 2.;
-            r[1] *= ((i >> 2) / n[0] % n[1]) + (i & 1) / 2.;
-            r[2] *= ((i >> 2) / n[0] / n[1]) + (i & 2) / 4.;
-        }
-        else {
-            r[0] *= ((i >> 1) % n[0]) + (i & 1) / 2.;
-            r[1] *= ((i >> 1) / n[0]) + (i & 1) / 2.;
-        }
+        vector_type& r = *r_it;
+        fcc_lattice_primitive()(r, n, i);
+        // scale by lattice constant
+        r *= a;
         // shift origin of lattice to offset
         r += offset;
     }

@@ -17,12 +17,9 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <boost/mpl/int.hpp>
-#include <boost/type_traits/is_same.hpp>
-#include <boost/utility/enable_if.hpp>
-
 #include <halmd/mdsim/gpu/particle_kernel.cuh>
 #include <halmd/mdsim/gpu/positions/lattice_kernel.hpp>
+#include <halmd/mdsim/positions/lattice_primitive.hpp>
 #include <halmd/numeric/blas/blas.hpp>
 #include <halmd/numeric/mp/dsfloat.hpp>
 #include <halmd/utility/gpu/thread.cuh>
@@ -38,62 +35,12 @@ namespace gpu {
 namespace positions {
 namespace lattice_kernel {
 
-using boost::mpl::int_;
-
 /** edge lengths of cuboid slab */
 static __constant__ variant<map<pair<int_<3>, float3>, pair<int_<2>, float2> > > offset_;
 /** number of cells per dimension */
 static __constant__ variant<map<pair<int_<3>, uint3>, pair<int_<2>, uint2> > > ncell_;
 
-/**
- * place particles on a face centered cubic lattice (fcc)
- */
-template <typename vector_type, typename index_type>
-__device__ typename enable_if<is_same<int_<3>, int_<vector_type::static_size> > >::type
-fcc(unsigned int i, index_type const& n, vector_type& r)
-{
-    // compose primitive vectors from 1-dimensional index
-    r[0] = ((i >> 2) % n[0]) + ((i ^ (i >> 1)) & 1) / 2.f;
-    r[1] = ((i >> 2) / n[0] % n[1]) + (i & 1) / 2.f;
-    r[2] = ((i >> 2) / n[0] / n[1]) + (i & 2) / 4.f;
-}
-
-template <typename vector_type, typename index_type>
-__device__ typename enable_if<is_same<int_<2>, int_<vector_type::static_size> > >::type
-fcc(unsigned int i, index_type const& n, vector_type& r)
-{
-    r[0] = ((i >> 1) % n[0]) + (i & 1) / 2.f;
-    r[1] = ((i >> 1) / n[0]) + (i & 1) / 2.f;
-}
-
-/**
- * place particles on a simple cubic lattice (sc)
- */
-template <typename vector_type, typename index_type>
-__device__ typename enable_if<is_same<int_<3>, int_<vector_type::static_size> > >::type
-sc(unsigned int i, index_type const& n, vector_type& r)
-{
-    r[0] = (i % n[0]) + 0.5f;
-    r[1] = (i / n[0] % n[1]) + 0.5f;
-    r[2] = (i / n[0] / n[1]) + 0.5f;
-}
-
-template <typename vector_type, typename index_type>
-__device__ typename enable_if<is_same<int_<2>, int_<vector_type::static_size> > >::type
-sc(unsigned int i, index_type const& n, vector_type& r)
-{
-    r[0] = (i % n[0]) + 0.5f;
-    r[1] = (i / n[0]) + 0.5f;
-}
-
-template <
-    typename vector_type
-  , void (*primitive)(
-        unsigned int
-      , fixed_vector<unsigned int, vector_type::static_size> const&
-      , fixed_vector<float, vector_type::static_size> &
-    )
->
+template <typename vector_type, typename primitive_type>
 __global__ void lattice(float4* g_r, uint npart, float a, uint skip)
 {
     enum { dimension = vector_type::static_size };
@@ -115,7 +62,7 @@ __global__ void lattice(float4* g_r, uint npart, float a, uint skip)
 
         // compute primitive lattice vector
         fixed_vector<float, dimension> e;
-        primitive(i + nvacancies, get<dimension>(ncell_), e);
+        primitive_type()(e, get<dimension>(ncell_), i + nvacancies);
 
         // scale with lattice constant and shift origin of lattice to offset
         fixed_vector<float, dimension> offset = get<dimension>(offset_);
@@ -136,11 +83,11 @@ lattice_wrapper<dimension> const lattice_wrapper<dimension>::kernel = {
     get<dimension>(lattice_kernel::offset_)
   , get<dimension>(lattice_kernel::ncell_)
 #ifdef USE_VERLET_DSFUN
-  , lattice_kernel::lattice<fixed_vector<dsfloat, dimension>, lattice_kernel::fcc>
-  , lattice_kernel::lattice<fixed_vector<dsfloat, dimension>, lattice_kernel::sc>
+  , lattice_kernel::lattice<fixed_vector<dsfloat, dimension>, fcc_lattice_primitive>
+  , lattice_kernel::lattice<fixed_vector<dsfloat, dimension>, sc_lattice_primitive>
 #else
-  , lattice_kernel::lattice<fixed_vector<float, dimension>, lattice_kernel::fcc>
-  , lattice_kernel::lattice<fixed_vector<float, dimension>, lattice_kernel::sc>
+  , lattice_kernel::lattice<fixed_vector<float, dimension>, fcc_lattice_primitive>
+  , lattice_kernel::lattice<fixed_vector<float, dimension>, sc_lattice_primitive>
 #endif
 };
 
