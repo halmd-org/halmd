@@ -190,6 +190,7 @@ function options(desc)
         desc:add("occupancy", po.float(), "desired average cell occupancy")
     end
     desc:add("disable-binning", po.bool_switch(), "disable domain decomposition")
+    desc:add("disable-sorting", po.bool_switch(), "disable domain decomposition")
 end
 
 --
