@@ -1,0 +1,48 @@
+--
+-- Copyright © 2011  Peter Colberg
+--
+-- This file is part of HALMD.
+--
+-- HALMD is free software: you can redistribute it and/or modify
+-- it under the terms of the GNU General Public License as published by
+-- the Free Software Foundation, either version 3 of the License, or
+-- (at your option) any later version.
+--
+-- This program is distributed in the hope that it will be useful,
+-- but WITHOUT ANY WARRANTY; without even the implied warranty of
+-- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+-- GNU General Public License for more details.
+--
+-- You should have received a copy of the GNU General Public License
+-- along with this program.  If not, see <http://www.gnu.org/licenses/>.
+--
+
+require("halmd.mdsim.box")
+require("halmd.modules")
+
+-- grab modules
+local mdsim = halmd.mdsim
+-- grab C++ wrappers
+local excluded_volume_wrapper = assert(libhalmd.mdsim.positions.excluded_volume)
+-- grab standard library
+local assert = assert
+local class_info = class_info
+local print = print
+
+module("halmd.mdsim.positions.excluded_volume", halmd.modules.register)
+
+function new(args)
+    -- parameters
+    local samples = assert(args.samples, "missing parameter: samples")
+    local diameters = assert(args.diameters, "missing parameter: diameters")
+    local cell_length = args.cell_length or 1 -- default value
+    -- dependencies
+    local box = mdsim.box() -- singleton
+    local logger = assert(args.logger)
+
+    local excluded_volume = excluded_volume_wrapper(box, cell_length, logger, samples[1])
+    for i = 1, #samples do
+        excluded_volume:exclude_spheres(samples[i], diameters[i])
+    end
+    return excluded_volume
+end
