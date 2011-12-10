@@ -32,19 +32,26 @@ local device = halmd.device
 local mdsim = halmd.mdsim
 local log = halmd.log
 -- grab C++ wrappers
-local neighbour_from_binning = {
-    host = {
-        [2] = libhalmd.mdsim.host.neighbours.from_binning_2_
-      , [3] = libhalmd.mdsim.host.neighbours.from_binning_3_
+local neighbours = {
+    from_binning = {
+        host = {
+            [2] = libhalmd.mdsim.host.neighbours.from_binning_2_
+          , [3] = libhalmd.mdsim.host.neighbours.from_binning_3_
+        }
+    }
+  , from_particle = {
+        host = {
+            [2] = libhalmd.mdsim.host.neighbours.from_particle_2_
+          , [3] = libhalmd.mdsim.host.neighbours.from_particle_3_
+        }
     }
 }
-local neighbour_from_particle = {}
 if libhalmd.mdsim.gpu then
-    neighbour_from_binning.gpu = {
+    neighbours.from_binning.gpu = {
         [2] = libhalmd.mdsim.gpu.neighbours.from_binning_2_
       , [3] = libhalmd.mdsim.gpu.neighbours.from_binning_3_
     }
-    neighbour_from_particle.gpu = {
+    neighbours.from_particle.gpu = {
         [2] = libhalmd.mdsim.gpu.neighbours.from_particle_2_
       , [3] = libhalmd.mdsim.gpu.neighbours.from_particle_3_
     }
@@ -99,9 +106,9 @@ function new(args)
     local neighbour
     if device() then
         if binning then
-            neighbour = assert(neighbour_from_binning.gpu[dimension])
+            neighbour = assert(neighbours.from_binning.gpu[dimension])
         else
-            neighbour = assert(neighbour_from_particle.gpu[dimension])
+            neighbour = assert(neighbours.from_particle.gpu[dimension])
         end
         local defaults = assert(neighbour.defaults)
         local occupancy = args.occupancy or defaults.occupancy()
@@ -111,7 +118,11 @@ function new(args)
             neighbour = neighbour(particle1, particle2, box, r_cut, skin, logger, occupancy)
         end
     else
-        neighbour = neighbour_from_binning.host[dimension](particle1, particle2, binning, binning, box, r_cut, skin, logger)
+        if binning then
+            neighbour = neighbours.from_binning.host[dimension](particle1, particle2, binning, binning, box, r_cut, skin, logger)
+        else
+            neighbour = neighbours.from_particle.host[dimension](particle1, particle2, box, r_cut, skin, logger)
+        end
     end
 
     -- store particle instances as Lua property
@@ -175,7 +186,7 @@ end
 --
 function options(desc)
     desc:add("skin", po.float(), "neighbour list skin")
-    if neighbour_from_binning.gpu then
+    if neighbours.from_binning.gpu then
         desc:add("occupancy", po.float(), "desired average cell occupancy")
     end
     desc:add("disable-binning", po.bool_switch(), "disable domain decomposition")
