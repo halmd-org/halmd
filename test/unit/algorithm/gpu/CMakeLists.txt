@@ -1,3 +1,16 @@
+add_executable(test_unit_algorithm_gpu_apply
+  apply.cpp
+  apply_kernel.cu
+)
+target_link_libraries(test_unit_algorithm_gpu_apply
+  ${HALMD_TEST_LIBRARIES}
+  ${HALMD_COMMON_LIBRARIES}
+  ${CUDA_LIBRARIES}
+)
+add_test(unit/algorithm/gpu/apply
+  test_unit_algorithm_gpu_apply --log_level=test_suite
+)
+
 add_executable(test_unit_algorithm_gpu_reduce
   reduce.cpp
   reduce_kernel.cu

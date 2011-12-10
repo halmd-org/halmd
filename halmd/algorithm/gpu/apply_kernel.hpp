@@ -1,5 +1,5 @@
 /*
- * Copyright © 2010  Peter Colberg
+ * Copyright © 2011  Michael Kopp
  *
  * This file is part of HALMD.
  *
@@ -17,27 +17,32 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <boost/asio.hpp>
+#ifndef HALMD_ALGORITHM_GPU_APPLY_KERNEL_HPP
+#define HALMD_ALGORITHM_GPU_APPLY_KERNEL_HPP
 
-#include <halmd/utility/hostname.hpp>
+#include <cuda_wrapper/cuda_wrapper.hpp>
+
+#include <halmd/algorithm/gpu/transform.cuh>
 
 namespace halmd {
+namespace algorithm {
+namespace gpu {
 
-/**
- * resolve canonical host name
- */
-std::string host_name()
+template <
+    typename functor
+  , typename input_type
+  , typename coalesced_input_type       = input_type
+  , typename output_type                = input_type
+  , typename coalesced_output_type      = output_type
+>
+struct apply_wrapper
 {
-    boost::asio::io_service ios;
-    namespace bai = boost::asio::ip;
-    bai::tcp::resolver resolver(ios);
-    bai::tcp::resolver::query query(bai::host_name(), "", bai::tcp::resolver::query::canonical_name);
-    bai::tcp::resolver::iterator addr_iter = resolver.resolve(query);
-    bai::tcp::resolver::iterator end;
-    if (addr_iter != end) {
-        return addr_iter->host_name();
-    }
-    return query.host_name(); // failed to resolve canonical host name
-}
+    cuda::function<void (coalesced_input_type const*, coalesced_output_type*, unsigned int)> apply;
+    static apply_wrapper const kernel;
+};
 
+} // namespace algorithm
+} // namespace gpu
 } // namespace halmd
+
+#endif /* ! HALMD_ALGORITHM_GPU_APPLY_KERNEL_HPP */

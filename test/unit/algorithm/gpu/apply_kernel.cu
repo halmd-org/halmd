@@ -1,5 +1,5 @@
 /*
- * Copyright © 2010  Peter Colberg
+ * Copyright © 2011  Felix Höfling
  *
  * This file is part of HALMD.
  *
@@ -17,27 +17,16 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <boost/asio.hpp>
+#include <halmd/algorithm/gpu/apply_kernel.cuh>
+#include <halmd/numeric/blas/blas.hpp>
 
-#include <halmd/utility/hostname.hpp>
+using namespace halmd;
+using namespace halmd::algorithm::gpu;
 
-namespace halmd {
-
-/**
- * resolve canonical host name
- */
-std::string host_name()
-{
-    boost::asio::io_service ios;
-    namespace bai = boost::asio::ip;
-    bai::tcp::resolver resolver(ios);
-    bai::tcp::resolver::query query(bai::host_name(), "", bai::tcp::resolver::query::canonical_name);
-    bai::tcp::resolver::iterator addr_iter = resolver.resolve(query);
-    bai::tcp::resolver::iterator end;
-    if (addr_iter != end) {
-        return addr_iter->host_name();
-    }
-    return query.host_name(); // failed to resolve canonical host name
-}
-
-} // namespace halmd
+template class apply_wrapper<
+    square_               // transform
+  , fixed_vector<float, 2>  // input_type
+  , float2                  // coalesced_input_type
+  , float                   // output_type
+  , float                   // coalesced_output_type
+>;

@@ -29,6 +29,7 @@ endif
 
 WGET = wget -c
 TAR = tar
+UNZIP = unzip
 RM = rm -rf
 CP = cp -r
 TOUCH = touch
@@ -171,9 +172,10 @@ BOOST_VERSION = 1.48.0
 BOOST_RELEASE = 1_48_0
 BOOST_TARBALL = boost_$(BOOST_RELEASE).tar.gz
 BOOST_TARBALL_URL = http://sourceforge.net/projects/boost/files/boost/$(BOOST_VERSION)/$(BOOST_TARBALL)
-BOOST_LOG_TARBALL = boost-log.tar
-BOOST_LOG_TARBALL_URL = http://boost-log.svn.sourceforge.net/viewvc/boost-log/trunk/boost-log/?view=tar
-BOOST_LOG_DIR = boost-log
+BOOST_LOG_VERSION = 1.1
+BOOST_LOG_TARBALL = boost-log-$(BOOST_LOG_VERSION).zip
+BOOST_LOG_TARBALL_URL = http://sourceforge.net/projects/boost-log/files/boost-log-$(BOOST_LOG_VERSION).zip
+BOOST_LOG_DIR = boost-log-$(BOOST_LOG_VERSION)
 BOOST_BUILD_DIR = boost_$(BOOST_RELEASE)
 BOOST_INSTALL_DIR = $(PREFIX)/boost_$(BOOST_RELEASE)
 BOOST_BUILD_FLAGS = cxxflags=-fPIC --without-python
@@ -188,7 +190,7 @@ fetch-boost: .fetch-boost
 .extract-boost: .fetch-boost
 	$(RM) $(BOOST_BUILD_DIR) $(BOOST_LOG_DIR)
 	$(TAR) -xzf $(BOOST_TARBALL)
-	$(TAR) -xf $(BOOST_LOG_TARBALL)
+	$(UNZIP) $(BOOST_LOG_TARBALL)
 	$(CP) $(BOOST_LOG_DIR)/boost/log $(BOOST_BUILD_DIR)/boost/
 	$(CP) $(BOOST_LOG_DIR)/libs/log $(BOOST_BUILD_DIR)/libs/
 	@$(TOUCH) $@
