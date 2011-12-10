@@ -31,6 +31,9 @@ set(HALMD_TEST_LIBRARIES
 
 set(HALMD_TEST_CMAKE_BINARY_DIR "@CMAKE_BINARY_DIR@/test/cmake")
 
+# path to HALMD executable
+set(HALMD_EXECUTABLE "${CMAKE_BINARY_DIR}/halmd/halmd")
+
 ##
 # HALMD test suite
 #
