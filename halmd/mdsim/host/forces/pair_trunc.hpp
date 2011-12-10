@@ -26,6 +26,7 @@
 #include <lua.hpp>
 #include <string>
 
+#include <halmd/io/logger.hpp>
 #include <halmd/mdsim/box.hpp>
 #include <halmd/mdsim/force_kernel.hpp>
 #include <halmd/mdsim/host/force.hpp>
@@ -55,7 +56,7 @@ public:
 
     typedef host::particle<dimension, float_type> particle_type;
     typedef mdsim::box<dimension> box_type;
-    typedef host::neighbour<dimension, float_type> neighbour_type;
+    typedef host::neighbour neighbour_type;
     typedef host::forces::smooth<dimension, float_type> smooth_type;
 
     inline static void luaopen(lua_State* L);

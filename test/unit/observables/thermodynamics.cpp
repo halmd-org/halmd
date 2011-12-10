@@ -31,7 +31,7 @@
 #include <halmd/mdsim/host/integrators/verlet.hpp>
 #include <halmd/mdsim/host/integrators/verlet_nvt_andersen.hpp>
 #include <halmd/mdsim/host/maximum_squared_displacement.hpp>
-#include <halmd/mdsim/host/neighbour.hpp>
+#include <halmd/mdsim/host/neighbours/from_binning.hpp>
 #include <halmd/mdsim/host/particle.hpp>
 #include <halmd/mdsim/host/positions/lattice.hpp>
 #include <halmd/mdsim/host/potentials/lennard_jones.hpp>
@@ -367,7 +367,7 @@ struct host_modules
     typedef mdsim::host::forces::pair_trunc<dimension, float_type, potential_type> force_type;
     typedef mdsim::host::forces::zero<dimension, float_type> zero_type;
     typedef mdsim::host::binning<dimension, float_type> binning_type;
-    typedef mdsim::host::neighbour<dimension, float_type> neighbour_type;
+    typedef mdsim::host::neighbours::from_binning<dimension, float_type> neighbour_type;
     typedef mdsim::host::maximum_squared_displacement<dimension, float_type> msd_type;
     typedef mdsim::host::integrators::verlet<dimension, float_type> nve_integrator_type;
     typedef mdsim::host::integrators::verlet_nvt_andersen<dimension, float_type> nvt_integrator_type;

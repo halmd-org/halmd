@@ -34,8 +34,8 @@ local log = halmd.log
 -- grab C++ wrappers
 local neighbour_from_binning = {
     host = {
-        [2] = libhalmd.mdsim.host.neighbour_2_
-      , [3] = libhalmd.mdsim.host.neighbour_3_
+        [2] = libhalmd.mdsim.host.neighbours.from_binning_2_
+      , [3] = libhalmd.mdsim.host.neighbours.from_binning_3_
     }
 }
 local neighbour_from_particle = {}
