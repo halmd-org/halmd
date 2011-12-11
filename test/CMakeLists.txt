@@ -31,6 +31,21 @@ set(HALMD_TEST_LIBRARIES
 
 set(HALMD_TEST_CMAKE_BINARY_DIR "@CMAKE_BINARY_DIR@/test/cmake")
 
+# path to HALMD C++ and Lua modules
+#
+# These may be used with the ENVIRONMENT test property if needed:
+#
+# set_property(TEST <test>
+#   PROPERTY ENVIRONMENT "LUA_PATH=${HALMD_LUA_PATH}" "LUA_CPATH=${HALMD_LUA_CPATH}"
+# )
+#
+set(HALMD_LUA_PATH
+  "${CMAKE_BINARY_DIR}/lua/?.lua\;${CMAKE_BINARY_DIR}/lua/?/init.lua"
+)
+set(HALMD_LUA_CPATH
+  "${CMAKE_BINARY_DIR}/halmd/?${CMAKE_SHARED_LIBRARY_SUFFIX}"
+)
+
 ##
 # HALMD test suite
 #
