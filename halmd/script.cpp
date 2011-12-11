@@ -100,9 +100,7 @@ void script::load_library()
     using namespace luabind;
 
     try {
-#ifndef NDEBUG
         scoped_pcall_callback pcall_callback(&traceback);
-#endif
         script_ = call_function<object>(L, "require", "halmd.default");
     }
     catch (luabind::error const& e) {
@@ -147,9 +145,7 @@ void script::options(options_parser& parser)
     // call_function throws an exception
     object options(globals(L)["halmd"]["option"]["get"]);
     try {
-#ifndef NDEBUG
         scoped_pcall_callback pcall_callback(&traceback);
-#endif
         call_function<void>(options, ref(parser));
     }
     catch (luabind::error const& e) {
@@ -168,9 +164,7 @@ void script::parsed(po::variables_map const& vm)
 
     object options(globals(L)["halmd"]["option"]["set"]);
     try {
-#ifndef NDEBUG
         scoped_pcall_callback pcall_callback(&traceback);
-#endif
         call_function<void>(options, vm);
     }
     catch (luabind::error const& e) {
