@@ -27,9 +27,13 @@ local readers = halmd.io.readers
 local writers = halmd.io.writers
 
 --
--- Setup and run simulation
+-- Simple liquid simulation
 --
-local function script()
+local liquid = {_NAME = "liquid"} -- FIXME implement halmd.module("name")
+
+halmd.modules.register(liquid)
+
+function liquid.new(args)
     -- load the device module to log (optional) GPU properties
     device() -- singleton
     -- open (optional) H5MD file and read simulation parameters
@@ -69,4 +73,7 @@ local function script()
     coroutine.yield(sampler:run())
 end
 
-return script
+function liquid.options(desc, globals)
+end
+
+return liquid
