@@ -74,7 +74,7 @@ end
 --
 function set(args)
     for k, v in pairs(args) do
-        if type(v) == "table" then
+        if type(v) == "table" and #v == 0 then
             vm[k] = v
         else
             globals[k] = v
