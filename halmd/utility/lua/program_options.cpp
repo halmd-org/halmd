@@ -49,6 +49,12 @@ static po::extended_typed_value<vector<T> >* po_composing_value()
     return po::value<vector<T> >()->composing();
 }
 
+template <typename T>
+static po::extended_typed_value<T>* po_default_value(po::extended_typed_value<T>* semantic, T const& value)
+{
+    return semantic->default_value(value);
+}
+
 static po::extended_typed_value<bool>* po_bool_switch()
 {
     return po::bool_switch();
@@ -174,57 +180,68 @@ HALMD_LUA_API int luaopen_libhalmd_utility_lua_program_options(lua_State* L)
                 .def("notifier", &po_notifier<int>)
                 .def("conflicts", &po::extended_typed_value<int>::conflicts)
                 .def("depends", &po::extended_typed_value<int>::depends)
+                .def("default", &po_default_value<int>)
 
           , class_<po::extended_typed_value<unsigned int>, po::value_semantic>("typed_value_uint")
                 .def("notifier", &po_notifier<unsigned int>)
                 .def("conflicts", &po::extended_typed_value<unsigned int>::conflicts)
                 .def("depends", &po::extended_typed_value<unsigned int>::depends)
+                .def("default", &po_default_value<unsigned int>)
 
           , class_<po::extended_typed_value<int64_t>, po::value_semantic>("typed_value_int64")
                 .def("notifier", &po_notifier<int64_t>)
                 .def("conflicts", &po::extended_typed_value<int64_t>::conflicts)
                 .def("depends", &po::extended_typed_value<int64_t>::depends)
+                .def("default", &po_default_value<int64_t>)
 
           , class_<po::extended_typed_value<uint64_t>, po::value_semantic>("typed_value_uint64")
                 .def("notifier", &po_notifier<uint64_t>)
                 .def("conflicts", &po::extended_typed_value<uint64_t>::conflicts)
                 .def("depends", &po::extended_typed_value<uint64_t>::depends)
+                .def("default", &po_default_value<uint64_t>)
 
           , class_<po::extended_typed_value<double>, po::value_semantic>("typed_value_float")
                 .def("notifier", &po_notifier<double>)
                 .def("conflicts", &po::extended_typed_value<double>::conflicts)
                 .def("depends", &po::extended_typed_value<double>::depends)
+                .def("default", &po_default_value<double>)
 
           , class_<po::extended_typed_value<string>, po::value_semantic>("typed_value_string")
                 .def("notifier", &po_notifier<string>)
                 .def("conflicts", &po::extended_typed_value<string>::conflicts)
                 .def("depends", &po::extended_typed_value<string>::depends)
                 .def("choices", &po_choices<string>)
+                .def("default", &po_default_value<string>)
 
           , class_<po::extended_typed_value<multi_array<int, 1> >, po::value_semantic>("typed_value_int_array")
                 .def("notifier", &po_notifier<multi_array<int, 1> >)
                 .def("conflicts", &po::extended_typed_value<multi_array<int, 1> >::conflicts)
                 .def("depends", &po::extended_typed_value<multi_array<int, 1> >::depends)
+                .def("default", &po_default_value<multi_array<int, 1> >)
 
           , class_<po::extended_typed_value<multi_array<unsigned int, 1> >, po::value_semantic>("typed_value_uint_array")
                 .def("notifier", &po_notifier<multi_array<unsigned int, 1> >)
                 .def("conflicts", &po::extended_typed_value<multi_array<unsigned int, 1> >::conflicts)
                 .def("depends", &po::extended_typed_value<multi_array<unsigned int, 1> >::depends)
+                .def("default", &po_default_value<multi_array<unsigned int, 1> >)
 
           , class_<po::extended_typed_value<multi_array<int64_t, 1> >, po::value_semantic>("typed_value_int64_array")
                 .def("notifier", &po_notifier<multi_array<int64_t, 1> >)
                 .def("conflicts", &po::extended_typed_value<multi_array<int64_t, 1> >::conflicts)
                 .def("depends", &po::extended_typed_value<multi_array<int64_t, 1> >::depends)
+                .def("default", &po_default_value<multi_array<int64_t, 1> >)
 
           , class_<po::extended_typed_value<multi_array<uint64_t, 1> >, po::value_semantic>("typed_value_uint64_array")
                 .def("notifier", &po_notifier<multi_array<uint64_t, 1> >)
                 .def("conflicts", &po::extended_typed_value<multi_array<uint64_t, 1> >::conflicts)
                 .def("depends", &po::extended_typed_value<multi_array<uint64_t, 1> >::depends)
+                .def("default", &po_default_value<multi_array<uint64_t, 1> >)
 
           , class_<po::extended_typed_value<multi_array<double, 1> >, po::value_semantic>("typed_value_float_array")
                 .def("notifier", &po_notifier<multi_array<double, 1> >)
                 .def("conflicts", &po::extended_typed_value<multi_array<double, 1> >::conflicts)
                 .def("depends", &po::extended_typed_value<multi_array<double, 1> >::depends)
+                .def("default", &po_default_value<multi_array<double, 1> >)
 
           , class_<po::extended_typed_value<vector<int> >, po::value_semantic>("typed_composing_value_int")
                 .def("notifier", &po_notifier<vector<int> >)
