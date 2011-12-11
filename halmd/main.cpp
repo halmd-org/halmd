@@ -41,8 +41,8 @@ using namespace std;
  * Run HAL’s MD package
  *
  * This function loads the Lua scripting engine, parses program options
- * from the command line and optionally a config file, sets up logging,
- * and runs the Lua simulation script.
+ * from the command line, sets up logging, and runs the Lua simulation
+ * script.
  */
 int main(int argc, char **argv)
 {
@@ -83,8 +83,6 @@ int main(int argc, char **argv)
                  )
              ),
              "prefix of output files")
-            ("config,c", po::value<string>(),
-             "parameter input file")
             ("verbose,v", po::accum_value<int>()->default_value(logging::warning),
              "increase verbosity")
             ("version",
@@ -94,14 +92,10 @@ int main(int argc, char **argv)
             ;
 
         //
-        // parse program options from command line and config file
+        // parse program options from command line
         //
         try {
             parser.parse_command_line(argc, argv, vm);
-
-            if (vm.count("config")) {
-                parser.parse_config_file(vm["config"].as<string>(), vm);
-            }
         }
         catch (po::error const& e) {
             cerr << PROGRAM_NAME ": " << e.what() << endl;
