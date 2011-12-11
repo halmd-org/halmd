@@ -17,13 +17,24 @@
 -- along with this program.  If not, see <http://www.gnu.org/licenses/>.
 --
 
+require("halmd.device")
 require("halmd.mdsim.box")
 require("halmd.modules")
 
 -- grab modules
+local device = halmd.device
 local mdsim = halmd.mdsim
 -- grab C++ wrappers
-local excluded_volume_wrapper = assert(libhalmd.mdsim.positions.excluded_volume)
+local excluded_volume_wrapper = {
+    [3] = {
+        double = assert(libhalmd.mdsim.positions.excluded_volume_3_double)
+      , float = assert(libhalmd.mdsim.positions.excluded_volume_3_float)
+    }
+  , [2] = {
+        double = assert(libhalmd.mdsim.positions.excluded_volume_2_double)
+      , float = assert(libhalmd.mdsim.positions.excluded_volume_2_float)
+    }
+}
 -- grab standard library
 local assert = assert
 local class_info = class_info
@@ -33,16 +44,18 @@ module("halmd.mdsim.positions.excluded_volume", halmd.modules.register)
 
 function new(args)
     -- parameters
-    local samples = assert(args.samples, "missing parameter: samples")
-    local diameters = assert(args.diameters, "missing parameter: diameters")
     local cell_length = args.cell_length or 1 -- default value
     -- dependencies
     local box = mdsim.box() -- singleton
+    local dimension = assert(box.dimension)
     local logger = assert(args.logger)
 
-    local excluded_volume = excluded_volume_wrapper(box, cell_length, logger, samples[1])
-    for i = 1, #samples do
-        excluded_volume:exclude_spheres(samples[i], diameters[i])
+    local excluded_volume
+    -- FIXME query precision from HALMD C++ library
+    if device() then
+        excluded_volume = assert(excluded_volume_wrapper[dimension].float)
+    else
+        excluded_volume = assert(excluded_volume_wrapper[dimension].double)
     end
-    return excluded_volume
+    return excluded_volume(box, cell_length, logger)
 end

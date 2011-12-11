@@ -33,8 +33,13 @@ return function()
         memory = "host"
       , particle = particle
     }
-    halmd.mdsim.positions.excluded_volume{
-        samples = {sample}
-      , diameters = {{1}}
-    }
+    local excluded = halmd.mdsim.positions.excluded_volume{}
+    excluded:exclude_sphere({3, 3, 3}, 1)
+    assert(not excluded:place_sphere({3, 3, 3}, 1))
+    assert(excluded:place_sphere({4, 4, 4}, 1))
+    assert(excluded:place_sphere({4, 4, 4}, 2 * math.sqrt(3) - 1))
+    assert(not excluded:place_sphere({4, 4, 4}, 2.00001 * math.sqrt(3) - 1))
+    excluded:exclude_sphere({4, 4, 4}, 1)
+    assert(not excluded:place_sphere({4, 4, 4}, 1))
+    excluded:exclude_sphere({3, 3, 3}, 10)
 end

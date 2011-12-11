@@ -64,13 +64,39 @@ public:
     bool place_sphere(
         vector_type const& centre
       , float_type diameter
-    );
+    ) const;
 
 private:
+    typedef std::pair<vector_type, float_type> sphere_type;
+    typedef fixed_vector<unsigned int, dimension> index_type;
+    typedef std::pair<index_type, index_type> index_pair_type;
+    typedef std::vector<sphere_type> cell_type;
+
+    index_pair_type sphere_extents(
+        vector_type const& centre
+      , float_type diameter
+    ) const;
+    void exclude_sphere_from_cell(
+        vector_type const& centre
+      , float_type diameter
+      , index_type const& index
+    );
+    bool place_cell(
+        vector_type const& centre
+      , float_type diameter
+      , index_type const& index
+    ) const;
+
     /** simulation box */
     boost::shared_ptr<box_type const> box_;
     /** module logger */
     boost::shared_ptr<logger_type> logger_;
+    /** number of cells per dimension */
+    index_type ncell_;
+    /** cell edge length per dimension */
+    vector_type cell_length_;
+    /** n-dimensional cells with excluded spheres */
+    boost::multi_array<cell_type, dimension> cell_;
 };
 
 } // namespace mdsim
