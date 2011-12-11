@@ -27,17 +27,19 @@ package.cpath = "@CMAKE_BINARY_DIR@/halmd/?@CMAKE_SHARED_LIBRARY_SUFFIX@"
 local halmd = require("halmd")
 
 -- load the device module to log (optional) GPU properties
-halmd.device() -- singleton
+halmd.device{} -- singleton
+-- create system state
+local particle = halmd.mdsim.particle{particles = {1000}, masses = {1}, label = {"A"}, dimension = 3}
 -- create simulation box with particles
-halmd.mdsim.box()
+halmd.mdsim.box{particles = {particle}, dimension = 3, length = {10, 10, 10}}
 -- add integrator
-halmd.mdsim.integrator()
+halmd.mdsim.integrator{particle = particle}
 -- add force
-halmd.mdsim.force()
+halmd.mdsim.force{particle = particle}
 -- set initial particle positions
-halmd.mdsim.position()
+halmd.mdsim.position{particle = particle}
 -- set initial particle velocities
-halmd.mdsim.velocity()
+halmd.mdsim.velocity{particle = particle}
 
 -- Construct sampler.
 local sampler = halmd.observables.sampler{steps = 100}
