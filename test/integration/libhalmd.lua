@@ -21,8 +21,6 @@
 -- This test ensures that libhalmd.so fulfills the requirement of a binary
 -- Lua extension module, i.e. is loadable from the upstream Lua interpreter.
 --
-package.path = "@CMAKE_BINARY_DIR@/lua/?.lua;@CMAKE_BINARY_DIR@/lua/?/init.lua"
-package.cpath = "@CMAKE_BINARY_DIR@/halmd/?@CMAKE_SHARED_LIBRARY_SUFFIX@"
 
 local halmd = require("halmd")
 
