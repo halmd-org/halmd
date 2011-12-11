@@ -41,7 +41,6 @@ class script
 public:
     script();
     void dofile(std::string const& file_name);
-    void load_library();
     void options(options_parser& parser);
     void parsed(po::variables_map const& vm);
     void run();

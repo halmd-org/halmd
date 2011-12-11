@@ -92,24 +92,6 @@ void script::package_path()
     lua_pop(L, 1);
 }
 
-/**
- * Load HALMD Lua library
- */
-void script::load_library()
-{
-    using namespace luabind;
-
-    try {
-        scoped_pcall_callback pcall_callback(&traceback);
-        script_ = call_function<object>(L, "require", "halmd.default");
-    }
-    catch (luabind::error const& e) {
-        LOG_ERROR(lua_tostring(L, -1));
-        lua_pop(L, 1); //< remove error message
-        throw;
-    }
-}
-
 /*
  * Load and execute Lua script
  */

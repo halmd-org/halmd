@@ -54,7 +54,7 @@ int main(int argc, char **argv)
         //
         options_parser parser;
         parser.add_options()
-            ("script", po::value<string>(), "HALMD script file")
+            ("script", po::value<string>()->required(), "HALMD script file")
             ;
 
         po::variables_map vm;
@@ -67,12 +67,7 @@ int main(int argc, char **argv)
             return EXIT_FAILURE;
         }
 
-        if (vm.count("script")) {
-            script.dofile(vm["script"].as<string>());
-        }
-        else {
-            script.load_library();
-        }
+        script.dofile(vm["script"].as<string>());
 
         script.options(parser);
 
