@@ -18,7 +18,6 @@
 --
 
 require("halmd.device")
-require("halmd.mdsim.particle")
 require("halmd.modules")
 require("halmd.numeric.matrix")
 

@@ -23,7 +23,6 @@ require("halmd.mdsim.binning")
 require("halmd.mdsim.box")
 require("halmd.mdsim.core")
 require("halmd.mdsim.maximum_squared_displacement")
-require("halmd.mdsim.particle")
 require("halmd.mdsim.sort")
 require("halmd.modules")
 

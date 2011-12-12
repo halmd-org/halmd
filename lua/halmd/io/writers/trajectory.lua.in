@@ -19,7 +19,6 @@
 
 require("halmd.io.writers.file")
 require("halmd.mdsim.box")
-require("halmd.mdsim.particle")
 require("halmd.modules")
 require("halmd.observables.phase_space")
 require("halmd.observables.sampler")

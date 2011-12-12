@@ -20,7 +20,6 @@
 require("halmd.device")
 require("halmd.mdsim.box")
 require("halmd.mdsim.core")
-require("halmd.mdsim.particle")
 require("halmd.modules")
 require("halmd.random")
 

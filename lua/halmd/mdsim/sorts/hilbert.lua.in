@@ -21,7 +21,6 @@ require("halmd.device")
 require("halmd.mdsim.binning")
 require("halmd.mdsim.box")
 require("halmd.mdsim.core")
-require("halmd.mdsim.particle")
 require("halmd.modules")
 
 -- grab modules

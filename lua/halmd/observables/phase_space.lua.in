@@ -19,7 +19,6 @@
 
 require("halmd.mdsim.box")
 require("halmd.mdsim.clock")
-require("halmd.mdsim.particle")
 require("halmd.modules")
 require("halmd.observables.samples.phase_space")
 

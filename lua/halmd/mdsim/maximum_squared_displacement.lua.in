@@ -19,7 +19,6 @@
 
 require("halmd.device")
 require("halmd.mdsim.box")
-require("halmd.mdsim.particle")
 require("halmd.modules")
 
 -- grab modules

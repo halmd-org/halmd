@@ -22,7 +22,6 @@ require("halmd.mdsim.box")
 require("halmd.mdsim.clock")
 require("halmd.mdsim.core")
 require("halmd.mdsim.forces.zero")
-require("halmd.mdsim.particle")
 require("halmd.modules")
 
 -- grab modules
