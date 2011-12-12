@@ -22,7 +22,6 @@ require("halmd.mdsim.box")
 require("halmd.mdsim.clock")
 require("halmd.mdsim.core")
 require("halmd.mdsim.forces.zero")
-require("halmd.mdsim.particle")
 require("halmd.modules")
 require("halmd.random")
 
@@ -54,11 +53,11 @@ module("halmd.mdsim.integrators.verlet_nvt_andersen", halmd.modules.register)
 -- construct verlet_nvt_andersen module
 --
 function new(args)
+    local particle = assert(args.particle, "missing parameter: particle")
     local temperature = args.temperature or 1.12 -- default value
     local collision_rate = args.collision_rate or 10 -- default value
 
     -- dependency injection
-    local particle = mdsim.particle() -- singleton
     local dimension = assert(particle.dimension)
     local box = mdsim.box() -- singleton
     local random = assert(random())
