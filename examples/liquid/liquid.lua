@@ -25,6 +25,8 @@ local mdsim = halmd.mdsim
 local observables = halmd.observables
 local readers = halmd.io.readers
 local writers = halmd.io.writers
+-- grab C++ library
+local po = libhalmd.po
 
 --
 -- Simple liquid simulation
@@ -35,36 +37,64 @@ halmd.modules.register(liquid)
 
 function liquid.new(args)
     -- load the device module to log (optional) GPU properties
-    device() -- singleton
+    device{} -- singleton
     -- open (optional) H5MD file and read simulation parameters
-    local reader = readers.trajectory()
+    local reader = readers.trajectory{}
 
-    -- create simulation box with particles
-    mdsim.box()
+    -- label particles A, B, …
+
+    -- create system state
+    local particle = mdsim.particle{
+        particles = assert(args.particles)
+      , masses = assert(args.masses)
+      , dimension = assert(args.dimension)
+      , label = (function()
+          -- generate labels "A", "B", "C", … according to number of species
+          local label = {}
+          for i = 1, #args.particles do
+              label[i] = string.char(string.byte("A") + i - 1)
+          end
+          return label
+      end)()
+    }
+    -- create simulation box
+    mdsim.box{
+        particles = {particle}
+    }
     -- add integrator
-    mdsim.integrator()
+    mdsim.integrator{
+        particle = particle
+    }
     -- add force
-    local force = mdsim.force()
+    local force = mdsim.force{
+        particle = particle
+    }
     -- set initial particle positions (optionally from reader)
-    mdsim.position{reader = reader}
+    mdsim.position{
+        reader = reader
+      , particle = particle
+    }
     -- set initial particle velocities (optionally from reader)
-    mdsim.velocity{reader = reader}
+    mdsim.velocity{
+        reader = reader
+      , particle = particle
+    }
 
     -- Construct sampler.
-    local sampler = observables.sampler()
+    local sampler = observables.sampler{}
 
     -- Write trajectory to H5MD file.
-    writers.trajectory{}
+    writers.trajectory{particle = particle, group = "liquid"}
     -- Sample macroscopic state variables.
-    observables.thermodynamics{force = force}
+    observables.thermodynamics{particle = particle, force = force}
     -- Sample static structure factor.
-    observables.ssf{}
+    observables.ssf{particle = particle}
     -- compute mean-square displacement
-    observables.dynamics.correlation{correlation = "mean_square_displacement"}
+    observables.dynamics.correlation{particle = particle, correlation = "mean_square_displacement"}
     -- compute mean-quartic displacement
-    observables.dynamics.correlation{correlation = "mean_quartic_displacement"}
+    observables.dynamics.correlation{particle = particle, correlation = "mean_quartic_displacement"}
     -- compute velocity autocorrelation
-    observables.dynamics.correlation{correlation = "velocity_autocorrelation"}
+    observables.dynamics.correlation{particle = particle, correlation = "velocity_autocorrelation"}
 
     -- yield sampler.setup slot from Lua to C++ to setup simulation box
     coroutine.yield(sampler:setup())
@@ -74,6 +104,13 @@ function liquid.new(args)
 end
 
 function liquid.options(desc, globals)
+    globals:add("particles", po.uint_array():default({1000}), "number of particles")
+    globals:add("masses", po.uint_array():default({1}), "particle masses")
+    globals:add("dimension", po.uint():default(3):notifier(function(value)
+        if value ~= 2 and value ~= 3 then
+            error(("invalid dimension '%d'"):format(value), 0)
+        end
+    end), "dimension of positional coordinates")
 end
 
 return liquid
