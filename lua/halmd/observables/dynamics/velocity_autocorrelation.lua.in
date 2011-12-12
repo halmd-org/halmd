@@ -40,19 +40,17 @@ module("halmd.observables.dynamics.correlations.velocity_autocorrelation", halmd
 -- @returns instance of vac module, instance of phase space sample
 --
 function new(args)
-    -- obtain appropriate phase space sample
+    local particle = assert(args.particle)
+
+    -- obtain phase space sampler
     local backend = device() and not args.disable_gpu and "gpu" or "host"
-    local sample = observables.samples.phase_space{memory = backend}
-    local dimension = assert(sample.dimension)
+    local phase_space = observables.phase_space{particle = particle, memory = backend}
+    local sample = assert(phase_space.sample)
+
     -- construct vac module
     local vac = assert(vac_wrapper)(sample)
 
-    -- extend vac module with read-only sample property
-    vac.sample = property(function(self)
-        return sample
-    end)
-    -- obtain phase space sampler
-    local phase_space = observables.phase_space{memory = backend}
+    -- add phase space sampler as read-only property
     vac.sampler = property(function(self)
         return phase_space
     end)

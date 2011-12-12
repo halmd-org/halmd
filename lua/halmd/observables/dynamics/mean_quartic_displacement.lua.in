@@ -40,19 +40,17 @@ module("halmd.observables.dynamics.correlations.mean_quartic_displacement", halm
 -- @returns instance of mqd module, instance of phase space sample
 --
 function new(args)
-    -- obtain appropriate phase space sample
+    local particle = assert(args.particle)
+
+    -- obtain phase space sampler
     local backend = device() and not args.disable_gpu and "gpu" or "host"
-    local sample = observables.samples.phase_space{memory = backend}
-    local dimension = assert(sample.dimension)
+    local phase_space = observables.phase_space{particle = particle, memory = backend}
+    local sample = assert(phase_space.sample)
+
     -- construct mqd module
     local mqd = assert(mqd_wrapper)(sample)
 
-    -- extend mqd module with read-only sample property
-    mqd.sample = property(function(self)
-        return sample
-    end)
-    -- obtain phase space sampler
-    local phase_space = observables.phase_space{memory = backend}
+    -- add phase space sampler as read-only property
     mqd.sampler = property(function(self)
         return phase_space
     end)

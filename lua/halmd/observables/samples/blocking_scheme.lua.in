@@ -35,12 +35,11 @@ local block_samples = {}
 -- construct blocking_scheme module
 --
 -- @param args    parameter table
---   args.sample  sample module, the pointer serves as index to the list of singletons
 --   args.sampler sampler module that acquires sample
 --
 function new(args)
-    local sample = assert(args.sample)
     local sampler = assert(args.sampler)
+    local sample = assert(sampler.sample)
 
     local block_sample = block_samples[sample]
     if not block_sample then
