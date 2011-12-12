@@ -58,15 +58,17 @@ function new(args)
     -- dependency injection
     local wavevector = assert(args.wavevector)
     local clock = mdsim.clock() -- singleton
-
-    local sample
-    if device() then
-        sample = assert(observables.samples.phase_space{memory = "gpu"})
-    else
-        sample = assert(observables.samples.phase_space{memory = "host"})
-    end
-    local dimension = assert(sample.dimension)
+    local particle = assert(args.particle, "missing parameter: particle")
     local logger = assert(args.logger)
+
+    local phase_space
+    if device() then
+        phase_space = observables.phase_space{particle = particle, memory = "gpu"}
+    else
+        phase_space = observables.phase_space{particle = particle, memory = "host"}
+    end
+    local sample = assert(phase_space.sample)
+    local dimension = assert(sample.dimension)
 
     local density_mode
     if device() then
@@ -75,13 +77,6 @@ function new(args)
         density_mode = assert(density_mode_wrapper.host[dimension])
     end
     local observable = density_mode(sample, wavevector, clock, logger)
-
-    local phase_space
-    if device() then
-        phase_space = assert(observables.phase_space{memory = "gpu"})
-    else
-        phase_space = assert(observables.phase_space{memory = "host"})
-    end
 
     -- acquire phase space before acquiring density modes
     observable:on_acquire(phase_space.acquire)
