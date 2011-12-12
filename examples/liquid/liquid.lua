@@ -39,7 +39,7 @@ function liquid.new(args)
     -- load the device module to log (optional) GPU properties
     device{} -- singleton
     -- open (optional) H5MD file and read simulation parameters
-    local reader = readers.trajectory{}
+    local reader = readers.trajectory{group = "liquid"}
 
     -- label particles A, B, …
 
