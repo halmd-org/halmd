@@ -198,7 +198,7 @@ end
 --
 function read_parameters(args, group)
     args.skin = group:read_attribute("skin", h5.float())
-    if neighbour_from_binning.gpu then
+    if neighbours.from_binning.gpu then
         args.occupancy = group:read_attribute("occupancy", h5.float())
     end
 end
