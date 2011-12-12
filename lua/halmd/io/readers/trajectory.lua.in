@@ -47,6 +47,7 @@ local reader
 --
 function new(args)
     if reader then
+        local group = assert(args.group)
         local time = args.time
         local step = args.step or -1 --default value
 
@@ -86,25 +87,28 @@ function new(args)
         end
 
         -- connect position data slots of phase space sample for reading
-        local sample
-        reader.position = property(function(self)
+        local samples = {}
+        reader.position = function(self, particle)
+            local sample = samples[particle]
             if not sample then
-                sample = observables.samples.phase_space{memory = "host"}
-                self:on_read(sample.position, {"position"})
-                self:on_read(sample.types, {"species"})
+                sample = observables.samples.phase_space{particle = particle, memory = "host"}
+                self:on_read(sample.position, {group, "position"})
+                self:on_read(sample.types, {group, "species"})
+                samples[particle] = sample
             end
             return sample
-        end)
+        end
 
         -- connect velocity data slots of phase space sample for reading
-        local sample
-        reader.velocity = property(function(self)
+        reader.velocity = function(self, particle)
+            local sample = samples[particle]
             if not sample then
-                sample = observables.samples.phase_space{memory = "host"}
-                self:on_read(sample.velocity, {"velocity"})
+                sample = observables.samples.phase_space{particle = particle, memory = "host"}
+                self:on_read(sample.velocity, {group, "velocity"})
+                samples[particle] = sample
             end
             return sample
-        end)
+        end
 
         return reader
     end

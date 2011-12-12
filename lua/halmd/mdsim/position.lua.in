@@ -39,7 +39,7 @@ function new(args)
     local position = args.position or "lattice" -- default value
     local reader = args.reader
     if reader and not args.position then
-        return positions.phase_space{particle = particle, sample = reader.position}
+        return positions.phase_space{particle = particle, sample = reader:position(particle)}
     end
     return positions[position]{particle = particle}
 end
