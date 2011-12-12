@@ -50,6 +50,7 @@ endif()
 
 # FIXME add third particle species with N=1 once supported, see commit 1f91762
 execute_halmd(
+  --script "@CMAKE_SOURCE_DIR@/examples/liquid/liquid.lua"
   --verbose
   --output "${OUTPUT_PREFIX}"
   --steps 500
@@ -60,6 +61,7 @@ execute_halmd(
 )
 
 execute_halmd(
+  --script "@CMAKE_SOURCE_DIR@/examples/liquid/liquid.lua"
   --verbose
   --output "${OUTPUT_PREFIX}_continued"
   --time 2

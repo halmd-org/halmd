@@ -48,6 +48,7 @@ else()
 endif()
 
 execute_halmd(
+  --script "@CMAKE_SOURCE_DIR@/examples/liquid/liquid.lua"
   --verbose
   --output "${OUTPUT_PREFIX}"
   --steps 1000
@@ -56,6 +57,7 @@ execute_halmd(
 )
 
 execute_halmd(
+  --script "@CMAKE_SOURCE_DIR@/examples/liquid/liquid.lua"
   --verbose
   --output "${OUTPUT_PREFIX}_continued"
   --steps 1000
