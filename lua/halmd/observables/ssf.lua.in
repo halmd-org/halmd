@@ -56,10 +56,10 @@ function new(args)
     local decimation = args.decimation or 10 -- default value
     local tolerance = args.tolerance or 0.01 -- default value
     local max_count = args.max_count or 7 -- default value
+    local particle = assert(args.particle, "missing parameter: particle")
 
     -- dependency injection
     local clock = mdsim.clock() -- singleton
-    local particle = mdsim.particle() -- singleton
     local dimension = assert(particle.dimension)
     local logger = assert(args.logger)
 
@@ -81,7 +81,7 @@ function new(args)
     end
 
     -- construct density_mode module
-    local density_mode = assert(observables.density_mode{wavevector = wavevector})
+    local density_mode = observables.density_mode{particle = particle, wavevector = wavevector}
     -- FIXME density modes per species
     local density_modes = {density_mode}
 
