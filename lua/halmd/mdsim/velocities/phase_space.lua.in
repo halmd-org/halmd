@@ -19,7 +19,6 @@
 
 require("halmd.device")
 require("halmd.mdsim.core")
-require("halmd.mdsim.particle")
 require("halmd.modules")
 
 -- grab modules
@@ -51,7 +50,7 @@ module("halmd.mdsim.velocities.phase_space", halmd.modules.register)
 --
 function new(args)
     -- dependency injection
-    local particle = mdsim.particle() -- singleton
+    local particle = assert(args.particle, "missing parameter: particle")
     local dimension = assert(particle.dimension)
     local sample = assert(args.sample)
     local logger = assert(args.logger)
