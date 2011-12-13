@@ -57,27 +57,15 @@ function thermostat.new(args)
       end)()
     }
     -- create simulation box
-    mdsim.box{
-        particles = {particle}
-    }
+    mdsim.box{particles = {particle}}
     -- add integrator
-    local thermostat = mdsim.integrators.verlet_nvt_andersen{
-        particle = particle
-    }
+    local thermostat = mdsim.integrators.verlet_nvt_andersen{particle = particle}
     -- add force
-    local force = mdsim.force{
-        particle = particle
-    }
+    local force = mdsim.force{particle = particle}
     -- set initial particle positions (optionally from reader)
-    mdsim.position{
-        reader = reader
-      , particle = particle
-    }
+    mdsim.position{reader = reader, particle = particle}
     -- set initial particle velocities (optionally from reader)
-    mdsim.velocity{
-        reader = reader
-      , particle = particle
-    }
+    mdsim.velocity{reader = reader, particle = particle}
 
     -- Construct sampler.
     local sampler = observables.sampler{}
