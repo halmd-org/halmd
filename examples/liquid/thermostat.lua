@@ -39,7 +39,8 @@ function thermostat.new(args)
     -- load the device module to log (optional) GPU properties
     device{} -- singleton
     -- open (optional) H5MD file and read simulation parameters
-    local reader = readers.trajectory{group = "liquid"}
+    -- FIXME support reading multiple species groups into single particle
+    local reader = readers.trajectory{group = "A"}
 
     -- create system state
     local particle = mdsim.particle{
@@ -82,7 +83,8 @@ function thermostat.new(args)
     local sampler = observables.sampler{}
 
     -- Write trajectory to H5MD file.
-    writers.trajectory{particle = particle, group = "liquid"}
+    -- FIXME support filtering of particles by species
+    writers.trajectory{particle = particle, group = "A"}
     -- Sample macroscopic state variables.
     observables.thermodynamics{particle = particle, force = force}
 
