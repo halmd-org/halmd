@@ -296,7 +296,7 @@ env-luabind:
 ## HDF5 C++ library
 ##
 
-HDF5_VERSION = 1.8.7
+HDF5_VERSION = 1.8.8
 HDF5_TARBALL = hdf5-$(HDF5_VERSION).tar.bz2
 HDF5_TARBALL_URL = http://www.hdfgroup.org/ftp/HDF5/current/src/$(HDF5_TARBALL)
 HDF5_BUILD_DIR = hdf5-$(HDF5_VERSION)
