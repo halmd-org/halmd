@@ -354,7 +354,7 @@ env-hdf5:
 ## Git version control
 ##
 
-GIT_VERSION = 1.7.7.3
+GIT_VERSION = 1.7.8
 GIT_TARBALL = git-$(GIT_VERSION).tar.gz
 GIT_MANPAGES_TARBALL = git-manpages-$(GIT_VERSION).tar.gz
 GIT_TARBALL_URL = http://git-core.googlecode.com/files/$(GIT_TARBALL)
