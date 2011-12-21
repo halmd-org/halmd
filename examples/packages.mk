@@ -114,18 +114,15 @@ env-cmake:
 ## Lua
 ##
 
-LUA_VERSION = 5.1.4
+LUA_VERSION = 5.2.0
 LUA_TARBALL = lua-$(LUA_VERSION).tar.gz
 LUA_TARBALL_URL = http://www.lua.org/ftp/$(LUA_TARBALL)
-LUA_PATCH = patch-lua-5.1.4-2
-LUA_PATCH_URL = http://www.lua.org/ftp/$(LUA_PATCH)
 LUA_BUILD_DIR = lua-$(LUA_VERSION)
 LUA_INSTALL_DIR = $(PREFIX)/lua-$(LUA_VERSION)
 LUA_CFLAGS = -DLUA_USE_LINUX -fPIC -O2 -Wall
 
 .fetch-lua:
 	$(WGET) $(LUA_TARBALL_URL)
-	$(WGET) $(LUA_PATCH_URL)
 	@$(TOUCH) $@
 
 fetch-lua: .fetch-lua
@@ -133,7 +130,6 @@ fetch-lua: .fetch-lua
 .extract-lua: .fetch-lua
 	$(RM) $(LUA_BUILD_DIR)
 	$(TAR) -xzf $(LUA_TARBALL)
-	cd $(LUA_BUILD_DIR)/src && $(PATCH) -p0 < $(CURDIR)/$(LUA_PATCH)
 	@$(TOUCH) $@
 
 extract-lua: .extract-lua
@@ -155,7 +151,6 @@ clean-lua:
 distclean-lua: clean-lua
 	@$(RM) .fetch-lua
 	$(RM) $(LUA_TARBALL)
-	$(RM) $(LUA_PATCH)
 
 env-lua:
 	@echo
