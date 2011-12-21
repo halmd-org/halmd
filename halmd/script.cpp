@@ -229,7 +229,11 @@ void script::run()
     do {
         // if Lua function is on top of the stack, create a new coroutine
         // from it, otherwise resume execution of the existing coroutine
+#if LUA_VERSION_NUM < 502
         status = lua_resume(L, 0);
+#else
+        status = lua_resume(L, NULL, 0);
+#endif
 
         // lua_resume returns
         //  - 0 if the function has returned successfully
