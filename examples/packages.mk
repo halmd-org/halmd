@@ -230,30 +230,22 @@ env-boost:
 ## Luabind library with Clang C++ compiler fix
 ##
 
-LUABIND_VERSION = 0.9.1
-LUABIND_TARBALL = luabind-$(LUABIND_VERSION).tar.gz
-LUABIND_TARBALL_URL = http://sourceforge.net/projects/luabind/files/luabind/$(LUABIND_VERSION)/$(LUABIND_TARBALL)
-LUABIND_CLANG_PATCH = luabind_proper_forward_declarations_for_clang.patch
-LUABIND_CLANG_PATCH_URL = http://sourceforge.net/projects/halmd/files/patches/$(LUABIND_CLANG_PATCH)
-LUABIND_CAST_GRAPH_CACHE_PATCH = luabind_cast_graph_cache_invalid_cast_fix.patch
-LUABIND_CAST_GRAPH_CACHE_PATCH_URL = http://sourceforge.net/projects/halmd/files/patches/$(LUABIND_CAST_GRAPH_CACHE_PATCH)
+LUABIND_VERSION = 0.9.1-23-g13691e6
+LUABIND_TARBALL = luabind-$(LUABIND_VERSION).tar.bz2
+LUABIND_TARBALL_URL = http://sourceforge.net/projects/halmd/files/libs/luabind/$(LUABIND_TARBALL)
 LUABIND_BUILD_DIR = luabind-$(LUABIND_VERSION)
 LUABIND_BUILD_FLAGS = cxxflags=-fPIC link=static variant=release variant=debug
 LUABIND_INSTALL_DIR = $(PREFIX)/luabind-$(LUABIND_VERSION)
 
 .fetch-luabind:
 	$(WGET) $(LUABIND_TARBALL_URL)
-	$(WGET) $(LUABIND_CLANG_PATCH_URL)
-	$(WGET) $(LUABIND_CAST_GRAPH_CACHE_PATCH_URL)
 	@$(TOUCH) $@
 
 fetch-luabind: .fetch-luabind
 
 .extract-luabind: .fetch-luabind .build-lua
 	$(RM) $(LUABIND_BUILD_DIR)
-	$(TAR) -xzf $(LUABIND_TARBALL)
-	cd $(LUABIND_BUILD_DIR) && $(PATCH) -p1 < $(CURDIR)/$(LUABIND_CLANG_PATCH)
-	cd $(LUABIND_BUILD_DIR) && $(PATCH) -p1 < $(CURDIR)/$(LUABIND_CAST_GRAPH_CACHE_PATCH)
+	$(TAR) -xjf $(LUABIND_TARBALL)
 	mkdir $(LUABIND_BUILD_DIR)/lua
 	ln -s $(CURDIR)/$(LUA_BUILD_DIR)/src $(LUABIND_BUILD_DIR)/lua/include
 	ln -s $(CURDIR)/$(LUA_BUILD_DIR)/src $(LUABIND_BUILD_DIR)/lua/lib
@@ -278,8 +270,6 @@ clean-luabind:
 distclean-luabind: clean-luabind
 	@$(RM) .fetch-luabind
 	$(RM) $(LUABIND_TARBALL)
-	$(RM) $(LUABIND_CLANG_PATCH)
-	$(RM) $(LUABIND_CAST_GRAPH_CACHE_PATCH)
 
 env-luabind:
 	@echo
