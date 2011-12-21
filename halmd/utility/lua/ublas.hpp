@@ -52,7 +52,11 @@ struct default_converter<boost::numeric::ublas::unbounded_array<T, A> >
     //! convert from Lua to C++
     boost::numeric::ublas::unbounded_array<T, A> from(lua_State* L, int index)
     {
-        std::size_t size = luaL_getn(L, index);
+#if LUA_VERSION_NUM < 502
+        std::size_t size = lua_objlen(L, index);
+#else
+        std::size_t size = luaL_len(L, index);
+#endif
         boost::numeric::ublas::unbounded_array<T, A> v(size);
         object table(from_stack(L, index));
         for (std::size_t i = 0; i < v.size(); ++i) {
