@@ -40,7 +40,7 @@ FIND_PATH(LUA_INCLUDE_DIR lua.h
 )
 
 FIND_LIBRARY(LUA_LIBRARY 
-  NAMES lua52 lua5.2 lua-5.2 lua51 lua5.1 lua-5.1 lua
+  NAMES lua lua52 lua5.2 lua-5.2 lua51 lua5.1 lua-5.1
   HINTS
   $ENV{LUA_DIR}
   PATH_SUFFIXES lib64 lib
