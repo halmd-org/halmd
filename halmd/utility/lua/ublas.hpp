@@ -48,7 +48,7 @@ struct default_converter<boost::numeric::ublas::vector<T, A> >
     //! convert from Lua to C++
     boost::numeric::ublas::vector<T, A> from(lua_State* L, int index)
     {
-        std::size_t size = luaL_getn(L, index);
+        std::size_t size = luaL_len(L, index);
         boost::numeric::ublas::vector<T, A> v(size);
         object table(from_stack(L, index));
         for (std::size_t i = 0; i < v.size(); ++i) {
@@ -93,7 +93,7 @@ struct default_converter<boost::numeric::ublas::matrix<T, F, A> >
     matrix_type from(lua_State* L, int index)
     {
         object table(from_stack(L, index));
-        std::size_t rows = luaL_getn(L, index);
+        std::size_t rows = luaL_len(L, index);
         std::size_t cols = (rows > 0) ? object_cast<vector_type>(table[1]).size() : 0;
         matrix_type m(rows, cols);
         for (std::size_t i = 0; i < m.size1(); ++i) {
