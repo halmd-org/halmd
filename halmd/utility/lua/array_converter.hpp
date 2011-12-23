@@ -24,6 +24,10 @@
 #include <boost/multi_array.hpp>
 #include <luabind/luabind.hpp>
 
+#if LUA_VERSION_NUM < 502
+# define luaL_len lua_objlen
+#endif
+
 namespace luabind {
 
 /**
@@ -36,11 +40,7 @@ struct default_converter<boost::array<T, N> >
     //! compute Lua to C++ conversion score
     static int compute_score(lua_State* L, int index)
     {
-#if LUA_VERSION_NUM < 502
-        return lua_type(L, index) == LUA_TTABLE && lua_objlen(L, index) == N ? 0 : -1;
-#else
         return lua_type(L, index) == LUA_TTABLE && luaL_len(L, index) == N ? 0 : -1;
-#endif
     }
 
     //! convert from Lua to C++
@@ -86,11 +86,7 @@ struct default_converter<boost::multi_array<T, 1> >
     //! convert from Lua to C++
     boost::multi_array<T, 1> from(lua_State* L, int index)
     {
-#if LUA_VERSION_NUM < 502
-        std::size_t size = lua_objlen(L, index);
-#else
         std::size_t size = luaL_len(L, index);
-#endif
         boost::multi_array<T, 1> v(boost::extents[size]);
         object table(from_stack(L, index));
         for (std::size_t i = 0; i < v.size(); ++i) {
@@ -116,5 +112,9 @@ struct default_converter<boost::multi_array<T, 1> const&>
   : default_converter<boost::multi_array<T, 1> > {};
 
 } // namespace luabind
+
+#if LUA_VERSION_NUM < 502
+# undef luaL_len
+#endif
 
 #endif /* ! HALMD_UTILITY_LUA_ARRAY_CONVERTER_HPP */

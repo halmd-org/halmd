@@ -22,6 +22,10 @@
 
 #include <luabind/luabind.hpp>
 
+#if LUA_VERSION_NUM < 502
+# define luaL_len lua_objlen
+#endif
+
 namespace boost {
 namespace numeric {
 namespace ublas {
@@ -52,11 +56,7 @@ struct default_converter<boost::numeric::ublas::unbounded_array<T, A> >
     //! convert from Lua to C++
     boost::numeric::ublas::unbounded_array<T, A> from(lua_State* L, int index)
     {
-#if LUA_VERSION_NUM < 502
-        std::size_t size = lua_objlen(L, index);
-#else
         std::size_t size = luaL_len(L, index);
-#endif
         boost::numeric::ublas::unbounded_array<T, A> v(size);
         object table(from_stack(L, index));
         for (std::size_t i = 0; i < v.size(); ++i) {
@@ -82,5 +82,9 @@ struct default_converter<boost::numeric::ublas::unbounded_array<T, A> const&>
   : default_converter<boost::numeric::ublas::unbounded_array<T, A> > {};
 
 } // namespace luabind
+
+#if LUA_VERSION_NUM < 502
+# undef luaL_len
+#endif
 
 #endif /* ! HALMD_UTILITY_LUA_UBLAS_HPP */
