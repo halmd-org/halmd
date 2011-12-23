@@ -230,7 +230,7 @@ env-boost:
 ## Luabind library with Clang C++ compiler fix
 ##
 
-LUABIND_VERSION = 0.9.1-23-g13691e6
+LUABIND_VERSION = 0.9.1-24-gf5fe839
 LUABIND_TARBALL = luabind-$(LUABIND_VERSION).tar.bz2
 LUABIND_TARBALL_URL = http://sourceforge.net/projects/halmd/files/libs/luabind/$(LUABIND_TARBALL)
 LUABIND_BUILD_DIR = luabind-$(LUABIND_VERSION)
