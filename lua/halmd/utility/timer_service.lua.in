@@ -18,14 +18,14 @@
 --
 
 require("halmd.modules")
-require("halmd.singleton")
+local singleton = require("halmd.singleton")
 
 -- grab C++ wrappers
 local timer_service = libhalmd.utility.timer_service
 -- grab standard library
 local assert = assert
 
-module("halmd.utility.timer_service", halmd.modules.register, halmd.singleton)
+module("halmd.utility.timer_service", halmd.modules.register, singleton)
 
 --
 -- construct timer_service module

@@ -18,7 +18,7 @@
 --
 
 require("halmd.modules")
-require("halmd.singleton")
+local singleton = require("halmd.singleton")
 
 require("halmd.device")
 require("halmd.log")
@@ -39,7 +39,7 @@ local po = libhalmd.po
 local assert = assert
 local error = error
 
-module("halmd.random", halmd.modules.register, halmd.singleton)
+module("halmd.random", halmd.modules.register, singleton)
 
 --
 -- construct random module
