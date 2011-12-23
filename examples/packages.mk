@@ -114,18 +114,15 @@ env-cmake:
 ## Lua
 ##
 
-LUA_VERSION = 5.1.4
+LUA_VERSION = 5.2.0
 LUA_TARBALL = lua-$(LUA_VERSION).tar.gz
 LUA_TARBALL_URL = http://www.lua.org/ftp/$(LUA_TARBALL)
-LUA_PATCH = patch-lua-5.1.4-2
-LUA_PATCH_URL = http://www.lua.org/ftp/$(LUA_PATCH)
 LUA_BUILD_DIR = lua-$(LUA_VERSION)
 LUA_INSTALL_DIR = $(PREFIX)/lua-$(LUA_VERSION)
-LUA_CFLAGS = -DLUA_USE_LINUX -fPIC -O2 -Wall
+LUA_CFLAGS = -DLUA_USE_LINUX -DLUA_COMPAT_MODULE -fPIC -O2 -Wall
 
 .fetch-lua:
 	$(WGET) $(LUA_TARBALL_URL)
-	$(WGET) $(LUA_PATCH_URL)
 	@$(TOUCH) $@
 
 fetch-lua: .fetch-lua
@@ -133,7 +130,6 @@ fetch-lua: .fetch-lua
 .extract-lua: .fetch-lua
 	$(RM) $(LUA_BUILD_DIR)
 	$(TAR) -xzf $(LUA_TARBALL)
-	cd $(LUA_BUILD_DIR)/src && $(PATCH) -p0 < $(CURDIR)/$(LUA_PATCH)
 	@$(TOUCH) $@
 
 extract-lua: .extract-lua
@@ -155,7 +151,6 @@ clean-lua:
 distclean-lua: clean-lua
 	@$(RM) .fetch-lua
 	$(RM) $(LUA_TARBALL)
-	$(RM) $(LUA_PATCH)
 
 env-lua:
 	@echo
@@ -235,30 +230,22 @@ env-boost:
 ## Luabind library with Clang C++ compiler fix
 ##
 
-LUABIND_VERSION = 0.9.1
-LUABIND_TARBALL = luabind-$(LUABIND_VERSION).tar.gz
-LUABIND_TARBALL_URL = http://sourceforge.net/projects/luabind/files/luabind/$(LUABIND_VERSION)/$(LUABIND_TARBALL)
-LUABIND_CLANG_PATCH = luabind_proper_forward_declarations_for_clang.patch
-LUABIND_CLANG_PATCH_URL = http://sourceforge.net/projects/halmd/files/patches/$(LUABIND_CLANG_PATCH)
-LUABIND_CAST_GRAPH_CACHE_PATCH = luabind_cast_graph_cache_invalid_cast_fix.patch
-LUABIND_CAST_GRAPH_CACHE_PATCH_URL = http://sourceforge.net/projects/halmd/files/patches/$(LUABIND_CAST_GRAPH_CACHE_PATCH)
+LUABIND_VERSION = 0.9.1-24-gf5fe839
+LUABIND_TARBALL = luabind-$(LUABIND_VERSION).tar.bz2
+LUABIND_TARBALL_URL = http://sourceforge.net/projects/halmd/files/libs/luabind/$(LUABIND_TARBALL)
 LUABIND_BUILD_DIR = luabind-$(LUABIND_VERSION)
 LUABIND_BUILD_FLAGS = cxxflags=-fPIC link=static variant=release variant=debug
 LUABIND_INSTALL_DIR = $(PREFIX)/luabind-$(LUABIND_VERSION)
 
 .fetch-luabind:
 	$(WGET) $(LUABIND_TARBALL_URL)
-	$(WGET) $(LUABIND_CLANG_PATCH_URL)
-	$(WGET) $(LUABIND_CAST_GRAPH_CACHE_PATCH_URL)
 	@$(TOUCH) $@
 
 fetch-luabind: .fetch-luabind
 
 .extract-luabind: .fetch-luabind .build-lua
 	$(RM) $(LUABIND_BUILD_DIR)
-	$(TAR) -xzf $(LUABIND_TARBALL)
-	cd $(LUABIND_BUILD_DIR) && $(PATCH) -p1 < $(CURDIR)/$(LUABIND_CLANG_PATCH)
-	cd $(LUABIND_BUILD_DIR) && $(PATCH) -p1 < $(CURDIR)/$(LUABIND_CAST_GRAPH_CACHE_PATCH)
+	$(TAR) -xjf $(LUABIND_TARBALL)
 	mkdir $(LUABIND_BUILD_DIR)/lua
 	ln -s $(CURDIR)/$(LUA_BUILD_DIR)/src $(LUABIND_BUILD_DIR)/lua/include
 	ln -s $(CURDIR)/$(LUA_BUILD_DIR)/src $(LUABIND_BUILD_DIR)/lua/lib
@@ -283,8 +270,6 @@ clean-luabind:
 distclean-luabind: clean-luabind
 	@$(RM) .fetch-luabind
 	$(RM) $(LUABIND_TARBALL)
-	$(RM) $(LUABIND_CLANG_PATCH)
-	$(RM) $(LUABIND_CAST_GRAPH_CACHE_PATCH)
 
 env-luabind:
 	@echo
@@ -296,9 +281,9 @@ env-luabind:
 ## HDF5 C++ library
 ##
 
-HDF5_VERSION = 1.8.7
+HDF5_VERSION = 1.8.8
 HDF5_TARBALL = hdf5-$(HDF5_VERSION).tar.bz2
-HDF5_TARBALL_URL = http://www.hdfgroup.org/ftp/HDF5/current/src/$(HDF5_TARBALL)
+HDF5_TARBALL_URL = http://www.hdfgroup.org/ftp/HDF5/releases/hdf5-$(HDF5_VERSION)/src/$(HDF5_TARBALL)
 HDF5_BUILD_DIR = hdf5-$(HDF5_VERSION)
 HDF5_INSTALL_DIR = $(PREFIX)/hdf5-$(HDF5_VERSION)
 HDF5_CONFIGURE_FLAGS = --enable-cxx
@@ -354,7 +339,7 @@ env-hdf5:
 ## Git version control
 ##
 
-GIT_VERSION = 1.7.7.3
+GIT_VERSION = 1.7.8
 GIT_TARBALL = git-$(GIT_VERSION).tar.gz
 GIT_MANPAGES_TARBALL = git-manpages-$(GIT_VERSION).tar.gz
 GIT_TARBALL_URL = http://git-core.googlecode.com/files/$(GIT_TARBALL)

@@ -20,9 +20,6 @@
 -- grab standard library
 local assert = assert
 local getmetatable = getmetatable
-local setmetatable = setmetatable
-
-module("halmd.singleton")
 
 -- references to C++ singleton instances by Lua module
 local singletons = {}
@@ -54,4 +51,4 @@ local function register(module)
 
 end
 
-setmetatable(_M, {__call = function(self, module) register(module) end})
+return register

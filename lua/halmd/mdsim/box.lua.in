@@ -18,7 +18,7 @@
 --
 
 require("halmd.modules")
-require("halmd.singleton")
+local singleton = require("halmd.singleton")
 
 -- grab modules
 local mdsim = halmd.mdsim
@@ -33,7 +33,7 @@ local po = libhalmd.po
 local assert = assert
 local error = error
 
-module("halmd.mdsim.box", halmd.modules.register, halmd.singleton)
+module("halmd.mdsim.box", halmd.modules.register, singleton)
 
 --
 -- construct box module instance

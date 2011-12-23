@@ -18,7 +18,7 @@
 --
 
 require("halmd.modules")
-require("halmd.singleton")
+local singleton = require("halmd.singleton")
 
 -- grab C++ wrappers
 local device_wrapper
@@ -29,7 +29,7 @@ local po = libhalmd.po
 -- grab standard library
 local assert = assert
 
-module("halmd.device", halmd.modules.register, halmd.singleton)
+module("halmd.device", halmd.modules.register, singleton)
 
 --
 -- query whether HALMD is compiled with GPU support
