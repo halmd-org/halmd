@@ -43,7 +43,7 @@ set(HALMD_EXECUTABLE "${CMAKE_BINARY_DIR}/halmd/halmd")
 # )
 #
 set(HALMD_LUA_PATH
-  "${CMAKE_BINARY_DIR}/lua/?.lua\;${CMAKE_BINARY_DIR}/lua/?/init.lua"
+  "${CMAKE_BINARY_DIR}/lua/?.lua\;${CMAKE_BINARY_DIR}/lua/?/init.lua\;${CMAKE_CURRENT_SOURCE_DIR}/tools/?.lua"
 )
 set(HALMD_LUA_CPATH
   "${CMAKE_BINARY_DIR}/halmd/?${CMAKE_SHARED_LIBRARY_SUFFIX}"
