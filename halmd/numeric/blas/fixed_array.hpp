@@ -23,11 +23,8 @@
 #ifndef __CUDACC__
 # include <boost/array.hpp>
 #endif
-#include <boost/type_traits/is_pod.hpp>
-#include <boost/utility/enable_if.hpp>
 
 #include <halmd/config.hpp>
-#include <halmd/numeric/mp/dsfloat.hpp>
 
 namespace halmd {
 namespace detail {
@@ -41,9 +38,6 @@ struct fixed_array
   : boost::array<T, N> {};
 
 #else /* __CUDACC__ */
-
-template <typename T, typename Enable = void>
-struct fixed_array_pod_type;
 
 //
 // The purpose of a fixed_array is to serve as the underlying
@@ -62,37 +56,16 @@ public:
 
     HALMD_GPU_ENABLED reference operator[](size_type i)
     {
-        return (reinterpret_cast<value_type*>(this))[i];
+        return storage_[i];
     }
 
     HALMD_GPU_ENABLED const_reference operator[](size_type i) const
     {
-        return (reinterpret_cast<value_type const*>(this))[i];
+        return storage_[i];
     }
 
 private:
-    typename fixed_array_pod_type<T>::type array[N];
-};
-
-//
-// CUDA shared memory arrays only allow POD-type data members, so we
-// cannot use structs with non-default constructors as a data members.
-// Instead, we define an equivalent POD type here and cast to the
-// non-POD type upon accessing an element of the fixed_array.
-//
-
-template <typename T>
-struct fixed_array_pod_type<T,
-  typename boost::enable_if<boost::is_pod<T> >::type>
-{
-    typedef T type;
-};
-
-template <>
-struct fixed_array_pod_type<dsfloat>
-{
-    // 4-byte alignment matches that of dsfloat
-    typedef struct { float x, y; } type;
+    T storage_[N];
 };
 
 #endif /* __CUDACC__ */
