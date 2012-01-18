@@ -97,10 +97,11 @@ public:
         unsigned short n = static_cast<unsigned short>(pair_[INDEX]);
         float coreS = pair_[CORE_SIGMA];
         float_type en_pot = pair_[EPSILON] * halmd::pow(rs - coreS, -n);
-        en_pot -= pair_rr_en_cut_[1];
 
         float_type fval = en_pot * n / (pair_[SIGMA2] * rs * (rs - coreS));
         float_type hvir = fval * rr * (coreS + n*rs)/(rs - coreS);
+
+        en_pot -= pair_rr_en_cut_[1];
 
         return make_tuple(fval, en_pot, hvir);
     }
