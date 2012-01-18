@@ -34,7 +34,7 @@ RM = rm -rf
 CP = cp -r
 TOUCH = touch
 PATCH = patch
-SHA1SUM = sha1sum
+SHA1SUM = sha1sum --check
 
 ##
 ## define top-level targets
@@ -71,8 +71,8 @@ CMAKE_INSTALL_DIR = $(PREFIX)/cmake-$(CMAKE_VERSION)
 	@$(RM) $(CMAKE_CUDA_PATCH)
 	$(WGET) $(CMAKE_TARBALL_URL)
 	$(WGET) $(CMAKE_CUDA_PATCH_URL)
-	@echo '$(CMAKE_TARBALL_SHA1SUM)  $(CMAKE_TARBALL)' | $(SHA1SUM) --check
-	@echo '$(CMAKE_CUDA_PATCH_SHA1SUM)  $(CMAKE_CUDA_PATCH)' | $(SHA1SUM) --check
+	@echo '$(CMAKE_TARBALL_SHA1SUM)  $(CMAKE_TARBALL)' | $(SHA1SUM)
+	@echo '$(CMAKE_CUDA_PATCH_SHA1SUM)  $(CMAKE_CUDA_PATCH)' | $(SHA1SUM)
 	@$(TOUCH) $@
 
 fetch-cmake: .fetch-cmake
@@ -132,7 +132,7 @@ LUA_CFLAGS = -DLUA_USE_LINUX -DLUA_COMPAT_MODULE -fPIC -O2 -Wall
 .fetch-lua:
 	@$(RM) $(LUA_TARBALL)
 	$(WGET) $(LUA_TARBALL_URL)
-	@echo '$(LUA_TARBALL_SHA1SUM)  $(LUA_TARBALL)' | $(SHA1SUM) --check
+	@echo '$(LUA_TARBALL_SHA1SUM)  $(LUA_TARBALL)' | $(SHA1SUM)
 	@$(TOUCH) $@
 
 fetch-lua: .fetch-lua
@@ -192,8 +192,8 @@ BOOST_BUILD_FLAGS = cxxflags=-fPIC --without-python
 	@$(RM) $(BOOST_LOG_TARBALL)
 	$(WGET) $(BOOST_TARBALL_URL)
 	$(WGET) -O $(BOOST_LOG_TARBALL) $(BOOST_LOG_TARBALL_URL)
-	@echo '$(BOOST_TARBALL_SHA1SUM)  $(BOOST_TARBALL)' | $(SHA1SUM) --check
-	@echo '$(BOOST_LOG_TARBALL_SHA1SUM)  $(BOOST_LOG_TARBALL)' | $(SHA1SUM) --check
+	@echo '$(BOOST_TARBALL_SHA1SUM)  $(BOOST_TARBALL)' | $(SHA1SUM)
+	@echo '$(BOOST_LOG_TARBALL_SHA1SUM)  $(BOOST_LOG_TARBALL)' | $(SHA1SUM)
 	@$(TOUCH) $@
 
 fetch-boost: .fetch-boost
@@ -257,7 +257,7 @@ LUABIND_INSTALL_DIR = $(PREFIX)/luabind-$(LUABIND_VERSION)
 .fetch-luabind:
 	@$(RM) $(LUABIND_TARBALL)
 	$(WGET) $(LUABIND_TARBALL_URL)
-	@echo '$(LUABIND_TARBALL_SHA1SUM)  $(LUABIND_TARBALL)' | $(SHA1SUM) --check
+	@echo '$(LUABIND_TARBALL_SHA1SUM)  $(LUABIND_TARBALL)' | $(SHA1SUM)
 	@$(TOUCH) $@
 
 fetch-luabind: .fetch-luabind
@@ -313,7 +313,7 @@ HDF5_CXXFLAGS = -fPIC
 .fetch-hdf5:
 	@$(RM) $(HDF5_TARBALL)
 	$(WGET) $(HDF5_TARBALL_URL)
-	@echo '$(HDF5_TARBALL_SHA1SUM)  $(HDF5_TARBALL)' | $(SHA1SUM) --check
+	@echo '$(HDF5_TARBALL_SHA1SUM)  $(HDF5_TARBALL)' | $(SHA1SUM)
 	@$(TOUCH) $@
 
 fetch-hdf5: .fetch-hdf5
@@ -377,8 +377,8 @@ GIT_INSTALL_DIR = $(PREFIX)/git-$(GIT_VERSION)
 	@$(RM) $(GIT_MANPAGES_TARBALL)
 	$(WGET) $(GIT_TARBALL_URL)
 	$(WGET) $(GIT_MANPAGES_TARBALL_URL)
-	@echo '$(GIT_TARBALL_SHA1SUM)  $(GIT_TARBALL)' | $(SHA1SUM) --check
-	@echo '$(GIT_MANPAGES_TARBALL_SHA1SUM)  $(GIT_MANPAGES_TARBALL)' | $(SHA1SUM) --check
+	@echo '$(GIT_TARBALL_SHA1SUM)  $(GIT_TARBALL)' | $(SHA1SUM)
+	@echo '$(GIT_MANPAGES_TARBALL_SHA1SUM)  $(GIT_MANPAGES_TARBALL)' | $(SHA1SUM)
 	@$(TOUCH) $@
 
 fetch-git: .fetch-git
@@ -438,7 +438,7 @@ HTOP_INSTALL_DIR = $(PREFIX)/htop-$(HTOP_VERSION)
 .fetch-htop:
 	@$(RM) $(HTOP_TARBALL)
 	$(WGET) $(HTOP_TARBALL_URL)
-	@echo '$(HTOP_TARBALL_SHA1SUM)  $(HTOP_TARBALL)' | $(SHA1SUM) --check
+	@echo '$(HTOP_TARBALL_SHA1SUM)  $(HTOP_TARBALL)' | $(SHA1SUM)
 	@$(TOUCH) $@
 
 fetch-htop: .fetch-htop
@@ -496,7 +496,7 @@ PYTHON_SPHINX_PYTHONPATH = $(PYTHON_SPHINX_INSTALL_DIR)/lib/python
 .fetch-python-sphinx:
 	@$(RM) $(PYTHON_SPHINX_TARBALL)
 	$(WGET) $(PYTHON_SPHINX_TARBALL_URL)
-	@echo '$(PYTHON_SPHINX_TARBALL_SHA1SUM)  $(PYTHON_SPHINX_TARBALL)' | $(SHA1SUM) --check
+	@echo '$(PYTHON_SPHINX_TARBALL_SHA1SUM)  $(PYTHON_SPHINX_TARBALL)' | $(SHA1SUM)
 	@$(TOUCH) $@
 
 fetch-python-sphinx: .fetch-python-sphinx
@@ -547,7 +547,7 @@ DOXYGEN_INSTALL_DIR = $(PREFIX)/doxygen-$(DOXYGEN_VERSION)
 .fetch-doxygen:
 	@$(RM) $(DOXYGEN_TARBALL)
 	$(WGET) $(DOXYGEN_TARBALL_URL)
-	@echo '$(DOXYGEN_TARBALL_SHA1SUM)  $(DOXYGEN_TARBALL)' | $(SHA1SUM) --check
+	@echo '$(DOXYGEN_TARBALL_SHA1SUM)  $(DOXYGEN_TARBALL)' | $(SHA1SUM)
 	@$(TOUCH) $@
 
 fetch-doxygen: .fetch-doxygen
@@ -605,7 +605,7 @@ GRAPHVIZ_INSTALL_DIR = $(PREFIX)/graphviz-$(GRAPHVIZ_VERSION)
 .fetch-graphviz:
 	@$(RM) $(GRAPHVIZ_TARBALL)
 	$(WGET) $(GRAPHVIZ_TARBALL_URL)
-	@echo '$(GRAPHVIZ_TARBALL_SHA1SUM)  $(GRAPHVIZ_TARBALL)' | $(SHA1SUM) --check
+	@echo '$(GRAPHVIZ_TARBALL_SHA1SUM)  $(GRAPHVIZ_TARBALL)' | $(SHA1SUM)
 	@$(TOUCH) $@
 
 fetch-graphviz: .fetch-graphviz
@@ -673,9 +673,9 @@ CLANG_INSTALL_DIR = $(PREFIX)/clang-$(CLANG_VERSION)
 	$(WGET) $(LLVM_TARBALL_URL)
 	$(WGET) -O $(LLVM_OCAML_MAKEFILE_PATCH) $(LLVM_OCAML_MAKEFILE_PATCH_URL)
 	$(WGET) $(CLANG_TARBALL_URL)
-	@echo '$(LLVM_TARBALL_SHA1SUM)  $(LLVM_TARBALL)' | $(SHA1SUM) --check
-	@echo '$(LLVM_OCAML_MAKEFILE_PATCH_SHA1SUM)  $(LLVM_OCAML_MAKEFILE_PATCH)' | $(SHA1SUM) --check
-	@echo '$(CLANG_TARBALL_SHA1SUM)  $(CLANG_TARBALL)' | $(SHA1SUM) --check
+	@echo '$(LLVM_TARBALL_SHA1SUM)  $(LLVM_TARBALL)' | $(SHA1SUM)
+	@echo '$(LLVM_OCAML_MAKEFILE_PATCH_SHA1SUM)  $(LLVM_OCAML_MAKEFILE_PATCH)' | $(SHA1SUM)
+	@echo '$(CLANG_TARBALL_SHA1SUM)  $(CLANG_TARBALL)' | $(SHA1SUM)
 	@$(TOUCH) $@
 
 fetch-clang: .fetch-clang
@@ -734,7 +734,7 @@ GNU_PARALLEL_INSTALL_DIR = $(PREFIX)/parallel-$(GNU_PARALLEL_VERSION)
 .fetch-gnu-parallel:
 	@$(RM) $(GNU_PARALLEL_TARBALL)
 	$(WGET) $(GNU_PARALLEL_TARBALL_URL)
-	@echo '$(GNU_PARALLEL_TARBALL_SHA1SUM)  $(GNU_PARALLEL_TARBALL)' | $(SHA1SUM) --check
+	@echo '$(GNU_PARALLEL_TARBALL_SHA1SUM)  $(GNU_PARALLEL_TARBALL)' | $(SHA1SUM)
 	@$(TOUCH) $@
 
 fetch-gnu-parallel: .fetch-gnu-parallel
