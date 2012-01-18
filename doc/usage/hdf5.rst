@@ -88,6 +88,12 @@ For further information, refer to the `Numpy and Scipy Documentation
 File formats
 ============
 
+*** this section is deprecated ***
+
+The file format is moved towards the `H5MD format <http://nongnu.org/h5md>`_,
+which is currently under development.
+
+
 Simulation parameters
 ---------------------
 
