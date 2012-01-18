@@ -616,7 +616,7 @@ CLANG_VERSION = 3.0
 LLVM_TARBALL = llvm-$(CLANG_VERSION).tar.gz
 LLVM_TARBALL_URL = http://llvm.org/releases/$(CLANG_VERSION)/$(LLVM_TARBALL)
 LLVM_OCAML_MAKEFILE_PATCH = llvm_ocaml_makefile.patch
-LLVM_OCAML_MAKEFILE_PATCH_URL = http://llvm.org/bugs/attachment.cgi?id=7625&action=diff&context=patch&collapsed=&headers=1&format=raw
+LLVM_OCAML_MAKEFILE_PATCH_URL = 'http://llvm.org/bugs/attachment.cgi?id=7625&action=diff&context=patch&collapsed=&headers=1&format=raw'
 CLANG_TARBALL = clang-$(CLANG_VERSION).tar.gz
 CLANG_TARBALL_URL = http://llvm.org/releases/$(CLANG_VERSION)/$(CLANG_TARBALL)
 CLANG_BUILD_DIR = llvm-$(CLANG_VERSION).src
