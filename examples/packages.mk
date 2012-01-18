@@ -27,7 +27,7 @@ endif
 ## define commonly used commands
 ##
 
-WGET = wget -c
+WGET = wget
 TAR = tar
 UNZIP = unzip
 RM = rm -rf
