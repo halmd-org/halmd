@@ -428,10 +428,10 @@ env-git:
 ## htop
 ##
 
-HTOP_VERSION = 0.9
+HTOP_VERSION = 1.0
 HTOP_TARBALL = htop-$(HTOP_VERSION).tar.gz
-HTOP_TARBALL_URL = http://sourceforge.net/projects/htop/files/htop/0.9/$(HTOP_TARBALL)
-HTOP_TARBALL_SHA1SUM = d755bff386c260c06162d50113794722e98e9200
+HTOP_TARBALL_URL = http://sourceforge.net/projects/htop/files/htop/$(HTOP_VERSION)/$(HTOP_TARBALL)
+HTOP_TARBALL_SHA1SUM = 9e9d5f9f2c39af0520a7ba67e7af67925334940a
 HTOP_BUILD_DIR = htop-$(HTOP_VERSION)
 HTOP_INSTALL_DIR = $(PREFIX)/htop-$(HTOP_VERSION)
 
