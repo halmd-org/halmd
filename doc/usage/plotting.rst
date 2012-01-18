@@ -7,27 +7,27 @@ Convenient and powerful access to the HDF5 output files is provided by the
 Python packages `h5py <http://alfven.org/wp/hdf5-for-python>`_ together with
 `PyLab <http://www.scipy.org/PyLab>`_. An examplary Python script for
 accessing, post-processing and plotting the output data of HALMD is provided in
-the sources at ``examples/plotting/plot_h5md.py``.
+the sources at ``examples/plotting/plot_h5md.py``; it requires H5Py ≥ 2.0.1.
 
 The various aspects of the script are detailed in the following. It starts with
 loading some packages, defining command line options, and opening the HDF5
 output file.
 
 .. literalinclude:: ../../examples/plotting/plot_h5md.py
-  :lines: 22-41
+  :lines: 22-42
 
 The script shows how to extract some of the simulation parameters that are
 stored along with each HDF5 output file.
 
 .. literalinclude:: ../../examples/plotting/plot_h5md.py
-  :lines: 43-50
+  :lines: 44-53
 
 It illustrates how to computes the average temperature, pressure, and potential
 energy over the whole simulation run or just over a selected range of data
 points, i.e., a time window.
 
 .. literalinclude:: ../../examples/plotting/plot_h5md.py
-  :lines: 52-58
+  :lines: 55-61
 
 .. literalinclude:: ../../examples/plotting/plot_h5md.py
   :pyobject: compute_average
@@ -36,10 +36,10 @@ Eventually, the script can dump the fluctuating potential energy as function of
 time to a text file
 
 .. literalinclude:: ../../examples/plotting/plot_h5md.py
-  :lines: 60-70
+  :lines: 63-73
 
 or directly generate a figure from these data
 
 .. literalinclude:: ../../examples/plotting/plot_h5md.py
-  :lines: 72-87
+  :lines: 75-90
 

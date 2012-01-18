@@ -38,11 +38,14 @@ def main():
 
     # open and read data file
     H5 = h5py.File(args.input, 'r')
-    H5param = H5["param"]
+    H5param = H5["halmd"]
+    H5obs = H5["observables"]
 
     # print some details
     print 'Particles: {0:s}'.format(H5param["box"].attrs["particles"])
-    print 'Force cutoff: {0:s}'.format(H5param[H5param.attrs["force"]].attrs["cutoff"])
+    print 'Force module: {0:s}'.format(H5param.attrs["force"])
+    if "cutoff" in H5param[H5param.attrs["force"]].attrs.keys():
+        print 'Force cutoff: {0:s}'.format(H5param[H5param.attrs["force"]].attrs["cutoff"])
     print 'Box size:',
     for x in H5param["box"].attrs["length"]:
         print ' {0:g}'.format(x),
@@ -51,15 +54,15 @@ def main():
 
     # compute and print some averages
     # the simplest selection of a data set looks like this:
-    #     temp, temp_err = compute_average(H5["TEMP"], 'Temperature')
+    #     temp, temp_err = compute_average(H5obs["temperature"], 'Temperature')
     # full support for slicing (th second pair of brackets) requires conversion to a NumPy array before
-    temp, temp_err = compute_average(array(H5["TEMP"])[range[0]:range[1]], 'Temperature')
-    pressure, pressure_err = compute_average(array(H5["PRESS"])[range[0]:range[1]], 'Pressure')
-    epot, epot_err = compute_average(array(H5["EPOT"])[range[0]:range[1]], 'Potential energy')
+    temp, temp_err = compute_average(array(H5obs["temperature/sample"])[range[0]:range[1]], 'Temperature')
+    pressure, pressure_err = compute_average(array(H5obs["pressure/sample"])[range[0]:range[1]], 'Pressure')
+    epot, epot_err = compute_average(array(H5obs["potential_energy/sample"])[range[0]:range[1]], 'Potential energy')
 
     # select data for plotting the potential energy as function of time
-    x = array(H5["TIME"])[range[0]:range[1]]
-    y = array(H5["EPOT"])[range[0]:range[1]]
+    x = array(H5obs["potential_energy/time"])[range[0]:range[1]]
+    y = array(H5obs["potential_energy/sample"])[range[0]:range[1]]
 
     # append plot data to file
     if args.dump:
