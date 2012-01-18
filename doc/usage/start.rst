@@ -91,5 +91,5 @@ or look at a specific data set ::
 For a more advanced inspection and analysis of the HDF5 output files, see
 :ref:`plotting`. You may try the exemplary script ::
 
-  path/to/halmd/examples/plotting/plot_h5md.py halmd_20110713_161511.obs
+  halmd/examples/plotting/plot_h5md.py halmd_20110713_161511.obs
 
