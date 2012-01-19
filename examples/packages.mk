@@ -656,25 +656,19 @@ CLANG_VERSION = 3.0
 LLVM_TARBALL = llvm-$(CLANG_VERSION).tar.gz
 LLVM_TARBALL_URL = http://llvm.org/releases/$(CLANG_VERSION)/$(LLVM_TARBALL)
 LLVM_TARBALL_SHA256 = 519eb11d3499ce99c6ffdb8718651fc91425ed7690eac91c8d6853474f7c0477
-LLVM_OCAML_MAKEFILE_PATCH = llvm_ocaml_makefile.patch
-LLVM_OCAML_MAKEFILE_PATCH_URL = 'http://llvm.org/bugs/attachment.cgi?id=7625&action=diff&context=patch&collapsed=&headers=1&format=raw'
-LLVM_OCAML_MAKEFILE_PATCH_SHA256 = 5ec2930ae7fa12c3d3895d6a0c84cb8c97d428c66b5377bc450150e3e3fa3982
 CLANG_TARBALL = clang-$(CLANG_VERSION).tar.gz
 CLANG_TARBALL_URL = http://llvm.org/releases/$(CLANG_VERSION)/$(CLANG_TARBALL)
 CLANG_TARBALL_SHA256 = b64e72da356d7c3428cfd7ac620d49ec042c84eaee13c26024879f555f4e126d
 CLANG_BUILD_DIR = llvm-$(CLANG_VERSION).src
-CLANG_CONFIGURE_FLAGS = --enable-optimized
+CLANG_CONFIGURE_FLAGS = --enable-optimized --enable-bindings=none
 CLANG_INSTALL_DIR = $(PREFIX)/clang-$(CLANG_VERSION)
 
 .fetch-clang:
 	@$(RM) $(LLVM_TARBALL)
-	@$(RM) $(LLVM_OCAML_MAKEFILE_PATCH)
 	@$(RM) $(CLANG_TARBALL)
 	$(WGET) $(LLVM_TARBALL_URL)
-	$(WGET) -O $(LLVM_OCAML_MAKEFILE_PATCH) $(LLVM_OCAML_MAKEFILE_PATCH_URL)
 	$(WGET) $(CLANG_TARBALL_URL)
 	@echo '$(LLVM_TARBALL_SHA256)  $(LLVM_TARBALL)' | $(SHA256SUM)
-	@echo '$(LLVM_OCAML_MAKEFILE_PATCH_SHA256)  $(LLVM_OCAML_MAKEFILE_PATCH)' | $(SHA256SUM)
 	@echo '$(CLANG_TARBALL_SHA256)  $(CLANG_TARBALL)' | $(SHA256SUM)
 	@$(TOUCH) $@
 
@@ -683,7 +677,6 @@ fetch-clang: .fetch-clang
 .extract-clang: .fetch-clang
 	$(RM) $(CLANG_BUILD_DIR)
 	$(TAR) -xzf $(LLVM_TARBALL)
-	cd $(CLANG_BUILD_DIR) && $(PATCH) -p1 < $(CURDIR)/$(LLVM_OCAML_MAKEFILE_PATCH)
 	cd $(CLANG_BUILD_DIR)/tools && $(TAR) -xzf $(CURDIR)/$(CLANG_TARBALL) && mv clang-$(CLANG_VERSION).src clang
 	@$(TOUCH) $@
 
