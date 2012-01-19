@@ -61,7 +61,7 @@ void pick_lattice_points()
       , inserter(lattice_points, lattice_points.begin())
       , unit_cell, epsilon, max_count
     );
-    BOOST_CHECK_EQUAL(lattice_points.size(), 0);
+    BOOST_CHECK_EQUAL(lattice_points.size(), 0u);
 
     // call with zero box size
     BOOST_MESSAGE("test zero box size");
@@ -70,7 +70,7 @@ void pick_lattice_points()
       , inserter(lattice_points, lattice_points.begin())
       , vector_type(0), epsilon, max_count
     );
-    BOOST_CHECK_EQUAL(lattice_points.size(), 0);
+    BOOST_CHECK_EQUAL(lattice_points.size(), 0u);
 
     // call with zero tolerance
     BOOST_MESSAGE("test zero tolerance");
@@ -79,7 +79,7 @@ void pick_lattice_points()
       , inserter(lattice_points, lattice_points.begin())
       , unit_cell, 0., max_count //< tolerance must be a floating-point type!
     );
-    BOOST_CHECK_EQUAL(lattice_points.size(), (dimension == 3) ? 11 : 18);
+    BOOST_CHECK_EQUAL(lattice_points.size(), (dimension == 3) ? 11u : 18u);
     lattice_points.clear();
 
     // call with zero max_count
@@ -89,7 +89,7 @@ void pick_lattice_points()
       , inserter(lattice_points, lattice_points.begin())
       , unit_cell, epsilon, 0
     );
-    BOOST_CHECK_EQUAL(lattice_points.size(), 0);
+    BOOST_CHECK_EQUAL(lattice_points.size(), 0u);
 
     // construct lattice points
     BOOST_MESSAGE("construct lattice points");
@@ -98,7 +98,7 @@ void pick_lattice_points()
       , inserter(lattice_points, lattice_points.begin())
       , unit_cell, epsilon, max_count
     );
-    BOOST_CHECK_EQUAL(lattice_points.size(), (dimension == 3) ? 14 : 28);  // not equal to sum(count)
+    BOOST_CHECK_EQUAL(lattice_points.size(), (dimension == 3) ? 14u : 28u);  // not equal to sum(count)
 
     // check conditions and counts on constructed lattice points
     for (unsigned int i = 0; i < radii.size(); ++i) {

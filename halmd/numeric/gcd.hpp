@@ -20,9 +20,8 @@
 #ifndef HALMD_NUMERIC_GCD_HPP
 #define HALMD_NUMERIC_GCD_HPP
 
-#include <boost/array.hpp>
-
 #include <halmd/config.hpp>
+#include <halmd/numeric/blas/fixed_vector.hpp>
 
 namespace halmd {
 
@@ -61,19 +60,19 @@ inline HALMD_GPU_ENABLED bool is_coprime(T const& a, T const& b)
 //
 /** returns greatest common divisor of all numbers in array */
 template <typename T, size_t N>
-inline HALMD_GPU_ENABLED T greatest_common_divisor(boost::array<T, N> const& a);
+inline HALMD_GPU_ENABLED T greatest_common_divisor(fixed_vector<T, N> const& a);
 
 template <typename T>
-inline HALMD_GPU_ENABLED T greatest_common_divisor(boost::array<T, 1> const& a)
+inline HALMD_GPU_ENABLED T greatest_common_divisor(fixed_vector<T, 1> const& a)
 {
     return a[0];
 }
 
 template <typename T, size_t N>
-inline HALMD_GPU_ENABLED T greatest_common_divisor(boost::array<T, N> const& a)
+inline HALMD_GPU_ENABLED T greatest_common_divisor(fixed_vector<T, N> const& a)
 {
     // compute gcd(a[0], gcd(a[1], gcd(a[2], ...)))
-    boost::array<T, N-1> b;
+    fixed_vector<T, N-1> b;
     std::copy(a.begin() + 1, a.end(), b.begin());
 
     return greatest_common_divisor(a[0], greatest_common_divisor(b));
@@ -81,7 +80,7 @@ inline HALMD_GPU_ENABLED T greatest_common_divisor(boost::array<T, N> const& a)
 
 /** returns true if all numbers in array are coprime */
 template <typename T, size_t N>
-inline HALMD_GPU_ENABLED bool is_coprime(boost::array<T, N> const& a)
+inline HALMD_GPU_ENABLED bool is_coprime(fixed_vector<T, N> const& a)
 {
     return greatest_common_divisor(a) == 1;
 }

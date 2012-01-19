@@ -1,5 +1,5 @@
 --
--- Copyright © 2011  Peter Colberg
+-- Copyright © 2012  Peter Colberg
 --
 -- This file is part of HALMD.
 --
@@ -17,28 +17,8 @@
 -- along with this program.  If not, see <http://www.gnu.org/licenses/>.
 --
 
-require("halmd.mdsim.clock")
-require("halmd.modules")
-local singleton = require("halmd.singleton")
-
--- grab modules
-local mdsim = halmd.mdsim
--- grab C++ wrappers
-local abort = assert(libhalmd.utility.abort)
-local posix_signal = assert(libhalmd.utility.posix_signal)
-
-module("halmd.utility.posix_signal", halmd.modules.register, singleton)
-
 --
--- construct POSIX signal handler
+-- Print CTEST_FULL_OUTPUT to avoid ctest truncation of output.
 --
-function new(args)
-    local signal_handler = posix_signal()
 
-    -- gracefully abort simulation on SIGTERM or SIGINT
-    local abort = abort(mdsim.clock())
-    signal_handler:on_term(abort)
-    signal_handler:on_int(abort)
-
-    return signal_handler
-end
+print("Avoid ctest truncation of output: CTEST_FULL_OUTPUT")
