@@ -193,8 +193,8 @@ private:
         unsigned int n = const_index > 0 ? const_index : index_(a, b);
         float_type rri = sigma2_(a, b) / rr;
         // avoid computation of square root for even powers
-        float_type rni = (const_index > 0) ? fixed_pow<const_index / 2>(rri) : std::pow(rri, n / 2);
-        if (n & 2) {
+        float_type rni = (const_index > 0) ? fixed_pow<const_index / 2>(rri) : halmd::pow(rri, n / 2);
+        if (n % 2) {
             rni *= std::sqrt(rri);
         }
         float_type eps_rni = epsilon_(a, b) * rni;
