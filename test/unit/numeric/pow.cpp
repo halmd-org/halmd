@@ -1,5 +1,5 @@
 /*
- * Copyright © 2010  Felix Höfling
+ * Copyright © 2010-2012  Felix Höfling
  *
  * This file is part of HALMD.
  *
@@ -32,63 +32,102 @@ const double eps = std::numeric_limits<double>::epsilon();
 using namespace halmd;
 
 //
-// test and benchmark fixed_pow() function
+// test and benchmark fixed_pow() and halmd::pow() functions
 //
 
-BOOST_AUTO_TEST_CASE( correctness )
+BOOST_AUTO_TEST_CASE( test_fixed_pow )
 {
-    BOOST_CHECK_EQUAL(std::pow(2., 0), fixed_pow<0>(2));
-    BOOST_CHECK_EQUAL(std::pow(2., 1), fixed_pow<1>(2));
-    BOOST_CHECK_EQUAL(std::pow(2., 2), fixed_pow<2>(2));
-    BOOST_CHECK_EQUAL(std::pow(2., 6), fixed_pow<6>(2));
-    BOOST_CHECK_EQUAL(std::pow(2., 12), fixed_pow<12>(2));
-    BOOST_CHECK_EQUAL(std::pow(2., 15), fixed_pow<15>(2));
-    BOOST_CHECK_EQUAL(std::pow(2., 24), fixed_pow<24>(2));
+    BOOST_CHECK_EQUAL(std::pow(2., 0), fixed_pow<0>(2.));
+    BOOST_CHECK_EQUAL(std::pow(2., 1), fixed_pow<1>(2.));
+    BOOST_CHECK_EQUAL(std::pow(2., 2), fixed_pow<2>(2.));
+    BOOST_CHECK_EQUAL(std::pow(2., 6), fixed_pow<6>(2.));
+    BOOST_CHECK_EQUAL(std::pow(2., 12), fixed_pow<12>(2.));
+    BOOST_CHECK_EQUAL(std::pow(2., 15), fixed_pow<15>(2.));
+    BOOST_CHECK_EQUAL(std::pow(2., 24), fixed_pow<24>(2.));
 
-    BOOST_CHECK_CLOSE_FRACTION(fixed_pow<2>(std::sqrt(5.)), 5, eps);
-    BOOST_CHECK_CLOSE_FRACTION(fixed_pow<12>(1.3), std::pow(1.3, 12), eps);
+    BOOST_CHECK_CLOSE_FRACTION(fixed_pow<2>(std::sqrt(5.)), 5., eps);
+    BOOST_CHECK_CLOSE_FRACTION(fixed_pow<12>(1.3), 23.298085122481, 11 * eps);  // 12-1 multiplications
+}
+
+BOOST_AUTO_TEST_CASE( test_halmd_pow )
+{
+    BOOST_CHECK_EQUAL(std::pow(2., 0), halmd::pow(2., 0));
+    BOOST_CHECK_EQUAL(std::pow(2., 1), halmd::pow(2., 1));
+    BOOST_CHECK_EQUAL(std::pow(2., 2), halmd::pow(2., 2));
+    BOOST_CHECK_EQUAL(std::pow(2., 6), halmd::pow(2., 6));
+    BOOST_CHECK_EQUAL(std::pow(2., 12), halmd::pow(2., 12));
+    BOOST_CHECK_EQUAL(std::pow(2., 15), halmd::pow(2., 15));
+    BOOST_CHECK_EQUAL(std::pow(2., 24), halmd::pow(2., 24));
+
+    BOOST_CHECK_CLOSE_FRACTION(halmd::pow(std::sqrt(5.), 2), 5, eps);
+    BOOST_CHECK_CLOSE_FRACTION(halmd::pow(1.3, 12), 23.298085122481, 11 * eps);
 }
 
 BOOST_AUTO_TEST_CASE( performance )
 {
-    boost::array<double, 3> elapsed;
+    boost::array<double, 5> elapsed;
+    double a;
     unsigned n;
-    #define index 12
+
+    // a const variable, even with known value, can not be used to
+    // instantiate a template parameter
+    unsigned const index = 12;
+    enum { index_ = 12 };
 
     BOOST_TEST_MESSAGE("evaluation time of x^" << index << " in nanoseconds:");
+
     halmd::timer timer;
-    double a = 0;
-    for (n=0; n < 10000000; n++) {
-        a += fixed_pow<index>((double)n);
+    a = 0;
+    for (n=0; n < 100000000; n++) {
+        a += fixed_pow<index_>((double)n);
     }
-    elapsed[0] = timer.elapsed();
-    BOOST_TEST_MESSAGE("  fixed_pow: " << 1e9 * elapsed[0] / n);
+    elapsed[0] = timer.elapsed() / n;
+    BOOST_TEST_MESSAGE("  fixed_pow: " << 1e9 * elapsed[0]);
+    // the error bounds are a worst case scenario, the first term arises from the
+    // error of exponentiation, and the second one from the summation of increasingly
+    // large numbers; compare Sum[n^k, {n, 0, m}] and Sum[l^12, {n, 0, m}, {l, 0, n}].
+    BOOST_CHECK_CLOSE_FRACTION(a, 7.692307192307702e102, (index_ + n / index_) * eps);
 
     timer.restart();
-    double b = 0;
-    for (n=0; n < 10000000; n++) {
-        b += std::pow((double)n, index);
+    a = 0;
+    for (n=0; n < 100000000; n++) {
+        a += halmd::pow((double)n, index);
     }
-    elapsed[1] = timer.elapsed();
-    BOOST_TEST_MESSAGE("  std::pow: " << 1e9 * elapsed[1] / n);
+    elapsed[1] = timer.elapsed() / n;
+    BOOST_TEST_MESSAGE("  halmd::pow: " << 1e9 * elapsed[1]);
+    BOOST_CHECK_CLOSE_FRACTION(a, 7.692307192307702e102, (index + n / index) * eps);
 
     timer.restart();
-    double c = 0;
+    a = 0;
+    for (n=0; n < 100000000; n++) {
+        a += std::pow((double)n, index_);
+    }
+    elapsed[2] = timer.elapsed() / n;
+    BOOST_TEST_MESSAGE("  std::pow (fixed): " << 1e9 * elapsed[2]);
+    BOOST_CHECK_CLOSE_FRACTION(a, 7.692307192307702e102, (index_ + n / index_) * eps);
+
+    timer.restart();
+    a = 0;
+    for (n=0; n < 1000000; n++) {
+        a += std::pow((double)n, index); // seems to results in a call to libm
+    }
+    elapsed[3] = timer.elapsed() / n;
+    BOOST_TEST_MESSAGE("  std::pow (variable): " << 1e9 * elapsed[3]);
+    BOOST_CHECK_CLOSE_FRACTION(a, 7.692257692407692e76, (index + n / index) * eps);
+
+    timer.restart();
+    a = 0;
     for (n=0; n < 100000; n++) {
-        c += std::pow((double)n, double(index));
+        a += std::pow((double)n, double(index));
     }
-    elapsed[2] = timer.elapsed();
-    BOOST_TEST_MESSAGE("  std::pow (double): " << 1e9 * elapsed[2] / n);
-
-    // use the results in some way in order to avoid an overoptimization of the loops
-    BOOST_TEST_MESSAGE("  results: " << a << " " << b << " " << c);
-
-    BOOST_CHECK_CLOSE_FRACTION(a, b, 2 * eps);
+    elapsed[4] = timer.elapsed() / n;
+    BOOST_TEST_MESSAGE("  std::pow (double): " << 1e9 * elapsed[4]);
+    BOOST_CHECK_CLOSE_FRACTION(a, 7.691807702307692e63, (index + n / index) * eps);
 
     // With a recent GCC compiler (4.3, 4.4) and C++ standard library,
     // std::pow may in fact perform better than fixed_pow, so the original
     // elapsed time check has been downgraded to an informational message.
 
-    BOOST_TEST_MESSAGE("  fixed_pow speed-up over std::pow: "
-                       << 100 * (1 - elapsed[0] / elapsed[1]) << "%");
+    BOOST_TEST_MESSAGE("  fixed_pow speed-up over std::pow with fixed exponent: " << elapsed[2] / elapsed[0]);
+    BOOST_TEST_MESSAGE("  halmd::pow speed-up over std::pow with variable exponent: " << elapsed[3] / elapsed[1]);
 }
