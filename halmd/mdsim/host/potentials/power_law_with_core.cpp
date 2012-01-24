@@ -54,9 +54,7 @@ power_law_with_core<float_type>::power_law_with_core(
   , r_cut_(ntype, ntype)
   , r_cut_sigma_(ntype, ntype)
   , rr_cut_(ntype, ntype)
-  , r_core_(ntype, ntype)
   , r_core_sigma_(ntype, ntype)
-  , rr_core_(ntype, ntype)
   , en_cut_(scalar_matrix<float_type>(ntype, ntype, 0))
   , logger_(logger)
 {
@@ -77,7 +75,6 @@ power_law_with_core<float_type>::power_law_with_core(
             sigma2_(i, j) = std::pow(sigma_(i, j), 2);
             r_cut_(i, j) = r_cut_sigma_(i, j) * sigma_(i, j);
             rr_cut_(i, j) = std::pow(r_cut_(i, j), 2);
-            rr_core_(i, j) = std::pow(r_core_(i, j), 2);
             // energy shift due to truncation at cutoff length
             en_cut_(i, j) = (*this)(rr_cut_(i, j), i, j).get<1>();
         }

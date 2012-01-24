@@ -1,5 +1,5 @@
 /*
- * Copyright © 2011  Michael Kopp
+ * Copyright © 2011-2012  Michael Kopp and Felix Höfling
  *
  * This file is part of HALMD.
  *
@@ -82,26 +82,26 @@ public:
      * and hypervirial @f$ r \partial_r r \partial_r U(r) @f$
      *
      * @f{eqnarray*}{
-     *   - \frac{U'(r)}{r} &=& n \epsilon \frac{\sigma^n}{r (r-r_\text{core})^{n+1}} = \frac{n}{r(r-r_\text{core})} U(r) \\
-     *   U(r) &=& \epsilon \left(\frac{\sigma}{r - r_\text{core}}\right)^n \\
-     *   r \partial_r r \partial_r U(r) &=& n U(r) \left( \frac{r (r_\text{core} + n r) }{ (r-r_\text{core})^2 } \right)
+     *   U(r) &=& \epsilon \left(\frac{r - r_\text{core}}{\sigma}\right)^{-n} \\
+     *   - \frac{U'(r)}{r} &=& n \frac{n}{r(r-r_\text{core})} U(r) \\
+     *   r \partial_r r \partial_r U(r) &=& n \frac{r (n r + r_\text{core}) }{ (r-r_\text{core})^2 } U(r)
      * @f}
      */
     template <typename float_type>
     HALMD_GPU_ENABLED tuple<float_type, float_type, float_type> operator()(float_type rr) const
     {
-        float_type rrs = rr / pair_[SIGMA2];
-        // It's not possible to avoid computation of a squareroot as r_core
-        // must be substracted from r but only r*r is passed.
-        float_type rs = sqrt(rrs);
+        float_type rr_ss = rr / pair_[SIGMA2];
+        // The computation of the square root can not be avoided
+        // as r_core must be substracted from r but only r * r is passed.
+        float_type r_s = sqrt(rr_ss);  // translates to sqrt.approx.f32 in PTX code for float_type=float (CUDA 3.2)
+        float_type dri = 1 / (r_s - pair_[CORE_SIGMA]);
         unsigned short n = static_cast<unsigned short>(pair_[INDEX]);
-        float coreS = pair_[CORE_SIGMA];
-        float_type en_pot = pair_[EPSILON] * halmd::pow(rs - coreS, -n);
+        float_type eps_dri_n = pair_[EPSILON] * halmd::pow(dri, n);
 
-        float_type fval = en_pot * n / (pair_[SIGMA2] * rs * (rs - coreS));
-        float_type hvir = fval * rr * (coreS + n*rs)/(rs - coreS);
-
-        en_pot -= pair_rr_en_cut_[1];
+        float_type en_pot = eps_dri_n - pair_rr_en_cut_[1];
+        float_type n_eps_dri_n_1 = n * dri * eps_dri_n;
+        float_type fval = n_eps_dri_n_1 / (pair_[SIGMA2] * r_s);
+        float_type hvir = n_eps_dri_n_1 * ((n + 1) * dri * rr_ss - r_s);
 
         return make_tuple(fval, en_pot, hvir);
     }

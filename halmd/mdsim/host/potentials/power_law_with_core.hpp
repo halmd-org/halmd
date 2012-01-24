@@ -1,5 +1,5 @@
 /*
- * Copyright © 2011  Michael Kopp
+ * Copyright © 2011-2012  Michael Kopp and Felix Höfling
  *
  * This file is part of HALMD.
  *
@@ -165,21 +165,6 @@ public:
         return r_cut_sigma_;
     }
 
-    matrix_type const& r_core() const
-    {
-        return r_core_;
-    }
-
-    float_type r_core(unsigned a, unsigned b) const
-    {
-        return r_core_(a, b);
-    }
-
-    float_type rr_core(unsigned a, unsigned b) const
-    {
-        return rr_core_(a, b);
-    }
-
     matrix_type const& r_core_sigma() const
     {
         return r_core_sigma_;
@@ -209,10 +194,11 @@ private:
      * @param b type of second interacting particle
      * @returns tuple of unit "force" @f$ -U'(r)/r @f$ and potential @f$ U(r) @f$
      * and hypervirial @f$ r \partial_r r \partial_r U(r) @f$ with
+     *
      * @f{eqnarray*}{
-     *   - \frac{U'(r)}{r} &=& n \epsilon \frac{\sigma^n}{r (r-r_\text{core})^{n+1}} = \frac{n}{r(r-r_\text{core})} U(r) \\
-     *   U(r) &=& \epsilon \left(\frac{\sigma}{r - r_\text{core}}\right)^n \\
-     *   r \partial_r r \partial_r U(r) &=& n U(r) \left( \frac{r (r_\text{core} + n r) }{ (r-r_\text{core})^2 } \right)
+     *   U(r) &=& \epsilon \left(\frac{r - r_\text{core}}{\sigma}\right)^{-n} \\
+     *   - \frac{U'(r)}{r} &=& n \frac{n}{r(r-r_\text{core})} U(r) \\
+     *   r \partial_r r \partial_r U(r) &=& n \frac{r (n r + r_\text{core}) }{ (r-r_\text{core})^2 } U(r)
      * @f}
      *
      */
@@ -221,25 +207,17 @@ private:
     {
         // choose arbitrary index_ if template parameter index = 0
         unsigned int n = const_index > 0 ? const_index : index_(a, b);
-        float_type rrs = rr / sigma2_(a, b);
-        // It's not possible to avoid computation of a squareroot as r_core
-        // must be substracted from r but only r*r is passed.
-        float_type rs = std::sqrt(rrs);
-        float_type rms = rs - r_core_sigma_(a, b);
-        float_type rmsi = 1 / rms;
+        float_type rr_ss = rr / sigma2_(a, b);
+        // The computation of the square root can not be avoided
+        // as r_core must be substracted from r but only r * r is passed.
+        float_type r_s = std::sqrt(rr_ss);
+        float_type dri = 1 / (r_s - r_core_sigma_(a, b));
+        float_type eps_dri_n = epsilon_(a, b) * ((const_index > 0) ? fixed_pow<const_index>(dri) : halmd::pow(dri, n));
 
-        float_type temp = epsilon_(a, b) * ( (const_index > 0) ?  fixed_pow<const_index+2>(rmsi) : std::pow(rmsi, n+2) );
-        float_type en_pot = temp * rms*rms - en_cut_(a, b);
-        temp *= n;
-        float_type fval = temp * rms / (sigma2_(a, b) * rs);
-        float_type hvir = temp * rs * (rms + n * rs);
-
-        /* backup algorithm -- probably slower...
-        float_type en_pot = epsilon_(a,b) * ( (const_index > 0) ?  fixed_pow<const_index>(rmsi) : std::pow(rmsi, n) );
-        en_pot -= en_cut_(a, b);
-        float_type fval = en_pot * n / (sigma2_(a, b) * rs * rms);
-        float_type hvir = fval * rr * (r_core_sigma_(a, b) + n * rs)/rms;
-        */
+        float_type en_pot = eps_dri_n - en_cut_(a, b);
+        float_type n_eps_dri_n_1 = n * dri * eps_dri_n;
+        float_type fval = n_eps_dri_n_1 / (sigma2_(a, b) * r_s);
+        float_type hvir = n_eps_dri_n_1 * ((n + 1) * dri * rr_ss - r_s);
 
         return boost::make_tuple(fval, en_pot, hvir);
     }
@@ -258,12 +236,8 @@ private:
     matrix_type r_cut_sigma_;
     /** square of cutoff length */
     matrix_type rr_cut_;
-    /** core radius in MD units */
-    matrix_type r_core_;
     /** core radius in units of sigma */
     matrix_type r_core_sigma_;
-    /** square of core radius */
-    matrix_type rr_core_;
     /** potential energy at cutoff in MD units */
     matrix_type en_cut_;
     /** module logger */

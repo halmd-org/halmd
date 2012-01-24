@@ -61,8 +61,6 @@ power_law_with_core<float_type>::power_law_with_core(
   , r_cut_(ntype, ntype)
   , rr_cut_(ntype, ntype)
   , r_core_sigma_(ntype, ntype)
-  , r_core_(ntype, ntype)
-  , rr_core_(ntype, ntype)
   , sigma2_(ntype, ntype)
   , en_cut_(ntype, ntype)
   , g_param_(epsilon_.data().size())
@@ -85,8 +83,6 @@ power_law_with_core<float_type>::power_law_with_core(
         for (unsigned j = i; j < ntype; ++j) {
             r_cut_(i, j) = r_cut_sigma_(i, j) * sigma_(i, j);
             rr_cut_(i, j) = std::pow(r_cut_(i, j), 2);
-            r_core_(i, j) = r_core_sigma_(i, j) * sigma_(i, j);
-            rr_core_(i, j) = std::pow(r_core_(i, j), 2);
             sigma2_(i, j) = std::pow(sigma_(i, j), 2);
             // energy shift due to truncation at cutoff length
             float_type ri_cut = 1 / r_cut_sigma_(i, j);

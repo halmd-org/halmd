@@ -86,21 +86,6 @@ public:
         return r_cut_sigma_;
     }
 
-    matrix_type const& r_core() const
-    {
-        return r_core_;
-    }
-
-    float_type r_core(unsigned a, unsigned b) const
-    {
-        return r_core_(a, b);
-    }
-
-    float_type rr_core(unsigned a, unsigned b) const
-    {
-        return rr_core_(a, b);
-    }
-
     matrix_type const& r_core_sigma() const
     {
         return r_core_sigma_;
@@ -134,12 +119,8 @@ private:
     matrix_type r_cut_;
     /** square of cutoff length */
     matrix_type rr_cut_;
-    /** core radius (pot. diverges) in units of sigma */
+    /** core radius in units of sigma */
     matrix_type r_core_sigma_;
-    /** core radius in MD units */
-    matrix_type r_core_;
-    /** square of core radius */
-    matrix_type rr_core_;
     /** square of pair separation */
     matrix_type sigma2_;
     /** potential energy at cutoff length in MD units */
