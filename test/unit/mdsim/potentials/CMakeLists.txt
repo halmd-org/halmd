@@ -32,6 +32,23 @@ if(WITH_CUDA)
   )
 endif(WITH_CUDA)
 
+add_executable(test_unit_mdsim_potentials_power_law
+  power_law.cpp
+)
+target_link_libraries(test_unit_mdsim_potentials_power_law
+  libhalmd
+  ${HALMD_COMMON_LIBRARIES}
+  ${HALMD_TEST_LIBRARIES}
+)
+add_test(unit/mdsim/potentials/power_law/host
+  test_unit_mdsim_potentials_power_law --run_test=power_law_host --log_level=test_suite
+)
+if(WITH_CUDA)
+  add_test(unit/mdsim/potentials/power_law/gpu
+    test_unit_mdsim_potentials_power_law --run_test=power_law_gpu --log_level=test_suite
+  )
+endif(WITH_CUDA)
+
 add_executable(test_unit_mdsim_potentials_power_law_with_core
   power_law_with_core.cpp
 )
