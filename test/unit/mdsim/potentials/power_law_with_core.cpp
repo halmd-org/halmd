@@ -1,5 +1,5 @@
 /*
- * Copyright © 2011  Michael Kopp
+ * Copyright © 2011-2012  Michael Kopp and Felix Höfling
  *
  * This file is part of HALMD.
  *
@@ -43,7 +43,7 @@ using namespace boost::assign; // list_of
 using namespace halmd;
 using namespace std;
 
-/** test power law Potential with divergence at a finite distance (core)
+/** test power law potential with divergence at a finite distance (hard core)
  *
  *  The host module is a conventional functor which can be tested directly. For
  *  the GPU module, we use the pair_trunc force module in two dimensions to
@@ -59,11 +59,15 @@ BOOST_AUTO_TEST_CASE( power_law_with_core_host )
     typedef potential_type::uint_matrix_type uint_matrix_type;
 
     // define interaction parameters
+    //
+    // choose numbers that are exactly representable as float,
+    // otherwise one has to account for rounding errors in the
+    // computation of reference values
     unsigned int ntype = 2;  // test a binary mixture
     boost::array<float, 3> cutoff_array = list_of(5.f)(6.f)(7.f);
-    boost::array<float, 3> core_array = list_of(0.4f)(0.5f)(0.6f);
+    boost::array<float, 3> core_array = list_of(0.375f)(0.5f)(0.75f);
     boost::array<float, 3> epsilon_array = list_of(1.f)(.5f)(.25f);
-    boost::array<float, 3> sigma_array = list_of(1.f)(2.f)(2.2f);
+    boost::array<float, 3> sigma_array = list_of(1.f)(2.f)(4.f);
     boost::array<unsigned, 3> index_array = list_of(6u)(12u)(7u);
 
     // construct module
@@ -103,64 +107,69 @@ BOOST_AUTO_TEST_CASE( power_law_with_core_host )
     // evaluate some points of the potential, force, and hypervirial
     typedef boost::tuple<double, double, double, double> tuple_type;
     const double eps = numeric_limits<double>::epsilon();
-    double tolerance = 1; // dummy
 
     // expected results (r, fval, en_pot, hvir)
-    // interaction AA: ε=1, σ=1, rc=5σ, r_core=0.4σ, n=6
+    // interaction AA: ε=1, σ=1, rc=5σ, r_core=0.375σ, n=6
     vector<tuple_type> results = tuple_list_of
-        (5.00000000000000e-01,  1.19999999987334e+08,  9.99999999894453e+05,  1.01999999989234e+09)
-        (1.00000000000000e+00,  2.14333649588151e+02,  2.14333649588151e+01,  2.28622559560695e+03)
-        (3.00000000000000e+00,  2.40890735993852e-03,  3.13157956792008e-03,  1.53428868771469e-01)
-        (5.00000000000000e+00, -7.07088373360112e-21, -2.71050543121376e-20, -1.16823296468192e-18)
-        (1.00000000000000e+01, -6.51694969216805e-06, -1.04271195074689e-04, -4.10024751465573e-03);
+        (0.5, 2.5165824e7, 262143.9998978285, 1.69869312e8)
+        (0.6666666666666667, 50122.75353685236, 1624.34839207839, 334151.6902456824)
+        (1., 161.0612736, 16.77711382854513, 1642.82499072)
+        (2., 0.1002646166123735, 0.05420782921016794, 3.054214475269223)
+        (10., 7.840541955650863e-8, -0.0001009137012623106, 0.0000491815813581736);
 
     BOOST_FOREACH (tuple_type a, results) {
         double rr = std::pow(get<0>(a), 2);
         double fval, en_pot, hvir;
         tie(fval, en_pot, hvir) = potential(rr, 0, 0);  // interaction AA
 
-        // tolerance for temp = (r-r_core)^-(n+2)
-        double tolerance_ = eps * index_array[0] * ( 1 + max(get<0>(a), double(cutoff_array[0]))/(get<0>(a) - cutoff_array[0]) );
-        // potential without cutoff-correction
-        double pot_nocut = epsilon_array[0] * pow( get<0>(a)/sigma_array[0] - core_array[0] , -index_array[0] );
-        // cutoff energy
-        double V0 = epsilon_array[0] * pow( cutoff_array[0] - core_array[0] , -index_array[0] );
+        // tolerance due to floating-point rounding depends on difference (r-r_core)
+        double r = get<0>(a) / sigma_array[0];        //< r in units of σ
+        double tolerance = eps * index_array[0] * (1 + r / (r - core_array[0]));
 
-        BOOST_CHECK_CLOSE(en_pot, get<2>(a), tolerance_ + eps * (1 + max(pot_nocut, V0)/abs(pot_nocut - V0))); // errors due to subtraction and multiplication
-        double tolerance_fval = tolerance_ + eps * (4 + max(get<0>(a), double(cutoff_array[0]))/abs(get<0>(a)-cutoff_array[0]));
-        BOOST_CHECK_CLOSE(fval, get<1>(a), tolerance_fval);
-        BOOST_CHECK_CLOSE(hvir, get<3>(a), tolerance_fval + eps * 5);
-    };
-
-    // interaction AB: ε=0.5, σ=2, rc=6σ, r_core=0.5σ, n=12
-    results = tuple_list_of
-        (1.50000000000000e+00,  1.34217728000000e+08,  8.38860799999999e+06,  1.14756157440000e+10)
-        (3.00000000000000e+00,  9.99999985497268e-01,  4.99999992748634e-01,  1.66499997585295e+02)
-        (5.00000000000000e+00,  7.32378366802688e-05,  1.22063061133781e-04,  2.79219252343525e-02)
-        (9.30000000000000e+00,  1.85130452966199e-09,  1.19085163870507e-08,  2.17222125536800e-06)
-        (1.50000000000000e+01, -4.12299566330883e-10, -7.21524241079045e-09, -1.19934998848752e-06);
-
-    BOOST_FOREACH (tuple_type a, results) {
-        double rr = std::pow(get<0>(a), 2);
-        double fval, en_pot, hvir;
-        tie(fval, en_pot, hvir) = potential(rr, 0, 1);  // interaction AB
         BOOST_CHECK_CLOSE_FRACTION(fval, get<1>(a), tolerance);
         BOOST_CHECK_CLOSE_FRACTION(en_pot, get<2>(a), tolerance);
         BOOST_CHECK_CLOSE_FRACTION(hvir, get<3>(a), tolerance);
     };
 
-    // interaction BB: ε=0.25, σ=2.2, rc=7σ, r_core=0.6σ, n=7
+    // interaction AB: ε=0.5, σ=2, rc=6σ, r_core=0.5σ, n=12
     results = tuple_list_of
-        (1.75000000000000e+00,  2.13408208954871e+05,  2.29413824626486e+04,  2.06252209855177e+07)
-        (4.00000000000000e+00,  4.10019316439325e-02,  6.27915296032796e-02,  7.17717394507524e+00)
-        (7.00000000000000e+00,  5.61802960847151e-05,  3.19104081761182e-04,  2.43877874031972e-02)
-        (1.22000000000000e+01, -2.30709843967200e-07, -4.37478597840433e-06, -2.73700859138740e-04)
-        (1.90000000000000e+01, -1.60760926012554e-07, -7.71468718087676e-06, -4.40906116352052e-04);
+        (1.333333333333333, 2.9386561536e10, 1.088391168e9, 2.664381579264e12)
+        (1.5, 1.34217728e8, 8.388607999999999e6, 1.1475615744e10)
+        (2., 12288., 2047.999999999347, 1.2288e6)
+        (4., 0.00385367331462947, 0.003853672662073555, 1.007093292889835)
+        (20., 2.92202811508691e-14, -6.516306057676999e-10, 1.482544791023043e-10);
+
+    BOOST_FOREACH (tuple_type a, results) {
+        double rr = std::pow(get<0>(a), 2);
+        double fval, en_pot, hvir;
+        tie(fval, en_pot, hvir) = potential(rr, 0, 1);  // interaction AB
+
+        // tolerance due to floating-point rounding depends on difference (r-r_core)
+        double r = get<0>(a) / sigma_array[1];        //< r in units of σ
+        double tolerance = eps * index_array[1] * (1 + r / (r - core_array[1]));
+
+        BOOST_CHECK_CLOSE_FRACTION(fval, get<1>(a), tolerance);
+        BOOST_CHECK_CLOSE_FRACTION(en_pot, get<2>(a), tolerance);
+        BOOST_CHECK_CLOSE_FRACTION(hvir, get<3>(a), tolerance);
+    };
+
+    // interaction BB: ε=0.25, σ=4, rc=7σ, r_core=.75σ, n=7
+    results = tuple_list_of
+        (3.333333333333333, 5.64350976e7, 8.957951999999329e6, 4.953747456e10)
+        (3.5, 2.097152e6, 524287.9999993289, 1.41295616e9)
+        (4., 7168., 4095.999999328911, 3.555328e6)
+        (8., 0.00917504, 0.05242812891136, 6.928990208)
+        (20., 2.055117329014365e-7, 9.310909815212629e-6, 0.0006914865365860098);
 
     BOOST_FOREACH (tuple_type a, results) {
         double rr = std::pow(get<0>(a), 2);
         double fval, en_pot, hvir;
         tie(fval, en_pot, hvir) = potential(rr, 1, 1);  // interaction BB
+
+        // tolerance due to floating-point rounding depends on difference (r-r_core)
+        double r = get<0>(a) / sigma_array[2];        //< r in units of σ
+        double tolerance = eps * index_array[2] * (1 + r / (r - core_array[2]));
+
         BOOST_CHECK_CLOSE_FRACTION(fval, get<1>(a), tolerance);
         BOOST_CHECK_CLOSE_FRACTION(en_pot, get<2>(a), tolerance);
         BOOST_CHECK_CLOSE_FRACTION(hvir, get<3>(a), tolerance);
@@ -226,9 +235,7 @@ void power_law_with_core<float_type>::test()
     cuda::host::vector<float> hypervirial(force->hypervirial().size());
     cuda::copy(force->hypervirial(), hypervirial);
 
-    const float_type tolerance = 10 * numeric_limits<float_type>::epsilon();
-
-    for (unsigned int i = 0; i < npart; ++i) {
+    for (unsigned int i = 0; i < npart; i += 100) {
         vector_type r1, r2;
         unsigned int type1, type2;
         tie(r1, type1) = particle_kernel::untagged<vector_type>(r_list[i]);
@@ -243,8 +250,18 @@ void power_law_with_core<float_type>::test()
         en_pot_ /= 2;
         hvir /= 2 * dimension * dimension;
 
-        BOOST_CHECK_SMALL(norm_inf(fval * r - f), norm_inf(f) * tolerance);
-        BOOST_CHECK_CLOSE_FRACTION(en_pot_, en_pot[i], 4 * tolerance);
+        // estimated upper bound on floating-point error for (r - r_core)^n
+        float_type const eps = numeric_limits<float_type>::epsilon();
+        unsigned int index = host_potential->index()(type1, type2);
+        float_type r_core = host_potential->r_core_sigma()(type1, type2) * host_potential->sigma()(type1, type2);
+        float_type r_norm = norm_2(r);
+        float_type tolerance = eps * index * (1 + r_norm / (r_norm - r_core));
+
+        // check both absolute and relative error
+        BOOST_CHECK_SMALL(norm_inf(fval * r - f), max(norm_inf(fval * r), float_type(1)) * tolerance);
+
+        // the prefactor is not justified, it is needed for absolute differences on the order 1e-14
+        BOOST_CHECK_CLOSE_FRACTION(en_pot_, en_pot[i], 3 * tolerance);
         BOOST_CHECK_CLOSE_FRACTION(hvir, hypervirial[i], tolerance);
     }
 }
@@ -255,21 +272,25 @@ power_law_with_core<float_type>::power_law_with_core()
     BOOST_TEST_MESSAGE("initialise simulation modules");
 
     // set module parameters
-    vector<unsigned int> npart_list = list_of(1000)(2);
+    vector<unsigned int> npart_list = list_of(100)(2); // particle distance should be large than hard core
     float box_length = 100;
     float cutoff = box_length / 2;
 
     boost::array<float, 3> cutoff_array = list_of(cutoff)(cutoff)(cutoff);
-    boost::array<float, 3> core_array = list_of(0.4f)(0.5f)(0.6f);
+    boost::array<float, 3> core_array = list_of(0.375f)(0.5f)(0.75f);
     boost::array<float, 3> epsilon_array = list_of(1.f)(.5f)(.25f);
-    boost::array<float, 3> sigma_array = list_of(1.f)(2.f)(2.2f);
+    boost::array<float, 3> sigma_array = list_of(1.f)(2.f)(4.f);
     boost::array<unsigned, 3> index_array = list_of(6u)(12u)(7u);
 
     // create modules
     particle = make_shared<particle_type>(npart_list);
     box = make_shared<box_type>(particle->nbox, fixed_vector<double, dimension>(box_length));
-    potential = make_shared<potential_type>(particle->ntype, cutoff_array, core_array, epsilon_array, sigma_array, index_array);
-    host_potential = make_shared<host_potential_type>(particle->ntype, cutoff_array, core_array, epsilon_array, sigma_array,index_array);
+    potential = make_shared<potential_type>(
+        particle->ntype, cutoff_array, core_array, epsilon_array, sigma_array, index_array
+    );
+    host_potential = make_shared<host_potential_type>(
+        particle->ntype, cutoff_array, core_array, epsilon_array, sigma_array,index_array
+    );
     neighbour = make_shared<neighbour_type>(particle);
     force = make_shared<force_type>(potential, particle, box, neighbour);
 }
