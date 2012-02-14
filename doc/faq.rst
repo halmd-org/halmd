@@ -23,11 +23,6 @@ FAQ
 
   Try lowering the ``--timestep`` value.
 
-**nvcc fails with 'cudafe++' died due to signal 11 (Invalid memory reference)**
-  This is due to a bug in the CUDA compiler, which may be circumvented by
-  including ``--host-compilation=c`` in the ``NVCCFLAGS`` environment variable
-  passed to cmake, or in CMAKE_CUDA_FLAGS using ccmake.
-
 **nvcc fails with error: inline function ‘__signbit’ cannot be declared weak**
   CUDA 2.3 (or less) is not compatible with GCC 4.4.
   As a work around install GCC 4.3 and place symlinks in the default CUDA

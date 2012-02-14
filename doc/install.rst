@@ -159,7 +159,7 @@ executables for each backend, which are statically linked to all libraries excep
 standard C and C++ libraries::
 
   CXXFLAGS="-fPIC -Wall"
-  NVCCFLAGS="-Xcompiler -fPIC -Xptxas -v --host-compilation=c" \
+  NVCCFLAGS="-Xcompiler -fPIC -Xptxas -v" \
   cmake \
       -DCMAKE_BUILD_TYPE=Release \
       -DHALMD_BACKEND_EXECUTABLES=TRUE \
