@@ -1,5 +1,5 @@
 /*
- * Copyright © 2011  Felix Höfling and Peter Colberg
+ * Copyright © 2011-2012  Felix Höfling and Peter Colberg
  *
  * This file is part of HALMD.
  *
@@ -105,52 +105,44 @@ void lattice<modules_type>::test()
     BOOST_TEST_MESSAGE("#particles: " << npart << ", #unit cells: " << ncell <<
                        ", lattice constant: " << lattice_constant);
 
-    // list of reference results: (wavenumber, ssf, count)
-    // S_q = {N if h,k,l all even or odd; 0 if h,k,l mixed parity}
-    // see e.g., http://en.wikipedia.org/wiki/Structure_factor
+    // define wavenumbers: q = norm_2((2π/a) × (h, k, l))
     //
-    // entries must be ordered with ascending wavenumber
+    // entries must be unique and ascendingly ordered
     //
-    // FIXME for boxes with a high aspect ratio. some of the wavevectors only fit approximately,
-    // reducing the tolerance on the wavevector magnitude, however, would discard many valid ones as well
-    vector<tuple<double, double, unsigned> > ssf_ref;
+    vector<double> wavenumber;
     double q_lat = 2 * M_PI / lattice_constant;
     if (dimension == 2) {
-        ssf_ref.push_back(make_tuple(q_lat / ncell[1], 0, 1));          // hkl = (0, 1/1024)
-        ssf_ref.push_back(make_tuple(q_lat / ncell[0], 0, 2));          // hkl = (1/4, 0), (0, 256/1024)
-        ssf_ref.push_back(make_tuple(sqrt(  1.) * q_lat, 0, 3));         // hkl = (0,1), (1,0), approx.: (4, 1) × (1/4, 1/1024)
-        ssf_ref.push_back(make_tuple(sqrt(  4.) * q_lat, npart / 2., 4));// hkl = (0,2), (2,0), approx.: (4, 1), (8, 1)
-        ssf_ref.push_back(make_tuple(sqrt(  9.) * q_lat, 0, 4));         // hkl = (0,3), (3,0), approx.: (3, 1), (4, 1)
-        ssf_ref.push_back(make_tuple(sqrt( 16.) * q_lat, npart / 2., 4));// hkl = (0,4), (4,0), approx.: (4, 1), (8, 1)
-        ssf_ref.push_back(make_tuple(sqrt(256.) * q_lat, npart / 2., 4));// hkl = (0,16), (16,0), approx.: (4, 1), (8, 1)
+        wavenumber.push_back(q_lat / ncell[0]);
+        wavenumber.push_back(q_lat / ncell[1]);
+        wavenumber.push_back(sqrt( 1.) * q_lat);
+        wavenumber.push_back(sqrt( 4.) * q_lat);
+        wavenumber.push_back(sqrt( 9.) * q_lat);
+        wavenumber.push_back(sqrt(16.) * q_lat);
+        wavenumber.push_back(sqrt(64.) * q_lat);
     }
     else if (dimension == 3) {
-        if (!gpu) {
-            ssf_ref.push_back(make_tuple(q_lat / ncell[1], 0, 2));         // hkl = (0, 0, 1/12), (0, 1/12, 0)
-            ssf_ref.push_back(make_tuple(q_lat / ncell[0], 0, 3));         // hkl = (1/6, 0, 0), (0, 2/12, 0), (0, 0, 2/12)
-        }
-        else {
-            ssf_ref.push_back(make_tuple(q_lat / ncell[0], 0, 1));         // hkl = (1/(6*19), 0, 0)
-            ssf_ref.push_back(make_tuple(q_lat / ncell[1], 0, 2));         // hkl = (0, 1/12, 0), (0, 0, 1/12)
-        }
-        ssf_ref.push_back(make_tuple(sqrt( 1.) * q_lat, 0, 6));         // hkl = (0,0,1), (1/3, 2/3, 2/3) and permutations
-        ssf_ref.push_back(make_tuple(sqrt( 2.) * q_lat, 0, 6));         // hkl = (0,1,1), (1/3, 1/3, 4/3), ...
-        ssf_ref.push_back(make_tuple(sqrt( 3.) * q_lat, npart / 4., 4));// hkl = (1,1,1), (1/3, 1/3, 5/3), ..., only the 1st one contributes
-        ssf_ref.push_back(make_tuple(sqrt( 4.) * q_lat, npart / 2., 6));// hkl = (0,0,2), (2/3, 4/3, 4/3), ...
-        ssf_ref.push_back(make_tuple(sqrt( 5.) * q_lat, 0, 6));         // hkl = (0,1,2), ...
-        ssf_ref.push_back(make_tuple(sqrt( 6.) * q_lat, 0, 6));         // hkl = (1,1,2), (1/3, 2/3, 7/3), ...
-        ssf_ref.push_back(make_tuple(sqrt( 8.) * q_lat, npart / 2., 6));// hkl = (0,2,2), (2/3, 2/3, 8/3), ...
-        ssf_ref.push_back(make_tuple(sqrt( 9.) * q_lat, 0, 6));         // hkl = (1,2,2), (0,0,3), ...
-        ssf_ref.push_back(make_tuple(sqrt(10.) * q_lat, 0, 6));         // hkl = (0,1,3), ...
-        ssf_ref.push_back(make_tuple(sqrt(12.) * q_lat, npart / 4., 4));// hkl = (2,2,2), (2, 2, 10), ...
+        wavenumber.push_back(q_lat / ncell[0]);
+        wavenumber.push_back(q_lat / ncell[1]);
+        wavenumber.push_back(q_lat / ncell[2]);
+        wavenumber.push_back(sqrt( 1.) * q_lat);
+        wavenumber.push_back(sqrt( 2.) * q_lat);
+        wavenumber.push_back(sqrt( 3.) * q_lat);
+        wavenumber.push_back(sqrt( 4.) * q_lat);
+        wavenumber.push_back(sqrt( 5.) * q_lat);
+        wavenumber.push_back(sqrt( 6.) * q_lat);
+        wavenumber.push_back(sqrt( 8.) * q_lat);
+        wavenumber.push_back(sqrt( 9.) * q_lat);
+        wavenumber.push_back(sqrt(10.) * q_lat);
+        wavenumber.push_back(sqrt(12.) * q_lat);
     }
+    sort(wavenumber.begin(), wavenumber.end());
+    wavenumber.erase(
+        unique(wavenumber.begin(), wavenumber.end())
+      , wavenumber.end()
+    );
 
     // setup wavevectors
-    vector<double> wavenumber(ssf_ref.size());
-    double const& (*get0)(tuple<double, double, unsigned>::inherited const&) = &boost::get<0>;
-    transform(ssf_ref.begin(), ssf_ref.end(), wavenumber.begin(), bind(get0, _1));
-
-    wavevector = make_shared<wavevector_type>(wavenumber, box->length(), 1e-6, 2 * dimension); // FIXME tolerance, see above
+    wavevector = make_shared<wavevector_type>(wavenumber, box->length(), 1e-3, 2 * dimension);
 
     // construct modules for density modes and static structure factor
     density_mode = make_shared<density_mode_type>(sample, wavevector, clock);
@@ -174,41 +166,88 @@ void lattice<modules_type>::test()
     BOOST_TEST_MESSAGE("compute static structure factor");
     ssf->sample();
     vector<typename ssf_type::result_type> const& result = ssf->value()[0]; // particle type 0
-    BOOST_CHECK(result.size() == ssf_ref.size());
+    BOOST_CHECK(result.size() == wavenumber.size());
 
-    // compare with reference values
-    double eps = gpu ? 100 * numeric_limits<float>::epsilon() : numeric_limits<double>::epsilon();
+    // compare with expected result
+    typedef typename wavevector_type::map_type::const_iterator iterator_type;
+    iterator_type q_begin = wavevector->value().begin();
+    iterator_type q_end = q_begin;
     for (unsigned i = 0; i < result.size(); ++i) {
-        // check wavenumber
-        double q = ssf->wavevector().wavenumber()[i];
-        BOOST_CHECK_CLOSE_FRACTION(q, get<0>(ssf_ref[i]), 1e-6);
+        // find range with wavevectors of magnitude q
+        double q = wavevector->wavenumber()[i];
+        q_begin = q_end;
+        for ( ; q_end != wavevector->value().end(); ++q_end) {
+            if (q_end->first > q)
+                break;
+        }
+        unsigned nq = q_end - q_begin;
+        BOOST_CHECK(nq > 0);
 
-#ifndef NDEBUG
-        // convert boost::array to fixed_vector for output
-        fixed_vector<double, 3> S_q;
-        copy(result[i].begin(), result[i].end(), S_q.begin());
-        BOOST_TEST_MESSAGE(
-            "S(q = " <<  q << "): " << S_q
-         << "; expected: S_q = " << get<1>(ssf_ref[i]) << " (count: " << get<2>(ssf_ref[i]) << ")"
-        );
-#endif
+        // determine (h,k,l) of each wavevector and its contribution to the
+        // structure factor
+        //
+        // S_q = {npart if h,k,l all even or odd; 0 if h,k,l mixed parity}
+        // see e.g., http://en.wikipedia.org/wiki/Structure_factor
+        //
+        // Each fcc unit cell contributes for
+        //  d=2: 1 + (-1)^(h+k)
+        //  d=3: 1 + (-1)^(h+k) + (-1)^(k+l) + (-1)^(h+l)
+        //
+        // which is nunit_cell if all h,k,l have the same parity
+        // and zero otherwise. Thus, S_q = ncell * nunit_cell = npart
+        // for matching wavevectors.
+        double S_q = 0;
+        for (iterator_type q_it = q_begin; q_it != q_end; ++q_it) {
+            // compute elementwise product (h,k,l) × ncell
+            // since fractions cannot be represented by double
+            typedef fixed_vector<unsigned, dimension> index_type; // caveat: we assume q[i] ≥ 0
+            index_type hkl_ncell = static_cast<index_type>(
+                round(element_prod(q_it->second, box->length() / (2 * M_PI)))
+            );
+            // check whether all entries are multiples of ncell
+            // and if yes, count number of odd multiples
+            if (element_mod(hkl_ncell, ncell) == index_type(0)) {
+                index_type hkl_mod = element_div(hkl_ncell, ncell) % 2;
+                unsigned n_odd = accumulate(hkl_mod.begin(), hkl_mod.end(), 0u, plus<unsigned>());
+                if (n_odd == 0 || n_odd == dimension) {
+                    S_q += 1;
+                }
+            }
+        }
+        S_q *= npart / nq;
 
+        // compare to results
+
+        // The error from accumulation is proportional to the number of terms.
+        //
+        // Additional errors from the computation of exp(iqr) are ignored, they
+        // can be estimated by exp(iqr)[1 + ε(qr)].
+        //
+        // For wavevectors with very asymmetric hkl-values, errors are large as
+        // well, which are accounted for phenomenologically by the factors 2
+        // and 4 below.
+        //
+        const double epsilon = numeric_limits<typename vector_type::value_type>::epsilon();
+        double tolerance = nq * epsilon;
+
+        // check accumulator count, i.e., number of wavevectors
+        BOOST_CHECK_EQUAL(nq, result[i][2]);
         // check structure factor
-        BOOST_CHECK_SMALL(fabs(result[i][0] - get<1>(ssf_ref[i])) / npart, eps);
+        BOOST_CHECK_SMALL(fabs(result[i][0] - S_q), npart * 2 * tolerance);
+
         // check error estimate on structure factor
-        // from N contributions assume n times the value npart, zero otherwise
-        // then variance(S_q) = npart² × (n/N) × (1-n/N) and
+        //
+        // From N contributions assume n times the value npart, zero otherwise:
+        // S_q = npart × n / N
+        // variance(S_q) = npart² × (n/N) × (1-n/N) = S_q × (npart - S_q)
         // S_q_err = sqrt(variance(S_q) / (N-1))
-        unsigned count = get<2>(ssf_ref[i]);
-        if (count > 1) {
-            double S_q_err = sqrt(get<1>(ssf_ref[i]) * (npart - get<1>(ssf_ref[i])) / (count - 1));
-            BOOST_CHECK_SMALL(fabs(result[i][1] - S_q_err) / max(S_q_err, 1.), eps);
+        if (nq > 1) {
+            double S_q_err = sqrt(S_q * (npart - S_q) / (nq - 1));
+            BOOST_CHECK_SMALL(fabs(result[i][1] - S_q_err), max(S_q_err, 1.) * 4 * tolerance);
         }
         else {
             BOOST_CHECK(result[i][1] == 0);
         }
-        // check count, i.e., number of wavevectors
-        BOOST_CHECK(result[i][2] == count);
     }
 }
 
@@ -222,7 +261,7 @@ lattice<modules_type>::lattice()
         ncell[0] *= 19; // prime
     }
     nunit_cell = (dimension == 3) ? 4 : 2;  //< number of particles per unit cell
-    npart = nunit_cell * accumulate(ncell.begin(), ncell.end(), 1, multiplies<unsigned>());
+    npart = nunit_cell * accumulate(ncell.begin(), ncell.end(), 1u, multiplies<unsigned>());
     density = 0.3;
     lattice_constant = pow(nunit_cell / density, 1.f / dimension);
     slab = 1;

@@ -44,12 +44,23 @@
 const unsigned BLOCKS = 64;
 const unsigned THREADS = 128;
 
+struct stochastic_test
+{
+    stochastic_test()
+    {
+        BOOST_TEST_MESSAGE("This test has a stochastic outcome. It shall fail less than once in 10000 passes.");
+    }
+};
+
 BOOST_GLOBAL_FIXTURE( set_cuda_device );
+BOOST_GLOBAL_FIXTURE( stochastic_test );
 
 void test_rand48_gpu( unsigned long n )
 {
     unsigned seed = time(NULL);
     using halmd::random::gpu::rand48;
+
+    BOOST_TEST_MESSAGE("generate " << n << " uniformly distributed random numbers on the GPU");
 
     try {
         // seed GPU random number generator
@@ -74,10 +85,11 @@ void test_rand48_gpu( unsigned long n )
         // check count, mean, and variance
         BOOST_CHECK_EQUAL(count(a), n);
 
-        // mean = 1/2, variance = 1/12, n-th moment is 1/(n+1)
-        // use tolerance = 3 sigma, so the test passes with 99% probability
+        // mean = 1/2, variance = 1/12, N-th moment is 1/(N+1)
+        // use tolerance = 4.5 sigma, so the test passes with 99.999% probability
+        // (assuming a normal distribution of the measured value, which is true for large n)
         double val = 0.5;
-        double tol = 3 * sigma(a) / std::sqrt(n - 1.);
+        double tol = 4.5 * sigma(a) / std::sqrt(n - 1.);
         BOOST_CHECK_CLOSE_FRACTION(mean(a), val, tol / val);
 
         // Var(ΣX^2/N) = E(X^4)/N
@@ -109,6 +121,8 @@ void test_host_random( unsigned long n )
     RandomNumberGenerator rng(seed);
 
     // test uniform distribution
+    BOOST_TEST_MESSAGE("generate " << n << " uniformly distributed random numbers on the host");
+
     halmd::accumulator<double> a;
     for (unsigned i=0; i < n; i++) {
         a(rng.uniform<double>());
@@ -117,10 +131,11 @@ void test_host_random( unsigned long n )
     // check count, mean, and variance
     BOOST_CHECK_EQUAL(count(a), n);
 
-    // mean = 1/2, variance = 1/12, n-th moment is 1/(n+1)
-    // use tolerance = 3 sigma, so the test passes with 99% probability
+    // mean = 1/2, variance = 1/12, N-th moment is 1/(N+1)
+    // use tolerance = 4.5 sigma, so the test passes with 99.999% probability
+    // (assuming a normal distribution of the measured value, which is true for large n)
     double val = 0.5;
-    double tol = 3 * sigma(a) / std::sqrt(n - 1.);
+    double tol = 4.5 * sigma(a) / std::sqrt(n - 1.);
     BOOST_CHECK_CLOSE_FRACTION(mean(a), val, tol / val);
 
     // Var(ΣX^2/N) = E(X^4)/N
@@ -129,6 +144,8 @@ void test_host_random( unsigned long n )
     BOOST_CHECK_CLOSE_FRACTION(variance(a), val, tol / val);
 
     // test Gaussian distribution
+    BOOST_TEST_MESSAGE("generate " << n << " normally distributed random numbers on the host");
+
     a = halmd::accumulator<double>();
     halmd::accumulator<double> a3, a4;
     for (unsigned i=0; i < n; i++) {
@@ -143,17 +160,17 @@ void test_host_random( unsigned long n )
 
     // mean = 0, std = 1
     BOOST_CHECK_EQUAL(count(a), n);
-    tol = 3 * sigma(a) / std::sqrt(n - 1.);     // tolerance = 3 sigma (passes in 99% of all cases)
+    tol = 4.5 * sigma(a) / std::sqrt(n - 1.);     // tolerance = 4.5 sigma (passes in 99.999% of all cases)
     BOOST_CHECK_SMALL(mean(a), tol);
     val = 1;
-    tol = 3 * std::sqrt( 1. / (n - 1) * 2);     // <X⁴> = 3 <X²>² = 3 ⇒ Var(X²) = 2
+    tol = 4.5 * std::sqrt( 1. / (n - 1) * 2);     // <X⁴> = 3 <X²>² = 3 ⇒ Var(X²) = 2
     BOOST_CHECK_CLOSE_FRACTION(variance(a), val, tol / val);
 
     // higher moments
-    tol = 3 * sigma(a3) / std::sqrt(n - 1.);    // <X³> = 0
+    tol = 4.5 * sigma(a3) / std::sqrt(n - 1.);    // <X³> = 0
     BOOST_CHECK_SMALL(mean(a3), tol);
     val = 3;                                     // <X⁴> = 3
-    tol = 3 * sigma(a4) / std::sqrt(n - 1.);
+    tol = 4.5 * sigma(a4) / std::sqrt(n - 1.);
     BOOST_CHECK_CLOSE_FRACTION(mean(a4), val, tol / val);
 }
 
@@ -162,8 +179,6 @@ HALMD_TEST_INIT( init_unit_test_suite )
     using namespace boost::unit_test::framework;
 
     std::vector<unsigned long> counts;
-    counts.push_back(100);
-    counts.push_back(1000);
     counts.push_back(10000);
     counts.push_back(100000);
     counts.push_back(1000000);
