@@ -16,7 +16,7 @@
 /**
  * double-single floating point value
  */
-__device__ __host__  struct dsfloat
+struct dsfloat
 {
     float __hi, __lo;
 
