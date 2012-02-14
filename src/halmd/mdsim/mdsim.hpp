@@ -92,7 +92,7 @@ private:
     void epsilon(boost::true_type const&)
     {
         if (!m_opt["binary"].empty() && m_opt["particles"].defaulted()) {
-            m_fluid.epsilon(m_opt["epsilon"].as<boost::array<float, 3> >());
+            m_fluid.epsilon(m_opt["epsilon"].template as<boost::array<float, 3> >());
         }
     }
 
@@ -100,7 +100,7 @@ private:
     void sigma(boost::true_type const&)
     {
         if (!m_opt["binary"].empty() && m_opt["particles"].defaulted()) {
-            m_fluid.sigma(m_opt["sigma"].as<boost::array<float, 3> >());
+            m_fluid.sigma(m_opt["sigma"].template as<boost::array<float, 3> >());
         }
     }
 
@@ -109,11 +109,11 @@ private:
     {
         boost::array<float, 3> r_cut;
         try {
-            r_cut = m_opt["cutoff"].as<boost::array<float, 3> >();
+            r_cut = m_opt["cutoff"].template as<boost::array<float, 3> >();
         }
         catch (boost::bad_any_cast const&) {
             // backwards compatibility
-            r_cut[0] = r_cut[1] = r_cut[2] = m_opt["cutoff"].as<float>();
+            r_cut[0] = r_cut[1] = r_cut[2] = m_opt["cutoff"].template as<float>();
         }
         m_fluid.cutoff_radius(r_cut);
     }
@@ -121,33 +121,33 @@ private:
     void potential_smoothing(boost::false_type const&) {}
     void potential_smoothing(boost::true_type const&)
     {
-        if (!m_opt["smooth"].empty() && m_opt["smooth"].as<float>() > 0) {
-            m_fluid.potential_smoothing(m_opt["smooth"].as<float>());
+        if (!m_opt["smooth"].empty() && m_opt["smooth"].template as<float>() > 0) {
+            m_fluid.potential_smoothing(m_opt["smooth"].template as<float>());
         }
     }
 
     void pair_separation(boost::false_type const&) {}
     void pair_separation(boost::true_type const&)
     {
-        m_fluid.pair_separation(m_opt["pair-separation"].as<float>());
+        m_fluid.pair_separation(m_opt["pair-separation"].template as<float>());
     }
 
     void cell_occupancy(boost::false_type const&) {}
     void cell_occupancy(boost::true_type const&)
     {
-        m_fluid.cell_occupancy(m_opt["cell-occupancy"].as<float>());
+        m_fluid.cell_occupancy(m_opt["cell-occupancy"].template as<float>());
     }
 
     void nbl_skin(boost::false_type const&) {}
     void nbl_skin(boost::true_type const&)
     {
-        m_fluid.nbl_skin(m_opt["skin"].as<float>());
+        m_fluid.nbl_skin(m_opt["skin"].template as<float>());
     }
 
     void threads(boost::false_type const&) {}
     void threads(boost::true_type const&)
     {
-        m_fluid.threads(m_opt["threads"].as<unsigned int>());
+        m_fluid.threads(m_opt["threads"].template as<unsigned int>());
     }
 
     void init_cells(boost::false_type const&) {}
@@ -166,13 +166,13 @@ private:
     void rescale_energy(boost::true_type const&)
     {
         if (!m_opt["measure-temperature-after-time"].empty()) {
-            m_en.open(m_opt["energy"].as<std::string>(), energy<dimension>::in);
+            m_en.open(m_opt["energy"].template as<std::string>(), energy<dimension>::in);
             accumulator<double> en;
-            m_en.temperature(en, m_opt["measure-temperature-after-time"].as<double>());
+            m_en.temperature(en, m_opt["measure-temperature-after-time"].template as<double>());
             LOG("temperature: " << en.mean() << " (" << en.std() << ", " << en.count() << " samples)");
             m_en.close();
             // rescale velocities to yield desired temperature
-            m_fluid.rescale_velocities(std::sqrt(m_opt["temperature"].as<float>() / en.mean()));
+            m_fluid.rescale_velocities(std::sqrt(m_opt["temperature"].template as<float>() / en.mean()));
         }
     }
 
@@ -180,8 +180,8 @@ private:
     void thermostat(boost::true_type const&)
     {
         if (!m_opt["thermostat"].empty()) {
-            float const nu = m_opt["thermostat"].as<float>();
-            float const temp = m_opt["temperature"].as<float>();
+            float const nu = m_opt["thermostat"].template as<float>();
+            float const temp = m_opt["temperature"].template as<float>();
             m_fluid.thermostat(nu, temp);
         }
     }
@@ -245,21 +245,21 @@ mdsim<mdsim_backend>::mdsim(options const& opt) : m_opt(opt)
 
     // number of particles in periodic simulation box
     if (!m_opt["binary"].empty() && m_opt["particles"].defaulted()) {
-        m_fluid.particles(m_opt["binary"].as<boost::array<unsigned int, 2> >());
+        m_fluid.particles(m_opt["binary"].template as<boost::array<unsigned int, 2> >());
     }
     else {
-        m_fluid.particles(m_opt["particles"].as<unsigned int>());
+        m_fluid.particles(m_opt["particles"].template as<unsigned int>());
     }
     if (m_opt["density"].defaulted() && !m_opt["box-length"].empty()) {
         // periodic simulation box length
-        m_fluid.box(m_opt["box-length"].as<float>());
+        m_fluid.box(m_opt["box-length"].template as<float>());
     }
     else {
         // number density
-        m_fluid.density(m_opt["density"].as<float>());
+        m_fluid.density(m_opt["density"].template as<float>());
     }
     // simulation timestep
-    m_fluid.timestep(m_opt["timestep"].as<double>());
+    m_fluid.timestep(m_opt["timestep"].template as<double>());
 
     // potential well depths
     epsilon(IMPL(lennard_jones_potential));
@@ -285,18 +285,18 @@ mdsim<mdsim_backend>::mdsim(options const& opt) : m_opt(opt)
     thermostat(IMPL(thermostat));
 
     if (m_opt["random-seed"].empty()) {
-        m_fluid.rng(read_random_seed(m_opt["random-device"].as<std::string>()));
+        m_fluid.rng(read_random_seed(m_opt["random-device"].template as<std::string>()));
     }
     else {
-        m_fluid.rng(m_opt["random-seed"].as<unsigned int>());
+        m_fluid.rng(m_opt["random-seed"].template as<unsigned int>());
     }
 
     if (!m_opt["trajectory-sample"].empty()) {
         // read trajectory sample and periodic simulation box length
         host_sample_type sample;
-        m_traj.open(m_opt["trajectory"].as<std::string>(), trajectory::in);
-        m_traj.read(sample, m_opt["trajectory-sample"].as<int64_t>());
-        float box = H5param(m_traj)["mdsim"]["box_length"].as<float>();
+        m_traj.open(m_opt["trajectory"].template as<std::string>(), trajectory::in);
+        m_traj.read(sample, m_opt["trajectory-sample"].template as<int64_t>());
+        float box = H5param(m_traj)["mdsim"]["box_length"].template as<float>();
         m_traj.close();
         // restore system state
         m_fluid.state(sample, box);
@@ -311,32 +311,32 @@ mdsim<mdsim_backend>::mdsim(options const& opt) : m_opt(opt)
 
     if (m_opt["trajectory-sample"].empty() || (m_opt["measure-temperature-after-time"].empty() && !m_opt["temperature"].defaulted())) {
         // initialise velocities from Maxwell-Boltzmann distribution
-        m_fluid.temperature(m_opt["temperature"].as<float>());
+        m_fluid.temperature(m_opt["temperature"].template as<float>());
     }
     // initialise hard-sphere event list
     init_event_list(IMPL(hardsphere_event_lists));
 
     if (m_opt["steps"].defaulted() && !m_opt["time"].empty()) {
         // total simulation time
-        m_corr.time(m_opt["time"].as<double>(), m_fluid.timestep());
+        m_corr.time(m_opt["time"].template as<double>(), m_fluid.timestep());
     }
     else {
         // total number of simulation steps
-        m_corr.steps(m_opt["steps"].as<uint64_t>(), m_fluid.timestep());
+        m_corr.steps(m_opt["steps"].template as<uint64_t>(), m_fluid.timestep());
     }
     // sample rate for lowest block level
-    m_corr.sample_rate(m_opt["sample-rate"].as<unsigned int>());
+    m_corr.sample_rate(m_opt["sample-rate"].template as<unsigned int>());
     // minimum number of trajectory samples
-    m_corr.min_samples(m_opt["min-samples"].as<uint64_t>());
+    m_corr.min_samples(m_opt["min-samples"].template as<uint64_t>());
     // maximum number of samples per block
     if (!m_opt["max-samples"].empty()) {
-        boost::multi_array<uint64_t, 1> max_samples(m_opt["max-samples"].as<boost::multi_array<uint64_t, 1> >());
+        boost::multi_array<uint64_t, 1> max_samples(m_opt["max-samples"].template as<boost::multi_array<uint64_t, 1> >());
         m_corr.max_samples(std::vector<uint64_t>(max_samples.begin(), max_samples.end()));
     }
     // block size
-    m_corr.block_size(m_opt["block-size"].as<unsigned int>());
+    m_corr.block_size(m_opt["block-size"].template as<unsigned int>());
 
-    if (!m_opt["disable-correlation"].as<bool>()) {
+    if (!m_opt["disable-correlation"].template as<bool>()) {
         std::vector<float> q;
         if (m_opt["q-values"].empty()) {
             // static structure factor peak at q ~ 2pi/sigma
@@ -344,12 +344,12 @@ mdsim<mdsim_backend>::mdsim(options const& opt) : m_opt(opt)
         }
         else {
             typedef boost::multi_array<float, 1> q_value_vector;
-            q_value_vector v = m_opt["q-values"].as<q_value_vector>();
+            q_value_vector v = m_opt["q-values"].template as<q_value_vector>();
             q.assign(v.begin(), v.end());
         }
-        m_corr.q_values(q, m_opt["q-error"].as<float>(), m_fluid.box());
+        m_corr.q_values(q, m_opt["q-error"].template as<float>(), m_fluid.box());
 
-        std::string const backend(m_opt["tcf-backend"].as<std::string>());
+        std::string const backend(m_opt["tcf-backend"].template as<std::string>());
         if (backend == "host") {
             m_corr.add_host_correlation_functions(m_fluid.is_binary() ? 2 : 1);
             m_is_corr_sample_gpu = false;
@@ -366,7 +366,7 @@ mdsim<mdsim_backend>::mdsim(options const& opt) : m_opt(opt)
 
         if (!m_opt["mobile-particle-fraction"].empty()) {
             boost::multi_array<float, 1> mobile_particle_fraction(
-                m_opt["mobile-particle-fraction"].as<boost::multi_array<float, 1> >()
+                m_opt["mobile-particle-fraction"].template as<boost::multi_array<float, 1> >()
             );
             std::for_each(
                 mobile_particle_fraction.begin()
@@ -377,7 +377,7 @@ mdsim<mdsim_backend>::mdsim(options const& opt) : m_opt(opt)
         if (!m_opt["immobile-particle-fraction"].empty())
         {
             boost::multi_array<float, 1> immobile_particle_fraction(
-                m_opt["immobile-particle-fraction"].as<boost::multi_array<float, 1> >()
+                m_opt["immobile-particle-fraction"].template as<boost::multi_array<float, 1> >()
             );
             std::for_each(
                 immobile_particle_fraction.begin()
@@ -511,7 +511,7 @@ void mdsim<mdsim_backend>::sample_fluid(uint64_t step, bool dump)
         m_corr_sample = sample;
     }
 
-    m_is_traj_step = dump || (m_corr.is_trajectory_step(step) && !m_opt["disable-trajectory"].as<bool>());
+    m_is_traj_step = dump || (m_corr.is_trajectory_step(step) && !m_opt["disable-trajectory"].template as<bool>());
 
     // sample trajectory on host
     if ((!m_is_corr_sample_gpu && m_is_corr_step) || m_is_traj_step) {
@@ -562,9 +562,9 @@ bool mdsim<mdsim_backend>::sample_properties(uint64_t step, bool perf)
 template <typename mdsim_backend>
 void mdsim<mdsim_backend>::open()
 {
-    std::string fn = m_opt["output"].as<std::string>();
+    std::string fn = m_opt["output"].template as<std::string>();
 
-    if (!m_opt["disable-correlation"].as<bool>()) {
+    if (!m_opt["disable-correlation"].template as<bool>()) {
         m_corr.open(fn + ".tcf", m_fluid.is_binary() ? 2 : 1);
         param(m_corr);
     }
@@ -572,7 +572,7 @@ void mdsim<mdsim_backend>::open()
     m_traj.open(fn + ".trj", trajectory::out);
     param(m_traj);
 
-    if (!m_opt["disable-energy"].as<bool>()) {
+    if (!m_opt["disable-energy"].template as<bool>()) {
         m_en.open(fn + ".tep", energy<dimension>::out);
         param(m_en);
     }
@@ -658,8 +658,8 @@ void mdsim<mdsim_backend>::param(H5param param) const
 {
     H5xx::group node(param["mdsim"]);
     node["backend"] = MDSIM_BACKEND;
-    if (!m_opt["disable-correlation"].as<bool>()) {
-        node["tcf_backend"] = m_opt["tcf-backend"].as<std::string>();
+    if (!m_opt["disable-correlation"].template as<bool>()) {
+        node["tcf_backend"] = m_opt["tcf-backend"].template as<std::string>();
     }
     node["dimension"] = static_cast<unsigned>(dimension);
     if (this->step > 0) {
