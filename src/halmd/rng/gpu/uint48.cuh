@@ -28,10 +28,10 @@ struct uint48
 {
     uint x, y, z;
 
-    uint48() {}
-    uint48(uint48 const& i) : x(i.x), y(i.y), z(i.z) {}
-    uint48(uint const& i) : x(i), y(i), z(i) {}
-    uint48(uint const& x, uint const& y, uint const& z) : x(x), y(y), z(z) {}
+    __host__ __device__ uint48() {}
+    __host__ __device__ uint48(uint48 const& i) : x(i.x), y(i.y), z(i.z) {}
+    __host__ __device__ uint48(uint const& i) : x(i), y(i), z(i) {}
+    __host__ __device__ uint48(uint const& x, uint const& y, uint const& z) : x(x), y(y), z(z) {}
 };
 
 #ifdef __CUDACC__
