@@ -85,12 +85,12 @@ public:
     typedef boost::function<T> _Base;
 
 public:
-    symbol(library& dl, std::string const& name) : _Base(dl.symbol<T>(name)) {}
+    symbol(library& dl, std::string const& name) : _Base(dl.template symbol<T>(name)) {}
     symbol() {}
 
     void set(library& dl, std::string const& name)
     {
-        _Base::operator=(dl.symbol<T>(name));
+        _Base::operator=(dl.template symbol<T>(name));
     }
 };
 
