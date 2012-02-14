@@ -67,7 +67,7 @@ struct tcf_sample
 typedef boost::multi_array<accumulator<double>, 2> tcf_unary_result_type;
 typedef boost::multi_array<accumulator<double>, 3> tcf_binary_result_type;
 
-template <template <int> class sample_type>
+template <template <int> class tcf_sample_type>
 struct correlation_function
 {
     /** HDF5 dataset */
@@ -79,73 +79,73 @@ struct correlation_function
 /**
  * mean-square displacement
  */
-template <template <int> class sample_type>
+template <template <int> class tcf_sample_type>
 struct mean_square_displacement;
 
 /**
  * mean-quartic displacement
  */
-template <template <int> class sample_type>
+template <template <int> class tcf_sample_type>
 struct mean_quartic_displacement;
 
 /**
  * velocity autocorrelation
  */
-template <template <int> class sample_type>
+template <template <int> class tcf_sample_type>
 struct velocity_autocorrelation;
 
 /**
  * correlation functions sorted by squared displacements
  */
-template <template <int> class sample_type>
+template <template <int> class tcf_sample_type>
 struct sorted_by_msd;
 
 /**
  * mean squared displacement for most mobile particles given lower boundary
  */
-template <template <int> class sample_type>
+template <template <int> class tcf_sample_type>
 struct mean_square_displacement_mobile;
 
 /**
  * mean squared displacement for most immobile particles given upper boundary
  */
-template <template <int> class sample_type>
+template <template <int> class tcf_sample_type>
 struct mean_square_displacement_immobile;
 
 /**
  * mean quartic displacement for most mobile particles given lower boundary
  */
-template <template <int> class sample_type>
+template <template <int> class tcf_sample_type>
 struct mean_quartic_displacement_mobile;
 
 /**
  * mean quartic displacement for most immobile particles given upper boundary
  */
-template <template <int> class sample_type>
+template <template <int> class tcf_sample_type>
 struct mean_quartic_displacement_immobile;
 
 /**
  * velocity autocorrelation for most mobile particles given lower boundary
  */
-template <template <int> class sample_type>
+template <template <int> class tcf_sample_type>
 struct velocity_autocorrelation_mobile;
 
 /**
  * velocity autocorrelation for most immobile particles given upper boundary
  */
-template <template <int> class sample_type>
+template <template <int> class tcf_sample_type>
 struct velocity_autocorrelation_immobile;
 
 /**
  * intermediate scattering function
  */
-template <template <int> class sample_type>
-struct intermediate_scattering_function : correlation_function<sample_type>
+template <template <int> class tcf_sample_type>
+struct intermediate_scattering_function : correlation_function<tcf_sample_type>
 {
     /** block sample results */
     tcf_binary_result_type result;
 
-    using correlation_function<sample_type>::type;
+    using correlation_function<tcf_sample_type>::type;
 
     char const* name() const { return "ISF"; }
 
@@ -179,19 +179,19 @@ struct intermediate_scattering_function : correlation_function<sample_type>
 /**
  * self-intermediate scattering function
  */
-template <template <int> class sample_type>
+template <template <int> class tcf_sample_type>
 struct self_intermediate_scattering_function;
 
 /**
  * squared self-intermediate scattering function
  */
-template <template <int> class sample_type>
-struct squared_self_intermediate_scattering_function : correlation_function<sample_type>
+template <template <int> class tcf_sample_type>
+struct squared_self_intermediate_scattering_function : correlation_function<tcf_sample_type>
 {
     /** block sample results */
     tcf_binary_result_type result;
 
-    using correlation_function<sample_type>::type;
+    using correlation_function<tcf_sample_type>::type;
 
     char const* name() const { return "SISF2"; }
 
@@ -225,13 +225,13 @@ struct squared_self_intermediate_scattering_function : correlation_function<samp
 /**
  * virial stress
  */
-template <template <int> class sample_type>
-struct virial_stress : correlation_function<sample_type>
+template <template <int> class tcf_sample_type>
+struct virial_stress : correlation_function<tcf_sample_type>
 {
     /** block sample results */
     tcf_unary_result_type result;
 
-    using correlation_function<sample_type>::type;
+    using correlation_function<tcf_sample_type>::type;
 
     char const* name() const { return "STRESS"; }
 
@@ -260,13 +260,13 @@ struct virial_stress : correlation_function<sample_type>
  *
  * for background see doi:10.1103/PhysRevB.60.3169 and doi:10.1063/1.2724820
  */
-template <template <int> class sample_type>
-struct helfand_moment : correlation_function<sample_type>
+template <template <int> class tcf_sample_type>
+struct helfand_moment : correlation_function<tcf_sample_type>
 {
     /** block sample results */
     tcf_unary_result_type result;
 
-    using correlation_function<sample_type>::type;
+    using correlation_function<tcf_sample_type>::type;
 
     char const* name() const { return "HELFAND"; }
 
