@@ -24,25 +24,20 @@
 namespace halmd {
 
 /**
- * resolve fully qualified host name
+ * resolve canonical host name
  */
 std::string host_name()
 {
     boost::asio::io_service ios;
     namespace bai = boost::asio::ip;
     bai::tcp::resolver resolver(ios);
-    bai::tcp::resolver::query query(bai::host_name(), "");
+    bai::tcp::resolver::query query(bai::host_name(), "", bai::tcp::resolver::query::canonical_name);
     bai::tcp::resolver::iterator addr_iter = resolver.resolve(query);
     bai::tcp::resolver::iterator end;
-    bai::tcp::endpoint ep;
-    while (addr_iter != end) {
-        bai::tcp::resolver::iterator name_iter = resolver.resolve((*addr_iter).endpoint());
-        if (name_iter != end) {
-            return (*name_iter).host_name();
-        }
-        ++addr_iter;
+    if (addr_iter != end) {
+        return addr_iter->host_name();
     }
-    return query.host_name(); // failed to resolve FQDN
+    return query.host_name(); // failed to resolve canonical host name
 }
 
 } // namespace halmd

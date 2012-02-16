@@ -20,4 +20,5 @@ add_test(unit/numeric/pow
   test_unit_numeric_pow --log_level=test_suite
 )
 
+add_subdirectory(blas)
 add_subdirectory(mp)

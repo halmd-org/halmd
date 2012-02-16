@@ -17,6 +17,9 @@
 -- along with this program.  If not, see <http://www.gnu.org/licenses/>.
 --
 
+-- backwards compatibility with Lua < 5.2
+local unpack = table.unpack or unpack
+
 -- @module halmd.modules.signals
 --
 -- This module implements connection tracking for a C++ module that provides

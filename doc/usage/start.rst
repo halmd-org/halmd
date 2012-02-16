@@ -33,7 +33,7 @@ Equilibration is done with the Andersen thermostat at a temperature
     --timestep 0.005 --time 50 \
     box --density 0.8 --particles 20000 \
     verlet_nvt_andersen --temperature 2 \
-    sampler --trajectory 10000
+    trajectory --every 10000
 
 Many parameters have sensible default values and may be omitted, e.g, the
 collision rate of the Andersen thermostat (10), or the cutoff radius of the
@@ -55,8 +55,8 @@ The equivalent parameter configuration file would look like this ::
   [verlet_nvt_andersen]
   temperature=2
 
-  [sampler]
-  trajectory=10000
+  [trajectory]
+  every=10000
 
 It is passed directly to HALMD, while parameters may be overwritten: ::
 
@@ -72,20 +72,24 @@ trajectory file and selecting a different integrator ::
 
   halmd -v \
     --integrator=verlet --timestep 0.001 --time 100 \
-    trajectory --file halmd_20110715_160545.trj
-    sampler --state-vars 100
+    trajectory --file halmd_20110715_160545.trj \
+    thermodynamics --every 100
 
-This will continue the simulation over 10⁵ steps and output thermodynamic
-(macroscopic) state variables every 100 steps (potential energy, instantaneous
-"temperature", pressure, ...) to a file with the extension ``msv``.
+This will continue the simulation over 10⁵ steps and write observables like
+thermodynamic state variables every 100 steps (potential energy, instantaneous
+"temperature", pressure, ... to a file with the extension ``obs``.
 
-If the HDF5 tools are properly installed, we may have a quick overview of the output file ::
+If the HDF5 tools are properly installed, we may have a quick overview of the
+output file ::
 
   h5ls halmd_20110715_160920.trj
 
 or look at a specific data set ::
 
-  h5dump -d EPOT halmd_20110713_161511.msv | less
+  h5dump -d observables/potential_energy halmd_20110713_161511.obs | less
 
-For a more advanced inspection and analysis of the HDF5 output files, see :ref:`plotting`.
+For a more advanced inspection and analysis of the HDF5 output files, see
+:ref:`plotting`. You may try the exemplary script ::
+
+  halmd/examples/plotting/plot_h5md.py halmd_20110713_161511.obs
 

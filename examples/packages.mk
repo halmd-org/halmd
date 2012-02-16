@@ -27,12 +27,14 @@ endif
 ## define commonly used commands
 ##
 
-WGET = wget -c
+WGET = wget
 TAR = tar
+UNZIP = unzip
 RM = rm -rf
 CP = cp -r
 TOUCH = touch
 PATCH = patch
+SHA256SUM = sha256sum --check
 
 ##
 ## define top-level targets
@@ -54,17 +56,23 @@ env: env-cmake env-lua env-boost env-luabind env-hdf5
 ## CMake with CMake-CUDA patch
 ##
 
-CMAKE_VERSION = 2.8.6
+CMAKE_VERSION = 2.8.7
 CMAKE_TARBALL = cmake-$(CMAKE_VERSION).tar.gz
 CMAKE_TARBALL_URL = http://www.cmake.org/files/v2.8/$(CMAKE_TARBALL)
-CMAKE_CUDA_PATCH = cmake-cuda-2.8.6-0-g4dd63fc.patch
+CMAKE_TARBALL_SHA256 = 130923053d8fe1a2ae032a3f09021f9024bf29d7a04ed10ae04647ff00ecf59f
+CMAKE_CUDA_PATCH = cmake-cuda-2.8.7-0-ga9ce0fa.patch
 CMAKE_CUDA_PATCH_URL = http://sourceforge.net/projects/halmd/files/patches/$(CMAKE_CUDA_PATCH)
+CMAKE_CUDA_PATCH_SHA256 = f54bd884eebb81190e102f0ed5736af92d42301abd21039cf61ce8c302c7fabe
 CMAKE_BUILD_DIR = cmake-$(CMAKE_VERSION)
 CMAKE_INSTALL_DIR = $(PREFIX)/cmake-$(CMAKE_VERSION)
 
 .fetch-cmake:
+	@$(RM) $(CMAKE_TARBALL)
+	@$(RM) $(CMAKE_CUDA_PATCH)
 	$(WGET) $(CMAKE_TARBALL_URL)
 	$(WGET) $(CMAKE_CUDA_PATCH_URL)
+	@echo '$(CMAKE_TARBALL_SHA256)  $(CMAKE_TARBALL)' | $(SHA256SUM)
+	@echo '$(CMAKE_CUDA_PATCH_SHA256)  $(CMAKE_CUDA_PATCH)' | $(SHA256SUM)
 	@$(TOUCH) $@
 
 fetch-cmake: .fetch-cmake
@@ -113,18 +121,18 @@ env-cmake:
 ## Lua
 ##
 
-LUA_VERSION = 5.1.4
+LUA_VERSION = 5.2.0
 LUA_TARBALL = lua-$(LUA_VERSION).tar.gz
 LUA_TARBALL_URL = http://www.lua.org/ftp/$(LUA_TARBALL)
-LUA_PATCH = patch-lua-5.1.4-2
-LUA_PATCH_URL = http://www.lua.org/ftp/$(LUA_PATCH)
+LUA_TARBALL_SHA256 = cabe379465aa8e388988073d59b69e76ba0025429d2c1da80821a252cdf6be0d
 LUA_BUILD_DIR = lua-$(LUA_VERSION)
 LUA_INSTALL_DIR = $(PREFIX)/lua-$(LUA_VERSION)
-LUA_CFLAGS = -DLUA_USE_LINUX -fPIC -O2 -Wall
+LUA_CFLAGS = -DLUA_USE_LINUX -DLUA_COMPAT_MODULE -fPIC -O2 -Wall
 
 .fetch-lua:
+	@$(RM) $(LUA_TARBALL)
 	$(WGET) $(LUA_TARBALL_URL)
-	$(WGET) $(LUA_PATCH_URL)
+	@echo '$(LUA_TARBALL_SHA256)  $(LUA_TARBALL)' | $(SHA256SUM)
 	@$(TOUCH) $@
 
 fetch-lua: .fetch-lua
@@ -132,7 +140,6 @@ fetch-lua: .fetch-lua
 .extract-lua: .fetch-lua
 	$(RM) $(LUA_BUILD_DIR)
 	$(TAR) -xzf $(LUA_TARBALL)
-	cd $(LUA_BUILD_DIR)/src && $(PATCH) -p0 < $(CURDIR)/$(LUA_PATCH)
 	@$(TOUCH) $@
 
 extract-lua: .extract-lua
@@ -154,7 +161,6 @@ clean-lua:
 distclean-lua: clean-lua
 	@$(RM) .fetch-lua
 	$(RM) $(LUA_TARBALL)
-	$(RM) $(LUA_PATCH)
 
 env-lua:
 	@echo
@@ -171,16 +177,23 @@ BOOST_VERSION = 1.48.0
 BOOST_RELEASE = 1_48_0
 BOOST_TARBALL = boost_$(BOOST_RELEASE).tar.gz
 BOOST_TARBALL_URL = http://sourceforge.net/projects/boost/files/boost/$(BOOST_VERSION)/$(BOOST_TARBALL)
-BOOST_LOG_TARBALL = boost-log.tar
-BOOST_LOG_TARBALL_URL = http://boost-log.svn.sourceforge.net/viewvc/boost-log/trunk/boost-log/?view=tar
-BOOST_LOG_DIR = boost-log
+BOOST_TARBALL_SHA256 = 01c8c3330a7a5013b8cfab18a3b80fcfd89001701ea5907c9ae635b97bc2c789
+BOOST_LOG_VERSION = 1.1
+BOOST_LOG_TARBALL = boost-log-$(BOOST_LOG_VERSION).zip
+BOOST_LOG_TARBALL_URL = http://sourceforge.net/projects/boost-log/files/boost-log-$(BOOST_LOG_VERSION).zip
+BOOST_LOG_TARBALL_SHA256 = 4b00e1d302017298284914c6cc9e7fcae0e097c93e632045d6b0fc4bf6266ba7
+BOOST_LOG_DIR = boost-log-$(BOOST_LOG_VERSION)
 BOOST_BUILD_DIR = boost_$(BOOST_RELEASE)
 BOOST_INSTALL_DIR = $(PREFIX)/boost_$(BOOST_RELEASE)
 BOOST_BUILD_FLAGS = cxxflags=-fPIC --without-python
 
 .fetch-boost:
+	@$(RM) $(BOOST_TARBALL)
+	@$(RM) $(BOOST_LOG_TARBALL)
 	$(WGET) $(BOOST_TARBALL_URL)
 	$(WGET) -O $(BOOST_LOG_TARBALL) $(BOOST_LOG_TARBALL_URL)
+	@echo '$(BOOST_TARBALL_SHA256)  $(BOOST_TARBALL)' | $(SHA256SUM)
+	@echo '$(BOOST_LOG_TARBALL_SHA256)  $(BOOST_LOG_TARBALL)' | $(SHA256SUM)
 	@$(TOUCH) $@
 
 fetch-boost: .fetch-boost
@@ -188,7 +201,7 @@ fetch-boost: .fetch-boost
 .extract-boost: .fetch-boost
 	$(RM) $(BOOST_BUILD_DIR) $(BOOST_LOG_DIR)
 	$(TAR) -xzf $(BOOST_TARBALL)
-	$(TAR) -xf $(BOOST_LOG_TARBALL)
+	$(UNZIP) $(BOOST_LOG_TARBALL)
 	$(CP) $(BOOST_LOG_DIR)/boost/log $(BOOST_BUILD_DIR)/boost/
 	$(CP) $(BOOST_LOG_DIR)/libs/log $(BOOST_BUILD_DIR)/libs/
 	@$(TOUCH) $@
@@ -230,33 +243,28 @@ env-boost:
 	@echo 'export CMAKE_PREFIX_PATH="$(BOOST_INSTALL_DIR)$${CMAKE_PREFIX_PATH+:$$CMAKE_PREFIX_PATH}"'
 
 ##
-## Luabind library with Clang C++ compiler fix
+## Luabind library
 ##
 
-LUABIND_VERSION = 0.9.1
-LUABIND_TARBALL = luabind-$(LUABIND_VERSION).tar.gz
-LUABIND_TARBALL_URL = http://sourceforge.net/projects/luabind/files/luabind/$(LUABIND_VERSION)/$(LUABIND_TARBALL)
-LUABIND_CLANG_PATCH = luabind_proper_forward_declarations_for_clang.patch
-LUABIND_CLANG_PATCH_URL = http://sourceforge.net/projects/halmd/files/patches/$(LUABIND_CLANG_PATCH)
-LUABIND_CAST_GRAPH_CACHE_PATCH = luabind_cast_graph_cache_invalid_cast_fix.patch
-LUABIND_CAST_GRAPH_CACHE_PATCH_URL = http://sourceforge.net/projects/halmd/files/patches/$(LUABIND_CAST_GRAPH_CACHE_PATCH)
+LUABIND_VERSION = 0.9.1-24-gf5fe839
+LUABIND_TARBALL = luabind-$(LUABIND_VERSION).tar.bz2
+LUABIND_TARBALL_URL = http://sourceforge.net/projects/halmd/files/libs/luabind/$(LUABIND_TARBALL)
+LUABIND_TARBALL_SHA256 = a2e8cf5d876a6df824b9b98680068d6c37c16ef543f782b2fd0a45467edc1432
 LUABIND_BUILD_DIR = luabind-$(LUABIND_VERSION)
 LUABIND_BUILD_FLAGS = cxxflags=-fPIC link=static variant=release variant=debug
 LUABIND_INSTALL_DIR = $(PREFIX)/luabind-$(LUABIND_VERSION)
 
 .fetch-luabind:
+	@$(RM) $(LUABIND_TARBALL)
 	$(WGET) $(LUABIND_TARBALL_URL)
-	$(WGET) $(LUABIND_CLANG_PATCH_URL)
-	$(WGET) $(LUABIND_CAST_GRAPH_CACHE_PATCH_URL)
+	@echo '$(LUABIND_TARBALL_SHA256)  $(LUABIND_TARBALL)' | $(SHA256SUM)
 	@$(TOUCH) $@
 
 fetch-luabind: .fetch-luabind
 
 .extract-luabind: .fetch-luabind .build-lua
 	$(RM) $(LUABIND_BUILD_DIR)
-	$(TAR) -xzf $(LUABIND_TARBALL)
-	cd $(LUABIND_BUILD_DIR) && $(PATCH) -p1 < $(CURDIR)/$(LUABIND_CLANG_PATCH)
-	cd $(LUABIND_BUILD_DIR) && $(PATCH) -p1 < $(CURDIR)/$(LUABIND_CAST_GRAPH_CACHE_PATCH)
+	$(TAR) -xjf $(LUABIND_TARBALL)
 	mkdir $(LUABIND_BUILD_DIR)/lua
 	ln -s $(CURDIR)/$(LUA_BUILD_DIR)/src $(LUABIND_BUILD_DIR)/lua/include
 	ln -s $(CURDIR)/$(LUA_BUILD_DIR)/src $(LUABIND_BUILD_DIR)/lua/lib
@@ -281,8 +289,6 @@ clean-luabind:
 distclean-luabind: clean-luabind
 	@$(RM) .fetch-luabind
 	$(RM) $(LUABIND_TARBALL)
-	$(RM) $(LUABIND_CLANG_PATCH)
-	$(RM) $(LUABIND_CAST_GRAPH_CACHE_PATCH)
 
 env-luabind:
 	@echo
@@ -294,9 +300,10 @@ env-luabind:
 ## HDF5 C++ library
 ##
 
-HDF5_VERSION = 1.8.7
+HDF5_VERSION = 1.8.8
 HDF5_TARBALL = hdf5-$(HDF5_VERSION).tar.bz2
-HDF5_TARBALL_URL = http://www.hdfgroup.org/ftp/HDF5/current/src/$(HDF5_TARBALL)
+HDF5_TARBALL_URL = http://www.hdfgroup.org/ftp/HDF5/releases/hdf5-$(HDF5_VERSION)/src/$(HDF5_TARBALL)
+HDF5_TARBALL_SHA256 = b0ebb0b5478c6c0427631d4ad08f96e39f1b09fde615aa98d2a1b8fb7f6dced3
 HDF5_BUILD_DIR = hdf5-$(HDF5_VERSION)
 HDF5_INSTALL_DIR = $(PREFIX)/hdf5-$(HDF5_VERSION)
 HDF5_CONFIGURE_FLAGS = --enable-cxx
@@ -304,7 +311,9 @@ HDF5_CFLAGS = -fPIC
 HDF5_CXXFLAGS = -fPIC
 
 .fetch-hdf5:
+	@$(RM) $(HDF5_TARBALL)
 	$(WGET) $(HDF5_TARBALL_URL)
+	@echo '$(HDF5_TARBALL_SHA256)  $(HDF5_TARBALL)' | $(SHA256SUM)
 	@$(TOUCH) $@
 
 fetch-hdf5: .fetch-hdf5
@@ -352,18 +361,24 @@ env-hdf5:
 ## Git version control
 ##
 
-GIT_VERSION = 1.7.7.3
+GIT_VERSION = 1.7.8.4
 GIT_TARBALL = git-$(GIT_VERSION).tar.gz
-GIT_MANPAGES_TARBALL = git-manpages-$(GIT_VERSION).tar.gz
 GIT_TARBALL_URL = http://git-core.googlecode.com/files/$(GIT_TARBALL)
+GIT_TARBALL_SHA256 = 71a5a98d386061fe606b5be1ac390dc725d418d12edfa20796ff7671247c67e3
+GIT_MANPAGES_TARBALL = git-manpages-$(GIT_VERSION).tar.gz
 GIT_MANPAGES_TARBALL_URL = http://git-core.googlecode.com/files/$(GIT_MANPAGES_TARBALL)
+GIT_MANPAGES_TARBALL_SHA256 = b4930a17de7b18d40d81c3830913e5c4c2a91134e3a331ad49757d496ee53b76
 GIT_BUILD_DIR = git-$(GIT_VERSION)
 GIT_CONFIGURE_FLAGS = --without-python
 GIT_INSTALL_DIR = $(PREFIX)/git-$(GIT_VERSION)
 
 .fetch-git:
+	@$(RM) $(GIT_TARBALL)
+	@$(RM) $(GIT_MANPAGES_TARBALL)
 	$(WGET) $(GIT_TARBALL_URL)
 	$(WGET) $(GIT_MANPAGES_TARBALL_URL)
+	@echo '$(GIT_TARBALL_SHA256)  $(GIT_TARBALL)' | $(SHA256SUM)
+	@echo '$(GIT_MANPAGES_TARBALL_SHA256)  $(GIT_MANPAGES_TARBALL)' | $(SHA256SUM)
 	@$(TOUCH) $@
 
 fetch-git: .fetch-git
@@ -413,14 +428,17 @@ env-git:
 ## htop
 ##
 
-HTOP_VERSION = 0.9
+HTOP_VERSION = 1.0
 HTOP_TARBALL = htop-$(HTOP_VERSION).tar.gz
-HTOP_TARBALL_URL = http://sourceforge.net/projects/htop/files/htop/0.9/$(HTOP_TARBALL)
+HTOP_TARBALL_URL = http://sourceforge.net/projects/htop/files/htop/$(HTOP_VERSION)/$(HTOP_TARBALL)
+HTOP_TARBALL_SHA256 = 242879b86db4b97e1090e7cd391247268ccbe90834ff34b6e8242926c9664852
 HTOP_BUILD_DIR = htop-$(HTOP_VERSION)
 HTOP_INSTALL_DIR = $(PREFIX)/htop-$(HTOP_VERSION)
 
 .fetch-htop:
+	@$(RM) $(HTOP_TARBALL)
 	$(WGET) $(HTOP_TARBALL_URL)
+	@echo '$(HTOP_TARBALL_SHA256)  $(HTOP_TARBALL)' | $(SHA256SUM)
 	@$(TOUCH) $@
 
 fetch-htop: .fetch-htop
@@ -467,15 +485,18 @@ env-htop:
 ## python-sphinx
 ##
 
-PYTHON_SPHINX_VERSION = 1.0.7
+PYTHON_SPHINX_VERSION = 1.1.2
 PYTHON_SPHINX_TARBALL = Sphinx-$(PYTHON_SPHINX_VERSION).tar.gz
 PYTHON_SPHINX_TARBALL_URL = http://pypi.python.org/packages/source/S/Sphinx/$(PYTHON_SPHINX_TARBALL)
+PYTHON_SPHINX_TARBALL_SHA256 = cf66ee61eef61b7c478907282bddcdd5e04eebd69a00a2bb93881427938fe688
 PYTHON_SPHINX_BUILD_DIR = Sphinx-$(PYTHON_SPHINX_VERSION)
 PYTHON_SPHINX_INSTALL_DIR = $(PREFIX)/python-sphinx-$(PYTHON_SPHINX_VERSION)
 PYTHON_SPHINX_PYTHONPATH = $(PYTHON_SPHINX_INSTALL_DIR)/lib/python
 
 .fetch-python-sphinx:
+	@$(RM) $(PYTHON_SPHINX_TARBALL)
 	$(WGET) $(PYTHON_SPHINX_TARBALL_URL)
+	@echo '$(PYTHON_SPHINX_TARBALL_SHA256)  $(PYTHON_SPHINX_TARBALL)' | $(SHA256SUM)
 	@$(TOUCH) $@
 
 fetch-python-sphinx: .fetch-python-sphinx
@@ -516,14 +537,17 @@ env-python-sphinx:
 ## Doxygen
 ##
 
-DOXYGEN_VERSION = 1.7.4
+DOXYGEN_VERSION = 1.7.6.1
 DOXYGEN_TARBALL = doxygen-$(DOXYGEN_VERSION).src.tar.gz
 DOXYGEN_TARBALL_URL = http://ftp.stack.nl/pub/users/dimitri/$(DOXYGEN_TARBALL)
+DOXYGEN_TARBALL_SHA256 = 0e60e794fb172d3fa4a9a9535f0b8e0eeb04e8366153f6b417569af0bcd61fcd
 DOXYGEN_BUILD_DIR = doxygen-$(DOXYGEN_VERSION)
 DOXYGEN_INSTALL_DIR = $(PREFIX)/doxygen-$(DOXYGEN_VERSION)
 
 .fetch-doxygen:
+	@$(RM) $(DOXYGEN_TARBALL)
 	$(WGET) $(DOXYGEN_TARBALL_URL)
+	@echo '$(DOXYGEN_TARBALL_SHA256)  $(DOXYGEN_TARBALL)' | $(SHA256SUM)
 	@$(TOUCH) $@
 
 fetch-doxygen: .fetch-doxygen
@@ -573,12 +597,15 @@ env-doxygen:
 GRAPHVIZ_VERSION = 2.28.0
 GRAPHVIZ_TARBALL = graphviz-$(GRAPHVIZ_VERSION).tar.gz
 GRAPHVIZ_TARBALL_URL = http://www.graphviz.org/pub/graphviz/stable/SOURCES/$(GRAPHVIZ_TARBALL)
+GRAPHVIZ_TARBALL_SHA256 = d3aa7973c578cae4cc26d9d6498c57ed06680cab9a4e940d0357a3c6527afc76
 GRAPHVIZ_BUILD_DIR = graphviz-$(GRAPHVIZ_VERSION)
 GRAPHVIZ_CONFIGURE_FLAGS = --with-qt=no --enable-swig=no --enable-python=no
 GRAPHVIZ_INSTALL_DIR = $(PREFIX)/graphviz-$(GRAPHVIZ_VERSION)
 
 .fetch-graphviz:
+	@$(RM) $(GRAPHVIZ_TARBALL)
 	$(WGET) $(GRAPHVIZ_TARBALL_URL)
+	@echo '$(GRAPHVIZ_TARBALL_SHA256)  $(GRAPHVIZ_TARBALL)' | $(SHA256SUM)
 	@$(TOUCH) $@
 
 fetch-graphviz: .fetch-graphviz
@@ -628,18 +655,21 @@ env-graphviz:
 CLANG_VERSION = 3.0
 LLVM_TARBALL = llvm-$(CLANG_VERSION).tar.gz
 LLVM_TARBALL_URL = http://llvm.org/releases/$(CLANG_VERSION)/$(LLVM_TARBALL)
-LLVM_OCAML_MAKEFILE_PATCH = llvm_ocaml_makefile.patch
-LLVM_OCAML_MAKEFILE_PATCH_URL = http://llvm.org/bugs/attachment.cgi?id=7625&action=diff&context=patch&collapsed=&headers=1&format=raw
+LLVM_TARBALL_SHA256 = 519eb11d3499ce99c6ffdb8718651fc91425ed7690eac91c8d6853474f7c0477
 CLANG_TARBALL = clang-$(CLANG_VERSION).tar.gz
 CLANG_TARBALL_URL = http://llvm.org/releases/$(CLANG_VERSION)/$(CLANG_TARBALL)
+CLANG_TARBALL_SHA256 = b64e72da356d7c3428cfd7ac620d49ec042c84eaee13c26024879f555f4e126d
 CLANG_BUILD_DIR = llvm-$(CLANG_VERSION).src
-CLANG_CONFIGURE_FLAGS = --enable-optimized
+CLANG_CONFIGURE_FLAGS = --enable-optimized --enable-bindings=none
 CLANG_INSTALL_DIR = $(PREFIX)/clang-$(CLANG_VERSION)
 
 .fetch-clang:
+	@$(RM) $(LLVM_TARBALL)
+	@$(RM) $(CLANG_TARBALL)
 	$(WGET) $(LLVM_TARBALL_URL)
-	$(WGET) -O $(LLVM_OCAML_MAKEFILE_PATCH) $(LLVM_OCAML_MAKEFILE_PATCH_URL)
 	$(WGET) $(CLANG_TARBALL_URL)
+	@echo '$(LLVM_TARBALL_SHA256)  $(LLVM_TARBALL)' | $(SHA256SUM)
+	@echo '$(CLANG_TARBALL_SHA256)  $(CLANG_TARBALL)' | $(SHA256SUM)
 	@$(TOUCH) $@
 
 fetch-clang: .fetch-clang
@@ -647,7 +677,6 @@ fetch-clang: .fetch-clang
 .extract-clang: .fetch-clang
 	$(RM) $(CLANG_BUILD_DIR)
 	$(TAR) -xzf $(LLVM_TARBALL)
-	cd $(CLANG_BUILD_DIR) && $(PATCH) -p1 < $(CURDIR)/$(LLVM_OCAML_MAKEFILE_PATCH)
 	cd $(CLANG_BUILD_DIR)/tools && $(TAR) -xzf $(CURDIR)/$(CLANG_TARBALL) && mv clang-$(CLANG_VERSION).src clang
 	@$(TOUCH) $@
 
@@ -684,18 +713,22 @@ env-clang:
 	@echo '# add Clang $(CLANG_VERSION) to environment'
 	@echo 'export PATH="$(CLANG_INSTALL_DIR)/bin$${PATH+:$$PATH}"'
 	@echo 'export MANPATH="$(CLANG_INSTALL_DIR)/share/man$${MANPATH+:$$MANPATH}"'
+
 ##
 ## GNU Parallel
 ##
 
-GNU_PARALLEL_VERSION = 20110722
+GNU_PARALLEL_VERSION = 20111222
 GNU_PARALLEL_TARBALL = parallel-$(GNU_PARALLEL_VERSION).tar.bz2
 GNU_PARALLEL_TARBALL_URL = http://ftp.gnu.org/gnu/parallel/$(GNU_PARALLEL_TARBALL)
+GNU_PARALLEL_TARBALL_SHA256 = 2bb8eb1f358963eb50d3f9f285b887c378e0a660061e7e3e9b8205bf2c443766
 GNU_PARALLEL_BUILD_DIR = parallel-$(GNU_PARALLEL_VERSION)
 GNU_PARALLEL_INSTALL_DIR = $(PREFIX)/parallel-$(GNU_PARALLEL_VERSION)
 
 .fetch-gnu-parallel:
+	@$(RM) $(GNU_PARALLEL_TARBALL)
 	$(WGET) $(GNU_PARALLEL_TARBALL_URL)
+	@echo '$(GNU_PARALLEL_TARBALL_SHA256)  $(GNU_PARALLEL_TARBALL)' | $(SHA256SUM)
 	@$(TOUCH) $@
 
 fetch-gnu-parallel: .fetch-gnu-parallel

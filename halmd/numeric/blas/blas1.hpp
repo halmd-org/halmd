@@ -1,5 +1,5 @@
 /*
- * Copyright © 2010  Felix Höfling
+ * Copyright © 2010-2011  Felix Höfling and Peter Colberg
  *
  * This file is part of HALMD.
  *
@@ -20,6 +20,10 @@
 #ifndef HALMD_NUMERIC_BLAS_BLAS1_HPP
 #define HALMD_NUMERIC_BLAS_BLAS1_HPP
 
+#include <boost/mpl/int.hpp>
+#include <boost/mpl/greater.hpp>
+#include <boost/utility/enable_if.hpp>
+
 #include <halmd/config.hpp>
 #include <halmd/numeric/blas/fixed_vector.hpp>
 
@@ -35,15 +39,27 @@ namespace blas {
 /**
  * absolute sum or 1-norm, sum(|x_i|)
  */
+template <typename T, size_t N, size_t L, size_t U>
+inline HALMD_GPU_ENABLED
+typename boost::disable_if<boost::mpl::greater<boost::mpl::int_<U>, boost::mpl::int_<L> >, T>::type
+norm_1(fixed_vector<T, N> const& v)
+{
+    HALMD_GPU_USING(::abs, std::abs);
+    return abs(v[L]);
+}
+
+template <typename T, size_t N, size_t L, size_t U>
+inline HALMD_GPU_ENABLED
+typename boost::enable_if<boost::mpl::greater<boost::mpl::int_<U>, boost::mpl::int_<L> >, T>::type
+norm_1(fixed_vector<T, N> const& v)
+{
+    return norm_1<T, N, L, (L + U) / 2>(v) + norm_1<T, N, (L + U) / 2 + 1, U>(v);
+}
+
 template <typename T, size_t N>
 inline HALMD_GPU_ENABLED T norm_1(fixed_vector<T, N> const& v)
 {
-    HALMD_GPU_USING(::abs, std::abs);
-    T s = 0;
-    for (size_t i = 0; i < v.size(); ++i) {
-        s += abs(v[i]);
-    }
-    return s;
+    return norm_1<T, N, 0, N - 1>(v);
 }
 
 /**
@@ -59,35 +75,60 @@ inline HALMD_GPU_ENABLED T norm_2(fixed_vector<T, N> const& v)
 /**
  * maximum norm or inf-norm, max(|x_i|)
  */
+template <typename T, size_t N, size_t L, size_t U>
+inline HALMD_GPU_ENABLED
+typename boost::disable_if<boost::mpl::greater<boost::mpl::int_<U>, boost::mpl::int_<L> >, T>::type
+norm_inf(fixed_vector<T, N> const& v)
+{
+    HALMD_GPU_USING(::abs, std::abs);
+    return abs(v[L]);
+}
+
+template <typename T, size_t N, size_t L, size_t U>
+inline HALMD_GPU_ENABLED
+typename boost::enable_if<boost::mpl::greater<boost::mpl::int_<U>, boost::mpl::int_<L> >, T>::type
+norm_inf(fixed_vector<T, N> const& v)
+{
+    HALMD_GPU_USING(::max, std::max);
+    return max(norm_inf<T, N, L, (L + U) / 2>(v), norm_inf<T, N, (L + U) / 2 + 1, U>(v));
+}
+
 template <typename T, size_t N>
 inline HALMD_GPU_ENABLED T norm_inf(fixed_vector<T, N> const& v)
 {
-    HALMD_GPU_USING(::abs, std::abs);
-    HALMD_GPU_USING(::max, std::max);
-    T s = 0;
-    for (size_t i = 0; i < v.size(); ++i) {
-        s = max(s, abs(v[i]));
-    }
-    return s;
+    return norm_inf<T, N, 0, N - 1>(v);
 }
 
 /**
  * index of maximal element, first i where |x_i| = max(|x_i|)
  */
+template <typename T, size_t N, size_t L, size_t U>
+inline HALMD_GPU_ENABLED
+typename boost::disable_if<boost::mpl::greater<boost::mpl::int_<U>, boost::mpl::int_<L> >, T>::type
+index_norm_inf(fixed_vector<T, N> const& v, size_t& i)
+{
+    HALMD_GPU_USING(::abs, std::abs);
+    i = L;
+    return abs(v[L]);
+}
+
+template <typename T, size_t N, size_t L, size_t U>
+inline HALMD_GPU_ENABLED
+typename boost::enable_if<boost::mpl::greater<boost::mpl::int_<U>, boost::mpl::int_<L> >, T>::type
+index_norm_inf(fixed_vector<T, N> const& v, size_t& i)
+{
+    size_t j, k;
+    T s = index_norm_inf<T, N, L, (L + U) / 2>(v, j);
+    T t = index_norm_inf<T, N, (L + U) / 2 + 1, U>(v, k);
+    return t > s ? ((i = k), t) : ((i = j), s);
+}
+
 template <typename T, size_t N>
 inline HALMD_GPU_ENABLED size_t index_norm_inf(fixed_vector<T, N> const& v)
 {
-    HALMD_GPU_USING(::abs, std::abs);
-    T s = 0;
-    size_t k = 0;
-    for (size_t i = 0; i < v.size(); ++i) {
-        T t = abs(v[i]);
-        if (s > t) {
-            t = s;
-            k = i;
-        }
-    }
-    return k;
+    size_t i;
+    index_norm_inf<T, N, 0, N - 1>(v, i);
+    return i;
 }
 
 /** TODO: implement plane rotations */

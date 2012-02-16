@@ -18,7 +18,7 @@
 --
 
 require("halmd.modules")
-require("halmd.singleton")
+local singleton = require("halmd.singleton")
 
 -- grab C++ wrappers
 local clock_wrapper = libhalmd.mdsim.clock
@@ -27,7 +27,7 @@ local po = libhalmd.po
 -- grab standard library
 local assert = assert
 
-module("halmd.mdsim.clock", halmd.modules.register, halmd.singleton)
+module("halmd.mdsim.clock", halmd.modules.register, singleton)
 
 --
 -- construct clock module

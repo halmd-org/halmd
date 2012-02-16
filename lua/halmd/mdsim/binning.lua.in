@@ -21,6 +21,7 @@ require("halmd.device")
 require("halmd.mdsim.box")
 require("halmd.mdsim.particle")
 require("halmd.modules")
+local singleton = require("halmd.singleton")
 
 -- grab modules
 local device = halmd.device
@@ -43,7 +44,7 @@ local po = libhalmd.po
 -- grab standard library
 local assert = assert
 
-module("halmd.mdsim.binning", halmd.modules.register, halmd.singleton)
+module("halmd.mdsim.binning", halmd.modules.register, singleton)
 
 --
 -- construct binning module
