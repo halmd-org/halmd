@@ -27,6 +27,10 @@
 
 #include <halmd/numeric/blas/fixed_vector.hpp>
 
+#if LUA_VERSION_NUM < 502
+# define luaL_len lua_objlen
+#endif
+
 namespace luabind {
 
 /**
@@ -40,7 +44,7 @@ struct default_converter<halmd::fixed_vector<T, N> >
     //! compute Lua to C++ conversion score
     static int compute_score(lua_State* L, int index)
     {
-        return lua_type(L, index) == LUA_TTABLE && lua_objlen(L, index) == N ? 0 : -1;
+        return lua_type(L, index) == LUA_TTABLE && luaL_len(L, index) == N ? 0 : -1;
     }
 
     //! convert from Lua to C++
@@ -72,5 +76,9 @@ struct default_converter<halmd::fixed_vector<T, N> const&>
 
 
 } // namespace luabind
+
+#if LUA_VERSION_NUM < 502
+# undef luaL_len
+#endif
 
 #endif /* ! HALMD_UTILITY_LUA_FIXED_VECTOR_CONVERTER_HPP */

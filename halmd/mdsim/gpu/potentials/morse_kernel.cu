@@ -17,19 +17,20 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef HALMD_MDSIM_GPU_FORCES_MORSE_KERNEL_CUH
-#define HALMD_MDSIM_GPU_FORCES_MORSE_KERNEL_CUH
-
-#include <halmd/mdsim/gpu/forces/morse_kernel.hpp>
+#include <halmd/algorithm/gpu/tuple.cuh>
 #include <halmd/mdsim/gpu/forces/pair_trunc_kernel.cuh>
+#include <halmd/mdsim/gpu/potentials/morse_kernel.hpp>
 #include <halmd/numeric/blas/blas.hpp>
 #include <halmd/utility/gpu/variant.cuh>
 
 namespace halmd {
 namespace mdsim {
 namespace gpu {
-namespace forces {
+namespace potentials {
 namespace morse_kernel {
+
+using algorithm::gpu::tuple;
+using algorithm::gpu::make_tuple;
 
 /** array of potential parameters for all combinations of particle types */
 static texture<float4> param_;
@@ -101,12 +102,18 @@ private:
 cuda::texture<float4> morse_wrapper::param = morse_kernel::param_;
 cuda::texture<float> morse_wrapper::rr_cut = morse_kernel::rr_cut_;
 
-template class pair_trunc_wrapper<3, morse_kernel::morse>;
-template class pair_trunc_wrapper<2, morse_kernel::morse>;
+} // namespace potentials
 
-} // namespace mdsim
-} // namespace gpu
+// explicit instantiation of force kernels
+namespace forces {
+
+using potentials::morse_kernel::morse;
+
+template class pair_trunc_wrapper<3, morse>;
+template class pair_trunc_wrapper<2, morse>;
+
 } // namespace forces
-} // namespace halmd
 
-#endif /* ! HALMD_MDSIM_GPU_FORCES_MORSE_KERNEL_CUH */
+} // namespace gpu
+} // namespace mdsim
+} // namespace halmd

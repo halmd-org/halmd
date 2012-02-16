@@ -1,14 +1,10 @@
 halmd_add_library(halmd_mdsim_host_forces
-  lennard_jones.cpp
-  morse.cpp
-  power_law.cpp
+  pair_trunc.cpp
   smooth.cpp
   zero.cpp
 )
 halmd_add_modules(
-  libhalmd_mdsim_host_forces_lennard_jones
-  libhalmd_mdsim_host_forces_morse
-  libhalmd_mdsim_host_forces_power_law
+  libhalmd_mdsim_host_forces_pair_trunc
   libhalmd_mdsim_host_forces_smooth
   libhalmd_mdsim_host_forces_zero
 )

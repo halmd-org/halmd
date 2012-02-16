@@ -20,7 +20,7 @@
 require("halmd.mdsim.clock")
 require("halmd.modules")
 require("halmd.observables.sampler")
-require("halmd.singleton")
+local singleton = require("halmd.singleton")
 
 -- grab modules
 local mdsim = halmd.mdsim
@@ -31,7 +31,7 @@ local po = libhalmd.po
 -- grab standard library
 local assert = assert
 
-module("halmd.observables.dynamics.blocking_scheme", halmd.modules.register, halmd.singleton)
+module("halmd.observables.dynamics.blocking_scheme", halmd.modules.register, singleton)
 
 --
 -- construct module blocking_scheme

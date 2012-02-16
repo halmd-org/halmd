@@ -1,5 +1,5 @@
 /*
- * Copyright © 2008-2011  Peter Colberg and Felix Höfling
+ * Copyright © 2008-2010  Peter Colberg and Felix Höfling
  *
  * This file is part of HALMD.
  *
@@ -17,23 +17,21 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef HALMD_MDSIM_HOST_FORCES_LENNARD_JONES_HPP
-#define HALMD_MDSIM_HOST_FORCES_LENNARD_JONES_HPP
+#ifndef HALMD_MDSIM_GPU_POTENTIALS_LENNARD_JONES_HPP
+#define HALMD_MDSIM_GPU_POTENTIALS_LENNARD_JONES_HPP
 
-#include <boost/assign.hpp>
 #include <boost/make_shared.hpp>
 #include <boost/numeric/ublas/symmetric.hpp>
-#include <boost/tuple/tuple.hpp>
+#include <cuda_wrapper/cuda_wrapper.hpp>
 #include <lua.hpp>
 
 #include <halmd/io/logger.hpp>
-#include <halmd/mdsim/host/forces/pair_trunc.hpp>
-#include <halmd/mdsim/host/forces/smooth.hpp>
+#include <halmd/mdsim/gpu/potentials/lennard_jones_kernel.hpp>
 
 namespace halmd {
 namespace mdsim {
-namespace host {
-namespace forces {
+namespace gpu {
+namespace potentials {
 
 /**
  * define Lennard-Jones potential and parameters
@@ -42,6 +40,7 @@ template <typename float_type>
 class lennard_jones
 {
 public:
+    typedef lennard_jones_kernel::lennard_jones gpu_potential_type;
     typedef boost::numeric::ublas::symmetric_matrix<float_type, boost::numeric::ublas::lower> matrix_type;
     typedef logger logger_type;
 
@@ -57,18 +56,10 @@ public:
       , boost::shared_ptr<logger_type> logger = boost::make_shared<logger_type>()
     );
 
-    /** compute potential and its derivative at squared distance 'rr' for particles of type 'a' and 'b' */
-    boost::tuple<float_type, float_type, float_type> operator() (float_type rr, unsigned a, unsigned b)
+    /** bind textures before kernel invocation */
+    void bind_textures() const
     {
-        float_type sigma2 = sigma2_(a, b);
-        float_type rri = sigma2 / rr;
-        float_type r6i = rri * rri * rri;
-        float_type eps_r6i = epsilon_(a, b) * r6i;
-        float_type fval = 48 * rri * eps_r6i * (r6i - 0.5) / sigma2;
-        float_type en_pot = 4 * eps_r6i * (r6i - 1) - en_cut_(a, b);
-        float_type hvir = 576 * eps_r6i * (r6i - 0.25);
-
-        return boost::make_tuple(fval, en_pot, hvir);
+        lennard_jones_wrapper::param.bind(g_param_);
     }
 
     matrix_type const& r_cut() const
@@ -116,13 +107,15 @@ private:
     matrix_type sigma2_;
     /** potential energy at cutoff length in MD units */
     matrix_type en_cut_;
+    /** potential parameters at CUDA device */
+    cuda::vector<float4> g_param_;
     /** module logger */
     boost::shared_ptr<logger_type> logger_;
 };
 
+} // namespace potentials
+} // namespace gpu
 } // namespace mdsim
-} // namespace host
-} // namespace forces
 } // namespace halmd
 
-#endif /* ! HALMD_MDSIM_HOST_FORCES_LENNARD_JONES_HPP */
+#endif /* ! HALMD_MDSIM_GPU_POTENTIALS_LENNARD_JONES_HPP */

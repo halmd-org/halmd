@@ -19,7 +19,7 @@
 
 require("halmd.hooks")
 require("halmd.modules")
-require("halmd.singleton")
+local singleton = require("halmd.singleton")
 require("halmd.utility")
 
 -- grab Lua modules
@@ -34,7 +34,7 @@ local error = error
 local pairs = pairs
 local table = table
 
-module("halmd.utility.profiler", halmd.modules.register, halmd.singleton)
+module("halmd.utility.profiler", halmd.modules.register, singleton)
 
 --
 -- construct profiler module

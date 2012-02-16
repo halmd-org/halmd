@@ -21,8 +21,7 @@
 #include <cmath>
 #include <string>
 
-#include <halmd/io/utility/hdf5.hpp>
-#include <halmd/mdsim/host/forces/power_law.hpp>
+#include <halmd/mdsim/host/potentials/power_law.hpp>
 #include <halmd/utility/lua/lua.hpp>
 
 using namespace boost;
@@ -32,7 +31,7 @@ using namespace std;
 namespace halmd {
 namespace mdsim {
 namespace host {
-namespace forces {
+namespace potentials {
 
 /**
  * Initialise potential parameters
@@ -92,7 +91,7 @@ void power_law<float_type>::luaopen(lua_State* L)
         [
             namespace_("host")
             [
-                namespace_("forces")
+                namespace_("potentials")
                 [
                     class_<power_law, shared_ptr<power_law> >(module_name())
                         .def(constructor<
@@ -114,31 +113,24 @@ void power_law<float_type>::luaopen(lua_State* L)
     ];
 }
 
-HALMD_LUA_API int luaopen_libhalmd_mdsim_host_forces_power_law(lua_State* L)
+HALMD_LUA_API int luaopen_libhalmd_mdsim_host_potentials_power_law(lua_State* L)
 {
 #ifndef USE_HOST_SINGLE_PRECISION
-    typedef double float_type;
+    power_law<double>::luaopen(L);
 #else
-    typedef float float_type;
+    power_law<float>::luaopen(L);
 #endif
-    power_law<float_type>::luaopen(L);
-    pair_trunc<3, float_type, power_law<float_type> >::luaopen(L);
-    pair_trunc<2, float_type, power_law<float_type> >::luaopen(L);
     return 0;
 }
 
 // explicit instantiation
 #ifndef USE_HOST_SINGLE_PRECISION
 template class power_law<double>;
-template class pair_trunc<3, double, power_law<double> >;
-template class pair_trunc<2, double, power_law<double> >;
 #else
 template class power_law<float>;
-template class pair_trunc<3, float, power_law<float> >;
-template class pair_trunc<2, float, power_law<float> >;
 #endif
 
-} // namespace mdsim
+} // namespace potentials
 } // namespace host
-} // namespace forces
+} // namespace mdsim
 } // namespace halmd

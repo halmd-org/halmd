@@ -82,7 +82,7 @@ find_package(Boost 1.43.0 QUIET REQUIRED COMPONENTS
 )
 find_package(CUDA QUIET)
 find_package(HDF5 QUIET REQUIRED)
-find_package(Lua51 QUIET REQUIRED)
+find_package(Lua QUIET REQUIRED)
 find_package(Luabind QUIET REQUIRED)
 
 if(CMAKE_CXX_COMPILER_ID MATCHES "^(GNU|Clang|Intel)$")

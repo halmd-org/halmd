@@ -1,5 +1,5 @@
 /*
- * Copyright © 2008-2010  Peter Colberg and Felix Höfling
+ * Copyright © 2008-2011  Peter Colberg and Felix Höfling
  *
  * This file is part of HALMD.
  *
@@ -17,22 +17,21 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef HALMD_MDSIM_GPU_FORCES_MORSE_HPP
-#define HALMD_MDSIM_GPU_FORCES_MORSE_HPP
+#ifndef HALMD_MDSIM_HOST_POTENTIALS_MORSE_HPP
+#define HALMD_MDSIM_HOST_POTENTIALS_MORSE_HPP
 
+#include <boost/assign.hpp>
 #include <boost/make_shared.hpp>
 #include <boost/numeric/ublas/symmetric.hpp>
-#include <cuda_wrapper/cuda_wrapper.hpp>
+#include <boost/tuple/tuple.hpp>
 #include <lua.hpp>
 
 #include <halmd/io/logger.hpp>
-#include <halmd/mdsim/gpu/forces/pair_trunc.hpp>
-#include <halmd/mdsim/gpu/forces/morse_kernel.hpp>
 
 namespace halmd {
 namespace mdsim {
-namespace gpu {
-namespace forces {
+namespace host {
+namespace potentials {
 
 /**
  * define Morse potential and parameters
@@ -41,14 +40,12 @@ template <typename float_type>
 class morse
 {
 public:
-    typedef morse_kernel::morse gpu_potential_type;
     typedef boost::numeric::ublas::symmetric_matrix<float_type, boost::numeric::ublas::lower> matrix_type;
     typedef logger logger_type;
 
     static char const* module_name() { return "morse"; }
 
     static void luaopen(lua_State* L);
-
     morse(
         unsigned ntype
       , boost::array<float, 3> const& cutoff
@@ -58,11 +55,25 @@ public:
       , boost::shared_ptr<logger_type> logger = boost::make_shared<logger_type>()
     );
 
-    /** bind textures before kernel invocation */
-    void bind_textures() const
+    /**
+     * Compute force and potential for interaction.
+     *
+     * @param rr squared distance between particles
+     * @param a type of first interacting particle
+     * @param b type of second interacting particle
+     * @returns tuple of unit "force" @f$ -U'(r)/r @f$ and potential @f$ U(r) @f$
+     * and hypervirial @f$ r \partial_r r \partial_r U(r) @f$
+     */
+    boost::tuple<float_type, float_type, float_type> operator() (float_type rr, unsigned a, unsigned b)
     {
-        morse_wrapper::param.bind(g_param_);
-        morse_wrapper::rr_cut.bind(g_rr_cut_);
+        float_type r_sigma = sqrt(rr) / sigma_(a, b);
+        float_type exp_dr = exp(r_min_sigma_(a, b) - r_sigma);
+        float_type eps_exp_dr = epsilon_(a, b) * exp_dr;
+        float_type fval = 2 * eps_exp_dr * (exp_dr - 1) * r_sigma / rr;
+        float_type en_pot = eps_exp_dr * (exp_dr - 2) - en_cut_(a, b);
+        float_type hvir = 2 * eps_exp_dr * r_sigma * ((exp_dr - 1) - r_sigma * (2 * exp_dr - 1));
+
+        return boost::make_tuple(fval, en_pot, hvir);
     }
 
     matrix_type const& r_cut() const
@@ -115,17 +126,13 @@ private:
     matrix_type r_cut_sigma_;
     /** square of cutoff radius */
     matrix_type rr_cut_;
-    /** potential parameters at CUDA device */
-    cuda::vector<float4> g_param_;
-    /** squared cutoff radius at CUDA device */
-    cuda::vector<float> g_rr_cut_;
     /** module logger */
     boost::shared_ptr<logger_type> logger_;
 };
 
+} // namespace potentials
+} // namespace host
 } // namespace mdsim
-} // namespace gpu
-} // namespace forces
 } // namespace halmd
 
-#endif /* ! HALMD_MDSIM_GPU_FORCES_MORSE_HPP */
+#endif /* ! HALMD_MDSIM_HOST_POTENTIALS_MORSE_HPP */

@@ -42,7 +42,6 @@ module("halmd.mdsim.forces.pair_trunc", halmd.modules.register)
 -- @param args.potential potential module instance
 --
 function new(args)
-    local force = assert(args.force)
     local potential = assert(args.potential)
 
     local particle = mdsim.particle() -- singleton
