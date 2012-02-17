@@ -1,5 +1,5 @@
 /*
- * Copyright © 2008-2011  Peter Colberg and Felix Höfling
+ * Copyright © 2008-2012  Peter Colberg and Felix Höfling
  *
  * This file is part of HALMD.
  *
@@ -39,13 +39,13 @@ namespace gpu {
 template <int dimension, typename float_type>
 phase_space<gpu::samples::phase_space<dimension, float_type> >::phase_space(
     shared_ptr<sample_type> sample
-  , shared_ptr<particle_type const> particle
+  , shared_ptr<particle_group_type const> particle_group
   , shared_ptr<box_type const> box
   , shared_ptr<clock_type const> clock
   , shared_ptr<logger_type> logger
 )
   : sample_(sample)
-  , particle_(particle)
+  , particle_group_(particle_group)
   , box_(box)
   , clock_(clock)
   , logger_(logger)
@@ -63,13 +63,13 @@ phase_space<gpu::samples::phase_space<dimension, float_type> >::phase_space(
 template <int dimension, typename float_type>
 phase_space<host::samples::phase_space<dimension, float_type> >::phase_space(
     shared_ptr<sample_type> sample
-  , shared_ptr<particle_type /* FIXME const */> particle
+  , shared_ptr<particle_group_type /* FIXME const */> particle_group
   , shared_ptr<box_type const> box
   , shared_ptr<clock_type const> clock
   , shared_ptr<logger_type> logger
 )
   : sample_(sample)
-  , particle_(particle)
+  , particle_group_(particle_group)
   , box_(box)
   , clock_(clock)
   , logger_(logger)
@@ -98,16 +98,17 @@ void phase_space<gpu::samples::phase_space<dimension, float_type> >::acquire()
         sample_->reset();
     }
 
-    phase_space_wrapper<dimension>::kernel.r.bind(particle_->g_r);
-    phase_space_wrapper<dimension>::kernel.image.bind(particle_->g_image);
-    phase_space_wrapper<dimension>::kernel.v.bind(particle_->g_v);
+    particle_type const& particle = *particle_group_->particle(); // use as shortcut
+    phase_space_wrapper<dimension>::kernel.r.bind(particle.g_r);
+    phase_space_wrapper<dimension>::kernel.image.bind(particle.g_image);
+    phase_space_wrapper<dimension>::kernel.v.bind(particle.g_v);
 
-    cuda::configure(particle_->dim.grid, particle_->dim.block);
+    cuda::configure(particle.dim.grid, particle.dim.block);
     phase_space_wrapper<dimension>::kernel.sample(
-        particle_->g_reverse_tag
+        particle_group_->g_map()
       , *sample_->r
       , *sample_->v
-      , particle_->nbox
+      , particle_group_->size()
     );
 
     sample_->step = clock_->step();
@@ -128,16 +129,14 @@ void phase_space<host::samples::phase_space<dimension, float_type> >::acquire()
 
     LOG_TRACE("acquire host sample");
 
-    using mdsim::gpu::particle_kernel::untagged;
-
+    particle_type& /* FIXME const& */ particle = *particle_group_->particle().get();
     try {
-        cuda::copy(particle_->g_r, particle_->h_r);
-        cuda::copy(particle_->g_image, particle_->h_image);
-        cuda::copy(particle_->g_v, particle_->h_v);
-        cuda::copy(particle_->g_reverse_tag, particle_->h_reverse_tag);
+        cuda::copy(particle.g_r, particle.h_r);
+        cuda::copy(particle.g_image, particle.h_image);
+        cuda::copy(particle.g_v, particle.h_v);
     }
     catch (cuda::error const&) {
-        LOG_ERROR("failed to copy phase space from GPU to host");
+        LOG_ERROR("failed to copy from GPU to host");
         throw;
     }
 
@@ -148,25 +147,27 @@ void phase_space<host::samples::phase_space<dimension, float_type> >::acquire()
         sample_->reset();
     }
 
+    assert(particle_group_->size() == sample_->r->size());
+    assert(particle_group_->size() == sample_->v->size());
+    assert(particle_group_->size() == sample_->type->size());
+
     // copy particle data using reverse tags as on the GPU
-    for (unsigned int tag = 0; tag < particle_->nbox; ++tag) {
-        unsigned int rtag = particle_->h_reverse_tag[tag];
-        assert(rtag < particle_->nbox);
+    unsigned int const* map = particle_group_->h_map();
+    for (unsigned int tag = 0; tag < particle_group_->size(); ++tag) {
 
-        vector_type r;
-        unsigned int type;
-        tie(r, type) = untagged<vector_type>(particle_->h_r[rtag]);
-        vector_type v = particle_->h_v[rtag];
-        vector_type image = particle_->h_image[rtag];
+        unsigned int idx = map[tag];
+        assert(idx < particle.nbox);
 
-        assert(tag < sample_->r->size());
-        assert(tag < sample_->v->size());
-        assert(tag < sample_->type->size());
+        using mdsim::gpu::particle_kernel::untagged;
 
         // periodically extended particle position
-        box_->extend_periodic(r, image);
+        vector_type r;
+        unsigned int type;
+        tie(r, type) = untagged<vector_type>(particle.h_r[idx]);
+        box_->extend_periodic(r, static_cast<vector_type>(particle.h_image[idx]));
+
         (*sample_->r)[tag] = r;
-        (*sample_->v)[tag] = v;
+        (*sample_->v)[tag] = static_cast<vector_type>(particle.h_v[idx]);
         (*sample_->type)[tag] = type;
     }
     sample_->step = clock_->step();
@@ -199,7 +200,7 @@ void phase_space<gpu::samples::phase_space<dimension, float_type> >::luaopen(lua
 
           , def("phase_space", &make_shared<phase_space
                , shared_ptr<sample_type>
-               , shared_ptr<particle_type const>
+               , shared_ptr<particle_group_type const>
                , shared_ptr<box_type const>
                , shared_ptr<clock_type const>
                , shared_ptr<logger_type>
@@ -235,7 +236,7 @@ void phase_space<host::samples::phase_space<dimension, float_type> >::luaopen(lu
 
           , def("phase_space", &make_shared<phase_space
                , shared_ptr<sample_type>
-               , shared_ptr<particle_type /* FIXME const */>
+               , shared_ptr<particle_group_type /* FIXME const */>
                , shared_ptr<box_type const>
                , shared_ptr<clock_type const>
                , shared_ptr<logger_type>
