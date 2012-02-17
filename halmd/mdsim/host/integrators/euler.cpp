@@ -51,7 +51,7 @@ euler<dimension, float_type>::euler(
 }
 
 /**
- * Set timestep.
+ * set integration timestep
  */
 template <int dimension, typename float_type>
 void euler<dimension, float_type>::timestep(double timestep)
@@ -62,25 +62,21 @@ void euler<dimension, float_type>::timestep(double timestep)
 }
 
 /**
- * Perform Euler integration: if v is set, update r.
+ * perform Euler integration: update positions from velocities
+ *
+ * @f$ r(t + \Delta t) = r(t) + v(t) \Delta t @f$
  */
 template <int dimension, typename float_type>
 void euler<dimension, float_type>::integrate()
 {
     scoped_timer_type timer(runtime_.integrate);
-    for( size_t i = 0 ; i < particle_->nbox; ++i)
+    for(size_t i = 0 ; i < particle_->nbox; ++i)
     {
-      vector_type& asdf = particle_->r[i] += particle_->v[i] * timestep_;
+      vector_type& r = particle_->r[i] += particle_->v[i] * timestep_;
       // enforce periodic boundary conditions
-      particle_->image[i] += box_->reduce_periodic(asdf);
+      particle_->image[i] += box_->reduce_periodic(r);
     }
 }
-
-/**
- * Finalize Euler integration (do nothing). Euler does not need finalisation.
- */
-template <int dimension, typename float_type>
-void euler<dimension, float_type>::finalize() { }
 
 template <int dimension, typename float_type>
 static char const* module_name_wrapper(euler<dimension, float_type> const&)

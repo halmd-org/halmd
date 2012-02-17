@@ -56,14 +56,14 @@ public:
       , double timestep
       , boost::shared_ptr<logger_type> logger = boost::make_shared<logger_type>()
     );
-    // inherited from integrator.hpp
-    virtual void integrate();
-    virtual void finalize();
 
-    //! set integration time-step
+    virtual void integrate();
+    virtual void finalize() {} // the Euler integrator consists of a single step only
+
+    //! set integration timestep
     virtual void timestep(double timestep);
 
-    //! returns integration time-step
+    //! returns integration timestep
     virtual double timestep() const
     {
         return timestep_;

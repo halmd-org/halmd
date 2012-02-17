@@ -46,13 +46,11 @@ euler<dimension, float_type>::euler(
   : particle_(particle)
   , box_(box)
   , logger_(logger)
-  // reference CUDA C++ euler_wrapper
-  , wrapper_(&euler_wrapper<dimension>::wrapper)
 {
     this->timestep(timestep);
 
     try {
-        cuda::copy(static_cast<vector_type>(box_->length()), wrapper_->box_length);
+        cuda::copy(static_cast<vector_type>(box_->length()), wrapper_type::kernel.box_length);
     }
     catch (cuda::error const&) {
         LOG_ERROR("failed to initialize Euler integrator symbols");
@@ -61,16 +59,15 @@ euler<dimension, float_type>::euler(
 }
 
 /**
- * set integration time-step
+ * set integration timestep
  */
 template <int dimension, typename float_type>
 void euler<dimension, float_type>::timestep(double timestep)
 {
     timestep_ = timestep;
-    timestep_half_ = 0.5 * timestep_;
 
     try {
-        cuda::copy(timestep_, wrapper_->timestep);
+        cuda::copy(timestep_, wrapper_type::kernel.timestep);
     }
     catch (cuda::error const&) {
         LOG_ERROR("failed to initialize Euler integrator symbols");
@@ -81,16 +78,17 @@ void euler<dimension, float_type>::timestep(double timestep)
 }
 
 /**
- * Perform (Euler) integration: If v is set, update r
+ * perform Euler integration: update positions from velocities
  */
 template <int dimension, typename float_type>
 void euler<dimension, float_type>::integrate()
 {
     try {
-        scoped_timer_type timer(runtime_.integrate); //< start timer -- runs 'till destruction
+        scoped_timer_type timer(runtime_.integrate);
         cuda::configure(particle_->dim.grid, particle_->dim.block);
-        wrapper_->integrate(
-            particle_->g_r, particle_->g_image, particle_->g_v ) ;
+        wrapper_type::kernel.integrate(
+            particle_->g_r, particle_->g_image, particle_->g_v
+        );
         cuda::thread::synchronize();
     }
     catch (cuda::error const&) {
@@ -98,12 +96,6 @@ void euler<dimension, float_type>::integrate()
         throw;
     }
 }
-
-/**
- * Finalize Euler (do nothing). Euler does not need finalisation.
- */
-template <int dimension, typename float_type>
-void euler<dimension, float_type>::finalize() { }
 
 template <int dimension, typename float_type>
 static char const* module_name_wrapper(euler<dimension, float_type> const&)

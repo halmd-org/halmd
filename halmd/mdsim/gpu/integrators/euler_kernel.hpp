@@ -34,14 +34,14 @@ struct euler_wrapper
     typedef typename type_traits<dimension, float>::gpu::coalesced_vector_type coalesced_vector_type;
     typedef typename type_traits<dimension, float>::gpu::vector_type vector_type;
 
-    /** integration time-step */
+    /** integration time step */
     cuda::symbol<float> timestep;
-    /** cubic box edgle length */
+    /** edge lengths of cuboid box */
     cuda::symbol<vector_type> box_length;
-    /** Euler integration: r' = r + v * dt  */
+    /** perform Euler integration */
     cuda::function <void (float4*, coalesced_vector_type*, float4*)> integrate;
 
-    static euler_wrapper const wrapper;
+    static euler_wrapper const kernel;
 };
 
 } // namespace integrators

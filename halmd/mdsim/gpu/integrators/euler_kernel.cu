@@ -51,14 +51,11 @@ static __constant__ variant<map<pair<int_<3>, float3>, pair<int_<2>, float2> > >
  * @param g_f forces (CUDA vector)
  */
 template <
-    typename vector_type //< dsfloat-precision
-  , typename vector_type_ //< float-precision
+    typename vector_type //< precision of positions and velocities
+  , typename vector_type_ //< default precision (box size, image vector)
   , typename gpu_vector_type
 >
-__global__ void _integrate(
-  float4* g_r,
-  gpu_vector_type* g_image,
-  float4* g_v)
+__global__ void _integrate(float4* g_r, gpu_vector_type* g_image, float4* g_v)
 {
     // get information which thread this is and thus which particles are to
     // be processed
@@ -92,11 +89,11 @@ __global__ void _integrate(
 } // namespace euler_kernel
 
 template <int dimension>
-euler_wrapper<dimension> const euler_wrapper<dimension>::wrapper = {
-    euler_kernel::timestep_ //timestep
-  , get<dimension>(euler_kernel::box_length_) //boxlength
+euler_wrapper<dimension> const euler_wrapper<dimension>::kernel = {
+    euler_kernel::timestep_
+  , get<dimension>(euler_kernel::box_length_)
 #ifdef USE_VERLET_DSFUN
-  , euler_kernel::_integrate<fixed_vector<dsfloat, dimension>, fixed_vector<float, dimension> > //integrate function pointer
+  , euler_kernel::_integrate<fixed_vector<dsfloat, dimension>, fixed_vector<float, dimension> >
 #else
   , euler_kernel::_integrate<fixed_vector<float, dimension>, fixed_vector<float, dimension> >
 #endif

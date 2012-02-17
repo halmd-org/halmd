@@ -47,6 +47,7 @@ public:
     typedef mdsim::box<dimension> box_type;
     typedef logger logger_type;
     typedef typename particle_type::vector_type vector_type;
+    typedef euler_wrapper<dimension> wrapper_type;
 
     static char const* module_name() { return "euler"; }
 
@@ -58,11 +59,12 @@ public:
       , double timestep
       , boost::shared_ptr<logger_type> logger = boost::make_shared<logger_type>()
     );
+
     virtual void integrate();
-    virtual void finalize();
+    virtual void finalize() {} // the Euler integrator consists of a single step only
     virtual void timestep(double timestep);
 
-    //! returns integration time-step
+    //! returns integration time step
     virtual double timestep() const
     {
         return timestep_;
@@ -82,12 +84,8 @@ private:
     boost::shared_ptr<box_type const> box_;
     /** module logger */
     boost::shared_ptr<logger_type> logger_;
-    /** CUDA C++ wrapper */
-    euler_wrapper<dimension> const* wrapper_;
     /** integration time-step */
     float_type timestep_;
-    /** half time-step */
-    float_type timestep_half_; //TODO unnecessary (?) -- remove
     /** profiling runtime accumulators */
     runtime runtime_;
 };

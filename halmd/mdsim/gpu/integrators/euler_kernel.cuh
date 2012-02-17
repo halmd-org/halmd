@@ -29,17 +29,17 @@ namespace integrators {
 namespace euler_kernel {
 
 /**
- * Euler integration
+ * Euler integration: @f$ r(t + \Delta t) = r(t) + v(t) \Delta t @f$
  */
 template <typename vector_type, typename vector_type_>
 __device__ void integrate(
   vector_type& r,
   vector_type_& image,
-  vector_type& v,
+  vector_type const& v,
   typename vector_type_::value_type timestep,
   vector_type_ const& box_length)
 {
-    // euler integration
+    // Euler integration
     r += v * timestep;
     // enforce periodic boundary conditions
     image += box_kernel::reduce_periodic(r, box_length);

@@ -26,8 +26,6 @@
 #include <functional>
 #include <limits>
 
-#include<iostream>
-
 #include <halmd/algorithm/gpu/apply_kernel.hpp>
 #include <halmd/mdsim/box.hpp>                          // dependency of euler module
 #include <halmd/mdsim/clock.hpp>                        // dependency of phase_space module
@@ -53,22 +51,22 @@ using namespace boost::assign; // list_of
 using namespace halmd;
 using namespace std;
 
-/** test Euler integrator: Simple differential equations of 1st order
+/** test Euler integrator: ordinary differential equations of 1st order
  *
- * Two differential equations are integrated using Euler integrator,
- * \f{eqnarray*}{
- *   \dot r = v = const ,
- *   \dot r = r ,
- * \f}
- * and the results are then compared to solutions, obtained by
- * recalculating manually, what the integrator should do,
- * \f{eqnarray*}{
- *   r(n) = r_0 + v \, dt \, n ,
- *   r(n) = (1 + dt)^n \, r_0 ,
- * \f}
+ * Two differential equations are solved using the Euler integrator,
+ * @f\[
+ *   \dot r = v = \mathit{const} \quad \text{and} \quad  \dot r = -r \, .
+ * @f\]
+ * The results are then compared to the algebraic solutions of the
+ * numerical scheme to properly account for discretisation errors,
+ * @f\[
+ *   r(n) = r_0 + v \, dt \, n
+ *   \quad \text{and} \quad
+ *   r(n) = (1 - dt)^n \, r_0 ,
+ * @f\]
  * with \f$n\f$ the number of steps taken.
  *
- * */
+ */
 
 template <typename modules_type>
 struct test_euler
@@ -326,7 +324,7 @@ void gpu_modules<dimension, float_type>::set_velocity(shared_ptr<particle_type> 
 {
     using namespace algorithm::gpu;
     typedef typename particle_type::vector_type vector_type;
-    typedef apply_wrapper<negate_, vector_type, float4, vector_type, float4> wrapper_type;
+    typedef apply_wrapper<negate_, vector_type, float4, vector_type, float4> apply_negate_wrapper;
 
     // copy -g_r[i] to g_v[i]
     //
@@ -341,7 +339,7 @@ void gpu_modules<dimension, float_type>::set_velocity(shared_ptr<particle_type> 
     // Caveat: overwrites particle tags in g_v (which are not used anyway)
     try {
         cuda::configure(particle->dim.grid, particle->dim.block);
-        wrapper_type::kernel.apply(particle->g_r, particle->g_v, particle->g_r.capacity());
+        apply_negate_wrapper::kernel.apply(particle->g_r, particle->g_v, particle->g_r.capacity());
         cuda::thread::synchronize();
     }
     catch (cuda::error const&) {
