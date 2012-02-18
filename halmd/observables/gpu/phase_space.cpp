@@ -261,6 +261,13 @@ void phase_space<gpu::samples::phase_space<dimension, float_type> >::luaopen(lua
                , shared_ptr<clock_type const>
                , shared_ptr<logger_type>
             >)
+          , def("phase_space", &make_shared<phase_space
+               , shared_ptr<sample_type>
+               , shared_ptr<particle_type const>
+               , shared_ptr<box_type const>
+               , shared_ptr<clock_type const>
+               , shared_ptr<logger_type>
+            >)
         ]
     ];
 }
@@ -293,6 +300,13 @@ void phase_space<host::samples::phase_space<dimension, float_type> >::luaopen(lu
           , def("phase_space", &make_shared<phase_space
                , shared_ptr<sample_type>
                , shared_ptr<particle_group_type>
+               , shared_ptr<box_type const>
+               , shared_ptr<clock_type const>
+               , shared_ptr<logger_type>
+            >)
+          , def("phase_space", &make_shared<phase_space
+               , shared_ptr<sample_type>
+               , shared_ptr<particle_type const>
                , shared_ptr<box_type const>
                , shared_ptr<clock_type const>
                , shared_ptr<logger_type>
