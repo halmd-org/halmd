@@ -17,9 +17,6 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <algorithm>
-#include <boost/bind.hpp>
-#include <boost/function.hpp>
 #include <boost/lexical_cast.hpp>
 #include <string>
 
@@ -35,13 +32,13 @@ namespace gpu {
 namespace samples {
 
 template <int dimension, typename float_type>
-particle_group<dimension, float_type>::particle_group(
-    boost::shared_ptr<particle_type /* FIXME const */> particle
-  , range_tag range
+particle_group_from_range<dimension, float_type>::particle_group_from_range(
+    shared_ptr<particle_type /* FIXME const */> particle
+  , unsigned int begin, unsigned int end
 )
   : particle_(particle)
-  , begin_(range.first)
-  , end_(range.second)
+  , begin_(begin)
+  , end_(end)
 {
     if (end_ < begin_) {
         throw std::logic_error("particle_group: inverse tag ranges not allowed.");
@@ -53,17 +50,21 @@ particle_group<dimension, float_type>::particle_group(
 }
 
 template <int dimension, typename float_type>
-particle_group<dimension, float_type>::particle_group(
-    boost::shared_ptr<particle_type /* FIXME const */> particle
-  , all_tag
-)
-  : particle_(particle)
-  , begin_(0)
-  , end_(particle->nbox)
-{}
+unsigned int const* particle_group_all<dimension, float_type>::h_map()
+{
+    // FIXME using particle_->h_reverse_tag prohibits particle_ to be const
+    try {
+        cuda::copy(particle_->g_reverse_tag, particle_->h_reverse_tag);
+    }
+    catch (cuda::error const&) {
+        throw;
+    }
+
+    return particle_->h_reverse_tag.data();
+}
 
 template <int dimension, typename float_type>
-unsigned int const* particle_group<dimension, float_type>::h_map() const
+unsigned int const* particle_group_from_range<dimension, float_type>::h_map()
 {
     // FIXME using particle_->h_reverse_tag prohibits particle_ to be const
     try {
@@ -76,12 +77,11 @@ unsigned int const* particle_group<dimension, float_type>::h_map() const
     return particle_->h_reverse_tag.data() + begin_;
 }
 
-
 template <int dimension, typename float_type>
 void particle_group<dimension, float_type>::luaopen(lua_State* L)
 {
     using namespace luabind;
-    static string const class_name("particle_group_" + lexical_cast<string>(dimension) + "_");
+    static string const class_name("particle_group" + lexical_cast<string>(dimension) + "_");
     module(L, "libhalmd")
     [
         namespace_("observables")
@@ -91,10 +91,56 @@ void particle_group<dimension, float_type>::luaopen(lua_State* L)
                 namespace_("samples")
                 [
                     class_<particle_group, shared_ptr<particle_group> >(class_name.c_str())
-                        .def(constructor<shared_ptr<particle_type /* FIXME const*/>, range_tag>())
-                        .def(constructor<shared_ptr<particle_type /* FIXME const*/>, all_tag>())
                         .property("particle", &particle_group::particle)
                         .property("size", &particle_group::size)
+                        .property("empty", &particle_group::empty)
+                ]
+            ]
+        ]
+    ];
+}
+
+template <int dimension, typename float_type>
+void particle_group_all<dimension, float_type>::luaopen(lua_State* L)
+{
+    using namespace luabind;
+    static string const class_name("particle_group_all" + lexical_cast<string>(dimension) + "_");
+    module(L, "libhalmd")
+    [
+        namespace_("observables")
+        [
+            namespace_("gpu")
+            [
+                namespace_("samples")
+                [
+                    class_<particle_group_all, shared_ptr<_Base>, _Base>(class_name.c_str())
+                        .def(constructor<
+                            shared_ptr<particle_type /* FIXME const*/>
+                        >())
+                ]
+            ]
+        ]
+    ];
+}
+
+template <int dimension, typename float_type>
+void particle_group_from_range<dimension, float_type>::luaopen(lua_State* L)
+{
+    using namespace luabind;
+    static string const class_name("particle_group_from_range" + lexical_cast<string>(dimension) + "_");
+    module(L, "libhalmd")
+    [
+        namespace_("observables")
+        [
+            namespace_("gpu")
+            [
+                namespace_("samples")
+                [
+                    class_<particle_group_from_range, shared_ptr<_Base>, _Base>(class_name.c_str())
+                        .def(constructor<
+                            shared_ptr<particle_type /* FIXME const*/>
+                          , unsigned int, unsigned int
+                        >())
                 ]
             ]
         ]
@@ -108,9 +154,25 @@ HALMD_LUA_API int luaopen_libhalmd_observables_gpu_samples_particle_group(lua_St
     return 0;
 }
 
+HALMD_LUA_API int luaopen_libhalmd_observables_gpu_samples_particle_group_all(lua_State* L)
+{
+    particle_group_all<3, float>::luaopen(L);
+    particle_group_all<2, float>::luaopen(L);
+    return 0;
+}
+
+HALMD_LUA_API int luaopen_libhalmd_observables_gpu_samples_particle_group_from_range(lua_State* L)
+{
+    particle_group_from_range<3, float>::luaopen(L);
+    particle_group_from_range<2, float>::luaopen(L);
+    return 0;
+}
+
 // explicit instantiation
-template class particle_group<3, float>;
-template class particle_group<2, float>;
+template class particle_group_all<3, float>;
+template class particle_group_all<2, float>;
+template class particle_group_from_range<3, float>;
+template class particle_group_from_range<2, float>;
 
 } // namespace samples
 } // namespace gpu

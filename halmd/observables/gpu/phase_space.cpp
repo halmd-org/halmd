@@ -129,7 +129,7 @@ void phase_space<host::samples::phase_space<dimension, float_type> >::acquire()
 
     LOG_TRACE("acquire host sample");
 
-    particle_type& /* FIXME const& */ particle = *particle_group_->particle().get();
+    particle_type& /* FIXME const& */ particle = const_cast<particle_type&>(*particle_group_->particle());
     try {
         cuda::copy(particle.g_r, particle.h_r);
         cuda::copy(particle.g_image, particle.h_image);

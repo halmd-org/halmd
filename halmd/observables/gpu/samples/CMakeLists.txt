@@ -4,5 +4,7 @@ halmd_add_library(halmd_observables_gpu_samples
 )
 halmd_add_modules(
   libhalmd_observables_gpu_samples_particle_group
+  libhalmd_observables_gpu_samples_particle_group_all
+  libhalmd_observables_gpu_samples_particle_group_from_range
   libhalmd_observables_gpu_samples_phase_space
 )

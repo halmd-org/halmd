@@ -30,10 +30,6 @@ namespace observables {
 namespace gpu {
 namespace samples {
 
-class range_tag : public std::pair<unsigned int, unsigned int> {};
-struct all_tag {};
-// struct unsorted_all_tag {};
-
 /**
  * A particle group represents a subset of particles, which is defined here by
  * an instance of gpu::particle together with either a range of tags or by
@@ -53,48 +49,69 @@ class particle_group
 {
 public:
     typedef mdsim::gpu::particle<dimension, float_type> particle_type;
+    typedef cuda::vector<unsigned int>::const_pointer gpu_map_iterator; // FIXME vector<T>::const_iterator
 
     static void luaopen(lua_State* L);
 
-    particle_group(
+    particle_group() {}
+
+    //! returns underlying particle instance
+    virtual boost::shared_ptr<particle_type /* FIXME const */> particle() const = 0;
+
+    /**
+     * returns an index array in GPU memory to map particle tags to array
+     * indices in gpu::particle
+     */
+    virtual gpu_map_iterator g_map() const = 0;
+    /**
+     * returns an index array in host memory to map particle tags to array
+     * indices in gpu::particle
+     */
+    virtual unsigned int const* h_map() = 0;
+
+    //! returns the size of the group, i.e., the number of particles
+    virtual unsigned int size() const = 0;
+
+    //! returns true if the group is the empty set
+    bool empty() const
+    {
+        return size() == 0;
+    }
+};
+
+template <int dimension, typename float_type>
+class particle_group_from_range
+  : public particle_group<dimension, float_type>
+{
+public:
+    typedef particle_group<dimension, float_type> _Base;
+    typedef typename _Base::particle_type particle_type;
+    typedef typename _Base::gpu_map_iterator gpu_map_iterator;
+
+    static void luaopen(lua_State* L);
+
+    particle_group_from_range(
         boost::shared_ptr<particle_type /* FIXME const */> particle
-      , range_tag range
+      , unsigned int begin
+      , unsigned int end
     );
 
-    particle_group(
-        boost::shared_ptr<particle_type /* FIXME const */> particle
-      , all_tag
-    );
-
-    boost::shared_ptr<particle_type /* FIXME const*/> particle() const
+    virtual boost::shared_ptr<particle_type /* FIXME const */> particle() const
     {
         return particle_;
     }
 
-    /**
-     * returns a permutation array in GPU memory to map particle tags to array
-     * indices in gpu::particle
-     */
-    unsigned int const* g_map() const
+    virtual gpu_map_iterator g_map() const
     {
         return particle_->g_reverse_tag.data() + begin_;
     }
-    /**
-     * returns a permutation array in host memory to map particle tags to array
-     * indices in gpu::particle
-     */
-    unsigned int const* h_map() const;
+
+    virtual unsigned int const* h_map();
 
     //! returns size of the group, i.e., the number of particles
-    unsigned int size() const
+    virtual unsigned int size() const
     {
         return end_ - begin_;
-    }
-
-    //! returns true if group is the empty set
-    bool empty() const
-    {
-        return begin_ == end_;
     }
 
 private:
@@ -103,6 +120,45 @@ private:
     /** tag range [begin, end) */
     unsigned int begin_;
     unsigned int end_;
+};
+
+template <int dimension, typename float_type>
+class particle_group_all
+  : public particle_group<dimension, float_type>
+{
+public:
+    typedef particle_group<dimension, float_type> _Base;
+    typedef typename _Base::particle_type particle_type;
+    typedef typename _Base::gpu_map_iterator gpu_map_iterator;
+
+    static void luaopen(lua_State* L);
+
+    particle_group_all(
+        boost::shared_ptr<particle_type /* FIXME const */> particle
+    )
+      : particle_(particle) {}
+
+    virtual boost::shared_ptr<particle_type /* FIXME const */> particle() const
+    {
+        return particle_;
+    }
+
+    virtual gpu_map_iterator g_map() const
+    {
+        return particle_->g_reverse_tag.data();
+    }
+
+    virtual unsigned int const* h_map();
+
+    //! returns size of the group, i.e., the number of particles
+    virtual unsigned int size() const
+    {
+        return particle_->nbox;
+    }
+
+private:
+    /** gpu::particle instance */
+    boost::shared_ptr<particle_type /* FIXME const */> particle_;
 };
 
 } // namespace samples
