@@ -72,19 +72,6 @@ public:
     /** mass per type */
     cuda::vector<float_type> g_mass;
 
-    //
-    // particles in page-locked host memory
-    //
-
-    /** positions, types */
-    cuda::host::vector<float4> h_r;
-    /** minimum image vectors */
-    cuda::host::vector<gpu_vector_type> h_image;
-    /** velocities, tags */
-    cuda::host::vector<float4> h_v;
-    /** reverse particle tags */
-    cuda::host::vector<unsigned int> h_reverse_tag;
-
     /** number of particles in simulation box */
     using _Base::nbox;
     /** number of particle types */

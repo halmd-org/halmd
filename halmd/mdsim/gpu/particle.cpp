@@ -58,11 +58,6 @@ particle<dimension, float_type>::particle(
   , g_f(nbox)
   , g_reverse_tag(nbox)
   , g_mass(ntype)
-  // allocate page-locked host memory
-  , h_r(nbox)
-  , h_image(nbox)
-  , h_v(nbox)
-  , h_reverse_tag(nbox)
 {
     LOG_DEBUG("number of CUDA execution blocks: " << dim.blocks_per_grid());
     LOG_DEBUG("number of CUDA execution threads per block: " << dim.threads_per_block());

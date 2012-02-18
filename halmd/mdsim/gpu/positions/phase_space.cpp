@@ -1,5 +1,5 @@
 /*
- * Copyright © 2008-2011  Peter Colberg
+ * Copyright © 2008-2012  Peter Colberg and Felix Höfling
  *
  * This file is part of HALMD.
  *
@@ -65,12 +65,14 @@ void phase_space<dimension, float_type>::set()
 
     scoped_timer_type timer(runtime_.set);
 
+    // construct particle data in page-locked host memory
+    cuda::host::vector<float4> h_r(particle_->nbox);
+
     // assign particle coordinates and types
-    assert(particle_->h_r.size() >= particle_->nbox);
     assert(sample_->r->size() >= particle_->nbox);
     assert(sample_->type->size() >= particle_->nbox);
     for (size_t i = 0; i < particle_->nbox; ++i) {
-        particle_->h_r[i] = particle_kernel::tagged<vector_type>((*sample_->r)[i], (*sample_->type)[i]);
+        h_r[i] = particle_kernel::tagged<vector_type>((*sample_->r)[i], (*sample_->type)[i]);
     }
 
     try {
@@ -78,7 +80,7 @@ void phase_space<dimension, float_type>::set()
         // erase particle position vectors (double-single precision)
         cuda::memset(particle_->g_r, 0, particle_->g_r.capacity());
 #endif
-        cuda::copy(particle_->h_r, particle_->g_r);
+        cuda::copy(h_r, particle_->g_r);
     }
     catch (cuda::error const&)
     {
