@@ -32,13 +32,27 @@ namespace gpu {
 namespace samples {
 
 template <int dimension, typename float_type>
+particle_group_all<dimension, float_type>::particle_group_all(
+    shared_ptr<particle_type const> particle
+)
+  // dependency injection
+  : particle_(particle)
+  // memory allocation
+  , h_reverse_tag_(particle->nbox)
+{}
+
+template <int dimension, typename float_type>
 particle_group_from_range<dimension, float_type>::particle_group_from_range(
-    shared_ptr<particle_type /* FIXME const */> particle
+    shared_ptr<particle_type const> particle
   , unsigned int begin, unsigned int end
 )
+  // dependency injection
   : particle_(particle)
+  // initialise attributes
   , begin_(begin)
   , end_(end)
+  // memory allocation
+  , h_reverse_tag_(particle->nbox)
 {
     if (end_ < begin_) {
         throw std::logic_error("particle_group: inverse tag ranges not allowed.");
@@ -52,29 +66,27 @@ particle_group_from_range<dimension, float_type>::particle_group_from_range(
 template <int dimension, typename float_type>
 unsigned int const* particle_group_all<dimension, float_type>::h_map()
 {
-    // FIXME using particle_->h_reverse_tag prohibits particle_ to be const
     try {
-        cuda::copy(particle_->g_reverse_tag, particle_->h_reverse_tag);
+        cuda::copy(particle_->g_reverse_tag, h_reverse_tag_);
     }
     catch (cuda::error const&) {
         throw;
     }
 
-    return particle_->h_reverse_tag.data();
+    return h_reverse_tag_.data();
 }
 
 template <int dimension, typename float_type>
 unsigned int const* particle_group_from_range<dimension, float_type>::h_map()
 {
-    // FIXME using particle_->h_reverse_tag prohibits particle_ to be const
     try {
-        cuda::copy(particle_->g_reverse_tag, particle_->h_reverse_tag);
+        cuda::copy(particle_->g_reverse_tag, h_reverse_tag_);
     }
     catch (cuda::error const&) {
         throw;
     }
 
-    return particle_->h_reverse_tag.data() + begin_;
+    return h_reverse_tag_.data() + begin_;
 }
 
 template <int dimension, typename float_type>
@@ -115,7 +127,7 @@ void particle_group_all<dimension, float_type>::luaopen(lua_State* L)
                 [
                     class_<particle_group_all, shared_ptr<_Base>, _Base>(class_name.c_str())
                         .def(constructor<
-                            shared_ptr<particle_type /* FIXME const*/>
+                            shared_ptr<particle_type const>
                         >())
                 ]
             ]
@@ -138,7 +150,7 @@ void particle_group_from_range<dimension, float_type>::luaopen(lua_State* L)
                 [
                     class_<particle_group_from_range, shared_ptr<_Base>, _Base>(class_name.c_str())
                         .def(constructor<
-                            shared_ptr<particle_type /* FIXME const*/>
+                            shared_ptr<particle_type const>
                           , unsigned int, unsigned int
                         >())
                 ]

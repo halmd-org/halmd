@@ -20,6 +20,7 @@
 #ifndef HALMD_OBSERVABLES_GPU_SAMPLES_PARTICLE_GROUP_HPP
 #define HALMD_OBSERVABLES_GPU_SAMPLES_PARTICLE_GROUP_HPP
 
+#include <cuda_wrapper/cuda_wrapper.hpp>
 #include <lua.hpp>
 #include <utility>
 
@@ -56,7 +57,7 @@ public:
     particle_group() {}
 
     //! returns underlying particle instance
-    virtual boost::shared_ptr<particle_type /* FIXME const */> particle() const = 0;
+    virtual boost::shared_ptr<particle_type const> particle() const = 0;
 
     /**
      * returns an index array in GPU memory to map particle tags to array
@@ -66,6 +67,9 @@ public:
     /**
      * returns an index array in host memory to map particle tags to array
      * indices in gpu::particle
+     *
+     * Method can not be const since it copies to internal buffer in host
+     * memory.
      */
     virtual unsigned int const* h_map() = 0;
 
@@ -80,49 +84,6 @@ public:
 };
 
 template <int dimension, typename float_type>
-class particle_group_from_range
-  : public particle_group<dimension, float_type>
-{
-public:
-    typedef particle_group<dimension, float_type> _Base;
-    typedef typename _Base::particle_type particle_type;
-    typedef typename _Base::gpu_map_iterator gpu_map_iterator;
-
-    static void luaopen(lua_State* L);
-
-    particle_group_from_range(
-        boost::shared_ptr<particle_type /* FIXME const */> particle
-      , unsigned int begin
-      , unsigned int end
-    );
-
-    virtual boost::shared_ptr<particle_type /* FIXME const */> particle() const
-    {
-        return particle_;
-    }
-
-    virtual gpu_map_iterator g_map() const
-    {
-        return particle_->g_reverse_tag.data() + begin_;
-    }
-
-    virtual unsigned int const* h_map();
-
-    //! returns size of the group, i.e., the number of particles
-    virtual unsigned int size() const
-    {
-        return end_ - begin_;
-    }
-
-private:
-    /** gpu::particle instance */
-    boost::shared_ptr<particle_type /* FIXME const */> particle_;
-    /** tag range [begin, end) */
-    unsigned int begin_;
-    unsigned int end_;
-};
-
-template <int dimension, typename float_type>
 class particle_group_all
   : public particle_group<dimension, float_type>
 {
@@ -134,11 +95,10 @@ public:
     static void luaopen(lua_State* L);
 
     particle_group_all(
-        boost::shared_ptr<particle_type /* FIXME const */> particle
-    )
-      : particle_(particle) {}
+        boost::shared_ptr<particle_type const> particle
+    );
 
-    virtual boost::shared_ptr<particle_type /* FIXME const */> particle() const
+    virtual boost::shared_ptr<particle_type const> particle() const
     {
         return particle_;
     }
@@ -158,9 +118,56 @@ public:
 
 private:
     /** gpu::particle instance */
-    boost::shared_ptr<particle_type /* FIXME const */> particle_;
+    boost::shared_ptr<particle_type const> particle_;
+    /** pre-allocate page-locked memory for reverse particle tags */
+    cuda::host::vector<unsigned int> h_reverse_tag_;
 };
 
+template <int dimension, typename float_type>
+class particle_group_from_range
+  : public particle_group<dimension, float_type>
+{
+public:
+    typedef particle_group<dimension, float_type> _Base;
+    typedef typename _Base::particle_type particle_type;
+    typedef typename _Base::gpu_map_iterator gpu_map_iterator;
+
+    static void luaopen(lua_State* L);
+
+    particle_group_from_range(
+        boost::shared_ptr<particle_type const> particle
+      , unsigned int begin
+      , unsigned int end
+    );
+
+    virtual boost::shared_ptr<particle_type const> particle() const
+    {
+        return particle_;
+    }
+
+    virtual gpu_map_iterator g_map() const
+    {
+        return particle_->g_reverse_tag.data() + begin_;
+    }
+
+    virtual unsigned int const* h_map();
+
+    //! returns size of the group, i.e., the number of particles
+    virtual unsigned int size() const
+    {
+        return end_ - begin_;
+    }
+
+private:
+    /** gpu::particle instance */
+    boost::shared_ptr<particle_type const> particle_;
+    /** tag range [begin, end) */
+    unsigned int begin_;
+    unsigned int end_;
+
+    /** pre-allocate page-locked memory for reverse particle tags */
+    cuda::host::vector<unsigned int> h_reverse_tag_;
+};
 } // namespace samples
 } // namespace gpu
 } // namespace observables
