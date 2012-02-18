@@ -61,12 +61,16 @@ using boost::tie;
 //
 inline float __int_as_float(int value)
 {
-    union { int i; float f; } u; u.i = value; return u.f;
+    union { int i; float f; } volatile u;
+    u.i = value;
+    return u.f;
 }
 
 inline int __float_as_int(float value)
 {
-    union { float f; int i; } u; u.f = value; return u.i;
+    union { float f; int i; } volatile u;
+    u.f = value;
+    return u.i;
 }
 
 #endif /* ! __CUDACC__ */
