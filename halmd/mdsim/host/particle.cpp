@@ -1,5 +1,5 @@
 /*
- * Copyright © 2008-2010  Peter Colberg
+ * Copyright © 2008-2012  Peter Colberg and Felix Höfling
  *
  * This file is part of HALMD.
  *
@@ -51,6 +51,7 @@ particle<dimension, float_type>::particle(
   , v(nbox)
   , f(nbox)
   , tag(nbox)
+  , reverse_tag(nbox)
   , type(nbox)
 {
 }
@@ -67,6 +68,8 @@ void particle<dimension, float_type>::set()
     }
     // assign particle tags
     copy(counting_iterator<size_t>(0), counting_iterator<size_t>(nbox), tag.begin());
+    // initially, the mapping tag → index is a 1:1 mapping
+    copy(tag.begin(), tag.end(), reverse_tag.begin());
 }
 
 /**
@@ -85,6 +88,12 @@ void particle<dimension, float_type>::rearrange(std::vector<unsigned int> const&
     // no permutation of forces
     algorithm::host::permute(tag.begin(), tag.end(), index.begin());
     algorithm::host::permute(type.begin(), type.end(), index.begin());
+
+    // update reverse tags
+    for (unsigned int i = 0; i < tag.size(); ++i) {
+        assert(tag[i] < reverse_tag.size());
+        reverse_tag[tag[i]] = i;
+    }
 }
 
 template <int dimension, typename float_type>

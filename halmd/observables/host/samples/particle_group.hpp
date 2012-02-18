@@ -97,7 +97,7 @@ public:
 
     virtual map_iterator map() const
     {
-        return particle_->tag.begin(); // FIXME host::particle doesn't provide reverse_tag
+        return particle_->reverse_tag.begin();
     }
 
     //! returns size of the group, i.e., the number of particles
@@ -135,7 +135,7 @@ public:
 
     virtual map_iterator map() const
     {
-        return particle_->tag.begin() + begin_; // FIXME host::particle doesn't provide reverse_tag
+        return particle_->reverse_tag.begin() + begin_;
     }
 
     //! returns size of the group, i.e., the number of particles

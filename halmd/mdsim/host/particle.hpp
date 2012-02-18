@@ -1,5 +1,5 @@
 /*
- * Copyright © 2008-2010  Peter Colberg
+ * Copyright © 2008-2012  Peter Colberg and Felix Höfling
  *
  * This file is part of HALMD.
  *
@@ -58,6 +58,8 @@ public:
     std::vector<vector_type> f;
     /** globally unique particle numbers */
     std::vector<unsigned int> tag;
+    /** reverse particle tags */
+    std::vector<unsigned int> reverse_tag;
     /** types */
     std::vector<unsigned int> type;
 
