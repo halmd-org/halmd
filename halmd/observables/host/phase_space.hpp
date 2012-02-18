@@ -1,5 +1,5 @@
 /*
- * Copyright © 2008-2011  Peter Colberg and Felix Höfling
+ * Copyright © 2008-2012  Peter Colberg and Felix Höfling
  *
  * This file is part of HALMD.
  *
@@ -25,8 +25,8 @@
 #include <halmd/io/logger.hpp>
 #include <halmd/mdsim/box.hpp>
 #include <halmd/mdsim/clock.hpp>
-#include <halmd/mdsim/host/particle.hpp>
 #include <halmd/observables/host/samples/phase_space.hpp>
+#include <halmd/observables/host/samples/particle_group.hpp>
 #include <halmd/observables/phase_space.hpp>
 #include <halmd/utility/profiler.hpp>
 
@@ -41,7 +41,8 @@ class phase_space
 public:
     typedef observables::phase_space<dimension> _Base;
     typedef host::samples::phase_space<dimension, float_type> sample_type;
-    typedef mdsim::host::particle<dimension, float_type> particle_type;
+    typedef host::samples::particle_group<dimension, float_type> particle_group_type;
+    typedef typename particle_group_type::particle_type particle_type;
     typedef mdsim::box<dimension> box_type;
     typedef mdsim::clock clock_type;
     typedef logger logger_type;
@@ -51,11 +52,20 @@ public:
 
     phase_space(
         boost::shared_ptr<sample_type> sample
+      , boost::shared_ptr<particle_group_type const> particle_group
+      , boost::shared_ptr<box_type const> box
+      , boost::shared_ptr<clock_type const> clock
+      , boost::shared_ptr<logger_type> logger = boost::make_shared<logger_type>()
+    );
+
+    phase_space(
+        boost::shared_ptr<sample_type> sample
       , boost::shared_ptr<particle_type const> particle
       , boost::shared_ptr<box_type const> box
       , boost::shared_ptr<clock_type const> clock
       , boost::shared_ptr<logger_type> logger = boost::make_shared<logger_type>()
     );
+
     virtual void acquire();
 
 private:
@@ -70,7 +80,7 @@ private:
     };
 
     boost::shared_ptr<sample_type> sample_;
-    boost::shared_ptr<particle_type const> particle_;
+    boost::shared_ptr<particle_group_type const> particle_group_;
     boost::shared_ptr<box_type const> box_;
     boost::shared_ptr<clock_type const> clock_;
     boost::shared_ptr<logger_type> logger_;

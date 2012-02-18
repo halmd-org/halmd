@@ -35,13 +35,31 @@ namespace host {
 template <int dimension, typename float_type>
 phase_space<dimension, float_type>::phase_space(
     shared_ptr<sample_type> sample
+  , shared_ptr<particle_group_type const> particle_group
+  , shared_ptr<box_type const> box
+  , shared_ptr<clock_type const> clock
+  , shared_ptr<logger_type> logger
+)
+  : sample_(sample)
+  , particle_group_(particle_group)
+  , box_(box)
+  , clock_(clock)
+  , logger_(logger)
+{
+}
+
+template <int dimension, typename float_type>
+phase_space<dimension, float_type>::phase_space(
+    shared_ptr<sample_type> sample
   , shared_ptr<particle_type const> particle
   , shared_ptr<box_type const> box
   , shared_ptr<clock_type const> clock
   , shared_ptr<logger_type> logger
 )
   : sample_(sample)
-  , particle_(particle)
+  , particle_group_(
+        make_shared<samples::particle_group_all<dimension, float_type> >(particle)
+    )
   , box_(box)
   , clock_(clock)
   , logger_(logger)
@@ -70,22 +88,23 @@ void phase_space<dimension, float_type>::acquire()
         sample_->reset();
     }
 
-    for (size_t i = 0; i < particle_->nbox; ++i) {
-        unsigned int type = particle_->type[i];
-        unsigned int tag = particle_->tag[i];
+    assert(particle_group_->size() == sample_->r->size());
+    assert(particle_group_->size() == sample_->v->size());
+    assert(particle_group_->size() == sample_->type->size());
+
+    // copy particle data using index map
+    particle_type const& particle = *particle_group_->particle();
+    typename particle_group_type::map_iterator idx = particle_group_->map();
+    for (unsigned int i = 0; i < particle_group_->size(); ++i, ++idx) {
+
+        assert(*idx < particle.nbox);
 
         // periodically extended particle position
-        assert(tag < sample_->r->size());
-        vector_type& r = (*sample_->r)[tag] = particle_->r[i];
-        box_->extend_periodic(r, particle_->image[i]);
+        vector_type& r = (*sample_->r)[i] = particle.r[*idx];
+        box_->extend_periodic(r, particle.image[*idx]);
 
-        // particle velocity
-        assert(tag < sample_->v->size());
-        (*sample_->v)[tag] = particle_->v[i];
-
-        // particle type
-        assert(tag < sample_->type->size());
-        (*sample_->type)[tag] = type;
+        (*sample_->v)[i] = particle.v[*idx];
+        (*sample_->type)[i] = particle.type[*idx];
     }
     sample_->step = clock_->step();
 }
@@ -115,6 +134,13 @@ void phase_space<dimension, float_type>::luaopen(lua_State* L)
                 ]
                 .def_readonly("runtime", &phase_space::runtime_)
 
+          , def("phase_space", &make_shared<phase_space
+               , shared_ptr<sample_type>
+               , shared_ptr<particle_group_type const>
+               , shared_ptr<box_type const>
+               , shared_ptr<clock_type const>
+               , shared_ptr<logger_type>
+            >)
           , def("phase_space", &make_shared<phase_space
                , shared_ptr<sample_type>
                , shared_ptr<particle_type const>
