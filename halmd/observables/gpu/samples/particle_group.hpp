@@ -60,13 +60,13 @@ public:
     virtual boost::shared_ptr<particle_type const> particle() const = 0;
 
     /**
-     * returns an index array in GPU memory to map particle tags to array
-     * indices in gpu::particle
+     * returns iterator to an index array in GPU memory mapping particle tags
+     * to array indices in gpu::particle
      */
     virtual gpu_map_iterator g_map() const = 0;
     /**
-     * returns an index array in host memory to map particle tags to array
-     * indices in gpu::particle
+     * returns iterator to an index array in host memory mapping particle tags
+     * to array indices in gpu::particle
      *
      * Method can not be const since it copies to internal buffer in host
      * memory.
