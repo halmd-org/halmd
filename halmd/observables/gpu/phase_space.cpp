@@ -44,6 +44,7 @@ phase_space<gpu::samples::phase_space<dimension, float_type> >::phase_space(
   , shared_ptr<clock_type const> clock
   , shared_ptr<logger_type> logger
 )
+  // dependency injection
   : sample_(sample)
   , particle_group_(particle_group)
   , box_(box)
@@ -68,11 +69,16 @@ phase_space<host::samples::phase_space<dimension, float_type> >::phase_space(
   , shared_ptr<clock_type const> clock
   , shared_ptr<logger_type> logger
 )
+  // dependency injection
   : sample_(sample)
   , particle_group_(particle_group)
   , box_(box)
   , clock_(clock)
   , logger_(logger)
+  // allocate page-locked host memory
+  , h_r_(particle_group->particle()->nbox)
+  , h_image_(particle_group->particle()->nbox)
+  , h_v_(particle_group->particle()->nbox)
 {
 }
 
@@ -84,6 +90,7 @@ phase_space<gpu::samples::phase_space<dimension, float_type> >::phase_space(
   , shared_ptr<clock_type const> clock
   , shared_ptr<logger_type> logger
 )
+  // dependency injection
   : sample_(sample)
   , particle_group_(
         make_shared<samples::particle_group_all<dimension, float_type> >(particle)
@@ -110,6 +117,7 @@ phase_space<host::samples::phase_space<dimension, float_type> >::phase_space(
   , shared_ptr<clock_type const> clock
   , shared_ptr<logger_type> logger
 )
+  // dependency injection
   : sample_(sample)
   , particle_group_(
         make_shared<samples::particle_group_all<dimension, float_type> >(particle)
@@ -117,6 +125,10 @@ phase_space<host::samples::phase_space<dimension, float_type> >::phase_space(
   , box_(box)
   , clock_(clock)
   , logger_(logger)
+  // allocate page-locked host memory
+  , h_r_(particle->nbox)
+  , h_image_(particle->nbox)
+  , h_v_(particle->nbox)
 {
 }
 
@@ -142,7 +154,7 @@ void phase_space<gpu::samples::phase_space<dimension, float_type> >::acquire()
         sample_->reset();
     }
 
-    particle_type const& particle = *particle_group_->particle(); // use as shortcut
+    particle_type const& particle = *particle_group_->particle();
     phase_space_wrapper<dimension>::kernel.r.bind(particle.g_r);
     phase_space_wrapper<dimension>::kernel.image.bind(particle.g_image);
     phase_space_wrapper<dimension>::kernel.v.bind(particle.g_v);
@@ -173,11 +185,11 @@ void phase_space<host::samples::phase_space<dimension, float_type> >::acquire()
 
     LOG_TRACE("acquire host sample");
 
-    particle_type& /* FIXME const& */ particle = const_cast<particle_type&>(*particle_group_->particle());
     try {
-        cuda::copy(particle.g_r, particle.h_r);
-        cuda::copy(particle.g_image, particle.h_image);
-        cuda::copy(particle.g_v, particle.h_v);
+        particle_type const& particle = *particle_group_->particle();
+        cuda::copy(particle.g_r, h_r_);
+        cuda::copy(particle.g_image, h_image_);
+        cuda::copy(particle.g_v, h_v_);
     }
     catch (cuda::error const&) {
         LOG_ERROR("failed to copy from GPU to host");
@@ -200,18 +212,18 @@ void phase_space<host::samples::phase_space<dimension, float_type> >::acquire()
     for (unsigned int tag = 0; tag < particle_group_->size(); ++tag) {
 
         unsigned int idx = map[tag];
-        assert(idx < particle.nbox);
+        assert(idx < h_r_.size());
 
         using mdsim::gpu::particle_kernel::untagged;
 
         // periodically extended particle position
         vector_type r;
         unsigned int type;
-        tie(r, type) = untagged<vector_type>(particle.h_r[idx]);
-        box_->extend_periodic(r, static_cast<vector_type>(particle.h_image[idx]));
+        tie(r, type) = untagged<vector_type>(h_r_[idx]);
+        box_->extend_periodic(r, static_cast<vector_type>(h_image_[idx]));
 
         (*sample_->r)[tag] = r;
-        (*sample_->v)[tag] = static_cast<vector_type>(particle.h_v[idx]);
+        (*sample_->v)[tag] = static_cast<vector_type>(h_v_[idx]);
         (*sample_->type)[tag] = type;
     }
     sample_->step = clock_->step();

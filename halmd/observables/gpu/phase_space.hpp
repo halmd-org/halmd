@@ -152,6 +152,12 @@ private:
     boost::shared_ptr<box_type const> box_;
     boost::shared_ptr<clock_type const> clock_;
     boost::shared_ptr<logger_type> logger_;
+
+    /** buffer data from gpu::particle in page-locked host memory */
+    cuda::host::vector<float4> h_r_;
+    cuda::host::vector<typename particle_type::gpu_vector_type> h_image_;
+    cuda::host::vector<float4> h_v_;
+
     /** profiling runtime accumulators */
     runtime runtime_;
 };
