@@ -63,13 +63,57 @@ phase_space<gpu::samples::phase_space<dimension, float_type> >::phase_space(
 template <int dimension, typename float_type>
 phase_space<host::samples::phase_space<dimension, float_type> >::phase_space(
     shared_ptr<sample_type> sample
-  , shared_ptr<particle_group_type /* FIXME const */> particle_group
+  , shared_ptr<particle_group_type> particle_group
   , shared_ptr<box_type const> box
   , shared_ptr<clock_type const> clock
   , shared_ptr<logger_type> logger
 )
   : sample_(sample)
   , particle_group_(particle_group)
+  , box_(box)
+  , clock_(clock)
+  , logger_(logger)
+{
+}
+
+template <int dimension, typename float_type>
+phase_space<gpu::samples::phase_space<dimension, float_type> >::phase_space(
+    shared_ptr<sample_type> sample
+  , shared_ptr<particle_type const> particle
+  , shared_ptr<box_type const> box
+  , shared_ptr<clock_type const> clock
+  , shared_ptr<logger_type> logger
+)
+  : sample_(sample)
+  , particle_group_(
+        make_shared<samples::particle_group_all<dimension, float_type> >(particle)
+    )
+  , box_(box)
+  , clock_(clock)
+  , logger_(logger)
+{
+    try {
+        cuda::copy(static_cast<vector_type>(box_->length()), phase_space_wrapper<dimension>::kernel.box_length);
+    }
+    catch (cuda::error const&)
+    {
+        LOG_ERROR("failed to copy box length to GPU");
+        throw;
+    }
+}
+
+template <int dimension, typename float_type>
+phase_space<host::samples::phase_space<dimension, float_type> >::phase_space(
+    shared_ptr<sample_type> sample
+  , shared_ptr<particle_type const> particle
+  , shared_ptr<box_type const> box
+  , shared_ptr<clock_type const> clock
+  , shared_ptr<logger_type> logger
+)
+  : sample_(sample)
+  , particle_group_(
+        make_shared<samples::particle_group_all<dimension, float_type> >(particle)
+    )
   , box_(box)
   , clock_(clock)
   , logger_(logger)
@@ -236,7 +280,7 @@ void phase_space<host::samples::phase_space<dimension, float_type> >::luaopen(lu
 
           , def("phase_space", &make_shared<phase_space
                , shared_ptr<sample_type>
-               , shared_ptr<particle_group_type /* FIXME const */>
+               , shared_ptr<particle_group_type>
                , shared_ptr<box_type const>
                , shared_ptr<clock_type const>
                , shared_ptr<logger_type>

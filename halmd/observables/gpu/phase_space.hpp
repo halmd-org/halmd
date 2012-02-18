@@ -56,9 +56,19 @@ public:
 
     static void luaopen(lua_State* L);
 
+    // construct from particle group
     phase_space(
         boost::shared_ptr<sample_type> sample
       , boost::shared_ptr<particle_group_type const> particle_group
+      , boost::shared_ptr<box_type const> box
+      , boost::shared_ptr<clock_type const> clock
+      , boost::shared_ptr<logger_type> logger = boost::make_shared<logger_type>()
+    );
+
+    // construct directly from particle
+    phase_space(
+        boost::shared_ptr<sample_type> sample
+      , boost::shared_ptr<particle_type const> particle
       , boost::shared_ptr<box_type const> box
       , boost::shared_ptr<clock_type const> clock
       , boost::shared_ptr<logger_type> logger = boost::make_shared<logger_type>()
@@ -106,13 +116,24 @@ public:
 
     static void luaopen(lua_State* L);
 
+    // construct from particle group
     phase_space(
         boost::shared_ptr<sample_type> sample
-      , boost::shared_ptr<particle_group_type /* FIXME const */> particle_group
+      , boost::shared_ptr<particle_group_type> particle_group
       , boost::shared_ptr<box_type const> box
       , boost::shared_ptr<clock_type const> clock
       , boost::shared_ptr<logger_type> logger = boost::make_shared<logger_type>()
     );
+
+    // construct directly from particle
+    phase_space(
+        boost::shared_ptr<sample_type> sample
+      , boost::shared_ptr<particle_type const> particle
+      , boost::shared_ptr<box_type const> box
+      , boost::shared_ptr<clock_type const> clock
+      , boost::shared_ptr<logger_type> logger = boost::make_shared<logger_type>()
+    );
+
     virtual void acquire();
 
 private:
@@ -127,7 +148,7 @@ private:
     };
 
     boost::shared_ptr<sample_type> sample_;
-    boost::shared_ptr<particle_group_type /* FIXME const */> particle_group_;
+    boost::shared_ptr<particle_group_type> particle_group_;
     boost::shared_ptr<box_type const> box_;
     boost::shared_ptr<clock_type const> clock_;
     boost::shared_ptr<logger_type> logger_;
