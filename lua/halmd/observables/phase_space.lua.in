@@ -17,12 +17,15 @@
 -- along with this program.  If not, see <http://www.gnu.org/licenses/>.
 --
 
+require("halmd.device")
 require("halmd.mdsim.box")
 require("halmd.mdsim.clock")
 require("halmd.modules")
+require("halmd.observables.samples.particle_group")
 require("halmd.observables.samples.phase_space")
 
 -- grab modules
+local device = halmd.device
 local mdsim = halmd.mdsim
 local observables = halmd.observables
 -- grab C++ wrappers
@@ -30,6 +33,8 @@ local phase_space_wrapper = assert(libhalmd.observables.phase_space)
 local property = property
 -- grab standard library
 local assert = assert
+local ipairs = ipairs
+local type = type
 
 module("halmd.observables.phase_space", halmd.modules.register)
 
@@ -37,23 +42,37 @@ module("halmd.observables.phase_space", halmd.modules.register)
 -- construct phase_space module
 --
 -- @param args       parameter table
---   args.memory     specify memory location of phase_space sample ("host", "gpu")
+--   args.particle_group    list of pairs (label, particle_group instance)
+--   args.memory            specify memory location of phase_space sample ("host", "gpu"),
+--                          if omitted use "gpu" if device is available
+-- @returns list of pairs (label, phase_space sampler instance)
 --
 function new(args)
     -- parameters
-    local particle = assert(args.particle, "missing parameter: particle")
-    local memory = assert(args.memory)
+    local particle_group = assert(args.particle_group, "missing parameter: particle_group")
+    assert(type(particle_group) == "table", "invalid table")
+    local memory = args.memory or (device() and "gpu" or "host")
+    local logger = assert(args.logger)
 
     -- dependency injection
-    local dimension = assert(particle.dimension)
     local box = mdsim.box() -- singleton
     local clock = mdsim.clock() -- singleton
-    local sample = assert(observables.samples.phase_space{particle = particle, memory = memory})
-    local logger = assert(args.logger)
-    local phase_space = phase_space_wrapper(sample, particle, box, clock, logger)
 
-    -- store phase space sample as property
-    phase_space.sample = property(function(self) return sample end)
+    local phase_space = {}
+    for i, val in ipairs(particle_group) do
+        local label = val[1]
+        local group = val[2]
+        local sample = assert(observables.samples.phase_space{particle_group = group, memory = memory})
+        local sampler = phase_space_wrapper(sample, group, box, clock, logger)
+
+        -- store phase space sample as property
+        sampler.sample = property(function(self) return sample end)
+
+        -- store memory as property for profiler description
+        sampler.memory = property(function(self) return memory end)
+
+        phase_space[i] = { label, sampler }
+    end
 
     return phase_space
 end
@@ -62,7 +81,12 @@ end
 -- connect runtime accumulators to module profiler
 --
 function profile(self, profiler)
-    local memory = assert(self.sample.memory)
-    profiler:on_profile{self, acquire = "acquisition of phase space sample on " .. memory}
-    profiler:on_profile{self, reset = "reset phase space sample on " .. memory}
+    for i, val in ipairs(self) do
+        local label = val[1]
+        local phase_space = val[2]
+        local memory = assert(phase_space.memory)
+        local str = "phase space sample of " .. label .. " particles on " .. memory
+        profiler:on_profile{phase_space, acquire = "acquisition of " .. str}
+        profiler:on_profile{phase_space, reset = "reset " .. str}
+    end
 end

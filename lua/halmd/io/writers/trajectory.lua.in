@@ -33,24 +33,27 @@ local po = libhalmd.po
 local h5 = libhalmd.h5
 -- grab standard library
 local assert = assert
+local ipairs = ipairs
 local string = string
+local type = type
 
 module("halmd.io.writers.trajectory", halmd.modules.register)
 
 --
 -- construct trajectory writer module
 --
+-- @param args       parameter table
+--   args.particle_group    list of pairs (label, particle_group instance)
+--   args.every             sampling interval, default (0) writes at start and finish only
+--
 function new(args)
-    local particle = assert(args.particle, "missing parameter: particle")
-    local group = assert(args.group, "missing parameter: group")
-    local every = args.every or 1000 -- default value
+    local particle_group = assert(args.particle_group, "missing parameter: particle_group")
+    assert(type(particle_group) == "table", "invalid table")
+    local every = args.every or 0 -- default value
 
     -- create trajectory file
     local file = writers.file{extension = "trj"}
 
-    -- FIXME share phase_space instance with observables::host::density_mode
-    local phase_space = assert(observables.phase_space{particle = particle, memory = "host"})
-    local sample = assert(phase_space.sample)
     local box = mdsim.box() -- singleton
     local sampler = observables.sampler() -- singleton
 
@@ -63,16 +66,31 @@ function new(args)
     writer:on_write(box.origin, {"offset"})
     sampler:on_start{writer.write, tracker = writer}
 
-    -- sample and write phase space at fixed interval
-    local writer = file:writer{location = {"trajectory", group}, mode = "append"}
-    writer:on_prepend_write(phase_space.acquire)
-    writer:on_write(sample.position, {"position"})
-    writer:on_write(sample.velocity, {"velocity"})
-    local _, species = writer:on_write(sample.types, {"species"})
-    sampler:on_sample{writer.write, every, tracker = writer}
+    -- construct list of phase space samplers
+    --
+    -- FIXME share phase_space instance with observables::host::density_mode -- is this a worthy optimisation?
+    local phase_space = assert(observables.phase_space{particle_group = particle_group, memory = "host"})
 
-    -- store attributes
-    species:write_attribute("mass", h5.float_array(), particle.mass)
+    for i, val in ipairs(phase_space) do
+        local label = val[1]
+        local phase_space = val[2]
+        local sample = assert(phase_space.sample)
+
+        -- sample and write phase space at fixed interval
+        local writer = file:writer{location = {"trajectory", label}, mode = "append"}
+        writer:on_prepend_write(phase_space.acquire)
+        writer:on_write(sample.position, {"position"})
+        writer:on_write(sample.velocity, {"velocity"})
+        local _, species = writer:on_write(sample.types, {"species"})
+        if every > 0 then
+            sampler:on_sample{writer.write, every, tracker = writer}
+        else
+            sampler:on_finish{writer.write, tracker = writer}
+        end
+
+        -- store attributes
+--         species:write_attribute("mass", h5.float_array(), particle.mass) -- FIXME
+    end
 
     return writer
 end

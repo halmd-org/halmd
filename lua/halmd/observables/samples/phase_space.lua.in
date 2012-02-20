@@ -54,23 +54,21 @@ module("halmd.observables.samples.phase_space", halmd.modules.register)
 -- construct phase_space module
 --
 -- @param args       parameter table
---   args.memory     specify memory location of sample ("host", "gpu")
+--   args.particle_group    instance of particle_group specifying data type and size
+--   args.memory            specify memory location of sample ("host", "gpu")
 --
 function new(args)
-    local particle = assert(args.particle, "missing parameter: particle")
-    local memory = assert(args.memory)
+    local particle_group = assert(args.particle_group, "missing parameter: particle_group")
+    local memory = assert(args.memory, "missing parameter: memory")
 
-    local dimension = assert(particle.dimension)
+    local dimension = assert(particle_group.dimension)
     local phase_space
     if device() then
         phase_space = assert(phase_space_wrapper.gpu[memory][dimension])
     else
         phase_space = assert(phase_space_wrapper.host[memory][dimension])
     end
-    local sample = phase_space(particle.nbox)
-
-    -- store memory as property for profiler description
-    sample.memory = property(function(self) return memory end)
+    local sample = phase_space(particle_group.size)
 
     return sample
 end
