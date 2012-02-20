@@ -101,22 +101,20 @@ void density_mode<dimension, float_type>::luaopen(lua_State* L)
     [
         namespace_("observables")
         [
-            namespace_("host")
-            [
-                class_<density_mode, shared_ptr<_Base>, _Base>(class_name.c_str())
-                    .def(constructor<
-                        shared_ptr<phase_space_type const>
-                      , shared_ptr<wavevector_type const>
-                      , shared_ptr<clock_type const>
-                      , shared_ptr<logger_type>
-                    >())
-                    .scope
-                    [
-                        class_<runtime>("runtime")
-                            .def_readonly("acquire", &runtime::acquire)
-                    ]
-                    .def_readonly("runtime", &density_mode::runtime_)
-            ]
+            class_<density_mode, shared_ptr<_Base>, _Base>(class_name.c_str())
+                .scope
+                [
+                    class_<runtime>("runtime")
+                        .def_readonly("acquire", &runtime::acquire)
+                ]
+                .def_readonly("runtime", &density_mode::runtime_)
+
+          , def("density_mode", &make_shared<density_mode
+              , shared_ptr<phase_space_type const>
+              , shared_ptr<wavevector_type const>
+              , shared_ptr<clock_type const>
+              , shared_ptr<logger_type>
+            >)
         ]
     ];
 }

@@ -17,11 +17,8 @@
 -- along with this program.  If not, see <http://www.gnu.org/licenses/>.
 --
 
-require("halmd.mdsim.particle")
 require("halmd.modules")
 
--- grab modules
-local mdsim = halmd.mdsim
 -- grab C++ wrappers
 local density_mode_wrapper = {
     [2] = libhalmd.observables.samples.density_mode_2_
@@ -33,11 +30,19 @@ local assert = assert
 module("halmd.observables.samples.density_mode", halmd.modules.register)
 
 --
--- construct density_mode module
+-- construct samples::density_mode module
+--
+-- @param args parameter table
+--   args.dimension   space dimension
+--   args.nspecies    number of particle species
+-- @returns instance of samples::density_mode module
 --
 function new()
-    local particle = mdsim.particle() -- singleton
-    local dimension = assert(particle.dimension)
+    local dimension = assert(args.dimension)
+    local nspecies = assert(args.nspecies)
 
-    sample = assert(density_mode_wrapper[dimension](#particle.ntypes))
+    I will never be parsed :-) -- FIXME
+
+    sample = assert(density_mode_wrapper[dimension])(nspecies)
+    return sample
 end

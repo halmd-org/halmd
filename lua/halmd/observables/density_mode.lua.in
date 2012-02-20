@@ -17,33 +17,21 @@
 -- along with this program.  If not, see <http://www.gnu.org/licenses/>.
 --
 
-require("halmd.device")
 require("halmd.mdsim.clock")
 require("halmd.modules")
 require("halmd.observables.phase_space")
-require("halmd.observables.samples.phase_space")
+require("halmd.observables.utility.wavevector")
 
 -- grab modules
-local device = halmd.device
 local mdsim = halmd.mdsim
 local observables = halmd.observables
 -- grab C++ wrappers
-local density_mode_wrapper = {
-    host = {
-        [2] = libhalmd.observables.host.density_mode_2_
-      , [3] = libhalmd.observables.host.density_mode_3_
-    }
-  , [2] = libhalmd.observables.density_mode_2_
-  , [3] = libhalmd.observables.density_mode_3_
-}
-if libhalmd.observables.gpu then
-    density_mode_wrapper.gpu = {
-        [2] = libhalmd.observables.gpu.density_mode_2_
-      , [3] = libhalmd.observables.gpu.density_mode_3_
-    }
-end
+local density_mode_wrapper = libhalmd.observables.density_mode
+local po = libhalmd.po
 -- grab standard library
 local assert = assert
+local ipairs = ipairs
+local type = type
 
 module("halmd.observables.density_mode", halmd.modules.register)
 
@@ -51,35 +39,57 @@ module("halmd.observables.density_mode", halmd.modules.register)
 -- construct instance of density_mode module
 --
 -- @param args              parameter table:
---     args.wavevector      instance of wavevector module
+--     args.phase_space     list of pairs (label, phase_space sampler)
+--     args.wavenumbers     explicit list of wavenumbers, specify alternatively:
+--     args.max_wavenumber  maximum wavenumber
+--     args.decimation      decimation parameter for wavenumber grid
+--     args.tolerance       tolerance on wavevector magnitude
+--     args.max_count       maximum count of wavevectors per wavenumber
 -- @returns instance of density_mode module
 --
 function new(args)
     -- dependency injection
-    local wavevector = assert(args.wavevector)
-    local clock = mdsim.clock() -- singleton
-    local particle = assert(args.particle, "missing parameter: particle")
+    local phase_space = assert(args.phase_space, "missing parameter: phase_space")
+    assert(type(phase_space) == "table", "invalid table")
     local logger = assert(args.logger)
 
-    local phase_space
-    if device() then
-        phase_space = observables.phase_space{particle = particle, memory = "gpu"}
-    else
-        phase_space = observables.phase_space{particle = particle, memory = "host"}
-    end
-    local sample = assert(phase_space.sample)
-    local dimension = assert(sample.dimension)
+    local wavenumbers = args.wavenumbers
+    local max_wavenumber = args.max_wavenumber or 12.6 -- default value, approx. 4π
+    local decimation = args.decimation or 10 -- default value
+    local tolerance = args.tolerance or 0.01 -- default value
+    local max_count = args.max_count or 7 -- default value
 
-    local density_mode
-    if device() then
-        density_mode = assert(density_mode_wrapper.gpu[dimension])
-    else
-        density_mode = assert(density_mode_wrapper.host[dimension])
+    -- construct local wavevector module
+    local wavevector = assert(observables.utility.wavevector)
+    if wavenumbers then
+        wavevector = wavevector{
+            wavenumber = wavenumbers
+          , tolerance = tolerance
+          , max_count = max_count
+        }
+    else -- use maximum_wavenumber
+        wavevector = wavevector{
+            max_wavenumber = max_wavenumber
+          , decimation = decimation
+          , tolerance = tolerance
+          , max_count = max_count
+        }
     end
-    local observable = density_mode(sample, wavevector, clock, logger)
 
-    -- acquire phase space before acquiring density modes
-    observable:on_acquire(phase_space.acquire)
+    local clock = mdsim.clock() -- singleton
+
+    -- construct list of density modes
+    local observable = {}
+    for i, val in ipairs(phase_space) do
+        local label = val[1]
+        local phase_space = val[2]
+        local sample = assert(phase_space.sample)
+        density_mode = density_mode_wrapper(sample, wavevector, clock, logger)
+
+        -- acquire phase space before acquiring density modes
+        density_mode:on_acquire(phase_space.acquire)
+        observable[i] = {label, density_mode}
+    end
 
     return observable
 end
@@ -88,5 +98,22 @@ end
 -- connect runtime accumulators to module profiler
 --
 function profile(self, profiler)
-    profiler:on_profile{self, acquire = "computation of density modes"}
+    for i, val in ipairs(self) do
+        local label = val[1]
+        local density_mode = val[2]
+        profiler:on_profile{density_mode, acquire = "computation of density modes for " .. label .. " particles"}
+    end
+end
+
+--
+-- assemble module options
+--
+-- @param desc po.options_description
+--
+function options(desc)
+    desc:add("wavenumbers", po.float_array():conflicts("max-wavenumber"), "list of wavenumbers")
+    desc:add("max-wavenumber", po.float():conflicts("wavenumbers"), "maximum wavenumber of semi-linearly spaced grid")
+    desc:add("decimation", po.uint():conflicts("wavenumbers"), "decimation of wavenumber grid")
+    desc:add("tolerance", po.float(), "relative tolerance on wavevector magnitude")
+    desc:add("max-count", po.uint(), "maximum number of wavevectors per wavenumber shell")
 end
