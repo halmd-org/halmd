@@ -1,0 +1,80 @@
+--
+-- Copyright © 2012  Felix Höfling
+--
+-- This file is part of HALMD.
+--
+-- HALMD is free software: you can redistribute it and/or modify
+-- it under the terms of the GNU General Public License as published by
+-- the Free Software Foundation, either version 3 of the License, or
+-- (at your option) any later version.
+--
+-- This program is distributed in the hope that it will be useful,
+-- but WITHOUT ANY WARRANTY; without even the implied warranty of
+-- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+-- GNU General Public License for more details.
+--
+-- You should have received a copy of the GNU General Public License
+-- along with this program.  If not, see <http://www.gnu.org/licenses/>.
+--
+
+require("halmd.modules")
+
+-- grab C++ wrappers
+local particle_group_all_wrapper = assert(libhalmd.observables.samples.particle_group_all)
+local particle_group_from_range_wrapper = assert(libhalmd.observables.samples.particle_group_from_range)
+-- grab standard library
+local assert = assert
+local ipairs = ipairs
+local type = type
+
+module("halmd.observables.samples.particle_group", halmd.modules.register)
+
+--
+-- construct particle_group module
+--
+-- @param args       parameter table
+--   args.particle   instance of {host,gpu}::particle
+--   args.range      list of ranges [begin, end) of particle tags for subset selection (optional)
+--   args.species    list of particle species for subset selection (optional, conflicts with 'range')
+--   args.label      list of group labels (optional, default: "A", "B"', ..., or "all")
+-- @returns table of pairs (label, particle_group instance)
+--
+function new(args)
+    local particle = assert(args.particle, "missing parameter: particle")
+    local range = args.range
+    local species = args.species
+    assert(not range or not species, "conflicting parameters: range, species")
+
+    -- construct default labels
+    local label = args.label
+    if not label then
+        label = {}
+        if range or species then
+            for i = 1, #particle do
+                label[i] = string.char(string.byte("A") + i - 1)
+            end
+        else
+            label[1] = "all"
+        end
+    end
+    assert(type(label) == "table", "invalid table")
+
+    -- construct list of particle groups
+    local particle_group = {}
+    if range then -- select by range
+        assert(type(range) == "table", "invalid table")
+        for i, r in ipairs(range) do
+            assert(#r == 2)
+            particle_group[i] = { label[i], particle_group_from_range_wrapper(particle, r[1], r[2]) }
+        end
+    elseif species then -- select by species
+        assert(type(species) == "table", "invalid table")
+        for i, s in ipairs(species) do
+            particle_group[i] = { label[i], particle_group_from_range_wrapper(particle, s) }
+        end
+    else -- select all
+        particle_group = { label[1], particle_group_all_wrapper(particle) }
+    end
+
+    return particle_group
+end
