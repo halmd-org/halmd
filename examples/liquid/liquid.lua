@@ -71,19 +71,31 @@ function liquid.new(args)
     -- Construct sampler.
     local sampler = observables.sampler{}
 
-    -- Write trajectory to H5MD file.
-    -- FIXME support filtering of particles by species
-    writers.trajectory{particle = particle, group = "A"}
     -- Sample macroscopic state variables.
     observables.thermodynamics{particle = particle, force = force}
-    -- Sample static structure factor.
-    observables.ssf{particle = particle}
-    -- compute mean-square displacement
-    observables.dynamics.correlation{particle = particle, correlation = "mean_square_displacement"}
-    -- compute mean-quartic displacement
-    observables.dynamics.correlation{particle = particle, correlation = "mean_quartic_displacement"}
-    -- compute velocity autocorrelation
-    observables.dynamics.correlation{particle = particle, correlation = "velocity_autocorrelation"}
+
+    -- Construct particle groups and samplers by species (species are numbered 0, 1, 2, ...)
+    local species = {} for i = 1, #args.particles do species[i] = i - 1 end -- FIXME avoid explicit for-loop!?
+    local particle_group = observables.samples.particle_group{
+        particle = particle, species = species, label = particle.label
+    }
+    local phase_space = observables.phase_space{particle_group = particle_group}
+
+    -- Write trajectory to H5MD file.
+    writers.trajectory{particle_group = particle_group, every = args.trajectory}
+
+    -- Sample static structure factors, construct density modes before.
+    local density_mode = observables.density_mode{
+        phase_space = phase_space, max_wavevector = 15
+    }
+    observables.ssf{density_mode = density_mode, every = args.structure}
+
+--     -- compute mean-square displacement
+--     observables.dynamics.correlation{particle_group = particle_group, correlation = "mean_square_displacement"}
+--     -- compute mean-quartic displacement
+--     observables.dynamics.correlation{particle_group = particle_group, correlation = "mean_quartic_displacement"}
+--     -- compute velocity autocorrelation
+--     observables.dynamics.correlation{particle_group = particle_group, correlation = "velocity_autocorrelation"}
 
     -- yield sampler.setup slot from Lua to C++ to setup simulation box
     coroutine.yield(sampler:setup())
@@ -100,6 +112,8 @@ function liquid.options(desc, globals)
             error(("invalid dimension '%d'"):format(value), 0)
         end
     end), "dimension of positional coordinates")
+--    globals:add("trajectory", po.uint64():default(0), "sampling interval for trajectory") -- FIXME boost::any_cast
+--    globals:add("structure", po.uint64():default(0), "sampling interval for structural properties") -- FIXME boost::any_cast
 end
 
 return liquid
