@@ -74,6 +74,10 @@ public:
     }
 };
 
+/**
+ * select all particles of a given host::particle instance
+ */
+
 template <int dimension, typename float_type>
 class particle_group_all
   : public particle_group<dimension, float_type>
@@ -111,6 +115,12 @@ private:
     boost::shared_ptr<particle_type const> particle_;
 };
 
+/**
+ * select particles of a given host::particle instance by a contiguous range
+ * of particle tags. This may be used to select for particles of a single
+ * species.
+ */
+
 template <int dimension, typename float_type>
 class particle_group_from_range
   : public particle_group<dimension, float_type>
@@ -122,10 +132,20 @@ public:
 
     static void luaopen(lua_State* L);
 
+    //! select by tag range [begin, end)
     particle_group_from_range(
         boost::shared_ptr<particle_type const> particle
       , unsigned int begin
       , unsigned int end
+    );
+
+    /**
+     * select by species assuming that the particle tags for each species are
+     * ascending and form a contiguous range.
+     */
+    particle_group_from_range(
+        boost::shared_ptr<particle_type const> particle
+      , unsigned int species
     );
 
     virtual boost::shared_ptr<particle_type const> particle() const

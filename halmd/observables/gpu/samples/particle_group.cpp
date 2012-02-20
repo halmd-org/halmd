@@ -18,6 +18,7 @@
  */
 
 #include <boost/lexical_cast.hpp>
+#include <boost/make_shared.hpp>
 #include <string>
 
 #include <halmd/observables/gpu/samples/particle_group.hpp>
@@ -64,6 +65,30 @@ particle_group_from_range<dimension, float_type>::particle_group_from_range(
 }
 
 template <int dimension, typename float_type>
+particle_group_from_range<dimension, float_type>::particle_group_from_range(
+    shared_ptr<particle_type const> particle
+  , unsigned int species
+)
+  // dependency injection
+  : particle_(particle)
+  // memory allocation
+  , h_reverse_tag_(particle->nbox)
+{
+    if (species >= particle_->ntypes.size()) {
+        throw std::logic_error("particle_group: invalid particle species.");
+    }
+
+    // find tag range for the specified species, assume that tags form an
+    // ascending and contiguous range for each species and that the species are
+    // ordered as well
+    begin_ = accumulate(
+        particle_->ntypes.begin(), particle_->ntypes.begin() + species
+      , 0u, plus<unsigned int>()
+    );
+    end_ = begin_ + particle_->ntypes[species];
+}
+
+template <int dimension, typename float_type>
 unsigned int const* particle_group_all<dimension, float_type>::h_map()
 {
     try {
@@ -90,6 +115,12 @@ unsigned int const* particle_group_from_range<dimension, float_type>::h_map()
 }
 
 template <int dimension, typename float_type>
+static int wrap_dimension(particle_group<dimension, float_type> const&)
+{
+    return dimension;
+}
+
+template <int dimension, typename float_type>
 void particle_group<dimension, float_type>::luaopen(lua_State* L)
 {
     using namespace luabind;
@@ -98,15 +129,13 @@ void particle_group<dimension, float_type>::luaopen(lua_State* L)
     [
         namespace_("observables")
         [
-            namespace_("gpu")
+            namespace_("samples")
             [
-                namespace_("samples")
-                [
-                    class_<particle_group, shared_ptr<particle_group> >(class_name.c_str())
-                        .property("particle", &particle_group::particle)
-                        .property("size", &particle_group::size)
-                        .property("empty", &particle_group::empty)
-                ]
+                class_<particle_group, shared_ptr<particle_group> >(class_name.c_str())
+                    .property("particle", &particle_group::particle)
+                    .property("size", &particle_group::size)
+                    .property("empty", &particle_group::empty)
+                    .property("dimension", &wrap_dimension<dimension, float_type>)
             ]
         ]
     ];
@@ -121,15 +150,12 @@ void particle_group_all<dimension, float_type>::luaopen(lua_State* L)
     [
         namespace_("observables")
         [
-            namespace_("gpu")
+            namespace_("samples")
             [
-                namespace_("samples")
-                [
-                    class_<particle_group_all, shared_ptr<_Base>, _Base>(class_name.c_str())
-                        .def(constructor<
-                            shared_ptr<particle_type const>
-                        >())
-                ]
+                class_<particle_group_all, shared_ptr<_Base>, _Base>(class_name.c_str())
+                , def("particle_group_all", &make_shared<particle_group_all
+                    , shared_ptr<particle_type const>
+                >)
             ]
         ]
     ];
@@ -144,16 +170,17 @@ void particle_group_from_range<dimension, float_type>::luaopen(lua_State* L)
     [
         namespace_("observables")
         [
-            namespace_("gpu")
+            namespace_("samples")
             [
-                namespace_("samples")
-                [
-                    class_<particle_group_from_range, shared_ptr<_Base>, _Base>(class_name.c_str())
-                        .def(constructor<
-                            shared_ptr<particle_type const>
-                          , unsigned int, unsigned int
-                        >())
-                ]
+                class_<particle_group_from_range, shared_ptr<_Base>, _Base>(class_name.c_str())
+                , def("particle_group_from_range", &make_shared<particle_group_from_range
+                    , shared_ptr<particle_type const>
+                    , unsigned int, unsigned int
+                >)
+                , def("particle_group_from_range", &make_shared<particle_group_from_range
+                    , shared_ptr<particle_type const>
+                    , unsigned int
+                >)
             ]
         ]
     ];
