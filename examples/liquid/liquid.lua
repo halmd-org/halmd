@@ -82,20 +82,25 @@ function liquid.new(args)
     local phase_space = observables.phase_space{particle_group = particle_group}
 
     -- Write trajectory to H5MD file.
-    writers.trajectory{particle_group = particle_group, every = args.trajectory}
+    writers.trajectory{particle_group = particle_group, every = args.trajectory or 0}
 
     -- Sample static structure factors, construct density modes before.
     local density_mode = observables.density_mode{
         phase_space = phase_space, max_wavevector = 15
     }
-    observables.ssf{density_mode = density_mode, every = args.structure}
+    observables.ssf{density_mode = density_mode, every = args.structure or 100}
 
---     -- compute mean-square displacement
---     observables.dynamics.correlation{particle_group = particle_group, correlation = "mean_square_displacement"}
---     -- compute mean-quartic displacement
---     observables.dynamics.correlation{particle_group = particle_group, correlation = "mean_quartic_displacement"}
---     -- compute velocity autocorrelation
---     observables.dynamics.correlation{particle_group = particle_group, correlation = "velocity_autocorrelation"}
+    -- compute mean-square displacement
+    observables.dynamics.correlation{sampler = phase_space, correlation = "mean_square_displacement"}
+    -- compute mean-quartic displacement
+    observables.dynamics.correlation{sampler = phase_space, correlation = "mean_quartic_displacement"}
+    -- compute velocity autocorrelation function
+    observables.dynamics.correlation{sampler = phase_space, correlation = "velocity_autocorrelation"}
+    -- compute intermediate scattering function from density modes different than those used for ssf computation
+    density_mode = observables.density_mode{
+        phase_space = phase_space, max_wavevector = 12, decimation = 2
+    }
+--     observables.dynamics.correlation{sampler = density_mode, correlation = "intermediate_scattering_function"}
 
     -- yield sampler.setup slot from Lua to C++ to setup simulation box
     coroutine.yield(sampler:setup())

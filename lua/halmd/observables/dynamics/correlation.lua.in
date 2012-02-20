@@ -25,15 +25,15 @@ require("halmd.observables.samples.blocking_scheme")
 
 -- grab modules
 local correlations = halmd.observables.dynamics.correlations
-local dynamics = halmd.observables.dynamics
-local samples = halmd.observables.samples
+local observables = halmd.observables
 local writers = halmd.io.writers
 -- grab C++ wrappers
 local correlation_wrapper = libhalmd.observables.dynamics.correlation
-local po = libhalmd.po
 local property = property
 -- grab standard library
 local assert = assert
+local ipairs = ipairs
+local type = type
 
 module("halmd.observables.dynamics.correlation", halmd.modules.register)
 
@@ -41,47 +41,63 @@ module("halmd.observables.dynamics.correlation", halmd.modules.register)
 -- add time correlation function to blocking_scheme
 --
 -- @param args parameter table
---   name      trajectory correlation function (e.g. "mean_square_displacement")
---   particle  particle instance
+--   name             trajectory correlation function (e.g. "mean_square_displacement")
+--   sampler          list of pairs (label, sampler instance), e.g., phase_space sampler
 --
 function new(args)
     local name = assert(args.correlation)
-    local particle = assert(args.particle)
+    local sampler = assert(args.sampler)
+    assert(type(sampler) == "table", "invalid table")
 
-    local blocking_scheme = dynamics.blocking_scheme() -- singleton
+    -- store constructor of tcf functor
+    local tcf = assert(correlations[name])
+
+    local blocking_scheme = observables.dynamics.blocking_scheme() -- singleton
     local file = writers.file() -- singleton
     local writer = file:writer{location = {"dynamics"}, mode = "truncate"}
 
-    -- construct the tcf functor and obtain the appropriate data sampler
-    local tcf = assert(correlations[name]){particle = particle}
-    local sampler = assert(tcf.sampler)
-    -- construct or retrieve associated blocking scheme for sample data
-    local block_sample = samples.blocking_scheme{sampler = sampler}
-    -- construct correlation function
-    local logger = assert(args.logger) -- FIXME use tcf module logger
-    local correlation = assert(correlation_wrapper)(tcf, block_sample, logger)
+    local observable = {}
+    for i, val in ipairs(sampler) do
+        local label = val[1]
+        local sampler = val[2]
+        -- construct the tcf functor
+        local tcf_ = tcf{sample = assert(sampler.sample)}
+        -- construct or retrieve associated blocking scheme for sample data
+        local block_sample = observables.samples.blocking_scheme{sampler = sampler}
+        -- construct correlation function
+        local logger = assert(args.logger) -- FIXME use tcf module logger
+        local correlation = assert(correlation_wrapper)(tcf_, block_sample, logger)
 
-    -- register correlation function with blocking scheme
-    blocking_scheme:on_correlate(correlation)
+        -- write correlation function results
+        writer:on_write(blocking_scheme.time, {name, label, "time"}) -- FIXME hardlink
+        writer:on_write(correlation.mean, {name, label, "mean"})
+        writer:on_write(correlation.error, {name, label, "error"})
+        writer:on_write(correlation.count, {name, label, "count"})
 
-    -- write correlation function results
-    writer:on_write(blocking_scheme.time, {name, "time"}) -- FIXME hardlink
-    writer:on_write(correlation.mean, {name, "mean"})
-    writer:on_write(correlation.error, {name, "error"})
-    writer:on_write(correlation.count, {name, "count"})
+        -- register correlation function with blocking scheme
+        blocking_scheme:on_correlate(correlation)
+
+        observable[i] = {label, correlation}
+    end
 
     -- write correlation results to H5MD file
     blocking_scheme:on_append_finalise(writer.write)
 
     -- store tcf module for profiler description
-    correlation.tcf = property(function(self) return tcf end)
+    local desc = tcf.description()
+    observable.desc = property(function(self) return desc end) -- FIXME "luabind: property_tag function can't be called"
 
-    return correlation
+    return observable
 end
 
 --
 -- connect runtime accumulators to module profiler
 --
 function profile(self, profiler)
-    profiler:on_profile{self, tcf = "computation of " .. self.tcf.module.description()}
+    local desc = "FIXME" -- assert(self.desc)
+    for i, val in ipairs(self) do
+        local label = val[1]
+        local correlation = val[2]
+        profiler:on_profile{correlation, tcf = "computation of " .. desc .. " for " .. label .. " particles"}
+    end
 end

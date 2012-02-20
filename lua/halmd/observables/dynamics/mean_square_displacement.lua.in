@@ -1,5 +1,5 @@
 --
--- Copyright © 2011  Felix Höfling and Peter Colberg
+-- Copyright © 2011-2012  Felix Höfling and Peter Colberg
 --
 -- This file is part of HALMD.
 --
@@ -17,61 +17,32 @@
 -- along with this program.  If not, see <http://www.gnu.org/licenses/>.
 --
 
-require("halmd.device")
 require("halmd.modules")
-require("halmd.observables.phase_space")
-require("halmd.observables.samples.phase_space")
 
--- grab modules
-local device = halmd.device
-local observables = halmd.observables
 -- grab C++ wrappers
 local msd_wrapper = libhalmd.observables.dynamics.mean_square_displacement
-local po = libhalmd.po
-local property = property
 -- grab standard library
 local assert = assert
 
 module("halmd.observables.dynamics.correlations.mean_square_displacement", halmd.modules.register)
 
 --
--- construct instance of msd module
---
--- @returns instance of msd module, instance of phase space sample
+-- construct instance of mean-square displacement (MSD) functor
+-- @param args parameter table
+--   args.sample        instance of phase space sample
+-- @returns instance of MSD functor
 --
 function new(args)
-    local particle = assert(args.particle)
-
-    -- obtain phase space sampler
-    local backend = device() and not args.disable_gpu and "gpu" or "host"
-    local phase_space = observables.phase_space{particle = particle, memory = backend}
-    local sample = assert(phase_space.sample)
+    local sample = assert(args.sample)
 
     -- construct msd module
     local msd = assert(msd_wrapper)(sample)
-
-    -- add phase space sampler as read-only property
-    msd.sampler = property(function(self)
-        return phase_space
-    end)
-
     return msd
 end
 
 --
--- returns module description
+-- @returns module description
 --
 function description()
     return "mean-square displacement"
-end
-
---
--- assemble module options
---
--- @param desc po.options_description
---
-function options(desc)
-    if device.with_gpu() then
-        desc:add("disable-gpu", po.bool_switch(), "disable GPU acceleration")
-    end
 end
