@@ -81,7 +81,7 @@ template <int dimension, typename float_type>
 void particle_group<dimension, float_type>::luaopen(lua_State* L)
 {
     using namespace luabind;
-    static string const class_name("particle_group" + lexical_cast<string>(dimension) + "_");
+    static string const class_name("particle_group_host_" + lexical_cast<string>(dimension) + "_");
     module(L, "libhalmd")
     [
         namespace_("observables")
@@ -102,7 +102,7 @@ template <int dimension, typename float_type>
 void particle_group_all<dimension, float_type>::luaopen(lua_State* L)
 {
     using namespace luabind;
-    static string const class_name("particle_group_all" + lexical_cast<string>(dimension) + "_");
+    static string const class_name("particle_group_all_host_" + lexical_cast<string>(dimension) + "_");
     module(L, "libhalmd")
     [
         namespace_("observables")
@@ -110,8 +110,8 @@ void particle_group_all<dimension, float_type>::luaopen(lua_State* L)
             namespace_("samples")
             [
                 class_<particle_group_all, shared_ptr<_Base>, _Base>(class_name.c_str())
-                , def("particle_group_all", &make_shared<particle_group_all
-                    , shared_ptr<particle_type const>
+              , def("particle_group_all", &make_shared<particle_group_all
+                  , shared_ptr<particle_type const>
                 >)
             ]
         ]
@@ -122,7 +122,7 @@ template <int dimension, typename float_type>
 void particle_group_from_range<dimension, float_type>::luaopen(lua_State* L)
 {
     using namespace luabind;
-    static string const class_name("particle_group_from_range" + lexical_cast<string>(dimension) + "_");
+    static string const class_name("particle_group_from_range_host_" + lexical_cast<string>(dimension) + "_");
     module(L, "libhalmd")
     [
         namespace_("observables")
@@ -130,13 +130,13 @@ void particle_group_from_range<dimension, float_type>::luaopen(lua_State* L)
             namespace_("samples")
             [
                 class_<particle_group_from_range, shared_ptr<_Base>, _Base>(class_name.c_str())
-                , def("particle_group_from_range", &make_shared<particle_group_from_range
-                    , shared_ptr<particle_type const>
-                    , unsigned int, unsigned int
+              , def("particle_group_from_range", &make_shared<particle_group_from_range
+                  , shared_ptr<particle_type const>
+                  , unsigned int, unsigned int
                 >)
-                , def("particle_group_from_range", &make_shared<particle_group_from_range
-                    , shared_ptr<particle_type const>
-                    , unsigned int
+              , def("particle_group_from_range", &make_shared<particle_group_from_range
+                  , shared_ptr<particle_type const>
+                  , unsigned int
                 >)
             ]
         ]
