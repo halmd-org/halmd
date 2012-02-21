@@ -64,24 +64,25 @@ function liquid.new(args)
     -- Construct sampler.
     local sampler = observables.sampler{}
 
-    -- Sample macroscopic state variables.
-    observables.thermodynamics{particle = particle, force = force}
-
-    -- Construct particle groups and samplers by species (species are numbered 0, 1, 2, ...)
+    -- Construct particle groups and phase space samplers by species (species are numbered 0, 1, 2, ...)
     local species = {} for i = 1, #args.particles do species[i] = i - 1 end -- FIXME avoid explicit for-loop!?
     local particle_group = observables.samples.particle_group{
         particle = particle, species = species
     }
     local phase_space = observables.phase_space{particle_group = particle_group}
 
+    -- Sample macroscopic state variables.
+    observables.thermodynamics{particle_group = { particle }, force = { force }, every = args.state_vars or 10 }
+    observables.thermodynamics{particle_group = { particle_group[1] }, force = { force }, every = args.state_vars or 10 }
+
     -- Write trajectory to H5MD file.
-    writers.trajectory{particle_group = particle_group, every = args.trajectory or 0}
+    writers.trajectory{particle_group = particle_group, every = args.trajectory or 10}
 
     -- Sample static structure factors, construct density modes before.
     local density_mode = observables.density_mode{
         phase_space = phase_space, max_wavevector = 15
     }
-    observables.ssf{density_mode = density_mode, every = args.structure or 100}
+    observables.ssf{density_mode = density_mode, every = args.structure or 10}
 
     -- compute mean-square displacement
     observables.dynamics.correlation{sampler = phase_space, correlation = "mean_square_displacement"}
@@ -112,6 +113,7 @@ function liquid.options(desc, globals)
     end), "dimension of positional coordinates")
 --    globals:add("trajectory", po.uint64():default(0), "sampling interval for trajectory") -- FIXME boost::any_cast
 --    globals:add("structure", po.uint64():default(0), "sampling interval for structural properties") -- FIXME boost::any_cast
+--    globals:add("state-vars", po.uint64():default(0), "sampling interval for state variables") -- FIXME boost::any_cast
 end
 
 return liquid

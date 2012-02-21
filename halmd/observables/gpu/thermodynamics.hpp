@@ -1,5 +1,5 @@
 /*
- * Copyright © 2010-2011  Felix Höfling and Peter Colberg
+ * Copyright © 2010-2012  Felix Höfling and Peter Colberg
  *
  * This file is part of HALMD.
  *
@@ -28,7 +28,7 @@
 #include <halmd/mdsim/box.hpp>
 #include <halmd/mdsim/clock.hpp>
 #include <halmd/mdsim/gpu/force.hpp>
-#include <halmd/mdsim/gpu/particle.hpp>
+#include <halmd/observables/gpu/samples/particle_group.hpp>
 #include <halmd/observables/thermodynamics.hpp>
 #include <halmd/utility/data_cache.hpp>
 #include <halmd/utility/profiler.hpp>
@@ -49,10 +49,19 @@ public:
     typedef mdsim::box<dimension> box_type;
     typedef mdsim::clock clock_type;
     typedef mdsim::gpu::force<dimension, float_type> force_type;
-    typedef mdsim::gpu::particle<dimension, float_type> particle_type;
+    typedef samples::particle_group<dimension, float_type> particle_group_type;
+    typedef typename particle_group_type::particle_type particle_type;
     typedef logger logger_type;
 
     static void luaopen(lua_State* L);
+
+    thermodynamics(
+        boost::shared_ptr<particle_group_type const> particle_group
+      , boost::shared_ptr<box_type const> box
+      , boost::shared_ptr<clock_type const> clock
+      , boost::shared_ptr<force_type const> force
+      , boost::shared_ptr<logger_type> logger = boost::make_shared<logger_type>()
+    );
 
     thermodynamics(
         boost::shared_ptr<particle_type const> particle
@@ -64,7 +73,7 @@ public:
 
     virtual unsigned int nparticle() const
     {
-        return particle_->nbox;
+        return particle_group_->size();
     }
 
     virtual double volume() const
@@ -95,7 +104,7 @@ private:
 
     /** module dependencies */
     boost::shared_ptr<box_type const> box_;
-    boost::shared_ptr<particle_type const> particle_;
+    boost::shared_ptr<particle_group_type const> particle_group_;
     boost::shared_ptr<force_type const> force_;
     /** module logger */
     boost::shared_ptr<logger_type> logger_;

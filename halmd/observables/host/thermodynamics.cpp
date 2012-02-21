@@ -1,5 +1,5 @@
 /*
- * Copyright © 2010-2011  Felix Höfling
+ * Copyright © 2010-2012  Felix Höfling
  *
  * This file is part of HALMD.
  *
@@ -31,6 +31,25 @@ namespace host {
 
 template <int dimension, typename float_type>
 thermodynamics<dimension, float_type>::thermodynamics(
+    shared_ptr<particle_group_type const> particle_group
+  , shared_ptr<box_type const> box
+  , shared_ptr<clock_type const> clock
+  , shared_ptr<force_type const> force
+  , shared_ptr<logger_type> logger
+)
+  // dependency injection
+  : box_(box)
+  , particle_group_(particle_group)
+  , force_(force)
+  , logger_(logger)
+  // initialise members
+  , en_kin_(clock)
+  , v_cm_(clock)
+{
+}
+
+template <int dimension, typename float_type>
+thermodynamics<dimension, float_type>::thermodynamics(
     shared_ptr<particle_type const> particle
   , shared_ptr<box_type const> box
   , shared_ptr<clock_type const> clock
@@ -39,7 +58,9 @@ thermodynamics<dimension, float_type>::thermodynamics(
 )
   // dependency injection
   : box_(box)
-  , particle_(particle)
+  , particle_group_(
+        make_shared<samples::particle_group_all<dimension, float_type> >(particle)
+  )
   , force_(force)
   , logger_(logger)
   // initialise members
@@ -58,11 +79,11 @@ double thermodynamics<dimension, float_type>::en_kin()
 
         // compute mean-square velocity
         double vv = 0;
-        BOOST_FOREACH(vector_type const& v, particle_->v) {
+        BOOST_FOREACH(vector_type const& v, particle_group_->particle()->v) {
             // assuming unit mass for all particle types
             vv += inner_prod(v, v);
         }
-        en_kin_ = .5 * vv / particle_->nbox;
+        en_kin_ = .5 * vv / nparticle();
     }
     return en_kin_;
 }
@@ -78,10 +99,10 @@ thermodynamics<dimension, float_type>::v_cm()
 
         // compute mean velocity
         vector_type v_cm(0.);
-        BOOST_FOREACH(vector_type const& v, particle_->v) {
+        BOOST_FOREACH(vector_type const& v, particle_group_->particle()->v) {
             v_cm += v;
         }
-        v_cm_ = v_cm / particle_->nbox;
+        v_cm_ = v_cm / nparticle();
     }
     return v_cm_;
 }
@@ -105,13 +126,6 @@ void thermodynamics<dimension, float_type>::luaopen(lua_State* L)
             namespace_("host")
             [
                 class_<thermodynamics, shared_ptr<_Base>, _Base>(class_name.c_str())
-                    .def(constructor<
-                        shared_ptr<particle_type const>
-                      , shared_ptr<box_type const>
-                      , shared_ptr<clock_type const>
-                      , shared_ptr<force_type const>
-                      , shared_ptr<logger_type>
-                    >())
                     .scope
                     [
                         class_<runtime>("runtime")
@@ -120,6 +134,25 @@ void thermodynamics<dimension, float_type>::luaopen(lua_State* L)
                     ]
                     .def_readonly("runtime", &thermodynamics::runtime_)
             ]
+        ]
+
+      , namespace_("observables")
+        [
+            def("thermodynamics", &make_shared<thermodynamics
+              , shared_ptr<particle_group_type const>
+              , shared_ptr<box_type const>
+              , shared_ptr<clock_type const>
+              , shared_ptr<force_type const>
+              , shared_ptr<logger_type>
+            >)
+
+          , def("thermodynamics", &make_shared<thermodynamics
+              , shared_ptr<particle_type const>
+              , shared_ptr<box_type const>
+              , shared_ptr<clock_type const>
+              , shared_ptr<force_type const>
+              , shared_ptr<logger_type>
+            >)
         ]
     ];
 }

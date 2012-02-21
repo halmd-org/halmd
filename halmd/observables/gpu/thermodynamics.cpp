@@ -1,5 +1,5 @@
 /*
- * Copyright © 2010-2011  Felix Höfling and Peter Colberg
+ * Copyright © 2010-2012  Felix Höfling and Peter Colberg
  *
  * This file is part of HALMD.
  *
@@ -17,6 +17,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <boost/make_shared.hpp>
+
 #include <halmd/numeric/blas/blas.hpp>
 #include <halmd/numeric/mp/dsfloat.hpp>
 #include <halmd/observables/gpu/thermodynamics.hpp>
@@ -32,6 +34,33 @@ namespace gpu {
 
 template <int dimension, typename float_type>
 thermodynamics<dimension, float_type>::thermodynamics(
+    shared_ptr<particle_group_type const> particle_group
+  , shared_ptr<box_type const> box
+  , shared_ptr<clock_type const> clock
+  , shared_ptr<force_type const> force
+  , shared_ptr<logger_type> logger
+)
+  // dependency injection
+  : box_(box)
+  , particle_group_(particle_group)
+  , force_(force)
+  , logger_(logger)
+  // initialise members
+  , en_kin_(clock)
+  , v_cm_(clock)
+  , en_pot_(clock)
+  , virial_(clock)
+  , hypervirial_(clock)
+  // memory allocation in functors
+  , sum_velocity_square_()
+  , sum_velocity_vector_()
+  , sum_scalar_()
+  , sum_stress_tensor_diagonal_()
+{
+}
+
+template <int dimension, typename float_type>
+thermodynamics<dimension, float_type>::thermodynamics(
     shared_ptr<particle_type const> particle
   , shared_ptr<box_type const> box
   , shared_ptr<clock_type const> clock
@@ -40,7 +69,9 @@ thermodynamics<dimension, float_type>::thermodynamics(
 )
   // dependency injection
   : box_(box)
-  , particle_(particle)
+  , particle_group_(
+        make_shared<samples::particle_group_all<dimension, float_type> >(particle)
+  )
   , force_(force)
   , logger_(logger)
   // initialise members
@@ -67,7 +98,7 @@ double thermodynamics<dimension, float_type>::en_kin()
         LOG_TRACE("acquire kinetic energy");
 
         scoped_timer_type timer(runtime_.en_kin);
-        en_kin_ = .5 * sum_velocity_square_(particle_->g_v) / particle_->nbox;
+        en_kin_ = .5 * sum_velocity_square_(particle_group_->particle()->g_v) / nparticle();
     }
     return en_kin_;
 }
@@ -83,7 +114,7 @@ thermodynamics<dimension, float_type>::v_cm()
         LOG_TRACE("acquire centre-of-mass velocity");
 
         scoped_timer_type timer(runtime_.v_cm);
-        v_cm_ = sum_velocity_vector_(particle_->g_v) / particle_->nbox;
+        v_cm_ = sum_velocity_vector_(particle_group_->particle()->g_v) / nparticle();
     }
     return v_cm_;
 }
@@ -98,7 +129,7 @@ double thermodynamics<dimension, float_type>::en_pot()
         LOG_TRACE("acquire potential energy");
 
         scoped_timer_type timer(runtime_.en_pot);
-        en_pot_ = sum_scalar_(force_->potential_energy()) / particle_->nbox;
+        en_pot_ = sum_scalar_(force_->potential_energy()) / nparticle();
     }
     return en_pot_;
 }
@@ -113,7 +144,7 @@ double thermodynamics<dimension, float_type>::virial()
         LOG_TRACE("acquire virial");
 
         scoped_timer_type timer(runtime_.virial);
-        virial_ = sum_stress_tensor_diagonal_(force_->stress_tensor_pot()) / particle_->nbox;
+        virial_ = sum_stress_tensor_diagonal_(force_->stress_tensor_pot()) / nparticle();
     }
     return virial_;
 }
@@ -128,7 +159,7 @@ double thermodynamics<dimension, float_type>::hypervirial()
         LOG_TRACE("acquire hypervirial");
 
         scoped_timer_type timer(runtime_.hypervirial);
-        hypervirial_ = sum_scalar_(force_->hypervirial()) / particle_->nbox;
+        hypervirial_ = sum_scalar_(force_->hypervirial()) / nparticle();
     }
     return hypervirial_;
 }
@@ -158,13 +189,6 @@ void thermodynamics<dimension, float_type>::luaopen(lua_State* L)
             namespace_("gpu")
             [
                 class_<thermodynamics, shared_ptr<_Base>, _Base>(class_name.c_str())
-                    .def(constructor<
-                        shared_ptr<particle_type>
-                      , shared_ptr<box_type>
-                      , shared_ptr<clock_type>
-                      , shared_ptr<force_type>
-                      , shared_ptr<logger_type>
-                    >())
                     .scope
                     [
                         class_<runtime>("runtime")
@@ -176,6 +200,25 @@ void thermodynamics<dimension, float_type>::luaopen(lua_State* L)
                     ]
                     .def_readonly("runtime", &thermodynamics::runtime_)
             ]
+        ]
+
+      , namespace_("observables")
+        [
+            def("thermodynamics", &make_shared<thermodynamics
+              , shared_ptr<particle_group_type const>
+              , shared_ptr<box_type const>
+              , shared_ptr<clock_type const>
+              , shared_ptr<force_type const>
+              , shared_ptr<logger_type>
+            >)
+
+          , def("thermodynamics", &make_shared<thermodynamics
+              , shared_ptr<particle_type const>
+              , shared_ptr<box_type const>
+              , shared_ptr<clock_type const>
+              , shared_ptr<force_type const>
+              , shared_ptr<logger_type>
+            >)
         ]
     ];
 }
