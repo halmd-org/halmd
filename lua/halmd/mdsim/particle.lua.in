@@ -69,7 +69,7 @@ function new(args)
         particle = particle_wrapper.host[dimension](npart, masses)
     end
 
-    -- store particle labels as Lua property
+    -- store particle label as Lua property
     particle.label = property(function(self)
         return label
     end)

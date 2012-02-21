@@ -1,5 +1,5 @@
 --
--- Copyright © 2011  Felix Höfling
+-- Copyright © 2011-2012  Felix Höfling
 --
 -- This file is part of HALMD.
 --
@@ -46,7 +46,7 @@ module("halmd.observables.ssf", halmd.modules.register)
 -- construct instances of ssf module for each density pair (e.g., AA, AB, BB, ...)
 --
 -- @param args parameter table
---   args.density_mode      list of pairs (label, density_mode instance)
+--   args.density_mode      list of density_mode instances with attached labels
 --   args.every             sampling interval
 -- @returns instance of ssf module
 --
@@ -61,18 +61,17 @@ function new(args)
     local dimension = assert(mdsim.box().dimension) -- singleton
     local logger = assert(args.logger)
 
-    -- unzip list of pairs (label, density_mode)
-    local label = {}
-    local rho = {}
-    for i, val in ipairs(density_mode) do
-        label[i], rho[i] = val[1], val[2]
+    -- drop additional table keys of density modes -- FIXME
+    local density_mode_ = {}
+    for i, rho in ipairs(density_mode) do
+        density_mode_[i] = rho
     end
 
-    -- construct ssf module from list of density_modes
-    local ssf = assert(ssf_wrapper[dimension])(rho, clock, 1, logger) -- FIXME obtain size from density_mode within ssf class
+    -- construct ssf module from list of density modes -- FIXME let ssf take explicitly 2 density modes
+    local ssf = assert(ssf_wrapper[dimension])(density_mode_, clock, 1, logger) -- FIXME obtain size from density_mode within ssf class
 
     -- acquire density modes before sampling static structure factor
-    for i, rho in ipairs(rho) do
+    for i, rho in ipairs(density_mode) do
         ssf:on_sample(rho.acquire)
     end
 
@@ -81,15 +80,17 @@ function new(args)
 
     -- write wavenumbers only once, use wavenumber object of first density_mode
     local writer = file:writer{location = {"structure", "ssf"}, mode = "truncate"}
-    writer:on_write(rho[1].wavenumber, {"wavenumber"})
+    writer:on_write(density_mode[1].wavenumber, {"wavenumber"})
     sampler:on_start{writer.write, tracker = ssf}
 
     -- write all partial structure factors
     local writer = file:writer{location = {"structure", "ssf"}, mode = "append"}
     writer:on_prepend_write(ssf.sample)
     for i = 1, #density_mode do
+        local label1 = assert(density_mode[i].label)
         for j = i, #density_mode do
-            writer:on_write(ssf:value(i - 1, j - 1), {label[i], label[j]})
+            local label2 = assert(density_mode[j].label)
+            writer:on_write(ssf:value(i - 1, j - 1), {label1, label2})
         end
     end
     sampler:on_sample{writer.write, every, tracker = ssf}

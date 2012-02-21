@@ -1,5 +1,5 @@
 --
--- Copyright © 2010  Peter Colberg
+-- Copyright © 2010-2012  Peter Colberg and Felix Höfling
 --
 -- This file is part of HALMD.
 --
@@ -42,10 +42,10 @@ module("halmd.observables.phase_space", halmd.modules.register)
 -- construct phase_space module
 --
 -- @param args       parameter table
---   args.particle_group    list of pairs (label, particle_group instance)
+--   args.particle_group    list of particle_group instances with attached labels
 --   args.memory            specify memory location of phase_space sample ("host", "gpu"),
 --                          if omitted use "gpu" if device is available
--- @returns list of pairs (label, phase_space sampler instance)
+-- @returns list of phase_space sampler instances with attached labels
 --
 function new(args)
     -- parameters
@@ -59,21 +59,22 @@ function new(args)
     local clock = mdsim.clock() -- singleton
 
     local phase_space = {}
-    for i, val in ipairs(particle_group) do
-        local label = val[1]
-        local group = val[2]
+    for i, group in ipairs(particle_group) do
         local sample = assert(observables.samples.phase_space{particle_group = group, memory = memory})
         local sampler = phase_space_wrapper(sample, group, box, clock, logger)
 
-        -- store phase space sample as property
+        -- store phase space sample as Lua property
         sampler.sample = property(function(self) return sample end)
 
-        -- store memory as property for profiler description
+        -- store memory as Lua property for profiler description
         sampler.memory = property(function(self) return memory end)
 
-        phase_space[i] = { label, sampler }
-    end
+        -- store label as Lua property
+        local label = assert(group.label)
+        sampler.label = property(function(self) return label end)
 
+        phase_space[i] = sampler
+    end
     return phase_space
 end
 
@@ -81,9 +82,8 @@ end
 -- connect runtime accumulators to module profiler
 --
 function profile(self, profiler)
-    for i, val in ipairs(self) do
-        local label = val[1]
-        local phase_space = val[2]
+    for i, phase_space in ipairs(self) do
+        local label = assert(phase_space.label)
         local memory = assert(phase_space.memory)
         local str = "phase space sample of " .. label .. " particles on " .. memory
         profiler:on_profile{phase_space, acquire = "acquisition of " .. str}

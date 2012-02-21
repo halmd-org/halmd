@@ -1,5 +1,5 @@
 --
--- Copyright © 2011  Felix Höfling
+-- Copyright © 2011-2012  Felix Höfling
 --
 -- This file is part of HALMD.
 --
@@ -31,6 +31,7 @@ local po = libhalmd.po
 -- grab standard library
 local assert = assert
 local ipairs = ipairs
+local property = property
 local type = type
 
 module("halmd.observables.density_mode", halmd.modules.register)
@@ -39,13 +40,13 @@ module("halmd.observables.density_mode", halmd.modules.register)
 -- construct instance of density_mode module
 --
 -- @param args              parameter table:
---     args.phase_space     list of pairs (label, phase_space sampler)
+--     args.phase_space     list of phase_space samplers with attached labels
 --     args.wavenumbers     explicit list of wavenumbers, specify alternatively:
 --     args.max_wavenumber  maximum wavenumber
 --     args.decimation      decimation parameter for wavenumber grid
 --     args.tolerance       tolerance on wavevector magnitude
 --     args.max_count       maximum count of wavevectors per wavenumber
--- @returns instance of density_mode module
+-- @returns list of density_mode instances
 --
 function new(args)
     -- dependency injection
@@ -80,15 +81,18 @@ function new(args)
 
     -- construct list of density modes
     local observable = {}
-    for i, val in ipairs(phase_space) do
-        local label = val[1]
-        local phase_space = val[2]
+    for i, phase_space in ipairs(phase_space) do
         local sample = assert(phase_space.sample)
         density_mode = density_mode_wrapper(sample, wavevector, clock, logger)
 
         -- acquire phase space before acquiring density modes
         density_mode:on_acquire(phase_space.acquire)
-        observable[i] = {label, density_mode}
+
+        -- store label as Lua property
+        local label = assert(phase_space.label)
+        density_mode.label = property(function(self) return label end)
+
+        observable[i] = density_mode
     end
 
     return observable
@@ -98,9 +102,8 @@ end
 -- connect runtime accumulators to module profiler
 --
 function profile(self, profiler)
-    for i, val in ipairs(self) do
-        local label = val[1]
-        local density_mode = val[2]
+    for i, density_mode in ipairs(self) do
+        local label = assert(density_mode.label)
         profiler:on_profile{density_mode, acquire = "computation of density modes for " .. label .. " particles"}
     end
 end

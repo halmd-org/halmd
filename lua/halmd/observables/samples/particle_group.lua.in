@@ -25,6 +25,8 @@ local particle_group_from_range_wrapper = assert(libhalmd.observables.samples.pa
 -- grab standard library
 local assert = assert
 local ipairs = ipairs
+local property = property
+local string = string
 local type = type
 
 module("halmd.observables.samples.particle_group", halmd.modules.register)
@@ -37,7 +39,8 @@ module("halmd.observables.samples.particle_group", halmd.modules.register)
 --   args.range      list of ranges [begin, end) of particle tags for subset selection (optional)
 --   args.species    list of particle species for subset selection (optional, conflicts with 'range')
 --   args.label      list of group labels (optional, default: "A", "B"', ..., or "all")
--- @returns table of pairs (label, particle_group instance)
+--                   TODO pass optionally a function/mapping instead of a list
+-- @returns list of particle_group instances with attached labels
 --
 function new(args)
     local particle = assert(args.particle, "missing parameter: particle")
@@ -50,7 +53,7 @@ function new(args)
     if not label then
         label = {}
         if range or species then
-            for i = 1, #particle do
+            for i = 1, #(range or species) do
                 label[i] = string.char(string.byte("A") + i - 1)
             end
         else
@@ -65,15 +68,20 @@ function new(args)
         assert(type(range) == "table", "invalid table")
         for i, r in ipairs(range) do
             assert(#r == 2)
-            particle_group[i] = { label[i], particle_group_from_range_wrapper(particle, r[1], r[2]) }
+            particle_group[i] = particle_group_from_range_wrapper(particle, r[1], r[2])
         end
     elseif species then -- select by species
         assert(type(species) == "table", "invalid table")
         for i, s in ipairs(species) do
-            particle_group[i] = { label[i], particle_group_from_range_wrapper(particle, s) }
+            particle_group[i] = particle_group_from_range_wrapper(particle, s)
         end
     else -- select all
-        particle_group = { label[1], particle_group_all_wrapper(particle) }
+        particle_group = { particle_group_all_wrapper(particle) }
+    end
+
+    -- store particle labels as Lua property
+    for i, group in ipairs(particle_group) do
+        group.label = property(function(self) return label[i] end)
     end
 
     return particle_group

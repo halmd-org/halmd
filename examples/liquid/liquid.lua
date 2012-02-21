@@ -1,5 +1,5 @@
 --
--- Copyright © 2010-2011  Peter Colberg and Felix Höfling
+-- Copyright © 2010-2012  Peter Colberg and Felix Höfling
 --
 -- This file is part of HALMD.
 --
@@ -48,14 +48,7 @@ function liquid.new(args)
         particles = assert(args.particles)
       , masses = assert(args.masses)
       , dimension = assert(args.dimension)
-      , label = (function()
-          -- generate labels "A", "B", "C", … according to number of species
-          local label = {}
-          for i = 1, #args.particles do
-              label[i] = string.char(string.byte("A") + i - 1)
-          end
-          return label
-      end)()
+      , label = "all" -- FIXME make optional
     }
     -- create simulation box
     mdsim.box{particles = {particle}}
@@ -77,7 +70,7 @@ function liquid.new(args)
     -- Construct particle groups and samplers by species (species are numbered 0, 1, 2, ...)
     local species = {} for i = 1, #args.particles do species[i] = i - 1 end -- FIXME avoid explicit for-loop!?
     local particle_group = observables.samples.particle_group{
-        particle = particle, species = species, label = particle.label
+        particle = particle, species = species
     }
     local phase_space = observables.phase_space{particle_group = particle_group}
 

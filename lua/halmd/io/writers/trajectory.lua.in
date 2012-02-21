@@ -1,5 +1,5 @@
 --
--- Copyright © 2010-2011  Peter Colberg
+-- Copyright © 2010-2012  Peter Colberg and Felix Höfling
 --
 -- This file is part of HALMD.
 --
@@ -43,7 +43,7 @@ module("halmd.io.writers.trajectory", halmd.modules.register)
 -- construct trajectory writer module
 --
 -- @param args       parameter table
---   args.particle_group    list of pairs (label, particle_group instance)
+--   args.particle_group    list of particle_group instances with attached labels
 --   args.every             sampling interval, default (0) writes at start and finish only
 --
 function new(args)
@@ -71,10 +71,9 @@ function new(args)
     -- FIXME share phase_space instance with observables::host::density_mode -- is this a worthy optimisation?
     local phase_space = assert(observables.phase_space{particle_group = particle_group, memory = "host"})
 
-    for i, val in ipairs(phase_space) do
-        local label = val[1]
-        local phase_space = val[2]
+    for i, phase_space in ipairs(phase_space) do
         local sample = assert(phase_space.sample)
+        local label = assert(phase_space.label)
 
         -- sample and write phase space at fixed interval
         local writer = file:writer{location = {"trajectory", label}, mode = "append"}

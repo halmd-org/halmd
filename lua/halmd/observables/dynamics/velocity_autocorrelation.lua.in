@@ -44,5 +44,5 @@ end
 -- @returns module description
 --
 function description()
-    return "velocity autocorrelation function"
+    return "velocity autocorrelation"
 end

@@ -70,11 +70,8 @@ module("halmd.mdsim.neighbour", halmd.modules.register)
 -- returns species label given a table of particle instances
 --
 function label(particles)
-    local species = {}
-    for i = 1, #particles do
-        species[i] = "(" .. table.concat(particles[i].label, ",") .. ")"
-    end
-    return table.concat(species, "←")
+    assert(#particles == 2)
+    return "(" .. particles[1].label .. " ← " .. particles[2].label .. ")"
 end
 
 --
@@ -175,7 +172,7 @@ end
 -- connect runtime accumulators to module profiler
 --
 function profile(self, profiler)
-    profiler:on_profile{self, update = "neighbour lists " .. label(self.particles)}
+    profiler:on_profile{self, update = "update of neighbour lists " .. label(self.particles)}
 end
 
 --

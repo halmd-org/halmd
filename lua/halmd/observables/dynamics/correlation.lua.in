@@ -1,5 +1,5 @@
 --
--- Copyright © 2011  Peter Colberg and Felix Höfling
+-- Copyright © 2011-2012  Peter Colberg and Felix Höfling
 --
 -- This file is part of HALMD.
 --
@@ -29,10 +29,10 @@ local observables = halmd.observables
 local writers = halmd.io.writers
 -- grab C++ wrappers
 local correlation_wrapper = libhalmd.observables.dynamics.correlation
-local property = property
 -- grab standard library
 local assert = assert
 local ipairs = ipairs
+local property = property
 local type = type
 
 module("halmd.observables.dynamics.correlation", halmd.modules.register)
@@ -42,7 +42,7 @@ module("halmd.observables.dynamics.correlation", halmd.modules.register)
 --
 -- @param args parameter table
 --   name             trajectory correlation function (e.g. "mean_square_displacement")
---   sampler          list of pairs (label, sampler instance), e.g., phase_space sampler
+--   sampler          list of sampler instance with attached labels
 --
 function new(args)
     local name = assert(args.correlation)
@@ -57,11 +57,10 @@ function new(args)
     local writer = file:writer{location = {"dynamics"}, mode = "truncate"}
 
     local observable = {}
-    for i, val in ipairs(sampler) do
-        local label = val[1]
-        local sampler = val[2]
+    for i, sampler in ipairs(sampler) do
+        local sample = assert(sampler.sample)
         -- construct the tcf functor
-        local tcf_ = tcf{sample = assert(sampler.sample)}
+        local tcf_ = tcf{sample = sample}
         -- construct or retrieve associated blocking scheme for sample data
         local block_sample = observables.samples.blocking_scheme{sampler = sampler}
         -- construct correlation function
@@ -69,23 +68,26 @@ function new(args)
         local correlation = assert(correlation_wrapper)(tcf_, block_sample, logger)
 
         -- write correlation function results
+        local label = assert(sampler.label)
         writer:on_write(blocking_scheme.time, {name, label, "time"}) -- FIXME hardlink
         writer:on_write(correlation.mean, {name, label, "mean"})
         writer:on_write(correlation.error, {name, label, "error"})
         writer:on_write(correlation.count, {name, label, "count"})
 
+        -- store label as Lua property
+        correlation.label = property(function(self) return label end)
+
         -- register correlation function with blocking scheme
         blocking_scheme:on_correlate(correlation)
 
-        observable[i] = {label, correlation}
+        observable[i] = correlation
     end
 
     -- write correlation results to H5MD file
     blocking_scheme:on_append_finalise(writer.write)
 
-    -- store tcf module for profiler description
-    local desc = tcf.description()
-    observable.desc = property(function(self) return desc end) -- FIXME "luabind: property_tag function can't be called"
+    -- store description for profiler description
+    observable.description = tcf.description()
 
     return observable
 end
@@ -94,10 +96,9 @@ end
 -- connect runtime accumulators to module profiler
 --
 function profile(self, profiler)
-    local desc = "FIXME" -- assert(self.desc)
-    for i, val in ipairs(self) do
-        local label = val[1]
-        local correlation = val[2]
+    local desc = assert(self.description)
+    for i, correlation in ipairs(self) do
+        local label = assert(correlation.label)
         profiler:on_profile{correlation, tcf = "computation of " .. desc .. " for " .. label .. " particles"}
     end
 end
