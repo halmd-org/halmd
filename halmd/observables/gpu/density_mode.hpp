@@ -1,5 +1,5 @@
 /*
- * Copyright © 2011  Felix Höfling
+ * Copyright © 2011-2012  Felix Höfling
  *
  * This file is part of HALMD.
  *
@@ -88,6 +88,12 @@ public:
     virtual boost::shared_ptr<result_type> value() const
     {
         return rho_sample_.rho;
+    }
+
+    //! returns number of particles
+    virtual unsigned int nparticle() const
+    {
+        return phase_space_->r->size();
     }
 
     //! returns simulation step when sample was taken

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2011  Felix Höfling
+ * Copyright © 2011-2012  Felix Höfling
  *
  * This file is part of HALMD.
  *
@@ -60,6 +60,7 @@ public:
     virtual connection on_acquire(slot_function_type const& slot) = 0;
     virtual step_type step() const = 0;
     virtual boost::shared_ptr<result_type> value() const = 0;
+    virtual unsigned int nparticle() const = 0;
     virtual wavevector_type const& wavevector() const = 0;
     virtual std::vector<double> const& wavenumber() const = 0;
 };

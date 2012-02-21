@@ -1,5 +1,5 @@
 /*
- * Copyright © 2011  Felix Höfling
+ * Copyright © 2011-2012  Felix Höfling
  *
  * This file is part of HALMD.
  *
@@ -38,7 +38,6 @@ template <int dimension>
 ssf<dimension>::ssf(
     vector<shared_ptr<density_mode_type const> > const& density_mode
   , shared_ptr<clock_type const> clock
-  , unsigned int npart
   , shared_ptr<logger_type> logger
 )
   // dependency injection
@@ -46,7 +45,6 @@ ssf<dimension>::ssf(
   , clock_(clock)
   , logger_(logger)
   // initialise members
-  , npart_(npart)
   , step_(numeric_limits<step_type>::max())
 {
     if (density_mode_.size() < 1) {
@@ -64,6 +62,13 @@ ssf<dimension>::ssf(
         value_[i].resize(nq);
         result_accumulator_[i].resize(nq);
     }
+
+    // normalisation factor: total number of particles
+    npart_ = 0;
+    for (unsigned int i = 0; i < ntype; ++i) {
+        npart_ += density_mode_[i]->nparticle();
+    }
+    LOG("evaluate static structure factor for " << npart_ << " particles");
 }
 
 /**
@@ -125,8 +130,8 @@ void ssf<dimension>::compute_()
 
     unsigned int ntype = density_mode_.size();
     unsigned int k = 0;
-    for (unsigned char i = 0; i < ntype; ++i) {
-        for (unsigned char j = i; j < ntype; ++j, ++k) {
+    for (unsigned int i = 0; i < ntype; ++i) {
+        for (unsigned int j = i; j < ntype; ++j, ++k) {
             rho_iterator rho_q0 = density_mode_[i]->value()->begin();
             rho_iterator rho_q1 = density_mode_[j]->value()->begin();
             result_iterator result = result_accumulator_[k].begin();
@@ -194,7 +199,6 @@ void ssf<dimension>::luaopen(lua_State* L)
                 .def(constructor<
                     vector<shared_ptr<density_mode_type const> > const&
                   , shared_ptr<clock_type const>
-                  , unsigned int
                   , shared_ptr<logger_type>
                 >())
                 .def("value", &wrap_value<ssf>)

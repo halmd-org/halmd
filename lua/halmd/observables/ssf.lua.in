@@ -67,8 +67,8 @@ function new(args)
         density_mode_[i] = rho
     end
 
-    -- construct ssf module from list of density modes -- FIXME let ssf take explicitly 2 density modes
-    local ssf = assert(ssf_wrapper[dimension])(density_mode_, clock, 1, logger) -- FIXME obtain size from density_mode within ssf class
+    -- construct ssf module from list of density modes
+    local ssf = assert(ssf_wrapper[dimension])(density_mode_, clock, logger)
 
     -- acquire density modes before sampling static structure factor
     for i, rho in ipairs(density_mode) do

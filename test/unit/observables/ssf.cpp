@@ -146,7 +146,7 @@ void lattice<modules_type>::test()
 
     // construct modules for density modes and static structure factor
     density_mode = make_shared<density_mode_type>(sample, wavevector, clock);
-    ssf = make_shared<ssf_type>(list_of(density_mode), clock, particle->nbox);
+    ssf = make_shared<ssf_type>(list_of(density_mode), clock);
 
     // generate lattices
     BOOST_TEST_MESSAGE("set particle tags");

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2011  Felix Höfling
+ * Copyright © 2011-2012  Felix Höfling
  *
  * This file is part of HALMD.
  *
@@ -67,7 +67,6 @@ public:
     ssf(
         std::vector<boost::shared_ptr<density_mode_type const> > const& density_mode
       , boost::shared_ptr<clock_type const> clock
-      , unsigned int npart
       , boost::shared_ptr<logger_type> logger = boost::make_shared<logger_type>()
     );
     // compute ssf from sample of density Fourier modes and store with given simulation step
