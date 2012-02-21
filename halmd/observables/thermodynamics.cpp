@@ -26,15 +26,18 @@ using namespace std;
 namespace halmd {
 namespace observables {
 
-template <int dimension>
-thermodynamics<dimension>::thermodynamics(
-    shared_ptr<box_type const> box
-  , shared_ptr<particle_type const> particle
-)
-  // dependency injection
-  : box_(box)
-  , particle_(particle)
+template <typename thermodynamics_type>
+static function<double ()>
+wrap_nparticle(shared_ptr<thermodynamics_type> thermodynamics)
 {
+    return bind(&thermodynamics_type::nparticle, thermodynamics);
+}
+
+template <typename thermodynamics_type>
+static function<double ()>
+wrap_density(shared_ptr<thermodynamics_type> thermodynamics)
+{
+    return bind(&thermodynamics_type::density, thermodynamics);
 }
 
 template <typename thermodynamics_type>
@@ -103,6 +106,8 @@ void thermodynamics<dimension>::luaopen(lua_State* L)
         namespace_("observables")
         [
             class_<thermodynamics, shared_ptr<thermodynamics> >(class_name.c_str())
+                .property("nparticle", &wrap_nparticle<thermodynamics>)
+                .property("density", &wrap_density<thermodynamics>)
                 .property("en_kin", &wrap_en_kin<thermodynamics>)
                 .property("en_pot", &wrap_en_pot<thermodynamics>)
                 .property("en_tot", &wrap_en_tot<thermodynamics>)

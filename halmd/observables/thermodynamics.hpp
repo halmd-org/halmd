@@ -20,12 +20,8 @@
 #ifndef HALMD_OBSERVABLES_THERMODYNAMICS_HPP
 #define HALMD_OBSERVABLES_THERMODYNAMICS_HPP
 
-#include <boost/foreach.hpp>
 #include <lua.hpp>
-#include <vector>
 
-#include <halmd/mdsim/box.hpp>
-#include <halmd/mdsim/particle.hpp>
 #include <halmd/mdsim/type_traits.hpp>
 #include <halmd/numeric/blas/blas.hpp>
 #include <halmd/utility/signal.hpp>
@@ -45,20 +41,17 @@ template <int dimension>
 class thermodynamics
 {
 public:
-    typedef mdsim::box<dimension> box_type;
-    typedef mdsim::particle<dimension> particle_type;
     typedef typename mdsim::type_traits<dimension, double>::vector_type vector_type;
     typedef typename signal<void ()>::slot_function_type slot_function_type;
 
     static void luaopen(lua_State* L);
 
-    thermodynamics(
-        boost::shared_ptr<box_type const> box
-      , boost::shared_ptr<particle_type const> particle
-    );
-
     // basic quantities with backend-specific evaluation
 
+    /** particle number */
+    virtual unsigned int nparticle() const = 0;
+    /** box volume */
+    virtual double volume() const = 0;
     /** potential energy per particle */
     virtual double en_pot() = 0;
     /** kinetic energy per particle */
@@ -78,21 +71,15 @@ public:
     /** total pressure */
     double pressure()
     {
-        return particle_->nbox / box_->volume() * (temp() + virial() / dimension);
+        return density() * (temp() + virial() / dimension);
     }
 
     /** system temperature */
     double temp() { return 2 * en_kin() / dimension; }
     /** number density */
-    double density() { return particle_->nbox / box_->volume(); }
+    double density() { return nparticle() / volume(); }
     /** total energy per particle */
     double en_tot() { return en_pot() + en_kin(); }
-
-private:
-    /** simulation box */
-    boost::shared_ptr<box_type const> box_;
-    /** system state */
-    boost::shared_ptr<particle_type const> particle_;
 };
 
 } // namespace observables

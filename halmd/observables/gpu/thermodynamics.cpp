@@ -38,8 +38,8 @@ thermodynamics<dimension, float_type>::thermodynamics(
   , shared_ptr<force_type const> force
   , shared_ptr<logger_type> logger
 )
-  : _Base(box, particle)
   // dependency injection
+  : box_(box)
   , particle_(particle)
   , force_(force)
   , logger_(logger)

@@ -21,12 +21,11 @@
 #define HALMD_OBSERVABLES_HOST_THERMODYNAMICS_HPP
 
 #include <boost/make_shared.hpp>
-#include <boost/numeric/ublas/symmetric.hpp>
 #include <lua.hpp>
-#include <vector>
 
 #include <halmd/io/logger.hpp>
 #include <halmd/observables/thermodynamics.hpp>
+#include <halmd/mdsim/box.hpp>
 #include <halmd/mdsim/clock.hpp>
 #include <halmd/mdsim/host/force.hpp>
 #include <halmd/mdsim/host/particle.hpp>
@@ -45,10 +44,10 @@ private:
     typedef observables::thermodynamics<dimension> _Base;
 
 public:
-    typedef mdsim::host::particle<dimension, float_type> particle_type;
-    typedef typename _Base::box_type box_type;
+    typedef mdsim::box<dimension> box_type;
     typedef mdsim::clock clock_type;
     typedef mdsim::host::force<dimension, float_type> force_type;
+    typedef mdsim::host::particle<dimension, float_type> particle_type;
     typedef logger logger_type;
     typedef typename clock_type::step_type step_type;
     typedef typename particle_type::vector_type vector_type;
@@ -62,6 +61,16 @@ public:
       , boost::shared_ptr<force_type const> force
       , boost::shared_ptr<logger_type> logger = boost::make_shared<logger_type>()
     );
+
+    virtual unsigned int nparticle() const
+    {
+        return particle_->nbox;
+    }
+
+    virtual double volume() const
+    {
+        return box_->volume();
+    }
 
     virtual double en_kin();
     virtual vector_type const& v_cm();
@@ -95,6 +104,7 @@ private:
     };
 
     /** module dependencies */
+    boost::shared_ptr<box_type const> box_;
     boost::shared_ptr<particle_type const> particle_;
     boost::shared_ptr<force_type const> force_;
     /** module logger */
