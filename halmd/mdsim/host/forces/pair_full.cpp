@@ -17,7 +17,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <halmd/mdsim/host/forces/pair_trunc.hpp>
+#include <halmd/mdsim/host/forces/pair_full.hpp>
 #include <halmd/mdsim/host/forces/smooth.hpp>
 #include <halmd/mdsim/host/potentials/lennard_jones.hpp>
 #include <halmd/mdsim/host/potentials/modified_lennard_jones.hpp>
@@ -33,7 +33,7 @@ namespace forces {
 
 using namespace potentials;
 
-HALMD_LUA_API int luaopen_libhalmd_mdsim_host_forces_pair_trunc(lua_State* L)
+HALMD_LUA_API int luaopen_libhalmd_mdsim_host_forces_pair_full(lua_State* L)
 {
 #ifndef USE_HOST_SINGLE_PRECISION
     typedef double float_type;
@@ -41,20 +41,21 @@ HALMD_LUA_API int luaopen_libhalmd_mdsim_host_forces_pair_trunc(lua_State* L)
     typedef float float_type;
 #endif
 
-    pair_trunc<3, float_type, lennard_jones<float_type> >::luaopen(L);
-    pair_trunc<2, float_type, lennard_jones<float_type> >::luaopen(L);
+    pair_full<3, float_type, lennard_jones<float_type> >::luaopen(L);
+    pair_full<2, float_type, lennard_jones<float_type> >::luaopen(L);
 
-    pair_trunc<3, float_type, modified_lennard_jones<float_type> >::luaopen(L);
-    pair_trunc<2, float_type, modified_lennard_jones<float_type> >::luaopen(L);
+    pair_full<3, float_type, modified_lennard_jones<float_type> >::luaopen(L);
+    pair_full<2, float_type, modified_lennard_jones<float_type> >::luaopen(L);
 
-    pair_trunc<3, float_type, morse<float_type> >::luaopen(L);
-    pair_trunc<2, float_type, morse<float_type> >::luaopen(L);
+    pair_full<3, float_type, morse<float_type> >::luaopen(L);
+    pair_full<2, float_type, morse<float_type> >::luaopen(L);
 
-    pair_trunc<3, float_type, power_law<float_type> >::luaopen(L);
-    pair_trunc<2, float_type, power_law<float_type> >::luaopen(L);
+    pair_full<3, float_type, power_law<float_type> >::luaopen(L);
+    pair_full<2, float_type, power_law<float_type> >::luaopen(L);
 
-    pair_trunc<3, float_type, power_law_with_core<float_type> >::luaopen(L);
-    pair_trunc<2, float_type, power_law_with_core<float_type> >::luaopen(L);
+    pair_full<3, float_type, power_law_with_core<float_type> >::luaopen(L);
+    pair_full<2, float_type, power_law_with_core<float_type> >::luaopen(L);
+
     return 0;
 }
 
@@ -65,20 +66,20 @@ typedef double float_type;
 typedef float float_type;
 #endif
 
-template class pair_trunc<3, float_type, lennard_jones<float_type> >;
-template class pair_trunc<2, float_type, lennard_jones<float_type> >;
+template class pair_full<3, float_type, lennard_jones<float_type> >;
+template class pair_full<2, float_type, lennard_jones<float_type> >;
 
-template class pair_trunc<3, float_type, modified_lennard_jones<float_type> >;
-template class pair_trunc<2, float_type, modified_lennard_jones<float_type> >;
+template class pair_full<3, float_type, modified_lennard_jones<float_type> >;
+template class pair_full<2, float_type, modified_lennard_jones<float_type> >;
 
-template class pair_trunc<3, float_type, morse<float_type> >;
-template class pair_trunc<2, float_type, morse<float_type> >;
+template class pair_full<3, float_type, morse<float_type> >;
+template class pair_full<2, float_type, morse<float_type> >;
 
-template class pair_trunc<3, float_type, power_law<float_type> >;
-template class pair_trunc<2, float_type, power_law<float_type> >;
+template class pair_full<3, float_type, power_law<float_type> >;
+template class pair_full<2, float_type, power_law<float_type> >;
 
-template class pair_trunc<3, float_type, power_law_with_core<float_type> >;
-template class pair_trunc<2, float_type, power_law_with_core<float_type> >;
+template class pair_full<3, float_type, power_law_with_core<float_type> >;
+template class pair_full<2, float_type, power_law_with_core<float_type> >;
 
 } // namespace forces
 } // namespace host

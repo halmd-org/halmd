@@ -34,12 +34,10 @@ local forces = libhalmd.mdsim.forces
 local property = property
 local assert = assert
 
-module("halmd.mdsim.forces.pair_trunc", halmd.modules.register)
+module("halmd.mdsim.forces.pair_full", halmd.modules.register)
 
 --
--- construct truncated pair force module
---
--- @param args.potential potential name
+-- construct pair force module with full (not truncated) interaction
 --
 function new(args)
     -- construct global potential module
@@ -49,16 +47,8 @@ function new(args)
     local dimension = assert(particle.dimension)
     local box = mdsim.box() -- singleton
 
-    -- create neighbour lists with cutoff radii of potential
-    local neighbour = mdsim.neighbour{r_cut = potential.r_cut}
-
     -- construct force module
-    local force = assert(forces.pair_trunc)(potential, particle, box, neighbour)
-
-    -- move tracked signal connections from neighbour to force;
-    -- on force:disconnect() the core signals connections of
-    -- both force and neighbour will be disconnected
-    neighbour:move_connections(force)
+    local force = assert(forces.pair_full)(potential, particle, box)
 
     local core = mdsim.core()
     -- system preparation
@@ -67,7 +57,7 @@ function new(args)
     core:on_force{force.compute, tracker = force}
 
     -- store potential Lua object (which contains the C++ object) as a
-    -- read-only Lua property, so we may read it in pair_trunc.profile
+    -- read-only Lua property, so we may read it in pair_full.profile
     -- and retrieve the description of the potential for the log entry
     force.potential = property(function(self)
         return potential
@@ -87,5 +77,5 @@ end
 -- returns module description
 --
 function description()
-    return "Truncated pair interaction"
+    return "Full pair interaction"
 end

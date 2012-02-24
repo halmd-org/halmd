@@ -21,8 +21,10 @@
 // #include <halmd/mdsim/gpu/forces/smooth.hpp>
 #include <halmd/mdsim/gpu/potentials/lennard_jones.hpp>
 #include <halmd/mdsim/gpu/potentials/lennard_jones_simple.hpp>
+#include <halmd/mdsim/gpu/potentials/modified_lennard_jones.hpp>
 #include <halmd/mdsim/gpu/potentials/morse.hpp>
-// #include <halmd/mdsim/gpu/potentials/power_law.hpp>
+#include <halmd/mdsim/gpu/potentials/power_law.hpp>
+#include <halmd/mdsim/gpu/potentials/power_law_with_core.hpp>
 #include <halmd/utility/lua/lua.hpp>
 
 namespace halmd {
@@ -40,11 +42,18 @@ HALMD_LUA_API int luaopen_libhalmd_mdsim_gpu_forces_pair_trunc(lua_State* L)
     pair_trunc<3, float, lennard_jones_simple<float> >::luaopen(L);
     pair_trunc<2, float, lennard_jones_simple<float> >::luaopen(L);
 
+    pair_trunc<3, float, modified_lennard_jones<float> >::luaopen(L);
+    pair_trunc<2, float, modified_lennard_jones<float> >::luaopen(L);
+
     pair_trunc<3, float, morse<float> >::luaopen(L);
     pair_trunc<2, float, morse<float> >::luaopen(L);
 
-//    pair_trunc<3, float, power_law<float> >::luaopen(L);
-//    pair_trunc<2, float, power_law<float> >::luaopen(L);
+    pair_trunc<3, float, power_law<float> >::luaopen(L);
+    pair_trunc<2, float, power_law<float> >::luaopen(L);
+
+    pair_trunc<3, float, power_law_with_core<float> >::luaopen(L);
+    pair_trunc<2, float, power_law_with_core<float> >::luaopen(L);
+
     return 0;
 }
 
@@ -55,11 +64,17 @@ template class pair_trunc<2, float, lennard_jones<float> >;
 template class pair_trunc<3, float, lennard_jones_simple<float> >;
 template class pair_trunc<2, float, lennard_jones_simple<float> >;
 
+template class pair_trunc<3, float, modified_lennard_jones<float> >;
+template class pair_trunc<2, float, modified_lennard_jones<float> >;
+
 template class pair_trunc<3, float, morse<float> >;
 template class pair_trunc<2, float, morse<float> >;
 
-// template class pair_trunc<3, float, power_law<float> >;
-// template class pair_trunc<2, float, power_law<float> >;
+template class pair_trunc<3, float, power_law<float> >;
+template class pair_trunc<2, float, power_law<float> >;
+
+template class pair_trunc<3, float, power_law_with_core<float> >;
+template class pair_trunc<2, float, power_law_with_core<float> >;
 
 } // namespace forces
 } // namespace gpu

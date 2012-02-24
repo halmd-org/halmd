@@ -1,5 +1,5 @@
 /*
- * Copyright © 2008-2011  Peter Colberg and Felix Höfling
+ * Copyright © 2011  Michael Kopp and Felix Höfling
  *
  * This file is part of HALMD.
  *
@@ -21,7 +21,7 @@
 #include <cmath>
 #include <string>
 
-#include <halmd/mdsim/host/potentials/power_law.hpp>
+#include <halmd/mdsim/host/potentials/power_law_with_core.hpp>
 #include <halmd/utility/lua/lua.hpp>
 
 using namespace boost;
@@ -37,9 +37,10 @@ namespace potentials {
  * Initialise potential parameters
  */
 template <typename float_type>
-power_law<float_type>::power_law(
+power_law_with_core<float_type>::power_law_with_core(
     unsigned int ntype
   , array<float, 3> const& cutoff
+  , array<float, 3> const& core
   , array<float, 3> const& epsilon
   , array<float, 3> const& sigma
   , array<unsigned int, 3> const& index
@@ -53,6 +54,7 @@ power_law<float_type>::power_law(
   , r_cut_(ntype, ntype)
   , r_cut_sigma_(ntype, ntype)
   , rr_cut_(ntype, ntype)
+  , r_core_sigma_(ntype, ntype)
   , en_cut_(scalar_matrix<float_type>(ntype, ntype, 0))
   , logger_(logger)
 {
@@ -63,6 +65,7 @@ power_law<float_type>::power_law(
             sigma_(i, j) = sigma[i + j];
             index_(i, j) = index[i + j];
             r_cut_sigma_(i, j) = cutoff[i + j];
+            r_core_sigma_(i, j) = core[i + j];
         }
     }
 
@@ -79,13 +82,14 @@ power_law<float_type>::power_law(
 
     LOG("interaction strength ε = " << epsilon_);
     LOG("interaction range σ = " << sigma_);
+    LOG("core radius r_core/σ = " << r_core_sigma_);
     LOG("power law index: n = " << index_);
-    LOG("cutoff length r_c = " << r_cut_sigma_);
+    LOG("cutoff length: r_c/σ = " << r_cut_sigma_);
     LOG("cutoff energy U = " << en_cut_);
 }
 
 template <typename float_type>
-void power_law<float_type>::luaopen(lua_State* L)
+void power_law_with_core<float_type>::luaopen(lua_State* L)
 {
     using namespace luabind;
     module(L, "libhalmd")
@@ -96,41 +100,43 @@ void power_law<float_type>::luaopen(lua_State* L)
             [
                 namespace_("potentials")
                 [
-                    class_<power_law, shared_ptr<power_law> >(module_name())
+                    class_<power_law_with_core, shared_ptr<power_law_with_core> >(module_name())
                         .def(constructor<
-                            unsigned int
-                          , array<float, 3> const&
-                          , array<float, 3> const&
-                          , array<float, 3> const&
-                          , array<unsigned int, 3> const&
+                            unsigned int                    // ntype
+                          , array<float, 3> const&          // cutoff
+                          , array<float, 3> const&          // core
+                          , array<float, 3> const&          // epsilon
+                          , array<float, 3> const&          // sigma
+                          , array<unsigned int, 3> const&   // index
                           , shared_ptr<logger_type>
                         >())
-                        .property("r_cut", (matrix_type const& (power_law::*)() const) &power_law::r_cut)
-                        .property("r_cut_sigma", &power_law::r_cut_sigma)
-                        .property("epsilon", &power_law::epsilon)
-                        .property("sigma", &power_law::sigma)
-                        .property("index", &power_law::index)
+                        .property("r_cut", (matrix_type const& (power_law_with_core::*)() const) &power_law_with_core::r_cut)
+                        .property("r_cut_sigma", &power_law_with_core::r_cut_sigma)
+                        .property("r_core_sigma", &power_law_with_core::r_core_sigma)
+                        .property("epsilon", &power_law_with_core::epsilon)
+                        .property("sigma", &power_law_with_core::sigma)
+                        .property("index", &power_law_with_core::index)
                 ]
             ]
         ]
     ];
 }
 
-HALMD_LUA_API int luaopen_libhalmd_mdsim_host_potentials_power_law(lua_State* L)
+HALMD_LUA_API int luaopen_libhalmd_mdsim_host_potentials_power_law_with_core(lua_State* L)
 {
 #ifndef USE_HOST_SINGLE_PRECISION
-    power_law<double>::luaopen(L);
+    power_law_with_core<double>::luaopen(L);
 #else
-    power_law<float>::luaopen(L);
+    power_law_with_core<float>::luaopen(L);
 #endif
     return 0;
 }
 
 // explicit instantiation
 #ifndef USE_HOST_SINGLE_PRECISION
-template class power_law<double>;
+template class power_law_with_core<double>;
 #else
-template class power_law<float>;
+template class power_law_with_core<float>;
 #endif
 
 } // namespace potentials

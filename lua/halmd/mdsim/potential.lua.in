@@ -17,11 +17,11 @@
 -- along with this program.  If not, see <http://www.gnu.org/licenses/>.
 --
 
-require("halmd.mdsim.forces")
+require("halmd.mdsim.potentials")
 require("halmd.modules")
 
 -- grab modules
-local forces = halmd.mdsim.forces
+local potentials = halmd.mdsim.potentials
 -- grab C++ wrappers
 local h5 = libhalmd.h5
 local po = libhalmd.po
@@ -30,14 +30,14 @@ local assert = assert
 local pairs = pairs
 local property = property
 
-module("halmd.mdsim.force", halmd.modules.register)
+module("halmd.mdsim.potential", halmd.modules.register)
 
 --
--- construct force module
+-- construct potential module
 --
 function new(args)
-    local force = args.force or "pair_trunc" -- default value
-    return assert(forces[force])()
+    local potential = args.potential or "lennard_jones" -- default value
+    return assert(potentials[potential])()
 end
 
 --
@@ -47,30 +47,30 @@ end
 --
 function options(desc, globals)
 
-    -- force module choices with descriptions
+    -- potential module choices with descriptions
     local choices = {}
-    for name, module in pairs(forces) do
+    for name, module in pairs(potentials) do
         if module.description then
             choices[name] = module.description()
         end
     end
 
-    globals:add("force", po.string():choices(choices), "select force algorithm")
+    globals:add("potential", po.string():choices(choices), "select interaction potential")
 end
 
 --
 -- read module parameters from HDF5 group
 --
 function read_parameters(args, group, globals)
-    args.force = globals:read_attribute("force", h5.string())
+    args.potential = globals:read_attribute("potential", h5.string())
 end
 
 --
 -- write module parameters to HDF5 group
 --
--- @param force module instance
+-- @param potential module instance
 -- @param group HDF5 group
 --
-function write_parameters(force, group, globals)
-    globals:write_attribute("force", h5.string(), force.module.namespace)
+function write_parameters(potential, group, globals)
+    globals:write_attribute("potential", h5.string(), potential.module.namespace)
 end

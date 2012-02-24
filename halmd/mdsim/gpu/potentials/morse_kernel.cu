@@ -18,6 +18,7 @@
  */
 
 #include <halmd/algorithm/gpu/tuple.cuh>
+#include <halmd/mdsim/gpu/forces/pair_full_kernel.cuh>
 #include <halmd/mdsim/gpu/forces/pair_trunc_kernel.cuh>
 #include <halmd/mdsim/gpu/potentials/morse_kernel.hpp>
 #include <halmd/numeric/blas/blas.hpp>
@@ -108,6 +109,9 @@ cuda::texture<float> morse_wrapper::rr_cut = morse_kernel::rr_cut_;
 namespace forces {
 
 using potentials::morse_kernel::morse;
+
+template class pair_full_wrapper<3, morse>;
+template class pair_full_wrapper<2, morse>;
 
 template class pair_trunc_wrapper<3, morse>;
 template class pair_trunc_wrapper<2, morse>;

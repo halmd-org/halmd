@@ -25,45 +25,44 @@ require("halmd.modules")
 local device = halmd.device
 local mdsim = halmd.mdsim
 -- grab C++ wrappers
-local power_law_wrapper = {
-    host = libhalmd.mdsim.host.potentials.power_law
+local modified_lennard_jones_wrapper = {
+    host = libhalmd.mdsim.host.potentials.modified_lennard_jones
 }
 if libhalmd.mdsim.gpu then
-    power_law_wrapper.gpu = libhalmd.mdsim.gpu.potentials.power_law
+    modified_lennard_jones_wrapper.gpu = libhalmd.mdsim.gpu.potentials.modified_lennard_jones
 end
 local h5 = libhalmd.h5
 local po = libhalmd.po
 -- grab standard library
 local assert = assert
 
-module("halmd.mdsim.potentials.power_law", halmd.modules.register)
+module("halmd.mdsim.potentials.modified_lennard_jones", halmd.modules.register)
 
 --
--- construct power law module
+-- construct modified Lennard-Jones module
 --
 function new(args)
     local cutoff = args.cutoff or {2.5, 2.5, 2.5} -- default value
     local epsilon = args.epsilon or {1.0, 1.5, 0.5} -- default value
     local sigma = args.sigma or {1.0, 0.8, 0.88} -- default value
-    local index = args.index or {12, 12, 12} -- default value
+    local index_m = args.index_repulsion or {12, 12, 12} -- default value
+    local index_n = args.index_attraction or {6, 6, 6} -- default value
 
     local particle = mdsim.particle() -- singleton
     local logger = assert(args.logger)
 
-    local power_law
-    if device() then
-        power_law = assert(power_law_wrapper.gpu)
-    else
-        power_law = assert(power_law_wrapper.host)
-    end
-    return power_law(particle.ntype, cutoff, epsilon, sigma, index, logger)
+    local potential
+    -- select optimised GPU version if 1 species and ε=1, σ=1
+    local modified_lennard_jones = assert(modified_lennard_jones_wrapper[device() and "gpu" or "host"])
+    potential = modified_lennard_jones(particle.ntype, cutoff, epsilon, sigma, index_m, index_n, logger)
+    return potential
 end
 
 --
 -- returns module description
 --
 function description()
-    return "power law potential"
+    return "modified Lennard-Jones potential"
 end
 
 --
@@ -75,7 +74,8 @@ function options(desc)
     desc:add("cutoff", po.float_array(), "truncate potential at cutoff radius")
     desc:add("epsilon", po.float_array(), "potential well depths")
     desc:add("sigma", po.float_array(), "collision diameters")
-    desc:add("index", po.uint(), "index of soft power-law potential")
+    desc:add("index-repulsion", po.uint_array(), "power law index of repulsion")
+    desc:add("index-attraction", po.uint_array(), "power law index of attraction")
     -- FIXME desc:add("smooth", po.float_array(), "C²-potential smoothing factor")
 end
 
@@ -86,18 +86,20 @@ function read_parameters(args, group)
     -- FIXME args.cutoff = group:read_attribute("cutoff", h5.float_array())
     -- FIXME args.epsilon = group:read_attribute("epsilon", h5.float_array())
     -- FIXME args.sigma = group:read_attribute("sigma", h5.float_array())
-    -- FIXME args.index = group:read_attribute("index", h5.uint_array())
+    -- FIXME args.index_repulsion = group:read_attribute("index_repulsion", h5.uint_array())
+    -- FIXME args.index_attraction = group:read_attribute("index_attraction", h5.uint_array())
 end
 
 --
 -- write module parameters to HDF5 group
 --
--- @param power_law module instance
+-- @param modified_lennard_jones module instance
 -- @param group HDF5 group
 --
-function write_parameters(power_law, group)
-    group:write_attribute("cutoff", h5.float_array(), power_law.r_cut_sigma:data())
-    group:write_attribute("epsilon", h5.float_array(), power_law.epsilon:data())
-    group:write_attribute("sigma", h5.float_array(), power_law.sigma:data())
-    group:write_attribute("index", h5.uint_array(), power_law.index:data())
+function write_parameters(modified_lennard_jones, group)
+    group:write_attribute("cutoff", h5.float_array(), modified_lennard_jones.r_cut_sigma:data())
+    group:write_attribute("epsilon", h5.float_array(), modified_lennard_jones.epsilon:data())
+    group:write_attribute("sigma", h5.float_array(), modified_lennard_jones.sigma:data())
+    group:write_attribute("index_repulsion", h5.uint_array(), modified_lennard_jones.index_m:data())
+    group:write_attribute("index_attraction", h5.uint_array(), modified_lennard_jones.index_n:data())
 end
