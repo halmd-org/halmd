@@ -190,9 +190,7 @@ void modified_lennard_jones<float_type>::test()
     for (unsigned int k = 0; k < r_list.size(); ++k) {
         vector_type r = (k % 2) ? k * dx : vector_type(0);
         unsigned int type = (k < particle->ntypes[0]) ? 0U : 1U;  // set particle type for a binary mixture
-//        r_list[k] = particle_kernel::tagged<vector_type>(r, type); //< GCC 4.4.1 crashes with internal compiler error
-        r_list[k] = r;
-        union { float f; uint32_t i; } u; u.i = type; r_list[k].w = u.f;
+        r_list[k] = particle_kernel::tagged<vector_type>(r, type);
     }
     cuda::copy(r_list, particle->g_r);
 
