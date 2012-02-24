@@ -1,5 +1,5 @@
 /*
- * Copyright © 2008-2011  Peter Colberg and Felix Höfling
+ * Copyright © 2011-2012  Michael Kopp and Felix Höfling
  *
  * This file is part of HALMD.
  *
@@ -17,8 +17,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef HALMD_MDSIM_HOST_POTENTIALS_POWER_LAW_HPP
-#define HALMD_MDSIM_HOST_POTENTIALS_POWER_LAW_HPP
+#ifndef HALMD_MDSIM_HOST_POTENTIALS_POWER_LAW_WITH_CORE_HPP
+#define HALMD_MDSIM_HOST_POTENTIALS_POWER_LAW_WITH_CORE_HPP
 
 #include <boost/make_shared.hpp>
 #include <boost/numeric/ublas/symmetric.hpp>
@@ -35,12 +35,13 @@ namespace potentials {
 
 /**
  * A power-law potential @f$ r^{-n} @f$ is often used for
- * repulsive smooth spheres. A big advantage is
- * its scale invariance (in the absence of a cutoff).
+ * repulsive smooth spheres. This potential is slightly
+ * modified to allow for solid particles. It diverges for
+ * (finite) r_core (parameter): @f$ (r-r_\text{core})^{-n} @f$
  */
 
 template <typename float_type>
-class power_law
+class power_law_with_core
 {
 public:
     typedef boost::numeric::ublas::symmetric_matrix<float_type, boost::numeric::ublas::lower> matrix_type;
@@ -49,11 +50,12 @@ public:
 
     static void luaopen(lua_State* L);
 
-    static char const* module_name() { return "power_law"; }
+    static char const* module_name() { return "power_law_with_core"; }
 
-    power_law(
+    power_law_with_core(
         unsigned int ntype
       , boost::array<float, 3> const& cutoff
+      , boost::array<float, 3> const& core
       , boost::array<float, 3> const& epsilon
       , boost::array<float, 3> const& sigma
       , boost::array<unsigned int, 3> const& index
@@ -163,6 +165,11 @@ public:
         return r_cut_sigma_;
     }
 
+    matrix_type const& r_core_sigma() const
+    {
+        return r_core_sigma_;
+    }
+
     matrix_type const& epsilon() const
     {
         return epsilon_;
@@ -179,28 +186,38 @@ public:
     }
 
 private:
-    /** optimise pow() function by providing the index at compile time
+    /**
+     * Optimise pow() function by providing the index at compile time.
+     *
      * @param rr squared distance between particles
      * @param a type of first interacting particle
      * @param b type of second interacting particle
      * @returns tuple of unit "force" @f$ -U'(r)/r @f$ and potential @f$ U(r) @f$
-     * and hypervirial @f$ r \partial_r r \partial_r U(r) @f$
+     * and hypervirial @f$ r \partial_r r \partial_r U(r) @f$ with
+     *
+     * @f{eqnarray*}{
+     *   U(r) &=& \epsilon \left(\frac{r - r_\text{core}}{\sigma}\right)^{-n} \\
+     *   - \frac{U'(r)}{r} &=& n \frac{n}{r(r-r_\text{core})} U(r) \\
+     *   r \partial_r r \partial_r U(r) &=& n \frac{r (n r + r_\text{core}) }{ (r-r_\text{core})^2 } U(r)
+     * @f}
+     *
      */
     template <int const_index>
     boost::tuple<float_type, float_type, float_type> impl_(float_type rr, unsigned a, unsigned b)
     {
         // choose arbitrary index_ if template parameter index = 0
         unsigned int n = const_index > 0 ? const_index : index_(a, b);
-        float_type rri = sigma2_(a, b) / rr;
-        // avoid computation of square root for even powers
-        float_type rni = (const_index > 0) ? fixed_pow<const_index / 2>(rri) : halmd::pow(rri, n / 2);
-        if (n % 2) {
-            rni *= std::sqrt(rri);
-        }
-        float_type eps_rni = epsilon_(a, b) * rni;
-        float_type fval = n * eps_rni / rr;
-        float_type en_pot = eps_rni - en_cut_(a, b);
-        float_type hvir = n * n * eps_rni;
+        float_type rr_ss = rr / sigma2_(a, b);
+        // The computation of the square root can not be avoided
+        // as r_core must be substracted from r but only r * r is passed.
+        float_type r_s = std::sqrt(rr_ss);
+        float_type dri = 1 / (r_s - r_core_sigma_(a, b));
+        float_type eps_dri_n = epsilon_(a, b) * ((const_index > 0) ? fixed_pow<const_index>(dri) : halmd::pow(dri, n));
+
+        float_type en_pot = eps_dri_n - en_cut_(a, b);
+        float_type n_eps_dri_n_1 = n * dri * eps_dri_n;
+        float_type fval = n_eps_dri_n_1 / (sigma2_(a, b) * r_s);
+        float_type hvir = n_eps_dri_n_1 * ((n + 1) * dri * rr_ss - r_s);
 
         return boost::make_tuple(fval, en_pot, hvir);
     }
@@ -211,7 +228,7 @@ private:
     matrix_type sigma_;
     /** power law index */
     uint_matrix_type index_;
-    /** square of pair separation */
+    /** square of pair separation in MD units */
     matrix_type sigma2_;
     /** cutoff length in MD units */
     matrix_type r_cut_;
@@ -219,6 +236,8 @@ private:
     matrix_type r_cut_sigma_;
     /** square of cutoff length */
     matrix_type rr_cut_;
+    /** core radius in units of sigma */
+    matrix_type r_core_sigma_;
     /** potential energy at cutoff in MD units */
     matrix_type en_cut_;
     /** module logger */
@@ -230,4 +249,4 @@ private:
 } // namespace mdsim
 } // namespace halmd
 
-#endif /* ! HALMD_MDSIM_HOST_POTENTIALS_POWER_LAW_HPP */
+#endif /* ! HALMD_MDSIM_HOST_POTENTIALS_POWER_LAW_WITH_CORE_HPP */

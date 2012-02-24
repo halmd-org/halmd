@@ -1,5 +1,5 @@
 /*
- * Copyright © 2008-2011  Peter Colberg and Felix Höfling
+ * Copyright © 2011  Felix Höfling
  *
  * This file is part of HALMD.
  *
@@ -20,39 +20,47 @@
 #include <halmd/algorithm/gpu/tuple.cuh>
 #include <halmd/mdsim/gpu/forces/pair_full_kernel.cuh>
 #include <halmd/mdsim/gpu/forces/pair_trunc_kernel.cuh>
-#include <halmd/mdsim/gpu/potentials/lennard_jones_kernel.hpp>
+#include <halmd/mdsim/gpu/potentials/power_law_kernel.hpp>
 #include <halmd/numeric/blas/blas.hpp>
+#include <halmd/numeric/pow.hpp>  // std::pow is not a device function
 #include <halmd/utility/gpu/variant.cuh>
 
 namespace halmd {
 namespace mdsim {
 namespace gpu {
 namespace potentials {
-namespace lennard_jones_kernel {
+namespace power_law_kernel {
 
 using algorithm::gpu::tuple;
 using algorithm::gpu::make_tuple;
 
-/** array of Lennard-Jones potential parameters for all combinations of particle types */
+/** array of potential parameters for all combinations of particle types */
 static texture<float4> param_;
+/** squares of potential cutoff radius and energy shift for all combinations of particle types */
+static texture<float2> rr_en_cut_;
 
 /**
- * Lennard-Jones interaction of a pair of particles.
+ * power law interaction potential of a pair of particles.
+ *
+ * @f[  U(r) = \epsilon (r/\sigma)^{-n} @f]
  */
-class lennard_jones
+class power_law
 {
 public:
     /**
-     * Construct Lennard-Jones pair interaction potential.
+     * Construct power law potential.
      *
      * Fetch potential parameters from texture cache for particle pair.
      *
      * @param type1 type of first interacting particle
      * @param type2 type of second interacting particle
      */
-    HALMD_GPU_ENABLED lennard_jones(unsigned int type1, unsigned int type2)
+    HALMD_GPU_ENABLED power_law(unsigned int type1, unsigned int type2)
       : pair_(
             tex1Dfetch(param_, symmetric_matrix::lower_index(type1, type2))
+        )
+      , pair_rr_en_cut_(
+            tex1Dfetch(rr_en_cut_, symmetric_matrix::lower_index(type1, type2))
         ) {}
 
     /**
@@ -63,7 +71,7 @@ public:
     template <typename float_type>
     HALMD_GPU_ENABLED bool within_range(float_type rr) const
     {
-        return (rr < pair_[RR_CUT]);
+        return (rr < pair_rr_en_cut_[0]);
     }
 
     /**
@@ -72,16 +80,27 @@ public:
      * @param rr squared distance between particles
      * @returns tuple of unit "force" @f$ -U'(r)/r @f$, potential @f$ U(r) @f$,
      * and hypervirial @f$ r \partial_r r \partial_r U(r) @f$
+     *
+     * @f{eqnarray*}{
+     *   - U'(r) / r &=& n r^{-2} \epsilon (r/\sigma)^{-n} \\
+     *   U(r) &=& \epsilon (r/\sigma)^{-n} \\
+     *   r \partial_r r \partial_r U(r) &=& n^2 \epsilon (r/\sigma)^{-n}
+     * @f}
      */
     template <typename float_type>
     HALMD_GPU_ENABLED tuple<float_type, float_type, float_type> operator()(float_type rr) const
     {
         float_type rri = pair_[SIGMA2] / rr;
-        float_type ri6 = rri * rri * rri;
-        float_type eps_ri6 = pair_[EPSILON] * ri6;
-        float_type fval = 48 * rri * eps_ri6 * (ri6 - 0.5f) / pair_[SIGMA2];
-        float_type en_pot = 4 * eps_ri6 * (ri6 - 1) - pair_[EN_CUT];
-        float_type hvir = 576 * eps_ri6 * (ri6 - 0.25f);
+        unsigned short n = static_cast<unsigned short>(pair_[INDEX]);
+        // avoid computation of square root for even powers
+        float_type rni = halmd::pow(rri, n / 2);
+        if (n % 2) {
+            rni *= sqrt(rri); // translates to sqrt.approx.f32 in PTX code for float_type=float (CUDA 3.2)
+        }
+        float_type eps_rni = pair_[EPSILON] * rni;
+        float_type fval = n * eps_rni / rr;
+        float_type en_pot = eps_rni - pair_rr_en_cut_[1];
+        float_type hvir = n * n * eps_rni;
 
         return make_tuple(fval, en_pot, hvir);
     }
@@ -89,24 +108,27 @@ public:
 private:
     /** potential parameters for particle pair */
     fixed_vector<float, 4> pair_;
+    /** squared cutoff radius and energy shift for particle pair */
+    fixed_vector<float, 2> pair_rr_en_cut_;
 };
 
-} // namespace lennard_jones_kernel
+} // namespace power_law_kernel
 
-cuda::texture<float4> lennard_jones_wrapper::param = lennard_jones_kernel::param_;
+cuda::texture<float4> power_law_wrapper::param = power_law_kernel::param_;
+cuda::texture<float2> power_law_wrapper::rr_en_cut = power_law_kernel::rr_en_cut_;
 
 } // namespace potentials
 
 // explicit instantiation of force kernels
 namespace forces {
 
-using potentials::lennard_jones_kernel::lennard_jones;
+using potentials::power_law_kernel::power_law;
 
-template class pair_full_wrapper<3, lennard_jones>;
-template class pair_full_wrapper<2, lennard_jones>;
+template class pair_full_wrapper<3, power_law>;
+template class pair_full_wrapper<2, power_law>;
 
-template class pair_trunc_wrapper<3, lennard_jones>;
-template class pair_trunc_wrapper<2, lennard_jones>;
+template class pair_trunc_wrapper<3, power_law>;
+template class pair_trunc_wrapper<2, power_law>;
 
 } // namespace forces
 

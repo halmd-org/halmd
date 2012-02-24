@@ -1,5 +1,6 @@
 add_subdirectory(integrators)
 add_subdirectory(positions)
+add_subdirectory(potentials)
 add_subdirectory(velocities)
 
 # module box

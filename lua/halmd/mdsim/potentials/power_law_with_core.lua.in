@@ -1,5 +1,5 @@
 --
--- Copyright © 2010-2011  Peter Colberg and Felix Höfling
+-- Copyright © 2011  Michael Kopp and Felix Höfling
 --
 -- This file is part of HALMD.
 --
@@ -25,24 +25,25 @@ require("halmd.modules")
 local device = halmd.device
 local mdsim = halmd.mdsim
 -- grab C++ wrappers
-local power_law_wrapper = {
-    host = libhalmd.mdsim.host.potentials.power_law
+local power_law_with_core_wrapper = {
+    host = libhalmd.mdsim.host.potentials.power_law_with_core
 }
 if libhalmd.mdsim.gpu then
-    power_law_wrapper.gpu = libhalmd.mdsim.gpu.potentials.power_law
+    power_law_with_core_wrapper.gpu = libhalmd.mdsim.gpu.potentials.power_law_with_core
 end
 local h5 = libhalmd.h5
 local po = libhalmd.po
 -- grab standard library
 local assert = assert
 
-module("halmd.mdsim.potentials.power_law", halmd.modules.register)
+module("halmd.mdsim.potentials.power_law_with_core", halmd.modules.register)
 
 --
 -- construct power law module
 --
 function new(args)
     local cutoff = args.cutoff or {2.5, 2.5, 2.5} -- default value
+    local core = args.core or {0.5, 0.5, 0.5} -- default value
     local epsilon = args.epsilon or {1.0, 1.5, 0.5} -- default value
     local sigma = args.sigma or {1.0, 0.8, 0.88} -- default value
     local index = args.index or {12, 12, 12} -- default value
@@ -50,20 +51,20 @@ function new(args)
     local particle = mdsim.particle() -- singleton
     local logger = assert(args.logger)
 
-    local power_law
+    local power_law_with_core
     if device() then
-        power_law = assert(power_law_wrapper.gpu)
+        power_law_with_core = assert(power_law_with_core_wrapper.gpu)
     else
-        power_law = assert(power_law_wrapper.host)
+        power_law_with_core = assert(power_law_with_core_wrapper.host)
     end
-    return power_law(particle.ntype, cutoff, epsilon, sigma, index, logger)
+    return power_law_with_core(particle.ntype, cutoff, core, epsilon, sigma, index, logger)
 end
 
 --
 -- returns module description
 --
 function description()
-    return "power law potential"
+    return "power law potential with hard core"
 end
 
 --
@@ -72,10 +73,11 @@ end
 -- @param desc po.options_description
 --
 function options(desc)
-    desc:add("cutoff", po.float_array(), "truncate potential at cutoff radius")
-    desc:add("epsilon", po.float_array(), "potential well depths")
-    desc:add("sigma", po.float_array(), "collision diameters")
-    desc:add("index", po.uint(), "index of soft power-law potential")
+    desc:add("cutoff", po.float_array(), "cutoff radius [in units of sigma]")
+    desc:add("core", po.float_array(), "radius of hard core [in units of sigma]")
+    desc:add("epsilon", po.float_array(), "interaction strength [MD units]")
+    desc:add("sigma", po.float_array(), "interaction range [MD units]")
+    desc:add("index", po.uint(), "power law index")
     -- FIXME desc:add("smooth", po.float_array(), "C²-potential smoothing factor")
 end
 
@@ -84,6 +86,7 @@ end
 --
 function read_parameters(args, group)
     -- FIXME args.cutoff = group:read_attribute("cutoff", h5.float_array())
+    -- FIXME args.core = group:read_attribute("core", h5.float_array())
     -- FIXME args.epsilon = group:read_attribute("epsilon", h5.float_array())
     -- FIXME args.sigma = group:read_attribute("sigma", h5.float_array())
     -- FIXME args.index = group:read_attribute("index", h5.uint_array())
@@ -92,12 +95,13 @@ end
 --
 -- write module parameters to HDF5 group
 --
--- @param power_law module instance
+-- @param power_law_with_core module instance
 -- @param group HDF5 group
 --
-function write_parameters(power_law, group)
-    group:write_attribute("cutoff", h5.float_array(), power_law.r_cut_sigma:data())
-    group:write_attribute("epsilon", h5.float_array(), power_law.epsilon:data())
-    group:write_attribute("sigma", h5.float_array(), power_law.sigma:data())
-    group:write_attribute("index", h5.uint_array(), power_law.index:data())
+function write_parameters(power_law_with_core, group)
+    group:write_attribute("cutoff",     h5.float_array(), power_law_with_core.r_cut_sigma:data())
+    group:write_attribute("core",       h5.float_array(), power_law_with_core.r_core_sigma:data())
+    group:write_attribute("epsilon",    h5.float_array(), power_law_with_core.epsilon:data())
+    group:write_attribute("sigma",      h5.float_array(), power_law_with_core.sigma:data())
+    group:write_attribute("index",      h5.uint_array(),  power_law_with_core.index:data())
 end
