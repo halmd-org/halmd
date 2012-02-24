@@ -64,7 +64,7 @@ end
 -- returns module description
 --
 function description()
-    return "Power law potential with core radius"
+    return "power law potential with hard core"
 end
 
 --
@@ -73,11 +73,11 @@ end
 -- @param desc po.options_description
 --
 function options(desc)
-    desc:add("cutoff", po.float_array(), "truncate potential at cutoff radius [in units of sigma]")
-    desc:add("core", po.float_array(), "potential diverges at core radius [in units of sigma]")
-    desc:add("epsilon", po.float_array(), "potential well depths [MD units]")
-    desc:add("sigma", po.float_array(), "collision diameters [MD units]")
-    desc:add("index", po.uint(), "index of soft power-law potential")
+    desc:add("cutoff", po.float_array(), "cutoff radius [in units of sigma]")
+    desc:add("core", po.float_array(), "radius of hard core [in units of sigma]")
+    desc:add("epsilon", po.float_array(), "interaction strength [MD units]")
+    desc:add("sigma", po.float_array(), "interaction range [MD units]")
+    desc:add("index", po.uint(), "power law index")
     -- FIXME desc:add("smooth", po.float_array(), "C²-potential smoothing factor")
 end
 
