@@ -73,8 +73,21 @@ public:
      */
     virtual unsigned int const* h_map() = 0;
 
+    /**
+     * returns bit array in GPU memory with each entry indicating whether the
+     * corresponding entry in gpu::particle is selected for the particle group.
+     * This is useful for unsorted access like in a summations.
+     *
+     * The bits are stored in chunks of 32, the selection mask for each warp is
+     * thus encoded in one 32-bit integer.
+     */
+//    virtual cuda::vector<uint32_t> const& selection_mask() const = 0; FIXME
+
     //! returns the size of the group, i.e., the number of particles
     virtual unsigned int size() const = 0;
+
+    //! returns true if the group selects all particles
+    virtual bool all() const = 0;
 
     //! returns true if the group is the empty set
     bool empty() const
@@ -114,10 +127,14 @@ public:
 
     virtual unsigned int const* h_map();
 
-    //! returns size of the group, i.e., the number of particles
     virtual unsigned int size() const
     {
         return particle_->nbox;
+    }
+
+    virtual bool all() const
+    {
+        return true;
     }
 
 private:
@@ -172,10 +189,14 @@ public:
 
     virtual unsigned int const* h_map();
 
-    //! returns size of the group, i.e., the number of particles
     virtual unsigned int size() const
     {
         return end_ - begin_;
+    }
+
+    virtual bool all() const
+    {
+        return size() == particle_->nbox;
     }
 
 private:

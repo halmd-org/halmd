@@ -64,8 +64,20 @@ public:
      */
     virtual map_iterator map() const = 0;
 
+    /**
+     * returns array with each entry indicating whether the corresponding entry
+     * in host::particle is selected for the particle group. This is useful for
+     * unsorted access like in a summations.
+     *
+     * Note that std::vector<bool> represents an array of bytes rather than a bitset.
+     */
+//    virtual std::vector<bool> selection_mask() const = 0; FIXME
+
     //! returns the size of the group, i.e., the number of particles
     virtual unsigned int size() const = 0;
+
+    //! returns true if the group selects all particles
+    virtual bool all() const = 0;
 
     //! returns true if the group is the empty set
     bool empty() const
@@ -104,10 +116,14 @@ public:
         return particle_->reverse_tag.begin();
     }
 
-    //! returns size of the group, i.e., the number of particles
     virtual unsigned int size() const
     {
         return particle_->nbox;
+    }
+
+    virtual bool all() const
+    {
+        return true;
     }
 
 private:
@@ -158,10 +174,14 @@ public:
         return particle_->reverse_tag.begin() + begin_;
     }
 
-    //! returns size of the group, i.e., the number of particles
     virtual unsigned int size() const
     {
         return end_ - begin_;
+    }
+
+    virtual bool all() const
+    {
+        return size() == particle_->nbox;
     }
 
 private:
