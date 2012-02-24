@@ -68,6 +68,7 @@ double thermodynamics<dimension, float_type>::en_kin()
     if (!en_kin_.valid()) {
         LOG_TRACE("acquire kinetic energy");
 
+        // FIXME use particle_group_->selection_mask() and reduce_if()
         scoped_timer_type timer(runtime_.en_kin);
         en_kin_ = .5 * sum_velocity_square_(particle_group_->particle()->g_v) / nparticle();
     }
@@ -84,6 +85,7 @@ thermodynamics<dimension, float_type>::v_cm()
     if (!v_cm_.valid()) {
         LOG_TRACE("acquire centre-of-mass velocity");
 
+        // FIXME use particle_group_->selection_mask() and reduce_if()
         scoped_timer_type timer(runtime_.v_cm);
         v_cm_ = sum_velocity_vector_(particle_group_->particle()->g_v) / nparticle();
     }
@@ -99,6 +101,7 @@ double thermodynamics<dimension, float_type>::en_pot()
     if (!en_pot_.valid()) {
         LOG_TRACE("acquire potential energy");
 
+        // FIXME use particle_group_->selection_mask() and reduce_if()
         scoped_timer_type timer(runtime_.en_pot);
         en_pot_ = sum_scalar_(force_->potential_energy()) / nparticle();
     }
@@ -114,6 +117,7 @@ double thermodynamics<dimension, float_type>::virial()
     if (!virial_.valid()) {
         LOG_TRACE("acquire virial");
 
+        // FIXME use particle_group_->selection_mask() and reduce_if()
         scoped_timer_type timer(runtime_.virial);
         virial_ = sum_stress_tensor_diagonal_(force_->stress_tensor_pot()) / nparticle();
     }
@@ -129,6 +133,7 @@ double thermodynamics<dimension, float_type>::hypervirial()
     if (!hypervirial_.valid()) {
         LOG_TRACE("acquire hypervirial");
 
+        // FIXME use particle_group_->selection_mask() and reduce_if()
         scoped_timer_type timer(runtime_.hypervirial);
         hypervirial_ = sum_scalar_(force_->hypervirial()) / nparticle();
     }

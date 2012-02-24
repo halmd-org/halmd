@@ -77,6 +77,7 @@ public:
         return potential_->r_cut();
     }
 
+    // FIXME move aux variables and their methods to host::particle
     /**
      * enable computation of auxiliary variables
      *
@@ -133,16 +134,17 @@ private:
     boost::shared_ptr<smooth_type> smooth_;
     boost::shared_ptr<neighbour_type const> neighbour_;
 
+    // FIXME move the following 5 variables to host::particle
     /** flag for switching the computation of auxiliary variables in function compute() */
     bool aux_flag_;
     /** flag indicates that the auxiliary variables were updated by the last call to compute() */
     bool aux_valid_;
     /** average potential energy per particle */
-    double en_pot_;
+    double en_pot_; // FIXME store per particle as on gpu
     /** potential part of stress tensor */
-    stress_tensor_type stress_pot_;
+    stress_tensor_type stress_pot_;  // FIXME store per particle as on gpu
     /** hyper virial for each particle */
-    double hypervirial_;
+    double hypervirial_; // FIXME store per particle as on gpu
     /** profiling runtime accumulators */
     runtime runtime_;
 

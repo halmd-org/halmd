@@ -67,6 +67,7 @@ public:
 
     static void luaopen(lua_State* L);
 
+    // FIXME operate on unsorted particle_group instead of phase_space
     density_mode(
         boost::shared_ptr<phase_space_type const> phase_space
       , boost::shared_ptr<wavevector_type const> wavevector

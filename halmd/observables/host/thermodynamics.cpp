@@ -56,6 +56,7 @@ double thermodynamics<dimension, float_type>::en_kin()
 
         scoped_timer_type timer(runtime_.en_kin);
 
+        // FIXME use particle_group_->selection_mask()
         // compute mean-square velocity
         double vv = 0;
         BOOST_FOREACH(vector_type const& v, particle_group_->particle()->v) {
@@ -76,6 +77,7 @@ thermodynamics<dimension, float_type>::v_cm()
 
         scoped_timer_type timer(runtime_.v_cm);
 
+        // FIXME use particle_group_->selection_mask()
         // compute mean velocity
         vector_type v_cm(0.);
         BOOST_FOREACH(vector_type const& v, particle_group_->particle()->v) {

@@ -66,7 +66,8 @@ function new(args)
 
     local thermodynamics = {}
     for i, group in ipairs(particle_group) do
-        -- construct thermodynamics module  -- FIXME drop dependency on force module
+        -- construct thermodynamics module
+        -- FIXME drop dependency on force module
         local observable = thermodynamics_wrapper(group, box, clock, force[i], logger)
 
         -- store label as Lua property
@@ -88,6 +89,7 @@ function new(args)
 
         -- turn on computation of auxiliary variables _before_ force computation
         -- in each sampling step
+        -- FIXME move from force to particle
         sampler:on_prepare{force[i].aux_enable, every, tracker = observable}
 
         thermodynamics[i] = observable

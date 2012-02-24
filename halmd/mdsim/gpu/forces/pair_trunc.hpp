@@ -67,6 +67,7 @@ public:
     );
     inline virtual void compute();
 
+    // FIXME move aux variables and their methods to gpu::particle
     /**
      * enable computation of auxiliary variables
      *
@@ -123,6 +124,7 @@ private:
     /** neighbour lists */
     boost::shared_ptr<neighbour_type const> neighbour_;
 
+    // FIXME move the following 5 variables to gpu::particle
     /** flag for switching the computation of auxiliary variables in function compute() */
     bool aux_flag_;
     /** flag indicates that the auxiliary variables were updated by the last call to compute() */
