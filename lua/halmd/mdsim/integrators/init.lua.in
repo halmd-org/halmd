@@ -1,3 +1,4 @@
 require("halmd.mdsim.integrators.euler")
 require("halmd.mdsim.integrators.verlet")
 require("halmd.mdsim.integrators.verlet_nvt_andersen")
+require("halmd.mdsim.integrators.verlet_nvt_hoover")

@@ -8,11 +8,11 @@ Cloning the repository
 
 HALMD is maintained in a public `Git <http://git-scm.com/>`_ repository ::
 
-  git clone --recursive git://git.colberg.org/halmd.git
+  git clone --recursive git://git.halmd.org/halmd.git
 
 In case you are behind a firewall that blocks the git protocol port, use ::
 
-  git clone --recursive http://git.colberg.org/halmd.git
+  git clone --recursive http://git.halmd.org/halmd.git
 
 This will create a directory ``halmd``, which holds a hidden copy of the
 repository and a working copy of the source files.
