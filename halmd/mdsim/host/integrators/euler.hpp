@@ -46,8 +46,6 @@ public:
     typedef mdsim::box<dimension> box_type;
     typedef logger logger_type;
 
-    static char const* module_name() { return "euler"; }
-
     static void luaopen(lua_State* L);
 
     euler(

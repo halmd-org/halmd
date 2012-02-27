@@ -49,8 +49,6 @@ public:
     typedef typename particle_type::vector_type vector_type;
     typedef euler_wrapper<dimension> wrapper_type;
 
-    static char const* module_name() { return "euler"; }
-
     static void luaopen(lua_State* L);
 
     euler(

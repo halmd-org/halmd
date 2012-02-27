@@ -1,5 +1,5 @@
 /*
- * Copyright © 2011 Michael Kopp
+ * Copyright © 2011-2012  Michael Kopp and Felix Höfling
  *
  * This file is part of HALMD.
  *
@@ -18,6 +18,7 @@
  */
 
 #include <algorithm>
+#include <boost/make_shared.hpp>
 #include <cmath>
 #include <string>
 
@@ -79,16 +80,10 @@ void euler<dimension, float_type>::integrate()
 }
 
 template <int dimension, typename float_type>
-static char const* module_name_wrapper(euler<dimension, float_type> const&)
-{
-    return euler<dimension, float_type>::module_name();
-}
-
-template <int dimension, typename float_type>
 void euler<dimension, float_type>::luaopen(lua_State* L)
 {
     using namespace luabind;
-    static string class_name(module_name() + ("_" + lexical_cast<string>(dimension) + "_"));
+    static string class_name("euler_" + lexical_cast<string>(dimension) + "_");
     module(L, "libhalmd")
     [
         namespace_("mdsim")
@@ -98,14 +93,6 @@ void euler<dimension, float_type>::luaopen(lua_State* L)
                 namespace_("integrators")
                 [
                     class_<euler, shared_ptr<_Base>, _Base>(class_name.c_str())
-                        .def(constructor<
-                            shared_ptr<particle_type>
-                          , shared_ptr<box_type>
-                          , double
-                          , shared_ptr<logger_type>
-                          >()
-                        )
-                        .property("modul_name", &module_name_wrapper<dimension, float_type>)
                         .scope
                         [
                             class_<runtime>("runtime")
@@ -113,6 +100,16 @@ void euler<dimension, float_type>::luaopen(lua_State* L)
                         ]
                         .def_readonly("runtime", &euler::runtime_)
                 ]
+            ]
+
+          , namespace_("integrators")
+            [
+                def("euler", &make_shared<euler
+                  , shared_ptr<particle_type>
+                  , shared_ptr<box_type const>
+                  , double
+                  , shared_ptr<logger_type>
+                >)
             ]
         ]
     ];
