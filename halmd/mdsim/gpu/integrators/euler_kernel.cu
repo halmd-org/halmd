@@ -1,5 +1,5 @@
 /*
- * Copyright © 2011  Michael Kopp
+ * Copyright © 2011-2012  Michael Kopp and Felix Höfling
  *
  * This file is part of HALMD.
  *
@@ -17,19 +17,13 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <boost/mpl/if.hpp>
-
 #include <halmd/mdsim/gpu/integrators/euler_kernel.cuh>
 #include <halmd/mdsim/gpu/integrators/euler_kernel.hpp>
 #include <halmd/mdsim/gpu/particle_kernel.cuh>
-#include <halmd/numeric/blas/blas.hpp>
 #include <halmd/numeric/mp/dsfloat.hpp>
 #include <halmd/utility/gpu/thread.cuh>
-#include <halmd/utility/gpu/variant.cuh>
 
-using namespace boost::mpl;
 using namespace halmd::mdsim::gpu::particle_kernel;
-using namespace halmd::utility::gpu;
 
 namespace halmd {
 namespace mdsim {
@@ -37,25 +31,28 @@ namespace gpu {
 namespace integrators {
 namespace euler_kernel {
 
-/** integration time-step */
-static __constant__ float timestep_;
-/** cuboid box edge length */
-static __constant__ variant<map<pair<int_<3>, float3>, pair<int_<2>, float2> > > box_length_;
-
 /**
  * Euler integration
  *
- * @param g_r positions (CUDA vector in global memory of gpu)
- * @param g_image number of times the particle exceeded the box margin (CUDA vector)
- * @param g_v velocities (CUDA vector in global memory of gpu)
- * @param g_f forces (CUDA vector)
+ * @param g_r           positions
+ * @param g_image       number of times the particle exceeded the box margin
+ * @param g_v           velocities
+ * @param g_f           forces
+ * @param timestep      integration timestep
+ * @param box_length    edge lengths of cuboid box
  */
 template <
     typename vector_type //< precision of positions and velocities
   , typename vector_type_ //< default precision (box size, image vector)
   , typename gpu_vector_type
 >
-__global__ void _integrate(float4* g_r, gpu_vector_type* g_image, float4* g_v)
+__global__ void _integrate(
+    float4* g_r
+  , gpu_vector_type* g_image
+  , float4* g_v
+  , float timestep
+  , vector_type_ box_length
+)
 {
     // get information which thread this is and thus which particles are to
     // be processed
@@ -73,10 +70,9 @@ __global__ void _integrate(float4* g_r, gpu_vector_type* g_image, float4* g_v)
 #endif
     // local copy of image
     vector_type_ image = g_image[i];
-    vector_type_ L = get<vector_type::static_size>(box_length_);
 
     // run actual integration routine in .cuh file
-    integrate(r, image, v, timestep_, L);
+    integrate(r, image, v, timestep, box_length);
 
 #ifdef USE_VERLET_DSFUN
     tie(g_r[i], g_r[i + threads]) = tagged(r, type);
@@ -90,12 +86,10 @@ __global__ void _integrate(float4* g_r, gpu_vector_type* g_image, float4* g_v)
 
 template <int dimension>
 euler_wrapper<dimension> const euler_wrapper<dimension>::kernel = {
-    euler_kernel::timestep_
-  , get<dimension>(euler_kernel::box_length_)
 #ifdef USE_VERLET_DSFUN
-  , euler_kernel::_integrate<fixed_vector<dsfloat, dimension>, fixed_vector<float, dimension> >
+    euler_kernel::_integrate<fixed_vector<dsfloat, dimension> >
 #else
-  , euler_kernel::_integrate<fixed_vector<float, dimension>, fixed_vector<float, dimension> >
+    euler_kernel::_integrate<fixed_vector<float, dimension> >
 #endif
 };
 

@@ -49,14 +49,6 @@ euler<dimension, float_type>::euler(
   , logger_(logger)
 {
     this->timestep(timestep);
-
-    try {
-        cuda::copy(static_cast<vector_type>(box_->length()), wrapper_type::kernel.box_length);
-    }
-    catch (cuda::error const&) {
-        LOG_ERROR("failed to initialize Euler integrator symbols");
-        throw;
-    }
 }
 
 /**
@@ -66,15 +58,6 @@ template <int dimension, typename float_type>
 void euler<dimension, float_type>::timestep(double timestep)
 {
     timestep_ = timestep;
-
-    try {
-        cuda::copy(timestep_, wrapper_type::kernel.timestep);
-    }
-    catch (cuda::error const&) {
-        LOG_ERROR("failed to initialise Euler integrator symbols");
-        throw;
-    }
-
     LOG("integration timestep: " << timestep_);
 }
 
@@ -89,6 +72,8 @@ void euler<dimension, float_type>::integrate()
         cuda::configure(particle_->dim.grid, particle_->dim.block);
         wrapper_type::kernel.integrate(
             particle_->g_r, particle_->g_image, particle_->g_v
+          , timestep_
+          , static_cast<vector_type>(box_->length())
         );
         cuda::thread::synchronize();
     }

@@ -21,7 +21,9 @@
 #define HALMD_MDSIM_GPU_INTEGRATOR_EULER_KERNEL_HPP
 
 #include <cuda_wrapper/cuda_wrapper.hpp>
+
 #include <halmd/mdsim/type_traits.hpp>
+#include <halmd/numeric/blas/fixed_vector.hpp>
 
 namespace halmd {
 namespace mdsim {
@@ -32,14 +34,15 @@ template <int dimension>
 struct euler_wrapper
 {
     typedef typename type_traits<dimension, float>::gpu::coalesced_vector_type coalesced_vector_type;
-    typedef typename type_traits<dimension, float>::gpu::vector_type vector_type;
+    typedef fixed_vector<float, dimension> vector_type;
 
-    /** integration time step */
-    cuda::symbol<float> timestep;
-    /** edge lengths of cuboid box */
-    cuda::symbol<vector_type> box_length;
-    /** perform Euler integration */
-    cuda::function <void (float4*, coalesced_vector_type*, float4*)> integrate;
+    cuda::function <void (
+        float4*                   // position vectors
+      , coalesced_vector_type*    // image vectors
+      , float4*                   // velocity vectors
+      , float                     // integration timestep
+      , vector_type               // edge lengths of cuboid box
+    )> integrate;
 
     static euler_wrapper const kernel;
 };
