@@ -176,6 +176,8 @@ BOOST_AUTO_TEST_CASE( power_law_with_core_host )
     };
 }
 
+#ifdef WITH_CUDA
+
 template <typename float_type>
 struct power_law_with_core
 {
@@ -293,7 +295,6 @@ power_law_with_core<float_type>::power_law_with_core()
     force = make_shared<force_type>(potential, particle, box, neighbour);
 }
 
-#ifdef WITH_CUDA
 BOOST_FIXTURE_TEST_CASE( power_law_with_core_gpu, device ) {
     power_law_with_core<float>().test();
 }

@@ -135,6 +135,8 @@ BOOST_AUTO_TEST_CASE( lennard_jones_host )
     };
 }
 
+#ifdef WITH_CUDA
+
 template <typename float_type>
 struct lennard_jones
 {
@@ -238,7 +240,6 @@ lennard_jones<float_type>::lennard_jones()
     force = make_shared<force_type>(potential, particle, box, neighbour);
 }
 
-#ifdef WITH_CUDA
 BOOST_FIXTURE_TEST_CASE( lennard_jones_gpu, device ) {
     lennard_jones<float>().test();
 }
