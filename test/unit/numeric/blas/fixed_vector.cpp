@@ -1,5 +1,5 @@
 /*
- * Copyright © 2011  Peter Colberg
+ * Copyright © 2011-2012  Peter Colberg and Felix Höfling
  *
  * This file is part of HALMD.
  *
@@ -372,6 +372,21 @@ TEST_CASE_VECTOR_SIZE( vector_modulus )
         BOOST_CHECK_EQUAL(z[i], (i + 1) % 3);
     }
     BOOST_CHECK_EQUAL(y, 3);
+}
+
+TEST_CASE_VECTOR_TYPE_TYPE_SIZE( vector_comparison )
+{
+    T const eps = numeric_limits<T>::epsilon(); // assume that T has lower precision than S
+    fixed_vector<T, N> x;
+    fixed_vector<S, N> y;
+    for (size_t i = 0; i < N; ++i) {
+        x[i] = 1 + i * eps;
+        y[i] = 1 + i * eps;
+    }
+    BOOST_CHECK_EQUAL(x, y);
+
+    x[N / 2] = 0;
+    BOOST_CHECK(!(x == y));
 }
 
 TEST_CASE_VECTOR_TYPE_SIZE( vector_inner_prod )
