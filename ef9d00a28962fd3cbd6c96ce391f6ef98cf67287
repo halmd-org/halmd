@@ -1,0 +1,11 @@
+Runtime performance with (commit f4e29ef) and without (commit 29b3348) CUDA
+constants, timings are in nanoseconds per step and particle:
+
+CUDA 3.2 on Tesla S1070 hardware, -arch sm_13
+
+ N      with        without
+
+1e6     2.437       2.594
+1e5     2.7344      2.8557
+1e4     4.9693      5.0092
+1e3     29.786      28.18
