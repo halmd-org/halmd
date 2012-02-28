@@ -75,7 +75,7 @@ function options(desc)
     desc:add("cutoff", po.float_array(), "truncate potential at cutoff radius")
     desc:add("epsilon", po.float_array(), "potential well depths")
     desc:add("sigma", po.float_array(), "collision diameters")
-    desc:add("index", po.uint(), "index of soft power-law potential")
+    desc:add("index", po.uint_array(), "index of soft power-law potential")
     -- FIXME desc:add("smooth", po.float_array(), "C²-potential smoothing factor")
 end
 
