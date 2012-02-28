@@ -1,0 +1,76 @@
+--
+-- Copyright © 2010-2011  Peter Colberg and Felix Höfling
+--
+-- This file is part of HALMD.
+--
+-- HALMD is free software: you can redistribute it and/or modify
+-- it under the terms of the GNU General Public License as published by
+-- the Free Software Foundation, either version 3 of the License, or
+-- (at your option) any later version.
+--
+-- This program is distributed in the hope that it will be useful,
+-- but WITHOUT ANY WARRANTY; without even the implied warranty of
+-- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+-- GNU General Public License for more details.
+--
+-- You should have received a copy of the GNU General Public License
+-- along with this program.  If not, see <http://www.gnu.org/licenses/>.
+--
+
+require("halmd.mdsim.potentials")
+require("halmd.modules")
+
+-- grab modules
+local potentials = halmd.mdsim.potentials
+-- grab C++ wrappers
+local h5 = libhalmd.h5
+local po = libhalmd.po
+-- grab standard library
+local assert = assert
+local pairs = pairs
+local property = property
+
+module("halmd.mdsim.potential", halmd.modules.register)
+
+--
+-- construct potential module
+--
+function new(args)
+    local potential = args.potential or "lennard_jones" -- default value
+    return assert(potentials[potential])()
+end
+
+--
+-- assemble module options
+--
+-- @param desc po.options_description
+--
+function options(desc, globals)
+
+    -- potential module choices with descriptions
+    local choices = {}
+    for name, module in pairs(potentials) do
+        if module.description then
+            choices[name] = module.description()
+        end
+    end
+
+    globals:add("potential", po.string():choices(choices), "select interaction potential")
+end
+
+--
+-- read module parameters from HDF5 group
+--
+function read_parameters(args, group, globals)
+    args.potential = globals:read_attribute("potential", h5.string())
+end
+
+--
+-- write module parameters to HDF5 group
+--
+-- @param potential module instance
+-- @param group HDF5 group
+--
+function write_parameters(potential, group, globals)
+    globals:write_attribute("potential", h5.string(), potential.module.namespace)
+end

@@ -18,6 +18,7 @@
  */
 
 #include <halmd/algorithm/gpu/tuple.cuh>
+#include <halmd/mdsim/gpu/forces/pair_full_kernel.cuh>
 #include <halmd/mdsim/gpu/forces/pair_trunc_kernel.cuh>
 #include <halmd/mdsim/gpu/potentials/lennard_jones_simple_kernel.hpp>
 #include <halmd/numeric/blas/blas.hpp>
@@ -99,6 +100,9 @@ cuda::symbol<float> lennard_jones_simple_wrapper::en_cut = lennard_jones_simple_
 namespace forces {
 
 using potentials::lennard_jones_simple_kernel::lennard_jones_simple;
+
+template class pair_full_wrapper<3, lennard_jones_simple>;
+template class pair_full_wrapper<2, lennard_jones_simple>;
 
 template class pair_trunc_wrapper<3, lennard_jones_simple>;
 template class pair_trunc_wrapper<2, lennard_jones_simple>;

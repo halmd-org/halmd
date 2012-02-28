@@ -1,0 +1,81 @@
+--
+-- Copyright © 2010-2011  Peter Colberg and Felix Höfling
+--
+-- This file is part of HALMD.
+--
+-- HALMD is free software: you can redistribute it and/or modify
+-- it under the terms of the GNU General Public License as published by
+-- the Free Software Foundation, either version 3 of the License, or
+-- (at your option) any later version.
+--
+-- This program is distributed in the hope that it will be useful,
+-- but WITHOUT ANY WARRANTY; without even the implied warranty of
+-- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+-- GNU General Public License for more details.
+--
+-- You should have received a copy of the GNU General Public License
+-- along with this program.  If not, see <http://www.gnu.org/licenses/>.
+--
+
+require("halmd.device")
+require("halmd.mdsim.box")
+require("halmd.mdsim.core")
+require("halmd.mdsim.neighbour")
+require("halmd.mdsim.particle")
+require("halmd.mdsim.potential")
+require("halmd.modules")
+
+-- grab modules
+local device = halmd.device
+local mdsim = halmd.mdsim
+local forces = libhalmd.mdsim.forces
+
+-- grab standard library
+local property = property
+local assert = assert
+
+module("halmd.mdsim.forces.pair_full", halmd.modules.register)
+
+--
+-- construct pair force module with full (not truncated) interaction
+--
+function new(args)
+    -- construct global potential module
+    local potential = mdsim.potential()
+
+    local particle = mdsim.particle() -- singleton
+    local dimension = assert(particle.dimension)
+    local box = mdsim.box() -- singleton
+
+    -- construct force module
+    local force = assert(forces.pair_full)(potential, particle, box)
+
+    local core = mdsim.core()
+    -- system preparation
+    core:on_append_setup{force.compute, tracker = force}
+    -- compute forces every step
+    core:on_force{force.compute, tracker = force}
+
+    -- store potential Lua object (which contains the C++ object) as a
+    -- read-only Lua property, so we may read it in pair_full.profile
+    -- and retrieve the description of the potential for the log entry
+    force.potential = property(function(self)
+        return potential
+    end)
+
+    return force
+end
+
+--
+-- connect runtime accumulators to module profiler
+--
+function profile(self, profiler)
+    profiler:on_profile{self, compute = "computation of " .. self.potential.module.description() .. " interaction"}
+end
+
+--
+-- returns module description
+--
+function description()
+    return "Full pair interaction"
+end

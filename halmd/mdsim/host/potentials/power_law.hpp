@@ -44,6 +44,7 @@ class power_law
 {
 public:
     typedef boost::numeric::ublas::matrix<float_type> matrix_type;
+    typedef boost::numeric::ublas::matrix<unsigned int> uint_matrix_type;
     typedef logger logger_type;
 
     static void luaopen(lua_State* L);
@@ -53,10 +54,10 @@ public:
     power_law(
         unsigned int ntype1
       , unsigned int ntype2
-      , int index
       , matrix_type const& cutoff
       , matrix_type const& epsilon
       , matrix_type const& sigma
+      , uint_matrix_type const& index
       , boost::shared_ptr<logger_type> logger = boost::make_shared<logger_type>()
     );
 
@@ -132,20 +133,15 @@ public:
      */
     boost::tuple<float_type, float_type, float_type> operator() (float_type rr, unsigned a, unsigned b)
     {
-        switch (index_) {
+        switch (index_(a, b)) {
             case 6:  return impl_<6>(rr, a, b);
             case 12: return impl_<12>(rr, a, b);
             case 24: return impl_<24>(rr, a, b);
             case 48: return impl_<48>(rr, a, b);
             default:
-                LOG_WARNING_ONCE("Using non-optimised force routine for index " << index_);
+                LOG_WARNING_ONCE("Using non-optimised force routine for index " << index_(a, b));
                 return impl_<0>(rr, a, b);
         }
-    }
-
-    int const& index() const
-    {
-        return index_;
     }
 
     matrix_type const& r_cut() const
@@ -178,6 +174,11 @@ public:
         return sigma_;
     }
 
+    uint_matrix_type const& index() const
+    {
+        return index_;
+    }
+
 private:
     /** optimise pow() function by providing the index at compile time
      * @param rr squared distance between particles
@@ -190,31 +191,33 @@ private:
     boost::tuple<float_type, float_type, float_type> impl_(float_type rr, unsigned a, unsigned b)
     {
         // choose arbitrary index_ if template parameter index = 0
-        float_type rni;
-        if (const_index > 0) {
-            rni = fixed_pow<const_index>(sigma_(a, b) / std::sqrt(rr));
-        }
-        else {
-            rni = std::pow(sigma_(a, b) / std::sqrt(rr), index_);
+        unsigned int n = const_index > 0 ? const_index : index_(a, b);
+        float_type rri = sigma2_(a, b) / rr;
+        // avoid computation of square root for even powers
+        float_type rni = (const_index > 0) ? fixed_pow<const_index / 2>(rri) : halmd::pow(rri, n / 2);
+        if (n % 2) {
+            rni *= std::sqrt(rri);
         }
         float_type eps_rni = epsilon_(a, b) * rni;
-        float_type fval = (const_index > 0 ? const_index : index_) * eps_rni / rr;
+        float_type fval = n * eps_rni / rr;
         float_type en_pot = eps_rni - en_cut_(a, b);
-        float_type hvir = fixed_pow<2>((const_index > 0 ? const_index : index_)) * eps_rni;
+        float_type hvir = n * n * eps_rni;
 
         return boost::make_tuple(fval, en_pot, hvir);
     }
 
-    /** power law index */
-    int index_;
     /** interaction strength in MD units */
     matrix_type epsilon_;
     /** interaction range in MD units */
     matrix_type sigma_;
-    /** cutoff length in MD units */
-    matrix_type r_cut_;
+    /** power law index */
+    uint_matrix_type index_;
+    /** square of pair separation */
+    matrix_type sigma2_;
     /** cutoff length in units of sigma */
     matrix_type r_cut_sigma_;
+    /** cutoff length in MD units */
+    matrix_type r_cut_;
     /** square of cutoff length */
     matrix_type rr_cut_;
     /** potential energy at cutoff in MD units */

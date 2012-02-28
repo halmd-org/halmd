@@ -36,17 +36,39 @@ HALMD_LUA_API int luaopen_libhalmd_utility_lua_ublas(lua_State* L)
     [
         namespace_("ublas")
         [
-            class_<vector<double> >("vector_double")
+            class_<vector<int> >("vector_int")
+                .def("data", (unbounded_array<int> const& (vector<int>::*)() const) &vector<int>::data)
+
+          , class_<vector<unsigned int> >("vector_uint")
+                .def("data", (unbounded_array<unsigned int> const& (vector<unsigned int>::*)() const) &vector<unsigned int>::data)
+
+          , class_<vector<double> >("vector_double")
                 .def("data", (unbounded_array<double> const& (vector<double>::*)() const) &vector<double>::data)
 
           , class_<vector<float> >("vector_float")
                 .def("data", (unbounded_array<float> const& (vector<float>::*)() const) &vector<float>::data)
+
+          , class_<matrix<int> >("matrix_int")
+                .def("data", (unbounded_array<int> const& (matrix<int>::*)() const) &matrix<int>::data)
+
+          , class_<matrix<unsigned int> >("matrix_uint")
+                .def("data", (unbounded_array<unsigned int> const& (matrix<unsigned int>::*)() const) &matrix<unsigned int>::data)
 
           , class_<matrix<double> >("matrix_double")
                 .def("data", (unbounded_array<double> const& (matrix<double>::*)() const) &matrix<double>::data)
 
           , class_<matrix<float> >("matrix_float")
                 .def("data", (unbounded_array<float> const& (matrix<float>::*)() const) &matrix<float>::data)
+
+          , class_<symmetric_matrix<int, lower> >("symmetric_matrix_int_lower")
+                .def("data", (unbounded_array<int> const& (symmetric_matrix<int, lower>::*)() const) &symmetric_matrix<int, lower>::data)
+                .def(tostring(self))
+                .def(tostring(const_self))
+
+          , class_<symmetric_matrix<unsigned int, lower> >("symmetric_matrix_uint_lower")
+                .def("data", (unbounded_array<unsigned int> const& (symmetric_matrix<unsigned int, lower>::*)() const) &symmetric_matrix<unsigned int, lower>::data)
+                .def(tostring(self))
+                .def(tostring(const_self))
 
           , class_<symmetric_matrix<double, lower> >("symmetric_matrix_double_lower")
                 .def("data", (unbounded_array<double> const& (symmetric_matrix<double, lower>::*)() const) &symmetric_matrix<double, lower>::data)
@@ -55,6 +77,16 @@ HALMD_LUA_API int luaopen_libhalmd_utility_lua_ublas(lua_State* L)
 
           , class_<symmetric_matrix<float, lower> >("symmetric_matrix_float_lower")
                 .def("data", (unbounded_array<float> const& (symmetric_matrix<float, lower>::*)() const) &symmetric_matrix<float, lower>::data)
+                .def(tostring(self))
+                .def(tostring(const_self))
+
+          , class_<symmetric_matrix<int, upper> >("symmetric_matrix_int_upper")
+                .def("data", (unbounded_array<int> const& (symmetric_matrix<int, upper>::*)() const) &symmetric_matrix<int, upper>::data)
+                .def(tostring(self))
+                .def(tostring(const_self))
+
+          , class_<symmetric_matrix<unsigned int, upper> >("symmetric_matrix_uint_upper")
+                .def("data", (unbounded_array<unsigned int> const& (symmetric_matrix<unsigned int, upper>::*)() const) &symmetric_matrix<unsigned int, upper>::data)
                 .def(tostring(self))
                 .def(tostring(const_self))
 

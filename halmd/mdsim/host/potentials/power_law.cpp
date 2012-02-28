@@ -40,16 +40,17 @@ template <typename float_type>
 power_law<float_type>::power_law(
     unsigned int ntype1
   , unsigned int ntype2
-  , int index
   , matrix_type const& cutoff
   , matrix_type const& epsilon
   , matrix_type const& sigma
+  , uint_matrix_type const& index
   , shared_ptr<logger_type> logger
 )
   // allocate potential parameters
-  : index_(index)
-  , epsilon_(epsilon)
+  : epsilon_(epsilon)
   , sigma_(sigma)
+  , index_(index)
+  , sigma2_(element_prod(sigma_, sigma_))
   , r_cut_sigma_(cutoff)
   , r_cut_(element_prod(sigma_, r_cut_sigma_))
   , rr_cut_(element_prod(r_cut_, r_cut_))
@@ -63,11 +64,11 @@ power_law<float_type>::power_law(
         }
     }
 
-    LOG("potential: power law index: n = " << index_);
-    LOG("potential: interaction strength ε = " << epsilon_);
-    LOG("potential: interaction range σ = " << sigma_);
-    LOG("potential: cutoff length r_c = " << r_cut_sigma_);
-    LOG("potential: cutoff energy U = " << en_cut_);
+    LOG("interaction strength ε = " << epsilon_);
+    LOG("interaction range σ = " << sigma_);
+    LOG("power law index: n = " << index_);
+    LOG("cutoff length r_c = " << r_cut_sigma_);
+    LOG("cutoff energy U = " << en_cut_);
 }
 
 template <typename float_type>
@@ -86,17 +87,17 @@ void power_law<float_type>::luaopen(lua_State* L)
                         .def(constructor<
                             unsigned int
                           , unsigned int
-                          , int
                           , matrix_type const&
                           , matrix_type const&
                           , matrix_type const&
+                          , uint_matrix_type const&
                           , shared_ptr<logger_type>
                         >())
-                        .property("index", &power_law::index)
                         .property("r_cut", (matrix_type const& (power_law::*)() const) &power_law::r_cut)
                         .property("r_cut_sigma", &power_law::r_cut_sigma)
                         .property("epsilon", &power_law::epsilon)
                         .property("sigma", &power_law::sigma)
+                        .property("index", &power_law::index)
                 ]
             ]
         ]

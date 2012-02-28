@@ -1,5 +1,5 @@
 --
--- Copyright © 2010  Peter Colberg and Felix Höfling
+-- Copyright © 2010-2011  Peter Colberg and Felix Höfling
 --
 -- This file is part of HALMD.
 --
@@ -37,8 +37,7 @@ module("halmd.mdsim.forces.pair_trunc", halmd.modules.register)
 --
 -- construct truncated pair force module
 --
--- @param args.force potential name
--- @param args.potential potential module instance
+-- @param args.potential potential name
 --
 function new(args)
     local particle1 = assert(args.particle or args.particles[1])
@@ -82,5 +81,12 @@ end
 -- connect runtime accumulators to module profiler
 --
 function profile(self, profiler)
-    profiler:on_profile{self, compute = "computation of " .. self.potential.module.description() .. " forces"}
+    profiler:on_profile{self, compute = "computation of " .. self.potential.module.description() .. " interaction"}
+end
+
+--
+-- returns module description
+--
+function description()
+    return "Truncated pair interaction"
 end

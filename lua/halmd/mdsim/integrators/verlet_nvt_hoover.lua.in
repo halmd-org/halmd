@@ -1,0 +1,146 @@
+--
+-- Copyright © 2011  Peter Colberg and Felix Höfling
+--
+-- This file is part of HALMD.
+--
+-- HALMD is free software: you can redistribute it and/or modify
+-- it under the terms of the GNU General Public License as published by
+-- the Free Software Foundation, either version 3 of the License, or
+-- (at your option) any later version.
+--
+-- This program is distributed in the hope that it will be useful,
+-- but WITHOUT ANY WARRANTY; without even the implied warranty of
+-- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+-- GNU General Public License for more details.
+--
+-- You should have received a copy of the GNU General Public License
+-- along with this program.  If not, see <http://www.gnu.org/licenses/>.
+--
+
+require("halmd.device")
+require("halmd.io.writers.file")
+require("halmd.mdsim.box")
+require("halmd.mdsim.clock")
+require("halmd.mdsim.core")
+require("halmd.mdsim.particle")
+require("halmd.modules")
+require("halmd.observables.sampler")
+
+-- grab modules
+local device = halmd.device
+local mdsim = halmd.mdsim
+local observables = halmd.observables
+local writers = halmd.io.writers
+-- grab C++ wrappers
+local verlet_nvt_hoover_wrapper = {
+    host = {
+        [2] = libhalmd.mdsim.host.integrators.verlet_nvt_hoover_2_
+      , [3] = libhalmd.mdsim.host.integrators.verlet_nvt_hoover_3_
+    }
+}
+if libhalmd.mdsim.gpu then
+    verlet_nvt_hoover_wrapper.gpu = {
+        [2] = libhalmd.mdsim.gpu.integrators.verlet_nvt_hoover_2_
+      , [3] = libhalmd.mdsim.gpu.integrators.verlet_nvt_hoover_3_
+    }
+end
+local h5 = libhalmd.h5
+local po = libhalmd.po
+-- grab standard library
+local assert = assert
+
+module("halmd.mdsim.integrators.verlet_nvt_hoover", halmd.modules.register)
+
+--
+-- construct verlet_nvt_hoover module
+--
+function new(args)
+    local temperature = args.temperature or 1.12 -- default value
+    local resonance_frequency = args.resonance_frequency or 5 -- default value
+    local every = args.every or 100 -- default value
+    local logger = assert(args.logger)
+
+    -- dependency injection
+    local particle = mdsim.particle() -- singleton
+    local dimension = assert(particle.dimension)
+    local box = mdsim.box() -- singleton
+    local clock = mdsim.clock() -- singleton
+    local timestep = assert(clock.timestep)
+
+    local verlet_nvt_hoover
+    if device() then
+        verlet_nvt_hoover = verlet_nvt_hoover_wrapper.gpu[dimension]
+    else
+        verlet_nvt_hoover = verlet_nvt_hoover_wrapper.host[dimension]
+    end
+    local integrator = verlet_nvt_hoover(particle, box, timestep, temperature, resonance_frequency, logger)
+
+    -- connect integrator to core
+    local core = mdsim.core()
+    core:on_integrate{integrator.integrate, tracker = integrator}
+    core:on_finalize{integrator.finalize, tracker = integrator}
+
+    -- connect chain variables to writers of trajectory file
+    local file = writers.file{extension = "trj"} -- singleton
+    local writer = file:writer{location = {"trajectory", "nose_hoover"}, mode = "append"}
+    writer:on_write(integrator.xi, {"position"})
+    writer:on_write(integrator.v_xi, {"velocity"})
+    -- connect writer to sampler
+    local sampler = observables.sampler() -- singleton
+    sampler:on_sample{writer.write, every, tracker = integrator}
+
+    -- connect chain energy to writers of observables file
+    file = writers.file() -- singleton
+    writer = file:writer{location = {"observables"}, mode = "append"}
+    writer:on_write(integrator.en_nhc, {"total_energy_nose_hoover_chain"})
+    -- connect writer to sampler
+    sampler:on_sample{writer.write, every, tracker = integrator}
+
+    return integrator
+end
+
+--
+-- connect runtime accumulators to module profiler
+--
+function profile(self, profiler)
+    profiler:on_profile{self, integrate = "first half-step of velocity-Verlet (+ Nosé-Hoover chain)"}
+    profiler:on_profile{self, finalize = "second half-step of velocity-Verlet (+ Nosé-Hoover chain)"}
+    profiler:on_profile{self, propagate = "propagate Nosé-Hoover chain"}
+    if device() then
+        profiler:on_profile{self, rescale = "rescale velocities in Nosé-Hoover thermostat"}
+    end
+end
+
+--
+-- returns module description
+--
+function description()
+    return "Thermostatted velocity-Verlet integrator using a Nosé-Hoover chain"
+end
+
+--
+-- assemble module options
+--
+-- @param desc po.options_description
+--
+function options(desc)
+    desc:add("timestep", po.float(), "integration timestep")
+    desc:add("temperature", po.float(), "thermostat temperature")
+    desc:add("resonance-frequency", po.float(), "resonance frequency of heat bath")
+-- FIXME reintroduce mass as alternative to resonance_frequency
+--    desc:add("mass", po.float_array(), "coupling parameters: `mass' of heat bath variables")
+    desc:add("every", po.uint64(), "sample interval for heat bath variables")
+end
+
+--
+-- write module parameters to HDF5 group
+--
+-- @param integrator module instance
+-- @param group HDF5 group
+--
+function write_parameters(integrator, group)
+    group:write_attribute("timestep", h5.float(), integrator.timestep)
+    group:write_attribute("temperature", h5.float(), integrator.temperature)
+    group:write_attribute("resonance_frequency", h5.float(), integrator.resonance_frequency)
+    group:write_attribute("mass", h5.float_array(), integrator.mass)
+end
