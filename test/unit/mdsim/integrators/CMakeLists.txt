@@ -1,3 +1,40 @@
+# module euler
+add_executable(test_unit_mdsim_integrators_euler
+  euler.cpp
+  apply_negate.cu
+)
+target_link_libraries(test_unit_mdsim_integrators_euler
+  libhalmd
+  ${HALMD_COMMON_LIBRARIES}
+  ${HALMD_TEST_LIBRARIES}
+)
+add_test(unit/mdsim/integrators/euler/host/2d/linear
+  test_unit_mdsim_integrators_euler --run_test=euler_host_2d_linear --log_level=test_suite
+)
+add_test(unit/mdsim/integrators/euler/host/2d/overdamped
+  test_unit_mdsim_integrators_euler --run_test=euler_host_2d_overdamped --log_level=test_suite
+)
+add_test(unit/mdsim/integrators/euler/host/3d/linear
+  test_unit_mdsim_integrators_euler --run_test=euler_host_3d_linear --log_level=test_suite
+)
+add_test(unit/mdsim/integrators/euler/host/3d/overdamped
+  test_unit_mdsim_integrators_euler --run_test=euler_host_3d_overdamped --log_level=test_suite
+)
+if(WITH_CUDA)
+  add_test(unit/mdsim/integrators/euler/gpu/2d/linear
+    test_unit_mdsim_integrators_euler --run_test=euler_gpu_2d_linear --log_level=test_suite
+  )
+  add_test(unit/mdsim/integrators/euler/gpu/2d/overdamped
+    test_unit_mdsim_integrators_euler --run_test=euler_gpu_2d_overdamped --log_level=test_suite
+  )
+  add_test(unit/mdsim/integrators/euler/gpu/3d/linear
+    test_unit_mdsim_integrators_euler --run_test=euler_gpu_3d_linear --log_level=test_suite
+  )
+  add_test(unit/mdsim/integrators/euler/gpu/3d/overdamped
+    test_unit_mdsim_integrators_euler --run_test=euler_gpu_3d_overdamped --log_level=test_suite
+  )
+endif(WITH_CUDA)
+
 # module verlet
 add_executable(test_unit_mdsim_integrators_verlet
   verlet.cpp

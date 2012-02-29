@@ -1,5 +1,5 @@
 /*
- * Copyright © 2008-2010  Peter Colberg
+ * Copyright © 2008-2012  Peter Colberg and Felix Höfling
  *
  * This file is part of HALMD.
  *
@@ -33,9 +33,21 @@ public:
 
     integrator() {}
     virtual ~integrator() {}
+
+    /**
+     * update positions and possibly velocities,
+     * e.g., first leap-frog step of velocity-Verlet integrator
+     */
     virtual void integrate() = 0;
+
+    /**
+     * update velocities,
+     * e.g., second leap-frog step of velocity-Verlet integrator
+     */
     virtual void finalize() = 0;
+    /** returns integration timestep */
     virtual double timestep() const = 0;
+    /** set integration timestep */
     virtual void timestep(double timestep) = 0;
 };
 
