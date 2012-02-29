@@ -19,10 +19,11 @@
 
 require("halmd.device")
 require("halmd.modules")
+require("halmd.observables.samples.particle_group")
 
 -- grab modules
 local device = halmd.device
-local mdsim = halmd.mdsim
+local observables = halmd.observables
 -- grab C++ wrappers
 local phase_space_wrapper = {
     host = {
@@ -54,12 +55,19 @@ module("halmd.observables.samples.phase_space", halmd.modules.register)
 -- construct phase_space module
 --
 -- @param args       parameter table
---   args.particle_group    instance of particle_group specifying data type and size
+--   args.particle          instance of particle or particle_group
 --   args.memory            specify memory location of sample ("host", "gpu")
 --
 function new(args)
-    local particle_group = assert(args.particle_group, "missing parameter: particle_group")
+    local particle = assert(args.particle, "missing parameter: particle")
     local memory = assert(args.memory, "missing parameter: memory")
+
+    local particle_group
+    if particle.particle then
+        particle_group = particle
+    else
+        particle_group = observables.samples.particle_group{particle = particle}
+    end
 
     local dimension = assert(particle_group.dimension)
     local phase_space
