@@ -1,5 +1,5 @@
 --
--- Copyright © 2010-2011  Peter Colberg and Felix Höfling
+-- Copyright © 2010-2012  Peter Colberg and Felix Höfling
 --
 -- This file is part of HALMD.
 --
@@ -18,10 +18,12 @@
 --
 
 require("halmd.mdsim.forces")
+require("halmd.mdsim.potential")
 require("halmd.modules")
 
 -- grab modules
 local forces = halmd.mdsim.forces
+local mdsim = halmd.mdsim
 -- grab C++ wrappers
 local h5 = libhalmd.h5
 local po = libhalmd.po
@@ -35,10 +37,18 @@ module("halmd.mdsim.force", halmd.modules.register)
 --
 -- construct force module
 --
+-- @param args       parameter table
+--   args.particle          instance of particle
+--   args.force             name of force (optional)
+--   args.potential         instance of potential (optional)
+--
+-- @returns instance of force
+--
 function new(args)
-    local particle = assert(args.particle)
+    local particle = assert(args.particle, "missing parameter: particle")
     local force = args.force or "pair_trunc" -- default value
-    return assert(forces[force]){particle = particle, potential = potential{particle = particle}}
+    local potential = args.potential or mdsim.potential{particle = particle}
+    return assert(forces[force]){particle = particle, potential = potential}
 end
 
 --

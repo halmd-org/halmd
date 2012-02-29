@@ -1,5 +1,5 @@
 --
--- Copyright © 2010-2011  Peter Colberg and Felix Höfling
+-- Copyright © 2010-2012  Peter Colberg and Felix Höfling
 --
 -- This file is part of HALMD.
 --
@@ -35,9 +35,16 @@ module("halmd.mdsim.potential", halmd.modules.register)
 --
 -- construct potential module
 --
+-- @param args       parameter table
+--   args.particle          instance of particle
+--   args.force             name of potential (optional)
+--
+-- @returns instance of potential
+--
 function new(args)
+    local particle = assert(args.particle, "missing parameter: particle")
     local potential = args.potential or "lennard_jones" -- default value
-    return assert(potentials[potential])()
+    return assert(potentials[potential]){particle = particle}
 end
 
 --
