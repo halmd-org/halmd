@@ -26,7 +26,6 @@
 #include <functional>
 #include <limits>
 
-#include <halmd/algorithm/gpu/apply_kernel.hpp>
 #include <halmd/mdsim/box.hpp>                          // dependency of euler module
 #include <halmd/mdsim/clock.hpp>                        // dependency of phase_space module
 #include <halmd/mdsim/host/integrators/euler.hpp>       // module to be tested
@@ -36,6 +35,7 @@
 #include <halmd/observables/host/samples/particle_group.hpp>
 #include <halmd/random/host/random.hpp>                 // dependency of modules position, velocity
 #ifdef WITH_CUDA
+# include <halmd/algorithm/gpu/apply_kernel.hpp>
 # include <halmd/mdsim/gpu/integrators/euler.hpp>
 # include <halmd/mdsim/gpu/positions/lattice.hpp>
 # include <halmd/mdsim/gpu/velocities/boltzmann.hpp>
