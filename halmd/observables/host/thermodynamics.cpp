@@ -49,27 +49,6 @@ thermodynamics<dimension, float_type>::thermodynamics(
 }
 
 template <int dimension, typename float_type>
-thermodynamics<dimension, float_type>::thermodynamics(
-    shared_ptr<particle_type const> particle
-  , shared_ptr<box_type const> box
-  , shared_ptr<clock_type const> clock
-  , shared_ptr<force_type const> force
-  , shared_ptr<logger_type> logger
-)
-  // dependency injection
-  : box_(box)
-  , particle_group_(
-        make_shared<samples::particle_group_all<dimension, float_type> >(particle)
-  )
-  , force_(force)
-  , logger_(logger)
-  // initialise members
-  , en_kin_(clock)
-  , v_cm_(clock)
-{
-}
-
-template <int dimension, typename float_type>
 double thermodynamics<dimension, float_type>::en_kin()
 {
     if (!en_kin_.valid()) {
@@ -140,14 +119,6 @@ void thermodynamics<dimension, float_type>::luaopen(lua_State* L)
         [
             def("thermodynamics", &make_shared<thermodynamics
               , shared_ptr<particle_group_type const>
-              , shared_ptr<box_type const>
-              , shared_ptr<clock_type const>
-              , shared_ptr<force_type const>
-              , shared_ptr<logger_type>
-            >)
-
-          , def("thermodynamics", &make_shared<thermodynamics
-              , shared_ptr<particle_type const>
               , shared_ptr<box_type const>
               , shared_ptr<clock_type const>
               , shared_ptr<force_type const>

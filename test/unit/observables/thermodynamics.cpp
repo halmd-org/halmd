@@ -32,11 +32,11 @@
 #include <halmd/mdsim/host/integrators/verlet_nvt_andersen.hpp>
 #include <halmd/mdsim/host/maximum_squared_displacement.hpp>
 #include <halmd/mdsim/host/neighbours/from_binning.hpp>
-#include <halmd/mdsim/host/particle.hpp>
 #include <halmd/mdsim/host/positions/lattice.hpp>
 #include <halmd/mdsim/host/potentials/lennard_jones.hpp>
 #include <halmd/mdsim/host/velocities/boltzmann.hpp>
 #include <halmd/numeric/accumulator.hpp>
+#include <halmd/observables/host/samples/particle_group.hpp>
 #include <halmd/observables/host/thermodynamics.hpp>
 #include <halmd/random/host/random.hpp>
 #include <halmd/utility/predicates/greater.hpp>
@@ -45,12 +45,12 @@
 # include <halmd/mdsim/gpu/forces/zero.hpp>
 # include <halmd/mdsim/gpu/integrators/verlet.hpp>
 # include <halmd/mdsim/gpu/integrators/verlet_nvt_andersen.hpp>
-# include <halmd/mdsim/gpu/particle.hpp>
 # include <halmd/mdsim/gpu/maximum_squared_displacement.hpp>
 # include <halmd/mdsim/gpu/neighbours/from_binning.hpp>
 # include <halmd/mdsim/gpu/positions/lattice.hpp>
 # include <halmd/mdsim/gpu/potentials/lennard_jones.hpp>
 # include <halmd/mdsim/gpu/velocities/boltzmann.hpp>
+# include <halmd/observables/gpu/samples/particle_group.hpp>
 # include <halmd/observables/gpu/thermodynamics.hpp>
 # include <halmd/random/gpu/random.hpp>
 # include <halmd/utility/gpu/device.hpp>
@@ -115,7 +115,8 @@ struct lennard_jones_fluid
     typedef typename modules_type::msd_type msd_type;
     typedef typename modules_type::nve_integrator_type nve_integrator_type;
     typedef typename modules_type::nvt_integrator_type nvt_integrator_type;
-    typedef typename modules_type::particle_type particle_type;
+    typedef typename modules_type::particle_group_type particle_group_type;
+    typedef typename particle_group_type::particle_type particle_type;
     typedef typename modules_type::position_type position_type;
     typedef typename modules_type::random_type random_type;
     typedef typename modules_type::thermodynamics_type thermodynamics_type;
@@ -326,7 +327,7 @@ lennard_jones_fluid<modules_type>::lennard_jones_fluid()
     force = make_shared<force_type>(potential, particle, particle, box, neighbour);
     zero = make_shared<zero_type>(particle);
     clock = make_shared<clock_type>(timestep);
-    thermodynamics = make_shared<thermodynamics_type>(particle, box, clock, force);
+    thermodynamics = make_shared<thermodynamics_type>(make_shared<particle_group_type>(particle), box, clock, force);
     msd = make_shared<msd_type>(particle, box);
 }
 
@@ -371,7 +372,7 @@ struct host_modules
     typedef mdsim::host::maximum_squared_displacement<dimension, float_type> msd_type;
     typedef mdsim::host::integrators::verlet<dimension, float_type> nve_integrator_type;
     typedef mdsim::host::integrators::verlet_nvt_andersen<dimension, float_type> nvt_integrator_type;
-    typedef mdsim::host::particle<dimension, float_type> particle_type;
+    typedef observables::host::samples::particle_group_all<dimension, float_type> particle_group_type;
     typedef mdsim::host::positions::lattice<dimension, float_type> position_type;
     typedef halmd::random::host::random random_type;
     typedef mdsim::host::velocities::boltzmann<dimension, float_type> velocity_type;
@@ -399,7 +400,7 @@ struct gpu_modules
     typedef mdsim::gpu::maximum_squared_displacement<dimension, float_type> msd_type;
     typedef mdsim::gpu::integrators::verlet<dimension, float_type> nve_integrator_type;
     typedef mdsim::gpu::integrators::verlet_nvt_andersen<dimension, float_type, halmd::random::gpu::rand48> nvt_integrator_type;
-    typedef mdsim::gpu::particle<dimension, float_type> particle_type;
+    typedef observables::gpu::samples::particle_group_all<dimension, float_type> particle_group_type;
     typedef mdsim::gpu::positions::lattice<dimension, float_type, halmd::random::gpu::rand48> position_type;
     typedef halmd::random::gpu::random<halmd::random::gpu::rand48> random_type;
     typedef observables::gpu::thermodynamics<dimension, float_type> thermodynamics_type;

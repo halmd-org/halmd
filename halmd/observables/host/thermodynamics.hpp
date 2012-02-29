@@ -62,14 +62,6 @@ public:
       , boost::shared_ptr<logger_type> logger = boost::make_shared<logger_type>()
     );
 
-    thermodynamics(
-        boost::shared_ptr<particle_type const> particle
-      , boost::shared_ptr<box_type const> box
-      , boost::shared_ptr<clock_type const> clock
-      , boost::shared_ptr<force_type const> force
-      , boost::shared_ptr<logger_type> logger = boost::make_shared<logger_type>()
-    );
-
     virtual unsigned int nparticle() const
     {
         return particle_group_->size();

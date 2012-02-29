@@ -30,18 +30,18 @@
 #include <halmd/mdsim/core.hpp>
 #include <halmd/mdsim/host/forces/zero.hpp>
 #include <halmd/mdsim/host/integrators/verlet.hpp>
-#include <halmd/mdsim/host/particle.hpp>
 #include <halmd/mdsim/host/positions/lattice.hpp>
 #include <halmd/mdsim/host/velocities/boltzmann.hpp>
 #include <halmd/numeric/accumulator.hpp>
+#include <halmd/observables/host/samples/particle_group.hpp>
 #include <halmd/observables/host/thermodynamics.hpp>
 #include <halmd/random/host/random.hpp>
 #ifdef WITH_CUDA
 # include <halmd/mdsim/gpu/forces/zero.hpp>
 # include <halmd/mdsim/gpu/integrators/verlet.hpp>
-# include <halmd/mdsim/gpu/particle.hpp>
 # include <halmd/mdsim/gpu/positions/lattice.hpp>
 # include <halmd/mdsim/gpu/velocities/boltzmann.hpp>
+# include <halmd/observables/gpu/samples/particle_group.hpp>
 # include <halmd/observables/gpu/thermodynamics.hpp>
 # include <halmd/random/gpu/random.hpp>
 # include <halmd/utility/gpu/device.hpp>
@@ -63,7 +63,8 @@ struct ideal_gas
     typedef typename modules_type::box_type box_type;
     typedef typename modules_type::force_type force_type;
     typedef typename modules_type::integrator_type integrator_type;
-    typedef typename modules_type::particle_type particle_type;
+    typedef typename modules_type::particle_group_type particle_group_type;
+    typedef typename particle_group_type::particle_type particle_type;
     typedef typename modules_type::position_type position_type;
     typedef typename modules_type::random_type random_type;
     typedef typename modules_type::thermodynamics_type thermodynamics_type;
@@ -158,7 +159,7 @@ ideal_gas<modules_type>::ideal_gas()
     integrator = make_shared<integrator_type>(particle, box, timestep);
     force = make_shared<force_type>(particle);
     clock = make_shared<clock_type>(timestep);
-    thermodynamics = make_shared<thermodynamics_type>(particle, box, clock, force);
+    thermodynamics = make_shared<thermodynamics_type>(make_shared<particle_group_type>(particle), box, clock, force);
 
     // create core and connect module slots to core signals
     this->connect();
@@ -184,7 +185,7 @@ struct host_modules
     typedef mdsim::box<dimension> box_type;
     typedef mdsim::host::forces::zero<dimension, float_type> force_type;
     typedef mdsim::host::integrators::verlet<dimension, float_type> integrator_type;
-    typedef mdsim::host::particle<dimension, float_type> particle_type;
+    typedef observables::host::samples::particle_group_all<dimension, float_type> particle_group_type;
     typedef mdsim::host::positions::lattice<dimension, float_type> position_type;
     typedef halmd::random::host::random random_type;
     typedef mdsim::host::velocities::boltzmann<dimension, float_type> velocity_type;
@@ -206,7 +207,7 @@ struct gpu_modules
     typedef mdsim::box<dimension> box_type;
     typedef mdsim::gpu::forces::zero<dimension, float_type> force_type;
     typedef mdsim::gpu::integrators::verlet<dimension, float_type> integrator_type;
-    typedef mdsim::gpu::particle<dimension, float_type> particle_type;
+    typedef observables::gpu::samples::particle_group_all<dimension, float_type> particle_group_type;
     typedef mdsim::gpu::positions::lattice<dimension, float_type, halmd::random::gpu::rand48> position_type;
     typedef halmd::random::gpu::random<halmd::random::gpu::rand48> random_type;
     typedef observables::gpu::thermodynamics<dimension, float_type> thermodynamics_type;
