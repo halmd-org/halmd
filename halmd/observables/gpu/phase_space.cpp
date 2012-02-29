@@ -82,56 +82,6 @@ phase_space<host::samples::phase_space<dimension, float_type> >::phase_space(
 {
 }
 
-template <int dimension, typename float_type>
-phase_space<gpu::samples::phase_space<dimension, float_type> >::phase_space(
-    shared_ptr<sample_type> sample
-  , shared_ptr<particle_type const> particle
-  , shared_ptr<box_type const> box
-  , shared_ptr<clock_type const> clock
-  , shared_ptr<logger_type> logger
-)
-  // dependency injection
-  : sample_(sample)
-  , particle_group_(
-        make_shared<samples::particle_group_all<dimension, float_type> >(particle)
-    )
-  , box_(box)
-  , clock_(clock)
-  , logger_(logger)
-{
-    try {
-        cuda::copy(static_cast<vector_type>(box_->length()), phase_space_wrapper<dimension>::kernel.box_length);
-    }
-    catch (cuda::error const&)
-    {
-        LOG_ERROR("failed to copy box length to GPU");
-        throw;
-    }
-}
-
-template <int dimension, typename float_type>
-phase_space<host::samples::phase_space<dimension, float_type> >::phase_space(
-    shared_ptr<sample_type> sample
-  , shared_ptr<particle_type const> particle
-  , shared_ptr<box_type const> box
-  , shared_ptr<clock_type const> clock
-  , shared_ptr<logger_type> logger
-)
-  // dependency injection
-  : sample_(sample)
-  , particle_group_(
-        make_shared<samples::particle_group_all<dimension, float_type> >(particle)
-    )
-  , box_(box)
-  , clock_(clock)
-  , logger_(logger)
-  // allocate page-locked host memory
-  , h_r_(particle->nbox)
-  , h_image_(particle->nbox)
-  , h_v_(particle->nbox)
-{
-}
-
 /**
  * Sample phase_space
  */
@@ -261,13 +211,6 @@ void phase_space<gpu::samples::phase_space<dimension, float_type> >::luaopen(lua
                , shared_ptr<clock_type const>
                , shared_ptr<logger_type>
             >)
-          , def("phase_space", &make_shared<phase_space
-               , shared_ptr<sample_type>
-               , shared_ptr<particle_type const>
-               , shared_ptr<box_type const>
-               , shared_ptr<clock_type const>
-               , shared_ptr<logger_type>
-            >)
         ]
     ];
 }
@@ -300,13 +243,6 @@ void phase_space<host::samples::phase_space<dimension, float_type> >::luaopen(lu
           , def("phase_space", &make_shared<phase_space
                , shared_ptr<sample_type>
                , shared_ptr<particle_group_type>
-               , shared_ptr<box_type const>
-               , shared_ptr<clock_type const>
-               , shared_ptr<logger_type>
-            >)
-          , def("phase_space", &make_shared<phase_space
-               , shared_ptr<sample_type>
-               , shared_ptr<particle_type const>
                , shared_ptr<box_type const>
                , shared_ptr<clock_type const>
                , shared_ptr<logger_type>

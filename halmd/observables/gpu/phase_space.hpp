@@ -65,15 +65,6 @@ public:
       , boost::shared_ptr<logger_type> logger = boost::make_shared<logger_type>()
     );
 
-    // construct directly from particle
-    phase_space(
-        boost::shared_ptr<sample_type> sample
-      , boost::shared_ptr<particle_type const> particle
-      , boost::shared_ptr<box_type const> box
-      , boost::shared_ptr<clock_type const> clock
-      , boost::shared_ptr<logger_type> logger = boost::make_shared<logger_type>()
-    );
-
     virtual void acquire();
 
 private:
@@ -120,15 +111,6 @@ public:
     phase_space(
         boost::shared_ptr<sample_type> sample
       , boost::shared_ptr<particle_group_type> particle_group
-      , boost::shared_ptr<box_type const> box
-      , boost::shared_ptr<clock_type const> clock
-      , boost::shared_ptr<logger_type> logger = boost::make_shared<logger_type>()
-    );
-
-    // construct directly from particle
-    phase_space(
-        boost::shared_ptr<sample_type> sample
-      , boost::shared_ptr<particle_type const> particle
       , boost::shared_ptr<box_type const> box
       , boost::shared_ptr<clock_type const> clock
       , boost::shared_ptr<logger_type> logger = boost::make_shared<logger_type>()

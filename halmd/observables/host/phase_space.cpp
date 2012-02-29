@@ -48,24 +48,6 @@ phase_space<dimension, float_type>::phase_space(
 {
 }
 
-template <int dimension, typename float_type>
-phase_space<dimension, float_type>::phase_space(
-    shared_ptr<sample_type> sample
-  , shared_ptr<particle_type const> particle
-  , shared_ptr<box_type const> box
-  , shared_ptr<clock_type const> clock
-  , shared_ptr<logger_type> logger
-)
-  : sample_(sample)
-  , particle_group_(
-        make_shared<samples::particle_group_all<dimension, float_type> >(particle)
-    )
-  , box_(box)
-  , clock_(clock)
-  , logger_(logger)
-{
-}
-
 /**
  * Sample phase_space
  */
@@ -137,13 +119,6 @@ void phase_space<dimension, float_type>::luaopen(lua_State* L)
           , def("phase_space", &make_shared<phase_space
                , shared_ptr<sample_type>
                , shared_ptr<particle_group_type const>
-               , shared_ptr<box_type const>
-               , shared_ptr<clock_type const>
-               , shared_ptr<logger_type>
-            >)
-          , def("phase_space", &make_shared<phase_space
-               , shared_ptr<sample_type>
-               , shared_ptr<particle_type const>
                , shared_ptr<box_type const>
                , shared_ptr<clock_type const>
                , shared_ptr<logger_type>
