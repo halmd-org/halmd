@@ -77,7 +77,7 @@ function options(desc)
     desc:add("core", po.float_array(), "radius of hard core [in units of sigma]")
     desc:add("epsilon", po.float_array(), "interaction strength [MD units]")
     desc:add("sigma", po.float_array(), "interaction range [MD units]")
-    desc:add("index", po.uint(), "power law index")
+    desc:add("index", po.uint_array(), "power law index")
     -- FIXME desc:add("smooth", po.float_array(), "C²-potential smoothing factor")
 end
 

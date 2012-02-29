@@ -1,5 +1,5 @@
 /*
- * Copyright © 2008-2011  Peter Colberg
+ * Copyright © 2008-2012  Peter Colberg and Felix Höfling
  *
  * This file is part of HALMD.
  *
@@ -318,6 +318,36 @@ operator%(fixed_vector<T, N> v, S const& s)
 {
     v %= s;
     return v;
+}
+
+/**
+ * Elementwise comparison
+ * @returns true if _all_ elements are equal
+ */
+template <typename T, typename S, size_t N, size_t L, size_t U>
+inline HALMD_GPU_ENABLED
+typename boost::disable_if<boost::mpl::greater<boost::mpl::int_<U>, boost::mpl::int_<L> >, bool>::type
+operator==(fixed_vector<T, N> const& v, fixed_vector<S, N> const& w)
+{
+    return v[L] == static_cast<T>(w[L]);
+}
+
+template <typename T, typename S, size_t N, size_t L, size_t U>
+inline HALMD_GPU_ENABLED
+typename boost::enable_if<boost::mpl::greater<boost::mpl::int_<U>, boost::mpl::int_<L> >, bool>::type
+operator==(fixed_vector<T, N> const& v, fixed_vector<S, N> const& w)
+{
+    return
+        operator==<T, S, N, L, (L + U) / 2>(v, w)
+     && operator==<T, S, N, (L + U) / 2 + 1, U>(v, w);
+}
+
+template <typename T, typename S, size_t N>
+inline HALMD_GPU_ENABLED
+typename boost::enable_if<boost::is_convertible<S, T>, bool>::type
+operator==(fixed_vector<T, N> const& v, fixed_vector<S, N> const& w)
+{
+    return operator==<T, S, N, 0, N - 1>(v, w);
 }
 
 /**
