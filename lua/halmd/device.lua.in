@@ -1,5 +1,5 @@
 --
--- Copyright © 2010  Peter Colberg
+-- Copyright © 2010-2012  Peter Colberg
 --
 -- This file is part of HALMD.
 --
@@ -19,6 +19,9 @@
 
 require("halmd.modules")
 local singleton = require("halmd.singleton")
+
+-- load GPU module if available
+pcall(require, "halmd.gpu")
 
 -- grab C++ wrappers
 local device_wrapper
