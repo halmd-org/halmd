@@ -1,5 +1,5 @@
 /*
- * Copyright © 2010-2011  Peter Colberg
+ * Copyright © 2010-2012  Peter Colberg
  *
  * This file is part of HALMD.
  *
@@ -46,6 +46,8 @@ script::script()
     luaL_openlibs(L);
     // set Lua package path
     package_path();
+    // set Lua C package path
+    package_cpath();
     // print Lua stack trace on error
     luabind::set_pcall_callback(&script::traceback);
     // translate C++ standard exceptions into error messages
@@ -93,6 +95,44 @@ void script::package_path()
     // append above literals to default package.path
     lua_concat(L, 3);
     // set new package.path
+    lua_rawset(L, -3);
+    // remove table "package"
+    lua_pop(L, 1);
+}
+
+/**
+ * Set Lua package cpath
+ *
+ * Append HALMD installation prefix paths to package.cpath.
+ */
+void script::package_cpath()
+{
+    // push table "package"
+    lua_getglobal(L, "package");
+    // push key for rawset
+    lua_pushliteral(L, "cpath");
+    // push key for rawget
+    lua_pushliteral(L, "cpath");
+    // get default package.cpath
+    lua_rawget(L, -3);
+
+    // absolute path to HALMD build tree
+    filesystem::path build_path(HALMD_BINARY_DIR);
+    // absolute path to initial current working directory
+    filesystem::path initial_path(filesystem::initial_path());
+
+    if (contains_path(build_path, initial_path)) {
+        // search for Lua scripts in build tree using relative path
+        lua_pushliteral(L, ";" HALMD_BINARY_DIR "/?.so");
+    }
+    else {
+        // search for Lua scripts in installation prefix
+        lua_pushliteral(L, ";" HALMD_INSTALL_PREFIX "/lib/?.so");
+    }
+
+    // append above literals to default package.cpath
+    lua_concat(L, 2);
+    // set new package.cpath
     lua_rawset(L, -3);
     // remove table "package"
     lua_pop(L, 1);
