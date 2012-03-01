@@ -1,5 +1,5 @@
 /*
- * Copyright © 2010-2011  Peter Colberg
+ * Copyright © 2010-2012  Peter Colberg
  *
  * This file is part of HALMD.
  *
@@ -55,6 +55,7 @@ private:
     typedef signal<void ()>::slot_function_type slot_function_type;
 
     void package_path();
+    void package_cpath();
     static void register_exception_handlers();
 
     /** RAII wrapper of Lua state */
