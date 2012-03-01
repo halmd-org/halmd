@@ -1,0 +1,14 @@
+#!/usr/bin/make -f
+# -*- makefile -*-
+
+# Uncomment this to turn on verbose mode.
+#export DH_VERBOSE=1
+
+%:
+	dh $@ --parallel
+
+override_dh_auto_configure:
+	dh_auto_configure -- -DBoost_USE_STATIC_LIBS=TRUE -DHDF5_USE_STATIC_LIBS=TRUE
+
+override_dh_shlibdeps:
+	dh_shlibdeps -- --ignore-missing-info

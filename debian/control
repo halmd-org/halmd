@@ -1,0 +1,20 @@
+Source: halmd
+Section: science
+Priority: optional
+Maintainer: Peter Colberg <peter@colberg.org>
+Build-Depends: debhelper (>= 8.0.0)
+Standards-Version: 3.9.2
+Homepage: http://halmd.org/
+Vcs-Git: git://git.halmd.org/halmd.git
+Vcs-Browser: http://git.halmd.org/halmd.git
+
+Package: halmd
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}
+Description: Highly Accelerated Large-scale Molecular Dynamics package
+ HALMD is a high-precision molecular dynamics package for the large-scale
+ simulation of simple and complex liquids.
+ .
+ HALMD supports acceleration through CUDA-enabled graphics processors.
+ HALMD lays emphasis on long-time numerical stability by using double-single
+ precision arithmetic for numerically crucial parts of the MD integration step.
