@@ -17,7 +17,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <boost/bind.hpp>
+#include <luabind/class_info.hpp>
 
 #include <halmd/io/logger.hpp>
 #include <halmd/script.hpp>
@@ -50,6 +50,10 @@ script::script()
     luabind::set_pcall_callback(&script::traceback);
     // translate C++ standard exceptions into error messages
     register_exception_handlers();
+    // setup global structures and Lua class support
+    luabind::open(L);
+    // class_info(), class_names()
+    luabind::bind_class_info(L);
     // load HALMD Lua C++ wrapper
     luaopen_libhalmd(L);
 }
