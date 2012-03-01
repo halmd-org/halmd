@@ -22,7 +22,7 @@
 /**
  * bind HALMD C++ modules
  */
-HALMD_LUA_API int luaopen_libhalmd(lua_State* L)
+HALMD_LUA_API int luaopen_@LIBRARY@(lua_State* L)
 {
     luaopen_@MODULE@(L);
     return 0;
