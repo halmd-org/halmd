@@ -85,3 +85,7 @@ There are some requirements to ensure a smooth run of packages.mk:
 The bzip2 library is necessary for Boost.IOStreams. As HALMD does not make use
 of this library, you may opt to compile Boost without bzip2 support by
 prepending ``NO_BZIP2=1`` to the make command.
+
+On a Debian system, the following packages are required::
+
+  apt-get install build-essential zlib1g-dev libbz2-dev unzip libreadline6-dev
