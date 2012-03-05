@@ -39,11 +39,20 @@ endif()
 
 configure_file(conf.py.in conf.py)
 
+# The documentation consists of static ReST documents in the source tree, and
+# auto-generated ReST documents in the binary tree. Since Sphinx only supports
+# a single tree for sources, copy the static documents to the binary tree.
+file(GLOB_RECURSE files RELATIVE "${CMAKE_CURRENT_SOURCE_DIR}" "*.rst.in")
+foreach(input ${files})
+  string(REGEX REPLACE "\\.in$" "" output ${input})
+  configure_file(${input} ${output} @ONLY)
+endforeach(input)
+
 add_custom_target(halmd_doc_html ALL
   ${SPHINX_EXECUTABLE}
     -q -b html
     -c "${CMAKE_CURRENT_BINARY_DIR}"
-    "${CMAKE_CURRENT_SOURCE_DIR}"
+    "${CMAKE_CURRENT_BINARY_DIR}"
     "${CMAKE_CURRENT_BINARY_DIR}/html"
   COMMENT "Build HALMD HTML documentation"
 )
@@ -66,7 +75,7 @@ add_custom_target(halmd_doc_man ALL
   ${SPHINX_EXECUTABLE}
     -q -b man
     -c "${CMAKE_CURRENT_BINARY_DIR}"
-    "${CMAKE_CURRENT_SOURCE_DIR}"
+    "${CMAKE_CURRENT_BINARY_DIR}"
     "${CMAKE_CURRENT_BINARY_DIR}/man"
   COMMENT "Build HALMD man page"
 )
@@ -82,7 +91,7 @@ add_custom_target(halmd_doc_pdf ALL
   ${SPHINX_EXECUTABLE}
     -q -b latex
     -c "${CMAKE_CURRENT_BINARY_DIR}"
-    "${CMAKE_CURRENT_SOURCE_DIR}"
+    "${CMAKE_CURRENT_BINARY_DIR}"
     "${CMAKE_CURRENT_BINARY_DIR}/pdf"
   COMMENT "Build HALMD PDF documentation"
 )
