@@ -48,6 +48,16 @@ foreach(input ${files})
   configure_file(${input} ${output} @ONLY)
 endforeach(input)
 
+# Extract module documentation from Lua sources
+configure_file(modules.lua.in modules.lua)
+file(GLOB_RECURSE files RELATIVE "${CMAKE_SOURCE_DIR}/lua" "${CMAKE_SOURCE_DIR}/lua/halmd/*.lua.in")
+execute_process(COMMAND
+  "${CMAKE_CURRENT_BINARY_DIR}/modules.lua"
+    "${CMAKE_SOURCE_DIR}/lua"
+    "${CMAKE_CURRENT_BINARY_DIR}/modules"
+    ${files}
+)
+
 add_custom_target(halmd_doc_html ALL
   ${SPHINX_EXECUTABLE}
     -q -b html
