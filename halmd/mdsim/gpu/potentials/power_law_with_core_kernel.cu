@@ -42,7 +42,7 @@ static texture<float2> rr_en_cut_;
 /**
  * power law interaction potential of a pair of particles.
  *
- * @f[  U(r) = \epsilon \left(\frac{\sigma}{r - r_\text{core}}\right)^n @f]
+ * @f[  U(r) = \epsilon \left(\frac{\sigma}{r - r_\mathrm{core}}\right)^n @f]
  */
 class power_law_with_core
 {
@@ -82,9 +82,9 @@ public:
      * and hypervirial @f$ r \partial_r r \partial_r U(r) @f$
      *
      * @f{eqnarray*}{
-     *   U(r) &=& \epsilon \left(\frac{r - r_\text{core}}{\sigma}\right)^{-n} \\
-     *   - \frac{U'(r)}{r} &=& n \frac{n}{r(r-r_\text{core})} U(r) \\
-     *   r \partial_r r \partial_r U(r) &=& n \frac{r (n r + r_\text{core}) }{ (r-r_\text{core})^2 } U(r)
+     *   U(r) &=& \epsilon \left(\frac{r - r_\mathrm{core}}{\sigma}\right)^{-n} \\
+     *   - \frac{U'(r)}{r} &=& n \frac{n}{r(r-r_\mathrm{core})} U(r) \\
+     *   r \partial_r r \partial_r U(r) &=& n \frac{r (n r + r_\mathrm{core}) }{ (r-r_\mathrm{core})^2 } U(r)
      * @f}
      */
     template <typename float_type>

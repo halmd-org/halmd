@@ -106,8 +106,8 @@ __global__ void _integrate(
  *
  * CUDA execution dimensions must agree with random number generator
  *
- * @param g_v particle velocities (array of size \code 2 * nplace \code for dsfloat arithmetic)
- * @param g_f particle forces (array of size \code nplace \code)
+ * @param g_v particle velocities (array of size \code{} 2 * nplace \endcode for dsfloat arithmetic)
+ * @param g_f particle forces (array of size \code{} nplace \endcode)
  * @param npart number of particles
  * @param nplace number of placeholder particles
  */

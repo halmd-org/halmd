@@ -37,7 +37,7 @@ namespace potentials {
  * A power-law potential @f$ r^{-n} @f$ is often used for
  * repulsive smooth spheres. This potential is slightly
  * modified to allow for solid particles. It diverges for
- * (finite) r_core (parameter): @f$ (r-r_\text{core})^{-n} @f$
+ * (finite) r_core (parameter): @f$ (r-r_\mathrm{core})^{-n} @f$
  */
 
 template <typename float_type>
@@ -196,9 +196,9 @@ private:
      * and hypervirial @f$ r \partial_r r \partial_r U(r) @f$ with
      *
      * @f{eqnarray*}{
-     *   U(r) &=& \epsilon \left(\frac{r - r_\text{core}}{\sigma}\right)^{-n} \\
-     *   - \frac{U'(r)}{r} &=& n \frac{n}{r(r-r_\text{core})} U(r) \\
-     *   r \partial_r r \partial_r U(r) &=& n \frac{r (n r + r_\text{core}) }{ (r-r_\text{core})^2 } U(r)
+     *   U(r) &=& \epsilon \left(\frac{r - r_\mathrm{core}}{\sigma}\right)^{-n} \\
+     *   - \frac{U'(r)}{r} &=& n \frac{n}{r(r-r_\mathrm{core})} U(r) \\
+     *   r \partial_r r \partial_r U(r) &=& n \frac{r (n r + r_\mathrm{core}) }{ (r-r_\mathrm{core})^2 } U(r)
      * @f}
      *
      */
