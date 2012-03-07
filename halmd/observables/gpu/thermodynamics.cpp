@@ -70,7 +70,7 @@ double thermodynamics<dimension, float_type>::en_kin()
 
         // FIXME use particle_group_->selection_mask() and reduce_if()
         scoped_timer_type timer(runtime_.en_kin);
-        en_kin_ = .5 * sum_velocity_square_(particle_group_->particle()->g_v) / nparticle();
+        en_kin_ = .5 * sum_velocity_square_(particle_group_->particle().g_v) / nparticle();
     }
     return en_kin_;
 }
@@ -87,7 +87,7 @@ thermodynamics<dimension, float_type>::v_cm()
 
         // FIXME use particle_group_->selection_mask() and reduce_if()
         scoped_timer_type timer(runtime_.v_cm);
-        v_cm_ = sum_velocity_vector_(particle_group_->particle()->g_v) / nparticle();
+        v_cm_ = sum_velocity_vector_(particle_group_->particle().g_v) / nparticle();
     }
     return v_cm_;
 }

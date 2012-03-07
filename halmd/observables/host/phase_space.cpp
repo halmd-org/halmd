@@ -75,7 +75,7 @@ void phase_space<dimension, float_type>::acquire()
     assert(particle_group_->size() == sample_->type->size());
 
     // copy particle data using index map
-    particle_type const& particle = *particle_group_->particle();
+    particle_type const& particle = particle_group_->particle();
     typename particle_group_type::map_iterator idx = particle_group_->map();
     for (unsigned int i = 0; i < particle_group_->size(); ++i, ++idx) {
 

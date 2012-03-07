@@ -56,7 +56,7 @@ public:
     particle_group() {}
 
     //! returns underlying particle instance
-    virtual boost::shared_ptr<particle_type const> particle() const = 0;
+    virtual particle_type const& particle() const = 0;
 
     /**
      * returns iterator to an index array mapping particle tags to array
@@ -106,9 +106,9 @@ public:
     )
       : particle_(particle) {}
 
-    virtual boost::shared_ptr<particle_type const> particle() const
+    virtual particle_type const& particle() const
     {
-        return particle_;
+        return *particle_;
     }
 
     virtual map_iterator map() const
@@ -164,9 +164,9 @@ public:
       , unsigned int species
     );
 
-    virtual boost::shared_ptr<particle_type const> particle() const
+    virtual particle_type const& particle() const
     {
-        return particle_;
+        return *particle_;
     }
 
     virtual map_iterator map() const
