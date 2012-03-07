@@ -1,0 +1,177 @@
+#!/usr/bin/env lua
+--
+-- Copyright © 2012  Peter Colberg
+--
+-- This file is part of HALMD.
+--
+-- HALMD is free software: you can redistribute it and/or modify
+-- it under the terms of the GNU General Public License as published by
+-- the Free Software Foundation, either version 3 of the License, or
+-- (at your option) any later version.
+--
+-- This program is distributed in the hope that it will be useful,
+-- but WITHOUT ANY WARRANTY; without even the implied warranty of
+-- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+-- GNU General Public License for more details.
+--
+-- You should have received a copy of the GNU General Public License
+-- along with this program.  If not, see <http://www.gnu.org/licenses/>.
+--
+
+--- Parse inline documentation from Lua module
+--
+-- :param sourcedir: path to source tree
+-- :param source: path of source file relative to source tree
+-- :returns: table with parser result
+--
+function parse_module(sourcedir, source)
+    local parsed = {}
+    parsed.file = source
+    parsed.path = ("%s/%s"):format(sourcedir, source)
+    parsed.docpath = source:gsub("/init%.lua", ""):gsub("%..*$", "")
+    parsed.name = parsed.docpath:gsub("^.*/", "")
+    parsed.namespace = parsed.docpath:gsub("/[^/]*$", ""):gsub("/", ".")
+
+    local entry
+    for line in io.lines(parsed.path) do
+        if not entry then
+            local m = line:match("^%-%-%-%s?(.-)%s*$")
+            if m then
+                if entry then
+                    for i = #entry, 1, -1 do
+                        if #entry[i] > 0 then
+                            break
+                        end
+                        table.remove(entry)
+                    end
+                    table.insert(parsed, entry)
+                end
+                entry = {}
+                if #m > 0 then
+                    table.insert(entry, m)
+                end
+            end
+        else
+            local m = line:match("^%-%-%s?(.-)%s*$")
+            if m then
+                if #m > 0 or #entry > 0 then
+                    table.insert(entry, m)
+                end
+            else
+                local m, n = line:match("^function%s*(([%w_]+)%([^)]*%))")
+                if m then
+                    entry.func = m
+                    entry.name = n
+                end
+                for i = #entry, 1, -1 do
+                    if #entry[i] > 0 then
+                        break
+                    end
+                    table.remove(entry)
+                end
+                table.insert(parsed, entry)
+                entry = nil
+            end
+        end
+    end
+
+    return parsed
+end
+
+--- Render result of module parser as reStructuredText
+--
+-- :param parsed: table with parser result
+-- :returns: string with reStructuredText output
+--
+function render_module(parsed)
+    local lines = {}
+    local l = function(line, ...)
+        table.insert(lines, line and (line .. "\n"):format(...) or "\n")
+    end
+
+    l(".. This file was generated from %s", parsed.file)
+    l()
+    l(".. highlight:: lua")
+    l()
+    l(".. module:: %s.%s", parsed.namespace, parsed.name)
+    l()
+
+    for i = 1, #parsed do
+        local entry = parsed[i]
+        local indent = ""
+        local class = false
+        if entry.func then
+            if entry.name == "new" then
+                class = true
+                l(".. currentmodule:: %s", parsed.namespace)
+                l()
+                l(".. class:: %s", entry.func:gsub("^new", parsed.name))
+            else
+                l(".. function:: %s", entry.func)
+            end
+            l()
+            indent = "   "
+        end
+        for j = 1, #entry do
+            l("%s%s", indent, entry[j])
+        end
+        l()
+        if class then
+            l(".. currentmodule:: %s.%s", parsed.namespace, parsed.name)
+            l()
+        end
+    end
+
+    return table.concat(lines, "")
+end
+
+--- Parse arguments from command line
+--
+-- :param args: array with command line arguments
+-- :returns: table with pairs of argument name and value
+--
+function parse_args(arg)
+    if #arg < 3 then
+        error("Usage: modules.lua sourcedir outdir filename [filename...]")
+    end
+    local sources = {}
+    for i = 3, #arg do
+        table.insert(sources, arg[i])
+    end
+    return {sourcedir = arg[1], outdir = arg[2], sources = sources}
+end
+
+-- table with output directory as key and directory creation function as value
+local makedirs = {}
+-- list of module creation functions
+local makemods = {}
+
+local args = assert(parse_args(arg))
+for i = 1, #args.sources do
+    local parsed = parse_module(args.sourcedir, args.sources[i])
+    local outfile = ("%s/%s.rst"):format(args.outdir, parsed.docpath)
+    local outdir = outfile:gsub("/[^/]+$", "")
+
+    if #parsed > 0 then
+        -- store reStructuredText write function for delayed execution
+        table.insert(makemods, function()
+            local f = assert(io.open(outfile, "w"))
+            f:write(render_module(parsed))
+            f:close()
+        end)
+
+        -- ensure cmake is executed only once per unique directory
+        makedirs[outdir] = function()
+            os.execute(("@CMAKE_COMMAND@ -E make_directory \"%s\""):format(outdir))
+        end
+    end
+end
+
+-- create output directories for documented modules
+for dir, makedir in pairs(makedirs) do
+    makedir()
+end
+-- write reStructuredText files for documented modules
+for i = 1, #makemods do
+    makemods[i]()
+end

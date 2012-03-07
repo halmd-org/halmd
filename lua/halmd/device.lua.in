@@ -32,17 +32,59 @@ local po = libhalmd.po
 -- grab standard library
 local assert = assert
 
+---
+-- Device management
+-- =================
+--
+-- The device module selects a GPU from the pool of available GPUs, or a subset
+-- thereof if a list of devices is passed. It allocates a CUDA context on that
+-- device, which will remain active till the program exits. Diagnostic
+-- information is logged about CUDA driver and runtime versions, and
+-- GPU capabilities.
+--
+-- Note that this module automatically loads a dynamic plugin that contains
+-- GPU-related modules. If the plugin fails to load, e.g. if the CUDA library
+-- is not available on the system, GPU support is disabled, and the host is
+-- used.
+--
+-- :func:`halmd.device` may be used to query whether the GPU is being used::
+--
+--   local device = require("halmd.device")
+--   if device() then
+--       -- using GPU
+--   else
+--       -- using host
+--   end
+--
 module("halmd.device", halmd.modules.register, singleton)
 
+--- Query whether HALMD has GPU support.
 --
--- query whether HALMD is compiled with GPU support
+-- This function is useful to enable/disable GPU-related functionality, e.g. options::
+--
+--    function options(desc)
+--        if device.with_gpu() then
+--            desc:add("disable-gpu", po.bool_switch(), "disable GPU acceleration")
+--        end
+--    end
+--
+-- Note that :func:`halmd.device.with_gpu` does not indicate whether the GPU is
+-- actually used. Instead, you may check the return value of :func:`halmd.device`
+-- for a non-``nil`` value instead, as shown in the example above.
 --
 function with_gpu()
     return device_wrapper ~= nil
 end
 
+--- Construct device instance.
 --
--- construct device module
+-- :param args.disable_gpu: do *not* use GPU (optional)
+-- :param args.devices: list of devices (optional)
+-- :returns: instance of device module if GPU is enabled, otherwise ``nil``
+--
+-- :func:`halmd.device` returns a singleton instance, i.e. the first call will
+-- create an instance that is kept alive until the end of program execution,
+-- and subsequent calls will return this instance.
 --
 function new(args)
     if device_wrapper and not args.disable_gpu then
@@ -58,11 +100,6 @@ end
 -- override default parameter namespace
 namespace = "gpu"
 
---
--- assemble module options
---
--- @param desc po.options_description
---
 function options(desc, globals)
     if with_gpu() then
         desc:add("devices", po.int_array(), "CUDA device(s)")

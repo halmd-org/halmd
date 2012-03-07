@@ -7,6 +7,7 @@ HALMD documentation
    readme
    installation/index
    usage/index
+   modules/index
    faq
    validation
    benchmarks
