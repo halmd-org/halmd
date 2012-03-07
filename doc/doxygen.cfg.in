@@ -33,3 +33,4 @@ SORT_MEMBER_DOCS       = NO
 STRIP_FROM_PATH        = @CMAKE_SOURCE_DIR@ @CMAKE_SOURCE_DIR@/include
 VERBATIM_HEADERS       = NO
 XML_PROGRAMLISTING     = NO
+EXTRA_PACKAGES         = amsmath amssymb siunitx
