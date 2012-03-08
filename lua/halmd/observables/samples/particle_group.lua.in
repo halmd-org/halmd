@@ -73,7 +73,16 @@ function new(args)
     elseif species then -- select by species
         assert(type(species) == "table", "invalid table")
         for i, s in ipairs(species) do
-            particle_group[i] = particle_group_from_range_wrapper(particle, s)
+            assert(s < #particle.ntypes, "invalid particle species")
+            -- find tag range for the specified species, assume that tags
+            -- form an ascending and contiguous range for each species and
+            -- that the species are ordered as well
+            local lower = 0
+            for j = 1, s do
+                lower = lower + particle.ntypes[j]
+            end
+            local upper = lower + particle.ntypes[s + 1]
+            particle_group[i] = particle_group_from_range_wrapper(particle, lower, upper)
         end
     else -- select all
         particle_group = { particle_group_all_wrapper(particle) }

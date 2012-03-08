@@ -155,15 +155,6 @@ public:
       , unsigned int end
     );
 
-    /**
-     * select by species assuming that the particle tags for each species are
-     * ascending and form a contiguous range.
-     */
-    particle_group_from_range(
-        boost::shared_ptr<particle_type const> particle
-      , unsigned int species
-    );
-
     virtual particle_type const& particle() const
     {
         return *particle_;

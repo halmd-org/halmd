@@ -65,30 +65,6 @@ particle_group_from_range<dimension, float_type>::particle_group_from_range(
 }
 
 template <int dimension, typename float_type>
-particle_group_from_range<dimension, float_type>::particle_group_from_range(
-    shared_ptr<particle_type const> particle
-  , unsigned int species
-)
-  // dependency injection
-  : particle_(particle)
-  // memory allocation
-  , h_reverse_tag_(particle->nbox)
-{
-    if (species >= particle_->ntypes.size()) {
-        throw std::logic_error("particle_group: invalid particle species.");
-    }
-
-    // find tag range for the specified species, assume that tags form an
-    // ascending and contiguous range for each species and that the species are
-    // ordered as well
-    begin_ = accumulate(
-        particle_->ntypes.begin(), particle_->ntypes.begin() + species
-      , 0u, plus<unsigned int>()
-    );
-    end_ = begin_ + particle_->ntypes[species];
-}
-
-template <int dimension, typename float_type>
 unsigned int const* particle_group_all<dimension, float_type>::h_map()
 {
     try {
@@ -176,10 +152,6 @@ void particle_group_from_range<dimension, float_type>::luaopen(lua_State* L)
               , def("particle_group_from_range", &make_shared<particle_group_from_range
                   , shared_ptr<particle_type const>
                   , unsigned int, unsigned int
-                >)
-              , def("particle_group_from_range", &make_shared<particle_group_from_range
-                  , shared_ptr<particle_type const>
-                  , unsigned int
                 >)
             ]
         ]
