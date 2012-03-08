@@ -912,8 +912,8 @@ fetch-mpfr: .fetch-mpfr
 
 extract-mpfr: .extract-mpfr
 
-.configure-mpfr: .extract-mpfr
-	cd $(MPFR_BUILD_DIR) && ./configure --prefix=$(MPFR_INSTALL_DIR) --disable-shared
+.configure-mpfr: .extract-mpfr .install-gmp
+	cd $(MPFR_BUILD_DIR) && ./configure --prefix=$(MPFR_INSTALL_DIR) --with-gmp=$(GMP_INSTALL_DIR) --disable-shared
 	@$(TOUCH) $@
 
 configure-mpfr: .configure-mpfr
