@@ -1017,7 +1017,7 @@ fetch-ppl: .fetch-ppl
 extract-ppl: .extract-ppl
 
 .configure-ppl: .extract-ppl .install-gmp
-	cd $(PPL_BUILD_DIR) && ./configure --prefix=$(PPL_INSTALL_DIR) --enable-interfaces=c,cxx --with-gmp-prefix=$(GMP_INSTALL_DIR) --disable-shared --disable-watchdog
+	cd $(PPL_BUILD_DIR) && CPPFLAGS=-I$(GMP_INSTALL_DIR)/include LDFLAGS=-L$(GMP_INSTALL_DIR)/lib ./configure --prefix=$(PPL_INSTALL_DIR) --enable-interfaces=c,cxx --disable-shared --disable-watchdog
 	@$(TOUCH) $@
 
 configure-ppl: .configure-ppl
