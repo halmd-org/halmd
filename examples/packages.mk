@@ -798,7 +798,7 @@ fetch-gcc: .fetch-gcc .fetch-gmp .fetch-mpfr .fetch-mpc .fetch-ppl .fetch-cloog-
 extract-gcc: .extract-gcc
 
 .configure-gcc: .extract-gcc .install-gmp .install-mpfr .install-mpc .install-ppl .install-cloog-ppl
-	cd $(GCC_BUILD_DIR) && ac_cv_lib_pwl_PWL_handle_timeout=no ./configure --prefix=$(GCC_INSTALL_DIR) --disable-multilib --enable-languages=c,c++,fortran,lto --with-gmp=$(GMP_INSTALL_DIR) --with-mpfr=$(MPFR_INSTALL_DIR) --with-mpc=$(MPC_INSTALL_DIR) --with-ppl=$(PPL_INSTALL_DIR) --with-cloog=$(CLOOG_PPL_INSTALL_DIR) --enable-build-with-cxx
+	cd $(GCC_BUILD_DIR) && LDFLAGS=-L$(GMP_INSTALL_DIR)/lib ac_cv_lib_pwl_PWL_handle_timeout=no ./configure --prefix=$(GCC_INSTALL_DIR) --disable-multilib --enable-languages=c,c++,fortran,lto --with-gmp=$(GMP_INSTALL_DIR) --with-mpfr=$(MPFR_INSTALL_DIR) --with-mpc=$(MPC_INSTALL_DIR) --with-ppl=$(PPL_INSTALL_DIR) --with-cloog=$(CLOOG_PPL_INSTALL_DIR) --enable-build-with-cxx
 	@$(TOUCH) $@
 
 configure-gcc: .configure-gcc
