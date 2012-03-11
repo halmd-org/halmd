@@ -49,9 +49,7 @@
 --
 
 -- module definition
--- @see http://lua-users.org/wiki/ModuleDefinition
--- @see http://lua-users.org/wiki/LuaModuleFunctionCritiqued
-local signals = {}
+local M = {}
 
 -- keep connections per tracker in a table with weak keys;
 -- if the tracker goes out of scope, the tracked connections
@@ -111,7 +109,7 @@ end
 -- by that Lua module, the original method is captured and overridden
 -- with a Lua function that sets up connection tracking.
 --
-function signals.patch(module)
+function M.patch(module)
     local new = module.new
 
     module.new = function(args)
@@ -153,4 +151,4 @@ function signals.patch(module)
 end
 
 -- return local module to calling module
-return signals
+return M
