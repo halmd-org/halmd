@@ -17,11 +17,9 @@
 -- along with this program.  If not, see <http://www.gnu.org/licenses/>.
 --
 
-require("halmd.mdsim.forces")
+local forces = require("halmd.mdsim.forces")
 require("halmd.modules")
 
--- grab modules
-local forces = halmd.mdsim.forces
 -- grab C++ wrappers
 local h5 = libhalmd.h5
 local po = libhalmd.po
@@ -48,12 +46,11 @@ end
 function options(desc, globals)
 
     -- force module choices with descriptions
-    local choices = {}
-    for name, module in pairs(forces) do
-        if module.description then
-            choices[name] = module.description()
-        end
-    end
+    local choices = {
+        pair_full       = forces.pair_full.description()
+      , pair_trunc      = forces.pair_trunc.description()
+      , zero            = forces.zero.description()
+    }
 
     globals:add("force", po.string():choices(choices), "select force algorithm")
 end
