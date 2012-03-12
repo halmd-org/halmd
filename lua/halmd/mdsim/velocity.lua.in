@@ -17,11 +17,9 @@
 -- along with this program.  If not, see <http://www.gnu.org/licenses/>.
 --
 
-require("halmd.mdsim.velocities")
+local velocities = require("halmd.mdsim.velocities")
 require("halmd.modules")
 
--- grab modules
-local velocities = halmd.mdsim.velocities
 -- grab C++ wrappers
 local h5 = libhalmd.h5
 local po = libhalmd.po
@@ -51,12 +49,9 @@ end
 function options(desc, globals)
 
     -- velocity module choices with descriptions
-    local choices = {}
-    for velocity, module in pairs(velocities) do
-        if module.description then
-            choices[velocity] = module.description()
-        end
-    end
+    local choices = {
+        boltzmann       = velocities.boltzmann.description()
+    }
 
     globals:add("velocity", po.string():choices(choices), "select initial particle velocities module")
 end
