@@ -1,0 +1,59 @@
+--
+-- Copyright © 2012  Peter Colberg
+--
+-- This file is part of HALMD.
+--
+-- HALMD is free software: you can redistribute it and/or modify
+-- it under the terms of the GNU General Public License as published by
+-- the Free Software Foundation, either version 3 of the License, or
+-- (at your option) any later version.
+--
+-- This program is distributed in the hope that it will be useful,
+-- but WITHOUT ANY WARRANTY; without even the implied warranty of
+-- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+-- GNU General Public License for more details.
+--
+-- You should have received a copy of the GNU General Public License
+-- along with this program.  If not, see <http://www.gnu.org/licenses/>.
+--
+
+---
+-- Module Definition
+-- =================
+--
+local M = {}
+
+---
+-- This function provides a lazy module loader, which may be used to load
+-- submodules on demand. For a namespace, one defines a loader module::
+--
+--    -- halmd/mdsim/potentials/init.lua
+--
+--    local module = require("halmd.utility.module")
+--
+--    return module.loader("halmd.mdsim.potentials")
+--
+-- The loader module then loads submodules upon use::
+--
+--    local potentials = require("halmd.mdsim.potentials")
+--
+--    -- This loads the lennard_jones module.
+--    local lennard_jones = assert(potentials.lennard_jones)
+--
+-- If a submodule cannot be loaded, the loader returns ``nil``.
+--
+-- :param string name: fully qualified name of module
+-- :returns: module table with metatable containing module loader
+--
+function M.loader(name)
+    local index = function(self, key)
+        local status, value = pcall(require, name .. "." .. key)
+        if status then
+            rawset(self, key, value)
+            return value
+        end
+    end
+    return setmetatable({}, {__index = index})
+end
+
+return M
