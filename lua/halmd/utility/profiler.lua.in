@@ -17,13 +17,12 @@
 -- along with this program.  If not, see <http://www.gnu.org/licenses/>.
 --
 
-require("halmd.hooks")
+local hooks = require("halmd.hooks")
 require("halmd.modules")
 local singleton = require("halmd.singleton")
 local utility = require("halmd.utility")
 
 -- grab Lua modules
-local hooks = halmd.hooks
 local signals = require("halmd.modules.signals")
 -- grab C++ modules
 local class_info = class_info

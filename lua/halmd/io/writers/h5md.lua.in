@@ -17,13 +17,12 @@
 -- along with this program.  If not, see <http://www.gnu.org/licenses/>.
 --
 
-require("halmd.hooks")
+local hooks = require("halmd.hooks")
 require("halmd.mdsim.clock")
 require("halmd.modules")
 require("halmd.utility.posix_signal")
 
 -- grab modules
-local hooks = halmd.hooks
 local mdsim = halmd.mdsim
 local utility = halmd.utility
 -- grab C++ modules
