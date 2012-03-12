@@ -170,6 +170,68 @@ env-lua:
 	@echo 'export CMAKE_PREFIX_PATH="$(LUA_INSTALL_DIR)$${CMAKE_PREFIX_PATH+:$$CMAKE_PREFIX_PATH}"'
 
 ##
+## LuaJIT
+##
+
+LUAJIT_VERSION = 2.0.0-beta9
+LUAJIT_TARBALL = LuaJIT-$(LUAJIT_VERSION).tar.gz
+LUAJIT_TARBALL_URL = http://luajit.org/download/$(LUAJIT_TARBALL)
+LUAJIT_TARBALL_SHA256 = da3793b4364a17c3700d39d13eae799b82ff23da1f61631d735de05333f46240
+LUAJIT_PATCH = beta9_hotfix1.patch
+LUAJIT_PATCH_URL = http://luajit.org/download/$(LUAJIT_PATCH)
+LUAJIT_PATCH_SHA256 = 468234a723c3a2bb7fe8caafc3aac0443473df2790b547a166babaf9b58cc671
+LUAJIT_BUILD_DIR = LuaJIT-$(LUAJIT_VERSION)
+LUAJIT_INSTALL_DIR = $(PREFIX)/luajit-$(LUAJIT_VERSION)
+
+.fetch-luajit:
+	@$(RM) $(LUAJIT_TARBALL)
+	@$(RM) $(LUAJIT_PATCH)
+	$(WGET) $(LUAJIT_TARBALL_URL)
+	$(WGET) $(LUAJIT_PATCH_URL)
+	@echo '$(LUAJIT_TARBALL_SHA256)  $(LUAJIT_TARBALL)' | $(SHA256SUM)
+	@echo '$(LUAJIT_PATCH_SHA256)  $(LUAJIT_PATCH)' | $(SHA256SUM)
+	@$(TOUCH) $@
+
+fetch-luajit: .fetch-luajit
+
+.extract-luajit: .fetch-luajit
+	$(RM) $(LUAJIT_BUILD_DIR)
+	$(TAR) -xzf $(LUAJIT_TARBALL)
+	cd $(LUAJIT_BUILD_DIR) && $(PATCH) -p1 < $(CURDIR)/$(LUAJIT_PATCH)
+	@$(TOUCH) $@
+
+extract-luajit: .extract-luajit
+
+.build-luajit: .extract-luajit
+	cd $(LUAJIT_BUILD_DIR) && make $(PARALLEL_BUILD_FLAGS)
+	@$(TOUCH) $@
+
+build-luajit: .build-luajit
+
+install-luajit: .build-luajit
+	cd $(LUAJIT_BUILD_DIR) && make install PREFIX=$(LUAJIT_INSTALL_DIR)
+	ln -sf luajit-$(LUAJIT_VERSION) $(LUAJIT_INSTALL_DIR)/bin/lua
+	ln -sf libluajit-5.1.a $(LUAJIT_INSTALL_DIR)/lib/liblua.a
+	ln -sf luajit-2.0 $(LUAJIT_INSTALL_DIR)/include/lua
+
+clean-luajit:
+	@$(RM) .build-luajit
+	@$(RM) .extract-luajit
+	$(RM) $(LUAJIT_BUILD_DIR)
+
+distclean-luajit: clean-luajit
+	@$(RM) .fetch-luajit
+	$(RM) $(LUAJIT_TARBALL)
+	$(RM) $(LUAJIT_PATCH)
+
+env-luajit:
+	@echo
+	@echo '# add LuaJIT $(LUAJIT_VERSION) to environment'
+	@echo 'export PATH="$(LUAJIT_INSTALL_DIR)/bin$${PATH+:$$PATH}"'
+	@echo 'export MANPATH="$(LUAJIT_INSTALL_DIR)/man$${MANPATH+:$$MANPATH}"'
+	@echo 'export CMAKE_PREFIX_PATH="$(LUAJIT_INSTALL_DIR)$${CMAKE_PREFIX_PATH+:$$CMAKE_PREFIX_PATH}"'
+
+##
 ## Boost C++ libraries with Boost.Log
 ##
 
