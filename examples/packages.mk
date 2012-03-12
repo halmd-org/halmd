@@ -182,6 +182,7 @@ LUAJIT_PATCH_URL = http://luajit.org/download/$(LUAJIT_PATCH)
 LUAJIT_PATCH_SHA256 = 468234a723c3a2bb7fe8caafc3aac0443473df2790b547a166babaf9b58cc671
 LUAJIT_BUILD_DIR = LuaJIT-$(LUAJIT_VERSION)
 LUAJIT_INSTALL_DIR = $(PREFIX)/luajit-$(LUAJIT_VERSION)
+LUAJIT_CFLAGS = -fPIC
 
 .fetch-luajit:
 	@$(RM) $(LUAJIT_TARBALL)
@@ -203,7 +204,7 @@ fetch-luajit: .fetch-luajit
 extract-luajit: .extract-luajit
 
 .build-luajit: .extract-luajit
-	cd $(LUAJIT_BUILD_DIR) && make $(PARALLEL_BUILD_FLAGS)
+	cd $(LUAJIT_BUILD_DIR) && make CFLAGS=$(LUAJIT_CFLAGS) $(PARALLEL_BUILD_FLAGS)
 	@$(TOUCH) $@
 
 build-luajit: .build-luajit
