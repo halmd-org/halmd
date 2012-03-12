@@ -17,11 +17,9 @@
 -- along with this program.  If not, see <http://www.gnu.org/licenses/>.
 --
 
-require("halmd.mdsim.integrators")
+local integrators = require("halmd.mdsim.integrators")
 require("halmd.modules")
 
--- grab modules
-local integrators = halmd.mdsim.integrators
 -- grab C++ wrappers
 local h5 = libhalmd.h5
 local po = libhalmd.po
@@ -47,12 +45,12 @@ end
 function options(desc, globals)
 
     -- integrator module choices with descriptions
-    local choices = {}
-    for integrator, module in pairs(integrators) do
-        if module.description then
-            choices[integrator] = module.description()
-        end
-    end
+    local choices = {
+        euler                   = integrators.euler.description()
+      , verlet                  = integrators.verlet.description()
+      , verlet_nvt_andersen     = integrators.verlet_nvt_andersen.description()
+      , verlet_nvt_hoover       = integrators.verlet_nvt_hoover.description()
+    }
 
     globals:add("integrator", po.string():choices(choices), "select integration module")
 end
