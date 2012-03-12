@@ -17,11 +17,9 @@
 -- along with this program.  If not, see <http://www.gnu.org/licenses/>.
 --
 
-require("halmd.mdsim.potentials")
+local potentials = require("halmd.mdsim.potentials")
 require("halmd.modules")
 
--- grab modules
-local potentials = halmd.mdsim.potentials
 -- grab C++ wrappers
 local h5 = libhalmd.h5
 local po = libhalmd.po
@@ -48,12 +46,13 @@ end
 function options(desc, globals)
 
     -- potential module choices with descriptions
-    local choices = {}
-    for name, module in pairs(potentials) do
-        if module.description then
-            choices[name] = module.description()
-        end
-    end
+    local choices = {
+        lennard_jones           = potentials.lennard_jones.description()
+      , modified_lennard_jones  = potentials.modified_lennard_jones.description()
+      , morse                   = potentials.morse.description()
+      , power_law               = potentials.power_law.description()
+      , power_law_with_core     = potentials.power_law_with_core.description()
+    }
 
     globals:add("potential", po.string():choices(choices), "select interaction potential")
 end
