@@ -127,7 +127,13 @@ LUA_TARBALL_URL = http://www.lua.org/ftp/$(LUA_TARBALL)
 LUA_TARBALL_SHA256 = cabe379465aa8e388988073d59b69e76ba0025429d2c1da80821a252cdf6be0d
 LUA_BUILD_DIR = lua-$(LUA_VERSION)
 LUA_INSTALL_DIR = $(PREFIX)/lua-$(LUA_VERSION)
-LUA_CFLAGS = -DLUA_USE_LINUX -DLUA_COMPAT_MODULE -fPIC -O2 -Wall
+LUA_CFLAGS = -fPIC -O2 -Wall -DLUA_USE_POSIX -DLUA_USE_DLOPEN -DLUA_USE_STRTODHEX -DLUA_USE_AFORMAT -DLUA_USE_LONGLONG -DLUA_COMPAT_MODULE
+LUA_LIBS = -Wl,-E -ldl -lm
+
+ifdef USE_READLINE
+LUA_CFLAGS += -DLUA_USE_READLINE
+LUA_LIBS += -lreadline -lncurses
+endif
 
 .fetch-lua:
 	@$(RM) $(LUA_TARBALL)
@@ -145,7 +151,7 @@ fetch-lua: .fetch-lua
 extract-lua: .extract-lua
 
 .build-lua: .extract-lua
-	cd $(LUA_BUILD_DIR) && make linux CFLAGS="$(LUA_CFLAGS)"
+	cd $(LUA_BUILD_DIR) && make linux CFLAGS="$(LUA_CFLAGS)" LIBS="$(LUA_LIBS)"
 	@$(TOUCH) $@
 
 build-lua: .build-lua
