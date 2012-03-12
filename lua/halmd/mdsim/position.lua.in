@@ -17,11 +17,9 @@
 -- along with this program.  If not, see <http://www.gnu.org/licenses/>.
 --
 
-require("halmd.mdsim.positions")
+local positions = require("halmd.mdsim.positions")
 require("halmd.modules")
 
--- grab modules
-local positions = halmd.mdsim.positions
 -- grab C++ wrappers
 local h5 = libhalmd.h5
 local po = libhalmd.po
@@ -51,12 +49,9 @@ end
 function options(desc, globals)
 
     -- position module choices with descriptions
-    local choices = {}
-    for position, module in pairs(positions) do
-        if module.description then
-            choices[position] = module.description()
-        end
-    end
+    local choices = {
+        lattice             = positions.lattice.description()
+    }
 
     globals:add("position", po.string():choices(choices), "select initial particle positions module")
 end
