@@ -256,6 +256,10 @@ BOOST_BUILD_DIR = boost_$(BOOST_RELEASE)
 BOOST_INSTALL_DIR = $(PREFIX)/boost_$(BOOST_RELEASE)
 BOOST_BUILD_FLAGS = cxxflags=-fPIC dll-path=$(BOOST_INSTALL_DIR)/lib --without-python
 
+ifndef USE_BZIP2
+BOOST_BUILD_FLAGS += -sNO_BZIP2=1
+endif
+
 .fetch-boost:
 	@$(RM) $(BOOST_TARBALL)
 	@$(RM) $(BOOST_LOG_TARBALL)
