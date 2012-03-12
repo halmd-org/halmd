@@ -17,11 +17,9 @@
 -- along with this program.  If not, see <http://www.gnu.org/licenses/>.
 --
 
-require("halmd.io.writers")
+local writers = require("halmd.io.writers")
 require("halmd.modules")
 
--- grab modules
-local writers = halmd.io.writers
 -- grab C++ wrappers
 local po = libhalmd.po
 -- grab standard library
@@ -54,12 +52,9 @@ namespace = "writer"
 --
 function options(desc)
     -- writer module choices with descriptions
-    local choices = {}
-    for writer, module in pairs(writers) do
-        if module.description then
-            choices[writer] = module.description()
-        end
-    end
+    local choices = {
+        h5md            = writers.h5md.description()
+    }
 
     desc:add("format", po.string():choices(choices), "select output file format")
 end
