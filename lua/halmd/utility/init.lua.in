@@ -22,19 +22,20 @@ local next = next
 local pairs = pairs
 local table = table
 
-module("halmd.utility")
+-- module definition
+local M = {}
 
 --
 -- Test if table is empty
 --
-function empty(t)
+function M.empty(t)
   return next(t) == nil
 end
 
 --
 -- Returns table with sorted keys of table t as values
 --
-function keys(t)
+function M.keys(t)
     local keys = {}
     for k, v in pairs(t) do
         table.insert(keys, k)
@@ -46,7 +47,7 @@ end
 --
 -- Returns iterator over pairs of table t sorted by key
 --
-function sorted(t)
+function M.sorted(t)
     local keys = keys(t)
     local i = 0
     local n = table.getn(keys)
@@ -63,10 +64,12 @@ end
 --
 -- Returns table with keys as values and values as keys
 --
-function reverse(t)
+function M.reverse(t)
     local result = {}
     for k, v in pairs(t) do
         result[v] = k
     end
     return result
 end
+
+return M
