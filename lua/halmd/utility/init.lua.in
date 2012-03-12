@@ -17,13 +17,15 @@
 -- along with this program.  If not, see <http://www.gnu.org/licenses/>.
 --
 
+local module = require("halmd.utility.module")
+
 -- grab standard library
 local next = next
 local pairs = pairs
 local table = table
 
 -- module definition
-local M = {}
+local M = module.loader("halmd.utility")
 
 --
 -- Test if table is empty
