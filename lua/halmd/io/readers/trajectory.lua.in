@@ -17,14 +17,13 @@
 -- along with this program.  If not, see <http://www.gnu.org/licenses/>.
 --
 
-require("halmd.io.readers")
+local readers = require("halmd.io.readers")
 require("halmd.mdsim.core")
 require("halmd.mdsim.particle")
 require("halmd.modules")
 require("halmd.observables.samples.phase_space")
 
 -- grab modules
-local readers = halmd.io.readers
 local mdsim = halmd.mdsim
 local observables = halmd.observables
 -- grab C++ wrappers
@@ -130,8 +129,13 @@ function options(desc)
         end
         file:close()
 
+        -- load file reader modules
+        local choices = {
+            h5md        = assert(readers.h5md)
+        }
+
         -- check for reader that can handle file format
-        for _, module in pairs(readers) do
+        for _, module in pairs(choices) do
             local check = module.check
             if check and check(value) then
                 reader = module
