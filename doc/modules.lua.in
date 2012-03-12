@@ -58,7 +58,7 @@ function parse_module(sourcedir, source)
                     table.insert(entry, m)
                 end
             else
-                local m, n = line:match("^function%s*(([%w_]+)%([^)]*%))")
+                local m, n = line:match("^function%s*[%w_]+%.(([%w_]+)%([^)]*%))")
                 if m then
                     entry.func = m
                     entry.name = n
