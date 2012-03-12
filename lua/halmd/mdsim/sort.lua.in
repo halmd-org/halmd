@@ -17,11 +17,9 @@
 -- along with this program.  If not, see <http://www.gnu.org/licenses/>.
 --
 
-require("halmd.mdsim.sorts")
+local sorts = require("halmd.mdsim.sorts")
 require("halmd.modules")
 
--- grab modules
-local sorts = halmd.mdsim.sorts
 -- grab C++ wrappers
 local h5 = libhalmd.h5
 local po = libhalmd.po
@@ -47,12 +45,9 @@ end
 function options(desc, globals)
 
     -- sort module choices with descriptions
-    local choices = {}
-    for sort, module in pairs(sorts) do
-        if module.description then
-            choices[sort] = module.description()
-        end
-    end
+    local choices = {
+        hilbert         = sorts.hilbert.description()
+    }
 
     globals:add("sort", po.string():choices(choices), "select sort module")
 end
