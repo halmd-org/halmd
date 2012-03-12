@@ -331,12 +331,24 @@ LUABIND_INSTALL_DIR = $(PREFIX)/luabind-$(LUABIND_VERSION)
 
 fetch-luabind: .fetch-luabind
 
-.extract-luabind: .fetch-luabind .build-lua
+ifdef USE_LUAJIT
+LUABIND_BUILD_LUA_TARGET = .build-luajit
+else
+LUABIND_BUILD_LUA_TARGET = .build-lua
+endif
+
+.extract-luabind: .fetch-luabind $(LUABIND_BUILD_LUA_TARGET)
 	$(RM) $(LUABIND_BUILD_DIR)
 	$(TAR) -xjf $(LUABIND_TARBALL)
 	mkdir $(LUABIND_BUILD_DIR)/lua
+ifdef USE_LUAJIT
+	mkdir $(LUABIND_BUILD_DIR)/lua/lib
+	ln -s $(CURDIR)/$(LUAJIT_BUILD_DIR)/src $(LUABIND_BUILD_DIR)/lua/include
+	ln -s $(CURDIR)/$(LUAJIT_BUILD_DIR)/src/libluajit.a $(LUABIND_BUILD_DIR)/lua/lib/liblua.a
+else
 	ln -s $(CURDIR)/$(LUA_BUILD_DIR)/src $(LUABIND_BUILD_DIR)/lua/include
 	ln -s $(CURDIR)/$(LUA_BUILD_DIR)/src $(LUABIND_BUILD_DIR)/lua/lib
+endif
 	@$(TOUCH) $@
 
 extract-luabind: .extract-luabind
