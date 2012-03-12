@@ -17,7 +17,7 @@
 -- along with this program.  If not, see <http://www.gnu.org/licenses/>.
 --
 
-require("halmd.device")
+local device            = require("halmd.device")
 local mdsim = {
     clock               = require("halmd.mdsim.clock")
 }
@@ -26,7 +26,6 @@ require("halmd.observables.phase_space")
 require("halmd.observables.samples.phase_space")
 
 -- grab modules
-local device = halmd.device
 local observables = halmd.observables
 -- grab C++ wrappers
 local density_mode_wrapper = {

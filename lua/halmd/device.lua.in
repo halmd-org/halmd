@@ -17,8 +17,7 @@
 -- along with this program.  If not, see <http://www.gnu.org/licenses/>.
 --
 
-require("halmd.modules")
-local singleton = require("halmd.singleton")
+local module = require("halmd.utility.module")
 
 -- load GPU module if available
 pcall(require, "halmd.gpu")
@@ -56,7 +55,7 @@ local assert = assert
 --       -- using host
 --   end
 --
-module("halmd.device", halmd.modules.register, singleton)
+local M = module.singleton("halmd.device")
 
 --- Query whether HALMD has GPU support.
 --
@@ -72,7 +71,7 @@ module("halmd.device", halmd.modules.register, singleton)
 -- actually used. Instead, you may check the return value of :func:`halmd.device`
 -- for a non-``nil`` value instead, as shown in the example above.
 --
-function with_gpu()
+function M.with_gpu()
     return device_wrapper ~= nil
 end
 
@@ -86,7 +85,7 @@ end
 -- create an instance that is kept alive until the end of program execution,
 -- and subsequent calls will return this instance.
 --
-function new(args)
+function M.new(args)
     if device_wrapper and not args.disable_gpu then
         local devices = args.devices -- optional
         if devices then
@@ -98,11 +97,13 @@ function new(args)
 end
 
 -- override default parameter namespace
-namespace = "gpu"
+M.namespace = "gpu"
 
-function options(desc, globals)
-    if with_gpu() then
+function M.options(desc, globals)
+    if M.with_gpu() then
         desc:add("devices", po.int_array(), "CUDA device(s)")
         globals:add("disable-gpu", po.bool_switch(), "disable GPU acceleration")
     end
 end
+
+return M

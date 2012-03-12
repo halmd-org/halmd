@@ -17,7 +17,7 @@
 -- along with this program.  If not, see <http://www.gnu.org/licenses/>.
 --
 
-require("halmd.device")
+local device            = require("halmd.device")
 require("halmd.mdsim.core")
 require("halmd.mdsim.particle")
 require("halmd.modules")
@@ -26,7 +26,6 @@ require("halmd.random")
 -- grab modules
 local mdsim = halmd.mdsim
 local random = halmd.random
-local device = halmd.device
 -- grab C++ wrappers
 local boltzmann_wrapper = {
     host = {

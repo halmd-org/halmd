@@ -17,12 +17,11 @@
 -- along with this program.  If not, see <http://www.gnu.org/licenses/>.
 --
 
-require("halmd.device")
+local device            = require("halmd.device")
 require("halmd.mdsim.particle")
 require("halmd.modules")
 
 -- grab modules
-local device = halmd.device
 local mdsim = halmd.mdsim
 -- grab C++ wrappers
 local morse_wrapper = {

@@ -17,7 +17,7 @@
 -- along with this program.  If not, see <http://www.gnu.org/licenses/>.
 --
 
-require("halmd.device")
+local device            = require("halmd.device")
 local mdsim = {
     box                 = require("halmd.mdsim.box")
   , core                = require("halmd.mdsim.core")
@@ -28,7 +28,6 @@ local mdsim = {
 require("halmd.modules")
 
 -- grab modules
-local device = halmd.device
 local forces = libhalmd.mdsim.forces
 
 -- grab standard library

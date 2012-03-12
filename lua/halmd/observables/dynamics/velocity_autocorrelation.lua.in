@@ -17,13 +17,12 @@
 -- along with this program.  If not, see <http://www.gnu.org/licenses/>.
 --
 
-require("halmd.device")
+local device            = require("halmd.device")
 require("halmd.modules")
 require("halmd.observables.phase_space")
 require("halmd.observables.samples.phase_space")
 
 -- grab modules
-local device = halmd.device
 local observables = halmd.observables
 -- grab C++ wrappers
 local vac_wrapper = libhalmd.observables.dynamics.velocity_autocorrelation

@@ -17,13 +17,12 @@
 -- along with this program.  If not, see <http://www.gnu.org/licenses/>.
 --
 
-require("halmd.device")
+local device            = require("halmd.device")
 require("halmd.mdsim.core")
 require("halmd.modules")
 local singleton = require("halmd.singleton")
 
 -- grab modules
-local device = halmd.device
 local mdsim = halmd.mdsim
 -- grab C++ wrappers
 local particle_wrapper = {

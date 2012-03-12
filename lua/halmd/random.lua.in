@@ -17,13 +17,10 @@
 -- along with this program.  If not, see <http://www.gnu.org/licenses/>.
 --
 
+local device            = require("halmd.device")
 require("halmd.modules")
 local singleton = require("halmd.singleton")
 
-require("halmd.device")
-
--- grab modules
-local device = halmd.device
 -- grab C++ wrappers
 local random_wrapper = {
     host = libhalmd.host.random
