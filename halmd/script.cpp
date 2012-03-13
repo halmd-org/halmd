@@ -154,6 +154,9 @@ void script::lua_compat()
     globals(L)["table"]["unpack"] = globals(L)["unpack"];
     globals(L)["unpack"] = nil;
 #endif
+
+    // function module is deprecated
+    globals(L)["module"] = nil;
 }
 
 /**
