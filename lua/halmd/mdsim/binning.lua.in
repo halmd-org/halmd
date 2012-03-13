@@ -20,8 +20,7 @@
 require("halmd.device")
 require("halmd.mdsim.box")
 require("halmd.mdsim.particle")
-require("halmd.modules")
-local singleton = require("halmd.singleton")
+local module = require("halmd.utility.module")
 
 -- grab modules
 local device = halmd.device
@@ -44,12 +43,12 @@ local po = libhalmd.po
 -- grab standard library
 local assert = assert
 
-module("halmd.mdsim.binning", halmd.modules.register, singleton)
+local M = module.singleton("halmd.mdsim.binning")
 
 --
 -- construct binning module
 --
-function new(args)
+function M.__new(args)
     -- cutoff radius matrix of truncated potential
     local r_cut = assert(args.r_cut)
     -- neighbour list skin
@@ -78,7 +77,7 @@ end
 --
 -- connect runtime accumulators to module profiler
 --
-function profile(self, profiler)
+function M.profile(self, profiler)
     profiler:on_profile{self, update = "cell lists update"}
 end
 
@@ -87,7 +86,7 @@ end
 --
 -- @param desc po.options_description
 --
-function options(desc)
+function M.options(desc)
     if binning_wrapper.gpu then
         desc:add("occupancy", po.float(), "desired average cell occupancy")
     end
@@ -96,7 +95,7 @@ end
 --
 -- read module parameters from HDF5 group
 --
-function read_parameters(args, group)
+function M.read_parameters(args, group)
     if binning_wrapper.gpu then
         args.occupancy = group:read_attribute("occupancy", h5.float())
     end
@@ -108,9 +107,11 @@ end
 -- @param binning module instance
 -- @param group HDF5 group
 --
-function write_parameters(binning, group)
+function M.write_parameters(binning, group)
     group:write_attribute("skin", h5.float(), binning.r_skin)
     if binning.cell_occupancy then
         group:write_attribute("occupancy", h5.float(), binning.cell_occupancy)
     end
 end
+
+return M
