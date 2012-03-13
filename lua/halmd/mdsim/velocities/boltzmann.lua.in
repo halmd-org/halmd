@@ -18,11 +18,11 @@
 --
 
 local device            = require("halmd.device")
+local module            = require("halmd.utility.module")
 local mdsim = {
     core                = require("halmd.mdsim.core")
   , particle            = require("halmd.mdsim.particle")
 }
-require("halmd.modules")
 local random            = require("halmd.random")
 
 -- grab C++ wrappers
@@ -43,12 +43,12 @@ local po = libhalmd.po
 -- grab standard library
 local assert = assert
 
-module("halmd.mdsim.velocities.boltzmann", halmd.modules.register)
+local M = module("halmd.mdsim.velocities.boltzmann")
 
 --
 -- construct boltzmann module
 --
-function new(args)
+function M.__new(args)
     local temperature = args.temperature or 1.12 -- default value
 
     -- dependency injection
@@ -75,14 +75,14 @@ end
 --
 -- connect runtime accumulators to module profiler
 --
-function profile(self, profiler)
+function M.profile(self, profiler)
     profiler:on_profile{self, set = "setting particle velocities from Boltzmann distribution"}
 end
 
 --
 -- returns module description
 --
-function description()
+function M.description()
     return "Boltzmann distribution"
 end
 
@@ -91,14 +91,14 @@ end
 --
 -- @param desc po.options_description
 --
-function options(desc)
+function M.options(desc)
     desc:add("temperature", po.float(), "Boltzmann distribution temperature")
 end
 
 --
 -- read module parameters from HDF5 group
 --
-function read_parameters(args, group)
+function M.read_parameters(args, group)
     args.temperature = group:read_attribute("temperature", h5.float())
 end
 
@@ -108,6 +108,8 @@ end
 -- @param boltzmann module instance
 -- @param group HDF5 group
 --
-function write_parameters(boltzmann, group)
+function M.write_parameters(boltzmann, group)
     group:write_attribute("temperature", h5.float(), boltzmann.temperature)
 end
+
+return M
