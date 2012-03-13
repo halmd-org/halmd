@@ -18,12 +18,12 @@
 --
 
 local device            = require("halmd.device")
-require("halmd.mdsim.core")
-require("halmd.mdsim.particle")
+local mdsim = {
+    core                = require("halmd.mdsim.core")
+  , particle            = require("halmd.mdsim.particle")
+}
 require("halmd.modules")
 
--- grab modules
-local mdsim = halmd.mdsim
 -- grab C++ wrappers
 local zero_wrapper = {
     host = {

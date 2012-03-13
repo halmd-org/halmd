@@ -17,14 +17,15 @@
 -- along with this program.  If not, see <http://www.gnu.org/licenses/>.
 --
 
-local readers = require("halmd.io.readers")
-require("halmd.mdsim.core")
-require("halmd.mdsim.particle")
+local readers           = require("halmd.io.readers")
+local mdsim = {
+    core                = require("halmd.mdsim.core")
+  , particle            = require("halmd.mdsim.particle")
+}
 require("halmd.modules")
 require("halmd.observables.samples.phase_space")
 
 -- grab modules
-local mdsim = halmd.mdsim
 local observables = halmd.observables
 -- grab C++ wrappers
 local po = libhalmd.po

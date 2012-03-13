@@ -18,13 +18,14 @@
 --
 
 local device            = require("halmd.device")
-require("halmd.mdsim.core")
-require("halmd.mdsim.particle")
+local mdsim = {
+    core                = require("halmd.mdsim.core")
+  , particle            = require("halmd.mdsim.particle")
+}
 require("halmd.modules")
 require("halmd.random")
 
 -- grab modules
-local mdsim = halmd.mdsim
 local random = halmd.random
 -- grab C++ wrappers
 local boltzmann_wrapper = {

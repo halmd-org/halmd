@@ -18,14 +18,13 @@
 --
 
 local device            = require("halmd.device")
-require("halmd.mdsim.box")
-require("halmd.mdsim.core")
-require("halmd.mdsim.particle")
+local mdsim = {
+    box                 = require("halmd.mdsim.box")
+  , core                = require("halmd.mdsim.core")
+  , particle            = require("halmd.mdsim.particle")
+}
 require("halmd.modules")
 
--- grab modules
-local mdsim = halmd.mdsim
-local observables = halmd.observables
 -- grab C++ wrappers
 local phase_space_wrapper = {
     host = {
