@@ -24,10 +24,8 @@ local mdsim = {
   , particle            = require("halmd.mdsim.particle")
 }
 require("halmd.modules")
-require("halmd.random")
+local random            = require("halmd.random")
 
--- grab modules
-local random = halmd.random
 -- grab C++ wrappers
 local lattice_wrapper = {
     host = {
