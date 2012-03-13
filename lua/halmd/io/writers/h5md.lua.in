@@ -17,11 +17,11 @@
 -- along with this program.  If not, see <http://www.gnu.org/licenses/>.
 --
 
-local hooks = require("halmd.hooks")
+local hooks             = require("halmd.hooks")
+local module            = require("halmd.utility.module")
 local mdsim = {
     clock               = require("halmd.mdsim.clock")
 }
-require("halmd.modules")
 local utility = {
     posix_signal        = require("halmd.utility.posix_signal")
 }
@@ -34,12 +34,12 @@ local error = error
 local setmetatable = setmetatable
 local type = type
 
-module("halmd.io.writers.h5md", halmd.modules.register)
+local M = module("halmd.io.writers.h5md")
 
 --
 -- construct H5MD writer
 --
-function new(args)
+function M.__new(args)
     local path = assert(args.path, "missing path")
     local file = h5md.file(path)
 
@@ -125,6 +125,8 @@ end
 --
 -- returns module description
 --
-function description()
+function M.description()
     return "H5MD file format"
 end
+
+return M

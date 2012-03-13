@@ -17,7 +17,9 @@
 -- along with this program.  If not, see <http://www.gnu.org/licenses/>.
 --
 
-require("halmd.io.writers.file")
+local writers = {
+    file                = require("halmd.io.writers.file")
+}
 require("halmd.modules")
 require("halmd.observables.dynamics.blocking_scheme")
 require("halmd.observables.dynamics.correlations")
@@ -27,7 +29,6 @@ require("halmd.observables.samples.blocking_scheme")
 local correlations = halmd.observables.dynamics.correlations
 local dynamics = halmd.observables.dynamics
 local samples = halmd.observables.samples
-local writers = halmd.io.writers
 -- grab C++ wrappers
 local correlation_wrapper = libhalmd.observables.dynamics.correlation
 local po = libhalmd.po

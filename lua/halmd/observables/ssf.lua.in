@@ -17,10 +17,12 @@
 -- along with this program.  If not, see <http://www.gnu.org/licenses/>.
 --
 
-require("halmd.io.writers.file")
 local mdsim = {
     clock               = require("halmd.mdsim.clock")
   , particle            = require("halmd.mdsim.particle")
+}
+local writers = {
+    file                = require("halmd.io.writers.file")
 }
 require("halmd.modules")
 require("halmd.observables.density_mode")
@@ -29,7 +31,6 @@ require("halmd.observables.utility.wavevector")
 
 -- grab modules
 local observables = halmd.observables
-local writers = halmd.io.writers
 -- grab C++ wrappers
 local ssf_wrapper = {
     [2] = libhalmd.observables.ssf_2_

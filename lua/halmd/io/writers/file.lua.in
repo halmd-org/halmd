@@ -17,8 +17,8 @@
 -- along with this program.  If not, see <http://www.gnu.org/licenses/>.
 --
 
-local writers = require("halmd.io.writers")
-require("halmd.modules")
+local module            = require("halmd.utility.module")
+local writers           = require("halmd.io.writers")
 
 -- grab C++ wrappers
 local po = libhalmd.po
@@ -26,7 +26,7 @@ local po = libhalmd.po
 local assert = assert
 local pairs = pairs
 
-module("halmd.io.writers.file", halmd.modules.register)
+local M = module("halmd.io.writers.file")
 
 -- file instances by extension
 local files = {}
@@ -34,7 +34,7 @@ local files = {}
 --
 -- construct observable writer
 --
-function new(args)
+function M.__new(args)
     local format = args.format or "h5md" -- default value
     local extension = args.extension or "obs" -- default value
     if not files[extension] then
@@ -43,14 +43,14 @@ function new(args)
     return files[extension]
 end
 
-namespace = "writer"
+M.namespace = "writer"
 
 --
 -- assemble module options
 --
 -- @param desc po.options_description
 --
-function options(desc)
+function M.options(desc)
     -- writer module choices with descriptions
     local choices = {
         h5md            = writers.h5md.description()
@@ -58,3 +58,5 @@ function options(desc)
 
     desc:add("format", po.string():choices(choices), "select output file format")
 end
+
+return M

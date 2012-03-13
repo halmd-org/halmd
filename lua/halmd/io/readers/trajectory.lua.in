@@ -17,12 +17,12 @@
 -- along with this program.  If not, see <http://www.gnu.org/licenses/>.
 --
 
+local module            = require("halmd.utility.module")
 local readers           = require("halmd.io.readers")
 local mdsim = {
     core                = require("halmd.mdsim.core")
   , particle            = require("halmd.mdsim.particle")
 }
-require("halmd.modules")
 require("halmd.observables.samples.phase_space")
 
 -- grab modules
@@ -37,7 +37,7 @@ local io = io
 local pairs = pairs
 local string = string
 
-module("halmd.io.readers.trajectory", halmd.modules.register)
+local M = module("halmd.io.readers.trajectory")
 
 -- detected file reader module
 local reader
@@ -45,7 +45,7 @@ local reader
 --
 -- construct trajectory reader module
 --
-function new(args)
+function M.__new(args)
     if reader then
         local time = args.time
         local step = args.step or -1 --default value
@@ -120,7 +120,7 @@ end
 --
 -- @param desc po.options_description
 --
-function options(desc)
+function M.options(desc)
     desc:add("file", po.string():notifier(function(value)
 
         -- check whether file exists and is readable
@@ -153,3 +153,5 @@ function options(desc)
 -- FIXME this option conflicts with and is superseded by the global option 'time'
 --    desc:add("time", po.float():conflicts("step"), "read phase space sample at time")
 end
+
+return M
