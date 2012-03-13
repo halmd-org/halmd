@@ -18,11 +18,11 @@
 --
 
 local device            = require("halmd.device")
+local module            = require("halmd.utility.module")
 local mdsim = {
     core                = require("halmd.mdsim.core")
   , particle            = require("halmd.mdsim.particle")
 }
-require("halmd.modules")
 
 -- grab C++ wrappers
 local zero_wrapper = {
@@ -40,12 +40,12 @@ end
 -- grab standard library
 local assert = assert
 
-module("halmd.mdsim.forces.zero", halmd.modules.register)
+local M = module("halmd.mdsim.forces.zero")
 
 --
 -- construct zero module
 --
-function new(args)
+function M.__new(args)
     local particle = mdsim.particle() -- singleton
     local dimension = assert(particle.dimension)
 
@@ -67,6 +67,8 @@ end
 --
 -- returns module description
 --
-function description()
+function M.description()
     return "Zero potential (no interaction)"
 end
+
+return M

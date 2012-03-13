@@ -18,6 +18,7 @@
 --
 
 local device            = require("halmd.device")
+local module            = require("halmd.utility.module")
 local mdsim = {
     box                 = require("halmd.mdsim.box")
   , core                = require("halmd.mdsim.core")
@@ -25,7 +26,6 @@ local mdsim = {
   , particle            = require("halmd.mdsim.particle")
   , potential           = require("halmd.mdsim.potential")
 }
-require("halmd.modules")
 
 -- grab modules
 local forces = libhalmd.mdsim.forces
@@ -34,12 +34,12 @@ local forces = libhalmd.mdsim.forces
 local property = property
 local assert = assert
 
-module("halmd.mdsim.forces.pair_full", halmd.modules.register)
+local M = module("halmd.mdsim.forces.pair_full")
 
 --
 -- construct pair force module with full (not truncated) interaction
 --
-function new(args)
+function M.__new(args)
     -- construct global potential module
     local potential = mdsim.potential()
 
@@ -69,13 +69,15 @@ end
 --
 -- connect runtime accumulators to module profiler
 --
-function profile(self, profiler)
+function M.profile(self, profiler)
     profiler:on_profile{self, compute = "computation of " .. self.potential.module.description() .. " interaction"}
 end
 
 --
 -- returns module description
 --
-function description()
+function M.description()
     return "Full pair interaction"
 end
+
+return M
