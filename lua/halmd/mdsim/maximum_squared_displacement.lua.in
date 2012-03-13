@@ -20,7 +20,7 @@
 require("halmd.device")
 require("halmd.mdsim.box")
 require("halmd.mdsim.particle")
-require("halmd.modules")
+local module = require("halmd.utility.module")
 
 -- grab modules
 local device = halmd.device
@@ -41,12 +41,12 @@ end
 -- grab standard library
 local assert = assert
 
-module("halmd.mdsim.maximum_squared_displacement", halmd.modules.register)
+local M = module("halmd.mdsim.maximum_squared_displacement")
 
 --
 -- construct maximum_squared_displacement module
 --
-function new(args)
+function M.__new(args)
     -- dependency injection
     local particle = mdsim.particle() -- singleton
     local dimension = assert(particle.dimension)
@@ -64,7 +64,9 @@ end
 --
 -- connect runtime accumulators to module profiler
 --
-function profile(self, profiler)
+function M.profile(self, profiler)
     profiler:on_profile{self, zero = "zero maximum displacement"}
     profiler:on_profile{self, compute = "compute maximum displacement"}
 end
+
+return M
