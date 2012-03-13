@@ -17,17 +17,16 @@
 -- along with this program.  If not, see <http://www.gnu.org/licenses/>.
 --
 
-require("halmd.device")
-require("halmd.mdsim.box")
-require("halmd.mdsim.clock")
-require("halmd.modules")
-require("halmd.observables.samples.particle_group")
-require("halmd.observables.samples.phase_space")
+local device            = require("halmd.device")
+local module            = require("halmd.utility.module")
+local mdsim = {
+    box                 = require("halmd.mdsim.box")
+  , clock               = require("halmd.mdsim.clock")
+}
+local samples = {
+    phase_space         = require("halmd.observables.samples.phase_space")
+}
 
--- grab modules
-local device = halmd.device
-local mdsim = halmd.mdsim
-local observables = halmd.observables
 -- grab C++ wrappers
 local phase_space_wrapper = assert(libhalmd.observables.phase_space)
 local property = property
@@ -36,7 +35,7 @@ local assert = assert
 local ipairs = ipairs
 local type = type
 
-module("halmd.observables.phase_space", halmd.modules.register)
+local M = module("halmd.observables.phase_space")
 
 --
 -- construct phase_space module
@@ -47,7 +46,7 @@ module("halmd.observables.phase_space", halmd.modules.register)
 --                          if omitted use "gpu" if device is available
 -- @returns list of phase_space sampler instances with attached labels
 --
-function new(args)
+function M.__new(args)
     -- parameters
     local particle_group = assert(args.particle_group, "missing parameter: particle_group")
     assert(type(particle_group) == "table", "invalid table")
@@ -60,7 +59,7 @@ function new(args)
 
     local phase_space = {}
     for i, group in ipairs(particle_group) do
-        local sample = assert(observables.samples.phase_space{particle_group = group, memory = memory})
+        local sample = assert(samples.phase_space{particle_group = group, memory = memory})
         local sampler = phase_space_wrapper(sample, group, box, clock, logger)
 
         -- store phase space sample as Lua property
@@ -81,7 +80,7 @@ end
 --
 -- connect runtime accumulators to module profiler
 --
-function profile(self, profiler)
+function M.profile(self, profiler)
     for i, phase_space in ipairs(self) do
         local label = assert(phase_space.label)
         local memory = assert(phase_space.memory)
@@ -90,3 +89,5 @@ function profile(self, profiler)
         profiler:on_profile{phase_space, reset = "reset " .. str}
     end
 end
+
+return M

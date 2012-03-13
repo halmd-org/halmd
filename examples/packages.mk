@@ -127,7 +127,13 @@ LUA_TARBALL_URL = http://www.lua.org/ftp/$(LUA_TARBALL)
 LUA_TARBALL_SHA256 = cabe379465aa8e388988073d59b69e76ba0025429d2c1da80821a252cdf6be0d
 LUA_BUILD_DIR = lua-$(LUA_VERSION)
 LUA_INSTALL_DIR = $(PREFIX)/lua-$(LUA_VERSION)
-LUA_CFLAGS = -DLUA_USE_LINUX -DLUA_COMPAT_MODULE -fPIC -O2 -Wall
+LUA_CFLAGS = -fPIC -O2 -Wall -DLUA_USE_POSIX -DLUA_USE_DLOPEN -DLUA_USE_STRTODHEX -DLUA_USE_AFORMAT -DLUA_USE_LONGLONG
+LUA_LIBS = -Wl,-E -ldl -lm
+
+ifdef USE_READLINE
+LUA_CFLAGS += -DLUA_USE_READLINE
+LUA_LIBS += -lreadline -lncurses
+endif
 
 .fetch-lua:
 	@$(RM) $(LUA_TARBALL)
@@ -145,7 +151,7 @@ fetch-lua: .fetch-lua
 extract-lua: .extract-lua
 
 .build-lua: .extract-lua
-	cd $(LUA_BUILD_DIR) && make linux CFLAGS="$(LUA_CFLAGS)"
+	cd $(LUA_BUILD_DIR) && make linux CFLAGS="$(LUA_CFLAGS)" LIBS="$(LUA_LIBS)"
 	@$(TOUCH) $@
 
 build-lua: .build-lua
@@ -170,6 +176,69 @@ env-lua:
 	@echo 'export CMAKE_PREFIX_PATH="$(LUA_INSTALL_DIR)$${CMAKE_PREFIX_PATH+:$$CMAKE_PREFIX_PATH}"'
 
 ##
+## LuaJIT
+##
+
+LUAJIT_VERSION = 2.0.0-beta9
+LUAJIT_TARBALL = LuaJIT-$(LUAJIT_VERSION).tar.gz
+LUAJIT_TARBALL_URL = http://luajit.org/download/$(LUAJIT_TARBALL)
+LUAJIT_TARBALL_SHA256 = da3793b4364a17c3700d39d13eae799b82ff23da1f61631d735de05333f46240
+LUAJIT_PATCH = beta9_hotfix1.patch
+LUAJIT_PATCH_URL = http://luajit.org/download/$(LUAJIT_PATCH)
+LUAJIT_PATCH_SHA256 = 468234a723c3a2bb7fe8caafc3aac0443473df2790b547a166babaf9b58cc671
+LUAJIT_BUILD_DIR = LuaJIT-$(LUAJIT_VERSION)
+LUAJIT_INSTALL_DIR = $(PREFIX)/luajit-$(LUAJIT_VERSION)
+LUAJIT_CFLAGS = -fPIC
+
+.fetch-luajit:
+	@$(RM) $(LUAJIT_TARBALL)
+	@$(RM) $(LUAJIT_PATCH)
+	$(WGET) $(LUAJIT_TARBALL_URL)
+	$(WGET) $(LUAJIT_PATCH_URL)
+	@echo '$(LUAJIT_TARBALL_SHA256)  $(LUAJIT_TARBALL)' | $(SHA256SUM)
+	@echo '$(LUAJIT_PATCH_SHA256)  $(LUAJIT_PATCH)' | $(SHA256SUM)
+	@$(TOUCH) $@
+
+fetch-luajit: .fetch-luajit
+
+.extract-luajit: .fetch-luajit
+	$(RM) $(LUAJIT_BUILD_DIR)
+	$(TAR) -xzf $(LUAJIT_TARBALL)
+	cd $(LUAJIT_BUILD_DIR) && $(PATCH) -p1 < $(CURDIR)/$(LUAJIT_PATCH)
+	@$(TOUCH) $@
+
+extract-luajit: .extract-luajit
+
+.build-luajit: .extract-luajit
+	cd $(LUAJIT_BUILD_DIR) && make CFLAGS=$(LUAJIT_CFLAGS) $(PARALLEL_BUILD_FLAGS)
+	@$(TOUCH) $@
+
+build-luajit: .build-luajit
+
+install-luajit: .build-luajit
+	cd $(LUAJIT_BUILD_DIR) && make install PREFIX=$(LUAJIT_INSTALL_DIR)
+	ln -sf luajit-$(LUAJIT_VERSION) $(LUAJIT_INSTALL_DIR)/bin/lua
+	ln -sf libluajit-5.1.a $(LUAJIT_INSTALL_DIR)/lib/liblua.a
+	ln -sf luajit-2.0 $(LUAJIT_INSTALL_DIR)/include/lua
+
+clean-luajit:
+	@$(RM) .build-luajit
+	@$(RM) .extract-luajit
+	$(RM) $(LUAJIT_BUILD_DIR)
+
+distclean-luajit: clean-luajit
+	@$(RM) .fetch-luajit
+	$(RM) $(LUAJIT_TARBALL)
+	$(RM) $(LUAJIT_PATCH)
+
+env-luajit:
+	@echo
+	@echo '# add LuaJIT $(LUAJIT_VERSION) to environment'
+	@echo 'export PATH="$(LUAJIT_INSTALL_DIR)/bin$${PATH+:$$PATH}"'
+	@echo 'export MANPATH="$(LUAJIT_INSTALL_DIR)/man$${MANPATH+:$$MANPATH}"'
+	@echo 'export CMAKE_PREFIX_PATH="$(LUAJIT_INSTALL_DIR)$${CMAKE_PREFIX_PATH+:$$CMAKE_PREFIX_PATH}"'
+
+##
 ## Boost C++ libraries with Boost.Log
 ##
 
@@ -185,7 +254,14 @@ BOOST_LOG_TARBALL_SHA256 = 4b00e1d302017298284914c6cc9e7fcae0e097c93e632045d6b0f
 BOOST_LOG_DIR = boost-log-$(BOOST_LOG_VERSION)
 BOOST_BUILD_DIR = boost_$(BOOST_RELEASE)
 BOOST_INSTALL_DIR = $(PREFIX)/boost_$(BOOST_RELEASE)
-BOOST_BUILD_FLAGS = cxxflags=-fPIC dll-path=$(BOOST_INSTALL_DIR)/lib --without-python
+BOOST_BUILD_FLAGS = cxxflags=-fPIC dll-path=$(BOOST_INSTALL_DIR)/lib
+
+ifndef USE_BZIP2
+BOOST_BUILD_FLAGS += -sNO_BZIP2=1
+endif
+ifndef USE_PYTHON
+BOOST_BUILD_FLAGS += --without-python
+endif
 
 .fetch-boost:
 	@$(RM) $(BOOST_TARBALL)
@@ -262,12 +338,24 @@ LUABIND_INSTALL_DIR = $(PREFIX)/luabind-$(LUABIND_VERSION)
 
 fetch-luabind: .fetch-luabind
 
-.extract-luabind: .fetch-luabind .build-lua
+ifdef USE_LUAJIT
+LUABIND_BUILD_LUA_TARGET = .build-luajit
+else
+LUABIND_BUILD_LUA_TARGET = .build-lua
+endif
+
+.extract-luabind: .fetch-luabind $(LUABIND_BUILD_LUA_TARGET)
 	$(RM) $(LUABIND_BUILD_DIR)
 	$(TAR) -xjf $(LUABIND_TARBALL)
 	mkdir $(LUABIND_BUILD_DIR)/lua
+ifdef USE_LUAJIT
+	mkdir $(LUABIND_BUILD_DIR)/lua/lib
+	ln -s $(CURDIR)/$(LUAJIT_BUILD_DIR)/src $(LUABIND_BUILD_DIR)/lua/include
+	ln -s $(CURDIR)/$(LUAJIT_BUILD_DIR)/src/libluajit.a $(LUABIND_BUILD_DIR)/lua/lib/liblua.a
+else
 	ln -s $(CURDIR)/$(LUA_BUILD_DIR)/src $(LUABIND_BUILD_DIR)/lua/include
 	ln -s $(CURDIR)/$(LUA_BUILD_DIR)/src $(LUABIND_BUILD_DIR)/lua/lib
+endif
 	@$(TOUCH) $@
 
 extract-luabind: .extract-luabind
@@ -770,3 +858,326 @@ env-gnu-parallel:
 	@echo '# add GNU Parallel $(GNU_PARALLEL_VERSION) to environment'
 	@echo 'export PATH="$(GNU_PARALLEL_INSTALL_DIR)/bin$${PATH+:$$PATH}"'
 	@echo 'export MANPATH="$(GNU_PARALLEL_INSTALL_DIR)/share/man$${MANPATH+:$$MANPATH}"'
+
+##
+## GCC (GNU Compiler Collection)
+##
+
+GCC_VERSION = 4.6.3
+GCC_TARBALL = gcc-$(GCC_VERSION).tar.bz2
+GCC_TARBALL_URL = ftp://ftp.fu-berlin.de/unix/languages/gcc/releases/gcc-$(GCC_VERSION)/$(GCC_TARBALL)
+GCC_TARBALL_SHA256 = e8f5853d4eec2f5ebaf8a72ae4d53c436aacf98153b2499f8635b48c4718a093
+GCC_BUILD_DIR = gcc-$(GCC_VERSION)
+GCC_INSTALL_DIR = $(PREFIX)/gcc-$(GCC_VERSION)
+
+.fetch-gcc:
+	@$(RM) $(GCC_TARBALL)
+	$(WGET) $(GCC_TARBALL_URL)
+	@echo '$(GCC_TARBALL_SHA256)  $(GCC_TARBALL)' | $(SHA256SUM)
+	@$(TOUCH) $@
+
+fetch-gcc: .fetch-gcc .fetch-gmp .fetch-mpfr .fetch-mpc .fetch-ppl .fetch-cloog-ppl
+
+.extract-gcc: .fetch-gcc
+	$(RM) $(GCC_BUILD_DIR)
+	$(TAR) -xjf $(GCC_TARBALL)
+	@$(TOUCH) $@
+
+extract-gcc: .extract-gcc
+
+.configure-gcc: .extract-gcc .install-gmp .install-mpfr .install-mpc .install-ppl .install-cloog-ppl
+	cd $(GCC_BUILD_DIR) && LDFLAGS=-L$(GMP_INSTALL_DIR)/lib ac_cv_lib_pwl_PWL_handle_timeout=no ./configure --prefix=$(GCC_INSTALL_DIR) --disable-multilib --enable-languages=c,c++,fortran,lto --with-gmp=$(GMP_INSTALL_DIR) --with-mpfr=$(MPFR_INSTALL_DIR) --with-mpc=$(MPC_INSTALL_DIR) --with-ppl=$(PPL_INSTALL_DIR) --with-cloog=$(CLOOG_PPL_INSTALL_DIR) --enable-build-with-cxx
+	@$(TOUCH) $@
+
+configure-gcc: .configure-gcc
+
+.build-gcc: .configure-gcc
+	cd $(GCC_BUILD_DIR) && make $(PARALLEL_BUILD_FLAGS)
+	@$(TOUCH) $@
+
+build-gcc: .build-gcc
+
+install-gcc: .build-gcc
+	cd $(GCC_BUILD_DIR) && make install
+
+clean-gcc:
+	@$(RM) .build-gcc
+	@$(RM) .configure-gcc
+	@$(RM) .extract-gcc
+	@$(RM) .install-gmp
+	@$(RM) .install-mpfr
+	@$(RM) .install-mpc
+	@$(RM) .install-ppl
+	@$(RM) .install-cloog-ppl
+	$(RM) $(GCC_BUILD_DIR)
+
+distclean-gcc: clean-gcc
+	@$(RM) .fetch-gcc
+	$(RM) $(GCC_TARBALL)
+
+env-gcc:
+	@echo
+	@echo '# add gcc $(GCC_VERSION) to environment'
+	@echo 'export PATH="$(GCC_INSTALL_DIR)/bin$${PATH+:$$PATH}"'
+	@echo 'export MANPATH="$(GCC_INSTALL_DIR)/share/man$${MANPATH+:$$MANPATH}"'
+	@echo 'export LD_LIBRARY_PATH="$(GCC_INSTALL_DIR)/lib64$${LD_LIBRARY_PATH+:$$LD_LIBRARY_PATH}"'
+
+##
+## GMP (GNU Multiple Precision Arithmetic Library)
+##
+
+GMP_VERSION = 5.0.4
+GMP_TARBALL = gmp-$(GMP_VERSION).tar.bz2
+GMP_TARBALL_URL = ftp://ftp.gmplib.org/pub/gmp-$(GMP_VERSION)/$(GMP_TARBALL)
+GMP_TARBALL_SHA256 = 35d4aade3e4bdf0915c944599b10d23f108ffedf6c3188aeec52221c5cf9a06f
+GMP_BUILD_DIR = gmp-$(GMP_VERSION)
+GMP_INSTALL_DIR = $(CURDIR)/$(GCC_BUILD_DIR)/gmp
+
+.fetch-gmp:
+	@$(RM) $(GMP_TARBALL)
+	$(WGET) $(GMP_TARBALL_URL)
+	@echo '$(GMP_TARBALL_SHA256)  $(GMP_TARBALL)' | $(SHA256SUM)
+	@$(TOUCH) $@
+
+fetch-gmp: .fetch-gmp
+
+.extract-gmp: .fetch-gmp
+	$(RM) $(GMP_BUILD_DIR)
+	$(TAR) -xjf $(GMP_TARBALL)
+	@$(TOUCH) $@
+
+extract-gmp: .extract-gmp
+
+.configure-gmp: .extract-gmp
+	cd $(GMP_BUILD_DIR) && ./configure --prefix=$(GMP_INSTALL_DIR) --enable-cxx --disable-shared
+	@$(TOUCH) $@
+
+configure-gmp: .configure-gmp
+
+.build-gmp: .configure-gmp
+	cd $(GMP_BUILD_DIR) && make $(PARALLEL_BUILD_FLAGS)
+	@$(TOUCH) $@
+
+build-gmp: .build-gmp
+
+.install-gmp: .build-gmp
+	cd $(GMP_BUILD_DIR) && make install
+	@$(TOUCH) $@
+
+clean-gmp:
+	@$(RM) .build-gmp
+	@$(RM) .configure-gmp
+	@$(RM) .extract-gmp
+	$(RM) $(GMP_BUILD_DIR)
+
+distclean-gmp: clean-gmp
+	@$(RM) .fetch-gmp
+	$(RM) $(GMP_TARBALL)
+
+##
+## MPFR (Multiple-precision floating-point computations with correct rounding)
+##
+
+MPFR_VERSION = 3.1.0
+MPFR_TARBALL = mpfr-$(MPFR_VERSION).tar.bz2
+MPFR_TARBALL_URL = http://www.mpfr.org/mpfr-$(MPFR_VERSION)/$(MPFR_TARBALL)
+MPFR_TARBALL_SHA256 = 74a7bbbad168dd1cc414f1c9210b8fc16ccfc8e422d34b3371a8978e31eab680
+MPFR_BUILD_DIR = mpfr-$(MPFR_VERSION)
+MPFR_INSTALL_DIR = $(CURDIR)/$(GCC_BUILD_DIR)/mpfr
+
+.fetch-mpfr:
+	@$(RM) $(MPFR_TARBALL)
+	$(WGET) $(MPFR_TARBALL_URL)
+	@echo '$(MPFR_TARBALL_SHA256)  $(MPFR_TARBALL)' | $(SHA256SUM)
+	@$(TOUCH) $@
+
+fetch-mpfr: .fetch-mpfr
+
+.extract-mpfr: .fetch-mpfr
+	$(RM) $(MPFR_BUILD_DIR)
+	$(TAR) -xjf $(MPFR_TARBALL)
+	@$(TOUCH) $@
+
+extract-mpfr: .extract-mpfr
+
+.configure-mpfr: .extract-mpfr .install-gmp
+	cd $(MPFR_BUILD_DIR) && ./configure --prefix=$(MPFR_INSTALL_DIR) --with-gmp=$(GMP_INSTALL_DIR) --disable-shared
+	@$(TOUCH) $@
+
+configure-mpfr: .configure-mpfr
+
+.build-mpfr: .configure-mpfr
+	cd $(MPFR_BUILD_DIR) && make $(PARALLEL_BUILD_FLAGS)
+	@$(TOUCH) $@
+
+build-mpfr: .build-mpfr
+
+.install-mpfr: .build-mpfr
+	cd $(MPFR_BUILD_DIR) && make install
+	@$(TOUCH) $@
+
+clean-mpfr:
+	@$(RM) .build-mpfr
+	@$(RM) .configure-mpfr
+	@$(RM) .extract-mpfr
+	$(RM) $(MPFR_BUILD_DIR)
+
+distclean-mpfr: clean-mpfr
+	@$(RM) .fetch-mpfr
+	$(RM) $(MPFR_TARBALL)
+
+##
+## MPC (arithmetic of complex numbers with arbitrarily high precision and correct rounding)
+##
+
+MPC_VERSION = 0.9
+MPC_TARBALL = mpc-$(MPC_VERSION).tar.gz
+MPC_TARBALL_URL = http://www.multiprecision.org/mpc/download/$(MPC_TARBALL)
+MPC_TARBALL_SHA256 = fd3efe422f0d454592059e80f2c00d1a2e381bf2beda424c5094abd4deb049ac
+MPC_BUILD_DIR = mpc-$(MPC_VERSION)
+MPC_INSTALL_DIR = $(CURDIR)/$(GCC_BUILD_DIR)/mpc
+
+.fetch-mpc:
+	@$(RM) $(MPC_TARBALL)
+	$(WGET) $(MPC_TARBALL_URL)
+	@echo '$(MPC_TARBALL_SHA256)  $(MPC_TARBALL)' | $(SHA256SUM)
+	@$(TOUCH) $@
+
+fetch-mpc: .fetch-mpc
+
+.extract-mpc: .fetch-mpc
+	$(RM) $(MPC_BUILD_DIR)
+	$(TAR) -xzf $(MPC_TARBALL)
+	@$(TOUCH) $@
+
+extract-mpc: .extract-mpc
+
+.configure-mpc: .extract-mpc .install-gmp .install-mpfr
+	cd $(MPC_BUILD_DIR) && ./configure --prefix=$(MPC_INSTALL_DIR) --with-gmp=$(GMP_INSTALL_DIR) --with-mpfr=$(MPFR_INSTALL_DIR) --disable-shared
+	@$(TOUCH) $@
+
+configure-mpc: .configure-mpc
+
+.build-mpc: .configure-mpc
+	cd $(MPC_BUILD_DIR) && make $(PARALLEL_BUILD_FLAGS)
+	@$(TOUCH) $@
+
+build-mpc: .build-mpc
+
+.install-mpc: .build-mpc
+	cd $(MPC_BUILD_DIR) && make install
+	@$(TOUCH) $@
+
+clean-mpc:
+	@$(RM) .build-mpc
+	@$(RM) .configure-mpc
+	@$(RM) .extract-mpc
+	$(RM) $(MPC_BUILD_DIR)
+
+distclean-mpc: clean-mpc
+	@$(RM) .fetch-mpc
+	$(RM) $(MPC_TARBALL)
+
+##
+## PPL (Parma Polyhedra Library)
+##
+
+PPL_VERSION = 0.11.2
+PPL_TARBALL = ppl-$(PPL_VERSION).tar.bz2
+PPL_TARBALL_URL = ftp://ftp.cs.unipr.it/pub/ppl/releases/$(PPL_VERSION)/$(PPL_TARBALL)
+PPL_TARBALL_SHA256 = e3fbd1c19ef44c6f020951807cdb6fc6a8153cd3a5c53b0ab9cf4c4f6e8cbbeb
+PPL_BUILD_DIR = ppl-$(PPL_VERSION)
+PPL_INSTALL_DIR = $(CURDIR)/$(GCC_BUILD_DIR)/ppl
+
+.fetch-ppl:
+	@$(RM) $(PPL_TARBALL)
+	$(WGET) $(PPL_TARBALL_URL)
+	@echo '$(PPL_TARBALL_SHA256)  $(PPL_TARBALL)' | $(SHA256SUM)
+	@$(TOUCH) $@
+
+fetch-ppl: .fetch-ppl
+
+.extract-ppl: .fetch-ppl
+	$(RM) $(PPL_BUILD_DIR)
+	$(TAR) -xjf $(PPL_TARBALL)
+	@$(TOUCH) $@
+
+extract-ppl: .extract-ppl
+
+.configure-ppl: .extract-ppl .install-gmp
+	cd $(PPL_BUILD_DIR) && CPPFLAGS=-I$(GMP_INSTALL_DIR)/include LDFLAGS=-L$(GMP_INSTALL_DIR)/lib ./configure --prefix=$(PPL_INSTALL_DIR) --enable-interfaces=c,cxx --disable-shared --disable-watchdog
+	@$(TOUCH) $@
+
+configure-ppl: .configure-ppl
+
+.build-ppl: .configure-ppl
+	cd $(PPL_BUILD_DIR) && make $(PARALLEL_BUILD_FLAGS)
+	@$(TOUCH) $@
+
+build-ppl: .build-ppl
+
+.install-ppl: .build-ppl
+	cd $(PPL_BUILD_DIR) && make install
+	@$(TOUCH) $@
+
+clean-ppl:
+	@$(RM) .build-ppl
+	@$(RM) .configure-ppl
+	@$(RM) .extract-ppl
+	$(RM) $(PPL_BUILD_DIR)
+
+distclean-ppl: clean-ppl
+	@$(RM) .fetch-ppl
+	$(RM) $(PPL_TARBALL)
+
+##
+## CLooG-PPL
+##
+
+CLOOG_PPL_VERSION = 0.15.11
+CLOOG_PPL_TARBALL = cloog-ppl-$(CLOOG_PPL_VERSION).tar.gz
+CLOOG_PPL_TARBALL_URL = ftp://ftp.fu-berlin.de/unix/languages/gcc/infrastructure/$(CLOOG_PPL_TARBALL)
+CLOOG_PPL_TARBALL_SHA256 = 7cd634d0b2b401b04096b545915ac67f883556e9a524e8e803a6bf6217a84d5f
+CLOOG_PPL_BUILD_DIR = cloog-ppl-$(CLOOG_PPL_VERSION)
+CLOOG_PPL_INSTALL_DIR = $(CURDIR)/$(GCC_BUILD_DIR)/cloog-ppl
+
+.fetch-cloog-ppl:
+	@$(RM) $(CLOOG_PPL_TARBALL)
+	$(WGET) $(CLOOG_PPL_TARBALL_URL)
+	@echo '$(CLOOG_PPL_TARBALL_SHA256)  $(CLOOG_PPL_TARBALL)' | $(SHA256SUM)
+	@$(TOUCH) $@
+
+fetch-cloog-ppl: .fetch-cloog-ppl
+
+.extract-cloog-ppl: .fetch-cloog-ppl
+	$(RM) $(CLOOG_PPL_BUILD_DIR)
+	$(TAR) -xzf $(CLOOG_PPL_TARBALL)
+	@$(TOUCH) $@
+
+extract-cloog-ppl: .extract-cloog-ppl
+
+.configure-cloog-ppl: .extract-cloog-ppl .install-ppl .install-gmp
+	cd $(CLOOG_PPL_BUILD_DIR) && ./configure --prefix=$(CLOOG_PPL_INSTALL_DIR) --with-ppl=$(PPL_INSTALL_DIR) --with-gmp=$(GMP_INSTALL_DIR) --disable-shared --with-host-libstdcxx=-lstdc++
+	@$(TOUCH) $@
+
+configure-cloog-ppl: .configure-cloog-ppl
+
+.build-cloog-ppl: .configure-cloog-ppl
+	cd $(CLOOG_PPL_BUILD_DIR) && make $(PARALLEL_BUILD_FLAGS)
+	@$(TOUCH) $@
+
+build-cloog-ppl: .build-cloog-ppl
+
+.install-cloog-ppl: .build-cloog-ppl
+	cd $(CLOOG_PPL_BUILD_DIR) && make install
+	@$(TOUCH) $@
+
+clean-cloog-ppl:
+	@$(RM) .build-cloog-ppl
+	@$(RM) .configure-cloog-ppl
+	@$(RM) .extract-cloog-ppl
+	$(RM) $(CLOOG_PPL_BUILD_DIR)
+
+distclean-cloog-ppl: clean-cloog-ppl
+	@$(RM) .fetch-cloog-ppl
+	$(RM) $(CLOOG_PPL_TARBALL)

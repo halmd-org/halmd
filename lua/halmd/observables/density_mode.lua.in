@@ -17,14 +17,17 @@
 -- along with this program.  If not, see <http://www.gnu.org/licenses/>.
 --
 
-require("halmd.mdsim.clock")
-require("halmd.modules")
-require("halmd.observables.phase_space")
-require("halmd.observables.utility.wavevector")
+local module            = require("halmd.utility.module")
+local mdsim = {
+    clock               = require("halmd.mdsim.clock")
+}
+local observables = {
+    phase_space         = require("halmd.observables.phase_space")
+  , utility = {
+        wavevector      = require("halmd.observables.utility.wavevector")
+    }
+}
 
--- grab modules
-local mdsim = halmd.mdsim
-local observables = halmd.observables
 -- grab C++ wrappers
 local density_mode_wrapper = libhalmd.observables.density_mode
 local po = libhalmd.po
@@ -34,7 +37,7 @@ local ipairs = ipairs
 local property = property
 local type = type
 
-module("halmd.observables.density_mode", halmd.modules.register)
+local M = module("halmd.observables.density_mode")
 
 --
 -- construct instance of density_mode module
@@ -48,7 +51,7 @@ module("halmd.observables.density_mode", halmd.modules.register)
 --     args.max_count       maximum count of wavevectors per wavenumber
 -- @returns list of density_mode instances
 --
-function new(args)
+function M.__new(args)
     -- dependency injection
     local phase_space = assert(args.phase_space, "missing parameter: phase_space")
     assert(type(phase_space) == "table", "invalid table")
@@ -101,7 +104,7 @@ end
 --
 -- connect runtime accumulators to module profiler
 --
-function profile(self, profiler)
+function M.profile(self, profiler)
     for i, density_mode in ipairs(self) do
         local label = assert(density_mode.label)
         profiler:on_profile{density_mode, acquire = "computation of density modes for " .. label .. " particles"}
@@ -113,10 +116,12 @@ end
 --
 -- @param desc po.options_description
 --
-function options(desc)
+function M.options(desc)
     desc:add("wavenumbers", po.float_array():conflicts("max-wavenumber"), "list of wavenumbers")
     desc:add("max-wavenumber", po.float():conflicts("wavenumbers"), "maximum wavenumber of semi-linearly spaced grid")
     desc:add("decimation", po.uint():conflicts("wavenumbers"), "decimation of wavenumber grid")
     desc:add("tolerance", po.float(), "relative tolerance on wavevector magnitude")
     desc:add("max-count", po.uint(), "maximum number of wavevectors per wavenumber shell")
 end
+
+return M

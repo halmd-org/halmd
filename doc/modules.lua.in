@@ -58,7 +58,7 @@ function parse_module(sourcedir, source)
                     table.insert(entry, m)
                 end
             else
-                local m, n = line:match("^function%s*(([%w_]+)%([^)]*%))")
+                local m, n = line:match("^function%s*[%w_]+%.(([%w_]+)%([^)]*%))")
                 if m then
                     entry.func = m
                     entry.name = n
@@ -101,11 +101,11 @@ function render_module(parsed)
         local indent = ""
         local class = false
         if entry.func then
-            if entry.name == "new" then
+            if entry.name == "__new" then
                 class = true
                 l(".. currentmodule:: %s", parsed.namespace)
                 l()
-                l(".. class:: %s", entry.func:gsub("^new", parsed.name))
+                l(".. class:: %s", entry.func:gsub("^__new", parsed.name))
             else
                 l(".. function:: %s", entry.func)
             end

@@ -17,13 +17,12 @@
 -- along with this program.  If not, see <http://www.gnu.org/licenses/>.
 --
 
-require("halmd.device")
-require("halmd.mdsim.box")
-require("halmd.modules")
+local device            = require("halmd.device")
+local module            = require("halmd.utility.module")
+local mdsim = {
+    box                 = require("halmd.mdsim.box")
+}
 
--- grab modules
-local device = halmd.device
-local mdsim = halmd.mdsim
 -- grab C++ wrappers
 local excluded_volume_wrapper = {
     [3] = {
@@ -38,11 +37,10 @@ local excluded_volume_wrapper = {
 -- grab standard library
 local assert = assert
 local class_info = class_info
-local print = print
 
-module("halmd.mdsim.positions.excluded_volume", halmd.modules.register)
+local M = module("halmd.mdsim.positions.excluded_volume")
 
-function new(args)
+function M.__new(args)
     -- parameters
     local cell_length = args.cell_length or 1 -- default value
     -- dependencies
@@ -59,3 +57,5 @@ function new(args)
     end
     return excluded_volume(box, cell_length, logger)
 end
+
+return M

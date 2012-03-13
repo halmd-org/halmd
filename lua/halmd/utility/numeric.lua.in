@@ -17,10 +17,12 @@
 -- along with this program.  If not, see <http://www.gnu.org/licenses/>.
 --
 
+local M = {}
+
 --
 -- returns matrix of given size with scalar value
 --
-function scalar_matrix(rows, columns, value)
+function M.scalar_matrix(rows, columns, value)
     local mat = {}
     for i = 1, rows do
         local row = {}
@@ -35,7 +37,7 @@ end
 --
 -- returns transpose of matrix
 --
-function trans(m)
+function M.trans(m)
     local t = {}
     for i = 1, #m do
         local row = m[i]
@@ -48,3 +50,5 @@ function trans(m)
     end
     return t
 end
+
+return M

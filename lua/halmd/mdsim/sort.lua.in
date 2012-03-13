@@ -17,11 +17,9 @@
 -- along with this program.  If not, see <http://www.gnu.org/licenses/>.
 --
 
-require("halmd.mdsim.sorts")
-require("halmd.modules")
+local module            = require("halmd.utility.module")
+local sorts             = require("halmd.mdsim.sorts")
 
--- grab modules
-local sorts = halmd.mdsim.sorts
 -- grab C++ wrappers
 local h5 = libhalmd.h5
 local po = libhalmd.po
@@ -29,12 +27,12 @@ local po = libhalmd.po
 local assert = assert
 local pairs = pairs
 
-module("halmd.mdsim.sort", halmd.modules.register)
+local M = module("halmd.mdsim.sort")
 
 --
 -- construct sort module
 --
-function new(args)
+function M.__new(args)
     local particle = assert(args.particle)
     local sort = args.sort or "hilbert" -- default value
     return sorts[sort]{particle = particle}
@@ -45,15 +43,12 @@ end
 --
 -- @param desc po.options_description
 --
-function options(desc, globals)
+function M.options(desc, globals)
 
     -- sort module choices with descriptions
-    local choices = {}
-    for sort, module in pairs(sorts) do
-        if module.description then
-            choices[sort] = module.description()
-        end
-    end
+    local choices = {
+        hilbert         = sorts.hilbert.description()
+    }
 
     globals:add("sort", po.string():choices(choices), "select sort module")
 end
@@ -61,7 +56,7 @@ end
 --
 -- read module parameters from HDF5 group
 --
-function read_parameters(args, group, globals)
+function M.read_parameters(args, group, globals)
     args.sort = globals:read_attribute("sort", h5.string())
 end
 
@@ -71,6 +66,8 @@ end
 -- @param sort module instance
 -- @param group HDF5 group
 --
-function write_parameters(sort, group, globals)
+function M.write_parameters(sort, group, globals)
     globals:write_attribute("sort", h5.string(), sort.module.namespace)
 end
+
+return M

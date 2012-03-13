@@ -17,7 +17,7 @@
 -- along with this program.  If not, see <http://www.gnu.org/licenses/>.
 --
 
-require("halmd.modules")
+local module = require("halmd.utility.module")
 
 -- grab C++ wrappers
 local logger_wrapper = libhalmd.io.logger
@@ -29,12 +29,16 @@ local rawset = rawset
 local setmetatable = setmetatable
 local tostring = tostring
 
-module("halmd.log", halmd.modules.provider)
+---
+-- Logging
+-- =======
+--
+local M = module("halmd.log")
 
 --
 -- returns logger with given prefix
 --
-function logger(args)
+function M.logger(args)
     local prefix = assert(args.prefix)
     local logger = logger_wrapper()
     logger:add_attribute("Module", prefix)
@@ -44,27 +48,72 @@ end
 --
 -- provide module logger
 --
-function parameters(module)
-    return {logger = logger{prefix = module.namespace}}
+function M.parameters(module)
+    return {logger = M.logger{prefix = module.namespace}}
 end
 
-setmetatable(_M, {
-    --
-    -- log message with given severity
-    --
-    -- @param level Logging severity level
-    --
-    __index = function(self, level)
-        local wrapper = logging_wrapper[level]
-        local log
-        if wrapper then
-            log = function(message, ...)
-                wrapper(tostring(message):format(...))
-            end
-        else
-            log = function() end
-        end
-        rawset(self, level, log)
-        return log
+---
+-- Log message with severity fatal.
+--
+-- :param string format: see `string.format`_
+--
+-- .. _string.format: http://www.lua.org/manual/5.2/manual.html#pdf-string.format
+--
+function M.fatal(format, ...)
+    logging_wrapper.fatal(tostring(format):format(...))
+end
+
+---
+-- Log message with severity error.
+--
+-- :param string format: see `string.format`_
+--
+function M.error(format, ...)
+    logging_wrapper.error(tostring(format):format(...))
+end
+
+---
+-- Log message with severity warning.
+--
+-- :param string format: see `string.format`_
+--
+function M.warning(format, ...)
+    logging_wrapper.warning(tostring(format):format(...))
+end
+
+---
+-- Log message with severity info.
+--
+-- :param string format: see `string.format`_
+--
+function M.info(format, ...)
+    logging_wrapper.info(tostring(format):format(...))
+end
+
+---
+-- Log message with severity debug.
+--
+-- :param string format: see `string.format`_
+--
+-- :func:`halmd.log.debug` has no effect in a non-debug build.
+--
+function M.debug(format, ...)
+    if logging_wrapper.debug then
+        logging_wrapper.debug(tostring(format):format(...))
     end
-})
+end
+
+---
+-- Log message with severity trace.
+--
+-- :param string format: see `string.format`_
+--
+-- :func:`halmd.log.trace` has no effect in a non-debug build.
+--
+function M.trace(format, ...)
+    if logging_wrapper.trace then
+        logging_wrapper.trace(tostring(format):format(...))
+    end
+end
+
+return M

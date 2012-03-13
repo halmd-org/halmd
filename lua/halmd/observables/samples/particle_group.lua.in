@@ -17,7 +17,7 @@
 -- along with this program.  If not, see <http://www.gnu.org/licenses/>.
 --
 
-require("halmd.modules")
+local module = require("halmd.utility.module")
 
 -- grab C++ wrappers
 local particle_group_all_wrapper = assert(libhalmd.observables.samples.particle_group_all)
@@ -29,7 +29,7 @@ local property = property
 local string = string
 local type = type
 
-module("halmd.observables.samples.particle_group", halmd.modules.register)
+local M = module("halmd.observables.samples.particle_group")
 
 --
 -- construct particle_group module
@@ -42,7 +42,7 @@ module("halmd.observables.samples.particle_group", halmd.modules.register)
 --                   TODO pass optionally a function/mapping instead of a list
 -- @returns list of particle_group instances with attached labels
 --
-function new(args)
+function M.__new(args)
     local particle = assert(args.particle, "missing parameter: particle")
     local range = args.range
     local species = args.species
@@ -95,3 +95,5 @@ function new(args)
 
     return particle_group
 end
+
+return M

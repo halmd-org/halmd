@@ -17,18 +17,18 @@
 -- along with this program.  If not, see <http://www.gnu.org/licenses/>.
 --
 
-require("halmd.device")
-require("halmd.mdsim.box")
-require("halmd.mdsim.clock")
-require("halmd.mdsim.core")
-require("halmd.mdsim.forces.zero")
-require("halmd.modules")
-require("halmd.random")
+local device            = require("halmd.device")
+local module            = require("halmd.utility.module")
+local random            = require("halmd.random")
+local mdsim = {
+    box                 = require("halmd.mdsim.box")
+  , clock               = require("halmd.mdsim.clock")
+  , core                = require("halmd.mdsim.core")
+  , forces = {
+        zero            = require("halmd.mdsim.forces.zero")
+    }
+}
 
--- grab modules
-local device = halmd.device
-local mdsim = halmd.mdsim
-local random = halmd.random
 -- grab C++ wrappers
 local verlet_nvt_andersen_wrapper = {
     host = {
@@ -47,12 +47,12 @@ local po = libhalmd.po
 -- grab standard library
 local assert = assert
 
-module("halmd.mdsim.integrators.verlet_nvt_andersen", halmd.modules.register)
+local M = module("halmd.mdsim.integrators.verlet_nvt_andersen")
 
 --
 -- construct verlet_nvt_andersen module
 --
-function new(args)
+function M.__new(args)
     local particle = assert(args.particle, "missing parameter: particle")
     local temperature = args.temperature or 1.12 -- default value
     local collision_rate = args.collision_rate or 10 -- default value
@@ -87,7 +87,7 @@ end
 --
 -- connect runtime accumulators to module profiler
 --
-function profile(self, profiler)
+function M.profile(self, profiler)
     profiler:on_profile{self, integrate = "first half-step of velocity-Verlet"}
     profiler:on_profile{self, finalize = "second half-step of velocity-Verlet (+ Andersen thermostat)"}
 end
@@ -95,7 +95,7 @@ end
 --
 -- returns module description
 --
-function description()
+function M.description()
     return "Velocity-Verlet integrator with Andersen thermostat"
 end
 
@@ -104,7 +104,7 @@ end
 --
 -- @param desc po.options_description
 --
-function options(desc)
+function M.options(desc)
     desc:add("temperature", po.float(), "thermostat temperature")
     desc:add("collision-rate", po.float(), "collision rate for Andersen thermostat")
 end
@@ -112,7 +112,7 @@ end
 --
 -- read module parameters from HDF5 group
 --
-function read_parameters(args, group)
+function M.read_parameters(args, group)
     args.temperature = group:read_attribute("temperature", h5.float())
     args.collision_rate = group:read_attribute("collision_rate", h5.float())
 end
@@ -123,8 +123,10 @@ end
 -- @param verlet_nvt_andersen module instance
 -- @param group HDF5 group
 --
-function write_parameters(andersen, group)
+function M.write_parameters(andersen, group)
     group:write_attribute("timestep", h5.float(), andersen.timestep)
     group:write_attribute("temperature", h5.float(), andersen.temperature)
     group:write_attribute("collision_rate", h5.float(), andersen.collision_rate)
 end
+
+return M

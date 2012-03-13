@@ -17,17 +17,21 @@
 -- along with this program.  If not, see <http://www.gnu.org/licenses/>.
 --
 
-require("halmd.io.writers.file")
-require("halmd.mdsim.box")
-require("halmd.modules")
-require("halmd.observables.phase_space")
-require("halmd.observables.sampler")
-require("halmd.observables.samples.phase_space")
+local module            = require("halmd.utility.module")
+local mdsim = {
+    box                 = require("halmd.mdsim.box")
+}
+local observables = {
+    phase_space         = require("halmd.observables.phase_space")
+  , sampler             = require("halmd.observables.sampler")
+}
+local samples = {
+    phase_space         = require("halmd.observables.samples.phase_space")
+}
+local writers = {
+    file                = require("halmd.io.writers.file")
+}
 
--- grab modules
-local writers = halmd.io.writers
-local mdsim = halmd.mdsim
-local observables = halmd.observables
 -- grab C++ wrappers
 local po = libhalmd.po
 local h5 = libhalmd.h5
@@ -37,7 +41,7 @@ local ipairs = ipairs
 local string = string
 local type = type
 
-module("halmd.io.writers.trajectory", halmd.modules.register)
+local M = module("halmd.io.writers.trajectory")
 
 --
 -- construct trajectory writer module
@@ -46,7 +50,7 @@ module("halmd.io.writers.trajectory", halmd.modules.register)
 --   args.particle_group    list of particle_group instances with attached labels
 --   args.every             sampling interval, default (0) writes at start and finish only
 --
-function new(args)
+function M.__new(args)
     local particle_group = assert(args.particle_group, "missing parameter: particle_group")
     assert(type(particle_group) == "table", "invalid table")
     local every = args.every or 0 -- default value
@@ -99,6 +103,8 @@ end
 --
 -- @param desc po.options_description
 --
-function options(desc)
+function M.options(desc)
     desc:add("every", po.uint64(), "sample interval for trajectory")
 end
+
+return M

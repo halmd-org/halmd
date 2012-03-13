@@ -56,6 +56,7 @@ private:
 
     void package_path();
     void package_cpath();
+    void lua_compat();
     static void register_exception_handlers();
 
     /** RAII wrapper of Lua state */

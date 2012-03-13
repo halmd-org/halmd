@@ -17,14 +17,9 @@
 -- along with this program.  If not, see <http://www.gnu.org/licenses/>.
 --
 
-require("halmd.modules")
+local device            = require("halmd.device")
+local module            = require("halmd.utility.module")
 
-require("halmd.device")
-require("halmd.log")
-
--- grab modules
-local device = halmd.device
-local log = halmd.log
 -- grab C++ wrappers
 local random_wrapper = {
     host = libhalmd.host.random
@@ -38,7 +33,7 @@ local po = libhalmd.po
 local assert = assert
 local error = error
 
-module("halmd.random", halmd.modules.register)
+local M = module("halmd.random")
 
 -- random number generator singleton per memory type
 local random = {}
@@ -46,7 +41,7 @@ local random = {}
 --
 -- construct random module
 --
-function new(args)
+function M.__new(args)
     local memory = args.memory -- optional argument
     if not memory then
         memory = device() and "gpu" or "host"
@@ -79,7 +74,7 @@ end
 --
 -- @param desc po.options_description
 --
-function options(desc)
+function M.options(desc)
     desc:add("seed", po.uint(), "random number generator integer seed")
     if random_wrapper.gpu then
         desc:add("blocks", po.uint(), "number of CUDA blocks")
@@ -90,7 +85,7 @@ end
 --
 -- read module parameters from HDF5 group
 --
-function read_parameters(args, group)
+function M.read_parameters(args, group)
     if random_wrapper.gpu then
         args.blocks = group:read_attribute("blocks", h5.uint())
         args.threads = group:read_attribute("threads", h5.uint())
@@ -103,7 +98,7 @@ end
 -- @param random module instance
 -- @param group HDF5 group
 --
-function write_parameters(random, group)
+function M.write_parameters(random, group)
 
     -- FIXME serialize random number generator state
 
@@ -112,3 +107,5 @@ function write_parameters(random, group)
         group:write_attribute("threads", h5.uint(), random.threads)
     end
 end
+
+return M

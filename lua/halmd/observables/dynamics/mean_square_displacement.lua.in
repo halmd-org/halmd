@@ -17,14 +17,14 @@
 -- along with this program.  If not, see <http://www.gnu.org/licenses/>.
 --
 
-require("halmd.modules")
+local module            = require("halmd.utility.module")
 
 -- grab C++ wrappers
 local msd_wrapper = libhalmd.observables.dynamics.mean_square_displacement
 -- grab standard library
 local assert = assert
 
-module("halmd.observables.dynamics.correlations.mean_square_displacement", halmd.modules.register)
+local M = module("halmd.observables.dynamics.correlations.mean_square_displacement")
 
 --
 -- construct instance of mean-square displacement (MSD) functor
@@ -32,7 +32,7 @@ module("halmd.observables.dynamics.correlations.mean_square_displacement", halmd
 --   args.sample        instance of phase space sample
 -- @returns instance of MSD functor
 --
-function new(args)
+function M.__new(args)
     local sample = assert(args.sample)
 
     -- construct msd module
@@ -43,6 +43,8 @@ end
 --
 -- @returns module description
 --
-function description()
+function M.description()
     return "mean-square displacement"
 end
+
+return M

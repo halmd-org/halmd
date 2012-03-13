@@ -17,7 +17,7 @@
 -- along with this program.  If not, see <http://www.gnu.org/licenses/>.
 --
 
-require("halmd.modules")
+local module = require("halmd.utility.module")
 
 -- grab C++ modules
 local h5md = libhalmd.io.readers.h5md
@@ -28,10 +28,10 @@ local ipairs = ipairs
 local setmetatable = setmetatable
 local type = type
 
-module("halmd.io.readers.h5md", halmd.modules.register, halmd.modules.provider)
+local M = module("halmd.io.readers.h5md")
 
 -- function to check file format
-check = h5md.file.check
+M.check = h5md.file.check
 
 -- module parameters
 local vm = {}
@@ -39,7 +39,7 @@ local vm = {}
 --
 -- provide parameters for given module
 --
-function parameters(module)
+function M.parameters(module)
     if module.read_parameters then
         local vm = vm[module.namespace]
         if vm then
@@ -51,7 +51,7 @@ end
 --
 -- construct H5MD reader
 --
-function new(args)
+function M.__new(args)
     local path = assert(args.path, "missing path")
     local file = h5md.file(path)
 
@@ -84,7 +84,7 @@ function new(args)
     --
     local param = file.root:open_group("halmd")
 
-    for _, module in ipairs(modules) do
+    for _, module in ipairs(M.modules) do
         local read_parameters = module.read_parameters
         if read_parameters then
             local namespace = assert(module.namespace)
@@ -119,3 +119,5 @@ function new(args)
 
     return file
 end
+
+return M

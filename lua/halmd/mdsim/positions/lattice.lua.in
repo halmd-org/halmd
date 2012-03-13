@@ -17,16 +17,14 @@
 -- along with this program.  If not, see <http://www.gnu.org/licenses/>.
 --
 
-require("halmd.device")
-require("halmd.mdsim.box")
-require("halmd.mdsim.core")
-require("halmd.modules")
-require("halmd.random")
+local device            = require("halmd.device")
+local module            = require("halmd.utility.module")
+local mdsim = {
+    box                 = require("halmd.mdsim.box")
+  , core                = require("halmd.mdsim.core")
+}
+local random            = require("halmd.random")
 
--- grab modules
-local device = halmd.device
-local mdsim = halmd.mdsim
-local random = halmd.random
 -- grab C++ wrappers
 local lattice_wrapper = {
     host = {
@@ -45,12 +43,12 @@ local po = libhalmd.po
 -- grab standard library
 local assert = assert
 
-module("halmd.mdsim.positions.lattice", halmd.modules.register)
+local M = module("halmd.mdsim.positions.lattice")
 
 --
 -- construct lattice module
 --
-function new(args)
+function M.__new(args)
     local particle = assert(args.particle, "missing parameter: particle")
     local slab = args.slab or {} -- optional
 
@@ -83,14 +81,14 @@ end
 --
 -- connect runtime accumulators to module profiler
 --
-function profile(self, profiler)
+function M.profile(self, profiler)
     profiler:on_profile{self, set = "setting particle positions on lattice"}
 end
 
 --
 -- returns module description
 --
-function description()
+function M.description()
     return "Face-centered cubic lattice"
 end
 
@@ -99,14 +97,14 @@ end
 --
 -- @param desc po.options_description
 --
-function options(desc)
+function M.options(desc)
     desc:add("slab", po.float_array(), "slab extents as a fraction of simulation box")
 end
 
 --
 -- read module parameters from HDF5 group
 --
-function read_parameters(args, group)
+function M.read_parameters(args, group)
     args.slab = group:read_attribute("slab", h5.float_array())
 end
 
@@ -116,6 +114,8 @@ end
 -- @param instance of lattice module
 -- @param group HDF5 group
 --
-function write_parameters(lattice, group)
+function M.write_parameters(lattice, group)
     group:write_attribute("slab", h5.float_array(), lattice.slab)
 end
+
+return M

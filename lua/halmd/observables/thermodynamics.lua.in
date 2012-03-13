@@ -17,18 +17,20 @@
 -- along with this program.  If not, see <http://www.gnu.org/licenses/>.
 --
 
-require("halmd.device")
-require("halmd.io.writers.file")
-require("halmd.mdsim.box")
-require("halmd.mdsim.core")
-require("halmd.modules")
-require("halmd.observables.sampler")
+local device            = require("halmd.device")
+local module            = require("halmd.utility.module")
+local mdsim = {
+    box                 = require("halmd.mdsim.box")
+  , clock               = require("halmd.mdsim.clock")
+  , core                = require("halmd.mdsim.core")
+}
+local observables = {
+    sampler             = require("halmd.observables.sampler")
+}
+local writers = {
+    file                = require("halmd.io.writers.file")
+}
 
--- grab modules
-local device = halmd.device
-local mdsim = halmd.mdsim
-local observables = halmd.observables
-local writers = halmd.io.writers
 -- grab C++ wrappers
 local thermodynamics_wrapper = libhalmd.observables.thermodynamics
 local po = libhalmd.po
@@ -38,7 +40,7 @@ local ipairs = ipairs
 local property = property
 local type = type
 
-module("halmd.observables.thermodynamics", halmd.modules.register)
+local M = module("halmd.observables.thermodynamics")
 
 --
 -- construct thermodynamics module
@@ -48,7 +50,7 @@ module("halmd.observables.thermodynamics", halmd.modules.register)
 --   args.force             list of associated force instances
 --   args.every             sampling interval
 -- @returns list of thermodynamics modules with attached labels
-function new(args)
+function M.__new(args)
     local particle_group = assert(args.particle_group, "missing parameter: particle_group")
     local every = assert(args.every)
     assert(type(particle_group) == "table", "invalid table")
@@ -101,7 +103,7 @@ end
 --
 -- connect runtime accumulators to module profiler
 --
-function profile(self, profiler)
+function M.profile(self, profiler)
     for i, thermodynamics in ipairs(self) do
         local label = assert(thermodynamics.label)
         local str = " of " .. label .. " particles"
@@ -119,6 +121,8 @@ end
 --
 -- @param desc po.options_description
 --
-function options(desc)
+function M.options(desc)
     desc:add("every", po.uint64(), "sample interval for macroscopic state variables")
 end
+
+return M

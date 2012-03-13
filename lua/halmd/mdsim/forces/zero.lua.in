@@ -17,13 +17,12 @@
 -- along with this program.  If not, see <http://www.gnu.org/licenses/>.
 --
 
-require("halmd.device")
-require("halmd.mdsim.core")
-require("halmd.modules")
+local device            = require("halmd.device")
+local module            = require("halmd.utility.module")
+local mdsim = {
+    core                = require("halmd.mdsim.core")
+}
 
--- grab modules
-local device = halmd.device
-local mdsim = halmd.mdsim
 -- grab C++ wrappers
 local zero_wrapper = {
     host = {
@@ -40,12 +39,12 @@ end
 -- grab standard library
 local assert = assert
 
-module("halmd.mdsim.forces.zero", halmd.modules.register)
+local M = module("halmd.mdsim.forces.zero")
 
 --
 -- construct zero module
 --
-function new(args)
+function M.__new(args)
     local particle = assert(args.particle)
     local dimension = assert(particle.dimension)
 
@@ -69,6 +68,8 @@ end
 --
 -- returns module description
 --
-function description()
+function M.description()
     return "Zero potential (no interaction)"
 end
+
+return M

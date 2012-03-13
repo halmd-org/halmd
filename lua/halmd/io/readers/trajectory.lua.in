@@ -17,15 +17,15 @@
 -- along with this program.  If not, see <http://www.gnu.org/licenses/>.
 --
 
-require("halmd.io.readers")
-require("halmd.mdsim.core")
-require("halmd.modules")
-require("halmd.observables.samples.phase_space")
+local module            = require("halmd.utility.module")
+local readers           = require("halmd.io.readers")
+local mdsim = {
+    core                = require("halmd.mdsim.core")
+}
+local samples = {
+    phase_space         = require("halmd.observables.samples.phase_space")
+}
 
--- grab modules
-local readers = halmd.io.readers
-local mdsim = halmd.mdsim
-local observables = halmd.observables
 -- grab C++ wrappers
 local po = libhalmd.po
 local property = property
@@ -36,7 +36,7 @@ local io = io
 local pairs = pairs
 local string = string
 
-module("halmd.io.readers.trajectory", halmd.modules.register)
+local M = module("halmd.io.readers.trajectory")
 
 -- detected file reader module
 local reader
@@ -44,7 +44,7 @@ local reader
 --
 -- construct trajectory reader module
 --
-function new(args)
+function M.__new(args)
     if reader then
         local group = assert(args.group)
         local time = args.time
@@ -90,7 +90,7 @@ function new(args)
         reader.position = function(self, particle)
             local sample = samples[particle]
             if not sample then
-                sample = observables.samples.phase_space{particle = particle, memory = "host"}
+                sample = samples.phase_space{particle = particle, memory = "host"}
                 self:on_read(sample.position, {group, "position"})
                 self:on_read(sample.types, {group, "species"})
                 samples[particle] = sample
@@ -102,7 +102,7 @@ function new(args)
         reader.velocity = function(self, particle)
             local sample = samples[particle]
             if not sample then
-                sample = observables.samples.phase_space{particle = particle, memory = "host"}
+                sample = samples.phase_space{particle = particle, memory = "host"}
                 self:on_read(sample.velocity, {group, "velocity"})
                 samples[particle] = sample
             end
@@ -118,7 +118,7 @@ end
 --
 -- @param desc po.options_description
 --
-function options(desc)
+function M.options(desc)
     desc:add("file", po.string():notifier(function(value)
 
         -- check whether file exists and is readable
@@ -128,8 +128,13 @@ function options(desc)
         end
         file:close()
 
+        -- load file reader modules
+        local choices = {
+            h5md        = assert(readers.h5md)
+        }
+
         -- check for reader that can handle file format
-        for _, module in pairs(readers) do
+        for _, module in pairs(choices) do
             local check = module.check
             if check and check(value) then
                 reader = module
@@ -146,3 +151,5 @@ function options(desc)
 -- FIXME this option conflicts with and is superseded by the global option 'time'
 --    desc:add("time", po.float():conflicts("step"), "read phase space sample at time")
 end
+
+return M

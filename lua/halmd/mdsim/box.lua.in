@@ -17,11 +17,8 @@
 -- along with this program.  If not, see <http://www.gnu.org/licenses/>.
 --
 
-require("halmd.modules")
-local singleton = require("halmd.singleton")
+local module            = require("halmd.utility.module")
 
--- grab modules
-local mdsim = halmd.mdsim
 -- grab C++ wrappers
 local box_wrapper = {
     [2] = libhalmd.mdsim.box_2_
@@ -33,7 +30,7 @@ local po = libhalmd.po
 local assert = assert
 local error = error
 
-module("halmd.mdsim.box", halmd.modules.register, singleton)
+local M = module.singleton("halmd.mdsim.box")
 
 --
 -- construct box module instance
@@ -41,7 +38,7 @@ module("halmd.mdsim.box", halmd.modules.register, singleton)
 -- @param args parameter table
 -- @returns box module instance
 --
-function new(args)
+function M.__new(args)
     local particles = assert(args.particles, "missing parameter: particles")
     local density = args.density or 0.75 -- default value
     local ratios = args.ratios or {}
@@ -82,7 +79,7 @@ end
 --
 -- @param desc po.options_description
 --
-function options(desc)
+function M.options(desc)
     desc:add("dimension", po.uint():notifier(function(value)
 
         if not box_wrapper[value] then
@@ -98,7 +95,7 @@ end
 --
 -- read module parameters from HDF5 group
 --
-function read_parameters(args, group)
+function M.read_parameters(args, group)
     args.dimension = group:read_attribute("dimension", h5.uint())
     -- upon continuation from a phase space sample, the box is set up from
     -- the absolute edge lengths and the particle number (which is read by
@@ -113,8 +110,10 @@ end
 -- @param box module instance
 -- @param group HDF5 group
 --
-function write_parameters(box, group)
+function M.write_parameters(box, group)
     group:write_attribute("dimension", h5.uint(), box.dimension)
     group:write_attribute("length", h5.float_array(), box.length)
     group:write_attribute("density", h5.float(), box.density)
 end
+
+return M

@@ -17,7 +17,7 @@
 -- along with this program.  If not, see <http://www.gnu.org/licenses/>.
 --
 
-require("halmd.modules")
+local module = require("halmd.utility.module")
 
 -- grab C++ wrappers
 local po = libhalmd.po
@@ -28,7 +28,8 @@ local pairs = pairs
 local setmetatable = setmetatable
 local type = type
 
-module("halmd.option", halmd.modules.provider)
+-- module definition
+local M = module("halmd.option")
 
 -- parsed module options
 local vm = {}
@@ -38,7 +39,7 @@ local globals = {}
 --
 -- provide parameters for given module
 --
-function parameters(module)
+function M.parameters(module)
     if module.options then
         local vm = vm[module.namespace]
         if vm then
@@ -53,8 +54,8 @@ end
 --
 -- @param parser options_parser instance
 --
-function get(parser)
-    for _, module in ipairs(modules) do
+function M.get(parser)
+    for _, module in ipairs(M.modules) do
         if module.options then
             local desc = po.options_description()
             local globals = po.options_description()
@@ -72,7 +73,7 @@ end
 --
 -- This function is called by halmd::script.
 --
-function set(args)
+function M.set(args)
     for k, v in pairs(args) do
         if type(v) == "table" and #v == 0 then
             vm[k] = v
@@ -85,3 +86,5 @@ function set(args)
         setmetatable(v, {__index = globals})
     end
 end
+
+return M

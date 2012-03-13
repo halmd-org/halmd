@@ -19,4 +19,4 @@
 
 local module = require("halmd.utility.module")
 
-return module.loader("halmd")
+return module.loader("halmd.observables.utility")

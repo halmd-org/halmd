@@ -17,7 +17,7 @@
 -- along with this program.  If not, see <http://www.gnu.org/licenses/>.
 --
 
-require("halmd.modules")
+local module            = require("halmd.utility.module")
 
 -- grab C++ wrappers
 local density_mode_wrapper = {
@@ -27,7 +27,7 @@ local density_mode_wrapper = {
 -- grab standard library
 local assert = assert
 
-module("halmd.observables.samples.density_mode", halmd.modules.register)
+local M = module("halmd.observables.samples.density_mode")
 
 --
 -- construct samples::density_mode module
@@ -37,7 +37,7 @@ module("halmd.observables.samples.density_mode", halmd.modules.register)
 --   args.nspecies    number of particle species
 -- @returns instance of samples::density_mode module
 --
-function new()
+function M.__new()
     local dimension = assert(args.dimension)
     local nspecies = assert(args.nspecies)
 
@@ -46,3 +46,5 @@ function new()
     sample = assert(density_mode_wrapper[dimension])(nspecies)
     return sample
 end
+
+return M

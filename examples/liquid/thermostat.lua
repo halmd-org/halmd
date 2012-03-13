@@ -106,4 +106,21 @@ function thermostat.options(desc, globals)
     globals:add("equilibrate", po.uint():default(200), "equilibation steps")
 end
 
+-- FIXME explicitly load modules to collect deprecated module options
+require("halmd.option")
+require("halmd.log")
+require("halmd.device")
+require("halmd.io.readers.trajectory")
+require("halmd.io.writers.trajectory")
+require("halmd.mdsim.box")
+require("halmd.mdsim.force")
+require("halmd.mdsim.integrator")
+require("halmd.mdsim.particle")
+require("halmd.mdsim.position")
+require("halmd.mdsim.velocity")
+require("halmd.observables.dynamics.correlation")
+require("halmd.observables.sampler")
+require("halmd.observables.ssf")
+require("halmd.observables.thermodynamics")
+
 return thermostat

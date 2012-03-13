@@ -17,15 +17,11 @@
 -- along with this program.  If not, see <http://www.gnu.org/licenses/>.
 --
 
-require("halmd.hooks")
-require("halmd.modules")
-local singleton = require("halmd.singleton")
-require("halmd.utility")
+local hooks             = require("halmd.hooks")
+local module            = require("halmd.utility.module")
+local signals           = require("halmd.modules.signals")
+local utility           = require("halmd.utility")
 
--- grab Lua modules
-local hooks = halmd.hooks
-local signals = require("halmd.modules.signals")
-local utility = halmd.utility
 -- grab C++ modules
 local class_info = class_info
 local profiler_wrapper = libhalmd.utility.profiler
@@ -34,18 +30,18 @@ local error = error
 local pairs = pairs
 local table = table
 
-module("halmd.utility.profiler", halmd.modules.register, singleton)
+local M = module.singleton("halmd.utility.profiler")
 
 --
 -- construct profiler module
 --
-function new(args)
+function M.__new(args)
     return profiler_wrapper()
 end
 
 -- patch C++ objects with signal connection handlers
 -- @see module halmd.modules.signals
-signals.patch(_M)
+signals.patch(M)
 
 hooks.register_object_hook(function(object, module)
     local profile = module.profile
@@ -74,7 +70,7 @@ hooks.register_object_hook(function(object, module)
                 if not attrs[acc] then
                     error("undefined runtime accumulator: " .. acc, 2)
                 end
-                local profiler = _M() -- singleton
+                local profiler = M() -- singleton
                 profiler:on_profile{runtime[acc], desc, tracker = object}
             end
         end
@@ -83,3 +79,5 @@ hooks.register_object_hook(function(object, module)
         profile(object, profiler)
     end
 end)
+
+return M

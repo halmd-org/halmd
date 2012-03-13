@@ -17,19 +17,20 @@
 -- along with this program.  If not, see <http://www.gnu.org/licenses/>.
 --
 
-require("halmd.modules")
-local singleton = require("halmd.singleton")
+local module = require("halmd.utility.module")
 
 -- grab C++ wrappers
 local timer_service = libhalmd.utility.timer_service
 -- grab standard library
 local assert = assert
 
-module("halmd.utility.timer_service", halmd.modules.register, singleton)
+local M = module.singleton("halmd.utility.timer_service")
 
 --
 -- construct timer_service module
 --
-function new(args)
+function M.__new(args)
     return timer_service()
 end
+
+return M
