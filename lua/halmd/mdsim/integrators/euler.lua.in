@@ -17,13 +17,13 @@
 -- along with this program.  If not, see <http://www.gnu.org/licenses/>.
 --
 
+local module            = require("halmd.utility.module")
 local mdsim = {
     box                 = require("halmd.mdsim.box")
   , clock               = require("halmd.mdsim.clock")
   , core                = require("halmd.mdsim.core")
   , particle            = require("halmd.mdsim.particle")
 }
-require("halmd.modules")
 
 -- grab C++ wrappers
 local euler_wrapper = libhalmd.mdsim.integrators.euler
@@ -31,12 +31,12 @@ local h5 = libhalmd.h5
 -- grab standard library
 local assert = assert
 
-module("halmd.mdsim.integrators.euler", halmd.modules.register)
+local M = module("halmd.mdsim.integrators.euler")
 
 --
 -- construct euler module
 --
-function new(args)
+function M.__new(args)
     -- dependency injection
     local particle = mdsim.particle() -- singleton
     local dimension = assert(particle.dimension)
@@ -58,14 +58,14 @@ end
 --
 -- connect runtime accumulators to module profiler
 --
-function profile(self, profiler)
+function M.profile(self, profiler)
     profiler:on_profile{self, integrate = "Euler integration"}
 end
 
 --
 -- returns module description
 --
-function description()
+function M.description()
     return "Euler integrator"
 end
 
@@ -75,6 +75,8 @@ end
 -- @param euler module instance
 -- @param group HDF5 group
 --
-function write_parameters(euler, group)
+function M.write_parameters(euler, group)
     group:write_attribute("timestep", h5.float(), euler.timestep)
 end
+
+return M

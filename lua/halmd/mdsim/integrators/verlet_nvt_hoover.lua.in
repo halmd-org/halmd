@@ -18,6 +18,7 @@
 --
 
 local device            = require("halmd.device")
+local module            = require("halmd.utility.module")
 require("halmd.io.writers.file")
 local mdsim = {
     box                 = require("halmd.mdsim.box")
@@ -25,7 +26,6 @@ local mdsim = {
   , core                = require("halmd.mdsim.core")
   , particle            = require("halmd.mdsim.particle")
 }
-require("halmd.modules")
 require("halmd.observables.sampler")
 
 -- grab modules
@@ -49,12 +49,12 @@ local po = libhalmd.po
 -- grab standard library
 local assert = assert
 
-module("halmd.mdsim.integrators.verlet_nvt_hoover", halmd.modules.register)
+local M = module("halmd.mdsim.integrators.verlet_nvt_hoover")
 
 --
 -- construct verlet_nvt_hoover module
 --
-function new(args)
+function M.__new(args)
     local temperature = args.temperature or 1.12 -- default value
     local resonance_frequency = args.resonance_frequency or 5 -- default value
     local every = args.every or 100 -- default value
@@ -102,7 +102,7 @@ end
 --
 -- connect runtime accumulators to module profiler
 --
-function profile(self, profiler)
+function M.profile(self, profiler)
     profiler:on_profile{self, integrate = "first half-step of velocity-Verlet (+ Nosé-Hoover chain)"}
     profiler:on_profile{self, finalize = "second half-step of velocity-Verlet (+ Nosé-Hoover chain)"}
     profiler:on_profile{self, propagate = "propagate Nosé-Hoover chain"}
@@ -114,7 +114,7 @@ end
 --
 -- returns module description
 --
-function description()
+function M.description()
     return "Thermostatted velocity-Verlet integrator using a Nosé-Hoover chain"
 end
 
@@ -123,7 +123,7 @@ end
 --
 -- @param desc po.options_description
 --
-function options(desc)
+function M.options(desc)
     desc:add("timestep", po.float(), "integration timestep")
     desc:add("temperature", po.float(), "thermostat temperature")
     desc:add("resonance-frequency", po.float(), "resonance frequency of heat bath")
@@ -138,9 +138,11 @@ end
 -- @param integrator module instance
 -- @param group HDF5 group
 --
-function write_parameters(integrator, group)
+function M.write_parameters(integrator, group)
     group:write_attribute("timestep", h5.float(), integrator.timestep)
     group:write_attribute("temperature", h5.float(), integrator.temperature)
     group:write_attribute("resonance_frequency", h5.float(), integrator.resonance_frequency)
     group:write_attribute("mass", h5.float_array(), integrator.mass)
 end
+
+return M
