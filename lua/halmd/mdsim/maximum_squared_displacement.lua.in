@@ -18,12 +18,12 @@
 --
 
 local device            = require("halmd.device")
-require("halmd.mdsim.box")
-require("halmd.mdsim.particle")
-local module = require("halmd.utility.module")
+local module            = require("halmd.utility.module")
+local mdsim = {
+    box                 = require("halmd.mdsim.box")
+  , particle            = require("halmd.mdsim.particle")
+}
 
--- grab modules
-local mdsim = halmd.mdsim
 -- grab C++ wrappers
 local maximum_squared_displacement_wrapper = {
     host = {

@@ -17,12 +17,12 @@
 -- along with this program.  If not, see <http://www.gnu.org/licenses/>.
 --
 
-require("halmd.mdsim.particle")
+local mdsim = {
+    particle            = require("halmd.mdsim.particle")
+}
 require("halmd.modules")
 local singleton = require("halmd.singleton")
 
--- grab modules
-local mdsim = halmd.mdsim
 -- grab C++ wrappers
 local box_wrapper = {
     [2] = libhalmd.mdsim.box_2_

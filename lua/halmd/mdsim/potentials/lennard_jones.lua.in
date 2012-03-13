@@ -18,11 +18,11 @@
 --
 
 local device            = require("halmd.device")
-require("halmd.mdsim.particle")
+local mdsim = {
+    particle            = require("halmd.mdsim.particle")
+}
 require("halmd.modules")
 
--- grab modules
-local mdsim = halmd.mdsim
 -- grab C++ wrappers
 local lennard_jones_wrapper = {
     host = libhalmd.mdsim.host.potentials.lennard_jones

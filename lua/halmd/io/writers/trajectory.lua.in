@@ -18,8 +18,10 @@
 --
 
 require("halmd.io.writers.file")
-require("halmd.mdsim.box")
-require("halmd.mdsim.particle")
+local mdsim = {
+    box                 = require("halmd.mdsim.box")
+  , particle            = require("halmd.mdsim.particle")
+}
 require("halmd.modules")
 require("halmd.observables.phase_space")
 require("halmd.observables.sampler")
@@ -27,7 +29,6 @@ require("halmd.observables.samples.phase_space")
 
 -- grab modules
 local writers = halmd.io.writers
-local mdsim = halmd.mdsim
 local observables = halmd.observables
 -- grab C++ wrappers
 local po = libhalmd.po

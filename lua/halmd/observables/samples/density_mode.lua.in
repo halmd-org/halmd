@@ -17,11 +17,11 @@
 -- along with this program.  If not, see <http://www.gnu.org/licenses/>.
 --
 
-require("halmd.mdsim.particle")
+local mdsim = {
+    particle            = require("halmd.mdsim.particle")
+}
 require("halmd.modules")
 
--- grab modules
-local mdsim = halmd.mdsim
 -- grab C++ wrappers
 local density_mode_wrapper = {
     [2] = libhalmd.observables.samples.density_mode_2_
