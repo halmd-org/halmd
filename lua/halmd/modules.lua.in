@@ -33,7 +33,7 @@ local table = table
 -- Modules register themselves by supplying the function register
 -- as an additional parameter to the module() command.
 --
-module("halmd.modules")
+local M = {}
 
 -- ordered list of registered HALMD modules
 local modules = {}
@@ -46,7 +46,7 @@ local providers = {}
 --
 -- @param module Lua module
 --
-function register(module)
+function M.register(module)
     table.insert(modules, module)
 
     --
@@ -112,9 +112,11 @@ end
 --
 -- @param module Lua module
 --
-function provider(module)
+function M.provider(module)
     table.insert(providers, module)
 
     -- FIXME read-only iterable proxy table to modules
     module.modules = modules
 end
+
+return M
