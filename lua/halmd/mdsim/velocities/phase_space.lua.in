@@ -17,15 +17,13 @@
 -- along with this program.  If not, see <http://www.gnu.org/licenses/>.
 --
 
-require("halmd.device")
-require("halmd.mdsim.core")
-require("halmd.mdsim.particle")
-require("halmd.modules")
+local device            = require("halmd.device")
+local module            = require("halmd.utility.module")
+local mdsim = {
+    core                = require("halmd.mdsim.core")
+  , particle            = require("halmd.mdsim.particle")
+}
 
--- grab modules
-local device = halmd.device
-local mdsim = halmd.mdsim
-local observables = halmd.observables
 -- grab C++ wrappers
 local phase_space_wrapper = {
     host = {
@@ -44,12 +42,12 @@ local po = libhalmd.po
 -- grab standard library
 local assert = assert
 
-module("halmd.mdsim.velocities.phase_space", halmd.modules.register)
+local M = module("halmd.mdsim.velocities.phase_space")
 
 --
 -- construct phase_space module
 --
-function new(args)
+function M.__new(args)
     -- dependency injection
     local particle = mdsim.particle() -- singleton
     local dimension = assert(particle.dimension)
@@ -74,6 +72,8 @@ end
 --
 -- connect runtime accumulators to module profiler
 --
-function profile(self, profiler)
+function M.profile(self, profiler)
     profiler:on_profile{self, set = "setting particle velocities from sample"}
 end
+
+return M

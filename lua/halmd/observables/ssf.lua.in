@@ -17,18 +17,22 @@
 -- along with this program.  If not, see <http://www.gnu.org/licenses/>.
 --
 
-require("halmd.io.writers.file")
-require("halmd.mdsim.clock")
-require("halmd.mdsim.particle")
-require("halmd.modules")
-require("halmd.observables.density_mode")
-require("halmd.observables.sampler")
-require("halmd.observables.utility.wavevector")
+local module            = require("halmd.utility.module")
+local mdsim = {
+    clock               = require("halmd.mdsim.clock")
+  , particle            = require("halmd.mdsim.particle")
+}
+local observables = {
+    density_mode        = require("halmd.observables.density_mode")
+  , sampler             = require("halmd.observables.sampler")
+  , utility = {
+        wavevector      = require("halmd.observables.utility.wavevector")
+    }
+}
+local writers = {
+    file                = require("halmd.io.writers.file")
+}
 
--- grab modules
-local mdsim = halmd.mdsim
-local observables = halmd.observables
-local writers = halmd.io.writers
 -- grab C++ wrappers
 local ssf_wrapper = {
     [2] = libhalmd.observables.ssf_2_
@@ -40,7 +44,7 @@ local po = libhalmd.po
 local assert = assert
 local string = string
 
-module("halmd.observables.ssf", halmd.modules.register)
+local M = module("halmd.observables.ssf")
 
 --
 -- construct instance of ssf module
@@ -48,7 +52,7 @@ module("halmd.observables.ssf", halmd.modules.register)
 -- @param args parameter table
 -- @returns instance of ssf module
 --
-function new(args)
+function M.__new(args)
     -- command line options
     local every = args.every or 1000 -- default value
     local wavenumbers = args.wavenumbers
@@ -118,14 +122,14 @@ end
 --
 -- connect runtime accumulators to module profiler
 --
-function profile(self, profiler)
+function M.profile(self, profiler)
     profiler:on_profile{self, sample = "computation of static structure factor"}
 end
 
 --
 -- returns module description
 --
-function description()
+function M.description()
     return "static structure factor"
 end
 
@@ -134,7 +138,7 @@ end
 --
 -- @param desc po.options_description
 --
-function options(desc)
+function M.options(desc)
     desc:add("every", po.uint64(), "sample interval for static structure factor")
     desc:add("wavenumbers", po.float_array():conflicts("max-wavenumber"), "list of wavenumbers")
     desc:add("max-wavenumber", po.float():conflicts("wavenumbers"), "maximum wavenumber of semi-linearly spaced grid")
@@ -146,7 +150,7 @@ end
 --
 -- read module parameters from HDF5 group
 --
-function read_parameters(args, group)
+function M.read_parameters(args, group)
     args.tolerance = group:read_attribute("tolerance", h5.float())
     args.max_count = group:read_attribute("max_count", h5.uint())
 end
@@ -157,8 +161,10 @@ end
 -- @param ssf     module instance
 -- @param group   HDF5 group
 --
-function write_parameters(ssf, group)
+function M.write_parameters(ssf, group)
     -- wavenumbers are stored along with the ssf data, e.g., in structure/ssf/wavenumber
     group:write_attribute("tolerance", h5.float(), ssf.wavevector.tolerance)
     group:write_attribute("max_count", h5.uint(), ssf.wavevector.max_count)
 end
+
+return M

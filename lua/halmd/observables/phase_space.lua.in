@@ -17,22 +17,23 @@
 -- along with this program.  If not, see <http://www.gnu.org/licenses/>.
 --
 
-require("halmd.mdsim.box")
-require("halmd.mdsim.clock")
-require("halmd.mdsim.particle")
-require("halmd.modules")
-require("halmd.observables.samples.phase_space")
+local module            = require("halmd.utility.module")
+local mdsim = {
+    box                 = require("halmd.mdsim.box")
+  , clock               = require("halmd.mdsim.clock")
+  , particle            = require("halmd.mdsim.particle")
+}
+local samples = {
+    phase_space         = require("halmd.observables.samples.phase_space")
+}
 
--- grab modules
-local mdsim = halmd.mdsim
-local observables = halmd.observables
 -- grab C++ wrappers
 local phase_space_wrapper = assert(libhalmd.observables.phase_space)
 local property = property
 -- grab standard library
 local assert = assert
 
-module("halmd.observables.phase_space", halmd.modules.register)
+local M = module("halmd.observables.phase_space")
 
 --
 -- construct phase_space module
@@ -40,7 +41,7 @@ module("halmd.observables.phase_space", halmd.modules.register)
 -- @param args       parameter table
 --   args.memory     specify memory location of phase_space sample ("host", "gpu")
 --
-function new(args)
+function M.__new(args)
     -- parameters
     local memory = assert(args.memory)
 
@@ -49,7 +50,7 @@ function new(args)
     local dimension = assert(particle.dimension)
     local box = mdsim.box() -- singleton
     local clock = mdsim.clock() -- singleton
-    local sample = assert(observables.samples.phase_space{memory = memory})
+    local sample = assert(samples.phase_space{memory = memory})
     local logger = assert(args.logger)
     local phase_space = phase_space_wrapper(sample, particle, box, clock, logger)
 
@@ -62,8 +63,10 @@ end
 --
 -- connect runtime accumulators to module profiler
 --
-function profile(self, profiler)
+function M.profile(self, profiler)
     local memory = assert(self.memory)
     profiler:on_profile{self, acquire = "acquisition of phase space sample on " .. memory}
     profiler:on_profile{self, reset = "reset phase space sample on " .. memory}
 end
+
+return M

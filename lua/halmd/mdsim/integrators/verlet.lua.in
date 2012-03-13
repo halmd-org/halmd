@@ -17,16 +17,15 @@
 -- along with this program.  If not, see <http://www.gnu.org/licenses/>.
 --
 
-require("halmd.device")
-require("halmd.mdsim.box")
-require("halmd.mdsim.clock")
-require("halmd.mdsim.core")
-require("halmd.mdsim.particle")
-require("halmd.modules")
+local device            = require("halmd.device")
+local module            = require("halmd.utility.module")
+local mdsim = {
+    box                 = require("halmd.mdsim.box")
+  , clock               = require("halmd.mdsim.clock")
+  , core                = require("halmd.mdsim.core")
+  , particle            = require("halmd.mdsim.particle")
+}
 
--- grab modules
-local device = halmd.device
-local mdsim = halmd.mdsim
 -- grab C++ wrappers
 local verlet_wrapper = {
     host = {
@@ -44,12 +43,12 @@ local h5 = libhalmd.h5
 -- grab standard library
 local assert = assert
 
-module("halmd.mdsim.integrators.verlet", halmd.modules.register)
+local M = module("halmd.mdsim.integrators.verlet")
 
 --
 -- construct verlet module
 --
-function new(args)
+function M.__new(args)
     -- dependency injection
     local particle = mdsim.particle() -- singleton
     local dimension = assert(particle.dimension)
@@ -77,7 +76,7 @@ end
 --
 -- connect runtime accumulators to module profiler
 --
-function profile(self, profiler)
+function M.profile(self, profiler)
     profiler:on_profile{self, integrate = "first half-step of velocity-Verlet"}
     profiler:on_profile{self, finalize = "second half-step of velocity-Verlet"}
 end
@@ -85,7 +84,7 @@ end
 --
 -- returns module description
 --
-function description()
+function M.description()
     return "Velocity-Verlet integrator"
 end
 
@@ -95,6 +94,8 @@ end
 -- @param verlet module instance
 -- @param group HDF5 group
 --
-function write_parameters(verlet, group)
+function M.write_parameters(verlet, group)
     group:write_attribute("timestep", h5.float(), verlet.timestep)
 end
+
+return M

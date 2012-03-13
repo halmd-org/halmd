@@ -17,16 +17,18 @@
 -- along with this program.  If not, see <http://www.gnu.org/licenses/>.
 --
 
-require("halmd.device")
-require("halmd.mdsim.clock")
-require("halmd.modules")
-require("halmd.observables.phase_space")
-require("halmd.observables.samples.phase_space")
+local device            = require("halmd.device")
+local module            = require("halmd.utility.module")
+local mdsim = {
+    clock               = require("halmd.mdsim.clock")
+}
+local observables = {
+    phase_space         = require("halmd.observables.phase_space")
+}
+local samples = {
+    phase_space         = require("halmd.observables.samples.phase_space")
+}
 
--- grab modules
-local device = halmd.device
-local mdsim = halmd.mdsim
-local observables = halmd.observables
 -- grab C++ wrappers
 local density_mode_wrapper = {
     host = {
@@ -45,7 +47,7 @@ end
 -- grab standard library
 local assert = assert
 
-module("halmd.observables.density_mode", halmd.modules.register)
+local M = module("halmd.observables.density_mode")
 
 --
 -- construct instance of density_mode module
@@ -54,16 +56,16 @@ module("halmd.observables.density_mode", halmd.modules.register)
 --     args.wavevector      instance of wavevector module
 -- @returns instance of density_mode module
 --
-function new(args)
+function M.__new(args)
     -- dependency injection
     local wavevector = assert(args.wavevector)
     local clock = mdsim.clock() -- singleton
 
     local sample
     if device() then
-        sample = assert(observables.samples.phase_space{memory = "gpu"})
+        sample = assert(samples.phase_space{memory = "gpu"})
     else
-        sample = assert(observables.samples.phase_space{memory = "host"})
+        sample = assert(samples.phase_space{memory = "host"})
     end
     local dimension = assert(sample.dimension)
     local logger = assert(args.logger)
@@ -92,6 +94,8 @@ end
 --
 -- connect runtime accumulators to module profiler
 --
-function profile(self, profiler)
+function M.profile(self, profiler)
     profiler:on_profile{self, acquire = "computation of density modes"}
 end
+
+return M

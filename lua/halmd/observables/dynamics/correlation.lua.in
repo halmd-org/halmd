@@ -17,17 +17,22 @@
 -- along with this program.  If not, see <http://www.gnu.org/licenses/>.
 --
 
-require("halmd.io.writers.file")
-require("halmd.modules")
-require("halmd.observables.dynamics.blocking_scheme")
-require("halmd.observables.dynamics.correlations")
-require("halmd.observables.samples.blocking_scheme")
+local module                    = require("halmd.utility.module")
+local correlations = {
+    mean_quartic_displacement   = require("halmd.observables.dynamics.mean_quartic_displacement")
+  , mean_square_displacement    = require("halmd.observables.dynamics.mean_square_displacement")
+  , velocity_autocorrelation    = require("halmd.observables.dynamics.velocity_autocorrelation")
+}
+local dynamics = {
+    blocking_scheme             = require("halmd.observables.dynamics.blocking_scheme")
+}
+local samples = {
+    blocking_scheme             = require("halmd.observables.samples.blocking_scheme")
+}
+local writers = {
+    file                        = require("halmd.io.writers.file")
+}
 
--- grab modules
-local correlations = halmd.observables.dynamics.correlations
-local dynamics = halmd.observables.dynamics
-local samples = halmd.observables.samples
-local writers = halmd.io.writers
 -- grab C++ wrappers
 local correlation_wrapper = libhalmd.observables.dynamics.correlation
 local po = libhalmd.po
@@ -35,7 +40,7 @@ local property = property
 -- grab standard library
 local assert = assert
 
-module("halmd.observables.dynamics.correlation", halmd.modules.register)
+local M = module("halmd.observables.dynamics.correlation")
 
 --
 -- add time correlation function to blocking_scheme
@@ -43,7 +48,7 @@ module("halmd.observables.dynamics.correlation", halmd.modules.register)
 -- @param args parameter table
 --   name   trajectory correlation function (e.g. "mean_square_displacement")
 --
-function new(args)
+function M.__new(args)
     local name = assert(args.correlation)
 
     local blocking_scheme = dynamics.blocking_scheme() -- singleton
@@ -81,6 +86,8 @@ end
 --
 -- connect runtime accumulators to module profiler
 --
-function profile(self, profiler)
+function M.profile(self, profiler)
     profiler:on_profile{self, tcf = "computation of " .. self.tcf.module.description()}
 end
+
+return M

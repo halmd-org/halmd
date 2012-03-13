@@ -17,30 +17,34 @@
 -- along with this program.  If not, see <http://www.gnu.org/licenses/>.
 --
 
-require("halmd.io.writers.file")
-require("halmd.mdsim.box")
-require("halmd.mdsim.particle")
-require("halmd.modules")
-require("halmd.observables.phase_space")
-require("halmd.observables.sampler")
-require("halmd.observables.samples.phase_space")
+local module            = require("halmd.utility.module")
+local mdsim = {
+    box                 = require("halmd.mdsim.box")
+  , particle            = require("halmd.mdsim.particle")
+}
+local observables = {
+    phase_space         = require("halmd.observables.phase_space")
+  , sampler             = require("halmd.observables.sampler")
+}
+local samples = {
+    phase_space         = require("halmd.observables.samples.phase_space")
+}
+local writers = {
+    file                = require("halmd.io.writers.file")
+}
 
--- grab modules
-local writers = halmd.io.writers
-local mdsim = halmd.mdsim
-local observables = halmd.observables
 -- grab C++ wrappers
 local po = libhalmd.po
 -- grab standard library
 local assert = assert
 local string = string
 
-module("halmd.io.writers.trajectory", halmd.modules.register)
+local M = module("halmd.io.writers.trajectory")
 
 --
 -- construct trajectory writer module
 --
-function new(args)
+function M.__new(args)
     local every = args.every or 1000 -- default value
 
     -- create trajectory file
@@ -48,7 +52,7 @@ function new(args)
 
     -- FIXME share phase_space instance with observables::host::density_mode
     local phase_space = assert(observables.phase_space{memory = "host"})
-    local sample = observables.samples.phase_space{memory = "host"} -- singleton
+    local sample = samples.phase_space{memory = "host"} -- singleton
     local particle = mdsim.particle() -- singleton
     local box = mdsim.box() -- singleton
     local sampler = observables.sampler() -- singleton
@@ -80,6 +84,8 @@ end
 --
 -- @param desc po.options_description
 --
-function options(desc)
+function M.options(desc)
     desc:add("every", po.uint64(), "sample interval for trajectory")
 end
+
+return M

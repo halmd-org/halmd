@@ -17,11 +17,11 @@
 -- along with this program.  If not, see <http://www.gnu.org/licenses/>.
 --
 
-require("halmd.mdsim.particle")
-require("halmd.modules")
+local module            = require("halmd.utility.module")
+local mdsim = {
+    particle            = require("halmd.mdsim.particle")
+}
 
--- grab modules
-local mdsim = halmd.mdsim
 -- grab C++ wrappers
 local density_mode_wrapper = {
     [2] = libhalmd.observables.samples.density_mode_2_
@@ -30,14 +30,16 @@ local density_mode_wrapper = {
 -- grab standard library
 local assert = assert
 
-module("halmd.observables.samples.density_mode", halmd.modules.register)
+local M = module("halmd.observables.samples.density_mode")
 
 --
 -- construct density_mode module
 --
-function new()
+function M.__new()
     local particle = mdsim.particle() -- singleton
     local dimension = assert(particle.dimension)
 
     sample = assert(density_mode_wrapper[dimension](#particle.ntypes))
 end
+
+return M

@@ -17,13 +17,12 @@
 -- along with this program.  If not, see <http://www.gnu.org/licenses/>.
 --
 
-require("halmd.device")
-require("halmd.mdsim.particle")
-require("halmd.modules")
+local device            = require("halmd.device")
+local module            = require("halmd.utility.module")
+local mdsim = {
+    particle            = require("halmd.mdsim.particle")
+}
 
--- grab modules
-local device = halmd.device
-local mdsim = halmd.mdsim
 -- grab C++ wrappers
 local lennard_jones_wrapper = {
     host = libhalmd.mdsim.host.potentials.lennard_jones
@@ -40,12 +39,12 @@ local po = libhalmd.po
 -- grab standard library
 local assert = assert
 
-module("halmd.mdsim.potentials.lennard_jones", halmd.modules.register)
+local M = module("halmd.mdsim.potentials.lennard_jones")
 
 --
 -- construct Lennard-Jones module
 --
-function new(args)
+function M.__new(args)
     local cutoff = args.cutoff or {2.5, 2.5, 2.5} -- default value
     local epsilon = args.epsilon or {1.0, 1.5, 0.5} -- default value
     local sigma = args.sigma or {1.0, 0.8, 0.88} -- default value
@@ -68,7 +67,7 @@ end
 --
 -- returns module description
 --
-function description()
+function M.description()
     return "Lennard-Jones potential"
 end
 
@@ -77,7 +76,7 @@ end
 --
 -- @param desc po.options_description
 --
-function options(desc)
+function M.options(desc)
     desc:add("cutoff", po.float_array(), "truncate potential at cutoff radius")
     desc:add("epsilon", po.float_array(), "potential well depths")
     desc:add("sigma", po.float_array(), "collision diameters")
@@ -87,7 +86,7 @@ end
 --
 -- read module parameters from HDF5 group
 --
-function read_parameters(args, group)
+function M.read_parameters(args, group)
     -- FIXME args.cutoff = group:read_attribute("cutoff", h5.float_array())
     -- FIXME args.epsilon = group:read_attribute("epsilon", h5.float_array())
     -- FIXME args.sigma = group:read_attribute("sigma", h5.float_array())
@@ -99,8 +98,10 @@ end
 -- @param lennard_jones module instance
 -- @param group HDF5 group
 --
-function write_parameters(lennard_jones, group)
+function M.write_parameters(lennard_jones, group)
     group:write_attribute("cutoff", h5.float_array(), lennard_jones.r_cut_sigma:data())
     group:write_attribute("epsilon", h5.float_array(), lennard_jones.epsilon:data())
     group:write_attribute("sigma", h5.float_array(), lennard_jones.sigma:data())
 end
+
+return M

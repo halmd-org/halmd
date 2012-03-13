@@ -17,14 +17,15 @@
 -- along with this program.  If not, see <http://www.gnu.org/licenses/>.
 --
 
-require("halmd.device")
-require("halmd.modules")
-require("halmd.observables.phase_space")
-require("halmd.observables.samples.phase_space")
+local device            = require("halmd.device")
+local module            = require("halmd.utility.module")
+local observables = {
+    phase_space         = require("halmd.observables.phase_space")
+}
+local samples = {
+    phase_space         = require("halmd.observables.samples.phase_space")
+}
 
--- grab modules
-local device = halmd.device
-local observables = halmd.observables
 -- grab C++ wrappers
 local msd_wrapper = libhalmd.observables.dynamics.mean_square_displacement
 local po = libhalmd.po
@@ -32,7 +33,7 @@ local property = property
 -- grab standard library
 local assert = assert
 
-module("halmd.observables.dynamics.correlations.mean_square_displacement", halmd.modules.register)
+local M = module("halmd.observables.dynamics.correlations.mean_square_displacement")
 
 --
 -- construct instance of msd module
@@ -41,12 +42,12 @@ module("halmd.observables.dynamics.correlations.mean_square_displacement", halmd
 --   species   particle species (type) for which the computation is done
 -- @returns instance of msd module, instance of phase space sample
 --
-function new(args)
+function M.__new(args)
     -- command line options
     local species = args.species or 0 -- default value
     -- obtain appropriate phase space sample
     local backend = device() and not args.disable_gpu and "gpu" or "host"
-    local sample = observables.samples.phase_space{memory = backend}
+    local sample = samples.phase_space{memory = backend}
     local dimension = assert(sample.dimension)
     -- construct msd module
     local msd = assert(msd_wrapper)(species, sample)
@@ -67,7 +68,7 @@ end
 --
 -- returns module description
 --
-function description()
+function M.description()
     return "mean-square displacement"
 end
 
@@ -76,8 +77,10 @@ end
 --
 -- @param desc po.options_description
 --
-function options(desc)
+function M.options(desc)
     if device.with_gpu() then
         desc:add("disable-gpu", po.bool_switch(), "disable GPU acceleration")
     end
 end
+
+return M

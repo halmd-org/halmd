@@ -1,3 +1,0 @@
-require("halmd.observables.dynamics.mean_quartic_displacement")
-require("halmd.observables.dynamics.mean_square_displacement")
-require("halmd.observables.dynamics.velocity_autocorrelation")

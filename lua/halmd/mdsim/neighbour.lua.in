@@ -17,18 +17,17 @@
 -- along with this program.  If not, see <http://www.gnu.org/licenses/>.
 --
 
-require("halmd.device")
-require("halmd.mdsim.binning")
-require("halmd.mdsim.box")
-require("halmd.mdsim.core")
-require("halmd.mdsim.maximum_squared_displacement")
-require("halmd.mdsim.particle")
-require("halmd.mdsim.sort")
-require("halmd.modules")
+local device                            = require("halmd.device")
+local module                            = require("halmd.utility.module")
+local mdsim = {
+    binning                             = require("halmd.mdsim.binning")
+  , box                                 = require("halmd.mdsim.box")
+  , core                                = require("halmd.mdsim.core")
+  , maximum_squared_displacement        = require("halmd.mdsim.maximum_squared_displacement")
+  , particle                            = require("halmd.mdsim.particle")
+  , sort                                = require("halmd.mdsim.sort")
+}
 
--- grab modules
-local device = halmd.device
-local mdsim = halmd.mdsim
 -- grab C++ wrappers
 local neighbour_from_binning = {
     host = {
@@ -54,14 +53,14 @@ local po = libhalmd.po
 local assert = assert
 local math = math
 
-module("halmd.mdsim.neighbour", halmd.modules.register)
+local M = module("halmd.mdsim.neighbour")
 
 --
 -- construct neighbour module
 --
 -- @param r_cut symmetric matrix with potential cutoff radii
 --
-function new(args)
+function M.__new(args)
     -- cutoff radius matrix of truncated potential
     local r_cut = assert(args.r_cut)
     -- neighbour list skin
@@ -131,7 +130,7 @@ end
 --
 -- connect runtime accumulators to module profiler
 --
-function profile(self, profiler)
+function M.profile(self, profiler)
     profiler:on_profile{self, update = "neighbour lists update"}
 end
 
@@ -140,7 +139,7 @@ end
 --
 -- @param desc po.options_description
 --
-function options(desc)
+function M.options(desc)
     desc:add("skin", po.float(), "neighbour list skin")
     if neighbour_from_binning.gpu then
         desc:add("occupancy", po.float(), "desired average cell occupancy")
@@ -151,7 +150,7 @@ end
 --
 -- read module parameters from HDF5 group
 --
-function read_parameters(args, group)
+function M.read_parameters(args, group)
     args.skin = group:read_attribute("skin", h5.float())
     if neighbour_from_binning.gpu then
         args.occupancy = group:read_attribute("occupancy", h5.float())
@@ -164,9 +163,11 @@ end
 -- @param neighbour module instance
 -- @param group HDF5 group
 --
-function write_parameters(neighbour, group)
+function M.write_parameters(neighbour, group)
     group:write_attribute("skin", h5.float(), neighbour.r_skin)
     if neighbour.cell_occupancy then
         group:write_attribute("occupancy", h5.float(), neighbour.cell_occupancy)
     end
 end
+
+return M

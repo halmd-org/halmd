@@ -17,11 +17,9 @@
 -- along with this program.  If not, see <http://www.gnu.org/licenses/>.
 --
 
-require("halmd.mdsim.potentials")
-require("halmd.modules")
+local module            = require("halmd.utility.module")
+local potentials        = require("halmd.mdsim.potentials")
 
--- grab modules
-local potentials = halmd.mdsim.potentials
 -- grab C++ wrappers
 local h5 = libhalmd.h5
 local po = libhalmd.po
@@ -30,12 +28,12 @@ local assert = assert
 local pairs = pairs
 local property = property
 
-module("halmd.mdsim.potential", halmd.modules.register)
+local M = module("halmd.mdsim.potential")
 
 --
 -- construct potential module
 --
-function new(args)
+function M.__new(args)
     local potential = args.potential or "lennard_jones" -- default value
     return assert(potentials[potential])()
 end
@@ -45,15 +43,16 @@ end
 --
 -- @param desc po.options_description
 --
-function options(desc, globals)
+function M.options(desc, globals)
 
     -- potential module choices with descriptions
-    local choices = {}
-    for name, module in pairs(potentials) do
-        if module.description then
-            choices[name] = module.description()
-        end
-    end
+    local choices = {
+        lennard_jones           = potentials.lennard_jones.description()
+      , modified_lennard_jones  = potentials.modified_lennard_jones.description()
+      , morse                   = potentials.morse.description()
+      , power_law               = potentials.power_law.description()
+      , power_law_with_core     = potentials.power_law_with_core.description()
+    }
 
     globals:add("potential", po.string():choices(choices), "select interaction potential")
 end
@@ -61,7 +60,7 @@ end
 --
 -- read module parameters from HDF5 group
 --
-function read_parameters(args, group, globals)
+function M.read_parameters(args, group, globals)
     args.potential = globals:read_attribute("potential", h5.string())
 end
 
@@ -71,6 +70,8 @@ end
 -- @param potential module instance
 -- @param group HDF5 group
 --
-function write_parameters(potential, group, globals)
+function M.write_parameters(potential, group, globals)
     globals:write_attribute("potential", h5.string(), potential.module.namespace)
 end
+
+return M

@@ -17,24 +17,23 @@
 -- along with this program.  If not, see <http://www.gnu.org/licenses/>.
 --
 
-require("halmd.mdsim.clock")
-require("halmd.modules")
-local singleton = require("halmd.singleton")
+local module            = require("halmd.utility.module")
+local signals           = require("halmd.modules.signals")
+local mdsim = {
+    clock               = require("halmd.mdsim.clock")
+}
 
--- grab modules
-local signals = require("halmd.modules.signals")
-local mdsim = halmd.mdsim
 -- grab C++ wrappers
 local core_wrapper = libhalmd.mdsim.core
 -- grab standard library
 local assert = assert
 
-module("halmd.mdsim.core", halmd.modules.register, singleton)
+local M = module.singleton("halmd.mdsim.core")
 
 --
 -- construct core module
 --
-function new(args)
+function M.__new(args)
     local clock = mdsim.clock() -- singleton
     return core_wrapper(clock)
 end
@@ -50,12 +49,14 @@ end
 --   integrator:disconnect()
 --   mdsim.integrator.verlet{}
 --
-signals.patch(_M)
+signals.patch(M)
 
 --
 -- connect runtime accumulators to module profiler
 --
-function profile(self, profiler)
+function M.profile(self, profiler)
     profiler:on_profile{self, setup = "microscopic state preparation"}
     profiler:on_profile{self, mdstep = "MD integration step"}
 end
+
+return M

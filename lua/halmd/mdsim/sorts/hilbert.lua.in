@@ -17,16 +17,15 @@
 -- along with this program.  If not, see <http://www.gnu.org/licenses/>.
 --
 
-require("halmd.device")
-require("halmd.mdsim.binning")
-require("halmd.mdsim.box")
-require("halmd.mdsim.core")
-require("halmd.mdsim.particle")
-require("halmd.modules")
+local device            = require("halmd.device")
+local module            = require("halmd.utility.module")
+local mdsim = {
+    binning             = require("halmd.mdsim.binning")
+  , box                 = require("halmd.mdsim.box")
+  , core                = require("halmd.mdsim.core")
+  , particle            = require("halmd.mdsim.particle")
+}
 
--- grab modules
-local device = halmd.device
-local mdsim = halmd.mdsim
 -- grab C++ wrappers
 local hilbert_wrapper = {
     host = {
@@ -43,12 +42,12 @@ end
 -- grab standard library
 local assert = assert
 
-module("halmd.mdsim.sorts.hilbert", halmd.modules.register)
+local M = module("halmd.mdsim.sorts.hilbert")
 
 --
 -- construct hilbert module
 --
-function new(args)
+function M.__new(args)
     -- dependency injection
     local particle = mdsim.particle() -- singleton
     local dimension = assert(particle.dimension)
@@ -69,7 +68,7 @@ end
 --
 -- connect runtime accumulators to module profiler
 --
-function profile(self, profiler)
+function M.profile(self, profiler)
     profiler:on_profile{self, order = "order particles by permutation"}
     profiler:on_profile{self, map = "map particles to Hilbert curve"}
 end
@@ -77,6 +76,8 @@ end
 --
 -- returns module description
 --
-function description()
+function M.description()
     return "Hilbert space-filling curve"
 end
+
+return M

@@ -17,11 +17,9 @@
 -- along with this program.  If not, see <http://www.gnu.org/licenses/>.
 --
 
-require("halmd.mdsim.integrators")
-require("halmd.modules")
+local module            = require("halmd.utility.module")
+local integrators       = require("halmd.mdsim.integrators")
 
--- grab modules
-local integrators = halmd.mdsim.integrators
 -- grab C++ wrappers
 local h5 = libhalmd.h5
 local po = libhalmd.po
@@ -29,12 +27,12 @@ local po = libhalmd.po
 local assert = assert
 local pairs = pairs
 
-module("halmd.mdsim.integrator", halmd.modules.register)
+local M = module("halmd.mdsim.integrator")
 
 --
 -- construct integrator module
 --
-function new(args)
+function M.__new(args)
     local integrator = args.integrator or "verlet" --default value
     return integrators[integrator]()
 end
@@ -44,15 +42,15 @@ end
 --
 -- @param desc po.options_description
 --
-function options(desc, globals)
+function M.options(desc, globals)
 
     -- integrator module choices with descriptions
-    local choices = {}
-    for integrator, module in pairs(integrators) do
-        if module.description then
-            choices[integrator] = module.description()
-        end
-    end
+    local choices = {
+        euler                   = integrators.euler.description()
+      , verlet                  = integrators.verlet.description()
+      , verlet_nvt_andersen     = integrators.verlet_nvt_andersen.description()
+      , verlet_nvt_hoover       = integrators.verlet_nvt_hoover.description()
+    }
 
     globals:add("integrator", po.string():choices(choices), "select integration module")
 end
@@ -60,7 +58,7 @@ end
 --
 -- read module parameters from HDF5 group
 --
-function read_parameters(args, group, globals)
+function M.read_parameters(args, group, globals)
     args.integrator = globals:read_attribute("integrator", h5.string())
 end
 
@@ -70,6 +68,8 @@ end
 -- @param integrator module instance
 -- @param group HDF5 group
 --
-function write_parameters(integrator, group, globals)
+function M.write_parameters(integrator, group, globals)
     globals:write_attribute("integrator", h5.string(), integrator.module.namespace)
 end
+
+return M

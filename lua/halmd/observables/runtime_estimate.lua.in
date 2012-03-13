@@ -17,18 +17,17 @@
 -- along with this program.  If not, see <http://www.gnu.org/licenses/>.
 --
 
-require("halmd.modules")
+local module            = require("halmd.utility.module")
+local mdsim = {
+    clock               = require("halmd.mdsim.clock")
+}
 
-require("halmd.mdsim.clock")
-
--- grab modules
-local mdsim = halmd.mdsim
 -- grab C++ wrappers
 local runtime_estimate_wrapper = libhalmd.observables.runtime_estimate
 -- grab standard library
 local assert = assert
 
-module("halmd.observables.runtime_estimate", halmd.modules.register)
+local M = module("halmd.observables.runtime_estimate")
 
 --
 -- construct instance of runtime_estimate module
@@ -39,7 +38,7 @@ module("halmd.observables.runtime_estimate", halmd.modules.register)
 --
 -- @returns instance of runtime_estimate module
 --
-function new(args)
+function M.__new(args)
     -- parameters
     local total_steps = assert(args.total_steps)
 
@@ -52,6 +51,8 @@ end
 --
 -- returns module description
 --
-function description()
+function M.description()
     return "runtime estimate"
 end
+
+return M

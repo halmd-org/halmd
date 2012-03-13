@@ -17,11 +17,9 @@
 -- along with this program.  If not, see <http://www.gnu.org/licenses/>.
 --
 
-require("halmd.mdsim.positions")
-require("halmd.modules")
+local module            = require("halmd.utility.module")
+local positions         = require("halmd.mdsim.positions")
 
--- grab modules
-local positions = halmd.mdsim.positions
 -- grab C++ wrappers
 local h5 = libhalmd.h5
 local po = libhalmd.po
@@ -29,12 +27,12 @@ local po = libhalmd.po
 local assert = assert
 local pairs = pairs
 
-module("halmd.mdsim.position", halmd.modules.register)
+local M = module("halmd.mdsim.position")
 
 --
 -- construct position module
 --
-function new(args)
+function M.__new(args)
     local position = args.position or "lattice" -- default value
     local reader = args.reader
     if reader and not args.position then
@@ -48,15 +46,12 @@ end
 --
 -- @param desc po.options_description
 --
-function options(desc, globals)
+function M.options(desc, globals)
 
     -- position module choices with descriptions
-    local choices = {}
-    for position, module in pairs(positions) do
-        if module.description then
-            choices[position] = module.description()
-        end
-    end
+    local choices = {
+        lattice             = positions.lattice.description()
+    }
 
     globals:add("position", po.string():choices(choices), "select initial particle positions module")
 end
@@ -67,8 +62,10 @@ end
 -- @param position module instance
 -- @param group HDF5 group
 --
-function write_parameters(self, group, globals)
+function M.write_parameters(self, group, globals)
     if self.module ~= positions.phase_space then
         globals:write_attribute("position", h5.string(), self.module.namespace)
     end
 end
+
+return M

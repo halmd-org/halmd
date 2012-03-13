@@ -58,6 +58,8 @@ script::script()
     luabind::bind_class_info(L);
     // load HALMD Lua C++ wrapper
     luaopen_halmd_base(L);
+    // prepare Lua 5.2 compatible environment
+    lua_compat();
 }
 
 /**
@@ -139,6 +141,25 @@ void script::package_cpath()
 }
 
 /**
+ * Prepare Lua 5.2 compatible environment
+ *
+ * http://www.lua.org/manual/5.2/manual.html#8.2
+ */
+void script::lua_compat()
+{
+    using namespace luabind;
+
+#if LUA_VERSION_NUM < 502
+    // function unpack was moved into the table library
+    globals(L)["table"]["unpack"] = globals(L)["unpack"];
+    globals(L)["unpack"] = nil;
+#endif
+
+    // function module is deprecated
+    globals(L)["module"] = nil;
+}
+
+/**
  * Load HALMD Lua library
  */
 void script::load_library()
@@ -185,12 +206,13 @@ void script::options(options_parser& parser)
 {
     using namespace luabind;
 
+    object option = call_function<object>(L, "require", "halmd.option");
     // retrieve the Lua function before the try-catch block
     // to avoid bogus error message on the Lua stack in case
     // call_function throws an exception
-    object options(globals(L)["halmd"]["option"]["get"]);
+    object option_get = option["get"];
     try {
-        call_function<void>(options, ref(parser));
+        call_function<void>(option_get, ref(parser));
     }
     catch (luabind::error const& e) {
         LOG_ERROR(lua_tostring(e.state(), -1));
@@ -206,9 +228,10 @@ void script::parsed(po::variables_map const& vm)
 {
     using namespace luabind;
 
-    object options(globals(L)["halmd"]["option"]["set"]);
+    object option = call_function<object>(L, "require", "halmd.option");
+    object option_set = option["set"];
     try {
-        call_function<void>(options, vm);
+        call_function<void>(option_set, vm);
     }
     catch (luabind::error const& e) {
         LOG_ERROR(lua_tostring(e.state(), -1));
