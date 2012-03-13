@@ -17,8 +17,8 @@
 -- along with this program.  If not, see <http://www.gnu.org/licenses/>.
 --
 
-local potentials = require("halmd.mdsim.potentials")
-require("halmd.modules")
+local module            = require("halmd.utility.module")
+local potentials        = require("halmd.mdsim.potentials")
 
 -- grab C++ wrappers
 local h5 = libhalmd.h5
@@ -28,12 +28,12 @@ local assert = assert
 local pairs = pairs
 local property = property
 
-module("halmd.mdsim.potential", halmd.modules.register)
+local M = module("halmd.mdsim.potential")
 
 --
 -- construct potential module
 --
-function new(args)
+function M.__new(args)
     local potential = args.potential or "lennard_jones" -- default value
     return assert(potentials[potential])()
 end
@@ -43,7 +43,7 @@ end
 --
 -- @param desc po.options_description
 --
-function options(desc, globals)
+function M.options(desc, globals)
 
     -- potential module choices with descriptions
     local choices = {
@@ -60,7 +60,7 @@ end
 --
 -- read module parameters from HDF5 group
 --
-function read_parameters(args, group, globals)
+function M.read_parameters(args, group, globals)
     args.potential = globals:read_attribute("potential", h5.string())
 end
 
@@ -70,6 +70,8 @@ end
 -- @param potential module instance
 -- @param group HDF5 group
 --
-function write_parameters(potential, group, globals)
+function M.write_parameters(potential, group, globals)
     globals:write_attribute("potential", h5.string(), potential.module.namespace)
 end
+
+return M

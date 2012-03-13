@@ -18,16 +18,17 @@
 --
 
 require("halmd.device")
-require("halmd.mdsim.box")
-require("halmd.mdsim.core")
-require("halmd.mdsim.neighbour")
-require("halmd.mdsim.particle")
-require("halmd.mdsim.potential")
+local mdsim = {
+    box                 = require("halmd.mdsim.box")
+  , core                = require("halmd.mdsim.core")
+  , neighbour           = require("halmd.mdsim.neighbour")
+  , particle            = require("halmd.mdsim.particle")
+  , potential           = require("halmd.mdsim.potential")
+}
 require("halmd.modules")
 
 -- grab modules
 local device = halmd.device
-local mdsim = halmd.mdsim
 local forces = libhalmd.mdsim.forces
 
 -- grab standard library
