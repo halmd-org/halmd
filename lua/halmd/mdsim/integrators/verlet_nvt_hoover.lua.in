@@ -25,13 +25,13 @@ local mdsim = {
   , core                = require("halmd.mdsim.core")
   , particle            = require("halmd.mdsim.particle")
 }
+local observables = {
+    sampler             = require("halmd.observables.sampler")
+}
 local writers = {
     file                = require("halmd.io.writers.file")
 }
-require("halmd.observables.sampler")
 
--- grab modules
-local observables = halmd.observables
 -- grab C++ wrappers
 local verlet_nvt_hoover_wrapper = {
     host = {

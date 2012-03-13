@@ -18,12 +18,14 @@
 --
 
 local device            = require("halmd.device")
-require("halmd.modules")
-require("halmd.observables.phase_space")
-require("halmd.observables.samples.phase_space")
+local module            = require("halmd.utility.module")
+local observables = {
+    phase_space         = require("halmd.observables.phase_space")
+}
+local samples = {
+    phase_space         = require("halmd.observables.samples.phase_space")
+}
 
--- grab modules
-local observables = halmd.observables
 -- grab C++ wrappers
 local vac_wrapper = libhalmd.observables.dynamics.velocity_autocorrelation
 local po = libhalmd.po
@@ -31,7 +33,7 @@ local property = property
 -- grab standard library
 local assert = assert
 
-module("halmd.observables.dynamics.correlations.velocity_autocorrelation", halmd.modules.register)
+local M = module("halmd.observables.dynamics.correlations.velocity_autocorrelation")
 
 --
 -- construct instance of vac module
@@ -40,12 +42,12 @@ module("halmd.observables.dynamics.correlations.velocity_autocorrelation", halmd
 --   species   particle species (type) for which the computation is done
 -- @returns instance of vac module, instance of phase space sample
 --
-function new(args)
+function M.__new(args)
     -- command line options
     local species = args.species or 0 -- default value
     -- obtain appropriate phase space sample
     local backend = device() and not args.disable_gpu and "gpu" or "host"
-    local sample = observables.samples.phase_space{memory = backend}
+    local sample = samples.phase_space{memory = backend}
     local dimension = assert(sample.dimension)
     -- construct vac module
     local vac = assert(vac_wrapper)(species, sample)
@@ -66,7 +68,7 @@ end
 --
 -- returns module description
 --
-function description()
+function M.description()
     return "velocity autocorrelation"
 end
 
@@ -75,8 +77,10 @@ end
 --
 -- @param desc po.options_description
 --
-function options(desc)
+function M.options(desc)
     if device.with_gpu() then
         desc:add("disable-gpu", po.bool_switch(), "disable GPU acceleration")
     end
 end
+
+return M

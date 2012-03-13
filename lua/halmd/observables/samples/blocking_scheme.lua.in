@@ -17,16 +17,17 @@
 -- along with this program.  If not, see <http://www.gnu.org/licenses/>.
 --
 
-require("halmd.modules")
-require("halmd.observables.dynamics.blocking_scheme")
+local module            = require("halmd.utility.module")
+local dynamics = {
+    blocking_scheme     = require("halmd.observables.dynamics.blocking_scheme")
+}
 
 -- grab C++ wrappers
 local blocking_scheme_wrapper = libhalmd.observables.samples.blocking_scheme
-local dynamics = halmd.observables.dynamics
 -- grab standard library
 local assert = assert
 
-module("halmd.observables.samples.blocking_scheme", halmd.modules.register)
+local M = module("halmd.observables.samples.blocking_scheme")
 
 -- block samples by sample
 local block_samples = {}
@@ -38,7 +39,7 @@ local block_samples = {}
 --   args.sample  sample module, the pointer serves as index to the list of singletons
 --   args.sampler sampler module that acquires sample
 --
-function new(args)
+function M.__new(args)
     local sample = assert(args.sample)
     local sampler = assert(args.sampler)
 
@@ -59,3 +60,5 @@ function new(args)
     end
     return block_sample
 end
+
+return M

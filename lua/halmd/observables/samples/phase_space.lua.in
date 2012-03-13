@@ -18,10 +18,10 @@
 --
 
 local device            = require("halmd.device")
+local module            = require("halmd.utility.module")
 local mdsim = {
     particle            = require("halmd.mdsim.particle")
 }
-require("halmd.modules")
 
 -- grab C++ wrappers
 local phase_space_wrapper = {
@@ -47,7 +47,7 @@ end
 -- grab standard library
 local assert = assert
 
-module("halmd.observables.samples.phase_space", halmd.modules.register)
+local M = module("halmd.observables.samples.phase_space")
 
 -- singleton
 local sample = {}
@@ -58,7 +58,7 @@ local sample = {}
 -- @param args       parameter table
 --   args.memory     specify memory location of sample ("host", "gpu")
 --
-function new(args)
+function M.__new(args)
     local memory = assert(args.memory)
 
     if not sample[memory] then
@@ -75,3 +75,5 @@ function new(args)
     end
     return sample[memory]
 end
+
+return M

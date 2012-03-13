@@ -17,10 +17,10 @@
 -- along with this program.  If not, see <http://www.gnu.org/licenses/>.
 --
 
+local module            = require("halmd.utility.module")
 local mdsim = {
     box                 = require("halmd.mdsim.box")
 }
-require("halmd.modules")
 
 -- grab C++ wrappers
 local wavevector_wrapper = {
@@ -30,7 +30,7 @@ local wavevector_wrapper = {
 -- grab standard library
 local assert = assert
 
-module("halmd.observables.utility.wavevector", halmd.modules.register)
+local M = module("halmd.observables.utility.wavevector")
 
 --
 -- construct instance of wavevector module
@@ -43,7 +43,7 @@ module("halmd.observables.utility.wavevector", halmd.modules.register)
 --     args.max_count       maximum number of wavevectors per wavenumber shell
 -- @returns instance of wavevector module
 --
-function new(args)
+function M.__new(args)
     -- options
     local wavenumber = args.wavenumber
     local max_wavenumber = args.max_wavenumber
@@ -63,3 +63,5 @@ function new(args)
         return wavevector(max_wavenumber, decimation, box.length, tolerance, max_count)
     end
 end
+
+return M

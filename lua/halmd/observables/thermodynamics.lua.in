@@ -18,20 +18,20 @@
 --
 
 local device            = require("halmd.device")
+local module            = require("halmd.utility.module")
 local mdsim = {
     box                 = require("halmd.mdsim.box")
   , clock               = require("halmd.mdsim.clock")
   , core                = require("halmd.mdsim.core")
   , particle            = require("halmd.mdsim.particle")
 }
+local observables = {
+    sampler             = require("halmd.observables.sampler")
+}
 local writers = {
     file                = require("halmd.io.writers.file")
 }
-require("halmd.modules")
-require("halmd.observables.sampler")
 
--- grab modules
-local observables = halmd.observables
 -- grab C++ wrappers
 local thermodynamics_wrapper = {
     host = {
@@ -51,12 +51,12 @@ local po = libhalmd.po
 -- grab standard library
 local assert = assert
 
-module("halmd.observables.thermodynamics", halmd.modules.register)
+local M = module("halmd.observables.thermodynamics")
 
 --
 -- construct thermodynamics module
 --
-function new(args)
+function M.__new(args)
     local every = args.every or 100 -- default value
 
     -- dependency injection
@@ -101,7 +101,7 @@ end
 --
 -- connect runtime accumulators to module profiler
 --
-function profile(self, profiler)
+function M.profile(self, profiler)
     profiler:on_profile{self, en_kin = "summation of kinetic energy"}
     profiler:on_profile{self, v_cm = "summation of centre-of-mass velocity"}
     if device() then
@@ -115,6 +115,8 @@ end
 --
 -- @param desc po.options_description
 --
-function options(desc)
+function M.options(desc)
     desc:add("every", po.uint64(), "sample interval for macroscopic state variables")
 end
+
+return M

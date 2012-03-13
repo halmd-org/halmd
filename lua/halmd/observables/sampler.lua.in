@@ -17,22 +17,21 @@
 -- along with this program.  If not, see <http://www.gnu.org/licenses/>.
 --
 
-require("halmd.modules")
+local module            = require("halmd.utility.module")
+local signals           = require("halmd.modules.signals")
 local mdsim = {
     clock               = require("halmd.mdsim.clock")
   , core                = require("halmd.mdsim.core")
 }
-require("halmd.observables.runtime_estimate")
-local singleton = require("halmd.singleton")
+local observables = {
+    runtime_estimate   = require("halmd.observables.runtime_estimate")
+}
 local utility = {
     posix_signal        = require("halmd.utility.posix_signal")
   , profiler            = require("halmd.utility.profiler")
   , timer_service       = require("halmd.utility.timer_service")
 }
 
--- grab modules
-local signals = require("halmd.modules.signals")
-local observables = halmd.observables
 -- grab C++ wrappers
 local sampler_wrapper = libhalmd.sampler
 local h5 = libhalmd.h5
@@ -41,12 +40,12 @@ local po = libhalmd.po
 local assert = assert
 local math = math
 
-module("halmd.observables.sampler", halmd.modules.register, singleton)
+local M = module.singleton("halmd.observables.sampler")
 
 --
 -- construct sampler module
 --
-function new(args)
+function M.__new(args)
     -- dependency injection
     local clock = mdsim.clock()
     local core = mdsim.core()
@@ -89,12 +88,12 @@ end
 
 -- patch C++ objects with signal connection handlers
 -- @see module halmd.modules.signals
-signals.patch(_M)
+signals.patch(M)
 
 --
 -- connect runtime accumulators to module profiler
 --
-function profile(self, profiler)
+function M.profile(self, profiler)
     profiler:on_profile{self, total = "total simulation runtime"}
     profiler:on_profile{self, start = "start-up of simulation"}
     profiler:on_profile{self, prepare = "preparation for integration step"}
@@ -107,7 +106,7 @@ end
 --
 -- @param desc po.options_description
 --
-function options(desc, globals)
+function M.options(desc, globals)
     globals:add("steps", po.uint64(), "number of simulation steps")
     globals:add("time", po.float():conflicts("steps"), "total simulation time")
 end
@@ -115,7 +114,7 @@ end
 --
 -- read module parameters from HDF5 group
 --
-function read_parameters(args, group, globals)
+function M.read_parameters(args, group, globals)
     args.steps = globals:read_attribute("steps", h5.uint64())
     -- args.time is optional parameter
 end
@@ -126,7 +125,9 @@ end
 -- @param sampler module instance
 -- @param group HDF5 group
 --
-function write_parameters(sampler, group, globals)
+function M.write_parameters(sampler, group, globals)
     globals:write_attribute("steps", h5.uint64(), sampler.steps)
     globals:write_attribute("time", h5.float(), sampler.total_time)
 end
+
+return M

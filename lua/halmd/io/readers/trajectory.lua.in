@@ -23,10 +23,10 @@ local mdsim = {
     core                = require("halmd.mdsim.core")
   , particle            = require("halmd.mdsim.particle")
 }
-require("halmd.observables.samples.phase_space")
+local samples = {
+    phase_space         = require("halmd.observables.samples.phase_space")
+}
 
--- grab modules
-local observables = halmd.observables
 -- grab C++ wrappers
 local po = libhalmd.po
 local property = property
@@ -89,7 +89,7 @@ function M.__new(args)
         local sample
         reader.position = property(function(self)
             if not sample then
-                sample = observables.samples.phase_space{memory = "host"}
+                sample = samples.phase_space{memory = "host"}
                 local particle = mdsim.particle() -- singleton
                 for i = 0, particle.ntype - 1 do
                     self:on_read(sample:position(i), {species(i), "position"})
@@ -102,7 +102,7 @@ function M.__new(args)
         local sample
         reader.velocity = property(function(self)
             if not sample then
-                sample = observables.samples.phase_space{memory = "host"}
+                sample = samples.phase_space{memory = "host"}
                 local particle = mdsim.particle() -- singleton
                 for i = 0, particle.ntype - 1 do
                     self:on_read(sample:velocity(i), {species(i), "velocity"})

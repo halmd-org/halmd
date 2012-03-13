@@ -17,22 +17,21 @@
 -- along with this program.  If not, see <http://www.gnu.org/licenses/>.
 --
 
+local module            = require("halmd.utility.module")
 local mdsim = {
     clock               = require("halmd.mdsim.clock")
 }
-require("halmd.modules")
-require("halmd.observables.sampler")
-local singleton = require("halmd.singleton")
+local observables = {
+    sampler             = require("halmd.observables.sampler")
+}
 
--- grab modules
-local observables = halmd.observables
 -- grab C++ wrappers
 local blocking_scheme_wrapper = libhalmd.observables.dynamics.blocking_scheme
 local po = libhalmd.po
 -- grab standard library
 local assert = assert
 
-module("halmd.observables.dynamics.blocking_scheme", halmd.modules.register, singleton)
+local M = module.singleton("halmd.observables.dynamics.blocking_scheme")
 
 --
 -- construct module blocking_scheme
@@ -44,7 +43,7 @@ module("halmd.observables.dynamics.blocking_scheme", halmd.modules.register, sin
 --   compute       table of time correlations functions to be computed
 -- @returns instance of blocking_scheme module
 --
-function new(args)
+function M.__new(args)
     local every = args.every or 100 -- default value
     local size  = args.size or 10 -- default value
     local shift = args.shift or 0 -- default value
@@ -71,7 +70,7 @@ end
 --
 -- @param desc po.options_description
 --
-function options(desc)
+function M.options(desc)
     desc:add("every", po.uint(), "sampling interval for time-correlation functions")
     desc:add("size", po.uint(), "block size, corresponds to coarse-graining factor")
     desc:add("shift", po.uint(), "coarse-graining shift between adjacent blocking levels")
@@ -84,6 +83,8 @@ end
 -- @param blocking_scheme module instance
 -- @param group HDF5 group
 --
-function write_parameters(blocking_scheme, group)
+function M.write_parameters(blocking_scheme, group)
 --     group:write_attribute("separation", h5.uint(), blocking_scheme.separation)
 end
+
+return M
