@@ -18,7 +18,7 @@
 --
 
 local forces = require("halmd.mdsim.forces")
-require("halmd.modules")
+local module = require("halmd.utility.module")
 
 -- grab C++ wrappers
 local h5 = libhalmd.h5
@@ -28,12 +28,12 @@ local assert = assert
 local pairs = pairs
 local property = property
 
-module("halmd.mdsim.force", halmd.modules.register)
+local M = module("halmd.mdsim.force")
 
 --
 -- construct force module
 --
-function new(args)
+function M.__new(args)
     local force = args.force or "pair_trunc" -- default value
     return assert(forces[force])()
 end
@@ -43,7 +43,7 @@ end
 --
 -- @param desc po.options_description
 --
-function options(desc, globals)
+function M.options(desc, globals)
 
     -- force module choices with descriptions
     local choices = {
@@ -58,7 +58,7 @@ end
 --
 -- read module parameters from HDF5 group
 --
-function read_parameters(args, group, globals)
+function M.read_parameters(args, group, globals)
     args.force = globals:read_attribute("force", h5.string())
 end
 
@@ -68,6 +68,8 @@ end
 -- @param force module instance
 -- @param group HDF5 group
 --
-function write_parameters(force, group, globals)
+function M.write_parameters(force, group, globals)
     globals:write_attribute("force", h5.string(), force.module.namespace)
 end
+
+return M
