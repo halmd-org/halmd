@@ -17,11 +17,11 @@
 -- along with this program.  If not, see <http://www.gnu.org/licenses/>.
 --
 
-require("halmd.mdsim.box")
+local mdsim = {
+    box                 = require("halmd.mdsim.box")
+}
 require("halmd.modules")
 
--- grab modules
-local mdsim = halmd.mdsim
 -- grab C++ wrappers
 local wavevector_wrapper = {
     [2] = libhalmd.observables.utility.wavevector_2_
