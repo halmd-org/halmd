@@ -18,17 +18,18 @@
 --
 
 require("halmd.device")
-require("halmd.mdsim.binning")
-require("halmd.mdsim.box")
-require("halmd.mdsim.core")
-require("halmd.mdsim.maximum_squared_displacement")
-require("halmd.mdsim.particle")
-require("halmd.mdsim.sort")
+local mdsim = {
+    binning                             = require("halmd.mdsim.binning")
+  , box                                 = require("halmd.mdsim.box")
+  , core                                = require("halmd.mdsim.core")
+  , maximum_squared_displacement        = require("halmd.mdsim.maximum_squared_displacement")
+  , particle                            = require("halmd.mdsim.particle")
+  , sort                                = require("halmd.mdsim.sort")
+}
 require("halmd.modules")
 
 -- grab modules
 local device = halmd.device
-local mdsim = halmd.mdsim
 -- grab C++ wrappers
 local neighbour_from_binning = {
     host = {
