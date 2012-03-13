@@ -21,7 +21,72 @@
 -- Module Definition
 -- =================
 --
-local M = {}
+local M = setmetatable({}, {__call = function(M, ...)
+    return M.__new(...)
+end})
+
+---
+-- Define new module.
+--
+-- :returns: module table
+--
+-- Example::
+--
+--    local module = require("halmd.module")
+--
+--    local M = module("halmd.mdsim.potentials.lennard_jones")
+--
+--    function M.__new(args)
+--        -- create and return instance
+--    end
+--
+--    return M
+--
+function M.__new(name)
+    --
+    -- FIXME This function wraps halmd.modules.register, which is deprecated.
+    --
+    local modules = require("halmd.modules")
+    local module = {_NAME = name}
+    modules.register(module)
+    local mt = getmetatable(module)
+    mt.__newindex = function(self, key, value)
+        if key == "parameters" then
+            modules.provider(self)
+        elseif key == "__new" then
+            rawset(self, "new", value)
+        end
+        rawset(self, key, value)
+    end
+    return module
+end
+
+---
+-- Define new singleton module.
+--
+-- :returns: module table
+--
+-- Example::
+--
+--    local module = require("halmd.module")
+--
+--    local M = module.singleton("halmd.mdsim.potentials.lennard_jones")
+--
+--    function M.__new(args)
+--        -- create and return singleton instance
+--    end
+--
+--    return M
+--
+function M.singleton(name)
+    --
+    -- FIXME This function wraps halmd.singleton, which is deprecated.
+    --
+    local singleton = require("halmd.singleton")
+    local module = M(name)
+    singleton(module)
+    return module
+end
 
 ---
 -- This function provides a lazy module loader, which may be used to load
