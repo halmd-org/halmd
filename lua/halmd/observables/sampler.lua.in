@@ -22,15 +22,16 @@ require("halmd.mdsim.clock")
 require("halmd.mdsim.core")
 require("halmd.observables.runtime_estimate")
 local singleton = require("halmd.singleton")
-require("halmd.utility.posix_signal")
-require("halmd.utility.profiler")
-require("halmd.utility.timer_service")
+local utility = {
+    posix_signal        = require("halmd.utility.posix_signal")
+  , profiler            = require("halmd.utility.profiler")
+  , timer_service       = require("halmd.utility.timer_service")
+}
 
 -- grab modules
 local signals = require("halmd.modules.signals")
 local mdsim = halmd.mdsim
 local observables = halmd.observables
-local utility = halmd.utility
 -- grab C++ wrappers
 local sampler_wrapper = libhalmd.sampler
 local h5 = libhalmd.h5
