@@ -21,11 +21,9 @@ require("halmd.modules")
 local singleton = require("halmd.singleton")
 
 require("halmd.device")
-require("halmd.log")
 
 -- grab modules
 local device = halmd.device
-local log = halmd.log
 -- grab C++ wrappers
 local random_wrapper = {
     host = libhalmd.host.random
