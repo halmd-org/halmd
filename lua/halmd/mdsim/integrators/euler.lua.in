@@ -17,14 +17,14 @@
 -- along with this program.  If not, see <http://www.gnu.org/licenses/>.
 --
 
-require("halmd.mdsim.box")
-require("halmd.mdsim.clock")
-require("halmd.mdsim.core")
-require("halmd.mdsim.particle")
+local mdsim = {
+    box                 = require("halmd.mdsim.box")
+  , clock               = require("halmd.mdsim.clock")
+  , core                = require("halmd.mdsim.core")
+  , particle            = require("halmd.mdsim.particle")
+}
 require("halmd.modules")
 
--- grab modules
-local mdsim = halmd.mdsim
 -- grab C++ wrappers
 local euler_wrapper = libhalmd.mdsim.integrators.euler
 local h5 = libhalmd.h5

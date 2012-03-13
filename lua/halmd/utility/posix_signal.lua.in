@@ -17,11 +17,11 @@
 -- along with this program.  If not, see <http://www.gnu.org/licenses/>.
 --
 
-require("halmd.mdsim.clock")
+local mdsim = {
+    clock               = require("halmd.mdsim.clock")
+}
 local module = require("halmd.utility.module")
 
--- grab modules
-local mdsim = halmd.mdsim
 -- grab C++ wrappers
 local abort = assert(libhalmd.utility.abort)
 local posix_signal = assert(libhalmd.utility.posix_signal)

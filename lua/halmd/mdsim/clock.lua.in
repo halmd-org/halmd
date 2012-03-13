@@ -17,8 +17,7 @@
 -- along with this program.  If not, see <http://www.gnu.org/licenses/>.
 --
 
-require("halmd.modules")
-local singleton = require("halmd.singleton")
+local module = require("halmd.utility.module")
 
 -- grab C++ wrappers
 local clock_wrapper = libhalmd.mdsim.clock
@@ -27,12 +26,12 @@ local po = libhalmd.po
 -- grab standard library
 local assert = assert
 
-module("halmd.mdsim.clock", halmd.modules.register, singleton)
+local M = module.singleton("halmd.mdsim.clock")
 
 --
 -- construct clock module
 --
-function new(args)
+function M.__new(args)
     local timestep = args.timestep or 0.001 -- default value
     return clock_wrapper(timestep)
 end
@@ -40,20 +39,22 @@ end
 --
 -- assemble module options
 --
-function options(desc, globals)
+function M.options(desc, globals)
     globals:add("timestep", po.float(), "simulation timestep")
 end
 
 --
 -- read module parameters from HDF5 group
 --
-function read_parameters(args, group, globals)
+function M.read_parameters(args, group, globals)
     args.timestep = globals:read_attribute("timestep", h5.float())
 end
 
 --
 -- write module parameters to HDF5 group
 --
-function write_parameters(clock, group, globals)
+function M.write_parameters(clock, group, globals)
     globals:write_attribute("timestep", h5.float(), clock.timestep)
 end
+
+return M

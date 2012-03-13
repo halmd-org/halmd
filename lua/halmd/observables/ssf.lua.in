@@ -18,15 +18,16 @@
 --
 
 require("halmd.io.writers.file")
-require("halmd.mdsim.clock")
-require("halmd.mdsim.particle")
+local mdsim = {
+    clock               = require("halmd.mdsim.clock")
+  , particle            = require("halmd.mdsim.particle")
+}
 require("halmd.modules")
 require("halmd.observables.density_mode")
 require("halmd.observables.sampler")
 require("halmd.observables.utility.wavevector")
 
 -- grab modules
-local mdsim = halmd.mdsim
 local observables = halmd.observables
 local writers = halmd.io.writers
 -- grab C++ wrappers

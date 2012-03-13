@@ -18,11 +18,10 @@
 --
 
 require("halmd.modules")
+local mdsim = {
+    clock               = require("halmd.mdsim.clock")
+}
 
-require("halmd.mdsim.clock")
-
--- grab modules
-local mdsim = halmd.mdsim
 -- grab C++ wrappers
 local runtime_estimate_wrapper = libhalmd.observables.runtime_estimate
 -- grab standard library

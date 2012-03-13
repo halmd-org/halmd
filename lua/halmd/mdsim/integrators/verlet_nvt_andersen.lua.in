@@ -18,16 +18,17 @@
 --
 
 require("halmd.device")
-require("halmd.mdsim.box")
-require("halmd.mdsim.clock")
-require("halmd.mdsim.core")
-require("halmd.mdsim.particle")
+local mdsim = {
+    box                 = require("halmd.mdsim.box")
+  , clock               = require("halmd.mdsim.clock")
+  , core                = require("halmd.mdsim.core")
+  , particle            = require("halmd.mdsim.particle")
+}
 require("halmd.modules")
 require("halmd.random")
 
 -- grab modules
 local device = halmd.device
-local mdsim = halmd.mdsim
 local random = halmd.random
 -- grab C++ wrappers
 local verlet_nvt_andersen_wrapper = {

@@ -17,13 +17,14 @@
 -- along with this program.  If not, see <http://www.gnu.org/licenses/>.
 --
 
-require("halmd.mdsim.clock")
+local mdsim = {
+    clock               = require("halmd.mdsim.clock")
+}
 require("halmd.modules")
 require("halmd.observables.sampler")
 local singleton = require("halmd.singleton")
 
 -- grab modules
-local mdsim = halmd.mdsim
 local observables = halmd.observables
 -- grab C++ wrappers
 local blocking_scheme_wrapper = libhalmd.observables.dynamics.blocking_scheme

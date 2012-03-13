@@ -18,8 +18,10 @@
 --
 
 require("halmd.modules")
-require("halmd.mdsim.clock")
-require("halmd.mdsim.core")
+local mdsim = {
+    clock               = require("halmd.mdsim.clock")
+  , core                = require("halmd.mdsim.core")
+}
 require("halmd.observables.runtime_estimate")
 local singleton = require("halmd.singleton")
 local utility = {
@@ -30,7 +32,6 @@ local utility = {
 
 -- grab modules
 local signals = require("halmd.modules.signals")
-local mdsim = halmd.mdsim
 local observables = halmd.observables
 -- grab C++ wrappers
 local sampler_wrapper = libhalmd.sampler
