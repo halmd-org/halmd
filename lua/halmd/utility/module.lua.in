@@ -103,20 +103,18 @@ end
 --    local potentials = require("halmd.mdsim.potentials")
 --
 --    -- This loads the lennard_jones module.
---    local lennard_jones = assert(potentials.lennard_jones)
+--    local lennard_jones = potentials.lennard_jones
 --
--- If a submodule cannot be loaded, the loader returns ``nil``.
+-- If a submodule cannot be loaded, the loader raises an error.
 --
 -- :param string name: fully qualified name of module
 -- :returns: module table with metatable containing module loader
 --
 function M.loader(name)
     local index = function(self, key)
-        local status, value = pcall(require, name .. "." .. key)
-        if status then
-            rawset(self, key, value)
-            return value
-        end
+        local value = require(name .. "." .. key)
+        rawset(self, key, value)
+        return value
     end
     return setmetatable({}, {__index = index})
 end
