@@ -244,9 +244,9 @@ env-luajit:
 
 BOOST_VERSION = 1.48.0
 BOOST_RELEASE = 1_48_0
-BOOST_TARBALL = boost_$(BOOST_RELEASE).tar.gz
+BOOST_TARBALL = boost_$(BOOST_RELEASE).tar.bz2
 BOOST_TARBALL_URL = http://sourceforge.net/projects/boost/files/boost/$(BOOST_VERSION)/$(BOOST_TARBALL)
-BOOST_TARBALL_SHA256 = 01c8c3330a7a5013b8cfab18a3b80fcfd89001701ea5907c9ae635b97bc2c789
+BOOST_TARBALL_SHA256 = 1bf254b2d69393ccd57a3cdd30a2f80318a005de8883a0792ed2f5e2598e5ada
 BOOST_LOG_VERSION = 1.1
 BOOST_LOG_TARBALL = boost-log-$(BOOST_LOG_VERSION).zip
 BOOST_LOG_TARBALL_URL = http://sourceforge.net/projects/boost-log/files/boost-log-$(BOOST_LOG_VERSION).zip
@@ -276,7 +276,7 @@ fetch-boost: .fetch-boost
 
 .extract-boost: .fetch-boost
 	$(RM) $(BOOST_BUILD_DIR) $(BOOST_LOG_DIR)
-	$(TAR) -xzf $(BOOST_TARBALL)
+	$(TAR) -xjf $(BOOST_TARBALL)
 	$(UNZIP) $(BOOST_LOG_TARBALL)
 	$(CP) $(BOOST_LOG_DIR)/boost/log $(BOOST_BUILD_DIR)/boost/
 	$(CP) $(BOOST_LOG_DIR)/libs/log $(BOOST_BUILD_DIR)/libs/
