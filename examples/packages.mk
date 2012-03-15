@@ -242,11 +242,11 @@ env-luajit:
 ## Boost C++ libraries with Boost.Log
 ##
 
-BOOST_VERSION = 1.48.0
-BOOST_RELEASE = 1_48_0
+BOOST_VERSION = 1.49.0
+BOOST_RELEASE = 1_49_0
 BOOST_TARBALL = boost_$(BOOST_RELEASE).tar.bz2
 BOOST_TARBALL_URL = http://sourceforge.net/projects/boost/files/boost/$(BOOST_VERSION)/$(BOOST_TARBALL)
-BOOST_TARBALL_SHA256 = 1bf254b2d69393ccd57a3cdd30a2f80318a005de8883a0792ed2f5e2598e5ada
+BOOST_TARBALL_SHA256 = dd748a7f5507a7e7af74f452e1c52a64e651ed1f7263fce438a06641d2180d3c
 BOOST_LOG_VERSION = 1.1
 BOOST_LOG_TARBALL = boost-log-$(BOOST_LOG_VERSION).zip
 BOOST_LOG_TARBALL_URL = http://sourceforge.net/projects/boost-log/files/boost-log-$(BOOST_LOG_VERSION).zip
@@ -322,10 +322,10 @@ env-boost:
 ## Luabind library
 ##
 
-LUABIND_VERSION = 0.9.1-24-gf5fe839
+LUABIND_VERSION = 0.9.1-25-g085f2e0
 LUABIND_TARBALL = luabind-$(LUABIND_VERSION).tar.bz2
 LUABIND_TARBALL_URL = http://sourceforge.net/projects/halmd/files/libs/luabind/$(LUABIND_TARBALL)
-LUABIND_TARBALL_SHA256 = a2e8cf5d876a6df824b9b98680068d6c37c16ef543f782b2fd0a45467edc1432
+LUABIND_TARBALL_SHA256 = ac903c3a4368f9e9624d0a9b191c4a043880b6d656840f4995b6ed1afcdffaf1
 LUABIND_BUILD_DIR = luabind-$(LUABIND_VERSION)
 LUABIND_BUILD_FLAGS = cxxflags=-fPIC link=static variant=release variant=debug
 LUABIND_INSTALL_DIR = $(PREFIX)/luabind-$(LUABIND_VERSION)
