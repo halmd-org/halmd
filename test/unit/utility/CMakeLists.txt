@@ -35,21 +35,6 @@ set_property(TEST unit/utility/signal
   PROPERTY TIMEOUT 5
 )
 
-add_executable(test_unit_utility_options_parser
-  options_parser.cpp
-)
-target_link_libraries(test_unit_utility_options_parser
-  test_tools_lua
-  halmd_utility
-  halmd_utility_program_options
-  halmd_utility_lua
-  ${Boost_PROGRAM_OPTIONS_LIBRARY}
-  ${HALMD_TEST_LIBRARIES}
-)
-add_test(unit/utility/options_parser
-  test_unit_utility_options_parser --log_level=test_suite
-)
-
 add_executable(test_unit_utility_posix_signal
   posix_signal.cpp
 )
