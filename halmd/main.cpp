@@ -1,5 +1,5 @@
 /*
- * Copyright © 2008-2011  Peter Colberg and Felix Höfling
+ * Copyright © 2008-2012  Peter Colberg and Felix Höfling
  *
  * This file is part of HALMD.
  *
@@ -17,106 +17,61 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <boost/algorithm/string/join.hpp>
-#include <boost/filesystem.hpp>
-#include <boost/lambda/lambda.hpp>
-#include <boost/lambda/bind.hpp>
-#include <boost/lambda/casts.hpp>
+#include <boost/program_options.hpp>
 #include <cstdlib> // EXIT_SUCCESS, EXIT_FAILURE
 
 #include <halmd/io/logger.hpp>
 #include <halmd/script.hpp>
-#include <halmd/utility/date_time.hpp>
-#include <halmd/utility/filesystem.hpp>
-#include <halmd/utility/hostname.hpp>
-#include <halmd/utility/options_parser.hpp>
+#include <halmd/utility/program_options.hpp>
+#include <halmd/utility/lua/lua.hpp>
 #include <halmd/version.h>
 
-using namespace boost;
-using namespace boost::algorithm;
 using namespace halmd;
 using namespace std;
+
+namespace po = boost::program_options;
 
 /**
  * Run HAL’s MD package
  *
- * This function loads the Lua scripting engine, parses program options
- * from the command line and optionally a config file, sets up logging,
- * and runs the Lua simulation script.
+ * This function parses the program options, loads the Lua interpreter,
+ * stores the command-line arguments in the global table 'arg' with
+ * program options at indices < 1 and script options at indices >= 1,
+ * and loads the user script from a file or from standard input.
  */
 int main(int argc, char **argv)
 {
     try {
-        script script; //< load Lua script engine
-
-        //
-        // assemble program options
-        //
-        options_parser parser;
-        parser.add_options()
-            ("script", po::value<string>(), "HALMD script file")
+        po::options_description desc;
+        desc.add_options()
+            ("help,h", "display this help and exit")
+            ("version", "output version information and exit")
             ;
 
+        vector<string> pos;
         po::variables_map vm;
         try {
-            parser.parse_command_line(argc, argv, vm, true);
+            po::command_line_parser parser(argc, argv);
+            parser.extra_style_parser(inject_option_terminator());
+            po::parsed_options parsed = parser.options(desc).run();
+            pos = po::collect_unrecognized(parsed.options, po::include_positional);
+            po::store(parsed, vm);
+            po::notify(vm);
         }
         catch (po::error const& e) {
-            cerr << PROGRAM_NAME ": " << e.what() << endl;
-            cerr << "Try `" PROGRAM_NAME " --help' for more information." << endl;
+            cerr << PROGRAM_NAME ": " << e.what() << endl
+                 << "Try `" PROGRAM_NAME " --help' for more information." << endl;
             return EXIT_FAILURE;
         }
 
-        if (vm.count("script")) {
-            script.dofile(vm["script"].as<string>());
-        }
-        else {
-            script.load_library();
-        }
-
-        script.options(parser);
-
-        parser.add_options()
-            ("output,o",
-             po::value<string>()->default_value(PROGRAM_NAME "_%Y%m%d_%H%M%S", "")->notifier(
-                 lambda::ll_const_cast<string&>(lambda::_1) = lambda::bind(
-                     &absolute_path
-                   , lambda::bind(
-                         &format_local_time
-                       , lambda::_1
-                     )
-                 )
-             ),
-             "prefix of output files")
-            ("config,c", po::value<string>(),
-             "parameter input file")
-            ("verbose,v", po::accum_value<int>()->default_value(logging::warning),
-             "increase verbosity")
-            ("version",
-             "output version and exit")
-            ("help,h",
-             "display this help and exit")
-            ;
-
-        //
-        // parse program options from command line and config file
-        //
-        try {
-            parser.parse_command_line(argc, argv, vm);
-
-            if (vm.count("config")) {
-                parser.parse_config_file(vm["config"].as<string>(), vm);
-            }
-        }
-        catch (po::error const& e) {
-            cerr << PROGRAM_NAME ": " << e.what() << endl;
-            cerr << "Try `" PROGRAM_NAME " --help' for more information." << endl;
-            return EXIT_FAILURE;
+        if (vm.count("help")) {
+            cout << "Usage: " PROGRAM_NAME " [options] [--] script [args]" << endl
+                 << "   or: " PROGRAM_NAME " [options] [- [args]]" << endl
+                 << endl
+                 << desc << endl;
+            return EXIT_SUCCESS;
         }
 
-        //
-        // print version information to stdout
-        //
         if (vm.count("version")) {
             cout << PROJECT_NAME " (" PROGRAM_DESC ") " PROGRAM_VERSION << endl << endl
                  << PROGRAM_COPYRIGHT << endl
@@ -128,39 +83,25 @@ int main(int argc, char **argv)
             return EXIT_SUCCESS;
         }
 
-        //
-        // print options help message to stdout
-        //
-        if (vm.count("help")) {
-            cout << "Usage: " PROGRAM_NAME " [OPTION]... [[MODULE] [OPTION]...]..."
-                 << endl << endl
-                 << parser.options() << endl;
-            return EXIT_SUCCESS;
+        script script;
+        luabind::object arg = luabind::newtable(script.L);
+        luabind::globals(script.L)["arg"] = arg;
+
+        int offset = -argc + 1;
+        if (pos.size() > 1) {
+            offset += pos.size() - 1;
+        }
+        for (int i = 0; i < argc; ++i, ++offset) {
+            arg[offset] = string(argv[i]);
         }
 
-        logging::get().open_console(
-            static_cast<logging::severity_level>(vm["verbose"].as<int>())
-        );
-        logging::get().open_file(
-            vm["output"].as<string>() + ".log"
-          , static_cast<logging::severity_level>(
-                max(vm["verbose"].as<int>(), static_cast<int>(logging::info))
-            )
-        );
-
-        LOG(PROJECT_NAME " (" PROGRAM_DESC ") " PROGRAM_VERSION);
-        LOG("variant: " << PROGRAM_VARIANT);
-#ifndef NDEBUG
-        LOG_WARNING("built with enabled debugging");
-#endif
-        LOG("command line: " << join(vector<string>(argv, argv + argc), " "));
-        LOG("host name: " << host_name());
-
-        script.parsed(vm); //< pass command line options to Lua
-
-        script.run();
+        string filename = "";
+        if (!pos.empty()) {
+            filename = *pos.begin();
+        }
+        script.dofile(filename);
     }
-    catch (std::exception const& e) {
+    catch (exception const& e) {
         LOG_ERROR(e.what());
         LOG_WARNING(PROJECT_NAME " aborted");
         return EXIT_FAILURE;

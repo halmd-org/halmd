@@ -18,12 +18,12 @@
  */
 
 #include <luabind/class_info.hpp>
+#include <stdexcept>
 
 #include <halmd/io/logger.hpp>
 #include <halmd/script.hpp>
 #include <halmd/utility/filesystem.hpp>
 #include <halmd/utility/lua/lua.hpp>
-#include <halmd/utility/lua/program_options.hpp>
 #include <halmd/version.h>
 
 using namespace boost;
@@ -159,179 +159,28 @@ void script::lua_compat()
     globals(L)["module"] = nil;
 }
 
-/**
- * Load HALMD Lua library
- */
-void script::load_library()
-{
-    using namespace luabind;
-
-    try {
-        script_ = call_function<object>(L, "require", "halmd.default");
-    }
-    catch (luabind::error const& e) {
-        LOG_ERROR(lua_tostring(L, -1));
-        lua_pop(L, 1); //< remove error message
-        throw;
-    }
-}
-
 /*
  * Load and execute Lua script
+ *
+ * If filename is empty, loads from standard input.
  */
-void script::dofile(string const& file_name)
+void script::dofile(string const& filename)
 {
     using namespace luabind;
 
+    // if filename is NULL, luaL_loadfile loads from standard input
+    char const* fn = NULL;
+    if (!filename.empty()) {
+        fn = filename.c_str();
+    }
     // error handler passed to lua_pcall as last argument
     lua_pushcfunction(L, &script::traceback);
 
-    if (luaL_loadfile(L, file_name.c_str()) || lua_pcall(L, 0, 1, 1)) {
+    if (luaL_loadfile(L, fn) || lua_pcall(L, 0, 0, 1)) {
         LOG_ERROR(lua_tostring(L, -1));
         lua_pop(L, 1); //< remove error message
         throw runtime_error("failed to load Lua script");
     }
-
-    // store return value of script as HALMD script function
-    // this function will be called later in script::run,
-    // after the command-line options have been parsed
-    script_ = object(from_stack(L, -1));
-    lua_pop(L, 1);
-}
-
-/**
- * Assemble program options
- */
-void script::options(options_parser& parser)
-{
-    using namespace luabind;
-
-    object option = call_function<object>(L, "require", "halmd.option");
-    // retrieve the Lua function before the try-catch block
-    // to avoid bogus error message on the Lua stack in case
-    // call_function throws an exception
-    object option_get = option["get"];
-    try {
-        call_function<void>(option_get, ref(parser));
-    }
-    catch (luabind::error const& e) {
-        LOG_ERROR(lua_tostring(e.state(), -1));
-        lua_pop(e.state(), 1); //< remove error message
-        throw;
-    }
-}
-
-/**
- * Set parsed command line options
- */
-void script::parsed(po::variables_map const& vm)
-{
-    using namespace luabind;
-
-    object option = call_function<object>(L, "require", "halmd.option");
-    object option_set = option["set"];
-    try {
-        call_function<void>(option_set, vm);
-    }
-    catch (luabind::error const& e) {
-        LOG_ERROR(lua_tostring(e.state(), -1));
-        lua_pop(e.state(), 1); //< remove error message
-        throw;
-    }
-}
-
-/**
- * Run simulation
- *
- * While the simulation is setup with Lua scripting, it entirely runs in
- * C++, outside of the Lua interpreter. This avoids unnecessary Lua errors
- * in case a C++ exception is thrown inside a module, e.g. if a defect GPU
- * fails during a long simulation run and a CUDA error is thrown. Further
- * it simplifies stack tracebacks when running inside a debugger.
- *
- * To allow the script to run multiple partial simulations, we use Lua
- * coroutines. The Lua function script() is started, and executes until
- * yielding a slot, e.g. sampler.setup or sampler.run. The slot is then
- * executed outside of the Lua interpreter. The Lua function is then
- * resumed. Script execution finishes when the Lua function returns.
- *
- * We use the Lua C API instead of luabind::resume_function and
- * luabind::resume, as the latter do not handle errors properly,
- * but abort with an assertion error (or segmentation fault if
- * compiled with NDEBUG).
- */
-void script::run()
-{
-    using namespace luabind;
-
-    // create a new Lua thread
-    //
-    // Lua threads allow functions, or coroutines, to run concurrently.
-    // In contrast to operating systems threads, however, only one
-    // function is running at any time. While one function is running,
-    // all other functions wait for it to yield or return. A function
-    // that has yielded continues execution after being resumed by
-    // another function.
-    //
-    // http://www.lua.org/pil/9.html
-    // http://www.lua.org/manual/5.1/manual.html#2.11
-    //
-    // override member pointer L to master state with thread state,
-    // to prevent errors due to accidental use of master state
-    lua_State* const L = lua_newthread(script::L);
-
-    // The object wrapper ensures that the thread is released for garbage
-    // collection in case a C++ exception is thrown. Note that the new
-    // thread is immediately popped from the stack.
-    object thread(from_stack(script::L, -1));
-    lua_pop(script::L, 1);
-
-    // push HALMD script function onto stack
-    script_.push(L);
-    if (lua_isnil(L, -1)) {
-        throw runtime_error("missing callable return value from HALMD script");
-    }
-
-    int status;
-    do {
-        // if Lua function is on top of the stack, create a new coroutine
-        // from it, otherwise resume execution of the existing coroutine
-#if LUA_VERSION_NUM < 502
-        status = lua_resume(L, 0);
-#else
-        status = lua_resume(L, NULL, 0);
-#endif
-
-        // lua_resume returns
-        //  - 0 if the function has returned successfully
-        //  - LUA_YIELD if the function has yielded
-        //  - other values if an error occurred
-        if (status == 0) {
-            // we expect no return value
-        }
-        else if (status == LUA_YIELD) {
-            // we expect a slot as the yield value
-            object ret(from_stack(L, -1));
-            lua_pop(L, 1);
-            slot_function_type slot = object_cast<slot_function_type>(ret);
-
-            // Some C++ modules are only needed during the Lua script stage,
-            // e.g. the trajectory reader. To make sure these modules are
-            // destructed before running the simulation, invoke the Lua
-            // garbage collector now.
-            lua_gc(L, LUA_GCCOLLECT, 0);
-
-            // execute the slot, e.g. sampler.setup or sampler.run
-            slot();
-        }
-        else {
-            script::traceback(L);
-            LOG_ERROR(lua_tostring(L, -1));
-            lua_pop(L, 1); // remove error message
-            throw runtime_error("failed to run simulation script");
-        }
-    }
-    while (status == LUA_YIELD);
 }
 
 /**
