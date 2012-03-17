@@ -57,6 +57,14 @@ script::script()
 }
 
 /**
+ * Translate C++ exception into Lua error message
+ */
+static void translate_exception(lua_State* L, std::exception const& e)
+{
+    lua_pushstring(L, e.what());
+}
+
+/**
  * Load Luabind into Lua interpreter
  */
 void script::load_luabind()
@@ -68,6 +76,8 @@ void script::load_luabind()
     set_pcall_callback(&script::traceback);
     // class_info(), class_names()
     bind_class_info(L);
+    // translate C++ exception into Lua error message
+    register_exception_handler<std::exception>(&translate_exception);
 }
 
 /**
