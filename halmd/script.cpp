@@ -44,20 +44,30 @@ script::script()
 {
     // load Lua standard libraries
     luaL_openlibs(L);
+    // load Luabind into Lua interpreter
+    load_luabind();
     // set Lua package path
     package_path();
     // set Lua C package path
     package_cpath();
-    // print Lua stack trace on error
-    luabind::set_pcall_callback(&script::traceback);
-    // setup global structures and Lua class support
-    luabind::open(L);
-    // class_info(), class_names()
-    luabind::bind_class_info(L);
     // load HALMD Lua C++ wrapper
     luaopen_halmd_base(L);
     // prepare Lua 5.2 compatible environment
     lua_compat();
+}
+
+/**
+ * Load Luabind into Lua interpreter
+ */
+void script::load_luabind()
+{
+    using namespace luabind;
+    // setup global structures and Lua class support
+    open(L);
+    // print Lua stack trace on error
+    set_pcall_callback(&script::traceback);
+    // class_info(), class_names()
+    bind_class_info(L);
 }
 
 /**
