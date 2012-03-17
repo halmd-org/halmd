@@ -70,7 +70,12 @@ implicit_value_textual(po::typed_value<T>* semantic, T const& value, string cons
 template <typename T>
 static void notify(luabind::object const& functor, T const& value)
 {
-    luabind::call_function<void>(functor, value);
+    try {
+        luabind::call_function<void>(functor, value);
+    }
+    catch (luabind::error const& e) {
+        throw runtime_error(lua_tostring(e.state(), -1));
+    }
 }
 
 template <typename T>
