@@ -23,6 +23,10 @@
 #include <luabind/luabind.hpp>
 #include <vector>
 
+#if LUA_VERSION_NUM < 502
+# define luaL_len lua_objlen
+#endif
+
 namespace luabind {
 
 /**
@@ -42,9 +46,12 @@ struct default_converter<std::vector<T> >
     //! convert from Lua to C++
     std::vector<T> from(lua_State* L, int index)
     {
+        std::size_t len = luaL_len(L, index);
+        object table(from_stack(L, index));
         std::vector<T> v;
-        for (iterator i(object(from_stack(L, index))), end; i != end; ++i) {
-            v.push_back(object_cast<T>(*i));
+        v.reserve(len);
+        for (std::size_t i = 0; i < len; ++i) {
+            v.push_back(object_cast<T>(table[i + 1]));
         }
         return v;
     }
@@ -66,5 +73,9 @@ struct default_converter<std::vector<T> const&>
   : default_converter<std::vector<T> > {};
 
 } // namespace luabind
+
+#if LUA_VERSION_NUM < 502
+# undef luaL_len
+#endif
 
 #endif /* ! HALMD_UTILITY_LUA_VECTOR_CONVERTER_HPP */
