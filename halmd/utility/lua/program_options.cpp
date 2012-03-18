@@ -216,6 +216,7 @@ HALMD_LUA_API int luaopen_libhalmd_utility_lua_program_options(lua_State* L)
                 .def(tostring(const_self))
                 .def("add", &add_option)
                 .def("add", &add_options)
+                .property("options", &po::options_description::options)
 
           , class_<po::positional_options_description>("positional_options_description")
                 .def(constructor<>())
