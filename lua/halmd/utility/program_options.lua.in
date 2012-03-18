@@ -55,6 +55,8 @@ end
 -- :param boolean args.composing: allow multiple occurences with single value (default: ``false``)
 -- :param boolean args.multitoken: allow multiple occurences with multiple values (default: ``false``)
 -- :param function args.notifier: notifier function (optional)
+-- :param args.default: default option value (optional)
+-- :param args.implicit: implicit option value (optional)
 --
 -- The following value types are supported:
 --
@@ -107,6 +109,12 @@ function argument_parser:add_argument(name, args)
         value:multitoken()
     elseif args.composing then
         value:composing()
+    end
+    if args.default then
+        value:default_value(args.default)
+    end
+    if args.implicit then
+        value:implicit_value(args.implicit)
     end
 end
 
