@@ -137,7 +137,9 @@ function argument_parser:set_defaults(defaults)
             error(("undefined argument '%s'"):format(k), 2)
         end
         local semantic = assert(option.semantic)
-        semantic:default_value(v)
+        if not pcall(semantic.default_value, semantic, v) then
+            error(("invalid default value to argument '%s'"):format(k), 2)
+        end
     end
 end
 
