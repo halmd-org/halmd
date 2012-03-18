@@ -42,7 +42,7 @@ function M.argument_parser()
     local desc = po.options_description()
     local option = po.option_description("help,h", po.untyped_value(), "display this help and exit")
     desc:add(option)
-    return setmetatable({desc = desc, args = {}}, {__index = argument_parser})
+    return setmetatable({desc = desc, options = {}, args = {}}, {__index = argument_parser})
 end
 
 ---
@@ -94,6 +94,7 @@ function argument_parser:add_argument(name, args)
     end
     local option = po.option_description(name, value, help)
     local long_name = assert(option.long_name)
+    self.options[long_name] = option
     self.desc:add(option)
 
     local notifier = args.notifier
@@ -115,6 +116,28 @@ function argument_parser:add_argument(name, args)
     end
     if args.implicit then
         value:implicit_value(args.implicit)
+    end
+end
+
+---
+-- Set default option values.
+--
+-- :param table defaults: argument names with default values
+--
+-- Example::
+--
+--     parser:set_defaults({particles = {9000, 1000}, number_density = 0.8})
+--
+function argument_parser:set_defaults(defaults)
+    local options = assert(self.options)
+    for k, v in pairs(defaults) do
+        local long_name = k:gsub("_", "-")
+        local option = options[long_name]
+        if not option then
+            error(("undefined option '%s'"):format(long_name), 2)
+        end
+        local semantic = assert(option.semantic)
+        semantic:default_value(v)
     end
 end
 
