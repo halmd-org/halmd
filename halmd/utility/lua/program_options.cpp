@@ -35,6 +35,23 @@ namespace po = boost::program_options;
 using namespace boost;
 using namespace std;
 
+namespace std {
+
+template <typename T>
+static ostream& operator<<(ostream& os, vector<T> const& value)
+{
+    typename vector<T>::const_iterator i = value.begin();
+    if (i != value.end()) {
+        os << *i;
+        for (++i; i != value.end(); ++i) {
+            os << " " << *i;
+        }
+    }
+    return os;
+}
+
+} // namespace std
+
 namespace halmd {
 
 template <typename T>
@@ -160,6 +177,10 @@ static void typed_value(lua_State* L, char const* name)
             [
                 class_<po::typed_value<vector<T> >, typed_value_wrapper<vector<T> >, po::value_semantic>(name)
                     .def(constructor<>())
+                    .def("default_value", &default_value<vector <T> >, return_reference_to(_1))
+                    .def("default_value", &default_value_textual<vector <T> >, return_reference_to(_1))
+                    .def("implicit_value", &implicit_value<vector <T> >, return_reference_to(_1))
+                    .def("implicit_value", &implicit_value_textual<vector <T> >, return_reference_to(_1))
                     .def("notifier", &notifier<vector<T> >, return_reference_to(_1))
                     .def("required", &po::typed_value<vector<T> >::required, return_reference_to(_1))
                     .def("composing", &po::typed_value<vector<T> >::composing, return_reference_to(_1))
