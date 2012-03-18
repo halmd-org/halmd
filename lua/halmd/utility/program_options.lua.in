@@ -40,7 +40,7 @@ local argument_parser = {}
 --
 function M.argument_parser()
     local desc = po.options_description()
-    local option = po.option_description("help,h", po.untyped_value.new(), "display this help and exit")
+    local option = po.option_description("help,h", po.untyped_value(), "display this help and exit")
     desc:add(option)
     return setmetatable({desc = desc, args = {}}, {__index = argument_parser})
 end
@@ -88,9 +88,9 @@ function argument_parser:add_argument(name, args)
     local help = assert(args.help)
     local value
     if args.multitoken or args.composing then
-        value = assert(po.multivalue[args.type]).new()
+        value = assert(po.multivalue[args.type])()
     else
-        value = assert(po.value[args.type]).new()
+        value = assert(po.value[args.type])()
     end
     local option = po.option_description(name, value, help)
     local long_name = assert(option.long_name)

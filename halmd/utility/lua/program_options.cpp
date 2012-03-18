@@ -20,8 +20,6 @@
 #include <boost/bind.hpp>
 #include <boost/program_options.hpp>
 #include <boost/program_options/cmdline.hpp>
-#include <boost/type_traits/is_same.hpp>
-#include <boost/utility/enable_if.hpp>
 #include <luabind/luabind.hpp>
 #include <luabind/adopt_policy.hpp>
 #include <luabind/operator.hpp> // luabind::tostring
@@ -86,24 +84,25 @@ notifier(po::typed_value<T>* semantic, luabind::object const& functor)
 }
 
 template <typename T>
-static typename disable_if<is_same<T, bool>, po::typed_value<T>*>::type
-value()
+struct typed_value_wrapper : po::typed_value<T>, luabind::wrap_base
 {
-    return po::value<T>();
-}
+    typed_value_wrapper() : po::typed_value<T>(0) {}
+};
 
-template <typename T>
-static typename enable_if<is_same<T, bool>, po::typed_value<T>*>::type
-value()
+template <>
+struct typed_value_wrapper<bool> : po::typed_value<bool>, luabind::wrap_base
 {
-    return po::bool_switch();
-}
+    typed_value_wrapper() : po::typed_value<bool>(0)
+    {
+        default_value(false);
+        zero_tokens();
+    }
+};
 
-static po::untyped_value*
-untyped_value()
+struct untyped_value_wrapper : po::untyped_value, luabind::wrap_base
 {
-    return new po::untyped_value(true); // zero tokens
-}
+    untyped_value_wrapper() : po::untyped_value(true) {} // zero tokens
+};
 
 static void
 add_option(po::options_description& self, shared_ptr<po::option_description> desc)
@@ -146,31 +145,25 @@ static void typed_value(lua_State* L, char const* name)
         [
             namespace_("value")
             [
-                class_<po::typed_value<T>, po::value_semantic>(name)
+                class_<po::typed_value<T>, typed_value_wrapper<T>, po::value_semantic>(name)
+                    .def(constructor<>())
                     .def("default_value", &default_value<T>, return_reference_to(_1))
                     .def("default_value", &default_value_textual<T>, return_reference_to(_1))
                     .def("implicit_value", &implicit_value<T>, return_reference_to(_1))
                     .def("implicit_value", &implicit_value_textual<T>, return_reference_to(_1))
                     .def("notifier", &notifier<T>, return_reference_to(_1))
                     .def("required", &po::typed_value<T>::required, return_reference_to(_1))
-                    .scope
-                    [
-                        def("new", &value<T>, adopt(result))
-                    ]
 
             ]
 
           , namespace_("multivalue")
             [
-                class_<po::typed_value<vector<T> >, po::value_semantic>(name)
+                class_<po::typed_value<vector<T> >, typed_value_wrapper<vector<T> >, po::value_semantic>(name)
+                    .def(constructor<>())
                     .def("notifier", &notifier<vector<T> >, return_reference_to(_1))
                     .def("required", &po::typed_value<vector<T> >::required, return_reference_to(_1))
                     .def("composing", &po::typed_value<vector<T> >::composing, return_reference_to(_1))
                     .def("multitoken", &po::typed_value<vector<T> >::multitoken, return_reference_to(_1))
-                    .scope
-                    [
-                        def("new", &value<vector<T> >, adopt(result))
-                    ]
             ]
         ]
     ];
@@ -190,11 +183,8 @@ HALMD_LUA_API int luaopen_libhalmd_utility_lua_program_options(lua_State* L)
                 .property("is_composing", &po::value_semantic::is_composing)
                 .property("is_required", &po::value_semantic::is_required)
 
-          , class_<po::untyped_value, po::value_semantic>("untyped_value")
-                .scope
-                [
-                    def("new", &untyped_value, adopt(result))
-                ]
+          , class_<po::untyped_value, untyped_value_wrapper, po::value_semantic>("untyped_value")
+                .def(constructor<>())
 
           , class_<po::option_description>("option_description")
                 .def(constructor<char const*, po::value_semantic*>(), adopt(_3))
