@@ -94,15 +94,16 @@ function argument_parser:add_argument(name, args)
     end
     local option = po.option_description(name, value, help)
     local long_name = assert(option.long_name)
-    self.options[long_name] = option
+    local key = long_name:gsub("%-", "_")
+    self.options[key] = option
     self.desc:add(option)
 
     local notifier = args.notifier
     value:notifier(function(value)
-        if self.args[long_name] == nil then
-            self.args[long_name] = value
+        if self.args[key] == nil then
+            self.args[key] = value
         elseif notifier then
-            notifier(self.args, long_name, value)
+            notifier(self.args, key, value)
         end
     end)
 
@@ -131,10 +132,9 @@ end
 function argument_parser:set_defaults(defaults)
     local options = assert(self.options)
     for k, v in pairs(defaults) do
-        local long_name = k:gsub("_", "-")
-        local option = options[long_name]
+        local option = options[k]
         if not option then
-            error(("undefined option '%s'"):format(long_name), 2)
+            error(("undefined argument '%s'"):format(k), 2)
         end
         local semantic = assert(option.semantic)
         semantic:default_value(v)
