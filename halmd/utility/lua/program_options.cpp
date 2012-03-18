@@ -133,7 +133,7 @@ add_options(po::options_description& self, po::options_description const& desc)
     self.add(desc);
 }
 
-static po::command_line_parser
+static po::command_line_parser&
 disallow_guessing(po::command_line_parser& parser)
 {
     using namespace boost::program_options::command_line_style;
