@@ -18,7 +18,7 @@
  */
 
 #include <boost/bind.hpp>
-#include <boost/type_traits/is_integral.hpp>
+#include <boost/type_traits/is_arithmetic.hpp>
 #include <boost/program_options.hpp>
 #include <boost/program_options/cmdline.hpp>
 #include <boost/utility/enable_if.hpp>
@@ -41,10 +41,15 @@ using namespace std;
 namespace std {
 
 /**
- * Ensure integral option value is exactly representable as Lua number.
+ * Ensure arithmetic option value is exactly representable as Lua number.
+ *
+ * Note that floating-point promotion from float to double (which is the
+ * default for lua_Number) is exact, refer to ISO/IEC 14882:1998, 4.6.1.
+ * “An rvalue of type float can be converted to an rvalue of type double.
+ * The value is unchanged.”
  */
 template <typename T>
-static typename enable_if<is_integral<T>, void>::type
+static typename enable_if<is_arithmetic<T>, void>::type
 validate(any& v, vector<string> const& values, T*, int)
 {
     po::validators::check_first_occurrence(v);
