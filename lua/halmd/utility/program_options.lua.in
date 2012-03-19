@@ -38,6 +38,7 @@ local po = setmetatable({}, {__index = assert(libhalmd.program_options)})
 -- add type aliases for built-in argument types
 po.value.number         = assert(po.value.float64)
 po.value.integer        = assert(po.value.int64)
+po.value.accumulate     = assert(po.accum_value)
 po.multivalue.number    = assert(po.multivalue.float64)
 po.multivalue.integer   = assert(po.multivalue.int64)
 
@@ -80,6 +81,7 @@ end
 -- string                 String
 -- number                 Double-precision floating-point
 -- integer                Signed 64-bit integer
+-- accumulate             Increment integer
 -- ====================   =======================================
 --
 -- These integral and floating-point value types are supported:

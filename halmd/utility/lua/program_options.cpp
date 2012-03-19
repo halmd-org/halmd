@@ -39,6 +39,7 @@
 #include <halmd/config.hpp>
 #include <halmd/numeric/cast.hpp>
 #include <halmd/utility/lua/vector_converter.hpp>
+#include <halmd/utility/program_options.hpp>
 
 namespace po = boost::program_options;
 namespace ublas = boost::numeric::ublas;
@@ -252,6 +253,26 @@ struct untyped_value_wrapper : po::untyped_value, luabind::wrap_base
     untyped_value_wrapper() : po::untyped_value(true) {} // zero tokens
 };
 
+template <typename T>
+static accumulating_value<T>*
+accum_default_value(accumulating_value<T>* semantic, T const& value)
+{
+    return semantic->default_value(value);
+}
+
+template <typename T>
+static accumulating_value<T>*
+accum_default_value_textual(accumulating_value<T>* semantic, T const& value, string const& textual)
+{
+    return semantic->default_value(value, textual);
+}
+
+template <typename T>
+struct accum_value_wrapper : accumulating_value<T>, luabind::wrap_base
+{
+    accum_value_wrapper() : accumulating_value<T>(0) {}
+};
+
 static void
 add_option(po::options_description& self, shared_ptr<po::option_description> desc)
 {
@@ -371,6 +392,13 @@ HALMD_LUA_API int luaopen_libhalmd_utility_lua_program_options(lua_State* L)
 
           , class_<po::untyped_value, untyped_value_wrapper, po::value_semantic>("untyped_value")
                 .def(constructor<>())
+
+          , class_<accumulating_value<int>, accum_value_wrapper<int>, po::value_semantic>("accum_value")
+                .def(constructor<>())
+                .def("default_value", &accum_default_value<int>, return_reference_to(_1))
+                .def("default_value", &accum_default_value_textual<int>, return_reference_to(_1))
+                .def("notifier", &notifier<int>, return_reference_to(_1))
+                .def("required", &po::typed_value<int>::required, return_reference_to(_1))
 
           , class_<po::option_description>("option_description")
                 .def(constructor<char const*, po::value_semantic*>(), adopt(_3))
