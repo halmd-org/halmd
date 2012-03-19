@@ -52,9 +52,9 @@ po.multivalue.integer   = assert(po.multivalue.int64)
 --
 function M.argument_parser()
     local self = {
-        desc = po.options_description()
-      , options = {}
-      , args = {}
+        _desc = po.options_description()
+      , _options = {}
+      , _args = {}
     }
     return setmetatable(self, {__index = argument_parser})
 end
@@ -118,20 +118,20 @@ function argument_parser:add_argument(name, args)
     local option = po.option_description(name, value, help)
     local long_name = assert(option.long_name)
     local key = long_name:gsub("%-", "_")
-    self.options[key] = option
-    self.desc:add(option)
+    self._options[key] = option
+    self._desc:add(option)
 
     local notifier = args.notifier
     value:notifier(function(value)
-        if self.args[key] == nil then
-            self.args[key] = value
+        if self._args[key] == nil then
+            self._args[key] = value
         elseif notifier then
-            notifier(self.args, key, value)
+            notifier(self._args, key, value)
         end
     end)
 
     if args.multitoken then
-        if self.__is_group then
+        if self._is_group then
             error("multitoken arguments not allowed in argument group", 2)
         end
         value:multitoken()
@@ -164,21 +164,21 @@ function argument_parser:add_argument_group(name)
     local option = po.option_description(name, value)
     local long_name = assert(option.long_name)
     local key = long_name:gsub("%-", "_")
-    self.options[key] = option
-    self.desc:add(option)
+    self._options[key] = option
+    self._desc:add(option)
 
     local desc = po.options_description()
     local group = M.argument_parser()
-    group.__is_group = true
+    group._is_group = true
 
     value:multitoken()
     value:notifier(function(value)
-        if self.args[key] == nil then
+        if self._args[key] == nil then
             local status, result = pcall(group.parse_args, group, value)
             if not status then
                 error(("in group '%s': %s"):format(long_name, result))
             end
-            self.args[key] = result
+            self._args[key] = result
         end
     end)
 
@@ -195,7 +195,7 @@ end
 --     parser:set_defaults({particles = {9000, 1000}, number_density = 0.8})
 --
 function argument_parser:set_defaults(defaults)
-    local options = assert(self.options)
+    local options = assert(self._options)
     for k, v in pairs(defaults) do
         local option = options[k]
         if not option then
@@ -233,11 +233,11 @@ function argument_parser:parse_args(args)
     local args = args or arg
     local parser = po.command_line_parser(args)
     local desc = po.options_description()
-    desc:add(self.desc)
+    desc:add(self._desc)
     desc:add(po.option_description("help,h", po.untyped_value()))
     parser:options(desc)
     parser:disallow_guessing()
-    if self.__is_group then
+    if self._is_group then
         parser:extra_parser(argument_group_parser)
     else
         parser:positional(po.positional_options_description())
@@ -246,12 +246,12 @@ function argument_parser:parse_args(args)
     local vm = po.variables_map()
     vm:store(parsed)
     if vm:count("help") > 0 then
-        print(self.desc)
+        print(self._desc)
         os.exit(0)
     end
     vm:notify()
     vm:notify()
-    return self.args
+    return self._args
 end
 
 return M
