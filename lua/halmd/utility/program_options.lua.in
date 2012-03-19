@@ -224,12 +224,14 @@ end
 -- :param table args: string array with command-line arguments, or ``nil``
 -- :returns: parsed arguments
 --
+-- If ``args`` is ``nil``, the ``halmd`` command-line arguments are parsed.
+--
 -- Example::
 --
 --    local args = parser:parse_args()
 --
 function argument_parser:parse_args(args)
-    local args = args or arg
+    local args = args or assert(_G.arg)
     local parser = po.command_line_parser(args)
     local desc = po.options_description()
     desc:add(self._desc)
