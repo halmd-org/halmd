@@ -51,10 +51,12 @@ po.multivalue.integer   = assert(po.multivalue.int64)
 --    local parser = options.argument_parser()
 --
 function M.argument_parser()
-    local desc = po.options_description()
-    local option = po.option_description("help,h", po.untyped_value(), "display this help and exit")
-    desc:add(option)
-    return setmetatable({desc = desc, options = {}, args = {}}, {__index = argument_parser})
+    local self = {
+        desc = po.options_description()
+      , options = {}
+      , args = {}
+    }
+    return setmetatable(self, {__index = argument_parser})
 end
 
 ---
@@ -230,7 +232,10 @@ end
 function argument_parser:parse_args(args)
     local args = args or arg
     local parser = po.command_line_parser(args)
-    parser:options(self.desc)
+    local desc = po.options_description()
+    desc:add(self.desc)
+    desc:add(po.option_description("help,h", po.untyped_value()))
+    parser:options(desc)
     parser:disallow_guessing()
     if self.__is_group then
         parser:extra_parser(argument_group_parser)
