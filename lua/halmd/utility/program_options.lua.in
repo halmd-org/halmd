@@ -68,6 +68,7 @@ end
 -- :param string args.help: description of option for --help
 -- :param boolean args.composing: allow multiple occurences with single value (default: ``false``)
 -- :param boolean args.multitoken: allow multiple occurences with multiple values (default: ``false``)
+-- :param boolean args.required: require at minimum one occurence (default: ``false``)
 -- :param function args.notifier: notifier function (optional)
 -- :param args.default: default option value (optional)
 -- :param args.implicit: implicit option value (optional)
@@ -138,6 +139,9 @@ function argument_parser:add_argument(name, args)
         value:multitoken()
     elseif args.composing then
         value:composing()
+    end
+    if args.required then
+        value:required()
     end
     if args.default then
         value:default_value(args.default)
