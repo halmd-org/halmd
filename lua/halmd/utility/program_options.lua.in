@@ -17,8 +17,6 @@
 -- along with this program.  If not, see <http://www.gnu.org/licenses/>.
 --
 
-local po = assert(libhalmd.program_options)
-
 ---
 -- Program options
 -- ===============
@@ -34,6 +32,14 @@ local po = assert(libhalmd.program_options)
 local M = {}
 
 local argument_parser = {}
+
+local po = setmetatable({}, {__index = assert(libhalmd.program_options)})
+
+-- add type aliases for built-in argument types
+po.value.number         = assert(po.value.float64)
+po.value.integer        = assert(po.value.int64)
+po.multivalue.number    = assert(po.multivalue.float64)
+po.multivalue.integer   = assert(po.multivalue.int64)
 
 ---
 -- Create new command-line parser.
@@ -71,6 +77,15 @@ end
 -- ====================   =======================================
 -- boolean                Boolean
 -- string                 String
+-- number                 Double-precision floating-point
+-- integer                Signed 64-bit integer
+-- ====================   =======================================
+--
+-- These integral and floating-point value types are supported:
+--
+-- ====================   =======================================
+-- Type                   Description
+-- ====================   =======================================
 -- int32                  Signed 32-bit integer
 -- int64                  Signed 64-bit integer
 -- uint32                 Unsigned 32-bit integer
