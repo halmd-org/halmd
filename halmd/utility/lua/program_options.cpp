@@ -17,8 +17,15 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <algorithm>
 #include <boost/bind.hpp>
+#include <boost/algorithm/string/compare.hpp>
+#include <boost/algorithm/string/find_iterator.hpp>
+#include <boost/algorithm/string/finder.hpp>
 #include <boost/type_traits/is_arithmetic.hpp>
+#include <boost/numeric/ublas/matrix.hpp>
+#include <boost/numeric/ublas/matrix_proxy.hpp>
+#include <boost/numeric/ublas/vector.hpp>
 #include <boost/program_options.hpp>
 #include <boost/program_options/cmdline.hpp>
 #include <boost/utility/enable_if.hpp>
@@ -34,6 +41,7 @@
 #include <halmd/utility/lua/vector_converter.hpp>
 
 namespace po = boost::program_options;
+namespace ublas = boost::numeric::ublas;
 
 using namespace boost;
 using namespace std;
@@ -64,6 +72,102 @@ validate(any& v, vector<string> const& values, T*, int)
     }
 }
 
+/**
+ * Read Boost uBLAS vector from input stream
+ *
+ * A vector is represented as a comma-delimited string, e.g. 1,2,3,4
+ */
+template <typename T>
+void validate(any& v, vector<string> const& values, ublas::vector<T>*, int)
+{
+    po::validators::check_first_occurrence(v);
+    string s(po::validators::get_single_string(values));
+    ublas::vector<T> value;
+    vector<T> element;
+    for (split_iterator<string::iterator> i = make_split_iterator(s, first_finder(",", is_equal()));
+         i != split_iterator<string::iterator>();
+         ++i)
+    {
+        any v;
+        vector<string> values;
+        values.push_back(copy_range<string>(*i));
+        validate(v, values, (T*)0, 0);
+        element.push_back(any_cast<T>(v));
+    }
+    value.resize(element.size());
+    copy(element.begin(), element.end(), value.begin());
+    v = value;
+}
+
+/**
+ * Read Boost uBLAS matrix from input stream
+ *
+ * A matrix is represented as colon-delimited rows with each row as a
+ * comma-delimited string, e.g. 11,12,13:21,22,23:31,32,33
+ */
+template <typename T>
+void validate(any& v, vector<string> const& values, ublas::matrix<T>*, int)
+{
+    po::validators::check_first_occurrence(v);
+    string s(po::validators::get_single_string(values));
+    ublas::matrix<T> value;
+    vector<ublas::vector<T> > row;
+    for (split_iterator<string::iterator> i = make_split_iterator(s, first_finder(":", is_equal()));
+         i != split_iterator<string::iterator>();
+         ++i)
+    {
+        any v;
+        vector<string> values;
+        values.push_back(copy_range<string>(*i));
+        validate(v, values, (ublas::vector<T>*)0, 0);
+        row.push_back(any_cast<ublas::vector<T> >(v));
+    }
+    if (!row.empty()) {
+        value.resize(row.size(), row.front().size());
+        for (size_t i = 0; i < row.size(); ++i) {
+            if (!(row[i].size() == value.size2())) {
+                throw_exception(po::invalid_option_value(s));
+            }
+            ublas::matrix_row<ublas::matrix<T> >(value, i) = row[i];
+        }
+    }
+    v = value;
+}
+
+/**
+ * Write Boost uBLAS vector to output stream
+ */
+template <typename T>
+ostream& operator<<(ostream& os, numeric::ublas::vector<T> const& value)
+{
+    for (size_t i = 0; i < value.size(); ++i) {
+        if (i > 0) {
+            os << ',';
+        }
+        os << value(i);
+    }
+    return os;
+}
+
+/**
+ * Write Boost uBLAS matrix to output stream
+ */
+template <typename T>
+ostream& operator<<(ostream& os, numeric::ublas::matrix<T> const& value)
+{
+    for (size_t i = 0; i < value.size1(); ++i) {
+        if (i > 0) {
+            os << ':';
+        }
+        ublas::vector<T> const& row = ublas::matrix_row<ublas::matrix<T> const>(value, i);
+        os << row;
+    }
+    return os;
+}
+
+/**
+ * Write STL vector to output stream
+ */
 template <typename T>
 static ostream& operator<<(ostream& os, vector<T> const& value)
 {
