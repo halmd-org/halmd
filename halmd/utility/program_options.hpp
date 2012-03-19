@@ -1,5 +1,5 @@
 /*
- * Copyright © 2012  Peter Colberg
+ * Copyright © 2010-2012  Peter Colberg
  *
  * This file is part of HALMD.
  *
@@ -21,6 +21,7 @@
 #define HALMD_UTILITY_PROGRAM_OPTIONS_HPP
 
 #include <boost/program_options/option.hpp>
+#include <boost/program_options/value_semantic.hpp>
 
 namespace halmd {
 
@@ -51,6 +52,71 @@ public:
         return result_type();
     }
 };
+
+/**
+ * Accumulating program option value
+ */
+template <typename T, typename charT = char>
+class accumulating_value
+  : public boost::program_options::typed_value<T, charT>
+{
+private:
+    typedef boost::program_options::typed_value<T, charT> _Base;
+
+    // Originally written by Bryan Green <bgreen@nas.nasa.gov>
+    // http://article.gmane.org/gmane.comp.lib.boost.user/29084
+
+public:
+    accumulating_value(T* store_to)
+      : _Base(store_to)
+      , origin_(0)
+    {
+        _Base::zero_tokens();
+    }
+
+    accumulating_value* default_value(T const& v)
+    {
+        // setting a default value sets the origin to that value
+        origin_ = v;
+        _Base::default_value(v);
+        return this;
+    }
+
+    accumulating_value* default_value(T const& v, std::string const& textual)
+    {
+        // setting a default value sets the origin to that value
+        origin_ = v;
+        _Base::default_value(v, textual);
+        return this;
+    }
+
+public:
+    void xparse(boost::any& v, std::vector<std::basic_string<charT> > const&) const
+    {
+        // if this is the first occurrence of the option, initialize it to the origin
+        if (v.empty()) {
+            v = boost::any(origin_);
+        }
+        ++boost::any_cast<T&>(v);
+    }
+
+private:
+    /** numeric origin from which to increment upward */
+    T origin_;
+};
+
+template <typename T>
+accumulating_value<T>* accum_value(T* v)
+{
+    accumulating_value<T>* r = new accumulating_value<T>(v);
+    return r;
+}
+
+template <typename T>
+accumulating_value<T>* accum_value()
+{
+    return accum_value<T>(0);
+}
 
 } // namespace halmd
 
