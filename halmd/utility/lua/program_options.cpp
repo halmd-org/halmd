@@ -18,8 +18,10 @@
  */
 
 #include <boost/bind.hpp>
+#include <boost/type_traits/is_integral.hpp>
 #include <boost/program_options.hpp>
 #include <boost/program_options/cmdline.hpp>
+#include <boost/utility/enable_if.hpp>
 #include <luabind/luabind.hpp>
 #include <luabind/adopt_policy.hpp>
 #include <luabind/operator.hpp> // luabind::tostring
@@ -28,6 +30,7 @@
 #include <stdint.h>
 
 #include <halmd/config.hpp>
+#include <halmd/numeric/cast.hpp>
 #include <halmd/utility/lua/vector_converter.hpp>
 
 namespace po = boost::program_options;
@@ -36,6 +39,25 @@ using namespace boost;
 using namespace std;
 
 namespace std {
+
+/**
+ * Ensure integral option value is exactly representable as Lua number.
+ */
+template <typename T>
+static typename enable_if<is_integral<T>, void>::type
+validate(any& v, vector<string> const& values, T*, int)
+{
+    po::validators::check_first_occurrence(v);
+    string s(po::validators::get_single_string(values));
+    try {
+        T value = lexical_cast<T>(s);
+        halmd::checked_narrowing_cast<lua_Number>(value);
+        v = any(value);
+    }
+    catch (exception const&) {
+        throw_exception(po::invalid_option_value(s));
+    }
+}
 
 template <typename T>
 static ostream& operator<<(ostream& os, vector<T> const& value)
