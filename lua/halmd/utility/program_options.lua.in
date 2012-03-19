@@ -54,7 +54,6 @@ function M.argument_parser()
     local self = {
         _desc = po.options_description()
       , _options = {}
-      , _args = {}
     }
     return setmetatable(self, {__index = argument_parser})
 end
@@ -249,9 +248,12 @@ function argument_parser:parse_args(args)
         print(self._desc)
         os.exit(0)
     end
-    vm:notify()
-    vm:notify()
-    return self._args
+    local result = {}
+    self._args = result
+    vm:notify() -- first notify stores values in self._args
+    vm:notify() -- second notify invokes (optional) notifier functions
+    self._args = nil
+    return result
 end
 
 return M
