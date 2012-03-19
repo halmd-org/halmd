@@ -25,6 +25,12 @@ local po = assert(libhalmd.program_options)
 --
 -- This module allows the use of command-line options in HALMD scripts.
 --
+-- Example:
+--
+-- .. code-block:: none
+--
+--   halmd liquid.lua --lennard-jones epsilon=2 sigma=2 --disable-gpu
+--
 local M = {}
 
 local argument_parser = {}
@@ -108,6 +114,9 @@ function argument_parser:add_argument(name, args)
     end)
 
     if args.multitoken then
+        if self.__is_group then
+            error("multitoken arguments not allowed in argument group", 2)
+        end
         value:multitoken()
     elseif args.composing then
         value:composing()
@@ -118,6 +127,45 @@ function argument_parser:add_argument(name, args)
     if args.implicit then
         value:implicit_value(args.implicit)
     end
+end
+
+---
+-- Add argument group.
+--
+-- :param name: name of argument group
+-- :returns: argument group
+--
+-- Example::
+--
+--    local group = parser:add_argument_group("lennard-jones")
+--    group:add_argument("epsilon", {type = "number", help = "potential well depths"})
+--    group:add_argument("sigma", {type = "number", help = "collision diameter"})
+--
+function argument_parser:add_argument_group(name)
+    local name = assert(name)
+    local value = po.multivalue.string()
+    local option = po.option_description(name, value)
+    local long_name = assert(option.long_name)
+    local key = long_name:gsub("%-", "_")
+    self.options[key] = option
+    self.desc:add(option)
+
+    local desc = po.options_description()
+    local group = M.argument_parser()
+    group.__is_group = true
+
+    value:multitoken()
+    value:notifier(function(value)
+        if self.args[key] == nil then
+            local status, result = pcall(group.parse_args, group, value)
+            if not status then
+                error(("in group '%s': %s"):format(long_name, result))
+            end
+            self.args[key] = result
+        end
+    end)
+
+    return group
 end
 
 ---
@@ -143,6 +191,17 @@ function argument_parser:set_defaults(defaults)
     end
 end
 
+--
+-- Extra parser for argument groups.
+--
+local function argument_group_parser(arg)
+    local name, value = arg:match("^([^=]*)=(.*)$")
+    if name then
+        return name, value
+    end
+    return arg
+end
+
 ---
 -- Parse arguments.
 --
@@ -158,7 +217,11 @@ function argument_parser:parse_args(args)
     local parser = po.command_line_parser(args)
     parser:options(self.desc)
     parser:disallow_guessing()
-    parser:positional(po.positional_options_description())
+    if self.__is_group then
+        parser:extra_parser(argument_group_parser)
+    else
+        parser:positional(po.positional_options_description())
+    end
     local parsed = parser:run()
     local vm = po.variables_map()
     vm:store(parsed)
