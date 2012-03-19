@@ -35,12 +35,57 @@ local argument_parser = {}
 
 local po = setmetatable({}, {__index = assert(libhalmd.program_options)})
 
--- add type aliases for built-in argument types
-po.value.number         = assert(po.value.float64)
-po.value.integer        = assert(po.value.int64)
-po.value.accumulate     = assert(po.accum_value)
-po.multi_value.number   = assert(po.multi_value.float64)
-po.multi_value.integer  = assert(po.multi_value.int64)
+--
+-- Add type aliases for built-in argument types.
+--
+po.value.accumulate             = assert(po.accum_value)
+po.value.integer                = assert(po.value.int64)
+po.value.number                 = assert(po.value.float64)
+po.value_vector.integer         = assert(po.value_vector.int64)
+po.value_vector.number          = assert(po.value_vector.float64)
+po.value_matrix.integer         = assert(po.value_matrix.int64)
+po.value_matrix.number          = assert(po.value_matrix.float64)
+po.multi_value.integer          = assert(po.multi_value.int64)
+po.multi_value.number           = assert(po.multi_value.float64)
+po.multi_value_vector.integer   = assert(po.multi_value_vector.int64)
+po.multi_value_vector.number    = assert(po.multi_value_vector.float64)
+po.multi_value_matrix.integer   = assert(po.multi_value_matrix.int64)
+po.multi_value_matrix.number    = assert(po.multi_value_matrix.float64)
+
+--
+-- Create value semantic of given type.
+--
+-- :param string type: value type
+-- :param string dtype: element type for matrix/vector (optional)
+-- :param boolean multitoken: multitoken or composing value (optional)
+--
+local function argument_value(type, dtype, multitoken)
+    local value
+    if type == "matrix" or type == "vector" then
+        if not dtype then
+            error(("missing %s element dtype"):format(type, dtype), 3)
+        end
+        if multitoken then
+            value = po["multi_value_" .. type]
+        else
+            value = po["value_" .. type]
+        end
+        value = value[dtype]
+        if not value then
+            error(("undefined %s element dtype '%s'"):format(type, dtype), 3)
+        end
+    else
+        if multitoken then
+            value = po.multi_value[type]
+        else
+            value = po.value[type]
+        end
+        if not value then
+            error(("undefined argument type '%s'"):format(type), 3)
+        end
+    end
+    return value()
+end
 
 ---
 -- Create new command-line parser.
@@ -65,6 +110,7 @@ end
 -- :param string name: long name, and (optionally) short name separated by comma
 -- :param table args: keyword arguments
 -- :param string args.type: value type of option
+-- :param string args.dtype: element type of ``vector`` or ``matrix`` (optional)
 -- :param string args.help: description of option for --help
 -- :param boolean args.composing: allow multiple occurences with single value (default: ``false``)
 -- :param boolean args.multitoken: allow multiple occurences with multiple values (default: ``false``)
@@ -83,6 +129,8 @@ end
 -- number                 Double-precision floating-point
 -- integer                Signed 64-bit integer
 -- accumulate             Increment integer
+-- vector                 1-dimensional array of type ``dtype``
+-- matrix                 2-dimensional array of type ``dtype``
 -- ====================   =======================================
 --
 -- These integral and floating-point value types are supported:
@@ -111,12 +159,7 @@ end
 function argument_parser:add_argument(name, args)
     local name = assert(name)
     local help = assert(args.help)
-    local value
-    if args.multitoken or args.composing then
-        value = assert(po.multi_value[args.type])()
-    else
-        value = assert(po.value[args.type])()
-    end
+    local value = argument_value(args.type, args.dtype, args.multitoken or args.composing)
     local option = po.option_description(name, value, help)
     local long_name = assert(option.long_name)
     local key = long_name:gsub("%-", "_")

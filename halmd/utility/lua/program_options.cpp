@@ -38,6 +38,7 @@
 
 #include <halmd/config.hpp>
 #include <halmd/numeric/cast.hpp>
+#include <halmd/utility/lua/ublas.hpp>
 #include <halmd/utility/lua/vector_converter.hpp>
 #include <halmd/utility/program_options.hpp>
 
@@ -339,14 +340,14 @@ variables_map_notify(po::variables_map& vm)
 }
 
 template <typename T>
-static void typed_value(lua_State* L, char const* name)
+static void typed_value(lua_State* L, char const* name, char const* value, char const* multi_value)
 {
     using namespace luabind;
     module(L, "libhalmd")
     [
         namespace_("program_options")
         [
-            namespace_("value")
+            namespace_(value)
             [
                 class_<po::typed_value<T>, typed_value_wrapper<T>, po::value_semantic>(name)
                     .def(constructor<>())
@@ -359,7 +360,7 @@ static void typed_value(lua_State* L, char const* name)
 
             ]
 
-          , namespace_("multi_value")
+          , namespace_(multi_value)
             [
                 class_<po::typed_value<vector<T> >, typed_value_wrapper<vector<T> >, po::value_semantic>(name)
                     .def(constructor<>())
@@ -444,14 +445,30 @@ HALMD_LUA_API int luaopen_libhalmd_utility_lua_program_options(lua_State* L)
                 .def("count", &po::variables_map::count)
         ]
     ];
-    typed_value<bool>(L, "boolean");
-    typed_value<string>(L, "string");
-    typed_value<int32_t>(L, "int32");
-    typed_value<int64_t>(L, "int64");
-    typed_value<uint32_t>(L, "uint32");
-    typed_value<uint64_t>(L, "uint64");
-    typed_value<float>(L, "float32");
-    typed_value<double>(L, "float64");
+
+    typed_value<bool                    >(L, "boolean", "value"       , "multi_value"       );
+    typed_value<string                  >(L, "string" , "value"       , "multi_value"       );
+    typed_value<int32_t                 >(L, "int32"  , "value"       , "multi_value"       );
+    typed_value<int64_t                 >(L, "int64"  , "value"       , "multi_value"       );
+    typed_value<uint32_t                >(L, "uint32" , "value"       , "multi_value"       );
+    typed_value<uint64_t                >(L, "uint64" , "value"       , "multi_value"       );
+    typed_value<float                   >(L, "float32", "value"       , "multi_value"       );
+    typed_value<double                  >(L, "float64", "value"       , "multi_value"       );
+
+    typed_value<ublas::vector<int32_t>  >(L, "int32"  , "value_vector", "multi_value_vector");
+    typed_value<ublas::vector<int64_t>  >(L, "int64"  , "value_vector", "multi_value_vector");
+    typed_value<ublas::vector<uint32_t> >(L, "uint32" , "value_vector", "multi_value_vector");
+    typed_value<ublas::vector<uint64_t> >(L, "uint64" , "value_vector", "multi_value_vector");
+    typed_value<ublas::vector<float>    >(L, "float32", "value_vector", "multi_value_vector");
+    typed_value<ublas::vector<double>   >(L, "float64", "value_vector", "multi_value_vector");
+
+    typed_value<ublas::matrix<int32_t>  >(L, "int32"  , "value_matrix", "multi_value_matrix");
+    typed_value<ublas::matrix<int64_t>  >(L, "int64"  , "value_matrix", "multi_value_matrix");
+    typed_value<ublas::matrix<uint32_t> >(L, "uint32" , "value_matrix", "multi_value_matrix");
+    typed_value<ublas::matrix<uint64_t> >(L, "uint64" , "value_matrix", "multi_value_matrix");
+    typed_value<ublas::matrix<float>    >(L, "float32", "value_matrix", "multi_value_matrix");
+    typed_value<ublas::matrix<double>   >(L, "float64", "value_matrix", "multi_value_matrix");
+
     return 0;
 }
 
