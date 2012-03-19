@@ -39,8 +39,8 @@ local po = setmetatable({}, {__index = assert(libhalmd.program_options)})
 po.value.number         = assert(po.value.float64)
 po.value.integer        = assert(po.value.int64)
 po.value.accumulate     = assert(po.accum_value)
-po.multivalue.number    = assert(po.multivalue.float64)
-po.multivalue.integer   = assert(po.multivalue.int64)
+po.multi_value.number   = assert(po.multi_value.float64)
+po.multi_value.integer  = assert(po.multi_value.int64)
 
 ---
 -- Create new command-line parser.
@@ -112,7 +112,7 @@ function argument_parser:add_argument(name, args)
     local help = assert(args.help)
     local value
     if args.multitoken or args.composing then
-        value = assert(po.multivalue[args.type])()
+        value = assert(po.multi_value[args.type])()
     else
         value = assert(po.value[args.type])()
     end
@@ -161,7 +161,7 @@ end
 --
 function argument_parser:add_argument_group(name)
     local name = assert(name)
-    local value = po.multivalue.string()
+    local value = po.multi_value.string()
     local option = po.option_description(name, value)
     local long_name = assert(option.long_name)
     local key = long_name:gsub("%-", "_")

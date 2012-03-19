@@ -359,7 +359,7 @@ static void typed_value(lua_State* L, char const* name)
 
             ]
 
-          , namespace_("multivalue")
+          , namespace_("multi_value")
             [
                 class_<po::typed_value<vector<T> >, typed_value_wrapper<vector<T> >, po::value_semantic>(name)
                     .def(constructor<>())
