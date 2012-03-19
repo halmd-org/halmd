@@ -18,7 +18,7 @@
 --
 
 ---
--- Program options
+-- Program Options
 -- ===============
 --
 -- This module allows the use of command-line options in HALMD scripts.
