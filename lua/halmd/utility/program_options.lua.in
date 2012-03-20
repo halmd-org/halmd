@@ -87,6 +87,23 @@ local function argument_value(type, dtype, multitoken)
     return value()
 end
 
+--
+-- Print error message to stderr, and exit with status 1.
+--
+-- :param string msg: error message
+--
+local function exit_with_error(msg)
+    local arg = assert(_G.arg)
+    local i = 0
+    while arg[i - 1] do
+        i = i - 1
+    end
+    local cmdline = table.concat(arg, " ", i, 0)
+    io.stderr:write(("halmd: %s\n"):format(msg))
+    io.stderr:write(("Try `%s --help' for more information.\n"):format(cmdline))
+    os.exit(1)
+end
+
 ---
 -- Create new command-line parser.
 --
