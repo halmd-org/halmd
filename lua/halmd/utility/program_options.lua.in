@@ -111,7 +111,7 @@ end
 -- :param table args: keyword arguments
 -- :param string args.type: value type of option
 -- :param string args.dtype: element type of ``vector`` or ``matrix`` (optional)
--- :param string args.help: description of option for --help
+-- :param string args.help: description of option for --help (optional)
 -- :param boolean args.composing: allow multiple occurences with single value (default: ``false``)
 -- :param boolean args.multitoken: allow multiple occurences with multiple values (default: ``false``)
 -- :param boolean args.required: require at minimum one occurence (default: ``false``)
@@ -158,9 +158,13 @@ end
 --
 function argument_parser:add_argument(name, args)
     local name = assert(name)
-    local help = assert(args.help)
     local value = argument_value(args.type, args.dtype, args.multitoken or args.composing)
-    local option = po.option_description(name, value, help)
+    local option
+    if args.help then
+        option = po.option_description(name, value, args.help)
+    else
+        option = po.option_description(name, value)
+    end
     local long_name = assert(option.long_name)
     local key = long_name:gsub("%-", "_")
     self._options[key] = option
