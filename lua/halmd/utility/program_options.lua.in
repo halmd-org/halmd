@@ -126,8 +126,6 @@ end
 -- ==========   =====================================
 -- boolean      Boolean
 -- string       String
--- number       Double-precision floating-point
--- integer      Signed 64-bit integer
 -- accumulate   Increment integer
 -- vector       1-dimensional array of type ``dtype``
 -- matrix       2-dimensional array of type ``dtype``
@@ -138,6 +136,8 @@ end
 -- =======  ===============================
 -- Type     Description
 -- =======  ===============================
+-- number   Double-precision floating-point
+-- integer  Signed 64-bit integer
 -- int32    Signed 32-bit integer
 -- int64    Signed 64-bit integer
 -- uint32   Unsigned 32-bit integer
