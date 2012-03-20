@@ -31,7 +31,6 @@
 #include <halmd/utility/lua/array_converter.hpp>
 #include <halmd/utility/lua/fixed_vector_converter.hpp>
 #include <halmd/utility/lua/long_long_converter.hpp>
-#include <halmd/utility/lua/map_converter.hpp>
 #include <halmd/utility/lua/optional_converter.hpp>
 #include <halmd/utility/lua/ublas.hpp>
 #include <halmd/utility/lua/vector_converter.hpp>

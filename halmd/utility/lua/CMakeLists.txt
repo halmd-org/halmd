@@ -1,12 +1,10 @@
 halmd_add_library(halmd_utility_lua
-  any_converter.cpp
   function.cpp
   hdf5.cpp
   program_options.cpp
   signal.cpp
 )
 halmd_add_modules(
-  libhalmd_utility_lua_any_converter
   libhalmd_utility_lua_function
   libhalmd_utility_lua_hdf5
   libhalmd_utility_lua_program_options
