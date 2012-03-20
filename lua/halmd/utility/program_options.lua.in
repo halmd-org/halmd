@@ -121,30 +121,30 @@ end
 --
 -- The following value types are supported:
 --
--- ====================   =======================================
--- Type                   Description
--- ====================   =======================================
--- boolean                Boolean
--- string                 String
--- number                 Double-precision floating-point
--- integer                Signed 64-bit integer
--- accumulate             Increment integer
--- vector                 1-dimensional array of type ``dtype``
--- matrix                 2-dimensional array of type ``dtype``
--- ====================   =======================================
+-- ==========   =====================================
+-- Type         Description
+-- ==========   =====================================
+-- boolean      Boolean
+-- string       String
+-- number       Double-precision floating-point
+-- integer      Signed 64-bit integer
+-- accumulate   Increment integer
+-- vector       1-dimensional array of type ``dtype``
+-- matrix       2-dimensional array of type ``dtype``
+-- ==========   =====================================
 --
 -- These integral and floating-point value types are supported:
 --
--- ====================   =======================================
--- Type                   Description
--- ====================   =======================================
--- int32                  Signed 32-bit integer
--- int64                  Signed 64-bit integer
--- uint32                 Unsigned 32-bit integer
--- uint64                 Unsigned 64-bit integer
--- float32                Single-precision floating-point
--- float64                Double-precision floating-point
--- ====================   =======================================
+-- =======  ===============================
+-- Type     Description
+-- =======  ===============================
+-- int32    Signed 32-bit integer
+-- int64    Signed 64-bit integer
+-- uint32   Unsigned 32-bit integer
+-- uint64   Unsigned 64-bit integer
+-- float32  Single-precision floating-point
+-- float64  Double-precision floating-point
+-- =======  ===============================
 --
 -- The optional notifier function has the following arguments:
 --
