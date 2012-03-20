@@ -60,7 +60,7 @@ int main(int argc, char **argv)
         }
         catch (po::error const& e) {
             cerr << PROGRAM_NAME ": " << e.what() << endl
-                 << "Try `" PROGRAM_NAME " --help' for more information." << endl;
+                 << "Try `" << argv[0] << " --help' for more information." << endl;
             return EXIT_FAILURE;
         }
 
