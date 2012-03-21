@@ -294,37 +294,19 @@ disallow_guessing(po::command_line_parser& parser)
 }
 
 static pair<string, string>
-call_extra_parser(luabind::object const& functor, string const& arg)
+split_argument(string const& arg)
 {
-    lua_State* L = functor.interpreter();
-    // push function
-    functor.push(L);
-    // push first argument (string)
-    lua_pushstring(L, arg.c_str());
-    // invoke lua_pcall with 1 argument, 2 return values, and error handler
-    if (luabind::detail::pcall(L, 1, 2)) {
-        // raise error with message on top of stack
-        throw runtime_error(lua_tostring(L, -1));
+    size_t pos = arg.find('=');
+    if (pos != string::npos) {
+        return make_pair(arg.substr(0, pos), arg.substr(pos + 1));
     }
-    // copy return values from stack
-    luabind::object first(luabind::from_stack(L, -2));
-    luabind::object second(luabind::from_stack(L, -1));
-    // pop return values from stack
-    lua_pop(L, 2);
-    pair<string, string> result;
-    if (first) {
-        result.first = luabind::object_cast<string>(first);
-    }
-    if (second) {
-        result.second = luabind::object_cast<string>(second);
-    }
-    return result;
+    return make_pair(arg, string());
 }
 
 static po::command_line_parser&
-extra_parser(po::command_line_parser& parser, luabind::object const& functor)
+group_parser(po::command_line_parser& parser)
 {
-    return parser.extra_parser(bind(&call_extra_parser, functor, _1));
+    return parser.extra_parser(&split_argument);
 }
 
 static void
@@ -433,7 +415,7 @@ HALMD_LUA_API int luaopen_libhalmd_utility_lua_program_options(lua_State* L)
                 .def("positional", &po::command_line_parser::positional, return_reference_to(_1))
                 .def("allow_unregistered", &po::command_line_parser::allow_unregistered, return_reference_to(_1))
                 .def("disallow_guessing", &disallow_guessing, return_reference_to(_1))
-                .def("extra_parser", &extra_parser, return_reference_to(_1))
+                .def("group_parser", &group_parser, return_reference_to(_1))
                 .def("run", &po::command_line_parser::run)
 
           , class_<po::parsed_options>("parsed_options")

@@ -277,17 +277,6 @@ function argument_parser:set_defaults(defaults)
     end
 end
 
---
--- Extra parser for argument groups.
---
-local function argument_group_parser(arg)
-    local name, value = arg:match("^([^=]*)=(.*)$")
-    if name then
-        return name, value
-    end
-    return arg
-end
-
 ---
 -- Parse arguments.
 --
@@ -309,7 +298,7 @@ function argument_parser:parse_args(args)
     parser:options(desc)
     parser:disallow_guessing()
     if self._is_group then
-        parser:extra_parser(argument_group_parser)
+        parser:group_parser()
     else
         parser:positional(po.positional_options_description())
     end
