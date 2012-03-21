@@ -16,6 +16,8 @@ git_repository("${CMAKE_SOURCE_DIR}" HALMD)
 
 set(PROGRAM_NAME "halmd")
 set(PROGRAM_DESC "HAL’s MD package")
+set(PROGRAM_AUTHORS "Peter Colberg and Felix Höfling")
+set(PROGRAM_COPYRIGHT "2007-2012, ${PROGRAM_AUTHORS}")
 if(HALMD_GIT_COMMIT_TAG)
   string(REGEX MATCH "v[0-9].*" PROGRAM_VERSION "${HALMD_GIT_COMMIT_TAG}")
   if(NOT PROGRAM_VERSION)
