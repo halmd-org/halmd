@@ -231,6 +231,8 @@ end
 -- Add argument group.
 --
 -- :param name: name of argument group
+-- :param table args: keyword arguments (optional)
+-- :param string args.help: description of argument group for --help (optional)
 -- :returns: argument group
 --
 -- Example::
@@ -239,10 +241,15 @@ end
 --    group:add_argument("epsilon", {type = "number", help = "potential well depths"})
 --    group:add_argument("sigma", {type = "number", help = "collision diameter"})
 --
-function argument_parser:add_argument_group(name)
+function argument_parser:add_argument_group(name, args)
     local name = assert(name)
     local value = po.multi_value.string()
-    local option = po.option_description(name, value)
+    local option
+    if args and args.help then
+        option = po.option_description(name, value, args.help)
+    else
+        option = po.option_description(name, value)
+    end
     local long_name = assert(option.long_name)
     local key = long_name:gsub("%-", "_")
     self._options[key] = option
