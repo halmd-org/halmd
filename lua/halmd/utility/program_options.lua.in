@@ -115,8 +115,20 @@ end
 --
 function M.argument_parser()
     local self = {
-        _desc = po.options_description()
-      , _options = {}
+        _desc = po.options_description(),
+        _options = {},
+    }
+    return setmetatable(self, {__index = argument_parser})
+end
+
+---
+-- Create new argument group parser.
+--
+local function argument_group_parser()
+    local self = {
+        _desc = po.options_description(),
+        _options = {},
+        _is_group = true,
     }
     return setmetatable(self, {__index = argument_parser})
 end
@@ -236,9 +248,7 @@ function argument_parser:add_argument_group(name)
     self._options[key] = option
     self._desc:add(option)
 
-    local desc = po.options_description()
-    local group = M.argument_parser()
-    group._is_group = true
+    local group = argument_group_parser()
 
     value:multitoken()
     value:notifier(function(value)
