@@ -397,10 +397,10 @@ end
 ---
 -- Parse arguments.
 --
--- :param table args: string array with command-line arguments, or ``nil``
+-- :param table args: sequence of arguments (optional)
 -- :returns: parsed arguments
 --
--- If ``args`` is ``nil``, the ``halmd`` command-line arguments are parsed.
+-- If ``args`` is not specified, the command-line arguments are parsed.
 --
 -- Example::
 --
