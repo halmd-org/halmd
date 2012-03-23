@@ -206,6 +206,7 @@ function M.argument_parser()
         __index = argument_parser,
         __tostring = format_help,
     }
+    self._desc:add(po.option_description("help,h", po.untyped_value(), "display this help and exit"))
     return setmetatable(self, mt)
 end
 
@@ -404,10 +405,7 @@ end
 function argument_parser:parse_args(args)
     local args = args or assert(_G.arg)
     local parser = po.command_line_parser(args)
-    local desc = po.options_description()
-    desc:add(self._desc)
-    desc:add(po.option_description("help,h", po.untyped_value()))
-    parser:options(desc)
+    parser:options(self._desc)
     parser:disallow_guessing()
     if self._is_group then
         parser:group_parser()
