@@ -44,7 +44,7 @@ int main(int argc, char **argv)
     try {
         po::options_description desc;
         desc.add_options()
-            ("help,h", "display this help and exit")
+            ("help", "display this help and exit")
             ("version", "output version information and exit")
             ;
 

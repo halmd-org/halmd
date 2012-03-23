@@ -206,7 +206,7 @@ function M.argument_parser()
         __index = argument_parser,
         __tostring = format_help,
     }
-    self._desc:add(po.option_description("help,h", po.untyped_value(), "display this help and exit"))
+    self._desc:add(po.option_description("help", po.untyped_value(), "display this help and exit"))
     return setmetatable(self, mt)
 end
 
