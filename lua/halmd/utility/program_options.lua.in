@@ -289,7 +289,9 @@ end
 --    parser:add_argument("disable-gpu", {type = "boolean", help = "disable GPU acceleration"})
 --
 function argument_parser:add_argument(name, args)
-    local name = assert(name)
+    if not name then
+        error("undefined argument name", 2)
+    end
     local value = argument_value(args.type, args.dtype, args.multitoken or args.composing)
     local option
     if args.help then
@@ -345,7 +347,9 @@ end
 --    group:add_argument("sigma", {type = "number", help = "collision diameter"})
 --
 function argument_parser:add_argument_group(name, args)
-    local name = assert(name)
+    if not name then
+        error("undefined argument group name", 2)
+    end
     local value = po.multi_value.string()
     local option
     if args and args.help then
