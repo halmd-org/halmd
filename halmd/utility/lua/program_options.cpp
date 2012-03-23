@@ -25,6 +25,7 @@
 #include <boost/type_traits/is_arithmetic.hpp>
 #include <boost/numeric/ublas/matrix.hpp>
 #include <boost/numeric/ublas/matrix_proxy.hpp>
+#include <boost/numeric/ublas/symmetric.hpp>
 #include <boost/numeric/ublas/vector.hpp>
 #include <boost/program_options.hpp>
 #include <boost/program_options/cmdline.hpp>
@@ -125,12 +126,34 @@ void validate(any& v, vector<string> const& values, ublas::matrix<T>*, int)
         row.push_back(any_cast<ublas::vector<T> >(v));
     }
     if (!row.empty()) {
-        value.resize(row.size(), row.front().size());
-        for (size_t i = 0; i < row.size(); ++i) {
-            if (!(row[i].size() == value.size2())) {
-                throw_exception(po::invalid_option_value(s));
+        if (row.front().size() == 1) {
+            ublas::symmetric_matrix<T, ublas::lower> m(row.size(), row.size());
+            for (size_t i = 0; i < row.size(); ++i) {
+                if (!(row[i].size() == i + 1)) {
+                    throw po::invalid_option_value(s);
+                }
+                copy(row[i].begin(), row[i].end(), ublas::row(m, i).begin());
             }
-            ublas::matrix_row<ublas::matrix<T> >(value, i) = row[i];
+            value = m;
+        }
+        else if (row.back().size() == 1) {
+            ublas::symmetric_matrix<T, ublas::upper> m(row.size(), row.size());
+            for (size_t i = 0; i < row.size(); ++i) {
+                if (!(row[i].size() == (m.size2() - i))) {
+                    throw po::invalid_option_value(s);
+                }
+                copy(row[i].begin(), row[i].end(), ublas::row(m, i).begin());
+            }
+            value = m;
+        }
+        else {
+            value.resize(row.size(), row.front().size());
+            for (size_t i = 0; i < row.size(); ++i) {
+                if (!(row[i].size() == value.size2())) {
+                    throw po::invalid_option_value(s);
+                }
+                ublas::row(value, i) = row[i];
+            }
         }
     }
     v = value;
