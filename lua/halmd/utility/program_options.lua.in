@@ -88,20 +88,96 @@ local function argument_value(type, dtype, multitoken)
 end
 
 --
--- Print error message to stderr, and exit with status 1.
+-- Returns concatenated command-line arguments up to script filename.
 --
--- :param string msg: error message
---
-local function exit_with_error(msg)
+local function cmdline()
     local arg = assert(_G.arg)
     local i = 0
     while arg[i - 1] do
         i = i - 1
     end
-    local cmdline = table.concat(arg, " ", i, 0)
+    return table.concat(arg, " ", i, 0)
+end
+
+--
+-- Print error message to stderr, and exit with status 1.
+--
+-- :param string msg: error message
+--
+local function exit_with_error(msg)
     io.stderr:write(("halmd: %s\n"):format(msg))
-    io.stderr:write(("Try `%s --help' for more information.\n"):format(cmdline))
+    io.stderr:write(("Try `%s --help' for more information.\n"):format(cmdline()))
     os.exit(1)
+end
+
+--
+-- Returns formatted argument help
+--
+local function format_argument(option)
+    local format_name = assert(option.format_name)
+    local format_parameter = assert(option.format_parameter)
+    local name
+    if #format_parameter > 0 then
+        name = ("%s %s"):format(format_name, format_parameter)
+    else
+        name = format_name
+    end
+    return name, option.description
+end
+
+--
+-- Returns formatted group argument help
+--
+local function format_group_argument(option)
+    local long_name = assert(option.long_name)
+    local format_parameter = assert(option.format_parameter)
+    local name
+    if #format_parameter > 0 then
+        name = ("    %s=%s"):format(long_name, format_parameter)
+    else
+        name = ("    %s"):format(long_name)
+    end
+    return name, option.description
+end
+
+--
+-- Returns formatted help message
+--
+local function format_help(self)
+    local left = {}
+    local right = {}
+    local padding = 0
+    local options = assert(self._desc.options)
+    local groups = assert(self._groups)
+    for i = 1, #options do
+        local option = options[i]
+        local name, desc = format_argument(option)
+        if #name > padding then
+            padding = #name
+        end
+        table.insert(left, name)
+        table.insert(right, desc)
+        local long_name = assert(option.long_name)
+        local group = groups[long_name]
+        if group then
+            local options = assert(group._desc.options)
+            for i = 1, #options do
+                local name, desc = format_group_argument(options[i])
+                if #name > padding then
+                    padding = #name
+                end
+                table.insert(left, name)
+                table.insert(right, desc)
+            end
+        end
+    end
+    local msg = {}
+    table.insert(msg, ("Usage: %s [args]\n"):format(cmdline()))
+    local fmt = ("  %%-%ds  %%s"):format(padding)
+    for i = 1, #left do
+        table.insert(msg, fmt:format(left[i], right[i]))
+    end
+    return table.concat(msg, "\n")
 end
 
 ---
@@ -117,6 +193,7 @@ function M.argument_parser()
     local self = {
         _desc = po.options_description(),
         _options = {},
+        _groups = {},
         _pcall = function(f, ...)
             local status, result = pcall(f, ...)
             if not status then
@@ -125,7 +202,11 @@ function M.argument_parser()
             return result
         end,
     }
-    return setmetatable(self, {__index = argument_parser})
+    local mt = {
+        __index = argument_parser,
+        __tostring = format_help,
+    }
+    return setmetatable(self, mt)
 end
 
 ---
@@ -144,7 +225,10 @@ local function argument_group_parser(name)
             return result
         end,
     }
-    return setmetatable(self, {__index = argument_parser})
+    local mt = {
+        __index = argument_parser,
+    }
+    return setmetatable(self, mt)
 end
 
 ---
@@ -270,6 +354,7 @@ function argument_parser:add_argument_group(name, args)
     self._desc:add(option)
 
     local group = argument_group_parser(name)
+    self._groups[long_name] = group
 
     value:multitoken()
     value:notifier(function(value)
@@ -333,7 +418,7 @@ function argument_parser:parse_args(args)
     local vm = po.variables_map()
     self._pcall(vm.store, vm, parsed)
     if vm:count("help") > 0 then
-        print(self._desc)
+        print(self)
         os.exit(0)
     end
     local result = {}
