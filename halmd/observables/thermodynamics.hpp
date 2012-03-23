@@ -53,6 +53,7 @@ public:
     thermodynamics(
         boost::shared_ptr<box_type const> box
     );
+    virtual ~thermodynamics() {}
 
     // basic quantities with backend-specific evaluation
 
