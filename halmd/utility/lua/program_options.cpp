@@ -71,7 +71,7 @@ validate(any& v, vector<string> const& values, T*, int)
         v = any(value);
     }
     catch (exception const&) {
-        throw_exception(po::invalid_option_value(s));
+        throw po::invalid_option_value(s);
     }
 }
 
