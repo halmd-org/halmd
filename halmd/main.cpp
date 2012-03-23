@@ -65,8 +65,8 @@ int main(int argc, char **argv)
         }
 
         if (vm.count("help")) {
-            cout << "Usage: " PROGRAM_NAME " [options] [--] script [args]" << endl
-                 << "   or: " PROGRAM_NAME " [options] [- [args]]" << endl
+            cout << "Usage: " << argv[0] << " [options] [--] script [args]" << endl
+                 << "   or: " << argv[0] << " [options] [- [args]]" << endl
                  << endl
                  << desc << endl;
             return EXIT_SUCCESS;
