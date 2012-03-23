@@ -117,6 +117,13 @@ function M.argument_parser()
     local self = {
         _desc = po.options_description(),
         _options = {},
+        _pcall = function(f, ...)
+            local status, result = pcall(f, ...)
+            if not status then
+                exit_with_error(result)
+            end
+            return result
+        end,
     }
     return setmetatable(self, {__index = argument_parser})
 end
@@ -124,11 +131,18 @@ end
 ---
 -- Create new argument group parser.
 --
-local function argument_group_parser()
+local function argument_group_parser(name)
     local self = {
         _desc = po.options_description(),
         _options = {},
         _is_group = true,
+        _pcall = function(f, ...)
+            local status, result = pcall(f, ...)
+            if not status then
+                exit_with_error(("in group '%s': %s"):format(name, result))
+            end
+            return result
+        end,
     }
     return setmetatable(self, {__index = argument_parser})
 end
@@ -204,7 +218,7 @@ function argument_parser:add_argument(name, args)
         if self._args[key] == nil then
             self._args[key] = value
         elseif notifier then
-            notifier(self._args, key, value)
+            self._pcall(notifier, self._args, key, value)
         end
     end)
 
@@ -255,16 +269,12 @@ function argument_parser:add_argument_group(name, args)
     self._options[key] = option
     self._desc:add(option)
 
-    local group = argument_group_parser()
+    local group = argument_group_parser(name)
 
     value:multitoken()
     value:notifier(function(value)
         if self._args[key] == nil then
-            local status, result = pcall(group.parse_args, group, value)
-            if not status then
-                error(("in group '%s': %s"):format(long_name, result))
-            end
-            self._args[key] = result
+            self._args[key] = group:parse_args(value)
         end
     end)
 
@@ -319,17 +329,19 @@ function argument_parser:parse_args(args)
     else
         parser:positional(po.positional_options_description())
     end
-    local parsed = parser:run()
+    local parsed = self._pcall(parser.run, parser)
     local vm = po.variables_map()
-    vm:store(parsed)
+    self._pcall(vm.store, vm, parsed)
     if vm:count("help") > 0 then
         print(self._desc)
         os.exit(0)
     end
     local result = {}
     self._args = result
-    vm:notify() -- first notify stores values in self._args
-    vm:notify() -- second notify invokes (optional) notifier functions
+    -- first notify stores values in self._args
+    self._pcall(vm.notify, vm)
+    -- second notify invokes (optional) notifier functions
+    self._pcall(vm.notify, vm)
     self._args = nil
     return result
 end
