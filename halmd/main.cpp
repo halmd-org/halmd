@@ -59,7 +59,7 @@ int main(int argc, char **argv)
             po::notify(vm);
         }
         catch (po::error const& e) {
-            cerr << PROGRAM_NAME ": " << e.what() << endl
+            cerr << argv[0] << ": " << e.what() << endl
                  << "Try `" << argv[0] << " --help' for more information." << endl;
             return EXIT_FAILURE;
         }

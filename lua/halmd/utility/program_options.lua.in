@@ -88,15 +88,17 @@ local function argument_value(type, dtype, multitoken)
 end
 
 --
--- Returns concatenated command-line arguments up to script filename.
+-- Returns concatenated command-line arguments, excluding script arguments.
 --
-local function cmdline()
+-- Returns program name from first command-line argument.
+--
+local function format_cmdline()
     local arg = assert(_G.arg)
     local i = 0
     while arg[i - 1] do
         i = i - 1
     end
-    return table.concat(arg, " ", i, 0)
+    return table.concat(arg, " ", i, 0), arg[i]
 end
 
 --
@@ -105,8 +107,9 @@ end
 -- :param string msg: error message
 --
 local function exit_with_error(msg)
-    io.stderr:write(("halmd: %s\n"):format(msg))
-    io.stderr:write(("Try `%s --help' for more information.\n"):format(cmdline()))
+    local args, program = format_cmdline()
+    io.stderr:write(("%s: %s\n"):format(program, msg))
+    io.stderr:write(("Try `%s --help' for more information.\n"):format(args))
     os.exit(1)
 end
 
@@ -172,7 +175,8 @@ local function format_help(self)
         end
     end
     local msg = {}
-    table.insert(msg, ("Usage: %s [args]\n"):format(cmdline()))
+    local args = format_cmdline()
+    table.insert(msg, ("Usage: %s [args]\n"):format(args))
     local fmt = ("  %%-%ds  %%s"):format(padding)
     for i = 1, #left do
         table.insert(msg, fmt:format(left[i], right[i]))
