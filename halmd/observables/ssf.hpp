@@ -71,7 +71,7 @@ public:
       , boost::shared_ptr<logger_type> logger = boost::make_shared<logger_type>()
     );
     // compute ssf from sample of density Fourier modes and store with given simulation step
-    virtual void sample();
+    void sample();
 
     connection on_sample(slot_function_type const& slot)
     {
