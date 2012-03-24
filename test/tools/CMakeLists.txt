@@ -17,6 +17,8 @@ add_library(test_tools_ctest SHARED
   ctest.cpp
 )
 target_link_libraries(test_tools_ctest
+  halmd_io
+  ${HALMD_COMMON_LIBRARIES}
   ${Boost_UNIT_TEST_FRAMEWORK_LIBRARY}
 )
 # The jfs2 filesystem on AIX has the nerving property that
