@@ -48,11 +48,6 @@ logging::logging()
 #else
     core::get()->add_global_attribute("TimeStamp", attributes::local_clock());
 #endif
-#ifdef NDEBUG
-    logging::open_console(info);
-#else
-    logging::open_console(debug);
-#endif
 }
 
 void logging::open_console(severity_level level)

@@ -88,9 +88,6 @@ public:
 
     /**
      * get logger singleton instance
-     *
-     * To ensure that logging is enabled by default, which is especially
-     * convenient in the unit tests, we make logging a singleton instance.
      */
     static logging& get()
     {

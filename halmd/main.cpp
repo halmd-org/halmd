@@ -41,6 +41,7 @@ namespace po = boost::program_options;
  */
 int main(int argc, char **argv)
 {
+    logging::get().open_console(logging::warning);
     try {
         po::options_description desc;
         desc.add_options()
