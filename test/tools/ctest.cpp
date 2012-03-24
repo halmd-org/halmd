@@ -19,7 +19,11 @@
 
 #include <boost/test/test_tools.hpp>
 #include <boost/test/unit_test_suite.hpp>
+
+#include <halmd/io/logger.hpp>
 #include <halmd/version.h>
+
+using namespace halmd;
 
 /**
  * Print CTEST_FULL_OUTPUT to avoid ctest truncation of output.
@@ -36,8 +40,28 @@ struct ctest_full_output
 };
 
 /**
+ * Enable logging to console.
+ *
+ * If built without debugging (NDEBUG), log with severity info.
+ *
+ * Otherwise, log with severity debug.
+ */
+struct ctest_logging
+{
+    ctest_logging()
+    {
+#ifdef NDEBUG
+        logging::get().open_console(logging::info);
+#else
+        logging::get().open_console(logging::debug);
+#endif
+    }
+};
+
+/**
  * To avoid static initialization order fiasco, add the CTEST_FULL_OUTPUT
  * printer as a global fixture instead of an __attribute__((constructor))
  * function. The global fixture is instantiated before the test run.
  */
 BOOST_GLOBAL_FIXTURE( ctest_full_output );
+BOOST_GLOBAL_FIXTURE( ctest_logging );
