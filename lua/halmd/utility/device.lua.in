@@ -46,16 +46,16 @@ local assert = assert
 -- is not available on the system, GPU support is disabled, and the host is
 -- used.
 --
--- :func:`halmd.device` may be used to query whether the GPU is being used::
+-- :func:`halmd.utility.device` may be used to query whether the GPU is being used::
 --
---   local device = require("halmd.device")
+--   local device = require("halmd.utility.device")
 --   if device() then
 --       -- using GPU
 --   else
 --       -- using host
 --   end
 --
-local M = module.singleton("halmd.device")
+local M = module.singleton("halmd.utility.device")
 
 --- Query whether HALMD has GPU support.
 --
@@ -67,8 +67,8 @@ local M = module.singleton("halmd.device")
 --        end
 --    end
 --
--- Note that :func:`halmd.device.with_gpu` does not indicate whether the GPU is
--- actually used. Instead, you may check the return value of :func:`halmd.device`
+-- Note that :func:`halmd.utility.device.with_gpu` does not indicate whether the GPU is
+-- actually used. Instead, you may check the return value of :func:`halmd.utility.device`
 -- for a non-``nil`` value instead, as shown in the example above.
 --
 function M.with_gpu()
@@ -81,7 +81,7 @@ end
 -- :param args.devices: list of devices (optional)
 -- :returns: instance of device module if GPU is enabled, otherwise ``nil``
 --
--- :func:`halmd.device` returns a singleton instance, i.e. the first call will
+-- :func:`halmd.utility.device` returns a singleton instance, i.e. the first call will
 -- create an instance that is kept alive until the end of program execution,
 -- and subsequent calls will return this instance.
 --
