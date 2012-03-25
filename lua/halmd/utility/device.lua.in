@@ -47,8 +47,8 @@ local M = module.singleton("halmd.utility.device")
 
 --- Construct device instance.
 --
--- :param args.disable_gpu: do *not* use GPU (optional)
--- :param args.devices: list of devices (optional)
+-- :param boolean args.disable_gpu: do *not* use GPU (optional)
+-- :param table args.devices: sequence of CUDA devices (optional)
 -- :returns: instance of device module if GPU is enabled, otherwise ``nil``
 --
 -- :func:`halmd.utility.device` returns a singleton instance, i.e. the first call will
