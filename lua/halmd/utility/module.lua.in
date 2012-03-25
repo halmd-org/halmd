@@ -120,9 +120,12 @@ end
 --
 function M.loader(name)
     local index = function(self, key)
-        local value = require(name .. "." .. key)
-        rawset(self, key, value)
-        return value
+        local status, result = pcall(require, name .. "." .. key)
+        if not status then
+            error(result, 2)
+        end
+        rawset(self, key, result)
+        return result
     end
     return setmetatable({}, {__index = index})
 end
