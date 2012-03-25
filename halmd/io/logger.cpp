@@ -117,8 +117,6 @@ static inline ostream& operator<<(ostream& os, logging::severity_level level)
         os << "WARNING"; break;
       case logging::error:
         os << "ERROR"; break;
-      case logging::fatal:
-        os << "FATAL"; break;
       default:
         os << static_cast<int>(level); break;
     }

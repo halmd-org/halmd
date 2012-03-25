@@ -58,7 +58,6 @@ public:
      */
     enum severity_level
     {
-        fatal,
         error,
         warning,
         info,
@@ -157,8 +156,6 @@ extern boost::shared_ptr<logger> const logger_;
     }                                                   \
 }
 
-#define LOG_FATAL(format)           HALMD_LOG(logging::fatal, format)
-#define LOG_FATAL_ONCE(format)      HALMD_LOG_ONCE(logging::fatal, format)
 #define LOG_ERROR(format)           HALMD_LOG(logging::error, format)
 #define LOG_ERROR_ONCE(format)      HALMD_LOG_ONCE(logging::error, format)
 #define LOG_WARNING(format)         HALMD_LOG(logging::warning, format)

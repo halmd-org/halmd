@@ -125,7 +125,7 @@ BOOST_AUTO_TEST_CASE( log_levels )
     string const logfile("test_unit_io_logger.log");
 
     // sweep all verbosities
-    for (int log_level = -1; log_level <= 5; log_level++) {
+    for (int log_level = -1; log_level <= 4; log_level++) {
         logging::severity_level s = static_cast<logging::severity_level>(log_level);
         logging::get().open_console(s);
         logging::get().open_file(logfile, s);
@@ -134,7 +134,6 @@ BOOST_AUTO_TEST_CASE( log_levels )
         console cons;
 
         LOG("info");
-        LOG_FATAL("fatal");
         LOG_ERROR("error");
         LOG_WARNING("warning");
         LOG_DEBUG("debugging");
