@@ -17,6 +17,7 @@
 -- along with this program.  If not, see <http://www.gnu.org/licenses/>.
 --
 
+local log               = require("halmd.io.log")
 local module            = require("halmd.utility.module")
 local mdsim = {
     box                 = require("halmd.mdsim.box")
@@ -51,7 +52,7 @@ function M.__new(args)
     local box = mdsim.box() -- singleton
     local clock = mdsim.clock() -- singleton
     local sample = assert(samples.phase_space{memory = memory})
-    local logger = assert(args.logger)
+    local logger = log.logger({label = "phase_space"})
     local phase_space = phase_space_wrapper(sample, particle, box, clock, logger)
 
     -- store memory as property for profiler description

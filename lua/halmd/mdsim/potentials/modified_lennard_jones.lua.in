@@ -18,6 +18,7 @@
 --
 
 local device            = require("halmd.device")
+local log               = require("halmd.io.log")
 local module            = require("halmd.utility.module")
 local mdsim = {
     particle            = require("halmd.mdsim.particle")
@@ -48,7 +49,7 @@ function M.__new(args)
     local index_n = args.index_attraction or {6, 6, 6} -- default value
 
     local particle = mdsim.particle() -- singleton
-    local logger = assert(args.logger)
+    local logger = log.logger({label = "modified_lennard_jones"})
 
     local potential
     -- select optimised GPU version if 1 species and ε=1, σ=1

@@ -17,6 +17,7 @@
 -- along with this program.  If not, see <http://www.gnu.org/licenses/>.
 --
 
+local log               = require("halmd.io.log")
 local module            = require("halmd.utility.module")
 local mdsim = {
     clock               = require("halmd.mdsim.clock")
@@ -65,7 +66,7 @@ function M.__new(args)
     local clock = mdsim.clock() -- singleton
     local particle = mdsim.particle() -- singleton
     local dimension = assert(particle.dimension)
-    local logger = assert(args.logger)
+    local logger = log.logger({label = "ssf"})
 
     -- construct local wavevector module
     local wavevector = assert(observables.utility.wavevector)

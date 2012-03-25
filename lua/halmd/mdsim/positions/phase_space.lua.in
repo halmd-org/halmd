@@ -18,6 +18,7 @@
 --
 
 local device            = require("halmd.device")
+local log               = require("halmd.io.log")
 local module            = require("halmd.utility.module")
 local mdsim = {
     box                 = require("halmd.mdsim.box")
@@ -54,7 +55,7 @@ function M.__new(args)
     local dimension = assert(particle.dimension)
     local box = mdsim.box() -- singleton
     local sample = assert(args.sample)
-    local logger = assert(args.logger)
+    local logger = log.logger({label = "phase_space"})
 
     local phase_space
     if device() then

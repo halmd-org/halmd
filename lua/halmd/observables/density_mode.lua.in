@@ -18,6 +18,7 @@
 --
 
 local device            = require("halmd.device")
+local log               = require("halmd.io.log")
 local module            = require("halmd.utility.module")
 local mdsim = {
     clock               = require("halmd.mdsim.clock")
@@ -68,7 +69,7 @@ function M.__new(args)
         sample = assert(samples.phase_space{memory = "host"})
     end
     local dimension = assert(sample.dimension)
-    local logger = assert(args.logger)
+    local logger = log.logger({label = "density_mode"})
 
     local density_mode
     if device() then

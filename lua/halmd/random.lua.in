@@ -18,6 +18,7 @@
 --
 
 local device            = require("halmd.device")
+local log               = require("halmd.io.log")
 local module            = require("halmd.utility.module")
 
 -- grab C++ wrappers
@@ -46,7 +47,7 @@ function M.__new(args)
         defaults = assert(random_wrapper.host.gfsr4.defaults)
     end
     local seed = args.seed or defaults.seed()
-    local logger = assert(args.logger)
+    local logger = log.logger({label = "random"})
 
     local random
     if device() then

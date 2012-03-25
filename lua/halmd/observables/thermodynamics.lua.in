@@ -18,6 +18,7 @@
 --
 
 local device            = require("halmd.device")
+local log               = require("halmd.io.log")
 local module            = require("halmd.utility.module")
 local mdsim = {
     box                 = require("halmd.mdsim.box")
@@ -65,7 +66,7 @@ function M.__new(args)
     local box = mdsim.box() -- singleton
     local clock = mdsim.clock() -- singleton
     local force = assert(args.force)
-    local logger = assert(args.logger)
+    local logger = log.logger({label = "thermodynamics"})
 
     local observable
     if device() then

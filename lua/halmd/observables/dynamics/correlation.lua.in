@@ -17,6 +17,7 @@
 -- along with this program.  If not, see <http://www.gnu.org/licenses/>.
 --
 
+local log                       = require("halmd.io.log")
 local module                    = require("halmd.utility.module")
 local correlations = {
     mean_quartic_displacement   = require("halmd.observables.dynamics.mean_quartic_displacement")
@@ -62,7 +63,7 @@ function M.__new(args)
     -- construct or retrieve associated blocking scheme for sample data
     local block_sample = samples.blocking_scheme{sample = sample, sampler = sampler}
     -- construct correlation function
-    local logger = assert(args.logger) -- FIXME use tcf module logger
+    local logger = log.logger({label = name})
     local correlation = assert(correlation_wrapper)(tcf, block_sample, logger)
 
     -- register correlation function with blocking scheme

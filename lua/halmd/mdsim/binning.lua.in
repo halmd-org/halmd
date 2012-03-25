@@ -18,6 +18,7 @@
 --
 
 local device            = require("halmd.device")
+local log               = require("halmd.io.log")
 local module            = require("halmd.utility.module")
 local mdsim = {
     box                 = require("halmd.mdsim.box")
@@ -57,7 +58,7 @@ function M.__new(args)
     local particle = mdsim.particle() -- singleton
     local dimension = assert(particle.dimension)
     local box = mdsim.box() -- singleton
-    local logger = assert(args.logger)
+    local logger = log.logger({label = "binning"})
 
     -- command line options
     local skin = args.skin or 0.5 -- default value

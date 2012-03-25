@@ -18,6 +18,7 @@
 --
 
 local device            = require("halmd.device")
+local log               = require("halmd.io.log")
 local module            = require("halmd.utility.module")
 local mdsim = {
     particle            = require("halmd.mdsim.particle")
@@ -47,7 +48,7 @@ function M.__new(args)
     local index = args.index or {12, 12, 12} -- default value
 
     local particle = mdsim.particle() -- singleton
-    local logger = assert(args.logger)
+    local logger = log.logger({label = "power_law"})
 
     local power_law
     if device() then
