@@ -55,7 +55,7 @@ local M = module.singleton("halmd.utility.device")
 -- create an instance that is kept alive until the end of program execution,
 -- and subsequent calls will return this instance.
 --
-function M.new(args)
+function M.__new(args)
     local disable_gpu = args and args.disable_gpu
     local devices = args and args.devices
 
