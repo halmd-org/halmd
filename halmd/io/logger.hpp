@@ -29,7 +29,6 @@
 #include <boost/log/sources/severity_logger.hpp>
 #include <boost/noncopyable.hpp>
 #include <boost/shared_ptr.hpp>
-#include <lua.hpp>
 
 namespace halmd {
 
@@ -83,8 +82,6 @@ public:
     void open_file(std::string file_name, severity_level level);
     /** close log to file */
     void close_file();
-    /** Lua bindings */
-    static void luaopen(lua_State* L);
 
     /**
      * get logger singleton instance
