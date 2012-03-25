@@ -19,18 +19,6 @@
 
 local module = require("halmd.utility.module")
 
--- load GPU module if available
-pcall(require, "halmd.gpu")
-
--- grab C++ wrappers
-local device_wrapper
-if libhalmd.utility.gpu then
-    device_wrapper = libhalmd.utility.gpu.device
-end
-local po = libhalmd.po
--- grab standard library
-local assert = assert
-
 ---
 -- Device management
 -- =================
@@ -57,24 +45,6 @@ local assert = assert
 --
 local M = module.singleton("halmd.utility.device")
 
---- Query whether HALMD has GPU support.
---
--- This function is useful to enable/disable GPU-related functionality, e.g. options::
---
---    function options(desc)
---        if device.with_gpu() then
---            desc:add("disable-gpu", po.bool_switch(), "disable GPU acceleration")
---        end
---    end
---
--- Note that :func:`halmd.utility.device.with_gpu` does not indicate whether the GPU is
--- actually used. Instead, you may check the return value of :func:`halmd.utility.device`
--- for a non-``nil`` value instead, as shown in the example above.
---
-function M.with_gpu()
-    return device_wrapper ~= nil
-end
-
 --- Construct device instance.
 --
 -- :param args.disable_gpu: do *not* use GPU (optional)
@@ -86,23 +56,17 @@ end
 -- and subsequent calls will return this instance.
 --
 function M.new(args)
-    if device_wrapper and not args.disable_gpu then
-        local devices = args.devices -- optional
+    local disable_gpu = args and args.disable_gpu
+    local devices = args and args.devices
+
+    -- load dynamically loadable module with GPU support if available
+    if not disable_gpu and pcall(require, "halmd.gpu") then
+        local device = assert(libhalmd.utility.gpu.device)
         if devices then
-            return device_wrapper(devices)
+            return device(devices)
         else
-            return device_wrapper()
+            return device()
         end
-    end
-end
-
--- override default parameter namespace
-M.namespace = "gpu"
-
-function M.options(desc, globals)
-    if M.with_gpu() then
-        desc:add("devices", po.int_array(), "CUDA device(s)")
-        globals:add("disable-gpu", po.bool_switch(), "disable GPU acceleration")
     end
 end
 
