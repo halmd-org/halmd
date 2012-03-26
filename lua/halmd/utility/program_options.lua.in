@@ -368,27 +368,27 @@ function argument_parser:add_argument(name, args)
             error(("choices not supported for argument type '%s'"):format(type), 2)
         end
         if action then
-            value:notifier(function(value)
+            value:notifier(function(args, value)
                 if not choices[value] then
                     self._pcall(choices_notifier, long_name, value, choices)
                 end
-                self._pcall(action, self._args, key, value)
+                self._pcall(action, args, key, value)
             end)
         else
-            value:notifier(function(value)
+            value:notifier(function(args, value)
                 if not choices[value] then
                     self._pcall(choices_notifier, long_name, value, choices)
                 end
-                self._args[key] = value
+                args[key] = value
             end)
         end
     elseif action then
-        value:notifier(function(value)
-            self._pcall(action, self._args, key, value)
+        value:notifier(function(args, value)
+            self._pcall(action, args, key, value)
         end)
     else
-        value:notifier(function(value)
-            self._args[key] = value
+        value:notifier(function(args, value)
+            args[key] = value
         end)
     end
 
@@ -445,8 +445,8 @@ function argument_parser:add_argument_group(name, args)
     self._groups[long_name] = group
 
     value:multitoken()
-    value:notifier(function(value)
-        self._args[key] = group:parse_args(value)
+    value:notifier(function(args, value)
+        args[key] = group:parse_args(value)
     end)
 
     return group
@@ -504,11 +504,7 @@ function argument_parser:parse_args(args)
         print(self)
         os.exit(0)
     end
-    local result = {}
-    self._args = result
-    self._pcall(vm.notify, vm)
-    self._args = nil
-    return result
+    return self._pcall(vm.notify, vm, {})
 end
 
 return M

@@ -241,8 +241,9 @@ implicit_value_textual(po::typed_value<T>* semantic, T const& value, string cons
 template <typename T>
 static void notify(luabind::object const& functor, T const& value)
 {
+    luabind::object args(luabind::from_stack(functor.interpreter(), -1));
     try {
-        luabind::call_function<void>(functor, value);
+        luabind::call_function<void>(functor, args, value);
     }
     catch (luabind::error const& e) {
         throw runtime_error(lua_tostring(e.state(), -1));
@@ -338,10 +339,27 @@ variables_map_store(po::variables_map& vm, po::parsed_options const& options)
     po::store(options, vm);
 }
 
-static void
-variables_map_notify(po::variables_map& vm)
+struct scoped_push
 {
+    lua_State* const L;
+
+    scoped_push(luabind::object const& object) : L(object.interpreter())
+    {
+        object.push(L);
+    }
+
+    ~scoped_push()
+    {
+        lua_pop(L, 1);
+    }
+};
+
+static luabind::object
+variables_map_notify(lua_State* L, po::variables_map& vm, luabind::object const& args)
+{
+    scoped_push p(args);
     po::notify(vm);
+    return args;
 }
 
 template <typename T>
@@ -362,7 +380,6 @@ static void typed_value(lua_State* L, char const* name, char const* value, char 
                     .def("implicit_value", &implicit_value_textual<T>, return_reference_to(_1))
                     .def("notifier", &notifier<T>, return_reference_to(_1))
                     .def("required", &po::typed_value<T>::required, return_reference_to(_1))
-
             ]
 
           , namespace_(multi_value)
