@@ -36,7 +36,11 @@ local function liquid(args)
     -- create simulation box with particles
     mdsim.box()
     -- add integrator
-    mdsim.integrator()
+    if args.ensemble == "nve" then
+        mdsim.integrators.verlet()
+    elseif args.ensemble == "nvt" then
+        mdsim.integrators.verlet_nvt_andersen()
+    end
     -- add force
     local force = mdsim.force()
     -- set initial particle positions (optionally from reader)
@@ -91,6 +95,11 @@ local function parse_args()
 
     parser:add_argument("disable-gpu", {type = "boolean", help = "disable GPU acceleration"})
     parser:add_argument("devices", {type = "vector", dtype = "integer", help = "CUDA device(s)"})
+
+    parser:add_argument("ensemble", {type = "string", choices = {
+        nve = "Constant NVE",
+        nvt = "Constant NVT",
+    }, default = "nve", help = "statistical ensemble"})
 
     return parser:parse_args()
 end
