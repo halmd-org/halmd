@@ -17,6 +17,8 @@
 -- along with this program.  If not, see <http://www.gnu.org/licenses/>.
 --
 
+local utility = require("halmd.utility") -- utility.sorted
+
 ---
 -- Program Options
 -- ===============
@@ -184,6 +186,35 @@ local function format_help(self)
     return table.concat(msg, "\n")
 end
 
+--
+-- Raise an error with a formatted list of choices with value and description.
+-- Note that only argument values of type string are supported.
+--
+-- :param string name: long argument name
+-- :param string value: argument value
+-- :param table choices: allowed argument values with descriptions
+--
+local function choices_notifier(name, value, choices)
+    local left = {}
+    local right = {}
+    local padding = 0
+    for name, desc in utility.sorted(choices) do
+        table.insert(left, name)
+        table.insert(right, desc)
+        if #name > padding then
+            padding = #name
+        end
+    end
+    local result = {}
+    table.insert(result, ("in argument '%s': invalid value '%s'\n"):format(name, value))
+    table.insert(result, "The choices for the argument are:")
+    local fmt = ("  %%-%ds  %%s"):format(padding)
+    for i = 1, #left do
+        table.insert(result, fmt:format(left[i], right[i]))
+    end
+    error(("%s\n"):format(table.concat(result, "\n")), 0)
+end
+
 ---
 -- Create new command-line parser.
 --
@@ -247,6 +278,7 @@ end
 -- :param boolean args.composing: allow multiple occurences with single value (default: ``false``)
 -- :param boolean args.multitoken: allow multiple occurences with multiple values (default: ``false``)
 -- :param boolean args.required: require at minimum one occurence (default: ``false``)
+-- :param table args.choices: allowed values with descriptions (optional)
 -- :param function args.action: argument handler function (optional)
 -- :param args.default: default option value (optional)
 -- :param args.implicit: implicit option value (optional)
@@ -281,6 +313,16 @@ end
 -- Example::
 --
 --    parser:add_argument("disable-gpu", {type = "boolean", help = "disable GPU acceleration"})
+--
+-- An optional table ``choices`` may be used to constrain the value of an argument::
+--
+--    parser.add_argument("ensemble", {type = "string", choices = {
+--        nve = "Constant NVE",
+--        nvt = "Constant NVT",
+--        npt = "Constant NPT",
+--    }, help = "statistical ensemble"})
+--
+-- Note that only arguments of ``type`` ``string`` are supported.
 --
 -- The optional ``action`` function receives the following arguments:
 --
@@ -320,7 +362,27 @@ function argument_parser:add_argument(name, args)
     self._desc:add(option)
 
     local action = args.action
-    if action then
+    local choices = args.choices
+    if choices then
+        if type ~= "string" then
+            error(("choices not supported for argument type '%s'"):format(type), 2)
+        end
+        if action then
+            value:notifier(function(value)
+                if not choices[value] then
+                    self._pcall(choices_notifier, long_name, value, choices)
+                end
+                self._pcall(action, self._args, key, value)
+            end)
+        else
+            value:notifier(function(value)
+                if not choices[value] then
+                    self._pcall(choices_notifier, long_name, value, choices)
+                end
+                self._args[key] = value
+            end)
+        end
+    elseif action then
         value:notifier(function(value)
             self._pcall(action, self._args, key, value)
         end)
