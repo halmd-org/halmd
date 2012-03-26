@@ -120,6 +120,9 @@ end
 --
 function M.loader(name)
     local index = function(self, key)
+        if type(key) ~= "string" then
+            error(("%s: missing or invalid module name"):format(name), 2)
+        end
         local status, result = pcall(require, name .. "." .. key)
         if not status then
             error(result, 2)
