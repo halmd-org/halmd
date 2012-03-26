@@ -303,7 +303,11 @@ function argument_parser:add_argument(name, args)
     if not name then
         error("undefined argument name", 2)
     end
-    local value = argument_value(args.type, args.dtype, args.multitoken or args.composing)
+    local type = args.type
+    if not type then
+        error(("missing type for argument '%s'"):format(name), 2)
+    end
+    local value = argument_value(type, args.dtype, args.multitoken or args.composing)
     local option
     if args.help then
         option = po.option_description(name, value, args.help)
