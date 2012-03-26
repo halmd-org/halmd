@@ -252,7 +252,6 @@ local function argument_group_parser(name)
     local self = {
         _desc = po.options_description(),
         _options = {},
-        _is_group = true,
         _pcall = function(f, ...)
             local status, result = pcall(f, ...)
             if not status then
@@ -393,7 +392,7 @@ function argument_parser:add_argument(name, args)
     end
 
     if args.multitoken then
-        if self._is_group then
+        if not self._groups then
             error("multitoken arguments not allowed in argument group", 2)
         end
         value:multitoken()
@@ -492,10 +491,10 @@ function argument_parser:parse_args(args)
     local parser = po.command_line_parser(args)
     parser:options(self._desc)
     parser:disallow_guessing()
-    if self._is_group then
-        parser:group_parser()
-    else
+    if self._groups then
         parser:positional(po.positional_options_description())
+    else
+        parser:group_parser()
     end
     local parsed = self._pcall(parser.run, parser)
     local vm = po.variables_map()
