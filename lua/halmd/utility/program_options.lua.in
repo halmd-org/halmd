@@ -247,7 +247,7 @@ end
 -- :param boolean args.composing: allow multiple occurences with single value (default: ``false``)
 -- :param boolean args.multitoken: allow multiple occurences with multiple values (default: ``false``)
 -- :param boolean args.required: require at minimum one occurence (default: ``false``)
--- :param function args.notifier: notifier function (optional)
+-- :param function args.action: argument handler function (optional)
 -- :param args.default: default option value (optional)
 -- :param args.implicit: implicit option value (optional)
 --
@@ -278,15 +278,26 @@ end
 -- float64  Double-precision floating-point
 -- =======  ===============================
 --
--- The optional notifier function has the following arguments:
---
--- :param table args: parsed arguments
--- :param string name: long name of this option
--- :param key: parsed value of this option
---
 -- Example::
 --
 --    parser:add_argument("disable-gpu", {type = "boolean", help = "disable GPU acceleration"})
+--
+-- The optional ``action`` function receives the following arguments:
+--
+-- :param table args: parsed arguments
+-- :param string key: args table key of this argument
+-- :param value: parsed value of this argument
+--
+-- Note that if you specify ``action``, the argument value will *not* be stored
+-- in the table returned by :func:`parse_args`, i.e. the argument handler
+-- function has to store a value in ``args[key]`` itself.
+--
+-- Example::
+--
+--    parser:add_argument("filename", {type = "string", action = function(args, key, value)
+--       -- substitute current time
+--       args[key] = os.date(value)
+--    end, default = "halmd_%Y%m%d_%H%M%S.trj", help = "trajectory filename"})
 --
 function argument_parser:add_argument(name, args)
     if not name then
@@ -304,14 +315,16 @@ function argument_parser:add_argument(name, args)
     self._options[key] = option
     self._desc:add(option)
 
-    local notifier = args.notifier
-    value:notifier(function(value)
-        if self._args[key] == nil then
+    local action = args.action
+    if action then
+        value:notifier(function(value)
+            self._pcall(action, self._args, key, value)
+        end)
+    else
+        value:notifier(function(value)
             self._args[key] = value
-        elseif notifier then
-            self._pcall(notifier, self._args, key, value)
-        end
-    end)
+        end)
+    end
 
     if args.multitoken then
         if self._is_group then
@@ -367,9 +380,7 @@ function argument_parser:add_argument_group(name, args)
 
     value:multitoken()
     value:notifier(function(value)
-        if self._args[key] == nil then
-            self._args[key] = group:parse_args(value)
-        end
+        self._args[key] = group:parse_args(value)
     end)
 
     return group
@@ -429,9 +440,6 @@ function argument_parser:parse_args(args)
     end
     local result = {}
     self._args = result
-    -- first notify stores values in self._args
-    self._pcall(vm.notify, vm)
-    -- second notify invokes (optional) notifier functions
     self._pcall(vm.notify, vm)
     self._args = nil
     return result
