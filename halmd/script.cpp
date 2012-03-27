@@ -197,7 +197,7 @@ void script::dofile(string const& filename)
     if (luaL_loadfile(L, fn) || lua_pcall(L, 0, 0, 1)) {
         LOG_ERROR(lua_tostring(L, -1));
         lua_pop(L, 1); //< remove error message
-        throw runtime_error("failed to load Lua script");
+        throw runtime_error("failed to run script");
     }
 }
 
