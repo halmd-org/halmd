@@ -110,6 +110,8 @@ local args = parse_args()
 halmd.io.log.open_console({severity = args.verbose[1]})
 -- log to file
 halmd.io.log.open_file(("%s.log"):format(args.output), {severity = args.verbose[2]})
+-- log version
+halmd.utility.version.prologue()
 -- initialise or disable GPU
 halmd.utility.device({disable_gpu = args.disable_gpu, devices = args.devices})
 
