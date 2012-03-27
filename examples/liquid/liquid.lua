@@ -1,3 +1,4 @@
+#!/usr/bin/env halmd
 --
 -- Copyright © 2010-2012  Peter Colberg and Felix Höfling
 --
