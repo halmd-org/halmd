@@ -35,7 +35,7 @@ class script
 {
 public:
     script();
-    void dofile(std::string const& filename);
+    void dofile(std::string const& filename = std::string());
 
     static int traceback(lua_State* L);
 

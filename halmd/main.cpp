@@ -96,11 +96,13 @@ int main(int argc, char **argv)
             arg[offset] = string(argv[i]);
         }
 
-        string filename = "";
+        // read script from file if specified, or from stdin
         if (!pos.empty()) {
-            filename = *pos.begin();
+            script.dofile(pos.front());
         }
-        script.dofile(filename);
+        else {
+            script.dofile();
+        }
     }
     catch (exception const& e) {
         LOG_ERROR(e.what());
