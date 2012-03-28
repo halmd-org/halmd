@@ -75,7 +75,7 @@ int main(int argc, char **argv)
 
         if (vm.count("version")) {
             cout << PROJECT_NAME " (" PROGRAM_DESC ") " PROGRAM_VERSION << endl << endl
-                 << PROGRAM_COPYRIGHT << endl
+                 << "Copyright © " PROGRAM_COPYRIGHT << endl
                  << "This is free software. "
                     "You may redistribute copies of it under the terms of" << endl
                  << "the GNU General Public License "

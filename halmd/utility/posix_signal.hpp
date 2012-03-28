@@ -1,5 +1,5 @@
 /*
- * Copyright © 2008-2011  Peter Colberg
+ * Copyright © 2008-2012  Peter Colberg
  *
  * This file is part of HALMD.
  *
@@ -40,8 +40,6 @@ private:
 public:
     typedef handler_type::slot_function_type slot_function_type;
 
-    posix_signal();
-    ~posix_signal();
     connection on_signal(int signum, slot_function_type const& slot);
     void wait() const;
     bool poll() const;
@@ -51,11 +49,12 @@ public:
 private:
     typedef boost::unordered_map<int, handler_type> handler_map_type;
 
+    static sigset_t block_signals();
+    static sigset_t set_;
+
     void handle(int signum) const;
 
     handler_map_type handler_;
-    sigset_t set_;
-    sigset_t oldset_;
 };
 
 } // namespace halmd
