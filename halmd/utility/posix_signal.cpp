@@ -154,11 +154,10 @@ string posix_signal::name(int signum)
 void posix_signal::handle(int signum) const
 {
     handler_map_type::const_iterator it = handler_.find(signum);
-    if (it == handler_.end()) {
-        throw std::logic_error("blocked unregistered signal " + name(signum));
-    }
     LOG_WARNING("process received signal " << name(signum));
-    it->second(signum);
+    if (it != handler_.end()) {
+        it->second(signum);
+    }
 }
 
 template <int signum>
