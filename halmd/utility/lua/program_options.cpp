@@ -246,7 +246,9 @@ static void notify(luabind::object const& functor, T const& value)
         luabind::call_function<void>(functor, args, value);
     }
     catch (luabind::error const& e) {
-        throw runtime_error(lua_tostring(e.state(), -1));
+        string error(lua_tostring(e.state(), -1));
+        lua_pop(e.state(), 1);
+        throw runtime_error(error);
     }
 }
 
