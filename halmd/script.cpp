@@ -208,13 +208,14 @@ void script::dofile(string const& filename)
  */
 int script::traceback(lua_State* L)
 {
-    lua_pushliteral(L, "\n");
     lua_getglobal(L, "debug");
     lua_pushliteral(L, "traceback");
     lua_rawget(L, -2);
     lua_remove(L, -2);
-    lua_call(L, 0, 1);
-    lua_concat(L, 3);
+    lua_pushvalue(L, -2);
+    lua_remove(L, -3);
+    lua_pushnumber(L, 2);
+    lua_call(L, 2, 1);
     return 1;
 }
 
