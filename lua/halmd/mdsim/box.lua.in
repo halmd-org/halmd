@@ -1,5 +1,5 @@
 --
--- Copyright © 2010-2011  Peter Colberg
+-- Copyright © 2010-2012  Peter Colberg
 --
 -- This file is part of HALMD.
 --
@@ -18,6 +18,9 @@
 --
 
 local module            = require("halmd.utility.module")
+local observables = {
+    sampler             = require("halmd.observables.sampler"),
+}
 
 -- grab C++ wrappers
 local box_wrapper = {
@@ -53,6 +56,16 @@ local M = module.singleton("halmd.mdsim.box")
 --
 -- ``box`` is a singleton, i.e. the first call to :class:`halmd.mdsim.box`
 -- creates an instance of ``box``, and subsequent calls return this instance.
+--
+-- .. method:: writer(file)
+--
+--    Write box specification to file.
+--
+--    http://nongnu.org/h5md/draft.html#box-specification
+--
+--    Note that the box specification will not be written immediately,
+--    but upon the start of the simulation. The writer is connected
+--    to the on_start signal of sampler.
 --
 -- .. attribute:: dimension
 --
@@ -93,19 +106,32 @@ function M.__new(args)
     assert(nbox > 0, "box does not contain any particles")
 
     local box = assert(box_wrapper[dimension], "invalid box dimension")
+    local self
     if length then
         -- complete missing values by repeating the last entry
         for i = #length + 1, dimension do
             length[i] = length[#length]
         end
-        return box(nbox, length)
+        self = box(nbox, length)
     else
         -- fill up missing values with 1
         for i = #ratios + 1, dimension do
             ratios[i] = 1 -- `neutral' aspect ratio
         end
-        return box(nbox, density, ratios)
+        self = box(nbox, density, ratios)
     end
+
+    self.writer = function(self, file)
+        local writer = file:writer({location = {"observables", "box"}, mode = "truncate"})
+        local group = assert(writer.group)
+        group:write_attribute("type", h5.string(), "cuboid")
+        writer:on_write(self.edges, {"edges"})
+        writer:on_write(self.origin, {"offset"})
+        local sampler = observables.sampler() -- singleton
+        sampler:on_start{writer.write, tracker = writer}
+    end
+
+    return self
 end
 
 --
