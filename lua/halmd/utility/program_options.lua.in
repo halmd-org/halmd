@@ -444,7 +444,7 @@ function argument_parser:add_argument_group(name, args)
     self._groups[long_name] = group
 
     value:multitoken()
-    value:default_value({})
+    value:default_value({}, "")
     value:notifier(function(args, value)
         args[key] = group:parse_args(value)
     end)
