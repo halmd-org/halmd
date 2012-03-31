@@ -101,7 +101,10 @@ local M = module("halmd.io.writers.h5md")
 --    Filename of the file.
 --
 function M.__new(args)
-    local path = assert(args.path, "missing path")
+    local path = args.path
+    if not path then
+        error("missing argument 'path'", 3)
+    end
     local file = h5md.file(path)
 
     file.writer = function(self, args)
