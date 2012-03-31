@@ -1,0 +1,509 @@
+--
+-- Copyright © 2012  Peter Colberg
+--
+-- This file is part of HALMD.
+--
+-- HALMD is free software: you can redistribute it and/or modify
+-- it under the terms of the GNU General Public License as published by
+-- the Free Software Foundation, either version 3 of the License, or
+-- (at your option) any later version.
+--
+-- This program is distributed in the hope that it will be useful,
+-- but WITHOUT ANY WARRANTY; without even the implied warranty of
+-- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+-- GNU General Public License for more details.
+--
+-- You should have received a copy of the GNU General Public License
+-- along with this program.  If not, see <http://www.gnu.org/licenses/>.
+--
+
+local utility = require("halmd.utility") -- utility.sorted
+
+---
+-- Program Options
+-- ===============
+--
+-- This module allows the use of command-line options in HALMD scripts.
+--
+-- Example:
+--
+-- .. code-block:: none
+--
+--   halmd liquid.lua --lennard-jones epsilon=2 sigma=2 --disable-gpu
+--
+local M = {}
+
+local argument_parser = {}
+
+local po = setmetatable({}, {__index = assert(libhalmd.program_options)})
+
+--
+-- Add type aliases for built-in argument types.
+--
+po.value.accumulate             = assert(po.accum_value)
+po.value.integer                = assert(po.value.int64)
+po.value.number                 = assert(po.value.float64)
+po.value_vector.integer         = assert(po.value_vector.int64)
+po.value_vector.number          = assert(po.value_vector.float64)
+po.value_matrix.integer         = assert(po.value_matrix.int64)
+po.value_matrix.number          = assert(po.value_matrix.float64)
+po.multi_value.integer          = assert(po.multi_value.int64)
+po.multi_value.number           = assert(po.multi_value.float64)
+po.multi_value_vector.integer   = assert(po.multi_value_vector.int64)
+po.multi_value_vector.number    = assert(po.multi_value_vector.float64)
+po.multi_value_matrix.integer   = assert(po.multi_value_matrix.int64)
+po.multi_value_matrix.number    = assert(po.multi_value_matrix.float64)
+
+--
+-- Create value semantic of given type.
+--
+-- :param string type: value type
+-- :param string dtype: element type for matrix/vector (optional)
+-- :param boolean multitoken: multitoken or composing value (optional)
+--
+local function argument_value(type, dtype, multitoken)
+    local value
+    if type == "matrix" or type == "vector" then
+        if not dtype then
+            error(("missing %s element dtype"):format(type, dtype), 3)
+        end
+        if multitoken then
+            value = po["multi_value_" .. type]
+        else
+            value = po["value_" .. type]
+        end
+        value = value[dtype]
+        if not value then
+            error(("undefined %s element dtype '%s'"):format(type, dtype), 3)
+        end
+    else
+        if multitoken then
+            value = po.multi_value[type]
+        else
+            value = po.value[type]
+        end
+        if not value then
+            error(("undefined argument type '%s'"):format(type), 3)
+        end
+    end
+    return value()
+end
+
+--
+-- Returns concatenated command-line arguments, excluding script arguments.
+--
+-- Returns program name from first command-line argument.
+--
+local function format_cmdline()
+    local arg = assert(_G.arg)
+    local i = 0
+    while arg[i - 1] do
+        i = i - 1
+    end
+    return table.concat(arg, " ", i, 0), arg[i]
+end
+
+--
+-- Print error message to stderr, and exit with status 1.
+--
+-- :param string msg: error message
+--
+local function exit_with_error(msg)
+    local args, program = format_cmdline()
+    io.stderr:write(("%s: %s\n"):format(program, msg))
+    io.stderr:write(("Try `%s --help' for more information.\n"):format(args))
+    os.exit(1)
+end
+
+--
+-- Returns formatted argument help
+--
+local function format_argument(option)
+    local format_name = assert(option.format_name)
+    local format_parameter = assert(option.format_parameter)
+    local name
+    if #format_parameter > 0 then
+        name = ("%s %s"):format(format_name, format_parameter)
+    else
+        name = format_name
+    end
+    return name, option.description
+end
+
+--
+-- Returns formatted group argument help
+--
+local function format_group_argument(option)
+    local long_name = assert(option.long_name)
+    local format_parameter = assert(option.format_parameter)
+    local name
+    if #format_parameter > 0 then
+        name = ("    %s=%s"):format(long_name, format_parameter)
+    else
+        name = ("    %s"):format(long_name)
+    end
+    return name, option.description
+end
+
+--
+-- Returns formatted help message
+--
+local function format_help(self)
+    local left = {}
+    local right = {}
+    local padding = 0
+    local options = assert(self._desc.options)
+    local groups = assert(self._groups)
+    for i = 1, #options do
+        local option = options[i]
+        local name, desc = format_argument(option)
+        if #name > padding then
+            padding = #name
+        end
+        table.insert(left, name)
+        table.insert(right, desc)
+        local long_name = assert(option.long_name)
+        local group = groups[long_name]
+        if group then
+            local options = assert(group._desc.options)
+            for i = 1, #options do
+                local name, desc = format_group_argument(options[i])
+                if #name > padding then
+                    padding = #name
+                end
+                table.insert(left, name)
+                table.insert(right, desc)
+            end
+        end
+    end
+    local msg = {}
+    local args = format_cmdline()
+    table.insert(msg, ("Usage: %s [args]\n"):format(args))
+    local fmt = ("  %%-%ds  %%s"):format(padding)
+    for i = 1, #left do
+        table.insert(msg, fmt:format(left[i], right[i]))
+    end
+    return table.concat(msg, "\n")
+end
+
+--
+-- Raise an error with a formatted list of choices with value and description.
+-- Note that only argument values of type string are supported.
+--
+-- :param string name: long argument name
+-- :param string value: argument value
+-- :param table choices: allowed argument values with descriptions
+--
+local function choices_notifier(name, value, choices)
+    local left = {}
+    local right = {}
+    local padding = 0
+    for name, desc in utility.sorted(choices) do
+        table.insert(left, name)
+        table.insert(right, desc)
+        if #name > padding then
+            padding = #name
+        end
+    end
+    local result = {}
+    table.insert(result, ("in argument '%s': invalid value '%s'\n"):format(name, value))
+    table.insert(result, "The choices for the argument are:")
+    local fmt = ("  %%-%ds  %%s"):format(padding)
+    for i = 1, #left do
+        table.insert(result, fmt:format(left[i], right[i]))
+    end
+    error(("%s\n"):format(table.concat(result, "\n")), 0)
+end
+
+---
+-- Create new command-line parser.
+--
+-- Example::
+--
+--    local options = require("halmd.utility.program_options")
+--
+--    local parser = options.argument_parser()
+--
+function M.argument_parser()
+    local self = {
+        _desc = po.options_description(),
+        _options = {},
+        _groups = {},
+        _pcall = function(f, ...)
+            local status, result = pcall(f, ...)
+            if not status then
+                exit_with_error(result)
+            end
+            return result
+        end,
+    }
+    local mt = {
+        __index = argument_parser,
+        __tostring = format_help,
+    }
+    self._desc:add(po.option_description("help", po.untyped_value(), "display this help and exit"))
+    return setmetatable(self, mt)
+end
+
+---
+-- Create new argument group parser.
+--
+local function argument_group_parser(name)
+    local self = {
+        _desc = po.options_description(),
+        _options = {},
+        _pcall = function(f, ...)
+            local status, result = pcall(f, ...)
+            if not status then
+                exit_with_error(("in group '%s': %s"):format(name, result))
+            end
+            return result
+        end,
+    }
+    local mt = {
+        __index = argument_parser,
+    }
+    return setmetatable(self, mt)
+end
+
+---
+-- Add argument to parser.
+--
+-- :param string name: long name, and (optionally) short name separated by comma
+-- :param table args: keyword arguments
+-- :param string args.type: value type of option
+-- :param string args.dtype: element type of ``vector`` or ``matrix`` (optional)
+-- :param string args.help: description of option for --help (optional)
+-- :param boolean args.composing: allow multiple occurences with single value (default: ``false``)
+-- :param boolean args.multitoken: allow multiple occurences with multiple values (default: ``false``)
+-- :param boolean args.required: require at minimum one occurence (default: ``false``)
+-- :param table args.choices: allowed values with descriptions (optional)
+-- :param function args.action: argument handler function (optional)
+-- :param args.default: default option value (optional)
+-- :param args.implicit: implicit option value (optional)
+--
+-- The following value types are supported:
+--
+-- ==========   =====================================
+-- Type         Description
+-- ==========   =====================================
+-- boolean      Boolean
+-- string       String
+-- accumulate   Increment integer
+-- vector       1-dimensional array of type ``dtype``
+-- matrix       2-dimensional array of type ``dtype``
+-- ==========   =====================================
+--
+-- These integral and floating-point value types are supported:
+--
+-- =======  ===============================
+-- Type     Description
+-- =======  ===============================
+-- number   Double-precision floating-point
+-- integer  Signed 64-bit integer
+-- int32    Signed 32-bit integer
+-- int64    Signed 64-bit integer
+-- uint32   Unsigned 32-bit integer
+-- uint64   Unsigned 64-bit integer
+-- float32  Single-precision floating-point
+-- float64  Double-precision floating-point
+-- =======  ===============================
+--
+-- Example::
+--
+--    parser:add_argument("disable-gpu", {type = "boolean", help = "disable GPU acceleration"})
+--
+-- An optional table ``choices`` may be used to constrain the value of an argument::
+--
+--    parser.add_argument("ensemble", {type = "string", choices = {
+--        nve = "Constant NVE",
+--        nvt = "Constant NVT",
+--        npt = "Constant NPT",
+--    }, help = "statistical ensemble"})
+--
+-- Note that only arguments of ``type`` ``string`` are supported.
+--
+-- The optional ``action`` function receives the following arguments:
+--
+-- :param table args: parsed arguments
+-- :param string key: args table key of this argument
+-- :param value: parsed value of this argument
+--
+-- Note that if you specify ``action``, the argument value will *not* be stored
+-- in the table returned by :func:`parse_args`, i.e. the argument handler
+-- function has to store a value in ``args[key]`` itself.
+--
+-- Example::
+--
+--    parser:add_argument("filename", {type = "string", action = function(args, key, value)
+--       -- substitute current time
+--       args[key] = os.date(value)
+--    end, default = "halmd_%Y%m%d_%H%M%S.trj", help = "trajectory filename"})
+--
+function argument_parser:add_argument(name, args)
+    if not name then
+        error("undefined argument name", 2)
+    end
+    local type = args.type
+    if not type then
+        error(("missing type for argument '%s'"):format(name), 2)
+    end
+    local value = argument_value(type, args.dtype, args.multitoken or args.composing)
+    local option
+    if args.help then
+        option = po.option_description(name, value, args.help)
+    else
+        option = po.option_description(name, value)
+    end
+    local long_name = assert(option.long_name)
+    local key = long_name:gsub("%-", "_")
+    self._options[key] = option
+    self._desc:add(option)
+
+    local action = args.action
+    local choices = args.choices
+    if choices then
+        if type ~= "string" then
+            error(("choices not supported for argument type '%s'"):format(type), 2)
+        end
+        if action then
+            value:notifier(function(args, value)
+                if not choices[value] then
+                    self._pcall(choices_notifier, long_name, value, choices)
+                end
+                self._pcall(action, args, key, value)
+            end)
+        else
+            value:notifier(function(args, value)
+                if not choices[value] then
+                    self._pcall(choices_notifier, long_name, value, choices)
+                end
+                args[key] = value
+            end)
+        end
+    elseif action then
+        value:notifier(function(args, value)
+            self._pcall(action, args, key, value)
+        end)
+    else
+        value:notifier(function(args, value)
+            args[key] = value
+        end)
+    end
+
+    if args.multitoken then
+        if not self._groups then
+            error("multitoken arguments not allowed in argument group", 2)
+        end
+        value:multitoken()
+    elseif args.composing then
+        value:composing()
+    end
+    if args.required then
+        value:required()
+    end
+    if args.default then
+        value:default_value(args.default)
+    end
+    if args.implicit then
+        value:implicit_value(args.implicit)
+    end
+end
+
+---
+-- Add argument group.
+--
+-- :param name: name of argument group
+-- :param table args: keyword arguments (optional)
+-- :param string args.help: description of argument group for --help (optional)
+-- :returns: argument group
+--
+-- Example::
+--
+--    local group = parser:add_argument_group("lennard-jones")
+--    group:add_argument("epsilon", {type = "number", help = "potential well depths"})
+--    group:add_argument("sigma", {type = "number", help = "collision diameter"})
+--
+function argument_parser:add_argument_group(name, args)
+    if not name then
+        error("undefined argument group name", 2)
+    end
+    local value = po.multi_value.string()
+    local option
+    if args and args.help then
+        option = po.option_description(name, value, args.help)
+    else
+        option = po.option_description(name, value)
+    end
+    local long_name = assert(option.long_name)
+    local key = long_name:gsub("%-", "_")
+    self._options[key] = option
+    self._desc:add(option)
+
+    local group = argument_group_parser(name)
+    self._groups[long_name] = group
+
+    value:multitoken()
+    value:notifier(function(args, value)
+        args[key] = group:parse_args(value)
+    end)
+
+    return group
+end
+
+---
+-- Set default option values.
+--
+-- :param table defaults: argument names with default values
+--
+-- Example::
+--
+--     parser:set_defaults({particles = {9000, 1000}, number_density = 0.8})
+--
+function argument_parser:set_defaults(defaults)
+    local options = assert(self._options)
+    for k, v in pairs(defaults) do
+        local option = options[k]
+        if not option then
+            error(("undefined argument '%s'"):format(k), 2)
+        end
+        local semantic = assert(option.semantic)
+        if not pcall(semantic.default_value, semantic, v) then
+            error(("invalid default value to argument '%s'"):format(k), 2)
+        end
+    end
+end
+
+---
+-- Parse arguments.
+--
+-- :param table args: sequence of arguments (optional)
+-- :returns: parsed arguments
+--
+-- If ``args`` is not specified, the command-line arguments are parsed.
+--
+-- Example::
+--
+--    local args = parser:parse_args()
+--
+function argument_parser:parse_args(args)
+    local args = args or assert(_G.arg)
+    local parser = po.command_line_parser(args)
+    parser:options(self._desc)
+    parser:disallow_guessing()
+    if self._groups then
+        parser:positional(po.positional_options_description())
+    else
+        parser:group_parser()
+    end
+    local parsed = self._pcall(parser.run, parser)
+    local vm = po.variables_map()
+    self._pcall(vm.store, vm, parsed)
+    if vm:count("help") > 0 then
+        print(self)
+        os.exit(0)
+    end
+    return self._pcall(vm.notify, vm, {})
+end
+
+return M

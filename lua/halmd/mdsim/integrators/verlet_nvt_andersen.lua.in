@@ -17,7 +17,8 @@
 -- along with this program.  If not, see <http://www.gnu.org/licenses/>.
 --
 
-local device            = require("halmd.device")
+local device            = require("halmd.utility.device")
+local log               = require("halmd.io.log")
 local module            = require("halmd.utility.module")
 local random            = require("halmd.random")
 local mdsim = {
@@ -63,7 +64,7 @@ function M.__new(args)
     local random = assert(random())
     local clock = mdsim.clock() -- singleton
     local timestep = assert(clock.timestep)
-    local logger = assert(args.logger)
+    local logger = log.logger({label = "verlet_nvt_andersen"})
 
     local andersen
     if device() then

@@ -17,7 +17,8 @@
 -- along with this program.  If not, see <http://www.gnu.org/licenses/>.
 --
 
-local device            = require("halmd.device")
+local device            = require("halmd.utility.device")
+local log               = require("halmd.io.log")
 local module            = require("halmd.utility.module")
 local mdsim = {
     box                 = require("halmd.mdsim.box")
@@ -59,7 +60,7 @@ function M.__new(args)
     local temperature = args.temperature or 1.12 -- default value
     local resonance_frequency = args.resonance_frequency or 5 -- default value
     local every = args.every or 100 -- default value
-    local logger = assert(args.logger)
+    local logger = log.logger({label = "verlet_nvt_hoover"})
 
     -- dependency injection
     local particle = mdsim.particle() -- singleton

@@ -17,7 +17,8 @@
 -- along with this program.  If not, see <http://www.gnu.org/licenses/>.
 --
 
-local device            = require("halmd.device")
+local device            = require("halmd.utility.device")
+local log               = require("halmd.io.log")
 local module            = require("halmd.utility.module")
 local mdsim = {
     box                 = require("halmd.mdsim.box")
@@ -60,7 +61,7 @@ function M.__new(args)
     local dimension = assert(box.dimension)
     local clock = mdsim.clock() -- singleton
     local force = assert(args.force)
-    local logger = assert(args.logger)
+    local logger = log.logger({label = "thermodynamics"})
 
     local sampler = observables.sampler() -- singleton
     local file = writers.file() -- singleton

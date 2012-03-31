@@ -23,12 +23,7 @@
 #include <boost/noncopyable.hpp>
 #include <boost/shared_ptr.hpp>
 #include <lua.hpp>
-#include <luabind/luabind.hpp> // luabind::object
-#include <stdexcept>
 #include <string>
-
-#include <halmd/utility/options_parser.hpp>
-#include <halmd/utility/signal.hpp>
 
 namespace halmd {
 
@@ -40,10 +35,7 @@ class script
 {
 public:
     script();
-    void dofile(std::string const& file_name);
-    void options(options_parser& parser);
-    void parsed(po::variables_map const& vm);
-    void run();
+    void dofile(std::string const& filename = std::string());
 
     static int traceback(lua_State* L);
 
@@ -52,17 +44,13 @@ public:
     lua_State* const L;
 
 private:
-    typedef signal<void ()>::slot_function_type slot_function_type;
-
+    void load_luabind();
     void package_path();
     void package_cpath();
     void lua_compat();
-    static void register_exception_handlers();
 
     /** RAII wrapper of Lua state */
     boost::shared_ptr<lua_State const> const L_;
-    /** Lua script function */
-    luabind::object script_;
 };
 
 } // namespace halmd

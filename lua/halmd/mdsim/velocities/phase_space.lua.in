@@ -17,7 +17,8 @@
 -- along with this program.  If not, see <http://www.gnu.org/licenses/>.
 --
 
-local device            = require("halmd.device")
+local device            = require("halmd.utility.device")
+local log               = require("halmd.io.log")
 local module            = require("halmd.utility.module")
 local mdsim = {
     core                = require("halmd.mdsim.core")
@@ -51,7 +52,7 @@ function M.__new(args)
     local particle = assert(args.particle, "missing parameter: particle")
     local dimension = assert(particle.dimension)
     local sample = assert(args.sample)
-    local logger = assert(args.logger)
+    local logger = log.logger({label = "phase_space"})
 
     local phase_space
     if device() then

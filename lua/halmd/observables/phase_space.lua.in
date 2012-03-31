@@ -17,7 +17,8 @@
 -- along with this program.  If not, see <http://www.gnu.org/licenses/>.
 --
 
-local device            = require("halmd.device")
+local device            = require("halmd.utility.device")
+local log               = require("halmd.io.log")
 local module            = require("halmd.utility.module")
 local mdsim = {
     box                 = require("halmd.mdsim.box")
@@ -51,7 +52,7 @@ function M.__new(args)
     local particle_group = assert(args.particle_group, "missing parameter: particle_group")
     assert(type(particle_group) == "table", "invalid table")
     local memory = args.memory or (device() and "gpu" or "host")
-    local logger = assert(args.logger)
+    local logger = log.logger({label = "phase_space"})
 
     -- dependency injection
     local box = mdsim.box() -- singleton

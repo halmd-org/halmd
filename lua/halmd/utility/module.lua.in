@@ -66,6 +66,9 @@ end
 --
 -- :returns: module table
 --
+-- The constructor is only invoked once during the lifetime of the HALMD process.
+-- Subsequent calls will return the value(s) of the first call to the constructor.
+--
 -- Example::
 --
 --    local module = require("halmd.module")
@@ -79,13 +82,18 @@ end
 --    return M
 --
 function M.singleton(name)
-    --
-    -- FIXME This function wraps halmd.singleton, which is deprecated.
-    --
-    local singleton = require("halmd.singleton")
-    local module = M(name)
-    singleton(module)
-    return module
+    local self = M(name)
+    local mt = getmetatable(self)
+    local construct = assert(mt.__call)
+    local unpack = assert(table.unpack)
+    local result
+    mt.__call = function(...)
+        if not result then
+            result = {construct(...)}
+        end
+        return unpack(result)
+    end
+    return self
 end
 
 ---
@@ -112,9 +120,15 @@ end
 --
 function M.loader(name)
     local index = function(self, key)
-        local value = require(name .. "." .. key)
-        rawset(self, key, value)
-        return value
+        if type(key) ~= "string" then
+            error(("%s: missing or invalid module name"):format(name), 2)
+        end
+        local status, result = pcall(require, name .. "." .. key)
+        if not status then
+            error(result, 2)
+        end
+        rawset(self, key, result)
+        return result
     end
     return setmetatable({}, {__index = index})
 end

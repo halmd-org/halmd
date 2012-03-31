@@ -22,6 +22,7 @@
 
 #include <boost/numeric/ublas/matrix.hpp>
 #include <boost/numeric/ublas/matrix_proxy.hpp> // row()
+#include <boost/numeric/ublas/symmetric.hpp>
 #include <boost/numeric/ublas/vector.hpp>
 
 #include <luabind/luabind.hpp>
@@ -120,12 +121,15 @@ struct default_converter<boost::numeric::ublas::matrix<T, F, A> const&>
   : default_converter<boost::numeric::ublas::matrix<T, F, A> > {};
 
 /**
- * Luabind converter for Boost uBLAS unbounded storage array
+ * Luabind converter for Boost uBLAS symmetric_matrix
  */
-template <typename T, typename A>
-struct default_converter<boost::numeric::ublas::unbounded_array<T, A> >
-  : native_converter_base<boost::numeric::ublas::unbounded_array<T, A> >
+template <typename T, typename F1, typename F2, typename A>
+struct default_converter<boost::numeric::ublas::symmetric_matrix<T, F1, F2, A> >
+  : native_converter_base<boost::numeric::ublas::symmetric_matrix<T, F1, F2, A> >
 {
+    typedef boost::numeric::ublas::vector<T, A> vector_type;
+    typedef boost::numeric::ublas::matrix<T, F2, A> matrix_type;
+
     //! compute Lua to C++ conversion score
     static int compute_score(lua_State* L, int index)
     {
@@ -133,32 +137,33 @@ struct default_converter<boost::numeric::ublas::unbounded_array<T, A> >
     }
 
     //! convert from Lua to C++
-    boost::numeric::ublas::unbounded_array<T, A> from(lua_State* L, int index)
+    matrix_type from(lua_State* L, int index)
     {
-        std::size_t size = luaL_len(L, index);
-        boost::numeric::ublas::unbounded_array<T, A> v(size);
         object table(from_stack(L, index));
-        for (std::size_t i = 0; i < v.size(); ++i) {
-            v[i] = object_cast<T>(table[i + 1]);
+        std::size_t rows = luaL_len(L, index);
+        matrix_type m(rows, rows);
+        for (std::size_t i = 0; i < m.size1(); ++i) {
+            row(m, i) = object_cast<vector_type>(table[i + 1]);
         }
-        return v;
+        return m;
     }
 
     //! convert from C++ to Lua
-    void to(lua_State* L, boost::numeric::ublas::unbounded_array<T, A> const& v)
+    void to(lua_State* L, matrix_type const& m)
     {
         object table = newtable(L);
-        for (std::size_t i = 0; i < v.size(); ++i) {
+        for (std::size_t i = 0; i < m.size1(); ++i) {
+            vector_type r = row(m, i);
             // default_converter<T> only invoked with reference wrapper
-            table[i + 1] = boost::cref(v[i]);
+            table[i + 1] = boost::cref(r);
         }
         table.push(L);
     }
 };
 
-template <typename T, typename A>
-struct default_converter<boost::numeric::ublas::unbounded_array<T, A> const&>
-  : default_converter<boost::numeric::ublas::unbounded_array<T, A> > {};
+template <typename T, typename F1, typename F2, typename A>
+struct default_converter<boost::numeric::ublas::symmetric_matrix<T, F1, F2, A> const&>
+  : default_converter<boost::numeric::ublas::symmetric_matrix<T, F1, F2, A> > {};
 
 } // namespace luabind
 

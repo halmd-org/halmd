@@ -17,8 +17,8 @@
 -- along with this program.  If not, see <http://www.gnu.org/licenses/>.
 --
 
-local device                            = require("halmd.device")
-local log                               = require("halmd.log")
+local device                            = require("halmd.utility.device")
+local log                               = require("halmd.io.log")
 local module                            = require("halmd.utility.module")
 local mdsim = {
     binning                             = require("halmd.mdsim.binning")
@@ -88,7 +88,7 @@ function M.__new(args)
     local particle2 = assert(args.particle or args.particles[2])
     local box = mdsim.box() -- singleton
     local dimension = assert(box.dimension)
-    local logger = log.logger{prefix = "neighbour " .. label({particle1, particle2})}
+    local logger = log.logger({label = "neighbour " .. label({particle1, particle2})})
 
     -- domain decomposition
     local binning

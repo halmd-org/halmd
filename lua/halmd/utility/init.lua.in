@@ -50,9 +50,9 @@ end
 -- Returns iterator over pairs of table t sorted by key
 --
 function M.sorted(t)
-    local keys = keys(t)
+    local keys = M.keys(t)
     local i = 0
-    local n = table.getn(keys)
+    local n = #keys
     return function()
         i = i + 1
         if i <= n then

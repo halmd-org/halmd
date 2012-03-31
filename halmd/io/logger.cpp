@@ -1,5 +1,5 @@
 /*
- * Copyright © 2008-2011  Peter Colberg
+ * Copyright © 2008-2012  Peter Colberg
  *
  * This file is part of HALMD.
  *
@@ -47,11 +47,6 @@ logging::logging()
     core::get()->add_global_attribute("TimeStamp", make_shared<attributes::local_clock>());
 #else
     core::get()->add_global_attribute("TimeStamp", attributes::local_clock());
-#endif
-#ifdef NDEBUG
-    logging::open_console(info);
-#else
-    logging::open_console(debug);
 #endif
 }
 
@@ -122,8 +117,6 @@ static inline ostream& operator<<(ostream& os, logging::severity_level level)
         os << "WARNING"; break;
       case logging::error:
         os << "ERROR"; break;
-      case logging::fatal:
-        os << "FATAL"; break;
       default:
         os << static_cast<int>(level); break;
     }
@@ -139,72 +132,79 @@ void logging::set_formatter(shared_ptr<backend_type> backend) const
            [
                formatters::stream << " [" << formatters::attr<logging::severity_level>("Severity") << "]"
            ]
-        << formatters::if_(filters::has_attr("Module"))
+        << formatters::if_(filters::has_attr("Label"))
            [
-               formatters::stream
-                   << " " << formatters::attr("Module")
-                   << formatters::if_(filters::has_attr("Tag"))
-                      [
-                          formatters::stream << "[" << formatters::attr("Tag") << "]"
-                      ]
-                   << ":"
+               formatters::stream << " " << formatters::attr("Label") << ":"
            ]
         << " " << formatters::message()
     );
 }
 
-template <logging::severity_level level>
-static void wrap_log(char const* message)
+struct logger_wrapper : logger, luabind::wrap_base
 {
-    HALMD_LOG(level, message);
-}
+    logger_wrapper() {}
 
-template <typename T>
-static void wrap_add_attribute(logger& logger_, string const& attr, T const& value)
-{
+    logger_wrapper(string const& label)
+    {
 #ifdef BOOST_LOG_ATTRIBUTE_HPP_INCLUDED_ // Boost.Log < 2.0
-    logger_.add_attribute(attr, make_shared<attributes::constant<T> >(value));
+        add_attribute("Label", make_shared<attributes::constant<string> >(label));
 #else
-    logger_.add_attribute(attr, attributes::constant<T>(value));
+        add_attribute("Label", attributes::constant<string>(label));
 #endif
+    }
+};
+
+static void wrap_log(logger& logger_, logging::severity_level level, char const* msg)
+{
+    BOOST_LOG_SEV(logger_, level) << msg;
 }
 
-void logging::luaopen(lua_State* L)
+static shared_ptr<logger> get_logger()
+{
+    return logger_;
+}
+
+HALMD_LUA_API int luaopen_libhalmd_io_logger(lua_State* L)
 {
     using namespace luabind;
     module(L, "libhalmd")
     [
         namespace_("io")
         [
-            class_<logger, shared_ptr<logger> >("logger")
+            class_<logger, shared_ptr<logger>, logger_wrapper>("logger")
                 .def(constructor<>())
-                .def("add_attribute", &wrap_add_attribute<string>)
-                .def("add_attribute", &wrap_add_attribute<int>)
+                .def(constructor<string>())
+                .scope
+                [
+                    def("log", &wrap_log)
+                  , def("get", &get_logger)
+                ]
 
-          , namespace_("logging")
-            [
-                def("fatal", &wrap_log<logging::fatal>)
-              , def("error", &wrap_log<logging::error>)
-              , def("warning", &wrap_log<logging::warning>)
-              , def("info", &wrap_log<logging::info>)
-#ifndef NDEBUG
-              , def("debug", &wrap_log<logging::debug>)
-              , def("trace", &wrap_log<logging::trace>)
-#endif
-            ]
+          , class_<logging>("logging")
+                .def("open_console", &logging::open_console)
+                .def("close_console", &logging::close_console)
+                .def("open_file", &logging::open_file)
+                .def("close_file", &logging::close_file)
+                .scope
+                [
+                    def("get", &logging::get)
+                ]
+                .enum_("severity")
+                [
+                    value("error", logging::error)
+                  , value("warning", logging::warning)
+                  , value("info", logging::info)
+                  , value("debug", logging::debug)
+                  , value("trace", logging::trace)
+                ]
         ]
     ];
+    return 0;
 }
 
 /** define logging singleton instance */
 logging logging::logging_;
 /** define global logger source */
 shared_ptr<logger> const logger_ = make_shared<logger>();
-
-HALMD_LUA_API int luaopen_libhalmd_io_logger(lua_State* L)
-{
-    logging::luaopen(L);
-    return 0;
-}
 
 } // namespace halmd

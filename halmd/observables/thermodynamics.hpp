@@ -46,6 +46,8 @@ public:
 
     static void luaopen(lua_State* L);
 
+    virtual ~thermodynamics() {}
+
     // basic quantities with backend-specific evaluation
 
     /** particle number */

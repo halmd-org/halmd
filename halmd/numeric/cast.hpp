@@ -1,5 +1,5 @@
 /*
- * Copyright © 2010  Peter Colberg
+ * Copyright © 2012  Peter Colberg
  *
  * This file is part of HALMD.
  *
@@ -17,24 +17,30 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef HALMD_UTILITY_PROGRAM_OPTIONS_PROGRAM_OPTIONS_HPP
-#define HALMD_UTILITY_PROGRAM_OPTIONS_PROGRAM_OPTIONS_HPP
+#ifndef HALMD_NUMERIC_CAST_HPP
+#define HALMD_NUMERIC_CAST_HPP
 
-#include <boost/program_options.hpp>
-
-#include <halmd/utility/program_options/accumulating_value.hpp>
-#include <halmd/utility/program_options/array.hpp>
-#include <halmd/utility/program_options/errors.hpp>
-#include <halmd/utility/program_options/typed_value.hpp>
-#include <halmd/utility/program_options/variables_map.hpp>
+#include <boost/type_traits/is_convertible.hpp>
+#include <boost/utility/enable_if.hpp>
+#include <stdexcept>
 
 namespace halmd {
-namespace po {
 
-// import Boost Program Options into this namespace for convenience
-using namespace boost::program_options;
+/**
+ * This function validates at runtime whether the value is exactly
+ * representable in type T, and otherwise throws an exception.
+ */
+template <typename T, typename S>
+inline typename boost::enable_if<boost::is_convertible<S, T>, T>::type
+checked_narrowing_cast(S const& value)
+{
+    T result = T(value);
+    if (S(result) != value) {
+        throw std::domain_error("value not exactly representable in target type");
+    }
+    return result;
+}
 
-} // namespace po
 } // namespace halmd
 
-#endif /* ! HALMD_UTILITY_PROGRAM_OPTIONS_PROGRAM_OPTIONS_HPP */
+#endif /* ! HALMD_NUMERIC_CAST_HPP */

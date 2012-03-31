@@ -19,18 +19,6 @@
 
 local module = require("halmd.utility.module")
 
--- load GPU module if available
-pcall(require, "halmd.gpu")
-
--- grab C++ wrappers
-local device_wrapper
-if libhalmd.utility.gpu then
-    device_wrapper = libhalmd.utility.gpu.device
-end
-local po = libhalmd.po
--- grab standard library
-local assert = assert
-
 ---
 -- Device management
 -- =================
@@ -46,63 +34,40 @@ local assert = assert
 -- is not available on the system, GPU support is disabled, and the host is
 -- used.
 --
--- :func:`halmd.device` may be used to query whether the GPU is being used::
+-- :func:`halmd.utility.device` may be used to query whether the GPU is being used::
 --
---   local device = require("halmd.device")
+--   local device = require("halmd.utility.device")
 --   if device() then
 --       -- using GPU
 --   else
 --       -- using host
 --   end
 --
-local M = module.singleton("halmd.device")
-
---- Query whether HALMD has GPU support.
---
--- This function is useful to enable/disable GPU-related functionality, e.g. options::
---
---    function options(desc)
---        if device.with_gpu() then
---            desc:add("disable-gpu", po.bool_switch(), "disable GPU acceleration")
---        end
---    end
---
--- Note that :func:`halmd.device.with_gpu` does not indicate whether the GPU is
--- actually used. Instead, you may check the return value of :func:`halmd.device`
--- for a non-``nil`` value instead, as shown in the example above.
---
-function M.with_gpu()
-    return device_wrapper ~= nil
-end
+local M = module.singleton("halmd.utility.device")
 
 --- Construct device instance.
 --
--- :param args.disable_gpu: do *not* use GPU (optional)
--- :param args.devices: list of devices (optional)
+-- :param table args: keyword arguments (optional)
+-- :param boolean args.disable_gpu: do *not* use GPU (optional)
+-- :param table args.devices: sequence of CUDA devices (optional)
 -- :returns: instance of device module if GPU is enabled, otherwise ``nil``
 --
--- :func:`halmd.device` returns a singleton instance, i.e. the first call will
+-- :func:`halmd.utility.device` returns a singleton instance, i.e. the first call will
 -- create an instance that is kept alive until the end of program execution,
 -- and subsequent calls will return this instance.
 --
-function M.new(args)
-    if device_wrapper and not args.disable_gpu then
-        local devices = args.devices -- optional
+function M.__new(args)
+    local disable_gpu = args and args.disable_gpu
+    local devices = args and args.devices
+
+    -- load dynamically loadable module with GPU support if available
+    if not disable_gpu and pcall(require, "halmd.gpu") then
+        local device = assert(libhalmd.utility.gpu.device)
         if devices then
-            return device_wrapper(devices)
+            return device(devices)
         else
-            return device_wrapper()
+            return device()
         end
-    end
-end
-
--- override default parameter namespace
-M.namespace = "gpu"
-
-function M.options(desc, globals)
-    if M.with_gpu() then
-        desc:add("devices", po.int_array(), "CUDA device(s)")
-        globals:add("disable-gpu", po.bool_switch(), "disable GPU acceleration")
     end
 end
 

@@ -17,7 +17,8 @@
 -- along with this program.  If not, see <http://www.gnu.org/licenses/>.
 --
 
-local device            = require("halmd.device")
+local device            = require("halmd.utility.device")
+local log               = require("halmd.io.log")
 local module            = require("halmd.utility.module")
 local numeric           = require("halmd.utility.numeric")
 
@@ -47,7 +48,7 @@ function M.__new(args)
     local minimum = args.minimum or 2 -- default value
 
     local particle = assert(args.particle)
-    local logger = assert(args.logger)
+    local logger = log.logger({label = "morse"})
 
     if type(cutoff) == "number" then
         cutoff = scalar_matrix(particle1.ntype, particle2.ntype, cutoff)

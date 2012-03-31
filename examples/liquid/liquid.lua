@@ -1,3 +1,4 @@
+#!/usr/bin/env halmd
 --
 -- Copyright © 2010-2012  Peter Colberg and Felix Höfling
 --
@@ -20,24 +21,16 @@
 local halmd = require("halmd")
 
 -- grab modules
-local device = halmd.device
+local log = halmd.io.log
 local mdsim = halmd.mdsim
 local observables = halmd.observables
 local readers = halmd.io.readers
 local writers = halmd.io.writers
--- grab C++ library
-local po = libhalmd.po
 
 --
--- Simple liquid simulation
+-- Setup and run simulation
 --
-local liquid = {_NAME = "liquid"} -- FIXME implement halmd.module("name")
-
-halmd.modules.register(liquid)
-
-function liquid.new(args)
-    -- load the device module to log (optional) GPU properties
-    device{} -- singleton
+local function liquid(args)
     -- FIXME support reading multiple species groups into single particle
     local reader = readers.trajectory{group = "A"}
 
@@ -72,17 +65,17 @@ function liquid.new(args)
     local phase_space = observables.phase_space{particle_group = particle_group}
 
     -- Sample macroscopic state variables.
-    observables.thermodynamics{particle_group = { particle }, force = { force }, every = args.state_vars or 10 }
-    observables.thermodynamics{particle_group = { particle_group[1] }, force = { force }, every = args.state_vars or 10 }
+    observables.thermodynamics{particle_group = { particle }, force = { force }, every = args.sampling.state_vars}
+    observables.thermodynamics{particle_group = { particle_group[1] }, force = { force }, every = args.sampling.state_vars}
 
     -- Write trajectory to H5MD file.
-    writers.trajectory{particle_group = particle_group, every = args.trajectory or 10}
+    writers.trajectory{particle_group = particle_group, every = args.sampling.trajectory}
 
     -- Sample static structure factors, construct density modes before.
     local density_mode = observables.density_mode{
         phase_space = phase_space, max_wavevector = 15
     }
-    observables.ssf{density_mode = density_mode, every = args.structure or 10}
+    observables.ssf{density_mode = density_mode, every = args.sampling.structure}
 
     -- compute mean-square displacement
     observables.dynamics.correlation{sampler = phase_space, correlation = "mean_square_displacement"}
@@ -103,34 +96,63 @@ function liquid.new(args)
     coroutine.yield(sampler:run())
 end
 
-function liquid.options(desc, globals)
-    globals:add("particles", po.uint_array():default({1000}), "number of particles")
-    globals:add("masses", po.uint_array():default({1}), "particle masses")
-    globals:add("dimension", po.uint():default(3):notifier(function(value)
+--
+-- Parse command-line arguments.
+--
+local function parse_args()
+    local parser = halmd.utility.program_options.argument_parser()
+
+    parser:add_argument("output,o", {type = "string", action = function(args, key, value)
+        -- substitute current time
+        args[key] = os.date(value)
+    end, default = "liquid_%Y%m%d_%H%M%S", help = "prefix of output files"})
+
+    parser:add_argument("verbose,v", {type = "accumulate", action = function(args, key, value)
+        local level = {
+            -- console, file
+            {"warning", "info" },
+            {"info"   , "info" },
+            {"debug"  , "debug"},
+            {"trace"  , "trace"},
+        }
+        args[key] = level[value] or level[#level]
+    end, default = 1, help = "increase logging verbosity"})
+
+    parser:add_argument("disable-gpu", {type = "boolean", help = "disable GPU acceleration"})
+    parser:add_argument("devices", {type = "vector", dtype = "integer", help = "CUDA device(s)"})
+
+    parser:add_argument("particles", {type = "vector", dtype = "integer", default = {1000}, help = "number of particles"})
+    parser:add_argument("masses", {type = "vector", dtype = "number", default = {1}, help = "particle masses"})
+    parser:add_argument("dimension", {type = "integer", default = 3, action = function(args, key, value)
         if value ~= 2 and value ~= 3 then
             error(("invalid dimension '%d'"):format(value), 0)
         end
-    end), "dimension of positional coordinates")
---    globals:add("trajectory", po.uint64():default(0), "sampling interval for trajectory") -- FIXME boost::any_cast
---    globals:add("structure", po.uint64():default(0), "sampling interval for structural properties") -- FIXME boost::any_cast
---    globals:add("state-vars", po.uint64():default(0), "sampling interval for state variables") -- FIXME boost::any_cast
+        args[key] = value
+    end, help = "dimension of positional coordinates"})
+
+    parser:add_argument("ensemble", {type = "string", choices = {
+        nve = "Constant NVE",
+        nvt = "Constant NVT",
+    }, default = "nve", help = "statistical ensemble"})
+
+    local sampling = parser:add_argument_group("sampling", {help = "sampling intervals"})
+    sampling:add_argument("trajectory", {type = "integer", default = 10, help = "sampling interval for trajectory"})
+    sampling:add_argument("structure", {type = "integer", default = 10, help = "sampling interval for structural properties"})
+    sampling:add_argument("state-vars", {type = "integer", default = 10, help = "sampling interval for state variables"})
+
+    return parser:parse_args()
 end
 
--- FIXME explicitly load modules to collect deprecated module options
-require("halmd.option")
-require("halmd.log")
-require("halmd.device")
-require("halmd.io.readers.trajectory")
-require("halmd.io.writers.trajectory")
-require("halmd.mdsim.box")
-require("halmd.mdsim.force")
-require("halmd.mdsim.integrator")
-require("halmd.mdsim.particle")
-require("halmd.mdsim.position")
-require("halmd.mdsim.velocity")
-require("halmd.observables.dynamics.correlation")
-require("halmd.observables.sampler")
-require("halmd.observables.ssf")
-require("halmd.observables.thermodynamics")
+local args = parse_args()
 
-return liquid
+-- log to console
+halmd.io.log.open_console({severity = args.verbose[1]})
+-- log to file
+halmd.io.log.open_file(("%s.log"):format(args.output), {severity = args.verbose[2]})
+-- log version
+halmd.utility.version.prologue()
+-- initialise or disable GPU
+halmd.utility.device({disable_gpu = args.disable_gpu, devices = args.devices})
+
+-- run simulation
+liquid(args)

@@ -17,6 +17,7 @@
 -- along with this program.  If not, see <http://www.gnu.org/licenses/>.
 --
 
+local log               = require("halmd.io.log")
 local module            = require("halmd.utility.module")
 local mdsim = {
     box                 = require("halmd.mdsim.box")
@@ -62,7 +63,7 @@ function M.__new(args)
     -- dependency injection
     local clock = mdsim.clock() -- singleton
     local dimension = assert(mdsim.box().dimension) -- singleton
-    local logger = assert(args.logger)
+    local logger = log.logger({label = "ssf"})
 
     -- drop additional table keys of density modes -- FIXME
     local density_mode_ = {}

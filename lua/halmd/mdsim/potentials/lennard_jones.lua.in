@@ -17,7 +17,8 @@
 -- along with this program.  If not, see <http://www.gnu.org/licenses/>.
 --
 
-local device            = require("halmd.device")
+local device            = require("halmd.utility.device")
+local log               = require("halmd.io.log")
 local module            = require("halmd.utility.module")
 local numeric           = require("halmd.utility.numeric")
 
@@ -51,7 +52,7 @@ function M.__new(args)
 
     local particle1 = assert(args.particle or args.particles[1])
     local particle2 = assert(args.particle or args.particles[2])
-    local logger = assert(args.logger)
+    local logger = log.logger({label = "lennard_jones"})
 
     local potential
     -- select optimised GPU version if 1 species and ε=1, σ=1

@@ -17,7 +17,8 @@
 -- along with this program.  If not, see <http://www.gnu.org/licenses/>.
 --
 
-local device            = require("halmd.device")
+local device            = require("halmd.utility.device")
+local log               = require("halmd.io.log")
 local module            = require("halmd.utility.module")
 local mdsim = {
     particle            = require("halmd.mdsim.particle")
@@ -48,7 +49,7 @@ function M.__new(args)
     local index = args.index or {12, 12, 12} -- default value
 
     local particle = mdsim.particle() -- singleton
-    local logger = assert(args.logger)
+    local logger = log.logger({label = "power_law_with_core"})
 
     local power_law_with_core
     if device() then

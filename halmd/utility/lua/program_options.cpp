@@ -1,5 +1,5 @@
 /*
- * Copyright © 2008-2010  Peter Colberg
+ * Copyright © 2008-2012  Peter Colberg
  *
  * This file is part of HALMD.
  *
@@ -17,289 +17,482 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <boost/lexical_cast.hpp>
-#include <boost/tuple/tuple.hpp> // boost::tie
-#include <iomanip>
+#include <algorithm>
+#include <boost/bind.hpp>
+#include <boost/algorithm/string/compare.hpp>
+#include <boost/algorithm/string/find_iterator.hpp>
+#include <boost/algorithm/string/finder.hpp>
+#include <boost/type_traits/is_arithmetic.hpp>
+#include <boost/numeric/ublas/matrix.hpp>
+#include <boost/numeric/ublas/matrix_proxy.hpp>
+#include <boost/numeric/ublas/symmetric.hpp>
+#include <boost/numeric/ublas/vector.hpp>
+#include <boost/program_options.hpp>
+#include <boost/program_options/cmdline.hpp>
+#include <boost/utility/enable_if.hpp>
 #include <luabind/luabind.hpp>
-#include <set>
-#include <sstream>
-#include <stdint.h> // <cstdint> is C++0x
-#include <vector>
+#include <luabind/adopt_policy.hpp>
+#include <luabind/operator.hpp> // luabind::tostring
+#include <luabind/return_reference_to_policy.hpp>
+#include <luabind/shared_ptr_converter.hpp>
+#include <stdint.h>
 
 #include <halmd/config.hpp>
-#include <halmd/utility/lua/array_converter.hpp>
-#include <halmd/utility/lua/long_long_converter.hpp> // *int64_t on x86
-#include <halmd/utility/lua/map_converter.hpp>
-#include <halmd/utility/program_options/program_options.hpp>
+#include <halmd/numeric/cast.hpp>
+#include <halmd/utility/lua/ublas.hpp>
+#include <halmd/utility/lua/vector_converter.hpp>
+#include <halmd/utility/program_options.hpp>
+
+namespace po = boost::program_options;
+namespace ublas = boost::numeric::ublas;
 
 using namespace boost;
 using namespace std;
 
+namespace std {
+
+/**
+ * Ensure arithmetic option value is exactly representable as Lua number.
+ *
+ * Note that floating-point promotion from float to double (which is the
+ * default for lua_Number) is exact, refer to ISO/IEC 14882:1998, 4.6.1.
+ * “An rvalue of type float can be converted to an rvalue of type double.
+ * The value is unchanged.”
+ */
+template <typename T>
+static typename enable_if<is_arithmetic<T>, void>::type
+validate(any& v, vector<string> const& values, T*, int)
+{
+    po::validators::check_first_occurrence(v);
+    string s(po::validators::get_single_string(values));
+    try {
+        T value = lexical_cast<T>(s);
+        halmd::checked_narrowing_cast<lua_Number>(value);
+        v = any(value);
+    }
+    catch (exception const&) {
+        throw po::invalid_option_value(s);
+    }
+}
+
+/**
+ * Read Boost uBLAS vector from input stream
+ *
+ * A vector is represented as a comma-delimited string, e.g. 1,2,3,4
+ */
+template <typename T>
+void validate(any& v, vector<string> const& values, ublas::vector<T>*, int)
+{
+    po::validators::check_first_occurrence(v);
+    string s(po::validators::get_single_string(values));
+    ublas::vector<T> value;
+    vector<T> element;
+    for (split_iterator<string::iterator> i = make_split_iterator(s, first_finder(",", is_equal()));
+         i != split_iterator<string::iterator>();
+         ++i)
+    {
+        any v;
+        vector<string> values;
+        values.push_back(copy_range<string>(*i));
+        validate(v, values, (T*)0, 0);
+        element.push_back(any_cast<T>(v));
+    }
+    value.resize(element.size());
+    copy(element.begin(), element.end(), value.begin());
+    v = value;
+}
+
+/**
+ * Read Boost uBLAS matrix from input stream
+ *
+ * A matrix is represented as colon-delimited rows with each row as a
+ * comma-delimited string, e.g. 11,12,13:21,22,23:31,32,33
+ */
+template <typename T>
+void validate(any& v, vector<string> const& values, ublas::matrix<T>*, int)
+{
+    po::validators::check_first_occurrence(v);
+    string s(po::validators::get_single_string(values));
+    ublas::matrix<T> value;
+    vector<ublas::vector<T> > row;
+    for (split_iterator<string::iterator> i = make_split_iterator(s, first_finder(":", is_equal()));
+         i != split_iterator<string::iterator>();
+         ++i)
+    {
+        any v;
+        vector<string> values;
+        values.push_back(copy_range<string>(*i));
+        validate(v, values, (ublas::vector<T>*)0, 0);
+        row.push_back(any_cast<ublas::vector<T> >(v));
+    }
+    if (!row.empty()) {
+        if (row.front().size() == 1) {
+            ublas::symmetric_matrix<T, ublas::lower> m(row.size(), row.size());
+            for (size_t i = 0; i < row.size(); ++i) {
+                if (!(row[i].size() == i + 1)) {
+                    throw po::invalid_option_value(s);
+                }
+                copy(row[i].begin(), row[i].end(), ublas::row(m, i).begin());
+            }
+            value = m;
+        }
+        else if (row.back().size() == 1) {
+            ublas::symmetric_matrix<T, ublas::upper> m(row.size(), row.size());
+            for (size_t i = 0; i < row.size(); ++i) {
+                if (!(row[i].size() == (m.size2() - i))) {
+                    throw po::invalid_option_value(s);
+                }
+                copy(row[i].begin(), row[i].end(), ublas::row(m, i).begin());
+            }
+            value = m;
+        }
+        else {
+            value.resize(row.size(), row.front().size());
+            for (size_t i = 0; i < row.size(); ++i) {
+                if (!(row[i].size() == value.size2())) {
+                    throw po::invalid_option_value(s);
+                }
+                ublas::row(value, i) = row[i];
+            }
+        }
+    }
+    v = value;
+}
+
+/**
+ * Write Boost uBLAS vector to output stream
+ */
+template <typename T>
+ostream& operator<<(ostream& os, numeric::ublas::vector<T> const& value)
+{
+    for (size_t i = 0; i < value.size(); ++i) {
+        if (i > 0) {
+            os << ',';
+        }
+        os << value(i);
+    }
+    return os;
+}
+
+/**
+ * Write Boost uBLAS matrix to output stream
+ */
+template <typename T>
+ostream& operator<<(ostream& os, numeric::ublas::matrix<T> const& value)
+{
+    for (size_t i = 0; i < value.size1(); ++i) {
+        if (i > 0) {
+            os << ':';
+        }
+        ublas::vector<T> const& row = ublas::matrix_row<ublas::matrix<T> const>(value, i);
+        os << row;
+    }
+    return os;
+}
+
+/**
+ * Write STL vector to output stream
+ */
+template <typename T>
+static ostream& operator<<(ostream& os, vector<T> const& value)
+{
+    typename vector<T>::const_iterator i = value.begin();
+    if (i != value.end()) {
+        os << *i;
+        for (++i; i != value.end(); ++i) {
+            os << " " << *i;
+        }
+    }
+    return os;
+}
+
+} // namespace std
+
 namespace halmd {
 
 template <typename T>
-static po::extended_typed_value<T>* po_value()
-{
-    return po::value<T>();
-}
-
-template <typename T>
-static po::extended_typed_value<vector<T> >* po_composing_value()
-{
-    return po::value<vector<T> >()->composing();
-}
-
-template <typename T>
-static po::extended_typed_value<T>* po_default_value(po::extended_typed_value<T>* semantic, T const& value)
+static po::typed_value<T>*
+default_value(po::typed_value<T>* semantic, T const& value)
 {
     return semantic->default_value(value);
 }
 
-static po::extended_typed_value<bool>* po_bool_switch()
+template <typename T>
+static po::typed_value<T>*
+default_value_textual(po::typed_value<T>* semantic, T const& value, string const& textual)
 {
-    return po::bool_switch();
+    return semantic->default_value(value, textual);
 }
 
 template <typename T>
-static void po_lua_notifier(luabind::object const& notifier, T const& value)
+static po::typed_value<T>*
+implicit_value(po::typed_value<T>* semantic, T const& value)
+{
+    return semantic->implicit_value(value);
+}
+
+template <typename T>
+static po::typed_value<T>*
+implicit_value_textual(po::typed_value<T>* semantic, T const& value, string const& textual)
+{
+    return semantic->implicit_value(value, textual);
+}
+
+template <typename T>
+static void notify(luabind::object const& functor, T const& value)
+{
+    luabind::object args(luabind::from_stack(functor.interpreter(), -1));
+    try {
+        luabind::call_function<void>(functor, args, value);
+    }
+    catch (luabind::error const& e) {
+        string error(lua_tostring(e.state(), -1));
+        lua_pop(e.state(), 1);
+        throw runtime_error(error);
+    }
+}
+
+template <typename T>
+static po::typed_value<T>*
+notifier(po::typed_value<T>* semantic, luabind::object const& functor)
+{
+    return semantic->notifier(bind(&notify<T>, functor, _1));
+}
+
+template <typename T>
+struct typed_value_wrapper : po::typed_value<T>, luabind::wrap_base
+{
+    typed_value_wrapper() : po::typed_value<T>(0) {}
+};
+
+template <>
+struct typed_value_wrapper<bool> : po::typed_value<bool>, luabind::wrap_base
+{
+    typed_value_wrapper() : po::typed_value<bool>(0)
+    {
+        default_value(false);
+        zero_tokens();
+    }
+};
+
+struct untyped_value_wrapper : po::untyped_value, luabind::wrap_base
+{
+    untyped_value_wrapper() : po::untyped_value(true) {} // zero tokens
+};
+
+template <typename T>
+static accumulating_value<T>*
+accum_default_value(accumulating_value<T>* semantic, T const& value)
+{
+    return semantic->default_value(value);
+}
+
+template <typename T>
+static accumulating_value<T>*
+accum_default_value_textual(accumulating_value<T>* semantic, T const& value, string const& textual)
+{
+    return semantic->default_value(value, textual);
+}
+
+template <typename T>
+struct accum_value_wrapper : accumulating_value<T>, luabind::wrap_base
+{
+    accum_value_wrapper() : accumulating_value<T>(0) {}
+};
+
+static void
+add_option(po::options_description& self, shared_ptr<po::option_description> desc)
+{
+    self.add(desc);
+}
+
+static void
+add_options(po::options_description& self, po::options_description const& desc)
+{
+    self.add(desc);
+}
+
+static po::command_line_parser&
+disallow_guessing(po::command_line_parser& parser)
+{
+    using namespace boost::program_options::command_line_style;
+    return parser.style(default_style & ~allow_guessing);
+}
+
+static pair<string, string>
+split_argument(string const& arg)
+{
+    size_t pos = arg.find('=');
+    if (pos != string::npos) {
+        return make_pair(arg.substr(0, pos), arg.substr(pos + 1));
+    }
+    return make_pair(arg, string());
+}
+
+static po::command_line_parser&
+group_parser(po::command_line_parser& parser)
+{
+    return parser.extra_parser(&split_argument);
+}
+
+static void
+variables_map_store(po::variables_map& vm, po::parsed_options const& options)
+{
+    po::store(options, vm);
+}
+
+struct scoped_push
+{
+    lua_State* const L;
+
+    scoped_push(luabind::object const& object) : L(object.interpreter())
+    {
+        object.push(L);
+    }
+
+    ~scoped_push()
+    {
+        lua_pop(L, 1);
+    }
+};
+
+static luabind::object
+variables_map_notify(lua_State* L, po::variables_map& vm, luabind::object const& args)
+{
+    scoped_push p(args);
+    po::notify(vm);
+    return args;
+}
+
+template <typename T>
+static void typed_value(lua_State* L, char const* name, char const* value, char const* multi_value)
 {
     using namespace luabind;
+    module(L, "libhalmd")
+    [
+        namespace_("program_options")
+        [
+            namespace_(value)
+            [
+                class_<po::typed_value<T>, typed_value_wrapper<T>, po::value_semantic>(name)
+                    .def(constructor<>())
+                    .def("default_value", &default_value<T>, return_reference_to(_1))
+                    .def("default_value", &default_value_textual<T>, return_reference_to(_1))
+                    .def("implicit_value", &implicit_value<T>, return_reference_to(_1))
+                    .def("implicit_value", &implicit_value_textual<T>, return_reference_to(_1))
+                    .def("notifier", &notifier<T>, return_reference_to(_1))
+                    .def("required", &po::typed_value<T>::required, return_reference_to(_1))
+            ]
 
-    object result;
-    try {
-        result = call_function<object>(notifier, value);
-    }
-    catch (error const& e) {
-        throw po::error(lua_tostring(e.state(), -1));
-    }
-
-    if (result) {
-        const_cast<T&>(value) = object_cast<T>(result);
-    }
+          , namespace_(multi_value)
+            [
+                class_<po::typed_value<vector<T> >, typed_value_wrapper<vector<T> >, po::value_semantic>(name)
+                    .def(constructor<>())
+                    .def("default_value", &default_value<vector <T> >, return_reference_to(_1))
+                    .def("default_value", &default_value_textual<vector <T> >, return_reference_to(_1))
+                    .def("implicit_value", &implicit_value<vector <T> >, return_reference_to(_1))
+                    .def("implicit_value", &implicit_value_textual<vector <T> >, return_reference_to(_1))
+                    .def("notifier", &notifier<vector<T> >, return_reference_to(_1))
+                    .def("required", &po::typed_value<vector<T> >::required, return_reference_to(_1))
+                    .def("composing", &po::typed_value<vector<T> >::composing, return_reference_to(_1))
+                    .def("multitoken", &po::typed_value<vector<T> >::multitoken, return_reference_to(_1))
+            ]
+        ]
+    ];
 }
 
-template <typename T>
-static po::extended_typed_value<T>* po_notifier(
-    po::extended_typed_value<T>* v, luabind::object const& notifier
-)
-{
-    return v->notifier(bind(&po_lua_notifier<T>, notifier, _1));
-}
-
-template <typename T>
-static void po_choices_notifier(map<T, string> const& choices, T const& value)
-{
-    if (choices.find(value) == choices.end()) {
-        typename map<T, string>::const_iterator i, ie;
-        size_t pad = 21; //< minimum padding, equivalent to --help output
-        for (i = choices.begin(), ie = choices.end(); i != ie; ++i) {
-            pad = max(pad, i->first.size());
-        }
-
-        stringstream s;
-        s << "invalid option value '" << value << "'" << endl << endl;
-
-        s << "The choices for the option are:" << endl;
-        for (i = choices.begin(), ie = choices.end(); i != ie; ++i) {
-            s << "  " << left << setw(pad) << i->first << " " << i->second << endl;
-        }
-
-        throw po::error(s.str());
-    }
-}
-
-template <typename T>
-static po::extended_typed_value<T>* po_choices(
-    po::extended_typed_value<T>* v, map<T, string> const& choices
-)
-{
-    return v->notifier(bind(&po_choices_notifier<T>, choices, _1));
-}
-
-template <typename T>
-static void po_composing_choices_notifier(
-    map<T, string> const& choices, vector<T> const& value
-)
-{
-    typename vector<T>::const_iterator i, end = value.end();
-    set<T> unique_values;
-    for (i = value.begin(); i != end; ++i) {
-        // first check that option value is valid choice
-        po_choices_notifier(choices, *i);
-        // check for duplicate option value
-        bool inserted;
-        typename set<T>::const_iterator it;
-        tie(it, inserted) = unique_values.insert(*i);
-        if (!inserted) {
-            throw po::error("duplicate option value '" + lexical_cast<string>(*i) + "'");
-        }
-    }
-}
-
-template <typename T>
-static po::extended_typed_value<vector<T> >* po_composing_choices(
-    po::extended_typed_value<vector<T> >* v, map<T, string> const& choices
-)
-{
-    return v->notifier(bind(&po_composing_choices_notifier<T>, choices, _1));
-}
-
-static void po_add_option_description(
-    po::options_description& desc, char const* name
-  , po::value_semantic const* semantic, char const* description
-)
-{
-    desc.add_options()(name, semantic, description);
-}
-
-static void po_add_options_description(
-    po::options_description& desc, po::options_description const& other
-)
-{
-    desc.add(other);
-}
-
-/**
- * register Boost Program_otions with Lua
- */
 HALMD_LUA_API int luaopen_libhalmd_utility_lua_program_options(lua_State* L)
 {
     using namespace luabind;
     module(L, "libhalmd")
     [
-        namespace_("po")
+        namespace_("program_options")
         [
             class_<po::value_semantic>("value_semantic")
+                .property("name", &po::value_semantic::name)
+                .property("min_tokens", &po::value_semantic::min_tokens)
+                .property("max_tokens", &po::value_semantic::max_tokens)
+                .property("is_composing", &po::value_semantic::is_composing)
+                .property("is_required", &po::value_semantic::is_required)
 
-          , class_<po::extended_typed_value<bool>, po::value_semantic>("typed_value_bool")
-                .def("notifier", &po_notifier<bool>)
-                .def("conflicts", &po::extended_typed_value<bool>::conflicts)
-                .def("depends", &po::extended_typed_value<bool>::depends)
+          , class_<po::untyped_value, untyped_value_wrapper, po::value_semantic>("untyped_value")
+                .def(constructor<>())
 
-          , class_<po::extended_typed_value<int>, po::value_semantic>("typed_value_int")
-                .def("notifier", &po_notifier<int>)
-                .def("conflicts", &po::extended_typed_value<int>::conflicts)
-                .def("depends", &po::extended_typed_value<int>::depends)
-                .def("default", &po_default_value<int>)
+          , class_<accumulating_value<int>, accum_value_wrapper<int>, po::value_semantic>("accum_value")
+                .def(constructor<>())
+                .def("default_value", &accum_default_value<int>, return_reference_to(_1))
+                .def("default_value", &accum_default_value_textual<int>, return_reference_to(_1))
+                .def("notifier", &notifier<int>, return_reference_to(_1))
+                .def("required", &po::typed_value<int>::required, return_reference_to(_1))
 
-          , class_<po::extended_typed_value<unsigned int>, po::value_semantic>("typed_value_uint")
-                .def("notifier", &po_notifier<unsigned int>)
-                .def("conflicts", &po::extended_typed_value<unsigned int>::conflicts)
-                .def("depends", &po::extended_typed_value<unsigned int>::depends)
-                .def("default", &po_default_value<unsigned int>)
-
-          , class_<po::extended_typed_value<int64_t>, po::value_semantic>("typed_value_int64")
-                .def("notifier", &po_notifier<int64_t>)
-                .def("conflicts", &po::extended_typed_value<int64_t>::conflicts)
-                .def("depends", &po::extended_typed_value<int64_t>::depends)
-                .def("default", &po_default_value<int64_t>)
-
-          , class_<po::extended_typed_value<uint64_t>, po::value_semantic>("typed_value_uint64")
-                .def("notifier", &po_notifier<uint64_t>)
-                .def("conflicts", &po::extended_typed_value<uint64_t>::conflicts)
-                .def("depends", &po::extended_typed_value<uint64_t>::depends)
-                .def("default", &po_default_value<uint64_t>)
-
-          , class_<po::extended_typed_value<double>, po::value_semantic>("typed_value_float")
-                .def("notifier", &po_notifier<double>)
-                .def("conflicts", &po::extended_typed_value<double>::conflicts)
-                .def("depends", &po::extended_typed_value<double>::depends)
-                .def("default", &po_default_value<double>)
-
-          , class_<po::extended_typed_value<string>, po::value_semantic>("typed_value_string")
-                .def("notifier", &po_notifier<string>)
-                .def("conflicts", &po::extended_typed_value<string>::conflicts)
-                .def("depends", &po::extended_typed_value<string>::depends)
-                .def("choices", &po_choices<string>)
-                .def("default", &po_default_value<string>)
-
-          , class_<po::extended_typed_value<multi_array<int, 1> >, po::value_semantic>("typed_value_int_array")
-                .def("notifier", &po_notifier<multi_array<int, 1> >)
-                .def("conflicts", &po::extended_typed_value<multi_array<int, 1> >::conflicts)
-                .def("depends", &po::extended_typed_value<multi_array<int, 1> >::depends)
-                .def("default", &po_default_value<multi_array<int, 1> >)
-
-          , class_<po::extended_typed_value<multi_array<unsigned int, 1> >, po::value_semantic>("typed_value_uint_array")
-                .def("notifier", &po_notifier<multi_array<unsigned int, 1> >)
-                .def("conflicts", &po::extended_typed_value<multi_array<unsigned int, 1> >::conflicts)
-                .def("depends", &po::extended_typed_value<multi_array<unsigned int, 1> >::depends)
-                .def("default", &po_default_value<multi_array<unsigned int, 1> >)
-
-          , class_<po::extended_typed_value<multi_array<int64_t, 1> >, po::value_semantic>("typed_value_int64_array")
-                .def("notifier", &po_notifier<multi_array<int64_t, 1> >)
-                .def("conflicts", &po::extended_typed_value<multi_array<int64_t, 1> >::conflicts)
-                .def("depends", &po::extended_typed_value<multi_array<int64_t, 1> >::depends)
-                .def("default", &po_default_value<multi_array<int64_t, 1> >)
-
-          , class_<po::extended_typed_value<multi_array<uint64_t, 1> >, po::value_semantic>("typed_value_uint64_array")
-                .def("notifier", &po_notifier<multi_array<uint64_t, 1> >)
-                .def("conflicts", &po::extended_typed_value<multi_array<uint64_t, 1> >::conflicts)
-                .def("depends", &po::extended_typed_value<multi_array<uint64_t, 1> >::depends)
-                .def("default", &po_default_value<multi_array<uint64_t, 1> >)
-
-          , class_<po::extended_typed_value<multi_array<double, 1> >, po::value_semantic>("typed_value_float_array")
-                .def("notifier", &po_notifier<multi_array<double, 1> >)
-                .def("conflicts", &po::extended_typed_value<multi_array<double, 1> >::conflicts)
-                .def("depends", &po::extended_typed_value<multi_array<double, 1> >::depends)
-                .def("default", &po_default_value<multi_array<double, 1> >)
-
-          , class_<po::extended_typed_value<vector<int> >, po::value_semantic>("typed_composing_value_int")
-                .def("notifier", &po_notifier<vector<int> >)
-                .def("conflicts", &po::extended_typed_value<vector<int> >::conflicts)
-                .def("depends", &po::extended_typed_value<vector<int> >::depends)
-
-          , class_<po::extended_typed_value<vector<unsigned int> >, po::value_semantic>("typed_composing_value_uint")
-                .def("notifier", &po_notifier<vector<unsigned int> >)
-                .def("conflicts", &po::extended_typed_value<vector<unsigned int> >::conflicts)
-                .def("depends", &po::extended_typed_value<vector<unsigned int> >::depends)
-
-          , class_<po::extended_typed_value<vector<int64_t> >, po::value_semantic>("typed_composing_value_int64")
-                .def("notifier", &po_notifier<vector<int64_t> >)
-                .def("conflicts", &po::extended_typed_value<vector<int64_t> >::conflicts)
-                .def("depends", &po::extended_typed_value<vector<int64_t> >::depends)
-
-          , class_<po::extended_typed_value<vector<uint64_t> >, po::value_semantic>("typed_composing_value_uint64")
-                .def("notifier", &po_notifier<vector<uint64_t> >)
-                .def("conflicts", &po::extended_typed_value<vector<uint64_t> >::conflicts)
-                .def("depends", &po::extended_typed_value<vector<uint64_t> >::depends)
-
-          , class_<po::extended_typed_value<vector<double> >, po::value_semantic>("typed_composing_value_float")
-                .def("notifier", &po_notifier<vector<double> >)
-                .def("conflicts", &po::extended_typed_value<vector<double> >::conflicts)
-                .def("depends", &po::extended_typed_value<vector<double> >::depends)
-
-          , class_<po::extended_typed_value<vector<string> >, po::value_semantic>("typed_composing_value_string")
-                .def("notifier", &po_notifier<vector<string> >)
-                .def("conflicts", &po::extended_typed_value<vector<string> >::conflicts)
-                .def("depends", &po::extended_typed_value<vector<string> >::depends)
-                .def("choices", &po_composing_choices<string>)
-
-          , def("bool_switch", &po_bool_switch)
-          , def("int", &po_value<int>)
-          , def("uint", &po_value<unsigned int>)
-          , def("int64", &po_value<int64_t>)
-          , def("uint64", &po_value<uint64_t>)
-          , def("float", &po_value<double>)
-          , def("string", &po_value<string>)
-          , def("int_array", &po_value<multi_array<int, 1> >)
-          , def("uint_array", &po_value<multi_array<unsigned int, 1> >)
-          , def("int64_array", &po_value<multi_array<int64_t, 1> >)
-          , def("uint64_array", &po_value<multi_array<uint64_t, 1> >)
-          , def("float_array", &po_value<multi_array<double, 1> >)
-          , def("composing_int", &po_composing_value<int>)
-          , def("composing_uint", &po_composing_value<unsigned int>)
-          , def("composing_int64", &po_composing_value<int64_t>)
-          , def("composing_uint64", &po_composing_value<uint64_t>)
-          , def("composing_float", &po_composing_value<double>)
-          , def("composing_string", &po_composing_value<string>)
+          , class_<po::option_description>("option_description")
+                .def(constructor<char const*, po::value_semantic*>(), adopt(_3))
+                .def(constructor<char const*, po::value_semantic*, char const*>(), adopt(_3))
+                .def("key", &po::option_description::key)
+                .property("description", &po::option_description::description)
+                .property("long_name", &po::option_description::long_name)
+                .property("semantic", &po::option_description::semantic)
+                .property("format_name", &po::option_description::format_name)
+                .property("format_parameter", &po::option_description::format_parameter)
 
           , class_<po::options_description>("options_description")
                 .def(constructor<>())
+                .def(constructor<unsigned int>())
+                .def(constructor<unsigned int, unsigned int>())
                 .def(constructor<string>())
-                .def("add", &po_add_option_description)
-                .def("add", &po_add_options_description)
+                .def(constructor<string, unsigned int>())
+                .def(constructor<string, unsigned int, unsigned int>())
+                .def(tostring(const_self))
+                .def("add", &add_option)
+                .def("add", &add_options)
+                .property("options", &po::options_description::options)
+
+          , class_<po::positional_options_description>("positional_options_description")
+                .def(constructor<>())
+                .def("add", &po::positional_options_description::add)
+
+          , class_<po::command_line_parser>("command_line_parser")
+                .def(constructor<vector<string> const&>())
+                .def("options", &po::command_line_parser::options, return_reference_to(_1))
+                .def("positional", &po::command_line_parser::positional, return_reference_to(_1))
+                .def("allow_unregistered", &po::command_line_parser::allow_unregistered, return_reference_to(_1))
+                .def("disallow_guessing", &disallow_guessing, return_reference_to(_1))
+                .def("group_parser", &group_parser, return_reference_to(_1))
+                .def("run", &po::command_line_parser::run)
+
+          , class_<po::parsed_options>("parsed_options")
+
+          , class_<po::variables_map>("variables_map")
+                .def(constructor<>())
+                .def("store", &variables_map_store)
+                .def("notify", &variables_map_notify)
+                .def("count", &po::variables_map::count)
         ]
     ];
+
+    typed_value<bool                    >(L, "boolean", "value"       , "multi_value"       );
+    typed_value<string                  >(L, "string" , "value"       , "multi_value"       );
+    typed_value<int32_t                 >(L, "int32"  , "value"       , "multi_value"       );
+    typed_value<int64_t                 >(L, "int64"  , "value"       , "multi_value"       );
+    typed_value<uint32_t                >(L, "uint32" , "value"       , "multi_value"       );
+    typed_value<uint64_t                >(L, "uint64" , "value"       , "multi_value"       );
+    typed_value<float                   >(L, "float32", "value"       , "multi_value"       );
+    typed_value<double                  >(L, "float64", "value"       , "multi_value"       );
+
+    typed_value<ublas::vector<int32_t>  >(L, "int32"  , "value_vector", "multi_value_vector");
+    typed_value<ublas::vector<int64_t>  >(L, "int64"  , "value_vector", "multi_value_vector");
+    typed_value<ublas::vector<uint32_t> >(L, "uint32" , "value_vector", "multi_value_vector");
+    typed_value<ublas::vector<uint64_t> >(L, "uint64" , "value_vector", "multi_value_vector");
+    typed_value<ublas::vector<float>    >(L, "float32", "value_vector", "multi_value_vector");
+    typed_value<ublas::vector<double>   >(L, "float64", "value_vector", "multi_value_vector");
+
+    typed_value<ublas::matrix<int32_t>  >(L, "int32"  , "value_matrix", "multi_value_matrix");
+    typed_value<ublas::matrix<int64_t>  >(L, "int64"  , "value_matrix", "multi_value_matrix");
+    typed_value<ublas::matrix<uint32_t> >(L, "uint32" , "value_matrix", "multi_value_matrix");
+    typed_value<ublas::matrix<uint64_t> >(L, "uint64" , "value_matrix", "multi_value_matrix");
+    typed_value<ublas::matrix<float>    >(L, "float32", "value_matrix", "multi_value_matrix");
+    typed_value<ublas::matrix<double>   >(L, "float64", "value_matrix", "multi_value_matrix");
+
     return 0;
 }
 

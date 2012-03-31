@@ -1,5 +1,5 @@
 /*
- * Copyright © 2008-2011  Peter Colberg
+ * Copyright © 2008-2012  Peter Colberg
  *
  * This file is part of HALMD.
  *
@@ -19,6 +19,8 @@
 
 #include <boost/bind.hpp>
 #include <boost/lexical_cast.hpp>
+#include <boost/system/error_code.hpp>
+#include <boost/system/system_error.hpp>
 #include <boost/tuple/tuple.hpp>
 
 #include <halmd/io/logger.hpp>
@@ -27,22 +29,50 @@
 #include <halmd/utility/posix_signal.hpp>
 
 using namespace boost;
+using namespace boost::system;
 using namespace std;
 
 namespace halmd {
 
-// FIXME error code handling (with boost::system::system_error)
-
-posix_signal::posix_signal()
+/**
+ * Block all signals
+ *
+ * @returns signal set with blocked signals
+ */
+sigset_t posix_signal::block_signals()
 {
-    sigemptyset(&set_);
-    pthread_sigmask(0, NULL, &oldset_);
+    sigset_t set;
+    sigfillset(&set);
+    error_code ec(pthread_sigmask(SIG_SETMASK, &set, NULL), get_posix_category());
+    if (ec != errc::success) {
+        throw system_error(ec);
+    }
+    return set;
 }
 
-posix_signal::~posix_signal()
-{
-    pthread_sigmask(SIG_SETMASK, &oldset_, NULL);
-}
+/**
+ * Block all signals on program startup
+ *
+ * The CUDA library interfers with signal blocking.
+ *
+ * We can only speculate as to what is happening in libcuda.so:
+ *
+ *    # strings /usr/lib64/libcuda.so | grep ^sig
+ *    sigemptyset
+ *    sigaddset
+ *    sigprocmask
+ *
+ * If we block signals before creating a CUDA context in the device module,
+ * signal handling works as expected. If we block signals after creating a
+ * CUDA context, signal handling fails, e.g. on TERM the process aborts.
+ *
+ * As a work-around, we block *all* signals using static initialisation,
+ * and register the handlers later, upon construction of posix_signal.
+ *
+ * The static variable posix_signal::set_ is used by class members, which
+ * prevents the compiler from optimizing away the call to block_signals().
+ */
+sigset_t posix_signal::set_ = posix_signal::block_signals();
 
 /**
  * register signal handler
@@ -55,10 +85,6 @@ connection posix_signal::on_signal(int signum, slot_function_type const& slot)
     handler_map_type::iterator it;
     bool inserted;
     tie(it, inserted) = handler_.insert(make_pair(signum, handler_type()));
-    if (inserted) {
-        sigaddset(&set_, signum);
-        pthread_sigmask(SIG_BLOCK, &set_, NULL);
-    }
     return it->second.connect(slot);
 }
 
@@ -128,11 +154,10 @@ string posix_signal::name(int signum)
 void posix_signal::handle(int signum) const
 {
     handler_map_type::const_iterator it = handler_.find(signum);
-    if (it == handler_.end()) {
-        throw std::logic_error("blocked unregistered signal " + name(signum));
-    }
     LOG_WARNING("process received signal " << name(signum));
-    it->second(signum);
+    if (it != handler_.end()) {
+        it->second(signum);
+    }
 }
 
 template <int signum>

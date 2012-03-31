@@ -6,4 +6,5 @@ Modules
    :glob:
 
    halmd/*
+   halmd/io/index
    halmd/utility/index

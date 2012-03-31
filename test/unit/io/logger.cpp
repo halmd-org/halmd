@@ -20,6 +20,8 @@
 #define BOOST_TEST_MODULE logger
 #include <boost/test/unit_test.hpp>
 
+#include <boost/assign.hpp>
+#include <boost/foreach.hpp>
 #include <boost/shared_ptr.hpp>
 #include <fstream>
 #include <iostream>
@@ -29,6 +31,7 @@
 #include <halmd/io/logger.hpp>
 
 using namespace boost;
+using namespace boost::assign;
 using namespace halmd;
 using namespace std;
 
@@ -124,17 +127,23 @@ BOOST_AUTO_TEST_CASE( log_levels )
 {
     string const logfile("test_unit_io_logger.log");
 
+    vector<logging::severity_level> log_levels = list_of
+        (logging::error)
+        (logging::warning)
+        (logging::info)
+        (logging::debug)
+        (logging::trace)
+        ;
+
     // sweep all verbosities
-    for (int log_level = -1; log_level <= 5; log_level++) {
-        logging::severity_level s = static_cast<logging::severity_level>(log_level);
-        logging::get().open_console(s);
-        logging::get().open_file(logfile, s);
+    BOOST_FOREACH(logging::severity_level log_level, log_levels) {
+        logging::get().open_console(log_level);
+        logging::get().open_file(logfile, log_level);
 
         // capture console output
         console cons;
 
         LOG("info");
-        LOG_FATAL("fatal");
         LOG_ERROR("error");
         LOG_WARNING("warning");
         LOG_DEBUG("debugging");
@@ -142,7 +151,7 @@ BOOST_AUTO_TEST_CASE( log_levels )
 
         fstream file(logfile.c_str());
 #ifdef NDEBUG
-        int max_level = min(log_level, static_cast<int>(logging::info));
+        logging::severity_level max_level = min(log_level, logging::info);
         BOOST_CHECK_EQUAL( count_lines(file), max_level + 1 );
         BOOST_CHECK_EQUAL( count_lines(cons.stream()), max_level + 1 );
 #else

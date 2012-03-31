@@ -17,6 +17,7 @@
 -- along with this program.  If not, see <http://www.gnu.org/licenses/>.
 --
 
+local log               = require("halmd.io.log")
 local module            = require("halmd.utility.module")
 local mdsim = {
     clock               = require("halmd.mdsim.clock")
@@ -55,7 +56,7 @@ function M.__new(args)
     -- dependency injection
     local phase_space = assert(args.phase_space, "missing parameter: phase_space")
     assert(type(phase_space) == "table", "invalid table")
-    local logger = assert(args.logger)
+    local logger = log.logger({label = "density_mode"})
 
     local wavenumbers = args.wavenumbers
     local max_wavenumber = args.max_wavenumber or 12.6 -- default value, approx. 4π

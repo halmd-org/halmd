@@ -17,6 +17,7 @@
 -- along with this program.  If not, see <http://www.gnu.org/licenses/>.
 --
 
+local log               = require("halmd.io.log")
 local module            = require("halmd.utility.module")
 local mdsim = {
     clock               = require("halmd.mdsim.clock")
@@ -54,7 +55,7 @@ function M.__new(args)
     local sampler = observables.sampler() -- singleton
     local maximum_time = assert(sampler.total_time)
     local resolution = clock.timestep * every
-    local logger = assert(args.logger) -- module logger
+    local logger = log.logger({label = "blocking_scheme"})
     local blocking_scheme = assert(blocking_scheme_wrapper)
     blocking_scheme = blocking_scheme(clock, maximum_time, resolution, size, shift, separation, logger)
 

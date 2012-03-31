@@ -18,12 +18,12 @@
  */
 
 #include <luabind/class_info.hpp>
+#include <stdexcept>
 
 #include <halmd/io/logger.hpp>
 #include <halmd/script.hpp>
 #include <halmd/utility/filesystem.hpp>
 #include <halmd/utility/lua/lua.hpp>
-#include <halmd/utility/lua/program_options.hpp>
 #include <halmd/version.h>
 
 using namespace boost;
@@ -44,20 +44,40 @@ script::script()
 {
     // load Lua standard libraries
     luaL_openlibs(L);
+    // load Luabind into Lua interpreter
+    load_luabind();
     // set Lua package path
     package_path();
     // set Lua C package path
     package_cpath();
-    // translate C++ standard exceptions into error messages
-    register_exception_handlers();
-    // setup global structures and Lua class support
-    luabind::open(L);
-    // class_info(), class_names()
-    luabind::bind_class_info(L);
     // load HALMD Lua C++ wrapper
     luaopen_halmd_base(L);
     // prepare Lua 5.2 compatible environment
     lua_compat();
+}
+
+/**
+ * Translate C++ exception into Lua error message
+ */
+static void translate_exception(lua_State* L, std::exception const& e)
+{
+    lua_pushstring(L, e.what());
+}
+
+/**
+ * Load Luabind into Lua interpreter
+ */
+void script::load_luabind()
+{
+    using namespace luabind;
+    // setup global structures and Lua class support
+    open(L);
+    // print Lua stack trace on error
+    set_pcall_callback(&script::traceback);
+    // class_info(), class_names()
+    bind_class_info(L);
+    // translate C++ exception into Lua error message
+    register_exception_handler<std::exception>(&translate_exception);
 }
 
 /**
@@ -159,162 +179,26 @@ void script::lua_compat()
 
 /*
  * Load and execute Lua script
+ *
+ * If filename is empty, loads from standard input.
  */
-void script::dofile(string const& file_name)
+void script::dofile(string const& filename)
 {
     using namespace luabind;
 
+    // if filename is NULL, luaL_loadfile loads from standard input
+    char const* fn = NULL;
+    if (!filename.empty()) {
+        fn = filename.c_str();
+    }
     // error handler passed to lua_pcall as last argument
     lua_pushcfunction(L, &script::traceback);
 
-    if (luaL_loadfile(L, file_name.c_str()) || lua_pcall(L, 0, 1, 1)) {
-        LOG_ERROR(lua_tostring(L, -1));
-        lua_pop(L, 1); //< remove error message
-        throw runtime_error("failed to load Lua script");
+    if (luaL_loadfile(L, fn) || lua_pcall(L, 0, 0, 1)) {
+        string error(lua_tostring(L, -1));
+        lua_pop(L, 1);
+        throw runtime_error(error);
     }
-
-    // store return value of script as HALMD script function
-    // this function will be called later in script::run,
-    // after the command-line options have been parsed
-    script_ = object(from_stack(L, -1));
-    lua_pop(L, 1);
-}
-
-/**
- * Assemble program options
- */
-void script::options(options_parser& parser)
-{
-    using namespace luabind;
-
-    object option = call_function<object>(L, "require", "halmd.option");
-    // retrieve the Lua function before the try-catch block
-    // to avoid bogus error message on the Lua stack in case
-    // call_function throws an exception
-    object option_get = option["get"];
-    try {
-        scoped_pcall_callback pcall_callback(&traceback);
-        call_function<void>(option_get, ref(parser));
-    }
-    catch (luabind::error const& e) {
-        LOG_ERROR(lua_tostring(e.state(), -1));
-        lua_pop(e.state(), 1); //< remove error message
-        throw;
-    }
-}
-
-/**
- * Set parsed command line options
- */
-void script::parsed(po::variables_map const& vm)
-{
-    using namespace luabind;
-
-    object option = call_function<object>(L, "require", "halmd.option");
-    object option_set = option["set"];
-    try {
-        scoped_pcall_callback pcall_callback(&traceback);
-        call_function<void>(option_set, vm);
-    }
-    catch (luabind::error const& e) {
-        LOG_ERROR(lua_tostring(e.state(), -1));
-        lua_pop(e.state(), 1); //< remove error message
-        throw;
-    }
-}
-
-/**
- * Run simulation
- *
- * While the simulation is setup with Lua scripting, it entirely runs in
- * C++, outside of the Lua interpreter. This avoids unnecessary Lua errors
- * in case a C++ exception is thrown inside a module, e.g. if a defect GPU
- * fails during a long simulation run and a CUDA error is thrown. Further
- * it simplifies stack tracebacks when running inside a debugger.
- *
- * To allow the script to run multiple partial simulations, we use Lua
- * coroutines. The Lua function script() is started, and executes until
- * yielding a slot, e.g. sampler.setup or sampler.run. The slot is then
- * executed outside of the Lua interpreter. The Lua function is then
- * resumed. Script execution finishes when the Lua function returns.
- *
- * We use the Lua C API instead of luabind::resume_function and
- * luabind::resume, as the latter do not handle errors properly,
- * but abort with an assertion error (or segmentation fault if
- * compiled with NDEBUG).
- */
-void script::run()
-{
-    using namespace luabind;
-
-    // create a new Lua thread
-    //
-    // Lua threads allow functions, or coroutines, to run concurrently.
-    // In contrast to operating systems threads, however, only one
-    // function is running at any time. While one function is running,
-    // all other functions wait for it to yield or return. A function
-    // that has yielded continues execution after being resumed by
-    // another function.
-    //
-    // http://www.lua.org/pil/9.html
-    // http://www.lua.org/manual/5.1/manual.html#2.11
-    //
-    // override member pointer L to master state with thread state,
-    // to prevent errors due to accidental use of master state
-    lua_State* const L = lua_newthread(script::L);
-
-    // The object wrapper ensures that the thread is released for garbage
-    // collection in case a C++ exception is thrown. Note that the new
-    // thread is immediately popped from the stack.
-    object thread(from_stack(script::L, -1));
-    lua_pop(script::L, 1);
-
-    // push HALMD script function onto stack
-    script_.push(L);
-    if (lua_isnil(L, -1)) {
-        throw runtime_error("missing callable return value from HALMD script");
-    }
-
-    int status;
-    do {
-        // if Lua function is on top of the stack, create a new coroutine
-        // from it, otherwise resume execution of the existing coroutine
-#if LUA_VERSION_NUM < 502
-        status = lua_resume(L, 0);
-#else
-        status = lua_resume(L, NULL, 0);
-#endif
-
-        // lua_resume returns
-        //  - 0 if the function has returned successfully
-        //  - LUA_YIELD if the function has yielded
-        //  - other values if an error occurred
-        if (status == 0) {
-            // we expect no return value
-        }
-        else if (status == LUA_YIELD) {
-            // we expect a slot as the yield value
-            object ret(from_stack(L, -1));
-            lua_pop(L, 1);
-            slot_function_type slot = object_cast<slot_function_type>(ret);
-
-            // Some C++ modules are only needed during the Lua script stage,
-            // e.g. the trajectory reader. To make sure these modules are
-            // destructed before running the simulation, invoke the Lua
-            // garbage collector now.
-            lua_gc(L, LUA_GCCOLLECT, 0);
-
-            // execute the slot, e.g. sampler.setup or sampler.run
-            slot();
-        }
-        else {
-            script::traceback(L);
-            LOG_ERROR(lua_tostring(L, -1));
-            lua_pop(L, 1); // remove error message
-            throw runtime_error("failed to run simulation script");
-        }
-    }
-    while (status == LUA_YIELD);
 }
 
 /**
@@ -324,93 +208,15 @@ void script::run()
  */
 int script::traceback(lua_State* L)
 {
-    lua_pushliteral(L, "\n");
     lua_getglobal(L, "debug");
     lua_pushliteral(L, "traceback");
     lua_rawget(L, -2);
     lua_remove(L, -2);
-    lua_call(L, 0, 1);
-    lua_concat(L, 3);
+    lua_pushvalue(L, -2);
+    lua_remove(L, -3);
+    lua_pushnumber(L, 2);
+    lua_call(L, 2, 1);
     return 1;
-}
-
-static void translate_logic_error(lua_State* L, logic_error const& e)
-{
-    lua_pushliteral(L, "Logic error: ");
-    lua_pushstring(L, e.what());
-    lua_concat(L, 2);
-}
-
-static void translate_domain_error(lua_State* L, domain_error const& e)
-{
-    lua_pushliteral(L, "Domain error: ");
-    lua_pushstring(L, e.what());
-    lua_concat(L, 2);
-}
-
-static void translate_invalid_argument(lua_State* L, invalid_argument const& e)
-{
-    lua_pushliteral(L, "Invalid argument: ");
-    lua_pushstring(L, e.what());
-    lua_concat(L, 2);
-}
-
-static void translate_length_error(lua_State* L, length_error const& e)
-{
-    lua_pushliteral(L, "Length error: ");
-    lua_pushstring(L, e.what());
-    lua_concat(L, 2);
-}
-
-static void translate_out_of_range(lua_State* L, out_of_range const& e)
-{
-    lua_pushliteral(L, "Out-of-range error: ");
-    lua_pushstring(L, e.what());
-    lua_concat(L, 2);
-}
-
-static void translate_runtime_error(lua_State* L, runtime_error const& e)
-{
-    lua_pushliteral(L, "Runtime error: ");
-    lua_pushstring(L, e.what());
-    lua_concat(L, 2);
-}
-
-static void translate_range_error(lua_State* L, range_error const& e)
-{
-    lua_pushliteral(L, "Range error: ");
-    lua_pushstring(L, e.what());
-    lua_concat(L, 2);
-}
-
-static void translate_overflow_error(lua_State* L, overflow_error const& e)
-{
-    lua_pushliteral(L, "Overflow error: ");
-    lua_pushstring(L, e.what());
-    lua_concat(L, 2);
-}
-
-static void translate_underflow_error(lua_State* L, underflow_error const& e)
-{
-    lua_pushliteral(L, "Underflow error: ");
-    lua_pushstring(L, e.what());
-    lua_concat(L, 2);
-}
-
-void script::register_exception_handlers()
-{
-    // C++ standard exceptions
-    // http://www.cplusplus.com/reference/std/stdexcept/
-    using namespace luabind;
-    register_exception_handler<logic_error>(&translate_logic_error);
-    register_exception_handler<domain_error>(&translate_domain_error);
-    register_exception_handler<invalid_argument>(&translate_invalid_argument);
-    register_exception_handler<length_error>(&translate_length_error);
-    register_exception_handler<out_of_range>(&translate_out_of_range);
-    register_exception_handler<runtime_error>(&translate_runtime_error);
-    register_exception_handler<range_error>(&translate_range_error);
-    register_exception_handler<overflow_error>(&translate_overflow_error);
-    register_exception_handler<underflow_error>(&translate_underflow_error);
 }
 
 } // namespace halmd

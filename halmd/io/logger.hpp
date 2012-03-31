@@ -29,7 +29,6 @@
 #include <boost/log/sources/severity_logger.hpp>
 #include <boost/noncopyable.hpp>
 #include <boost/shared_ptr.hpp>
-#include <lua.hpp>
 
 namespace halmd {
 
@@ -59,7 +58,6 @@ public:
      */
     enum severity_level
     {
-        fatal,
         error,
         warning,
         info,
@@ -83,14 +81,9 @@ public:
     void open_file(std::string file_name, severity_level level);
     /** close log to file */
     void close_file();
-    /** Lua bindings */
-    static void luaopen(lua_State* L);
 
     /**
      * get logger singleton instance
-     *
-     * To ensure that logging is enabled by default, which is especially
-     * convenient in the unit tests, we make logging a singleton instance.
      */
     static logging& get()
     {
@@ -163,8 +156,6 @@ extern boost::shared_ptr<logger> const logger_;
     }                                                   \
 }
 
-#define LOG_FATAL(format)           HALMD_LOG(logging::fatal, format)
-#define LOG_FATAL_ONCE(format)      HALMD_LOG_ONCE(logging::fatal, format)
 #define LOG_ERROR(format)           HALMD_LOG(logging::error, format)
 #define LOG_ERROR_ONCE(format)      HALMD_LOG_ONCE(logging::error, format)
 #define LOG_WARNING(format)         HALMD_LOG(logging::warning, format)

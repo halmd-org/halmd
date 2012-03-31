@@ -60,7 +60,7 @@ public:
       , float_type skin
       , boost::shared_ptr<logger_type> logger = boost::make_shared<logger_type>()
     );
-    virtual void update();
+    void update();
 
     //! returns neighbour list skin in MD units
     float_type r_skin() const

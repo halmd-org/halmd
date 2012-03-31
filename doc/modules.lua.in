@@ -58,10 +58,15 @@ function parse_module(sourcedir, source)
                     table.insert(entry, m)
                 end
             else
-                local m, n = line:match("^function%s*[%w_]+%.(([%w_]+)%([^)]*%))")
-                if m then
-                    entry.func = m
-                    entry.name = n
+                local mod, sep, func, name = line:match("^function%s*([%w_]+)([.:])(([%w_]+)%([^)]*%))")
+                if mod then
+                    if sep == ":" then
+                        entry.class = mod
+                    else
+                        entry.module = mod
+                    end
+                    entry.func = func
+                    entry.name = name
                 end
                 for i = #entry, 1, -1 do
                     if #entry[i] > 0 then
@@ -99,26 +104,49 @@ function render_module(parsed)
     for i = 1, #parsed do
         local entry = parsed[i]
         local indent = ""
-        local class = false
+        local constructor = false
+        local methods = {}
         if entry.func then
             if entry.name == "__new" then
-                class = true
+                constructor = true
                 l(".. currentmodule:: %s", parsed.namespace)
                 l()
                 l(".. class:: %s", entry.func:gsub("^__new", parsed.name))
-            else
-                l(".. function:: %s", entry.func)
+            elseif entry.module then
+                for i = 1, #parsed do
+                    if parsed[i].class == entry.name then
+                        table.insert(methods, parsed[i])
+                    end
+                end
+                if #methods > 0 then
+                    l(".. class:: %s", entry.func)
+                else
+                    l(".. function:: %s", entry.func)
+                end
             end
             l()
             indent = "   "
         end
-        for j = 1, #entry do
-            l("%s%s", indent, entry[j])
+        if not entry.class then
+            for j = 1, #entry do
+                l("%s%s", indent, entry[j])
+            end
+            l()
         end
-        l()
-        if class then
+        if constructor then
             l(".. currentmodule:: %s.%s", parsed.namespace, parsed.name)
             l()
+        end
+        if #methods > 0 then
+            for i = 1, #methods do
+                local entry = methods[i]
+                l("%s.. method:: %s", indent, entry.func)
+                l()
+                for j = 1, #entry do
+                    l("%s%s%s", indent, indent, entry[j])
+                end
+                l()
+            end
         end
     end
 
