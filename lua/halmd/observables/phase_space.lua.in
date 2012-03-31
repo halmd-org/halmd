@@ -24,6 +24,9 @@ local mdsim = {
     box                 = require("halmd.mdsim.box")
   , clock               = require("halmd.mdsim.clock")
 }
+local observables = {
+    sampler             = require("halmd.observables.sampler"),
+}
 local samples = {
     phase_space         = require("halmd.observables.samples.phase_space")
   , particle_group      = require("halmd.observables.samples.particle_group")
@@ -67,9 +70,25 @@ local M = module("halmd.observables.phase_space")
 --    the same sampler with multiple observable modules for optimal
 --    performance.
 --
--- .. attribute:: acquire
 --
---    Callable slot to acquire phase space sample.
+-- .. method:: writer(file, args)
+--
+--    Write trajectory of particle group to file.
+--
+--    http://nongnu.org/h5md/draft.html#trajectory-group
+--
+--    :param file: instance of file writer
+--    :param table args: keyword arguments (optional)
+--    :param number args.every: sampling interval (optional)
+--    :param string args.group: name of trajectory group (optional)
+--    :returns: instance of group writer
+--
+--    If ``every`` is not specified, a phase space sample will be written
+--    at the start and end of the simulation.
+--
+--    If ``group`` is omitted, the particle group's label will be used as
+--    the name of the trajectory group.
+--
 --
 -- .. attribute:: group
 --
@@ -79,6 +98,10 @@ local M = module("halmd.observables.phase_space")
 -- .. attribute:: sample
 --
 --    The phase_space sample used by the sampler.
+--
+-- .. attribute:: acquire
+--
+--    Callable slot to acquire phase space sample.
 --
 function M.__new(args)
     local particle = args.particle
@@ -103,12 +126,36 @@ function M.__new(args)
         local logger = log.logger({label = ("phase_space (%s)"):format(label)})
         local sample = samples.phase_space({particle = group, memory = memory})
         local sampler = phase_space_wrapper(sample, group, box, clock, logger)
+
         sampler.sample = property(function(self)
             return sample
         end)
         sampler.group = property(function(self)
             return group
         end)
+
+        sampler.writer = function(self, file, args)
+            local name = args.group or assert(self.group.label)
+            local writer = file:writer({location = {"trajectory", name}, mode = "append"})
+            writer:on_prepend_write(self.acquire)
+
+            local sample = assert(self.sample)
+            writer:on_write(sample.position, {"position"})
+            writer:on_write(sample.velocity, {"velocity"})
+            writer:on_write(sample.types, {"species"})
+
+            local every = args.every
+            local sampler = observables.sampler() -- singleton
+            if every and every > 0 then
+                sampler:on_sample{writer.write, every, tracker = writer}
+            else
+                sampler:on_start{writer.write, tracker = writer}
+                sampler:on_finish{writer.write, tracker = writer}
+            end
+
+            return writer
+        end
+
         return sampler
     end
 
