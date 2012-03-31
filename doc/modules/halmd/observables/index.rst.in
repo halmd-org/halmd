@@ -1,0 +1,9 @@
+Observables
+===========
+
+.. toctree::
+   :maxdepth: 2
+   :glob:
+
+   *
+   samples/index

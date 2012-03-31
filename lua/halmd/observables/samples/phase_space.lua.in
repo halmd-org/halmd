@@ -48,14 +48,47 @@ local property = property
 -- grab standard library
 local assert = assert
 
+---
+-- Phase Space
+-- ===========
+--
+-- A :class:`phase_space` sample contains the phase space coordinates of
+-- all or a subset of the particles in the system. The sample contains
+-- the position (periodically extended by the net number of boundary
+-- crossings in each dimension of a particle), the velocity, the integer
+-- species and the mass of the particles.
+--
+-- The :class:`phase_space` sample is the conjugate data structure to
+-- :class:`halmd.mdsim.particle`. The latter is sorted by positions,
+-- according to a space-filling curve, while the former is sorted by
+-- particle tag. The array index of particle in :class:`phase_space`
+-- remains the same over the course of the simulation, which allows
+-- the calculation of single-particle observables, such as the
+-- mean-square displacement.
+--
 local M = module("halmd.observables.samples.phase_space")
 
+---
+-- Construct a phase_space sample.
 --
--- construct phase_space module
+-- :param table args: keyword arguments
+-- :param args.particle: instance of particle or particle_group
+-- :param args.memory: memory location of sample ("host", "gpu")
+-- :returns: instance of phase_space sample
 --
--- @param args       parameter table
---   args.particle          instance of particle or particle_group
---   args.memory            specify memory location of sample ("host", "gpu")
+-- .. attribute:: dimension
+--
+--    The dimension of positions and velocities.
+--
+-- In a debug build, additional attributes are available:
+--
+-- .. attribute:: position
+--
+--    A sequence of particle positions ordered by tag.
+--
+-- .. attribute:: velocity
+--
+--    A sequence of particle velocities ordered by tag.
 --
 function M.__new(args)
     local particle = assert(args.particle, "missing parameter: particle")
