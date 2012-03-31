@@ -58,6 +58,14 @@ local M = module("halmd.io.writers.h5md")
 --
 -- .. warning:: The output file will be truncated if it exists.
 --
+-- The file may be flushed to disk by sending the USR2 signal to the process::
+--
+--    killall -USR2 halmd
+--
+-- This yields a consistent snapshot on disk (until the next sample
+-- is written), which is useful to peek at output data during the
+-- simulation.
+--
 -- .. method:: writer(args)
 --
 --    Construct a group writer.
