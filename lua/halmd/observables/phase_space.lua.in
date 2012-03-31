@@ -67,6 +67,10 @@ local M = module("halmd.observables.phase_space")
 --    the same sampler with multiple observable modules for optimal
 --    performance.
 --
+-- .. attribute:: acquire
+--
+--    Callable slot to acquire phase space sample.
+--
 -- .. attribute:: group
 --
 --    The particle group used by the sampler.
