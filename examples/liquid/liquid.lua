@@ -62,7 +62,7 @@ local function liquid(args)
     local particle_group = observables.samples.particle_group{
         particle = particle, species = species
     }
-    local phase_space = observables.phase_space{particle_group = particle_group}
+    local phase_space = observables.phase_space{particle = particle_group}
 
     -- Sample macroscopic state variables.
     observables.thermodynamics{particle_group = { particle }, force = { force }, every = args.sampling.state_vars}
