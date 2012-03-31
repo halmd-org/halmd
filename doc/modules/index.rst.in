@@ -6,6 +6,7 @@ Modules
    :glob:
 
    halmd/*
+   halmd/mdsim/index
    halmd/io/index
    halmd/observables/index
    halmd/utility/index
