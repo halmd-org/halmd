@@ -26,6 +26,7 @@ local mdsim = {
 }
 local samples = {
     phase_space         = require("halmd.observables.samples.phase_space")
+  , particle_group      = require("halmd.observables.samples.particle_group")
 }
 
 -- grab C++ wrappers
@@ -66,48 +67,67 @@ local M = module("halmd.observables.phase_space")
 --    the same sampler with multiple observable modules for optimal
 --    performance.
 --
+-- .. attribute:: group
+--
+--    The particle group used by the sampler.
+--    If a particle instance was given, an ``all`` particle_group.
+--
+-- .. attribute:: sample
+--
+--    The phase_space sample used by the sampler.
+--
 function M.__new(args)
-    -- parameters
-    local particle_group = assert(args.particle_group, "missing parameter: particle_group")
-    assert(type(particle_group) == "table", "invalid table")
-    local memory = args.memory or (device() and "gpu" or "host")
-    local logger = log.logger({label = "phase_space"})
-
-    -- dependency injection
+    local particle = args.particle
+    if not particle then
+        error("missing parameter 'particle'", 3)
+    end
+    local memory = args.memory
+    if not memory then
+        memory = device() and "gpu" or "host"
+    end
     local box = mdsim.box() -- singleton
     local clock = mdsim.clock() -- singleton
 
-    local phase_space = {}
-    for i, group in ipairs(particle_group) do
-        local sample = assert(samples.phase_space{particle_group = group, memory = memory})
-        local sampler = phase_space_wrapper(sample, group, box, clock, logger)
-
-        -- store phase space sample as Lua property
-        sampler.sample = property(function(self) return sample end)
-
-        -- store memory as Lua property for profiler description
-        sampler.memory = property(function(self) return memory end)
-
-        -- store label as Lua property
+    local sampler = function(particle)
+        local group
+        if particle.particle then
+            group = particle
+        else
+            group = samples.particle_group({particle = particle})
+        end
         local label = assert(group.label)
-        sampler.label = property(function(self) return label end)
-
-        phase_space[i] = sampler
+        local logger = log.logger({label = ("phase_space (%s)"):format(label)})
+        local sample = samples.phase_space({particle = group, memory = memory})
+        local sampler = phase_space_wrapper(sample, group, box, clock, logger)
+        sampler.sample = property(function(self)
+            return sample
+        end)
+        sampler.group = property(function(self)
+            return group
+        end)
+        return sampler
     end
-    return phase_space
+
+    if type(particle) == "table" then
+        local samplers = {}
+        for i = 1, #particle do
+            table.insert(samplers, sampler(particle[i]))
+        end
+        return samplers
+    else
+        return sampler(particle)
+    end
 end
 
 --
 -- connect runtime accumulators to module profiler
 --
 function M.profile(self, profiler)
-    for i, phase_space in ipairs(self) do
-        local label = assert(phase_space.label)
-        local memory = assert(phase_space.memory)
-        local str = "phase space sample of " .. label .. " particles on " .. memory
-        profiler:on_profile{phase_space, acquire = "acquisition of " .. str}
-        profiler:on_profile{phase_space, reset = "reset " .. str}
-    end
+    local label = assert(self.group.label)
+    local memory = assert(self.sample.memory)
+    local desc = ("phase space sample of %s particles on %s"):format(label, memory)
+    profiler:on_profile({self, acquire = ("acquisition of %s"):format(desc)})
+    profiler:on_profile({self, reset = ("reset %s"):format(desc)})
 end
 
 return M
