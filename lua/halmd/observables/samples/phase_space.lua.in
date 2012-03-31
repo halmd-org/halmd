@@ -19,9 +19,6 @@
 
 local device            = require("halmd.utility.device")
 local module            = require("halmd.utility.module")
-local samples = {
-    particle_group      = require("halmd.observables.samples.particle_group")
-}
 
 -- grab C++ wrappers
 local phase_space_wrapper = {
@@ -104,15 +101,8 @@ function M.__new(args)
         error("missing argument 'memory'", 3)
     end
 
-    local particle_group
-    if particle.particle then
-        particle_group = particle
-    else
-        particle_group = samples.particle_group{particle = particle}
-    end
-
-    local dimension = assert(particle_group.dimension)
-    local size = assert(particle_group.size)
+    local dimension = assert(particle.dimension)
+    local size = assert(particle.size or particle.nbox)
 
     local phase_space
     if device() then
