@@ -44,7 +44,7 @@ local function liquid(args)
       , label = "all" -- FIXME make optional
     }
     -- create simulation box
-    mdsim.box{particles = {particle}}
+    local box = mdsim.box({particles = {particle}})
     -- add integrator
     mdsim.integrator{particle = particle}
     -- add force
@@ -57,12 +57,21 @@ local function liquid(args)
     -- Construct sampler.
     local sampler = observables.sampler{}
 
+    -- H5MD file writer
+    local writer = writers.h5md({path = ("%s.trj"):format(args.output)})
+    -- write box specification to H5MD file
+    box:writer(writer)
+
     -- Construct particle groups and phase space samplers by species (species are numbered 0, 1, 2, ...)
     local species = {} for i = 1, #args.particles do species[i] = i - 1 end -- FIXME avoid explicit for-loop!?
     local particle_group = observables.samples.particle_group{
         particle = particle, species = species
     }
     local phase_space = observables.phase_space{particle = particle_group}
+    -- write trajectory of particle groups to H5MD file
+    for i = 1, #phase_space do
+        phase_space[i]:writer(writer, {every = args.sampling.trajectory})
+    end
 
     -- Sample macroscopic state variables.
     observables.thermodynamics{particle_group = { particle }, force = { force }, every = args.sampling.state_vars}
