@@ -36,16 +36,35 @@ local assert = assert
 local ipairs = ipairs
 local type = type
 
+---
+-- Phase Space
+-- ===========
+--
+-- A phase_space sampler acquires particle coordinates from an instance of
+-- particle or particle_group. The sampler can copy particle data from
+-- host to host, gpu to host, or gpu to gpu memory. The particles are
+-- ordered by tag, which guarantees that a particle has the same array
+-- index over the course of the simulation.
+--
 local M = module("halmd.observables.phase_space")
 
+---
+-- Construct phase_space sampler.
 --
--- construct phase_space module
+-- :param table args: keyword arguments
+-- :param args.particle: instance, or sequence of instances, of particle or particle_group
+-- :param string args.memory: memory location of phase_space sample (optional)
+-- :returns: instance, or sequence of instances, of phase_space sampler
 --
--- @param args       parameter table
---   args.particle_group    list of particle_group instances with attached labels
---   args.memory            specify memory location of phase_space sample ("host", "gpu"),
---                          if omitted use "gpu" if device is available
--- @returns list of phase_space sampler instances with attached labels
+-- The supported values for ``memory`` are "host" and "gpu". If ``memory``
+-- is not specified, the memory location is selected according to the
+-- compute device.
+--
+-- .. note::
+--
+--    The sample will be updated at most *once* per step, so you can reuse
+--    the same sampler with multiple observable modules for optimal
+--    performance.
 --
 function M.__new(args)
     -- parameters
