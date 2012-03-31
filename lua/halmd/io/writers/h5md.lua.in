@@ -36,41 +36,74 @@ local io = io
 local setmetatable = setmetatable
 local type = type
 
+---
+-- H5MD Writer
+-- ===========
+--
+-- This module provides a file writer for the H5MD format.
+--
+-- http://nongnu.org/h5md/
+--
 local M = module("halmd.io.writers.h5md")
 
+---
+-- Construct H5MD writer.
 --
--- construct H5MD writer
+-- :param table args: keyword arguments
+-- :param string args.path: pathname of output file
+-- :returns: instance of file writer
+--
+-- Create the output file and writes the H5MD attribute group.
+--
+-- http://nongnu.org/h5md/draft.html#global-attributes
+--
+-- .. warning:: The output file will be truncated if it exists.
+--
+-- .. method:: writer(args)
+--
+--    Construct a group writer.
+--
+--    :param table args: keyword arguments
+--    :param table args.location: sequence with group's path
+--    :param string args.mode: write mode ("append" or "truncate")
+--    :returns: instance of group writer
+--
+--    Example for creating and using a truncate writer::
+--
+--       local writer = file:writer({location = {"trajectory", "box"}, mode = "truncate"})
+--       writer:on_write(box.origin, {"offset"})
+--       writer:on_write(box.edges, {"edges"})
+--
+--       local sampler = observables.sampler() -- singleton
+--       sampler:on_start(writer.write)
+--
+--    Example for creating and using an append writer::
+--
+--       local writer = file:writer({location = {"observables"}, mode = "append"})
+--       writer:on_prepend_write(observable.sample)
+--       writer:on_write(observable.en_pot, {"potential_energy"})
+--       writer:on_write(observable.en_kin, {"kinetic_energy"})
+--       writer:on_write(observable.en_tot, {"total_energy"})
+--
+--       local sampler = observables.sampler() -- singleton
+--       sampler:on_start(writer.write)
+--
+-- .. attribute:: flush
+--
+--    Callable slot to flush the output file to disk.
+--
+-- .. attribute:: root
+--
+--    HDF5 root group of the file.
+--
+-- .. attribute:: path
+--
+--    Filename of the file.
 --
 function M.__new(args)
     local path = assert(args.path, "missing path")
     local file = h5md.file(path)
 
-    -- extend H5MD file with a file:writer method
-    --
-    -- This function wraps the constructors of h5md::append and h5md::truncate,
-    -- which allows observable modules to construct a collective dataset writer
-    -- without knowledge of the file format.
-    --
-    -- Example for creating and using a truncate writer:
-    --
-    --   local writer = file:writer{location = {"trajectory", "box"}, mode = "truncate"}
-    --   writer:on_write(box.origin, {"offset"})
-    --   writer:on_write(box.edges, {"edges"})
-    --
-    --   local sampler = observables.sampler{} -- singleton
-    --   sampler:on_start(writer.write)
-    --
-    -- Example for creating and using an append writer:
-    --
-    --   local writer = file:writer{location = {"observables"}, mode = "append"}
-    --   writer:on_prepend_write(observable.sample)
-    --   writer:on_write(observable.en_pot, {"potential_energy"})
-    --   writer:on_write(observable.en_kin, {"kinetic_energy"})
-    --   writer:on_write(observable.en_tot, {"total_energy"})
-    --
-    --   local sampler = observables.sampler{} -- singleton
-    --   sampler:on_start(writer.write)
-    --
     file.writer = function(self, args)
         assert(type(args) == "table", "missing argument table")
         local writer
