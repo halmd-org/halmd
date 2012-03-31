@@ -112,13 +112,21 @@ function M.__new(args)
     end
 
     local dimension = assert(particle_group.dimension)
+    local size = assert(particle_group.size)
+
     local phase_space
     if device() then
-        phase_space = assert(phase_space_wrapper.gpu[memory][dimension])
+        phase_space = assert(phase_space_wrapper.gpu)
     else
-        phase_space = assert(phase_space_wrapper.host[memory][dimension])
+        phase_space = assert(phase_space_wrapper.host)
     end
-    local sample = phase_space(particle_group.size)
+    phase_space = phase_space[memory]
+    if not phase_space then
+        error(("undefined memory location '%s'"):format(tostring(memory)), 3)
+    end
+    phase_space = assert(phase_space[dimension])
+
+    local sample = phase_space(size)
 
     sample.memory = property(function(self)
         return memory
