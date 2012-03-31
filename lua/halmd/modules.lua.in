@@ -89,12 +89,22 @@ function M.register(module)
         local args = setmetatable({}, {__index = param})
         local object = module.new(args)
         if object then
-            -- store Lua module that created C++ module as read-only property
-            if not object.module then
-                object.module = property(function() return module end)
+            local apply_hooks = function(object)
+                -- store Lua module that created C++ module as read-only property
+                if not object.module then
+                    object.module = property(function() return module end)
+                end
+
+                hooks.register_object(object, module)
             end
 
-            hooks.register_object(object, module)
+            if type(object) == "table" then
+                for i = 1, #object do
+                    apply_hooks(object[i])
+                end
+            else
+                apply_hooks(object)
+            end
         end
         return object
     end
