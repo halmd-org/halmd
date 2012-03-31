@@ -17,7 +17,6 @@
 -- along with this program.  If not, see <http://www.gnu.org/licenses/>.
 --
 
-local hooks             = require("halmd.hooks")
 local module            = require("halmd.utility.module")
 local mdsim = {
     clock               = require("halmd.mdsim.clock")
@@ -123,43 +122,6 @@ function M.__new(args)
         end
         return writer
     end
-
-    -- create parameter group
-    local param = file.root:open_group("halmd")
-
-    -- store HALMD script to ease reproducibility
-    if args.script then
-        local f = assert(io.open(args.script, "r"))
-        local s = f:read("*all")
-        f:close()
-        param:write_attribute("script", h5.string(), s)
-    end
-
-    -- register hook to write HALMD parameters
-    hooks.register_module_hook(function(module, object)
-        local write_parameters = module.write_parameters
-        if write_parameters then
-            --
-            -- If write_parameters only stores global parameters, or stores
-            -- no parameters at all, the module's HDF5 parameter group would
-            -- remain empty. Therefore we delay creation by creating or opening
-            -- the group upon access of its methods.
-            --
-            local group = setmetatable({}, {
-                __index = function(self, name)
-                    local namespace = assert(module.namespace)
-                    local group = param:open_group(namespace)
-                    local method = group[name]
-                    if method then
-                        return function(self, ...)
-                            method(group, ...)
-                        end
-                    end
-                end
-            })
-            write_parameters(object, group, param)
-        end
-    end)
 
     -- flush H5MD file to disk on SIGUSR2
     local posix_signal = utility.posix_signal() -- singleton
