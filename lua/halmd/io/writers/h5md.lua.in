@@ -168,11 +168,10 @@ function M.__new(args)
     return file
 end
 
+---
+-- .. function:: version()
 --
--- returns module description
---
-function M.description()
-    return "H5MD file format"
-end
+--    Returns sequence of integers with major and minor H5MD version.
+M.version = assert(h5md.file.version)
 
 return M
