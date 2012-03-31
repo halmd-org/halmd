@@ -63,6 +63,9 @@ local M = module.singleton("halmd.mdsim.box")
 --
 --    http://nongnu.org/h5md/draft.html#box-specification
 --
+--    :param file: instance of file writer
+--    :returns: instance of group writer
+--
 --    Note that the box specification will not be written immediately,
 --    but upon the start of the simulation. The writer is connected
 --    to the on_start signal of sampler.
@@ -129,6 +132,7 @@ function M.__new(args)
         writer:on_write(self.origin, {"offset"})
         local sampler = observables.sampler() -- singleton
         sampler:on_start{writer.write, tracker = writer}
+        return writer
     end
 
     return self
