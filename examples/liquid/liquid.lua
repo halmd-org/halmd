@@ -73,9 +73,13 @@ local function liquid(args)
         phase_space[i]:writer(writer, {every = args.sampling.trajectory})
     end
 
+    -- H5MD file writer
+    local writer = writers.h5md({path = ("%s.obs"):format(args.output)})
     -- Sample macroscopic state variables.
-    observables.thermodynamics{particle_group = { particle }, force = { force }, every = args.sampling.state_vars}
-    observables.thermodynamics{particle_group = { particle_group[1] }, force = { force }, every = args.sampling.state_vars}
+    local msv = observables.thermodynamics{particle = particle_group, force = {force}, every = args.sampling.state_vars}
+    for i = 1, #msv do
+        msv[i]:writer(writer, {every = args.sampling.state_vars})
+    end
 
     -- Write trajectory to H5MD file.
     writers.trajectory{particle_group = particle_group, every = args.sampling.trajectory}
