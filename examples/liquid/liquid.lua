@@ -81,9 +81,6 @@ local function liquid(args)
         msv[i]:writer(writer, {every = args.sampling.state_vars})
     end
 
-    -- Write trajectory to H5MD file.
-    writers.trajectory{particle_group = particle_group, every = args.sampling.trajectory}
-
     -- Sample static structure factors, construct density modes before.
     local density_mode = observables.density_mode{
         phase_space = phase_space, max_wavevector = 15
