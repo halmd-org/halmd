@@ -1,5 +1,5 @@
 --
--- Copyright © 2010-2011  Peter Colberg and Felix Höfling
+-- Copyright © 2010-2012  Peter Colberg and Felix Höfling
 --
 -- This file is part of HALMD.
 --
@@ -41,16 +41,72 @@ local ipairs = ipairs
 local property = property
 local type = type
 
+---
+-- Thermodynamics
+-- ==============
+--
+-- This module calculates thermodynamic state variables for the particles of
+-- an instance of particle or particle group, which includes
+--
+-- * potential energy
+-- * kinetic energy
+-- * total energy
+-- * center of mass velocity
+-- * pressure
+-- * temperature
+-- * virial
+-- * hypervirial
+--
 local M = module("halmd.observables.thermodynamics")
 
+---
+-- Construct thermodynamics observable.
 --
--- construct thermodynamics module
+-- :param table args: keyword arguments
+-- :param args.particle_group: instance, or sequence of instances, of particle or particle_group
+-- :param args.force: instance, or sequence of instances, of corresponding force
+-- :returns: instance, or sequence of instances, of thermodynamics
 --
--- @param args parameter table
---   args.particle_group    list of particle group instances with attached labels
---   args.force             list of associated force instances
---   args.every             sampling interval
--- @returns list of thermodynamics modules with attached labels
+-- .. attribute:: nparticle
+--
+--    Callable slot that returns number of particles.
+--
+-- .. attribute:: density
+--
+--    Callable slot that returns number density.
+--
+-- .. attribute:: en_kin
+--
+--    Callable slot that returns kinetic energy.
+--
+-- .. attribute:: en_pot
+--
+--    Callable slot that returns potential energy.
+--
+-- .. attribute:: en_tot
+--
+--    Callable slot that returns total energy.
+--
+-- .. attribute:: pressure
+--
+--    Callable slot that returns virial pressure.
+--
+-- .. attribute:: temp
+--
+--    Callable slot that returns temperature.
+--
+-- .. attribute:: v_cm
+--
+--    Callable slot that returns center of mass velocity.
+--
+-- .. attribute:: virial
+--
+--    Callable slot that returns virial.
+--
+-- .. attribute:: hypervirial
+--
+--    Callable slot that returns hypervirial.
+--
 function M.__new(args)
     local particle_group = assert(args.particle_group, "missing parameter: particle_group")
     local every = assert(args.every)
