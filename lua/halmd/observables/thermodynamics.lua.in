@@ -17,7 +17,6 @@
 -- along with this program.  If not, see <http://www.gnu.org/licenses/>.
 --
 
-local device            = require("halmd.utility.device")
 local log               = require("halmd.io.log")
 local module            = require("halmd.utility.module")
 local mdsim = {
@@ -28,18 +27,12 @@ local mdsim = {
 local observables = {
     sampler             = require("halmd.observables.sampler")
 }
-local writers = {
-    file                = require("halmd.io.writers.file")
+local samples = {
+    particle_group      = require("halmd.observables.samples.particle_group")
 }
 
 -- grab C++ wrappers
-local thermodynamics_wrapper = libhalmd.observables.thermodynamics
-local po = libhalmd.po
--- grab standard library
-local assert = assert
-local ipairs = ipairs
-local property = property
-local type = type
+local thermodynamics = assert(libhalmd.observables.thermodynamics)
 
 ---
 -- Thermodynamics
@@ -66,6 +59,15 @@ local M = module("halmd.observables.thermodynamics")
 -- :param args.particle_group: instance, or sequence of instances, of particle or particle_group
 -- :param args.force: instance, or sequence of instances, of corresponding force
 -- :returns: instance, or sequence of instances, of thermodynamics
+--
+-- .. method:: writer(file, args)
+--
+--    Write state variables to file.
+--
+--    :param file: instance of file writer
+--    :param table args: keyword arguments
+--    :param number args.every: sampling interval
+--    :returns: instance of group writer
 --
 -- .. attribute:: nparticle
 --
@@ -108,78 +110,96 @@ local M = module("halmd.observables.thermodynamics")
 --    Callable slot that returns hypervirial.
 --
 function M.__new(args)
-    local particle_group = assert(args.particle_group, "missing parameter: particle_group")
-    local every = assert(args.every)
-    assert(type(particle_group) == "table", "invalid table")
-
-    -- dependency injection
+    local particle = args.particle
+    if not particle then
+        error("missing parameter 'particle'", 3)
+    end
+    local force = args.force
+    if not force then
+        error("missing parameter 'force'", 3)
+    end
     local box = mdsim.box() -- singleton
-    local dimension = assert(box.dimension)
     local clock = mdsim.clock() -- singleton
-    local force = assert(args.force)
-    local logger = log.logger({label = "thermodynamics"})
 
-    local sampler = observables.sampler() -- singleton
-    local file = writers.file() -- singleton
-    local writer = file:writer{location = {"observables"}, mode = "append"}
+    local observable = function(particle, force)
+        local group
+        if particle.particle then
+            group = particle
+        else
+            group = samples.particle_group({particle = particle})
+        end
+        local logger
+        local label = group.label -- may be nil
+        if label then
+            logger = log.logger({label = ("thermodynamics (%s)"):format(label)})
+        else
+            logger = log.logger({label = "thermodynamics"})
+        end
 
-    local thermodynamics = {}
-    for i, group in ipairs(particle_group) do
-        -- construct thermodynamics module
         -- FIXME drop dependency on force module
-        local observable = thermodynamics_wrapper(group, box, clock, force[i], logger)
+        local observable = thermodynamics(group, box, clock, force, logger)
 
-        -- store label as Lua property
-        local label = assert(group.label)
-        observable.label = property(function(self) return label end)
+        observable.group = property(function(self)
+            return group
+        end)
 
-        -- connect results with writer
-        writer:on_write(observable.en_pot, {label, "potential_energy"})
-        writer:on_write(observable.en_kin, {label, "kinetic_energy"})
-        writer:on_write(observable.en_tot, {label, "total_energy"})
-        writer:on_write(observable.v_cm, {label, "center_of_mass_velocity"})
-        writer:on_write(observable.pressure, {label, "pressure"})
-        writer:on_write(observable.temp, {label, "temperature"})
-        writer:on_write(observable.virial, {label, "virial"})
-        writer:on_write(observable.hypervirial, {label, "hypervirial"})
+        observable.writer = function(self, file, args)
+            local writer = file:writer{location = {"observables"}, mode = "append"}
+            local label = self.group.label -- may be nil
+            writer:on_write(self.en_pot     , {"potential_energy"       , label})
+            writer:on_write(self.en_kin     , {"kinetic_energy"         , label})
+            writer:on_write(self.en_tot     , {"total_energy"           , label})
+            writer:on_write(self.v_cm       , {"center_of_mass_velocity", label})
+            writer:on_write(self.pressure   , {"pressure"               , label})
+            writer:on_write(self.temp       , {"temperature"            , label})
+            writer:on_write(self.virial     , {"virial"                 , label})
+            writer:on_write(self.hypervirial, {"hypervirial"            , label})
 
-        -- connect writer to sampler
-        sampler:on_sample{writer.write, every, tracker = observable}
+            -- connect writer to sampler
+            local every = args.every
+            if not every then
+                error("missing parameter 'every'", 2)
+            end
+            local sampler = observables.sampler() -- singleton
+            sampler:on_sample{writer.write, every, tracker = self}
 
-        -- turn on computation of auxiliary variables _before_ force computation
-        -- in each sampling step
-        -- FIXME move from force to particle
-        sampler:on_prepare{force[i].aux_enable, every, tracker = observable}
+            -- turn on computation of auxiliary variables _before_ force computation
+            -- in each sampling step
+            -- FIXME move from force to particle
+            sampler:on_prepare{force.aux_enable, every, tracker = observable}
 
-        thermodynamics[i] = observable
+            return writer
+        end
+
+        return observable
     end
 
-    return thermodynamics
+    if type(particle) == "table" then
+        local observables = {}
+        for i = 1, #particle do
+            table.insert(observables, observable(particle[i], force[i]))
+        end
+        return observables
+    else
+        return observable(particle, force)
+    end
 end
 
 --
 -- connect runtime accumulators to module profiler
 --
 function M.profile(self, profiler)
-    for i, thermodynamics in ipairs(self) do
-        local label = assert(thermodynamics.label)
-        local str = " of " .. label .. " particles"
-        profiler:on_profile{thermodynamics, en_kin = "summation of kinetic energy" .. str}
-        profiler:on_profile{thermodynamics, v_cm = "summation of centre-of-mass velocity" .. str}
-        if device() then
-            profiler:on_profile{thermodynamics, en_pot = "summation of potential energy" .. str}
-            profiler:on_profile{thermodynamics, virial = "summation of virial" .. str}
-            profiler:on_profile{thermodynamics, hypervirial = "summation of hypervirial" .. str}
+    local label = assert(self.group.label)
+    local profile = function(name, desc)
+        if self.runtime[name] then
+            profiler:on_profile({self, [name] = ("summation of %s of %s particles"):format(desc, label)})
         end
     end
-end
-
--- assemble module options
---
--- @param desc po.options_description
---
-function M.options(desc)
-    desc:add("every", po.uint64(), "sample interval for macroscopic state variables")
+    profile("en_kin"     , "kinetic energy"         )
+    profile("v_cm"       , "centre-of-mass velocity")
+    profile("en_pot"     , "potential energy"       )
+    profile("virial"     , "virial"                 )
+    profile("hypervirial", "hypervirial"            )
 end
 
 return M
