@@ -154,8 +154,8 @@ string posix_signal::name(int signum)
 void posix_signal::handle(int signum) const
 {
     handler_map_type::const_iterator it = handler_.find(signum);
-    LOG_WARNING("process received signal " << name(signum));
     if (it != handler_.end()) {
+        LOG_WARNING("process received signal " << name(signum));
         it->second(signum);
     }
 }

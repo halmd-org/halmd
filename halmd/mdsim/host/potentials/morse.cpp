@@ -60,7 +60,7 @@ morse<float_type>::morse(
     // energy shift due to truncation at cutoff length
     for (unsigned i = 0; i < en_cut_.size1(); ++i) {
         for (unsigned j = 0; j < en_cut_.size2(); ++j) {
-            en_cut_(i, j) = (*this)(rr_cut_(i, j), i, j).get<1>();
+            en_cut_(i, j) = get<1>((*this)(rr_cut_(i, j), i, j));
         }
     }
 
