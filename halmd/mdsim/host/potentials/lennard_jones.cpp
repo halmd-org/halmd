@@ -71,7 +71,7 @@ lennard_jones<float_type>::lennard_jones(
             rr_cut_(i, j) = std::pow(r_cut_(i, j), 2);
             sigma2_(i, j) = std::pow(sigma_(i, j), 2);
             // energy shift due to truncation at cutoff length
-            en_cut_(i, j) = (*this)(rr_cut_(i, j), i, j).get<1>();
+            en_cut_(i, j) = get<1>((*this)(rr_cut_(i, j), i, j));
         }
     }
 

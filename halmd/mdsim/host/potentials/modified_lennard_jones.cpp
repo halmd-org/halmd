@@ -83,7 +83,7 @@ modified_lennard_jones<float_type>::modified_lennard_jones(
             index_m_2_(i, j) = index_m_(i, j) / 2;
             index_n_2_(i, j) = index_n_(i, j) / 2;
             // energy shift due to truncation at cutoff length
-            en_cut_(i, j) = (*this)(rr_cut_(i, j), i, j).get<1>();
+            en_cut_(i, j) = get<1>((*this)(rr_cut_(i, j), i, j));
         }
     }
 

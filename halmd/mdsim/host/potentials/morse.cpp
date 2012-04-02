@@ -72,7 +72,7 @@ morse<float_type>::morse(
             r_cut_(i, j) = r_cut_sigma_(i, j) * sigma_(i, j);
             rr_cut_(i, j) = std::pow(r_cut_(i, j), 2);
             // energy shift due to truncation at cutoff length
-            en_cut_(i, j) = (*this)(rr_cut_(i, j), i, j).get<1>();
+            en_cut_(i, j) = get<1>((*this)(rr_cut_(i, j), i, j));
         }
     }
 
