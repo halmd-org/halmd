@@ -1,5 +1,5 @@
 /*
- * Copyright © 2008-2011  Peter Colberg
+ * Copyright © 2008-2012  Peter Colberg
  *
  * This file is part of HALMD.
  *
@@ -63,10 +63,13 @@ template <int dimension, typename float_type>
 void verlet<dimension, float_type>::integrate()
 {
     scoped_timer_type timer(runtime_.integrate);
+
+    typename particle_type::force_array_type& force = particle_->force();
+
     for (size_t i = 0; i < particle_->nbox; ++i) {
         unsigned int type = particle_->type[i];
         float_type mass = particle_->mass[type];
-        vector_type& v = particle_->v[i] += particle_->f[i] * timestep_half_ / mass;
+        vector_type& v = particle_->v[i] += force[i] * timestep_half_ / mass;
         vector_type& r = particle_->r[i] += v * timestep_;
         // enforce periodic boundary conditions
         // TODO: reduction is now to (-L/2, L/2) instead of (0, L) as before
@@ -82,10 +85,13 @@ template <int dimension, typename float_type>
 void verlet<dimension, float_type>::finalize()
 {
     scoped_timer_type timer(runtime_.finalize);
+
+    typename particle_type::force_array_type& force = particle_->force();
+
     for (size_t i = 0; i < particle_->nbox; ++i) {
         unsigned int type = particle_->type[i];
         float_type mass = particle_->mass[type];
-        particle_->v[i] += particle_->f[i] * timestep_half_ / mass;
+        particle_->v[i] += force[i] * timestep_half_ / mass;
     }
 }
 

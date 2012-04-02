@@ -1,5 +1,5 @@
 /*
- * Copyright © 2008-2011  Peter Colberg and Felix Höfling
+ * Copyright © 2008-2012  Peter Colberg and Felix Höfling
  *
  * This file is part of HALMD.
  *
@@ -109,10 +109,12 @@ void verlet_nvt_hoover<dimension, float_type>::integrate()
 {
     scoped_timer_type timer(runtime_.integrate);
 
+    typename particle_type::force_array_type& force = particle_->force();
+
     propagate_chain();
 
     for (size_t i = 0; i < particle_->nbox; ++i) {
-        vector_type& v = particle_->v[i] += particle_->f[i] * timestep_half_;
+        vector_type& v = particle_->v[i] += force[i] * timestep_half_;
         vector_type& r = particle_->r[i] += v * timestep_;
         // enforce periodic boundary conditions
         particle_->image[i] += box_->reduce_periodic(r);
@@ -127,9 +129,11 @@ void verlet_nvt_hoover<dimension, float_type>::finalize()
 {
     scoped_timer_type timer(runtime_.finalize);
 
+    typename particle_type::force_array_type& force = particle_->force();
+
     // loop over all particles
     for (size_t i = 0; i < particle_->nbox; ++i) {
-        particle_->v[i] += particle_->f[i] * timestep_half_;
+        particle_->v[i] += force[i] * timestep_half_;
     }
 
     propagate_chain();

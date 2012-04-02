@@ -27,7 +27,6 @@
 #include <vector>
 
 #include <halmd/mdsim/box.hpp>
-#include <halmd/mdsim/host/force.hpp>
 #include <halmd/mdsim/host/particle.hpp>
 #include <halmd/utility/profiler.hpp>
 

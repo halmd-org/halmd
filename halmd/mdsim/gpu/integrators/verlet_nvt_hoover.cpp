@@ -35,8 +35,7 @@ namespace gpu {
 namespace integrators {
 
 template <int dimension, typename float_type>
-verlet_nvt_hoover<dimension, float_type>::
-verlet_nvt_hoover(
+verlet_nvt_hoover<dimension, float_type>::verlet_nvt_hoover(
     shared_ptr<particle_type> particle
   , shared_ptr<box_type const> box
   , float_type timestep
@@ -143,7 +142,7 @@ integrate()
     try {
         cuda::configure(particle_->dim.grid, particle_->dim.block);
         wrapper_type::kernel.integrate(
-            particle_->g_r, particle_->g_image, particle_->g_v, particle_->g_f, scale
+            particle_->g_r, particle_->g_image, particle_->g_v, particle_->force(), scale
         );
         cuda::thread::synchronize();
     }
@@ -168,7 +167,7 @@ finalize()
     // and scheduling
     try {
         cuda::configure(particle_->dim.grid, particle_->dim.block);
-        wrapper_type::kernel.finalize(particle_->g_v, particle_->g_f);
+        wrapper_type::kernel.finalize(particle_->g_v, particle_->force());
         cuda::thread::synchronize();
 
         float_type scale = propagate_chain();

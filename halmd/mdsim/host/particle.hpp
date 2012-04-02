@@ -26,18 +26,30 @@
 #include <halmd/mdsim/particle.hpp>
 #include <halmd/mdsim/type_traits.hpp>
 #include <halmd/utility/profiler.hpp>
+#include <halmd/utility/raw_allocator.hpp>
 
 namespace halmd {
 namespace mdsim {
 namespace host {
 
-template <unsigned int dimension, typename float_type>
+template <int dimension, typename float_type>
 class particle
   : public mdsim::particle<dimension>
 {
-public:
     typedef mdsim::particle<dimension> _Base;
+
+public:
     typedef typename type_traits<dimension, float_type>::vector_type vector_type;
+
+    typedef vector_type force_type;
+    typedef double en_pot_type;
+    typedef typename type_traits<dimension, float_type>::stress_tensor_type stress_pot_type;
+    typedef double hypervirial_type;
+
+    typedef std::vector<force_type, raw_allocator<force_type> > force_array_type;
+    typedef std::vector<en_pot_type, raw_allocator<en_pot_type> > en_pot_array_type;
+    typedef std::vector<stress_pot_type, raw_allocator<stress_pot_type> > stress_pot_array_type;
+    typedef std::vector<hypervirial_type, raw_allocator<hypervirial_type> > hypervirial_array_type;
 
     static void luaopen(lua_State* L);
 
@@ -54,8 +66,6 @@ public:
     std::vector<vector_type> image;
     /** velocities */
     std::vector<vector_type> v;
-    /** forces */
-    std::vector<vector_type> f;
     /** globally unique particle numbers */
     std::vector<unsigned int> tag;
     /** reverse particle tags */
@@ -72,7 +82,121 @@ public:
     /** mass per type */
     using _Base::mass;
 
+    /**
+     * Enable computation of auxiliary variables.
+     *
+     * The flag is reset by the next call to prepare().
+     */
+    void aux_enable();
+
+    /**
+     * Reset forces, and optionally auxiliary variables, to zero.
+     */
+    void prepare();
+
+    /**
+     * Returns non-const reference to force per particle.
+     */
+    force_array_type const& force() const
+    {
+       return force_;
+    }
+
+    /**
+     * Returns const reference to force per particle.
+     */
+    force_array_type& force()
+    {
+       return force_;
+    }
+
+    /**
+     * Returns const reference to potential energy per particle.
+     *
+     * This method checks that the computation of auxiliary variables was enabled.
+     */
+    en_pot_array_type const& en_pot() const
+    {
+        assert_aux_valid();
+        return en_pot_;
+    }
+
+    /**
+     * Returns non-const reference to potential energy per particle.
+     */
+    en_pot_array_type& en_pot()
+    {
+        return en_pot_;
+    }
+
+    /**
+     * Returns const reference to potential part of stress tensor per particle.
+     *
+     * This method checks that the computation of auxiliary variables was enabled.
+     */
+    stress_pot_array_type const& stress_pot() const
+    {
+        assert_aux_valid();
+        return stress_pot_;
+    }
+
+    /**
+     * Returns non-const reference to potential part of stress tensor per particle.
+     */
+    stress_pot_array_type& stress_pot()
+    {
+        return stress_pot_;
+    }
+
+    /**
+     * Returns const reference to hypervirial per particle.
+     *
+     * This method checks that the computation of auxiliary variables was enabled.
+     */
+    hypervirial_array_type const& hypervirial() const
+    {
+        assert_aux_valid();
+        return hypervirial_;
+    }
+
+    /**
+     * Returns non-const reference to hypervirial per particle.
+     */
+    hypervirial_array_type& hypervirial()
+    {
+        return hypervirial_;
+    }
+
+    /**
+     * Returns true if computation of auxiliary variables is enabled.
+     */
+    bool aux_valid() const
+    {
+        return aux_valid_;
+    }
+
 private:
+    /** force per particle */
+    force_array_type force_;
+    /** potential energy per particle */
+    en_pot_array_type en_pot_;
+    /** potential part of stress tensor per particle */
+    stress_pot_array_type stress_pot_;
+    /** hypervirial per particle */
+    hypervirial_array_type hypervirial_;
+
+    /** flag for enabling the computation of auxiliary variables this step */
+    bool aux_flag_;
+    /** flag that indicates the auxiliary variables are computed this step */
+    bool aux_valid_;
+
+    void assert_aux_valid() const
+    {
+        if (!aux_valid_) {
+            throw std::logic_error("auxiliary variables were not enabled in particle");
+        }
+    }
+
     typedef utility::profiler profiler_type;
     typedef typename profiler_type::accumulator_type accumulator_type;
     typedef typename profiler_type::scoped_timer_type scoped_timer_type;

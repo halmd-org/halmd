@@ -77,6 +77,10 @@ function M.__new(args)
     -- set particle types at the beginning of system preparation
     core:on_prepend_setup{particle.set, tracker = particle}
 
+    -- zero particle forces before adding partial forces
+    core:on_prepend_setup{particle.prepare, tracker = particle}
+    core:on_prepend_force{particle.prepare, tracker = particle}
+
     return particle
 end
 

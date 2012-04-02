@@ -1,5 +1,5 @@
 /*
- * Copyright © 2008-2011  Peter Colberg and Felix Höfling
+ * Copyright © 2008-2012  Peter Colberg and Felix Höfling
  *
  * This file is part of HALMD.
  *
@@ -28,6 +28,7 @@
 #include <halmd/mdsim/gpu/particle_kernel.hpp>
 #include <halmd/utility/gpu/device.hpp>
 #include <halmd/utility/lua/lua.hpp>
+#include <halmd/utility/signal.hpp>
 
 using namespace boost;
 using namespace halmd::algorithm::gpu; // radix_sort
@@ -42,7 +43,7 @@ namespace gpu {
  *
  * @param particles number of particles per type or species
  */
-template <unsigned int dimension, typename float_type>
+template <int dimension, typename float_type>
 particle<dimension, float_type>::particle(
     vector<unsigned int> const& particles
   , vector<double> const& mass
@@ -55,9 +56,15 @@ particle<dimension, float_type>::particle(
   , g_r(nbox)
   , g_image(nbox)
   , g_v(nbox)
-  , g_f(nbox)
   , g_reverse_tag(nbox)
   , g_mass(ntype)
+  , g_force_(nbox)
+  , g_en_pot_(nbox)
+  , g_stress_pot_(nbox)
+  , g_hypervirial_(nbox)
+  // disable auxiliary variables by default
+  , aux_flag_(false)
+  , aux_valid_(false)
 {
     LOG_DEBUG("number of CUDA execution blocks: " << dim.blocks_per_grid());
     LOG_DEBUG("number of CUDA execution threads per block: " << dim.threads_per_block());
@@ -101,8 +108,11 @@ particle<dimension, float_type>::particle(
         g_v.reserve(dim.threads());
 #endif
         g_image.reserve(dim.threads());
-        g_f.reserve(dim.threads());
         g_reverse_tag.reserve(dim.threads());
+        g_force_.reserve(dim.threads());
+        g_en_pot_.reserve(dim.threads());
+        g_stress_pot_.reserve(dim.threads());
+        g_hypervirial_.reserve(dim.threads());
     }
     catch (cuda::error const&) {
         LOG_ERROR("failed to allocate particles in global device memory");
@@ -113,7 +123,6 @@ particle<dimension, float_type>::particle(
     // this avoids potential nonsense computations resulting in denormalised numbers
     cuda::memset(g_r, 0, g_r.capacity());
     cuda::memset(g_v, 0, g_v.capacity());
-    cuda::memset(g_f, 0, g_f.capacity());
     cuda::memset(g_image, 0, g_image.capacity());
     cuda::memset(g_reverse_tag, 0, g_reverse_tag.capacity());
 
@@ -128,10 +137,35 @@ particle<dimension, float_type>::particle(
     }
 }
 
+template <int dimension, typename float_type>
+void particle<dimension, float_type>::aux_enable()
+{
+    LOG_TRACE("enable computation of auxiliary variables");
+    aux_flag_ = true;
+}
+
+template <int dimension, typename float_type>
+void particle<dimension, float_type>::prepare()
+{
+    LOG_TRACE("zero forces");
+    cuda::memset(g_force_, 0, g_force_.capacity());
+
+    // indicate whether auxiliary variables are computed this step
+    aux_valid_ = aux_flag_;
+
+    if (aux_flag_) {
+        LOG_TRACE("zero auxiliary variables");
+        cuda::memset(g_en_pot_, 0, g_en_pot_.capacity());
+        cuda::memset(g_stress_pot_, 0, g_stress_pot_.capacity());
+        cuda::memset(g_hypervirial_, 0, g_hypervirial_.capacity());
+        aux_flag_ = false;
+    }
+}
+
 /**
  * set particle tags and types
  */
-template <unsigned int dimension, typename float_type>
+template <int dimension, typename float_type>
 void particle<dimension, float_type>::set()
 {
     try {
@@ -154,7 +188,7 @@ void particle<dimension, float_type>::set()
 /**
  * rearrange particles by permutation
  */
-template <unsigned int dimension, typename float_type>
+template <int dimension, typename float_type>
 void particle<dimension, float_type>::rearrange(cuda::vector<unsigned int> const& g_index)
 {
     scoped_timer_type timer(runtime_.rearrange);
@@ -184,7 +218,7 @@ void particle<dimension, float_type>::rearrange(cuda::vector<unsigned int> const
     sort(g_tag, g_reverse_tag);
 }
 
-template <unsigned int dimension, typename float_type>
+template <int dimension, typename float_type>
 unsigned int particle<dimension, float_type>::defaults::threads() {
     return 128;
 }
@@ -195,7 +229,21 @@ static int wrap_dimension(particle<dimension, float_type> const&)
     return dimension;
 }
 
-template <unsigned int dimension, typename float_type>
+template <typename particle_type>
+static typename signal<void ()>::slot_function_type
+wrap_aux_enable(shared_ptr<particle_type> self)
+{
+    return bind(&particle_type::aux_enable, self);
+}
+
+template <typename particle_type>
+static typename signal<void ()>::slot_function_type
+wrap_prepare(shared_ptr<particle_type> self)
+{
+    return bind(&particle_type::prepare, self);
+}
+
+template <int dimension, typename float_type>
 void particle<dimension, float_type>::luaopen(lua_State* L)
 {
     using namespace luabind;
@@ -217,6 +265,8 @@ void particle<dimension, float_type>::luaopen(lua_State* L)
                        , unsigned int
                      >())
                     .property("dimension", &wrap_dimension<dimension, float_type>)
+                    .property("aux_enable", &wrap_aux_enable<particle>)
+                    .property("prepare", &wrap_prepare<particle>)
                     .scope[
                         namespace_("defaults")
                         [

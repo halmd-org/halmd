@@ -33,8 +33,7 @@ namespace gpu {
 namespace integrators {
 
 template <int dimension, typename float_type, typename RandomNumberGenerator>
-verlet_nvt_andersen<dimension, float_type, RandomNumberGenerator>::
-verlet_nvt_andersen(
+verlet_nvt_andersen<dimension, float_type, RandomNumberGenerator>::verlet_nvt_andersen(
     shared_ptr<particle_type> particle
   , shared_ptr<box_type const> box
   , shared_ptr<random_type> random
@@ -118,7 +117,7 @@ integrate()
           , particle_->ntype * sizeof(float)
         );
         wrapper_type::kernel.integrate(
-            particle_->g_r, particle_->g_image, particle_->g_v, particle_->g_f
+            particle_->g_r, particle_->g_image, particle_->g_v, particle_->force()
           , particle_->g_mass, particle_->ntype
         );
         cuda::thread::synchronize();
@@ -149,7 +148,7 @@ finalize()
           , particle_->ntype * sizeof(float)
         );
         wrapper_type::kernel.finalize(
-            particle_->g_r, particle_->g_v, particle_->g_f
+            particle_->g_r, particle_->g_v, particle_->force()
           , particle_->g_mass, particle_->ntype
           , particle_->nbox, particle_->dim.threads()
         );

@@ -57,7 +57,6 @@ local M = module("halmd.observables.thermodynamics")
 --
 -- :param table args: keyword arguments
 -- :param args.particle_group: instance, or sequence of instances, of particle or particle_group
--- :param args.force: instance, or sequence of instances, of corresponding force
 -- :returns: instance, or sequence of instances, of thermodynamics
 --
 -- .. method:: writer(file, args)
@@ -114,14 +113,10 @@ function M.__new(args)
     if not particle then
         error("missing parameter 'particle'", 3)
     end
-    local force = args.force
-    if not force then
-        error("missing parameter 'force'", 3)
-    end
     local box = mdsim.box() -- singleton
     local clock = mdsim.clock() -- singleton
 
-    local observable = function(particle, force)
+    local observable = function(particle)
         local group
         if particle.particle then
             group = particle
@@ -136,8 +131,7 @@ function M.__new(args)
             logger = log.logger({label = "thermodynamics"})
         end
 
-        -- FIXME drop dependency on force module
-        local observable = thermodynamics(group, box, clock, force, logger)
+        local observable = thermodynamics(group, box, clock, logger)
 
         observable.group = property(function(self)
             return group
@@ -165,8 +159,8 @@ function M.__new(args)
 
             -- turn on computation of auxiliary variables _before_ force computation
             -- in each sampling step
-            -- FIXME move from force to particle
-            sampler:on_prepare{force.aux_enable, every, tracker = observable}
+            local particle = assert(self.group.particle)
+            sampler:on_prepare{particle.aux_enable, every, tracker = observable}
 
             return writer
         end
@@ -177,11 +171,11 @@ function M.__new(args)
     if type(particle) == "table" then
         local observables = {}
         for i = 1, #particle do
-            table.insert(observables, observable(particle[i], force[i]))
+            table.insert(observables, observable(particle[i]))
         end
         return observables
     else
-        return observable(particle, force)
+        return observable(particle)
     end
 end
 

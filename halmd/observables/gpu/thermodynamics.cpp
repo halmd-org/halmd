@@ -37,13 +37,11 @@ thermodynamics<dimension, float_type>::thermodynamics(
     shared_ptr<particle_group_type const> particle_group
   , shared_ptr<box_type const> box
   , shared_ptr<clock_type const> clock
-  , shared_ptr<force_type const> force
   , shared_ptr<logger_type> logger
 )
   // dependency injection
   : box_(box)
   , particle_group_(particle_group)
-  , force_(force)
   , logger_(logger)
   // initialise members
   , en_kin_(clock)
@@ -103,7 +101,7 @@ double thermodynamics<dimension, float_type>::en_pot()
 
         // FIXME use particle_group_->selection_mask() and reduce_if()
         scoped_timer_type timer(runtime_.en_pot);
-        en_pot_ = sum_scalar_(force_->potential_energy()) / nparticle();
+        en_pot_ = sum_scalar_(particle_group_->particle().en_pot()) / nparticle();
     }
     return en_pot_;
 }
@@ -119,7 +117,7 @@ double thermodynamics<dimension, float_type>::virial()
 
         // FIXME use particle_group_->selection_mask() and reduce_if()
         scoped_timer_type timer(runtime_.virial);
-        virial_ = sum_stress_tensor_diagonal_(force_->stress_tensor_pot()) / nparticle();
+        virial_ = sum_stress_tensor_diagonal_(particle_group_->particle().stress_pot()) / nparticle();
     }
     return virial_;
 }
@@ -135,7 +133,7 @@ double thermodynamics<dimension, float_type>::hypervirial()
 
         // FIXME use particle_group_->selection_mask() and reduce_if()
         scoped_timer_type timer(runtime_.hypervirial);
-        hypervirial_ = sum_scalar_(force_->hypervirial()) / nparticle();
+        hypervirial_ = sum_scalar_(particle_group_->particle().hypervirial()) / nparticle();
     }
     return hypervirial_;
 }
@@ -184,7 +182,6 @@ void thermodynamics<dimension, float_type>::luaopen(lua_State* L)
               , shared_ptr<particle_group_type const>
               , shared_ptr<box_type const>
               , shared_ptr<clock_type const>
-              , shared_ptr<force_type const>
               , shared_ptr<logger_type>
             >)
         ]

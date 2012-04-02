@@ -28,7 +28,6 @@
 #include <halmd/mdsim/box.hpp>
 #include <halmd/mdsim/clock.hpp>
 #include <halmd/mdsim/core.hpp>
-#include <halmd/mdsim/host/forces/zero.hpp>
 #include <halmd/mdsim/host/integrators/verlet.hpp>
 #include <halmd/mdsim/host/positions/lattice.hpp>
 #include <halmd/mdsim/host/velocities/boltzmann.hpp>
@@ -37,7 +36,6 @@
 #include <halmd/observables/host/thermodynamics.hpp>
 #include <halmd/random/host/random.hpp>
 #ifdef WITH_CUDA
-# include <halmd/mdsim/gpu/forces/zero.hpp>
 # include <halmd/mdsim/gpu/integrators/verlet.hpp>
 # include <halmd/mdsim/gpu/positions/lattice.hpp>
 # include <halmd/mdsim/gpu/velocities/boltzmann.hpp>
@@ -61,7 +59,6 @@ template <typename modules_type>
 struct ideal_gas
 {
     typedef typename modules_type::box_type box_type;
-    typedef typename modules_type::force_type force_type;
     typedef typename modules_type::integrator_type integrator_type;
     typedef typename modules_type::particle_group_type particle_group_type;
     typedef typename particle_group_type::particle_type particle_type;
@@ -89,7 +86,6 @@ struct ideal_gas
     shared_ptr<box_type> box;
     shared_ptr<clock_type> clock;
     shared_ptr<core_type> core;
-    shared_ptr<force_type> force;
     shared_ptr<integrator_type> integrator;
     shared_ptr<particle_type> particle;
     shared_ptr<position_type> position;
@@ -107,7 +103,7 @@ void ideal_gas<modules_type>::test()
 {
     // prepare system with Maxwell-Boltzmann distributed velocities
     BOOST_TEST_MESSAGE("assign positions and velocities");
-    force->aux_enable();              // enable computation of potential energy
+    particle->aux_enable();              // enable computation of potential energy
     core->setup();
 
     const double vcm_limit = gpu ? 0.1 * eps_float : eps;
@@ -121,7 +117,7 @@ void ideal_gas<modules_type>::test()
     for (step_type i = 0; i < steps; ++i) {
         // last step: evaluate auxiliary variables (potential energy, virial, ...)
         if (i == steps - 1) {
-            force->aux_enable();
+            particle->aux_enable();
         }
         core->mdstep();
     }
@@ -157,9 +153,8 @@ ideal_gas<modules_type>::ideal_gas()
     position = make_shared<position_type>(particle, box, random, slab);
     velocity = make_shared<velocity_type>(particle, random, temp);
     integrator = make_shared<integrator_type>(particle, box, timestep);
-    force = make_shared<force_type>(particle);
     clock = make_shared<clock_type>(timestep);
-    thermodynamics = make_shared<thermodynamics_type>(make_shared<particle_group_type>(particle), box, clock, force);
+    thermodynamics = make_shared<thermodynamics_type>(make_shared<particle_group_type>(particle), box, clock);
 
     // create core and connect module slots to core signals
     this->connect();
@@ -173,7 +168,7 @@ void ideal_gas<modules_type>::connect()
     core->on_prepend_setup( bind(&particle_type::set, particle) );
     core->on_setup( bind(&position_type::set, position) );
     core->on_setup( bind(&velocity_type::set, velocity) );
-    core->on_append_setup( bind(&force_type::compute, force) );
+    core->on_append_setup( bind(&particle_type::prepare, particle) );
     // integration step
     core->on_integrate( bind(&integrator_type::integrate, integrator) );
     core->on_finalize( bind(&integrator_type::finalize, integrator) );
@@ -183,7 +178,6 @@ template <int dimension, typename float_type>
 struct host_modules
 {
     typedef mdsim::box<dimension> box_type;
-    typedef mdsim::host::forces::zero<dimension, float_type> force_type;
     typedef mdsim::host::integrators::verlet<dimension, float_type> integrator_type;
     typedef observables::host::samples::particle_group_all<dimension, float_type> particle_group_type;
     typedef mdsim::host::positions::lattice<dimension, float_type> position_type;
@@ -205,7 +199,6 @@ template <int dimension, typename float_type>
 struct gpu_modules
 {
     typedef mdsim::box<dimension> box_type;
-    typedef mdsim::gpu::forces::zero<dimension, float_type> force_type;
     typedef mdsim::gpu::integrators::verlet<dimension, float_type> integrator_type;
     typedef observables::gpu::samples::particle_group_all<dimension, float_type> particle_group_type;
     typedef mdsim::gpu::positions::lattice<dimension, float_type, halmd::random::gpu::rand48> position_type;

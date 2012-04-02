@@ -27,7 +27,6 @@
 #include <halmd/mdsim/clock.hpp>
 #include <halmd/mdsim/core.hpp>
 #include <halmd/mdsim/host/forces/pair_trunc.hpp>
-#include <halmd/mdsim/host/forces/zero.hpp>
 #include <halmd/mdsim/host/integrators/verlet.hpp>
 #include <halmd/mdsim/host/integrators/verlet_nvt_andersen.hpp>
 #include <halmd/mdsim/host/maximum_squared_displacement.hpp>
@@ -42,7 +41,6 @@
 #include <halmd/utility/predicates/greater.hpp>
 #ifdef WITH_CUDA
 # include <halmd/mdsim/gpu/forces/pair_trunc.hpp>
-# include <halmd/mdsim/gpu/forces/zero.hpp>
 # include <halmd/mdsim/gpu/integrators/verlet.hpp>
 # include <halmd/mdsim/gpu/integrators/verlet_nvt_andersen.hpp>
 # include <halmd/mdsim/gpu/maximum_squared_displacement.hpp>
@@ -109,7 +107,6 @@ struct lennard_jones_fluid
     typedef typename modules_type::box_type box_type;
     typedef typename modules_type::potential_type potential_type;
     typedef typename modules_type::force_type force_type;
-    typedef typename modules_type::zero_type zero_type;
     typedef typename modules_type::binning_type binning_type;
     typedef typename modules_type::neighbour_type neighbour_type;
     typedef typename modules_type::msd_type msd_type;
@@ -149,7 +146,6 @@ struct lennard_jones_fluid
     shared_ptr<core_type> core;
     shared_ptr<potential_type> potential;
     shared_ptr<force_type> force;
-    shared_ptr<zero_type> zero;
     shared_ptr<binning_type> binning;
     shared_ptr<neighbour_type> neighbour;
     shared_ptr<msd_type> msd;
@@ -205,7 +201,7 @@ void lennard_jones_fluid<modules_type>::test()
     step_type period = static_cast<step_type>(round(.01 / timestep));
     for (step_type i = 0; i < steps; ++i) {
         if (i == steps - 1) {
-            force->aux_enable();              // enable auxiliary variables in last step
+            particle->aux_enable();              // enable auxiliary variables in last step
         }
         core->mdstep();
         if(i > steps/2 && i % period == 0) {
@@ -231,7 +227,7 @@ void lennard_jones_fluid<modules_type>::test()
     for (step_type i = 0; i < steps; ++i) {
         // turn on evaluation of potential energy, virial, etc.
         if(i % period == 0) {
-            force->aux_enable();
+            particle->aux_enable();
         }
 
         // perform MD step
@@ -325,9 +321,8 @@ lennard_jones_fluid<modules_type>::lennard_jones_fluid()
     position = make_shared<position_type>(particle, box, random, slab);
     velocity = make_shared<velocity_type>(particle, random, temp);
     force = make_shared<force_type>(potential, particle, particle, box, neighbour);
-    zero = make_shared<zero_type>(particle);
     clock = make_shared<clock_type>(timestep);
-    thermodynamics = make_shared<thermodynamics_type>(make_shared<particle_group_type>(particle), box, clock, force);
+    thermodynamics = make_shared<thermodynamics_type>(make_shared<particle_group_type>(particle), box, clock);
     msd = make_shared<msd_type>(particle, box);
 }
 
@@ -337,7 +332,7 @@ void lennard_jones_fluid<modules_type>::connect()
     core = make_shared<core_type>(clock);
     // system preparation
     core->on_prepend_setup( bind(&particle_type::set, particle) );
-    core->on_prepend_setup( bind(&zero_type::compute, zero) );
+    core->on_prepend_setup( bind(&particle_type::prepare, particle) );
     core->on_setup( bind(&position_type::set, position) );
     core->on_setup( bind(&velocity_type::set, velocity) );
     core->on_append_setup( bind(&msd_type::zero, msd) );
@@ -347,7 +342,7 @@ void lennard_jones_fluid<modules_type>::connect()
 
     // integration step
     core->on_integrate( bind(&integrator_type::integrate, integrator) );
-    core->on_prepend_force( bind(&zero_type::compute, zero) );
+    core->on_prepend_force( bind(&particle_type::prepare, particle) );
     core->on_force( bind(&force_type::compute, force) );
     core->on_finalize( bind(&integrator_type::finalize, integrator) );
 
@@ -366,7 +361,6 @@ struct host_modules
     typedef mdsim::box<dimension> box_type;
     typedef mdsim::host::potentials::lennard_jones<float_type> potential_type;
     typedef mdsim::host::forces::pair_trunc<dimension, float_type, potential_type> force_type;
-    typedef mdsim::host::forces::zero<dimension, float_type> zero_type;
     typedef mdsim::host::binning<dimension, float_type> binning_type;
     typedef mdsim::host::neighbours::from_binning<dimension, float_type> neighbour_type;
     typedef mdsim::host::maximum_squared_displacement<dimension, float_type> msd_type;
@@ -394,7 +388,6 @@ struct gpu_modules
     typedef mdsim::box<dimension> box_type;
     typedef mdsim::gpu::potentials::lennard_jones<float_type> potential_type;
     typedef mdsim::gpu::forces::pair_trunc<dimension, float_type, potential_type> force_type;
-    typedef mdsim::gpu::forces::zero<dimension, float_type> zero_type;
     typedef mdsim::gpu::binning<dimension, float_type> binning_type;
     typedef mdsim::gpu::neighbours::from_binning<dimension, float_type> neighbour_type;
     typedef mdsim::gpu::maximum_squared_displacement<dimension, float_type> msd_type;

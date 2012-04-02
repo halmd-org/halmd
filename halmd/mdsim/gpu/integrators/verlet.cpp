@@ -91,7 +91,7 @@ void verlet<dimension, float_type>::integrate()
         );
         wrapper_->integrate(
             particle_->g_r, particle_->g_image, particle_->g_v
-          , particle_->g_f, particle_->g_mass, particle_->ntype
+          , particle_->force(), particle_->g_mass, particle_->ntype
         );
         cuda::thread::synchronize();
     }
@@ -118,7 +118,7 @@ void verlet<dimension, float_type>::finalize()
           , particle_->ntype * sizeof(float)
         );
         wrapper_->finalize(
-            particle_->g_r, particle_->g_v, particle_->g_f
+            particle_->g_r, particle_->g_v, particle_->force()
           , particle_->g_mass, particle_->ntype
         );
         cuda::thread::synchronize();

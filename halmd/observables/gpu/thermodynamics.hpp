@@ -27,7 +27,6 @@
 #include <halmd/io/logger.hpp>
 #include <halmd/mdsim/box.hpp>
 #include <halmd/mdsim/clock.hpp>
-#include <halmd/mdsim/gpu/force.hpp>
 #include <halmd/observables/gpu/samples/particle_group.hpp>
 #include <halmd/observables/thermodynamics.hpp>
 #include <halmd/utility/data_cache.hpp>
@@ -48,7 +47,6 @@ public:
     typedef typename _Base::vector_type vector_type;
     typedef mdsim::box<dimension> box_type;
     typedef mdsim::clock clock_type;
-    typedef mdsim::gpu::force<dimension, float_type> force_type;
     typedef samples::particle_group<dimension, float_type> particle_group_type;
     typedef typename particle_group_type::particle_type particle_type;
     typedef logger logger_type;
@@ -59,7 +57,6 @@ public:
         boost::shared_ptr<particle_group_type const> particle_group
       , boost::shared_ptr<box_type const> box
       , boost::shared_ptr<clock_type const> clock
-      , boost::shared_ptr<force_type const> force
       , boost::shared_ptr<logger_type> logger = boost::make_shared<logger_type>()
     );
 
@@ -97,7 +94,6 @@ private:
     /** module dependencies */
     boost::shared_ptr<box_type const> box_;
     boost::shared_ptr<particle_group_type const> particle_group_;
-    boost::shared_ptr<force_type const> force_;
     /** module logger */
     boost::shared_ptr<logger_type> logger_;
 
@@ -137,12 +133,10 @@ private:
       , double                                  // host_output_type
     > sum_scalar_;
 
-    typedef typename force_type::stress_tensor_type stress_tensor_type;
-    typedef typename force_type::gpu_stress_tensor_type gpu_stress_tensor_type;
     algorithm::gpu::reduce<
         algorithm::gpu::sum_                    // reduce_transform
-      , stress_tensor_type                      // input_type
-      , gpu_stress_tensor_type                  // coalesced_input_type
+      , typename particle_type::stress_pot_type // input_type
+      , typename particle_type::stress_pot_array_type::value_type // coalesced_input_type
       , dsfloat                                 // output_type
       , dsfloat                                 // coalesced_output_type
       , double                                  // host_output_type

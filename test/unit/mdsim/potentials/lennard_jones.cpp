@@ -191,18 +191,19 @@ void lennard_jones<float_type>::test()
     }
     cuda::copy(r_list, particle->g_r);
 
-    force->aux_enable();              // enable computation of auxiliary quantities
+    particle->aux_enable();              // enable computation of auxiliary quantities
+    particle->prepare();
     force->compute();
 
     // read forces and other stuff from device
-    cuda::host::vector<typename particle_type::gpu_vector_type> f_list(particle->g_f.size());
-    cuda::copy(particle->g_f, f_list);
+    cuda::host::vector<typename particle_type::gpu_vector_type> f_list(particle->force().size());
+    cuda::copy(particle->force(), f_list);
 
-    cuda::host::vector<float> en_pot(force->potential_energy().size());
-    cuda::copy(force->potential_energy(), en_pot);
+    cuda::host::vector<float> en_pot(particle->en_pot().size());
+    cuda::copy(particle->en_pot(), en_pot);
 
-    cuda::host::vector<float> hypervirial(force->hypervirial().size());
-    cuda::copy(force->hypervirial(), hypervirial);
+    cuda::host::vector<float> hypervirial(particle->hypervirial().size());
+    cuda::copy(particle->hypervirial(), hypervirial);
 
     const float_type tolerance = 10 * numeric_limits<float_type>::epsilon();
 

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2008-2011  Peter Colberg and Felix Höfling
+ * Copyright © 2008-2012  Peter Colberg and Felix Höfling
  *
  * This file is part of HALMD.
  *
@@ -20,6 +20,7 @@
 #ifndef HALMD_MDSIM_GPU_FORCES_PAIR_TRUNC_HPP
 #define HALMD_MDSIM_GPU_FORCES_PAIR_TRUNC_HPP
 
+#include <boost/bind.hpp>
 #include <boost/shared_ptr.hpp>
 #include <boost/lexical_cast.hpp>
 #include <lua.hpp>
@@ -27,12 +28,12 @@
 
 #include <halmd/io/logger.hpp>
 #include <halmd/mdsim/box.hpp>
-#include <halmd/mdsim/gpu/force.hpp>
 #include <halmd/mdsim/gpu/forces/pair_trunc_kernel.hpp>
 #include <halmd/mdsim/gpu/neighbour.hpp>
 #include <halmd/mdsim/gpu/particle.hpp>
 #include <halmd/utility/lua/lua.hpp>
 #include <halmd/utility/profiler.hpp>
+#include <halmd/utility/signal.hpp>
 
 namespace halmd {
 namespace mdsim {
@@ -44,61 +45,25 @@ namespace forces {
  */
 template <int dimension, typename float_type, typename potential_type>
 class pair_trunc
-  : public mdsim::gpu::force<dimension, float_type>
 {
 public:
-    typedef mdsim::gpu::force<dimension, float_type> _Base;
-    typedef typename _Base::vector_type vector_type;
-    typedef typename _Base::gpu_stress_tensor_type gpu_stress_tensor_type;
-    typedef gpu::particle<dimension, float> particle_type;
+    typedef gpu::particle<dimension, float_type> particle_type;
+    typedef typename particle_type::vector_type vector_type;
     typedef mdsim::box<dimension> box_type;
     typedef gpu::neighbour neighbour_type;
     typedef typename potential_type::gpu_potential_type gpu_potential_type;
     typedef pair_trunc_wrapper<dimension, gpu_potential_type> gpu_wrapper;
 
-    inline static void luaopen(lua_State* L);
+    static void luaopen(lua_State* L);
 
-    inline pair_trunc(
+    pair_trunc(
         boost::shared_ptr<potential_type> potential
       , boost::shared_ptr<particle_type> particle1
       , boost::shared_ptr<particle_type> particle2
       , boost::shared_ptr<box_type> box
       , boost::shared_ptr<neighbour_type const> neighbour
     );
-    inline virtual void compute();
-
-    // FIXME move aux variables and their methods to gpu::particle
-    /**
-     * enable computation of auxiliary variables
-     *
-     * The flag is reset by the next call to compute().
-     */
-    virtual void aux_enable()
-    {
-        LOG_TRACE("enable computation of auxiliary variables");
-        aux_flag_ = true;
-    }
-
-    //! returns potential energies of particles
-    virtual cuda::vector<float> const& potential_energy() const
-    {
-        assert_aux_valid();
-        return g_en_pot_;
-    }
-
-    /** potential part of stress tensors of particles */
-    virtual cuda::vector<gpu_stress_tensor_type> const& stress_tensor_pot() const
-    {
-        assert_aux_valid();
-        return g_stress_pot_;
-    }
-
-    //! returns hyper virial of particles
-    virtual cuda::vector<float> const& hypervirial() const
-    {
-        assert_aux_valid();
-        return g_hypervirial_;
-    }
+    void compute();
 
 private:
     typedef utility::profiler profiler_type;
@@ -110,13 +75,6 @@ private:
         accumulator_type compute;
     };
 
-    void assert_aux_valid() const
-    {
-        if (!aux_valid_) {
-            throw std::logic_error("Auxiliary variables were not enabled in force module.");
-        }
-    }
-
     boost::shared_ptr<potential_type> potential_;
     boost::shared_ptr<particle_type> particle1_;
     boost::shared_ptr<particle_type> particle2_;
@@ -124,17 +82,6 @@ private:
     /** neighbour lists */
     boost::shared_ptr<neighbour_type const> neighbour_;
 
-    // FIXME move the following 5 variables to gpu::particle
-    /** flag for switching the computation of auxiliary variables in function compute() */
-    bool aux_flag_;
-    /** flag indicates that the auxiliary variables were updated by the last call to compute() */
-    bool aux_valid_;
-    /** potential energy for each particle */
-    cuda::vector<float> g_en_pot_;
-    /** potential part of stress tensor for each particle */
-    cuda::vector<gpu_stress_tensor_type> g_stress_pot_;
-    /** hyper virial for each particle */
-    cuda::vector<float> g_hypervirial_;
     /** profiling runtime accumulators */
     runtime runtime_;
 };
@@ -154,13 +101,6 @@ pair_trunc<dimension, float_type, potential_type>::pair_trunc(
   , particle2_(particle2)
   , box_(box)
   , neighbour_(neighbour)
-  // member initalisation
-  , aux_flag_(false)          //< disable auxiliary variables by default
-  , aux_valid_(false)
-  // memory allocation
-  , g_en_pot_(particle1_->dim.threads())
-  , g_stress_pot_(particle1_->dim.threads())
-  , g_hypervirial_(particle1_->dim.threads())
 {
     cuda::copy(static_cast<vector_type>(box_->length()), gpu_wrapper::kernel.box_length);
 }
@@ -183,19 +123,19 @@ void pair_trunc<dimension, float_type, potential_type>::compute()
     potential_->bind_textures();
 
     cuda::configure(particle1_->dim.grid, particle1_->dim.block);
-    aux_valid_ = aux_flag_;
-    if (!aux_flag_) {
+    if (!particle1_->aux_valid()) {
         gpu_wrapper::kernel.compute(
-            particle1_->g_f, neighbour_->g_neighbour(), g_en_pot_, g_stress_pot_, g_hypervirial_
+            particle1_->force(), neighbour_->g_neighbour()
+          , particle1_->en_pot(), particle1_->stress_pot(), particle1_->hypervirial()
           , particle1_->ntype, particle2_->ntype
         );
     }
     else {
         gpu_wrapper::kernel.compute_aux(
-            particle1_->g_f, neighbour_->g_neighbour(), g_en_pot_, g_stress_pot_, g_hypervirial_
+            particle1_->force(), neighbour_->g_neighbour()
+          , particle1_->en_pot(), particle1_->stress_pot(), particle1_->hypervirial()
           , particle1_->ntype, particle2_->ntype
         );
-        aux_flag_ = false;
     }
     cuda::thread::synchronize();
 }
@@ -206,10 +146,16 @@ static char const* module_name_wrapper(pair_trunc<dimension, float_type, potenti
     return potential_type::module_name();
 }
 
+template <typename force_type>
+static typename signal<void ()>::slot_function_type
+wrap_compute(boost::shared_ptr<force_type> force)
+{
+    return boost::bind(&force_type::compute, force);
+}
+
 template <int dimension, typename float_type, typename potential_type>
 void pair_trunc<dimension, float_type, potential_type>::luaopen(lua_State* L)
 {
-    typedef typename _Base::_Base _Base_Base;
     using namespace luabind;
     static std::string class_name("pair_trunc_" + boost::lexical_cast<std::string>(dimension) + "_");
     module(L, "libhalmd")
@@ -222,15 +168,9 @@ void pair_trunc<dimension, float_type, potential_type>::luaopen(lua_State* L)
                 [
                     namespace_(class_name.c_str())
                     [
-                        class_<pair_trunc, boost::shared_ptr<_Base_Base>, bases<_Base_Base, _Base> >(potential_type::module_name())
-                            .def(constructor<
-                                boost::shared_ptr<potential_type>
-                              , boost::shared_ptr<particle_type>
-                              , boost::shared_ptr<particle_type>
-                              , boost::shared_ptr<box_type>
-                              , boost::shared_ptr<neighbour_type const>
-                            >())
+                        class_<pair_trunc>(potential_type::module_name())
                             .property("module_name", &module_name_wrapper<dimension, float_type, potential_type>)
+                            .property("compute", &wrap_compute<pair_trunc>)
                             .scope
                             [
                                 class_<runtime>("runtime")

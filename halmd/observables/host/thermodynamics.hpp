@@ -1,5 +1,5 @@
 /*
- * Copyright © 2010-2012  Felix Höfling
+ * Copyright © 2010-2012  Felix Höfling and Peter Colberg
  *
  * This file is part of HALMD.
  *
@@ -26,7 +26,6 @@
 #include <halmd/io/logger.hpp>
 #include <halmd/mdsim/box.hpp>
 #include <halmd/mdsim/clock.hpp>
-#include <halmd/mdsim/host/force.hpp>
 #include <halmd/observables/host/samples/particle_group.hpp>
 #include <halmd/observables/thermodynamics.hpp>
 #include <halmd/utility/data_cache.hpp>
@@ -47,7 +46,6 @@ public:
     typedef typename _Base::vector_type vector_type;
     typedef mdsim::box<dimension> box_type;
     typedef mdsim::clock clock_type;
-    typedef mdsim::host::force<dimension, float_type> force_type;
     typedef samples::particle_group<dimension, float_type> particle_group_type;
     typedef typename particle_group_type::particle_type particle_type;
     typedef logger logger_type;
@@ -58,7 +56,6 @@ public:
         boost::shared_ptr<particle_group_type const> particle_group
       , boost::shared_ptr<box_type const> box
       , boost::shared_ptr<clock_type const> clock
-      , boost::shared_ptr<force_type const> force
       , boost::shared_ptr<logger_type> logger = boost::make_shared<logger_type>()
     );
 
@@ -72,24 +69,34 @@ public:
         return box_->volume();
     }
 
+    /**
+     * Compute mean kinetic energy per particle.
+     */
     virtual double en_kin();
+
+    /**
+     * Compute mean potential energy per particle.
+     */
     virtual vector_type const& v_cm();
 
-    virtual double en_pot()
-    {
-        return force_->potential_energy();
-    }
+    /**
+     * Compute mean potential energy per particle.
+     */
+    virtual double en_pot();
 
-    virtual double virial()
-    {
-        return force_->stress_tensor_pot()[0];
-    }
+    /**
+     * Compute mean virial per particle.
+     */
+    virtual double virial();
 
-    virtual double hypervirial()
-    {
-        return force_->hypervirial();
-    }
+    /**
+     * Compute mean hypervirial per particle.
+     */
+    virtual double hypervirial();
 
+    /**
+     * Clear cache.
+     */
     virtual void clear_cache();
 
 private:
@@ -101,18 +108,23 @@ private:
     {
         accumulator_type en_kin;
         accumulator_type v_cm;
+        accumulator_type en_pot;
+        accumulator_type virial;
+        accumulator_type hypervirial;
     };
 
     /** module dependencies */
     boost::shared_ptr<box_type const> box_;
     boost::shared_ptr<particle_group_type const> particle_group_;
-    boost::shared_ptr<force_type const> force_;
     /** module logger */
     boost::shared_ptr<logger_type> logger_;
 
     /** cached results */
     data_cache<double> en_kin_;
     data_cache<vector_type> v_cm_;
+    data_cache<double> en_pot_;
+    data_cache<double> virial_;
+    data_cache<double> hypervirial_;
 
     /** profiling runtime accumulators */
     runtime runtime_;

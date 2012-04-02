@@ -28,7 +28,6 @@
 #include <halmd/mdsim/box.hpp>
 #include <halmd/mdsim/clock.hpp>
 #include <halmd/mdsim/core.hpp>
-#include <halmd/mdsim/host/forces/zero.hpp>
 #include <halmd/mdsim/host/integrators/verlet_nvt_andersen.hpp>
 #include <halmd/mdsim/host/positions/lattice.hpp>
 #include <halmd/mdsim/host/velocities/boltzmann.hpp>
@@ -37,7 +36,6 @@
 #include <halmd/observables/host/thermodynamics.hpp>
 #include <halmd/random/host/random.hpp>
 #ifdef WITH_CUDA
-# include <halmd/mdsim/gpu/forces/zero.hpp>
 # include <halmd/mdsim/gpu/integrators/verlet_nvt_andersen.hpp>
 # include <halmd/mdsim/gpu/positions/lattice.hpp>
 # include <halmd/mdsim/gpu/velocities/boltzmann.hpp>
@@ -59,7 +57,6 @@ template <typename modules_type>
 struct verlet_nvt_andersen
 {
     typedef typename modules_type::box_type box_type;
-    typedef typename modules_type::force_type force_type;
     typedef typename modules_type::integrator_type integrator_type;
     typedef typename modules_type::particle_group_type particle_group_type;
     typedef typename particle_group_type::particle_type particle_type;
@@ -88,7 +85,6 @@ struct verlet_nvt_andersen
     shared_ptr<box_type> box;
     shared_ptr<clock_type> clock;
     shared_ptr<core_type> core;
-    shared_ptr<force_type> force;
     shared_ptr<integrator_type> integrator;
     shared_ptr<particle_type> particle;
     shared_ptr<position_type> position;
@@ -199,9 +195,8 @@ verlet_nvt_andersen<modules_type>::verlet_nvt_andersen()
     position = make_shared<position_type>(particle, box, random, slab);
     velocity = make_shared<velocity_type>(particle, random, temp);
     integrator = make_shared<integrator_type>(particle, box, random, timestep, temp, coll_rate);
-    force = make_shared<force_type>(particle);
     clock = make_shared<clock_type>(timestep);
-    thermodynamics = make_shared<thermodynamics_type>(make_shared<particle_group_type>(particle), box, clock, force);
+    thermodynamics = make_shared<thermodynamics_type>(make_shared<particle_group_type>(particle), box, clock);
 
     // create core and connect module slots to core signals
     this->connect();
@@ -213,9 +208,9 @@ void verlet_nvt_andersen<modules_type>::connect()
     core = make_shared<core_type>(clock);
     // system preparation
     core->on_prepend_setup( bind(&particle_type::set, particle) );
+    core->on_prepend_setup( bind(&particle_type::prepare, particle) );
     core->on_setup( bind(&position_type::set, position) );
     core->on_setup( bind(&velocity_type::set, velocity) );
-    core->on_append_setup( bind(&force_type::compute, force) );
     // integration step
     core->on_integrate( bind(&integrator_type::integrate, integrator) );
     core->on_finalize( bind(&integrator_type::finalize, integrator) );
@@ -225,7 +220,6 @@ template <int dimension, typename float_type>
 struct host_modules
 {
     typedef mdsim::box<dimension> box_type;
-    typedef mdsim::host::forces::zero<dimension, float_type> force_type;
     typedef mdsim::host::integrators::verlet_nvt_andersen<dimension, float_type> integrator_type;
     typedef observables::host::samples::particle_group_all<dimension, float_type> particle_group_type;
     typedef mdsim::host::positions::lattice<dimension, float_type> position_type;
@@ -247,7 +241,6 @@ template <int dimension, typename float_type>
 struct gpu_modules
 {
     typedef mdsim::box<dimension> box_type;
-    typedef mdsim::gpu::forces::zero<dimension, float_type> force_type;
     typedef mdsim::gpu::integrators::verlet_nvt_andersen<dimension, float_type, halmd::random::gpu::rand48> integrator_type;
     typedef observables::gpu::samples::particle_group_all<dimension, float_type> particle_group_type;
     typedef mdsim::gpu::positions::lattice<dimension, float_type, halmd::random::gpu::rand48> position_type;

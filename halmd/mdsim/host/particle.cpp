@@ -26,6 +26,7 @@
 #include <halmd/io/logger.hpp>
 #include <halmd/mdsim/host/particle.hpp>
 #include <halmd/utility/lua/lua.hpp>
+#include <halmd/utility/signal.hpp>
 
 using namespace boost;
 using namespace std;
@@ -39,7 +40,7 @@ namespace host {
  *
  * @param particles number of particles per type or species
  */
-template <unsigned int dimension, typename float_type>
+template <int dimension, typename float_type>
 particle<dimension, float_type>::particle(
     vector<unsigned int> const& particles
   , vector<double> const& mass
@@ -49,17 +50,23 @@ particle<dimension, float_type>::particle(
   , r(nbox)
   , image(nbox)
   , v(nbox)
-  , f(nbox)
   , tag(nbox)
   , reverse_tag(nbox)
   , type(nbox)
+  , force_(nbox)
+  , en_pot_(nbox)
+  , stress_pot_(nbox)
+  , hypervirial_(nbox)
+  // disable auxiliary variables by default
+  , aux_flag_(false)
+  , aux_valid_(false)
 {
 }
 
 /**
  * set particle tags and types
  */
-template <unsigned int dimension, typename float_type>
+template <int dimension, typename float_type>
 void particle<dimension, float_type>::set()
 {
     // assign particle types
@@ -72,12 +79,37 @@ void particle<dimension, float_type>::set()
     copy(tag.begin(), tag.end(), reverse_tag.begin());
 }
 
+template <int dimension, typename float_type>
+void particle<dimension, float_type>::aux_enable()
+{
+    LOG_TRACE("enable computation of auxiliary variables");
+    aux_flag_ = true;
+}
+
+template <int dimension, typename float_type>
+void particle<dimension, float_type>::prepare()
+{
+    LOG_TRACE("zero forces");
+    fill(force_.begin(), force_.end(), 0);
+
+    // indicate whether auxiliary variables are computed this step
+    aux_valid_ = aux_flag_;
+
+    if (aux_flag_) {
+        LOG_TRACE("zero auxiliary variables");
+        fill(en_pot_.begin(), en_pot_.end(), 0);
+        fill(stress_pot_.begin(), stress_pot_.end(), 0);
+        fill(hypervirial_.begin(), hypervirial_.end(), 0);
+        aux_flag_ = false;
+    }
+}
+
 /**
  * Rearrange particles in memory according to an integer index sequence
  *
  * The neighbour lists must be rebuilt after calling this function!
  */
-template <unsigned int dimension, typename float_type>
+template <int dimension, typename float_type>
 void particle<dimension, float_type>::rearrange(std::vector<unsigned int> const& index)
 {
     scoped_timer_type timer(runtime_.rearrange);
@@ -102,7 +134,21 @@ static int wrap_dimension(particle<dimension, float_type> const&)
     return dimension;
 }
 
-template <unsigned int dimension, typename float_type>
+template <typename particle_type>
+static typename signal<void ()>::slot_function_type
+wrap_aux_enable(shared_ptr<particle_type> self)
+{
+    return bind(&particle_type::aux_enable, self);
+}
+
+template <typename particle_type>
+static typename signal<void ()>::slot_function_type
+wrap_prepare(shared_ptr<particle_type> self)
+{
+    return bind(&particle_type::prepare, self);
+}
+
+template <int dimension, typename float_type>
 void particle<dimension, float_type>::luaopen(lua_State* L)
 {
     using namespace luabind;
@@ -119,6 +165,8 @@ void particle<dimension, float_type>::luaopen(lua_State* L)
                       , vector<double> const&
                     >())
                     .property("dimension", &wrap_dimension<dimension, float_type>)
+                    .property("aux_enable", &wrap_aux_enable<particle>)
+                    .property("prepare", &wrap_prepare<particle>)
                     .scope[
                         class_<runtime>("runtime")
                             .def_readonly("rearrange", &runtime::rearrange)

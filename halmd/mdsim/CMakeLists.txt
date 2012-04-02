@@ -2,7 +2,6 @@ halmd_add_library(halmd_mdsim
   box.cpp
   clock.cpp
   core.cpp
-  force.cpp
   integrator.cpp
   neighbour.cpp
   particle.cpp
@@ -14,7 +13,6 @@ halmd_add_modules(
   libhalmd_mdsim_box
   libhalmd_mdsim_core
   libhalmd_mdsim_clock
-  libhalmd_mdsim_force
   libhalmd_mdsim_integrator
   libhalmd_mdsim_neighbour
   libhalmd_mdsim_particle

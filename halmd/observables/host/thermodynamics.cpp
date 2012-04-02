@@ -1,5 +1,5 @@
 /*
- * Copyright © 2010-2012  Felix Höfling
+ * Copyright © 2010-2012  Felix Höfling and Peter Colberg
  *
  * This file is part of HALMD.
  *
@@ -34,17 +34,18 @@ thermodynamics<dimension, float_type>::thermodynamics(
     shared_ptr<particle_group_type const> particle_group
   , shared_ptr<box_type const> box
   , shared_ptr<clock_type const> clock
-  , shared_ptr<force_type const> force
   , shared_ptr<logger_type> logger
 )
   // dependency injection
   : box_(box)
   , particle_group_(particle_group)
-  , force_(force)
   , logger_(logger)
   // initialise members
   , en_kin_(clock)
   , v_cm_(clock)
+  , en_pot_(clock)
+  , virial_(clock)
+  , hypervirial_(clock)
 {
 }
 
@@ -89,10 +90,76 @@ thermodynamics<dimension, float_type>::v_cm()
 }
 
 template <int dimension, typename float_type>
+double thermodynamics<dimension, float_type>::en_pot()
+{
+    typedef typename particle_type::en_pot_type en_pot_type;
+    typename particle_type::en_pot_array_type const& en_pot = particle_group_->particle().en_pot();
+
+    if (!en_pot_.valid()) {
+        LOG_TRACE("acquire potential energy");
+
+        scoped_timer_type timer(runtime_.en_pot);
+
+        // FIXME use particle_group_->selection_mask()
+        double sum = 0;
+        BOOST_FOREACH(en_pot_type value, en_pot) {
+            sum += value;
+        }
+        en_pot_ = sum / nparticle();
+    }
+    return en_pot_;
+}
+
+template <int dimension, typename float_type>
+double thermodynamics<dimension, float_type>::virial()
+{
+    typedef typename particle_type::stress_pot_type stress_pot_type;
+    typename particle_type::stress_pot_array_type const& stress_pot = particle_group_->particle().stress_pot();
+
+    if (!virial_.valid()) {
+        LOG_TRACE("acquire virial");
+
+        scoped_timer_type timer(runtime_.virial);
+
+        // FIXME use particle_group_->selection_mask()
+        double sum = 0;
+        BOOST_FOREACH(stress_pot_type const& value, stress_pot) {
+            sum += value[0];
+        }
+        virial_ = sum / nparticle();
+    }
+    return virial_;
+}
+
+template <int dimension, typename float_type>
+double thermodynamics<dimension, float_type>::hypervirial()
+{
+    typedef typename particle_type::hypervirial_type hypervirial_type;
+    typename particle_type::hypervirial_array_type const& hypervirial = particle_group_->particle().hypervirial();
+
+    if (!hypervirial_.valid()) {
+
+        scoped_timer_type timer(runtime_.hypervirial);
+
+        LOG_TRACE("acquire hypervirial");
+        // FIXME use particle_group_->selection_mask()
+        double sum = 0;
+        BOOST_FOREACH(hypervirial_type value, hypervirial) {
+            sum += value;
+        }
+        hypervirial_ = sum / nparticle();
+    }
+    return hypervirial_;
+}
+
+template <int dimension, typename float_type>
 void thermodynamics<dimension, float_type>::clear_cache()
 {
     en_kin_.clear();
     v_cm_.clear();
+    en_pot_.clear();
+    virial_.clear();
+    hypervirial_.clear();
 }
 
 template <int dimension, typename float_type>
@@ -112,6 +179,9 @@ void thermodynamics<dimension, float_type>::luaopen(lua_State* L)
                         class_<runtime>("runtime")
                             .def_readonly("en_kin", &runtime::en_kin)
                             .def_readonly("v_cm", &runtime::v_cm)
+                            .def_readonly("en_pot", &runtime::en_pot)
+                            .def_readonly("virial", &runtime::virial)
+                            .def_readonly("hypervirial", &runtime::hypervirial)
                     ]
                     .def_readonly("runtime", &thermodynamics::runtime_)
             ]
@@ -123,7 +193,6 @@ void thermodynamics<dimension, float_type>::luaopen(lua_State* L)
               , shared_ptr<particle_group_type const>
               , shared_ptr<box_type const>
               , shared_ptr<clock_type const>
-              , shared_ptr<force_type const>
               , shared_ptr<logger_type>
             >)
         ]

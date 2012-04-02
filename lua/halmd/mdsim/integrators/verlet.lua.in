@@ -24,9 +24,6 @@ local mdsim = {
     box                 = require("halmd.mdsim.box")
   , clock               = require("halmd.mdsim.clock")
   , core                = require("halmd.mdsim.core")
-  , forces = {
-        zero            = require("halmd.mdsim.forces.zero")
-    }
 }
 
 -- grab C++ wrappers
@@ -72,9 +69,6 @@ function M.__new(args)
     -- connect integrator to core
     core:on_integrate{integrator.integrate, tracker = integrator}
     core:on_finalize{integrator.finalize, tracker = integrator}
-
-    -- zero particle forces before adding partial forces
-    mdsim.forces.zero{ particle = particle }
 
     return integrator
 end
