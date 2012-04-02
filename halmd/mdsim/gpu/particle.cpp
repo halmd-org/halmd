@@ -243,6 +243,23 @@ wrap_prepare(shared_ptr<particle_type> self)
     return bind(&particle_type::prepare, self);
 }
 
+template <typename particle_type>
+struct wrap_particle
+  : particle_type
+  , luabind::wrap_base
+{
+    wrap_particle(
+        vector<unsigned int> const& particles
+      , vector<double> const& mass
+      , unsigned int threads
+    ) : particle_type(particles, mass, threads) {}
+
+    wrap_particle(
+        vector<unsigned int> const& particles
+      , vector<double> const& mass
+    ) : particle_type(particles, mass) {}
+};
+
 template <int dimension, typename float_type>
 void particle<dimension, float_type>::luaopen(lua_State* L)
 {
@@ -254,7 +271,7 @@ void particle<dimension, float_type>::luaopen(lua_State* L)
         [
             namespace_("gpu")
             [
-                class_<particle, shared_ptr<_Base>, _Base>(class_name.c_str())
+                class_<particle, shared_ptr<_Base>, _Base, wrap_particle<particle> >(class_name.c_str())
                     .def(constructor<
                          vector<unsigned int> const&
                        , vector<double> const&
