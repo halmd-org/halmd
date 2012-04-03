@@ -145,6 +145,8 @@ local function parse_args()
         nvt = "Constant NVT",
     }, default = "nve", help = "statistical ensemble"})
 
+    parser:add_argument("steps", {type = "integer", default = 10000, help = "number of simulation steps"})
+
     local sampling = parser:add_argument_group("sampling", {help = "sampling intervals"})
     sampling:add_argument("trajectory", {type = "integer", default = 10, help = "sampling interval for trajectory"})
     sampling:add_argument("structure", {type = "integer", default = 10, help = "sampling interval for structural properties"})
