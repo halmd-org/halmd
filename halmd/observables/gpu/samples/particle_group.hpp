@@ -57,7 +57,7 @@ public:
     particle_group() {}
 
     //! returns underlying particle instance
-    virtual particle_type const& particle() const = 0;
+    virtual boost::shared_ptr<particle_type const> particle() const = 0;
 
     /**
      * returns iterator to an index array in GPU memory mapping particle tags
@@ -115,9 +115,9 @@ public:
         boost::shared_ptr<particle_type const> particle
     );
 
-    virtual particle_type const& particle() const
+    virtual boost::shared_ptr<particle_type const> particle() const
     {
-        return *particle_;
+        return particle_;
     }
 
     virtual gpu_map_iterator g_map() const
@@ -168,9 +168,9 @@ public:
       , unsigned int end
     );
 
-    virtual particle_type const& particle() const
+    virtual boost::shared_ptr<particle_type const> particle() const
     {
-        return *particle_;
+        return particle_;
     }
 
     virtual gpu_map_iterator g_map() const

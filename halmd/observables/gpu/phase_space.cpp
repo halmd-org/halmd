@@ -76,9 +76,9 @@ phase_space<host::samples::phase_space<dimension, float_type> >::phase_space(
   , clock_(clock)
   , logger_(logger)
   // allocate page-locked host memory
-  , h_r_(particle_group->particle().nbox)
-  , h_image_(particle_group->particle().nbox)
-  , h_v_(particle_group->particle().nbox)
+  , h_r_(particle_group->particle()->nbox)
+  , h_image_(particle_group->particle()->nbox)
+  , h_v_(particle_group->particle()->nbox)
 {
 }
 
@@ -104,7 +104,7 @@ void phase_space<gpu::samples::phase_space<dimension, float_type> >::acquire()
         sample_->reset();
     }
 
-    particle_type const& particle = particle_group_->particle();
+    particle_type const& particle = *particle_group_->particle();
     phase_space_wrapper<dimension>::kernel.r.bind(particle.g_r);
     phase_space_wrapper<dimension>::kernel.image.bind(particle.g_image);
     phase_space_wrapper<dimension>::kernel.v.bind(particle.g_v);
@@ -136,7 +136,7 @@ void phase_space<host::samples::phase_space<dimension, float_type> >::acquire()
     LOG_TRACE("acquire host sample");
 
     try {
-        particle_type const& particle = particle_group_->particle();
+        particle_type const& particle = *particle_group_->particle();
         cuda::copy(particle.g_r, h_r_);
         cuda::copy(particle.g_image, h_image_);
         cuda::copy(particle.g_v, h_v_);

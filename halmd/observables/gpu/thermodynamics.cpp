@@ -68,7 +68,7 @@ double thermodynamics<dimension, float_type>::en_kin()
 
         // FIXME use particle_group_->selection_mask() and reduce_if()
         scoped_timer_type timer(runtime_.en_kin);
-        en_kin_ = .5 * sum_velocity_square_(particle_group_->particle().g_v) / nparticle();
+        en_kin_ = .5 * sum_velocity_square_(particle_group_->particle()->g_v) / nparticle();
     }
     return en_kin_;
 }
@@ -85,7 +85,7 @@ thermodynamics<dimension, float_type>::v_cm()
 
         // FIXME use particle_group_->selection_mask() and reduce_if()
         scoped_timer_type timer(runtime_.v_cm);
-        v_cm_ = sum_velocity_vector_(particle_group_->particle().g_v) / nparticle();
+        v_cm_ = sum_velocity_vector_(particle_group_->particle()->g_v) / nparticle();
     }
     return v_cm_;
 }
@@ -101,7 +101,7 @@ double thermodynamics<dimension, float_type>::en_pot()
 
         // FIXME use particle_group_->selection_mask() and reduce_if()
         scoped_timer_type timer(runtime_.en_pot);
-        en_pot_ = sum_scalar_(particle_group_->particle().en_pot()) / nparticle();
+        en_pot_ = sum_scalar_(particle_group_->particle()->en_pot()) / nparticle();
     }
     return en_pot_;
 }
@@ -117,7 +117,7 @@ double thermodynamics<dimension, float_type>::virial()
 
         // FIXME use particle_group_->selection_mask() and reduce_if()
         scoped_timer_type timer(runtime_.virial);
-        virial_ = sum_stress_tensor_diagonal_(particle_group_->particle().stress_pot()) / nparticle();
+        virial_ = sum_stress_tensor_diagonal_(particle_group_->particle()->stress_pot()) / nparticle();
     }
     return virial_;
 }
@@ -133,7 +133,7 @@ double thermodynamics<dimension, float_type>::hypervirial()
 
         // FIXME use particle_group_->selection_mask() and reduce_if()
         scoped_timer_type timer(runtime_.hypervirial);
-        hypervirial_ = sum_scalar_(particle_group_->particle().hypervirial()) / nparticle();
+        hypervirial_ = sum_scalar_(particle_group_->particle()->hypervirial()) / nparticle();
     }
     return hypervirial_;
 }

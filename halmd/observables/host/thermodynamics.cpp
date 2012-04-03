@@ -60,7 +60,7 @@ double thermodynamics<dimension, float_type>::en_kin()
         // FIXME use particle_group_->selection_mask()
         // compute mean-square velocity
         double vv = 0;
-        BOOST_FOREACH(vector_type const& v, particle_group_->particle().v) {
+        BOOST_FOREACH(vector_type const& v, particle_group_->particle()->v) {
             // assuming unit mass for all particle types
             vv += inner_prod(v, v);
         }
@@ -81,7 +81,7 @@ thermodynamics<dimension, float_type>::v_cm()
         // FIXME use particle_group_->selection_mask()
         // compute mean velocity
         vector_type v_cm(0.);
-        BOOST_FOREACH(vector_type const& v, particle_group_->particle().v) {
+        BOOST_FOREACH(vector_type const& v, particle_group_->particle()->v) {
             v_cm += v;
         }
         v_cm_ = v_cm / nparticle();
@@ -93,7 +93,7 @@ template <int dimension, typename float_type>
 double thermodynamics<dimension, float_type>::en_pot()
 {
     typedef typename particle_type::en_pot_type en_pot_type;
-    typename particle_type::en_pot_array_type const& en_pot = particle_group_->particle().en_pot();
+    typename particle_type::en_pot_array_type const& en_pot = particle_group_->particle()->en_pot();
 
     if (!en_pot_.valid()) {
         LOG_TRACE("acquire potential energy");
@@ -114,7 +114,7 @@ template <int dimension, typename float_type>
 double thermodynamics<dimension, float_type>::virial()
 {
     typedef typename particle_type::stress_pot_type stress_pot_type;
-    typename particle_type::stress_pot_array_type const& stress_pot = particle_group_->particle().stress_pot();
+    typename particle_type::stress_pot_array_type const& stress_pot = particle_group_->particle()->stress_pot();
 
     if (!virial_.valid()) {
         LOG_TRACE("acquire virial");
@@ -135,7 +135,7 @@ template <int dimension, typename float_type>
 double thermodynamics<dimension, float_type>::hypervirial()
 {
     typedef typename particle_type::hypervirial_type hypervirial_type;
-    typename particle_type::hypervirial_array_type const& hypervirial = particle_group_->particle().hypervirial();
+    typename particle_type::hypervirial_array_type const& hypervirial = particle_group_->particle()->hypervirial();
 
     if (!hypervirial_.valid()) {
 
