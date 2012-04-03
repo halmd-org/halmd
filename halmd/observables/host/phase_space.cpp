@@ -42,6 +42,7 @@ phase_space<dimension, float_type>::phase_space(
 )
   : sample_(sample)
   , particle_group_(particle_group)
+  , particle_(particle_group->particle())
   , box_(box)
   , clock_(clock)
   , logger_(logger)
@@ -75,18 +76,17 @@ void phase_space<dimension, float_type>::acquire()
     assert(particle_group_->size() == sample_->type->size());
 
     // copy particle data using index map
-    particle_type const& particle = *particle_group_->particle();
     typename particle_group_type::map_iterator idx = particle_group_->map();
     for (unsigned int i = 0; i < particle_group_->size(); ++i, ++idx) {
 
-        assert(*idx < particle.nbox);
+        assert(*idx < particle_->nbox);
 
         // periodically extended particle position
-        vector_type& r = (*sample_->r)[i] = particle.r[*idx];
-        box_->extend_periodic(r, particle.image[*idx]);
+        vector_type& r = (*sample_->r)[i] = particle_->r[*idx];
+        box_->extend_periodic(r, particle_->image[*idx]);
 
-        (*sample_->v)[i] = particle.v[*idx];
-        (*sample_->type)[i] = particle.type[*idx];
+        (*sample_->v)[i] = particle_->v[*idx];
+        (*sample_->type)[i] = particle_->type[*idx];
     }
     sample_->step = clock_->step();
 }

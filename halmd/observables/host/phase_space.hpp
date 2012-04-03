@@ -73,6 +73,7 @@ private:
 
     boost::shared_ptr<sample_type> sample_;
     boost::shared_ptr<particle_group_type const> particle_group_;
+    boost::shared_ptr<particle_type const> particle_;
     boost::shared_ptr<box_type const> box_;
     boost::shared_ptr<clock_type const> clock_;
     boost::shared_ptr<logger_type> logger_;
