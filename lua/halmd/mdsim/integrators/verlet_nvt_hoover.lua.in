@@ -78,8 +78,8 @@ function M.__new(args)
 
     -- connect integrator to core
     local core = mdsim.core()
-    core:on_integrate{integrator.integrate, tracker = integrator}
-    core:on_finalize{integrator.finalize, tracker = integrator}
+    core:on_integrate(integrator.integrate)
+    core:on_finalize(integrator.finalize)
 
     -- connect chain variables to writers of trajectory file
     local file = writers.file{extension = "trj"} -- singleton
@@ -88,14 +88,14 @@ function M.__new(args)
     writer:on_write(integrator.v_xi, {"velocity"})
     -- connect writer to sampler
     local sampler = observables.sampler() -- singleton
-    sampler:on_sample{writer.write, every, tracker = integrator}
+    sampler:on_sample(writer.write, every)
 
     -- connect chain energy to writers of observables file
     file = writers.file() -- singleton
     writer = file:writer{location = {"observables"}, mode = "append"}
     writer:on_write(integrator.en_nhc, {"total_energy_nose_hoover_chain"})
     -- connect writer to sampler
-    sampler:on_sample{writer.write, every, tracker = integrator}
+    sampler:on_sample(writer.write, every)
 
     return integrator
 end

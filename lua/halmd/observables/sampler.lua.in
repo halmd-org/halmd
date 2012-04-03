@@ -18,7 +18,6 @@
 --
 
 local module            = require("halmd.utility.module")
-local signals           = require("halmd.modules.signals")
 local mdsim = {
     clock               = require("halmd.mdsim.clock")
   , core                = require("halmd.mdsim.core")
@@ -85,10 +84,6 @@ function M.__new(args)
 
     return sampler
 end
-
--- patch C++ objects with signal connection handlers
--- @see module halmd.modules.signals
-signals.patch(M)
 
 --
 -- connect runtime accumulators to module profiler

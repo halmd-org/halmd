@@ -65,7 +65,7 @@ function M.__new(args)
         writer:on_write(sample:position(i), {species, "position"})
         writer:on_write(sample:velocity(i), {species, "velocity"})
     end
-    sampler:on_sample{writer.write, every, tracker = writer}
+    sampler:on_sample(writer.write, every)
 
     -- write box edge vectors and offset to trajectory group
     --
@@ -74,7 +74,7 @@ function M.__new(args)
     local writer = file:writer{location = {"trajectory", "box"}, mode = "truncate"}
     writer:on_write(box.edges, {"edges"})
     writer:on_write(box.origin, {"offset"})
-    sampler:on_start{writer.write, tracker = writer}
+    sampler:on_start(writer.write)
 
     return writer
 end

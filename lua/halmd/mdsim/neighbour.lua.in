@@ -113,14 +113,14 @@ function M.__new(args)
 
     -- system preparation after setting positions and velocities
     local core = mdsim.core()
-    core:on_append_setup{sort.order, tracker = neighbour}
+    core:on_append_setup(sort.order)
 
     -- compare maximum squared displacement to squared half skin size
     local limit = math.pow(neighbour.r_skin / 2, 2)
     local greater = predicates.greater(maximum_squared_displacement.compute, limit)
 
     -- evaluate maximum squared displacement every step
-    core:on_prepend_force{greater.evaluate, tracker = neighbour}
+    core:on_prepend_force(greater.evaluate)
     -- if maximum squared displacement is greater than squared half skin size:
     greater:on_greater(sort.order)
 
