@@ -131,7 +131,7 @@ function M.__new(args)
         writer:on_write(self.edges, {"edges"})
         writer:on_write(self.origin, {"offset"})
         local sampler = observables.sampler() -- singleton
-        sampler:on_start{writer.write, tracker = writer}
+        sampler:on_start(writer.write)
         return writer
     end
 

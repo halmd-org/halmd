@@ -74,7 +74,7 @@ function M.__new(args)
 
     local core = mdsim.core()
     -- connect position to core
-    core:on_setup{position.set, tracker = position}
+    core:on_setup(position.set)
 
     return position
 end

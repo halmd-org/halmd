@@ -19,7 +19,6 @@
 
 local hooks             = require("halmd.hooks")
 local module            = require("halmd.utility.module")
-local signals           = require("halmd.modules.signals")
 local utility           = require("halmd.utility")
 
 -- grab C++ modules
@@ -38,10 +37,6 @@ local M = module.singleton("halmd.utility.profiler")
 function M.__new(args)
     return profiler_wrapper()
 end
-
--- patch C++ objects with signal connection handlers
--- @see module halmd.modules.signals
-signals.patch(M)
 
 hooks.register_object_hook(function(object, module)
     local profile = module.profile
@@ -71,7 +66,7 @@ hooks.register_object_hook(function(object, module)
                     error("undefined runtime accumulator: " .. acc, 2)
                 end
                 local profiler = M() -- singleton
-                profiler:on_profile{runtime[acc], desc, tracker = object}
+                profiler:on_profile(runtime[acc], desc)
             end
         end
 

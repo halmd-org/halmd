@@ -56,16 +56,11 @@ function M.__new(args)
     -- construct force module
     local force = assert(forces.pair_trunc)(potential, particle1, particle2, box, neighbour)
 
-    -- move tracked signal connections from neighbour to force;
-    -- on force:disconnect() the core signals connections of
-    -- both force and neighbour will be disconnected
-    neighbour:move_connections(force)
-
     local core = mdsim.core()
     -- system preparation
-    core:on_append_setup{force.compute, tracker = force}
+    core:on_append_setup(force.compute)
     -- compute forces every step
-    core:on_force{force.compute, tracker = force}
+    core:on_force(force.compute)
 
     -- store potential Lua object (which contains the C++ object) as a
     -- read-only Lua property, so we may read it in pair_trunc.profile

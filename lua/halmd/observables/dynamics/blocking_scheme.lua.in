@@ -60,8 +60,8 @@ function M.__new(args)
     blocking_scheme = blocking_scheme(clock, maximum_time, resolution, size, shift, separation, logger)
 
     -- connect to sampler
-    sampler:on_sample{blocking_scheme.sample, every, tracker = blocking_scheme}
-    sampler:on_finish{blocking_scheme.finalise, tracker = blocking_scheme}
+    sampler:on_sample(blocking_scheme.sample, every)
+    sampler:on_finish(blocking_scheme.finalise)
 
     return blocking_scheme
 end

@@ -85,7 +85,7 @@ function M.__new(args)
     -- write wavenumbers only once, use wavenumber object of first density_mode
     local writer = file:writer{location = {"structure", "ssf"}, mode = "truncate"}
     writer:on_write(density_mode[1].wavenumber, {"wavenumber"})
-    sampler:on_start{writer.write, tracker = ssf}
+    sampler:on_start(writer.write)
 
     -- write all partial structure factors
     local writer = file:writer{location = {"structure", "ssf"}, mode = "append"}
@@ -97,7 +97,7 @@ function M.__new(args)
             writer:on_write(ssf:value(i - 1, j - 1), {label1, label2})
         end
     end
-    sampler:on_sample{writer.write, every, tracker = ssf}
+    sampler:on_sample(writer.write, every)
 
     return ssf
 end

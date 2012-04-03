@@ -75,11 +75,11 @@ function M.__new(args)
 
     local core = mdsim.core()
     -- set particle types at the beginning of system preparation
-    core:on_prepend_setup{particle.set, tracker = particle}
+    core:on_prepend_setup(particle.set)
 
     -- zero particle forces before adding partial forces
-    core:on_prepend_setup{particle.prepare, tracker = particle}
-    core:on_prepend_force{particle.prepare, tracker = particle}
+    core:on_prepend_setup(particle.prepare)
+    core:on_prepend_force(particle.prepare)
 
     return particle
 end

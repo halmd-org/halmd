@@ -138,14 +138,14 @@ function M.__new(args)
     local core = mdsim.core()
 
     -- evaluate maximum squared displacement every step
-    core:on_prepend_force{greater.evaluate, tracker = neighbour}
+    core:on_prepend_force(greater.evaluate)
 
     if not args.disable_sorting then
         -- particle sorting
         local sort = mdsim.sort{particle = particle1}
 
         -- system preparation after setting positions and velocities
-        core:on_append_setup{sort.order, tracker = neighbour}
+        core:on_append_setup(sort.order)
 
         -- if maximum squared displacement is greater than squared half skin size:
         greater:on_greater(sort.order)
@@ -155,8 +155,8 @@ function M.__new(args)
         sort:on_order(neighbour.update)
     else
         -- system preparation after setting positions and velocities
-        core:on_append_setup{maximum_squared_displacement.zero, tracker = neighbour}
-        core:on_append_setup{neighbour.update, tracker = neighbour}
+        core:on_append_setup(maximum_squared_displacement.zero)
+        core:on_append_setup(neighbour.update)
 
         -- if maximum squared displacement is greater than squared half skin size:
         greater:on_greater(maximum_squared_displacement.zero)

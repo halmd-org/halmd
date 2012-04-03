@@ -52,9 +52,9 @@ function M.__new(args)
 
     local core = mdsim.core()
     -- system preparation
-    core:on_append_setup{force.compute, tracker = force}
+    core:on_append_setup(force.compute)
     -- compute forces every step
-    core:on_force{force.compute, tracker = force}
+    core:on_force(force.compute)
 
     -- store potential Lua object (which contains the C++ object) as a
     -- read-only Lua property, so we may read it in pair_full.profile

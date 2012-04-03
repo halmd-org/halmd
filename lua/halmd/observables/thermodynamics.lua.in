@@ -155,12 +155,12 @@ function M.__new(args)
                 error("missing parameter 'every'", 2)
             end
             local sampler = observables.sampler() -- singleton
-            sampler:on_sample{writer.write, every, tracker = self}
+            sampler:on_sample(writer.write, every)
 
             -- turn on computation of auxiliary variables _before_ force computation
             -- in each sampling step
             local particle = assert(self.group.particle)
-            sampler:on_prepare{particle.aux_enable, every, tracker = observable}
+            sampler:on_prepare(particle.aux_enable, every)
 
             return writer
         end

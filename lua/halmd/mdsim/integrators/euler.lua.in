@@ -50,7 +50,7 @@ function M.__new(args)
 
     -- connect integrator to core
     local core = mdsim.core() -- singleton
-    core:on_integrate{integrator.integrate, tracker = integrator}
+    core:on_integrate(integrator.integrate)
     -- note: euler.finalize is an empty function
 
     return integrator
