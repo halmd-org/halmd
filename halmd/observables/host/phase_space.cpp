@@ -23,6 +23,7 @@
 #include <halmd/utility/demangle.hpp>
 #include <halmd/utility/lua/lua.hpp>
 #include <halmd/utility/scoped_timer.hpp>
+#include <halmd/utility/signal.hpp>
 #include <halmd/utility/timer.hpp>
 
 using namespace boost;
@@ -91,6 +92,13 @@ void phase_space<dimension, float_type>::acquire()
     sample_->step = clock_->step();
 }
 
+template <typename phase_space_type>
+typename signal<void ()>::slot_function_type
+acquire_wrapper(shared_ptr<phase_space_type> phase_space)
+{
+    return bind(&phase_space_type::acquire, phase_space);
+}
+
 template <int dimension, typename float_type>
 static int wrap_dimension(phase_space<dimension, float_type> const&)
 {
@@ -106,7 +114,8 @@ void phase_space<dimension, float_type>::luaopen(lua_State* L)
     [
         namespace_("observables")
         [
-            class_<phase_space, shared_ptr<_Base>, _Base>(class_name.c_str())
+            class_<phase_space>(class_name.c_str())
+                .property("acquire", &acquire_wrapper<phase_space>)
                 .property("dimension", &wrap_dimension<dimension, float_type>)
                 .scope
                 [

@@ -27,7 +27,6 @@
 #include <halmd/mdsim/clock.hpp>
 #include <halmd/observables/host/samples/phase_space.hpp>
 #include <halmd/observables/host/samples/particle_group.hpp>
-#include <halmd/observables/phase_space.hpp>
 #include <halmd/utility/profiler.hpp>
 
 namespace halmd {
@@ -36,10 +35,8 @@ namespace host {
 
 template <int dimension, typename float_type>
 class phase_space
-  : public observables::phase_space<dimension>
 {
 public:
-    typedef observables::phase_space<dimension> _Base;
     typedef host::samples::phase_space<dimension, float_type> sample_type;
     typedef host::samples::particle_group<dimension, float_type> particle_group_type;
     typedef typename particle_group_type::particle_type particle_type;
@@ -58,7 +55,7 @@ public:
       , boost::shared_ptr<logger_type> logger = boost::make_shared<logger_type>()
     );
 
-    virtual void acquire();
+    void acquire();
 
 private:
     typedef halmd::utility::profiler profiler_type;
