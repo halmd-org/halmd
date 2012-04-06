@@ -1,5 +1,5 @@
 /*
- * Copyright © 2011  Peter Colberg
+ * Copyright © 2011-2012  Peter Colberg
  *
  * This file is part of HALMD.
  *
@@ -94,66 +94,6 @@ public:
 private:
     /** append shared step and time datasets */
     void write_step_time();
-
-    template <typename T>
-    static H5::DataSet create_dataset(
-        H5::Group const& group
-      , std::string const& name
-      , boost::function<T ()> const&
-    );
-    template <typename T>
-    static H5::DataSet create_dataset(
-        H5::Group const& group
-      , std::string const& name
-      , boost::function<T const& ()> const&
-    );
-    template <typename T>
-    static H5::DataSet create_dataset(
-        H5::Group const& group
-      , std::string const& name
-      , boost::function<T& ()> const&
-    );
-    template <typename T, typename Alloc>
-    static H5::DataSet create_dataset(
-        H5::Group const& group
-      , std::string const& name
-      , boost::function<std::vector<T, Alloc> ()> const& slot
-    );
-    template <typename T, typename Alloc>
-    static H5::DataSet create_dataset(
-        H5::Group const& group
-      , std::string const& name
-      , boost::function<std::vector<T, Alloc> const& ()> const& slot
-    );
-    template <typename T, typename Alloc>
-    static H5::DataSet create_dataset(
-        H5::Group const& group
-      , std::string const& name
-      , boost::function<std::vector<T, Alloc>& ()> const& slot
-    );
-    template <typename T, std::size_t N, typename Alloc>
-    static H5::DataSet create_dataset(
-        H5::Group const& group
-      , std::string const& name
-      , boost::function<boost::multi_array<T, N, Alloc> ()> const& slot
-    );
-    template <typename T, std::size_t N, typename Alloc>
-    static H5::DataSet create_dataset(
-        H5::Group const& group
-      , std::string const& name
-      , boost::function<boost::multi_array<T, N, Alloc> const& ()> const& slot
-    );
-    template <typename T, std::size_t N, typename Alloc>
-    static H5::DataSet create_dataset(
-        H5::Group const& group
-      , std::string const& name
-      , boost::function<boost::multi_array<T, N, Alloc>& ()> const& slot
-    );
-    template <typename T>
-    static void write_dataset(
-        H5::DataSet dataset
-      , boost::function<T ()> const& slot
-    );
 
     /** writer group */
     H5::Group group_;
