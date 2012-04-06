@@ -1,5 +1,5 @@
 /*
- * Copyright © 2011  Peter Colberg
+ * Copyright © 2011-2012  Peter Colberg
  *
  * This file is part of HALMD.
  *
@@ -49,6 +49,51 @@ truncate::truncate(
 }
 
 template <typename T>
+static H5::DataSet create_dataset(
+    H5::Group const& group
+  , string const& name
+  , T const&
+)
+{
+    return h5xx::create_dataset<T>(group, name);
+}
+
+template <typename T, typename Alloc>
+static H5::DataSet create_dataset(
+    H5::Group const& group
+  , string const& name
+  , vector<T, Alloc> const& data
+)
+{
+    return h5xx::create_dataset<vector<T, Alloc> >(group, name, data.size());
+}
+
+template <typename T, size_t N, typename Alloc>
+static H5::DataSet create_dataset(
+    H5::Group const& group
+  , string const& name
+  , multi_array<T, N, Alloc> const& data
+)
+{
+    return h5xx::create_dataset<multi_array<T, N, Alloc> >(group, name, data.shape());
+}
+
+template <typename T>
+static void write_dataset(
+    H5::DataSet& dataset
+  , H5::Group const& group
+  , string const& name
+  , function<T ()> const& slot
+)
+{
+    T const& data = slot();
+    if (!dataset.getId()) {
+        dataset = create_dataset(group, name, data);
+    }
+    h5xx::write_dataset(dataset, data);
+}
+
+template <typename T>
 connection truncate::on_write(
     subgroup_type& dataset
   , function<T ()> const& slot
@@ -58,8 +103,7 @@ connection truncate::on_write(
     if (location.size() < 1) {
         throw invalid_argument("dataset location");
     }
-    dataset = create_dataset(group_, join(location, "/"), slot);
-    return on_write_.connect(bind(&write_dataset<T>, dataset, slot));
+    return on_write_.connect(bind(&write_dataset<T>, dataset, group_, join(location, "/"), slot));
 }
 
 connection truncate::on_prepend_write(slot_function_type const& slot)
@@ -77,105 +121,6 @@ void truncate::write()
     on_prepend_write_();
     on_write_();
     on_append_write_();
-}
-
-template <typename T>
-H5::DataSet truncate::create_dataset(
-    H5::Group const& group
-  , string const& name
-  , function<T ()> const&
-)
-{
-    return h5xx::create_dataset<T>(group, name);
-}
-
-template <typename T>
-H5::DataSet truncate::create_dataset(
-    H5::Group const& group
-  , string const& name
-  , function<T const& ()> const&
-)
-{
-    return h5xx::create_dataset<T>(group, name);
-}
-
-template <typename T>
-H5::DataSet truncate::create_dataset(
-    H5::Group const& group
-  , string const& name
-  , function<T& ()> const&
-)
-{
-    return h5xx::create_dataset<T>(group, name);
-}
-
-template <typename T, typename Alloc>
-H5::DataSet truncate::create_dataset(
-    H5::Group const& group
-  , string const& name
-  , function<vector<T, Alloc> ()> const& slot
-)
-{
-    return h5xx::create_dataset<vector<T, Alloc> >(group, name, slot().size());
-}
-
-template <typename T, typename Alloc>
-H5::DataSet truncate::create_dataset(
-    H5::Group const& group
-  , string const& name
-  , function<vector<T, Alloc> const& ()> const& slot
-)
-{
-    return h5xx::create_dataset<vector<T, Alloc> >(group, name, slot().size());
-}
-
-template <typename T, typename Alloc>
-H5::DataSet truncate::create_dataset(
-    H5::Group const& group
-  , string const& name
-  , function<vector<T, Alloc>& ()> const& slot
-)
-{
-    return h5xx::create_dataset<vector<T, Alloc> >(group, name, slot().size());
-}
-
-template <typename T, std::size_t N, typename Alloc>
-H5::DataSet truncate::create_dataset(
-    H5::Group const& group
-  , string const& name
-  , function<multi_array<T, N, Alloc> ()> const& slot
-)
-{
-    return h5xx::create_dataset<multi_array<T, N, Alloc> >(group, name, slot().shape());
-}
-
-template <typename T, size_t N, typename Alloc>
-H5::DataSet truncate::create_dataset(
-    H5::Group const& group
-  , string const& name
-  , function<multi_array<T, N, Alloc> const& ()> const& slot
-)
-{
-    return h5xx::create_dataset<multi_array<T, N, Alloc> >(group, name, slot().shape());
-}
-
-template <typename T, size_t N, typename Alloc>
-H5::DataSet truncate::create_dataset(
-    H5::Group const& group
-  , string const& name
-  , function<multi_array<T, N, Alloc>& ()> const& slot
-)
-{
-    return h5xx::create_dataset<multi_array<T, N, Alloc> >(group, name, slot().shape());
-}
-
-template <typename T>
-void truncate::write_dataset(
-    H5::DataSet dataset
-  , function<T ()> const& slot
-)
-{
-    h5xx::write_dataset(dataset, slot());
 }
 
 static truncate::slot_function_type

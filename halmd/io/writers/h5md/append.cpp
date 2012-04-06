@@ -55,6 +55,51 @@ append::append(
 }
 
 template <typename T>
+static H5::DataSet create_dataset(
+    H5::Group const& group
+  , string const& name
+  , T const&
+)
+{
+    return h5xx::create_chunked_dataset<T>(group, name);
+}
+
+template <typename T, typename Alloc>
+static H5::DataSet create_dataset(
+    H5::Group const& group
+  , string const& name
+  , vector<T, Alloc> const& data
+)
+{
+    return h5xx::create_chunked_dataset<vector<T, Alloc> >(group, name, data.size());
+}
+
+template <typename T, size_t N, typename Alloc>
+static H5::DataSet create_dataset(
+    H5::Group const& group
+  , string const& name
+  , multi_array<T, N, Alloc> const& data
+)
+{
+    return h5xx::create_chunked_dataset<multi_array<T, N, Alloc> >(group, name, data.shape());
+}
+
+template <typename T>
+static void write_dataset(
+    H5::DataSet& dataset
+  , H5::Group const& group
+  , string const& name
+  , function<T ()> const& slot
+)
+{
+    T const& data = slot();
+    if (!dataset.getId()) {
+        dataset = create_dataset(group, name, data);
+    }
+    h5xx::write_chunked_dataset(dataset, data);
+}
+
+template <typename T>
 connection append::on_write(
     subgroup_type& group
   , function<T ()> const& slot
@@ -65,10 +110,9 @@ connection append::on_write(
         throw invalid_argument("dataset location");
     }
     group = h5xx::open_group(group_, join(location, "/"));
-    H5::DataSet dataset = create_dataset(group, "sample", slot);
     h5xx::link(step_, group, "step");
     h5xx::link(time_, group, "time");
-    return on_write_.connect(bind(&write_dataset<T>, dataset, slot));
+    return on_write_.connect(bind(&write_dataset<T>, H5::DataSet(), group, "sample", slot));
 }
 
 connection append::on_prepend_write(slot_function_type const& slot)
@@ -93,106 +137,6 @@ void append::write_step_time()
 {
     h5xx::write_chunked_dataset(step_, clock_->step());
     h5xx::write_chunked_dataset(time_, clock_->time());
-}
-
-template <typename T>
-H5::DataSet append::create_dataset(
-    H5::Group const& group
-  , string const& name
-  , function<T ()> const&
-)
-{
-    return h5xx::create_chunked_dataset<T>(group, name);
-}
-
-template <typename T>
-H5::DataSet append::create_dataset(
-    H5::Group const& group
-  , string const& name
-  , function<T const& ()> const&
-)
-{
-    return h5xx::create_chunked_dataset<T>(group, name);
-}
-
-template <typename T>
-H5::DataSet append::create_dataset(
-    H5::Group const& group
-  , string const& name
-  , function<T& ()> const&
-)
-{
-    return h5xx::create_chunked_dataset<T>(group, name);
-}
-
-template <typename T, typename Alloc>
-H5::DataSet append::create_dataset(
-    H5::Group const& group
-  , string const& name
-  , function<vector<T, Alloc> ()> const& slot
-)
-{
-    return h5xx::create_chunked_dataset<vector<T, Alloc> >(group, name, slot().size());
-}
-
-template <typename T, typename Alloc>
-H5::DataSet append::create_dataset(
-    H5::Group const& group
-  , string const& name
-  , function<vector<T, Alloc> const& ()> const& slot
-)
-{
-    return h5xx::create_chunked_dataset<vector<T, Alloc> >(group, name, slot().size());
-}
-
-template <typename T, typename Alloc>
-H5::DataSet append::create_dataset(
-    H5::Group const& group
-  , string const& name
-  , function<vector<T, Alloc>& ()> const& slot
-)
-{
-    return h5xx::create_chunked_dataset<vector<T, Alloc> >(group, name, slot().size());
-}
-
-template <typename T, std::size_t N, typename Alloc>
-H5::DataSet append::create_dataset(
-    H5::Group const& group
-  , string const& name
-  , function<multi_array<T, N, Alloc> ()> const& slot
-)
-{
-    return h5xx::create_chunked_dataset<multi_array<T, N, Alloc> >(group, name, slot().shape());
-}
-
-template <typename T, size_t N, typename Alloc>
-H5::DataSet append::create_dataset(
-    H5::Group const& group
-  , string const& name
-  , function<multi_array<T, N, Alloc> const& ()> const& slot
-)
-{
-    return h5xx::create_chunked_dataset<multi_array<T, N, Alloc> >(group, name, slot().shape());
-}
-
-template <typename T, size_t N, typename Alloc>
-H5::DataSet append::create_dataset(
-    H5::Group const& group
-  , string const& name
-  , function<multi_array<T, N, Alloc>& ()> const& slot
-)
-{
-    return h5xx::create_chunked_dataset<multi_array<T, N, Alloc> >(group, name, slot().shape());
-}
-
-
-template <typename T>
-void append::write_dataset(
-    H5::DataSet dataset
-  , function<T ()> const& slot
-)
-{
-    h5xx::write_chunked_dataset(dataset, slot());
 }
 
 static append::slot_function_type
