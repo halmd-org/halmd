@@ -89,7 +89,7 @@ public:
 
 private:
     typedef typename clock_type::step_type step_type;
-    typedef typename density_mode_type::mode_vector_type rho_vector_type;
+    typedef typename density_mode_type::mode_array_type rho_vector_type;
 
     /** wavevector grid */
     boost::shared_ptr<wavevector_type const> wavevector_;

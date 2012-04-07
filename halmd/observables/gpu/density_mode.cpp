@@ -87,7 +87,7 @@ density_mode<dimension, float_type>::acquire(phase_space_type const& phase_space
 {
     scoped_timer_type timer(runtime_.acquire);
 
-    if (rho_sample_ && rho_sample_->step == clock_->step()) {
+    if (rho_sample_ && rho_sample_->step() == clock_->step()) {
         LOG_TRACE("sample is up to date");
         return rho_sample_;
     }
@@ -100,12 +100,13 @@ density_mode<dimension, float_type>::acquire(phase_space_type const& phase_space
 
     // re-allocate memory which allows modules (e.g., dynamics::blocking_scheme)
     // to hold a previous copy of the sample
-    rho_sample_ = make_shared<sample_type>(nq_);
+    rho_sample_ = make_shared<sample_type>(nq_, clock_->step());
 
-    assert(rho_sample_->rho->size() == nq_);
+    assert(rho_sample_->rho().size() == nq_);
+    assert(rho_sample_->step() == clock_->step());
 
     // compute density modes
-    mode_vector_type& rho = *rho_sample_->rho; //< dereference shared_ptr
+    mode_array_type& rho = rho_sample_->rho();
     try {
         cuda::configure(dim_.grid, dim_.block);
         wrapper_type::kernel.q.bind(g_q_);
@@ -134,7 +135,6 @@ density_mode<dimension, float_type>::acquire(phase_space_type const& phase_space
     for (unsigned int i = 0; i < nq_; ++i) {
         rho[i] = mode_type(h_cos_[i], -h_sin_[i]);
     }
-    rho_sample_->step = clock_->step();
 
     return rho_sample_;
 }

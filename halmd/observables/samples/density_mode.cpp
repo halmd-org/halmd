@@ -1,5 +1,5 @@
 /*
- * Copyright © 2011  Felix Höfling
+ * Copyright © 2011-2012  Felix Höfling and Peter Colberg
  *
  * This file is part of HALMD.
  *
@@ -35,15 +35,15 @@ template <int dimension>
 void density_mode<dimension>::luaopen(lua_State* L)
 {
     using namespace luabind;
-    static string const class_name("density_mode_" + lexical_cast<string>(dimension) + "_");
+    static string const class_name("density_mode_" + lexical_cast<string>(dimension));
     module(L, "libhalmd")
     [
         namespace_("observables")
         [
             namespace_("samples")
             [
-                class_<density_mode, shared_ptr<density_mode> >(class_name.c_str())
-                    .def(constructor<unsigned int>())
+                class_<density_mode>(class_name.c_str())
+                    .property("step", &density_mode::step)
             ]
         ]
     ];

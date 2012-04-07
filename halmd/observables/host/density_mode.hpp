@@ -78,8 +78,8 @@ public:
 
 private:
     typedef fixed_vector<float_type, dimension> vector_type;
-    typedef typename sample_type::mode_vector_type mode_vector_type;
-    typedef typename mode_vector_type::value_type mode_type;
+    typedef typename sample_type::mode_array_type mode_array_type;
+    typedef typename mode_array_type::value_type mode_type;
 
     /** cached sample with density modes */
     boost::shared_ptr<sample_type> rho_sample_;

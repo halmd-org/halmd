@@ -81,8 +81,8 @@ public:
 private:
     typedef typename mdsim::type_traits<dimension, float>::vector_type vector_type;
     typedef typename mdsim::type_traits<dimension, float>::gpu::coalesced_vector_type gpu_vector_type;
-    typedef typename sample_type::mode_vector_type mode_vector_type;
-    typedef typename mode_vector_type::value_type mode_type;
+    typedef typename sample_type::mode_array_type mode_array_type;
+    typedef typename mode_array_type::value_type mode_type;
     typedef density_mode_wrapper<dimension> wrapper_type;
 
     /** cached sample with density modes */

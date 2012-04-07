@@ -63,15 +63,15 @@ ssf<dimension>::sample(density_mode_type const& mode1, density_mode_type const& 
 
     LOG_TRACE("sampling");
 
-    if (mode1.step != clock_->step()) {
+    if (mode1.step() != clock_->step()) {
         throw logic_error("first density modes sample was not updated");
     }
-    if (mode2.step != clock_->step()) {
+    if (mode2.step() != clock_->step()) {
         throw logic_error("second density modes sample was not updated");
     }
 
-    typename rho_vector_type::const_iterator rho_q1 = mode1.rho->begin();
-    typename rho_vector_type::const_iterator rho_q2 = mode2.rho->begin();
+    typename rho_vector_type::const_iterator rho_q1 = mode1.rho().begin();
+    typename rho_vector_type::const_iterator rho_q2 = mode2.rho().begin();
     typename result_type::iterator result = result_.begin();
 
     typename wavevector_type::map_type const& wavevector = wavevector_->value();

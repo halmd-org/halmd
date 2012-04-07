@@ -1,5 +1,5 @@
 /*
- * Copyright © 2011  Felix Höfling
+ * Copyright © 2011-2012  Felix Höfling and Peter Colberg
  *
  * This file is part of HALMD.
  *
@@ -20,14 +20,13 @@
 #ifndef HALMD_OBSERVABLES_SAMPLES_DENSITY_MODE_HPP
 #define HALMD_OBSERVABLES_SAMPLES_DENSITY_MODE_HPP
 
-#include <boost/shared_ptr.hpp>
 #include <complex>
 #include <limits>
 #include <lua.hpp>
+#include <stdexcept> // std::logic_error
 #include <vector>
 
 #include <halmd/mdsim/clock.hpp>
-#include <halmd/numeric/blas/fixed_vector.hpp>
 #include <halmd/utility/raw_allocator.hpp>
 
 namespace halmd {
@@ -35,70 +34,75 @@ namespace observables {
 namespace samples {
 
 /**
- *  data structure for storing Fourier modes of the particle density
+ * Data structure for storing Fourier modes of the particle density.
  *
- *  @f$ \rho_{\vec q} = \sum_{i=1}^N \exp(\textrm{i}\vec q \cdot \vec r_i) @f$
+ * @f$ \rho_{\vec q} = \sum_{i=1}^N \exp(\textrm{i}\vec q \cdot \vec r_i) @f$
  */
 template <int dimension>
 class density_mode
 {
-private:
-    typedef mdsim::clock clock_type;
-
 public:
-    typedef fixed_vector<double, dimension> vector_type;
-    typedef std::complex<double> mode_type;
-    typedef typename clock_type::step_type step_type;
-
-    /** density modes, one entry per wavevector */
-    typedef std::vector<mode_type, raw_allocator<mode_type> > mode_vector_type;
+    typedef std::vector<std::complex<double>, raw_allocator<std::complex<double> > > mode_array_type;
+    typedef typename mdsim::clock::step_type step_type;
 
     /**
-     *  nested list of density modes, @f$ rho[i][j] = \rho_{\vec q}^{(i)} = @f$
-     *  for wavevector @f$ \vec q = wavevector[j] @f$ and particle types @f$ i @f$
+     * Construct sample of given size.
+     *
+     * @param nq total number of wavevectors
+     * @param step simulation step when sample is taken (optional)
      */
-    boost::shared_ptr<mode_vector_type> rho;
-    /** simulation step when sample was taken */
-    step_type step;
+    density_mode(std::size_t nq, step_type step = std::numeric_limits<step_type>::max());
 
+    /**
+     * Returns const reference to density modes, one entry per wavevector.
+     *
+     * nested list of density modes, @f$ rho[i][j] = \rho_{\vec q}^{(i)} = @f$
+     * for wavevector @f$ \vec q = wavevector[j] @f$ and particle types @f$ i @f$
+     */
+    mode_array_type const& rho() const
+    {
+        return rho_;
+    }
+
+    /**
+     * Returns non-const reference to density modus, one entry per wavevector.
+     *
+     * nested list of density modes, @f$ rho[i][j] = \rho_{\vec q}^{(i)} = @f$
+     * for wavevector @f$ \vec q = wavevector[j] @f$ and particle types @f$ i @f$
+     */
+    mode_array_type& rho()
+    {
+        return rho_;
+    }
+
+    /**
+     * Returns simulation step when the sample was taken.
+     */
+    step_type step() const
+    {
+        if (step_ == std::numeric_limits<step_type>::max()) {
+            throw std::logic_error("step not set in density modes sample");
+        }
+        return step_;
+    }
+
+    /**
+     * Bind class to Lua.
+     */
     static void luaopen(lua_State* L);
 
-    /**
-     * construct sample of given size
-     *
-     * @param nq    total number of wavevectors
-     */
-    density_mode(unsigned int nq);
-
-    /**
-     * Free shared pointers and re-allocate memory
-     * if containers are shared with some other object.
-     *
-     * Values are not initialised.
-     *
-     * @param force if true then enforce reallocation
-     */
-    void reset(bool force=false);
+private:
+    /** density modes */
+    mode_array_type rho_;
+    /** simulation step when sample was taken */
+    step_type step_;
 };
 
 template <int dimension>
-inline density_mode<dimension>::density_mode(unsigned int nq)
-  // allocate density modes
-  : rho(new mode_vector_type(nq))
-  // initialise attributes
-  , step(std::numeric_limits<step_type>::max())
+inline density_mode<dimension>::density_mode(std::size_t nq, step_type step)
+  : rho_(nq)
+  , step_(step)
 {
-}
-
-template <int dimension>
-inline void density_mode<dimension>::reset(bool force)
-{
-    // free shared pointers and re-allocate memory
-    if (force || !rho.unique()) {
-        rho.reset(new mode_vector_type(rho->size()));
-    }
-    // make time stamp invalid
-    step = std::numeric_limits<step_type>::max();
 }
 
 } // namespace samples

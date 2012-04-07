@@ -52,7 +52,7 @@ density_mode<dimension, float_type>::acquire(phase_space_type const& phase_space
 {
     scoped_timer_type timer(runtime_.acquire);
 
-    if (rho_sample_ && rho_sample_->step == clock_->step()) {
+    if (rho_sample_ && rho_sample_->step() == clock_->step()) {
         LOG_TRACE("sample is up to date");
         return rho_sample_;
     }
@@ -65,18 +65,19 @@ density_mode<dimension, float_type>::acquire(phase_space_type const& phase_space
 
     // re-allocate memory which allows modules (e.g., dynamics::blocking_scheme)
     // to hold a previous copy of the sample
-    rho_sample_ = make_shared<sample_type>(wavevector_->value().size());
+    rho_sample_ = make_shared<sample_type>(wavevector_->value().size(), clock_->step());
 
-    assert(rho_sample_->rho->size() == wavevector_->value().size());
+    assert(rho_sample_->rho().size() == wavevector_->value().size());
+    assert(rho_sample_->step() == clock_->step());
 
     // compute density modes
-    mode_vector_type& rho_vector = *rho_sample_->rho; //< dereference shared_ptr
+    mode_array_type& rho_vector = rho_sample_->rho();
     // initialise result array
     fill(rho_vector.begin(), rho_vector.end(), 0);
     // compute sum of exponentials: rho_q = sum_r exp(-i q·r)
     // 1st loop: iterate over particles
     BOOST_FOREACH (vector_type const& r, *phase_space.r) {
-        typename mode_vector_type::iterator rho_q = rho_vector.begin();
+        typename mode_array_type::iterator rho_q = rho_vector.begin();
         typedef pair<double, vector_type> map_value_type; // pair: (wavenumber, wavevector)
         // 2nd loop: iterate over wavevectors
         BOOST_FOREACH (map_value_type const& q_pair, wavevector_->value()) {
@@ -84,7 +85,6 @@ density_mode<dimension, float_type>::acquire(phase_space_type const& phase_space
             *rho_q++ += mode_type(cos(q_r), -sin(q_r));
         }
     }
-    rho_sample_->step = clock_->step();
 
     return rho_sample_;
 }
