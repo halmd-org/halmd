@@ -122,19 +122,11 @@ connection blocking_scheme::on_sample(shared_ptr<block_sample_type> block_sample
 
 void blocking_scheme::sample()
 {
-    // FIXME only if needed
-    // trigger update of input sample(s)
     on_prepend_sample_();
 
     LOG_TRACE("append sample(s)");
 
-    // check integrity of input data
-    step_type step = clock_->step();
-    BOOST_FOREACH(shared_ptr<block_sample_type> block_sample, block_sample_) {
-        if (block_sample->step() != step) {
-            throw logic_error("input sample was not updated");
-        }
-    }
+    step_type const step = clock_->step();
 
     // iterate over all coarse-graining levels
     for (unsigned int i = 0; i < interval_.size(); ++i) {

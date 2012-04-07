@@ -44,8 +44,6 @@ namespace samples {
 class blocking_scheme_base
 {
 public:
-    typedef mdsim::clock::step_type step_type;
-
     /** append the current input data to level 'index' */
     virtual void push_back(std::size_t index) = 0;
     /** drop the first entry at level 'index' */
@@ -62,8 +60,6 @@ public:
     virtual std::size_t count() const = 0;
     /** returns size of coarse-graining blocks */
     virtual std::size_t block_size() const = 0;
-    /** returns integration step of the current sample */
-    virtual step_type step() const = 0;
 };
 
 /**
@@ -81,7 +77,6 @@ public:
     typedef boost::circular_buffer<sample_type> block_type;
     typedef typename block_type::iterator block_iterator;
     typedef typename block_type::const_iterator block_const_iterator;
-    typedef typename _Base::step_type step_type;
 
     static void luaopen(lua_State* L);
 
@@ -98,7 +93,6 @@ public:
     virtual std::size_t size(std::size_t index) const;
     virtual std::size_t count() const;
     virtual std::size_t block_size() const;
-    virtual step_type step() const;
 
     /**
      * This function is inlined by the correlation function.
@@ -185,14 +179,6 @@ template <typename sample_type>
 std::size_t blocking_scheme<sample_type>::block_size() const
 {
     return block_size_;
-}
-
-template <typename sample_type>
-typename blocking_scheme<sample_type>::step_type
-blocking_scheme<sample_type>::step() const
-{
-    // return integration step at which sample data were taken
-    return sample_->step;
 }
 
 template <typename sample_type>
