@@ -148,7 +148,7 @@ void correlation<tcf_type>::compute(unsigned int level)
         scoped_timer_type timer(runtime_.tcf);
         // call TCF-specific compute routine and
         // store result in output accumulator
-        (*out++)(tcf_->compute(*first, *second));
+        (*out++)(tcf_->compute(**first, **second));
     }
 }
 
