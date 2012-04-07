@@ -1,5 +1,5 @@
 /*
- * Copyright © 2011-2012  Felix Höfling
+ * Copyright © 2011-2012  Felix Höfling and Peter Colberg
  *
  * This file is part of HALMD.
  *
@@ -17,16 +17,14 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <algorithm>
 #include <boost/bind.hpp>
-#include <functional>
-#include <iterator>
-#include <limits>
+#include <boost/function.hpp>
 #include <stdexcept>
-#include <string>
 
 #include <halmd/observables/ssf.hpp>
 #include <halmd/utility/lua/lua.hpp>
+#include <halmd/numeric/accumulator.hpp>
+#include <halmd/utility/signal.hpp>
 
 using namespace boost;
 using namespace std;
@@ -36,181 +34,117 @@ namespace observables {
 
 template <int dimension>
 ssf<dimension>::ssf(
-    vector<shared_ptr<density_mode_type const> > const& density_mode
+    shared_ptr<wavevector_type const> wavevector
+  , double norm
   , shared_ptr<clock_type const> clock
   , shared_ptr<logger_type> logger
 )
   // dependency injection
-  : density_mode_(density_mode)
+  : wavevector_(wavevector)
+  , norm_(norm)
   , clock_(clock)
   , logger_(logger)
   // initialise members
+  , result_(wavevector_->wavenumber().size())
   , step_(numeric_limits<step_type>::max())
 {
-    if (density_mode_.size() < 1) {
-        throw invalid_argument("missing density modes");
-    }
-
-    // allocate memory
-    unsigned int nq = density_mode_.front()->wavenumber().size();
-    unsigned int ntype = density_mode_.size();
-    unsigned int nssf = ntype * (ntype + 1) / 2; //< number of partial structure factors
-
-    value_.resize(nssf);
-    result_accumulator_.resize(nssf);
-    for (unsigned int i = 0; i < nssf; ++i) {
-        value_[i].resize(nq);
-        result_accumulator_[i].resize(nq);
-    }
-
-    // normalisation factor: total number of particles
-    npart_ = 0;
-    for (unsigned int i = 0; i < ntype; ++i) {
-        npart_ += density_mode_[i]->nparticle();
-    }
-    LOG("evaluate static structure factor for " << npart_ << " particles");
 }
 
-/**
- * compute SSF from sample of density Fourier modes
- */
 template <int dimension>
-void ssf<dimension>::sample()
-{
-    if (step_ == clock_->step()) {
-        LOG_TRACE("sample is up to date");
-        return;
-    }
-
-    // acquire sample of density modes
-    on_sample_();
-
-    LOG_TRACE("sampling");
-
-    for (size_t i = 0; i < density_mode_.size(); ++i) {
-        if (density_mode_[i]->step() != clock_->step()) {
-            throw logic_error("density modes sample was not updated");
-        }
-    }
-
-    // compute SSF
-    compute_();
-
-    // iterate over combinations of particle types
-    for (unsigned int i = 0; i < value_.size(); ++i) {
-        // transform accumulators to tuples (mean, error_of_mean, count)
-        for (unsigned int j = 0; j < result_accumulator_[i].size(); ++j) {
-            accumulator<double> const& acc = result_accumulator_[i][j];
-            result_type& v = value_[i][j];
-            v[0] = mean(acc);
-            v[1] = (count(acc) > 1) ? error_of_mean(acc) : 0;
-            v[2] = static_cast<double>(count(acc));
-        }
-    }
-    step_ = clock_->step();   // store simulation step as time stamp
-}
-
-/**
- * compute SSF from sample of density Fourier modes
- */
-template <int dimension>
-void ssf<dimension>::compute_()
+typename ssf<dimension>::result_type const&
+ssf<dimension>::sample(density_mode_type const& mode1, density_mode_type const& mode2)
 {
     scoped_timer_type timer(runtime_.sample);
 
-    typedef typename density_mode_type::result_type rho_vector_type;
-    typedef typename density_mode_type::wavevector_type::map_type wavevector_map_type;
-    typedef typename rho_vector_type::const_iterator rho_iterator;
-    typedef typename wavevector_map_type::const_iterator wavevector_iterator;
-    typedef std::vector<accumulator<double> >::iterator result_iterator;
+    if (step_ == clock_->step()) {
+        LOG_TRACE("sample is up to date");
+        return result_;
+    }
 
-    // perform computation of partial SSF for all combinations of particle types
-    wavevector_map_type const& wavevector = density_mode_.front()->wavevector().value();
-    if (wavevector.empty()) return; // nothing to do
+    LOG_TRACE("sampling");
 
-    unsigned int ntype = density_mode_.size();
-    unsigned int k = 0;
-    for (unsigned int i = 0; i < ntype; ++i) {
-        for (unsigned int j = i; j < ntype; ++j, ++k) {
-            rho_iterator rho_q0 = density_mode_[i]->value()->begin();
-            rho_iterator rho_q1 = density_mode_[j]->value()->begin();
-            result_iterator result = result_accumulator_[k].begin();
+    if (mode1.step != clock_->step()) {
+        throw logic_error("first density modes sample was not updated");
+    }
+    if (mode2.step != clock_->step()) {
+        throw logic_error("second density modes sample was not updated");
+    }
 
-            // accumulate products of density modes with equal wavenumber,
-            // iterate over sorted list of wavevectors
-            wavevector_iterator q = wavevector.begin();
-            wavevector_iterator q_next = q; ++q_next;
-            while (q != wavevector.end()) {
-                // compute Re[rho_q rho_q^*], add result to output accumulator
-                double re = (real(*rho_q0) * real(*rho_q1) + imag(*rho_q0) * imag(*rho_q1));
-                (*result)(re / npart_);
-                // find end of range with equal wavenumber
-                if (q_next == wavevector.end() || q->first != q_next->first) {
-                    result++;   // next wavenumber: increment output iterator
-                }
-                ++q; ++q_next; ++rho_q0; ++rho_q1;
-            }
+    typename rho_vector_type::const_iterator rho_q1 = mode1.rho->begin();
+    typename rho_vector_type::const_iterator rho_q2 = mode2.rho->begin();
+    typename result_type::iterator result = result_.begin();
+
+    typename wavevector_type::map_type const& wavevector = wavevector_->value();
+    typename wavevector_type::map_type::const_iterator q = wavevector.begin();
+    typename wavevector_type::map_type::const_iterator q_next = q; ++q_next;
+
+    // accumulate products of density modes with equal wavenumber,
+    // iterate over sorted list of wavevectors
+    accumulator<double> acc;
+    while (q != wavevector.end()) {
+        // compute Re[rho_q rho_q^*], add result to output accumulator
+        double re = (real(*rho_q1) * real(*rho_q2) + imag(*rho_q1) * imag(*rho_q2));
+        acc(re / norm_);
+        // find end of range with equal wavenumber
+        if (q_next == wavevector.end() || q->first != q_next->first) {
+            // transform accumulator to array (mean, error_of_mean, count)
+            (*result)[0] = mean(acc);
+            (*result)[1] = count(acc) > 1 ? error_of_mean(acc) : 0;
+            (*result)[2] = count(acc);
+            acc.reset();
+            // next wavenumber: increment output iterator
+            ++result;
         }
+        ++q; ++q_next; ++rho_q1; ++rho_q2;
     }
+
+    // store simulation step as time stamp
+    step_ = clock_->step();
+
+    return result_;
 }
 
-template <int dimension>
-vector<typename ssf<dimension>::result_type> const&
-ssf<dimension>::value(unsigned int type1, unsigned int type2) const
+template <typename result_type, typename ssf_type, typename slot_type>
+static result_type const&
+sample(shared_ptr<ssf_type> ssf, slot_type const& mode1, slot_type const& mode2)
 {
-    unsigned int ntype = density_mode_.size();
-    if (!(type1 < ntype)) {
-        throw invalid_argument("first particle type");
-    }
-    if (!(type2 < ntype)) {
-        throw invalid_argument("second particle type");
-    }
-    unsigned int i = min(type1, type2);
-    unsigned int j = max(type1, type2);
-    unsigned int k = j + i * ntype - (i * (i + 1)) / 2;
-    assert(k < value_.size());
-    return value_[k];
+    return ssf->sample(*mode1(), *mode2());
 }
 
-template <typename ssf_type>
-static function<vector<typename ssf_type::result_type> const& ()>
-wrap_value(shared_ptr<ssf_type const> ssf, unsigned int type1, unsigned int type2)
+template <typename result_type, typename ssf_type, typename slot_type>
+static function<result_type const& ()>
+wrap_sample(shared_ptr<ssf_type> ssf, slot_type const& mode1, slot_type const& mode2)
 {
-    return bind(static_cast<vector<typename ssf_type::result_type> const& (ssf_type::*)(unsigned int, unsigned int) const>(&ssf_type::value), ssf, type1, type2);
-}
-
-template <typename ssf_type>
-typename ssf_type::slot_function_type
-sample_wrapper(shared_ptr<ssf_type> ssf)
-{
-    return bind(&ssf_type::sample, ssf);
+    return bind(&sample<result_type, ssf_type, slot_type>, ssf, mode1, mode2);
 }
 
 template <int dimension>
 void ssf<dimension>::luaopen(lua_State* L)
 {
+    typedef function<shared_ptr<density_mode_type const> ()> slot_type;
+
     using namespace luabind;
-    static string class_name("ssf_" + lexical_cast<string>(dimension) + "_");
+    static string class_name("ssf_" + lexical_cast<string>(dimension));
     module(L, "libhalmd")
     [
         namespace_("observables")
         [
-            class_<ssf, shared_ptr<ssf> >(class_name.c_str())
-                .def(constructor<
-                    vector<shared_ptr<density_mode_type const> > const&
-                  , shared_ptr<clock_type const>
-                  , shared_ptr<logger_type>
-                >())
-                .def("value", &wrap_value<ssf>)
+            class_<ssf>(class_name.c_str())
+                .def("sample", &wrap_sample<result_type, ssf, slot_type>)
                 .property("wavevector", &ssf::wavevector)
-                .property("sample", &sample_wrapper<ssf>)
-                .def("on_sample", &ssf::on_sample)
                 .scope
                 [
                     class_<runtime>("runtime")
                         .def_readonly("sample", &runtime::sample)
                 ]
                 .def_readonly("runtime", &ssf::runtime_)
+
+          , def("ssf", &make_shared<ssf
+              , shared_ptr<wavevector_type const>
+              , double
+              , shared_ptr<clock_type const>
+              , shared_ptr<logger_type>
+            >)
         ]
     ];
 }

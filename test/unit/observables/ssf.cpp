@@ -70,12 +70,14 @@ struct lattice
     typedef typename modules_type::sample_type sample_type;
     typedef typename modules_type::phase_space_type phase_space_type;
     typedef typename modules_type::density_mode_type density_mode_type;
+    typedef typename density_mode_type::sample_type density_mode_sample_type;
     static bool const gpu = modules_type::gpu;
     typedef typename particle_type::vector_type vector_type;
     typedef typename vector_type::value_type float_type;
     static unsigned int const dimension = vector_type::static_size;
     typedef observables::utility::wavevector<dimension> wavevector_type;
     typedef observables::ssf<dimension> ssf_type;
+    typedef typename ssf_type::result_type ssf_result_type;
     typedef mdsim::clock clock_type;
 
     fixed_vector<unsigned, dimension> ncell;
@@ -146,8 +148,8 @@ void lattice<modules_type>::test()
     wavevector = make_shared<wavevector_type>(wavenumber, box->length(), 1e-3, 2 * dimension);
 
     // construct modules for density modes and static structure factor
-    density_mode = make_shared<density_mode_type>(sample, wavevector, clock);
-    ssf = make_shared<ssf_type>(list_of(density_mode), clock);
+    density_mode = make_shared<density_mode_type>(wavevector, clock);
+    ssf = make_shared<ssf_type>(wavevector, particle->nbox, clock);
 
     // generate lattices
     BOOST_TEST_MESSAGE("set particle tags");
@@ -161,12 +163,11 @@ void lattice<modules_type>::test()
 
     // compute density modes
     BOOST_TEST_MESSAGE("compute density modes");
-    density_mode->acquire();
+    shared_ptr<density_mode_sample_type const> mode = density_mode->acquire(*sample);
 
     // compute static structure factor
     BOOST_TEST_MESSAGE("compute static structure factor");
-    ssf->sample();
-    vector<typename ssf_type::result_type> const& result = ssf->value()[0]; // particle type 0
+    ssf_result_type const& result = ssf->sample(*mode, *mode);
     BOOST_CHECK(result.size() == wavenumber.size());
 
     // compare with expected result

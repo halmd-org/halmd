@@ -1,12 +1,10 @@
 halmd_add_library(halmd_observables
-  density_mode.cpp
   runtime_estimate.cpp
   sampler.cpp
   ssf.cpp
   thermodynamics.cpp
 )
 halmd_add_modules(
-  libhalmd_observables_density_mode
   libhalmd_observables_runtime_estimate
   libhalmd_observables_sampler
   libhalmd_observables_ssf

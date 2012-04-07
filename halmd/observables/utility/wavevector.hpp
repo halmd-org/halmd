@@ -44,6 +44,7 @@ class wavevector
 public:
     typedef fixed_vector<double, dimension> vector_type;
     typedef std::vector<std::pair<double, vector_type> > map_type;
+    typedef std::vector<double> wavenumber_array_type;
 
     static void luaopen(lua_State* L);
 
@@ -87,7 +88,7 @@ public:
     }
 
     //! returns wavenumber grid
-    std::vector<double> const& wavenumber() const
+    wavenumber_array_type const& wavenumber() const
     {
         return wavenumber_;
     }
@@ -97,7 +98,7 @@ protected:
     void init_();
 
     /** wavenumber grid */
-    std::vector<double> wavenumber_;
+    wavenumber_array_type wavenumber_;
     /** edge lengths of simulation box */
     vector_type box_length_;
     /** tolerance of wavevector magnitudes (relative error) */

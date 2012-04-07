@@ -1,5 +1,5 @@
 /*
- * Copyright © 2011  Felix Höfling
+ * Copyright © 2011-2012  Felix Höfling and Peter Colberg
  *
  * This file is part of HALMD.
  *
@@ -17,6 +17,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <boost/bind.hpp>
+
 #include <halmd/observables/gpu/density_mode.hpp>
 #include <halmd/utility/lua/lua.hpp>
 
@@ -29,21 +31,18 @@ namespace gpu {
 
 template <int dimension, typename float_type>
 density_mode<dimension, float_type>::density_mode(
-    shared_ptr<phase_space_type const> phase_space
-  , shared_ptr<wavevector_type const> wavevector
+    shared_ptr<wavevector_type const> wavevector
   , shared_ptr<clock_type const> clock
   , shared_ptr<logger_type> logger
 )
     // dependency injection
-  : phase_space_(phase_space)
-  , wavevector_(wavevector)
+  : wavevector_(wavevector)
   , clock_(clock)
   , logger_(logger)
     // member initialisation
   , nq_(wavevector_->value().size())
   , dim_(50, 64 << DEVICE_SCALE) // at most 512 threads per block
     // memory allocation
-  , rho_sample_(nq_)
   , g_q_(nq_)
   , g_sin_block_(nq_ * dim_.blocks_per_grid()), g_cos_block_(nq_ * dim_.blocks_per_grid())
   , g_sin_(nq_), g_cos_(nq_)
@@ -83,39 +82,37 @@ density_mode<dimension, float_type>::density_mode(
  * Acquire sample of all density modes from phase space sample
  */
 template <int dimension, typename float_type>
-void density_mode<dimension, float_type>::acquire()
+shared_ptr<typename density_mode<dimension, float_type>::sample_type const>
+density_mode<dimension, float_type>::acquire(phase_space_type const& phase_space)
 {
     scoped_timer_type timer(runtime_.acquire);
 
-    if (rho_sample_.step == clock_->step()) {
+    if (rho_sample_ && rho_sample_->step == clock_->step()) {
         LOG_TRACE("sample is up to date");
-        return;
+        return rho_sample_;
     }
-
-    typedef typename density_mode_sample_type::mode_vector_type mode_vector_type;
-
-    // trigger update of phase space sample
-    on_acquire_();
 
     LOG_TRACE("acquire sample");
 
-    if (phase_space_->step != clock_->step()) {
+    if (phase_space.step != clock_->step()) {
         throw logic_error("GPU phase space sample was not updated");
     }
 
     // re-allocate memory which allows modules (e.g., dynamics::blocking_scheme)
     // to hold a previous copy of the sample
-    rho_sample_.reset();
+    rho_sample_ = make_shared<sample_type>(nq_);
+
+    assert(rho_sample_->rho->size() == nq_);
 
     // compute density modes
-    mode_vector_type& rho = *rho_sample_.rho; //< dereference shared_ptr
+    mode_vector_type& rho = *rho_sample_->rho; //< dereference shared_ptr
     try {
         cuda::configure(dim_.grid, dim_.block);
         wrapper_type::kernel.q.bind(g_q_);
 
         // compute exp(i q·r) for all wavevector/particle pairs and perform block sums
         wrapper_type::kernel.compute(
-            *phase_space_->r, phase_space_->r->size()
+            *phase_space.r, phase_space.r->size()
           , g_sin_block_, g_cos_block_);
         cuda::thread::synchronize();
 
@@ -137,19 +134,39 @@ void density_mode<dimension, float_type>::acquire()
     for (unsigned int i = 0; i < nq_; ++i) {
         rho[i] = mode_type(h_cos_[i], -h_sin_[i]);
     }
-    rho_sample_.step = clock_->step();
+    rho_sample_->step = clock_->step();
+
+    return rho_sample_;
+}
+
+template <typename sample_type, typename density_mode_type, typename slot_type>
+static shared_ptr<sample_type const>
+acquire(shared_ptr<density_mode_type> density_mode, slot_type const& phase_space)
+{
+    return density_mode->acquire(*phase_space());
+}
+
+template <typename sample_type, typename density_mode_type, typename slot_type>
+static function<shared_ptr<sample_type const> ()>
+wrap_acquire(shared_ptr<density_mode_type> density_mode, slot_type const& phase_space)
+{
+    return bind(&acquire<sample_type, density_mode_type, slot_type>, density_mode, phase_space);
 }
 
 template <int dimension, typename float_type>
 void density_mode<dimension, float_type>::luaopen(lua_State* L)
 {
+    typedef function<shared_ptr<phase_space_type const> ()> slot_type;
+
     using namespace luabind;
-    static string class_name("density_mode_" + lexical_cast<string>(dimension) + "_");
+    static string class_name("density_mode_" + lexical_cast<string>(dimension));
     module(L, "libhalmd")
     [
         namespace_("observables")
         [
-            class_<density_mode, shared_ptr<_Base>, _Base>(class_name.c_str())
+            class_<density_mode>(class_name.c_str())
+                .def("acquire", &wrap_acquire<sample_type, density_mode, slot_type>)
+                .property("wavevector", &density_mode::wavevector)
                 .scope
                 [
                     class_<runtime>("runtime")
@@ -158,7 +175,6 @@ void density_mode<dimension, float_type>::luaopen(lua_State* L)
                 .def_readonly("runtime", &density_mode::runtime_)
 
           , def("density_mode", &make_shared<density_mode
-              , shared_ptr<phase_space_type const>
               , shared_ptr<wavevector_type const>
               , shared_ptr<clock_type const>
               , shared_ptr<logger_type>

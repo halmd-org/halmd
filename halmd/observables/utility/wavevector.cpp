@@ -128,6 +128,13 @@ void wavevector<dimension>::init_()
     LOG_DEBUG("total number of wavevectors: " << wavevector_.size());
 }
 
+template <typename wavevector_type, typename wavenumber_array_type>
+static function<wavenumber_array_type const& ()>
+wrap_wavenumber(shared_ptr<wavevector_type const> wavevector)
+{
+    return bind(&wavevector_type::wavenumber, wavevector);
+}
+
 template <int dimension>
 void wavevector<dimension>::luaopen(lua_State* L)
 {
@@ -150,7 +157,7 @@ void wavevector<dimension>::luaopen(lua_State* L)
                        , vector_type const&
                        , double, unsigned int
                     >())
-                    .property("wavenumber", &wavevector::wavenumber)
+                    .property("wavenumber", &wrap_wavenumber<wavevector, wavenumber_array_type>)
                     .property("value", &wavevector::value)
                     .property("tolerance", &wavevector::tolerance)
                     .property("max_count", &wavevector::max_count)
