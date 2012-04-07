@@ -71,9 +71,12 @@ void excluded_volume<dimension, float_type>::exclude_spheres(
   , std::vector<float_type> diameter
 )
 {
-    for (size_t i = 0; i < sample.r->size(); ++i) {
-        vector_type r = (*sample.r)[i];
-        unsigned int type = (*sample.type)[i];
+    typename sample_type::position_array_type const& position = sample.position();
+    typename sample_type::species_array_type const& species = sample.species();
+
+    for (size_t i = 0; i < position.size(); ++i) {
+        vector_type r = position[i];
+        unsigned int type = species[i];
         assert(type < diameter.size());
         this->exclude_sphere(r, diameter[type]);
     }

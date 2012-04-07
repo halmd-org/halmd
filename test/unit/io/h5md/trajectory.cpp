@@ -49,20 +49,22 @@ array<string, 3> const types = {{ "A", "B", "C" }};
 template <typename sample_type, typename writer_type>
 void on_write_sample(vector<shared_ptr<sample_type> > const& sample, shared_ptr<writer_type> writer)
 {
-    typedef typename sample_type::sample_vector sample_vector;
-    typedef sample_vector const& (sample_type::*getter_type)() const;
+    typedef typename sample_type::position_array_type position_array_type;
+    typedef typename sample_type::velocity_array_type velocity_array_type;
+    typedef position_array_type const& (sample_type::*position_getter_type)() const;
+    typedef velocity_array_type const& (sample_type::*velocity_getter_type)() const;
     typedef typename writer_type::subgroup_type subgroup_type;
 
     for (unsigned int type = 0; type < sample.size(); ++type) {
         subgroup_type position, velocity;
-        writer->template on_write<sample_vector const&>(
+        writer->template on_write<position_array_type const&>(
             position
-          , bind(static_cast<getter_type>(&sample_type::position), sample[type])
+          , bind(static_cast<position_getter_type>(&sample_type::position), sample[type])
           , list_of(types[type])("position")
         );
-        writer->template on_write<sample_vector const&>(
+        writer->template on_write<velocity_array_type const&>(
             velocity
-          , bind(static_cast<getter_type>(&sample_type::velocity), sample[type])
+          , bind(static_cast<velocity_getter_type>(&sample_type::velocity), sample[type])
           , list_of(types[type])("velocity")
         );
         BOOST_CHECK_EQUAL(h5xx::path(position), "/trajectory/" + types[type] + "/position");
@@ -73,20 +75,22 @@ void on_write_sample(vector<shared_ptr<sample_type> > const& sample, shared_ptr<
 template <typename sample_type, typename reader_type>
 void on_read_sample(vector<shared_ptr<sample_type> > const& sample, shared_ptr<reader_type> reader)
 {
-    typedef typename sample_type::sample_vector sample_vector;
-    typedef sample_vector& (sample_type::*getter_type)();
+    typedef typename sample_type::position_array_type position_array_type;
+    typedef typename sample_type::velocity_array_type velocity_array_type;
+    typedef position_array_type& (sample_type::*position_getter_type)();
+    typedef velocity_array_type& (sample_type::*velocity_getter_type)();
     typedef typename reader_type::subgroup_type subgroup_type;
 
     for (unsigned int type = 0; type < sample.size(); ++type) {
         subgroup_type position, velocity;
-        reader->template on_read<sample_vector&>(
+        reader->template on_read<position_array_type&>(
             position
-          , bind(static_cast<getter_type>(&sample_type::position), sample[type])
+          , bind(static_cast<position_getter_type>(&sample_type::position), sample[type])
           , list_of(types[type])("position")
         );
-        reader->template on_read<sample_vector&>(
+        reader->template on_read<velocity_array_type&>(
             velocity
-          , bind(static_cast<getter_type>(&sample_type::velocity), sample[type])
+          , bind(static_cast<velocity_getter_type>(&sample_type::velocity), sample[type])
           , list_of(types[type])("velocity")
         );
         BOOST_CHECK_EQUAL(h5xx::path(position), "/trajectory/" + types[type] + "/position");
@@ -99,8 +103,10 @@ void h5md(vector<unsigned int> const& ntypes)
 {
     typedef observables::host::samples::phase_space<dimension, float> float_sample_type;
     typedef observables::host::samples::phase_space<dimension, double> double_sample_type;
-    typedef typename float_sample_type::sample_vector float_sample_vector;
-    typedef typename double_sample_type::sample_vector double_sample_vector;
+    typedef typename float_sample_type::position_array_type float_position_array_type;
+    typedef typename float_sample_type::velocity_array_type float_velocity_array_type;
+    typedef typename double_sample_type::position_array_type double_position_array_type;
+    typedef typename double_sample_type::velocity_array_type double_velocity_array_type;
 
     typedef fixed_vector<float, dimension> float_vector_type;
     typedef fixed_vector<double, dimension> double_vector_type;
@@ -113,8 +119,8 @@ void h5md(vector<unsigned int> const& ntypes)
     vector<shared_ptr<double_sample_type> > double_sample;
     for (unsigned int type = 0; type < ntypes.size(); ++type) {
         double_sample.push_back(make_shared<double_sample_type>(ntypes[type]));
-        double_sample_vector& r_sample = *double_sample[type]->r;
-        double_sample_vector& v_sample = *double_sample[type]->v;
+        double_position_array_type& r_sample = double_sample[type]->position();
+        double_velocity_array_type& v_sample = double_sample[type]->velocity();
         for (unsigned int i = 0; i < ntypes[type]; ++i) {
             double_vector_type& r = r_sample[i];
             r[0] = type;
@@ -130,7 +136,6 @@ void h5md(vector<unsigned int> const& ntypes)
                 v[2] = static_cast<double>(1L << (i % 64));
             }
         }
-        double_sample[type]->step = 0;
     }
 
     // copy sample to single precision
@@ -138,18 +143,17 @@ void h5md(vector<unsigned int> const& ntypes)
     for (unsigned int type = 0; type < ntypes.size(); ++type) {
         float_sample.push_back(make_shared<float_sample_type>(ntypes[type]));
         transform(
-            double_sample[type]->r->begin()
-          , double_sample[type]->r->end()
-          , float_sample[type]->r->begin()
+            double_sample[type]->position().begin()
+          , double_sample[type]->position().end()
+          , float_sample[type]->position().begin()
           , lambda::ll_static_cast<float_vector_type>(lambda::_1)
         );
         transform(
-            double_sample[type]->v->begin()
-          , double_sample[type]->v->end()
-          , float_sample[type]->v->begin()
+            double_sample[type]->velocity().begin()
+          , double_sample[type]->velocity().end()
+          , float_sample[type]->velocity().begin()
           , lambda::ll_static_cast<float_vector_type>(lambda::_1)
         );
-        float_sample[type]->step = double_sample[type]->step;
     }
 
     // write single-precision sample to file
@@ -179,11 +183,8 @@ void h5md(vector<unsigned int> const& ntypes)
 
     // simulate an integration step for the very first particle
     clock->advance();
-    (*double_sample[0]->r)[0] += (*double_sample[0]->v)[0];
-    (*double_sample[0]->v)[0] = double_vector_type(sqrt(2));
-    for (unsigned int type = 0; type < ntypes.size(); ++type) {
-        double_sample[type]->step = clock->step();
-    }
+    double_sample[0]->position()[0] += double_sample[0]->velocity()[0];
+    double_sample[0]->velocity()[0] = double_vector_type(sqrt(2));
 
     // deconstruct the file module before writing
     // the HDF5 library will keep the file open as long as groups
@@ -219,16 +220,16 @@ void h5md(vector<unsigned int> const& ntypes)
     // check binary equality of written and read data
     for (unsigned int type = 0; type < ntypes.size(); ++type) {
         BOOST_CHECK_EQUAL_COLLECTIONS(
-            double_sample_[type]->r->begin()
-          , double_sample_[type]->r->end()
-          , double_sample[type]->r->begin()
-          , double_sample[type]->r->end()
+            double_sample_[type]->position().begin()
+          , double_sample_[type]->position().end()
+          , double_sample[type]->position().begin()
+          , double_sample[type]->position().end()
         );
         BOOST_CHECK_EQUAL_COLLECTIONS(
-            double_sample_[type]->v->begin()
-          , double_sample_[type]->v->end()
-          , double_sample[type]->v->begin()
-          , double_sample[type]->v->end()
+            double_sample_[type]->velocity().begin()
+          , double_sample_[type]->velocity().end()
+          , double_sample[type]->velocity().begin()
+          , double_sample[type]->velocity().end()
         );
     }
 
@@ -254,16 +255,16 @@ void h5md(vector<unsigned int> const& ntypes)
     // note that float_sample was not modified and thus corresponds to #0
     for (unsigned int type = 0; type < ntypes.size(); ++type) {
         BOOST_CHECK_EQUAL_COLLECTIONS(
-            float_sample_[type]->r->begin()
-          , float_sample_[type]->r->end()
-          , float_sample[type]->r->begin()
-          , float_sample[type]->r->end()
+            float_sample_[type]->position().begin()
+          , float_sample_[type]->position().end()
+          , float_sample[type]->position().begin()
+          , float_sample[type]->position().end()
         );
         BOOST_CHECK_EQUAL_COLLECTIONS(
-            float_sample_[type]->v->begin()
-          , float_sample_[type]->v->end()
-          , float_sample[type]->v->begin()
-          , float_sample[type]->v->end()
+            float_sample_[type]->velocity().begin()
+          , float_sample_[type]->velocity().end()
+          , float_sample[type]->velocity().begin()
+          , float_sample[type]->velocity().end()
         );
     }
 

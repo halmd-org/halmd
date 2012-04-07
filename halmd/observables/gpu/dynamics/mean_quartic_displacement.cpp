@@ -70,8 +70,8 @@ mean_quartic_displacement<dimension, float_type>::compute(
 )
 {
     cuda::configure(blocks_, threads_);
-    assert(first.r->size() == second.r->size());
-    compute_(*first.r, *second.r, first.r->size(), g_acc_);
+    assert(first.position().size() == second.position().size());
+    compute_(first.position(), second.position(), first.position().size(), g_acc_);
     cuda::copy(g_acc_, h_acc_); // implicit synchronize
     return for_each(h_acc_.begin(), h_acc_.end(), accumulator_type());
 }

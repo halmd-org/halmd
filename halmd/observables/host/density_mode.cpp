@@ -59,7 +59,7 @@ density_mode<dimension, float_type>::acquire(phase_space_type const& phase_space
 
     LOG_TRACE("acquire sample");
 
-    if (phase_space.step != clock_->step()) {
+    if (phase_space.step() != clock_->step()) {
         throw logic_error("host phase space sample was not updated");
     }
 
@@ -76,7 +76,7 @@ density_mode<dimension, float_type>::acquire(phase_space_type const& phase_space
     fill(rho_vector.begin(), rho_vector.end(), 0);
     // compute sum of exponentials: rho_q = sum_r exp(-i q·r)
     // 1st loop: iterate over particles
-    BOOST_FOREACH (vector_type const& r, *phase_space.r) {
+    BOOST_FOREACH (vector_type const& r, phase_space.position()) {
         typename mode_array_type::iterator rho_q = rho_vector.begin();
         typedef pair<double, vector_type> map_value_type; // pair: (wavenumber, wavevector)
         // 2nd loop: iterate over wavevectors

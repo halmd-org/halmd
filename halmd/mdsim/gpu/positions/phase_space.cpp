@@ -69,10 +69,14 @@ void phase_space<dimension, float_type>::set()
     cuda::host::vector<float4> h_r(particle_->nbox);
 
     // assign particle coordinates and types
-    assert(sample_->r->size() >= particle_->nbox);
-    assert(sample_->type->size() >= particle_->nbox);
+    typename sample_type::position_array_type const& position = sample_->position();
+    typename sample_type::species_array_type const& species = sample_->species();
+
+    assert(position.size() >= particle_->nbox);
+    assert(species.size() >= particle_->nbox);
+
     for (size_t i = 0; i < particle_->nbox; ++i) {
-        h_r[i] = particle_kernel::tagged<vector_type>((*sample_->r)[i], (*sample_->type)[i]);
+        h_r[i] = particle_kernel::tagged<vector_type>(position[i], species[i]);
     }
 
     try {

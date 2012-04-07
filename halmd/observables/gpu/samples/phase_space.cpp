@@ -1,5 +1,5 @@
 /*
- * Copyright © 2008-2011  Peter Colberg and Felix Höfling
+ * Copyright © 2008-2012  Peter Colberg and Felix Höfling
  *
  * This file is part of HALMD.
  *
@@ -17,14 +17,12 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <algorithm>
-#include <boost/bind.hpp>
-#include <boost/function.hpp>
 #include <boost/lexical_cast.hpp>
 #include <string>
 
 #include <halmd/observables/gpu/samples/phase_space.hpp>
 #include <halmd/observables/samples/blocking_scheme.hpp>
+#include <halmd/utility/demangle.hpp>
 #include <halmd/utility/lua/lua.hpp>
 
 using namespace boost;
@@ -36,56 +34,10 @@ namespace gpu {
 namespace samples {
 
 template <int dimension, typename float_type>
-static int wrap_dimension(phase_space<dimension, float_type> const&)
-{
-    return dimension;
-}
-
-#ifndef NDEBUG
-template <int dimension, typename float_type>
-vector<typename phase_space<dimension, float_type>::vector_type>
-phase_space<dimension, float_type>::position() const
-{
-    cuda::vector<gpu_vector_type> const& g_r = *r;
-    cuda::host::vector<gpu_vector_type> h_r(g_r.size());
-    cuda::copy(g_r, h_r);
-    vector<vector_type> position(g_r.size());
-    copy(h_r.begin(), h_r.end(), position.begin());
-    return position;
-}
-
-template <int dimension, typename float_type>
-vector<typename phase_space<dimension, float_type>::vector_type>
-phase_space<dimension, float_type>::velocity() const
-{
-    cuda::vector<gpu_vector_type> const& g_v = *v;
-    cuda::host::vector<gpu_vector_type> h_v(g_v.size());
-    cuda::copy(g_v, h_v);
-    vector<vector_type> velocity(g_v.size());
-    copy(h_v.begin(), h_v.end(), velocity.begin());
-    return velocity;
-}
-
-template <typename phase_space_type>
-static function<vector<typename phase_space_type::vector_type> ()>
-wrap_position(shared_ptr<phase_space_type> self)
-{
-    return bind(&phase_space_type::position, self);
-}
-
-template <typename phase_space_type>
-static function<vector<typename phase_space_type::vector_type> ()>
-wrap_velocity(shared_ptr<phase_space_type> self)
-{
-    return bind(&phase_space_type::velocity, self);
-}
-#endif /* ! NDEBUG */
-
-template <int dimension, typename float_type>
 void phase_space<dimension, float_type>::luaopen(lua_State* L)
 {
     using namespace luabind;
-    static string const class_name("phase_space_" + lexical_cast<string>(dimension) + "_");
+    static string const class_name("phase_space_" + lexical_cast<string>(dimension) + "_" + demangled_name<float_type>());
     module(L, "libhalmd")
     [
         namespace_("observables")
@@ -94,13 +46,8 @@ void phase_space<dimension, float_type>::luaopen(lua_State* L)
             [
                 namespace_("samples")
                 [
-                    class_<phase_space, shared_ptr<phase_space> >(class_name.c_str())
-                        .def(constructor<unsigned int>())
-                        .property("dimension", &wrap_dimension<dimension, float_type>)
-#ifndef NDEBUG
-                        .property("position", &wrap_position<phase_space>)
-                        .property("velocity", &wrap_velocity<phase_space>)
-#endif
+                    class_<phase_space>(class_name.c_str())
+                        .property("step", &phase_space::step)
                 ]
             ]
         ]

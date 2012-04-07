@@ -94,7 +94,7 @@ density_mode<dimension, float_type>::acquire(phase_space_type const& phase_space
 
     LOG_TRACE("acquire sample");
 
-    if (phase_space.step != clock_->step()) {
+    if (phase_space.step() != clock_->step()) {
         throw logic_error("GPU phase space sample was not updated");
     }
 
@@ -113,7 +113,7 @@ density_mode<dimension, float_type>::acquire(phase_space_type const& phase_space
 
         // compute exp(i q·r) for all wavevector/particle pairs and perform block sums
         wrapper_type::kernel.compute(
-            *phase_space.r, phase_space.r->size()
+            phase_space.position(), phase_space.position().size()
           , g_sin_block_, g_cos_block_);
         cuda::thread::synchronize();
 

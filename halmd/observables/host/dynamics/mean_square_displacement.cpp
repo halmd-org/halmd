@@ -43,8 +43,8 @@ mean_square_displacement<dimension, float_type>::compute(
 )
 {
     accumulator_type acc;
-    typename sample_type::sample_vector::const_iterator r1, r2, end = first.r->end();
-    for (r1 = first.r->begin(), r2 = second.r->begin(); r1 != end; ++r1, ++r2) {
+    typename sample_type::position_array_type::const_iterator r1, r2, end = first.position().end();
+    for (r1 = first.position().begin(), r2 = second.position().begin(); r1 != end; ++r1, ++r2) {
         // accumulate square displacement
         acc(correlate_function_type()(*r1, *r2));
     }

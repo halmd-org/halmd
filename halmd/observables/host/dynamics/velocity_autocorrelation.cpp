@@ -45,8 +45,8 @@ velocity_autocorrelation<dimension, float_type>::compute(
 )
 {
     accumulator_type acc;
-    typename sample_type::sample_vector::const_iterator v1, v2, end = first.v->end();
-    for (v1 = first.v->begin(), v2 = second.v->begin(); v1 != end; ++v1, ++v2) {
+    typename sample_type::position_array_type::const_iterator v1, v2, end = first.velocity().end();
+    for (v1 = first.velocity().begin(), v2 = second.velocity().begin(); v1 != end; ++v1, ++v2) {
         // accumulate velocity autocorrelation
         acc(correlate_function_type()(*v1, *v2));
     }

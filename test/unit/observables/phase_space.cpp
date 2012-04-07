@@ -66,26 +66,27 @@ copy_sample(shared_ptr<observables::gpu::samples::phase_space<dimension, float_t
     using mdsim::gpu::particle_kernel::untagged;
 
     typedef observables::host::samples::phase_space<dimension, float_type> host_sample_type;
-    typedef typename observables::gpu::samples::phase_space<dimension, float_type>::gpu_vector_type gpu_vector_type;
-    typedef typename observables::gpu::samples::phase_space<dimension, float_type>::vector_type vector_type;
+    typedef observables::gpu::samples::phase_space<dimension, float_type> gpu_sample_type;
+    typedef typename gpu_sample_type::position_array_type::value_type gpu_vector_type;
+    typedef typename host_sample_type::position_array_type::value_type vector_type;
 
     // allocate memory
-    shared_ptr<host_sample_type> result = make_shared<host_sample_type>(sample->r->size());
-    cuda::host::vector<gpu_vector_type> h_buf(sample->r->size());
+    shared_ptr<host_sample_type> result = make_shared<host_sample_type>(sample->position().size());
+    cuda::host::vector<gpu_vector_type> h_buf(sample->position().size());
 
     // copy from GPU to host via page-locked memory
 
     // positions and types
-    cuda::copy(*sample->r, h_buf);
+    cuda::copy(sample->position(), h_buf);
     cuda::thread::synchronize();
     for (size_t i = 0; i < h_buf.size(); ++i) {
-        tie((*result->r)[i], (*result->type)[i]) = untagged<vector_type>(h_buf[i]);
+        tie(result->position()[i], result->species()[i]) = untagged<vector_type>(h_buf[i]);
     }
 
     // velocities
-    cuda::copy(*sample->v, h_buf);
+    cuda::copy(sample->velocity(), h_buf);
     cuda::thread::synchronize();
-    std::copy(h_buf.begin(), h_buf.end(), result->v->begin());
+    std::copy(h_buf.begin(), h_buf.end(), result->velocity().begin());
 
     return result;
 }
@@ -136,14 +137,18 @@ void phase_space<modules_type>::test()
 {
     float_type const epsilon = numeric_limits<float_type>::epsilon();
 
+    typename input_sample_type::position_array_type& input_position = input_sample->position();
+    typename input_sample_type::velocity_array_type& input_velocity = input_sample->velocity();
+    typename input_sample_type::species_array_type& input_species = input_sample->species();
+
     // prepare input sample
-    BOOST_CHECK_EQUAL(input_sample->r->size(), accumulate(npart.begin(), npart.end(), 0));
-    BOOST_CHECK_EQUAL(input_sample->v->size(), accumulate(npart.begin(), npart.end(), 0));
+    BOOST_CHECK_EQUAL(input_position.size(), accumulate(npart.begin(), npart.end(), 0));
+    BOOST_CHECK_EQUAL(input_velocity.size(), accumulate(npart.begin(), npart.end(), 0));
     for (unsigned int i = 0, n = 0; i < npart.size(); ++i) { // iterate over particle species
         for (unsigned int j = 0; j < npart[i]; ++n, ++j) { // iterate over particles
-            vector_type& r = (*input_sample->r)[n];
-            vector_type& v = (*input_sample->v)[n];
-            unsigned int& type = (*input_sample->type)[n];
+            vector_type& r = input_position[n];
+            vector_type& v = input_velocity[n];
+            unsigned int& type = input_species[n];
             r[0] = float_type(j) + float_type(1) / (i + 1); //< a large, non-integer value
             r[1] = 0;
             r[dimension - 1] = - static_cast<float_type>(j);
@@ -153,7 +158,6 @@ void phase_space<modules_type>::test()
             type = i;
         }
     }
-    input_sample->step = 0;
 
     // copy input sample to particle
     position->set();
@@ -165,29 +169,33 @@ void phase_space<modules_type>::test()
     // acquire sample from particle, construct temporary sampler module
     clock->advance();
     shared_ptr<output_sample_type const> output_sample = phase_space_type(make_shared<particle_group_type>(particle), box, clock).acquire();
-    BOOST_CHECK(output_sample->step == 1);
+    BOOST_CHECK(output_sample->step() == 1);
 
     // compare output and input, copy GPU sample to host before
-    shared_ptr<observables::host::samples::phase_space<dimension, float_type> const> result
-        = copy_sample(output_sample);
-    BOOST_CHECK_EQUAL(result->r->size(), accumulate(npart.begin(), npart.end(), 0));
+    shared_ptr<input_sample_type const> result = copy_sample(output_sample);
+
+    typename input_sample_type::position_array_type const& result_position = result->position();
+    typename input_sample_type::velocity_array_type const& result_velocity = result->velocity();
+    typename input_sample_type::species_array_type const& result_species = result->species();
+
+    BOOST_CHECK_EQUAL(result_position.size(), accumulate(npart.begin(), npart.end(), 0));
     for (unsigned int i = 0, n = 0; i < npart.size(); ++i) { // iterate over particle species
         for (unsigned int j = 0; j < npart[i]; ++n, ++j) { // iterate over particles
             // compare positions with a tolerance due to mapping to and from the periodic box
             for (unsigned int k = 0; k < dimension; ++k) {
-                BOOST_CHECK_CLOSE_FRACTION((*result->r)[n][k], (*input_sample->r)[n][k], 10 * epsilon);
+                BOOST_CHECK_CLOSE_FRACTION(result_position[n][k], input_position[n][k], 10 * epsilon);
             }
         }
     }
     // compare velocities directly as they should not have been modified
     BOOST_CHECK_EQUAL_COLLECTIONS(
-        result->v->begin(), result->v->end()
-      , input_sample->v->begin(), input_sample->v->end()
+        result_velocity.begin(), result_velocity.end()
+      , input_velocity.begin(), input_velocity.end()
     );
     // compare particle species
     BOOST_CHECK_EQUAL_COLLECTIONS(
-        result->type->begin(), result->type->end()
-      , input_sample->type->begin(), input_sample->type->end()
+        result_species.begin(), result_species.end()
+      , input_species.begin(), input_species.end()
     );
 }
 

@@ -81,7 +81,6 @@ struct test_euler
     typedef mdsim::clock clock_type;
     typedef typename modules_type::sample_type sample_type;
     typedef typename modules_type::phase_space_type phase_space_type;
-    typedef typename modules_type::sample_type::sample_vector sample_vector_type; // positions/velocities
 
     typedef typename particle_type::vector_type vector_type;
     typedef typename vector_type::value_type float_type;
@@ -130,15 +129,19 @@ void test_euler<modules_type>::linear_motion()
     // acquire sample with final positions and velocities
     shared_ptr<sample_type const> sample = phase_space->acquire();
 
+    typename sample_type::position_array_type const& initial_position = initial_sample->position();
+    typename sample_type::velocity_array_type const& initial_velocity = initial_sample->velocity();
+    typename sample_type::position_array_type const& position = sample->position();
+
     // particlewise comparison with analytic solution
     // the absolute error should be relative to the maximum value, i.e., the box length
     float_type tolerance = 4 * steps * numeric_limits::epsilon() * norm_inf(box->length());
     float_type duration = steps * integrator->timestep();
     float_type max_deviation = 0;
     for (size_t i = 0; i < npart; ++i) {
-        vector_type const& r0 = (*initial_sample->r)[i];
-        vector_type const& v0 = (*initial_sample->v)[i];
-        vector_type const& r_final = (*sample->r)[i];
+        vector_type const& r0 = initial_position[i];
+        vector_type const& v0 = initial_velocity[i];
+        vector_type const& r_final = position[i];
 
         vector_type r_analytic = r0 + duration * v0;
 
@@ -178,8 +181,8 @@ void test_euler<modules_type>::overdamped_motion()
     float_type factor = pow(1 - integrator->timestep(), static_cast<double>(steps));
     float_type max_deviation = 0;
     for (size_t i = 0; i < npart; ++i) {
-        vector_type const& r0 = (*initial_sample->r)[i];
-        vector_type const& r_final = (*sample->r)[i];
+        vector_type const& r0 = initial_sample->position()[i];
+        vector_type const& r_final = sample->position()[i];
 
         vector_type r_analytic = r0 * factor;
 

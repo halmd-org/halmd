@@ -64,8 +64,8 @@ vector<double> compute_ssf(
     vector<double> ssf(nq);
     vector<double> cos_(nq, 0);
     vector<double> sin_(nq, 0);
-    size_t npart = sample->r->size();
-    BOOST_FOREACH(typename sample_type::vector_type const& r, *sample->r) {
+    size_t npart = sample->position().size();
+    BOOST_FOREACH(typename sample_type::vector_type const& r, sample->position()) {
         for (unsigned j = 0; j < nq; ++j) {
             double qr = inner_prod(wavevector[j], static_cast<vector_type>(r));
             cos_[j] += cos(qr);
@@ -153,7 +153,7 @@ void lattice<modules_type>::test()
     // centre of mass
     fixed_vector<double, dimension> r_cm(
         accumulate(
-            sample->r->begin(), sample->r->end(), vector_type(0)
+            sample->position().begin(), sample->position().end(), vector_type(0)
           , plus<vector_type>()
         ) / npart
     );
@@ -161,13 +161,13 @@ void lattice<modules_type>::test()
     using namespace halmd::detail::numeric::blas;
     fixed_vector<double, dimension> r_min(
         accumulate(
-            sample->r->begin(), sample->r->end(), vector_type(0)
+            sample->position().begin(), sample->position().end(), vector_type(0)
           , bind(element_min<float_type, dimension>, _1, _2)
         )
     );
     fixed_vector<double, dimension> r_max(
         accumulate(
-            sample->r->begin(), sample->r->end(), vector_type(0)
+            sample->position().begin(), sample->position().end(), vector_type(0)
           , bind(element_max<float_type, dimension>, _1, _2)
         )
     );

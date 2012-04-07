@@ -38,7 +38,6 @@ class mean_square_displacement
 {
 public:
     typedef gpu::samples::phase_space<dimension, float_type> sample_type;
-    typedef typename sample_type::sample_vector sample_vector_type;
     typedef typename sample_type::vector_type vector_type;
     typedef double result_type;
     typedef accumulator<result_type> accumulator_type;

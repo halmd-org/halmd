@@ -1,5 +1,5 @@
 /*
- * Copyright © 2008-2011  Peter Colberg and Felix Höfling
+ * Copyright © 2008-2012  Peter Colberg and Felix Höfling
  *
  * This file is part of HALMD.
  *
@@ -23,11 +23,10 @@
 #include <cuda_wrapper/cuda_wrapper.hpp>
 #include <limits>
 #include <lua.hpp>
-#include <stdint.h>
-#include <vector>
+#include <stdexcept> // std::logic_error
 
 #include <halmd/mdsim/clock.hpp>
-#include <halmd/mdsim/type_traits.hpp>
+#include <halmd/numeric/blas/fixed_vector.hpp>
 
 namespace halmd {
 namespace observables {
@@ -37,68 +36,87 @@ namespace samples {
 template <int dimension, typename float_type>
 class phase_space
 {
-private:
-    typedef mdsim::clock clock_type;
-
 public:
-    typedef typename mdsim::type_traits<dimension, float_type>::vector_type vector_type;
-    typedef float4 gpu_vector_type;
-    typedef typename clock_type::step_type step_type;
-
-    /** sample vector type for all particles of a type */
-    typedef cuda::vector<gpu_vector_type> sample_vector;
-
-    /** periodically extended particle positions */
-    boost::shared_ptr<sample_vector> r;
-    /** particle velocities */
-    boost::shared_ptr<sample_vector> v;
-    /** simulation step when sample was taken */
-    step_type step;
-
-    static void luaopen(lua_State* L);
-
-    phase_space(unsigned int npart);
+    typedef fixed_vector<float_type, dimension> vector_type;
+    typedef cuda::vector<float4> position_array_type;
+    typedef cuda::vector<float4> velocity_array_type;
+    typedef typename mdsim::clock::step_type step_type;
 
     /**
-     * Free shared pointers and re-allocate memory
-     * if containers are shared with some other object.
+     * Construct phase space sample.
      *
-     * Values are not initialised.
-     *
-     * @param force if true then enforce reallocation
+     * @param nparticle number of particles
+     * @param step simulation step the sample is taken (optional)
      */
-    void reset(bool force=false);
+    phase_space(std::size_t nparticle, step_type step = std::numeric_limits<step_type>::max());
 
-#ifndef NDEBUG
-    /** get particle positions of given type */
-    std::vector<vector_type> position() const;
-    /** get particle velocities of given type */
-    std::vector<vector_type> velocity() const;
-#endif
+    /**
+     * Returns const reference to particle positions.
+     *
+     * The positions are extended with their periodic image vectors.
+     */
+    position_array_type const& position() const
+    {
+        return position_;
+    }
+
+    /**
+     * Returns non-const reference to particle positions.
+     *
+     * The positions are extended with their periodic image vectors.
+     */
+    position_array_type& position()
+    {
+        return position_;
+    }
+
+    /**
+     * Returns const reference to particle velocities.
+     */
+    velocity_array_type const& velocity() const
+    {
+        return velocity_;
+    }
+
+    /**
+     * Returns non-const reference to particle velocities.
+     */
+    velocity_array_type& velocity()
+    {
+        return velocity_;
+    }
+
+    /**
+     * Returns simulation step when the sample was taken.
+     */
+    step_type step() const
+    {
+        if (step_ == std::numeric_limits<step_type>::max()) {
+            throw std::logic_error("step not set in phase space sample");
+        }
+        return step_;
+    }
+
+    /**
+     * Bind class to Lua.
+     */
+    static void luaopen(lua_State* L);
+
+private:
+    /** periodically extended particle positions */
+    position_array_type position_;
+    /** particle velocities */
+    velocity_array_type velocity_;
+    /** simulation step when sample was taken */
+    step_type step_;
 };
 
 template <int dimension, typename float_type>
-inline phase_space<dimension, float_type>::phase_space(unsigned int npart)
-  // allocate sample pointers
-  : r(new sample_vector(npart))
-  , v(new sample_vector(npart))
-  // initialise attributes
-  , step(std::numeric_limits<step_type>::max())
+inline phase_space<dimension, float_type>::phase_space(std::size_t nparticle, step_type step)
+  : position_(nparticle)
+  , velocity_(nparticle)
+  , step_(step)
 {
-}
-
-template <int dimension, typename float_type>
-inline void phase_space<dimension, float_type>::reset(bool force)
-{
-    // free shared pointers and re-allocate memory
-    if (force || !r.unique()) {
-        r.reset(new sample_vector(r->size()));
-    }
-    if (force || !v.unique()) {
-        v.reset(new sample_vector(v->size()));
-    }
-    // make time stamp invalid
-    step = std::numeric_limits<step_type>::max();
 }
 
 } // namespace samples

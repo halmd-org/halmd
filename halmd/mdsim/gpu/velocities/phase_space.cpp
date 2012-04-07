@@ -60,9 +60,12 @@ void phase_space<dimension, float_type>::set()
     cuda::host::vector<float4> h_v(particle_->nbox);
 
     // assign particle velocities and tags
-    assert(sample_->v->size() >= particle_->nbox);
+    typename sample_type::velocity_array_type const& velocity = sample_->velocity();
+
+    assert(velocity.size() >= particle_->nbox);
+
     for (size_t i = 0; i < particle_->nbox; ++i) {
-        h_v[i] = particle_kernel::tagged<vector_type>((*sample_->v)[i], i);
+        h_v[i] = particle_kernel::tagged<vector_type>(velocity[i], i);
     }
 
     try {

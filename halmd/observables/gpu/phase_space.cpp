@@ -90,7 +90,7 @@ phase_space<gpu::samples::phase_space<dimension, float_type> >::acquire()
 {
     scoped_timer_type timer(runtime_.acquire);
 
-    if (sample_ && sample_->step == clock_->step()) {
+    if (sample_ && sample_->step() == clock_->step()) {
         LOG_TRACE("sample is up to date");
         return sample_;
     }
@@ -101,8 +101,11 @@ phase_space<gpu::samples::phase_space<dimension, float_type> >::acquire()
     // to hold a previous copy of the sample
     {
         scoped_timer_type timer(runtime_.reset);
-        sample_ = make_shared<sample_type>(particle_group_->size());
+        sample_ = make_shared<sample_type>(particle_group_->size(), clock_->step());
     }
+
+    assert(particle_group_->size() == sample_->position().size());
+    assert(particle_group_->size() == sample_->velocity().size());
 
     phase_space_wrapper<dimension>::kernel.r.bind(particle_->g_r);
     phase_space_wrapper<dimension>::kernel.image.bind(particle_->g_image);
@@ -111,12 +114,10 @@ phase_space<gpu::samples::phase_space<dimension, float_type> >::acquire()
     cuda::configure(particle_->dim.grid, particle_->dim.block);
     phase_space_wrapper<dimension>::kernel.sample(
         particle_group_->g_map()
-      , *sample_->r
-      , *sample_->v
+      , sample_->position()
+      , sample_->velocity()
       , particle_group_->size()
     );
-
-    sample_->step = clock_->step();
 
     return sample_;
 }
@@ -130,7 +131,7 @@ phase_space<host::samples::phase_space<dimension, float_type> >::acquire()
 {
     scoped_timer_type timer(runtime_.acquire);
 
-    if (sample_ && sample_->step == clock_->step()) {
+    if (sample_ && sample_->step() == clock_->step()) {
         LOG_TRACE("sample is up to date");
         return sample_;
     }
@@ -151,12 +152,16 @@ phase_space<host::samples::phase_space<dimension, float_type> >::acquire()
     // to hold a previous copy of the sample
     {
         scoped_timer_type timer(runtime_.reset);
-        sample_ = make_shared<sample_type>(particle_group_->size());
+        sample_ = make_shared<sample_type>(particle_group_->size(), clock_->step());
     }
 
-    assert(particle_group_->size() == sample_->r->size());
-    assert(particle_group_->size() == sample_->v->size());
-    assert(particle_group_->size() == sample_->type->size());
+    assert(particle_group_->size() == sample_->position().size());
+    assert(particle_group_->size() == sample_->velocity().size());
+    assert(particle_group_->size() == sample_->species().size());
+
+    typename sample_type::position_array_type& position = sample_->position();
+    typename sample_type::velocity_array_type& velocity = sample_->velocity();
+    typename sample_type::species_array_type& species = sample_->species();
 
     // copy particle data using reverse tags as on the GPU
     unsigned int const* map = particle_group_->h_map();
@@ -173,11 +178,10 @@ phase_space<host::samples::phase_space<dimension, float_type> >::acquire()
         tie(r, type) = untagged<vector_type>(h_r_[idx]);
         box_->extend_periodic(r, static_cast<vector_type>(h_image_[idx]));
 
-        (*sample_->r)[tag] = r;
-        (*sample_->v)[tag] = static_cast<vector_type>(h_v_[idx]);
-        (*sample_->type)[tag] = type;
+        position[tag] = r;
+        velocity[tag] = static_cast<vector_type>(h_v_[idx]);
+        species[tag] = type;
     }
-    sample_->step = clock_->step();
 
     return sample_;
 }
