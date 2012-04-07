@@ -105,7 +105,6 @@ struct test_euler
     shared_ptr<position_type> position;
     shared_ptr<velocity_type> velocity;
     shared_ptr<clock_type> clock;
-    shared_ptr<sample_type> sample;
     shared_ptr<phase_space_type> phase_space;
 
     test_euler();
@@ -117,20 +116,19 @@ struct test_euler
 template <typename modules_type>
 void test_euler<modules_type>::linear_motion()
 {
-    // store initial positions and velocities
-    phase_space->acquire();                      // copy data from particle to host sample
-    sample_type initial_sample = *sample;        // only copy internal boost::shared_ptr
-    sample->reset();                             // detach shared_ptrs and reset sample's time stamp
+    // copy initial positions and velocities from particle to host sample
+    shared_ptr<sample_type const> initial_sample = phase_space->acquire();
 
     // perform integration
     BOOST_TEST_MESSAGE("running Euler integration for linear motion over " << steps << " steps");
     for (size_t i = 0; i < steps; ++i) {
         integrator->integrate();
         integrator->finalize();
+        clock->advance();
     }
 
     // acquire sample with final positions and velocities
-    phase_space->acquire();
+    shared_ptr<sample_type const> sample = phase_space->acquire();
 
     // particlewise comparison with analytic solution
     // the absolute error should be relative to the maximum value, i.e., the box length
@@ -138,8 +136,8 @@ void test_euler<modules_type>::linear_motion()
     float_type duration = steps * integrator->timestep();
     float_type max_deviation = 0;
     for (size_t i = 0; i < npart; ++i) {
-        vector_type const& r0 = (*initial_sample.r)[i];
-        vector_type const& v0 = (*initial_sample.v)[i];
+        vector_type const& r0 = (*initial_sample->r)[i];
+        vector_type const& v0 = (*initial_sample->v)[i];
         vector_type const& r_final = (*sample->r)[i];
 
         vector_type r_analytic = r0 + duration * v0;
@@ -156,10 +154,8 @@ void test_euler<modules_type>::linear_motion()
 template <typename modules_type>
 void test_euler<modules_type>::overdamped_motion()
 {
-    // store initial positions and velocities
-    phase_space->acquire();                      // copy data from particle to host sample
-    sample_type initial_sample = *sample;        // only copy internal boost::shared_ptr
-    sample->reset();                             // detach shared_ptrs and reset sample's time stamp
+    // copy initial positions and velocities from particle to host sample
+    shared_ptr<sample_type const> initial_sample = phase_space->acquire();
 
     // reduce number of steps as the test runs much slower
     // and the outcome can't be well represented by float
@@ -171,17 +167,18 @@ void test_euler<modules_type>::overdamped_motion()
         modules_type::set_velocity(particle); // set particle velocity: v = -r
         integrator->integrate();
         integrator->finalize();
+        clock->advance();
     }
 
     // acquire sample with final positions and velocities
-    phase_space->acquire();
+    shared_ptr<sample_type const> sample = phase_space->acquire();
 
     // particlewise comparison with analytic solution
     // r_n = r_0 * (1 - Δt)^n → r_0 * exp(-n Δt)
     float_type factor = pow(1 - integrator->timestep(), static_cast<double>(steps));
     float_type max_deviation = 0;
     for (size_t i = 0; i < npart; ++i) {
-        vector_type const& r0 = (*initial_sample.r)[i];
+        vector_type const& r0 = (*initial_sample->r)[i];
         vector_type const& r_final = (*sample->r)[i];
 
         vector_type r_analytic = r0 * factor;
@@ -228,8 +225,7 @@ test_euler<modules_type>::test_euler()
     position = make_shared<position_type>(particle, box, random, slab);
     velocity = make_shared<velocity_type>(particle, random, temp);
     clock = make_shared<clock_type>(1);
-    sample = make_shared<sample_type>(particle->nbox);
-    phase_space = make_shared<phase_space_type>(sample, make_shared<particle_group_type>(particle), box, clock);
+    phase_space = make_shared<phase_space_type>(make_shared<particle_group_type>(particle), box, clock);
 
     // set positions and velocities
     BOOST_TEST_MESSAGE("set particle tags");

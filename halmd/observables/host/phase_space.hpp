@@ -43,21 +43,42 @@ public:
     typedef mdsim::box<dimension> box_type;
     typedef mdsim::clock clock_type;
     typedef logger logger_type;
-    typedef typename sample_type::vector_type vector_type;
 
-    static void luaopen(lua_State* L);
-
+    /**
+     * Construct phase_space sampler from particle group.
+     */
     phase_space(
-        boost::shared_ptr<sample_type> sample
-      , boost::shared_ptr<particle_group_type const> particle_group
+        boost::shared_ptr<particle_group_type const> particle_group
       , boost::shared_ptr<box_type const> box
       , boost::shared_ptr<clock_type const> clock
       , boost::shared_ptr<logger_type> logger = boost::make_shared<logger_type>()
     );
 
-    void acquire();
+    /**
+     * Acquire phase_space sample.
+     */
+    boost::shared_ptr<sample_type const> acquire();
+
+    /**
+     * Bind class to Lua.
+     */
+    static void luaopen(lua_State* L);
 
 private:
+    /** particle group */
+    boost::shared_ptr<particle_group_type const> particle_group_;
+    /** particle instance to particle group */
+    boost::shared_ptr<particle_type const> particle_;
+    /** simulation box */
+    boost::shared_ptr<box_type const> box_;
+    /** simulation clock */
+    boost::shared_ptr<clock_type const> clock_;
+    /** logger instance */
+    boost::shared_ptr<logger_type> logger_;
+    /** cached phase_space sample */
+    boost::shared_ptr<sample_type> sample_;
+
+    typedef typename sample_type::vector_type vector_type;
     typedef halmd::utility::profiler profiler_type;
     typedef typename profiler_type::accumulator_type accumulator_type;
     typedef typename profiler_type::scoped_timer_type scoped_timer_type;
@@ -68,12 +89,6 @@ private:
         accumulator_type reset;
     };
 
-    boost::shared_ptr<sample_type> sample_;
-    boost::shared_ptr<particle_group_type const> particle_group_;
-    boost::shared_ptr<particle_type const> particle_;
-    boost::shared_ptr<box_type const> box_;
-    boost::shared_ptr<clock_type const> clock_;
-    boost::shared_ptr<logger_type> logger_;
     /** profiling runtime accumulators */
     runtime runtime_;
 };

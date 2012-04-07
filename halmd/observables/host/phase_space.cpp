@@ -1,5 +1,5 @@
 /*
- * Copyright © 2008-2011  Peter Colberg and Felix Höfling
+ * Copyright © 2008-2012  Peter Colberg and Felix Höfling
  *
  * This file is part of HALMD.
  *
@@ -35,14 +35,12 @@ namespace host {
 
 template <int dimension, typename float_type>
 phase_space<dimension, float_type>::phase_space(
-    shared_ptr<sample_type> sample
-  , shared_ptr<particle_group_type const> particle_group
+    shared_ptr<particle_group_type const> particle_group
   , shared_ptr<box_type const> box
   , shared_ptr<clock_type const> clock
   , shared_ptr<logger_type> logger
 )
-  : sample_(sample)
-  , particle_group_(particle_group)
+  : particle_group_(particle_group)
   , particle_(particle_group->particle())
   , box_(box)
   , clock_(clock)
@@ -54,13 +52,14 @@ phase_space<dimension, float_type>::phase_space(
  * Sample phase_space
  */
 template <int dimension, typename float_type>
-void phase_space<dimension, float_type>::acquire()
+shared_ptr<typename phase_space<dimension, float_type>::sample_type const>
+phase_space<dimension, float_type>::acquire()
 {
     scoped_timer_type timer(runtime_.acquire);
 
-    if (sample_->step == clock_->step()) {
+    if (sample_ && sample_->step == clock_->step()) {
         LOG_TRACE("sample is up to date");
-        return;
+        return sample_;
     }
 
     LOG_TRACE("acquire sample");
@@ -69,7 +68,7 @@ void phase_space<dimension, float_type>::acquire()
     // to hold a previous copy of the sample
     {
         scoped_timer_type timer(runtime_.reset);
-        sample_->reset();
+        sample_ = make_shared<sample_type>(particle_group_->size());
     }
 
     assert(particle_group_->size() == sample_->r->size());
@@ -90,19 +89,21 @@ void phase_space<dimension, float_type>::acquire()
         (*sample_->type)[i] = particle_->type[*idx];
     }
     sample_->step = clock_->step();
+
+    return sample_;
 }
 
-template <typename phase_space_type>
-typename signal<void ()>::slot_function_type
-acquire_wrapper(shared_ptr<phase_space_type> phase_space)
+template <typename phase_space_type, typename sample_type>
+static function<shared_ptr<sample_type const> ()>
+wrap_acquire(shared_ptr<phase_space_type> phase_space)
 {
     return bind(&phase_space_type::acquire, phase_space);
 }
 
-template <int dimension, typename float_type>
-static int wrap_dimension(phase_space<dimension, float_type> const&)
+template <typename phase_space_type>
+static int wrap_dimension(phase_space_type const&)
 {
-    return dimension;
+    return phase_space_type::particle_type::vector_type::static_size;
 }
 
 template <int dimension, typename float_type>
@@ -115,8 +116,8 @@ void phase_space<dimension, float_type>::luaopen(lua_State* L)
         namespace_("observables")
         [
             class_<phase_space>(class_name.c_str())
-                .property("acquire", &acquire_wrapper<phase_space>)
-                .property("dimension", &wrap_dimension<dimension, float_type>)
+                .property("acquire", &wrap_acquire<phase_space, sample_type>)
+                .property("dimension", &wrap_dimension<phase_space>)
                 .scope
                 [
                     class_<runtime>("runtime")
@@ -126,7 +127,6 @@ void phase_space<dimension, float_type>::luaopen(lua_State* L)
                 .def_readonly("runtime", &phase_space::runtime_)
 
           , def("phase_space", &make_shared<phase_space
-               , shared_ptr<sample_type>
                , shared_ptr<particle_group_type const>
                , shared_ptr<box_type const>
                , shared_ptr<clock_type const>

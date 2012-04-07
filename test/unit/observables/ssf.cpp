@@ -91,7 +91,6 @@ struct lattice
     shared_ptr<particle_type> particle;
     shared_ptr<position_type> position;
     shared_ptr<random_type> random;
-    shared_ptr<sample_type> sample;
     shared_ptr<phase_space_type> phase_space;
     shared_ptr<wavevector_type> wavevector;
     shared_ptr<density_mode_type> density_mode;
@@ -159,7 +158,7 @@ void lattice<modules_type>::test()
 
     // acquire phase space sample
     BOOST_TEST_MESSAGE("acquire phase space sample");
-    phase_space->acquire();
+    shared_ptr<sample_type const> sample = phase_space->acquire();
 
     // compute density modes
     BOOST_TEST_MESSAGE("compute density modes");
@@ -275,9 +274,8 @@ lattice<modules_type>::lattice()
     box = make_shared<box_type>(npart, density, fixed_vector<double, dimension>(ncell));
     random = make_shared<random_type>();
     position = make_shared<position_type>(particle, box, random, slab);
-    sample = make_shared<sample_type>(particle->nbox);
     clock = make_shared<clock_type>(0); // bogus time-step
-    phase_space = make_shared<phase_space_type>(sample, make_shared<particle_group_type>(particle), box, clock);
+    phase_space = make_shared<phase_space_type>(make_shared<particle_group_type>(particle), box, clock);
 }
 
 template <int dimension, typename float_type>

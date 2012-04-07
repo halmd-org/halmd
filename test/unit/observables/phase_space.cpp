@@ -60,8 +60,8 @@ using namespace std;
  */
 #ifdef WITH_CUDA
 template <int dimension, typename float_type>
-shared_ptr<observables::host::samples::phase_space<dimension, float_type> >
-copy_sample(shared_ptr<observables::gpu::samples::phase_space<dimension, float_type> > sample)
+shared_ptr<observables::host::samples::phase_space<dimension, float_type> const>
+copy_sample(shared_ptr<observables::gpu::samples::phase_space<dimension, float_type> const> sample)
 {
     using mdsim::gpu::particle_kernel::untagged;
 
@@ -93,8 +93,8 @@ copy_sample(shared_ptr<observables::gpu::samples::phase_space<dimension, float_t
 
 
 template <int dimension, typename float_type>
-shared_ptr<observables::host::samples::phase_space<dimension, float_type> >
-copy_sample(shared_ptr<observables::host::samples::phase_space<dimension, float_type> > sample)
+shared_ptr<observables::host::samples::phase_space<dimension, float_type> const>
+copy_sample(shared_ptr<observables::host::samples::phase_space<dimension, float_type> const> sample)
 {
     return sample;
 }
@@ -126,7 +126,6 @@ struct phase_space
     shared_ptr<position_type> position;
     shared_ptr<velocity_type> velocity;
     shared_ptr<input_sample_type> input_sample;
-    shared_ptr<output_sample_type> output_sample;
 
     void test();
     phase_space();
@@ -165,11 +164,11 @@ void phase_space<modules_type>::test()
 
     // acquire sample from particle, construct temporary sampler module
     clock->advance();
-    phase_space_type(output_sample, make_shared<particle_group_type>(particle), box, clock).acquire();
+    shared_ptr<output_sample_type const> output_sample = phase_space_type(make_shared<particle_group_type>(particle), box, clock).acquire();
     BOOST_CHECK(output_sample->step == 1);
 
     // compare output and input, copy GPU sample to host before
-    shared_ptr<observables::host::samples::phase_space<dimension, float_type> > result
+    shared_ptr<observables::host::samples::phase_space<dimension, float_type> const> result
         = copy_sample(output_sample);
     BOOST_CHECK_EQUAL(result->r->size(), accumulate(npart.begin(), npart.end(), 0));
     for (unsigned int i = 0, n = 0; i < npart.size(); ++i) { // iterate over particle species
@@ -211,7 +210,6 @@ phase_space<modules_type>::phase_space()
     particle = make_shared<particle_type>(npart, mass);
     box = make_shared<box_type>(particle->nbox, box_length);
     input_sample = make_shared<input_sample_type>(particle->nbox);
-    output_sample = make_shared<output_sample_type>(particle->nbox);
     position = make_shared<position_type>(particle, box, input_sample);
     velocity = make_shared<velocity_type>(particle, input_sample);
     clock = make_shared<clock_type>(0); // bogus time-step
