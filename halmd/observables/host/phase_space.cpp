@@ -129,12 +129,15 @@ void phase_space<dimension, float_type>::luaopen(lua_State* L)
                 ]
                 .def_readonly("runtime", &phase_space::runtime_)
 
-          , def("phase_space", &make_shared<phase_space
-               , shared_ptr<particle_group_type const>
-               , shared_ptr<box_type const>
-               , shared_ptr<clock_type const>
-               , shared_ptr<logger_type>
-            >)
+          , namespace_("host")
+            [
+                def("phase_space", &make_shared<phase_space
+                   , shared_ptr<particle_group_type const>
+                   , shared_ptr<box_type const>
+                   , shared_ptr<clock_type const>
+                   , shared_ptr<logger_type>
+                >)
+            ]
         ]
     ];
 }
