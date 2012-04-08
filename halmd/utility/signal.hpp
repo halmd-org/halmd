@@ -27,19 +27,6 @@
 
 namespace halmd {
 
-/**
- * Signal implements callbacks with multiple targets.
- *
- * This class mimics a subset of the boost::signal interface. Some advanced
- * features of boost::signal such as return values and object tracking are
- * not implemented. The benefit of using this minimal signal class is
- * performance close to that of boost::function calls.
- *
- * http://www.boost.org/doc/libs/release/doc/html/signals.html
- */
-template <typename T>
-class signal;
-
 // forward declaration
 template <typename T>
 class slots;
@@ -224,15 +211,28 @@ public:
     }
 };
 
-template <typename T0>
-class signal0
-  : public slots<boost::function0<T0> >
+/**
+ * Signal implements callbacks with multiple targets.
+ *
+ * This class mimics a subset of the boost::signal interface. Some advanced
+ * features of boost::signal such as return values and object tracking are
+ * not implemented. The benefit of using this minimal signal class is
+ * performance close to that of boost::function calls.
+ *
+ * http://www.boost.org/doc/libs/release/doc/html/signals.html
+ */
+template <typename T>
+class signal;
+
+template <>
+class signal<void ()>
+  : public slots<boost::function<void ()> >
 {
 public:
-    typedef boost::function0<T0> slot_function_type;
+    typedef boost::function<void ()> slot_function_type;
     typedef typename slots<slot_function_type>::const_iterator const_iterator;
 
-    T0 operator()() const
+    void operator()() const
     {
         for (const_iterator f = this->begin(); f != this->end(); ++f) {
             (*f)();
@@ -240,15 +240,15 @@ public:
     }
 };
 
-template <typename T0, typename T1>
-class signal1
-  : public slots<boost::function1<T0, T1> >
+template <typename T1>
+class signal<void (T1)>
+  : public slots<boost::function<void (T1)> >
 {
 public:
-    typedef boost::function1<T0, T1> slot_function_type;
+    typedef boost::function<void (T1)> slot_function_type;
     typedef typename slots<slot_function_type>::const_iterator const_iterator;
 
-    T0 operator()(T1 arg1) const
+    void operator()(T1 arg1) const
     {
         for (const_iterator f = this->begin(); f != this->end(); ++f) {
             (*f)(arg1);
@@ -256,15 +256,15 @@ public:
     }
 };
 
-template <typename T0, typename T1, typename T2>
-class signal2
-  : public slots<boost::function2<T0, T1, T2> >
+template <typename T1, typename T2>
+class signal<void (T1, T2)>
+  : public slots<boost::function<void (T1, T2)> >
 {
 public:
-    typedef boost::function2<T0, T1, T2> slot_function_type;
+    typedef boost::function<void (T1, T2)> slot_function_type;
     typedef typename slots<slot_function_type>::const_iterator const_iterator;
 
-    T0 operator()(T1 arg1, T2 arg2) const
+    void operator()(T1 arg1, T2 arg2) const
     {
         for (const_iterator f = this->begin(); f != this->end(); ++f) {
             (*f)(arg1, arg2);
@@ -272,15 +272,15 @@ public:
     }
 };
 
-template <typename T0, typename T1, typename T2, typename T3>
-class signal3
-  : public slots<boost::function3<T0, T1, T2, T3> >
+template <typename T1, typename T2, typename T3>
+class signal<void (T1, T2, T3)>
+  : public slots<boost::function<void (T1, T2, T3)> >
 {
 public:
-    typedef boost::function3<T0, T1, T2, T3> slot_function_type;
+    typedef boost::function<void (T1, T2, T3)> slot_function_type;
     typedef typename slots<slot_function_type>::const_iterator const_iterator;
 
-    T0 operator()(T1 arg1, T2 arg2, T3 arg3) const
+    void operator()(T1 arg1, T2 arg2, T3 arg3) const
     {
         for (const_iterator f = this->begin(); f != this->end(); ++f) {
             (*f)(arg1, arg2, arg3);
@@ -288,15 +288,15 @@ public:
     }
 };
 
-template <typename T0, typename T1, typename T2, typename T3, typename T4>
-class signal4
-  : public slots<boost::function4<T0, T1, T2, T3, T4> >
+template <typename T1, typename T2, typename T3, typename T4>
+class signal<void (T1, T2, T3, T4)>
+  : public slots<boost::function<void (T1, T2, T3, T4)> >
 {
 public:
-    typedef boost::function4<T0, T1, T2, T3, T4> slot_function_type;
+    typedef boost::function<void (T1, T2, T3, T4)> slot_function_type;
     typedef typename slots<slot_function_type>::const_iterator const_iterator;
 
-    T0 operator()(T1 arg1, T2 arg2, T3 arg3, T4 arg4) const
+    void operator()(T1 arg1, T2 arg2, T3 arg3, T4 arg4) const
     {
         for (const_iterator f = this->begin(); f != this->end(); ++f) {
             (*f)(arg1, arg2, arg3, arg4);
@@ -304,15 +304,15 @@ public:
     }
 };
 
-template <typename T0, typename T1, typename T2, typename T3, typename T4, typename T5>
-class signal5
-  : public slots<boost::function5<T0, T1, T2, T3, T4, T5> >
+template <typename T1, typename T2, typename T3, typename T4, typename T5>
+class signal<void (T1, T2, T3, T4, T5)>
+  : public slots<boost::function<void (T1, T2, T3, T4, T5)> >
 {
 public:
-    typedef boost::function5<T0, T1, T2, T3, T4, T5> slot_function_type;
+    typedef boost::function<void (T1, T2, T3, T4, T5)> slot_function_type;
     typedef typename slots<slot_function_type>::const_iterator const_iterator;
 
-    T0 operator()(T1 arg1, T2 arg2, T3 arg3, T4 arg4, T5 arg5) const
+    void operator()(T1 arg1, T2 arg2, T3 arg3, T4 arg4, T5 arg5) const
     {
         for (const_iterator f = this->begin(); f != this->end(); ++f) {
             (*f)(arg1, arg2, arg3, arg4, arg5);
@@ -320,15 +320,15 @@ public:
     }
 };
 
-template <typename T0, typename T1, typename T2, typename T3, typename T4, typename T5, typename T6>
-class signal6
-  : public slots<boost::function6<T0, T1, T2, T3, T4, T5, T6> >
+template <typename T1, typename T2, typename T3, typename T4, typename T5, typename T6>
+class signal<void (T1, T2, T3, T4, T5, T6)>
+  : public slots<boost::function<void (T1, T2, T3, T4, T5, T6)> >
 {
 public:
-    typedef boost::function6<T0, T1, T2, T3, T4, T5, T6> slot_function_type;
+    typedef boost::function<void (T1, T2, T3, T4, T5, T6)> slot_function_type;
     typedef typename slots<slot_function_type>::const_iterator const_iterator;
 
-    T0 operator()(T1 arg1, T2 arg2, T3 arg3, T4 arg4, T5 arg5, T6 arg6) const
+    void operator()(T1 arg1, T2 arg2, T3 arg3, T4 arg4, T5 arg5, T6 arg6) const
     {
         for (const_iterator f = this->begin(); f != this->end(); ++f) {
             (*f)(arg1, arg2, arg3, arg4, arg5, arg6);
@@ -336,15 +336,15 @@ public:
     }
 };
 
-template <typename T0, typename T1, typename T2, typename T3, typename T4, typename T5, typename T6, typename T7>
-class signal7
-  : public slots<boost::function7<T0, T1, T2, T3, T4, T5, T6, T7> >
+template <typename T1, typename T2, typename T3, typename T4, typename T5, typename T6, typename T7>
+class signal<void (T1, T2, T3, T4, T5, T6, T7)>
+  : public slots<boost::function<void (T1, T2, T3, T4, T5, T6, T7)> >
 {
 public:
-    typedef boost::function7<T0, T1, T2, T3, T4, T5, T6, T7> slot_function_type;
+    typedef boost::function<void (T1, T2, T3, T4, T5, T6, T7)> slot_function_type;
     typedef typename slots<slot_function_type>::const_iterator const_iterator;
 
-    T0 operator()(T1 arg1, T2 arg2, T3 arg3, T4 arg4, T5 arg5, T6 arg6, T7 arg7) const
+    void operator()(T1 arg1, T2 arg2, T3 arg3, T4 arg4, T5 arg5, T6 arg6, T7 arg7) const
     {
         for (const_iterator f = this->begin(); f != this->end(); ++f) {
             (*f)(arg1, arg2, arg3, arg4, arg5, arg6, arg7);
@@ -352,15 +352,15 @@ public:
     }
 };
 
-template <typename T0, typename T1, typename T2, typename T3, typename T4, typename T5, typename T6, typename T7, typename T8>
-class signal8
-  : public slots<boost::function8<T0, T1, T2, T3, T4, T5, T6, T7, T8> >
+template <typename T1, typename T2, typename T3, typename T4, typename T5, typename T6, typename T7, typename T8>
+class signal<void (T1, T2, T3, T4, T5, T6, T7, T8)>
+  : public slots<boost::function<void (T1, T2, T3, T4, T5, T6, T7, T8)> >
 {
 public:
-    typedef boost::function8<T0, T1, T2, T3, T4, T5, T6, T7, T8> slot_function_type;
+    typedef boost::function<void (T1, T2, T3, T4, T5, T6, T7, T8)> slot_function_type;
     typedef typename slots<slot_function_type>::const_iterator const_iterator;
 
-    T0 operator()(T1 arg1, T2 arg2, T3 arg3, T4 arg4, T5 arg5, T6 arg6, T7 arg7, T8 arg8) const
+    void operator()(T1 arg1, T2 arg2, T3 arg3, T4 arg4, T5 arg5, T6 arg6, T7 arg7, T8 arg8) const
     {
         for (const_iterator f = this->begin(); f != this->end(); ++f) {
             (*f)(arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8);
@@ -368,61 +368,21 @@ public:
     }
 };
 
-template <typename T0, typename T1, typename T2, typename T3, typename T4, typename T5, typename T6, typename T7, typename T8, typename T9>
-class signal9
-  : public slots<boost::function9<T0, T1, T2, T3, T4, T5, T6, T7, T8, T9> >
+template <typename T1, typename T2, typename T3, typename T4, typename T5, typename T6, typename T7, typename T8, typename T9>
+class signal<void (T1, T2, T3, T4, T5, T6, T7, T8, T9)>
+  : public slots<boost::function<void (T1, T2, T3, T4, T5, T6, T7, T8, T9)> >
 {
 public:
-    typedef boost::function9<T0, T1, T2, T3, T4, T5, T6, T7, T8, T9> slot_function_type;
+    typedef boost::function<void (T1, T2, T3, T4, T5, T6, T7, T8, T9)> slot_function_type;
     typedef typename slots<slot_function_type>::const_iterator const_iterator;
 
-    T0 operator()(T1 arg1, T2 arg2, T3 arg3, T4 arg4, T5 arg5, T6 arg6, T7 arg7, T8 arg8, T9 arg9) const
+    void operator()(T1 arg1, T2 arg2, T3 arg3, T4 arg4, T5 arg5, T6 arg6, T7 arg7, T8 arg8, T9 arg9) const
     {
         for (const_iterator f = this->begin(); f != this->end(); ++f) {
             (*f)(arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9);
         }
     }
 };
-
-template <>
-class signal<void ()>
-  : public signal0<void> {};
-
-template <typename T1>
-class signal<void (T1)>
-  : public signal1<void, T1> {};
-
-template <typename T1, typename T2>
-class signal<void (T1, T2)>
-  : public signal2<void, T1, T2> {};
-
-template <typename T1, typename T2, typename T3>
-class signal<void (T1, T2, T3)>
-  : public signal3<void, T1, T2, T3> {};
-
-template <typename T1, typename T2, typename T3, typename T4>
-class signal<void (T1, T2, T3, T4)>
-  : public signal4<void, T1, T2, T3, T4> {};
-
-template <typename T1, typename T2, typename T3, typename T4, typename T5>
-class signal<void (T1, T2, T3, T4, T5)>
-  : public signal5<void, T1, T2, T3, T4, T5> {};
-
-template <typename T1, typename T2, typename T3, typename T4, typename T5, typename T6>
-class signal<void (T1, T2, T3, T4, T5, T6)>
-  : public signal6<void, T1, T2, T3, T4, T5, T6> {};
-
-template <typename T1, typename T2, typename T3, typename T4, typename T5, typename T6, typename T7>
-class signal<void (T1, T2, T3, T4, T5, T6, T7)>
-  : public signal7<void, T1, T2, T3, T4, T5, T6, T7> {};
-
-template <typename T1, typename T2, typename T3, typename T4, typename T5, typename T6, typename T7, typename T8>
-class signal<void (T1, T2, T3, T4, T5, T6, T7, T8)>
-  : public signal8<void, T1, T2, T3, T4, T5, T6, T7, T8> {};
-
-template <typename T1, typename T2, typename T3, typename T4, typename T5, typename T6, typename T7, typename T8, typename T9>
-class signal<void (T1, T2, T3, T4, T5, T6, T7, T8, T9)>
-  : public signal9<void, T1, T2, T3, T4, T5, T6, T7, T8, T9> {};
 
 } // namespace halmd
 
