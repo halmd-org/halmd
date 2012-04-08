@@ -89,7 +89,7 @@ find_package(Luabind QUIET REQUIRED)
 
 if(CMAKE_CXX_COMPILER_ID MATCHES "^(GNU|Clang|Intel)$")
   if(CMAKE_CXX_FLAGS STREQUAL "${CMAKE_CXX_FLAGS_INIT}")
-    set(CMAKE_CXX_FLAGS "-fPIC -Wall" CACHE STRING
+    set(CMAKE_CXX_FLAGS "-fvisibility-inlines-hidden -fPIC -Wall" CACHE STRING
       "Flags used by the compiler during all build types." FORCE)
   endif()
 elseif(CMAKE_CXX_COMPILER_ID STREQUAL "XL")
