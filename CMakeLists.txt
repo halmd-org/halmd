@@ -89,8 +89,12 @@ find_package(Luabind QUIET REQUIRED)
 
 if(CMAKE_CXX_COMPILER_ID MATCHES "^(GNU|Clang|Intel)$")
   if(CMAKE_CXX_FLAGS STREQUAL "${CMAKE_CXX_FLAGS_INIT}")
-    set(CMAKE_CXX_FLAGS "-fvisibility-inlines-hidden -fPIC -Wall" CACHE STRING
+    set(CMAKE_CXX_FLAGS "-fPIC -Wall" CACHE STRING
       "Flags used by the compiler during all build types." FORCE)
+  endif()
+  if(CMAKE_CXX_FLAGS_RELEASE STREQUAL "${CMAKE_CXX_FLAGS_RELEASE_INIT}")
+    set(CMAKE_CXX_FLAGS_RELEASE "-O3 -DNDEBUG -fvisibility-inlines-hidden" CACHE STRING
+      "Flags used by the compiler during release builds." FORCE)
   endif()
   # Strip binaries for Release builds
   if(CMAKE_EXE_LINKER_FLAGS_RELEASE STREQUAL "${CMAKE_EXE_LINKER_FLAGS_RELEASE_INIT}")
