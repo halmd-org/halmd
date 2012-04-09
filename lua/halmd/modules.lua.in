@@ -98,7 +98,7 @@ function M.register(module)
                 hooks.register_object(object, module)
             end
 
-            if type(object) == "table" then
+            if type(object) == "table" and #object > 0 then
                 for i = 1, #object do
                     apply_hooks(object[i])
                 end
