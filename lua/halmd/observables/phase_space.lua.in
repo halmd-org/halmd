@@ -28,12 +28,11 @@ local observables = {
     sampler             = require("halmd.observables.sampler"),
 }
 local samples = {
-    phase_space         = require("halmd.observables.samples.phase_space")
-  , particle_group      = require("halmd.observables.samples.particle_group")
+    particle_group      = require("halmd.observables.samples.particle_group")
 }
 
 -- grab C++ wrappers
-local phase_space_wrapper = assert(libhalmd.observables.phase_space)
+local phase_space = assert(libhalmd.observables.host.phase_space)
 local property = property
 -- grab standard library
 local assert = assert
@@ -95,9 +94,9 @@ local M = module("halmd.observables.phase_space")
 --    The particle group used by the sampler.
 --    If a particle instance was given, an ``all`` particle_group.
 --
--- .. attribute:: sample
+-- .. attribute:: memory
 --
---    The phase_space sample used by the sampler.
+--    The memory location of the sample, either "host" or "gpu".
 --
 -- .. attribute:: acquire
 --
@@ -124,25 +123,22 @@ function M.__new(args)
         end
         local label = assert(group.label)
         local logger = log.logger({label = ("phase_space (%s)"):format(label)})
-        local sample = samples.phase_space({particle = group, memory = memory})
-        local sampler = phase_space_wrapper(sample, group, box, clock, logger)
+        local sampler = phase_space(group, box, clock, logger)
 
-        sampler.sample = property(function(self)
-            return sample
-        end)
         sampler.group = property(function(self)
             return group
+        end)
+        sampler.memory = property(function(self)
+            return memory
         end)
 
         sampler.writer = function(self, file, args)
             local name = args.group or assert(self.group.label)
             local writer = file:writer({location = {"trajectory", name}, mode = "append"})
-            writer:on_prepend_write(self.acquire)
 
-            local sample = assert(self.sample)
-            writer:on_write(sample.position, {"position"})
-            writer:on_write(sample.velocity, {"velocity"})
-            writer:on_write(sample.types, {"species"})
+            writer:on_write(self.position, {"position"})
+            writer:on_write(self.velocity, {"velocity"})
+            writer:on_write(self.species, {"species"})
 
             local every = args.every
             local sampler = observables.sampler() -- singleton
@@ -175,7 +171,7 @@ end
 --
 function M.profile(self, profiler)
     local label = assert(self.group.label)
-    local memory = assert(self.sample.memory)
+    local memory = assert(self.memory)
     local desc = ("phase space sample of %s particles on %s"):format(label, memory)
     profiler:on_profile({self, acquire = ("acquisition of %s"):format(desc)})
     profiler:on_profile({self, reset = ("reset %s"):format(desc)})
