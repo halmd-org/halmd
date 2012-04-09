@@ -47,7 +47,7 @@ public:
     void evaluate() const
     {
         value_type result = func_();
-        LOG_TRACE("predicate is " << result << " > " << value_);
+        LOG_TRACE("predicate is (" << result << " > " << value_ << ")");
         if (result > value_) {
             on_greater_();
         }
