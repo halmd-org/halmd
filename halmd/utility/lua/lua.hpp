@@ -30,6 +30,7 @@
 #include <halmd/config.hpp> // HALMD_LUA_API
 #include <halmd/utility/lua/array_converter.hpp>
 #include <halmd/utility/lua/fixed_vector_converter.hpp>
+#include <halmd/utility/lua/function.hpp>
 #include <halmd/utility/lua/long_long_converter.hpp>
 #include <halmd/utility/lua/map_converter.hpp>
 #include <halmd/utility/lua/optional_converter.hpp>
