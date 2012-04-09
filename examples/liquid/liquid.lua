@@ -100,10 +100,10 @@ local function liquid(args)
 --     observables.dynamics.correlation{sampler = density_mode, correlation = "intermediate_scattering_function"}
 
     -- yield sampler.setup slot from Lua to C++ to setup simulation box
-    coroutine.yield(sampler:setup())
+    sampler:setup()()
 
     -- yield sampler.run slot from Lua to C++ to run simulation
-    coroutine.yield(sampler:run())
+    sampler:run()()
 end
 
 --
