@@ -92,7 +92,7 @@ static void write_dataset(
   , function<T ()> const& slot
 )
 {
-    T const& data = slot();
+    T data = slot();
     if (!dataset.getId()) {
         dataset = create_dataset(group, name, data);
     }
