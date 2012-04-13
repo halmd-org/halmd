@@ -106,9 +106,6 @@ phase_space<gpu::samples::phase_space<dimension, float_type> >::acquire()
         sample_ = make_shared<sample_type>(particle_group_->size(), clock_->step());
     }
 
-    assert(particle_group_->size() == sample_->position().size());
-    assert(particle_group_->size() == sample_->velocity().size());
-
     phase_space_wrapper<dimension>::kernel.r.bind(particle_->g_r);
     phase_space_wrapper<dimension>::kernel.image.bind(particle_->g_image);
     phase_space_wrapper<dimension>::kernel.v.bind(particle_->g_v);

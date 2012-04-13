@@ -73,10 +73,6 @@ phase_space<dimension, float_type>::acquire()
         sample_ = make_shared<sample_type>(particle_group_->size(), clock_->step());
     }
 
-    assert(particle_group_->size() == sample_->position().size());
-    assert(particle_group_->size() == sample_->velocity().size());
-    assert(particle_group_->size() == sample_->species().size());
-
     typename sample_type::position_array_type& position = sample_->position();
     typename sample_type::velocity_array_type& velocity = sample_->velocity();
     typename sample_type::species_array_type& species = sample_->species();

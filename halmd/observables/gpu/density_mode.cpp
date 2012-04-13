@@ -102,9 +102,6 @@ density_mode<dimension, float_type>::acquire(phase_space_type const& phase_space
     // to hold a previous copy of the sample
     rho_sample_ = make_shared<sample_type>(nq_, clock_->step());
 
-    assert(rho_sample_->rho().size() == nq_);
-    assert(rho_sample_->step() == clock_->step());
-
     // compute density modes
     mode_array_type& rho = rho_sample_->rho();
     try {
