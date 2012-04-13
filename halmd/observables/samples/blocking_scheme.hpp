@@ -207,7 +207,7 @@ void blocking_scheme<sample_type>::luaopen(lua_State* L)
                 class_<blocking_scheme, _Base>(class_name.c_str())
 
               , def("blocking_scheme", &boost::make_shared<blocking_scheme
-                  , sample_slot_type const&
+                  , sample_slot_type
                   , std::size_t
                   , std::size_t
                   , boost::shared_ptr<clock_type const>
