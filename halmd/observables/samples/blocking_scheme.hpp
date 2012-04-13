@@ -138,7 +138,7 @@ blocking_scheme<sample_type>::blocking_scheme(
 template <typename sample_type>
 void blocking_scheme<sample_type>::push_back(std::size_t index)
 {
-    typename sample_slot_type::result_type sample = sample_();
+    boost::shared_ptr<sample_type const> sample = sample_();
     if (sample->step() != clock_->step()) {
         throw std::logic_error("input sample was not updated");
     }
