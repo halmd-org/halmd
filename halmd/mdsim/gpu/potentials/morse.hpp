@@ -107,14 +107,14 @@ private:
     matrix_type sigma_;
     /** position of potential well in units of sigma */
     matrix_type r_min_sigma_;
-    /** potential energy at cutoff length in MD units */
-    matrix_type en_cut_;
-    /** cutoff radius in MD units */
-    matrix_type r_cut_;
     /** cutoff radius in units of sigma */
     matrix_type r_cut_sigma_;
+    /** cutoff radius in MD units */
+    matrix_type r_cut_;
     /** square of cutoff radius */
     matrix_type rr_cut_;
+    /** potential energy at cutoff length in MD units */
+    matrix_type en_cut_;
     /** potential parameters at CUDA device */
     cuda::vector<float4> g_param_;
     /** squared cutoff radius at CUDA device */
