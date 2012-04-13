@@ -53,7 +53,7 @@ void greater<value_type>::luaopen(lua_State* L, char const* class_name)
                         .def("__call", &function_type::operator())
                 ]
 
-          , def("greater", &make_shared<greater, function_type const&, value_type const&>)
+          , def("greater", &make_shared<greater, function_type, value_type>)
         ]
     ];
 }

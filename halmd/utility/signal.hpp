@@ -230,7 +230,7 @@ class signal<void ()>
 {
 public:
     typedef boost::function<void ()> slot_function_type;
-    typedef typename slots<slot_function_type>::const_iterator const_iterator;
+    typedef slots<slot_function_type>::const_iterator const_iterator;
 
     void operator()() const
     {

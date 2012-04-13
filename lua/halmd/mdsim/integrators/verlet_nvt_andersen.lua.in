@@ -71,10 +71,33 @@ function M.__new(args)
     end
     local integrator = andersen(particle, box, random, timestep, temperature, collision_rate, logger)
 
-    local core = mdsim.core()
+    -- sequence of signal connections
+    local conn = {}
+
+    integrator.connect = function(self)
+        if #conn == 0 then
+            local core = mdsim.core() -- singleton
+            table.insert(conn, core:on_integrate(self.integrate))
+            table.insert(conn, core:on_finalize(self.finalize))
+        else
+            error("integrator is already connected", 2)
+        end
+    end
+
+    integrator.disconnect = function(self)
+        if #conn > 0 then
+            for i = 1, #conn do
+                conn[i]:disconnect()
+            end
+            conn = {}
+        else
+            error("integrator is already disconnected", 2)
+        end
+    end
+
     -- connect integrator to core
-    core:on_integrate(integrator.integrate)
-    core:on_finalize(integrator.finalize)
+    integrator:connect()
+
 
     return integrator
 end
