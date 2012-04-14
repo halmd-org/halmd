@@ -161,7 +161,7 @@
             BOOST_PP_REPEAT(CUDA_FUNCTION_ARGS, DECL_ARG, __offset)
             #undef DECL_ARG
             // launch CUDA device function
-            CUDA_CALL(cudaLaunch(reinterpret_cast<const char *>(&f)));
+            CUDA_CALL(cudaLaunch(reinterpret_cast<const char *>(f)));
         }
 
     #endif /* ! __CUDACC__ */
