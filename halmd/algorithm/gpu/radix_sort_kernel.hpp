@@ -34,7 +34,7 @@ enum {
     // bucket count per partition
     BUCKET_SIZE = (1 << RADIX),
     // bucket count per thread
-    BUCKETS_PER_THREAD = BUCKET_SIZE / HALF_WARP_SIZE,
+    BUCKETS_PER_THREAD = BUCKET_SIZE / HALF_WARP_SIZE
 };
 
 /**

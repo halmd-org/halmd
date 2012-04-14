@@ -28,7 +28,7 @@ namespace gpu {
 
 enum {
     // number of shared memory banks
-    SHMEM_BANKS = 16,
+    SHMEM_BANKS = 16
 };
 
 /**

@@ -62,7 +62,7 @@ public:
         warning,
         info,
         debug,
-        trace,
+        trace
     };
 
     /**
