@@ -25,8 +25,8 @@
 #include <halmd/io/logger.hpp>
 #include <halmd/mdsim/box.hpp>
 #include <halmd/mdsim/clock.hpp>
+#include <halmd/mdsim/host/particle_group.hpp>
 #include <halmd/observables/host/samples/phase_space.hpp>
-#include <halmd/observables/host/samples/particle_group.hpp>
 #include <halmd/utility/profiler.hpp>
 
 namespace halmd {
@@ -38,7 +38,7 @@ class phase_space
 {
 public:
     typedef host::samples::phase_space<dimension, float_type> sample_type;
-    typedef host::samples::particle_group<dimension, float_type> particle_group_type;
+    typedef mdsim::host::particle_group<dimension, float_type> particle_group_type;
     typedef typename particle_group_type::particle_type particle_type;
     typedef mdsim::box<dimension> box_type;
     typedef mdsim::clock clock_type;

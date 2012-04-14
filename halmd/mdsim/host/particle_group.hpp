@@ -17,8 +17,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef HALMD_OBSERVABLES_HOST_SAMPLES_PARTICLE_GROUP_HPP
-#define HALMD_OBSERVABLES_HOST_SAMPLES_PARTICLE_GROUP_HPP
+#ifndef HALMD_MDSIM_HOST_PARTICLE_GROUP_HPP
+#define HALMD_MDSIM_HOST_PARTICLE_GROUP_HPP
 
 #include <lua.hpp>
 #include <utility>
@@ -26,9 +26,8 @@
 #include <halmd/mdsim/host/particle.hpp>
 
 namespace halmd {
-namespace observables {
+namespace mdsim {
 namespace host {
-namespace samples {
 
 /**
  * A particle group represents a subset of particles, which is defined here by
@@ -182,9 +181,9 @@ private:
     unsigned int begin_;
     unsigned int end_;
 };
-} // namespace samples
+
 } // namespace host
-} // namespace observables
+} // namespace mdsim
 } // namespace halmd
 
-#endif /* ! HALMD_OBSERVABLES_HOST_SAMPLES_PARTICLE_GROUP_HPP */
+#endif /* ! HALMD_MDSIM_HOST_PARTICLE_GROUP_HPP */

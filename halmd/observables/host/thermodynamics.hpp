@@ -26,7 +26,7 @@
 #include <halmd/io/logger.hpp>
 #include <halmd/mdsim/box.hpp>
 #include <halmd/mdsim/clock.hpp>
-#include <halmd/observables/host/samples/particle_group.hpp>
+#include <halmd/mdsim/host/particle_group.hpp>
 #include <halmd/observables/thermodynamics.hpp>
 #include <halmd/utility/data_cache.hpp>
 #include <halmd/utility/profiler.hpp>
@@ -37,7 +37,7 @@ namespace host {
 
 template <int dimension, typename float_type>
 class thermodynamics
-    : public observables::thermodynamics<dimension>
+  : public observables::thermodynamics<dimension>
 {
 private:
     typedef observables::thermodynamics<dimension> _Base;
@@ -46,7 +46,7 @@ public:
     typedef typename _Base::vector_type vector_type;
     typedef mdsim::box<dimension> box_type;
     typedef mdsim::clock clock_type;
-    typedef samples::particle_group<dimension, float_type> particle_group_type;
+    typedef mdsim::host::particle_group<dimension, float_type> particle_group_type;
     typedef typename particle_group_type::particle_type particle_type;
     typedef logger logger_type;
 

@@ -29,18 +29,18 @@
 #include <halmd/mdsim/box.hpp>                          // dependency of euler module
 #include <halmd/mdsim/clock.hpp>                        // dependency of phase_space module
 #include <halmd/mdsim/host/integrators/euler.hpp>       // module to be tested
+#include <halmd/mdsim/host/particle_group.hpp>
 #include <halmd/mdsim/host/positions/lattice.hpp>       // for initialisation
 #include <halmd/mdsim/host/velocities/boltzmann.hpp>    // for initialisation
 #include <halmd/observables/host/phase_space.hpp>       // for unified reading of positions and velocities
-#include <halmd/observables/host/samples/particle_group.hpp>
 #include <halmd/random/host/random.hpp>                 // dependency of modules position, velocity
 #ifdef WITH_CUDA
 # include <halmd/algorithm/gpu/apply_kernel.hpp>
 # include <halmd/mdsim/gpu/integrators/euler.hpp>
+# include <halmd/mdsim/gpu/particle_group.hpp>
 # include <halmd/mdsim/gpu/positions/lattice.hpp>
 # include <halmd/mdsim/gpu/velocities/boltzmann.hpp>
 # include <halmd/observables/gpu/phase_space.hpp>
-# include <halmd/observables/gpu/samples/particle_group.hpp>
 # include <halmd/random/gpu/random.hpp>
 # include <halmd/utility/gpu/device.hpp>
 # include <include/cuda_wrapper/cuda_wrapper.hpp>
@@ -246,7 +246,7 @@ template <int dimension, typename float_type>
 struct host_modules
 {
     typedef mdsim::box<dimension> box_type;
-    typedef observables::host::samples::particle_group_all<dimension, float_type> particle_group_type;
+    typedef mdsim::host::particle_group_all<dimension, float_type> particle_group_type;
     typedef typename particle_group_type::particle_type particle_type;
     typedef mdsim::host::integrators::euler<dimension, float_type> integrator_type;
     typedef halmd::random::host::random random_type;
@@ -296,7 +296,7 @@ template <int dimension, typename float_type>
 struct gpu_modules
 {
     typedef mdsim::box<dimension> box_type;
-    typedef observables::gpu::samples::particle_group_all<dimension, float_type> particle_group_type;
+    typedef mdsim::gpu::particle_group_all<dimension, float_type> particle_group_type;
     typedef typename particle_group_type::particle_type particle_type;
     typedef mdsim::gpu::integrators::euler<dimension, float_type> integrator_type;
     typedef halmd::random::gpu::random<halmd::random::gpu::rand48> random_type;

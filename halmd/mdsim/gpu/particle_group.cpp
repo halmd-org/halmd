@@ -21,16 +21,15 @@
 #include <boost/make_shared.hpp>
 #include <string>
 
-#include <halmd/observables/gpu/samples/particle_group.hpp>
+#include <halmd/mdsim/gpu/particle_group.hpp>
 #include <halmd/utility/lua/lua.hpp>
 
 using namespace boost;
 using namespace std;
 
 namespace halmd {
-namespace observables {
+namespace mdsim {
 namespace gpu {
-namespace samples {
 
 template <int dimension, typename float_type>
 particle_group_all<dimension, float_type>::particle_group_all(
@@ -103,16 +102,13 @@ void particle_group<dimension, float_type>::luaopen(lua_State* L)
     static string const class_name("particle_group_gpu_" + lexical_cast<string>(dimension) + "_");
     module(L, "libhalmd")
     [
-        namespace_("observables")
+        namespace_("mdsim")
         [
-            namespace_("samples")
-            [
-                class_<particle_group, shared_ptr<particle_group> >(class_name.c_str())
-                    .property("particle", &particle_group::particle)
-                    .property("size", &particle_group::size)
-                    .property("empty", &particle_group::empty)
-                    .property("dimension", &wrap_dimension<dimension, float_type>)
-            ]
+            class_<particle_group, shared_ptr<particle_group> >(class_name.c_str())
+                .property("particle", &particle_group::particle)
+                .property("size", &particle_group::size)
+                .property("empty", &particle_group::empty)
+                .property("dimension", &wrap_dimension<dimension, float_type>)
         ]
     ];
 }
@@ -124,15 +120,12 @@ void particle_group_all<dimension, float_type>::luaopen(lua_State* L)
     static string const class_name("particle_group_all_gpu_" + lexical_cast<string>(dimension) + "_");
     module(L, "libhalmd")
     [
-        namespace_("observables")
+        namespace_("mdsim")
         [
-            namespace_("samples")
-            [
-                class_<particle_group_all, shared_ptr<_Base>, _Base>(class_name.c_str())
-              , def("particle_group_all", &make_shared<particle_group_all
-                  , shared_ptr<particle_type const>
-                >)
-            ]
+            class_<particle_group_all, shared_ptr<_Base>, _Base>(class_name.c_str())
+          , def("particle_group_all", &make_shared<particle_group_all
+              , shared_ptr<particle_type const>
+            >)
         ]
     ];
 }
@@ -144,36 +137,23 @@ void particle_group_from_range<dimension, float_type>::luaopen(lua_State* L)
     static string const class_name("particle_group_from_range_gpu_" + lexical_cast<string>(dimension) + "_");
     module(L, "libhalmd")
     [
-        namespace_("observables")
+        namespace_("mdsim")
         [
-            namespace_("samples")
-            [
-                class_<particle_group_from_range, shared_ptr<_Base>, _Base>(class_name.c_str())
-              , def("particle_group_from_range", &make_shared<particle_group_from_range
-                  , shared_ptr<particle_type const>
-                  , unsigned int, unsigned int
-                >)
-            ]
+            class_<particle_group_from_range, shared_ptr<_Base>, _Base>(class_name.c_str())
+          , def("particle_group_from_range", &make_shared<particle_group_from_range
+              , shared_ptr<particle_type const>
+              , unsigned int, unsigned int
+            >)
         ]
     ];
 }
 
-HALMD_LUA_API int luaopen_libhalmd_observables_gpu_samples_particle_group(lua_State* L)
+HALMD_LUA_API int luaopen_libhalmd_mdsim_gpu_particle_group(lua_State* L)
 {
     particle_group<3, float>::luaopen(L);
     particle_group<2, float>::luaopen(L);
-    return 0;
-}
-
-HALMD_LUA_API int luaopen_libhalmd_observables_gpu_samples_particle_group_all(lua_State* L)
-{
     particle_group_all<3, float>::luaopen(L);
     particle_group_all<2, float>::luaopen(L);
-    return 0;
-}
-
-HALMD_LUA_API int luaopen_libhalmd_observables_gpu_samples_particle_group_from_range(lua_State* L)
-{
     particle_group_from_range<3, float>::luaopen(L);
     particle_group_from_range<2, float>::luaopen(L);
     return 0;
@@ -185,7 +165,6 @@ template class particle_group_all<2, float>;
 template class particle_group_from_range<3, float>;
 template class particle_group_from_range<2, float>;
 
-} // namespace samples
 } // namespace gpu
-} // namespace observables
+} // namespace mdsim
 } // namespace halmd

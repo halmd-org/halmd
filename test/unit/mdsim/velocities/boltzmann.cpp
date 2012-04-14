@@ -26,14 +26,14 @@
 
 #include <halmd/mdsim/box.hpp>
 #include <halmd/mdsim/clock.hpp>
+#include <halmd/mdsim/host/particle_group.hpp>
 #include <halmd/mdsim/host/velocities/boltzmann.hpp>
 #include <halmd/numeric/accumulator.hpp>
-#include <halmd/observables/host/samples/particle_group.hpp>
 #include <halmd/observables/host/thermodynamics.hpp>
 #include <halmd/random/host/random.hpp>
 #ifdef WITH_CUDA
+# include <halmd/mdsim/gpu/particle_group.hpp>
 # include <halmd/mdsim/gpu/velocities/boltzmann.hpp>
-# include <halmd/observables/gpu/samples/particle_group.hpp>
 # include <halmd/observables/gpu/thermodynamics.hpp>
 # include <halmd/random/gpu/random.hpp>
 # include <halmd/utility/gpu/device.hpp>
@@ -154,7 +154,7 @@ template <int dimension, typename float_type>
 struct host_modules
 {
     typedef mdsim::box<dimension> box_type;
-    typedef observables::host::samples::particle_group_all<dimension, float_type> particle_group_type;
+    typedef mdsim::host::particle_group_all<dimension, float_type> particle_group_type;
     typedef halmd::random::host::random random_type;
     typedef mdsim::host::velocities::boltzmann<dimension, float_type> velocity_type;
     typedef observables::host::thermodynamics<dimension, float_type> thermodynamics_type;
@@ -173,7 +173,7 @@ template <int dimension, typename float_type>
 struct gpu_modules
 {
     typedef mdsim::box<dimension> box_type;
-    typedef observables::gpu::samples::particle_group_all<dimension, float_type> particle_group_type;
+    typedef mdsim::gpu::particle_group_all<dimension, float_type> particle_group_type;
     typedef halmd::random::gpu::random<halmd::random::gpu::rand48> random_type;
     typedef observables::gpu::thermodynamics<dimension, float_type> thermodynamics_type;
     typedef mdsim::gpu::velocities::boltzmann<dimension, float_type, halmd::random::gpu::rand48> velocity_type;

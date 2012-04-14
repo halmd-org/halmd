@@ -23,12 +23,10 @@ local mdsim = {
     box                 = require("halmd.mdsim.box")
   , clock               = require("halmd.mdsim.clock")
   , core                = require("halmd.mdsim.core")
+  , particle_group      = require("halmd.mdsim.particle_group")
 }
 local observables = {
     sampler             = require("halmd.observables.sampler")
-}
-local samples = {
-    particle_group      = require("halmd.observables.samples.particle_group")
 }
 
 -- grab C++ wrappers
@@ -121,7 +119,7 @@ function M.__new(args)
         if particle.particle then
             group = particle
         else
-            group = samples.particle_group({particle = particle})
+            group = mdsim.particle_group({particle = particle})
         end
         local logger
         local label = group.label -- may be nil

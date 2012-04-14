@@ -3,6 +3,7 @@ halmd_add_library(halmd_mdsim_host
   maximum_squared_displacement.cpp
   neighbour.cpp
   particle.cpp
+  particle_group.cpp
   velocity.cpp
 )
 halmd_add_modules(
@@ -10,6 +11,7 @@ halmd_add_modules(
   libhalmd_mdsim_host_maximum_squared_displacement
   libhalmd_mdsim_host_neighbour
   libhalmd_mdsim_host_particle
+  libhalmd_mdsim_host_particle_group
   libhalmd_mdsim_host_velocity
 )
 

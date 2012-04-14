@@ -64,7 +64,7 @@ local function liquid(args)
 
     -- Construct particle groups and phase space samplers by species (species are numbered 0, 1, 2, ...)
     local species = {} for i = 1, #args.particles do species[i] = i - 1 end -- FIXME avoid explicit for-loop!?
-    local particle_group = observables.samples.particle_group{
+    local particle_group = mdsim.particle_group{
         particle = particle, species = species
     }
     local phase_space = observables.phase_space{particle = particle_group}

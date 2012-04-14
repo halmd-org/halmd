@@ -24,7 +24,7 @@
 
 #include <halmd/mdsim/box.hpp>
 #include <halmd/mdsim/clock.hpp>
-#include <halmd/observables/gpu/samples/particle_group.hpp>
+#include <halmd/mdsim/gpu/particle_group.hpp>
 #include <halmd/observables/gpu/samples/phase_space.hpp>
 #include <halmd/observables/host/samples/phase_space.hpp>
 #include <halmd/utility/profiler.hpp>
@@ -43,7 +43,7 @@ template <int dimension, typename float_type>
 class phase_space<gpu::samples::phase_space<dimension, float_type> >
 {
 public:
-    typedef gpu::samples::particle_group<dimension, float_type> particle_group_type;
+    typedef mdsim::gpu::particle_group<dimension, float_type> particle_group_type;
     typedef typename particle_group_type::particle_type particle_type;
     typedef gpu::samples::phase_space<dimension, float_type> sample_type;
     typedef mdsim::box<dimension> box_type;
@@ -108,7 +108,7 @@ class phase_space<host::samples::phase_space<dimension, float_type> >
 {
 public:
     typedef host::samples::phase_space<dimension, float_type> sample_type;
-    typedef gpu::samples::particle_group<dimension, float_type> particle_group_type;
+    typedef mdsim::gpu::particle_group<dimension, float_type> particle_group_type;
     typedef typename particle_group_type::particle_type particle_type;
     typedef mdsim::box<dimension> box_type;
     typedef fixed_vector<float_type, dimension> vector_type;

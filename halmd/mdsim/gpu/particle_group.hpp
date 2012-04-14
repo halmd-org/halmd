@@ -17,8 +17,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef HALMD_OBSERVABLES_GPU_SAMPLES_PARTICLE_GROUP_HPP
-#define HALMD_OBSERVABLES_GPU_SAMPLES_PARTICLE_GROUP_HPP
+#ifndef HALMD_MDSIM_GPU_PARTICLE_GROUP_HPP
+#define HALMD_MDSIM_GPU_PARTICLE_GROUP_HPP
 
 #include <cuda_wrapper/cuda_wrapper.hpp>
 #include <lua.hpp>
@@ -27,9 +27,8 @@
 #include <halmd/mdsim/gpu/particle.hpp>
 
 namespace halmd {
-namespace observables {
+namespace mdsim {
 namespace gpu {
-namespace samples {
 
 /**
  * A particle group represents a subset of particles, which is defined here by
@@ -200,9 +199,8 @@ private:
     /** pre-allocate page-locked memory for reverse particle tags */
     cuda::host::vector<unsigned int> h_reverse_tag_;
 };
-} // namespace samples
 } // namespace gpu
-} // namespace observables
+} // namespace mdsim
 } // namespace halmd
 
-#endif /* ! HALMD_OBSERVABLES_GPU_SAMPLES_PARTICLE_GROUP_HPP */
+#endif /* ! HALMD_MDSIM_GPU_PARTICLE_GROUP_HPP */

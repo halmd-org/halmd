@@ -1,10 +1,6 @@
 halmd_add_library(halmd_observables_host_samples
   phase_space.cpp
-  particle_group.cpp
 )
 halmd_add_modules(
   libhalmd_observables_host_samples_phase_space
-  libhalmd_observables_host_samples_particle_group
-  libhalmd_observables_host_samples_particle_group_all
-  libhalmd_observables_host_samples_particle_group_from_range
 )

@@ -31,15 +31,15 @@
 
 #include <halmd/mdsim/box.hpp>
 #include <halmd/mdsim/clock.hpp>
+#include <halmd/mdsim/host/particle_group.hpp>
 #include <halmd/mdsim/host/positions/lattice.hpp>
 #include <halmd/numeric/accumulator.hpp>
 #include <halmd/observables/host/phase_space.hpp>
-#include <halmd/observables/host/samples/particle_group.hpp>
 #include <halmd/random/host/random.hpp>
 #ifdef WITH_CUDA
+# include <halmd/mdsim/gpu/particle_group.hpp>
 # include <halmd/mdsim/gpu/positions/lattice.hpp>
 # include <halmd/observables/gpu/phase_space.hpp>
-# include <halmd/observables/gpu/samples/particle_group.hpp>
 # include <halmd/random/gpu/random.hpp>
 # include <halmd/utility/gpu/device.hpp>
 #endif
@@ -220,7 +220,7 @@ template <int dimension, typename float_type>
 struct host_modules
 {
     typedef mdsim::box<dimension> box_type;
-    typedef observables::host::samples::particle_group_all<dimension, float_type> particle_group_type;
+    typedef mdsim::host::particle_group_all<dimension, float_type> particle_group_type;
     typedef mdsim::host::positions::lattice<dimension, float_type> position_type;
     typedef halmd::random::host::random random_type;
     typedef observables::host::samples::phase_space<dimension, float_type> sample_type;
@@ -240,7 +240,7 @@ template <int dimension, typename float_type>
 struct gpu_modules
 {
     typedef mdsim::box<dimension> box_type;
-    typedef observables::gpu::samples::particle_group_all<dimension, float_type> particle_group_type;
+    typedef mdsim::gpu::particle_group_all<dimension, float_type> particle_group_type;
     typedef mdsim::gpu::positions::lattice<dimension, float_type, halmd::random::gpu::rand48> position_type;
     typedef halmd::random::gpu::random<halmd::random::gpu::rand48> random_type;
     typedef observables::host::samples::phase_space<dimension, float_type> sample_type;

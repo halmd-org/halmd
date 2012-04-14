@@ -20,8 +20,8 @@
 local module = require("halmd.utility.module")
 
 -- grab C++ wrappers
-local particle_group_all_wrapper = assert(libhalmd.observables.samples.particle_group_all)
-local particle_group_from_range_wrapper = assert(libhalmd.observables.samples.particle_group_from_range)
+local particle_group_all_wrapper = assert(libhalmd.mdsim.particle_group_all)
+local particle_group_from_range_wrapper = assert(libhalmd.mdsim.particle_group_from_range)
 -- grab standard library
 local assert = assert
 local ipairs = ipairs
@@ -29,7 +29,7 @@ local property = property
 local string = string
 local type = type
 
-local M = module("halmd.observables.samples.particle_group")
+local M = module("halmd.mdsim.particle_group")
 
 --
 -- construct particle_group module
