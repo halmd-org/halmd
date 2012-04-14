@@ -20,6 +20,7 @@
 local device            = require("halmd.utility.device")
 local log               = require("halmd.io.log")
 local module            = require("halmd.utility.module")
+local profiler          = require("halmd.utility.profiler")
 local mdsim = {
     box                 = require("halmd.mdsim.box")
   , clock               = require("halmd.mdsim.clock")
@@ -31,13 +32,13 @@ local samples = {
     particle_group      = require("halmd.observables.samples.particle_group")
 }
 
--- grab C++ wrappers
-local phase_space = assert(libhalmd.observables.host.phase_space)
-local property = property
--- grab standard library
-local assert = assert
-local ipairs = ipairs
-local type = type
+-- grab C++ classes
+local phase_space = {
+    host = assert(libhalmd.observables.host.phase_space)
+}
+if libhalmd.observables.gpu then
+    phase_space.gpu = assert(libhalmd.observables.gpu.phase_space)
+end
 
 ---
 -- Phase Space
@@ -56,12 +57,7 @@ local M = module("halmd.observables.phase_space")
 --
 -- :param table args: keyword arguments
 -- :param args.particle: instance, or sequence of instances, of particle or particle_group
--- :param string args.memory: memory location of phase_space sample (optional)
 -- :returns: instance, or sequence of instances, of phase_space sampler
---
--- The supported values for ``memory`` are "host" and "gpu". If ``memory``
--- is not specified, the memory location is selected according to the
--- compute device.
 --
 -- .. note::
 --
@@ -69,8 +65,31 @@ local M = module("halmd.observables.phase_space")
 --    the same sampler with multiple observable modules for optimal
 --    performance.
 --
+-- .. method:: acquire(args)
 --
--- .. method:: writer(file, args)
+--    Returns data slot to acquire phase space sample.
+--
+--    :param table args: keyword arguments (optional)
+--    :param string args.memory: memory location of phase space sample (optional)
+--
+--    The supported values for ``memory`` are "host" and "gpu". If ``memory``
+--    is not specified, the memory location is selected according to the
+--    compute device.
+--
+-- .. method:: connect()
+--
+--    Connect phase_space sampler to profiler. This is the default.
+--
+-- .. method:: disconnect()
+--
+--    Disconnect phase_space sampler from profiler.
+--
+-- .. attribute:: group
+--
+--    The particle group used by the sampler.
+--    If a particle instance was given, an ``all`` particle_group.
+--
+-- .. class:: writer(file, args)
 --
 --    Write trajectory of particle group to file.
 --
@@ -88,28 +107,18 @@ local M = module("halmd.observables.phase_space")
 --    If ``group`` is omitted, the particle group's label will be used as
 --    the name of the trajectory group.
 --
+--    .. method:: connect()
 --
--- .. attribute:: group
+--       Connect phase_space writer to observables sampler. This is the default.
 --
---    The particle group used by the sampler.
---    If a particle instance was given, an ``all`` particle_group.
+--    .. method:: disconnect()
 --
--- .. attribute:: memory
---
---    The memory location of the sample, either "host" or "gpu".
---
--- .. attribute:: acquire
---
---    Callable slot to acquire phase space sample.
+--       Disconnect phase_space writer from observables sampler.
 --
 function M.__new(args)
     local particle = args.particle
     if not particle then
         error("missing parameter 'particle'", 3)
-    end
-    local memory = args.memory
-    if not memory then
-        memory = device() and "gpu" or "host"
     end
     local box = mdsim.box() -- singleton
     local clock = mdsim.clock() -- singleton
@@ -123,39 +132,107 @@ function M.__new(args)
         end
         local label = assert(group.label)
         local logger = log.logger({label = ("phase_space (%s)"):format(label)})
-        local sampler = phase_space(group, box, clock, logger)
 
-        sampler.group = property(function(self)
-            return group
-        end)
-        sampler.memory = property(function(self)
-            return memory
-        end)
+        local samplers = {}
+        for memory, class in pairs(phase_space) do
+            samplers[memory] = class(group, box, clock, logger)
+        end
+
+        local sampler = {group = group}
+
+        sampler.acquire = function(self, args)
+            local memory = args and args.memory
+            if not memory then
+                memory = device() and "gpu" or "host"
+            end
+            local sampler = samplers[memory]
+            if not sampler then
+                error(("unsupported phase_space memory type '%s'"):format(memory), 2)
+            end
+            return assert(sampler.acquire)
+        end
 
         sampler.writer = function(self, file, args)
             local name = args.group or assert(self.group.label)
             local writer = file:writer({location = {"trajectory", name}, mode = "append"})
 
-            writer:on_write(self.position, {"position"})
-            writer:on_write(self.velocity, {"velocity"})
-            writer:on_write(self.species, {"species"})
+            local sampler = assert(samplers.host)
+            writer:on_write(sampler.position, {"position"})
+            writer:on_write(sampler.velocity, {"velocity"})
+            writer:on_write(sampler.species, {"species"})
 
             local every = args.every
-            local sampler = observables.sampler() -- singleton
-            if every and every > 0 then
-                sampler:on_sample(writer.write, every)
-            else
-                sampler:on_start(writer.write)
-                sampler:on_finish(writer.write)
+
+            -- sequence of signal connections
+            local conn = {}
+
+            writer.connect = function(self)
+                if #conn == 0 then
+                    local sampler = observables.sampler() -- singleton
+                    if every and every > 0 then
+                        table.insert(conn, sampler:on_sample(self.write, every))
+                    else
+                        table.insert(conn, sampler:on_start(self.write))
+                        table.insert(conn, sampler:on_finish(self.write))
+                    end
+                else
+                    error("phase_space writer is already connected", 2)
+                end
             end
+
+            writer.disconnect = function(self)
+                if #conn > 0 then
+                    for i = 1, #conn do
+                        conn[i]:disconnect()
+                    end
+                    conn = {}
+                else
+                    error("phase_space writer is already disconnected", 2)
+                end
+            end
+
+            -- connect writer to sampler
+            writer:connect()
 
             return writer
         end
 
+        -- sequence of signal connections
+        local conn = {}
+
+        sampler.connect = function(self)
+            if #conn == 0 then
+                local profiler = profiler() -- singleton
+                for memory, sampler in pairs(samplers) do
+                    local label = assert(self.group.label)
+                    local desc = ("phase space sample of %s particles on %s"):format(label, memory)
+                    local runtime = assert(sampler.runtime)
+                    table.insert(conn, profiler:on_profile(runtime.acquire, ("acquisition of %s"):format(desc)))
+                    table.insert(conn, profiler:on_profile(runtime.reset, ("reset %s"):format(desc)))
+                end
+            else
+                error("phase_space sampler is already connected", 2)
+            end
+        end
+
+        sampler.disconnect = function(self)
+            if #conn > 0 then
+                for i = 1, #conn do
+                    conn[i]:disconnect()
+                end
+                conn = {}
+            else
+                error("phase_space sampler is already disconnected", 2)
+            end
+        end
+
+        -- connect runtime accumulators to module profiler
+        sampler:connect()
+
         return sampler
     end
 
-    if type(particle) == "table" then
+    if type(particle) == "table" and #particle > 0 then
         local samplers = {}
         for i = 1, #particle do
             table.insert(samplers, sampler(particle[i]))
@@ -164,17 +241,6 @@ function M.__new(args)
     else
         return sampler(particle)
     end
-end
-
---
--- connect runtime accumulators to module profiler
---
-function M.profile(self, profiler)
-    local label = assert(self.group.label)
-    local memory = assert(self.memory)
-    local desc = ("phase space sample of %s particles on %s"):format(label, memory)
-    profiler:on_profile({self, acquire = ("acquisition of %s"):format(desc)})
-    profiler:on_profile({self, reset = ("reset %s"):format(desc)})
 end
 
 return M
