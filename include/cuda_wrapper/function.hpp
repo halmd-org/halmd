@@ -139,7 +139,7 @@
         typedef void T (BOOST_PP_ENUM_PARAMS(CUDA_FUNCTION_ARGS, T));
 
     public:
-        function(T *f) : f(f) {}
+        function(T* f) : f_(reinterpret_cast<char const*>(f)) {}
 
     #ifndef __CUDACC__
 
@@ -161,13 +161,13 @@
             BOOST_PP_REPEAT(CUDA_FUNCTION_ARGS, DECL_ARG, __offset)
             #undef DECL_ARG
             // launch CUDA device function
-            CUDA_CALL(cudaLaunch(reinterpret_cast<const char *>(f)));
+            CUDA_CALL(cudaLaunch(f_));
         }
 
     #endif /* ! __CUDACC__ */
 
     private:
-        T *f;
+        char const* f_;
     };
 
     } // namespace cuda
