@@ -142,8 +142,8 @@ void phase_space<modules_type>::test()
     typename input_sample_type::species_array_type& input_species = input_sample->species();
 
     // prepare input sample
-    BOOST_CHECK_EQUAL(input_position.size(), accumulate(npart.begin(), npart.end(), 0));
-    BOOST_CHECK_EQUAL(input_velocity.size(), accumulate(npart.begin(), npart.end(), 0));
+    BOOST_CHECK_EQUAL(input_position.size(), accumulate(npart.begin(), npart.end(), 0u));
+    BOOST_CHECK_EQUAL(input_velocity.size(), accumulate(npart.begin(), npart.end(), 0u));
     for (unsigned int i = 0, n = 0; i < npart.size(); ++i) { // iterate over particle species
         for (unsigned int j = 0; j < npart[i]; ++n, ++j) { // iterate over particles
             vector_type& r = input_position[n];
@@ -178,7 +178,7 @@ void phase_space<modules_type>::test()
     typename input_sample_type::velocity_array_type const& result_velocity = result->velocity();
     typename input_sample_type::species_array_type const& result_species = result->species();
 
-    BOOST_CHECK_EQUAL(result_position.size(), accumulate(npart.begin(), npart.end(), 0));
+    BOOST_CHECK_EQUAL(result_position.size(), accumulate(npart.begin(), npart.end(), 0u));
     for (unsigned int i = 0, n = 0; i < npart.size(); ++i) { // iterate over particle species
         for (unsigned int j = 0; j < npart[i]; ++n, ++j) { // iterate over particles
             // compare positions with a tolerance due to mapping to and from the periodic box
