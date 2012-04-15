@@ -29,6 +29,9 @@ local mdsim = {
 local observables = {
     sampler             = require("halmd.observables.sampler"),
 }
+local samples = {
+    phase_space         = require("halmd.observables.samples.phase_space"),
+}
 
 -- grab C++ classes
 local phase_space = {
@@ -154,10 +157,10 @@ function M.__new(args)
             local name = args.group or assert(self.group.label)
             local writer = file:writer({location = {"trajectory", name}, mode = "append"})
 
-            local sampler = assert(samplers.host)
-            writer:on_write(sampler.position, {"position"})
-            writer:on_write(sampler.velocity, {"velocity"})
-            writer:on_write(sampler.species, {"species"})
+            local slot = self:acquire({memory = "host"})
+            writer:on_write(samples.phase_space.position(slot), {"position"})
+            writer:on_write(samples.phase_space.velocity(slot), {"velocity"})
+            writer:on_write(samples.phase_space.species(slot), {"species"})
 
             local every = args.every
 

@@ -125,4 +125,34 @@ function M.__new(args)
     return sample
 end
 
+---
+-- .. function:: position(slot)
+--
+--    Extract position array from data slot returning phase_space sample.
+--
+--    :param slot: data slot returning phase_space sample
+--    :returns: data slot returning position array
+--
+M.position = assert(libhalmd.observables.samples.phase_space.position)
+
+---
+-- .. function:: velocity(slot)
+--
+--    Extract velocity array from data slot returning phase_space sample.
+--
+--    :param slot: data slot returning phase_space sample
+--    :returns: data slot returning velocity array
+--
+M.velocity = assert(libhalmd.observables.samples.phase_space.velocity)
+
+---
+-- .. function:: species(slot)
+--
+--    Extract species array from data slot returning phase_space sample.
+--
+--    :param slot: data slot returning phase_space sample
+--    :returns: data slot returning species array
+--
+M.species = assert(libhalmd.observables.samples.phase_space.species)
+
 return M
