@@ -42,13 +42,14 @@ namespace gpu {
 template <int dimension, typename float_type>
 phase_space<gpu::samples::phase_space<dimension, float_type> >::phase_space(
     shared_ptr<particle_group_type const> particle_group
+  , shared_ptr<particle_type> particle
   , shared_ptr<box_type const> box
   , shared_ptr<clock_type const> clock
   , shared_ptr<logger_type> logger
 )
   // dependency injection
   : particle_group_(particle_group)
-  , particle_(particle_group->particle())
+  , particle_(particle)
   , box_(box)
   , clock_(clock)
   , logger_(logger)
@@ -66,13 +67,14 @@ phase_space<gpu::samples::phase_space<dimension, float_type> >::phase_space(
 template <int dimension, typename float_type>
 phase_space<host::samples::phase_space<dimension, float_type> >::phase_space(
     shared_ptr<particle_group_type> particle_group
+  , shared_ptr<particle_type> particle
   , shared_ptr<box_type const> box
   , shared_ptr<clock_type const> clock
   , shared_ptr<logger_type> logger
 )
   // dependency injection
   : particle_group_(particle_group)
-  , particle_(particle_group->particle())
+  , particle_(particle)
   , box_(box)
   , clock_(clock)
   , logger_(logger)
@@ -185,6 +187,64 @@ phase_space<host::samples::phase_space<dimension, float_type> >::acquire()
     return sample_;
 }
 
+template <int dimension, typename float_type>
+void phase_space<host::samples::phase_space<dimension, float_type> >::set(shared_ptr<sample_type const> sample)
+{
+    scoped_timer_type timer(runtime_.set);
+
+    // assign particle coordinates and types
+    typename sample_type::position_array_type const& sample_position = sample->position();
+    typename sample_type::velocity_array_type const& sample_velocity = sample->velocity();
+    typename sample_type::species_array_type const& sample_species = sample->species();
+
+    assert(sample_position.size() >= particle_group_->size());
+    assert(sample_velocity.size() >= particle_group_->size());
+    assert(sample_species.size() >= particle_group_->size());
+
+    unsigned int const* map = particle_group_->h_map();
+    for (unsigned int tag = 0; tag < particle_group_->size(); ++tag) {
+        unsigned int idx = map[tag];
+        assert(idx < h_r_.size());
+
+        using mdsim::gpu::particle_kernel::tagged;
+
+        h_r_[idx] = tagged<vector_type>(sample_position[tag], sample_species[tag]);
+        h_v_[idx] = sample_velocity[tag];
+    }
+
+    try {
+#ifdef USE_VERLET_DSFUN
+        cuda::memset(particle_->g_r, 0, particle_->g_r.capacity());
+        cuda::memset(particle_->g_v, 0, particle_->g_v.capacity());
+#endif
+        cuda::copy(h_r_, particle_->g_r);
+        cuda::copy(h_v_, particle_->g_v);
+    }
+    catch (cuda::error const&)
+    {
+        LOG_ERROR("failed to copy particles to GPU");
+        throw;
+    }
+
+    // shift particle positions to range (-L/2, L/2)
+    try {
+        phase_space_wrapper<dimension>::kernel.r.bind(particle_->g_r);
+        cuda::configure(particle_->dim.grid, particle_->dim.block);
+        phase_space_wrapper<dimension>::kernel.reduce_periodic(
+            particle_group_->g_map()
+          , particle_->g_r
+          , particle_->g_image
+          , static_cast<vector_type>(box_->length())
+          , particle_group_->size()
+        );
+    }
+    catch (cuda::error const&)
+    {
+        LOG_ERROR("failed to reduce particle positions on GPU");
+        throw;
+    }
+}
+
 template <typename phase_space_type, typename sample_type>
 static function<shared_ptr<sample_type const> ()>
 wrap_acquire(shared_ptr<phase_space_type> phase_space)
@@ -222,6 +282,7 @@ void phase_space<gpu::samples::phase_space<dimension, float_type> >::luaopen(lua
             [
                 def("phase_space", &make_shared<phase_space
                    , shared_ptr<particle_group_type const>
+                   , shared_ptr<particle_type>
                    , shared_ptr<box_type const>
                    , shared_ptr<clock_type const>
                    , shared_ptr<logger_type>
@@ -248,6 +309,7 @@ void phase_space<host::samples::phase_space<dimension, float_type> >::luaopen(lu
                     class_<runtime>("runtime")
                         .def_readonly("acquire", &runtime::acquire)
                         .def_readonly("reset", &runtime::reset)
+                        .def_readonly("set", &runtime::set)
                 ]
                 .def_readonly("runtime", &phase_space::runtime_)
 
@@ -255,6 +317,7 @@ void phase_space<host::samples::phase_space<dimension, float_type> >::luaopen(lu
             [
                 def("phase_space", &make_shared<phase_space
                    , shared_ptr<particle_group_type>
+                   , shared_ptr<particle_type>
                    , shared_ptr<box_type const>
                    , shared_ptr<clock_type const>
                    , shared_ptr<logger_type>

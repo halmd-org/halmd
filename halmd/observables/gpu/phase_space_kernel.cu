@@ -70,6 +70,36 @@ __global__ void sample(unsigned int const* g_reverse_tag, T* g_r, T* g_v, unsign
     }
 }
 
+/**
+ * shift particle positions to range (-L/2, L/2)
+ */
+template <typename vector_type, typename coalesced_vector_type>
+__global__ void reduce_periodic(
+    unsigned int const* g_reverse_tag
+  , float4* g_r
+  , coalesced_vector_type* g_image
+  , vector_type box_length
+  , unsigned int npart
+)
+{
+    using mdsim::gpu::particle_kernel::untagged;
+    using mdsim::gpu::particle_kernel::tagged;
+
+    enum { dimension = vector_type::static_size };
+
+    if (GTID < npart) {
+        unsigned int rtag = g_reverse_tag[GTID];
+        vector_type r;
+        unsigned int type;
+        tie(r, type) = untagged<vector_type>(tex1Dfetch(r_, rtag));
+
+        vector_type image = box_kernel::reduce_periodic(r, box_length);
+
+        g_image[rtag] = image;
+        g_r[rtag] = tagged(r, type);
+    }
+}
+
 } // namespace phase_space_kernel
 
 template <int dimension>
@@ -79,6 +109,7 @@ phase_space_wrapper<dimension> const phase_space_wrapper<dimension>::kernel = {
   , phase_space_kernel::v_
   , get<dimension>(phase_space_kernel::box_length_)
   , phase_space_kernel::sample<fixed_vector<float, dimension> >
+  , phase_space_kernel::reduce_periodic<fixed_vector<float, dimension> >
 };
 
 template class phase_space_wrapper<3>;

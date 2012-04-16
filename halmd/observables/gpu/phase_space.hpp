@@ -55,6 +55,7 @@ public:
      */
     phase_space(
         boost::shared_ptr<particle_group_type const> particle_group
+      , boost::shared_ptr<particle_type> particle
       , boost::shared_ptr<box_type const> box
       , boost::shared_ptr<clock_type const> clock
       , boost::shared_ptr<logger_type> logger = boost::make_shared<logger_type>()
@@ -76,7 +77,7 @@ private:
     /** particle group */
     boost::shared_ptr<particle_group_type const> particle_group_;
     /** particle instance to particle group */
-    boost::shared_ptr<particle_type const> particle_;
+    boost::shared_ptr<particle_type> particle_;
     /** simulation box */
     boost::shared_ptr<box_type const> box_;
     /** simulation clock */
@@ -120,6 +121,7 @@ public:
      */
     phase_space(
         boost::shared_ptr<particle_group_type> particle_group
+      , boost::shared_ptr<particle_type> particle
       , boost::shared_ptr<box_type const> box
       , boost::shared_ptr<clock_type const> clock
       , boost::shared_ptr<logger_type> logger = boost::make_shared<logger_type>()
@@ -131,6 +133,11 @@ public:
     boost::shared_ptr<sample_type const> acquire();
 
     /**
+     * Set particles from phase_space sample.
+     */
+    void set(boost::shared_ptr<sample_type const> sample);
+
+    /**
      * Bind class to Lua.
      */
     static void luaopen(lua_State* L);
@@ -139,7 +146,7 @@ private:
     /** particle group */
     boost::shared_ptr<particle_group_type> particle_group_;
     /** particle instance to particle group */
-    boost::shared_ptr<particle_type const> particle_;
+    boost::shared_ptr<particle_type> particle_;
     /** simulation box */
     boost::shared_ptr<box_type const> box_;
     /** simulation clock */
@@ -164,6 +171,7 @@ private:
     {
         accumulator_type acquire;
         accumulator_type reset;
+        accumulator_type set;
     };
 
     /** profiling runtime accumulators */

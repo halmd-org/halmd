@@ -44,6 +44,8 @@ struct phase_space_wrapper
     cuda::symbol<vector_type> box_length;
     /** sample phase space for all particle of a single species */
     cuda::function<void (unsigned int const*, float4*, float4*, unsigned int)> sample;
+    /** shift particle positions to range (-L/2, L/2) */
+    cuda::function<void (unsigned int const*, float4*, coalesced_vector_type*, fixed_vector<float, dimension>, unsigned int)> reduce_periodic;
 
     static phase_space_wrapper const kernel;
 };

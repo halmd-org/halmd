@@ -228,7 +228,7 @@ test_euler<modules_type>::test_euler()
     position = make_shared<position_type>(particle, box, random, slab);
     velocity = make_shared<velocity_type>(particle, random, temp);
     clock = make_shared<clock_type>(1);
-    phase_space = make_shared<phase_space_type>(make_shared<particle_group_type>(particle), box, clock);
+    phase_space = make_shared<phase_space_type>(make_shared<particle_group_type>(particle), particle, box, clock);
 
     // set positions and velocities
     BOOST_TEST_MESSAGE("set particle tags");

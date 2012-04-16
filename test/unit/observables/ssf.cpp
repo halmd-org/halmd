@@ -275,7 +275,7 @@ lattice<modules_type>::lattice()
     random = make_shared<random_type>();
     position = make_shared<position_type>(particle, box, random, slab);
     clock = make_shared<clock_type>(0); // bogus time-step
-    phase_space = make_shared<phase_space_type>(make_shared<particle_group_type>(particle), box, clock);
+    phase_space = make_shared<phase_space_type>(make_shared<particle_group_type>(particle), particle, box, clock);
 }
 
 template <int dimension, typename float_type>

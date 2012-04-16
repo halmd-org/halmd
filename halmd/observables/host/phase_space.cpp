@@ -38,12 +38,13 @@ namespace host {
 template <int dimension, typename float_type>
 phase_space<dimension, float_type>::phase_space(
     shared_ptr<particle_group_type const> particle_group
+  , shared_ptr<particle_type> particle
   , shared_ptr<box_type const> box
   , shared_ptr<clock_type const> clock
   , shared_ptr<logger_type> logger
 )
   : particle_group_(particle_group)
-  , particle_(particle_group->particle())
+  , particle_(particle)
   , box_(box)
   , clock_(clock)
   , logger_(logger)
@@ -99,6 +100,41 @@ phase_space<dimension, float_type>::acquire()
     return sample_;
 }
 
+template <int dimension, typename float_type>
+void phase_space<dimension, float_type>::set(shared_ptr<sample_type const> sample)
+{
+    scoped_timer_type timer(runtime_.set);
+
+    typename particle_type::position_array_type& particle_position = particle_->r;
+    typename particle_type::image_array_type& particle_image = particle_->image;
+    typename particle_type::velocity_array_type& particle_velocity = particle_->v;
+    typename particle_type::species_array_type& particle_species = particle_->type;
+
+    typename sample_type::position_array_type const& sample_position = sample->position();
+    typename sample_type::velocity_array_type const& sample_velocity = sample->velocity();
+    typename sample_type::species_array_type const& sample_species = sample->species();
+
+    typename particle_group_type::map_iterator idx = particle_group_->map();
+    for (size_t i = 0; i < particle_group_->size(); ++i, ++idx) {
+        assert(*idx < particle_->nbox);
+        vector_type& r = (particle_position[*idx] = sample_position[i]);
+        vector_type& image = (particle_image[*idx] = 0);
+
+        // The host implementation of reduce_periodic wraps the position at
+        // most once around the box. This is more efficient during the
+        // simulation. For setting arbitrary particle positions, however,
+        // we must ensure that the final position is actually inside the
+        // periodic box.
+        vector_type shift;
+        do {
+            image += (shift = box_->reduce_periodic(r));
+        } while(shift != vector_type(0));
+
+        particle_velocity[*idx] = sample_velocity[i];
+        particle_species[*idx] = sample_species[i];
+    }
+}
+
 template <typename phase_space_type, typename sample_type>
 static function<shared_ptr<sample_type const> ()>
 wrap_acquire(shared_ptr<phase_space_type> phase_space)
@@ -129,6 +165,7 @@ void phase_space<dimension, float_type>::luaopen(lua_State* L)
                     class_<runtime>("runtime")
                         .def_readonly("acquire", &runtime::acquire)
                         .def_readonly("reset", &runtime::reset)
+                        .def_readonly("set", &runtime::set)
                 ]
                 .def_readonly("runtime", &phase_space::runtime_)
 
@@ -136,6 +173,7 @@ void phase_space<dimension, float_type>::luaopen(lua_State* L)
             [
                 def("phase_space", &make_shared<phase_space
                    , shared_ptr<particle_group_type const>
+                   , shared_ptr<particle_type>
                    , shared_ptr<box_type const>
                    , shared_ptr<clock_type const>
                    , shared_ptr<logger_type>
