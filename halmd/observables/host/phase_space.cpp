@@ -73,9 +73,14 @@ phase_space<dimension, float_type>::acquire()
         sample_ = make_shared<sample_type>(particle_group_->size(), clock_->step());
     }
 
-    typename sample_type::position_array_type& position = sample_->position();
-    typename sample_type::velocity_array_type& velocity = sample_->velocity();
-    typename sample_type::species_array_type& species = sample_->species();
+    typename particle_type::position_array_type& particle_position = particle_->r;
+    typename particle_type::image_array_type& particle_image = particle_->image;
+    typename particle_type::velocity_array_type& particle_velocity = particle_->v;
+    typename particle_type::species_array_type& particle_species = particle_->type;
+
+    typename sample_type::position_array_type& sample_position = sample_->position();
+    typename sample_type::velocity_array_type& sample_velocity = sample_->velocity();
+    typename sample_type::species_array_type& sample_species = sample_->species();
 
     // copy particle data using index map
     typename particle_group_type::map_iterator idx = particle_group_->map();
@@ -84,11 +89,11 @@ phase_space<dimension, float_type>::acquire()
         assert(*idx < particle_->nbox);
 
         // periodically extended particle position
-        vector_type& r = position[i] = particle_->r[*idx];
-        box_->extend_periodic(r, particle_->image[*idx]);
+        vector_type& r = sample_position[i] = particle_position[*idx];
+        box_->extend_periodic(r, particle_image[*idx]);
 
-        velocity[i] = particle_->v[*idx];
-        species[i] = particle_->type[*idx];
+        sample_velocity[i] = particle_velocity[*idx];
+        sample_species[i] = particle_species[*idx];
     }
 
     return sample_;
