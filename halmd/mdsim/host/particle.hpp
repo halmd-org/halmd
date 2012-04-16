@@ -41,11 +41,25 @@ class particle
 public:
     typedef typename type_traits<dimension, float_type>::vector_type vector_type;
 
+    typedef vector_type position_type;
+    typedef vector_type image_type;
+    typedef vector_type velocity_type;
+    typedef unsigned int tag_type;
+    typedef unsigned int reverse_tag_type;
+    typedef unsigned int species_type;
+    typedef double mass_type;
     typedef vector_type force_type;
     typedef double en_pot_type;
     typedef typename type_traits<dimension, float_type>::stress_tensor_type stress_pot_type;
     typedef double hypervirial_type;
 
+    typedef std::vector<position_type> position_array_type;
+    typedef std::vector<image_type> image_array_type;
+    typedef std::vector<velocity_type> velocity_array_type;
+    typedef std::vector<tag_type> tag_array_type;
+    typedef std::vector<reverse_tag_type> reverse_tag_array_type;
+    typedef std::vector<species_type> species_array_type;
+    typedef std::vector<mass_type> mass_array_type;
     typedef std::vector<force_type, raw_allocator<force_type> > force_array_type;
     typedef std::vector<en_pot_type, raw_allocator<en_pot_type> > en_pot_array_type;
     typedef std::vector<stress_pot_type, raw_allocator<stress_pot_type> > stress_pot_array_type;
