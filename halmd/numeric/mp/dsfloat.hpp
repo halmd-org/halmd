@@ -26,26 +26,12 @@
 #include <boost/utility/enable_if.hpp>
 
 #include <halmd/numeric/mp/dsfun.hpp>
-#ifdef __CUDACC__
-# include <halmd/algorithm/gpu/tuple.cuh>
-#else
-# include <boost/tuple/tuple.hpp>
-#endif
+#include <halmd/utility/tuple.hpp>
 
 namespace halmd {
 namespace detail {
 namespace numeric {
 namespace mp {
-
-#ifdef __CUDACC__
-using algorithm::gpu::tuple;
-using algorithm::gpu::make_tuple;
-using algorithm::gpu::tie;
-#else
-using boost::tuple;
-using boost::make_tuple;
-using boost::tie;
-#endif
 
 /**
  * Double-single floating point value

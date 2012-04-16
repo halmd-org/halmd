@@ -1,5 +1,5 @@
 /*
- * Copyright © 2010-2011  Peter Colberg and Felix Höfling
+ * Copyright © 2010-2012  Peter Colberg and Felix Höfling
  *
  * This file is part of HALMD.
  *
@@ -17,13 +17,28 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef HALMD_ALGORITHM_GPU_TUPLE_CUH
-#define HALMD_ALGORITHM_GPU_TUPLE_CUH
+#ifndef HALMD_UTILITY_TUPLE_HPP
+#define HALMD_UTILITY_TUPLE_HPP
 
-#include <boost/mpl/int.hpp>
-#include <boost/type_traits/remove_reference.hpp>
-#include <boost/type_traits/is_same.hpp>
-#include <boost/utility/enable_if.hpp>
+#ifndef __CUDACC__
+# include <boost/tuple/tuple.hpp>
+#else
+# include <boost/mpl/int.hpp>
+# include <boost/type_traits/remove_reference.hpp>
+# include <boost/type_traits/is_same.hpp>
+# include <boost/utility/enable_if.hpp>
+#endif
+
+namespace halmd {
+
+#ifndef __CUDACC__
+
+// import Boost.Tuple library into halmd namespace
+using boost::tuple;
+using boost::make_tuple;
+using boost::tie;
+
+#else /* __CUDACC__ */
 
 //
 // Poor man's tuple library for CUDA.
@@ -36,10 +51,6 @@
 //
 
 // we support n-tuples for n=1, 2, 3
-
-namespace halmd {
-namespace algorithm {
-namespace gpu {
 
 // forward declaration
 template <typename T0, typename T1 = void, typename T2 = void>
@@ -194,8 +205,8 @@ __device__ tuple<T0&, T1&, T2&> tie(T0& t0, T1& t1, T2& t2)
     return tuple<T0&, T1&, T2&>(t0, t1, t2);
 }
 
-} // namespace algorithm
-} // namespace gpu
+#endif /* __CUDACC__ */
+
 } // namespace halmd
 
-#endif /* ! HALMD_ALGORITHM_GPU_TUPLE_CUH */
+#endif /* ! HALMD_UTILITY_TUPLE_HPP */
