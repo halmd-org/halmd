@@ -37,15 +37,12 @@
 #endif
 
 #include <halmd/config.hpp>
+#include <halmd/utility/tuple.hpp>
 
 namespace halmd {
 namespace detail {
 namespace numeric {
 namespace blas {
-
-HALMD_GPU_USING(algorithm::gpu::tuple, boost::tuple);
-HALMD_GPU_USING(algorithm::gpu::tie, boost::tie);
-HALMD_GPU_USING(algorithm::gpu::make_tuple, boost::make_tuple);
 
 /**
  * Returns "high" and "low" single precision vector tuple

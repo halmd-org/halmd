@@ -17,21 +17,18 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <halmd/algorithm/gpu/tuple.cuh>
 #include <halmd/mdsim/gpu/forces/pair_full_kernel.cuh>
 #include <halmd/mdsim/gpu/forces/pair_trunc_kernel.cuh>
 #include <halmd/mdsim/gpu/potentials/lennard_jones_simple_kernel.hpp>
 #include <halmd/numeric/blas/blas.hpp>
 #include <halmd/utility/gpu/variant.cuh>
+#include <halmd/utility/tuple.hpp>
 
 namespace halmd {
 namespace mdsim {
 namespace gpu {
 namespace potentials {
 namespace lennard_jones_simple_kernel {
-
-using algorithm::gpu::tuple;
-using algorithm::gpu::make_tuple;
 
 /** Lennard-Jones potential parameters: rr_cut, en_cut */
 static __constant__ float rr_cut_;

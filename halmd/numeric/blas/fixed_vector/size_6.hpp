@@ -29,21 +29,12 @@
 #include <halmd/config.hpp>
 #include <halmd/numeric/blas/fixed_vector/size_N.hpp>
 #include <halmd/numeric/mp/dsfloat.hpp>
-#ifdef __CUDACC__
-# include <halmd/algorithm/gpu/tuple.cuh>
-#else
-# include <boost/tuple/tuple.hpp>
-#endif
+#include <halmd/utility/tuple.hpp>
 
 namespace halmd {
 namespace detail {
 namespace numeric {
 namespace blas {
-
-#ifdef WITH_CUDA
-HALMD_GPU_USING(algorithm::gpu::tuple, boost::tuple);
-HALMD_GPU_USING(algorithm::gpu::make_tuple, boost::make_tuple);
-#endif
 
 /**
  * Six-dimensional single precision floating-point vector

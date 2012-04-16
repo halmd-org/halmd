@@ -27,15 +27,11 @@
 #ifndef HALMD_RANDOM_GPU_NORMAL_DISTRIBUTION_CUH
 #define HALMD_RANDOM_GPU_NORMAL_DISTRIBUTION_CUH
 
-#include <halmd/algorithm/gpu/tuple.cuh>
+#include <halmd/utility/tuple.hpp>
 
 namespace halmd {
 namespace random {
 namespace gpu {
-
-using algorithm::gpu::tuple;
-using algorithm::gpu::make_tuple;
-using algorithm::gpu::tie;
 
 //
 // The Box-Muller transformation for generating random numbers

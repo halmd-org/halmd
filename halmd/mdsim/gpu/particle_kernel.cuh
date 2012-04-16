@@ -26,13 +26,9 @@
 #include <boost/utility/enable_if.hpp>
 #include <cuda_runtime.h> // if compiled with C++ compiler
 
-#ifdef __CUDACC__
-# include <halmd/algorithm/gpu/tuple.cuh>
-#else
-# include <boost/tuple/tuple.hpp>
-#endif
 #include <halmd/numeric/blas/blas.hpp>
 #include <halmd/numeric/mp/dsfloat.hpp>
+#include <halmd/utility/tuple.hpp>
 
 namespace halmd {
 namespace mdsim {
@@ -42,17 +38,7 @@ namespace particle_kernel {
 /** placeholder particle */
 enum { PLACEHOLDER = -1U };
 
-#ifdef __CUDACC__
-
-using algorithm::gpu::tuple;
-using algorithm::gpu::make_tuple;
-using algorithm::gpu::tie;
-
-#else /* ! __CUDACC__ */
-
-using boost::tuple;
-using boost::make_tuple;
-using boost::tie;
+#ifndef __CUDACC__
 
 //
 // Use union casts instead of pointer casts to avoid dereferencing
