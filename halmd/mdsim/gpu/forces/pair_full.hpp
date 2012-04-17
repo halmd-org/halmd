@@ -149,7 +149,6 @@ pair_full<dimension, float_type, potential_type>::pair_full(
   , g_stress_pot_(particle_->dim.threads())
   , g_hypervirial_(particle_->dim.threads())
 {
-    cuda::copy(static_cast<vector_type>(box_->length()), gpu_wrapper::kernel.box_length);
     cuda::copy(particle_->nbox, gpu_wrapper::kernel.npart);
 }
 
@@ -171,11 +170,13 @@ void pair_full<dimension, float_type, potential_type>::compute()
     if (!aux_flag_) {
         gpu_wrapper::kernel.compute(
             particle_->g_f, particle_->g_r, g_en_pot_, g_stress_pot_, g_hypervirial_
+          , static_cast<vector_type>(box_->length())
         );
     }
     else {
         gpu_wrapper::kernel.compute_aux(
             particle_->g_f, particle_->g_r, g_en_pot_, g_stress_pot_, g_hypervirial_
+          , static_cast<vector_type>(box_->length())
         );
         aux_flag_ = false;
     }

@@ -31,8 +31,8 @@ namespace forces {
 template <int dimension, typename potential_type>
 struct pair_full_wrapper
 {
+    typedef fixed_vector<float, dimension> vector_type;
     typedef typename type_traits<dimension, float>::gpu::coalesced_vector_type coalesced_vector_type;
-    typedef typename type_traits<dimension, float>::gpu::vector_type vector_type;
     typedef typename type_traits<dimension, float>::gpu::stress_tensor_type stress_tensor_type;
 
     /** compute forces only */
@@ -42,6 +42,7 @@ struct pair_full_wrapper
       , float*
       , stress_tensor_type*
       , float*
+      , vector_type
     )> compute;
     /** compute forces and auxiliary stuff: internal energy, potential part of stress tensor, ... */
     cuda::function<void (
@@ -50,9 +51,8 @@ struct pair_full_wrapper
       , float*
       , stress_tensor_type*
       , float*
+      , vector_type
     )> compute_aux;
-    /** cubic box edge length */
-    cuda::symbol<vector_type> box_length;
     /** total number of particles */
     cuda::symbol<unsigned int> npart;
 
