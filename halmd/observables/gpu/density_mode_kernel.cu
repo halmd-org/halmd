@@ -22,12 +22,10 @@
 #include <halmd/numeric/blas/blas.hpp>
 #include <halmd/observables/gpu/density_mode_kernel.hpp>
 #include <halmd/utility/gpu/thread.cuh>
-#include <halmd/utility/gpu/variant.cuh>
 
 #define MAX_BLOCK_SIZE 512
 
 using namespace boost;
-using namespace halmd::utility::gpu; //< variant, map, pair
 
 namespace halmd {
 namespace observables {
@@ -35,7 +33,7 @@ namespace gpu {
 namespace density_mode_kernel {
 
 // pass wavevectors via texture
-texture<variant<map<pair<int_<3>, float4>, pair<int_<2>, float2> > > > q_;
+texture<float4> q_;
 
 // global constants
 __constant__ uint nq_;        // number of wavevectors
@@ -92,7 +90,7 @@ __global__ void compute(coalesced_vector_type const* g_r, uint npart, float* g_s
 
     // outer loop over wavevectors
     for (uint i=0; i < nq_; i++) {
-        vector_type q = tex1Dfetch(get<dimension>(q_), i);
+        vector_type q = tex1Dfetch(reinterpret_cast<texture<coalesced_vector_type>&>(q_), i);
         sin_[TID] = 0;
         cos_[TID] = 0;
         for (uint j = GTID; j < npart; j += GTDIM) {
@@ -166,7 +164,7 @@ __global__ void finalise(
 
 template <int dimension>
 density_mode_wrapper<dimension> const density_mode_wrapper<dimension>::kernel = {
-    get<dimension>(density_mode_kernel::q_)
+    reinterpret_cast<texture<coalesced_vector_type>&>(density_mode_kernel::q_)
   , density_mode_kernel::nq_
   , density_mode_kernel::compute<fixed_vector<float, dimension> >
   , density_mode_kernel::finalise
