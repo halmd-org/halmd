@@ -30,15 +30,11 @@ namespace gpu {
 template <int dimension>
 struct binning_wrapper
 {
-    typedef typename type_traits<dimension, float>::gpu::vector_type vector_type;
-    typedef typename type_traits<dimension, unsigned int>::gpu::vector_type cell_index_type;
+    typedef fixed_vector<float, dimension> vector_type;
+    typedef fixed_vector<unsigned int, dimension> index_type;
 
-    /** number of cells per dimension */
-    cuda::symbol<cell_index_type> ncell;
     /** number of particles in simulation box */
     cuda::symbol<unsigned int> nbox;
-    /** cell edge lengths */
-    cuda::symbol<vector_type> cell_length;
     /** assign particles to cells */
     cuda::function<void (int*, unsigned int const*, unsigned int const*, unsigned int const*, unsigned int*)> assign_cells;
     /** compute global cell offsets in particle list */
@@ -46,7 +42,7 @@ struct binning_wrapper
     /** generate ascending index sequence */
     cuda::function<void (unsigned int*)> gen_index;
     /** compute cell indices for particle positions */
-    cuda::function<void (float4 const*, unsigned int*)> compute_cell;
+    cuda::function<void (float4 const*, unsigned int*, vector_type, index_type)> compute_cell;
 
     static binning_wrapper kernel;
 };

@@ -57,7 +57,7 @@ __global__ void displacement(
         vector_type r0;
         tie(r0, type) = untagged<vector_type>(g_r0[i]);
         r -= r0;
-        box_kernel::reduce_periodic(r, static_cast<vector_type>(box_length));
+        box_kernel::reduce_periodic(r, box_length);
         rr = max(rr, inner_prod(r, r));
     }
 

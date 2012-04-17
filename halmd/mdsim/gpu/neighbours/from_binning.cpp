@@ -92,8 +92,6 @@ from_binning<dimension, float_type>::from_binning(
 
     try {
         cuda::copy(particle_->nbox, get_from_binning_kernel<dimension>().nbox);
-        cuda::copy(binning_->ncell(), get_from_binning_kernel<dimension>().ncell);
-        cuda::copy(static_cast<vector_type>(box_->length()), get_from_binning_kernel<dimension>().box_length);
         cuda::copy(rr_cut_skin_.data(), g_rr_cut_skin_);
         cuda::copy(size_, get_from_binning_kernel<dimension>().neighbour_size);
         cuda::copy(stride_, get_from_binning_kernel<dimension>().neighbour_stride);
@@ -132,6 +130,8 @@ void from_binning<dimension, float_type>::update()
     get_from_binning_kernel<dimension>().update_neighbours(
         g_ret, g_neighbour_, binning_->g_cell()
       , rr_cut_skin_.size1(), rr_cut_skin_.size2()
+      , binning_->ncell()
+      , static_cast<vector_type>(box_->length())
     );
     cuda::thread::synchronize();
     cuda::copy(g_ret, h_ret);

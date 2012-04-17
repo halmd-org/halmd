@@ -21,10 +21,7 @@
 #include <halmd/mdsim/gpu/particle_kernel.hpp>
 #include <halmd/numeric/blas/blas.hpp>
 #include <halmd/utility/gpu/thread.cuh>
-#include <halmd/utility/gpu/variant.cuh>
 #include <halmd/utility/tuple.hpp>
-
-using namespace halmd::utility::gpu;
 
 namespace halmd {
 namespace mdsim {
@@ -40,7 +37,7 @@ static texture<unsigned int> ntypes_;
 /** positions, types */
 static texture<float4> r_;
 /** minimum image vectors */
-static texture<variant<map<pair<int_<3>, float4>, pair<int_<2>, float2> > > > image_;
+static texture<void> image_;
 /** velocities, tags */
 static texture<float4> v_;
 
@@ -103,7 +100,7 @@ __global__ void rearrange(
 #ifdef USE_VERLET_DSFUN
     g_r[GTID + GTDIM] = tex1Dfetch(r_, i + GTDIM);
 #endif
-    g_image[GTID] = tex1Dfetch(get<dimension>(image_), i);
+    g_image[GTID] = tex1Dfetch(reinterpret_cast<texture<aligned_vector_type>&>(image_), i);
 
     // copy velocity, but split off tag and store separately
     {
@@ -128,7 +125,7 @@ particle_wrapper<dimension> const particle_wrapper<dimension>::kernel = {
   , particle_kernel::ntype_
   , particle_kernel::ntypes_
   , particle_kernel::r_
-  , get<dimension>(particle_kernel::image_)
+  , particle_kernel::image_
   , particle_kernel::v_
   , particle_kernel::tag<fixed_vector<float, dimension> >
   , particle_kernel::gen_index

@@ -17,14 +17,15 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <boost/utility/enable_if.hpp>
+
 #include <halmd/numeric/blas/blas.hpp>
 #include <halmd/observables/gpu/density_mode_kernel.hpp>
 #include <halmd/utility/gpu/thread.cuh>
-#include <halmd/utility/gpu/variant.cuh>
 
 #define MAX_BLOCK_SIZE 512
 
-using namespace halmd::utility::gpu; //< variant, map, pair
+using namespace boost;
 
 namespace halmd {
 namespace observables {
@@ -32,28 +33,10 @@ namespace gpu {
 namespace density_mode_kernel {
 
 // pass wavevectors via texture
-texture<variant<map<pair<int_<3>, float4>, pair<int_<2>, float2> > > > q_;
+texture<void> q_;
 
 // global constants
 __constant__ uint nq_;        // number of wavevectors
-
-// copy enable_if_c and disable_if_c from Boost.Utility
-// to avoid dependency on Boost headers
-template <bool B, class T = void>
-struct enable_if_c {
-    typedef T type;
-};
-
-template <class T>
-struct enable_if_c<false, T> {};
-
-template <bool B, class T = void>
-struct disable_if_c {
-    typedef T type;
-};
-
-template <class T>
-struct disable_if_c<true, T> {};
 
 // recursive reduction function,
 // terminate for threads=0
@@ -107,7 +90,7 @@ __global__ void compute(coalesced_vector_type const* g_r, uint npart, float* g_s
 
     // outer loop over wavevectors
     for (uint i=0; i < nq_; i++) {
-        vector_type q = tex1Dfetch(get<dimension>(q_), i);
+        vector_type q = tex1Dfetch(reinterpret_cast<texture<coalesced_vector_type>&>(q_), i);
         sin_[TID] = 0;
         cos_[TID] = 0;
         for (uint j = GTID; j < npart; j += GTDIM) {
@@ -181,7 +164,7 @@ __global__ void finalise(
 
 template <int dimension>
 density_mode_wrapper<dimension> const density_mode_wrapper<dimension>::kernel = {
-    get<dimension>(density_mode_kernel::q_)
+    density_mode_kernel::q_
   , density_mode_kernel::nq_
   , density_mode_kernel::compute<fixed_vector<float, dimension> >
   , density_mode_kernel::finalise

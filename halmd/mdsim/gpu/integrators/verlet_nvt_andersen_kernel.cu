@@ -31,7 +31,6 @@
 #include <halmd/random/gpu/normal_distribution.cuh>
 #include <halmd/random/gpu/random_number_generator.cuh>
 #include <halmd/utility/gpu/thread.cuh>
-#include <halmd/utility/gpu/variant.cuh>
 
 #if __CUDA_ARCH__ < 120
 # define USE_ORIGINAL_ANDERSEN_THERMOSTAT
@@ -39,8 +38,6 @@
 
 using namespace boost::mpl;
 using namespace halmd::mdsim::gpu::particle_kernel;
-using namespace halmd::random::gpu;
-using namespace halmd::utility::gpu;
 
 namespace halmd {
 namespace mdsim {
@@ -50,14 +47,10 @@ namespace verlet_nvt_andersen_kernel {
 
 /** integration time-step */
 static __constant__ float timestep_;
-/** cuboid box edge length */
-static __constant__ variant<map<pair<int_<3>, float3>, pair<int_<2>, float2> > > box_length_;
 /** square-root of heat bath temperature */
 static __constant__ float sqrt_temperature_;
 /** collision probability with heat bath */
 static __constant__ float coll_prob_;
-/** parameters of random number generator */
-static __constant__ random_number_generator rng_;
 
 /**
  * First leapfrog half-step of velocity-Verlet algorithm
@@ -73,6 +66,7 @@ __global__ void _integrate(
   , float4* g_v
   , gpu_vector_type const* g_f
   , float const* g_mass, unsigned int ntype
+  , vector_type_ box_length
 )
 {
     extern __shared__ float s_mass[];
@@ -94,10 +88,9 @@ __global__ void _integrate(
 #endif
     vector_type_ image = g_image[i];
     vector_type_ f = g_f[i];
-    vector_type_ L = get<vector_type::static_size>(box_length_);
     float mass = s_mass[type];
 
-    verlet_kernel::integrate(r, image, v, f, mass, timestep_, L);
+    verlet_kernel::integrate(r, image, v, f, mass, timestep_, box_length);
 
 #ifdef USE_VERLET_DSFUN
     tie(g_r[i], g_r[i + threads]) = tagged(r, type);
@@ -131,6 +124,7 @@ __global__ void _finalize(
   , gpu_vector_type const* g_f
   , float const* g_mass, unsigned int ntype
   , unsigned int npart, unsigned int nplace
+  , rng_type rng
 )
 {
     extern __shared__ float s_mass[];
@@ -142,7 +136,7 @@ __global__ void _finalize(
     enum { dimension = vector_type::static_size };
 
     // read random number generator state from global device memory
-    typename rng_type::state_type state = get<rng_type>(rng_)[GTID];
+    typename rng_type::state_type state = rng[GTID];
 
     // cache second normal variate for odd dimensions
     bool cached = false;
@@ -176,9 +170,9 @@ __global__ void _finalize(
         // to avoid divergent threads within a warp, the stochastic coupling
         // is performed for all particles in the thread as soon as one thread requests it
 #ifdef USE_ORIGINAL_ANDERSEN_THERMOSTAT
-        if (uniform(get<rng_type>(rng_), state) > coll_prob_) {
+        if (uniform(rng, state) > coll_prob_) {
 #else
-        if (__all(uniform(get<rng_type>(rng_), state) > q)) {
+        if (__all(uniform(rng, state) > q)) {
 #endif
             // read force from global device memory
             vector_type_ f = g_f[i];
@@ -193,11 +187,11 @@ __global__ void _finalize(
 
             // assign random velocity according to Maxwell-Boltzmann distribution
             for (uint j = 0; j < dimension - 1; j += 2) {
-                tie(v[j], v[j + 1]) = normal(get<rng_type>(rng_), state, mean, sigma);
+                tie(v[j], v[j + 1]) = normal(rng, state, mean, sigma);
             }
             if (dimension % 2) {
                 if ((cached = !cached)) {
-                    tie(v[dimension - 1], cache) = normal(get<rng_type>(rng_), state, mean, sigma);
+                    tie(v[dimension - 1], cache) = normal(rng, state, mean, sigma);
                 }
                 else {
                     v[dimension - 1] = cache;
@@ -214,7 +208,7 @@ __global__ void _finalize(
     }
 
     // store random number generator state in global device memory
-    get<rng_type>(rng_)[GTID] = state;
+    rng[GTID] = state;
 }
 
 } // namespace verlet_nvt_andersen_kernel
@@ -223,10 +217,8 @@ template <int dimension, typename rng_type>
 verlet_nvt_andersen_wrapper<dimension, rng_type> const
 verlet_nvt_andersen_wrapper<dimension, rng_type>::kernel = {
     verlet_nvt_andersen_kernel::timestep_
-  , get<dimension>(verlet_nvt_andersen_kernel::box_length_)
   , verlet_nvt_andersen_kernel::sqrt_temperature_
   , verlet_nvt_andersen_kernel::coll_prob_
-  , get<rng_type>(verlet_nvt_andersen_kernel::rng_)
 #ifdef USE_VERLET_DSFUN
   , verlet_nvt_andersen_kernel::_integrate<
         fixed_vector<dsfloat, dimension>

@@ -22,9 +22,7 @@
 #include <halmd/numeric/blas/blas.hpp>
 #include <halmd/observables/gpu/phase_space_kernel.hpp>
 #include <halmd/utility/gpu/thread.cuh>
-#include <halmd/utility/gpu/variant.cuh>
 
-using namespace halmd::utility::gpu; //< variant, map, pair
 using namespace halmd::mdsim::gpu; //< namespace box_kernel
 
 namespace halmd {
@@ -35,22 +33,27 @@ namespace phase_space_kernel {
 /** positions, types */
 texture<float4> r_;
 /** minimum image vectors */
-texture<variant<map<pair<int_<3>, float4>, pair<int_<2>, float2> > > > image_;
+texture<void> image_;
 /** velocities, tags */
 texture<float4> v_;
-/** cubic box edgle length */
-__constant__ variant<map<pair<int_<3>, float3>, pair<int_<2>, float2> > > box_length_;
 
 /**
  * sample phase space for all particle of a single species
  */
 template <typename vector_type, typename T>
-__global__ void sample(unsigned int const* g_reverse_tag, T* g_r, T* g_v, unsigned int npart)
+__global__ void sample(
+    unsigned int const* g_reverse_tag
+  , T* g_r
+  , T* g_v
+  , vector_type box_length
+  , unsigned int npart
+)
 {
     using mdsim::gpu::particle_kernel::untagged;
     using mdsim::gpu::particle_kernel::tagged;
 
     enum { dimension = vector_type::static_size };
+    typedef typename phase_space_wrapper<dimension>::coalesced_vector_type coalesced_vector_type;
 
     if (GTID < npart) {
         // permutation index
@@ -61,9 +64,8 @@ __global__ void sample(unsigned int const* g_reverse_tag, T* g_r, T* g_v, unsign
         tie(r, type) = untagged<vector_type>(tex1Dfetch(r_, rtag));
         tie(v, tag) = untagged<vector_type>(tex1Dfetch(v_, rtag));
         // extend particle positions in periodic box
-        vector_type image = tex1Dfetch(get<dimension>(image_), rtag);
-        vector_type L = get<dimension>(box_length_);
-        box_kernel::extend_periodic(r, image, L);
+        vector_type image = tex1Dfetch(reinterpret_cast<texture<coalesced_vector_type>&>(image_), rtag);
+        box_kernel::extend_periodic(r, image, box_length);
         // store particle in global memory
         g_r[GTID] = tagged(r, type);
         g_v[GTID] = tagged(v, type);
@@ -105,9 +107,8 @@ __global__ void reduce_periodic(
 template <int dimension>
 phase_space_wrapper<dimension> const phase_space_wrapper<dimension>::kernel = {
     phase_space_kernel::r_
-  , get<dimension>(phase_space_kernel::image_)
+  , phase_space_kernel::image_
   , phase_space_kernel::v_
-  , get<dimension>(phase_space_kernel::box_length_)
   , phase_space_kernel::sample<fixed_vector<float, dimension> >
   , phase_space_kernel::reduce_periodic<fixed_vector<float, dimension> >
 };

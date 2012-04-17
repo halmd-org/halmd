@@ -61,18 +61,6 @@ verlet_nvt_hoover<dimension, float_type>::verlet_nvt_hoover(
 
     LOG("resonance frequency of heat bath: " << resonance_frequency_);
     this->temperature(temperature);
-
-    // copy parameters to CUDA device
-    try {
-        cuda::copy(
-            static_cast<fixed_vector<float, dimension> >(box_->length())
-          , wrapper_type::kernel.box_length
-        );
-    }
-    catch (cuda::error const&) {
-        LOG_ERROR("failed to initialize Verlet integrator symbols");
-        throw;
-    }
 }
 
 /**
@@ -143,6 +131,7 @@ integrate()
         cuda::configure(particle_->dim.grid, particle_->dim.block);
         wrapper_type::kernel.integrate(
             particle_->g_r, particle_->g_image, particle_->g_v, particle_->force(), scale
+          , static_cast<vector_type>(box_->length())
         );
         cuda::thread::synchronize();
     }

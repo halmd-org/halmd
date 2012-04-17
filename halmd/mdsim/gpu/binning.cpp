@@ -89,8 +89,7 @@ binning<dimension, float_type>::binning(
     // compute derived values
     size_t ncells = accumulate(ncell_.begin(), ncell_.end(), 1, multiplies<size_t>());
     cell_size_ = warp_size * static_cast<size_t>(ceil(nwarps / ncells));
-    vector_type cell_length_ =
-        element_div(static_cast<vector_type>(box_->length()), static_cast<vector_type>(ncell_));
+    cell_length_ = element_div(static_cast<vector_type>(box_->length()), static_cast<vector_type>(ncell_));
     dim_cell_ = cuda::config(
         dim3(
              accumulate(ncell_.begin(), ncell_.end() - 1, 1, multiplies<size_t>())
@@ -112,8 +111,6 @@ binning<dimension, float_type>::binning(
 
     try {
         cuda::copy(particle_->nbox, get_binning_kernel<dimension>().nbox);
-        cuda::copy(static_cast<fixed_vector<uint, dimension> >(ncell_), get_binning_kernel<dimension>().ncell);
-        cuda::copy(cell_length_, get_binning_kernel<dimension>().cell_length);
     }
     catch (cuda::error const&) {
         LOG_ERROR("failed to copy cell parameters to device symbols");
@@ -146,7 +143,12 @@ void binning<dimension, float_type>::update()
 
     // compute cell indices for particle positions
     cuda::configure(particle_->dim.grid, particle_->dim.block);
-    get_binning_kernel<dimension>().compute_cell(particle_->g_r, g_cell_index_);
+    get_binning_kernel<dimension>().compute_cell(
+        particle_->g_r
+      , g_cell_index_
+      , cell_length_
+      , static_cast<fixed_vector<uint, dimension> >(ncell_)
+    );
 
     // generate permutation
     cuda::configure(particle_->dim.grid, particle_->dim.block);

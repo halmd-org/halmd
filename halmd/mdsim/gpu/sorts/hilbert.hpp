@@ -81,6 +81,8 @@ private:
     void permutation(cuda::vector<unsigned int>& g_map, cuda::vector<unsigned int>& g_index);
 
     boost::shared_ptr<particle_type> particle_;
+    /** simulation box */
+    boost::shared_ptr<box_type const> box_;
     /** recursion depth */
     unsigned int depth_;
     /** signal emitted after particle ordering */

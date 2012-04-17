@@ -43,10 +43,11 @@ hilbert<dimension, float_type>::hilbert(
 )
   // dependency injection
   : particle_(particle)
+  , box_(box)
   , logger_(logger)
 {
     // FIXME set Hilbert space-filling curve recursion depth
-    float_type max_length = *max_element(box->length().begin(), box->length().end());
+    float_type max_length = *max_element(box_->length().begin(), box_->length().end());
     depth_ = static_cast<unsigned int>(std::ceil(std::log(max_length) / M_LN2));
     // 32-bit integer for 2D/3D Hilbert code allows a maximum of 16/10 levels
     depth_ = std::min((dimension == 3) ? 10U : 16U, depth_);
@@ -54,7 +55,6 @@ hilbert<dimension, float_type>::hilbert(
     LOG("vertex recursion depth: " << depth_);
 
     try {
-        cuda::copy(static_cast<vector_type>(box->length()), wrapper_type::kernel.box_length);
         cuda::copy(depth_, wrapper_type::kernel.depth);
     }
     catch (cuda::error const&) {
@@ -94,7 +94,11 @@ void hilbert<dimension, float_type>::map(cuda::vector<unsigned int>& g_map)
 {
     scoped_timer_type timer(runtime_.map);
     cuda::configure(particle_->dim.grid, particle_->dim.block);
-    wrapper_type::kernel.map(particle_->g_r, g_map);
+    wrapper_type::kernel.map(
+        particle_->g_r
+      , g_map
+      , static_cast<vector_type>(box_->length())
+    );
 }
 
 /**

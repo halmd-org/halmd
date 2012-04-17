@@ -27,10 +27,8 @@
 #include <halmd/numeric/blas/blas.hpp>
 #include <halmd/numeric/mp/dsfloat.hpp>
 #include <halmd/utility/gpu/thread.cuh>
-#include <halmd/utility/gpu/variant.cuh>
 
 using namespace halmd::mdsim::gpu::particle_kernel;
-using namespace halmd::utility::gpu;
 
 namespace halmd {
 namespace mdsim {
@@ -42,8 +40,6 @@ namespace pair_trunc_kernel {
 static __constant__ unsigned int neighbour_size_;
 /** neighbour list stride */
 static __constant__ unsigned int neighbour_stride_;
-/** cuboid box edge length */
-static __constant__ variant<map<pair<int_<3>, float3>, pair<int_<2>, float2> > > box_length_;
 /** positions, types */
 static texture<float4> r1_;
 /** positions, types */
@@ -67,6 +63,7 @@ __global__ void compute(
   , float* g_hypervirial
   , unsigned int ntype1
   , unsigned int ntype2
+  , vector_type box_length
 )
 {
     enum { dimension = vector_type::static_size };
@@ -108,7 +105,7 @@ __global__ void compute(
         // particle distance vector
         vector_type r = r1 - r2;
         // enforce periodic boundary conditions
-        box_kernel::reduce_periodic(r, static_cast<vector_type>(get<dimension>(box_length_)));
+        box_kernel::reduce_periodic(r, box_length);
         // squared particle distance
         value_type rr = inner_prod(r, r);
         // enforce cutoff length
@@ -147,7 +144,6 @@ pair_trunc_wrapper<dimension, potential_type> const
 pair_trunc_wrapper<dimension, potential_type>::kernel = {
     pair_trunc_kernel::compute<false, fixed_vector<float, dimension>, potential_type>
   , pair_trunc_kernel::compute<true, fixed_vector<float, dimension>, potential_type>
-  , get<dimension>(pair_trunc_kernel::box_length_)
   , pair_trunc_kernel::neighbour_size_
   , pair_trunc_kernel::neighbour_stride_
   , pair_trunc_kernel::r1_

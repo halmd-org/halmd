@@ -55,7 +55,6 @@ BOOST_AUTO_TEST_CASE( compare_variates )
     halmd::timer timer;
     timer.restart();
     rng.seed(seed);
-    cuda::copy(rng.rng(), halmd::random::gpu::get_random_kernel<rand48::rng_type>().rng);
     double elapsed = timer.elapsed();
 
     BOOST_TEST_MESSAGE("seed GPU time: " << std::fixed << std::setprecision(3)
@@ -65,7 +64,7 @@ BOOST_AUTO_TEST_CASE( compare_variates )
     cuda::vector<uint> g_array(count);
     timer.restart();
     cuda::configure(rng.dim.grid, rng.dim.block);
-    halmd::random::gpu::get_random_kernel<rand48::rng_type>().get(g_array, g_array.size());
+    halmd::random::gpu::get_random_kernel<rand48::rng_type>().get(g_array, g_array.size(), rng.rng());
     cuda::thread::synchronize();
     elapsed = timer.elapsed();
 

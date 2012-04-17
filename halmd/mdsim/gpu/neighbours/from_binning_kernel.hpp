@@ -21,7 +21,7 @@
 #define HALMD_MDSIM_GPU_NEIGHBOURS_FROM_BINNING_KERNEL_HPP
 
 #include <cuda_wrapper/cuda_wrapper.hpp>
-#include <halmd/mdsim/type_traits.hpp>
+#include <halmd/numeric/blas/fixed_vector.hpp>
 
 namespace halmd {
 namespace mdsim {
@@ -31,13 +31,11 @@ namespace neighbours {
 template <int dimension>
 struct from_binning_wrapper
 {
-    typedef typename type_traits<dimension, float>::gpu::vector_type vector_type;
-    typedef typename type_traits<dimension, unsigned int>::gpu::vector_type cell_index_type;
+    typedef fixed_vector<float, dimension> vector_type;
+    typedef fixed_vector<unsigned int, dimension> cell_size_type;
 
     /** (cutoff lengths + neighbour list skin)² */
     cuda::texture<float> rr_cut_skin;
-    /** number of cells per dimension */
-    cuda::symbol<cell_index_type> ncell;
     /** neighbour list length */
     cuda::symbol<unsigned int> neighbour_size;
     /** neighbour list stride */
@@ -46,12 +44,12 @@ struct from_binning_wrapper
     cuda::symbol<unsigned int> nbox;
     /** positions, tags */
     cuda::texture<float4> r;
-    /** cubic box edgle length */
-    cuda::symbol<vector_type> box_length;
     /** update neighbour lists */
     cuda::function<void (
         int*, unsigned int*, unsigned int const*
       , unsigned int, unsigned int
+      , cell_size_type
+      , vector_type
     )> update_neighbours;
 
     static from_binning_wrapper kernel;

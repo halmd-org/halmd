@@ -91,7 +91,6 @@ pair_full<dimension, float_type, potential_type>::pair_full(
   , particle_(particle)
   , box_(box)
 {
-    cuda::copy(static_cast<vector_type>(box_->length()), gpu_wrapper::kernel.box_length);
     cuda::copy(particle_->nbox, gpu_wrapper::kernel.npart);
 }
 
@@ -114,6 +113,7 @@ void pair_full<dimension, float_type, potential_type>::compute()
             particle_->force(), particle_->g_r
           , particle_->en_pot(), particle_->stress_pot(), particle_->hypervirial()
           , particle_->ntype, particle_->ntype
+          , static_cast<vector_type>(box_->length())
         );
     }
     else {
@@ -121,6 +121,7 @@ void pair_full<dimension, float_type, potential_type>::compute()
             particle_->force(), particle_->g_r
           , particle_->en_pot(), particle_->stress_pot(), particle_->hypervirial()
           , particle_->ntype, particle_->ntype
+          , static_cast<vector_type>(box_->length())
         );
     }
     cuda::thread::synchronize();

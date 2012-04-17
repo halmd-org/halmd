@@ -25,11 +25,9 @@
 #include <halmd/numeric/blas/blas.hpp>
 #include <halmd/numeric/mp/dsfloat.hpp>
 #include <halmd/utility/gpu/thread.cuh>
-#include <halmd/utility/gpu/variant.cuh>
 
 using namespace boost::mpl;
 using namespace halmd::mdsim::gpu::particle_kernel;
-using namespace halmd::utility::gpu;
 
 namespace halmd {
 namespace mdsim {
@@ -39,8 +37,6 @@ namespace verlet_kernel {
 
 /** integration time-step */
 static __constant__ float timestep_;
-/** cuboid box edge length */
-static __constant__ variant<map<pair<int_<3>, float3>, pair<int_<2>, float2> > > box_length_;
 
 /**
  * First leapfrog half-step of velocity-Verlet algorithm
@@ -57,6 +53,7 @@ __global__ void _integrate(
   , gpu_vector_type const* g_f
   , float const* g_mass
   , unsigned int ntype
+  , vector_type_ box_length
 )
 {
     extern __shared__ float s_mass[];
@@ -78,10 +75,9 @@ __global__ void _integrate(
 #endif
     vector_type_ image = g_image[i];
     vector_type_ f = g_f[i];
-    vector_type_ L = get<vector_type::static_size>(box_length_);
     float mass = s_mass[type];
 
-    integrate(r, image, v, f, mass, timestep_, L);
+    integrate(r, image, v, f, mass, timestep_, box_length);
 
 #ifdef USE_VERLET_DSFUN
     tie(g_r[i], g_r[i + threads]) = tagged(r, type);
@@ -143,7 +139,6 @@ __global__ void _finalize(
 template <int dimension>
 verlet_wrapper<dimension> const verlet_wrapper<dimension>::wrapper = {
     verlet_kernel::timestep_
-  , get<dimension>(verlet_kernel::box_length_)
 #ifdef USE_VERLET_DSFUN
   , verlet_kernel::_integrate<fixed_vector<dsfloat, dimension>, fixed_vector<float, dimension> >
   , verlet_kernel::_finalize<fixed_vector<dsfloat, dimension>, fixed_vector<float, dimension> >

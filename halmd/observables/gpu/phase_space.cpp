@@ -54,14 +54,6 @@ phase_space<gpu::samples::phase_space<dimension, float_type> >::phase_space(
   , clock_(clock)
   , logger_(logger)
 {
-    try {
-        cuda::copy(static_cast<vector_type>(box_->length()), phase_space_wrapper<dimension>::kernel.box_length);
-    }
-    catch (cuda::error const&)
-    {
-        LOG_ERROR("failed to copy box length to GPU");
-        throw;
-    }
 }
 
 template <int dimension, typename float_type>
@@ -117,6 +109,7 @@ phase_space<gpu::samples::phase_space<dimension, float_type> >::acquire()
         particle_group_->g_map()
       , sample_->position()
       , sample_->velocity()
+      , static_cast<vector_type>(box_->length())
       , particle_group_->size()
     );
 

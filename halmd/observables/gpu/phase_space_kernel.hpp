@@ -23,6 +23,7 @@
 #include <cuda_wrapper/cuda_wrapper.hpp>
 
 #include <halmd/mdsim/type_traits.hpp>
+#include <halmd/numeric/blas/fixed_vector.hpp>
 
 namespace halmd {
 namespace observables {
@@ -31,7 +32,7 @@ namespace gpu {
 template <int dimension>
 struct phase_space_wrapper
 {
-    typedef typename mdsim::type_traits<dimension, float>::gpu::vector_type vector_type;
+    typedef fixed_vector<float, dimension> vector_type;
     typedef typename mdsim::type_traits<dimension, float>::gpu::coalesced_vector_type coalesced_vector_type;
 
     /** positions, types */
@@ -40,12 +41,10 @@ struct phase_space_wrapper
     cuda::texture<coalesced_vector_type> image;
     /** velocities, tags */
     cuda::texture<float4> v;
-    /** cubic box edgle length */
-    cuda::symbol<vector_type> box_length;
     /** sample phase space for all particle of a single species */
-    cuda::function<void (unsigned int const*, float4*, float4*, unsigned int)> sample;
+    cuda::function<void (unsigned int const*, float4*, float4*, vector_type, unsigned int)> sample;
     /** shift particle positions to range (-L/2, L/2) */
-    cuda::function<void (unsigned int const*, float4*, coalesced_vector_type*, fixed_vector<float, dimension>, unsigned int)> reduce_periodic;
+    cuda::function<void (unsigned int const*, float4*, coalesced_vector_type*, vector_type, unsigned int)> reduce_periodic;
 
     static phase_space_wrapper const kernel;
 };

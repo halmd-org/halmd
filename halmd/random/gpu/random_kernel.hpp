@@ -29,10 +29,9 @@ namespace gpu {
 template <typename RandomNumberGenerator>
 struct random_wrapper
 {
-    cuda::symbol<RandomNumberGenerator> rng;
-    cuda::function<void (float*, uint)> uniform;
-    cuda::function<void (uint*, uint)> get;
-    cuda::function<void (float*, uint, float, float)> normal;
+    cuda::function<void (float*, unsigned int, RandomNumberGenerator)> uniform;
+    cuda::function<void (unsigned int*, unsigned int, RandomNumberGenerator)> get;
+    cuda::function<void (float*, unsigned int, float, float, RandomNumberGenerator)> normal;
     static random_wrapper const kernel;
 };
 

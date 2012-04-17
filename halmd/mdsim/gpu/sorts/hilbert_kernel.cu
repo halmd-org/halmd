@@ -26,11 +26,9 @@
 #include <halmd/mdsim/sorts/hilbert_kernel.hpp>
 #include <halmd/numeric/blas/blas.hpp>
 #include <halmd/utility/gpu/thread.cuh>
-#include <halmd/utility/gpu/variant.cuh>
 
 using namespace halmd::algorithm::gpu;
 using namespace halmd::mdsim::gpu::particle_kernel;
-using namespace halmd::utility::gpu;
 
 namespace halmd {
 namespace mdsim {
@@ -40,14 +38,16 @@ namespace hilbert_kernel {
 
 /** Hilbert space-filling curve recursion depth */
 __constant__ unsigned int depth_;
-/** cubic box edgle length */
-__constant__ variant<map<pair<int_<3>, float3>, pair<int_<2>, float2> > > box_length_;
 
 /**
  * generate Hilbert space-filling curve
  */
 template <typename vector_type>
-__global__ void map(float4 const* g_r, unsigned int* g_sfc)
+__global__ void map(
+    float4 const* g_r
+  , unsigned int* g_sfc
+  , vector_type box_length
+)
 {
     enum { dimension = vector_type::static_size };
 
@@ -65,8 +65,7 @@ __global__ void map(float4 const* g_r, unsigned int* g_sfc)
     unsigned int type;
     vector_type r;
     tie(r, type) = untagged<vector_type>(g_r[GTID]);
-    vector_type L = get<dimension>(box_length_);
-    r = element_div(r, L);
+    r = element_div(r, box_length);
 
     // compute Hilbert code for particle
     g_sfc[GTID] = mdsim::sorts::hilbert_kernel::map(r, depth_);
@@ -85,7 +84,6 @@ __global__ void gen_index(unsigned int* g_index)
 template <int dimension>
 hilbert_wrapper<dimension> const hilbert_wrapper<dimension>::kernel = {
     hilbert_kernel::depth_
-  , get<dimension>(hilbert_kernel::box_length_)
   , hilbert_kernel::map<fixed_vector<float, dimension> >
   , hilbert_kernel::gen_index
 };

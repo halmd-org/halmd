@@ -22,10 +22,8 @@
 #include <halmd/mdsim/gpu/particle_kernel.cuh>
 #include <halmd/numeric/blas/blas.hpp>
 #include <halmd/utility/gpu/thread.cuh>
-#include <halmd/utility/gpu/variant.cuh>
 
 using namespace halmd::mdsim::gpu::particle_kernel;
-using namespace halmd::utility::gpu;
 
 namespace halmd {
 namespace mdsim {
@@ -41,22 +39,19 @@ __constant__ unsigned int neighbour_size_;
 __constant__ unsigned int neighbour_stride_;
 /** number of particles in simulation box */
 __constant__ unsigned int nbox_;
-/** cuboid box edgle length */
-__constant__ variant<map<pair<int_<3>, float3>, pair<int_<2>, float2> > > box_length_;
-/** number of cells per dimension */
-__constant__ variant<map<pair<int_<3>, uint3>, pair<int_<2>, uint2> > > ncell_;
 /** positions, tags */
 texture<float4> r_;
 
 /**
  * compute neighbour cell
  */
-__device__ unsigned int compute_neighbour_cell(fixed_vector<int, 3> const &offset)
+inline __device__ unsigned int compute_neighbour_cell(
+    fixed_vector<int, 3> const& offset
+  , fixed_vector<int, 3> const& ncell
+)
 {
-    fixed_vector<int, 3> ncell(static_cast<fixed_vector<unsigned int, 3> >(get<3>(ncell_)));
-    fixed_vector<int, 3> cell;
-
     // cell belonging to this execution block
+    fixed_vector<int, 3> cell;
     cell[0] = BID % ncell[0];
     cell[1] = (BID / ncell[0]) % ncell[1];
     cell[2] = BID / ncell[0] / ncell[1];
@@ -66,12 +61,13 @@ __device__ unsigned int compute_neighbour_cell(fixed_vector<int, 3> const &offse
     return (cell[2] * ncell[1] + cell[1]) * ncell[0] + cell[0];
 }
 
-__device__ unsigned int compute_neighbour_cell(fixed_vector<int, 2> const& offset)
+inline __device__ unsigned int compute_neighbour_cell(
+    fixed_vector<int, 2> const& offset
+  , fixed_vector<int, 2> const& ncell
+)
 {
-    fixed_vector<int, 2> ncell(static_cast<fixed_vector<unsigned int, 2> >(get<2>(ncell_)));
-    fixed_vector<int, 2> cell;
-
     // cell belonging to this execution block
+    fixed_vector<int, 2> cell;
     cell[0] = BID % ncell[0];
     cell[1] = BID / ncell[0];
     // neighbour cell of this cell
@@ -83,32 +79,34 @@ __device__ unsigned int compute_neighbour_cell(fixed_vector<int, 2> const& offse
 /**
  * update neighbour list with particles of given cell
  */
-template <bool same_cell, typename T, typename I>
+template <bool same_cell, typename vector_type, typename cell_size_type, typename cell_difference_type>
 __device__ void update_cell_neighbours(
-  I const& offset,
-  unsigned int const* g_cell,
-  T const& r,
-  unsigned int type,
-  unsigned int ntype1,
-  unsigned int ntype2,
-  unsigned int const& n,
-  unsigned int& count,
-  unsigned int* g_neighbour)
+    cell_difference_type const& offset
+  , cell_size_type const& ncell
+  , unsigned int const* g_cell
+  , vector_type const& r
+  , unsigned int type
+  , unsigned int ntype1
+  , unsigned int ntype2
+  , unsigned int const& n
+  , unsigned int& count
+  , unsigned int* g_neighbour
+  , vector_type const& box_length
+)
 {
     extern __shared__ unsigned int s_n[];
     unsigned int* const s_type = &s_n[blockDim.x];
-    T* const s_r = reinterpret_cast<T*>(&s_n[2 * blockDim.x]);
-    enum { dimension = T::static_size };
+    vector_type* const s_r = reinterpret_cast<vector_type*>(&s_n[2 * blockDim.x]);
 
     // shared memory barrier
     __syncthreads();
 
     // compute cell index
-    unsigned int const cell = compute_neighbour_cell(offset);
+    unsigned int const cell = compute_neighbour_cell(offset, static_cast<cell_difference_type>(ncell));
     // load particles in cell
     unsigned int const n_ = g_cell[cell * blockDim.x + threadIdx.x];
     s_n[threadIdx.x] = n_;
-    tie(s_r[threadIdx.x], s_type[threadIdx.x]) = untagged<fixed_vector<float, dimension> >(tex1Dfetch(r_, n_));
+    tie(s_r[threadIdx.x], s_type[threadIdx.x]) = untagged<vector_type >(tex1Dfetch(r_, n_));
     __syncthreads();
 
     if (n == PLACEHOLDER) return;
@@ -122,10 +120,9 @@ __device__ void update_cell_neighbours(
         if (same_cell && i == threadIdx.x) continue;
 
         // particle distance vector
-        T dr = r - s_r[i];
+        vector_type dr = r - s_r[i];
         // enforce periodic boundary conditions
-        T L = get<dimension>(box_length_);
-        box_kernel::reduce_periodic(dr, L);
+        box_kernel::reduce_periodic(dr, box_length);
         // squared particle distance
         float rr = inner_prod(dr, dr);
 
@@ -145,11 +142,13 @@ __device__ void update_cell_neighbours(
  */
 template <unsigned int dimension>
 __global__ void update_neighbours(
-  int* g_ret,
-  unsigned int* g_neighbour,
-  unsigned int const* g_cell,
-  unsigned int ntype1,
-  unsigned int ntype2
+    int* g_ret
+  , unsigned int* g_neighbour
+  , unsigned int const* g_cell
+  , unsigned int ntype1
+  , unsigned int ntype2
+  , fixed_vector<unsigned int, dimension> ncell
+  , fixed_vector<float, dimension> box_length
 )
 {
     // load particle from cell placeholder
@@ -203,8 +202,8 @@ __global__ void update_neighbours(
                         goto self;
                     }
                     // visit 26 neighbour cells, grouped into 13 pairs of mutually opposite cells
-                    update_cell_neighbours<false>(j, g_cell, r, type, ntype1, ntype2, n, count, g_neighbour);
-                    update_cell_neighbours<false>(-j, g_cell, r, type, ntype1, ntype2, n, count, g_neighbour);
+                    update_cell_neighbours<false>(j, ncell, g_cell, r, type, ntype1, ntype2, n, count, g_neighbour, box_length);
+                    update_cell_neighbours<false>(-j, ncell, g_cell, r, type, ntype1, ntype2, n, count, g_neighbour, box_length);
                 }
             }
             else {
@@ -212,14 +211,14 @@ __global__ void update_neighbours(
                     goto self;
                 }
                 // visit 8 neighbour cells, grouped into 4 pairs of mutually opposite cells
-                update_cell_neighbours<false>(j, g_cell, r, type, ntype1, ntype2, n, count, g_neighbour);
-                update_cell_neighbours<false>(-j, g_cell, r, type, ntype1, ntype2, n, count, g_neighbour);
+                update_cell_neighbours<false>(j, ncell, g_cell, r, type, ntype1, ntype2, n, count, g_neighbour, box_length);
+                update_cell_neighbours<false>(-j, ncell, g_cell, r, type, ntype1, ntype2, n, count, g_neighbour, box_length);
             }
         }
     }
 
 self:
-    update_cell_neighbours<true>(j, g_cell, r, type, ntype1, ntype2, n, count, g_neighbour);
+    update_cell_neighbours<true>(j, ncell, g_cell, r, type, ntype1, ntype2, n, count, g_neighbour, box_length);
 
     // return failure if any neighbour list is fully occupied
     if (count == neighbour_size_) {
@@ -232,12 +231,10 @@ self:
 template <int dimension>
 from_binning_wrapper<dimension> from_binning_wrapper<dimension>::kernel = {
     from_binning_kernel::rr_cut_skin_
-  , get<dimension>(from_binning_kernel::ncell_)
   , from_binning_kernel::neighbour_size_
   , from_binning_kernel::neighbour_stride_
   , from_binning_kernel::nbox_
   , from_binning_kernel::r_
-  , get<dimension>(from_binning_kernel::box_length_)
   , from_binning_kernel::update_neighbours<dimension>
 };
 

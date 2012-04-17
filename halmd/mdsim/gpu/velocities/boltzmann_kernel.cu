@@ -26,7 +26,6 @@
 
 using namespace halmd::algorithm::gpu;
 using namespace halmd::mdsim::gpu::particle_kernel;
-using namespace halmd::random::gpu;
 
 //
 // Maxwell-Boltzmann distribution at accurate temperature
@@ -38,9 +37,6 @@ namespace gpu {
 namespace velocities {
 namespace boltzmann_kernel {
 
-// random number generator parameters
-static __constant__ random_number_generator rng;
-
 /**
  * generate Maxwell-Boltzmann distributed velocities and reduce velocity
  */
@@ -50,7 +46,15 @@ template <
   , int threads
   , typename T
 >
-__global__ void gaussian(float4* g_v, uint npart, uint nplace, float temp, T* g_vcm, dsfloat* g_vv)
+__global__ void gaussian(
+    float4* g_v
+  , unsigned int npart
+  , unsigned int nplace
+  , float temp
+  , T* g_vcm
+  , dsfloat* g_vv
+  , rng_type rng
+)
 {
     enum { dimension = vector_type::static_size };
     typedef typename vector_type::value_type float_type;
@@ -63,7 +67,7 @@ __global__ void gaussian(float4* g_v, uint npart, uint nplace, float temp, T* g_
     float_type vv = 0;
 
     // read random number generator state from global device memory
-    typename rng_type::state_type state = get<rng_type>(rng)[GTID];
+    typename rng_type::state_type state = rng[GTID];
 
     // normal distribution parameters
     float const mean = 0.f;
@@ -82,11 +86,11 @@ __global__ void gaussian(float4* g_v, uint npart, uint nplace, float temp, T* g_
         tie(v, tag) = untagged<vector_type>(g_v[i]);
 #endif
         for (uint j = 0; j < dimension - 1; j += 2) {
-            tie(v[j], v[j + 1]) = normal(get<rng_type>(rng), state, mean, sigma);
+            tie(v[j], v[j + 1]) = normal(rng, state, mean, sigma);
         }
         if (dimension % 2) {
            if ((cached = !cached)) {
-               tie(v[dimension - 1], cache) = normal(get<rng_type>(rng), state, mean, sigma);
+               tie(v[dimension - 1], cache) = normal(rng, state, mean, sigma);
            }
            else {
                v[dimension - 1] = cache;
@@ -102,7 +106,7 @@ __global__ void gaussian(float4* g_v, uint npart, uint nplace, float temp, T* g_
     }
 
     // store random number generator state in global device memory
-    get<rng_type>(rng)[GTID] = state;
+    rng[GTID] = state;
 
     // reduced values for this thread
     s_vcm[TID] = vcm;
@@ -192,7 +196,6 @@ boltzmann_wrapper<dimension, float_type, rng_type> const boltzmann_wrapper<dimen
   , boltzmann_kernel::gaussian<fixed_vector<float_type, dimension>, rng_type, 256>
   , boltzmann_kernel::gaussian<fixed_vector<float_type, dimension>, rng_type, 512>
   , boltzmann_kernel::shift_rescale<fixed_vector<float_type, dimension> >
-  , get<rng_type>(boltzmann_kernel::rng)
 };
 
 #ifdef USE_VERLET_DSFUN

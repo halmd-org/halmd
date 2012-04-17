@@ -172,15 +172,9 @@ void lattice<dimension, float_type, RandomNumberGenerator>::fcc(
         LOG_TRACE("insert a vacancy after every " << skip << " sites");
     }
 
-    // set kernel globals in constant memory
-    lattice_wrapper<dimension> const& kernel = get_lattice_kernel<dimension>();
-    cuda::copy(offset, kernel.offset);
-    cuda::copy(n, kernel.ncell);
-
-    cuda::thread::synchronize();
     try {
         cuda::configure(particle_->dim.grid, particle_->dim.block);
-        kernel.fcc(first, npart, a, skip);
+        get_lattice_kernel<dimension>().fcc(first, npart, a, skip, offset, n);
         cuda::thread::synchronize();
     }
     catch (cuda::error const&) {

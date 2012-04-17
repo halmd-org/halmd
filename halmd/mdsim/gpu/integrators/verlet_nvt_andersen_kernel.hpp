@@ -31,29 +31,27 @@ namespace integrators {
 template <int dimension, typename rng_type>
 struct verlet_nvt_andersen_wrapper
 {
+    typedef fixed_vector<float, dimension> vector_type;
     typedef typename type_traits<dimension, float>::gpu::coalesced_vector_type coalesced_vector_type;
-    typedef typename type_traits<dimension, float>::gpu::vector_type vector_type;
 
     /** integration time-step */
     cuda::symbol<float> timestep;
-    /** cubic box edgle length */
-    cuda::symbol<vector_type> box_length;
     /** square-root of heat bath temperature */
     cuda::symbol<float> sqrt_temperature;
     /** collision probability with heat bath */
     cuda::symbol<float> coll_prob;
-    /** parameters of random number generator */
-    cuda::symbol<rng_type> rng;
     /** first leapfrog half-step of velocity-Verlet algorithm */
     cuda::function <void (
         float4*, coalesced_vector_type*, float4*
       , coalesced_vector_type const*, float const*, unsigned int
+      , vector_type
     )> integrate;
     /** second leapfrog half-step of velocity-Verlet algorithm */
     cuda::function <void (
         float4 const*, float4*, coalesced_vector_type const*
       , float const*, unsigned int
       , unsigned int, unsigned int
+      , rng_type
     )> finalize;
 
     static verlet_nvt_andersen_wrapper const kernel;

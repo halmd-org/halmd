@@ -21,24 +21,5 @@
 #define HALMD_RANDOM_GPU_RANDOM_KERNEL_CUH
 
 #include <halmd/random/gpu/rand48_kernel.cuh>
-#include <halmd/utility/gpu/variant.cuh>
-
-namespace halmd {
-namespace random {
-namespace gpu {
-
-using utility::gpu::variant;
-using utility::gpu::set;
-using utility::gpu::get;
-
-typedef variant<
-    set<
-        rand48_rng
-    >
-> random_number_generator;
-
-} // namespace random
-} // namespace gpu
-} // namespace halmd
 
 #endif /* ! HALMD_RANDOM_GPU_RANDOM_KERNEL_CUH */

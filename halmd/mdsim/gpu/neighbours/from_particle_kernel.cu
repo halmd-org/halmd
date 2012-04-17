@@ -22,10 +22,8 @@
 #include <halmd/mdsim/gpu/particle_kernel.cuh>
 #include <halmd/numeric/blas/blas.hpp>
 #include <halmd/utility/gpu/thread.cuh>
-#include <halmd/utility/gpu/variant.cuh>
 
 using namespace halmd::mdsim::gpu::particle_kernel;
-using namespace halmd::utility::gpu;
 
 namespace halmd {
 namespace mdsim {

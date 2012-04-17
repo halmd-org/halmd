@@ -102,7 +102,6 @@ pair_trunc<dimension, float_type, potential_type>::pair_trunc(
   , box_(box)
   , neighbour_(neighbour)
 {
-    cuda::copy(static_cast<vector_type>(box_->length()), gpu_wrapper::kernel.box_length);
 }
 
 /**
@@ -128,6 +127,7 @@ void pair_trunc<dimension, float_type, potential_type>::compute()
             particle1_->force(), neighbour_->g_neighbour()
           , particle1_->en_pot(), particle1_->stress_pot(), particle1_->hypervirial()
           , particle1_->ntype, particle2_->ntype
+          , static_cast<vector_type>(box_->length())
         );
     }
     else {
@@ -135,6 +135,7 @@ void pair_trunc<dimension, float_type, potential_type>::compute()
             particle1_->force(), neighbour_->g_neighbour()
           , particle1_->en_pot(), particle1_->stress_pot(), particle1_->hypervirial()
           , particle1_->ntype, particle2_->ntype
+          , static_cast<vector_type>(box_->length())
         );
     }
     cuda::thread::synchronize();
