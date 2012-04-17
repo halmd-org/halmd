@@ -126,7 +126,7 @@ particle_wrapper<dimension> const particle_wrapper<dimension>::kernel = {
   , particle_kernel::ntype_
   , particle_kernel::ntypes_
   , particle_kernel::r_
-  , reinterpret_cast<texture<aligned_vector_type>&>(particle_kernel::image_)
+  , particle_kernel::image_
   , particle_kernel::v_
   , particle_kernel::tag<fixed_vector<float, dimension> >
   , particle_kernel::gen_index

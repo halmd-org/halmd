@@ -76,7 +76,7 @@ __global__ void sample(
 template <int dimension>
 phase_space_wrapper<dimension> const phase_space_wrapper<dimension>::kernel = {
     phase_space_kernel::r_
-  , reinterpret_cast<texture<coalesced_vector_type>&>(phase_space_kernel::image_)
+  , phase_space_kernel::image_
   , phase_space_kernel::v_
   , phase_space_kernel::sample<fixed_vector<float, dimension> >
 };

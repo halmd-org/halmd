@@ -164,7 +164,7 @@ __global__ void finalise(
 
 template <int dimension>
 density_mode_wrapper<dimension> const density_mode_wrapper<dimension>::kernel = {
-    reinterpret_cast<texture<coalesced_vector_type>&>(density_mode_kernel::q_)
+    density_mode_kernel::q_
   , density_mode_kernel::nq_
   , density_mode_kernel::compute<fixed_vector<float, dimension> >
   , density_mode_kernel::finalise
