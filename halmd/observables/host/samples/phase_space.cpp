@@ -17,7 +17,6 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <boost/bind.hpp>
 #include <boost/lexical_cast.hpp>
 #include <string>
 
@@ -34,48 +33,6 @@ namespace observables {
 namespace host {
 namespace samples {
 
-template <typename phase_space_type>
-static typename phase_space_type::position_array_type const&
-position(function<shared_ptr<phase_space_type const> ()> const& slot)
-{
-    return slot()->position();
-}
-
-template <typename phase_space_type>
-static function<typename phase_space_type::position_array_type const& ()>
-wrap_position(function<shared_ptr<phase_space_type const> ()> const& slot)
-{
-    return bind(&position<phase_space_type>, slot);
-}
-
-template <typename phase_space_type>
-static typename phase_space_type::velocity_array_type const&
-velocity(function<shared_ptr<phase_space_type const> ()> const& slot)
-{
-    return slot()->velocity();
-}
-
-template <typename phase_space_type>
-static function<typename phase_space_type::velocity_array_type const& ()>
-wrap_velocity(function<shared_ptr<phase_space_type const> ()> const& slot)
-{
-    return bind(&velocity<phase_space_type>, slot);
-}
-
-template <typename phase_space_type>
-static typename phase_space_type::species_array_type const&
-species(function<shared_ptr<phase_space_type const> ()> const& slot)
-{
-    return slot()->species();
-}
-
-template <typename phase_space_type>
-static function<typename phase_space_type::species_array_type const& ()>
-wrap_species(function<shared_ptr<phase_space_type const> ()> const& slot)
-{
-    return bind(&species<phase_space_type>, slot);
-}
-
 template <int dimension, typename float_type>
 void phase_space<dimension, float_type>::luaopen(lua_State* L)
 {
@@ -91,15 +48,6 @@ void phase_space<dimension, float_type>::luaopen(lua_State* L)
                 [
                     class_<phase_space>(class_name.c_str())
                         .property("step", &phase_space::step)
-                ]
-            ]
-          , namespace_("samples")
-            [
-                namespace_("phase_space")
-                [
-                    def("position", &wrap_position<phase_space>)
-                  , def("velocity", &wrap_velocity<phase_space>)
-                  , def("species", &wrap_species<phase_space>)
                 ]
             ]
         ]

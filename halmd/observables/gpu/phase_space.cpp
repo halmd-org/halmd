@@ -285,6 +285,48 @@ void phase_space<gpu::samples::phase_space<dimension, float_type> >::luaopen(lua
     ];
 }
 
+template <typename phase_space_type>
+static typename phase_space_type::sample_type::position_array_type const&
+position(shared_ptr<phase_space_type> const& phase_space)
+{
+    return phase_space->acquire()->position();
+}
+
+template <typename phase_space_type>
+static function<typename phase_space_type::sample_type::position_array_type const& ()>
+wrap_position(shared_ptr<phase_space_type> phase_space)
+{
+    return bind(&position<phase_space_type>, phase_space);
+}
+
+template <typename phase_space_type>
+static typename phase_space_type::sample_type::velocity_array_type const&
+velocity(shared_ptr<phase_space_type> const& phase_space)
+{
+    return phase_space->acquire()->velocity();
+}
+
+template <typename phase_space_type>
+static function<typename phase_space_type::sample_type::velocity_array_type const& ()>
+wrap_velocity(shared_ptr<phase_space_type> phase_space)
+{
+    return bind(&velocity<phase_space_type>, phase_space);
+}
+
+template <typename phase_space_type>
+static typename phase_space_type::sample_type::species_array_type const&
+species(shared_ptr<phase_space_type> const& phase_space)
+{
+    return phase_space->acquire()->species();
+}
+
+template <typename phase_space_type>
+static function<typename phase_space_type::sample_type::species_array_type const& ()>
+wrap_species(shared_ptr<phase_space_type> phase_space)
+{
+    return bind(&species<phase_space_type>, phase_space);
+}
+
 template <int dimension, typename float_type>
 void phase_space<host::samples::phase_space<dimension, float_type> >::luaopen(lua_State* L)
 {
@@ -296,6 +338,9 @@ void phase_space<host::samples::phase_space<dimension, float_type> >::luaopen(lu
         [
             class_<phase_space>(class_name.c_str())
                 .property("acquire", &wrap_acquire<phase_space, sample_type>)
+                .property("position", &wrap_position<phase_space>)
+                .property("velocity", &wrap_velocity<phase_space>)
+                .property("species", &wrap_species<phase_space>)
                 .property("dimension", &wrap_dimension<phase_space>)
                 .scope
                 [
