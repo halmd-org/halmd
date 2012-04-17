@@ -64,7 +64,3 @@ add_test(unit/utility/posix_signal
 
 add_subdirectory(lua)
 add_subdirectory(program_options)
-
-if(WITH_CUDA)
-  add_subdirectory(gpu)
-endif(WITH_CUDA)
