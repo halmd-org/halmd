@@ -94,8 +94,7 @@ binning<dimension, float_type>::binning(
     // compute derived values
     size_t ncells = accumulate(ncell_.begin(), ncell_.end(), 1, multiplies<size_t>());
     cell_size_ = warp_size * static_cast<size_t>(ceil(nwarps / ncells));
-    vector_type cell_length_ =
-        element_div(static_cast<vector_type>(box_->length()), static_cast<vector_type>(ncell_));
+    cell_length_ = element_div(static_cast<vector_type>(box_->length()), static_cast<vector_type>(ncell_));
     dim_cell_ = cuda::config(
         dim3(
              accumulate(ncell_.begin(), ncell_.end() - 1, 1, multiplies<size_t>())
