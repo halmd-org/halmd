@@ -33,7 +33,7 @@ namespace gpu {
 namespace density_mode_kernel {
 
 // pass wavevectors via texture
-texture<float4> q_;
+texture<void> q_;
 
 // global constants
 __constant__ uint nq_;        // number of wavevectors

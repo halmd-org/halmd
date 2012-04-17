@@ -37,7 +37,7 @@ static texture<unsigned int> ntypes_;
 /** positions, types */
 static texture<float4> r_;
 /** minimum image vectors */
-static texture<float4> image_;
+static texture<void> image_;
 /** velocities, tags */
 static texture<float4> v_;
 

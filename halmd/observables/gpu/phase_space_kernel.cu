@@ -33,7 +33,7 @@ namespace phase_space_kernel {
 /** positions, types */
 texture<float4> r_;
 /** minimum image vectors */
-texture<float4> image_;
+texture<void> image_;
 /** velocities, tags */
 texture<float4> v_;
 
