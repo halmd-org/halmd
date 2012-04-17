@@ -21,7 +21,7 @@
 #define HALMD_MDSIM_GPU_MAXIMUM_SQUARED_DISPLACEMENT_KERNEL_HPP
 
 #include <cuda_wrapper/cuda_wrapper.hpp>
-#include <halmd/mdsim/type_traits.hpp>
+#include <halmd/numeric/blas/fixed_vector.hpp>
 
 namespace halmd {
 namespace mdsim {
@@ -30,13 +30,11 @@ namespace gpu {
 template <int dimension>
 struct maximum_squared_displacement_wrapper
 {
-    typedef typename type_traits<dimension, float>::gpu::vector_type vector_type;
-    typedef cuda::function<void (float4 const* g_r, float4 const* g_r0, float* g_rr)> displacement_impl_type;
+    typedef fixed_vector<float, dimension> vector_type;
+    typedef cuda::function<void (float4 const* g_r, float4 const* g_r0, float* g_rr, vector_type)> displacement_impl_type;
 
     /** number of particles in simulation box */
     cuda::symbol<unsigned int> nbox;
-    /** cubic box edgle length */
-    cuda::symbol<vector_type> box_length;
     /** maximum squared particle displacement */
     displacement_impl_type displacement_impl[5];
 

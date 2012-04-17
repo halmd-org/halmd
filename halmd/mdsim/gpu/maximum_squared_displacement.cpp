@@ -57,7 +57,6 @@ maximum_squared_displacement<dimension, float_type>::maximum_squared_displacemen
 {
     try {
         cuda::copy(particle_->nbox, get_maximum_squared_displacement_kernel<dimension>().nbox);
-        cuda::copy(static_cast<vector_type>(box_->length()), get_maximum_squared_displacement_kernel<dimension>().box_length);
     }
     catch (cuda::error const&) {
         LOG_ERROR("failed to copy parameters to device symbols");
@@ -108,7 +107,12 @@ float_type maximum_squared_displacement<dimension, float_type>::compute()
     scoped_timer_type timer(runtime_.compute);
     try {
         cuda::configure(dim_reduce_.grid, dim_reduce_.block, dim_reduce_.threads_per_block() * sizeof(float));
-        displacement_impl_(particle_->g_r, g_r0_, g_rr_);
+        displacement_impl_(
+            particle_->g_r
+          , g_r0_
+          , g_rr_
+          , static_cast<vector_type>(box_->length())
+        );
         cuda::copy(g_rr_, h_rr_);
     }
     catch (cuda::error const&) {

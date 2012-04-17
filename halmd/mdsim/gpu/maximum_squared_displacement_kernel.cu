@@ -22,11 +22,9 @@
 #include <halmd/mdsim/gpu/maximum_squared_displacement_kernel.hpp>
 #include <halmd/mdsim/gpu/particle_kernel.cuh>
 #include <halmd/utility/gpu/thread.cuh>
-#include <halmd/utility/gpu/variant.cuh>
 
 using namespace halmd::algorithm::gpu;
 using namespace halmd::mdsim::gpu::particle_kernel;
-using namespace halmd::utility::gpu;
 
 namespace halmd {
 namespace mdsim {
@@ -35,14 +33,17 @@ namespace maximum_squared_displacement_kernel {
 
 /** number of particles in simulation box */
 __constant__ unsigned int nbox_;
-/** cuboid box edgle length */
-__constant__ variant<map<pair<int_<3>, float3>, pair<int_<2>, float2> > > box_length_;
 
 /**
  * maximum squared particle displacement
  */
 template <typename vector_type, int threads>
-__global__ void displacement(float4 const* g_r, float4 const* g_r0, typename vector_type::value_type* g_rr)
+__global__ void displacement(
+    float4 const* g_r
+  , float4 const* g_r0
+  , typename vector_type::value_type* g_rr
+  , vector_type box_length
+)
 {
     typedef typename vector_type::value_type float_type;
     enum { dimension = vector_type::static_size };
@@ -58,7 +59,7 @@ __global__ void displacement(float4 const* g_r, float4 const* g_r0, typename vec
         vector_type r0;
         tie(r0, type) = untagged<vector_type>(g_r0[i]);
         r -= r0;
-        box_kernel::reduce_periodic(r, static_cast<vector_type>(get<dimension>(box_length_)));
+        box_kernel::reduce_periodic(r, box_length);
         rr = max(rr, inner_prod(r, r));
     }
 
@@ -80,7 +81,6 @@ __global__ void displacement(float4 const* g_r, float4 const* g_r0, typename vec
 template <int dimension>
 maximum_squared_displacement_wrapper<dimension> maximum_squared_displacement_wrapper<dimension>::kernel = {
     maximum_squared_displacement_kernel::nbox_
-  , get<dimension>(maximum_squared_displacement_kernel::box_length_)
   , maximum_squared_displacement_kernel::displacement<fixed_vector<float, dimension>, 512>
   , maximum_squared_displacement_kernel::displacement<fixed_vector<float, dimension>, 256>
   , maximum_squared_displacement_kernel::displacement<fixed_vector<float, dimension>, 128>
