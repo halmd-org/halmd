@@ -45,14 +45,6 @@ phase_space<dimension, float_type>::phase_space(
   , sample_(sample)
   , logger_(logger)
 {
-    try {
-        cuda::copy(static_cast<vector_type>(box_->length()), phase_space_wrapper<dimension>::kernel.box_length);
-    }
-    catch (cuda::error const&)
-    {
-        LOG_ERROR("failed to copy box length to GPU");
-        throw;
-    }
 }
 
 /**
@@ -93,7 +85,11 @@ void phase_space<dimension, float_type>::set()
     // shift particle positions to range (-L/2, L/2)
     try {
         cuda::configure(particle_->dim.grid, particle_->dim.block);
-        phase_space_wrapper<dimension>::kernel.reduce_periodic(particle_->g_r, particle_->g_image);
+        phase_space_wrapper<dimension>::kernel.reduce_periodic(
+            particle_->g_r
+          , particle_->g_image
+          , static_cast<vector_type>(box_->length())
+        );
     }
     catch (cuda::error const&)
     {
