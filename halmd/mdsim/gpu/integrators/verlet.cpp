@@ -47,14 +47,6 @@ verlet<dimension, float_type>::verlet(
   , wrapper_(&verlet_wrapper<dimension>::wrapper)
 {
     this->timestep(timestep);
-
-    try {
-        cuda::copy(static_cast<vector_type>(box_->length()), wrapper_->box_length);
-    }
-    catch (cuda::error const&) {
-        LOG_ERROR("failed to initialize Verlet integrator symbols");
-        throw;
-    }
 }
 
 /**
