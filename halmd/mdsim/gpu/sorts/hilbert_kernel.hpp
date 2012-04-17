@@ -21,8 +21,7 @@
 #define HALMD_MDSIM_GPU_SORTS_HILBERT_KERNEL_HPP
 
 #include <cuda_wrapper/cuda_wrapper.hpp>
-
-#include <halmd/mdsim/type_traits.hpp>
+#include <halmd/numeric/blas/fixed_vector.hpp>
 
 namespace halmd {
 namespace mdsim {
@@ -32,14 +31,12 @@ namespace sorts {
 template <int dimension>
 struct hilbert_wrapper
 {
-    typedef typename type_traits<dimension, float>::gpu::vector_type builtin_vector_type;
+    typedef fixed_vector<float, dimension> vector_type;
 
     /** Hilbert space-filling curve recursion depth */
     cuda::symbol<unsigned int> depth;
-    /** cubic box edgle length */
-    cuda::symbol<builtin_vector_type> box_length;
     /** generate Hilbert space-filling curve */
-    cuda::function<void (float4 const*, unsigned int*)> map;
+    cuda::function<void (float4 const*, unsigned int*, vector_type)> map;
     /** generate ascending index sequence */
     cuda::function<void (unsigned int*)> gen_index;
 
