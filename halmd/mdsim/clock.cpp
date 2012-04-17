@@ -1,5 +1,6 @@
 /*
- * Copyright © 2011  Felix Höfling and Peter Colberg
+ * Copyright © 2011-2012 Peter Colberg
+ * Copyright © 2011 Felix Höfling
  *
  * This file is part of HALMD.
  *
@@ -23,19 +24,29 @@
 #include <halmd/mdsim/clock.hpp>
 #include <halmd/utility/lua/lua.hpp>
 
-using namespace boost;
-using namespace std;
-
 namespace halmd {
 namespace mdsim {
 
-clock::clock(time_type timestep)
-  // initialise attributes
-  : step_(0)
-  , time_(0)
-  , timestep_(timestep)
+clock::clock() : step_(0), time_(0), step_origin_(0), time_origin_(0) {}
+
+clock::time_type clock::timestep() const
 {
-    LOG("simulation time-step: " << timestep_);
+    if (!timestep_) {
+        throw std::logic_error("time step has not been set");
+    }
+    return *timestep_;
+}
+
+void clock::set_timestep(time_type timestep)
+{
+    step_origin_ = step_;
+    time_origin_ = time_;
+    timestep_ = timestep;
+
+    // propagate timestep to integrator(s)
+    on_set_timestep_(*timestep_);
+
+    LOG("integration time step: " << *timestep_);
 }
 
 HALMD_LUA_API int luaopen_libhalmd_mdsim_clock(lua_State* L)
@@ -46,7 +57,9 @@ HALMD_LUA_API int luaopen_libhalmd_mdsim_clock(lua_State* L)
         namespace_("mdsim")
         [
             class_<clock, boost::shared_ptr<clock> >("clock")
-                .def(constructor<clock::time_type>())
+                .def(constructor<>())
+                .def("set_timestep", &clock::set_timestep)
+                .def("on_set_timestep", &clock::on_set_timestep)
                 .property("step", &clock::step)
                 .property("time", &clock::time)
                 .property("timestep", &clock::timestep)

@@ -161,6 +161,7 @@ void verlet_nvt_hoover<modules_type>::test()
     // equilibrate the system,
     // this avoids a jump in the conserved energy at the very beginning
     BOOST_TEST_MESSAGE("equilibrate over " << steps / 20 << " steps");
+    clock->set_timestep(integrator->timestep());
     for (uint64_t i = 0; i < steps / 20; ++i) {
         if (i + 1 == steps / 20) {
             particle->aux_enable();                    //< enable computation of potential energy
@@ -305,7 +306,7 @@ verlet_nvt_hoover<modules_type>::verlet_nvt_hoover()
     force = boost::make_shared<force_type>(potential, particle, particle, box, neighbour);
     position = boost::make_shared<position_type>(particle, box, 1);
     velocity = boost::make_shared<velocity_type>(particle, random, start_temp);
-    clock = boost::make_shared<clock_type>(timestep);
+    clock = boost::make_shared<clock_type>();
     thermodynamics = boost::make_shared<thermodynamics_type>(boost::make_shared<particle_group_type>(particle), box, clock);
     max_displacement = boost::make_shared<max_displacement_type>(particle, box);
 

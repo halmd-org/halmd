@@ -158,6 +158,7 @@ void phase_space<modules_type>::test()
     // TODO
 
     // acquire sample from particle, construct temporary sampler module
+    clock->set_timestep(0); // bogus time-step
     clock->advance();
     boost::shared_ptr<output_sample_type const> output_sample = output_phase_space_type(make_shared<particle_group_type>(particle), particle, box, clock).acquire();
     BOOST_CHECK(output_sample->step() == 1);
@@ -211,7 +212,7 @@ phase_space<modules_type>::phase_space()
     particle = boost::make_shared<particle_type>(accumulate(npart.begin(), npart.end(), 0));
     box = boost::make_shared<box_type>(box_length);
     input_sample = boost::make_shared<input_sample_type>(particle->nparticle());
-    clock = boost::make_shared<clock_type>(0); // bogus time-step
+    clock = boost::make_shared<clock_type>();
 
     // set particle tags and types
     particle->set();

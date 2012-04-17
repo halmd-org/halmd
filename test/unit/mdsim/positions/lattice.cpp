@@ -219,7 +219,7 @@ lattice<modules_type>::lattice()
     particle = boost::make_shared<particle_type>(npart);
     box = boost::make_shared<box_type>(box_length);
     position = boost::make_shared<position_type>(particle, box, slab);
-    clock = boost::make_shared<clock_type>(0); // bogus time-step
+    clock = boost::make_shared<clock_type>();
     phase_space = boost::make_shared<phase_space_type>(boost::make_shared<particle_group_type>(particle), particle, box, clock);
 }
 

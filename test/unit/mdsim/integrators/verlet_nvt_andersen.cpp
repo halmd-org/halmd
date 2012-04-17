@@ -114,6 +114,7 @@ void verlet_nvt_andersen<modules_type>::test()
 
     core->setup();
     BOOST_TEST_MESSAGE("run NVT integrator over " << steps << " steps");
+    clock->set_timestep(integrator->timestep());
     for (step_type i = 0; i < steps; ++i) {
         core->mdstep();
         if(i % period == 0) {
@@ -200,7 +201,7 @@ verlet_nvt_andersen<modules_type>::verlet_nvt_andersen()
     position = boost::make_shared<position_type>(particle, box, slab);
     velocity = boost::make_shared<velocity_type>(particle, random, temp);
     integrator = boost::make_shared<integrator_type>(particle, box, random, timestep, temp, coll_rate);
-    clock = boost::make_shared<clock_type>(timestep);
+    clock = boost::make_shared<clock_type>();
     thermodynamics = boost::make_shared<thermodynamics_type>(boost::make_shared<particle_group_type>(particle), box, clock);
 
     // create core and connect module slots to core signals

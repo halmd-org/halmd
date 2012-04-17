@@ -1,5 +1,6 @@
 /*
- * Copyright © 2011  Felix Höfling and Peter Colberg
+ * Copyright © 2011-2012 Peter Colberg
+ * Copyright © 2011 Felix Höfling
  *
  * This file is part of HALMD.
  *
@@ -20,7 +21,11 @@
 #ifndef HALMD_MDSIM_CLOCK_HPP
 #define HALMD_MDSIM_CLOCK_HPP
 
+#include <boost/function.hpp>
+#include <boost/optional.hpp>
 #include <stdint.h> // uint64_t
+
+#include <halmd/utility/signal.hpp>
 
 namespace halmd {
 namespace mdsim {
@@ -40,14 +45,14 @@ public:
     /** difference between two simulation times */
     typedef double time_difference_type;
 
-    clock(time_type timestep);
+    clock();
 
     /** advance clock by one step */
     void advance()
     {
         ++step_;
         // multiply instead of increment to avoid accumulated summation errors
-        time_ = step_ * timestep_;
+        time_ = time_origin_ + (step_ - step_origin_) * timestep();
     }
 
     /** MD step counter */
@@ -62,10 +67,22 @@ public:
         return time_;
     }
 
-    /** MD timestep */
-    time_type timestep() const
+    /**
+     * returns integration time step
+     */
+    time_type timestep() const;
+
+    /**
+     * set integration time step
+     */
+    void set_timestep(time_type timestep);
+
+    /**
+     * connect slot to set time step signal
+     */
+    connection on_set_timestep(boost::function<void (time_type)> const& slot)
     {
-        return timestep_;
+        return on_set_timestep_.connect(slot);
     }
 
 private:
@@ -73,8 +90,14 @@ private:
     step_type step_;
     /** simulation time */
     time_type time_;
-    /** timestep */
-    time_type timestep_;
+    /** step counter at most recent call of set_timestep() */
+    step_type step_origin_;
+    /** simulation time at most recent call of set_timestep() */
+    time_type time_origin_;
+    /** integration time step */
+    boost::optional<time_type> timestep_;
+    /** set time step signal */
+    signal<void (time_type)> on_set_timestep_;
 };
 
 } // namespace mdsim

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2011  Peter Colberg
+ * Copyright © 2011-2012 Peter Colberg
  *
  * This file is part of HALMD.
  *
@@ -17,38 +17,79 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <halmd/config.hpp>
+
+#ifndef HALMD_NO_CXX11
+
 #define BOOST_TEST_MODULE clock
 #include <boost/test/unit_test.hpp>
 
-#include <boost/make_shared.hpp>
 #include <limits>
 
 #include <halmd/mdsim/clock.hpp>
 #include <test/tools/ctest.hpp>
 
-using namespace boost;
-using namespace std;
-
-typedef halmd::mdsim::clock clock_type;
-typedef clock_type::step_type step_type;
-typedef clock_type::time_type time_type;
-
-time_type const eps_time = numeric_limits<time_type>::epsilon();
-
-BOOST_AUTO_TEST_CASE( init )
+/**
+ * Construct instance of simulation clock.
+ */
+struct clock_fixture
 {
-    boost::shared_ptr<clock_type> clock = make_shared<clock_type>(0.001);
-    BOOST_CHECK_EQUAL( clock->step(), 0u );
-    BOOST_CHECK_CLOSE_FRACTION( clock->time(), 0., eps_time );
-    BOOST_CHECK_CLOSE_FRACTION( clock->timestep(), 0.001, eps_time );
-}
+    typedef halmd::mdsim::clock clock_type;
+    typedef clock_type::step_type step_type;
+    typedef clock_type::time_type time_type;
 
-BOOST_AUTO_TEST_CASE( monotonic_timestep )
-{
-    boost::shared_ptr<clock_type> clock = make_shared<clock_type>(0.001);
-    for (int i = 0; i < 1000000; ++i) {
-        clock->advance();
+    /**
+     * Returns relative tolerance for comparison of time values.
+     */
+    static time_type epsilon()
+    {
+       return std::numeric_limits<time_type>::epsilon();
     }
-    BOOST_CHECK_EQUAL( clock->step(), 1000000u );
-    BOOST_CHECK_CLOSE_FRACTION( clock->time(), 1000., eps_time );
+
+    clock_type clock;
+    clock_type const& clock_const;
+
+    clock_fixture() : clock_const(clock) {}
+};
+
+BOOST_FIXTURE_TEST_CASE( set_timestep, clock_fixture )
+{
+    BOOST_CHECK_EQUAL( clock_const.step(), 0u );
+    BOOST_CHECK_CLOSE_FRACTION( clock_const.time(), 0., epsilon() );
+
+    /** counter for number of calls to set_timestep slot */
+    int calls = 0;
+    /** value of timestep passed to set_timestep slot */
+    time_type timestep = 0;
+
+    clock.on_set_timestep([&](time_type value) {
+        ++calls;
+        timestep = value;
+    });
+
+    BOOST_CHECK_EQUAL( calls, 0 );
+    BOOST_CHECK_CLOSE_FRACTION( timestep, 0., epsilon() );
+    BOOST_CHECK_THROW( clock_const.timestep(), std::logic_error );
+
+    BOOST_CHECK_NO_THROW( clock.set_timestep(0.001) );
+    BOOST_CHECK_EQUAL( calls, 1 );
+    BOOST_CHECK_CLOSE_FRACTION( timestep, 0.001, epsilon() );
+    BOOST_CHECK_CLOSE_FRACTION( clock_const.timestep(), 0.001, epsilon() );
+
+    BOOST_CHECK_NO_THROW( clock.set_timestep(0.002) );
+    BOOST_CHECK_EQUAL( calls, 2 );
+    BOOST_CHECK_CLOSE_FRACTION( timestep, 0.002, epsilon() );
+    BOOST_CHECK_CLOSE_FRACTION( clock_const.timestep(), 0.002, epsilon() );
 }
+
+BOOST_FIXTURE_TEST_CASE( monotonic_timestep, clock_fixture )
+{
+    BOOST_CHECK_NO_THROW( clock.set_timestep(0.001) );
+    for (int i = 0; i < 1000000; ++i) {
+        clock.advance();
+    }
+    BOOST_CHECK_EQUAL( clock_const.step(), 1000000u );
+    BOOST_CHECK_CLOSE_FRACTION( clock_const.time(), 1000., epsilon() );
+}
+
+#endif /* ! HALMD_NO_CXX11 */

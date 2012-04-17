@@ -175,7 +175,7 @@ void h5md(vector<unsigned int> const& ntypes)
 
     // write single-precision sample to file
     // use time-step not exactly representable as float-point value
-    boost::shared_ptr<mdsim::clock> clock = make_shared<mdsim::clock>(1/6.);
+    boost::shared_ptr<mdsim::clock> clock = make_shared<mdsim::clock>();
     boost::shared_ptr<writers::h5md::file> writer_file =
         boost::make_shared<writers::h5md::file>(filename);
     boost::shared_ptr<writers::h5md::append> writer =
@@ -199,6 +199,7 @@ void h5md(vector<unsigned int> const& ntypes)
     writer_file->flush();
 
     // simulate an integration step for the very first particle
+    clock->set_timestep(1 / 6.);
     clock->advance();
     double_sample[0]->position()[0] += double_sample[0]->velocity()[0];
     double_sample[0]->velocity()[0] = double_vector_type(sqrt(2));

@@ -147,7 +147,7 @@ boltzmann<modules_type>::boltzmann()
     box = boost::make_shared<box_type>(box_length);
     random = boost::make_shared<random_type>();
     velocity = boost::make_shared<velocity_type>(particle, random, temp);
-    clock = boost::make_shared<clock_type>(0); // bogus time-step
+    clock = boost::make_shared<clock_type>();
     thermodynamics = boost::make_shared<thermodynamics_type>(boost::make_shared<particle_group_type>(particle), box, clock);
 }
 

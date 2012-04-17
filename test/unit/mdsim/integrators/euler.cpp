@@ -124,6 +124,7 @@ void test_euler<modules_type>::linear_motion()
 
     // perform integration
     BOOST_TEST_MESSAGE("running Euler integration for linear motion over " << steps << " steps");
+    clock->set_timestep(integrator->timestep());
     for (size_t i = 0; i < steps; ++i) {
         integrator->integrate();
         clock->advance();
@@ -169,6 +170,7 @@ void test_euler<modules_type>::overdamped_motion()
 
     // perform integration
     BOOST_TEST_MESSAGE("running Euler integration for overdamped motion over " << steps << " steps");
+    clock->set_timestep(integrator->timestep());
     for (size_t i = 0; i < steps; ++i) {
         modules_type::set_velocity(particle); // set particle velocity: v = -r
         integrator->integrate();
@@ -230,7 +232,7 @@ test_euler<modules_type>::test_euler()
     random = boost::make_shared<random_type>();
     position = boost::make_shared<position_type>(particle, box, slab);
     velocity = boost::make_shared<velocity_type>(particle, random, temp);
-    clock = boost::make_shared<clock_type>(1);
+    clock = boost::make_shared<clock_type>();
     phase_space = boost::make_shared<phase_space_type>(boost::make_shared<particle_group_type>(particle), particle, box, clock);
 
     // set positions and velocities

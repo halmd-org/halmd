@@ -174,6 +174,7 @@ void lennard_jones_fluid<modules_type>::test()
     vector<connection> conn;
     conn.push_back(core->on_integrate( bind(&nvt_integrator_type::integrate, nvt_integrator) ));
     conn.push_back(core->on_finalize( bind(&nvt_integrator_type::finalize, nvt_integrator) ));
+    clock->set_timestep(nvt_integrator->timestep());
 
     // relax configuration and thermalise at given temperature, run for t*=30
     BOOST_TEST_MESSAGE("thermalise initial state at T=" << temp);
@@ -189,6 +190,7 @@ void lennard_jones_fluid<modules_type>::test()
     boost::shared_ptr<nve_integrator_type> nve_integrator = boost::make_shared<nve_integrator_type>(particle, box, timestep);
     core->on_integrate( bind(&nve_integrator_type::integrate, nve_integrator) );
     core->on_finalize( bind(&nve_integrator_type::finalize, nve_integrator) );
+    clock->set_timestep(nve_integrator->timestep());
 
     // stochastic thermostat => centre particle velocities around zero
     velocity->shift(-thermodynamics->v_cm());
@@ -227,8 +229,8 @@ void lennard_jones_fluid<modules_type>::test()
 
     // microcanonical simulation run
     BOOST_TEST_MESSAGE("run NVE simulation");
-    steps = static_cast<step_type>(ceil(60 / timestep));
-    period = static_cast<step_type>(round(0.05 / timestep));
+    steps = static_cast<step_type>(ceil(60 / nve_integrator->timestep()));
+    period = static_cast<step_type>(round(0.05 / nve_integrator->timestep()));
     for (step_type i = 0; i < steps; ++i) {
         // turn on evaluation of potential energy, virial, etc.
         if(i % period == 0) {
@@ -328,7 +330,7 @@ lennard_jones_fluid<modules_type>::lennard_jones_fluid()
     position = boost::make_shared<position_type>(particle, box, slab);
     velocity = boost::make_shared<velocity_type>(particle, random, temp);
     force = boost::make_shared<force_type>(potential, particle, particle, box, neighbour);
-    clock = boost::make_shared<clock_type>(timestep);
+    clock = boost::make_shared<clock_type>();
     thermodynamics = boost::make_shared<thermodynamics_type>(boost::make_shared<particle_group_type>(particle), box, clock);
     msd = boost::make_shared<msd_type>(particle, box);
 
