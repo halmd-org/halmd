@@ -1,6 +1,5 @@
-/* cuda_wrapper/texture.hpp
- *
- * Copyright (C) 2007  Peter Colberg
+/*
+ * Copyright © 2007-2012  Peter Colberg
  *
  * This file is part of HALMD.
  *
@@ -34,11 +33,7 @@
 
 namespace cuda {
 
-template <
-    typename T
-  , int dim = 1
-  , enum cudaTextureReadMode mode = cudaReadModeElementType
->
+template <typename T, int dim = 1, cudaTextureReadMode mode = cudaReadModeElementType>
 class texture
 {
 public:
@@ -46,18 +41,21 @@ public:
     /**
      * type-safe constructor for CUDA host code
      */
-    texture(::texture<T, dim, mode> const& tex)
-      : tex(tex)
-        // For variant textures we need to override the channel desciptor.
-      , cd(cudaCreateChannelDesc<T>())
-    {}
+    texture(::texture<T, dim, mode> const& tex) : ref_(tex), desc_(tex.channelDesc) {}
+
+    /**
+     * variant constructor for CUDA host code
+     *
+     * For variant textures we need to override the channel desciptor.
+     */
+    texture(::texture<void, dim, mode> const& tex) : ref_(tex), desc_(cudaCreateChannelDesc<T>()) {}
 #else /* ! __CUDACC__ */
     /**
      * bind CUDA texture to device memory array
      */
-    void bind(cuda::vector<T> const& v) const
+    void bind(cuda::vector<T> const& array) const
     {
-        CUDA_CALL(cudaBindTexture(NULL, &tex, v.data(), &cd));
+        CUDA_CALL(cudaBindTexture(NULL, &ref_, array.data(), &desc_));
     }
 
     /**
@@ -65,18 +63,18 @@ public:
      */
     void unbind() const
     {
-        CUDA_CALL(cudaUnbindTexture(&tex));
+        CUDA_CALL(cudaUnbindTexture(&ref_));
     }
 #endif /* ! __CUDACC__ */
 
 private:
 #ifndef __CUDACC__
     // provide dummy host constructor to avoid GCC 4.4 warning
-    texture() : tex(textureReference()) {}
+    texture() : ref_(textureReference()) {}
 #endif
 
-    textureReference const& tex;
-    cudaChannelFormatDesc const cd;
+    textureReference const& ref_;
+    cudaChannelFormatDesc const desc_;
 };
 
 } // namespace cuda
