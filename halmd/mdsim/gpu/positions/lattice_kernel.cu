@@ -26,11 +26,9 @@
 #include <halmd/numeric/blas/blas.hpp>
 #include <halmd/numeric/mp/dsfloat.hpp>
 #include <halmd/utility/gpu/thread.cuh>
-#include <halmd/utility/gpu/variant.cuh>
 
 using namespace boost;
 using namespace halmd::mdsim::gpu::particle_kernel;
-using namespace halmd::utility::gpu;
 
 namespace halmd {
 namespace mdsim {
@@ -39,11 +37,6 @@ namespace positions {
 namespace lattice_kernel {
 
 using boost::mpl::int_;
-
-/** edge lengths of cuboid slab */
-static __constant__ variant<map<pair<int_<3>, float3>, pair<int_<2>, float2> > > offset_;
-/** number of cells per dimension */
-static __constant__ variant<map<pair<int_<3>, uint3>, pair<int_<2>, uint2> > > ncell_;
 
 /**
  * place particles on a face centered cubic lattice (fcc)
@@ -94,7 +87,14 @@ template <
       , fixed_vector<float, vector_type::static_size> &
     )
 >
-__global__ void lattice(float4* g_r, uint npart, float a, uint skip)
+__global__ void lattice(
+    float4* g_r
+  , unsigned int npart
+  , float a
+  , unsigned int skip
+  , fixed_vector<float, vector_type::static_size> offset
+  , fixed_vector<unsigned int, vector_type::static_size> ncell
+)
 {
     enum { dimension = vector_type::static_size };
     unsigned int const threads = GTDIM;
@@ -115,10 +115,9 @@ __global__ void lattice(float4* g_r, uint npart, float a, uint skip)
 
         // compute primitive lattice vector
         fixed_vector<float, dimension> e;
-        primitive(i + nvacancies, get<dimension>(ncell_), e);
+        primitive(i + nvacancies, ncell, e);
 
         // scale with lattice constant and shift origin of lattice to offset
-        fixed_vector<float, dimension> offset = get<dimension>(offset_);
         r = e * a + offset; //< cast sum to dsfloat-based type
 
 #ifdef USE_VERLET_DSFUN
@@ -133,13 +132,11 @@ __global__ void lattice(float4* g_r, uint npart, float a, uint skip)
 
 template <int dimension>
 lattice_wrapper<dimension> const lattice_wrapper<dimension>::kernel = {
-    get<dimension>(lattice_kernel::offset_)
-  , get<dimension>(lattice_kernel::ncell_)
 #ifdef USE_VERLET_DSFUN
-  , lattice_kernel::lattice<fixed_vector<dsfloat, dimension>, lattice_kernel::fcc>
+    lattice_kernel::lattice<fixed_vector<dsfloat, dimension>, lattice_kernel::fcc>
   , lattice_kernel::lattice<fixed_vector<dsfloat, dimension>, lattice_kernel::sc>
 #else
-  , lattice_kernel::lattice<fixed_vector<float, dimension>, lattice_kernel::fcc>
+    lattice_kernel::lattice<fixed_vector<float, dimension>, lattice_kernel::fcc>
   , lattice_kernel::lattice<fixed_vector<float, dimension>, lattice_kernel::sc>
 #endif
 };

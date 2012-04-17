@@ -21,7 +21,7 @@
 #define HALMD_MDSIM_GPU_POSITIONS_LATTICE_KERNEL_HPP
 
 #include <cuda_wrapper/cuda_wrapper.hpp>
-#include <halmd/mdsim/type_traits.hpp>
+#include <halmd/numeric/blas/fixed_vector.hpp>
 
 namespace halmd {
 namespace mdsim {
@@ -31,16 +31,11 @@ namespace positions {
 template <int dimension>
 struct lattice_wrapper
 {
-    typedef typename type_traits<dimension, float>::gpu::vector_type vector_type;
-    typedef typename type_traits<dimension, unsigned int>::gpu::vector_type index_type;
+    typedef fixed_vector<float, dimension> vector_type;
+    typedef fixed_vector<unsigned int, dimension> index_type;
 
-    /** offset: origin of particle lattice */
-    cuda::symbol<vector_type> offset;
-    /** number of cells per dimension */
-    cuda::symbol<index_type> ncell;
-
-    cuda::function<void (float4*, uint, float, uint)> fcc;
-    cuda::function<void (float4*, uint, float, uint)> sc;
+    cuda::function<void (float4*, unsigned int, float, unsigned int, vector_type, index_type)> fcc;
+    cuda::function<void (float4*, unsigned int, float, unsigned int, vector_type, index_type)> sc;
     static lattice_wrapper const kernel;
 };
 
