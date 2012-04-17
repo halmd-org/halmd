@@ -133,12 +133,6 @@ end
 --    :param slot: data slot returning phase_space sample
 --    :returns: data slot returning position array
 --
---    .. note::
---
---       The sample returned by ``slot`` is cached in the position slot.
---       To free the memory used by the sample of the last call, the
---       position slot needs to be destroyed, i.e. disconnected.
---
 M.position = assert(libhalmd.observables.samples.phase_space.position)
 
 ---
@@ -149,12 +143,6 @@ M.position = assert(libhalmd.observables.samples.phase_space.position)
 --    :param slot: data slot returning phase_space sample
 --    :returns: data slot returning velocity array
 --
---    .. note::
---
---       The sample returned by ``slot`` is cached in the velocity slot.
---       To free the memory used by the sample of the last call, the
---       velocity slot needs to be destroyed, i.e. disconnected.
---
 M.velocity = assert(libhalmd.observables.samples.phase_space.velocity)
 
 ---
@@ -164,12 +152,6 @@ M.velocity = assert(libhalmd.observables.samples.phase_space.velocity)
 --
 --    :param slot: data slot returning phase_space sample
 --    :returns: data slot returning species array
---
---    .. note::
---
---       The sample returned by ``slot`` is cached in the species slot.
---       To free the memory used by the sample of the last call, the
---       species slot needs to be destroyed, i.e. disconnected.
 --
 M.species = assert(libhalmd.observables.samples.phase_space.species)
 

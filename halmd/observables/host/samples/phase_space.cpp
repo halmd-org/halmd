@@ -34,49 +34,46 @@ namespace observables {
 namespace host {
 namespace samples {
 
-template <typename sample_type>
-static typename sample_type::position_array_type const&
-position(function<shared_ptr<sample_type const> ()> const& slot, shared_ptr<sample_type const>& sample)
+template <typename phase_space_type>
+static typename phase_space_type::position_array_type const&
+position(function<shared_ptr<phase_space_type const> ()> const& slot)
 {
-    sample = slot();
-    return sample->position();
+    return slot()->position();
 }
 
-template <typename sample_type>
-static function<typename sample_type::position_array_type const& ()>
-wrap_position(function<shared_ptr<sample_type const> ()> const& slot)
+template <typename phase_space_type>
+static function<typename phase_space_type::position_array_type const& ()>
+wrap_position(function<shared_ptr<phase_space_type const> ()> const& slot)
 {
-    return bind(&position<sample_type>, slot, shared_ptr<sample_type const>());
+    return bind(&position<phase_space_type>, slot);
 }
 
-template <typename sample_type>
-static typename sample_type::velocity_array_type const&
-velocity(function<shared_ptr<sample_type const> ()> const& slot, shared_ptr<sample_type const>& sample)
+template <typename phase_space_type>
+static typename phase_space_type::velocity_array_type const&
+velocity(function<shared_ptr<phase_space_type const> ()> const& slot)
 {
-    sample = slot();
-    return sample->velocity();
+    return slot()->velocity();
 }
 
-template <typename sample_type>
-static function<typename sample_type::velocity_array_type const& ()>
-wrap_velocity(function<shared_ptr<sample_type const> ()> const& slot)
+template <typename phase_space_type>
+static function<typename phase_space_type::velocity_array_type const& ()>
+wrap_velocity(function<shared_ptr<phase_space_type const> ()> const& slot)
 {
-    return bind(&velocity<sample_type>, slot, shared_ptr<sample_type const>());
+    return bind(&velocity<phase_space_type>, slot);
 }
 
-template <typename sample_type>
-static typename sample_type::species_array_type const&
-species(function<shared_ptr<sample_type const> ()> const& slot, shared_ptr<sample_type const>& sample)
+template <typename phase_space_type>
+static typename phase_space_type::species_array_type const&
+species(function<shared_ptr<phase_space_type const> ()> const& slot)
 {
-    sample = slot();
-    return sample->species();
+    return slot()->species();
 }
 
-template <typename sample_type>
-static function<typename sample_type::species_array_type const& ()>
-wrap_species(function<shared_ptr<sample_type const> ()> const& slot)
+template <typename phase_space_type>
+static function<typename phase_space_type::species_array_type const& ()>
+wrap_species(function<shared_ptr<phase_space_type const> ()> const& slot)
 {
-    return bind(&species<sample_type>, slot, shared_ptr<sample_type const>());
+    return bind(&species<phase_space_type>, slot);
 }
 
 template <int dimension, typename float_type>
