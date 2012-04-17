@@ -87,7 +87,9 @@ void verlet<dimension, float_type>::integrate()
         scoped_timer_type timer(runtime_.integrate);
         cuda::configure(particle_->dim.grid, particle_->dim.block);
         wrapper_->integrate(
-            particle_->g_r, particle_->g_image, particle_->g_v, particle_->g_f);
+            particle_->g_r, particle_->g_image, particle_->g_v, particle_->g_f
+          , static_cast<vector_type>(box_->length())
+        );
         cuda::thread::synchronize();
     }
     catch (cuda::error const&) {
