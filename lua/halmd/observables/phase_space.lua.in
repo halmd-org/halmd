@@ -74,6 +74,24 @@ local M = module("halmd.observables.phase_space")
 --    is not specified, the memory location is selected according to the
 --    compute device.
 --
+-- .. method:: position()
+--
+--    Returns data slot that acquires phase space sample and returns position array.
+--
+--    :returns: data slot that returns position array in host memory
+--
+-- .. method:: velocity()
+--
+--    Returns data slot that acquires phase space sample and returns velocity array.
+--
+--    :returns: data slot that returns velocity array in host memory
+--
+-- .. method:: species()
+--
+--    Returns data slot that acquires phase space sample and returns species array.
+--
+--    :returns: data slot that returns species array in host memory
+--
 -- .. method:: connect()
 --
 --    Connect phase_space sampler to profiler. This is the default.
@@ -151,14 +169,25 @@ function M.__new(args)
             return assert(sampler.acquire)
         end
 
+        sampler.position = function(self)
+            return assert(samplers.host.position)
+        end
+
+        sampler.velocity = function(self)
+            return assert(samplers.host.velocity)
+        end
+
+        sampler.species = function(self)
+            return assert(samplers.host.species)
+        end
+
         sampler.writer = function(self, file, args)
             local name = args.group or assert(self.group.label)
             local writer = file:writer({location = {"trajectory", name}, mode = "append"})
 
-            local sampler = assert(samplers.host)
-            writer:on_write(sampler.position, {"position"})
-            writer:on_write(sampler.velocity, {"velocity"})
-            writer:on_write(sampler.species, {"species"})
+            writer:on_write(self.position(), {"position"})
+            writer:on_write(self.velocity(), {"velocity"})
+            writer:on_write(self.species(), {"species"})
 
             local every = args.every
 
