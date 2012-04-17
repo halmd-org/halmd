@@ -28,55 +28,49 @@ namespace random {
 namespace gpu {
 namespace random_kernel {
 
-// random number generator parameters
-static __constant__ random_number_generator rng;
-
-// import into current namespace (because we define get function below)
-using random::gpu::get;
-
 /**
  * fill array with uniform random numbers in [0.0, 1.0)
  */
 template <typename Rng>
-__global__ void uniform(float* v, unsigned int len)
+__global__ void uniform(float* v, unsigned int len, Rng rng)
 {
-    typename Rng::state_type state = get<Rng>(rng)[GTID];
+    typename Rng::state_type state = rng[GTID];
 
     for (unsigned int k = GTID; k < len; k += GTDIM) {
-        v[k] = uniform(get<Rng>(rng), state);
+        v[k] = uniform(rng, state);
     }
 
-    get<Rng>(rng)[GTID] = state;
+    rng[GTID] = state;
 }
 
 /**
  * fill array with random integers in [0, 2^32-1]
  */
 template <typename Rng>
-__global__ void get(unsigned int* v, unsigned int len)
+__global__ void get(unsigned int* v, unsigned int len, Rng rng)
 {
-    typename Rng::state_type state = get<Rng>(rng)[GTID];
+    typename Rng::state_type state = rng[GTID];
 
     for (unsigned int k = GTID; k < len; k += GTDIM) {
-        v[k] = get(get<Rng>(rng), state);
+        v[k] = get(rng, state);
     }
 
-    get<Rng>(rng)[GTID] = state;
+    rng[GTID] = state;
 }
 
 /**
  * fill array with normal distributed random numbers in [0.0, 1.0)
  */
 template <typename Rng>
-__global__ void normal(float* v, unsigned int len, float mean, float sigma)
+__global__ void normal(float* v, unsigned int len, float mean, float sigma, Rng rng)
 {
-    typename Rng::state_type state = get<Rng>(rng)[GTID];
+    typename Rng::state_type state = rng[GTID];
 
     for (unsigned int k = GTID; k < len; k += 2 * GTDIM) {
-        tie(v[k], v[k + GTID]) = normal(get<Rng>(rng), state, mean, sigma);
+        tie(v[k], v[k + GTID]) = normal(rng, state, mean, sigma);
     }
 
-    get<Rng>(rng)[GTID] = state;
+    rng[GTID] = state;
 }
 
 
@@ -87,8 +81,7 @@ __global__ void normal(float* v, unsigned int len, float mean, float sigma)
  */
 template <typename Rng>
 random_wrapper<Rng> const random_wrapper<Rng>::kernel = {
-    random_kernel::get<Rng>(random_kernel::rng)
-  , random_kernel::uniform<Rng>
+    random_kernel::uniform<Rng>
   , random_kernel::get<Rng>
   , random_kernel::normal<Rng>
 };

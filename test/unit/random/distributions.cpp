@@ -66,12 +66,11 @@ void test_rand48_gpu( unsigned long n )
         // seed GPU random number generator
         rand48 rng(BLOCKS, THREADS);
         rng.seed(seed);
-        cuda::copy(rng.rng(), halmd::random::gpu::get_random_kernel<rand48::rng_type>().rng);
 
         // parallel GPU rand48
         cuda::vector<float> g_array(n);
         cuda::configure(rng.dim.grid, rng.dim.block);
-        halmd::random::gpu::get_random_kernel<rand48::rng_type>().uniform(g_array, g_array.size());
+        halmd::random::gpu::get_random_kernel<rand48::rng_type>().uniform(g_array, g_array.size(), rng.rng());
         cuda::thread::synchronize();
 
         cuda::host::vector<float> h_array(n);

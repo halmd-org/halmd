@@ -50,9 +50,8 @@ void compare_radix_sort( size_t count )
     cuda::host::vector<uint> h_array(count);
     rand48 rng((count + threads - 1) / threads, threads);
     rng.seed(seed);
-    cuda::copy(rng.rng(), halmd::random::gpu::get_random_kernel<rand48::rng_type>().rng);
     cuda::configure(rng.dim.grid, rng.dim.block);
-    halmd::random::gpu::get_random_kernel<rand48::rng_type>().get(g_array, g_array.size());
+    halmd::random::gpu::get_random_kernel<rand48::rng_type>().get(g_array, g_array.size(), rng.rng());
     cuda::thread::synchronize();
     cuda::copy(g_array, h_array);
 
