@@ -51,16 +51,6 @@ verlet_nvt_andersen(
     this->timestep(timestep);
     this->temperature(temperature);
     LOG("collision rate with heat bath: " << coll_rate_);
-
-    // copy parameters to CUDA device
-    try {
-        cuda::copy(static_cast<vector_type>(box_->length()), wrapper_type::kernel.box_length);
-        cuda::copy(random_->rng().rng(), wrapper_type::kernel.rng);
-    }
-    catch (cuda::error const&) {
-        LOG_ERROR("failed to initialize Verlet integrator symbols");
-        throw;
-    }
 }
 
 /**
@@ -115,7 +105,9 @@ integrate()
         scoped_timer_type timer(runtime_.integrate);
         cuda::configure(particle_->dim.grid, particle_->dim.block);
         wrapper_type::kernel.integrate(
-            particle_->g_r, particle_->g_image, particle_->g_v, particle_->g_f);
+            particle_->g_r, particle_->g_image, particle_->g_v, particle_->g_f
+          , static_cast<vector_type>(box_->length())
+        );
         cuda::thread::synchronize();
     }
     catch (cuda::error const&) {
@@ -143,6 +135,7 @@ finalize()
         wrapper_type::kernel.finalize(
             particle_->g_v, particle_->g_f
           , particle_->nbox, particle_->dim.threads()
+          , random_->rng().rng()
         );
         cuda::thread::synchronize();
     }
