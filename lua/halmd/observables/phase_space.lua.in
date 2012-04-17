@@ -133,7 +133,8 @@ function M.__new(args)
 
         local samplers = {}
         for memory, class in pairs(phase_space) do
-            samplers[memory] = class(group, box, clock, logger)
+            local particle = assert(group.particle)
+            samplers[memory] = class(group, particle, box, clock, logger)
         end
 
         local sampler = {group = group}
