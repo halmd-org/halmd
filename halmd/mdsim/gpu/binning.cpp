@@ -117,8 +117,6 @@ binning<dimension, float_type>::binning(
 
     try {
         cuda::copy(particle_->nbox, get_binning_kernel<dimension>().nbox);
-        cuda::copy(static_cast<fixed_vector<uint, dimension> >(ncell_), get_binning_kernel<dimension>().ncell);
-        cuda::copy(cell_length_, get_binning_kernel<dimension>().cell_length);
     }
     catch (cuda::error const&) {
         LOG_ERROR("failed to copy cell parameters to device symbols");
@@ -151,7 +149,12 @@ void binning<dimension, float_type>::update()
 
     // compute cell indices for particle positions
     cuda::configure(particle_->dim.grid, particle_->dim.block);
-    get_binning_kernel<dimension>().compute_cell(particle_->g_r, g_cell_index_);
+    get_binning_kernel<dimension>().compute_cell(
+        particle_->g_r
+      , g_cell_index_
+      , cell_length_
+      , static_cast<fixed_vector<uint, dimension> >(ncell_)
+    );
 
     // generate permutation
     cuda::configure(particle_->dim.grid, particle_->dim.block);

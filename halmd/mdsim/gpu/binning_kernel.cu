@@ -32,24 +32,19 @@ namespace binning_kernel {
 
 /** number of particles in simulation box */
 __constant__ unsigned int nbox_;
-/** number of cells per dimension */
-__constant__ variant<map<pair<int_<3>, uint3>, pair<int_<2>, uint2> > > ncell_;
-/** cell edge lengths */
-__constant__ variant<map<pair<int_<3>, float3>, pair<int_<2>, float2> > > cell_length_;
 
 /**
  * compute cell indices for given particle positions
  */
-template <
-    typename cell_size_type // work around "lower_constant: bad kind" bug in CUDA 2.3
-  , typename vector_type
->
-__device__ inline unsigned int compute_cell_index(vector_type r)
+template <typename vector_type, typename cell_size_type>
+inline __device__ unsigned int compute_cell_index(
+    vector_type r
+  , vector_type cell_length
+  , cell_size_type ncell
+)
 {
     enum { dimension = vector_type::static_size };
 
-    vector_type cell_length = get<dimension>(cell_length_);
-    cell_size_type ncell = get<dimension>(ncell_);
     cell_size_type index = element_mod(
         static_cast<cell_size_type>(element_div(r, cell_length) + static_cast<vector_type>(ncell))
       , ncell
@@ -67,12 +62,17 @@ __device__ inline unsigned int compute_cell_index(vector_type r)
  * compute cell indices for particle positions
  */
 template <unsigned int dimension>
-__global__ void compute_cell(float4 const* g_r, unsigned int* g_cell)
+__global__ void compute_cell(
+    float4 const* g_r
+  , unsigned int* g_cell
+  , fixed_vector<float, dimension> cell_length
+  , fixed_vector<unsigned int, dimension> ncell
+)
 {
     fixed_vector<float, dimension> r;
     unsigned int type;
     tie(r, type) = untagged<fixed_vector<float, dimension> >(g_r[GTID]);
-    g_cell[GTID] = compute_cell_index<fixed_vector<unsigned int, dimension> >(r);
+    g_cell[GTID] = compute_cell_index(r, cell_length, ncell);
 }
 
 /**
@@ -135,9 +135,7 @@ __global__ void gen_index(unsigned int* g_index)
 
 template <int dimension>
 binning_wrapper<dimension> binning_wrapper<dimension>::kernel = {
-    get<dimension>(binning_kernel::ncell_)
-  , binning_kernel::nbox_
-  , get<dimension>(binning_kernel::cell_length_)
+    binning_kernel::nbox_
   , binning_kernel::assign_cells
   , binning_kernel::find_cell_offset
   , binning_kernel::gen_index
