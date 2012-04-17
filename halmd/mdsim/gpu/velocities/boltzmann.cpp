@@ -48,9 +48,6 @@ boltzmann<dimension, float_type, RandomNumberGenerator>::boltzmann(
   , g_vcm_(2 * random_->rng().dim.blocks_per_grid())
   , g_vv_(random_->rng().dim.blocks_per_grid())
 {
-    // copy random number generator parameters to GPU
-    cuda::copy(random_->rng().rng(), wrapper_type::kernel.rng);
-
     LOG("Boltzmann velocity distribution temperature: T = " << temp_);
 }
 
@@ -106,6 +103,7 @@ void boltzmann<dimension, float_type, RandomNumberGenerator>::set()
       , temp_
       , g_vcm_
       , g_vv_
+      , random_->rng().rng()
     );
     cuda::thread::synchronize();
 
