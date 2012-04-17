@@ -22,7 +22,6 @@
 #include <halmd/mdsim/gpu/potentials/modified_lennard_jones_kernel.hpp>
 #include <halmd/numeric/blas/blas.hpp>
 #include <halmd/numeric/pow.hpp>  // std::pow is not a device function
-#include <halmd/utility/gpu/variant.cuh>
 #include <halmd/utility/tuple.hpp>
 
 namespace halmd {
