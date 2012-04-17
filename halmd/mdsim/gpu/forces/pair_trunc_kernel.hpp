@@ -31,16 +31,14 @@ namespace forces {
 template <int dimension, typename potential_type>
 struct pair_trunc_wrapper
 {
+    typedef fixed_vector<float, dimension> vector_type;
     typedef typename type_traits<dimension, float>::gpu::coalesced_vector_type coalesced_vector_type;
-    typedef typename type_traits<dimension, float>::gpu::vector_type vector_type;
     typedef typename type_traits<dimension, float>::gpu::stress_tensor_type stress_tensor_type;
 
     /** compute forces only */
-    cuda::function<void (coalesced_vector_type*, unsigned int const*, float*, stress_tensor_type*, float*)> compute;
+    cuda::function<void (coalesced_vector_type*, unsigned int const*, float*, stress_tensor_type*, float*, vector_type)> compute;
     /** compute forces and auxiliary stuff: internal energy, potential part of stress tensor, ... */
-    cuda::function<void (coalesced_vector_type*, unsigned int const*, float*, stress_tensor_type*, float*)> compute_aux;
-    /** cubic box edge length */
-    cuda::symbol<vector_type> box_length;
+    cuda::function<void (coalesced_vector_type*, unsigned int const*, float*, stress_tensor_type*, float*, vector_type)> compute_aux;
     /** number of placeholders per neighbour list */
     cuda::symbol<unsigned int> neighbour_size;
     /** neighbour list stride */
