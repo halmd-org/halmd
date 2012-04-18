@@ -23,7 +23,7 @@ local observables = {
 }
 
 -- grab C++ wrappers
-local box_wrapper = {
+local box = {
     [2] = libhalmd.mdsim.box_2_
   , [3] = libhalmd.mdsim.box_3_
 }
@@ -84,40 +84,20 @@ local M = module.singleton("halmd.mdsim.box")
 --    The slot returns the edge lengths as a matrix.
 --
 function M.__new(args)
-    local particles = assert(args.particles, "missing parameter: particles")
-    local density = args.density or 0.75 -- default value
-    local ratios = args.ratios or {}
-    local length = args.length -- optional
-
-    -- determine coordinates dimension and total number of particles
-    local dimension
-    local nbox = 0
-    for i = 1, #particles do
-        local d = assert(particles[i].dimension)
-        local n = assert(particles[i].nbox)
-        dimension = dimension or d
-        if dimension ~= d then
-            error("mismatching particle dimensions: " .. dimension .. " ≠ " .. d)
-        end
-        nbox = nbox + n
+    local length = args.length
+    if not length then
+        error("missing parameter: length", 3)
     end
-    assert(nbox > 0, "box does not contain any particles")
-
-    local box = assert(box_wrapper[dimension], "invalid box dimension")
-    local self
-    if length then
-        -- complete missing values by repeating the last entry
-        for i = #length + 1, dimension do
-            length[i] = length[#length]
-        end
-        self = box(nbox, length)
-    else
-        -- fill up missing values with 1
-        for i = #ratios + 1, dimension do
-            ratios[i] = 1 -- `neutral' aspect ratio
-        end
-        self = box(nbox, density, ratios)
+    local dimension = args.dimension
+    if not length then
+        error("missing parameter: dimension", 3)
     end
+    local box = box[dimension]
+    if not box then
+        error(("invalid box dimension: %s"):format(dimension), 3)
+    end
+
+    local self = box(length)
 
     self.writer = function(self, file)
         local writer = file:writer({location = {"observables", "box"}, mode = "truncate"})
