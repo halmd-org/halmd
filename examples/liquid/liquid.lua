@@ -148,9 +148,9 @@ local function parse_args()
     parser:add_argument("steps", {type = "integer", default = 10000, help = "number of simulation steps"})
 
     local sampling = parser:add_argument_group("sampling", {help = "sampling intervals"})
-    sampling:add_argument("trajectory", {type = "integer", default = 10, help = "sampling interval for trajectory"})
-    sampling:add_argument("structure", {type = "integer", default = 10, help = "sampling interval for structural properties"})
-    sampling:add_argument("state-vars", {type = "integer", default = 10, help = "sampling interval for state variables"})
+    sampling:add_argument("trajectory", {type = "integer", default = 1000, help = "sampling interval for trajectory"})
+    sampling:add_argument("structure", {type = "integer", default = 1000, help = "sampling interval for structural properties"})
+    sampling:add_argument("state-vars", {type = "integer", default = 1000, help = "sampling interval for state variables"})
 
     return parser:parse_args()
 end
