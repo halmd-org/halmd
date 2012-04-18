@@ -27,11 +27,6 @@ local box_wrapper = {
     [2] = libhalmd.mdsim.box_2_
   , [3] = libhalmd.mdsim.box_3_
 }
-local h5 = libhalmd.h5
-local po = libhalmd.po
--- grab standard library
-local assert = assert
-local error = error
 
 ---
 -- Box
@@ -136,48 +131,6 @@ function M.__new(args)
     end
 
     return self
-end
-
---
--- assemble module options
---
--- @param desc po.options_description
---
-function M.options(desc)
-    desc:add("dimension", po.uint():notifier(function(value)
-
-        if not box_wrapper[value] then
-            error(("invalid dimension '%d'"):format(value), 0)
-        end
-
-    end), "dimension of positional coordinates")
-    desc:add("length", po.float_array():conflicts("density"), "edge lengths of simulation box")
-    desc:add("density", po.float(), "particle density")
-    desc:add("ratios", po.float_array():conflicts("length"), "relative aspect ratios of simulation box")
-end
-
---
--- read module parameters from HDF5 group
---
-function M.read_parameters(args, group)
-    args.dimension = group:read_attribute("dimension", h5.uint())
-    -- upon continuation from a phase space sample, the box is set up from
-    -- the absolute edge lengths and the particle number (which is read by
-    -- the particle module). The presence of 'length' supersedes the options
-    -- 'density' and 'ratios' (see function 'new').
-    args.length = group:read_attribute("length", h5.float_array())
-end
-
---
--- write module parameters to HDF5 group
---
--- @param box module instance
--- @param group HDF5 group
---
-function M.write_parameters(box, group)
-    group:write_attribute("dimension", h5.uint(), box.dimension)
-    group:write_attribute("length", h5.float_array(), box.length)
-    group:write_attribute("density", h5.float(), box.density)
 end
 
 return M
