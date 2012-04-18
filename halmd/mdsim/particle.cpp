@@ -96,7 +96,7 @@ void particle<dimension>::luaopen(lua_State* L)
     [
         namespace_("mdsim")
         [
-            class_<particle, shared_ptr<particle> >(class_name.c_str())
+            class_<particle>(class_name.c_str())
                 .property("set", &wrap_set<particle>)
                 .def_readonly("nbox", &particle::nbox)
                 .def_readonly("ntype", &particle::ntype)

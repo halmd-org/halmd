@@ -109,6 +109,22 @@ public:
     void prepare();
 
     /**
+     * Returns number of particles.
+     */
+    std::size_t nparticle() const
+    {
+        return nbox;
+    }
+
+    /**
+     * Returns number of species.
+     */
+    unsigned int nspecies() const
+    {
+        return ntype;
+    }
+
+    /**
      * Returns non-const reference to force per particle.
      */
     force_array_type const& force() const

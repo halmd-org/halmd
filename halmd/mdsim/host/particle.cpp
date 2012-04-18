@@ -175,6 +175,8 @@ void particle<dimension, float_type>::luaopen(lua_State* L)
                         vector<unsigned int> const&
                       , vector<double> const&
                     >())
+                    .property("nparticle", &particle::nparticle)
+                    .property("nspecies", &particle::nspecies)
                     .property("dimension", &wrap_dimension<dimension, float_type>)
                     .property("aux_enable", &wrap_aux_enable<particle>)
                     .property("prepare", &wrap_prepare<particle>)
