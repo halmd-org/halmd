@@ -27,6 +27,7 @@ local box = {
     [2] = libhalmd.mdsim.box_2_
   , [3] = libhalmd.mdsim.box_3_
 }
+local h5 = assert(libhalmd.h5)
 
 ---
 -- Box
