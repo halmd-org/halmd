@@ -103,6 +103,7 @@ void box<dimension>::luaopen(lua_State* L)
                 .def(constructor<vector_type const&>())
                 .property("dimension", &wrap_dimension<dimension>)
                 .property("length", &box::length)
+                .property("volume", &box::volume)
                 .property("origin", &wrap_origin<box>)
                 .property("edges", &wrap_edges<box>)
         ]
