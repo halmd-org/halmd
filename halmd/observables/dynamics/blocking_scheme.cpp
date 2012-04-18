@@ -46,6 +46,7 @@ blocking_scheme::blocking_scheme(
   , logger_(logger)
   , block_size_(block_size)
   , separation_(separation)
+  , timestep_(clock_->timestep())
 {
     LOG("size of coarse-graining blocks: " << block_size_);
     if (block_size_ < 2) {
@@ -127,6 +128,11 @@ void blocking_scheme::sample()
     on_prepend_sample_();
 
     LOG_TRACE("append sample(s)");
+
+    // check time step is same as upon construction
+    if (clock_->timestep() != timestep_) {
+        throw logic_error("blocking scheme does not allow variable time step");
+    }
 
     // check integrity of input data
     step_type step = clock_->step();
