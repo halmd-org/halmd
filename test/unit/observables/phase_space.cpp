@@ -114,7 +114,6 @@ struct phase_space
     enum { dimension = vector_type::static_size };
 
     vector<unsigned int> npart;
-    typename box_type::vector_type box_length;
 
     shared_ptr<box_type> box;
     shared_ptr<clock_type> clock;
@@ -204,11 +203,11 @@ phase_space<modules_type>::phase_space()
     // floating-point number and which is small enough to have some overflow
     // from the periodic box. In addition, some of the coordinates should sit
     // precisely at the edge.
-    box_length = fixed_vector<double, dimension>(40./3);
+    typename box_type::vector_type box_length = 40./3;
 
     // create modules
     particle = make_shared<particle_type>(npart, mass);
-    box = make_shared<box_type>(particle->nbox, box_length);
+    box = make_shared<box_type>(box_length);
     input_sample = make_shared<input_sample_type>(particle->nbox);
     clock = make_shared<clock_type>(0); // bogus time-step
 

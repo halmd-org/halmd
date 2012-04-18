@@ -277,6 +277,10 @@ verlet_nvt_hoover<modules_type>::verlet_nvt_hoover()
     timestep = 0.002;
     resonance_frequency = 5.;
     box_ratios = (dimension == 3) ? list_of(1.)(2.)(1.01) : list_of(1.)(2.);
+    double det = accumulate(box_ratios.begin(), box_ratios.end(), 1., multiplies<double>());
+    double volume = npart / density;
+    double edge_length = pow(volume / det, 1. / dimension);
+    typename box_type::vector_type box_length = edge_length * box_ratios;
     skin = 0.5;
 
     vector<unsigned int> npart_vector = list_of(npart);
@@ -292,7 +296,7 @@ verlet_nvt_hoover<modules_type>::verlet_nvt_hoover()
 
     // create modules
     particle = make_shared<particle_type>(npart_vector, mass);
-    box = make_shared<box_type>(npart, density, box_ratios);
+    box = make_shared<box_type>(box_length);
     random = make_shared<random_type>();
     integrator = make_shared<integrator_type>(particle, box, timestep, temp, resonance_frequency);
     potential = make_shared<potential_type>(particle->ntype, particle->ntype, cutoff, epsilon, sigma);

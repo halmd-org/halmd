@@ -25,6 +25,7 @@
 #include <boost/make_shared.hpp>
 #include <functional>
 #include <limits>
+#include <numeric>
 
 #include <halmd/mdsim/box.hpp>                          // dependency of euler module
 #include <halmd/mdsim/clock.hpp>                        // dependency of phase_space module
@@ -215,6 +216,10 @@ test_euler<modules_type>::test_euler()
     timestep = 0.001; // small, but typical timestep
     npart = gpu ? 4000 : 108; // optimize filling of fcc lattice, use only few particles on the host
     box_ratios = (dimension == 3) ? list_of<double>(1)(2)(1.01) : list_of<double>(1)(2);
+    double det = accumulate(box_ratios.begin(), box_ratios.end(), 1., multiplies<double>());
+    double volume = npart / density;
+    double edge_length = pow(volume / det, 1. / dimension);
+    typename box_type::vector_type box_length = edge_length * box_ratios;
     slab = 1;
 
     vector<unsigned int> npart_vector = list_of(npart);
@@ -222,7 +227,7 @@ test_euler<modules_type>::test_euler()
 
     // create modules
     particle = make_shared<particle_type>(npart_vector, mass);
-    box = make_shared<box_type>(npart, density, box_ratios);
+    box = make_shared<box_type>(box_length);
     integrator = make_shared<integrator_type>(particle, box, timestep);
     random = make_shared<random_type>();
     position = make_shared<position_type>(particle, box, random, slab);

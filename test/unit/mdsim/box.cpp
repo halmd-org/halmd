@@ -50,25 +50,14 @@ void construction()
 
     double const epsilon = numeric_limits<double>::epsilon();
 
-    unsigned int npart = 1000;
     vector_type ratios = (dimension == 2) ? list_of(1.)(1.) : list_of(.001)(1.)(1000.);
     vector_type length = element_prod(vector_type(10), ratios);
     double volume = (dimension == 2) ? 100 : 1000;
-    double density = static_cast<double>(npart) / volume;
 
-    // constructor 1
-    BOOST_TEST_MESSAGE("Construction from particle number and edge lengths");
-    shared_ptr<box_type> box = make_shared<box_type>(npart, length);
+    BOOST_TEST_MESSAGE("Construction from edge lengths");
+    shared_ptr<box_type> box = make_shared<box_type>(length);
     BOOST_CHECK_EQUAL(box->length(), length);
     BOOST_CHECK_CLOSE_FRACTION(box->volume(), volume, epsilon);
-    BOOST_CHECK_CLOSE_FRACTION(box->density(), density, epsilon);
-
-    // constructor 2
-    BOOST_TEST_MESSAGE("Construction from particle number, density, and edge ratios");
-    box = make_shared<box_type>(npart, density, ratios);
-    BOOST_CHECK_SMALL(norm_2(box->length() - length) / norm_2(length), epsilon);
-    BOOST_CHECK_CLOSE_FRACTION(box->volume(), volume, dimension * epsilon);
-    BOOST_CHECK_EQUAL(box->density(), density);
 }
 
 template <int dimension>
@@ -79,9 +68,8 @@ void periodic_host()
 
     double const epsilon = numeric_limits<double>::epsilon();
 
-    unsigned int npart = 1;
     vector_type length = (dimension == 2) ? list_of(1./3)(1./5) : list_of(.001)(1.)(1000.);
-    box_type box(npart, length);
+    box_type box(length);
 
     // set up list of positions that are (half-) multiples of the
     // edge lengths or completely unrelated

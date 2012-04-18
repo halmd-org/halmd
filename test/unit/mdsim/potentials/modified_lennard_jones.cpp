@@ -286,7 +286,7 @@ modified_lennard_jones<float_type>::modified_lennard_jones()
 
     // create modules
     particle = make_shared<particle_type>(npart_list, mass);
-    box = make_shared<box_type>(particle->nbox, fixed_vector<double, dimension>(box_length));
+    box = make_shared<box_type>(typename box_type::vector_type(box_length));
     potential = make_shared<potential_type>(
         particle->ntype, particle->ntype, cutoff_array
       , epsilon_array, sigma_array, index_m_array, index_n_array

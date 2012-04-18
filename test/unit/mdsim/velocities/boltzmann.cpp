@@ -138,12 +138,13 @@ boltzmann<modules_type>::boltzmann()
     npart = gpu ? 10000 : 3000;
     temp = 2.0;
     density = 0.3;
+    typename box_type::vector_type box_length = pow(npart / density, 1. / dimension);
 
     vector<unsigned int> npart_vector = list_of(npart);
     vector<double> mass = list_of(1);
 
     particle = make_shared<particle_type>(npart_vector, mass);
-    box = make_shared<box_type>(npart, density);
+    box = make_shared<box_type>(box_length);
     random = make_shared<random_type>();
     velocity = make_shared<velocity_type>(particle, random, temp);
     clock = make_shared<clock_type>(0); // bogus time-step

@@ -36,24 +36,11 @@ public:
 
     typedef typename type_traits<dimension, double>::vector_type vector_type;
 
-    box(
-        size_t nbox
-      , vector_type const& length
-    );
-    box(
-        size_t nbox
-      , double density
-      , vector_type const& ratios
-    );
+    box(vector_type const& length);
 
     vector_type const& length() const
     {
         return length_;
-    }
-
-    double density() const
-    {
-        return density_;
     }
 
     template <typename T>
@@ -72,8 +59,6 @@ public:
 private:
     /** edge lengths of cuboid */
     vector_type length_;
-    /** number density */
-    double density_;
     /** store half value for efficient use in reduce_periodic() */
     vector_type length_half_;
 };

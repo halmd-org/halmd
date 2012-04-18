@@ -300,6 +300,10 @@ lennard_jones_fluid<modules_type>::lennard_jones_fluid()
     timestep = 0.001;
     npart = gpu ? 4000 : 1500;
     box_ratios = (dimension == 3) ? list_of(1)(2)(1.01) : list_of(1)(2);
+    double det = accumulate(box_ratios.begin(), box_ratios.end(), 1., multiplies<double>());
+    double volume = npart / density;
+    double edge_length = pow(volume / det, 1. / dimension);
+    typename box_type::vector_type box_length = edge_length * box_ratios;
     slab = 1;
 
     vector<unsigned int> npart_vector = list_of(npart);
@@ -314,7 +318,7 @@ lennard_jones_fluid<modules_type>::lennard_jones_fluid()
     // create modules
     random = make_shared<random_type>();
     particle = make_shared<particle_type>(npart_vector, mass);
-    box = make_shared<box_type>(npart, density, box_ratios);
+    box = make_shared<box_type>(box_length);
     potential = make_shared<potential_type>(particle->ntype, particle->ntype, rc_mat, epsilon_mat, sigma_mat);
     binning = make_shared<binning_type>(particle, box, potential->r_cut(), skin);
     neighbour = make_shared<neighbour_type>(particle, particle, binning, binning, box, potential->r_cut(), skin);

@@ -197,19 +197,20 @@ lattice<modules_type>::lattice()
     npart = nunit_cell * accumulate(ncell.begin(), ncell.end(), 1, multiplies<unsigned int>());
     density = 0.3;
     lattice_constant = pow(nunit_cell / density, 1.f / dimension);
+    typename box_type::vector_type box_ratios(ncell);
+    typename box_type::vector_type box_length = lattice_constant * box_ratios;
 
     slab = (dimension == 3) ? list_of(1.)(.5)(1.) : list_of(1.)(1.);
     double slab_vol_frac = accumulate(slab.begin(), slab.end(), 1., multiplies<double>());
-    npart *= slab_vol_frac;
     // adjust density to make sure that the slab can accomodate an fcc lattice with the
     // same lattice spacing (a mismatch is a likely reason for failure of the test)
-    density *= slab_vol_frac;
+    npart *= slab_vol_frac;
 
     vector<unsigned int> npart_vector = list_of(npart);
     vector<double> mass = list_of(1);
 
     particle = make_shared<particle_type>(npart_vector, mass);
-    box = make_shared<box_type>(npart, density, fixed_vector<double, dimension>(ncell));
+    box = make_shared<box_type>(box_length);
     random = make_shared<random_type>();
     position = make_shared<position_type>(particle, box, random, slab);
     clock = make_shared<clock_type>(0); // bogus time-step
