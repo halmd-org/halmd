@@ -74,30 +74,30 @@ local function liquid(args)
     end
 
     -- H5MD file writer
-    local writer = writers.h5md({path = ("%s.obs"):format(args.output)})
+    -- FIXME local writer = writers.h5md({path = ("%s.obs"):format(args.output)})
     -- Sample macroscopic state variables.
-    local msv = observables.thermodynamics{particle = particle_group, force = {force}, every = args.sampling.state_vars}
-    for i = 1, #msv do
-        msv[i]:writer(writer, {every = args.sampling.state_vars})
-    end
+    -- FIXME local msv = observables.thermodynamics{particle = particle_group, force = {force}, every = args.sampling.state_vars}
+    -- FIXME for i = 1, #msv do
+    -- FIXME     msv[i]:writer(writer, {every = args.sampling.state_vars})
+    -- FIXME end
 
     -- Sample static structure factors, construct density modes before.
-    local density_mode = observables.density_mode{
-        phase_space = phase_space, max_wavevector = 15
-    }
-    observables.ssf{density_mode = density_mode, every = args.sampling.structure}
+    -- FIXME local density_mode = observables.density_mode{
+    -- FIXME     phase_space = phase_space, max_wavevector = 15
+    -- FIXME }
+    -- FIXME observables.ssf{density_mode = density_mode, every = args.sampling.structure}
 
     -- compute mean-square displacement
-    observables.dynamics.correlation{sampler = phase_space, correlation = "mean_square_displacement"}
+    -- FIXME observables.dynamics.correlation{sampler = phase_space, correlation = "mean_square_displacement"}
     -- compute mean-quartic displacement
-    observables.dynamics.correlation{sampler = phase_space, correlation = "mean_quartic_displacement"}
+    -- FIXME observables.dynamics.correlation{sampler = phase_space, correlation = "mean_quartic_displacement"}
     -- compute velocity autocorrelation function
-    observables.dynamics.correlation{sampler = phase_space, correlation = "velocity_autocorrelation"}
+    -- FIXME observables.dynamics.correlation{sampler = phase_space, correlation = "velocity_autocorrelation"}
     -- compute intermediate scattering function from density modes different than those used for ssf computation
-    density_mode = observables.density_mode{
-        phase_space = phase_space, max_wavevector = 12, decimation = 2
-    }
---     observables.dynamics.correlation{sampler = density_mode, correlation = "intermediate_scattering_function"}
+    -- FIXME density_mode = observables.density_mode{
+    -- FIXME     phase_space = phase_space, max_wavevector = 12, decimation = 2
+    -- FIXME }
+    -- FIXME observables.dynamics.correlation{sampler = density_mode, correlation = "intermediate_scattering_function"}
 
     -- yield sampler.setup slot from Lua to C++ to setup simulation box
     sampler:setup()()
