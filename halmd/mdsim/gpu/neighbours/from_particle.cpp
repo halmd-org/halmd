@@ -76,8 +76,10 @@ from_particle<dimension, float_type>::from_particle(
     float_type unit_sphere[5] = {0, 2, M_PI, 4 * M_PI / 3, M_PI * M_PI / 2 };
     assert(dimension <= 4);
     float_type neighbour_sphere = unit_sphere[dimension] * pow(r_cut_max + r_skin_, dimension);
+    // partial number density
+    float_type density = particle1_->nparticle() / box_->volume();
     // number of placeholders per neighbour list
-    size_ = static_cast<size_t>(ceil(neighbour_sphere * (box_->density() / nu_cell_)));
+    size_ = static_cast<size_t>(ceil(neighbour_sphere * (density / nu_cell_)));
     // at least cell_size (or warp_size?) placeholders
     // FIXME what is a sensible lower bound?
     // size_ = max(size_, binning_->cell_size());

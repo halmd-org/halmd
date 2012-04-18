@@ -77,8 +77,10 @@ from_binning<dimension, float_type>::from_binning(
     float_type unit_sphere[5] = {0, 2, M_PI, 4 * M_PI / 3, M_PI * M_PI / 2 };
     assert(dimension <= 4);
     float_type neighbour_sphere = unit_sphere[dimension] * pow(r_cut_max + r_skin_, dimension);
+    // partial number density
+    float_type density = particle_->nparticle() / box_->volume();
     // number of placeholders per neighbour list
-    size_ = static_cast<size_t>(ceil(neighbour_sphere * (box_->density() / binning_->effective_cell_occupancy())));
+    size_ = static_cast<size_t>(ceil(neighbour_sphere * (density / binning_->effective_cell_occupancy())));
     // at least cell_size (or warp_size?) placeholders
     // FIXME what is a sensible lower bound?
     size_ = max(size_, binning_->cell_size());
