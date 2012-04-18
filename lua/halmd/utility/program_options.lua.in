@@ -241,7 +241,6 @@ function M.argument_parser()
         __index = argument_parser,
         __tostring = format_help,
     }
-    self._desc:add(po.option_description("help", po.untyped_value(), "display this help and exit"))
     return setmetatable(self, mt)
 end
 
@@ -476,6 +475,29 @@ function argument_parser:set_defaults(defaults)
 end
 
 ---
+-- Parse --help option.
+--
+-- :param table args: sequence of arguments
+--
+-- If --help is specified in args, print help and exit process.
+--
+local function parse_help(self, args)
+    local desc = po.options_description()
+    local parser = po.command_line_parser(args)
+    desc:add(po.option_description("help", po.untyped_value()))
+    parser:options(desc)
+    parser:allow_unregistered()
+    parser:disallow_guessing()
+    local parsed = parser:run()
+    local vm = po.variables_map()
+    vm:store(parsed)
+    if vm:count("help") > 0 then
+        print(self)
+        os.exit(0)
+    end
+end
+
+---
 -- Parse arguments.
 --
 -- :param table args: sequence of arguments (optional)
@@ -489,6 +511,9 @@ end
 --
 function argument_parser:parse_args(args)
     local args = args or assert(_G.arg)
+    if self._groups then
+        parse_help(self, args)
+    end
     local parser = po.command_line_parser(args)
     parser:options(self._desc)
     parser:disallow_guessing()
@@ -500,10 +525,6 @@ function argument_parser:parse_args(args)
     local parsed = self._pcall(parser.run, parser)
     local vm = po.variables_map()
     self._pcall(vm.store, vm, parsed)
-    if vm:count("help") > 0 then
-        print(self)
-        os.exit(0)
-    end
     return self._pcall(vm.notify, vm, {})
 end
 
