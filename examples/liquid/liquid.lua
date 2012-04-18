@@ -34,6 +34,24 @@ local function liquid(args)
     -- FIXME support reading multiple species groups into single particle
     local reader = readers.trajectory{group = "A"}
 
+    -- total number of particles from sum of particles per species
+    local nparticle = 0
+    for i = 1, #args.particles do
+        nparticle = nparticle + args.particles[i]
+    end
+    -- derive edge lengths from number of particles, density and edge ratios
+    local volume = nparticle / args.density
+    local det = 1
+    for i = 1, #args.ratios do
+        det = det * args.ratios[i]
+    end
+    local length = {}
+    for i = 1, #args.ratios do
+        length[i] = args.ratios[i] * math.pow(volume / det, 1 / args.dimension)
+    end
+    -- create simulation domain with periodic boundary conditions
+    local box = mdsim.box({length = length, dimension = args.dimension})
+
     -- label particles A, B, …
 
     -- create system state
@@ -43,8 +61,6 @@ local function liquid(args)
       , dimension = assert(args.dimension)
       , label = "all" -- FIXME make optional
     }
-    -- create simulation box
-    local box = mdsim.box({particles = {particle}})
     -- add integrator
     mdsim.integrator{particle = particle}
     -- add force
@@ -132,6 +148,8 @@ local function parse_args()
     parser:add_argument("devices", {type = "vector", dtype = "integer", help = "CUDA device(s)"})
 
     parser:add_argument("particles", {type = "vector", dtype = "integer", default = {1000}, help = "number of particles"})
+    parser:add_argument("density", {type = "number", default = 0.75, help = "particle number density"})
+    parser:add_argument("ratios", {type = "vector", dtype = "number", default = {1, 1, 1}, help = "relative aspect ratios of simulation box"})
     parser:add_argument("masses", {type = "vector", dtype = "number", default = {1}, help = "particle masses"})
     parser:add_argument("dimension", {type = "integer", default = 3, action = function(args, key, value)
         if value ~= 2 and value ~= 3 then
