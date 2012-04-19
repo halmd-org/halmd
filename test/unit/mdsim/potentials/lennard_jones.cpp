@@ -167,6 +167,7 @@ struct lennard_jones
     shared_ptr<neighbour_type> neighbour;
     shared_ptr<particle_type> particle;
     shared_ptr<host_potential_type> host_potential;
+    vector<unsigned int> npart_list;
 
     lennard_jones();
     void test();
@@ -186,7 +187,7 @@ void lennard_jones<float_type>::test()
     cuda::host::vector<float4> r_list(particle->g_r.size());
     for (unsigned int k = 0; k < r_list.size(); ++k) {
         vector_type r = (k % 2) ? k * dx : vector_type(0);
-        unsigned int type = (k < particle->ntypes[0]) ? 0U : 1U;  // set particle type for a binary mixture
+        unsigned int type = (k < npart_list[0]) ? 0U : 1U;  // set particle type for a binary mixture
         r_list[k] = particle_kernel::tagged<vector_type>(r, type);
     }
     cuda::copy(r_list, particle->g_r);
@@ -234,7 +235,7 @@ lennard_jones<float_type>::lennard_jones()
     BOOST_TEST_MESSAGE("initialise simulation modules");
 
     // set module parameters
-    vector<unsigned int> npart_list = list_of(1000)(2);
+    npart_list = list_of(1000)(2);
     vector<double> mass = list_of(1)(1);
     float box_length = 100;
     float cutoff = box_length / 2;
