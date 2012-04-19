@@ -82,6 +82,7 @@ public:
     // particles in global device memory
     //
 
+private:
     /** positions, types */
     cuda::vector<float4> g_r;
     /** minimum image vectors */
@@ -90,6 +91,7 @@ public:
     cuda::vector<float4> g_v;
     /** reverse particle tags */
     cuda::vector<unsigned int> g_reverse_tag;
+public:
     /** mass per type */
     cuda::vector<float_type> g_mass;
 
