@@ -41,16 +41,17 @@ local function liquid(args)
     end
     -- derive edge lengths from number of particles, density and edge ratios
     local volume = nparticle / args.density
+    local dimension = #args.ratios
     local det = 1
     for i = 1, #args.ratios do
         det = det * args.ratios[i]
     end
     local length = {}
     for i = 1, #args.ratios do
-        length[i] = args.ratios[i] * math.pow(volume / det, 1 / args.dimension)
+        length[i] = args.ratios[i] * math.pow(volume / det, 1 / dimension)
     end
     -- create simulation domain with periodic boundary conditions
-    local box = mdsim.box({length = length, dimension = args.dimension})
+    local box = mdsim.box({length = length})
 
     -- label particles A, B, …
 
@@ -58,7 +59,7 @@ local function liquid(args)
     local particle = mdsim.particle{
         particles = assert(args.particles)
       , masses = assert(args.masses)
-      , dimension = assert(args.dimension)
+      , dimension = assert(dimension)
       , label = "all" -- FIXME make optional
     }
     -- add integrator
@@ -149,14 +150,13 @@ local function parse_args()
 
     parser:add_argument("particles", {type = "vector", dtype = "integer", default = {1000}, help = "number of particles"})
     parser:add_argument("density", {type = "number", default = 0.75, help = "particle number density"})
-    parser:add_argument("ratios", {type = "vector", dtype = "number", default = {1, 1, 1}, help = "relative aspect ratios of simulation box"})
-    parser:add_argument("masses", {type = "vector", dtype = "number", default = {1}, help = "particle masses"})
-    parser:add_argument("dimension", {type = "integer", default = 3, action = function(args, key, value)
-        if value ~= 2 and value ~= 3 then
-            error(("invalid dimension '%d'"):format(value), 0)
+    parser:add_argument("ratios", {type = "vector", dtype = "number", action = function(args, key, value)
+        if #value ~= 2 and #value ~= 3 then
+            error(("box ratios has invalid dimension '%d'"):format(#value), 0)
         end
         args[key] = value
-    end, help = "dimension of positional coordinates"})
+    end, default = {1, 1, 1}, help = "relative aspect ratios of simulation box"})
+    parser:add_argument("masses", {type = "vector", dtype = "number", default = {1}, help = "particle masses"})
 
     parser:add_argument("ensemble", {type = "string", choices = {
         nve = "Constant NVE",
