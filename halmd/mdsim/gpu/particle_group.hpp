@@ -43,7 +43,6 @@ namespace gpu {
  * and starts with the smallest tag in the set.
  *
  */
-
 template <int dimension, typename float_type>
 class particle_group
 {
@@ -98,7 +97,6 @@ public:
 /**
  * select all particles of a given gpu::particle instance
  */
-
 template <int dimension, typename float_type>
 class particle_group_all
   : public particle_group<dimension, float_type>
@@ -110,31 +108,17 @@ public:
 
     static void luaopen(lua_State* L);
 
-    particle_group_all(
-        boost::shared_ptr<particle_type const> particle
-    );
+    particle_group_all(boost::shared_ptr<particle_type const> particle);
 
-    virtual boost::shared_ptr<particle_type const> particle() const
-    {
-        return particle_;
-    }
+    virtual boost::shared_ptr<particle_type const> particle() const;
 
-    virtual gpu_map_iterator g_map() const
-    {
-        return particle_->reverse_tag().data();
-    }
+    virtual gpu_map_iterator g_map() const;
 
     virtual unsigned int const* h_map();
 
-    virtual unsigned int size() const
-    {
-        return particle_->nparticle();
-    }
+    virtual unsigned int size() const;
 
-    virtual bool all() const
-    {
-        return true;
-    }
+    virtual bool all() const;
 
 private:
     /** gpu::particle instance */
@@ -148,7 +132,6 @@ private:
  * of particle tags. This may be used to select for particles of a single
  * species.
  */
-
 template <int dimension, typename float_type>
 class particle_group_from_range
   : public particle_group<dimension, float_type>
@@ -167,27 +150,15 @@ public:
       , unsigned int end
     );
 
-    virtual boost::shared_ptr<particle_type const> particle() const
-    {
-        return particle_;
-    }
+    virtual boost::shared_ptr<particle_type const> particle() const;
 
-    virtual gpu_map_iterator g_map() const
-    {
-        return particle_->reverse_tag().data() + begin_;
-    }
+    virtual gpu_map_iterator g_map() const;
 
     virtual unsigned int const* h_map();
 
-    virtual unsigned int size() const
-    {
-        return end_ - begin_;
-    }
+    virtual unsigned int size() const;
 
-    virtual bool all() const
-    {
-        return size() == particle_->nparticle();
-    }
+    virtual bool all() const;
 
 private:
     /** gpu::particle instance */

@@ -66,6 +66,20 @@ particle_group_all<dimension, float_type>::particle_group_all(
 {}
 
 template <int dimension, typename float_type>
+shared_ptr<typename particle_group_all<dimension, float_type>::particle_type const>
+particle_group_all<dimension, float_type>::particle() const
+{
+    return particle_;
+}
+
+template <int dimension, typename float_type>
+typename particle_group_all<dimension, float_type>::gpu_map_iterator
+particle_group_all<dimension, float_type>::g_map() const
+{
+    return particle_->reverse_tag().data();
+}
+
+template <int dimension, typename float_type>
 unsigned int const* particle_group_all<dimension, float_type>::h_map()
 {
     try {
@@ -76,6 +90,18 @@ unsigned int const* particle_group_all<dimension, float_type>::h_map()
     }
 
     return h_reverse_tag_.data();
+}
+
+template <int dimension, typename float_type>
+unsigned int particle_group_all<dimension, float_type>::size() const
+{
+    return particle_->nparticle();
+}
+
+template <int dimension, typename float_type>
+bool particle_group_all<dimension, float_type>::all() const
+{
+    return true;
 }
 
 template <int dimension, typename float_type>
@@ -118,6 +144,20 @@ particle_group_from_range<dimension, float_type>::particle_group_from_range(
 }
 
 template <int dimension, typename float_type>
+shared_ptr<typename particle_group_from_range<dimension, float_type>::particle_type const>
+particle_group_from_range<dimension, float_type>::particle() const
+{
+    return particle_;
+}
+
+template <int dimension, typename float_type>
+typename particle_group_from_range<dimension, float_type>::gpu_map_iterator
+particle_group_from_range<dimension, float_type>::g_map() const
+{
+    return particle_->reverse_tag().data() + begin_;
+}
+
+template <int dimension, typename float_type>
 unsigned int const* particle_group_from_range<dimension, float_type>::h_map()
 {
     try {
@@ -128,6 +168,18 @@ unsigned int const* particle_group_from_range<dimension, float_type>::h_map()
     }
 
     return h_reverse_tag_.data() + begin_;
+}
+
+template <int dimension, typename float_type>
+unsigned int particle_group_from_range<dimension, float_type>::size() const
+{
+    return end_ - begin_;
+}
+
+template <int dimension, typename float_type>
+bool particle_group_from_range<dimension, float_type>::all() const
+{
+    return size() == particle_->nparticle();
 }
 
 template <int dimension, typename float_type>
