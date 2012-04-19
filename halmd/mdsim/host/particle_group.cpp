@@ -73,6 +73,38 @@ void particle_group_all<dimension, float_type>::luaopen(lua_State* L)
 }
 
 template <int dimension, typename float_type>
+particle_group_all<dimension, float_type>::particle_group_all(
+    shared_ptr<particle_type const> particle
+)
+  : particle_(particle) {}
+
+template <int dimension, typename float_type>
+boost::shared_ptr<typename particle_group_all<dimension, float_type>::particle_type const>
+particle_group_all<dimension, float_type>::particle() const
+{
+    return particle_;
+}
+
+template <int dimension, typename float_type>
+typename particle_group_all<dimension, float_type>::map_iterator
+particle_group_all<dimension, float_type>::map() const
+{
+    return particle_->reverse_tag().begin();
+}
+
+template <int dimension, typename float_type>
+unsigned int particle_group_all<dimension, float_type>::size() const
+{
+    return particle_->nparticle();
+}
+
+template <int dimension, typename float_type>
+bool particle_group_all<dimension, float_type>::all() const
+{
+    return true;
+}
+
+template <int dimension, typename float_type>
 particle_group_from_range<dimension, float_type>::particle_group_from_range(
     shared_ptr<particle_type const> particle
   , unsigned int begin, unsigned int end
@@ -88,6 +120,32 @@ particle_group_from_range<dimension, float_type>::particle_group_from_range(
     if (end_ > particle_->nparticle()) {
         throw std::logic_error("particle_group: tag range exceeds particle array.");
     }
+}
+
+template <int dimension, typename float_type>
+shared_ptr<typename particle_group_from_range<dimension, float_type>::particle_type const>
+particle_group_from_range<dimension, float_type>::particle() const
+{
+    return particle_;
+}
+
+template <int dimension, typename float_type>
+typename particle_group_from_range<dimension, float_type>::map_iterator
+particle_group_from_range<dimension, float_type>::map() const
+{
+    return particle_->reverse_tag().begin() + begin_;
+}
+
+template <int dimension, typename float_type>
+unsigned int particle_group_from_range<dimension, float_type>::size() const
+{
+    return end_ - begin_;
+}
+
+template <int dimension, typename float_type>
+bool particle_group_from_range<dimension, float_type>::all() const
+{
+    return size() == particle_->nparticle();
 }
 
 template <int dimension, typename float_type>
