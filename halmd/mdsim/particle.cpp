@@ -98,8 +98,6 @@ void particle<dimension>::luaopen(lua_State* L)
         [
             class_<particle>(class_name.c_str())
                 .property("set", &wrap_set<particle>)
-                .def_readonly("nbox", &particle::nbox)
-                .def_readonly("ntype", &particle::ntype)
                 .def_readonly("ntypes", &particle::ntypes)
                 .def_readonly("mass", &particle::mass)
         ]

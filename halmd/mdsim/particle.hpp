@@ -45,10 +45,13 @@ public:
     virtual ~particle() {}
     virtual void set() = 0;
 
+protected:
     /** number of particles in simulation box */
     unsigned int const nbox;
     /** number of particle types */
     unsigned int const ntype;
+
+public:
     /** number of particles per type */
     std::vector<unsigned int> const ntypes;
     /** mass per type */

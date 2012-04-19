@@ -81,10 +81,13 @@ public:
     /** mass per type */
     cuda::vector<float_type> g_mass;
 
+private:
     /** number of particles in simulation box */
     using _Base::nbox;
     /** number of particle types */
     using _Base::ntype;
+
+public:
     /** number of particles per type */
     using _Base::ntypes;
 
