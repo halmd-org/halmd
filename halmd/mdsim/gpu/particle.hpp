@@ -86,11 +86,10 @@ private:
     using _Base::nbox;
     /** number of particle types */
     using _Base::ntype;
-
-public:
     /** number of particles per type */
     using _Base::ntypes;
 
+public:
     /**
      * Enable computation of auxiliary variables.
      *

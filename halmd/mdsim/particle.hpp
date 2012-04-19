@@ -50,10 +50,10 @@ protected:
     unsigned int const nbox;
     /** number of particle types */
     unsigned int const ntype;
-
-public:
     /** number of particles per type */
     std::vector<unsigned int> const ntypes;
+
+public:
     /** mass per type */
     std::vector<double> const mass;
 };
