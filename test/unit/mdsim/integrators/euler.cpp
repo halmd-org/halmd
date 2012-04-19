@@ -273,8 +273,8 @@ void host_modules<dimension, float_type>::set_velocity(shared_ptr<particle_type>
 {
     // copy -r[i] to v[i]
     transform(
-        particle->r.begin(), particle->r.end()
-      , particle->v.begin()
+        particle->position().begin(), particle->position().end()
+      , particle->velocity().begin()
       , negate<typename particle_type::vector_type>()
     );
 }

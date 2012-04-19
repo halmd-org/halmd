@@ -109,15 +109,18 @@ void verlet_nvt_hoover<dimension, float_type>::integrate()
 {
     scoped_timer_type timer(runtime_.integrate);
 
-    typename particle_type::force_array_type& force = particle_->force();
+    typename particle_type::position_array_type& position = particle_->position();
+    typename particle_type::image_array_type& image = particle_->image;
+    typename particle_type::velocity_array_type& velocity = particle_->velocity();
+    typename particle_type::force_array_type const& force = particle_->force();
 
     propagate_chain();
 
     for (size_t i = 0; i < particle_->nparticle(); ++i) {
-        vector_type& v = particle_->v[i] += force[i] * timestep_half_;
-        vector_type& r = particle_->r[i] += v * timestep_;
+        vector_type& v = velocity[i] += force[i] * timestep_half_;
+        vector_type& r = position[i] += v * timestep_;
         // enforce periodic boundary conditions
-        particle_->image[i] += box_->reduce_periodic(r);
+        image[i] += box_->reduce_periodic(r);
     }
 }
 
@@ -129,11 +132,12 @@ void verlet_nvt_hoover<dimension, float_type>::finalize()
 {
     scoped_timer_type timer(runtime_.finalize);
 
-    typename particle_type::force_array_type& force = particle_->force();
+    typename particle_type::velocity_array_type& velocity = particle_->velocity();
+    typename particle_type::force_array_type const& force = particle_->force();
 
     // loop over all particles
     for (size_t i = 0; i < particle_->nparticle(); ++i) {
-        particle_->v[i] += force[i] * timestep_half_;
+        velocity[i] += force[i] * timestep_half_;
     }
 
     propagate_chain();
@@ -156,7 +160,7 @@ void verlet_nvt_hoover<dimension, float_type>::propagate_chain()
 
     // compute total kinetic energy (multiplied by 2)
     float_type en_kin_2 = 0;
-    BOOST_FOREACH(vector_type const& v, particle_->v) {
+    BOOST_FOREACH(vector_type const& v, particle_->velocity()) {
         // assuming unit mass for all particle types
         en_kin_2 += inner_prod(v, v);
     }
@@ -175,7 +179,7 @@ void verlet_nvt_hoover<dimension, float_type>::propagate_chain()
 
     // rescale velocities and kinetic energy
     float_type s = exp(-v_xi[0] * timestep_half_);
-    BOOST_FOREACH(vector_type& v, particle_->v) {
+    BOOST_FOREACH(vector_type& v, particle_->velocity()) {
         v *= s;
     }
     en_kin_2 *= s * s;

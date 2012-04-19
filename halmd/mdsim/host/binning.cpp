@@ -86,11 +86,13 @@ void binning<dimension, float_type>::update()
 
     scoped_timer_type timer(runtime_.update);
 
+    typename particle_type::position_array_type const& position = particle_->position();
+
     // empty cell lists without memory reallocation
     for_each(cell_.data(), cell_.data() + cell_.num_elements(), bind(&cell_list::clear, _1));
     // add particles to cells
     for (size_t i = 0; i < particle_->nparticle(); ++i) {
-        vector_type const& r = particle_->r[i];
+        vector_type const& r = position[i];
         cell_size_type index = element_mod(static_cast<cell_size_type>(element_div(r, cell_length_) + static_cast<vector_type>(ncell_)), ncell_);
         cell_(index).push_back(i);
     }

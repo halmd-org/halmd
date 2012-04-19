@@ -71,11 +71,16 @@ template <int dimension, typename float_type>
 void euler<dimension, float_type>::integrate()
 {
     scoped_timer_type timer(runtime_.integrate);
-    for(size_t i = 0 ; i < particle_->nparticle(); ++i)
+
+    typename particle_type::position_array_type& position = particle_->position();
+    typename particle_type::image_array_type& image = particle_->image;
+    typename particle_type::velocity_array_type const& velocity = particle_->velocity();
+
+    for (size_t i = 0 ; i < particle_->nparticle(); ++i)
     {
-      vector_type& r = particle_->r[i] += particle_->v[i] * timestep_;
-      // enforce periodic boundary conditions
-      particle_->image[i] += box_->reduce_periodic(r);
+        vector_type& r = position[i] += velocity[i] * timestep_;
+        // enforce periodic boundary conditions
+        image[i] += box_->reduce_periodic(r);
     }
 }
 

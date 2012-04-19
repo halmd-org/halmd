@@ -61,7 +61,7 @@ double thermodynamics<dimension, float_type>::en_kin()
         // FIXME use particle_group_->selection_mask()
         // compute mean-square velocity
         double vv = 0;
-        BOOST_FOREACH(vector_type const& v, particle_->v) {
+        BOOST_FOREACH(vector_type const& v, particle_->velocity()) {
             // assuming unit mass for all particle types
             vv += inner_prod(v, v);
         }
@@ -82,7 +82,7 @@ thermodynamics<dimension, float_type>::v_cm()
         // FIXME use particle_group_->selection_mask()
         // compute mean velocity
         vector_type v_cm(0.);
-        BOOST_FOREACH(vector_type const& v, particle_->v) {
+        BOOST_FOREACH(vector_type const& v, particle_->velocity()) {
             v_cm += v;
         }
         v_cm_ = v_cm / nparticle();

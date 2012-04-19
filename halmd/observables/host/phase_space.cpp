@@ -74,10 +74,10 @@ phase_space<dimension, float_type>::acquire()
         sample_ = make_shared<sample_type>(particle_group_->size(), clock_->step());
     }
 
-    typename particle_type::position_array_type& particle_position = particle_->r;
+    typename particle_type::position_array_type& particle_position = particle_->position();
     typename particle_type::image_array_type& particle_image = particle_->image;
-    typename particle_type::velocity_array_type& particle_velocity = particle_->v;
-    typename particle_type::species_array_type& particle_species = particle_->type;
+    typename particle_type::velocity_array_type& particle_velocity = particle_->velocity();
+    typename particle_type::species_array_type& particle_species = particle_->species();
 
     typename sample_type::position_array_type& sample_position = sample_->position();
     typename sample_type::velocity_array_type& sample_velocity = sample_->velocity();
@@ -105,10 +105,10 @@ void phase_space<dimension, float_type>::set(shared_ptr<sample_type const> sampl
 {
     scoped_timer_type timer(runtime_.set);
 
-    typename particle_type::position_array_type& particle_position = particle_->r;
+    typename particle_type::position_array_type& particle_position = particle_->position();
     typename particle_type::image_array_type& particle_image = particle_->image;
-    typename particle_type::velocity_array_type& particle_velocity = particle_->v;
-    typename particle_type::species_array_type& particle_species = particle_->type;
+    typename particle_type::velocity_array_type& particle_velocity = particle_->velocity();
+    typename particle_type::species_array_type& particle_species = particle_->species();
 
     typename sample_type::position_array_type const& sample_position = sample->position();
     typename sample_type::velocity_array_type const& sample_velocity = sample->velocity();

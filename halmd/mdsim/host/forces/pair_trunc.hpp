@@ -145,6 +145,10 @@ template <int dimension, typename float_type, typename potential_type>
 template <bool compute_aux1, bool compute_aux2>
 void pair_trunc<dimension, float_type, potential_type>::compute_aux()
 {
+    typename particle_type::position_array_type const& position1 = particle1_->position();
+    typename particle_type::position_array_type const& position2 = particle2_->position();
+    typename particle_type::species_array_type const& species1   = particle1_->species();
+    typename particle_type::species_array_type const& species2   = particle2_->species();
     typename particle_type::force_array_type& force1             = particle1_->force();
     typename particle_type::force_array_type& force2             = particle2_->force();
     typename particle_type::en_pot_array_type& en_pot1           = particle1_->en_pot();
@@ -164,11 +168,11 @@ void pair_trunc<dimension, float_type, potential_type>::compute_aux()
         // calculate pairwise Lennard-Jones force with neighbour particles
         BOOST_FOREACH(size_t j, lists[i]) {
             // particle distance vector
-            vector_type r = particle1_->r[i] - particle2_->r[j];
+            vector_type r = position1[i] - position2[j];
             box_->reduce_periodic(r);
             // particle types
-            unsigned a = particle1_->type[i];
-            unsigned b = particle2_->type[j];
+            unsigned a = species1[i];
+            unsigned b = species2[j];
             // squared particle distance
             float_type rr = inner_prod(r, r);
 

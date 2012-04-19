@@ -85,7 +85,7 @@ inline boltzmann<dimension, float_type>::gaussian(float_type sigma)
     float_type r = 0;
     bool r_valid = false;
 
-    BOOST_FOREACH (vector_type& v, particle_->v) {
+    BOOST_FOREACH (vector_type& v, particle_->velocity()) {
         // assign two components at a time
         for (unsigned i=0; i < dimension-1; i+=2) {
             tie(v[i], v[i+1]) = random_->normal(sigma);
@@ -104,8 +104,8 @@ inline boltzmann<dimension, float_type>::gaussian(float_type sigma)
         vv += inner_prod(v, v);
     }
 
-    v_cm /= particle_->v.size();
-    vv /= particle_->v.size();
+    v_cm /= particle_->velocity().size();
+    vv /= particle_->velocity().size();
     return make_pair(v_cm, vv);
 }
 
