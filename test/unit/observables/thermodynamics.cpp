@@ -319,7 +319,7 @@ lennard_jones_fluid<modules_type>::lennard_jones_fluid()
     random = make_shared<random_type>();
     particle = make_shared<particle_type>(npart_vector, mass);
     box = make_shared<box_type>(box_length);
-    potential = make_shared<potential_type>(particle->ntype, particle->ntype, rc_mat, epsilon_mat, sigma_mat);
+    potential = make_shared<potential_type>(particle->nspecies(), particle->nspecies(), rc_mat, epsilon_mat, sigma_mat);
     binning = make_shared<binning_type>(particle, box, potential->r_cut(), skin);
     neighbour = make_shared<neighbour_type>(particle, particle, binning, binning, box, potential->r_cut(), skin);
     position = make_shared<position_type>(particle, box, random, slab);

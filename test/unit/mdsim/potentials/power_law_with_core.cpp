@@ -321,10 +321,10 @@ power_law_with_core<float_type>::power_law_with_core()
     particle = make_shared<particle_type>(npart_list, mass);
     box = make_shared<box_type>(typename box_type::vector_type(box_length));
     potential = make_shared<potential_type>(
-        particle->ntype, particle->ntype, cutoff_array, core_array, epsilon_array, sigma_array, index_array
+        particle->nspecies(), particle->nspecies(), cutoff_array, core_array, epsilon_array, sigma_array, index_array
     );
     host_potential = make_shared<host_potential_type>(
-        particle->ntype, particle->ntype, cutoff_array, core_array, epsilon_array, sigma_array, index_array
+        particle->nspecies(), particle->nspecies(), cutoff_array, core_array, epsilon_array, sigma_array, index_array
     );
     neighbour = make_shared<neighbour_type>(particle);
     force = make_shared<force_type>(potential, particle, particle, box, neighbour);

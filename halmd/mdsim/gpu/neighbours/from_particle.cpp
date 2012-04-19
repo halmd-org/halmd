@@ -58,13 +58,13 @@ from_particle<dimension, float_type>::from_particle(
   , logger_(logger)
   // allocate parameters
   , r_skin_(skin)
-  , rr_cut_skin_(particle1_->ntype, particle2_->ntype)
+  , rr_cut_skin_(particle1_->nspecies(), particle2_->nspecies())
   , g_rr_cut_skin_(rr_cut_skin_.data().size())
   , nu_cell_(cell_occupancy) // FIXME neighbour list occupancy
 {
     typename matrix_type::value_type r_cut_max = 0;
-    for (size_t i = 0; i < particle1_->ntype; ++i) {
-        for (size_t j = 0; j < particle2_->ntype; ++j) {
+    for (size_t i = 0; i < particle1_->nspecies(); ++i) {
+        for (size_t j = 0; j < particle2_->nspecies(); ++j) {
             rr_cut_skin_(i, j) = std::pow(r_cut(i, j) + r_skin_, 2);
             r_cut_max = max(r_cut(i, j), r_cut_max);
         }
@@ -125,8 +125,8 @@ void from_particle<dimension, float_type>::update()
       , particle1_->nparticle()
       , particle2_->g_r
       , particle2_->nparticle()
-      , particle1_->ntype
-      , particle2_->ntype
+      , particle1_->nspecies()
+      , particle2_->nspecies()
       , static_cast<vector_type>(box_->length())
       , g_neighbour_
       , size_

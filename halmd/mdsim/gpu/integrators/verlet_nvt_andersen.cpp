@@ -104,11 +104,11 @@ integrate()
         scoped_timer_type timer(runtime_.integrate);
         cuda::configure(
             particle_->dim.grid, particle_->dim.block
-          , particle_->ntype * sizeof(float)
+          , particle_->nspecies() * sizeof(float)
         );
         wrapper_type::kernel.integrate(
             particle_->g_r, particle_->g_image, particle_->g_v, particle_->force()
-          , particle_->g_mass, particle_->ntype
+          , particle_->g_mass, particle_->nspecies()
           , static_cast<vector_type>(box_->length())
         );
         cuda::thread::synchronize();
@@ -136,11 +136,11 @@ finalize()
         // the kernel makes use of the random number generator
         cuda::configure(
             random_->rng().dim.grid, random_->rng().dim.block
-          , particle_->ntype * sizeof(float)
+          , particle_->nspecies() * sizeof(float)
         );
         wrapper_type::kernel.finalize(
             particle_->g_r, particle_->g_v, particle_->force()
-          , particle_->g_mass, particle_->ntype
+          , particle_->g_mass, particle_->nspecies()
           , particle_->nparticle(), particle_->dim.threads()
           , random_->rng().rng()
         );

@@ -126,7 +126,7 @@ void pair_trunc<dimension, float_type, potential_type>::compute()
         gpu_wrapper::kernel.compute(
             particle1_->force(), neighbour_->g_neighbour()
           , particle1_->en_pot(), particle1_->stress_pot(), particle1_->hypervirial()
-          , particle1_->ntype, particle2_->ntype
+          , particle1_->nspecies(), particle2_->nspecies()
           , static_cast<vector_type>(box_->length())
         );
     }
@@ -134,7 +134,7 @@ void pair_trunc<dimension, float_type, potential_type>::compute()
         gpu_wrapper::kernel.compute_aux(
             particle1_->force(), neighbour_->g_neighbour()
           , particle1_->en_pot(), particle1_->stress_pot(), particle1_->hypervirial()
-          , particle1_->ntype, particle2_->ntype
+          , particle1_->nspecies(), particle2_->nspecies()
           , static_cast<vector_type>(box_->length())
         );
     }

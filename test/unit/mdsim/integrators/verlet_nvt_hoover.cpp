@@ -299,7 +299,7 @@ verlet_nvt_hoover<modules_type>::verlet_nvt_hoover()
     box = make_shared<box_type>(box_length);
     random = make_shared<random_type>();
     integrator = make_shared<integrator_type>(particle, box, timestep, temp, resonance_frequency);
-    potential = make_shared<potential_type>(particle->ntype, particle->ntype, cutoff, epsilon, sigma);
+    potential = make_shared<potential_type>(particle->nspecies(), particle->nspecies(), cutoff, epsilon, sigma);
     binning = make_shared<binning_type>(particle, box, potential->r_cut(), skin);
     neighbour = make_shared<neighbour_type>(particle, particle, binning, binning, box, potential->r_cut(), skin);
     force = make_shared<force_type>(potential, particle, particle, box, neighbour);

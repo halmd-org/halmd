@@ -53,7 +53,7 @@ from_particle<dimension, float_type>::from_particle(
   // allocate parameters
   , neighbour_(particle1_->nparticle())
   , r_skin_(skin)
-  , rr_cut_skin_(particle1_->ntype, particle2_->ntype)
+  , rr_cut_skin_(particle1_->nspecies(), particle2_->nspecies())
 {
     matrix_type r_cut_skin(r_cut.size1(), r_cut.size2());
     typename matrix_type::value_type r_cut_max = 0;

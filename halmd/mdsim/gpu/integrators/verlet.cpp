@@ -79,11 +79,11 @@ void verlet<dimension, float_type>::integrate()
         scoped_timer_type timer(runtime_.integrate);
         cuda::configure(
             particle_->dim.grid, particle_->dim.block
-          , particle_->ntype * sizeof(float)
+          , particle_->nspecies() * sizeof(float)
         );
         wrapper_->integrate(
             particle_->g_r, particle_->g_image, particle_->g_v
-          , particle_->force(), particle_->g_mass, particle_->ntype
+          , particle_->force(), particle_->g_mass, particle_->nspecies()
           , static_cast<vector_type>(box_->length())
         );
         cuda::thread::synchronize();
@@ -108,11 +108,11 @@ void verlet<dimension, float_type>::finalize()
         scoped_timer_type timer(runtime_.finalize);
         cuda::configure(
             particle_->dim.grid, particle_->dim.block
-          , particle_->ntype * sizeof(float)
+          , particle_->nspecies() * sizeof(float)
         );
         wrapper_->finalize(
             particle_->g_r, particle_->g_v, particle_->force()
-          , particle_->g_mass, particle_->ntype
+          , particle_->g_mass, particle_->nspecies()
         );
         cuda::thread::synchronize();
     }

@@ -112,7 +112,7 @@ void pair_full<dimension, float_type, potential_type>::compute()
         gpu_wrapper::kernel.compute(
             particle_->force(), particle_->g_r
           , particle_->en_pot(), particle_->stress_pot(), particle_->hypervirial()
-          , particle_->ntype, particle_->ntype
+          , particle_->nspecies(), particle_->nspecies()
           , static_cast<vector_type>(box_->length())
         );
     }
@@ -120,7 +120,7 @@ void pair_full<dimension, float_type, potential_type>::compute()
         gpu_wrapper::kernel.compute_aux(
             particle_->force(), particle_->g_r
           , particle_->en_pot(), particle_->stress_pot(), particle_->hypervirial()
-          , particle_->ntype, particle_->ntype
+          , particle_->nspecies(), particle_->nspecies()
           , static_cast<vector_type>(box_->length())
         );
     }
