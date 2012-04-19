@@ -102,7 +102,7 @@ function M.__new(args)
     end
 
     local dimension = assert(particle.dimension)
-    local size = assert(particle.size or particle.nbox)
+    local size = assert(particle.size or particle.nparticle)
 
     local phase_space
     if device() then
