@@ -58,14 +58,16 @@ double thermodynamics<dimension, float_type>::en_kin()
 
         scoped_timer_type timer(runtime_.en_kin);
 
+        typename particle_type::velocity_array_type const& velocity = particle_->velocity();
+        typename particle_type::mass_array_type const& mass = particle_->mass();
+
         // FIXME use particle_group_->selection_mask()
-        // compute mean-square velocity
-        double vv = 0;
-        BOOST_FOREACH(vector_type const& v, particle_->velocity()) {
+        double mv2 = 0;
+        for (size_t i = 0; i < particle_->nparticle(); ++i) {
             // assuming unit mass for all particle types
-            vv += inner_prod(v, v);
+            mv2 += mass[i] * inner_prod(velocity[i], velocity[i]);
         }
-        en_kin_ = .5 * vv / nparticle();
+        en_kin_ = 0.5 * mv2 / nparticle();
     }
     return en_kin_;
 }
