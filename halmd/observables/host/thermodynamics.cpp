@@ -81,13 +81,17 @@ thermodynamics<dimension, float_type>::v_cm()
 
         scoped_timer_type timer(runtime_.v_cm);
 
+        typename particle_type::velocity_array_type const& velocity = particle_->velocity();
+        typename particle_type::mass_array_type const& mass = particle_->mass();
+
         // FIXME use particle_group_->selection_mask()
-        // compute mean velocity
-        vector_type v_cm(0.);
-        BOOST_FOREACH(vector_type const& v, particle_->velocity()) {
-            v_cm += v;
+        vector_type mv = 0;
+        double m = 0;
+        for (size_t i = 0; i < particle_->nparticle(); ++i) {
+            mv += mass[i] * velocity[i];
+            m += mass[i];
         }
-        v_cm_ = v_cm / nparticle();
+        v_cm_ = mv / m;
     }
     return v_cm_;
 }
