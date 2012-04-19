@@ -66,7 +66,7 @@ void verlet<dimension, float_type>::integrate()
 
     typename particle_type::force_array_type& force = particle_->force();
 
-    for (size_t i = 0; i < particle_->nbox; ++i) {
+    for (size_t i = 0; i < particle_->nparticle(); ++i) {
         unsigned int type = particle_->type[i];
         float_type mass = particle_->mass[type];
         vector_type& v = particle_->v[i] += force[i] * timestep_half_ / mass;
@@ -88,7 +88,7 @@ void verlet<dimension, float_type>::finalize()
 
     typename particle_type::force_array_type& force = particle_->force();
 
-    for (size_t i = 0; i < particle_->nbox; ++i) {
+    for (size_t i = 0; i < particle_->nparticle(); ++i) {
         unsigned int type = particle_->type[i];
         float_type mass = particle_->mass[type];
         particle_->v[i] += force[i] * timestep_half_ / mass;

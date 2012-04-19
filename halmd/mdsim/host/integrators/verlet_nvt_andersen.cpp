@@ -83,7 +83,7 @@ void verlet_nvt_andersen<dimension, float_type>::integrate()
 
     typename particle_type::force_array_type& force = particle_->force();
 
-    for (size_t i = 0; i < particle_->nbox; ++i) {
+    for (size_t i = 0; i < particle_->nparticle(); ++i) {
         unsigned int type = particle_->type[i];
         float_type mass = particle_->mass[type];
         vector_type& v = particle_->v[i] += force[i] * timestep_half_ / mass;
@@ -110,7 +110,7 @@ void verlet_nvt_andersen<dimension, float_type>::finalize()
     bool rng_cache_valid = false;
 
     // loop over all particles
-    for (size_t i = 0; i < particle_->nbox; ++i) {
+    for (size_t i = 0; i < particle_->nparticle(); ++i) {
         // is deterministic step?
         if (random_->uniform<float_type>() > coll_prob_) {
             unsigned int type = particle_->type[i];

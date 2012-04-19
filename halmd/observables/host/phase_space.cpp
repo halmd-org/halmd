@@ -87,7 +87,7 @@ phase_space<dimension, float_type>::acquire()
     typename particle_group_type::map_iterator idx = particle_group_->map();
     for (unsigned int i = 0; i < particle_group_->size(); ++i, ++idx) {
 
-        assert(*idx < particle_->nbox);
+        assert(*idx < particle_->nparticle());
 
         // periodically extended particle position
         vector_type& r = sample_position[i] = particle_position[*idx];
@@ -116,7 +116,7 @@ void phase_space<dimension, float_type>::set(shared_ptr<sample_type const> sampl
 
     typename particle_group_type::map_iterator idx = particle_group_->map();
     for (size_t i = 0; i < particle_group_->size(); ++i, ++idx) {
-        assert(*idx < particle_->nbox);
+        assert(*idx < particle_->nparticle());
         vector_type& r = (particle_position[*idx] = sample_position[i]);
         vector_type& image = (particle_image[*idx] = 0);
 

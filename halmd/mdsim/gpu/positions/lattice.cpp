@@ -65,14 +65,14 @@ lattice<dimension, float_type, RandomNumberGenerator>::lattice(
 template <int dimension, typename float_type, typename RandomNumberGenerator>
 void lattice<dimension, float_type, RandomNumberGenerator>::set()
 {
-    assert(particle_->g_r.size() == particle_->nbox);
+    assert(particle_->g_r.size() == particle_->nparticle());
 
     // assign fcc lattice points to a fraction of the particles in a slab at the centre
     gpu_vector_type length = static_cast<gpu_vector_type>(element_prod(box_->length(), slab_));
     gpu_vector_type offset = -length / 2;
 
     float4* r_it = particle_->g_r.data(); // use pointer as substitute for missing iterator
-    fcc(r_it, r_it + particle_->nbox, length, offset);
+    fcc(r_it, r_it + particle_->nparticle(), length, offset);
 
     // randomise particle positions if there is more than 1 particle type
     // FIXME this requires a subsequent sort

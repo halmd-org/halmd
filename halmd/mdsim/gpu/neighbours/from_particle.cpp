@@ -122,9 +122,9 @@ void from_particle<dimension, float_type>::update()
     );
     get_from_particle_kernel<dimension>().update(
         particle1_->g_r
-      , particle1_->nbox
+      , particle1_->nparticle()
       , particle2_->g_r
-      , particle2_->nbox
+      , particle2_->nparticle()
       , particle1_->ntype
       , particle2_->ntype
       , static_cast<vector_type>(box_->length())

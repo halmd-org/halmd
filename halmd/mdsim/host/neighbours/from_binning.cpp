@@ -57,7 +57,7 @@ from_binning<dimension, float_type>::from_binning(
   , box_(box)
   , logger_(logger)
   // allocate parameters
-  , neighbour_(particle1_->nbox)
+  , neighbour_(particle1_->nparticle())
   , r_skin_(skin)
   , rr_cut_skin_(particle1_->ntype, particle2_->ntype)
 {

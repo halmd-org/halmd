@@ -38,7 +38,7 @@ particle_group_all<dimension, float_type>::particle_group_all(
   // dependency injection
   : particle_(particle)
   // memory allocation
-  , h_reverse_tag_(particle->nbox)
+  , h_reverse_tag_(particle->nparticle())
 {}
 
 template <int dimension, typename float_type>
@@ -52,7 +52,7 @@ particle_group_from_range<dimension, float_type>::particle_group_from_range(
   , begin_(begin)
   , end_(end)
   // memory allocation
-  , h_reverse_tag_(particle->nbox)
+  , h_reverse_tag_(particle->nparticle())
 {
     if (end_ < begin_) {
         throw std::logic_error("particle_group: inverse tag ranges not allowed.");

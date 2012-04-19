@@ -71,9 +71,9 @@ phase_space<host::samples::phase_space<dimension, float_type> >::phase_space(
   , clock_(clock)
   , logger_(logger)
   // allocate page-locked host memory
-  , h_r_(particle_->nbox)
-  , h_image_(particle_->nbox)
-  , h_v_(particle_->nbox)
+  , h_r_(particle_->nparticle())
+  , h_image_(particle_->nparticle())
+  , h_v_(particle_->nparticle())
 {
 }
 

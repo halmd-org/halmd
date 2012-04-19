@@ -51,7 +51,7 @@ maximum_squared_displacement<dimension, float_type>::maximum_squared_displacemen
   , dim_reduce_(64, (64 << DEVICE_SCALE))
   , displacement_impl_(get_displacement_impl(dim_reduce_.threads_per_block()))
   // allocate parameters
-  , g_r0_(particle_->nbox)
+  , g_r0_(particle_->nparticle())
   , g_rr_(dim_reduce_.blocks_per_grid())
   , h_rr_(g_rr_.size())
 {
@@ -108,7 +108,7 @@ float_type maximum_squared_displacement<dimension, float_type>::compute()
             particle_->g_r
           , g_r0_
           , g_rr_
-          , particle_->nbox
+          , particle_->nparticle()
           , static_cast<vector_type>(box_->length())
         );
         cuda::copy(g_rr_, h_rr_);

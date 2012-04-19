@@ -98,7 +98,7 @@ void boltzmann<dimension, float_type, RandomNumberGenerator>::set()
     );
     gaussian_impl_(
         particle_->g_v
-      , particle_->nbox
+      , particle_->nparticle()
       , particle_->dim.threads()
       , temp_
       , g_vcm_
@@ -116,7 +116,7 @@ void boltzmann<dimension, float_type, RandomNumberGenerator>::set()
     );
     wrapper_type::kernel.shift_rescale(
         particle_->g_v
-      , particle_->nbox
+      , particle_->nparticle()
       , particle_->dim.threads()
       , temp_
       , g_vcm_

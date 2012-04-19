@@ -44,7 +44,7 @@ particle_group_from_range<dimension, float_type>::particle_group_from_range(
         throw std::logic_error("particle_group: inverse tag ranges not allowed.");
     }
 
-    if (end_ > particle_->nbox) {
+    if (end_ > particle_->nparticle()) {
         throw std::logic_error("particle_group: tag range exceeds particle array.");
     }
 }

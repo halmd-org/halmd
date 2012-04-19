@@ -226,7 +226,7 @@ void power_law_with_core<float_type>::test()
 
     // place particles along the x-axis within one half of the box,
     // put every second particle at the origin
-    unsigned int npart = particle->nbox;
+    unsigned int npart = particle->nparticle();
     vector_type dx(0);
     dx[0] = box->edges()[0][0] / npart / 2;
 

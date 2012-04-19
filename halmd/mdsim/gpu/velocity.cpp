@@ -40,7 +40,7 @@ velocity<dimension, float_type>::velocity(
   // set parameters
   , dim_(particle_->dim) // FIXME not used?
 {
-    cuda::copy(particle_->nbox, get_velocity_kernel<dimension>().nbox);
+    cuda::copy(particle_->nparticle(), get_velocity_kernel<dimension>().nbox);
 }
 
 /**

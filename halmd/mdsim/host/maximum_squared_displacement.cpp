@@ -42,7 +42,7 @@ maximum_squared_displacement<dimension, float_type>::maximum_squared_displacemen
   : particle_(particle)
   , box_(box)
   // allocate parameters
-  , r0_(particle_->nbox)
+  , r0_(particle_->nparticle())
 {
 }
 
@@ -64,7 +64,7 @@ float_type maximum_squared_displacement<dimension, float_type>::compute()
 {
     scoped_timer_type timer(runtime_.compute);
     float_type rr_max = 0;
-    for (size_t i = 0; i < particle_->nbox; ++i) {
+    for (size_t i = 0; i < particle_->nparticle(); ++i) {
         vector_type r = particle_->r[i] - r0_[i];
         box_->reduce_periodic(r);
         rr_max = max(rr_max, inner_prod(r, r));

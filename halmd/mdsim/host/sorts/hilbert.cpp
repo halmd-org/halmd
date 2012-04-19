@@ -99,7 +99,7 @@ void hilbert<dimension, float_type>::order()
             // particle binning
             binning_->update();
             // generate index sequence according to Hilbert-sorted cells
-            index.reserve(particle_->nbox);
+            index.reserve(particle_->nparticle());
             BOOST_FOREACH(cell_list const* cell, map_) {
                 BOOST_FOREACH(unsigned int p, *cell) {
                     index.push_back(p);

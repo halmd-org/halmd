@@ -160,7 +160,7 @@ void pair_trunc<dimension, float_type, potential_type>::compute_aux()
     typedef typename particle_type::stress_pot_type stress_pot_type;
     typedef typename particle_type::hypervirial_type hypervirial_type;
 
-    for (size_t i = 0; i < particle1_->nbox; ++i) {
+    for (size_t i = 0; i < particle1_->nparticle(); ++i) {
         // calculate pairwise Lennard-Jones force with neighbour particles
         BOOST_FOREACH(size_t j, lists[i]) {
             // particle distance vector

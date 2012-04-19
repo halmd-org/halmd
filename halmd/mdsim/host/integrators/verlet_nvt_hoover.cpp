@@ -78,19 +78,19 @@ template <int dimension, typename float_type>
 void verlet_nvt_hoover<dimension, float_type>::temperature(double temperature)
 {
     temperature_ = static_cast<float_type>(temperature);
-    en_kin_target_2_ = dimension * particle_->nbox * temperature_;
+    en_kin_target_2_ = dimension * particle_->nparticle() * temperature_;
 
     // follow Martyna et al. [J. Chem. Phys. 97, 2635 (1992)]
     // for the masses of the heat bath variables
     float_type omega_sq = pow(2 * M_PI * resonance_frequency_, 2);
-    unsigned int dof = dimension * particle_->nbox;
+    unsigned int dof = dimension * particle_->nparticle();
     chain_type mass;
     mass[0] = dof * temperature_ / omega_sq;
     mass[1] = temperature_ / omega_sq;
     set_mass(mass);
 
     LOG("temperature of heat bath: " << temperature_);
-    LOG_DEBUG("target kinetic energy: " << en_kin_target_2_ / particle_->nbox);
+    LOG_DEBUG("target kinetic energy: " << en_kin_target_2_ / particle_->nparticle());
 }
 
 template <int dimension, typename float_type>
@@ -113,7 +113,7 @@ void verlet_nvt_hoover<dimension, float_type>::integrate()
 
     propagate_chain();
 
-    for (size_t i = 0; i < particle_->nbox; ++i) {
+    for (size_t i = 0; i < particle_->nparticle(); ++i) {
         vector_type& v = particle_->v[i] += force[i] * timestep_half_;
         vector_type& r = particle_->r[i] += v * timestep_;
         // enforce periodic boundary conditions
@@ -132,18 +132,18 @@ void verlet_nvt_hoover<dimension, float_type>::finalize()
     typename particle_type::force_array_type& force = particle_->force();
 
     // loop over all particles
-    for (size_t i = 0; i < particle_->nbox; ++i) {
+    for (size_t i = 0; i < particle_->nparticle(); ++i) {
         particle_->v[i] += force[i] * timestep_half_;
     }
 
     propagate_chain();
 
     // compute energy contribution of chain variables
-    en_nhc_ = temperature_ * (dimension * particle_->nbox * xi[0] + xi[1]);
+    en_nhc_ = temperature_ * (dimension * particle_->nparticle() * xi[0] + xi[1]);
     for (unsigned int i = 0; i < 2; ++i ) {
         en_nhc_ += mass_xi_[i] * v_xi[i] * v_xi[i] / 2;
     }
-    en_nhc_ /= particle_->nbox;
+    en_nhc_ /= particle_->nparticle();
 }
 
 /**

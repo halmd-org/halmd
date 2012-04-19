@@ -97,7 +97,7 @@ neighbour_chain<dimension, float_type>::neighbour_chain(
     // fill each particle's neighbour list with the following particle
     cuda::host::vector<unsigned int> neighbour(g_neighbour_.size());
     for (unsigned int i = 0; i < neighbour.size(); ++i) {
-        neighbour[i] = (i + 1) % particle->nbox; // point only to real particles
+        neighbour[i] = (i + 1) % particle->nparticle(); // point only to real particles
     }
     cuda::copy(neighbour, g_neighbour_); // copy data to GPU
 }

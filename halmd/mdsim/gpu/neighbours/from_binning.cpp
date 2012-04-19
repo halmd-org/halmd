@@ -93,7 +93,7 @@ from_binning<dimension, float_type>::from_binning(
     LOG("number of placeholders per neighbour list: " << size_);
 
     try {
-        cuda::copy(particle_->nbox, get_from_binning_kernel<dimension>().nbox);
+        cuda::copy(particle_->nparticle(), get_from_binning_kernel<dimension>().nbox);
         cuda::copy(rr_cut_skin_.data(), g_rr_cut_skin_);
         cuda::copy(size_, get_from_binning_kernel<dimension>().neighbour_size);
         cuda::copy(stride_, get_from_binning_kernel<dimension>().neighbour_stride);

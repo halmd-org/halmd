@@ -71,7 +71,7 @@ template <int dimension, typename float_type>
 void euler<dimension, float_type>::integrate()
 {
     scoped_timer_type timer(runtime_.integrate);
-    for(size_t i = 0 ; i < particle_->nbox; ++i)
+    for(size_t i = 0 ; i < particle_->nparticle(); ++i)
     {
       vector_type& r = particle_->r[i] += particle_->v[i] * timestep_;
       // enforce periodic boundary conditions

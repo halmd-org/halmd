@@ -65,7 +65,7 @@ lattice<dimension, float_type>::lattice(
 template <int dimension, typename float_type>
 void lattice<dimension, float_type>::set()
 {
-    assert(particle_->r.size() == particle_->nbox);
+    assert(particle_->r.size() == particle_->nparticle());
 
     // assign fcc lattice points to a fraction of the particles in a slab at the centre
     vector_type length = element_prod(box_->length(), slab_);

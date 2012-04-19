@@ -138,9 +138,9 @@ void pair_full<dimension, float_type, potential_type>::compute_aux()
     typename particle_type::hypervirial_array_type& hypervirial1 = particle_->hypervirial();
     typename particle_type::hypervirial_array_type& hypervirial2 = particle_->hypervirial();
 
-    for (size_t i = 0; i < particle_->nbox; ++i) {
+    for (size_t i = 0; i < particle_->nparticle(); ++i) {
         // calculate untruncated pairwise Lennard-Jones force with all other particles
-        for (size_t j = 0; j < particle_->nbox; ++j) {
+        for (size_t j = 0; j < particle_->nparticle(); ++j) {
             // skip self-interaction
             if (i == j ) {
                 continue;

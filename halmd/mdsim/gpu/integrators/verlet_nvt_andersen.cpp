@@ -141,7 +141,7 @@ finalize()
         wrapper_type::kernel.finalize(
             particle_->g_r, particle_->g_v, particle_->force()
           , particle_->g_mass, particle_->ntype
-          , particle_->nbox, particle_->dim.threads()
+          , particle_->nparticle(), particle_->dim.threads()
           , random_->rng().rng()
         );
         cuda::thread::synchronize();

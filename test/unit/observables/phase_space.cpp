@@ -208,7 +208,7 @@ phase_space<modules_type>::phase_space()
     // create modules
     particle = make_shared<particle_type>(npart, mass);
     box = make_shared<box_type>(box_length);
-    input_sample = make_shared<input_sample_type>(particle->nbox);
+    input_sample = make_shared<input_sample_type>(particle->nparticle());
     clock = make_shared<clock_type>(0); // bogus time-step
 
     // set particle tags and types

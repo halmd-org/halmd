@@ -51,7 +51,7 @@ from_particle<dimension, float_type>::from_particle(
   , box_(box)
   , logger_(logger)
   // allocate parameters
-  , neighbour_(particle1_->nbox)
+  , neighbour_(particle1_->nparticle())
   , r_skin_(skin)
   , rr_cut_skin_(particle1_->ntype, particle2_->ntype)
 {
@@ -83,7 +83,7 @@ void from_particle<dimension, float_type>::update()
     // whether Newton's third law applies
     bool const reactio = (particle1_ == particle2_);
 
-    for (size_t i = 0; i < particle1_->nbox; ++i) {
+    for (size_t i = 0; i < particle1_->nparticle(); ++i) {
         // load first particle
         vector_type r1 = particle1_->r[i];
         unsigned int type1 = particle1_->type[i];
@@ -91,7 +91,7 @@ void from_particle<dimension, float_type>::update()
         // clear particle's neighbour list
         neighbour_[i].clear();
 
-        for (size_t j = reactio ? (i + 1) : 0; j < particle2_->nbox; ++j) {
+        for (size_t j = reactio ? (i + 1) : 0; j < particle2_->nparticle(); ++j) {
             // load second particle
             vector_type r2 = particle2_->r[j];
             unsigned int type2 = particle2_->type[j];

@@ -128,7 +128,7 @@ public:
 
     virtual unsigned int size() const
     {
-        return particle_->nbox;
+        return particle_->nparticle();
     }
 
     virtual bool all() const
@@ -186,7 +186,7 @@ public:
 
     virtual bool all() const
     {
-        return size() == particle_->nbox;
+        return size() == particle_->nparticle();
     }
 
 private:

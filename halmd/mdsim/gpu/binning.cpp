@@ -56,7 +56,7 @@ binning<dimension, float_type>::binning(
   // allocate parameters
   , r_skin_(skin)
   , nu_cell_(cell_occupancy)
-  , sort_(particle_->nbox, particle_->dim.threads_per_block())
+  , sort_(particle_->nparticle(), particle_->dim.threads_per_block())
 {
     float_type r_cut_max = *max_element(r_cut.data().begin(), r_cut.data().end());
     // find an optimal(?) cell size
@@ -78,7 +78,7 @@ binning<dimension, float_type>::binning(
         static_cast<cell_size_type>(box_->length() / (r_cut_max + r_skin_));
     // determine optimal value from 2,3) together with b,c)
     size_t warp_size = cuda::device::properties(cuda::device::get()).warp_size();
-    double nwarps = particle_->nbox / (nu_cell_ * warp_size);
+    double nwarps = particle_->nparticle() / (nu_cell_ * warp_size);
     double volume = accumulate(box_->length().begin(), box_->length().end(), 1., multiplies<double>());
     ncell_ = static_cast<cell_size_type>(ceil(box_->length() * pow(nwarps / volume, 1./dimension)));
     LOG_DEBUG("desired values for number of cells: " << ncell_);
@@ -106,11 +106,11 @@ binning<dimension, float_type>::binning(
     LOG("number of cells per dimension: " << ncell_);
     LOG("cell edge lengths: " << cell_length_);
     LOG("desired average cell occupancy: " << nu_cell_);
-    nu_cell_eff_ = static_cast<double>(particle_->nbox) / dim_cell_.threads();
+    nu_cell_eff_ = static_cast<double>(particle_->nparticle()) / dim_cell_.threads();
     LOG("effective average cell occupancy: " << nu_cell_eff_);
 
     try {
-        cuda::copy(particle_->nbox, get_binning_kernel<dimension>().nbox);
+        cuda::copy(particle_->nparticle(), get_binning_kernel<dimension>().nbox);
     }
     catch (cuda::error const&) {
         LOG_ERROR("failed to copy cell parameters to device symbols");
@@ -121,9 +121,9 @@ binning<dimension, float_type>::binning(
         g_cell_.resize(dim_cell_.threads());
         g_cell_offset_.resize(dim_cell_.blocks_per_grid());
         g_cell_index_.reserve(particle_->dim.threads());
-        g_cell_index_.resize(particle_->nbox);
+        g_cell_index_.resize(particle_->nparticle());
         g_cell_permutation_.reserve(particle_->dim.threads());
-        g_cell_permutation_.resize(particle_->nbox);
+        g_cell_permutation_.resize(particle_->nparticle());
     }
     catch (cuda::error const&) {
         LOG_ERROR("failed to allocate cell placeholders in global device memory");

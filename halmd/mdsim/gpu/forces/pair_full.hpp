@@ -91,7 +91,7 @@ pair_full<dimension, float_type, potential_type>::pair_full(
   , particle_(particle)
   , box_(box)
 {
-    cuda::copy(particle_->nbox, gpu_wrapper::kernel.npart);
+    cuda::copy(particle_->nparticle(), gpu_wrapper::kernel.npart);
 }
 
 /**
