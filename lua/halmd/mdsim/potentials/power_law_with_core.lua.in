@@ -57,7 +57,7 @@ function M.__new(args)
     else
         power_law_with_core = assert(power_law_with_core_wrapper.host)
     end
-    return power_law_with_core(particle.ntype, cutoff, core, epsilon, sigma, index, logger)
+    return power_law_with_core(particle.nspecies, cutoff, core, epsilon, sigma, index, logger)
 end
 
 --

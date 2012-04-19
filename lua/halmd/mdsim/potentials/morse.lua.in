@@ -51,16 +51,16 @@ function M.__new(args)
     local logger = log.logger({label = "morse"})
 
     if type(cutoff) == "number" then
-        cutoff = scalar_matrix(particle1.ntype, particle2.ntype, cutoff)
+        cutoff = scalar_matrix(particle1.nspecies, particle2.nspecies, cutoff)
     end
     if type(epsilon) == "number" then
-        epsilon = scalar_matrix(particle1.ntype, particle2.ntype, epsilon)
+        epsilon = scalar_matrix(particle1.nspecies, particle2.nspecies, epsilon)
     end
     if type(sigma) == "number" then
-        sigma = scalar_matrix(particle1.ntype, particle2.ntype, sigma)
+        sigma = scalar_matrix(particle1.nspecies, particle2.nspecies, sigma)
     end
     if type(minimum) == "number" then
-        minimum = scalar_matrix(particle1.ntype, particle2.ntype, minimum)
+        minimum = scalar_matrix(particle1.nspecies, particle2.nspecies, minimum)
     end
 
     local morse
@@ -69,7 +69,7 @@ function M.__new(args)
     else
         morse = assert(morse_wrapper.host)
     end
-    return morse(particle.ntype, cutoff, epsilon, sigma, minimum, logger)
+    return morse(particle.nspecies, cutoff, epsilon, sigma, minimum, logger)
 end
 
 --

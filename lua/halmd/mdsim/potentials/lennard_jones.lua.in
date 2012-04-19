@@ -58,19 +58,19 @@ function M.__new(args)
     -- select optimised GPU version if 1 species and ε=1, σ=1
     if device() and epsilon == 1 and sigma == 1 then
         local lennard_jones_simple = assert(lennard_jones_simple_wrapper.gpu)
-        potential = lennard_jones_simple(particle1.ntype, particle2.ntype, cutoff, logger)
+        potential = lennard_jones_simple(particle1.nspecies, particle2.nspecies, cutoff, logger)
     else
         if type(cutoff) == "number" then
-            cutoff = scalar_matrix(particle1.ntype, particle2.ntype, cutoff)
+            cutoff = scalar_matrix(particle1.nspecies, particle2.nspecies, cutoff)
         end
         if type(epsilon) == "number" then
-            epsilon = scalar_matrix(particle1.ntype, particle2.ntype, epsilon)
+            epsilon = scalar_matrix(particle1.nspecies, particle2.nspecies, epsilon)
         end
         if type(sigma) == "number" then
-            sigma = scalar_matrix(particle1.ntype, particle2.ntype, sigma)
+            sigma = scalar_matrix(particle1.nspecies, particle2.nspecies, sigma)
         end
         local lennard_jones = assert(lennard_jones_wrapper[device() and "gpu" or "host"])
-        potential = lennard_jones(particle1.ntype, particle2.ntype, cutoff, epsilon, sigma, logger)
+        potential = lennard_jones(particle1.nspecies, particle2.nspecies, cutoff, epsilon, sigma, logger)
     end
     return potential
 end
