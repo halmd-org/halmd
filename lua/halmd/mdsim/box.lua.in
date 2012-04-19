@@ -47,7 +47,7 @@ local M = module.singleton("halmd.mdsim.box")
 -- Construct box.
 --
 -- :param table args: keyword arguments
--- :param table length: sequence of edge lengths, according to dimensionality
+-- :param table args.length: sequence of edge lengths, according to dimensionality
 -- :returns: instance of box
 --
 -- ``box`` is a singleton, i.e. the first call to :class:`halmd.mdsim.box`
@@ -89,10 +89,7 @@ function M.__new(args)
     if not length then
         error("missing parameter: length", 3)
     end
-    local dimension = args.dimension
-    if not length then
-        error("missing parameter: dimension", 3)
-    end
+    local dimension = #length
     local box = box[dimension]
     if not box then
         error(("invalid box dimension: %s"):format(dimension), 3)
