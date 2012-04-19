@@ -122,7 +122,7 @@ void verlet_nvt_andersen<dimension, float_type>::finalize()
         // stochastic coupling with heat bath
         else {
             // assign two velocity components at a time
-            vector_type& v = particle_->velocity()[i];
+            vector_type& v = velocity[i];
             for (unsigned i=0; i < dimension-1; i+=2) {
                 tie(v[i], v[i+1]) = random_->normal(sqrt_temperature_);
             }
