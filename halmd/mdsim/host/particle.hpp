@@ -96,9 +96,6 @@ private:
     using _Base::ntypes;
 
 public:
-    /** mass per type */
-    using _Base::mass;
-
     /**
      * Enable computation of auxiliary variables.
      *
@@ -240,6 +237,22 @@ public:
     }
 
     /**
+     * Returns const reference to particle masss.
+     */
+    mass_array_type const& mass() const
+    {
+       return mass_;
+    }
+
+    /**
+     * Returns non-const reference to particle mass.
+     */
+    mass_array_type& mass()
+    {
+       return mass_;
+    }
+
+    /**
      * Returns non-const reference to force per particle.
      */
     force_array_type const& force() const
@@ -321,6 +334,8 @@ public:
     }
 
 private:
+    /** particle masses */
+    mass_array_type mass_;
     /** force per particle */
     force_array_type force_;
     /** potential energy per particle */

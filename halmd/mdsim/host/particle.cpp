@@ -53,6 +53,7 @@ particle<dimension, float_type>::particle(
   , tag_(nbox)
   , reverse_tag_(nbox)
   , type(nbox)
+  , mass_(nbox)
   , force_(nbox)
   , en_pot_(nbox)
   , stress_pot_(nbox)
@@ -61,6 +62,7 @@ particle<dimension, float_type>::particle(
   , aux_flag_(false)
   , aux_valid_(false)
 {
+    fill(mass_.begin(), mass_.end(), 1);
 }
 
 /**

@@ -113,11 +113,12 @@ void verlet_nvt_hoover<dimension, float_type>::integrate()
     typename particle_type::image_array_type& image = particle_->image();
     typename particle_type::velocity_array_type& velocity = particle_->velocity();
     typename particle_type::force_array_type const& force = particle_->force();
+    typename particle_type::mass_array_type const& mass = particle_->mass();
 
     propagate_chain();
 
     for (size_t i = 0; i < particle_->nparticle(); ++i) {
-        vector_type& v = velocity[i] += force[i] * timestep_half_;
+        vector_type& v = velocity[i] += force[i] * timestep_half_ / mass[i];
         vector_type& r = position[i] += v * timestep_;
         // enforce periodic boundary conditions
         image[i] += box_->reduce_periodic(r);
@@ -134,10 +135,11 @@ void verlet_nvt_hoover<dimension, float_type>::finalize()
 
     typename particle_type::velocity_array_type& velocity = particle_->velocity();
     typename particle_type::force_array_type const& force = particle_->force();
+    typename particle_type::mass_array_type const& mass = particle_->mass();
 
     // loop over all particles
     for (size_t i = 0; i < particle_->nparticle(); ++i) {
-        velocity[i] += force[i] * timestep_half_;
+        velocity[i] += force[i] * timestep_half_ / mass[i];
     }
 
     propagate_chain();

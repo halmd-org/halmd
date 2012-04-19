@@ -68,11 +68,10 @@ void verlet<dimension, float_type>::integrate()
     typename particle_type::image_array_type& image = particle_->image();
     typename particle_type::velocity_array_type& velocity = particle_->velocity();
     typename particle_type::force_array_type const& force = particle_->force();
+    typename particle_type::mass_array_type const& mass = particle_->mass();
 
     for (size_t i = 0; i < particle_->nparticle(); ++i) {
-        unsigned int type = particle_->species()[i];
-        float_type mass = particle_->mass[type];
-        vector_type& v = velocity[i] += force[i] * timestep_half_ / mass;
+        vector_type& v = velocity[i] += force[i] * timestep_half_ / mass[i];
         vector_type& r = position[i] += v * timestep_;
         // enforce periodic boundary conditions
         // TODO: reduction is now to (-L/2, L/2) instead of (0, L) as before
@@ -91,11 +90,10 @@ void verlet<dimension, float_type>::finalize()
 
     typename particle_type::velocity_array_type& velocity = particle_->velocity();
     typename particle_type::force_array_type const& force = particle_->force();
+    typename particle_type::mass_array_type const& mass = particle_->mass();
 
     for (size_t i = 0; i < particle_->nparticle(); ++i) {
-        unsigned int type = particle_->species()[i];
-        float_type mass = particle_->mass[type];
-        velocity[i] += force[i] * timestep_half_ / mass;
+        velocity[i] += force[i] * timestep_half_ / mass[i];
     }
 }
 
