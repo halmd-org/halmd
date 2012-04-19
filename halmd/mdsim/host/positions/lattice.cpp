@@ -75,7 +75,7 @@ void lattice<dimension, float_type>::set()
     // randomise particle positions if there is more than 1 particle type
     // FIXME this requires a subsequent sort
     // FIXME this will fail greatly once we support polymers
-    if (particle_->ntypes.size() > 1) {
+    if (particle_->nspecies() > 1) {
         LOG("randomly permuting particle positions");
         random_->shuffle(particle_->r.begin(), particle_->r.end());
     }
