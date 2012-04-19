@@ -74,20 +74,20 @@ public:
     virtual void set();
     void rearrange(std::vector<unsigned int> const& index);
 
+private:
     /** positions, reduced to extended domain box */
     std::vector<vector_type> r;
     /** minimum image vectors */
-    std::vector<vector_type> image;
+    std::vector<vector_type> image_;
     /** velocities */
     std::vector<vector_type> v;
     /** globally unique particle numbers */
-    std::vector<unsigned int> tag;
+    std::vector<unsigned int> tag_;
     /** reverse particle tags */
-    std::vector<unsigned int> reverse_tag;
+    std::vector<unsigned int> reverse_tag_;
     /** types */
     std::vector<unsigned int> type;
 
-private:
     /** number of particles in simulation box */
     using _Base::nbox;
     /** number of particle types */
@@ -144,6 +144,22 @@ public:
     }
 
     /**
+     * Returns non-const reference to particle images.
+     */
+    image_array_type const& image() const
+    {
+       return image_;
+    }
+
+    /**
+     * Returns const reference to particle images.
+     */
+    image_array_type& image()
+    {
+       return image_;
+    }
+
+    /**
      * Returns const reference to particle velocities.
      */
     velocity_array_type const& velocity() const
@@ -157,6 +173,38 @@ public:
     velocity_array_type& velocity()
     {
        return v;
+    }
+
+    /**
+     * Returns const reference to particle tags.
+     */
+    tag_array_type const& tag() const
+    {
+       return tag_;
+    }
+
+    /**
+     * Returns non-const reference to particle tags.
+     */
+    tag_array_type& tag()
+    {
+       return tag_;
+    }
+
+    /**
+     * Returns const reference to particle reverse_tags.
+     */
+    reverse_tag_array_type const& reverse_tag() const
+    {
+       return reverse_tag_;
+    }
+
+    /**
+     * Returns non-const reference to particle reverse_tags.
+     */
+    reverse_tag_array_type& reverse_tag()
+    {
+       return reverse_tag_;
     }
 
     /**

@@ -65,7 +65,7 @@ void verlet<dimension, float_type>::integrate()
     scoped_timer_type timer(runtime_.integrate);
 
     typename particle_type::position_array_type& position = particle_->position();
-    typename particle_type::image_array_type& image = particle_->image;
+    typename particle_type::image_array_type& image = particle_->image();
     typename particle_type::velocity_array_type& velocity = particle_->velocity();
     typename particle_type::force_array_type const& force = particle_->force();
 

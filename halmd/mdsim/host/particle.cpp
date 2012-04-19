@@ -48,10 +48,10 @@ particle<dimension, float_type>::particle(
   : _Base(particles, mass)
   // allocate particle storage
   , r(nbox)
-  , image(nbox)
+  , image_(nbox)
   , v(nbox)
-  , tag(nbox)
-  , reverse_tag(nbox)
+  , tag_(nbox)
+  , reverse_tag_(nbox)
   , type(nbox)
   , force_(nbox)
   , en_pot_(nbox)
@@ -74,9 +74,9 @@ void particle<dimension, float_type>::set()
         fill_n(type.begin() + i, ntypes[j], j);
     }
     // assign particle tags
-    copy(counting_iterator<size_t>(0), counting_iterator<size_t>(nbox), tag.begin());
+    copy(counting_iterator<size_t>(0), counting_iterator<size_t>(nbox), tag_.begin());
     // initially, the mapping tag → index is a 1:1 mapping
-    copy(tag.begin(), tag.end(), reverse_tag.begin());
+    copy(tag_.begin(), tag_.end(), reverse_tag_.begin());
 }
 
 template <int dimension, typename float_type>
@@ -115,16 +115,16 @@ void particle<dimension, float_type>::rearrange(std::vector<unsigned int> const&
     scoped_timer_type timer(runtime_.rearrange);
 
     algorithm::host::permute(r.begin(), r.end(), index.begin());
-    algorithm::host::permute(image.begin(), image.end(), index.begin());
+    algorithm::host::permute(image_.begin(), image_.end(), index.begin());
     algorithm::host::permute(v.begin(), v.end(), index.begin());
     // no permutation of forces
-    algorithm::host::permute(tag.begin(), tag.end(), index.begin());
+    algorithm::host::permute(tag_.begin(), tag_.end(), index.begin());
     algorithm::host::permute(type.begin(), type.end(), index.begin());
 
     // update reverse tags
-    for (unsigned int i = 0; i < tag.size(); ++i) {
-        assert(tag[i] < reverse_tag.size());
-        reverse_tag[tag[i]] = i;
+    for (unsigned int i = 0; i < tag_.size(); ++i) {
+        assert(tag_[i] < reverse_tag_.size());
+        reverse_tag_[tag_[i]] = i;
     }
 }
 

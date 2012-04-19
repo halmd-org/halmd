@@ -81,7 +81,7 @@ void lattice<dimension, float_type>::set()
     }
 
     // assign particle image vectors
-    fill(particle_->image.begin(), particle_->image.end(), 0);
+    fill(particle_->image().begin(), particle_->image().end(), 0);
 }
 
 /**

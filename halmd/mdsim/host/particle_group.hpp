@@ -112,7 +112,7 @@ public:
 
     virtual map_iterator map() const
     {
-        return particle_->reverse_tag.begin();
+        return particle_->reverse_tag().begin();
     }
 
     virtual unsigned int size() const
@@ -161,7 +161,7 @@ public:
 
     virtual map_iterator map() const
     {
-        return particle_->reverse_tag.begin() + begin_;
+        return particle_->reverse_tag().begin() + begin_;
     }
 
     virtual unsigned int size() const

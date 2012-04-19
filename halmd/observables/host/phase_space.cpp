@@ -75,7 +75,7 @@ phase_space<dimension, float_type>::acquire()
     }
 
     typename particle_type::position_array_type& particle_position = particle_->position();
-    typename particle_type::image_array_type& particle_image = particle_->image;
+    typename particle_type::image_array_type& particle_image = particle_->image();
     typename particle_type::velocity_array_type& particle_velocity = particle_->velocity();
     typename particle_type::species_array_type& particle_species = particle_->species();
 
@@ -106,7 +106,7 @@ void phase_space<dimension, float_type>::set(shared_ptr<sample_type const> sampl
     scoped_timer_type timer(runtime_.set);
 
     typename particle_type::position_array_type& particle_position = particle_->position();
-    typename particle_type::image_array_type& particle_image = particle_->image;
+    typename particle_type::image_array_type& particle_image = particle_->image();
     typename particle_type::velocity_array_type& particle_velocity = particle_->velocity();
     typename particle_type::species_array_type& particle_species = particle_->species();
 
