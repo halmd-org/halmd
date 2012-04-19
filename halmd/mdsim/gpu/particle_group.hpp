@@ -121,7 +121,7 @@ public:
 
     virtual gpu_map_iterator g_map() const
     {
-        return particle_->g_reverse_tag.data();
+        return particle_->reverse_tag().data();
     }
 
     virtual unsigned int const* h_map();
@@ -174,7 +174,7 @@ public:
 
     virtual gpu_map_iterator g_map() const
     {
-        return particle_->g_reverse_tag.data() + begin_;
+        return particle_->reverse_tag().data() + begin_;
     }
 
     virtual unsigned int const* h_map();

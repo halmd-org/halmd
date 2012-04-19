@@ -52,7 +52,7 @@ void velocity<dimension, float_type>::rescale(double factor)
     LOG_TRACE("rescale particle velocities by a factor of " << factor);
     cuda::configure(dim_.grid, dim_.block);
     get_velocity_kernel<dimension>().rescale(
-        particle_->g_v
+        particle_->velocity()
       , particle_->dim.threads()
       , factor
     );
@@ -67,7 +67,7 @@ void velocity<dimension, float_type>::shift(vector_type const& delta)
     LOG_TRACE("shift particle velocities by " << delta);
     cuda::configure(dim_.grid, dim_.block);
     get_velocity_kernel<dimension>().shift(
-        particle_->g_v
+        particle_->velocity()
       , particle_->dim.threads()
       , delta
     );
@@ -82,7 +82,7 @@ void velocity<dimension, float_type>::shift_rescale(vector_type const& delta, do
     LOG_TRACE("shift particle velocities by " << delta << " and rescale by a factor of " << factor);
     cuda::configure(dim_.grid, dim_.block);
     get_velocity_kernel<dimension>().shift_rescale(
-        particle_->g_v
+        particle_->velocity()
       , particle_->dim.threads()
       , delta
       , factor

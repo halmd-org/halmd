@@ -58,7 +58,7 @@ particle_group_from_range<dimension, float_type>::particle_group_from_range(
         throw std::logic_error("particle_group: inverse tag ranges not allowed.");
     }
 
-    if (end_ > particle_->g_reverse_tag.size()) {
+    if (end_ > particle_->reverse_tag().size()) {
         throw std::logic_error("particle_group: tag range exceeds particle array.");
     }
 }
@@ -67,7 +67,7 @@ template <int dimension, typename float_type>
 unsigned int const* particle_group_all<dimension, float_type>::h_map()
 {
     try {
-        cuda::copy(particle_->g_reverse_tag, h_reverse_tag_);
+        cuda::copy(particle_->reverse_tag(), h_reverse_tag_);
     }
     catch (cuda::error const&) {
         throw;
@@ -80,7 +80,7 @@ template <int dimension, typename float_type>
 unsigned int const* particle_group_from_range<dimension, float_type>::h_map()
 {
     try {
-        cuda::copy(particle_->g_reverse_tag, h_reverse_tag_);
+        cuda::copy(particle_->reverse_tag(), h_reverse_tag_);
     }
     catch (cuda::error const&) {
         throw;

@@ -127,7 +127,7 @@ void from_binning<dimension, float_type>::update()
     cuda::host::vector<int> h_ret(1);
     cuda::memset(g_ret, EXIT_SUCCESS);
     cuda::configure(binning_->dim_cell().grid, binning_->dim_cell().block, binning_->cell_size() * (2 + dimension) * sizeof(int));
-    get_from_binning_kernel<dimension>().r.bind(particle_->g_r);
+    get_from_binning_kernel<dimension>().r.bind(particle_->position());
     get_from_binning_kernel<dimension>().rr_cut_skin.bind(g_rr_cut_skin_);
     get_from_binning_kernel<dimension>().update_neighbours(
         g_ret, g_neighbour_, binning_->g_cell()

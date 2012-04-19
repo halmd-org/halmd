@@ -144,7 +144,7 @@ void binning<dimension, float_type>::update()
     // compute cell indices for particle positions
     cuda::configure(particle_->dim.grid, particle_->dim.block);
     get_binning_kernel<dimension>().compute_cell(
-        particle_->g_r
+        particle_->position()
       , g_cell_index_
       , cell_length_
       , static_cast<fixed_vector<uint, dimension> >(ncell_)

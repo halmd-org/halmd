@@ -65,13 +65,13 @@ lattice<dimension, float_type, RandomNumberGenerator>::lattice(
 template <int dimension, typename float_type, typename RandomNumberGenerator>
 void lattice<dimension, float_type, RandomNumberGenerator>::set()
 {
-    assert(particle_->g_r.size() == particle_->nparticle());
+    assert(particle_->position().size() == particle_->nparticle());
 
     // assign fcc lattice points to a fraction of the particles in a slab at the centre
     gpu_vector_type length = static_cast<gpu_vector_type>(element_prod(box_->length(), slab_));
     gpu_vector_type offset = -length / 2;
 
-    float4* r_it = particle_->g_r.data(); // use pointer as substitute for missing iterator
+    float4* r_it = particle_->position().data(); // use pointer as substitute for missing iterator
     fcc(r_it, r_it + particle_->nparticle(), length, offset);
 
     // randomise particle positions if there is more than 1 particle type
@@ -79,12 +79,12 @@ void lattice<dimension, float_type, RandomNumberGenerator>::set()
     // FIXME this will fail greatly once we support polymers
     if (particle_->nspecies() > 1) {
         LOG("randomly permuting particle positions");
-        random_->shuffle(particle_->g_r); //< this shuffles the types as well
+        random_->shuffle(particle_->position()); //< this shuffles the types as well
         particle_->set();                //< assign new tags and types
     }
 
     // reset particle image vectors
-    cuda::memset(particle_->g_image, 0, particle_->g_image.capacity());
+    cuda::memset(particle_->image(), 0, particle_->image().capacity());
 }
 
 /**

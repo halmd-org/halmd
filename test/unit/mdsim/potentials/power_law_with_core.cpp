@@ -231,13 +231,13 @@ void power_law_with_core<float_type>::test()
     vector_type dx(0);
     dx[0] = box->edges()[0][0] / npart / 2;
 
-    cuda::host::vector<float4> r_list(particle->g_r.size());
+    cuda::host::vector<float4> r_list(particle->position().size());
     for (unsigned int k = 0; k < r_list.size(); ++k) {
         vector_type r = (k % 2) ? k * dx : vector_type(0);
         unsigned int type = (k < npart_list[0]) ? 0U : 1U;  // set particle type for a binary mixture
         r_list[k] = particle_kernel::tagged<vector_type>(r, type);
     }
-    cuda::copy(r_list, particle->g_r);
+    cuda::copy(r_list, particle->position());
 
     particle->aux_enable();              // enable computation of auxiliary quantities
     particle->prepare();

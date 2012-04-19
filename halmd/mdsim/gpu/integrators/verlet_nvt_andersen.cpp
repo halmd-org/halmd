@@ -107,7 +107,7 @@ integrate()
           , particle_->nspecies() * sizeof(float)
         );
         wrapper_type::kernel.integrate(
-            particle_->g_r, particle_->g_image, particle_->g_v, particle_->force()
+            particle_->position(), particle_->image(), particle_->velocity(), particle_->force()
           , particle_->g_mass, particle_->nspecies()
           , static_cast<vector_type>(box_->length())
         );
@@ -139,7 +139,7 @@ finalize()
           , particle_->nspecies() * sizeof(float)
         );
         wrapper_type::kernel.finalize(
-            particle_->g_r, particle_->g_v, particle_->force()
+            particle_->position(), particle_->velocity(), particle_->force()
           , particle_->g_mass, particle_->nspecies()
           , particle_->nparticle(), particle_->dim.threads()
           , random_->rng().rng()

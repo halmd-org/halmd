@@ -110,7 +110,7 @@ void pair_full<dimension, float_type, potential_type>::compute()
     cuda::configure(particle_->dim.grid, particle_->dim.block);
     if (!particle_->aux_valid()) {
         gpu_wrapper::kernel.compute(
-            particle_->force(), particle_->g_r
+            particle_->force(), particle_->position()
           , particle_->en_pot(), particle_->stress_pot(), particle_->hypervirial()
           , particle_->nspecies(), particle_->nspecies()
           , static_cast<vector_type>(box_->length())
@@ -118,7 +118,7 @@ void pair_full<dimension, float_type, potential_type>::compute()
     }
     else {
         gpu_wrapper::kernel.compute_aux(
-            particle_->force(), particle_->g_r
+            particle_->force(), particle_->position()
           , particle_->en_pot(), particle_->stress_pot(), particle_->hypervirial()
           , particle_->nspecies(), particle_->nspecies()
           , static_cast<vector_type>(box_->length())

@@ -121,9 +121,9 @@ void from_particle<dimension, float_type>::update()
       , particle1_->dim.threads_per_block() * (sizeof(unsigned int) + sizeof(vector_type))
     );
     get_from_particle_kernel<dimension>().update(
-        particle1_->g_r
+        particle1_->position()
       , particle1_->nparticle()
-      , particle2_->g_r
+      , particle2_->position()
       , particle2_->nparticle()
       , particle1_->nspecies()
       , particle2_->nspecies()

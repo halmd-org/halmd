@@ -130,7 +130,7 @@ integrate()
     try {
         cuda::configure(particle_->dim.grid, particle_->dim.block);
         wrapper_type::kernel.integrate(
-            particle_->g_r, particle_->g_image, particle_->g_v, particle_->force(), scale
+            particle_->position(), particle_->image(), particle_->velocity(), particle_->force(), scale
           , static_cast<vector_type>(box_->length())
         );
         cuda::thread::synchronize();
@@ -156,7 +156,7 @@ finalize()
     // and scheduling
     try {
         cuda::configure(particle_->dim.grid, particle_->dim.block);
-        wrapper_type::kernel.finalize(particle_->g_v, particle_->force());
+        wrapper_type::kernel.finalize(particle_->velocity(), particle_->force());
         cuda::thread::synchronize();
 
         float_type scale = propagate_chain();
@@ -164,7 +164,7 @@ finalize()
         // rescale velocities
         scoped_timer_type timer2(runtime_.rescale);
         cuda::configure(particle_->dim.grid, particle_->dim.block);
-        wrapper_type::kernel.rescale(particle_->g_v, scale);
+        wrapper_type::kernel.rescale(particle_->velocity(), scale);
         cuda::thread::synchronize();
     }
     catch (cuda::error const&) {
@@ -189,7 +189,7 @@ float_type verlet_nvt_hoover<dimension, float_type>::propagate_chain()
     scoped_timer_type timer(runtime_.propagate);
 
     // compute total kinetic energy (multiplied by 2),
-    float_type en_kin_2 = compute_en_kin_2_(particle_->g_v);
+    float_type en_kin_2 = compute_en_kin_2_(particle_->velocity());
 
     // head of the chain
     v_xi[1] += (mass_xi_[0] * v_xi[0] * v_xi[0] - temperature_) / mass_xi_[1] * timestep_4_;

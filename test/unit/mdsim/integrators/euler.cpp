@@ -347,7 +347,7 @@ void gpu_modules<dimension, float_type>::set_velocity(shared_ptr<particle_type> 
     // Caveat: overwrites particle tags in g_v (which are not used anyway)
     try {
         cuda::configure(particle->dim.grid, particle->dim.block);
-        apply_negate_wrapper::kernel.apply(particle->g_r, particle->g_v, particle->g_r.capacity());
+        apply_negate_wrapper::kernel.apply(particle->position(), particle->velocity(), particle->position().capacity());
         cuda::thread::synchronize();
     }
     catch (cuda::error const&) {

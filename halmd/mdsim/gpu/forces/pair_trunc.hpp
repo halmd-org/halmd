@@ -117,8 +117,8 @@ void pair_trunc<dimension, float_type, potential_type>::compute()
 
     cuda::copy(neighbour_->size(), gpu_wrapper::kernel.neighbour_size);
     cuda::copy(neighbour_->stride(), gpu_wrapper::kernel.neighbour_stride);
-    gpu_wrapper::kernel.r1.bind(particle1_->g_r);
-    gpu_wrapper::kernel.r2.bind(particle2_->g_r);
+    gpu_wrapper::kernel.r1.bind(particle1_->position());
+    gpu_wrapper::kernel.r2.bind(particle2_->position());
     potential_->bind_textures();
 
     cuda::configure(particle1_->dim.grid, particle1_->dim.block);
