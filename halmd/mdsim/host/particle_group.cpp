@@ -32,24 +32,6 @@ namespace mdsim {
 namespace host {
 
 template <int dimension, typename float_type>
-particle_group_from_range<dimension, float_type>::particle_group_from_range(
-    shared_ptr<particle_type const> particle
-  , unsigned int begin, unsigned int end
-)
-  : particle_(particle)
-  , begin_(begin)
-  , end_(end)
-{
-    if (end_ < begin_) {
-        throw std::logic_error("particle_group: inverse tag ranges not allowed.");
-    }
-
-    if (end_ > particle_->nparticle()) {
-        throw std::logic_error("particle_group: tag range exceeds particle array.");
-    }
-}
-
-template <int dimension, typename float_type>
 static int wrap_dimension(particle_group<dimension, float_type> const&)
 {
     return dimension;
@@ -88,6 +70,24 @@ void particle_group_all<dimension, float_type>::luaopen(lua_State* L)
             >)
         ]
     ];
+}
+
+template <int dimension, typename float_type>
+particle_group_from_range<dimension, float_type>::particle_group_from_range(
+    shared_ptr<particle_type const> particle
+  , unsigned int begin, unsigned int end
+)
+  : particle_(particle)
+  , begin_(begin)
+  , end_(end)
+{
+    if (end_ < begin_) {
+        throw std::logic_error("particle_group: inverse tag ranges not allowed.");
+    }
+
+    if (end_ > particle_->nparticle()) {
+        throw std::logic_error("particle_group: tag range exceeds particle array.");
+    }
 }
 
 template <int dimension, typename float_type>

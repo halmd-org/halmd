@@ -32,64 +32,6 @@ namespace mdsim {
 namespace gpu {
 
 template <int dimension, typename float_type>
-particle_group_all<dimension, float_type>::particle_group_all(
-    shared_ptr<particle_type const> particle
-)
-  // dependency injection
-  : particle_(particle)
-  // memory allocation
-  , h_reverse_tag_(particle->nparticle())
-{}
-
-template <int dimension, typename float_type>
-particle_group_from_range<dimension, float_type>::particle_group_from_range(
-    shared_ptr<particle_type const> particle
-  , unsigned int begin, unsigned int end
-)
-  // dependency injection
-  : particle_(particle)
-  // initialise attributes
-  , begin_(begin)
-  , end_(end)
-  // memory allocation
-  , h_reverse_tag_(particle->nparticle())
-{
-    if (end_ < begin_) {
-        throw std::logic_error("particle_group: inverse tag ranges not allowed.");
-    }
-
-    if (end_ > particle_->reverse_tag().size()) {
-        throw std::logic_error("particle_group: tag range exceeds particle array.");
-    }
-}
-
-template <int dimension, typename float_type>
-unsigned int const* particle_group_all<dimension, float_type>::h_map()
-{
-    try {
-        cuda::copy(particle_->reverse_tag(), h_reverse_tag_);
-    }
-    catch (cuda::error const&) {
-        throw;
-    }
-
-    return h_reverse_tag_.data();
-}
-
-template <int dimension, typename float_type>
-unsigned int const* particle_group_from_range<dimension, float_type>::h_map()
-{
-    try {
-        cuda::copy(particle_->reverse_tag(), h_reverse_tag_);
-    }
-    catch (cuda::error const&) {
-        throw;
-    }
-
-    return h_reverse_tag_.data() + begin_;
-}
-
-template <int dimension, typename float_type>
 static int wrap_dimension(particle_group<dimension, float_type> const&)
 {
     return dimension;
@@ -114,6 +56,29 @@ void particle_group<dimension, float_type>::luaopen(lua_State* L)
 }
 
 template <int dimension, typename float_type>
+particle_group_all<dimension, float_type>::particle_group_all(
+    shared_ptr<particle_type const> particle
+)
+  // dependency injection
+  : particle_(particle)
+  // memory allocation
+  , h_reverse_tag_(particle->nparticle())
+{}
+
+template <int dimension, typename float_type>
+unsigned int const* particle_group_all<dimension, float_type>::h_map()
+{
+    try {
+        cuda::copy(particle_->reverse_tag(), h_reverse_tag_);
+    }
+    catch (cuda::error const&) {
+        throw;
+    }
+
+    return h_reverse_tag_.data();
+}
+
+template <int dimension, typename float_type>
 void particle_group_all<dimension, float_type>::luaopen(lua_State* L)
 {
     using namespace luabind;
@@ -128,6 +93,41 @@ void particle_group_all<dimension, float_type>::luaopen(lua_State* L)
             >)
         ]
     ];
+}
+
+template <int dimension, typename float_type>
+particle_group_from_range<dimension, float_type>::particle_group_from_range(
+    shared_ptr<particle_type const> particle
+  , unsigned int begin, unsigned int end
+)
+  // dependency injection
+  : particle_(particle)
+  // initialise attributes
+  , begin_(begin)
+  , end_(end)
+  // memory allocation
+  , h_reverse_tag_(particle->nparticle())
+{
+    if (end_ < begin_) {
+        throw std::logic_error("particle_group: inverse tag ranges not allowed.");
+    }
+
+    if (end_ > particle_->reverse_tag().size()) {
+        throw std::logic_error("particle_group: tag range exceeds particle array.");
+    }
+}
+
+template <int dimension, typename float_type>
+unsigned int const* particle_group_from_range<dimension, float_type>::h_map()
+{
+    try {
+        cuda::copy(particle_->reverse_tag(), h_reverse_tag_);
+    }
+    catch (cuda::error const&) {
+        throw;
+    }
+
+    return h_reverse_tag_.data() + begin_;
 }
 
 template <int dimension, typename float_type>
