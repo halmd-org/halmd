@@ -128,6 +128,54 @@ public:
     }
 
     /**
+     * Returns const reference to particle positions.
+     */
+    position_array_type const& position() const
+    {
+       return r;
+    }
+
+    /**
+     * Returns non-const reference to particle positions.
+     */
+    position_array_type& position()
+    {
+       return r;
+    }
+
+    /**
+     * Returns const reference to particle velocities.
+     */
+    velocity_array_type const& velocity() const
+    {
+       return v;
+    }
+
+    /**
+     * Returns non-const reference to particle velocities.
+     */
+    velocity_array_type& velocity()
+    {
+       return v;
+    }
+
+    /**
+     * Returns const reference to particle species.
+     */
+    species_array_type const& species() const
+    {
+       return type;
+    }
+
+    /**
+     * Returns non-const reference to particle species.
+     */
+    species_array_type& species()
+    {
+       return type;
+    }
+
+    /**
      * Returns non-const reference to force per particle.
      */
     force_array_type const& force() const
