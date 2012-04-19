@@ -58,6 +58,7 @@ particle<dimension, float_type>::particle(
   , g_v(nbox)
   , g_reverse_tag(nbox)
   , g_mass(ntype)
+  , g_tag_(nbox)
   , g_force_(nbox)
   , g_en_pot_(nbox)
   , g_stress_pot_(nbox)
@@ -108,6 +109,7 @@ particle<dimension, float_type>::particle(
         g_v.reserve(dim.threads());
 #endif
         g_image.reserve(dim.threads());
+        g_tag_.reserve(dim.threads());
         g_reverse_tag.reserve(dim.threads());
         g_force_.reserve(dim.threads());
         g_en_pot_.reserve(dim.threads());
@@ -124,6 +126,7 @@ particle<dimension, float_type>::particle(
     cuda::memset(g_r, 0, g_r.capacity());
     cuda::memset(g_v, 0, g_v.capacity());
     cuda::memset(g_image, 0, g_image.capacity());
+    cuda::memset(g_tag_, 0, g_tag_.capacity());
     cuda::memset(g_reverse_tag, 0, g_reverse_tag.capacity());
 
     try {

@@ -43,11 +43,23 @@ public:
     typedef typename type_traits<dimension, float>::gpu::coalesced_vector_type gpu_vector_type;
     struct defaults;
 
+    typedef vector_type position_type;
+    typedef vector_type image_type;
+    typedef vector_type velocity_type;
+    typedef unsigned int tag_type;
+    typedef unsigned int reverse_tag_type;
+    typedef unsigned int species_type;
+    typedef double mass_type;
     typedef vector_type force_type;
     typedef float_type en_pot_type;
     typedef typename type_traits<dimension, float_type>::stress_tensor_type stress_pot_type;
     typedef float_type hypervirial_type;
 
+    typedef cuda::vector<float4> position_array_type;
+    typedef cuda::vector<gpu_vector_type> image_array_type;
+    typedef cuda::vector<float4> velocity_array_type;
+    typedef cuda::vector<tag_type> tag_array_type;
+    typedef cuda::vector<reverse_tag_type> reverse_tag_array_type;
     typedef cuda::vector<gpu_vector_type> force_array_type;
     typedef cuda::vector<en_pot_type> en_pot_array_type;
     typedef cuda::vector<typename type_traits<dimension, float_type>::gpu::stress_tensor_type> stress_pot_array_type;
@@ -117,6 +129,87 @@ public:
     {
         return ntype;
     }
+
+    /**
+     * Returns non-const reference to particle positions and species.
+     */
+    position_array_type const& position() const
+    {
+       return g_r;
+    }
+
+    /**
+     * Returns const reference to particle positions and species.
+     */
+    position_array_type& position()
+    {
+       return g_r;
+    }
+
+    /**
+     * Returns non-const reference to particle images.
+     */
+    image_array_type const& image() const
+    {
+       return g_image;
+    }
+
+    /**
+     * Returns const reference to particle images.
+     */
+    image_array_type& image()
+    {
+       return g_image;
+    }
+
+    /**
+     * Returns non-const reference to particle velocities and masses.
+     */
+    velocity_array_type const& velocity() const
+    {
+       return g_v;
+    }
+
+    /**
+     * Returns const reference to particle velocities and masses.
+     */
+    velocity_array_type& velocity()
+    {
+       return g_v;
+    }
+
+    /**
+     * Returns non-const reference to particle tags.
+     */
+    tag_array_type const& tag() const
+    {
+       return g_tag_;
+    }
+
+    /**
+     * Returns const reference to particle tags.
+     */
+    tag_array_type& tag()
+    {
+       return g_tag_;
+    }
+
+    /**
+     * Returns non-const reference to particle reverse tags.
+     */
+    reverse_tag_array_type const& reverse_tag() const
+    {
+       return g_reverse_tag;
+    }
+
+    /**
+     * Returns const reference to particle reverse tags.
+     */
+    reverse_tag_array_type& reverse_tag()
+    {
+       return g_reverse_tag;
+    }
+
     /**
      * Returns non-const reference to force per particle.
      */
@@ -198,8 +291,9 @@ public:
         return aux_valid_;
     }
 
-
 private:
+    /** particle tags */
+    tag_array_type g_tag_;
     /** force per particle */
     force_array_type g_force_;
     /** potential energy per particle */
