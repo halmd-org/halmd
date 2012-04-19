@@ -113,10 +113,26 @@ public:
 
     /**
      * Returns number of particles.
+     *
+     * Currently the number of particles is fixed at construction of
+     * particle. This may change in the future, to allow for chemical
+     * reactions that do not conserve the number of particles, or to
+     * transfer particles between domains of different processors.
      */
     std::size_t nparticle() const
     {
         return nbox;
+    }
+
+    /**
+     * Returns number of particle placeholders.
+     *
+     * Currently the number of placeholders, i.e. the element count of the
+     * particle arrays in memory, is equal to the number of particles.
+     */
+    std::size_t nplaceholder() const
+    {
+        return tag_.capacity();
     }
 
     /**
