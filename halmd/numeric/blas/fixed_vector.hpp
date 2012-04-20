@@ -1,5 +1,5 @@
 /*
- * Copyright © 2008-2010  Peter Colberg and Felix Höfling
+ * Copyright © 2008-2012  Peter Colberg and Felix Höfling
  *
  * This file is part of HALMD.
  *
@@ -27,6 +27,9 @@
 #include <halmd/numeric/blas/fixed_vector/size_6.hpp>
 #include <halmd/numeric/blas/fixed_vector/operators.hpp>
 #include <halmd/numeric/blas/fixed_vector/rounding.hpp>
+#ifdef CUDART_VERSION
+# include <halmd/numeric/blas/fixed_vector/cuda_vector_converter.hpp>
+#endif
 
 namespace halmd {
 
