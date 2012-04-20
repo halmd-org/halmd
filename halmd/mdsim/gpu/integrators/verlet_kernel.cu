@@ -17,17 +17,11 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <boost/mpl/if.hpp>
-
 #include <halmd/mdsim/gpu/integrators/verlet_kernel.cuh>
 #include <halmd/mdsim/gpu/integrators/verlet_kernel.hpp>
-#include <halmd/mdsim/gpu/particle_kernel.cuh>
 #include <halmd/numeric/blas/blas.hpp>
 #include <halmd/numeric/mp/dsfloat.hpp>
 #include <halmd/utility/gpu/thread.cuh>
-
-using namespace boost::mpl;
-using namespace halmd::mdsim::gpu::particle_kernel;
 
 namespace halmd {
 namespace mdsim {
@@ -66,26 +60,16 @@ __global__ void _integrate(
     unsigned int const threads = GTDIM;
     unsigned int type, tag;
     vector_type r, v;
-#ifdef USE_VERLET_DSFUN
-    tie(r, type) = untagged<vector_type>(g_r[i], g_r[i + threads]);
-    tie(v, tag) = untagged<vector_type>(g_v[i], g_v[i + threads]);
-#else
-    tie(r, type) = untagged<vector_type>(g_r[i]);
-    tie(v, tag) = untagged<vector_type>(g_v[i]);
-#endif
+    tie(r, type) <<= tie(g_r[i], g_r[i + threads]);
+    tie(v, tag) <<= tie(g_v[i], g_v[i + threads]);
     vector_type_ image = g_image[i];
     vector_type_ f = g_f[i];
     float mass = s_mass[type];
 
     integrate(r, image, v, f, mass, timestep_, box_length);
 
-#ifdef USE_VERLET_DSFUN
-    tie(g_r[i], g_r[i + threads]) = tagged(r, type);
-    tie(g_v[i], g_v[i + threads]) = tagged(v, tag);
-#else
-    g_r[i] = tagged(r, type);
-    g_v[i] = tagged(v, tag);
-#endif
+    tie(g_r[i], g_r[i + threads]) <<= tie(r, type);
+    tie(g_v[i], g_v[i + threads]) <<= tie(v, tag);
     g_image[i] = image;
 }
 
@@ -116,22 +100,14 @@ __global__ void _finalize(
     unsigned int tag, type;
     vector_type v;
     vector_type_ _;
-    tie(_, type) = untagged<vector_type_>(g_r[i]);
-#ifdef USE_VERLET_DSFUN
-    tie(v, tag) = untagged<vector_type>(g_v[i], g_v[i + threads]);
-#else
-    tie(v, tag) = untagged<vector_type>(g_v[i]);
-#endif
+    tie(_, type) <<= g_r[i];
+    tie(v, tag) <<= tie(g_v[i], g_v[i + threads]);
     vector_type_ f = g_f[i];
     float mass = s_mass[type];
 
     finalize(v, f, mass, timestep_);
 
-#ifdef USE_VERLET_DSFUN
-    tie(g_v[i], g_v[i + threads]) = tagged(v, tag);
-#else
-    g_v[i] = tagged(v, tag);
-#endif
+    tie(g_v[i], g_v[i + threads]) <<= tie(v, tag);
 }
 
 } // namespace verlet_kernel
