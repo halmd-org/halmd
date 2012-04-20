@@ -147,6 +147,8 @@ private:
     std::vector<step_type> interval_;
     /** time origin of next correlations to compute for each coarse-graining level */
     std::vector<step_type> origin_;
+    /** snapshot of time step at construction */
+    time_type timestep_;
     /** time grid of the resulting correlation functions */
     block_time_type time_;
     /** signal triggers preparation of input sample */
