@@ -35,6 +35,7 @@ namespace halmd {
 
 // import Boost.Tuple library into halmd namespace
 using boost::tuple;
+using boost::get;
 using boost::make_tuple;
 using boost::tie;
 
