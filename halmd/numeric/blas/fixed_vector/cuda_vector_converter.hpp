@@ -75,21 +75,6 @@ operator<<=(T& left, tuple<U&, V&> right)
 }
 
 /**
- * Pack tuple of single-precision floating-point value and scalar into CUDA vector.
- *
- * This function accepts a tuple of two CUDA vectors for signature
- * compatibility with the double-precision variants. The unneeded
- * second CUDA vector is discarded, i.e. its memory is not accessed.
- */
-template <typename T, typename U, typename V>
-inline HALMD_GPU_ENABLED typename boost::enable_if<
-    boost::is_same<T, typename cuda_vector_converter<T, tuple<U const, V const> >::result_type>, void>::type
-operator<<=(tuple<T&, T&> left, tuple<U&, V&> right)
-{
-    get<0>(left) = cuda_vector_converter<T, tuple<U const, V const> >::apply(get<0>(right), get<1>(right));
-}
-
-/**
  * Pack tuple of double-precision floating-point value and scalar into tuple of two CUDA vectors.
  */
 template <typename T, typename U, typename V>
@@ -109,21 +94,6 @@ inline HALMD_GPU_ENABLED typename boost::enable_if<
 operator<<=(tuple<U&, V&> left, T& right)
 {
     left = cuda_vector_converter<tuple<U, V>, T const>::apply(right);
-}
-
-/**
- * Unpack CUDA vector into tuple of single-precision floating-point value and scalar.
- *
- * This function accepts a tuple of two CUDA vectors for signature
- * compatibility with the double-precision variants. The unneeded
- * second CUDA vector is discarded, i.e. its memory is not accessed.
- */
-template <typename T, typename U, typename V>
-inline HALMD_GPU_ENABLED typename boost::enable_if<
-    boost::is_same<tuple<U, V>, typename cuda_vector_converter<tuple<U, V>, T const>::result_type>, void>::type
-operator<<=(tuple<U&, V&> left, tuple<T&, T&> right)
-{
-    left = cuda_vector_converter<tuple<U, V>, T const>::apply(get<0>(right));
 }
 
 /**

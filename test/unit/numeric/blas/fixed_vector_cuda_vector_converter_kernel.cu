@@ -48,7 +48,6 @@ static __global__ void converter_two(float4 const* g_input, float4* g_output, U*
 template <typename U, typename V>
 float_kernel<U, V> const float_kernel<U, V>::kernel = {
     &::converter_one
-  , &::converter_two
 };
 
 template <typename U, typename V>
