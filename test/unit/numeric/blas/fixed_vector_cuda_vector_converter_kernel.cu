@@ -24,23 +24,45 @@
 using namespace halmd;
 
 template <typename U, typename V>
-static __global__ void converter_one(float4 const* g_input, float4* g_output, U* g_u, V* g_v)
+static __global__ void converter_one(float4* g_input, float4* g_output, U* g_u, V* g_v)
 {
     U u;
     V v;
+
+    // pass by non-const reference
     tie(u, v) <<= g_input[GTID];
     g_output[GTID] <<= tie(u, v);
+
+    // pass by const reference
+    tie(u, v) <<= static_cast<float4 const&>(g_input[GTID]);
+    g_output[GTID] <<= tie(static_cast<U const&>(u), static_cast<V const&>(v));
+
+    // pass by value
+    tie(u, v) <<= float4(g_input[GTID]);
+    g_output[GTID] <<= make_tuple(u, v);
+
     g_u[GTID] = u;
     g_v[GTID] = v;
 }
 
 template <typename U, typename V>
-static __global__ void converter_two(float4 const* g_input, float4* g_output, U* g_u, V* g_v)
+static __global__ void converter_two(float4* g_input, float4* g_output, U* g_u, V* g_v)
 {
     U u;
     V v;
+
+    // pass by non-const reference
     tie(u, v) <<= tie(g_input[GTID], g_input[GTID + GTDIM]);
     tie(g_output[GTID], g_output[GTID + GTDIM]) <<= tie(u, v);
+
+    // pass by const reference
+    tie(u, v) <<= tie(static_cast<float4 const&>(g_input[GTID]), static_cast<float4 const&>(g_input[GTID + GTDIM]));
+    tie(g_output[GTID], g_output[GTID + GTDIM]) <<= tie(static_cast<U const&>(u), static_cast<V const&>(v));
+
+    // pass by value
+    tie(u, v) <<= make_tuple(g_input[GTID], g_input[GTID + GTDIM]);
+    tie(g_output[GTID], g_output[GTID + GTDIM]) <<= make_tuple(u, v);
+
     g_u[GTID] = u;
     g_v[GTID] = v;
 }

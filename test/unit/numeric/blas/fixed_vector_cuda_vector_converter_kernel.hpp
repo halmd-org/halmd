@@ -25,14 +25,14 @@
 template <typename U, typename V>
 struct float_kernel
 {
-    cuda::function<void (float4 const*, float4*, U*, V*) > converter_one;
+    cuda::function<void (float4*, float4*, U*, V*) > converter_one;
     static float_kernel const kernel;
 };
 
 template <typename U, typename V>
 struct double_kernel
 {
-    cuda::function<void (float4 const*, float4*, U*, V*) > converter_two;
+    cuda::function<void (float4*, float4*, U*, V*) > converter_two;
     static double_kernel const kernel;
 };
 
