@@ -20,6 +20,7 @@
 #ifndef HALMD_NUMERIC_BLAS_FIXED_VECTOR_CUDA_VECTOR_CONVERTER_HPP
 #define HALMD_NUMERIC_BLAS_FIXED_VECTOR_CUDA_VECTOR_CONVERTER_HPP
 
+#include <boost/mpl/and.hpp>
 #include <boost/type_traits/is_same.hpp>
 #include <boost/utility/enable_if.hpp>
 
@@ -60,877 +61,972 @@ inline int __float_as_int(float value)
 
 #endif /* ! __CUDACC__ */
 
-template <typename L, typename R>
-struct cuda_vector_converter;
-
-/**
- * Pack tuple of single-precision floating-point value and scalar into CUDA vector.
- */
-template <typename T, typename U, typename V>
-inline HALMD_GPU_ENABLED typename boost::enable_if<
-    boost::is_same<T, typename cuda_vector_converter<T, tuple<U const, V const> >::result_type>, void>::type
-operator<<=(T& left, tuple<U&, V&> right)
-{
-    left = cuda_vector_converter<T, tuple<U const, V const> >::apply(get<0>(right), get<1>(right));
-}
-
-/**
- * Pack tuple of double-precision floating-point value and scalar into tuple of two CUDA vectors.
- */
-template <typename T, typename U, typename V>
-inline HALMD_GPU_ENABLED typename boost::enable_if<
-    boost::is_same<tuple<T, T>, typename cuda_vector_converter<tuple<T, T>, tuple<U const, V const> >::result_type>, void>::type
-operator<<=(tuple<T&, T&> left, tuple<U&, V&> right)
-{
-    left = cuda_vector_converter<tuple<T, T>, tuple<U const, V const> >::apply(get<0>(right), get<1>(right));
-}
-
-/**
- * Unpack CUDA vector into tuple of single-precision floating-point value and scalar.
- */
-template <typename T, typename U, typename V>
-inline HALMD_GPU_ENABLED typename boost::enable_if<
-    boost::is_same<tuple<U, V>, typename cuda_vector_converter<tuple<U, V>, T const>::result_type>, void>::type
-operator<<=(tuple<U&, V&> left, T& right)
-{
-    left = cuda_vector_converter<tuple<U, V>, T const>::apply(right);
-}
-
-/**
- * Unpack tuple of two CUDA vectors into tuple of double-precision floating-point value and scalar.
- */
-template <typename T, typename U, typename V>
-inline HALMD_GPU_ENABLED typename boost::enable_if<
-    boost::is_same<tuple<U, V>, typename cuda_vector_converter<tuple<U, V>, tuple<T const, T const> >::result_type>, void>::type
-operator<<=(tuple<U&, V&> left, tuple<T&, T&> right)
-{
-    left = cuda_vector_converter<tuple<U, V>, tuple<T const, T const> >::apply(get<0>(right), get<1>(right));
-}
-
 /**
  * Pack fixed_vector<float, 3> and int into float4.
  */
-template <>
-struct cuda_vector_converter<float4, tuple<fixed_vector<float, 3> const, int const> >
+template <typename T, typename U, typename V>
+inline HALMD_GPU_ENABLED typename boost::enable_if<
+    boost::mpl::and_<
+        boost::is_same<T, float4>
+      , boost::is_same<U const, fixed_vector<float, 3> const>
+      , boost::is_same<V const, int const>
+    >, void>::type
+operator<<=(T& left, tuple<U&, V&> right)
 {
-    typedef float4 result_type;
-
-    static HALMD_GPU_ENABLED result_type apply(fixed_vector<float, 3> const& u, int const& v)
-    {
-        float4 t;
-        t.x = u[0];
-        t.y = u[1];
-        t.z = u[2];
-        t.w = __int_as_float(v);
-        return t;
-    }
-};
+    fixed_vector<float, 3> u;
+    int v;
+    tie(u, v) = tuple<U const&, V const&>(right);
+    float4 t;
+    t.x = u[0];
+    t.y = u[1];
+    t.z = u[2];
+    t.w = __int_as_float(v);
+    left = t;
+}
 
 /**
  * Unpack float4 into tuple of fixed_vector<float, 3> and int.
  */
-template <>
-struct cuda_vector_converter<tuple<fixed_vector<float, 3>, int>, float4 const>
+template <typename T, typename U, typename V>
+inline HALMD_GPU_ENABLED typename boost::enable_if<
+    boost::mpl::and_<
+        boost::is_same<T const, float4 const>
+      , boost::is_same<U, fixed_vector<float, 3> >
+      , boost::is_same<V, int>
+    >, void>::type
+operator<<=(tuple<U&, V&> left, T& right)
 {
-    typedef tuple<fixed_vector<float, 3>, int> result_type;
-
-    static HALMD_GPU_ENABLED result_type apply(float4 const& t)
-    {
-        fixed_vector<float, 3> u;
-        u[0] = t.x;
-        u[1] = t.y;
-        u[2] = t.z;
-        int v = __float_as_int(t.w);
-        return make_tuple(u, v);
-    }
-};
+    fixed_vector<float, 3> u;
+    u[0] = right.x;
+    u[1] = right.y;
+    u[2] = right.z;
+    int v = __float_as_int(right.w);
+    left = make_tuple(u, v);
+}
 
 /**
  * Pack fixed_vector<float, 2> and int into float4.
  */
-template <>
-struct cuda_vector_converter<float4, tuple<fixed_vector<float, 2> const, int const> >
+template <typename T, typename U, typename V>
+inline HALMD_GPU_ENABLED typename boost::enable_if<
+    boost::mpl::and_<
+        boost::is_same<T, float4>
+      , boost::is_same<U const, fixed_vector<float, 2> const>
+      , boost::is_same<V const, int const>
+    >, void>::type
+operator<<=(T& left, tuple<U&, V&> right)
 {
-    typedef float4 result_type;
-
-    static HALMD_GPU_ENABLED result_type apply(fixed_vector<float, 2> const& u, int const& v)
-    {
-        float4 t;
-        t.x = u[0];
-        t.y = u[1];
-        t.z = 0;
-        t.w = __int_as_float(v);
-        return t;
-    }
-};
+    fixed_vector<float, 2> u;
+    int v;
+    tie(u, v) = tuple<U const&, V const&>(right);
+    float4 t;
+    t.x = u[0];
+    t.y = u[1];
+    t.z = 0;
+    t.w = __int_as_float(v);
+    left = t;
+}
 
 /**
  * Unpack float4 into tuple of fixed_vector<float, 2> and int.
  */
-template <>
-struct cuda_vector_converter<tuple<fixed_vector<float, 2>, int>, float4 const>
+template <typename T, typename U, typename V>
+inline HALMD_GPU_ENABLED typename boost::enable_if<
+    boost::mpl::and_<
+        boost::is_same<T const, float4 const>
+      , boost::is_same<U, fixed_vector<float, 2> >
+      , boost::is_same<V, int>
+    >, void>::type
+operator<<=(tuple<U&, V&> left, T& right)
 {
-    typedef tuple<fixed_vector<float, 2>, int> result_type;
-
-    static HALMD_GPU_ENABLED result_type apply(float4 const& t)
-    {
-        fixed_vector<float, 2> u;
-        u[0] = t.x;
-        u[1] = t.y;
-        int v = __float_as_int(t.w);
-        return make_tuple(u, v);
-    }
-};
+    fixed_vector<float, 2> u;
+    u[0] = right.x;
+    u[1] = right.y;
+    int v = __float_as_int(right.w);
+    left = make_tuple(u, v);
+}
 
 /**
  * Pack fixed_vector<float, 3> and unsigned int into float4.
  */
-template <>
-struct cuda_vector_converter<float4, tuple<fixed_vector<float, 3> const, unsigned int const> >
+template <typename T, typename U, typename V>
+inline HALMD_GPU_ENABLED typename boost::enable_if<
+    boost::mpl::and_<
+        boost::is_same<T, float4>
+      , boost::is_same<U const, fixed_vector<float, 3> const>
+      , boost::is_same<V const, unsigned int const>
+    >, void>::type
+operator<<=(T& left, tuple<U&, V&> right)
 {
-    typedef float4 result_type;
-
-    static HALMD_GPU_ENABLED result_type apply(fixed_vector<float, 3> const& u, unsigned int const& v)
-    {
-        float4 t;
-        t.x = u[0];
-        t.y = u[1];
-        t.z = u[2];
-        t.w = __int_as_float(v);
-        return t;
-    }
-};
+    fixed_vector<float, 3> u;
+    unsigned int v;
+    tie(u, v) = tuple<U const&, V const&>(right);
+    float4 t;
+    t.x = u[0];
+    t.y = u[1];
+    t.z = u[2];
+    t.w = __int_as_float(v);
+    left = t;
+}
 
 /**
  * Unpack float4 into tuple of fixed_vector<float, 3> and unsigned int.
  */
-template <>
-struct cuda_vector_converter<tuple<fixed_vector<float, 3>, unsigned int>, float4 const>
+template <typename T, typename U, typename V>
+inline HALMD_GPU_ENABLED typename boost::enable_if<
+    boost::mpl::and_<
+        boost::is_same<T const, float4 const>
+      , boost::is_same<U, fixed_vector<float, 3> >
+      , boost::is_same<V, unsigned int>
+    >, void>::type
+operator<<=(tuple<U&, V&> left, T& right)
 {
-    typedef tuple<fixed_vector<float, 3>, unsigned int> result_type;
-
-    static HALMD_GPU_ENABLED result_type apply(float4 const& t)
-    {
-        fixed_vector<float, 3> u;
-        u[0] = t.x;
-        u[1] = t.y;
-        u[2] = t.z;
-        unsigned int v = __float_as_int(t.w);
-        return make_tuple(u, v);
-    }
-};
+    fixed_vector<float, 3> u;
+    u[0] = right.x;
+    u[1] = right.y;
+    u[2] = right.z;
+    unsigned int v = __float_as_int(right.w);
+    left = make_tuple(u, v);
+}
 
 /**
  * Pack fixed_vector<float, 2> and unsigned int into float4.
  */
-template <>
-struct cuda_vector_converter<float4, tuple<fixed_vector<float, 2> const, unsigned int const> >
+template <typename T, typename U, typename V>
+inline HALMD_GPU_ENABLED typename boost::enable_if<
+    boost::mpl::and_<
+        boost::is_same<T, float4>
+      , boost::is_same<U const, fixed_vector<float, 2> const>
+      , boost::is_same<V const, unsigned int const>
+    >, void>::type
+operator<<=(T& left, tuple<U&, V&> right)
 {
-    typedef float4 result_type;
-
-    static HALMD_GPU_ENABLED result_type apply(fixed_vector<float, 2> const& u, unsigned int const& v)
-    {
-        float4 t;
-        t.x = u[0];
-        t.y = u[1];
-        t.z = 0;
-        t.w = __int_as_float(v);
-        return t;
-    }
-};
+    fixed_vector<float, 2> u;
+    unsigned int v;
+    tie(u, v) = tuple<U const&, V const&>(right);
+    float4 t;
+    t.x = u[0];
+    t.y = u[1];
+    t.z = 0;
+    t.w = __int_as_float(v);
+    left = t;
+}
 
 /**
  * Unpack float4 into tuple of fixed_vector<float, 2> and unsigned int.
  */
-template <>
-struct cuda_vector_converter<tuple<fixed_vector<float, 2>, unsigned int>, float4 const>
+template <typename T, typename U, typename V>
+inline HALMD_GPU_ENABLED typename boost::enable_if<
+    boost::mpl::and_<
+        boost::is_same<T const, float4 const>
+      , boost::is_same<U, fixed_vector<float, 2> >
+      , boost::is_same<V, unsigned int>
+    >, void>::type
+operator<<=(tuple<U&, V&> left, T& right)
 {
-    typedef tuple<fixed_vector<float, 2>, unsigned int> result_type;
-
-    static HALMD_GPU_ENABLED result_type apply(float4 const& t)
-    {
-        fixed_vector<float, 2> u;
-        u[0] = t.x;
-        u[1] = t.y;
-        unsigned int v = __float_as_int(t.w);
-        return make_tuple(u, v);
-    }
-};
+    fixed_vector<float, 2> u;
+    u[0] = right.x;
+    u[1] = right.y;
+    unsigned int v = __float_as_int(right.w);
+    left = make_tuple(u, v);
+}
 
 /**
  * Pack fixed_vector<float, 3> and float into float4.
  */
-template <>
-struct cuda_vector_converter<float4, tuple<fixed_vector<float, 3> const, float const> >
+template <typename T, typename U, typename V>
+inline HALMD_GPU_ENABLED typename boost::enable_if<
+    boost::mpl::and_<
+        boost::is_same<T, float4>
+      , boost::is_same<U const, fixed_vector<float, 3> const>
+      , boost::is_same<V const, float const>
+    >, void>::type
+operator<<=(T& left, tuple<U&, V&> right)
 {
-    typedef float4 result_type;
-
-    static HALMD_GPU_ENABLED result_type apply(fixed_vector<float, 3> const& u, float const& v)
-    {
-        float4 t;
-        t.x = u[0];
-        t.y = u[1];
-        t.z = u[2];
-        t.w = v;
-        return t;
-    }
-};
+    fixed_vector<float, 3> u;
+    float v;
+    tie(u, v) = tuple<U const&, V const&>(right);
+    float4 t;
+    t.x = u[0];
+    t.y = u[1];
+    t.z = u[2];
+    t.w = v;
+    left = t;
+}
 
 /**
  * Unpack float4 into tuple of fixed_vector<float, 3> and float.
  */
-template <>
-struct cuda_vector_converter<tuple<fixed_vector<float, 3>, float>, float4 const>
+template <typename T, typename U, typename V>
+inline HALMD_GPU_ENABLED typename boost::enable_if<
+    boost::mpl::and_<
+        boost::is_same<T const, float4 const>
+      , boost::is_same<U, fixed_vector<float, 3> >
+      , boost::is_same<V, float>
+    >, void>::type
+operator<<=(tuple<U&, V&> left, T& right)
 {
-    typedef tuple<fixed_vector<float, 3>, float> result_type;
-
-    static HALMD_GPU_ENABLED result_type apply(float4 const& t)
-    {
-        fixed_vector<float, 3> u;
-        u[0] = t.x;
-        u[1] = t.y;
-        u[2] = t.z;
-        float v = t.w;
-        return make_tuple(u, v);
-    }
-};
+    fixed_vector<float, 3> u;
+    u[0] = right.x;
+    u[1] = right.y;
+    u[2] = right.z;
+    float v = right.w;
+    left = make_tuple(u, v);
+}
 
 /**
  * Pack fixed_vector<float, 2> and float into float4.
  */
-template <>
-struct cuda_vector_converter<float4, tuple<fixed_vector<float, 2> const, float const> >
+template <typename T, typename U, typename V>
+inline HALMD_GPU_ENABLED typename boost::enable_if<
+    boost::mpl::and_<
+        boost::is_same<T, float4>
+      , boost::is_same<U const, fixed_vector<float, 2> const>
+      , boost::is_same<V const, float const>
+    >, void>::type
+operator<<=(T& left, tuple<U&, V&> right)
 {
-    typedef float4 result_type;
-
-    static HALMD_GPU_ENABLED result_type apply(fixed_vector<float, 2> const& u, float const& v)
-    {
-        float4 t;
-        t.x = u[0];
-        t.y = u[1];
-        t.z = 0;
-        t.w = v;
-        return t;
-    }
-};
+    fixed_vector<float, 2> u;
+    float v;
+    tie(u, v) = tuple<U const&, V const&>(right);
+    float4 t;
+    t.x = u[0];
+    t.y = u[1];
+    t.z = 0;
+    t.w = v;
+    left = t;
+}
 
 /**
  * Unpack float4 into tuple of fixed_vector<float, 2> and float.
  */
-template <>
-struct cuda_vector_converter<tuple<fixed_vector<float, 2>, float>, float4 const>
+template <typename T, typename U, typename V>
+inline HALMD_GPU_ENABLED typename boost::enable_if<
+    boost::mpl::and_<
+        boost::is_same<T const, float4 const>
+      , boost::is_same<U, fixed_vector<float, 2> >
+      , boost::is_same<V, float>
+    >, void>::type
+operator<<=(tuple<U&, V&> left, T& right)
 {
-    typedef tuple<fixed_vector<float, 2>, float> result_type;
-
-    static HALMD_GPU_ENABLED result_type apply(float4 const& t)
-    {
-        fixed_vector<float, 2> u;
-        u[0] = t.x;
-        u[1] = t.y;
-        float v = t.w;
-        return make_tuple(u, v);
-    }
-};
+    fixed_vector<float, 2> u;
+    u[0] = right.x;
+    u[1] = right.y;
+    float v = right.w;
+    left = make_tuple(u, v);
+}
 
 /**
  * Pack fixed_vector<double, 3> and int into tuple of float4 and float4.
  */
-template <>
-struct cuda_vector_converter<tuple<float4, float4>, tuple<fixed_vector<double, 3> const, int const> >
+template <typename T, typename U, typename V>
+inline HALMD_GPU_ENABLED typename boost::enable_if<
+    boost::mpl::and_<
+        boost::is_same<T, float4>
+      , boost::is_same<U const, fixed_vector<double, 3> const>
+      , boost::is_same<V const, int const>
+    >, void>::type
+operator<<=(tuple<T&, T&> left, tuple<U&, V&> right)
 {
-    typedef tuple<float4, float4> result_type;
-
-    static HALMD_GPU_ENABLED result_type apply(fixed_vector<double, 3> const& u, int const& v)
-    {
-        float4 hi, lo;
-        tie(hi.x, lo.x) = split(dsfloat(u[0]));
-        tie(hi.y, lo.y) = split(dsfloat(u[1]));
-        tie(hi.z, lo.z) = split(dsfloat(u[2]));
-        tie(hi.w, lo.w) = make_tuple(__int_as_float(v), 0);
-        return make_tuple(hi, lo);
-    }
-};
+    fixed_vector<double, 3> u;
+    int v;
+    tie(u, v) = tuple<U const&, V const&>(right);
+    float4 hi, lo;
+    tie(hi.x, lo.x) = split(dsfloat(u[0]));
+    tie(hi.y, lo.y) = split(dsfloat(u[1]));
+    tie(hi.z, lo.z) = split(dsfloat(u[2]));
+    tie(hi.w, lo.w) = make_tuple(__int_as_float(v), 0);
+    left = make_tuple(hi, lo);
+}
 
 /**
  * Unpack float4 and float4 into tuple of fixed_vector<double, 3> and int.
  */
-template <>
-struct cuda_vector_converter<tuple<fixed_vector<double, 3>, int>, tuple<float4 const, float4 const> >
+template <typename T, typename U, typename V>
+inline HALMD_GPU_ENABLED typename boost::enable_if<
+    boost::mpl::and_<
+        boost::is_same<T const, float4 const>
+      , boost::is_same<U, fixed_vector<double, 3> >
+      , boost::is_same<V, int>
+    >, void>::type
+operator<<=(tuple<U&, V&> left, tuple<T&, T&> right)
 {
-    typedef tuple<fixed_vector<double, 3>, int> result_type;
-
-    static HALMD_GPU_ENABLED result_type apply(float4 const& hi, float4 const& lo)
-    {
-        fixed_vector<double, 3> u;
-        u[0] = dsfloat(hi.x, lo.x);
-        u[1] = dsfloat(hi.y, lo.y);
-        u[2] = dsfloat(hi.z, lo.z);
-        int v = __float_as_int(hi.w);
-        return make_tuple(u, v);
-    }
-};
+    float4 hi, lo;
+    tie(hi, lo) = tuple<T const&, T const&>(right);
+    fixed_vector<double, 3> u;
+    u[0] = dsfloat(hi.x, lo.x);
+    u[1] = dsfloat(hi.y, lo.y);
+    u[2] = dsfloat(hi.z, lo.z);
+    int v = __float_as_int(hi.w);
+    left = make_tuple(u, v);
+}
 
 /**
  * Pack fixed_vector<double, 2> and int into tuple of float4 and float4.
  */
-template <>
-struct cuda_vector_converter<tuple<float4, float4>, tuple<fixed_vector<double, 2> const, int const> >
+template <typename T, typename U, typename V>
+inline HALMD_GPU_ENABLED typename boost::enable_if<
+    boost::mpl::and_<
+        boost::is_same<T, float4>
+      , boost::is_same<U const, fixed_vector<double, 2> const>
+      , boost::is_same<V const, int const>
+    >, void>::type
+operator<<=(tuple<T&, T&> left, tuple<U&, V&> right)
 {
-    typedef tuple<float4, float4> result_type;
-
-    static HALMD_GPU_ENABLED result_type apply(fixed_vector<double, 2> const& u, int const& v)
-    {
-        float4 hi, lo;
-        tie(hi.x, lo.x) = split(dsfloat(u[0]));
-        tie(hi.y, lo.y) = split(dsfloat(u[1]));
-        tie(hi.z, lo.z) = make_tuple(0, 0);
-        tie(hi.w, lo.w) = make_tuple(__int_as_float(v), 0);
-        return make_tuple(hi, lo);
-    }
-};
+    fixed_vector<double, 2> u;
+    int v;
+    tie(u, v) = tuple<U const&, V const&>(right);
+    float4 hi, lo;
+    tie(hi.x, lo.x) = split(dsfloat(u[0]));
+    tie(hi.y, lo.y) = split(dsfloat(u[1]));
+    tie(hi.z, lo.z) = make_tuple(0, 0);
+    tie(hi.w, lo.w) = make_tuple(__int_as_float(v), 0);
+    left = make_tuple(hi, lo);
+}
 
 /**
  * Unpack float4 and float4 into tuple of fixed_vector<double, 2> and int.
  */
-template <>
-struct cuda_vector_converter<tuple<fixed_vector<double, 2>, int>, tuple<float4 const, float4 const> >
+template <typename T, typename U, typename V>
+inline HALMD_GPU_ENABLED typename boost::enable_if<
+    boost::mpl::and_<
+        boost::is_same<T const, float4 const>
+      , boost::is_same<U, fixed_vector<double, 2> >
+      , boost::is_same<V, int>
+    >, void>::type
+operator<<=(tuple<U&, V&> left, tuple<T&, T&> right)
 {
-    typedef tuple<fixed_vector<double, 2>, int> result_type;
-
-    static HALMD_GPU_ENABLED result_type apply(float4 const& hi, float4 const& lo)
-    {
-        fixed_vector<double, 2> u;
-        u[0] = dsfloat(hi.x, lo.x);
-        u[1] = dsfloat(hi.y, lo.y);
-        int v = __float_as_int(hi.w);
-        return make_tuple(u, v);
-    }
-};
+    float4 hi, lo;
+    tie(hi, lo) = tuple<T const&, T const&>(right);
+    fixed_vector<double, 2> u;
+    u[0] = dsfloat(hi.x, lo.x);
+    u[1] = dsfloat(hi.y, lo.y);
+    int v = __float_as_int(hi.w);
+    left = make_tuple(u, v);
+}
 
 /**
  * Pack fixed_vector<double, 3> and unsigned int into tuple of float4 and float4.
  */
-template <>
-struct cuda_vector_converter<tuple<float4, float4>, tuple<fixed_vector<double, 3> const, unsigned int const> >
+template <typename T, typename U, typename V>
+inline HALMD_GPU_ENABLED typename boost::enable_if<
+    boost::mpl::and_<
+        boost::is_same<T, float4>
+      , boost::is_same<U const, fixed_vector<double, 3> const>
+      , boost::is_same<V const, unsigned int const>
+    >, void>::type
+operator<<=(tuple<T&, T&> left, tuple<U&, V&> right)
 {
-    typedef tuple<float4, float4> result_type;
-
-    static HALMD_GPU_ENABLED result_type apply(fixed_vector<double, 3> const& u, unsigned int const& v)
-    {
-        float4 hi, lo;
-        tie(hi.x, lo.x) = split(dsfloat(u[0]));
-        tie(hi.y, lo.y) = split(dsfloat(u[1]));
-        tie(hi.z, lo.z) = split(dsfloat(u[2]));
-        tie(hi.w, lo.w) = make_tuple(__int_as_float(v), 0);
-        return make_tuple(hi, lo);
-    }
-};
+    fixed_vector<double, 3> u;
+    unsigned int v;
+    tie(u, v) = tuple<U const&, V const&>(right);
+    float4 hi, lo;
+    tie(hi.x, lo.x) = split(dsfloat(u[0]));
+    tie(hi.y, lo.y) = split(dsfloat(u[1]));
+    tie(hi.z, lo.z) = split(dsfloat(u[2]));
+    tie(hi.w, lo.w) = make_tuple(__int_as_float(v), 0);
+    left = make_tuple(hi, lo);
+}
 
 /**
  * Unpack float4 and float4 into tuple of fixed_vector<double, 3> and unsigned int.
  */
-template <>
-struct cuda_vector_converter<tuple<fixed_vector<double, 3>, unsigned int>, tuple<float4 const, float4 const> >
+template <typename T, typename U, typename V>
+inline HALMD_GPU_ENABLED typename boost::enable_if<
+    boost::mpl::and_<
+        boost::is_same<T const, float4 const>
+      , boost::is_same<U, fixed_vector<double, 3> >
+      , boost::is_same<V, unsigned int>
+    >, void>::type
+operator<<=(tuple<U&, V&> left, tuple<T&, T&> right)
 {
-    typedef tuple<fixed_vector<double, 3>, unsigned int> result_type;
-
-    static HALMD_GPU_ENABLED result_type apply(float4 const& hi, float4 const& lo)
-    {
-        fixed_vector<double, 3> u;
-        u[0] = dsfloat(hi.x, lo.x);
-        u[1] = dsfloat(hi.y, lo.y);
-        u[2] = dsfloat(hi.z, lo.z);
-        unsigned int v = __float_as_int(hi.w);
-        return make_tuple(u, v);
-    }
-};
+    float4 hi, lo;
+    tie(hi, lo) = tuple<T const&, T const&>(right);
+    fixed_vector<double, 3> u;
+    u[0] = dsfloat(hi.x, lo.x);
+    u[1] = dsfloat(hi.y, lo.y);
+    u[2] = dsfloat(hi.z, lo.z);
+    unsigned int v = __float_as_int(hi.w);
+    left = make_tuple(u, v);
+}
 
 /**
  * Pack fixed_vector<double, 2> and unsigned int into tuple of float4 and float4.
  */
-template <>
-struct cuda_vector_converter<tuple<float4, float4>, tuple<fixed_vector<double, 2> const, unsigned int const> >
+template <typename T, typename U, typename V>
+inline HALMD_GPU_ENABLED typename boost::enable_if<
+    boost::mpl::and_<
+        boost::is_same<T, float4>
+      , boost::is_same<U const, fixed_vector<double, 2> const>
+      , boost::is_same<V const, unsigned int const>
+    >, void>::type
+operator<<=(tuple<T&, T&> left, tuple<U&, V&> right)
 {
-    typedef tuple<float4, float4> result_type;
-
-    static HALMD_GPU_ENABLED result_type apply(fixed_vector<double, 2> const& u, unsigned int const& v)
-    {
-        float4 hi, lo;
-        tie(hi.x, lo.x) = split(dsfloat(u[0]));
-        tie(hi.y, lo.y) = split(dsfloat(u[1]));
-        tie(hi.z, lo.z) = make_tuple(0, 0);
-        tie(hi.w, lo.w) = make_tuple(__int_as_float(v), 0);
-        return make_tuple(hi, lo);
-    }
-};
+    fixed_vector<double, 2> u;
+    unsigned int v;
+    tie(u, v) = tuple<U const&, V const&>(right);
+    float4 hi, lo;
+    tie(hi.x, lo.x) = split(dsfloat(u[0]));
+    tie(hi.y, lo.y) = split(dsfloat(u[1]));
+    tie(hi.z, lo.z) = make_tuple(0, 0);
+    tie(hi.w, lo.w) = make_tuple(__int_as_float(v), 0);
+    left = make_tuple(hi, lo);
+}
 
 /**
  * Unpack float4 and float4 into tuple of fixed_vector<double, 2> and unsigned int.
  */
-template <>
-struct cuda_vector_converter<tuple<fixed_vector<double, 2>, unsigned int>, tuple<float4 const, float4 const> >
+template <typename T, typename U, typename V>
+inline HALMD_GPU_ENABLED typename boost::enable_if<
+    boost::mpl::and_<
+        boost::is_same<T const, float4 const>
+      , boost::is_same<U, fixed_vector<double, 2> >
+      , boost::is_same<V, unsigned int>
+    >, void>::type
+operator<<=(tuple<U&, V&> left, tuple<T&, T&> right)
 {
-    typedef tuple<fixed_vector<double, 2>, unsigned int> result_type;
-
-    static HALMD_GPU_ENABLED result_type apply(float4 const& hi, float4 const& lo)
-    {
-        fixed_vector<double, 2> u;
-        u[0] = dsfloat(hi.x, lo.x);
-        u[1] = dsfloat(hi.y, lo.y);
-        unsigned int v = __float_as_int(hi.w);
-        return make_tuple(u, v);
-    }
-};
+    float4 hi, lo;
+    tie(hi, lo) = tuple<T const&, T const&>(right);
+    fixed_vector<double, 2> u;
+    u[0] = dsfloat(hi.x, lo.x);
+    u[1] = dsfloat(hi.y, lo.y);
+    unsigned int v = __float_as_int(hi.w);
+    left = make_tuple(u, v);
+}
 
 /**
  * Pack fixed_vector<double, 3> and float into tuple of float4 and float4.
  */
-template <>
-struct cuda_vector_converter<tuple<float4, float4>, tuple<fixed_vector<double, 3> const, float const> >
+template <typename T, typename U, typename V>
+inline HALMD_GPU_ENABLED typename boost::enable_if<
+    boost::mpl::and_<
+        boost::is_same<T, float4>
+      , boost::is_same<U const, fixed_vector<double, 3> const>
+      , boost::is_same<V const, float const>
+    >, void>::type
+operator<<=(tuple<T&, T&> left, tuple<U&, V&> right)
 {
-    typedef tuple<float4, float4> result_type;
-
-    static HALMD_GPU_ENABLED result_type apply(fixed_vector<double, 3> const& u, float const& v)
-    {
-        float4 hi, lo;
-        tie(hi.x, lo.x) = split(dsfloat(u[0]));
-        tie(hi.y, lo.y) = split(dsfloat(u[1]));
-        tie(hi.z, lo.z) = split(dsfloat(u[2]));
-        tie(hi.w, lo.w) = make_tuple(v, 0);
-        return make_tuple(hi, lo);
-    }
-};
+    fixed_vector<double, 3> u;
+    float v;
+    tie(u, v) = tuple<U const&, V const&>(right);
+    float4 hi, lo;
+    tie(hi.x, lo.x) = split(dsfloat(u[0]));
+    tie(hi.y, lo.y) = split(dsfloat(u[1]));
+    tie(hi.z, lo.z) = split(dsfloat(u[2]));
+    tie(hi.w, lo.w) = make_tuple(v, 0);
+    left = make_tuple(hi, lo);
+}
 
 /**
  * Unpack float4 and float4 into tuple of fixed_vector<double, 3> and float.
  */
-template <>
-struct cuda_vector_converter<tuple<fixed_vector<double, 3>, float>, tuple<float4 const, float4 const> >
+template <typename T, typename U, typename V>
+inline HALMD_GPU_ENABLED typename boost::enable_if<
+    boost::mpl::and_<
+        boost::is_same<T const, float4 const>
+      , boost::is_same<U, fixed_vector<double, 3> >
+      , boost::is_same<V, float>
+    >, void>::type
+operator<<=(tuple<U&, V&> left, tuple<T&, T&> right)
 {
-    typedef tuple<fixed_vector<double, 3>, float> result_type;
-
-    static HALMD_GPU_ENABLED result_type apply(float4 const& hi, float4 const& lo)
-    {
-        fixed_vector<double, 3> u;
-        u[0] = dsfloat(hi.x, lo.x);
-        u[1] = dsfloat(hi.y, lo.y);
-        u[2] = dsfloat(hi.z, lo.z);
-        float v = hi.w;
-        return make_tuple(u, v);
-    }
-};
+    float4 hi, lo;
+    tie(hi, lo) = tuple<T const&, T const&>(right);
+    fixed_vector<double, 3> u;
+    u[0] = dsfloat(hi.x, lo.x);
+    u[1] = dsfloat(hi.y, lo.y);
+    u[2] = dsfloat(hi.z, lo.z);
+    float v = hi.w;
+    left = make_tuple(u, v);
+}
 
 /**
  * Pack fixed_vector<double, 2> and float into tuple of float4 and float4.
  */
-template <>
-struct cuda_vector_converter<tuple<float4, float4>, tuple<fixed_vector<double, 2> const, float const> >
+template <typename T, typename U, typename V>
+inline HALMD_GPU_ENABLED typename boost::enable_if<
+    boost::mpl::and_<
+        boost::is_same<T, float4>
+      , boost::is_same<U const, fixed_vector<double, 2> const>
+      , boost::is_same<V const, float const>
+    >, void>::type
+operator<<=(tuple<T&, T&> left, tuple<U&, V&> right)
 {
-    typedef tuple<float4, float4> result_type;
-
-    static HALMD_GPU_ENABLED result_type apply(fixed_vector<double, 2> const& u, float const& v)
-    {
-        float4 hi, lo;
-        tie(hi.x, lo.x) = split(dsfloat(u[0]));
-        tie(hi.y, lo.y) = split(dsfloat(u[1]));
-        tie(hi.z, lo.z) = make_tuple(0, 0);
-        tie(hi.w, lo.w) = make_tuple(v, 0);
-        return make_tuple(hi, lo);
-    }
-};
+    fixed_vector<double, 2> u;
+    float v;
+    tie(u, v) = tuple<U const&, V const&>(right);
+    float4 hi, lo;
+    tie(hi.x, lo.x) = split(dsfloat(u[0]));
+    tie(hi.y, lo.y) = split(dsfloat(u[1]));
+    tie(hi.z, lo.z) = make_tuple(0, 0);
+    tie(hi.w, lo.w) = make_tuple(v, 0);
+    left = make_tuple(hi, lo);
+}
 
 /**
  * Unpack float4 and float4 into tuple of fixed_vector<double, 2> and float.
  */
-template <>
-struct cuda_vector_converter<tuple<fixed_vector<double, 2>, float>, tuple<float4 const, float4 const> >
+template <typename T, typename U, typename V>
+inline HALMD_GPU_ENABLED typename boost::enable_if<
+    boost::mpl::and_<
+        boost::is_same<T const, float4 const>
+      , boost::is_same<U, fixed_vector<double, 2> >
+      , boost::is_same<V, float>
+    >, void>::type
+operator<<=(tuple<U&, V&> left, tuple<T&, T&> right)
 {
-    typedef tuple<fixed_vector<double, 2>, float> result_type;
-
-    static HALMD_GPU_ENABLED result_type apply(float4 const& hi, float4 const& lo)
-    {
-        fixed_vector<double, 2> u;
-        u[0] = dsfloat(hi.x, lo.x);
-        u[1] = dsfloat(hi.y, lo.y);
-        float v = hi.w;
-        return make_tuple(u, v);
-    }
-};
+    float4 hi, lo;
+    tie(hi, lo) = tuple<T const&, T const&>(right);
+    fixed_vector<double, 2> u;
+    u[0] = dsfloat(hi.x, lo.x);
+    u[1] = dsfloat(hi.y, lo.y);
+    float v = hi.w;
+    left = make_tuple(u, v);
+}
 
 /**
  * Pack fixed_vector<double, 3> and double into tuple of float4 and float4.
  */
-template <>
-struct cuda_vector_converter<tuple<float4, float4>, tuple<fixed_vector<double, 3> const, double const> >
+template <typename T, typename U, typename V>
+inline HALMD_GPU_ENABLED typename boost::enable_if<
+    boost::mpl::and_<
+        boost::is_same<T, float4>
+      , boost::is_same<U const, fixed_vector<double, 3> const>
+      , boost::is_same<V const, double const>
+    >, void>::type
+operator<<=(tuple<T&, T&> left, tuple<U&, V&> right)
 {
-    typedef tuple<float4, float4> result_type;
-
-    static HALMD_GPU_ENABLED result_type apply(fixed_vector<double, 3> const& u, double const& v)
-    {
-        float4 hi, lo;
-        tie(hi.x, lo.x) = split(dsfloat(u[0]));
-        tie(hi.y, lo.y) = split(dsfloat(u[1]));
-        tie(hi.z, lo.z) = split(dsfloat(u[2]));
-        tie(hi.w, lo.w) = split(dsfloat(v));
-        return make_tuple(hi, lo);
-    }
-};
+    fixed_vector<double, 3> u;
+    double v;
+    tie(u, v) = tuple<U const&, V const&>(right);
+    float4 hi, lo;
+    tie(hi.x, lo.x) = split(dsfloat(u[0]));
+    tie(hi.y, lo.y) = split(dsfloat(u[1]));
+    tie(hi.z, lo.z) = split(dsfloat(u[2]));
+    tie(hi.w, lo.w) = split(dsfloat(v));
+    left = make_tuple(hi, lo);
+}
 
 /**
  * Unpack float4 and float4 into tuple of fixed_vector<double, 3> and double.
  */
-template <>
-struct cuda_vector_converter<tuple<fixed_vector<double, 3>, double>, tuple<float4 const, float4 const> >
+template <typename T, typename U, typename V>
+inline HALMD_GPU_ENABLED typename boost::enable_if<
+    boost::mpl::and_<
+        boost::is_same<T const, float4 const>
+      , boost::is_same<U, fixed_vector<double, 3> >
+      , boost::is_same<V, double>
+    >, void>::type
+operator<<=(tuple<U&, V&> left, tuple<T&, T&> right)
 {
-    typedef tuple<fixed_vector<double, 3>, double> result_type;
-
-    static HALMD_GPU_ENABLED result_type apply(float4 const& hi, float4 const& lo)
-    {
-        fixed_vector<double, 3> u;
-        u[0] = dsfloat(hi.x, lo.x);
-        u[1] = dsfloat(hi.y, lo.y);
-        u[2] = dsfloat(hi.z, lo.z);
-        double v = dsfloat(hi.w, lo.w);
-        return make_tuple(u, v);
-    }
-};
+    float4 hi, lo;
+    tie(hi, lo) = tuple<T const&, T const&>(right);
+    fixed_vector<double, 3> u;
+    u[0] = dsfloat(hi.x, lo.x);
+    u[1] = dsfloat(hi.y, lo.y);
+    u[2] = dsfloat(hi.z, lo.z);
+    double v = dsfloat(hi.w, lo.w);
+    left = make_tuple(u, v);
+}
 
 /**
  * Pack fixed_vector<double, 2> and double into tuple of float4 and float4.
  */
-template <>
-struct cuda_vector_converter<tuple<float4, float4>, tuple<fixed_vector<double, 2> const, double const> >
+template <typename T, typename U, typename V>
+inline HALMD_GPU_ENABLED typename boost::enable_if<
+    boost::mpl::and_<
+        boost::is_same<T, float4>
+      , boost::is_same<U const, fixed_vector<double, 2> const>
+      , boost::is_same<V const, double const>
+    >, void>::type
+operator<<=(tuple<T&, T&> left, tuple<U&, V&> right)
 {
-    typedef tuple<float4, float4> result_type;
-
-    static HALMD_GPU_ENABLED result_type apply(fixed_vector<double, 2> const& u, double const& v)
-    {
-        float4 hi, lo;
-        tie(hi.x, lo.x) = split(dsfloat(u[0]));
-        tie(hi.y, lo.y) = split(dsfloat(u[1]));
-        tie(hi.z, lo.z) = make_tuple(0, 0);
-        tie(hi.w, lo.w) = split(dsfloat(v));
-        return make_tuple(hi, lo);
-    }
-};
+    fixed_vector<double, 2> u;
+    double v;
+    tie(u, v) = tuple<U const&, V const&>(right);
+    float4 hi, lo;
+    tie(hi.x, lo.x) = split(dsfloat(u[0]));
+    tie(hi.y, lo.y) = split(dsfloat(u[1]));
+    tie(hi.z, lo.z) = make_tuple(0, 0);
+    tie(hi.w, lo.w) = split(dsfloat(v));
+    left = make_tuple(hi, lo);
+}
 
 /**
  * Unpack float4 and float4 into tuple of fixed_vector<double, 2> and double.
  */
-template <>
-struct cuda_vector_converter<tuple<fixed_vector<double, 2>, double>, tuple<float4 const, float4 const> >
+template <typename T, typename U, typename V>
+inline HALMD_GPU_ENABLED typename boost::enable_if<
+    boost::mpl::and_<
+        boost::is_same<T const, float4 const>
+      , boost::is_same<U, fixed_vector<double, 2> >
+      , boost::is_same<V, double>
+    >, void>::type
+operator<<=(tuple<U&, V&> left, tuple<T&, T&> right)
 {
-    typedef tuple<fixed_vector<double, 2>, double> result_type;
-
-    static HALMD_GPU_ENABLED result_type apply(float4 const& hi, float4 const& lo)
-    {
-        fixed_vector<double, 2> u;
-        u[0] = dsfloat(hi.x, lo.x);
-        u[1] = dsfloat(hi.y, lo.y);
-        double v = dsfloat(hi.w, lo.w);
-        return make_tuple(u, v);
-    }
-};
+    float4 hi, lo;
+    tie(hi, lo) = tuple<T const&, T const&>(right);
+    fixed_vector<double, 2> u;
+    u[0] = dsfloat(hi.x, lo.x);
+    u[1] = dsfloat(hi.y, lo.y);
+    double v = dsfloat(hi.w, lo.w);
+    left = make_tuple(u, v);
+}
 
 /**
  * Pack fixed_vector<dsfloat, 3> and int into tuple of float4 and float4.
  */
-template <>
-struct cuda_vector_converter<tuple<float4, float4>, tuple<fixed_vector<dsfloat, 3> const, int const> >
+template <typename T, typename U, typename V>
+inline HALMD_GPU_ENABLED typename boost::enable_if<
+    boost::mpl::and_<
+        boost::is_same<T, float4>
+      , boost::is_same<U const, fixed_vector<dsfloat, 3> const>
+      , boost::is_same<V const, int const>
+    >, void>::type
+operator<<=(tuple<T&, T&> left, tuple<U&, V&> right)
 {
-    typedef tuple<float4, float4> result_type;
-
-    static HALMD_GPU_ENABLED result_type apply(fixed_vector<dsfloat, 3> const& u, int const& v)
-    {
-        float4 hi, lo;
-        tie(hi.x, lo.x) = split(u[0]);
-        tie(hi.y, lo.y) = split(u[1]);
-        tie(hi.z, lo.z) = split(u[2]);
-        tie(hi.w, lo.w) = make_tuple(__int_as_float(v), 0);
-        return make_tuple(hi, lo);
-    }
-};
+    fixed_vector<dsfloat, 3> u;
+    int v;
+    tie(u, v) = tuple<U const&, V const&>(right);
+    float4 hi, lo;
+    tie(hi.x, lo.x) = split(u[0]);
+    tie(hi.y, lo.y) = split(u[1]);
+    tie(hi.z, lo.z) = split(u[2]);
+    tie(hi.w, lo.w) = make_tuple(__int_as_float(v), 0);
+    left = make_tuple(hi, lo);
+}
 
 /**
  * Unpack float4 and float4 into tuple of fixed_vector<dsfloat, 3> and int.
  */
-template <>
-struct cuda_vector_converter<tuple<fixed_vector<dsfloat, 3>, int>, tuple<float4 const, float4 const> >
+template <typename T, typename U, typename V>
+inline HALMD_GPU_ENABLED typename boost::enable_if<
+    boost::mpl::and_<
+        boost::is_same<T const, float4 const>
+      , boost::is_same<U, fixed_vector<dsfloat, 3> >
+      , boost::is_same<V, int>
+    >, void>::type
+operator<<=(tuple<U&, V&> left, tuple<T&, T&> right)
 {
-    typedef tuple<fixed_vector<dsfloat, 3>, int> result_type;
-
-    static HALMD_GPU_ENABLED result_type apply(float4 const& hi, float4 const& lo)
-    {
-        fixed_vector<dsfloat, 3> u;
-        u[0] = dsfloat(hi.x, lo.x);
-        u[1] = dsfloat(hi.y, lo.y);
-        u[2] = dsfloat(hi.z, lo.z);
-        int v = __float_as_int(hi.w);
-        return make_tuple(u, v);
-    }
-};
+    float4 hi, lo;
+    tie(hi, lo) = tuple<T const&, T const&>(right);
+    fixed_vector<dsfloat, 3> u;
+    u[0] = dsfloat(hi.x, lo.x);
+    u[1] = dsfloat(hi.y, lo.y);
+    u[2] = dsfloat(hi.z, lo.z);
+    int v = __float_as_int(hi.w);
+    left = make_tuple(u, v);
+}
 
 /**
  * Pack fixed_vector<dsfloat, 2> and int into tuple of float4 and float4.
  */
-template <>
-struct cuda_vector_converter<tuple<float4, float4>, tuple<fixed_vector<dsfloat, 2> const, int const> >
+template <typename T, typename U, typename V>
+inline HALMD_GPU_ENABLED typename boost::enable_if<
+    boost::mpl::and_<
+        boost::is_same<T, float4>
+      , boost::is_same<U const, fixed_vector<dsfloat, 2> const>
+      , boost::is_same<V const, int const>
+    >, void>::type
+operator<<=(tuple<T&, T&> left, tuple<U&, V&> right)
 {
-    typedef tuple<float4, float4> result_type;
-
-    static HALMD_GPU_ENABLED result_type apply(fixed_vector<dsfloat, 2> const& u, int const& v)
-    {
-        float4 hi, lo;
-        tie(hi.x, lo.x) = split(u[0]);
-        tie(hi.y, lo.y) = split(u[1]);
-        tie(hi.z, lo.z) = make_tuple(0, 0);
-        tie(hi.w, lo.w) = make_tuple(__int_as_float(v), 0);
-        return make_tuple(hi, lo);
-    }
-};
+    fixed_vector<dsfloat, 2> u;
+    int v;
+    tie(u, v) = tuple<U const&, V const&>(right);
+    float4 hi, lo;
+    tie(hi.x, lo.x) = split(u[0]);
+    tie(hi.y, lo.y) = split(u[1]);
+    tie(hi.z, lo.z) = make_tuple(0, 0);
+    tie(hi.w, lo.w) = make_tuple(__int_as_float(v), 0);
+    left = make_tuple(hi, lo);
+}
 
 /**
  * Unpack float4 and float4 into tuple of fixed_vector<dsfloat, 2> and int.
  */
-template <>
-struct cuda_vector_converter<tuple<fixed_vector<dsfloat, 2>, int>, tuple<float4 const, float4 const> >
+template <typename T, typename U, typename V>
+inline HALMD_GPU_ENABLED typename boost::enable_if<
+    boost::mpl::and_<
+        boost::is_same<T const, float4 const>
+      , boost::is_same<U, fixed_vector<dsfloat, 2> >
+      , boost::is_same<V, int>
+    >, void>::type
+operator<<=(tuple<U&, V&> left, tuple<T&, T&> right)
 {
-    typedef tuple<fixed_vector<dsfloat, 2>, int> result_type;
-
-    static HALMD_GPU_ENABLED result_type apply(float4 const& hi, float4 const& lo)
-    {
-        fixed_vector<dsfloat, 2> u;
-        u[0] = dsfloat(hi.x, lo.x);
-        u[1] = dsfloat(hi.y, lo.y);
-        int v = __float_as_int(hi.w);
-        return make_tuple(u, v);
-    }
-};
+    float4 hi, lo;
+    tie(hi, lo) = tuple<T const&, T const&>(right);
+    fixed_vector<dsfloat, 2> u;
+    u[0] = dsfloat(hi.x, lo.x);
+    u[1] = dsfloat(hi.y, lo.y);
+    int v = __float_as_int(hi.w);
+    left = make_tuple(u, v);
+}
 
 /**
  * Pack fixed_vector<dsfloat, 3> and unsigned int into tuple of float4 and float4.
  */
-template <>
-struct cuda_vector_converter<tuple<float4, float4>, tuple<fixed_vector<dsfloat, 3> const, unsigned int const> >
+template <typename T, typename U, typename V>
+inline HALMD_GPU_ENABLED typename boost::enable_if<
+    boost::mpl::and_<
+        boost::is_same<T, float4>
+      , boost::is_same<U const, fixed_vector<dsfloat, 3> const>
+      , boost::is_same<V const, unsigned int const>
+    >, void>::type
+operator<<=(tuple<T&, T&> left, tuple<U&, V&> right)
 {
-    typedef tuple<float4, float4> result_type;
-
-    static HALMD_GPU_ENABLED result_type apply(fixed_vector<dsfloat, 3> const& u, unsigned int const& v)
-    {
-        float4 hi, lo;
-        tie(hi.x, lo.x) = split(u[0]);
-        tie(hi.y, lo.y) = split(u[1]);
-        tie(hi.z, lo.z) = split(u[2]);
-        tie(hi.w, lo.w) = make_tuple(__int_as_float(v), 0);
-        return make_tuple(hi, lo);
-    }
-};
+    fixed_vector<dsfloat, 3> u;
+    unsigned int v;
+    tie(u, v) = tuple<U const&, V const&>(right);
+    float4 hi, lo;
+    tie(hi.x, lo.x) = split(u[0]);
+    tie(hi.y, lo.y) = split(u[1]);
+    tie(hi.z, lo.z) = split(u[2]);
+    tie(hi.w, lo.w) = make_tuple(__int_as_float(v), 0);
+    left = make_tuple(hi, lo);
+}
 
 /**
  * Unpack float4 and float4 into tuple of fixed_vector<dsfloat, 3> and unsigned int.
  */
-template <>
-struct cuda_vector_converter<tuple<fixed_vector<dsfloat, 3>, unsigned int>, tuple<float4 const, float4 const> >
+template <typename T, typename U, typename V>
+inline HALMD_GPU_ENABLED typename boost::enable_if<
+    boost::mpl::and_<
+        boost::is_same<T const, float4 const>
+      , boost::is_same<U, fixed_vector<dsfloat, 3> >
+      , boost::is_same<V, unsigned int>
+    >, void>::type
+operator<<=(tuple<U&, V&> left, tuple<T&, T&> right)
 {
-    typedef tuple<fixed_vector<dsfloat, 3>, unsigned int> result_type;
-
-    static HALMD_GPU_ENABLED result_type apply(float4 const& hi, float4 const& lo)
-    {
-        fixed_vector<dsfloat, 3> u;
-        u[0] = dsfloat(hi.x, lo.x);
-        u[1] = dsfloat(hi.y, lo.y);
-        u[2] = dsfloat(hi.z, lo.z);
-        unsigned int v = __float_as_int(hi.w);
-        return make_tuple(u, v);
-    }
-};
+    float4 hi, lo;
+    tie(hi, lo) = tuple<T const&, T const&>(right);
+    fixed_vector<dsfloat, 3> u;
+    u[0] = dsfloat(hi.x, lo.x);
+    u[1] = dsfloat(hi.y, lo.y);
+    u[2] = dsfloat(hi.z, lo.z);
+    unsigned int v = __float_as_int(hi.w);
+    left = make_tuple(u, v);
+}
 
 /**
  * Pack fixed_vector<dsfloat, 2> and unsigned int into tuple of float4 and float4.
  */
-template <>
-struct cuda_vector_converter<tuple<float4, float4>, tuple<fixed_vector<dsfloat, 2> const, unsigned int const> >
+template <typename T, typename U, typename V>
+inline HALMD_GPU_ENABLED typename boost::enable_if<
+    boost::mpl::and_<
+        boost::is_same<T, float4>
+      , boost::is_same<U const, fixed_vector<dsfloat, 2> const>
+      , boost::is_same<V const, unsigned int const>
+    >, void>::type
+operator<<=(tuple<T&, T&> left, tuple<U&, V&> right)
 {
-    typedef tuple<float4, float4> result_type;
-
-    static HALMD_GPU_ENABLED result_type apply(fixed_vector<dsfloat, 2> const& u, unsigned int const& v)
-    {
-        float4 hi, lo;
-        tie(hi.x, lo.x) = split(u[0]);
-        tie(hi.y, lo.y) = split(u[1]);
-        tie(hi.z, lo.z) = make_tuple(0, 0);
-        tie(hi.w, lo.w) = make_tuple(__int_as_float(v), 0);
-        return make_tuple(hi, lo);
-    }
-};
+    fixed_vector<dsfloat, 2> u;
+    unsigned int v;
+    tie(u, v) = tuple<U const&, V const&>(right);
+    float4 hi, lo;
+    tie(hi.x, lo.x) = split(u[0]);
+    tie(hi.y, lo.y) = split(u[1]);
+    tie(hi.z, lo.z) = make_tuple(0, 0);
+    tie(hi.w, lo.w) = make_tuple(__int_as_float(v), 0);
+    left = make_tuple(hi, lo);
+}
 
 /**
  * Unpack float4 and float4 into tuple of fixed_vector<dsfloat, 2> and unsigned int.
  */
-template <>
-struct cuda_vector_converter<tuple<fixed_vector<dsfloat, 2>, unsigned int>, tuple<float4 const, float4 const> >
+template <typename T, typename U, typename V>
+inline HALMD_GPU_ENABLED typename boost::enable_if<
+    boost::mpl::and_<
+        boost::is_same<T const, float4 const>
+      , boost::is_same<U, fixed_vector<dsfloat, 2> >
+      , boost::is_same<V, unsigned int>
+    >, void>::type
+operator<<=(tuple<U&, V&> left, tuple<T&, T&> right)
 {
-    typedef tuple<fixed_vector<dsfloat, 2>, unsigned int> result_type;
-
-    static HALMD_GPU_ENABLED result_type apply(float4 const& hi, float4 const& lo)
-    {
-        fixed_vector<dsfloat, 2> u;
-        u[0] = dsfloat(hi.x, lo.x);
-        u[1] = dsfloat(hi.y, lo.y);
-        unsigned int v = __float_as_int(hi.w);
-        return make_tuple(u, v);
-    }
-};
+    float4 hi, lo;
+    tie(hi, lo) = tuple<T const&, T const&>(right);
+    fixed_vector<dsfloat, 2> u;
+    u[0] = dsfloat(hi.x, lo.x);
+    u[1] = dsfloat(hi.y, lo.y);
+    unsigned int v = __float_as_int(hi.w);
+    left = make_tuple(u, v);
+}
 
 /**
  * Pack fixed_vector<dsfloat, 3> and float into tuple of float4 and float4.
  */
-template <>
-struct cuda_vector_converter<tuple<float4, float4>, tuple<fixed_vector<dsfloat, 3> const, float const> >
+template <typename T, typename U, typename V>
+inline HALMD_GPU_ENABLED typename boost::enable_if<
+    boost::mpl::and_<
+        boost::is_same<T, float4>
+      , boost::is_same<U const, fixed_vector<dsfloat, 3> const>
+      , boost::is_same<V const, float const>
+    >, void>::type
+operator<<=(tuple<T&, T&> left, tuple<U&, V&> right)
 {
-    typedef tuple<float4, float4> result_type;
-
-    static HALMD_GPU_ENABLED result_type apply(fixed_vector<dsfloat, 3> const& u, float const& v)
-    {
-        float4 hi, lo;
-        tie(hi.x, lo.x) = split(u[0]);
-        tie(hi.y, lo.y) = split(u[1]);
-        tie(hi.z, lo.z) = split(u[2]);
-        tie(hi.w, lo.w) = make_tuple(v, 0);
-        return make_tuple(hi, lo);
-    }
-};
+    fixed_vector<dsfloat, 3> u;
+    float v;
+    tie(u, v) = tuple<U const&, V const&>(right);
+    float4 hi, lo;
+    tie(hi.x, lo.x) = split(u[0]);
+    tie(hi.y, lo.y) = split(u[1]);
+    tie(hi.z, lo.z) = split(u[2]);
+    tie(hi.w, lo.w) = make_tuple(v, 0);
+    left = make_tuple(hi, lo);
+}
 
 /**
  * Unpack float4 and float4 into tuple of fixed_vector<dsfloat, 3> and float.
  */
-template <>
-struct cuda_vector_converter<tuple<fixed_vector<dsfloat, 3>, float>, tuple<float4 const, float4 const> >
+template <typename T, typename U, typename V>
+inline HALMD_GPU_ENABLED typename boost::enable_if<
+    boost::mpl::and_<
+        boost::is_same<T const, float4 const>
+      , boost::is_same<U, fixed_vector<dsfloat, 3> >
+      , boost::is_same<V, float>
+    >, void>::type
+operator<<=(tuple<U&, V&> left, tuple<T&, T&> right)
 {
-    typedef tuple<fixed_vector<dsfloat, 3>, float> result_type;
-
-    static HALMD_GPU_ENABLED result_type apply(float4 const& hi, float4 const& lo)
-    {
-        fixed_vector<dsfloat, 3> u;
-        u[0] = dsfloat(hi.x, lo.x);
-        u[1] = dsfloat(hi.y, lo.y);
-        u[2] = dsfloat(hi.z, lo.z);
-        float v = hi.w;
-        return make_tuple(u, v);
-    }
-};
+    float4 hi, lo;
+    tie(hi, lo) = tuple<T const&, T const&>(right);
+    fixed_vector<dsfloat, 3> u;
+    u[0] = dsfloat(hi.x, lo.x);
+    u[1] = dsfloat(hi.y, lo.y);
+    u[2] = dsfloat(hi.z, lo.z);
+    float v = hi.w;
+    left = make_tuple(u, v);
+}
 
 /**
  * Pack fixed_vector<dsfloat, 2> and float into tuple of float4 and float4.
  */
-template <>
-struct cuda_vector_converter<tuple<float4, float4>, tuple<fixed_vector<dsfloat, 2> const, float const> >
+template <typename T, typename U, typename V>
+inline HALMD_GPU_ENABLED typename boost::enable_if<
+    boost::mpl::and_<
+        boost::is_same<T, float4>
+      , boost::is_same<U const, fixed_vector<dsfloat, 2> const>
+      , boost::is_same<V const, float const>
+    >, void>::type
+operator<<=(tuple<T&, T&> left, tuple<U&, V&> right)
 {
-    typedef tuple<float4, float4> result_type;
-
-    static HALMD_GPU_ENABLED result_type apply(fixed_vector<dsfloat, 2> const& u, float const& v)
-    {
-        float4 hi, lo;
-        tie(hi.x, lo.x) = split(u[0]);
-        tie(hi.y, lo.y) = split(u[1]);
-        tie(hi.z, lo.z) = make_tuple(0, 0);
-        tie(hi.w, lo.w) = make_tuple(v, 0);
-        return make_tuple(hi, lo);
-    }
-};
+    fixed_vector<dsfloat, 2> u;
+    float v;
+    tie(u, v) = tuple<U const&, V const&>(right);
+    float4 hi, lo;
+    tie(hi.x, lo.x) = split(u[0]);
+    tie(hi.y, lo.y) = split(u[1]);
+    tie(hi.z, lo.z) = make_tuple(0, 0);
+    tie(hi.w, lo.w) = make_tuple(v, 0);
+    left = make_tuple(hi, lo);
+}
 
 /**
  * Unpack float4 and float4 into tuple of fixed_vector<dsfloat, 2> and float.
  */
-template <>
-struct cuda_vector_converter<tuple<fixed_vector<dsfloat, 2>, float>, tuple<float4 const, float4 const> >
+template <typename T, typename U, typename V>
+inline HALMD_GPU_ENABLED typename boost::enable_if<
+    boost::mpl::and_<
+        boost::is_same<T const, float4 const>
+      , boost::is_same<U, fixed_vector<dsfloat, 2> >
+      , boost::is_same<V, float>
+    >, void>::type
+operator<<=(tuple<U&, V&> left, tuple<T&, T&> right)
 {
-    typedef tuple<fixed_vector<dsfloat, 2>, float> result_type;
-
-    static HALMD_GPU_ENABLED result_type apply(float4 const& hi, float4 const& lo)
-    {
-        fixed_vector<dsfloat, 2> u;
-        u[0] = dsfloat(hi.x, lo.x);
-        u[1] = dsfloat(hi.y, lo.y);
-        float v = hi.w;
-        return make_tuple(u, v);
-    }
-};
+    float4 hi, lo;
+    tie(hi, lo) = tuple<T const&, T const&>(right);
+    fixed_vector<dsfloat, 2> u;
+    u[0] = dsfloat(hi.x, lo.x);
+    u[1] = dsfloat(hi.y, lo.y);
+    float v = hi.w;
+    left = make_tuple(u, v);
+}
 
 /**
  * Pack fixed_vector<dsfloat, 3> and dsfloat into tuple of float4 and float4.
  */
-template <>
-struct cuda_vector_converter<tuple<float4, float4>, tuple<fixed_vector<dsfloat, 3> const, dsfloat const> >
+template <typename T, typename U, typename V>
+inline HALMD_GPU_ENABLED typename boost::enable_if<
+    boost::mpl::and_<
+        boost::is_same<T, float4>
+      , boost::is_same<U const, fixed_vector<dsfloat, 3> const>
+      , boost::is_same<V const, dsfloat const>
+    >, void>::type
+operator<<=(tuple<T&, T&> left, tuple<U&, V&> right)
 {
-    typedef tuple<float4, float4> result_type;
-
-    static HALMD_GPU_ENABLED result_type apply(fixed_vector<dsfloat, 3> const& u, dsfloat const& v)
-    {
-        float4 hi, lo;
-        tie(hi.x, lo.x) = split(u[0]);
-        tie(hi.y, lo.y) = split(u[1]);
-        tie(hi.z, lo.z) = split(u[2]);
-        tie(hi.w, lo.w) = split(v);
-        return make_tuple(hi, lo);
-    }
-};
+    fixed_vector<dsfloat, 3> u;
+    dsfloat v;
+    tie(u, v) = tuple<U const&, V const&>(right);
+    float4 hi, lo;
+    tie(hi.x, lo.x) = split(u[0]);
+    tie(hi.y, lo.y) = split(u[1]);
+    tie(hi.z, lo.z) = split(u[2]);
+    tie(hi.w, lo.w) = split(v);
+    left = make_tuple(hi, lo);
+}
 
 /**
  * Unpack float4 and float4 into tuple of fixed_vector<dsfloat, 3> and dsfloat.
  */
-template <>
-struct cuda_vector_converter<tuple<fixed_vector<dsfloat, 3>, dsfloat>, tuple<float4 const, float4 const> >
+template <typename T, typename U, typename V>
+inline HALMD_GPU_ENABLED typename boost::enable_if<
+    boost::mpl::and_<
+        boost::is_same<T const, float4 const>
+      , boost::is_same<U, fixed_vector<dsfloat, 3> >
+      , boost::is_same<V, dsfloat>
+    >, void>::type
+operator<<=(tuple<U&, V&> left, tuple<T&, T&> right)
 {
-    typedef tuple<fixed_vector<dsfloat, 3>, dsfloat> result_type;
-
-    static HALMD_GPU_ENABLED result_type apply(float4 const& hi, float4 const& lo)
-    {
-        fixed_vector<dsfloat, 3> u;
-        u[0] = dsfloat(hi.x, lo.x);
-        u[1] = dsfloat(hi.y, lo.y);
-        u[2] = dsfloat(hi.z, lo.z);
-        dsfloat v = dsfloat(hi.w, lo.w);
-        return make_tuple(u, v);
-    }
-};
+    float4 hi, lo;
+    tie(hi, lo) = tuple<T const&, T const&>(right);
+    fixed_vector<dsfloat, 3> u;
+    u[0] = dsfloat(hi.x, lo.x);
+    u[1] = dsfloat(hi.y, lo.y);
+    u[2] = dsfloat(hi.z, lo.z);
+    dsfloat v = dsfloat(hi.w, lo.w);
+    left = make_tuple(u, v);
+}
 
 /**
  * Pack fixed_vector<dsfloat, 2> and dsfloat into tuple of float4 and float4.
  */
-template <>
-struct cuda_vector_converter<tuple<float4, float4>, tuple<fixed_vector<dsfloat, 2> const, dsfloat const> >
+template <typename T, typename U, typename V>
+inline HALMD_GPU_ENABLED typename boost::enable_if<
+    boost::mpl::and_<
+        boost::is_same<T, float4>
+      , boost::is_same<U const, fixed_vector<dsfloat, 2> const>
+      , boost::is_same<V const, dsfloat const>
+    >, void>::type
+operator<<=(tuple<T&, T&> left, tuple<U&, V&> right)
 {
-    typedef tuple<float4, float4> result_type;
-
-    static HALMD_GPU_ENABLED result_type apply(fixed_vector<dsfloat, 2> const& u, dsfloat const& v)
-    {
-        float4 hi, lo;
-        tie(hi.x, lo.x) = split(u[0]);
-        tie(hi.y, lo.y) = split(u[1]);
-        tie(hi.z, lo.z) = make_tuple(0, 0);
-        tie(hi.w, lo.w) = split(v);
-        return make_tuple(hi, lo);
-    }
-};
+    fixed_vector<dsfloat, 2> u;
+    dsfloat v;
+    tie(u, v) = tuple<U const&, V const&>(right);
+    float4 hi, lo;
+    tie(hi.x, lo.x) = split(u[0]);
+    tie(hi.y, lo.y) = split(u[1]);
+    tie(hi.z, lo.z) = make_tuple(0, 0);
+    tie(hi.w, lo.w) = split(v);
+    left = make_tuple(hi, lo);
+}
 
 /**
  * Unpack float4 and float4 into tuple of fixed_vector<dsfloat, 2> and dsfloat.
  */
-template <>
-struct cuda_vector_converter<tuple<fixed_vector<dsfloat, 2>, dsfloat>, tuple<float4 const, float4 const> >
+template <typename T, typename U, typename V>
+inline HALMD_GPU_ENABLED typename boost::enable_if<
+    boost::mpl::and_<
+        boost::is_same<T const, float4 const>
+      , boost::is_same<U, fixed_vector<dsfloat, 2> >
+      , boost::is_same<V, dsfloat>
+    >, void>::type
+operator<<=(tuple<U&, V&> left, tuple<T&, T&> right)
 {
-    typedef tuple<fixed_vector<dsfloat, 2>, dsfloat> result_type;
-
-    static HALMD_GPU_ENABLED result_type apply(float4 const& hi, float4 const& lo)
-    {
-        fixed_vector<dsfloat, 2> u;
-        u[0] = dsfloat(hi.x, lo.x);
-        u[1] = dsfloat(hi.y, lo.y);
-        dsfloat v = dsfloat(hi.w, lo.w);
-        return make_tuple(u, v);
-    }
-};
+    float4 hi, lo;
+    tie(hi, lo) = tuple<T const&, T const&>(right);
+    fixed_vector<dsfloat, 2> u;
+    u[0] = dsfloat(hi.x, lo.x);
+    u[1] = dsfloat(hi.y, lo.y);
+    dsfloat v = dsfloat(hi.w, lo.w);
+    left = make_tuple(u, v);
+}
 
 } // namespace detail
 } // namespace numeric
