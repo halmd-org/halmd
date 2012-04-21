@@ -32,7 +32,6 @@
 #ifdef WITH_CUDA
 # include <halmd/mdsim/gpu/forces/pair_trunc.hpp>
 # include <halmd/mdsim/gpu/particle.hpp>
-# include <halmd/mdsim/gpu/particle_kernel.cuh>
 # include <halmd/mdsim/gpu/potentials/power_law_with_core.hpp>
 # include <halmd/utility/gpu/device.hpp>
 # include <test/unit/mdsim/potentials/gpu/neighbour_chain.hpp>
@@ -223,8 +222,6 @@ struct power_law_with_core
 template <typename float_type>
 void power_law_with_core<float_type>::test()
 {
-    using namespace halmd::mdsim::gpu; // particle_kernel::{tagged, untagged}
-
     // place particles along the x-axis within one half of the box,
     // put every second particle at the origin
     unsigned int npart = particle->nparticle();
@@ -235,7 +232,7 @@ void power_law_with_core<float_type>::test()
     for (unsigned int k = 0; k < r_list.size(); ++k) {
         vector_type r = (k % 2) ? k * dx : vector_type(0);
         unsigned int type = (k < npart_list[0]) ? 0U : 1U;  // set particle type for a binary mixture
-        r_list[k] = particle_kernel::tagged<vector_type>(r, type);
+        r_list[k] <<= tie(r, type);
     }
     cuda::copy(r_list, particle->position());
 
@@ -256,8 +253,8 @@ void power_law_with_core<float_type>::test()
     for (unsigned int i = 0; i < npart; i += 100) {
         vector_type r1, r2;
         unsigned int type1, type2;
-        tie(r1, type1) = particle_kernel::untagged<vector_type>(r_list[i]);
-        tie(r2, type2) = particle_kernel::untagged<vector_type>(r_list[(i + 1) % npart]);
+        tie(r1, type1) <<= r_list[i];
+        tie(r2, type2) <<= r_list[(i + 1) % npart];
         vector_type r = r1 - r2;
         vector_type f = f_list[i];
 

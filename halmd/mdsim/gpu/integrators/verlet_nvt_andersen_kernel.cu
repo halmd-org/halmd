@@ -21,11 +21,8 @@
 // of the original thermostat introduced by H. C. Andersen (1978).
 // #define USE_ORIGINAL_ANDERSEN_THERMOSTAT
 
-#include <boost/mpl/if.hpp>
-
 #include <halmd/mdsim/gpu/integrators/verlet_kernel.cuh>
 #include <halmd/mdsim/gpu/integrators/verlet_nvt_andersen_kernel.hpp>
-#include <halmd/mdsim/gpu/particle_kernel.cuh>
 #include <halmd/numeric/blas/blas.hpp>
 #include <halmd/numeric/mp/dsfloat.hpp>
 #include <halmd/random/gpu/normal_distribution.cuh>
@@ -35,9 +32,6 @@
 #if __CUDA_ARCH__ < 120
 # define USE_ORIGINAL_ANDERSEN_THERMOSTAT
 #endif
-
-using namespace boost::mpl;
-using namespace halmd::mdsim::gpu::particle_kernel;
 
 namespace halmd {
 namespace mdsim {
@@ -80,11 +74,11 @@ __global__ void _integrate(
     unsigned int type, tag;
     vector_type r, v;
 #ifdef USE_VERLET_DSFUN
-    tie(r, type) = untagged<vector_type>(g_r[i], g_r[i + threads]);
-    tie(v, tag) = untagged<vector_type>(g_v[i], g_v[i + threads]);
+    tie(r, type) <<= tie(g_r[i], g_r[i + threads]);
+    tie(v, tag) <<= tie(g_v[i], g_v[i + threads]);
 #else
-    tie(r, type) = untagged<vector_type>(g_r[i]);
-    tie(v, tag) = untagged<vector_type>(g_v[i]);
+    tie(r, type) <<= g_r[i];
+    tie(v, tag) <<= g_v[i];
 #endif
     vector_type_ image = g_image[i];
     vector_type_ f = g_f[i];
@@ -93,11 +87,11 @@ __global__ void _integrate(
     verlet_kernel::integrate(r, image, v, f, mass, timestep_, box_length);
 
 #ifdef USE_VERLET_DSFUN
-    tie(g_r[i], g_r[i + threads]) = tagged(r, type);
-    tie(g_v[i], g_v[i + threads]) = tagged(v, tag);
+    tie(g_r[i], g_r[i + threads]) <<= tie(r, type);
+    tie(g_v[i], g_v[i + threads]) <<= tie(v, tag);
 #else
-    g_r[i] = tagged(r, type);
-    g_v[i] = tagged(v, tag);
+    g_r[i] <<= tie(r, type);
+    g_v[i] <<= tie(v, tag);
 #endif
     g_image[i] = image;
 }
@@ -157,11 +151,11 @@ __global__ void _finalize(
         unsigned int tag, type;
         vector_type v;
         vector_type_ _;
-        tie(_, type) = untagged<vector_type_>(g_r[i]);
+        tie(_, type) <<= g_r[i];
 #ifdef USE_VERLET_DSFUN
-        tie(v, tag) = untagged<vector_type>(g_v[i], g_v[i + nplace]);
+        tie(v, tag) <<= tie(g_v[i], g_v[i + nplace]);
 #else
-        tie(v, tag) = untagged<vector_type>(g_v[i]);
+        tie(v, tag) <<= g_v[i];
 #endif
         float mass = s_mass[type];
 
@@ -201,9 +195,9 @@ __global__ void _finalize(
 
         // write velocity to global device memory
 #ifdef USE_VERLET_DSFUN
-        tie(g_v[i], g_v[i + nplace]) = tagged(v, tag);
+        tie(g_v[i], g_v[i + nplace]) <<= tie(v, tag);
 #else
-        g_v[i] = tagged(v, tag);
+        g_v[i] <<= tie(v, tag);
 #endif
     }
 

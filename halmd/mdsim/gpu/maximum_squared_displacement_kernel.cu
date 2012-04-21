@@ -20,11 +20,9 @@
 #include <halmd/algorithm/gpu/reduction.cuh>
 #include <halmd/mdsim/gpu/box_kernel.cuh>
 #include <halmd/mdsim/gpu/maximum_squared_displacement_kernel.hpp>
-#include <halmd/mdsim/gpu/particle_kernel.cuh>
 #include <halmd/utility/gpu/thread.cuh>
 
 using namespace halmd::algorithm::gpu;
-using namespace halmd::mdsim::gpu::particle_kernel;
 
 namespace halmd {
 namespace mdsim {
@@ -53,9 +51,9 @@ __global__ void displacement(
     for (uint i = GTID; i < npart; i += GTDIM) {
         vector_type r;
         unsigned int type;
-        tie(r, type) = untagged<vector_type>(g_r[i]);
+        tie(r, type) <<= g_r[i];
         vector_type r0;
-        tie(r0, type) = untagged<vector_type>(g_r0[i]);
+        tie(r0, type) <<= g_r0[i];
         r -= r0;
         box_kernel::reduce_periodic(r, box_length);
         rr = max(rr, inner_prod(r, r));

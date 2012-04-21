@@ -106,7 +106,7 @@ __device__ void update_cell_neighbours(
     // load particles in cell
     unsigned int const n_ = g_cell[cell * blockDim.x + threadIdx.x];
     s_n[threadIdx.x] = n_;
-    tie(s_r[threadIdx.x], s_type[threadIdx.x]) = untagged<vector_type >(tex1Dfetch(r_, n_));
+    tie(s_r[threadIdx.x], s_type[threadIdx.x]) <<= tex1Dfetch(r_, n_);
     __syncthreads();
 
     if (n == PLACEHOLDER) return;
@@ -155,7 +155,7 @@ __global__ void update_neighbours(
     unsigned int const n = g_cell[GTID];
     unsigned int type;
     fixed_vector<float, dimension> r;
-    tie(r, type) = untagged<fixed_vector<float, dimension> >(tex1Dfetch(r_, n));
+    tie(r, type) <<= tex1Dfetch(r_, n);
     // number of particles in neighbour list
     unsigned int count = 0;
 

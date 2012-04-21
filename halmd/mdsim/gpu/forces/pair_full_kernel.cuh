@@ -23,12 +23,9 @@
 #include <halmd/mdsim/force_kernel.hpp>
 #include <halmd/mdsim/gpu/box_kernel.cuh>
 #include <halmd/mdsim/gpu/forces/pair_full_kernel.hpp>
-#include <halmd/mdsim/gpu/particle_kernel.cuh>
 #include <halmd/numeric/blas/blas.hpp>
 #include <halmd/numeric/mp/dsfloat.hpp>
 #include <halmd/utility/gpu/thread.cuh>
-
-using namespace halmd::mdsim::gpu::particle_kernel;
 
 namespace halmd {
 namespace mdsim {
@@ -67,7 +64,7 @@ __global__ void compute(
     // load particle associated with this thread
     unsigned int type1;
     vector_type r1;
-    tie(r1, type1) = untagged<vector_type>(g_r[i]);
+    tie(r1, type1) <<= g_r[i];
 
     // contribution to potential energy and hypervirial
     float en_pot_ = 0;
@@ -85,7 +82,7 @@ __global__ void compute(
         // load particle
         unsigned int type2;
         vector_type r2;
-        tie(r2, type2) = untagged<vector_type>(g_r[j]);
+        tie(r2, type2) <<= g_r[j];
         // pair potential
         potential_type const potential(type1, type2, ntype1, ntype2);
 

@@ -17,18 +17,15 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <boost/mpl/if.hpp>
 #include <float.h>
 
 #include <halmd/algorithm/gpu/bits.cuh>
-#include <halmd/mdsim/gpu/particle_kernel.cuh>
 #include <halmd/mdsim/gpu/sorts/hilbert_kernel.hpp>
 #include <halmd/mdsim/sorts/hilbert_kernel.hpp>
 #include <halmd/numeric/blas/blas.hpp>
 #include <halmd/utility/gpu/thread.cuh>
 
 using namespace halmd::algorithm::gpu;
-using namespace halmd::mdsim::gpu::particle_kernel;
 
 namespace halmd {
 namespace mdsim {
@@ -64,7 +61,7 @@ __global__ void map(
 
     unsigned int type;
     vector_type r;
-    tie(r, type) = untagged<vector_type>(g_r[GTID]);
+    tie(r, type) <<= g_r[GTID];
     r = element_div(r, box_length);
 
     // compute Hilbert code for particle

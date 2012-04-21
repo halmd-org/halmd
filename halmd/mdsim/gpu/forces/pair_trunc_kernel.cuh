@@ -73,7 +73,7 @@ __global__ void compute(
     // load particle associated with this thread
     unsigned int type1;
     vector_type r1;
-    tie(r1, type1) = untagged<vector_type>(tex1Dfetch(r1_, i));
+    tie(r1, type1) <<= tex1Dfetch(r1_, i);
 
     // contribution to potential energy and hypervirial
     float en_pot_ = 0;
@@ -98,7 +98,7 @@ __global__ void compute(
         // load particle
         unsigned int type2;
         vector_type r2;
-        tie(r2, type2) = untagged<vector_type>(tex1Dfetch(r2_, j));
+        tie(r2, type2) <<= tex1Dfetch(r2_, j);
         // pair potential
         potential_type const potential(type1, type2, ntype1, ntype2);
 

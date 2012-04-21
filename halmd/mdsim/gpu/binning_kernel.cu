@@ -69,7 +69,7 @@ __global__ void compute_cell(
 {
     fixed_vector<float, dimension> r;
     unsigned int type;
-    tie(r, type) = untagged<fixed_vector<float, dimension> >(g_r[GTID]);
+    tie(r, type) <<= g_r[GTID];
     g_cell[GTID] = compute_cell_index(r, cell_length, ncell);
 }
 

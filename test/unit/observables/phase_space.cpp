@@ -36,7 +36,6 @@
 #ifdef WITH_CUDA
 # include <cuda_wrapper/cuda_wrapper.hpp>
 # include <halmd/mdsim/gpu/particle_group.hpp>
-# include <halmd/mdsim/gpu/particle_kernel.cuh>
 # include <halmd/observables/gpu/phase_space.hpp>
 # include <halmd/observables/gpu/samples/phase_space.hpp>
 # include <halmd/utility/gpu/device.hpp>
@@ -59,8 +58,6 @@ template <int dimension, typename float_type>
 shared_ptr<observables::host::samples::phase_space<dimension, float_type> const>
 copy_sample(shared_ptr<observables::gpu::samples::phase_space<dimension, float_type> const> sample)
 {
-    using mdsim::gpu::particle_kernel::untagged;
-
     typedef observables::host::samples::phase_space<dimension, float_type> host_sample_type;
     typedef observables::gpu::samples::phase_space<dimension, float_type> gpu_sample_type;
     typedef typename gpu_sample_type::position_array_type::value_type gpu_vector_type;
@@ -76,7 +73,7 @@ copy_sample(shared_ptr<observables::gpu::samples::phase_space<dimension, float_t
     cuda::copy(sample->position(), h_buf);
     cuda::thread::synchronize();
     for (size_t i = 0; i < h_buf.size(); ++i) {
-        tie(result->position()[i], result->species()[i]) = untagged<vector_type>(h_buf[i]);
+        tie(result->position()[i], result->species()[i]) <<= h_buf[i];
     }
 
     // velocities

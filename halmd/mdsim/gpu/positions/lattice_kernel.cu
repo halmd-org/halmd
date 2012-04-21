@@ -17,15 +17,11 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <halmd/mdsim/gpu/particle_kernel.cuh>
 #include <halmd/mdsim/gpu/positions/lattice_kernel.hpp>
 #include <halmd/mdsim/positions/lattice_primitive.hpp>
 #include <halmd/numeric/blas/blas.hpp>
 #include <halmd/numeric/mp/dsfloat.hpp>
 #include <halmd/utility/gpu/thread.cuh>
-
-using namespace boost;
-using namespace halmd::mdsim::gpu::particle_kernel;
 
 namespace halmd {
 namespace mdsim {
@@ -52,9 +48,9 @@ __global__ void lattice(
         vector_type r;
         unsigned int type;
 #ifdef USE_VERLET_DSFUN
-        tie(r, type) = untagged<vector_type>(g_r[i], g_r[i + threads]);
+        tie(r, type) <<= tie(g_r[i], g_r[i + threads]);
 #else
-        tie(r, type) = untagged<vector_type>(g_r[i]);
+        tie(r, type) <<= g_r[i];
 #endif
 
         // introduce a vacancy after every (skip - 1) particles
@@ -68,9 +64,9 @@ __global__ void lattice(
         r = e * a + offset; //< cast sum to dsfloat-based type
 
 #ifdef USE_VERLET_DSFUN
-        tie(g_r[i], g_r[i + threads]) = tagged(r, type);
+        tie(g_r[i], g_r[i + threads]) <<= tie(r, type);
 #else
-        g_r[i] = tagged(r, type);
+        g_r[i] <<= tie(r, type);
 #endif
     }
 }

@@ -18,7 +18,6 @@
  */
 
 #include <halmd/mdsim/gpu/box_kernel.cuh>
-#include <halmd/mdsim/gpu/particle_kernel.cuh>
 #include <halmd/numeric/blas/blas.hpp>
 #include <halmd/observables/gpu/phase_space_kernel.hpp>
 #include <halmd/utility/gpu/thread.cuh>
@@ -49,9 +48,6 @@ __global__ void sample(
   , unsigned int npart
 )
 {
-    using mdsim::gpu::particle_kernel::untagged;
-    using mdsim::gpu::particle_kernel::tagged;
-
     enum { dimension = vector_type::static_size };
     typedef typename phase_space_wrapper<dimension>::coalesced_vector_type coalesced_vector_type;
 
@@ -61,14 +57,14 @@ __global__ void sample(
         // fetch particle from texture caches
         unsigned int tag, type;
         vector_type r, v;
-        tie(r, type) = untagged<vector_type>(tex1Dfetch(r_, rtag));
-        tie(v, tag) = untagged<vector_type>(tex1Dfetch(v_, rtag));
+        tie(r, type) <<= tex1Dfetch(r_, rtag);
+        tie(v, tag) <<= tex1Dfetch(v_, rtag);
         // extend particle positions in periodic box
         vector_type image = tex1Dfetch(reinterpret_cast<texture<coalesced_vector_type>&>(image_), rtag);
         box_kernel::extend_periodic(r, image, box_length);
         // store particle in global memory
-        g_r[GTID] = tagged(r, type);
-        g_v[GTID] = tagged(v, type);
+        g_r[GTID] <<= tie(r, type);
+        g_v[GTID] <<= tie(v, type);
     }
 }
 
@@ -84,21 +80,18 @@ __global__ void reduce_periodic(
   , unsigned int npart
 )
 {
-    using mdsim::gpu::particle_kernel::untagged;
-    using mdsim::gpu::particle_kernel::tagged;
-
     enum { dimension = vector_type::static_size };
 
     if (GTID < npart) {
         unsigned int rtag = g_reverse_tag[GTID];
         vector_type r;
         unsigned int type;
-        tie(r, type) = untagged<vector_type>(tex1Dfetch(r_, rtag));
+        tie(r, type) <<= tex1Dfetch(r_, rtag);
 
         vector_type image = box_kernel::reduce_periodic(r, box_length);
 
         g_image[rtag] = image;
-        g_r[rtag] = tagged(r, type);
+        g_r[rtag] <<= tie(r, type);
     }
 }
 

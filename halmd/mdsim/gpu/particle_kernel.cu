@@ -17,7 +17,6 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <halmd/mdsim/gpu/particle_kernel.cuh>
 #include <halmd/mdsim/gpu/particle_kernel.hpp>
 #include <halmd/numeric/blas/blas.hpp>
 #include <halmd/utility/gpu/thread.cuh>
@@ -52,8 +51,8 @@ __global__ void tag(coalesced_vector_type* g_r, coalesced_vector_type* g_v)
 {
     vector_type r, v;
     unsigned int type, tag;
-    tie(r, type) = untagged<vector_type>(g_r[GTID]);
-    tie(v, tag) = untagged<vector_type>(g_v[GTID]);
+    tie(r, type) <<= g_r[GTID];
+    tie(v, tag) <<= g_v[GTID];
 
     // set particle type
     for (type = 0, tag = GTID; type < ntype_; ++type) {
@@ -67,8 +66,8 @@ __global__ void tag(coalesced_vector_type* g_r, coalesced_vector_type* g_v)
     // set particle identifier
     tag = GTID;
 
-    g_r[GTID] = tagged(r, type);
-    g_v[GTID] = tagged(v, tag);
+    g_r[GTID] <<= tie(r, type);
+    g_v[GTID] <<= tie(v, tag);
 }
 
 /**
@@ -107,11 +106,11 @@ __global__ void rearrange(
         vector_type v;
         unsigned int tag;
 #ifdef USE_VERLET_DSFUN
-        tie(v, tag) = untagged<vector_type>(tex1Dfetch(v_, i), tex1Dfetch(v_, i + GTDIM));
-        tie(g_v[GTID], g_v[GTID + GTDIM]) = tagged(v, tag);
+        tie(v, tag) <<= make_tuple(tex1Dfetch(v_, i), tex1Dfetch(v_, i + GTDIM));
+        tie(g_v[GTID], g_v[GTID + GTDIM]) <<= tie(v, tag);
 #else
-        tie(v, tag) = untagged<vector_type>(tex1Dfetch(v_, i));
-        g_v[GTID] = tagged(v, tag);
+        tie(v, tag) <<= tex1Dfetch(v_, i);
+        g_v[GTID] <<= tie(v, tag);
 #endif
         g_tag[GTID] = tag;
     }

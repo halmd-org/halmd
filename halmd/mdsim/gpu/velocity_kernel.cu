@@ -17,11 +17,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <halmd/mdsim/gpu/particle_kernel.cuh>
 #include <halmd/mdsim/gpu/velocity_kernel.hpp>
 #include <halmd/utility/gpu/thread.cuh>
-
-using namespace halmd::mdsim::gpu::particle_kernel;
 
 namespace halmd {
 namespace mdsim {
@@ -45,15 +42,15 @@ __global__ void rescale(
         vector_type v;
         unsigned int tag;
 #ifdef USE_VERLET_DSFUN
-        tie(v, tag) = untagged<vector_type>(g_v[i], g_v[i + size]);
+        tie(v, tag) <<= tie(g_v[i], g_v[i + size]);
 #else
-        tie(v, tag) = untagged<vector_type>(g_v[i]);
+        tie(v, tag) <<= g_v[i];
 #endif
         v *= factor;
 #ifdef USE_VERLET_DSFUN
-        tie(g_v[i], g_v[i + size]) = tagged(v, tag);
+        tie(g_v[i], g_v[i + size]) <<= tie(v, tag);
 #else
-        g_v[i] = tagged(v, tag);
+        g_v[i] <<= tie(v, tag);
 #endif
     }
 }
@@ -72,15 +69,15 @@ __global__ void shift(
         vector_type v;
         unsigned int tag;
 #ifdef USE_VERLET_DSFUN
-        tie(v, tag) = untagged<vector_type>(g_v[i], g_v[i + size]);
+        tie(v, tag) <<= tie(g_v[i], g_v[i + size]);
 #else
-        tie(v, tag) = untagged<vector_type>(g_v[i]);
+        tie(v, tag) <<= g_v[i];
 #endif
         v += delta;
 #ifdef USE_VERLET_DSFUN
-        tie(g_v[i], g_v[i + size]) = tagged(v, tag);
+        tie(g_v[i], g_v[i + size]) <<= tie(v, tag);
 #else
-        g_v[i] = tagged(v, tag);
+        g_v[i] <<= tie(v, tag);
 #endif
     }
 }
@@ -100,16 +97,16 @@ __global__ void shift_rescale(
         vector_type v;
         unsigned int tag;
 #ifdef USE_VERLET_DSFUN
-        tie(v, tag) = untagged<vector_type>(g_v[i], g_v[i + size]);
+        tie(v, tag) <<= tie(g_v[i], g_v[i + size]);
 #else
-        tie(v, tag) = untagged<vector_type>(g_v[i]);
+        tie(v, tag) <<= g_v[i];
 #endif
         v += delta;
         v *= factor;
 #ifdef USE_VERLET_DSFUN
-        tie(g_v[i], g_v[i + size]) = tagged(v, tag);
+        tie(g_v[i], g_v[i + size]) <<= tie(v, tag);
 #else
-        g_v[i] = tagged(v, tag);
+        g_v[i] <<= tie(v, tag);
 #endif
     }
 }

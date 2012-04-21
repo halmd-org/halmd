@@ -23,7 +23,6 @@
 #include <exception>
 
 #include <halmd/io/logger.hpp>
-#include <halmd/mdsim/gpu/particle_kernel.cuh>
 #include <halmd/observables/gpu/phase_space.hpp>
 #include <halmd/observables/gpu/phase_space_kernel.hpp>
 #include <halmd/utility/demangle.hpp>
@@ -164,12 +163,10 @@ phase_space<host::samples::phase_space<dimension, float_type> >::acquire()
         unsigned int idx = map[tag];
         assert(idx < h_r_.size());
 
-        using mdsim::gpu::particle_kernel::untagged;
-
         // periodically extended particle position
         vector_type r;
         unsigned int type;
-        tie(r, type) = untagged<vector_type>(h_r_[idx]);
+        tie(r, type) <<= h_r_[idx];
         box_->extend_periodic(r, static_cast<vector_type>(h_image_[idx]));
 
         position[tag] = r;
@@ -199,9 +196,7 @@ void phase_space<host::samples::phase_space<dimension, float_type> >::set(shared
         unsigned int idx = map[tag];
         assert(idx < h_r_.size());
 
-        using mdsim::gpu::particle_kernel::tagged;
-
-        h_r_[idx] = tagged<vector_type>(sample_position[tag], sample_species[tag]);
+        h_r_[idx] <<= tie(sample_position[tag], sample_species[tag]);
         h_v_[idx] = sample_velocity[tag];
     }
 

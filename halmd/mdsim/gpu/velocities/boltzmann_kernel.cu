@@ -18,14 +18,12 @@
  */
 
 #include <halmd/algorithm/gpu/reduction.cuh>
-#include <halmd/mdsim/gpu/particle_kernel.cuh>
 #include <halmd/mdsim/gpu/velocities/boltzmann_kernel.hpp>
 #include <halmd/random/gpu/normal_distribution.cuh>
 #include <halmd/random/gpu/random_number_generator.cuh>
 #include <halmd/utility/gpu/thread.cuh>
 
 using namespace halmd::algorithm::gpu;
-using namespace halmd::mdsim::gpu::particle_kernel;
 
 //
 // Maxwell-Boltzmann distribution at accurate temperature
@@ -81,9 +79,9 @@ __global__ void gaussian(
         vector_type v;
         unsigned int tag;
 #ifdef USE_VERLET_DSFUN
-        tie(v, tag) = untagged<vector_type>(g_v[i], g_v[i + nplace]);
+        tie(v, tag) <<= tie(g_v[i], g_v[i + nplace]);
 #else
-        tie(v, tag) = untagged<vector_type>(g_v[i]);
+        tie(v, tag) <<= g_v[i];
 #endif
         for (uint j = 0; j < dimension - 1; j += 2) {
             tie(v[j], v[j + 1]) = normal(rng, state, mean, sigma);
@@ -99,9 +97,9 @@ __global__ void gaussian(
         vcm += v;
         vv += inner_prod(v, v);
 #ifdef USE_VERLET_DSFUN
-        tie(g_v[i], g_v[i + nplace]) = tagged(v, tag);
+        tie(g_v[i], g_v[i + nplace]) <<= tie(v, tag);
 #else
-        g_v[i] = tagged(v, tag);
+        g_v[i] <<= tie(v, tag);
 #endif
     }
 
@@ -172,16 +170,16 @@ __global__ void shift_rescale(float4* g_v, uint npart, uint nplace, dsfloat temp
         vector_type v;
         unsigned int tag;
 #ifdef USE_VERLET_DSFUN
-        tie(v, tag) = untagged<vector_type>(g_v[i], g_v[i + nplace]);
+        tie(v, tag) <<= tie(g_v[i], g_v[i + nplace]);
 #else
-        tie(v, tag) = untagged<vector_type>(g_v[i]);
+        tie(v, tag) <<= g_v[i];
 #endif
         v -= vcm;
         v *= coeff;
 #ifdef USE_VERLET_DSFUN
-        tie(g_v[i], g_v[i + nplace]) = tagged(v, tag);
+        tie(g_v[i], g_v[i + nplace]) <<= tie(v, tag);
 #else
-        g_v[i] = tagged(v, tag);
+        g_v[i] <<= tie(v, tag);
 #endif
     }
 }

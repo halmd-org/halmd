@@ -19,11 +19,8 @@
 
 #include <halmd/mdsim/gpu/box_kernel.cuh>
 #include <halmd/mdsim/gpu/neighbours/from_particle_kernel.hpp>
-#include <halmd/mdsim/gpu/particle_kernel.cuh>
 #include <halmd/numeric/blas/blas.hpp>
 #include <halmd/utility/gpu/thread.cuh>
-
-using namespace halmd::mdsim::gpu::particle_kernel;
 
 namespace halmd {
 namespace mdsim {
@@ -56,7 +53,7 @@ __global__ void update(
     unsigned int index1 = GTID;
     unsigned int type1;
     vector_type r1;
-    tie(r1, type1) = untagged<vector_type>(g_r1[index1]);
+    tie(r1, type1) <<= g_r1[index1];
 
     // number of particles in neighbour list
     unsigned int count = 0;
@@ -68,7 +65,7 @@ __global__ void update(
         __syncthreads();
         unsigned int index = block * blockDim.x + TID;
         if (index < npart2) {
-            tie(s_r[TID], s_type[TID]) = untagged<vector_type>(g_r2[index]);
+            tie(s_r[TID], s_type[TID]) <<= g_r2[index];
         }
         __syncthreads();
 

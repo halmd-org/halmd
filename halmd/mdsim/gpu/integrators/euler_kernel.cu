@@ -19,11 +19,8 @@
 
 #include <halmd/mdsim/gpu/integrators/euler_kernel.cuh>
 #include <halmd/mdsim/gpu/integrators/euler_kernel.hpp>
-#include <halmd/mdsim/gpu/particle_kernel.cuh>
 #include <halmd/numeric/mp/dsfloat.hpp>
 #include <halmd/utility/gpu/thread.cuh>
-
-using namespace halmd::mdsim::gpu::particle_kernel;
 
 namespace halmd {
 namespace mdsim {
@@ -62,11 +59,11 @@ __global__ void _integrate(
     // local copy of position and velocity
     vector_type r, v;
 #ifdef USE_VERLET_DSFUN
-    tie(r, type) = untagged<vector_type>(g_r[i], g_r[i + threads]);
-    tie(v, tag) = untagged<vector_type>(g_v[i], g_v[i + threads]);
+    tie(r, type) <<= tie(g_r[i], g_r[i + threads]);
+    tie(v, tag) <<= tie(g_v[i], g_v[i + threads]);
 #else
-    tie(r, type) = untagged<vector_type>(g_r[i]);
-    tie(v, tag) = untagged<vector_type>(g_v[i]);
+    tie(r, type) <<= g_r[i];
+    tie(v, tag) <<= g_v[i];
 #endif
     // local copy of image
     vector_type_ image = g_image[i];
@@ -75,9 +72,9 @@ __global__ void _integrate(
     integrate(r, image, v, timestep, box_length);
 
 #ifdef USE_VERLET_DSFUN
-    tie(g_r[i], g_r[i + threads]) = tagged(r, type);
+    tie(g_r[i], g_r[i + threads]) <<= tie(r, type);
 #else
-    g_r[i] = tagged(r, type);
+    g_r[i] <<= tie(r, type);
 #endif
     g_image[i] = image;
 }

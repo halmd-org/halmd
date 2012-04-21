@@ -20,19 +20,15 @@
 // this file is identical to verlet_kernel.cu except for the
 // rescaling of velocities in integrate()
 
-#include <boost/mpl/if.hpp>
-
 #include <halmd/algorithm/gpu/reduce_kernel.cuh>
 #include <halmd/mdsim/gpu/integrators/verlet_kernel.cuh>
 #include <halmd/mdsim/gpu/integrators/verlet_nvt_hoover_kernel.hpp>
-#include <halmd/mdsim/gpu/particle_kernel.cuh>
 #include <halmd/numeric/blas/blas.hpp>
 #include <halmd/numeric/mp/dsfloat.hpp>
 #include <halmd/utility/gpu/thread.cuh>
 
 using namespace boost::mpl;
 using namespace halmd::algorithm::gpu;
-using namespace halmd::mdsim::gpu::particle_kernel;
 
 namespace halmd
 {
@@ -67,11 +63,11 @@ __global__ void _integrate(
     unsigned int type, tag;
     vector_type r, v;
 #ifdef USE_VERLET_DSFUN
-    tie(r, type) = untagged<vector_type>(g_r[i], g_r[i + threads]);
-    tie(v, tag) = untagged<vector_type>(g_v[i], g_v[i + threads]);
+    tie(r, type) <<= tie(g_r[i], g_r[i + threads]);
+    tie(v, tag) <<= tie(g_v[i], g_v[i + threads]);
 #else
-    tie(r, type) = untagged<vector_type>(g_r[i]);
-    tie(v, tag) = untagged<vector_type>(g_v[i]);
+    tie(r, type) <<= g_r[i];
+    tie(v, tag) <<= g_v[i];
 #endif
     vector_type_ image = g_image[i];
     vector_type_ f = g_f[i];
@@ -80,11 +76,11 @@ __global__ void _integrate(
     verlet_kernel::integrate(r, image, v, f, /* FIXME mass */ 1, timestep_, box_length);
 
 #ifdef USE_VERLET_DSFUN
-    tie(g_r[i], g_r[i + threads]) = tagged(r, type);
-    tie(g_v[i], g_v[i + threads]) = tagged(v, tag);
+    tie(g_r[i], g_r[i + threads]) <<= tie(r, type);
+    tie(g_v[i], g_v[i + threads]) <<= tie(v, tag);
 #else
-    g_r[i] = tagged(r, type);
-    g_v[i] = tagged(v, tag);
+    g_r[i] <<= tie(r, type);
+    g_v[i] <<= tie(v, tag);
 #endif
     g_image[i] = image;
 }
@@ -104,18 +100,18 @@ __global__ void _finalize(float4* g_v, gpu_vector_type const* g_f)
     unsigned int tag;
     vector_type v;
 #ifdef USE_VERLET_DSFUN
-    tie(v, tag) = untagged<vector_type>(g_v[i], g_v[i + threads]);
+    tie(v, tag) <<= tie(g_v[i], g_v[i + threads]);
 #else
-    tie(v, tag) = untagged<vector_type>(g_v[i]);
+    tie(v, tag) <<= g_v[i];
 #endif
     vector_type_ f = g_f[i];
 
     verlet_kernel::finalize(v, f, /* FIXME mass */ 1, timestep_);
 
 #ifdef USE_VERLET_DSFUN
-    tie(g_v[i], g_v[i + threads]) = tagged(v, tag);
+    tie(g_v[i], g_v[i + threads]) <<= tie(v, tag);
 #else
-    g_v[i] = tagged(v, tag);
+    g_v[i] <<= tie(v, tag);
 #endif
 }
 
@@ -130,17 +126,17 @@ __global__ void rescale(float4* g_v, float_type scale)
     unsigned int tag;
     vector_type v;
 #ifdef USE_VERLET_DSFUN
-    tie(v, tag) = untagged<vector_type>(g_v[i], g_v[i + threads]);
+    tie(v, tag) <<= tie(g_v[i], g_v[i + threads]);
 #else
-    tie(v, tag) = untagged<vector_type>(g_v[i]);
+    tie(v, tag) <<= g_v[i];
 #endif
 
     v *= scale;
 
 #ifdef USE_VERLET_DSFUN
-    tie(g_v[i], g_v[i + threads]) = tagged(v, tag);
+    tie(g_v[i], g_v[i + threads]) <<= tie(v, tag);
 #else
-    g_v[i] = tagged(v, tag);
+    g_v[i] <<= tie(v, tag);
 #endif
 }
 
