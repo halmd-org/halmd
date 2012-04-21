@@ -23,8 +23,6 @@
 #include <halmd/numeric/blas/blas.hpp>
 #include <halmd/utility/gpu/thread.cuh>
 
-using namespace halmd::mdsim::gpu::particle_kernel;
-
 namespace halmd {
 namespace mdsim {
 namespace gpu {
@@ -109,13 +107,13 @@ __device__ void update_cell_neighbours(
     tie(s_r[threadIdx.x], s_type[threadIdx.x]) <<= tex1Dfetch(r_, n_);
     __syncthreads();
 
-    if (n == PLACEHOLDER) return;
+    if (n == particle_kernel::placeholder) return;
 
     for (unsigned int i = 0; i < blockDim.x; ++i) {
         // particle number of cell placeholder
         unsigned int const m = s_n[i];
         // skip placeholder particles
-        if (m == PLACEHOLDER) break;
+        if (m == particle_kernel::placeholder) break;
         // skip same particle
         if (same_cell && i == threadIdx.x) continue;
 

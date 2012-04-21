@@ -25,8 +25,12 @@ namespace mdsim {
 namespace gpu {
 namespace particle_kernel {
 
-/** placeholder particle */
-enum { PLACEHOLDER = -1U };
+/**
+ * Index value of a placeholder particle.
+ *
+ * All bytes are equal to 0xff, which facilitates erasing with cuda::memset.
+ */
+enum { placeholder = -1U };
 
 } // namespace mdsim
 } // namespace gpu

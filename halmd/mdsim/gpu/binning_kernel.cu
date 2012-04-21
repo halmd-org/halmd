@@ -21,8 +21,6 @@
 #include <halmd/mdsim/gpu/particle_kernel.cuh>
 #include <halmd/utility/gpu/thread.cuh>
 
-using namespace halmd::mdsim::gpu::particle_kernel;
-
 namespace halmd {
 namespace mdsim {
 namespace gpu {
@@ -108,13 +106,13 @@ __global__ void assign_cells(
     // global offset of this thread's particle
     const unsigned int n = offset + threadIdx.x;
     // mark as virtual particle
-    unsigned int tag = PLACEHOLDER;
+    unsigned int tag = particle_kernel::placeholder;
     // mark as real particle if appropriate
-    if (offset != PLACEHOLDER && n < nbox_ && g_cell[n] == BID) {
+    if (offset != particle_kernel::placeholder && n < nbox_ && g_cell[n] == BID) {
         tag = g_itag[n];
     }
     // return failure if any cell list is fully occupied
-    if (tag != PLACEHOLDER && (threadIdx.x + 1) == blockDim.x) {
+    if (tag != particle_kernel::placeholder && (threadIdx.x + 1) == blockDim.x) {
         *g_ret = EXIT_FAILURE;
     }
     // store particle in this block's cell

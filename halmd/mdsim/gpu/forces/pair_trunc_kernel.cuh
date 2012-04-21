@@ -28,8 +28,6 @@
 #include <halmd/numeric/mp/dsfloat.hpp>
 #include <halmd/utility/gpu/thread.cuh>
 
-using namespace halmd::mdsim::gpu::particle_kernel;
-
 namespace halmd {
 namespace mdsim {
 namespace gpu {
@@ -91,7 +89,7 @@ __global__ void compute(
         // coalesced read from neighbour list
         unsigned int j = g_neighbour[k * neighbour_stride_ + i];
         // skip placeholder particles
-        if (j == particle_kernel::PLACEHOLDER) {
+        if (j == particle_kernel::placeholder) {
             break;
         }
 
