@@ -75,7 +75,7 @@ operator<<=(T& left, tuple<U&, V&> right)
 {
     fixed_vector<float, 3> u;
     int v;
-    tie(u, v) = tuple<U const&, V const&>(right);
+    tie(u, v) = right;
     float4 t;
     t.x = u[0];
     t.y = u[1];
@@ -118,7 +118,7 @@ operator<<=(T& left, tuple<U&, V&> right)
 {
     fixed_vector<float, 2> u;
     int v;
-    tie(u, v) = tuple<U const&, V const&>(right);
+    tie(u, v) = right;
     float4 t;
     t.x = u[0];
     t.y = u[1];
@@ -160,7 +160,7 @@ operator<<=(T& left, tuple<U&, V&> right)
 {
     fixed_vector<float, 3> u;
     unsigned int v;
-    tie(u, v) = tuple<U const&, V const&>(right);
+    tie(u, v) = right;
     float4 t;
     t.x = u[0];
     t.y = u[1];
@@ -203,7 +203,7 @@ operator<<=(T& left, tuple<U&, V&> right)
 {
     fixed_vector<float, 2> u;
     unsigned int v;
-    tie(u, v) = tuple<U const&, V const&>(right);
+    tie(u, v) = right;
     float4 t;
     t.x = u[0];
     t.y = u[1];
@@ -245,7 +245,7 @@ operator<<=(T& left, tuple<U&, V&> right)
 {
     fixed_vector<float, 3> u;
     float v;
-    tie(u, v) = tuple<U const&, V const&>(right);
+    tie(u, v) = right;
     float4 t;
     t.x = u[0];
     t.y = u[1];
@@ -288,7 +288,7 @@ operator<<=(T& left, tuple<U&, V&> right)
 {
     fixed_vector<float, 2> u;
     float v;
-    tie(u, v) = tuple<U const&, V const&>(right);
+    tie(u, v) = right;
     float4 t;
     t.x = u[0];
     t.y = u[1];
@@ -330,7 +330,7 @@ operator<<=(tuple<T&, T&> left, tuple<U&, V&> right)
 {
     fixed_vector<double, 3> u;
     int v;
-    tie(u, v) = tuple<U const&, V const&>(right);
+    tie(u, v) = right;
     float4 hi, lo;
     tie(hi.x, lo.x) = split(dsfloat(u[0]));
     tie(hi.y, lo.y) = split(dsfloat(u[1]));
@@ -352,7 +352,7 @@ inline HALMD_GPU_ENABLED typename boost::enable_if<
 operator<<=(tuple<U&, V&> left, tuple<T&, T&> right)
 {
     float4 hi, lo;
-    tie(hi, lo) = tuple<T const&, T const&>(right);
+    tie(hi, lo) = right;
     fixed_vector<double, 3> u;
     u[0] = dsfloat(hi.x, lo.x);
     u[1] = dsfloat(hi.y, lo.y);
@@ -375,7 +375,7 @@ operator<<=(tuple<T&, T&> left, tuple<U&, V&> right)
 {
     fixed_vector<double, 2> u;
     int v;
-    tie(u, v) = tuple<U const&, V const&>(right);
+    tie(u, v) = right;
     float4 hi, lo;
     tie(hi.x, lo.x) = split(dsfloat(u[0]));
     tie(hi.y, lo.y) = split(dsfloat(u[1]));
@@ -397,7 +397,7 @@ inline HALMD_GPU_ENABLED typename boost::enable_if<
 operator<<=(tuple<U&, V&> left, tuple<T&, T&> right)
 {
     float4 hi, lo;
-    tie(hi, lo) = tuple<T const&, T const&>(right);
+    tie(hi, lo) = right;
     fixed_vector<double, 2> u;
     u[0] = dsfloat(hi.x, lo.x);
     u[1] = dsfloat(hi.y, lo.y);
@@ -419,7 +419,7 @@ operator<<=(tuple<T&, T&> left, tuple<U&, V&> right)
 {
     fixed_vector<double, 3> u;
     unsigned int v;
-    tie(u, v) = tuple<U const&, V const&>(right);
+    tie(u, v) = right;
     float4 hi, lo;
     tie(hi.x, lo.x) = split(dsfloat(u[0]));
     tie(hi.y, lo.y) = split(dsfloat(u[1]));
@@ -441,7 +441,7 @@ inline HALMD_GPU_ENABLED typename boost::enable_if<
 operator<<=(tuple<U&, V&> left, tuple<T&, T&> right)
 {
     float4 hi, lo;
-    tie(hi, lo) = tuple<T const&, T const&>(right);
+    tie(hi, lo) = right;
     fixed_vector<double, 3> u;
     u[0] = dsfloat(hi.x, lo.x);
     u[1] = dsfloat(hi.y, lo.y);
@@ -464,7 +464,7 @@ operator<<=(tuple<T&, T&> left, tuple<U&, V&> right)
 {
     fixed_vector<double, 2> u;
     unsigned int v;
-    tie(u, v) = tuple<U const&, V const&>(right);
+    tie(u, v) = right;
     float4 hi, lo;
     tie(hi.x, lo.x) = split(dsfloat(u[0]));
     tie(hi.y, lo.y) = split(dsfloat(u[1]));
@@ -486,7 +486,7 @@ inline HALMD_GPU_ENABLED typename boost::enable_if<
 operator<<=(tuple<U&, V&> left, tuple<T&, T&> right)
 {
     float4 hi, lo;
-    tie(hi, lo) = tuple<T const&, T const&>(right);
+    tie(hi, lo) = right;
     fixed_vector<double, 2> u;
     u[0] = dsfloat(hi.x, lo.x);
     u[1] = dsfloat(hi.y, lo.y);
@@ -508,7 +508,7 @@ operator<<=(tuple<T&, T&> left, tuple<U&, V&> right)
 {
     fixed_vector<double, 3> u;
     float v;
-    tie(u, v) = tuple<U const&, V const&>(right);
+    tie(u, v) = right;
     float4 hi, lo;
     tie(hi.x, lo.x) = split(dsfloat(u[0]));
     tie(hi.y, lo.y) = split(dsfloat(u[1]));
@@ -530,7 +530,7 @@ inline HALMD_GPU_ENABLED typename boost::enable_if<
 operator<<=(tuple<U&, V&> left, tuple<T&, T&> right)
 {
     float4 hi, lo;
-    tie(hi, lo) = tuple<T const&, T const&>(right);
+    tie(hi, lo) = right;
     fixed_vector<double, 3> u;
     u[0] = dsfloat(hi.x, lo.x);
     u[1] = dsfloat(hi.y, lo.y);
@@ -553,7 +553,7 @@ operator<<=(tuple<T&, T&> left, tuple<U&, V&> right)
 {
     fixed_vector<double, 2> u;
     float v;
-    tie(u, v) = tuple<U const&, V const&>(right);
+    tie(u, v) = right;
     float4 hi, lo;
     tie(hi.x, lo.x) = split(dsfloat(u[0]));
     tie(hi.y, lo.y) = split(dsfloat(u[1]));
@@ -575,7 +575,7 @@ inline HALMD_GPU_ENABLED typename boost::enable_if<
 operator<<=(tuple<U&, V&> left, tuple<T&, T&> right)
 {
     float4 hi, lo;
-    tie(hi, lo) = tuple<T const&, T const&>(right);
+    tie(hi, lo) = right;
     fixed_vector<double, 2> u;
     u[0] = dsfloat(hi.x, lo.x);
     u[1] = dsfloat(hi.y, lo.y);
@@ -597,7 +597,7 @@ operator<<=(tuple<T&, T&> left, tuple<U&, V&> right)
 {
     fixed_vector<double, 3> u;
     double v;
-    tie(u, v) = tuple<U const&, V const&>(right);
+    tie(u, v) = right;
     float4 hi, lo;
     tie(hi.x, lo.x) = split(dsfloat(u[0]));
     tie(hi.y, lo.y) = split(dsfloat(u[1]));
@@ -619,7 +619,7 @@ inline HALMD_GPU_ENABLED typename boost::enable_if<
 operator<<=(tuple<U&, V&> left, tuple<T&, T&> right)
 {
     float4 hi, lo;
-    tie(hi, lo) = tuple<T const&, T const&>(right);
+    tie(hi, lo) = right;
     fixed_vector<double, 3> u;
     u[0] = dsfloat(hi.x, lo.x);
     u[1] = dsfloat(hi.y, lo.y);
@@ -642,7 +642,7 @@ operator<<=(tuple<T&, T&> left, tuple<U&, V&> right)
 {
     fixed_vector<double, 2> u;
     double v;
-    tie(u, v) = tuple<U const&, V const&>(right);
+    tie(u, v) = right;
     float4 hi, lo;
     tie(hi.x, lo.x) = split(dsfloat(u[0]));
     tie(hi.y, lo.y) = split(dsfloat(u[1]));
@@ -664,7 +664,7 @@ inline HALMD_GPU_ENABLED typename boost::enable_if<
 operator<<=(tuple<U&, V&> left, tuple<T&, T&> right)
 {
     float4 hi, lo;
-    tie(hi, lo) = tuple<T const&, T const&>(right);
+    tie(hi, lo) = right;
     fixed_vector<double, 2> u;
     u[0] = dsfloat(hi.x, lo.x);
     u[1] = dsfloat(hi.y, lo.y);
@@ -686,7 +686,7 @@ operator<<=(tuple<T&, T&> left, tuple<U&, V&> right)
 {
     fixed_vector<dsfloat, 3> u;
     int v;
-    tie(u, v) = tuple<U const&, V const&>(right);
+    tie(u, v) = right;
     float4 hi, lo;
     tie(hi.x, lo.x) = split(u[0]);
     tie(hi.y, lo.y) = split(u[1]);
@@ -708,7 +708,7 @@ inline HALMD_GPU_ENABLED typename boost::enable_if<
 operator<<=(tuple<U&, V&> left, tuple<T&, T&> right)
 {
     float4 hi, lo;
-    tie(hi, lo) = tuple<T const&, T const&>(right);
+    tie(hi, lo) = right;
     fixed_vector<dsfloat, 3> u;
     u[0] = dsfloat(hi.x, lo.x);
     u[1] = dsfloat(hi.y, lo.y);
@@ -731,7 +731,7 @@ operator<<=(tuple<T&, T&> left, tuple<U&, V&> right)
 {
     fixed_vector<dsfloat, 2> u;
     int v;
-    tie(u, v) = tuple<U const&, V const&>(right);
+    tie(u, v) = right;
     float4 hi, lo;
     tie(hi.x, lo.x) = split(u[0]);
     tie(hi.y, lo.y) = split(u[1]);
@@ -753,7 +753,7 @@ inline HALMD_GPU_ENABLED typename boost::enable_if<
 operator<<=(tuple<U&, V&> left, tuple<T&, T&> right)
 {
     float4 hi, lo;
-    tie(hi, lo) = tuple<T const&, T const&>(right);
+    tie(hi, lo) = right;
     fixed_vector<dsfloat, 2> u;
     u[0] = dsfloat(hi.x, lo.x);
     u[1] = dsfloat(hi.y, lo.y);
@@ -775,7 +775,7 @@ operator<<=(tuple<T&, T&> left, tuple<U&, V&> right)
 {
     fixed_vector<dsfloat, 3> u;
     unsigned int v;
-    tie(u, v) = tuple<U const&, V const&>(right);
+    tie(u, v) = right;
     float4 hi, lo;
     tie(hi.x, lo.x) = split(u[0]);
     tie(hi.y, lo.y) = split(u[1]);
@@ -797,7 +797,7 @@ inline HALMD_GPU_ENABLED typename boost::enable_if<
 operator<<=(tuple<U&, V&> left, tuple<T&, T&> right)
 {
     float4 hi, lo;
-    tie(hi, lo) = tuple<T const&, T const&>(right);
+    tie(hi, lo) = right;
     fixed_vector<dsfloat, 3> u;
     u[0] = dsfloat(hi.x, lo.x);
     u[1] = dsfloat(hi.y, lo.y);
@@ -820,7 +820,7 @@ operator<<=(tuple<T&, T&> left, tuple<U&, V&> right)
 {
     fixed_vector<dsfloat, 2> u;
     unsigned int v;
-    tie(u, v) = tuple<U const&, V const&>(right);
+    tie(u, v) = right;
     float4 hi, lo;
     tie(hi.x, lo.x) = split(u[0]);
     tie(hi.y, lo.y) = split(u[1]);
@@ -842,7 +842,7 @@ inline HALMD_GPU_ENABLED typename boost::enable_if<
 operator<<=(tuple<U&, V&> left, tuple<T&, T&> right)
 {
     float4 hi, lo;
-    tie(hi, lo) = tuple<T const&, T const&>(right);
+    tie(hi, lo) = right;
     fixed_vector<dsfloat, 2> u;
     u[0] = dsfloat(hi.x, lo.x);
     u[1] = dsfloat(hi.y, lo.y);
@@ -864,7 +864,7 @@ operator<<=(tuple<T&, T&> left, tuple<U&, V&> right)
 {
     fixed_vector<dsfloat, 3> u;
     float v;
-    tie(u, v) = tuple<U const&, V const&>(right);
+    tie(u, v) = right;
     float4 hi, lo;
     tie(hi.x, lo.x) = split(u[0]);
     tie(hi.y, lo.y) = split(u[1]);
@@ -886,7 +886,7 @@ inline HALMD_GPU_ENABLED typename boost::enable_if<
 operator<<=(tuple<U&, V&> left, tuple<T&, T&> right)
 {
     float4 hi, lo;
-    tie(hi, lo) = tuple<T const&, T const&>(right);
+    tie(hi, lo) = right;
     fixed_vector<dsfloat, 3> u;
     u[0] = dsfloat(hi.x, lo.x);
     u[1] = dsfloat(hi.y, lo.y);
@@ -909,7 +909,7 @@ operator<<=(tuple<T&, T&> left, tuple<U&, V&> right)
 {
     fixed_vector<dsfloat, 2> u;
     float v;
-    tie(u, v) = tuple<U const&, V const&>(right);
+    tie(u, v) = right;
     float4 hi, lo;
     tie(hi.x, lo.x) = split(u[0]);
     tie(hi.y, lo.y) = split(u[1]);
@@ -931,7 +931,7 @@ inline HALMD_GPU_ENABLED typename boost::enable_if<
 operator<<=(tuple<U&, V&> left, tuple<T&, T&> right)
 {
     float4 hi, lo;
-    tie(hi, lo) = tuple<T const&, T const&>(right);
+    tie(hi, lo) = right;
     fixed_vector<dsfloat, 2> u;
     u[0] = dsfloat(hi.x, lo.x);
     u[1] = dsfloat(hi.y, lo.y);
@@ -953,7 +953,7 @@ operator<<=(tuple<T&, T&> left, tuple<U&, V&> right)
 {
     fixed_vector<dsfloat, 3> u;
     dsfloat v;
-    tie(u, v) = tuple<U const&, V const&>(right);
+    tie(u, v) = right;
     float4 hi, lo;
     tie(hi.x, lo.x) = split(u[0]);
     tie(hi.y, lo.y) = split(u[1]);
@@ -975,7 +975,7 @@ inline HALMD_GPU_ENABLED typename boost::enable_if<
 operator<<=(tuple<U&, V&> left, tuple<T&, T&> right)
 {
     float4 hi, lo;
-    tie(hi, lo) = tuple<T const&, T const&>(right);
+    tie(hi, lo) = right;
     fixed_vector<dsfloat, 3> u;
     u[0] = dsfloat(hi.x, lo.x);
     u[1] = dsfloat(hi.y, lo.y);
@@ -998,7 +998,7 @@ operator<<=(tuple<T&, T&> left, tuple<U&, V&> right)
 {
     fixed_vector<dsfloat, 2> u;
     dsfloat v;
-    tie(u, v) = tuple<U const&, V const&>(right);
+    tie(u, v) = right;
     float4 hi, lo;
     tie(hi.x, lo.x) = split(u[0]);
     tie(hi.y, lo.y) = split(u[1]);
@@ -1020,7 +1020,7 @@ inline HALMD_GPU_ENABLED typename boost::enable_if<
 operator<<=(tuple<U&, V&> left, tuple<T&, T&> right)
 {
     float4 hi, lo;
-    tie(hi, lo) = tuple<T const&, T const&>(right);
+    tie(hi, lo) = right;
     fixed_vector<dsfloat, 2> u;
     u[0] = dsfloat(hi.x, lo.x);
     u[1] = dsfloat(hi.y, lo.y);
