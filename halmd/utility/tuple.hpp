@@ -102,6 +102,34 @@ private:
     friend T0 get<0>(tuple<T0> const&);
 };
 
+template <typename T0>
+class tuple<T0&>
+{
+public:
+    __device__ tuple(T0& t0) : t0(t0) {}
+
+    __device__ tuple& operator=(tuple<T0&> const& t)
+    {
+        t0 = get<0>(t);
+        return *this;
+    }
+
+    template <typename U0>
+    __device__ tuple(tuple<U0> const& t) : t0(get<0>(t)) {}
+
+    template <typename U0>
+    __device__ tuple& operator=(tuple<U0> const& t)
+    {
+        t0 = get<0>(t);
+        return *this;
+    }
+
+private:
+    T0& t0;
+
+    friend T0& get<0>(tuple<T0&> const&);
+};
+
 template <int i, typename T0, typename T1>
 __device__ typename boost::enable_if<boost::is_same<boost::mpl::int_<0>, boost::mpl::int_<i> >, T0>::type
 get(tuple<T0, T1> const& t)
@@ -143,6 +171,38 @@ private:
 
     friend T0 get<0>(tuple<T0, T1> const&);
     friend T1 get<1>(tuple<T0, T1> const&);
+};
+
+template <typename T0, typename T1>
+class tuple<T0&, T1&>
+{
+public:
+    __device__ tuple(T0& t0, T1& t1) : t0(t0), t1(t1) {}
+
+    __device__ tuple& operator=(tuple<T0&, T1&> const& t)
+    {
+        t0 = get<0>(t);
+        t1 = get<1>(t);
+        return *this;
+    }
+
+    template <typename U0, typename U1>
+    __device__ tuple(tuple<U0&, U1&> const& t) : t0(get<0>(t)), t1(get<1>(t)) {}
+
+    template <typename U0, typename U1>
+    __device__ tuple& operator=(tuple<U0, U1> const& t)
+    {
+        t0 = get<0>(t);
+        t1 = get<1>(t);
+        return *this;
+    }
+
+private:
+    T0& t0;
+    T1& t1;
+
+    friend T0& get<0>(tuple<T0&, T1&> const&);
+    friend T1& get<1>(tuple<T0&, T1&> const&);
 };
 
 template <int i, typename T0, typename T1, typename T2>
@@ -198,6 +258,42 @@ private:
     friend T0 get<0>(tuple<T0, T1, T2> const&);
     friend T1 get<1>(tuple<T0, T1, T2> const&);
     friend T2 get<2>(tuple<T0, T1, T2> const&);
+};
+
+template <typename T0, typename T1, typename T2>
+class tuple<T0&, T1&, T2&>
+{
+public:
+    __device__ tuple(T0& t0, T1& t1, T2& t2) : t0(t0), t1(t1), t2(t2) {}
+
+    __device__ tuple& operator=(tuple<T0&, T1&, T2&> const& t)
+    {
+        t0 = get<0>(t);
+        t1 = get<1>(t);
+        t2 = get<2>(t);
+        return *this;
+    }
+
+    template <typename U0, typename U1, typename U2>
+    __device__ tuple(tuple<U0, U1, U2> const& t) : t0(get<0>(t)), t1(get<1>(t)), t2(get<2>(t)) {}
+
+    template <typename U0, typename U1, typename U2>
+    __device__ tuple& operator=(tuple<U0, U1, U2> const& t)
+    {
+        t0 = get<0>(t);
+        t1 = get<1>(t);
+        t2 = get<2>(t);
+        return *this;
+    }
+
+private:
+    T0& t0;
+    T1& t1;
+    T2& t2;
+
+    friend T0& get<0>(tuple<T0&, T1&, T2&> const&);
+    friend T1& get<1>(tuple<T0&, T1&, T2&> const&);
+    friend T2& get<2>(tuple<T0&, T1&, T2&> const&);
 };
 
 template <typename T0>
