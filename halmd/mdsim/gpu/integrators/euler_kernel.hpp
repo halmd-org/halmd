@@ -37,11 +37,11 @@ struct euler_wrapper
     typedef fixed_vector<float, dimension> vector_type;
 
     cuda::function <void (
-        float4*                   // position vectors
-      , coalesced_vector_type*    // image vectors
-      , float4*                   // velocity vectors
-      , float                     // integration timestep
-      , vector_type               // edge lengths of cuboid box
+        float4*
+      , coalesced_vector_type*
+      , float4 const*
+      , float
+      , vector_type
     )> integrate;
 
     static euler_wrapper const kernel;

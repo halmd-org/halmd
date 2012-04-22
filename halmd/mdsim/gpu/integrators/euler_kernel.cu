@@ -17,7 +17,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <halmd/mdsim/gpu/integrators/euler_kernel.cuh>
+#include <halmd/mdsim/gpu/box_kernel.cuh>
 #include <halmd/mdsim/gpu/integrators/euler_kernel.hpp>
 #include <halmd/numeric/mp/dsfloat.hpp>
 #include <halmd/utility/gpu/thread.cuh>
@@ -29,54 +29,53 @@ namespace integrators {
 namespace euler_kernel {
 
 /**
- * Euler integration
+ * Euler integration: @f$ r(t + \Delta t) = r(t) + v(t) \Delta t @f$
  *
- * @param g_r           positions
+ * @param g_position    positions
  * @param g_image       number of times the particle exceeded the box margin
- * @param g_v           velocities
- * @param g_f           forces
+ * @param g_velocity    velocities
+ * @param g_force       forces
  * @param timestep      integration timestep
  * @param box_length    edge lengths of cuboid box
  */
-template <
-    typename vector_type //< precision of positions and velocities
-  , typename vector_type_ //< default precision (box size, image vector)
-  , typename gpu_vector_type
->
-__global__ void _integrate(
-    float4* g_r
+template <int dimension, typename float_type, typename gpu_vector_type>
+__global__ void integrate(
+    float4* g_position
   , gpu_vector_type* g_image
-  , float4* g_v
+  , float4 const* g_velocity
   , float timestep
-  , vector_type_ box_length
+  , fixed_vector<float, dimension> box_length
 )
 {
-    // get information which thread this is and thus which particles are to
-    // be processed
-    unsigned int const i = GTID;
-    unsigned int const threads = GTDIM;
-    unsigned int type, tag;
-    // local copy of position and velocity
-    vector_type r, v;
-#ifdef USE_VERLET_DSFUN
-    tie(r, type) <<= tie(g_r[i], g_r[i + threads]);
-    tie(v, tag) <<= tie(g_v[i], g_v[i + threads]);
-#else
-    tie(r, type) <<= g_r[i];
-    tie(v, tag) <<= g_v[i];
-#endif
-    // local copy of image
-    vector_type_ image = g_image[i];
+    // kernel execution parameters
+    unsigned int const thread = GTID;
+    unsigned int const nthread = GTDIM;
 
-    // run actual integration routine in .cuh file
-    integrate(r, image, v, timestep, box_length);
-
+    // read position, species, velocity, mass, image from global memory
+    fixed_vector<float_type, dimension> r, v;
+    unsigned int species;
+    float mass;
 #ifdef USE_VERLET_DSFUN
-    tie(g_r[i], g_r[i + threads]) <<= tie(r, type);
+    tie(r, species) <<= tie(g_position[thread], g_position[thread + nthread]);
+    tie(v, mass) <<= tie(g_velocity[thread], g_velocity[thread + nthread]);
 #else
-    g_r[i] <<= tie(r, type);
+    tie(r, species) <<= g_position[thread];
+    tie(v, mass) <<= g_velocity[thread];
 #endif
-    g_image[i] = image;
+    fixed_vector<float, dimension> image = g_image[thread];
+
+    // Euler integration
+    r += v * timestep;
+    // enforce periodic boundary conditions
+    image += box_kernel::reduce_periodic(r, box_length);
+
+    // store position, species, image in global memory
+#ifdef USE_VERLET_DSFUN
+    tie(g_position[thread], g_position[thread + nthread]) <<= tie(r, species);
+#else
+    g_position[thread] <<= tie(r, species);
+#endif
+    g_image[thread] = image;
 }
 
 } // namespace euler_kernel
@@ -84,9 +83,9 @@ __global__ void _integrate(
 template <int dimension>
 euler_wrapper<dimension> const euler_wrapper<dimension>::kernel = {
 #ifdef USE_VERLET_DSFUN
-    euler_kernel::_integrate<fixed_vector<dsfloat, dimension> >
+    euler_kernel::integrate<dimension, dsfloat>
 #else
-    euler_kernel::_integrate<fixed_vector<float, dimension> >
+    euler_kernel::integrate<dimension, float>
 #endif
 };
 
