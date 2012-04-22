@@ -74,15 +74,6 @@ timestep(double timestep)
     timestep_half_ = timestep_ / 2;
     timestep_4_ = timestep_ / 4;
     timestep_8_ = timestep_ / 8;
-
-    try {
-        cuda::copy(timestep_, wrapper_type::kernel.timestep);
-    }
-    catch (cuda::error const&) {
-        LOG_ERROR("failed to initialize Verlet integrator symbols");
-        throw;
-    }
-
     LOG("integration timestep: " << timestep_);
 }
 
@@ -130,7 +121,12 @@ integrate()
     try {
         cuda::configure(particle_->dim.grid, particle_->dim.block);
         wrapper_type::kernel.integrate(
-            particle_->position(), particle_->image(), particle_->velocity(), particle_->force(), scale
+            particle_->position()
+          , particle_->image()
+          , particle_->velocity()
+          , particle_->force()
+          , timestep_
+          , scale
           , static_cast<vector_type>(box_->length())
         );
         cuda::thread::synchronize();
@@ -156,7 +152,7 @@ finalize()
     // and scheduling
     try {
         cuda::configure(particle_->dim.grid, particle_->dim.block);
-        wrapper_type::kernel.finalize(particle_->velocity(), particle_->force());
+        wrapper_type::kernel.finalize(particle_->velocity(), particle_->force(), timestep_);
         cuda::thread::synchronize();
 
         float_type scale = propagate_chain();

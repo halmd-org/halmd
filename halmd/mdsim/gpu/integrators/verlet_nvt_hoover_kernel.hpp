@@ -34,13 +34,8 @@ struct verlet_nvt_hoover_wrapper
     typedef fixed_vector<float, dimension> vector_type;
     typedef typename type_traits<dimension, float>::gpu::coalesced_vector_type coalesced_vector_type;
 
-    /** integration time-step */
-    cuda::symbol<float> timestep;
-    /** first leapfrog half-step of velocity-Verlet algorithm */
-    cuda::function <void (float4*, coalesced_vector_type*, float4*, coalesced_vector_type const*, float_type, vector_type)> integrate;
-    /** second leapfrog half-step of velocity-Verlet algorithm */
-    cuda::function <void (float4*, coalesced_vector_type const*)> finalize;
-    /** rescaling of velocities */
+    cuda::function <void (float4*, coalesced_vector_type*, float4*, coalesced_vector_type const*, float, float_type, vector_type)> integrate;
+    cuda::function <void (float4*, coalesced_vector_type const*, float)> finalize;
     cuda::function <void (float4*, float_type)> rescale;
 
     static verlet_nvt_hoover_wrapper const kernel;
