@@ -57,12 +57,11 @@ template <
     typename vector_type
   , typename coalesced_vector_type
 >
-__global__ void tag(coalesced_vector_type* g_r, coalesced_vector_type* g_v)
+__global__ void tag(coalesced_vector_type* g_r)
 {
     vector_type r, v;
     unsigned int type, tag;
     tie(r, type) <<= g_r[GTID];
-    tie(v, tag) <<= g_v[GTID];
 
     // set particle type
     for (type = 0, tag = GTID; type < ntype_; ++type) {
@@ -73,11 +72,7 @@ __global__ void tag(coalesced_vector_type* g_r, coalesced_vector_type* g_v)
         tag -= n;
     }
 
-    // set particle identifier
-    tag = GTID;
-
     g_r[GTID] <<= tie(r, type);
-    g_v[GTID] <<= tie(v, tag);
 }
 
 /**

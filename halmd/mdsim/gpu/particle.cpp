@@ -129,6 +129,9 @@ particle<dimension, float_type>::particle(
     cuda::memset(g_tag_, 0, g_tag_.capacity());
     cuda::memset(g_reverse_tag, 0, g_reverse_tag.capacity());
 
+    // set particle masses to unit mass
+    set_mass(1);
+
     try {
         cuda::copy(nbox, get_particle_kernel<dimension>().nbox);
         cuda::copy(ntype, get_particle_kernel<dimension>().ntype);
@@ -174,7 +177,7 @@ void particle<dimension, float_type>::prepare()
 }
 
 /**
- * set particle tags and types
+ * set particle types
  */
 template <int dimension, typename float_type>
 void particle<dimension, float_type>::set()
@@ -184,7 +187,7 @@ void particle<dimension, float_type>::set()
         cuda::vector<unsigned int> g_ntypes(ntypes.size());
         cuda::copy(ntypes, g_ntypes);
         get_particle_kernel<dimension>().ntypes.bind(g_ntypes);
-        get_particle_kernel<dimension>().tag(g_r, g_v);
+        get_particle_kernel<dimension>().tag(g_r);
 
         cuda::configure(dim.grid, dim.block);
         get_particle_kernel<dimension>().gen_index(g_reverse_tag);
