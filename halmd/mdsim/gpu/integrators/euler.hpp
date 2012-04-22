@@ -29,7 +29,6 @@
 #include <halmd/mdsim/box.hpp>
 #include <halmd/mdsim/gpu/integrators/euler_kernel.hpp>
 #include <halmd/mdsim/gpu/particle.hpp>
-#include <halmd/mdsim/integrator.hpp>
 #include <halmd/utility/profiler.hpp>
 
 namespace halmd {
@@ -39,10 +38,8 @@ namespace integrators {
 
 template <int dimension, typename float_type>
 class euler
-  : public mdsim::integrator<dimension>
 {
 public:
-    typedef mdsim::integrator<dimension> _Base;
     typedef gpu::particle<dimension, float_type> particle_type;
     typedef mdsim::box<dimension> box_type;
     typedef logger logger_type;
@@ -58,12 +55,11 @@ public:
       , boost::shared_ptr<logger_type> logger = boost::make_shared<logger_type>()
     );
 
-    virtual void integrate();
-    virtual void finalize() {} // the Euler integrator consists of a single step only
-    virtual void timestep(double timestep);
+    void integrate();
+    void set_timestep(double timestep);
 
     //! returns integration time step
-    virtual double timestep() const
+    double timestep() const
     {
         return timestep_;
     }

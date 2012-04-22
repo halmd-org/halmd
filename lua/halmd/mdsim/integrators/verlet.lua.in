@@ -17,7 +17,6 @@
 -- along with this program.  If not, see <http://www.gnu.org/licenses/>.
 --
 
-local device            = require("halmd.utility.device")
 local log               = require("halmd.io.log")
 local module            = require("halmd.utility.module")
 local mdsim = {
@@ -27,21 +26,8 @@ local mdsim = {
 }
 
 -- grab C++ wrappers
-local verlet_wrapper = {
-    host = {
-        [2] = libhalmd.mdsim.host.integrators.verlet_2_
-      , [3] = libhalmd.mdsim.host.integrators.verlet_3_
-    }
-}
-if libhalmd.mdsim.gpu then
-    verlet_wrapper.gpu = {
-        [2] = libhalmd.mdsim.gpu.integrators.verlet_2_
-      , [3] = libhalmd.mdsim.gpu.integrators.verlet_3_
-    }
-end
+local verlet = assert(libhalmd.mdsim.integrators.verlet)
 local h5 = libhalmd.h5
--- grab standard library
-local assert = assert
 
 local M = module("halmd.mdsim.integrators.verlet")
 
@@ -57,12 +43,6 @@ function M.__new(args)
     local timestep = assert(clock.timestep)
     local logger = log.logger({label = "verlet"})
 
-    local verlet
-    if device() then
-        verlet = assert(verlet_wrapper.gpu[dimension])
-    else
-        verlet = assert(verlet_wrapper.host[dimension])
-    end
     local integrator = verlet(particle, box, timestep, logger)
 
     -- sequence of signal connections

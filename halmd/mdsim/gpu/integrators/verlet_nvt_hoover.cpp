@@ -18,12 +18,13 @@
  */
 
 #include <algorithm>
+#include <boost/bind.hpp>
 #include <boost/lambda/lambda.hpp>
-#include <cuda_wrapper/cuda_wrapper.hpp>
+#include <boost/make_shared.hpp>
 #include <cmath>
-#include <string>
 
 #include <halmd/mdsim/gpu/integrators/verlet_nvt_hoover.hpp>
+#include <halmd/utility/demangle.hpp>
 #include <halmd/utility/lua/lua.hpp>
 
 using namespace boost;
@@ -57,18 +58,17 @@ verlet_nvt_hoover<dimension, float_type>::verlet_nvt_hoover(
   // this is done here and only once rather than repeatedly during the integration
   , compute_en_kin_2_(30)  // FIXME reduce kernel should use #multiprocessors = #blocks as default
 {
-    this->timestep(timestep);
+    set_timestep(timestep);
 
     LOG("resonance frequency of heat bath: " << resonance_frequency_);
-    this->temperature(temperature);
+    set_temperature(temperature);
 }
 
 /**
  * set integration time-step
  */
 template <int dimension, typename float_type>
-void verlet_nvt_hoover<dimension, float_type>::
-timestep(double timestep)
+void verlet_nvt_hoover<dimension, float_type>::set_timestep(double timestep)
 {
     timestep_ = static_cast<float_type>(timestep);
     timestep_half_ = timestep_ / 2;
@@ -81,8 +81,7 @@ timestep(double timestep)
  * set temperature and adjust masses of heat bath variables
  */
 template <int dimension, typename float_type>
-void verlet_nvt_hoover<dimension, float_type>::
-temperature(double temperature)
+void verlet_nvt_hoover<dimension, float_type>::set_temperature(double temperature)
 {
     temperature_ = static_cast<float_type>(temperature);
     en_kin_target_2_ = dimension * particle_->nparticle() * temperature_;
@@ -101,8 +100,7 @@ temperature(double temperature)
 }
 
 template <int dimension, typename float_type>
-void verlet_nvt_hoover<dimension, float_type>::
-set_mass(chain_type const& mass)
+void verlet_nvt_hoover<dimension, float_type>::set_mass(chain_type const& mass)
 {
     mass_xi_ = mass;
     LOG("`mass' of heat bath variables: " << mass_xi_);
@@ -112,8 +110,7 @@ set_mass(chain_type const& mass)
  * First leapfrog half-step of velocity-Verlet algorithm
  */
 template <int dimension, typename float_type>
-void verlet_nvt_hoover<dimension, float_type>::
-integrate()
+void verlet_nvt_hoover<dimension, float_type>::integrate()
 {
     scoped_timer<timer> timer_(runtime_.integrate);
     float_type scale = propagate_chain();
@@ -141,8 +138,7 @@ integrate()
  * Second leapfrog half-step of velocity-Verlet algorithm
  */
 template <int dimension, typename float_type>
-void verlet_nvt_hoover<dimension, float_type>::
-finalize()
+void verlet_nvt_hoover<dimension, float_type>::finalize()
 {
     scoped_timer_type timer(runtime_.finalize);
 
@@ -214,12 +210,6 @@ float_type verlet_nvt_hoover<dimension, float_type>::propagate_chain()
     return s;
 }
 
-template <int dimension, typename float_type>
-static char const* module_name_wrapper(verlet_nvt_hoover<dimension, float_type> const&)
-{
-    return verlet_nvt_hoover<dimension, float_type>::module_name();
-}
-
 template <typename integrator_type>
 static function<typename integrator_type::chain_type& ()>
 wrap_xi(shared_ptr<integrator_type> integrator)
@@ -241,12 +231,25 @@ wrap_en_nhc(shared_ptr<integrator_type> integrator)
     return bind(&integrator_type::en_nhc, integrator);
 }
 
+template <typename integrator_type>
+static function <void ()>
+wrap_integrate(shared_ptr<integrator_type> self)
+{
+    return bind(&integrator_type::integrate, self);
+}
+
+template <typename integrator_type>
+static function <void ()>
+wrap_finalize(shared_ptr<integrator_type> self)
+{
+    return bind(&integrator_type::finalize, self);
+}
+
 template <int dimension, typename float_type>
 void verlet_nvt_hoover<dimension, float_type>::luaopen(lua_State* L)
 {
-    typedef typename _Base::_Base _Base_Base;
+    static string const class_name = demangled_name<verlet_nvt_hoover>();
     using namespace luabind;
-    static string class_name(module_name() + ("_" + lexical_cast<string>(dimension) + "_"));
     module(L, "libhalmd")
     [
         namespace_("mdsim")
@@ -255,23 +258,18 @@ void verlet_nvt_hoover<dimension, float_type>::luaopen(lua_State* L)
             [
                 namespace_("integrators")
                 [
-                    class_<
-                        verlet_nvt_hoover
-                      , shared_ptr<_Base_Base>
-                      , bases<_Base_Base, _Base>
-                    >(class_name.c_str())
-                        .def(constructor<
-                            shared_ptr<particle_type>
-                          , shared_ptr<box_type const>
-                          , float_type, float_type, float_type
-                          , shared_ptr<logger_type>
-                        >())
+                    class_<verlet_nvt_hoover>(class_name.c_str())
+                        .property("integrate", &wrap_integrate<verlet_nvt_hoover>)
+                        .property("finalize", &wrap_finalize<verlet_nvt_hoover>)
+                        .property("timestep", &verlet_nvt_hoover::set_timestep)
+                        .property("temperature", &verlet_nvt_hoover::temperature)
                         .property("xi", &wrap_xi<verlet_nvt_hoover>)
                         .property("v_xi", &wrap_v_xi<verlet_nvt_hoover>)
                         .property("en_nhc", &wrap_en_nhc<verlet_nvt_hoover>)
                         .property("mass", &verlet_nvt_hoover::mass)
                         .property("resonance_frequency", &verlet_nvt_hoover::resonance_frequency)
-                        .property("module_name", &module_name_wrapper<dimension, float_type>)
+                        .def("set_timestep", &verlet_nvt_hoover::set_timestep)
+                        .def("set_temperature", &verlet_nvt_hoover::set_temperature)
                         .def("set_mass", &verlet_nvt_hoover::set_mass)
                         .scope
                         [
@@ -283,6 +281,18 @@ void verlet_nvt_hoover<dimension, float_type>::luaopen(lua_State* L)
                         ]
                         .def_readonly("runtime", &verlet_nvt_hoover::runtime_)
                 ]
+            ]
+
+          , namespace_("integrators")
+            [
+                def("verlet_nvt_hoover", &make_shared<verlet_nvt_hoover
+                  , shared_ptr<particle_type>
+                  , shared_ptr<box_type const>
+                  , float_type
+                  , float_type
+                  , float_type
+                  , shared_ptr<logger_type>
+                >)
             ]
         ]
     ];

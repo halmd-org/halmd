@@ -18,10 +18,12 @@
  */
 
 #include <algorithm>
+#include <boost/bind.hpp>
+#include <boost/make_shared.hpp>
 #include <cmath>
-#include <string>
 
 #include <halmd/mdsim/host/integrators/verlet_nvt_andersen.hpp>
+#include <halmd/utility/demangle.hpp>
 #include <halmd/utility/lua/lua.hpp>
 
 using namespace boost;
@@ -49,13 +51,13 @@ verlet_nvt_andersen<dimension, float_type>::verlet_nvt_andersen(
   , coll_rate_(coll_rate)
   , logger_(logger)
 {
-    this->timestep(timestep);
-    this->temperature(temperature);
+    set_timestep(timestep);
+    set_temperature(temperature);
     LOG("collision rate with heat bath: " << coll_rate_);
 }
 
 template <int dimension, typename float_type>
-void verlet_nvt_andersen<dimension, float_type>::timestep(double timestep)
+void verlet_nvt_andersen<dimension, float_type>::set_timestep(double timestep)
 {
     timestep_ = static_cast<float_type>(timestep);
     timestep_half_ = 0.5 * timestep;
@@ -65,7 +67,7 @@ void verlet_nvt_andersen<dimension, float_type>::timestep(double timestep)
 }
 
 template <int dimension, typename float_type>
-void verlet_nvt_andersen<dimension, float_type>::temperature(double temperature)
+void verlet_nvt_andersen<dimension, float_type>::set_temperature(double temperature)
 {
     temperature_ = static_cast<float_type>(temperature);
     sqrt_temperature_ = sqrt(temperature_);
@@ -140,17 +142,25 @@ void verlet_nvt_andersen<dimension, float_type>::finalize()
     }
 }
 
-template <int dimension, typename float_type>
-static char const* module_name_wrapper(verlet_nvt_andersen<dimension, float_type> const&)
+template <typename integrator_type>
+static function <void ()>
+wrap_integrate(shared_ptr<integrator_type> self)
 {
-    return verlet_nvt_andersen<dimension, float_type>::module_name();
+    return bind(&integrator_type::integrate, self);
+}
+
+template <typename integrator_type>
+static function <void ()>
+wrap_finalize(shared_ptr<integrator_type> self)
+{
+    return bind(&integrator_type::finalize, self);
 }
 
 template <int dimension, typename float_type>
 void verlet_nvt_andersen<dimension, float_type>::luaopen(lua_State* L)
 {
+    static string const class_name = demangled_name<verlet_nvt_andersen>();
     using namespace luabind;
-    static string class_name(module_name() + ("_" + lexical_cast<string>(dimension) + "_"));
     module(L, "libhalmd")
     [
         namespace_("mdsim")
@@ -159,18 +169,14 @@ void verlet_nvt_andersen<dimension, float_type>::luaopen(lua_State* L)
             [
                 namespace_("integrators")
                 [
-                    class_<verlet_nvt_andersen, shared_ptr<_Base>, _Base>(class_name.c_str())
-                        .def(constructor<
-                            shared_ptr<particle_type>
-                          , shared_ptr<box_type const>
-                          , shared_ptr<random_type>
-                          , float_type
-                          , float_type
-                          , float_type
-                          , shared_ptr<logger_type>
-                        >())
+                    class_<verlet_nvt_andersen>(class_name.c_str())
+                        .property("integrate", &wrap_integrate<verlet_nvt_andersen>)
+                        .property("finalize", &wrap_finalize<verlet_nvt_andersen>)
+                        .property("timestep", &verlet_nvt_andersen::set_timestep)
+                        .property("temperature", &verlet_nvt_andersen::temperature)
                         .property("collision_rate", &verlet_nvt_andersen::collision_rate)
-                        .property("module_name", &module_name_wrapper<dimension, float_type>)
+                        .def("set_timestep", &verlet_nvt_andersen::set_timestep)
+                        .def("set_temperature", &verlet_nvt_andersen::set_temperature)
                         .scope
                         [
                             class_<runtime>("runtime")
@@ -179,6 +185,19 @@ void verlet_nvt_andersen<dimension, float_type>::luaopen(lua_State* L)
                         ]
                         .def_readonly("runtime", &verlet_nvt_andersen::runtime_)
                 ]
+            ]
+
+          , namespace_("integrators")
+            [
+                def("verlet_nvt_andersen", &make_shared<verlet_nvt_andersen
+                  , shared_ptr<particle_type>
+                  , shared_ptr<box_type const>
+                  , shared_ptr<random_type>
+                  , float_type
+                  , float_type
+                  , float_type
+                  , shared_ptr<logger_type>
+                >)
             ]
         ]
     ];

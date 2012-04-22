@@ -27,10 +27,8 @@ local mdsim = {
 }
 
 -- grab C++ wrappers
-local euler_wrapper = libhalmd.mdsim.integrators.euler
+local euler = assert(libhalmd.mdsim.integrators.euler)
 local h5 = libhalmd.h5
--- grab standard library
-local assert = assert
 
 local M = module("halmd.mdsim.integrators.euler")
 
@@ -46,7 +44,7 @@ function M.__new(args)
     local timestep = assert(clock.timestep)
     local logger = log.logger({label = "euler"})
 
-    local integrator = euler_wrapper(particle, box, timestep, logger)
+    local integrator = euler(particle, box, timestep, logger)
 
     -- sequence of signal connections
     local conn = {}

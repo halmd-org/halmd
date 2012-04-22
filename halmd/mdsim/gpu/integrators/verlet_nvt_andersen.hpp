@@ -28,7 +28,6 @@
 #include <halmd/mdsim/box.hpp>
 #include <halmd/mdsim/gpu/integrators/verlet_nvt_andersen_kernel.hpp>
 #include <halmd/mdsim/gpu/particle.hpp>
-#include <halmd/mdsim/integrators/nvt.hpp>
 #include <halmd/random/gpu/random.hpp>
 #include <halmd/utility/profiler.hpp>
 
@@ -39,10 +38,8 @@ namespace integrators {
 
 template <int dimension, typename float_type, typename RandomNumberGenerator>
 class verlet_nvt_andersen
-  : public mdsim::integrators::nvt<dimension>
 {
 public:
-    typedef mdsim::integrators::nvt<dimension> _Base;
     typedef gpu::particle<dimension, float_type> particle_type;
     typedef mdsim::box<dimension> box_type;
     typedef random::gpu::random<RandomNumberGenerator> random_type;
@@ -50,8 +47,6 @@ public:
     typedef typename particle_type::vector_type vector_type;
     typedef typename random_type::rng_type rng_type;
     typedef verlet_nvt_andersen_wrapper<dimension, rng_type> wrapper_type;
-
-    static char const* module_name() { return "verlet_nvt_andersen"; }
 
     static void luaopen(lua_State* L);
 
@@ -64,19 +59,19 @@ public:
       , float_type coll_rate
       , boost::shared_ptr<logger_type> logger = boost::make_shared<logger_type>()
     );
-    virtual void integrate();
-    virtual void finalize();
-    virtual void timestep(double timestep);
-    virtual void temperature(double temperature);
+    void integrate();
+    void finalize();
+    void set_timestep(double timestep);
+    void set_temperature(double temperature);
 
     //! returns integration time-step
-    virtual double timestep() const
+    double timestep() const
     {
         return timestep_;
     }
 
     //! returns temperature of heat bath
-    virtual double temperature() const
+    double temperature() const
     {
         return temperature_;
     }

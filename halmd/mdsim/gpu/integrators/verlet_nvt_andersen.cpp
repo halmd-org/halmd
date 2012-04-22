@@ -18,10 +18,12 @@
  */
 
 #include <algorithm>
+#include <boost/bind.hpp>
+#include <boost/make_shared.hpp>
 #include <cmath>
-#include <string>
 
 #include <halmd/mdsim/gpu/integrators/verlet_nvt_andersen.hpp>
+#include <halmd/utility/demangle.hpp>
 #include <halmd/utility/lua/lua.hpp>
 
 using namespace boost;
@@ -47,8 +49,8 @@ verlet_nvt_andersen<dimension, float_type, RandomNumberGenerator>::verlet_nvt_an
   , coll_rate_(coll_rate)
   , logger_(logger)
 {
-    this->timestep(timestep);
-    this->temperature(temperature);
+    set_timestep(timestep);
+    set_temperature(temperature);
     LOG("collision rate with heat bath: " << coll_rate_);
 }
 
@@ -56,8 +58,7 @@ verlet_nvt_andersen<dimension, float_type, RandomNumberGenerator>::verlet_nvt_an
  * set integration time-step
  */
 template <int dimension, typename float_type, typename RandomNumberGenerator>
-void verlet_nvt_andersen<dimension, float_type, RandomNumberGenerator>::
-timestep(double timestep)
+void verlet_nvt_andersen<dimension, float_type, RandomNumberGenerator>::set_timestep(double timestep)
 {
     timestep_ = timestep;
     coll_prob_ = coll_rate_ * timestep;
@@ -65,8 +66,7 @@ timestep(double timestep)
 }
 
 template <int dimension, typename float_type, typename RandomNumberGenerator>
-void verlet_nvt_andersen<dimension, float_type, RandomNumberGenerator>::
-temperature(double temperature)
+void verlet_nvt_andersen<dimension, float_type, RandomNumberGenerator>::set_temperature(double temperature)
 {
     temperature_ = static_cast<float_type>(temperature);
     sqrt_temperature_ = sqrt(temperature_);
@@ -77,8 +77,7 @@ temperature(double temperature)
  * First leapfrog half-step of velocity-Verlet algorithm
  */
 template <int dimension, typename float_type, typename RandomNumberGenerator>
-void verlet_nvt_andersen<dimension, float_type, RandomNumberGenerator>::
-integrate()
+void verlet_nvt_andersen<dimension, float_type, RandomNumberGenerator>::integrate()
 {
     try {
         scoped_timer_type timer(runtime_.integrate);
@@ -105,8 +104,7 @@ integrate()
  * Second leapfrog half-step of velocity-Verlet algorithm
  */
 template <int dimension, typename float_type, typename RandomNumberGenerator>
-void verlet_nvt_andersen<dimension, float_type, RandomNumberGenerator>::
-finalize()
+void verlet_nvt_andersen<dimension, float_type, RandomNumberGenerator>::finalize()
 {
     // TODO: possibly a performance critical issue:
     // the old implementation had this loop included in update_forces(),
@@ -137,18 +135,26 @@ finalize()
     }
 }
 
-template <int dimension, typename float_type, typename RandomNumberGenerator>
-static char const* module_name_wrapper(verlet_nvt_andersen<dimension, float_type, RandomNumberGenerator> const&)
+template <typename integrator_type>
+static function <void ()>
+wrap_integrate(shared_ptr<integrator_type> self)
 {
-    return verlet_nvt_andersen<dimension, float_type, RandomNumberGenerator>::module_name();
+    return bind(&integrator_type::integrate, self);
+}
+
+template <typename integrator_type>
+static function <void ()>
+wrap_finalize(shared_ptr<integrator_type> self)
+{
+    return bind(&integrator_type::finalize, self);
 }
 
 template <int dimension, typename float_type, typename RandomNumberGenerator>
 void verlet_nvt_andersen<dimension, float_type, RandomNumberGenerator>::
 luaopen(lua_State* L)
 {
+    static string const class_name = demangled_name<verlet_nvt_andersen>();
     using namespace luabind;
-    static string class_name(module_name() + ("_" + lexical_cast<string>(dimension) + "_"));
     module(L, "libhalmd")
     [
         namespace_("mdsim")
@@ -157,18 +163,14 @@ luaopen(lua_State* L)
             [
                 namespace_("integrators")
                 [
-                    class_<verlet_nvt_andersen, shared_ptr<_Base>, _Base>(class_name.c_str())
-                        .def(constructor<
-                            shared_ptr<particle_type>
-                          , shared_ptr<box_type const>
-                          , shared_ptr<random_type>
-                          , float_type
-                          , float_type
-                          , float_type
-                          , shared_ptr<logger_type>
-                        >())
+                    class_<verlet_nvt_andersen>(class_name.c_str())
+                        .property("integrate", &wrap_integrate<verlet_nvt_andersen>)
+                        .property("finalize", &wrap_finalize<verlet_nvt_andersen>)
+                        .property("timestep", &verlet_nvt_andersen::set_timestep)
+                        .property("temperature", &verlet_nvt_andersen::temperature)
                         .property("collision_rate", &verlet_nvt_andersen::collision_rate)
-                        .property("module_name", &module_name_wrapper<dimension, float_type, RandomNumberGenerator>)
+                        .def("set_timestep", &verlet_nvt_andersen::set_timestep)
+                        .def("set_temperature", &verlet_nvt_andersen::set_temperature)
                         .scope
                         [
                             class_<runtime>("runtime")
@@ -177,6 +179,19 @@ luaopen(lua_State* L)
                         ]
                         .def_readonly("runtime", &verlet_nvt_andersen::runtime_)
                 ]
+            ]
+
+          , namespace_("integrators")
+            [
+                def("verlet_nvt_andersen", &make_shared<verlet_nvt_andersen
+                  , shared_ptr<particle_type>
+                  , shared_ptr<box_type const>
+                  , shared_ptr<random_type>
+                  , float_type
+                  , float_type
+                  , float_type
+                  , shared_ptr<logger_type>
+                >)
             ]
         ]
     ];

@@ -17,7 +17,6 @@
 -- along with this program.  If not, see <http://www.gnu.org/licenses/>.
 --
 
-local device            = require("halmd.utility.device")
 local log               = require("halmd.io.log")
 local module            = require("halmd.utility.module")
 local random            = require("halmd.random")
@@ -28,22 +27,9 @@ local mdsim = {
 }
 
 -- grab C++ wrappers
-local verlet_nvt_andersen_wrapper = {
-    host = {
-        [2] = libhalmd.mdsim.host.integrators.verlet_nvt_andersen_2_
-      , [3] = libhalmd.mdsim.host.integrators.verlet_nvt_andersen_3_
-    }
-}
-if libhalmd.mdsim.gpu then
-    verlet_nvt_andersen_wrapper.gpu = {
-        [2] = libhalmd.mdsim.gpu.integrators.verlet_nvt_andersen_2_
-      , [3] = libhalmd.mdsim.gpu.integrators.verlet_nvt_andersen_3_
-    }
-end
+local verlet_nvt_andersen = assert(libhalmd.mdsim.integrators.verlet_nvt_andersen)
 local h5 = libhalmd.h5
 local po = libhalmd.po
--- grab standard library
-local assert = assert
 
 local M = module("halmd.mdsim.integrators.verlet_nvt_andersen")
 
@@ -63,13 +49,7 @@ function M.__new(args)
     local timestep = assert(clock.timestep)
     local logger = log.logger({label = "verlet_nvt_andersen"})
 
-    local andersen
-    if device() then
-        andersen = verlet_nvt_andersen_wrapper.gpu[dimension]
-    else
-        andersen = verlet_nvt_andersen_wrapper.host[dimension]
-    end
-    local integrator = andersen(particle, box, random, timestep, temperature, collision_rate, logger)
+    local integrator = verlet_nvt_andersen(particle, box, random, timestep, temperature, collision_rate, logger)
 
     -- sequence of signal connections
     local conn = {}

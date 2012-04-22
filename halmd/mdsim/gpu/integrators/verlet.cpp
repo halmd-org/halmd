@@ -18,10 +18,12 @@
  */
 
 #include <algorithm>
+#include <boost/bind.hpp>
+#include <boost/make_shared.hpp>
 #include <cmath>
-#include <string>
 
 #include <halmd/mdsim/gpu/integrators/verlet.hpp>
+#include <halmd/utility/demangle.hpp>
 #include <halmd/utility/lua/lua.hpp>
 
 using namespace boost;
@@ -46,14 +48,14 @@ verlet<dimension, float_type>::verlet(
   // reference CUDA C++ verlet_wrapper
   , wrapper_(&verlet_wrapper<dimension>::wrapper)
 {
-    this->timestep(timestep);
+    set_timestep(timestep);
 }
 
 /**
  * set integration time-step
  */
 template <int dimension, typename float_type>
-void verlet<dimension, float_type>::timestep(double timestep)
+void verlet<dimension, float_type>::set_timestep(double timestep)
 {
     timestep_ = timestep;
     LOG("integration timestep: " << timestep_);
@@ -112,17 +114,25 @@ void verlet<dimension, float_type>::finalize()
     }
 }
 
-template <int dimension, typename float_type>
-static char const* module_name_wrapper(verlet<dimension, float_type> const&)
+template <typename integrator_type>
+static function <void ()>
+wrap_integrate(shared_ptr<integrator_type> self)
 {
-    return verlet<dimension, float_type>::module_name();
+    return bind(&integrator_type::integrate, self);
+}
+
+template <typename integrator_type>
+static function <void ()>
+wrap_finalize(shared_ptr<integrator_type> self)
+{
+    return bind(&integrator_type::finalize, self);
 }
 
 template <int dimension, typename float_type>
 void verlet<dimension, float_type>::luaopen(lua_State* L)
 {
+    static string const class_name = demangled_name<verlet>();
     using namespace luabind;
-    static string class_name(module_name() + ("_" + lexical_cast<string>(dimension) + "_"));
     module(L, "libhalmd")
     [
         namespace_("mdsim")
@@ -131,14 +141,11 @@ void verlet<dimension, float_type>::luaopen(lua_State* L)
             [
                 namespace_("integrators")
                 [
-                    class_<verlet, shared_ptr<_Base>, _Base>(class_name.c_str())
-                        .def(constructor<
-                            shared_ptr<particle_type>
-                          , shared_ptr<box_type const>
-                          , double
-                          , shared_ptr<logger_type>
-                        >())
-                        .property("module_name", &module_name_wrapper<dimension, float_type>)
+                    class_<verlet>(class_name.c_str())
+                        .property("integrate", &wrap_integrate<verlet>)
+                        .property("finalize", &wrap_finalize<verlet>)
+                        .property("timestep", &verlet::set_timestep)
+                        .def("set_timestep", &verlet::set_timestep)
                         .scope
                         [
                             class_<runtime>("runtime")
@@ -147,6 +154,16 @@ void verlet<dimension, float_type>::luaopen(lua_State* L)
                         ]
                         .def_readonly("runtime", &verlet::runtime_)
                 ]
+            ]
+
+          , namespace_("integrators")
+            [
+                def("verlet", &make_shared<verlet
+                  , shared_ptr<particle_type>
+                  , shared_ptr<box_type const>
+                  , double
+                  , shared_ptr<logger_type>
+                >)
             ]
         ]
     ];

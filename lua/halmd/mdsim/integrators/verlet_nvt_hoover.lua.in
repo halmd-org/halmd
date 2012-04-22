@@ -34,22 +34,9 @@ local writers = {
 }
 
 -- grab C++ wrappers
-local verlet_nvt_hoover_wrapper = {
-    host = {
-        [2] = libhalmd.mdsim.host.integrators.verlet_nvt_hoover_2_
-      , [3] = libhalmd.mdsim.host.integrators.verlet_nvt_hoover_3_
-    }
-}
-if libhalmd.mdsim.gpu then
-    verlet_nvt_hoover_wrapper.gpu = {
-        [2] = libhalmd.mdsim.gpu.integrators.verlet_nvt_hoover_2_
-      , [3] = libhalmd.mdsim.gpu.integrators.verlet_nvt_hoover_3_
-    }
-end
+local verlet_nvt_hoover = assert(libhalmd.mdsim.integrators.verlet_nvt_hoover)
 local h5 = libhalmd.h5
 local po = libhalmd.po
--- grab standard library
-local assert = assert
 
 local M = module("halmd.mdsim.integrators.verlet_nvt_hoover")
 
@@ -69,12 +56,6 @@ function M.__new(args)
     local clock = mdsim.clock() -- singleton
     local timestep = assert(clock.timestep)
 
-    local verlet_nvt_hoover
-    if device() then
-        verlet_nvt_hoover = verlet_nvt_hoover_wrapper.gpu[dimension]
-    else
-        verlet_nvt_hoover = verlet_nvt_hoover_wrapper.host[dimension]
-    end
     local integrator = verlet_nvt_hoover(particle, box, timestep, temperature, resonance_frequency, logger)
 
     -- sequence of signal connections

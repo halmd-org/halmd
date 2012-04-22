@@ -18,11 +18,13 @@
  */
 
 #include <algorithm>
+#include <boost/bind.hpp>
 #include <boost/make_shared.hpp>
 #include <cmath>
 #include <string>
 
 #include <halmd/mdsim/host/integrators/euler.hpp>
+#include <halmd/utility/demangle.hpp>
 #include <halmd/utility/lua/lua.hpp>
 #include <halmd/utility/scoped_timer.hpp>
 #include <halmd/utility/timer.hpp>
@@ -48,14 +50,14 @@ euler<dimension, float_type>::euler(
   , box_(box)
   , logger_(logger)
 {
-    this->timestep(timestep);
+    set_timestep(timestep);
 }
 
 /**
  * set integration timestep
  */
 template <int dimension, typename float_type>
-void euler<dimension, float_type>::timestep(double timestep)
+void euler<dimension, float_type>::set_timestep(double timestep)
 {
   timestep_ = timestep;
 
@@ -84,11 +86,25 @@ void euler<dimension, float_type>::integrate()
     }
 }
 
+template <typename integrator_type>
+static function <void ()>
+wrap_integrate(shared_ptr<integrator_type> self)
+{
+    return bind(&integrator_type::integrate, self);
+}
+
+template <typename integrator_type>
+static function <void ()>
+wrap_finalize(shared_ptr<integrator_type> self)
+{
+    return bind(&integrator_type::finalize, self);
+}
+
 template <int dimension, typename float_type>
 void euler<dimension, float_type>::luaopen(lua_State* L)
 {
     using namespace luabind;
-    static string class_name("euler_" + lexical_cast<string>(dimension) + "_");
+    static string const class_name = demangled_name<euler>();
     module(L, "libhalmd")
     [
         namespace_("mdsim")
@@ -97,7 +113,10 @@ void euler<dimension, float_type>::luaopen(lua_State* L)
             [
                 namespace_("integrators")
                 [
-                    class_<euler, shared_ptr<_Base>, _Base>(class_name.c_str())
+                    class_<euler>(class_name.c_str())
+                        .property("integrate", &wrap_integrate<euler>)
+                        .property("timestep", &euler::set_timestep)
+                        .def("set_timestep", &euler::set_timestep)
                         .scope
                         [
                             class_<runtime>("runtime")

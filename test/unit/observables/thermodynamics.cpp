@@ -20,6 +20,7 @@
 #define BOOST_TEST_MODULE thermodynamics
 #include <boost/test/unit_test.hpp>
 
+#include <algorithm>
 #include <boost/make_shared.hpp>
 #include <limits>
 
@@ -127,7 +128,6 @@ struct lennard_jones_fluid
     typedef typename particle_type::vector_type vector_type;
     typedef typename vector_type::value_type float_type;
     static unsigned int const dimension = vector_type::static_size;
-    typedef mdsim::integrator<dimension> integrator_type;
     typedef predicates::greater<float_type> greater_type;
 
     float density;
@@ -149,7 +149,6 @@ struct lennard_jones_fluid
     shared_ptr<binning_type> binning;
     shared_ptr<neighbour_type> neighbour;
     shared_ptr<msd_type> msd;
-    shared_ptr<integrator_type> integrator;
     shared_ptr<particle_type> particle;
     shared_ptr<position_type> position;
     shared_ptr<random_type> random;
@@ -165,25 +164,28 @@ template <typename modules_type>
 void lennard_jones_fluid<modules_type>::test()
 {
     // create NVT integrator
-    integrator = make_shared<nvt_integrator_type>(
+    shared_ptr<nvt_integrator_type> nvt_integrator = make_shared<nvt_integrator_type>(
         particle, box, random
       , 0.005 /* time step */, temp, 1. /* collision rate */
     );
-    // create core and connect module slots to core signals
-    this->connect();
+    vector<connection> conn;
+    conn.push_back(core->on_integrate( bind(&nvt_integrator_type::integrate, nvt_integrator) ));
+    conn.push_back(core->on_finalize( bind(&nvt_integrator_type::finalize, nvt_integrator) ));
 
     // relax configuration and thermalise at given temperature, run for t*=30
     BOOST_TEST_MESSAGE("thermalise initial state at T=" << temp);
     core->setup();
-    step_type steps = static_cast<step_type>(ceil(30 / integrator->timestep()));
+    step_type steps = static_cast<step_type>(ceil(30 / nvt_integrator->timestep()));
     for (step_type i = 0; i < steps; ++i) {
         core->mdstep();
     }
+    for_each(conn.begin(), conn.end(), bind(&connection::disconnect, _1));
+    conn.clear();
 
     // set different timestep and choose NVE integrator
-    integrator = make_shared<nve_integrator_type>(particle, box, timestep);
-    // recreate core and connect module slots to core signals
-    this->connect();
+    shared_ptr<nve_integrator_type> nve_integrator = make_shared<nve_integrator_type>(particle, box, timestep);
+    core->on_integrate( bind(&nve_integrator_type::integrate, nve_integrator) );
+    core->on_finalize( bind(&nve_integrator_type::finalize, nve_integrator) );
 
     // stochastic thermostat => centre particle velocities around zero
     velocity->shift(-thermodynamics->v_cm());
@@ -328,6 +330,9 @@ lennard_jones_fluid<modules_type>::lennard_jones_fluid()
     clock = make_shared<clock_type>(timestep);
     thermodynamics = make_shared<thermodynamics_type>(make_shared<particle_group_type>(particle), box, clock);
     msd = make_shared<msd_type>(particle, box);
+
+    // create core and connect module slots to core signals
+    this->connect();
 }
 
 template <typename modules_type>
@@ -345,10 +350,8 @@ void lennard_jones_fluid<modules_type>::connect()
     core->on_append_setup( bind(&force_type::compute, force) );
 
     // integration step
-    core->on_integrate( bind(&integrator_type::integrate, integrator) );
     core->on_prepend_force( bind(&particle_type::prepare, particle) );
     core->on_force( bind(&force_type::compute, force) );
-    core->on_finalize( bind(&integrator_type::finalize, integrator) );
 
     // update neighbour lists if maximum squared displacement is greater than (skin/2)²
     float_type limit = pow(neighbour->r_skin() / 2, 2);

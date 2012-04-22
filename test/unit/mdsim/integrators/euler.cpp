@@ -123,7 +123,6 @@ void test_euler<modules_type>::linear_motion()
     BOOST_TEST_MESSAGE("running Euler integration for linear motion over " << steps << " steps");
     for (size_t i = 0; i < steps; ++i) {
         integrator->integrate();
-        integrator->finalize();
         clock->advance();
     }
 
@@ -170,7 +169,6 @@ void test_euler<modules_type>::overdamped_motion()
     for (size_t i = 0; i < steps; ++i) {
         modules_type::set_velocity(particle); // set particle velocity: v = -r
         integrator->integrate();
-        integrator->finalize();
         clock->advance();
     }
 

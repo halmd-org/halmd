@@ -26,7 +26,6 @@
 #include <halmd/io/logger.hpp>
 #include <halmd/mdsim/box.hpp>
 #include <halmd/mdsim/host/particle.hpp>
-#include <halmd/mdsim/integrators/nvt.hpp>
 #include <halmd/utility/profiler.hpp>
 
 namespace halmd
@@ -43,17 +42,13 @@ namespace mdsim { namespace host { namespace integrators
 
 template <int dimension, typename float_type>
 class verlet_nvt_hoover
-  : public mdsim::integrators::nvt<dimension>
 {
 public:
-    typedef mdsim::integrators::nvt<dimension> _Base;
     typedef host::particle<dimension, float_type> particle_type;
     typedef typename particle_type::vector_type vector_type;
     typedef mdsim::box<dimension> box_type;
     typedef logger logger_type;
     typedef fixed_vector<float_type, 2> chain_type;
-
-    static char const* module_name() { return "verlet_nvt_hoover"; }
 
     static void luaopen(lua_State* L);
 
@@ -66,32 +61,32 @@ public:
       , boost::shared_ptr<logger_type> logger = boost::make_shared<logger_type>()
     );
 
-    virtual void integrate();
-    virtual void finalize();
-    virtual void timestep(double timestep);
-    virtual void temperature(double temperature);
-    virtual void set_mass(chain_type const& mass);
+    void integrate();
+    void finalize();
+    void set_timestep(double timestep);
+    void set_temperature(double temperature);
+    void set_mass(chain_type const& mass);
 
     //! returns integration time-step
-    virtual double timestep() const
+    double timestep() const
     {
         return timestep_;
     }
 
     //! returns temperature of heat bath
-    virtual double temperature() const
+    double temperature() const
     {
         return temperature_;
     }
 
     //! returns resonance frequency of heat bath
-    virtual double resonance_frequency() const
+    double resonance_frequency() const
     {
         return resonance_frequency_;
     }
 
     //! returns coupling parameters: `mass' of the heat bath variables
-    virtual chain_type const& mass() const
+    chain_type const& mass() const
     {
         return mass_xi_;
     }
