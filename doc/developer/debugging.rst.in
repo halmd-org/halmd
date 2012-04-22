@@ -1,0 +1,14 @@
+Debugging
+=========
+
+Debugging C++ exceptions
+------------------------
+
+When debugging exceptions, instruct the GNU debugger to catch exceptions
+by executing "catch throw" before executing the program with "run".
+
+Invalid device function
+-----------------------
+
+If you get a CUDA error "invalid device function" upon kernel launch,
+check whether the kernel function has a __global__ attribute.
