@@ -24,6 +24,7 @@
 #include <boost/bind.hpp>
 #include <boost/make_shared.hpp>
 #include <limits>
+#include <numeric>
 
 #include <halmd/mdsim/box.hpp>
 #include <halmd/mdsim/clock.hpp>
