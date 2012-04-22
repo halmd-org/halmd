@@ -34,23 +34,22 @@ struct verlet_nvt_andersen_wrapper
     typedef fixed_vector<float, dimension> vector_type;
     typedef typename type_traits<dimension, float>::gpu::coalesced_vector_type coalesced_vector_type;
 
-    /** integration time-step */
-    cuda::symbol<float> timestep;
-    /** square-root of heat bath temperature */
-    cuda::symbol<float> sqrt_temperature;
-    /** collision probability with heat bath */
-    cuda::symbol<float> coll_prob;
-    /** first leapfrog half-step of velocity-Verlet algorithm */
     cuda::function <void (
-        float4*, coalesced_vector_type*, float4*
-      , coalesced_vector_type const*, float const*, unsigned int
+        float4*
+      , coalesced_vector_type*
+      , float4*
+      , coalesced_vector_type const*
+      , float
       , vector_type
     )> integrate;
-    /** second leapfrog half-step of velocity-Verlet algorithm */
     cuda::function <void (
-        float4 const*, float4*, coalesced_vector_type const*
-      , float const*, unsigned int
-      , unsigned int, unsigned int
+        float4*
+      , coalesced_vector_type const*
+      , float
+      , float
+      , float
+      , unsigned int
+      , unsigned int
       , rng_type
     )> finalize;
 

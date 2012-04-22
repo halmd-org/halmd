@@ -60,18 +60,7 @@ void verlet_nvt_andersen<dimension, float_type, RandomNumberGenerator>::
 timestep(double timestep)
 {
     timestep_ = timestep;
-    timestep_half_ = 0.5 * timestep_;
     coll_prob_ = coll_rate_ * timestep;
-
-    try {
-        cuda::copy(timestep_, wrapper_type::kernel.timestep);
-        cuda::copy(coll_prob_, wrapper_type::kernel.coll_prob);
-    }
-    catch (cuda::error const&) {
-        LOG_ERROR("failed to initialize Verlet integrator symbols");
-        throw;
-    }
-
     LOG("integration timestep: " << timestep_);
 }
 
@@ -81,15 +70,6 @@ temperature(double temperature)
 {
     temperature_ = static_cast<float_type>(temperature);
     sqrt_temperature_ = sqrt(temperature_);
-
-    try {
-        cuda::copy(sqrt_temperature_, wrapper_type::kernel.sqrt_temperature);
-    }
-    catch (cuda::error const&) {
-        LOG_ERROR("failed to initialize Verlet integrator symbols");
-        throw;
-    }
-
     LOG("temperature of heat bath: " << temperature_);
 }
 
@@ -104,11 +84,13 @@ integrate()
         scoped_timer_type timer(runtime_.integrate);
         cuda::configure(
             particle_->dim.grid, particle_->dim.block
-          , particle_->nspecies() * sizeof(float)
         );
         wrapper_type::kernel.integrate(
-            particle_->position(), particle_->image(), particle_->velocity(), particle_->force()
-          , particle_->g_mass, particle_->nspecies()
+            particle_->position()
+          , particle_->image()
+          , particle_->velocity()
+          , particle_->force()
+          , timestep_
           , static_cast<vector_type>(box_->length())
         );
         cuda::thread::synchronize();
@@ -136,12 +118,15 @@ finalize()
         // the kernel makes use of the random number generator
         cuda::configure(
             random_->rng().dim.grid, random_->rng().dim.block
-          , particle_->nspecies() * sizeof(float)
         );
         wrapper_type::kernel.finalize(
-            particle_->position(), particle_->velocity(), particle_->force()
-          , particle_->g_mass, particle_->nspecies()
-          , particle_->nparticle(), particle_->dim.threads()
+            particle_->velocity()
+          , particle_->force()
+          , timestep_
+          , sqrt_temperature_
+          , coll_prob_
+          , particle_->nparticle()
+          , particle_->dim.threads()
           , random_->rng().rng()
         );
         cuda::thread::synchronize();

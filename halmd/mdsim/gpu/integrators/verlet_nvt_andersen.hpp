@@ -103,8 +103,6 @@ private:
     boost::shared_ptr<random_type> random_;
     /** integration time-step */
     float_type timestep_;
-    /** half time-step */
-    float_type timestep_half_;
     /** temperature of the heat bath */
     float_type temperature_;
     /** square root of temperature */
