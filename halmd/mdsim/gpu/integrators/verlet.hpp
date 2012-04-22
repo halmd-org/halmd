@@ -86,8 +86,6 @@ private:
     verlet_wrapper<dimension> const* wrapper_;
     /** integration time-step */
     float_type timestep_;
-    /** half time-step */
-    float_type timestep_half_;
     /** profiling runtime accumulators */
     runtime runtime_;
 };

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2008-2010  Peter Colberg
+ * Copyright © 2008-2012  Peter Colberg
  *
  * This file is part of HALMD.
  *
@@ -17,7 +17,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <halmd/mdsim/gpu/integrators/verlet_kernel.cuh>
+#include <halmd/mdsim/gpu/box_kernel.cuh>
 #include <halmd/mdsim/gpu/integrators/verlet_kernel.hpp>
 #include <halmd/numeric/blas/blas.hpp>
 #include <halmd/numeric/mp/dsfloat.hpp>
@@ -29,102 +29,85 @@ namespace gpu {
 namespace integrators {
 namespace verlet_kernel {
 
-/** integration time-step */
-static __constant__ float timestep_;
-
 /**
  * First leapfrog half-step of velocity-Verlet algorithm
  */
-template <
-    typename vector_type
-  , typename vector_type_
-  , typename gpu_vector_type
->
-__global__ void _integrate(
-    float4* g_r
+template <int dimension, typename float_type, typename gpu_vector_type>
+__global__ void integrate(
+    float4* g_position
   , gpu_vector_type* g_image
-  , float4* g_v
-  , gpu_vector_type const* g_f
-  , float const* g_mass
-  , unsigned int ntype
-  , vector_type_ box_length
+  , float4* g_velocity
+  , gpu_vector_type const* g_force
+  , float timestep
+  , fixed_vector<float, dimension> box_length
 )
 {
-    extern __shared__ float s_mass[];
-    if (TID < ntype) {
-        s_mass[TID] = g_mass[TID];
-    }
-    __syncthreads();
+    // kernel execution parameters
+    unsigned int const thread = GTID;
+    unsigned int const nthread = GTDIM;
 
-    unsigned int const i = GTID;
-    unsigned int const threads = GTDIM;
-    unsigned int type, tag;
-    vector_type r, v;
+    // read position, species, velocity, mass, image, force from global memory
+    fixed_vector<float_type, dimension> r, v;
+    unsigned int species;
+    float mass;
 #ifdef USE_VERLET_DSFUN
-    tie(r, type) <<= tie(g_r[i], g_r[i + threads]);
-    tie(v, tag) <<= tie(g_v[i], g_v[i + threads]);
+    tie(r, species) <<= tie(g_position[thread], g_position[thread + nthread]);
+    tie(v, mass) <<= tie(g_velocity[thread], g_velocity[thread + nthread]);
 #else
-    tie(r, type) <<= g_r[i];
-    tie(v, tag) <<= g_v[i];
+    tie(r, species) <<= g_position[thread];
+    tie(v, mass) <<= g_velocity[thread];
 #endif
-    vector_type_ image = g_image[i];
-    vector_type_ f = g_f[i];
-    float mass = s_mass[type];
+    fixed_vector<float, dimension> image = g_image[thread];
+    fixed_vector<float, dimension> f = g_force[thread];
 
-    integrate(r, image, v, f, mass, timestep_, box_length);
+    // advance position by full step, velocity by half step
+    v += f * (timestep / 2) / mass;
+    r += v * timestep;
+    image += box_kernel::reduce_periodic(r, box_length);
 
+    // store position, species, velocity, mass, image in global memory
 #ifdef USE_VERLET_DSFUN
-    tie(g_r[i], g_r[i + threads]) <<= tie(r, type);
-    tie(g_v[i], g_v[i + threads]) <<= tie(v, tag);
+    tie(g_position[thread], g_position[thread + nthread]) <<= tie(r, species);
+    tie(g_velocity[thread], g_velocity[thread + nthread]) <<= tie(v, mass);
 #else
-    g_r[i] <<= tie(r, type);
-    g_v[i] <<= tie(v, tag);
+    g_position[thread] <<= tie(r, species);
+    g_velocity[thread] <<= tie(v, mass);
 #endif
-    g_image[i] = image;
+    g_image[thread] = image;
 }
 
 /**
  * Second leapfrog half-step of velocity-Verlet algorithm
  */
-template <
-    typename vector_type
-  , typename vector_type_
-  , typename gpu_vector_type
->
-__global__ void _finalize(
-    float4 const* g_r
-  , float4* g_v
-  , gpu_vector_type const* g_f
-  , float const* g_mass
-  , unsigned int ntype
+template <int dimension, typename float_type, typename gpu_vector_type>
+__global__ void finalize(
+    float4* g_velocity
+  , gpu_vector_type const* g_force
+  , float timestep
 )
 {
-    extern __shared__ float s_mass[];
-    if (TID < ntype) {
-        s_mass[TID] = g_mass[TID];
-    }
-    __syncthreads();
+    // kernel execution parameters
+    unsigned int const thread = GTID;
+    unsigned int const nthread = GTDIM;
 
-    unsigned int const i = GTID;
-    unsigned int const threads = GTDIM;
-    unsigned int tag, type;
-    vector_type v;
-    vector_type_ _;
-    tie(_, type) <<= g_r[i];
+    // read velocity, mass, force from global memory
+    fixed_vector<float_type, dimension> v;
+    float mass;
 #ifdef USE_VERLET_DSFUN
-    tie(v, tag) <<= tie(g_v[i], g_v[i + threads]);
+    tie(v, mass) <<= tie(g_velocity[thread], g_velocity[thread + nthread]);
 #else
-    tie(v, tag) <<= g_v[i];
+    tie(v, mass) <<= g_velocity[thread];
 #endif
-    vector_type_ f = g_f[i];
-    float mass = s_mass[type];
+    fixed_vector<float, dimension> f = g_force[thread];
 
-    finalize(v, f, mass, timestep_);
+    // advance velocity by half step
+    v += f * (timestep / 2) / mass;
 
+    // store velocity, mass in global memory
 #ifdef USE_VERLET_DSFUN
-    tie(g_v[i], g_v[i + threads]) <<= tie(v, tag);
+    tie(g_velocity[thread], g_velocity[thread + nthread]) <<= tie(v, mass);
 #else
-    g_v[i] <<= tie(v, tag);
+    g_velocity[thread] <<= tie(v, mass);
 #endif
 }
 
@@ -132,13 +115,12 @@ __global__ void _finalize(
 
 template <int dimension>
 verlet_wrapper<dimension> const verlet_wrapper<dimension>::wrapper = {
-    verlet_kernel::timestep_
 #ifdef USE_VERLET_DSFUN
-  , verlet_kernel::_integrate<fixed_vector<dsfloat, dimension>, fixed_vector<float, dimension> >
-  , verlet_kernel::_finalize<fixed_vector<dsfloat, dimension>, fixed_vector<float, dimension> >
+    verlet_kernel::integrate<dimension, dsfloat>
+  , verlet_kernel::finalize<dimension, dsfloat>
 #else
-  , verlet_kernel::_integrate<fixed_vector<float, dimension>, fixed_vector<float, dimension> >
-  , verlet_kernel::_finalize<fixed_vector<float, dimension>, fixed_vector<float, dimension> >
+    verlet_kernel::integrate<dimension, float>
+  , verlet_kernel::finalize<dimension, float>
 #endif
 };
 

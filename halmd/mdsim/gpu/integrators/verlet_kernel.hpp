@@ -1,5 +1,5 @@
 /*
- * Copyright © 2008-2010  Peter Colberg
+ * Copyright © 2008-2012  Peter Colberg
  *
  * This file is part of HALMD.
  *
@@ -34,18 +34,16 @@ struct verlet_wrapper
     typedef fixed_vector<float, dimension> vector_type;
     typedef typename type_traits<dimension, float>::gpu::coalesced_vector_type coalesced_vector_type;
 
-    /** integration time-step */
-    cuda::symbol<float> timestep;
-    /** first leapfrog half-step of velocity-Verlet algorithm */
     cuda::function <void (
         float4*, coalesced_vector_type*, float4*
-      , coalesced_vector_type const*, float const*, unsigned int
+      , coalesced_vector_type const*
+      , float
       , vector_type
     )> integrate;
-    /** second leapfrog half-step of velocity-Verlet algorithm */
     cuda::function <void (
-        float4 const*, float4*, coalesced_vector_type const*
-      , float const*, unsigned int
+        float4*
+      , coalesced_vector_type const*
+      , float
     )> finalize;
 
     static verlet_wrapper const wrapper;

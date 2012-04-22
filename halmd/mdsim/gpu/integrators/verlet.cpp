@@ -56,16 +56,6 @@ template <int dimension, typename float_type>
 void verlet<dimension, float_type>::timestep(double timestep)
 {
     timestep_ = timestep;
-    timestep_half_ = 0.5 * timestep_;
-
-    try {
-        cuda::copy(timestep_, wrapper_->timestep);
-    }
-    catch (cuda::error const&) {
-        LOG_ERROR("failed to initialize Verlet integrator symbols");
-        throw;
-    }
-
     LOG("integration timestep: " << timestep_);
 }
 
@@ -79,11 +69,11 @@ void verlet<dimension, float_type>::integrate()
         scoped_timer_type timer(runtime_.integrate);
         cuda::configure(
             particle_->dim.grid, particle_->dim.block
-          , particle_->nspecies() * sizeof(float)
         );
         wrapper_->integrate(
             particle_->position(), particle_->image(), particle_->velocity()
-          , particle_->force(), particle_->g_mass, particle_->nspecies()
+          , particle_->force()
+          , timestep_
           , static_cast<vector_type>(box_->length())
         );
         cuda::thread::synchronize();
@@ -108,11 +98,11 @@ void verlet<dimension, float_type>::finalize()
         scoped_timer_type timer(runtime_.finalize);
         cuda::configure(
             particle_->dim.grid, particle_->dim.block
-          , particle_->nspecies() * sizeof(float)
         );
         wrapper_->finalize(
-            particle_->position(), particle_->velocity(), particle_->force()
-          , particle_->g_mass, particle_->nspecies()
+            particle_->velocity()
+          , particle_->force()
+          , timestep_
         );
         cuda::thread::synchronize();
     }
