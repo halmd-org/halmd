@@ -41,6 +41,16 @@ static texture<void> image_;
 static texture<float4> v_;
 
 /**
+ * Set particle masses to scalar.
+ */
+template <int dimension>
+__global__ void set_mass(float4* g_velocity, unsigned int nparticle, float mass)
+{
+    fixed_vector<float, dimension> v = g_velocity[GTID];
+    g_velocity[GTID] <<= tie(v, mass);
+}
+
+/**
  * set particle tags and types
  */
 template <
@@ -133,6 +143,7 @@ particle_wrapper<dimension> const particle_wrapper<dimension>::kernel = {
 #else
   , particle_kernel::rearrange<fixed_vector<float, dimension> >
 #endif
+  , particle_kernel::set_mass<dimension>
 };
 
 template class particle_wrapper<3>;

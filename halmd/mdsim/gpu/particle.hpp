@@ -199,6 +199,13 @@ public:
     }
 
     /**
+     * Set particle masses to scalar.
+     *
+     * This includes the masses of particle placeholders.
+     */
+    void set_mass(float_type mass);
+
+    /**
      * Returns non-const reference to particle tags.
      */
     tag_array_type const& tag() const

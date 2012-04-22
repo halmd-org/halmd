@@ -148,6 +148,14 @@ void particle<dimension, float_type>::aux_enable()
 }
 
 template <int dimension, typename float_type>
+void particle<dimension, float_type>::set_mass(float_type mass)
+{
+    cuda::configure(dim.grid, dim.block);
+    get_particle_kernel<dimension>().set_mass(g_v, g_v.size(), mass);
+    cuda::thread::synchronize();
+}
+
+template <int dimension, typename float_type>
 void particle<dimension, float_type>::prepare()
 {
     LOG_TRACE("zero forces");

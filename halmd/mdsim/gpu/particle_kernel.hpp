@@ -48,6 +48,7 @@ struct particle_wrapper
     cuda::function<void (unsigned int*)> gen_index;
     /** rearrange particles by a given permutation */
     cuda::function<void (unsigned int const*, float4*, aligned_vector_type*, float4*, unsigned int*)> rearrange;
+    cuda::function<void (float4*, unsigned int, float)> set_mass;
     static particle_wrapper const kernel;
 };
 
