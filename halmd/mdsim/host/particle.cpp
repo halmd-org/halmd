@@ -62,7 +62,14 @@ particle<dimension, float_type>::particle(
   , aux_flag_(false)
   , aux_valid_(false)
 {
-    fill(mass_.begin(), mass_.end(), 1);
+    // set particle masses to unit mass
+    set_mass(1);
+}
+
+template <int dimension, typename float_type>
+void particle<dimension, float_type>::set_mass(float_type mass)
+{
+    fill(mass_.begin(), mass_.end(), mass);
 }
 
 /**
@@ -179,6 +186,7 @@ void particle<dimension, float_type>::luaopen(lua_State* L)
                     >())
                     .property("nparticle", &particle::nparticle)
                     .property("nspecies", &particle::nspecies)
+                    .def("set_mass", &particle::set_mass)
                     .property("dimension", &wrap_dimension<dimension, float_type>)
                     .property("aux_enable", &wrap_aux_enable<particle>)
                     .property("prepare", &wrap_prepare<particle>)

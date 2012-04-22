@@ -253,6 +253,11 @@ public:
     }
 
     /**
+     * Set particle masses to scalar.
+     */
+    void set_mass(float_type mass);
+
+    /**
      * Returns non-const reference to force per particle.
      */
     force_array_type const& force() const
