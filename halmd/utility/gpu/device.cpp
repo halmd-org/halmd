@@ -26,9 +26,9 @@
 #include <exception>
 #include <fstream>
 
+#include <halmd/config.hpp> // HALMD_GPU_ARCH
 #include <halmd/io/logger.hpp>
 #include <halmd/utility/gpu/device.hpp>
-#include <halmd/utility/gpu/device_kernel.hpp>
 #include <halmd/utility/lua/lua.hpp>
 #include <halmd/utility/multi_array.hpp>
 
@@ -154,13 +154,8 @@ string device::nvidia_driver_version()
  */
 string device::compute_version()
 {
-    cuda::vector<int> g_arch(1);
-    cuda::host::vector<int> h_arch(1);
-    cuda::configure(1, 1);
-    device_wrapper::arch(g_arch);
-    cuda::copy(g_arch, h_arch);
-    int major = h_arch.front() / 100;
-    int minor = h_arch.front() / 10 % 10;
+    int major = HALMD_GPU_ARCH / 100;
+    int minor = HALMD_GPU_ARCH / 10 % 10;
     return lexical_cast<string>(major) + "." + lexical_cast<string>(minor);
 }
 
