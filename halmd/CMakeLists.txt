@@ -76,6 +76,9 @@ foreach(LIBRARY ${HALMD_LIBRARIES})
   endif()
 endforeach()
 
+# Generate configuration header
+configure_file(config.hpp.in config.hpp @ONLY)
+
 # Substitute version info in header file
 configure_file(version.h.in version.h ESCAPE_QUOTES @ONLY)
 
