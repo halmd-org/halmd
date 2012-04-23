@@ -129,7 +129,7 @@ void verlet<dimension, float_type>::luaopen(lua_State* L)
                     class_<verlet>(class_name.c_str())
                         .property("integrate", &wrap_integrate<verlet>)
                         .property("finalize", &wrap_finalize<verlet>)
-                        .property("timestep", &verlet::set_timestep)
+                        .property("timestep", &verlet::timestep)
                         .def("set_timestep", &verlet::set_timestep)
                         .scope
                         [

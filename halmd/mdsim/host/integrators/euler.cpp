@@ -115,7 +115,7 @@ void euler<dimension, float_type>::luaopen(lua_State* L)
                 [
                     class_<euler>(class_name.c_str())
                         .property("integrate", &wrap_integrate<euler>)
-                        .property("timestep", &euler::set_timestep)
+                        .property("timestep", &euler::timestep)
                         .def("set_timestep", &euler::set_timestep)
                         .scope
                         [
