@@ -41,10 +41,20 @@ reduce(accumulator_type& acc, accumulator_type s_acc[])
         acc(s_acc[TID + threads]);
         s_acc[TID] = acc;
     }
-    // no further syncs needed within execution warp of 32 threads
-    if (threads >= warpSize) {
-        __syncthreads();
-    }
+
+    //
+    // FIXME __syncthreads only if threads >= warpSize
+    //
+    // On Fermi devices (even with PTX < 2.0), this requires acc and s_acc
+    // to be declared as volatile, which in turn requires the methods of
+    // the accumulator and any used data type (fixed_vector, dsfloat) to
+    // be declared volatile, in the case of member methods, and/or accept
+    // function arguments with the volatile qualifier.
+    //
+    // Refer to Fermi Compatibility Guide, 1.3.3 Kernels.
+    //
+    __syncthreads();
+
     reduce<threads / 2>(acc, s_acc);
 }
 
