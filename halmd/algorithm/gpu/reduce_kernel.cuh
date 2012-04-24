@@ -17,6 +17,9 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#ifndef HALMD_ALGORITHM_GPU_REDUCE_KERNEL_CUH
+#define HALMD_ALGORITHM_GPU_REDUCE_KERNEL_CUH
+
 #include <boost/utility/enable_if.hpp>
 
 #include <halmd/algorithm/gpu/reduce_kernel.hpp>
@@ -116,3 +119,5 @@ reduction_kernel_threads<threads, accumulator_type> const reduction_kernel_threa
 };
 
 } // namespace halmd
+
+#endif /* ! HALMD_ALGORITHM_GPU_REDUCE_KERNEL_CUH */
