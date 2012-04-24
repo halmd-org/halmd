@@ -24,6 +24,8 @@
 using namespace halmd;
 
 template class reduction_kernel<sum<float, dsfloat> >;
+template class reduction_kernel<sum_of_squares<float, dsfloat> >;
 #ifdef HALMD_GPU_DOUBLE_PRECISION
 template class reduction_kernel<sum<float, double> >;
+template class reduction_kernel<sum_of_squares<float, double> >;
 #endif

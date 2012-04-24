@@ -26,12 +26,11 @@ template <typename input_type, typename output_type>
 class sum
 {
 public:
-    typedef output_type result_type;
     typedef input_type argument_type;
 
-    sum(argument_type const& init = 0) : sum_(init) {}
+    sum(output_type const& init = 0) : sum_(init) {}
 
-    result_type operator()() const
+    output_type operator()() const
     {
         return sum_;
     }
@@ -47,7 +46,35 @@ public:
     }
 
 private:
-    result_type sum_;
+    output_type sum_;
+};
+
+template <typename input_type, typename output_type>
+class sum_of_squares
+{
+public:
+    typedef input_type first_argument_type;
+    typedef input_type second_argument_type;
+
+    sum_of_squares(output_type const& init = 0) : sum_(init) {}
+
+    output_type operator()() const
+    {
+        return sum_;
+    }
+
+    HALMD_GPU_ENABLED void operator()(first_argument_type const& first, second_argument_type const& second)
+    {
+        sum_ += output_type(first) * output_type(second);
+    }
+
+    HALMD_GPU_ENABLED void operator()(sum_of_squares const& acc)
+    {
+        sum_ += acc.sum_;
+    }
+
+private:
+    output_type sum_;
 };
 
 #endif /* ! TEST_UNIT_ALGORITHM_GPU_REDUCE_KERNEL_HPP */

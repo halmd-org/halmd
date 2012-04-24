@@ -84,8 +84,10 @@ inline __device__ void reduce(accumulator_type& acc)
     reduce<threads / 2>(acc, s_acc);
 }
 
+namespace detail {
+
 /**
- * Compute block sums of input array using given accumulator.
+ * Compute block sums of input array using unary accumulator.
  *
  * @param g_input input array
  * @param size number of elements in input array
@@ -113,11 +115,43 @@ static __global__ void reduction(
     }
 }
 
+/**
+ * Compute block sums of two input arrays using binary accumulator.
+ *
+ * @param g_first first input array
+ * @param g_second second input array
+ * @param size number of elements in input arrays
+ * @param g_block_acc output block accumulators
+ * @param input accumulator
+ */
 template <unsigned int threads, typename accumulator_type>
-reduction_kernel_threads<threads, accumulator_type> const reduction_kernel_threads<threads, accumulator_type>::kernel = {
+static __global__ void reduction(
+    typename accumulator_type::first_argument_type const* g_first
+  , typename accumulator_type::second_argument_type const* g_second
+  , unsigned int size
+  , accumulator_type* g_block_acc
+  , accumulator_type acc
+)
+{
+    // load values from global device memory
+    for (unsigned int i = GTID; i < size; i += GTDIM) {
+        acc(g_first[i], g_second[i]);
+    }
+    // compute reduced value for all threads in block
+    reduce<threads>(acc);
+
+    if (TID < 1) {
+        // store block reduced value in global memory
+        g_block_acc[blockIdx.x] = acc;
+    }
+}
+
+template <unsigned int threads, typename accumulator_type>
+reduction_kernel<threads, accumulator_type> const reduction_kernel<threads, accumulator_type>::kernel = {
     reduction<threads>
 };
 
+} // namespace detail
 } // namespace halmd
 
 #endif /* ! HALMD_ALGORITHM_GPU_REDUCE_KERNEL_CUH */

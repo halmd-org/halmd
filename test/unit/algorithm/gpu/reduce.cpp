@@ -21,8 +21,10 @@
 #include <boost/test/unit_test.hpp>
 #include <boost/test/parameterized_test.hpp>
 
+#include <algorithm> // std::transform
 #include <boost/array.hpp>
 #include <boost/iterator/counting_iterator.hpp>
+#include <functional> // std::negate
 
 #include <halmd/algorithm/gpu/reduce.hpp>
 #include <halmd/numeric/accumulator.hpp>
@@ -38,10 +40,10 @@ using namespace halmd;
 BOOST_GLOBAL_FIXTURE( set_cuda_device );
 
 /**
- * Test »32 bit integer arithmetic using double-single floating point (~44 bit).
+ * Compute sum of natural numbers using a unary reduction.
  */
 template <typename accumulator_type>
-static void float_reduce()
+static void unary_reduce_float()
 {
     cuda::host::vector<float> h_v(make_counting_iterator(1), make_counting_iterator(12345679));
     cuda::vector<float> g_v(h_v.size());
@@ -50,15 +52,56 @@ static void float_reduce()
     BOOST_CHECK_EQUAL(int64_t(double(acc())), 12345678LL * 12345679 / 2);
 }
 
-BOOST_AUTO_TEST_CASE( float_to_double_single_reduce )
+/**
+ * Test »32 bit integer arithmetic using double-single floating point (48 bit mantissa).
+ */
+BOOST_AUTO_TEST_CASE( unary_reduce_float_to_double_single )
 {
-    float_reduce<sum<float, dsfloat> >();
+    unary_reduce_float<sum<float, dsfloat> >();
 }
 
 #ifdef HALMD_GPU_DOUBLE_PRECISION
-BOOST_AUTO_TEST_CASE( float_to_double_reduce )
+/**
+ * Test »32 bit integer arithmetic using double-precision floating point (53 bit mantissa).
+ */
+BOOST_AUTO_TEST_CASE( unary_reduce_float_to_double )
 {
-    float_reduce<sum<float, double> >();
+    unary_reduce_float<sum<float, double> >();
+}
+#endif
+
+/**
+ * Compute sum of squares of natural numbers using a binary reduction.
+ */
+template <typename accumulator_type>
+static void binary_reduce_float()
+{
+    cuda::host::vector<float> h_v1(make_counting_iterator(1), make_counting_iterator(123457));
+    cuda::host::vector<float> h_v2(h_v1.size());
+    std::transform(h_v1.begin(), h_v1.end(), h_v2.begin(), std::negate<float>());
+    cuda::vector<float> g_v1(h_v1.size());
+    cuda::vector<float> g_v2(h_v2.size());
+    cuda::copy(h_v1, g_v1);
+    cuda::copy(h_v2, g_v2);
+    accumulator_type acc = reduce(g_v1, g_v2, accumulator_type());
+    BOOST_CHECK_EQUAL(int64_t(double(acc())), -123456LL * 123457 * (2 * 123456 + 1) / 6);
+}
+
+/**
+ * Test »32 bit integer arithmetic using double-single floating point (48 bit mantissa).
+ */
+BOOST_AUTO_TEST_CASE( binary_reduce_float_to_double_single )
+{
+    binary_reduce_float<sum_of_squares<float, dsfloat> >();
+}
+
+#ifdef HALMD_GPU_DOUBLE_PRECISION
+/**
+ * Test »32 bit integer arithmetic using double-precision floating point (53 bit mantissa).
+ */
+BOOST_AUTO_TEST_CASE( binary_reduce_float_to_double )
+{
+    binary_reduce_float<sum_of_squares<float, double> >();
 }
 #endif
 
