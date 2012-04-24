@@ -1,5 +1,5 @@
 /*
- * Copyright © 2008-2011  Peter Colberg
+ * Copyright © 2012  Peter Colberg
  *
  * This file is part of HALMD.
  *
@@ -17,34 +17,17 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <halmd/algorithm/gpu/reduce_kernel.cuh>
+#include <halmd/numeric/mp/dsfloat.hpp>
 #include <halmd/observables/dynamics/velocity_autocorrelation.hpp>
-#include <halmd/observables/gpu/dynamics/velocity_autocorrelation_kernel.hpp>
-#include <halmd/observables/gpu/dynamics/tagged_particle.cuh>
+#include <halmd/observables/gpu/dynamics/tagged_particle.hpp>
+
+using namespace halmd::observables::dynamics;
+using namespace halmd::observables::gpu::dynamics;
 
 namespace halmd {
-namespace observables {
-namespace gpu {
-namespace dynamics {
 
-template <int dimension, unsigned int threads>
-velocity_autocorrelation_wrapper<dimension, threads> const
-velocity_autocorrelation_wrapper<dimension, threads>::wrapper = {
-    accumulate<observables::dynamics::velocity_autocorrelation<vector_type>, threads>
-};
+template class reduction_kernel<tagged_particle<velocity_autocorrelation<3, float>, dsfloat> >;
+template class reduction_kernel<tagged_particle<velocity_autocorrelation<2, float>, dsfloat> >;
 
-// explicit template instantiation
-template class velocity_autocorrelation_wrapper<3, 512>;
-template class velocity_autocorrelation_wrapper<2, 512>;
-template class velocity_autocorrelation_wrapper<3, 256>;
-template class velocity_autocorrelation_wrapper<2, 256>;
-template class velocity_autocorrelation_wrapper<3, 128>;
-template class velocity_autocorrelation_wrapper<2, 128>;
-template class velocity_autocorrelation_wrapper<3, 64>;
-template class velocity_autocorrelation_wrapper<2, 64>;
-template class velocity_autocorrelation_wrapper<3, 32>;
-template class velocity_autocorrelation_wrapper<2, 32>;
-
-} // namespace dynamics
-} // namespace gpu
-} // namespace observables
 } // namespace halmd

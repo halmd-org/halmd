@@ -1,5 +1,5 @@
 /*
- * Copyright © 2008-2011  Peter Colberg and Felix Höfling
+ * Copyright © 2008-2012  Peter Colberg and Felix Höfling
  *
  * This file is part of HALMD.
  *
@@ -22,7 +22,9 @@
 
 #include <lua.hpp>
 
-#include <halmd/observables/gpu/dynamics/velocity_autocorrelation_kernel.hpp>
+#include <halmd/algorithm/gpu/reduce.hpp>
+#include <halmd/observables/dynamics/velocity_autocorrelation.hpp>
+#include <halmd/observables/gpu/dynamics/tagged_particle.hpp>
 #include <halmd/observables/gpu/samples/phase_space.hpp>
 
 namespace halmd {
@@ -38,7 +40,6 @@ class velocity_autocorrelation
 {
 public:
     typedef gpu::samples::phase_space<dimension, float_type> sample_type;
-    typedef typename sample_type::vector_type vector_type;
     typedef double result_type;
     typedef accumulator<result_type> accumulator_type;
 
@@ -67,16 +68,10 @@ public:
     accumulator_type compute(sample_type const& first, sample_type const& second);
 
 private:
-    typedef accumulator<dsfloat> gpu_accumulator_type;
-    typedef cuda::function<void (float4 const*, float4 const*, unsigned int, gpu_accumulator_type*)> compute_function_type;
+    typedef observables::dynamics::velocity_autocorrelation<dimension, float> correlate_function_type;
 
-    static compute_function_type select_compute(unsigned int threads);
-
-    unsigned int blocks_;
-    unsigned int threads_;
-    compute_function_type compute_;
-    cuda::vector<gpu_accumulator_type> g_acc_;
-    cuda::host::vector<gpu_accumulator_type> h_acc_;
+    /** functor for compuation of mean-quartic displacement */
+    reduction<tagged_particle<correlate_function_type, dsfloat> > compute_vacf_;
 };
 
 } // namespace dynamics

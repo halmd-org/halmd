@@ -55,7 +55,7 @@ public:
     accumulator_type compute(sample_type const& first, sample_type const& second);
 
 private:
-    typedef observables::dynamics::mean_square_displacement<vector_type> correlate_function_type;
+    typedef observables::dynamics::mean_square_displacement<dimension, float_type> correlate_function_type;
 };
 
 } // namespace dynamics

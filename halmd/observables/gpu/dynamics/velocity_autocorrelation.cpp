@@ -17,10 +17,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <algorithm>
-#include <boost/lexical_cast.hpp>
 #include <boost/make_shared.hpp>
-#include <cassert>
 #include <stdexcept>
 #include <string>
 
@@ -43,12 +40,8 @@ velocity_autocorrelation<dimension, float_type>::velocity_autocorrelation(
     unsigned int blocks
   , unsigned int threads
 )
-  // member initialisation
-  : blocks_(blocks)
-  , threads_(threads)
-  , compute_(select_compute(threads_))
-  , g_acc_(blocks_)
-  , h_acc_(blocks_)
+  // allocate block reduction buffers in GPU and page-locked host memory
+  : compute_vacf_(blocks, threads)
 {
 }
 
@@ -69,31 +62,7 @@ velocity_autocorrelation<dimension, float_type>::compute(
   , sample_type const& second
 )
 {
-    cuda::configure(blocks_, threads_);
-    assert(first.velocity().size() == second.velocity().size());
-    compute_(first.velocity(), second.velocity(), first.velocity().size(), g_acc_);
-    cuda::copy(g_acc_, h_acc_); // implicit synchronize
-    return for_each(h_acc_.begin(), h_acc_.end(), accumulator_type());
-}
-
-template <int dimension, typename float_type>
-typename velocity_autocorrelation<dimension, float_type>::compute_function_type
-velocity_autocorrelation<dimension, float_type>::select_compute(unsigned int threads)
-{
-    switch (threads) {
-        case 512:
-            return velocity_autocorrelation_wrapper<dimension, 512>::wrapper.compute;
-        case 256:
-            return velocity_autocorrelation_wrapper<dimension, 256>::wrapper.compute;
-        case 128:
-            return velocity_autocorrelation_wrapper<dimension, 128>::wrapper.compute;
-        case 64:
-            return velocity_autocorrelation_wrapper<dimension, 64>::wrapper.compute;
-        case 32:
-            return velocity_autocorrelation_wrapper<dimension, 32>::wrapper.compute;
-        default:
-            throw invalid_argument("number of threads");
-    }
+    return compute_vacf_(first.velocity(), second.velocity())();
 }
 
 template <typename tcf_type>

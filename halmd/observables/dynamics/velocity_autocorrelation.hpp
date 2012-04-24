@@ -21,17 +21,18 @@
 #define HALMD_OBSERVABLES_DYNAMICS_VELOCITY_AUTOCORRELATION_HPP
 
 #include <halmd/config.hpp>
+#include <halmd/numeric/blas/fixed_vector.hpp>
 
 namespace halmd {
 namespace observables {
 namespace dynamics {
 
-template <typename vector_type>
+template <unsigned int dimension, typename float_type>
 struct velocity_autocorrelation
 {
-    typedef typename vector_type::value_type value_type;
+    typedef fixed_vector<float_type, dimension> vector_type;
 
-    HALMD_GPU_ENABLED value_type operator()(vector_type const& v1, vector_type const& v2) const
+    HALMD_GPU_ENABLED float_type operator()(vector_type const& v1, vector_type const& v2) const
     {
         return inner_prod(v1, v2);
     }

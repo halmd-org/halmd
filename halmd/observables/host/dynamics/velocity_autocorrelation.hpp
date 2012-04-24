@@ -48,7 +48,7 @@ public:
     accumulator_type compute(sample_type const& first, sample_type const& second);
 
 private:
-    typedef observables::dynamics::velocity_autocorrelation<vector_type> correlate_function_type;
+    typedef observables::dynamics::velocity_autocorrelation<dimension, float_type> correlate_function_type;
 };
 
 } // namespace dynamics

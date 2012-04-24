@@ -21,22 +21,23 @@
 #define HALMD_OBSERVABLES_DYNAMICS_MEAN_QUARTIC_DISPLACEMENT_HPP
 
 #include <halmd/config.hpp>
+#include <halmd/numeric/blas/fixed_vector.hpp>
 
 namespace halmd {
 namespace observables {
 namespace dynamics {
 
-template <typename vector_type>
+template <unsigned int dimension, typename float_type>
 struct mean_quartic_displacement
 {
-    typedef typename vector_type::value_type value_type;
+    typedef fixed_vector<float_type, dimension> vector_type;
 
-    HALMD_GPU_ENABLED value_type operator()(vector_type const& r1, vector_type const& r2) const
+    HALMD_GPU_ENABLED float_type operator()(vector_type const& r1, vector_type const& r2) const
     {
         // displacement of particle: R(t2) - R(t1)
         vector_type dr = r2 - r1;
         // square displacement
-        value_type rr = inner_prod(dr, dr);
+        float_type rr = inner_prod(dr, dr);
         // return quartic displacement
         return rr * rr;
     }
