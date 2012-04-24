@@ -24,3 +24,6 @@
 using namespace halmd;
 
 template class reduction_kernel<sum<float, dsfloat> >;
+#ifdef HALMD_GPU_DOUBLE_PRECISION
+template class reduction_kernel<sum<float, double> >;
+#endif

@@ -40,10 +40,9 @@ BOOST_GLOBAL_FIXTURE( set_cuda_device );
 /**
  * Test »32 bit integer arithmetic using double-single floating point (~44 bit).
  */
-BOOST_AUTO_TEST_CASE( double_single_reduce )
+template <typename accumulator_type>
+static void float_reduce()
 {
-    typedef sum<float, dsfloat> accumulator_type;
-
     cuda::host::vector<float> h_v(make_counting_iterator(1), make_counting_iterator(12345679));
     cuda::vector<float> g_v(h_v.size());
     cuda::copy(h_v, g_v);
@@ -51,12 +50,28 @@ BOOST_AUTO_TEST_CASE( double_single_reduce )
     BOOST_CHECK_EQUAL(int64_t(double(acc())), 12345678LL * 12345679 / 2);
 }
 
+BOOST_AUTO_TEST_CASE( float_to_double_single_reduce )
+{
+    float_reduce<sum<float, dsfloat> >();
+}
+
+#ifdef HALMD_GPU_DOUBLE_PRECISION
+BOOST_AUTO_TEST_CASE( float_to_double_reduce )
+{
+    float_reduce<sum<float, double> >();
+}
+#endif
+
 /**
  * benchmark reduce kernel
  */
-void performance(size_t size)
+static void performance(size_t size)
 {
+#ifdef HALMD_GPU_DOUBLE_PRECISION
+    typedef sum<float, double> accumulator_type;
+#else
     typedef sum<float, dsfloat> accumulator_type;
+#endif
 
     const int count_local = 20;
     const int count_global = 100;
