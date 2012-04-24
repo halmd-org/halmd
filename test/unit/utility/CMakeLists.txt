@@ -48,3 +48,6 @@ add_test(unit/utility/posix_signal
 )
 
 add_subdirectory(lua)
+if(HALMD_WITH_GPU)
+  add_subdirectory(gpu)
+endif()
