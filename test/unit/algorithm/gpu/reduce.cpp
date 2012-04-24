@@ -1,5 +1,5 @@
 /*
- * Copyright © 2010-2011  Peter Colberg and Felix Höfling
+ * Copyright © 2010-2012  Felix Höfling and Peter Colberg
  *
  * This file is part of HALMD.
  *
@@ -26,15 +26,14 @@
 
 #include <halmd/algorithm/gpu/reduce.hpp>
 #include <halmd/numeric/accumulator.hpp>
-#include <halmd/numeric/blas/blas.hpp>
 #include <halmd/numeric/mp/dsfloat.hpp>
 #include <halmd/utility/timer.hpp>
 #include <test/tools/cuda.hpp>
 #include <test/tools/init.hpp>
+#include <test/unit/algorithm/gpu/reduce_kernel.hpp>
 
 using namespace boost;
 using namespace halmd;
-using namespace halmd::algorithm::gpu;
 
 BOOST_GLOBAL_FIXTURE( set_cuda_device );
 
@@ -43,18 +42,13 @@ BOOST_GLOBAL_FIXTURE( set_cuda_device );
  */
 BOOST_AUTO_TEST_CASE( double_single_reduce )
 {
-    reduce<
-        sum_            // reduce_transform
-      , float           // input_type
-      , float           // coalesced_input_type
-      , dsfloat         // output_type
-      , dsfloat         // coalesced_output_type
-      , double          // host_output_type
-    > sum;
+    typedef sum<float, dsfloat> accumulator_type;
+
     cuda::host::vector<float> h_v(make_counting_iterator(1), make_counting_iterator(12345679));
     cuda::vector<float> g_v(h_v.size());
     cuda::copy(h_v, g_v);
-    BOOST_CHECK_EQUAL(int64_t(sum(g_v)), 12345678LL * 12345679 / 2);
+    accumulator_type acc = reduce(g_v, accumulator_type());
+    BOOST_CHECK_EQUAL(int64_t(double(acc())), 12345678LL * 12345679 / 2);
 }
 
 /**
@@ -62,6 +56,8 @@ BOOST_AUTO_TEST_CASE( double_single_reduce )
  */
 void performance(size_t size)
 {
+    typedef sum<float, dsfloat> accumulator_type;
+
     const int count_local = 20;
     const int count_global = 100;
     const int blocks = 30;
@@ -76,34 +72,19 @@ void performance(size_t size)
         for (int i = 0; i < count_local; ++i) {
             halmd::timer timer;
             // initialise kernel and allocate internal memory
-            reduce<
-                sum_            // reduce_transform
-              , float           // input_type
-              , float           // coalesced_input_type
-              , dsfloat         // output_type
-              , dsfloat         // coalesced_output_type
-              , double          // host_output_type
-            > sum_local(blocks, threads);
-            //
-            double result = sum_local(g_v);
+            reduction<accumulator_type> reduce(blocks, threads);
+            accumulator_type sum_local = reduce(g_v, accumulator_type());
             elapsed[0](timer.elapsed());
-            BOOST_CHECK_EQUAL(uint64_t(result), uint64_t(size - 1) * size / 2);
+            BOOST_CHECK_EQUAL(uint64_t(double(sum_local())), uint64_t(size - 1) * size / 2);
         }
 
         // pre-initialise kernel
-        reduce<
-            sum_              // reduce_transform
-            , float           // input_type
-            , float           // coalesced_input_type
-            , dsfloat         // output_type
-            , dsfloat         // coalesced_output_type
-            , double          // host_output_type
-        > sum_global(blocks, threads);
+        reduction<accumulator_type> reduce(blocks, threads);
         for (int i = 0; i < count_global; ++i) {
             halmd::timer timer;
-            double result = sum_global(g_v);
+            accumulator_type sum_global = reduce(g_v, accumulator_type());
             elapsed[1](timer.elapsed());
-            BOOST_CHECK_EQUAL(uint64_t(result), uint64_t(size - 1) * size / 2);
+            BOOST_CHECK_EQUAL(uint64_t(double(sum_global())), uint64_t(size - 1) * size / 2);
         }
 
         BOOST_TEST_MESSAGE("  summation of " << size << " floats: "

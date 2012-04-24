@@ -1,5 +1,5 @@
 /*
- * Copyright © 2010  Peter Colberg
+ * Copyright © 2012  Peter Colberg
  *
  * This file is part of HALMD.
  *
@@ -18,32 +18,9 @@
  */
 
 #include <halmd/algorithm/gpu/reduce_kernel.cuh>
-#include <halmd/numeric/blas/blas.hpp>
 #include <halmd/numeric/mp/dsfloat.hpp>
+#include <test/unit/algorithm/gpu/reduce_kernel.hpp>
 
 using namespace halmd;
-using namespace halmd::algorithm::gpu;
 
-template class reduce_wrapper<
-    sum_        // reduce_transform
-  , float       // input_type
->;
-template class reduce_wrapper<
-    max_        // reduce_transform
-  , float       // input_type
->;
-template class reduce_wrapper<
-    sum_        // reduce_transform
-  , dsfloat     // input_type
->;
-template class reduce_wrapper<
-    max_        // reduce_transform
-  , dsfloat     // input_type
->;
-template class reduce_wrapper<
-    sum_        // reduce_transform
-  , float       // input_type
-  , float       // coalesced_input_type
-  , dsfloat     // output_type
-  , dsfloat     // coalesced_output_type
->;
+template class reduction_kernel<sum<float, dsfloat> >;

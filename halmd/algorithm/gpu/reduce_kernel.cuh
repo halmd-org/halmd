@@ -1,5 +1,5 @@
 /*
- * Copyright © 2008-2010  Peter Colberg
+ * Copyright © 2008-2012  Peter Colberg
  *
  * This file is part of HALMD.
  *
@@ -17,72 +17,92 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <boost/preprocessor/repetition/enum_params.hpp>
+#include <boost/utility/enable_if.hpp>
 
 #include <halmd/algorithm/gpu/reduce_kernel.hpp>
-#include <halmd/algorithm/gpu/reduction.cuh>
 #include <halmd/utility/gpu/thread.cuh>
 
 namespace halmd {
-namespace algorithm {
-namespace gpu {
-namespace reduce_kernel {
 
-/**
- * parallel reduction
- */
-template <
-    typename reduce_transform
-  , typename input_type
-  , typename coalesced_input_type
-  , typename output_type
-  , typename coalesced_output_type
-  , typename input_transform
-  , typename output_transform
-  , int threads
->
-__global__ void reduce(coalesced_input_type const* g_in, coalesced_output_type* g_block_sum, uint n)
+template <unsigned int threads, typename accumulator_type>
+inline __device__ typename boost::enable_if_c<threads == 1, void>::type
+reduce(accumulator_type& acc, accumulator_type s_acc[])
 {
-    __shared__ output_type s_vv[threads];
-
-    // load values from global device memory
-    output_type vv = 0;
-    for (uint i = GTID; i < n; i += GTDIM) {
-        output_type v = transform<input_transform, input_type, output_type>(g_in[i]);
-        vv = transform<reduce_transform>(vv, v);
-    }
-    // reduced value for this thread
-    s_vv[TID] = vv;
-    __syncthreads();
-
-    // compute reduced value for all threads in block
-    gpu::reduce<threads / 2, reduce_transform>(vv, s_vv);
-
-    if (TID < 1) {
-        // store block reduced value in global memory
-        g_block_sum[blockIdx.x] = transform<output_transform, output_type, output_type>(vv);
+    if (TID < threads) {
+        acc(s_acc[TID + threads]);
     }
 }
 
-} // namespace reduce_kernel
+template <unsigned int threads, typename accumulator_type>
+inline __device__ typename boost::disable_if_c<threads == 1, void>::type
+reduce(accumulator_type& acc, accumulator_type s_acc[])
+{
+    if (TID < threads) {
+        acc(s_acc[TID + threads]);
+        s_acc[TID] = acc;
+    }
+    // no further syncs needed within execution warp of 32 threads
+    if (threads >= warpSize) {
+        __syncthreads();
+    }
+    reduce<threads / 2>(acc, s_acc);
+}
 
-//
-// To avoid repeating template arguments and at the same time not
-// define an ugly macro, we use BOOST_PP_ENUM_PARAMS to generate
-// the template arguments. The meaningless names (T0, T1, …) will
-// never show up in compile error messages, as the compiler uses
-// the template argument names of the *declaration*.
-//
+/**
+ * Reduce accumulators of block threads.
+ *
+ * @param acc accumulator of block thread 0
+ */
+template <unsigned int threads, typename accumulator_type>
+inline __device__ void reduce(accumulator_type& acc)
+{
+    // We need to avoid default initialization of the shared memory
+    // array, since this increases execution time of the kernel.
+    // Use a char array, and cast to type of reduction functor.
+    __shared__ char s_storage[threads * sizeof(accumulator_type)];
 
-template <BOOST_PP_ENUM_PARAMS(7, typename T)>
-reduce_wrapper<BOOST_PP_ENUM_PARAMS(7, T)> const reduce_wrapper<BOOST_PP_ENUM_PARAMS(7, T)>::kernel = {
-    reduce_kernel::reduce<BOOST_PP_ENUM_PARAMS(7, T), 512>
-  , reduce_kernel::reduce<BOOST_PP_ENUM_PARAMS(7, T), 256>
-  , reduce_kernel::reduce<BOOST_PP_ENUM_PARAMS(7, T), 128>
-  , reduce_kernel::reduce<BOOST_PP_ENUM_PARAMS(7, T),  64>
-  , reduce_kernel::reduce<BOOST_PP_ENUM_PARAMS(7, T),  32>
+    accumulator_type* const s_acc = reinterpret_cast<accumulator_type*>(s_storage);
+
+    // reduced value for this thread
+    s_acc[TID] = acc;
+    __syncthreads();
+
+    // compute reduced value for all threads in block
+    reduce<threads / 2>(acc, s_acc);
+}
+
+/**
+ * Compute block sums of input array using given accumulator.
+ *
+ * @param g_input input array
+ * @param size number of elements in input array
+ * @param g_block_acc output block accumulators
+ * @param input accumulator
+ */
+template <unsigned int threads, typename accumulator_type>
+static __global__ void reduction(
+    typename accumulator_type::argument_type const* g_input
+  , unsigned int size
+  , accumulator_type* g_block_acc
+  , accumulator_type acc
+)
+{
+    // load values from global device memory
+    for (unsigned int i = GTID; i < size; i += GTDIM) {
+        acc(g_input[i]);
+    }
+    // compute reduced value for all threads in block
+    reduce<threads>(acc);
+
+    if (TID < 1) {
+        // store block reduced value in global memory
+        g_block_acc[blockIdx.x] = acc;
+    }
+}
+
+template <unsigned int threads, typename accumulator_type>
+reduction_kernel_threads<threads, accumulator_type> const reduction_kernel_threads<threads, accumulator_type>::kernel = {
+    reduction<threads>
 };
 
-} // namespace algorithm
-} // namespace gpu
 } // namespace halmd

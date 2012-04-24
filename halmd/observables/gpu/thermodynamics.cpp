@@ -26,7 +26,6 @@
 
 using namespace boost;
 using namespace std;
-using namespace halmd::algorithm::gpu;
 
 namespace halmd {
 namespace observables {
@@ -50,16 +49,11 @@ thermodynamics<dimension, float_type>::thermodynamics(
   , en_pot_(clock)
   , virial_(clock)
   , hypervirial_(clock)
-  // memory allocation in functors
-  , sum_velocity_square_()
-  , sum_velocity_vector_()
-  , sum_scalar_()
-  , sum_stress_tensor_diagonal_()
 {
 }
 
 /**
- * compute mean-square velocity
+ * compute mean kinetic energy per particle
  */
 template <int dimension, typename float_type>
 double thermodynamics<dimension, float_type>::en_kin()
@@ -69,7 +63,7 @@ double thermodynamics<dimension, float_type>::en_kin()
 
         // FIXME use particle_group_->selection_mask() and reduce_if()
         scoped_timer_type timer(runtime_.en_kin);
-        en_kin_ = .5 * sum_velocity_square_(particle_->velocity()) / nparticle();
+        en_kin_ = double(compute_en_kin_(particle_->velocity())()) / nparticle();
     }
     return en_kin_;
 }
@@ -86,7 +80,7 @@ thermodynamics<dimension, float_type>::v_cm()
 
         // FIXME use particle_group_->selection_mask() and reduce_if()
         scoped_timer_type timer(runtime_.v_cm);
-        v_cm_ = sum_velocity_vector_(particle_->velocity()) / nparticle();
+        v_cm_ = vector_type(compute_v_cm_(particle_->velocity())());
     }
     return v_cm_;
 }
@@ -102,7 +96,7 @@ double thermodynamics<dimension, float_type>::en_pot()
 
         // FIXME use particle_group_->selection_mask() and reduce_if()
         scoped_timer_type timer(runtime_.en_pot);
-        en_pot_ = sum_scalar_(particle_->en_pot()) / nparticle();
+        en_pot_ = double(compute_en_pot_(particle_->en_pot())()) / nparticle();
     }
     return en_pot_;
 }
@@ -118,7 +112,7 @@ double thermodynamics<dimension, float_type>::virial()
 
         // FIXME use particle_group_->selection_mask() and reduce_if()
         scoped_timer_type timer(runtime_.virial);
-        virial_ = sum_stress_tensor_diagonal_(particle_->stress_pot()) / nparticle();
+        virial_ = double(compute_virial_(particle_->stress_pot())()) / nparticle();
     }
     return virial_;
 }
@@ -134,7 +128,7 @@ double thermodynamics<dimension, float_type>::hypervirial()
 
         // FIXME use particle_group_->selection_mask() and reduce_if()
         scoped_timer_type timer(runtime_.hypervirial);
-        hypervirial_ = sum_scalar_(particle_->hypervirial()) / nparticle();
+        hypervirial_ = double(compute_en_pot_(particle_->hypervirial())()) / nparticle();
     }
     return hypervirial_;
 }

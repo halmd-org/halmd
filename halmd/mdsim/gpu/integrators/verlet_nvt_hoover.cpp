@@ -54,9 +54,6 @@ verlet_nvt_hoover<dimension, float_type>::verlet_nvt_hoover(
   // member initialisation
   , en_nhc_(0)
   , resonance_frequency_(resonance_frequency)
-  // set up functor and allocate internal memory,
-  // this is done here and only once rather than repeatedly during the integration
-  , compute_en_kin_2_(30)  // FIXME reduce kernel should use #multiprocessors = #blocks as default
 {
     set_timestep(timestep);
 
@@ -180,8 +177,8 @@ float_type verlet_nvt_hoover<dimension, float_type>::propagate_chain()
 {
     scoped_timer_type timer(runtime_.propagate);
 
-    // compute total kinetic energy (multiplied by 2),
-    float_type en_kin_2 = compute_en_kin_2_(particle_->velocity());
+    // compute total kinetic energy multiplied by 2
+    float_type en_kin_2 = 2 * compute_en_kin_(particle_->velocity())();
 
     // head of the chain
     v_xi[1] += (mass_xi_[0] * v_xi[0] * v_xi[0] - temperature_) / mass_xi_[1] * timestep_4_;

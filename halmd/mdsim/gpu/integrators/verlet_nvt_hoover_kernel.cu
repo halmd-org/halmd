@@ -18,13 +18,10 @@
  */
 
 #include <halmd/mdsim/gpu/box_kernel.cuh>
-#include <halmd/algorithm/gpu/reduce_kernel.cuh>
 #include <halmd/mdsim/gpu/integrators/verlet_nvt_hoover_kernel.hpp>
 #include <halmd/numeric/blas/blas.hpp>
 #include <halmd/numeric/mp/dsfloat.hpp>
 #include <halmd/utility/gpu/thread.cuh>
-
-using namespace halmd::algorithm::gpu;
 
 namespace halmd {
 namespace mdsim {
@@ -166,23 +163,4 @@ template class verlet_nvt_hoover_wrapper<2, float>;
 } // namespace integrators
 } // namespace gpu
 } // namespace mdsim
-
-template class reduce_wrapper<
-    sum_                        // reduce_transform
-  , fixed_vector<float, 3>      // input_type
-  , float4                      // coalesced_input_type
-  , dsfloat                     // output_type
-  , dsfloat                     // coalesced_output_type
-  , square_                     // input_transform
->;
-
-template class reduce_wrapper<
-    sum_                        // reduce_transform
-  , fixed_vector<float, 2>      // input_type
-  , float4                      // coalesced_input_type
-  , dsfloat                     // output_type
-  , dsfloat                     // coalesced_output_type
-  , square_                     // input_transform
->;
-
 } // namespace halmd

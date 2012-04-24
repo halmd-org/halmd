@@ -1,5 +1,5 @@
 /*
- * Copyright © 2008-2010  Peter Colberg
+ * Copyright © 2008-2012  Peter Colberg
  *
  * This file is part of HALMD.
  *
@@ -20,136 +20,115 @@
 #ifndef HALMD_ALGORITHM_GPU_REDUCE_HPP
 #define HALMD_ALGORITHM_GPU_REDUCE_HPP
 
-#include <algorithm>
-#include <numeric>
+#include <algorithm> // std::for_each
 #include <stdexcept>
 
-#include <boost/lambda/lambda.hpp> // before other Boost.Lambda headers
-#include <boost/lambda/casts.hpp>
-#include <boost/iterator/transform_iterator.hpp>
 #include <cuda_wrapper/cuda_wrapper.hpp>
 #include <halmd/algorithm/gpu/reduce_kernel.hpp>
 
 namespace halmd {
-namespace algorithm {
-namespace gpu {
 
+/**
+ * Reduce an input array on GPU using an accumulator.
+ */
 template <
-    typename reduce_transform
-  , typename host_output_type
+    typename accumulator_type
+  , unsigned int max_threads = shared_memory_max_threads<accumulator_type>::value
 >
-struct reduce_blocks;
-
-template <
-    typename reduce_transform
-  , typename input_type
-  , typename coalesced_input_type       = input_type
-  , typename output_type                = input_type
-  , typename coalesced_output_type      = output_type
-  , typename host_output_type           = coalesced_output_type
-  , typename input_transform            = identity_
-  , typename output_transform           = identity_
->
-struct reduce
+class reduction
 {
-    typedef reduce_wrapper<
-        reduce_transform
-      , input_type
-      , coalesced_input_type
-      , output_type
-      , coalesced_output_type
-      , input_transform
-      , output_transform
-    > wrapper_type;
+private:
+    typedef reduction_kernel<accumulator_type, max_threads> kernel_type;
+    typedef typename kernel_type::function_type function_type;
 
-    typedef cuda::function<
-        void (coalesced_input_type const*, coalesced_output_type*, unsigned int)
-    > reduce_impl_type;
+public:
+    /** element type of input array */
+    typedef typename accumulator_type::argument_type argument_type;
 
-    reduce(int blocks = 16, int threads = (64 << DEVICE_SCALE))
-      : dim(blocks, threads)
-      , g_block(blocks)
-      , h_block(blocks)
-      , reduce_impl(get_reduce_impl(threads))
-    {}
+    /**
+     * Allocate reduction buffers in GPU and host memory.
+     *
+     * @param blocks number of blocks in execution grid
+     * @param threads number of threads per block
+     *
+     * The number of threads per block must be power of 2, and at least 32
+     * (size of a wrap). CUDA PTX < 2.0 allows a maximum number of threads
+     * of 512, while CUDA PTX ≥ 2.0 allows 1024 threads per block.
+     */
+    reduction(unsigned int blocks = 16, unsigned int threads = max_threads);
 
-    host_output_type operator()(cuda::vector<coalesced_input_type> const& g_v)
-    {
-        cuda::configure(dim.grid, dim.block);
-        reduce_impl(g_v, g_block, g_v.size());
-        cuda::copy(g_block, h_block);
-        return reduce_blocks<reduce_transform, host_output_type>()(h_block);
-    }
+    /**
+     * Reduce values in input array using given accumulator.
+     *
+     * @param g_input input array in GPU memory
+     * @param acc reduction accumulator
+     */
+    accumulator_type operator()(
+        cuda::vector<argument_type> const& g_input
+      , accumulator_type const& acc = accumulator_type()
+    );
 
-    static reduce_impl_type get_reduce_impl(int threads)
-    {
-        switch (threads) {
-          case 512:
-            return wrapper_type::kernel.reduce_impl_512;
-          case 256:
-            return wrapper_type::kernel.reduce_impl_256;
-          case 128:
-            return wrapper_type::kernel.reduce_impl_128;
-          case 64:
-            return wrapper_type::kernel.reduce_impl_64;
-          case 32:
-            return wrapper_type::kernel.reduce_impl_32;
-          default:
-            throw std::logic_error("invalid reduction thread count");
-        }
-    }
-
-    cuda::config dim;
-    cuda::vector<coalesced_output_type> g_block;
-    cuda::host::vector<coalesced_output_type> h_block;
-    reduce_impl_type reduce_impl;
+private:
+    /** kernel execution parameters */
+    cuda::config dim_;
+    /** accumulators per block in GPU memory */
+    cuda::vector<accumulator_type> g_block_;
+    /** accumulators per block in pinned host memory */
+    cuda::host::vector<accumulator_type> h_block_;
+    /** reduce kernel function matching number of threads per block */
+    cuda::function<function_type> reduce_;
 };
 
-template <typename host_output_type>
-struct reduce_blocks<sum_, host_output_type>
+template <typename accumulator_type, unsigned int max_threads>
+inline reduction<accumulator_type, max_threads>::reduction(
+    unsigned int blocks
+  , unsigned int threads
+)
+  : dim_(blocks, threads)
+  , g_block_(blocks)
+  , h_block_(blocks)
+  , reduce_(kernel_type::reduce(threads))
 {
-    template <typename coalesced_output_type>
-    host_output_type operator()(cuda::host::vector<coalesced_output_type> const& h_block)
-    {
-        using namespace boost::lambda;
-        using boost::lambda::_1;
-        return std::accumulate(
-            boost::make_transform_iterator(
-                h_block.begin()
-              , ret<host_output_type>(ll_static_cast<host_output_type>(_1))
-            )
-          , boost::make_transform_iterator(
-                h_block.end()
-              , ret<host_output_type>(ll_static_cast<host_output_type>(_1))
-            )
-          , host_output_type(0)
-        );
-    }
-};
+}
 
-template <typename host_output_type>
-struct reduce_blocks<max_, host_output_type>
+template <typename accumulator_type, unsigned int max_threads>
+inline accumulator_type reduction<accumulator_type, max_threads>::operator()(
+    cuda::vector<argument_type> const& g_input
+  , accumulator_type const& acc
+)
 {
-    template <typename coalesced_output_type>
-    host_output_type operator()(cuda::host::vector<coalesced_output_type> const& h_block)
-    {
-        using namespace boost::lambda;
-        using boost::lambda::_1;
-        return *std::max_element(
-            boost::make_transform_iterator(
-                h_block.begin()
-              , ret<host_output_type>(ll_static_cast<host_output_type>(_1))
-            )
-          , boost::make_transform_iterator(
-                h_block.end()
-              , ret<host_output_type>(ll_static_cast<host_output_type>(_1))
-            )
-        );
-    }
-};
+    cuda::configure(dim_.grid, dim_.block);
+    reduce_(g_input, g_input.size(), g_block_, acc);
+    cuda::copy(g_block_, h_block_);
+    return std::for_each(h_block_.begin(), h_block_.end(), acc);
+}
 
-} // namespace algorithm
-} // namespace gpu
+/**
+ * Reduce values in input array using given accumulator.
+ *
+ * @param g_input input array in GPU memory
+ * @param acc reduction accumulator
+ *
+ * This function is provided for convenience in unit tests only.
+ *
+ * You are strongly advised to pre-allocate the reduction buffers by
+ * defining a reduction<accumulator_type> member in your C++ class,
+ * and repeatedly invoke this functor to reduce values.
+ *
+ * The allocation of pinned host memory may be unpredictably slow, and take
+ * longer than the reduction itself for small arrays. For details, see and
+ * run the reduction unit test, and compare the “global” and “local”
+ * benchmark results.
+ */
+template <typename accumulator_type>
+inline accumulator_type reduce(
+    cuda::vector<typename accumulator_type::argument_type> const& g_input
+  , accumulator_type const& acc
+)
+{
+    return reduction<accumulator_type>()(g_input, acc);
+}
+
 } // namespace halmd
 
 #endif /* ! HALMD_ALGORITHM_GPU_REDUCE_HPP */

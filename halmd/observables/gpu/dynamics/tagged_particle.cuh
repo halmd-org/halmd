@@ -40,7 +40,6 @@ __global__ void accumulate(
   , accumulator_type* g_acc
 )
 {
-    __shared__ accumulator_type s_acc[threads];
     accumulator_type acc;
 
     // load values from global device memory
@@ -48,12 +47,9 @@ __global__ void accumulate(
     for (unsigned int i = GTID; i < size; i += GTDIM) {
         acc(correlate(g_r1[i], g_r2[i]));
     }
-    // reduced value for this thread
-    s_acc[TID] = acc;
-    __syncthreads();
 
     // compute reduced value for all threads in block
-    algorithm::gpu::reduce<threads / 2, algorithm::gpu::accumulate_>(acc, acc, s_acc, s_acc);
+    reduce<threads>(acc);
 
     if (TID < 1) {
         // store block reduced value in global memory

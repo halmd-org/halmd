@@ -1,5 +1,5 @@
 /*
- * Copyright © 2008-2010  Peter Colberg
+ * Copyright © 2008-2012  Peter Colberg
  *
  * This file is part of HALMD.
  *
@@ -20,34 +20,160 @@
 #ifndef HALMD_ALGORITHM_GPU_REDUCE_KERNEL_HPP
 #define HALMD_ALGORITHM_GPU_REDUCE_KERNEL_HPP
 
+#include <stdexcept> // std::logic_error
+
 #include <cuda_wrapper/cuda_wrapper.hpp>
-#include <halmd/algorithm/gpu/transform.cuh>
+#include <halmd/config.hpp>
+#include <halmd/utility/gpu/shared_memory.hpp>
 
 namespace halmd {
-namespace algorithm {
-namespace gpu {
 
-template <
-    typename reduce_transform
-  , typename input_type
-  , typename coalesced_input_type       = input_type
-  , typename output_type                = input_type
-  , typename coalesced_output_type      = output_type
-  , typename input_transform            = identity_
-  , typename output_transform           = identity_
->
-struct reduce_wrapper
+template <unsigned int threads, typename accumulator_type>
+struct reduction_kernel_threads
 {
-    cuda::function<void (coalesced_input_type const*, coalesced_output_type*, unsigned int)> reduce_impl_512;
-    cuda::function<void (coalesced_input_type const*, coalesced_output_type*, unsigned int)> reduce_impl_256;
-    cuda::function<void (coalesced_input_type const*, coalesced_output_type*, unsigned int)> reduce_impl_128;
-    cuda::function<void (coalesced_input_type const*, coalesced_output_type*, unsigned int)> reduce_impl_64;
-    cuda::function<void (coalesced_input_type const*, coalesced_output_type*, unsigned int)> reduce_impl_32;
-    static reduce_wrapper const kernel;
+    typedef typename accumulator_type::argument_type argument_type;
+    cuda::function<void (argument_type const*, unsigned int, accumulator_type*, accumulator_type)> reduce;
+    static reduction_kernel_threads const kernel;
 };
 
-} // namespace algorithm
-} // namespace gpu
+template <
+    typename accumulator_type
+  , unsigned int max_threads = shared_memory_max_threads<accumulator_type>::value
+>
+struct reduction_kernel;
+
+template <typename accumulator_type>
+struct reduction_kernel<accumulator_type, 1024>
+{
+    typedef typename accumulator_type::argument_type argument_type;
+    typedef void (function_type)(argument_type const*, unsigned int, accumulator_type*, accumulator_type);
+
+    static cuda::function<function_type> const& reduce(unsigned int threads)
+    {
+        switch (threads) {
+          case 1024:
+            return reduction_kernel_threads<1024, accumulator_type>::kernel.reduce;
+          case 512:
+            return reduction_kernel_threads<512, accumulator_type>::kernel.reduce;
+          case 256:
+            return reduction_kernel_threads<256, accumulator_type>::kernel.reduce;
+          case 128:
+            return reduction_kernel_threads<128, accumulator_type>::kernel.reduce;
+          case 64:
+            return reduction_kernel_threads<64, accumulator_type>::kernel.reduce;
+          case 32:
+            return reduction_kernel_threads<32, accumulator_type>::kernel.reduce;
+          default:
+            throw std::logic_error("invalid number of reduction threads");
+        }
+    }
+};
+
+template <typename accumulator_type>
+struct reduction_kernel<accumulator_type, 512>
+{
+    typedef typename accumulator_type::argument_type argument_type;
+    typedef void (function_type)(argument_type const*, unsigned int, accumulator_type*, accumulator_type);
+
+    static cuda::function<function_type> const& reduce(unsigned int threads)
+    {
+        switch (threads) {
+          case 512:
+            return reduction_kernel_threads<512, accumulator_type>::kernel.reduce;
+          case 256:
+            return reduction_kernel_threads<256, accumulator_type>::kernel.reduce;
+          case 128:
+            return reduction_kernel_threads<128, accumulator_type>::kernel.reduce;
+          case 64:
+            return reduction_kernel_threads<64, accumulator_type>::kernel.reduce;
+          case 32:
+            return reduction_kernel_threads<32, accumulator_type>::kernel.reduce;
+          default:
+            throw std::logic_error("invalid number of reduction threads");
+        }
+    }
+};
+
+template <typename accumulator_type>
+struct reduction_kernel<accumulator_type, 256>
+{
+    typedef typename accumulator_type::argument_type argument_type;
+    typedef void (function_type)(argument_type const*, unsigned int, accumulator_type*, accumulator_type);
+
+    static cuda::function<function_type> const& reduce(unsigned int threads)
+    {
+        switch (threads) {
+          case 256:
+            return reduction_kernel_threads<256, accumulator_type>::kernel.reduce;
+          case 128:
+            return reduction_kernel_threads<128, accumulator_type>::kernel.reduce;
+          case 64:
+            return reduction_kernel_threads<64, accumulator_type>::kernel.reduce;
+          case 32:
+            return reduction_kernel_threads<32, accumulator_type>::kernel.reduce;
+          default:
+            throw std::logic_error("invalid number of reduction threads");
+        }
+    }
+};
+
+template <typename accumulator_type>
+struct reduction_kernel<accumulator_type, 128>
+{
+    typedef typename accumulator_type::argument_type argument_type;
+    typedef void (function_type)(argument_type const*, unsigned int, accumulator_type*, accumulator_type);
+
+    static cuda::function<function_type> const& reduce(unsigned int threads)
+    {
+        switch (threads) {
+          case 128:
+            return reduction_kernel_threads<128, accumulator_type>::kernel.reduce;
+          case 64:
+            return reduction_kernel_threads<64, accumulator_type>::kernel.reduce;
+          case 32:
+            return reduction_kernel_threads<32, accumulator_type>::kernel.reduce;
+          default:
+            throw std::logic_error("invalid number of reduction threads");
+        }
+    }
+};
+
+template <typename accumulator_type>
+struct reduction_kernel<accumulator_type, 64>
+{
+    typedef typename accumulator_type::argument_type argument_type;
+    typedef void (function_type)(argument_type const*, unsigned int, accumulator_type*, accumulator_type);
+
+    static cuda::function<function_type> const& reduce(unsigned int threads)
+    {
+        switch (threads) {
+          case 64:
+            return reduction_kernel_threads<64, accumulator_type>::kernel.reduce;
+          case 32:
+            return reduction_kernel_threads<32, accumulator_type>::kernel.reduce;
+          default:
+            throw std::logic_error("invalid number of reduction threads");
+        }
+    }
+};
+
+template <typename accumulator_type>
+struct reduction_kernel<accumulator_type, 32>
+{
+    typedef typename accumulator_type::argument_type argument_type;
+    typedef void (function_type)(argument_type const*, unsigned int, accumulator_type*, accumulator_type);
+
+    static cuda::function<function_type> const& reduce(unsigned int threads)
+    {
+        switch (threads) {
+          case 32:
+            return reduction_kernel_threads<32, accumulator_type>::kernel.reduce;
+          default:
+            throw std::logic_error("invalid number of reduction threads");
+        }
+    }
+};
+
 } // namespace halmd
 
 #endif /* ! HALMD_ALGORITHM_GPU_REDUCE_KERNEL_HPP */

@@ -17,20 +17,37 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <halmd/algorithm/gpu/reduce_kernel.cuh>
-#include <halmd/numeric/mp/dsfloat.hpp>
-#include <halmd/observables/gpu/thermodynamics_kernel.hpp>
+#ifndef TEST_UNIT_ALGORITHM_GPU_REDUCE_KERNEL_HPP
+#define TEST_UNIT_ALGORITHM_GPU_REDUCE_KERNEL_HPP
 
-using namespace halmd::observables::gpu;
+#include <halmd/config.hpp>
 
-namespace halmd {
+template <typename input_type, typename output_type>
+class sum
+{
+public:
+    typedef output_type result_type;
+    typedef input_type argument_type;
 
-template class reduction_kernel<kinetic_energy<3, dsfloat> >;
-template class reduction_kernel<kinetic_energy<2, dsfloat> >;
-template class reduction_kernel<velocity_of_centre_of_mass<3, dsfloat> >;
-template class reduction_kernel<velocity_of_centre_of_mass<2, dsfloat> >;
-template class reduction_kernel<potential_energy<dsfloat> >;
-template class reduction_kernel<virial<3, dsfloat> >;
-template class reduction_kernel<virial<2, dsfloat> >;
+    sum(argument_type const& init = 0) : sum_(init) {}
 
-} // namespace halmd
+    result_type operator()() const
+    {
+        return sum_;
+    }
+
+    HALMD_GPU_ENABLED void operator()(argument_type const& value)
+    {
+        sum_ += value;
+    }
+
+    HALMD_GPU_ENABLED void operator()(sum const& acc)
+    {
+        sum_ += acc.sum_;
+    }
+
+private:
+    result_type sum_;
+};
+
+#endif /* ! TEST_UNIT_ALGORITHM_GPU_REDUCE_KERNEL_HPP */

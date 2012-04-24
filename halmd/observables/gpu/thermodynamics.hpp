@@ -28,6 +28,7 @@
 #include <halmd/mdsim/box.hpp>
 #include <halmd/mdsim/clock.hpp>
 #include <halmd/mdsim/gpu/particle_group.hpp>
+#include <halmd/observables/gpu/thermodynamics_kernel.hpp>
 #include <halmd/observables/thermodynamics.hpp>
 #include <halmd/utility/data_cache.hpp>
 #include <halmd/utility/profiler.hpp>
@@ -78,19 +79,6 @@ public:
     virtual void clear_cache();
 
 private:
-    typedef halmd::utility::profiler profiler_type;
-    typedef profiler_type::accumulator_type accumulator_type;
-    typedef profiler_type::scoped_timer_type scoped_timer_type;
-
-    struct runtime
-    {
-        accumulator_type en_kin;
-        accumulator_type v_cm;
-        accumulator_type en_pot;
-        accumulator_type virial;
-        accumulator_type hypervirial;
-    };
-
     /** module dependencies */
     boost::shared_ptr<box_type const> box_;
     boost::shared_ptr<particle_group_type const> particle_group_;
@@ -105,51 +93,34 @@ private:
     data_cache<double> virial_;
     data_cache<double> hypervirial_;
 
-    /** functors for reduce kernels */
-    algorithm::gpu::reduce<
-        algorithm::gpu::sum_                    // reduce_transform
-      , fixed_vector<float, dimension>          // input_type
-      , float4                                  // coalesced_input_type
-      , dsfloat                                 // output_type
-      , dsfloat                                 // coalesced_output_type
-      , double                                  // host_output_type
-      , algorithm::gpu::square_                 // input_transform
-    > sum_velocity_square_;
+    /** functor for total kinetic energy */
+    reduction<gpu::kinetic_energy<dimension, dsfloat> > compute_en_kin_;
+    /** functor for centre-of-mass velocity */
+    reduction<gpu::velocity_of_centre_of_mass<dimension, dsfloat> > compute_v_cm_;
+    /** functor for total potential energy */
+    reduction<gpu::potential_energy<dsfloat> > compute_en_pot_;
+    /** functor for total virial sum */
+    reduction<gpu::virial<dimension, dsfloat> > compute_virial_;
 
-    algorithm::gpu::reduce<
-        algorithm::gpu::sum_                    // reduce_transform
-      , fixed_vector<float, dimension>          // input_type
-      , float4                                  // coalesced_input_type
-      , fixed_vector<dsfloat, dimension>        // output_type
-      , fixed_vector<dsfloat, dimension>        // coalesced_output_type
-      , vector_type                             // host_output_type
-    > sum_velocity_vector_;
+    typedef halmd::utility::profiler profiler_type;
+    typedef profiler_type::accumulator_type accumulator_type;
+    typedef profiler_type::scoped_timer_type scoped_timer_type;
 
-    algorithm::gpu::reduce<
-        algorithm::gpu::sum_                    // reduce_transform
-      , float                                   // input_type
-      , float                                   // coalesced_input_type
-      , dsfloat                                 // output_type
-      , dsfloat                                 // coalesced_output_type
-      , double                                  // host_output_type
-    > sum_scalar_;
-
-    algorithm::gpu::reduce<
-        algorithm::gpu::sum_                    // reduce_transform
-      , typename particle_type::stress_pot_type // input_type
-      , typename particle_type::stress_pot_array_type::value_type // coalesced_input_type
-      , dsfloat                                 // output_type
-      , dsfloat                                 // coalesced_output_type
-      , double                                  // host_output_type
-      , algorithm::gpu::at_0                    // input_transform
-    > sum_stress_tensor_diagonal_;
+    struct runtime
+    {
+        accumulator_type en_kin;
+        accumulator_type v_cm;
+        accumulator_type en_pot;
+        accumulator_type virial;
+        accumulator_type hypervirial;
+    };
 
     /** profiling runtime accumulators */
     runtime runtime_;
 };
 
-} // namespace observables
 } // namespace gpu
+} // namespace observables
 } // namespace halmd
 
 #endif /* ! HALMD_OBSERVABLES_THERMODYNAMICS_HPP */

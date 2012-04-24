@@ -31,6 +31,7 @@
 #include <halmd/mdsim/gpu/integrators/verlet_nvt_hoover_kernel.hpp>
 #include <halmd/mdsim/gpu/particle.hpp>
 #include <halmd/numeric/mp/dsfloat.hpp>
+#include <halmd/observables/gpu/thermodynamics_kernel.hpp>
 #include <halmd/utility/profiler.hpp>
 
 namespace halmd {
@@ -148,16 +149,8 @@ private:
     /** coupling parameters: `mass' of the heat bath variables */
     chain_type mass_xi_;
 
-    /** functor to compute actual value of total kinetic energy (multiplied by 2) */
-    algorithm::gpu::reduce<
-        algorithm::gpu::sum_                    // reduce_transform
-      , fixed_vector<float, dimension>          // input_type
-      , float4                                  // coalesced_input_type
-      , dsfloat                                 // output_type
-      , dsfloat                                 // coalesced_output_type
-      , float_type                              // host_output_type
-      , algorithm::gpu::square_                 // input_transform
-    > compute_en_kin_2_;
+    /** functor to compute actual value of total kinetic energy */
+    reduction<observables::gpu::kinetic_energy<dimension, dsfloat> > compute_en_kin_;
 
     /** profiling runtime accumulators */
     runtime runtime_;
