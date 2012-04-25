@@ -15,4 +15,14 @@ if(CMAKE_CXX_PLATFORM_ID STREQUAL "Linux")
   set(CMAKE_EXE_LINKER_FLAGS_RELEASE_INIT "-Wl,-s")
   set(CMAKE_MODULE_LINKER_FLAGS_RELEASE_INIT "-Wl,-s")
   set(CMAKE_SHARED_LINKER_FLAGS_RELEASE_INIT "-Wl,-s")
+
+elseif(CMAKE_CXX_PLATFORM_ID STREQUAL "AIX")
+
+  # The combined flags -qtwolink -Wl,-bweaklocal instruct the AIX linker
+  # to discard unreferenced objects of an archive, which is needed to
+  # avoid undefined symbol errors when linking the unit tests.
+  # -qnoipa is needed to disable link-time IPA, which breaks -qtwolink.
+  set(CMAKE_EXE_LINKER_FLAGS_INIT "-qtwolink -Wl,-bweaklocal -qnoipa")
+  set(CMAKE_MODULE_LINKER_FLAGS_INIT "-qtwolink -Wl,-bweaklocal -qnoipa")
+  set(CMAKE_SHARED_LINKER_FLAGS_INIT "-qtwolink -Wl,-bweaklocal -qnoipa")
 endif()
