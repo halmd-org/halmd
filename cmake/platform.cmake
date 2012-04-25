@@ -10,4 +10,9 @@ if(CMAKE_CXX_PLATFORM_ID STREQUAL "Linux")
   set(CMAKE_EXE_LINKER_FLAGS_INIT "-Wl,--as-needed")
   set(CMAKE_MODULE_LINKER_FLAGS_INIT "-Wl,--as-needed")
   set(CMAKE_SHARED_LINKER_FLAGS_INIT "-Wl,--as-needed")
+
+  # Strip binaries for Release builds
+  set(CMAKE_EXE_LINKER_FLAGS_RELEASE_INIT "-Wl,-s")
+  set(CMAKE_MODULE_LINKER_FLAGS_RELEASE_INIT "-Wl,-s")
+  set(CMAKE_SHARED_LINKER_FLAGS_RELEASE_INIT "-Wl,-s")
 endif()

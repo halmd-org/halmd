@@ -103,19 +103,6 @@ if(CMAKE_CXX_COMPILER_ID MATCHES "^(GNU|Clang|Intel)$")
     set(CMAKE_CXX_FLAGS_RELEASE "-O3 -DNDEBUG -fvisibility-inlines-hidden" CACHE STRING
       "Flags used by the compiler during release builds." FORCE)
   endif()
-  # Strip binaries for Release builds
-  if(CMAKE_EXE_LINKER_FLAGS_RELEASE STREQUAL "${CMAKE_EXE_LINKER_FLAGS_RELEASE_INIT}")
-    set(CMAKE_EXE_LINKER_FLAGS_RELEASE "-Wl,-s" CACHE STRING
-      "Flags used by the linker during release builds." FORCE)
-  endif()
-  if(CMAKE_MODULE_LINKER_FLAGS_RELEASE STREQUAL "${CMAKE_MODULE_LINKER_FLAGS_RELEASE_INIT}")
-    set(CMAKE_MODULE_LINKER_FLAGS_RELEASE "-Wl,-s" CACHE STRING
-      "Flags used by the linker during release builds." FORCE)
-  endif()
-  if(CMAKE_SHARED_LINKER_FLAGS_RELEASE STREQUAL "${CMAKE_SHARED_LINKER_FLAGS_RELEASE_INIT}")
-    set(CMAKE_SHARED_LINKER_FLAGS_RELEASE "-Wl,-s" CACHE STRING
-      "Flags used by the linker during release builds." FORCE)
-  endif()
 elseif(CMAKE_CXX_COMPILER_ID STREQUAL "XL")
   if(CMAKE_CXX_FLAGS STREQUAL "${CMAKE_CXX_FLAGS_INIT}")
     set(CMAKE_CXX_FLAGS "-qrtti=all" CACHE STRING
