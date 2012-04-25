@@ -27,6 +27,7 @@
 
 #include <halmd/algorithm/host/pick_lattice_points.hpp>
 #include <halmd/numeric/blas/fixed_vector.hpp>
+#include <test/tools/ctest.hpp>
 #include <test/tools/init.hpp>
 
 using namespace boost;

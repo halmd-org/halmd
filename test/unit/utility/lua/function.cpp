@@ -22,6 +22,7 @@
 
 #include <boost/lexical_cast.hpp>
 
+#include <test/tools/ctest.hpp>
 #include <test/unit/utility/lua/function_exception_fixture.hpp>
 #include <test/unit/utility/lua/function_by_const_ref_fixture.hpp>
 #include <test/unit/utility/lua/function_by_ref_fixture.hpp>

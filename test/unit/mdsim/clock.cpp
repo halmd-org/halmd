@@ -24,6 +24,7 @@
 #include <limits>
 
 #include <halmd/mdsim/clock.hpp>
+#include <test/tools/ctest.hpp>
 
 using namespace boost;
 using namespace std;

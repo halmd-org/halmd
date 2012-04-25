@@ -36,6 +36,7 @@
 # include <test/unit/mdsim/box_kernel.hpp>
 # include <halmd/utility/gpu/device.hpp>
 #endif
+#include <test/tools/ctest.hpp>
 
 using namespace boost;
 using namespace boost::assign;

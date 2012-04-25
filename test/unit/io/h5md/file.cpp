@@ -26,6 +26,7 @@
 #include <ctime>
 
 #include <halmd/io/writers/h5md/file.hpp>
+#include <test/tools/ctest.hpp>
 
 using namespace boost;
 using namespace halmd;

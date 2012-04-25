@@ -33,6 +33,7 @@
 # include <halmd/random/gpu/rand48.hpp>
 # include <test/tools/cuda.hpp>
 #endif
+#include <test/tools/ctest.hpp>
 #include <test/tools/init.hpp>
 
 //

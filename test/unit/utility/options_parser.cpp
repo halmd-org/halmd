@@ -24,6 +24,7 @@
 #include <sstream>
 
 #include <halmd/utility/options_parser.hpp>
+#include <test/tools/ctest.hpp>
 #include <test/tools/lua.hpp>
 
 using namespace boost;

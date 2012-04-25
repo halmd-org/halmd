@@ -23,6 +23,7 @@
 #include <boost/array.hpp>
 
 #include <halmd/utility/program_options/program_options.hpp>
+#include <test/tools/ctest.hpp>
 #include <test/unit/utility/program_options/predicates.hpp>
 
 using namespace boost;

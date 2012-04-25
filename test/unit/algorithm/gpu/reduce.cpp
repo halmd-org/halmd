@@ -29,6 +29,7 @@
 #include <halmd/numeric/blas/blas.hpp>
 #include <halmd/numeric/mp/dsfloat.hpp>
 #include <halmd/utility/timer.hpp>
+#include <test/tools/ctest.hpp>
 #include <test/tools/cuda.hpp>
 #include <test/tools/init.hpp>
 

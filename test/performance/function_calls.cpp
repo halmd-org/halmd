@@ -26,6 +26,7 @@
 #include <halmd/utility/scoped_timer.hpp>
 #include <halmd/utility/signal.hpp>
 #include <halmd/utility/timer.hpp>
+#include <test/tools/ctest.hpp>
 #include <test/tools/lua.hpp>
 #include <test/performance/function_calls_extern.hpp>
 #ifdef WITH_CUDA

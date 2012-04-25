@@ -24,6 +24,7 @@
 #include <cmath>
 #include <vector>
 
+#include <test/tools/ctest.hpp>
 #include <test/tools/init.hpp>
 
 int& scalar()

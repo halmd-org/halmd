@@ -24,6 +24,7 @@
 #include <boost/shared_ptr.hpp>
 
 #include <halmd/utility/profiler.hpp>
+#include <test/tools/ctest.hpp>
 
 using namespace boost;
 using namespace halmd;

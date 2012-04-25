@@ -24,6 +24,7 @@
 #include <halmd/config.hpp>
 #include <halmd/utility/lua/any_converter.hpp>
 #include <halmd/utility/lua/map_converter.hpp>
+#include <test/tools/ctest.hpp>
 #include <test/tools/lua.hpp>
 
 using namespace boost;

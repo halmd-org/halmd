@@ -22,6 +22,7 @@
 
 #include <cuda_wrapper/cuda_wrapper.hpp>
 #include <halmd/numeric/mp/dsfloat.hpp>
+#include <test/tools/ctest.hpp>
 #include <test/tools/cuda.hpp>
 
 #define BLOCKS 4096
