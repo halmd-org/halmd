@@ -21,6 +21,7 @@
 #define HALMD_ALGORITHM_GPU_REDUCE_HPP
 
 #include <algorithm> // std::for_each
+#include <boost/utility.hpp> // boost::noncopyable
 #include <cassert> // assert
 #include <stdexcept>
 
@@ -41,6 +42,7 @@ class reduction;
 
 template <typename accumulator_type, unsigned int max_threads>
 class reduction<accumulator_type, max_threads, 1>
+  : boost::noncopyable
 {
 private:
     typedef reduction_kernel<accumulator_type, max_threads> kernel_type;
@@ -89,9 +91,10 @@ inline reduction<accumulator_type, max_threads, 1>::reduction(
 )
   : dim_(blocks, threads)
   , g_block_(blocks)
-  , h_block_(blocks)
   , reduce_(kernel_type::reduce(threads))
 {
+    // avoid DefaultConstructible requirement on accumulator_type
+    h_block_.reserve(blocks);
 }
 
 template <typename accumulator_type, unsigned int max_threads>
@@ -102,8 +105,9 @@ inline accumulator_type reduction<accumulator_type, max_threads, 1>::operator()(
 {
     cuda::configure(dim_.grid, dim_.block);
     reduce_(g_input, g_input.size(), g_block_, acc);
-    cuda::copy(g_block_, h_block_);
-    return std::for_each(h_block_.begin(), h_block_.end(), acc);
+    assert(g_block_.size() == h_block_.capacity());
+    cuda::copy(g_block_, h_block_, g_block_.size());
+    return std::for_each(h_block_.begin(), h_block_.begin() + h_block_.capacity(), acc);
 }
 
 /**
@@ -134,6 +138,7 @@ inline accumulator_type reduce(
 
 template <typename accumulator_type, unsigned int max_threads>
 class reduction<accumulator_type, max_threads, 2>
+  : boost::noncopyable
 {
 private:
     typedef reduction_kernel<accumulator_type, max_threads> kernel_type;
@@ -184,9 +189,10 @@ inline reduction<accumulator_type, max_threads, 2>::reduction(
 )
   : dim_(blocks, threads)
   , g_block_(blocks)
-  , h_block_(blocks)
   , reduce_(kernel_type::reduce(threads))
 {
+    // avoid DefaultConstructible requirement on accumulator_type
+    h_block_.reserve(blocks);
 }
 
 template <typename accumulator_type, unsigned int max_threads>
@@ -199,8 +205,9 @@ inline accumulator_type reduction<accumulator_type, max_threads, 2>::operator()(
     assert(g_first.size() == g_second.size());
     cuda::configure(dim_.grid, dim_.block);
     reduce_(g_first, g_second, g_first.size(), g_block_, acc);
-    cuda::copy(g_block_, h_block_);
-    return std::for_each(h_block_.begin(), h_block_.end(), acc);
+    assert(g_block_.size() == h_block_.capacity());
+    cuda::copy(g_block_, h_block_, g_block_.size());
+    return std::for_each(h_block_.begin(), h_block_.begin() + h_block_.capacity(), acc);
 }
 
 /**

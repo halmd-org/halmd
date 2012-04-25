@@ -28,6 +28,7 @@ class sum
 public:
     typedef input_type argument_type;
 
+    // DefaultConstructible
     sum(output_type const& init = 0) : sum_(init) {}
 
     output_type operator()() const
@@ -56,7 +57,8 @@ public:
     typedef input_type first_argument_type;
     typedef input_type second_argument_type;
 
-    sum_of_squares(output_type const& init = 0) : sum_(init) {}
+    // non-DefaultConstructible
+    sum_of_squares(output_type const& init) : sum_(init) {}
 
     output_type operator()() const
     {
