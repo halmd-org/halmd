@@ -17,39 +17,39 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <boost/test/test_tools.hpp> // BOOST_TEST_MESSAGE
+#ifndef TEST_TOOLS_CTEST_HPP
+#define TEST_TOOLS_CTEST_HPP
 
-#include <halmd/io/logger.hpp>
-#include <halmd/version.h>
+#include <boost/test/unit_test_suite.hpp> // BOOST_GLOBAL_FIXTURE
 
-using namespace halmd;
-
-// We may not include <test/tools/ctest.hpp> in this file, since this would
-// add the global fixtures ctest_full_output, and in turn cause duplicated
-// output in a test linking against this library.
-// Therefore repeat the class definition of ctest_full_output here.
-
+/**
+ * Print CTEST_FULL_OUTPUT to avoid ctest truncation of output.
+ *
+ * Requires --log_level=message or --log_level=test_suite.
+ */
 struct ctest_full_output
 {
     ctest_full_output();
 };
 
-ctest_full_output::ctest_full_output()
-{
-    BOOST_TEST_MESSAGE( "Avoid ctest truncation of output: CTEST_FULL_OUTPUT" );
-    BOOST_TEST_MESSAGE( PROJECT_NAME " " PROGRAM_VERSION );
-}
-
+/**
+ * Enable logging to console.
+ *
+ * If built without debugging (NDEBUG), log with severity info.
+ *
+ * Otherwise, log with severity debug.
+ */
 struct ctest_logging
 {
     ctest_logging();
 };
 
-ctest_logging::ctest_logging()
-{
-#ifdef NDEBUG
-    logging::get().open_console(logging::info);
-#else
-    logging::get().open_console(logging::debug);
-#endif
-}
+/**
+ * To avoid static initialization order fiasco, add the CTEST_FULL_OUTPUT
+ * printer as a global fixture instead of an __attribute__((constructor))
+ * function. The global fixture is instantiated before the test run.
+ */
+BOOST_GLOBAL_FIXTURE( ctest_full_output );
+BOOST_GLOBAL_FIXTURE( ctest_logging );
+
+#endif /* ! TEST_TOOLS_CTEST_HPP */
