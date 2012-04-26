@@ -112,7 +112,7 @@ public:
      */
     position_array_type const& position() const
     {
-       return position_;
+        return position_;
     }
 
     /**
@@ -120,7 +120,7 @@ public:
      */
     position_array_type& position()
     {
-       return position_;
+        return position_;
     }
 
     /**
@@ -128,7 +128,7 @@ public:
      */
     image_array_type const& image() const
     {
-       return image_;
+        return image_;
     }
 
     /**
@@ -136,7 +136,7 @@ public:
      */
     image_array_type& image()
     {
-       return image_;
+        return image_;
     }
 
     /**
@@ -144,7 +144,7 @@ public:
      */
     velocity_array_type const& velocity() const
     {
-       return velocity_;
+        return velocity_;
     }
 
     /**
@@ -152,7 +152,7 @@ public:
      */
     velocity_array_type& velocity()
     {
-       return velocity_;
+        return velocity_;
     }
 
     /**
@@ -160,7 +160,7 @@ public:
      */
     tag_array_type const& tag() const
     {
-       return tag_;
+        return tag_;
     }
 
     /**
@@ -168,7 +168,7 @@ public:
      */
     tag_array_type& tag()
     {
-       return tag_;
+        return tag_;
     }
 
     /**
@@ -176,7 +176,7 @@ public:
      */
     reverse_tag_array_type const& reverse_tag() const
     {
-       return reverse_tag_;
+        return reverse_tag_;
     }
 
     /**
@@ -184,7 +184,7 @@ public:
      */
     reverse_tag_array_type& reverse_tag()
     {
-       return reverse_tag_;
+        return reverse_tag_;
     }
 
     /**
@@ -192,7 +192,7 @@ public:
      */
     species_array_type const& species() const
     {
-       return species_;
+        return species_;
     }
 
     /**
@@ -200,7 +200,7 @@ public:
      */
     species_array_type& species()
     {
-       return species_;
+        return species_;
     }
 
     /**
@@ -208,7 +208,7 @@ public:
      */
     mass_array_type const& mass() const
     {
-       return mass_;
+        return mass_;
     }
 
     /**
@@ -216,7 +216,7 @@ public:
      */
     mass_array_type& mass()
     {
-       return mass_;
+        return mass_;
     }
 
     /**
@@ -229,7 +229,7 @@ public:
      */
     force_array_type const& force() const
     {
-       return force_;
+        return force_;
     }
 
     /**
@@ -237,7 +237,7 @@ public:
      */
     force_array_type& force()
     {
-       return force_;
+        return force_;
     }
 
     /**
