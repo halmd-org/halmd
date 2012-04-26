@@ -29,6 +29,16 @@ if(DEFINED CMAKE_CXX_COMPILER_ID)
   endif()
 endif()
 
+if(DEFINED CMAKE_CUDA_COMPILER_ID)
+  if(CMAKE_CUDA_COMPILER_ID STREQUAL "NVCC")
+
+    set(CMAKE_CUDA_FLAGS_INIT "-Xcompiler -fPIC -Xptxas -v -arch sm_12")
+
+  else()
+    message(WARNING "Unsupported CUDA compiler: ${CMAKE_CUDA_COMPILER_ID}")
+  endif()
+endif()
+
 if(CMAKE_CXX_PLATFORM_ID STREQUAL "Linux")
 
   # On Linux, add --Wl,--as-needed to the default linker flags.
