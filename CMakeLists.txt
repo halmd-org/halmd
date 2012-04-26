@@ -89,45 +89,6 @@ find_package(HDF5 QUIET REQUIRED)
 find_package(Lua QUIET REQUIRED)
 find_package(Luabind QUIET REQUIRED)
 
-if(CMAKE_CXX_COMPILER_ID MATCHES "^(GNU|Clang|Intel)$")
-  if(CMAKE_CXX_FLAGS STREQUAL "${CMAKE_CXX_FLAGS_INIT}")
-    if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
-      set(CMAKE_CXX_FLAGS "-fPIC -Wall -std=c++98" CACHE STRING
-        "Flags used by the compiler during all build types." FORCE)
-    else()
-      set(CMAKE_CXX_FLAGS "-fPIC -Wall" CACHE STRING
-        "Flags used by the compiler during all build types." FORCE)
-    endif()
-  endif()
-  if(CMAKE_CXX_FLAGS_RELEASE STREQUAL "${CMAKE_CXX_FLAGS_RELEASE_INIT}")
-    set(CMAKE_CXX_FLAGS_RELEASE "-O3 -DNDEBUG -fvisibility-inlines-hidden" CACHE STRING
-      "Flags used by the compiler during release builds." FORCE)
-  endif()
-elseif(CMAKE_CXX_COMPILER_ID STREQUAL "XL")
-  if(CMAKE_CXX_FLAGS STREQUAL "${CMAKE_CXX_FLAGS_INIT}")
-    set(CMAKE_CXX_FLAGS "-qrtti=all" CACHE STRING
-      "Flags used by the compiler during all build types." FORCE)
-  endif()
-  # We only need object-level inlining (opposed to link-time optimization),
-  # therefore we follow the recommendation for XL 11 that -qipa=inline is
-  # deprecated, and use -qinline instead.
-  # http://publib.boulder.ibm.com/infocenter/iadthelp/v8r0/index.jsp?topic=/com.ibm.xlcpp111.linux.doc/compiler_ref/opt_ipa.html
-  if(CMAKE_CXX_FLAGS_RELEASE STREQUAL "${CMAKE_CXX_FLAGS_RELEASE_INIT}")
-    set(CMAKE_CXX_FLAGS_RELEASE "-O4 -DNDEBUG -qstrict=all -qnoipa -qinline" CACHE STRING
-      "Flags used by the compiler during Release builds" FORCE)
-  endif()
-  if(CMAKE_CXX_FLAGS_MINSIZEREL STREQUAL "${CMAKE_CXX_FLAGS_MINSIZEREL_INIT}")
-    set(CMAKE_CXX_FLAGS_MINSIZEREL "${CMAKE_CXX_FLAGS_RELEASE}" CACHE STRING
-      "Flags used by the compiler during MinSizeRel builds" FORCE)
-  endif()
-  if(CMAKE_CXX_FLAGS_RELWITHDEBINFO STREQUAL "${CMAKE_CXX_FLAGS_RELWITHDEBINFO_INIT}")
-    set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "-g -O2 -qstrict=all" CACHE STRING
-      "Flags used by the compiler during RelWithDebInfo builds" FORCE)
-  endif()
-else()
-  message(WARNING "Unsupported CXX compiler: ${CMAKE_CXX_COMPILER_ID}")
-endif()
-
 if(CUDA_FOUND AND NOT HALMD_USE_STATIC_LIBS)
   set(WITH_CUDA TRUE)
   enable_language(CUDA)
