@@ -111,7 +111,7 @@ public:
      */
     position_array_type const& position() const
     {
-       return g_position_;
+        return g_position_;
     }
 
     /**
@@ -119,7 +119,7 @@ public:
      */
     position_array_type& position()
     {
-       return g_position_;
+        return g_position_;
     }
 
     /**
@@ -127,7 +127,7 @@ public:
      */
     image_array_type const& image() const
     {
-       return g_image_;
+        return g_image_;
     }
 
     /**
@@ -135,7 +135,7 @@ public:
      */
     image_array_type& image()
     {
-       return g_image_;
+        return g_image_;
     }
 
     /**
@@ -143,7 +143,7 @@ public:
      */
     velocity_array_type const& velocity() const
     {
-       return g_velocity_;
+        return g_velocity_;
     }
 
     /**
@@ -151,7 +151,7 @@ public:
      */
     velocity_array_type& velocity()
     {
-       return g_velocity_;
+        return g_velocity_;
     }
 
     /**
@@ -166,7 +166,7 @@ public:
      */
     tag_array_type const& tag() const
     {
-       return g_tag_;
+        return g_tag_;
     }
 
     /**
@@ -174,7 +174,7 @@ public:
      */
     tag_array_type& tag()
     {
-       return g_tag_;
+        return g_tag_;
     }
 
     /**
@@ -182,7 +182,7 @@ public:
      */
     reverse_tag_array_type const& reverse_tag() const
     {
-       return g_reverse_tag_;
+        return g_reverse_tag_;
     }
 
     /**
@@ -190,7 +190,7 @@ public:
      */
     reverse_tag_array_type& reverse_tag()
     {
-       return g_reverse_tag_;
+        return g_reverse_tag_;
     }
 
     /**
@@ -198,7 +198,7 @@ public:
      */
     force_array_type const& force() const
     {
-       return g_force_;
+        return g_force_;
     }
 
     /**
@@ -206,7 +206,7 @@ public:
      */
     force_array_type& force()
     {
-       return g_force_;
+        return g_force_;
     }
 
     /**
