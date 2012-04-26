@@ -47,7 +47,7 @@ class particle_group
 {
 public:
     typedef mdsim::host::particle<dimension, float_type> particle_type;
-    typedef std::vector<unsigned int>::const_iterator map_iterator;
+    typedef typename particle_type::reverse_tag_array_type::const_iterator map_iterator;
 
     static void luaopen(lua_State* L);
 
