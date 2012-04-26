@@ -24,7 +24,6 @@ add_executable(test_unit_utility_lua_map_converter
 target_link_libraries(test_unit_utility_lua_map_converter
   halmd_utility_lua
   test_tools_lua
-  ${Boost_PROGRAM_OPTIONS_LIBRARY}
   ${HALMD_TEST_LIBRARIES}
 )
 add_test(unit/utility/lua/map_converter

@@ -3,7 +3,6 @@ add_executable(test_unit_utility_program_options_typed_value
 )
 target_link_libraries(test_unit_utility_program_options_typed_value
   halmd_utility_program_options
-  ${Boost_PROGRAM_OPTIONS_LIBRARY}
   ${HALMD_TEST_LIBRARIES}
 )
 add_test(unit/utility/program_options/typed_value
@@ -14,7 +13,6 @@ add_executable(test_unit_utility_program_options_accumulating_value
 )
 target_link_libraries(test_unit_utility_program_options_accumulating_value
   halmd_utility_program_options
-  ${Boost_PROGRAM_OPTIONS_LIBRARY}
   ${HALMD_TEST_LIBRARIES}
 )
 add_test(unit/utility/program_options/accumulating_value

@@ -42,7 +42,6 @@ target_link_libraries(test_unit_utility_options_parser
   halmd_utility
   halmd_utility_program_options
   halmd_utility_lua
-  ${Boost_PROGRAM_OPTIONS_LIBRARY}
   ${HALMD_TEST_LIBRARIES}
 )
 add_test(unit/utility/options_parser
