@@ -29,7 +29,7 @@
 using namespace boost;
 using namespace std;
 
-HALMD_LUA_API int luaopen_halmd_base(lua_State* L);
+HALMD_LUA_API int luaopen_halmd(lua_State* L);
 
 namespace halmd {
 
@@ -57,7 +57,7 @@ script::script()
     // class_info(), class_names()
     luabind::bind_class_info(L);
     // load HALMD Lua C++ wrapper
-    luaopen_halmd_base(L);
+    luaopen_halmd(L);
     // prepare Lua 5.2 compatible environment
     lua_compat();
 }
