@@ -79,27 +79,7 @@ endforeach()
 # Substitute version info in header file
 configure_file(version.h.in version.h ESCAPE_QUOTES @ONLY)
 
-##
-# HALMD library with all modules
-#
-# This library should *only* be linked against unit tests.
-#
-
 halmd_bundle_modules(modules.hpp.in modules.hpp libhalmd ${HALMD_MODULES})
-halmd_bundle_modules(modules.cpp.in modules.cpp libhalmd ${HALMD_MODULES})
-
-add_library(libhalmd SHARED
-  "${CMAKE_CURRENT_BINARY_DIR}/modules.cpp"
-)
-set_target_properties(libhalmd PROPERTIES
-  PREFIX ""
-  # http://www.cmake.org/Wiki/CMake_FAQ#Why_are_libraries_linked_to_my_shared_library_included_when_something_links_to_it.3F
-  LINK_INTERFACE_LIBRARIES ""
-)
-target_link_libraries(libhalmd
-  ${HALMD_LIBRARIES}
-  ${HALMD_COMMON_LIBRARIES}
-)
 
 ##
 # HALMD executable with base modules
