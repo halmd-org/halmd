@@ -4,7 +4,6 @@ add_executable(test_unit_algorithm_gpu_apply
 )
 target_link_libraries(test_unit_algorithm_gpu_apply
   ${HALMD_TEST_LIBRARIES}
-  ${HALMD_COMMON_LIBRARIES}
   ${CUDA_LIBRARIES}
 )
 add_test(unit/algorithm/gpu/apply
@@ -17,7 +16,6 @@ add_executable(test_unit_algorithm_gpu_reduce
 )
 target_link_libraries(test_unit_algorithm_gpu_reduce
   ${HALMD_TEST_LIBRARIES}
-  ${HALMD_COMMON_LIBRARIES}
   ${CUDA_LIBRARIES}
 )
 add_test(unit/algorithm/gpu/reduce
