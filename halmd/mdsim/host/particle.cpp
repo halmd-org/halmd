@@ -35,25 +35,21 @@ namespace halmd {
 namespace mdsim {
 namespace host {
 
-/**
- * Allocate microscopic system state.
- *
- * @param particles number of particles per type or species
- */
 template <int dimension, typename float_type>
 particle<dimension, float_type>::particle(size_t nparticle)
   // allocate particle storage
-  : position_(nparticle)
-  , image_(nparticle)
-  , velocity_(nparticle)
-  , tag_(nparticle)
-  , reverse_tag_(nparticle)
-  , species_(nparticle)
-  , mass_(nparticle)
-  , force_(nparticle)
-  , en_pot_(nparticle)
-  , stress_pot_(nparticle)
-  , hypervirial_(nparticle)
+  : nspecies_(1)
+  , position_(nparticle, 0)
+  , image_(nparticle, 0)
+  , velocity_(nparticle, 0)
+  , tag_(nparticle, 0)
+  , reverse_tag_(nparticle, 0)
+  , species_(nparticle, 0)
+  , mass_(nparticle, 1)
+  , force_(nparticle, 0)
+  , en_pot_(nparticle, 0)
+  , stress_pot_(nparticle, 0)
+  , hypervirial_(nparticle, 0)
   // disable auxiliary variables by default
   , aux_flag_(false)
   , aux_valid_(false)

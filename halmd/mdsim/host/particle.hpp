@@ -56,16 +56,22 @@ public:
     typedef std::vector<reverse_tag_type> reverse_tag_array_type;
     typedef std::vector<species_type> species_array_type;
     typedef std::vector<mass_type> mass_array_type;
-    typedef std::vector<force_type, raw_allocator<force_type> > force_array_type;
-    typedef std::vector<en_pot_type, raw_allocator<en_pot_type> > en_pot_array_type;
-    typedef std::vector<stress_pot_type, raw_allocator<stress_pot_type> > stress_pot_array_type;
-    typedef std::vector<hypervirial_type, raw_allocator<hypervirial_type> > hypervirial_array_type;
+    typedef std::vector<force_type> force_array_type;
+    typedef std::vector<en_pot_type> en_pot_array_type;
+    typedef std::vector<stress_pot_type> stress_pot_array_type;
+    typedef std::vector<hypervirial_type> hypervirial_array_type;
 
     void set();
     void rearrange(std::vector<unsigned int> const& index);
 
     /**
      * Allocate particle arrays in host memory.
+     *
+     * @param nparticle number of particles
+     *
+     * All particle arrays, except the masses, are initialised to zero.
+     * The particle masses are initialised to unit mass. The number of
+     * species is initialised to zero.
      */
     particle(std::size_t nparticle);
 
