@@ -221,11 +221,8 @@ test_euler<modules_type>::test_euler()
     typename box_type::vector_type box_length = edge_length * box_ratios;
     slab = 1;
 
-    vector<unsigned int> npart_vector = list_of(npart);
-    vector<double> mass = list_of(1);
-
     // create modules
-    particle = make_shared<particle_type>(npart_vector, mass);
+    particle = make_shared<particle_type>(npart);
     box = make_shared<box_type>(box_length);
     integrator = make_shared<integrator_type>(particle, box, timestep);
     random = make_shared<random_type>();

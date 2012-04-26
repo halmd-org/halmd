@@ -24,7 +24,6 @@
 #include <vector>
 
 #include <cuda_wrapper/cuda_wrapper.hpp>
-#include <halmd/mdsim/particle.hpp>
 #include <halmd/mdsim/type_traits.hpp>
 #include <halmd/utility/profiler.hpp>
 
@@ -34,10 +33,7 @@ namespace gpu {
 
 template <int dimension, typename float_type>
 class particle
-  : public mdsim::particle<dimension>
 {
-    typedef mdsim::particle<dimension> _Base;
-
 public:
     typedef typename type_traits<dimension, float_type>::vector_type vector_type;
     typedef typename type_traits<dimension, float>::gpu::coalesced_vector_type gpu_vector_type;
@@ -65,56 +61,16 @@ public:
     typedef cuda::vector<typename type_traits<dimension, float_type>::gpu::stress_tensor_type> stress_pot_array_type;
     typedef cuda::vector<hypervirial_type> hypervirial_array_type;
 
-    static void luaopen(lua_State* L);
-
-    particle(
-        std::vector<unsigned int> const& particles
-      , std::vector<double> const& mass
-      , unsigned int threads = defaults::threads()
-    );
-    virtual void set();
+    void set();
     void rearrange(cuda::vector<unsigned int> const& g_index);
 
     /** grid and block dimensions for CUDA calls */
     cuda::config const dim;
 
-    //
-    // particles in global device memory
-    //
-
-private:
-    /** positions, types */
-    cuda::vector<float4> g_r;
-    /** minimum image vectors */
-    cuda::vector<gpu_vector_type> g_image;
-    /** velocities, tags */
-    cuda::vector<float4> g_v;
-    /** reverse particle tags */
-    cuda::vector<unsigned int> g_reverse_tag;
-public:
-    /** mass per type */
-    cuda::vector<float_type> g_mass;
-
-private:
-    /** number of particles in simulation box */
-    using _Base::nbox;
-    /** number of particle types */
-    using _Base::ntype;
-    /** number of particles per type */
-    using _Base::ntypes;
-
-public:
     /**
-     * Enable computation of auxiliary variables.
-     *
-     * The flag is reset by the next call to prepare().
+     * Allocate particle arrays in GPU memory.
      */
-    void aux_enable();
-
-    /**
-     * Reset forces, and optionally auxiliary variables, to zero.
-     */
-    void prepare();
+    particle(std::size_t nparticle, unsigned int threads = defaults::threads());
 
     /**
      * Returns number of particles.
@@ -126,7 +82,7 @@ public:
      */
     std::size_t nparticle() const
     {
-        return nbox;
+        return g_tag_.size();
     }
 
     /**
@@ -147,7 +103,7 @@ public:
      */
     unsigned int nspecies() const
     {
-        return ntype;
+        return nspecies_;
     }
 
     /**
@@ -155,7 +111,7 @@ public:
      */
     position_array_type const& position() const
     {
-       return g_r;
+       return g_position_;
     }
 
     /**
@@ -163,7 +119,7 @@ public:
      */
     position_array_type& position()
     {
-       return g_r;
+       return g_position_;
     }
 
     /**
@@ -171,7 +127,7 @@ public:
      */
     image_array_type const& image() const
     {
-       return g_image;
+       return g_image_;
     }
 
     /**
@@ -179,7 +135,7 @@ public:
      */
     image_array_type& image()
     {
-       return g_image;
+       return g_image_;
     }
 
     /**
@@ -187,7 +143,7 @@ public:
      */
     velocity_array_type const& velocity() const
     {
-       return g_v;
+       return g_velocity_;
     }
 
     /**
@@ -195,7 +151,7 @@ public:
      */
     velocity_array_type& velocity()
     {
-       return g_v;
+       return g_velocity_;
     }
 
     /**
@@ -226,7 +182,7 @@ public:
      */
     reverse_tag_array_type const& reverse_tag() const
     {
-       return g_reverse_tag;
+       return g_reverse_tag_;
     }
 
     /**
@@ -234,7 +190,7 @@ public:
      */
     reverse_tag_array_type& reverse_tag()
     {
-       return g_reverse_tag;
+       return g_reverse_tag_;
     }
 
     /**
@@ -311,6 +267,13 @@ public:
     }
 
     /**
+     * Enable computation of auxiliary variables.
+     *
+     * The flag is reset by the next call to prepare().
+     */
+    void aux_enable();
+
+    /**
      * Returns true if computation of auxiliary variables is enabled.
      */
     bool aux_valid() const
@@ -318,9 +281,29 @@ public:
         return aux_valid_;
     }
 
+    /**
+     * Reset forces, and optionally auxiliary variables, to zero.
+     */
+    void prepare();
+
+    /**
+     * Bind class to Lua.
+     */
+    static void luaopen(lua_State* L);
+
 private:
+    /** number of particle species */
+    unsigned int nspecies_;
+    /** positions, species */
+    position_array_type g_position_;
+    /** minimum image vectors */
+    image_array_type g_image_;
+    /** velocities, masses */
+    velocity_array_type g_velocity_;
     /** particle tags */
     tag_array_type g_tag_;
+    /** reverse particle tags */
+    reverse_tag_array_type g_reverse_tag_;
     /** force per particle */
     force_array_type g_force_;
     /** potential energy per particle */

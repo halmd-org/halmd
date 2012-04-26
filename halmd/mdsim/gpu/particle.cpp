@@ -44,29 +44,26 @@ namespace gpu {
  * @param particles number of particles per type or species
  */
 template <int dimension, typename float_type>
-particle<dimension, float_type>::particle(
-    vector<unsigned int> const& particles
-  , vector<double> const& mass
-  , unsigned int threads
-)
-  : _Base(particles, mass)
+particle<dimension, float_type>::particle(size_t nparticle, unsigned int threads)
   // default CUDA kernel execution dimensions
-  , dim(device::validate(cuda::config((nbox + threads - 1) / threads, threads)))
+  : dim(device::validate(cuda::config((nparticle + threads - 1) / threads, threads)))
   // allocate global device memory
-  , g_r(nbox)
-  , g_image(nbox)
-  , g_v(nbox)
-  , g_reverse_tag(nbox)
-  , g_mass(ntype)
-  , g_tag_(nbox)
-  , g_force_(nbox)
-  , g_en_pot_(nbox)
-  , g_stress_pot_(nbox)
-  , g_hypervirial_(nbox)
+  , g_position_(nparticle)
+  , g_image_(nparticle)
+  , g_velocity_(nparticle)
+  , g_reverse_tag_(nparticle)
+  , g_tag_(nparticle)
+  , g_force_(nparticle)
+  , g_en_pot_(nparticle)
+  , g_stress_pot_(nparticle)
+  , g_hypervirial_(nparticle)
   // disable auxiliary variables by default
   , aux_flag_(false)
   , aux_valid_(false)
 {
+    LOG("number of particles: " << g_tag_.size());
+    LOG("number of particle placeholders: " << g_tag_.capacity());
+    LOG("number of particle species: " << nspecies_);
     LOG_DEBUG("number of CUDA execution blocks: " << dim.blocks_per_grid());
     LOG_DEBUG("number of CUDA execution threads per block: " << dim.threads_per_block());
 
@@ -101,16 +98,16 @@ particle<dimension, float_type>::particle(
         // for the long-time stability of the integrator.
         //
         LOG("integrate using double-single precision");
-        g_r.reserve(2 * dim.threads());
-        g_v.reserve(2 * dim.threads());
+        g_position_.reserve(2 * dim.threads());
+        g_velocity_.reserve(2 * dim.threads());
 #else
         LOG_WARNING("integrate using single precision");
-        g_r.reserve(dim.threads());
-        g_v.reserve(dim.threads());
+        g_position_.reserve(dim.threads());
+        g_velocity_.reserve(dim.threads());
 #endif
-        g_image.reserve(dim.threads());
+        g_image_.reserve(dim.threads());
         g_tag_.reserve(dim.threads());
-        g_reverse_tag.reserve(dim.threads());
+        g_reverse_tag_.reserve(dim.threads());
         g_force_.reserve(dim.threads());
         g_en_pot_.reserve(dim.threads());
         g_stress_pot_.reserve(dim.threads());
@@ -123,19 +120,18 @@ particle<dimension, float_type>::particle(
 
     // initialise 'ghost' particles to zero
     // this avoids potential nonsense computations resulting in denormalised numbers
-    cuda::memset(g_r, 0, g_r.capacity());
-    cuda::memset(g_v, 0, g_v.capacity());
-    cuda::memset(g_image, 0, g_image.capacity());
+    cuda::memset(g_position_, 0, g_position_.capacity());
+    cuda::memset(g_velocity_, 0, g_velocity_.capacity());
+    cuda::memset(g_image_, 0, g_image_.capacity());
     cuda::memset(g_tag_, 0, g_tag_.capacity());
-    cuda::memset(g_reverse_tag, 0, g_reverse_tag.capacity());
+    cuda::memset(g_reverse_tag_, 0, g_reverse_tag_.capacity());
 
     // set particle masses to unit mass
     set_mass(1);
 
     try {
-        cuda::copy(nbox, get_particle_kernel<dimension>().nbox);
-        cuda::copy(ntype, get_particle_kernel<dimension>().ntype);
-        cuda::copy(vector<float_type>(mass.begin(), mass.end()), g_mass);
+        cuda::copy(g_tag_.size(), get_particle_kernel<dimension>().nbox);
+        cuda::copy(nspecies_, get_particle_kernel<dimension>().ntype);
     }
     catch (cuda::error const&) {
         LOG_ERROR("failed to copy particle parameters to device symbols");
@@ -154,7 +150,7 @@ template <int dimension, typename float_type>
 void particle<dimension, float_type>::set_mass(float_type mass)
 {
     cuda::configure(dim.grid, dim.block);
-    get_particle_kernel<dimension>().set_mass(g_v, g_v.size(), mass);
+    get_particle_kernel<dimension>().set_mass(g_velocity_, g_velocity_.size(), mass);
     cuda::thread::synchronize();
 }
 
@@ -184,13 +180,10 @@ void particle<dimension, float_type>::set()
 {
     try {
         cuda::configure(dim.grid, dim.block);
-        cuda::vector<unsigned int> g_ntypes(ntypes.size());
-        cuda::copy(ntypes, g_ntypes);
-        get_particle_kernel<dimension>().ntypes.bind(g_ntypes);
-        get_particle_kernel<dimension>().tag(g_r);
+        get_particle_kernel<dimension>().tag(g_position_);
 
         cuda::configure(dim.grid, dim.block);
-        get_particle_kernel<dimension>().gen_index(g_reverse_tag);
+        get_particle_kernel<dimension>().gen_index(g_reverse_tag_);
         cuda::thread::synchronize();
     }
     catch (cuda::error const&) {
@@ -206,30 +199,30 @@ template <int dimension, typename float_type>
 void particle<dimension, float_type>::rearrange(cuda::vector<unsigned int> const& g_index)
 {
     scoped_timer_type timer(runtime_.rearrange);
-    cuda::vector<float4> g_r_buf(nbox);
-    cuda::vector<gpu_vector_type> g_image_buf(nbox);
-    cuda::vector<float4> g_v_buf(nbox);
-    cuda::vector<unsigned int> g_tag(nbox);
+    cuda::vector<float4> g_r_buf(g_tag_.size());
+    cuda::vector<gpu_vector_type> g_image_buf(g_tag_.size());
+    cuda::vector<float4> g_v_buf(g_tag_.size());
+    cuda::vector<unsigned int> g_tag(g_tag_.size());
 
-    g_r_buf.reserve(g_r.capacity());
-    g_image_buf.reserve(g_image.capacity());
-    g_v_buf.reserve(g_v.capacity());
-    g_tag.reserve(g_reverse_tag.capacity());
+    g_r_buf.reserve(g_position_.capacity());
+    g_image_buf.reserve(g_image_.capacity());
+    g_v_buf.reserve(g_velocity_.capacity());
+    g_tag.reserve(g_reverse_tag_.capacity());
 
     cuda::configure(dim.grid, dim.block);
-    get_particle_kernel<dimension>().r.bind(g_r);
-    get_particle_kernel<dimension>().image.bind(g_image);
-    get_particle_kernel<dimension>().v.bind(g_v);
+    get_particle_kernel<dimension>().r.bind(g_position_);
+    get_particle_kernel<dimension>().image.bind(g_image_);
+    get_particle_kernel<dimension>().v.bind(g_velocity_);
     get_particle_kernel<dimension>().rearrange(g_index, g_r_buf, g_image_buf, g_v_buf, g_tag);
 
-    g_r_buf.swap(g_r);
-    g_image_buf.swap(g_image);
-    g_v_buf.swap(g_v);
+    g_r_buf.swap(g_position_);
+    g_image_buf.swap(g_image_);
+    g_v_buf.swap(g_velocity_);
 
-    radix_sort<unsigned int> sort(nbox, dim.threads_per_block());
+    radix_sort<unsigned int> sort(g_tag_.size(), dim.threads_per_block());
     cuda::configure(dim.grid, dim.block);
-    get_particle_kernel<dimension>().gen_index(g_reverse_tag);
-    sort(g_tag, g_reverse_tag);
+    get_particle_kernel<dimension>().gen_index(g_reverse_tag_);
+    sort(g_tag, g_reverse_tag_);
 }
 
 template <int dimension, typename float_type>
@@ -258,20 +251,20 @@ wrap_prepare(shared_ptr<particle_type> self)
 }
 
 template <typename particle_type>
+typename signal<void ()>::slot_function_type
+wrap_set(shared_ptr<particle_type> particle)
+{
+    return bind(&particle_type::set, particle);
+}
+
+template <typename particle_type>
 struct wrap_particle
   : particle_type
   , luabind::wrap_base
 {
-    wrap_particle(
-        vector<unsigned int> const& particles
-      , vector<double> const& mass
-      , unsigned int threads
-    ) : particle_type(particles, mass, threads) {}
+    wrap_particle(size_t nparticle, unsigned int threads) : particle_type(nparticle, threads) {}
 
-    wrap_particle(
-        vector<unsigned int> const& particles
-      , vector<double> const& mass
-    ) : particle_type(particles, mass) {}
+    wrap_particle(size_t nparticle) : particle_type(nparticle) {}
 };
 
 template <int dimension, typename float_type>
@@ -285,22 +278,16 @@ void particle<dimension, float_type>::luaopen(lua_State* L)
         [
             namespace_("gpu")
             [
-                class_<particle, shared_ptr<_Base>, _Base, wrap_particle<particle> >(class_name.c_str())
-                    .def(constructor<
-                         vector<unsigned int> const&
-                       , vector<double> const&
-                     >())
-                    .def(constructor<
-                         vector<unsigned int> const&
-                       , vector<double> const&
-                       , unsigned int
-                     >())
+                class_<particle, shared_ptr<particle>, wrap_particle<particle> >(class_name.c_str())
+                    .def(constructor<size_t, unsigned int>())
+                    .def(constructor<size_t>())
                     .property("nparticle", &particle::nparticle)
                     .property("nspecies", &particle::nspecies)
                     .def("set_mass", &particle::set_mass)
                     .property("dimension", &wrap_dimension<dimension, float_type>)
                     .property("aux_enable", &wrap_aux_enable<particle>)
                     .property("prepare", &wrap_prepare<particle>)
+                    .property("set", &wrap_set<particle>)
                     .scope[
                         namespace_("defaults")
                         [

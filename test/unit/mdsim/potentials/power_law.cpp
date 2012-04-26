@@ -26,6 +26,7 @@
 #include <boost/numeric/ublas/assignment.hpp> // <<=
 #include <cmath> // std::pow
 #include <limits>
+#include <numeric> // std::accumulate
 
 #include <halmd/mdsim/box.hpp>
 #include <halmd/mdsim/host/potentials/power_law.hpp>
@@ -256,7 +257,6 @@ power_law<float_type>::power_law()
 
     // set module parameters
     npart_list = list_of(1000)(2);
-    vector<double> mass = list_of(1)(1);
     float box_length = 100;
     float cutoff = box_length / 2;
 
@@ -280,7 +280,7 @@ power_law<float_type>::power_law()
       , 12, 24;
 
     // create modules
-    particle = make_shared<particle_type>(npart_list, mass);
+    particle = make_shared<particle_type>(accumulate(npart_list.begin(), npart_list.end(), 0));
     box = make_shared<box_type>(typename box_type::vector_type(box_length));
     potential = make_shared<potential_type>(
         particle->nspecies(), particle->nspecies(), cutoff_array

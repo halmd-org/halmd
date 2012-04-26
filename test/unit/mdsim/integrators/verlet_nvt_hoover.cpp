@@ -284,9 +284,6 @@ verlet_nvt_hoover<modules_type>::verlet_nvt_hoover()
     typename box_type::vector_type box_length = edge_length * box_ratios;
     skin = 0.5;
 
-    vector<unsigned int> npart_vector = list_of(npart);
-    vector<double> mass = list_of(1);
-
     typedef typename potential_type::matrix_type matrix_type;
     matrix_type cutoff(1, 1);
     cutoff <<= pow(2., 1./6);
@@ -296,7 +293,7 @@ verlet_nvt_hoover<modules_type>::verlet_nvt_hoover()
     sigma <<= 1.;
 
     // create modules
-    particle = make_shared<particle_type>(npart_vector, mass);
+    particle = make_shared<particle_type>(npart);
     box = make_shared<box_type>(box_length);
     random = make_shared<random_type>();
     integrator = make_shared<integrator_type>(particle, box, timestep, temp, resonance_frequency);

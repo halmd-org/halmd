@@ -41,27 +41,27 @@ namespace host {
  * @param particles number of particles per type or species
  */
 template <int dimension, typename float_type>
-particle<dimension, float_type>::particle(
-    vector<unsigned int> const& particles
-  , vector<double> const& mass
-)
-  : _Base(particles, mass)
+particle<dimension, float_type>::particle(size_t nparticle)
   // allocate particle storage
-  , r(nbox)
-  , image_(nbox)
-  , v(nbox)
-  , tag_(nbox)
-  , reverse_tag_(nbox)
-  , type(nbox)
-  , mass_(nbox)
-  , force_(nbox)
-  , en_pot_(nbox)
-  , stress_pot_(nbox)
-  , hypervirial_(nbox)
+  : position_(nparticle)
+  , image_(nparticle)
+  , velocity_(nparticle)
+  , tag_(nparticle)
+  , reverse_tag_(nparticle)
+  , species_(nparticle)
+  , mass_(nparticle)
+  , force_(nparticle)
+  , en_pot_(nparticle)
+  , stress_pot_(nparticle)
+  , hypervirial_(nparticle)
   // disable auxiliary variables by default
   , aux_flag_(false)
   , aux_valid_(false)
 {
+    LOG("number of particles: " << tag_.size());
+    LOG("number of particle placeholders: " << tag_.capacity());
+    LOG("number of particle species: " << nspecies_);
+
     // set particle masses to unit mass
     set_mass(1);
 }
@@ -78,12 +78,10 @@ void particle<dimension, float_type>::set_mass(float_type mass)
 template <int dimension, typename float_type>
 void particle<dimension, float_type>::set()
 {
-    // assign particle types
-    for (size_t i = 0, j = 0; j < ntype; i += ntypes[j], ++j) {
-        fill_n(type.begin() + i, ntypes[j], j);
-    }
+    // initialise particle types to zero
+    fill(species_.begin(), species_.end(), 0);
     // assign particle tags
-    copy(counting_iterator<size_t>(0), counting_iterator<size_t>(nbox), tag_.begin());
+    copy(counting_iterator<size_t>(0), counting_iterator<size_t>(tag_.size()), tag_.begin());
     // initially, the mapping tag → index is a 1:1 mapping
     copy(tag_.begin(), tag_.end(), reverse_tag_.begin());
 }
@@ -123,12 +121,12 @@ void particle<dimension, float_type>::rearrange(std::vector<unsigned int> const&
 {
     scoped_timer_type timer(runtime_.rearrange);
 
-    algorithm::host::permute(r.begin(), r.end(), index.begin());
+    algorithm::host::permute(position_.begin(), position_.end(), index.begin());
     algorithm::host::permute(image_.begin(), image_.end(), index.begin());
-    algorithm::host::permute(v.begin(), v.end(), index.begin());
+    algorithm::host::permute(velocity_.begin(), velocity_.end(), index.begin());
     // no permutation of forces
     algorithm::host::permute(tag_.begin(), tag_.end(), index.begin());
-    algorithm::host::permute(type.begin(), type.end(), index.begin());
+    algorithm::host::permute(species_.begin(), species_.end(), index.begin());
 
     // update reverse tags
     for (unsigned int i = 0; i < tag_.size(); ++i) {
@@ -158,14 +156,18 @@ wrap_prepare(shared_ptr<particle_type> self)
 }
 
 template <typename particle_type>
+typename signal<void ()>::slot_function_type
+wrap_set(shared_ptr<particle_type> particle)
+{
+    return bind(&particle_type::set, particle);
+}
+
+template <typename particle_type>
 struct wrap_particle
   : particle_type
   , luabind::wrap_base
 {
-    wrap_particle(
-        vector<unsigned int> const& particles
-      , vector<double> const& mass
-    ) : particle_type(particles, mass) {}
+    wrap_particle(size_t nparticle) : particle_type(nparticle) {}
 };
 
 template <int dimension, typename float_type>
@@ -179,17 +181,15 @@ void particle<dimension, float_type>::luaopen(lua_State* L)
         [
             namespace_("host")
             [
-                class_<particle, shared_ptr<_Base>, _Base, wrap_particle<particle> >(class_name.c_str())
-                    .def(constructor<
-                        vector<unsigned int> const&
-                      , vector<double> const&
-                    >())
+                class_<particle, shared_ptr<particle>, wrap_particle<particle> >(class_name.c_str())
+                    .def(constructor<size_t>())
                     .property("nparticle", &particle::nparticle)
                     .property("nspecies", &particle::nspecies)
                     .def("set_mass", &particle::set_mass)
                     .property("dimension", &wrap_dimension<dimension, float_type>)
                     .property("aux_enable", &wrap_aux_enable<particle>)
                     .property("prepare", &wrap_prepare<particle>)
+                    .property("set", &wrap_set<particle>)
                     .scope[
                         class_<runtime>("runtime")
                             .def_readonly("rearrange", &runtime::rearrange)

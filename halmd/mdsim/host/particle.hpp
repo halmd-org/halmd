@@ -23,7 +23,6 @@
 #include <lua.hpp>
 #include <vector>
 
-#include <halmd/mdsim/particle.hpp>
 #include <halmd/mdsim/type_traits.hpp>
 #include <halmd/utility/profiler.hpp>
 #include <halmd/utility/raw_allocator.hpp>
@@ -34,12 +33,9 @@ namespace host {
 
 template <int dimension, typename float_type>
 class particle
-  : public mdsim::particle<dimension>
 {
-    typedef mdsim::particle<dimension> _Base;
-
 public:
-    typedef typename type_traits<dimension, float_type>::vector_type vector_type;
+    typedef fixed_vector<float_type, dimension> vector_type;
 
     typedef vector_type position_type;
     typedef vector_type image_type;
@@ -65,48 +61,13 @@ public:
     typedef std::vector<stress_pot_type, raw_allocator<stress_pot_type> > stress_pot_array_type;
     typedef std::vector<hypervirial_type, raw_allocator<hypervirial_type> > hypervirial_array_type;
 
-    static void luaopen(lua_State* L);
-
-    particle(
-        std::vector<unsigned int> const& particles
-      , std::vector<double> const& mass
-    );
-    virtual void set();
+    void set();
     void rearrange(std::vector<unsigned int> const& index);
 
-private:
-    /** positions, reduced to extended domain box */
-    std::vector<vector_type> r;
-    /** minimum image vectors */
-    std::vector<vector_type> image_;
-    /** velocities */
-    std::vector<vector_type> v;
-    /** globally unique particle numbers */
-    std::vector<unsigned int> tag_;
-    /** reverse particle tags */
-    std::vector<unsigned int> reverse_tag_;
-    /** types */
-    std::vector<unsigned int> type;
-
-    /** number of particles in simulation box */
-    using _Base::nbox;
-    /** number of particle types */
-    using _Base::ntype;
-    /** number of particles per type */
-    using _Base::ntypes;
-
-public:
     /**
-     * Enable computation of auxiliary variables.
-     *
-     * The flag is reset by the next call to prepare().
+     * Allocate particle arrays in host memory.
      */
-    void aux_enable();
-
-    /**
-     * Reset forces, and optionally auxiliary variables, to zero.
-     */
-    void prepare();
+    particle(std::size_t nparticle);
 
     /**
      * Returns number of particles.
@@ -118,7 +79,7 @@ public:
      */
     std::size_t nparticle() const
     {
-        return nbox;
+        return tag_.size();
     }
 
     /**
@@ -137,7 +98,7 @@ public:
      */
     unsigned int nspecies() const
     {
-        return ntype;
+        return nspecies_;
     }
 
     /**
@@ -145,7 +106,7 @@ public:
      */
     position_array_type const& position() const
     {
-       return r;
+       return position_;
     }
 
     /**
@@ -153,7 +114,7 @@ public:
      */
     position_array_type& position()
     {
-       return r;
+       return position_;
     }
 
     /**
@@ -177,7 +138,7 @@ public:
      */
     velocity_array_type const& velocity() const
     {
-       return v;
+       return velocity_;
     }
 
     /**
@@ -185,7 +146,7 @@ public:
      */
     velocity_array_type& velocity()
     {
-       return v;
+       return velocity_;
     }
 
     /**
@@ -225,7 +186,7 @@ public:
      */
     species_array_type const& species() const
     {
-       return type;
+       return species_;
     }
 
     /**
@@ -233,7 +194,7 @@ public:
      */
     species_array_type& species()
     {
-       return type;
+       return species_;
     }
 
     /**
@@ -331,6 +292,13 @@ public:
     }
 
     /**
+     * Enable computation of auxiliary variables.
+     *
+     * The flag is reset by the next call to prepare().
+     */
+    void aux_enable();
+
+    /**
      * Returns true if computation of auxiliary variables is enabled.
      */
     bool aux_valid() const
@@ -338,7 +306,31 @@ public:
         return aux_valid_;
     }
 
+    /**
+     * Reset forces, and optionally auxiliary variables, to zero.
+     */
+    void prepare();
+
+    /**
+     * Bind class to Lua.
+     */
+    static void luaopen(lua_State* L);
+
 private:
+    /** number of particle species */
+    unsigned int nspecies_;
+    /** positions, reduced to extended domain box */
+    position_array_type position_;
+    /** minimum image vectors */
+    image_array_type image_;
+    /** velocities */
+    velocity_array_type velocity_;
+    /** particle tags */
+    tag_array_type tag_;
+    /** reverse particle tags */
+    reverse_tag_array_type reverse_tag_;
+    /** particle species */
+    species_array_type species_;
     /** particle masses */
     mass_array_type mass_;
     /** force per particle */

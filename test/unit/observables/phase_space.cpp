@@ -25,7 +25,7 @@
 #include <boost/foreach.hpp>
 #include <boost/make_shared.hpp>
 #include <limits>
-#include <numeric>
+#include <numeric> // std::accumulate
 
 #include <halmd/mdsim/box.hpp>
 #include <halmd/mdsim/clock.hpp>
@@ -195,7 +195,6 @@ phase_space<modules_type>::phase_space()
 
     // set module parameters
     npart = list_of(1024)(512)(30)(1); //< choose a value smaller than warp size and some limiting values
-    vector<double> mass = list_of(1)(1)(1)(1);
 
     // choose a box length with is not an exactly representable as a
     // floating-point number and which is small enough to have some overflow
@@ -204,7 +203,7 @@ phase_space<modules_type>::phase_space()
     typename box_type::vector_type box_length = 40./3;
 
     // create modules
-    particle = make_shared<particle_type>(npart, mass);
+    particle = make_shared<particle_type>(accumulate(npart.begin(), npart.end(), 0));
     box = make_shared<box_type>(box_length);
     input_sample = make_shared<input_sample_type>(particle->nparticle());
     clock = make_shared<clock_type>(0); // bogus time-step
