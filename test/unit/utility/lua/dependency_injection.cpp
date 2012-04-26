@@ -21,6 +21,7 @@
 #include <boost/test/unit_test.hpp>
 
 #include <halmd/utility/lua/lua.hpp>
+#include <test/tools/ctest.hpp>
 #include <test/tools/lua.hpp>
 
 /**

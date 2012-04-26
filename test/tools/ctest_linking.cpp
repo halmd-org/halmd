@@ -20,6 +20,8 @@
 #define BOOST_TEST_MODULE ctest_linking
 #include <boost/test/unit_test.hpp>
 
+#include <test/tools/ctest.hpp>
+
 BOOST_AUTO_TEST_CASE( dummy )
 {
     // The output of libtest_tools_ctest is tested in ctest_linking.cmake.in.

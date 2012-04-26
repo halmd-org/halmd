@@ -30,6 +30,7 @@
 #include <halmd/numeric/accumulator.hpp>
 #include <halmd/numeric/mp/dsfloat.hpp>
 #include <halmd/utility/timer.hpp>
+#include <test/tools/ctest.hpp>
 #include <test/tools/cuda.hpp>
 #include <test/tools/init.hpp>
 #include <test/unit/algorithm/gpu/reduce_kernel.hpp>

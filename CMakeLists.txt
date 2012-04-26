@@ -40,6 +40,8 @@ message(STATUS "Building HALMD ${PROGRAM_VERSION}")
 
 if(NOT HALMD_DOC_ONLY)
 
+set(CMAKE_USER_MAKE_RULES_OVERRIDE "cmake/platform.cmake")
+
 project(HALMD CXX)
 
 if(CMAKE_BUILD_TYPE STREQUAL "${CMAKE_BUILD_TYPE_INIT}")
@@ -87,73 +89,6 @@ find_package(HDF5 QUIET REQUIRED)
 find_package(Lua QUIET REQUIRED)
 find_package(Luabind QUIET REQUIRED)
 
-if(CMAKE_CXX_COMPILER_ID MATCHES "^(GNU|Clang|Intel)$")
-  if(CMAKE_CXX_FLAGS STREQUAL "${CMAKE_CXX_FLAGS_INIT}")
-    if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
-      set(CMAKE_CXX_FLAGS "-fPIC -Wall -std=c++98" CACHE STRING
-        "Flags used by the compiler during all build types." FORCE)
-    else()
-      set(CMAKE_CXX_FLAGS "-fPIC -Wall" CACHE STRING
-        "Flags used by the compiler during all build types." FORCE)
-    endif()
-  endif()
-  if(CMAKE_CXX_FLAGS_RELEASE STREQUAL "${CMAKE_CXX_FLAGS_RELEASE_INIT}")
-    set(CMAKE_CXX_FLAGS_RELEASE "-O3 -DNDEBUG -fvisibility-inlines-hidden" CACHE STRING
-      "Flags used by the compiler during release builds." FORCE)
-  endif()
-  # Strip binaries for Release builds
-  if(CMAKE_EXE_LINKER_FLAGS_RELEASE STREQUAL "${CMAKE_EXE_LINKER_FLAGS_RELEASE_INIT}")
-    set(CMAKE_EXE_LINKER_FLAGS_RELEASE "-Wl,-s" CACHE STRING
-      "Flags used by the linker during release builds." FORCE)
-  endif()
-  if(CMAKE_MODULE_LINKER_FLAGS_RELEASE STREQUAL "${CMAKE_MODULE_LINKER_FLAGS_RELEASE_INIT}")
-    set(CMAKE_MODULE_LINKER_FLAGS_RELEASE "-Wl,-s" CACHE STRING
-      "Flags used by the linker during release builds." FORCE)
-  endif()
-  if(CMAKE_SHARED_LINKER_FLAGS_RELEASE STREQUAL "${CMAKE_SHARED_LINKER_FLAGS_RELEASE_INIT}")
-    set(CMAKE_SHARED_LINKER_FLAGS_RELEASE "-Wl,-s" CACHE STRING
-      "Flags used by the linker during release builds." FORCE)
-  endif()
-elseif(CMAKE_CXX_COMPILER_ID STREQUAL "XL")
-  if(CMAKE_CXX_FLAGS STREQUAL "${CMAKE_CXX_FLAGS_INIT}")
-    set(CMAKE_CXX_FLAGS "-qrtti=all" CACHE STRING
-      "Flags used by the compiler during all build types." FORCE)
-  endif()
-  # We only need object-level inlining (opposed to link-time optimization),
-  # therefore we follow the recommendation for XL 11 that -qipa=inline is
-  # deprecated, and use -qinline instead.
-  # http://publib.boulder.ibm.com/infocenter/iadthelp/v8r0/index.jsp?topic=/com.ibm.xlcpp111.linux.doc/compiler_ref/opt_ipa.html
-  if(CMAKE_CXX_FLAGS_RELEASE STREQUAL "${CMAKE_CXX_FLAGS_RELEASE_INIT}")
-    set(CMAKE_CXX_FLAGS_RELEASE "-O4 -DNDEBUG -qstrict=all -qnoipa -qinline" CACHE STRING
-      "Flags used by the compiler during Release builds" FORCE)
-  endif()
-  if(CMAKE_CXX_FLAGS_MINSIZEREL STREQUAL "${CMAKE_CXX_FLAGS_MINSIZEREL_INIT}")
-    set(CMAKE_CXX_FLAGS_MINSIZEREL "${CMAKE_CXX_FLAGS_RELEASE}" CACHE STRING
-      "Flags used by the compiler during MinSizeRel builds" FORCE)
-  endif()
-  if(CMAKE_CXX_FLAGS_RELWITHDEBINFO STREQUAL "${CMAKE_CXX_FLAGS_RELWITHDEBINFO_INIT}")
-    set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "-g -O2 -qstrict=all" CACHE STRING
-      "Flags used by the compiler during RelWithDebInfo builds" FORCE)
-  endif()
-else()
-  message(WARNING "Unsupported CXX compiler: ${CMAKE_CXX_COMPILER_ID}")
-endif()
-
-if(CMAKE_CXX_PLATFORM_ID STREQUAL "AIX")
-  # The combined flags -qtwolink -Wl,-bweaklocal instruct the AIX linker
-  # to discard unreferenced objects of an archive, which is needed to
-  # avoid undefined symbol errors when linking the unit tests.
-  # -qnoipa is needed to disable link-time IPA, which breaks -qtwolink.
-  if(CMAKE_EXE_LINKER_FLAGS STREQUAL "${CMAKE_EXE_LINKER_FLAGS_INIT}")
-    set(CMAKE_EXE_LINKER_FLAGS "-qtwolink -Wl,-bweaklocal -qnoipa" CACHE STRING
-      "Flags used by the linker." FORCE)
-  endif()
-  if(CMAKE_SHARED_LINKER_FLAGS STREQUAL "${CMAKE_SHARED_LINKER_FLAGS_INIT}")
-    set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS}" CACHE STRING
-      "Flags used by the linker during the creation of shared libraries." FORCE)
-  endif()
-endif()
-
 if(CUDA_FOUND AND NOT HALMD_USE_STATIC_LIBS)
   enable_language(CUDA)
 
@@ -162,11 +97,6 @@ if(CUDA_FOUND AND NOT HALMD_USE_STATIC_LIBS)
   # FIXME deprecated, use HALMD_WITH_GPU instead
   set(WITH_CUDA TRUE)
   add_definitions(-DWITH_CUDA)
-
-  if(CMAKE_CUDA_FLAGS STREQUAL "${CMAKE_CUDA_FLAGS_INIT}")
-    set(CMAKE_CUDA_FLAGS "-Xcompiler -fPIC -Xptxas -v -arch sm_12" CACHE STRING
-      "Flags used by the compiler during all build types." FORCE)
-  endif()
 
   try_compile(success "${CMAKE_BINARY_DIR}" "${CMAKE_SOURCE_DIR}/cmake/cuda_arch.cu" OUTPUT_VARIABLE result)
   if(result MATCHES "__CUDA_ARCH__([0-9]+)__")

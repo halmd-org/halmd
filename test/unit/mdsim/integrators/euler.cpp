@@ -46,6 +46,7 @@
 # include <halmd/utility/gpu/device.hpp>
 # include <include/cuda_wrapper/cuda_wrapper.hpp>
 #endif
+#include <test/tools/ctest.hpp>
 
 using namespace boost;
 using namespace boost::assign; // list_of

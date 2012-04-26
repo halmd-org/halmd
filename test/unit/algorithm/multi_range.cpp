@@ -23,7 +23,9 @@
 #include <boost/assign.hpp>
 #include <boost/bind.hpp>
 #include <boost/multi_array.hpp>
+
 #include <halmd/algorithm/multi_range.hpp>
+#include <test/tools/ctest.hpp>
 
 using namespace boost;
 using namespace boost::assign;

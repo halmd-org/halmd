@@ -26,6 +26,7 @@
 
 #include <halmd/numeric/pow.hpp>
 #include <halmd/utility/timer.hpp>
+#include <test/tools/ctest.hpp>
 
 const double eps = std::numeric_limits<double>::epsilon();
 

@@ -22,6 +22,7 @@
 
 #include <halmd/algorithm/gpu/apply_kernel.hpp>
 #include <halmd/numeric/blas/blas.hpp>
+#include <test/tools/ctest.hpp>
 #include <test/tools/cuda.hpp>
 #include <test/tools/init.hpp>
 

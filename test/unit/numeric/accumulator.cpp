@@ -21,6 +21,7 @@
 #include <boost/test/unit_test.hpp>
 
 #include <halmd/numeric/accumulator.hpp>
+#include <test/tools/ctest.hpp>
 
 BOOST_AUTO_TEST_CASE( test_accumulator )
 {

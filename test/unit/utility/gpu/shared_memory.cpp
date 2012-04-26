@@ -21,7 +21,9 @@
 #include <boost/test/unit_test.hpp>
 
 #include <boost/array.hpp>
+
 #include <halmd/utility/gpu/shared_memory.hpp>
+#include <test/tools/ctest.hpp>
 
 using namespace halmd;
 

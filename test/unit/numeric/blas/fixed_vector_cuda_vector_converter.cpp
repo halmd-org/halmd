@@ -27,6 +27,7 @@
 
 #include <halmd/numeric/blas/fixed_vector.hpp>
 #include <halmd/numeric/cast.hpp>
+#include <test/tools/ctest.hpp>
 #include <test/unit/numeric/blas/fixed_vector_cuda_vector_converter_kernel.hpp>
 
 using namespace boost;

@@ -25,6 +25,7 @@
 #include <iostream>
 
 #include <cuda_wrapper/cuda_wrapper.hpp>
+#include <test/tools/ctest.hpp>
 
 /**
  *  "global fixture" for Boost Unit Test Framework: select CUDA device

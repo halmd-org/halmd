@@ -29,6 +29,7 @@
 #include <stdio.h>
 
 #include <halmd/io/logger.hpp>
+#include <test/tools/ctest.hpp>
 
 using namespace boost;
 using namespace boost::assign;

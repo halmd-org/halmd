@@ -24,6 +24,7 @@
 
 #include <cuda_wrapper/cuda_wrapper.hpp>
 #include <halmd/utility/timer.hpp>
+#include <test/tools/ctest.hpp>
 #include <test/tools/cuda.hpp>
 #include <test/tools/init.hpp>
 

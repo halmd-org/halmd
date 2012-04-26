@@ -36,6 +36,7 @@
 #include <halmd/io/writers/h5md/file.hpp>
 #include <halmd/mdsim/clock.hpp>
 #include <halmd/observables/host/samples/phase_space.hpp>
+#include <test/tools/ctest.hpp>
 #include <test/tools/init.hpp>
 
 using namespace boost;

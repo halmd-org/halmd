@@ -1,9 +1,18 @@
 add_executable(test_unit_mdsim_potentials_lennard_jones
   lennard_jones.cpp
 )
+if(WITH_CUDA)
+  target_link_libraries(test_unit_mdsim_potentials_lennard_jones
+    halmd_mdsim_gpu_forces
+    halmd_mdsim_gpu_potentials
+    halmd_mdsim_gpu
+    halmd_algorithm_gpu
+    halmd_utility_gpu
+  )
+endif()
 target_link_libraries(test_unit_mdsim_potentials_lennard_jones
-  libhalmd
-  ${HALMD_COMMON_LIBRARIES}
+  halmd_mdsim_host_potentials
+  halmd_mdsim
   ${HALMD_TEST_LIBRARIES}
 )
 add_test(unit/mdsim/potentials/lennard_jones/host
@@ -13,14 +22,23 @@ if(WITH_CUDA)
   add_test(unit/mdsim/potentials/lennard_jones/gpu
     test_unit_mdsim_potentials_lennard_jones --run_test=lennard_jones_gpu --log_level=test_suite
   )
-endif(WITH_CUDA)
+endif()
 
 add_executable(test_unit_mdsim_potentials_modified_lennard_jones
   modified_lennard_jones.cpp
 )
+if(WITH_CUDA)
+  target_link_libraries(test_unit_mdsim_potentials_modified_lennard_jones
+    halmd_mdsim_gpu_forces
+    halmd_mdsim_gpu_potentials
+    halmd_mdsim_gpu
+    halmd_algorithm_gpu
+    halmd_utility_gpu
+  )
+endif()
 target_link_libraries(test_unit_mdsim_potentials_modified_lennard_jones
-  libhalmd
-  ${HALMD_COMMON_LIBRARIES}
+  halmd_mdsim_host_potentials
+  halmd_mdsim
   ${HALMD_TEST_LIBRARIES}
 )
 add_test(unit/mdsim/potentials/modified_lennard_jones/host
@@ -30,14 +48,23 @@ if(WITH_CUDA)
   add_test(unit/mdsim/potentials/modified_lennard_jones/gpu
     test_unit_mdsim_potentials_modified_lennard_jones --run_test=modified_lennard_jones_gpu --log_level=test_suite
   )
-endif(WITH_CUDA)
+endif()
 
 add_executable(test_unit_mdsim_potentials_power_law
   power_law.cpp
 )
+if(WITH_CUDA)
+  target_link_libraries(test_unit_mdsim_potentials_power_law
+    halmd_mdsim_gpu_forces
+    halmd_mdsim_gpu_potentials
+    halmd_mdsim_gpu
+    halmd_algorithm_gpu
+    halmd_utility_gpu
+  )
+endif()
 target_link_libraries(test_unit_mdsim_potentials_power_law
-  libhalmd
-  ${HALMD_COMMON_LIBRARIES}
+  halmd_mdsim_host_potentials
+  halmd_mdsim
   ${HALMD_TEST_LIBRARIES}
 )
 add_test(unit/mdsim/potentials/power_law/host
@@ -47,14 +74,23 @@ if(WITH_CUDA)
   add_test(unit/mdsim/potentials/power_law/gpu
     test_unit_mdsim_potentials_power_law --run_test=power_law_gpu --log_level=test_suite
   )
-endif(WITH_CUDA)
+endif()
 
 add_executable(test_unit_mdsim_potentials_power_law_with_core
   power_law_with_core.cpp
 )
+if(WITH_CUDA)
+  target_link_libraries(test_unit_mdsim_potentials_power_law_with_core
+    halmd_mdsim_gpu_forces
+    halmd_mdsim_gpu_potentials
+    halmd_mdsim_gpu
+    halmd_algorithm_gpu
+    halmd_utility_gpu
+  )
+endif()
 target_link_libraries(test_unit_mdsim_potentials_power_law_with_core
-  libhalmd
-  ${HALMD_COMMON_LIBRARIES}
+  halmd_mdsim_host_potentials
+  halmd_mdsim
   ${HALMD_TEST_LIBRARIES}
 )
 add_test(unit/mdsim/potentials/power_law_with_core/host
@@ -64,4 +100,4 @@ if(WITH_CUDA)
   add_test(unit/mdsim/potentials/power_law_with_core/gpu
     test_unit_mdsim_potentials_power_law_with_core --run_test=power_law_with_core_gpu --log_level=test_suite
   )
-endif(WITH_CUDA)
+endif()

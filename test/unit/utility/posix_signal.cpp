@@ -28,6 +28,7 @@
 
 #include <halmd/utility/posix_signal.hpp>
 #include <halmd/utility/timer.hpp>
+#include <test/tools/ctest.hpp>
 #include <test/tools/init.hpp>
 
 using namespace boost;

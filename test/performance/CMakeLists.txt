@@ -16,7 +16,6 @@ else(WITH_CUDA)
 endif(WITH_CUDA)
 target_link_libraries(test_performance_function_calls
   test_tools_lua
-  ${HALMD_COMMON_LIBRARIES}
   ${HALMD_TEST_LIBRARIES}
 )
 add_test(performance/function_calls
@@ -28,7 +27,6 @@ if(WITH_CUDA)
     memory_allocation.cpp
   )
   target_link_libraries(test_performance_memory_allocation
-    ${HALMD_COMMON_LIBRARIES}
     ${HALMD_TEST_LIBRARIES}
   )
   add_test(performance/memory_allocation

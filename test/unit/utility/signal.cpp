@@ -21,6 +21,7 @@
 #include <boost/test/unit_test.hpp>
 
 #include <halmd/utility/signal.hpp>
+#include <test/tools/ctest.hpp>
 
 using namespace boost;
 using namespace halmd;

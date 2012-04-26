@@ -36,6 +36,7 @@
 # include <halmd/utility/gpu/device.hpp>
 # include <test/unit/mdsim/potentials/gpu/neighbour_chain.hpp>
 #endif
+#include <test/tools/ctest.hpp>
 
 
 using namespace boost;

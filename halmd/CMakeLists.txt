@@ -59,20 +59,20 @@ get_property(HALMD_MODULES GLOBAL PROPERTY HALMD_MODULES)
 get_property(HALMD_LIBRARIES GLOBAL PROPERTY HALMD_LIBRARIES)
 
 # Split HALMD C++ modules into GPU and non-GPU modules
+set(HALMD_GPU_MODULES)
 foreach(MODULE ${HALMD_MODULES})
   if(MODULE MATCHES "gpu")
     list(APPEND HALMD_GPU_MODULES ${MODULE})
-  else()
-    list(APPEND HALMD_BASE_MODULES ${MODULE})
+    list(REMOVE_ITEM HALMD_MODULES ${MODULE})
   endif()
 endforeach()
 
 # Split HALMD C++ libraries into GPU and non-GPU libraries
+set(HALMD_GPU_LIBRARIES)
 foreach(LIBRARY ${HALMD_LIBRARIES})
   if(LIBRARY MATCHES "gpu")
     list(APPEND HALMD_GPU_LIBRARIES ${LIBRARY})
-  else()
-    list(APPEND HALMD_BASE_LIBRARIES ${LIBRARY})
+    list(REMOVE_ITEM HALMD_LIBRARIES ${LIBRARY})
   endif()
 endforeach()
 
@@ -82,74 +82,39 @@ configure_file(config.hpp.in config.hpp @ONLY)
 # Substitute version info in header file
 configure_file(version.h.in version.h ESCAPE_QUOTES @ONLY)
 
-##
-# HALMD library with all modules
-#
-# This library should *only* be linked against unit tests.
-#
-
-halmd_bundle_modules(modules.hpp.in modules.hpp libhalmd ${HALMD_MODULES})
-halmd_bundle_modules(modules.cpp.in modules.cpp libhalmd ${HALMD_MODULES})
-
-add_library(libhalmd SHARED
-  "${CMAKE_CURRENT_BINARY_DIR}/modules.cpp"
-)
-set_target_properties(libhalmd PROPERTIES
-  PREFIX ""
-  # http://www.cmake.org/Wiki/CMake_FAQ#Why_are_libraries_linked_to_my_shared_library_included_when_something_links_to_it.3F
-  LINK_INTERFACE_LIBRARIES ""
-)
-target_link_libraries(libhalmd
-  ${HALMD_LIBRARIES}
-  ${HALMD_COMMON_LIBRARIES}
-)
+halmd_bundle_modules(modules.hpp.in modules.hpp halmd ${HALMD_MODULES} ${HALMD_GPU_MODULES})
 
 ##
-# HALMD executable with base modules
+# HALMD executable with non-GPU modules
 #
 
-halmd_bundle_modules(modules.cpp.in modules_base.cpp halmd_base ${HALMD_BASE_MODULES})
+halmd_bundle_modules(modules.cpp.in modules_halmd.cpp halmd ${HALMD_MODULES})
 
 add_executable(halmd
   main.cpp
-  "${CMAKE_CURRENT_BINARY_DIR}/modules_base.cpp"
+  "${CMAKE_CURRENT_BINARY_DIR}/modules_halmd.cpp"
 )
 target_link_libraries(halmd
   # with newer version of GNU ld, indirect linking through intermediate
   # libraries does not work anymore, so we have to explicitly link halmd
   # against common libraries
   # http://fedoraproject.org/wiki/UnderstandingDSOLinkChange
-  ${HALMD_BASE_LIBRARIES}
+  ${HALMD_LIBRARIES}
   ${HALMD_COMMON_LIBRARIES}
 )
 install(TARGETS halmd
   RUNTIME DESTINATION bin
 )
 
-# On Linux, add --Wl,--as-needed to the link flags of the halmd executable.
-# This makes distribution packagers happy, as the halmd binary will only
-# reference the actually used libraries, which allows for minimal package
-# dependencies of the halmd package. The HALMD_COMMON_LIBRARIES variable
-# contains more libraries than needed in most cases, to support linking
-# Boost and HDF5 libraries statically.
-#
-# Note that -Wl,--as-needed must not be set globally, the unit tests
-# have to be build _without_ this flag. Otherwise fixtures in linked
-# shared test libraries will be silently discarded by the linker.
-#
-if(CMAKE_CXX_PLATFORM_ID STREQUAL "Linux")
-  set_target_properties(halmd PROPERTIES LINK_FLAGS "-Wl,--as-needed")
-endif()
-
 ##
 # HALMD plugin with GPU modules
 #
 
 if(WITH_CUDA)
-  halmd_bundle_modules(modules.cpp.in modules_gpu.cpp halmd_gpu ${HALMD_GPU_MODULES})
+  halmd_bundle_modules(modules.cpp.in modules_halmd_gpu.cpp halmd_gpu ${HALMD_GPU_MODULES})
 
   add_library(halmd_gpu MODULE
-    "${CMAKE_CURRENT_BINARY_DIR}/modules_gpu.cpp"
+    "${CMAKE_CURRENT_BINARY_DIR}/modules_halmd_gpu.cpp"
   )
   set_target_properties(halmd_gpu PROPERTIES
     PREFIX ""

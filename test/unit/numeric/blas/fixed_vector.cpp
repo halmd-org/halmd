@@ -22,6 +22,7 @@
 
 #include <halmd/numeric/blas/fixed_vector.hpp>
 #include <halmd/numeric/blas/blas1.hpp>
+#include <test/tools/ctest.hpp>
 
 using namespace boost;
 using namespace std;

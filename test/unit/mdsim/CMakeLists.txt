@@ -4,19 +4,23 @@ add_subdirectory(potentials)
 add_subdirectory(velocities)
 
 # module box
-if (WITH_CUDA)
+if(WITH_CUDA)
   add_executable(test_unit_mdsim_box
     box.cpp
     box_kernel.cu
-)
+  )
 else (WITH_CUDA)
   add_executable(test_unit_mdsim_box
     box.cpp
-)
-endif (WITH_CUDA)
+  )
+endif()
+if(WITH_CUDA)
+  target_link_libraries(test_unit_mdsim_box
+    halmd_utility_gpu
+  )
+endif()
 target_link_libraries(test_unit_mdsim_box
-  libhalmd
-  ${HALMD_COMMON_LIBRARIES}
+  halmd_mdsim
   ${HALMD_TEST_LIBRARIES}
 )
 add_test(unit/mdsim/box/construction/2d
@@ -38,15 +42,14 @@ if(WITH_CUDA)
   add_test(unit/mdsim/box/periodic/gpu/3d
     test_unit_mdsim_box --run_test=box_periodic_gpu_3d --log_level=test_suite
   )
-endif(WITH_CUDA)
+endif()
 
 # module clock
 add_executable(test_unit_mdsim_clock
   clock.cpp
 )
 target_link_libraries(test_unit_mdsim_clock
-  libhalmd
-  ${HALMD_COMMON_LIBRARIES}
+  halmd_mdsim
   ${HALMD_TEST_LIBRARIES}
 )
 add_test(unit/mdsim/clock

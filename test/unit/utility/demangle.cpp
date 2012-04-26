@@ -26,6 +26,7 @@
 #include <boost/mpl/vector.hpp>
 
 #include <halmd/utility/demangle.hpp>
+#include <test/tools/ctest.hpp>
 
 //
 // define test templates and types
