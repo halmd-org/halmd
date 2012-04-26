@@ -25,6 +25,7 @@
 #include <limits>
 #include <stdint.h> // uint64_t
 
+#include <halmd/config.hpp> // HALMD_GPU_DOUBLE_PRECISION
 #include <halmd/numeric/blas/fixed_vector.hpp>
 #include <halmd/numeric/cast.hpp>
 #include <test/tools/ctest.hpp>
@@ -267,14 +268,19 @@ BOOST_AUTO_TEST_CASE_TEMPLATE( fixed_vector_float_float_converter_one, pair_type
 // Double-precision tests
 //
 
-typedef boost::mpl::vector<                       pair<fixed_vector<double , 3>, int         > >       double_int_types_1;
-typedef boost::mpl::push_back<double_int_types_1, pair<fixed_vector<double , 2>, int         > >::type double_int_types_2;
-typedef boost::mpl::push_back<double_int_types_2, pair<fixed_vector<double , 3>, unsigned int> >::type double_int_types_3;
-typedef boost::mpl::push_back<double_int_types_3, pair<fixed_vector<double , 2>, unsigned int> >::type double_int_types_4;
-typedef boost::mpl::push_back<double_int_types_4, pair<fixed_vector<dsfloat, 3>, int         > >::type double_int_types_5;
-typedef boost::mpl::push_back<double_int_types_5, pair<fixed_vector<dsfloat, 2>, int         > >::type double_int_types_6;
-typedef boost::mpl::push_back<double_int_types_6, pair<fixed_vector<dsfloat, 3>, unsigned int> >::type double_int_types_7;
-typedef boost::mpl::push_back<double_int_types_7, pair<fixed_vector<dsfloat, 2>, unsigned int> >::type double_int_types;
+typedef boost::mpl::vector<                       pair<fixed_vector<dsfloat, 3>, int         > >       double_int_types_1;
+typedef boost::mpl::push_back<double_int_types_1, pair<fixed_vector<dsfloat, 2>, int         > >::type double_int_types_2;
+typedef boost::mpl::push_back<double_int_types_2, pair<fixed_vector<dsfloat, 3>, unsigned int> >::type double_int_types_3;
+typedef boost::mpl::push_back<double_int_types_3, pair<fixed_vector<dsfloat, 2>, unsigned int> >::type double_int_types_4;
+#ifdef HALMD_GPU_DOUBLE_PRECISION
+typedef boost::mpl::push_back<double_int_types_4, pair<fixed_vector<double , 3>, int         > >::type double_int_types_5;
+typedef boost::mpl::push_back<double_int_types_5, pair<fixed_vector<double , 2>, int         > >::type double_int_types_6;
+typedef boost::mpl::push_back<double_int_types_6, pair<fixed_vector<double , 3>, unsigned int> >::type double_int_types_7;
+typedef boost::mpl::push_back<double_int_types_7, pair<fixed_vector<double , 2>, unsigned int> >::type double_int_types_8;
+typedef double_int_types_8 double_int_types;
+#else
+typedef double_int_types_4 double_int_types;
+#endif
 
 BOOST_AUTO_TEST_CASE_TEMPLATE( fixed_vector_double_int_converter_two, pair_type, double_int_types )
 {
@@ -354,14 +360,19 @@ BOOST_AUTO_TEST_CASE_TEMPLATE( fixed_vector_double_int_converter_two, pair_type,
     }
 }
 
-typedef boost::mpl::vector<                         pair<fixed_vector<double , 3>, float  > >       double_float_types_1;
-typedef boost::mpl::push_back<double_float_types_1, pair<fixed_vector<double , 2>, float  > >::type double_float_types_2;
-typedef boost::mpl::push_back<double_float_types_2, pair<fixed_vector<double , 3>, double > >::type double_float_types_3;
-typedef boost::mpl::push_back<double_float_types_3, pair<fixed_vector<double , 2>, double > >::type double_float_types_4;
-typedef boost::mpl::push_back<double_float_types_4, pair<fixed_vector<dsfloat, 3>, float  > >::type double_float_types_5;
-typedef boost::mpl::push_back<double_float_types_5, pair<fixed_vector<dsfloat, 2>, float  > >::type double_float_types_6;
-typedef boost::mpl::push_back<double_float_types_6, pair<fixed_vector<dsfloat, 3>, dsfloat> >::type double_float_types_7;
-typedef boost::mpl::push_back<double_float_types_7, pair<fixed_vector<dsfloat, 2>, dsfloat> >::type double_float_types;
+typedef boost::mpl::vector<                         pair<fixed_vector<dsfloat, 3>, float  > >       double_float_types_1;
+typedef boost::mpl::push_back<double_float_types_1, pair<fixed_vector<dsfloat, 2>, float  > >::type double_float_types_2;
+typedef boost::mpl::push_back<double_float_types_2, pair<fixed_vector<dsfloat, 3>, dsfloat> >::type double_float_types_3;
+typedef boost::mpl::push_back<double_float_types_3, pair<fixed_vector<dsfloat, 2>, dsfloat> >::type double_float_types_4;
+#ifdef HALMD_GPU_DOUBLE_PRECISION
+typedef boost::mpl::push_back<double_float_types_4, pair<fixed_vector<double , 3>, float  > >::type double_float_types_5;
+typedef boost::mpl::push_back<double_float_types_5, pair<fixed_vector<double , 2>, float  > >::type double_float_types_6;
+typedef boost::mpl::push_back<double_float_types_6, pair<fixed_vector<double , 3>, double > >::type double_float_types_7;
+typedef boost::mpl::push_back<double_float_types_7, pair<fixed_vector<double , 2>, double > >::type double_float_types_8;
+typedef double_float_types_8 double_float_types;
+#else
+typedef double_float_types_4 double_float_types;
+#endif
 
 BOOST_AUTO_TEST_CASE_TEMPLATE( fixed_vector_double_float_converter_two, pair_type, double_float_types )
 {

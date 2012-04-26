@@ -17,6 +17,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <halmd/config.hpp> // HALMD_GPU_DOUBLE_PRECISION
 #include <halmd/numeric/blas/fixed_vector.hpp>
 #include <halmd/utility/gpu/thread.cuh>
 #include <test/unit/numeric/blas/fixed_vector_cuda_vector_converter_kernel.hpp>
@@ -84,15 +85,6 @@ template class float_kernel<fixed_vector<float, 2>, unsigned int>;
 template class float_kernel<fixed_vector<float, 3>, float>;
 template class float_kernel<fixed_vector<float, 2>, float>;
 
-template class double_kernel<fixed_vector<double, 3>, int>;
-template class double_kernel<fixed_vector<double, 2>, int>;
-template class double_kernel<fixed_vector<double, 3>, unsigned int>;
-template class double_kernel<fixed_vector<double, 2>, unsigned int>;
-template class double_kernel<fixed_vector<double, 3>, float>;
-template class double_kernel<fixed_vector<double, 2>, float>;
-template class double_kernel<fixed_vector<double, 3>, double>;
-template class double_kernel<fixed_vector<double, 2>, double>;
-
 template class double_kernel<fixed_vector<dsfloat, 3>, int>;
 template class double_kernel<fixed_vector<dsfloat, 2>, int>;
 template class double_kernel<fixed_vector<dsfloat, 3>, unsigned int>;
@@ -101,3 +93,14 @@ template class double_kernel<fixed_vector<dsfloat, 3>, float>;
 template class double_kernel<fixed_vector<dsfloat, 2>, float>;
 template class double_kernel<fixed_vector<dsfloat, 3>, dsfloat>;
 template class double_kernel<fixed_vector<dsfloat, 2>, dsfloat>;
+
+#ifdef HALMD_GPU_DOUBLE_PRECISION
+template class double_kernel<fixed_vector<double, 3>, int>;
+template class double_kernel<fixed_vector<double, 2>, int>;
+template class double_kernel<fixed_vector<double, 3>, unsigned int>;
+template class double_kernel<fixed_vector<double, 2>, unsigned int>;
+template class double_kernel<fixed_vector<double, 3>, float>;
+template class double_kernel<fixed_vector<double, 2>, float>;
+template class double_kernel<fixed_vector<double, 3>, double>;
+template class double_kernel<fixed_vector<double, 2>, double>;
+#endif
