@@ -61,9 +61,6 @@ particle<dimension, float_type>::particle(size_t nparticle, unsigned int threads
   , aux_flag_(false)
   , aux_valid_(false)
 {
-    LOG("number of particles: " << g_tag_.size());
-    LOG("number of particle placeholders: " << g_tag_.capacity());
-    LOG("number of particle species: " << nspecies_);
     LOG_DEBUG("number of CUDA execution blocks: " << dim.blocks_per_grid());
     LOG_DEBUG("number of CUDA execution threads per block: " << dim.threads_per_block());
 
@@ -137,6 +134,10 @@ particle<dimension, float_type>::particle(size_t nparticle, unsigned int threads
         LOG_ERROR("failed to copy particle parameters to device symbols");
         throw;
     }
+
+    LOG("number of particles: " << g_tag_.size());
+    LOG("number of particle placeholders: " << g_tag_.capacity());
+    LOG("number of particle species: " << nspecies_);
 }
 
 template <int dimension, typename float_type>
