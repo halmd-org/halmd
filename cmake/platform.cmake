@@ -32,7 +32,21 @@ endif()
 if(DEFINED CMAKE_CUDA_COMPILER_ID)
   if(CMAKE_CUDA_COMPILER_ID STREQUAL "NVCC")
 
-    set(CMAKE_CUDA_FLAGS_INIT "-Xcompiler -fPIC -Xptxas -v -arch sm_12")
+    # Compile for CUDA compute version 1.2, and generate PTX 1.2 code
+    # as well as binary code for targets of compute capability 1.3 and 2.0.
+    # This ensures backward and forward compatibility with targets of
+    # compute capability ≥ 1.2 through JIT compilation at program
+    # startup, while providing binary code for Tesla and Fermi GPUs.
+    #
+    # Note that we compile with -arch=compute_12 to disable native double
+    # precision (present with compute_13), and to avoid performance penalty
+    # of IEEE-compliant floating-point (present with compute_20).
+    #
+    # We will raise the default compute version later to enable native double
+    # precision, as an alternative to double-single precision, and when all
+    # kernels are optimised for Fermi GPUs.
+
+    set(CMAKE_CUDA_FLAGS_INIT "-Xcompiler -fPIC -Xptxas -v -arch=compute_12 -code=compute_12,sm_13,sm_20")
 
   else()
     message(WARNING "Unsupported CUDA compiler: ${CMAKE_CUDA_COMPILER_ID}")
