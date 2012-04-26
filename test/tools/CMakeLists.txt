@@ -4,18 +4,9 @@
 add_library(test_tools_lua
   lua.cpp
 )
-target_link_libraries(test_tools_lua
-  ${LUABIND_LIBRARY}
-  ${LUA_LIBRARIES}
-  dl
-)
 
 add_library(test_tools_ctest
   ctest.cpp
-)
-target_link_libraries(test_tools_ctest
-  halmd_io
-  ${HALMD_COMMON_LIBRARIES}
 )
 
 add_executable(test_tools_ctest_linking

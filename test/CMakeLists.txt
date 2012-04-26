@@ -24,9 +24,9 @@ endif(suffix STREQUAL "${CMAKE_SHARED_LIBRARY_SUFFIX}")
 # CTEST_FULL_OUTPUT to avoid ctest truncation of the test output.
 set(HALMD_TEST_LIBRARIES
   test_tools_ctest
-  pthread
-  rt
+  halmd_io
   ${Boost_UNIT_TEST_FRAMEWORK_LIBRARY}
+  ${HALMD_COMMON_LIBRARIES}
 )
 
 set(HALMD_TEST_CMAKE_BINARY_DIR "@CMAKE_BINARY_DIR@/test/cmake")
