@@ -12,8 +12,7 @@ add_executable(test_unit_utility_profiler
   profiler.cpp
 )
 target_link_libraries(test_unit_utility_profiler
-  libhalmd
-  ${HALMD_COMMON_LIBRARIES}
+  halmd_utility
   ${HALMD_TEST_LIBRARIES}
 )
 add_test(unit/utility/profiler
@@ -54,8 +53,7 @@ add_executable(test_unit_utility_posix_signal
   posix_signal.cpp
 )
 target_link_libraries(test_unit_utility_posix_signal
-  libhalmd
-  ${HALMD_COMMON_LIBRARIES}
+  halmd_utility
   ${HALMD_TEST_LIBRARIES}
 )
 add_test(unit/utility/posix_signal
