@@ -9,7 +9,6 @@ endif(WITH_CUDA)
 target_link_libraries(test_unit_random_distributions
   halmd_random_host
   halmd_io
-  ${HALMD_COMMON_LIBRARIES}
   ${HALMD_TEST_LIBRARIES}
 )
 add_test(unit/random/distributions

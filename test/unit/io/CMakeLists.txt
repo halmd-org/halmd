@@ -3,7 +3,6 @@ add_executable(test_unit_io_logger
 )
 target_link_libraries(test_unit_io_logger
   halmd_io
-  ${HALMD_COMMON_LIBRARIES}
   ${HALMD_TEST_LIBRARIES}
 )
 add_test(unit/io/logger

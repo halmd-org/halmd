@@ -13,9 +13,7 @@ add_executable(test_unit_numeric_pow
 )
 target_link_libraries(test_unit_numeric_pow
   ${HALMD_TEST_LIBRARIES}
-  ${Boost_SYSTEM_LIBRARY}
-  rt
-  )
+)
 add_test(unit/numeric/pow
   test_unit_numeric_pow --log_level=test_suite
 )
