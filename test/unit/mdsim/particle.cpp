@@ -30,6 +30,10 @@
 #include <test/tools/constant_iterator.hpp>
 #include <test/tools/ctest.hpp>
 #include <test/unit/mdsim/positions/lattice_iterator.hpp>
+#ifdef HALMD_WITH_GPU
+# include <halmd/mdsim/gpu/particle.hpp>
+# include <test/tools/cuda.hpp>
+#endif
 
 using namespace boost;
 using namespace std;
@@ -671,3 +675,138 @@ BOOST_AUTO_TEST_CASE( hypervirial )
 BOOST_AUTO_TEST_SUITE_END() // three
 
 BOOST_AUTO_TEST_SUITE_END() // host
+
+#ifdef HALMD_WITH_GPU
+BOOST_AUTO_TEST_SUITE( gpu )
+
+/**
+ * Fixture that constructs instance of gpu::particle.
+ */
+template <unsigned int dimension>
+struct particle_fixture : set_cuda_device
+{
+    particle_fixture() : particle(12345) {}
+
+    halmd::mdsim::gpu::particle<dimension, float> particle;
+};
+
+BOOST_FIXTURE_TEST_SUITE( two, particle_fixture<2> )
+
+BOOST_AUTO_TEST_CASE( position )
+{
+    particle_position(particle);
+}
+
+BOOST_AUTO_TEST_CASE( image )
+{
+    particle_image(particle);
+}
+
+BOOST_AUTO_TEST_CASE( velocity )
+{
+    particle_velocity(particle);
+}
+
+BOOST_AUTO_TEST_CASE( tag )
+{
+    particle_tag(particle);
+}
+
+BOOST_AUTO_TEST_CASE( reverse_tag )
+{
+    particle_reverse_tag(particle);
+}
+
+BOOST_AUTO_TEST_CASE( species )
+{
+    particle_species(particle);
+}
+
+BOOST_AUTO_TEST_CASE( mass )
+{
+    particle_mass(particle);
+}
+
+BOOST_AUTO_TEST_CASE( force )
+{
+    particle_force(particle);
+}
+
+BOOST_AUTO_TEST_CASE( en_pot )
+{
+    particle_en_pot(particle);
+}
+
+BOOST_AUTO_TEST_CASE( stress_pot )
+{
+    particle_stress_pot(particle);
+}
+
+BOOST_AUTO_TEST_CASE( hypervirial )
+{
+    particle_hypervirial(particle);
+}
+
+BOOST_AUTO_TEST_SUITE_END() // two
+
+BOOST_FIXTURE_TEST_SUITE( three, particle_fixture<3> )
+
+BOOST_AUTO_TEST_CASE( position )
+{
+    particle_position(particle);
+}
+
+BOOST_AUTO_TEST_CASE( image )
+{
+    particle_image(particle);
+}
+
+BOOST_AUTO_TEST_CASE( velocity )
+{
+    particle_velocity(particle);
+}
+
+BOOST_AUTO_TEST_CASE( tag )
+{
+    particle_tag(particle);
+}
+
+BOOST_AUTO_TEST_CASE( reverse_tag )
+{
+    particle_reverse_tag(particle);
+}
+
+BOOST_AUTO_TEST_CASE( species )
+{
+    particle_species(particle);
+}
+
+BOOST_AUTO_TEST_CASE( mass )
+{
+    particle_mass(particle);
+}
+
+BOOST_AUTO_TEST_CASE( force )
+{
+    particle_force(particle);
+}
+
+BOOST_AUTO_TEST_CASE( en_pot )
+{
+    particle_en_pot(particle);
+}
+
+BOOST_AUTO_TEST_CASE( stress_pot )
+{
+    particle_stress_pot(particle);
+}
+
+BOOST_AUTO_TEST_CASE( hypervirial )
+{
+    particle_hypervirial(particle);
+}
+
+BOOST_AUTO_TEST_SUITE_END() // three
+
+BOOST_AUTO_TEST_SUITE_END() // gpu
+#endif /* HALMD_WITH_GPU */

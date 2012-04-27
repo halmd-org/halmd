@@ -45,7 +45,7 @@ public:
     typedef unsigned int tag_type;
     typedef unsigned int reverse_tag_type;
     typedef unsigned int species_type;
-    typedef double mass_type;
+    typedef float mass_type;
     typedef vector_type force_type;
     typedef float_type en_pot_type;
     typedef typename type_traits<dimension, float_type>::stress_tensor_type stress_pot_type;
@@ -123,6 +123,26 @@ public:
     }
 
     /**
+     * Copy particle positions to given array.
+     */
+    void get_position(std::vector<position_type>& position);
+
+    /**
+     * Copy particle positions from given array.
+     */
+    void set_position(std::vector<position_type> const& position);
+
+    /**
+     * Copy particle species to given array.
+     */
+    void get_species(std::vector<species_type>& species);
+
+    /**
+     * Copy particle species from given array.
+     */
+    void set_species(std::vector<species_type> const& species);
+
+    /**
      * Returns non-const reference to particle images.
      */
     image_array_type const& image() const
@@ -139,6 +159,16 @@ public:
     }
 
     /**
+     * Copy particle images to given array.
+     */
+    void get_image(std::vector<image_type>& image);
+
+    /**
+     * Copy particle images from given array.
+     */
+    void set_image(std::vector<image_type> const& image);
+
+    /**
      * Returns non-const reference to particle velocities and masses.
      */
     velocity_array_type const& velocity() const
@@ -153,6 +183,26 @@ public:
     {
         return g_velocity_;
     }
+
+    /**
+     * Copy particle velocities to given array.
+     */
+    void get_velocity(std::vector<velocity_type>& velocity);
+
+    /**
+     * Copy particle velocities from given array.
+     */
+    void set_velocity(std::vector<velocity_type> const& velocity);
+
+    /**
+     * Copy particle masses to given array.
+     */
+    void get_mass(std::vector<mass_type>& mass);
+
+    /**
+     * Copy particle masses from given array.
+     */
+    void set_mass(std::vector<mass_type> const& mass);
 
     /**
      * Set particle masses to scalar.
@@ -178,6 +228,16 @@ public:
     }
 
     /**
+     * Copy particle tags to given array.
+     */
+    void get_tag(std::vector<tag_type>& tag);
+
+    /**
+     * Copy particle tags from given array.
+     */
+    void set_tag(std::vector<tag_type> const& tag);
+
+    /**
      * Returns non-const reference to particle reverse tags.
      */
     reverse_tag_array_type const& reverse_tag() const
@@ -194,6 +254,16 @@ public:
     }
 
     /**
+     * Copy particle reverse tags to given array.
+     */
+    void get_reverse_tag(std::vector<reverse_tag_type>& reverse_tag);
+
+    /**
+     * Copy particle reverse tags from given array.
+     */
+    void set_reverse_tag(std::vector<reverse_tag_type> const& reverse_tag);
+
+    /**
      * Returns non-const reference to force per particle.
      */
     force_array_type const& force() const
@@ -208,6 +278,16 @@ public:
     {
         return g_force_;
     }
+
+    /**
+     * Copy force per particle to given array.
+     */
+    void get_force(std::vector<force_type>& force);
+
+    /**
+     * Copy force per particle from given array.
+     */
+    void set_force(std::vector<force_type> const& force);
 
     /**
      * Returns const reference to potential energy per particle.
@@ -229,6 +309,16 @@ public:
     }
 
     /**
+     * Copy potential energy per particle to given array.
+     */
+    void get_en_pot(std::vector<en_pot_type>& en_pot);
+
+    /**
+     * Copy potential energy per particle from given array.
+     */
+    void set_en_pot(std::vector<en_pot_type> const& en_pot);
+
+    /**
      * Returns const reference to potential part of stress tensor per particle.
      *
      * This method checks that the computation of auxiliary variables was enabled.
@@ -248,6 +338,16 @@ public:
     }
 
     /**
+     * Copy potential part of stress tensor per particle to given array.
+     */
+    void get_stress_pot(std::vector<stress_pot_type>& stress_pot);
+
+    /**
+     * Copy potential part of stress tensor per particle from given array.
+     */
+    void set_stress_pot(std::vector<stress_pot_type> const& stress_pot);
+
+    /**
      * Returns const reference to hypervirial per particle.
      *
      * This method checks that the computation of auxiliary variables was enabled.
@@ -265,6 +365,16 @@ public:
     {
         return g_hypervirial_;
     }
+
+    /**
+     * Copy hypervirial per particle to given array.
+     */
+    void get_hypervirial(std::vector<hypervirial_type>& hypervirial);
+
+    /**
+     * Copy hypervirial per particle from given array.
+     */
+    void set_hypervirial(std::vector<hypervirial_type> const& hypervirial);
 
     /**
      * Enable computation of auxiliary variables.
