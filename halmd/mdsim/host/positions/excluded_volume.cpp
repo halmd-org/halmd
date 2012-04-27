@@ -57,12 +57,11 @@ void excluded_volume<dimension, float_type>::exclude_sphere(
     index_type lower, upper;
     tie(lower, upper) = this->sphere_extents(centre, diameter);
     upper += index_type(1); // index range is [lower, upper)
-    index_type result = multi_range_for_each(
+    multi_range_for_each(
         lower
       , upper
       , bind(&excluded_volume::exclude_sphere_from_cell, this, centre, diameter, _1)
     );
-    assert(equal(upper.begin(), upper.end(), result.begin()));
 }
 
 template <int dimension, typename float_type>

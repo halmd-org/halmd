@@ -33,7 +33,7 @@ multi_range_for_each(
     index_type const& it
   , index_type const&
   , index_type const&
-  , function_type const& f
+  , function_type& f
 )
 {
     f(it);
@@ -46,7 +46,7 @@ multi_range_for_each(
     index_type& it
   , index_type const& first
   , index_type const& last
-  , function_type const& f
+  , function_type& f
 )
 {
     it[dimension] = first[dimension];
@@ -63,15 +63,15 @@ multi_range_for_each(
  */
 template <typename index_type, typename function_type>
 inline HALMD_GPU_ENABLED
-index_type multi_range_for_each(
+function_type multi_range_for_each(
     index_type const& first
   , index_type const& last
-  , function_type const& f
+  , function_type f
 )
 {
     index_type it(first);
     multi_range_for_each<0>(it, first, last, f);
-    return it;
+    return f;
 }
 
 template <size_t dimension, typename index_type, typename predicate_type>
@@ -81,7 +81,7 @@ multi_range_find_if(
     index_type const& it
   , index_type const&
   , index_type const&
-  , predicate_type const& pred
+  , predicate_type& pred
 )
 {
     return pred(it);
@@ -94,7 +94,7 @@ multi_range_find_if(
     index_type& it
   , index_type const& first
   , index_type const& last
-  , predicate_type const& pred
+  , predicate_type& pred
 )
 {
     it[dimension] = first[dimension];
@@ -117,7 +117,7 @@ inline HALMD_GPU_ENABLED
 index_type multi_range_find_if(
     index_type const& first
   , index_type const& last
-  , predicate_type const& pred
+  , predicate_type pred
 )
 {
     index_type it(first);

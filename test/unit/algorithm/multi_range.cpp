@@ -111,10 +111,25 @@ BOOST_FIXTURE_TEST_CASE( find_if_empty_range, multi_array_fixture )
 }
 
 template <typename T, size_t N>
-void element_accumulate(multi_array<T, N> const& tensor, T& sum, array<size_t, N> const& index)
+class multi_array_accumulate
 {
-    sum += tensor(index);
-}
+public:
+    explicit multi_array_accumulate(multi_array<T, N> const& tensor) : tensor_(tensor), sum_(0) {}
+
+    void operator()(array<size_t, N> const& index)
+    {
+        sum_ += tensor_(index);
+    }
+
+    T operator()() const
+    {
+        return sum_;
+    }
+
+private:
+    multi_array<T, N> const& tensor_;
+    T sum_;
+};
 
 /**
  * sum over all elements
@@ -124,15 +139,12 @@ BOOST_FIXTURE_TEST_CASE( for_each_sum_elements, multi_array_fixture )
     double const N = size[0] * size[1] * size[2];
     double sum = 0;
     array<size_t, 3> first = {{ 0, 0, 0 }};
-    array<size_t, 3> result = multi_range_for_each(
+    multi_array_accumulate<double, 3> result = multi_range_for_each(
         first
       , size
-      , bind(&element_accumulate<double, 3>, cref(tensor), ref(sum), _1)
+      , multi_array_accumulate<double, 3>(tensor)
     );
-    BOOST_CHECK_EQUAL(result[0], size[0]);
-    BOOST_CHECK_EQUAL(result[1], size[1]);
-    BOOST_CHECK_EQUAL(result[2], size[2]);
-    BOOST_CHECK_EQUAL(sum, N * (N + 1) / 2);
+    BOOST_CHECK_EQUAL(result(), N * (N + 1) / 2);
 }
 
 /**
@@ -142,13 +154,10 @@ BOOST_FIXTURE_TEST_CASE( for_each_sum_empty_range, multi_array_fixture )
 {
     double sum = 0;
     array<size_t, 3> first = {{ 0, 0, 0 }};
-    array<size_t, 3> result = multi_range_for_each(
+    multi_array_accumulate<double, 3> result = multi_range_for_each(
         first
       , first
-      , bind(&element_accumulate<double, 3>, cref(tensor), ref(sum), _1)
+      , multi_array_accumulate<double, 3>(tensor)
     );
-    BOOST_CHECK_EQUAL(result[0], first[0]);
-    BOOST_CHECK_EQUAL(result[1], first[1]);
-    BOOST_CHECK_EQUAL(result[2], first[2]);
-    BOOST_CHECK_EQUAL(sum, 0);
+    BOOST_CHECK_EQUAL(result(), 0);
 }
