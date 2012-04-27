@@ -24,6 +24,7 @@
 #include <boost/array.hpp>
 #include <boost/iterator/counting_iterator.hpp>
 #include <cmath> // std::ceil, std::pow
+#include <iterator> // std::back_inserter
 
 #include <halmd/config.hpp>
 #include <halmd/mdsim/host/particle.hpp>
@@ -45,6 +46,17 @@ template <typename particle_type>
 void particle_position(particle_type& particle)
 {
     typedef typename particle_type::position_type position_type;
+    typedef typename particle_type::species_type species_type;
+
+    // set species to ascending sequence of integers starting at 1 ≠ 0
+    vector<species_type> species;
+    species.reserve(particle.nparticle());
+    copy(
+        counting_iterator<species_type>(1)
+      , counting_iterator<species_type>(particle.nparticle() + 1)
+      , back_inserter(species)
+    );
+    particle.set_species(species);
 
     // check that species are initialised to zero
     vector<position_type> position;
@@ -82,6 +94,17 @@ void particle_position(particle_type& particle)
       , lattice_iterator<position_type>(particle.nparticle(), 0)
       , lattice_iterator<position_type>(particle.nparticle(), particle.nparticle())
     );
+
+    // check that particle species are preserved, since positions
+    // and species are stored in the same array in gpu::particle
+    species.clear();
+    particle.get_species(species);
+    BOOST_CHECK_EQUAL_COLLECTIONS(
+        species.begin()
+      , species.end()
+      , counting_iterator<species_type>(1)
+      , counting_iterator<species_type>(particle.nparticle() + 1)
+    );
 }
 
 /**
@@ -92,7 +115,7 @@ void particle_image(particle_type& particle)
 {
     typedef typename particle_type::image_type image_type;
 
-    // check that species are initialised to zero
+    // check that images are initialised to zero
     vector<image_type> image;
     particle.get_image(image);
     BOOST_CHECK_EQUAL_COLLECTIONS(
@@ -137,8 +160,19 @@ template <typename particle_type>
 void particle_velocity(particle_type& particle)
 {
     typedef typename particle_type::velocity_type velocity_type;
+    typedef typename particle_type::mass_type mass_type;
 
-    // check that species are initialised to zero
+    // set masses to ascending sequence of integers starting at 2 ≠ 1
+    vector<mass_type> mass;
+    mass.reserve(particle.nparticle());
+    copy(
+        counting_iterator<mass_type>(2)
+      , counting_iterator<mass_type>(particle.nparticle() + 2)
+      , back_inserter(mass)
+    );
+    particle.set_mass(mass);
+
+    // check that velocities are initialised to zero
     vector<velocity_type> velocity;
     particle.get_velocity(velocity);
     BOOST_CHECK_EQUAL_COLLECTIONS(
@@ -173,6 +207,17 @@ void particle_velocity(particle_type& particle)
       , velocity.end()
       , lattice_iterator<velocity_type>(particle.nparticle(), 0)
       , lattice_iterator<velocity_type>(particle.nparticle(), particle.nparticle())
+    );
+
+    // check that particle masses are preserved, since velocities
+    // and masses are stored in the same array in gpu::particle
+    mass.clear();
+    particle.get_mass(mass);
+    BOOST_CHECK_EQUAL_COLLECTIONS(
+        mass.begin()
+      , mass.end()
+      , counting_iterator<mass_type>(2)
+      , counting_iterator<mass_type>(particle.nparticle() + 2)
     );
 }
 
@@ -267,9 +312,20 @@ template <typename particle_type>
 void particle_species(particle_type& particle)
 {
     typedef typename particle_type::species_type species_type;
+    typedef typename particle_type::position_type position_type;
 
     // check default of one species
     BOOST_CHECK_EQUAL( particle.nspecies(), 1 );
+
+    // assign square/cubic lattice vectors
+    vector<position_type> position;
+    position.reserve(particle.nparticle());
+    copy(
+         lattice_iterator<position_type>(particle.nparticle(), 0)
+       , lattice_iterator<position_type>(particle.nparticle(), particle.nparticle())
+       , back_inserter(position)
+    );
+    particle.set_position(position);
 
     // check that species are initialised to zero
     vector<species_type> species;
@@ -307,6 +363,17 @@ void particle_species(particle_type& particle)
       , counting_iterator<species_type>(1)
       , counting_iterator<species_type>(particle.nparticle() + 1)
     );
+
+    // check that particle positions are preserved, since positions
+    // and species are stored in the same array in gpu::particle
+    position.clear();
+    particle.get_position(position);
+    BOOST_CHECK_EQUAL_COLLECTIONS(
+        position.begin()
+      , position.end()
+      , lattice_iterator<position_type>(particle.nparticle(), 0)
+      , lattice_iterator<position_type>(particle.nparticle(), particle.nparticle())
+    );
 }
 
 /**
@@ -316,6 +383,17 @@ template <typename particle_type>
 void particle_mass(particle_type& particle)
 {
     typedef typename particle_type::mass_type mass_type;
+    typedef typename particle_type::velocity_type velocity_type;
+
+    // assign square/cubic lattice vectors
+    vector<velocity_type> velocity;
+    velocity.reserve(particle.nparticle());
+    copy(
+         lattice_iterator<velocity_type>(particle.nparticle(), 0)
+       , lattice_iterator<velocity_type>(particle.nparticle(), particle.nparticle())
+       , back_inserter(velocity)
+    );
+    particle.set_velocity(velocity);
 
     // check that masses are initialised to unit mass
     vector<mass_type> mass;
@@ -352,6 +430,17 @@ void particle_mass(particle_type& particle)
       , mass.end()
       , counting_iterator<mass_type>(2)
       , counting_iterator<mass_type>(particle.nparticle() + 2)
+    );
+
+    // check that particle velocities are preserved, since velocities
+    // and masses are stored in the same array in gpu::particle
+    velocity.clear();
+    particle.get_velocity(velocity);
+    BOOST_CHECK_EQUAL_COLLECTIONS(
+        velocity.begin()
+      , velocity.end()
+      , lattice_iterator<velocity_type>(particle.nparticle(), 0)
+      , lattice_iterator<velocity_type>(particle.nparticle(), particle.nparticle())
     );
 }
 
