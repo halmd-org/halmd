@@ -20,6 +20,9 @@
 #include <algorithm>
 #include <boost/iterator/counting_iterator.hpp>
 #include <exception>
+#include <iterator> // std::back_inserter
+#include <luabind/luabind.hpp>
+#include <luabind/out_value_policy.hpp>
 #include <numeric>
 
 #include <halmd/algorithm/host/permute.hpp>
@@ -57,15 +60,188 @@ particle<dimension, float_type>::particle(size_t nparticle)
     LOG("number of particles: " << tag_.size());
     LOG("number of particle placeholders: " << tag_.capacity());
     LOG("number of particle species: " << nspecies_);
+}
 
-    // set particle masses to unit mass
-    set_mass(1);
+template <int dimension, typename float_type>
+void particle<dimension, float_type>::get_position(vector<position_type>& position)
+{
+    position.clear();
+    copy(position_.begin(), position_.end(), back_inserter(position));
+}
+
+template <int dimension, typename float_type>
+void particle<dimension, float_type>::set_position(vector<position_type> const& position)
+{
+    if (position.size() != position_.size()) {
+        throw invalid_argument("array size not equal to number of particles");
+    }
+    copy(position.begin(), position.end(), position_.begin());
+}
+
+template <int dimension, typename float_type>
+void particle<dimension, float_type>::get_image(vector<image_type>& image)
+{
+    image.clear();
+    copy(image_.begin(), image_.end(), back_inserter(image));
+}
+
+template <int dimension, typename float_type>
+void particle<dimension, float_type>::set_image(vector<image_type> const& image)
+{
+    if (image.size() != image_.size()) {
+        throw invalid_argument("array size not equal to number of particles");
+    }
+    copy(image.begin(), image.end(), image_.begin());
+}
+
+template <int dimension, typename float_type>
+void particle<dimension, float_type>::get_velocity(vector<velocity_type>& velocity)
+{
+    velocity.clear();
+    copy(velocity_.begin(), velocity_.end(), back_inserter(velocity));
+}
+
+template <int dimension, typename float_type>
+void particle<dimension, float_type>::set_velocity(vector<velocity_type> const& velocity)
+{
+    if (velocity.size() != velocity_.size()) {
+        throw invalid_argument("array size not equal to number of particles");
+    }
+    copy(velocity.begin(), velocity.end(), velocity_.begin());
+}
+
+template <int dimension, typename float_type>
+void particle<dimension, float_type>::get_tag(vector<tag_type>& tag)
+{
+    tag.clear();
+    copy(tag_.begin(), tag_.end(), back_inserter(tag));
+}
+
+template <int dimension, typename float_type>
+void particle<dimension, float_type>::set_tag(vector<tag_type> const& tag)
+{
+    if (tag.size() != tag_.size()) {
+        throw invalid_argument("array size not equal to number of particles");
+    }
+    copy(tag.begin(), tag.end(), tag_.begin());
+}
+
+template <int dimension, typename float_type>
+void particle<dimension, float_type>::get_reverse_tag(vector<reverse_tag_type>& reverse_tag)
+{
+    reverse_tag.clear();
+    copy(reverse_tag_.begin(), reverse_tag_.end(), back_inserter(reverse_tag));
+}
+
+template <int dimension, typename float_type>
+void particle<dimension, float_type>::set_reverse_tag(vector<reverse_tag_type> const& reverse_tag)
+{
+    if (reverse_tag.size() != reverse_tag_.size()) {
+        throw invalid_argument("array size not equal to number of particles");
+    }
+    copy(reverse_tag.begin(), reverse_tag.end(), reverse_tag_.begin());
+}
+
+template <int dimension, typename float_type>
+void particle<dimension, float_type>::get_species(vector<species_type>& species)
+{
+    species.clear();
+    copy(species_.begin(), species_.end(), back_inserter(species));
+}
+
+template <int dimension, typename float_type>
+void particle<dimension, float_type>::set_species(vector<species_type> const& species)
+{
+    if (species.size() != species_.size()) {
+        throw invalid_argument("array size not equal to number of particles");
+    }
+    copy(species.begin(), species.end(), species_.begin());
+}
+
+template <int dimension, typename float_type>
+void particle<dimension, float_type>::get_mass(vector<mass_type>& mass)
+{
+    mass.clear();
+    copy(mass_.begin(), mass_.end(), back_inserter(mass));
+}
+
+template <int dimension, typename float_type>
+void particle<dimension, float_type>::set_mass(vector<mass_type> const& mass)
+{
+    if (mass.size() != mass_.size()) {
+        throw invalid_argument("array size not equal to number of particles");
+    }
+    copy(mass.begin(), mass.end(), mass_.begin());
 }
 
 template <int dimension, typename float_type>
 void particle<dimension, float_type>::set_mass(float_type mass)
 {
     fill(mass_.begin(), mass_.end(), mass);
+}
+
+template <int dimension, typename float_type>
+void particle<dimension, float_type>::get_force(vector<force_type>& force)
+{
+    force.clear();
+    copy(force_.begin(), force_.end(), back_inserter(force));
+}
+
+template <int dimension, typename float_type>
+void particle<dimension, float_type>::set_force(vector<force_type> const& force)
+{
+    if (force.size() != force_.size()) {
+        throw invalid_argument("array size not equal to number of particles");
+    }
+    copy(force.begin(), force.end(), force_.begin());
+}
+
+template <int dimension, typename float_type>
+void particle<dimension, float_type>::get_en_pot(vector<en_pot_type>& en_pot)
+{
+    en_pot.clear();
+    copy(en_pot_.begin(), en_pot_.end(), back_inserter(en_pot));
+}
+
+template <int dimension, typename float_type>
+void particle<dimension, float_type>::set_en_pot(vector<en_pot_type> const& en_pot)
+{
+    if (en_pot.size() != en_pot_.size()) {
+        throw invalid_argument("array size not equal to number of particles");
+    }
+    copy(en_pot.begin(), en_pot.end(), en_pot_.begin());
+}
+
+template <int dimension, typename float_type>
+void particle<dimension, float_type>::get_stress_pot(vector<stress_pot_type>& stress_pot)
+{
+    stress_pot.clear();
+    copy(stress_pot_.begin(), stress_pot_.end(), back_inserter(stress_pot));
+}
+
+template <int dimension, typename float_type>
+void particle<dimension, float_type>::set_stress_pot(vector<stress_pot_type> const& stress_pot)
+{
+    if (stress_pot.size() != stress_pot_.size()) {
+        throw invalid_argument("array size not equal to number of particles");
+    }
+    copy(stress_pot.begin(), stress_pot.end(), stress_pot_.begin());
+}
+
+template <int dimension, typename float_type>
+void particle<dimension, float_type>::get_hypervirial(vector<hypervirial_type>& hypervirial)
+{
+    hypervirial.clear();
+    copy(hypervirial_.begin(), hypervirial_.end(), back_inserter(hypervirial));
+}
+
+template <int dimension, typename float_type>
+void particle<dimension, float_type>::set_hypervirial(vector<hypervirial_type> const& hypervirial)
+{
+    if (hypervirial.size() != hypervirial_.size()) {
+        throw invalid_argument("array size not equal to number of particles");
+    }
+    copy(hypervirial.begin(), hypervirial.end(), hypervirial_.begin());
 }
 
 /**
@@ -181,7 +357,29 @@ void particle<dimension, float_type>::luaopen(lua_State* L)
                     .def(constructor<size_t>())
                     .property("nparticle", &particle::nparticle)
                     .property("nspecies", &particle::nspecies)
-                    .def("set_mass", &particle::set_mass)
+                    .def("get_position", &particle::get_position, pure_out_value(_2))
+                    .def("set_position", &particle::set_position)
+                    .def("get_image", &particle::get_image, pure_out_value(_2))
+                    .def("set_image", &particle::set_image)
+                    .def("get_velocity", &particle::get_velocity, pure_out_value(_2))
+                    .def("set_velocity", &particle::set_velocity)
+                    .def("get_tag", &particle::get_tag, pure_out_value(_2))
+                    .def("set_tag", &particle::set_tag)
+                    .def("get_reverse_tag", &particle::get_reverse_tag, pure_out_value(_2))
+                    .def("set_reverse_tag", &particle::set_reverse_tag)
+                    .def("get_species", &particle::get_species, pure_out_value(_2))
+                    .def("set_species", &particle::set_species)
+                    .def("get_mass", &particle::get_mass, pure_out_value(_2))
+                    .def("set_mass", static_cast<void (particle::*)(vector<mass_type> const&)>(&particle::set_mass))
+                    .def("set_mass", static_cast<void (particle::*)(float_type)>(&particle::set_mass))
+                    .def("get_force", &particle::get_force, pure_out_value(_2))
+                    .def("set_force", &particle::set_force)
+                    .def("get_en_pot", &particle::get_en_pot, pure_out_value(_2))
+                    .def("set_en_pot", &particle::set_en_pot)
+                    .def("get_stress_pot", &particle::get_stress_pot, pure_out_value(_2))
+                    .def("set_stress_pot", &particle::set_stress_pot)
+                    .def("get_hypervirial", &particle::get_hypervirial, pure_out_value(_2))
+                    .def("set_hypervirial", &particle::set_hypervirial)
                     .property("dimension", &wrap_dimension<dimension, float_type>)
                     .property("aux_enable", &wrap_aux_enable<particle>)
                     .property("prepare", &wrap_prepare<particle>)

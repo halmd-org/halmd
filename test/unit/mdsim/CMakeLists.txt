@@ -55,3 +55,17 @@ target_link_libraries(test_unit_mdsim_clock
 add_test(unit/mdsim/clock
   test_unit_mdsim_clock --log_level=test_suite
 )
+
+add_executable(test_unit_mdsim_particle
+  particle.cpp
+)
+target_link_libraries(test_unit_mdsim_particle
+  halmd_mdsim_host
+  ${HALMD_TEST_LIBRARIES}
+)
+add_test(unit/mdsim/particle/host/2d
+  test_unit_mdsim_particle --run_test=host/two --log_level=test_suite
+)
+add_test(unit/mdsim/particle/host/3d
+  test_unit_mdsim_particle --run_test=host/three --log_level=test_suite
+)
