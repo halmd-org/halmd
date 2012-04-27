@@ -152,292 +152,11 @@ particle<dimension, float_type>::particle(size_t nparticle, unsigned int threads
 }
 
 template <int dimension, typename float_type>
-void particle<dimension, float_type>::get_position(vector<position_type>& position)
-{
-    position.clear();
-    cuda::host::vector<float4> h_position(g_position_.size());
-    cuda::copy(g_position_, h_position);
-    for (size_t i = 0; i < g_position_.size(); ++i) {
-        position_type r;
-        unsigned int s;
-        tie(r, s) <<= h_position[i];
-        position.push_back(r);
-    }
-}
-
-template <int dimension, typename float_type>
-void particle<dimension, float_type>::set_position(vector<position_type> const& position)
-{
-    if (position.size() != g_position_.size()) {
-        throw invalid_argument("array size not equal to number of particles");
-    }
-    cuda::host::vector<float4> h_position(g_position_.size());
-    cuda::copy(g_position_, h_position);
-    for (size_t i = 0; i < g_position_.size(); ++i) {
-        position_type r;
-        unsigned int s;
-        tie(r, s) <<= h_position[i];
-        h_position[i] <<= tie(position[i], s);
-    }
-    cuda::copy(h_position, g_position_);
-}
-
-template <int dimension, typename float_type>
-void particle<dimension, float_type>::get_species(vector<species_type>& species)
-{
-    species.clear();
-    cuda::host::vector<float4> h_position(g_position_.size());
-    cuda::copy(g_position_, h_position);
-    for (size_t i = 0; i < g_position_.size(); ++i) {
-        position_type r;
-        unsigned int s;
-        tie(r, s) <<= h_position[i];
-        species.push_back(s);
-    }
-}
-
-template <int dimension, typename float_type>
-void particle<dimension, float_type>::set_species(vector<species_type> const& species)
-{
-    if (species.size() != g_position_.size()) {
-        throw invalid_argument("array size not equal to number of particles");
-    }
-    cuda::host::vector<float4> h_position(g_position_.size());
-    cuda::copy(g_position_, h_position);
-    for (size_t i = 0; i < g_position_.size(); ++i) {
-        position_type r;
-        unsigned int s;
-        tie(r, s) <<= h_position[i];
-        h_position[i] <<= tie(r, species[i]);
-    }
-    cuda::memset(g_position_, 0, g_position_.capacity());
-    cuda::copy(h_position, g_position_);
-}
-
-template <int dimension, typename float_type>
-void particle<dimension, float_type>::get_image(vector<image_type>& image)
-{
-    image.clear();
-    cuda::host::vector<gpu_vector_type> h_image(g_image_.size());
-    cuda::copy(g_image_, h_image);
-    copy(h_image.begin(), h_image.end(), back_inserter(image));
-}
-
-template <int dimension, typename float_type>
-void particle<dimension, float_type>::set_image(vector<image_type> const& image)
-{
-    if (image.size() != g_image_.size()) {
-        throw invalid_argument("array size not equal to number of particles");
-    }
-    cuda::host::vector<gpu_vector_type> h_image;
-    h_image.reserve(g_image_.size());
-    copy(image.begin(), image.end(), back_inserter(h_image));
-    cuda::memset(g_image_, 0, g_image_.capacity());
-    cuda::copy(h_image, g_image_);
-}
-
-template <int dimension, typename float_type>
-void particle<dimension, float_type>::get_velocity(vector<velocity_type>& velocity)
-{
-    velocity.clear();
-    cuda::host::vector<float4> h_velocity(g_velocity_.size());
-    cuda::copy(g_velocity_, h_velocity);
-    for (size_t i = 0; i < g_velocity_.size(); ++i) {
-        velocity_type v;
-        float m;
-        tie(v, m) <<= h_velocity[i];
-        velocity.push_back(v);
-    }
-}
-
-template <int dimension, typename float_type>
-void particle<dimension, float_type>::set_velocity(vector<velocity_type> const& velocity)
-{
-    if (velocity.size() != g_velocity_.size()) {
-        throw invalid_argument("array size not equal to number of particles");
-    }
-    cuda::host::vector<float4> h_velocity(g_velocity_.size());
-    cuda::copy(g_velocity_, h_velocity);
-    for (size_t i = 0; i < g_velocity_.size(); ++i) {
-        velocity_type v;
-        float m;
-        tie(v, m) <<= h_velocity[i];
-        h_velocity[i] <<= tie(velocity[i], m);
-    }
-    cuda::memset(g_velocity_, 0, g_velocity_.capacity());
-    cuda::copy(h_velocity, g_velocity_);
-}
-
-template <int dimension, typename float_type>
-void particle<dimension, float_type>::get_mass(vector<mass_type>& mass)
-{
-    mass.clear();
-    cuda::host::vector<float4> h_velocity(g_velocity_.size());
-    cuda::copy(g_velocity_, h_velocity);
-    for (size_t i = 0; i < g_velocity_.size(); ++i) {
-        velocity_type v;
-        float m;
-        tie(v, m) <<= h_velocity[i];
-        mass.push_back(m);
-    }
-}
-
-template <int dimension, typename float_type>
-void particle<dimension, float_type>::set_mass(vector<mass_type> const& mass)
-{
-    if (mass.size() != g_velocity_.size()) {
-        throw invalid_argument("array size not equal to number of particles");
-    }
-    cuda::host::vector<float4> h_velocity(g_velocity_.size());
-    cuda::copy(g_velocity_, h_velocity);
-    for (size_t i = 0; i < g_velocity_.size(); ++i) {
-        velocity_type v;
-        float m;
-        tie(v, m) <<= h_velocity[i];
-        h_velocity[i] <<= tie(v, mass[i]);
-    }
-    cuda::memset(g_velocity_, 0, g_velocity_.capacity());
-    cuda::copy(h_velocity, g_velocity_);
-}
-
-template <int dimension, typename float_type>
 void particle<dimension, float_type>::set_mass(float_type mass)
 {
     cuda::configure(dim.grid, dim.block);
     get_particle_kernel<dimension>().set_mass(g_velocity_, g_velocity_.size(), mass);
     cuda::thread::synchronize();
-}
-
-template <int dimension, typename float_type>
-void particle<dimension, float_type>::get_tag(vector<tag_type>& tag)
-{
-    tag.clear();
-    cuda::host::vector<tag_type> h_tag(g_tag_.size());
-    cuda::copy(g_tag_, h_tag);
-    copy(h_tag.begin(), h_tag.end(), back_inserter(tag));
-}
-
-template <int dimension, typename float_type>
-void particle<dimension, float_type>::set_tag(vector<tag_type> const& tag)
-{
-    if (tag.size() != g_tag_.size()) {
-        throw invalid_argument("array size not equal to number of particles");
-    }
-    cuda::host::vector<tag_type> h_tag;
-    h_tag.reserve(g_tag_.size());
-    copy(tag.begin(), tag.end(), back_inserter(h_tag));
-    cuda::memset(g_tag_, 0, g_tag_.capacity());
-    cuda::copy(h_tag, g_tag_);
-}
-
-template <int dimension, typename float_type>
-void particle<dimension, float_type>::get_reverse_tag(vector<reverse_tag_type>& reverse_tag)
-{
-    reverse_tag.clear();
-    cuda::host::vector<reverse_tag_type> h_reverse_tag(g_reverse_tag_.size());
-    cuda::copy(g_reverse_tag_, h_reverse_tag);
-    copy(h_reverse_tag.begin(), h_reverse_tag.end(), back_inserter(reverse_tag));
-}
-
-template <int dimension, typename float_type>
-void particle<dimension, float_type>::set_reverse_tag(vector<reverse_tag_type> const& reverse_tag)
-{
-    if (reverse_tag.size() != g_reverse_tag_.size()) {
-        throw invalid_argument("array size not equal to number of particles");
-    }
-    cuda::host::vector<reverse_tag_type> h_reverse_tag;
-    h_reverse_tag.reserve(g_reverse_tag_.size());
-    copy(reverse_tag.begin(), reverse_tag.end(), back_inserter(h_reverse_tag));
-    cuda::memset(g_reverse_tag_, 0, g_reverse_tag_.capacity());
-    cuda::copy(h_reverse_tag, g_reverse_tag_);
-}
-
-template <int dimension, typename float_type>
-void particle<dimension, float_type>::get_force(vector<force_type>& force)
-{
-    force.clear();
-    cuda::host::vector<gpu_vector_type> h_force(g_force_.size());
-    cuda::copy(g_force_, h_force);
-    copy(h_force.begin(), h_force.end(), back_inserter(force));
-}
-
-template <int dimension, typename float_type>
-void particle<dimension, float_type>::set_force(vector<force_type> const& force)
-{
-    if (force.size() != g_force_.size()) {
-        throw invalid_argument("array size not equal to number of particles");
-    }
-    cuda::host::vector<gpu_vector_type> h_force;
-    h_force.reserve(g_force_.size());
-    copy(force.begin(), force.end(), back_inserter(h_force));
-    cuda::memset(g_force_, 0, g_force_.capacity());
-    cuda::copy(h_force, g_force_);
-}
-
-template <int dimension, typename float_type>
-void particle<dimension, float_type>::get_en_pot(vector<en_pot_type>& en_pot)
-{
-    en_pot.clear();
-    cuda::host::vector<en_pot_type> h_en_pot(g_en_pot_.size());
-    cuda::copy(g_en_pot_, h_en_pot);
-    copy(h_en_pot.begin(), h_en_pot.end(), back_inserter(en_pot));
-}
-
-template <int dimension, typename float_type>
-void particle<dimension, float_type>::set_en_pot(vector<en_pot_type> const& en_pot)
-{
-    if (en_pot.size() != g_en_pot_.size()) {
-        throw invalid_argument("array size not equal to number of particles");
-    }
-    cuda::host::vector<en_pot_type> h_en_pot;
-    h_en_pot.reserve(g_en_pot_.size());
-    copy(en_pot.begin(), en_pot.end(), back_inserter(h_en_pot));
-    cuda::memset(g_en_pot_, 0, g_en_pot_.capacity());
-    cuda::copy(h_en_pot, g_en_pot_);
-}
-
-template <int dimension, typename float_type>
-void particle<dimension, float_type>::get_stress_pot(vector<stress_pot_type>& stress_pot)
-{
-    stress_pot.clear();
-    cuda::host::vector<typename stress_pot_array_type::value_type> h_stress_pot(g_stress_pot_.size());
-    cuda::copy(g_stress_pot_, h_stress_pot);
-    copy(h_stress_pot.begin(), h_stress_pot.end(), back_inserter(stress_pot));
-}
-
-template <int dimension, typename float_type>
-void particle<dimension, float_type>::set_stress_pot(vector<stress_pot_type> const& stress_pot)
-{
-    if (stress_pot.size() != g_stress_pot_.size()) {
-        throw invalid_argument("array size not equal to number of particles");
-    }
-    cuda::host::vector<typename stress_pot_array_type::value_type> h_stress_pot;
-    h_stress_pot.reserve(g_stress_pot_.size());
-    copy(stress_pot.begin(), stress_pot.end(), back_inserter(h_stress_pot));
-    cuda::memset(g_stress_pot_, 0, g_stress_pot_.capacity());
-    cuda::copy(h_stress_pot, g_stress_pot_);
-}
-
-template <int dimension, typename float_type>
-void particle<dimension, float_type>::get_hypervirial(vector<hypervirial_type>& hypervirial)
-{
-    hypervirial.clear();
-    cuda::host::vector<hypervirial_type> h_hypervirial(g_hypervirial_.size());
-    cuda::copy(g_hypervirial_, h_hypervirial);
-    copy(h_hypervirial.begin(), h_hypervirial.end(), back_inserter(hypervirial));
-}
-
-template <int dimension, typename float_type>
-void particle<dimension, float_type>::set_hypervirial(vector<hypervirial_type> const& hypervirial)
-{
-    if (hypervirial.size() != g_hypervirial_.size()) {
-        throw invalid_argument("array size not equal to number of particles");
-    }
-    cuda::host::vector<hypervirial_type> h_hypervirial;
-    h_hypervirial.reserve(g_hypervirial_.size());
-    copy(hypervirial.begin(), hypervirial.end(), back_inserter(h_hypervirial));
-    cuda::memset(g_hypervirial_, 0, g_hypervirial_.capacity());
-    cuda::copy(h_hypervirial, g_hypervirial_);
 }
 
 template <int dimension, typename float_type>
@@ -523,6 +242,215 @@ unsigned int particle<dimension, float_type>::defaults::threads() {
     return 128;
 }
 
+template <typename particle_type>
+static void
+wrap_get_position(particle_type const& particle, vector<typename particle_type::position_type>& output)
+{
+    output.clear();
+    output.reserve(particle.nparticle());
+    particle.get_position(back_inserter(output));
+}
+
+template <typename particle_type>
+static void
+wrap_set_position(particle_type& particle, vector<typename particle_type::position_type> const& input)
+{
+    if (input.size() != particle.nparticle()) {
+        throw invalid_argument("input array size not equal to number of particles");
+    }
+    particle.set_position(input.begin(), input.end());
+}
+
+template <typename particle_type>
+static void
+wrap_get_image(particle_type const& particle, vector<typename particle_type::image_type>& output)
+{
+    output.clear();
+    output.reserve(particle.nparticle());
+    particle.get_image(back_inserter(output));
+}
+
+template <typename particle_type>
+static void
+wrap_set_image(particle_type& particle, vector<typename particle_type::image_type> const& input)
+{
+    if (input.size() != particle.nparticle()) {
+        throw invalid_argument("input array size not equal to number of particles");
+    }
+    particle.set_image(input.begin(), input.end());
+}
+
+template <typename particle_type>
+static void
+wrap_get_velocity(particle_type const& particle, vector<typename particle_type::velocity_type>& output)
+{
+    output.clear();
+    output.reserve(particle.nparticle());
+    particle.get_velocity(back_inserter(output));
+}
+
+template <typename particle_type>
+static void
+wrap_set_velocity(particle_type& particle, vector<typename particle_type::velocity_type> const& input)
+{
+    if (input.size() != particle.nparticle()) {
+        throw invalid_argument("input array size not equal to number of particles");
+    }
+    particle.set_velocity(input.begin(), input.end());
+}
+
+template <typename particle_type>
+static void
+wrap_get_tag(particle_type const& particle, vector<typename particle_type::tag_type>& output)
+{
+    output.clear();
+    output.reserve(particle.nparticle());
+    particle.get_tag(back_inserter(output));
+}
+
+template <typename particle_type>
+static void
+wrap_set_tag(particle_type& particle, vector<typename particle_type::tag_type> const& input)
+{
+    if (input.size() != particle.nparticle()) {
+        throw invalid_argument("input array size not equal to number of particles");
+    }
+    particle.set_tag(input.begin(), input.end());
+}
+
+template <typename particle_type>
+static void
+wrap_get_reverse_tag(particle_type const& particle, vector<typename particle_type::reverse_tag_type>& output)
+{
+    output.clear();
+    output.reserve(particle.nparticle());
+    particle.get_reverse_tag(back_inserter(output));
+}
+
+template <typename particle_type>
+static void
+wrap_set_reverse_tag(particle_type& particle, vector<typename particle_type::reverse_tag_type> const& input)
+{
+    if (input.size() != particle.nparticle()) {
+        throw invalid_argument("input array size not equal to number of particles");
+    }
+    particle.set_reverse_tag(input.begin(), input.end());
+}
+
+template <typename particle_type>
+static void
+wrap_get_species(particle_type const& particle, vector<typename particle_type::species_type>& output)
+{
+    output.clear();
+    output.reserve(particle.nparticle());
+    particle.get_species(back_inserter(output));
+}
+
+template <typename particle_type>
+static void
+wrap_set_species(particle_type& particle, vector<typename particle_type::species_type> const& input)
+{
+    if (input.size() != particle.nparticle()) {
+        throw invalid_argument("input array size not equal to number of particles");
+    }
+    particle.set_species(input.begin(), input.end());
+}
+
+template <typename particle_type>
+static void
+wrap_get_mass(particle_type const& particle, vector<typename particle_type::mass_type>& output)
+{
+    output.clear();
+    output.reserve(particle.nparticle());
+    particle.get_mass(back_inserter(output));
+}
+
+template <typename particle_type>
+static void
+wrap_set_mass(particle_type& particle, vector<typename particle_type::mass_type> const& input)
+{
+    if (input.size() != particle.nparticle()) {
+        throw invalid_argument("input array size not equal to number of particles");
+    }
+    particle.set_mass(input.begin(), input.end());
+}
+
+template <typename particle_type>
+static void
+wrap_get_force(particle_type const& particle, vector<typename particle_type::force_type>& output)
+{
+    output.clear();
+    output.reserve(particle.nparticle());
+    particle.get_force(back_inserter(output));
+}
+
+template <typename particle_type>
+static void
+wrap_set_force(particle_type& particle, vector<typename particle_type::force_type> const& input)
+{
+    if (input.size() != particle.nparticle()) {
+        throw invalid_argument("input array size not equal to number of particles");
+    }
+    particle.set_force(input.begin(), input.end());
+}
+
+template <typename particle_type>
+static void
+wrap_get_en_pot(particle_type const& particle, vector<typename particle_type::en_pot_type>& output)
+{
+    output.clear();
+    output.reserve(particle.nparticle());
+    particle.get_en_pot(back_inserter(output));
+}
+
+template <typename particle_type>
+static void
+wrap_set_en_pot(particle_type& particle, vector<typename particle_type::en_pot_type> const& input)
+{
+    if (input.size() != particle.nparticle()) {
+        throw invalid_argument("input array size not equal to number of particles");
+    }
+    particle.set_en_pot(input.begin(), input.end());
+}
+
+template <typename particle_type>
+static void
+wrap_get_stress_pot(particle_type const& particle, vector<typename particle_type::stress_pot_type>& output)
+{
+    output.clear();
+    output.reserve(particle.nparticle());
+    particle.get_stress_pot(back_inserter(output));
+}
+
+template <typename particle_type>
+static void
+wrap_set_stress_pot(particle_type& particle, vector<typename particle_type::stress_pot_type> const& input)
+{
+    if (input.size() != particle.nparticle()) {
+        throw invalid_argument("input array size not equal to number of particles");
+    }
+    particle.set_stress_pot(input.begin(), input.end());
+}
+
+template <typename particle_type>
+static void
+wrap_get_hypervirial(particle_type const& particle, vector<typename particle_type::hypervirial_type>& output)
+{
+    output.clear();
+    output.reserve(particle.nparticle());
+    particle.get_hypervirial(back_inserter(output));
+}
+
+template <typename particle_type>
+static void
+wrap_set_hypervirial(particle_type& particle, vector<typename particle_type::hypervirial_type> const& input)
+{
+    if (input.size() != particle.nparticle()) {
+        throw invalid_argument("input array size not equal to number of particles");
+    }
+    particle.set_hypervirial(input.begin(), input.end());
+}
+
 template <int dimension, typename float_type>
 static int wrap_dimension(particle<dimension, float_type> const&)
 {
@@ -576,29 +504,29 @@ void particle<dimension, float_type>::luaopen(lua_State* L)
                     .def(constructor<size_t>())
                     .property("nparticle", &particle::nparticle)
                     .property("nspecies", &particle::nspecies)
-                    .def("get_position", &particle::get_position, pure_out_value(_2))
-                    .def("set_position", &particle::set_position)
-                    .def("get_image", &particle::get_image, pure_out_value(_2))
-                    .def("set_image", &particle::set_image)
-                    .def("get_velocity", &particle::get_velocity, pure_out_value(_2))
-                    .def("set_velocity", &particle::set_velocity)
-                    .def("get_tag", &particle::get_tag, pure_out_value(_2))
-                    .def("set_tag", &particle::set_tag)
-                    .def("get_reverse_tag", &particle::get_reverse_tag, pure_out_value(_2))
-                    .def("set_reverse_tag", &particle::set_reverse_tag)
-                    .def("get_species", &particle::get_species, pure_out_value(_2))
-                    .def("set_species", &particle::set_species)
-                    .def("get_mass", &particle::get_mass, pure_out_value(_2))
-                    .def("set_mass", static_cast<void (particle::*)(vector<mass_type> const&)>(&particle::set_mass))
+                    .def("get_position", &wrap_get_position<particle>, pure_out_value(_2))
+                    .def("set_position", &wrap_set_position<particle>)
+                    .def("get_image", &wrap_get_image<particle>, pure_out_value(_2))
+                    .def("set_image", &wrap_set_image<particle>)
+                    .def("get_velocity", &wrap_get_velocity<particle>, pure_out_value(_2))
+                    .def("set_velocity", &wrap_set_velocity<particle>)
+                    .def("get_tag", &wrap_get_tag<particle>, pure_out_value(_2))
+                    .def("set_tag", &wrap_set_tag<particle>)
+                    .def("get_reverse_tag", &wrap_get_reverse_tag<particle>, pure_out_value(_2))
+                    .def("set_reverse_tag", &wrap_set_reverse_tag<particle>)
+                    .def("get_species", &wrap_get_species<particle>, pure_out_value(_2))
+                    .def("set_species", &wrap_set_species<particle>)
+                    .def("get_mass", &wrap_get_mass<particle>, pure_out_value(_2))
+                    .def("set_mass", &wrap_set_mass<particle>)
                     .def("set_mass", static_cast<void (particle::*)(float_type)>(&particle::set_mass))
-                    .def("get_force", &particle::get_force, pure_out_value(_2))
-                    .def("set_force", &particle::set_force)
-                    .def("get_en_pot", &particle::get_en_pot, pure_out_value(_2))
-                    .def("set_en_pot", &particle::set_en_pot)
-                    .def("get_stress_pot", &particle::get_stress_pot, pure_out_value(_2))
-                    .def("set_stress_pot", &particle::set_stress_pot)
-                    .def("get_hypervirial", &particle::get_hypervirial, pure_out_value(_2))
-                    .def("set_hypervirial", &particle::set_hypervirial)
+                    .def("get_force", &wrap_get_force<particle>, pure_out_value(_2))
+                    .def("set_force", &wrap_set_force<particle>)
+                    .def("get_en_pot", &wrap_get_en_pot<particle>, pure_out_value(_2))
+                    .def("set_en_pot", &wrap_set_en_pot<particle>)
+                    .def("get_stress_pot", &wrap_get_stress_pot<particle>, pure_out_value(_2))
+                    .def("set_stress_pot", &wrap_set_stress_pot<particle>)
+                    .def("get_hypervirial", &wrap_get_hypervirial<particle>, pure_out_value(_2))
+                    .def("set_hypervirial", &wrap_set_hypervirial<particle>)
                     .property("dimension", &wrap_dimension<dimension, float_type>)
                     .property("aux_enable", &wrap_aux_enable<particle>)
                     .property("prepare", &wrap_prepare<particle>)

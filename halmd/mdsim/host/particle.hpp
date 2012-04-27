@@ -20,6 +20,7 @@
 #ifndef HALMD_MDSIM_HOST_PARTICLE_HPP
 #define HALMD_MDSIM_HOST_PARTICLE_HPP
 
+#include <algorithm> // std::copy
 #include <lua.hpp>
 #include <vector>
 
@@ -123,16 +124,6 @@ public:
     }
 
     /**
-     * Copy particle positions to given array.
-     */
-    void get_position(std::vector<position_type>& position);
-
-    /**
-     * Copy particle positions from given array.
-     */
-    void set_position(std::vector<position_type> const& position);
-
-    /**
      * Returns non-const reference to particle images.
      */
     image_array_type const& image() const
@@ -147,16 +138,6 @@ public:
     {
         return image_;
     }
-
-    /**
-     * Copy particle images to given array.
-     */
-    void get_image(std::vector<image_type>& image);
-
-    /**
-     * Copy particle images from given array.
-     */
-    void set_image(std::vector<image_type> const& image);
 
     /**
      * Returns const reference to particle velocities.
@@ -175,16 +156,6 @@ public:
     }
 
     /**
-     * Copy particle velocities to given array.
-     */
-    void get_velocity(std::vector<velocity_type>& velocity);
-
-    /**
-     * Copy particle velocities from given array.
-     */
-    void set_velocity(std::vector<velocity_type> const& velocity);
-
-    /**
      * Returns const reference to particle tags.
      */
     tag_array_type const& tag() const
@@ -199,16 +170,6 @@ public:
     {
         return tag_;
     }
-
-    /**
-     * Copy particle tags to given array.
-     */
-    void get_tag(std::vector<tag_type>& tag);
-
-    /**
-     * Copy particle tags from given array.
-     */
-    void set_tag(std::vector<tag_type> const& tag);
 
     /**
      * Returns const reference to particle reverse tags.
@@ -227,16 +188,6 @@ public:
     }
 
     /**
-     * Copy particle reverse tags to given array.
-     */
-    void get_reverse_tag(std::vector<reverse_tag_type>& reverse_tag);
-
-    /**
-     * Copy particle reverse tags from given array.
-     */
-    void set_reverse_tag(std::vector<reverse_tag_type> const& reverse_tag);
-
-    /**
      * Returns const reference to particle species.
      */
     species_array_type const& species() const
@@ -251,16 +202,6 @@ public:
     {
         return species_;
     }
-
-    /**
-     * Copy particle species to given array.
-     */
-    void get_species(std::vector<species_type>& species);
-
-    /**
-     * Copy particle species from given array.
-     */
-    void set_species(std::vector<species_type> const& species);
 
     /**
      * Returns const reference to particle masses.
@@ -279,21 +220,6 @@ public:
     }
 
     /**
-     * Copy particle masses to given array.
-     */
-    void get_mass(std::vector<mass_type>& mass);
-
-    /**
-     * Copy particle masses from given array.
-     */
-    void set_mass(std::vector<mass_type> const& mass);
-
-    /**
-     * Set particle masses to scalar.
-     */
-    void set_mass(float_type mass);
-
-    /**
      * Returns non-const reference to force per particle.
      */
     force_array_type const& force() const
@@ -308,16 +234,6 @@ public:
     {
         return force_;
     }
-
-    /**
-     * Copy force per particle to given array.
-     */
-    void get_force(std::vector<force_type>& force);
-
-    /**
-     * Copy force per particle from given array.
-     */
-    void set_force(std::vector<force_type> const& force);
 
     /**
      * Returns const reference to potential energy per particle.
@@ -339,16 +255,6 @@ public:
     }
 
     /**
-     * Copy potential energy per particle to given array.
-     */
-    void get_en_pot(std::vector<en_pot_type>& en_pot);
-
-    /**
-     * Copy potential energy per particle from given array.
-     */
-    void set_en_pot(std::vector<en_pot_type> const& en_pot);
-
-    /**
      * Returns const reference to potential part of stress tensor per particle.
      *
      * This method checks that the computation of auxiliary variables was enabled.
@@ -366,16 +272,6 @@ public:
     {
         return stress_pot_;
     }
-
-    /**
-     * Copy potential part of stress tensor per particle to given array.
-     */
-    void get_stress_pot(std::vector<stress_pot_type>& stress_pot);
-
-    /**
-     * Copy potential part of stress tensor per particle from given array.
-     */
-    void set_stress_pot(std::vector<stress_pot_type> const& stress_pot);
 
     /**
      * Returns const reference to hypervirial per particle.
@@ -397,14 +293,141 @@ public:
     }
 
     /**
+     * Copy particle positions to given array.
+     */
+    template <typename iterator_type>
+    void get_position(iterator_type const& first) const;
+
+    /**
+     * Copy particle positions from given array.
+     */
+    template <typename iterator_type>
+    void set_position(iterator_type const& first, iterator_type const& last);
+
+    /**
+     * Copy particle images to given array.
+     */
+    template <typename iterator_type>
+    void get_image(iterator_type const& first) const;
+
+    /**
+     * Copy particle images from given array.
+     */
+    template <typename iterator_type>
+    void set_image(iterator_type const& first, iterator_type const& last);
+
+    /**
+     * Copy particle velocities to given array.
+     */
+    template <typename iterator_type>
+    void get_velocity(iterator_type const& first) const;
+
+    /**
+     * Copy particle velocities from given array.
+     */
+    template <typename iterator_type>
+    void set_velocity(iterator_type const& first, iterator_type const& last);
+
+    /**
+     * Copy particle tags to given array.
+     */
+    template <typename iterator_type>
+    void get_tag(iterator_type const& first) const;
+
+    /**
+     * Copy particle tags from given array.
+     */
+    template <typename iterator_type>
+    void set_tag(iterator_type const& first, iterator_type const& last);
+
+    /**
+     * Copy particle reverse tags to given array.
+     */
+    template <typename iterator_type>
+    void get_reverse_tag(iterator_type const& first) const;
+
+    /**
+     * Copy particle reverse tags from given array.
+     */
+    template <typename iterator_type>
+    void set_reverse_tag(iterator_type const& first, iterator_type const& last);
+
+    /**
+     * Copy particle species to given array.
+     */
+    template <typename iterator_type>
+    void get_species(iterator_type const& first) const;
+
+    /**
+     * Copy particle species from given array.
+     */
+    template <typename iterator_type>
+    void set_species(iterator_type const& first, iterator_type const& last);
+
+    /**
+     * Copy particle masses to given array.
+     */
+    template <typename iterator_type>
+    void get_mass(iterator_type const& first) const;
+
+    /**
+     * Copy particle masses from given array.
+     */
+    template <typename iterator_type>
+    void set_mass(iterator_type const& first, iterator_type const& last);
+
+    /**
+     * Set particle masses to scalar.
+     */
+    void set_mass(float_type mass);
+
+    /**
+     * Copy force per particle to given array.
+     */
+    template <typename iterator_type>
+    void get_force(iterator_type const& first) const;
+
+    /**
+     * Copy force per particle from given array.
+     */
+    template <typename iterator_type>
+    void set_force(iterator_type const& first, iterator_type const& last);
+
+    /**
+     * Copy potential energy per particle to given array.
+     */
+    template <typename iterator_type>
+    void get_en_pot(iterator_type const& first) const;
+
+    /**
+     * Copy potential energy per particle from given array.
+     */
+    template <typename iterator_type>
+    void set_en_pot(iterator_type const& first, iterator_type const& last);
+
+    /**
+     * Copy potential part of stress tensor per particle to given array.
+     */
+    template <typename iterator_type>
+    void get_stress_pot(iterator_type const& first) const;
+
+    /**
+     * Copy potential part of stress tensor per particle from given array.
+     */
+    template <typename iterator_type>
+    void set_stress_pot(iterator_type const& first, iterator_type const& last);
+
+    /**
      * Copy hypervirial per particle to given array.
      */
-    void get_hypervirial(std::vector<hypervirial_type>& hypervirial);
+    template <typename iterator_type>
+    void get_hypervirial(iterator_type const& first) const;
 
     /**
      * Copy hypervirial per particle from given array.
      */
-    void set_hypervirial(std::vector<hypervirial_type> const& hypervirial);
+    template <typename iterator_type>
+    void set_hypervirial(iterator_type const& first, iterator_type const& last);
 
     /**
      * Enable computation of auxiliary variables.
@@ -481,6 +504,160 @@ private:
     /** profiling runtime accumulators */
     runtime runtime_;
 };
+
+template <int dimension, typename float_type>
+template <typename iterator_type>
+inline void particle<dimension, float_type>::get_position(iterator_type const& first) const
+{
+    std::copy(position_.begin(), position_.end(), first);
+}
+
+template <int dimension, typename float_type>
+template <typename iterator_type>
+inline void particle<dimension, float_type>::set_position(iterator_type const& first, iterator_type const& last)
+{
+    std::copy(first, last, position_.begin());
+}
+
+template <int dimension, typename float_type>
+template <typename iterator_type>
+inline void particle<dimension, float_type>::get_image(iterator_type const& first) const
+{
+    std::copy(image_.begin(), image_.end(), first);
+}
+
+template <int dimension, typename float_type>
+template <typename iterator_type>
+inline void particle<dimension, float_type>::set_image(iterator_type const& first, iterator_type const& last)
+{
+    std::copy(first, last, image_.begin());
+}
+
+template <int dimension, typename float_type>
+template <typename iterator_type>
+inline void particle<dimension, float_type>::get_velocity(iterator_type const& first) const
+{
+    std::copy(velocity_.begin(), velocity_.end(), first);
+}
+
+template <int dimension, typename float_type>
+template <typename iterator_type>
+inline void particle<dimension, float_type>::set_velocity(iterator_type const& first, iterator_type const& last)
+{
+    std::copy(first, last, velocity_.begin());
+}
+
+template <int dimension, typename float_type>
+template <typename iterator_type>
+inline void particle<dimension, float_type>::get_tag(iterator_type const& first) const
+{
+    std::copy(tag_.begin(), tag_.end(), first);
+}
+
+template <int dimension, typename float_type>
+template <typename iterator_type>
+inline void particle<dimension, float_type>::set_tag(iterator_type const& first, iterator_type const& last)
+{
+    std::copy(first, last, tag_.begin());
+}
+
+template <int dimension, typename float_type>
+template <typename iterator_type>
+inline void particle<dimension, float_type>::get_reverse_tag(iterator_type const& first) const
+{
+    std::copy(reverse_tag_.begin(), reverse_tag_.end(), first);
+}
+
+template <int dimension, typename float_type>
+template <typename iterator_type>
+inline void particle<dimension, float_type>::set_reverse_tag(iterator_type const& first, iterator_type const& last)
+{
+    std::copy(first, last, reverse_tag_.begin());
+}
+
+template <int dimension, typename float_type>
+template <typename iterator_type>
+inline void particle<dimension, float_type>::get_species(iterator_type const& first) const
+{
+    std::copy(species_.begin(), species_.end(), first);
+}
+
+template <int dimension, typename float_type>
+template <typename iterator_type>
+inline void particle<dimension, float_type>::set_species(iterator_type const& first, iterator_type const& last)
+{
+    std::copy(first, last, species_.begin());
+}
+
+template <int dimension, typename float_type>
+template <typename iterator_type>
+inline void particle<dimension, float_type>::get_mass(iterator_type const& first) const
+{
+    std::copy(mass_.begin(), mass_.end(), first);
+}
+
+template <int dimension, typename float_type>
+template <typename iterator_type>
+inline void particle<dimension, float_type>::set_mass(iterator_type const& first, iterator_type const& last)
+{
+    std::copy(first, last, mass_.begin());
+}
+
+template <int dimension, typename float_type>
+template <typename iterator_type>
+inline void particle<dimension, float_type>::get_force(iterator_type const& first) const
+{
+    std::copy(force_.begin(), force_.end(), first);
+}
+
+template <int dimension, typename float_type>
+template <typename iterator_type>
+inline void particle<dimension, float_type>::set_force(iterator_type const& first, iterator_type const& last)
+{
+    std::copy(first, last, force_.begin());
+}
+
+template <int dimension, typename float_type>
+template <typename iterator_type>
+inline void particle<dimension, float_type>::get_en_pot(iterator_type const& first) const
+{
+    std::copy(en_pot_.begin(), en_pot_.end(), first);
+}
+
+template <int dimension, typename float_type>
+template <typename iterator_type>
+inline void particle<dimension, float_type>::set_en_pot(iterator_type const& first, iterator_type const& last)
+{
+    std::copy(first, last, en_pot_.begin());
+}
+
+template <int dimension, typename float_type>
+template <typename iterator_type>
+inline void particle<dimension, float_type>::get_stress_pot(iterator_type const& first) const
+{
+    std::copy(stress_pot_.begin(), stress_pot_.end(), first);
+}
+
+template <int dimension, typename float_type>
+template <typename iterator_type>
+inline void particle<dimension, float_type>::set_stress_pot(iterator_type const& first, iterator_type const& last)
+{
+    std::copy(first, last, stress_pot_.begin());
+}
+
+template <int dimension, typename float_type>
+template <typename iterator_type>
+inline void particle<dimension, float_type>::get_hypervirial(iterator_type const& first) const
+{
+    std::copy(hypervirial_.begin(), hypervirial_.end(), first);
+}
+
+template <int dimension, typename float_type>
+template <typename iterator_type>
+inline void particle<dimension, float_type>::set_hypervirial(iterator_type const& first, iterator_type const& last)
+{
+    std::copy(first, last, hypervirial_.begin());
+}
 
 } // namespace mdsim
 } // namespace host
