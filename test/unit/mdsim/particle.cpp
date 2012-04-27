@@ -315,7 +315,7 @@ void particle_species(particle_type& particle)
     typedef typename particle_type::position_type position_type;
 
     // check default of one species
-    BOOST_CHECK_EQUAL( particle.nspecies(), 1 );
+    BOOST_CHECK_EQUAL( particle.nspecies(), 1u );
 
     // assign square/cubic lattice vectors
     vector<position_type> position;
