@@ -66,6 +66,7 @@ template <int dimension, typename float_type>
 void particle<dimension, float_type>::get_position(vector<position_type>& position)
 {
     position.clear();
+    position.reserve(position_.size());
     copy(position_.begin(), position_.end(), back_inserter(position));
 }
 
@@ -82,6 +83,7 @@ template <int dimension, typename float_type>
 void particle<dimension, float_type>::get_image(vector<image_type>& image)
 {
     image.clear();
+    image.reserve(image_.size());
     copy(image_.begin(), image_.end(), back_inserter(image));
 }
 
@@ -98,6 +100,7 @@ template <int dimension, typename float_type>
 void particle<dimension, float_type>::get_velocity(vector<velocity_type>& velocity)
 {
     velocity.clear();
+    velocity.reserve(velocity_.size());
     copy(velocity_.begin(), velocity_.end(), back_inserter(velocity));
 }
 
@@ -114,6 +117,7 @@ template <int dimension, typename float_type>
 void particle<dimension, float_type>::get_tag(vector<tag_type>& tag)
 {
     tag.clear();
+    tag.reserve(tag_.size());
     copy(tag_.begin(), tag_.end(), back_inserter(tag));
 }
 
@@ -130,6 +134,7 @@ template <int dimension, typename float_type>
 void particle<dimension, float_type>::get_reverse_tag(vector<reverse_tag_type>& reverse_tag)
 {
     reverse_tag.clear();
+    reverse_tag.reserve(reverse_tag_.size());
     copy(reverse_tag_.begin(), reverse_tag_.end(), back_inserter(reverse_tag));
 }
 
@@ -146,6 +151,7 @@ template <int dimension, typename float_type>
 void particle<dimension, float_type>::get_species(vector<species_type>& species)
 {
     species.clear();
+    species.reserve(species_.size());
     copy(species_.begin(), species_.end(), back_inserter(species));
 }
 
@@ -162,6 +168,7 @@ template <int dimension, typename float_type>
 void particle<dimension, float_type>::get_mass(vector<mass_type>& mass)
 {
     mass.clear();
+    mass.reserve(mass_.size());
     copy(mass_.begin(), mass_.end(), back_inserter(mass));
 }
 
@@ -184,6 +191,7 @@ template <int dimension, typename float_type>
 void particle<dimension, float_type>::get_force(vector<force_type>& force)
 {
     force.clear();
+    force.reserve(force_.size());
     copy(force_.begin(), force_.end(), back_inserter(force));
 }
 
@@ -200,6 +208,7 @@ template <int dimension, typename float_type>
 void particle<dimension, float_type>::get_en_pot(vector<en_pot_type>& en_pot)
 {
     en_pot.clear();
+    en_pot.reserve(en_pot_.size());
     copy(en_pot_.begin(), en_pot_.end(), back_inserter(en_pot));
 }
 
@@ -216,6 +225,7 @@ template <int dimension, typename float_type>
 void particle<dimension, float_type>::get_stress_pot(vector<stress_pot_type>& stress_pot)
 {
     stress_pot.clear();
+    stress_pot.reserve(stress_pot_.size());
     copy(stress_pot_.begin(), stress_pot_.end(), back_inserter(stress_pot));
 }
 
@@ -232,6 +242,7 @@ template <int dimension, typename float_type>
 void particle<dimension, float_type>::get_hypervirial(vector<hypervirial_type>& hypervirial)
 {
     hypervirial.clear();
+    hypervirial.reserve(hypervirial_.size());
     copy(hypervirial_.begin(), hypervirial_.end(), back_inserter(hypervirial));
 }
 
