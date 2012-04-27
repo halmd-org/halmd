@@ -61,6 +61,19 @@ struct sc_lattice_primitive
 {
     template <typename float_type>
     HALMD_GPU_ENABLED void operator()(
+        fixed_vector<float_type, 4>& r
+      , fixed_vector<unsigned int, 4> const& nsite
+      , unsigned int site
+    ) const
+    {
+        r[0] = (site % nsite[0]) + float_type(0.5);
+        r[1] = (site / nsite[0] % nsite[1]) + float_type(0.5);
+        r[2] = (site / nsite[0] / nsite[1] % nsite[2]) + float_type(0.5);
+        r[3] = (site / nsite[0] / nsite[1] / nsite[2]) + float_type(0.5);
+    }
+
+    template <typename float_type>
+    HALMD_GPU_ENABLED void operator()(
         fixed_vector<float_type, 3>& r
       , fixed_vector<unsigned int, 3> const& nsite
       , unsigned int site
