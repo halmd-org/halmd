@@ -47,6 +47,7 @@ void particle_position(particle_type& particle)
 {
     typedef typename particle_type::position_type position_type;
     typedef typename particle_type::species_type species_type;
+    particle_type const& const_particle = particle;
 
     // set species to ascending sequence of integers starting at 1 ≠ 0
     particle.set_species(
@@ -57,7 +58,7 @@ void particle_position(particle_type& particle)
     // check that positions are initialised to zero
     vector<position_type> position;
     position.reserve(particle.nparticle());
-    particle.get_position(back_inserter(position));
+    const_particle.get_position(back_inserter(position));
     BOOST_CHECK_EQUAL_COLLECTIONS(
         position.begin()
       , position.end()
@@ -72,7 +73,7 @@ void particle_position(particle_type& particle)
     );
 
     position.clear();
-    particle.get_position(back_inserter(position));
+    const_particle.get_position(back_inserter(position));
     BOOST_CHECK_EQUAL_COLLECTIONS(
         position.begin()
       , position.end()
@@ -84,7 +85,7 @@ void particle_position(particle_type& particle)
     // and species are stored in the same array in gpu::particle
     vector<species_type> species;
     species.reserve(particle.nparticle());
-    particle.get_species(back_inserter(species));
+    const_particle.get_species(back_inserter(species));
     BOOST_CHECK_EQUAL_COLLECTIONS(
         species.begin()
       , species.end()
@@ -100,11 +101,12 @@ template <typename particle_type>
 void particle_image(particle_type& particle)
 {
     typedef typename particle_type::image_type image_type;
+    particle_type const& const_particle = particle;
 
     // check that images are initialised to zero
     vector<image_type> image;
     image.reserve(particle.nparticle());
-    particle.get_image(back_inserter(image));
+    const_particle.get_image(back_inserter(image));
     BOOST_CHECK_EQUAL_COLLECTIONS(
         image.begin()
       , image.end()
@@ -119,7 +121,7 @@ void particle_image(particle_type& particle)
     );
 
     image.clear();
-    particle.get_image(back_inserter(image));
+    const_particle.get_image(back_inserter(image));
     BOOST_CHECK_EQUAL_COLLECTIONS(
         image.begin()
       , image.end()
@@ -136,6 +138,7 @@ void particle_velocity(particle_type& particle)
 {
     typedef typename particle_type::velocity_type velocity_type;
     typedef typename particle_type::mass_type mass_type;
+    particle_type const& const_particle = particle;
 
     // set masses to ascending sequence of integers starting at 2 ≠ 1
     particle.set_mass(
@@ -146,7 +149,7 @@ void particle_velocity(particle_type& particle)
     // check that velocities are initialised to zero
     vector<velocity_type> velocity;
     velocity.reserve(particle.nparticle());
-    particle.get_velocity(back_inserter(velocity));
+    const_particle.get_velocity(back_inserter(velocity));
     BOOST_CHECK_EQUAL_COLLECTIONS(
         velocity.begin()
       , velocity.end()
@@ -161,7 +164,7 @@ void particle_velocity(particle_type& particle)
     );
 
     velocity.clear();
-    particle.get_velocity(back_inserter(velocity));
+    const_particle.get_velocity(back_inserter(velocity));
     BOOST_CHECK_EQUAL_COLLECTIONS(
         velocity.begin()
       , velocity.end()
@@ -173,7 +176,7 @@ void particle_velocity(particle_type& particle)
     // and masses are stored in the same array in gpu::particle
     vector<mass_type> mass;
     mass.reserve(particle.nparticle());
-    particle.get_mass(back_inserter(mass));
+    const_particle.get_mass(back_inserter(mass));
     BOOST_CHECK_EQUAL_COLLECTIONS(
         mass.begin()
       , mass.end()
@@ -189,11 +192,12 @@ template <typename particle_type>
 void particle_tag(particle_type& particle)
 {
     typedef typename particle_type::tag_type tag_type;
+    particle_type const& const_particle = particle;
 
     // check that tags default to ascending sequence of integers
     vector<tag_type> tag;
     tag.reserve(particle.nparticle());
-    particle.get_tag(back_inserter(tag));
+    const_particle.get_tag(back_inserter(tag));
     BOOST_CHECK_EQUAL_COLLECTIONS(
         tag.begin()
       , tag.end()
@@ -205,7 +209,7 @@ void particle_tag(particle_type& particle)
     particle.set_tag(tag.rbegin(), tag.rend());
 
     tag.clear();
-    particle.get_tag(back_inserter(tag));
+    const_particle.get_tag(back_inserter(tag));
     BOOST_CHECK_EQUAL_COLLECTIONS(
         tag.rbegin()
       , tag.rend()
@@ -221,11 +225,12 @@ template <typename particle_type>
 void particle_reverse_tag(particle_type& particle)
 {
     typedef typename particle_type::reverse_tag_type reverse_tag_type;
+    particle_type const& const_particle = particle;
 
     // check that reverse tags default to ascending sequence of integers
     vector<reverse_tag_type> reverse_tag;
     reverse_tag.reserve(particle.nparticle());
-    particle.get_reverse_tag(back_inserter(reverse_tag));
+    const_particle.get_reverse_tag(back_inserter(reverse_tag));
     BOOST_CHECK_EQUAL_COLLECTIONS(
         reverse_tag.begin()
       , reverse_tag.end()
@@ -243,7 +248,7 @@ void particle_reverse_tag(particle_type& particle)
     reverse_tag.resize(particle.nparticle() / 2);
 
     reverse_tag.clear();
-    particle.get_reverse_tag(back_inserter(reverse_tag));
+    const_particle.get_reverse_tag(back_inserter(reverse_tag));
     BOOST_CHECK_EQUAL_COLLECTIONS(
         reverse_tag.rbegin()
       , reverse_tag.rend()
@@ -260,6 +265,7 @@ void particle_species(particle_type& particle)
 {
     typedef typename particle_type::species_type species_type;
     typedef typename particle_type::position_type position_type;
+    particle_type const& const_particle = particle;
 
     // check default of one species
     BOOST_CHECK_EQUAL( particle.nspecies(), 1u );
@@ -273,7 +279,7 @@ void particle_species(particle_type& particle)
     // check that species are initialised to zero
     vector<species_type> species;
     species.reserve(particle.nparticle());
-    particle.get_species(back_inserter(species));
+    const_particle.get_species(back_inserter(species));
     BOOST_CHECK_EQUAL_COLLECTIONS(
         species.begin()
       , species.end()
@@ -288,7 +294,7 @@ void particle_species(particle_type& particle)
     );
 
     species.clear();
-    particle.get_species(back_inserter(species));
+    const_particle.get_species(back_inserter(species));
     BOOST_CHECK_EQUAL_COLLECTIONS(
         species.begin()
       , species.end()
@@ -300,7 +306,7 @@ void particle_species(particle_type& particle)
     // and species are stored in the same array in gpu::particle
     vector<position_type> position;
     position.reserve(particle.nparticle());
-    particle.get_position(back_inserter(position));
+    const_particle.get_position(back_inserter(position));
     BOOST_CHECK_EQUAL_COLLECTIONS(
         position.begin()
       , position.end()
@@ -317,6 +323,7 @@ void particle_mass(particle_type& particle)
 {
     typedef typename particle_type::mass_type mass_type;
     typedef typename particle_type::velocity_type velocity_type;
+    particle_type const& const_particle = particle;
 
     // assign square/cubic lattice vectors
     particle.set_velocity(
@@ -327,7 +334,7 @@ void particle_mass(particle_type& particle)
     // check that masses are initialised to unit mass
     vector<mass_type> mass;
     mass.reserve(particle.nparticle());
-    particle.get_mass(back_inserter(mass));
+    const_particle.get_mass(back_inserter(mass));
     BOOST_CHECK_EQUAL_COLLECTIONS(
         mass.begin()
       , mass.end()
@@ -342,7 +349,7 @@ void particle_mass(particle_type& particle)
     );
 
     mass.clear();
-    particle.get_mass(back_inserter(mass));
+    const_particle.get_mass(back_inserter(mass));
     BOOST_CHECK_EQUAL_COLLECTIONS(
         mass.begin()
       , mass.end()
@@ -354,7 +361,7 @@ void particle_mass(particle_type& particle)
     // and masses are stored in the same array in gpu::particle
     vector<velocity_type> velocity;
     velocity.reserve(particle.nparticle());
-    particle.get_velocity(back_inserter(velocity));
+    const_particle.get_velocity(back_inserter(velocity));
     BOOST_CHECK_EQUAL_COLLECTIONS(
         velocity.begin()
       , velocity.end()
@@ -370,11 +377,12 @@ template <typename particle_type>
 void particle_force(particle_type& particle)
 {
     typedef typename particle_type::force_type force_type;
+    particle_type const& const_particle = particle;
 
     // check that forces are initialised to zero
     vector<force_type> force;
     force.reserve(particle.nparticle());
-    particle.get_force(back_inserter(force));
+    const_particle.get_force(back_inserter(force));
     BOOST_CHECK_EQUAL_COLLECTIONS(
         force.begin()
       , force.end()
@@ -389,7 +397,7 @@ void particle_force(particle_type& particle)
     );
 
     force.clear();
-    particle.get_force(back_inserter(force));
+    const_particle.get_force(back_inserter(force));
     BOOST_CHECK_EQUAL_COLLECTIONS(
         force.begin()
       , force.end()
@@ -405,11 +413,12 @@ template <typename particle_type>
 void particle_en_pot(particle_type& particle)
 {
     typedef typename particle_type::en_pot_type en_pot_type;
+    particle_type const& const_particle = particle;
 
     // check that potential energies are initialised to zero
     vector<en_pot_type> en_pot;
     en_pot.reserve(particle.nparticle());
-    particle.get_en_pot(back_inserter(en_pot));
+    const_particle.get_en_pot(back_inserter(en_pot));
     BOOST_CHECK_EQUAL_COLLECTIONS(
         en_pot.begin()
       , en_pot.end()
@@ -424,7 +433,7 @@ void particle_en_pot(particle_type& particle)
     );
 
     en_pot.clear();
-    particle.get_en_pot(back_inserter(en_pot));
+    const_particle.get_en_pot(back_inserter(en_pot));
     BOOST_CHECK_EQUAL_COLLECTIONS(
         en_pot.begin()
       , en_pot.end()
@@ -440,11 +449,12 @@ template <typename particle_type>
 void particle_stress_pot(particle_type& particle)
 {
     typedef typename particle_type::stress_pot_type stress_pot_type;
+    particle_type const& const_particle = particle;
 
     // check that stress tensors are initialised to zero
     vector<stress_pot_type> stress_pot;
     stress_pot.reserve(particle.nparticle());
-    particle.get_stress_pot(back_inserter(stress_pot));
+    const_particle.get_stress_pot(back_inserter(stress_pot));
     BOOST_CHECK_EQUAL_COLLECTIONS(
         stress_pot.begin()
       , stress_pot.end()
@@ -459,7 +469,7 @@ void particle_stress_pot(particle_type& particle)
     );
 
     stress_pot.clear();
-    particle.get_stress_pot(back_inserter(stress_pot));
+    const_particle.get_stress_pot(back_inserter(stress_pot));
     BOOST_CHECK_EQUAL_COLLECTIONS(
         stress_pot.begin()
       , stress_pot.end()
@@ -475,11 +485,12 @@ template <typename particle_type>
 void particle_hypervirial(particle_type& particle)
 {
     typedef typename particle_type::hypervirial_type hypervirial_type;
+    particle_type const& const_particle = particle;
 
     // check that hypervirials are initialised to zero
     vector<hypervirial_type> hypervirial;
     hypervirial.reserve(particle.nparticle());
-    particle.get_hypervirial(back_inserter(hypervirial));
+    const_particle.get_hypervirial(back_inserter(hypervirial));
     BOOST_CHECK_EQUAL_COLLECTIONS(
         hypervirial.begin()
       , hypervirial.end()
@@ -494,7 +505,7 @@ void particle_hypervirial(particle_type& particle)
     );
 
     hypervirial.clear();
-    particle.get_hypervirial(back_inserter(hypervirial));
+    const_particle.get_hypervirial(back_inserter(hypervirial));
     BOOST_CHECK_EQUAL_COLLECTIONS(
         hypervirial.begin()
       , hypervirial.end()
