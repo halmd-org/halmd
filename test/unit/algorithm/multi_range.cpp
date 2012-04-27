@@ -23,6 +23,7 @@
 #include <boost/assign.hpp>
 #include <boost/bind.hpp>
 #include <boost/multi_array.hpp>
+#include <iterator> // std::back_inserter
 
 #include <halmd/algorithm/multi_range.hpp>
 #include <test/tools/ctest.hpp>
@@ -160,4 +161,78 @@ BOOST_FIXTURE_TEST_CASE( for_each_sum_empty_range, multi_array_fixture )
       , multi_array_accumulate<double, 3>(tensor)
     );
     BOOST_CHECK_EQUAL(result(), 0);
+}
+
+template <typename multi_array_type, typename iterator_type>
+class multi_range_copy
+{
+public:
+    multi_range_copy(multi_array_type const& input, iterator_type output) : input_(input), output_(output) {}
+
+    /**
+     * Copy element from multi_array to output iterator.
+     */
+    template <typename index_type>
+    bool operator()(index_type const& index)
+    {
+        *output_++ = input_(index);
+        return false;
+    }
+
+private:
+    multi_array_type const& input_;
+    iterator_type output_;
+};
+
+template <typename multi_array_type, typename iterator_type>
+static multi_range_copy<multi_array_type, iterator_type>
+make_multi_range_copy(multi_array_type const& input, iterator_type output)
+{
+    return multi_range_copy<multi_array_type, iterator_type>(input, output);
+}
+
+/**
+ * Check multi_range_for_each iterates in C storage order,
+ * which is the default storage order of multi_array.
+ */
+BOOST_FIXTURE_TEST_CASE( multi_range_for_each_iteration_order , multi_array_fixture )
+{
+    array<size_t, 3> first = {{ 0, 0, 0 }};
+    vector<double> result;
+    result.reserve(tensor.num_elements());
+    multi_range_for_each(
+        first
+      , size
+      , make_multi_range_copy(tensor, back_inserter(result))
+    );
+    // check result vector has same order as multi_array storage
+    BOOST_CHECK_EQUAL_COLLECTIONS(
+        result.begin()
+      , result.end()
+      , tensor.data()
+      , tensor.data() + tensor.num_elements()
+    );
+}
+
+/**
+ * Check multi_range_find_if iterates in C storage order,
+ * which is the default storage order of multi_array.
+ */
+BOOST_FIXTURE_TEST_CASE( multi_range_find_if_iteration_order , multi_array_fixture )
+{
+    array<size_t, 3> first = {{ 0, 0, 0 }};
+    vector<double> result;
+    result.reserve(tensor.num_elements());
+    multi_range_find_if(
+        first
+      , size
+      , make_multi_range_copy(tensor, back_inserter(result))
+    );
+    // check result vector has same order as multi_array storage
+    BOOST_CHECK_EQUAL_COLLECTIONS(
+        result.begin()
+      , result.end()
+      , tensor.data()
+      , tensor.data() + tensor.num_elements()
+    );
 }
