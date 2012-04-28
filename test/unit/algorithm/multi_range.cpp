@@ -138,7 +138,6 @@ private:
 BOOST_FIXTURE_TEST_CASE( for_each_sum_elements, multi_array_fixture )
 {
     double const N = size[0] * size[1] * size[2];
-    double sum = 0;
     array<size_t, 3> first = {{ 0, 0, 0 }};
     multi_array_accumulate<double, 3> result = multi_range_for_each(
         first
@@ -153,7 +152,6 @@ BOOST_FIXTURE_TEST_CASE( for_each_sum_elements, multi_array_fixture )
  */
 BOOST_FIXTURE_TEST_CASE( for_each_sum_empty_range, multi_array_fixture )
 {
-    double sum = 0;
     array<size_t, 3> first = {{ 0, 0, 0 }};
     multi_array_accumulate<double, 3> result = multi_range_for_each(
         first
