@@ -1,5 +1,5 @@
 /*
- * Copyright © 2011  Peter Colberg
+ * Copyright © 2011-2012  Peter Colberg
  *
  * This file is part of HALMD.
  *
@@ -17,15 +17,16 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#define BOOST_TEST_MODULE multi_range
-#include <boost/test/unit_test.hpp>
-
 #include <boost/assign.hpp>
 #include <boost/bind.hpp>
 #include <boost/multi_array.hpp>
+#include <boost/test/unit_test.hpp>
 #include <iterator> // std::back_inserter
 
 #include <halmd/algorithm/multi_range.hpp>
+#include <halmd/utility/scoped_timer.hpp>
+#include <halmd/utility/timer.hpp>
+#include <halmd/numeric/accumulator.hpp>
 #include <test/tools/ctest.hpp>
 
 using namespace boost;
@@ -233,4 +234,204 @@ BOOST_FIXTURE_TEST_CASE( multi_range_find_if_iteration_order , multi_array_fixtu
       , tensor.data()
       , tensor.data() + tensor.num_elements()
     );
+}
+
+struct multi_array_4_fixture
+{
+    typedef multi_array<double, 4> array_type;
+    typedef array<size_t, 4> index_type;
+
+    index_type const size;
+    array_type tensor;
+
+    /**
+     * Initialise elements of multi_array with ascending sequence of integers.
+     * The sequence is continuous in memory, following C storage order.
+     */
+    explicit multi_array_4_fixture(index_type const& size) : size(size), tensor(size)
+    {
+        size_t n = 0;
+        for (size_t i = 0; i < size[0]; ++i) {
+            for (size_t j = 0; j < size[1]; ++j) {
+                for (size_t k = 0; k < size[2]; ++k) {
+                    for (size_t l = 0; l < size[3]; ++l) {
+                        tensor[i][j][k][l] = ++n;
+                    }
+                }
+            }
+        }
+    }
+};
+
+/**
+ * Compute sum of elements of multi_array.
+ */
+template <typename input_type>
+struct multi_array_sum
+{
+    explicit multi_array_sum(input_type const& input) : input_(input), sum_(0) {}
+
+    /**
+     * Add multi_array element to sum.
+     */
+    template <typename index_type>
+    void operator()(index_type const& index)
+    {
+        sum_ += input_(index);
+    }
+
+    /**
+     * Returns sum.
+     */
+    double operator()() const
+    {
+        return sum_;
+    }
+
+private:
+    input_type const& input_;
+    double sum_;
+};
+
+/**
+ * Measure average time of summing multi_array using multi_range_for_each.
+ */
+struct time_multi_range_for_each : multi_array_4_fixture
+{
+    explicit time_multi_range_for_each(index_type const& size) : multi_array_4_fixture(size) {}
+
+    void operator()(size_t iterations) const
+    {
+        BOOST_TEST_MESSAGE( "  sum " << size[0] << "×" << size[1] << "×" << size[2] << "×" << size[3] << " elements using multi_range_for_each");
+        BOOST_TEST_MESSAGE( "  warm up " << iterations << " iterations");
+        accumulator<double> acc;
+        for (size_t i = 0; i < iterations; ++i) {
+            index_type first = {{ 0, 0, 0, 0 }};
+            multi_array_sum<array_type> result = multi_range_for_each(
+                first
+              , size
+              , multi_array_sum<array_type>(tensor)
+            );
+            acc(result());
+        }
+
+        BOOST_TEST_MESSAGE( "  measure " << iterations << " iterations" );
+        accumulator<double> elapsed;
+        for (size_t i = 0; i < iterations; ++i) {
+            scoped_timer<timer> t(elapsed);
+            index_type first = {{ 0, 0, 0, 0 }};
+            multi_array_sum<array_type> result = multi_range_for_each(
+                first
+              , size
+              , multi_array_sum<array_type>(tensor)
+            );
+            acc(result());
+        }
+
+        uint64_t const n = tensor.num_elements();
+        BOOST_TEST_MESSAGE( "  elapsed time " << mean(elapsed) * 1e3 << " ± " << error_of_mean(elapsed) * 1e3 << " ms per iteration" );
+        BOOST_CHECK_EQUAL( count(elapsed), iterations );
+        BOOST_CHECK_EQUAL( mean(acc), n * (n + 1) / 2 );
+        BOOST_CHECK_EQUAL( error_of_mean(acc), 0 );
+        BOOST_CHECK_EQUAL( count(acc), 2 * iterations );
+    }
+};
+
+/**
+ * Measure average time of summing multi_array using nested for loops.
+ */
+struct time_nested_for_loops : multi_array_4_fixture
+{
+    explicit time_nested_for_loops(index_type const& size) : multi_array_4_fixture(size) {}
+
+    void operator()(size_t iterations) const
+    {
+        BOOST_TEST_MESSAGE( "  sum " << size[0] << "×" << size[1] << "×" << size[2] << "×" << size[3] << " elements using nested for loops");
+        BOOST_TEST_MESSAGE( "  warm up " << iterations << " iterations");
+        accumulator<double> acc;
+        for (size_t i = 0; i < iterations; ++i) {
+            double sum = 0;
+            index_type k;
+            for (k[0] = 0; k[0] != size[0]; ++k[0]) {
+                for (k[1] = 0; k[1] != size[1]; ++k[1]) {
+                    for (k[2] = 0; k[2] != size[2]; ++k[2]) {
+                        for (k[3] = 0; k[3] != size[3]; ++k[3]) {
+                            sum += tensor(k);
+                        }
+                    }
+                }
+            }
+            acc(sum);
+        }
+
+        BOOST_TEST_MESSAGE( "  measure " << iterations << " iterations" );
+        accumulator<double> elapsed;
+        for (size_t i = 0; i < iterations; ++i) {
+            scoped_timer<timer> t(elapsed);
+            double sum = 0;
+            index_type k;
+            for (k[0] = 0; k[0] != size[0]; ++k[0]) {
+                for (k[1] = 0; k[1] != size[1]; ++k[1]) {
+                    for (k[2] = 0; k[2] != size[2]; ++k[2]) {
+                        for (k[3] = 0; k[3] != size[3]; ++k[3]) {
+                            sum += tensor(k);
+                        }
+                    }
+                }
+            }
+            acc(sum);
+        }
+
+        uint64_t const n = tensor.num_elements();
+        BOOST_TEST_MESSAGE( "  elapsed time " << mean(elapsed) * 1e3 << " ± " << error_of_mean(elapsed) * 1e3 << " ms per iteration" );
+        BOOST_CHECK_EQUAL( count(elapsed), iterations );
+        BOOST_CHECK_EQUAL( mean(acc), n * (n + 1) / 2 );
+        BOOST_CHECK_EQUAL( error_of_mean(acc), 0 );
+        BOOST_CHECK_EQUAL( count(acc), 2 * iterations );
+    }
+};
+
+static void test_time_multi_range_for_each(unsigned int size)
+{
+    time_multi_range_for_each::index_type sizes = list_of(size)(size)(size)(size);
+    time_multi_range_for_each test(sizes);
+    test(10);
+}
+
+static void test_time_nested_for_loops(unsigned int size)
+{
+    time_nested_for_loops::index_type sizes = list_of(size)(size)(size)(size);
+    time_nested_for_loops test(sizes);
+    test(10);
+}
+
+/**
+ * Manual test case registration.
+ */
+bool init_unit_test()
+{
+    using namespace boost::unit_test;
+
+    framework::master_test_suite().p_name.value = "multi_range";
+
+    /*
+     * While the goal of multi_range_for_each is to allow iteration over a
+     * multi-dimensional range of arbitrary dimensions, which is not possible
+     * with nested for loops, this test ensures that multi_range_for_each is
+     * equivalent to nested for loops in terms of performance.
+     */
+    for (unsigned int size = 20; size <= 100; size += 20) {
+        callback0<> time_multi_range_for_each = bind(&test_time_multi_range_for_each, size);
+        framework::master_test_suite().add(BOOST_TEST_CASE( time_multi_range_for_each ));
+
+        callback0<> time_nested_for_loops = bind(&test_time_nested_for_loops, size);
+        framework::master_test_suite().add(BOOST_TEST_CASE( time_nested_for_loops ));
+    }
+
+    return true;
+}
+
+int main(int argc, char** argv)
+{
+    return boost::unit_test::unit_test_main(&init_unit_test, argc, argv);
 }
