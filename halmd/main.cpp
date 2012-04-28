@@ -52,8 +52,10 @@ int main(int argc, char **argv)
         vector<string> pos;
         po::variables_map vm;
         try {
+            using namespace boost::program_options::command_line_style;
             po::command_line_parser parser(argc, argv);
             parser.extra_style_parser(inject_option_terminator());
+            parser.style(default_style & ~allow_guessing);
             po::parsed_options parsed = parser.options(desc).run();
             pos = po::collect_unrecognized(parsed.options, po::include_positional);
             po::store(parsed, vm);
