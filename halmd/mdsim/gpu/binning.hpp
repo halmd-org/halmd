@@ -1,5 +1,5 @@
 /*
- * Copyright © 2008-2011  Peter Colberg and Felix Höfling
+ * Copyright © 2008-2012  Peter Colberg and Felix Höfling
  *
  * This file is part of HALMD.
  *
@@ -20,6 +20,8 @@
 #ifndef HALMD_MDSIM_GPU_BINNING_HPP
 #define HALMD_MDSIM_GPU_BINNING_HPP
 
+#include <algorithm>
+#include <boost/bind.hpp>
 #include <boost/make_shared.hpp>
 #include <boost/numeric/ublas/matrix.hpp>
 #include <boost/shared_ptr.hpp>
@@ -27,9 +29,11 @@
 
 #include <halmd/io/logger.hpp>
 #include <halmd/algorithm/gpu/radix_sort.hpp>
+#include <halmd/algorithm/multi_range.hpp>
 #include <halmd/mdsim/box.hpp>
 #include <halmd/mdsim/gpu/binning_kernel.hpp>
 #include <halmd/mdsim/gpu/particle.hpp>
+#include <halmd/utility/multi_index.hpp>
 #include <halmd/utility/profiler.hpp>
 
 namespace halmd {
@@ -110,7 +114,35 @@ public:
         return g_cell_;
     }
 
+    /**
+     * Copy cells to multi-range output iterator.
+     *
+     * @param output multi-range output iterator
+     *
+     * A multi-range iterator is a functor that accepts a multi-dimensional
+     * index of array type, and returns an output iterator for the given
+     * index. The particle indices in the cell of the given index are
+     * then copied to the returned output iterator.
+     */
+    template <typename output_iterator>
+    void get_cell(output_iterator output) const;
+
 private:
+    typedef cuda::host::vector<unsigned int> cell_array_host_type;
+    typedef typename cell_array_host_type::const_iterator cell_array_host_iterator;
+
+    /**
+     * This functor copies the particle indices of a cell at a given index
+     * to an output iterator at the given index. The output iterator is
+     * retrieved by invoking the output_iterator functor with the given index.
+     */
+    template <typename output_iterator>
+    void get_cell_at(
+        output_iterator& output
+      , cell_size_type const& index
+      , cell_array_host_iterator const& input
+    ) const;
+
     typedef utility::profiler profiler_type;
     typedef typename profiler_type::accumulator_type accumulator_type;
     typedef typename profiler_type::scoped_timer_type scoped_timer_type;
@@ -152,6 +184,33 @@ private:
     /** profiling runtime accumulators */
     runtime runtime_;
 };
+
+template <int dimension, typename float_type>
+template <typename output_iterator>
+inline void binning<dimension, float_type>::get_cell_at(
+    output_iterator& output
+  , cell_size_type const& index
+  , cell_array_host_iterator const& input
+) const
+{
+    typedef typename cell_array_host_type::const_iterator input_iterator;
+    input_iterator first = input + cell_size_ * multi_index_to_offset(index, ncell_);
+    input_iterator last = first + cell_size_;
+    std::remove_copy(first, last, output(index), -1u);
+}
+
+template <int dimension, typename float_type>
+template <typename output_iterator>
+inline void binning<dimension, float_type>::get_cell(output_iterator output) const
+{
+    cell_array_host_type h_cell(g_cell_.size());
+    cuda::copy(g_cell_, h_cell);
+    multi_range_for_each(
+        cell_size_type(0)
+      , ncell_
+      , boost::bind(&binning::get_cell_at<output_iterator>, this, output, _1, h_cell.begin())
+    );
+}
 
 template <int dimension, typename float_type>
 struct binning<dimension, float_type>::defaults
