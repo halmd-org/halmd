@@ -8,6 +8,16 @@ add_test(unit/utility/demangle
   test_unit_utility_demangle --log_level=message
 )
 
+add_executable(test_unit_utility_multi_index
+  multi_index.cpp
+)
+target_link_libraries(test_unit_utility_multi_index
+  ${HALMD_TEST_LIBRARIES}
+)
+add_test(unit/utility/multi_index
+  test_unit_utility_multi_index --log_level=message
+)
+
 add_executable(test_unit_utility_profiler
   profiler.cpp
 )
