@@ -30,6 +30,7 @@
     #include <cuda_runtime.h>
 
     #ifndef __CUDACC__
+    # include <cstddef>
     # include <cuda_wrapper/error.hpp>
     # include <cuda_wrapper/stream.hpp>
     #endif
@@ -163,6 +164,59 @@
             // launch CUDA device function
             CUDA_CALL(cudaLaunch(f_));
         }
+
+    #if CUDART_VERSION >= 4010
+
+        unsigned int binary_version() const
+        {
+            cudaFuncAttributes attr;
+            CUDA_CALL( cudaFuncGetAttributes(&attr, f_) );
+            return attr.binaryVersion;
+        }
+
+        std::size_t const_size_bytes() const
+        {
+            cudaFuncAttributes attr;
+            CUDA_CALL( cudaFuncGetAttributes(&attr, f_) );
+            return attr.constSizeBytes;
+        }
+
+        std::size_t local_size_bytes() const
+        {
+            cudaFuncAttributes attr;
+            CUDA_CALL( cudaFuncGetAttributes(&attr, f_) );
+            return attr.localSizeBytes;
+        }
+
+        unsigned int max_threads_per_block() const
+        {
+            cudaFuncAttributes attr;
+            CUDA_CALL( cudaFuncGetAttributes(&attr, f_) );
+            return attr.maxThreadsPerBlock;
+        }
+
+        unsigned int num_regs() const
+        {
+            cudaFuncAttributes attr;
+            CUDA_CALL( cudaFuncGetAttributes(&attr, f_) );
+            return attr.numRegs;
+        }
+
+        unsigned int ptx_version() const
+        {
+            cudaFuncAttributes attr;
+            CUDA_CALL( cudaFuncGetAttributes(&attr, f_) );
+            return attr.ptxVersion;
+        }
+
+        std::size_t shared_size_bytes() const
+        {
+            cudaFuncAttributes attr;
+            CUDA_CALL( cudaFuncGetAttributes(&attr, f_) );
+            return attr.sharedSizeBytes;
+        }
+
+    #endif /* CUDART_VERSION >= 4010 */
 
     #endif /* ! __CUDACC__ */
 
