@@ -40,15 +40,7 @@ struct default_converter<std::vector<T> >
     //! compute Lua to C++ conversion score
     static int compute_score(lua_State* L, int index)
     {
-        if (lua_type(L, index) != LUA_TTABLE) {
-            return -1;
-        }
-        for (iterator i(object(from_stack(L, index))), end; i != end; ++i) {
-            if (!object_cast_nothrow<T>(*i)) {
-                return -1;
-            }
-        }
-        return 0;
+        return lua_type(L, index) == LUA_TTABLE ? 0 : -1;
     }
 
     //! convert from Lua to C++
