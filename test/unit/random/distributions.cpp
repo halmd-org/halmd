@@ -53,8 +53,8 @@ struct stochastic_test
     }
 };
 
-BOOST_GLOBAL_FIXTURE( set_cuda_device );
-BOOST_GLOBAL_FIXTURE( stochastic_test );
+BOOST_GLOBAL_FIXTURE( set_cuda_device )
+BOOST_GLOBAL_FIXTURE( stochastic_test )
 
 void test_rand48_gpu( unsigned long n )
 {

@@ -37,7 +37,7 @@ extern cuda::function<void (float const*, float const*, dsfloat*)> kernel_mulss;
 extern cuda::function<void (dsfloat const*, dsfloat const*, dsfloat*)> kernel_div;
 extern cuda::function<void (dsfloat const*, dsfloat*)> kernel_sqrt;
 
-BOOST_GLOBAL_FIXTURE( set_cuda_device );
+BOOST_GLOBAL_FIXTURE( set_cuda_device )
 
 /**
  * DSFUN addition test

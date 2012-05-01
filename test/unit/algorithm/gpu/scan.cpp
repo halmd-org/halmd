@@ -32,7 +32,7 @@
 #include <test/tools/cuda.hpp>
 #include <test/tools/init.hpp>
 
-BOOST_GLOBAL_FIXTURE( set_cuda_device );
+BOOST_GLOBAL_FIXTURE( set_cuda_device )
 
 void compare_scan( size_t count )
 {

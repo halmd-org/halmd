@@ -37,7 +37,7 @@ using namespace boost;
 using namespace halmd;
 using namespace halmd::algorithm::gpu;
 
-BOOST_GLOBAL_FIXTURE( set_cuda_device );
+BOOST_GLOBAL_FIXTURE( set_cuda_device )
 
 /**
  * Test »32 bit integer arithmetic using double-single floating point (~44 bit).
