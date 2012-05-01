@@ -17,6 +17,9 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#define BOOST_TEST_MODULE multi_range
+#include <boost/test/unit_test.hpp>
+
 #include <boost/assign.hpp>
 #include <boost/bind.hpp>
 #include <boost/multi_array.hpp>
@@ -28,6 +31,7 @@
 #include <halmd/utility/timer.hpp>
 #include <halmd/numeric/accumulator.hpp>
 #include <test/tools/ctest.hpp>
+#include <test/tools/init.hpp>
 
 using namespace boost;
 using namespace boost::assign;
@@ -408,11 +412,9 @@ static void test_time_nested_for_loops(unsigned int size)
 /**
  * Manual test case registration.
  */
-bool init_unit_test()
+HALMD_TEST_INIT( multi_range )
 {
     using namespace boost::unit_test;
-
-    framework::master_test_suite().p_name.value = "multi_range";
 
     /*
      * While the goal of multi_range_for_each is to allow iteration over a
@@ -427,11 +429,4 @@ bool init_unit_test()
         callback0<> time_nested_for_loops = bind(&test_time_nested_for_loops, size);
         framework::master_test_suite().add(BOOST_TEST_CASE( time_nested_for_loops ));
     }
-
-    return true;
-}
-
-int main(int argc, char** argv)
-{
-    return boost::unit_test::unit_test_main(&init_unit_test, argc, argv);
 }
