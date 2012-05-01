@@ -260,6 +260,9 @@ BOOST_LOG_DIR = boost-log-$(BOOST_LOG_VERSION)
 BOOST_ALWAYS_INLINE_PATCH = boost_1_49_0_fix_integer_log2_always_inline.diff
 BOOST_ALWAYS_INLINE_PATCH_URL = http://sourceforge.net/projects/halmd/files/libs/boost/$(BOOST_ALWAYS_INLINE_PATCH)
 BOOST_ALWAYS_INLINE_PATCH_SHA256 = 3e0c475d9579804984873858339b53825595c022bfdf811b0a97827cbc18acff
+BOOST_LEXICAL_CAST_PATCH = boost_1_49_0_fix_lexical_cast_double_iso_printf.diff
+BOOST_LEXICAL_CAST_PATCH_URL = http://sourceforge.net/projects/halmd/files/libs/boost/$(BOOST_LEXICAL_CAST_PATCH)
+BOOST_LEXICAL_CAST_PATCH_SHA256 = fd74584eb571d4d9beec44e7cb7f9eb4abbf4101f212a56438ac1187e8a7d5e1
 BOOST_BUILD_DIR = boost_$(BOOST_RELEASE)
 BOOST_INSTALL_DIR = $(PREFIX)/boost_$(BOOST_RELEASE)
 BOOST_BUILD_FLAGS = cxxflags=-fPIC dll-path=$(BOOST_INSTALL_DIR)/lib
@@ -274,12 +277,16 @@ endif
 .fetch-boost:
 	@$(RM) $(BOOST_TARBALL)
 	@$(RM) $(BOOST_LOG_TARBALL)
+	@$(RM) $(BOOST_ALWAYS_INLINE_PATCH)
+	@$(RM) $(BOOST_LEXICAL_CAST_PATCH)
 	$(WGET) $(BOOST_TARBALL_URL)
-	$(WGET) -O $(BOOST_LOG_TARBALL) $(BOOST_LOG_TARBALL_URL)
+	$(WGET) $(BOOST_LOG_TARBALL_URL)
 	$(WGET) $(BOOST_ALWAYS_INLINE_PATCH_URL)
+	$(WGET) $(BOOST_LEXICAL_CAST_PATCH_URL)
 	@echo '$(BOOST_TARBALL_SHA256)  $(BOOST_TARBALL)' | $(SHA256SUM)
 	@echo '$(BOOST_LOG_TARBALL_SHA256)  $(BOOST_LOG_TARBALL)' | $(SHA256SUM)
 	@echo '$(BOOST_ALWAYS_INLINE_PATCH_SHA256)  $(BOOST_ALWAYS_INLINE_PATCH)' | $(SHA256SUM)
+	@echo '$(BOOST_LEXICAL_CAST_PATCH_SHA256)  $(BOOST_LEXICAL_CAST_PATCH)' | $(SHA256SUM)
 	@$(TOUCH) $@
 
 fetch-boost: .fetch-boost
@@ -291,6 +298,7 @@ fetch-boost: .fetch-boost
 	$(CP) $(BOOST_LOG_DIR)/boost/log $(BOOST_BUILD_DIR)/boost/
 	$(CP) $(BOOST_LOG_DIR)/libs/log $(BOOST_BUILD_DIR)/libs/
 	cd $(BOOST_BUILD_DIR) && $(PATCH) -p1 < $(CURDIR)/$(BOOST_ALWAYS_INLINE_PATCH)
+	cd $(BOOST_BUILD_DIR) && $(PATCH) -p1 < $(CURDIR)/$(BOOST_LEXICAL_CAST_PATCH)
 	@$(TOUCH) $@
 
 extract-boost: .extract-boost
@@ -320,6 +328,8 @@ distclean-boost: clean-boost
 	@$(RM) .fetch-boost
 	$(RM) $(BOOST_TARBALL)
 	$(RM) $(BOOST_LOG_TARBALL)
+	$(RM) $(BOOST_BOOST_ALWAYS_INLINE_PATCH)
+	$(RM) $(BOOST_BOOST_LEXICAL_CAST_PATCH)
 
 env-boost:
 	@echo
