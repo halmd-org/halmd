@@ -44,11 +44,6 @@ set(CMAKE_USER_MAKE_RULES_OVERRIDE "cmake/platform.cmake")
 
 project(HALMD CXX)
 
-if(CMAKE_BUILD_TYPE STREQUAL "${CMAKE_BUILD_TYPE_INIT}")
-  set(CMAKE_BUILD_TYPE "Release" CACHE STRING
-    "Choose the type of build, options are: Debug Release RelWithDebInfo MinSizeRel." FORCE)
-endif()
-
 if (HALMD_USE_STATIC_LIBS)
   set(HALMD_USE_STATIC_LIBS TRUE CACHE INTERNAL
     "Build statically linked backend executables")
