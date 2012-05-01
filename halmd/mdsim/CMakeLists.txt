@@ -3,7 +3,6 @@ halmd_add_library(halmd_mdsim
   clock.cpp
   core.cpp
   neighbour.cpp
-  position.cpp
   sort.cpp
   velocity.cpp
 )
@@ -12,7 +11,6 @@ halmd_add_modules(
   libhalmd_mdsim_core
   libhalmd_mdsim_clock
   libhalmd_mdsim_neighbour
-  libhalmd_mdsim_position
   libhalmd_mdsim_sort
   libhalmd_mdsim_velocity
 )

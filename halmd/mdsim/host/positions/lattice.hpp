@@ -28,7 +28,6 @@
 #include <halmd/io/logger.hpp>
 #include <halmd/mdsim/box.hpp>
 #include <halmd/mdsim/host/particle.hpp>
-#include <halmd/mdsim/position.hpp>
 #include <halmd/random/host/random.hpp>
 #include <halmd/utility/profiler.hpp>
 
@@ -39,10 +38,8 @@ namespace positions {
 
 template <int dimension, typename float_type>
 class lattice
-  : public mdsim::position<dimension>
 {
 public:
-    typedef mdsim::position<dimension> _Base;
     typedef host::particle<dimension, float_type> particle_type;
     typedef typename particle_type::vector_type vector_type;
     typedef mdsim::box<dimension> box_type;
@@ -60,7 +57,7 @@ public:
       , vector_type const& slab
       , boost::shared_ptr<logger_type> logger = boost::make_shared<logger_type>()
     );
-    virtual void set();
+    void set();
 
     vector_type const& slab() const { return slab_; }
 

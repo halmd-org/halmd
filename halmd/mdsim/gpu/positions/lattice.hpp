@@ -27,7 +27,6 @@
 #include <halmd/io/logger.hpp>
 #include <halmd/mdsim/box.hpp>
 #include <halmd/mdsim/gpu/particle.hpp>
-#include <halmd/mdsim/position.hpp>
 #include <halmd/mdsim/type_traits.hpp>
 #include <halmd/random/gpu/random.hpp>
 #include <halmd/utility/profiler.hpp>
@@ -39,10 +38,8 @@ namespace positions {
 
 template <int dimension, typename float_type, typename RandomNumberGenerator>
 class lattice
-  : public mdsim::position<dimension>
 {
 public:
-    typedef mdsim::position<dimension> _Base;
     typedef gpu::particle<dimension, float_type> particle_type;
     typedef mdsim::box<dimension> box_type;
     typedef random::gpu::random<RandomNumberGenerator> random_type;
@@ -62,7 +59,7 @@ public:
       , typename box_type::vector_type const& slab
       , boost::shared_ptr<logger_type> logger = boost::make_shared<logger_type>()
     );
-    virtual void set();
+    void set();
 
     typename box_type::vector_type const& slab() const { return slab_; }
 

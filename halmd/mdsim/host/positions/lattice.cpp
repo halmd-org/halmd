@@ -187,6 +187,12 @@ static char const* module_name_wrapper(lattice<dimension, float_type> const&)
     return lattice<dimension, float_type>::module_name();
 }
 
+template <typename position_type>
+static function<void ()> wrap_set(shared_ptr<position_type> self)
+{
+    return bind(&position_type::set, self);
+}
+
 template <int dimension, typename float_type>
 void lattice<dimension, float_type>::luaopen(lua_State* L)
 {
@@ -200,7 +206,7 @@ void lattice<dimension, float_type>::luaopen(lua_State* L)
             [
                 namespace_("positions")
                 [
-                    class_<lattice, shared_ptr<_Base>, _Base>(class_name.c_str())
+                    class_<lattice, shared_ptr<lattice> >(class_name.c_str())
                         .def(constructor<
                              shared_ptr<particle_type>
                            , shared_ptr<box_type const>
@@ -210,6 +216,7 @@ void lattice<dimension, float_type>::luaopen(lua_State* L)
                         >())
                         .property("slab", &lattice::slab)
                         .property("module_name", &module_name_wrapper<dimension, float_type>)
+                        .property("set", &wrap_set<lattice>)
                         .scope
                         [
                             class_<runtime>("runtime")
