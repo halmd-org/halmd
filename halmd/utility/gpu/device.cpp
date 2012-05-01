@@ -30,7 +30,6 @@
 #include <halmd/io/logger.hpp>
 #include <halmd/utility/gpu/device.hpp>
 #include <halmd/utility/lua/lua.hpp>
-#include <halmd/utility/multi_array.hpp>
 
 using namespace boost;
 using namespace boost::algorithm;

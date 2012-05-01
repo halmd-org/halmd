@@ -49,7 +49,7 @@ struct ctest_logging
  * printer as a global fixture instead of an __attribute__((constructor))
  * function. The global fixture is instantiated before the test run.
  */
-BOOST_GLOBAL_FIXTURE( ctest_full_output );
-BOOST_GLOBAL_FIXTURE( ctest_logging );
+BOOST_GLOBAL_FIXTURE( ctest_full_output )
+BOOST_GLOBAL_FIXTURE( ctest_logging )
 
 #endif /* ! TEST_TOOLS_CTEST_HPP */

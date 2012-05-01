@@ -29,7 +29,7 @@
 using namespace halmd;
 using namespace halmd::algorithm::gpu;
 
-BOOST_GLOBAL_FIXTURE( set_cuda_device );
+BOOST_GLOBAL_FIXTURE( set_cuda_device )
 
 /**
  * Test apply wrapper for square transform.
