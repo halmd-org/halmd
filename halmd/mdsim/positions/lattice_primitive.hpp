@@ -75,7 +75,7 @@ public:
     }
 
     /**
-     * Returns total number of unit cells.
+     * Returns total number of lattice points.
      */
     HALMD_GPU_ENABLED size_type size() const
     {
@@ -135,7 +135,7 @@ public:
     }
 
     /**
-     * Returns total number of unit cells.
+     * Returns total number of lattice points.
      */
     HALMD_GPU_ENABLED size_type size() const
     {
@@ -197,7 +197,7 @@ public:
     }
 
     /**
-     * Returns total number of unit cells.
+     * Returns total number of lattice points.
      */
     HALMD_GPU_ENABLED size_type size() const
     {
@@ -257,7 +257,7 @@ public:
     }
 
     /**
-     * Returns total number of unit cells.
+     * Returns total number of lattice points.
      */
     HALMD_GPU_ENABLED size_type size() const
     {
@@ -318,7 +318,7 @@ public:
     }
 
     /**
-     * Returns total number of unit cells.
+     * Returns total number of lattice points.
      */
     HALMD_GPU_ENABLED size_type size() const
     {
