@@ -31,7 +31,7 @@ template <typename Position, typename Shape, typename Enable = void>
 class close_packed_lattice;
 
 /**
- * Two-dimensional hexagonal close-packed lattice.
+ * Two-dimensional hexagonal close-packed unit lattice.
  *
  * @tparam Position 2-dimensional floating-n array type
  * @tparam Shape 2-dimensional integer array type
@@ -46,7 +46,7 @@ public:
     typedef typename shape_type::size_type size_type;
 
     /**
-     * Construct lattice primitive of given shape.
+     * Construct unit lattice primitive of given shape.
      *
      * @param shape number of unit cells per dimension
      */
@@ -90,7 +90,7 @@ private:
 };
 
 /**
- * Three-dimensional face centered cubic lattice.
+ * Three-dimensional face centered cubic unit lattice.
  *
  * @tparam Position 3-dimensional floating-n array type
  * @tparam Shape 3-dimensional integer array type
@@ -105,7 +105,7 @@ public:
     typedef typename shape_type::size_type size_type;
 
     /**
-     * Construct lattice primitive of given shape.
+     * Construct unit lattice primitive of given shape.
      *
      * @param shape number of unit cells per dimension
      */
@@ -153,7 +153,7 @@ template <typename Position, typename Shape, typename Enable = void>
 class primitive_lattice;
 
 /**
- * Two-dimensional square lattice.
+ * Two-dimensional square unit lattice.
  *
  * @tparam Position 2-dimensional floating-n array type
  * @tparam Shape 2-dimensional integer array type
@@ -168,7 +168,7 @@ public:
     typedef typename shape_type::size_type size_type;
 
     /**
-     * Construct lattice primitive of given shape.
+     * Construct unit lattice primitive of given shape.
      *
      * @param shape number of unit cells per dimension
      */
@@ -212,7 +212,7 @@ private:
 };
 
 /**
- * Three-dimensional primitive cubic lattice.
+ * Three-dimensional primitive cubic unit lattice.
  *
  * @tparam Position 3-dimensional floating-n array type
  * @tparam Shape 3-dimensional integer array type
@@ -227,7 +227,7 @@ public:
     typedef typename shape_type::size_type size_type;
 
     /**
-     * Construct lattice primitive of given shape.
+     * Construct unit lattice primitive of given shape.
      *
      * @param shape number of unit cells per dimension
      */
@@ -272,7 +272,7 @@ private:
 };
 
 /**
- * Four-dimensional primitive tesseractic lattice.
+ * Four-dimensional primitive tesseractic unit lattice.
  *
  * @tparam Position 4-dimensional floating-n array type
  * @tparam Shape 4-dimensional integer array type
@@ -287,7 +287,7 @@ public:
     typedef typename shape_type::size_type size_type;
 
     /**
-     * Construct lattice primitive of given shape.
+     * Construct unit lattice primitive of given shape.
      *
      * @param shape number of unit cells per dimension
      */
