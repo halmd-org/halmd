@@ -183,9 +183,9 @@ void lattice<modules_type>::test()
     // check centre and corners
     fixed_vector<double, dimension> corner = .5 * element_prod(box->length(), slab);  //< upper right corner
     fixed_vector<double, dimension> offset = lattice_constant;                               //< diagonal of the unit cell
-    BOOST_CHECK_SMALL(norm_1(r_cm + offset / 4) / norm_1(corner), 2 * eps);
-    BOOST_CHECK_SMALL(norm_1(r_min + corner) / norm_1(corner), eps);
-    BOOST_CHECK_SMALL(norm_1(r_max - corner + offset / 2) / norm_1(corner), eps);
+    BOOST_CHECK_SMALL(norm_1(r_cm) / norm_1(corner), 2 * eps);
+    BOOST_CHECK_SMALL(norm_1(r_min + corner - offset / 4) / norm_1(corner), eps);
+    BOOST_CHECK_SMALL(norm_1(r_max - corner + offset / 4) / norm_1(corner), eps);
 }
 
 template <typename modules_type>
