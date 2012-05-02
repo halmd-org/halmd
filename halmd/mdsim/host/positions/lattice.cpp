@@ -163,6 +163,8 @@ void lattice<dimension, float_type>::fcc(
         LOG_TRACE("insert a vacancy at every " << skip << "th site");
     }
 
+    close_packed_lattice<vector_type, index_type> const lattice(n);
+
     size_t i = 0;
     for (position_iterator r_it = first; r_it != last; ++r_it, ++i) {
         // skip vacant lattice points
@@ -170,8 +172,7 @@ void lattice<dimension, float_type>::fcc(
             ++i;
         }
 
-        vector_type& r = *r_it;
-        fcc_lattice_primitive()(r, n, i);
+        vector_type& r = *r_it = lattice(i);
         // scale by lattice constant
         r *= a;
         // shift origin of lattice to offset

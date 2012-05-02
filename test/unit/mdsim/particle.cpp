@@ -23,21 +23,54 @@
 #include <algorithm> // std::fill
 #include <boost/array.hpp>
 #include <boost/iterator/counting_iterator.hpp>
+#include <boost/iterator/transform_iterator.hpp>
 #include <cmath> // std::ceil, std::pow
 #include <iterator> // std::back_inserter
 
 #include <halmd/config.hpp>
 #include <halmd/mdsim/host/particle.hpp>
+#include <halmd/mdsim/positions/lattice_primitive.hpp>
 #include <test/tools/constant_iterator.hpp>
 #include <test/tools/ctest.hpp>
-#include <test/unit/mdsim/positions/lattice_iterator.hpp>
 #ifdef HALMD_WITH_GPU
 # include <halmd/mdsim/gpu/particle.hpp>
 # include <test/tools/cuda.hpp>
 #endif
 
 using namespace boost;
+using namespace halmd;
 using namespace std;
+
+/**
+ * Primitive lattice with equal number of lattice points per dimension.
+ *
+ * This lattice functor generates two, three or four-dimensional vectors.
+ */
+template <typename vector_type>
+class equilateral_lattice
+  : public primitive_lattice<vector_type, fixed_vector<size_t, vector_type::static_size> >
+{
+public:
+    equilateral_lattice(size_t nparticle) : lattice_type(make_lattice(nparticle)) {}
+
+private:
+    typedef primitive_lattice<vector_type, fixed_vector<size_t, vector_type::static_size> > lattice_type;
+
+    static lattice_type make_lattice(unsigned int nparticle)
+    {
+        return lattice_type(ceil(pow(nparticle, 1. / vector_type::static_size)));
+    }
+};
+
+/**
+ * Make lattice iterator given a lattice primitive and particle index.
+ */
+template <typename lattice_type>
+inline transform_iterator<lattice_type, counting_iterator<size_t> >
+make_lattice_iterator(lattice_type const& lattice, size_t n)
+{
+    return make_transform_iterator(make_counting_iterator(n), lattice);
+}
 
 /**
  * Test initialisation, getter and setter of particle positions.
@@ -67,9 +100,10 @@ void particle_position(particle_type& particle)
     );
 
     // assign square/cubic lattice vectors
+    equilateral_lattice<position_type> lattice(particle.nparticle());
     particle.set_position(
-         lattice_iterator<position_type>(particle.nparticle(), 0)
-       , lattice_iterator<position_type>(particle.nparticle(), particle.nparticle())
+         make_lattice_iterator(lattice, 0)
+       , make_lattice_iterator(lattice, particle.nparticle())
     );
 
     position.clear();
@@ -77,8 +111,8 @@ void particle_position(particle_type& particle)
     BOOST_CHECK_EQUAL_COLLECTIONS(
         position.begin()
       , position.end()
-      , lattice_iterator<position_type>(particle.nparticle(), 0)
-      , lattice_iterator<position_type>(particle.nparticle(), particle.nparticle())
+      , make_lattice_iterator(lattice, 0)
+      , make_lattice_iterator(lattice, particle.nparticle())
     );
 
     // check that particle species are preserved, since positions
@@ -115,9 +149,10 @@ void particle_image(particle_type& particle)
     );
 
     // assign square/cubic lattice vectors
+    equilateral_lattice<image_type> lattice(particle.nparticle());
     particle.set_image(
-         lattice_iterator<image_type>(particle.nparticle(), 0)
-       , lattice_iterator<image_type>(particle.nparticle(), particle.nparticle())
+         make_lattice_iterator(lattice, 0)
+       , make_lattice_iterator(lattice, particle.nparticle())
     );
 
     image.clear();
@@ -125,8 +160,8 @@ void particle_image(particle_type& particle)
     BOOST_CHECK_EQUAL_COLLECTIONS(
         image.begin()
       , image.end()
-      , lattice_iterator<image_type>(particle.nparticle(), 0)
-      , lattice_iterator<image_type>(particle.nparticle(), particle.nparticle())
+      , make_lattice_iterator(lattice, 0)
+      , make_lattice_iterator(lattice, particle.nparticle())
     );
 }
 
@@ -158,9 +193,10 @@ void particle_velocity(particle_type& particle)
     );
 
     // assign square/cubic lattice vectors
+    equilateral_lattice<velocity_type> lattice(particle.nparticle());
     particle.set_velocity(
-         lattice_iterator<velocity_type>(particle.nparticle(), 0)
-       , lattice_iterator<velocity_type>(particle.nparticle(), particle.nparticle())
+         make_lattice_iterator(lattice, 0)
+       , make_lattice_iterator(lattice, particle.nparticle())
     );
 
     velocity.clear();
@@ -168,8 +204,8 @@ void particle_velocity(particle_type& particle)
     BOOST_CHECK_EQUAL_COLLECTIONS(
         velocity.begin()
       , velocity.end()
-      , lattice_iterator<velocity_type>(particle.nparticle(), 0)
-      , lattice_iterator<velocity_type>(particle.nparticle(), particle.nparticle())
+      , make_lattice_iterator(lattice, 0)
+      , make_lattice_iterator(lattice, particle.nparticle())
     );
 
     // check that particle masses are preserved, since velocities
@@ -271,9 +307,10 @@ void particle_species(particle_type& particle)
     BOOST_CHECK_EQUAL( particle.nspecies(), 1u );
 
     // assign square/cubic lattice vectors
+    equilateral_lattice<position_type> lattice(particle.nparticle());
     particle.set_position(
-         lattice_iterator<position_type>(particle.nparticle(), 0)
-       , lattice_iterator<position_type>(particle.nparticle(), particle.nparticle())
+         make_lattice_iterator(lattice, 0)
+       , make_lattice_iterator(lattice, particle.nparticle())
     );
 
     // check that species are initialised to zero
@@ -310,8 +347,8 @@ void particle_species(particle_type& particle)
     BOOST_CHECK_EQUAL_COLLECTIONS(
         position.begin()
       , position.end()
-      , lattice_iterator<position_type>(particle.nparticle(), 0)
-      , lattice_iterator<position_type>(particle.nparticle(), particle.nparticle())
+      , make_lattice_iterator(lattice, 0)
+      , make_lattice_iterator(lattice, particle.nparticle())
     );
 }
 
@@ -326,9 +363,10 @@ void particle_mass(particle_type& particle)
     particle_type const& const_particle = particle;
 
     // assign square/cubic lattice vectors
+    equilateral_lattice<velocity_type> lattice(particle.nparticle());
     particle.set_velocity(
-         lattice_iterator<velocity_type>(particle.nparticle(), 0)
-       , lattice_iterator<velocity_type>(particle.nparticle(), particle.nparticle())
+         make_lattice_iterator(lattice, 0)
+       , make_lattice_iterator(lattice, particle.nparticle())
     );
 
     // check that masses are initialised to unit mass
@@ -365,8 +403,8 @@ void particle_mass(particle_type& particle)
     BOOST_CHECK_EQUAL_COLLECTIONS(
         velocity.begin()
       , velocity.end()
-      , lattice_iterator<velocity_type>(particle.nparticle(), 0)
-      , lattice_iterator<velocity_type>(particle.nparticle(), particle.nparticle())
+      , make_lattice_iterator(lattice, 0)
+      , make_lattice_iterator(lattice, particle.nparticle())
     );
 }
 
@@ -391,9 +429,10 @@ void particle_force(particle_type& particle)
     );
 
     // assign square/cubic lattice vectors
+    equilateral_lattice<force_type> lattice(particle.nparticle());
     particle.set_force(
-         lattice_iterator<force_type>(particle.nparticle(), 0)
-       , lattice_iterator<force_type>(particle.nparticle(), particle.nparticle())
+         make_lattice_iterator(lattice, 0)
+       , make_lattice_iterator(lattice, particle.nparticle())
     );
 
     force.clear();
@@ -401,8 +440,8 @@ void particle_force(particle_type& particle)
     BOOST_CHECK_EQUAL_COLLECTIONS(
         force.begin()
       , force.end()
-      , lattice_iterator<force_type>(particle.nparticle(), 0)
-      , lattice_iterator<force_type>(particle.nparticle(), particle.nparticle())
+      , make_lattice_iterator(lattice, 0)
+      , make_lattice_iterator(lattice, particle.nparticle())
     );
 }
 
@@ -463,9 +502,10 @@ void particle_stress_pot(particle_type& particle)
     );
 
     // assign square/four-dimensional cubic lattice vectors
+    equilateral_lattice<stress_pot_type> lattice(particle.nparticle());
     particle.set_stress_pot(
-        lattice_iterator<stress_pot_type>(particle.nparticle(), 0)
-      , lattice_iterator<stress_pot_type>(particle.nparticle(), particle.nparticle())
+        make_lattice_iterator(lattice, 0)
+      , make_lattice_iterator(lattice, particle.nparticle())
     );
 
     stress_pot.clear();
@@ -473,8 +513,8 @@ void particle_stress_pot(particle_type& particle)
     BOOST_CHECK_EQUAL_COLLECTIONS(
         stress_pot.begin()
       , stress_pot.end()
-      , lattice_iterator<stress_pot_type>(particle.nparticle(), 0)
-      , lattice_iterator<stress_pot_type>(particle.nparticle(), particle.nparticle())
+      , make_lattice_iterator(lattice, 0)
+      , make_lattice_iterator(lattice, particle.nparticle())
     );
 }
 

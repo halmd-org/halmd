@@ -1,5 +1,5 @@
 /*
- * Copyright © 2008  Peter Colberg
+ * Copyright © 2008, 2012  Peter Colberg
  *
  * This file is part of HALMD.
  *
@@ -20,80 +20,316 @@
 #ifndef HALMD_MDSIM_POSITIONS_LATTICE_PRIMITIVE_HPP
 #define HALMD_MDSIM_POSITIONS_LATTICE_PRIMITIVE_HPP
 
+#include <boost/utility/enable_if.hpp>
+
 #include <halmd/config.hpp>
-#include <halmd/numeric/blas/fixed_vector.hpp>
+#include <halmd/utility/multi_index.hpp>
 
 namespace halmd {
 
+template <typename Position, typename Shape, typename Enable = void>
+class close_packed_lattice;
+
 /**
- * place particles on a face centered cubic lattice (fcc)
+ * Two-dimensional hexagonal close-packed lattice.
+ *
+ * @tparam Position 2-dimensional floating-n array type
+ * @tparam Shape 2-dimensional integer array type
  */
-struct fcc_lattice_primitive
+template <typename Position, typename Shape>
+class close_packed_lattice<Position, Shape
+  , typename boost::enable_if_c<(Position::static_size == 2)>::type>
 {
-    template <typename float_type>
-    HALMD_GPU_ENABLED void operator()(
-        fixed_vector<float_type, 3>& r
-      , fixed_vector<unsigned int, 3> const& nsite
-      , unsigned int site
-    ) const
+public:
+    typedef Position result_type;
+    typedef Shape shape_type;
+    typedef typename shape_type::size_type size_type;
+
+    /**
+     * Construct lattice primitive of given shape.
+     *
+     * @param shape number of unit cells per dimension
+     */
+    explicit HALMD_GPU_ENABLED close_packed_lattice(shape_type const& shape) : shape_(shape) {}
+
+    /**
+     * Returns lattice position for given particle index.
+     *
+     * @param n particle index with 0 ≤ index < size()
+     */
+    HALMD_GPU_ENABLED result_type operator()(size_type n) const
     {
-        r[0] = ((site >> 2) % nsite[0]) + ((site ^ (site >> 1)) & 1) / float_type(2);
-        r[1] = ((site >> 2) / nsite[0] % nsite[1]) + (site & 1) / float_type(2);
-        r[2] = ((site >> 2) / nsite[0] / nsite[1]) + (site & 2) / float_type(4);
+        shape_type cell = offset_to_multi_index(n >> 1, shape_);
+        result_type r;
+        r[0] = cell[0] + ((n & 1) * 2 + 1) / float_type(4);
+        r[1] = cell[1] + ((n & 1) * 2 + 1) / float_type(4);
+        return r;
     }
 
-    template <typename float_type>
-    HALMD_GPU_ENABLED void operator()(
-        fixed_vector<float_type, 2>& r
-      , fixed_vector<unsigned int, 2> const& nsite
-      , unsigned int site
-    ) const
+    /**
+     * Returns number of unit cells per dimension.
+     */
+    HALMD_GPU_ENABLED shape_type const& shape() const
     {
-        r[0] = ((site >> 1) % nsite[0]) + (site & 1) / float_type(2);
-        r[1] = ((site >> 1) / nsite[0]) + (site & 1) / float_type(2);
+        return shape_;
     }
+
+    /**
+     * Returns total number of unit cells.
+     */
+    HALMD_GPU_ENABLED size_type size() const
+    {
+        return 2 * shape_[0] * shape_[1];
+    }
+
+private:
+    typedef typename result_type::value_type float_type;
+
+    /** number of unit cells per dimension */
+    shape_type shape_;
 };
 
 /**
- * place particles on a simple cubic lattice (sc)
+ * Three-dimensional face centered cubic lattice.
+ *
+ * @tparam Position 3-dimensional floating-n array type
+ * @tparam Shape 3-dimensional integer array type
  */
-struct sc_lattice_primitive
+template <typename Position, typename Shape>
+class close_packed_lattice<Position, Shape
+  , typename boost::enable_if_c<(Position::static_size == 3)>::type>
 {
-    template <typename float_type>
-    HALMD_GPU_ENABLED void operator()(
-        fixed_vector<float_type, 4>& r
-      , fixed_vector<unsigned int, 4> const& nsite
-      , unsigned int site
-    ) const
+public:
+    typedef Position result_type;
+    typedef Shape shape_type;
+    typedef typename shape_type::size_type size_type;
+
+    /**
+     * Construct lattice primitive of given shape.
+     *
+     * @param shape number of unit cells per dimension
+     */
+    explicit HALMD_GPU_ENABLED close_packed_lattice(shape_type const& shape) : shape_(shape) {}
+
+    /**
+     * Returns lattice position for given particle index.
+     *
+     * @param n particle index with 0 ≤ index < size()
+     */
+    HALMD_GPU_ENABLED result_type operator()(size_type n) const
     {
-        r[0] = (site % nsite[0]) + float_type(0.5);
-        r[1] = (site / nsite[0] % nsite[1]) + float_type(0.5);
-        r[2] = (site / nsite[0] / nsite[1] % nsite[2]) + float_type(0.5);
-        r[3] = (site / nsite[0] / nsite[1] / nsite[2]) + float_type(0.5);
+        shape_type cell = offset_to_multi_index(n >> 2, shape_);
+        result_type r;
+        r[0] = cell[0] + (((n ^ (n >> 1)) & 1) * 2 + 1) / float_type(4);
+        r[1] = cell[1] + ((n & 1) * 2 + 1) / float_type(4);
+        r[2] = cell[2] + ((n & 2) + 1) / float_type(4);
+        return r;
     }
 
-    template <typename float_type>
-    HALMD_GPU_ENABLED void operator()(
-        fixed_vector<float_type, 3>& r
-      , fixed_vector<unsigned int, 3> const& nsite
-      , unsigned int site
-    ) const
+    /**
+     * Returns number of unit cells per dimension.
+     */
+    HALMD_GPU_ENABLED shape_type const& shape() const
     {
-        r[0] = (site % nsite[0]) + float_type(0.5);
-        r[1] = (site / nsite[0] % nsite[1]) + float_type(0.5);
-        r[2] = (site / nsite[0] / nsite[1]) + float_type(0.5);
+        return shape_;
     }
 
-    template <typename float_type>
-    HALMD_GPU_ENABLED void operator()(
-        fixed_vector<float_type, 2>& r
-      , fixed_vector<unsigned int, 2> const& nsite
-      , unsigned int site
-    ) const
+    /**
+     * Returns total number of unit cells.
+     */
+    HALMD_GPU_ENABLED size_type size() const
     {
-        r[0] = (site % nsite[0]) + float_type(0.5);
-        r[1] = (site / nsite[0]) + float_type(0.5);
+        return 4 * shape_[0] * shape_[1] * shape_[2];
     }
+
+private:
+    typedef typename result_type::value_type float_type;
+
+    /** number of unit cells per dimension */
+    shape_type shape_;
+};
+
+template <typename Position, typename Shape, typename Enable = void>
+class primitive_lattice;
+
+/**
+ * Two-dimensional square lattice.
+ *
+ * @tparam Position 2-dimensional floating-n array type
+ * @tparam Shape 2-dimensional integer array type
+ */
+template <typename Position, typename Shape>
+class primitive_lattice<Position, Shape
+  , typename boost::enable_if_c<(Position::static_size == 2)>::type>
+{
+public:
+    typedef Position result_type;
+    typedef Shape shape_type;
+    typedef typename shape_type::size_type size_type;
+
+    /**
+     * Construct lattice primitive of given shape.
+     *
+     * @param shape number of unit cells per dimension
+     */
+    explicit HALMD_GPU_ENABLED primitive_lattice(shape_type const& shape) : shape_(shape) {}
+
+    /**
+     * Returns lattice position for given particle index.
+     *
+     * @param n particle index with 0 ≤ index < size()
+     */
+    HALMD_GPU_ENABLED result_type operator()(size_type n) const
+    {
+        shape_type cell = offset_to_multi_index(n, shape_);
+        result_type r;
+        r[0] = cell[0] + float_type(0.5);
+        r[1] = cell[1] + float_type(0.5);
+        return r;
+    }
+
+    /**
+     * Returns number of unit cells per dimension.
+     */
+    HALMD_GPU_ENABLED shape_type const& shape() const
+    {
+        return shape_;
+    }
+
+    /**
+     * Returns total number of unit cells.
+     */
+    HALMD_GPU_ENABLED size_type size() const
+    {
+        return shape_[0] * shape_[1];
+    }
+
+private:
+    typedef typename result_type::value_type float_type;
+
+    /** number of unit cells per dimension */
+    shape_type shape_;
+};
+
+/**
+ * Three-dimensional primitive cubic lattice.
+ *
+ * @tparam Position 3-dimensional floating-n array type
+ * @tparam Shape 3-dimensional integer array type
+ */
+template <typename Position, typename Shape>
+class primitive_lattice<Position, Shape
+  , typename boost::enable_if_c<(Position::static_size == 3)>::type>
+{
+public:
+    typedef Position result_type;
+    typedef Shape shape_type;
+    typedef typename shape_type::size_type size_type;
+
+    /**
+     * Construct lattice primitive of given shape.
+     *
+     * @param shape number of unit cells per dimension
+     */
+    explicit HALMD_GPU_ENABLED primitive_lattice(shape_type const& shape) : shape_(shape) {}
+
+    /**
+     * Returns lattice position for given particle index.
+     *
+     * @param n particle index with 0 ≤ index < size()
+     */
+    HALMD_GPU_ENABLED result_type operator()(size_type n) const
+    {
+        shape_type cell = offset_to_multi_index(n, shape_);
+        result_type r;
+        r[0] = cell[0] + float_type(0.5);
+        r[1] = cell[1] + float_type(0.5);
+        r[2] = cell[2] + float_type(0.5);
+        return r;
+    }
+
+    /**
+     * Returns number of unit cells per dimension.
+     */
+    HALMD_GPU_ENABLED shape_type const& shape() const
+    {
+        return shape_;
+    }
+
+    /**
+     * Returns total number of unit cells.
+     */
+    HALMD_GPU_ENABLED size_type size() const
+    {
+        return shape_[0] * shape_[1] * shape_[2];
+    }
+
+private:
+    typedef typename result_type::value_type float_type;
+
+    /** number of unit cells per dimension */
+    shape_type shape_;
+};
+
+/**
+ * Four-dimensional primitive tesseractic lattice.
+ *
+ * @tparam Position 4-dimensional floating-n array type
+ * @tparam Shape 4-dimensional integer array type
+ */
+template <typename Position, typename Shape>
+class primitive_lattice<Position, Shape
+  , typename boost::enable_if_c<(Position::static_size == 4)>::type>
+{
+public:
+    typedef Position result_type;
+    typedef Shape shape_type;
+    typedef typename shape_type::size_type size_type;
+
+    /**
+     * Construct lattice primitive of given shape.
+     *
+     * @param shape number of unit cells per dimension
+     */
+    explicit HALMD_GPU_ENABLED primitive_lattice(shape_type const& shape) : shape_(shape) {}
+
+    /**
+     * Returns lattice position for given particle index.
+     *
+     * @param n particle index with 0 ≤ index < size()
+     */
+    HALMD_GPU_ENABLED result_type operator()(size_type n) const
+    {
+        shape_type cell = offset_to_multi_index(n, shape_);
+        result_type r;
+        r[0] = cell[0] + float_type(0.5);
+        r[1] = cell[1] + float_type(0.5);
+        r[2] = cell[2] + float_type(0.5);
+        r[3] = cell[3] + float_type(0.5);
+        return r;
+    }
+
+    /**
+     * Returns number of unit cells per dimension.
+     */
+    HALMD_GPU_ENABLED shape_type const& shape() const
+    {
+        return shape_;
+    }
+
+    /**
+     * Returns total number of unit cells.
+     */
+    HALMD_GPU_ENABLED size_type size() const
+    {
+        return shape_[0] * shape_[1] * shape_[2] * shape_[3];
+    }
+
+private:
+    typedef typename result_type::value_type float_type;
+
+    /** number of unit cells per dimension */
+    shape_type shape_;
 };
 
 } // namespace halmd

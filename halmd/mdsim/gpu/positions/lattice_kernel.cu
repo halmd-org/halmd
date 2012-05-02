@@ -29,7 +29,7 @@ namespace gpu {
 namespace positions {
 namespace lattice_kernel {
 
-template <typename vector_type, typename primitive_type>
+template <typename vector_type, typename lattice_type>
 __global__ void lattice(
     float4* g_r
   , unsigned int npart
@@ -42,7 +42,9 @@ __global__ void lattice(
     enum { dimension = vector_type::static_size };
     unsigned int const threads = GTDIM;
 
-    for (uint i = GTID; i < npart; i += threads) {
+    lattice_type const lattice(ncell);
+
+    for (unsigned int i = GTID; i < npart; i += threads) {
 
         // load particle type
         vector_type r;
@@ -57,8 +59,7 @@ __global__ void lattice(
         uint nvacancies = (skip > 1) ? (i / (skip - 1)) : 0;
 
         // compute primitive lattice vector
-        fixed_vector<float, dimension> e;
-        primitive_type()(e, ncell, i + nvacancies);
+        fixed_vector<float, dimension> e = lattice(i + nvacancies);
 
         // scale with lattice constant and shift origin of lattice to offset
         r = e * a + offset; //< cast sum to dsfloat-based type
@@ -76,11 +77,11 @@ __global__ void lattice(
 template <int dimension>
 lattice_wrapper<dimension> const lattice_wrapper<dimension>::kernel = {
 #ifdef USE_VERLET_DSFUN
-    lattice_kernel::lattice<fixed_vector<dsfloat, dimension>, fcc_lattice_primitive>
-  , lattice_kernel::lattice<fixed_vector<dsfloat, dimension>, sc_lattice_primitive>
+    lattice_kernel::lattice<fixed_vector<dsfloat, dimension>, close_packed_lattice<vector_type, index_type> >
+  , lattice_kernel::lattice<fixed_vector<dsfloat, dimension>, primitive_lattice<vector_type, index_type> >
 #else
-    lattice_kernel::lattice<fixed_vector<float, dimension>, fcc_lattice_primitive>
-  , lattice_kernel::lattice<fixed_vector<float, dimension>, sc_lattice_primitive>
+    lattice_kernel::lattice<fixed_vector<float, dimension>, close_packed_lattice<vector_type, index_type> >
+  , lattice_kernel::lattice<fixed_vector<float, dimension>, primitive_lattice<vector_type, index_type> >
 #endif
 };
 

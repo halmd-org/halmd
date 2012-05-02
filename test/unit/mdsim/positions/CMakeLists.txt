@@ -32,3 +32,13 @@ if(WITH_CUDA)
     test_unit_mdsim_positions_lattice --run_test=lattice_gpu_3d --log_level=test_suite
   )
 endif()
+
+add_executable(test_unit_mdsim_positions_lattice_primitive
+  lattice_primitive.cpp
+)
+target_link_libraries(test_unit_mdsim_positions_lattice_primitive
+  ${HALMD_TEST_LIBRARIES}
+)
+add_test(unit/mdsim/positions/lattice_primitive
+  test_unit_mdsim_positions_lattice_primitive --log_level=test_suite
+)
