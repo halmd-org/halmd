@@ -2,6 +2,7 @@ add_subdirectory(integrators)
 add_subdirectory(positions)
 add_subdirectory(potentials)
 add_subdirectory(velocities)
+add_subdirectory(smoothers)
 
 add_executable(test_unit_mdsim_binning
   binning.cpp
