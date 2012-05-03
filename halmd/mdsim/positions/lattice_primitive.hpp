@@ -43,7 +43,7 @@ class close_packed_lattice<Position, Shape
 public:
     typedef Position result_type;
     typedef Shape shape_type;
-    typedef typename shape_type::size_type size_type;
+    typedef typename shape_type::value_type size_type;
 
     /**
      * Construct unit lattice primitive of given shape.
@@ -102,7 +102,7 @@ class close_packed_lattice<Position, Shape
 public:
     typedef Position result_type;
     typedef Shape shape_type;
-    typedef typename shape_type::size_type size_type;
+    typedef typename shape_type::value_type size_type;
 
     /**
      * Construct unit lattice primitive of given shape.
@@ -165,7 +165,7 @@ class primitive_lattice<Position, Shape
 public:
     typedef Position result_type;
     typedef Shape shape_type;
-    typedef typename shape_type::size_type size_type;
+    typedef typename shape_type::value_type size_type;
 
     /**
      * Construct unit lattice primitive of given shape.
@@ -224,7 +224,7 @@ class primitive_lattice<Position, Shape
 public:
     typedef Position result_type;
     typedef Shape shape_type;
-    typedef typename shape_type::size_type size_type;
+    typedef typename shape_type::value_type size_type;
 
     /**
      * Construct unit lattice primitive of given shape.
@@ -284,7 +284,7 @@ class primitive_lattice<Position, Shape
 public:
     typedef Position result_type;
     typedef Shape shape_type;
-    typedef typename shape_type::size_type size_type;
+    typedef typename shape_type::value_type size_type;
 
     /**
      * Construct unit lattice primitive of given shape.
