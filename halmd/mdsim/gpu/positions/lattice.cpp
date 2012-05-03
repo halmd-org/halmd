@@ -26,6 +26,7 @@
 
 #include <halmd/mdsim/gpu/positions/lattice_kernel.hpp>
 #include <halmd/mdsim/gpu/positions/lattice.hpp>
+#include <halmd/mdsim/positions/lattice_primitive.hpp>
 #include <halmd/utility/lua/lua.hpp>
 
 using namespace boost;
@@ -125,14 +126,15 @@ void lattice<dimension, float_type, RandomNumberGenerator>::fcc(
   , gpu_vector_type const& length, gpu_vector_type const& offset
 )
 {
-    scoped_timer_type timer(runtime_.set);
+    typedef close_packed_lattice<vector_type, index_type> lattice_type;
 
+    scoped_timer_type timer(runtime_.set);
     // determine maximal lattice constant
     // use the same floating point precision as the CUDA device,
     // assign lattice coordinates to (sub-)volume of the box
     LOG_TRACE("generating fcc lattice for " << last - first << " particles, box: " << length << ", offset: " << offset);
     size_t npart = last - first;
-    float_type u = (dimension == 3) ? 4 : 2;
+    float_type u = lattice_type(1).size();
     float_type V = accumulate(
         length.begin(), length.end()
       , float_type(1) / ceil(npart / u)
@@ -174,7 +176,7 @@ void lattice<dimension, float_type, RandomNumberGenerator>::fcc(
 
     try {
         cuda::configure(particle_->dim.grid, particle_->dim.block);
-        get_lattice_kernel<dimension>().fcc(first, npart, a, skip, offset, n);
+        get_lattice_kernel<lattice_type>().lattice(first, npart, a, skip, offset, n);
         cuda::thread::synchronize();
     }
     catch (cuda::error const&) {

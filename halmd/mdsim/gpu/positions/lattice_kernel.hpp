@@ -28,21 +28,22 @@ namespace mdsim {
 namespace gpu {
 namespace positions {
 
-template <int dimension>
+template <typename lattice_type>
 struct lattice_wrapper
 {
-    typedef fixed_vector<float, dimension> vector_type;
-    typedef fixed_vector<unsigned int, dimension> index_type;
+    typedef typename lattice_type::result_type vector_type;
+    typedef typename lattice_type::shape_type shape_type;
+    static unsigned int const dimension = vector_type::static_size;
 
-    cuda::function<void (float4*, unsigned int, float, unsigned int, vector_type, index_type)> fcc;
-    cuda::function<void (float4*, unsigned int, float, unsigned int, vector_type, index_type)> sc;
+    cuda::function<void (float4*, unsigned int, float, unsigned int, vector_type, shape_type)> lattice;
+
     static lattice_wrapper const kernel;
 };
 
-template <int dimension>
-lattice_wrapper<dimension> const& get_lattice_kernel()
+template <typename lattice_type>
+lattice_wrapper<lattice_type> const& get_lattice_kernel()
 {
-    return lattice_wrapper<dimension>::kernel;
+    return lattice_wrapper<lattice_type>::kernel;
 }
 
 } // namespace mdsim

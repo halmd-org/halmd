@@ -35,8 +35,8 @@ __global__ void lattice(
   , unsigned int npart
   , float a
   , unsigned int skip
-  , fixed_vector<float, vector_type::static_size> offset
-  , fixed_vector<unsigned int, vector_type::static_size> ncell
+  , typename lattice_type::result_type offset
+  , typename lattice_type::shape_type ncell
 )
 {
     enum { dimension = vector_type::static_size };
@@ -74,19 +74,17 @@ __global__ void lattice(
 
 } // namespace lattice_kernel
 
-template <int dimension>
-lattice_wrapper<dimension> const lattice_wrapper<dimension>::kernel = {
+template <typename lattice_type>
+lattice_wrapper<lattice_type> const lattice_wrapper<lattice_type>::kernel = {
 #ifdef USE_VERLET_DSFUN
-    lattice_kernel::lattice<fixed_vector<dsfloat, dimension>, close_packed_lattice<vector_type, index_type> >
-  , lattice_kernel::lattice<fixed_vector<dsfloat, dimension>, primitive_lattice<vector_type, index_type> >
+    lattice_kernel::lattice<fixed_vector<dsfloat, dimension>, lattice_type>
 #else
-    lattice_kernel::lattice<fixed_vector<float, dimension>, close_packed_lattice<vector_type, index_type> >
-  , lattice_kernel::lattice<fixed_vector<float, dimension>, primitive_lattice<vector_type, index_type> >
+    lattice_kernel::lattice<fixed_vector<float, dimension>, lattice_type>
 #endif
 };
 
-template class lattice_wrapper<3>;
-template class lattice_wrapper<2>;
+template class lattice_wrapper<close_packed_lattice<fixed_vector<float, 3>, fixed_vector<unsigned int, 3> > >;
+template class lattice_wrapper<close_packed_lattice<fixed_vector<float, 2>, fixed_vector<unsigned int, 2> > >;
 
 } // namespace mdsim
 } // namespace gpu

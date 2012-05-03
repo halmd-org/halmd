@@ -122,12 +122,13 @@ void lattice<dimension, float_type>::fcc(
 )
 {
     typedef fixed_vector<unsigned int, dimension> index_type;
+    typedef close_packed_lattice<vector_type, index_type> lattice_type;
 
     scoped_timer_type timer(runtime_.set);
 
     LOG_TRACE("generating fcc lattice for " << last - first << " particles, box: " << length << ", offset: " << offset);
     size_t npart = last - first;
-    double u = (dimension == 3) ? 4 : 2;
+    double u = lattice_type(1).size();
     double V = accumulate(length.begin(), length.end(), 1., multiplies<double>()) / ceil(npart / u);
     double a = pow(V, 1. / dimension);
     index_type n(length / a);
@@ -163,7 +164,7 @@ void lattice<dimension, float_type>::fcc(
         LOG_TRACE("insert a vacancy at every " << skip << "th site");
     }
 
-    close_packed_lattice<vector_type, index_type> const lattice(n);
+    lattice_type const lattice(n);
 
     size_t i = 0;
     for (position_iterator r_it = first; r_it != last; ++r_it, ++i) {
