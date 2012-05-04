@@ -88,64 +88,69 @@ BOOST_AUTO_TEST_CASE( power_law_host )
     BOOST_CHECK(index(1, 1) == index_array[2]);
 
     // evaluate some points of the potential, force, and hypervirial
-    typedef boost::tuple<double, double, double, double> tuple_type;
+    typedef boost::array<double, 4> array_type;
     double const eps = numeric_limits<double>::epsilon();
 
     // expected results (r, fval, en_pot, hvir) for ε=1, σ=1, n=12, rc=5σ
-    vector<tuple_type> results = tuple_list_of
-        (0.2, 7.32421875e10, 2.44140625e8, 3.515625e10)
-        (0.5, 196608., 4095.999999995904, 589824.)
-        (1., 12., 0.999999995904, 144.)
-        (2., 0.000732421875, 0.000244136529, 0.03515625)
-        (10., 1.2e-13, -4.095e-9, 1.44e-10);
+    boost::array<array_type, 5> results_aa = {{
+        {{0.2, 7.32421875e10, 2.44140625e8, 3.515625e10}}
+      , {{0.5, 196608., 4095.999999995904, 589824.}}
+      , {{1., 12., 0.999999995904, 144.}}
+      , {{2., 0.000732421875, 0.000244136529, 0.03515625}}
+      , {{10., 1.2e-13, -4.095e-9, 1.44e-10}}
+    }};
 
-    BOOST_FOREACH (tuple_type a, results) {
-        double rr = std::pow(get<0>(a), 2);
+    BOOST_FOREACH (array_type const& a, results_aa) {
+        double rr = std::pow(a[0], 2);
         double fval, en_pot, hvir;
         tie(fval, en_pot, hvir) = potential(rr, 0, 0);  // interaction AA
 
         double tolerance = (1 + index_array[0] / 2) * eps;
-        BOOST_CHECK_CLOSE_FRACTION(fval, get<1>(a), tolerance);
-        BOOST_CHECK_CLOSE_FRACTION(en_pot, get<2>(a), tolerance);
-        BOOST_CHECK_CLOSE_FRACTION(hvir, get<3>(a), tolerance);
+        BOOST_CHECK_CLOSE_FRACTION(fval, a[1], tolerance);
+        BOOST_CHECK_CLOSE_FRACTION(en_pot, a[2], tolerance);
+        BOOST_CHECK_CLOSE_FRACTION(hvir, a[3], tolerance);
     };
 
     // interaction AB: ε=.5, σ=2, n=24, rc=5σ
-    results = tuple_list_of
-        (0.2, 3.e26, 5.e23, 2.88e26)
-        (0.5, 1.3510798882111488e16,  1.40737488355328e14, 8.106479329266893e16)
-        (1., 2.01326592e8, 8.388608e6, 4.831838208e9)
-        (2., 3., 0.5, 288.)
-        (10., 2.01326592e-18, 0., 4.831838208e-15);
+    boost::array<array_type, 5> results_ab = {{
+        {{0.2, 3.e26, 5.e23, 2.88e26}}
+      , {{0.5, 1.3510798882111488e16,  1.40737488355328e14, 8.106479329266893e16}}
+      , {{1., 2.01326592e8, 8.388608e6, 4.831838208e9}}
+      , {{2., 3., 0.5, 288.}}
+      , {{10., 2.01326592e-18, 0., 4.831838208e-15}}
+    }};
 
-    BOOST_FOREACH (tuple_type a, results) {
-        double rr = std::pow(get<0>(a), 2);
+
+    BOOST_FOREACH (array_type const& a, results_ab) {
+        double rr = std::pow(a[0], 2);
         double fval, en_pot, hvir;
         tie(fval, en_pot, hvir) = potential(rr, 0, 1);  // interaction AB
 
         double tolerance = (1 + index_array[1] / 2) * eps;
-        BOOST_CHECK_CLOSE_FRACTION(fval, get<1>(a), tolerance);
-        BOOST_CHECK_CLOSE_FRACTION(en_pot, get<2>(a), tolerance);
-        BOOST_CHECK_CLOSE_FRACTION(hvir, get<3>(a), tolerance);
+        BOOST_CHECK_CLOSE_FRACTION(fval, a[1], tolerance);
+        BOOST_CHECK_CLOSE_FRACTION(en_pot, a[2], tolerance);
+        BOOST_CHECK_CLOSE_FRACTION(hvir, a[3], tolerance);
     };
 
     // interaction BB: ε=.25, σ=4, n=3, rc=5σ
-    results = tuple_list_of
-        (0.2, 150000., 1999.998, 18000.)
-        (0.5, 1536., 127.998, 1152.)
-        (1., 48., 15.998, 144.)
-        (2., 1.5, 1.998, 18.)
-        (10., 0.00048, 0.014, 0.144);
+    boost::array<array_type, 5> results_bb = {{
+        {{0.2, 150000., 1999.998, 18000.}}
+      , {{0.5, 1536., 127.998, 1152.}}
+      , {{1., 48., 15.998, 144.}}
+      , {{2., 1.5, 1.998, 18.}}
+      , {{10., 0.00048, 0.014, 0.144}}
+    }};
 
-    BOOST_FOREACH (tuple_type a, results) {
-        double rr = std::pow(get<0>(a), 2);
+
+    BOOST_FOREACH (array_type const& a, results_bb) {
+        double rr = std::pow(a[0], 2);
         double fval, en_pot, hvir;
         tie(fval, en_pot, hvir) = potential(rr, 1, 1);  // interaction BB
 
         double tolerance = (1 + index_array[2] / 2) * eps;
-        BOOST_CHECK_CLOSE_FRACTION(fval, get<1>(a), tolerance);
-        BOOST_CHECK_CLOSE_FRACTION(en_pot, get<2>(a), tolerance);
-        BOOST_CHECK_CLOSE_FRACTION(hvir, get<3>(a), tolerance);
+        BOOST_CHECK_CLOSE_FRACTION(fval, a[1], tolerance);
+        BOOST_CHECK_CLOSE_FRACTION(en_pot, a[2], tolerance);
+        BOOST_CHECK_CLOSE_FRACTION(hvir, a[3], tolerance);
     };
 }
 
