@@ -45,7 +45,7 @@ po::options_description_easy_init options_parser::add_options()
  */
 void options_parser::add(po::options_description const& desc)
 {
-    vector<shared_ptr<po::option_description> >::const_iterator i, ie;
+    vector<boost::shared_ptr<po::option_description> >::const_iterator i, ie;
     for (i = desc.options().begin(), ie = desc.options().end(); i != ie; ++i) {
         globals_.add(*i);
     }
@@ -67,7 +67,7 @@ void options_parser::add(po::options_description const& desc, string const& sect
             tie(m, _) = desc_.insert(make_pair(section, desc));
             sections_.insert(section);
         }
-        vector<shared_ptr<po::option_description> >::const_iterator i, ie;
+        vector<boost::shared_ptr<po::option_description> >::const_iterator i, ie;
         for (i = desc.options().begin(), ie = desc.options().end(); i != ie; ++i) {
             m->second.add(*i);
         }

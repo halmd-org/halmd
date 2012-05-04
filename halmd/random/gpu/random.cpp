@@ -34,7 +34,7 @@ namespace gpu {
 template <typename RandomNumberGenerator>
 random<RandomNumberGenerator>::random(
     unsigned int seed
-  , shared_ptr<logger_type> logger
+  , boost::shared_ptr<logger_type> logger
   , unsigned int blocks
   , unsigned int threads
   , unsigned int shuffle_threads
@@ -136,10 +136,10 @@ void random<RandomNumberGenerator>::luaopen(lua_State* L)
         [
             namespace_("random")
             [
-                class_<random, shared_ptr<random> >(class_name.c_str())
+                class_<random, boost::shared_ptr<random> >(class_name.c_str())
                     .def(constructor<
                         unsigned int
-                      , shared_ptr<logger_type>
+                      , boost::shared_ptr<logger_type>
                       , unsigned int
                       , unsigned int
                       , unsigned int

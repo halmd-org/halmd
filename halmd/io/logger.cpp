@@ -57,9 +57,9 @@ logging::logging()
 
 void logging::open_console(severity_level level)
 {
-    shared_ptr<console_backend_type> backend(make_shared<console_backend_type>());
+    boost::shared_ptr<console_backend_type> backend(make_shared<console_backend_type>());
     backend->add_stream(
-        shared_ptr<ostream>(&clog, empty_deleter())
+        boost::shared_ptr<ostream>(&clog, empty_deleter())
     );
     set_formatter(backend);
     backend->auto_flush(true);
@@ -84,7 +84,7 @@ void logging::close_console()
 
 void logging::open_file(string file_name, severity_level level)
 {
-    shared_ptr<file_backend_type> backend(
+    boost::shared_ptr<file_backend_type> backend(
         make_shared<file_backend_type>(
             keywords::file_name = file_name
         )
@@ -131,7 +131,7 @@ static inline ostream& operator<<(ostream& os, logging::severity_level level)
 }
 
 template <typename backend_type>
-void logging::set_formatter(shared_ptr<backend_type> backend) const
+void logging::set_formatter(boost::shared_ptr<backend_type> backend) const
 {
     backend->set_formatter(formatters::stream
         << formatters::date_time("TimeStamp", "[%d-%m-%Y %H:%M:%S.%f]")
@@ -176,7 +176,7 @@ void logging::luaopen(lua_State* L)
     [
         namespace_("io")
         [
-            class_<logger, shared_ptr<logger> >("logger")
+            class_<logger, boost::shared_ptr<logger> >("logger")
                 .def(constructor<>())
                 .def("add_attribute", &wrap_add_attribute<string>)
                 .def("add_attribute", &wrap_add_attribute<int>)
@@ -199,7 +199,7 @@ void logging::luaopen(lua_State* L)
 /** define logging singleton instance */
 logging logging::logging_;
 /** define global logger source */
-shared_ptr<logger> const logger_ = make_shared<logger>();
+boost::shared_ptr<logger> const logger_ = make_shared<logger>();
 
 HALMD_LUA_API int luaopen_libhalmd_io_logger(lua_State* L)
 {

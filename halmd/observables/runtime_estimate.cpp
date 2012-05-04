@@ -33,7 +33,7 @@ namespace halmd {
 namespace observables {
 
 runtime_estimate::runtime_estimate(
-    shared_ptr<clock_type> clock
+    boost::shared_ptr<clock_type> clock
   , step_type total_steps
 )
   // dependency injection
@@ -79,13 +79,13 @@ string runtime_estimate::format_time(double time, unsigned int prec)
 }
 
 static runtime_estimate::slot_function_type
-wrap_sample(shared_ptr<runtime_estimate> instance)
+wrap_sample(boost::shared_ptr<runtime_estimate> instance)
 {
     return bind(&runtime_estimate::sample, instance);
 }
 
 static runtime_estimate::slot_function_type
-wrap_estimate(shared_ptr<runtime_estimate> instance)
+wrap_estimate(boost::shared_ptr<runtime_estimate> instance)
 {
     return bind(&runtime_estimate::estimate, instance);
 }
@@ -97,9 +97,9 @@ void runtime_estimate::luaopen(lua_State* L)
     [
         namespace_("observables")
         [
-            class_<runtime_estimate, shared_ptr<runtime_estimate> >("runtime_estimate")
+            class_<runtime_estimate, boost::shared_ptr<runtime_estimate> >("runtime_estimate")
                 .def(constructor<
-                    shared_ptr<clock_type>
+                    boost::shared_ptr<clock_type>
                   , step_type
                 >())
                 .property("sample", &wrap_sample)

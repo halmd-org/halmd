@@ -59,8 +59,8 @@ using namespace std;
  */
 #ifdef WITH_CUDA
 template <int dimension, typename float_type>
-shared_ptr<observables::host::samples::phase_space<dimension, float_type> >
-copy_sample(shared_ptr<observables::gpu::samples::phase_space<dimension, float_type> > sample)
+boost::shared_ptr<observables::host::samples::phase_space<dimension, float_type> >
+copy_sample(boost::shared_ptr<observables::gpu::samples::phase_space<dimension, float_type> > sample)
 {
     typedef observables::host::samples::phase_space<dimension, float_type> host_sample_type;
     typedef typename observables::gpu::samples::phase_space<dimension, float_type>::gpu_vector_type gpu_vector_type;
@@ -70,7 +70,7 @@ copy_sample(shared_ptr<observables::gpu::samples::phase_space<dimension, float_t
     for (unsigned int i = 0; i < sample->r.size(); ++i) {
         ntypes.push_back(sample->r[i]->size());
     }
-    shared_ptr<host_sample_type> result = make_shared<host_sample_type>(ntypes);
+    boost::shared_ptr<host_sample_type> result = make_shared<host_sample_type>(ntypes);
     cuda::host::vector<gpu_vector_type> h_buf;
 
     // copy from GPU to host via page-locked memory
@@ -94,8 +94,8 @@ copy_sample(shared_ptr<observables::gpu::samples::phase_space<dimension, float_t
 
 
 template <int dimension, typename float_type>
-shared_ptr<observables::host::samples::phase_space<dimension, float_type> >
-copy_sample(shared_ptr<observables::host::samples::phase_space<dimension, float_type> > sample)
+boost::shared_ptr<observables::host::samples::phase_space<dimension, float_type> >
+copy_sample(boost::shared_ptr<observables::host::samples::phase_space<dimension, float_type> > sample)
 {
     return sample;
 }
@@ -120,13 +120,13 @@ struct phase_space
     vector<unsigned int> npart;
     typename box_type::vector_type box_length;
 
-    shared_ptr<box_type> box;
-    shared_ptr<clock_type> clock;
-    shared_ptr<particle_type> particle;
-    shared_ptr<position_type> position;
-    shared_ptr<velocity_type> velocity;
-    shared_ptr<input_sample_type> input_sample;
-    shared_ptr<output_sample_type> output_sample;
+    boost::shared_ptr<box_type> box;
+    boost::shared_ptr<clock_type> clock;
+    boost::shared_ptr<particle_type> particle;
+    boost::shared_ptr<position_type> position;
+    boost::shared_ptr<velocity_type> velocity;
+    boost::shared_ptr<input_sample_type> input_sample;
+    boost::shared_ptr<output_sample_type> output_sample;
 
     void test();
     phase_space();
@@ -167,7 +167,7 @@ void phase_space<modules_type>::test()
     BOOST_CHECK(output_sample->step == 1);
 
     // compare output and input, copy GPU sample to host before
-    shared_ptr<observables::host::samples::phase_space<dimension, float_type> > result
+    boost::shared_ptr<observables::host::samples::phase_space<dimension, float_type> > result
         = copy_sample(output_sample);
     for (unsigned int i = 0; i < npart.size(); ++i) { // iterate over particle species
         // compare positions with a tolerance due to mapping to and from the periodic box

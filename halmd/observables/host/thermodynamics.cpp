@@ -29,11 +29,11 @@ namespace host {
 
 template <int dimension, typename float_type>
 thermodynamics<dimension, float_type>::thermodynamics(
-    shared_ptr<particle_type const> particle
-  , shared_ptr<box_type const> box
-  , shared_ptr<clock_type const> clock
-  , shared_ptr<force_type const> force
-  , shared_ptr<logger_type> logger
+    boost::shared_ptr<particle_type const> particle
+  , boost::shared_ptr<box_type const> box
+  , boost::shared_ptr<clock_type const> clock
+  , boost::shared_ptr<force_type const> force
+  , boost::shared_ptr<logger_type> logger
 )
   : _Base(box)
   // dependency injection
@@ -102,13 +102,13 @@ void thermodynamics<dimension, float_type>::luaopen(lua_State* L)
         [
             namespace_("host")
             [
-                class_<thermodynamics, shared_ptr<_Base>, _Base>(class_name.c_str())
+                class_<thermodynamics, boost::shared_ptr<_Base>, _Base>(class_name.c_str())
                     .def(constructor<
-                        shared_ptr<particle_type const>
-                      , shared_ptr<box_type const>
-                      , shared_ptr<clock_type const>
-                      , shared_ptr<force_type const>
-                      , shared_ptr<logger_type>
+                        boost::shared_ptr<particle_type const>
+                      , boost::shared_ptr<box_type const>
+                      , boost::shared_ptr<clock_type const>
+                      , boost::shared_ptr<force_type const>
+                      , boost::shared_ptr<logger_type>
                     >())
                     .scope
                     [

@@ -74,14 +74,14 @@ phase_space<dimension, float_type>::velocity(unsigned int type) const
 
 template <typename phase_space_type>
 static function<vector<typename phase_space_type::vector_type> ()>
-wrap_position(shared_ptr<phase_space_type> self, unsigned int type)
+wrap_position(boost::shared_ptr<phase_space_type> self, unsigned int type)
 {
     return bind(&phase_space_type::position, self, type);
 }
 
 template <typename phase_space_type>
 static function<vector<typename phase_space_type::vector_type> ()>
-wrap_velocity(shared_ptr<phase_space_type> self, unsigned int type)
+wrap_velocity(boost::shared_ptr<phase_space_type> self, unsigned int type)
 {
     return bind(&phase_space_type::velocity, self, type);
 }
@@ -100,7 +100,7 @@ void phase_space<dimension, float_type>::luaopen(lua_State* L)
             [
                 namespace_("samples")
                 [
-                    class_<phase_space, shared_ptr<phase_space> >(class_name.c_str())
+                    class_<phase_space, boost::shared_ptr<phase_space> >(class_name.c_str())
                         .def(constructor<vector<unsigned int> >())
                         .property("dimension", &wrap_dimension<dimension, float_type>)
 #ifndef NDEBUG

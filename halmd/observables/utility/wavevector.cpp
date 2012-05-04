@@ -139,7 +139,7 @@ void wavevector<dimension>::luaopen(lua_State* L)
         [
             namespace_("utility")
             [
-                class_<wavevector, shared_ptr<wavevector> >(class_name.c_str())
+                class_<wavevector, boost::shared_ptr<wavevector> >(class_name.c_str())
                     .def(constructor<
                          vector<double> const&
                        , vector_type const&

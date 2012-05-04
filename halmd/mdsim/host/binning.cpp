@@ -42,11 +42,11 @@ namespace host {
  */
 template <int dimension, typename float_type>
 binning<dimension, float_type>::binning(
-    shared_ptr<particle_type const> particle
-  , shared_ptr<box_type const> box
+    boost::shared_ptr<particle_type const> particle
+  , boost::shared_ptr<box_type const> box
   , matrix_type const& r_cut
   , float_type skin
-  , shared_ptr<logger_type> logger
+  , boost::shared_ptr<logger_type> logger
 )
   // dependency injection
   : particle_(particle)
@@ -98,7 +98,7 @@ void binning<dimension, float_type>::update()
 
 template <typename binning_type>
 typename signal<void ()>::slot_function_type
-wrap_update(shared_ptr<binning_type> binning)
+wrap_update(boost::shared_ptr<binning_type> binning)
 {
     return bind(&binning_type::update, binning);
 }
@@ -114,13 +114,13 @@ void binning<dimension, float_type>::luaopen(lua_State* L)
         [
             namespace_("host")
             [
-                class_<binning, shared_ptr<binning> >(class_name.c_str())
+                class_<binning, boost::shared_ptr<binning> >(class_name.c_str())
                     .def(constructor<
-                        shared_ptr<particle_type const>
-                      , shared_ptr<box_type const>
+                        boost::shared_ptr<particle_type const>
+                      , boost::shared_ptr<box_type const>
                       , matrix_type const&
                       , float_type
-                      , shared_ptr<logger_type>
+                      , boost::shared_ptr<logger_type>
                      >())
                     .property("update", &wrap_update<binning>)
                     .property("r_skin", &binning::r_skin)

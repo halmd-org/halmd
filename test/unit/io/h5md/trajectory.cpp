@@ -48,7 +48,7 @@ using namespace std;
 array<string, 3> const types = {{ "A", "B", "C" }};
 
 template <typename sample_type, typename writer_type>
-void on_write_sample(shared_ptr<sample_type> sample, shared_ptr<writer_type> writer)
+void on_write_sample(boost::shared_ptr<sample_type> sample, boost::shared_ptr<writer_type> writer)
 {
     typedef typename sample_type::sample_vector sample_vector;
     typedef sample_vector const& (sample_type::*getter_type)(unsigned int) const;
@@ -72,7 +72,7 @@ void on_write_sample(shared_ptr<sample_type> sample, shared_ptr<writer_type> wri
 }
 
 template <typename sample_type, typename reader_type>
-void on_read_sample(shared_ptr<sample_type> sample, shared_ptr<reader_type> reader)
+void on_read_sample(boost::shared_ptr<sample_type> sample, boost::shared_ptr<reader_type> reader)
 {
     typedef typename sample_type::sample_vector sample_vector;
     typedef sample_vector& (sample_type::*getter_type)(unsigned int);
@@ -111,7 +111,7 @@ void h5md(vector<unsigned int> const& ntypes)
     BOOST_MESSAGE("Testing " << ntypes.size() << " particle types");
 
     // construct phase space sample and fill with positions and velocities
-    shared_ptr<double_sample_type> double_sample = make_shared<double_sample_type>(ntypes);
+    boost::shared_ptr<double_sample_type> double_sample = make_shared<double_sample_type>(ntypes);
     for (unsigned int type = 0; type < ntypes.size(); ++type) {
         double_sample_vector& r_sample = *double_sample->r[type];
         double_sample_vector& v_sample = *double_sample->v[type];
@@ -134,7 +134,7 @@ void h5md(vector<unsigned int> const& ntypes)
     double_sample->step = 0;
 
     // copy sample to single precision
-    shared_ptr<float_sample_type> float_sample = make_shared<float_sample_type>(ntypes);
+    boost::shared_ptr<float_sample_type> float_sample = make_shared<float_sample_type>(ntypes);
     for (unsigned int type = 0; type < ntypes.size(); ++type) {
         transform(
             double_sample->r[type]->begin()
@@ -153,10 +153,10 @@ void h5md(vector<unsigned int> const& ntypes)
 
     // write single-precision sample to file
     // use time-step not exactly representable as float-point value
-    shared_ptr<mdsim::clock> clock = make_shared<mdsim::clock>(1/6.);
-    shared_ptr<writers::h5md::file> writer_file =
+    boost::shared_ptr<mdsim::clock> clock = make_shared<mdsim::clock>(1/6.);
+    boost::shared_ptr<writers::h5md::file> writer_file =
         make_shared<writers::h5md::file>(filename);
-    shared_ptr<writers::h5md::append> writer =
+    boost::shared_ptr<writers::h5md::append> writer =
         make_shared<writers::h5md::append>(writer_file->root(), list_of("trajectory"), clock);
 
     on_write_sample(float_sample, writer);
@@ -198,11 +198,11 @@ void h5md(vector<unsigned int> const& ntypes)
     // read phase space sample #1 from file in double precision
     // reading is done upon construction, so we use an unnamed, temporary reader object
     // allocate memory for reading back the phase space sample
-    shared_ptr<double_sample_type> double_sample_ = make_shared<double_sample_type>(ntypes);
+    boost::shared_ptr<double_sample_type> double_sample_ = make_shared<double_sample_type>(ntypes);
 
-    shared_ptr<readers::h5md::file> reader_file =
+    boost::shared_ptr<readers::h5md::file> reader_file =
         make_shared<readers::h5md::file>(filename);
-    shared_ptr<readers::h5md::append> reader =
+    boost::shared_ptr<readers::h5md::append> reader =
         make_shared<readers::h5md::append>(reader_file->root(), list_of("trajectory"));
 
     on_read_sample(double_sample_, reader);
@@ -227,7 +227,7 @@ void h5md(vector<unsigned int> const& ntypes)
     }
 
     // read phase space sample #0 from file in single precision
-    shared_ptr<float_sample_type> float_sample_ = make_shared<float_sample_type>(ntypes);
+    boost::shared_ptr<float_sample_type> float_sample_ = make_shared<float_sample_type>(ntypes);
 
     // reconstruct the reader to replace slots to double with float sample
     reader.reset();

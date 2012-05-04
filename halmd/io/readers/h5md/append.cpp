@@ -180,13 +180,13 @@ hsize_t append::read_time_index(
 }
 
 static append::slot_function_type
-wrap_read_at_step(shared_ptr<append> instance, append::step_difference_type offset)
+wrap_read_at_step(boost::shared_ptr<append> instance, append::step_difference_type offset)
 {
     return bind(&append::read_at_step, instance, offset);
 }
 
 static append::slot_function_type
-wrap_read_at_time(shared_ptr<append> instance, append::time_difference_type offset)
+wrap_read_at_time(boost::shared_ptr<append> instance, append::time_difference_type offset)
 {
     return bind(&append::read_at_time, instance, offset);
 }
@@ -202,7 +202,7 @@ void append::luaopen(lua_State* L)
             [
                 namespace_("h5md")
                 [
-                    class_<append, shared_ptr<append> >("append")
+                    class_<append, boost::shared_ptr<append> >("append")
                         .def(constructor<H5::Group const&, vector<string> const&>())
                         .def("on_read", &append::on_read<float&>, pure_out_value(_2))
                         .def("on_read", &append::on_read<double&>, pure_out_value(_2))

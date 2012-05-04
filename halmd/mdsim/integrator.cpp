@@ -32,14 +32,14 @@ namespace mdsim {
 
 template <typename integrator_type>
 typename signal<void ()>::slot_function_type
-wrap_integrate(shared_ptr<integrator_type> integrator)
+wrap_integrate(boost::shared_ptr<integrator_type> integrator)
 {
     return bind(&integrator_type::integrate, integrator);
 }
 
 template <typename integrator_type>
 typename signal<void ()>::slot_function_type
-wrap_finalize(shared_ptr<integrator_type> integrator)
+wrap_finalize(boost::shared_ptr<integrator_type> integrator)
 {
     return bind(&integrator_type::finalize, integrator);
 }
@@ -53,7 +53,7 @@ void integrator<dimension>::luaopen(lua_State* L)
     [
         namespace_("mdsim")
         [
-            class_<integrator, shared_ptr<integrator> >(class_name.c_str())
+            class_<integrator, boost::shared_ptr<integrator> >(class_name.c_str())
                 .property("timestep", static_cast<double (integrator::*)() const>(&integrator::timestep), static_cast<void (integrator::*)(double)>(&integrator::timestep))
                 .property("integrate", &wrap_integrate<integrator>)
                 .property("finalize", &wrap_finalize<integrator>)

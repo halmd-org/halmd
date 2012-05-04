@@ -31,7 +31,7 @@ namespace mdsim {
 
 template <typename position>
 typename signal<void ()>::slot_function_type
-wrap_set(shared_ptr<position> self)
+wrap_set(boost::shared_ptr<position> self)
 {
     return bind(&position::set, self);
 }
@@ -45,7 +45,7 @@ void position<dimension>::luaopen(lua_State* L)
     [
         namespace_("mdsim")
         [
-            class_<position, shared_ptr<position> >(class_name.c_str())
+            class_<position, boost::shared_ptr<position> >(class_name.c_str())
                 .property("set", &wrap_set<position>)
         ]
     ];

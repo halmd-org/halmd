@@ -34,7 +34,7 @@ namespace host {
 namespace forces {
 
 template <int dimension, typename float_type>
-zero<dimension, float_type>::zero(shared_ptr<particle_type> particle)
+zero<dimension, float_type>::zero(boost::shared_ptr<particle_type> particle)
   // dependency injection
   : particle(particle)
 {
@@ -67,9 +67,9 @@ void zero<dimension, float_type>::luaopen(lua_State* L)
             [
                 namespace_("forces")
                 [
-                    class_<zero, shared_ptr<_Base_Base>, bases<_Base_Base, _Base> >(class_name.c_str())
+                    class_<zero, boost::shared_ptr<_Base_Base>, bases<_Base_Base, _Base> >(class_name.c_str())
                         .def(constructor<
-                            shared_ptr<particle_type>
+                            boost::shared_ptr<particle_type>
                         >())
                         .property("module_name", &module_name_wrapper<dimension, float_type>)
                 ]

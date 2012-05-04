@@ -87,7 +87,7 @@ void file::luaopen(lua_State* L)
             [
                 namespace_("h5md")
                 [
-                    class_<file, shared_ptr<file> >("file")
+                    class_<file, boost::shared_ptr<file> >("file")
                         .def(constructor<string const&>())
                         .def("close", &file::close)
                         .property("root", &file::root)

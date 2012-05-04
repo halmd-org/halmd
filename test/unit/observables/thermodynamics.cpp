@@ -141,20 +141,20 @@ struct lennard_jones_fluid
     fixed_vector<double, dimension> box_ratios;
     fixed_vector<double, dimension> slab;
 
-    shared_ptr<box_type> box;
-    shared_ptr<clock_type> clock;
-    shared_ptr<core_type> core;
-    shared_ptr<potential_type> potential;
-    shared_ptr<force_type> force;
-    shared_ptr<binning_type> binning;
-    shared_ptr<neighbour_type> neighbour;
-    shared_ptr<msd_type> msd;
-    shared_ptr<integrator_type> integrator;
-    shared_ptr<particle_type> particle;
-    shared_ptr<position_type> position;
-    shared_ptr<random_type> random;
-    shared_ptr<thermodynamics_type> thermodynamics;
-    shared_ptr<velocity_type> velocity;
+    boost::shared_ptr<box_type> box;
+    boost::shared_ptr<clock_type> clock;
+    boost::shared_ptr<core_type> core;
+    boost::shared_ptr<potential_type> potential;
+    boost::shared_ptr<force_type> force;
+    boost::shared_ptr<binning_type> binning;
+    boost::shared_ptr<neighbour_type> neighbour;
+    boost::shared_ptr<msd_type> msd;
+    boost::shared_ptr<integrator_type> integrator;
+    boost::shared_ptr<particle_type> particle;
+    boost::shared_ptr<position_type> position;
+    boost::shared_ptr<random_type> random;
+    boost::shared_ptr<thermodynamics_type> thermodynamics;
+    boost::shared_ptr<velocity_type> velocity;
 
     void test();
     lennard_jones_fluid();
@@ -342,7 +342,7 @@ void lennard_jones_fluid<modules_type>::connect()
 
     // update neighbour lists if maximum squared displacement is greater than (skin/2)²
     float_type limit = pow(neighbour->r_skin() / 2, 2);
-    shared_ptr<greater_type> greater = make_shared<greater_type>( bind(&msd_type::compute, msd), limit );
+    boost::shared_ptr<greater_type> greater = make_shared<greater_type>( bind(&msd_type::compute, msd), limit );
     greater->on_greater( bind(&msd_type::zero, msd) );
     greater->on_greater( bind(&binning_type::update, binning) );
     greater->on_greater( bind(&neighbour_type::update, neighbour) );

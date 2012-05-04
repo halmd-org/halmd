@@ -98,15 +98,15 @@ struct test_euler
     fixed_vector<double, dimension> box_ratios;
     fixed_vector<double, dimension> slab;
 
-    shared_ptr<box_type> box;
-    shared_ptr<particle_type> particle;
-    shared_ptr<integrator_type> integrator;
-    shared_ptr<random_type> random;
-    shared_ptr<position_type> position;
-    shared_ptr<velocity_type> velocity;
-    shared_ptr<clock_type> clock;
-    shared_ptr<sample_type> sample;
-    shared_ptr<phase_space_type> phase_space;
+    boost::shared_ptr<box_type> box;
+    boost::shared_ptr<particle_type> particle;
+    boost::shared_ptr<integrator_type> integrator;
+    boost::shared_ptr<random_type> random;
+    boost::shared_ptr<position_type> position;
+    boost::shared_ptr<velocity_type> velocity;
+    boost::shared_ptr<clock_type> clock;
+    boost::shared_ptr<sample_type> sample;
+    boost::shared_ptr<phase_space_type> phase_space;
 
     test_euler();
     void linear_motion();
@@ -258,12 +258,12 @@ struct host_modules
 
     static bool const gpu = false;
 
-    static void set_velocity(shared_ptr<particle_type> particle);
+    static void set_velocity(boost::shared_ptr<particle_type> particle);
 };
 
 /** host specific helper function: set particle velocity to v = -r */
 template <int dimension, typename float_type>
-void host_modules<dimension, float_type>::set_velocity(shared_ptr<particle_type> particle)
+void host_modules<dimension, float_type>::set_velocity(boost::shared_ptr<particle_type> particle)
 {
     // copy -r[i] to v[i]
     transform(
@@ -316,12 +316,12 @@ struct gpu_modules
     };
 #endif
 
-    static void set_velocity(shared_ptr<particle_type> particle);
+    static void set_velocity(boost::shared_ptr<particle_type> particle);
 };
 
 /** GPU specific helper function: set particle velocity to v = -r */
 template <int dimension, typename float_type>
-void gpu_modules<dimension, float_type>::set_velocity(shared_ptr<particle_type> particle)
+void gpu_modules<dimension, float_type>::set_velocity(boost::shared_ptr<particle_type> particle)
 {
     using namespace algorithm::gpu;
     typedef typename particle_type::vector_type vector_type;

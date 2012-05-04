@@ -106,7 +106,7 @@ static int wrap_dimension(box<dimension> const&)
 
 template <typename box_type>
 static function<typename box_type::vector_type ()>
-wrap_origin(shared_ptr<box_type const> box)
+wrap_origin(boost::shared_ptr<box_type const> box)
 {
     return bind(&box_type::origin, box);
 }
@@ -127,7 +127,7 @@ void box<dimension>::luaopen(lua_State* L)
     [
         namespace_("mdsim")
         [
-            class_<box, shared_ptr<box> >(class_name.c_str())
+            class_<box, boost::shared_ptr<box> >(class_name.c_str())
                 .def(constructor<size_t, vector_type const&>())
                 .def(constructor<size_t, double, vector_type const&>())
                 .property("dimension", &wrap_dimension<dimension>)

@@ -59,7 +59,7 @@ void construction()
 
     // constructor 1
     BOOST_TEST_MESSAGE("Construction from particle number and edge lengths");
-    shared_ptr<box_type> box = make_shared<box_type>(npart, length);
+    boost::shared_ptr<box_type> box = make_shared<box_type>(npart, length);
     BOOST_CHECK_EQUAL(box->length(), length);
     BOOST_CHECK_CLOSE_FRACTION(box->volume(), volume, epsilon);
     BOOST_CHECK_CLOSE_FRACTION(box->density(), density, epsilon);

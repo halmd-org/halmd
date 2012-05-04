@@ -208,7 +208,7 @@ void particle<dimension, float_type>::luaopen(lua_State* L)
         [
             namespace_("gpu")
             [
-                class_<particle, shared_ptr<_Base>, _Base>(class_name.c_str())
+                class_<particle, boost::shared_ptr<_Base>, _Base>(class_name.c_str())
                     .def(constructor<vector<unsigned int> const&>())
                     .def(constructor<vector<unsigned int> const&, unsigned int>())
                     .property("dimension", &wrap_dimension<dimension, float_type>)

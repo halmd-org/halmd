@@ -46,7 +46,7 @@ struct timer_map
 
 BOOST_AUTO_TEST_CASE( test_profiler )
 {
-    shared_ptr<utility::profiler> profiler;
+    boost::shared_ptr<utility::profiler> profiler;
     timer_map timers;
     timers.timer1 = make_shared<timer_map::accumulator_type>();
     timers.timer2 = make_shared<timer_map::accumulator_type>();

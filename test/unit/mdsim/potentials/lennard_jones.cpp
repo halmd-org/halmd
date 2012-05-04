@@ -151,12 +151,12 @@ struct lennard_jones
 
     typedef typename particle_type::vector_type vector_type;
 
-    shared_ptr<box_type> box;
-    shared_ptr<potential_type> potential;
-    shared_ptr<force_type> force;
-    shared_ptr<neighbour_type> neighbour;
-    shared_ptr<particle_type> particle;
-    shared_ptr<host_potential_type> host_potential;
+    boost::shared_ptr<box_type> box;
+    boost::shared_ptr<potential_type> potential;
+    boost::shared_ptr<force_type> force;
+    boost::shared_ptr<neighbour_type> neighbour;
+    boost::shared_ptr<particle_type> particle;
+    boost::shared_ptr<host_potential_type> host_potential;
 
     lennard_jones();
     void test();

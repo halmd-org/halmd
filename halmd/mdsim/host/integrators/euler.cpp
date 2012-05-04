@@ -38,10 +38,10 @@ namespace integrators {
 // constructor
 template <int dimension, typename float_type>
 euler<dimension, float_type>::euler(
-    shared_ptr<particle_type> particle
-  , shared_ptr<box_type const> box
+    boost::shared_ptr<particle_type> particle
+  , boost::shared_ptr<box_type const> box
   , double timestep
-  , shared_ptr<logger_type> logger
+  , boost::shared_ptr<logger_type> logger
 )
   // dependency injection (initialize public variables)
   : particle_(particle)
@@ -92,7 +92,7 @@ void euler<dimension, float_type>::luaopen(lua_State* L)
             [
                 namespace_("integrators")
                 [
-                    class_<euler, shared_ptr<_Base>, _Base>(class_name.c_str())
+                    class_<euler, boost::shared_ptr<_Base>, _Base>(class_name.c_str())
                         .scope
                         [
                             class_<runtime>("runtime")
@@ -105,10 +105,10 @@ void euler<dimension, float_type>::luaopen(lua_State* L)
           , namespace_("integrators")
             [
                 def("euler", &make_shared<euler
-                  , shared_ptr<particle_type>
-                  , shared_ptr<box_type const>
+                  , boost::shared_ptr<particle_type>
+                  , boost::shared_ptr<box_type const>
                   , double
-                  , shared_ptr<logger_type>
+                  , boost::shared_ptr<logger_type>
                 >)
             ]
         ]

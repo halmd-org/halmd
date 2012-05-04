@@ -34,11 +34,11 @@ namespace host {
 
 template <int dimension, typename float_type>
 phase_space<dimension, float_type>::phase_space(
-    shared_ptr<sample_type> sample
-  , shared_ptr<particle_type const> particle
-  , shared_ptr<box_type const> box
-  , shared_ptr<clock_type const> clock
-  , shared_ptr<logger_type> logger
+    boost::shared_ptr<sample_type> sample
+  , boost::shared_ptr<particle_type const> particle
+  , boost::shared_ptr<box_type const> box
+  , boost::shared_ptr<clock_type const> clock
+  , boost::shared_ptr<logger_type> logger
 )
   : sample_(sample)
   , particle_(particle)
@@ -103,7 +103,7 @@ void phase_space<dimension, float_type>::luaopen(lua_State* L)
     [
         namespace_("observables")
         [
-            class_<phase_space, shared_ptr<_Base>, _Base>(class_name.c_str())
+            class_<phase_space, boost::shared_ptr<_Base>, _Base>(class_name.c_str())
                 .property("dimension", &wrap_dimension<dimension, float_type>)
                 .scope
                 [
@@ -114,11 +114,11 @@ void phase_space<dimension, float_type>::luaopen(lua_State* L)
                 .def_readonly("runtime", &phase_space::runtime_)
 
           , def("phase_space", &make_shared<phase_space
-               , shared_ptr<sample_type>
-               , shared_ptr<particle_type const>
-               , shared_ptr<box_type const>
-               , shared_ptr<clock_type const>
-               , shared_ptr<logger_type>
+               , boost::shared_ptr<sample_type>
+               , boost::shared_ptr<particle_type const>
+               , boost::shared_ptr<box_type const>
+               , boost::shared_ptr<clock_type const>
+               , boost::shared_ptr<logger_type>
             >)
         ]
     ];

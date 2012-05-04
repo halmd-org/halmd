@@ -56,7 +56,7 @@ void timer_service::event::operator()(time_type const& time)
 }
 
 static timer_service::slot_function_type
-wrap_process(shared_ptr<timer_service> ts)
+wrap_process(boost::shared_ptr<timer_service> ts)
 {
     return bind(&timer_service::process, ts);
 }
@@ -68,7 +68,7 @@ void timer_service::luaopen(lua_State* L)
     [
         namespace_("utility")
         [
-            class_<timer_service, shared_ptr<timer_service> >("timer_service")
+            class_<timer_service, boost::shared_ptr<timer_service> >("timer_service")
                 .def(constructor<>())
                 .def("on_periodic", static_cast<connection (timer_service::*)(slot_function_type const&, time_type)>(&timer_service::on_periodic))
                 .def("on_periodic", static_cast<connection (timer_service::*)(slot_function_type const&, time_type, time_type)>(&timer_service::on_periodic))

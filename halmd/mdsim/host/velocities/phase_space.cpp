@@ -33,9 +33,9 @@ namespace velocities {
 
 template <int dimension, typename float_type>
 phase_space<dimension, float_type>::phase_space(
-    shared_ptr<particle_type> particle
-  , shared_ptr<sample_type const> sample
-  , shared_ptr<logger_type> logger
+    boost::shared_ptr<particle_type> particle
+  , boost::shared_ptr<sample_type const> sample
+  , boost::shared_ptr<logger_type> logger
 )
   : _Base(particle, logger)
   // dependency injection
@@ -74,11 +74,11 @@ void phase_space<dimension, float_type>::luaopen(lua_State* L)
             [
                 namespace_("velocities")
                 [
-                    class_<phase_space, shared_ptr<_Base>, _Base>(class_name.c_str())
+                    class_<phase_space, boost::shared_ptr<_Base>, _Base>(class_name.c_str())
                         .def(constructor<
-                             shared_ptr<particle_type>
-                           , shared_ptr<sample_type const>
-                           , shared_ptr<logger_type>
+                             boost::shared_ptr<particle_type>
+                           , boost::shared_ptr<sample_type const>
+                           , boost::shared_ptr<logger_type>
                         >())
                         .scope
                         [

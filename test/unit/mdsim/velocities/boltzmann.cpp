@@ -73,13 +73,13 @@ struct boltzmann
     double temp;
     double density;
 
-    shared_ptr<box_type> box;
-    shared_ptr<clock_type> clock;
-    shared_ptr<force_type> force;
-    shared_ptr<particle_type> particle;
-    shared_ptr<random_type> random;
-    shared_ptr<thermodynamics_type> thermodynamics;
-    shared_ptr<velocity_type> velocity;
+    boost::shared_ptr<box_type> box;
+    boost::shared_ptr<clock_type> clock;
+    boost::shared_ptr<force_type> force;
+    boost::shared_ptr<particle_type> particle;
+    boost::shared_ptr<random_type> random;
+    boost::shared_ptr<thermodynamics_type> thermodynamics;
+    boost::shared_ptr<velocity_type> velocity;
 
     void test();
     boltzmann();

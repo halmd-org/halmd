@@ -31,7 +31,7 @@ namespace mdsim {
 
 template <typename velocity>
 typename signal<void ()>::slot_function_type
-wrap_set(shared_ptr<velocity> self)
+wrap_set(boost::shared_ptr<velocity> self)
 {
     return bind(&velocity::set, self);
 }
@@ -45,7 +45,7 @@ void velocity<dimension>::luaopen(lua_State* L)
     [
         namespace_("mdsim")
         [
-            class_<velocity, shared_ptr<velocity> >(class_name.c_str())
+            class_<velocity, boost::shared_ptr<velocity> >(class_name.c_str())
                 .property("set", &wrap_set<velocity>)
         ]
     ];

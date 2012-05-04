@@ -38,7 +38,7 @@ profiler::profiler()
     LOG("profiler timer resolution: " << 1.E9 * timer_type::elapsed_min() << " ns");
 }
 
-connection profiler::on_profile(shared_ptr<accumulator_type> acc, string const& desc)
+connection profiler::on_profile(boost::shared_ptr<accumulator_type> acc, string const& desc)
 {
     return accumulators_.connect(make_pair(acc, desc));
 }
@@ -148,7 +148,7 @@ void profiler::log() const
 }
 
 static profiler::slot_function_type
-wrap_profile(shared_ptr<profiler> instance)
+wrap_profile(boost::shared_ptr<profiler> instance)
 {
     return bind(&profiler::profile, instance);
 }
@@ -160,7 +160,7 @@ void profiler::luaopen(lua_State* L)
     [
         namespace_("utility")
         [
-            class_<profiler, shared_ptr<profiler> >("profiler")
+            class_<profiler, boost::shared_ptr<profiler> >("profiler")
                 .def(constructor<>())
                 .def("on_profile", &profiler::on_profile)
                 .def("on_prepend_profile", &profiler::on_prepend_profile)

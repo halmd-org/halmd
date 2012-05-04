@@ -86,16 +86,16 @@ struct ideal_gas
     fixed_vector<double, dimension> box_ratios;
     fixed_vector<double, dimension> slab;
 
-    shared_ptr<box_type> box;
-    shared_ptr<clock_type> clock;
-    shared_ptr<core_type> core;
-    shared_ptr<force_type> force;
-    shared_ptr<integrator_type> integrator;
-    shared_ptr<particle_type> particle;
-    shared_ptr<position_type> position;
-    shared_ptr<random_type> random;
-    shared_ptr<thermodynamics_type> thermodynamics;
-    shared_ptr<velocity_type> velocity;
+    boost::shared_ptr<box_type> box;
+    boost::shared_ptr<clock_type> clock;
+    boost::shared_ptr<core_type> core;
+    boost::shared_ptr<force_type> force;
+    boost::shared_ptr<integrator_type> integrator;
+    boost::shared_ptr<particle_type> particle;
+    boost::shared_ptr<position_type> position;
+    boost::shared_ptr<random_type> random;
+    boost::shared_ptr<thermodynamics_type> thermodynamics;
+    boost::shared_ptr<velocity_type> velocity;
 
     void test();
     ideal_gas();

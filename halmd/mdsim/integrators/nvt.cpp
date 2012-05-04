@@ -38,7 +38,7 @@ void nvt<dimension>::luaopen(lua_State* L)
         [
             namespace_("integrators")
             [
-                class_<nvt, shared_ptr<_Base>, bases<_Base> >(class_name.c_str())
+                class_<nvt, boost::shared_ptr<_Base>, bases<_Base> >(class_name.c_str())
                     .property(
                         "temperature"
                       , (double (nvt::*)() const) &nvt::temperature

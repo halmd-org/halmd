@@ -46,7 +46,7 @@ struct create_file
         file.reset();
         filesystem::remove("h5md.h5");
     }
-    shared_ptr<file_type> file;
+    boost::shared_ptr<file_type> file;
 };
 
 BOOST_FIXTURE_TEST_CASE( check_version, create_file )

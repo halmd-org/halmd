@@ -56,7 +56,7 @@ void smooth<dimension, float_type>::luaopen(lua_State* L)
             [
                 namespace_("forces")
                 [
-                    class_<smooth, shared_ptr<smooth> >(class_name.c_str())
+                    class_<smooth, boost::shared_ptr<smooth> >(class_name.c_str())
                         .def(constructor<double>())
                 ]
             ]

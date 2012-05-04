@@ -32,7 +32,7 @@ namespace mdsim {
 
 template <typename sort_type>
 typename signal<void ()>::slot_function_type
-wrap_order(shared_ptr<sort_type> sort)
+wrap_order(boost::shared_ptr<sort_type> sort)
 {
     return bind(&sort_type::order, sort);
 }
@@ -46,7 +46,7 @@ void sort<dimension>::luaopen(lua_State* L)
     [
         namespace_("mdsim")
         [
-            class_<sort, shared_ptr<sort> >(class_name.c_str())
+            class_<sort, boost::shared_ptr<sort> >(class_name.c_str())
                 .property("order", &wrap_order<sort>)
                 .def("on_order", &sort::on_order)
         ]

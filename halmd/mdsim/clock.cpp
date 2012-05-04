@@ -45,7 +45,7 @@ HALMD_LUA_API int luaopen_libhalmd_mdsim_clock(lua_State* L)
     [
         namespace_("mdsim")
         [
-            class_<clock, shared_ptr<clock> >("clock")
+            class_<clock, boost::shared_ptr<clock> >("clock")
                 .def(constructor<clock::time_type>())
                 .property("step", &clock::step)
                 .property("time", &clock::time)

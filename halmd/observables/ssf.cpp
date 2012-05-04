@@ -36,10 +36,10 @@ namespace observables {
 
 template <int dimension>
 ssf<dimension>::ssf(
-    shared_ptr<density_mode_type const> density_mode
-  , shared_ptr<clock_type const> clock
+    boost::shared_ptr<density_mode_type const> density_mode
+  , boost::shared_ptr<clock_type const> clock
   , unsigned int npart
-  , shared_ptr<logger_type> logger
+  , boost::shared_ptr<logger_type> logger
 )
   // dependency injection
   : density_mode_(density_mode)
@@ -163,14 +163,14 @@ ssf<dimension>::value(unsigned int type1, unsigned int type2) const
 
 template <typename ssf_type>
 static function<vector<typename ssf_type::result_type> const& ()>
-wrap_value(shared_ptr<ssf_type const> ssf, unsigned int type1, unsigned int type2)
+wrap_value(boost::shared_ptr<ssf_type const> ssf, unsigned int type1, unsigned int type2)
 {
     return bind(static_cast<vector<typename ssf_type::result_type> const& (ssf_type::*)(unsigned int, unsigned int) const>(&ssf_type::value), ssf, type1, type2);
 }
 
 template <typename ssf_type>
 typename ssf_type::slot_function_type
-sample_wrapper(shared_ptr<ssf_type> ssf)
+sample_wrapper(boost::shared_ptr<ssf_type> ssf)
 {
     return bind(&ssf_type::sample, ssf);
 }
@@ -184,12 +184,12 @@ void ssf<dimension>::luaopen(lua_State* L)
     [
         namespace_("observables")
         [
-            class_<ssf, shared_ptr<ssf> >(class_name.c_str())
+            class_<ssf, boost::shared_ptr<ssf> >(class_name.c_str())
                 .def(constructor<
-                    shared_ptr<density_mode_type const>
-                  , shared_ptr<clock_type const>
+                    boost::shared_ptr<density_mode_type const>
+                  , boost::shared_ptr<clock_type const>
                   , unsigned int
-                  , shared_ptr<logger_type>
+                  , boost::shared_ptr<logger_type>
                 >())
                 .def("value", &wrap_value<ssf>)
                 .property("wavevector", &ssf::wavevector)

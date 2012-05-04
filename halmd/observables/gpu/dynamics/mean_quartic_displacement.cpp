@@ -103,7 +103,7 @@ mean_quartic_displacement<dimension, float_type>::select_compute(unsigned int th
 
 
 template <typename tcf_type>
-static shared_ptr<tcf_type>
+static boost::shared_ptr<tcf_type>
 wrap_tcf(size_t type, typename tcf_type::sample_type const&)
 {
     return make_shared<tcf_type>(type);

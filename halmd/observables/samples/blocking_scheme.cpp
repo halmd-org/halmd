@@ -35,7 +35,7 @@ HALMD_LUA_API int luaopen_libhalmd_observables_samples_blocking_scheme(lua_State
         [
             namespace_("samples")
             [
-                class_<blocking_scheme_base, shared_ptr<blocking_scheme_base> >("blocking_scheme_base")
+                class_<blocking_scheme_base, boost::shared_ptr<blocking_scheme_base> >("blocking_scheme_base")
             ]
         ]
     ];

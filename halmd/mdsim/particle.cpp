@@ -66,7 +66,7 @@ particle<dimension>::particle(vector<unsigned int> const& particles)
 
 template <typename particle_type>
 typename signal<void ()>::slot_function_type
-wrap_set(shared_ptr<particle_type> particle)
+wrap_set(boost::shared_ptr<particle_type> particle)
 {
     return bind(&particle_type::set, particle);
 }
@@ -81,7 +81,7 @@ void particle<dimension>::luaopen(lua_State* L)
     [
         namespace_("mdsim")
         [
-            class_<particle, shared_ptr<particle> >(class_name.c_str())
+            class_<particle, boost::shared_ptr<particle> >(class_name.c_str())
                 .property("set", &wrap_set<particle>)
                 .def_readonly("nbox", &particle::nbox)
                 .def_readonly("ntype", &particle::ntype)

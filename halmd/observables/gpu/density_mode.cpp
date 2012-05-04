@@ -29,10 +29,10 @@ namespace gpu {
 
 template <int dimension, typename float_type>
 density_mode<dimension, float_type>::density_mode(
-    shared_ptr<phase_space_type const> phase_space
-  , shared_ptr<wavevector_type const> wavevector
-  , shared_ptr<clock_type const> clock
-  , shared_ptr<logger_type> logger
+    boost::shared_ptr<phase_space_type const> phase_space
+  , boost::shared_ptr<wavevector_type const> wavevector
+  , boost::shared_ptr<clock_type const> clock
+  , boost::shared_ptr<logger_type> logger
 )
     // dependency injection
   : phase_space_(phase_space)
@@ -155,12 +155,12 @@ void density_mode<dimension, float_type>::luaopen(lua_State* L)
         [
             namespace_("gpu")
             [
-                class_<density_mode, shared_ptr<_Base>, _Base>(class_name.c_str())
+                class_<density_mode, boost::shared_ptr<_Base>, _Base>(class_name.c_str())
                     .def(constructor<
-                        shared_ptr<phase_space_type const>
-                      , shared_ptr<wavevector_type const>
-                      , shared_ptr<clock_type const>
-                      , shared_ptr<logger_type>
+                        boost::shared_ptr<phase_space_type const>
+                      , boost::shared_ptr<wavevector_type const>
+                      , boost::shared_ptr<clock_type const>
+                      , boost::shared_ptr<logger_type>
                     >())
                     .scope
                     [

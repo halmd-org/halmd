@@ -38,7 +38,7 @@ void force<dimension, float_type>::luaopen(lua_State* L)
         [
             namespace_("host")
             [
-                class_<force, shared_ptr<_Base>, _Base>(class_name.c_str())
+                class_<force, boost::shared_ptr<_Base>, _Base>(class_name.c_str())
             ]
         ]
     ];

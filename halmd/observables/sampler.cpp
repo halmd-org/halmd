@@ -33,8 +33,8 @@ namespace observables {
  * Initialize simulation
  */
 sampler::sampler(
-    shared_ptr<clock_type const> clock
-  , shared_ptr<core_type> core
+    boost::shared_ptr<clock_type const> clock
+  , boost::shared_ptr<core_type> core
   , step_type steps
 )
   : clock_(clock)
@@ -152,19 +152,19 @@ void sampler::sample(slot_function_type const& slot, step_type interval) const
 }
 
 static sampler::slot_function_type
-wrap_run(shared_ptr<sampler> self, sampler::step_type steps)
+wrap_run(boost::shared_ptr<sampler> self, sampler::step_type steps)
 {
     return bind(&sampler::run, self, steps);
 }
 
 static sampler::slot_function_type
-wrap_run_default_steps(shared_ptr<sampler> self)
+wrap_run_default_steps(boost::shared_ptr<sampler> self)
 {
     return bind(&sampler::run, self, 0);
 }
 
 static sampler::slot_function_type
-wrap_setup(shared_ptr<sampler> self)
+wrap_setup(boost::shared_ptr<sampler> self)
 {
     return bind(&sampler::setup, self);
 }
@@ -174,10 +174,10 @@ void sampler::luaopen(lua_State* L)
     using namespace luabind;
     module(L, "libhalmd")
     [
-        class_<sampler, shared_ptr<sampler> >("sampler")
+        class_<sampler, boost::shared_ptr<sampler> >("sampler")
             .def(constructor<
-                shared_ptr<sampler::clock_type const>
-              , shared_ptr<sampler::core_type>
+                boost::shared_ptr<sampler::clock_type const>
+              , boost::shared_ptr<sampler::core_type>
               , sampler::step_type
             >())
             .def("on_start", &sampler::on_start)

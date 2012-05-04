@@ -34,10 +34,10 @@ using namespace std;
 
 template <int dimension, typename float_type>
 phase_space<dimension, float_type>::phase_space(
-    shared_ptr<particle_type> particle
-  , shared_ptr<box_type const> box
-  , shared_ptr<sample_type const> sample
-  , shared_ptr<logger_type> logger
+    boost::shared_ptr<particle_type> particle
+  , boost::shared_ptr<box_type const> box
+  , boost::shared_ptr<sample_type const> sample
+  , boost::shared_ptr<logger_type> logger
 )
   // dependency injection
   : particle_(particle)
@@ -111,12 +111,12 @@ void phase_space<dimension, float_type>::luaopen(lua_State* L)
             [
                 namespace_("positions")
                 [
-                    class_<phase_space, shared_ptr<_Base>, _Base>(class_name.c_str())
+                    class_<phase_space, boost::shared_ptr<_Base>, _Base>(class_name.c_str())
                         .def(constructor<
-                             shared_ptr<particle_type>
-                           , shared_ptr<box_type const>
-                           , shared_ptr<sample_type const>
-                           , shared_ptr<logger_type>
+                             boost::shared_ptr<particle_type>
+                           , boost::shared_ptr<box_type const>
+                           , boost::shared_ptr<sample_type const>
+                           , boost::shared_ptr<logger_type>
                         >())
                         .scope
                         [

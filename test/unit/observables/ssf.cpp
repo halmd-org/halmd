@@ -85,16 +85,16 @@ struct lattice
     float lattice_constant;
     fixed_vector<double, dimension> slab;
 
-    shared_ptr<box_type> box;
-    shared_ptr<particle_type> particle;
-    shared_ptr<position_type> position;
-    shared_ptr<random_type> random;
-    shared_ptr<sample_type> sample;
-    shared_ptr<phase_space_type> phase_space;
-    shared_ptr<wavevector_type> wavevector;
-    shared_ptr<density_mode_type> density_mode;
-    shared_ptr<ssf_type> ssf;
-    shared_ptr<clock_type> clock;
+    boost::shared_ptr<box_type> box;
+    boost::shared_ptr<particle_type> particle;
+    boost::shared_ptr<position_type> position;
+    boost::shared_ptr<random_type> random;
+    boost::shared_ptr<sample_type> sample;
+    boost::shared_ptr<phase_space_type> phase_space;
+    boost::shared_ptr<wavevector_type> wavevector;
+    boost::shared_ptr<density_mode_type> density_mode;
+    boost::shared_ptr<ssf_type> ssf;
+    boost::shared_ptr<clock_type> clock;
 
     void test();
     lattice();

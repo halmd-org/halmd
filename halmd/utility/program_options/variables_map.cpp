@@ -38,12 +38,12 @@ void store(parsed_options const& options, variables_map& vm, bool utf8)
 
     options_description const& desc = *options.description;
 
-    BOOST_FOREACH(shared_ptr<option_description> const& d, desc.options())
+    BOOST_FOREACH(boost::shared_ptr<option_description> const& d, desc.options())
     {
         string const& name = d->long_name();
 
         // cast upstream value semantic to our value semantic
-        shared_ptr<extended_value_semantic const> semantic(
+        boost::shared_ptr<extended_value_semantic const> semantic(
             dynamic_pointer_cast<extended_value_semantic const>(d->semantic())
         );
         // skip values not deriving from our value semantic

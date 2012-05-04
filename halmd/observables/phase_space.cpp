@@ -31,7 +31,7 @@ namespace observables {
 
 template <typename phase_space_type>
 typename signal<void ()>::slot_function_type
-acquire_wrapper(shared_ptr<phase_space_type> phase_space)
+acquire_wrapper(boost::shared_ptr<phase_space_type> phase_space)
 {
     return bind(&phase_space_type::acquire, phase_space);
 }
@@ -45,7 +45,7 @@ void phase_space<dimension>::luaopen(lua_State* L)
     [
         namespace_("observables")
         [
-            class_<phase_space, shared_ptr<phase_space> >(class_name.c_str())
+            class_<phase_space, boost::shared_ptr<phase_space> >(class_name.c_str())
                 .property("acquire", &acquire_wrapper<phase_space>)
         ]
     ];

@@ -87,7 +87,7 @@ std::string file::author()
 }
 
 static signal<void ()>::slot_function_type
-wrap_flush(shared_ptr<file> instance)
+wrap_flush(boost::shared_ptr<file> instance)
 {
     return bind(&file::flush, instance);
 }
@@ -103,7 +103,7 @@ void file::luaopen(lua_State* L)
             [
                 namespace_("h5md")
                 [
-                    class_<file, shared_ptr<file> >("file")
+                    class_<file, boost::shared_ptr<file> >("file")
                         .def(constructor<string const&>())
                         // wrap as slot to support periodic flushing of file
                         .property("flush", &wrap_flush)

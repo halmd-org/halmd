@@ -141,9 +141,9 @@ typedef boost::log::sources::severity_logger<logging::severity_level> logger;
  *
  * As module loggers will be created in Lua to automatically add
  * attributes such as the module name, we declare logger_ as a
- * shared_ptr, which allows passing it to the module constructor
+ * boost::shared_ptr, which allows passing it to the module constructor
  * (loggers have no copy constructor). As a safety measure we
- * declare the shared_ptr as const, while the logger itself is
+ * declare the boost::shared_ptr as const, while the logger itself is
  * mutable.
  */
 extern boost::shared_ptr<logger> const logger_;
