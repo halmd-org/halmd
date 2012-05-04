@@ -47,9 +47,7 @@ struct fixed_vector
     /**
      * Initialization by scalar
      */
-    template <typename U>
-    HALMD_GPU_ENABLED fixed_vector(U const& s,
-      typename boost::enable_if<boost::is_convertible<U, T> >::type* dummy = 0)
+    HALMD_GPU_ENABLED fixed_vector(T const& s)
     {
         for (size_t i = 0; i < static_size; ++i) {
             (*this)[i] = s;
