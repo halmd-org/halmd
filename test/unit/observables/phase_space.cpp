@@ -202,13 +202,13 @@ phase_space<modules_type>::phase_space()
     box_length = fixed_vector<double, dimension>(40./3);
 
     // create modules
-    particle = make_shared<particle_type>(npart);
-    box = make_shared<box_type>(particle->nbox, box_length);
-    input_sample = make_shared<input_sample_type>(npart);
-    output_sample = make_shared<output_sample_type>(npart);
-    position = make_shared<position_type>(particle, box, input_sample);
-    velocity = make_shared<velocity_type>(particle, input_sample);
-    clock = make_shared<clock_type>(0); // bogus time-step
+    particle = boost::make_shared<particle_type>(npart);
+    box = boost::make_shared<box_type>(particle->nbox, box_length);
+    input_sample = boost::make_shared<input_sample_type>(npart);
+    output_sample = boost::make_shared<output_sample_type>(npart);
+    position = boost::make_shared<position_type>(particle, box, input_sample);
+    velocity = boost::make_shared<velocity_type>(particle, input_sample);
+    clock = boost::make_shared<clock_type>(0); // bogus time-step
 
     // set particle tags and types
     particle->set();

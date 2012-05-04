@@ -39,7 +39,7 @@ struct create_file
     typedef file_type::version_type version_type;
     /** create H5MD file */
     create_file() {
-        file = make_shared<file_type>("h5md.h5");
+        file = boost::make_shared<file_type>("h5md.h5");
     }
     /** close and unlink H5MD file */
     ~create_file() {

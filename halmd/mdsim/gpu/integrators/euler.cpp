@@ -108,7 +108,7 @@ void euler<dimension, float_type>::luaopen(lua_State* L)
 
           , namespace_("integrators")
             [
-                def("euler", &make_shared<euler
+                def("euler", &boost::make_shared<euler
                   , boost::shared_ptr<particle_type>
                   , boost::shared_ptr<box_type const>
                   , double

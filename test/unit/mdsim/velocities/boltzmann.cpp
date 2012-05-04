@@ -145,13 +145,13 @@ boltzmann<modules_type>::boltzmann()
 
     vector<unsigned int> npart_vector = list_of(npart);
 
-    particle = make_shared<particle_type>(npart_vector);
-    box = make_shared<box_type>(npart, density);
-    random = make_shared<random_type>();
-    velocity = make_shared<velocity_type>(particle, random, temp);
-    force = make_shared<force_type>(particle);
-    clock = make_shared<clock_type>(0); // bogus time-step
-    thermodynamics = make_shared<thermodynamics_type>(particle, box, clock, force);
+    particle = boost::make_shared<particle_type>(npart_vector);
+    box = boost::make_shared<box_type>(npart, density);
+    random = boost::make_shared<random_type>();
+    velocity = boost::make_shared<velocity_type>(particle, random, temp);
+    force = boost::make_shared<force_type>(particle);
+    clock = boost::make_shared<clock_type>(0); // bogus time-step
+    thermodynamics = boost::make_shared<thermodynamics_type>(particle, box, clock, force);
 }
 
 template <int dimension, typename float_type>

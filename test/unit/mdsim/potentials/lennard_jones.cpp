@@ -232,12 +232,12 @@ lennard_jones<float_type>::lennard_jones()
     boost::array<float, 3> sigma_array = list_of(1.f)(2.f)(4.f);
 
     // create modules
-    particle = make_shared<particle_type>(npart_list);
-    box = make_shared<box_type>(particle->nbox, fixed_vector<double, dimension>(box_length));
-    potential = make_shared<potential_type>(particle->ntype, cutoff_array, epsilon_array, sigma_array);
-    host_potential = make_shared<host_potential_type>(particle->ntype, cutoff_array, epsilon_array, sigma_array);
-    neighbour = make_shared<neighbour_type>(particle);
-    force = make_shared<force_type>(potential, particle, box, neighbour);
+    particle = boost::make_shared<particle_type>(npart_list);
+    box = boost::make_shared<box_type>(particle->nbox, fixed_vector<double, dimension>(box_length));
+    potential = boost::make_shared<potential_type>(particle->ntype, cutoff_array, epsilon_array, sigma_array);
+    host_potential = boost::make_shared<host_potential_type>(particle->ntype, cutoff_array, epsilon_array, sigma_array);
+    neighbour = boost::make_shared<neighbour_type>(particle);
+    force = boost::make_shared<force_type>(potential, particle, box, neighbour);
 }
 
 BOOST_FIXTURE_TEST_CASE( lennard_jones_gpu, device ) {

@@ -281,24 +281,24 @@ verlet_nvt_hoover<modules_type>::verlet_nvt_hoover()
     vector<unsigned int> npart_vector = list_of(npart);
 
     // create modules
-    particle = make_shared<particle_type>(npart_vector);
-    box = make_shared<box_type>(npart, density, box_ratios);
-    random = make_shared<random_type>();
-    integrator = make_shared<integrator_type>(particle, box, timestep, temp, resonance_frequency);
-    potential = make_shared<potential_type>(
+    particle = boost::make_shared<particle_type>(npart_vector);
+    box = boost::make_shared<box_type>(npart, density, box_ratios);
+    random = boost::make_shared<random_type>();
+    integrator = boost::make_shared<integrator_type>(particle, box, timestep, temp, resonance_frequency);
+    potential = boost::make_shared<potential_type>(
         particle->ntype
       , list_of(pow(2.f, 1.f/6))(0.f)(0.f)     /* cutoff, WCA potential */
       , list_of(1.f)(0.f)(0.f)                 /* epsilon */
       , list_of(1.f)(0.f)(0.f)                 /* sigma */
     );
-    binning = make_shared<binning_type>(particle, box, potential->r_cut(), skin);
-    neighbour = make_shared<neighbour_type>(particle, box, binning, potential->r_cut(), skin);
-    force = make_shared<force_type>(potential, particle, box, neighbour);
-    position = make_shared<position_type>(particle, box, random, 1);
-    velocity = make_shared<velocity_type>(particle, random, start_temp);
-    clock = make_shared<clock_type>(timestep);
-    thermodynamics = make_shared<thermodynamics_type>(particle, box, clock, force);
-    max_displacement = make_shared<max_displacement_type>(particle, box);
+    binning = boost::make_shared<binning_type>(particle, box, potential->r_cut(), skin);
+    neighbour = boost::make_shared<neighbour_type>(particle, box, binning, potential->r_cut(), skin);
+    force = boost::make_shared<force_type>(potential, particle, box, neighbour);
+    position = boost::make_shared<position_type>(particle, box, random, 1);
+    velocity = boost::make_shared<velocity_type>(particle, random, start_temp);
+    clock = boost::make_shared<clock_type>(timestep);
+    thermodynamics = boost::make_shared<thermodynamics_type>(particle, box, clock, force);
+    max_displacement = boost::make_shared<max_displacement_type>(particle, box);
 
     // create core and connect module slots to core signals
     this->connect();
@@ -307,7 +307,7 @@ verlet_nvt_hoover<modules_type>::verlet_nvt_hoover()
 template <typename modules_type>
 void verlet_nvt_hoover<modules_type>::connect()
 {
-    core = make_shared<core_type>(clock);
+    core = boost::make_shared<core_type>(clock);
     // system preparation
     core->on_prepend_setup( bind(&particle_type::set, particle) );
     core->on_setup( bind(&position_type::set, position) );
@@ -325,7 +325,7 @@ void verlet_nvt_hoover<modules_type>::connect()
     // update neighbour lists if maximum squared displacement is greater than (skin/2)²
     float_type limit = pow(neighbour->r_skin() / 2, 2);
     boost::shared_ptr<greater_type> greater =
-        make_shared<greater_type>(bind(&max_displacement_type::compute, max_displacement), limit);
+        boost::make_shared<greater_type>(bind(&max_displacement_type::compute, max_displacement), limit);
     greater->on_greater( bind(&max_displacement_type::zero, max_displacement) );
     greater->on_greater( bind(&binning_type::update, binning) );
     greater->on_greater( bind(&neighbour_type::update, neighbour) );

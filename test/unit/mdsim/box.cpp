@@ -66,7 +66,7 @@ void construction()
 
     // constructor 2
     BOOST_TEST_MESSAGE("Construction from particle number, density, and edge ratios");
-    box = make_shared<box_type>(npart, density, ratios);
+    box = boost::make_shared<box_type>(npart, density, ratios);
     BOOST_CHECK_SMALL(norm_2(box->length() - length) / norm_2(length), epsilon);
     BOOST_CHECK_CLOSE_FRACTION(box->volume(), volume, dimension * epsilon);
     BOOST_CHECK_EQUAL(box->density(), density);

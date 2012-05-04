@@ -143,11 +143,11 @@ void lattice<modules_type>::test()
     );
 
     // setup wavevectors
-    wavevector = make_shared<wavevector_type>(wavenumber, box->length(), 1e-3, 2 * dimension);
+    wavevector = boost::make_shared<wavevector_type>(wavenumber, box->length(), 1e-3, 2 * dimension);
 
     // construct modules for density modes and static structure factor
-    density_mode = make_shared<density_mode_type>(sample, wavevector, clock);
-    ssf = make_shared<ssf_type>(density_mode, clock, particle->nbox);
+    density_mode = boost::make_shared<density_mode_type>(sample, wavevector, clock);
+    ssf = boost::make_shared<ssf_type>(density_mode, clock, particle->nbox);
 
     // generate lattices
     BOOST_TEST_MESSAGE("set particle tags");
@@ -269,13 +269,13 @@ lattice<modules_type>::lattice()
 
     vector<unsigned int> npart_vector = list_of(npart);
 
-    particle = make_shared<particle_type>(npart_vector);
-    box = make_shared<box_type>(npart, density, fixed_vector<double, dimension>(ncell));
-    random = make_shared<random_type>();
-    position = make_shared<position_type>(particle, box, random, slab);
-    sample = make_shared<sample_type>(particle->ntypes);
-    clock = make_shared<clock_type>(0); // bogus time-step
-    phase_space = make_shared<phase_space_type>(sample, particle, box, clock);
+    particle = boost::make_shared<particle_type>(npart_vector);
+    box = boost::make_shared<box_type>(npart, density, fixed_vector<double, dimension>(ncell));
+    random = boost::make_shared<random_type>();
+    position = boost::make_shared<position_type>(particle, box, random, slab);
+    sample = boost::make_shared<sample_type>(particle->ntypes);
+    clock = boost::make_shared<clock_type>(0); // bogus time-step
+    phase_space = boost::make_shared<phase_space_type>(sample, particle, box, clock);
 }
 
 template <int dimension, typename float_type>

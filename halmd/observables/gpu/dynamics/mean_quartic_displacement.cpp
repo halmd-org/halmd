@@ -106,7 +106,7 @@ template <typename tcf_type>
 static boost::shared_ptr<tcf_type>
 wrap_tcf(size_t type, typename tcf_type::sample_type const&)
 {
-    return make_shared<tcf_type>(type);
+    return boost::make_shared<tcf_type>(type);
 }
 
 template <int dimension, typename float_type>

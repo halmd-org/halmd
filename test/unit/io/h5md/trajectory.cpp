@@ -155,9 +155,9 @@ void h5md(vector<unsigned int> const& ntypes)
     // use time-step not exactly representable as float-point value
     boost::shared_ptr<mdsim::clock> clock = make_shared<mdsim::clock>(1/6.);
     boost::shared_ptr<writers::h5md::file> writer_file =
-        make_shared<writers::h5md::file>(filename);
+        boost::make_shared<writers::h5md::file>(filename);
     boost::shared_ptr<writers::h5md::append> writer =
-        make_shared<writers::h5md::append>(writer_file->root(), list_of("trajectory"), clock);
+        boost::make_shared<writers::h5md::append>(writer_file->root(), list_of("trajectory"), clock);
 
     on_write_sample(float_sample, writer);
 
@@ -168,8 +168,8 @@ void h5md(vector<unsigned int> const& ntypes)
     // resetting the shared_ptr first closes the HDF5 file
     writer.reset();
     writer_file.reset();
-    writer_file = make_shared<writers::h5md::file>(filename);
-    writer = make_shared<writers::h5md::append>(writer_file->root(), list_of("trajectory"), clock);
+    writer_file = boost::make_shared<writers::h5md::file>(filename);
+    writer = boost::make_shared<writers::h5md::append>(writer_file->root(), list_of("trajectory"), clock);
 
     on_write_sample(double_sample, writer);
 
@@ -201,9 +201,9 @@ void h5md(vector<unsigned int> const& ntypes)
     boost::shared_ptr<double_sample_type> double_sample_ = make_shared<double_sample_type>(ntypes);
 
     boost::shared_ptr<readers::h5md::file> reader_file =
-        make_shared<readers::h5md::file>(filename);
+        boost::make_shared<readers::h5md::file>(filename);
     boost::shared_ptr<readers::h5md::append> reader =
-        make_shared<readers::h5md::append>(reader_file->root(), list_of("trajectory"));
+        boost::make_shared<readers::h5md::append>(reader_file->root(), list_of("trajectory"));
 
     on_read_sample(double_sample_, reader);
 
@@ -231,7 +231,7 @@ void h5md(vector<unsigned int> const& ntypes)
 
     // reconstruct the reader to replace slots to double with float sample
     reader.reset();
-    reader = make_shared<readers::h5md::append>(reader_file->root(), list_of("trajectory"));
+    reader = boost::make_shared<readers::h5md::append>(reader_file->root(), list_of("trajectory"));
 
     // deconstruct file module to check that the HDF5 library
     // keeps the file open if reader module still exists

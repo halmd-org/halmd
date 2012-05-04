@@ -220,15 +220,15 @@ test_euler<modules_type>::test_euler()
     vector<unsigned int> npart_vector = list_of(npart);
 
     // create modules
-    particle = make_shared<particle_type>(npart_vector);
-    box = make_shared<box_type>(npart, density, box_ratios);
-    integrator = make_shared<integrator_type>(particle, box, timestep);
-    random = make_shared<random_type>();
-    position = make_shared<position_type>(particle, box, random, slab);
-    velocity = make_shared<velocity_type>(particle, random, temp);
-    clock = make_shared<clock_type>(1);
-    sample = make_shared<sample_type>(particle->ntypes);
-    phase_space = make_shared<phase_space_type>(sample, particle, box, clock);
+    particle = boost::make_shared<particle_type>(npart_vector);
+    box = boost::make_shared<box_type>(npart, density, box_ratios);
+    integrator = boost::make_shared<integrator_type>(particle, box, timestep);
+    random = boost::make_shared<random_type>();
+    position = boost::make_shared<position_type>(particle, box, random, slab);
+    velocity = boost::make_shared<velocity_type>(particle, random, temp);
+    clock = boost::make_shared<clock_type>(1);
+    sample = boost::make_shared<sample_type>(particle->ntypes);
+    phase_space = boost::make_shared<phase_space_type>(sample, particle, box, clock);
 
     // set positions and velocities
     BOOST_TEST_MESSAGE("set particle tags");

@@ -113,7 +113,7 @@ void phase_space<dimension, float_type>::luaopen(lua_State* L)
                 ]
                 .def_readonly("runtime", &phase_space::runtime_)
 
-          , def("phase_space", &make_shared<phase_space
+          , def("phase_space", &boost::make_shared<phase_space
                , boost::shared_ptr<sample_type>
                , boost::shared_ptr<particle_type const>
                , boost::shared_ptr<box_type const>

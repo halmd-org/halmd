@@ -65,7 +65,7 @@ void logging::open_console(severity_level level)
     backend->auto_flush(true);
 
     core::get()->remove_sink(console_);
-    console_ = make_shared<console_sink_type>(backend);
+    console_ = boost::make_shared<console_sink_type>(backend);
     console_->set_filter(
 #ifdef NDEBUG
         filters::attr<severity_level>("Severity") <= min(level, info)
@@ -85,7 +85,7 @@ void logging::close_console()
 void logging::open_file(string file_name, severity_level level)
 {
     boost::shared_ptr<file_backend_type> backend(
-        make_shared<file_backend_type>(
+        boost::make_shared<file_backend_type>(
             keywords::file_name = file_name
         )
     );
@@ -93,7 +93,7 @@ void logging::open_file(string file_name, severity_level level)
     backend->auto_flush(true);
 
     core::get()->remove_sink(file_);
-    file_ = make_shared<file_sink_type>(backend);
+    file_ = boost::make_shared<file_sink_type>(backend);
     file_->set_filter(
 #ifdef NDEBUG
         filters::attr<severity_level>("Severity") <= min(level, info)
@@ -163,7 +163,7 @@ template <typename T>
 static void wrap_add_attribute(logger& logger_, string const& attr, T const& value)
 {
 #ifdef BOOST_LOG_ATTRIBUTE_HPP_INCLUDED_ // Boost.Log < 2.0
-    logger_.add_attribute(attr, make_shared<attributes::constant<T> >(value));
+    logger_.add_attribute(attr, boost::make_shared<attributes::constant<T> >(value));
 #else
     logger_.add_attribute(attr, attributes::constant<T>(value));
 #endif

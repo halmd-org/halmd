@@ -253,18 +253,18 @@ power_law<float_type>::power_law()
     boost::array<unsigned, 3> index_array = list_of(6)(12)(24);
 
     // create modules
-    particle = make_shared<particle_type>(npart_list);
-    box = make_shared<box_type>(particle->nbox, fixed_vector<double, dimension>(box_length));
-    potential = make_shared<potential_type>(
+    particle = boost::make_shared<particle_type>(npart_list);
+    box = boost::make_shared<box_type>(particle->nbox, fixed_vector<double, dimension>(box_length));
+    potential = boost::make_shared<potential_type>(
         particle->ntype, cutoff_array
       , epsilon_array, sigma_array, index_array
     );
-    host_potential = make_shared<host_potential_type>(
+    host_potential = boost::make_shared<host_potential_type>(
         particle->ntype, cutoff_array
       , epsilon_array, sigma_array, index_array
     );
-    neighbour = make_shared<neighbour_type>(particle);
-    force = make_shared<force_type>(potential, particle, box, neighbour);
+    neighbour = boost::make_shared<neighbour_type>(particle);
+    force = boost::make_shared<force_type>(potential, particle, box, neighbour);
 }
 
 BOOST_FIXTURE_TEST_CASE( power_law_gpu, device ) {

@@ -48,15 +48,15 @@ BOOST_AUTO_TEST_CASE( test_profiler )
 {
     boost::shared_ptr<utility::profiler> profiler;
     timer_map timers;
-    timers.timer1 = make_shared<timer_map::accumulator_type>();
-    timers.timer2 = make_shared<timer_map::accumulator_type>();
+    timers.timer1 = boost::make_shared<timer_map::accumulator_type>();
+    timers.timer2 = boost::make_shared<timer_map::accumulator_type>();
 
     // repeat three times
     for (unsigned n=0; n < 3; n++) {
         BOOST_TEST_MESSAGE("Pass #" << n+1);
 
         // construct modules
-        profiler = make_shared<utility::profiler>();
+        profiler = boost::make_shared<utility::profiler>();
 
         // register profiling timers
         profiler->on_profile(timers.timer1, "first timer");

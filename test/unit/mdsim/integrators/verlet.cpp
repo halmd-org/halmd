@@ -150,15 +150,15 @@ ideal_gas<modules_type>::ideal_gas()
     vector<unsigned int> npart_vector = list_of(npart);
 
     // create modules
-    particle = make_shared<particle_type>(npart_vector);
-    box = make_shared<box_type>(npart, density, box_ratios);
-    random = make_shared<random_type>();
-    position = make_shared<position_type>(particle, box, random, slab);
-    velocity = make_shared<velocity_type>(particle, random, temp);
-    integrator = make_shared<integrator_type>(particle, box, timestep);
-    force = make_shared<force_type>(particle);
-    clock = make_shared<clock_type>(timestep);
-    thermodynamics = make_shared<thermodynamics_type>(particle, box, clock, force);
+    particle = boost::make_shared<particle_type>(npart_vector);
+    box = boost::make_shared<box_type>(npart, density, box_ratios);
+    random = boost::make_shared<random_type>();
+    position = boost::make_shared<position_type>(particle, box, random, slab);
+    velocity = boost::make_shared<velocity_type>(particle, random, temp);
+    integrator = boost::make_shared<integrator_type>(particle, box, timestep);
+    force = boost::make_shared<force_type>(particle);
+    clock = boost::make_shared<clock_type>(timestep);
+    thermodynamics = boost::make_shared<thermodynamics_type>(particle, box, clock, force);
 
     // create core and connect module slots to core signals
     this->connect();
@@ -167,7 +167,7 @@ ideal_gas<modules_type>::ideal_gas()
 template <typename modules_type>
 void ideal_gas<modules_type>::connect()
 {
-    core = make_shared<core_type>(clock);
+    core = boost::make_shared<core_type>(clock);
     // system preparation
     core->on_prepend_setup( bind(&particle_type::set, particle) );
     core->on_setup( bind(&position_type::set, position) );

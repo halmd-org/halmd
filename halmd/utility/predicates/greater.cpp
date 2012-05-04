@@ -48,7 +48,7 @@ void greater<value_type>::luaopen(lua_State* L, char const* class_name)
                 .property("evaluate", &wrap_evaluate<greater>)
                 .def("on_greater", &greater::on_greater)
 
-          , def("greater", &make_shared<greater, function_type, value_type>)
+          , def("greater", &boost::make_shared<greater, function_type, value_type>)
         ]
     ];
 }

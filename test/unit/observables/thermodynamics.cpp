@@ -165,7 +165,7 @@ template <typename modules_type>
 void lennard_jones_fluid<modules_type>::test()
 {
     // create NVT integrator
-    integrator = make_shared<nvt_integrator_type>(
+    integrator = boost::make_shared<nvt_integrator_type>(
         particle, box, random
       , 0.005 /* time step */, temp, 1. /* collision rate */
     );
@@ -181,7 +181,7 @@ void lennard_jones_fluid<modules_type>::test()
     }
 
     // set different timestep and choose NVE integrator
-    integrator = make_shared<nve_integrator_type>(particle, box, timestep);
+    integrator = boost::make_shared<nve_integrator_type>(particle, box, timestep);
     // recreate core and connect module slots to core signals
     this->connect();
 
@@ -308,24 +308,24 @@ lennard_jones_fluid<modules_type>::lennard_jones_fluid()
     boost::array<float, 3> sigma_array = list_of(sigma)(0.f)(0.f);
 
     // create modules
-    random = make_shared<random_type>();
-    particle = make_shared<particle_type>(npart_vector);
-    box = make_shared<box_type>(npart, density, box_ratios);
-    potential = make_shared<potential_type>(particle->ntype, rc_array, epsilon_array, sigma_array);
-    binning = make_shared<binning_type>(particle, box, potential->r_cut(), skin);
-    neighbour = make_shared<neighbour_type>(particle, box, binning, potential->r_cut(), skin);
-    position = make_shared<position_type>(particle, box, random, slab);
-    velocity = make_shared<velocity_type>(particle, random, temp);
-    force = make_shared<force_type>(potential, particle, box, neighbour);
-    clock = make_shared<clock_type>(timestep);
-    thermodynamics = make_shared<thermodynamics_type>(particle, box, clock, force);
-    msd = make_shared<msd_type>(particle, box);
+    random = boost::make_shared<random_type>();
+    particle = boost::make_shared<particle_type>(npart_vector);
+    box = boost::make_shared<box_type>(npart, density, box_ratios);
+    potential = boost::make_shared<potential_type>(particle->ntype, rc_array, epsilon_array, sigma_array);
+    binning = boost::make_shared<binning_type>(particle, box, potential->r_cut(), skin);
+    neighbour = boost::make_shared<neighbour_type>(particle, box, binning, potential->r_cut(), skin);
+    position = boost::make_shared<position_type>(particle, box, random, slab);
+    velocity = boost::make_shared<velocity_type>(particle, random, temp);
+    force = boost::make_shared<force_type>(potential, particle, box, neighbour);
+    clock = boost::make_shared<clock_type>(timestep);
+    thermodynamics = boost::make_shared<thermodynamics_type>(particle, box, clock, force);
+    msd = boost::make_shared<msd_type>(particle, box);
 }
 
 template <typename modules_type>
 void lennard_jones_fluid<modules_type>::connect()
 {
-    core = make_shared<core_type>(clock);
+    core = boost::make_shared<core_type>(clock);
     // system preparation
     core->on_prepend_setup( bind(&particle_type::set, particle) );
     core->on_setup( bind(&position_type::set, position) );
