@@ -47,7 +47,7 @@ static luabind::object read_attribute(
 {
     if (h5xx::exists_attribute(object, name)) {
         T value = h5xx::read_attribute<T>(object, name);
-        return luabind::object(L, cref(value));
+        return luabind::object(L, boost::cref(value));
     }
     return luabind::object(); // == nil
 }
