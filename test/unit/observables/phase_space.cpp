@@ -192,8 +192,11 @@ phase_space<modules_type>::phase_space()
 {
     BOOST_TEST_MESSAGE("initialise simulation modules");
 
-    // set module parameters
-    npart = list_of(1024)(512)(30)(1); //< choose a value smaller than warp size and some limiting values
+    // choose a value smaller than warp size and some limiting values
+    npart.push_back(1024);
+    npart.push_back(512);
+    npart.push_back(30);
+    npart.push_back(1);
 
     // choose a box length with is not an exactly representable as a
     // floating-point number and which is small enough to have some overflow
