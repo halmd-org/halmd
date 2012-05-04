@@ -212,7 +212,7 @@ void script::options(options_parser& parser)
     // call_function throws an exception
     object option_get = option["get"];
     try {
-        call_function<void>(option_get, ref(parser));
+        call_function<void>(option_get, boost::ref(parser));
     }
     catch (luabind::error const& e) {
         LOG_ERROR(lua_tostring(e.state(), -1));
