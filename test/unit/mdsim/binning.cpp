@@ -497,7 +497,8 @@ HALMD_TEST_INIT( binning )
     float cell_length = 2;
 
     for (unsigned int unit = 1; unit <= 8; unit *= 2) {
-        for (float compression = 0; compression <= 1; compression += 0.2) {
+        for (unsigned int j = 0; j <= 4; ++j) {
+            float compression = j / 4.;
             {
 #ifdef USE_HOST_SINGLE_PRECISION
                 typedef test_binning_non_uniform_density<halmd::mdsim::host::binning<2, float> > test_type;
