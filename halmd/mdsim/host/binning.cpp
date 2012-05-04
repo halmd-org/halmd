@@ -62,11 +62,7 @@ binning<dimension, float_type>::binning(
         }
     }
     vector_type L = box->length();
-    ncell_ = static_cast<cell_size_type>(L / r_cut_max);
-    if (*min_element(ncell_.begin(), ncell_.end()) < 3) {
-        LOG_DEBUG("number of cells per dimension (untruncated): " << L / r_cut_max);
-        throw logic_error("less than least 3 cells per dimension");
-    }
+    ncell_ = element_max(static_cast<cell_size_type>(L / r_cut_max), cell_size_type(1));
     cell_.resize(ncell_);
     cell_length_ = element_div(L, static_cast<vector_type>(ncell_));
 
