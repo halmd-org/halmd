@@ -73,14 +73,14 @@ phase_space<dimension, float_type>::velocity(unsigned int type) const
 }
 
 template <typename phase_space_type>
-static function<vector<typename phase_space_type::vector_type> ()>
+static boost::function<vector<typename phase_space_type::vector_type> ()>
 wrap_position(boost::shared_ptr<phase_space_type> self, unsigned int type)
 {
     return bind(&phase_space_type::position, self, type);
 }
 
 template <typename phase_space_type>
-static function<vector<typename phase_space_type::vector_type> ()>
+static boost::function<vector<typename phase_space_type::vector_type> ()>
 wrap_velocity(boost::shared_ptr<phase_space_type> self, unsigned int type)
 {
     return bind(&phase_space_type::velocity, self, type);

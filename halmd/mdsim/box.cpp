@@ -105,14 +105,14 @@ static int wrap_dimension(box<dimension> const&)
 }
 
 template <typename box_type>
-static function<typename box_type::vector_type ()>
+static boost::function<typename box_type::vector_type ()>
 wrap_origin(boost::shared_ptr<box_type const> box)
 {
     return bind(&box_type::origin, box);
 }
 
 template <typename box_type>
-static function<vector<typename box_type::vector_type> ()>
+static boost::function<vector<typename box_type::vector_type> ()>
 wrap_edges(boost::shared_ptr<box_type const> box)
 {
     return bind(&box_type::edges, box);

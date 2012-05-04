@@ -89,7 +89,7 @@ static void write_dataset(
     H5::DataSet& dataset
   , H5::Group const& group
   , string const& name
-  , function<T ()> const& slot
+  , boost::function<T ()> const& slot
 )
 {
     T data = slot();
@@ -102,7 +102,7 @@ static void write_dataset(
 template <typename T>
 connection append::on_write(
     subgroup_type& group
-  , function<T ()> const& slot
+  , boost::function<T ()> const& slot
   , vector<string> const& location
 )
 {

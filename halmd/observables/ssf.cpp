@@ -162,7 +162,7 @@ ssf<dimension>::value(unsigned int type1, unsigned int type2) const
 }
 
 template <typename ssf_type>
-static function<vector<typename ssf_type::result_type> const& ()>
+static boost::function<vector<typename ssf_type::result_type> const& ()>
 wrap_value(boost::shared_ptr<ssf_type const> ssf, unsigned int type1, unsigned int type2)
 {
     return bind(static_cast<vector<typename ssf_type::result_type> const& (ssf_type::*)(unsigned int, unsigned int) const>(&ssf_type::value), ssf, type1, type2);

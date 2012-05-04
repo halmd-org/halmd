@@ -57,7 +57,7 @@ append::append(
 template <typename T>
 connection append::on_read(
     subgroup_type& group
-  , function<T ()> const& slot
+  , boost::function<T ()> const& slot
   , vector<string> const& location
 )
 {
@@ -95,7 +95,7 @@ void append::read_at_time(time_difference_type offset)
 template <typename T>
 void append::read_dataset(
     H5::Group const& group
-  , function<T ()> const& slot
+  , boost::function<T ()> const& slot
   , index_function_type const& index
 )
 {

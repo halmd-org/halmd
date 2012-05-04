@@ -84,7 +84,7 @@ phase_space<dimension, float_type>::velocity(unsigned int type)
 }
 
 template <typename phase_space_type>
-static function<typename phase_space_type::sample_vector& ()>
+static boost::function<typename phase_space_type::sample_vector& ()>
 wrap_position(boost::shared_ptr<phase_space_type> phase_space, unsigned int type)
 {
     typedef typename phase_space_type::sample_vector& (phase_space_type::*getter_type)(unsigned int);
@@ -92,7 +92,7 @@ wrap_position(boost::shared_ptr<phase_space_type> phase_space, unsigned int type
 }
 
 template <typename phase_space_type>
-static function<typename phase_space_type::sample_vector& ()>
+static boost::function<typename phase_space_type::sample_vector& ()>
 wrap_velocity(boost::shared_ptr<phase_space_type> phase_space, unsigned int type)
 {
     typedef typename phase_space_type::sample_vector& (phase_space_type::*getter_type)(unsigned int);

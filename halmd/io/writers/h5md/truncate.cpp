@@ -83,7 +83,7 @@ static void write_dataset(
     H5::DataSet& dataset
   , H5::Group const& group
   , string const& name
-  , function<T ()> const& slot
+  , boost::function<T ()> const& slot
 )
 {
     T data = slot();
@@ -96,7 +96,7 @@ static void write_dataset(
 template <typename T>
 connection truncate::on_write(
     subgroup_type& dataset
-  , function<T ()> const& slot
+  , boost::function<T ()> const& slot
   , vector<string> const& location
 )
 {

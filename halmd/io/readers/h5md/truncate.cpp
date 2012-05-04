@@ -50,7 +50,7 @@ truncate::truncate(
 template <typename T>
 connection truncate::on_read(
     subgroup_type& dataset
-  , function<T ()> const& slot
+  , boost::function<T ()> const& slot
   , vector<string> const& location
 )
 {
@@ -81,7 +81,7 @@ void truncate::read()
 template <typename T>
 void truncate::read_dataset(
     H5::DataSet dataset
-  , function<T ()> const& slot
+  , boost::function<T ()> const& slot
 )
 {
     h5xx::read_dataset(dataset, slot());

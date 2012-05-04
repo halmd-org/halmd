@@ -40,7 +40,7 @@ acquire_wrapper(boost::shared_ptr<density_mode_type> density_mode)
 }
 
 template <typename density_mode_type>
-static function<vector<double> const& ()>
+static boost::function<vector<double> const& ()>
 wrap_wavenumber(boost::shared_ptr<density_mode_type const> density_mode)
 {
     return bind(&density_mode_type::wavenumber, density_mode);

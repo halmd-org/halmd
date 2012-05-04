@@ -190,21 +190,21 @@ static char const* module_name_wrapper(verlet_nvt_hoover<dimension, float_type> 
 }
 
 template <typename integrator_type>
-static function<typename integrator_type::chain_type& ()>
+static boost::function<typename integrator_type::chain_type& ()>
 wrap_xi(boost::shared_ptr<integrator_type> integrator)
 {
     return lambda::var(integrator->xi);
 }
 
 template <typename integrator_type>
-static function<typename integrator_type::chain_type& ()>
+static boost::function<typename integrator_type::chain_type& ()>
 wrap_v_xi(boost::shared_ptr<integrator_type> integrator)
 {
     return lambda::var(integrator->v_xi);
 }
 
 template <typename integrator_type>
-static function<double ()>
+static boost::function<double ()>
 wrap_en_nhc(boost::shared_ptr<integrator_type> integrator)
 {
     return bind(&integrator_type::en_nhc, integrator);
