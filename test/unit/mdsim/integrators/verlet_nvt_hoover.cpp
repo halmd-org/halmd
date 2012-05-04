@@ -148,7 +148,7 @@ void verlet_nvt_hoover<modules_type>::test()
     // the samples can be considered independent
     uint64_t period = static_cast<uint64_t>(round(3 / (resonance_frequency * timestep)));
     accumulator<double> temp_;
-    array<accumulator<double>, dimension> v_cm;   //< accumulate velocity component-wise
+    boost::array<accumulator<double>, dimension> v_cm;   //< accumulate velocity component-wise
     double max_en_diff = 0;                       // integral of motion: Hamiltonian extended by NHC terms
 
     BOOST_TEST_MESSAGE("prepare system");

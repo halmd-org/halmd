@@ -110,7 +110,7 @@ void verlet_nvt_andersen<modules_type>::test()
     // the samples can be considered independent
     step_type period = static_cast<step_type>(round(3. / (coll_rate * timestep)));
     accumulator<double> temp_;
-    array<accumulator<double>, dimension> v_cm;   //< accumulate velocity component-wise
+    boost::array<accumulator<double>, dimension> v_cm;   //< accumulate velocity component-wise
 
     core->setup();
     BOOST_TEST_MESSAGE("run NVT integrator over " << steps << " steps");

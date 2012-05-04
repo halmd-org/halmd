@@ -40,7 +40,7 @@ BOOST_AUTO_TEST_CASE( accumulating_value_empty )
     desc.add_options()
         ("verbose,v", po::accum_value<int>(), "")
         ;
-    array<char const*, 1> args = {{ "" //< argv[0]
+    boost::array<char const*, 1> args = {{ "" //< argv[0]
     }};
     po::command_line_parser parser(args.size(), const_cast<char**>(&args.front()));
     po::parsed_options parsed(parser.options(desc).run());
@@ -59,7 +59,7 @@ BOOST_AUTO_TEST_CASE( accumulating_value_1 )
     desc.add_options()
         ("verbose,v", po::accum_value<int>(), "")
         ;
-    array<char const*, 3> args = {{ "" //< argv[0]
+    boost::array<char const*, 3> args = {{ "" //< argv[0]
       , "positional", "--verbose"
     }};
     po::command_line_parser parser(args.size(), const_cast<char**>(&args.front()));
@@ -79,7 +79,7 @@ BOOST_AUTO_TEST_CASE( accumulating_value_3 )
     desc.add_options()
         ("verbose,v", po::accum_value<int>(), "")
         ;
-    array<char const*, 5> args = {{ "" //< argv[0]
+    boost::array<char const*, 5> args = {{ "" //< argv[0]
       , "-v", "positional", "--verbose", "-v"
     }};
     po::command_line_parser parser(args.size(), const_cast<char**>(&args.front()));
@@ -99,7 +99,7 @@ BOOST_AUTO_TEST_CASE( accumulating_value_defaulted )
     desc.add_options()
         ("verbose,v", po::accum_value<int>()->default_value(2), "")
         ;
-    array<char const*, 1> args = {{ "" //< argv[0]
+    boost::array<char const*, 1> args = {{ "" //< argv[0]
     }};
     po::command_line_parser parser(args.size(), const_cast<char**>(&args.front()));
     po::parsed_options parsed(parser.options(desc).run());

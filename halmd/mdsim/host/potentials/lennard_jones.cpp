@@ -40,9 +40,9 @@ namespace potentials {
 template <typename float_type>
 lennard_jones<float_type>::lennard_jones(
     unsigned ntype
-  , array<float, 3> const& cutoff
-  , array<float, 3> const& epsilon
-  , array<float, 3> const& sigma
+  , boost::array<float, 3> const& cutoff
+  , boost::array<float, 3> const& epsilon
+  , boost::array<float, 3> const& sigma
   , boost::shared_ptr<logger_type> logger
 )
   // allocate potential parameters
@@ -96,9 +96,9 @@ void lennard_jones<float_type>::luaopen(lua_State* L)
                     class_<lennard_jones, boost::shared_ptr<lennard_jones> >(module_name())
                         .def(constructor<
                             unsigned
-                          , array<float, 3> const&
-                          , array<float, 3> const&
-                          , array<float, 3> const&
+                          , boost::array<float, 3> const&
+                          , boost::array<float, 3> const&
+                          , boost::array<float, 3> const&
                           , boost::shared_ptr<logger_type>
                         >())
                         .property("r_cut", (matrix_type const& (lennard_jones::*)() const) &lennard_jones::r_cut)

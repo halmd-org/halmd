@@ -50,7 +50,7 @@ BOOST_AUTO_TEST_CASE( empty_args )
     desc.add_options()
         ("particles", po::value<uint_array>(), "")
         ;
-    array<char const*, 1> args = {{ "halmd" //< argv[0]
+    boost::array<char const*, 1> args = {{ "halmd" //< argv[0]
     }};
     parser.add(desc, "box");
     po::variables_map vm;
@@ -69,7 +69,7 @@ BOOST_AUTO_TEST_CASE( empty_args_defaulted )
     desc.add_options()
         ("density", po::value<double>()->default_value(0.75), "")
         ;
-    array<char const*, 1> args = {{ "halmd" //< argv[0]
+    boost::array<char const*, 1> args = {{ "halmd" //< argv[0]
     }};
     parser.add(desc, "box");
     po::variables_map vm;
@@ -87,7 +87,7 @@ BOOST_AUTO_TEST_CASE( empty_options_description )
     halmd::options_parser parser;
     po::options_description desc;
     parser.add(desc, "core");
-    array<char const*, 2> args = {{ "halmd" //< argv[0]
+    boost::array<char const*, 2> args = {{ "halmd" //< argv[0]
       , "core"
     }};
     po::variables_map vm;
@@ -105,7 +105,7 @@ BOOST_AUTO_TEST_CASE( single_occurrence )
         ("particles", po::value<uint_array>(), "")
         ("density", po::value<double>(), "")
         ;
-    array<char const*, 6> args = {{ "" //< argv[0]
+    boost::array<char const*, 6> args = {{ "" //< argv[0]
       , "box", "--particles", "10000" , "--density", "0.8"
     }};
     parser.add(desc, "box");
@@ -129,7 +129,7 @@ BOOST_AUTO_TEST_CASE( multiple_occurrences )
         ("particles", po::value<uint_array>(), "")
         ("density", po::value<double>(), "")
         ;
-    array<char const*, 7> args = {{ "" //< argv[0]
+    boost::array<char const*, 7> args = {{ "" //< argv[0]
       , "box", "--particles", "10000"
       , "box", "--density", "0.8"
     }};
@@ -153,7 +153,7 @@ BOOST_AUTO_TEST_CASE( module_independent_options )
         ("verbose,v", po::accum_value<int>()->default_value(42), "")
         ("output", po::value<string>(), "")
         ;
-    array<char const*, 5> args = {{ "" //< argv[0]
+    boost::array<char const*, 5> args = {{ "" //< argv[0]
       , "-vvv", "-v", "--output", "/dev/null"
     }};
     po::variables_map vm;
@@ -178,7 +178,7 @@ BOOST_AUTO_TEST_CASE( module_independent_and_module_options )
         ("particles", po::value<uint_array>(), "")
         ("density", po::value<double>(), "")
         ;
-    array<char const*, 9> args = {{ "" //< argv[0]
+    boost::array<char const*, 9> args = {{ "" //< argv[0]
       , "-vvv", "-v"
       , "box", "--particles", "10000"
       , "box", "--density", "0.8"
@@ -205,7 +205,7 @@ BOOST_AUTO_TEST_CASE( multiple_option_occurrences )
     desc.add_options()
         ("dimension", po::value<unsigned int>(), "")
         ;
-    array<char const*, 4> args = {{ "" //< argv[0]
+    boost::array<char const*, 4> args = {{ "" //< argv[0]
       , "box", "--dimension=2", "--dimension=3"
     }};
     parser.add(desc, "box");
@@ -235,7 +235,7 @@ BOOST_AUTO_TEST_CASE( multiple_namespace_and_option_occurrences )
             ;
         parser.add(desc, "core");
     }
-    array<char const*, 7> args = {{ "" //< argv[0]
+    boost::array<char const*, 7> args = {{ "" //< argv[0]
       , "box", "--dimension=2"
       , "core", "--integrator=verlet_nvt_andersen"
       , "box", "--dimension=3"
@@ -254,7 +254,7 @@ BOOST_AUTO_TEST_CASE( invalid_namespace )
     desc.add_options()
         ("dimension", po::value<unsigned int>(), "")
         ;
-    array<char const*, 4> args = {{ "" //< argv[0]
+    boost::array<char const*, 4> args = {{ "" //< argv[0]
       , "box", "--dimension=2"
       , "core"
     }};
@@ -273,7 +273,7 @@ BOOST_AUTO_TEST_CASE( invalid_namespace_with_option )
     desc.add_options()
         ("dimension", po::value<unsigned int>(), "")
         ;
-    array<char const*, 5> args = {{ "" //< argv[0]
+    boost::array<char const*, 5> args = {{ "" //< argv[0]
       , "box", "--dimension=2"
       , "core", "--integrator=verlet_nvt_andersen"
     }};
@@ -316,7 +316,7 @@ BOOST_AUTO_TEST_CASE( multiple_modules )
             ;
         parser.add(desc, "morse");
     }
-    array<char const*, 15> args = {{ "" //< argv[0]
+    boost::array<char const*, 15> args = {{ "" //< argv[0]
       , "-vvv"
       , "box", "--dimension=3"
       , "core", "--integrator=verlet_nvt_andersen"
@@ -866,7 +866,7 @@ BOOST_AUTO_TEST_CASE( command_line_and_config_file )
             ;
         parser.add(desc, "morse");
     }
-    array<char const*, 13> args = {{ "" //< argv[0]
+    boost::array<char const*, 13> args = {{ "" //< argv[0]
       , "-v"
       , "box", "--dimension=2"
       , "core", "--integrator=verlet_nvt_andersen"

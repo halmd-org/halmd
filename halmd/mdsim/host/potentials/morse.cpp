@@ -40,10 +40,10 @@ namespace potentials {
 template <typename float_type>
 morse<float_type>::morse(
     unsigned ntype
-  , array<float, 3> const& cutoff
-  , array<float, 3> const& epsilon
-  , array<float, 3> const& sigma
-  , array<float, 3> const& r_min
+  , boost::array<float, 3> const& cutoff
+  , boost::array<float, 3> const& epsilon
+  , boost::array<float, 3> const& sigma
+  , boost::array<float, 3> const& r_min
   , boost::shared_ptr<logger_type> logger
 )
   // allocate potential parameters
@@ -98,10 +98,10 @@ void morse<float_type>::luaopen(lua_State* L)
                     class_<morse, boost::shared_ptr<morse> >(module_name())
                         .def(constructor<
                             unsigned
-                          , array<float, 3> const&
-                          , array<float, 3> const&
-                          , array<float, 3> const&
-                          , array<float, 3> const&
+                          , boost::array<float, 3> const&
+                          , boost::array<float, 3> const&
+                          , boost::array<float, 3> const&
+                          , boost::array<float, 3> const&
                           , boost::shared_ptr<logger_type>
                         >())
                         .property("r_cut", (matrix_type const& (morse::*)() const) &morse::r_cut)

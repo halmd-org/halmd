@@ -39,10 +39,10 @@ namespace potentials {
 template <typename float_type>
 power_law<float_type>::power_law(
     unsigned int ntype
-  , array<float, 3> const& cutoff
-  , array<float, 3> const& epsilon
-  , array<float, 3> const& sigma
-  , array<unsigned int, 3> const& index
+  , boost::array<float, 3> const& cutoff
+  , boost::array<float, 3> const& epsilon
+  , boost::array<float, 3> const& sigma
+  , boost::array<unsigned int, 3> const& index
   , boost::shared_ptr<logger_type> logger
 )
   // allocate potential parameters
@@ -99,10 +99,10 @@ void power_law<float_type>::luaopen(lua_State* L)
                     class_<power_law, boost::shared_ptr<power_law> >(module_name())
                         .def(constructor<
                             unsigned int
-                          , array<float, 3> const&
-                          , array<float, 3> const&
-                          , array<float, 3> const&
-                          , array<unsigned int, 3> const&
+                          , boost::array<float, 3> const&
+                          , boost::array<float, 3> const&
+                          , boost::array<float, 3> const&
+                          , boost::array<unsigned int, 3> const&
                           , boost::shared_ptr<logger_type>
                         >())
                         .property("r_cut", (matrix_type const& (power_law::*)() const) &power_law::r_cut)

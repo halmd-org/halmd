@@ -45,7 +45,7 @@ using namespace halmd;
 using namespace halmd::io; // avoid ambiguity of io:: between halmd::io and boost::io
 using namespace std;
 
-array<string, 3> const types = {{ "A", "B", "C" }};
+boost::array<string, 3> const types = {{ "A", "B", "C" }};
 
 template <typename sample_type, typename writer_type>
 void on_write_sample(boost::shared_ptr<sample_type> sample, boost::shared_ptr<writer_type> writer)

@@ -46,11 +46,11 @@ namespace potentials {
 template <typename float_type>
 power_law_with_core<float_type>::power_law_with_core(
     unsigned ntype
-  , array<float, 3> const& cutoff
-  , array<float, 3> const& core
-  , array<float, 3> const& epsilon
-  , array<float, 3> const& sigma
-  , array<unsigned, 3> const& index
+  , boost::array<float, 3> const& cutoff
+  , boost::array<float, 3> const& core
+  , boost::array<float, 3> const& epsilon
+  , boost::array<float, 3> const& sigma
+  , boost::array<unsigned, 3> const& index
   , boost::shared_ptr<logger_type> logger
 )
   // allocate potential parameters
@@ -131,11 +131,11 @@ void power_law_with_core<float_type>::luaopen(lua_State* L)
                     class_<power_law_with_core, boost::shared_ptr<power_law_with_core> >(module_name())
                         .def(constructor<
                             unsigned
-                          , array<float, 3> const&
-                          , array<float, 3> const&
-                          , array<float, 3> const&
-                          , array<float, 3> const&
-                          , array<unsigned, 3> const&
+                          , boost::array<float, 3> const&
+                          , boost::array<float, 3> const&
+                          , boost::array<float, 3> const&
+                          , boost::array<float, 3> const&
+                          , boost::array<unsigned, 3> const&
                           , boost::shared_ptr<logger_type>
                         >())
                         .property("r_cut", (matrix_type const& (power_law_with_core::*)() const) &power_law_with_core::r_cut)
