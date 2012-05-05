@@ -47,11 +47,6 @@ void greater<value_type>::luaopen(lua_State* L, char const* class_name)
             class_<greater>(class_name)
                 .property("evaluate", &wrap_evaluate<greater>)
                 .def("on_greater", &greater::on_greater)
-                .scope
-                [
-                    class_<function_type>("function_type")
-                        .def("__call", &function_type::operator())
-                ]
 
           , def("greater", &make_shared<greater, function_type, value_type>)
         ]
