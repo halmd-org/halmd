@@ -351,10 +351,10 @@ env-boost:
 ## Luabind library
 ##
 
-LUABIND_VERSION = 0.9.1-29-g5778ff8
+LUABIND_VERSION = 0.9.1-30-g99922ac
 LUABIND_TARBALL = luabind-$(LUABIND_VERSION).tar.bz2
 LUABIND_TARBALL_URL = http://sourceforge.net/projects/halmd/files/libs/luabind/$(LUABIND_TARBALL)
-LUABIND_TARBALL_SHA256 = 9d85fa51e9693a8050d0cd9e0eaceb045db1a86f38209102bb0c120d88f318e6
+LUABIND_TARBALL_SHA256 = a5557572f3fa0e962d6136cfeb49ba0482c93b9d8fd45c238f29c045e44da9d9
 LUABIND_BUILD_DIR = luabind-$(LUABIND_VERSION)
 LUABIND_BUILD_FLAGS = cxxflags=-fPIC link=static variant=release variant=debug
 LUABIND_INSTALL_DIR = $(PREFIX)/luabind-$(LUABIND_VERSION)
