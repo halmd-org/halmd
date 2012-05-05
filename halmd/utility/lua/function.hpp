@@ -621,11 +621,19 @@ struct default_converter<boost::function<R (Args...)> >
   : halmd::detail::lua_function_converter<halmd::detail::cpp_function_converter<luabind::detail::value_converter> > {};
 
 template <typename R, typename... Args>
+struct default_converter<boost::function<R (Args...)>&&>
+  : halmd::detail::lua_function_converter<halmd::detail::cpp_function_converter<luabind::detail::value_converter> > {};
+
+template <typename R, typename... Args>
 struct default_converter<boost::function<R (Args...)> const&>
   : halmd::detail::lua_function_converter<halmd::detail::cpp_function_converter<luabind::detail::const_ref_converter> > {};
 
 template <typename R, typename... Args>
 struct default_converter<boost::function<R& (Args...)> >
+  : halmd::detail::cpp_function_converter<luabind::detail::value_converter> {};
+
+template <typename R, typename... Args>
+struct default_converter<boost::function<R& (Args...)>&&>
   : halmd::detail::cpp_function_converter<luabind::detail::value_converter> {};
 
 template <typename R, typename... Args>

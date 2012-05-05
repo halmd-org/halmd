@@ -70,6 +70,12 @@ template <typename T, std::size_t N>
 struct default_converter<boost::array<T, N> const&>
   : default_converter<boost::array<T, N> > {};
 
+#ifndef HALMD_NO_CXX11
+template <typename T, std::size_t N>
+struct default_converter<boost::array<T, N>&&>
+  : default_converter<boost::array<T, N> > {};
+#endif
+
 /**
  * Luabind converter for 1-dimensional Boost multi_array
  */
@@ -110,6 +116,12 @@ struct default_converter<boost::multi_array<T, 1> >
 template <typename T>
 struct default_converter<boost::multi_array<T, 1> const&>
   : default_converter<boost::multi_array<T, 1> > {};
+
+#ifndef HALMD_NO_CXX11
+template <typename T>
+struct default_converter<boost::multi_array<T, 1>&&>
+  : default_converter<boost::multi_array<T, 1> > {};
+#endif
 
 } // namespace luabind
 

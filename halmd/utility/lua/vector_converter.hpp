@@ -72,6 +72,12 @@ template <typename T>
 struct default_converter<std::vector<T> const&>
   : default_converter<std::vector<T> > {};
 
+#ifndef HALMD_NO_CXX11
+template <typename T>
+struct default_converter<std::vector<T>&&>
+  : default_converter<std::vector<T> > {};
+#endif
+
 } // namespace luabind
 
 #if LUA_VERSION_NUM < 502
