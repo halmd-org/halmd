@@ -170,7 +170,7 @@ public:
      *
      * Instead of clearing the list of slots, we reallocate the list,
      * which breaks the link between weak pointers in connection objects
-     * and the shared_ptr in signal holding the slots, and enables
+     * and the boost::shared_ptr in signal holding the slots, and enables
      * connection objects to ignore calls to connection::disconnect().
      */
     void disconnect_all_slots()

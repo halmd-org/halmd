@@ -40,11 +40,11 @@ namespace gpu {
 
 template <int dimension, typename float_type>
 phase_space<gpu::samples::phase_space<dimension, float_type> >::phase_space(
-    shared_ptr<particle_group_type const> particle_group
-  , shared_ptr<particle_type> particle
-  , shared_ptr<box_type const> box
-  , shared_ptr<clock_type const> clock
-  , shared_ptr<logger_type> logger
+    boost::shared_ptr<particle_group_type const> particle_group
+  , boost::shared_ptr<particle_type> particle
+  , boost::shared_ptr<box_type const> box
+  , boost::shared_ptr<clock_type const> clock
+  , boost::shared_ptr<logger_type> logger
 )
   // dependency injection
   : particle_group_(particle_group)
@@ -57,11 +57,11 @@ phase_space<gpu::samples::phase_space<dimension, float_type> >::phase_space(
 
 template <int dimension, typename float_type>
 phase_space<host::samples::phase_space<dimension, float_type> >::phase_space(
-    shared_ptr<particle_group_type> particle_group
-  , shared_ptr<particle_type> particle
-  , shared_ptr<box_type const> box
-  , shared_ptr<clock_type const> clock
-  , shared_ptr<logger_type> logger
+    boost::shared_ptr<particle_group_type> particle_group
+  , boost::shared_ptr<particle_type> particle
+  , boost::shared_ptr<box_type const> box
+  , boost::shared_ptr<clock_type const> clock
+  , boost::shared_ptr<logger_type> logger
 )
   // dependency injection
   : particle_group_(particle_group)
@@ -80,7 +80,7 @@ phase_space<host::samples::phase_space<dimension, float_type> >::phase_space(
  * Sample phase_space
  */
 template <int dimension, typename float_type>
-shared_ptr<gpu::samples::phase_space<dimension, float_type> const>
+boost::shared_ptr<gpu::samples::phase_space<dimension, float_type> const>
 phase_space<gpu::samples::phase_space<dimension, float_type> >::acquire()
 {
     scoped_timer_type timer(runtime_.acquire);
@@ -96,7 +96,7 @@ phase_space<gpu::samples::phase_space<dimension, float_type> >::acquire()
     // to hold a previous copy of the sample
     {
         scoped_timer_type timer(runtime_.reset);
-        sample_ = make_shared<sample_type>(particle_group_->size(), clock_->step());
+        sample_ = boost::make_shared<sample_type>(particle_group_->size(), clock_->step());
     }
 
     phase_space_wrapper<dimension>::kernel.r.bind(particle_->position());
@@ -119,7 +119,7 @@ phase_space<gpu::samples::phase_space<dimension, float_type> >::acquire()
  * Sample phase_space
  */
 template <int dimension, typename float_type>
-shared_ptr<host::samples::phase_space<dimension, float_type> const>
+boost::shared_ptr<host::samples::phase_space<dimension, float_type> const>
 phase_space<host::samples::phase_space<dimension, float_type> >::acquire()
 {
     scoped_timer_type timer(runtime_.acquire);
@@ -145,7 +145,7 @@ phase_space<host::samples::phase_space<dimension, float_type> >::acquire()
     // to hold a previous copy of the sample
     {
         scoped_timer_type timer(runtime_.reset);
-        sample_ = make_shared<sample_type>(particle_group_->size(), clock_->step());
+        sample_ = boost::make_shared<sample_type>(particle_group_->size(), clock_->step());
     }
 
     assert(particle_group_->size() == sample_->position().size());
@@ -178,7 +178,7 @@ phase_space<host::samples::phase_space<dimension, float_type> >::acquire()
 }
 
 template <int dimension, typename float_type>
-void phase_space<host::samples::phase_space<dimension, float_type> >::set(shared_ptr<sample_type const> sample)
+void phase_space<host::samples::phase_space<dimension, float_type> >::set(boost::shared_ptr<sample_type const> sample)
 {
     scoped_timer_type timer(runtime_.set);
 
@@ -234,8 +234,8 @@ void phase_space<host::samples::phase_space<dimension, float_type> >::set(shared
 }
 
 template <typename phase_space_type, typename sample_type>
-static function<shared_ptr<sample_type const> ()>
-wrap_acquire(shared_ptr<phase_space_type> phase_space)
+static boost::function<boost::shared_ptr<sample_type const> ()>
+wrap_acquire(boost::shared_ptr<phase_space_type> phase_space)
 {
     return bind(&phase_space_type::acquire, phase_space);
 }
@@ -268,12 +268,12 @@ void phase_space<gpu::samples::phase_space<dimension, float_type> >::luaopen(lua
 
           , namespace_("gpu")
             [
-                def("phase_space", &make_shared<phase_space
-                   , shared_ptr<particle_group_type const>
-                   , shared_ptr<particle_type>
-                   , shared_ptr<box_type const>
-                   , shared_ptr<clock_type const>
-                   , shared_ptr<logger_type>
+                def("phase_space", &boost::make_shared<phase_space
+                   , boost::shared_ptr<particle_group_type const>
+                   , boost::shared_ptr<particle_type>
+                   , boost::shared_ptr<box_type const>
+                   , boost::shared_ptr<clock_type const>
+                   , boost::shared_ptr<logger_type>
                 >)
             ]
         ]
@@ -282,42 +282,42 @@ void phase_space<gpu::samples::phase_space<dimension, float_type> >::luaopen(lua
 
 template <typename phase_space_type>
 static typename phase_space_type::sample_type::position_array_type const&
-position(shared_ptr<phase_space_type> const& phase_space)
+position(boost::shared_ptr<phase_space_type> const& phase_space)
 {
     return phase_space->acquire()->position();
 }
 
 template <typename phase_space_type>
-static function<typename phase_space_type::sample_type::position_array_type const& ()>
-wrap_position(shared_ptr<phase_space_type> phase_space)
+static boost::function<typename phase_space_type::sample_type::position_array_type const& ()>
+wrap_position(boost::shared_ptr<phase_space_type> phase_space)
 {
     return bind(&position<phase_space_type>, phase_space);
 }
 
 template <typename phase_space_type>
 static typename phase_space_type::sample_type::velocity_array_type const&
-velocity(shared_ptr<phase_space_type> const& phase_space)
+velocity(boost::shared_ptr<phase_space_type> const& phase_space)
 {
     return phase_space->acquire()->velocity();
 }
 
 template <typename phase_space_type>
-static function<typename phase_space_type::sample_type::velocity_array_type const& ()>
-wrap_velocity(shared_ptr<phase_space_type> phase_space)
+static boost::function<typename phase_space_type::sample_type::velocity_array_type const& ()>
+wrap_velocity(boost::shared_ptr<phase_space_type> phase_space)
 {
     return bind(&velocity<phase_space_type>, phase_space);
 }
 
 template <typename phase_space_type>
 static typename phase_space_type::sample_type::species_array_type const&
-species(shared_ptr<phase_space_type> const& phase_space)
+species(boost::shared_ptr<phase_space_type> const& phase_space)
 {
     return phase_space->acquire()->species();
 }
 
 template <typename phase_space_type>
-static function<typename phase_space_type::sample_type::species_array_type const& ()>
-wrap_species(shared_ptr<phase_space_type> phase_space)
+static boost::function<typename phase_space_type::sample_type::species_array_type const& ()>
+wrap_species(boost::shared_ptr<phase_space_type> phase_space)
 {
     return bind(&species<phase_space_type>, phase_space);
 }
@@ -348,12 +348,12 @@ void phase_space<host::samples::phase_space<dimension, float_type> >::luaopen(lu
 
           , namespace_("host")
             [
-                def("phase_space", &make_shared<phase_space
-                   , shared_ptr<particle_group_type>
-                   , shared_ptr<particle_type>
-                   , shared_ptr<box_type const>
-                   , shared_ptr<clock_type const>
-                   , shared_ptr<logger_type>
+                def("phase_space", &boost::make_shared<phase_space
+                   , boost::shared_ptr<particle_group_type>
+                   , boost::shared_ptr<particle_type>
+                   , boost::shared_ptr<box_type const>
+                   , boost::shared_ptr<clock_type const>
+                   , boost::shared_ptr<logger_type>
                 >)
             ]
         ]

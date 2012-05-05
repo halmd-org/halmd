@@ -32,7 +32,7 @@ using namespace std;
 /**
  * Make function to noop using boost::bind
  */
-__attribute__((noinline)) function<void (double)> bind_noop()
+__attribute__((noinline)) boost::function<void (double)> bind_noop()
 {
     return bind(&noop, _1);
 }

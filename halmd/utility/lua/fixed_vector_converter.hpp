@@ -74,6 +74,11 @@ template <typename T, std::size_t N>
 struct default_converter<halmd::fixed_vector<T, N> const&>
   : default_converter<halmd::fixed_vector<T, N> > {};
 
+#ifndef HALMD_NO_CXX11
+template <typename T, std::size_t N>
+struct default_converter<halmd::fixed_vector<T, N>&&>
+  : default_converter<halmd::fixed_vector<T, N> > {};
+#endif
 
 } // namespace luabind
 

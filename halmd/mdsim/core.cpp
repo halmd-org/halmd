@@ -32,7 +32,7 @@ namespace mdsim {
 /**
  * Initialize simulation
  */
-core::core(shared_ptr<clock_type> clock)
+core::core(boost::shared_ptr<clock_type> clock)
   // dependency injection
   : clock_(clock)
 {
@@ -80,8 +80,8 @@ void core::luaopen(lua_State* L)
     [
         namespace_("mdsim")
         [
-            class_<core, shared_ptr<core> >("core")
-                .def(constructor<shared_ptr<core::clock_type> >())
+            class_<core, boost::shared_ptr<core> >("core")
+                .def(constructor<boost::shared_ptr<core::clock_type> >())
                 .def("setup", &core::setup)
                 .def("mdstep", &core::mdstep)
                 .def("on_prepend_setup", &core::on_prepend_setup)

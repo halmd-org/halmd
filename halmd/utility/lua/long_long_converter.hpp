@@ -54,6 +54,12 @@ template <>
 struct default_converter<long long const&>
   : default_converter<long long> {};
 
+#ifndef HALMD_NO_CXX11
+template <>
+struct default_converter<long long&&>
+  : default_converter<long long> {};
+#endif
+
 /**
  * Luabind converter for unsigned long long integer
  */
@@ -83,6 +89,12 @@ struct default_converter<unsigned long long>
 template <>
 struct default_converter<unsigned long long const&>
   : default_converter<unsigned long long> {};
+
+#ifndef HALMD_NO_CXX11
+template <>
+struct default_converter<unsigned long long&&>
+  : default_converter<unsigned long long> {};
+#endif
 
 } // namespace luabind
 

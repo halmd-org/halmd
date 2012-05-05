@@ -31,7 +31,7 @@ namespace host {
 
 random::random(
     unsigned int seed
-  , shared_ptr<logger_type> logger
+  , boost::shared_ptr<logger_type> logger
 )
   : logger_(logger)
 {
@@ -55,10 +55,10 @@ void random::luaopen(lua_State* L)
         [
             namespace_("random")
             [
-                class_<random, shared_ptr<random> >("gfsr4")
+                class_<random, boost::shared_ptr<random> >("gfsr4")
                     .def(constructor<
                         unsigned int
-                      , shared_ptr<logger_type>
+                      , boost::shared_ptr<logger_type>
                     >())
                     .scope
                     [

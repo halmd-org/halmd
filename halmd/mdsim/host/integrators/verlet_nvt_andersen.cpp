@@ -36,13 +36,13 @@ namespace integrators {
 
 template <int dimension, typename float_type>
 verlet_nvt_andersen<dimension, float_type>::verlet_nvt_andersen(
-    shared_ptr<particle_type> particle
-  , shared_ptr<box_type const> box
-  , shared_ptr<random_type> random
+    boost::shared_ptr<particle_type> particle
+  , boost::shared_ptr<box_type const> box
+  , boost::shared_ptr<random_type> random
   , float_type timestep
   , float_type temperature
   , float_type coll_rate
-  , shared_ptr<logger_type> logger
+  , boost::shared_ptr<logger_type> logger
 )
   // dependency injection
   : particle_(particle)
@@ -143,15 +143,15 @@ void verlet_nvt_andersen<dimension, float_type>::finalize()
 }
 
 template <typename integrator_type>
-static function <void ()>
-wrap_integrate(shared_ptr<integrator_type> self)
+static boost::function<void ()>
+wrap_integrate(boost::shared_ptr<integrator_type> self)
 {
     return bind(&integrator_type::integrate, self);
 }
 
 template <typename integrator_type>
-static function <void ()>
-wrap_finalize(shared_ptr<integrator_type> self)
+static boost::function<void ()>
+wrap_finalize(boost::shared_ptr<integrator_type> self)
 {
     return bind(&integrator_type::finalize, self);
 }
@@ -189,14 +189,14 @@ void verlet_nvt_andersen<dimension, float_type>::luaopen(lua_State* L)
 
           , namespace_("integrators")
             [
-                def("verlet_nvt_andersen", &make_shared<verlet_nvt_andersen
-                  , shared_ptr<particle_type>
-                  , shared_ptr<box_type const>
-                  , shared_ptr<random_type>
+                def("verlet_nvt_andersen", &boost::make_shared<verlet_nvt_andersen
+                  , boost::shared_ptr<particle_type>
+                  , boost::shared_ptr<box_type const>
+                  , boost::shared_ptr<random_type>
                   , float_type
                   , float_type
                   , float_type
-                  , shared_ptr<logger_type>
+                  , boost::shared_ptr<logger_type>
                 >)
             ]
         ]

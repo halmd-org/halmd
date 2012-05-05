@@ -60,6 +60,12 @@ template <typename T>
 struct default_converter<boost::optional<T> const&>
   : default_converter<boost::optional<T> > {};
 
+#ifndef HALMD_NO_CXX11
+template <typename T>
+struct default_converter<boost::optional<T>&&>
+  : default_converter<boost::optional<T> > {};
+#endif
+
 } // namespace luabind
 
 #endif /* ! HALMD_UTILITY_LUA_OPTIONAL_CONVERTER_HPP */

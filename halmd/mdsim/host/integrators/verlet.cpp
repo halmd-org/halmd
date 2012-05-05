@@ -36,10 +36,10 @@ namespace integrators {
 
 template <int dimension, typename float_type>
 verlet<dimension, float_type>::verlet(
-    shared_ptr<particle_type> particle
-  , shared_ptr<box_type const> box
+    boost::shared_ptr<particle_type> particle
+  , boost::shared_ptr<box_type const> box
   , double timestep
-  , shared_ptr<logger_type> logger
+  , boost::shared_ptr<logger_type> logger
 )
   // dependency injection
   : particle_(particle)
@@ -100,15 +100,15 @@ void verlet<dimension, float_type>::finalize()
 }
 
 template <typename integrator_type>
-static function <void ()>
-wrap_integrate(shared_ptr<integrator_type> self)
+static boost::function<void ()>
+wrap_integrate(boost::shared_ptr<integrator_type> self)
 {
     return bind(&integrator_type::integrate, self);
 }
 
 template <typename integrator_type>
-static function <void ()>
-wrap_finalize(shared_ptr<integrator_type> self)
+static boost::function<void ()>
+wrap_finalize(boost::shared_ptr<integrator_type> self)
 {
     return bind(&integrator_type::finalize, self);
 }
@@ -143,11 +143,11 @@ void verlet<dimension, float_type>::luaopen(lua_State* L)
 
           , namespace_("integrators")
             [
-                def("verlet", &make_shared<verlet
-                  , shared_ptr<particle_type>
-                  , shared_ptr<box_type const>
+                def("verlet", &boost::make_shared<verlet
+                  , boost::shared_ptr<particle_type>
+                  , boost::shared_ptr<box_type const>
                   , double
-                  , shared_ptr<logger_type>
+                  , boost::shared_ptr<logger_type>
                 >)
             ]
         ]

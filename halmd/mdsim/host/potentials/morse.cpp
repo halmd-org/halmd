@@ -45,7 +45,7 @@ morse<float_type>::morse(
   , matrix_type const& epsilon
   , matrix_type const& sigma
   , matrix_type const& r_min
-  , shared_ptr<logger_type> logger
+  , boost::shared_ptr<logger_type> logger
 )
   // allocate potential parameters
   : epsilon_(epsilon)
@@ -83,7 +83,7 @@ void morse<float_type>::luaopen(lua_State* L)
             [
                 namespace_("potentials")
                 [
-                    class_<morse, shared_ptr<morse> >(module_name())
+                    class_<morse, boost::shared_ptr<morse> >(module_name())
                         .def(constructor<
                             unsigned int
                           , unsigned int
@@ -91,7 +91,7 @@ void morse<float_type>::luaopen(lua_State* L)
                           , matrix_type const&
                           , matrix_type const&
                           , matrix_type const&
-                          , shared_ptr<logger_type>
+                          , boost::shared_ptr<logger_type>
                         >())
                         .property("r_cut", (matrix_type const& (morse::*)() const) &morse::r_cut)
                         .property("r_cut_sigma", &morse::r_cut_sigma)

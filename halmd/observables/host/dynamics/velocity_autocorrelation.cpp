@@ -54,10 +54,10 @@ velocity_autocorrelation<dimension, float_type>::compute(
 }
 
 template <typename tcf_type>
-static shared_ptr<tcf_type>
+static boost::shared_ptr<tcf_type>
 select_tcf_by_sample(typename tcf_type::sample_type const&)
 {
-    return make_shared<tcf_type>();
+    return boost::make_shared<tcf_type>();
 }
 
 template <int dimension, typename float_type>

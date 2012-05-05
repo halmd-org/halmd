@@ -60,7 +60,7 @@ namespace std {
  * The value is unchanged.”
  */
 template <typename T>
-static typename enable_if<is_arithmetic<T>, void>::type
+static typename boost::enable_if<is_arithmetic<T>, void>::type
 validate(any& v, vector<string> const& values, T*, int)
 {
     po::validators::check_first_occurrence(v);
@@ -301,7 +301,7 @@ struct accum_value_wrapper : accumulating_value<T>, luabind::wrap_base
 };
 
 static void
-add_option(po::options_description& self, shared_ptr<po::option_description> desc)
+add_option(po::options_description& self, boost::shared_ptr<po::option_description> desc)
 {
     self.add(desc);
 }

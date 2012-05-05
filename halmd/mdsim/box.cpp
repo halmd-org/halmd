@@ -77,14 +77,14 @@ static int wrap_dimension(box<dimension> const&)
 }
 
 template <typename box_type>
-static function<typename box_type::vector_type ()>
-wrap_origin(shared_ptr<box_type const> box)
+static boost::function<typename box_type::vector_type ()>
+wrap_origin(boost::shared_ptr<box_type const> box)
 {
     return bind(&box_type::origin, box);
 }
 
 template <typename box_type>
-static function<vector<typename box_type::vector_type> ()>
+static boost::function<vector<typename box_type::vector_type> ()>
 wrap_edges(boost::shared_ptr<box_type const> box)
 {
     return bind(&box_type::edges, box);
@@ -99,7 +99,7 @@ void box<dimension>::luaopen(lua_State* L)
     [
         namespace_("mdsim")
         [
-            class_<box, shared_ptr<box> >(class_name.c_str())
+            class_<box, boost::shared_ptr<box> >(class_name.c_str())
                 .def(constructor<vector_type const&>())
                 .property("dimension", &wrap_dimension<dimension>)
                 .property("length", &box::length)

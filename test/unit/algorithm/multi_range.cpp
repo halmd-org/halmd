@@ -39,7 +39,7 @@ using namespace halmd;
 using namespace std;
 
 template <typename T, size_t N>
-bool element_equal(multi_array<T, N> const& tensor, T const& value, array<size_t, N> const& index)
+bool element_equal(multi_array<T, N> const& tensor, T const& value, boost::array<size_t, N> const& index)
 {
     return tensor(index) == value;
 }
@@ -57,7 +57,7 @@ struct multi_array_fixture
         }
     }
 
-    array<size_t, 3> const size;
+    boost::array<size_t, 3> const size;
     multi_array<double, 3> tensor;
 };
 
@@ -66,14 +66,14 @@ struct multi_array_fixture
  */
 BOOST_FIXTURE_TEST_CASE( find_if_every_element, multi_array_fixture )
 {
-    array<size_t, 3> first = {{ 0, 0, 0 }};
+    boost::array<size_t, 3> first = {{ 0, 0, 0 }};
     for (size_t i = 0, n = 1; i < size[0]; ++i) {
         for (size_t j = 0; j < size[1]; ++j) {
             for (size_t k = 0; k < size[2]; ++k, ++n) {
-                array<size_t, 3> result = multi_range_find_if(
+                boost::array<size_t, 3> result = multi_range_find_if(
                     first
                   , size
-                  , bind(&element_equal<double, 3>, cref(tensor), n, _1)
+                  , bind(&element_equal<double, 3>, boost::cref(tensor), n, _1)
                 );
                 BOOST_CHECK_EQUAL(result[0], i);
                 BOOST_CHECK_EQUAL(result[1], j);
@@ -88,11 +88,11 @@ BOOST_FIXTURE_TEST_CASE( find_if_every_element, multi_array_fixture )
  */
 BOOST_FIXTURE_TEST_CASE( find_if_nonexistent, multi_array_fixture )
 {
-    array<size_t, 3> first = {{ 0, 0, 0 }};
-    array<size_t, 3> result = multi_range_find_if(
+    boost::array<size_t, 3> first = {{ 0, 0, 0 }};
+    boost::array<size_t, 3> result = multi_range_find_if(
         first
       , size
-      , bind(&element_equal<double, 3>, cref(tensor), size[0] * size[1] * size[2] + 1, _1)
+      , bind(&element_equal<double, 3>, boost::cref(tensor), size[0] * size[1] * size[2] + 1, _1)
     );
     BOOST_CHECK_EQUAL(result[0], size[0]);
     BOOST_CHECK_EQUAL(result[1], size[1]);
@@ -105,11 +105,11 @@ BOOST_FIXTURE_TEST_CASE( find_if_nonexistent, multi_array_fixture )
  */
 BOOST_FIXTURE_TEST_CASE( find_if_empty_range, multi_array_fixture )
 {
-    array<size_t, 3> first = {{ 0, 0, 0 }};
-    array<size_t, 3> result = multi_range_find_if(
+    boost::array<size_t, 3> first = {{ 0, 0, 0 }};
+    boost::array<size_t, 3> result = multi_range_find_if(
         first
       , first
-      , bind(&element_equal<double, 3>, cref(tensor), size[0] * size[1] * size[2], _1)
+      , bind(&element_equal<double, 3>, boost::cref(tensor), size[0] * size[1] * size[2], _1)
     );
     BOOST_CHECK_EQUAL(result[0], first[0]);
     BOOST_CHECK_EQUAL(result[1], first[1]);
@@ -122,7 +122,7 @@ class multi_array_accumulate
 public:
     explicit multi_array_accumulate(multi_array<T, N> const& tensor) : tensor_(tensor), sum_(0) {}
 
-    void operator()(array<size_t, N> const& index)
+    void operator()(boost::array<size_t, N> const& index)
     {
         sum_ += tensor_(index);
     }
@@ -143,7 +143,7 @@ private:
 BOOST_FIXTURE_TEST_CASE( for_each_sum_elements, multi_array_fixture )
 {
     double const N = size[0] * size[1] * size[2];
-    array<size_t, 3> first = {{ 0, 0, 0 }};
+    boost::array<size_t, 3> first = {{ 0, 0, 0 }};
     multi_array_accumulate<double, 3> result = multi_range_for_each(
         first
       , size
@@ -157,7 +157,7 @@ BOOST_FIXTURE_TEST_CASE( for_each_sum_elements, multi_array_fixture )
  */
 BOOST_FIXTURE_TEST_CASE( for_each_sum_empty_range, multi_array_fixture )
 {
-    array<size_t, 3> first = {{ 0, 0, 0 }};
+    boost::array<size_t, 3> first = {{ 0, 0, 0 }};
     multi_array_accumulate<double, 3> result = multi_range_for_each(
         first
       , first
@@ -200,7 +200,7 @@ make_multi_range_copy(multi_array_type const& input, iterator_type output)
  */
 BOOST_FIXTURE_TEST_CASE( multi_range_for_each_iteration_order , multi_array_fixture )
 {
-    array<size_t, 3> first = {{ 0, 0, 0 }};
+    boost::array<size_t, 3> first = {{ 0, 0, 0 }};
     vector<double> result;
     result.reserve(tensor.num_elements());
     multi_range_for_each(
@@ -223,7 +223,7 @@ BOOST_FIXTURE_TEST_CASE( multi_range_for_each_iteration_order , multi_array_fixt
  */
 BOOST_FIXTURE_TEST_CASE( multi_range_find_if_iteration_order , multi_array_fixture )
 {
-    array<size_t, 3> first = {{ 0, 0, 0 }};
+    boost::array<size_t, 3> first = {{ 0, 0, 0 }};
     vector<double> result;
     result.reserve(tensor.num_elements());
     multi_range_find_if(
@@ -243,7 +243,7 @@ BOOST_FIXTURE_TEST_CASE( multi_range_find_if_iteration_order , multi_array_fixtu
 struct multi_array_4_fixture
 {
     typedef multi_array<double, 4> array_type;
-    typedef array<size_t, 4> index_type;
+    typedef boost::array<size_t, 4> index_type;
 
     index_type const size;
     array_type tensor;

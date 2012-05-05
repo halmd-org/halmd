@@ -39,4 +39,8 @@
 # define HALMD_GPU_USING(__gpu__, __host__) using __host__
 #endif
 
+#if __cplusplus < 201103L
+# define HALMD_NO_CXX11
+#endif
+
 #endif /* ! HALMD_CONFIG_HPP */

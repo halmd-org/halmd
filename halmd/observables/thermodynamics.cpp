@@ -27,71 +27,71 @@ namespace halmd {
 namespace observables {
 
 template <typename thermodynamics_type>
-static function<double ()>
-wrap_nparticle(shared_ptr<thermodynamics_type> thermodynamics)
+static boost::function<double ()>
+wrap_nparticle(boost::shared_ptr<thermodynamics_type> thermodynamics)
 {
     return bind(&thermodynamics_type::nparticle, thermodynamics);
 }
 
 template <typename thermodynamics_type>
-static function<double ()>
-wrap_density(shared_ptr<thermodynamics_type> thermodynamics)
+static boost::function<double ()>
+wrap_density(boost::shared_ptr<thermodynamics_type> thermodynamics)
 {
     return bind(&thermodynamics_type::density, thermodynamics);
 }
 
 template <typename thermodynamics_type>
-static function<double ()>
-wrap_en_tot(shared_ptr<thermodynamics_type> thermodynamics)
+static boost::function<double ()>
+wrap_en_tot(boost::shared_ptr<thermodynamics_type> thermodynamics)
 {
     return bind(&thermodynamics_type::en_tot, thermodynamics);
 }
 
 template <typename thermodynamics_type>
-static function<double ()>
-wrap_en_pot(shared_ptr<thermodynamics_type> thermodynamics)
+static boost::function<double ()>
+wrap_en_pot(boost::shared_ptr<thermodynamics_type> thermodynamics)
 {
     return bind(&thermodynamics_type::en_pot, thermodynamics);
 }
 
 template <typename thermodynamics_type>
-static function<double ()>
-wrap_en_kin(shared_ptr<thermodynamics_type> thermodynamics)
+static boost::function<double ()>
+wrap_en_kin(boost::shared_ptr<thermodynamics_type> thermodynamics)
 {
     return bind(&thermodynamics_type::en_kin, thermodynamics);
 }
 
 template <typename thermodynamics_type>
-static function<typename thermodynamics_type::vector_type ()>
-wrap_v_cm(shared_ptr<thermodynamics_type> thermodynamics)
+static boost::function<typename thermodynamics_type::vector_type ()>
+wrap_v_cm(boost::shared_ptr<thermodynamics_type> thermodynamics)
 {
     return bind(&thermodynamics_type::v_cm, thermodynamics);
 }
 
 template <typename thermodynamics_type>
-static function<double ()>
-wrap_temp(shared_ptr<thermodynamics_type> thermodynamics)
+static boost::function<double ()>
+wrap_temp(boost::shared_ptr<thermodynamics_type> thermodynamics)
 {
     return bind(&thermodynamics_type::temp, thermodynamics);
 }
 
 template <typename thermodynamics_type>
-static function<double ()>
-wrap_pressure(shared_ptr<thermodynamics_type> thermodynamics)
+static boost::function<double ()>
+wrap_pressure(boost::shared_ptr<thermodynamics_type> thermodynamics)
 {
     return bind(&thermodynamics_type::pressure, thermodynamics);
 }
 
 template <typename thermodynamics_type>
-static function<double ()>
-wrap_virial(shared_ptr<thermodynamics_type> thermodynamics)
+static boost::function<double ()>
+wrap_virial(boost::shared_ptr<thermodynamics_type> thermodynamics)
 {
     return bind(&thermodynamics_type::virial, thermodynamics);
 }
 
 template <typename thermodynamics_type>
-static function<double ()>
-wrap_hypervirial(shared_ptr<thermodynamics_type> thermodynamics)
+static boost::function<double ()>
+wrap_hypervirial(boost::shared_ptr<thermodynamics_type> thermodynamics)
 {
     return bind(&thermodynamics_type::hypervirial, thermodynamics);
 }
@@ -105,7 +105,7 @@ void thermodynamics<dimension>::luaopen(lua_State* L)
     [
         namespace_("observables")
         [
-            class_<thermodynamics, shared_ptr<thermodynamics> >(class_name.c_str())
+            class_<thermodynamics, boost::shared_ptr<thermodynamics> >(class_name.c_str())
                 .property("nparticle", &wrap_nparticle<thermodynamics>)
                 .property("density", &wrap_density<thermodynamics>)
                 .property("en_kin", &wrap_en_kin<thermodynamics>)

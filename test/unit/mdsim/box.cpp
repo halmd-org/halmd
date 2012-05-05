@@ -56,7 +56,7 @@ void construction()
     double volume = (dimension == 2) ? 100 : 1000;
 
     BOOST_TEST_MESSAGE("Construction from edge lengths");
-    shared_ptr<box_type> box = make_shared<box_type>(length);
+    boost::shared_ptr<box_type> box = boost::make_shared<box_type>(length);
     BOOST_CHECK_EQUAL(box->length(), length);
     BOOST_CHECK_CLOSE_FRACTION(box->volume(), volume, epsilon);
 }

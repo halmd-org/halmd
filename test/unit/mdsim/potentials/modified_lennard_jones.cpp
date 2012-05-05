@@ -111,58 +111,61 @@ BOOST_AUTO_TEST_CASE( modified_lennard_jones_host )
     BOOST_CHECK(index_n(1, 1) == index_n_array(1, 1));
 
     // evaluate some points of the potential, force, and hypervirial
-    typedef boost::tuple<double, double, double, double> tuple_type;
+    typedef boost::array<double, 4> array_type;
     const double tolerance = 5 * numeric_limits<double>::epsilon();
 
     // expected results (r, fval, en_pot, hvir) for ε=1, σ=1, m=12, n=4, rc=5σ
-    vector<tuple_type> results = tuple_list_of
-        (0.2, 2.929685e11, 9.765600000064e8, 1.4062496e11)
-        (0.5, 785408., 16320.00639998362, 2.358272e6)
-        (1., 32., 0.006399983616, 512.)
-        (2., -0.2470703125, -0.242623453884, -3.859375)
-        (10., -0.00001599999952, 0.00599998362, -0.006399999424);
+    boost::array<array_type, 5> results_aa = {{
+        {{0.2, 2.929685e11, 9.765600000064e8, 1.4062496e11}}
+      , {{0.5, 785408., 16320.00639998362, 2.358272e6}}
+      , {{1., 32., 0.006399983616, 512.}}
+      , {{2., -0.2470703125, -0.242623453884, -3.859375}}
+      , {{10., -0.00001599999952, 0.00599998362, -0.006399999424}}
+    }};
 
-    BOOST_FOREACH (tuple_type a, results) {
-        double rr = std::pow(get<0>(a), 2);
+    BOOST_FOREACH (array_type const& a, results_aa) {
+        double rr = std::pow(a[0], 2);
         double fval, en_pot, hvir;
         tie(fval, en_pot, hvir) = potential(rr, 0, 0);  // interaction AA
-        BOOST_CHECK_CLOSE_FRACTION(fval, get<1>(a), tolerance);
-        BOOST_CHECK_CLOSE_FRACTION(en_pot, get<2>(a), tolerance);
-        BOOST_CHECK_CLOSE_FRACTION(hvir, get<3>(a), tolerance);
+        BOOST_CHECK_CLOSE_FRACTION(fval, a[1], tolerance);
+        BOOST_CHECK_CLOSE_FRACTION(en_pot, a[2], tolerance);
+        BOOST_CHECK_CLOSE_FRACTION(hvir, a[3], tolerance);
     };
 
     // interaction AB: ε=.5, σ=2, m=12, n=2, rc=5σ
-    results = tuple_list_of
-        (0.2, 5.9999999999e14, 1.99999999980008e12, 2.879999999992e14)
-        (0.5, 1.61061248e9, 3.355440007999999e7, 4.83183808e9)
-        (1., 98288., 8184.079999991808, 1.179616e6)
-        (2., 5., 0.079999991808, 280.)
-        (10., -0.00159999901696, 0., -0.319998820352);
+    boost::array<array_type, 5> results_ab = {{
+        {{0.2, 5.9999999999e14, 1.99999999980008e12, 2.879999999992e14}}
+      , {{0.5, 1.61061248e9, 3.355440007999999e7, 4.83183808e9}}
+      , {{1., 98288., 8184.079999991808, 1.179616e6}}
+      , {{2., 5., 0.079999991808, 280.}}
+      , {{10., -0.00159999901696, 0., -0.319998820352}}
+    }};
 
-    BOOST_FOREACH (tuple_type a, results) {
-        double rr = std::pow(get<0>(a), 2);
+    BOOST_FOREACH (array_type const& a, results_ab) {
+        double rr = std::pow(a[0], 2);
         double fval, en_pot, hvir;
         tie(fval, en_pot, hvir) = potential(rr, 0, 1);  // interaction AB
-        BOOST_CHECK_CLOSE_FRACTION(fval, get<1>(a), tolerance);
-        BOOST_CHECK_CLOSE_FRACTION(en_pot, get<2>(a), tolerance);
-        BOOST_CHECK_CLOSE_FRACTION(hvir, get<3>(a), tolerance);
+        BOOST_CHECK_CLOSE_FRACTION(fval, a[1], tolerance);
+        BOOST_CHECK_CLOSE_FRACTION(en_pot, a[2], tolerance);
+        BOOST_CHECK_CLOSE_FRACTION(hvir, a[3], tolerance);
     };
 
     // interaction BB: ε=.25, σ=4, m=12, n=6, rc=5σ
-    results = tuple_list_of
-        (0.2, 1.2287999904e18, 4.095999936e15, 5.89823997696e17)
-        (0.5, 3.298528591872e12, 6.871921459200006e10, 9.8955952128e12)
-        (1., 2.01302016e8, 1.6773120000063997e7, 2.415771648e9)
-        (2., 12192., 4032.000063995904, 587520.)
-        (10., -0.00024374673408, -0.00401522688, -0.14504008089599998);
+    boost::array<array_type, 5> results_bb = {{
+        {{0.2, 1.2287999904e18, 4.095999936e15, 5.89823997696e17}}
+      , {{0.5, 3.298528591872e12, 6.871921459200006e10, 9.8955952128e12}}
+      , {{1., 2.01302016e8, 1.6773120000063997e7, 2.415771648e9}}
+      , {{2., 12192., 4032.000063995904, 587520.}}
+      , {{10., -0.00024374673408, -0.00401522688, -0.14504008089599998}}
+    }};
 
-    BOOST_FOREACH (tuple_type a, results) {
-        double rr = std::pow(get<0>(a), 2);
+    BOOST_FOREACH (array_type const& a, results_bb) {
+        double rr = std::pow(a[0], 2);
         double fval, en_pot, hvir;
         tie(fval, en_pot, hvir) = potential(rr, 1, 1);  // interaction BB
-        BOOST_CHECK_CLOSE_FRACTION(fval, get<1>(a), tolerance);
-        BOOST_CHECK_CLOSE_FRACTION(en_pot, get<2>(a), tolerance);
-        BOOST_CHECK_CLOSE_FRACTION(hvir, get<3>(a), tolerance);
+        BOOST_CHECK_CLOSE_FRACTION(fval, a[1], tolerance);
+        BOOST_CHECK_CLOSE_FRACTION(en_pot, a[2], tolerance);
+        BOOST_CHECK_CLOSE_FRACTION(hvir, a[3], tolerance);
     };
 }
 
@@ -182,12 +185,12 @@ struct modified_lennard_jones
 
     typedef typename particle_type::vector_type vector_type;
 
-    shared_ptr<box_type> box;
-    shared_ptr<potential_type> potential;
-    shared_ptr<force_type> force;
-    shared_ptr<neighbour_type> neighbour;
-    shared_ptr<particle_type> particle;
-    shared_ptr<host_potential_type> host_potential;
+    boost::shared_ptr<box_type> box;
+    boost::shared_ptr<potential_type> potential;
+    boost::shared_ptr<force_type> force;
+    boost::shared_ptr<neighbour_type> neighbour;
+    boost::shared_ptr<particle_type> particle;
+    boost::shared_ptr<host_potential_type> host_potential;
     vector<unsigned int> npart_list;
 
     modified_lennard_jones();
@@ -255,7 +258,8 @@ modified_lennard_jones<float_type>::modified_lennard_jones()
     BOOST_TEST_MESSAGE("initialise simulation modules");
 
     // set module parameters
-    npart_list = list_of(1000)(2);
+    npart_list.push_back(1000);
+    npart_list.push_back(2);
     float box_length = 100;
     float cutoff = box_length / 2;
 
@@ -283,18 +287,18 @@ modified_lennard_jones<float_type>::modified_lennard_jones()
       , 2, 6;
 
     // create modules
-    particle = make_shared<particle_type>(accumulate(npart_list.begin(), npart_list.end(), 0));
-    box = make_shared<box_type>(typename box_type::vector_type(box_length));
-    potential = make_shared<potential_type>(
+    particle = boost::make_shared<particle_type>(accumulate(npart_list.begin(), npart_list.end(), 0));
+    box = boost::make_shared<box_type>(typename box_type::vector_type(box_length));
+    potential = boost::make_shared<potential_type>(
         particle->nspecies(), particle->nspecies(), cutoff_array
       , epsilon_array, sigma_array, index_m_array, index_n_array
     );
-    host_potential = make_shared<host_potential_type>(
+    host_potential = boost::make_shared<host_potential_type>(
         particle->nspecies(), particle->nspecies(), cutoff_array
       , epsilon_array, sigma_array, index_m_array, index_n_array
     );
-    neighbour = make_shared<neighbour_type>(particle);
-    force = make_shared<force_type>(potential, particle, particle, box, neighbour);
+    neighbour = boost::make_shared<neighbour_type>(particle);
+    force = boost::make_shared<force_type>(potential, particle, particle, box, neighbour);
 }
 
 BOOST_FIXTURE_TEST_CASE( modified_lennard_jones_gpu, device ) {

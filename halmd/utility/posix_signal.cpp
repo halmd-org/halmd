@@ -168,25 +168,25 @@ wrap_on_signal(posix_signal& self, signal<void ()>::slot_function_type const& sl
 }
 
 static signal<void ()>::slot_function_type
-wrap_wait(shared_ptr<posix_signal> self)
+wrap_wait(boost::shared_ptr<posix_signal> self)
 {
     return bind(&posix_signal::wait, self);
 }
 
 static signal<void ()>::slot_function_type
-wrap_poll(shared_ptr<posix_signal> self)
+wrap_poll(boost::shared_ptr<posix_signal> self)
 {
     return bind(&posix_signal::poll, self);
 }
 
 static void
-abort(shared_ptr<mdsim::clock const> clock)
+abort(boost::shared_ptr<mdsim::clock const> clock)
 {
     throw runtime_error("gracefully aborting simulation at step " + lexical_cast<string>(clock->step()));
 }
 
 static signal<void ()>::slot_function_type
-wrap_abort(shared_ptr<mdsim::clock const> clock)
+wrap_abort(boost::shared_ptr<mdsim::clock const> clock)
 {
     return bind(&abort, clock);
 }
@@ -198,7 +198,7 @@ void posix_signal::luaopen(lua_State* L)
     [
         namespace_("utility")
         [
-            class_<posix_signal, shared_ptr<posix_signal> >("posix_signal")
+            class_<posix_signal, boost::shared_ptr<posix_signal> >("posix_signal")
                 .def(constructor<>())
                 .def("on_hup", &wrap_on_signal<SIGHUP>)
                 .def("on_int", &wrap_on_signal<SIGINT>)

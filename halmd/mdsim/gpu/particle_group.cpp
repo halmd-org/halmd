@@ -46,7 +46,7 @@ void particle_group<dimension, float_type>::luaopen(lua_State* L)
     [
         namespace_("mdsim")
         [
-            class_<particle_group, shared_ptr<particle_group> >(class_name.c_str())
+            class_<particle_group, boost::shared_ptr<particle_group> >(class_name.c_str())
                 .property("particle", &particle_group::particle)
                 .property("size", &particle_group::size)
                 .property("empty", &particle_group::empty)
@@ -57,7 +57,7 @@ void particle_group<dimension, float_type>::luaopen(lua_State* L)
 
 template <int dimension, typename float_type>
 particle_group_all<dimension, float_type>::particle_group_all(
-    shared_ptr<particle_type const> particle
+    boost::shared_ptr<particle_type const> particle
 )
   // dependency injection
   : particle_(particle)
@@ -66,7 +66,7 @@ particle_group_all<dimension, float_type>::particle_group_all(
 {}
 
 template <int dimension, typename float_type>
-shared_ptr<typename particle_group_all<dimension, float_type>::particle_type const>
+boost::shared_ptr<typename particle_group_all<dimension, float_type>::particle_type const>
 particle_group_all<dimension, float_type>::particle() const
 {
     return particle_;
@@ -113,9 +113,9 @@ void particle_group_all<dimension, float_type>::luaopen(lua_State* L)
     [
         namespace_("mdsim")
         [
-            class_<particle_group_all, shared_ptr<_Base>, _Base>(class_name.c_str())
-          , def("particle_group_all", &make_shared<particle_group_all
-              , shared_ptr<particle_type const>
+            class_<particle_group_all, boost::shared_ptr<_Base>, _Base>(class_name.c_str())
+          , def("particle_group_all", &boost::make_shared<particle_group_all
+              , boost::shared_ptr<particle_type const>
             >)
         ]
     ];
@@ -123,7 +123,7 @@ void particle_group_all<dimension, float_type>::luaopen(lua_State* L)
 
 template <int dimension, typename float_type>
 particle_group_from_range<dimension, float_type>::particle_group_from_range(
-    shared_ptr<particle_type const> particle
+    boost::shared_ptr<particle_type const> particle
   , unsigned int begin, unsigned int end
 )
   // dependency injection
@@ -144,7 +144,7 @@ particle_group_from_range<dimension, float_type>::particle_group_from_range(
 }
 
 template <int dimension, typename float_type>
-shared_ptr<typename particle_group_from_range<dimension, float_type>::particle_type const>
+boost::shared_ptr<typename particle_group_from_range<dimension, float_type>::particle_type const>
 particle_group_from_range<dimension, float_type>::particle() const
 {
     return particle_;
@@ -191,9 +191,9 @@ void particle_group_from_range<dimension, float_type>::luaopen(lua_State* L)
     [
         namespace_("mdsim")
         [
-            class_<particle_group_from_range, shared_ptr<_Base>, _Base>(class_name.c_str())
-          , def("particle_group_from_range", &make_shared<particle_group_from_range
-              , shared_ptr<particle_type const>
+            class_<particle_group_from_range, boost::shared_ptr<_Base>, _Base>(class_name.c_str())
+          , def("particle_group_from_range", &boost::make_shared<particle_group_from_range
+              , boost::shared_ptr<particle_type const>
               , unsigned int, unsigned int
             >)
         ]

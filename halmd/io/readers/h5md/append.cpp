@@ -57,7 +57,7 @@ append::append(
 template <typename T>
 connection append::on_read(
     subgroup_type& group
-  , function<T ()> const& slot
+  , boost::function<T ()> const& slot
   , vector<string> const& location
 )
 {
@@ -95,7 +95,7 @@ void append::read_at_time(time_difference_type offset)
 template <typename T>
 void append::read_dataset(
     H5::Group const& group
-  , function<T ()> const& slot
+  , boost::function<T ()> const& slot
   , index_function_type const& index
 )
 {
@@ -180,13 +180,13 @@ hsize_t append::read_time_index(
 }
 
 static append::slot_function_type
-wrap_read_at_step(shared_ptr<append> instance, append::step_difference_type offset)
+wrap_read_at_step(boost::shared_ptr<append> instance, append::step_difference_type offset)
 {
     return bind(&append::read_at_step, instance, offset);
 }
 
 static append::slot_function_type
-wrap_read_at_time(shared_ptr<append> instance, append::time_difference_type offset)
+wrap_read_at_time(boost::shared_ptr<append> instance, append::time_difference_type offset)
 {
     return bind(&append::read_at_time, instance, offset);
 }
@@ -202,7 +202,7 @@ void append::luaopen(lua_State* L)
             [
                 namespace_("h5md")
                 [
-                    class_<append, shared_ptr<append> >("append")
+                    class_<append, boost::shared_ptr<append> >("append")
                         .def(constructor<H5::Group const&, vector<string> const&>())
                         .property("group", &append::group)
                         .def("on_read", &append::on_read<float&>, pure_out_value(_2))
@@ -222,8 +222,8 @@ void append::luaopen(lua_State* L)
                         .def("on_read", &append::on_read<vector<fixed_vector<double, 2>, raw_allocator<fixed_vector<double, 2> > >&>, pure_out_value(_2))
                         .def("on_read", &append::on_read<vector<fixed_vector<double, 3>, raw_allocator<fixed_vector<double, 3> > >&>, pure_out_value(_2))
                         .def("on_read", &append::on_read<vector<unsigned int, raw_allocator<unsigned int> >&>, pure_out_value(_2))
-                        .def("on_read", &append::on_read<vector<array<float, 3> >&>, pure_out_value(_2))
-                        .def("on_read", &append::on_read<vector<array<double, 3> >&>, pure_out_value(_2))
+                        .def("on_read", &append::on_read<vector<boost::array<float, 3> >&>, pure_out_value(_2))
+                        .def("on_read", &append::on_read<vector<boost::array<double, 3> >&>, pure_out_value(_2))
                         .def("on_prepend_read", &append::on_prepend_read)
                         .def("on_append_read", &append::on_append_read)
                         .def("read_at_step", &wrap_read_at_step)

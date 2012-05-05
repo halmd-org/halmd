@@ -43,12 +43,12 @@ namespace neighbours {
  */
 template <int dimension, typename float_type>
 from_particle<dimension, float_type>::from_particle(
-    shared_ptr<particle_type const> particle1
-  , shared_ptr<particle_type const> particle2
-  , shared_ptr<box_type const> box
+    boost::shared_ptr<particle_type const> particle1
+  , boost::shared_ptr<particle_type const> particle2
+  , boost::shared_ptr<box_type const> box
   , matrix_type const& r_cut
   , double skin
-  , shared_ptr<logger> logger
+  , boost::shared_ptr<logger> logger
   , double cell_occupancy
 )
   // dependency injection
@@ -161,14 +161,14 @@ void from_particle<dimension, float_type>::luaopen(lua_State* L)
             [
                 namespace_("neighbours")
                 [
-                    class_<from_particle, shared_ptr<mdsim::neighbour>, mdsim::neighbour>(class_name.c_str())
+                    class_<from_particle, boost::shared_ptr<mdsim::neighbour>, mdsim::neighbour>(class_name.c_str())
                         .def(constructor<
-                            shared_ptr<particle_type const>
-                          , shared_ptr<particle_type const>
-                          , shared_ptr<box_type const>
+                            boost::shared_ptr<particle_type const>
+                          , boost::shared_ptr<particle_type const>
+                          , boost::shared_ptr<box_type const>
                           , matrix_type const&
                           , double
-                          , shared_ptr<logger_type>
+                          , boost::shared_ptr<logger_type>
                           , double
                         >())
                         .property("r_skin", &from_particle::r_skin)

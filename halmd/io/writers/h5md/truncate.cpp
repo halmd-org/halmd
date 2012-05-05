@@ -83,7 +83,7 @@ static void write_dataset(
     H5::DataSet& dataset
   , H5::Group const& group
   , string const& name
-  , function<T ()> const& slot
+  , boost::function<T ()> const& slot
 )
 {
     T data = slot();
@@ -96,7 +96,7 @@ static void write_dataset(
 template <typename T>
 connection truncate::on_write(
     subgroup_type& dataset
-  , function<T ()> const& slot
+  , boost::function<T ()> const& slot
   , vector<string> const& location
 )
 {
@@ -124,7 +124,7 @@ void truncate::write()
 }
 
 static truncate::slot_function_type
-wrap_write(shared_ptr<truncate> instance)
+wrap_write(boost::shared_ptr<truncate> instance)
 {
     return bind(&truncate::write, instance);
 }
@@ -148,7 +148,7 @@ void truncate::luaopen(lua_State* L)
             [
                 namespace_("h5md")
                 [
-                    class_<truncate, shared_ptr<truncate> >("truncate")
+                    class_<truncate, boost::shared_ptr<truncate> >("truncate")
                         .def(constructor<H5::Group const&, vector<string> const&>())
                         .property("group", &truncate::group)
                         .property("write", &wrap_write)
@@ -198,12 +198,12 @@ void truncate::luaopen(lua_State* L)
                         .def("on_write", &truncate::on_write<vector<fixed_vector<double, 3>, raw_allocator<fixed_vector<double, 3> > > const&>, pure_out_value(_2))
                         .def("on_write", &truncate::on_write<vector<unsigned int, raw_allocator<unsigned int > >&>, pure_out_value(_2))
                         .def("on_write", &truncate::on_write<vector<unsigned int, raw_allocator<unsigned int > > const&>, pure_out_value(_2))
-                        .def("on_write", &truncate::on_write<vector<array<float, 3> > >, pure_out_value(_2))
-                        .def("on_write", &truncate::on_write<vector<array<float, 3> >&>, pure_out_value(_2))
-                        .def("on_write", &truncate::on_write<vector<array<float, 3> > const&>, pure_out_value(_2))
-                        .def("on_write", &truncate::on_write<vector<array<double, 3> > >, pure_out_value(_2))
-                        .def("on_write", &truncate::on_write<vector<array<double, 3> >&>, pure_out_value(_2))
-                        .def("on_write", &truncate::on_write<vector<array<double, 3> > const&>, pure_out_value(_2))
+                        .def("on_write", &truncate::on_write<vector<boost::array<float, 3> > >, pure_out_value(_2))
+                        .def("on_write", &truncate::on_write<vector<boost::array<float, 3> >&>, pure_out_value(_2))
+                        .def("on_write", &truncate::on_write<vector<boost::array<float, 3> > const&>, pure_out_value(_2))
+                        .def("on_write", &truncate::on_write<vector<boost::array<double, 3> > >, pure_out_value(_2))
+                        .def("on_write", &truncate::on_write<vector<boost::array<double, 3> >&>, pure_out_value(_2))
+                        .def("on_write", &truncate::on_write<vector<boost::array<double, 3> > const&>, pure_out_value(_2))
                         .def("on_write", &truncate::on_write<multi_array<float, 2> >, pure_out_value(_2))
                         .def("on_write", &truncate::on_write<multi_array<float, 2>&>, pure_out_value(_2))
                         .def("on_write", &truncate::on_write<multi_array<float, 2> const&>, pure_out_value(_2))

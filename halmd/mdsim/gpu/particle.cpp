@@ -459,21 +459,21 @@ static int wrap_dimension(particle<dimension, float_type> const&)
 
 template <typename particle_type>
 static typename signal<void ()>::slot_function_type
-wrap_aux_enable(shared_ptr<particle_type> self)
+wrap_aux_enable(boost::shared_ptr<particle_type> self)
 {
     return bind(&particle_type::aux_enable, self);
 }
 
 template <typename particle_type>
 static typename signal<void ()>::slot_function_type
-wrap_prepare(shared_ptr<particle_type> self)
+wrap_prepare(boost::shared_ptr<particle_type> self)
 {
     return bind(&particle_type::prepare, self);
 }
 
 template <typename particle_type>
 typename signal<void ()>::slot_function_type
-wrap_set(shared_ptr<particle_type> particle)
+wrap_set(boost::shared_ptr<particle_type> particle)
 {
     return bind(&particle_type::set, particle);
 }
@@ -499,7 +499,7 @@ void particle<dimension, float_type>::luaopen(lua_State* L)
         [
             namespace_("gpu")
             [
-                class_<particle, shared_ptr<particle>, wrap_particle<particle> >(class_name.c_str())
+                class_<particle, boost::shared_ptr<particle>, wrap_particle<particle> >(class_name.c_str())
                     .def(constructor<size_t, unsigned int>())
                     .def(constructor<size_t>())
                     .property("nparticle", &particle::nparticle)

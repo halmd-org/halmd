@@ -34,10 +34,10 @@ namespace observables {
 
 template <int dimension>
 ssf<dimension>::ssf(
-    shared_ptr<wavevector_type const> wavevector
+    boost::shared_ptr<wavevector_type const> wavevector
   , double norm
-  , shared_ptr<clock_type const> clock
-  , shared_ptr<logger_type> logger
+  , boost::shared_ptr<clock_type const> clock
+  , boost::shared_ptr<logger_type> logger
 )
   // dependency injection
   : wavevector_(wavevector)
@@ -106,14 +106,14 @@ ssf<dimension>::sample(density_mode_type const& mode1, density_mode_type const& 
 
 template <typename result_type, typename ssf_type, typename slot_type>
 static result_type const&
-sample(shared_ptr<ssf_type> ssf, slot_type const& mode1, slot_type const& mode2)
+sample(boost::shared_ptr<ssf_type> ssf, slot_type const& mode1, slot_type const& mode2)
 {
     return ssf->sample(*mode1(), *mode2());
 }
 
 template <typename result_type, typename ssf_type, typename slot_type>
-static function<result_type const& ()>
-wrap_sample(shared_ptr<ssf_type> ssf, slot_type const& mode1, slot_type const& mode2)
+static boost::function<result_type const& ()>
+wrap_sample(boost::shared_ptr<ssf_type> ssf, slot_type const& mode1, slot_type const& mode2)
 {
     return bind(&sample<result_type, ssf_type, slot_type>, ssf, mode1, mode2);
 }
@@ -121,7 +121,7 @@ wrap_sample(shared_ptr<ssf_type> ssf, slot_type const& mode1, slot_type const& m
 template <int dimension>
 void ssf<dimension>::luaopen(lua_State* L)
 {
-    typedef function<shared_ptr<density_mode_type const> ()> slot_type;
+    typedef boost::function<boost::shared_ptr<density_mode_type const> ()> slot_type;
 
     using namespace luabind;
     static string class_name("ssf_" + lexical_cast<string>(dimension));
@@ -139,11 +139,11 @@ void ssf<dimension>::luaopen(lua_State* L)
                 ]
                 .def_readonly("runtime", &ssf::runtime_)
 
-          , def("ssf", &make_shared<ssf
-              , shared_ptr<wavevector_type const>
+          , def("ssf", &boost::make_shared<ssf
+              , boost::shared_ptr<wavevector_type const>
               , double
-              , shared_ptr<clock_type const>
-              , shared_ptr<logger_type>
+              , boost::shared_ptr<clock_type const>
+              , boost::shared_ptr<logger_type>
             >)
         ]
     ];

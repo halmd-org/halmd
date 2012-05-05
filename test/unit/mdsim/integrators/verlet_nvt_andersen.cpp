@@ -84,15 +84,15 @@ struct verlet_nvt_andersen
     fixed_vector<double, dimension> box_ratios;
     fixed_vector<double, dimension> slab;
 
-    shared_ptr<box_type> box;
-    shared_ptr<clock_type> clock;
-    shared_ptr<core_type> core;
-    shared_ptr<integrator_type> integrator;
-    shared_ptr<particle_type> particle;
-    shared_ptr<position_type> position;
-    shared_ptr<random_type> random;
-    shared_ptr<thermodynamics_type> thermodynamics;
-    shared_ptr<velocity_type> velocity;
+    boost::shared_ptr<box_type> box;
+    boost::shared_ptr<clock_type> clock;
+    boost::shared_ptr<core_type> core;
+    boost::shared_ptr<integrator_type> integrator;
+    boost::shared_ptr<particle_type> particle;
+    boost::shared_ptr<position_type> position;
+    boost::shared_ptr<random_type> random;
+    boost::shared_ptr<thermodynamics_type> thermodynamics;
+    boost::shared_ptr<velocity_type> velocity;
 
     void test();
     verlet_nvt_andersen();
@@ -108,7 +108,7 @@ void verlet_nvt_andersen<modules_type>::test()
     // the samples can be considered independent
     step_type period = static_cast<step_type>(round(3. / (coll_rate * timestep)));
     accumulator<double> temp_;
-    array<accumulator<double>, dimension> v_cm;   //< accumulate velocity component-wise
+    boost::array<accumulator<double>, dimension> v_cm;   //< accumulate velocity component-wise
 
     core->setup();
     BOOST_TEST_MESSAGE("run NVT integrator over " << steps << " steps");
@@ -192,14 +192,14 @@ verlet_nvt_andersen<modules_type>::verlet_nvt_andersen()
     slab = 1;
 
     // create modules
-    particle = make_shared<particle_type>(npart);
-    box = make_shared<box_type>(box_length);
-    random = make_shared<random_type>();
-    position = make_shared<position_type>(particle, box, random, slab);
-    velocity = make_shared<velocity_type>(particle, random, temp);
-    integrator = make_shared<integrator_type>(particle, box, random, timestep, temp, coll_rate);
-    clock = make_shared<clock_type>(timestep);
-    thermodynamics = make_shared<thermodynamics_type>(make_shared<particle_group_type>(particle), box, clock);
+    particle = boost::make_shared<particle_type>(npart);
+    box = boost::make_shared<box_type>(box_length);
+    random = boost::make_shared<random_type>();
+    position = boost::make_shared<position_type>(particle, box, random, slab);
+    velocity = boost::make_shared<velocity_type>(particle, random, temp);
+    integrator = boost::make_shared<integrator_type>(particle, box, random, timestep, temp, coll_rate);
+    clock = boost::make_shared<clock_type>(timestep);
+    thermodynamics = boost::make_shared<thermodynamics_type>(boost::make_shared<particle_group_type>(particle), box, clock);
 
     // create core and connect module slots to core signals
     this->connect();
@@ -208,7 +208,7 @@ verlet_nvt_andersen<modules_type>::verlet_nvt_andersen()
 template <typename modules_type>
 void verlet_nvt_andersen<modules_type>::connect()
 {
-    core = make_shared<core_type>(clock);
+    core = boost::make_shared<core_type>(clock);
     // system preparation
     core->on_prepend_setup( bind(&particle_type::set, particle) );
     core->on_prepend_setup( bind(&particle_type::prepare, particle) );

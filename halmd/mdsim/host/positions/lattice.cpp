@@ -38,11 +38,11 @@ namespace positions {
 
 template <int dimension, typename float_type>
 lattice<dimension, float_type>::lattice(
-    shared_ptr<particle_type> particle
-  , shared_ptr<box_type const> box
-  , shared_ptr<random_type> random
+    boost::shared_ptr<particle_type> particle
+  , boost::shared_ptr<box_type const> box
+  , boost::shared_ptr<random_type> random
   , vector_type const& slab
-  , shared_ptr<logger_type> logger
+  , boost::shared_ptr<logger_type> logger
 )
   // dependency injection
   : particle_(particle)
@@ -190,7 +190,7 @@ static char const* module_name_wrapper(lattice<dimension, float_type> const&)
 }
 
 template <typename position_type>
-static function<void ()> wrap_set(shared_ptr<position_type> self)
+static boost::function<void ()> wrap_set(boost::shared_ptr<position_type> self)
 {
     return bind(&position_type::set, self);
 }
@@ -208,13 +208,13 @@ void lattice<dimension, float_type>::luaopen(lua_State* L)
             [
                 namespace_("positions")
                 [
-                    class_<lattice, shared_ptr<lattice> >(class_name.c_str())
+                    class_<lattice, boost::shared_ptr<lattice> >(class_name.c_str())
                         .def(constructor<
-                             shared_ptr<particle_type>
-                           , shared_ptr<box_type const>
-                           , shared_ptr<random_type>
+                             boost::shared_ptr<particle_type>
+                           , boost::shared_ptr<box_type const>
+                           , boost::shared_ptr<random_type>
                            , vector_type const&
-                           , shared_ptr<logger_type>
+                           , boost::shared_ptr<logger_type>
                         >())
                         .property("slab", &lattice::slab)
                         .property("module_name", &module_name_wrapper<dimension, float_type>)

@@ -50,7 +50,7 @@ truncate::truncate(
 template <typename T>
 connection truncate::on_read(
     subgroup_type& dataset
-  , function<T ()> const& slot
+  , boost::function<T ()> const& slot
   , vector<string> const& location
 )
 {
@@ -81,14 +81,14 @@ void truncate::read()
 template <typename T>
 void truncate::read_dataset(
     H5::DataSet dataset
-  , function<T ()> const& slot
+  , boost::function<T ()> const& slot
 )
 {
     h5xx::read_dataset(dataset, slot());
 }
 
 static truncate::slot_function_type
-wrap_read(shared_ptr<truncate> instance)
+wrap_read(boost::shared_ptr<truncate> instance)
 {
     return bind(&truncate::read, instance);
 }
@@ -104,7 +104,7 @@ void truncate::luaopen(lua_State* L)
             [
                 namespace_("h5md")
                 [
-                    class_<truncate, shared_ptr<truncate> >("truncate")
+                    class_<truncate, boost::shared_ptr<truncate> >("truncate")
                         .def(constructor<H5::Group const&, vector<string> const&>())
                         .property("group", &truncate::group)
                         .property("read", &wrap_read)
@@ -125,8 +125,8 @@ void truncate::luaopen(lua_State* L)
                         .def("on_read", &truncate::on_read<vector<fixed_vector<double, 2>, raw_allocator<fixed_vector<double, 2> > >&>, pure_out_value(_2))
                         .def("on_read", &truncate::on_read<vector<fixed_vector<double, 3>, raw_allocator<fixed_vector<double, 3> > >&>, pure_out_value(_2))
                         .def("on_read", &truncate::on_read<vector<unsigned int, raw_allocator<unsigned int > >&>, pure_out_value(_2))
-                        .def("on_read", &truncate::on_read<vector<array<float, 3> >&>, pure_out_value(_2))
-                        .def("on_read", &truncate::on_read<vector<array<double, 3> >&>, pure_out_value(_2))
+                        .def("on_read", &truncate::on_read<vector<boost::array<float, 3> >&>, pure_out_value(_2))
+                        .def("on_read", &truncate::on_read<vector<boost::array<double, 3> >&>, pure_out_value(_2))
                         .def("on_prepend_read", &truncate::on_prepend_read)
                         .def("on_append_read", &truncate::on_append_read)
                 ]

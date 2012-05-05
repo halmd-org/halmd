@@ -35,7 +35,7 @@ class greater
 public:
     typedef halmd::signal<void ()> signal_type;
     typedef signal_type::slot_function_type slot_function_type;
-    typedef boost::function0<value_type> function_type;
+    typedef boost::function<value_type ()> function_type;
 
     greater(function_type const& func, value_type const& value) : func_(func), value_(value) {}
 

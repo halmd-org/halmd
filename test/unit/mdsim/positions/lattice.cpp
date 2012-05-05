@@ -57,7 +57,7 @@ using namespace std;
 /** compute static structure factor of phase space sample for some wavevectors */
 template <typename sample_type, typename vector_type>
 vector<double> compute_ssf(
-    shared_ptr<sample_type> sample
+    boost::shared_ptr<sample_type> sample
   , vector<vector_type> const& wavevector
 )
 {
@@ -102,12 +102,12 @@ struct lattice
     float lattice_constant;
     fixed_vector<double, dimension> slab;
 
-    shared_ptr<box_type> box;
-    shared_ptr<particle_type> particle;
-    shared_ptr<position_type> position;
-    shared_ptr<random_type> random;
-    shared_ptr<phase_space_type> phase_space;
-    shared_ptr<clock_type> clock;
+    boost::shared_ptr<box_type> box;
+    boost::shared_ptr<particle_type> particle;
+    boost::shared_ptr<position_type> position;
+    boost::shared_ptr<random_type> random;
+    boost::shared_ptr<phase_space_type> phase_space;
+    boost::shared_ptr<clock_type> clock;
 
     void test();
     lattice();
@@ -127,7 +127,7 @@ void lattice<modules_type>::test()
 
     // acquire phase space samples
     BOOST_TEST_MESSAGE("acquire phase space sample");
-    shared_ptr<sample_type const> sample = phase_space->acquire();
+    boost::shared_ptr<sample_type const> sample = phase_space->acquire();
 
     // compute static structure factors for a set of wavenumbers
     // which are points of the reciprocal lattice
@@ -207,12 +207,12 @@ lattice<modules_type>::lattice()
     // same lattice spacing (a mismatch is a likely reason for failure of the test)
     npart *= slab_vol_frac;
 
-    particle = make_shared<particle_type>(npart);
-    box = make_shared<box_type>(box_length);
-    random = make_shared<random_type>();
-    position = make_shared<position_type>(particle, box, random, slab);
-    clock = make_shared<clock_type>(0); // bogus time-step
-    phase_space = make_shared<phase_space_type>(make_shared<particle_group_type>(particle), particle, box, clock);
+    particle = boost::make_shared<particle_type>(npart);
+    box = boost::make_shared<box_type>(box_length);
+    random = boost::make_shared<random_type>();
+    position = boost::make_shared<position_type>(particle, box, random, slab);
+    clock = boost::make_shared<clock_type>(0); // bogus time-step
+    phase_space = boost::make_shared<phase_space_type>(boost::make_shared<particle_group_type>(particle), particle, box, clock);
 }
 
 template <int dimension, typename float_type>

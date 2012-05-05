@@ -45,10 +45,10 @@ using namespace halmd;
 using namespace halmd::io; // avoid ambiguity of io:: between halmd::io and boost::io
 using namespace std;
 
-array<string, 3> const types = {{ "A", "B", "C" }};
+boost::array<string, 3> const types = {{ "A", "B", "C" }};
 
 template <typename sample_type, typename writer_type>
-void on_write_sample(vector<shared_ptr<sample_type> > const& sample, shared_ptr<writer_type> writer)
+void on_write_sample(vector<boost::shared_ptr<sample_type> > const& sample, boost::shared_ptr<writer_type> writer)
 {
     typedef typename sample_type::position_array_type position_array_type;
     typedef typename sample_type::velocity_array_type velocity_array_type;
@@ -74,7 +74,7 @@ void on_write_sample(vector<shared_ptr<sample_type> > const& sample, shared_ptr<
 }
 
 template <typename sample_type, typename reader_type>
-void on_read_sample(vector<shared_ptr<sample_type> > const& sample, shared_ptr<reader_type> reader)
+void on_read_sample(vector<boost::shared_ptr<sample_type> > const& sample, boost::shared_ptr<reader_type> reader)
 {
     typedef typename sample_type::position_array_type position_array_type;
     typedef typename sample_type::velocity_array_type velocity_array_type;
@@ -117,9 +117,9 @@ void h5md(vector<unsigned int> const& ntypes)
     BOOST_MESSAGE("Testing " << ntypes.size() << " particle types");
 
     // construct phase space sample and fill with positions and velocities
-    vector<shared_ptr<double_sample_type> > double_sample;
+    vector<boost::shared_ptr<double_sample_type> > double_sample;
     for (unsigned int type = 0; type < ntypes.size(); ++type) {
-        double_sample.push_back(make_shared<double_sample_type>(ntypes[type]));
+        double_sample.push_back(boost::make_shared<double_sample_type>(ntypes[type]));
         double_position_array_type& r_sample = double_sample[type]->position();
         double_velocity_array_type& v_sample = double_sample[type]->velocity();
         for (unsigned int i = 0; i < ntypes[type]; ++i) {
@@ -140,9 +140,9 @@ void h5md(vector<unsigned int> const& ntypes)
     }
 
     // copy sample to single precision
-    vector<shared_ptr<float_sample_type> > float_sample;
+    vector<boost::shared_ptr<float_sample_type> > float_sample;
     for (unsigned int type = 0; type < ntypes.size(); ++type) {
-        float_sample.push_back(make_shared<float_sample_type>(ntypes[type]));
+        float_sample.push_back(boost::make_shared<float_sample_type>(ntypes[type]));
         transform(
             double_sample[type]->position().begin()
           , double_sample[type]->position().end()
@@ -159,11 +159,11 @@ void h5md(vector<unsigned int> const& ntypes)
 
     // write single-precision sample to file
     // use time-step not exactly representable as float-point value
-    shared_ptr<mdsim::clock> clock = make_shared<mdsim::clock>(1/6.);
-    shared_ptr<writers::h5md::file> writer_file =
-        make_shared<writers::h5md::file>(filename);
-    shared_ptr<writers::h5md::append> writer =
-        make_shared<writers::h5md::append>(writer_file->root(), list_of("trajectory"), clock);
+    boost::shared_ptr<mdsim::clock> clock = make_shared<mdsim::clock>(1/6.);
+    boost::shared_ptr<writers::h5md::file> writer_file =
+        boost::make_shared<writers::h5md::file>(filename);
+    boost::shared_ptr<writers::h5md::append> writer =
+        boost::make_shared<writers::h5md::append>(writer_file->root(), list_of("trajectory"), clock);
 
     on_write_sample(float_sample, writer);
 
@@ -174,8 +174,8 @@ void h5md(vector<unsigned int> const& ntypes)
     // resetting the shared_ptr first closes the HDF5 file
     writer.reset();
     writer_file.reset();
-    writer_file = make_shared<writers::h5md::file>(filename);
-    writer = make_shared<writers::h5md::append>(writer_file->root(), list_of("trajectory"), clock);
+    writer_file = boost::make_shared<writers::h5md::file>(filename);
+    writer = boost::make_shared<writers::h5md::append>(writer_file->root(), list_of("trajectory"), clock);
 
     on_write_sample(double_sample, writer);
 
@@ -203,15 +203,15 @@ void h5md(vector<unsigned int> const& ntypes)
     // read phase space sample #1 from file in double precision
     // reading is done upon construction, so we use an unnamed, temporary reader object
     // allocate memory for reading back the phase space sample
-    vector<shared_ptr<double_sample_type> > double_sample_;
+    vector<boost::shared_ptr<double_sample_type> > double_sample_;
     for (unsigned int type = 0; type < ntypes.size(); ++type) {
-        double_sample_.push_back(make_shared<double_sample_type>(ntypes[type]));
+        double_sample_.push_back(boost::make_shared<double_sample_type>(ntypes[type]));
     }
 
-    shared_ptr<readers::h5md::file> reader_file =
-        make_shared<readers::h5md::file>(filename);
-    shared_ptr<readers::h5md::append> reader =
-        make_shared<readers::h5md::append>(reader_file->root(), list_of("trajectory"));
+    boost::shared_ptr<readers::h5md::file> reader_file =
+        boost::make_shared<readers::h5md::file>(filename);
+    boost::shared_ptr<readers::h5md::append> reader =
+        boost::make_shared<readers::h5md::append>(reader_file->root(), list_of("trajectory"));
 
     on_read_sample(double_sample_, reader);
 
@@ -235,14 +235,14 @@ void h5md(vector<unsigned int> const& ntypes)
     }
 
     // read phase space sample #0 from file in single precision
-    vector<shared_ptr<float_sample_type> > float_sample_;
+    vector<boost::shared_ptr<float_sample_type> > float_sample_;
     for (unsigned int type = 0; type < ntypes.size(); ++type) {
-        float_sample_.push_back(make_shared<float_sample_type>(ntypes[type]));
+        float_sample_.push_back(boost::make_shared<float_sample_type>(ntypes[type]));
     }
 
     // reconstruct the reader to replace slots to double with float sample
     reader.reset();
-    reader = make_shared<readers::h5md::append>(reader_file->root(), list_of("trajectory"));
+    reader = boost::make_shared<readers::h5md::append>(reader_file->root(), list_of("trajectory"));
 
     // deconstruct file module to check that the HDF5 library
     // keeps the file open if reader module still exists

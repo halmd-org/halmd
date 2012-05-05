@@ -52,15 +52,15 @@ logging::logging()
 
 void logging::open_console(severity_level level)
 {
-    shared_ptr<console_backend_type> backend(make_shared<console_backend_type>());
+    boost::shared_ptr<console_backend_type> backend(make_shared<console_backend_type>());
     backend->add_stream(
-        shared_ptr<ostream>(&clog, empty_deleter())
+        boost::shared_ptr<ostream>(&clog, empty_deleter())
     );
     set_formatter(backend);
     backend->auto_flush(true);
 
     core::get()->remove_sink(console_);
-    console_ = make_shared<console_sink_type>(backend);
+    console_ = boost::make_shared<console_sink_type>(backend);
     console_->set_filter(
 #ifdef NDEBUG
         filters::attr<severity_level>("Severity") <= min(level, info)
@@ -79,8 +79,8 @@ void logging::close_console()
 
 void logging::open_file(string file_name, severity_level level)
 {
-    shared_ptr<file_backend_type> backend(
-        make_shared<file_backend_type>(
+    boost::shared_ptr<file_backend_type> backend(
+        boost::make_shared<file_backend_type>(
             keywords::file_name = file_name
         )
     );
@@ -88,7 +88,7 @@ void logging::open_file(string file_name, severity_level level)
     backend->auto_flush(true);
 
     core::get()->remove_sink(file_);
-    file_ = make_shared<file_sink_type>(backend);
+    file_ = boost::make_shared<file_sink_type>(backend);
     file_->set_filter(
 #ifdef NDEBUG
         filters::attr<severity_level>("Severity") <= min(level, info)
@@ -124,7 +124,7 @@ static inline ostream& operator<<(ostream& os, logging::severity_level level)
 }
 
 template <typename backend_type>
-void logging::set_formatter(shared_ptr<backend_type> backend) const
+void logging::set_formatter(boost::shared_ptr<backend_type> backend) const
 {
     backend->set_formatter(formatters::stream
         << formatters::date_time("TimeStamp", "[%d-%m-%Y %H:%M:%S.%f]")
@@ -147,7 +147,7 @@ struct logger_wrapper : logger, luabind::wrap_base
     logger_wrapper(string const& label)
     {
 #ifdef BOOST_LOG_ATTRIBUTE_HPP_INCLUDED_ // Boost.Log < 2.0
-        add_attribute("Label", make_shared<attributes::constant<string> >(label));
+        add_attribute("Label", boost::make_shared<attributes::constant<string> >(label));
 #else
         add_attribute("Label", attributes::constant<string>(label));
 #endif
@@ -159,7 +159,7 @@ static void wrap_log(logger& logger_, logging::severity_level level, char const*
     BOOST_LOG_SEV(logger_, level) << msg;
 }
 
-static shared_ptr<logger> get_logger()
+static boost::shared_ptr<logger> get_logger()
 {
     return logger_;
 }
@@ -171,7 +171,7 @@ HALMD_LUA_API int luaopen_libhalmd_io_logger(lua_State* L)
     [
         namespace_("io")
         [
-            class_<logger, shared_ptr<logger>, logger_wrapper>("logger")
+            class_<logger, boost::shared_ptr<logger>, logger_wrapper>("logger")
                 .def(constructor<>())
                 .def(constructor<string>())
                 .scope
@@ -205,6 +205,6 @@ HALMD_LUA_API int luaopen_libhalmd_io_logger(lua_State* L)
 /** define logging singleton instance */
 logging logging::logging_;
 /** define global logger source */
-shared_ptr<logger> const logger_ = make_shared<logger>();
+boost::shared_ptr<logger> const logger_ = make_shared<logger>();
 
 } // namespace halmd

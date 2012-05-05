@@ -31,7 +31,7 @@ namespace mdsim {
 
 template <typename neighbour_type>
 typename signal<void ()>::slot_function_type
-wrap_update(shared_ptr<neighbour_type> neighbour)
+wrap_update(boost::shared_ptr<neighbour_type> neighbour)
 {
     return bind(&neighbour_type::update, neighbour);
 }

@@ -71,12 +71,12 @@ struct boltzmann
     double temp;
     double density;
 
-    shared_ptr<box_type> box;
-    shared_ptr<clock_type> clock;
-    shared_ptr<particle_type> particle;
-    shared_ptr<random_type> random;
-    shared_ptr<thermodynamics_type> thermodynamics;
-    shared_ptr<velocity_type> velocity;
+    boost::shared_ptr<box_type> box;
+    boost::shared_ptr<clock_type> clock;
+    boost::shared_ptr<particle_type> particle;
+    boost::shared_ptr<random_type> random;
+    boost::shared_ptr<thermodynamics_type> thermodynamics;
+    boost::shared_ptr<velocity_type> velocity;
 
     void test();
     boltzmann();
@@ -141,12 +141,12 @@ boltzmann<modules_type>::boltzmann()
     density = 0.3;
     typename box_type::vector_type box_length = pow(npart / density, 1. / dimension);
 
-    particle = make_shared<particle_type>(npart);
-    box = make_shared<box_type>(box_length);
-    random = make_shared<random_type>();
-    velocity = make_shared<velocity_type>(particle, random, temp);
-    clock = make_shared<clock_type>(0); // bogus time-step
-    thermodynamics = make_shared<thermodynamics_type>(make_shared<particle_group_type>(particle), box, clock);
+    particle = boost::make_shared<particle_type>(npart);
+    box = boost::make_shared<box_type>(box_length);
+    random = boost::make_shared<random_type>();
+    velocity = boost::make_shared<velocity_type>(particle, random, temp);
+    clock = boost::make_shared<clock_type>(0); // bogus time-step
+    thermodynamics = boost::make_shared<thermodynamics_type>(boost::make_shared<particle_group_type>(particle), box, clock);
 }
 
 template <int dimension, typename float_type>

@@ -159,11 +159,11 @@ void excluded_volume<dimension, float_type>::luaopen(lua_State* L)
         [
             namespace_("positions")
             [
-                class_<excluded_volume, shared_ptr<excluded_volume> >(class_name.c_str())
+                class_<excluded_volume, boost::shared_ptr<excluded_volume> >(class_name.c_str())
                     .def(constructor<
-                         shared_ptr<box_type const>
+                         boost::shared_ptr<box_type const>
                        , float_type
-                       , shared_ptr<logger_type>
+                       , boost::shared_ptr<logger_type>
                     >())
                     .def("exclude_sphere", &excluded_volume::exclude_sphere)
                     .def("exclude_spheres", &excluded_volume::exclude_spheres)

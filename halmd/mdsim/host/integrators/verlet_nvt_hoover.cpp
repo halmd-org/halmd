@@ -38,12 +38,12 @@ namespace mdsim { namespace host { namespace integrators
 
 template <int dimension, typename float_type>
 verlet_nvt_hoover<dimension, float_type>::verlet_nvt_hoover(
-    shared_ptr<particle_type> particle
-  , shared_ptr<box_type const> box
+    boost::shared_ptr<particle_type> particle
+  , boost::shared_ptr<box_type const> box
   , float_type timestep
   , float_type temperature
   , float_type resonance_frequency
-  , shared_ptr<logger_type> logger
+  , boost::shared_ptr<logger_type> logger
 )
   // public member initialisation
   : xi(0)
@@ -196,36 +196,36 @@ void verlet_nvt_hoover<dimension, float_type>::propagate_chain()
 }
 
 template <typename integrator_type>
-static function <void ()>
-wrap_integrate(shared_ptr<integrator_type> self)
+static boost::function<void ()>
+wrap_integrate(boost::shared_ptr<integrator_type> self)
 {
     return bind(&integrator_type::integrate, self);
 }
 
 template <typename integrator_type>
-static function <void ()>
-wrap_finalize(shared_ptr<integrator_type> self)
+static boost::function<void ()>
+wrap_finalize(boost::shared_ptr<integrator_type> self)
 {
     return bind(&integrator_type::finalize, self);
 }
 
 template <typename integrator_type>
-static function<typename integrator_type::chain_type& ()>
-wrap_xi(shared_ptr<integrator_type> integrator)
+static boost::function<typename integrator_type::chain_type& ()>
+wrap_xi(boost::shared_ptr<integrator_type> integrator)
 {
     return lambda::var(integrator->xi);
 }
 
 template <typename integrator_type>
-static function<typename integrator_type::chain_type& ()>
-wrap_v_xi(shared_ptr<integrator_type> integrator)
+static boost::function<typename integrator_type::chain_type& ()>
+wrap_v_xi(boost::shared_ptr<integrator_type> integrator)
 {
     return lambda::var(integrator->v_xi);
 }
 
 template <typename integrator_type>
-static function<double ()>
-wrap_en_nhc(shared_ptr<integrator_type> integrator)
+static boost::function<double ()>
+wrap_en_nhc(boost::shared_ptr<integrator_type> integrator)
 {
     return bind(&integrator_type::en_nhc, integrator);
 }
@@ -269,13 +269,13 @@ void verlet_nvt_hoover<dimension, float_type>::luaopen(lua_State* L)
 
           , namespace_("integrators")
             [
-                def("verlet_nvt_hoover", &make_shared<verlet_nvt_hoover
-                  , shared_ptr<particle_type>
-                  , shared_ptr<box_type const>
+                def("verlet_nvt_hoover", &boost::make_shared<verlet_nvt_hoover
+                  , boost::shared_ptr<particle_type>
+                  , boost::shared_ptr<box_type const>
                   , float_type
                   , float_type
                   , float_type
-                  , shared_ptr<logger_type>
+                  , boost::shared_ptr<logger_type>
                 >)
             ]
         ]

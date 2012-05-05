@@ -42,7 +42,7 @@ lennard_jones_simple<float_type>::lennard_jones_simple(
     unsigned int ntype1
   , unsigned int ntype2
   , float_type cutoff
-  , shared_ptr<logger_type> logger
+  , boost::shared_ptr<logger_type> logger
 )
   // initialise members
   : r_cut_(cutoff)
@@ -76,12 +76,12 @@ void lennard_jones_simple<float_type>::luaopen(lua_State* L)
             [
                 namespace_("potentials")
                 [
-                    class_<lennard_jones_simple, shared_ptr<lennard_jones_simple> >(module_name())
+                    class_<lennard_jones_simple, boost::shared_ptr<lennard_jones_simple> >(module_name())
                         .def(constructor<
                             unsigned int
                           , unsigned int
                           , float_type
-                          , shared_ptr<logger_type>
+                          , boost::shared_ptr<logger_type>
                         >())
                         // provide Lua interface coherent with lennard_jones
                         .property("r_cut", &lennard_jones_simple::r_cut)

@@ -40,7 +40,7 @@ namespace h5md {
 append::append(
     H5::Group const& root
   , vector<string> const& location
-  , shared_ptr<clock_type const> clock
+  , boost::shared_ptr<clock_type const> clock
 )
   : clock_(clock)
 {
@@ -89,7 +89,7 @@ static void write_dataset(
     H5::DataSet& dataset
   , H5::Group const& group
   , string const& name
-  , function<T ()> const& slot
+  , boost::function<T ()> const& slot
 )
 {
     T data = slot();
@@ -102,7 +102,7 @@ static void write_dataset(
 template <typename T>
 connection append::on_write(
     subgroup_type& group
-  , function<T ()> const& slot
+  , boost::function<T ()> const& slot
   , vector<string> const& location
 )
 {
@@ -140,7 +140,7 @@ void append::write_step_time()
 }
 
 static append::slot_function_type
-wrap_write(shared_ptr<append> instance)
+wrap_write(boost::shared_ptr<append> instance)
 {
     return bind(&append::write, instance);
 }
@@ -164,8 +164,8 @@ void append::luaopen(lua_State* L)
             [
                 namespace_("h5md")
                 [
-                    class_<append, shared_ptr<append> >("append")
-                        .def(constructor<H5::Group const&, vector<string> const&, shared_ptr<clock_type const> >())
+                    class_<append, boost::shared_ptr<append> >("append")
+                        .def(constructor<H5::Group const&, vector<string> const&, boost::shared_ptr<clock_type const> >())
                         .property("group", &append::group)
                         .property("write", &wrap_write)
                         .def("on_write", &append::on_write<float>, pure_out_value(_2))
@@ -214,12 +214,12 @@ void append::luaopen(lua_State* L)
                         .def("on_write", &append::on_write<vector<fixed_vector<double, 3>, raw_allocator<fixed_vector<double, 3> > > const&>, pure_out_value(_2))
                         .def("on_write", &append::on_write<vector<unsigned int, raw_allocator<unsigned int > >&>, pure_out_value(_2))
                         .def("on_write", &append::on_write<vector<unsigned int, raw_allocator<unsigned int > > const&>, pure_out_value(_2))
-                        .def("on_write", &append::on_write<vector<array<float, 3> > >, pure_out_value(_2))
-                        .def("on_write", &append::on_write<vector<array<float, 3> >&>, pure_out_value(_2))
-                        .def("on_write", &append::on_write<vector<array<float, 3> > const&>, pure_out_value(_2))
-                        .def("on_write", &append::on_write<vector<array<double, 3> > >, pure_out_value(_2))
-                        .def("on_write", &append::on_write<vector<array<double, 3> >&>, pure_out_value(_2))
-                        .def("on_write", &append::on_write<vector<array<double, 3> > const&>, pure_out_value(_2))
+                        .def("on_write", &append::on_write<vector<boost::array<float, 3> > >, pure_out_value(_2))
+                        .def("on_write", &append::on_write<vector<boost::array<float, 3> >&>, pure_out_value(_2))
+                        .def("on_write", &append::on_write<vector<boost::array<float, 3> > const&>, pure_out_value(_2))
+                        .def("on_write", &append::on_write<vector<boost::array<double, 3> > >, pure_out_value(_2))
+                        .def("on_write", &append::on_write<vector<boost::array<double, 3> >&>, pure_out_value(_2))
+                        .def("on_write", &append::on_write<vector<boost::array<double, 3> > const&>, pure_out_value(_2))
                         .def("on_write", &append::on_write<multi_array<float, 2> >, pure_out_value(_2))
                         .def("on_write", &append::on_write<multi_array<float, 2>&>, pure_out_value(_2))
                         .def("on_write", &append::on_write<multi_array<float, 2> const&>, pure_out_value(_2))

@@ -30,10 +30,10 @@ namespace velocities {
 
 template <int dimension, typename float_type, typename RandomNumberGenerator>
 boltzmann<dimension, float_type, RandomNumberGenerator>::boltzmann(
-    shared_ptr<particle_type> particle
-  , shared_ptr<random_type> random
+    boost::shared_ptr<particle_type> particle
+  , boost::shared_ptr<random_type> random
   , double temperature
-  , shared_ptr<logger_type> logger
+  , boost::shared_ptr<logger_type> logger
 )
   : _Base(particle, logger)
   // dependency injection
@@ -154,12 +154,12 @@ void boltzmann<dimension, float_type, RandomNumberGenerator>::luaopen(lua_State*
             [
                 namespace_("velocities")
                 [
-                    class_<boltzmann, shared_ptr<_Base_Base>, bases<_Base_Base, _Base> >(class_name.c_str())
+                    class_<boltzmann, boost::shared_ptr<_Base_Base>, bases<_Base_Base, _Base> >(class_name.c_str())
                         .def(constructor<
-                             shared_ptr<particle_type>
-                           , shared_ptr<random_type>
+                             boost::shared_ptr<particle_type>
+                           , boost::shared_ptr<random_type>
                            , double
-                           , shared_ptr<logger_type>
+                           , boost::shared_ptr<logger_type>
                          >())
                         .property("temperature", &boltzmann::temperature)
                         .property("module_name", &module_name_wrapper<dimension, float_type, RandomNumberGenerator>)

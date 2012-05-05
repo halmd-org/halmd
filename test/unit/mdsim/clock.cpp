@@ -37,7 +37,7 @@ time_type const eps_time = numeric_limits<time_type>::epsilon();
 
 BOOST_AUTO_TEST_CASE( init )
 {
-    shared_ptr<clock_type> clock = make_shared<clock_type>(0.001);
+    boost::shared_ptr<clock_type> clock = make_shared<clock_type>(0.001);
     BOOST_CHECK_EQUAL( clock->step(), 0u );
     BOOST_CHECK_CLOSE_FRACTION( clock->time(), 0., eps_time );
     BOOST_CHECK_CLOSE_FRACTION( clock->timestep(), 0.001, eps_time );
@@ -45,7 +45,7 @@ BOOST_AUTO_TEST_CASE( init )
 
 BOOST_AUTO_TEST_CASE( monotonic_timestep )
 {
-    shared_ptr<clock_type> clock = make_shared<clock_type>(0.001);
+    boost::shared_ptr<clock_type> clock = make_shared<clock_type>(0.001);
     for (int i = 0; i < 1000000; ++i) {
         clock->advance();
     }

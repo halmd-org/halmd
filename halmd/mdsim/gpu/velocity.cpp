@@ -31,8 +31,8 @@ namespace gpu {
 
 template <int dimension, typename float_type>
 velocity<dimension, float_type>::velocity(
-    shared_ptr<particle_type> particle
-  , shared_ptr<logger_type> logger
+    boost::shared_ptr<particle_type> particle
+  , boost::shared_ptr<logger_type> logger
 )
   // dependency injection
   : particle_(particle)
@@ -100,7 +100,7 @@ void velocity<dimension, float_type>::luaopen(lua_State* L)
         [
             namespace_("gpu")
             [
-                class_<velocity, shared_ptr<_Base>, _Base>(class_name.c_str())
+                class_<velocity, boost::shared_ptr<_Base>, _Base>(class_name.c_str())
             ]
         ]
     ];

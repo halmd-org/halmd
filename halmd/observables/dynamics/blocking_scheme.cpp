@@ -33,13 +33,13 @@ namespace observables {
 namespace dynamics {
 
 blocking_scheme::blocking_scheme(
-    shared_ptr<clock_type const> clock
+    boost::shared_ptr<clock_type const> clock
   , double maximum_lag_time
   , double resolution
   , unsigned int block_size
   , unsigned int shift
   , unsigned int separation
-  , shared_ptr<logger_type> logger
+  , boost::shared_ptr<logger_type> logger
 )
   // member initialisation
   : clock_(clock)
@@ -105,13 +105,13 @@ blocking_scheme::blocking_scheme(
     }
 }
 
-connection blocking_scheme::on_correlate(shared_ptr<correlation_base> tcf)
+connection blocking_scheme::on_correlate(boost::shared_ptr<correlation_base> tcf)
 {
     assert(find(tcf_.begin(), tcf_.end(), tcf) == tcf_.end());
     return tcf_.connect(tcf);
 }
 
-connection blocking_scheme::on_sample(shared_ptr<block_sample_type> block_sample)
+connection blocking_scheme::on_sample(boost::shared_ptr<block_sample_type> block_sample)
 {
     assert(block_sample->count() == count());
     assert(block_sample->block_size() == block_size_);
@@ -139,7 +139,7 @@ void blocking_scheme::sample()
         if (step % interval_[i] == 0 && step >= origin_[i]) {
             // append current sample to block at level 'i' for each sample type
             LOG_TRACE("append sample(s) to blocking level " << i);
-            BOOST_FOREACH(shared_ptr<block_sample_type> block_sample, block_sample_) {
+            BOOST_FOREACH(boost::shared_ptr<block_sample_type> block_sample, block_sample_) {
                 block_sample->push_back(i);
             }
 
@@ -173,7 +173,7 @@ void blocking_scheme::process(unsigned int level)
     // call all registered correlation modules
     // and correlate block data with first entry
     LOG_TRACE("compute correlations at blocking level " << level << " from step " << origin_[level]);
-    BOOST_FOREACH(shared_ptr<correlation_base> tcf, tcf_) {
+    BOOST_FOREACH(boost::shared_ptr<correlation_base> tcf, tcf_) {
         tcf->compute(level);
     }
 
@@ -187,7 +187,7 @@ void blocking_scheme::process(unsigned int level)
     // for each block structure, discard all entries earlier
     // than the new time origin at this level
     LOG_TRACE("discard first " << skip << " entries at level " << level);
-    BOOST_FOREACH(shared_ptr<block_sample_type> block_sample, block_sample_) {
+    BOOST_FOREACH(boost::shared_ptr<block_sample_type> block_sample, block_sample_) {
         for (unsigned int k = 0; k < skip && !block_sample->empty(level); ++k) {
             block_sample->pop_front(level);
         }
@@ -215,19 +215,19 @@ connection blocking_scheme::on_append_finalise(slot_function_type const& slot)
 }
 
 blocking_scheme::slot_function_type
-static wrap_sample(shared_ptr<blocking_scheme> self)
+static wrap_sample(boost::shared_ptr<blocking_scheme> self)
 {
     return bind(&blocking_scheme::sample, self);
 }
 
 blocking_scheme::slot_function_type
-static wrap_finalise(shared_ptr<blocking_scheme> self)
+static wrap_finalise(boost::shared_ptr<blocking_scheme> self)
 {
     return bind(&blocking_scheme::finalise, self);
 }
 
-static function<blocking_scheme::block_time_type const& ()>
-wrap_time(shared_ptr<blocking_scheme> self)
+static boost::function<blocking_scheme::block_time_type const& ()>
+wrap_time(boost::shared_ptr<blocking_scheme> self)
 {
     return bind(&blocking_scheme::time, self);
 }
@@ -241,15 +241,15 @@ void blocking_scheme::luaopen(lua_State* L)
         [
             namespace_("dynamics")
             [
-                class_<blocking_scheme, shared_ptr<blocking_scheme> >("blocking_scheme")
+                class_<blocking_scheme, boost::shared_ptr<blocking_scheme> >("blocking_scheme")
                     .def(constructor<
-                        shared_ptr<clock_type const>
+                        boost::shared_ptr<clock_type const>
                       , double
                       , double
                       , unsigned int
                       , unsigned int
                       , unsigned int
-                      , shared_ptr<logger_type>
+                      , boost::shared_ptr<logger_type>
                     >())
                     .property("finalise", &wrap_finalise)
                     .property("sample", &wrap_sample)

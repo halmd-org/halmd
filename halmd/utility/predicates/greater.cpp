@@ -31,7 +31,7 @@ namespace predicates {
 
 template <typename greater_type>
 static typename greater_type::slot_function_type
-wrap_evaluate(shared_ptr<greater_type const> greater)
+wrap_evaluate(boost::shared_ptr<greater_type const> greater)
 {
     return bind(&greater_type::evaluate, greater);
 }
@@ -47,13 +47,8 @@ void greater<value_type>::luaopen(lua_State* L, char const* class_name)
             class_<greater>(class_name)
                 .property("evaluate", &wrap_evaluate<greater>)
                 .def("on_greater", &greater::on_greater)
-                .scope
-                [
-                    class_<function_type>("function_type")
-                        .def("__call", &function_type::operator())
-                ]
 
-          , def("greater", &make_shared<greater, function_type, value_type>)
+          , def("greater", &boost::make_shared<greater, function_type, value_type>)
         ]
     ];
 }
