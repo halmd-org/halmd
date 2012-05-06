@@ -28,6 +28,7 @@
 # include <algorithm>
 # include <cassert>
 # include <initializer_list>
+# include <type_traits>
 #endif
 #ifdef HALMD_WITH_GPU
 # include <cuda_runtime.h> // CUDA vector types for host compiler
@@ -62,7 +63,7 @@ struct fixed_vector<float, 4>
      */
     template <typename U>
     HALMD_GPU_ENABLED fixed_vector(std::initializer_list<U> const& v,
-      typename boost::enable_if<boost::is_convertible<U, float> >::type* dummy = 0)
+      typename std::enable_if<std::is_convertible<U, float>::value>::type* dummy = 0)
     {
         assert( v.size() == _Base::size() );
         std::copy(v.begin(), v.end(), _Base::begin());
@@ -141,7 +142,7 @@ struct fixed_vector<unsigned int, 4>
      */
     template <typename U>
     HALMD_GPU_ENABLED fixed_vector(std::initializer_list<U> const& v,
-      typename boost::enable_if<boost::is_convertible<U, unsigned int> >::type* dummy = 0)
+      typename std::enable_if<std::is_convertible<U, unsigned int>::value>::type* dummy = 0)
     {
         assert( v.size() == _Base::size() );
         std::copy(v.begin(), v.end(), _Base::begin());
@@ -220,7 +221,7 @@ struct fixed_vector<int, 4>
      */
     template <typename U>
     HALMD_GPU_ENABLED fixed_vector(std::initializer_list<U> const& v,
-      typename boost::enable_if<boost::is_convertible<U, int> >::type* dummy = 0)
+      typename std::enable_if<std::is_convertible<U, int>::value>::type* dummy = 0)
     {
         assert( v.size() == _Base::size() );
         std::copy(v.begin(), v.end(), _Base::begin());
@@ -298,7 +299,7 @@ struct fixed_vector<dsfloat, 4> : fixed_array<dsfloat, 4>
      */
     template <typename U>
     HALMD_GPU_ENABLED fixed_vector(std::initializer_list<U> const& v,
-      typename boost::enable_if<boost::is_convertible<U, dsfloat> >::type* dummy = 0)
+      typename std::enable_if<std::is_convertible<U, dsfloat>::value>::type* dummy = 0)
     {
         assert( v.size() == _Base::size() );
         std::copy(v.begin(), v.end(), _Base::begin());
@@ -358,7 +359,7 @@ struct fixed_vector<double, 4>
      */
     template <typename U>
     HALMD_GPU_ENABLED fixed_vector(std::initializer_list<U> const& v,
-      typename boost::enable_if<boost::is_convertible<U, double> >::type* dummy = 0)
+      typename std::enable_if<std::is_convertible<U, double>::value>::type* dummy = 0)
     {
         assert( v.size() == _Base::size() );
         std::copy(v.begin(), v.end(), _Base::begin());

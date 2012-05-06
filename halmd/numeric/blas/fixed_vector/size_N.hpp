@@ -28,6 +28,7 @@
 # include <algorithm>
 # include <cassert>
 # include <initializer_list>
+# include <type_traits>
 #endif
 
 #include <halmd/numeric/blas/fixed_array.hpp>
@@ -57,7 +58,7 @@ struct fixed_vector
      */
     template <typename U>
     HALMD_GPU_ENABLED fixed_vector(std::initializer_list<U> const& v,
-      typename boost::enable_if<boost::is_convertible<U, T> >::type* dummy = 0)
+      typename std::enable_if<std::is_convertible<U, T>::value>::type* dummy = 0)
     {
         assert( v.size() == _Base::size() );
         std::copy(v.begin(), v.end(), _Base::begin());
