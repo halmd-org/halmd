@@ -20,6 +20,8 @@
 #ifndef HALMD_MDSIM_HOST_BINNING_HPP
 #define HALMD_MDSIM_HOST_BINNING_HPP
 
+#include <halmd/config.hpp>
+
 #include <algorithm>
 #include <boost/bind.hpp>
 #include <boost/make_shared.hpp>
@@ -103,14 +105,6 @@ public:
     void get_cell(output_iterator output) const;
 
 private:
-    /**
-     * This functor copies the particle indices of a cell at a given index
-     * to an output iterator at the given index. The output iterator is
-     * retrieved by invoking the output_iterator functor with the given index.
-     */
-    template <typename output_iterator>
-    void get_cell_at(output_iterator& output, cell_size_type const& index) const;
-
     typedef utility::profiler profiler_type;
     typedef typename profiler_type::accumulator_type accumulator_type;
     typedef typename profiler_type::scoped_timer_type scoped_timer_type;
@@ -136,15 +130,7 @@ private:
     runtime runtime_;
 };
 
-template <int dimension, typename float_type>
-template <typename output_iterator>
-inline void binning<dimension, float_type>::get_cell_at(
-    output_iterator& output
-  , cell_size_type const& index
-) const
-{
-    std::copy(cell_(index).begin(), cell_(index).end(), output(index));
-}
+#ifndef HALMD_NO_CXX11
 
 template <int dimension, typename float_type>
 template <typename output_iterator>
@@ -153,9 +139,14 @@ inline void binning<dimension, float_type>::get_cell(output_iterator output) con
     multi_range_for_each(
         cell_size_type(0)
       , ncell_
-      , boost::bind(&binning::get_cell_at<output_iterator>, this, output, _1)
+      , [&](cell_size_type const& index)
+        {
+            std::copy(cell_(index).begin(), cell_(index).end(), output(index));
+        }
     );
 }
+
+#endif /* ! HALMD_NO_CXX11 */
 
 } // namespace host
 } // namespace mdsim
