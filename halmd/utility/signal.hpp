@@ -221,8 +221,27 @@ public:
  *
  * http://www.boost.org/doc/libs/release/doc/html/signals.html
  */
-template <typename T>
+template <typename Function>
 class signal;
+
+#ifndef HALMD_NO_CXX11
+
+template <typename... Args>
+class signal<void (Args...)>
+  : public slots<boost::function<void (Args...)> >
+{
+public:
+    typedef boost::function<void (Args...)> slot_function_type;
+
+    void operator()(Args... args) const
+    {
+        for (slot_function_type const& f : *this) {
+            f(args...);
+        }
+    }
+};
+
+#else /* HALMD_NO_CXX11 */
 
 template <>
 class signal<void ()>
@@ -383,6 +402,8 @@ public:
         }
     }
 };
+
+#endif /* HALMD_NO_CXX11 */
 
 } // namespace halmd
 
