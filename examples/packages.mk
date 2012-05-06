@@ -268,8 +268,13 @@ BOOST_LOG_CXX11_PATCH_URL = http://sourceforge.net/projects/halmd/files/libs/boo
 BOOST_LOG_CXX11_PATCH_SHA256 = 350a137852592c5ba079c5fa0a5a5f9c7c2d662fc755d6837c32354c5670ecfe
 BOOST_BUILD_DIR = boost_$(BOOST_RELEASE)
 BOOST_INSTALL_DIR = $(PREFIX)/boost_$(BOOST_RELEASE)
-BOOST_BUILD_FLAGS = cxxflags=-fPIC dll-path=$(BOOST_INSTALL_DIR)/lib
+BOOST_BUILD_FLAGS = dll-path=$(BOOST_INSTALL_DIR)/lib
 
+ifdef USE_CXX11
+BOOST_BUILD_FLAGS += "cxxflags=-fPIC -std=c++11"
+else
+BOOST_BUILD_FLAGS += cxxflags=-fPIC
+endif
 ifndef USE_BZIP2
 BOOST_BUILD_FLAGS += -sNO_BZIP2=1
 endif
@@ -358,6 +363,12 @@ LUABIND_TARBALL_SHA256 = 4d6ca51f05e3bb9f0cf04bd1c3f371023f58b414bba8174c2558a05
 LUABIND_BUILD_DIR = luabind-$(LUABIND_VERSION)
 LUABIND_BUILD_FLAGS = cxxflags=-fPIC link=static variant=release variant=debug
 LUABIND_INSTALL_DIR = $(PREFIX)/luabind-$(LUABIND_VERSION)
+
+ifdef USE_CXX11
+LUABIND_BUILD_FLAGS += "cxxflags=-fPIC -std=c++11"
+else
+LUABIND_BUILD_FLAGS += cxxflags=-fPIC
+endif
 
 .fetch-luabind:
 	@$(RM) $(LUABIND_TARBALL)
