@@ -25,6 +25,8 @@
 #include <boost/weak_ptr.hpp>
 #include <list>
 
+#include <halmd/config.hpp>
+
 namespace halmd {
 
 // forward declaration

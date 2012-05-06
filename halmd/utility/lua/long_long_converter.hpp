@@ -22,6 +22,8 @@
 
 #include <luabind/luabind.hpp>
 
+#include <halmd/config.hpp>
+
 namespace luabind {
 
 /**

@@ -24,6 +24,8 @@
 #include <boost/multi_array.hpp>
 #include <luabind/luabind.hpp>
 
+#include <halmd/config.hpp>
+
 #if LUA_VERSION_NUM < 502
 # define luaL_len lua_objlen
 #endif

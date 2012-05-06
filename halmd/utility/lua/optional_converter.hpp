@@ -23,6 +23,8 @@
 #include <boost/optional.hpp>
 #include <luabind/luabind.hpp>
 
+#include <halmd/config.hpp>
+
 namespace luabind {
 
 /**
