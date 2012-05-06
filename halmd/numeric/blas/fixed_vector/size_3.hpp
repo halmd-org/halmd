@@ -20,13 +20,19 @@
 #ifndef HALMD_NUMERIC_BLAS_FIXED_VECTOR_SIZE_3_HPP
 #define HALMD_NUMERIC_BLAS_FIXED_VECTOR_SIZE_3_HPP
 
+#include <halmd/config.hpp>
+
 #include <boost/type_traits/is_convertible.hpp>
 #include <boost/utility/enable_if.hpp>
-#ifdef WITH_CUDA
+#ifndef HALMD_NO_CXX11
+# include <algorithm>
+# include <cassert>
+# include <initializer_list>
+#endif
+#ifdef HALMD_WITH_GPU
 # include <cuda_runtime.h> // CUDA vector types for host compiler
 #endif
 
-#include <halmd/config.hpp>
 #include <halmd/numeric/blas/fixed_array.hpp>
 #include <halmd/numeric/blas/fixed_vector/size_N.hpp>
 #include <halmd/numeric/mp/dsfloat.hpp>
@@ -50,6 +56,21 @@ struct fixed_vector<float, 3>
 
     HALMD_GPU_ENABLED fixed_vector() {}
 
+#ifndef HALMD_NO_CXX11
+
+    /**
+     * Assign values from initializer list.
+     */
+    template <typename U>
+    HALMD_GPU_ENABLED fixed_vector(std::initializer_list<U> const& v,
+      typename boost::enable_if<boost::is_convertible<U, float> >::type* dummy = 0)
+    {
+        assert( v.size() == _Base::size() );
+        std::copy(v.begin(), v.end(), _Base::begin());
+    }
+
+#endif /* ! HALMD_NO_CXX11 */
+
     /**
      * Initialization by scalar
      */
@@ -72,7 +93,7 @@ struct fixed_vector<float, 3>
         }
     }
 
-#ifdef WITH_CUDA
+#ifdef HALMD_WITH_GPU
 
     /**
      * Convert from CUDA vector type
@@ -129,7 +150,7 @@ struct fixed_vector<float, 3>
         return make_tuple(v, w);
     }
 
-#endif /* WITH_CUDA */
+#endif /* HALMD_WITH_GPU */
 };
 
 /**
@@ -144,6 +165,21 @@ struct fixed_vector<unsigned int, 3>
     enum { static_size = _Base::static_size };
 
     HALMD_GPU_ENABLED fixed_vector() {}
+
+#ifndef HALMD_NO_CXX11
+
+    /**
+     * Assign values from initializer list.
+     */
+    template <typename U>
+    HALMD_GPU_ENABLED fixed_vector(std::initializer_list<U> const& v,
+      typename boost::enable_if<boost::is_convertible<U, unsigned int> >::type* dummy = 0)
+    {
+        assert( v.size() == _Base::size() );
+        std::copy(v.begin(), v.end(), _Base::begin());
+    }
+
+#endif /* ! HALMD_NO_CXX11 */
 
     /**
      * Initialization by scalar
@@ -167,7 +203,7 @@ struct fixed_vector<unsigned int, 3>
         }
     }
 
-#ifdef WITH_CUDA
+#ifdef HALMD_WITH_GPU
 
     /**
      * Convert from CUDA vector type
@@ -224,7 +260,7 @@ struct fixed_vector<unsigned int, 3>
         return make_tuple(v, w);
     }
 
-#endif /* WITH_CUDA */
+#endif /* HALMD_WITH_GPU */
 };
 
 /**
@@ -239,6 +275,21 @@ struct fixed_vector<int, 3>
     enum { static_size = _Base::static_size };
 
     HALMD_GPU_ENABLED fixed_vector() {}
+
+#ifndef HALMD_NO_CXX11
+
+    /**
+     * Assign values from initializer list.
+     */
+    template <typename U>
+    HALMD_GPU_ENABLED fixed_vector(std::initializer_list<U> const& v,
+      typename boost::enable_if<boost::is_convertible<U, int> >::type* dummy = 0)
+    {
+        assert( v.size() == _Base::size() );
+        std::copy(v.begin(), v.end(), _Base::begin());
+    }
+
+#endif /* ! HALMD_NO_CXX11 */
 
     /**
      * Initialization by scalar
@@ -262,7 +313,7 @@ struct fixed_vector<int, 3>
         }
     }
 
-#ifdef WITH_CUDA
+#ifdef HALMD_WITH_GPU
 
     /**
      * Convert from CUDA vector type
@@ -319,7 +370,7 @@ struct fixed_vector<int, 3>
         return make_tuple(v, w);
     }
 
-#endif /* WITH_CUDA */
+#endif /* HALMD_WITH_GPU */
 };
 
 /**
@@ -333,6 +384,21 @@ struct fixed_vector<dsfloat, 3> : fixed_array<dsfloat, 3>
     enum { static_size = _Base::static_size };
 
     HALMD_GPU_ENABLED fixed_vector() {}
+
+#ifndef HALMD_NO_CXX11
+
+    /**
+     * Assign values from initializer list.
+     */
+    template <typename U>
+    HALMD_GPU_ENABLED fixed_vector(std::initializer_list<U> const& v,
+      typename boost::enable_if<boost::is_convertible<U, dsfloat> >::type* dummy = 0)
+    {
+        assert( v.size() == _Base::size() );
+        std::copy(v.begin(), v.end(), _Base::begin());
+    }
+
+#endif /* ! HALMD_NO_CXX11 */
 
     /**
      * Initialization by scalar
@@ -378,6 +444,21 @@ struct fixed_vector<double, 3>
     enum { static_size = _Base::static_size };
 
     HALMD_GPU_ENABLED fixed_vector() {}
+
+#ifndef HALMD_NO_CXX11
+
+    /**
+     * Assign values from initializer list.
+     */
+    template <typename U>
+    HALMD_GPU_ENABLED fixed_vector(std::initializer_list<U> const& v,
+      typename boost::enable_if<boost::is_convertible<U, double> >::type* dummy = 0)
+    {
+        assert( v.size() == _Base::size() );
+        std::copy(v.begin(), v.end(), _Base::begin());
+    }
+
+#endif /* ! HALMD_NO_CXX11 */
 
     /**
      * Initialization by scalar
