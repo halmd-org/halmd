@@ -268,8 +268,13 @@ BOOST_LOG_CXX11_PATCH_URL = http://sourceforge.net/projects/halmd/files/libs/boo
 BOOST_LOG_CXX11_PATCH_SHA256 = 350a137852592c5ba079c5fa0a5a5f9c7c2d662fc755d6837c32354c5670ecfe
 BOOST_BUILD_DIR = boost_$(BOOST_RELEASE)
 BOOST_INSTALL_DIR = $(PREFIX)/boost_$(BOOST_RELEASE)
-BOOST_BUILD_FLAGS = cxxflags=-fPIC dll-path=$(BOOST_INSTALL_DIR)/lib
+BOOST_BUILD_FLAGS = dll-path=$(BOOST_INSTALL_DIR)/lib
 
+ifdef USE_CXX11
+BOOST_BUILD_FLAGS += "cxxflags=-fPIC -std=c++11"
+else
+BOOST_BUILD_FLAGS += cxxflags=-fPIC
+endif
 ifndef USE_BZIP2
 BOOST_BUILD_FLAGS += -sNO_BZIP2=1
 endif
@@ -351,13 +356,19 @@ env-boost:
 ## Luabind library
 ##
 
-LUABIND_VERSION = 0.9.1-30-g99922ac
+LUABIND_VERSION = 0.9.1-32-ga431826
 LUABIND_TARBALL = luabind-$(LUABIND_VERSION).tar.bz2
 LUABIND_TARBALL_URL = http://sourceforge.net/projects/halmd/files/libs/luabind/$(LUABIND_TARBALL)
-LUABIND_TARBALL_SHA256 = a5557572f3fa0e962d6136cfeb49ba0482c93b9d8fd45c238f29c045e44da9d9
+LUABIND_TARBALL_SHA256 = 0c9bb9b5974199556109efb588228afb940db30ad06e10ca5ef597f79e2dc37d
 LUABIND_BUILD_DIR = luabind-$(LUABIND_VERSION)
 LUABIND_BUILD_FLAGS = cxxflags=-fPIC link=static variant=release variant=debug
 LUABIND_INSTALL_DIR = $(PREFIX)/luabind-$(LUABIND_VERSION)
+
+ifdef USE_CXX11
+LUABIND_BUILD_FLAGS += "cxxflags=-fPIC -std=c++11"
+else
+LUABIND_BUILD_FLAGS += cxxflags=-fPIC
+endif
 
 .fetch-luabind:
 	@$(RM) $(LUABIND_TARBALL)
@@ -896,13 +907,19 @@ GCC_VERSION = 4.7.0
 GCC_TARBALL = gcc-$(GCC_VERSION).tar.bz2
 GCC_TARBALL_URL = http://mirror.csclub.uwaterloo.ca/gnu/gcc/gcc-$(GCC_VERSION)/$(GCC_TARBALL)
 GCC_TARBALL_SHA256 = a680083e016f656dab7acd45b9729912e70e71bbffcbf0e3e8aa1cccf19dc9a5
+GCC_LIBSTDCXX_CLANG_PATCH = libstdc++4.7-clang11.patch
+GCC_LIBSTDCXX_CLANG_PATCH_URL = http://clang.llvm.org/$(GCC_LIBSTDCXX_CLANG_PATCH)
+GCC_LIBSTDCXX_CLANG_PATCH_SHA256 = 89afaeb15b720274345c75f05931288ed3798ca65f4515b2fc8dde407becfaee
 GCC_BUILD_DIR = gcc-$(GCC_VERSION)
 GCC_INSTALL_DIR = $(PREFIX)/gcc-$(GCC_VERSION)
 
 .fetch-gcc:
 	@$(RM) $(GCC_TARBALL)
+	@$(RM) $(GCC_LIBSTDCXX_CLANG_PATCH)
 	$(WGET) $(GCC_TARBALL_URL)
+	$(WGET) $(GCC_LIBSTDCXX_CLANG_PATCH_URL)
 	@echo '$(GCC_TARBALL_SHA256)  $(GCC_TARBALL)' | $(SHA256SUM)
+	@echo '$(GCC_LIBSTDCXX_CLANG_PATCH_SHA256)  $(GCC_LIBSTDCXX_CLANG_PATCH)' | $(SHA256SUM)
 	@$(TOUCH) $@
 
 fetch-gcc: .fetch-gcc .fetch-gmp .fetch-mpfr .fetch-mpc .fetch-ppl .fetch-cloog-ppl
@@ -910,6 +927,7 @@ fetch-gcc: .fetch-gcc .fetch-gmp .fetch-mpfr .fetch-mpc .fetch-ppl .fetch-cloog-
 .extract-gcc: .fetch-gcc
 	$(RM) $(GCC_BUILD_DIR)
 	$(TAR) -xjf $(GCC_TARBALL)
+	cd $(GCC_BUILD_DIR)/libstdc++-v3 && $(PATCH) -p0 < $(CURDIR)/$(GCC_LIBSTDCXX_CLANG_PATCH)
 	@$(TOUCH) $@
 
 extract-gcc: .extract-gcc
@@ -943,6 +961,7 @@ clean-gcc:
 distclean-gcc: clean-gcc
 	@$(RM) .fetch-gcc
 	$(RM) $(GCC_TARBALL)
+	$(RM) $(GCC_LIBSTDCXX_CLANG_PATCH)
 
 env-gcc:
 	@echo

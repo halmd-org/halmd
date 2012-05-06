@@ -24,6 +24,8 @@
 #include <luabind/luabind.hpp>
 #include <stdexcept>
 
+#include <halmd/config.hpp>
+
 /**
  * Luabind converter for Boost.Function
  */

@@ -23,6 +23,8 @@
 #include <luabind/luabind.hpp>
 #include <vector>
 
+#include <halmd/config.hpp>
+
 #if LUA_VERSION_NUM < 502
 # define luaL_len lua_objlen
 #endif

@@ -24,8 +24,9 @@
 #include <boost/numeric/ublas/matrix_proxy.hpp> // row()
 #include <boost/numeric/ublas/symmetric.hpp>
 #include <boost/numeric/ublas/vector.hpp>
-
 #include <luabind/luabind.hpp>
+
+#include <halmd/config.hpp>
 
 #if LUA_VERSION_NUM < 502
 # define luaL_len lua_objlen

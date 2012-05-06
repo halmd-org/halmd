@@ -25,6 +25,7 @@
 #include <boost/iterator/transform_iterator.hpp>
 #include <luabind/luabind.hpp>
 
+#include <halmd/config.hpp>
 #include <halmd/numeric/blas/fixed_vector.hpp>
 
 #if LUA_VERSION_NUM < 502
