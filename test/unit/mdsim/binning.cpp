@@ -164,12 +164,11 @@ test_binning(binning_type& binning, particle_type const& particle, box_type cons
     unsigned int maximum = cell_count.front();
     unsigned int minimum = cell_count.front();
 
-    std::for_each(cell_count.begin(), cell_count.end(), [&](unsigned int count)
-    {
+    for (unsigned int count : cell_count) {
         acc(count);
         maximum = std::max(maximum, count);
         minimum = std::min(minimum, count);
-    });
+    }
 
     BOOST_TEST_MESSAGE( "average number of particles per cell " << mean(acc) << " (σ = " << sigma(acc) << ")" );
     BOOST_TEST_MESSAGE( "minimum number of particles per cell " << minimum );
