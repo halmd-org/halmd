@@ -907,19 +907,13 @@ GCC_VERSION = 4.7.0
 GCC_TARBALL = gcc-$(GCC_VERSION).tar.bz2
 GCC_TARBALL_URL = http://mirror.csclub.uwaterloo.ca/gnu/gcc/gcc-$(GCC_VERSION)/$(GCC_TARBALL)
 GCC_TARBALL_SHA256 = a680083e016f656dab7acd45b9729912e70e71bbffcbf0e3e8aa1cccf19dc9a5
-GCC_LIBSTDCXX_CLANG_PATCH = libstdc++4.7-clang11.patch
-GCC_LIBSTDCXX_CLANG_PATCH_URL = http://clang.llvm.org/$(GCC_LIBSTDCXX_CLANG_PATCH)
-GCC_LIBSTDCXX_CLANG_PATCH_SHA256 = 89afaeb15b720274345c75f05931288ed3798ca65f4515b2fc8dde407becfaee
 GCC_BUILD_DIR = gcc-$(GCC_VERSION)
 GCC_INSTALL_DIR = $(PREFIX)/gcc-$(GCC_VERSION)
 
 .fetch-gcc:
 	@$(RM) $(GCC_TARBALL)
-	@$(RM) $(GCC_LIBSTDCXX_CLANG_PATCH)
 	$(WGET) $(GCC_TARBALL_URL)
-	$(WGET) $(GCC_LIBSTDCXX_CLANG_PATCH_URL)
 	@echo '$(GCC_TARBALL_SHA256)  $(GCC_TARBALL)' | $(SHA256SUM)
-	@echo '$(GCC_LIBSTDCXX_CLANG_PATCH_SHA256)  $(GCC_LIBSTDCXX_CLANG_PATCH)' | $(SHA256SUM)
 	@$(TOUCH) $@
 
 fetch-gcc: .fetch-gcc .fetch-gmp .fetch-mpfr .fetch-mpc .fetch-ppl .fetch-cloog-ppl
@@ -927,7 +921,6 @@ fetch-gcc: .fetch-gcc .fetch-gmp .fetch-mpfr .fetch-mpc .fetch-ppl .fetch-cloog-
 .extract-gcc: .fetch-gcc
 	$(RM) $(GCC_BUILD_DIR)
 	$(TAR) -xjf $(GCC_TARBALL)
-	cd $(GCC_BUILD_DIR)/libstdc++-v3 && $(PATCH) -p0 < $(CURDIR)/$(GCC_LIBSTDCXX_CLANG_PATCH)
 	@$(TOUCH) $@
 
 extract-gcc: .extract-gcc
@@ -961,7 +954,6 @@ clean-gcc:
 distclean-gcc: clean-gcc
 	@$(RM) .fetch-gcc
 	$(RM) $(GCC_TARBALL)
-	$(RM) $(GCC_LIBSTDCXX_CLANG_PATCH)
 
 env-gcc:
 	@echo
