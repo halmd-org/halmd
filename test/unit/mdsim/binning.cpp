@@ -194,7 +194,7 @@ test_binning(binning_type& binning, particle_type const& particle, box_type cons
  * particle on the lattice.
  */
 template <typename binning_type>
-static boost::unit_test::callback0<>
+static void
 test_non_uniform_density(typename binning_type::cell_size_type const& shape, float length, float scale)
 {
     typedef typename binning_type::particle_type particle_type;
@@ -205,45 +205,31 @@ test_non_uniform_density(typename binning_type::cell_size_type const& shape, flo
     typedef typename vector_type::value_type float_type;
     typedef typename shape_type::value_type size_type;
 
-    return [=]() {
-        BOOST_TEST_MESSAGE( "number of lattice unit cells " << shape );
-        BOOST_TEST_MESSAGE( "lower bound for edge length of cells " << length );
+    BOOST_TEST_MESSAGE( "number of lattice unit cells " << shape );
+    BOOST_TEST_MESSAGE( "lower bound for edge length of cells " << length );
 
-        // create close-packed lattice of given shape
-        halmd::close_packed_lattice<vector_type, shape_type> lattice(shape);
-        // create simulation domain
-        boost::shared_ptr<box_type> box(new box_type(typename box_type::vector_type(lattice.shape())));
-        // create system of particles of number of lattice points
-        boost::shared_ptr<particle_type> particle(new particle_type(lattice.size()));
-        // create particle binning
-        binning_type binning(particle, box, matrix_type(1, 1, length), 0);
+    // create close-packed lattice of given shape
+    halmd::close_packed_lattice<vector_type, shape_type> lattice(shape);
+    // create simulation domain
+    boost::shared_ptr<box_type> box(new box_type(typename box_type::vector_type(lattice.shape())));
+    // create system of particles of number of lattice points
+    boost::shared_ptr<particle_type> particle(new particle_type(lattice.size()));
+    // create particle binning
+    binning_type binning(particle, box, matrix_type(1, 1, length), 0);
 
-        BOOST_TEST_MESSAGE( "number density " << particle->nparticle() / box->volume() );
+    BOOST_TEST_MESSAGE( "number density " << particle->nparticle() / box->volume() );
 
-        // place particles on lattice
-        particle->set_position(
-            boost::make_transform_iterator(boost::make_counting_iterator(size_type(0)), lattice)
-          , boost::make_transform_iterator(boost::make_counting_iterator(lattice.size()), lattice)
-        );
-        // transform density using sine shift
-        transform_density(*particle, *box, scale);
+    // place particles on lattice
+    particle->set_position(
+        boost::make_transform_iterator(boost::make_counting_iterator(size_type(0)), lattice)
+      , boost::make_transform_iterator(boost::make_counting_iterator(lattice.size()), lattice)
+    );
+    // transform density using sine shift
+    transform_density(*particle, *box, scale);
 
-        // bin particles and test output
-        test_binning(binning, *particle, *box);
-    };
+    // bin particles and test output
+    test_binning(binning, *particle, *box);
 }
-
-#ifdef HALMD_WITH_GPU
-template <typename test_type>
-static boost::unit_test::callback0<>
-test_with_gpu(test_type const& test)
-{
-    return [=]() {
-        set_cuda_device device;
-        test();
-    };
-}
-#endif
 
 /**
  * Manual test case registration.
@@ -283,11 +269,13 @@ HALMD_TEST_INIT( binning )
 #else
                 typedef halmd::mdsim::host::binning<2, double> binning_type;
 #endif
-                callback0<> non_uniform_density = test_non_uniform_density<binning_type>(
-                    {2 * unit, 3 * unit} // non-square box with coprime edge lengths
-                  , cell_length
-                  , compression
-                );
+                auto non_uniform_density = [=]() {
+                    test_non_uniform_density<binning_type>(
+                        {2 * unit, 3 * unit} // non-square box with coprime edge lengths
+                      , cell_length
+                      , compression
+                    );
+                };
                 ts_host_two->add(BOOST_TEST_CASE( non_uniform_density ));
             }
             {
@@ -296,30 +284,38 @@ HALMD_TEST_INIT( binning )
 #else
                 typedef halmd::mdsim::host::binning<3, double> binning_type;
 #endif
-                callback0<> non_uniform_density = test_non_uniform_density<binning_type>(
-                    {2 * unit, 5 * unit, 3 * unit} // non-cubic box with coprime edge lengths
-                  , cell_length
-                  , compression
-                );
+                auto non_uniform_density = [=]() {
+                    test_non_uniform_density<binning_type>(
+                        {2 * unit, 5 * unit, 3 * unit} // non-cubic box with coprime edge lengths
+                      , cell_length
+                      , compression
+                    );
+                };
                 ts_host_three->add(BOOST_TEST_CASE( non_uniform_density ));
             }
 #ifdef HALMD_WITH_GPU
             {
                 typedef halmd::mdsim::gpu::binning<2, float> binning_type;
-                callback0<> non_uniform_density = test_with_gpu(test_non_uniform_density<binning_type>(
-                    {2 * unit, 3 * unit} // non-square box with coprime edge lengths
-                  , cell_length
-                  , compression
-                ));
+                auto non_uniform_density = [=]() {
+                    set_cuda_device device;
+                    test_non_uniform_density<binning_type>(
+                        {2 * unit, 3 * unit} // non-square box with coprime edge lengths
+                      , cell_length
+                      , compression
+                    );
+                };
                 ts_gpu_two->add(BOOST_TEST_CASE( non_uniform_density ));
             }
             {
                 typedef halmd::mdsim::gpu::binning<3, float> binning_type;
-                callback0<> non_uniform_density = test_with_gpu(test_non_uniform_density<binning_type>(
-                    {2 * unit, 5 * unit, 3 * unit} // non-cubic box with coprime edge lengths
-                  , cell_length
-                  , compression
-                ));
+                auto non_uniform_density = [=]() {
+                    set_cuda_device device;
+                    test_non_uniform_density<binning_type>(
+                        {2 * unit, 5 * unit, 3 * unit} // non-cubic box with coprime edge lengths
+                      , cell_length
+                      , compression
+                    );
+                };
                 ts_gpu_three->add(BOOST_TEST_CASE( non_uniform_density ));
             }
 #endif
