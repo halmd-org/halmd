@@ -82,8 +82,7 @@ transform_density(particle_type& particle, box_type const& box, float scale)
     // factors where f(r_i) have inflexion point at middle of box
     position_type lambda = element_div(position_type(scale), k);
     // density transform
-    auto transform = [&](position_type const& r)
-    {
+    auto transform = [&](position_type const& r) {
         return r + element_prod(lambda, sin(element_prod(k, r)));
     };
 
@@ -133,11 +132,9 @@ test_binning(binning_type& binning, particle_type const& particle, box_type cons
     // an array with particle indices, and increase the particle count
     // of the cell.
     //
-    auto make_cell_iterator = [&](cell_size_type const& cell, unsigned int& count)
-    {
+    auto make_cell_iterator = [&](cell_size_type const& cell, unsigned int& count) {
         return boost::make_function_output_iterator(
-            [&](unsigned int index)
-            {
+            [&](unsigned int index) {
                 BOOST_CHECK_EQUAL( cell, floor(element_prod(position[index], unit_ncell)) );
                 particle_index.push_back(index);
                 ++count;
@@ -152,8 +149,7 @@ test_binning(binning_type& binning, particle_type const& particle, box_type cons
     // output particle indices and cell counts to arrays
     auto cell_count_iterator = cell_count.begin();
     binning.get_cell(
-        [&](cell_size_type const& cell)
-        {
+        [&](cell_size_type const& cell) {
             return make_cell_iterator(cell, *cell_count_iterator++);
         }
     );
@@ -209,8 +205,7 @@ test_non_uniform_density(typename binning_type::cell_size_type const& shape, flo
     typedef typename vector_type::value_type float_type;
     typedef typename shape_type::value_type size_type;
 
-    return [=]()
-    {
+    return [=]() {
         BOOST_TEST_MESSAGE( "number of lattice unit cells " << shape );
         BOOST_TEST_MESSAGE( "lower bound for edge length of cells " << length );
 
@@ -243,8 +238,7 @@ template <typename test_type>
 static boost::unit_test::callback0<>
 test_with_gpu(test_type const& test)
 {
-    return [=]()
-    {
+    return [=]() {
         set_cuda_device device;
         test();
     };

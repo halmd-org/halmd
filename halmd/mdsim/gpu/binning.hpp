@@ -183,8 +183,7 @@ inline void binning<dimension, float_type>::get_cell(output_iterator output) con
     multi_range_for_each(
         cell_size_type(0)
       , ncell_
-      , [&](cell_size_type const& index)
-        {
+      , [&](cell_size_type const& index) {
             auto first = h_cell.begin() + cell_size_ * multi_index_to_offset(index, ncell_);
             auto last = first + cell_size_;
             std::remove_copy(first, last, output(index), -1u);
