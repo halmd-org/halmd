@@ -281,9 +281,8 @@ HALMD_TEST_INIT( binning )
     // lower bound on edge length of cells
     float cell_length = 2;
 
-    for (unsigned int unit = 1; unit <= 8; unit *= 2) {
-        for (unsigned int j = 0; j <= 4; ++j) {
-            float compression = j / 4.;
+    for (unsigned int unit : {1, 2, 4, 8}) {
+        for (float compression : {0., 0.25, 0.5, 0.75, 1.}) {
             {
 #ifdef USE_HOST_SINGLE_PRECISION
                 typedef halmd::mdsim::host::binning<2, float> binning_type;
