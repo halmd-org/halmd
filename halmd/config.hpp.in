@@ -43,4 +43,12 @@
 # define HALMD_NO_CXX11
 #endif
 
+/**
+ * Enable use of decltype in boost::result_of, which is needed to
+ * make boost::transform_iterator work with lambda functions.
+ */
+#ifndef HALMD_NO_CXX11
+# define BOOST_RESULT_OF_USE_DECLTYPE
+#endif
+
 #endif /* ! HALMD_CONFIG_HPP */
