@@ -84,6 +84,15 @@ find_package(HDF5 QUIET REQUIRED)
 find_package(Lua QUIET REQUIRED)
 find_package(Luabind QUIET REQUIRED)
 
+# Define macro LUABIND_DYNAMIC_LINK if linking to shared Luabind library.
+#
+# http://www.rasterbar.com/products/luabind/docs.html#building-and-testing
+#
+get_filename_component(suffix "${LUABIND_LIBRARY}" EXT)
+if(suffix STREQUAL "${CMAKE_SHARED_LIBRARY_SUFFIX}")
+  add_definitions(-DLUABIND_DYNAMIC_LINK)
+endif()
+
 if(CUDA_FOUND AND NOT HALMD_USE_STATIC_LIBS)
   enable_language(CUDA)
 
