@@ -22,6 +22,7 @@
 
 #include <lua.hpp>
 
+#include <halmd/io/logger.hpp>
 #include <halmd/mdsim/box.hpp>
 #include <halmd/mdsim/clock.hpp>
 #include <halmd/mdsim/gpu/particle.hpp>

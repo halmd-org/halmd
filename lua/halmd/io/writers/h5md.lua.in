@@ -87,7 +87,7 @@ function M.__new(args)
     end
 
     -- create parameter group
-    local param = file.root:open_group("halmd")
+    local param = file.root:open_group("parameters")
 
     -- register hook to write HALMD parameters
     hooks.register_module_hook(function(module, object)

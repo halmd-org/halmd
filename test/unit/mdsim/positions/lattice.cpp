@@ -116,6 +116,18 @@ struct lattice
     lattice();
 };
 
+template <typename vector_type>
+static vector_type wrap_element_max(vector_type const& v, vector_type const& w)
+{
+    return element_max(v, w);
+}
+
+template <typename vector_type>
+static vector_type wrap_element_min(vector_type const& v, vector_type const& w)
+{
+    return element_min(v, w);
+}
+
 template <typename modules_type>
 void lattice<modules_type>::test()
 {
@@ -162,17 +174,16 @@ void lattice<modules_type>::test()
         ) / npart
     );
     // minimal and maximal coordinates
-    using namespace halmd::detail::numeric::blas;
     fixed_vector<double, dimension> r_min(
         accumulate(
             sample->r[0]->begin(), sample->r[0]->end(), vector_type(0)
-          , bind(element_min<float_type, dimension>, _1, _2)
+          , bind(wrap_element_min<vector_type>, _1, _2)
         )
     );
     fixed_vector<double, dimension> r_max(
         accumulate(
             sample->r[0]->begin(), sample->r[0]->end(), vector_type(0)
-          , bind(element_max<float_type, dimension>, _1, _2)
+          , bind(wrap_element_max<vector_type>, _1, _2)
         )
     );
 

@@ -20,18 +20,18 @@
 #ifndef HALMD_NUMERIC_BLAS_FIXED_VECTOR_HPP
 #define HALMD_NUMERIC_BLAS_FIXED_VECTOR_HPP
 
-#include <halmd/numeric/blas/fixed_vector/size_N.hpp>
-#include <halmd/numeric/blas/fixed_vector/size_2.hpp>
-#include <halmd/numeric/blas/fixed_vector/size_3.hpp>
-#include <halmd/numeric/blas/fixed_vector/size_4.hpp>
-#include <halmd/numeric/blas/fixed_vector/size_6.hpp>
-#include <halmd/numeric/blas/fixed_vector/operators.hpp>
-#include <halmd/numeric/blas/fixed_vector/rounding.hpp>
+#include <halmd/numeric/blas/detail/vector.hpp>
+#include <halmd/numeric/blas/detail/size_2.hpp>
+#include <halmd/numeric/blas/detail/size_3.hpp>
+#include <halmd/numeric/blas/detail/size_4.hpp>
+#include <halmd/numeric/blas/detail/size_6.hpp>
+#include <halmd/numeric/blas/detail/operators.hpp>
+#include <halmd/numeric/blas/detail/rounding.hpp>
 
 namespace halmd {
 
 // import into top-level namespace
-using detail::numeric::blas::fixed_vector;
+using halmd::numeric::blas::detail::fixed_vector;
 
 } // namespace halmd
 

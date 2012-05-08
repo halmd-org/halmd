@@ -17,20 +17,20 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef HALMD_NUMERIC_BLAS_BLAS1_HPP
-#define HALMD_NUMERIC_BLAS_BLAS1_HPP
+#ifndef HALMD_NUMERIC_BLAS_DETAIL_BLAS1_HPP
+#define HALMD_NUMERIC_BLAS_DETAIL_BLAS1_HPP
 
 #include <boost/mpl/int.hpp>
 #include <boost/mpl/greater.hpp>
 #include <boost/utility/enable_if.hpp>
 
 #include <halmd/config.hpp>
-#include <halmd/numeric/blas/fixed_vector.hpp>
+#include <halmd/numeric/blas/detail/vector.hpp>
 
 namespace halmd {
-namespace detail {
 namespace numeric {
 namespace blas {
+namespace detail {
 
 /** provide functionality of BLAS Level 1 */
 
@@ -134,8 +134,8 @@ inline HALMD_GPU_ENABLED size_t index_norm_inf(fixed_vector<T, N> const& v)
 /** TODO: implement plane rotations */
 
 } // namespace detail
-} // namespace numeric
 } // namespace blas
+} // namespace numeric
 } // namespace halmd
 
-#endif /* ! HALMD_NUMERIC_BLAS_BLAS1_HPP */
+#endif /* ! HALMD_NUMERIC_BLAS_DETAIL_BLAS1_HPP */
