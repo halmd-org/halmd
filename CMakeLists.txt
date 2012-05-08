@@ -106,7 +106,7 @@ if(CUDA_FOUND AND NOT HALMD_USE_STATIC_LIBS)
   endif()
 
 else(CUDA_FOUND AND NOT HALMD_USE_STATIC_LIBS)
-  set(WITH_CUDA FALSE)
+  set(HALMD_WITH_GPU FALSE)
 endif(CUDA_FOUND AND NOT HALMD_USE_STATIC_LIBS)
 
 if(HALMD_USE_STATIC_LIBS)
@@ -132,7 +132,7 @@ if(HALMD_VARIANT_HILBERT_ALT_3D)
   add_definitions(-DUSE_HILBERT_ALT_3D)
 endif(HALMD_VARIANT_HILBERT_ALT_3D)
 
-if(WITH_CUDA)
+if(HALMD_WITH_GPU)
   set(HALMD_VARIANT_CELL_SUMMATION_ORDER TRUE CACHE BOOL
     "Use opposite cell summation order")
   if(HALMD_VARIANT_CELL_SUMMATION_ORDER)
@@ -155,7 +155,7 @@ if(WITH_CUDA)
     "Scale/size of the CUDA device (try to reduce in case of insufficient resources)")
   add_definitions(-DDEVICE_SCALE=${HALMD_DEVICE_SCALE})
 
-endif(WITH_CUDA)
+endif(HALMD_WITH_GPU)
 
 #
 # The following option only works on x86-64 by default, which always uses the
@@ -200,11 +200,11 @@ set(HALMD_COMMON_LIBRARIES
   ${LUABIND_LIBRARY}
   ${LUA_LIBRARIES}
 )
-if(WITH_CUDA)
+if(HALMD_WITH_GPU)
   list(APPEND HALMD_COMMON_LIBRARIES
     ${CUDA_LIBRARIES}
   )
-endif(WITH_CUDA)
+endif(HALMD_WITH_GPU)
 if(HALMD_USE_STATIC_LIBS)
   list(APPEND HALMD_COMMON_LIBRARIES
     -static-libgcc
@@ -229,9 +229,9 @@ include_directories(${Boost_INCLUDE_DIR})
 include_directories(${HDF5_INCLUDE_DIR})
 include_directories(${LUA_INCLUDE_DIR})
 include_directories(${LUABIND_INCLUDE_DIR})
-if(WITH_CUDA)
+if(HALMD_WITH_GPU)
   include_directories(${CUDA_INCLUDE_DIR})
-endif(WITH_CUDA)
+endif(HALMD_WITH_GPU)
 
 add_subdirectory(doc EXCLUDE_FROM_ALL)
 add_subdirectory(halmd)
