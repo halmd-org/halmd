@@ -20,6 +20,8 @@
 #ifndef HALMD_NUMERIC_BLAS_FIXED_VECTOR_HPP
 #define HALMD_NUMERIC_BLAS_FIXED_VECTOR_HPP
 
+#include <halmd/config.hpp>
+
 #include <halmd/numeric/blas/detail/vector.hpp>
 #include <halmd/numeric/blas/detail/size_2.hpp>
 #include <halmd/numeric/blas/detail/size_3.hpp>
@@ -33,8 +35,13 @@
 
 namespace halmd {
 
+#ifndef HALMD_NO_CXX11
 // import into top-level namespace
+template <typename T, size_t N>
+using fixed_vector = halmd::numeric::blas::detail::fixed_vector<T, N>;
+#else
 using halmd::numeric::blas::detail::fixed_vector;
+#endif
 
 } // namespace halmd
 
