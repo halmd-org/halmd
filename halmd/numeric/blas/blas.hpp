@@ -20,8 +20,8 @@
 #ifndef HALMD_NUMERIC_BLAS_BLAS_HPP
 #define HALMD_NUMERIC_BLAS_BLAS_HPP
 
-#include <halmd/numeric/blas/blas1.hpp>
 #include <halmd/numeric/blas/fixed_vector.hpp>
+#include <halmd/numeric/blas/detail/blas1.hpp>
 #include <halmd/numeric/blas/symmetric_matrix.hpp>
 
 #endif /* ! HALMD_NUMERIC_BLAS_BLAS_HPP */

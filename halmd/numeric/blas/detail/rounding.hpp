@@ -17,24 +17,26 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef HALMD_NUMERIC_BLAS_FIXED_VECTOR_ROUNDING_HPP
-#define HALMD_NUMERIC_BLAS_FIXED_VECTOR_ROUNDING_HPP
+#ifndef HALMD_NUMERIC_BLAS_DETAIL_ROUNDING_HPP
+#define HALMD_NUMERIC_BLAS_DETAIL_ROUNDING_HPP
+
+#include <halmd/config.hpp>
 
 #include <boost/type_traits/is_same.hpp>
 #include <boost/utility/enable_if.hpp>
 #ifndef __CUDACC__
 # include <cmath>
 #endif
-#ifdef WITH_CUDA
+#ifdef HALMD_WITH_GPU
 # include <cuda_runtime.h> // CUDA vector types for host compiler
 #endif
 
-#include <halmd/config.hpp>
+#include <halmd/numeric/blas/detail/vector.hpp>
 
 namespace halmd {
-namespace detail {
 namespace numeric {
 namespace blas {
+namespace detail {
 
 #ifdef __CUDACC__
 
@@ -296,11 +298,8 @@ fixed_vector<unsigned int, N> __float2uint_rz(fixed_vector<float, N> const& v)
 #endif /* ! __CUDACC__ */
 
 } // namespace detail
-} // namespace numeric
 } // namespace blas
-// import into top-level namespace
-using detail::numeric::blas::fixed_vector;
-
+} // namespace numeric
 } // namespace halmd
 
-#endif /* ! HALMD_NUMERIC_BLAS_FIXED_VECTOR_ROUNDING_HPP */
+#endif /* ! HALMD_NUMERIC_BLAS_DETAIL_ROUNDING_HPP */

@@ -20,6 +20,8 @@
 #ifndef HALMD_UTIL_HOSTNAME_HPP
 #define HALMD_UTIL_HOSTNAME_HPP
 
+#include <string>
+
 namespace halmd {
 
 extern std::string host_name();

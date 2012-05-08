@@ -25,6 +25,7 @@
 #include <boost/utility/enable_if.hpp>
 #include <exception>
 #include <limits>
+#include <stdexcept>
 
 #include <halmd/mdsim/clock.hpp>
 

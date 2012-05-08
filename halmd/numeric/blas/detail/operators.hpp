@@ -17,8 +17,10 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef HALMD_NUMERIC_BLAS_FIXED_VECTOR_OPERATORS_HPP
-#define HALMD_NUMERIC_BLAS_FIXED_VECTOR_OPERATORS_HPP
+#ifndef HALMD_NUMERIC_BLAS_DETAIL_OPERATORS_HPP
+#define HALMD_NUMERIC_BLAS_DETAIL_OPERATORS_HPP
+
+#include <halmd/config.hpp>
 
 #include <algorithm>
 #include <boost/mpl/and.hpp>
@@ -32,17 +34,17 @@
 # include <cmath>
 # include <iostream>
 #endif
-#ifdef WITH_CUDA
+#ifdef HALMD_WITH_GPU
 # include <cuda_runtime.h> // CUDA vector types for host compiler
 #endif
 
-#include <halmd/config.hpp>
+#include <halmd/numeric/blas/detail/vector.hpp>
 #include <halmd/utility/tuple.hpp>
 
 namespace halmd {
-namespace detail {
 namespace numeric {
 namespace blas {
+namespace detail {
 
 /**
  * Returns "high" and "low" single precision vector tuple
@@ -726,11 +728,8 @@ inline std::istream& operator>>(std::istream& is, fixed_vector<T, N>& v)
 #endif /* ! __CUDACC__ */
 
 } // namespace detail
-} // namespace numeric
 } // namespace blas
-// import into top-level namespace
-using detail::numeric::blas::fixed_vector;
-
+} // namespace numeric
 } // namespace halmd
 
-#endif /* ! HALMD_NUMERIC_BLAS_FIXED_VECTOR_OPERATORS_HPP */
+#endif /* ! HALMD_NUMERIC_BLAS_DETAIL_OPERATORS_HPP */

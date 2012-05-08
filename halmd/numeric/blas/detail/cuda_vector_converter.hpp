@@ -17,21 +17,23 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef HALMD_NUMERIC_BLAS_FIXED_VECTOR_CUDA_VECTOR_CONVERTER_HPP
-#define HALMD_NUMERIC_BLAS_FIXED_VECTOR_CUDA_VECTOR_CONVERTER_HPP
+#ifndef HALMD_NUMERIC_BLAS_DETAIL_CUDA_VECTOR_CONVERTER_HPP
+#define HALMD_NUMERIC_BLAS_DETAIL_CUDA_VECTOR_CONVERTER_HPP
+
+#include <halmd/config.hpp>
 
 #include <boost/mpl/and.hpp>
 #include <boost/type_traits/is_same.hpp>
 #include <boost/utility/enable_if.hpp>
 
-#include <halmd/config.hpp>
+#include <halmd/numeric/blas/detail/vector.hpp>
 #include <halmd/numeric/mp/dsfloat.hpp>
 #include <halmd/utility/tuple.hpp>
 
 namespace halmd {
-namespace detail {
 namespace numeric {
 namespace blas {
+namespace detail {
 
 #ifndef __CUDACC__
 
@@ -2031,8 +2033,8 @@ operator<<=(tuple<U&, V&> left, tuple<T, T> right)
 }
 
 } // namespace detail
-} // namespace numeric
 } // namespace blas
+} // namespace numeric
 } // namespace halmd
 
-#endif /* ! HALMD_NUMERIC_BLAS_FIXED_VECTOR_CUDA_VECTOR_CONVERTER_HPP */
+#endif /* ! HALMD_NUMERIC_BLAS_DETAIL_CUDA_VECTOR_CONVERTER_HPP */
