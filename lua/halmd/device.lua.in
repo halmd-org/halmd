@@ -19,9 +19,6 @@
 
 local module = require("halmd.utility.module")
 
--- load GPU module if available
-pcall(require, "halmd.gpu")
-
 -- grab C++ wrappers
 local device_wrapper
 if libhalmd.utility.gpu then
