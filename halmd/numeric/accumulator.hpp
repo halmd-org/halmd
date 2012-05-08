@@ -169,8 +169,8 @@ HALMD_GPU_ENABLED T error_of_mean(accumulator<T> const& acc)
     return sqrt((acc.v_ / acc.n_) / (acc.n_ - 1));
 }
 
-} // namespace numeric
 } // namespace detail
+} // namespace numeric
 
 #ifndef HALMD_NO_CXX11
 // import into top-level namespace
