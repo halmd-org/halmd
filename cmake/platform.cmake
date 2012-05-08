@@ -3,7 +3,11 @@ set(CMAKE_BUILD_TYPE_INIT "Release")
 if(DEFINED CMAKE_CXX_COMPILER_ID)
   if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
 
-    set(CMAKE_CXX_FLAGS_INIT "-fPIC -Wall -std=c++11 -pedantic")
+    if(CMAKE_CXX_COMPILER_VERSION VERSION_EQUAL "4.7" OR CMAKE_CXX_COMPILER_VERSION VERSION_GREATER "4.7")
+      set(CMAKE_CXX_FLAGS_INIT "-fPIC -Wall -std=c++11 -pedantic")
+    else()
+      set(CMAKE_CXX_FLAGS_INIT "-fPIC -Wall -std=c++98 -Wno-long-long -pedantic")
+    endif()
     set(CMAKE_CXX_FLAGS_RELEASE_INIT "-O3 -DNDEBUG -fvisibility-inlines-hidden")
 
   elseif(CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
