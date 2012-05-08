@@ -20,6 +20,8 @@
 #ifndef HALMD_NUMERIC_ACCUMULATOR_HPP
 #define HALMD_NUMERIC_ACCUMULATOR_HPP
 
+#include <halmd/config.hpp>
+
 #include <boost/type_traits/is_convertible.hpp>
 #include <boost/type_traits/is_same.hpp>
 #include <boost/utility/enable_if.hpp>
@@ -28,11 +30,9 @@
 # include <stdint.h>
 #endif
 
-#include <halmd/config.hpp>
-
 namespace halmd {
-namespace detail {
 namespace numeric {
+namespace detail {
 
 /**
  * Accumulator with statistical evaluation functions
@@ -169,11 +169,16 @@ HALMD_GPU_ENABLED T error_of_mean(accumulator<T> const& acc)
     return sqrt((acc.v_ / acc.n_) / (acc.n_ - 1));
 }
 
-} // namespace detail
 } // namespace numeric
+} // namespace detail
 
+#ifndef HALMD_NO_CXX11
 // import into top-level namespace
-using detail::numeric::accumulator;
+template <typename T>
+using accumulator = halmd::numeric::detail::accumulator<T>;
+#else
+using halmd::numeric::detail::accumulator;
+#endif
 
 } // namespace halmd
 
