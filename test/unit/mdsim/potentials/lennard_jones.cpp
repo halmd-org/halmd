@@ -17,6 +17,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <halmd/config.hpp>
+
 #define BOOST_TEST_MODULE lennard_jones
 #include <boost/test/unit_test.hpp>
 
@@ -30,7 +32,7 @@
 
 #include <halmd/mdsim/box.hpp>
 #include <halmd/mdsim/host/potentials/lennard_jones.hpp>
-#ifdef WITH_CUDA
+#ifdef HALMD_WITH_GPU
 # include <halmd/mdsim/gpu/forces/pair_trunc.hpp>
 # include <halmd/mdsim/gpu/particle.hpp>
 # include <halmd/mdsim/gpu/potentials/lennard_jones.hpp>
@@ -148,7 +150,7 @@ BOOST_AUTO_TEST_CASE( lennard_jones_host )
     };
 }
 
-#ifdef WITH_CUDA
+#ifdef HALMD_WITH_GPU
 
 template <typename float_type>
 struct lennard_jones
@@ -267,4 +269,4 @@ lennard_jones<float_type>::lennard_jones()
 BOOST_FIXTURE_TEST_CASE( lennard_jones_gpu, device ) {
     lennard_jones<float>().test();
 }
-#endif // WITH_CUDA
+#endif // HALMD_WITH_GPU

@@ -1,11 +1,11 @@
 add_executable(test_unit_random_distributions
   distributions.cpp
 )
-if(WITH_CUDA)
+if(HALMD_WITH_GPU)
   target_link_libraries(test_unit_random_distributions
     halmd_random_gpu
   )
-endif(WITH_CUDA)
+endif(HALMD_WITH_GPU)
 target_link_libraries(test_unit_random_distributions
   halmd_random_host
   halmd_io
@@ -15,6 +15,6 @@ add_test(unit/random/distributions
   test_unit_random_distributions --log_level=test_suite
 )
 
-if(WITH_CUDA)
+if(HALMD_WITH_GPU)
   add_subdirectory(gpu)
-endif(WITH_CUDA)
+endif(HALMD_WITH_GPU)

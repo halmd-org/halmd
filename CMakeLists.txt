@@ -98,10 +98,6 @@ if(CUDA_FOUND AND NOT HALMD_USE_STATIC_LIBS)
 
   set(HALMD_WITH_GPU TRUE)
 
-  # FIXME deprecated, use HALMD_WITH_GPU instead
-  set(WITH_CUDA TRUE)
-  add_definitions(-DWITH_CUDA)
-
   try_compile(success "${CMAKE_BINARY_DIR}" "${CMAKE_SOURCE_DIR}/cmake/cuda_arch.cu" OUTPUT_VARIABLE result)
   if(result MATCHES "__CUDA_ARCH__([0-9]+)__")
     set(HALMD_GPU_ARCH "${CMAKE_MATCH_1}")

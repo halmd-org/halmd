@@ -17,6 +17,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <halmd/config.hpp>
+
 #define BOOST_TEST_MODULE euler
 #include <boost/test/unit_test.hpp>
 
@@ -35,7 +37,7 @@
 #include <halmd/mdsim/host/velocities/boltzmann.hpp>    // for initialisation
 #include <halmd/observables/host/phase_space.hpp>       // for unified reading of positions and velocities
 #include <halmd/random/host/random.hpp>                 // dependency of modules position, velocity
-#ifdef WITH_CUDA
+#ifdef HALMD_WITH_GPU
 # include <halmd/algorithm/gpu/apply_kernel.hpp>
 # include <halmd/mdsim/gpu/integrators/euler.hpp>
 # include <halmd/mdsim/gpu/particle_group.hpp>
@@ -289,7 +291,7 @@ BOOST_AUTO_TEST_CASE( euler_host_3d_overdamped ) {
     test_euler<host_modules<3, double> >().overdamped_motion();
 }
 
-#ifdef WITH_CUDA
+#ifdef HALMD_WITH_GPU
 /**
  * Specify concretely which modules to use: Gpu modules.
  */
@@ -365,4 +367,4 @@ BOOST_FIXTURE_TEST_CASE( euler_gpu_2d_overdamped, device ) {
 BOOST_FIXTURE_TEST_CASE( euler_gpu_3d_overdamped, device ) {
     test_euler<gpu_modules<3, float> >().overdamped_motion();
 }
-#endif // WITH_CUDA
+#endif // HALMD_WITH_GPU

@@ -110,7 +110,7 @@ install(TARGETS halmd
 # HALMD plugin with GPU modules
 #
 
-if(WITH_CUDA)
+if(HALMD_WITH_GPU)
   halmd_bundle_modules(modules.cpp.in modules_halmd_gpu.cpp halmd_gpu ${HALMD_GPU_MODULES})
 
   add_library(halmd_gpu MODULE

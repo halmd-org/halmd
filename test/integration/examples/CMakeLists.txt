@@ -9,7 +9,7 @@ add_test(integration/examples/thermostat/host/2d
 add_test(integration/examples/thermostat/host/3d
   @CMAKE_COMMAND@ -DDIMENSION=3 -DUSE_HOST=1 -P test_integration_examples_thermostat.cmake
 )
-if(WITH_CUDA)
+if(HALMD_WITH_GPU)
   add_test(integration/examples/thermostat/gpu/2d
     @CMAKE_COMMAND@ -DDIMENSION=2 -P test_integration_examples_thermostat.cmake
   )

@@ -1,3 +1,3 @@
-if(WITH_CUDA)
+if(HALMD_WITH_GPU)
   add_subdirectory(gpu)
-endif(WITH_CUDA)
+endif(HALMD_WITH_GPU)

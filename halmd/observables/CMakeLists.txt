@@ -14,7 +14,7 @@ halmd_add_modules(
 add_subdirectory(samples) # must appear first in order to register blocking_scheme_base before blocking_scheme
 add_subdirectory(dynamics)
 add_subdirectory(host)
-if(WITH_CUDA)
+if(HALMD_WITH_GPU)
   add_subdirectory(gpu)
-endif(WITH_CUDA)
+endif(HALMD_WITH_GPU)
 add_subdirectory(utility)

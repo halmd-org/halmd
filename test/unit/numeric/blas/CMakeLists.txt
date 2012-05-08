@@ -7,7 +7,7 @@ target_link_libraries(test_unit_numeric_fixed_vector
 add_test(unit/numeric/fixed_vector
   test_unit_numeric_fixed_vector --log_level=test_suite
 )
-if(WITH_CUDA)
+if(HALMD_WITH_GPU)
   add_executable(test_unit_numeric_fixed_vector_cuda_vector_converter
     fixed_vector_cuda_vector_converter.cpp
     fixed_vector_cuda_vector_converter_kernel.cu
@@ -19,4 +19,4 @@ if(WITH_CUDA)
   add_test(unit/numeric/fixed_vector/cuda_vector_converter
     test_unit_numeric_fixed_vector_cuda_vector_converter --log_level=test_suite
   )
-endif(WITH_CUDA)
+endif(HALMD_WITH_GPU)

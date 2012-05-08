@@ -17,6 +17,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <halmd/config.hpp>
+
 #define BOOST_TEST_MODULE function_calls
 #include <boost/test/unit_test.hpp>
 
@@ -29,7 +31,7 @@
 #include <test/tools/ctest.hpp>
 #include <test/tools/lua.hpp>
 #include <test/performance/function_calls_extern.hpp>
-#ifdef WITH_CUDA
+#ifdef HALMD_WITH_GPU
 # include <test/tools/cuda.hpp>
 # include <test/performance/function_calls_extern_kernel.hpp>
 #endif
@@ -287,7 +289,7 @@ BOOST_AUTO_TEST_CASE( boost_signals2_10 )
 
 BOOST_AUTO_TEST_SUITE_END() // host
 
-#ifdef WITH_CUDA
+#ifdef HALMD_WITH_GPU
 
 BOOST_FIXTURE_TEST_SUITE( gpu, set_cuda_device )
 
@@ -413,4 +415,4 @@ BOOST_AUTO_TEST_CASE( cuda_kernel_16_512_synchronize )
 
 BOOST_AUTO_TEST_SUITE_END() // gpu
 
-#endif /* WITH_CUDA */
+#endif /* HALMD_WITH_GPU */

@@ -17,6 +17,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <halmd/config.hpp>
+
 #define BOOST_TEST_MODULE phase_space
 #include <boost/test/unit_test.hpp>
 
@@ -33,7 +35,7 @@
 #include <halmd/numeric/accumulator.hpp>
 #include <halmd/observables/host/phase_space.hpp>
 #include <halmd/observables/host/samples/phase_space.hpp>
-#ifdef WITH_CUDA
+#ifdef HALMD_WITH_GPU
 # include <cuda_wrapper/cuda_wrapper.hpp>
 # include <halmd/mdsim/gpu/particle_group.hpp>
 # include <halmd/observables/gpu/phase_space.hpp>
@@ -54,7 +56,7 @@ using namespace std;
 /**
  * copy GPU sample to host sample, do nothing if input is host sample
  */
-#ifdef WITH_CUDA
+#ifdef HALMD_WITH_GPU
 template <int dimension, typename float_type>
 boost::shared_ptr<observables::host::samples::phase_space<dimension, float_type> const>
 copy_sample(boost::shared_ptr<observables::gpu::samples::phase_space<dimension, float_type> const> sample)
@@ -232,7 +234,7 @@ BOOST_AUTO_TEST_CASE( phase_space_host_3d ) {
     phase_space<host_modules<3, double> >().test();
 }
 
-#ifdef WITH_CUDA
+#ifdef HALMD_WITH_GPU
 template <int dimension, typename float_type>
 struct gpu_host_modules
 {
@@ -265,4 +267,4 @@ BOOST_FIXTURE_TEST_CASE( phase_space_gpu_gpu_2d, device ) {
 BOOST_FIXTURE_TEST_CASE( phase_space_gpu_gpu_3d, device ) {
     phase_space<gpu_gpu_modules<3, float> >().test();
 }
-#endif // WITH_CUDA
+#endif // HALMD_WITH_GPU

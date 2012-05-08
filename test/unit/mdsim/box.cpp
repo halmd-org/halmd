@@ -17,6 +17,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <halmd/config.hpp>
+
 #define BOOST_TEST_MODULE box
 #include <boost/test/unit_test.hpp>
 
@@ -30,7 +32,7 @@
 #include <halmd/mdsim/type_traits.hpp>
 #include <halmd/numeric/blas/fixed_vector.hpp>
 #include <halmd/numeric/mp/dsfloat.hpp>
-#ifdef WITH_CUDA
+#ifdef HALMD_WITH_GPU
 # include <cuda_wrapper/cuda_wrapper.hpp>
 # include <halmd/mdsim/gpu/box_kernel.cuh>
 # include <test/unit/mdsim/box_kernel.hpp>
@@ -112,7 +114,7 @@ void periodic_host()
     }
 }
 
-#ifdef WITH_CUDA
+#ifdef HALMD_WITH_GPU
 
 template <int dimension, typename float_type>
 void periodic_gpu()
@@ -209,7 +211,7 @@ BOOST_AUTO_TEST_CASE(box_periodic_host_3d) {
     periodic_host<3>();
 }
 
-#ifdef WITH_CUDA
+#ifdef HALMD_WITH_GPU
 BOOST_FIXTURE_TEST_CASE(box_periodic_gpu_2d, device) {
     periodic_gpu<2, float>();
 }

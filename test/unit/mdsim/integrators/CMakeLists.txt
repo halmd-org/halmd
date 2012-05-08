@@ -3,7 +3,7 @@ add_executable(test_unit_mdsim_integrators_euler
   euler.cpp
   apply_negate.cu
 )
-if(WITH_CUDA)
+if(HALMD_WITH_GPU)
   target_link_libraries(test_unit_mdsim_integrators_euler
     halmd_mdsim_gpu_integrators
     halmd_mdsim_gpu_positions
@@ -36,7 +36,7 @@ add_test(unit/mdsim/integrators/euler/host/3d/linear
 add_test(unit/mdsim/integrators/euler/host/3d/overdamped
   test_unit_mdsim_integrators_euler --run_test=euler_host_3d_overdamped --log_level=test_suite
 )
-if(WITH_CUDA)
+if(HALMD_WITH_GPU)
   add_test(unit/mdsim/integrators/euler/gpu/2d/linear
     test_unit_mdsim_integrators_euler --run_test=euler_gpu_2d_linear --log_level=test_suite
   )
@@ -55,7 +55,7 @@ endif()
 add_executable(test_unit_mdsim_integrators_verlet
   verlet.cpp
 )
-if(WITH_CUDA)
+if(HALMD_WITH_GPU)
   target_link_libraries(test_unit_mdsim_integrators_verlet
     halmd_mdsim_gpu_forces
     halmd_mdsim_gpu_integrators
@@ -85,7 +85,7 @@ add_test(unit/mdsim/integrators/verlet/host/2d
 add_test(unit/mdsim/integrators/verlet/host/3d
   test_unit_mdsim_integrators_verlet --run_test=ideal_gas_host_3d --log_level=test_suite
 )
-if(WITH_CUDA)
+if(HALMD_WITH_GPU)
   add_test(unit/mdsim/integrators/verlet/gpu/2d
     test_unit_mdsim_integrators_verlet --run_test=ideal_gas_gpu_2d --log_level=test_suite
   )
@@ -98,7 +98,7 @@ endif()
 add_executable(test_unit_mdsim_integrators_verlet_nvt_andersen
   verlet_nvt_andersen.cpp
 )
-if(WITH_CUDA)
+if(HALMD_WITH_GPU)
   target_link_libraries(test_unit_mdsim_integrators_verlet_nvt_andersen
     halmd_mdsim_gpu_forces
     halmd_mdsim_gpu_integrators
@@ -128,7 +128,7 @@ add_test(unit/mdsim/integrators/verlet_nvt_andersen/host/2d
 add_test(unit/mdsim/integrators/verlet_nvt_andersen/host/3d
   test_unit_mdsim_integrators_verlet_nvt_andersen --run_test=verlet_nvt_andersen_host_3d --log_level=test_suite
 )
-if(WITH_CUDA)
+if(HALMD_WITH_GPU)
   add_test(unit/mdsim/integrators/verlet_nvt_andersen/gpu/2d
     test_unit_mdsim_integrators_verlet_nvt_andersen --run_test=verlet_nvt_andersen_gpu_2d --log_level=test_suite
   )
@@ -141,7 +141,7 @@ endif()
 add_executable(test_unit_mdsim_integrators_verlet_nvt_hoover
   verlet_nvt_hoover.cpp
 )
-if(WITH_CUDA)
+if(HALMD_WITH_GPU)
   target_link_libraries(test_unit_mdsim_integrators_verlet_nvt_hoover
     halmd_mdsim_gpu_forces
     halmd_mdsim_gpu_integrators
@@ -175,7 +175,7 @@ add_test(unit/mdsim/integrators/verlet_nvt_hoover/host/2d
 add_test(unit/mdsim/integrators/verlet_nvt_hoover/host/3d
   test_unit_mdsim_integrators_verlet_nvt_hoover --run_test=verlet_nvt_hoover_host_3d --log_level=test_suite
 )
-if(WITH_CUDA)
+if(HALMD_WITH_GPU)
   add_test(unit/mdsim/integrators/verlet_nvt_hoover/gpu/2d
     test_unit_mdsim_integrators_verlet_nvt_hoover --run_test=verlet_nvt_hoover_gpu_2d --log_level=test_suite
   )

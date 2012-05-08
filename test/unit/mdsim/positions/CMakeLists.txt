@@ -1,7 +1,7 @@
 add_executable(test_unit_mdsim_positions_lattice
   lattice.cpp
 )
-if(WITH_CUDA)
+if(HALMD_WITH_GPU)
   target_link_libraries(test_unit_mdsim_positions_lattice
     halmd_mdsim_gpu_positions
     halmd_mdsim_gpu
@@ -24,7 +24,7 @@ add_test(unit/mdsim/positions/lattice/host/2d
 add_test(unit/mdsim/positions/lattice/host/3d
   test_unit_mdsim_positions_lattice --run_test=lattice_host_3d --log_level=test_suite
 )
-if(WITH_CUDA)
+if(HALMD_WITH_GPU)
   add_test(unit/mdsim/positions/lattice/gpu/2d
     test_unit_mdsim_positions_lattice --run_test=lattice_gpu_2d --log_level=test_suite
   )

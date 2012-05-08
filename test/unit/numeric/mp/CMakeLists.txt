@@ -1,4 +1,4 @@
-if(WITH_CUDA)
+if(HALMD_WITH_GPU)
   add_executable(test_unit_numeric_mp_dsfun
     dsfun.cpp
     dsfun_kernel.cu
@@ -9,4 +9,4 @@ if(WITH_CUDA)
   add_test(unit/numeric/mp/dsfun
     test_unit_numeric_mp_dsfun --log_level=test_suite
   )
-endif(WITH_CUDA)
+endif(HALMD_WITH_GPU)

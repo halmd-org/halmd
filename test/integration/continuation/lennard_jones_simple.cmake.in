@@ -30,10 +30,10 @@ set(CMAKE_MODULE_PATH "@HALMD_TEST_CMAKE_BINARY_DIR@")
 include(execute_halmd)
 
 set(OUTPUT_PREFIX "@CMAKE_CURRENT_BINARY_DIR@/lennard_jones_simple")
-set(WITH_CUDA @WITH_CUDA@)
+set(HALMD_WITH_GPU @HALMD_WITH_GPU@)
 
 if(DEFINED USE_HOST)
-  if(WITH_CUDA)
+  if(HALMD_WITH_GPU)
     set(BACKEND_OPTION "--disable-gpu")
   endif()
   message(STATUS "Using host backend for continuation")

@@ -17,6 +17,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <halmd/config.hpp>
+
 #define BOOST_TEST_MODULE distributions
 #include <boost/test/unit_test.hpp>
 #include <boost/test/parameterized_test.hpp>
@@ -27,7 +29,7 @@
 
 #include <halmd/numeric/accumulator.hpp>
 #include <halmd/random/host/random.hpp>
-#ifdef WITH_CUDA
+#ifdef HALMD_WITH_GPU
 # include <cuda_wrapper/cuda_wrapper.hpp>
 # include <halmd/random/gpu/random_kernel.hpp>
 # include <halmd/random/gpu/rand48.hpp>
@@ -40,7 +42,7 @@
 // test random number generators in combination with accumulator class
 //
 
-#ifdef WITH_CUDA
+#ifdef HALMD_WITH_GPU
 
 const unsigned BLOCKS = 64;
 const unsigned THREADS = 128;
@@ -109,7 +111,7 @@ void test_rand48_gpu( unsigned long n )
     }
 }
 
-#endif /* WITH_CUDA */
+#endif /* HALMD_WITH_GPU */
 
 void test_host_random( unsigned long n )
 {
@@ -187,7 +189,7 @@ HALMD_TEST_INIT( init_unit_test_suite )
 
     master_test_suite().add(
         BOOST_PARAM_TEST_CASE(&test_host_random, counts.begin(), counts.end()-2));
-#ifdef WITH_CUDA
+#ifdef HALMD_WITH_GPU
     master_test_suite().add(
         BOOST_PARAM_TEST_CASE(&test_rand48_gpu, counts.begin(), counts.end()));
 #endif

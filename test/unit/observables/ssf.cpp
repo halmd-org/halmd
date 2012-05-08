@@ -17,6 +17,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <halmd/config.hpp>
+
 #define BOOST_TEST_MODULE ssf
 #include <boost/test/unit_test.hpp>
 
@@ -38,7 +40,7 @@
 #include <halmd/observables/ssf.hpp>
 #include <halmd/observables/utility/wavevector.hpp>
 #include <halmd/random/host/random.hpp>
-#ifdef WITH_CUDA
+#ifdef HALMD_WITH_GPU
 # include <halmd/mdsim/gpu/particle_group.hpp>
 # include <halmd/mdsim/gpu/positions/lattice.hpp>
 # include <halmd/observables/gpu/density_mode.hpp>
@@ -298,7 +300,7 @@ BOOST_AUTO_TEST_CASE( ssf_host_3d ) {
     lattice<host_modules<3, double> >().test();
 }
 
-#ifdef WITH_CUDA
+#ifdef HALMD_WITH_GPU
 template <int dimension, typename float_type>
 struct gpu_modules
 {
@@ -318,4 +320,4 @@ BOOST_FIXTURE_TEST_CASE( ssf_gpu_2d, device ) {
 BOOST_FIXTURE_TEST_CASE( ssf_gpu_3d, device ) {
     lattice<gpu_modules<3, float> >().test();
 }
-#endif // WITH_CUDA
+#endif // HALMD_WITH_GPU

@@ -34,17 +34,17 @@ if(HALMD_WITH_GPU)
 endif()
 
 # module box
-if(WITH_CUDA)
+if(HALMD_WITH_GPU)
   add_executable(test_unit_mdsim_box
     box.cpp
     box_kernel.cu
   )
-else (WITH_CUDA)
+else (HALMD_WITH_GPU)
   add_executable(test_unit_mdsim_box
     box.cpp
   )
 endif()
-if(WITH_CUDA)
+if(HALMD_WITH_GPU)
   target_link_libraries(test_unit_mdsim_box
     halmd_utility_gpu
   )
@@ -65,7 +65,7 @@ add_test(unit/mdsim/box/periodic/host/2d
 add_test(unit/mdsim/box/periodic/host/3d
   test_unit_mdsim_box --run_test=box_periodic_host_3d --log_level=test_suite
 )
-if(WITH_CUDA)
+if(HALMD_WITH_GPU)
   add_test(unit/mdsim/box/periodic/gpu/2d
     test_unit_mdsim_box --run_test=box_periodic_gpu_2d --log_level=test_suite
   )

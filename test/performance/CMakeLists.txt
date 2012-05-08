@@ -1,19 +1,19 @@
 ##
 # HALMD performance tests
 #
-if(WITH_CUDA)
+if(HALMD_WITH_GPU)
   add_executable(test_performance_function_calls
     function_calls.cpp
     function_calls_extern.cpp
     function_calls_extern_kernel.cu
   )
-else(WITH_CUDA)
+else(HALMD_WITH_GPU)
   add_executable(test_performance_function_calls
     function_calls.cpp
     function_calls_extern.cpp
     function_calls_extern_kernel.cu
   )
-endif(WITH_CUDA)
+endif(HALMD_WITH_GPU)
 target_link_libraries(test_performance_function_calls
   test_tools_lua
   ${HALMD_TEST_LIBRARIES}
@@ -22,7 +22,7 @@ add_test(performance/function_calls
   test_performance_function_calls --log_level=message
 )
 
-if(WITH_CUDA)
+if(HALMD_WITH_GPU)
   add_executable(test_performance_memory_allocation
     memory_allocation.cpp
   )
@@ -32,4 +32,4 @@ if(WITH_CUDA)
   add_test(performance/memory_allocation
     test_performance_memory_allocation --log_level=message
   )
-endif(WITH_CUDA)
+endif(HALMD_WITH_GPU)

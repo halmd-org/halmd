@@ -12,7 +12,7 @@ add_test(integration/continuation/lennard_jones/host/2d
 add_test(integration/continuation/lennard_jones/host/3d
   @CMAKE_COMMAND@ -DDIMENSION=3 -DUSE_HOST=1 -P test_integration_continuation_lennard_jones.cmake
 )
-if(WITH_CUDA)
+if(HALMD_WITH_GPU)
   add_test(integration/continuation/lennard_jones/gpu/2d
     @CMAKE_COMMAND@ -DDIMENSION=2 -P test_integration_continuation_lennard_jones.cmake
   )
@@ -31,7 +31,7 @@ add_test(integration/continuation/lennard_jones_simple/host/2d
 add_test(integration/continuation/lennard_jones_simple/host/3d
   @CMAKE_COMMAND@ -DDIMENSION=3 -DUSE_HOST=1 -P test_integration_continuation_lennard_jones_simple.cmake
 )
-if(WITH_CUDA)
+if(HALMD_WITH_GPU)
   add_test(integration/continuation/lennard_jones_simple/gpu/2d
     @CMAKE_COMMAND@ -DDIMENSION=2 -P test_integration_continuation_lennard_jones_simple.cmake
   )

@@ -9,7 +9,7 @@ add_test(unit/algorithm/multi_range
   test_unit_algorithm_multi_range --log_level=test_suite
 )
 
-if(WITH_CUDA)
+if(HALMD_WITH_GPU)
   add_subdirectory(gpu)
-endif(WITH_CUDA)
+endif(HALMD_WITH_GPU)
 add_subdirectory(host)

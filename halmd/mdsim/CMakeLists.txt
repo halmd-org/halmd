@@ -15,7 +15,7 @@ halmd_add_modules(
   libhalmd_mdsim_velocity
 )
 
-if(WITH_CUDA)
+if(HALMD_WITH_GPU)
   add_subdirectory(gpu)
-endif(WITH_CUDA)
+endif(HALMD_WITH_GPU)
 add_subdirectory(host)

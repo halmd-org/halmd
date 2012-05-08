@@ -17,6 +17,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <halmd/config.hpp>
+
 #define BOOST_TEST_MODULE verlet_nvt_andersen
 #include <boost/test/unit_test.hpp>
 
@@ -36,7 +38,7 @@
 #include <halmd/numeric/accumulator.hpp>
 #include <halmd/observables/host/thermodynamics.hpp>
 #include <halmd/random/host/random.hpp>
-#ifdef WITH_CUDA
+#ifdef HALMD_WITH_GPU
 # include <halmd/mdsim/gpu/integrators/verlet_nvt_andersen.hpp>
 # include <halmd/mdsim/gpu/particle_group.hpp>
 # include <halmd/mdsim/gpu/positions/lattice.hpp>
@@ -239,7 +241,7 @@ BOOST_AUTO_TEST_CASE( verlet_nvt_andersen_host_3d ) {
     verlet_nvt_andersen<host_modules<3, double> >().test();
 }
 
-#ifdef WITH_CUDA
+#ifdef HALMD_WITH_GPU
 template <int dimension, typename float_type>
 struct gpu_modules
 {
@@ -259,4 +261,4 @@ BOOST_FIXTURE_TEST_CASE( verlet_nvt_andersen_gpu_2d, device ) {
 BOOST_FIXTURE_TEST_CASE( verlet_nvt_andersen_gpu_3d, device ) {
     verlet_nvt_andersen<gpu_modules<3, float> >().test();
 }
-#endif // WITH_CUDA
+#endif // HALMD_WITH_GPU

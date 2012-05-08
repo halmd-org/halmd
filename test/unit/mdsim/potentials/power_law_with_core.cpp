@@ -17,6 +17,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <halmd/config.hpp>
+
 #define BOOST_TEST_MODULE power_law_with_core
 #include <boost/test/unit_test.hpp>
 
@@ -30,7 +32,7 @@
 
 #include <halmd/mdsim/box.hpp>
 #include <halmd/mdsim/host/potentials/power_law_with_core.hpp>
-#ifdef WITH_CUDA
+#ifdef HALMD_WITH_GPU
 # include <halmd/mdsim/gpu/forces/pair_trunc.hpp>
 # include <halmd/mdsim/gpu/particle.hpp>
 # include <halmd/mdsim/gpu/potentials/power_law_with_core.hpp>
@@ -196,7 +198,7 @@ BOOST_AUTO_TEST_CASE( power_law_with_core_host )
     };
 }
 
-#ifdef WITH_CUDA
+#ifdef HALMD_WITH_GPU
 
 template <typename float_type>
 struct power_law_with_core
@@ -336,4 +338,4 @@ power_law_with_core<float_type>::power_law_with_core()
 BOOST_FIXTURE_TEST_CASE( power_law_with_core_gpu, device ) {
     power_law_with_core<float>().test();
 }
-#endif // WITH_CUDA
+#endif // HALMD_WITH_GPU
