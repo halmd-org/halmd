@@ -82,7 +82,7 @@ function M.__new(args)
     --
     -- @param file HDF5 trajectory file
     --
-    local param = file.root:open_group("halmd")
+    local param = file.root:open_group("parameters")
 
     for _, module in ipairs(M.modules) do
         local read_parameters = module.read_parameters
