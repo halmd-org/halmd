@@ -270,7 +270,7 @@ BOOST_BUILD_DIR = boost_$(BOOST_RELEASE)
 BOOST_INSTALL_DIR = $(PREFIX)/boost_$(BOOST_RELEASE)
 BOOST_BUILD_FLAGS = dll-path=$(BOOST_INSTALL_DIR)/lib
 
-ifdef USE_CXX11
+ifndef USE_CXX98
 BOOST_BUILD_FLAGS += "cxxflags=-fPIC -std=c++11"
 else
 BOOST_BUILD_FLAGS += cxxflags=-fPIC
@@ -364,7 +364,7 @@ LUABIND_BUILD_DIR = luabind-$(LUABIND_VERSION)
 LUABIND_BUILD_FLAGS = cxxflags=-fPIC link=static variant=release variant=debug
 LUABIND_INSTALL_DIR = $(PREFIX)/luabind-$(LUABIND_VERSION)
 
-ifdef USE_CXX11
+ifndef USE_CXX98
 LUABIND_BUILD_FLAGS += "cxxflags=-fPIC -std=c++11"
 else
 LUABIND_BUILD_FLAGS += cxxflags=-fPIC
