@@ -78,9 +78,9 @@ public:
     );
 
     virtual void compute(unsigned int level);
-    block_mean_type const& mean();
-    block_error_type const& error();
-    block_count_type const& count();
+    block_mean_type const& get_mean();
+    block_error_type const& get_error();
+    block_count_type const& get_count();
 
 private:
     typedef correlation_base _Base;
@@ -154,11 +154,11 @@ void correlation<tcf_type>::compute(unsigned int level)
 
 template <typename tcf_type>
 typename correlation<tcf_type>::block_mean_type const&
-correlation<tcf_type>::mean()
+correlation<tcf_type>::get_mean()
 {
     for (std::size_t i = 0; i < result_.shape()[0]; ++i) {
         for (std::size_t j = 0; j < result_.shape()[1]; ++j) {
-            mean_[i][j] = detail::numeric::mean(result_[i][j]);
+            mean_[i][j] = mean(result_[i][j]);
         }
     }
     return mean_;
@@ -166,7 +166,7 @@ correlation<tcf_type>::mean()
 
 template <typename tcf_type>
 typename correlation<tcf_type>::block_error_type const&
-correlation<tcf_type>::error()
+correlation<tcf_type>::get_error()
 {
     for (std::size_t i = 0; i < result_.shape()[0]; ++i) {
         for (std::size_t j = 0; j < result_.shape()[1]; ++j) {
@@ -178,11 +178,11 @@ correlation<tcf_type>::error()
 
 template <typename tcf_type>
 typename correlation<tcf_type>::block_count_type const&
-correlation<tcf_type>::count()
+correlation<tcf_type>::get_count()
 {
     for (std::size_t i = 0; i < result_.shape()[0]; ++i) {
         for (std::size_t j = 0; j < result_.shape()[1]; ++j) {
-            count_[i][j] = detail::numeric::count(result_[i][j]);
+            count_[i][j] = count(result_[i][j]);
         }
     }
     return count_;
@@ -192,21 +192,21 @@ template <typename correlation_type>
 static boost::function<typename correlation_type::block_mean_type const& ()>
 wrap_mean(boost::shared_ptr<correlation_type> self)
 {
-    return boost::bind(&correlation_type::mean, self);
+    return boost::bind(&correlation_type::get_mean, self);
 }
 
 template <typename correlation_type>
 static boost::function<typename correlation_type::block_error_type const& ()>
 wrap_error(boost::shared_ptr<correlation_type> self)
 {
-    return boost::bind(&correlation_type::error, self);
+    return boost::bind(&correlation_type::get_error, self);
 }
 
 template <typename correlation_type>
 static boost::function<typename correlation_type::block_count_type const& ()>
 wrap_count(boost::shared_ptr<correlation_type> self)
 {
-    return boost::bind(&correlation_type::count, self);
+    return boost::bind(&correlation_type::get_count, self);
 }
 
 template <typename tcf_type>
