@@ -20,8 +20,7 @@
 #define BOOST_TEST_MODULE fixed_vector
 #include <boost/test/unit_test.hpp>
 
-#include <halmd/numeric/blas/fixed_vector.hpp>
-#include <halmd/numeric/blas/blas1.hpp>
+#include <halmd/numeric/blas/blas.hpp>
 #include <test/tools/ctest.hpp>
 
 using namespace boost;

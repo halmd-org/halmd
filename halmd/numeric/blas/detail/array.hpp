@@ -17,19 +17,19 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef HALMD_NUMERIC_BLAS_FIXED_ARRAY_HPP
-#define HALMD_NUMERIC_BLAS_FIXED_ARRAY_HPP
+#ifndef HALMD_NUMERIC_BLAS_DETAIL_STORAGE_HPP
+#define HALMD_NUMERIC_BLAS_DETAIL_STORAGE_HPP
+
+#include <halmd/config.hpp>
 
 #ifndef __CUDACC__
 # include <boost/array.hpp>
 #endif
 
-#include <halmd/config.hpp>
-
 namespace halmd {
-namespace detail {
 namespace numeric {
 namespace blas {
+namespace detail {
 
 #ifndef __CUDACC__
 
@@ -71,8 +71,8 @@ private:
 #endif /* __CUDACC__ */
 
 } // namespace detail
-} // namespace numeric
 } // namespace blas
+} // namespace numeric
 } // namespace halmd
 
-#endif /* ! HALMD_NUMERIC_BLAS_FIXED_ARRAY_HPP */
+#endif /* ! HALMD_NUMERIC_BLAS_DETAIL_STORAGE_HPP */

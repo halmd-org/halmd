@@ -20,6 +20,8 @@
 #ifndef HALMD_NUMERIC_BLAS_SYMMETRIC_MATRIX_HPP
 #define HALMD_NUMERIC_BLAS_SYMMETRIC_MATRIX_HPP
 
+#include <halmd/config.hpp>
+
 namespace halmd {
 namespace symmetric_matrix {
 

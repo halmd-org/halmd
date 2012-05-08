@@ -17,19 +17,20 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef HALMD_NUMERIC_BLAS_FIXED_VECTOR_SIZE_N_HPP
-#define HALMD_NUMERIC_BLAS_FIXED_VECTOR_SIZE_N_HPP
+#ifndef HALMD_NUMERIC_BLAS_DETAIL_VECTOR_HPP
+#define HALMD_NUMERIC_BLAS_DETAIL_VECTOR_HPP
+
+#include <halmd/config.hpp>
 
 #include <boost/type_traits/is_convertible.hpp>
 #include <boost/utility/enable_if.hpp>
 
-#include <halmd/config.hpp>
-#include <halmd/numeric/blas/fixed_array.hpp>
+#include <halmd/numeric/blas/detail/array.hpp>
 
 namespace halmd {
-namespace detail {
 namespace numeric {
 namespace blas {
+namespace detail {
 
 /**
  * N-dimensional vector of arbitrary value type
@@ -70,11 +71,8 @@ struct fixed_vector
 };
 
 } // namespace detail
-} // namespace numeric
 } // namespace blas
-// import into top-level namespace
-using detail::numeric::blas::fixed_vector;
-
+} // namespace numeric
 } // namespace halmd
 
-#endif /* ! HALMD_NUMERIC_BLAS_FIXED_VECTOR_SIZE_N_HPP */
+#endif /* ! HALMD_NUMERIC_BLAS_DETAIL_VECTOR_HPP */
