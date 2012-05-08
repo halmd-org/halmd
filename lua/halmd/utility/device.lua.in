@@ -19,6 +19,12 @@
 
 local module = require("halmd.utility.module")
 
+-- grab C++ wrappers
+local device
+if libhalmd.utility.gpu then
+    device = libhalmd.utility.gpu.device
+end
+
 ---
 -- Device management
 -- =================
@@ -28,11 +34,6 @@ local module = require("halmd.utility.module")
 -- device, which will remain active till the program exits. Diagnostic
 -- information is logged about CUDA driver and runtime versions, and
 -- GPU capabilities.
---
--- Note that this module automatically loads a dynamic plugin that contains
--- GPU-related modules. If the plugin fails to load, e.g. if the CUDA library
--- is not available on the system, GPU support is disabled, and the host is
--- used.
 --
 -- :func:`halmd.utility.device` may be used to query whether the GPU is being used::
 --
@@ -60,9 +61,7 @@ function M.__new(args)
     local disable_gpu = args and args.disable_gpu
     local devices = args and args.devices
 
-    -- load dynamically loadable module with GPU support if available
-    if not disable_gpu and pcall(require, "halmd.gpu") then
-        local device = assert(libhalmd.utility.gpu.device)
+    if device and not disable_gpu then
         if devices then
             return device(devices)
         else

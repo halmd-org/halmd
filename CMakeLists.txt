@@ -44,12 +44,10 @@ set(CMAKE_USER_MAKE_RULES_OVERRIDE "cmake/platform.cmake")
 
 project(HALMD CXX)
 
-if (HALMD_USE_STATIC_LIBS)
-  set(HALMD_USE_STATIC_LIBS TRUE CACHE INTERNAL
-    "Build statically linked backend executables")
+if(HALMD_USE_STATIC_LIBS)
   set(Boost_USE_STATIC_LIBS TRUE)
   set(HDF5_USE_STATIC_LIBS TRUE)
-endif(HALMD_USE_STATIC_LIBS)
+endif()
 
 # The FindBoost CMake module prefers multi-threaded libraries (filenames with
 # postfix "-mt") over non-multi-threaded libraries. On Redhat or SuSE with
@@ -93,7 +91,7 @@ if(suffix STREQUAL "${CMAKE_SHARED_LIBRARY_SUFFIX}")
   add_definitions(-DLUABIND_DYNAMIC_LINK)
 endif()
 
-if(CUDA_FOUND AND NOT HALMD_USE_STATIC_LIBS)
+if(CUDA_FOUND)
   enable_language(CUDA)
 
   set(HALMD_WITH_GPU TRUE)
@@ -105,9 +103,7 @@ if(CUDA_FOUND AND NOT HALMD_USE_STATIC_LIBS)
     message(SEND_ERROR "${result}")
   endif()
 
-else(CUDA_FOUND AND NOT HALMD_USE_STATIC_LIBS)
-  set(HALMD_WITH_GPU FALSE)
-endif(CUDA_FOUND AND NOT HALMD_USE_STATIC_LIBS)
+endif()
 
 if(HALMD_USE_STATIC_LIBS)
   set(HALMD_BACKEND_EXECUTABLES TRUE CACHE BOOL
@@ -205,12 +201,6 @@ if(HALMD_WITH_GPU)
     ${CUDA_LIBRARIES}
   )
 endif(HALMD_WITH_GPU)
-if(HALMD_USE_STATIC_LIBS)
-  list(APPEND HALMD_COMMON_LIBRARIES
-    -static-libgcc
-    -Wl,-Bstatic
-  )
-endif(HALMD_USE_STATIC_LIBS)
 list(APPEND HALMD_COMMON_LIBRARIES
   rt
   dl
