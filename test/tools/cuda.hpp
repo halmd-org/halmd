@@ -21,6 +21,7 @@
 #define HALMD_TEST_TOOLS_CUDA_HPP
 
 #include <boost/shared_ptr.hpp>
+#include <boost/test/test_tools.hpp>
 #include <boost/test/unit_test_monitor.hpp>
 #include <iostream>
 

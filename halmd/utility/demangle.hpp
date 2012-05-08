@@ -20,6 +20,7 @@
 #ifndef HALMD_UTILITY_DEMANGLE_HPP
 #define HALMD_UTILITY_DEMANGLE_HPP
 
+#include <cstdlib>
 #include <string>
 #include <typeinfo>
 #include <vector>

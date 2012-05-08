@@ -23,6 +23,7 @@
 #include <boost/shared_ptr.hpp>
 #include <exception>
 #include <limits>
+#include <stdexcept>
 
 #include <halmd/mdsim/clock.hpp>
 
