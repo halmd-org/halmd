@@ -20,8 +20,6 @@
 #ifndef HALMD_CONFIG_HPP
 #define HALMD_CONFIG_HPP
 
-#include <boost/config.hpp>
-
 #define HALMD_LUA_API extern "C"
 
 #cmakedefine HALMD_WITH_GPU
@@ -41,14 +39,7 @@
 # define HALMD_GPU_USING(__gpu__, __host__) using __host__
 #endif
 
-/**
- * C++11 standards-compliant compilers set __cplusplus == 201103L.
- * This is the case for GCC 4.7 in C++11 mode. To ensure backward
- * compatibility with GCC 4.6 in C++0x mode, check for a list of
- * C++11 features instead, which is lambda functions, initializer
- * lists and decltype.
- */
-#if defined(BOOST_NO_LAMBDAS) || defined(BOOST_NO_INITIALIZER_LISTS) || defined(BOOST_NO_DECLTYPE)
+#if __cplusplus < 201103L
 # define HALMD_NO_CXX11
 #endif
 
