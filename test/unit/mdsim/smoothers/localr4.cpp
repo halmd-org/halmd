@@ -30,8 +30,16 @@
 #include <cmath>
 #include <limits>
 
+#include <halmd/mdsim/box.hpp>
 #include <halmd/mdsim/host/potentials/lennard_jones.hpp>
 #include <halmd/mdsim/smoothers/localr4.hpp>
+#ifdef HALMD_WITH_GPU
+# include <halmd/mdsim/gpu/forces/pair_trunc.hpp>
+# include <halmd/mdsim/gpu/particle.hpp>
+# include <halmd/mdsim/gpu/potentials/lennard_jones.hpp>
+# include <test/unit/mdsim/potentials/gpu/neighbour_chain.hpp>
+# include <test/tools/cuda.hpp>
+#endif
 #include <test/tools/ctest.hpp>
 
 BOOST_AUTO_TEST_SUITE( host )
@@ -142,5 +150,155 @@ BOOST_AUTO_TEST_CASE( localr4 )
 }
 
 BOOST_AUTO_TEST_SUITE_END() // host
+
+#ifdef HALMD_WITH_GPU
+
+BOOST_AUTO_TEST_SUITE( gpu )
+
+template <typename float_type>
+struct test_localr4
+{
+    enum { dimension = 2 };
+
+    typedef halmd::mdsim::box<dimension> box_type;
+    typedef halmd::mdsim::smoothers::localr4<float_type> smooth_type;
+    typedef halmd::mdsim::smoothers::localr4<double> host_smooth_type;
+    typedef halmd::mdsim::gpu::particle<dimension, float_type> particle_type;
+    typedef halmd::mdsim::gpu::potentials::lennard_jones<float_type> potential_type;
+    typedef halmd::mdsim::host::potentials::lennard_jones<double> host_potential_type;
+    typedef halmd::mdsim::gpu::forces::pair_trunc<dimension, float_type, potential_type, smooth_type> force_type;
+    typedef test::unit::mdsim::potentials::gpu::neighbour_chain<dimension, float_type> neighbour_type;
+
+    typedef typename particle_type::vector_type vector_type;
+
+    std::vector<unsigned int> npart_list;
+    boost::shared_ptr<box_type> box;
+    boost::shared_ptr<potential_type> potential;
+    boost::shared_ptr<smooth_type> smoother;
+    boost::shared_ptr<host_smooth_type> host_smoother;
+    boost::shared_ptr<force_type> force;
+    boost::shared_ptr<neighbour_type> neighbour;
+    boost::shared_ptr<particle_type> particle;
+    boost::shared_ptr<host_potential_type> host_potential;
+
+    test_localr4();
+    void test();
+};
+
+template <typename float_type>
+void test_localr4<float_type>::test()
+{
+    // place particles along the x-axis within one half of the box,
+    // put every second particle at the origin
+    unsigned int npart = particle->nparticle();
+    vector_type dx(0);
+    dx[0] = box->edges()[0][0] / npart / 2;
+
+    cuda::host::vector<float4> r_list(particle->position().size());
+    for (unsigned int k = 0; k < r_list.size(); ++k) {
+        vector_type r = (k % 2) ? k * dx : vector_type(0);
+        unsigned int type = (k < npart_list[0]) ? 0U : 1U;  // set particle type for a binary mixture
+        r_list[k] <<= boost::tie(r, type);
+    }
+    cuda::copy(r_list, particle->position());
+
+    // enable computation of auxiliary quantities
+    particle->aux_enable();
+    // set forces and auxiliary quantities to zero
+    particle->prepare();
+    // add forces and auxiliary quantities
+    force->compute();
+
+    // read forces and other stuff from device
+    cuda::host::vector<typename particle_type::gpu_vector_type> f_list(particle->force().size());
+    cuda::copy(particle->force(), f_list);
+
+    cuda::host::vector<float> en_pot(particle->en_pot().size());
+    cuda::copy(particle->en_pot(), en_pot);
+
+    float_type const eps = std::numeric_limits<float_type>::epsilon();
+
+    for (unsigned int i = 0; i < npart; ++i) {
+        vector_type r1, r2;
+        unsigned int type1, type2;
+        boost::tie(r1, type1) <<= r_list[i];
+        boost::tie(r2, type2) <<= r_list[(i + 1) % npart];
+        vector_type r = r1 - r2;
+        vector_type f = f_list[i];
+
+        // reference values from host module
+        double fval, en_pot_, hvir;
+        double rr = inner_prod(r, r);
+        boost::tie(fval, en_pot_, hvir) = (*host_potential)(rr, type1, type2);
+
+        if (rr < host_potential->rr_cut(type1, type2)) {
+            double rcut = host_potential->r_cut(type1, type2);
+            (*host_smoother)(std::sqrt(rr), rcut, fval, en_pot_);
+            // the GPU force module stores only a fraction of these values
+            en_pot_ /= 2;
+
+            // the first term is from the smoothing, the second from the potential
+            // (see lennard_jones.cpp from unit tests)
+            float_type const tolerance = 8 * eps * (1 + rcut/(rcut - std::sqrt(rr))) + 10 * eps;
+
+            BOOST_CHECK_SMALL(norm_inf(fval * r - f), std::max(norm_inf(fval * r), float_type(1)) * tolerance * 2);
+            BOOST_CHECK_CLOSE_FRACTION(en_pot_, en_pot[i], 2 * tolerance);
+        }
+        else {
+            // when the distance is greater than the cutoff
+            // set the force and the pair potential to zero
+            fval = en_pot_ = 0;
+            BOOST_CHECK_SMALL(norm_inf(f), eps);
+            BOOST_CHECK_SMALL(en_pot[i], eps);
+        }
+    }
+}
+
+template <typename float_type>
+test_localr4<float_type>::test_localr4()
+{
+    typedef typename potential_type::matrix_type matrix_type;
+
+    BOOST_TEST_MESSAGE("initialise simulation modules");
+
+    // set module parameters
+    npart_list = {500, 300};
+    // the box length should not be greater than 2*r_c
+    float box_length = 10;
+    // smoothing parameter
+    double const h = 1. / 256;
+
+    float_type wca_cut = std::pow(2., 1. / 6);
+    matrix_type cutoff_array(2, 2);
+    cutoff_array <<=
+        2.5, 2.
+      , 2. , wca_cut;
+    matrix_type epsilon_array(2, 2);
+    epsilon_array <<=
+        1., 2.
+      , 2., 0.25;
+    matrix_type sigma_array(2, 2);
+    sigma_array <<=
+        1., 2.
+      , 2., 4.;
+
+    // create modules
+    particle = boost::make_shared<particle_type>(accumulate(npart_list.begin(), npart_list.end(), 0), npart_list.size());
+    box = boost::make_shared<box_type>(typename box_type::vector_type(box_length));
+    potential = boost::make_shared<potential_type>(particle->nspecies(), particle->nspecies(), cutoff_array, epsilon_array, sigma_array);
+    host_potential = boost::make_shared<host_potential_type>(particle->nspecies(), particle->nspecies(), cutoff_array, epsilon_array, sigma_array);
+    neighbour = boost::make_shared<neighbour_type>(particle);
+    smoother = boost::make_shared<smooth_type>(h);
+    host_smoother = boost::make_shared<host_smooth_type>(h);
+    force = boost::make_shared<force_type>(potential, particle, particle, box, neighbour, smoother);
+}
+
+BOOST_FIXTURE_TEST_CASE( localr4, set_cuda_device ) {
+    test_localr4<float>().test();
+}
+
+BOOST_AUTO_TEST_SUITE_END() // gpu
+
+#endif /** HALMD_WITH_GPU */
 
 #endif /* ! HALMD_NO_CXX11 */
