@@ -1210,3 +1210,62 @@ clean-cloog-ppl:
 distclean-cloog-ppl: clean-cloog-ppl
 	@$(RM) .fetch-cloog-ppl
 	$(RM) $(CLOOG_PPL_TARBALL)
+
+##
+## HALMD Highly Accerelated Large-Scale Molecular Dynamics
+##
+
+HALMD_VERSION = 0.2-rc2
+HALMD_TARBALL = halmd-$(HALMD_VERSION).tar.bz2
+HALMD_TARBALL_URL = http://downloads.sourceforge.net/project/halmd/halmd/0.2/testing/$(HALMD_TARBALL)
+HALMD_TARBALL_SHA256 = adbd7b2e7e0e4e597503ec203acda9e50b8a09aa9ac4c056d12627132f8dc24d
+HALMD_SOURCE_DIR = halmd-$(HALMD_VERSION)
+HALMD_BUILD_DIR = $(HALMD_SOURCE_DIR)/build/release
+HALMD_INSTALL_DIR = $(PREFIX)/halmd-$(HALMD_VERSION)
+
+.fetch-halmd:
+	@$(RM) $(HALMD_TARBALL)
+	$(WGET) $(HALMD_TARBALL_URL)
+	@echo '$(HALMD_TARBALL_SHA256)  $(HALMD_TARBALL)' | $(SHA256SUM)
+	@$(TOUCH) $@
+
+fetch-halmd: .fetch-halmd
+
+.extract-halmd: .fetch-halmd
+	$(RM) $(HALMD_SOURCE_DIR)
+	$(TAR) -xjf $(HALMD_TARBALL)
+	@$(TOUCH) $@
+
+extract-halmd: .extract-halmd
+
+.configure-halmd: .extract-halmd
+	mkdir -p $(HALMD_BUILD_DIR)
+	cd $(HALMD_BUILD_DIR) && cmake -DCMAKE_INSTALL_PREFIX=$(HALMD_INSTALL_DIR) $(CURDIR)/$(HALMD_SOURCE_DIR)
+	@$(TOUCH) $@
+
+configure-halmd: .configure-halmd
+
+.build-halmd: .configure-halmd
+	cd $(HALMD_BUILD_DIR) && make $(PARALLEL_BUILD_FLAGS)
+	@$(TOUCH) $@
+
+build-halmd: .build-halmd
+
+install-halmd: .build-halmd
+	cd $(HALMD_BUILD_DIR) && make install
+
+clean-halmd:
+	@$(RM) .build-halmd
+	@$(RM) .configure-halmd
+	@$(RM) .extract-halmd
+	$(RM) $(HALMD_SOURCE_DIR)
+
+distclean-halmd: clean-halmd
+	@$(RM) .fetch-halmd
+	$(RM) $(HALMD_TARBALL)
+
+env-halmd:
+	@echo
+	@echo '# add CMake $(HALMD_VERSION) to environment'
+	@echo 'export PATH="$(HALMD_INSTALL_DIR)/bin$${PATH+:$$PATH}"'
+	@echo 'export MANPATH="$(HALMD_INSTALL_DIR)/share/man$${MANPATH+:$$MANPATH}"'
