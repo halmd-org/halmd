@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 2.8)
+cmake_minimum_required(VERSION 2.8.8)
 
 if(NOT HALMD_DOC_ONLY)
   set(HALMD_DOC_ONLY FALSE)
@@ -9,30 +9,24 @@ set(HALMD_DOC_ONLY ${HALMD_DOC_ONLY} CACHE INTERNAL "Build HALMD documentation o
 
 set(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake")
 
-find_package(Git QUIET REQUIRED)
-find_package(GitRepository QUIET REQUIRED)
+# If the subdirectory cmake/ contains a version.cmake.in file, we are in a git
+# repository, then extract the git commit from the repository to generate
+# CMake files with version information and rules for crafting a HALMD archive.
+#
+# If the subdirectory cmake/ does not contain version.cmake.in, we are in a
+# HALMD archive, then include pre-build CMake file with version information.
+#
+if(EXISTS "${CMAKE_SOURCE_DIR}/cmake/version.cmake.in")
+  find_package(Git QUIET REQUIRED)
+  find_package(GitRepository QUIET REQUIRED)
 
-git_repository("${CMAKE_SOURCE_DIR}" HALMD)
+  git_repository("${CMAKE_SOURCE_DIR}" HALMD)
 
-set(PROGRAM_NAME "halmd")
-set(PROGRAM_DESC "HAL’s MD package")
-set(PROGRAM_AUTHORS "Peter Colberg and Felix Höfling")
-set(PROGRAM_COPYRIGHT "2007-2012, ${PROGRAM_AUTHORS}")
-if(HALMD_GIT_COMMIT_TAG)
-  string(REGEX MATCH "v[0-9].*" PROGRAM_VERSION "${HALMD_GIT_COMMIT_TAG}")
-  if(NOT PROGRAM_VERSION)
-    set(PROGRAM_VERSION "${HALMD_GIT_COMMIT_TAG}")
-    if(HALMD_GIT_BRANCH)
-      set(PROGRAM_VERSION "${PROGRAM_VERSION} (${HALMD_GIT_BRANCH})")
-    endif()
-  endif()
+  configure_file(cmake/version.cmake.in cmake/version.cmake @ONLY)
+  include("${CMAKE_BINARY_DIR}/cmake/version.cmake")
+  include("${CMAKE_SOURCE_DIR}/cmake/archive.cmake")
 else()
-  set(PROGRAM_VERSION "(unknown version)")
-endif()
-if(HALMD_GIT_COMMITTER_DATE)
-  set(PROGRAM_DATE "${HALMD_GIT_COMMITTER_DATE}")
-else()
-  set(PROGRAM_DATE "unknown date")
+  include("${CMAKE_SOURCE_DIR}/cmake/version.cmake")
 endif()
 
 # Output source version for Dashboard test reports
@@ -223,7 +217,27 @@ if(HALMD_WITH_GPU)
   include_directories(${CUDA_INCLUDE_DIR})
 endif(HALMD_WITH_GPU)
 
-add_subdirectory(doc EXCLUDE_FROM_ALL)
+# If the subdirectory doc/ contains a CMakeLists.txt, we are in a git repository,
+# then include the CMake rules in doc/ to extract and generate documentation.
+# Note that the targets halmd_doc_html, halmd_doc_pdf and halmd_doc_man are
+# not included in the default targets, so to generate documentation, one
+# has to explicitly invoke the desired target with make halmd_doc_<format>.
+#
+# If the subdirectory doc/ does not contain a CMakeLists.txt, we are in a
+# HALMD archive, then add a rule to install the pre-build documentation.
+#
+if(EXISTS "${CMAKE_SOURCE_DIR}/doc/CMakeLists.txt")
+  add_subdirectory(doc EXCLUDE_FROM_ALL)
+else()
+  install(DIRECTORY "${CMAKE_SOURCE_DIR}/doc/"
+    DESTINATION "share/doc/halmd"
+    PATTERN "man" EXCLUDE
+  )
+  install(DIRECTORY "${CMAKE_SOURCE_DIR}/doc/man/"
+    DESTINATION "share/man/man1"
+  )
+endif()
+
 add_subdirectory(halmd)
 add_subdirectory(lua)
 add_subdirectory(test)
