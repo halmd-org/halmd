@@ -28,7 +28,7 @@ namespace mdsim {
 namespace gpu {
 namespace forces {
 
-template <int dimension, typename potential_type>
+template <int dimension, typename potential_type, typename smooth_type>
 struct pair_trunc_wrapper
 {
     typedef fixed_vector<float, dimension> vector_type;
@@ -40,12 +40,14 @@ struct pair_trunc_wrapper
         coalesced_vector_type*, unsigned int const*, float*, stress_tensor_type*, float*
       , unsigned int, unsigned int
       , vector_type
+      , smooth_type const
     )> compute;
     /** compute forces and auxiliary stuff: internal energy, potential part of stress tensor, ... */
     cuda::function<void (
         coalesced_vector_type*, unsigned int const*, float*, stress_tensor_type*, float*
       , unsigned int, unsigned int
       , vector_type
+      , smooth_type const
     )> compute_aux;
     /** number of placeholders per neighbour list */
     cuda::symbol<unsigned int> neighbour_size;

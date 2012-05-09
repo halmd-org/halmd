@@ -23,6 +23,8 @@
 #include <halmd/numeric/blas/blas.hpp>
 #include <halmd/numeric/pow.hpp>  // std::pow is not a device function
 #include <halmd/utility/tuple.hpp>
+#include <halmd/mdsim/smoothers/localr4.hpp>
+#include <halmd/mdsim/smoothers/nosmooth.hpp>
 
 namespace halmd {
 namespace mdsim {
@@ -126,13 +128,16 @@ cuda::texture<float2> power_law_wrapper::rr_en_cut = power_law_kernel::rr_en_cut
 // explicit instantiation of force kernels
 namespace forces {
 
-using potentials::power_law_kernel::power_law;
+using namespace halmd::mdsim::gpu::potentials::power_law_kernel;
+using namespace halmd::mdsim::smoothers;
 
 template class pair_full_wrapper<3, power_law>;
 template class pair_full_wrapper<2, power_law>;
 
-template class pair_trunc_wrapper<3, power_law>;
-template class pair_trunc_wrapper<2, power_law>;
+template class pair_trunc_wrapper<3, power_law, nosmooth>;
+template class pair_trunc_wrapper<2, power_law, nosmooth>;
+template class pair_trunc_wrapper<3, power_law, localr4<float> >;
+template class pair_trunc_wrapper<2, power_law, localr4<float> >;
 
 } // namespace forces
 

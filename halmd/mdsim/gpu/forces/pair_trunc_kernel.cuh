@@ -52,6 +52,7 @@ template <
   , typename potential_type
   , typename gpu_vector_type
   , typename stress_tensor_type
+  , typename smooth_type
 >
 __global__ void compute(
     gpu_vector_type* g_f
@@ -62,6 +63,7 @@ __global__ void compute(
   , unsigned int ntype1
   , unsigned int ntype2
   , vector_type box_length
+  , smooth_type const smooth
 )
 {
     enum { dimension = vector_type::static_size };
@@ -114,6 +116,9 @@ __global__ void compute(
         value_type fval, en_pot, hvir;
         tie(fval, en_pot, hvir) = potential(rr);
 
+        // apply smoothing function to force and potential
+        smooth(sqrt(rr), sqrt(potential.rr_cut()), fval, en_pot);
+
         // force from other particle acting on this particle
         f += fval * r;
         if (do_aux) {
@@ -137,9 +142,9 @@ __global__ void compute(
 
 } // namespace pair_trunc_kernel
 
-template <int dimension, typename potential_type>
-pair_trunc_wrapper<dimension, potential_type> const
-pair_trunc_wrapper<dimension, potential_type>::kernel = {
+template <int dimension, typename potential_type, typename smooth_type>
+pair_trunc_wrapper<dimension, potential_type, smooth_type> const
+pair_trunc_wrapper<dimension, potential_type, smooth_type>::kernel = {
     pair_trunc_kernel::compute<false, fixed_vector<float, dimension>, potential_type>
   , pair_trunc_kernel::compute<true, fixed_vector<float, dimension>, potential_type>
   , pair_trunc_kernel::neighbour_size_
