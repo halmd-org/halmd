@@ -235,9 +235,9 @@ if(EXISTS "${CMAKE_SOURCE_DIR}/doc/CMakeLists.txt")
 else()
   install(DIRECTORY "${CMAKE_SOURCE_DIR}/doc/"
     DESTINATION "share/doc/halmd"
-    PATTERN "halmd.1" EXCLUDE
+    PATTERN "man" EXCLUDE
   )
-  install(FILES "${CMAKE_SOURCE_DIR}/doc/halmd.1"
+  install(DIRECTORY "${CMAKE_SOURCE_DIR}/doc/man/"
     DESTINATION "share/man/man1"
   )
 endif()

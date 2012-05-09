@@ -87,7 +87,6 @@ add_custom_command(OUTPUT "${HALMD_ARCHIVE_INTERMEDIATE_HALMD_H5XX_DOC}"
     --exclude=.doctrees
     --exclude=.buildinfo
     --transform="s,^doc/html/_sources,doc,"
-    --transform="s,^doc/man,doc,"
     --transform="s,^doc/pdf,doc,"
     --transform="s,^,${HALMD_ARCHIVE_PREFIX}/,"
     "cmake/version.cmake"
