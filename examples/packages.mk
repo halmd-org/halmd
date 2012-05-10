@@ -270,7 +270,7 @@ BOOST_BUILD_DIR = boost_$(BOOST_RELEASE)
 BOOST_INSTALL_DIR = $(PREFIX)/boost_$(BOOST_RELEASE)
 BOOST_BUILD_FLAGS = dll-path=$(BOOST_INSTALL_DIR)/lib
 
-ifndef USE_CXX98
+ifdef USE_CXX11
 BOOST_BUILD_FLAGS += "cxxflags=-fPIC -std=c++11"
 else
 BOOST_BUILD_FLAGS += cxxflags=-fPIC
