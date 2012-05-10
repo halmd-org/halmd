@@ -1,5 +1,5 @@
 #
-# Copyright © 2011-2012  Peter Colberg
+# Copyright © 2011  Peter Colberg
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -22,24 +22,6 @@ PREFIX = $(HOME)/opt
 ifdef CONCURRENCY_LEVEL
     PARALLEL_BUILD_FLAGS = -j$(CONCURRENCY_LEVEL)
 endif
-
-# compile Boost and Luabind with -std=c++11 with GCC >= 4.7
-define USER_CONFIG_JAM
-project : requirements <conditional>@cxxflags ;
-
-rule cxxflags ( properties * )
-{
-    local version = [ MATCH "<toolset-gcc:version>([0-9]+)\.([0-9]+).*" : $$(properties) ] ;
-    local major = $$(version[1]) ;
-    local minor = $$(version[2]) ;
-
-    if $$(major) >= 4 && $$(minor) >= 7
-    {
-       result += <cxxflags>"-std=c++11" ;
-    }
-}
-endef
-export USER_CONFIG_JAM
 
 ##
 ## define commonly used commands
@@ -286,8 +268,13 @@ BOOST_LOG_CXX11_PATCH_URL = http://sourceforge.net/projects/halmd/files/libs/boo
 BOOST_LOG_CXX11_PATCH_SHA256 = 350a137852592c5ba079c5fa0a5a5f9c7c2d662fc755d6837c32354c5670ecfe
 BOOST_BUILD_DIR = boost_$(BOOST_RELEASE)
 BOOST_INSTALL_DIR = $(PREFIX)/boost_$(BOOST_RELEASE)
-BOOST_BUILD_FLAGS = dll-path=$(BOOST_INSTALL_DIR)/lib cxxflags=-fPIC --user-config=user-config.jam
+BOOST_BUILD_FLAGS = dll-path=$(BOOST_INSTALL_DIR)/lib
 
+ifndef USE_CXX98
+BOOST_BUILD_FLAGS += "cxxflags=-fPIC -std=c++11"
+else
+BOOST_BUILD_FLAGS += cxxflags=-fPIC
+endif
 ifndef USE_BZIP2
 BOOST_BUILD_FLAGS += -sNO_BZIP2=1
 endif
@@ -324,7 +311,6 @@ fetch-boost: .fetch-boost
 	cd $(BOOST_BUILD_DIR) && $(PATCH) -p1 < $(CURDIR)/$(BOOST_ALWAYS_INLINE_PATCH)
 	cd $(BOOST_BUILD_DIR) && $(PATCH) -p1 < $(CURDIR)/$(BOOST_LEXICAL_CAST_PATCH)
 	cd $(BOOST_BUILD_DIR) && $(PATCH) -p3 < $(CURDIR)/$(BOOST_LOG_CXX11_PATCH)
-	cd $(BOOST_BUILD_DIR) && echo "$$USER_CONFIG_JAM" > user-config.jam
 	@$(TOUCH) $@
 
 extract-boost: .extract-boost
