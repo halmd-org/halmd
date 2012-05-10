@@ -30,9 +30,9 @@
 #include <halmd/io/logger.hpp>
 #include <halmd/mdsim/box.hpp>
 #include <halmd/mdsim/force_kernel.hpp>
-#include <halmd/mdsim/host/forces/smooth.hpp>
 #include <halmd/mdsim/host/neighbour.hpp>
 #include <halmd/mdsim/host/particle.hpp>
+#include <halmd/mdsim/smoothers/nosmooth.hpp>
 #include <halmd/utility/lua/lua.hpp>
 #include <halmd/utility/profiler.hpp>
 #include <halmd/utility/signal.hpp>
@@ -45,7 +45,7 @@ namespace forces {
 /**
  * template class for modules implementing short ranged potential forces
  */
-template <int dimension, typename float_type, typename potential_type>
+template <int dimension, typename float_type, typename potential_type, typename smooth_type = smoothers::nosmooth>
 class pair_trunc
 {
 public:
@@ -55,7 +55,6 @@ public:
 
     typedef mdsim::box<dimension> box_type;
     typedef host::neighbour neighbour_type;
-    typedef host::forces::smooth<dimension, float_type> smooth_type;
 
     static void luaopen(lua_State* L);
 
@@ -65,7 +64,7 @@ public:
       , boost::shared_ptr<particle_type> particle2
       , boost::shared_ptr<box_type> box
       , boost::shared_ptr<neighbour_type const> neighbour
-      // FIXME , boost::shared_ptr<smooth_type> smooth
+      , boost::shared_ptr<smooth_type const> smooth = boost::make_shared<smooth_type>()
     );
     void compute();
 
@@ -89,8 +88,8 @@ private:
     boost::shared_ptr<particle_type> particle1_;
     boost::shared_ptr<particle_type> particle2_;
     boost::shared_ptr<box_type> box_;
-    boost::shared_ptr<smooth_type> smooth_;
     boost::shared_ptr<neighbour_type const> neighbour_;
+    boost::shared_ptr<smooth_type const> smooth_;
 
     /** profiling runtime accumulators */
     runtime runtime_;
@@ -99,14 +98,14 @@ private:
     inline void compute_aux();
 };
 
-template <int dimension, typename float_type, typename potential_type>
-pair_trunc<dimension, float_type, potential_type>::pair_trunc(
+template <int dimension, typename float_type, typename potential_type, typename smooth_type>
+pair_trunc<dimension, float_type, potential_type, smooth_type>::pair_trunc(
     boost::shared_ptr<potential_type> potential
   , boost::shared_ptr<particle_type> particle1
   , boost::shared_ptr<particle_type> particle2
   , boost::shared_ptr<box_type> box
   , boost::shared_ptr<neighbour_type const> neighbour
-  // FIXME , boost::shared_ptr<smooth_type> smooth
+  , boost::shared_ptr<smooth_type const> smooth
 )
   // dependency injection
   : potential_(potential)
@@ -114,7 +113,7 @@ pair_trunc<dimension, float_type, potential_type>::pair_trunc(
   , particle2_(particle2)
   , box_(box)
   , neighbour_(neighbour)
-{}
+  , smooth_(smooth) {}
 
 /**
  * Compute pair forces and, if enabled, auxiliary variables,
@@ -122,8 +121,8 @@ pair_trunc<dimension, float_type, potential_type>::pair_trunc(
  *
  * Reset flag for auxiliary variables.
  */
-template <int dimension, typename float_type, typename potential_type>
-void pair_trunc<dimension, float_type, potential_type>::compute()
+template <int dimension, typename float_type, typename potential_type, typename smooth_type>
+void pair_trunc<dimension, float_type, potential_type, smooth_type>::compute()
 {
     scoped_timer_type timer(runtime_.compute);
 
@@ -141,9 +140,9 @@ void pair_trunc<dimension, float_type, potential_type>::compute()
     }
 }
 
-template <int dimension, typename float_type, typename potential_type>
+template <int dimension, typename float_type, typename potential_type, typename smooth_type>
 template <bool compute_aux1, bool compute_aux2>
-void pair_trunc<dimension, float_type, potential_type>::compute_aux()
+void pair_trunc<dimension, float_type, potential_type, smooth_type>::compute_aux()
 {
     typename particle_type::position_array_type const& position1 = particle1_->position();
     typename particle_type::position_array_type const& position2 = particle2_->position();
@@ -184,10 +183,7 @@ void pair_trunc<dimension, float_type, potential_type>::compute_aux()
             boost::tie(fval, pot, hvir) = (*potential_)(rr, a, b);
 
             // optionally smooth potential yielding continuous 2nd derivative
-            // FIXME test performance of template versus runtime bool
-            if (smooth_) {
-                smooth_->compute(std::sqrt(rr), potential_->r_cut(a, b), fval, pot);
-            }
+            (*smooth_)(std::sqrt(rr), potential_->r_cut(a, b), fval, pot);
 
             // add force contribution to both particles
             force1[i] += r * fval;
@@ -217,8 +213,8 @@ void pair_trunc<dimension, float_type, potential_type>::compute_aux()
     }
 }
 
-template <int dimension, typename float_type, typename potential_type>
-static char const* module_name_wrapper(pair_trunc<dimension, float_type, potential_type> const&)
+template <int dimension, typename float_type, typename potential_type, typename smooth_type>
+static char const* module_name_wrapper(pair_trunc<dimension, float_type, potential_type, smooth_type> const&)
 {
     return potential_type::module_name();
 }
@@ -230,8 +226,8 @@ wrap_compute(boost::shared_ptr<force_type> force)
     return boost::bind(&force_type::compute, force);
 }
 
-template <int dimension, typename float_type, typename potential_type>
-void pair_trunc<dimension, float_type, potential_type>::luaopen(lua_State* L)
+template <int dimension, typename float_type, typename potential_type, typename smooth_type>
+void pair_trunc<dimension, float_type, potential_type, smooth_type>::luaopen(lua_State* L)
 {
     using namespace luabind;
     static std::string class_name("pair_trunc_" + boost::lexical_cast<std::string>(dimension) + "_");
@@ -247,7 +243,7 @@ void pair_trunc<dimension, float_type, potential_type>::luaopen(lua_State* L)
                     [
                         class_<pair_trunc>(potential_type::module_name())
                             .property("r_cut", &pair_trunc::r_cut)
-                            .property("module_name", &module_name_wrapper<dimension, float_type, potential_type>)
+                            .property("module_name", &module_name_wrapper<dimension, float_type, potential_type, smooth_type>)
                             .property("compute", &wrap_compute<pair_trunc>)
                             .scope
                             [
@@ -267,6 +263,7 @@ void pair_trunc<dimension, float_type, potential_type>::luaopen(lua_State* L)
                   , boost::shared_ptr<particle_type>
                   , boost::shared_ptr<box_type>
                   , boost::shared_ptr<neighbour_type const>
+                  , boost::shared_ptr<smooth_type const>
                 >)
             ]
         ]

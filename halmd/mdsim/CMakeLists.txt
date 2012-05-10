@@ -15,6 +15,8 @@ halmd_add_modules(
   libhalmd_mdsim_velocity
 )
 
+add_subdirectory(smoothers)
+
 if(HALMD_WITH_GPU)
   add_subdirectory(gpu)
 endif(HALMD_WITH_GPU)
