@@ -28,6 +28,7 @@
 #include <halmd/io/logger.hpp>
 #include <halmd/mdsim/box.hpp>
 #include <halmd/mdsim/gpu/force.hpp>
+#include <halmd/mdsim/forces/trunc/discontinuous.hpp>
 #include <halmd/mdsim/gpu/forces/pair_trunc_kernel.hpp>
 #include <halmd/mdsim/gpu/neighbour.hpp>
 #include <halmd/mdsim/gpu/particle.hpp>
@@ -42,7 +43,7 @@ namespace forces {
 /**
  * class template for modules implementing short ranged potential forces
  */
-template <int dimension, typename float_type, typename potential_type>
+template <int dimension, typename float_type, typename potential_type, typename trunc_type = mdsim::forces::trunc::discontinuous>
 class pair_trunc
   : public mdsim::gpu::force<dimension, float_type>
 {
@@ -54,7 +55,7 @@ public:
     typedef mdsim::box<dimension> box_type;
     typedef gpu::neighbour neighbour_type;
     typedef typename potential_type::gpu_potential_type gpu_potential_type;
-    typedef pair_trunc_wrapper<dimension, gpu_potential_type> gpu_wrapper;
+    typedef pair_trunc_wrapper<dimension, gpu_potential_type, trunc_type> gpu_wrapper;
 
     inline static void luaopen(lua_State* L);
 
@@ -63,6 +64,7 @@ public:
       , boost::shared_ptr<particle_type> particle
       , boost::shared_ptr<box_type> box
       , boost::shared_ptr<neighbour_type const> neighbour
+      , boost::shared_ptr<trunc_type const> trunc = boost::make_shared<trunc_type>()
     );
     inline virtual void compute();
 
@@ -120,6 +122,8 @@ private:
     boost::shared_ptr<box_type> box_;
     /** neighbour lists */
     boost::shared_ptr<neighbour_type const> neighbour_;
+    /** smoothing functor */
+    boost::shared_ptr<trunc_type const> trunc_;
 
     /** flag for switching the computation of auxiliary variables in function compute() */
     bool aux_flag_;
@@ -135,19 +139,20 @@ private:
     runtime runtime_;
 };
 
-template <int dimension, typename float_type, typename potential_type>
-pair_trunc<dimension, float_type, potential_type>::pair_trunc(
+template <int dimension, typename float_type, typename potential_type, typename trunc_type>
+pair_trunc<dimension, float_type, potential_type, trunc_type>::pair_trunc(
     boost::shared_ptr<potential_type> potential
   , boost::shared_ptr<particle_type> particle
   , boost::shared_ptr<box_type> box
   , boost::shared_ptr<neighbour_type const> neighbour
-  // FIXME , boost::shared_ptr<smooth_type> smooth
+  , boost::shared_ptr<trunc_type const> trunc
 )
   // dependency injection
   : potential_(potential)
   , particle_(particle)
   , box_(box)
   , neighbour_(neighbour)
+  , trunc_(trunc)
   // member initalisation
   , aux_flag_(false)          //< disable auxiliary variables by default
   , aux_valid_(false)
@@ -164,8 +169,8 @@ pair_trunc<dimension, float_type, potential_type>::pair_trunc(
  *
  * Reset flag for auxiliary variables.
  */
-template <int dimension, typename float_type, typename potential_type>
-void pair_trunc<dimension, float_type, potential_type>::compute()
+template <int dimension, typename float_type, typename potential_type, typename trunc_type>
+void pair_trunc<dimension, float_type, potential_type, trunc_type>::compute()
 {
     scoped_timer_type timer(runtime_.compute);
 
@@ -180,26 +185,28 @@ void pair_trunc<dimension, float_type, potential_type>::compute()
         gpu_wrapper::kernel.compute(
             particle_->g_r, particle_->g_f, neighbour_->g_neighbour(), g_en_pot_, g_stress_pot_, g_hypervirial_
           , static_cast<vector_type>(box_->length())
+          , *trunc_
         );
     }
     else {
         gpu_wrapper::kernel.compute_aux(
             particle_->g_r, particle_->g_f, neighbour_->g_neighbour(), g_en_pot_, g_stress_pot_, g_hypervirial_
           , static_cast<vector_type>(box_->length())
+          , *trunc_
         );
         aux_flag_ = false;
     }
     cuda::thread::synchronize();
 }
 
-template <int dimension, typename float_type, typename potential_type>
-static char const* module_name_wrapper(pair_trunc<dimension, float_type, potential_type> const&)
+template <int dimension, typename float_type, typename potential_type, typename trunc_type>
+static char const* module_name_wrapper(pair_trunc<dimension, float_type, potential_type, trunc_type> const&)
 {
     return potential_type::module_name();
 }
 
-template <int dimension, typename float_type, typename potential_type>
-void pair_trunc<dimension, float_type, potential_type>::luaopen(lua_State* L)
+template <int dimension, typename float_type, typename potential_type, typename trunc_type>
+void pair_trunc<dimension, float_type, potential_type, trunc_type>::luaopen(lua_State* L)
 {
     typedef typename _Base::_Base _Base_Base;
     using namespace luabind;
@@ -220,8 +227,9 @@ void pair_trunc<dimension, float_type, potential_type>::luaopen(lua_State* L)
                               , boost::shared_ptr<particle_type>
                               , boost::shared_ptr<box_type>
                               , boost::shared_ptr<neighbour_type const>
+                              , boost::shared_ptr<trunc_type const>
                             >())
-                            .property("module_name", &module_name_wrapper<dimension, float_type, potential_type>)
+                            .property("module_name", &module_name_wrapper<dimension, float_type, potential_type, trunc_type>)
                             .scope
                             [
                                 class_<runtime>("runtime")
@@ -239,6 +247,7 @@ void pair_trunc<dimension, float_type, potential_type>::luaopen(lua_State* L)
                   , boost::shared_ptr<particle_type>
                   , boost::shared_ptr<box_type>
                   , boost::shared_ptr<neighbour_type const>
+                  , boost::shared_ptr<trunc_type const>
                 >)
             ]
         ]

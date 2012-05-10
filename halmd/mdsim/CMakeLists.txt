@@ -24,6 +24,8 @@ halmd_add_modules(
 )
 
 add_subdirectory(integrators)
+add_subdirectory(forces)
+
 if(WITH_CUDA)
   add_subdirectory(gpu)
 endif(WITH_CUDA)

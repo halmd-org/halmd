@@ -21,6 +21,7 @@
 #define HALMD_MDSIM_GPU_FORCES_PAIR_TRUNC_KERNEL_HPP
 
 #include <cuda_wrapper/cuda_wrapper.hpp>
+#include <halmd/mdsim/forces/trunc/discontinuous.hpp>
 #include <halmd/mdsim/type_traits.hpp>
 
 namespace halmd {
@@ -28,7 +29,7 @@ namespace mdsim {
 namespace gpu {
 namespace forces {
 
-template <int dimension, typename potential_type>
+template <int dimension, typename potential_type, typename smooth_type = mdsim::forces::trunc::discontinuous>
 struct pair_trunc_wrapper
 {
     typedef fixed_vector<float, dimension> vector_type;
@@ -36,9 +37,19 @@ struct pair_trunc_wrapper
     typedef typename type_traits<dimension, float>::gpu::stress_tensor_type stress_tensor_type;
 
     /** compute forces only */
-    cuda::function<void (float4*, coalesced_vector_type*, unsigned int const*, float*, stress_tensor_type*, float*, vector_type)> compute;
+    cuda::function<void (
+        float4 const*
+      , coalesced_vector_type*, unsigned int const*, float*, stress_tensor_type*, float*
+      , vector_type
+      , smooth_type const
+    )> compute;
     /** compute forces and auxiliary stuff: internal energy, potential part of stress tensor, ... */
-    cuda::function<void (float4*, coalesced_vector_type*, unsigned int const*, float*, stress_tensor_type*, float*, vector_type)> compute_aux;
+    cuda::function<void (
+        float4 const*
+      , coalesced_vector_type*, unsigned int const*, float*, stress_tensor_type*, float*
+      , vector_type
+      , smooth_type const
+    )> compute_aux;
     /** number of placeholders per neighbour list */
     cuda::symbol<unsigned int> neighbour_size;
     /** neighbour list stride */

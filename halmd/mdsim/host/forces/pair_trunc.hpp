@@ -29,7 +29,7 @@
 #include <halmd/mdsim/box.hpp>
 #include <halmd/mdsim/force_kernel.hpp>
 #include <halmd/mdsim/host/force.hpp>
-#include <halmd/mdsim/host/forces/smooth.hpp>
+#include <halmd/mdsim/forces/trunc/discontinuous.hpp>
 #include <halmd/mdsim/host/neighbour.hpp>
 #include <halmd/mdsim/host/particle.hpp>
 #include <halmd/utility/lua/lua.hpp>
@@ -43,7 +43,7 @@ namespace forces {
 /**
  * template class for modules implementing short ranged potential forces
  */
-template <int dimension, typename float_type, typename potential_type>
+template <int dimension, typename float_type, typename potential_type, typename trunc_type = mdsim::forces::trunc::discontinuous>
 class pair_trunc
   : public mdsim::host::force<dimension, float_type>
 {
@@ -56,7 +56,6 @@ public:
     typedef host::particle<dimension, float_type> particle_type;
     typedef mdsim::box<dimension> box_type;
     typedef host::neighbour<dimension, float_type> neighbour_type;
-    typedef host::forces::smooth<dimension, float_type> smooth_type;
 
     inline static void luaopen(lua_State* L);
 
@@ -65,7 +64,7 @@ public:
       , boost::shared_ptr<particle_type> particle
       , boost::shared_ptr<box_type> box
       , boost::shared_ptr<neighbour_type const> neighbour
-      // FIXME , boost::shared_ptr<smooth_type> smooth
+      , boost::shared_ptr<trunc_type const> trunc = boost::make_shared<trunc_type>()
     );
     inline virtual void compute();
 
@@ -127,8 +126,8 @@ private:
     boost::shared_ptr<potential_type> potential_;
     boost::shared_ptr<particle_type> particle_;
     boost::shared_ptr<box_type> box_;
-    boost::shared_ptr<smooth_type> smooth_;
     boost::shared_ptr<neighbour_type const> neighbour_;
+    boost::shared_ptr<trunc_type const> trunc_;
 
     /** flag for switching the computation of auxiliary variables in function compute() */
     bool aux_flag_;
@@ -147,19 +146,20 @@ private:
     inline void compute_impl_();
 };
 
-template <int dimension, typename float_type, typename potential_type>
-pair_trunc<dimension, float_type, potential_type>::pair_trunc(
+template <int dimension, typename float_type, typename potential_type, typename trunc_type>
+pair_trunc<dimension, float_type, potential_type, trunc_type>::pair_trunc(
     boost::shared_ptr<potential_type> potential
   , boost::shared_ptr<particle_type> particle
   , boost::shared_ptr<box_type> box
   , boost::shared_ptr<neighbour_type const> neighbour
-  // FIXME , boost::shared_ptr<smooth_type> smooth
+  , boost::shared_ptr<trunc_type const> trunc
 )
   // dependency injection
   : potential_(potential)
   , particle_(particle)
   , box_(box)
   , neighbour_(neighbour)
+  , trunc_(trunc)
   // member initialisation
   , aux_flag_(false)          //< disable auxiliary variables by default
   , aux_valid_(false)
@@ -171,8 +171,8 @@ pair_trunc<dimension, float_type, potential_type>::pair_trunc(
  *
  * Reset flag for auxiliary variables.
  */
-template <int dimension, typename float_type, typename potential_type>
-void pair_trunc<dimension, float_type, potential_type>::compute()
+template <int dimension, typename float_type, typename potential_type, typename trunc_type>
+void pair_trunc<dimension, float_type, potential_type, trunc_type>::compute()
 {
     scoped_timer_type timer(runtime_.compute);
 
@@ -187,9 +187,9 @@ void pair_trunc<dimension, float_type, potential_type>::compute()
     }
 }
 
-template <int dimension, typename float_type, typename potential_type>
+template <int dimension, typename float_type, typename potential_type, typename trunc_type>
 template <bool do_aux>
-void pair_trunc<dimension, float_type, potential_type>::compute_impl_()
+void pair_trunc<dimension, float_type, potential_type, trunc_type>::compute_impl_()
 {
     // initialise particle forces to zero
     std::fill(particle_->f.begin(), particle_->f.end(), 0);
@@ -222,11 +222,8 @@ void pair_trunc<dimension, float_type, potential_type>::compute_impl_()
             float_type fval, en_pot, hvir;
             boost::tie(fval, en_pot, hvir) = (*potential_)(rr, a, b);
 
-            // optionally smooth potential yielding continuous 2nd derivative
-            // FIXME test performance of template versus runtime bool
-            if (smooth_) {
-                smooth_->compute(std::sqrt(rr), potential_->r_cut(a, b), fval, en_pot);
-            }
+            // impose smooth potential cutoff yielding continuous 2nd derivative (may be an empty function)
+            (*trunc_)(std::sqrt(rr), potential_->r_cut(a, b), fval, en_pot);
 
             // add force contribution to both particles
             particle_->f[i] += r * fval;
@@ -257,14 +254,14 @@ void pair_trunc<dimension, float_type, potential_type>::compute_impl_()
     }
 }
 
-template <int dimension, typename float_type, typename potential_type>
-static char const* module_name_wrapper(pair_trunc<dimension, float_type, potential_type> const&)
+template <int dimension, typename float_type, typename potential_type, typename trunc_type>
+static char const* module_name_wrapper(pair_trunc<dimension, float_type, potential_type, trunc_type> const&)
 {
     return potential_type::module_name();
 }
 
-template <int dimension, typename float_type, typename potential_type>
-void pair_trunc<dimension, float_type, potential_type>::luaopen(lua_State* L)
+template <int dimension, typename float_type, typename potential_type, typename trunc_type>
+void pair_trunc<dimension, float_type, potential_type, trunc_type>::luaopen(lua_State* L)
 {
     typedef typename _Base::_Base _Base_Base;
     using namespace luabind;
@@ -287,7 +284,7 @@ void pair_trunc<dimension, float_type, potential_type>::luaopen(lua_State* L)
                               , boost::shared_ptr<neighbour_type const>
                             >())
                             .property("r_cut", &pair_trunc::r_cut)
-                            .property("module_name", &module_name_wrapper<dimension, float_type, potential_type>)
+                            .property("module_name", &module_name_wrapper<dimension, float_type, potential_type, trunc_type>)
                             .scope
                             [
                                 class_<runtime>("runtime")
@@ -305,6 +302,7 @@ void pair_trunc<dimension, float_type, potential_type>::luaopen(lua_State* L)
                   , boost::shared_ptr<particle_type>
                   , boost::shared_ptr<box_type>
                   , boost::shared_ptr<neighbour_type const>
+                  , boost::shared_ptr<trunc_type const>
                 >)
             ]
         ]

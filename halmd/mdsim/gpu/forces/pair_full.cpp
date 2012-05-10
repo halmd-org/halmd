@@ -18,7 +18,6 @@
  */
 
 #include <halmd/mdsim/gpu/forces/pair_full.hpp>
-// #include <halmd/mdsim/gpu/forces/smooth.hpp>
 #include <halmd/mdsim/gpu/potentials/lennard_jones.hpp>
 #include <halmd/mdsim/gpu/potentials/lennard_jones_simple.hpp>
 #include <halmd/mdsim/gpu/potentials/modified_lennard_jones.hpp>

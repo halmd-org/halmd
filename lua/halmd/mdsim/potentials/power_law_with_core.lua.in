@@ -48,6 +48,7 @@ function M.__new(args)
     local epsilon = setmetatable(args.epsilon or {1.0, 1.5, 0.5 }, fixed_array) -- default value
     local sigma   = setmetatable(args.sigma   or {1.0, 0.8, 0.88}, fixed_array) -- default value
     local index   = setmetatable(args.index   or { 12,  12,   12}, fixed_array) -- default value
+    local smooth  = args.smooth or 0 -- default value
 
     local particle = mdsim.particle() -- singleton
     local logger = assert(args.logger)
@@ -58,7 +59,12 @@ function M.__new(args)
     else
         power_law_with_core = assert(power_law_with_core_wrapper.host)
     end
-    return power_law_with_core(particle.ntype, cutoff, core, epsilon, sigma, index, logger)
+    potential = power_law_with_core(particle.ntype, cutoff, core, epsilon, sigma, index, logger)
+
+    -- store smooth parameter as property of potential
+    potential.smooth = property(function(self) return smooth end)
+
+    return potential
 end
 
 --
@@ -79,7 +85,7 @@ function M.options(desc)
     desc:add("epsilon", po.float_array(), "interaction strength [MD units]")
     desc:add("sigma", po.float_array(), "interaction range [MD units]")
     desc:add("index", po.uint_array(), "power law index")
-    -- FIXME desc:add("smooth", po.float_array(), "C²-potential smoothing factor")
+    desc:add("smooth", po.float(), "smoothing parameter for C²-continuous cutoff")
 end
 
 --
@@ -91,6 +97,7 @@ function M.read_parameters(args, group)
     args.epsilon = group:read_attribute("epsilon", h5.float_array())
     args.sigma = group:read_attribute("sigma", h5.float_array())
     args.index = group:read_attribute("index", h5.uint_array())
+    args.smooth = group:read_attribute("smooth", h5.float())
 end
 
 --
@@ -105,6 +112,7 @@ function M.write_parameters(power_law_with_core, group)
     group:write_attribute("epsilon",    h5.float_array(), power_law_with_core.epsilon:data())
     group:write_attribute("sigma",      h5.float_array(), power_law_with_core.sigma:data())
     group:write_attribute("index",      h5.uint_array(),  power_law_with_core.index:data())
+    group:write_attribute("smooth",     h5.float(),       power_law_with_core.smooth)
 end
 
 return M

@@ -25,10 +25,12 @@ local mdsim = {
   , neighbour           = require("halmd.mdsim.neighbour")
   , particle            = require("halmd.mdsim.particle")
   , potential           = require("halmd.mdsim.potential")
+  , forces_trunc        = require("halmd.mdsim.forces.trunc")
 }
 
 -- grab modules
 local forces = libhalmd.mdsim.forces
+local discontinuous = assert(libhalmd.mdsim.forces.trunc.discontinuous)
 
 -- grab standard library
 local property = property
@@ -45,6 +47,16 @@ function M.__new(args)
     -- construct global potential module
     local potential = mdsim.potential()
 
+    -- construct cutoff module depending on smoothing parameter
+    local smooth = assert(potential.smooth)
+    if smooth > 0 then
+        -- use local, smooth truncation
+        trunc = mdsim.forces_trunc.local_r4{h = smooth}
+    else
+        -- otherwise default to empty function
+        trunc = discontinuous()
+    end
+
     local particle = mdsim.particle() -- singleton
     local dimension = assert(particle.dimension)
     local box = mdsim.box() -- singleton
@@ -53,7 +65,7 @@ function M.__new(args)
     local neighbour = mdsim.neighbour{r_cut = potential.r_cut}
 
     -- construct force module
-    local force = assert(forces.pair_trunc)(potential, particle, box, neighbour)
+    local force = assert(forces.pair_trunc)(potential, particle, box, neighbour, trunc)
 
     local core = mdsim.core()
     -- system preparation

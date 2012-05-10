@@ -47,6 +47,7 @@ function M.__new(args)
     local epsilon = setmetatable(args.epsilon or {1.0, 1.5, 0.5 }, fixed_array) -- default value
     local sigma   = setmetatable(args.sigma   or {1.0, 0.8, 0.88}, fixed_array) -- default value
     local minimum = setmetatable(args.minimum or {2.0, 1.6, 1.78}, fixed_array) -- default value
+    local smooth  = args.smooth or 0 -- default value
 
     local particle = mdsim.particle() -- singleton
     local logger = assert(args.logger)
@@ -57,7 +58,12 @@ function M.__new(args)
     else
         morse = assert(morse_wrapper.host)
     end
-    return morse(particle.ntype, cutoff, epsilon, sigma, minimum, logger)
+    potential = morse(particle.ntype, cutoff, epsilon, sigma, minimum, logger)
+
+    -- store smooth parameter as property of potential
+    potential.smooth = property(function(self) return smooth end)
+
+    return potential
 end
 
 --
@@ -77,7 +83,7 @@ function M.options(desc)
     desc:add("epsilon", po.float_array(), "potential well depths")
     desc:add("sigma", po.float_array(), "collision diameters")
     desc:add("minimum", po.float_array(), "positions of potential minimum for interactions")
-    -- FIXME desc:add("smooth", po.float_array(), "C²-potential smoothing factor")
+    desc:add("smooth", po.float(), "smoothing parameter for C²-continuous cutoff")
 end
 
 --
@@ -88,6 +94,7 @@ function M.read_parameters(args, group)
     args.epsilon = group:read_attribute("epsilon", h5.float_array())
     args.sigma = group:read_attribute("sigma", h5.float_array())
     args.minimum = group:read_attribute("minimum", h5.float_array())
+    args.smooth = group:read_attribute("smooth", h5.float())
 end
 
 --
@@ -101,6 +108,7 @@ function M.write_parameters(morse, group)
     group:write_attribute("epsilon", h5.float_array(), morse.epsilon:data())
     group:write_attribute("sigma", h5.float_array(), morse.sigma:data())
     group:write_attribute("minimum", h5.float_array(), morse.r_min_sigma:data())
+    group:write_attribute("smooth", h5.float(), morse.smooth)
 end
 
 return M

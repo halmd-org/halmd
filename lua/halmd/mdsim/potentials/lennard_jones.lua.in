@@ -50,6 +50,7 @@ function M.__new(args)
     local cutoff  = setmetatable(args.cutoff  or {2.5, 2.5, 2.5 }, fixed_array) -- default value
     local epsilon = setmetatable(args.epsilon or {1.0, 1.5, 0.5 }, fixed_array) -- default value
     local sigma   = setmetatable(args.sigma   or {1.0, 0.8, 0.88}, fixed_array) -- default value
+    local smooth  = args.smooth or 0 -- default value
 
     local particle = mdsim.particle() -- singleton
     local logger = assert(args.logger)
@@ -63,6 +64,10 @@ function M.__new(args)
         local lennard_jones = assert(lennard_jones_wrapper[device() and "gpu" or "host"])
         potential = lennard_jones(particle.ntype, cutoff, epsilon, sigma, logger)
     end
+
+    -- store smooth parameter as property of potential
+    potential.smooth = property(function(self) return smooth end)
+
     return potential
 end
 
@@ -82,7 +87,7 @@ function M.options(desc)
     desc:add("cutoff", po.float_array(), "truncate potential at cutoff radius")
     desc:add("epsilon", po.float_array(), "potential well depths")
     desc:add("sigma", po.float_array(), "collision diameters")
-    -- FIXME desc:add("smooth", po.float_array(), "C²-potential smoothing factor")
+    desc:add("smooth", po.float(), "smoothing parameter for C²-continuous cutoff")
 end
 
 --
@@ -92,6 +97,7 @@ function M.read_parameters(args, group)
     args.cutoff = group:read_attribute("cutoff", h5.float_array())
     args.epsilon = group:read_attribute("epsilon", h5.float_array())
     args.sigma = group:read_attribute("sigma", h5.float_array())
+    args.smooth = group:read_attribute("smooth", h5.float())
 end
 
 --
@@ -104,6 +110,7 @@ function M.write_parameters(lennard_jones, group)
     group:write_attribute("cutoff", h5.float_array(), lennard_jones.r_cut_sigma:data())
     group:write_attribute("epsilon", h5.float_array(), lennard_jones.epsilon:data())
     group:write_attribute("sigma", h5.float_array(), lennard_jones.sigma:data())
+    group:write_attribute("smooth", h5.float(), lennard_jones.smooth)
 end
 
 return M

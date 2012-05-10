@@ -48,6 +48,7 @@ function M.__new(args)
     local sigma   = setmetatable(args.sigma            or {1.0, 0.8, 0.88}, fixed_array) -- default value
     local index_m = setmetatable(args.index_repulsion  or {12 , 12 , 12  }, fixed_array) -- default value
     local index_n = setmetatable(args.index_attraction or {6  , 6  , 6   }, fixed_array) -- default value
+    local smooth  = args.smooth or 0 -- default value
 
     local particle = mdsim.particle() -- singleton
     local logger = assert(args.logger)
@@ -56,6 +57,10 @@ function M.__new(args)
     -- select optimised GPU version if 1 species and ε=1, σ=1
     local modified_lennard_jones = assert(modified_lennard_jones_wrapper[device() and "gpu" or "host"])
     potential = modified_lennard_jones(particle.ntype, cutoff, epsilon, sigma, index_m, index_n, logger)
+
+    -- store smooth parameter as property of potential
+    potential.smooth = property(function(self) return smooth end)
+
     return potential
 end
 
@@ -77,7 +82,7 @@ function M.options(desc)
     desc:add("sigma", po.float_array(), "collision diameters")
     desc:add("index-repulsion", po.uint_array(), "power law index of repulsion")
     desc:add("index-attraction", po.uint_array(), "power law index of attraction")
-    -- FIXME desc:add("smooth", po.float_array(), "C²-potential smoothing factor")
+    desc:add("smooth", po.float(), "smoothing parameter for C²-continuous cutoff")
 end
 
 --
@@ -89,6 +94,7 @@ function M.read_parameters(args, group)
     args.sigma = group:read_attribute("sigma", h5.float_array())
     args.index_repulsion = group:read_attribute("index_repulsion", h5.uint_array())
     args.index_attraction = group:read_attribute("index_attraction", h5.uint_array())
+    args.smooth = group:read_attribute("smooth", h5.float())
 end
 
 --
@@ -103,6 +109,7 @@ function M.write_parameters(modified_lennard_jones, group)
     group:write_attribute("sigma", h5.float_array(), modified_lennard_jones.sigma:data())
     group:write_attribute("index_repulsion", h5.uint_array(), modified_lennard_jones.index_m:data())
     group:write_attribute("index_attraction", h5.uint_array(), modified_lennard_jones.index_n:data())
+    group:write_attribute("smooth", h5.float(), modified_lennard_jones.smooth)
 end
 
 return M

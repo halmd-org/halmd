@@ -135,7 +135,6 @@ pair_full<dimension, float_type, potential_type>::pair_full(
     boost::shared_ptr<potential_type> potential
   , boost::shared_ptr<particle_type> particle
   , boost::shared_ptr<box_type> box
-  // FIXME , boost::shared_ptr<smooth_type> smooth
 )
   // dependency injection
   : potential_(potential)
