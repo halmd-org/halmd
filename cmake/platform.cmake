@@ -12,7 +12,12 @@ if(DEFINED CMAKE_CXX_COMPILER_ID)
 
   elseif(CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
 
-    set(CMAKE_CXX_FLAGS_INIT "-fPIC -Wall")
+    if(NOT CMAKE_CXX_COMPILER_VERSION VERSION_LESS "3.1")
+      set(CMAKE_CXX_FLAGS_INIT "-fPIC -Wall -std=c++11 -pedantic")
+    else()
+      set(CMAKE_CXX_FLAGS_INIT "-fPIC -Wall -Wno-long-long -pedantic")
+    endif()
+    set(CMAKE_CXX_FLAGS_RELEASE_INIT "-O3 -DNDEBUG -fvisibility=hidden")
 
   elseif(CMAKE_CXX_COMPILER_ID STREQUAL "Intel")
 
