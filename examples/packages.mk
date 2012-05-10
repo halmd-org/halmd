@@ -38,7 +38,6 @@ rule cxxflags ( properties * )
        result += <cxxflags>"-std=c++11" ;
     }
 }
-using gcc : : $(CXX) ;
 endef
 export USER_CONFIG_JAM
 
@@ -325,6 +324,7 @@ fetch-boost: .fetch-boost
 	cd $(BOOST_BUILD_DIR) && $(PATCH) -p1 < $(CURDIR)/$(BOOST_ALWAYS_INLINE_PATCH)
 	cd $(BOOST_BUILD_DIR) && $(PATCH) -p1 < $(CURDIR)/$(BOOST_LEXICAL_CAST_PATCH)
 	cd $(BOOST_BUILD_DIR) && $(PATCH) -p3 < $(CURDIR)/$(BOOST_LOG_CXX11_PATCH)
+	cd $(BOOST_BUILD_DIR) && echo "$$USER_CONFIG_JAM" > user-config.jam
 	@$(TOUCH) $@
 
 extract-boost: .extract-boost
@@ -336,14 +336,12 @@ extract-boost: .extract-boost
 configure-boost: .configure-boost
 
 .build-boost: .configure-boost
-	cd $(BOOST_BUILD_DIR) && echo "$$USER_CONFIG_JAM" > user-config.jam
 	cd $(BOOST_BUILD_DIR) && ./bjam $(BOOST_BUILD_FLAGS) $(PARALLEL_BUILD_FLAGS)
 	@$(TOUCH) $@
 
 build-boost: .build-boost
 
 install-boost: .build-boost
-	cd $(BOOST_BUILD_DIR) && echo "$$USER_CONFIG_JAM" > user-config.jam
 	cd $(BOOST_BUILD_DIR) && ./bjam $(BOOST_BUILD_FLAGS) install --prefix=$(BOOST_INSTALL_DIR)
 
 clean-boost:
