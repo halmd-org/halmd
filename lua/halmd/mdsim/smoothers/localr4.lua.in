@@ -1,0 +1,45 @@
+--
+-- Copyright © 2012 Nicolas Höft
+--
+-- This file is part of HALMD.
+--
+-- HALMD is free software: you can redistribute it and/or modify
+-- it under the terms of the GNU General Public License as published by
+-- the Free Software Foundation, either version 3 of the License, or
+-- (at your option) any later version.
+--
+-- This program is distributed in the hope that it will be useful,
+-- but WITHOUT ANY WARRANTY; without even the implied warranty of
+-- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+-- GNU General Public License for more details.
+--
+-- You should have received a copy of the GNU General Public License
+-- along with this program.  If not, see <http://www.gnu.org/licenses/>.
+--
+
+local device = require("halmd.utility.device")
+local module = require("halmd.utility.module")
+
+--
+-- C²-continuous smoothing based on local r^4 dependence
+--
+local M = module("halmd.mdsim.smoothers.localr4")
+
+-- grab C++ wrappers
+local localr4 = {
+    float = assert(libhalmd.mdsim.smoothers.localr4_float)
+  , double = assert(libhalmd.mdsim.smoothers.localr4_double)
+}
+
+function M.__new(args)
+    local h = assert(args.h)
+    local smooth
+    if device() then
+        smooth = assert(localr4.float)
+    else
+        smooth = assert(localr4.double)
+    end
+    return smooth(h)
+end
+
+return M

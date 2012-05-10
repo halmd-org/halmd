@@ -27,6 +27,7 @@ local mdsim = {
 
 -- grab modules
 local forces = libhalmd.mdsim.forces
+local nosmooth = assert(libhalmd.mdsim.smoothers.nosmooth)
 
 -- grab standard library
 local property = property
@@ -38,11 +39,13 @@ local M = module("halmd.mdsim.forces.pair_trunc")
 -- construct truncated pair force module
 --
 -- @param args.potential potential name
+-- @param args.smooth smoothing function (defaults to no smoothing)
 --
 function M.__new(args)
     local particle1 = assert(args.particle or args.particles[1])
     local particle2 = assert(args.particle or args.particles[2])
     local potential = assert(args.potential)
+    local smooth = args.smooth or nosmooth()
     local neighbour = args.neighbour -- optional
 
     local box = mdsim.box() -- singleton
@@ -54,7 +57,7 @@ function M.__new(args)
     end
 
     -- construct force module
-    local force = assert(forces.pair_trunc)(potential, particle1, particle2, box, neighbour)
+    local force = assert(forces.pair_trunc)(potential, particle1, particle2, box, neighbour, smooth)
 
     local core = mdsim.core()
     -- system preparation
