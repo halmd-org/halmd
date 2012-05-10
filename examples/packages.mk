@@ -268,13 +268,8 @@ BOOST_LOG_CXX11_PATCH_URL = http://sourceforge.net/projects/halmd/files/libs/boo
 BOOST_LOG_CXX11_PATCH_SHA256 = 350a137852592c5ba079c5fa0a5a5f9c7c2d662fc755d6837c32354c5670ecfe
 BOOST_BUILD_DIR = boost_$(BOOST_RELEASE)
 BOOST_INSTALL_DIR = $(PREFIX)/boost_$(BOOST_RELEASE)
-BOOST_BUILD_FLAGS = dll-path=$(BOOST_INSTALL_DIR)/lib
+BOOST_BUILD_FLAGS = cxxflags=-fPIC dll-path=$(BOOST_INSTALL_DIR)/lib
 
-ifdef USE_CXX11
-BOOST_BUILD_FLAGS += "cxxflags=-fPIC -std=c++11"
-else
-BOOST_BUILD_FLAGS += cxxflags=-fPIC
-endif
 ifndef USE_BZIP2
 BOOST_BUILD_FLAGS += -sNO_BZIP2=1
 endif
