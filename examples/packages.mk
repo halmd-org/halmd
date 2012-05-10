@@ -184,24 +184,18 @@ env-lua:
 ## LuaJIT
 ##
 
-LUAJIT_VERSION = 2.0.0-beta9
+LUAJIT_VERSION = 2.0.0-beta10
 LUAJIT_TARBALL = LuaJIT-$(LUAJIT_VERSION).tar.gz
 LUAJIT_TARBALL_URL = http://luajit.org/download/$(LUAJIT_TARBALL)
-LUAJIT_TARBALL_SHA256 = da3793b4364a17c3700d39d13eae799b82ff23da1f61631d735de05333f46240
-LUAJIT_PATCH = beta9_hotfix1.patch
-LUAJIT_PATCH_URL = http://luajit.org/download/$(LUAJIT_PATCH)
-LUAJIT_PATCH_SHA256 = 468234a723c3a2bb7fe8caafc3aac0443473df2790b547a166babaf9b58cc671
+LUAJIT_TARBALL_SHA256 = 750e9317ca2c61fa17e739abc582c55c1fe69749ba65442dfd7f04ce20cf9ff6
 LUAJIT_BUILD_DIR = LuaJIT-$(LUAJIT_VERSION)
 LUAJIT_INSTALL_DIR = $(PREFIX)/luajit-$(LUAJIT_VERSION)
 LUAJIT_CFLAGS = -fPIC
 
 .fetch-luajit:
 	@$(RM) $(LUAJIT_TARBALL)
-	@$(RM) $(LUAJIT_PATCH)
 	$(WGET) $(LUAJIT_TARBALL_URL)
-	$(WGET) $(LUAJIT_PATCH_URL)
 	@echo '$(LUAJIT_TARBALL_SHA256)  $(LUAJIT_TARBALL)' | $(SHA256SUM)
-	@echo '$(LUAJIT_PATCH_SHA256)  $(LUAJIT_PATCH)' | $(SHA256SUM)
 	@$(TOUCH) $@
 
 fetch-luajit: .fetch-luajit
@@ -209,7 +203,6 @@ fetch-luajit: .fetch-luajit
 .extract-luajit: .fetch-luajit
 	$(RM) $(LUAJIT_BUILD_DIR)
 	$(TAR) -xzf $(LUAJIT_TARBALL)
-	cd $(LUAJIT_BUILD_DIR) && $(PATCH) -p1 < $(CURDIR)/$(LUAJIT_PATCH)
 	@$(TOUCH) $@
 
 extract-luajit: .extract-luajit
@@ -234,7 +227,6 @@ clean-luajit:
 distclean-luajit: clean-luajit
 	@$(RM) .fetch-luajit
 	$(RM) $(LUAJIT_TARBALL)
-	$(RM) $(LUAJIT_PATCH)
 
 env-luajit:
 	@echo
