@@ -22,6 +22,7 @@
 #include <halmd/mdsim/gpu/potentials/morse_kernel.hpp>
 #include <halmd/numeric/blas/blas.hpp>
 #include <halmd/utility/tuple.hpp>
+#include <halmd/mdsim/forces/trunc/local_r4.hpp>
 
 namespace halmd {
 namespace mdsim {
@@ -112,13 +113,16 @@ cuda::texture<float> morse_wrapper::rr_cut = morse_kernel::rr_cut_;
 // explicit instantiation of force kernels
 namespace forces {
 
-using potentials::morse_kernel::morse;
+using namespace halmd::mdsim::gpu::potentials::morse_kernel;
+using namespace halmd::mdsim::forces::trunc;
 
 template class pair_full_wrapper<3, morse>;
 template class pair_full_wrapper<2, morse>;
 
 template class pair_trunc_wrapper<3, morse>;
 template class pair_trunc_wrapper<2, morse>;
+template class pair_trunc_wrapper<3, morse, local_r4<float> >;
+template class pair_trunc_wrapper<2, morse, local_r4<float> >;
 
 } // namespace forces
 

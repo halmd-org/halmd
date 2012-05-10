@@ -18,12 +18,12 @@
  */
 
 #include <halmd/mdsim/host/forces/pair_trunc.hpp>
-#include <halmd/mdsim/host/forces/smooth.hpp>
 #include <halmd/mdsim/host/potentials/lennard_jones.hpp>
 #include <halmd/mdsim/host/potentials/modified_lennard_jones.hpp>
 #include <halmd/mdsim/host/potentials/morse.hpp>
 #include <halmd/mdsim/host/potentials/power_law.hpp>
 #include <halmd/mdsim/host/potentials/power_law_with_core.hpp>
+#include <halmd/mdsim/forces/trunc/local_r4.hpp>
 #include <halmd/utility/lua/lua.hpp>
 
 namespace halmd {
@@ -31,7 +31,8 @@ namespace mdsim {
 namespace host {
 namespace forces {
 
-using namespace potentials;
+using namespace halmd::mdsim::host::potentials;
+using namespace halmd::mdsim::forces::trunc;
 
 HALMD_LUA_API int luaopen_libhalmd_mdsim_host_forces_pair_trunc(lua_State* L)
 {
@@ -43,18 +44,28 @@ HALMD_LUA_API int luaopen_libhalmd_mdsim_host_forces_pair_trunc(lua_State* L)
 
     pair_trunc<3, float_type, lennard_jones<float_type> >::luaopen(L);
     pair_trunc<2, float_type, lennard_jones<float_type> >::luaopen(L);
+    pair_trunc<3, float_type, lennard_jones<float_type>, local_r4<float_type> >::luaopen(L);
+    pair_trunc<2, float_type, lennard_jones<float_type>, local_r4<float_type> >::luaopen(L);
 
     pair_trunc<3, float_type, modified_lennard_jones<float_type> >::luaopen(L);
     pair_trunc<2, float_type, modified_lennard_jones<float_type> >::luaopen(L);
+    pair_trunc<3, float_type, modified_lennard_jones<float_type>, local_r4<float_type> >::luaopen(L);
+    pair_trunc<2, float_type, modified_lennard_jones<float_type>, local_r4<float_type> >::luaopen(L);
 
     pair_trunc<3, float_type, morse<float_type> >::luaopen(L);
     pair_trunc<2, float_type, morse<float_type> >::luaopen(L);
+    pair_trunc<3, float_type, morse<float_type>, local_r4<float_type> >::luaopen(L);
+    pair_trunc<2, float_type, morse<float_type>, local_r4<float_type> >::luaopen(L);
 
     pair_trunc<3, float_type, power_law<float_type> >::luaopen(L);
     pair_trunc<2, float_type, power_law<float_type> >::luaopen(L);
+    pair_trunc<3, float_type, power_law<float_type>, local_r4<float_type> >::luaopen(L);
+    pair_trunc<2, float_type, power_law<float_type>, local_r4<float_type> >::luaopen(L);
 
     pair_trunc<3, float_type, power_law_with_core<float_type> >::luaopen(L);
     pair_trunc<2, float_type, power_law_with_core<float_type> >::luaopen(L);
+    pair_trunc<3, float_type, power_law_with_core<float_type>, local_r4<float_type> >::luaopen(L);
+    pair_trunc<2, float_type, power_law_with_core<float_type>, local_r4<float_type> >::luaopen(L);
     return 0;
 }
 
@@ -67,18 +78,28 @@ typedef float float_type;
 
 template class pair_trunc<3, float_type, lennard_jones<float_type> >;
 template class pair_trunc<2, float_type, lennard_jones<float_type> >;
+template class pair_trunc<3, float_type, lennard_jones<float_type>, local_r4<float_type> >;
+template class pair_trunc<2, float_type, lennard_jones<float_type>, local_r4<float_type> >;
 
 template class pair_trunc<3, float_type, modified_lennard_jones<float_type> >;
 template class pair_trunc<2, float_type, modified_lennard_jones<float_type> >;
+template class pair_trunc<3, float_type, modified_lennard_jones<float_type>, local_r4<float_type> >;
+template class pair_trunc<2, float_type, modified_lennard_jones<float_type>, local_r4<float_type> >;
 
 template class pair_trunc<3, float_type, morse<float_type> >;
 template class pair_trunc<2, float_type, morse<float_type> >;
+template class pair_trunc<3, float_type, morse<float_type>, local_r4<float_type> >;
+template class pair_trunc<2, float_type, morse<float_type>, local_r4<float_type> >;
 
 template class pair_trunc<3, float_type, power_law<float_type> >;
 template class pair_trunc<2, float_type, power_law<float_type> >;
+template class pair_trunc<3, float_type, power_law<float_type>, local_r4<float_type> >;
+template class pair_trunc<2, float_type, power_law<float_type>, local_r4<float_type> >;
 
 template class pair_trunc<3, float_type, power_law_with_core<float_type> >;
 template class pair_trunc<2, float_type, power_law_with_core<float_type> >;
+template class pair_trunc<3, float_type, power_law_with_core<float_type>, local_r4<float_type> >;
+template class pair_trunc<2, float_type, power_law_with_core<float_type>, local_r4<float_type> >;
 
 } // namespace forces
 } // namespace host

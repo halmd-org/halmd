@@ -23,6 +23,7 @@
 #include <halmd/numeric/blas/blas.hpp>
 #include <halmd/numeric/pow.hpp>  // std::pow is not a device function
 #include <halmd/utility/tuple.hpp>
+#include <halmd/mdsim/forces/trunc/local_r4.hpp>
 
 namespace halmd {
 namespace mdsim {
@@ -122,13 +123,16 @@ cuda::texture<float2> modified_lennard_jones_wrapper::rr_en_cut = modified_lenna
 // explicit instantiation of force kernels
 namespace forces {
 
-using potentials::modified_lennard_jones_kernel::modified_lennard_jones;
+using namespace halmd::mdsim::gpu::potentials::modified_lennard_jones_kernel;
+using namespace halmd::mdsim::forces::trunc;
 
 template class pair_full_wrapper<3, modified_lennard_jones>;
 template class pair_full_wrapper<2, modified_lennard_jones>;
 
 template class pair_trunc_wrapper<3, modified_lennard_jones>;
 template class pair_trunc_wrapper<2, modified_lennard_jones>;
+template class pair_trunc_wrapper<3, modified_lennard_jones, local_r4<float> >;
+template class pair_trunc_wrapper<2, modified_lennard_jones, local_r4<float> >;
 
 } // namespace forces
 

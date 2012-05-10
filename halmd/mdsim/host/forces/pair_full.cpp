@@ -18,7 +18,6 @@
  */
 
 #include <halmd/mdsim/host/forces/pair_full.hpp>
-#include <halmd/mdsim/host/forces/smooth.hpp>
 #include <halmd/mdsim/host/potentials/lennard_jones.hpp>
 #include <halmd/mdsim/host/potentials/modified_lennard_jones.hpp>
 #include <halmd/mdsim/host/potentials/morse.hpp>

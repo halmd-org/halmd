@@ -22,6 +22,7 @@
 #include <halmd/mdsim/gpu/potentials/lennard_jones_simple_kernel.hpp>
 #include <halmd/numeric/blas/blas.hpp>
 #include <halmd/utility/tuple.hpp>
+#include <halmd/mdsim/forces/trunc/local_r4.hpp>
 
 namespace halmd {
 namespace mdsim {
@@ -100,13 +101,16 @@ cuda::symbol<float> lennard_jones_simple_wrapper::en_cut = lennard_jones_simple_
 // explicit instantiation of force kernels
 namespace forces {
 
-using potentials::lennard_jones_simple_kernel::lennard_jones_simple;
+using namespace halmd::mdsim::gpu::potentials::lennard_jones_simple_kernel;
+using namespace halmd::mdsim::forces::trunc;
 
 template class pair_full_wrapper<3, lennard_jones_simple>;
 template class pair_full_wrapper<2, lennard_jones_simple>;
 
 template class pair_trunc_wrapper<3, lennard_jones_simple>;
 template class pair_trunc_wrapper<2, lennard_jones_simple>;
+template class pair_trunc_wrapper<3, lennard_jones_simple, local_r4<float> >;
+template class pair_trunc_wrapper<2, lennard_jones_simple, local_r4<float> >;
 
 } // namespace forces
 
