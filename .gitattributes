@@ -2,7 +2,6 @@
 .gitmodules             export-ignore
 CTestConfig.cmake       export-ignore
 cmake/archive.cmake     export-ignore
-cmake/release.cmake     export-ignore
 cmake/version.cmake.in  export-ignore
 debian                  export-ignore
 doc                     export-ignore
