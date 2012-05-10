@@ -54,13 +54,6 @@ if(NOT DEFINED Boost_USE_MULTITHREADED)
   set(Boost_USE_MULTITHREADED FALSE)
 endif(NOT DEFINED Boost_USE_MULTITHREADED)
 
-# Use Luabind debug library if build type is not Release.
-# The debug variant has many assert() statements, e.g. to check
-# for duplicate class registration, or missing base classes.
-if(NOT CMAKE_BUILD_TYPE STREQUAL "Release")
-  set(LUABIND_USE_DEBUG_LIBS TRUE)
-endif()
-
 find_package(Boost 1.43.0 QUIET REQUIRED COMPONENTS
   date_time
   filesystem
@@ -74,16 +67,6 @@ find_package(Boost 1.43.0 QUIET REQUIRED COMPONENTS
 find_package(CUDA QUIET)
 find_package(HDF5 QUIET REQUIRED)
 find_package(Lua QUIET REQUIRED)
-find_package(Luabind QUIET REQUIRED)
-
-# Define macro LUABIND_DYNAMIC_LINK if linking to shared Luabind library.
-#
-# http://www.rasterbar.com/products/luabind/docs.html#building-and-testing
-#
-get_filename_component(suffix "${LUABIND_LIBRARY}" EXT)
-if(suffix STREQUAL "${CMAKE_SHARED_LIBRARY_SUFFIX}")
-  add_definitions(-DLUABIND_DYNAMIC_LINK)
-endif()
 
 if(CUDA_FOUND)
   enable_language(CUDA)
@@ -182,6 +165,7 @@ set(CMAKE_BUILD_WITH_INSTALL_RPATH FALSE)
 set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
 
 set(HALMD_COMMON_LIBRARIES
+  luabind
   ${Boost_DATE_TIME_LIBRARY}
   ${Boost_LOG_LIBRARY}
   ${Boost_PROGRAM_OPTIONS_LIBRARY}
@@ -191,7 +175,6 @@ set(HALMD_COMMON_LIBRARIES
   ${Boost_THREAD_LIBRARY}
   ${HDF5_CPP_LIBRARY}
   ${HDF5_LIBRARY}
-  ${LUABIND_LIBRARY}
   ${LUA_LIBRARIES}
 )
 if(WITH_CUDA)
@@ -211,12 +194,12 @@ include(CTest)
 
 include_directories(${HALMD_SOURCE_DIR}/include)
 include_directories(${HALMD_SOURCE_DIR}/libs/h5xx)
+include_directories(${HALMD_SOURCE_DIR}/libs/luabind)
 include_directories(${HALMD_SOURCE_DIR})
 include_directories(${HALMD_BINARY_DIR})
 include_directories(${Boost_INCLUDE_DIR})
 include_directories(${HDF5_INCLUDE_DIR})
 include_directories(${LUA_INCLUDE_DIR})
-include_directories(${LUABIND_INCLUDE_DIR})
 if(WITH_CUDA)
   include_directories(${CUDA_INCLUDE_DIR})
 endif(WITH_CUDA)
@@ -242,6 +225,7 @@ else()
   )
 endif()
 
+add_subdirectory(libs/luabind/src)
 add_subdirectory(halmd)
 add_subdirectory(lua)
 add_subdirectory(test)
