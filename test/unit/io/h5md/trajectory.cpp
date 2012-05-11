@@ -17,14 +17,18 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <halmd/config.hpp>
+
 #define BOOST_TEST_MODULE trajectory
 #include <boost/test/unit_test.hpp>
 #include <boost/test/parameterized_test.hpp>
 
 #include <boost/assign.hpp>
 #include <boost/bind.hpp>
-#include <boost/lambda/lambda.hpp>
-#include <boost/lambda/casts.hpp>
+#ifdef HALMD_NO_CXX11
+# include <boost/lambda/lambda.hpp>
+# include <boost/lambda/casts.hpp>
+#endif
 #include <boost/lexical_cast.hpp>
 #include <boost/make_shared.hpp>
 #include <boost/shared_ptr.hpp>
@@ -147,13 +151,25 @@ void h5md(vector<unsigned int> const& ntypes)
             double_sample[type]->position().begin()
           , double_sample[type]->position().end()
           , float_sample[type]->position().begin()
+#ifdef HALMD_NO_CXX11
           , lambda::ll_static_cast<float_vector_type>(lambda::_1)
+#else
+          , [](double_vector_type const& r) {
+                return float_vector_type(r);
+            }
+#endif
         );
         transform(
             double_sample[type]->velocity().begin()
           , double_sample[type]->velocity().end()
           , float_sample[type]->velocity().begin()
+#ifdef HALMD_NO_CXX11
           , lambda::ll_static_cast<float_vector_type>(lambda::_1)
+#else
+          , [](double_vector_type const& v) {
+                return float_vector_type(v);
+            }
+#endif
         );
     }
 
