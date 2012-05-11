@@ -599,63 +599,6 @@ env-python-sphinx:
 	@echo 'export PYTHONPATH="$(PYTHON_SPHINX_PYTHONPATH)$${PYTHONPATH+:$$PYTHONPATH}"'
 
 ##
-## Doxygen
-##
-
-DOXYGEN_VERSION = 1.7.6.1
-DOXYGEN_TARBALL = doxygen-$(DOXYGEN_VERSION).src.tar.gz
-DOXYGEN_TARBALL_URL = http://ftp.stack.nl/pub/users/dimitri/$(DOXYGEN_TARBALL)
-DOXYGEN_TARBALL_SHA256 = 0e60e794fb172d3fa4a9a9535f0b8e0eeb04e8366153f6b417569af0bcd61fcd
-DOXYGEN_BUILD_DIR = doxygen-$(DOXYGEN_VERSION)
-DOXYGEN_INSTALL_DIR = $(PREFIX)/doxygen-$(DOXYGEN_VERSION)
-
-.fetch-doxygen:
-	@$(RM) $(DOXYGEN_TARBALL)
-	$(WGET) $(DOXYGEN_TARBALL_URL)
-	@echo '$(DOXYGEN_TARBALL_SHA256)  $(DOXYGEN_TARBALL)' | $(SHA256SUM)
-	@$(TOUCH) $@
-
-fetch-doxygen: .fetch-doxygen
-
-.extract-doxygen: .fetch-doxygen
-	$(RM) $(DOXYGEN_BUILD_DIR)
-	$(TAR) -xzf $(DOXYGEN_TARBALL)
-	@$(TOUCH) $@
-
-extract-doxygen: .extract-doxygen
-
-.configure-doxygen: .extract-doxygen
-	cd $(DOXYGEN_BUILD_DIR) && ./configure --prefix $(DOXYGEN_INSTALL_DIR)
-	@$(TOUCH) $@
-
-configure-doxygen: .configure-doxygen
-
-.build-doxygen: .configure-doxygen
-	cd $(DOXYGEN_BUILD_DIR) && make $(PARALLEL_BUILD_FLAGS)
-	@$(TOUCH) $@
-
-build-doxygen: .build-doxygen
-
-install-doxygen: .build-doxygen
-	cd $(DOXYGEN_BUILD_DIR) && make install
-
-clean-doxygen:
-	@$(RM) .build-doxygen
-	@$(RM) .configure-doxygen
-	@$(RM) .extract-doxygen
-	$(RM) $(DOXYGEN_BUILD_DIR)
-
-distclean-doxygen: clean-doxygen
-	@$(RM) .fetch-doxygen
-	$(RM) $(DOXYGEN_TARBALL)
-
-env-doxygen:
-	@echo
-	@echo '# add Doxygen $(DOXYGEN_VERSION) to environment'
-	@echo 'export PATH="$(DOXYGEN_INSTALL_DIR)/bin$${PATH+:$$PATH}"'
-	@echo 'export MANPATH="$(DOXYGEN_INSTALL_DIR)/man$${MANPATH+:$$MANPATH}"'
-
-##
 ## Graphviz
 ##
 
