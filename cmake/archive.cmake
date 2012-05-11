@@ -1,8 +1,8 @@
 ##
 ## Generate HALMD archive
 ##
-# This set of rules crafts a tarball of the halmd repository, including the h5xx
-# submodule and generated documentation as plain-text ReST, HTML with images,
+# This set of rules crafts a tarball of the halmd repository, including git
+# submodules and generated documentation as plain-text ReST, HTML with images,
 # PDF and manual page.
 #
 # The tarball is created with git archive of the halmd repository, and further
@@ -28,16 +28,22 @@ set(HALMD_ARCHIVE_OUTPUT
 )
 
 set(HALMD_ARCHIVE_INTERMEDIATE_HALMD
-  "CMakeFiles/${PROGRAM_NAME}-git-archive-${HALMD_GIT_COMMIT_TAG}.tar"
+  "CMakeFiles/${PROGRAM_NAME}-${HALMD_GIT_COMMIT_TAG}.tar"
 )
 set(HALMD_ARCHIVE_INTERMEDIATE_H5XX
-  "CMakeFiles/h5xx-git-archive-HEAD.tar"
+  "CMakeFiles/libs-h5xx.tar"
 )
-set(HALMD_ARCHIVE_INTERMEDIATE_HALMD_H5XX
-  "CMakeFiles/${HALMD_ARCHIVE_PREFIX}+h5xx-HEAD.tar"
+set(HALMD_ARCHIVE_INTERMEDIATE_LUABIND
+  "CMakeFiles/libs-luabind.tar"
 )
-set(HALMD_ARCHIVE_INTERMEDIATE_HALMD_H5XX_DOC
-  "CMakeFiles/${HALMD_ARCHIVE_PREFIX}+h5xx-HEAD+doc.tar"
+set(HALMD_ARCHIVE_INTERMEDIATE_LIBS
+  "CMakeFiles/libs.tar"
+)
+set(HALMD_ARCHIVE_INTERMEDIATE_HALMD_LIBS
+  "CMakeFiles/${HALMD_ARCHIVE_PREFIX}+libs.tar"
+)
+set(HALMD_ARCHIVE_INTERMEDIATE_HALMD_LIBS_DOC
+  "CMakeFiles/${HALMD_ARCHIVE_PREFIX}+libs+doc.tar"
 )
 
 add_custom_command(OUTPUT "${HALMD_ARCHIVE_INTERMEDIATE_HALMD}"
@@ -60,28 +66,53 @@ add_custom_command(OUTPUT "${HALMD_ARCHIVE_INTERMEDIATE_H5XX}"
   DEPENDS "${CMAKE_BINARY_DIR}/cmake/version.cmake"
 )
 
-add_custom_command(OUTPUT "${HALMD_ARCHIVE_INTERMEDIATE_HALMD_H5XX}"
-  COMMAND cmake -E rename
-    "${HALMD_ARCHIVE_INTERMEDIATE_HALMD}"
-    "${HALMD_ARCHIVE_INTERMEDIATE_HALMD_H5XX}"
-  COMMAND tar
-    --concatenate
-    --file="${HALMD_ARCHIVE_INTERMEDIATE_HALMD_H5XX}"
-    "${HALMD_ARCHIVE_INTERMEDIATE_H5XX}"
-  COMMAND cmake -E remove
-    "${HALMD_ARCHIVE_INTERMEDIATE_H5XX}"
-  DEPENDS
-    "${HALMD_ARCHIVE_INTERMEDIATE_HALMD}"
-    "${HALMD_ARCHIVE_INTERMEDIATE_H5XX}"
+add_custom_command(OUTPUT "${HALMD_ARCHIVE_INTERMEDIATE_LUABIND}"
+  WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}/libs/luabind"
+  COMMAND git archive
+    --format=tar
+    --output="${CMAKE_CURRENT_BINARY_DIR}/${HALMD_ARCHIVE_INTERMEDIATE_LUABIND}"
+    --prefix="${HALMD_ARCHIVE_PREFIX}/libs/luabind/"
+    HEAD
+  DEPENDS "${CMAKE_BINARY_DIR}/cmake/version.cmake"
 )
 
-add_custom_command(OUTPUT "${HALMD_ARCHIVE_INTERMEDIATE_HALMD_H5XX_DOC}"
+add_custom_command(OUTPUT "${HALMD_ARCHIVE_INTERMEDIATE_LIBS}"
   COMMAND cmake -E rename
-    "${HALMD_ARCHIVE_INTERMEDIATE_HALMD_H5XX}"
-    "${HALMD_ARCHIVE_INTERMEDIATE_HALMD_H5XX_DOC}"
+    "${HALMD_ARCHIVE_INTERMEDIATE_H5XX}"
+    "${HALMD_ARCHIVE_INTERMEDIATE_LIBS}"
+  COMMAND tar
+    --concatenate
+    --file="${HALMD_ARCHIVE_INTERMEDIATE_LIBS}"
+    "${HALMD_ARCHIVE_INTERMEDIATE_LUABIND}"
+  COMMAND cmake -E remove
+    "${HALMD_ARCHIVE_INTERMEDIATE_LUABIND}"
+  DEPENDS
+    "${HALMD_ARCHIVE_INTERMEDIATE_H5XX}"
+    "${HALMD_ARCHIVE_INTERMEDIATE_LUABIND}"
+)
+
+add_custom_command(OUTPUT "${HALMD_ARCHIVE_INTERMEDIATE_HALMD_LIBS}"
+  COMMAND cmake -E rename
+    "${HALMD_ARCHIVE_INTERMEDIATE_HALMD}"
+    "${HALMD_ARCHIVE_INTERMEDIATE_HALMD_LIBS}"
+  COMMAND tar
+    --concatenate
+    --file="${HALMD_ARCHIVE_INTERMEDIATE_HALMD_LIBS}"
+    "${HALMD_ARCHIVE_INTERMEDIATE_LIBS}"
+  COMMAND cmake -E remove
+    "${HALMD_ARCHIVE_INTERMEDIATE_LIBS}"
+  DEPENDS
+    "${HALMD_ARCHIVE_INTERMEDIATE_HALMD}"
+    "${HALMD_ARCHIVE_INTERMEDIATE_LIBS}"
+)
+
+add_custom_command(OUTPUT "${HALMD_ARCHIVE_INTERMEDIATE_HALMD_LIBS_DOC}"
+  COMMAND cmake -E rename
+    "${HALMD_ARCHIVE_INTERMEDIATE_HALMD_LIBS}"
+    "${HALMD_ARCHIVE_INTERMEDIATE_HALMD_LIBS_DOC}"
   COMMAND tar
     --append
-    --file="${HALMD_ARCHIVE_INTERMEDIATE_HALMD_H5XX_DOC}"
+    --file="${HALMD_ARCHIVE_INTERMEDIATE_HALMD_LIBS_DOC}"
     --owner=root
     --group=root
     --exclude=.doctrees
@@ -94,7 +125,7 @@ add_custom_command(OUTPUT "${HALMD_ARCHIVE_INTERMEDIATE_HALMD_H5XX_DOC}"
     "doc/man/${PROGRAM_NAME}.1"
     "doc/pdf/${PROGRAM_NAME}.pdf"
   DEPENDS
-    "${HALMD_ARCHIVE_INTERMEDIATE_HALMD_H5XX}"
+    "${HALMD_ARCHIVE_INTERMEDIATE_HALMD_LIBS}"
     halmd_doc_html
     halmd_doc_man
     halmd_doc_pdf
@@ -102,12 +133,12 @@ add_custom_command(OUTPUT "${HALMD_ARCHIVE_INTERMEDIATE_HALMD_H5XX_DOC}"
 
 add_custom_command(OUTPUT "${HALMD_ARCHIVE_OUTPUT}"
   COMMAND cmake -E rename
-    "${HALMD_ARCHIVE_INTERMEDIATE_HALMD_H5XX_DOC}"
+    "${HALMD_ARCHIVE_INTERMEDIATE_HALMD_LIBS_DOC}"
     "${HALMD_ARCHIVE_PREFIX}.tar"
   COMMAND bzip2
     --force "${HALMD_ARCHIVE_PREFIX}.tar"
   DEPENDS
-    "${HALMD_ARCHIVE_INTERMEDIATE_HALMD_H5XX_DOC}"
+    "${HALMD_ARCHIVE_INTERMEDIATE_HALMD_LIBS_DOC}"
 )
 
 add_custom_target(halmd_archive
