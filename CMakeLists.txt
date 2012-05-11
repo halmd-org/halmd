@@ -225,6 +225,15 @@ else()
   )
 endif()
 
+# Install simulation and plotting examples to <prefix>/share/doc/halmd.
+# This is common practice in GNU/Linux distributions, and encourages
+# users to make a copy of an example and modify it for their needs.
+#
+install(DIRECTORY ${CMAKE_SOURCE_DIR}/examples
+  DESTINATION share/doc/halmd
+  PATTERN packages.mk EXCLUDE
+)
+
 add_subdirectory(libs/luabind/src)
 add_subdirectory(halmd)
 add_subdirectory(lua)
