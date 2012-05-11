@@ -20,18 +20,17 @@ proceeding, be aware of the section :ref:`automatic`.
 
 When initially creating the CMake build tree, include all third-party package
 directories in the environment variable ``CMAKE_PREFIX_PATH``.
-For example, if Boost, Lua and Luabind are installed in your home directory,
+For example, if Boost and Lua are installed in your home directory,
 CUDA is installed system-wide, and the HALMD source is in ``~/projects/halmd``,
 the initial cmake command might look like this ::
 
-   CMAKE_PREFIX_PATH=~/opt/boost_1_47_0:/opt/cuda-3.1:~/opt/lua-5.1.4:~/opt/luabind-0.9.1 cmake ~/projects/halmd
+   CMAKE_PREFIX_PATH=~/opt/boost_1_47_0:/opt/cuda-3.1:~/opt/lua-5.1.4 cmake ~/projects/halmd
 
 Instead of setting CMAKE_PREFIX_PATH manually, you would include the package directories in your ~/.bashrc (or your favourite shell's equivalent) ::
 
    export CMAKE_PREFIX_PATH="${HOME}/opt/boost_1_47_0${CMAKE_PREFIX_PATH+:$CMAKE_PREFIX_PATH}"
    export CMAKE_PREFIX_PATH="/opt/cuda-3.1${CMAKE_PREFIX_PATH+:$CMAKE_PREFIX_PATH}"
    export CMAKE_PREFIX_PATH="${HOME}/opt/lua-5.1.4${CMAKE_PREFIX_PATH+:$CMAKE_PREFIX_PATH}"
-   export CMAKE_PREFIX_PATH="${HOME}/opt/luabind-0.9.1${CMAKE_PREFIX_PATH+:$CMAKE_PREFIX_PATH}"
 
 GNU/Linux
 ---------
@@ -173,46 +172,6 @@ Include Lua in your shell environment, by adding to ~/.bashrc::
    export MANPATH="${HOME}/opt/lua-5.1.4/man${MANPATH+:$MANPATH}"
 
 
-Luabind library
-^^^^^^^^^^^^^^^
-
-Get the latest `Luabind source package`_, currently `Luabind 0.9.1`_.
-
-Get a `patch for the cast graph cache bug in Luabind 0.9.1`_. This bug
-manifests itself with ambiguous overload errors or segmentation faults
-due to casts of a Lua value to a mismatching C++ type.
-
-.. _Luabind source package: http://sourceforge.net/projects/luabind/files/luabind
-.. _Luabind 0.9.1: http://sourceforge.net/projects/luabind/files/luabind/0.9.1/luabind-0.9.1.tar.gz
-.. _patch for the cast graph cache bug in Luabind 0.9.1: http://sourceforge.net/projects/halmd/files/patches/luabind_cast_graph_cache_invalid_cast_fix.patch
-
-.. note::
-
-   Luabind is based on the Boost C++ libraries and uses boost-jam as its
-   build tool. After bootstrapping Boost following the instructions above, the
-   bjam executable is found in the top-level source directory, for example
-   ``/tmp/boost_1_47_0/bjam``. This directory also has to be passed to bjam
-   during Luabind build using the environment variable ``BOOST_ROOT``.
-
-Patch the Luabind source to fix the cast graph cache bug::
-
-   patch -p1 < ../luabind_cast_graph_cache_invalid_cast_fix.patch
-
-Compile statically linked release and debug variants of the Luabind library with ::
-
-   BOOST_ROOT=/tmp/boost_1_47_0 LUA_PATH=~/opt/lua-5.1.4 /tmp/boost_1_47_0/bjam cxxflags=-fPIC link=static variant=release variant=debug
-
-Install the Luabind library into your packages directory::
-
-   BOOST_ROOT=/tmp/boost_1_47_0 LUA_PATH=~/opt/lua-5.1.4 /tmp/boost_1_47_0/bjam cxxflags=-fPIC link=static variant=release variant=debug install --prefix=$HOME/opt/luabind-0.9.1
-
-(Note that bjam does not replace ~ with your home directory, use ``$HOME`` instead.)
-
-Include Luabind in your shell environment, by adding to ~/.bashrc::
-
-   export CMAKE_PREFIX_PATH="${HOME}/opt/luabind-0.9.1${CMAKE_PREFIX_PATH+:$CMAKE_PREFIX_PATH}"
-
-
 HDF5 library
 ^^^^^^^^^^^^
 
@@ -286,14 +245,6 @@ Lua
 Compile the Lua library ::
 
    make aix
-
-
-Luabind
-^^^^^^^
-
-Compile and install the Luabind library ::
-
-   BOOST_ROOT=/tmp/boost_1_47_0 LUA_PATH=~/opt/powerpc-ibm-aix5.3/lua-5.1.4 /tmp/boost_1_47_0/bjam --toolset=vacpp address-model=64 cxxflags=-qrtti=all link=static variant=release variant=debug install --prefix=$HOME/opt/powerpc-ibm-aix5.3/luabind-0.9.1
 
 
 HDF5

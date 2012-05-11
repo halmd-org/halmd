@@ -55,10 +55,6 @@ A detailed step-by-step guide for manual installation is given in section
   language. The fast and lightweight Lua interpreter is embedded in the HALMD
   executable.
 
-* `Luabind library <http://sourceforge.net/projects/luabind>`_ >= 0.9.1
-
-  Luabind is used to create bindings between C++ objects and Lua modules.
-
 * `HDF5 C++ Library <http://www.hdfgroup.org/HDF5/>`_ >= 1.8
 
   "HDF5 is a data model, library, and file format for storing and managing
