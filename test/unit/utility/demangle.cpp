@@ -21,7 +21,6 @@
 #include <boost/test/unit_test.hpp>
 
 #include <boost/assign/list_of.hpp>
-#include <boost/lambda/lambda.hpp>
 #include <boost/mpl/at.hpp>
 #include <boost/mpl/vector.hpp>
 
@@ -74,17 +73,6 @@ struct test_type
       , i
     >::type type;
 };
-
-namespace std {
-
-// needed for Boost Test failure message
-static inline ostream& operator<<(ostream& os, vector<string> const& v)
-{
-    for_each(v.begin(), v.end(), os << boost::lambda::_1);
-    return os;
-}
-
-} // namespace std
 
 using namespace boost::assign;
 using namespace halmd;
