@@ -214,7 +214,7 @@ endif(WITH_CUDA)
 # HALMD archive, then add a rule to install the pre-build documentation.
 #
 if(EXISTS "${CMAKE_SOURCE_DIR}/doc/CMakeLists.txt")
-  add_subdirectory(doc EXCLUDE_FROM_ALL)
+  add_subdirectory(doc)
 else()
   install(DIRECTORY "${CMAKE_SOURCE_DIR}/doc/"
     DESTINATION "share/doc/halmd"
