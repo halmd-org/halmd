@@ -17,10 +17,14 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <halmd/config.hpp>
+
 #include <algorithm>
 #include <boost/algorithm/string/join.hpp> // boost::join
 #include <boost/bind.hpp>
-#include <boost/lambda/lambda.hpp>
+#ifdef HALMD_NO_CXX11
+# include <boost/lambda/lambda.hpp>
+#endif
 #include <boost/tuple/tuple.hpp> // boost::tie
 #include <cmath> // std::signbit
 #include <limits>
@@ -165,7 +169,13 @@ hsize_t append::read_time_index(
         times.begin()
       , times.end()
       , time
+#ifdef HALMD_NO_CXX11
       , lambda::_1 * (1 + 100 * numeric_limits<time_type>::epsilon()) < lambda::_2
+#else
+      , [](time_type time1, time_type time2) {
+            return (time1 * (1 + 100 * numeric_limits<time_type>::epsilon()) < time2);
+        }
+#endif
     );
     if (first == last) {
         LOG_ERROR("no time " << time << " in dataset " << h5xx::path(dataset));
