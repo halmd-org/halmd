@@ -57,7 +57,6 @@ endif(NOT DEFINED Boost_USE_MULTITHREADED)
 find_package(Boost 1.43.0 QUIET REQUIRED COMPONENTS
   date_time
   filesystem
-  log
   program_options
   random
   system
@@ -165,9 +164,9 @@ set(CMAKE_BUILD_WITH_INSTALL_RPATH FALSE)
 set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
 
 set(HALMD_COMMON_LIBRARIES
+  boost_log
   luabind
   ${Boost_DATE_TIME_LIBRARY}
-  ${Boost_LOG_LIBRARY}
   ${Boost_PROGRAM_OPTIONS_LIBRARY}
   ${Boost_RANDOM_LIBRARY}
   ${Boost_FILESYSTEM_LIBRARY}
@@ -193,6 +192,7 @@ enable_testing()
 include(CTest)
 
 include_directories(${HALMD_SOURCE_DIR}/include)
+include_directories(${HALMD_SOURCE_DIR}/libs/boost-log)
 include_directories(${HALMD_SOURCE_DIR}/libs/h5xx)
 include_directories(${HALMD_SOURCE_DIR}/libs/luabind)
 include_directories(${HALMD_SOURCE_DIR})
@@ -234,6 +234,7 @@ install(DIRECTORY ${CMAKE_SOURCE_DIR}/examples
   PATTERN packages.mk EXCLUDE
 )
 
+add_subdirectory(libs/boost-log/libs/log/src)
 add_subdirectory(libs/luabind/src)
 add_subdirectory(halmd)
 add_subdirectory(lua)

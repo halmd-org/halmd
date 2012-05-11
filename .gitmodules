@@ -4,3 +4,6 @@
 [submodule "libs/luabind"]
 	path = libs/luabind
 	url = ../luabind
+[submodule "libs/boost-log"]
+	path = libs/boost-log
+	url = ../boost-log
