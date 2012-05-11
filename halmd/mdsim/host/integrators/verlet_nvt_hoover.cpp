@@ -17,10 +17,14 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <halmd/config.hpp>
+
 #include <algorithm>
 #include <boost/bind.hpp>
 #include <boost/foreach.hpp>
-#include <boost/lambda/lambda.hpp>
+#ifdef HALMD_NO_CXX11
+# include <boost/lambda/lambda.hpp>
+#endif
 #include <boost/make_shared.hpp>
 #include <cmath>
 
@@ -213,14 +217,26 @@ template <typename integrator_type>
 static boost::function<typename integrator_type::chain_type& ()>
 wrap_xi(boost::shared_ptr<integrator_type> integrator)
 {
+#ifdef HALMD_NO_CXX11
     return lambda::var(integrator->xi);
+#else
+    return [=]() -> typename integrator_type::chain_type& {
+        return integrator->xi;
+    };
+#endif
 }
 
 template <typename integrator_type>
 static boost::function<typename integrator_type::chain_type& ()>
 wrap_v_xi(boost::shared_ptr<integrator_type> integrator)
 {
+#ifdef HALMD_NO_CXX11
     return lambda::var(integrator->v_xi);
+#else
+    return [=]() -> typename integrator_type::chain_type& {
+        return integrator->v_xi;
+    };
+#endif
 }
 
 template <typename integrator_type>
