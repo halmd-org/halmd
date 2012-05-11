@@ -299,7 +299,7 @@ lennard_jones_fluid<modules_type>::lennard_jones_fluid()
     skin = 0.5;
     timestep = 0.001;
     npart = gpu ? 4000 : 1500;
-    box_ratios = (dimension == 3) ? list_of(1)(2)(1.01) : list_of(1)(2);
+    box_ratios = (dimension == 3) ? list_of(1.)(2.)(1.01) : list_of(1.)(2.);
     slab = 1;
 
     vector<unsigned int> npart_vector = list_of(npart);

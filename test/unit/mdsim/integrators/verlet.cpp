@@ -144,7 +144,7 @@ ideal_gas<modules_type>::ideal_gas()
     temp = 1;
     time_type timestep = 0.001;
     npart = 1000;
-    box_ratios = (dimension == 3) ? list_of(1)(2)(1.01) : list_of(1)(2);
+    box_ratios = (dimension == 3) ? list_of(1.)(2.)(1.01) : list_of(1.)(2.);
     slab = 1;
 
     vector<unsigned int> npart_vector = list_of(npart);
