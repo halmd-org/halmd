@@ -257,15 +257,6 @@ BOOST_LOG_TARBALL = boost-log-$(BOOST_LOG_VERSION).zip
 BOOST_LOG_TARBALL_URL = http://sourceforge.net/projects/boost-log/files/boost-log-$(BOOST_LOG_VERSION).zip
 BOOST_LOG_TARBALL_SHA256 = 4b00e1d302017298284914c6cc9e7fcae0e097c93e632045d6b0fc4bf6266ba7
 BOOST_LOG_DIR = boost-log-$(BOOST_LOG_VERSION)
-BOOST_ALWAYS_INLINE_PATCH = boost_1_49_0_fix_integer_log2_always_inline.diff
-BOOST_ALWAYS_INLINE_PATCH_URL = http://sourceforge.net/projects/halmd/files/libs/boost/$(BOOST_ALWAYS_INLINE_PATCH)
-BOOST_ALWAYS_INLINE_PATCH_SHA256 = 3e0c475d9579804984873858339b53825595c022bfdf811b0a97827cbc18acff
-BOOST_LEXICAL_CAST_PATCH = boost_1_49_0_fix_lexical_cast_double_iso_printf.diff
-BOOST_LEXICAL_CAST_PATCH_URL = http://sourceforge.net/projects/halmd/files/libs/boost/$(BOOST_LEXICAL_CAST_PATCH)
-BOOST_LEXICAL_CAST_PATCH_SHA256 = b738c716a22966d746125078bb3f428ffdad45ae50ee23e434781d904572712c
-BOOST_LOG_CXX11_PATCH = boost_log_1.1_fix_compilation_with_c++11.diff
-BOOST_LOG_CXX11_PATCH_URL = http://sourceforge.net/projects/halmd/files/libs/boost/$(BOOST_LOG_CXX11_PATCH)
-BOOST_LOG_CXX11_PATCH_SHA256 = 350a137852592c5ba079c5fa0a5a5f9c7c2d662fc755d6837c32354c5670ecfe
 BOOST_BUILD_DIR = boost_$(BOOST_RELEASE)
 BOOST_INSTALL_DIR = $(PREFIX)/boost_$(BOOST_RELEASE)
 BOOST_BUILD_FLAGS = cxxflags=-fPIC dll-path=$(BOOST_INSTALL_DIR)/lib
@@ -277,22 +268,50 @@ ifndef USE_PYTHON
 BOOST_BUILD_FLAGS += --without-python
 endif
 
+define BOOST_PATCH
+--- boost/random/detail/integer_log2.hpp
++++ boost/random/detail/integer_log2.hpp
+@@ -27,7 +27,7 @@
+ #elif defined(BOOST_MSVC)
+ #define BOOST_RANDOM_DETAIL_CONSTEXPR __forceinline
+ #elif defined(__GNUC__) && __GNUC__ >= 4
+-#define BOOST_RANDOM_DETAIL_CONSTEXPR __attribute__((const)) __attribute__((always_inline))
++#define BOOST_RANDOM_DETAIL_CONSTEXPR inline __attribute__((const)) __attribute__((always_inline))
+ #else
+ #define BOOST_RANDOM_DETAIL_CONSTEXPR inline
+ #endif
+--- boost/lexical_cast.hpp
++++ boost/lexical_cast.hpp
+@@ -1294,7 +1294,7 @@
+             bool shl_double(double val,T* out)
+             {   using namespace std;
+                 if (put_inf_nan(start,finish,val)) return true;
+-                finish = start + sprintf(out,"%.*lg", static_cast<int>(boost::detail::lcast_get_precision<double >()), val );
++                finish = start + sprintf(out,"%.*g", static_cast<int>(boost::detail::lcast_get_precision<double >()), val );
+                 return finish > start;
+             }
+ #ifndef __MINGW32__
+--- boost/log/sources/basic_logger.hpp
++++ boost/log/sources/basic_logger.hpp
+@@ -224,7 +224,7 @@ protected:
+     std::pair< typename attribute_set_type::iterator, bool > add_attribute_unlocked(
+         string_type const& name, shared_ptr< attribute > const& attr)
+     {
+-        return m_Attributes.insert(std::make_pair(name, attr));
++        return m_Attributes.insert(typename attribute_set_type::key_type(name), attr);
+     }
+ 
+     /*!
+endef
+export BOOST_PATCH
+
 .fetch-boost:
 	@$(RM) $(BOOST_TARBALL)
 	@$(RM) $(BOOST_LOG_TARBALL)
-	@$(RM) $(BOOST_ALWAYS_INLINE_PATCH)
-	@$(RM) $(BOOST_LEXICAL_CAST_PATCH)
-	@$(RM) $(BOOST_LOG_CXX11_PATCH)
 	$(WGET) $(BOOST_TARBALL_URL)
 	$(WGET) $(BOOST_LOG_TARBALL_URL)
-	$(WGET) $(BOOST_ALWAYS_INLINE_PATCH_URL)
-	$(WGET) $(BOOST_LEXICAL_CAST_PATCH_URL)
-	$(WGET) $(BOOST_LOG_CXX11_PATCH_URL)
 	@echo '$(BOOST_TARBALL_SHA256)  $(BOOST_TARBALL)' | $(SHA256SUM)
 	@echo '$(BOOST_LOG_TARBALL_SHA256)  $(BOOST_LOG_TARBALL)' | $(SHA256SUM)
-	@echo '$(BOOST_ALWAYS_INLINE_PATCH_SHA256)  $(BOOST_ALWAYS_INLINE_PATCH)' | $(SHA256SUM)
-	@echo '$(BOOST_LEXICAL_CAST_PATCH_SHA256)  $(BOOST_LEXICAL_CAST_PATCH)' | $(SHA256SUM)
-	@echo '$(BOOST_LOG_CXX11_PATCH_SHA256)  $(BOOST_LOG_CXX11_PATCH)' | $(SHA256SUM)
 	@$(TOUCH) $@
 
 fetch-boost: .fetch-boost
@@ -303,9 +322,7 @@ fetch-boost: .fetch-boost
 	$(UNZIP) $(BOOST_LOG_TARBALL)
 	$(CP) $(BOOST_LOG_DIR)/boost/log $(BOOST_BUILD_DIR)/boost/
 	$(CP) $(BOOST_LOG_DIR)/libs/log $(BOOST_BUILD_DIR)/libs/
-	cd $(BOOST_BUILD_DIR) && $(PATCH) -p1 < $(CURDIR)/$(BOOST_ALWAYS_INLINE_PATCH)
-	cd $(BOOST_BUILD_DIR) && $(PATCH) -p1 < $(CURDIR)/$(BOOST_LEXICAL_CAST_PATCH)
-	cd $(BOOST_BUILD_DIR) && $(PATCH) -p3 < $(CURDIR)/$(BOOST_LOG_CXX11_PATCH)
+	cd $(BOOST_BUILD_DIR) && echo "$$BOOST_PATCH" | $(PATCH) -p0
 	@$(TOUCH) $@
 
 extract-boost: .extract-boost
@@ -335,9 +352,6 @@ distclean-boost: clean-boost
 	@$(RM) .fetch-boost
 	$(RM) $(BOOST_TARBALL)
 	$(RM) $(BOOST_LOG_TARBALL)
-	$(RM) $(BOOST_BOOST_ALWAYS_INLINE_PATCH)
-	$(RM) $(BOOST_BOOST_LEXICAL_CAST_PATCH)
-	$(RM) $(BOOST_BOOST_LOG_CXX11_PATCH)
 
 env-boost:
 	@echo
