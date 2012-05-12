@@ -210,8 +210,8 @@ list(APPEND HALMD_COMMON_LIBRARIES
 enable_testing()
 include(CTest)
 
-include_directories(${HALMD_SOURCE_DIR}/include)
 include_directories(${HALMD_SOURCE_DIR}/libs/boost-log)
+include_directories(${HALMD_SOURCE_DIR}/libs/cuda-wrapper)
 include_directories(${HALMD_SOURCE_DIR}/libs/h5xx)
 include_directories(${HALMD_SOURCE_DIR}/libs/luabind)
 include_directories(${HALMD_SOURCE_DIR})

@@ -35,6 +35,7 @@
 #include <halmd/observables/host/phase_space.hpp>       // for unified reading of positions and velocities
 #include <halmd/random/host/random.hpp>                 // dependency of modules position, velocity
 #ifdef WITH_CUDA
+# include <cuda_wrapper/cuda_wrapper.hpp>
 # include <halmd/algorithm/gpu/apply_kernel.hpp>
 # include <halmd/mdsim/gpu/integrators/euler.hpp>
 # include <halmd/mdsim/gpu/particle.hpp>
@@ -43,7 +44,6 @@
 # include <halmd/observables/gpu/phase_space.hpp>
 # include <halmd/random/gpu/random.hpp>
 # include <halmd/utility/gpu/device.hpp>
-# include <include/cuda_wrapper/cuda_wrapper.hpp>
 #endif
 #include <test/tools/ctest.hpp>
 
