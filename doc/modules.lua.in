@@ -121,6 +121,7 @@ function render_module(parsed)
                 end
                 if #methods > 0 then
                     l(".. class:: %s", entry.func)
+                    l("   :noindex:")
                 else
                     l(".. function:: %s", entry.func)
                 end

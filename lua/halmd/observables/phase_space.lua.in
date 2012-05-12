@@ -106,6 +106,7 @@ local M = module("halmd.observables.phase_space")
 --    If a particle instance was given, an ``all`` particle_group.
 --
 -- .. class:: writer(file, args)
+--    :noindex:
 --
 --    Write trajectory of particle group to file.
 --
