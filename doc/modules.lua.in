@@ -106,6 +106,7 @@ function render_module(parsed)
                 l(".. currentmodule:: %s", parsed.namespace)
                 l()
                 l(".. class:: %s", entry.func:gsub("^__new", parsed.name))
+                l("   :noindex:")
             else
                 l(".. function:: %s", entry.func)
             end
