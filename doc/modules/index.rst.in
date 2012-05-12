@@ -5,7 +5,6 @@ Modules
    :maxdepth: 2
    :glob:
 
-   halmd/*
    halmd/mdsim/index
    halmd/io/index
    halmd/observables/index
