@@ -39,6 +39,12 @@ foreach(input ${files})
   configure_file(${input} ${output} @ONLY)
 endforeach(input)
 
+# Copy examples for inlining of plot examples into documentation.
+file(GLOB_RECURSE files RELATIVE ${CMAKE_SOURCE_DIR} ${CMAKE_SOURCE_DIR}/examples/*)
+foreach(input ${files})
+  configure_file(${CMAKE_SOURCE_DIR}/${input} ${input} @ONLY)
+endforeach()
+
 # Extract module documentation from Lua sources
 configure_file(modules.lua.in modules.lua)
 file(GLOB_RECURSE files RELATIVE "${CMAKE_SOURCE_DIR}/lua" "${CMAKE_SOURCE_DIR}/lua/halmd/*.lua.in")
@@ -87,7 +93,7 @@ add_custom_target(halmd_doc_pdf ALL
   COMMENT "Build HALMD PDF documentation"
 )
 add_custom_command(TARGET halmd_doc_pdf POST_BUILD
-  COMMAND ${CMAKE_MAKE_PROGRAM}
+  COMMAND ${CMAKE_MAKE_PROGRAM} LATEXOPTS=-interaction=nonstopmode
   WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/pdf"
 )
 add_dependencies(halmd_doc_pdf

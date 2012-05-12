@@ -14,3 +14,8 @@ HALMD documentation
    units
    developer/index
 
+.. toctree::
+   :hidden:
+
+   cmake/cache_vars
+   cmake/env_vars

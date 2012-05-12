@@ -13,33 +13,33 @@ The various aspects of the script are detailed in the following. It starts with
 loading some packages, defining command line options, and opening the HDF5
 output file.
 
-.. literalinclude:: ../../examples/plotting/plot_h5md.py
+.. literalinclude:: /examples/plotting/plot_h5md.py
   :lines: 22-42
 
 The script shows how to extract some of the simulation parameters that are
 stored along with each HDF5 output file.
 
-.. literalinclude:: ../../examples/plotting/plot_h5md.py
+.. literalinclude:: /examples/plotting/plot_h5md.py
   :lines: 44-53
 
 It illustrates how to computes the average temperature, pressure, and potential
 energy over the whole simulation run or just over a selected range of data
 points, i.e., a time window.
 
-.. literalinclude:: ../../examples/plotting/plot_h5md.py
+.. literalinclude:: /examples/plotting/plot_h5md.py
   :lines: 55-61
 
-.. literalinclude:: ../../examples/plotting/plot_h5md.py
+.. literalinclude:: /examples/plotting/plot_h5md.py
   :pyobject: compute_average
 
 Eventually, the script can dump the fluctuating potential energy as function of
 time to a text file
 
-.. literalinclude:: ../../examples/plotting/plot_h5md.py
+.. literalinclude:: /examples/plotting/plot_h5md.py
   :lines: 63-73
 
 or directly generate a figure from these data
 
-.. literalinclude:: ../../examples/plotting/plot_h5md.py
+.. literalinclude:: /examples/plotting/plot_h5md.py
   :lines: 75-90
 

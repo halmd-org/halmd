@@ -112,6 +112,7 @@ function render_module(parsed)
                 l(".. currentmodule:: %s", parsed.namespace)
                 l()
                 l(".. class:: %s", entry.func:gsub("^__new", parsed.name))
+                l("   :noindex:")
             elseif entry.module then
                 for i = 1, #parsed do
                     if parsed[i].class == entry.name then

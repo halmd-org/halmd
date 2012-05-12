@@ -43,21 +43,39 @@ if(HALMD_USE_STATIC_LIBS)
   set(HDF5_USE_STATIC_LIBS TRUE)
 endif()
 
-# The FindBoost CMake module prefers multi-threaded libraries (filenames with
-# postfix "-mt") over non-multi-threaded libraries. On Redhat or SuSE with
-# installed system Boost libraries, this causes the system libraries (with
-# "-mt") to override the custom-compiled libraries (without "-mt"). For now,
-# HALMD requires custom-compiled libraries in any case, as upstream Boost does
-# not contain the Boost.Log library yet.
+# We need to support both Boost libraries shipped with the system, and
+# self-compiled Boost libraries for users on systems with outdated libraries
+# and for developers with the need for compilation without warnings.
 #
-if(NOT DEFINED Boost_USE_MULTITHREADED)
-  set(Boost_USE_MULTITHREADED FALSE)
-endif(NOT DEFINED Boost_USE_MULTITHREADED)
+# On Redhat and SuSE systems, the thread-safe Boost libraries are named
+# libboost_<component>-mt, while on Debian systems, and with Boost upstream,
+# the thread-safe Boost libraries are named libboost_<component>, as the
+# latter only ship thread-safe Boost libraries.
+#
+# If Boost_USE_MULTITHREADED is set to TRUE, which is the default, the
+# FindBoost module prefers libraries with -mt suffix over libraries without
+# -mt suffix. This may result in a mess when using self-compiled libraries
+# configured in CMAKE_PREFIX_PATH, since the include path will be set to the
+# self-compiled headers, while library paths are set the system libraries.
+#
+# If Boost_USE_MULTITHREADED is set to FALSE, both self-compiled libraries
+# and system libraries on Debian are found properly. However, with system
+# libraries on Redhat and SuSE, the thread-unsafe variants will be used,
+# which conflicts with our requirement for thread-safe libraries.
+#
+# The only fail-safe solution is to set Boost_NO_SYSTEM_PATHS to TRUE if
+# undefined, to properly find self-compiled Boost libraries. If the user
+# wishes to use the Boost libraries of the system, Boost_NO_SYSTEM_PATHS
+# may be overridden with cmake -DBoost_NO_SYSTEM_PATHS=FALSE.
+#
+set(Boost_USE_MULTITHREADED TRUE)
+if(NOT DEFINED Boost_NO_SYSTEM_PATHS)
+  set(Boost_NO_SYSTEM_PATHS TRUE)
+endif()
 
 find_package(Boost 1.43.0 QUIET REQUIRED COMPONENTS
   date_time
   filesystem
-  log
   program_options
   random
   system
@@ -161,9 +179,9 @@ set(CMAKE_BUILD_WITH_INSTALL_RPATH FALSE)
 set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
 
 set(HALMD_COMMON_LIBRARIES
+  boost_log
   luabind
   ${Boost_DATE_TIME_LIBRARY}
-  ${Boost_LOG_LIBRARY}
   ${Boost_PROGRAM_OPTIONS_LIBRARY}
   ${Boost_RANDOM_LIBRARY}
   ${Boost_FILESYSTEM_LIBRARY}
@@ -188,7 +206,8 @@ list(APPEND HALMD_COMMON_LIBRARIES
 enable_testing()
 include(CTest)
 
-include_directories(${HALMD_SOURCE_DIR}/include)
+include_directories(${HALMD_SOURCE_DIR}/libs/boost-log)
+include_directories(${HALMD_SOURCE_DIR}/libs/cuda-wrapper)
 include_directories(${HALMD_SOURCE_DIR}/libs/h5xx)
 include_directories(${HALMD_SOURCE_DIR}/libs/luabind)
 include_directories(${HALMD_SOURCE_DIR})
@@ -210,7 +229,7 @@ endif(HALMD_WITH_GPU)
 # HALMD archive, then add a rule to install the pre-build documentation.
 #
 if(EXISTS "${CMAKE_SOURCE_DIR}/doc/CMakeLists.txt")
-  add_subdirectory(doc EXCLUDE_FROM_ALL)
+  add_subdirectory(doc)
 else()
   install(DIRECTORY "${CMAKE_SOURCE_DIR}/doc/"
     DESTINATION "share/doc/halmd"
@@ -221,6 +240,16 @@ else()
   )
 endif()
 
+# Install simulation and plotting examples to <prefix>/share/doc/halmd.
+# This is common practice in GNU/Linux distributions, and encourages
+# users to make a copy of an example and modify it for their needs.
+#
+install(DIRECTORY ${CMAKE_SOURCE_DIR}/examples
+  DESTINATION share/doc/halmd
+  PATTERN packages.mk EXCLUDE
+)
+
+add_subdirectory(libs/boost-log/libs/log/src)
 add_subdirectory(libs/luabind/src)
 add_subdirectory(halmd)
 add_subdirectory(lua)

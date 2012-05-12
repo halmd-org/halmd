@@ -35,13 +35,12 @@ values for the truncated and shifted Lennard--Jones potential in three dimension
 +--------+---------------+----------------+-------------+-------------+------------------+-----------------+----------------------------+
 
 [1] Molecular dynamics simulations, J. K. Johnson, J. A. Zollweg, and K. E. Gubbins,
-    *The Lennard-Jones equation of state revisited*, Mol. Phys. **78**, 591 (1993).
-    `[Link] <http://dx.doi.org/10.1080/00268979300100411>`_
+    *The Lennard-Jones equation of state revisited*,
+    `Mol. Phys. 78, 591 <http://dx.doi.org/10.1080/00268979300100411>`_ (1993).
 
 [2] Integral equations theory, A. Ayadim, M. Oettel, and S Amokrane,
     *Optimum free energy in the reference functional approach for the integral equations theory*,
-    J. Phys.: Condens. Matter **21**, 115103 (2009).
-    `[Link] <http://dx.doi.org/10.1088/0953-8984/21/11/115103>`_
+    `J. Phys.: Condens. Matter 21, 115103 <http://dx.doi.org/10.1088/0953-8984/21/11/115103>`_ (2009).
 
 [*] Result obtained with *HAL's MD package* (4000 particles, NVT ensemble with Nosé--Hoover chain)
 
@@ -53,8 +52,7 @@ Weeks--Chandler--Andersen potential
 
 [1] Molecular dynamics simulations, D. Levesque and W. T. Ashurst,
     *Long-Time Behavior of the Velocity Autocorrelation Function for a Fluid of Soft Repulsive Particles*,
-    Phys. Rev. Lett. **33**, 277 (1974).
-    `[Link] <http://link.aps.org/doi/10.1103/PhysRevLett.33.277>`_
+    `Phys. Rev. Lett. 33, 277 <http://link.aps.org/doi/10.1103/PhysRevLett.33.277>`_ (1974).
 
 
 Binary mixtures
@@ -68,5 +66,4 @@ Kob--Andersen mixture
 
 [1] Molecular dynamics simulations, P. Bordat, F. Affouard, M. Descamps, and F. Müller-Plathe,
     *The breakdown of the Stokes–Einstein relation in supercooled binary liquids*,
-    J. Phys.: Condens. Matter **15**, 5397 (2003).
-    `[Link] <http://dx.doi.org/10.1088/0953-8984/15/32/301>`_
+    `J. Phys.: Condens. Matter 15, 5397 <http://dx.doi.org/10.1088/0953-8984/15/32/301>`_ (2003).

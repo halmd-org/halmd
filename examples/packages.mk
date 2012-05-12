@@ -29,7 +29,6 @@ endif
 
 WGET = wget
 TAR = tar
-UNZIP = unzip
 RM = rm -rf
 CP = cp -r
 TOUCH = touch
@@ -244,11 +243,6 @@ BOOST_RELEASE = 1_49_0
 BOOST_TARBALL = boost_$(BOOST_RELEASE).tar.bz2
 BOOST_TARBALL_URL = http://sourceforge.net/projects/boost/files/boost/$(BOOST_VERSION)/$(BOOST_TARBALL)
 BOOST_TARBALL_SHA256 = dd748a7f5507a7e7af74f452e1c52a64e651ed1f7263fce438a06641d2180d3c
-BOOST_LOG_VERSION = 1.1
-BOOST_LOG_TARBALL = boost-log-$(BOOST_LOG_VERSION).zip
-BOOST_LOG_TARBALL_URL = http://sourceforge.net/projects/boost-log/files/boost-log-$(BOOST_LOG_VERSION).zip
-BOOST_LOG_TARBALL_SHA256 = 4b00e1d302017298284914c6cc9e7fcae0e097c93e632045d6b0fc4bf6266ba7
-BOOST_LOG_DIR = boost-log-$(BOOST_LOG_VERSION)
 BOOST_BUILD_DIR = boost_$(BOOST_RELEASE)
 BOOST_INSTALL_DIR = $(PREFIX)/boost_$(BOOST_RELEASE)
 BOOST_BUILD_FLAGS = cxxflags=-fPIC dll-path=$(BOOST_INSTALL_DIR)/lib
@@ -365,69 +359,19 @@ define BOOST_PATCH
      }
  
  #endif
---- boost/log/sources/basic_logger.hpp
-+++ boost/log/sources/basic_logger.hpp
-@@ -224,7 +224,7 @@ protected:
-     std::pair< typename attribute_set_type::iterator, bool > add_attribute_unlocked(
-         string_type const& name, shared_ptr< attribute > const& attr)
-     {
--        return m_Attributes.insert(std::make_pair(name, attr));
-+        return m_Attributes.insert(typename attribute_set_type::key_type(name), attr);
-     }
- 
-     /*!
---- boost/log/formatters/stream.hpp
-+++ boost/log/formatters/stream.hpp
-@@ -94,22 +94,23 @@
- 
- #endif // !defined(BOOST_LOG_DOXYGEN_PASS) && !defined(BOOST_LOG_BROKEN_STRING_LITERALS)
- 
--    static const stream_placeholder instance;
-+    static stream_placeholder const& instance()
-+    {
-+        static stream_placeholder const sp = {};
-+        return sp;
-+    }
- };
- 
--template< typename CharT >
--const stream_placeholder< CharT > stream_placeholder< CharT >::instance = {};
--
- //  Placeholders to begin lambda expressions
- namespace {
- 
- #ifdef BOOST_LOG_USE_CHAR
-     //! A placeholder used to construct lambda expressions of streaming formatters for narrow-character logging
--    stream_placeholder< char > const& stream = stream_placeholder< char >::instance;
-+    stream_placeholder< char > const& stream = stream_placeholder< char >::instance();
- #endif
- #ifdef BOOST_LOG_USE_WCHAR_T
-     //! A placeholder used to construct lambda expressions of streaming formatters for wide-character logging
--    stream_placeholder< wchar_t > const& wstream = stream_placeholder< wchar_t >::instance;
-+    stream_placeholder< wchar_t > const& wstream = stream_placeholder< wchar_t >::instance();
- #endif
- 
- } // namespace
 endef
 export BOOST_PATCH
 
 .fetch-boost:
 	@$(RM) $(BOOST_TARBALL)
-	@$(RM) $(BOOST_LOG_TARBALL)
 	$(WGET) $(BOOST_TARBALL_URL)
-	$(WGET) $(BOOST_LOG_TARBALL_URL)
 	@echo '$(BOOST_TARBALL_SHA256)  $(BOOST_TARBALL)' | $(SHA256SUM)
-	@echo '$(BOOST_LOG_TARBALL_SHA256)  $(BOOST_LOG_TARBALL)' | $(SHA256SUM)
 	@$(TOUCH) $@
 
 fetch-boost: .fetch-boost
 
 .extract-boost: .fetch-boost
-	$(RM) $(BOOST_BUILD_DIR) $(BOOST_LOG_DIR)
 	$(TAR) -xjf $(BOOST_TARBALL)
-	$(UNZIP) $(BOOST_LOG_TARBALL)
-	$(CP) $(BOOST_LOG_DIR)/boost/log $(BOOST_BUILD_DIR)/boost/
-	$(CP) $(BOOST_LOG_DIR)/libs/log $(BOOST_BUILD_DIR)/libs/
 	cd $(BOOST_BUILD_DIR) && echo "$$BOOST_PATCH" | sed -e 's/\\ $$/\\/' | $(PATCH) -p0
 	@$(TOUCH) $@
 
@@ -452,12 +396,10 @@ clean-boost:
 	@$(RM) .build-boost
 	@$(RM) .configure-boost
 	@$(RM) .extract-boost
-	$(RM) $(BOOST_BUILD_DIR) $(BOOST_LOG_DIR)
 
 distclean-boost: clean-boost
 	@$(RM) .fetch-boost
 	$(RM) $(BOOST_TARBALL)
-	$(RM) $(BOOST_LOG_TARBALL)
 
 env-boost:
 	@echo
@@ -703,63 +645,6 @@ env-python-sphinx:
 	@echo '# add python-sphinx $(PYTHON_SPHINX_VERSION) to environment'
 	@echo 'export PATH="$(PYTHON_SPHINX_INSTALL_DIR)/bin$${PATH+:$$PATH}"'
 	@echo 'export PYTHONPATH="$(PYTHON_SPHINX_PYTHONPATH)$${PYTHONPATH+:$$PYTHONPATH}"'
-
-##
-## Doxygen
-##
-
-DOXYGEN_VERSION = 1.7.6.1
-DOXYGEN_TARBALL = doxygen-$(DOXYGEN_VERSION).src.tar.gz
-DOXYGEN_TARBALL_URL = http://ftp.stack.nl/pub/users/dimitri/$(DOXYGEN_TARBALL)
-DOXYGEN_TARBALL_SHA256 = 0e60e794fb172d3fa4a9a9535f0b8e0eeb04e8366153f6b417569af0bcd61fcd
-DOXYGEN_BUILD_DIR = doxygen-$(DOXYGEN_VERSION)
-DOXYGEN_INSTALL_DIR = $(PREFIX)/doxygen-$(DOXYGEN_VERSION)
-
-.fetch-doxygen:
-	@$(RM) $(DOXYGEN_TARBALL)
-	$(WGET) $(DOXYGEN_TARBALL_URL)
-	@echo '$(DOXYGEN_TARBALL_SHA256)  $(DOXYGEN_TARBALL)' | $(SHA256SUM)
-	@$(TOUCH) $@
-
-fetch-doxygen: .fetch-doxygen
-
-.extract-doxygen: .fetch-doxygen
-	$(RM) $(DOXYGEN_BUILD_DIR)
-	$(TAR) -xzf $(DOXYGEN_TARBALL)
-	@$(TOUCH) $@
-
-extract-doxygen: .extract-doxygen
-
-.configure-doxygen: .extract-doxygen
-	cd $(DOXYGEN_BUILD_DIR) && ./configure --prefix $(DOXYGEN_INSTALL_DIR)
-	@$(TOUCH) $@
-
-configure-doxygen: .configure-doxygen
-
-.build-doxygen: .configure-doxygen
-	cd $(DOXYGEN_BUILD_DIR) && make $(PARALLEL_BUILD_FLAGS)
-	@$(TOUCH) $@
-
-build-doxygen: .build-doxygen
-
-install-doxygen: .build-doxygen
-	cd $(DOXYGEN_BUILD_DIR) && make install
-
-clean-doxygen:
-	@$(RM) .build-doxygen
-	@$(RM) .configure-doxygen
-	@$(RM) .extract-doxygen
-	$(RM) $(DOXYGEN_BUILD_DIR)
-
-distclean-doxygen: clean-doxygen
-	@$(RM) .fetch-doxygen
-	$(RM) $(DOXYGEN_TARBALL)
-
-env-doxygen:
-	@echo
-	@echo '# add Doxygen $(DOXYGEN_VERSION) to environment'
-	@echo 'export PATH="$(DOXYGEN_INSTALL_DIR)/bin$${PATH+:$$PATH}"'
-	@echo 'export MANPATH="$(DOXYGEN_INSTALL_DIR)/man$${MANPATH+:$$MANPATH}"'
 
 ##
 ## Graphviz
