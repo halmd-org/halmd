@@ -39,6 +39,12 @@ foreach(input ${files})
   configure_file(${input} ${output} @ONLY)
 endforeach(input)
 
+# Copy examples for inlining of plot examples into documentation.
+file(GLOB_RECURSE files RELATIVE ${CMAKE_SOURCE_DIR} ${CMAKE_SOURCE_DIR}/examples/*)
+foreach(input ${files})
+  configure_file(${CMAKE_SOURCE_DIR}/${input} ${input} @ONLY)
+endforeach()
+
 # Extract module documentation from Lua sources
 configure_file(modules.lua.in modules.lua)
 file(GLOB_RECURSE files RELATIVE "${CMAKE_SOURCE_DIR}/lua" "${CMAKE_SOURCE_DIR}/lua/halmd/*.lua.in")
