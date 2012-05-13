@@ -20,23 +20,12 @@
 #ifndef HALMD_UTILITY_LUA_UBLAS_HPP
 #define HALMD_UTILITY_LUA_UBLAS_HPP
 
+#include <boost/numeric/ublas/storage.hpp>
 #include <luabind/luabind.hpp>
 
 #if LUA_VERSION_NUM < 502
 # define luaL_len lua_objlen
 #endif
-
-namespace boost {
-namespace numeric {
-namespace ublas {
-
-// forward declaration
-template <typename T, typename A>
-struct unbounded_array;
-
-} // namespace ublas
-} // namespace numeric
-} // namespace boost
 
 namespace luabind {
 
