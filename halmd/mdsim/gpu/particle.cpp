@@ -47,11 +47,11 @@ namespace gpu {
  * @param particles number of particles per type or species
  */
 template <int dimension, typename float_type>
-particle<dimension, float_type>::particle(size_t nparticle, unsigned int threads)
+particle<dimension, float_type>::particle(size_t nparticle, unsigned int nspecies, unsigned int threads)
   // default CUDA kernel execution dimensions
   : dim(device::validate(cuda::config((nparticle + threads - 1) / threads, threads)))
   // allocate global device memory
-  , nspecies_(1)
+  , nspecies_(std::max(nspecies, 1u))
   , g_position_(nparticle)
   , g_image_(nparticle)
   , g_velocity_(nparticle)
@@ -483,9 +483,9 @@ struct wrap_particle
   : particle_type
   , luabind::wrap_base
 {
-    wrap_particle(size_t nparticle, unsigned int threads) : particle_type(nparticle, threads) {}
+    wrap_particle(size_t nparticle, unsigned int nspecies, unsigned int threads) : particle_type(nparticle, nspecies, threads) {}
 
-    wrap_particle(size_t nparticle) : particle_type(nparticle) {}
+    wrap_particle(size_t nparticle, unsigned int nspecies) : particle_type(nparticle, nspecies) {}
 };
 
 template <int dimension, typename float_type>
@@ -500,8 +500,8 @@ void particle<dimension, float_type>::luaopen(lua_State* L)
             namespace_("gpu")
             [
                 class_<particle, boost::shared_ptr<particle>, wrap_particle<particle> >(class_name.c_str())
+                    .def(constructor<size_t, unsigned int, unsigned int>())
                     .def(constructor<size_t, unsigned int>())
-                    .def(constructor<size_t>())
                     .property("nparticle", &particle::nparticle)
                     .property("nspecies", &particle::nspecies)
                     .def("get_position", &wrap_get_position<particle>, pure_out_value(_2))

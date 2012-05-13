@@ -68,12 +68,12 @@ public:
      * Allocate particle arrays in host memory.
      *
      * @param nparticle number of particles
+     * @param nspecies number of particle species
      *
      * All particle arrays, except the masses, are initialised to zero.
-     * The particle masses are initialised to unit mass. The number of
-     * species is initialised to zero.
+     * The particle masses are initialised to unit mass.
      */
-    particle(std::size_t nparticle);
+    particle(std::size_t nparticle, unsigned int nspecies = 1);
 
     /**
      * Returns number of particles.

@@ -17,6 +17,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <algorithm>
 #include <boost/iterator/counting_iterator.hpp>
 #include <exception>
 #include <iterator> // std::back_inserter
@@ -38,9 +39,9 @@ namespace mdsim {
 namespace host {
 
 template <int dimension, typename float_type>
-particle<dimension, float_type>::particle(size_t nparticle)
+particle<dimension, float_type>::particle(size_t nparticle, unsigned int nspecies)
   // allocate particle storage
-  : nspecies_(1)
+  : nspecies_(std::max(nspecies, 1u))
   , position_(nparticle, 0)
   , image_(nparticle, 0)
   , velocity_(nparticle, 0)
@@ -371,7 +372,7 @@ struct wrap_particle
   : particle_type
   , luabind::wrap_base
 {
-    wrap_particle(size_t nparticle) : particle_type(nparticle) {}
+    wrap_particle(size_t nparticle, unsigned int nspecies) : particle_type(nparticle, nspecies) {}
 };
 
 template <int dimension, typename float_type>
@@ -386,7 +387,7 @@ void particle<dimension, float_type>::luaopen(lua_State* L)
             namespace_("host")
             [
                 class_<particle, boost::shared_ptr<particle>, wrap_particle<particle> >(class_name.c_str())
-                    .def(constructor<size_t>())
+                    .def(constructor<size_t, unsigned int>())
                     .property("nparticle", &particle::nparticle)
                     .property("nspecies", &particle::nspecies)
                     .def("get_position", &wrap_get_position<particle>, pure_out_value(_2))

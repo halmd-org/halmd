@@ -69,8 +69,14 @@ public:
 
     /**
      * Allocate particle arrays in GPU memory.
+     *
+     * @param nparticle number of particles
+     * @param nspecies number of particle species
+     *
+     * All particle arrays, except the masses, are initialised to zero.
+     * The particle masses are initialised to unit mass.
      */
-    particle(std::size_t nparticle, unsigned int threads = defaults::threads());
+    particle(std::size_t nparticle, unsigned int nspecies = 1, unsigned int threads = defaults::threads());
 
     /**
      * Returns number of particles.
