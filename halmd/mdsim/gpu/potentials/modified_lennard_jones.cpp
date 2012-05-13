@@ -20,6 +20,7 @@
 #include <boost/numeric/ublas/io.hpp>
 #include <cuda_wrapper/cuda_wrapper.hpp>
 #include <cmath>
+#include <stdexcept>
 #include <string>
 
 #include <halmd/mdsim/gpu/potentials/modified_lennard_jones.hpp>
@@ -34,6 +35,16 @@ namespace halmd {
 namespace mdsim {
 namespace gpu {
 namespace potentials {
+
+template <typename matrix_type>
+static matrix_type const&
+check_shape(matrix_type const& m, unsigned int size1, unsigned int size2)
+{
+    if (m.size1() != size1 || m.size2() != size2) {
+        throw std::invalid_argument("parameter matrix has invalid shape");
+    }
+    return m;
+}
 
 /**
  * Initialise Lennard-Jones potential parameters
@@ -50,11 +61,11 @@ modified_lennard_jones<float_type>::modified_lennard_jones(
   , boost::shared_ptr<logger_type> logger
 )
   // allocate potential parameters
-  : epsilon_(epsilon)
-  , sigma_(sigma)
-  , index_m_(index_m)
-  , index_n_(index_n)
-  , r_cut_sigma_(cutoff)
+  : epsilon_(check_shape(epsilon, ntype1, ntype2))
+  , sigma_(check_shape(sigma, ntype1, ntype2))
+  , index_m_(check_shape(index_m, ntype1, ntype2))
+  , index_n_(check_shape(index_n, ntype1, ntype2))
+  , r_cut_sigma_(check_shape(cutoff, ntype1, ntype2))
   , r_cut_(element_prod(sigma_, r_cut_sigma_))
   , rr_cut_(element_prod(r_cut_, r_cut_))
   , sigma2_(element_prod(sigma_, sigma_))

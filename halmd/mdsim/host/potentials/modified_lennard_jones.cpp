@@ -20,6 +20,7 @@
 #include <boost/numeric/ublas/io.hpp>
 #include <cmath>
 #include <exception>
+#include <stdexcept>
 #include <string>
 
 #include <halmd/io/logger.hpp>
@@ -36,6 +37,16 @@ namespace mdsim {
 namespace host {
 namespace potentials {
 
+template <typename matrix_type>
+static matrix_type const&
+check_shape(matrix_type const& m, unsigned int size1, unsigned int size2)
+{
+    if (m.size1() != size1 || m.size2() != size2) {
+        throw std::invalid_argument("parameter matrix has invalid shape");
+    }
+    return m;
+}
+
 /**
  * Initialise Lennard-Jones potential parameters
  */
@@ -51,13 +62,13 @@ modified_lennard_jones<float_type>::modified_lennard_jones(
   , boost::shared_ptr<logger_type> logger
 )
   // allocate potential parameters
-  : epsilon_(epsilon)
-  , sigma_(sigma)
-  , index_m_(index_m)
+  : epsilon_(check_shape(epsilon, ntype1, ntype2))
+  , sigma_(check_shape(sigma, ntype1, ntype2))
+  , index_m_(check_shape(index_m, ntype1, ntype2))
   , index_m_2_(index_m_ / 2)
-  , index_n_(index_n)
+  , index_n_(check_shape(index_n, ntype1, ntype2))
   , index_n_2_(index_n_ / 2)
-  , r_cut_sigma_(cutoff)
+  , r_cut_sigma_(check_shape(cutoff, ntype1, ntype2))
   , r_cut_(element_prod(sigma_, r_cut_sigma_))
   , rr_cut_(element_prod(r_cut_, r_cut_))
   , sigma2_(element_prod(sigma_, sigma_))
