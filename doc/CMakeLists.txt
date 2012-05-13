@@ -76,9 +76,6 @@ add_custom_target(halmd_doc_man ALL
     "${CMAKE_CURRENT_BINARY_DIR}/man"
   COMMENT "Build HALMD man page"
 )
-add_dependencies(halmd_doc_man
-  halmd_doc_html
-)
 
 install(FILES "${CMAKE_CURRENT_BINARY_DIR}/man/halmd.1"
   DESTINATION "share/man/man1"
@@ -101,9 +98,6 @@ add_custom_target(halmd_doc_pdf ALL
 add_custom_command(TARGET halmd_doc_pdf POST_BUILD
   COMMAND ${CMAKE_MAKE_PROGRAM} LATEXOPTS=-interaction=${HALMD_DOC_LATEX_MODE}
   WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/pdf"
-)
-add_dependencies(halmd_doc_pdf
-  halmd_doc_man
 )
 
 install(FILES "${CMAKE_CURRENT_BINARY_DIR}/pdf/halmd.pdf"
