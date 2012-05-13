@@ -84,6 +84,12 @@ install(FILES "${CMAKE_CURRENT_BINARY_DIR}/man/halmd.1"
   DESTINATION "share/man/man1"
 )
 
+if(CMAKE_VERBOSE_MAKEFILE)
+  set(HALMD_DOC_LATEX_MODE nonstopmode)
+else()
+  set(HALMD_DOC_LATEX_MODE batchmode)
+endif()
+
 add_custom_target(halmd_doc_pdf ALL
   ${SPHINX_EXECUTABLE}
     -q -b latex
@@ -93,7 +99,7 @@ add_custom_target(halmd_doc_pdf ALL
   COMMENT "Build HALMD PDF documentation"
 )
 add_custom_command(TARGET halmd_doc_pdf POST_BUILD
-  COMMAND ${CMAKE_MAKE_PROGRAM} LATEXOPTS=-interaction=nonstopmode
+  COMMAND ${CMAKE_MAKE_PROGRAM} LATEXOPTS=-interaction=${HALMD_DOC_LATEX_MODE}
   WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/pdf"
 )
 add_dependencies(halmd_doc_pdf
