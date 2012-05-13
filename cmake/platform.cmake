@@ -9,10 +9,12 @@ if(DEFINED CMAKE_CXX_COMPILER_ID)
   elseif(CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
 
     set(CMAKE_CXX_FLAGS_INIT "-fPIC -Wall")
+    set(CMAKE_CXX_FLAGS_RELEASE_INIT "-O3 -DNDEBUG -fvisibility=hidden")
 
   elseif(CMAKE_CXX_COMPILER_ID STREQUAL "Intel")
 
     set(CMAKE_CXX_FLAGS_INIT "-fPIC -Wall")
+    set(CMAKE_CXX_FLAGS_RELEASE_INIT "-O3 -DNDEBUG -fvisibility=hidden")
 
   elseif(CMAKE_CXX_COMPILER_ID STREQUAL "XL")
 
