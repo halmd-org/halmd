@@ -8,7 +8,7 @@ if(DEFINED CMAKE_CXX_COMPILER_ID)
     else()
       set(CMAKE_CXX_FLAGS_INIT "-fPIC -Wall -std=c++98 -Wno-long-long -pedantic")
     endif()
-    set(CMAKE_CXX_FLAGS_RELEASE_INIT "-O3 -DNDEBUG -fvisibility=hidden")
+    set(CMAKE_CXX_FLAGS_RELEASE_INIT "-O3 -DNDEBUG -DBOOST_DISABLE_ASSERTS -fvisibility=hidden")
 
   elseif(CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
 
@@ -17,11 +17,12 @@ if(DEFINED CMAKE_CXX_COMPILER_ID)
     else()
       set(CMAKE_CXX_FLAGS_INIT "-fPIC -Wall -Wno-long-long -pedantic")
     endif()
-    set(CMAKE_CXX_FLAGS_RELEASE_INIT "-O3 -DNDEBUG -fvisibility=hidden")
+    set(CMAKE_CXX_FLAGS_RELEASE_INIT "-O3 -DNDEBUG -DBOOST_DISABLE_ASSERTS -fvisibility=hidden")
 
   elseif(CMAKE_CXX_COMPILER_ID STREQUAL "Intel")
 
     set(CMAKE_CXX_FLAGS_INIT "-fPIC -Wall")
+    set(CMAKE_CXX_FLAGS_RELEASE_INIT "-O3 -DNDEBUG -DBOOST_DISABLE_ASSERTS -fvisibility=hidden")
 
   elseif(CMAKE_CXX_COMPILER_ID STREQUAL "XL")
 
