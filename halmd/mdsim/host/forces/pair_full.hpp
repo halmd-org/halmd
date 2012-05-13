@@ -30,7 +30,6 @@
 #include <halmd/io/logger.hpp>
 #include <halmd/mdsim/box.hpp>
 #include <halmd/mdsim/force_kernel.hpp>
-#include <halmd/mdsim/host/forces/smooth.hpp>
 #include <halmd/mdsim/host/particle.hpp>
 #include <halmd/utility/lua/lua.hpp>
 #include <halmd/utility/profiler.hpp>
@@ -53,7 +52,6 @@ public:
     typedef typename potential_type::matrix_type matrix_type;
 
     typedef mdsim::box<dimension> box_type;
-    typedef host::forces::smooth<dimension, float_type> smooth_type;
 
     static void luaopen(lua_State* L);
 
@@ -61,7 +59,6 @@ public:
         boost::shared_ptr<potential_type> potential
       , boost::shared_ptr<particle_type> particle
       , boost::shared_ptr<box_type> box
-      // FIXME , boost::shared_ptr<smooth_type> smooth
     );
     void compute();
 
@@ -84,7 +81,6 @@ private:
     boost::shared_ptr<potential_type> potential_;
     boost::shared_ptr<particle_type> particle_;
     boost::shared_ptr<box_type> box_;
-    boost::shared_ptr<smooth_type> smooth_;
 
     /** profiling runtime accumulators */
     runtime runtime_;
@@ -98,7 +94,6 @@ pair_full<dimension, float_type, potential_type>::pair_full(
     boost::shared_ptr<potential_type> potential
   , boost::shared_ptr<particle_type> particle
   , boost::shared_ptr<box_type> box
-  // FIXME , boost::shared_ptr<smooth_type> smooth
 )
   // dependency injection
   : potential_(potential)
@@ -160,12 +155,6 @@ void pair_full<dimension, float_type, potential_type>::compute_aux()
 
             float_type fval, pot, hvir;
             boost::tie(fval, pot, hvir) = (*potential_)(rr, a, b);
-
-            // optionally smooth potential yielding continuous 2nd derivative
-            // FIXME test performance of template versus runtime bool
-            if (smooth_) {
-                smooth_->compute(std::sqrt(rr), potential_->r_cut(a, b), fval, pot);
-            }
 
             // add force contribution to both particles
             force1[i] += r * fval;
