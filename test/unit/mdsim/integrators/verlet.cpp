@@ -155,7 +155,7 @@ ideal_gas<modules_type>::ideal_gas()
     particle = boost::make_shared<particle_type>(npart);
     box = boost::make_shared<box_type>(box_length);
     random = boost::make_shared<random_type>();
-    position = boost::make_shared<position_type>(particle, box, random, slab);
+    position = boost::make_shared<position_type>(particle, box, slab);
     velocity = boost::make_shared<velocity_type>(particle, random, temp);
     integrator = boost::make_shared<integrator_type>(particle, box, timestep);
     clock = boost::make_shared<clock_type>(timestep);
@@ -206,7 +206,7 @@ struct gpu_modules
     typedef mdsim::box<dimension> box_type;
     typedef mdsim::gpu::integrators::verlet<dimension, float_type> integrator_type;
     typedef mdsim::gpu::particle_group_all<dimension, float_type> particle_group_type;
-    typedef mdsim::gpu::positions::lattice<dimension, float_type, halmd::random::gpu::rand48> position_type;
+    typedef mdsim::gpu::positions::lattice<dimension, float_type> position_type;
     typedef halmd::random::gpu::random<halmd::random::gpu::rand48> random_type;
     typedef observables::gpu::thermodynamics<dimension, float_type> thermodynamics_type;
     typedef mdsim::gpu::velocities::boltzmann<dimension, float_type, halmd::random::gpu::rand48> velocity_type;

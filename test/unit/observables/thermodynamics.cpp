@@ -325,7 +325,7 @@ lennard_jones_fluid<modules_type>::lennard_jones_fluid()
     potential = boost::make_shared<potential_type>(particle->nspecies(), particle->nspecies(), rc_mat, epsilon_mat, sigma_mat);
     binning = boost::make_shared<binning_type>(particle, box, potential->r_cut(), skin);
     neighbour = boost::make_shared<neighbour_type>(particle, particle, binning, binning, box, potential->r_cut(), skin);
-    position = boost::make_shared<position_type>(particle, box, random, slab);
+    position = boost::make_shared<position_type>(particle, box, slab);
     velocity = boost::make_shared<velocity_type>(particle, random, temp);
     force = boost::make_shared<force_type>(potential, particle, particle, box, neighbour);
     clock = boost::make_shared<clock_type>(timestep);
@@ -402,7 +402,7 @@ struct gpu_modules
     typedef mdsim::gpu::integrators::verlet<dimension, float_type> nve_integrator_type;
     typedef mdsim::gpu::integrators::verlet_nvt_andersen<dimension, float_type, halmd::random::gpu::rand48> nvt_integrator_type;
     typedef mdsim::gpu::particle_group_all<dimension, float_type> particle_group_type;
-    typedef mdsim::gpu::positions::lattice<dimension, float_type, halmd::random::gpu::rand48> position_type;
+    typedef mdsim::gpu::positions::lattice<dimension, float_type> position_type;
     typedef halmd::random::gpu::random<halmd::random::gpu::rand48> random_type;
     typedef observables::gpu::thermodynamics<dimension, float_type> thermodynamics_type;
     typedef mdsim::gpu::velocities::boltzmann<dimension, float_type, halmd::random::gpu::rand48> velocity_type;

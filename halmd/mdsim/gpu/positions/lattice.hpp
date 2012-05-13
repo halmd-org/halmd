@@ -28,7 +28,6 @@
 #include <halmd/mdsim/box.hpp>
 #include <halmd/mdsim/gpu/particle.hpp>
 #include <halmd/mdsim/type_traits.hpp>
-#include <halmd/random/gpu/random.hpp>
 #include <halmd/utility/profiler.hpp>
 
 namespace halmd {
@@ -36,13 +35,12 @@ namespace mdsim {
 namespace gpu {
 namespace positions {
 
-template <int dimension, typename float_type, typename RandomNumberGenerator>
+template <int dimension, typename float_type>
 class lattice
 {
 public:
     typedef gpu::particle<dimension, float_type> particle_type;
     typedef mdsim::box<dimension> box_type;
-    typedef random::gpu::random<RandomNumberGenerator> random_type;
     typedef logger logger_type;
     typedef typename particle_type::vector_type vector_type;
     typedef typename type_traits<dimension, float>::vector_type gpu_vector_type;
@@ -55,7 +53,6 @@ public:
     lattice(
         boost::shared_ptr<particle_type> particle
       , boost::shared_ptr<box_type const> box
-      , boost::shared_ptr<random_type> random
       , typename box_type::vector_type const& slab
       , boost::shared_ptr<logger_type> logger = boost::make_shared<logger_type>()
     );
@@ -75,7 +72,6 @@ private:
 
     boost::shared_ptr<particle_type> particle_;
     boost::shared_ptr<box_type const> box_;
-    boost::shared_ptr<random_type> random_;
     boost::shared_ptr<logger_type> logger_;
     /** slab extents for each direction as fraction of the edge length of the box */
     typename box_type::vector_type slab_;

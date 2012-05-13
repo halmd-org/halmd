@@ -28,7 +28,6 @@
 #include <halmd/io/logger.hpp>
 #include <halmd/mdsim/box.hpp>
 #include <halmd/mdsim/host/particle.hpp>
-#include <halmd/random/host/random.hpp>
 #include <halmd/utility/profiler.hpp>
 
 namespace halmd {
@@ -43,7 +42,6 @@ public:
     typedef host::particle<dimension, float_type> particle_type;
     typedef typename particle_type::vector_type vector_type;
     typedef mdsim::box<dimension> box_type;
-    typedef random::host::random random_type;
     typedef logger logger_type;
 
     static char const* module_name() { return "lattice"; }
@@ -53,7 +51,6 @@ public:
     lattice(
         boost::shared_ptr<particle_type> particle
       , boost::shared_ptr<box_type const> box
-      , boost::shared_ptr<random_type> random
       , vector_type const& slab
       , boost::shared_ptr<logger_type> logger = boost::make_shared<logger_type>()
     );
@@ -73,7 +70,6 @@ private:
 
     boost::shared_ptr<particle_type> particle_;
     boost::shared_ptr<box_type const> box_;
-    boost::shared_ptr<random_type> random_;
     boost::shared_ptr<logger_type> logger_;
     /** slab extents for each direction as fraction of the edge length of the box */
     vector_type slab_;

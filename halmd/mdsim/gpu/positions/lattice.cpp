@@ -37,18 +37,16 @@ namespace mdsim {
 namespace gpu {
 namespace positions {
 
-template <int dimension, typename float_type, typename RandomNumberGenerator>
-lattice<dimension, float_type, RandomNumberGenerator>::lattice(
+template <int dimension, typename float_type>
+lattice<dimension, float_type>::lattice(
     boost::shared_ptr<particle_type> particle
   , boost::shared_ptr<box_type const> box
-  , boost::shared_ptr<random_type> random
   , typename box_type::vector_type const& slab
   , boost::shared_ptr<logger_type> logger
 )
   // dependency injection
   : particle_(particle)
   , box_(box)
-  , random_(random)
   , logger_(logger)
   , slab_(slab)
 {
@@ -63,8 +61,8 @@ lattice<dimension, float_type, RandomNumberGenerator>::lattice(
     }
 }
 
-template <int dimension, typename float_type, typename RandomNumberGenerator>
-void lattice<dimension, float_type, RandomNumberGenerator>::set()
+template <int dimension, typename float_type>
+void lattice<dimension, float_type>::set()
 {
     assert(particle_->position().size() == particle_->nparticle());
 
@@ -74,15 +72,6 @@ void lattice<dimension, float_type, RandomNumberGenerator>::set()
 
     float4* r_it = particle_->position().data(); // use pointer as substitute for missing iterator
     fcc(r_it, r_it + particle_->nparticle(), length, offset);
-
-    // randomise particle positions if there is more than 1 particle type
-    // FIXME this requires a subsequent sort
-    // FIXME this will fail greatly once we support polymers
-    if (particle_->nspecies() > 1) {
-        LOG("randomly permuting particle positions");
-        random_->shuffle(particle_->position()); //< this shuffles the types as well
-        particle_->set();                //< assign new tags and types
-    }
 
     // reset particle image vectors
     cuda::memset(particle_->image(), 0, particle_->image().capacity());
@@ -119,9 +108,9 @@ void lattice<dimension, float_type, RandomNumberGenerator>::set()
  *
  * is satisfied.
  */
-template <int dimension, typename float_type, typename RandomNumberGenerator>
+template <int dimension, typename float_type>
 template <typename position_iterator>
-void lattice<dimension, float_type, RandomNumberGenerator>::fcc(
+void lattice<dimension, float_type>::fcc(
     position_iterator first, position_iterator last
   , gpu_vector_type const& length, gpu_vector_type const& offset
 )
@@ -186,10 +175,10 @@ void lattice<dimension, float_type, RandomNumberGenerator>::fcc(
     LOG_DEBUG("number of particles inserted: " << npart);
 }
 
-template <int dimension, typename float_type, typename RandomNumberGenerator>
-static char const* module_name_wrapper(lattice<dimension, float_type, RandomNumberGenerator> const&)
+template <int dimension, typename float_type>
+static char const* module_name_wrapper(lattice<dimension, float_type> const&)
 {
-    return lattice<dimension, float_type, RandomNumberGenerator>::module_name();
+    return lattice<dimension, float_type>::module_name();
 }
 
 template <typename position_type>
@@ -198,8 +187,8 @@ static boost::function<void ()> wrap_set(boost::shared_ptr<position_type> self)
     return bind(&position_type::set, self);
 }
 
-template <int dimension, typename float_type, typename RandomNumberGenerator>
-void lattice<dimension, float_type, RandomNumberGenerator>::luaopen(lua_State* L)
+template <int dimension, typename float_type>
+void lattice<dimension, float_type>::luaopen(lua_State* L)
 {
     using namespace luabind;
     static string class_name(module_name() + ("_" + lexical_cast<string>(dimension) + "_"));
@@ -215,13 +204,12 @@ void lattice<dimension, float_type, RandomNumberGenerator>::luaopen(lua_State* L
                         .def(constructor<
                              boost::shared_ptr<particle_type>
                            , boost::shared_ptr<box_type const>
-                           , boost::shared_ptr<random_type>
                            , typename box_type::vector_type const&
                            , boost::shared_ptr<logger_type>
                          >())
                         .property("set", &wrap_set<lattice>)
                         .property("slab", &lattice::slab)
-                        .property("module_name", &module_name_wrapper<dimension, float_type, RandomNumberGenerator>)
+                        .property("module_name", &module_name_wrapper<dimension, float_type>)
                         .scope
                         [
                             class_<runtime>("runtime")
@@ -236,14 +224,14 @@ void lattice<dimension, float_type, RandomNumberGenerator>::luaopen(lua_State* L
 
 HALMD_LUA_API int luaopen_libhalmd_mdsim_gpu_positions_lattice(lua_State* L)
 {
-    lattice<3, float, random::gpu::rand48>::luaopen(L);
-    lattice<2, float, random::gpu::rand48>::luaopen(L);
+    lattice<3, float>::luaopen(L);
+    lattice<2, float>::luaopen(L);
     return 0;
 }
 
 // explicit instantiation
-template class lattice<3, float, random::gpu::rand48>;
-template class lattice<2, float, random::gpu::rand48>;
+template class lattice<3, float>;
+template class lattice<2, float>;
 
 } // namespace mdsim
 } // namespace gpu

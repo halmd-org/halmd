@@ -40,14 +40,12 @@ template <int dimension, typename float_type>
 lattice<dimension, float_type>::lattice(
     boost::shared_ptr<particle_type> particle
   , boost::shared_ptr<box_type const> box
-  , boost::shared_ptr<random_type> random
   , vector_type const& slab
   , boost::shared_ptr<logger_type> logger
 )
   // dependency injection
   : particle_(particle)
   , box_(box)
-  , random_(random)
   , logger_(logger)
   , slab_(slab)
 {
@@ -71,14 +69,6 @@ void lattice<dimension, float_type>::set()
     vector_type length = element_prod(box_->length(), slab_);
     vector_type offset = -length / 2;
     fcc(particle_->position().begin(), particle_->position().end(), length, offset);
-
-    // randomise particle positions if there is more than 1 particle type
-    // FIXME this requires a subsequent sort
-    // FIXME this will fail greatly once we support polymers
-    if (particle_->nspecies() > 1) {
-        LOG("randomly permuting particle positions");
-        random_->shuffle(particle_->position().begin(), particle_->position().end());
-    }
 
     // assign particle image vectors
     fill(particle_->image().begin(), particle_->image().end(), 0);
@@ -212,7 +202,6 @@ void lattice<dimension, float_type>::luaopen(lua_State* L)
                         .def(constructor<
                              boost::shared_ptr<particle_type>
                            , boost::shared_ptr<box_type const>
-                           , boost::shared_ptr<random_type>
                            , vector_type const&
                            , boost::shared_ptr<logger_type>
                         >())

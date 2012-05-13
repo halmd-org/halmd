@@ -303,7 +303,7 @@ verlet_nvt_hoover<modules_type>::verlet_nvt_hoover()
     binning = boost::make_shared<binning_type>(particle, box, potential->r_cut(), skin);
     neighbour = boost::make_shared<neighbour_type>(particle, particle, binning, binning, box, potential->r_cut(), skin);
     force = boost::make_shared<force_type>(potential, particle, particle, box, neighbour);
-    position = boost::make_shared<position_type>(particle, box, random, 1);
+    position = boost::make_shared<position_type>(particle, box, 1);
     velocity = boost::make_shared<velocity_type>(particle, random, start_temp);
     clock = boost::make_shared<clock_type>(timestep);
     thermodynamics = boost::make_shared<thermodynamics_type>(boost::make_shared<particle_group_type>(particle), box, clock);
@@ -380,7 +380,7 @@ struct gpu_modules
     typedef mdsim::gpu::maximum_squared_displacement<dimension, float_type> max_displacement_type;
     typedef mdsim::gpu::integrators::verlet_nvt_hoover<dimension, double> integrator_type;
     typedef mdsim::gpu::particle_group_all<dimension, float_type> particle_group_type;
-    typedef mdsim::gpu::positions::lattice<dimension, float_type, halmd::random::gpu::rand48> position_type;
+    typedef mdsim::gpu::positions::lattice<dimension, float_type> position_type;
     typedef halmd::random::gpu::random<halmd::random::gpu::rand48> random_type;
     typedef observables::gpu::thermodynamics<dimension, float_type> thermodynamics_type;
     typedef mdsim::gpu::velocities::boltzmann<dimension, float_type, halmd::random::gpu::rand48> velocity_type;

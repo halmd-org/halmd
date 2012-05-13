@@ -228,7 +228,7 @@ test_euler<modules_type>::test_euler()
     box = boost::make_shared<box_type>(box_length);
     integrator = boost::make_shared<integrator_type>(particle, box, timestep);
     random = boost::make_shared<random_type>();
-    position = boost::make_shared<position_type>(particle, box, random, slab);
+    position = boost::make_shared<position_type>(particle, box, slab);
     velocity = boost::make_shared<velocity_type>(particle, random, temp);
     clock = boost::make_shared<clock_type>(1);
     phase_space = boost::make_shared<phase_space_type>(boost::make_shared<particle_group_type>(particle), particle, box, clock);
@@ -303,7 +303,7 @@ struct gpu_modules
     typedef typename particle_group_type::particle_type particle_type;
     typedef mdsim::gpu::integrators::euler<dimension, float_type> integrator_type;
     typedef halmd::random::gpu::random<halmd::random::gpu::rand48> random_type;
-    typedef mdsim::gpu::positions::lattice<dimension, float_type, halmd::random::gpu::rand48> position_type;
+    typedef mdsim::gpu::positions::lattice<dimension, float_type> position_type;
     typedef mdsim::gpu::velocities::boltzmann<dimension, float_type, halmd::random::gpu::rand48> velocity_type;
     typedef observables::host::samples::phase_space<dimension, float_type> sample_type;
     typedef observables::gpu::phase_space<sample_type> phase_space_type;
