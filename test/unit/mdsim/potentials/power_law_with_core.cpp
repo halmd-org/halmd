@@ -323,7 +323,7 @@ power_law_with_core<float_type>::power_law_with_core()
       , 12, 7;
 
     // create modules
-    particle = boost::make_shared<particle_type>(accumulate(npart_list.begin(), npart_list.end(), 0));
+    particle = boost::make_shared<particle_type>(accumulate(npart_list.begin(), npart_list.end(), 0), npart_list.size());
     box = boost::make_shared<box_type>(typename box_type::vector_type(box_length));
     potential = boost::make_shared<potential_type>(
         particle->nspecies(), particle->nspecies(), cutoff_array, core_array, epsilon_array, sigma_array, index_array

@@ -258,7 +258,7 @@ lennard_jones<float_type>::lennard_jones()
       , 2., 4.;
 
     // create modules
-    particle = boost::make_shared<particle_type>(accumulate(npart_list.begin(), npart_list.end(), 0));
+    particle = boost::make_shared<particle_type>(accumulate(npart_list.begin(), npart_list.end(), 0), npart_list.size());
     box = boost::make_shared<box_type>(typename box_type::vector_type(box_length));
     potential = boost::make_shared<potential_type>(particle->nspecies(), particle->nspecies(), cutoff_array, epsilon_array, sigma_array);
     host_potential = boost::make_shared<host_potential_type>(particle->nspecies(), particle->nspecies(), cutoff_array, epsilon_array, sigma_array);
