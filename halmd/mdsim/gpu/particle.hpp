@@ -37,7 +37,6 @@ class particle
 public:
     typedef typename type_traits<dimension, float_type>::vector_type vector_type;
     typedef typename type_traits<dimension, float>::gpu::coalesced_vector_type gpu_vector_type;
-    struct defaults;
 
     typedef vector_type position_type;
     typedef vector_type image_type;
@@ -76,7 +75,7 @@ public:
      * All particle arrays, except the masses, are initialised to zero.
      * The particle masses are initialised to unit mass.
      */
-    particle(std::size_t nparticle, unsigned int nspecies = 1, unsigned int threads = defaults::threads());
+    particle(std::size_t nparticle, unsigned int nspecies = 1);
 
     /**
      * Returns number of particles.
@@ -753,12 +752,6 @@ inline void particle<dimension, float_type>::set_hypervirial(iterator_type const
     cuda::memset(g_hypervirial_, 0, g_hypervirial_.capacity());
     cuda::copy(h_hypervirial, g_hypervirial_);
 }
-
-template <int dimension, typename float_type>
-struct particle<dimension, float_type>::defaults
-{
-    static unsigned int threads();
-};
 
 } // namespace mdsim
 } // namespace gpu

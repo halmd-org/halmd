@@ -47,9 +47,9 @@ namespace gpu {
  * @param particles number of particles per type or species
  */
 template <int dimension, typename float_type>
-particle<dimension, float_type>::particle(size_t nparticle, unsigned int nspecies, unsigned int threads)
-  // default CUDA kernel execution dimensions
-  : dim(device::validate(cuda::config((nparticle + threads - 1) / threads, threads)))
+particle<dimension, float_type>::particle(size_t nparticle, unsigned int nspecies)
+  // FIXME default CUDA kernel execution dimensions
+  : dim(device::validate(cuda::config((nparticle + 128 - 1) / 128, 128)))
   // allocate global device memory
   , nspecies_(std::max(nspecies, 1u))
   , g_position_(nparticle)
@@ -235,11 +235,6 @@ void particle<dimension, float_type>::rearrange(cuda::vector<unsigned int> const
     cuda::configure(dim.grid, dim.block);
     get_particle_kernel<dimension>().gen_index(g_reverse_tag_);
     sort(g_tag, g_reverse_tag_);
-}
-
-template <int dimension, typename float_type>
-unsigned int particle<dimension, float_type>::defaults::threads() {
-    return 128;
 }
 
 template <typename particle_type>
@@ -483,8 +478,6 @@ struct wrap_particle
   : particle_type
   , luabind::wrap_base
 {
-    wrap_particle(size_t nparticle, unsigned int nspecies, unsigned int threads) : particle_type(nparticle, nspecies, threads) {}
-
     wrap_particle(size_t nparticle, unsigned int nspecies) : particle_type(nparticle, nspecies) {}
 };
 
@@ -500,7 +493,6 @@ void particle<dimension, float_type>::luaopen(lua_State* L)
             namespace_("gpu")
             [
                 class_<particle, boost::shared_ptr<particle>, wrap_particle<particle> >(class_name.c_str())
-                    .def(constructor<size_t, unsigned int, unsigned int>())
                     .def(constructor<size_t, unsigned int>())
                     .property("nparticle", &particle::nparticle)
                     .property("nspecies", &particle::nspecies)
@@ -531,12 +523,9 @@ void particle<dimension, float_type>::luaopen(lua_State* L)
                     .property("aux_enable", &wrap_aux_enable<particle>)
                     .property("prepare", &wrap_prepare<particle>)
                     .property("set", &wrap_set<particle>)
-                    .scope[
-                        namespace_("defaults")
-                        [
-                            def("threads", &defaults::threads)
-                        ]
-                      , class_<runtime>("runtime")
+                    .scope
+                    [
+                        class_<runtime>("runtime")
                             .def_readonly("rearrange", &runtime::rearrange)
                     ]
                     .def_readonly("runtime", &particle::runtime_)
