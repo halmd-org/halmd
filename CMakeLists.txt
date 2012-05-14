@@ -43,35 +43,8 @@ if(HALMD_USE_STATIC_LIBS)
   set(HDF5_USE_STATIC_LIBS TRUE)
 endif()
 
-# We need to support both Boost libraries shipped with the system, and
-# self-compiled Boost libraries for users on systems with outdated libraries
-# and for developers with the need for compilation without warnings.
-#
-# On Redhat and SuSE systems, the thread-safe Boost libraries are named
-# libboost_<component>-mt, while on Debian systems, and with Boost upstream,
-# the thread-safe Boost libraries are named libboost_<component>, as the
-# latter only ship thread-safe Boost libraries.
-#
-# If Boost_USE_MULTITHREADED is set to TRUE, which is the default, the
-# FindBoost module prefers libraries with -mt suffix over libraries without
-# -mt suffix. This may result in a mess when using self-compiled libraries
-# configured in CMAKE_PREFIX_PATH, since the include path will be set to the
-# self-compiled headers, while library paths are set the system libraries.
-#
-# If Boost_USE_MULTITHREADED is set to FALSE, both self-compiled libraries
-# and system libraries on Debian are found properly. However, with system
-# libraries on Redhat and SuSE, the thread-unsafe variants will be used,
-# which conflicts with our requirement for thread-safe libraries.
-#
-# The only fail-safe solution is to set Boost_NO_SYSTEM_PATHS to TRUE if
-# undefined, to properly find self-compiled Boost libraries. If the user
-# wishes to use the Boost libraries of the system, Boost_NO_SYSTEM_PATHS
-# may be overridden with cmake -DBoost_NO_SYSTEM_PATHS=FALSE.
-#
+# Require thread-safe Boost libraries for thread-safe Boost Log
 set(Boost_USE_MULTITHREADED TRUE)
-if(NOT DEFINED Boost_NO_SYSTEM_PATHS)
-  set(Boost_NO_SYSTEM_PATHS TRUE)
-endif()
 
 find_package(Boost 1.43.0 QUIET REQUIRED COMPONENTS
   date_time
