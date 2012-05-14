@@ -23,7 +23,6 @@
 #include <halmd/numeric/blas/blas.hpp>
 #include <halmd/utility/tuple.hpp>
 #include <halmd/mdsim/forces/trunc/local_r4.hpp>
-#include <halmd/mdsim/forces/trunc/discontinuous.hpp>
 
 namespace halmd {
 namespace mdsim {
@@ -120,8 +119,8 @@ using namespace halmd::mdsim::forces::trunc;
 template class pair_full_wrapper<3, morse>;
 template class pair_full_wrapper<2, morse>;
 
-template class pair_trunc_wrapper<3, morse, discontinuous>;
-template class pair_trunc_wrapper<2, morse, discontinuous>;
+template class pair_trunc_wrapper<3, morse>;
+template class pair_trunc_wrapper<2, morse>;
 template class pair_trunc_wrapper<3, morse, local_r4<float> >;
 template class pair_trunc_wrapper<2, morse, local_r4<float> >;
 

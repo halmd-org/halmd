@@ -24,7 +24,6 @@
 #include <halmd/numeric/pow.hpp>  // std::pow is not a device function
 #include <halmd/utility/tuple.hpp>
 #include <halmd/mdsim/forces/trunc/local_r4.hpp>
-#include <halmd/mdsim/forces/trunc/discontinuous.hpp>
 
 namespace halmd {
 namespace mdsim {
@@ -130,8 +129,8 @@ using namespace halmd::mdsim::forces::trunc;
 template class pair_full_wrapper<3, modified_lennard_jones>;
 template class pair_full_wrapper<2, modified_lennard_jones>;
 
-template class pair_trunc_wrapper<3, modified_lennard_jones, discontinuous>;
-template class pair_trunc_wrapper<2, modified_lennard_jones, discontinuous>;
+template class pair_trunc_wrapper<3, modified_lennard_jones>;
+template class pair_trunc_wrapper<2, modified_lennard_jones>;
 template class pair_trunc_wrapper<3, modified_lennard_jones, local_r4<float> >;
 template class pair_trunc_wrapper<2, modified_lennard_jones, local_r4<float> >;
 
