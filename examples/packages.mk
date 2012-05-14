@@ -253,7 +253,7 @@ BOOST_TARBALL_URL = http://sourceforge.net/projects/boost/files/boost/$(BOOST_VE
 BOOST_TARBALL_SHA256 = dd748a7f5507a7e7af74f452e1c52a64e651ed1f7263fce438a06641d2180d3c
 BOOST_BUILD_DIR = boost_$(BOOST_RELEASE)
 BOOST_INSTALL_DIR = $(PREFIX)/boost_$(BOOST_RELEASE)
-BOOST_BUILD_FLAGS = cxxflags=-fPIC dll-path=$(BOOST_INSTALL_DIR)/lib
+BOOST_BUILD_FLAGS = threading=multi variant=release --layout=tagged cxxflags=-fPIC dll-path=$(BOOST_INSTALL_DIR)/lib
 
 ifndef USE_BZIP2
 BOOST_BUILD_FLAGS += -sNO_BZIP2=1
