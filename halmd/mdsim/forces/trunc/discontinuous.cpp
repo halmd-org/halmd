@@ -17,41 +17,40 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef HALMD_MDSIM_SMOOTHERS_NOSMOOTH_HPP
-#define HALMD_MDSIM_SMOOTHERS_NOSMOOTH_HPP
-
-#include <halmd/config.hpp>
-
-#ifndef __CUDACC__
-# include <lua.hpp>
-#endif
+#include <halmd/mdsim/forces/trunc/discontinuous.hpp>
+#include <halmd/utility/lua/lua.hpp>
 
 namespace halmd {
 namespace mdsim {
-namespace smoothers {
+namespace forces {
+namespace trunc {
 
-/**
- * This is the smoothing function which does no smoothing at all.
- */
-class nosmooth
+void discontinuous::luaopen(lua_State* L)
 {
-public:
-#ifndef __CUDACC__
-    static void luaopen(lua_State* L);
-#endif
+    using namespace luabind;
+    module(L, "libhalmd")
+    [
+        namespace_("mdsim")
+        [
+            namespace_("forces")
+            [
+                namespace_("trunc")
+                [
+                    class_<discontinuous, boost::shared_ptr<discontinuous> >("discontinuous")
+                        .def(constructor<>())
+                ]
+            ]
+        ]
+    ];
+}
 
-    /**
-     * Calculate the smoothing based on the particles distance r,
-     * the cutoff distance r_cut, the scalar force |F(r)| f_abs, and
-     * the potential U(r).
-     * In this case, all variables remain unchanged
-     */
-    template <typename float_type>
-    HALMD_GPU_ENABLED void operator()(float_type, float_type, float_type&, float_type&) const {}
-};
+HALMD_LUA_API int luaopen_libhalmd_mdsim_forces_trunc_discontinuous(lua_State* L)
+{
+    discontinuous::luaopen(L);
+    return 0;
+}
 
-} // namespace smoothers
+} // namespace trunc
+} // namespace forces
 } // namespace mdsim
 } // namespace halmd
-
-#endif /* ! HALMD_MDSIM_SMOOTHERS_NOSMOOTH_HPP */

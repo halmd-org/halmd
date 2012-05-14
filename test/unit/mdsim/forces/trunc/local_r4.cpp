@@ -20,7 +20,7 @@
 
 #include <halmd/config.hpp>
 
-#define BOOST_TEST_MODULE localr4
+#define BOOST_TEST_MODULE local_r4
 #include <boost/test/unit_test.hpp>
 
 #ifndef HALMD_NO_CXX11
@@ -31,8 +31,8 @@
 #include <limits>
 
 #include <halmd/mdsim/box.hpp>
+#include <halmd/mdsim/forces/trunc/local_r4.hpp>
 #include <halmd/mdsim/host/potentials/lennard_jones.hpp>
-#include <halmd/mdsim/smoothers/localr4.hpp>
 #ifdef HALMD_WITH_GPU
 # include <halmd/mdsim/gpu/forces/pair_trunc.hpp>
 # include <halmd/mdsim/gpu/particle.hpp>
@@ -44,10 +44,10 @@
 
 BOOST_AUTO_TEST_SUITE( host )
 
-BOOST_AUTO_TEST_CASE( localr4 )
+BOOST_AUTO_TEST_CASE( local_r4 )
 {
     typedef halmd::mdsim::host::potentials::lennard_jones<double> potential_type;
-    typedef halmd::mdsim::smoothers::localr4<double> smooth_type;
+    typedef halmd::mdsim::forces::trunc::local_r4<double> trunc_type;
     typedef potential_type::matrix_type matrix_type;
 
     float wca_cut = std::pow(2., 1 / 6.);
@@ -71,7 +71,7 @@ BOOST_AUTO_TEST_CASE( localr4 )
 
     // construct potential module
     potential_type potential(ntype, ntype, cutoff_array, epsilon_array, sigma_array);
-    smooth_type smooth(h);
+    trunc_type trunc(h);
 
     double const eps = std::numeric_limits<double>::epsilon();
     typedef std::array<double, 3> row_type;
@@ -93,7 +93,7 @@ BOOST_AUTO_TEST_CASE( localr4 )
         // AA interaction
         boost::tie(fval, en_pot, hvir) = potential(rr, 0, 0);
 
-        smooth(row[0], rcut, fval, en_pot);
+        trunc(row[0], rcut, fval, en_pot);
 
         double const tolerance = 8 * eps * (1 + rcut / (rcut - row[0]));
 
@@ -117,7 +117,7 @@ BOOST_AUTO_TEST_CASE( localr4 )
         // AB interaction
         boost::tie(fval, en_pot, hvir) = potential(rr, 0, 1);
 
-        smooth(row[0], rcut, fval, en_pot);
+        trunc(row[0], rcut, fval, en_pot);
 
         double const tolerance = 8 * eps * (1 + rcut / (rcut - row[0]));
 
@@ -141,7 +141,7 @@ BOOST_AUTO_TEST_CASE( localr4 )
         boost::tie(fval, en_pot, hvir) = potential(rr, 1, 1);
         double const rcut = potential.r_cut(1, 1);
 
-        smooth(row[0], rcut, fval, en_pot);
+        trunc(row[0], rcut, fval, en_pot);
         double const tolerance = 9 * eps * (1 + rcut / (rcut - row[0]));
 
         BOOST_CHECK_CLOSE_FRACTION(fval, row[1], 2 * tolerance);
@@ -156,17 +156,17 @@ BOOST_AUTO_TEST_SUITE_END() // host
 BOOST_AUTO_TEST_SUITE( gpu )
 
 template <typename float_type>
-struct test_localr4
+struct test_local_r4
 {
     enum { dimension = 2 };
 
     typedef halmd::mdsim::box<dimension> box_type;
-    typedef halmd::mdsim::smoothers::localr4<float_type> smooth_type;
-    typedef halmd::mdsim::smoothers::localr4<double> host_smooth_type;
+    typedef halmd::mdsim::forces::trunc::local_r4<float_type> trunc_type;
+    typedef halmd::mdsim::forces::trunc::local_r4<double> host_trunc_type;
     typedef halmd::mdsim::gpu::particle<dimension, float_type> particle_type;
     typedef halmd::mdsim::gpu::potentials::lennard_jones<float_type> potential_type;
     typedef halmd::mdsim::host::potentials::lennard_jones<double> host_potential_type;
-    typedef halmd::mdsim::gpu::forces::pair_trunc<dimension, float_type, potential_type, smooth_type> force_type;
+    typedef halmd::mdsim::gpu::forces::pair_trunc<dimension, float_type, potential_type, trunc_type> force_type;
     typedef test::unit::mdsim::potentials::gpu::neighbour_chain<dimension, float_type> neighbour_type;
 
     typedef typename particle_type::vector_type vector_type;
@@ -174,19 +174,19 @@ struct test_localr4
     std::vector<unsigned int> npart_list;
     boost::shared_ptr<box_type> box;
     boost::shared_ptr<potential_type> potential;
-    boost::shared_ptr<smooth_type> smoother;
-    boost::shared_ptr<host_smooth_type> host_smoother;
+    boost::shared_ptr<trunc_type> trunc;
+    boost::shared_ptr<host_trunc_type> host_trunc;
     boost::shared_ptr<force_type> force;
     boost::shared_ptr<neighbour_type> neighbour;
     boost::shared_ptr<particle_type> particle;
     boost::shared_ptr<host_potential_type> host_potential;
 
-    test_localr4();
+    test_local_r4();
     void test();
 };
 
 template <typename float_type>
-void test_localr4<float_type>::test()
+void test_local_r4<float_type>::test()
 {
     // place particles along the x-axis within one half of the box,
     // put every second particle at the origin
@@ -233,7 +233,7 @@ void test_localr4<float_type>::test()
 
         if (rr < host_potential->rr_cut(type1, type2)) {
             double rcut = host_potential->r_cut(type1, type2);
-            (*host_smoother)(std::sqrt(rr), rcut, fval, en_pot_);
+            (*host_trunc)(std::sqrt(rr), rcut, fval, en_pot_);
             // the GPU force module stores only a fraction of these values
             en_pot_ /= 2;
 
@@ -255,7 +255,7 @@ void test_localr4<float_type>::test()
 }
 
 template <typename float_type>
-test_localr4<float_type>::test_localr4()
+test_local_r4<float_type>::test_local_r4()
 {
     typedef typename potential_type::matrix_type matrix_type;
 
@@ -288,13 +288,13 @@ test_localr4<float_type>::test_localr4()
     potential = boost::make_shared<potential_type>(particle->nspecies(), particle->nspecies(), cutoff_array, epsilon_array, sigma_array);
     host_potential = boost::make_shared<host_potential_type>(particle->nspecies(), particle->nspecies(), cutoff_array, epsilon_array, sigma_array);
     neighbour = boost::make_shared<neighbour_type>(particle);
-    smoother = boost::make_shared<smooth_type>(h);
-    host_smoother = boost::make_shared<host_smooth_type>(h);
-    force = boost::make_shared<force_type>(potential, particle, particle, box, neighbour, smoother);
+    trunc = boost::make_shared<trunc_type>(h);
+    host_trunc = boost::make_shared<host_trunc_type>(h);
+    force = boost::make_shared<force_type>(potential, particle, particle, box, neighbour, trunc);
 }
 
-BOOST_FIXTURE_TEST_CASE( localr4, set_cuda_device ) {
-    test_localr4<float>().test();
+BOOST_FIXTURE_TEST_CASE( local_r4, set_cuda_device ) {
+    test_local_r4<float>().test();
 }
 
 BOOST_AUTO_TEST_SUITE_END() // gpu

@@ -1,5 +1,5 @@
 --
--- Copyright © 2012 Nicolas Höft
+-- Copyright © 2012  Nicolas Höft
 --
 -- This file is part of HALMD.
 --
@@ -17,29 +17,6 @@
 -- along with this program.  If not, see <http://www.gnu.org/licenses/>.
 --
 
-local device = require("halmd.utility.device")
 local module = require("halmd.utility.module")
 
---
--- C²-continuous smoothing based on local r^4 dependence
---
-local M = module("halmd.mdsim.smoothers.localr4")
-
--- grab C++ wrappers
-local localr4 = {
-    float = assert(libhalmd.mdsim.smoothers.localr4_float)
-  , double = assert(libhalmd.mdsim.smoothers.localr4_double)
-}
-
-function M.__new(args)
-    local h = assert(args.h)
-    local smooth
-    if device() then
-        smooth = assert(localr4.float)
-    else
-        smooth = assert(localr4.double)
-    end
-    return smooth(h)
-end
-
-return M
+return module.loader("halmd.mdsim.forces.trunc")

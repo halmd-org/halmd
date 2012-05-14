@@ -18,8 +18,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef HALMD_MDSIM_SMOOTHERS_LOCALR4_HPP
-#define HALMD_MDSIM_SMOOTHERS_LOCALR4_HPP
+#ifndef HALMD_MDSIM_FORCES_TRUNC_LOCAL_R4_HPP
+#define HALMD_MDSIM_FORCES_TRUNC_LOCAL_R4_HPP
 
 #include <halmd/config.hpp>
 
@@ -30,7 +30,8 @@
 
 namespace halmd {
 namespace mdsim {
-namespace smoothers {
+namespace forces {
+namespace trunc {
 
 /**
  * This class implments the smoothing function in the form
@@ -38,13 +39,13 @@ namespace smoothers {
  * where h is the smoothing parameter given in the constructor.
  */
 template <typename float_type>
-class localr4
+class local_r4
 {
 public:
 #ifndef __CUDACC__
     static void luaopen(lua_State* L);
 
-    localr4(float_type h) : rri_smooth_(std::pow(h, -2)) {}
+    local_r4(float_type h) : rri_smooth_(std::pow(h, -2)) {}
 #endif
 
     /**
@@ -61,7 +62,7 @@ private:
 };
 
 template <typename float_type>
-HALMD_GPU_ENABLED void localr4<float_type>::operator()(
+HALMD_GPU_ENABLED void local_r4<float_type>::operator()(
     float_type r        // absolute particle distnace
   , float_type r_cut    // cutoff radius
   , float_type& f_abs   // F(r) / |r|
@@ -82,8 +83,9 @@ HALMD_GPU_ENABLED void localr4<float_type>::operator()(
     pot = h0_r * pot;
 }
 
-} // namespace smoothers
+} // namespace trunc
+} // namespace forces
 } // namespace mdsim
 } // namespace halmd
 
-#endif /* ! HALMD_MDSIM_SMOOTHERS_LOCALR4_HPP */
+#endif /* ! HALMD_MDSIM_FORCES_TRUNC_LOCAL_R4_HPP */

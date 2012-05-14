@@ -22,8 +22,8 @@
 #include <halmd/mdsim/gpu/potentials/lennard_jones_simple_kernel.hpp>
 #include <halmd/numeric/blas/blas.hpp>
 #include <halmd/utility/tuple.hpp>
-#include <halmd/mdsim/smoothers/localr4.hpp>
-#include <halmd/mdsim/smoothers/nosmooth.hpp>
+#include <halmd/mdsim/forces/trunc/local_r4.hpp>
+#include <halmd/mdsim/forces/trunc/discontinuous.hpp>
 
 namespace halmd {
 namespace mdsim {
@@ -106,15 +106,15 @@ cuda::symbol<float> lennard_jones_simple_wrapper::en_cut = lennard_jones_simple_
 namespace forces {
 
 using namespace halmd::mdsim::gpu::potentials::lennard_jones_simple_kernel;
-using namespace halmd::mdsim::smoothers;
+using namespace halmd::mdsim::forces::trunc;
 
 template class pair_full_wrapper<3, lennard_jones_simple>;
 template class pair_full_wrapper<2, lennard_jones_simple>;
 
-template class pair_trunc_wrapper<3, lennard_jones_simple, nosmooth>;
-template class pair_trunc_wrapper<2, lennard_jones_simple, nosmooth>;
-template class pair_trunc_wrapper<3, lennard_jones_simple, localr4<float> >;
-template class pair_trunc_wrapper<2, lennard_jones_simple, localr4<float> >;
+template class pair_trunc_wrapper<3, lennard_jones_simple, discontinuous>;
+template class pair_trunc_wrapper<2, lennard_jones_simple, discontinuous>;
+template class pair_trunc_wrapper<3, lennard_jones_simple, local_r4<float> >;
+template class pair_trunc_wrapper<2, lennard_jones_simple, local_r4<float> >;
 
 } // namespace forces
 

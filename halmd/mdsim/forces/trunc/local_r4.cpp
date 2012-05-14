@@ -20,51 +20,56 @@
 
 #include <string>
 
-#include <halmd/mdsim/smoothers/localr4.hpp>
+#include <halmd/mdsim/forces/trunc/local_r4.hpp>
 #include <halmd/utility/lua/lua.hpp>
 #include <halmd/utility/demangle.hpp>
 
 namespace halmd {
 namespace mdsim {
-namespace smoothers {
+namespace forces {
+namespace trunc {
 
 template <typename float_type>
-void localr4<float_type>::luaopen(lua_State* L)
+void local_r4<float_type>::luaopen(lua_State* L)
 {
     using namespace luabind;
-    static std::string class_name("localr4_" + demangled_name<float_type>());
+    static std::string class_name("local_r4_" + demangled_name<float_type>());
     module(L, "libhalmd")
     [
         namespace_("mdsim")
         [
-            namespace_("smoothers")
+            namespace_("forces")
             [
-                class_<localr4, boost::shared_ptr<localr4> >(class_name.c_str())
-                    .def(constructor<float_type>())
+                namespace_("trunc")
+                [
+                    class_<local_r4, boost::shared_ptr<local_r4> >(class_name.c_str())
+                        .def(constructor<float_type>())
+                ]
             ]
         ]
     ];
 }
 
-HALMD_LUA_API int luaopen_libhalmd_mdsim_smoothers_localr4(lua_State* L)
+HALMD_LUA_API int luaopen_libhalmd_mdsim_forces_trunc_local_r4(lua_State* L)
 {
 #if defined(HALMD_WITH_GPU) || defined(USE_HOST_SINGLE_PRECISION)
-    localr4<float>::luaopen(L);
+    local_r4<float>::luaopen(L);
 #endif
 #ifndef USE_HOST_SINGLE_PRECISION
-    localr4<double>::luaopen(L);
+    local_r4<double>::luaopen(L);
 #endif
     return 0;
 }
 
 // explicit instantiation
 #if defined(HALMD_WITH_GPU) || defined(USE_HOST_SINGLE_PRECISION)
-template class localr4<float>;
+template class local_r4<float>;
 #endif
 #ifndef USE_HOST_SINGLE_PRECISION
-template class localr4<double>;
+template class local_r4<double>;
 #endif
 
-} // namespace smoothers
+} // namespace trunc
+} // namespace forces
 } // namespace mdsim
 } // namespace halmd
