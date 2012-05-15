@@ -46,7 +46,7 @@ endif()
 # Require thread-safe Boost libraries for thread-safe Boost Log
 set(Boost_USE_MULTITHREADED TRUE)
 
-find_package(Boost 1.43.0 QUIET REQUIRED COMPONENTS
+find_package(Boost 1.49.0 QUIET REQUIRED COMPONENTS
   date_time
   filesystem
   program_options
