@@ -32,11 +32,6 @@ Cache variables are passed as options to CMake using ``-D...``
 
      Recommended value is ``-DHDF5_USE_STATIC_LIBS=TRUE``.
 
-   HALMD_BACKEND_EXECUTABLES
-     Compile separate, dynamically linked executable for each backend.
-
-     Recommended value is ``-DHALMD_BACKEND_EXECUTABLES=TRUE``.
-
    HALMD_WITH_GPU
 
      Forcibly enable or disable GPU support.

@@ -82,17 +82,6 @@ else()
   set(HALMD_WITH_GPU FALSE)
 endif()
 
-if(HALMD_USE_STATIC_LIBS)
-  set(HALMD_BACKEND_EXECUTABLES TRUE CACHE BOOL
-    "Build separate executable for each backend" FORCE)
-else(HALMD_USE_STATIC_LIBS)
-  set(HALMD_BACKEND_EXECUTABLES FALSE CACHE BOOL
-    "Build separate executable for each backend")
-endif(HALMD_USE_STATIC_LIBS)
-if(HALMD_BACKEND_EXECUTABLES)
-  add_definitions(-DBACKEND_EXECUTABLES)
-endif(HALMD_BACKEND_EXECUTABLES)
-
 set(HALMD_VARIANT_HILBERT_ORDER TRUE CACHE BOOL
   "Use Hilbert space-filling curve particle ordering")
 if(HALMD_VARIANT_HILBERT_ORDER)
