@@ -31,6 +31,11 @@ if(DEFINED CMAKE_CXX_COMPILER_ID)
   else()
     message(WARNING "Unsupported CXX compiler: ${CMAKE_CXX_COMPILER_ID}")
   endif()
+
+  # Work around disabled thread support with Boost < 1.49 and libstdc++ ≥ 4.7
+  # https://svn.boost.org/trac/boost/ticket/6165
+  set(CMAKE_CXX_FLAGS_INIT "${CMAKE_CXX_FLAGS_INIT} -D_GLIBCXX_HAVE_GTHR_DEFAULT")
+
 endif()
 
 if(DEFINED CMAKE_CUDA_COMPILER_ID)
