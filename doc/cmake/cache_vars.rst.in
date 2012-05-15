@@ -37,6 +37,15 @@ Cache variables are passed as options to CMake using ``-D...``
 
      Recommended value is ``-DHALMD_BACKEND_EXECUTABLES=TRUE``.
 
+   HALMD_WITH_GPU
+
+     Forcibly enable or disable GPU support.
+
+     By default, GPU support is enabled or disabled depending on whether CUDA
+     is available. If HALMD_WITH_GPU is explicitly set to TRUE, CMake will
+     fail if CUDA is not available. If HALMD_WITH_GPU is explicitly set to
+     FALSE, GPU support will be disabled even if CUDA is available.
+
    HALMD_USE_STATIC_LIBS
      Compile separate, statically linked executable for each backend.
 
