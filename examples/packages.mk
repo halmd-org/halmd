@@ -16,7 +16,7 @@
 #
 
 # default installation prefix
-PREFIX = $(HOME)/opt
+PREFIX ?= $(HOME)/opt
 
 # support parallel builds
 ifdef CONCURRENCY_LEVEL
