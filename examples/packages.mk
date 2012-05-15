@@ -319,6 +319,7 @@ install-boost: .build-boost
 	cd $(BOOST_BUILD_DIR) && ./bjam $(BOOST_BUILD_FLAGS) install --prefix=$(BOOST_INSTALL_DIR)
 
 clean-boost:
+	$(RM) $(BOOST_BUILD_DIR)
 	@$(RM) .build-boost
 	@$(RM) .configure-boost
 	@$(RM) .extract-boost
