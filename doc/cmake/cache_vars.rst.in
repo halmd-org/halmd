@@ -44,10 +44,6 @@ Cache variables are passed as options to CMake using ``-D...``
    HALMD_USE_STATIC_LIBS
      Compile separate, statically linked executable for each backend.
 
-     This only compiles the host backends, as the CUDA runtime library requires
-     dynamic linking to load the CUDA driver.
-
-
    HALMD_VARIANT_CELL_SUMMATION_ORDER
      Use opposite cell summation order (GPU backends only).
 
