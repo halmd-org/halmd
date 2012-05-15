@@ -13,17 +13,8 @@ Useful environment variables for CMake
 
      Recommended value is ``NVCCFLAGS="-Xcompiler -fPIC -Xptxas -v -arch sm_12"``.
 
-   CUDA_INSTALL_PREFIX
-     Path to CUDA toolkit.
+   CMAKE_PREFIX_PATH
+     Colon-separated list with installation prefixes of third-party libraries.
 
-     This variable is not needed if the NVCC compiler is installed in a default
-     executable path, e.g. /usr/bin or /usr/local/bin, or in one of these
-     standard locations: /usr/local/cuda, /usr/lib/cuda, /usr/shared/cuda,
-     /opt/cuda
-
-   BOOST_LIBRARYDIR
-     Path to boost libraries.
-
-   BOOST_INCLUDEDIR
-     Path to boost header files.
+     This flag is useful with third-party libraries installed in non-system directories.
 
