@@ -3,18 +3,42 @@ Useful environment variables for CMake
 
 .. glossary::
 
-   CXXFLAGS
-     Compilation flags for C++ compiler.
-
-     Recommended value is ``CXXFLAGS="-fPIC -Wall"``.
-
-   NVCCFLAGS
-     Compilation flags for CUDA compiler.
-
-     Recommended value is ``NVCCFLAGS="-Xcompiler -fPIC -Xptxas -v -arch sm_12"``.
-
    CMAKE_PREFIX_PATH
      Colon-separated list with installation prefixes of third-party libraries.
 
      This flag is useful with third-party libraries installed in non-system directories.
+
+     Example::
+
+        export CMAKE_PREFIX_PATH=$HOME/opt/rhel6-x86_64/lua-5.2.0:$HOME/opt/rhel6-x86_64/hdf5-1.8.8:$HOME/opt/rhel6-x86_64/boost_1_49_0
+
+   CXX
+     Path to C++ compiler.
+
+     Override default C++ compiler ``c++``.
+
+     Example::
+
+        CXX=clang++ cmake ...
+
+   CXXFLAGS
+     Compilation flags for C++ compiler.
+
+     These flags *extend* the default C++ compiler flags.
+
+     For developers, recommended value is ``CXXFLAGS=-Werror`` to treat warnings as errors.
+
+     Example::
+
+        CXXFLAGS=-Werror cmake ...
+
+   CUDACC
+     Path to CUDA compiler.
+
+     Override default CUDA compiler ``nvcc``.
+
+   CUDAFLAGS
+     Compilation flags for CUDA compiler.
+
+     These flags *extend* the default CUDA compiler flags.
 
