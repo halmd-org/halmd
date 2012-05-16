@@ -379,7 +379,7 @@ template <int dimension, typename float_type>
 void particle<dimension, float_type>::luaopen(lua_State* L)
 {
     using namespace luabind;
-    static string class_name("particle_" + lexical_cast<string>(dimension) + "_");
+    static string class_name("particle_" + lexical_cast<string>(dimension));
     module(L, "libhalmd")
     [
         namespace_("mdsim")

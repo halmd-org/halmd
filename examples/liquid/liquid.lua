@@ -35,8 +35,9 @@ local function liquid(args)
     local reader = readers.trajectory{group = "A"}
 
     -- total number of particles from sum of particles per species
+    local nspecies = #args.particles
     local nparticle = 0
-    for i = 1, #args.particles do
+    for i = 1, nspecies do
         nparticle = nparticle + args.particles[i]
     end
     -- derive edge lengths from number of particles, density and edge ratios
@@ -56,12 +57,7 @@ local function liquid(args)
     -- label particles A, B, …
 
     -- create system state
-    local particle = mdsim.particle{
-        particles = assert(args.particles)
-      , masses = assert(args.masses)
-      , dimension = assert(dimension)
-      , label = "all" -- FIXME make optional
-    }
+    local particle = mdsim.particle({particles = nparticle, species = nspecies})
     -- add integrator
     mdsim.integrator{particle = particle}
     -- add force

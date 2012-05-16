@@ -1,5 +1,5 @@
 --
--- Copyright © 2010-2011  Peter Colberg
+-- Copyright © 2010-2012 Peter Colberg
 --
 -- This file is part of HALMD.
 --
@@ -17,110 +17,102 @@
 -- along with this program.  If not, see <http://www.gnu.org/licenses/>.
 --
 
-local device            = require("halmd.utility.device")
 local module            = require("halmd.utility.module")
 local mdsim = {
-    core                = require("halmd.mdsim.core")
+    box                 = require("halmd.mdsim.box")
+  , core                = require("halmd.mdsim.core")
+}
+local utility = {
+    device              = require("halmd.utility.device")
+  , profiler            = require("halmd.utility.profiler")
 }
 
--- grab C++ wrappers
-local particle_wrapper = {
-    host = {
-        [2] = libhalmd.mdsim.host.particle_2_
-      , [3] = libhalmd.mdsim.host.particle_3_
-    }
-  , [2] = libhalmd.mdsim.particle_2_
-  , [3] = libhalmd.mdsim.particle_3_
-}
-if libhalmd.mdsim.gpu then
-    particle_wrapper.gpu = {
-        [2] = libhalmd.mdsim.gpu.particle_2_
-      , [3] = libhalmd.mdsim.gpu.particle_3_
-    }
-end
-local h5 = libhalmd.h5
-local po = libhalmd.po
--- grab standard library
-local assert = assert
-local property = property
-
+---
+-- Particle arrays
+-- ===============
+--
 local M = module("halmd.mdsim.particle")
 
+-- grab C++ wrappers
+local particle = {
+    host = {
+        [2] = assert(libhalmd.mdsim.host.particle_2)
+      , [3] = assert(libhalmd.mdsim.host.particle_3)
+    }
+}
+if libhalmd.mdsim.gpu then
+    particle.gpu = {
+        [2] = assert(libhalmd.mdsim.gpu.particle_2)
+      , [3] = assert(libhalmd.mdsim.gpu.particle_3)
+    }
+end
+
+---
+-- Construct particle instance.
 --
--- construct particle module
---
--- @param dimension dimension of positional coordinates
+-- :param number particles: number of particles
+-- :param number species: number of species
+-- :param string label: instance label (defaults to ``all``)
 --
 function M.__new(args)
-    local dimension = assert(args.dimension)
-    local npart = args.particles or {1000} -- default value
-    local masses = assert(args.masses)
-    local label = assert(args.label)
-
-    local particle
-    if device() then
-        if args.threads then
-            particle = particle_wrapper.gpu[dimension](npart, masses, args.threads)
-        else
-            particle = particle_wrapper.gpu[dimension](npart, masses)
-        end
-    else
-        particle = particle_wrapper.host[dimension](npart, masses)
+    local nparticle = args.particles
+    if not nparticle then
+        error("missing argument: particles", 3)
     end
+    local nspecies = args.species
+    if not nspecies then
+        error("missing argument: species", 3)
+    end
+    local label = args.label or "all"
+
+    -- query positional dimension of simulation domain
+    local box = mdsim.box() -- singleton
+    local dimension = assert(box.dimension)
+
+    -- select particle class
+    local memory = utility.device() and "gpu" or "host"
+    local particle = assert(particle[memory][dimension])
+
+    -- construct particle instance
+    local self = particle(nparticle, nspecies)
 
     -- store particle label as Lua property
-    particle.label = property(function(self)
+    self.label = property(function(self)
         return label
     end)
 
-    local core = mdsim.core()
-    -- set particle types at the beginning of system preparation
-    core:on_prepend_setup(particle.set)
+    -- sequence of signal connections
+    local conn = {}
 
-    -- zero particle forces before adding partial forces
-    core:on_prepend_setup(particle.prepare)
-    core:on_prepend_force(particle.prepare)
+    self.connect = function(self)
+        if #conn == 0 then
+            local core = mdsim.core() -- singleton
+            table.insert(conn, core:on_prepend_setup(self.prepare))
+            table.insert(conn, core:on_prepend_force(self.prepare))
 
-    return particle
-end
-
---
--- connect runtime accumulators to module profiler
---
-function M.profile(self, profiler)
-    profiler:on_profile{self, rearrange = "rearrange particles by permutation"}
-end
-
--- override default parameter namespace
-M.namespace = "box"
-
---
--- assemble module options
---
--- @param desc po.options_description
---
-function M.options(desc)
-    desc:add("particles", po.uint_array(), "number of particles")
-    if particle_wrapper.gpu then
-        desc:add("threads", po.uint(), "number of CUDA threads per block")
+            local profiler = utility.profiler() -- singleton
+            local runtime = assert(self.runtime)
+            table.insert(conn, profiler:on_profile(runtime.rearrange, "rearrange particles by permutation"))
+        else
+            error("particle is already connected", 2)
+        end
     end
-end
 
---
--- read module parameters from HDF5 group
---
-function M.read_parameters(args, group)
-    args.particles = group:read_attribute("particles", h5.uint_array())
-end
+    self.disconnect = function(self)
+        if #conn > 0 then
+            for i = 1, #conn do
+                conn[i]:disconnect()
+            end
+            conn = {}
+        else
+            error("particle is already disconnected", 2)
+        end
+    end
 
---
--- write module parameters to HDF5 group
---
--- @param particle module instance
--- @param group HDF5 group
---
-function M.write_parameters(particle, group)
-    group:write_attribute("particles", h5.uint_array(), particle.ntypes)
+    -- zero particle forces every step before partial forces are added
+    self:connect()
+
+    return self
 end
 
 return M
