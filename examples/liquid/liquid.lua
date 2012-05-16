@@ -87,12 +87,12 @@ local function liquid(args)
     end
 
     -- H5MD file writer
-    -- FIXME local writer = writers.h5md({path = ("%s.obs"):format(args.output)})
+    local writer = writers.h5md({path = ("%s.obs"):format(args.output)})
     -- Sample macroscopic state variables.
-    -- FIXME local msv = observables.thermodynamics{particle = particle_group, force = {force}, every = args.sampling.state_vars}
-    -- FIXME for i = 1, #msv do
-    -- FIXME     msv[i]:writer(writer, {every = args.sampling.state_vars})
-    -- FIXME end
+    local msv = observables.thermodynamics({particle = particle_group})
+    for i = 1, #msv do
+        msv[i]:writer(writer, {every = args.sampling.state_vars})
+    end
 
     -- Sample static structure factors, construct density modes before.
     -- FIXME local density_mode = observables.density_mode{
