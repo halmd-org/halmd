@@ -28,7 +28,7 @@ local utility = {
 }
 
 ---
--- Particle arrays
+-- Particle Arrays
 -- ===============
 --
 local M = module("halmd.mdsim.particle")
@@ -50,9 +50,10 @@ end
 ---
 -- Construct particle instance.
 --
--- :param number particles: number of particles
--- :param number species: number of species
--- :param string label: instance label (defaults to ``all``)
+-- :param table args: keyword arguments
+-- :param number args.particles: number of particles
+-- :param number args.species: number of species
+-- :param string args.label: instance label (defaults to ``all``)
 --
 function M.__new(args)
     local nparticle = args.particles
