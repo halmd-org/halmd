@@ -150,12 +150,18 @@ function M.__new(args)
         local label = assert(group.label)
         local logger = log.logger({label = ("phase_space (%s)"):format(label)})
 
+        local particle = assert(group.particle)
         local samplers = {}
-        for memory, class in pairs(phase_space) do
-            local particle = assert(group.particle)
-            samplers[memory] = class(group, particle, box, clock, logger)
+
+        -- construct phase space sampler to host memory
+        samplers.host = phase_space.host(group, particle, box, clock, logger)
+
+        -- if GPU is used, construct phase space sampler to GPU memory
+        if device() then
+            samplers.gpu = phase_space.gpu(group, particle, box, clock, logger)
         end
 
+        -- construct unified Lua object for host and gpu sampler
         local sampler = {group = group}
 
         sampler.acquire = function(self, args)
