@@ -1,15 +1,9 @@
 # Locate Lua library
 # This module defines
-#  LUA_FOUND, if false, do not try to link to Lua 
+#  LUALIBS_FOUND
 #  LUA_LIBRARIES
-#  LUA_INCLUDE_DIR, where to find lua.h 
+#  LUA_INCLUDE_DIR
 #
-# Note that the expected include convention is
-#  #include "lua.h"
-# and not
-#  #include <lua/lua.h>
-# This is because, the lua location is not standardized and may exist
-# in locations other than lua/
 
 #=============================================================================
 # Copyright 2007-2009 Kitware, Inc.
@@ -40,7 +34,7 @@ find_path(LUA_INCLUDE_DIR lua.h
   /opt
 )
 
-find_library(LUA_LIBRARY 
+find_library(LUA_LIBRARY
   NAMES lua lua52 lua5.2 lua-5.2 lua51 lua5.1 lua-5.1
   HINTS
   $ENV{LUA_DIR}
@@ -67,31 +61,14 @@ if(LUA_LIBRARY)
   endif(UNIX AND NOT APPLE)
 endif(LUA_LIBRARY)
 
-find_program(LUA_EXECUTABLE
-  NAMES lua lua52 lua5.2 lua-5.2 lua51 lua5.1 lua-5.1
-  HINTS
-  $ENV{LUA_DIR}
-  PATH_SUFFIXES bin
-  PATHS
-  ~/Library/Frameworks
-  /Library/Frameworks
-  /usr/local
-  /usr
-  /sw
-  /opt/local
-  /opt/csw
-  /opt
-)
-
 include(FindPackageHandleStandardArgs)
-# handle the QUIETLY and REQUIRED arguments and set LUA_FOUND to TRUE if 
+# handle the QUIETLY and REQUIRED arguments and set LUALIBS_FOUND to TRUE if
 # all listed variables are TRUE
-find_package_handle_standard_args(Lua  DEFAULT_MSG  LUA_LIBRARIES LUA_INCLUDE_DIR LUA_EXECUTABLE)
+find_package_handle_standard_args(LuaLibs DEFAULT_MSG LUA_LIBRARIES LUA_INCLUDE_DIR)
 
 mark_as_advanced(
   LUA_INCLUDE_DIR
   LUA_LIBRARIES
   LUA_LIBRARY
   LUA_MATH_LIBRARY
-  LUA_EXECUTABLE
 )

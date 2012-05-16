@@ -56,7 +56,7 @@ find_package(Boost 1.49.0 QUIET REQUIRED COMPONENTS
   unit_test_framework
 )
 find_package(HDF5 QUIET REQUIRED)
-find_package(Lua QUIET REQUIRED)
+find_package(LuaLibs QUIET REQUIRED)
 
 # By default, enable GPU support only if CUDA is available.
 # If HALMD_WITH_GPU is explicitly set to TRUE, require CUDA.
