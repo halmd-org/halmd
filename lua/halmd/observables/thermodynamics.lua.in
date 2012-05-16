@@ -54,7 +54,7 @@ local M = module("halmd.observables.thermodynamics")
 -- Construct thermodynamics observable.
 --
 -- :param table args: keyword arguments
--- :param args.particle_group: instance, or sequence of instances, of particle or particle_group
+-- :param args.particle: instance, or sequence of instances, of particle or particle_group
 -- :returns: instance, or sequence of instances, of thermodynamics
 --
 -- .. method:: writer(file, args)
