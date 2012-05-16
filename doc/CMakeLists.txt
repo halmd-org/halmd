@@ -23,6 +23,13 @@ if(NOT DVIPNG_CONVERTER)
 endif(NOT DVIPNG_CONVERTER)
 mark_as_advanced(DVIPNG_CONVERTER)
 
+# Lua scripts are used to extract inline documentation
+find_package(LuaInterp QUIET)
+if(NOT LUA_EXECUTABLE)
+  message(WARNING "Unable to find Lua interpreter")
+  set(GENERATE_DOC FALSE)
+endif()
+
 if(NOT GENERATE_DOC)
   message(WARNING "Missing required documentation tools")
   return()

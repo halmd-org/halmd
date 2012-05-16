@@ -57,7 +57,7 @@ find_package(Boost 1.43.0 QUIET REQUIRED COMPONENTS
 )
 find_package(CUDA QUIET)
 find_package(HDF5 QUIET REQUIRED)
-find_package(Lua QUIET REQUIRED)
+find_package(LuaLibs QUIET REQUIRED)
 
 if(CUDA_FOUND)
   enable_language(CUDA)
