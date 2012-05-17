@@ -58,8 +58,8 @@ local function liquid(args)
 
     -- create system state
     local particle = mdsim.particle({particles = nparticle, species = nspecies})
-    -- add integrator
-    mdsim.integrator{particle = particle}
+    -- add velocity-Verlet integrator
+    local integrator = mdsim.integrators.verlet({particle = particle, timestep = args.timestep})
     -- add force
     local force = mdsim.force{particle = particle}
     -- set initial particle positions (optionally from reader)
@@ -160,6 +160,7 @@ local function parse_args()
     }, default = "nve", help = "statistical ensemble"})
 
     parser:add_argument("steps", {type = "integer", default = 10000, help = "number of simulation steps"})
+    parser:add_argument("timestep", {type = "number", default = 0.001, help = "integration time step"})
 
     local sampling = parser:add_argument_group("sampling", {help = "sampling intervals"})
     sampling:add_argument("trajectory", {type = "integer", default = 1000, help = "sampling interval for trajectory"})

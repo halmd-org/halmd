@@ -1,5 +1,5 @@
 --
--- Copyright © 2010  Peter Colberg
+-- Copyright © 2010-2012 Peter Colberg
 --
 -- This file is part of HALMD.
 --
@@ -24,41 +24,111 @@ local mdsim = {
   , clock               = require("halmd.mdsim.clock")
   , core                = require("halmd.mdsim.core")
 }
+local utility = {
+    profiler            = require("halmd.utility.profiler")
+}
+
+---
+-- Velocity Verlet
+-- ===============
+--
+-- This NVE-ensemble integrator implements the velocity-Verlet algorithm in
+-- `J. Chem. Phys. 76, 637 <http://dx.doi.org/10.1063/1.442716>`_ (1982).
+--
+-- The algorithm consists of a first half-step
+--
+-- .. math::
+--
+--    \vec{v}\Bigl(t + \frac{\tau}{2}\Bigr) &= \vec{v}\Bigl(t\Bigr) + \frac{\tau}{2} \frac{\vec{F}\left(t\right)}{m}
+--    \\
+--    \vec{r}\Bigl(t + \tau\Bigr) &= \vec{r}\Bigl(t\Bigr) + \tau \vec{v}\Bigl(t + \frac{\tau}{2}\Bigr)
+--
+-- and a second half-step
+--
+-- .. math::
+--
+--    \vec{v}\Bigl(t + \tau\Bigr) = \vec{v}\Bigl(t + \frac{\tau}{2}\Bigr) + \frac{\tau}{2} \frac{\vec{F}\left(t + \tau\right)}{m}
+--
+local M = module("halmd.mdsim.integrators.verlet")
 
 -- grab C++ wrappers
 local verlet = assert(libhalmd.mdsim.integrators.verlet)
-local h5 = libhalmd.h5
 
-local M = module("halmd.mdsim.integrators.verlet")
-
+---
+-- Construct velocity-Verlet integrator for given system of particles.
 --
--- construct verlet module
+-- :param table args: keyword arguments
+-- :param args.particle: instance of :class:`halmd.mdsim.particle`
+-- :param number args.timestep: integration time step (defaults to :attr:`halmd.mdsim.clock.timestep`)
+--
+-- .. method:: set_timestep
+--
+--    Set integration time step in MD units.
+--
+--    This method forwards to :meth:`halmd.mdsim.clock.set_timestep`,
+--    to ensure that all integrators use an identical time step.
+--
+-- .. attribute:: timestep
+--
+--    Integration time step in MD units.
+--
+-- .. attribute:: integrate
+--
+--    Nullary slot to calculate first half-step.
+--
+--    By default this slot is connected to :meth:`halmd.mdsim.core.on_integrate`.
+--
+-- .. attribute:: finalize
+--
+--    Nullary slot to calculate second half-step.
+--
+--    By default this slot is connected to :meth:`halmd.mdsim.core.on_finalize`.
 --
 function M.__new(args)
-    -- dependency injection
-    local particle = assert(args.particle, "missing parameter: particle")
-    local dimension = assert(particle.dimension)
-    local box = mdsim.box() -- singleton
+    local particle = args.particle
+    if not particle then
+        error("missing parameter: particle", 3)
+    end
     local clock = mdsim.clock() -- singleton
-    local timestep = assert(clock.timestep)
+    local timestep = args.timestep
+    if timestep then
+        clock:set_timestep(timestep)
+    else
+        timestep = assert(clock.timestep)
+    end
+
+    local box = mdsim.box() -- singleton
+    local dimension = assert(box.dimension)
     local logger = log.logger({label = "verlet"})
 
-    local integrator = verlet(particle, box, timestep, logger)
+    local self = verlet(particle, box, timestep, logger)
 
     -- sequence of signal connections
     local conn = {}
+    -- capture C++ method set_timestep
+    local set_timestep = assert(self.set_timestep)
 
-    integrator.connect = function(self)
+    self.connect = function(self)
         if #conn == 0 then
             local core = mdsim.core() -- singleton
             table.insert(conn, core:on_integrate(self.integrate))
             table.insert(conn, core:on_finalize(self.finalize))
+
+            local clock = mdsim.clock() -- singleton
+            table.insert(conn, clock:on_set_timestep(function(timestep)
+                set_timestep(self, timestep)
+            end))
+
+            local profiler = utility.profiler() -- singleton
+            local runtime = assert(self.runtime)
+            table.insert(conn, profiler:on_profile(runtime.integrate, "first half-step of velocity-Verlet"))
+            table.insert(conn, profiler:on_profile(runtime.finalize, "second half-step of velocity-Verlet"))
         else
             error("integrator is already connected", 2)
         end
     end
 
-    integrator.disconnect = function(self)
+    self.disconnect = function(self)
         if #conn > 0 then
             for i = 1, #conn do
                 conn[i]:disconnect()
@@ -69,35 +139,16 @@ function M.__new(args)
         end
     end
 
+    -- forward Lua method set_timestep to clock
+    self.set_timestep = function(self, timestep)
+        local clock = mdsim.clock() -- singleton
+        clock:set_timestep(timestep)
+    end
+
     -- connect integrator to core
-    integrator:connect()
+    self:connect()
 
-    return integrator
-end
-
---
--- connect runtime accumulators to module profiler
---
-function M.profile(self, profiler)
-    profiler:on_profile{self, integrate = "first half-step of velocity-Verlet"}
-    profiler:on_profile{self, finalize = "second half-step of velocity-Verlet"}
-end
-
---
--- returns module description
---
-function M.description()
-    return "Velocity-Verlet integrator"
-end
-
---
--- write module parameters to HDF5 group
---
--- @param verlet module instance
--- @param group HDF5 group
---
-function M.write_parameters(verlet, group)
-    group:write_attribute("timestep", h5.float(), verlet.timestep)
+    return self
 end
 
 return M
