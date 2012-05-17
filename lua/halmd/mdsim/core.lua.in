@@ -1,5 +1,5 @@
 --
--- Copyright © 2010-2011  Peter Colberg
+-- Copyright © 2010-2012 Peter Colberg
 --
 -- This file is part of HALMD.
 --
@@ -21,28 +21,126 @@ local module            = require("halmd.utility.module")
 local mdsim = {
     clock               = require("halmd.mdsim.clock")
 }
+local utility = {
+    profiler            = require("halmd.utility.profiler")
+}
 
--- grab C++ wrappers
-local core_wrapper = libhalmd.mdsim.core
--- grab standard library
-local assert = assert
-
+---
+-- Core
+-- ====
+--
+-- The simulation core drives the MD step.
+--
 local M = module.singleton("halmd.mdsim.core")
 
---
--- construct core module
---
-function M.__new(args)
-    local clock = mdsim.clock() -- singleton
-    return core_wrapper(clock)
-end
+-- grab C++ wrappers
+local core = assert(libhalmd.mdsim.core)
 
+---
+-- Construct core.
 --
--- connect runtime accumulators to module profiler
+-- Returns a singleton instance of core.
 --
-function M.profile(self, profiler)
-    profiler:on_profile{self, setup = "microscopic state preparation"}
-    profiler:on_profile{self, mdstep = "MD integration step"}
+-- .. method:: setup()
+--
+--    Prepare microscopic system state.
+--
+--    This method is invoked by :meth:`halmd.observables.sampler.setup`.
+--
+-- .. method:: mdstep()
+--
+--    Perform a single MD integration step.
+--
+--    This method increments :attr:`halmd.mdsim.clock.step`,
+--    and emits all signals in order of definition below.
+--
+--    This method is invoked by :meth:`halmd.observables.sampler.run`.
+--
+-- .. method:: on_prepend_setup(slot)
+--
+--    Connect nullary slot to signal.
+--
+--    :returns: signal connection
+--
+-- .. method:: on_setup(slot)
+--
+--    Connect nullary slot to signal.
+--
+--    :returns: signal connection
+--
+-- .. method:: on_append_setup(slot)
+--
+--    Connect nullary slot to signal.
+--
+--    :returns: signal connection
+--
+-- .. method:: on_prepend_integrate(slot)
+--
+--    Connect nullary slot to signal.
+--
+--    :returns: signal connection
+--
+-- .. method:: on_integrate(slot)
+--
+--    Connect nullary slot to signal.
+--
+--    :returns: signal connection
+--
+-- .. method:: on_append_integrate(slot)
+--
+--    Connect nullary slot to signal.
+--
+--    :returns: signal connection
+--
+-- .. method:: on_prepend_force(slot)
+--
+--    Connect nullary slot to signal.
+--
+--    :returns: signal connection
+--
+-- .. method:: on_force(slot)
+--
+--    Connect nullary slot to signal.
+--
+--    :returns: signal connection
+--
+-- .. method:: on_append_force(slot)
+--
+--    Connect nullary slot to signal.
+--
+--    :returns: signal connection
+--
+-- .. method:: on_prepend_finalize(slot)
+--
+--    Connect nullary slot to signal.
+--
+--    :returns: signal connection
+--
+-- .. method:: on_finalize(slot)
+--
+--    Connect nullary slot to signal.
+--
+--    :returns: signal connection
+--
+-- .. method:: on_append_finalize(slot)
+--
+--    Connect nullary slot to signal.
+--
+--    :returns: signal connection
+--
+function M.__new()
+    local clock = mdsim.clock() -- singleton
+
+    -- construct instance
+    local self = core(clock)
+
+    -- connect runtime accumulators to profiler
+    local profiler = utility.profiler() -- singleton
+    local runtime = assert(self.runtime)
+    profiler:on_profile(runtime.setup, "microscopic state preparation")
+    profiler:on_profile(runtime.mdstep, "MD integration step")
+
+    return self
 end
 
 return M
