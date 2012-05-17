@@ -69,6 +69,7 @@ execute_process(COMMAND
     "${CMAKE_CURRENT_BINARY_DIR}/modules"
     ${files}
 )
+list(APPEND HALMD_DOC_INPUT_FILES ${CMAKE_CURRENT_BINARY_DIR}/modules.lua)
 foreach(input ${files})
   string(REGEX REPLACE "\\.in$" "" output ${input})
   list(APPEND HALMD_DOC_INPUT_FILES ${CMAKE_BINARY_DIR}/lua/${output})
