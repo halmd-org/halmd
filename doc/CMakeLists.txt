@@ -110,7 +110,7 @@ install(FILES "${CMAKE_CURRENT_BINARY_DIR}/man/halmd.1"
   DESTINATION "share/man/man1"
 )
 
-if(CMAKE_VERBOSE_MAKEFILE)
+if(CMAKE_VERBOSE_MAKEFILE OR HALMD_DOC_ONLY)
   set(HALMD_DOC_LATEX_MODE nonstopmode)
 else()
   set(HALMD_DOC_LATEX_MODE batchmode)
