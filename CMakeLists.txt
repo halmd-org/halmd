@@ -10,6 +10,12 @@ set(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake")
 # HALMD archive, then include pre-build CMake file with version information.
 #
 if(EXISTS "${CMAKE_SOURCE_DIR}/cmake/version.cmake.in")
+  set(HALMD_USE_GIT TRUE)
+else()
+  set(HALMD_USE_GIT FALSE)
+endif()
+
+if(HALMD_USE_GIT)
   find_package(Git QUIET REQUIRED)
   find_package(GitRepository QUIET REQUIRED)
 
@@ -17,7 +23,10 @@ if(EXISTS "${CMAKE_SOURCE_DIR}/cmake/version.cmake.in")
 
   configure_file(cmake/version.cmake.in cmake/version.cmake @ONLY)
   include("${CMAKE_BINARY_DIR}/cmake/version.cmake")
+
+  # Target to generate HALMD archive
   include("${CMAKE_SOURCE_DIR}/cmake/archive.cmake")
+
 else()
   include("${CMAKE_SOURCE_DIR}/cmake/version.cmake")
 endif()
@@ -25,14 +34,16 @@ endif()
 # Output source version for Dashboard test reports
 message(STATUS "Building HALMD ${PROGRAM_VERSION}")
 
-if(NOT HALMD_DOC_ONLY)
-  set(HALMD_DOC_ONLY FALSE)
-else()
-  set(HALMD_DOC_ONLY TRUE)
+if(HALMD_USE_GIT)
+  if(HALMD_DOC_ONLY)
+    set(HALMD_DOC_ONLY TRUE)
+  else()
+    set(HALMD_DOC_ONLY FALSE)
+  endif()
+  set(HALMD_DOC_ONLY ${HALMD_DOC_ONLY} CACHE INTERNAL "Build HALMD documentation only" FORCE)
 endif()
-set(HALMD_DOC_ONLY ${HALMD_DOC_ONLY} CACHE INTERNAL "Build HALMD documentation only" FORCE)
 
-if(NOT HALMD_DOC_ONLY)
+if(NOT HALMD_DOC_ONLY OR NOT HALMD_USE_GIT)
 
   set(CMAKE_USER_MAKE_RULES_OVERRIDE "cmake/platform.cmake")
 
@@ -148,7 +159,7 @@ if(NOT HALMD_DOC_ONLY)
   # If the subdirectory doc/ does not contain a CMakeLists.txt, we are in a
   # HALMD archive, then add a rule to install the pre-build documentation.
   #
-  if(EXISTS "${CMAKE_SOURCE_DIR}/doc/CMakeLists.txt")
+  if(HALMD_USE_GIT)
     add_subdirectory(doc)
   else()
     install(DIRECTORY "${CMAKE_SOURCE_DIR}/doc/"
