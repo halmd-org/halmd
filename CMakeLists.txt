@@ -1,12 +1,5 @@
 cmake_minimum_required(VERSION 2.8.8)
 
-if(NOT HALMD_DOC_ONLY)
-  set(HALMD_DOC_ONLY FALSE)
-else()
-  set(HALMD_DOC_ONLY TRUE)
-endif()
-set(HALMD_DOC_ONLY ${HALMD_DOC_ONLY} CACHE INTERNAL "Build HALMD documentation only" FORCE)
-
 set(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake")
 
 # If the subdirectory cmake/ contains a version.cmake.in file, we are in a git
@@ -31,6 +24,13 @@ endif()
 
 # Output source version for Dashboard test reports
 message(STATUS "Building HALMD ${PROGRAM_VERSION}")
+
+if(NOT HALMD_DOC_ONLY)
+  set(HALMD_DOC_ONLY FALSE)
+else()
+  set(HALMD_DOC_ONLY TRUE)
+endif()
+set(HALMD_DOC_ONLY ${HALMD_DOC_ONLY} CACHE INTERNAL "Build HALMD documentation only" FORCE)
 
 if(NOT HALMD_DOC_ONLY)
 
