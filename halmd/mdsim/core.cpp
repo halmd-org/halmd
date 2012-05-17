@@ -17,26 +17,14 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <cmath>
-
 #include <halmd/io/logger.hpp>
 #include <halmd/mdsim/core.hpp>
 #include <halmd/utility/lua/lua.hpp>
 
-using namespace boost;
-using namespace std;
-
 namespace halmd {
 namespace mdsim {
 
-/**
- * Initialize simulation
- */
-core::core(boost::shared_ptr<clock_type> clock)
-  // dependency injection
-  : clock_(clock)
-{
-}
+core::core(boost::shared_ptr<clock_type> clock) : clock_(clock) {}
 
 /**
  * Prepare microscopic system state
