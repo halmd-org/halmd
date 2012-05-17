@@ -47,35 +47,17 @@ using namespace std;
 int main(int argc, char **argv)
 {
     try {
-        script script; //< load Lua script engine
+        //
+        // load Lua script engine
+        //
+        script script;
+        script.load_library();
 
         //
-        // assemble program options
+        // parse program options from command line and config file
         //
         options_parser parser;
-        parser.add_options()
-            ("script", po::value<string>(), "HALMD script file")
-            ;
-
-        po::variables_map vm;
-        try {
-            parser.parse_command_line(argc, argv, vm, true);
-        }
-        catch (po::error const& e) {
-            cerr << PROGRAM_NAME ": " << e.what() << endl;
-            cerr << "Try `" PROGRAM_NAME " --help' for more information." << endl;
-            return EXIT_FAILURE;
-        }
-
-        if (vm.count("script")) {
-            script.dofile(vm["script"].as<string>());
-        }
-        else {
-            script.load_library();
-        }
-
         script.options(parser);
-
         parser.add_options()
             ("output,o",
              po::value<string>()->default_value(PROGRAM_NAME "_%Y%m%d_%H%M%S", "")->notifier(
@@ -98,9 +80,7 @@ int main(int argc, char **argv)
              "display this help and exit")
             ;
 
-        //
-        // parse program options from command line and config file
-        //
+        po::variables_map vm;
         try {
             parser.parse_command_line(argc, argv, vm);
 
