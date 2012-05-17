@@ -114,5 +114,5 @@ install(FILES "${CMAKE_CURRENT_BINARY_DIR}/pdf/halmd.pdf"
 )
 
 set_directory_properties(PROPERTIES
-  ADDITIONAL_MAKE_CLEAN_FILES ".buildinfo;.doctrees;html;man;pdf"
+  ADDITIONAL_MAKE_CLEAN_FILES "html;man;pdf"
 )
