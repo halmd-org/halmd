@@ -151,7 +151,6 @@ end
 
 ---
 -- .. class:: logger(args)
---    :noindex:
 --
 --    Construct a logger instance, optionally with given label.
 --
