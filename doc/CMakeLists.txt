@@ -35,11 +35,12 @@ if(NOT GENERATE_DOC)
   return()
 endif()
 
-configure_file(conf.py.in conf.py)
-
 # Accumulate list of input dependency files for documentation targets,
 # to avoid rebuilding documentation when input files remain unchanged.
 set(HALMD_DOC_INPUT_FILES)
+
+configure_file(conf.py.in conf.py)
+list(APPEND HALMD_DOC_INPUT_FILES ${CMAKE_CURRENT_BINARY_DIR}/conf.py)
 
 # The documentation consists of static ReST documents in the source tree, and
 # auto-generated ReST documents in the binary tree. Since Sphinx only supports
