@@ -94,6 +94,7 @@ function render_module(parsed)
     l(".. highlight:: lua")
     l()
     l(".. module:: %s.%s", parsed.namespace, parsed.name)
+    l("   :noindex:")
     l()
 
     for i = 1, #parsed do
@@ -106,7 +107,6 @@ function render_module(parsed)
                 l(".. currentmodule:: %s", parsed.namespace)
                 l()
                 l(".. class:: %s", entry.func:gsub("^__new", parsed.name))
-                l("   :noindex:")
             else
                 l(".. function:: %s", entry.func)
             end
