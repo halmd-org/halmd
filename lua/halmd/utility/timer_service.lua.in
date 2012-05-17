@@ -1,5 +1,5 @@
 --
--- Copyright © 2011  Peter Colberg
+-- Copyright © 2011-2012 Peter Colberg
 --
 -- This file is part of HALMD.
 --
@@ -19,17 +19,21 @@
 
 local module = require("halmd.utility.module")
 
--- grab C++ wrappers
-local timer_service = libhalmd.utility.timer_service
--- grab standard library
-local assert = assert
-
+---
+-- Timer Service
+-- =============
+--
 local M = module.singleton("halmd.utility.timer_service")
 
+-- grab C++ wrappers
+local timer_service = assert(libhalmd.utility.timer_service)
+
+---
+-- Construct timer service.
 --
--- construct timer_service module
+-- Returns singleton instance.
 --
-function M.__new(args)
+function M.__new()
     return timer_service()
 end
 

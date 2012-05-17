@@ -18,7 +18,6 @@
  */
 
 #include <algorithm>
-#include <boost/bind.hpp>
 #include <boost/foreach.hpp>
 #include <iomanip>
 #include <vector>
@@ -147,12 +146,6 @@ void profiler::log() const
     }
 }
 
-static profiler::slot_function_type
-wrap_profile(boost::shared_ptr<profiler> instance)
-{
-    return bind(&profiler::profile, instance);
-}
-
 void profiler::luaopen(lua_State* L)
 {
     using namespace luabind;
@@ -165,7 +158,7 @@ void profiler::luaopen(lua_State* L)
                 .def("on_profile", &profiler::on_profile)
                 .def("on_prepend_profile", &profiler::on_prepend_profile)
                 .def("on_append_profile", &profiler::on_append_profile)
-                .property("profile", &wrap_profile)
+                .def("profile", &profiler::profile)
                 .scope
                 [
                     class_<accumulator_type>("accumulator")

@@ -1,5 +1,5 @@
 --
--- Copyright © 2010-2011  Peter Colberg
+-- Copyright © 2010-2012 Peter Colberg
 --
 -- This file is part of HALMD.
 --
@@ -22,107 +22,91 @@ local mdsim = {
     clock               = require("halmd.mdsim.clock")
   , core                = require("halmd.mdsim.core")
 }
-local observables = {
-    runtime_estimate   = require("halmd.observables.runtime_estimate")
-}
 local utility = {
     posix_signal        = require("halmd.utility.posix_signal")
   , profiler            = require("halmd.utility.profiler")
   , timer_service       = require("halmd.utility.timer_service")
 }
 
--- grab C++ wrappers
-local sampler_wrapper = libhalmd.sampler
-local h5 = libhalmd.h5
-local po = libhalmd.po
--- grab standard library
-local assert = assert
-local math = math
-
+---
+-- Sampler
+-- =======
+--
 local M = module.singleton("halmd.observables.sampler")
 
+-- grab C++ wrappers
+local sampler = assert(libhalmd.sampler)
+
+---
+-- Construct sampler.
 --
--- construct sampler module
+-- Returns singleton instance of sampler.
 --
-function M.__new(args)
-    -- dependency injection
-    local clock = mdsim.clock()
-    local core = mdsim.core()
-
-    -- command line options
-    local steps = args.steps or 10000 -- default value
-    local time = args.time -- optional
-
-    if time then
-        steps = math.floor((time / clock.timestep) + 0.5)
-    end
-
-    -- construct sampler module
-    local sampler = assert(sampler_wrapper)(clock, core, steps)
+-- .. method:: setup()
+--
+--    Setup simulation domain.
+--
+--    This method invokes :meth:`halmd.mdsim.core.setup`.
+--
+-- .. method:: run(steps)
+--
+--    Run simulation for given number of steps.
+--
+--    This method invokes :meth:`halmd.mdsim.core.mdstep`.
+--
+-- .. method:: on_start(slot)
+--
+--    Connect slot to signal.
+--
+--    :returns: signal connection
+--
+-- .. method:: on_finish(slot)
+--
+--    Connect slot to signal.
+--
+--    :returns: signal connection
+--
+-- .. method:: on_prepare(slot, interval)
+--
+--    Connect slot to signal.
+--
+--    :returns: signal connection
+--
+-- .. method:: on_sample(slot, interval)
+--
+--    Connect slot to signal.
+--
+--    :returns: signal connection
+--
+function M.__new()
+    -- construct sampler instance
+    local clock = mdsim.clock() -- singleton
+    local core = mdsim.core() -- singleton
+    local self = sampler(clock, core)
 
     -- process timer service every step
-    sampler:on_sample(utility.timer_service().process, 1)
-
-    -- construct and connect runtime estimator.
-    local runtime_estimate = observables.runtime_estimate{total_steps = steps}
     local timer_service = utility.timer_service() -- singleton
-    -- sample every minute, start at 0 seconds
-    timer_service:on_periodic(runtime_estimate.sample, 60, 0)
-    -- log estimate every 15 minutes, start at 10 seconds
-    timer_service:on_periodic(runtime_estimate.estimate, 15 * 60, 10)
+    self:on_sample(timer_service.process, 1)
 
-    -- construct and connect POSIX signal handler
-    local posix_signal = utility.posix_signal()
-    -- poll for blocked signals every step
-    sampler:on_sample(posix_signal.poll, 1)
-    -- log runtime estimate on SIGUSR1
-    posix_signal:on_usr1(runtime_estimate.estimate)
+    -- poll for blocked POSIX signals every step
+    local posix_signal = utility.posix_signal() -- singleton
+    self:on_sample(posix_signal.poll, 1)
 
-    -- connect profiler to sampler
+    -- gracefully abort simulation on SIGTERM or SIGINT
+    local abort = sampler.abort(mdsim.clock())
+    posix_signal:on_term(abort)
+    posix_signal:on_int(abort)
+
+    -- connect runtime accumulators to module profiler
     local profiler = utility.profiler() -- singleton
-    sampler:on_finish(profiler.profile)
+    local runtime = assert(self.runtime)
+    profiler:on_profile(runtime.total, "total simulation runtime")
+    profiler:on_profile(runtime.start, "start-up of simulation")
+    profiler:on_profile(runtime.prepare, "preparation for integration step")
+    profiler:on_profile(runtime.sample, "evaluation of observables")
+    profiler:on_profile(runtime.finish, "finishing simulation")
 
-    return sampler
-end
-
---
--- connect runtime accumulators to module profiler
---
-function M.profile(self, profiler)
-    profiler:on_profile{self, total = "total simulation runtime"}
-    profiler:on_profile{self, start = "start-up of simulation"}
-    profiler:on_profile{self, prepare = "preparation for integration step"}
-    profiler:on_profile{self, sample = "evaluation of observables"}
-    profiler:on_profile{self, finish = "finishing simulation"}
-end
-
---
--- assemble module options
---
--- @param desc po.options_description
---
-function M.options(desc, globals)
-    globals:add("steps", po.uint64(), "number of simulation steps")
-    globals:add("time", po.float():conflicts("steps"), "total simulation time")
-end
-
---
--- read module parameters from HDF5 group
---
-function M.read_parameters(args, group, globals)
-    args.steps = globals:read_attribute("steps", h5.uint64())
-    -- args.time is optional parameter
-end
-
---
--- write module parameters to HDF5 group
---
--- @param sampler module instance
--- @param group HDF5 group
---
-function M.write_parameters(sampler, group, globals)
-    globals:write_attribute("steps", h5.uint64(), sampler.steps)
-    globals:write_attribute("time", h5.float(), sampler.total_time)
+    return self
 end
 
 return M

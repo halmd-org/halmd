@@ -1,5 +1,6 @@
 --
--- Copyright © 2011  Felix Höfling
+-- Copyright © 2012 Peter Colberg
+-- Copyright © 2011 Felix Höfling
 --
 -- This file is part of HALMD.
 --
@@ -21,38 +22,81 @@ local module            = require("halmd.utility.module")
 local mdsim = {
     clock               = require("halmd.mdsim.clock")
 }
+local utility = {
+    posix_signal       = require("halmd.utility.posix_signal")
+  , timer_service       = require("halmd.utility.timer_service")
+}
 
--- grab C++ wrappers
-local runtime_estimate_wrapper = libhalmd.observables.runtime_estimate
--- grab standard library
-local assert = assert
-
+---
+-- Runtime Estimate
+-- ================
+--
 local M = module("halmd.observables.runtime_estimate")
 
+-- grab C++ wrappers
+local runtime_estimate = assert(libhalmd.observables.runtime_estimate)
+
+---
+-- Construct runtime_estimate instance.
 --
--- construct instance of runtime_estimate module
---
--- @param args parameter table
---      total_steps   number of simulation steps until finish
---      current_step  current value of simulation step counter
---
--- @returns instance of runtime_estimate module
+-- :param table args: keyword arguments
+-- :param number steps: length of simulation run
+-- :param number first: time to first estimate in seconds
+-- :param number interval: frequency of estimates in seconds
+-- :param number sample: frequency of sampling in seconds
 --
 function M.__new(args)
-    -- parameters
-    local total_steps = assert(args.total_steps)
-
-    -- dependency injection
+    local steps = args.steps
+    if not steps then
+        error("missing argument: steps", 3)
+    end
+    local first = args.first
+    if not first then
+        error("missing argument: first", 3)
+    end
+    local interval = args.interval
+    if not interval then
+        error("missing argument: interval", 3)
+    end
+    local sample = args.sample
+    if not sample then
+        error("missing argument: sample", 3)
+    end
     local clock = mdsim.clock()
 
-    return assert(runtime_estimate_wrapper)(clock, total_steps)
-end
+    -- construct instance
+    local self = runtime_estimate(clock, steps)
 
---
--- returns module description
---
-function M.description()
-    return "runtime estimate"
+    -- sequence of signal connections
+    local conn = {}
+
+    self.connect = function(self)
+        if #conn == 0 then
+            local timer_service = utility.timer_service() -- singleton
+            table.insert(conn, timer_service:on_periodic(self.estimate, interval, first))
+            table.insert(conn, timer_service:on_periodic(self.sample, sample, 0))
+
+            local posix_signal = utility.posix_signal() -- singleton
+            table.insert(conn, posix_signal:on_usr1(self.estimate))
+        else
+            error("runtime estimate is already connected", 2)
+        end
+    end
+
+    self.disconnect = function(self)
+        if #conn > 0 then
+            for i = 1, #conn do
+                conn[i]:disconnect()
+            end
+            conn = {}
+        else
+            error("runtime estimate is already disconnected", 2)
+        end
+    end
+
+    self:connect()
+
+    return self
 end
 
 return M

@@ -1,5 +1,6 @@
 /*
- * Copyright © 2010-2011  Felix Höfling and Peter Colberg
+ * Copyright © 2010-2012 Peter Colberg
+ * Copyright © 2010-2011 Felix Höfling
  *
  * This file is part of HALMD.
  *
@@ -18,37 +19,23 @@
  */
 
 #include <boost/bind.hpp>
+#include <boost/function.hpp>
+#include <boost/lexical_cast.hpp>
 
 #include <halmd/io/logger.hpp>
 #include <halmd/observables/sampler.hpp>
 #include <halmd/utility/lua/lua.hpp>
 
-using namespace boost;
-using namespace std;
-
 namespace halmd {
 namespace observables {
 
-/**
- * Initialize simulation
- */
 sampler::sampler(
     boost::shared_ptr<clock_type> clock
   , boost::shared_ptr<core_type> core
-  , step_type steps
 )
   : clock_(clock)
-  , core_(core)
-  , steps_(steps)
-  , total_time_(steps_ * clock_->timestep())
-{
-    LOG("number of integration steps: " << steps_);
-    LOG("integration time: " << total_time_);
-}
+  , core_(core) {}
 
-/**
- * Setup simulation box
- */
 void sampler::setup()
 {
     LOG("setting up simulation box");
@@ -58,9 +45,6 @@ void sampler::setup()
     on_sample_();
 }
 
-/**
- * Run simulation for given number of steps
- */
 void sampler::run(step_type steps)
 {
     {
@@ -68,11 +52,11 @@ void sampler::run(step_type steps)
         on_start_();
     }
 
-    LOG("starting simulation run");
+    LOG("starting simulation run over " << steps << " integration steps");
     {
         scoped_timer_type timer(runtime_.total);
 
-        step_type limit = steps > 0 ? (clock_->step() + steps) : steps_;
+        step_type limit = clock_->step() + steps;
 
         while (clock_->step() < limit) {
             // increment 1-based simulation step
@@ -103,44 +87,11 @@ void sampler::run(step_type steps)
 }
 
 /**
- * Connect slot to signal emitted before starting simulation run
- */
-connection sampler::on_start(slot_function_type const& slot)
-{
-    return on_start_.connect(slot);
-}
-
-/**
- * Connect slot to signal emitted before MD integration step
- */
-connection sampler::on_prepare(slot_function_type const& slot, step_type interval)
-{
-    return on_prepare_.connect(bind(&sampler::prepare, this, slot, interval));
-}
-
-/**
- * Connect slot to signal emitted after MD integration step
- */
-connection sampler::on_sample(slot_function_type const& slot, step_type interval)
-{
-    return on_sample_.connect(bind(&sampler::sample, this, slot, interval));
-}
-
-/**
- * Connect slot to signal emitted after finishing simulation run
- */
-connection sampler::on_finish(slot_function_type const& slot)
-{
-    return on_finish_.connect(slot);
-}
-
-/**
  * Forward signal to slot at given interval
  */
-void sampler::prepare(slot_function_type const& slot, step_type interval) const
+void sampler::prepare(boost::function<void ()> const& slot, step_type interval) const
 {
-    step_type step = clock_->step();
-    if (step % interval == 0 || step == steps_) {
+    if (clock_->step() % interval == 0) {
         slot();
     }
 }
@@ -148,30 +99,21 @@ void sampler::prepare(slot_function_type const& slot, step_type interval) const
 /**
  * Forward signal to slot at given interval
  */
-void sampler::sample(slot_function_type const& slot, step_type interval) const
+void sampler::sample(boost::function<void ()> const& slot, step_type interval) const
 {
-    step_type step = clock_->step();
-    if (step % interval == 0 || step == steps_) {
+    if (clock_->step() % interval == 0) {
         slot();
     }
 }
 
-static sampler::slot_function_type
-wrap_run(boost::shared_ptr<sampler> self, sampler::step_type steps)
+static void abort(boost::shared_ptr<mdsim::clock const> clock)
 {
-    return bind(&sampler::run, self, steps);
+    throw std::runtime_error("gracefully aborting simulation at step " + boost::lexical_cast<std::string>(clock->step()));
 }
 
-static sampler::slot_function_type
-wrap_run_default_steps(boost::shared_ptr<sampler> self)
+static boost::function<void ()> wrap_abort(boost::shared_ptr<mdsim::clock const> clock)
 {
-    return bind(&sampler::run, self, 0);
-}
-
-static sampler::slot_function_type
-wrap_setup(boost::shared_ptr<sampler> self)
-{
-    return bind(&sampler::setup, self);
+    return boost::bind(&abort, clock);
 }
 
 void sampler::luaopen(lua_State* L)
@@ -183,17 +125,13 @@ void sampler::luaopen(lua_State* L)
             .def(constructor<
                 boost::shared_ptr<sampler::clock_type>
               , boost::shared_ptr<sampler::core_type>
-              , sampler::step_type
             >())
+            .def("setup", &sampler::setup)
+            .def("run", &sampler::run)
             .def("on_start", &sampler::on_start)
             .def("on_finish", &sampler::on_finish)
             .def("on_prepare", &sampler::on_prepare)
             .def("on_sample", &sampler::on_sample)
-            .def("setup", &wrap_setup)
-            .def("run", &wrap_run)
-            .def("run", &wrap_run_default_steps)
-            .property("steps", &sampler::steps)
-            .property("total_time", &sampler::total_time)
             .scope
             [
                 class_<runtime>("runtime")
@@ -202,6 +140,8 @@ void sampler::luaopen(lua_State* L)
                     .def_readonly("prepare", &runtime::prepare)
                     .def_readonly("sample", &runtime::sample)
                     .def_readonly("finish", &runtime::finish)
+
+              , def("abort", &wrap_abort)
             ]
             .def_readonly("runtime", &sampler::runtime_)
     ];

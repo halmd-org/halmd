@@ -1,5 +1,6 @@
 /*
- * Copyright © 2010-2011  Felix Höfling and Peter Colberg
+ * Copyright © 2010-2012 Peter Colberg
+ * Copyright © 2010-2011 Felix Höfling
  *
  * This file is part of HALMD.
  *
@@ -20,8 +21,6 @@
 #ifndef HALMD_OBSERVABLES_SAMPLER_HPP
 #define HALMD_OBSERVABLES_SAMPLER_HPP
 
-#include <utility> // pair
-
 #include <halmd/mdsim/clock.hpp>
 #include <halmd/mdsim/core.hpp>
 #include <halmd/utility/profiler.hpp>
@@ -35,44 +34,80 @@ namespace observables {
  */
 class sampler
 {
-private:
-    typedef halmd::signal<void ()> signal_type;
-
 public:
     typedef mdsim::clock clock_type;
     typedef clock_type::step_type step_type;
-    typedef clock_type::time_type time_type;
     typedef mdsim::core core_type;
-    typedef signal_type::slot_function_type slot_function_type;
 
     sampler(
         boost::shared_ptr<clock_type> clock
       , boost::shared_ptr<core_type> core
-      , step_type steps
     );
+
+    /**
+     * Setup simulation box
+     */
     void setup();
+
+    /**
+     * Run simulation for given number of steps
+     */
     void run(step_type steps);
-    connection on_start(slot_function_type const& slot);
-    connection on_prepare(slot_function_type const& slot, step_type interval);
-    connection on_sample(slot_function_type const& slot, step_type interval);
-    connection on_finish(slot_function_type const& slot);
 
-    /** total number of integration steps */
-    step_type steps() const
+    /**
+     * Connect slot to signal emitted before starting simulation run
+     */
+    connection on_start(boost::function<void ()> const& slot)
     {
-        return steps_;
+        return on_start_.connect(slot);
     }
 
-    /** total integration time in MD units */
-    time_type total_time() const
+    /**
+     * Connect slot to signal emitted before MD integration step
+     */
+    connection on_prepare(boost::function<void ()> const& slot, step_type interval)
     {
-        return total_time_;
+        return on_prepare_.connect(boost::bind(&sampler::prepare, this, slot, interval));
     }
 
-    /** Lua bindings */
+    /**
+     * Connect slot to signal emitted after MD integration step
+     */
+    connection on_sample(boost::function<void ()> const& slot, step_type interval)
+    {
+        return on_sample_.connect(boost::bind(&sampler::sample, this, slot, interval));
+    }
+
+    /**
+     * Connect slot to signal emitted after finishing simulation run
+     */
+    connection on_finish(boost::function<void ()> const& slot)
+    {
+        return on_finish_.connect(slot);
+    }
+
+    /**
+     * Bind class to Lua
+     */
     static void luaopen(lua_State* L);
 
 private:
+    void prepare(boost::function<void ()> const& slot, step_type interval) const;
+    void sample(boost::function<void ()> const& slot, step_type interval) const;
+
+    /** simulation clock */
+    boost::shared_ptr<clock_type> clock_;
+    /** simulation core */
+    boost::shared_ptr<core_type> core_;
+    /** signal emitted before starting simulation run */
+    signal<void ()> on_start_;
+    /** signal emitted before MD integration step */
+    signal<void ()> on_prepare_;
+    /** signal emitted after MD integration step */
+    signal<void ()> on_sample_;
+    /** signal emitted after finishing simulation run */
+    signal<void ()> on_finish_;
+
     typedef utility::profiler profiler_type;
     typedef profiler_type::accumulator_type accumulator_type;
     typedef profiler_type::scoped_timer_type scoped_timer_type;
@@ -86,27 +121,8 @@ private:
         accumulator_type finish;
     };
 
-    void prepare(slot_function_type const& slot, step_type interval) const;
-    void sample(slot_function_type const& slot, step_type interval) const;
-
-    /** Molecular Dynamics simulation clock */
-    boost::shared_ptr<clock_type> clock_;
-    /** Molecular Dynamics simulation core */
-    boost::shared_ptr<core_type> core_;
-    /** total number of integration steps */
-    step_type steps_;
-    /** total integration time in MD units */
-    time_type total_time_;
     /** profiling runtime accumulators */
     runtime runtime_;
-    /** signal emitted before starting simulation run */
-    signal_type on_start_;
-    /** signal emitted before MD integration step */
-    signal_type on_prepare_;
-    /** signal emitted after MD integration step */
-    signal_type on_sample_;
-    /** signal emitted after finishing simulation run */
-    signal_type on_finish_;
 };
 
 } // namespace observables
