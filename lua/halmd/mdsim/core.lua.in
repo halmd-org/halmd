@@ -18,9 +18,6 @@
 --
 
 local module            = require("halmd.utility.module")
-local mdsim = {
-    clock               = require("halmd.mdsim.clock")
-}
 local utility = {
     profiler            = require("halmd.utility.profiler")
 }
@@ -50,9 +47,6 @@ local core = assert(libhalmd.mdsim.core)
 -- .. method:: mdstep()
 --
 --    Perform a single MD integration step.
---
---    This method increments :attr:`halmd.mdsim.clock.step`,
---    and emits all signals in order of definition below.
 --
 --    This method is invoked by :meth:`halmd.observables.sampler.run`.
 --
@@ -129,10 +123,8 @@ local core = assert(libhalmd.mdsim.core)
 --    :returns: signal connection
 --
 function M.__new()
-    local clock = mdsim.clock() -- singleton
-
     -- construct instance
-    local self = core(clock)
+    local self = core()
 
     -- connect runtime accumulators to profiler
     local profiler = utility.profiler() -- singleton

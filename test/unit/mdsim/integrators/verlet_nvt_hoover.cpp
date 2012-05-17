@@ -166,6 +166,7 @@ void verlet_nvt_hoover<modules_type>::test()
         if (i + 1 == steps / 20) {
             particle->aux_enable();                    //< enable computation of potential energy
         }
+        clock->advance();
         core->mdstep();
     }
 
@@ -180,6 +181,7 @@ void verlet_nvt_hoover<modules_type>::test()
         }
 
         // perform MD step
+        clock->advance();
         core->mdstep();
 
         // measurement
@@ -317,7 +319,7 @@ verlet_nvt_hoover<modules_type>::verlet_nvt_hoover()
 template <typename modules_type>
 void verlet_nvt_hoover<modules_type>::connect()
 {
-    core = boost::make_shared<core_type>(clock);
+    core = boost::make_shared<core_type>();
     // system preparation
     core->on_prepend_setup( bind(&particle_type::set, particle) );
     core->on_prepend_setup( bind(&particle_type::prepare, particle) );

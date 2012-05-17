@@ -181,6 +181,7 @@ void lennard_jones_fluid<modules_type>::test()
     core->setup();
     step_type steps = static_cast<step_type>(ceil(30 / nvt_integrator->timestep()));
     for (step_type i = 0; i < steps; ++i) {
+        clock->advance();
         core->mdstep();
     }
     for_each(conn.begin(), conn.end(), bind(&connection::disconnect, _1));
@@ -210,6 +211,7 @@ void lennard_jones_fluid<modules_type>::test()
         if (i == steps - 1) {
             particle->aux_enable();              // enable auxiliary variables in last step
         }
+        clock->advance();
         core->mdstep();
         if(i > steps/2 && i % period == 0) {
             temp_(thermodynamics->temp());
@@ -238,6 +240,7 @@ void lennard_jones_fluid<modules_type>::test()
         }
 
         // perform MD step
+        clock->advance();
         core->mdstep();
 
         // measurement
@@ -341,7 +344,7 @@ lennard_jones_fluid<modules_type>::lennard_jones_fluid()
 template <typename modules_type>
 void lennard_jones_fluid<modules_type>::connect()
 {
-    core = boost::make_shared<core_type>(clock);
+    core = boost::make_shared<core_type>();
     // system preparation
     core->on_prepend_setup( bind(&particle_type::set, particle) );
     core->on_prepend_setup( bind(&particle_type::prepare, particle) );

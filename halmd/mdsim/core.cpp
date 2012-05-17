@@ -17,14 +17,11 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <halmd/io/logger.hpp>
 #include <halmd/mdsim/core.hpp>
 #include <halmd/utility/lua/lua.hpp>
 
 namespace halmd {
 namespace mdsim {
-
-core::core(boost::shared_ptr<clock_type> clock) : clock_(clock) {}
 
 /**
  * Prepare microscopic system state
@@ -45,11 +42,6 @@ void core::mdstep()
 {
     scoped_timer_type timer(runtime_.mdstep);
 
-    // increment 1-based simulation step
-    clock_->advance();
-
-    LOG_TRACE("performing MD step #" << clock_->step());
-
     on_prepend_integrate_();
     on_integrate_();
     on_append_integrate_();
@@ -69,7 +61,7 @@ void core::luaopen(lua_State* L)
         namespace_("mdsim")
         [
             class_<core, boost::shared_ptr<core> >("core")
-                .def(constructor<boost::shared_ptr<core::clock_type> >())
+                .def(constructor<>())
                 .def("setup", &core::setup)
                 .def("mdstep", &core::mdstep)
                 .def("on_prepend_setup", &core::on_prepend_setup)

@@ -124,6 +124,7 @@ void ideal_gas<modules_type>::test()
         if (i == steps - 1) {
             particle->aux_enable();
         }
+        clock->advance();
         core->mdstep();
     }
 
@@ -169,7 +170,7 @@ ideal_gas<modules_type>::ideal_gas()
 template <typename modules_type>
 void ideal_gas<modules_type>::connect()
 {
-    core = boost::make_shared<core_type>(clock);
+    core = boost::make_shared<core_type>();
     // system preparation
     core->on_prepend_setup( bind(&particle_type::set, particle) );
     core->on_setup( bind(&position_type::set, position) );

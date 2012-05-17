@@ -20,9 +20,6 @@
 #ifndef HALMD_MDSIM_CORE_HPP
 #define HALMD_MDSIM_CORE_HPP
 
-#include <boost/shared_ptr.hpp>
-
-#include <halmd/mdsim/clock.hpp>
 #include <halmd/utility/profiler.hpp>
 #include <halmd/utility/signal.hpp>
 
@@ -36,9 +33,7 @@ class core
 public:
     typedef halmd::signal<void ()> signal_type;
     typedef signal_type::slot_function_type slot_function_type;
-    typedef mdsim::clock clock_type;
 
-    core(boost::shared_ptr<clock_type> clock);
     void setup();
     void mdstep();
 
@@ -116,7 +111,6 @@ private:
         accumulator_type mdstep;
     };
 
-    boost::shared_ptr<clock_type> clock_;
     signal_type on_prepend_setup_;
     signal_type on_setup_;
     signal_type on_append_setup_;

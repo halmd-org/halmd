@@ -33,7 +33,7 @@ namespace observables {
  * Initialize simulation
  */
 sampler::sampler(
-    boost::shared_ptr<clock_type const> clock
+    boost::shared_ptr<clock_type> clock
   , boost::shared_ptr<core_type> core
   , step_type steps
 )
@@ -75,6 +75,11 @@ void sampler::run(step_type steps)
         step_type limit = steps > 0 ? (clock_->step() + steps) : steps_;
 
         while (clock_->step() < limit) {
+            // increment 1-based simulation step
+            clock_->advance();
+
+            LOG_TRACE("performing MD step #" << clock_->step());
+
             {
                 scoped_timer_type timer(runtime_.prepare);
                 on_prepare_();
@@ -135,7 +140,7 @@ connection sampler::on_finish(slot_function_type const& slot)
 void sampler::prepare(slot_function_type const& slot, step_type interval) const
 {
     step_type step = clock_->step();
-    if (step == 0 || (step + 1) % interval == 0 || (step + 1) == steps_) {
+    if (step % interval == 0 || step == steps_) {
         slot();
     }
 }
@@ -146,7 +151,7 @@ void sampler::prepare(slot_function_type const& slot, step_type interval) const
 void sampler::sample(slot_function_type const& slot, step_type interval) const
 {
     step_type step = clock_->step();
-    if (step == 0 || step % interval == 0 || step == steps_) {
+    if (step % interval == 0 || step == steps_) {
         slot();
     }
 }
@@ -176,7 +181,7 @@ void sampler::luaopen(lua_State* L)
     [
         class_<sampler, boost::shared_ptr<sampler> >("sampler")
             .def(constructor<
-                boost::shared_ptr<sampler::clock_type const>
+                boost::shared_ptr<sampler::clock_type>
               , boost::shared_ptr<sampler::core_type>
               , sampler::step_type
             >())
