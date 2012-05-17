@@ -1,5 +1,5 @@
 --
--- Copyright © 2011  Peter Colberg
+-- Copyright © 2011-2012 Peter Colberg
 --
 -- This file is part of HALMD.
 --
@@ -19,42 +19,48 @@
 
 local module = require("halmd.utility.module")
 
--- grab C++ wrappers
-local clock_wrapper = libhalmd.mdsim.clock
-local h5 = libhalmd.h5
-local po = libhalmd.po
--- grab standard library
-local assert = assert
-
+---
+-- Clock
+-- =====
+--
+-- The clock tracks simulation step and time, and defines the integration time step.
+--
 local M = module.singleton("halmd.mdsim.clock")
 
---
--- construct clock module
---
-function M.__new(args)
-    local timestep = args.timestep or 0.001 -- default value
-    return clock_wrapper(timestep)
-end
+-- grab C++ wrappers
+local clock = assert(libhalmd.mdsim.clock)
 
+---
+-- Construct clock module.
 --
--- assemble module options
+-- Returns a singleton instance of clock.
 --
-function M.options(desc, globals)
-    globals:add("timestep", po.float(), "simulation timestep")
-end
-
+-- .. method:: set_timestep(timestep)
 --
--- read module parameters from HDF5 group
+--    Define integration time step.
 --
-function M.read_parameters(args, group, globals)
-    args.timestep = globals:read_attribute("timestep", h5.float())
-end
-
+--    The value of the time step is propagated to all integrators.
 --
--- write module parameters to HDF5 group
+-- .. method:: on_set_timestep(slot)
 --
-function M.write_parameters(clock, group, globals)
-    globals:write_attribute("timestep", h5.float(), clock.timestep)
+--    Connect a unary slot that accepts the integration time step.
+--
+--    This slot is called after setting the time step with :meth:`set_timestep`.
+--
+-- .. attribute:: step
+--
+--    Current simulation step.
+--
+-- .. attribute:: time
+--
+--    Current simulation time in MD units.
+--
+-- .. attribute:: timestep
+--
+--    Integration time step in MD units.
+--
+function M.__new()
+    return clock()
 end
 
 return M
