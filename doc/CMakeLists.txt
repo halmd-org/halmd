@@ -37,6 +37,10 @@ endif()
 
 configure_file(conf.py.in conf.py)
 
+# Accumulate list of input dependency files for documentation targets,
+# to avoid rebuilding documentation when input files remain unchanged.
+set(HALMD_DOC_INPUT_FILES)
+
 # The documentation consists of static ReST documents in the source tree, and
 # auto-generated ReST documents in the binary tree. Since Sphinx only supports
 # a single tree for sources, copy the static documents to the binary tree.
@@ -44,6 +48,7 @@ file(GLOB_RECURSE files RELATIVE "${CMAKE_CURRENT_SOURCE_DIR}" "*.rst.in")
 foreach(input ${files})
   string(REGEX REPLACE "\\.in$" "" output ${input})
   configure_file(${input} ${output} @ONLY)
+  list(APPEND HALMD_DOC_INPUT_FILES ${CMAKE_CURRENT_BINARY_DIR}/${output})
 endforeach(input)
 
 # Copy examples for inlining of plot examples into documentation.
@@ -51,6 +56,7 @@ file(GLOB_RECURSE files RELATIVE ${CMAKE_SOURCE_DIR} ${CMAKE_SOURCE_DIR}/example
 foreach(input ${files})
   if(NOT input MATCHES "(^|/)\\.[^/]+$")
     configure_file(${CMAKE_SOURCE_DIR}/${input} ${input} @ONLY)
+    list(APPEND HALMD_DOC_INPUT_FILES ${CMAKE_CURRENT_BINARY_DIR}/${input})
   endif()
 endforeach()
 
@@ -63,29 +69,43 @@ execute_process(COMMAND
     "${CMAKE_CURRENT_BINARY_DIR}/modules"
     ${files}
 )
+foreach(input ${files})
+  string(REGEX REPLACE "\\.in$" "" output ${input})
+  list(APPEND HALMD_DOC_INPUT_FILES ${CMAKE_BINARY_DIR}/lua/${output})
+endforeach()
 
-add_custom_target(halmd_doc_html ALL
-  ${SPHINX_EXECUTABLE}
+add_custom_command(OUTPUT html
+  COMMAND ${SPHINX_EXECUTABLE}
     -q -b html
     -c "${CMAKE_CURRENT_BINARY_DIR}"
     "${CMAKE_CURRENT_BINARY_DIR}"
     "${CMAKE_CURRENT_BINARY_DIR}/html"
+  COMMAND ${CMAKE_COMMAND}
+    -E touch html
+  DEPENDS ${HALMD_DOC_INPUT_FILES}
   COMMENT "Build HALMD HTML documentation"
 )
-
+add_custom_target(halmd_doc_html ALL
+  DEPENDS html
+)
 install(DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/html"
   DESTINATION "share/doc/halmd"
 )
 
-add_custom_target(halmd_doc_man ALL
-  ${SPHINX_EXECUTABLE}
+add_custom_command(OUTPUT man
+  COMMAND ${SPHINX_EXECUTABLE}
     -q -b man
     -c "${CMAKE_CURRENT_BINARY_DIR}"
     "${CMAKE_CURRENT_BINARY_DIR}"
     "${CMAKE_CURRENT_BINARY_DIR}/man"
+  COMMAND ${CMAKE_COMMAND}
+    -E touch man
+  DEPENDS ${HALMD_DOC_INPUT_FILES}
   COMMENT "Build HALMD man page"
 )
-
+add_custom_target(halmd_doc_man ALL
+  DEPENDS man
+)
 install(FILES "${CMAKE_CURRENT_BINARY_DIR}/man/halmd.1"
   DESTINATION "share/man/man1"
 )
@@ -96,19 +116,22 @@ else()
   set(HALMD_DOC_LATEX_MODE batchmode)
 endif()
 
-add_custom_target(halmd_doc_pdf ALL
-  ${SPHINX_EXECUTABLE}
+add_custom_command(OUTPUT pdf
+  COMMAND ${SPHINX_EXECUTABLE}
     -q -b latex
     -c "${CMAKE_CURRENT_BINARY_DIR}"
     "${CMAKE_CURRENT_BINARY_DIR}"
     "${CMAKE_CURRENT_BINARY_DIR}/pdf"
+  COMMAND ${CMAKE_MAKE_PROGRAM}
+    -C pdf LATEXOPTS=-interaction=${HALMD_DOC_LATEX_MODE}
+  COMMAND ${CMAKE_COMMAND}
+    -E touch pdf
+  DEPENDS ${HALMD_DOC_INPUT_FILES}
   COMMENT "Build HALMD PDF documentation"
 )
-add_custom_command(TARGET halmd_doc_pdf POST_BUILD
-  COMMAND ${CMAKE_MAKE_PROGRAM} LATEXOPTS=-interaction=${HALMD_DOC_LATEX_MODE}
-  WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/pdf"
+add_custom_target(halmd_doc_pdf ALL
+  DEPENDS pdf
 )
-
 install(FILES "${CMAKE_CURRENT_BINARY_DIR}/pdf/halmd.pdf"
   DESTINATION "share/doc/halmd"
 )

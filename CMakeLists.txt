@@ -181,5 +181,6 @@ else(NOT HALMD_DOC_ONLY)
 project(HALMD NONE) # no compiler languages
 
 add_subdirectory(doc)
+add_subdirectory(lua)
 
 endif(NOT HALMD_DOC_ONLY)
