@@ -62,7 +62,6 @@ void verlet_nvt_andersen<dimension, float_type, RandomNumberGenerator>::set_time
 {
     timestep_ = timestep;
     coll_prob_ = coll_rate_ * timestep;
-    LOG("integration timestep: " << timestep_);
 }
 
 template <int dimension, typename float_type, typename RandomNumberGenerator>

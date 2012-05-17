@@ -58,7 +58,6 @@ template <int dimension, typename float_type>
 void verlet<dimension, float_type>::set_timestep(double timestep)
 {
     timestep_ = timestep;
-    LOG("integration timestep: " << timestep_);
 }
 
 /**

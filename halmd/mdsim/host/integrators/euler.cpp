@@ -59,9 +59,7 @@ euler<dimension, float_type>::euler(
 template <int dimension, typename float_type>
 void euler<dimension, float_type>::set_timestep(double timestep)
 {
-  timestep_ = timestep;
-
-  LOG("integration timestep: " << timestep_);
+    timestep_ = timestep;
 }
 
 /**

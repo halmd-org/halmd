@@ -73,8 +73,6 @@ void verlet_nvt_hoover<dimension, float_type>::set_timestep(double timestep)
     timestep_half_ = timestep_ / 2;
     timestep_4_ = timestep_ / 4;
     timestep_8_ = timestep_ / 8;
-
-    LOG("integration timestep: " << timestep_);
 }
 
 /*
