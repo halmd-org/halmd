@@ -59,17 +59,15 @@ verlet_nvt_andersen<dimension, float_type>::verlet_nvt_andersen(
 template <int dimension, typename float_type>
 void verlet_nvt_andersen<dimension, float_type>::set_timestep(double timestep)
 {
-    timestep_ = static_cast<float_type>(timestep);
+    timestep_ = timestep;
     timestep_half_ = 0.5 * timestep;
     coll_prob_ = coll_rate_ * timestep;
-
-    LOG("integration timestep: " << timestep_);
 }
 
 template <int dimension, typename float_type>
 void verlet_nvt_andersen<dimension, float_type>::set_temperature(double temperature)
 {
-    temperature_ = static_cast<float_type>(temperature);
+    temperature_ = temperature;
     sqrt_temperature_ = sqrt(temperature_);
 
     LOG("temperature of heat bath: " << temperature_);

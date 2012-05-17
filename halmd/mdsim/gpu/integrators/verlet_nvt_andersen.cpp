@@ -67,7 +67,7 @@ void verlet_nvt_andersen<dimension, float_type, RandomNumberGenerator>::set_time
 template <int dimension, typename float_type, typename RandomNumberGenerator>
 void verlet_nvt_andersen<dimension, float_type, RandomNumberGenerator>::set_temperature(double temperature)
 {
-    temperature_ = static_cast<float_type>(temperature);
+    temperature_ = temperature;
     sqrt_temperature_ = sqrt(temperature_);
     LOG("temperature of heat bath: " << temperature_);
 }

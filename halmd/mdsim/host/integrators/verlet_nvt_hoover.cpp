@@ -69,7 +69,7 @@ verlet_nvt_hoover<dimension, float_type>::verlet_nvt_hoover(
 template <int dimension, typename float_type>
 void verlet_nvt_hoover<dimension, float_type>::set_timestep(double timestep)
 {
-    timestep_ = static_cast<float_type>(timestep);
+    timestep_ = timestep;
     timestep_half_ = timestep_ / 2;
     timestep_4_ = timestep_ / 4;
     timestep_8_ = timestep_ / 8;
