@@ -141,7 +141,7 @@ function M.__new(args)
 
     if not args.disable_sorting then
         -- particle sorting
-        local sort = mdsim.sort{particle = particle1}
+        local sort = mdsim.sort{particle = particle1, binning = binning}
 
         -- system preparation after setting positions and velocities
         core:on_append_setup(sort.order)

@@ -42,7 +42,7 @@ local po = libhalmd.po
 -- grab standard library
 local assert = assert
 
-local M = module.singleton("halmd.mdsim.binning")
+local M = module("halmd.mdsim.binning")
 
 --
 -- construct binning module
