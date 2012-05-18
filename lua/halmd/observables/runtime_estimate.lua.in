@@ -21,9 +21,7 @@
 local clock             = require("halmd.mdsim.clock")
 local module            = require("halmd.utility.module")
 local posix_signal      = require("halmd.utility.posix_signal")
-local utility = {
-    timer_service       = require("halmd.utility.timer_service")
-}
+local timer_service     = require("halmd.utility.timer_service")
 
 ---
 -- Runtime Estimate
@@ -69,7 +67,6 @@ function M.__new(args)
 
     self.connect = function(self)
         if #conn == 0 then
-            local timer_service = utility.timer_service() -- singleton
             table.insert(conn, timer_service:on_periodic(self.estimate, interval, first))
             table.insert(conn, timer_service:on_periodic(self.sample, sample, 0))
             table.insert(conn, posix_signal:on_usr1(self.estimate))

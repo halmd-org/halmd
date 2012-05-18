@@ -1,5 +1,5 @@
 --
--- Copyright © 2011-2012 Peter Colberg
+-- Copyright © 2012 Peter Colberg
 --
 -- This file is part of HALMD.
 --
@@ -17,24 +17,40 @@
 -- along with this program.  If not, see <http://www.gnu.org/licenses/>.
 --
 
-local module = require("halmd.utility.module")
+-- grab C++ wrappers
+local timer_service = assert(libhalmd.utility.timer_service)
 
 ---
 -- Timer Service
 -- =============
 --
-local M = module.singleton("halmd.utility.timer_service")
-
--- grab C++ wrappers
-local timer_service = assert(libhalmd.utility.timer_service)
-
----
--- Construct timer service.
+-- .. currentmodule:: halmd.utility
 --
--- Returns singleton instance.
+-- .. class:: timer_service
 --
-function M.__new()
-    return timer_service()
-end
+--    This is a singleton class.
+--
+--    .. method:: on_periodic(slot, interval)
+--
+--       Connect function to call periodically at given interval.
+--
+--       :param slot: nullary function
+--       :param number interval: frequency of calls to function in seconds
+--       :returns: connection
+--
+--    .. method:: on_periodic(slot, interval, start)
+--
+--       Connect function to call periodically at given interval.
+--
+--       :param slot: nullary function
+--       :param number interval: frequency of calls to function in seconds
+--       :param number start: time of first call in seconds
+--       :returns: connection
+--
+--    .. attribute:: process
+--
+--       Nullary slot to process timer event queue.
+--
 
-return M
+-- construct singleton instance
+return timer_service()

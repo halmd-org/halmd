@@ -81,7 +81,6 @@ local sampler = assert(libhalmd.sampler)
 local self = sampler(clock, core)
 
 -- process timer service every step
-local timer_service = timer_service() -- singleton
 self:on_sample(timer_service.process, 1)
 
 -- poll for blocked POSIX signals every step
