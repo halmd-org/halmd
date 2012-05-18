@@ -20,13 +20,11 @@
 local clock             = require("halmd.mdsim.clock")
 local log               = require("halmd.io.log")
 local module            = require("halmd.utility.module")
+local sampler           = require("halmd.observables.sampler")
 local mdsim = {
     box                 = require("halmd.mdsim.box")
   , core                = require("halmd.mdsim.core")
   , particle_group      = require("halmd.mdsim.particle_group")
-}
-local observables = {
-    sampler             = require("halmd.observables.sampler")
 }
 
 -- grab C++ wrappers
@@ -151,7 +149,6 @@ function M.__new(args)
             if not every then
                 error("missing parameter 'every'", 2)
             end
-            local sampler = observables.sampler() -- singleton
             sampler:on_sample(writer.write, every)
 
             -- turn on computation of auxiliary variables _before_ force computation

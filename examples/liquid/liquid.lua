@@ -67,9 +67,6 @@ local function liquid(args)
     -- set initial particle velocities (optionally from reader)
     mdsim.velocity{reader = reader, particle = particle}
 
-    -- Construct sampler.
-    local sampler = observables.sampler{}
-
     -- H5MD file writer
     local writer = writers.h5md({path = ("%s.trj"):format(args.output)})
     -- write box specification to H5MD file
@@ -113,13 +110,13 @@ local function liquid(args)
     -- FIXME observables.dynamics.correlation{sampler = density_mode, correlation = "intermediate_scattering_function"}
 
     -- setup simulation box
-    sampler:setup()
+    observables.sampler:setup()
 
     -- estimate remaining runtime
     local runtime = observables.runtime_estimate({steps = args.steps, first = 10, interval = 900, sample = 60})
 
     -- run simulation
-    sampler:run(args.steps)
+    observables.sampler:run(args.steps)
 
     -- log profiler results
     local profiler = halmd.utility.profiler() -- singleton

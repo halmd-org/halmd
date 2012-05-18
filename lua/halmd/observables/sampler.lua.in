@@ -18,94 +18,89 @@
 --
 
 local clock             = require("halmd.mdsim.clock")
-local module            = require("halmd.utility.module")
-local mdsim = {
-    core                = require("halmd.mdsim.core")
-}
-local utility = {
-    posix_signal        = require("halmd.utility.posix_signal")
-  , profiler            = require("halmd.utility.profiler")
-  , timer_service       = require("halmd.utility.timer_service")
-}
-
----
--- Sampler
--- =======
---
-local M = module.singleton("halmd.observables.sampler")
+local core              = require("halmd.mdsim.core")
+local posix_signal      = require("halmd.utility.posix_signal")
+local profiler          = require("halmd.utility.profiler")
+local timer_service     = require("halmd.utility.timer_service")
 
 -- grab C++ wrappers
 local sampler = assert(libhalmd.sampler)
 
 ---
--- Construct sampler.
+-- Sampler
+-- =======
 --
--- Returns singleton instance of sampler.
+-- .. currentmodule:: halmd.observables
 --
--- .. method:: setup()
+-- .. class:: sampler
 --
---    Setup simulation domain.
+--    This is a singleton class::
 --
---    This method invokes :meth:`halmd.mdsim.core.setup`.
+--       local sampler = require("halmd.observables.sampler")
+--       sampler:setup()
+--       sampler:run(1000)
 --
--- .. method:: run(steps)
+--    .. method:: setup()
 --
---    Run simulation for given number of steps.
+--       Setup simulation domain.
 --
---    This method invokes :meth:`halmd.mdsim.core.mdstep`.
+--       This method invokes :meth:`halmd.mdsim.core.setup`.
 --
--- .. method:: on_start(slot)
+--    .. method:: run(steps)
 --
---    Connect slot to signal.
+--       Run simulation for given number of steps.
 --
---    :returns: signal connection
+--       This method invokes :meth:`halmd.mdsim.core.mdstep`.
 --
--- .. method:: on_finish(slot)
+--    .. method:: on_start(slot)
 --
---    Connect slot to signal.
+--       Connect slot to signal.
 --
---    :returns: signal connection
+--       :returns: signal connection
 --
--- .. method:: on_prepare(slot, interval)
+--    .. method:: on_finish(slot)
 --
---    Connect slot to signal.
+--       Connect slot to signal.
 --
---    :returns: signal connection
+--       :returns: signal connection
 --
--- .. method:: on_sample(slot, interval)
+--    .. method:: on_prepare(slot, interval)
 --
---    Connect slot to signal.
+--       Connect slot to signal.
 --
---    :returns: signal connection
+--       :returns: signal connection
 --
-function M.__new()
-    -- construct sampler instance
-    local core = mdsim.core() -- singleton
-    local self = sampler(clock, core)
+--    .. method:: on_sample(slot, interval)
+--
+--       Connect slot to signal.
+--
+--       :returns: signal connection
+--
 
-    -- process timer service every step
-    local timer_service = utility.timer_service() -- singleton
-    self:on_sample(timer_service.process, 1)
+-- construct singleton instance
+local core = core() -- singleton
+local self = sampler(clock, core)
 
-    -- poll for blocked POSIX signals every step
-    local posix_signal = utility.posix_signal() -- singleton
-    self:on_sample(posix_signal.poll, 1)
+-- process timer service every step
+local timer_service = timer_service() -- singleton
+self:on_sample(timer_service.process, 1)
 
-    -- gracefully abort simulation on SIGTERM or SIGINT
-    local abort = sampler.abort(clock)
-    posix_signal:on_term(abort)
-    posix_signal:on_int(abort)
+-- poll for blocked POSIX signals every step
+local posix_signal = posix_signal() -- singleton
+self:on_sample(posix_signal.poll, 1)
 
-    -- connect runtime accumulators to module profiler
-    local profiler = utility.profiler() -- singleton
-    local runtime = assert(self.runtime)
-    profiler:on_profile(runtime.total, "total simulation runtime")
-    profiler:on_profile(runtime.start, "start-up of simulation")
-    profiler:on_profile(runtime.prepare, "preparation for integration step")
-    profiler:on_profile(runtime.sample, "evaluation of observables")
-    profiler:on_profile(runtime.finish, "finishing simulation")
+-- gracefully abort simulation on SIGTERM or SIGINT
+local abort = sampler.abort(clock)
+posix_signal:on_term(abort)
+posix_signal:on_int(abort)
 
-    return self
-end
+-- connect runtime accumulators to module profiler
+local profiler = profiler() -- singleton
+local runtime = assert(self.runtime)
+profiler:on_profile(runtime.total, "total simulation runtime")
+profiler:on_profile(runtime.start, "start-up of simulation")
+profiler:on_profile(runtime.prepare, "preparation for integration step")
+profiler:on_profile(runtime.sample, "evaluation of observables")
+profiler:on_profile(runtime.finish, "finishing simulation")
 
-return M
+return self

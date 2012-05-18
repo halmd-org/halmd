@@ -22,12 +22,10 @@ local device            = require("halmd.utility.device")
 local log               = require("halmd.io.log")
 local module            = require("halmd.utility.module")
 local profiler          = require("halmd.utility.profiler")
+local sampler           = require("halmd.observables.sampler")
 local mdsim = {
     box                 = require("halmd.mdsim.box")
   , particle_group      = require("halmd.mdsim.particle_group")
-}
-local observables = {
-    sampler             = require("halmd.observables.sampler"),
 }
 
 -- grab C++ classes
@@ -160,9 +158,9 @@ function M.__new(args)
         end
 
         -- construct unified Lua object for host and gpu sampler
-        local sampler = {group = group}
+        local self = {group = group}
 
-        sampler.acquire = function(self, args)
+        self.acquire = function(self, args)
             local memory = args and args.memory
             if not memory then
                 memory = device() and "gpu" or "host"
@@ -174,19 +172,19 @@ function M.__new(args)
             return assert(sampler.acquire)
         end
 
-        sampler.position = function(self)
+        self.position = function(self)
             return assert(samplers.host.position)
         end
 
-        sampler.velocity = function(self)
+        self.velocity = function(self)
             return assert(samplers.host.velocity)
         end
 
-        sampler.species = function(self)
+        self.species = function(self)
             return assert(samplers.host.species)
         end
 
-        sampler.writer = function(self, file, args)
+        self.writer = function(self, file, args)
             local name = args.group or assert(self.group.label)
             local writer = file:writer({location = {"trajectory", name}, mode = "append"})
 
@@ -201,7 +199,6 @@ function M.__new(args)
 
             writer.connect = function(self)
                 if #conn == 0 then
-                    local sampler = observables.sampler() -- singleton
                     if every and every > 0 then
                         table.insert(conn, sampler:on_sample(self.write, every))
                     else
@@ -233,7 +230,7 @@ function M.__new(args)
         -- sequence of signal connections
         local conn = {}
 
-        sampler.connect = function(self)
+        self.connect = function(self)
             if #conn == 0 then
                 local profiler = profiler() -- singleton
                 for memory, sampler in pairs(samplers) do
@@ -248,7 +245,7 @@ function M.__new(args)
             end
         end
 
-        sampler.disconnect = function(self)
+        self.disconnect = function(self)
             if #conn > 0 then
                 for i = 1, #conn do
                     conn[i]:disconnect()
@@ -260,9 +257,9 @@ function M.__new(args)
         end
 
         -- connect runtime accumulators to module profiler
-        sampler:connect()
+        self:connect()
 
-        return sampler
+        return self
     end
 
     if type(particle) == "table" and #particle > 0 then

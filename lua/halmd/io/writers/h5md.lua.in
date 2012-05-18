@@ -79,7 +79,7 @@ local M = module("halmd.io.writers.h5md")
 --       writer:on_write(box.origin, {"offset"})
 --       writer:on_write(box.edges, {"edges"})
 --
---       local sampler = observables.sampler() -- singleton
+--       local sampler = require("halmd.observables.sampler")
 --       sampler:on_start(writer.write)
 --
 --    Example for creating and using an append writer::
@@ -90,7 +90,7 @@ local M = module("halmd.io.writers.h5md")
 --       writer:on_write(observable.en_kin, {"kinetic_energy"})
 --       writer:on_write(observable.en_tot, {"total_energy"})
 --
---       local sampler = observables.sampler() -- singleton
+--       local sampler = require("halmd.observables.sampler")
 --       sampler:on_start(writer.write)
 --
 -- .. attribute:: flush

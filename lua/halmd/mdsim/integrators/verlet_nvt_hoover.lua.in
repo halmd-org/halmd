@@ -21,13 +21,11 @@ local clock             = require("halmd.mdsim.clock")
 local device            = require("halmd.utility.device")
 local log               = require("halmd.io.log")
 local module            = require("halmd.utility.module")
+local sampler           = require("halmd.observables.sampler")
 local mdsim = {
     box                 = require("halmd.mdsim.box")
   , core                = require("halmd.mdsim.core")
   , particle            = require("halmd.mdsim.particle")
-}
-local observables = {
-    sampler             = require("halmd.observables.sampler")
 }
 local writers = {
     file                = require("halmd.io.writers.file")
@@ -90,7 +88,6 @@ function M.__new(args)
     writer:on_write(integrator.xi, {"position"})
     writer:on_write(integrator.v_xi, {"velocity"})
     -- connect writer to sampler
-    local sampler = observables.sampler() -- singleton
     sampler:on_sample(writer.write, every)
 
     -- connect chain energy to writers of observables file

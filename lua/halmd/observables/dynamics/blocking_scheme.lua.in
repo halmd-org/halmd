@@ -20,9 +20,7 @@
 local clock             = require("halmd.mdsim.clock")
 local log               = require("halmd.io.log")
 local module            = require("halmd.utility.module")
-local observables = {
-    sampler             = require("halmd.observables.sampler")
-}
+local sampler           = require("halmd.observables.sampler")
 
 -- grab C++ wrappers
 local blocking_scheme_wrapper = libhalmd.observables.dynamics.blocking_scheme
@@ -49,7 +47,6 @@ function M.__new(args)
     local separation = args.separation or every * size -- default value
 
     -- construct driver module blocking_scheme
-    local sampler = observables.sampler() -- singleton
     local maximum_time = assert(sampler.total_time)
     local resolution = clock.timestep * every
     local logger = log.logger({label = "blocking_scheme"})
