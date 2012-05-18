@@ -21,11 +21,9 @@ local clock             = require("halmd.mdsim.clock")
 local core              = require("halmd.mdsim.core")
 local log               = require("halmd.io.log")
 local module            = require("halmd.utility.module")
+local profiler          = require("halmd.utility.profiler")
 local mdsim = {
     box                 = require("halmd.mdsim.box")
-}
-local utility = {
-    profiler            = require("halmd.utility.profiler")
 }
 
 ---
@@ -116,7 +114,6 @@ function M.__new(args)
                 set_timestep(self, timestep)
             end))
 
-            local profiler = utility.profiler() -- singleton
             local runtime = assert(self.runtime)
             table.insert(conn, profiler:on_profile(runtime.integrate, "first half-step of velocity-Verlet"))
             table.insert(conn, profiler:on_profile(runtime.finalize, "second half-step of velocity-Verlet"))

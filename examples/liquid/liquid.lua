@@ -119,8 +119,7 @@ local function liquid(args)
     observables.sampler:run(args.steps)
 
     -- log profiler results
-    local profiler = halmd.utility.profiler() -- singleton
-    profiler:profile()
+    halmd.utility.profiler:profile()
 end
 
 --

@@ -123,7 +123,6 @@ local core = assert(libhalmd.mdsim.core)
 local self = core()
 
 -- connect runtime accumulators to profiler
-local profiler = profiler() -- singleton
 local runtime = assert(self.runtime)
 profiler:on_profile(runtime.setup, "microscopic state preparation")
 profiler:on_profile(runtime.mdstep, "MD integration step")

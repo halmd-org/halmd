@@ -19,12 +19,12 @@
 
 local core              = require("halmd.mdsim.core")
 local module            = require("halmd.utility.module")
+local profiler          = require("halmd.utility.profiler")
 local mdsim = {
     box                 = require("halmd.mdsim.box")
 }
 local utility = {
     device              = require("halmd.utility.device")
-  , profiler            = require("halmd.utility.profiler")
 }
 
 ---
@@ -90,7 +90,6 @@ function M.__new(args)
             table.insert(conn, core:on_prepend_setup(self.prepare))
             table.insert(conn, core:on_prepend_force(self.prepare))
 
-            local profiler = utility.profiler() -- singleton
             local runtime = assert(self.runtime)
             table.insert(conn, profiler:on_profile(runtime.rearrange, "rearrange particles by permutation"))
         else

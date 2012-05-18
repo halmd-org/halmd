@@ -1,5 +1,5 @@
 --
--- Copyright © 2011  Peter Colberg
+-- Copyright © 2012 Peter Colberg
 --
 -- This file is part of HALMD.
 --
@@ -17,62 +17,45 @@
 -- along with this program.  If not, see <http://www.gnu.org/licenses/>.
 --
 
-local hooks             = require("halmd.hooks")
-local module            = require("halmd.utility.module")
-local utility           = require("halmd.utility")
-
 -- grab C++ modules
-local class_info = class_info
-local profiler_wrapper = libhalmd.utility.profiler
--- grab standard library
-local error = error
-local pairs = pairs
-local table = table
+local profiler = assert(libhalmd.utility.profiler)
 
-local M = module.singleton("halmd.utility.profiler")
-
+---
+-- Profiler
+-- ========
 --
--- construct profiler module
+-- .. currentmodule:: halmd.utility
 --
-function M.__new(args)
-    return profiler_wrapper()
-end
+-- .. class:: profiler
+--
+--    This is a singleton class.
+--
+--    .. method:: profile()
+--
+--       Log and reset runtime accumulators.
+--
+--    .. method:: on_profile(acc, desc)
+--
+--       Connect accumulator for profiling.
+--
+--       :param acc: runtime accumulator
+--       :param string desc: description of runtime accumulator
+--       :returns: connection
+--
+--    .. method:: on_prepend_profile(slot)
+--
+--       Connect slot to signal.
+--
+--       :param slot: nullary function
+--       :returns: connection
+--
+--    .. method:: on_append_profile(slot)
+--
+--       Connect slot to signal.
+--
+--       :param slot: nullary function
+--       :returns: connection
+--
 
-hooks.register_object_hook(function(object, module)
-    local profile = module.profile
-    if profile then
-        -- module profiler
-        local profiler = {}
-
-        --
-        -- profiler:on_profile takes a single unnamed argument, which is the
-        -- module to be profiled, and arbitrary many named arguments, with
-        -- each the name of a runtime accumulator and its description
-        --
-        function profiler:on_profile(args)
-            local object = table.remove(args, 1)
-            if not object then
-                error("missing argument: profiled module", 2)
-            end
-
-            for acc, desc in pairs(args) do
-                local runtime = object.runtime
-                if not runtime then
-                    error("missing runtime struct in module", 2)
-                end
-                local class = class_info(runtime)
-                local attrs = utility.reverse(class.attributes)
-                if not attrs[acc] then
-                    error("undefined runtime accumulator: " .. acc, 2)
-                end
-                local profiler = M() -- singleton
-                profiler:on_profile(runtime[acc], desc)
-            end
-        end
-
-        -- connect runtime accumulators of object to profiler
-        profile(object, profiler)
-    end
-end)
-
-return M
+-- construct singleton instance
+return profiler()

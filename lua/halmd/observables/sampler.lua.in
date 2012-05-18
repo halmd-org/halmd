@@ -94,7 +94,6 @@ posix_signal:on_term(abort)
 posix_signal:on_int(abort)
 
 -- connect runtime accumulators to module profiler
-local profiler = profiler() -- singleton
 local runtime = assert(self.runtime)
 profiler:on_profile(runtime.total, "total simulation runtime")
 profiler:on_profile(runtime.start, "start-up of simulation")
