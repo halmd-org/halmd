@@ -28,7 +28,7 @@ local po = libhalmd.po
 -- grab standard library
 local assert = assert
 
-local M = module.singleton("halmd.observables.dynamics.blocking_scheme")
+local M = module("halmd.observables.dynamics.blocking_scheme")
 
 --
 -- construct module blocking_scheme
