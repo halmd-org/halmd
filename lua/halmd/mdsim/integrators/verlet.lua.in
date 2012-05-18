@@ -18,11 +18,11 @@
 --
 
 local clock             = require("halmd.mdsim.clock")
+local core              = require("halmd.mdsim.core")
 local log               = require("halmd.io.log")
 local module            = require("halmd.utility.module")
 local mdsim = {
     box                 = require("halmd.mdsim.box")
-  , core                = require("halmd.mdsim.core")
 }
 local utility = {
     profiler            = require("halmd.utility.profiler")
@@ -109,7 +109,6 @@ function M.__new(args)
 
     self.connect = function(self)
         if #conn == 0 then
-            local core = mdsim.core() -- singleton
             table.insert(conn, core:on_integrate(self.integrate))
             table.insert(conn, core:on_finalize(self.finalize))
 

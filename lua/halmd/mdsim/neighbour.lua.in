@@ -17,13 +17,13 @@
 -- along with this program.  If not, see <http://www.gnu.org/licenses/>.
 --
 
+local core                              = require("halmd.mdsim.core")
 local device                            = require("halmd.utility.device")
 local log                               = require("halmd.io.log")
 local module                            = require("halmd.utility.module")
 local mdsim = {
     binning                             = require("halmd.mdsim.binning")
   , box                                 = require("halmd.mdsim.box")
-  , core                                = require("halmd.mdsim.core")
   , maximum_squared_displacement        = require("halmd.mdsim.maximum_squared_displacement")
   , sort                                = require("halmd.mdsim.sort")
 }
@@ -135,7 +135,6 @@ function M.__new(args)
     -- compare maximum squared displacement to squared half skin size
     local limit = math.pow(neighbour.r_skin / 2, 2)
     local greater = predicates.greater(maximum_squared_displacement.compute, limit)
-    local core = mdsim.core()
 
     -- evaluate maximum squared displacement every step
     core:on_prepend_force(greater.evaluate)

@@ -19,9 +19,7 @@
 
 local module            = require("halmd.utility.module")
 local readers           = require("halmd.io.readers")
-local mdsim = {
-    core                = require("halmd.mdsim.core")
-}
+local core              = require("halmd.mdsim.core")
 local samples = {
     phase_space         = require("halmd.observables.samples.phase_space")
 }
@@ -55,7 +53,6 @@ function M.__new(args)
         -- open trajectory group
         local reader = file:reader{location = {"trajectory"}, mode = "append"}
         -- read phase space sample before system preparation
-        local core = mdsim.core() -- singleton
 -- FIXME the option 'time' conflicts with and is superseded by the global option 'time'
 --        if time then
 --            core:on_prepend_setup(reader:read_at_time(time))

@@ -18,13 +18,13 @@
 --
 
 local clock             = require("halmd.mdsim.clock")
+local core              = require("halmd.mdsim.core")
 local device            = require("halmd.utility.device")
 local log               = require("halmd.io.log")
 local module            = require("halmd.utility.module")
 local sampler           = require("halmd.observables.sampler")
 local mdsim = {
     box                 = require("halmd.mdsim.box")
-  , core                = require("halmd.mdsim.core")
   , particle            = require("halmd.mdsim.particle")
 }
 local writers = {
@@ -60,7 +60,6 @@ function M.__new(args)
 
     integrator.connect = function(self)
         if #conn == 0 then
-            local core = mdsim.core() -- singleton
             table.insert(conn, core:on_integrate(self.integrate))
             table.insert(conn, core:on_finalize(self.finalize))
         else

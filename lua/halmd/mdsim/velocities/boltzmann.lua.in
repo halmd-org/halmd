@@ -17,12 +17,10 @@
 -- along with this program.  If not, see <http://www.gnu.org/licenses/>.
 --
 
+local core              = require("halmd.mdsim.core")
 local device            = require("halmd.utility.device")
 local log               = require("halmd.io.log")
 local module            = require("halmd.utility.module")
-local mdsim = {
-    core                = require("halmd.mdsim.core")
-}
 local random            = require("halmd.random")
 
 -- grab C++ wrappers
@@ -65,7 +63,6 @@ function M.__new(args)
     end
     local velocity = boltzmann(particle, random, temperature, logger)
 
-    local core = mdsim.core()
     -- connect velocity to core
     core:on_setup(velocity.set)
 

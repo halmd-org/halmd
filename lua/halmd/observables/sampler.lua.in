@@ -78,7 +78,6 @@ local sampler = assert(libhalmd.sampler)
 --
 
 -- construct singleton instance
-local core = core() -- singleton
 local self = sampler(clock, core)
 
 -- process timer service every step

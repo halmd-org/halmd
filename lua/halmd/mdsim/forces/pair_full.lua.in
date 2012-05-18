@@ -17,11 +17,11 @@
 -- along with this program.  If not, see <http://www.gnu.org/licenses/>.
 --
 
+local core              = require("halmd.mdsim.core")
 local device            = require("halmd.utility.device")
 local module            = require("halmd.utility.module")
 local mdsim = {
     box                 = require("halmd.mdsim.box")
-  , core                = require("halmd.mdsim.core")
   , neighbour           = require("halmd.mdsim.neighbour")
   , particle            = require("halmd.mdsim.particle")
   , potential           = require("halmd.mdsim.potential")
@@ -50,7 +50,6 @@ function M.__new(args)
     -- construct force module
     local force = assert(forces.pair_full)(potential, particle, box)
 
-    local core = mdsim.core()
     -- system preparation
     core:on_append_setup(force.compute)
     -- compute forces every step

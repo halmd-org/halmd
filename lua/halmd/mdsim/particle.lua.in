@@ -17,10 +17,10 @@
 -- along with this program.  If not, see <http://www.gnu.org/licenses/>.
 --
 
+local core              = require("halmd.mdsim.core")
 local module            = require("halmd.utility.module")
 local mdsim = {
     box                 = require("halmd.mdsim.box")
-  , core                = require("halmd.mdsim.core")
 }
 local utility = {
     device              = require("halmd.utility.device")
@@ -87,7 +87,6 @@ function M.__new(args)
 
     self.connect = function(self)
         if #conn == 0 then
-            local core = mdsim.core() -- singleton
             table.insert(conn, core:on_prepend_setup(self.prepare))
             table.insert(conn, core:on_prepend_force(self.prepare))
 
