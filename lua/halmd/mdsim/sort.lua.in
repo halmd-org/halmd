@@ -35,7 +35,7 @@ local M = module("halmd.mdsim.sort")
 function M.__new(args)
     local particle = assert(args.particle)
     local sort = args.sort or "hilbert" -- default value
-    return sorts[sort]{particle = particle, binning = args.binning}
+    return sorts[sort]{box = args.box, particle = particle, binning = args.binning}
 end
 
 --

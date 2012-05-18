@@ -21,9 +21,6 @@ local core              = require("halmd.mdsim.core")
 local device            = require("halmd.utility.device")
 local log               = require("halmd.io.log")
 local module            = require("halmd.utility.module")
-local mdsim = {
-    box                 = require("halmd.mdsim.box")
-}
 
 -- grab C++ wrappers
 local phase_space_wrapper = {
@@ -51,8 +48,8 @@ local M = module("halmd.mdsim.positions.phase_space")
 function M.__new(args)
     -- dependency injection
     local particle = assert(args.particle)
+    local box = assert(args.box)
     local dimension = assert(particle.dimension)
-    local box = mdsim.box() -- singleton
     local sample = assert(args.sample)
     local logger = log.logger({label = "phase_space"})
 

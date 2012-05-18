@@ -20,9 +20,6 @@
 local device            = require("halmd.utility.device")
 local log               = require("halmd.io.log")
 local module            = require("halmd.utility.module")
-local mdsim = {
-    box                 = require("halmd.mdsim.box")
-}
 
 -- grab C++ wrappers
 local hilbert_wrapper = {
@@ -48,9 +45,9 @@ local M = module("halmd.mdsim.sorts.hilbert")
 function M.__new(args)
     -- dependency injection
     local particle = assert(args.particle)
+    local box = assert(args.box)
     local dimension = assert(particle.dimension)
     local binning = assert(args.binning)
-    local box = mdsim.box() -- singleton
     local logger = log.logger({label = "hilbert"})
 
     local sort

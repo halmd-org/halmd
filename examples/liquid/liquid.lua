@@ -57,15 +57,17 @@ local function liquid(args)
     -- label particles A, B, …
 
     -- create system state
-    local particle = mdsim.particle({particles = nparticle, species = nspecies})
+    local particle = mdsim.particle({box = box, particles = nparticle, species = nspecies})
     -- add velocity-Verlet integrator
-    local integrator = mdsim.integrators.verlet({particle = particle, timestep = args.timestep})
+    local integrator = mdsim.integrators.verlet({box = box, particle = particle, timestep = args.timestep})
+    -- pair potential
+    local potential = mdsim.potentials.lennard_jones({particle = particle})
     -- add force
-    local force = mdsim.force{particle = particle}
+    local force = mdsim.forces.pair_trunc{box = box, particle = particle, potential = potential}
     -- set initial particle positions (optionally from reader)
-    mdsim.position{reader = reader, particle = particle}
+    mdsim.positions.lattice{box = box, particle = particle}
     -- set initial particle velocities (optionally from reader)
-    mdsim.velocity{reader = reader, particle = particle}
+    mdsim.velocities.boltzmann{box = box, particle = particle}
 
     -- H5MD file writer
     local writer = writers.h5md({path = ("%s.trj"):format(args.output)})
@@ -77,7 +79,7 @@ local function liquid(args)
     local particle_group = mdsim.particle_group{
         particle = particle -- FIXME , species = species
     }
-    local phase_space = observables.phase_space{particle = particle_group}
+    local phase_space = observables.phase_space{box = box, particle = particle_group}
     -- write trajectory of particle groups to H5MD file
     for i = 1, #phase_space do
         phase_space[i]:writer(writer, {every = args.sampling.trajectory})
@@ -86,7 +88,7 @@ local function liquid(args)
     -- H5MD file writer
     local writer = writers.h5md({path = ("%s.obs"):format(args.output)})
     -- Sample macroscopic state variables.
-    local msv = observables.thermodynamics({particle = particle_group})
+    local msv = observables.thermodynamics({box = box, particle = particle_group})
     for i = 1, #msv do
         msv[i]:writer(writer, {every = args.sampling.state_vars})
     end

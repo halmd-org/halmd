@@ -136,6 +136,12 @@ wrap_wavenumber(boost::shared_ptr<wavevector_type const> wavevector)
 }
 
 template <int dimension>
+static unsigned int wrap_dimension(wavevector<dimension> const&)
+{
+    return dimension;
+}
+
+template <int dimension>
 void wavevector<dimension>::luaopen(lua_State* L)
 {
     using namespace luabind;
@@ -161,6 +167,7 @@ void wavevector<dimension>::luaopen(lua_State* L)
                     .property("value", &wavevector::value)
                     .property("tolerance", &wavevector::tolerance)
                     .property("max_count", &wavevector::max_count)
+                    .property("dimension", &wrap_dimension<dimension>)
             ]
         ]
     ];

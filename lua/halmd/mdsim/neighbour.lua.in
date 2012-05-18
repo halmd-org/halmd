@@ -23,7 +23,6 @@ local log                               = require("halmd.io.log")
 local module                            = require("halmd.utility.module")
 local mdsim = {
     binning                             = require("halmd.mdsim.binning")
-  , box                                 = require("halmd.mdsim.box")
   , maximum_squared_displacement        = require("halmd.mdsim.maximum_squared_displacement")
   , sort                                = require("halmd.mdsim.sort")
 }
@@ -86,14 +85,14 @@ function M.__new(args)
     -- dependency injection
     local particle1 = assert(args.particle or args.particles[1])
     local particle2 = assert(args.particle or args.particles[2])
-    local box = mdsim.box() -- singleton
+    local box = assert(args.box)
     local dimension = assert(box.dimension)
     local logger = log.logger({label = "neighbour " .. label({particle1, particle2})})
 
     -- domain decomposition
     local binning
     if not args.disable_binning then
-        binning = mdsim.binning{particle = particle2, r_cut = r_cut, skin = skin}
+        binning = mdsim.binning{box = box, particle = particle2, r_cut = r_cut, skin = skin}
     end
 
     -- neighbour lists
@@ -130,7 +129,7 @@ function M.__new(args)
     end
 
     -- maximum squared displacement computation
-    local maximum_squared_displacement = mdsim.maximum_squared_displacement{particle = particle1}
+    local maximum_squared_displacement = mdsim.maximum_squared_displacement{box = box, particle = particle1}
 
     -- compare maximum squared displacement to squared half skin size
     local limit = math.pow(neighbour.r_skin / 2, 2)
@@ -141,7 +140,7 @@ function M.__new(args)
 
     if not args.disable_sorting then
         -- particle sorting
-        local sort = mdsim.sort{particle = particle1, binning = binning}
+        local sort = mdsim.sort{box = box, particle = particle1, binning = binning}
 
         -- system preparation after setting positions and velocities
         core:on_append_setup(sort.order)

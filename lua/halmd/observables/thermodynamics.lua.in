@@ -22,9 +22,7 @@ local log               = require("halmd.io.log")
 local module            = require("halmd.utility.module")
 local sampler           = require("halmd.observables.sampler")
 local mdsim = {
-    box                 = require("halmd.mdsim.box")
-  , core                = require("halmd.mdsim.core")
-  , particle_group      = require("halmd.mdsim.particle_group")
+    particle_group      = require("halmd.mdsim.particle_group")
 }
 
 -- grab C++ wrappers
@@ -53,6 +51,7 @@ local M = module("halmd.observables.thermodynamics")
 --
 -- :param table args: keyword arguments
 -- :param args.particle: instance, or sequence of instances, of particle or particle_group
+-- :param args.box: instance of :class:`halmd.mdsim.box`
 -- :returns: instance, or sequence of instances, of thermodynamics
 --
 -- .. method:: writer(file, args)
@@ -109,7 +108,10 @@ function M.__new(args)
     if not particle then
         error("missing parameter 'particle'", 3)
     end
-    local box = mdsim.box() -- singleton
+    local box = args.box
+    if not box then
+        error("missing parameter 'box'", 3)
+    end
 
     local observable = function(particle)
         local group

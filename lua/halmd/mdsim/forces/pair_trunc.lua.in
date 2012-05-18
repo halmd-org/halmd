@@ -21,8 +21,7 @@ local core              = require("halmd.mdsim.core")
 local device            = require("halmd.utility.device")
 local module            = require("halmd.utility.module")
 local mdsim = {
-    box                 = require("halmd.mdsim.box")
-  , neighbour           = require("halmd.mdsim.neighbour")
+    neighbour           = require("halmd.mdsim.neighbour")
 }
 
 -- grab modules
@@ -44,16 +43,15 @@ local M = module("halmd.mdsim.forces.pair_trunc")
 function M.__new(args)
     local particle1 = assert(args.particle or args.particles[1])
     local particle2 = assert(args.particle or args.particles[2])
+    local box = assert(args.box)
+    local dimension = assert(box.dimension)
     local potential = assert(args.potential)
     local trunc = args.trunc or discontinuous()
     local neighbour = args.neighbour -- optional
 
-    local box = mdsim.box() -- singleton
-    local dimension = assert(box.dimension)
-
     -- create neighbour lists with cutoff radii of potential
     if not neighbour then
-        neighbour = mdsim.neighbour{particles = {particle1, particle2}, r_cut = potential.r_cut}
+        neighbour = mdsim.neighbour{box = box, particles = {particle1, particle2}, r_cut = potential.r_cut}
     end
 
     -- construct force module

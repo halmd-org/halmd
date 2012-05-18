@@ -20,9 +20,6 @@
 local device            = require("halmd.utility.device")
 local log               = require("halmd.io.log")
 local module            = require("halmd.utility.module")
-local mdsim = {
-    box                 = require("halmd.mdsim.box")
-}
 
 -- grab C++ wrappers
 local excluded_volume_wrapper = {
@@ -45,7 +42,7 @@ function M.__new(args)
     -- parameters
     local cell_length = args.cell_length or 1 -- default value
     -- dependencies
-    local box = mdsim.box() -- singleton
+    local box = assert(args.box)
     local dimension = assert(box.dimension)
     local logger = log.logger({label = "excluded_volume"})
 

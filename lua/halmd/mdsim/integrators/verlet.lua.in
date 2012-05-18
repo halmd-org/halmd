@@ -22,9 +22,6 @@ local core              = require("halmd.mdsim.core")
 local log               = require("halmd.io.log")
 local module            = require("halmd.utility.module")
 local profiler          = require("halmd.utility.profiler")
-local mdsim = {
-    box                 = require("halmd.mdsim.box")
-}
 
 ---
 -- Velocity Verlet
@@ -57,6 +54,7 @@ local verlet = assert(libhalmd.mdsim.integrators.verlet)
 --
 -- :param table args: keyword arguments
 -- :param args.particle: instance of :class:`halmd.mdsim.particle`
+-- :param args.box: instance of :class:`halmd.mdsim.box`
 -- :param number args.timestep: integration time step (defaults to :attr:`halmd.mdsim.clock.timestep`)
 --
 -- .. method:: set_timestep
@@ -87,6 +85,11 @@ function M.__new(args)
     if not particle then
         error("missing parameter: particle", 3)
     end
+    local box = args.box
+    if not box then
+        error("missing parameter: box", 3)
+    end
+    local dimension = assert(box.dimension)
     local timestep = args.timestep
     if timestep then
         clock:set_timestep(timestep)
@@ -94,8 +97,6 @@ function M.__new(args)
         timestep = assert(clock.timestep)
     end
 
-    local box = mdsim.box() -- singleton
-    local dimension = assert(box.dimension)
     local logger = log.logger({label = "verlet"})
 
     local self = verlet(particle, box, timestep, logger)

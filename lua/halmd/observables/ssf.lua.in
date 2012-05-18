@@ -21,9 +21,6 @@ local clock             = require("halmd.mdsim.clock")
 local log               = require("halmd.io.log")
 local module            = require("halmd.utility.module")
 local sampler           = require("halmd.observables.sampler")
-local mdsim = {
-    box                 = require("halmd.mdsim.box")
-}
 local observables = {
     density_mode        = require("halmd.observables.density_mode")
 }
@@ -61,7 +58,7 @@ function M.__new(args)
     assert(type(density_mode) == "table", "invalid table")
 
     -- dependency injection
-    local dimension = assert(mdsim.box().dimension) -- singleton
+    local dimension = assert(density_mode.wavevector.dimension)
     local logger = log.logger({label = "ssf"})
 
     -- drop additional table keys of density modes -- FIXME

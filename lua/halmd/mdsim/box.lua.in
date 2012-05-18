@@ -37,9 +37,9 @@ local h5 = assert(libhalmd.h5)
 --
 -- Example::
 --
---    local box = halmd.mdsim.box({length = {100, 100, 10}) -- singleton
+--    local box = halmd.mdsim.box({length = {100, 100, 10})
 --
-local M = module.singleton("halmd.mdsim.box")
+local M = module("halmd.mdsim.box")
 
 ---
 -- Construct box.
@@ -47,9 +47,6 @@ local M = module.singleton("halmd.mdsim.box")
 -- :param table args: keyword arguments
 -- :param table args.length: sequence of edge lengths, according to dimensionality
 -- :returns: instance of box
---
--- ``box`` is a singleton, i.e. the first call to :class:`halmd.mdsim.box`
--- creates an instance of ``box``, and subsequent calls return this instance.
 --
 -- .. method:: writer(file)
 --

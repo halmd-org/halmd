@@ -20,9 +20,6 @@
 local core              = require("halmd.mdsim.core")
 local module            = require("halmd.utility.module")
 local profiler          = require("halmd.utility.profiler")
-local mdsim = {
-    box                 = require("halmd.mdsim.box")
-}
 local utility = {
     device              = require("halmd.utility.device")
 }
@@ -51,11 +48,17 @@ end
 -- Construct particle instance.
 --
 -- :param table args: keyword arguments
+-- :param number args.box: instance of :class:`halmd.mdsim.box`
 -- :param number args.particles: number of particles
 -- :param number args.species: number of species
 -- :param string args.label: instance label (defaults to ``all``)
 --
 function M.__new(args)
+    local box = args.box
+    if not box then
+        error("missing argument: box", 3)
+    end
+    local dimension = assert(box.dimension)
     local nparticle = args.particles
     if not nparticle then
         error("missing argument: particles", 3)
@@ -65,10 +68,6 @@ function M.__new(args)
         error("missing argument: species", 3)
     end
     local label = args.label or "all"
-
-    -- query positional dimension of simulation domain
-    local box = mdsim.box() -- singleton
-    local dimension = assert(box.dimension)
 
     -- select particle class
     local memory = utility.device() and "gpu" or "host"

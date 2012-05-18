@@ -21,9 +21,6 @@ local core              = require("halmd.mdsim.core")
 local device            = require("halmd.utility.device")
 local log               = require("halmd.io.log")
 local module            = require("halmd.utility.module")
-local mdsim = {
-    box                 = require("halmd.mdsim.box")
-}
 
 -- grab C++ wrappers
 local lattice_wrapper = {
@@ -50,11 +47,11 @@ local M = module("halmd.mdsim.positions.lattice")
 --
 function M.__new(args)
     local particle = assert(args.particle, "missing parameter: particle")
+    local box = assert(args.box, "missing parameter: box")
     local slab = args.slab or {} -- optional
 
     -- dependency injection
     local dimension = assert(particle.dimension)
-    local box = mdsim.box() -- singleton
     local logger = log.logger({label = "lattice"})
 
     -- fill up missing values with 1

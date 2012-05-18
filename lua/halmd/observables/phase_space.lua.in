@@ -24,8 +24,7 @@ local module            = require("halmd.utility.module")
 local profiler          = require("halmd.utility.profiler")
 local sampler           = require("halmd.observables.sampler")
 local mdsim = {
-    box                 = require("halmd.mdsim.box")
-  , particle_group      = require("halmd.mdsim.particle_group")
+    particle_group      = require("halmd.mdsim.particle_group")
 }
 
 -- grab C++ classes
@@ -53,6 +52,7 @@ local M = module("halmd.observables.phase_space")
 --
 -- :param table args: keyword arguments
 -- :param args.particle: instance, or sequence of instances, of particle or particle_group
+-- :param args.box: instance of :class:`halmd.mdsim.box`
 -- :returns: instance, or sequence of instances, of phase_space sampler
 --
 -- .. note::
@@ -134,7 +134,10 @@ function M.__new(args)
     if not particle then
         error("missing parameter 'particle'", 3)
     end
-    local box = mdsim.box() -- singleton
+    local box = args.box
+    if not box then
+        error("missing parameter 'box'", 3)
+    end
 
     local sampler = function(particle)
         local group

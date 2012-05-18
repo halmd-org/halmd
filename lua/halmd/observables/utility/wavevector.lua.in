@@ -18,9 +18,6 @@
 --
 
 local module            = require("halmd.utility.module")
-local mdsim = {
-    box                 = require("halmd.mdsim.box")
-}
 
 -- grab C++ wrappers
 local wavevector_wrapper = {
@@ -51,9 +48,7 @@ function M.__new(args)
     local tolerance = assert(args.tolerance)
     local max_count = assert(args.max_count)
     assert(wavenumber or max_wavenumber)
-
-    -- dependency injection
-    local box = mdsim.box() -- singleton
+    local box = assert(args.box)
     local dimension = assert(box.dimension)
 
     local wavevector = assert(wavevector_wrapper[dimension])
