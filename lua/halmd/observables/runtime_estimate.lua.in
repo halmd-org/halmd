@@ -20,9 +20,9 @@
 
 local clock             = require("halmd.mdsim.clock")
 local module            = require("halmd.utility.module")
+local posix_signal      = require("halmd.utility.posix_signal")
 local utility = {
-    posix_signal       = require("halmd.utility.posix_signal")
-  , timer_service       = require("halmd.utility.timer_service")
+    timer_service       = require("halmd.utility.timer_service")
 }
 
 ---
@@ -72,8 +72,6 @@ function M.__new(args)
             local timer_service = utility.timer_service() -- singleton
             table.insert(conn, timer_service:on_periodic(self.estimate, interval, first))
             table.insert(conn, timer_service:on_periodic(self.sample, sample, 0))
-
-            local posix_signal = utility.posix_signal() -- singleton
             table.insert(conn, posix_signal:on_usr1(self.estimate))
         else
             error("runtime estimate is already connected", 2)

@@ -1,5 +1,5 @@
 --
--- Copyright © 2011-2012 Peter Colberg
+-- Copyright © 2012 Peter Colberg
 --
 -- This file is part of HALMD.
 --
@@ -17,24 +17,97 @@
 -- along with this program.  If not, see <http://www.gnu.org/licenses/>.
 --
 
-local module = require("halmd.utility.module")
+-- grab C++ wrappers
+local posix_signal = assert(libhalmd.utility.posix_signal)
 
 ---
 -- POSIX Signal
 -- ============
 --
-local M = module.singleton("halmd.utility.posix_signal")
-
--- grab C++ wrappers
-local posix_signal = assert(libhalmd.utility.posix_signal)
-
----
--- Construct POSIX signal handler.
+-- .. currentmodule:: halmd.utility
 --
--- Returns singleton instance.
+-- .. class:: posix_signal
 --
-function M.__new()
-    return posix_signal()
-end
+--    This is a singleton class.
+--
+--    .. method:: on_hup(slot)
+--
+--      Connect slot to invoke on signal ``HUP``.
+--
+--      :param slot: unary slot that accepts signal number
+--      :returns: connection
+--
+--    .. method:: on_int(slot)
+--
+--      Connect slot to invoke on signal ``INT``.
+--
+--      :param slot: unary slot that accepts signal number
+--      :returns: connection
+--
+--    .. method:: on_alrm(slot)
+--
+--      Connect slot to invoke on signal ``ALRM``.
+--
+--      :param slot: unary slot that accepts signal number
+--      :returns: connection
+--
+--    .. method:: on_term(slot)
+--
+--      Connect slot to invoke on signal ``TERM``.
+--
+--      :param slot: unary slot that accepts signal number
+--      :returns: connection
+--
+--    .. method:: on_usr1(slot)
+--
+--      Connect slot to invoke on signal ``USR1``.
+--
+--      :param slot: unary slot that accepts signal number
+--      :returns: connection
+--
+--    .. method:: on_usr2(slot)
+--
+--      Connect slot to invoke on signal ``USR2``.
+--
+--      :param slot: unary slot that accepts signal number
+--      :returns: connection
+--
+--    .. method:: on_cont(slot)
+--
+--      Connect slot to invoke on signal ``CONT``.
+--
+--      :param slot: unary slot that accepts signal number
+--      :returns: connection
+--
+--    .. method:: on_tstp(slot)
+--
+--      Connect slot to invoke on signal ``TSTP``.
+--
+--      :param slot: unary slot that accepts signal number
+--      :returns: connection
+--
+--    .. method:: on_ttin(slot)
+--
+--      Connect slot to invoke on signal ``TTIN``.
+--
+--      :param slot: unary slot that accepts signal number
+--      :returns: connection
+--
+--    .. method:: on_ttou(slot)
+--
+--      Connect slot to invoke on signal ``TTOU``.
+--
+--      :param slot: unary slot that accepts signal number
+--      :returns: connection
+--
+--    .. attribute:: wait
+--
+--      Nullary slot that blocks process until signal is received.
+--
+--    .. attribute:: poll
+--
+--      Nullary slot that polls signal queue, and returns true if signal was handled.
+--
 
-return M
+-- construct singleton instance
+return posix_signal()

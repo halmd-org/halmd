@@ -19,9 +19,7 @@
 
 local module            = require("halmd.utility.module")
 local clock             = require("halmd.mdsim.clock")
-local utility = {
-    posix_signal        = require("halmd.utility.posix_signal")
-}
+local posix_signal      = require("halmd.utility.posix_signal")
 
 -- grab C++ modules
 local h5md = libhalmd.io.writers.h5md
@@ -129,7 +127,6 @@ function M.__new(args)
     end
 
     -- flush H5MD file to disk on SIGUSR2
-    local posix_signal = utility.posix_signal() -- singleton
     posix_signal:on_usr2(file.flush)
 
     return file

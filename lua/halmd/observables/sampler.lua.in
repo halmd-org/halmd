@@ -85,7 +85,6 @@ local timer_service = timer_service() -- singleton
 self:on_sample(timer_service.process, 1)
 
 -- poll for blocked POSIX signals every step
-local posix_signal = posix_signal() -- singleton
 self:on_sample(posix_signal.poll, 1)
 
 -- gracefully abort simulation on SIGTERM or SIGINT
