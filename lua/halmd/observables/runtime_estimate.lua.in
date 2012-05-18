@@ -18,10 +18,8 @@
 -- along with this program.  If not, see <http://www.gnu.org/licenses/>.
 --
 
+local clock             = require("halmd.mdsim.clock")
 local module            = require("halmd.utility.module")
-local mdsim = {
-    clock               = require("halmd.mdsim.clock")
-}
 local utility = {
     posix_signal       = require("halmd.utility.posix_signal")
   , timer_service       = require("halmd.utility.timer_service")
@@ -62,7 +60,6 @@ function M.__new(args)
     if not sample then
         error("missing argument: sample", 3)
     end
-    local clock = mdsim.clock()
 
     -- construct instance
     local self = runtime_estimate(clock, steps)

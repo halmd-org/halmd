@@ -17,10 +17,10 @@
 -- along with this program.  If not, see <http://www.gnu.org/licenses/>.
 --
 
+local clock             = require("halmd.mdsim.clock")
 local module            = require("halmd.utility.module")
 local mdsim = {
-    clock               = require("halmd.mdsim.clock")
-  , core                = require("halmd.mdsim.core")
+    core                = require("halmd.mdsim.core")
 }
 local utility = {
     posix_signal        = require("halmd.utility.posix_signal")
@@ -80,7 +80,6 @@ local sampler = assert(libhalmd.sampler)
 --
 function M.__new()
     -- construct sampler instance
-    local clock = mdsim.clock() -- singleton
     local core = mdsim.core() -- singleton
     local self = sampler(clock, core)
 
@@ -93,7 +92,7 @@ function M.__new()
     self:on_sample(posix_signal.poll, 1)
 
     -- gracefully abort simulation on SIGTERM or SIGINT
-    local abort = sampler.abort(mdsim.clock())
+    local abort = sampler.abort(clock)
     posix_signal:on_term(abort)
     posix_signal:on_int(abort)
 

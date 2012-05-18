@@ -17,11 +17,9 @@
 -- along with this program.  If not, see <http://www.gnu.org/licenses/>.
 --
 
+local clock             = require("halmd.mdsim.clock")
 local log               = require("halmd.io.log")
 local module            = require("halmd.utility.module")
-local mdsim = {
-    clock               = require("halmd.mdsim.clock")
-}
 local observables = {
     sampler             = require("halmd.observables.sampler")
 }
@@ -51,7 +49,6 @@ function M.__new(args)
     local separation = args.separation or every * size -- default value
 
     -- construct driver module blocking_scheme
-    local clock = mdsim.clock() -- singleton
     local sampler = observables.sampler() -- singleton
     local maximum_time = assert(sampler.total_time)
     local resolution = clock.timestep * every

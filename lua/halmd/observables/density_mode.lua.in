@@ -17,11 +17,9 @@
 -- along with this program.  If not, see <http://www.gnu.org/licenses/>.
 --
 
+local clock             = require("halmd.mdsim.clock")
 local log               = require("halmd.io.log")
 local module            = require("halmd.utility.module")
-local mdsim = {
-    clock               = require("halmd.mdsim.clock")
-}
 local observables = {
     phase_space         = require("halmd.observables.phase_space")
   , utility = {
@@ -80,8 +78,6 @@ function M.__new(args)
           , max_count = max_count
         }
     end
-
-    local clock = mdsim.clock() -- singleton
 
     -- construct list of density modes
     local observable = {}

@@ -17,13 +17,13 @@
 -- along with this program.  If not, see <http://www.gnu.org/licenses/>.
 --
 
+local clock             = require("halmd.mdsim.clock")
 local device            = require("halmd.utility.device")
 local log               = require("halmd.io.log")
 local module            = require("halmd.utility.module")
 local profiler          = require("halmd.utility.profiler")
 local mdsim = {
     box                 = require("halmd.mdsim.box")
-  , clock               = require("halmd.mdsim.clock")
   , particle_group      = require("halmd.mdsim.particle_group")
 }
 local observables = {
@@ -137,7 +137,6 @@ function M.__new(args)
         error("missing parameter 'particle'", 3)
     end
     local box = mdsim.box() -- singleton
-    local clock = mdsim.clock() -- singleton
 
     local sampler = function(particle)
         local group

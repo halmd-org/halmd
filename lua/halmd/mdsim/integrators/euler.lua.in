@@ -17,11 +17,11 @@
 -- along with this program.  If not, see <http://www.gnu.org/licenses/>.
 --
 
+local clock             = require("halmd.mdsim.clock")
 local log               = require("halmd.io.log")
 local module            = require("halmd.utility.module")
 local mdsim = {
     box                 = require("halmd.mdsim.box")
-  , clock               = require("halmd.mdsim.clock")
   , core                = require("halmd.mdsim.core")
   , particle            = require("halmd.mdsim.particle")
 }
@@ -40,7 +40,6 @@ function M.__new(args)
     local particle = mdsim.particle() -- singleton
     local dimension = assert(particle.dimension)
     local box = mdsim.box() -- singleton
-    local clock = mdsim.clock() -- singleton
     local timestep = assert(clock.timestep)
     local logger = log.logger({label = "euler"})
 

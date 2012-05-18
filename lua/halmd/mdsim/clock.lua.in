@@ -17,7 +17,8 @@
 -- along with this program.  If not, see <http://www.gnu.org/licenses/>.
 --
 
-local module = require("halmd.utility.module")
+-- grab C++ wrappers
+local clock = assert(libhalmd.mdsim.clock)
 
 ---
 -- Clock
@@ -25,42 +26,41 @@ local module = require("halmd.utility.module")
 --
 -- The clock tracks simulation step and time, and defines the integration time step.
 --
-local M = module.singleton("halmd.mdsim.clock")
+-- .. currentmodule:: halmd.mdsim
+--
+-- .. class:: clock
+--
+--    This is a singleton class::
+--
+--       local clock = require("halmd.mdsim.clock")
+--       clock:on_set_timestep(function(timestep)
+--           print(("time step has changed to %g"):format(timestep))
+--       end)
+--
+--    .. attribute:: step
+--
+--       Current simulation step.
+--
+--    .. attribute:: time
+--
+--       Current simulation time in MD units.
+--
+--    .. attribute:: timestep
+--
+--       Integration time step in MD units.
+--
+--    .. method:: set_timestep(timestep)
+--
+--       Define integration time step.
+--
+--       The value of the time step is propagated to all integrators.
+--
+--    .. method:: on_set_timestep(slot)
+--
+--       Connect a unary slot that accepts the integration time step.
+--
+--       This slot is called after setting the time step with :meth:`set_timestep`.
+--
 
--- grab C++ wrappers
-local clock = assert(libhalmd.mdsim.clock)
-
----
--- Construct clock module.
---
--- Returns a singleton instance of clock.
---
--- .. method:: set_timestep(timestep)
---
---    Define integration time step.
---
---    The value of the time step is propagated to all integrators.
---
--- .. method:: on_set_timestep(slot)
---
---    Connect a unary slot that accepts the integration time step.
---
---    This slot is called after setting the time step with :meth:`set_timestep`.
---
--- .. attribute:: step
---
---    Current simulation step.
---
--- .. attribute:: time
---
---    Current simulation time in MD units.
---
--- .. attribute:: timestep
---
---    Integration time step in MD units.
---
-function M.__new()
-    return clock()
-end
-
-return M
+-- construct singleton instance
+return clock()

@@ -17,12 +17,12 @@
 -- along with this program.  If not, see <http://www.gnu.org/licenses/>.
 --
 
+local clock             = require("halmd.mdsim.clock")
 local log               = require("halmd.io.log")
 local module            = require("halmd.utility.module")
 local random            = require("halmd.random")
 local mdsim = {
     box                 = require("halmd.mdsim.box")
-  , clock               = require("halmd.mdsim.clock")
   , core                = require("halmd.mdsim.core")
 }
 
@@ -45,7 +45,6 @@ function M.__new(args)
     local dimension = assert(particle.dimension)
     local box = mdsim.box() -- singleton
     local random = assert(random())
-    local clock = mdsim.clock() -- singleton
     local timestep = assert(clock.timestep)
     local logger = log.logger({label = "verlet_nvt_andersen"})
 
