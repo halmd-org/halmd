@@ -48,12 +48,8 @@ device::device()
     catch (runtime_error const& e) {
         LOG_WARNING(e.what());
     }
-# if CUDA_VERSION >= 2020
     LOG("CUDA driver version: " << device::cuda_driver_version());
-# endif
-# if (CUDART_VERSION >= 2020)
     LOG("CUDA runtime version: " << device::cuda_runtime_version());
-# endif
 
     // choose first available CUDA device
     cuda::thread::synchronize();
@@ -140,15 +136,14 @@ string device::compute_version()
     return lexical_cast<string>(major) + "." + lexical_cast<string>(minor);
 }
 
-#if CUDA_VERSION >= 2020
-
 /**
  * Query CUDA driver version
  */
 string device::cuda_driver_version()
 {
-    int major = cuda::driver::version() / 1000;
-    int minor = cuda::driver::version() / 10 % 10;
+    int version = cuda::driver_version();
+    int major = version / 1000;
+    int minor = version / 10 % 10;
     return lexical_cast<string>(major) + "." + lexical_cast<string>(minor);
 }
 
@@ -157,13 +152,11 @@ string device::cuda_driver_version()
  */
 string device::cuda_runtime_version()
 {
-    int version = cuda::version();
+    int version = cuda::runtime_version();
     int major = version / 1000;
     int minor = version / 10 % 10;
     return lexical_cast<string>(major) + "." + lexical_cast<string>(minor);
 }
-
-#endif /* CUDART_VERSION >= 2020 */
 
 /**
  * Translate CUDA exception to Lua error message

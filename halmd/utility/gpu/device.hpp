@@ -51,10 +51,8 @@ public:
 
     static std::string nvidia_driver_version();
     static std::string compute_version();
-#if CUDA_VERSION >= 2020
     static std::string cuda_driver_version();
     static std::string cuda_runtime_version();
-#endif
     //! validate CUDA execution configuration
     static cuda::config const& validate(cuda::config const& dim);
 };
