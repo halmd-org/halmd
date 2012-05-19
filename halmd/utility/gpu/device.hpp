@@ -1,5 +1,5 @@
 /*
- * Copyright © 2008-2011  Peter Colberg
+ * Copyright © 2008-2012 Peter Colberg
  *
  * This file is part of HALMD.
  *
@@ -46,7 +46,7 @@ class device
 public:
     static void luaopen(lua_State* L);
 
-    device(std::vector<int> devices = std::vector<int>());
+    device();
     ~device();
 
     static std::string nvidia_driver_version();
@@ -57,10 +57,6 @@ public:
 #endif
     //! validate CUDA execution configuration
     static cuda::config const& validate(cuda::config const& dim);
-
-private:
-    /** selected CUDA device context */
-    boost::shared_ptr<cuda::driver::context> context_;
 };
 
 } // namespace halmd

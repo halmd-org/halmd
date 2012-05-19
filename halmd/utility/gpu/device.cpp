@@ -1,5 +1,5 @@
 /*
- * Copyright © 2008-2011  Peter Colberg
+ * Copyright © 2008-2012 Peter Colberg
  *
  * This file is part of HALMD.
  *
@@ -40,7 +40,7 @@ namespace halmd {
 /**
  * Initialize CUDA device
  */
-device::device(vector<int> devices)
+device::device()
 {
     try {
         LOG("NVIDIA driver version: " << device::nvidia_driver_version());
@@ -55,31 +55,12 @@ device::device(vector<int> devices)
     LOG("CUDA runtime version: " << device::cuda_runtime_version());
 # endif
 
-    // default to list of available CUDA devices
-    if (devices.empty()) {
-        copy(
-            counting_iterator<int>(0)
-          , counting_iterator<int>(cuda::device::count())
-          , std::back_inserter(devices)
-        );
-    }
-
     // choose first available CUDA device
-    BOOST_FOREACH (int i, devices) {
-        try {
-            // create CUDA context and associate it with this thread
-            context_.reset(new cuda::driver::context(i));
-            break;
-        }
-        catch (cuda::driver::error const&) {
-            // device is compute-exlusive mode and in use
-        }
-    }
+    cuda::thread::synchronize();
 
-    LOG("GPU: " << cuda::driver::context::device());
+    cuda::device::properties prop(cuda::device::get());
 
-    cuda::device::properties prop = cuda::driver::context::device();
-
+    LOG("GPU: " << cuda::device::get());
     LOG("GPU name: " << prop.name());
     LOG("GPU total global memory: " << prop.total_global_mem() << " bytes");
     LOG("GPU shared memory per block: " << prop.shared_mem_per_block() << " bytes");
@@ -105,7 +86,8 @@ device::~device()
 
 cuda::config const& device::validate(cuda::config const& dim)
 {
-    cuda::device::properties prop = cuda::driver::context::device();
+    cuda::thread::synchronize();
+    cuda::device::properties prop(cuda::device::get());
     unsigned int threads = dim.threads_per_block();
 
     if (threads < 1) {
@@ -203,7 +185,6 @@ void device::luaopen(lua_State* L)
             namespace_("gpu")
             [
                 class_<device, boost::shared_ptr<device> >("device")
-                    .def(constructor<vector<int> >())
                     .def(constructor<>())
                     .scope
                     [
