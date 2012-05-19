@@ -55,7 +55,7 @@ find_package(Boost 1.43.0 QUIET REQUIRED COMPONENTS
   thread
   unit_test_framework
 )
-find_package(CUDA QUIET)
+find_package(CUDA QUIET COMPONENTS cuda cudart)
 find_package(HDF5 QUIET REQUIRED)
 find_package(LuaLibs QUIET REQUIRED)
 
