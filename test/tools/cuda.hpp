@@ -20,61 +20,47 @@
 #ifndef HALMD_TEST_TOOLS_CUDA_HPP
 #define HALMD_TEST_TOOLS_CUDA_HPP
 
-#include <boost/shared_ptr.hpp>
 #include <boost/test/test_tools.hpp>
 #include <boost/test/unit_test_monitor.hpp>
-#include <iostream>
 
 #include <cuda_wrapper/cuda_wrapper.hpp>
-#include <test/tools/ctest.hpp>
+#include <test/tools/init.hpp>
 
 /**
- *  "global fixture" for Boost Unit Test Framework: select CUDA device
+ * "global fixture" for Boost Unit Test Framework: select CUDA device
  *
- *  create a CUDA context on a free device using the driver library, respect device locks
+ * create a CUDA context on a free device, respect device locks
  */
-class set_cuda_device
+struct set_cuda_device
 {
-public:
-    set_cuda_device() {
-        // choose first available CUDA device
-        int device_count = cuda::device::count();
-        for (int i = 0; i < device_count; ++i) {
-            try {
-                // create CUDA context and associate it with this thread
-                ctx_.reset(new cuda::driver::context(i));
-                break;
-            }
-            catch (cuda::driver::error const&) {
-                // device is compute-exlusive mode and in use
-            }
-        }
-        BOOST_TEST_MESSAGE("Using CUDA device #" << cuda::driver::context::device());
+    /**
+     * implicitly create CUDA context
+     */
+    set_cuda_device()
+    {
+        cuda::thread::synchronize();
+        BOOST_TEST_MESSAGE( "Using CUDA device #" << cuda::device::get() );
     }
 
+    /**
+     * destroy CUDA context
+     */
     ~set_cuda_device()
     {
-        // Detach CUDA runtime from CUDA device context
-        // This explicit clean-up is needed with CUDA < 3.0.
         cuda::thread::exit();
     }
-
-private:
-    boost::shared_ptr<cuda::driver::context> ctx_;
 };
 
-void cuda_error_translator( cuda::error const& e)
+void cuda_error_translator(cuda::error const& e)
 {
-    BOOST_TEST_MESSAGE( "(CUDA error) " << e.what() ); throw;
+    BOOST_TEST_MESSAGE( "(CUDA error) " << e.what() );
+    throw;
 }
 
-struct register_cuda_error {
-    register_cuda_error() {
-        using namespace boost::unit_test;
-        unit_test_monitor.register_exception_translator<cuda::error>( &cuda_error_translator );
-    }
-};
-
-static register_cuda_error _register_cuda_error_dummy;
+HALMD_TEST_INIT( register_cuda_error )
+{
+    using namespace boost::unit_test;
+    unit_test_monitor.register_exception_translator<cuda::error>(&cuda_error_translator);
+}
 
 #endif /* ! HALMD_TEST_TOOLS_CUDA_HPP */
