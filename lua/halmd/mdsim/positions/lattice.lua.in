@@ -60,7 +60,7 @@ function M.__new(args)
     end
 
     local lattice
-    if device() then
+    if device.gpu then
         lattice = lattice_wrapper.gpu[dimension]
     else
         lattice = lattice_wrapper.host[dimension]

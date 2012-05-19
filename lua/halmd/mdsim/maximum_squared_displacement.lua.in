@@ -48,7 +48,7 @@ function M.__new(args)
     local dimension = assert(particle.dimension)
 
     local maximum_squared_displacement
-    if device() then
+    if device.gpu then
         maximum_squared_displacement = assert(maximum_squared_displacement_wrapper.gpu[dimension])
     else
         maximum_squared_displacement = assert(maximum_squared_displacement_wrapper.host[dimension])

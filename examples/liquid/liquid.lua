@@ -146,9 +146,6 @@ local function parse_args()
         args[key] = level[value] or level[#level]
     end, default = 1, help = "increase logging verbosity"})
 
-    parser:add_argument("disable-gpu", {type = "boolean", help = "disable GPU acceleration"})
-    parser:add_argument("devices", {type = "vector", dtype = "integer", help = "CUDA device(s)"})
-
     parser:add_argument("particles", {type = "vector", dtype = "integer", default = {1000}, help = "number of particles"})
     parser:add_argument("density", {type = "number", default = 0.75, help = "particle number density"})
     parser:add_argument("ratios", {type = "vector", dtype = "number", action = function(args, key, value)
@@ -183,8 +180,6 @@ halmd.io.log.open_console({severity = args.verbose[1]})
 halmd.io.log.open_file(("%s.log"):format(args.output), {severity = args.verbose[2]})
 -- log version
 halmd.utility.version.prologue()
--- initialise or disable GPU
-halmd.utility.device({disable_gpu = args.disable_gpu, devices = args.devices})
 
 -- run simulation
 liquid(args)

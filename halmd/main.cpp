@@ -17,6 +17,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <halmd/config.hpp>
+
 #include <boost/program_options.hpp>
 #include <cstdlib> // EXIT_SUCCESS, EXIT_FAILURE
 
@@ -45,6 +47,9 @@ int main(int argc, char **argv)
     try {
         po::options_description desc;
         desc.add_options()
+#ifdef HALMD_WITH_GPU
+            ("disable-gpu", "disable GPU acceleration")
+#endif
             ("help", "display this help and exit")
             ("version", "output version information and exit")
             ;
@@ -97,6 +102,15 @@ int main(int argc, char **argv)
         for (int i = 0; i < argc; ++i, ++offset) {
             arg[offset] = string(argv[i]);
         }
+
+#ifdef HALMD_WITH_GPU
+        if (vm.count("disable-gpu")) {
+#endif
+            luabind::object package = luabind::globals(script.L)["package"]["loaded"];
+            package["halmd.utility.device"] = luabind::newtable(script.L);
+#ifdef HALMD_WITH_GPU
+        }
+#endif
 
         // read script from file if specified, or from stdin
         if (!pos.empty()) {

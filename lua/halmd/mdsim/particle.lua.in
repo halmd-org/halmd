@@ -18,11 +18,9 @@
 --
 
 local core              = require("halmd.mdsim.core")
+local device            = require("halmd.utility.device")
 local module            = require("halmd.utility.module")
 local profiler          = require("halmd.utility.profiler")
-local utility = {
-    device              = require("halmd.utility.device")
-}
 
 ---
 -- Particle Arrays
@@ -70,7 +68,7 @@ function M.__new(args)
     local label = args.label or "all"
 
     -- select particle class
-    local memory = utility.device() and "gpu" or "host"
+    local memory = device.gpu and "gpu" or "host"
     local particle = assert(particle[memory][dimension])
 
     -- construct particle instance

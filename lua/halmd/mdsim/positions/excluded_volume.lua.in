@@ -48,7 +48,7 @@ function M.__new(args)
 
     local excluded_volume
     -- FIXME query precision from HALMD C++ library
-    if device() then
+    if device.gpu then
         excluded_volume = assert(excluded_volume_wrapper[dimension].float)
     else
         excluded_volume = assert(excluded_volume_wrapper[dimension].double)

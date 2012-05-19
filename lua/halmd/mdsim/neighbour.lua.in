@@ -97,7 +97,7 @@ function M.__new(args)
 
     -- neighbour lists
     local neighbour
-    if device() then
+    if device.gpu then
         if binning then
             neighbour = assert(neighbours.from_binning.gpu[dimension])
         else

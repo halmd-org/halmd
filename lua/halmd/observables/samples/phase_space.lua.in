@@ -105,7 +105,7 @@ function M.__new(args)
     local size = assert(particle.size or particle.nparticle)
 
     local phase_space
-    if device() then
+    if device.gpu then
         phase_space = assert(phase_space_wrapper.gpu)
     else
         phase_space = assert(phase_space_wrapper.host)

@@ -60,7 +60,7 @@ function M.__new(args)
     local skin = args.skin or 0.5 -- default value
 
     local binning
-    if device() then
+    if device.gpu then
         local defaults = assert(binning_wrapper.gpu[dimension].defaults)
         local occupancy = args.occupancy or defaults.occupancy()
         binning = binning_wrapper.gpu[dimension](particle, box, r_cut, skin, logger, occupancy)

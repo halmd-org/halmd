@@ -1,5 +1,5 @@
 --
--- Copyright © 2010-2012  Peter Colberg
+-- Copyright © 2010-2012 Peter Colberg
 --
 -- This file is part of HALMD.
 --
@@ -17,57 +17,44 @@
 -- along with this program.  If not, see <http://www.gnu.org/licenses/>.
 --
 
-local module = require("halmd.utility.module")
-
 -- grab C++ wrappers
-local device
-if libhalmd.utility.gpu then
-    device = libhalmd.utility.gpu.device
-end
+local device = assert(libhalmd.utility.gpu.device)
 
 ---
 -- Device management
 -- =================
 --
--- The device module selects a GPU from the pool of available GPUs, or a subset
--- thereof if a list of devices is passed. It allocates a CUDA context on that
--- device, which will remain active till the program exits. Diagnostic
--- information is logged about CUDA driver and runtime versions, and
--- GPU capabilities.
+-- The device module selects a GPU from the pool of available GPUs.
+-- It allocates a CUDA context on that device, which will remain active till
+-- the program exits. Diagnostic information is logged about CUDA driver and
+-- runtime versions, and GPU capabilities.
 --
--- :func:`halmd.utility.device` may be used to query whether the GPU is being used::
+-- :attr:`halmd.utility.device.gpu` may be used to query whether the GPU is being used::
 --
---   local device = require("halmd.utility.device")
---   if device() then
---       -- using GPU
---   else
---       -- using host
---   end
+--    local device = require("halmd.utility.device")
+--    if device.gpu then
+--        -- using GPU
+--    else
+--        -- using host
+--    end
 --
-local M = module.singleton("halmd.utility.device")
+-- To select a specific GPU, you may use the `nvlock <http://git.colberg.org/nvcuda-tools.git>`_ tool::
+--
+--    CUDA_DEVICE=0 nvlock halmd liquid.lua
+--
+-- nvlock will lock the CUDA device for other processes using nvlock, similar
+-- to compute prohibitive mode. This allows scheduling one process per GPU.
+--
+-- .. currentmodule:: halmd.utility
+--
+-- .. class:: device
+--
+--    This is a singleton class.
+--
+--    .. attribute:: gpu
+--
+--       Ordinal number of the CUDA device.
+--
 
---- Construct device instance.
---
--- :param table args: keyword arguments (optional)
--- :param boolean args.disable_gpu: do *not* use GPU (optional)
--- :param table args.devices: sequence of CUDA devices (optional)
--- :returns: instance of device module if GPU is enabled, otherwise ``nil``
---
--- :func:`halmd.utility.device` returns a singleton instance, i.e. the first call will
--- create an instance that is kept alive until the end of program execution,
--- and subsequent calls will return this instance.
---
-function M.__new(args)
-    local disable_gpu = args and args.disable_gpu
-    local devices = args and args.devices
-
-    if device and not disable_gpu then
-        if devices then
-            return device(devices)
-        else
-            return device()
-        end
-    end
-end
-
-return M
+-- construct singleton instance
+return device()

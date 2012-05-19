@@ -56,7 +56,7 @@ function M.__new(args)
     local logger = log.logger({label = "boltzmann"})
 
     local boltzmann
-    if device() then
+    if device.gpu then
         boltzmann = boltzmann_wrapper.gpu[dimension]
     else
         boltzmann = boltzmann_wrapper.host[dimension]

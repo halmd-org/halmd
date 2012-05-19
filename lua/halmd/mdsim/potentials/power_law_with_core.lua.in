@@ -52,7 +52,7 @@ function M.__new(args)
     local logger = log.logger({label = "power_law_with_core"})
 
     local power_law_with_core
-    if device() then
+    if device.gpu then
         power_law_with_core = assert(power_law_with_core_wrapper.gpu)
     else
         power_law_with_core = assert(power_law_with_core_wrapper.host)

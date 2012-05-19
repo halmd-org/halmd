@@ -61,7 +61,7 @@ function M.__new(args)
     end
 
     local power_law
-    if device() then
+    if device.gpu then
         power_law = assert(power_law_wrapper.gpu)
     else
         power_law = assert(power_law_wrapper.host)

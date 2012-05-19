@@ -34,7 +34,7 @@ local local_r4 = {
 function M.__new(args)
     local h = assert(args.h)
     local trunc
-    if device() then
+    if device.gpu then
         trunc = assert(local_r4.float)
     else
         trunc = assert(local_r4.double)

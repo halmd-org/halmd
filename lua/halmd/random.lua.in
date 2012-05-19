@@ -45,7 +45,7 @@ local random = {}
 function M.__new(args)
     local memory = args.memory -- optional argument
     if not memory then
-        memory = device() and "gpu" or "host"
+        memory = device.gpu and "gpu" or "host"
     end
 
     if not random[memory] then

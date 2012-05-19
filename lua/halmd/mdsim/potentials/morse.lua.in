@@ -64,7 +64,7 @@ function M.__new(args)
     end
 
     local morse
-    if device() then
+    if device.gpu then
         morse = assert(morse_wrapper.gpu)
     else
         morse = assert(morse_wrapper.host)

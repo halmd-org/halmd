@@ -51,7 +51,7 @@ function M.__new(args)
     local logger = log.logger({label = "hilbert"})
 
     local sort
-    if device() then
+    if device.gpu then
         sort = assert(hilbert_wrapper.gpu[dimension])(particle, box, logger)
     else
         sort = assert(hilbert_wrapper.host[dimension])(particle, box, binning, logger)

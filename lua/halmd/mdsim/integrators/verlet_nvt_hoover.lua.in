@@ -106,7 +106,7 @@ function M.profile(self, profiler)
     profiler:on_profile{self, integrate = "first half-step of velocity-Verlet (+ Nosé-Hoover chain)"}
     profiler:on_profile{self, finalize = "second half-step of velocity-Verlet (+ Nosé-Hoover chain)"}
     profiler:on_profile{self, propagate = "propagate Nosé-Hoover chain"}
-    if device() then
+    if device.gpu then
         profiler:on_profile{self, rescale = "rescale velocities in Nosé-Hoover thermostat"}
     end
 end

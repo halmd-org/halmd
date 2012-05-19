@@ -53,7 +53,7 @@ function M.__new(args)
     local logger = log.logger({label = "phase_space"})
 
     local phase_space
-    if device() then
+    if device.gpu then
         phase_space = phase_space_wrapper.gpu[dimension]
     else
         phase_space = phase_space_wrapper.host[dimension]

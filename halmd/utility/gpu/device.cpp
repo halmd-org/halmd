@@ -168,6 +168,11 @@ static void translate_cuda_error(lua_State* L, cuda::error const& e)
     lua_concat(L, 2);
 }
 
+static int wrap_gpu(device const&)
+{
+    return cuda::device::get();
+}
+
 void device::luaopen(lua_State* L)
 {
     using namespace luabind;
@@ -179,6 +184,7 @@ void device::luaopen(lua_State* L)
             [
                 class_<device, boost::shared_ptr<device> >("device")
                     .def(constructor<>())
+                    .property("gpu", &wrap_gpu)
                     .scope
                     [
                         def("nvidia_driver_version", &device::nvidia_driver_version)

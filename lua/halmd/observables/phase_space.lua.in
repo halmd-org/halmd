@@ -156,7 +156,7 @@ function M.__new(args)
         samplers.host = phase_space.host(group, particle, box, clock, logger)
 
         -- if GPU is used, construct phase space sampler to GPU memory
-        if device() then
+        if device.gpu then
             samplers.gpu = phase_space.gpu(group, particle, box, clock, logger)
         end
 
@@ -166,7 +166,7 @@ function M.__new(args)
         self.acquire = function(self, args)
             local memory = args and args.memory
             if not memory then
-                memory = device() and "gpu" or "host"
+                memory = device.gpu and "gpu" or "host"
             end
             local sampler = samplers[memory]
             if not sampler then
