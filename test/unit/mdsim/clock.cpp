@@ -19,10 +19,10 @@
 
 #include <halmd/config.hpp>
 
-#ifndef HALMD_NO_CXX11
-
 #define BOOST_TEST_MODULE clock
 #include <boost/test/unit_test.hpp>
+
+#ifndef HALMD_NO_CXX11
 
 #include <limits>
 
