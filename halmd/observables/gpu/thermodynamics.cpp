@@ -22,10 +22,8 @@
 #include <halmd/numeric/blas/blas.hpp>
 #include <halmd/numeric/mp/dsfloat.hpp>
 #include <halmd/observables/gpu/thermodynamics.hpp>
+#include <halmd/utility/demangle.hpp>
 #include <halmd/utility/lua/lua.hpp>
-
-using namespace boost;
-using namespace std;
 
 namespace halmd {
 namespace observables {
@@ -33,15 +31,14 @@ namespace gpu {
 
 template <int dimension, typename float_type>
 thermodynamics<dimension, float_type>::thermodynamics(
-    boost::shared_ptr<particle_group_type const> particle_group
+    boost::shared_ptr<particle_type const> particle
   , boost::shared_ptr<box_type const> box
   , boost::shared_ptr<clock_type const> clock
   , boost::shared_ptr<logger_type> logger
 )
   // dependency injection
   : box_(box)
-  , particle_group_(particle_group)
-  , particle_(particle_group->particle())
+  , particle_(particle)
   , logger_(logger)
   // initialise members
   , en_kin_(clock)
@@ -50,6 +47,18 @@ thermodynamics<dimension, float_type>::thermodynamics(
   , virial_(clock)
   , hypervirial_(clock)
 {
+}
+
+template <int dimension, typename float_type>
+unsigned int thermodynamics<dimension, float_type>::nparticle() const
+{
+    return particle_->nparticle();
+}
+
+template <int dimension, typename float_type>
+double thermodynamics<dimension, float_type>::volume() const
+{
+    return box_->volume();
 }
 
 /**
@@ -61,7 +70,6 @@ double thermodynamics<dimension, float_type>::en_kin()
     if (!en_kin_.valid()) {
         LOG_TRACE("acquire kinetic energy");
 
-        // FIXME use particle_group_->selection_mask() and reduce_if()
         scoped_timer_type timer(runtime_.en_kin);
         en_kin_ = double(compute_en_kin_(particle_->velocity())()) / nparticle();
     }
@@ -78,7 +86,6 @@ thermodynamics<dimension, float_type>::v_cm()
     if (!v_cm_.valid()) {
         LOG_TRACE("acquire centre-of-mass velocity");
 
-        // FIXME use particle_group_->selection_mask() and reduce_if()
         scoped_timer_type timer(runtime_.v_cm);
         v_cm_ = vector_type(compute_v_cm_(particle_->velocity())());
     }
@@ -94,7 +101,6 @@ double thermodynamics<dimension, float_type>::en_pot()
     if (!en_pot_.valid()) {
         LOG_TRACE("acquire potential energy");
 
-        // FIXME use particle_group_->selection_mask() and reduce_if()
         scoped_timer_type timer(runtime_.en_pot);
         en_pot_ = double(compute_en_pot_(particle_->en_pot())()) / nparticle();
     }
@@ -110,7 +116,6 @@ double thermodynamics<dimension, float_type>::virial()
     if (!virial_.valid()) {
         LOG_TRACE("acquire virial");
 
-        // FIXME use particle_group_->selection_mask() and reduce_if()
         scoped_timer_type timer(runtime_.virial);
         virial_ = double(compute_virial_(particle_->stress_pot())()) / nparticle();
     }
@@ -126,7 +131,6 @@ double thermodynamics<dimension, float_type>::hypervirial()
     if (!hypervirial_.valid()) {
         LOG_TRACE("acquire hypervirial");
 
-        // FIXME use particle_group_->selection_mask() and reduce_if()
         scoped_timer_type timer(runtime_.hypervirial);
         hypervirial_ = double(compute_en_pot_(particle_->hypervirial())()) / nparticle();
     }
@@ -150,14 +154,14 @@ template <int dimension, typename float_type>
 void thermodynamics<dimension, float_type>::luaopen(lua_State* L)
 {
     using namespace luabind;
-    static string class_name("thermodynamics_" + lexical_cast<string>(dimension) + "_");
+    static std::string class_name = demangled_name<thermodynamics>();
     module(L, "libhalmd")
     [
         namespace_("observables")
         [
             namespace_("gpu")
             [
-                class_<thermodynamics, boost::shared_ptr<_Base>, _Base>(class_name.c_str())
+                class_<thermodynamics, _Base>(class_name.c_str())
                     .scope
                     [
                         class_<runtime>("runtime")
@@ -174,7 +178,7 @@ void thermodynamics<dimension, float_type>::luaopen(lua_State* L)
       , namespace_("observables")
         [
             def("thermodynamics", &boost::make_shared<thermodynamics
-              , boost::shared_ptr<particle_group_type const>
+              , boost::shared_ptr<particle_type const>
               , boost::shared_ptr<box_type const>
               , boost::shared_ptr<clock_type const>
               , boost::shared_ptr<logger_type>

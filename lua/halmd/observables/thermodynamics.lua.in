@@ -21,9 +21,6 @@ local clock             = require("halmd.mdsim.clock")
 local log               = require("halmd.io.log")
 local module            = require("halmd.utility.module")
 local sampler           = require("halmd.observables.sampler")
-local mdsim = {
-    particle_group      = require("halmd.mdsim.particle_group")
-}
 
 -- grab C++ wrappers
 local thermodynamics = assert(libhalmd.observables.thermodynamics)
@@ -49,9 +46,8 @@ local thermodynamics = assert(libhalmd.observables.thermodynamics)
 -- Construct thermodynamics observable.
 --
 -- :param table args: keyword arguments
--- :param args.particle: instance, or sequence of instances, of particle or particle_group
+-- :param args.particle: instance of :class:`halmd.mdsim.particle`
 -- :param args.box: instance of :class:`halmd.mdsim.box`
--- :returns: instance, or sequence of instances, of thermodynamics
 --
 -- .. method:: writer(file, args)
 --
@@ -111,67 +107,38 @@ local M = module(function(args)
     if not box then
         error("missing parameter 'box'", 2)
     end
+    local label = assert(particle.label)
+    local logger = log.logger({label = ("thermodynamics (%s)"):format(label)})
 
-    local observable = function(particle)
-        local group
-        if particle.particle then
-            group = particle
-        else
-            group = mdsim.particle_group({particle = particle})
+    -- construct instance
+    local self = thermodynamics(particle, box, clock, logger)
+
+    self.writer = function(self, file, args)
+        local writer = file:writer{location = {"observables"}, mode = "append"}
+        writer:on_write(self.en_pot     , {"potential_energy"       , label})
+        writer:on_write(self.en_kin     , {"kinetic_energy"         , label})
+        writer:on_write(self.en_tot     , {"total_energy"           , label})
+        writer:on_write(self.v_cm       , {"center_of_mass_velocity", label})
+        writer:on_write(self.pressure   , {"pressure"               , label})
+        writer:on_write(self.temp       , {"temperature"            , label})
+        writer:on_write(self.virial     , {"virial"                 , label})
+        writer:on_write(self.hypervirial, {"hypervirial"            , label})
+
+        -- connect writer to sampler
+        local every = args.every
+        if not every then
+            error("missing parameter 'every'", 2)
         end
-        local logger
-        local label = group.label -- may be nil
-        if label then
-            logger = log.logger({label = ("thermodynamics (%s)"):format(label)})
-        else
-            logger = log.logger({label = "thermodynamics"})
-        end
+        sampler:on_sample(writer.write, every)
 
-        local observable = thermodynamics(group, box, clock, logger)
+        -- turn on computation of auxiliary variables _before_ force computation
+        -- in each sampling step
+        sampler:on_prepare(particle.aux_enable, every)
 
-        observable.group = property(function(self)
-            return group
-        end)
-
-        observable.writer = function(self, file, args)
-            local writer = file:writer{location = {"observables"}, mode = "append"}
-            local label = self.group.label -- may be nil
-            writer:on_write(self.en_pot     , {"potential_energy"       , label})
-            writer:on_write(self.en_kin     , {"kinetic_energy"         , label})
-            writer:on_write(self.en_tot     , {"total_energy"           , label})
-            writer:on_write(self.v_cm       , {"center_of_mass_velocity", label})
-            writer:on_write(self.pressure   , {"pressure"               , label})
-            writer:on_write(self.temp       , {"temperature"            , label})
-            writer:on_write(self.virial     , {"virial"                 , label})
-            writer:on_write(self.hypervirial, {"hypervirial"            , label})
-
-            -- connect writer to sampler
-            local every = args.every
-            if not every then
-                error("missing parameter 'every'", 2)
-            end
-            sampler:on_sample(writer.write, every)
-
-            -- turn on computation of auxiliary variables _before_ force computation
-            -- in each sampling step
-            local particle = assert(self.group.particle)
-            sampler:on_prepare(particle.aux_enable, every)
-
-            return writer
-        end
-
-        return observable
+        return writer
     end
 
-    if type(particle) == "table" then
-        local observables = {}
-        for i = 1, #particle do
-            table.insert(observables, observable(particle[i]))
-        end
-        return observables
-    else
-        return observable(particle)
-    end
+    return self
 end)
 
 --

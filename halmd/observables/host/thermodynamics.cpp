@@ -20,10 +20,8 @@
 #include <boost/foreach.hpp>
 
 #include <halmd/observables/host/thermodynamics.hpp>
+#include <halmd/utility/demangle.hpp>
 #include <halmd/utility/lua/lua.hpp>
-
-using namespace boost;
-using namespace std;
 
 namespace halmd {
 namespace observables {
@@ -31,15 +29,14 @@ namespace host {
 
 template <int dimension, typename float_type>
 thermodynamics<dimension, float_type>::thermodynamics(
-    boost::shared_ptr<particle_group_type const> particle_group
+    boost::shared_ptr<particle_type const> particle
   , boost::shared_ptr<box_type const> box
   , boost::shared_ptr<clock_type const> clock
   , boost::shared_ptr<logger_type> logger
 )
   // dependency injection
   : box_(box)
-  , particle_group_(particle_group)
-  , particle_(particle_group->particle())
+  , particle_(particle)
   , logger_(logger)
   // initialise members
   , en_kin_(clock)
@@ -48,6 +45,18 @@ thermodynamics<dimension, float_type>::thermodynamics(
   , virial_(clock)
   , hypervirial_(clock)
 {
+}
+
+template <int dimension, typename float_type>
+unsigned int thermodynamics<dimension, float_type>::nparticle() const
+{
+    return particle_->nparticle();
+}
+
+template <int dimension, typename float_type>
+double thermodynamics<dimension, float_type>::volume() const
+{
+    return box_->volume();
 }
 
 template <int dimension, typename float_type>
@@ -61,7 +70,6 @@ double thermodynamics<dimension, float_type>::en_kin()
         typename particle_type::velocity_array_type const& velocity = particle_->velocity();
         typename particle_type::mass_array_type const& mass = particle_->mass();
 
-        // FIXME use particle_group_->selection_mask()
         double mv2 = 0;
         for (size_t i = 0; i < particle_->nparticle(); ++i) {
             // assuming unit mass for all particle types
@@ -84,7 +92,6 @@ thermodynamics<dimension, float_type>::v_cm()
         typename particle_type::velocity_array_type const& velocity = particle_->velocity();
         typename particle_type::mass_array_type const& mass = particle_->mass();
 
-        // FIXME use particle_group_->selection_mask()
         vector_type mv = 0;
         double m = 0;
         for (size_t i = 0; i < particle_->nparticle(); ++i) {
@@ -107,7 +114,6 @@ double thermodynamics<dimension, float_type>::en_pot()
 
         scoped_timer_type timer(runtime_.en_pot);
 
-        // FIXME use particle_group_->selection_mask()
         double sum = 0;
         BOOST_FOREACH(en_pot_type value, en_pot) {
             sum += value;
@@ -128,7 +134,6 @@ double thermodynamics<dimension, float_type>::virial()
 
         scoped_timer_type timer(runtime_.virial);
 
-        // FIXME use particle_group_->selection_mask()
         double sum = 0;
         BOOST_FOREACH(stress_pot_type const& value, stress_pot) {
             sum += value[0];
@@ -149,7 +154,6 @@ double thermodynamics<dimension, float_type>::hypervirial()
         scoped_timer_type timer(runtime_.hypervirial);
 
         LOG_TRACE("acquire hypervirial");
-        // FIXME use particle_group_->selection_mask()
         double sum = 0;
         BOOST_FOREACH(hypervirial_type value, hypervirial) {
             sum += value;
@@ -173,14 +177,14 @@ template <int dimension, typename float_type>
 void thermodynamics<dimension, float_type>::luaopen(lua_State* L)
 {
     using namespace luabind;
-    static string class_name("thermodynamics_" + lexical_cast<string>(dimension) + "_");
+    static std::string class_name = demangled_name<thermodynamics>();
     module(L, "libhalmd")
     [
         namespace_("observables")
         [
             namespace_("host")
             [
-                class_<thermodynamics, boost::shared_ptr<_Base>, _Base>(class_name.c_str())
+                class_<thermodynamics, _Base>(class_name.c_str())
                     .scope
                     [
                         class_<runtime>("runtime")
@@ -197,7 +201,7 @@ void thermodynamics<dimension, float_type>::luaopen(lua_State* L)
       , namespace_("observables")
         [
             def("thermodynamics", &boost::make_shared<thermodynamics
-              , boost::shared_ptr<particle_group_type const>
+              , boost::shared_ptr<particle_type const>
               , boost::shared_ptr<box_type const>
               , boost::shared_ptr<clock_type const>
               , boost::shared_ptr<logger_type>

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2010  Felix Höfling
+ * Copyright © 2012 Peter Colberg
  *
  * This file is part of HALMD.
  *
@@ -18,10 +18,8 @@
  */
 
 #include <halmd/observables/thermodynamics.hpp>
+#include <halmd/utility/demangle.hpp>
 #include <halmd/utility/lua/lua.hpp>
-
-using namespace boost;
-using namespace std;
 
 namespace halmd {
 namespace observables {
@@ -30,82 +28,82 @@ template <typename thermodynamics_type>
 static boost::function<double ()>
 wrap_nparticle(boost::shared_ptr<thermodynamics_type> thermodynamics)
 {
-    return bind(&thermodynamics_type::nparticle, thermodynamics);
+    return boost::bind(&thermodynamics_type::nparticle, thermodynamics);
 }
 
 template <typename thermodynamics_type>
 static boost::function<double ()>
 wrap_density(boost::shared_ptr<thermodynamics_type> thermodynamics)
 {
-    return bind(&thermodynamics_type::density, thermodynamics);
+    return boost::bind(&thermodynamics_type::density, thermodynamics);
 }
 
 template <typename thermodynamics_type>
 static boost::function<double ()>
 wrap_en_tot(boost::shared_ptr<thermodynamics_type> thermodynamics)
 {
-    return bind(&thermodynamics_type::en_tot, thermodynamics);
+    return boost::bind(&thermodynamics_type::en_tot, thermodynamics);
 }
 
 template <typename thermodynamics_type>
 static boost::function<double ()>
 wrap_en_pot(boost::shared_ptr<thermodynamics_type> thermodynamics)
 {
-    return bind(&thermodynamics_type::en_pot, thermodynamics);
+    return boost::bind(&thermodynamics_type::en_pot, thermodynamics);
 }
 
 template <typename thermodynamics_type>
 static boost::function<double ()>
 wrap_en_kin(boost::shared_ptr<thermodynamics_type> thermodynamics)
 {
-    return bind(&thermodynamics_type::en_kin, thermodynamics);
+    return boost::bind(&thermodynamics_type::en_kin, thermodynamics);
 }
 
 template <typename thermodynamics_type>
 static boost::function<typename thermodynamics_type::vector_type ()>
 wrap_v_cm(boost::shared_ptr<thermodynamics_type> thermodynamics)
 {
-    return bind(&thermodynamics_type::v_cm, thermodynamics);
+    return boost::bind(&thermodynamics_type::v_cm, thermodynamics);
 }
 
 template <typename thermodynamics_type>
 static boost::function<double ()>
 wrap_temp(boost::shared_ptr<thermodynamics_type> thermodynamics)
 {
-    return bind(&thermodynamics_type::temp, thermodynamics);
+    return boost::bind(&thermodynamics_type::temp, thermodynamics);
 }
 
 template <typename thermodynamics_type>
 static boost::function<double ()>
 wrap_pressure(boost::shared_ptr<thermodynamics_type> thermodynamics)
 {
-    return bind(&thermodynamics_type::pressure, thermodynamics);
+    return boost::bind(&thermodynamics_type::pressure, thermodynamics);
 }
 
 template <typename thermodynamics_type>
 static boost::function<double ()>
 wrap_virial(boost::shared_ptr<thermodynamics_type> thermodynamics)
 {
-    return bind(&thermodynamics_type::virial, thermodynamics);
+    return boost::bind(&thermodynamics_type::virial, thermodynamics);
 }
 
 template <typename thermodynamics_type>
 static boost::function<double ()>
 wrap_hypervirial(boost::shared_ptr<thermodynamics_type> thermodynamics)
 {
-    return bind(&thermodynamics_type::hypervirial, thermodynamics);
+    return boost::bind(&thermodynamics_type::hypervirial, thermodynamics);
 }
 
 template <int dimension>
 void thermodynamics<dimension>::luaopen(lua_State* L)
 {
     using namespace luabind;
-    static string class_name("thermodynamics_" + lexical_cast<string>(dimension) + "_");
+    static std::string class_name = demangled_name<thermodynamics>();
     module(L, "libhalmd")
     [
         namespace_("observables")
         [
-            class_<thermodynamics, boost::shared_ptr<thermodynamics> >(class_name.c_str())
+            class_<thermodynamics>(class_name.c_str())
                 .property("nparticle", &wrap_nparticle<thermodynamics>)
                 .property("density", &wrap_density<thermodynamics>)
                 .property("en_kin", &wrap_en_kin<thermodynamics>)

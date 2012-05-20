@@ -27,7 +27,7 @@
 #include <halmd/io/logger.hpp>
 #include <halmd/mdsim/box.hpp>
 #include <halmd/mdsim/clock.hpp>
-#include <halmd/mdsim/gpu/particle_group.hpp>
+#include <halmd/mdsim/gpu/particle.hpp>
 #include <halmd/observables/gpu/thermodynamics_kernel.hpp>
 #include <halmd/observables/thermodynamics.hpp>
 #include <halmd/utility/data_cache.hpp>
@@ -48,40 +48,61 @@ public:
     typedef typename _Base::vector_type vector_type;
     typedef mdsim::box<dimension> box_type;
     typedef mdsim::clock clock_type;
-    typedef mdsim::gpu::particle_group<dimension, float_type> particle_group_type;
-    typedef typename particle_group_type::particle_type particle_type;
+    typedef mdsim::gpu::particle<dimension, float_type> particle_type;
     typedef logger logger_type;
 
     static void luaopen(lua_State* L);
 
     thermodynamics(
-        boost::shared_ptr<particle_group_type const> particle_group
+        boost::shared_ptr<particle_type const> particle
       , boost::shared_ptr<box_type const> box
       , boost::shared_ptr<clock_type const> clock
       , boost::shared_ptr<logger_type> logger = boost::make_shared<logger_type>()
     );
 
-    virtual unsigned int nparticle() const
-    {
-        return particle_group_->size();
-    }
+    /**
+     * Returns number of particles.
+     */
+    virtual unsigned int nparticle() const;
 
-    virtual double volume() const
-    {
-        return box_->volume();
-    }
+    /**
+     * Returns volume.
+     */
+    virtual double volume() const;
 
+    /**
+     * Compute mean kinetic energy per particle.
+     */
     virtual double en_kin();
+
+    /**
+     * Compute mean potential energy per particle.
+     */
     virtual vector_type const& v_cm();
+
+    /**
+     * Compute mean potential energy per particle.
+     */
     virtual double en_pot();
+
+    /**
+     * Compute mean virial per particle.
+     */
     virtual double virial();
+
+    /**
+     * Compute mean hypervirial per particle.
+     */
     virtual double hypervirial();
+
+    /**
+     * Clear cache.
+     */
     virtual void clear_cache();
 
 private:
     /** module dependencies */
     boost::shared_ptr<box_type const> box_;
-    boost::shared_ptr<particle_group_type const> particle_group_;
     boost::shared_ptr<particle_type const> particle_;
     /** module logger */
     boost::shared_ptr<logger_type> logger_;

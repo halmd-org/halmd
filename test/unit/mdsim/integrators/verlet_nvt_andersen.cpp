@@ -32,7 +32,7 @@
 #include <halmd/mdsim/clock.hpp>
 #include <halmd/mdsim/core.hpp>
 #include <halmd/mdsim/host/integrators/verlet_nvt_andersen.hpp>
-#include <halmd/mdsim/host/particle_group.hpp>
+#include <halmd/mdsim/host/particle.hpp>
 #include <halmd/mdsim/host/positions/lattice.hpp>
 #include <halmd/mdsim/host/velocities/boltzmann.hpp>
 #include <halmd/numeric/accumulator.hpp>
@@ -40,7 +40,7 @@
 #include <halmd/random/host/random.hpp>
 #ifdef HALMD_WITH_GPU
 # include <halmd/mdsim/gpu/integrators/verlet_nvt_andersen.hpp>
-# include <halmd/mdsim/gpu/particle_group.hpp>
+# include <halmd/mdsim/gpu/particle.hpp>
 # include <halmd/mdsim/gpu/positions/lattice.hpp>
 # include <halmd/mdsim/gpu/velocities/boltzmann.hpp>
 # include <halmd/observables/gpu/thermodynamics.hpp>
@@ -62,8 +62,7 @@ struct verlet_nvt_andersen
 {
     typedef typename modules_type::box_type box_type;
     typedef typename modules_type::integrator_type integrator_type;
-    typedef typename modules_type::particle_group_type particle_group_type;
-    typedef typename particle_group_type::particle_type particle_type;
+    typedef typename modules_type::particle_type particle_type;
     typedef typename modules_type::position_type position_type;
     typedef typename modules_type::random_type random_type;
     typedef typename modules_type::thermodynamics_type thermodynamics_type;
@@ -203,7 +202,7 @@ verlet_nvt_andersen<modules_type>::verlet_nvt_andersen()
     velocity = boost::make_shared<velocity_type>(particle, random, temp);
     integrator = boost::make_shared<integrator_type>(particle, box, random, timestep, temp, coll_rate);
     clock = boost::make_shared<clock_type>();
-    thermodynamics = boost::make_shared<thermodynamics_type>(boost::make_shared<particle_group_type>(particle), box, clock);
+    thermodynamics = boost::make_shared<thermodynamics_type>(particle, box, clock);
 
     // create core and connect module slots to core signals
     this->connect();
@@ -228,7 +227,7 @@ struct host_modules
 {
     typedef mdsim::box<dimension> box_type;
     typedef mdsim::host::integrators::verlet_nvt_andersen<dimension, float_type> integrator_type;
-    typedef mdsim::host::particle_group_all<dimension, float_type> particle_group_type;
+    typedef mdsim::host::particle<dimension, float_type> particle_type;
     typedef mdsim::host::positions::lattice<dimension, float_type> position_type;
     typedef halmd::random::host::random random_type;
     typedef mdsim::host::velocities::boltzmann<dimension, float_type> velocity_type;
@@ -249,7 +248,7 @@ struct gpu_modules
 {
     typedef mdsim::box<dimension> box_type;
     typedef mdsim::gpu::integrators::verlet_nvt_andersen<dimension, float_type, halmd::random::gpu::rand48> integrator_type;
-    typedef mdsim::gpu::particle_group_all<dimension, float_type> particle_group_type;
+    typedef mdsim::gpu::particle<dimension, float_type> particle_type;
     typedef mdsim::gpu::positions::lattice<dimension, float_type> position_type;
     typedef halmd::random::gpu::random<halmd::random::gpu::rand48> random_type;
     typedef observables::gpu::thermodynamics<dimension, float_type> thermodynamics_type;
