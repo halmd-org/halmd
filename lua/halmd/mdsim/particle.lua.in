@@ -28,16 +28,16 @@ local profiler          = require("halmd.utility.profiler")
 --
 
 -- grab C++ wrappers
-local particle = {
-    host = {
-        [2] = assert(libhalmd.mdsim.host.particle_2)
-      , [3] = assert(libhalmd.mdsim.host.particle_3)
-    }
-}
-if libhalmd.mdsim.gpu then
-    particle.gpu = {
+local particle
+if device.gpu then
+    particle = {
         [2] = assert(libhalmd.mdsim.gpu.particle_2)
       , [3] = assert(libhalmd.mdsim.gpu.particle_3)
+    }
+else
+    particle = {
+        [2] = assert(libhalmd.mdsim.host.particle_2)
+      , [3] = assert(libhalmd.mdsim.host.particle_3)
     }
 end
 
@@ -55,7 +55,6 @@ local M = module(function(args)
     if not box then
         error("missing argument: box", 2)
     end
-    local dimension = assert(box.dimension)
     local nparticle = args.particles
     if not nparticle then
         error("missing argument: particles", 2)
@@ -67,8 +66,8 @@ local M = module(function(args)
     local label = args.label or "all"
 
     -- select particle class
-    local memory = device.gpu and "gpu" or "host"
-    local particle = assert(particle[memory][dimension])
+    local dimension = assert(box.dimension)
+    local particle = assert(particle[dimension])
 
     -- construct particle instance
     local self = particle(nparticle, nspecies)
