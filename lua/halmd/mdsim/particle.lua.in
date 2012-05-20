@@ -23,8 +23,8 @@ local module            = require("halmd.utility.module")
 local profiler          = require("halmd.utility.profiler")
 
 ---
--- Particle Arrays
--- ===============
+-- Particle
+-- ========
 --
 
 -- grab C++ wrappers
@@ -49,6 +49,18 @@ end
 -- :param number args.particles: number of particles
 -- :param number args.species: number of species
 -- :param string args.label: instance label (defaults to ``all``)
+--
+-- .. attribute:: nparticle
+--
+--    Number of particles.
+--
+-- .. attribute:: nspecies
+--
+--    Number of particle species.
+--
+-- .. attribute:: label
+--
+--    Instance label.
 --
 local M = module(function(args)
     local box = args.box

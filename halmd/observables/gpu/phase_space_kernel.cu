@@ -95,6 +95,20 @@ __global__ void reduce_periodic(
     }
 }
 
+/**
+ * copy particle group from GPU to host memory
+ */
+__global__ void copy_particle_group(
+    unsigned int const* g_group
+  , unsigned int* h_group
+  , unsigned int size
+)
+{
+    if (GTID < size) {
+        h_group[GTID] = g_group[GTID];
+    }
+}
+
 } // namespace phase_space_kernel
 
 template <int dimension>
@@ -104,6 +118,7 @@ phase_space_wrapper<dimension> const phase_space_wrapper<dimension>::kernel = {
   , phase_space_kernel::v_
   , phase_space_kernel::sample<fixed_vector<float, dimension> >
   , phase_space_kernel::reduce_periodic<fixed_vector<float, dimension> >
+  , phase_space_kernel::copy_particle_group
 };
 
 template class phase_space_wrapper<3>;

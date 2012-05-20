@@ -27,28 +27,23 @@
 #include <halmd/utility/signal.hpp>
 #include <halmd/utility/timer.hpp>
 
-using namespace boost;
-using namespace std;
-
 namespace halmd {
 namespace observables {
 namespace host {
 
 template <int dimension, typename float_type>
 phase_space<dimension, float_type>::phase_space(
-    boost::shared_ptr<particle_group_type const> particle_group
-  , boost::shared_ptr<particle_type> particle
+    boost::shared_ptr<particle_type> particle
+  , boost::shared_ptr<particle_group_type const> particle_group
   , boost::shared_ptr<box_type const> box
   , boost::shared_ptr<clock_type const> clock
   , boost::shared_ptr<logger_type> logger
 )
-  : particle_group_(particle_group)
-  , particle_(particle)
+  : particle_(particle)
+  , particle_group_(particle_group)
   , box_(box)
   , clock_(clock)
-  , logger_(logger)
-{
-}
+  , logger_(logger) {}
 
 /**
  * Sample phase_space
@@ -83,17 +78,18 @@ phase_space<dimension, float_type>::acquire()
     typename sample_type::species_array_type& sample_species = sample_->species();
 
     // copy particle data using index map
-    typename particle_group_type::map_iterator idx = particle_group_->map();
-    for (unsigned int i = 0; i < particle_group_->size(); ++i, ++idx) {
-
-        assert(*idx < particle_->nparticle());
+    std::size_t tag = 0;
+    for (std::size_t i : *particle_group_) {
+        assert(i < particle_->nparticle());
 
         // periodically extended particle position
-        vector_type& r = sample_position[i] = particle_position[*idx];
-        box_->extend_periodic(r, particle_image[*idx]);
+        vector_type& r = sample_position[i];
+        r = particle_position[i];
+        box_->extend_periodic(r, particle_image[i]);
 
-        sample_velocity[i] = particle_velocity[*idx];
-        sample_species[i] = particle_species[*idx];
+        sample_velocity[tag] = particle_velocity[i];
+        sample_species[tag] = particle_species[i];
+        ++tag;
     }
 
     return sample_;
@@ -113,11 +109,13 @@ void phase_space<dimension, float_type>::set(boost::shared_ptr<sample_type const
     typename sample_type::velocity_array_type const& sample_velocity = sample->velocity();
     typename sample_type::species_array_type const& sample_species = sample->species();
 
-    typename particle_group_type::map_iterator idx = particle_group_->map();
-    for (size_t i = 0; i < particle_group_->size(); ++i, ++idx) {
-        assert(*idx < particle_->nparticle());
-        vector_type& r = (particle_position[*idx] = sample_position[i]);
-        vector_type& image = (particle_image[*idx] = 0);
+    std::size_t tag = 0;
+    for (std::size_t i : *particle_group_) {
+        assert(i < particle_->nparticle());
+        vector_type& r = particle_position[i];
+        r = sample_position[tag];
+        vector_type& image = particle_image[i];
+        image = 0;
 
         // The host implementation of reduce_periodic wraps the position at
         // most once around the box. This is more efficient during the
@@ -129,8 +127,9 @@ void phase_space<dimension, float_type>::set(boost::shared_ptr<sample_type const
             image += (shift = box_->reduce_periodic(r));
         } while(shift != vector_type(0));
 
-        particle_velocity[*idx] = sample_velocity[i];
-        particle_species[*idx] = sample_species[i];
+        particle_velocity[i] = sample_velocity[tag];
+        particle_species[i] = sample_species[tag];
+        ++tag;
     }
 }
 
@@ -138,7 +137,7 @@ template <typename phase_space_type, typename sample_type>
 static boost::function<boost::shared_ptr<sample_type const> ()>
 wrap_acquire(boost::shared_ptr<phase_space_type> phase_space)
 {
-    return bind(&phase_space_type::acquire, phase_space);
+    return boost::bind(&phase_space_type::acquire, phase_space);
 }
 
 template <typename phase_space_type>
@@ -152,7 +151,7 @@ template <typename phase_space_type>
 static boost::function<typename phase_space_type::sample_type::position_array_type const& ()>
 wrap_position(boost::shared_ptr<phase_space_type> phase_space)
 {
-    return bind(&position<phase_space_type>, phase_space);
+    return boost::bind(&position<phase_space_type>, phase_space);
 }
 
 template <typename phase_space_type>
@@ -166,7 +165,7 @@ template <typename phase_space_type>
 static boost::function<typename phase_space_type::sample_type::velocity_array_type const& ()>
 wrap_velocity(boost::shared_ptr<phase_space_type> phase_space)
 {
-    return bind(&velocity<phase_space_type>, phase_space);
+    return boost::bind(&velocity<phase_space_type>, phase_space);
 }
 
 template <typename phase_space_type>
@@ -180,7 +179,7 @@ template <typename phase_space_type>
 static boost::function<typename phase_space_type::sample_type::species_array_type const& ()>
 wrap_species(boost::shared_ptr<phase_space_type> phase_space)
 {
-    return bind(&species<phase_space_type>, phase_space);
+    return boost::bind(&species<phase_space_type>, phase_space);
 }
 
 template <typename phase_space_type>
@@ -215,8 +214,8 @@ void phase_space<dimension, float_type>::luaopen(lua_State* L)
                     .def_readonly("runtime", &phase_space::runtime_)
 
               , def("phase_space", &boost::make_shared<phase_space
-                   , boost::shared_ptr<particle_group_type const>
                    , boost::shared_ptr<particle_type>
+                   , boost::shared_ptr<particle_group_type const>
                    , boost::shared_ptr<box_type const>
                    , boost::shared_ptr<clock_type const>
                    , boost::shared_ptr<logger_type>

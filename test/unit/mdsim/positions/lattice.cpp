@@ -27,18 +27,19 @@
 #include <boost/foreach.hpp>
 #include <boost/make_shared.hpp>
 #include <cmath>
-#include <functional> // std::multiplies
+#include <functional>
 #include <limits>
-#include <numeric> // std::accumulate
+#include <numeric>
 
 #include <halmd/mdsim/box.hpp>
 #include <halmd/mdsim/clock.hpp>
-#include <halmd/mdsim/host/particle_group.hpp>
+#include <halmd/mdsim/host/particle.hpp>
 #include <halmd/mdsim/host/positions/lattice.hpp>
+#include <halmd/mdsim/particle_group.hpp>
 #include <halmd/numeric/accumulator.hpp>
 #include <halmd/observables/host/phase_space.hpp>
 #ifdef HALMD_WITH_GPU
-# include <halmd/mdsim/gpu/particle_group.hpp>
+# include <halmd/mdsim/gpu/particle.hpp>
 # include <halmd/mdsim/gpu/positions/lattice.hpp>
 # include <halmd/observables/gpu/phase_space.hpp>
 # include <halmd/utility/gpu/device.hpp>
@@ -83,8 +84,8 @@ template <typename modules_type>
 struct lattice
 {
     typedef typename modules_type::box_type box_type;
-    typedef typename modules_type::particle_group_type particle_group_type;
-    typedef typename particle_group_type::particle_type particle_type;
+    typedef typename modules_type::particle_type particle_type;
+    typedef mdsim::particle_group_from_range<particle_type> particle_group_type;
     typedef typename modules_type::position_type position_type;
     typedef typename modules_type::sample_type sample_type;
     typedef typename modules_type::phase_space_type phase_space_type;
@@ -220,14 +221,15 @@ lattice<modules_type>::lattice()
     box = boost::make_shared<box_type>(box_length);
     position = boost::make_shared<position_type>(particle, box, slab);
     clock = boost::make_shared<clock_type>();
-    phase_space = boost::make_shared<phase_space_type>(boost::make_shared<particle_group_type>(particle), particle, box, clock);
+    boost::shared_ptr<particle_group_type> particle_group = boost::make_shared<particle_group_type>(particle, 0, particle->nparticle());
+    phase_space = boost::make_shared<phase_space_type>(particle, particle_group, box, clock);
 }
 
 template <int dimension, typename float_type>
 struct host_modules
 {
     typedef mdsim::box<dimension> box_type;
-    typedef mdsim::host::particle_group_all<dimension, float_type> particle_group_type;
+    typedef mdsim::host::particle<dimension, float_type> particle_type;
     typedef mdsim::host::positions::lattice<dimension, float_type> position_type;
     typedef observables::host::samples::phase_space<dimension, float_type> sample_type;
     typedef observables::host::phase_space<dimension, float_type> phase_space_type;
@@ -246,7 +248,7 @@ template <int dimension, typename float_type>
 struct gpu_modules
 {
     typedef mdsim::box<dimension> box_type;
-    typedef mdsim::gpu::particle_group_all<dimension, float_type> particle_group_type;
+    typedef mdsim::gpu::particle<dimension, float_type> particle_type;
     typedef mdsim::gpu::positions::lattice<dimension, float_type> position_type;
     typedef observables::host::samples::phase_space<dimension, float_type> sample_type;
     typedef observables::gpu::phase_space<sample_type> phase_space_type;

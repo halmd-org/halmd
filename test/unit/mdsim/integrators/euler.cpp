@@ -29,19 +29,20 @@
 #include <limits>
 #include <numeric>
 
-#include <halmd/mdsim/box.hpp>                          // dependency of euler module
-#include <halmd/mdsim/clock.hpp>                        // dependency of phase_space module
-#include <halmd/mdsim/host/integrators/euler.hpp>       // module to be tested
-#include <halmd/mdsim/host/particle_group.hpp>
-#include <halmd/mdsim/host/positions/lattice.hpp>       // for initialisation
-#include <halmd/mdsim/host/velocities/boltzmann.hpp>    // for initialisation
-#include <halmd/observables/host/phase_space.hpp>       // for unified reading of positions and velocities
-#include <halmd/random/host/random.hpp>                 // dependency of modules position, velocity
+#include <halmd/mdsim/box.hpp>
+#include <halmd/mdsim/clock.hpp>
+#include <halmd/mdsim/host/integrators/euler.hpp>
+#include <halmd/mdsim/host/particle.hpp>
+#include <halmd/mdsim/host/positions/lattice.hpp>
+#include <halmd/mdsim/host/velocities/boltzmann.hpp>
+#include <halmd/mdsim/particle_group.hpp>
+#include <halmd/observables/host/phase_space.hpp>
+#include <halmd/random/host/random.hpp>
 #ifdef HALMD_WITH_GPU
 # include <cuda_wrapper/cuda_wrapper.hpp>
 # include <halmd/algorithm/gpu/apply_kernel.hpp>
 # include <halmd/mdsim/gpu/integrators/euler.hpp>
-# include <halmd/mdsim/gpu/particle_group.hpp>
+# include <halmd/mdsim/gpu/particle.hpp>
 # include <halmd/mdsim/gpu/positions/lattice.hpp>
 # include <halmd/mdsim/gpu/velocities/boltzmann.hpp>
 # include <halmd/observables/gpu/phase_space.hpp>
@@ -77,8 +78,8 @@ struct test_euler
 {
     typedef typename modules_type::box_type box_type;
     typedef typename modules_type::integrator_type integrator_type;
-    typedef typename modules_type::particle_group_type particle_group_type;
-    typedef typename particle_group_type::particle_type particle_type;
+    typedef typename modules_type::particle_type particle_type;
+    typedef mdsim::particle_group_from_range<particle_type> particle_group_type;
     typedef typename modules_type::position_type position_type;
     typedef typename modules_type::random_type random_type;
     typedef typename modules_type::velocity_type velocity_type;
@@ -233,7 +234,8 @@ test_euler<modules_type>::test_euler()
     position = boost::make_shared<position_type>(particle, box, slab);
     velocity = boost::make_shared<velocity_type>(particle, random, temp);
     clock = boost::make_shared<clock_type>();
-    phase_space = boost::make_shared<phase_space_type>(boost::make_shared<particle_group_type>(particle), particle, box, clock);
+    boost::shared_ptr<particle_group_type> particle_group = boost::make_shared<particle_group_type>(particle, 0, particle->nparticle());
+    phase_space = boost::make_shared<phase_space_type>(particle, particle_group, box, clock);
 
     // set positions and velocities
     BOOST_TEST_MESSAGE("set particle tags");
@@ -251,8 +253,7 @@ template <int dimension, typename float_type>
 struct host_modules
 {
     typedef mdsim::box<dimension> box_type;
-    typedef mdsim::host::particle_group_all<dimension, float_type> particle_group_type;
-    typedef typename particle_group_type::particle_type particle_type;
+    typedef mdsim::host::particle<dimension, float_type> particle_type;
     typedef mdsim::host::integrators::euler<dimension, float_type> integrator_type;
     typedef halmd::random::host::random random_type;
     typedef mdsim::host::positions::lattice<dimension, float_type> position_type;
@@ -301,8 +302,7 @@ template <int dimension, typename float_type>
 struct gpu_modules
 {
     typedef mdsim::box<dimension> box_type;
-    typedef mdsim::gpu::particle_group_all<dimension, float_type> particle_group_type;
-    typedef typename particle_group_type::particle_type particle_type;
+    typedef mdsim::gpu::particle<dimension, float_type> particle_type;
     typedef mdsim::gpu::integrators::euler<dimension, float_type> integrator_type;
     typedef halmd::random::gpu::random<halmd::random::gpu::rand48> random_type;
     typedef mdsim::gpu::positions::lattice<dimension, float_type> position_type;

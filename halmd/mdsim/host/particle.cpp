@@ -28,6 +28,7 @@
 #include <halmd/algorithm/host/permute.hpp>
 #include <halmd/io/logger.hpp>
 #include <halmd/mdsim/host/particle.hpp>
+#include <halmd/mdsim/particle_group.hpp>
 #include <halmd/utility/lua/lua.hpp>
 #include <halmd/utility/signal.hpp>
 
@@ -432,9 +433,17 @@ HALMD_LUA_API int luaopen_libhalmd_mdsim_host_particle(lua_State* L)
 #ifndef USE_HOST_SINGLE_PRECISION
     particle<3, double>::luaopen(L);
     particle<2, double>::luaopen(L);
+    particle_group<particle<3, double> >::luaopen(L);
+    particle_group<particle<2, double> >::luaopen(L);
+    particle_group_from_range<particle<3, double> >::luaopen(L);
+    particle_group_from_range<particle<2, double> >::luaopen(L);
 #else
     particle<3, float>::luaopen(L);
     particle<2, float>::luaopen(L);
+    particle_group<particle<3, float> >::luaopen(L);
+    particle_group<particle<2, float> >::luaopen(L);
+    particle_group_from_range<particle<3, float> >::luaopen(L);
+    particle_group_from_range<particle<2, float> >::luaopen(L);
 #endif
     return 0;
 }
@@ -448,6 +457,16 @@ template class particle<3, float>;
 template class particle<2, float>;
 #endif
 
-} // namespace mdsim
 } // namespace host
+
+// explicit instantiation
+#ifndef USE_HOST_SINGLE_PRECISION
+template class particle_group_from_range<host::particle<3, double> >;
+template class particle_group_from_range<host::particle<2, double> >;
+#else
+template class particle_group_from_range<host::particle<3, float> >;
+template class particle_group_from_range<host::particle<2, float> >;
+#endif
+
+} // namespace mdsim
 } // namespace halmd

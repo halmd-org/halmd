@@ -25,7 +25,8 @@
 #include <halmd/io/logger.hpp>
 #include <halmd/mdsim/box.hpp>
 #include <halmd/mdsim/clock.hpp>
-#include <halmd/mdsim/host/particle_group.hpp>
+#include <halmd/mdsim/host/particle.hpp>
+#include <halmd/mdsim/particle_group.hpp>
 #include <halmd/observables/host/samples/phase_space.hpp>
 #include <halmd/utility/profiler.hpp>
 
@@ -37,9 +38,9 @@ template <int dimension, typename float_type>
 class phase_space
 {
 public:
-    typedef host::samples::phase_space<dimension, float_type> sample_type;
-    typedef mdsim::host::particle_group<dimension, float_type> particle_group_type;
-    typedef typename particle_group_type::particle_type particle_type;
+    typedef samples::phase_space<dimension, float_type> sample_type;
+    typedef mdsim::host::particle<dimension, float_type> particle_type;
+    typedef mdsim::particle_group<particle_type> particle_group_type;
     typedef mdsim::box<dimension> box_type;
     typedef mdsim::clock clock_type;
     typedef logger logger_type;
@@ -48,8 +49,8 @@ public:
      * Construct phase_space sampler from particle group.
      */
     phase_space(
-        boost::shared_ptr<particle_group_type const> particle_group
-      , boost::shared_ptr<particle_type> particle
+        boost::shared_ptr<particle_type> particle
+      , boost::shared_ptr<particle_group_type const> particle_group
       , boost::shared_ptr<box_type const> box
       , boost::shared_ptr<clock_type const> clock
       , boost::shared_ptr<logger_type> logger = boost::make_shared<logger_type>()
@@ -71,10 +72,10 @@ public:
     static void luaopen(lua_State* L);
 
 private:
-    /** particle group */
-    boost::shared_ptr<particle_group_type const> particle_group_;
     /** particle instance to particle group */
     boost::shared_ptr<particle_type> particle_;
+    /** particle group */
+    boost::shared_ptr<particle_group_type const> particle_group_;
     /** simulation box */
     boost::shared_ptr<box_type const> box_;
     /** simulation clock */

@@ -45,6 +45,8 @@ struct phase_space_wrapper
     cuda::function<void (unsigned int const*, float4*, float4*, vector_type, unsigned int)> sample;
     /** shift particle positions to range (-L/2, L/2) */
     cuda::function<void (unsigned int const*, float4*, coalesced_vector_type*, vector_type, unsigned int)> reduce_periodic;
+    /** copy particle group from GPU to host memory */
+    cuda::function<void (unsigned int const*, unsigned int*, unsigned int size)> copy_particle_group;
 
     static phase_space_wrapper const kernel;
 };

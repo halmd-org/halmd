@@ -25,7 +25,8 @@
 #include <halmd/io/logger.hpp>
 #include <halmd/mdsim/box.hpp>
 #include <halmd/mdsim/clock.hpp>
-#include <halmd/mdsim/gpu/particle_group.hpp>
+#include <halmd/mdsim/gpu/particle.hpp>
+#include <halmd/mdsim/particle_group.hpp>
 #include <halmd/observables/gpu/samples/phase_space.hpp>
 #include <halmd/observables/host/samples/phase_space.hpp>
 #include <halmd/utility/profiler.hpp>
@@ -44,9 +45,9 @@ template <int dimension, typename float_type>
 class phase_space<gpu::samples::phase_space<dimension, float_type> >
 {
 public:
-    typedef mdsim::gpu::particle_group<dimension, float_type> particle_group_type;
-    typedef typename particle_group_type::particle_type particle_type;
     typedef gpu::samples::phase_space<dimension, float_type> sample_type;
+    typedef mdsim::gpu::particle<dimension, float_type> particle_type;
+    typedef mdsim::particle_group<particle_type> particle_group_type;
     typedef mdsim::box<dimension> box_type;
     typedef mdsim::clock clock_type;
     typedef logger logger_type;
@@ -55,8 +56,8 @@ public:
      * Construct phase_space sampler from particle group.
      */
     phase_space(
-        boost::shared_ptr<particle_group_type const> particle_group
-      , boost::shared_ptr<particle_type> particle
+        boost::shared_ptr<particle_type> particle
+      , boost::shared_ptr<particle_group_type const> particle_group
       , boost::shared_ptr<box_type const> box
       , boost::shared_ptr<clock_type const> clock
       , boost::shared_ptr<logger_type> logger = boost::make_shared<logger_type>()
@@ -75,10 +76,10 @@ public:
 private:
     typedef typename sample_type::vector_type vector_type;
 
-    /** particle group */
-    boost::shared_ptr<particle_group_type const> particle_group_;
     /** particle instance to particle group */
     boost::shared_ptr<particle_type> particle_;
+    /** particle group */
+    boost::shared_ptr<particle_group_type const> particle_group_;
     /** simulation box */
     boost::shared_ptr<box_type const> box_;
     /** simulation clock */
@@ -110,8 +111,8 @@ class phase_space<host::samples::phase_space<dimension, float_type> >
 {
 public:
     typedef host::samples::phase_space<dimension, float_type> sample_type;
-    typedef mdsim::gpu::particle_group<dimension, float_type> particle_group_type;
-    typedef typename particle_group_type::particle_type particle_type;
+    typedef mdsim::gpu::particle<dimension, float_type> particle_type;
+    typedef mdsim::particle_group<particle_type> particle_group_type;
     typedef mdsim::box<dimension> box_type;
     typedef fixed_vector<float_type, dimension> vector_type;
     typedef logger logger_type;
@@ -121,8 +122,8 @@ public:
      * Construct phase_space sampler from particle group.
      */
     phase_space(
-        boost::shared_ptr<particle_group_type> particle_group
-      , boost::shared_ptr<particle_type> particle
+        boost::shared_ptr<particle_type> particle
+      , boost::shared_ptr<particle_group_type const> particle_group
       , boost::shared_ptr<box_type const> box
       , boost::shared_ptr<clock_type const> clock
       , boost::shared_ptr<logger_type> logger = boost::make_shared<logger_type>()
@@ -144,10 +145,10 @@ public:
     static void luaopen(lua_State* L);
 
 private:
-    /** particle group */
-    boost::shared_ptr<particle_group_type> particle_group_;
     /** particle instance to particle group */
     boost::shared_ptr<particle_type> particle_;
+    /** particle group */
+    boost::shared_ptr<particle_group_type const> particle_group_;
     /** simulation box */
     boost::shared_ptr<box_type const> box_;
     /** simulation clock */
@@ -163,6 +164,10 @@ private:
     cuda::host::vector<typename particle_type::gpu_vector_type> h_image_;
     /** buffered velocities in page-locked host memory */
     cuda::host::vector<float4> h_v_;
+    /** buffered reverse tags in page-locked host memory */
+    cuda::host::vector<unsigned int> h_group_;
+    /** GPU threads per block */
+    unsigned int threads_;
 
     typedef halmd::utility::profiler profiler_type;
     typedef typename profiler_type::accumulator_type accumulator_type;

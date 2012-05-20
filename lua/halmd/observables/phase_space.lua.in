@@ -151,7 +151,7 @@ local M = module(function(args)
 
         -- construct phase space samplers
         for memory, phase_space in pairs(phase_space) do
-            samplers[memory] = phase_space(group, particle, box, clock, logger)
+            samplers[memory] = phase_space(particle, group, box, clock, logger)
         end
 
         -- construct unified Lua object for host and gpu sampler

@@ -1,5 +1,6 @@
 --
--- Copyright © 2012  Felix Höfling
+-- Copyright © 2012 Peter Colberg
+-- Copyright © 2012 Felix Höfling
 --
 -- This file is part of HALMD.
 --
@@ -19,80 +20,76 @@
 
 local module = require("halmd.utility.module")
 
+---
+-- Particle Group
+-- ==============
+--
+-- A particle group represents a subset of particles, which is defined
+-- by an instance of particle together with a sequence of indices.
+--
+-- Example::
+--
+--    -- construct particle instance for given simulation domain
+--    local system = halmd.mdsim.particle({box = box, particles = 10000, species = 2})
+--
+--    -- select all particles, i.e. range is {1, particle.nparticle}
+--    local group_all = halmd.mdsim.particle_group({particle = particle})
+--
+--    -- select each species, assuming particles of a species have contiguous tags
+--    local group_A = halmd.mdsim.particle_group({particle = system, range = {1, 5000}, label = "A"})
+--    local group_B = halmd.mdsim.particle_group({particle = system, range = {5001, 10000}, label = "B"})
+--
+
 -- grab C++ wrappers
-local particle_group_all_wrapper = assert(libhalmd.mdsim.particle_group_all)
-local particle_group_from_range_wrapper = assert(libhalmd.mdsim.particle_group_from_range)
--- grab standard library
-local assert = assert
-local ipairs = ipairs
-local property = property
-local string = string
-local type = type
+local particle_group_from_range = assert(libhalmd.mdsim.particle_group_from_range)
 
-
+---
+-- Construct particle group from tag range.
 --
--- construct particle_group module
+-- :param table args: keyword arguments
+-- :param args.particle: instance of :class:`halmd.mdsim.particle`
+-- :param table args.range: particle tag range ``{first, last}`` (defaults to all particles)
+-- :param string args.label: group label (defaults to :attr:`halmd.mdsim.particle.label` if all particles)
 --
--- @param args       parameter table
---   args.particle   instance of {host,gpu}::particle
---   args.range      list of ranges [begin, end) of particle tags for subset selection (optional)
---   args.species    list of particle species for subset selection (optional, conflicts with 'range')
---   args.label      list of group labels (optional, default: "A", "B"', ..., or "all")
---                   TODO pass optionally a function/mapping instead of a list
--- @returns list of particle_group instances with attached labels
+-- .. note::
+--
+--    Particle tags are 1-based, i.e. the first particle has tag 1.
+--
+-- .. attribute:: particle
+--
+--    Instance of :class:`halmd.mdsim.particle`
+--
+-- .. attribute:: size
+--
+--    Number of particles in group.
 --
 local M = module(function(args)
-    local particle = assert(args.particle, "missing parameter: particle")
+    local particle = args.particle
+    if not particle then
+        error("missing argument 'particle'", 2)
+    end
     local range = args.range
-    local species = args.species
-    assert(not range or not species, "conflicting parameters: range, species")
-
-    -- construct default labels
     local label = args.label
-    if not label then
-        label = {}
-        if range or species then
-            for i = 1, #(range or species) do
-                label[i] = string.char(string.byte("A") + i - 1)
-            end
-        else
-            label[1] = "all"
-        end
+    if not range then
+        range = {1, assert(particle.nparticle)}
+        label = assert(particle.label)
     end
-    assert(type(label) == "table", "invalid table")
-
-    -- construct list of particle groups
-    local particle_group = {}
-    if range then -- select by range
-        assert(type(range) == "table", "invalid table")
-        for i, r in ipairs(range) do
-            assert(#r == 2)
-            particle_group[i] = particle_group_from_range_wrapper(particle, r[1], r[2])
-        end
-    elseif species then -- select by species
-        assert(type(species) == "table", "invalid table")
-        for i, s in ipairs(species) do
-            assert(s < #particle.ntypes, "invalid particle species")
-            -- find tag range for the specified species, assume that tags
-            -- form an ascending and contiguous range for each species and
-            -- that the species are ordered as well
-            local lower = 0
-            for j = 1, s do
-                lower = lower + particle.ntypes[j]
-            end
-            local upper = lower + particle.ntypes[s + 1]
-            particle_group[i] = particle_group_from_range_wrapper(particle, lower, upper)
-        end
-    else -- select all
-        particle_group = { particle_group_all_wrapper(particle) }
+    if type(range) ~= "table" or #range ~= 2 then
+        error("invalid argument 'range'", 2)
+    end
+    if type(label) ~= "string" then
+        error("invalid argument 'label'", 2)
     end
 
-    -- store particle labels as Lua property
-    for i, group in ipairs(particle_group) do
-        group.label = property(function(self) return label[i] end)
-    end
+    -- construct particle group from tag range
+    local self = particle_group_from_range(particle, range[1], range[2])
 
-    return particle_group
+    -- attach label as read-only property
+    self.label = property(function(self)
+        return label
+    end)
+
+    return self
 end)
 
 return M
