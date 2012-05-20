@@ -17,15 +17,12 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <boost/nondet_random.hpp> // boost::random_device
+#include <boost/shared_ptr.hpp>
 
 #include <halmd/random/gpu/rand48.hpp>
 #include <halmd/random/gpu/random.hpp>
 #include <halmd/random/gpu/random_kernel.hpp>
 #include <halmd/utility/lua/lua.hpp>
-
-using namespace boost;
-using namespace std;
 
 namespace halmd {
 namespace random {
@@ -34,24 +31,21 @@ namespace gpu {
 template <typename RandomNumberGenerator>
 random<RandomNumberGenerator>::random(
     unsigned int seed
-  , boost::shared_ptr<logger_type> logger
   , unsigned int blocks
   , unsigned int threads
   , unsigned int shuffle_threads
 )
   // allocate random number generator state
   : rng_(blocks, threads)
-  , logger_(logger)
   , shuffle_threads_(shuffle_threads)
 {
-    LOG("random number generator seed: " << seed);
-    try {
-        rng_.seed(seed);
-    }
-    catch (cuda::error const&) {
-        LOG_ERROR("failed to seed random number generator");
-        throw;
-    }
+    random::seed(seed);
+}
+
+template <typename RandomNumberGenerator>
+void random<RandomNumberGenerator>::seed(unsigned int seed)
+{
+    rng_.seed(seed);
 }
 
 /**
@@ -60,15 +54,9 @@ random<RandomNumberGenerator>::random(
 template <typename RandomNumberGenerator>
 void random<RandomNumberGenerator>::uniform(cuda::vector<float>& g_v)
 {
-    try {
-        cuda::configure(rng_.dim.grid, rng_.dim.block);
-        get_random_kernel<rng_type>().uniform(g_v, g_v.size(), rng_.rng());
-        cuda::thread::synchronize();
-    }
-    catch (cuda::error const&) {
-        LOG_ERROR("failed to fill vector with uniform random numbers");
-        throw;
-    }
+    cuda::configure(rng_.dim.grid, rng_.dim.block);
+    get_random_kernel<rng_type>().uniform(g_v, g_v.size(), rng_.rng());
+    cuda::thread::synchronize();
 }
 
 /**
@@ -77,15 +65,9 @@ void random<RandomNumberGenerator>::uniform(cuda::vector<float>& g_v)
 template <typename RandomNumberGenerator>
 void random<RandomNumberGenerator>::get(cuda::vector<unsigned int>& g_v)
 {
-    try {
-        cuda::configure(rng_.dim.grid, rng_.dim.block);
-        get_random_kernel<rng_type>().get(g_v, g_v.size(), rng_.rng());
-        cuda::thread::synchronize();
-    }
-    catch (cuda::error const&) {
-        LOG_ERROR("failed to fill vector with uniform integer random numbers");
-        throw;
-    }
+    cuda::configure(rng_.dim.grid, rng_.dim.block);
+    get_random_kernel<rng_type>().get(g_v, g_v.size(), rng_.rng());
+    cuda::thread::synchronize();
 }
 
 /**
@@ -94,24 +76,11 @@ void random<RandomNumberGenerator>::get(cuda::vector<unsigned int>& g_v)
 template <typename RandomNumberGenerator>
 void random<RandomNumberGenerator>::normal(cuda::vector<float>& g_v, float mean, float sigma)
 {
-    try {
-        cuda::configure(rng_.dim.grid, rng_.dim.block);
-        get_random_kernel<rng_type>().normal(g_v, g_v.size(), mean, sigma, rng_.rng());
-        cuda::thread::synchronize();
-    }
-    catch (cuda::error const&) {
-        LOG_ERROR("failed to fill vector with normal random numbers");
-        throw;
-    }
+    cuda::configure(rng_.dim.grid, rng_.dim.block);
+    get_random_kernel<rng_type>().normal(g_v, g_v.size(), mean, sigma, rng_.rng());
+    cuda::thread::synchronize();
 }
 
-//! Get seed from non-deterministic random number generator.
-// boost::random_device reads from /dev/urandom on GNU/Linux,
-// and the default cryptographic service provider on Windows.
-template <typename RandomNumberGenerator>
-unsigned int random<RandomNumberGenerator>::defaults::seed() {
-    return boost::random_device()();
-}
 template <typename RandomNumberGenerator>
 unsigned int random<RandomNumberGenerator>::defaults::blocks() {
     return 32;
@@ -129,34 +98,16 @@ template <typename RandomNumberGenerator>
 void random<RandomNumberGenerator>::luaopen(lua_State* L)
 {
     using namespace luabind;
-    static string class_name(RandomNumberGenerator::name());
+    static std::string const class_name = RandomNumberGenerator::name();
     module(L, "libhalmd")
     [
-        namespace_("gpu")
+        namespace_("random")
         [
-            namespace_("random")
+            namespace_("gpu")
             [
                 class_<random, boost::shared_ptr<random> >(class_name.c_str())
-                    .def(constructor<
-                        unsigned int
-                      , boost::shared_ptr<logger_type>
-                      , unsigned int
-                      , unsigned int
-                      , unsigned int
-                     >())
-                    .property("blocks", &random::blocks)
-                    .property("threads", &random::threads)
-                    .scope
-                    [
-                        class_<defaults>("defaults")
-                            .scope
-                            [
-                                def("seed", &defaults::seed)
-                              , def("threads", &defaults::threads)
-                              , def("blocks", &defaults::blocks)
-                              , def("shuffle_threads", &defaults::shuffle_threads)
-                            ]
-                    ]
+                    .def(constructor<>())
+                    .def("seed", &random::seed)
             ]
         ]
     ];

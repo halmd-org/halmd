@@ -44,11 +44,11 @@ function M.__new(args)
     -- dependency injection
     local dimension = assert(particle.dimension)
     local box = mdsim.box() -- singleton
-    local random = assert(random())
+    local rng = random.generator()
     local timestep = assert(clock.timestep)
     local logger = log.logger({label = "verlet_nvt_andersen"})
 
-    local integrator = verlet_nvt_andersen(particle, box, random, timestep, temperature, collision_rate, logger)
+    local integrator = verlet_nvt_andersen(particle, box, rng, timestep, temperature, collision_rate, logger)
 
     -- sequence of signal connections
     local conn = {}

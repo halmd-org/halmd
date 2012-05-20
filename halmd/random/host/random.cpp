@@ -17,33 +17,23 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <boost/nondet_random.hpp> // boost::random_device
+#include <boost/shared_ptr.hpp>
 
 #include <halmd/random/host/random.hpp>
 #include <halmd/utility/lua/lua.hpp>
-
-using namespace boost;
-using namespace std;
 
 namespace halmd {
 namespace random {
 namespace host {
 
-random::random(
-    unsigned int seed
-  , boost::shared_ptr<logger_type> logger
-)
-  : logger_(logger)
+random::random(unsigned int seed)
 {
-    LOG("random number generator seed: " << seed);
-    rng_.seed(seed);
+    random::seed(seed);
 }
 
-//! Get seed from non-deterministic random number generator.
-// boost::random_device reads from /dev/urandom on GNU/Linux,
-// and the default cryptographic service provider on Windows.
-unsigned int random::defaults::seed() {
-    return boost::random_device()();
+void random::seed(unsigned int seed)
+{
+    rng_.seed(seed);
 }
 
 void random::luaopen(lua_State* L)
@@ -51,23 +41,13 @@ void random::luaopen(lua_State* L)
     using namespace luabind;
     module(L, "libhalmd")
     [
-        namespace_("host")
+        namespace_("random")
         [
-            namespace_("random")
+            namespace_("host")
             [
                 class_<random, boost::shared_ptr<random> >("gfsr4")
-                    .def(constructor<
-                        unsigned int
-                      , boost::shared_ptr<logger_type>
-                    >())
-                    .scope
-                    [
-                        class_<defaults>("defaults")
-                            .scope
-                            [
-                                def("seed", &defaults::seed)
-                            ]
-                    ]
+                    .def(constructor<>())
+                    .def("seed", &random::seed)
             ]
         ]
     ];

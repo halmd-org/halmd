@@ -1,5 +1,5 @@
 --
--- Copyright © 2010-2011  Peter Colberg
+-- Copyright © 2012 Peter Colberg
 --
 -- This file is part of HALMD.
 --
@@ -17,96 +17,59 @@
 -- along with this program.  If not, see <http://www.gnu.org/licenses/>.
 --
 
-local device            = require("halmd.utility.device")
-local log               = require("halmd.io.log")
-local module            = require("halmd.utility.module")
+local device = require("halmd.utility.device")
+
+---
+-- Random Numbers
+-- ==============
+--
+-- This module provides random number generators and random distributions.
+--
+local M = {}
 
 -- grab C++ wrappers
-local random_wrapper = {
-    host = libhalmd.host.random
-}
-if libhalmd.gpu then
-    random_wrapper.gpu = libhalmd.gpu.random
+local random = {host = assert(libhalmd.random.host.gfsr4)}
+if device.gpu then
+    random.gpu = assert(libhalmd.random.gpu.rand48)
 end
-local h5 = libhalmd.h5
-local po = libhalmd.po
--- grab standard library
-local assert = assert
-local error = error
 
-local M = module("halmd.random")
+-- construct random number generators with default seed
+local generator = {}
+for memory, random in pairs(random) do
+    generator[memory] = random()
+end
 
--- random number generator singleton per memory type
-local random = {}
-
+---
+-- Seed random number generator.
 --
--- construct random module
+-- :param number seed: random number generator seed
 --
-function M.__new(args)
-    local memory = args.memory -- optional argument
+function M.seed(seed)
+    if not type(seed) ~= "number" then
+        error("bad argument #1 (expected number)", 2)
+    end
+    for memory, generator in pairs(generator) do
+        generator.seed(seed)
+    end
+end
+
+---
+-- Get random number generator.
+--
+-- :param table args: keyword arguments
+-- :param string args.memory: ``host`` or ``gpu`` (defaults to compute device)
+-- :returns: random number generator
+--
+function M.generator(args)
+    local memory = args and args.memory
     if not memory then
         memory = device.gpu and "gpu" or "host"
     end
-
-    if not random[memory] then
-        local defaults
-        if memory == "gpu" then
-            defaults = assert(random_wrapper.gpu.rand48.defaults)
-        else
-            defaults = assert(random_wrapper.host.gfsr4.defaults)
-        end
-        local seed = args.seed or defaults.seed()
-        local logger = log.logger({label = "random"})
-
-        if memory == "gpu" then
-            local blocks = args.blocks or defaults.blocks()
-            local threads = args.threads or defaults.threads()
-            local shuffle_threads = defaults.shuffle_threads()
-            random[memory] = random_wrapper.gpu.rand48(seed, logger, blocks, threads, shuffle_threads)
-        else
-            random[memory] = random_wrapper.host.gfsr4(seed, logger)
-        end
+    local self = generator[memory]
+    if not self then
+        error("bad argument 'memory'", 2)
     end
-    return random[memory]
-end
-
---
--- assemble module options
---
--- @param desc po.options_description
---
-function M.options(desc)
-    desc:add("seed", po.uint(), "random number generator integer seed")
-    if random_wrapper.gpu then
-        desc:add("blocks", po.uint(), "number of CUDA blocks")
-        desc:add("threads", po.uint(), "number of CUDA threads per block")
-    end
-end
-
---
--- read module parameters from HDF5 group
---
-function M.read_parameters(args, group)
-    if random_wrapper.gpu then
-        args.blocks = group:read_attribute("blocks", h5.uint())
-        args.threads = group:read_attribute("threads", h5.uint())
-    end
-end
-
---
--- write module parameters to HDF5 group
---
--- @param random module instance
--- @param group HDF5 group
---
-function M.write_parameters(random, group)
-
-    -- FIXME serialize random number generator state
-
-    if random.blocks then
-        group:write_attribute("blocks", h5.uint(), random.blocks)
-        group:write_attribute("threads", h5.uint(), random.threads)
-    end
+    return self
 end
 
 return M

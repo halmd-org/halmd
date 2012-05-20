@@ -21,13 +21,11 @@
 #define HALMD_RANDOM_GPU_RANDOM_HPP
 
 #include <algorithm>
-#include <boost/make_shared.hpp>
-#include <boost/shared_ptr.hpp>
+#include <boost/nondet_random.hpp> // boost::random_device
 #include <lua.hpp>
 #include <iterator>
 
 #include <halmd/algorithm/gpu/radix_sort.hpp>
-#include <halmd/io/logger.hpp>
 #include <halmd/random/gpu/rand48.hpp>
 
 namespace halmd {
@@ -39,18 +37,26 @@ class random
 {
 public:
     typedef typename RandomNumberGenerator::rng_type rng_type;
-    typedef logger logger_type;
     struct defaults;
 
-    static void luaopen(lua_State* L);
-
+    /**
+     * Initialise random number generator.
+     *
+     * Get default seed from non-deterministic random number generator.
+     * boost::random_device reads from /dev/urandom on GNU/Linux,
+     * and the default cryptographic service provider on Windows.
+     */
     random(
-        unsigned int seed = defaults::seed()
-      , boost::shared_ptr<logger_type> logger = boost::make_shared<logger_type>()
+        unsigned int seed = boost::random_device()()
       , unsigned int blocks = defaults::blocks()
       , unsigned int threads = defaults::threads()
       , unsigned int shuffle_threads = defaults::shuffle_threads()
     );
+
+    /**
+     * Seed random number generator.
+     */
+    void seed(unsigned int seed);
 
     //
     // The following functions are provided for convenience.
@@ -78,18 +84,20 @@ public:
         return rng_;
     }
 
+    /**
+     * Bind class to Lua.
+     */
+    static void luaopen(lua_State* L);
+
 private:
     /** pseudo-random number generator */
     RandomNumberGenerator rng_;
-    /** module logger */
-    boost::shared_ptr<logger_type> logger_;
     unsigned int shuffle_threads_;
 };
 
 template <typename RandomNumberGenerator>
 struct random<RandomNumberGenerator>::defaults
 {
-    static unsigned int seed();
     static unsigned int blocks();
     static unsigned int threads();
     static unsigned int shuffle_threads();
@@ -106,26 +114,12 @@ void random<RandomNumberGenerator>::shuffle(Sequence& g_val)
     typedef algorithm::gpu::radix_sort<value_type> sort_type;
 
     cuda::vector<unsigned int> g_sort_index;
-    // allocate device memory
-    try {
-        g_sort_index.resize(g_val.size());
-        g_sort_index.reserve(shuffle_threads_);
-    }
-    catch (cuda::error const&) {
-        LOG_ERROR("failed to allocate global device memory in random::shuffle");
-        throw;
-    }
-
+    g_sort_index.resize(g_val.size());
+    g_sort_index.reserve(shuffle_threads_);
     sort_type sort(g_val.size(), shuffle_threads_);
-    try {
-        get(g_sort_index);
-        sort(g_sort_index, g_val);
-        cuda::thread::synchronize();
-    }
-    catch (cuda::error const&) {
-        LOG_ERROR("failed to shuffle sequence on GPU");
-        throw;
-    }
+    get(g_sort_index);
+    sort(g_sort_index, g_val);
+    cuda::thread::synchronize();
 }
 
 } // namespace random

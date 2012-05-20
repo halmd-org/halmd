@@ -21,7 +21,7 @@
 #define HALMD_RANDOM_HOST_RANDOM_HPP
 
 #include <algorithm>
-#include <boost/make_shared.hpp>
+#include <boost/nondet_random.hpp> // boost::random_device
 #include <boost/random/mersenne_twister.hpp>
 #include <boost/random/uniform_01.hpp>
 #include <boost/random/uniform_int.hpp>
@@ -30,7 +30,6 @@
 #include <iterator>
 #include <utility>
 
-#include <halmd/io/logger.hpp>
 #include <halmd/numeric/blas/fixed_vector.hpp>
 
 namespace halmd {
@@ -41,19 +40,20 @@ class random
 {
 public:
     typedef boost::mt19937 random_generator; // FIXME template parameter
-    typedef logger logger_type;
 
-    struct defaults
-    {
-        static unsigned int seed();
-    };
+    /**
+     * Initialise random number generator.
+     *
+     * Get default seed from non-deterministic random number generator.
+     * boost::random_device reads from /dev/urandom on GNU/Linux,
+     * and the default cryptographic service provider on Windows.
+     */
+    random(unsigned int seed = boost::random_device()());
 
-    static void luaopen(lua_State* L);
-
-    random(
-        unsigned int seed = defaults::seed()
-      , boost::shared_ptr<logger_type> logger = boost::make_shared<logger_type>()
-    );
+    /**
+     * Seed random number generator.
+     */
+    void seed(unsigned int seed);
 
     template <typename input_iterator>
     void shuffle(input_iterator first, input_iterator last);
@@ -68,11 +68,14 @@ public:
     template <typename value_type>
     void unit_vector(fixed_vector<value_type, 4>& v);
 
+    /**
+     * Bind class to Lua.
+     */
+    static void luaopen(lua_State* L);
+
 private:
     /** pseudo-random number generator */
     random_generator rng_;
-    /** module logger */
-    boost::shared_ptr<logger_type> logger_;
 };
 
 /**

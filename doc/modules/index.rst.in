@@ -8,4 +8,5 @@ Modules
    halmd/mdsim/index
    halmd/io/index
    halmd/observables/index
+   halmd/random
    halmd/utility/index
