@@ -28,10 +28,8 @@ local mdsim = {
 }
 
 -- grab C++ classes
-local phase_space = {
-    host = assert(libhalmd.observables.host.phase_space)
-}
-if libhalmd.observables.gpu then
+local phase_space = {host = assert(libhalmd.observables.host.phase_space)}
+if device.gpu then
     phase_space.gpu = assert(libhalmd.observables.gpu.phase_space)
 end
 
@@ -151,12 +149,9 @@ local M = module(function(args)
         local particle = assert(group.particle)
         local samplers = {}
 
-        -- construct phase space sampler to host memory
-        samplers.host = phase_space.host(group, particle, box, clock, logger)
-
-        -- if GPU is used, construct phase space sampler to GPU memory
-        if device.gpu then
-            samplers.gpu = phase_space.gpu(group, particle, box, clock, logger)
+        -- construct phase space samplers
+        for memory, phase_space in pairs(phase_space) do
+            samplers[memory] = phase_space(group, particle, box, clock, logger)
         end
 
         -- construct unified Lua object for host and gpu sampler
