@@ -34,7 +34,6 @@ local io = io
 local pairs = pairs
 local string = string
 
-local M = module("halmd.io.readers.trajectory")
 
 -- detected file reader module
 local reader
@@ -42,7 +41,7 @@ local reader
 --
 -- construct trajectory reader module
 --
-function M.__new(args)
+local M = module(function(args)
     if reader then
         local group = assert(args.group)
         local time = args.time
@@ -108,7 +107,7 @@ function M.__new(args)
 
         return reader
     end
-end
+end)
 
 --
 -- assemble module options

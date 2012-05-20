@@ -27,7 +27,6 @@ local blocking_scheme_wrapper = libhalmd.observables.samples.blocking_scheme
 -- grab standard library
 local assert = assert
 
-local M = module("halmd.observables.samples.blocking_scheme")
 
 -- block samples by sample
 local block_samples = {}
@@ -38,7 +37,7 @@ local block_samples = {}
 -- @param args    parameter table
 --   args.sampler sampler module that acquires sample
 --
-function M.__new(args)
+local M = module(function(args)
     local sampler = assert(args.sampler)
     local sample = assert(sampler.sample)
 
@@ -58,6 +57,6 @@ function M.__new(args)
         block_samples[sample] = block_sample
     end
     return block_sample
-end
+end)
 
 return M

@@ -30,12 +30,11 @@ local mdsim = {
 local euler = assert(libhalmd.mdsim.integrators.euler)
 local h5 = libhalmd.h5
 
-local M = module("halmd.mdsim.integrators.euler")
 
 --
 -- construct euler module
 --
-function M.__new(args)
+local M = module(function(args)
     -- dependency injection
     local particle = mdsim.particle() -- singleton
     local dimension = assert(particle.dimension)
@@ -71,7 +70,7 @@ function M.__new(args)
     integrator:connect()
 
     return integrator
-end
+end)
 
 --
 -- connect runtime accumulators to module profiler

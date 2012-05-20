@@ -37,12 +37,11 @@ end
 -- grab standard library
 local assert = assert
 
-local M = module("halmd.mdsim.sorts.hilbert")
 
 --
 -- construct hilbert module
 --
-function M.__new(args)
+local M = module(function(args)
     -- dependency injection
     local particle = assert(args.particle)
     local box = assert(args.box)
@@ -58,7 +57,7 @@ function M.__new(args)
     end
 
     return sort
-end
+end)
 
 --
 -- connect runtime accumulators to module profiler

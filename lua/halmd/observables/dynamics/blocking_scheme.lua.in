@@ -28,7 +28,6 @@ local po = libhalmd.po
 -- grab standard library
 local assert = assert
 
-local M = module("halmd.observables.dynamics.blocking_scheme")
 
 --
 -- construct module blocking_scheme
@@ -40,7 +39,7 @@ local M = module("halmd.observables.dynamics.blocking_scheme")
 --   compute       table of time correlations functions to be computed
 -- @returns instance of blocking_scheme module
 --
-function M.__new(args)
+local M = module(function(args)
     local every = args.every or 100 -- default value
     local size  = args.size or 10 -- default value
     local shift = args.shift or 0 -- default value
@@ -58,7 +57,7 @@ function M.__new(args)
     sampler:on_finish(blocking_scheme.finalise)
 
     return blocking_scheme
-end
+end)
 
 --
 -- assemble module options

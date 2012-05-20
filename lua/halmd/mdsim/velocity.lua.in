@@ -27,12 +27,11 @@ local po = libhalmd.po
 local assert = assert
 local pairs = pairs
 
-local M = module("halmd.mdsim.velocity")
 
 --
 -- construct velocity module
 --
-function M.__new(args)
+local M = module(function(args)
     local particle = assert(args.particle, "missing parameter: particle")
     local velocity = args.velocity or "boltzmann" -- default value
     local reader = args.reader
@@ -40,7 +39,7 @@ function M.__new(args)
         return velocities.phase_space{particle = particle, sample = reader:velocity(particle)}
     end
     return velocities[velocity]{particle = particle}
-end
+end)
 
 --
 -- assemble module options

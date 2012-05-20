@@ -36,12 +36,11 @@ local verlet_nvt_hoover = assert(libhalmd.mdsim.integrators.verlet_nvt_hoover)
 local h5 = libhalmd.h5
 local po = libhalmd.po
 
-local M = module("halmd.mdsim.integrators.verlet_nvt_hoover")
 
 --
 -- construct verlet_nvt_hoover module
 --
-function M.__new(args)
+local M = module(function(args)
     local temperature = args.temperature or 1.12 -- default value
     local resonance_frequency = args.resonance_frequency or 5 -- default value
     local every = args.every or 100 -- default value
@@ -97,7 +96,7 @@ function M.__new(args)
     sampler:on_sample(writer.write, every)
 
     return integrator
-end
+end)
 
 --
 -- connect runtime accumulators to module profiler

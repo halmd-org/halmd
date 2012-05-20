@@ -24,7 +24,6 @@ local vacf_wrapper = libhalmd.observables.dynamics.velocity_autocorrelation
 -- grab standard library
 local assert = assert
 
-local M = module("halmd.observables.dynamics.correlations.velocity_autocorrelation")
 
 --
 -- construct instance of velocity autocorrelation function (VACF) functor
@@ -32,13 +31,13 @@ local M = module("halmd.observables.dynamics.correlations.velocity_autocorrelati
 --   args.sample        instance of phase space sample
 -- @returns instance of VACF functor
 --
-function M.__new(args)
+local M = module(function(args)
     local sample = assert(args.sample)
 
     -- construct msd module
     local vacf = assert(vacf_wrapper)(sample)
     return vacf
-end
+end)
 
 --
 -- @returns module description

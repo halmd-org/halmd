@@ -36,12 +36,11 @@ local po = libhalmd.po
 -- grab standard library
 local assert = assert
 
-local M = module("halmd.mdsim.potentials.modified_lennard_jones")
 
 --
 -- construct modified Lennard-Jones module
 --
-function M.__new(args)
+local M = module(function(args)
     local cutoff = args.cutoff or {2.5, 2.5, 2.5} -- default value
     local epsilon = args.epsilon or {1.0, 1.5, 0.5} -- default value
     local sigma = args.sigma or {1.0, 0.8, 0.88} -- default value
@@ -56,7 +55,7 @@ function M.__new(args)
     local modified_lennard_jones = assert(modified_lennard_jones_wrapper[device.gpu and "gpu" or "host"])
     potential = modified_lennard_jones(particle.nspecies, cutoff, epsilon, sigma, index_m, index_n, logger)
     return potential
-end
+end)
 
 --
 -- returns module description

@@ -27,7 +27,6 @@ local density_mode_wrapper = {
 -- grab standard library
 local assert = assert
 
-local M = module("halmd.observables.samples.density_mode")
 
 --
 -- construct samples::density_mode module
@@ -37,7 +36,7 @@ local M = module("halmd.observables.samples.density_mode")
 --   args.nspecies    number of particle species
 -- @returns instance of samples::density_mode module
 --
-function M.__new()
+local M = module(function()
     local dimension = assert(args.dimension)
     local nspecies = assert(args.nspecies)
 
@@ -45,6 +44,6 @@ function M.__new()
 
     sample = assert(density_mode_wrapper[dimension])(nspecies)
     return sample
-end
+end)
 
 return M

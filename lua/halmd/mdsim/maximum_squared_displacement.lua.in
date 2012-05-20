@@ -36,12 +36,11 @@ end
 -- grab standard library
 local assert = assert
 
-local M = module("halmd.mdsim.maximum_squared_displacement")
 
 --
 -- construct maximum_squared_displacement module
 --
-function M.__new(args)
+local M = module(function(args)
     -- dependency injection
     local box = assert(args.box)
     local particle = assert(args.particle)
@@ -54,7 +53,7 @@ function M.__new(args)
         maximum_squared_displacement = assert(maximum_squared_displacement_wrapper.host[dimension])
     end
     return maximum_squared_displacement(particle, box)
-end
+end)
 
 --
 -- connect runtime accumulators to module profiler

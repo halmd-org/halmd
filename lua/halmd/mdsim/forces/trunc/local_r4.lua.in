@@ -23,7 +23,6 @@ local module = require("halmd.utility.module")
 --
 -- C²-continuous smoothing based on local r^4 dependence
 --
-local M = module("halmd.mdsim.forces.trunc.local_r4")
 
 -- grab C++ wrappers
 local local_r4 = {
@@ -31,7 +30,7 @@ local local_r4 = {
   , double = assert(libhalmd.mdsim.forces.trunc.local_r4_double)
 }
 
-function M.__new(args)
+local M = module(function(args)
     local h = assert(args.h)
     local trunc
     if device.gpu then
@@ -40,6 +39,6 @@ function M.__new(args)
         trunc = assert(local_r4.double)
     end
     return trunc(h)
-end
+end)
 
 return M

@@ -27,7 +27,6 @@ local wavevector_wrapper = {
 -- grab standard library
 local assert = assert
 
-local M = module("halmd.observables.utility.wavevector")
 
 --
 -- construct instance of wavevector module
@@ -40,7 +39,7 @@ local M = module("halmd.observables.utility.wavevector")
 --     args.max_count       maximum number of wavevectors per wavenumber shell
 -- @returns instance of wavevector module
 --
-function M.__new(args)
+local M = module(function(args)
     -- options
     local wavenumber = args.wavenumber
     local max_wavenumber = args.max_wavenumber
@@ -57,6 +56,6 @@ function M.__new(args)
     else
         return wavevector(max_wavenumber, decimation, box.length, tolerance, max_count)
     end
-end
+end)
 
 return M

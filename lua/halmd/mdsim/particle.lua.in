@@ -26,7 +26,6 @@ local profiler          = require("halmd.utility.profiler")
 -- Particle Arrays
 -- ===============
 --
-local M = module("halmd.mdsim.particle")
 
 -- grab C++ wrappers
 local particle = {
@@ -51,19 +50,19 @@ end
 -- :param number args.species: number of species
 -- :param string args.label: instance label (defaults to ``all``)
 --
-function M.__new(args)
+local M = module(function(args)
     local box = args.box
     if not box then
-        error("missing argument: box", 3)
+        error("missing argument: box", 2)
     end
     local dimension = assert(box.dimension)
     local nparticle = args.particles
     if not nparticle then
-        error("missing argument: particles", 3)
+        error("missing argument: particles", 2)
     end
     local nspecies = args.species
     if not nspecies then
-        error("missing argument: species", 3)
+        error("missing argument: species", 2)
     end
     local label = args.label or "all"
 
@@ -109,6 +108,6 @@ function M.__new(args)
     self:connect()
 
     return self
-end
+end)
 
 return M

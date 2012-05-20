@@ -36,9 +36,8 @@ local excluded_volume_wrapper = {
 local assert = assert
 local class_info = class_info
 
-local M = module("halmd.mdsim.positions.excluded_volume")
 
-function M.__new(args)
+local M = module(function(args)
     -- parameters
     local cell_length = args.cell_length or 1 -- default value
     -- dependencies
@@ -54,6 +53,6 @@ function M.__new(args)
         excluded_volume = assert(excluded_volume_wrapper[dimension].double)
     end
     return excluded_volume(box, cell_length, logger)
-end
+end)
 
 return M

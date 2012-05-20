@@ -41,12 +41,11 @@ local po = libhalmd.po
 -- grab standard library
 local assert = assert
 
-local M = module("halmd.mdsim.velocities.boltzmann")
 
 --
 -- construct boltzmann module
 --
-function M.__new(args)
+local M = module(function(args)
     local particle = assert(args.particle, "missing parameter: particle")
     local temperature = args.temperature or 1.12 -- default value
 
@@ -67,7 +66,7 @@ function M.__new(args)
     core:on_setup(velocity.set)
 
     return velocity
-end
+end)
 
 --
 -- connect runtime accumulators to module profiler

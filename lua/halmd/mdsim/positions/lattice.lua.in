@@ -40,12 +40,11 @@ local po = libhalmd.po
 -- grab standard library
 local assert = assert
 
-local M = module("halmd.mdsim.positions.lattice")
 
 --
 -- construct lattice module
 --
-function M.__new(args)
+local M = module(function(args)
     local particle = assert(args.particle, "missing parameter: particle")
     local box = assert(args.box, "missing parameter: box")
     local slab = args.slab or {} -- optional
@@ -71,7 +70,7 @@ function M.__new(args)
     core:on_setup(position.set)
 
     return position
-end
+end)
 
 --
 -- connect runtime accumulators to module profiler

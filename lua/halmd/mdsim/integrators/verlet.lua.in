@@ -44,7 +44,6 @@ local profiler          = require("halmd.utility.profiler")
 --
 --    \vec{v}\Bigl(t + \tau\Bigr) = \vec{v}\Bigl(t + \frac{\tau}{2}\Bigr) + \frac{\tau}{2} \frac{\vec{F}\left(t + \tau\right)}{m}
 --
-local M = module("halmd.mdsim.integrators.verlet")
 
 -- grab C++ wrappers
 local verlet = assert(libhalmd.mdsim.integrators.verlet)
@@ -80,14 +79,14 @@ local verlet = assert(libhalmd.mdsim.integrators.verlet)
 --
 --    By default this slot is connected to :meth:`halmd.mdsim.core.on_finalize`.
 --
-function M.__new(args)
+local M = module(function(args)
     local particle = args.particle
     if not particle then
-        error("missing parameter: particle", 3)
+        error("missing parameter: particle", 2)
     end
     local box = args.box
     if not box then
-        error("missing parameter: box", 3)
+        error("missing parameter: box", 2)
     end
     local dimension = assert(box.dimension)
     local timestep = args.timestep
@@ -143,6 +142,6 @@ function M.__new(args)
     self:connect()
 
     return self
-end
+end)
 
 return M

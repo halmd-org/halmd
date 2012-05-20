@@ -28,7 +28,6 @@ local ipairs = ipairs
 local setmetatable = setmetatable
 local type = type
 
-local M = module("halmd.io.readers.h5md")
 
 -- function to check file format
 M.check = h5md.file.check
@@ -51,7 +50,7 @@ end
 --
 -- construct H5MD reader
 --
-function M.__new(args)
+local M = module(function(args)
     local path = assert(args.path, "missing path")
     local file = h5md.file(path)
 
@@ -118,6 +117,6 @@ function M.__new(args)
     end
 
     return file
-end
+end)
 
 return M

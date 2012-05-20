@@ -45,7 +45,6 @@ end
 -- ordered by tag, which guarantees that a particle has the same array
 -- index over the course of the simulation.
 --
-local M = module("halmd.observables.phase_space")
 
 ---
 -- Construct phase_space sampler.
@@ -129,14 +128,14 @@ local M = module("halmd.observables.phase_space")
 --
 --       Disconnect phase_space writer from observables sampler.
 --
-function M.__new(args)
+local M = module(function(args)
     local particle = args.particle
     if not particle then
-        error("missing parameter 'particle'", 3)
+        error("missing parameter 'particle'", 2)
     end
     local box = args.box
     if not box then
-        error("missing parameter 'box'", 3)
+        error("missing parameter 'box'", 2)
     end
 
     local sampler = function(particle)
@@ -273,6 +272,6 @@ function M.__new(args)
     else
         return sampler(particle)
     end
-end
+end)
 
 return M

@@ -24,7 +24,6 @@ local mqd_wrapper = libhalmd.observables.dynamics.mean_quartic_displacement
 -- grab standard library
 local assert = assert
 
-local M = module("halmd.observables.dynamics.correlations.mean_quartic_displacement")
 
 --
 -- construct instance of mean-quartic displacement (MQD) functor
@@ -32,13 +31,13 @@ local M = module("halmd.observables.dynamics.correlations.mean_quartic_displacem
 --   args.sample        instance of phase space sample
 -- @returns instance of MQD functor
 --
-function M.__new(args)
+local M = module(function(args)
     local sample = assert(args.sample)
 
     -- construct msd module
     local mqd = assert(mqd_wrapper)(sample)
     return mqd
-end
+end)
 
 --
 -- @returns module description

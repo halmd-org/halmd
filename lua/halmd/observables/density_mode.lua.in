@@ -36,7 +36,6 @@ local ipairs = ipairs
 local property = property
 local type = type
 
-local M = module("halmd.observables.density_mode")
 
 --
 -- construct instance of density_mode module
@@ -50,7 +49,7 @@ local M = module("halmd.observables.density_mode")
 --     args.max_count       maximum count of wavevectors per wavenumber
 -- @returns list of density_mode instances
 --
-function M.__new(args)
+local M = module(function(args)
     -- dependency injection
     local phase_space = assert(args.phase_space, "missing parameter: phase_space")
     assert(type(phase_space) == "table", "invalid table")
@@ -96,7 +95,7 @@ function M.__new(args)
     end
 
     return observable
-end
+end)
 
 --
 -- connect runtime accumulators to module profiler

@@ -42,7 +42,6 @@ local ipairs = ipairs
 local property = property
 local type = type
 
-local M = module("halmd.observables.dynamics.correlation")
 
 --
 -- add time correlation function to blocking_scheme
@@ -51,7 +50,7 @@ local M = module("halmd.observables.dynamics.correlation")
 --   name             trajectory correlation function (e.g. "mean_square_displacement")
 --   sampler          list of sampler instance with attached labels
 --
-function M.__new(args)
+local M = module(function(args)
     local name = assert(args.correlation)
     local sampler = assert(args.sampler)
     assert(type(sampler) == "table", "invalid table")
@@ -97,7 +96,7 @@ function M.__new(args)
     observable.description = tcf.description()
 
     return observable
-end
+end)
 
 --
 -- connect runtime accumulators to module profiler

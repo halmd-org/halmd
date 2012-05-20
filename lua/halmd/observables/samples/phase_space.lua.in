@@ -63,7 +63,6 @@ local assert = assert
 -- the calculation of single-particle observables, such as the
 -- mean-square displacement.
 --
-local M = module("halmd.observables.samples.phase_space")
 
 ---
 -- Construct a phase_space sample.
@@ -91,14 +90,14 @@ local M = module("halmd.observables.samples.phase_space")
 --
 --    A sequence of particle velocities ordered by tag.
 --
-function M.__new(args)
+local M = module(function(args)
     local particle = args.particle
     if not particle then
-        error("missing argument 'particle'", 3)
+        error("missing argument 'particle'", 2)
     end
     local memory = args.memory
     if not memory then
-        error("missing argument 'memory'", 3)
+        error("missing argument 'memory'", 2)
     end
 
     local dimension = assert(particle.dimension)
@@ -112,7 +111,7 @@ function M.__new(args)
     end
     phase_space = phase_space[memory]
     if not phase_space then
-        error(("undefined memory location '%s'"):format(tostring(memory)), 3)
+        error(("undefined memory location '%s'"):format(tostring(memory)), 2)
     end
     phase_space = assert(phase_space[dimension])
 
@@ -123,6 +122,6 @@ function M.__new(args)
     end)
 
     return sample
-end
+end)
 
 return M

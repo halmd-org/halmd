@@ -36,12 +36,11 @@ local po = libhalmd.po
 -- grab standard library
 local assert = assert
 
-local M = module("halmd.mdsim.potentials.power_law_with_core")
 
 --
 -- construct power law module
 --
-function M.__new(args)
+local M = module(function(args)
     local cutoff = args.cutoff or {2.5, 2.5, 2.5} -- default value
     local core = args.core or {0.5, 0.5, 0.5} -- default value
     local epsilon = args.epsilon or {1.0, 1.5, 0.5} -- default value
@@ -58,7 +57,7 @@ function M.__new(args)
         power_law_with_core = assert(power_law_with_core_wrapper.host)
     end
     return power_law_with_core(particle.nspecies, cutoff, core, epsilon, sigma, index, logger)
-end
+end)
 
 --
 -- returns module description

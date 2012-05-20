@@ -29,7 +29,6 @@ local property = property
 local string = string
 local type = type
 
-local M = module("halmd.mdsim.particle_group")
 
 --
 -- construct particle_group module
@@ -42,7 +41,7 @@ local M = module("halmd.mdsim.particle_group")
 --                   TODO pass optionally a function/mapping instead of a list
 -- @returns list of particle_group instances with attached labels
 --
-function M.__new(args)
+local M = module(function(args)
     local particle = assert(args.particle, "missing parameter: particle")
     local range = args.range
     local species = args.species
@@ -94,6 +93,6 @@ function M.__new(args)
     end
 
     return particle_group
-end
+end)
 
 return M

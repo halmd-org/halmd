@@ -36,12 +36,11 @@ local assert = assert
 local type = type
 local scalar_matrix = assert(numeric.scalar_matrix)
 
-local M = module("halmd.mdsim.potentials.power_law")
 
 --
 -- construct power law module
 --
-function M.__new(args)
+local M = module(function(args)
     local cutoff = args.cutoff or 2.5 -- default value
     local epsilon = args.epsilon or 1 -- default value
     local sigma = args.sigma or 1 -- default value
@@ -67,7 +66,7 @@ function M.__new(args)
         power_law = assert(power_law_wrapper.host)
     end
     return power_law(particle.nspecies, cutoff, epsilon, sigma, index, logger)
-end
+end)
 
 --
 -- returns module description

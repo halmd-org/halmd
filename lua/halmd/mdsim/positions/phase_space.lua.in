@@ -40,12 +40,11 @@ local po = libhalmd.po
 -- grab standard library
 local assert = assert
 
-local M = module("halmd.mdsim.positions.phase_space")
 
 --
 -- construct phase_space module
 --
-function M.__new(args)
+local M = module(function(args)
     -- dependency injection
     local particle = assert(args.particle)
     local box = assert(args.box)
@@ -65,7 +64,7 @@ function M.__new(args)
     core:on_setup(position.set)
 
     return position
-end
+end)
 
 --
 -- connect runtime accumulators to module profiler

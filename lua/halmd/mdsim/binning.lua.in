@@ -39,12 +39,11 @@ local po = libhalmd.po
 -- grab standard library
 local assert = assert
 
-local M = module("halmd.mdsim.binning")
 
 --
 -- construct binning module
 --
-function M.__new(args)
+local M = module(function(args)
     -- cutoff radius matrix of truncated potential
     local r_cut = assert(args.r_cut)
     -- neighbour list skin
@@ -68,7 +67,7 @@ function M.__new(args)
         binning = binning_wrapper.host[dimension](particle, box, r_cut, skin, logger)
     end
     return binning
-end
+end)
 
 --
 -- connect runtime accumulators to module profiler

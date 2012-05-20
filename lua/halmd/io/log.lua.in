@@ -132,12 +132,10 @@ end
 --    -- C++ class
 --    local my_potential = assert(libhalmd.mdsim.potentials.my_potential)
 --
---    local M = module("halmd.mdsim.potentials.my_potential")
---
---    --use the same logger for all instances
+--    -- use the same logger for all instances
 --    local logger = log.logger({label = "my_potential"})
 --
---    function M.__new(args)
+--    local M = module(function(args)
 --        -- logs message with prefix "my_potential: "
 --        logger:info("parameters: %g %g %g", 1.0, 0.88, 0.8)
 --
@@ -145,7 +143,7 @@ end
 --        local self = my_potential(..., logger)
 --
 --        return self
---    end
+--    end)
 --
 --    return M
 
@@ -237,7 +235,7 @@ local function logging_severity(severity)
     if severity then
         result = level[severity]
         if not result then
-            error(("undefined severity level '%s'"):format(severity), 3)
+            error(("undefined severity level '%s'"):format(severity), 2)
         end
     else
         result = assert(level.info)

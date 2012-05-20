@@ -39,7 +39,6 @@ local h5 = assert(libhalmd.h5)
 --
 --    local box = halmd.mdsim.box({length = {100, 100, 10})
 --
-local M = module("halmd.mdsim.box")
 
 ---
 -- Construct box.
@@ -79,15 +78,15 @@ local M = module("halmd.mdsim.box")
 --    Callable data slot for use with a writer.
 --    The slot returns the edge lengths as a matrix.
 --
-function M.__new(args)
+local M = module(function(args)
     local length = args.length
     if not length then
-        error("missing parameter: length", 3)
+        error("missing parameter: length", 2)
     end
     local dimension = #length
     local box = box[dimension]
     if not box then
-        error(("invalid box dimension: %s"):format(dimension), 3)
+        error(("invalid box dimension: %s"):format(dimension), 2)
     end
 
     local self = box(length)
@@ -103,6 +102,6 @@ function M.__new(args)
     end
 
     return self
-end
+end)
 
 return M

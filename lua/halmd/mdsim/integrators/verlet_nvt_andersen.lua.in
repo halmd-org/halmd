@@ -31,12 +31,11 @@ local verlet_nvt_andersen = assert(libhalmd.mdsim.integrators.verlet_nvt_anderse
 local h5 = libhalmd.h5
 local po = libhalmd.po
 
-local M = module("halmd.mdsim.integrators.verlet_nvt_andersen")
 
 --
 -- construct verlet_nvt_andersen module
 --
-function M.__new(args)
+local M = module(function(args)
     local particle = assert(args.particle, "missing parameter: particle")
     local temperature = args.temperature or 1.12 -- default value
     local collision_rate = args.collision_rate or 10 -- default value
@@ -78,7 +77,7 @@ function M.__new(args)
 
 
     return integrator
-end
+end)
 
 --
 -- connect runtime accumulators to module profiler

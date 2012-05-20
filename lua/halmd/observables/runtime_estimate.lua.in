@@ -27,7 +27,6 @@ local timer_service     = require("halmd.utility.timer_service")
 -- Runtime Estimate
 -- ================
 --
-local M = module("halmd.observables.runtime_estimate")
 
 -- grab C++ wrappers
 local runtime_estimate = assert(libhalmd.observables.runtime_estimate)
@@ -41,22 +40,22 @@ local runtime_estimate = assert(libhalmd.observables.runtime_estimate)
 -- :param number interval: frequency of estimates in seconds
 -- :param number sample: frequency of sampling in seconds
 --
-function M.__new(args)
+local M = module(function(args)
     local steps = args.steps
     if not steps then
-        error("missing argument: steps", 3)
+        error("missing argument: steps", 2)
     end
     local first = args.first
     if not first then
-        error("missing argument: first", 3)
+        error("missing argument: first", 2)
     end
     local interval = args.interval
     if not interval then
-        error("missing argument: interval", 3)
+        error("missing argument: interval", 2)
     end
     local sample = args.sample
     if not sample then
-        error("missing argument: sample", 3)
+        error("missing argument: sample", 2)
     end
 
     -- construct instance
@@ -89,6 +88,6 @@ function M.__new(args)
     self:connect()
 
     return self
-end
+end)
 
 return M

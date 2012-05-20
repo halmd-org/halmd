@@ -36,12 +36,11 @@ local assert = assert
 local type = type
 local scalar_matrix = assert(numeric.scalar_matrix)
 
-local M = module("halmd.mdsim.potentials.morse")
 
 --
 -- construct Morse module
 --
-function M.__new(args)
+local M = module(function(args)
     local cutoff = args.cutoff or 2.5 -- default value
     local epsilon = args.epsilon or 1 -- default value
     local sigma = args.sigma or 1 -- default value
@@ -70,7 +69,7 @@ function M.__new(args)
         morse = assert(morse_wrapper.host)
     end
     return morse(particle.nspecies, cutoff, epsilon, sigma, minimum, logger)
-end
+end)
 
 --
 -- returns module description

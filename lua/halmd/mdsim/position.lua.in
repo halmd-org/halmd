@@ -27,12 +27,11 @@ local po = libhalmd.po
 local assert = assert
 local pairs = pairs
 
-local M = module("halmd.mdsim.position")
 
 --
 -- construct position module
 --
-function M.__new(args)
+local M = module(function(args)
     local particle = assert(args.particle, "missing parameter: particle")
     local position = args.position or "lattice" -- default value
     local reader = args.reader
@@ -40,7 +39,7 @@ function M.__new(args)
         return positions.phase_space{particle = particle, sample = reader:position(particle)}
     end
     return positions[position]{particle = particle}
-end
+end)
 
 --
 -- assemble module options

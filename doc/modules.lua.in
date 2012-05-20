@@ -67,6 +67,11 @@ function parse_module(sourcedir, source)
                     end
                     entry.func = func
                     entry.name = name
+                else
+                    local func = line:match("%s*module%s*%(%s*function%s*(%([^)]*%))")
+                    if func then
+                        entry.func = func
+                    end
                 end
                 for i = #entry, 1, -1 do
                     if #entry[i] > 0 then
@@ -108,11 +113,11 @@ function render_module(parsed)
         local constructor = false
         local methods = {}
         if entry.func then
-            if entry.name == "__new" then
+            if not entry.name then
                 constructor = true
                 l(".. currentmodule:: %s", parsed.namespace)
                 l()
-                l(".. class:: %s", entry.func:gsub("^__new", parsed.name))
+                l(".. class:: %s%s", parsed.name, entry.func)
             elseif entry.module then
                 for i = 1, #parsed do
                     if parsed[i].class == entry.name then

@@ -21,45 +21,34 @@
 -- Module Definition
 -- =================
 --
-local M = setmetatable({}, {__call = function(M, ...)
-    return M.__new(...)
-end})
+local module = function(new)
+    return setmetatable({}, {__call = function(M, ...)
+        return new(...)
+    end})
+end
 
 ---
 -- Define new module.
 --
+-- :param function new: module constructor
 -- :returns: module table
 --
 -- Example::
 --
 --    local module = require("halmd.module")
 --
---    local M = module("halmd.mdsim.potentials.lennard_jones")
---
---    function M.__new(args)
+--    local M = module(function(args)
 --        -- create and return instance
---    end
+--    end)
 --
 --    return M
 --
-function M.__new(name)
-    --
-    -- FIXME This function wraps halmd.modules.register, which is deprecated.
-    --
-    local modules = require("halmd.modules")
-    local module = {_NAME = name}
-    modules.register(module)
-    local mt = getmetatable(module)
-    mt.__newindex = function(self, key, value)
-        if key == "parameters" then
-            modules.provider(self)
-        elseif key == "__new" then
-            rawset(self, "new", value)
-        end
-        rawset(self, key, value)
+local M = module(function(new)
+    if type(new) ~= "function" then
+        error("bad argument #1 (function expected)", 2)
     end
-    return module
-end
+    return module(new)
+end)
 
 ---
 -- This function provides a lazy module loader, which may be used to load

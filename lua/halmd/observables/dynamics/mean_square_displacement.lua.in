@@ -24,7 +24,6 @@ local msd_wrapper = libhalmd.observables.dynamics.mean_square_displacement
 -- grab standard library
 local assert = assert
 
-local M = module("halmd.observables.dynamics.correlations.mean_square_displacement")
 
 --
 -- construct instance of mean-square displacement (MSD) functor
@@ -32,13 +31,13 @@ local M = module("halmd.observables.dynamics.correlations.mean_square_displaceme
 --   args.sample        instance of phase space sample
 -- @returns instance of MSD functor
 --
-function M.__new(args)
+local M = module(function(args)
     local sample = assert(args.sample)
 
     -- construct msd module
     local msd = assert(msd_wrapper)(sample)
     return msd
-end
+end)
 
 --
 -- @returns module description

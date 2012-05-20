@@ -44,7 +44,6 @@ local thermodynamics = assert(libhalmd.observables.thermodynamics)
 -- * virial
 -- * hypervirial
 --
-local M = module("halmd.observables.thermodynamics")
 
 ---
 -- Construct thermodynamics observable.
@@ -103,14 +102,14 @@ local M = module("halmd.observables.thermodynamics")
 --
 --    Callable slot that returns hypervirial.
 --
-function M.__new(args)
+local M = module(function(args)
     local particle = args.particle
     if not particle then
-        error("missing parameter 'particle'", 3)
+        error("missing parameter 'particle'", 2)
     end
     local box = args.box
     if not box then
-        error("missing parameter 'box'", 3)
+        error("missing parameter 'box'", 2)
     end
 
     local observable = function(particle)
@@ -173,7 +172,7 @@ function M.__new(args)
     else
         return observable(particle)
     end
-end
+end)
 
 --
 -- connect runtime accumulators to module profiler

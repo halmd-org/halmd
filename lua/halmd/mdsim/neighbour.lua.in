@@ -61,7 +61,6 @@ local math = math
 local property = property
 local table = table
 
-local M = module("halmd.mdsim.neighbour")
 
 --
 -- returns species label given a table of particle instances
@@ -76,7 +75,7 @@ end
 --
 -- @param r_cut symmetric matrix with potential cutoff radii
 --
-function M.__new(args)
+local M = module(function(args)
     -- cutoff radius matrix of truncated potential
     local r_cut = assert(args.r_cut)
     -- neighbour list skin
@@ -162,7 +161,7 @@ function M.__new(args)
     end
 
     return neighbour
-end
+end)
 
 --
 -- connect runtime accumulators to module profiler

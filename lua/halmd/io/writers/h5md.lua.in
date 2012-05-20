@@ -39,7 +39,6 @@ local type = type
 --
 -- http://nongnu.org/h5md/
 --
-local M = module("halmd.io.writers.h5md")
 
 ---
 -- Construct H5MD writer.
@@ -103,10 +102,10 @@ local M = module("halmd.io.writers.h5md")
 --
 --    Filename of the file.
 --
-function M.__new(args)
+local M = module(function(args)
     local path = args.path
     if not path then
-        error("missing argument 'path'", 3)
+        error("missing argument 'path'", 2)
     end
     local file = h5md.file(path)
 
@@ -130,7 +129,7 @@ function M.__new(args)
     posix_signal:on_usr2(file.flush)
 
     return file
-end
+end)
 
 ---
 -- .. function:: version()

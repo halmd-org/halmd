@@ -41,7 +41,6 @@ local ipairs = ipairs
 local string = string
 local type = type
 
-local M = module("halmd.observables.ssf")
 
 --
 -- construct instances of ssf module for each density pair (e.g., AA, AB, BB, ...)
@@ -51,7 +50,7 @@ local M = module("halmd.observables.ssf")
 --   args.every             sampling interval
 -- @returns instance of ssf module
 --
-function M.__new(args)
+local M = module(function(args)
     -- command line options
     local density_mode = assert(args.density_mode, "missing parameter: density_mode")
     local every = assert(args.every, "missing parameter: every")
@@ -95,7 +94,7 @@ function M.__new(args)
     sampler:on_sample(writer.write, every)
 
     return ssf
-end
+end)
 
 --
 -- connect runtime accumulators to module profiler
