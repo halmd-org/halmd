@@ -83,7 +83,7 @@ phase_space<dimension, float_type>::acquire()
         assert(i < particle_->nparticle());
 
         // periodically extended particle position
-        vector_type& r = sample_position[i];
+        vector_type& r = sample_position[tag];
         r = particle_position[i];
         box_->extend_periodic(r, particle_image[i]);
 
