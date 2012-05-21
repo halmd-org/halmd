@@ -185,20 +185,18 @@ particle_group_from_range<particle_type>::particle() const
  * Convert from range of 1-based tags to 0-based iterator range
  */
 template <typename particle_type>
-struct wrap_particle_group_from_range
-  : particle_group_from_range<particle_type>
-  , luabind::wrap_base
+static boost::shared_ptr<particle_group_from_range<particle_type> >
+wrap_particle_group_from_range(
+    boost::shared_ptr<particle_type const> particle
+  , std::size_t first
+  , std::size_t last
+)
 {
-    wrap_particle_group_from_range(
-        boost::shared_ptr<particle_type const> particle
-      , std::size_t first
-      , std::size_t last
-    )
-      : particle_group_from_range<particle_type>(
-            particle
-          , first - 1
-          , last
-        ) {}
+    return boost::make_shared<particle_group_from_range<particle_type> >(
+        particle
+      , first - 1
+      , last
+    );
 };
 
 template <typename particle_type>
@@ -209,13 +207,9 @@ void particle_group_from_range<particle_type>::luaopen(lua_State* L)
     [
         namespace_("mdsim")
         [
-            class_<particle_group_from_range, wrap_particle_group_from_range<particle_type>, _Base>()
+            class_<particle_group_from_range, _Base>()
 
-          , def("particle_group_from_range", &boost::make_shared<particle_group_from_range
-              , boost::shared_ptr<particle_type const>
-              , std::size_t
-              , std::size_t
-            >)
+          , def("particle_group_from_range", &wrap_particle_group_from_range<particle_type>)
         ]
     ];
 }
