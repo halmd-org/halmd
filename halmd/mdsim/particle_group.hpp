@@ -145,7 +145,7 @@ particle_group_from_range<particle_type>::particle_group_from_range(
   , begin_(begin)
   , end_(end)
 {
-    if (end_ < begin_) {
+    if (end_ <= begin_) {
         throw std::logic_error("particle_group: inverse tag ranges not allowed");
     }
     if (end_ > particle_->reverse_tag().size()) {
