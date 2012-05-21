@@ -41,15 +41,19 @@ class verlet_nvt_andersen
 {
 public:
     typedef gpu::particle<dimension, float_type> particle_type;
-    typedef mdsim::box<dimension> box_type;
     typedef random::gpu::random<RandomNumberGenerator> random_type;
+    typedef mdsim::box<dimension> box_type;
     typedef logger logger_type;
+
+private:
     typedef typename particle_type::vector_type vector_type;
     typedef typename random_type::rng_type rng_type;
     typedef verlet_nvt_andersen_wrapper<dimension, rng_type> wrapper_type;
 
-    static void luaopen(lua_State* L);
-
+public:
+    /**
+     * Initialise Verlet-Andersen integrator.
+     */
     verlet_nvt_andersen(
         boost::shared_ptr<particle_type> particle
       , boost::shared_ptr<box_type const> box
@@ -59,42 +63,62 @@ public:
       , float_type coll_rate
       , boost::shared_ptr<logger_type> logger = boost::make_shared<logger_type>()
     );
-    void integrate();
-    void finalize();
-    void set_timestep(double timestep);
-    void set_temperature(double temperature);
 
-    //! returns integration time-step
+    /**
+     * First leapfrog half-step of velocity-Verlet algorithm
+     */
+    void integrate();
+
+    /**
+     * Second leapfrog half-step of velocity-Verlet algorithm
+     */
+    void finalize();
+
+    /**
+     * Set integration time-step.
+     */
+    void set_timestep(double timestep);
+
+    /**
+     * Returns integration time-step.
+     */
     double timestep() const
     {
         return timestep_;
     }
 
-    //! returns temperature of heat bath
+    /**
+     * Set temperature of heat bath.
+     */
+    void set_temperature(double temperature);
+
+    /**
+     * Returns temperature of heat bath.
+     */
     double temperature() const
     {
         return temperature_;
     }
 
-    //! returns collision rate with the heat bath
+    /**
+     * Returns collision rate with the heat bath.
+     */
     float_type collision_rate() const
     {
         return coll_rate_;
     }
 
+    /**
+     * Bind class to Lua.
+     */
+    static void luaopen(lua_State* L);
+
 private:
-    typedef utility::profiler profiler_type;
-    typedef typename profiler_type::accumulator_type accumulator_type;
-    typedef typename profiler_type::scoped_timer_type scoped_timer_type;
-
-    struct runtime
-    {
-        accumulator_type integrate;
-        accumulator_type finalize;
-    };
-
+    /** system state */
     boost::shared_ptr<particle_type> particle_;
+    /** simulation domain */
     boost::shared_ptr<box_type const> box_;
+    /** random number generator */
     boost::shared_ptr<random_type> random_;
     /** integration time-step */
     float_type timestep_;
@@ -108,13 +132,24 @@ private:
     float_type coll_prob_;
     /** module logger */
     boost::shared_ptr<logger_type> logger_;
+
+    typedef utility::profiler profiler_type;
+    typedef typename profiler_type::accumulator_type accumulator_type;
+    typedef typename profiler_type::scoped_timer_type scoped_timer_type;
+
+    struct runtime
+    {
+        accumulator_type integrate;
+        accumulator_type finalize;
+    };
+
     /** profiling runtime accumulators */
     runtime runtime_;
 };
 
-} // namespace mdsim
-} // namespace gpu
 } // namespace integrators
+} // namespace gpu
+} // namespace mdsim
 } // namespace halmd
 
 #endif /* ! HALMD_MDSIM_GPU_INTEGRATORS_VERLET_NVT_ANDERSEN_HPP */

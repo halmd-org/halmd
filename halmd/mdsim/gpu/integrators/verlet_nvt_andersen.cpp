@@ -25,9 +25,6 @@
 #include <halmd/mdsim/gpu/integrators/verlet_nvt_andersen.hpp>
 #include <halmd/utility/lua/lua.hpp>
 
-using namespace boost;
-using namespace std;
-
 namespace halmd {
 namespace mdsim {
 namespace gpu {
@@ -38,10 +35,11 @@ verlet_nvt_andersen<dimension, float_type, RandomNumberGenerator>::verlet_nvt_an
     boost::shared_ptr<particle_type> particle
   , boost::shared_ptr<box_type const> box
   , boost::shared_ptr<random_type> random
-  , float_type timestep, float_type temperature, float_type coll_rate
+  , float_type timestep
+  , float_type temperature
+  , float_type coll_rate
   , boost::shared_ptr<logger_type> logger
 )
-  // dependency injection
   : particle_(particle)
   , box_(box)
   , random_(random)
@@ -67,7 +65,7 @@ template <int dimension, typename float_type, typename RandomNumberGenerator>
 void verlet_nvt_andersen<dimension, float_type, RandomNumberGenerator>::set_temperature(double temperature)
 {
     temperature_ = temperature;
-    sqrt_temperature_ = sqrt(temperature_);
+    sqrt_temperature_ = std::sqrt(temperature_);
     LOG("temperature of heat bath: " << temperature_);
 }
 
@@ -77,11 +75,9 @@ void verlet_nvt_andersen<dimension, float_type, RandomNumberGenerator>::set_temp
 template <int dimension, typename float_type, typename RandomNumberGenerator>
 void verlet_nvt_andersen<dimension, float_type, RandomNumberGenerator>::integrate()
 {
+    scoped_timer_type timer(runtime_.integrate);
     try {
-        scoped_timer_type timer(runtime_.integrate);
-        cuda::configure(
-            particle_->dim.grid, particle_->dim.block
-        );
+        cuda::configure(particle_->dim.grid, particle_->dim.block);
         wrapper_type::kernel.integrate(
             particle_->position()
           , particle_->image()
@@ -104,17 +100,11 @@ void verlet_nvt_andersen<dimension, float_type, RandomNumberGenerator>::integrat
 template <int dimension, typename float_type, typename RandomNumberGenerator>
 void verlet_nvt_andersen<dimension, float_type, RandomNumberGenerator>::finalize()
 {
-    // TODO: possibly a performance critical issue:
-    // the old implementation had this loop included in update_forces(),
-    // which saves one additional read of the forces plus the additional kernel execution
-    // and scheduling
+    scoped_timer_type timer(runtime_.finalize);
     try {
-        scoped_timer_type timer(runtime_.finalize);
         // use CUDA execution dimensions of 'random' since
         // the kernel makes use of the random number generator
-        cuda::configure(
-            random_->rng().dim.grid, random_->rng().dim.block
-        );
+        cuda::configure(random_->rng().dim.grid, random_->rng().dim.block);
         wrapper_type::kernel.finalize(
             particle_->velocity()
           , particle_->force()
@@ -137,14 +127,14 @@ template <typename integrator_type>
 static boost::function<void ()>
 wrap_integrate(boost::shared_ptr<integrator_type> self)
 {
-    return bind(&integrator_type::integrate, self);
+    return boost::bind(&integrator_type::integrate, self);
 }
 
 template <typename integrator_type>
 static boost::function<void ()>
 wrap_finalize(boost::shared_ptr<integrator_type> self)
 {
-    return bind(&integrator_type::finalize, self);
+    return boost::bind(&integrator_type::finalize, self);
 }
 
 template <int dimension, typename float_type, typename RandomNumberGenerator>
@@ -160,14 +150,14 @@ void verlet_nvt_andersen<dimension, float_type, RandomNumberGenerator>::luaopen(
                 class_<verlet_nvt_andersen>()
                     .property("integrate", &wrap_integrate<verlet_nvt_andersen>)
                     .property("finalize", &wrap_finalize<verlet_nvt_andersen>)
+                    .def("set_timestep", &verlet_nvt_andersen::set_timestep)
                     .property("timestep", &verlet_nvt_andersen::timestep)
+                    .def("set_temperature", &verlet_nvt_andersen::set_temperature)
                     .property("temperature", &verlet_nvt_andersen::temperature)
                     .property("collision_rate", &verlet_nvt_andersen::collision_rate)
-                    .def("set_timestep", &verlet_nvt_andersen::set_timestep)
-                    .def("set_temperature", &verlet_nvt_andersen::set_temperature)
                     .scope
                     [
-                        class_<runtime>("runtime")
+                        class_<runtime>()
                             .def_readonly("integrate", &runtime::integrate)
                             .def_readonly("finalize", &runtime::finalize)
                     ]
@@ -198,7 +188,7 @@ HALMD_LUA_API int luaopen_libhalmd_mdsim_gpu_integrators_verlet_nvt_andersen(lua
 template class verlet_nvt_andersen<3, float, random::gpu::rand48>;
 template class verlet_nvt_andersen<2, float, random::gpu::rand48>;
 
-} // namespace mdsim
-} // namespace gpu
 } // namespace integrators
+} // namespace gpu
+} // namespace mdsim
 } // namespace halmd

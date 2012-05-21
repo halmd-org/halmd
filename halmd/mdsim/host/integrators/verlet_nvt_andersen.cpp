@@ -25,9 +25,6 @@
 #include <halmd/mdsim/host/integrators/verlet_nvt_andersen.hpp>
 #include <halmd/utility/lua/lua.hpp>
 
-using namespace boost;
-using namespace std;
-
 namespace halmd {
 namespace mdsim {
 namespace host {
@@ -43,7 +40,6 @@ verlet_nvt_andersen<dimension, float_type>::verlet_nvt_andersen(
   , float_type coll_rate
   , boost::shared_ptr<logger_type> logger
 )
-  // dependency injection
   : particle_(particle)
   , box_(box)
   , random_(random)
@@ -67,43 +63,37 @@ template <int dimension, typename float_type>
 void verlet_nvt_andersen<dimension, float_type>::set_temperature(double temperature)
 {
     temperature_ = temperature;
-    sqrt_temperature_ = sqrt(temperature_);
-
+    sqrt_temperature_ = std::sqrt(temperature_);
     LOG("temperature of heat bath: " << temperature_);
 }
 
-/**
- * First leapfrog half-step of velocity-Verlet algorithm
- */
 template <int dimension, typename float_type>
 void verlet_nvt_andersen<dimension, float_type>::integrate()
 {
     scoped_timer_type timer(runtime_.integrate);
 
+    std::size_t const nparticle = particle_->nparticle();
     typename particle_type::position_array_type& position = particle_->position();
     typename particle_type::image_array_type& image = particle_->image();
     typename particle_type::velocity_array_type& velocity = particle_->velocity();
     typename particle_type::force_array_type const& force = particle_->force();
     typename particle_type::mass_array_type const& mass = particle_->mass();
 
-    for (size_t i = 0; i < particle_->nparticle(); ++i) {
-        vector_type& v = velocity[i] += force[i] * timestep_half_ / mass[i];
-        vector_type& r = position[i] += v * timestep_;
-        // enforce periodic boundary conditions
-        // TODO: reduction is now to (-L/2, L/2) instead of (0, L) as before
-        // check that this is OK
+    for (std::size_t i = 0; i < nparticle; ++i) {
+        vector_type& v = velocity[i];
+        vector_type& r = position[i];
+        v += force[i] * timestep_half_ / mass[i];
+        r += v * timestep_;
         image[i] += box_->reduce_periodic(r);
     }
 }
 
-/**
- * Second leapfrog half-step of velocity-Verlet algorithm
- */
 template <int dimension, typename float_type>
 void verlet_nvt_andersen<dimension, float_type>::finalize()
 {
     scoped_timer_type timer(runtime_.finalize);
 
+    std::size_t const nparticle = particle_->nparticle();
     typename particle_type::velocity_array_type& velocity = particle_->velocity();
     typename particle_type::force_array_type const& force = particle_->force();
     typename particle_type::mass_array_type const& mass = particle_->mass();
@@ -113,25 +103,25 @@ void verlet_nvt_andersen<dimension, float_type>::finalize()
     bool rng_cache_valid = false;
 
     // loop over all particles
-    for (size_t i = 0; i < particle_->nparticle(); ++i) {
+    for (std::size_t i = 0; i < nparticle; ++i) {
+        vector_type& v = velocity[i];
         // is deterministic step?
         if (random_->uniform<float_type>() > coll_prob_) {
-            velocity[i] += force[i] * timestep_half_ / mass[i];
+            v += force[i] * timestep_half_ / mass[i];
         }
         // stochastic coupling with heat bath
         else {
             // assign two velocity components at a time
-            vector_type& v = velocity[i];
-            for (unsigned i=0; i < dimension-1; i+=2) {
-                tie(v[i], v[i+1]) = random_->normal(sqrt_temperature_);
+            for (unsigned int i = 0; i < dimension - 1; i += 2) {
+                boost::tie(v[i], v[i + 1]) = random_->normal(sqrt_temperature_);
             }
             // handle last component separately for odd dimensions
             if (dimension % 2 == 1) {
                 if (rng_cache_valid) {
-                    v[dimension-1] = rng_cache;
+                    v[dimension - 1] = rng_cache;
                 }
                 else {
-                    tie(v[dimension-1], rng_cache) = random_->normal(sqrt_temperature_);
+                    boost::tie(v[dimension - 1], rng_cache) = random_->normal(sqrt_temperature_);
                 }
                 rng_cache_valid = !rng_cache_valid;
             }
@@ -143,14 +133,14 @@ template <typename integrator_type>
 static boost::function<void ()>
 wrap_integrate(boost::shared_ptr<integrator_type> self)
 {
-    return bind(&integrator_type::integrate, self);
+    return boost::bind(&integrator_type::integrate, self);
 }
 
 template <typename integrator_type>
 static boost::function<void ()>
 wrap_finalize(boost::shared_ptr<integrator_type> self)
 {
-    return bind(&integrator_type::finalize, self);
+    return boost::bind(&integrator_type::finalize, self);
 }
 
 template <int dimension, typename float_type>
@@ -166,14 +156,14 @@ void verlet_nvt_andersen<dimension, float_type>::luaopen(lua_State* L)
                 class_<verlet_nvt_andersen>()
                     .property("integrate", &wrap_integrate<verlet_nvt_andersen>)
                     .property("finalize", &wrap_finalize<verlet_nvt_andersen>)
+                    .def("set_timestep", &verlet_nvt_andersen::set_timestep)
                     .property("timestep", &verlet_nvt_andersen::timestep)
+                    .def("set_temperature", &verlet_nvt_andersen::set_temperature)
                     .property("temperature", &verlet_nvt_andersen::temperature)
                     .property("collision_rate", &verlet_nvt_andersen::collision_rate)
-                    .def("set_timestep", &verlet_nvt_andersen::set_timestep)
-                    .def("set_temperature", &verlet_nvt_andersen::set_temperature)
                     .scope
                     [
-                        class_<runtime>("runtime")
+                        class_<runtime>()
                             .def_readonly("integrate", &runtime::integrate)
                             .def_readonly("finalize", &runtime::finalize)
                     ]
@@ -214,7 +204,7 @@ template class verlet_nvt_andersen<3, float>;
 template class verlet_nvt_andersen<2, float>;
 #endif
 
-} // namespace mdsim
-} // namespace host
 } // namespace integrators
+} // namespace host
+} // namespace mdsim
 } // namespace halmd
