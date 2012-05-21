@@ -17,6 +17,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <algorithm>
 #include <boost/bind.hpp>
 #include <boost/function.hpp>
 #include <boost/make_shared.hpp>
@@ -316,18 +317,34 @@ wrap_velocity(boost::shared_ptr<phase_space_type> phase_space)
     return boost::bind(&velocity<phase_space_type>, phase_space);
 }
 
+/**
+ * Translate species from internal (0-based) to external (1-based) representation.
+ *
+ * This function returns a const reference to a species array that is
+ * stored in the functor, and passed by reference to this function.
+ */
 template <typename phase_space_type>
 static typename phase_space_type::sample_type::species_array_type const&
-species(boost::shared_ptr<phase_space_type> const& phase_space)
+species(boost::shared_ptr<phase_space_type> const& phase_space, typename phase_space_type::sample_type::species_array_type& species)
 {
-    return phase_space->acquire()->species();
+    boost::shared_ptr<typename phase_space_type::sample_type const> sample = phase_space->acquire();
+    species.resize(sample->species().size());
+    std::transform(
+        sample->species().begin()
+      , sample->species().end()
+      , species.begin()
+      , [](typename phase_space_type::sample_type::species_array_type::value_type s) {
+            return s + 1;
+        }
+    );
+    return species;
 }
 
 template <typename phase_space_type>
 static boost::function<typename phase_space_type::sample_type::species_array_type const& ()>
 wrap_species(boost::shared_ptr<phase_space_type> phase_space)
 {
-    return boost::bind(&species<phase_space_type>, phase_space);
+    return boost::bind(&species<phase_space_type>, phase_space, typename phase_space_type::sample_type::species_array_type());
 }
 
 template <int dimension, typename float_type>
