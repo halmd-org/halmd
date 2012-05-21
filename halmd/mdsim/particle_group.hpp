@@ -197,7 +197,7 @@ wrap_particle_group_from_range(
       , first - 1
       , last
     );
-};
+}
 
 template <typename particle_type>
 void particle_group_from_range<particle_type>::luaopen(lua_State* L)
