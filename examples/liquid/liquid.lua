@@ -31,9 +31,6 @@ local writers = halmd.io.writers
 -- Setup and run simulation
 --
 local function liquid(args)
-    -- FIXME support reading multiple species groups into single particle
-    local reader = readers.trajectory{group = "A"}
-
     -- total number of particles from sum of particles per species
     local nspecies = #args.particles
     local nparticle = 0
@@ -64,9 +61,9 @@ local function liquid(args)
     local potential = mdsim.potentials.lennard_jones({particle = particle})
     -- add force
     local force = mdsim.forces.pair_trunc{box = box, particle = particle, potential = potential}
-    -- set initial particle positions (optionally from reader)
+    -- set initial particle positions
     mdsim.positions.lattice{box = box, particle = particle}
-    -- set initial particle velocities (optionally from reader)
+    -- set initial particle velocities
     mdsim.velocities.boltzmann{box = box, particle = particle}
 
     -- H5MD file writer
