@@ -23,7 +23,6 @@
 #include <cmath>
 
 #include <halmd/mdsim/host/integrators/verlet_nvt_andersen.hpp>
-#include <halmd/utility/demangle.hpp>
 #include <halmd/utility/lua/lua.hpp>
 
 using namespace boost;
@@ -157,37 +156,30 @@ wrap_finalize(boost::shared_ptr<integrator_type> self)
 template <int dimension, typename float_type>
 void verlet_nvt_andersen<dimension, float_type>::luaopen(lua_State* L)
 {
-    static string const class_name = demangled_name<verlet_nvt_andersen>();
     using namespace luabind;
     module(L, "libhalmd")
     [
         namespace_("mdsim")
         [
-            namespace_("host")
+            namespace_("integrators")
             [
-                namespace_("integrators")
-                [
-                    class_<verlet_nvt_andersen>(class_name.c_str())
-                        .property("integrate", &wrap_integrate<verlet_nvt_andersen>)
-                        .property("finalize", &wrap_finalize<verlet_nvt_andersen>)
-                        .property("timestep", &verlet_nvt_andersen::timestep)
-                        .property("temperature", &verlet_nvt_andersen::temperature)
-                        .property("collision_rate", &verlet_nvt_andersen::collision_rate)
-                        .def("set_timestep", &verlet_nvt_andersen::set_timestep)
-                        .def("set_temperature", &verlet_nvt_andersen::set_temperature)
-                        .scope
-                        [
-                            class_<runtime>("runtime")
-                                .def_readonly("integrate", &runtime::integrate)
-                                .def_readonly("finalize", &runtime::finalize)
-                        ]
-                        .def_readonly("runtime", &verlet_nvt_andersen::runtime_)
-                ]
-            ]
+                class_<verlet_nvt_andersen>()
+                    .property("integrate", &wrap_integrate<verlet_nvt_andersen>)
+                    .property("finalize", &wrap_finalize<verlet_nvt_andersen>)
+                    .property("timestep", &verlet_nvt_andersen::timestep)
+                    .property("temperature", &verlet_nvt_andersen::temperature)
+                    .property("collision_rate", &verlet_nvt_andersen::collision_rate)
+                    .def("set_timestep", &verlet_nvt_andersen::set_timestep)
+                    .def("set_temperature", &verlet_nvt_andersen::set_temperature)
+                    .scope
+                    [
+                        class_<runtime>("runtime")
+                            .def_readonly("integrate", &runtime::integrate)
+                            .def_readonly("finalize", &runtime::finalize)
+                    ]
+                    .def_readonly("runtime", &verlet_nvt_andersen::runtime_)
 
-          , namespace_("integrators")
-            [
-                def("verlet_nvt_andersen", &boost::make_shared<verlet_nvt_andersen
+              , def("verlet_nvt_andersen", &boost::make_shared<verlet_nvt_andersen
                   , boost::shared_ptr<particle_type>
                   , boost::shared_ptr<box_type const>
                   , boost::shared_ptr<random_type>

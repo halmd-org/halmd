@@ -604,7 +604,7 @@ struct cpp_function_converter
         if (!luabind::detail::class_registry::get_registry(L)->find_class(typeid(boost::function<T>))) {
             luabind::module(L)
             [
-                luabind::class_<boost::function<T> >(typeid(boost::function<T>).name())
+                luabind::class_<boost::function<T> >()
                     .def("__call", &boost::function<T>::operator())
             ];
         }

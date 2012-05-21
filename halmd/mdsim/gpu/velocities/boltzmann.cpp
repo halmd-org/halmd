@@ -154,7 +154,7 @@ void boltzmann<dimension, float_type, RandomNumberGenerator>::luaopen(lua_State*
             [
                 namespace_("velocities")
                 [
-                    class_<boltzmann, boost::shared_ptr<_Base_Base>, bases<_Base_Base, _Base> >(class_name.c_str())
+                    class_<boltzmann, boost::shared_ptr<_Base_Base>, _Base_Base>(class_name.c_str())
                         .def(constructor<
                              boost::shared_ptr<particle_type>
                            , boost::shared_ptr<random_type>

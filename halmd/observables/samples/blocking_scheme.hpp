@@ -31,7 +31,6 @@
 #include <vector>
 
 #include <halmd/mdsim/clock.hpp>
-#include <halmd/utility/demangle.hpp>
 #include <halmd/utility/lua/lua.hpp>
 
 namespace halmd {
@@ -197,14 +196,13 @@ template <typename sample_type>
 void blocking_scheme<sample_type>::luaopen(lua_State* L)
 {
     using namespace luabind;
-    static std::string const class_name(demangled_name<blocking_scheme>());
     module(L, "libhalmd")
     [
         namespace_("observables")
         [
             namespace_("samples")
             [
-                class_<blocking_scheme, _Base>(class_name.c_str())
+                class_<blocking_scheme, _Base>()
 
               , def("blocking_scheme", &boost::make_shared<blocking_scheme
                   , sample_slot_type

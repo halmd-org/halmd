@@ -17,15 +17,9 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <boost/lexical_cast.hpp>
-#include <string>
-
 #include <halmd/observables/samples/blocking_scheme.hpp>
 #include <halmd/observables/samples/density_mode.hpp>
 #include <halmd/utility/lua/lua.hpp>
-
-using namespace boost;
-using namespace std;
 
 namespace halmd {
 namespace observables {
@@ -35,17 +29,10 @@ template <int dimension>
 void density_mode<dimension>::luaopen(lua_State* L)
 {
     using namespace luabind;
-    static string const class_name("density_mode_" + lexical_cast<string>(dimension));
-    module(L, "libhalmd")
+    module(L)
     [
-        namespace_("observables")
-        [
-            namespace_("samples")
-            [
-                class_<density_mode>(class_name.c_str())
-                    .property("step", &density_mode::step)
-            ]
-        ]
+        class_<density_mode>()
+            .property("step", &density_mode::step)
     ];
 }
 

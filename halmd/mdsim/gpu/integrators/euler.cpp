@@ -22,7 +22,6 @@
 
 #include <halmd/io/logger.hpp>
 #include <halmd/mdsim/gpu/integrators/euler.hpp>
-#include <halmd/utility/demangle.hpp>
 #include <halmd/utility/lua/lua.hpp>
 #include <halmd/utility/scoped_timer.hpp>
 #include <halmd/utility/timer.hpp>
@@ -99,31 +98,24 @@ template <int dimension, typename float_type>
 void euler<dimension, float_type>::luaopen(lua_State* L)
 {
     using namespace luabind;
-    static string const class_name = demangled_name<euler>();
     module(L, "libhalmd")
     [
         namespace_("mdsim")
         [
-            namespace_("gpu")
+            namespace_("integrators")
             [
-                namespace_("integrators")
-                [
-                    class_<euler>(class_name.c_str())
-                        .property("integrate", &wrap_integrate<euler>)
-                        .property("timestep", &euler::timestep)
-                        .def("set_timestep", &euler::set_timestep)
-                        .scope
-                        [
-                            class_<runtime>("runtime")
-                                .def_readonly("integrate", &runtime::integrate)
-                        ]
-                        .def_readonly("runtime", &euler::runtime_)
-                ]
-            ]
+                class_<euler>()
+                    .property("integrate", &wrap_integrate<euler>)
+                    .property("timestep", &euler::timestep)
+                    .def("set_timestep", &euler::set_timestep)
+                    .scope
+                    [
+                        class_<runtime>("runtime")
+                            .def_readonly("integrate", &runtime::integrate)
+                    ]
+                    .def_readonly("runtime", &euler::runtime_)
 
-          , namespace_("integrators")
-            [
-                def("euler", &boost::make_shared<euler
+              , def("euler", &boost::make_shared<euler
                   , boost::shared_ptr<particle_type>
                   , boost::shared_ptr<box_type const>
                   , double

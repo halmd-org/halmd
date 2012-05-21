@@ -22,7 +22,6 @@
 #include <boost/make_shared.hpp>
 
 #include <halmd/observables/host/phase_space.hpp>
-#include <halmd/utility/demangle.hpp>
 #include <halmd/utility/lua/lua.hpp>
 #include <halmd/utility/scoped_timer.hpp>
 #include <halmd/utility/signal.hpp>
@@ -194,29 +193,28 @@ template <int dimension, typename float_type>
 void phase_space<dimension, float_type>::luaopen(lua_State* L)
 {
     using namespace luabind;
-    static string const class_name(demangled_name<phase_space>());
     module(L, "libhalmd")
     [
         namespace_("observables")
         [
-            class_<phase_space>(class_name.c_str())
-                .property("acquire", &wrap_acquire<phase_space, sample_type>)
-                .property("position", &wrap_position<phase_space>)
-                .property("velocity", &wrap_velocity<phase_space>)
-                .property("species", &wrap_species<phase_space>)
-                .property("dimension", &wrap_dimension<phase_space>)
-                .scope
-                [
-                    class_<runtime>("runtime")
-                        .def_readonly("acquire", &runtime::acquire)
-                        .def_readonly("reset", &runtime::reset)
-                        .def_readonly("set", &runtime::set)
-                ]
-                .def_readonly("runtime", &phase_space::runtime_)
-
-          , namespace_("host")
+            namespace_("host")
             [
-                def("phase_space", &boost::make_shared<phase_space
+                class_<phase_space>()
+                    .property("acquire", &wrap_acquire<phase_space, sample_type>)
+                    .property("position", &wrap_position<phase_space>)
+                    .property("velocity", &wrap_velocity<phase_space>)
+                    .property("species", &wrap_species<phase_space>)
+                    .property("dimension", &wrap_dimension<phase_space>)
+                    .scope
+                    [
+                        class_<runtime>("runtime")
+                            .def_readonly("acquire", &runtime::acquire)
+                            .def_readonly("reset", &runtime::reset)
+                            .def_readonly("set", &runtime::set)
+                    ]
+                    .def_readonly("runtime", &phase_space::runtime_)
+
+              , def("phase_space", &boost::make_shared<phase_space
                    , boost::shared_ptr<particle_group_type const>
                    , boost::shared_ptr<particle_type>
                    , boost::shared_ptr<box_type const>

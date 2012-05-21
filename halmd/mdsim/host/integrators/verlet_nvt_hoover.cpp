@@ -247,43 +247,36 @@ wrap_en_nhc(boost::shared_ptr<integrator_type> integrator)
 template <int dimension, typename float_type>
 void verlet_nvt_hoover<dimension, float_type>::luaopen(lua_State* L)
 {
-    static string const class_name = demangled_name<verlet_nvt_hoover>();
     using namespace luabind;
     module(L, "libhalmd")
     [
         namespace_("mdsim")
         [
-            namespace_("host")
+            namespace_("integrators")
             [
-                namespace_("integrators")
-                [
-                    class_<verlet_nvt_hoover>(class_name.c_str())
-                        .property("integrate", &wrap_integrate<verlet_nvt_hoover>)
-                        .property("finalize", &wrap_finalize<verlet_nvt_hoover>)
-                        .property("timestep", &verlet_nvt_hoover::timestep)
-                        .property("temperature", &verlet_nvt_hoover::temperature)
-                        .property("xi", &wrap_xi<verlet_nvt_hoover>)
-                        .property("v_xi", &wrap_v_xi<verlet_nvt_hoover>)
-                        .property("en_nhc", &wrap_en_nhc<verlet_nvt_hoover>)
-                        .property("mass", &verlet_nvt_hoover::mass)
-                        .property("resonance_frequency", &verlet_nvt_hoover::resonance_frequency)
-                        .def("set_timestep", &verlet_nvt_hoover::set_timestep)
-                        .def("set_temperature", &verlet_nvt_hoover::set_temperature)
-                        .def("set_mass", &verlet_nvt_hoover::set_mass)
-                        .scope
-                        [
-                            class_<runtime>("runtime")
-                                .def_readonly("integrate", &runtime::integrate)
-                                .def_readonly("finalize", &runtime::finalize)
-                                .def_readonly("propagate", &runtime::propagate)
-                        ]
-                        .def_readonly("runtime", &verlet_nvt_hoover::runtime_)
-                ]
-            ]
+                class_<verlet_nvt_hoover>()
+                    .property("integrate", &wrap_integrate<verlet_nvt_hoover>)
+                    .property("finalize", &wrap_finalize<verlet_nvt_hoover>)
+                    .property("timestep", &verlet_nvt_hoover::timestep)
+                    .property("temperature", &verlet_nvt_hoover::temperature)
+                    .property("xi", &wrap_xi<verlet_nvt_hoover>)
+                    .property("v_xi", &wrap_v_xi<verlet_nvt_hoover>)
+                    .property("en_nhc", &wrap_en_nhc<verlet_nvt_hoover>)
+                    .property("mass", &verlet_nvt_hoover::mass)
+                    .property("resonance_frequency", &verlet_nvt_hoover::resonance_frequency)
+                    .def("set_timestep", &verlet_nvt_hoover::set_timestep)
+                    .def("set_temperature", &verlet_nvt_hoover::set_temperature)
+                    .def("set_mass", &verlet_nvt_hoover::set_mass)
+                    .scope
+                    [
+                        class_<runtime>("runtime")
+                            .def_readonly("integrate", &runtime::integrate)
+                            .def_readonly("finalize", &runtime::finalize)
+                            .def_readonly("propagate", &runtime::propagate)
+                    ]
+                    .def_readonly("runtime", &verlet_nvt_hoover::runtime_)
 
-          , namespace_("integrators")
-            [
-                def("verlet_nvt_hoover", &boost::make_shared<verlet_nvt_hoover
+              , def("verlet_nvt_hoover", &boost::make_shared<verlet_nvt_hoover
                   , boost::shared_ptr<particle_type>
                   , boost::shared_ptr<box_type const>
                   , float_type

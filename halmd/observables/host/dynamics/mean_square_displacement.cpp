@@ -24,11 +24,7 @@
 #include <halmd/io/logger.hpp>
 #include <halmd/observables/dynamics/correlation.hpp>
 #include <halmd/observables/host/dynamics/mean_square_displacement.hpp>
-#include <halmd/utility/demangle.hpp>
 #include <halmd/utility/lua/lua.hpp>
-
-using namespace boost;
-using namespace std;
 
 namespace halmd {
 namespace observables {
@@ -62,14 +58,13 @@ template <int dimension, typename float_type>
 void mean_square_displacement<dimension, float_type>::luaopen(lua_State* L)
 {
     using namespace luabind;
-    static string const class_name(demangled_name<mean_square_displacement>());
     module(L, "libhalmd")
     [
         namespace_("observables")
         [
             namespace_("dynamics")
             [
-                class_<mean_square_displacement>(class_name.c_str())
+                class_<mean_square_displacement>()
 
               , def("mean_square_displacement", &select_tcf_by_sample<mean_square_displacement>)
             ]

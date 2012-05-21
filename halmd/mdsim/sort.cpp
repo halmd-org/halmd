@@ -41,15 +41,11 @@ template <int dimension>
 void sort<dimension>::luaopen(lua_State* L)
 {
     using namespace luabind;
-    static string class_name("sort_" + lexical_cast<string>(dimension) + "_");
-    module(L, "libhalmd")
+    module(L)
     [
-        namespace_("mdsim")
-        [
-            class_<sort, boost::shared_ptr<sort> >(class_name.c_str())
-                .property("order", &wrap_order<sort>)
-                .def("on_order", &sort::on_order)
-        ]
+        class_<sort>()
+            .property("order", &wrap_order<sort>)
+            .def("on_order", &sort::on_order)
     ];
 }
 

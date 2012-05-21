@@ -40,12 +40,11 @@ template <int dimension>
 void velocity<dimension>::luaopen(lua_State* L)
 {
     using namespace luabind;
-    static string class_name("velocity_" + lexical_cast<string>(dimension) + "_");
-    module(L, "libhalmd")
+    module(L)
     [
         namespace_("mdsim")
         [
-            class_<velocity, boost::shared_ptr<velocity> >(class_name.c_str())
+            class_<velocity>()
                 .property("set", &wrap_set<velocity>)
         ]
     ];

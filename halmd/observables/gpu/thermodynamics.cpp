@@ -22,7 +22,6 @@
 #include <halmd/numeric/blas/blas.hpp>
 #include <halmd/numeric/mp/dsfloat.hpp>
 #include <halmd/observables/gpu/thermodynamics.hpp>
-#include <halmd/utility/demangle.hpp>
 #include <halmd/utility/lua/lua.hpp>
 
 namespace halmd {
@@ -154,14 +153,13 @@ template <int dimension, typename float_type>
 void thermodynamics<dimension, float_type>::luaopen(lua_State* L)
 {
     using namespace luabind;
-    static std::string class_name = demangled_name<thermodynamics>();
     module(L, "libhalmd")
     [
         namespace_("observables")
         [
             namespace_("gpu")
             [
-                class_<thermodynamics, _Base>(class_name.c_str())
+                class_<thermodynamics, _Base>()
                     .scope
                     [
                         class_<runtime>("runtime")

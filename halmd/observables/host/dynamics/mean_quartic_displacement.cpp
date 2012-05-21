@@ -22,9 +22,6 @@
 #include <halmd/observables/host/dynamics/mean_quartic_displacement.hpp>
 #include <halmd/utility/lua/lua.hpp>
 
-using namespace boost;
-using namespace std;
-
 namespace halmd {
 namespace observables {
 namespace host {
@@ -64,14 +61,13 @@ template <int dimension, typename float_type>
 void mean_quartic_displacement<dimension, float_type>::luaopen(lua_State* L)
 {
     using namespace luabind;
-    static string class_name("mean_quartic_displacement_" + lexical_cast<string>(dimension) + "_");
     module(L, "libhalmd")
     [
         namespace_("observables")
         [
             namespace_("dynamics")
             [
-                class_<mean_quartic_displacement>(class_name.c_str())
+                class_<mean_quartic_displacement>()
 
               , def("mean_quartic_displacement", &select_tcf_by_sample<mean_quartic_displacement>)
             ]

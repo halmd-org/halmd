@@ -124,12 +124,11 @@ void ssf<dimension>::luaopen(lua_State* L)
     typedef boost::function<boost::shared_ptr<density_mode_type const> ()> slot_type;
 
     using namespace luabind;
-    static string class_name("ssf_" + lexical_cast<string>(dimension));
     module(L, "libhalmd")
     [
         namespace_("observables")
         [
-            class_<ssf>(class_name.c_str())
+            class_<ssf>()
                 .def("sample", &wrap_sample<result_type, ssf, slot_type>)
                 .property("wavevector", &ssf::wavevector)
                 .scope

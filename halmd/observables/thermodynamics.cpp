@@ -18,7 +18,6 @@
  */
 
 #include <halmd/observables/thermodynamics.hpp>
-#include <halmd/utility/demangle.hpp>
 #include <halmd/utility/lua/lua.hpp>
 
 namespace halmd {
@@ -98,24 +97,20 @@ template <int dimension>
 void thermodynamics<dimension>::luaopen(lua_State* L)
 {
     using namespace luabind;
-    static std::string class_name = demangled_name<thermodynamics>();
-    module(L, "libhalmd")
+    module(L)
     [
-        namespace_("observables")
-        [
-            class_<thermodynamics>(class_name.c_str())
-                .property("nparticle", &wrap_nparticle<thermodynamics>)
-                .property("density", &wrap_density<thermodynamics>)
-                .property("en_kin", &wrap_en_kin<thermodynamics>)
-                .property("en_pot", &wrap_en_pot<thermodynamics>)
-                .property("en_tot", &wrap_en_tot<thermodynamics>)
-                .property("pressure", &wrap_pressure<thermodynamics>)
-                .property("temp", &wrap_temp<thermodynamics>)
-                .property("v_cm", &wrap_v_cm<thermodynamics>)
-                .property("virial", &wrap_virial<thermodynamics>)
-                .property("hypervirial", &wrap_hypervirial<thermodynamics>)
-                .def("clear_cache", &thermodynamics::clear_cache)
-        ]
+        class_<thermodynamics>()
+            .property("nparticle", &wrap_nparticle<thermodynamics>)
+            .property("density", &wrap_density<thermodynamics>)
+            .property("en_kin", &wrap_en_kin<thermodynamics>)
+            .property("en_pot", &wrap_en_pot<thermodynamics>)
+            .property("en_tot", &wrap_en_tot<thermodynamics>)
+            .property("pressure", &wrap_pressure<thermodynamics>)
+            .property("temp", &wrap_temp<thermodynamics>)
+            .property("v_cm", &wrap_v_cm<thermodynamics>)
+            .property("virial", &wrap_virial<thermodynamics>)
+            .property("hypervirial", &wrap_hypervirial<thermodynamics>)
+            .def("clear_cache", &thermodynamics::clear_cache)
     ];
 }
 

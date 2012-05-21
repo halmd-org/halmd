@@ -20,7 +20,6 @@
 #include <boost/foreach.hpp>
 
 #include <halmd/observables/host/thermodynamics.hpp>
-#include <halmd/utility/demangle.hpp>
 #include <halmd/utility/lua/lua.hpp>
 
 namespace halmd {
@@ -177,30 +176,23 @@ template <int dimension, typename float_type>
 void thermodynamics<dimension, float_type>::luaopen(lua_State* L)
 {
     using namespace luabind;
-    static std::string class_name = demangled_name<thermodynamics>();
     module(L, "libhalmd")
     [
         namespace_("observables")
         [
-            namespace_("host")
-            [
-                class_<thermodynamics, _Base>(class_name.c_str())
-                    .scope
-                    [
-                        class_<runtime>("runtime")
-                            .def_readonly("en_kin", &runtime::en_kin)
-                            .def_readonly("v_cm", &runtime::v_cm)
-                            .def_readonly("en_pot", &runtime::en_pot)
-                            .def_readonly("virial", &runtime::virial)
-                            .def_readonly("hypervirial", &runtime::hypervirial)
-                    ]
-                    .def_readonly("runtime", &thermodynamics::runtime_)
-            ]
-        ]
+            class_<thermodynamics, _Base>()
+                .scope
+                [
+                    class_<runtime>("runtime")
+                        .def_readonly("en_kin", &runtime::en_kin)
+                        .def_readonly("v_cm", &runtime::v_cm)
+                        .def_readonly("en_pot", &runtime::en_pot)
+                        .def_readonly("virial", &runtime::virial)
+                        .def_readonly("hypervirial", &runtime::hypervirial)
+                ]
+                .def_readonly("runtime", &thermodynamics::runtime_)
 
-      , namespace_("observables")
-        [
-            def("thermodynamics", &boost::make_shared<thermodynamics
+          , def("thermodynamics", &boost::make_shared<thermodynamics
               , boost::shared_ptr<particle_type const>
               , boost::shared_ptr<box_type const>
               , boost::shared_ptr<clock_type const>

@@ -156,12 +156,11 @@ void density_mode<dimension, float_type>::luaopen(lua_State* L)
     typedef boost::function<boost::shared_ptr<phase_space_type const> ()> slot_type;
 
     using namespace luabind;
-    static string class_name("density_mode_" + lexical_cast<string>(dimension));
     module(L, "libhalmd")
     [
         namespace_("observables")
         [
-            class_<density_mode>(class_name.c_str())
+            class_<density_mode>()
                 .def("acquire", &wrap_acquire<sample_type, density_mode, slot_type>)
                 .property("wavevector", &density_mode::wavevector)
                 .scope

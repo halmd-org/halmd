@@ -17,16 +17,9 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <boost/lexical_cast.hpp>
-#include <string>
-
 #include <halmd/observables/gpu/samples/phase_space.hpp>
 #include <halmd/observables/samples/blocking_scheme.hpp>
-#include <halmd/utility/demangle.hpp>
 #include <halmd/utility/lua/lua.hpp>
-
-using namespace boost;
-using namespace std;
 
 namespace halmd {
 namespace observables {
@@ -37,20 +30,10 @@ template <int dimension, typename float_type>
 void phase_space<dimension, float_type>::luaopen(lua_State* L)
 {
     using namespace luabind;
-    static string const class_name("phase_space_" + lexical_cast<string>(dimension) + "_" + demangled_name<float_type>());
-    module(L, "libhalmd")
+    module(L)
     [
-        namespace_("observables")
-        [
-            namespace_("gpu")
-            [
-                namespace_("samples")
-                [
-                    class_<phase_space>(class_name.c_str())
-                        .property("step", &phase_space::step)
-                ]
-            ]
-        ]
+        class_<phase_space>()
+            .property("step", &phase_space::step)
     ];
 }
 

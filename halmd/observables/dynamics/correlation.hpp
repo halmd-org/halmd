@@ -25,12 +25,11 @@
 #include <boost/make_shared.hpp>
 #include <boost/shared_ptr.hpp>
 #include <boost/multi_array.hpp>
-#include <lua.hpp>
 
 #include <halmd/io/logger.hpp>
 #include <halmd/numeric/accumulator.hpp>
 #include <halmd/observables/samples/blocking_scheme.hpp>
-#include <halmd/utility/demangle.hpp>
+#include <halmd/utility/lua/lua.hpp>
 #include <halmd/utility/profiler.hpp>
 
 namespace halmd {
@@ -213,14 +212,13 @@ template <typename tcf_type>
 void correlation<tcf_type>::luaopen(lua_State* L)
 {
     using namespace luabind;
-    static std::string const class_name(demangled_name<correlation>());
     module(L, "libhalmd")
     [
         namespace_("observables")
         [
             namespace_("dynamics")
             [
-                class_<correlation, _Base>(class_name.c_str())
+                class_<correlation, _Base>()
                     .property("mean", &wrap_mean<correlation>)
                     .property("error", &wrap_error<correlation>)
                     .property("count", &wrap_count<correlation>)

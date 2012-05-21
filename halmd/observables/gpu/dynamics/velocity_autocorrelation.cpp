@@ -19,16 +19,11 @@
 
 #include <boost/make_shared.hpp>
 #include <stdexcept>
-#include <string>
 
 #include <halmd/io/logger.hpp>
 #include <halmd/observables/dynamics/correlation.hpp>
 #include <halmd/observables/gpu/dynamics/velocity_autocorrelation.hpp>
-#include <halmd/utility/demangle.hpp>
 #include <halmd/utility/lua/lua.hpp>
-
-using namespace boost;
-using namespace std;
 
 namespace halmd {
 namespace observables {
@@ -76,14 +71,13 @@ template <int dimension, typename float_type>
 void velocity_autocorrelation<dimension, float_type>::luaopen(lua_State* L)
 {
     using namespace luabind;
-    static string const class_name(demangled_name<velocity_autocorrelation>());
     module(L, "libhalmd")
     [
         namespace_("observables")
         [
             namespace_("dynamics")
             [
-                class_<velocity_autocorrelation>(class_name.c_str())
+                class_<velocity_autocorrelation>()
 
               , def("velocity_autocorrelation", &select_tcf_by_sample<velocity_autocorrelation>)
             ]

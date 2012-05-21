@@ -20,10 +20,6 @@
 #include <halmd/mdsim/gpu/velocity.hpp>
 #include <halmd/mdsim/gpu/velocity_kernel.hpp>
 #include <halmd/numeric/mp/dsfloat.hpp>
-#include <halmd/utility/lua/lua.hpp>
-
-using namespace boost;
-using namespace std;
 
 namespace halmd {
 namespace mdsim {
@@ -87,30 +83,6 @@ void velocity<dimension, float_type>::shift_rescale(vector_type const& delta, do
       , delta
       , factor
     );
-}
-
-template <int dimension, typename float_type>
-void velocity<dimension, float_type>::luaopen(lua_State* L)
-{
-    using namespace luabind;
-    static string class_name("velocity_" + lexical_cast<string>(dimension) + "_");
-    module(L, "libhalmd")
-    [
-        namespace_("mdsim")
-        [
-            namespace_("gpu")
-            [
-                class_<velocity, boost::shared_ptr<_Base>, _Base>(class_name.c_str())
-            ]
-        ]
-    ];
-}
-
-HALMD_LUA_API int luaopen_libhalmd_mdsim_gpu_velocity(lua_State* L)
-{
-    velocity<3, float>::luaopen(L);
-    velocity<2, float>::luaopen(L);
-    return 0;
 }
 
 template class velocity<3, float>;

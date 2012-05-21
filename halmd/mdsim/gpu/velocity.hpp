@@ -21,7 +21,6 @@
 #define HALMD_MDSIM_GPU_VELOCITY_HPP
 
 #include <boost/make_shared.hpp>
-#include <lua.hpp>
 
 #include <halmd/io/logger.hpp>
 #include <halmd/mdsim/gpu/particle.hpp>
@@ -40,8 +39,6 @@ public:
     typedef gpu::particle<dimension, float_type> particle_type;
     typedef typename _Base::vector_type vector_type;
     typedef logger logger_type;
-
-    static void luaopen(lua_State* L);
 
     velocity(
         boost::shared_ptr<particle_type> particle
