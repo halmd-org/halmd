@@ -60,12 +60,24 @@ local verlet = assert(libhalmd.mdsim.integrators.verlet)
 --
 --    Set integration time step in MD units.
 --
+--    :param number timestep: integration timestep
+--
 --    This method forwards to :meth:`halmd.mdsim.clock.set_timestep`,
 --    to ensure that all integrators use an identical time step.
 --
 -- .. attribute:: timestep
 --
 --    Integration time step in MD units.
+--
+-- .. method:: disconnect()
+--
+--    Disconnect integrator from core and profiler.
+--
+-- .. method:: connect()
+--
+--    Connect integrator to core and profiler.
+--
+--    By default the integrator is connected.
 --
 -- .. attribute:: integrate
 --
