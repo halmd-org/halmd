@@ -79,7 +79,7 @@ local h5 = assert(libhalmd.h5)
 --    The slot returns the edge lengths as a matrix.
 --
 local M = module(function(args)
-    local length = args.length
+    local length = args and args.length
     if not length then
         error("missing parameter: length", 2)
     end
