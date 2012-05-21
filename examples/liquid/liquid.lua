@@ -76,11 +76,9 @@ local function liquid(args)
     local particle_group = mdsim.particle_group{
         particle = particle -- FIXME , species = species
     }
-    local phase_space = observables.phase_space{box = box, particle = particle_group}
+    local phase_space = observables.phase_space({box = box, group = particle_group})
     -- write trajectory of particle groups to H5MD file
-    for i = 1, #phase_space do
-        phase_space[i]:writer(writer, {every = args.sampling.trajectory})
-    end
+    phase_space:writer(writer, {every = args.sampling.trajectory})
 
     -- H5MD file writer
     local writer = writers.h5md({path = ("%s.obs"):format(args.output)})
