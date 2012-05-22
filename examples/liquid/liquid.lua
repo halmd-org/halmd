@@ -92,8 +92,13 @@ local function liquid(args)
     -- FIXME }
     -- FIXME observables.ssf{density_mode = density_mode, every = args.sampling.structure}
 
+    -- setup blocking scheme for correlation functions
+    local max_lag = args.steps * integrator.timestep / 10
+    local blocking_scheme = observables.dynamics.blocking_scheme({max_lag = max_lag, every = 100, size = 10})
+
     -- compute mean-square displacement
-    local msd = observables.dynamics.mean_square_displacement({phase_space = phase_space, writer = writer})
+    local msd = observables.dynamics.mean_square_displacement({phase_space = phase_space})
+    blocking_scheme:correlation(msd, writer)
     -- compute mean-quartic displacement
     -- FIXME observables.dynamics.correlation{sampler = phase_space, correlation = "mean_quartic_displacement"}
     -- compute velocity autocorrelation function

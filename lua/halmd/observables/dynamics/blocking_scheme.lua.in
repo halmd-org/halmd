@@ -1,5 +1,5 @@
 --
--- Copyright © 2011  Peter Colberg and Felix Höfling
+-- Copyright © 2011-2012 Peter Colberg and Felix Höfling
 --
 -- This file is part of HALMD.
 --
@@ -20,65 +20,168 @@
 local clock             = require("halmd.mdsim.clock")
 local log               = require("halmd.io.log")
 local module            = require("halmd.utility.module")
+local profiler          = require("halmd.utility.profiler")
 local sampler           = require("halmd.observables.sampler")
 
--- grab C++ wrappers
-local blocking_scheme_wrapper = libhalmd.observables.dynamics.blocking_scheme
-local po = libhalmd.po
--- grab standard library
-local assert = assert
-
-
+---
+-- Blocking Scheme
+-- ===============
 --
--- construct module blocking_scheme
--- @param args   parameter table
---   every         sampling interval of lowest coarse-graining level
---   size          size of each block, determines coarse-graining factor
---   shift         coarse-graining shift between odd and even levels
---   separation    minimal separation of samples for time averages
---   compute       table of time correlations functions to be computed
--- @returns instance of blocking_scheme module
+
+-- grab C++ wrappers
+local blocking_scheme = assert(libhalmd.observables.dynamics.blocking_scheme)
+local blocking_sample = assert(libhalmd.observables.samples.blocking_scheme)
+local correlation = assert(libhalmd.observables.dynamics.correlation)
+
+---
+-- Construct blocking scheme.
+--
+-- :param args: keyword arguments
+-- :param number args.max_lag: maximum lag time in MD units
+-- :param number args.every: sampling interval of lowest coarse-graining level
+-- :param number args.size: size of each block, determines coarse-graining factor
+-- :param number args.shift: coarse-graining shift between odd and even levels (defaults to :math:`\lfloor\sqrt\text{size}\rfloor`)
+-- :param number args.separation: minimal separation of samples for time averages (defaults to :math:`\text{every}\times\text{size}`)
+--
+-- .. method:: disconnect()
+--
+--    Disconnect blocking scheme from sampler.
+--
+-- .. method:: connect()
+--
+--    Connect blocking scheme to sampler.
+--
+--    This is the default.
+--
+-- .. class:: correlation(tcf, writer)
+--
+--    Compute time correlation function.
+--
+--    :param tcf: time correlation function
+--    :param writer: instance of :class:`halmd.io.writers.h5md`
+--
+--    .. method:: disconnect()
+--
+--       Disconnect correlation function from blocking scheme.
+--
+--    .. method:: connect()
+--
+--       Connect correlation function to blocking scheme.
+--
+--       This is the default.
 --
 local M = module(function(args)
-    local every = args.every or 100 -- default value
-    local size  = args.size or 10 -- default value
-    local shift = args.shift or 0 -- default value
-    local separation = args.separation or every * size -- default value
-
-    -- construct driver module blocking_scheme
-    local maximum_time = assert(sampler.total_time)
-    local resolution = clock.timestep * every
+    local max_lag = args.max_lag
+    if type(max_lag) ~= "number" then
+        error("bad argument 'max_lag'", 2)
+    end
+    local every = args.every
+    if type(every) ~= "number" then
+        error("bad argument 'every'", 2)
+    end
+    local size = args.size
+    if type(size) ~= "number" then
+        error("bad argument 'size'", 2)
+    end
+    local shift = args.shift or math.floor(math.sqrt(size))
+    if type(shift) ~= "number" then
+        error("bad argument 'shift'", 2)
+    end
+    local separation = args.separation or every * size
+    if type(separation) ~= "number" then
+        error("bad argument 'separation'", 2)
+    end
+    local resolution = every * assert(clock.timestep)
     local logger = log.logger({label = "blocking_scheme"})
-    local blocking_scheme = assert(blocking_scheme_wrapper)
-    blocking_scheme = blocking_scheme(clock, maximum_time, resolution, size, shift, separation, logger)
 
-    -- connect to sampler
-    sampler:on_sample(blocking_scheme.sample, every)
-    sampler:on_finish(blocking_scheme.finalise)
+    -- construct instance
+    local self = blocking_scheme(clock, max_lag, resolution, size, shift, separation, logger)
 
-    return blocking_scheme
+    -- sequence of signal connections
+    local conn = {}
+
+    self.connect = function(self)
+        if #conn == 0 then
+            table.insert(conn, sampler:on_sample(self.sample, every))
+            table.insert(conn, sampler:on_finish(self.finalise))
+        else
+            error("blocking scheme is already connected", 2)
+        end
+    end
+
+    self.disconnect = function(self)
+        if #conn > 0 then
+            for i = 1, #conn do
+                conn[i]:disconnect()
+            end
+            conn = {}
+        else
+            error("blocking scheme is already disconnected", 2)
+        end
+    end
+
+    self.correlation = function(self, tcf, writer)
+        if not tcf then
+            error("bad argument 'tcf'", 2)
+        end
+        if not writer then
+            error("bad argument 'writer'", 2)
+        end
+        local acquire = assert(tcf.acquire)
+        local correlate = assert(tcf)
+        local group = assert(tcf.group)
+        local desc = assert(tcf.desc)
+
+        -- construct blocking sample from acquire() function
+        local count = assert(self.count)
+        local size = assert(self.block_size)
+        local sample = blocking_sample(acquire, count, size, clock)
+
+        -- construct correlation function for blocking scheme
+        local result = correlation(tcf, sample, logger)
+
+        -- write correlation function results
+        local writer = writer:writer({location = group, mode = "truncate"})
+        writer:on_write(self.time, {"time"}) -- FIXME hardlink
+        writer:on_write(result.mean, {"mean"})
+        writer:on_write(result.error, {"error"})
+        writer:on_write(result.count, {"count"})
+
+        -- sequence of signal connections
+        local conn = {}
+
+        result.connect = function(result)
+            if #conn == 0 then
+                table.insert(conn, self:on_sample(sample))
+                table.insert(conn, self:on_correlate(result))
+                table.insert(conn, self:on_append_finalise(writer.write))
+                table.insert(conn, profiler:on_profile(result.runtime.tcf, desc))
+            else
+                error("correlation function is already connected", 2)
+            end
+        end
+
+        result.disconnect = function(result)
+            if #conn > 0 then
+                for i = 1, #conn do
+                    conn[i]:disconnect()
+                end
+                conn = {}
+            else
+                error("correlation function is already disconnected", 2)
+            end
+        end
+
+        -- connect correlation function to blocking scheme
+        result:connect()
+
+        return result
+    end
+
+    -- connect blocking scheme to sampler
+    self:connect()
+
+    return self
 end)
-
---
--- assemble module options
---
--- @param desc po.options_description
---
-function M.options(desc)
-    desc:add("every", po.uint(), "sampling interval for time-correlation functions")
-    desc:add("size", po.uint(), "block size, corresponds to coarse-graining factor")
-    desc:add("shift", po.uint(), "coarse-graining shift between adjacent blocking levels")
-    desc:add("separation", po.uint(), "minimal sample separation for time averages")
-end
-
---
--- write module parameters to HDF5 group
---
--- @param blocking_scheme module instance
--- @param group HDF5 group
---
-function M.write_parameters(blocking_scheme, group)
---     group:write_attribute("separation", h5.uint(), blocking_scheme.separation)
-end
 
 return M

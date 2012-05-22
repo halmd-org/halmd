@@ -52,15 +52,12 @@ blocking_scheme::blocking_scheme(
     if (block_size_ < 2) {
         throw invalid_argument("Minimum size of coarse-graining blocks is 2.");
     }
-
-    // optionally, compute shift of shifted coarse-graining levels ('odd' levels)
     if (shift == 0) {
-        shift = static_cast<unsigned int>(std::sqrt(block_size_));
+        throw invalid_argument("Coarse-graining shift must be non-zero.");
     }
-    else if (shift >= block_size_) {
+    if (shift >= block_size_) {
         throw invalid_argument("Coarse-graining shift must be less than block size.");
     }
-    assert(shift > 0);
 
     // report shift only if shifted blocks ('odd' levels) are enabled
     if (shift > 1) {
