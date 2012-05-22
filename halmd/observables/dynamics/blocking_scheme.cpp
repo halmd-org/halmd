@@ -94,7 +94,7 @@ blocking_scheme::blocking_scheme(
     }
 
     // setup initial time origin for each level
-    origin_.resize(block_count, 0);
+    origin_.resize(block_count, clock_->step());
 
     // construct associated time grid
     time_.resize(boost::extents[block_count][block_size_]);
@@ -136,7 +136,7 @@ void blocking_scheme::sample()
 
     // iterate over all coarse-graining levels
     for (unsigned int i = 0; i < interval_.size(); ++i) {
-        if (step % interval_[i] == 0 && step >= origin_[i]) {
+        if ((step - origin_[i]) % interval_[i] == 0 && step >= origin_[i]) {
             // append current sample to block at level 'i' for each sample type
             LOG_TRACE("append sample(s) to blocking level " << i);
             BOOST_FOREACH(boost::shared_ptr<block_sample_type> block_sample, block_sample_) {
