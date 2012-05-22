@@ -17,8 +17,12 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <halmd/config.hpp>
+
 #include <algorithm>
+#include <boost/function_output_iterator.hpp>
 #include <boost/iterator/counting_iterator.hpp>
+#include <boost/iterator/transform_iterator.hpp>
 #include <exception>
 #include <iterator> // std::back_inserter
 #include <luabind/luabind.hpp>
@@ -233,7 +237,12 @@ wrap_get_species(particle_type const& particle, vector<typename particle_type::s
 {
     output.clear();
     output.reserve(particle.nparticle());
-    particle.get_species(back_inserter(output));
+    auto convert_0_to_1 = [&](typename particle_type::species_type s) {
+        output.push_back(s + 1);
+    };
+    particle.get_species(
+        boost::make_function_output_iterator(convert_0_to_1)
+    );
 }
 
 template <typename particle_type>
@@ -243,7 +252,13 @@ wrap_set_species(particle_type& particle, vector<typename particle_type::species
     if (input.size() != particle.nparticle()) {
         throw invalid_argument("input array size not equal to number of particles");
     }
-    particle.set_species(input.begin(), input.end());
+    auto convert_1_to_0 = [](typename particle_type::species_type s) {
+        return s - 1;
+    };
+    particle.set_species(
+        boost::make_transform_iterator(input.begin(), convert_1_to_0)
+      , boost::make_transform_iterator(input.end(), convert_1_to_0)
+    );
 }
 
 template <typename particle_type>
