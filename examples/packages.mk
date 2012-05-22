@@ -28,6 +28,7 @@ endif
 ##
 
 WGET = wget
+GIT = git
 TAR = tar
 RM = rm -rf
 CP = cp -r
@@ -1210,3 +1211,51 @@ env-halmd:
 	@echo '# add CMake $(HALMD_VERSION) to environment'
 	@echo 'export PATH="$(HALMD_INSTALL_DIR)/bin$${PATH+:$$PATH}"'
 	@echo 'export MANPATH="$(HALMD_INSTALL_DIR)/share/man$${MANPATH+:$$MANPATH}"'
+
+##
+## nvCUDA-tools - A collection of tools for NVIDIA CUDA compute devices
+##
+
+NVCUDA_TOOLS_VERSION = 8853069
+NVCUDA_TOOLS_GIT_URL = http://git.colberg.org/nvcuda-tools.git
+NVCUDA_TOOLS_SOURCE_DIR = nvcuda-tools-$(NVCUDA_TOOLS_VERSION)
+NVCUDA_TOOLS_BUILD_DIR = $(NVCUDA_TOOLS_SOURCE_DIR)/build/release
+NVCUDA_TOOLS_INSTALL_DIR = $(PREFIX)/nvcuda-tools-$(NVCUDA_TOOLS_VERSION)
+
+.fetch-nvcuda-tools:
+	$(RM) $(NVCUDA_TOOLS_SOURCE_DIR)
+	$(GIT) clone $(NVCUDA_TOOLS_GIT_URL) $(NVCUDA_TOOLS_SOURCE_DIR)
+	cd $(NVCUDA_TOOLS_SOURCE_DIR) && $(GIT) checkout $(NVCUDA_TOOLS_VERSION)
+	@$(TOUCH) $@
+
+fetch-nvcuda-tools: .fetch-nvcuda-tools
+
+.configure-nvcuda-tools: .fetch-nvcuda-tools
+	mkdir -p $(NVCUDA_TOOLS_BUILD_DIR)
+	cd $(NVCUDA_TOOLS_BUILD_DIR) && cmake -DCMAKE_INSTALL_PREFIX=$(NVCUDA_TOOLS_INSTALL_DIR) $(CURDIR)/$(NVCUDA_TOOLS_SOURCE_DIR)
+	@$(TOUCH) $@
+
+configure-nvcuda-tools: .configure-nvcuda-tools
+
+.build-nvcuda-tools: .configure-nvcuda-tools
+	cd $(NVCUDA_TOOLS_BUILD_DIR) && make $(PARALLEL_BUILD_FLAGS)
+	@$(TOUCH) $@
+
+build-nvcuda-tools: .build-nvcuda-tools
+
+install-nvcuda-tools: .build-nvcuda-tools
+	cd $(NVCUDA_TOOLS_BUILD_DIR) && make install
+
+clean-nvcuda-tools:
+	@$(RM) .build-nvcuda-tools
+	@$(RM) .configure-nvcuda-tools
+	$(RM) $(NVCUDA_TOOLS_BUILD_DIR)
+
+distclean-nvcuda-tools: clean-nvcuda-tools
+	@$(RM) .fetch-nvcuda-tools
+	$(RM) $(NVCUDA_TOOLS_SOURCE_DIR)
+
+env-nvcuda-tools:
+	@echo
+	@echo '# add CMake $(NVCUDA_TOOLS_VERSION) to environment'
+	@echo 'export PATH="$(NVCUDA_TOOLS_INSTALL_DIR)/bin$${PATH+:$$PATH}"'
