@@ -62,7 +62,7 @@ velocity_autocorrelation<dimension, float_type>::compute(
 
 template <typename tcf_type>
 static boost::shared_ptr<tcf_type>
-select_tcf_by_sample(typename tcf_type::sample_type const&)
+select_tcf_by_acquire(boost::function<boost::shared_ptr<typename tcf_type::sample_type const> ()> const&)
 {
     return boost::make_shared<tcf_type>();
 }
@@ -79,7 +79,7 @@ void velocity_autocorrelation<dimension, float_type>::luaopen(lua_State* L)
             [
                 class_<velocity_autocorrelation>()
 
-              , def("velocity_autocorrelation", &select_tcf_by_sample<velocity_autocorrelation>)
+              , def("velocity_autocorrelation", &select_tcf_by_acquire<velocity_autocorrelation>)
             ]
         ]
     ];
