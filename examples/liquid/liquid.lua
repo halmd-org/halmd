@@ -100,7 +100,8 @@ local function liquid(args)
     local msd = observables.dynamics.mean_square_displacement({phase_space = phase_space})
     blocking_scheme:correlation(msd, writer)
     -- compute mean-quartic displacement
-    -- FIXME observables.dynamics.correlation{sampler = phase_space, correlation = "mean_quartic_displacement"}
+    local mqd = observables.dynamics.mean_quartic_displacement({phase_space = phase_space})
+    blocking_scheme:correlation(mqd, writer)
     -- compute velocity autocorrelation function
     -- FIXME observables.dynamics.correlation{sampler = phase_space, correlation = "velocity_autocorrelation"}
     -- compute intermediate scattering function from density modes different than those used for ssf computation

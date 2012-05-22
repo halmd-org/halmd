@@ -1,5 +1,5 @@
 --
--- Copyright © 2011-2012  Felix Höfling and Peter Colberg
+-- Copyright © 2012 Peter Colberg
 --
 -- This file is part of HALMD.
 --
@@ -17,33 +17,71 @@
 -- along with this program.  If not, see <http://www.gnu.org/licenses/>.
 --
 
-local module            = require("halmd.utility.module")
+local module = require("halmd.utility.module")
+
+---
+-- Mean-Quartic Displacement
+-- =========================
+--
 
 -- grab C++ wrappers
-local mqd_wrapper = libhalmd.observables.dynamics.mean_quartic_displacement
--- grab standard library
-local assert = assert
+local mean_quartic_displacement = assert(libhalmd.observables.dynamics.mean_quartic_displacement)
 
-
+---
+-- Construct mean-quartic displacement.
 --
--- construct instance of mean-quartic displacement (MQD) functor
--- @param args parameter table
---   args.sample        instance of phase space sample
--- @returns instance of MQD functor
+-- :param args: keyword arguments
+-- :param args.phase_space: instance of :class:`halmd.observables.phase_space`
+--
+-- .. method:: acquire()
+--
+--    Acquire phase space sample.
+--
+--    :returns: phase space sample
+--
+-- .. method:: correlate(first, second)
+--
+--    Correlate two phase space samples.
+--
+--    :param first: first phase space sample
+--    :param second: second phase space sample
+--    :returns: mean-quartic displacement between samples
+--
+-- .. attribute:: group
+--
+--    H5MD group.
+--
+-- .. attribute:: desc
+--
+--    Profiler description.
 --
 local M = module(function(args)
-    local sample = assert(args.sample)
+    local phase_space = args and args.phase_space
+    if not phase_space then
+        error("missing argument 'phase_space'", 2)
+    end
+    local acquire = assert(phase_space.acquire())
+    local label = assert(phase_space.group.label)
 
-    -- construct msd module
-    local mqd = assert(mqd_wrapper)(sample)
-    return mqd
+    -- construct instance
+    local self = mean_quartic_displacement(acquire)
+
+    -- attach acquire function as read-only property
+    self.acquire = property(function(self)
+        return acquire
+    end)
+
+    -- attach H5MD group
+    self.group = property(function(self)
+        return {"dynamics", "mean_quartic_displacement", label}
+    end)
+
+    -- attach profiler description
+    self.desc = property(function(self)
+        return ("mean-quartic displacement of %s"):format(label)
+    end)
+
+    return self
 end)
-
---
--- @returns module description
---
-function M.description()
-    return "mean-quartic displacement"
-end
 
 return M
