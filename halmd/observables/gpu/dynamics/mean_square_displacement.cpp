@@ -62,7 +62,7 @@ mean_square_displacement<dimension, float_type>::compute(
 
 template <typename tcf_type>
 static boost::shared_ptr<tcf_type>
-select_tcf_by_sample(typename tcf_type::sample_type const&)
+select_tcf_by_acquire(boost::function<boost::shared_ptr<typename tcf_type::sample_type const> ()> const&)
 {
     return boost::make_shared<tcf_type>();
 }
@@ -79,7 +79,7 @@ void mean_square_displacement<dimension, float_type>::luaopen(lua_State* L)
             [
                 class_<mean_square_displacement>()
 
-              , def("mean_square_displacement", &select_tcf_by_sample<mean_square_displacement>)
+              , def("mean_square_displacement", &select_tcf_by_acquire<mean_square_displacement>)
             ]
         ]
     ];

@@ -93,7 +93,7 @@ local function liquid(args)
     -- FIXME observables.ssf{density_mode = density_mode, every = args.sampling.structure}
 
     -- compute mean-square displacement
-    -- FIXME observables.dynamics.correlation{sampler = phase_space, correlation = "mean_square_displacement"}
+    local msd = observables.dynamics.mean_square_displacement({phase_space = phase_space, writer = writer})
     -- compute mean-quartic displacement
     -- FIXME observables.dynamics.correlation{sampler = phase_space, correlation = "mean_quartic_displacement"}
     -- compute velocity autocorrelation function
