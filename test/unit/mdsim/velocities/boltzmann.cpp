@@ -1,5 +1,6 @@
 /*
- * Copyright © 2011  Felix Höfling and Peter Colberg
+ * Copyright © 2011-2012  Felix Höfling
+ * Copyright © 2011       Peter Colberg
  *
  * This file is part of HALMD.
  *
@@ -98,18 +99,19 @@ void boltzmann<modules_type>::test()
     // test velocity distribution of final state
     //
     // centre-of-mass velocity ⇒ mean of velocity distribution
-    // each particle is an independent "measurement"
-    // limit is 3σ, σ = √(<v_x²> / (N - 1)) where <v_x²> = k T
-    double vcm_limit = 3 * sqrt(temp / (npart - 1));
-    BOOST_TEST_MESSAGE("Absolute limit on instantaneous centre-of-mass velocity: " << vcm_limit);
-    BOOST_CHECK_SMALL(norm_inf(thermodynamics->v_cm()), vcm_limit);  //< norm_inf tests the max. value
+    // each particle is an independent "measurement",
+    // tolerance is 4.5σ, σ = √(<v_x²> / (N - 1)) where <v_x²> = k T,
+    // with this choice, a single test passes with 99.999% probability
+    double vcm_tolerance = 4.5 * sqrt(temp / (npart - 1));
+    BOOST_TEST_MESSAGE("Absolute tolerance on instantaneous centre-of-mass velocity: " << vcm_tolerance);
+    BOOST_CHECK_SMALL(norm_inf(thermodynamics->v_cm()), vcm_tolerance);  //< norm_inf tests the max. value
 
     // temperature ⇒ variance of velocity distribution
-    // we have only one measurement of the variance
-    // limit is 3σ, σ = √<ΔT²> where <ΔT²> / T² = 2 / (dimension × N)
-    double rel_temp_limit = 3 * sqrt(2. / (dimension * npart)) / temp;
-    BOOST_TEST_MESSAGE("Relative limit on instantaneous temperature: " << rel_temp_limit);
-    BOOST_CHECK_CLOSE_FRACTION(thermodynamics->temp(), temp, rel_temp_limit);
+    // we have only one measurement of the variance,
+    // tolerance is 4.5σ, σ = √<ΔT²> where <ΔT²> / T² = 2 / (dimension × N)
+    double rel_temp_tolerance = 4.5 * sqrt(2. / (dimension * npart)) / temp;
+    BOOST_TEST_MESSAGE("Relative tolerance on instantaneous temperature: " << rel_temp_tolerance);
+    BOOST_CHECK_CLOSE_FRACTION(thermodynamics->temp(), temp, rel_temp_tolerance);
 
     //
     // test shifting and rescaling
@@ -118,20 +120,20 @@ void boltzmann<modules_type>::test()
     double scale = 1.5;
     velocity->rescale(scale);
     thermodynamics->clear_cache(); //< reset caches after rescaling the velocities
-    BOOST_CHECK_CLOSE_FRACTION(thermodynamics->temp(), scale * scale * temp, rel_temp_limit);
+    BOOST_CHECK_CLOSE_FRACTION(thermodynamics->temp(), scale * scale * temp, rel_temp_tolerance);
 
     // shift mean velocity to zero
     fixed_vector<double, dimension> v_cm = thermodynamics->v_cm();
     velocity->shift(-v_cm);
     thermodynamics->clear_cache(); //< reset caches after shifting the velocities
-    vcm_limit = gpu ? 0.1 * eps_float : 2 * eps;
-    BOOST_CHECK_SMALL(norm_inf(thermodynamics->v_cm()), vcm_limit);
+    vcm_tolerance = gpu ? 0.1 * eps_float : 2 * eps;
+    BOOST_CHECK_SMALL(norm_inf(thermodynamics->v_cm()), vcm_tolerance);
 
     // first shift, then rescale in one step
     velocity->shift_rescale(v_cm, 1 / scale);
     thermodynamics->clear_cache(); //< reset caches after modifying the velocities
-    BOOST_CHECK_CLOSE_FRACTION(thermodynamics->temp(), temp, rel_temp_limit);
-    BOOST_CHECK_SMALL(norm_inf(thermodynamics->v_cm() - v_cm), vcm_limit);
+    BOOST_CHECK_CLOSE_FRACTION(thermodynamics->temp(), temp, rel_temp_tolerance);
+    BOOST_CHECK_SMALL(norm_inf(thermodynamics->v_cm() - v_cm), vcm_tolerance);
 }
 
 template <typename modules_type>
