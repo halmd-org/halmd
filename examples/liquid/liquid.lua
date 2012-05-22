@@ -71,8 +71,14 @@ local function liquid(args)
     -- write box specification to H5MD file
     box:writer(writer)
 
-    -- Construct particle groups and phase space samplers by species (species are numbered 0, 1, 2, ...)
-    local species = {} for i = 1, #args.particles do species[i] = i - 1 end -- FIXME avoid explicit for-loop!?
+    -- Set particle species, with continuous range of tags per species
+    local species = {}
+    for s = 1, nspecies do
+        local nparticle = assert(args.particles[s])
+        for i = 1, nparticle do table.insert(species, s) end
+    end
+    particle:set_species(species)
+
     local particle_group = mdsim.particle_group{
         particle = particle -- FIXME , species = species
     }
