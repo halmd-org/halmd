@@ -109,8 +109,8 @@ void ideal_gas<modules_type>::test()
     particle->aux_enable();              // enable computation of potential energy
     core->setup();
 
-    const double vcm_limit = gpu ? 0.1 * eps_float : eps;
-    BOOST_CHECK_SMALL(norm_inf(thermodynamics->v_cm()), vcm_limit);
+    const double vcm_tolerance = gpu ? 0.1 * eps_float : eps;
+    BOOST_CHECK_SMALL(norm_inf(thermodynamics->v_cm()), vcm_tolerance);
 
     double en_tot = thermodynamics->en_tot();
 
@@ -127,7 +127,7 @@ void ideal_gas<modules_type>::test()
         core->mdstep();
     }
 
-    BOOST_CHECK_SMALL(norm_inf(thermodynamics->v_cm()), vcm_limit);
+    BOOST_CHECK_SMALL(norm_inf(thermodynamics->v_cm()), vcm_tolerance);
     BOOST_CHECK_CLOSE_FRACTION(en_tot, thermodynamics->en_tot(), 10 * eps);
 
     BOOST_CHECK_CLOSE_FRACTION(temp, (float)thermodynamics->temp(), eps_float);

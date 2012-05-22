@@ -1,5 +1,6 @@
 /*
- * Copyright © 2010-2011  Felix Höfling and Peter Colberg
+ * Copyright © 2010-2012  Felix Höfling
+ * Copyright © 2010-2011  Peter Colberg
  *
  * This file is part of HALMD.
  *
@@ -130,50 +131,51 @@ void verlet_nvt_andersen<modules_type>::test()
     // test velocity distribution of final state
     //
     // centre-of-mass velocity ⇒ mean of velocity distribution
-    // each particle is an independent "measurement"
-    // limit is 3σ, σ = √(<v_x²> / (N - 1)) where <v_x²> = k T
-    double vcm_limit = 3 * sqrt(temp / (npart - 1));
-    BOOST_TEST_MESSAGE("Absolute limit on instantaneous centre-of-mass velocity: " << vcm_limit);
-    BOOST_CHECK_SMALL(norm_inf(thermodynamics->v_cm()), vcm_limit);  //< norm_inf tests the max. value
+    // each particle is an independent "measurement",
+    // tolerance is 4.5σ, σ = √(<v_x²> / (N - 1)) where <v_x²> = k T,
+    // with this choice, a single test passes with 99.999% probability
+    double vcm_tolerance = 4.5 * sqrt(temp / (npart - 1));
+    BOOST_TEST_MESSAGE("Absolute tolerance on instantaneous centre-of-mass velocity: " << vcm_tolerance);
+    BOOST_CHECK_SMALL(norm_inf(thermodynamics->v_cm()), vcm_tolerance);  //< norm_inf tests the max. value
 
     // temperature ⇒ variance of velocity distribution
-    // we have only one measurement of the variance
-    // limit is 3σ, σ = √<ΔT²> where <ΔT²> / T² = 2 / (dimension × N)
-    double rel_temp_limit = 3 * sqrt(2. / (dimension * npart)) / temp;
-    BOOST_TEST_MESSAGE("Relative limit on instantaneous temperature: " << rel_temp_limit);
-    BOOST_CHECK_CLOSE_FRACTION(thermodynamics->temp(), temp, rel_temp_limit);
+    // we have only one measurement of the variance,
+    // tolerance is 4.5σ, σ = √<ΔT²> where <ΔT²> / T² = 2 / (dimension × N)
+    double rel_temp_tolerance = 4.5 * sqrt(2. / (dimension * npart)) / temp;
+    BOOST_TEST_MESSAGE("Relative tolerance on instantaneous temperature: " << rel_temp_tolerance);
+    BOOST_CHECK_CLOSE_FRACTION(thermodynamics->temp(), temp, rel_temp_tolerance);
 
     //
     // test velocity distribution averaged over the whole simulation run
     //
     // centre-of-mass velocity ⇒ mean of velocity distribution
-    // #measurements = #particles × #samples
-    // limit is 3σ, σ = √(<v_x²> / (N × C - 1)) where <v_x²> = k T
-    vcm_limit = 3 * sqrt(temp / (npart * count(v_cm[0]) - 1));
-    BOOST_TEST_MESSAGE("Absolute limit on centre-of-mass velocity: " << vcm_limit);
+    // #measurements = #particles × #samples,
+    // tolerance is 4.5σ, σ = √(<v_x²> / (N × C - 1)) where <v_x²> = k T
+    vcm_tolerance = 4.5 * sqrt(temp / (npart * count(v_cm[0]) - 1));
+    BOOST_TEST_MESSAGE("Absolute tolerance on centre-of-mass velocity: " << vcm_tolerance);
     for (unsigned int i = 0; i < dimension; ++i) {
-        BOOST_CHECK_SMALL(mean(v_cm[i]), 3 * vcm_limit);
-        BOOST_CHECK_SMALL(error_of_mean(v_cm[i]), vcm_limit);
+        BOOST_CHECK_SMALL(mean(v_cm[i]), vcm_tolerance);
+        BOOST_CHECK_SMALL(error_of_mean(v_cm[i]), vcm_tolerance);
     }
 
     // mean temperature ⇒ variance of velocity distribution
-    // each sample should constitute an independent measurement
-    // limit is 3σ, σ = √(<ΔT²> / (C - 1)) where <ΔT²> / T² = 2 / (dimension × N)
-    rel_temp_limit = 3 * sqrt(2. / (dimension * npart * (count(temp_) - 1))) / temp;
-    BOOST_TEST_MESSAGE("Relative limit on temperature: " << rel_temp_limit);
-    BOOST_CHECK_CLOSE_FRACTION(mean(temp_), temp, rel_temp_limit);
+    // each sample should constitute an independent measurement,
+    // tolerance is 4.5σ, σ = √(<ΔT²> / (C - 1)) where <ΔT²> / T² = 2 / (dimension × N)
+    rel_temp_tolerance = 4.5 * sqrt(2. / (dimension * npart * (count(temp_) - 1))) / temp;
+    BOOST_TEST_MESSAGE("Relative tolerance on temperature: " << rel_temp_tolerance);
+    BOOST_CHECK_CLOSE_FRACTION(mean(temp_), temp, rel_temp_tolerance);
 
     // specific heat per particle ⇒ temperature fluctuations
     // c_V = k × (dimension × N / 2)² <ΔT²> / T² / N = k × dimension / 2
-    // where we have used <ΔT²> / T² = 2 / (dimension × N)
-    // limit is 3σ, with the approximation
+    // where we have used <ΔT²> / T² = 2 / (dimension × N),
+    // tolerance is 4.5σ, with the approximation
     // σ² = Var[ΔE² / (k T²)] / C → (dimension / 2) × (dimension + 6 / N) / C
     // (one measurement only from the average over C samples)
     double cv = pow(.5 * dimension, 2.) * npart * variance(temp_);
     double cv_variance=  (.5 * dimension) * (dimension + 6. / npart) / count(temp_);
-    double rel_cv_limit = 3 * sqrt(cv_variance) / (.5 * dimension);
-    BOOST_TEST_MESSAGE("Relative limit on specific heat: " << rel_cv_limit);
-    BOOST_CHECK_CLOSE_FRACTION(cv, .5 * dimension, rel_cv_limit);
+    double rel_cv_tolerance = 4.5 * sqrt(cv_variance) / (.5 * dimension);
+    BOOST_TEST_MESSAGE("Relative tolerance on specific heat: " << rel_cv_tolerance);
+    BOOST_CHECK_CLOSE_FRACTION(cv, .5 * dimension, rel_cv_tolerance);
 }
 
 template <typename modules_type>
