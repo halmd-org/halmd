@@ -1,5 +1,5 @@
 /*
- * Copyright © 2012  Peter Colberg
+ * Copyright © 2012 Peter Colberg
  *
  * This file is part of HALMD.
  *
@@ -20,12 +20,12 @@
 #define BOOST_TEST_MODULE particle
 #include <boost/test/unit_test.hpp>
 
-#include <algorithm> // std::fill
+#include <algorithm>
 #include <boost/array.hpp>
 #include <boost/iterator/counting_iterator.hpp>
 #include <boost/iterator/transform_iterator.hpp>
-#include <cmath> // std::ceil, std::pow
-#include <iterator> // std::back_inserter
+#include <cmath>
+#include <iterator>
 
 #include <halmd/config.hpp>
 #include <halmd/mdsim/host/particle.hpp>
@@ -37,10 +37,6 @@
 # include <test/tools/cuda.hpp>
 #endif
 
-using namespace boost;
-using namespace halmd;
-using namespace std;
-
 /**
  * Primitive lattice with equal number of lattice points per dimension.
  *
@@ -48,17 +44,17 @@ using namespace std;
  */
 template <typename vector_type>
 class equilateral_lattice
-  : public primitive_lattice<vector_type, fixed_vector<size_t, vector_type::static_size> >
+  : public halmd::primitive_lattice<vector_type, halmd::fixed_vector<size_t, vector_type::static_size> >
 {
 public:
     equilateral_lattice(size_t nparticle) : lattice_type(make_lattice(nparticle)) {}
 
 private:
-    typedef primitive_lattice<vector_type, fixed_vector<size_t, vector_type::static_size> > lattice_type;
+    typedef halmd::primitive_lattice<vector_type, halmd::fixed_vector<size_t, vector_type::static_size> > lattice_type;
 
     static lattice_type make_lattice(unsigned int nparticle)
     {
-        return lattice_type(ceil(pow(nparticle, 1. / vector_type::static_size)));
+        return lattice_type(std::ceil(std::pow(nparticle, 1. / vector_type::static_size)));
     }
 };
 
@@ -66,10 +62,10 @@ private:
  * Make lattice iterator given a lattice primitive and particle index.
  */
 template <typename lattice_type>
-inline transform_iterator<lattice_type, counting_iterator<size_t> >
+inline boost::transform_iterator<lattice_type, boost::counting_iterator<size_t> >
 make_lattice_iterator(lattice_type const& lattice, size_t n)
 {
-    return make_transform_iterator(make_counting_iterator(n), lattice);
+    return boost::make_transform_iterator(boost::make_counting_iterator(n), lattice);
 }
 
 /**
@@ -84,12 +80,12 @@ void particle_position(particle_type& particle)
 
     // set species to ascending sequence of integers starting at 1 ≠ 0
     particle.set_species(
-        counting_iterator<species_type>(1)
-      , counting_iterator<species_type>(particle.nparticle() + 1)
+        boost::counting_iterator<species_type>(1)
+      , boost::counting_iterator<species_type>(particle.nparticle() + 1)
     );
 
     // check that positions are initialised to zero
-    vector<position_type> position;
+    std::vector<position_type> position;
     position.reserve(particle.nparticle());
     const_particle.get_position(back_inserter(position));
     BOOST_CHECK_EQUAL_COLLECTIONS(
@@ -117,14 +113,14 @@ void particle_position(particle_type& particle)
 
     // check that particle species are preserved, since positions
     // and species are stored in the same array in gpu::particle
-    vector<species_type> species;
+    std::vector<species_type> species;
     species.reserve(particle.nparticle());
     const_particle.get_species(back_inserter(species));
     BOOST_CHECK_EQUAL_COLLECTIONS(
         species.begin()
       , species.end()
-      , counting_iterator<species_type>(1)
-      , counting_iterator<species_type>(particle.nparticle() + 1)
+      , boost::counting_iterator<species_type>(1)
+      , boost::counting_iterator<species_type>(particle.nparticle() + 1)
     );
 }
 
@@ -138,7 +134,7 @@ void particle_image(particle_type& particle)
     particle_type const& const_particle = particle;
 
     // check that images are initialised to zero
-    vector<image_type> image;
+    std::vector<image_type> image;
     image.reserve(particle.nparticle());
     const_particle.get_image(back_inserter(image));
     BOOST_CHECK_EQUAL_COLLECTIONS(
@@ -177,12 +173,12 @@ void particle_velocity(particle_type& particle)
 
     // set masses to ascending sequence of integers starting at 2 ≠ 1
     particle.set_mass(
-        counting_iterator<mass_type>(2)
-      , counting_iterator<mass_type>(particle.nparticle() + 2)
+        boost::counting_iterator<mass_type>(2)
+      , boost::counting_iterator<mass_type>(particle.nparticle() + 2)
     );
 
     // check that velocities are initialised to zero
-    vector<velocity_type> velocity;
+    std::vector<velocity_type> velocity;
     velocity.reserve(particle.nparticle());
     const_particle.get_velocity(back_inserter(velocity));
     BOOST_CHECK_EQUAL_COLLECTIONS(
@@ -210,14 +206,14 @@ void particle_velocity(particle_type& particle)
 
     // check that particle masses are preserved, since velocities
     // and masses are stored in the same array in gpu::particle
-    vector<mass_type> mass;
+    std::vector<mass_type> mass;
     mass.reserve(particle.nparticle());
     const_particle.get_mass(back_inserter(mass));
     BOOST_CHECK_EQUAL_COLLECTIONS(
         mass.begin()
       , mass.end()
-      , counting_iterator<mass_type>(2)
-      , counting_iterator<mass_type>(particle.nparticle() + 2)
+      , boost::counting_iterator<mass_type>(2)
+      , boost::counting_iterator<mass_type>(particle.nparticle() + 2)
     );
 }
 
@@ -231,14 +227,14 @@ void particle_tag(particle_type& particle)
     particle_type const& const_particle = particle;
 
     // check that tags default to ascending sequence of integers
-    vector<tag_type> tag;
+    std::vector<tag_type> tag;
     tag.reserve(particle.nparticle());
     const_particle.get_tag(back_inserter(tag));
     BOOST_CHECK_EQUAL_COLLECTIONS(
         tag.begin()
       , tag.end()
-      , counting_iterator<tag_type>(0)
-      , counting_iterator<tag_type>(particle.nparticle())
+      , boost::counting_iterator<tag_type>(0)
+      , boost::counting_iterator<tag_type>(particle.nparticle())
     );
 
     // reverse order of particle tags
@@ -249,8 +245,8 @@ void particle_tag(particle_type& particle)
     BOOST_CHECK_EQUAL_COLLECTIONS(
         tag.rbegin()
       , tag.rend()
-      , counting_iterator<tag_type>(0)
-      , counting_iterator<tag_type>(particle.nparticle())
+      , boost::counting_iterator<tag_type>(0)
+      , boost::counting_iterator<tag_type>(particle.nparticle())
     );
 }
 
@@ -264,14 +260,14 @@ void particle_reverse_tag(particle_type& particle)
     particle_type const& const_particle = particle;
 
     // check that reverse tags default to ascending sequence of integers
-    vector<reverse_tag_type> reverse_tag;
+    std::vector<reverse_tag_type> reverse_tag;
     reverse_tag.reserve(particle.nparticle());
     const_particle.get_reverse_tag(back_inserter(reverse_tag));
     BOOST_CHECK_EQUAL_COLLECTIONS(
         reverse_tag.begin()
       , reverse_tag.end()
-      , counting_iterator<reverse_tag_type>(0)
-      , counting_iterator<reverse_tag_type>(particle.nparticle())
+      , boost::counting_iterator<reverse_tag_type>(0)
+      , boost::counting_iterator<reverse_tag_type>(particle.nparticle())
     );
 
     // reverse order of reverse particle tags
@@ -288,8 +284,8 @@ void particle_reverse_tag(particle_type& particle)
     BOOST_CHECK_EQUAL_COLLECTIONS(
         reverse_tag.rbegin()
       , reverse_tag.rend()
-      , counting_iterator<reverse_tag_type>(0)
-      , counting_iterator<reverse_tag_type>(particle.nparticle())
+      , boost::counting_iterator<reverse_tag_type>(0)
+      , boost::counting_iterator<reverse_tag_type>(particle.nparticle())
     );
 }
 
@@ -314,7 +310,7 @@ void particle_species(particle_type& particle)
     );
 
     // check that species are initialised to zero
-    vector<species_type> species;
+    std::vector<species_type> species;
     species.reserve(particle.nparticle());
     const_particle.get_species(back_inserter(species));
     BOOST_CHECK_EQUAL_COLLECTIONS(
@@ -326,8 +322,8 @@ void particle_species(particle_type& particle)
 
     // set species to ascending sequence of integers starting at 1 ≠ 0
     particle.set_species(
-        counting_iterator<species_type>(1)
-      , counting_iterator<species_type>(particle.nparticle() + 1)
+        boost::counting_iterator<species_type>(1)
+      , boost::counting_iterator<species_type>(particle.nparticle() + 1)
     );
 
     species.clear();
@@ -335,13 +331,13 @@ void particle_species(particle_type& particle)
     BOOST_CHECK_EQUAL_COLLECTIONS(
         species.begin()
       , species.end()
-      , counting_iterator<species_type>(1)
-      , counting_iterator<species_type>(particle.nparticle() + 1)
+      , boost::counting_iterator<species_type>(1)
+      , boost::counting_iterator<species_type>(particle.nparticle() + 1)
     );
 
     // check that particle positions are preserved, since positions
     // and species are stored in the same array in gpu::particle
-    vector<position_type> position;
+    std::vector<position_type> position;
     position.reserve(particle.nparticle());
     const_particle.get_position(back_inserter(position));
     BOOST_CHECK_EQUAL_COLLECTIONS(
@@ -370,7 +366,7 @@ void particle_mass(particle_type& particle)
     );
 
     // check that masses are initialised to unit mass
-    vector<mass_type> mass;
+    std::vector<mass_type> mass;
     mass.reserve(particle.nparticle());
     const_particle.get_mass(back_inserter(mass));
     BOOST_CHECK_EQUAL_COLLECTIONS(
@@ -382,8 +378,8 @@ void particle_mass(particle_type& particle)
 
     // set masses to ascending sequence of integers starting at 2 ≠ 1
     particle.set_mass(
-        counting_iterator<mass_type>(2)
-      , counting_iterator<mass_type>(particle.nparticle() + 2)
+        boost::counting_iterator<mass_type>(2)
+      , boost::counting_iterator<mass_type>(particle.nparticle() + 2)
     );
 
     mass.clear();
@@ -391,13 +387,13 @@ void particle_mass(particle_type& particle)
     BOOST_CHECK_EQUAL_COLLECTIONS(
         mass.begin()
       , mass.end()
-      , counting_iterator<mass_type>(2)
-      , counting_iterator<mass_type>(particle.nparticle() + 2)
+      , boost::counting_iterator<mass_type>(2)
+      , boost::counting_iterator<mass_type>(particle.nparticle() + 2)
     );
 
     // check that particle velocities are preserved, since velocities
     // and masses are stored in the same array in gpu::particle
-    vector<velocity_type> velocity;
+    std::vector<velocity_type> velocity;
     velocity.reserve(particle.nparticle());
     const_particle.get_velocity(back_inserter(velocity));
     BOOST_CHECK_EQUAL_COLLECTIONS(
@@ -418,7 +414,7 @@ void particle_force(particle_type& particle)
     particle_type const& const_particle = particle;
 
     // check that forces are initialised to zero
-    vector<force_type> force;
+    std::vector<force_type> force;
     force.reserve(particle.nparticle());
     const_particle.get_force(back_inserter(force));
     BOOST_CHECK_EQUAL_COLLECTIONS(
@@ -455,7 +451,7 @@ void particle_en_pot(particle_type& particle)
     particle_type const& const_particle = particle;
 
     // check that potential energies are initialised to zero
-    vector<en_pot_type> en_pot;
+    std::vector<en_pot_type> en_pot;
     en_pot.reserve(particle.nparticle());
     const_particle.get_en_pot(back_inserter(en_pot));
     BOOST_CHECK_EQUAL_COLLECTIONS(
@@ -467,8 +463,8 @@ void particle_en_pot(particle_type& particle)
 
     // set potential energies to ascending sequence of integers starting at 1 ≠ 0
     particle.set_en_pot(
-        counting_iterator<en_pot_type>(1)
-      , counting_iterator<en_pot_type>(particle.nparticle() + 1)
+        boost::counting_iterator<en_pot_type>(1)
+      , boost::counting_iterator<en_pot_type>(particle.nparticle() + 1)
     );
 
     en_pot.clear();
@@ -476,8 +472,8 @@ void particle_en_pot(particle_type& particle)
     BOOST_CHECK_EQUAL_COLLECTIONS(
         en_pot.begin()
       , en_pot.end()
-      , counting_iterator<en_pot_type>(1)
-      , counting_iterator<en_pot_type>(particle.nparticle() + 1)
+      , boost::counting_iterator<en_pot_type>(1)
+      , boost::counting_iterator<en_pot_type>(particle.nparticle() + 1)
     );
 }
 
@@ -491,7 +487,7 @@ void particle_stress_pot(particle_type& particle)
     particle_type const& const_particle = particle;
 
     // check that stress tensors are initialised to zero
-    vector<stress_pot_type> stress_pot;
+    std::vector<stress_pot_type> stress_pot;
     stress_pot.reserve(particle.nparticle());
     const_particle.get_stress_pot(back_inserter(stress_pot));
     BOOST_CHECK_EQUAL_COLLECTIONS(
@@ -528,7 +524,7 @@ void particle_hypervirial(particle_type& particle)
     particle_type const& const_particle = particle;
 
     // check that hypervirials are initialised to zero
-    vector<hypervirial_type> hypervirial;
+    std::vector<hypervirial_type> hypervirial;
     hypervirial.reserve(particle.nparticle());
     const_particle.get_hypervirial(back_inserter(hypervirial));
     BOOST_CHECK_EQUAL_COLLECTIONS(
@@ -540,8 +536,8 @@ void particle_hypervirial(particle_type& particle)
 
     // set hypervirials to ascending sequence of integers starting at 1 ≠ 0
     particle.set_hypervirial(
-        counting_iterator<hypervirial_type>(1)
-      , counting_iterator<hypervirial_type>(particle.nparticle() + 1)
+        boost::counting_iterator<hypervirial_type>(1)
+      , boost::counting_iterator<hypervirial_type>(particle.nparticle() + 1)
     );
 
     hypervirial.clear();
@@ -549,8 +545,8 @@ void particle_hypervirial(particle_type& particle)
     BOOST_CHECK_EQUAL_COLLECTIONS(
         hypervirial.begin()
       , hypervirial.end()
-      , counting_iterator<hypervirial_type>(1)
-      , counting_iterator<hypervirial_type>(particle.nparticle() + 1)
+      , boost::counting_iterator<hypervirial_type>(1)
+      , boost::counting_iterator<hypervirial_type>(particle.nparticle() + 1)
     );
 }
 
