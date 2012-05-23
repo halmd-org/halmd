@@ -23,13 +23,6 @@ if(NOT DVIPNG_CONVERTER)
 endif(NOT DVIPNG_CONVERTER)
 mark_as_advanced(DVIPNG_CONVERTER)
 
-# Lua scripts are used to extract inline documentation
-find_package(LuaInterp QUIET)
-if(NOT LUA_EXECUTABLE)
-  message(WARNING "Unable to find Lua interpreter")
-  set(GENERATE_DOC FALSE)
-endif()
-
 if(NOT GENERATE_DOC)
   message(WARNING "Missing required documentation tools")
   return()
@@ -51,16 +44,6 @@ file(GLOB_RECURSE files RELATIVE ${CMAKE_SOURCE_DIR} ${CMAKE_SOURCE_DIR}/example
 foreach(input ${files})
   configure_file(${CMAKE_SOURCE_DIR}/${input} ${input} @ONLY)
 endforeach()
-
-# Extract module documentation from Lua sources
-configure_file(modules.lua.in modules.lua)
-file(GLOB_RECURSE files RELATIVE "${CMAKE_SOURCE_DIR}/lua" "${CMAKE_SOURCE_DIR}/lua/halmd/*.lua.in")
-execute_process(COMMAND
-  "${CMAKE_CURRENT_BINARY_DIR}/modules.lua"
-    "${CMAKE_SOURCE_DIR}/lua"
-    "${CMAKE_CURRENT_BINARY_DIR}/modules"
-    ${files}
-)
 
 add_custom_target(halmd_doc_html ALL
   ${SPHINX_EXECUTABLE}
