@@ -52,22 +52,14 @@ void local_r4<float_type>::luaopen(lua_State* L)
 
 HALMD_LUA_API int luaopen_libhalmd_mdsim_forces_trunc_local_r4(lua_State* L)
 {
-#if defined(HALMD_WITH_GPU) || defined(USE_HOST_SINGLE_PRECISION)
     local_r4<float>::luaopen(L);
-#endif
-#ifndef USE_HOST_SINGLE_PRECISION
     local_r4<double>::luaopen(L);
-#endif
     return 0;
 }
 
 // explicit instantiation
-#if defined(HALMD_WITH_GPU) || defined(USE_HOST_SINGLE_PRECISION)
 template class local_r4<float>;
-#endif
-#ifndef USE_HOST_SINGLE_PRECISION
 template class local_r4<double>;
-#endif
 
 } // namespace trunc
 } // namespace forces
