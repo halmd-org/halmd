@@ -38,8 +38,6 @@
 # include <test/tools/cuda.hpp>
 #endif
 
-#ifndef HALMD_NO_CXX11
-
 /**
  * Partially compress system by applying sine shift to positions.
  *
@@ -322,5 +320,3 @@ HALMD_TEST_INIT( binning )
         }
     }
 }
-
-#endif /* ! HALMD_NO_CXX11 */

@@ -23,8 +23,6 @@
 #define BOOST_TEST_MODULE local_r4
 #include <boost/test/unit_test.hpp>
 
-#ifndef HALMD_NO_CXX11
-
 #include <array>
 #include <boost/numeric/ublas/assignment.hpp>
 #include <cmath>
@@ -300,5 +298,3 @@ BOOST_FIXTURE_TEST_CASE( local_r4, set_cuda_device ) {
 BOOST_AUTO_TEST_SUITE_END() // gpu
 
 #endif /** HALMD_WITH_GPU */
-
-#endif /* ! HALMD_NO_CXX11 */

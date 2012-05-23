@@ -22,8 +22,6 @@
 #define BOOST_TEST_MODULE clock
 #include <boost/test/unit_test.hpp>
 
-#ifndef HALMD_NO_CXX11
-
 #include <limits>
 
 #include <halmd/mdsim/clock.hpp>
@@ -91,5 +89,3 @@ BOOST_FIXTURE_TEST_CASE( monotonic_timestep, clock_fixture )
     BOOST_CHECK_EQUAL( clock_const.step(), 1000000u );
     BOOST_CHECK_CLOSE_FRACTION( clock_const.time(), 1000., epsilon() );
 }
-
-#endif /* ! HALMD_NO_CXX11 */
