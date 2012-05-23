@@ -20,8 +20,6 @@
 #ifndef HALMD_MDSIM_GPU_BINNING_HPP
 #define HALMD_MDSIM_GPU_BINNING_HPP
 
-#include <halmd/config.hpp>
-
 #include <algorithm>
 #include <boost/bind.hpp>
 #include <boost/make_shared.hpp>
@@ -172,8 +170,6 @@ private:
     runtime runtime_;
 };
 
-#ifndef HALMD_NO_CXX11
-
 template <int dimension, typename float_type>
 template <typename output_iterator>
 inline void binning<dimension, float_type>::get_cell(output_iterator output) const
@@ -190,8 +186,6 @@ inline void binning<dimension, float_type>::get_cell(output_iterator output) con
         }
     );
 }
-
-#endif /* ! HALMD_NO_CXX11 */
 
 template <int dimension, typename float_type>
 struct binning<dimension, float_type>::defaults
