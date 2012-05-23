@@ -1216,7 +1216,7 @@ env-halmd:
 ## nvCUDA-tools - A collection of tools for NVIDIA CUDA compute devices
 ##
 
-NVCUDA_TOOLS_VERSION = 8853069
+NVCUDA_TOOLS_VERSION = 15490f0
 NVCUDA_TOOLS_GIT_URL = http://git.colberg.org/nvcuda-tools.git
 NVCUDA_TOOLS_SOURCE_DIR = nvcuda-tools-$(NVCUDA_TOOLS_VERSION)
 NVCUDA_TOOLS_BUILD_DIR = $(NVCUDA_TOOLS_SOURCE_DIR)/build/release
