@@ -1082,10 +1082,10 @@ distclean-cloog-ppl: clean-cloog-ppl
 ## HALMD Highly Accerelated Large-Scale Molecular Dynamics
 ##
 
-HALMD_VERSION = 0.2-rc2
+HALMD_VERSION = 0.2-rc3
 HALMD_TARBALL = halmd-$(HALMD_VERSION).tar.bz2
 HALMD_TARBALL_URL = http://downloads.sourceforge.net/project/halmd/halmd/0.2/testing/$(HALMD_TARBALL)
-HALMD_TARBALL_SHA256 = adbd7b2e7e0e4e597503ec203acda9e50b8a09aa9ac4c056d12627132f8dc24d
+HALMD_TARBALL_SHA256 = ffc7a3b99efe8dc2dee9c24589c9c3dec52043395fd02f93dcb4ea326b5c0704
 HALMD_SOURCE_DIR = halmd-$(HALMD_VERSION)
 HALMD_BUILD_DIR = $(HALMD_SOURCE_DIR)/build/release
 HALMD_INSTALL_DIR = $(PREFIX)/halmd-$(HALMD_VERSION)
