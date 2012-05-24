@@ -27,8 +27,8 @@
 #include <halmd/mdsim/box.hpp>
 #include <halmd/mdsim/gpu/particle.hpp>
 #include <halmd/mdsim/gpu/sorts/hilbert_kernel.hpp>
-#include <halmd/mdsim/sort.hpp>
 #include <halmd/utility/profiler.hpp>
+#include <halmd/utility/signal.hpp>
 
 namespace halmd {
 namespace mdsim {
@@ -37,17 +37,13 @@ namespace sorts {
 
 template <int dimension, typename float_type>
 class hilbert
-  : public mdsim::sort<dimension>
 {
 public:
-    typedef mdsim::sort<dimension> _Base;
     typedef gpu::particle<dimension, float_type> particle_type;
     typedef typename particle_type::vector_type vector_type;
     typedef typename particle_type::gpu_vector_type gpu_vector_type;
     typedef mdsim::box<dimension> box_type;
     typedef hilbert_wrapper<dimension> wrapper_type;
-    typedef typename _Base::signal_type signal_type;
-    typedef typename _Base::slot_function_type slot_function_type;
     typedef logger logger_type;
 
     static char const* module_name() { return "hilbert"; }
@@ -59,9 +55,9 @@ public:
       , boost::shared_ptr<box_type const> box
       , boost::shared_ptr<logger_type> logger = boost::make_shared<logger_type>()
     );
-    virtual void order();
+    void order();
 
-    virtual connection on_order(slot_function_type const& slot)
+    connection on_order(boost::function<void ()> const& slot)
     {
         return on_order_.connect(slot);
     }
@@ -86,7 +82,7 @@ private:
     /** recursion depth */
     unsigned int depth_;
     /** signal emitted after particle ordering */
-    signal_type on_order_;
+    signal<void ()> on_order_;
     /** module logger */
     boost::shared_ptr<logger_type> logger_;
     /** profiling runtime accumulators */

@@ -3,14 +3,12 @@ halmd_add_library(halmd_mdsim
   clock.cpp
   core.cpp
   neighbour.cpp
-  sort.cpp
 )
 halmd_add_modules(
   libhalmd_mdsim_box
   libhalmd_mdsim_core
   libhalmd_mdsim_clock
   libhalmd_mdsim_neighbour
-  libhalmd_mdsim_sort
 )
 
 add_subdirectory(forces)

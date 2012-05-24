@@ -119,6 +119,13 @@ static char const* module_name_wrapper(hilbert<dimension, float_type> const&)
     return hilbert<dimension, float_type>::module_name();
 }
 
+template <typename sort_type>
+static boost::function<void ()>
+wrap_order(boost::shared_ptr<sort_type> sort)
+{
+    return boost::bind(&sort_type::order, sort);
+}
+
 template <int dimension, typename float_type>
 void hilbert<dimension, float_type>::luaopen(lua_State* L)
 {
@@ -132,13 +139,15 @@ void hilbert<dimension, float_type>::luaopen(lua_State* L)
             [
                 namespace_("sorts")
                 [
-                    class_<hilbert, boost::shared_ptr<_Base>, _Base>(class_name.c_str())
+                    class_<hilbert, boost::shared_ptr<hilbert> >(class_name.c_str())
                         .def(constructor<
                             boost::shared_ptr<particle_type>
                           , boost::shared_ptr<box_type const>
                           , boost::shared_ptr<logger_type>
                         >())
                         .property("module_name", &module_name_wrapper<dimension, float_type>)
+                        .property("order", &wrap_order<hilbert>)
+                        .def("on_order", &hilbert::on_order)
                         .scope
                         [
                             class_<runtime>("runtime")
