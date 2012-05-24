@@ -51,8 +51,6 @@ public:
     typedef mdsim::box<dimension> box_type;
     typedef gpu::binning<dimension, float_type> binning_type;
     struct defaults;
-    typedef typename _Base::signal_type signal_type;
-    typedef typename _Base::slot_function_type slot_function_type;
     typedef logger logger_type;
 
     static void luaopen(lua_State* L);
@@ -68,14 +66,14 @@ public:
       , boost::shared_ptr<logger_type> logger = boost::make_shared<logger_type>()
       , double cell_occupancy = defaults::occupancy()
     );
-    virtual void update();
+    void update();
 
-    virtual connection on_prepend_update(slot_function_type const& slot)
+    connection on_prepend_update(boost::function<void ()> const& slot)
     {
         return on_prepend_update_.connect(slot);
     }
 
-    virtual connection on_append_update(slot_function_type const& slot)
+    connection on_append_update(boost::function<void ()> const& slot)
     {
         return on_append_update_.connect(slot);
     }
@@ -149,9 +147,9 @@ private:
     /** profiling runtime accumulators */
     runtime runtime_;
     /** signal emitted before neighbour list update */
-    signal_type on_prepend_update_;
+    signal<void ()> on_prepend_update_;
     /** signal emitted after neighbour list update */
-    signal_type on_append_update_;
+    signal<void ()> on_append_update_;
 };
 
 template <int dimension, typename float_type>

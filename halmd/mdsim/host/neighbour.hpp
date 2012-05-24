@@ -23,8 +23,6 @@
 #include <lua.hpp>
 #include <vector>
 
-#include <halmd/mdsim/neighbour.hpp>
-
 namespace halmd {
 namespace mdsim {
 namespace host {
@@ -36,11 +34,11 @@ namespace host {
  * neighbour lists for force modules with truncated potentials.
  */
 class neighbour
-  : public mdsim::neighbour
 {
 public:
     typedef std::vector<unsigned int> neighbour_list;
 
+    virtual ~neighbour() {}
     /** Lua bindings */
     static void luaopen(lua_State* L);
     /** neighbour lists */

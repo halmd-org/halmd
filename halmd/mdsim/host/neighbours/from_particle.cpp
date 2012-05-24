@@ -120,6 +120,13 @@ void from_particle<dimension, float_type>::update()
     on_append_update_();
 }
 
+template <typename neighbour_type>
+static boost::function<void ()>
+wrap_update(boost::shared_ptr<neighbour_type> neighbour)
+{
+    return boost::bind(&neighbour_type::update, neighbour);
+}
+
 template <int dimension, typename float_type>
 void from_particle<dimension, float_type>::luaopen(lua_State* L)
 {
@@ -133,7 +140,7 @@ void from_particle<dimension, float_type>::luaopen(lua_State* L)
             [
                 namespace_("neighbours")
                 [
-                    class_<from_particle, boost::shared_ptr<mdsim::neighbour>, mdsim::neighbour>(class_name.c_str())
+                    class_<from_particle, boost::shared_ptr<_Base>, _Base>(class_name.c_str())
                         .def(constructor<
                             boost::shared_ptr<particle_type const>
                           , boost::shared_ptr<particle_type const>
@@ -143,6 +150,9 @@ void from_particle<dimension, float_type>::luaopen(lua_State* L)
                           , boost::shared_ptr<logger_type>
                          >())
                         .property("r_skin", &from_particle::r_skin)
+                        .property("update", &wrap_update<from_particle>)
+                        .def("on_prepend_update", &from_particle::on_prepend_update)
+                        .def("on_append_update", &from_particle::on_append_update)
                         .scope
                         [
                             class_<runtime>("runtime")

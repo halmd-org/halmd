@@ -190,6 +190,13 @@ void from_binning<dimension, float_type>::compute_cell_neighbours(size_t i, cell
     }
 }
 
+template <typename neighbour_type>
+static boost::function<void ()>
+wrap_update(boost::shared_ptr<neighbour_type> neighbour)
+{
+    return boost::bind(&neighbour_type::update, neighbour);
+}
+
 template <int dimension, typename float_type>
 void from_binning<dimension, float_type>::luaopen(lua_State* L)
 {
@@ -203,7 +210,7 @@ void from_binning<dimension, float_type>::luaopen(lua_State* L)
             [
                 namespace_("neighbours")
                 [
-                    class_<from_binning, boost::shared_ptr<mdsim::neighbour>, mdsim::neighbour>(class_name.c_str())
+                    class_<from_binning, boost::shared_ptr<_Base>, _Base>(class_name.c_str())
                         .def(constructor<
                             boost::shared_ptr<particle_type const>
                           , boost::shared_ptr<particle_type const>
@@ -215,6 +222,9 @@ void from_binning<dimension, float_type>::luaopen(lua_State* L)
                           , boost::shared_ptr<logger_type>
                          >())
                         .property("r_skin", &from_binning::r_skin)
+                        .property("update", &wrap_update<from_binning>)
+                        .def("on_prepend_update", &from_binning::on_prepend_update)
+                        .def("on_append_update", &from_binning::on_append_update)
                         .scope
                         [
                             class_<runtime>("runtime")

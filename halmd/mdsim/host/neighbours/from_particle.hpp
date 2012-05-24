@@ -49,8 +49,6 @@ public:
     typedef boost::numeric::ublas::matrix<float_type> matrix_type;
     typedef mdsim::box<dimension> box_type;
     typedef typename _Base::neighbour_list neighbour_list;
-    typedef typename _Base::signal_type signal_type;
-    typedef typename _Base::slot_function_type slot_function_type;
     typedef logger logger_type;
 
     static void luaopen(lua_State* L);
@@ -63,14 +61,14 @@ public:
       , double skin
       , boost::shared_ptr<logger_type> logger = boost::make_shared<logger_type>()
     );
-    virtual void update();
+    void update();
 
-    virtual connection on_prepend_update(slot_function_type const& slot)
+    connection on_prepend_update(boost::function<void ()> const& slot)
     {
         return on_prepend_update_.connect(slot);
     }
 
-    virtual connection on_append_update(slot_function_type const& slot)
+    connection on_append_update(boost::function<void ()> const& slot)
     {
         return on_append_update_.connect(slot);
     }
@@ -109,9 +107,9 @@ private:
     /** (cutoff lengths + neighbour list skin)² */
     matrix_type rr_cut_skin_;
     /** signal emitted before neighbour list update */
-    signal_type on_prepend_update_;
+    signal<void ()> on_prepend_update_;
     /** signal emitted after neighbour list update */
-    signal_type on_append_update_;
+    signal<void ()> on_append_update_;
     /** profiling runtime accumulators */
     runtime runtime_;
 };

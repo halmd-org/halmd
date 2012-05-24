@@ -49,18 +49,6 @@ public:
         boost::shared_ptr<particle_type const> particle
     );
 
-    virtual void update() {}
-
-    virtual halmd::connection on_prepend_update(halmd::mdsim::neighbour::slot_function_type const& slot)
-    {
-        return signal_.connect(slot);
-    }
-
-    virtual halmd::connection on_append_update(halmd::mdsim::neighbour::slot_function_type const& slot)
-    {
-        return signal_.connect(slot);
-    }
-
     /** neighbour lists */
     virtual cuda::vector<unsigned int> const& g_neighbour() const
     {
@@ -80,8 +68,6 @@ private:
     unsigned int stride_;
     /** neighbour lists */
     cuda::vector<unsigned int> g_neighbour_;
-    /** dummy signal */
-    halmd::mdsim::neighbour::signal_type signal_;
 };
 
 template <int dimension, typename float_type>

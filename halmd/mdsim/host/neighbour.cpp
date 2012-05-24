@@ -20,9 +20,6 @@
 #include <halmd/mdsim/host/neighbour.hpp>
 #include <halmd/utility/lua/lua.hpp>
 
-using namespace boost;
-using namespace std;
-
 namespace halmd {
 namespace mdsim {
 namespace host {
@@ -36,7 +33,7 @@ void neighbour::luaopen(lua_State* L)
         [
             namespace_("host")
             [
-                class_<neighbour, mdsim::neighbour>("neighbour")
+                class_<neighbour>("neighbour")
             ]
         ]
     ];
