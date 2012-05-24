@@ -62,7 +62,8 @@ local function liquid(args)
     -- add force
     local force = mdsim.forces.pair_trunc{box = box, particle = particle, potential = potential}
     -- set initial particle positions
-    mdsim.positions.lattice{box = box, particle = particle}
+    local lattice = mdsim.positions.lattice{box = box, particle = particle}
+    lattice:set()
     -- set initial particle velocities
     local boltzmann = mdsim.velocities.boltzmann{box = box, particle = particle}
     boltzmann:set()

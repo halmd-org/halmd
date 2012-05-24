@@ -179,12 +179,6 @@ static char const* module_name_wrapper(lattice<dimension, float_type> const&)
     return lattice<dimension, float_type>::module_name();
 }
 
-template <typename position_type>
-static boost::function<void ()> wrap_set(boost::shared_ptr<position_type> self)
-{
-    return bind(&position_type::set, self);
-}
-
 template <int dimension, typename float_type>
 void lattice<dimension, float_type>::luaopen(lua_State* L)
 {
@@ -207,7 +201,7 @@ void lattice<dimension, float_type>::luaopen(lua_State* L)
                         >())
                         .property("slab", &lattice::slab)
                         .property("module_name", &module_name_wrapper<dimension, float_type>)
-                        .property("set", &wrap_set<lattice>)
+                        .def("set", &lattice::set)
                         .scope
                         [
                             class_<runtime>("runtime")

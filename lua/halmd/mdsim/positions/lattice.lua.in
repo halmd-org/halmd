@@ -66,9 +66,6 @@ local M = module(function(args)
     end
     local position = lattice(particle, box, slab, logger)
 
-    -- connect position to core
-    core:on_setup(position.set)
-
     return position
 end)
 
