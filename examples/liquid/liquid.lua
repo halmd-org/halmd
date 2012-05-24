@@ -65,7 +65,7 @@ local function liquid(args)
     local lattice = mdsim.positions.lattice{box = box, particle = particle}
     lattice:set()
     -- set initial particle velocities
-    local boltzmann = mdsim.velocities.boltzmann{box = box, particle = particle}
+    local boltzmann = mdsim.velocities.boltzmann{particle = particle}
     boltzmann:set()
 
     -- H5MD file writer
