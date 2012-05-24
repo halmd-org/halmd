@@ -37,8 +37,10 @@ static texture<unsigned int> ntypes_;
 static texture<float4> r_;
 /** minimum image vectors */
 static texture<void> image_;
-/** velocities, tags */
+/** velocities, masses */
 static texture<float4> v_;
+/** tags */
+static texture<unsigned int> tag_;
 
 /**
  * Set particle masses to scalar.
@@ -48,31 +50,6 @@ __global__ void set_mass(float4* g_velocity, unsigned int nparticle, float mass)
 {
     fixed_vector<float, dimension> v = g_velocity[GTID];
     g_velocity[GTID] <<= tie(v, mass);
-}
-
-/**
- * set particle tags and types
- */
-template <
-    typename vector_type
-  , typename coalesced_vector_type
->
-__global__ void tag(coalesced_vector_type* g_r)
-{
-    vector_type r, v;
-    unsigned int type, tag;
-    tie(r, type) <<= g_r[GTID];
-
-    // set particle type
-    for (type = 0, tag = GTID; type < ntype_; ++type) {
-        unsigned int n = tex1Dfetch(ntypes_, type);
-        if (tag < n) {
-            break;
-        }
-        tag -= n;
-    }
-
-    g_r[GTID] <<= tie(r, type);
 }
 
 /**
@@ -109,15 +86,15 @@ __global__ void rearrange(
     // copy velocity, but split off tag and store separately
     {
         vector_type v;
-        unsigned int tag;
+        float mass;
 #ifdef USE_VERLET_DSFUN
-        tie(v, tag) <<= make_tuple(tex1Dfetch(v_, i), tex1Dfetch(v_, i + GTDIM));
-        tie(g_v[GTID], g_v[GTID + GTDIM]) <<= tie(v, tag);
+        tie(v, mass) <<= make_tuple(tex1Dfetch(v_, i), tex1Dfetch(v_, i + GTDIM));
+        tie(g_v[GTID], g_v[GTID + GTDIM]) <<= tie(v, mass);
 #else
-        tie(v, tag) <<= tex1Dfetch(v_, i);
-        g_v[GTID] <<= tie(v, tag);
+        tie(v, mass) <<= tex1Dfetch(v_, i);
+        g_v[GTID] <<= tie(v, mass);
 #endif
-        g_tag[GTID] = tag;
+        g_tag[GTID] = tex1Dfetch(tag_, i);
     }
 }
 
@@ -131,7 +108,7 @@ particle_wrapper<dimension> const particle_wrapper<dimension>::kernel = {
   , particle_kernel::r_
   , particle_kernel::image_
   , particle_kernel::v_
-  , particle_kernel::tag<fixed_vector<float, dimension> >
+  , particle_kernel::tag_
   , particle_kernel::gen_index
 #ifdef USE_VERLET_DSFUN
   , particle_kernel::rearrange<fixed_vector<dsfloat, dimension> >

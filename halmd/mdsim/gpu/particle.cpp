@@ -230,11 +230,13 @@ void particle<dimension, float_type>::rearrange(cuda::vector<unsigned int> const
     get_particle_kernel<dimension>().r.bind(g_position_);
     get_particle_kernel<dimension>().image.bind(g_image_);
     get_particle_kernel<dimension>().v.bind(g_velocity_);
+    get_particle_kernel<dimension>().tag.bind(g_tag_);
     get_particle_kernel<dimension>().rearrange(g_index, g_r_buf, g_image_buf, g_v_buf, g_tag);
 
     g_r_buf.swap(g_position_);
     g_image_buf.swap(g_image_);
     g_v_buf.swap(g_velocity_);
+    cuda::copy(g_tag, g_tag_);
 
     radix_sort<unsigned int> sort(g_tag_.size(), dim.threads_per_block());
     cuda::configure(dim.grid, dim.block);

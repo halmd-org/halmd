@@ -41,9 +41,10 @@ struct particle_wrapper
     cuda::texture<float4> r;
     /** minimum image vectors */
     cuda::texture<aligned_vector_type> image;
-    /** velocities, tags */
+    /** velocities, masses */
     cuda::texture<float4> v;
-    cuda::function<void (float4*)> tag;
+    /** tags */
+    cuda::texture<unsigned int> tag;
     /** generate ascending index sequence */
     cuda::function<void (unsigned int*)> gen_index;
     /** rearrange particles by a given permutation */
