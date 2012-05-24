@@ -24,7 +24,6 @@
 
 #include <halmd/io/logger.hpp>
 #include <halmd/mdsim/gpu/particle.hpp>
-#include <halmd/mdsim/velocity.hpp>
 
 namespace halmd {
 namespace mdsim {
@@ -32,21 +31,19 @@ namespace gpu {
 
 template <int dimension, typename float_type>
 class velocity
-  : public mdsim::velocity<dimension>
 {
 public:
-    typedef mdsim::velocity<dimension> _Base;
     typedef gpu::particle<dimension, float_type> particle_type;
-    typedef typename _Base::vector_type vector_type;
+    typedef fixed_vector<double, dimension> vector_type;
     typedef logger logger_type;
 
     velocity(
         boost::shared_ptr<particle_type> particle
       , boost::shared_ptr<logger_type> logger = boost::make_shared<logger_type>()
     );
-    virtual void rescale(double factor);
-    virtual void shift(vector_type const& delta);
-    virtual void shift_rescale(vector_type const& delta, double factor);
+    void rescale(double factor);
+    void shift(vector_type const& delta);
+    void shift_rescale(vector_type const& delta, double factor);
 
 private:
     boost::shared_ptr<particle_type> particle_;

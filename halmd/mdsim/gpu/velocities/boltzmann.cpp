@@ -143,7 +143,6 @@ static char const* module_name_wrapper(boltzmann<dimension, float_type, RandomNu
 template <int dimension, typename float_type, typename RandomNumberGenerator>
 void boltzmann<dimension, float_type, RandomNumberGenerator>::luaopen(lua_State* L)
 {
-    typedef typename _Base::_Base _Base_Base;
     using namespace luabind;
     static string class_name(module_name() + ("_" + lexical_cast<string>(dimension) + "_"));
     module(L, "libhalmd")
@@ -154,7 +153,7 @@ void boltzmann<dimension, float_type, RandomNumberGenerator>::luaopen(lua_State*
             [
                 namespace_("velocities")
                 [
-                    class_<boltzmann, boost::shared_ptr<_Base_Base>, _Base_Base>(class_name.c_str())
+                    class_<boltzmann, boost::shared_ptr<boltzmann> >(class_name.c_str())
                         .def(constructor<
                              boost::shared_ptr<particle_type>
                            , boost::shared_ptr<random_type>
@@ -163,6 +162,7 @@ void boltzmann<dimension, float_type, RandomNumberGenerator>::luaopen(lua_State*
                          >())
                         .property("temperature", &boltzmann::temperature)
                         .property("module_name", &module_name_wrapper<dimension, float_type, RandomNumberGenerator>)
+                        .def("set", &boltzmann::set)
                         .scope
                         [
                             class_<runtime>("runtime")

@@ -4,7 +4,6 @@ halmd_add_library(halmd_mdsim
   core.cpp
   neighbour.cpp
   sort.cpp
-  velocity.cpp
 )
 halmd_add_modules(
   libhalmd_mdsim_box
@@ -12,7 +11,6 @@ halmd_add_modules(
   libhalmd_mdsim_clock
   libhalmd_mdsim_neighbour
   libhalmd_mdsim_sort
-  libhalmd_mdsim_velocity
 )
 
 add_subdirectory(forces)

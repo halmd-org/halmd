@@ -20,7 +20,6 @@
 #include <boost/foreach.hpp>
 
 #include <halmd/mdsim/host/velocity.hpp>
-#include <halmd/utility/lua/lua.hpp>
 
 namespace halmd {
 namespace mdsim {
@@ -70,28 +69,6 @@ void velocity<dimension, float_type>::shift_rescale(vector_type const& delta, do
         v += delta;
         v *= factor;
     }
-}
-
-template <int dimension, typename float_type>
-void velocity<dimension, float_type>::luaopen(lua_State* L)
-{
-    using namespace luabind;
-    module(L)
-    [
-        class_<velocity, _Base>()
-    ];
-}
-
-HALMD_LUA_API int luaopen_libhalmd_mdsim_host_velocity(lua_State* L)
-{
-#ifndef USE_HOST_SINGLE_PRECISION
-    velocity<3, double>::luaopen(L);
-    velocity<2, double>::luaopen(L);
-#else
-    velocity<3, float>::luaopen(L);
-    velocity<2, float>::luaopen(L);
-#endif
-    return 0;
 }
 
 #ifndef USE_HOST_SINGLE_PRECISION

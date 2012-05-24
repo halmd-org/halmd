@@ -66,7 +66,7 @@ public:
       , double temperature
       , boost::shared_ptr<logger_type> logger = boost::make_shared<logger_type>()
     );
-    virtual void set();
+    void set();
 
     //! returns temperature
     float_type temperature() const
