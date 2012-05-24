@@ -21,8 +21,8 @@
 local module = require("halmd.utility.module")
 
 ---
--- Particle Group
--- ==============
+-- All
+-- ===
 --
 -- A particle group represents a subset of particles, which is defined
 -- by an instance of particle together with a sequence of indices.
@@ -30,30 +30,21 @@ local module = require("halmd.utility.module")
 -- Example::
 --
 --    -- construct particle instance for given simulation domain
---    local system = halmd.mdsim.particle({box = box, particles = 10000, species = 2})
+--    local system = halmd.mdsim.particle({box = box, particles = 10000, species = 1})
 --
---    -- select all particles, i.e. range is {1, particle.nparticle}
---    local group_all = halmd.mdsim.particle_group({particle = particle})
---
---    -- select each species, assuming particles of a species have contiguous tags
---    local group_A = halmd.mdsim.particle_group({particle = system, range = {1, 5000}, label = "A"})
---    local group_B = halmd.mdsim.particle_group({particle = system, range = {5001, 10000}, label = "B"})
+--    -- select all particles
+--    local group_all = halmd.mdsim.particle_groups.all({particle = particle})
 --
 
 -- grab C++ wrappers
-local particle_group_from_range = assert(libhalmd.mdsim.particle_group_from_range)
+local from_range = assert(libhalmd.mdsim.particle_groups.from_range)
 
 ---
--- Construct particle group from tag range.
+-- Construct particle group from all particles.
 --
 -- :param table args: keyword arguments
 -- :param args.particle: instance of :class:`halmd.mdsim.particle`
--- :param table args.range: particle tag range ``{first, last}`` (defaults to all particles)
--- :param string args.label: group label (defaults to :attr:`halmd.mdsim.particle.label` if all particles)
---
--- .. note::
---
---    Particle tags are 1-based, i.e. the first particle has tag 1.
+-- :param string args.label: group label (defaults to :attr:`halmd.mdsim.particle.label`)
 --
 -- .. attribute:: particle
 --
@@ -68,21 +59,14 @@ local M = module(function(args)
     if not particle then
         error("missing argument 'particle'", 2)
     end
-    local range = args.range
-    local label = args.label
-    if not range then
-        range = {1, assert(particle.nparticle)}
-        label = assert(particle.label)
-    end
-    if type(range) ~= "table" or #range ~= 2 then
-        error("invalid argument 'range'", 2)
-    end
+    local label = args.label or assert(particle.label)
     if type(label) ~= "string" then
         error("invalid argument 'label'", 2)
     end
+    local range = {1, assert(particle.nparticle)}
 
     -- construct particle group from tag range
-    local self = particle_group_from_range(particle, range[1], range[2])
+    local self = from_range(particle, range[1], range[2])
 
     -- attach label as read-only property
     self.label = property(function(self)

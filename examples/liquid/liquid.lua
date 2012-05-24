@@ -81,7 +81,7 @@ local function liquid(args)
     end
     particle:set_species(species)
 
-    local particle_group = mdsim.particle_group{
+    local particle_group = mdsim.particle_groups.all{
         particle = particle -- FIXME , species = species
     }
     local phase_space = observables.phase_space({box = box, group = particle_group})

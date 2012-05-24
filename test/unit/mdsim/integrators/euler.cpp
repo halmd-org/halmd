@@ -35,7 +35,7 @@
 #include <halmd/mdsim/host/particle.hpp>
 #include <halmd/mdsim/host/positions/lattice.hpp>
 #include <halmd/mdsim/host/velocities/boltzmann.hpp>
-#include <halmd/mdsim/particle_group.hpp>
+#include <halmd/mdsim/particle_groups/from_range.hpp>
 #include <halmd/observables/host/phase_space.hpp>
 #include <halmd/random/host/random.hpp>
 #ifdef HALMD_WITH_GPU
@@ -79,7 +79,7 @@ struct test_euler
     typedef typename modules_type::box_type box_type;
     typedef typename modules_type::integrator_type integrator_type;
     typedef typename modules_type::particle_type particle_type;
-    typedef mdsim::particle_group_from_range<particle_type> particle_group_type;
+    typedef mdsim::particle_groups::from_range<particle_type> particle_group_type;
     typedef typename modules_type::position_type position_type;
     typedef typename modules_type::random_type random_type;
     typedef typename modules_type::velocity_type velocity_type;

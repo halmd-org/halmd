@@ -32,7 +32,7 @@
 #include <halmd/mdsim/box.hpp>
 #include <halmd/mdsim/clock.hpp>
 #include <halmd/mdsim/host/particle.hpp>
-#include <halmd/mdsim/particle_group.hpp>
+#include <halmd/mdsim/particle_groups/from_range.hpp>
 #include <halmd/numeric/accumulator.hpp>
 #include <halmd/observables/host/phase_space.hpp>
 #include <halmd/observables/host/samples/phase_space.hpp>
@@ -102,7 +102,7 @@ struct phase_space
 {
     typedef typename modules_type::box_type box_type;
     typedef typename modules_type::particle_type particle_type;
-    typedef mdsim::particle_group_from_range<particle_type> particle_group_type;
+    typedef mdsim::particle_groups::from_range<particle_type> particle_group_type;
     typedef typename modules_type::input_phase_space_type input_phase_space_type;
     typedef typename input_phase_space_type::sample_type input_sample_type;
     typedef typename modules_type::output_phase_space_type output_phase_space_type;
@@ -225,7 +225,7 @@ struct host_modules
 {
     typedef mdsim::box<dimension> box_type;
     typedef mdsim::host::particle<dimension, float_type> particle_type;
-    typedef mdsim::particle_group_from_range<particle_type> particle_group_type;
+    typedef mdsim::particle_groups::from_range<particle_type> particle_group_type;
     typedef observables::host::phase_space<dimension, float_type> input_phase_space_type;
     typedef input_phase_space_type output_phase_space_type;
     static bool const gpu = false;
