@@ -210,7 +210,7 @@ struct power_law_with_core
     typedef mdsim::gpu::potentials::power_law_with_core<float_type> potential_type;
     typedef mdsim::host::potentials::power_law_with_core<double> host_potential_type;
     typedef mdsim::gpu::forces::pair_trunc<dimension, float_type, potential_type> force_type;
-    typedef test::unit::mdsim::potentials::gpu::neighbour_chain<dimension, float_type> neighbour_type;
+    typedef neighbour_chain<dimension, float_type> neighbour_type;
 
     typedef typename particle_type::vector_type vector_type;
 

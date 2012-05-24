@@ -165,7 +165,7 @@ struct test_local_r4
     typedef halmd::mdsim::gpu::potentials::lennard_jones<float_type> potential_type;
     typedef halmd::mdsim::host::potentials::lennard_jones<double> host_potential_type;
     typedef halmd::mdsim::gpu::forces::pair_trunc<dimension, float_type, potential_type, trunc_type> force_type;
-    typedef test::unit::mdsim::potentials::gpu::neighbour_chain<dimension, float_type> neighbour_type;
+    typedef neighbour_chain<dimension, float_type> neighbour_type;
 
     typedef typename particle_type::vector_type vector_type;
 

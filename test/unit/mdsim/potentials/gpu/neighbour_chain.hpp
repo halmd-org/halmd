@@ -25,12 +25,6 @@
 #include <halmd/mdsim/gpu/neighbour.hpp>
 #include <halmd/mdsim/gpu/particle.hpp>
 
-namespace test {
-namespace unit {
-namespace mdsim {
-namespace potentials {
-namespace gpu {
-
 /** GPU neighbour list returning a chain
  *
  * This class constructs a set of neighbour lists where each particle interacts
@@ -87,11 +81,5 @@ neighbour_chain<dimension, float_type>::neighbour_chain(
     }
     cuda::copy(neighbour, g_neighbour_); // copy data to GPU
 }
-
-} // namespace gpu
-} // namespace potentials
-} // namespace mdsim
-} // namespace unit
-} // namespace test
 
 #endif /* ! TEST_UNIT_MDSIM_POTENTIALS_GPU_NEIGHBOUR_CHAIN_HPP */
