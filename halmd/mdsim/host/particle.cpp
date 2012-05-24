@@ -212,10 +212,15 @@ template <typename particle_type>
 static void
 wrap_set_tag(particle_type& particle, vector<typename particle_type::tag_type> const& input)
 {
+    typedef typename particle_type::tag_type tag_type;
     if (input.size() != particle.nparticle()) {
         throw invalid_argument("input array size not equal to number of particles");
     }
-    auto convert_1_to_0 = [](typename particle_type::tag_type t) {
+    tag_type nparticle = particle.nparticle();
+    auto convert_1_to_0 = [&](tag_type t) -> tag_type {
+        if (t < 1 || t > nparticle) {
+            throw std::invalid_argument("invalid particle tag");
+        }
         return t - 1;
     };
     particle.set_tag(
@@ -242,10 +247,15 @@ template <typename particle_type>
 static void
 wrap_set_reverse_tag(particle_type& particle, vector<typename particle_type::reverse_tag_type> const& input)
 {
+    typedef typename particle_type::reverse_tag_type reverse_tag_type;
     if (input.size() != particle.nparticle()) {
         throw invalid_argument("input array size not equal to number of particles");
     }
-    auto convert_1_to_0 = [](typename particle_type::reverse_tag_type i) {
+    reverse_tag_type nparticle = particle.nparticle();
+    auto convert_1_to_0 = [&](reverse_tag_type i) -> reverse_tag_type {
+        if (i < 1 || i > nparticle) {
+            throw std::invalid_argument("invalid particle reverse tag");
+        }
         return i - 1;
     };
     particle.set_reverse_tag(
@@ -272,10 +282,15 @@ template <typename particle_type>
 static void
 wrap_set_species(particle_type& particle, vector<typename particle_type::species_type> const& input)
 {
+    typedef typename particle_type::species_type species_type;
     if (input.size() != particle.nparticle()) {
         throw invalid_argument("input array size not equal to number of particles");
     }
-    auto convert_1_to_0 = [](typename particle_type::species_type s) {
+    species_type nspecies = particle.nspecies();
+    auto convert_1_to_0 = [&](species_type s) -> species_type {
+        if (s < 1 || s > nspecies) {
+            throw std::invalid_argument("invalid particle species");
+        }
         return s - 1;
     };
     particle.set_species(
