@@ -305,7 +305,12 @@ wrap_get_tag(particle_type const& particle, vector<typename particle_type::tag_t
 {
     output.clear();
     output.reserve(particle.nparticle());
-    particle.get_tag(back_inserter(output));
+    auto convert_0_to_1 = [&](typename particle_type::tag_type t) {
+        output.push_back(t + 1);
+    };
+    particle.get_tag(
+        boost::make_function_output_iterator(convert_0_to_1)
+    );
 }
 
 template <typename particle_type>
@@ -315,7 +320,13 @@ wrap_set_tag(particle_type& particle, vector<typename particle_type::tag_type> c
     if (input.size() != particle.nparticle()) {
         throw invalid_argument("input array size not equal to number of particles");
     }
-    particle.set_tag(input.begin(), input.end());
+    auto convert_1_to_0 = [](typename particle_type::tag_type t) {
+        return t - 1;
+    };
+    particle.set_tag(
+        boost::make_transform_iterator(input.begin(), convert_1_to_0)
+      , boost::make_transform_iterator(input.end(), convert_1_to_0)
+    );
 }
 
 template <typename particle_type>
@@ -324,7 +335,12 @@ wrap_get_reverse_tag(particle_type const& particle, vector<typename particle_typ
 {
     output.clear();
     output.reserve(particle.nparticle());
-    particle.get_reverse_tag(back_inserter(output));
+    auto convert_0_to_1 = [&](typename particle_type::reverse_tag_type i) {
+        output.push_back(i + 1);
+    };
+    particle.get_reverse_tag(
+        boost::make_function_output_iterator(convert_0_to_1)
+    );
 }
 
 template <typename particle_type>
@@ -334,7 +350,13 @@ wrap_set_reverse_tag(particle_type& particle, vector<typename particle_type::rev
     if (input.size() != particle.nparticle()) {
         throw invalid_argument("input array size not equal to number of particles");
     }
-    particle.set_reverse_tag(input.begin(), input.end());
+    auto convert_1_to_0 = [](typename particle_type::reverse_tag_type i) {
+        return i - 1;
+    };
+    particle.set_reverse_tag(
+        boost::make_transform_iterator(input.begin(), convert_1_to_0)
+      , boost::make_transform_iterator(input.end(), convert_1_to_0)
+    );
 }
 
 template <typename particle_type>
