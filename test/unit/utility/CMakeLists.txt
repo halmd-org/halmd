@@ -5,7 +5,7 @@ target_link_libraries(test_unit_utility_demangle
   ${HALMD_TEST_LIBRARIES}
 )
 add_test(unit/utility/demangle
-  test_unit_utility_demangle --log_level=message
+  test_unit_utility_demangle --log_level=test_suite
 )
 
 add_executable(test_unit_utility_multi_index
@@ -15,7 +15,7 @@ target_link_libraries(test_unit_utility_multi_index
   ${HALMD_TEST_LIBRARIES}
 )
 add_test(unit/utility/multi_index
-  test_unit_utility_multi_index --log_level=message
+  test_unit_utility_multi_index --log_level=test_suite
 )
 
 add_executable(test_unit_utility_profiler
@@ -52,7 +52,7 @@ target_link_libraries(test_unit_utility_posix_signal
   ${HALMD_TEST_LIBRARIES}
 )
 add_test(unit/utility/posix_signal
-  test_unit_utility_posix_signal --log_level=message
+  test_unit_utility_posix_signal --log_level=test_suite
 )
 
 add_executable(test_unit_utility_raw_array
