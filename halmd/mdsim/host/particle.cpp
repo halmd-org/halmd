@@ -128,6 +128,7 @@ void particle<dimension, float_type>::rearrange(std::vector<unsigned int> const&
     // no permutation of forces
     algorithm::host::permute(tag_.begin(), tag_.end(), index.begin());
     algorithm::host::permute(species_.begin(), species_.end(), index.begin());
+    algorithm::host::permute(mass_.begin(), mass_.end(), index.begin());
 
     // update reverse tags
     for (unsigned int i = 0; i < tag_.size(); ++i) {
