@@ -55,6 +55,16 @@ add_test(unit/utility/posix_signal
   test_unit_utility_posix_signal --log_level=message
 )
 
+add_executable(test_unit_utility_raw_array
+  raw_array.cpp
+)
+target_link_libraries(test_unit_utility_raw_array
+  ${HALMD_TEST_LIBRARIES}
+)
+add_test(unit/utility/raw_array
+  test_unit_utility_raw_array --log_level=test_suite
+)
+
 add_subdirectory(lua)
 if(HALMD_WITH_GPU)
   add_subdirectory(gpu)
