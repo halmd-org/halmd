@@ -53,12 +53,12 @@ template <int dimension, typename float_type>
 boost::shared_ptr<typename phase_space<dimension, float_type>::sample_type const>
 phase_space<dimension, float_type>::acquire()
 {
-    scoped_timer_type timer(runtime_.acquire);
-
     if (sample_ && sample_->step() == clock_->step()) {
         LOG_TRACE("sample is up to date");
         return sample_;
     }
+
+    scoped_timer_type timer(runtime_.acquire);
 
     LOG_TRACE("acquire sample");
 
