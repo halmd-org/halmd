@@ -20,6 +20,7 @@
 #include <h5xx/h5xx.hpp>
 #include <luabind/luabind.hpp>
 #include <luabind/exception_handler.hpp>
+#include <luabind/out_value_policy.hpp>
 
 #include <halmd/config.hpp>
 #include <halmd/utility/lua/long_long_converter.hpp> // *int64_t on x86
@@ -76,6 +77,16 @@ static int translate_h5_exception(lua_State* L, H5::Exception const& e)
 }
 
 /**
+ * Returns shape of dataset.
+ */
+static void wrap_shape(H5::DataSet const& dataset, std::vector<hsize_t>& shape)
+{
+    H5::DataSpace const& space = dataset.getSpace();
+    shape.resize(space.getSimpleExtentNdims());
+    space.getSimpleExtentDims(&*shape.begin());
+}
+
+/**
  * Register HDF5 classes and functions with Lua
  */
 HALMD_LUA_API int luaopen_libhalmd_utility_lua_hdf5(lua_State* L)
@@ -126,6 +137,7 @@ HALMD_LUA_API int luaopen_libhalmd_utility_lua_hdf5(lua_State* L)
                 .def("exists_dataset", &h5xx::exists_dataset)
 
           , class_<H5::DataSet, bases<H5::H5Object, H5::AbstractDs> >("dataset")
+                .property("shape", &wrap_shape, pure_out_value(_2))
 
           , class_<type_wrapper<bool> >("bool")
                 .def(constructor<>())
