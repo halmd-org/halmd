@@ -19,51 +19,82 @@
 
 local module = require("halmd.utility.module")
 
+---
+-- H5MD Reader
+-- ===========
+--
+-- This module provides a file reader for the H5MD format.
+--
+-- http://nongnu.org/h5md/
+
 -- grab C++ modules
-local h5md = libhalmd.io.readers.h5md
--- grab standard library
-local assert = assert
-local error = error
-local ipairs = ipairs
-local setmetatable = setmetatable
-local type = type
+local h5md = assert(libhalmd.io.readers.h5md)
 
-
--- function to check file format
-M.check = h5md.file.check
-
--- module parameters
-local vm = {}
-
+---
+-- Construct H5MD reader.
 --
--- provide parameters for given module
+-- :param table args: keyword arguments
+-- :param string args.path: pathname of input file
 --
-function M.parameters(module)
-    if module.read_parameters then
-        local vm = vm[module.namespace]
-        if vm then
-            return setmetatable({}, {__index = vm})
-        end
-    end
-end
-
+-- .. method:: reader(args)
 --
--- construct H5MD reader
+--    Construct a group reader.
+--
+--    :param table args: keyword arguments
+--    :param table args.location: sequence with group's path
+--    :param string args.mode: read mode ("append" or "truncate")
+--    :returns: instance of group reader
+--
+-- .. method:: close()
+--
+--    Close file.
+--
+-- .. attribute:: root
+--
+--    HDF5 root group of the file.
+--
+-- .. attribute:: path
+--
+--    Filename of the file.
+--
+-- .. attribute:: version
+--
+--    H5MD major and minor version of file.
+--
+-- .. attribute:: creator
+--
+--    Name of the program that created the file.
+--
+-- .. attribute:: creator_version
+--
+--    Version of the program that created the file.
+--
+-- .. attribute:: creation_time
+--
+--    Creation time of the file in seconds since the Unix epoch.
+--
+-- .. attribute:: author
+--
+--    Name of author of the file.
 --
 local M = module(function(args)
-    local path = assert(args.path, "missing path")
+    local path = args and args.path
+    if type(path) ~= "string" then
+        error("bad argument 'path'", 2)
+    end
+
+    -- open H5MD file for reading
     local file = h5md.file(path)
 
-    -- extend H5MD file with a file:reader method
-    --
-    -- This function wraps the constructors of h5md::append and h5md::truncate,
-    -- which allows modules to construct a collective dataset reader without
-    -- knowledge of the file format.
-    --
     file.reader = function(self, args)
-        assert(type(args) == "table", "missing argument table")
-        local location = assert(args.location, "missing location")
-        local mode = assert(args.mode, "missing mode")
+        local location = args and args.location
+        if type(location) ~= "table" then
+            error("bad argument 'location'", 2)
+        end
+        local mode = args.mode
+        if type(mode) ~= "string" then
+            error("bad argument 'mode'", 2)
+        end
 
         local reader
         if mode == "append" then
@@ -71,52 +102,25 @@ local M = module(function(args)
         elseif mode == "truncate" then
             reader = h5md.truncate(self.root, location)
         else
-            error("invalid mode: " .. mode)
+            error(("invalid mode: %s"):format(mode), 2)
         end
         return reader
     end
 
-    --
-    -- read module parameters from trajectory file
-    --
-    -- @param file HDF5 trajectory file
-    --
-    local param = file.root:open_group("parameters")
-
-    for _, module in ipairs(M.modules) do
-        local read_parameters = module.read_parameters
-        if read_parameters then
-            local namespace = assert(module.namespace)
-
-            -- If read_parameters only reads global parameters, or reads
-            -- no parameters at all, the module's HDF5 parameter group would
-            -- remain empty. Therefore we delay creation by creating or opening
-            -- the group upon access of its methods.
-
-            local group = setmetatable({}, {
-                __index = function(self, name)
-                    if not param:exists_group(namespace) then
-                        return function() end
-                    end
-
-                    local group = param:open_group(namespace)
-
-                    local method = group[name]
-                    if method then
-                        return function(self, ...)
-                            return method(group, ...)
-                        end
-                    end
-                end
-            })
-
-            vm[namespace] = vm[namespace] or {}
-
-            read_parameters(vm[namespace], group, param)
-        end
-    end
-
     return file
 end)
+
+---
+-- Check whether file is H5MD file.
+--
+-- :param path: filename
+-- :returns: ``true`` if file is H5MD file, ``false`` if not, or ``nil`` if file does not exist
+--
+function M.check(path)
+    if type(path) ~= "string" then
+        error("bad argument 'path'", 2)
+    end
+    return io.open(path, "r") and h5md.file.check(path)
+end
 
 return M

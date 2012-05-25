@@ -17,8 +17,16 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <algorithm>
+#include <boost/function.hpp>
+#include <boost/make_shared.hpp>
+#include <boost/shared_ptr.hpp>
+#include <luabind/luabind.hpp>
+#include <luabind/out_value_policy.hpp>
+
 #include <halmd/observables/host/samples/phase_space.hpp>
 #include <halmd/observables/samples/blocking_scheme.hpp>
+#include <halmd/utility/demangle.hpp>
 #include <halmd/utility/lua/lua.hpp>
 
 namespace halmd {
@@ -26,14 +34,110 @@ namespace observables {
 namespace host {
 namespace samples {
 
+template <typename phase_space_type>
+static std::size_t wrap_size(phase_space_type const& self)
+{
+    return self.position().size();
+}
+
+template <typename phase_space_type>
+static std::size_t wrap_dimension(phase_space_type const&)
+{
+    return phase_space_type::position_array_type::value_type::static_size;
+}
+
+template <typename phase_space_type>
+static boost::function<std::vector<typename phase_space_type::position_array_type::value_type>& ()>
+wrap_position(boost::shared_ptr<phase_space_type> self, boost::function<void ()>& array_to_sample)
+{
+    typedef std::vector<typename phase_space_type::position_array_type::value_type> array_type;
+    boost::shared_ptr<array_type> array = boost::make_shared<array_type>();
+    array_to_sample = [=]() {
+        if (self->position().size() != array->size()) {
+            throw std::runtime_error("phase space sample has mismatching size");
+        }
+        std::copy(
+            array->begin()
+          , array->end()
+          , self->position().begin()
+        );
+        array->clear();
+    };
+    return [=]() -> array_type& {
+        return *array;
+    };
+}
+
+template <typename phase_space_type>
+static boost::function<std::vector<typename phase_space_type::velocity_array_type::value_type>& ()>
+wrap_velocity(boost::shared_ptr<phase_space_type> self, boost::function<void ()>& array_to_sample)
+{
+    typedef std::vector<typename phase_space_type::velocity_array_type::value_type> array_type;
+    boost::shared_ptr<array_type> array = boost::make_shared<array_type>();
+    array_to_sample = [=]() {
+        if (self->velocity().size() != array->size()) {
+            throw std::runtime_error("phase space sample has mismatching size");
+        }
+        std::copy(
+            array->begin()
+          , array->end()
+          , self->velocity().begin()
+        );
+        array->clear();
+    };
+    return [=]() -> array_type& {
+        return *array;
+    };
+}
+
+template <typename phase_space_type>
+static boost::function<std::vector<typename phase_space_type::species_array_type::value_type>& ()>
+wrap_species(boost::shared_ptr<phase_space_type> self, boost::function<void ()>& array_to_sample)
+{
+    typedef std::vector<typename phase_space_type::species_array_type::value_type> array_type;
+    boost::shared_ptr<array_type> array = boost::make_shared<array_type>();
+    array_to_sample = [=]() {
+        if (self->species().size() != array->size()) {
+            throw std::runtime_error("phase space sample has mismatching size");
+        }
+        std::transform(
+            array->begin()
+          , array->end()
+          , self->species().begin()
+          , [](typename phase_space_type::species_array_type::value_type s) {
+                return s - 1;
+            }
+        );
+        array->clear();
+    };
+    return [=]() -> array_type& {
+        return *array;
+    };
+}
+
 template <int dimension, typename float_type>
 void phase_space<dimension, float_type>::luaopen(lua_State* L)
 {
     using namespace luabind;
-    module(L)
+    static std::string const class_name = "phase_space_" + std::to_string(dimension) + "_" + demangled_name<float_type>();
+    module(L, "libhalmd")
     [
-        class_<phase_space>()
-            .property("step", &phase_space::step)
+        namespace_("observables")
+        [
+            namespace_("host")
+            [
+                namespace_("samples")
+                [
+                    class_<phase_space, boost::shared_ptr<phase_space> >(class_name.c_str())
+                        .def(constructor<std::size_t>())
+                        .property("size", &wrap_size<phase_space>)
+                        .property("dimension", &wrap_dimension<phase_space>)
+                        .def("position", &wrap_position<phase_space>, pure_out_value(_2))
+                        .def("velocity", &wrap_velocity<phase_space>, pure_out_value(_2))
+                        .def("species", &wrap_species<phase_space>, pure_out_value(_2))
+                ]
+            ]
+        ]
     ];
 }
 

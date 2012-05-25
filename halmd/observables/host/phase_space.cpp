@@ -221,6 +221,7 @@ void phase_space<dimension, float_type>::luaopen(lua_State* L)
                     .property("velocity", &wrap_velocity<phase_space>)
                     .property("species", &wrap_species<phase_space>)
                     .property("dimension", &wrap_dimension<phase_space>)
+                    .def("set", &phase_space::set)
                     .scope
                     [
                         class_<runtime>("runtime")

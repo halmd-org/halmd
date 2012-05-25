@@ -96,6 +96,7 @@ void file::luaopen(lua_State* L)
                         .property("creator", &file::creator)
                         .property("creator_version", &file::creator_version)
                         .property("creation_time", &file::creation_time)
+                        .property("author", &file::author)
                         .scope
                         [
                             def("check", &file::check)

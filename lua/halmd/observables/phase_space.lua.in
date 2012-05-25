@@ -83,6 +83,10 @@ end
 --
 --    :returns: data slot that returns species array in host memory
 --
+-- .. method:: set(sample)
+--
+--    Set positions, velocities, species from phase space sample.
+--
 -- .. method:: connect()
 --
 --    Connect phase_space sampler to profiler. This is the default.
@@ -210,6 +214,11 @@ local M = module(function(args)
         return writer
     end
 
+    self.set = function(self, ...)
+        logger:info(("setting particles from phase space sample"):format(label))
+        samplers.host:set(...)
+    end
+
     -- sequence of signal connections
     local conn = {}
 
@@ -243,5 +252,93 @@ local M = module(function(args)
 
     return self
 end)
+
+-- grab C++ classes
+local phase_space
+if device.gpu then
+    phase_space = {
+        [2] = assert(libhalmd.observables.host.samples.phase_space_2_float)
+      , [3] = assert(libhalmd.observables.host.samples.phase_space_3_float)
+    }
+else
+    phase_space = {
+        [2] = assert(libhalmd.observables.host.samples.phase_space_2_double)
+      , [3] = assert(libhalmd.observables.host.samples.phase_space_3_double)
+    }
+end
+
+---
+-- .. class:: reader(file, args)
+--
+--    Construct reader for given trajectory group.
+--
+--    http://nongnu.org/h5md/draft.html#trajectory-group
+--
+--    :param file: instance of :class:`halmd.io.readers.h5md`
+--    :param table args: keyword arguments
+--    :param string args.group: name of trajectory group
+--
+--    Returns a group reader, and a phase space sample.
+--
+--    Example::
+--
+--       local file = halmd.io.readers.h5md({path = "kob_andersen.h5"})
+--       local reader, sample = halmd.observables.phase_space.reader(file, {group = "all"})
+--       reader:read_at_step(0)
+--       local nparticle = assert(sample.size)
+--       local dimension = assert(sample.dimension)
+--
+--    The returned group reader has these methods.
+--
+--       .. method:: read_at_step(step)
+--
+--          Read sample at given step.
+--
+--          If ``step`` is negative, seek backward from last (``-1``) sample.
+--
+--       .. method:: read_at_time(time)
+--
+--          Read sample at given time in MD units.
+--
+--          If ``time`` is negative, seek backward from last (``-0``) sample.
+--
+--    The returned phase space sample has these attributes.
+--
+--       .. attribute:: size
+--
+--          Returns number of particles.
+--
+--       .. attribute:: dimension
+--
+--          Returns dimension of positional coordinates.
+--
+
+function M.reader(file, args)
+    if not file then
+        error("bad argument 'file'", 2)
+    end
+    local group = args and args.group
+    if type(group) ~= "string" then
+        error("bad argument 'group'", 2)
+    end
+    local self = file:reader({location = {"trajectory", group}, mode = "append"})
+    local dataset = self.group:open_group("position"):open_dataset("sample")
+    local shape = assert(dataset.shape)
+    local nparticle = assert(shape[2])
+    local dimension = assert(shape[3])
+    local phase_space = assert(phase_space[dimension])
+    if not phase_space then
+        error(("unsupported positional dimension: %d"):format(dimension), 2)
+    end
+    local sample = phase_space(nparticle)
+    local names = {"position", "velocity", "species"}
+    for i = 1, #names do
+        local name = names[i]
+        local array, array_to_sample = sample[name](sample)
+        self:on_read(array, {name})
+        self:on_append_read(array_to_sample)
+    end
+    return self, sample
+end
 
 return M

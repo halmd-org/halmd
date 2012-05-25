@@ -181,18 +181,6 @@ hsize_t append::read_time_index(
     return first - times.begin();
 }
 
-static append::slot_function_type
-wrap_read_at_step(boost::shared_ptr<append> instance, append::step_difference_type offset)
-{
-    return bind(&append::read_at_step, instance, offset);
-}
-
-static append::slot_function_type
-wrap_read_at_time(boost::shared_ptr<append> instance, append::time_difference_type offset)
-{
-    return bind(&append::read_at_time, instance, offset);
-}
-
 void append::luaopen(lua_State* L)
 {
     using namespace luabind;
@@ -207,6 +195,8 @@ void append::luaopen(lua_State* L)
                     class_<append, boost::shared_ptr<append> >("append")
                         .def(constructor<H5::Group const&, vector<string> const&>())
                         .property("group", &append::group)
+                        .def("read_at_step", &append::read_at_step)
+                        .def("read_at_time", &append::read_at_time)
                         .def("on_read", &append::on_read<float&>, pure_out_value(_2))
                         .def("on_read", &append::on_read<double&>, pure_out_value(_2))
                         .def("on_read", &append::on_read<fixed_vector<float, 2>&>, pure_out_value(_2))
@@ -224,8 +214,6 @@ void append::luaopen(lua_State* L)
                         .def("on_read", &append::on_read<vector<boost::array<double, 3> >&>, pure_out_value(_2))
                         .def("on_prepend_read", &append::on_prepend_read)
                         .def("on_append_read", &append::on_append_read)
-                        .def("read_at_step", &wrap_read_at_step)
-                        .def("read_at_time", &wrap_read_at_time)
                 ]
             ]
         ]

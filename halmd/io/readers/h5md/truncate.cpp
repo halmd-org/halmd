@@ -86,12 +86,6 @@ void truncate::read_dataset(
     h5xx::read_dataset(dataset, slot());
 }
 
-static truncate::slot_function_type
-wrap_read(boost::shared_ptr<truncate> instance)
-{
-    return bind(&truncate::read, instance);
-}
-
 void truncate::luaopen(lua_State* L)
 {
     using namespace luabind;
@@ -106,7 +100,7 @@ void truncate::luaopen(lua_State* L)
                     class_<truncate, boost::shared_ptr<truncate> >("truncate")
                         .def(constructor<H5::Group const&, vector<string> const&>())
                         .property("group", &truncate::group)
-                        .property("read", &wrap_read)
+                        .def("read", &truncate::read)
                         .def("on_read", &truncate::on_read<float&>, pure_out_value(_2))
                         .def("on_read", &truncate::on_read<double&>, pure_out_value(_2))
                         .def("on_read", &truncate::on_read<fixed_vector<float, 2>&>, pure_out_value(_2))
