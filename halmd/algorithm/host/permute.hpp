@@ -20,6 +20,7 @@
 #ifndef HALMD_ALGORITHM_HOST_PERMUTE_HPP
 #define HALMD_ALGORITHM_HOST_PERMUTE_HPP
 
+#include <iterator>
 #include <vector>
 
 namespace halmd {
@@ -38,8 +39,8 @@ namespace host {
 template <typename input_iterator, typename index_iterator>
 void permute(input_iterator first, input_iterator last, index_iterator index)
 {
-    typedef typename input_iterator::difference_type difference_type;
-    typedef typename input_iterator::value_type value_type;
+    typedef typename std::iterator_traits<input_iterator>::difference_type difference_type;
+    typedef typename std::iterator_traits<input_iterator>::value_type value_type;
 
     std::vector<bool> follower(last - first, false);
     for (difference_type i = 0; i < last - first; ++i) {
