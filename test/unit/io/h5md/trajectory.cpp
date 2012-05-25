@@ -24,7 +24,6 @@
 #include <boost/test/parameterized_test.hpp>
 
 #include <boost/assign.hpp>
-#include <boost/bind.hpp>
 #include <boost/lexical_cast.hpp>
 #include <boost/make_shared.hpp>
 #include <boost/shared_ptr.hpp>
@@ -52,24 +51,31 @@ void on_write_sample(vector<boost::shared_ptr<sample_type> > const& sample, boos
 {
     typedef typename sample_type::position_array_type position_array_type;
     typedef typename sample_type::velocity_array_type velocity_array_type;
-    typedef position_array_type const& (sample_type::*position_getter_type)() const;
-    typedef velocity_array_type const& (sample_type::*velocity_getter_type)() const;
     typedef typename writer_type::subgroup_type subgroup_type;
 
     for (unsigned int type = 0; type < sample.size(); ++type) {
-        subgroup_type position, velocity;
-        writer->template on_write<position_array_type const&>(
-            position
-          , bind(static_cast<position_getter_type>(&sample_type::position), sample[type])
-          , list_of(types[type])("position")
-        );
-        writer->template on_write<velocity_array_type const&>(
-            velocity
-          , bind(static_cast<velocity_getter_type>(&sample_type::velocity), sample[type])
-          , list_of(types[type])("velocity")
-        );
-        BOOST_CHECK_EQUAL(h5xx::path(position), "/trajectory/" + types[type] + "/position");
-        BOOST_CHECK_EQUAL(h5xx::path(velocity), "/trajectory/" + types[type] + "/velocity");
+        {
+            subgroup_type group;
+            writer->template on_write<position_array_type const&>(
+                group
+              , [=]() -> position_array_type const& {
+                    return sample[type]->position();
+                }
+              , {types[type], "position"}
+            );
+            BOOST_CHECK_EQUAL(h5xx::path(group), "/trajectory/" + types[type] + "/position");
+        }
+        {
+            subgroup_type group;
+            writer->template on_write<velocity_array_type const&>(
+                group
+              , [=]() -> velocity_array_type const& {
+                    return sample[type]->velocity();
+                }
+              , {types[type], "velocity"}
+            );
+            BOOST_CHECK_EQUAL(h5xx::path(group), "/trajectory/" + types[type] + "/velocity");
+        }
     }
 }
 
@@ -78,24 +84,49 @@ void on_read_sample(vector<boost::shared_ptr<sample_type> > const& sample, boost
 {
     typedef typename sample_type::position_array_type position_array_type;
     typedef typename sample_type::velocity_array_type velocity_array_type;
-    typedef position_array_type& (sample_type::*position_getter_type)();
-    typedef velocity_array_type& (sample_type::*velocity_getter_type)();
+    typedef typename sample_type::position_array_type::value_type position_type;
+    typedef typename sample_type::velocity_array_type::value_type velocity_type;
     typedef typename reader_type::subgroup_type subgroup_type;
 
     for (unsigned int type = 0; type < sample.size(); ++type) {
-        subgroup_type position, velocity;
-        reader->template on_read<position_array_type&>(
-            position
-          , bind(static_cast<position_getter_type>(&sample_type::position), sample[type])
-          , list_of(types[type])("position")
-        );
-        reader->template on_read<velocity_array_type&>(
-            velocity
-          , bind(static_cast<velocity_getter_type>(&sample_type::velocity), sample[type])
-          , list_of(types[type])("velocity")
-        );
-        BOOST_CHECK_EQUAL(h5xx::path(position), "/trajectory/" + types[type] + "/position");
-        BOOST_CHECK_EQUAL(h5xx::path(velocity), "/trajectory/" + types[type] + "/velocity");
+        {
+            boost::shared_ptr<std::vector<position_type>> array = boost::make_shared<std::vector<position_type>>();
+            subgroup_type group;
+            reader->template on_read<std::vector<position_type>&>(
+                group
+              , [=]() -> std::vector<position_type>& {
+                    return *array;
+                }
+              , {types[type], "position"}
+            );
+            reader->on_append_read([=]() {
+                std::copy(
+                    array->begin()
+                  , array->end()
+                  , sample[type]->position().begin()
+                );
+            });
+            BOOST_CHECK_EQUAL(h5xx::path(group), "/trajectory/" + types[type] + "/position");
+        }
+        {
+            boost::shared_ptr<std::vector<velocity_type>> array = boost::make_shared<std::vector<velocity_type>>();
+            subgroup_type group;
+            reader->template on_read<std::vector<velocity_type>&>(
+                group
+              , [=]() -> std::vector<velocity_type>& {
+                    return *array;
+                }
+              , {types[type], "velocity"}
+            );
+            reader->on_append_read([=]() {
+                std::copy(
+                    array->begin()
+                  , array->end()
+                  , sample[type]->velocity().begin()
+                );
+            });
+            BOOST_CHECK_EQUAL(h5xx::path(group), "/trajectory/" + types[type] + "/velocity");
+        }
     }
 }
 
