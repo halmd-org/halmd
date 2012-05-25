@@ -22,6 +22,8 @@
 #include <boost/shared_ptr.hpp>
 #include <cmath>
 #include <functional> // std::multiplies
+#include <luabind/luabind.hpp>
+#include <luabind/out_value_policy.hpp>
 #include <numeric> // std::accumulate
 
 #include <halmd/io/logger.hpp>
@@ -90,11 +92,33 @@ wrap_edges(boost::shared_ptr<box_type const> box)
     return bind(&box_type::edges, box);
 }
 
+template <typename box_type>
+static boost::function<std::vector<typename box_type::vector_type>& ()>
+edges_to_length(boost::function<typename box_type::vector_type ()>& length)
+{
+    typedef typename box_type::vector_type vector_type;
+    typedef std::vector<vector_type> edges_type;
+    boost::shared_ptr<edges_type> edges = boost::make_shared<edges_type>();
+    length = [=]() -> vector_type {
+        vector_type length;
+        if (edges->size() != box_type::vector_type::static_size) {
+            throw std::runtime_error("edges have mismatching dimension");
+        }
+        for (unsigned int i = 0; i < box_type::vector_type::static_size; ++i) {
+            length[i] = (*edges)[i][i];
+        }
+        return length;
+    };
+    return [=]() -> edges_type& {
+        return *edges;
+    };
+}
+
 template <int dimension>
 void box<dimension>::luaopen(lua_State* L)
 {
     using namespace luabind;
-    static string class_name("box_" + lexical_cast<string>(dimension) + "_");
+    static std::string class_name("box_" + std::to_string(dimension));
     module(L, "libhalmd")
     [
         namespace_("mdsim")
@@ -106,6 +130,10 @@ void box<dimension>::luaopen(lua_State* L)
                 .property("volume", &box::volume)
                 .property("origin", &wrap_origin<box>)
                 .property("edges", &wrap_edges<box>)
+                .scope
+                [
+                    def("edges_to_length", &edges_to_length<box>, pure_out_value(_1))
+                ]
         ]
     ];
 }

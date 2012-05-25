@@ -22,8 +22,8 @@ local sampler           = require("halmd.observables.sampler")
 
 -- grab C++ wrappers
 local box = {
-    [2] = libhalmd.mdsim.box_2_
-  , [3] = libhalmd.mdsim.box_3_
+    [2] = assert(libhalmd.mdsim.box_2)
+  , [3] = assert(libhalmd.mdsim.box_3)
 }
 local h5 = assert(libhalmd.h5)
 
@@ -103,5 +103,36 @@ local M = module(function(args)
 
     return self
 end)
+
+---
+-- Read edge lengths of simulation domain from H5MD file.
+--
+-- http://nongnu.org/h5md/draft.html#box-specification
+--
+-- :param file: instance of :class:`halmd.io.readers.h5md`
+-- :returns: edge lengths
+--
+function M.reader(file)
+    if not file then
+        error("bad argument 'file'", 2)
+    end
+    local self = file:reader({location = {"observables", "box"}, mode = "truncate"})
+    local group = assert(self.group)
+    local geometry = group:read_attribute("type", h5.string())
+    if geometry ~= "cuboid" then
+        error(("unsupported geometry: %s"):format(geometry), 2)
+    end
+    local dataset = self.group:open_dataset("edges")
+    local shape = assert(dataset.shape)
+    local dimension = assert(shape[1])
+    local box = box[dimension]
+    if not box then
+        error(("unsupported dimension: %d"):format(dimension), 2)
+    end
+    local edges, length = box.edges_to_length()
+    self:on_read(edges, {"edges"})
+    self:read()
+    return length()
+end
 
 return M
