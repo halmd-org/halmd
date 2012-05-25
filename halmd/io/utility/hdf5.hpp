@@ -24,6 +24,7 @@
 
 #include <h5xx/h5xx.hpp>
 #include <halmd/numeric/blas/fixed_vector.hpp>
+#include <halmd/utility/raw_array.hpp>
 
 namespace h5xx {
 
@@ -32,6 +33,13 @@ struct is_array<halmd::numeric::blas::detail::fixed_vector<T, N> >
 {
     enum { value = true };
     typedef is_array type;
+};
+
+template <typename T>
+struct is_vector<halmd::raw_array<T> >
+{
+    enum { value = true };
+    typedef is_vector type;
 };
 
 template <typename T, typename Alloc>

@@ -27,7 +27,7 @@
 
 #include <halmd/mdsim/clock.hpp>
 #include <halmd/numeric/blas/fixed_vector.hpp>
-#include <halmd/utility/raw_allocator.hpp>
+#include <halmd/utility/raw_array.hpp>
 
 namespace halmd {
 namespace observables {
@@ -39,9 +39,9 @@ class phase_space
 {
 public:
     typedef fixed_vector<float_type, dimension> vector_type;
-    typedef std::vector<vector_type, raw_allocator<vector_type> > position_array_type;
-    typedef std::vector<vector_type, raw_allocator<vector_type> > velocity_array_type;
-    typedef std::vector<unsigned int, raw_allocator<unsigned int> > species_array_type;
+    typedef raw_array<vector_type> position_array_type;
+    typedef raw_array<vector_type> velocity_array_type;
+    typedef raw_array<unsigned int> species_array_type;
     typedef typename mdsim::clock::step_type step_type;
 
     /**

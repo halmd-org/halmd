@@ -325,26 +325,26 @@ wrap_velocity(boost::shared_ptr<phase_space_type> phase_space)
  */
 template <typename phase_space_type>
 static typename phase_space_type::sample_type::species_array_type const&
-species(boost::shared_ptr<phase_space_type> const& phase_space, typename phase_space_type::sample_type::species_array_type& species)
+species(boost::shared_ptr<phase_space_type> const& phase_space, boost::shared_ptr<typename phase_space_type::sample_type::species_array_type>& species)
 {
     boost::shared_ptr<typename phase_space_type::sample_type const> sample = phase_space->acquire();
-    species.resize(sample->species().size());
+    species.reset(new typename phase_space_type::sample_type::species_array_type(sample->species().size()));
     std::transform(
         sample->species().begin()
       , sample->species().end()
-      , species.begin()
+      , species->begin()
       , [](typename phase_space_type::sample_type::species_array_type::value_type s) {
             return s + 1;
         }
     );
-    return species;
+    return *species;
 }
 
 template <typename phase_space_type>
 static boost::function<typename phase_space_type::sample_type::species_array_type const& ()>
 wrap_species(boost::shared_ptr<phase_space_type> phase_space)
 {
-    return boost::bind(&species<phase_space_type>, phase_space, typename phase_space_type::sample_type::species_array_type());
+    return boost::bind(&species<phase_space_type>, phase_space, boost::shared_ptr<typename phase_space_type::sample_type::species_array_type>());
 }
 
 template <int dimension, typename float_type>
