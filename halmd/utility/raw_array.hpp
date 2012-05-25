@@ -50,7 +50,7 @@ public:
     /**
      * Allocate uninitialised array of given number of elements.
      */
-    explicit raw_array(size_type size): size_(size), storage_(allocate(size)) {}
+    explicit raw_array(size_type size) : size_(size), storage_(allocate(size)) {}
 
     /**
      * Deallocate array.
