@@ -47,23 +47,34 @@ template <int dimension, typename float_type>
 particle<dimension, float_type>::particle(size_t nparticle, unsigned int nspecies)
   // allocate particle storage
   : nspecies_(std::max(nspecies, 1u))
-  , position_(nparticle, 0)
-  , image_(nparticle, 0)
-  , velocity_(nparticle, 0)
-  , tag_(counting_iterator<tag_type>(0), counting_iterator<tag_type>(nparticle))
-  , reverse_tag_(tag_)
-  , species_(nparticle, 0)
-  , mass_(nparticle, 1)
-  , force_(nparticle, 0)
-  , en_pot_(nparticle, 0)
-  , stress_pot_(nparticle, 0)
-  , hypervirial_(nparticle, 0)
+  , position_(nparticle)
+  , image_(nparticle)
+  , velocity_(nparticle)
+  , tag_(nparticle)
+  , reverse_tag_(nparticle)
+  , species_(nparticle)
+  , mass_(nparticle)
+  , force_(nparticle)
+  , en_pot_(nparticle)
+  , stress_pot_(nparticle)
+  , hypervirial_(nparticle)
   // disable auxiliary variables by default
   , aux_flag_(false)
   , aux_valid_(false)
 {
+    std::fill(position_.begin(), position_.end(), 0);
+    std::fill(image_.begin(), image_.end(), 0);
+    std::fill(velocity_.begin(), velocity_.end(), 0);
+    std::iota(tag_.begin(), tag_.end(), 0);
+    std::iota(reverse_tag_.begin(), reverse_tag_.end(), 0);
+    std::fill(species_.begin(), species_.end(), 0);
+    std::fill(mass_.begin(), mass_.end(), 1);
+    std::fill(force_.begin(), force_.end(), 0);
+    std::fill(en_pot_.begin(), en_pot_.end(), 0);
+    std::fill(stress_pot_.begin(), stress_pot_.end(), 0);
+    std::fill(hypervirial_.begin(), hypervirial_.end(), 0);
+
     LOG("number of particles: " << tag_.size());
-    LOG("number of particle placeholders: " << tag_.capacity());
     LOG("number of particle species: " << nspecies_);
 }
 

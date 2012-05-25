@@ -22,10 +22,10 @@
 
 #include <algorithm> // std::copy
 #include <lua.hpp>
-#include <vector>
 
 #include <halmd/mdsim/type_traits.hpp>
 #include <halmd/utility/profiler.hpp>
+#include <halmd/utility/raw_array.hpp>
 
 namespace halmd {
 namespace mdsim {
@@ -49,17 +49,17 @@ public:
     typedef typename type_traits<dimension, float_type>::stress_tensor_type stress_pot_type;
     typedef double hypervirial_type;
 
-    typedef std::vector<position_type> position_array_type;
-    typedef std::vector<image_type> image_array_type;
-    typedef std::vector<velocity_type> velocity_array_type;
-    typedef std::vector<tag_type> tag_array_type;
-    typedef std::vector<reverse_tag_type> reverse_tag_array_type;
-    typedef std::vector<species_type> species_array_type;
-    typedef std::vector<mass_type> mass_array_type;
-    typedef std::vector<force_type> force_array_type;
-    typedef std::vector<en_pot_type> en_pot_array_type;
-    typedef std::vector<stress_pot_type> stress_pot_array_type;
-    typedef std::vector<hypervirial_type> hypervirial_array_type;
+    typedef raw_array<position_type> position_array_type;
+    typedef raw_array<image_type> image_array_type;
+    typedef raw_array<velocity_type> velocity_array_type;
+    typedef raw_array<tag_type> tag_array_type;
+    typedef raw_array<reverse_tag_type> reverse_tag_array_type;
+    typedef raw_array<species_type> species_array_type;
+    typedef raw_array<mass_type> mass_array_type;
+    typedef raw_array<force_type> force_array_type;
+    typedef raw_array<en_pot_type> en_pot_array_type;
+    typedef raw_array<stress_pot_type> stress_pot_array_type;
+    typedef raw_array<hypervirial_type> hypervirial_array_type;
 
     void set();
     void rearrange(std::vector<unsigned int> const& index);
@@ -96,7 +96,7 @@ public:
      */
     std::size_t nplaceholder() const
     {
-        return tag_.capacity();
+        return tag_.size();
     }
 
     /**
