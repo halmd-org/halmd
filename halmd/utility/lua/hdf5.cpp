@@ -87,6 +87,14 @@ static void wrap_shape(H5::DataSet const& dataset, std::vector<hsize_t>& shape)
 }
 
 /**
+ * Open HDF5 DataSet.
+ */
+static H5::DataSet wrap_open_dataset(H5::CommonFG const& group, std::string const& name)
+{
+    return group.openDataSet(name);
+}
+
+/**
  * Register HDF5 classes and functions with Lua
  */
 HALMD_LUA_API int luaopen_libhalmd_utility_lua_hdf5(lua_State* L)
@@ -102,6 +110,7 @@ HALMD_LUA_API int luaopen_libhalmd_utility_lua_hdf5(lua_State* L)
           , class_<H5::AbstractDs>("abstract_dataset")
 
           , class_<H5::CommonFG>("common_fg")
+                .def("open_dataset", &wrap_open_dataset)
                 .def("open_group", &h5xx::open_group)
                 .def("exists_group", &h5xx::exists_group)
 
