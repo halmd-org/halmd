@@ -123,9 +123,9 @@ HALMD_LUA_API int luaopen_libhalmd_utility_lua_hdf5(lua_State* L)
           , class_<H5::H5File, bases<H5::IdComponent, H5::CommonFG> >("file")
 
           , class_<H5::Group, bases<H5::H5Object, H5::CommonFG> >("group")
+                .def("exists_dataset", &h5xx::exists_dataset)
 
           , class_<H5::DataSet, bases<H5::H5Object, H5::AbstractDs> >("dataset")
-                .def("exists_dataset", &h5xx::exists_dataset)
 
           , class_<type_wrapper<bool> >("bool")
                 .def(constructor<>())
