@@ -22,7 +22,6 @@
 
 #include <cassert>
 #include <cstddef>
-#include <memory>
 
 namespace halmd {
 
@@ -54,11 +53,19 @@ public:
     explicit raw_array(size_type size): size_(size), storage_(allocate(size)) {}
 
     /**
+     * Deallocate array.
+     */
+    ~raw_array()
+    {
+        deallocate(storage_);
+    }
+
+    /**
      * Returns iterator pointing to first element of array.
      */
     iterator begin()
     {
-        return &*storage_;
+        return storage_;
     }
 
     /**
@@ -66,7 +73,7 @@ public:
      */
     const_iterator begin() const
     {
-        return &*storage_;
+        return storage_;
     }
 
     /**
@@ -74,7 +81,7 @@ public:
      */
     iterator end()
     {
-        return &*storage_ + size_;
+        return storage_ + size_;
     }
 
     /**
@@ -82,7 +89,7 @@ public:
      */
     const_iterator end() const
     {
-        return &*storage_ + size_;
+        return storage_ + size_;
     }
 
     /**
@@ -99,7 +106,7 @@ public:
     reference operator[](size_type i)
     {
         assert(i < size_);
-        return (&*storage_)[i];
+        return storage_[i];
     }
 
     /**
@@ -108,7 +115,7 @@ public:
     const_reference operator[](size_type i) const
     {
         assert(i < size_);
-        return (&*storage_)[i];
+        return storage_[i];
     }
 
     /** deleted implicit copy constructor */
@@ -123,10 +130,16 @@ private:
         return static_cast<pointer>(::operator new(size * sizeof(value_type)));
     }
 
+    /** deallocate storage */
+    static void deallocate(pointer p)
+    {
+        ::operator delete(p);
+    }
+
     /** number of array elements */
-    size_type size_;
+    size_type const size_;
     /** uninitialised storage */
-    std::unique_ptr<T> storage_;
+    T* const storage_;
 };
 
 } // namespace halmd
