@@ -24,10 +24,9 @@
 #include <limits>
 #include <lua.hpp>
 #include <stdexcept> // std::logic_error
-#include <vector>
 
 #include <halmd/mdsim/clock.hpp>
-#include <halmd/utility/raw_allocator.hpp>
+#include <halmd/utility/raw_array.hpp>
 
 namespace halmd {
 namespace observables {
@@ -42,7 +41,7 @@ template <int dimension>
 class density_mode
 {
 public:
-    typedef std::vector<std::complex<double>, raw_allocator<std::complex<double> > > mode_array_type;
+    typedef raw_array<std::complex<double>> mode_array_type;
     typedef typename mdsim::clock::step_type step_type;
 
     /**
