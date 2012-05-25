@@ -42,6 +42,7 @@ public:
     typedef raw_array<vector_type> position_array_type;
     typedef raw_array<vector_type> velocity_array_type;
     typedef raw_array<unsigned int> species_array_type;
+    typedef raw_array<float_type> mass_array_type;
     typedef typename mdsim::clock::step_type step_type;
 
     /**
@@ -105,6 +106,22 @@ public:
     }
 
     /**
+     * Returns const reference to particle mass.
+     */
+    mass_array_type const& mass() const
+    {
+        return mass_;
+    }
+
+    /**
+     * Returns non-const reference to particle mass.
+     */
+    mass_array_type& mass()
+    {
+        return mass_;
+    }
+
+    /**
      * Returns simulation step when the sample was taken.
      */
     step_type step() const
@@ -127,6 +144,8 @@ private:
     velocity_array_type velocity_;
     /** particle species */
     species_array_type species_;
+    /** particle mass */
+    mass_array_type mass_;
     /** simulation step when sample was taken */
     step_type step_;
 };
@@ -136,6 +155,7 @@ inline phase_space<dimension, float_type>::phase_space(std::size_t nparticle, st
   : position_(nparticle)
   , velocity_(nparticle)
   , species_(nparticle)
+  , mass_(nparticle)
   , step_(step)
 {
 }

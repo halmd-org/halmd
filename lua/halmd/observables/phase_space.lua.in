@@ -83,9 +83,15 @@ end
 --
 --    :returns: data slot that returns species array in host memory
 --
+-- .. method:: mass()
+--
+--    Returns data slot that acquires phase space sample and returns mass array.
+--
+--    :returns: data slot that returns mass array in host memory
+--
 -- .. method:: set(sample)
 --
---    Set positions, velocities, species from phase space sample.
+--    Set positions, velocities, species and masses from phase space sample.
 --
 -- .. method:: connect()
 --
@@ -171,6 +177,10 @@ local M = module(function(args)
         return assert(samplers.host.species)
     end
 
+    self.mass = function(self)
+        return assert(samplers.host.mass)
+    end
+
     self.writer = function(self, file, args)
         local name = args.group or assert(self.group.label)
         local writer = file:writer({location = {"trajectory", name}, mode = "append"})
@@ -178,6 +188,7 @@ local M = module(function(args)
         writer:on_write(self.position(), {"position"})
         writer:on_write(self.velocity(), {"velocity"})
         writer:on_write(self.species(), {"species"})
+        writer:on_write(self.mass(), {"mass"})
 
         local every = args.every
 
@@ -331,7 +342,7 @@ function M.reader(file, args)
         error(("unsupported positional dimension: %d"):format(dimension), 2)
     end
     local sample = phase_space(nparticle)
-    local names = {"position", "velocity", "species"}
+    local names = {"position", "velocity", "species", "mass"}
     for i = 1, #names do
         local name = names[i]
         local array, array_to_sample = sample[name](sample)

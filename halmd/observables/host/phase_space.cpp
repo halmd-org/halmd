@@ -73,10 +73,12 @@ phase_space<dimension, float_type>::acquire()
     typename particle_type::image_array_type& particle_image = particle_->image();
     typename particle_type::velocity_array_type& particle_velocity = particle_->velocity();
     typename particle_type::species_array_type& particle_species = particle_->species();
+    typename particle_type::mass_array_type& particle_mass = particle_->mass();
 
     typename sample_type::position_array_type& sample_position = sample_->position();
     typename sample_type::velocity_array_type& sample_velocity = sample_->velocity();
     typename sample_type::species_array_type& sample_species = sample_->species();
+    typename sample_type::mass_array_type& sample_mass = sample_->mass();
 
     // copy particle data using index map
     std::size_t tag = 0;
@@ -90,6 +92,7 @@ phase_space<dimension, float_type>::acquire()
 
         sample_velocity[tag] = particle_velocity[i];
         sample_species[tag] = particle_species[i];
+        sample_mass[tag] = particle_mass[i];
         ++tag;
     }
 
@@ -105,10 +108,12 @@ void phase_space<dimension, float_type>::set(boost::shared_ptr<sample_type const
     typename particle_type::image_array_type& particle_image = particle_->image();
     typename particle_type::velocity_array_type& particle_velocity = particle_->velocity();
     typename particle_type::species_array_type& particle_species = particle_->species();
+    typename particle_type::mass_array_type& particle_mass = particle_->mass();
 
     typename sample_type::position_array_type const& sample_position = sample->position();
     typename sample_type::velocity_array_type const& sample_velocity = sample->velocity();
     typename sample_type::species_array_type const& sample_species = sample->species();
+    typename sample_type::mass_array_type const& sample_mass = sample->mass();
 
     std::size_t tag = 0;
     for (std::size_t i : *particle_group_) {
@@ -130,6 +135,7 @@ void phase_space<dimension, float_type>::set(boost::shared_ptr<sample_type const
 
         particle_velocity[i] = sample_velocity[tag];
         particle_species[i] = sample_species[tag];
+        particle_mass[i] = sample_mass[tag];
         ++tag;
     }
 }
@@ -200,6 +206,20 @@ wrap_species(boost::shared_ptr<phase_space_type> phase_space)
 }
 
 template <typename phase_space_type>
+static typename phase_space_type::sample_type::mass_array_type const&
+mass(boost::shared_ptr<phase_space_type> const& phase_space)
+{
+    return phase_space->acquire()->mass();
+}
+
+template <typename phase_space_type>
+static boost::function<typename phase_space_type::sample_type::mass_array_type const& ()>
+wrap_mass(boost::shared_ptr<phase_space_type> phase_space)
+{
+    return boost::bind(&mass<phase_space_type>, phase_space);
+}
+
+template <typename phase_space_type>
 static int wrap_dimension(phase_space_type const&)
 {
     return phase_space_type::particle_type::vector_type::static_size;
@@ -220,6 +240,7 @@ void phase_space<dimension, float_type>::luaopen(lua_State* L)
                     .property("position", &wrap_position<phase_space>)
                     .property("velocity", &wrap_velocity<phase_space>)
                     .property("species", &wrap_species<phase_space>)
+                    .property("mass", &wrap_mass<phase_space>)
                     .property("dimension", &wrap_dimension<phase_space>)
                     .def("set", &phase_space::set)
                     .scope

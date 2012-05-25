@@ -192,10 +192,12 @@ phase_space<host::samples::phase_space<dimension, float_type> >::acquire()
     assert(particle_group_->size() == sample_->position().size());
     assert(particle_group_->size() == sample_->velocity().size());
     assert(particle_group_->size() == sample_->species().size());
+    assert(particle_group_->size() == sample_->mass().size());
 
     typename sample_type::position_array_type& position = sample_->position();
     typename sample_type::velocity_array_type& velocity = sample_->velocity();
     typename sample_type::species_array_type& species = sample_->species();
+    typename sample_type::mass_array_type& mass = sample_->mass();
 
     // copy particle data using reverse tags as on the GPU
     cuda::configure((particle_group_->size() + threads_ - 1) / threads_, threads_);
@@ -217,7 +219,7 @@ phase_space<host::samples::phase_space<dimension, float_type> >::acquire()
         box_->extend_periodic(r, static_cast<vector_type>(h_image_[i]));
 
         position[tag] = r;
-        velocity[tag] = static_cast<vector_type>(h_v_[i]);
+        tie(velocity[tag], mass[tag]) <<= h_v_[i];
         species[tag] = type;
         ++tag;
     }
@@ -234,6 +236,7 @@ void phase_space<host::samples::phase_space<dimension, float_type> >::set(boost:
     typename sample_type::position_array_type const& sample_position = sample->position();
     typename sample_type::velocity_array_type const& sample_velocity = sample->velocity();
     typename sample_type::species_array_type const& sample_species = sample->species();
+    typename sample_type::mass_array_type const& sample_mass = sample->mass();
 
     assert(sample_position.size() >= particle_group_->size());
     assert(sample_velocity.size() >= particle_group_->size());
@@ -252,7 +255,7 @@ void phase_space<host::samples::phase_space<dimension, float_type> >::set(boost:
     for (std::size_t i : h_group_) {
         assert(i < h_r_.size());
         h_r_[i] <<= tie(sample_position[tag], sample_species[tag]);
-        h_v_[i] = sample_velocity[tag];
+        h_v_[i] <<= tie(sample_velocity[tag], sample_mass[tag]);
         ++tag;
     }
 
@@ -347,6 +350,20 @@ wrap_species(boost::shared_ptr<phase_space_type> phase_space)
     return boost::bind(&species<phase_space_type>, phase_space, boost::shared_ptr<typename phase_space_type::sample_type::species_array_type>());
 }
 
+template <typename phase_space_type>
+static typename phase_space_type::sample_type::mass_array_type const&
+mass(boost::shared_ptr<phase_space_type> const& phase_space)
+{
+    return phase_space->acquire()->mass();
+}
+
+template <typename phase_space_type>
+static boost::function<typename phase_space_type::sample_type::mass_array_type const& ()>
+wrap_mass(boost::shared_ptr<phase_space_type> phase_space)
+{
+    return boost::bind(&mass<phase_space_type>, phase_space);
+}
+
 template <int dimension, typename float_type>
 void phase_space<host::samples::phase_space<dimension, float_type> >::luaopen(lua_State* L)
 {
@@ -360,6 +377,7 @@ void phase_space<host::samples::phase_space<dimension, float_type> >::luaopen(lu
                 .property("position", &wrap_position<phase_space>)
                 .property("velocity", &wrap_velocity<phase_space>)
                 .property("species", &wrap_species<phase_space>)
+                .property("mass", &wrap_mass<phase_space>)
                 .property("dimension", &wrap_dimension<phase_space>)
                 .def("set", &phase_space::set)
                 .scope

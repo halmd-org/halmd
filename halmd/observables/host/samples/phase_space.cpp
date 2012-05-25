@@ -115,6 +115,28 @@ wrap_species(boost::shared_ptr<phase_space_type> self, boost::function<void ()>&
     };
 }
 
+template <typename phase_space_type>
+static boost::function<std::vector<typename phase_space_type::mass_array_type::value_type>& ()>
+wrap_mass(boost::shared_ptr<phase_space_type> self, boost::function<void ()>& array_to_sample)
+{
+    typedef std::vector<typename phase_space_type::mass_array_type::value_type> array_type;
+    boost::shared_ptr<array_type> array = boost::make_shared<array_type>();
+    array_to_sample = [=]() {
+        if (self->mass().size() != array->size()) {
+            throw std::runtime_error("phase space sample has mismatching size");
+        }
+        std::copy(
+            array->begin()
+          , array->end()
+          , self->mass().begin()
+        );
+        array->clear();
+    };
+    return [=]() -> array_type& {
+        return *array;
+    };
+}
+
 template <int dimension, typename float_type>
 void phase_space<dimension, float_type>::luaopen(lua_State* L)
 {
@@ -135,6 +157,7 @@ void phase_space<dimension, float_type>::luaopen(lua_State* L)
                         .def("position", &wrap_position<phase_space>, pure_out_value(_2))
                         .def("velocity", &wrap_velocity<phase_space>, pure_out_value(_2))
                         .def("species", &wrap_species<phase_space>, pure_out_value(_2))
+                        .def("mass", &wrap_mass<phase_space>, pure_out_value(_2))
                 ]
             ]
         ]
