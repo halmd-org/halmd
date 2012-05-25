@@ -47,19 +47,20 @@ using namespace std;
 boost::array<string, 3> const types = {{ "A", "B", "C" }};
 
 template <typename sample_type, typename writer_type>
-void on_write_sample(vector<boost::shared_ptr<sample_type> > const& sample, boost::shared_ptr<writer_type> writer)
+void on_write_sample(vector<boost::shared_ptr<sample_type> > const& samples, boost::shared_ptr<writer_type> writer)
 {
     typedef typename sample_type::position_array_type position_array_type;
     typedef typename sample_type::velocity_array_type velocity_array_type;
     typedef typename writer_type::subgroup_type subgroup_type;
 
-    for (unsigned int type = 0; type < sample.size(); ++type) {
+    for (unsigned int type = 0; type < samples.size(); ++type) {
+        boost::shared_ptr<sample_type> sample = samples[type];
         {
             subgroup_type group;
             writer->template on_write<position_array_type const&>(
                 group
               , [=]() -> position_array_type const& {
-                    return sample[type]->position();
+                    return sample->position();
                 }
               , {types[type], "position"}
             );
@@ -70,7 +71,7 @@ void on_write_sample(vector<boost::shared_ptr<sample_type> > const& sample, boos
             writer->template on_write<velocity_array_type const&>(
                 group
               , [=]() -> velocity_array_type const& {
-                    return sample[type]->velocity();
+                    return sample->velocity();
                 }
               , {types[type], "velocity"}
             );
@@ -80,7 +81,7 @@ void on_write_sample(vector<boost::shared_ptr<sample_type> > const& sample, boos
 }
 
 template <typename sample_type, typename reader_type>
-void on_read_sample(vector<boost::shared_ptr<sample_type> > const& sample, boost::shared_ptr<reader_type> reader)
+void on_read_sample(vector<boost::shared_ptr<sample_type> > const& samples, boost::shared_ptr<reader_type> reader)
 {
     typedef typename sample_type::position_array_type position_array_type;
     typedef typename sample_type::velocity_array_type velocity_array_type;
@@ -88,7 +89,8 @@ void on_read_sample(vector<boost::shared_ptr<sample_type> > const& sample, boost
     typedef typename sample_type::velocity_array_type::value_type velocity_type;
     typedef typename reader_type::subgroup_type subgroup_type;
 
-    for (unsigned int type = 0; type < sample.size(); ++type) {
+    for (unsigned int type = 0; type < samples.size(); ++type) {
+        boost::shared_ptr<sample_type> sample = samples[type];
         {
             boost::shared_ptr<std::vector<position_type>> array = boost::make_shared<std::vector<position_type>>();
             subgroup_type group;
@@ -103,7 +105,7 @@ void on_read_sample(vector<boost::shared_ptr<sample_type> > const& sample, boost
                 std::copy(
                     array->begin()
                   , array->end()
-                  , sample[type]->position().begin()
+                  , sample->position().begin()
                 );
             });
             BOOST_CHECK_EQUAL(h5xx::path(group), "/trajectory/" + types[type] + "/position");
@@ -122,7 +124,7 @@ void on_read_sample(vector<boost::shared_ptr<sample_type> > const& sample, boost
                 std::copy(
                     array->begin()
                   , array->end()
-                  , sample[type]->velocity().begin()
+                  , sample->velocity().begin()
                 );
             });
             BOOST_CHECK_EQUAL(h5xx::path(group), "/trajectory/" + types[type] + "/velocity");
