@@ -238,8 +238,6 @@ test_euler<modules_type>::test_euler()
     phase_space = boost::make_shared<phase_space_type>(particle, particle_group, box, clock);
 
     // set positions and velocities
-    BOOST_TEST_MESSAGE("set particle tags");
-    particle->set();
     BOOST_TEST_MESSAGE("position particles on lattice");
     position->set();
     BOOST_TEST_MESSAGE("set particle velocities");

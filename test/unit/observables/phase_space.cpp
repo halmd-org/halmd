@@ -215,9 +215,6 @@ phase_space<modules_type>::phase_space()
     box = boost::make_shared<box_type>(box_length);
     input_sample = boost::make_shared<input_sample_type>(particle->nparticle());
     clock = boost::make_shared<clock_type>();
-
-    // set particle tags and types
-    particle->set();
 }
 
 template <int dimension, typename float_type>

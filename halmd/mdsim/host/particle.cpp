@@ -36,9 +36,6 @@
 #include <halmd/utility/lua/lua.hpp>
 #include <halmd/utility/signal.hpp>
 
-using namespace boost;
-using namespace std;
-
 namespace halmd {
 namespace mdsim {
 namespace host {
@@ -81,21 +78,7 @@ particle<dimension, float_type>::particle(size_t nparticle, unsigned int nspecie
 template <int dimension, typename float_type>
 void particle<dimension, float_type>::set_mass(float_type mass)
 {
-    fill(mass_.begin(), mass_.end(), mass);
-}
-
-/**
- * set particle tags and types
- */
-template <int dimension, typename float_type>
-void particle<dimension, float_type>::set()
-{
-    // initialise particle types to zero
-    fill(species_.begin(), species_.end(), 0);
-    // assign particle tags
-    copy(counting_iterator<size_t>(0), counting_iterator<size_t>(tag_.size()), tag_.begin());
-    // initially, the mapping tag → index is a 1:1 mapping
-    copy(tag_.begin(), tag_.end(), reverse_tag_.begin());
+    std::fill(mass_.begin(), mass_.end(), mass);
 }
 
 template <int dimension, typename float_type>
@@ -109,16 +92,16 @@ template <int dimension, typename float_type>
 void particle<dimension, float_type>::prepare()
 {
     LOG_TRACE("zero forces");
-    fill(force_.begin(), force_.end(), 0);
+    std::fill(force_.begin(), force_.end(), 0);
 
     // indicate whether auxiliary variables are computed this step
     aux_valid_ = aux_flag_;
 
     if (aux_flag_) {
         LOG_TRACE("zero auxiliary variables");
-        fill(en_pot_.begin(), en_pot_.end(), 0);
-        fill(stress_pot_.begin(), stress_pot_.end(), 0);
-        fill(hypervirial_.begin(), hypervirial_.end(), 0);
+        std::fill(en_pot_.begin(), en_pot_.end(), 0);
+        std::fill(stress_pot_.begin(), stress_pot_.end(), 0);
+        std::fill(hypervirial_.begin(), hypervirial_.end(), 0);
         aux_flag_ = false;
     }
 }
@@ -150,7 +133,7 @@ void particle<dimension, float_type>::rearrange(std::vector<unsigned int> const&
 
 template <typename particle_type>
 static void
-wrap_get_position(particle_type const& particle, vector<typename particle_type::position_type>& output)
+wrap_get_position(particle_type const& particle, std::vector<typename particle_type::position_type>& output)
 {
     output.clear();
     output.reserve(particle.nparticle());
@@ -159,17 +142,17 @@ wrap_get_position(particle_type const& particle, vector<typename particle_type::
 
 template <typename particle_type>
 static void
-wrap_set_position(particle_type& particle, vector<typename particle_type::position_type> const& input)
+wrap_set_position(particle_type& particle, std::vector<typename particle_type::position_type> const& input)
 {
     if (input.size() != particle.nparticle()) {
-        throw invalid_argument("input array size not equal to number of particles");
+        throw std::invalid_argument("input array size not equal to number of particles");
     }
     particle.set_position(input.begin(), input.end());
 }
 
 template <typename particle_type>
 static void
-wrap_get_image(particle_type const& particle, vector<typename particle_type::image_type>& output)
+wrap_get_image(particle_type const& particle, std::vector<typename particle_type::image_type>& output)
 {
     output.clear();
     output.reserve(particle.nparticle());
@@ -178,17 +161,17 @@ wrap_get_image(particle_type const& particle, vector<typename particle_type::ima
 
 template <typename particle_type>
 static void
-wrap_set_image(particle_type& particle, vector<typename particle_type::image_type> const& input)
+wrap_set_image(particle_type& particle, std::vector<typename particle_type::image_type> const& input)
 {
     if (input.size() != particle.nparticle()) {
-        throw invalid_argument("input array size not equal to number of particles");
+        throw std::invalid_argument("input array size not equal to number of particles");
     }
     particle.set_image(input.begin(), input.end());
 }
 
 template <typename particle_type>
 static void
-wrap_get_velocity(particle_type const& particle, vector<typename particle_type::velocity_type>& output)
+wrap_get_velocity(particle_type const& particle, std::vector<typename particle_type::velocity_type>& output)
 {
     output.clear();
     output.reserve(particle.nparticle());
@@ -197,17 +180,17 @@ wrap_get_velocity(particle_type const& particle, vector<typename particle_type::
 
 template <typename particle_type>
 static void
-wrap_set_velocity(particle_type& particle, vector<typename particle_type::velocity_type> const& input)
+wrap_set_velocity(particle_type& particle, std::vector<typename particle_type::velocity_type> const& input)
 {
     if (input.size() != particle.nparticle()) {
-        throw invalid_argument("input array size not equal to number of particles");
+        throw std::invalid_argument("input array size not equal to number of particles");
     }
     particle.set_velocity(input.begin(), input.end());
 }
 
 template <typename particle_type>
 static void
-wrap_get_tag(particle_type const& particle, vector<typename particle_type::tag_type>& output)
+wrap_get_tag(particle_type const& particle, std::vector<typename particle_type::tag_type>& output)
 {
     output.clear();
     output.reserve(particle.nparticle());
@@ -221,11 +204,11 @@ wrap_get_tag(particle_type const& particle, vector<typename particle_type::tag_t
 
 template <typename particle_type>
 static void
-wrap_set_tag(particle_type& particle, vector<typename particle_type::tag_type> const& input)
+wrap_set_tag(particle_type& particle, std::vector<typename particle_type::tag_type> const& input)
 {
     typedef typename particle_type::tag_type tag_type;
     if (input.size() != particle.nparticle()) {
-        throw invalid_argument("input array size not equal to number of particles");
+        throw std::invalid_argument("input array size not equal to number of particles");
     }
     tag_type nparticle = particle.nparticle();
     auto convert_1_to_0 = [&](tag_type t) -> tag_type {
@@ -242,7 +225,7 @@ wrap_set_tag(particle_type& particle, vector<typename particle_type::tag_type> c
 
 template <typename particle_type>
 static void
-wrap_get_reverse_tag(particle_type const& particle, vector<typename particle_type::reverse_tag_type>& output)
+wrap_get_reverse_tag(particle_type const& particle, std::vector<typename particle_type::reverse_tag_type>& output)
 {
     output.clear();
     output.reserve(particle.nparticle());
@@ -256,11 +239,11 @@ wrap_get_reverse_tag(particle_type const& particle, vector<typename particle_typ
 
 template <typename particle_type>
 static void
-wrap_set_reverse_tag(particle_type& particle, vector<typename particle_type::reverse_tag_type> const& input)
+wrap_set_reverse_tag(particle_type& particle, std::vector<typename particle_type::reverse_tag_type> const& input)
 {
     typedef typename particle_type::reverse_tag_type reverse_tag_type;
     if (input.size() != particle.nparticle()) {
-        throw invalid_argument("input array size not equal to number of particles");
+        throw std::invalid_argument("input array size not equal to number of particles");
     }
     reverse_tag_type nparticle = particle.nparticle();
     auto convert_1_to_0 = [&](reverse_tag_type i) -> reverse_tag_type {
@@ -277,7 +260,7 @@ wrap_set_reverse_tag(particle_type& particle, vector<typename particle_type::rev
 
 template <typename particle_type>
 static void
-wrap_get_species(particle_type const& particle, vector<typename particle_type::species_type>& output)
+wrap_get_species(particle_type const& particle, std::vector<typename particle_type::species_type>& output)
 {
     output.clear();
     output.reserve(particle.nparticle());
@@ -291,11 +274,11 @@ wrap_get_species(particle_type const& particle, vector<typename particle_type::s
 
 template <typename particle_type>
 static void
-wrap_set_species(particle_type& particle, vector<typename particle_type::species_type> const& input)
+wrap_set_species(particle_type& particle, std::vector<typename particle_type::species_type> const& input)
 {
     typedef typename particle_type::species_type species_type;
     if (input.size() != particle.nparticle()) {
-        throw invalid_argument("input array size not equal to number of particles");
+        throw std::invalid_argument("input array size not equal to number of particles");
     }
     species_type nspecies = particle.nspecies();
     auto convert_1_to_0 = [&](species_type s) -> species_type {
@@ -312,7 +295,7 @@ wrap_set_species(particle_type& particle, vector<typename particle_type::species
 
 template <typename particle_type>
 static void
-wrap_get_mass(particle_type const& particle, vector<typename particle_type::mass_type>& output)
+wrap_get_mass(particle_type const& particle, std::vector<typename particle_type::mass_type>& output)
 {
     output.clear();
     output.reserve(particle.nparticle());
@@ -321,17 +304,17 @@ wrap_get_mass(particle_type const& particle, vector<typename particle_type::mass
 
 template <typename particle_type>
 static void
-wrap_set_mass(particle_type& particle, vector<typename particle_type::mass_type> const& input)
+wrap_set_mass(particle_type& particle, std::vector<typename particle_type::mass_type> const& input)
 {
     if (input.size() != particle.nparticle()) {
-        throw invalid_argument("input array size not equal to number of particles");
+        throw std::invalid_argument("input array size not equal to number of particles");
     }
     particle.set_mass(input.begin(), input.end());
 }
 
 template <typename particle_type>
 static void
-wrap_get_force(particle_type const& particle, vector<typename particle_type::force_type>& output)
+wrap_get_force(particle_type const& particle, std::vector<typename particle_type::force_type>& output)
 {
     output.clear();
     output.reserve(particle.nparticle());
@@ -340,17 +323,17 @@ wrap_get_force(particle_type const& particle, vector<typename particle_type::for
 
 template <typename particle_type>
 static void
-wrap_set_force(particle_type& particle, vector<typename particle_type::force_type> const& input)
+wrap_set_force(particle_type& particle, std::vector<typename particle_type::force_type> const& input)
 {
     if (input.size() != particle.nparticle()) {
-        throw invalid_argument("input array size not equal to number of particles");
+        throw std::invalid_argument("input array size not equal to number of particles");
     }
     particle.set_force(input.begin(), input.end());
 }
 
 template <typename particle_type>
 static void
-wrap_get_en_pot(particle_type const& particle, vector<typename particle_type::en_pot_type>& output)
+wrap_get_en_pot(particle_type const& particle, std::vector<typename particle_type::en_pot_type>& output)
 {
     output.clear();
     output.reserve(particle.nparticle());
@@ -359,17 +342,17 @@ wrap_get_en_pot(particle_type const& particle, vector<typename particle_type::en
 
 template <typename particle_type>
 static void
-wrap_set_en_pot(particle_type& particle, vector<typename particle_type::en_pot_type> const& input)
+wrap_set_en_pot(particle_type& particle, std::vector<typename particle_type::en_pot_type> const& input)
 {
     if (input.size() != particle.nparticle()) {
-        throw invalid_argument("input array size not equal to number of particles");
+        throw std::invalid_argument("input array size not equal to number of particles");
     }
     particle.set_en_pot(input.begin(), input.end());
 }
 
 template <typename particle_type>
 static void
-wrap_get_stress_pot(particle_type const& particle, vector<typename particle_type::stress_pot_type>& output)
+wrap_get_stress_pot(particle_type const& particle, std::vector<typename particle_type::stress_pot_type>& output)
 {
     output.clear();
     output.reserve(particle.nparticle());
@@ -378,17 +361,17 @@ wrap_get_stress_pot(particle_type const& particle, vector<typename particle_type
 
 template <typename particle_type>
 static void
-wrap_set_stress_pot(particle_type& particle, vector<typename particle_type::stress_pot_type> const& input)
+wrap_set_stress_pot(particle_type& particle, std::vector<typename particle_type::stress_pot_type> const& input)
 {
     if (input.size() != particle.nparticle()) {
-        throw invalid_argument("input array size not equal to number of particles");
+        throw std::invalid_argument("input array size not equal to number of particles");
     }
     particle.set_stress_pot(input.begin(), input.end());
 }
 
 template <typename particle_type>
 static void
-wrap_get_hypervirial(particle_type const& particle, vector<typename particle_type::hypervirial_type>& output)
+wrap_get_hypervirial(particle_type const& particle, std::vector<typename particle_type::hypervirial_type>& output)
 {
     output.clear();
     output.reserve(particle.nparticle());
@@ -397,10 +380,10 @@ wrap_get_hypervirial(particle_type const& particle, vector<typename particle_typ
 
 template <typename particle_type>
 static void
-wrap_set_hypervirial(particle_type& particle, vector<typename particle_type::hypervirial_type> const& input)
+wrap_set_hypervirial(particle_type& particle, std::vector<typename particle_type::hypervirial_type> const& input)
 {
     if (input.size() != particle.nparticle()) {
-        throw invalid_argument("input array size not equal to number of particles");
+        throw std::invalid_argument("input array size not equal to number of particles");
     }
     particle.set_hypervirial(input.begin(), input.end());
 }
@@ -444,7 +427,7 @@ template <int dimension, typename float_type>
 void particle<dimension, float_type>::luaopen(lua_State* L)
 {
     using namespace luabind;
-    static string class_name("particle_" + lexical_cast<string>(dimension));
+    static std::string class_name("particle_" + std::to_string(dimension));
     module(L, "libhalmd")
     [
         namespace_("mdsim")
@@ -481,7 +464,6 @@ void particle<dimension, float_type>::luaopen(lua_State* L)
                     .property("dimension", &wrap_dimension<dimension, float_type>)
                     .property("aux_enable", &wrap_aux_enable<particle>)
                     .property("prepare", &wrap_prepare<particle>)
-                    .property("set", &wrap_set<particle>)
                     .scope[
                         class_<runtime>("runtime")
                             .def_readonly("rearrange", &runtime::rearrange)

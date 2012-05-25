@@ -131,8 +131,6 @@ void lattice<modules_type>::test()
                        ", lattice constant: " << lattice_constant << ", slab extents: " << slab);
 
     // generate lattices
-    BOOST_TEST_MESSAGE("set particle tags");
-    particle->set();
     BOOST_TEST_MESSAGE("generate fcc lattice");
     position->set();
 

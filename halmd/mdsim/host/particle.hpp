@@ -61,7 +61,6 @@ public:
     typedef raw_array<stress_pot_type> stress_pot_array_type;
     typedef raw_array<hypervirial_type> hypervirial_array_type;
 
-    void set();
     void rearrange(std::vector<unsigned int> const& index);
 
     /**

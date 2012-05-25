@@ -151,8 +151,6 @@ void lattice<modules_type>::test()
     ssf = boost::make_shared<ssf_type>(wavevector, particle->nparticle(), clock);
 
     // generate lattices
-    BOOST_TEST_MESSAGE("set particle tags");
-    particle->set();
     BOOST_TEST_MESSAGE("generate fcc lattice");
     position->set();
 

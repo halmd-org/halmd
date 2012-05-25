@@ -345,7 +345,6 @@ void lennard_jones_fluid<modules_type>::connect()
 {
     core = boost::make_shared<core_type>();
     // system preparation
-    core->on_prepend_setup( bind(&particle_type::set, particle) );
     core->on_prepend_setup( bind(&particle_type::prepare, particle) );
     core->on_setup( bind(&position_type::set, position) );
     core->on_setup( bind(&velocity_type::set, velocity) );

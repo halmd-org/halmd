@@ -88,8 +88,6 @@ template <typename modules_type>
 void boltzmann<modules_type>::test()
 {
     // generate velocity distribution
-    BOOST_TEST_MESSAGE("set particle tags");
-    particle->set();
     BOOST_TEST_MESSAGE("generate Maxwell-Boltzmann distribution");
     velocity->set();
 
