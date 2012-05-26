@@ -19,4 +19,14 @@
 
 local module = require("halmd.utility.module")
 
+---
+-- Writers
+-- =======
+--
+-- .. toctree::
+--    :maxdepth: 2
+--    :glob:
+--
+--    *
+--
 return module.loader("halmd.io.writers")

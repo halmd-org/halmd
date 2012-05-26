@@ -19,4 +19,18 @@
 
 local module = require("halmd.utility.module")
 
+---
+-- Modules
+-- =======
+--
+-- .. toctree::
+--    :maxdepth: 2
+--    :glob:
+--
+--    mdsim/index
+--    io/index
+--    observables/index
+--    random
+--    utility/index
+--
 return module.loader("halmd")

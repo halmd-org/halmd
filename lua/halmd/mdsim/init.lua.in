@@ -19,4 +19,18 @@
 
 local module = require("halmd.utility.module")
 
+---
+-- Simulation
+-- ==========
+--
+-- .. toctree::
+--    :maxdepth: 2
+--    :glob:
+--
+--    *
+--    integrators/index
+--    particle_groups/index
+--    potentials/index
+--    velocities/index
+--
 return module.loader("halmd.mdsim")

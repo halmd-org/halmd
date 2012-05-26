@@ -19,4 +19,14 @@
 
 local module = require("halmd.utility.module")
 
+---
+-- Dynamics
+-- ========
+--
+-- .. toctree::
+--    :maxdepth: 2
+--    :glob:
+--
+--    *
+--
 return module.loader("halmd.observables.dynamics")

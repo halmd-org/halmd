@@ -19,4 +19,16 @@
 
 local module = require("halmd.utility.module")
 
+---
+-- Input and Output
+-- ================
+--
+-- .. toctree::
+--    :maxdepth: 2
+--    :glob:
+--
+--    *
+--    readers/index
+--    writers/index
+--
 return module.loader("halmd.io")

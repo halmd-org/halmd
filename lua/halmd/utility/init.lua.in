@@ -19,22 +19,30 @@
 
 local module = require("halmd.utility.module")
 
--- grab standard library
-local next = next
-local pairs = pairs
-local table = table
-
--- module definition
+---
+-- Utilities
+-- =========
+--
+-- .. toctree::
+--    :maxdepth: 2
+--    :glob:
+--
+--    *
+--
 local M = module.loader("halmd.utility")
 
---
+---
+-- Functions
+-- ---------
+
+---
 -- Test if table is empty
 --
 function M.empty(t)
   return next(t) == nil
 end
 
---
+---
 -- Returns table with sorted keys of table t as values
 --
 function M.keys(t)
@@ -46,7 +54,7 @@ function M.keys(t)
     return keys
 end
 
---
+---
 -- Returns iterator over pairs of table t sorted by key
 --
 function M.sorted(t)
@@ -63,7 +71,7 @@ function M.sorted(t)
     end
 end
 
---
+---
 -- Returns table with keys as values and values as keys
 --
 function M.reverse(t)

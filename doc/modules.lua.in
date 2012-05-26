@@ -28,9 +28,10 @@ function parse_module(sourcedir, source)
     local parsed = {}
     parsed.file = source
     parsed.path = ("%s/%s"):format(sourcedir, source)
-    parsed.docpath = source:gsub("/init%.lua", ""):gsub("%..*$", "")
-    parsed.name = parsed.docpath:gsub("^.*/", "")
-    parsed.namespace = parsed.docpath:gsub("/[^/]*$", ""):gsub("/", ".")
+    parsed.docpath = source:gsub("%..*$", ""):gsub("/init$", "/index"):gsub("^halmd/", "")
+    parsed.module = source:gsub("%..*$", ""):gsub("/init$", ""):gsub("/", ".")
+    parsed.name = parsed.module:gsub("^.*%.", "")
+    parsed.namespace = parsed.module:gsub("%.[^.]*$", "")
 
     local entry
     for line in io.lines(parsed.path) do
@@ -103,7 +104,7 @@ function render_module(parsed)
     l()
     l(".. highlight:: lua")
     l()
-    l(".. module:: %s.%s", parsed.namespace, parsed.name)
+    l(".. module:: %s", parsed.module)
     l("   :noindex:")
     l()
 
