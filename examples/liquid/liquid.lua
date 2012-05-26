@@ -91,7 +91,7 @@ local function liquid(args)
     -- H5MD file writer
     local writer = writers.h5md({path = ("%s.obs"):format(args.output)})
     -- Sample macroscopic state variables.
-    local msv = observables.thermodynamics({box = box, particle = particle})
+    local msv = observables.thermodynamics({box = box, group = particle_group})
     msv:writer(writer, {every = args.sampling.state_vars})
 
     -- Sample static structure factors, construct density modes before.

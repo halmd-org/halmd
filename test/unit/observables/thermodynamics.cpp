@@ -38,6 +38,7 @@
 #include <halmd/mdsim/host/positions/lattice.hpp>
 #include <halmd/mdsim/host/potentials/lennard_jones.hpp>
 #include <halmd/mdsim/host/velocities/boltzmann.hpp>
+#include <halmd/mdsim/particle_groups/from_range.hpp>
 #include <halmd/numeric/accumulator.hpp>
 #include <halmd/observables/host/thermodynamics.hpp>
 #include <halmd/random/host/random.hpp>
@@ -117,6 +118,7 @@ struct lennard_jones_fluid
     typedef typename modules_type::nve_integrator_type nve_integrator_type;
     typedef typename modules_type::nvt_integrator_type nvt_integrator_type;
     typedef typename modules_type::particle_type particle_type;
+    typedef halmd::mdsim::particle_groups::from_range<particle_type> particle_group_type;
     typedef typename modules_type::position_type position_type;
     typedef typename modules_type::random_type random_type;
     typedef typename modules_type::thermodynamics_type thermodynamics_type;
@@ -333,7 +335,8 @@ lennard_jones_fluid<modules_type>::lennard_jones_fluid()
     velocity = boost::make_shared<velocity_type>(particle, random, temp);
     force = boost::make_shared<force_type>(potential, particle, particle, box, neighbour);
     clock = boost::make_shared<clock_type>();
-    thermodynamics = boost::make_shared<thermodynamics_type>(particle, box, clock);
+    boost::shared_ptr<particle_group_type> group = boost::make_shared<particle_group_type>(particle, 0, particle->nparticle());
+    thermodynamics = boost::make_shared<thermodynamics_type>(group, box, clock);
     msd = boost::make_shared<msd_type>(particle, box);
 
     // create core and connect module slots to core signals

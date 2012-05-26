@@ -28,6 +28,7 @@
 #include <halmd/mdsim/box.hpp>
 #include <halmd/mdsim/clock.hpp>
 #include <halmd/mdsim/gpu/particle.hpp>
+#include <halmd/mdsim/particle_group.hpp>
 #include <halmd/observables/gpu/thermodynamics_kernel.hpp>
 #include <halmd/observables/thermodynamics.hpp>
 #include <halmd/utility/data_cache.hpp>
@@ -43,18 +44,20 @@ class thermodynamics
 {
 private:
     typedef observables::thermodynamics<dimension> _Base;
+    typedef thermodynamics_kernel<dimension, float_type> _Kernel;
 
 public:
     typedef typename _Base::vector_type vector_type;
     typedef mdsim::box<dimension> box_type;
     typedef mdsim::clock clock_type;
     typedef mdsim::gpu::particle<dimension, float_type> particle_type;
+    typedef mdsim::particle_group<particle_type> particle_group_type;
     typedef logger logger_type;
 
     static void luaopen(lua_State* L);
 
     thermodynamics(
-        boost::shared_ptr<particle_type const> particle
+        boost::shared_ptr<particle_group_type const> group
       , boost::shared_ptr<box_type const> box
       , boost::shared_ptr<clock_type const> clock
       , boost::shared_ptr<logger_type> logger = boost::make_shared<logger_type>()
@@ -101,9 +104,10 @@ public:
     virtual void clear_cache();
 
 private:
-    /** module dependencies */
+    /** simulation domain */
     boost::shared_ptr<box_type const> box_;
-    boost::shared_ptr<particle_type const> particle_;
+    /** particle group */
+    boost::shared_ptr<particle_group_type const> group_;
     /** module logger */
     boost::shared_ptr<logger_type> logger_;
 

@@ -17,8 +17,6 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <boost/foreach.hpp>
-
 #include <halmd/observables/host/thermodynamics.hpp>
 #include <halmd/utility/lua/lua.hpp>
 
@@ -28,14 +26,14 @@ namespace host {
 
 template <int dimension, typename float_type>
 thermodynamics<dimension, float_type>::thermodynamics(
-    boost::shared_ptr<particle_type const> particle
+    boost::shared_ptr<particle_group_type const> group
   , boost::shared_ptr<box_type const> box
   , boost::shared_ptr<clock_type const> clock
   , boost::shared_ptr<logger_type> logger
 )
   // dependency injection
   : box_(box)
-  , particle_(particle)
+  , group_(group)
   , logger_(logger)
   // initialise members
   , en_kin_(clock)
@@ -49,7 +47,7 @@ thermodynamics<dimension, float_type>::thermodynamics(
 template <int dimension, typename float_type>
 unsigned int thermodynamics<dimension, float_type>::nparticle() const
 {
-    return particle_->nparticle();
+    return group_->size();
 }
 
 template <int dimension, typename float_type>
@@ -66,15 +64,16 @@ double thermodynamics<dimension, float_type>::en_kin()
 
         scoped_timer_type timer(runtime_.en_kin);
 
-        typename particle_type::velocity_array_type const& velocity = particle_->velocity();
-        typename particle_type::mass_array_type const& mass = particle_->mass();
+        particle_type const& particle = group_->particle();
+        typename particle_type::velocity_array_type const& velocity = particle.velocity();
+        typename particle_type::mass_array_type const& mass = particle.mass();
 
         double mv2 = 0;
-        for (size_t i = 0; i < particle_->nparticle(); ++i) {
+        for (std::size_t i : *group_) {
             // assuming unit mass for all particle types
             mv2 += mass[i] * inner_prod(velocity[i], velocity[i]);
         }
-        en_kin_ = 0.5 * mv2 / nparticle();
+        en_kin_ = 0.5 * mv2 / group_->size();
     }
     return en_kin_;
 }
@@ -88,12 +87,13 @@ thermodynamics<dimension, float_type>::v_cm()
 
         scoped_timer_type timer(runtime_.v_cm);
 
-        typename particle_type::velocity_array_type const& velocity = particle_->velocity();
-        typename particle_type::mass_array_type const& mass = particle_->mass();
+        particle_type const& particle = group_->particle();
+        typename particle_type::velocity_array_type const& velocity = particle.velocity();
+        typename particle_type::mass_array_type const& mass = particle.mass();
 
         vector_type mv = 0;
         double m = 0;
-        for (size_t i = 0; i < particle_->nparticle(); ++i) {
+        for (std::size_t i : *group_) {
             mv += mass[i] * velocity[i];
             m += mass[i];
         }
@@ -105,19 +105,19 @@ thermodynamics<dimension, float_type>::v_cm()
 template <int dimension, typename float_type>
 double thermodynamics<dimension, float_type>::en_pot()
 {
-    typedef typename particle_type::en_pot_type en_pot_type;
-    typename particle_type::en_pot_array_type const& en_pot = particle_->en_pot();
-
     if (!en_pot_.valid()) {
         LOG_TRACE("acquire potential energy");
 
         scoped_timer_type timer(runtime_.en_pot);
 
+        particle_type const& particle = group_->particle();
+        typename particle_type::en_pot_array_type const& en_pot = particle.en_pot();
+
         double sum = 0;
-        BOOST_FOREACH(en_pot_type value, en_pot) {
-            sum += value;
+        for (std::size_t i : *group_) {
+            sum += en_pot[i];
         }
-        en_pot_ = sum / nparticle();
+        en_pot_ = sum / group_->size();
     }
     return en_pot_;
 }
@@ -125,19 +125,19 @@ double thermodynamics<dimension, float_type>::en_pot()
 template <int dimension, typename float_type>
 double thermodynamics<dimension, float_type>::virial()
 {
-    typedef typename particle_type::stress_pot_type stress_pot_type;
-    typename particle_type::stress_pot_array_type const& stress_pot = particle_->stress_pot();
-
     if (!virial_.valid()) {
         LOG_TRACE("acquire virial");
 
         scoped_timer_type timer(runtime_.virial);
 
+        particle_type const& particle = group_->particle();
+        typename particle_type::stress_pot_array_type const& stress_pot = particle.stress_pot();
+
         double sum = 0;
-        BOOST_FOREACH(stress_pot_type const& value, stress_pot) {
-            sum += value[0];
+        for (std::size_t i : *group_) {
+            sum += stress_pot[i][0];
         }
-        virial_ = sum / nparticle();
+        virial_ = sum / group_->size();
     }
     return virial_;
 }
@@ -145,19 +145,19 @@ double thermodynamics<dimension, float_type>::virial()
 template <int dimension, typename float_type>
 double thermodynamics<dimension, float_type>::hypervirial()
 {
-    typedef typename particle_type::hypervirial_type hypervirial_type;
-    typename particle_type::hypervirial_array_type const& hypervirial = particle_->hypervirial();
-
     if (!hypervirial_.valid()) {
+        LOG_TRACE("acquire hypervirial");
 
         scoped_timer_type timer(runtime_.hypervirial);
 
-        LOG_TRACE("acquire hypervirial");
+        particle_type const& particle = group_->particle();
+        typename particle_type::hypervirial_array_type const& hypervirial = particle.hypervirial();
+
         double sum = 0;
-        BOOST_FOREACH(hypervirial_type value, hypervirial) {
-            sum += value;
+        for (std::size_t i : *group_) {
+            sum += hypervirial[i];
         }
-        hypervirial_ = sum / nparticle();
+        hypervirial_ = sum / group_->size();
     }
     return hypervirial_;
 }
@@ -193,7 +193,7 @@ void thermodynamics<dimension, float_type>::luaopen(lua_State* L)
                 .def_readonly("runtime", &thermodynamics::runtime_)
 
           , def("thermodynamics", &boost::make_shared<thermodynamics
-              , boost::shared_ptr<particle_type const>
+              , boost::shared_ptr<particle_group_type const>
               , boost::shared_ptr<box_type const>
               , boost::shared_ptr<clock_type const>
               , boost::shared_ptr<logger_type>

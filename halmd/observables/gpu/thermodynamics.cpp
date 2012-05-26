@@ -30,14 +30,14 @@ namespace gpu {
 
 template <int dimension, typename float_type>
 thermodynamics<dimension, float_type>::thermodynamics(
-    boost::shared_ptr<particle_type const> particle
+    boost::shared_ptr<particle_group_type const> group
   , boost::shared_ptr<box_type const> box
   , boost::shared_ptr<clock_type const> clock
   , boost::shared_ptr<logger_type> logger
 )
   // dependency injection
   : box_(box)
-  , particle_(particle)
+  , group_(group)
   , logger_(logger)
   // initialise members
   , en_kin_(clock)
@@ -51,7 +51,7 @@ thermodynamics<dimension, float_type>::thermodynamics(
 template <int dimension, typename float_type>
 unsigned int thermodynamics<dimension, float_type>::nparticle() const
 {
-    return particle_->nparticle();
+    return group_->size();
 }
 
 template <int dimension, typename float_type>
@@ -70,7 +70,9 @@ double thermodynamics<dimension, float_type>::en_kin()
         LOG_TRACE("acquire kinetic energy");
 
         scoped_timer_type timer(runtime_.en_kin);
-        en_kin_ = double(compute_en_kin_(particle_->velocity())()) / nparticle();
+
+        _Kernel::get().velocity.bind(group_->particle().velocity());
+        en_kin_ = double(compute_en_kin_(group_->begin(), group_->end())()) / nparticle();
     }
     return en_kin_;
 }
@@ -86,7 +88,9 @@ thermodynamics<dimension, float_type>::v_cm()
         LOG_TRACE("acquire centre-of-mass velocity");
 
         scoped_timer_type timer(runtime_.v_cm);
-        v_cm_ = vector_type(compute_v_cm_(particle_->velocity())());
+
+        _Kernel::get().velocity.bind(group_->particle().velocity());
+        v_cm_ = vector_type(compute_v_cm_(group_->begin(), group_->end())());
     }
     return v_cm_;
 }
@@ -101,7 +105,9 @@ double thermodynamics<dimension, float_type>::en_pot()
         LOG_TRACE("acquire potential energy");
 
         scoped_timer_type timer(runtime_.en_pot);
-        en_pot_ = double(compute_en_pot_(particle_->en_pot())()) / nparticle();
+
+        _Kernel::get().en_pot.bind(group_->particle().en_pot());
+        en_pot_ = double(compute_en_pot_(group_->begin(), group_->end())()) / nparticle();
     }
     return en_pot_;
 }
@@ -116,7 +122,9 @@ double thermodynamics<dimension, float_type>::virial()
         LOG_TRACE("acquire virial");
 
         scoped_timer_type timer(runtime_.virial);
-        virial_ = double(compute_virial_(particle_->stress_pot())()) / nparticle();
+
+        _Kernel::get().stress_pot.bind(group_->particle().stress_pot());
+        virial_ = double(compute_virial_(group_->begin(), group_->end())()) / nparticle();
     }
     return virial_;
 }
@@ -131,7 +139,9 @@ double thermodynamics<dimension, float_type>::hypervirial()
         LOG_TRACE("acquire hypervirial");
 
         scoped_timer_type timer(runtime_.hypervirial);
-        hypervirial_ = double(compute_en_pot_(particle_->hypervirial())()) / nparticle();
+
+        _Kernel::get().en_pot.bind(group_->particle().hypervirial());
+        hypervirial_ = double(compute_en_pot_(group_->begin(), group_->end())()) / nparticle();
     }
     return hypervirial_;
 }
@@ -176,7 +186,7 @@ void thermodynamics<dimension, float_type>::luaopen(lua_State* L)
       , namespace_("observables")
         [
             def("thermodynamics", &boost::make_shared<thermodynamics
-              , boost::shared_ptr<particle_type const>
+              , boost::shared_ptr<particle_group_type const>
               , boost::shared_ptr<box_type const>
               , boost::shared_ptr<clock_type const>
               , boost::shared_ptr<logger_type>

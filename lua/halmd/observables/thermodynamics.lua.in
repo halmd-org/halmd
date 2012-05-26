@@ -30,7 +30,7 @@ local thermodynamics = assert(libhalmd.observables.thermodynamics)
 -- ==============
 --
 -- This module calculates thermodynamic state variables for the particles of
--- an instance of particle or particle group, which includes
+-- a group, which includes
 --
 -- * potential energy
 -- * kinetic energy
@@ -46,7 +46,7 @@ local thermodynamics = assert(libhalmd.observables.thermodynamics)
 -- Construct thermodynamics observable.
 --
 -- :param table args: keyword arguments
--- :param args.particle: instance of :class:`halmd.mdsim.particle`
+-- :param args.group: instance of :mod:`halmd.mdsim.particle_groups`
 -- :param args.box: instance of :class:`halmd.mdsim.box`
 --
 -- .. method:: writer(file, args)
@@ -99,19 +99,19 @@ local thermodynamics = assert(libhalmd.observables.thermodynamics)
 --    Callable slot that returns hypervirial.
 --
 local M = module(function(args)
-    local particle = args.particle
-    if not particle then
-        error("missing parameter 'particle'", 2)
+    local group = args.group
+    if not group then
+        error("missing parameter 'group'", 2)
     end
     local box = args.box
     if not box then
         error("missing parameter 'box'", 2)
     end
-    local label = assert(particle.label)
+    local label = assert(group.label)
     local logger = log.logger({label = ("thermodynamics (%s)"):format(label)})
 
     -- construct instance
-    local self = thermodynamics(particle, box, clock, logger)
+    local self = thermodynamics(group, box, clock, logger)
 
     self.writer = function(self, file, args)
         local writer = file:writer{location = {"observables"}, mode = "append"}
@@ -133,7 +133,7 @@ local M = module(function(args)
 
         -- turn on computation of auxiliary variables _before_ force computation
         -- in each sampling step
-        sampler:on_prepare(particle.aux_enable, every)
+        sampler:on_prepare(group.particle.aux_enable, every)
 
         return writer
     end

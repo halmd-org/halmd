@@ -20,6 +20,7 @@
 #ifndef HALMD_OBSERVABLES_GPU_THERMODYNAMICS_KERNEL_HPP
 #define HALMD_OBSERVABLES_GPU_THERMODYNAMICS_KERNEL_HPP
 
+#include <cuda_wrapper/cuda_wrapper.hpp>
 #include <halmd/config.hpp>
 #include <halmd/numeric/blas/fixed_vector.hpp>
 #include <halmd/mdsim/type_traits.hpp>
@@ -27,6 +28,29 @@
 namespace halmd {
 namespace observables {
 namespace gpu {
+
+template <int dimension, typename float_type>
+class thermodynamics_kernel
+{
+private:
+    typedef typename mdsim::type_traits<dimension, float>::gpu::stress_tensor_type coalesced_stress_pot_type;
+
+public:
+    /** particle velocities and masses */
+    cuda::texture<float4> velocity;
+    /** potential energies */
+    cuda::texture<float> en_pot;
+    /** potential parts of stress tensor */
+    cuda::texture<coalesced_stress_pot_type> stress_pot;
+
+    static thermodynamics_kernel const& get()
+    {
+        return kernel;
+    }
+
+private:
+    static thermodynamics_kernel const kernel;
+};
 
 /**
  * Compute total kinetic energy.
@@ -36,7 +60,7 @@ class kinetic_energy
 {
 public:
     /** element type of input array */
-    typedef float4 argument_type;
+    typedef unsigned int argument_type;
 
     /**
      * Initialise kinetic energy to zero.
@@ -46,13 +70,7 @@ public:
     /**
      * Accumulate kinetic energy of a particle.
      */
-    HALMD_GPU_ENABLED void operator()(argument_type const& velocity)
-    {
-        fixed_vector<float, dimension> v;
-        float mass;
-        tie(v, mass) <<= velocity;
-        mv2_ += mass * inner_prod(v, v);
-    }
+    inline HALMD_GPU_ENABLED void operator()(argument_type const& i);
 
     /**
      * Accumulate kinetic energy of another accumulator.
@@ -86,7 +104,7 @@ private:
 
 public:
     /** element type of input array */
-    typedef float4 argument_type;
+    typedef unsigned int argument_type;
 
     /**
      * Initialise momentan and mass to zero.
@@ -96,14 +114,7 @@ public:
     /**
      * Accumulate momentum and mass of a particle.
      */
-    HALMD_GPU_ENABLED void operator()(argument_type const& value)
-    {
-        fixed_vector<float, dimension> v;
-        float mass;
-        tie(v, mass) <<= value;
-        mv_ += mass * v;
-        m_ += mass;
-    }
+    inline HALMD_GPU_ENABLED void operator()(argument_type const& i);
 
     /**
      * Accumulate velocity centre of mass of another accumulator.
@@ -136,15 +147,12 @@ template <typename float_type>
 class potential_energy
 {
 public:
-    typedef float argument_type;
+    typedef unsigned int argument_type;
 
     /**
      * Accumulate potential energy of a particle.
      */
-    HALMD_GPU_ENABLED void operator()(argument_type const& en_pot)
-    {
-        en_pot_ += en_pot;
-    }
+    inline HALMD_GPU_ENABLED void operator()(argument_type const& i);
 
     /**
      * Accumulate potential energy of another accumulator.
@@ -175,19 +183,16 @@ class virial
 {
 private:
     typedef typename mdsim::type_traits<dimension, float>::stress_tensor_type stress_pot_type;
+    typedef typename mdsim::type_traits<dimension, float>::gpu::stress_tensor_type coalesced_stress_pot_type;
 
 public:
     /** element type of input array */
-    typedef typename mdsim::type_traits<dimension, float>::gpu::stress_tensor_type argument_type;
+    typedef unsigned int argument_type;
 
     /**
      * Accumulate stress tensor diagonal of a particle.
      */
-    HALMD_GPU_ENABLED void operator()(argument_type const& stress_pot)
-    {
-        stress_pot_type s = stress_pot;
-        virial_ += s[0];
-    }
+    inline HALMD_GPU_ENABLED void operator()(argument_type const& i);
 
     /**
      * Accumulate virial sum of another accumulator.
