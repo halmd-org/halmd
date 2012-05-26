@@ -72,7 +72,7 @@ double thermodynamics<dimension, float_type>::en_kin()
         scoped_timer_type timer(runtime_.en_kin);
 
         _Kernel::get().velocity.bind(group_->particle().velocity());
-        en_kin_ = double(compute_en_kin_(group_->begin(), group_->end())()) / nparticle();
+        en_kin_ = double(compute_en_kin_(group_->begin(), group_->end())()) / group_->size();
     }
     return en_kin_;
 }
@@ -107,7 +107,7 @@ double thermodynamics<dimension, float_type>::en_pot()
         scoped_timer_type timer(runtime_.en_pot);
 
         _Kernel::get().en_pot.bind(group_->particle().en_pot());
-        en_pot_ = double(compute_en_pot_(group_->begin(), group_->end())()) / nparticle();
+        en_pot_ = double(compute_en_pot_(group_->begin(), group_->end())()) / group_->size();
     }
     return en_pot_;
 }
@@ -124,7 +124,7 @@ double thermodynamics<dimension, float_type>::virial()
         scoped_timer_type timer(runtime_.virial);
 
         _Kernel::get().stress_pot.bind(group_->particle().stress_pot());
-        virial_ = double(compute_virial_(group_->begin(), group_->end())()) / nparticle();
+        virial_ = double(compute_virial_(group_->begin(), group_->end())()) / group_->size();
     }
     return virial_;
 }
@@ -141,7 +141,7 @@ double thermodynamics<dimension, float_type>::hypervirial()
         scoped_timer_type timer(runtime_.hypervirial);
 
         _Kernel::get().en_pot.bind(group_->particle().hypervirial());
-        hypervirial_ = double(compute_en_pot_(group_->begin(), group_->end())()) / nparticle();
+        hypervirial_ = double(compute_en_pot_(group_->begin(), group_->end())()) / group_->size();
     }
     return hypervirial_;
 }
