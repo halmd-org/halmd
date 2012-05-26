@@ -1,5 +1,6 @@
 /*
- * Copyright © 2008-2011  Peter Colberg
+ * Copyright © 2010 Felix Höfling
+ * Copyright © 2008-2012 Peter Colberg
  *
  * This file is part of HALMD.
  *
@@ -17,14 +18,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <boost/foreach.hpp>
-#include <boost/tuple/tuple.hpp>
-
 #include <halmd/mdsim/host/velocities/boltzmann.hpp>
 #include <halmd/utility/lua/lua.hpp>
-
-using namespace boost;
-using namespace std;
 
 namespace halmd {
 namespace mdsim {
@@ -49,9 +44,6 @@ boltzmann<dimension, float_type>::boltzmann(
     LOG("Boltzmann velocity distribution temperature: T = " << temp_);
 }
 
-/**
- * Initialise velocities from Maxwell-Boltzmann distribution
- */
 template <int dimension, typename float_type>
 void boltzmann<dimension, float_type>::set()
 {
@@ -60,91 +52,78 @@ void boltzmann<dimension, float_type>::set()
     // assuming equal (unit) mass for all particle types
     vector_type v_cm;
     float_type vv;
-    tie(v_cm, vv) = gaussian(sqrt(temp_));
+    boost::tie(v_cm, vv) = gaussian(sqrt(temp_));
 
     // center velocities around origin, then rescale to exactly
     // match the desired temperature;
     // temp = vv / dimension
     // vv changes to vv - v_cm^2 after shifting
-    float_type scale = sqrt(temp_ * dimension / (vv - inner_prod(v_cm, v_cm)));
+    float_type scale = std::sqrt(temp_ * dimension / (vv - inner_prod(v_cm, v_cm)));
     boltzmann::shift_rescale(-v_cm, scale);
 
     LOG_DEBUG("velocities rescaled by factor " << scale);
     LOG_DEBUG("assigned Boltzmann-distributed velocities");
 }
 
-/**
- * Assign new velocities from Gaussian distribution
- */
 template <int dimension, typename float_type>
-pair<typename boltzmann<dimension, float_type>::vector_type, float_type>
-inline boltzmann<dimension, float_type>::gaussian(float_type sigma)
+std::pair<typename boltzmann<dimension, float_type>::vector_type, float_type>
+boltzmann<dimension, float_type>::gaussian(float_type sigma)
 {
     vector_type v_cm = 0;
     float_type vv = 0;
     float_type r = 0;
     bool r_valid = false;
 
-    BOOST_FOREACH (vector_type& v, particle_->velocity()) {
+    for(vector_type& v : particle_->velocity()) {
         // assign two components at a time
-        for (unsigned i=0; i < dimension-1; i+=2) {
-            tie(v[i], v[i+1]) = random_->normal(sigma);
+        for (unsigned int i = 0; i < dimension - 1; i += 2) {
+            boost::tie(v[i], v[i + 1]) = random_->normal(sigma);
         }
         // handle last component separately for odd dimensions
         if (dimension % 2 == 1) {
             if (r_valid) {
-                v[dimension-1] = r;
+                v[dimension - 1] = r;
             }
             else {
-                tie(v[dimension-1], r) = random_->normal(sigma);
+                boost::tie(v[dimension - 1], r) = random_->normal(sigma);
             }
             r_valid = !r_valid;
         }
         v_cm += v;
         vv += inner_prod(v, v);
     }
-
     v_cm /= particle_->velocity().size();
     vv /= particle_->velocity().size();
-    return make_pair(v_cm, vv);
-}
 
-template <int dimension, typename float_type>
-static char const* module_name_wrapper(boltzmann<dimension, float_type> const&)
-{
-    return boltzmann<dimension, float_type>::module_name();
+    return std::make_pair(v_cm, vv);
 }
 
 template <int dimension, typename float_type>
 void boltzmann<dimension, float_type>::luaopen(lua_State* L)
 {
     using namespace luabind;
-    static string class_name(module_name() + ("_" + lexical_cast<string>(dimension) + "_"));
     module(L, "libhalmd")
     [
         namespace_("mdsim")
         [
-            namespace_("host")
+            namespace_("velocities")
             [
-                namespace_("velocities")
-                [
-                    class_<boltzmann, boost::shared_ptr<boltzmann> >(class_name.c_str())
-                        .def(constructor<
-                            boost::shared_ptr<particle_type>
-                           , boost::shared_ptr<random_type>
-                           , double
-                           , boost::shared_ptr<logger_type>
-                        >())
-                        .property("temperature", &boltzmann::temperature)
-                        .property("module_name", &module_name_wrapper<dimension, float_type>)
-                        .def("set", &boltzmann::set)
-                        .scope
-                        [
-                            class_<runtime>("runtime")
-                                .def_readonly("set", &runtime::set)
-                        ]
-                        .def_readonly("runtime", &boltzmann::runtime_)
-                ]
+                class_<boltzmann>()
+                    .property("temperature", &boltzmann::temperature)
+                    .def("set", &boltzmann::set)
+                    .scope
+                    [
+                        class_<runtime>("runtime")
+                            .def_readonly("set", &runtime::set)
+                    ]
+                    .def_readonly("runtime", &boltzmann::runtime_)
+
+              , def("boltzmann", &boost::make_shared<boltzmann
+                  , boost::shared_ptr<particle_type>
+                  , boost::shared_ptr<random_type>
+                  , double
+                  , boost::shared_ptr<logger_type>
+                >)
             ]
         ]
     ];
@@ -171,7 +150,7 @@ template class boltzmann<3, float>;
 template class boltzmann<2, float>;
 #endif
 
-} // namespace mdsim
-} // namespace host
 } // namespace velocities
+} // namespace host
+} // namespace mdsim
 } // namespace halmd
