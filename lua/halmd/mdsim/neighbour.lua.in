@@ -24,7 +24,7 @@ local module                            = require("halmd.utility.module")
 local mdsim = {
     binning                             = require("halmd.mdsim.binning")
   , maximum_squared_displacement        = require("halmd.mdsim.maximum_squared_displacement")
-  , sort                                = require("halmd.mdsim.sort")
+  , sort                                = require("halmd.mdsim.sorts.hilbert")
 }
 
 -- grab C++ wrappers
