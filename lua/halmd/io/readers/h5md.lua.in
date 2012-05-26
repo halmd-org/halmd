@@ -121,6 +121,22 @@ end)
 -- :param path: filename
 -- :returns: ``true`` if file is H5MD file, ``false`` if not, or ``nil`` if file does not exist
 --
+-- This function is useful to validate a command-line argument::
+--
+--    local parser = halmd.utility.program_options.argument_parser()
+--
+--    parser:add_argument("trajectory", {
+--        help = "trajectory file name"
+--      , type = "string"
+--      , required = true
+--      , action = function(args, key, value)
+--            if not halmd.io.readers.h5md.check(value) then
+--                error(("not an H5MD file: %s"):format(value), 0)
+--            end
+--            args[key] = value
+--        end
+--    })
+--
 function M.check(path)
     if type(path) ~= "string" then
         error("bad argument 'path'", 2)
