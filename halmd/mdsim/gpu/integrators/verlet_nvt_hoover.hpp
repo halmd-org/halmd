@@ -31,7 +31,6 @@
 #include <halmd/mdsim/gpu/integrators/verlet_nvt_hoover_kernel.hpp>
 #include <halmd/mdsim/gpu/particle.hpp>
 #include <halmd/numeric/mp/dsfloat.hpp>
-#include <halmd/observables/gpu/thermodynamics_kernel.hpp>
 #include <halmd/utility/profiler.hpp>
 
 namespace halmd {
@@ -150,7 +149,7 @@ private:
     chain_type mass_xi_;
 
     /** functor to compute actual value of total kinetic energy */
-    reduction<observables::gpu::kinetic_energy<dimension, dsfloat> > compute_en_kin_;
+    reduction<kinetic_energy<dimension, dsfloat> > compute_en_kin_;
 
     /** profiling runtime accumulators */
     runtime runtime_;

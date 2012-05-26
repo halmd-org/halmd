@@ -17,6 +17,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <halmd/algorithm/gpu/reduce_kernel.cuh>
 #include <halmd/mdsim/gpu/box_kernel.cuh>
 #include <halmd/mdsim/gpu/integrators/verlet_nvt_hoover_kernel.hpp>
 #include <halmd/numeric/blas/blas.hpp>
@@ -163,4 +164,8 @@ template class verlet_nvt_hoover_wrapper<2, float>;
 } // namespace integrators
 } // namespace gpu
 } // namespace mdsim
+
+template class reduction_kernel<mdsim::gpu::integrators::kinetic_energy<3, dsfloat> >;
+template class reduction_kernel<mdsim::gpu::integrators::kinetic_energy<2, dsfloat> >;
+
 } // namespace halmd

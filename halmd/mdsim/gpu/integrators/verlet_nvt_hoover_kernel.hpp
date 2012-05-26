@@ -20,6 +20,8 @@
 #ifndef HALMD_MDSIM_GPU_INTEGRATOR_VERLET_NVT_HOOVER_KERNEL_HPP
 #define HALMD_MDSIM_GPU_INTEGRATOR_VERLET_NVT_HOOVER_KERNEL_HPP
 
+#include <halmd/config.hpp>
+
 #include <cuda_wrapper/cuda_wrapper.hpp>
 #include <halmd/mdsim/type_traits.hpp>
 
@@ -39,6 +41,53 @@ struct verlet_nvt_hoover_wrapper
     cuda::function <void (float4*, float_type)> rescale;
 
     static verlet_nvt_hoover_wrapper const kernel;
+};
+
+/**
+ * Compute total kinetic energy.
+ */
+template <int dimension, typename float_type>
+class kinetic_energy
+{
+public:
+    /** element type of input array */
+    typedef float4 argument_type;
+
+    /**
+     * Initialise kinetic energy to zero.
+     */
+    kinetic_energy() : mv2_(0) {}
+
+    /**
+     * Accumulate kinetic energy of a particle.
+     */
+    HALMD_GPU_ENABLED void operator()(argument_type const& velocity)
+    {
+        fixed_vector<float, dimension> v;
+        float mass;
+        tie(v, mass) <<= velocity;
+        mv2_ += mass * inner_prod(v, v);
+    }
+
+    /**
+     * Accumulate kinetic energy of another accumulator.
+     */
+    HALMD_GPU_ENABLED void operator()(kinetic_energy const& acc)
+    {
+        mv2_ += acc.mv2_;
+    }
+
+    /**
+     * Returns total kinetic energy.
+     */
+    float_type operator()() const
+    {
+        return 0.5 * mv2_;
+    }
+
+private:
+    /** sum over mass × square of velocity vector */
+    float_type mv2_;
 };
 
 } // namespace integrators
