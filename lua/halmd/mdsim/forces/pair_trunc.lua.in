@@ -1,5 +1,6 @@
 --
--- Copyright © 2010-2011  Peter Colberg and Felix Höfling
+-- Copyright © 2010-2012 Peter Colberg
+-- Copyright © 2010-2011 Felix Höfling
 --
 -- This file is part of HALMD.
 --
@@ -18,71 +19,125 @@
 --
 
 local core              = require("halmd.mdsim.core")
+local neighbour         = require("halmd.mdsim.neighbour")
 local device            = require("halmd.utility.device")
 local module            = require("halmd.utility.module")
-local mdsim = {
-    neighbour           = require("halmd.mdsim.neighbour")
-}
+local profiler          = require("halmd.utility.profiler")
 
--- grab modules
-local forces = libhalmd.mdsim.forces
+---
+-- Truncated Pair Force
+-- ====================
+--
+--
+
+-- grab C++ wrappers
+local pair_trunc = assert(libhalmd.mdsim.forces.pair_trunc)
 local discontinuous = assert(libhalmd.mdsim.forces.trunc.discontinuous)
 
--- grab standard library
-local property = property
-local assert = assert
-
-
+---
+-- Construct truncated pair force.
 --
--- construct truncated pair force module
+-- :param table args: keyword arguments
+-- :param args.particle: instance, or sequence of two instances, of :class:`halmd.mdsim.particle`
+-- :param args.box: instance of :mod:`halmd.mdsim.box`
+-- :param args.potential: instance of :mod:`halmd.mdsim.potentials`
+-- :param args.trunc: instance of :mod:`halmd.mdsim.forces.trunc` (optional)
 --
--- @param args.potential potential name
--- @param args.trunc smoothing function (defaults to no smoothing)
+-- If ``trunc`` is not specified, the pair potential is :math:`C^0` continuous at the cutoff.
+--
+-- .. method:: connect()
+--
+--    Connect force to core and profiler.
+--
+--    This is the default.
+--
+-- .. method:: disconnect()
+--
+--    Disconnect force from core and profiler.
+--
+--    .. warning::
+--
+--       Currently this does not disconnect particle sorting, binning and neighbour lists.
+--
+-- .. attribute:: compute
+--
+--    Nullary slot to compute pair forces.
+--
+--    This function is connected to :meth:`halmd.mdsim.core.on_force` and
+--    :meth:`halmd.mdsim.core.on_append_setup` in :meth:`connect`.
+--
+-- .. attribute:: potential
+--
+--    Instance of :mod:`halmd.mdsim.potentials`.
+--
+-- .. attribute:: r_cut
+--
+--    Matrix with elements :math:`r_{\text{c}, ij}` in reduced units.
 --
 local M = module(function(args)
-    local particle1 = assert(args.particle or args.particles[1])
-    local particle2 = assert(args.particle or args.particles[2])
-    local box = assert(args.box)
-    local dimension = assert(box.dimension)
-    local potential = assert(args.potential)
+    local particle = args and args.particle
+    if type(particle) ~= "table" then
+        particle = {particle, particle}
+    end
+    if #particle ~= 2 then
+        error("bad argument 'particle'", 2)
+    end
+    local box = args.box
+    if not box then
+        error("bad argument 'box'", 2)
+    end
+    local potential = args.potential
+    if not potential then
+        error("bad argument 'potential'", 2)
+    end
     local trunc = args.trunc or discontinuous()
-    local neighbour = args.neighbour -- optional
 
     -- create neighbour lists with cutoff radii of potential
-    if not neighbour then
-        neighbour = mdsim.neighbour{box = box, particles = {particle1, particle2}, r_cut = potential.r_cut}
-    end
+    local r_cut = assert(potential.r_cut)
+    local neighbour = neighbour({box = box, particles = particle, r_cut = r_cut})
 
     -- construct force module
-    local force = assert(forces.pair_trunc)(potential, particle1, particle2, box, neighbour, trunc)
+    local self = pair_trunc(potential, particle[1], particle[2], box, neighbour, trunc)
 
-    -- system preparation
-    core:on_append_setup(force.compute)
-    -- compute forces every step
-    core:on_force(force.compute)
-
-    -- store potential Lua object (which contains the C++ object) as a
-    -- read-only Lua property, so we may read it in pair_trunc.profile
-    -- and retrieve the description of the potential for the log entry
-    force.potential = property(function(self)
+    -- attach potential instance as read-only Lua property
+    self.potential = property(function(self)
         return potential
     end)
 
-    return force
+    -- sequence of signal connections
+    local conn = {}
+    -- profiler description
+    local desc = ("computation of %s interaction"):format(potential.description)
+
+    self.connect = function(self)
+        if #conn == 0 then
+            -- system preparation
+            table.insert(conn, core:on_append_setup(self.compute))
+            -- compute forces every step
+            table.insert(conn, core:on_force(self.compute))
+
+            local runtime = assert(self.runtime)
+            table.insert(conn, profiler:on_profile(runtime.compute, desc))
+        else
+            error("integrator is already connected", 2)
+        end
+    end
+
+    self.disconnect = function(self)
+        if #conn > 0 then
+            for i = 1, #conn do
+                conn[i]:disconnect()
+            end
+            conn = {}
+        else
+            error("integrator is already disconnected", 2)
+        end
+    end
+
+    -- connect to core and profiler
+    self:connect()
+
+    return self
 end)
-
---
--- connect runtime accumulators to module profiler
---
-function M.profile(self, profiler)
-    profiler:on_profile{self, compute = "computation of " .. self.potential.module.description() .. " interaction"}
-end
-
---
--- returns module description
---
-function M.description()
-    return "Truncated pair interaction"
-end
 
 return M

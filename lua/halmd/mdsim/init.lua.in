@@ -28,6 +28,7 @@ local module = require("halmd.utility.module")
 --    :glob:
 --
 --    *
+--    forces/index
 --    integrators/index
 --    particle_groups/index
 --    potentials/index
