@@ -22,7 +22,6 @@
 
 #include <boost/bind.hpp>
 #include <boost/shared_ptr.hpp>
-#include <boost/lexical_cast.hpp>
 #include <lua.hpp>
 #include <string>
 
@@ -146,12 +145,6 @@ void pair_trunc<dimension, float_type, potential_type, trunc_type>::compute()
     cuda::thread::synchronize();
 }
 
-template <int dimension, typename float_type, typename potential_type, typename trunc_type>
-static char const* module_name_wrapper(pair_trunc<dimension, float_type, potential_type, trunc_type> const&)
-{
-    return potential_type::module_name();
-}
-
 template <typename force_type>
 static typename signal<void ()>::slot_function_type
 wrap_compute(boost::shared_ptr<force_type> force)
@@ -163,33 +156,22 @@ template <int dimension, typename float_type, typename potential_type, typename 
 void pair_trunc<dimension, float_type, potential_type, trunc_type>::luaopen(lua_State* L)
 {
     using namespace luabind;
-    static std::string class_name("pair_trunc_" + boost::lexical_cast<std::string>(dimension) + "_");
     module(L, "libhalmd")
     [
         namespace_("mdsim")
         [
-            namespace_("gpu")
+            namespace_("forces")
             [
-                namespace_("forces")
-                [
-                    namespace_(class_name.c_str())
+                class_<pair_trunc>()
+                    .property("compute", &wrap_compute<pair_trunc>)
+                    .scope
                     [
-                        class_<pair_trunc>(potential_type::module_name())
-                            .property("module_name", &module_name_wrapper<dimension, float_type, potential_type, trunc_type>)
-                            .property("compute", &wrap_compute<pair_trunc>)
-                            .scope
-                            [
-                                class_<runtime>("runtime")
-                                    .def_readonly("compute", &runtime::compute)
-                            ]
-                            .def_readonly("runtime", &pair_trunc::runtime_)
+                        class_<runtime>("runtime")
+                            .def_readonly("compute", &runtime::compute)
                     ]
-                ]
-            ]
+                    .def_readonly("runtime", &pair_trunc::runtime_)
 
-          , namespace_("forces")
-            [
-                def("pair_trunc", &boost::make_shared<pair_trunc,
+              , def("pair_trunc", &boost::make_shared<pair_trunc,
                     boost::shared_ptr<potential_type>
                   , boost::shared_ptr<particle_type>
                   , boost::shared_ptr<particle_type>
