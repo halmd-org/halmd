@@ -55,14 +55,14 @@ public:
     virtual std::size_t size() const = 0;
 
     /**
-     * Returns pointer to underlying particle instance.
+     * Returns reference to underlying particle instance.
      */
-    virtual boost::shared_ptr<particle_type> particle() = 0;
+    virtual particle_type& particle() = 0;
 
     /**
-     * Returns const pointer to underlying particle instance.
+     * Returns const reference to underlying particle instance.
      */
-    virtual boost::shared_ptr<particle_type const> particle() const = 0;
+    virtual particle_type const& particle() const = 0;
 
     /**
      * Bind class to Lua.
@@ -71,7 +71,7 @@ public:
 };
 
 template <typename particle_type>
-static boost::shared_ptr<particle_type>
+static particle_type&
 wrap_particle(particle_group<particle_type>& self)
 {
     return self.particle();
