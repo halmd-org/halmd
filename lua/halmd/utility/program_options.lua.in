@@ -244,7 +244,7 @@ function M.argument_parser()
     return setmetatable(self, mt)
 end
 
----
+--
 -- Create new argument group parser.
 --
 local function argument_group_parser(name)
@@ -474,7 +474,7 @@ function argument_parser:set_defaults(defaults)
     end
 end
 
----
+--
 -- Parse --help option.
 --
 -- :param table args: sequence of arguments
