@@ -205,7 +205,9 @@ void verlet_nvt_hoover<modules_type>::test()
     //
     // test conservation of pseudo-Hamiltonian
     //
-    const double en_tolerance = max(3e-5, steps * 1e-12);
+    // these tolerances have no deeper justification, except that even a small
+    // energy drift requires a scaling with the number of simulation steps
+    const double en_tolerance = max(5e-5, steps * 1e-12);
     BOOST_CHECK_SMALL(max_en_diff / fabs(en_nhc0), en_tolerance);
 
     //
