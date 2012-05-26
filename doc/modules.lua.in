@@ -105,7 +105,13 @@ function render_module(parsed)
     l(".. highlight:: lua")
     l()
     l(".. module:: %s", parsed.module)
-    l("   :noindex:")
+    for i = 1, #parsed do
+        local entry = parsed[i]
+        if entry.func and not entry.name then
+            l("   :noindex:")
+            break
+        end
+    end
     l()
 
     for i = 1, #parsed do
