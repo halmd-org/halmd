@@ -49,7 +49,7 @@ public:
      * Select by tag range [begin, end).
      */
     from_range(
-        boost::shared_ptr<particle_type const> particle
+        boost::shared_ptr<particle_type> particle
       , std::size_t begin
       , std::size_t end
     );
@@ -70,7 +70,12 @@ public:
     virtual std::size_t size() const;
 
     /**
-     * Returns underlying particle instance.
+     * Returns pointer to underlying particle instance.
+     */
+    virtual boost::shared_ptr<particle_type> particle();
+
+    /**
+     * Returns const pointer to underlying particle instance.
      */
     virtual boost::shared_ptr<particle_type const> particle() const;
 
@@ -81,7 +86,7 @@ public:
 
 private:
     /** particle instance */
-    boost::shared_ptr<particle_type const> particle_;
+    boost::shared_ptr<particle_type> particle_;
     /** first tag of range */
     std::size_t begin_;
     /** past last tag of range */
@@ -90,7 +95,7 @@ private:
 
 template <typename particle_type>
 from_range<particle_type>::from_range(
-    boost::shared_ptr<particle_type const> particle
+    boost::shared_ptr<particle_type> particle
   , std::size_t begin
   , std::size_t end
 )
@@ -128,6 +133,13 @@ from_range<particle_type>::size() const
 }
 
 template <typename particle_type>
+boost::shared_ptr<particle_type>
+from_range<particle_type>::particle()
+{
+    return particle_;
+}
+
+template <typename particle_type>
 boost::shared_ptr<particle_type const>
 from_range<particle_type>::particle() const
 {
@@ -140,7 +152,7 @@ from_range<particle_type>::particle() const
 template <typename particle_type>
 static boost::shared_ptr<from_range<particle_type> >
 wrap_from_range(
-    boost::shared_ptr<particle_type const> particle
+    boost::shared_ptr<particle_type> particle
   , std::size_t first
   , std::size_t last
 )

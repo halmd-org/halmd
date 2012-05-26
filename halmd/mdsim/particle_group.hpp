@@ -55,7 +55,12 @@ public:
     virtual std::size_t size() const = 0;
 
     /**
-     * Returns underlying particle instance.
+     * Returns pointer to underlying particle instance.
+     */
+    virtual boost::shared_ptr<particle_type> particle() = 0;
+
+    /**
+     * Returns const pointer to underlying particle instance.
      */
     virtual boost::shared_ptr<particle_type const> particle() const = 0;
 
@@ -66,13 +71,20 @@ public:
 };
 
 template <typename particle_type>
+static boost::shared_ptr<particle_type>
+wrap_particle(particle_group<particle_type>& self)
+{
+    return self.particle();
+}
+
+template <typename particle_type>
 void particle_group<particle_type>::luaopen(lua_State* L)
 {
     using namespace luabind;
     module(L)
     [
         class_<particle_group>()
-            .property("particle", &particle_group::particle)
+            .property("particle", &wrap_particle<particle_type>)
             .property("size", &particle_group::size)
     ];
 }
