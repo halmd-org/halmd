@@ -49,7 +49,7 @@ static void unary_reduce_float()
     cuda::host::vector<float> h_v(make_counting_iterator(1), make_counting_iterator(12345679));
     cuda::vector<float> g_v(h_v.size());
     cuda::copy(h_v, g_v);
-    accumulator_type acc = reduce(g_v, accumulator_type(0));
+    accumulator_type acc = reduce(g_v.begin(), g_v.end(), accumulator_type(0));
     BOOST_CHECK_EQUAL(int64_t(double(acc())), 12345678LL * 12345679 / 2);
 }
 
@@ -84,7 +84,7 @@ static void binary_reduce_float()
     cuda::vector<float> g_v2(h_v2.size());
     cuda::copy(h_v1, g_v1);
     cuda::copy(h_v2, g_v2);
-    accumulator_type acc = reduce(g_v1, g_v2, accumulator_type(0));
+    accumulator_type acc = reduce(g_v1.begin(), g_v1.end(), g_v2.begin(), accumulator_type(0));
     BOOST_CHECK_EQUAL(int64_t(double(acc())), -123456LL * 123457 * (2 * 123456 + 1) / 6);
 }
 
@@ -132,7 +132,7 @@ static void performance(size_t size)
             halmd::timer timer;
             // initialise kernel and allocate internal memory
             reduction<accumulator_type> reduce(blocks, threads);
-            accumulator_type sum_local = reduce(g_v);
+            accumulator_type sum_local = reduce(g_v.begin(), g_v.end());
             elapsed[0](timer.elapsed());
             BOOST_CHECK_EQUAL(uint64_t(double(sum_local())), uint64_t(size - 1) * size / 2);
         }
@@ -141,7 +141,7 @@ static void performance(size_t size)
         reduction<accumulator_type> reduce(blocks, threads);
         for (int i = 0; i < count_global; ++i) {
             halmd::timer timer;
-            accumulator_type sum_global = reduce(g_v);
+            accumulator_type sum_global = reduce(g_v.begin(), g_v.end());
             elapsed[1](timer.elapsed());
             BOOST_CHECK_EQUAL(uint64_t(double(sum_global())), uint64_t(size - 1) * size / 2);
         }

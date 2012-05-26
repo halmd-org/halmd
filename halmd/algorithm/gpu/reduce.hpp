@@ -68,10 +68,20 @@ public:
      * @param g_input input array in GPU memory
      * @param acc reduction accumulator
      */
+    template <typename InputIterator>
     accumulator_type operator()(
-        cuda::vector<argument_type> const& g_input
+        InputIterator first
+      , InputIterator last
       , accumulator_type const& acc = accumulator_type()
     );
+
+    /**
+     * This method is provided for backward compatibility.
+     */
+     accumulator_type operator()(
+         cuda::vector<argument_type> const& g_input
+       , accumulator_type const& acc = accumulator_type()
+     );
 
 private:
     /** kernel execution parameters */
@@ -98,16 +108,27 @@ inline reduction<accumulator_type, max_threads, 1>::reduction(
 }
 
 template <typename accumulator_type, unsigned int max_threads>
+template <typename InputIterator>
+inline accumulator_type reduction<accumulator_type, max_threads, 1>::operator()(
+    InputIterator first
+  , InputIterator last
+  , accumulator_type const& acc
+)
+{
+    cuda::configure(dim_.grid, dim_.block);
+    reduce_(&*first, last - first, g_block_, acc);
+    assert(g_block_.size() == h_block_.capacity());
+    cuda::copy(g_block_, h_block_, g_block_.size());
+    return std::for_each(h_block_.begin(), h_block_.begin() + h_block_.capacity(), acc);
+}
+
+template <typename accumulator_type, unsigned int max_threads>
 inline accumulator_type reduction<accumulator_type, max_threads, 1>::operator()(
     cuda::vector<argument_type> const& g_input
   , accumulator_type const& acc
 )
 {
-    cuda::configure(dim_.grid, dim_.block);
-    reduce_(g_input, g_input.size(), g_block_, acc);
-    assert(g_block_.size() == h_block_.capacity());
-    cuda::copy(g_block_, h_block_, g_block_.size());
-    return std::for_each(h_block_.begin(), h_block_.begin() + h_block_.capacity(), acc);
+    return (*this)(g_input.begin(), g_input.end(), acc);
 }
 
 /**
@@ -127,13 +148,14 @@ inline accumulator_type reduction<accumulator_type, max_threads, 1>::operator()(
  * run the reduction unit test, and compare the “global” and “local”
  * benchmark results.
  */
-template <typename accumulator_type>
+template <typename InputIterator, typename accumulator_type>
 inline accumulator_type reduce(
-    cuda::vector<typename accumulator_type::argument_type> const& g_input
+    InputIterator first
+  , InputIterator last
   , accumulator_type const& acc
 )
 {
-    return reduction<accumulator_type>()(g_input, acc);
+    return reduction<accumulator_type>()(first, last, acc);
 }
 
 template <typename accumulator_type, unsigned int max_threads>
@@ -165,11 +187,22 @@ public:
      * @param g_input input array in GPU memory
      * @param acc reduction accumulator
      */
+    template <typename InputIterator1, typename InputIterator2>
     accumulator_type operator()(
-        cuda::vector<first_argument_type> const& g_first
-      , cuda::vector<second_argument_type> const& g_second
+        InputIterator1 first1
+      , InputIterator1 last1
+      , InputIterator2 first2
       , accumulator_type const& acc = accumulator_type()
     );
+
+    /**
+     * This method is provided for backward compatibility.
+     */
+     accumulator_type operator()(
+         cuda::vector<first_argument_type> const& g_first
+       , cuda::vector<second_argument_type> const& g_second
+       , accumulator_type const& acc = accumulator_type()
+     );
 
 private:
     /** kernel execution parameters */
@@ -196,18 +229,29 @@ inline reduction<accumulator_type, max_threads, 2>::reduction(
 }
 
 template <typename accumulator_type, unsigned int max_threads>
+template <typename InputIterator1, typename InputIterator2>
 inline accumulator_type reduction<accumulator_type, max_threads, 2>::operator()(
-    cuda::vector<first_argument_type> const& g_first
-  , cuda::vector<second_argument_type> const& g_second
+    InputIterator1 first1
+  , InputIterator1 last1
+  , InputIterator2 first2
   , accumulator_type const& acc
 )
 {
-    assert(g_first.size() == g_second.size());
     cuda::configure(dim_.grid, dim_.block);
-    reduce_(g_first, g_second, g_first.size(), g_block_, acc);
+    reduce_(&*first1, &*first2, last1 - first1, g_block_, acc);
     assert(g_block_.size() == h_block_.capacity());
     cuda::copy(g_block_, h_block_, g_block_.size());
     return std::for_each(h_block_.begin(), h_block_.begin() + h_block_.capacity(), acc);
+}
+
+template <typename accumulator_type, unsigned int max_threads>
+inline accumulator_type reduction<accumulator_type, max_threads, 2>::operator()(
+     cuda::vector<first_argument_type> const& g_first
+   , cuda::vector<second_argument_type> const& g_second
+   , accumulator_type const& acc
+)
+{
+    return (*this)(g_first.begin(), g_first.end(), g_second.begin(), acc);
 }
 
 /**
@@ -228,14 +272,15 @@ inline accumulator_type reduction<accumulator_type, max_threads, 2>::operator()(
  * run the reduction unit test, and compare the “global” and “local”
  * benchmark results.
  */
-template <typename accumulator_type>
+template <typename InputIterator1, typename InputIterator2, typename accumulator_type>
 inline accumulator_type reduce(
-    cuda::vector<typename accumulator_type::first_argument_type> const& g_first
-  , cuda::vector<typename accumulator_type::second_argument_type> const& g_second
+    InputIterator1 first1
+  , InputIterator1 last1
+  , InputIterator2 first2
   , accumulator_type const& acc
 )
 {
-    return reduction<accumulator_type>()(g_first, g_second, acc);
+    return reduction<accumulator_type>()(first1, last1, first2, acc);
 }
 
 } // namespace halmd
