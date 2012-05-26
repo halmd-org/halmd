@@ -1,5 +1,5 @@
 --
--- Copyright © 2010  Peter Colberg
+-- Copyright © 2010-2012 Peter Colberg
 --
 -- This file is part of HALMD.
 --
@@ -17,92 +17,82 @@
 -- along with this program.  If not, see <http://www.gnu.org/licenses/>.
 --
 
-local core              = require("halmd.mdsim.core")
 local device            = require("halmd.utility.device")
 local log               = require("halmd.io.log")
 local module            = require("halmd.utility.module")
 local random            = require("halmd.random")
 
--- grab C++ wrappers
-local boltzmann_wrapper = {
-    host = {
-        [2] = libhalmd.mdsim.host.velocities.boltzmann_2_
-      , [3] = libhalmd.mdsim.host.velocities.boltzmann_3_
-    }
-}
-if libhalmd.mdsim.gpu then
-    boltzmann_wrapper.gpu = {
-        [2] = libhalmd.mdsim.gpu.velocities.boltzmann_2_
-      , [3] = libhalmd.mdsim.gpu.velocities.boltzmann_3_
-    }
-end
-local h5 = libhalmd.h5
-local po = libhalmd.po
--- grab standard library
-local assert = assert
-
-
+---
+-- Boltzmann distribution
+-- ======================
 --
--- construct boltzmann module
+-- This module initialises particle velocities from a Boltzmann distribution.
+--
+-- .. warning::
+--
+--    Non-unit masses are not supported yet.
+--
+-- The velocity distribution of each dimension :math:`i` is a Gaussian with mean
+-- :math:`\mu_{v_i} = 0` and width :math:`\sigma_{v_i} = \sqrt{T^*}`,
+--
+-- .. math::
+--
+--    f\left(v_i\right) = \sqrt{\frac{1}{2\pi T^*}} \exp\left(\frac{-v_i^2}{2 T^*}\right)
+--
+-- To account for the finite size of the system, the velocities are shifted,
+--
+-- .. math::
+--
+--    \vec{v}_\text{shifted} \equiv \vec{v} - \vec{V}_\text{cm}
+--
+-- to yield a centre of mass velocity of zero, and scaled,
+--
+-- .. math::
+--
+--    \vec{v}_\text{scaled} \equiv \vec{v}_\text{shifted}\; \sqrt{\frac{d T^*}{E_\text{kin} - \vec{V}_\text{cm}^2}}
+--
+-- to yield the exact temperature, using the centre of mass velocity and kinetic energy,
+--
+-- .. math::
+--
+--    \vec{V}_\text{cm} &= \frac{1}{N} \sum_{n = 1}^N \vec{v}_n \\
+--
+--    E_\text{kin} &= \frac{1}{2N} \sum_{n = 1}^N v_n^2
+--
+
+-- grab C++ wrappers
+local boltzmann = assert(libhalmd.mdsim.velocities.boltzmann)
+
+---
+-- Construct boltzmann module.
+--
+-- :param table args: keyword arguments
+-- :param args.particle: instance of :class:`halmd.mdsim.particle`
+-- :param number args.temperature: temperature of distribution
+--
+-- .. method:: set()
+--
+--    Initialise particle velocities from Boltzmann distribution.
+--
+-- .. attribute:: temperature
+--
+--    Temperature of distribution in reduced units.
 --
 local M = module(function(args)
-    local particle = assert(args.particle, "missing parameter: particle")
-    local temperature = args.temperature or 1.12 -- default value
-
-    -- dependency injection
-    local dimension = assert(particle.dimension)
-    local rng = random.generator()
-    local logger = log.logger({label = "boltzmann"})
-
-    local boltzmann
-    if device.gpu then
-        boltzmann = boltzmann_wrapper.gpu[dimension]
-    else
-        boltzmann = boltzmann_wrapper.host[dimension]
+    local particle = args.particle
+    if not particle then
+        error("bad argument 'parameter'", 2)
     end
-    local velocity = boltzmann(particle, rng, temperature, logger)
+    local temperature = args.temperature
+    if not temperature then
+        error("bad argument 'temperature'", 2)
+    end
+    local rng = random.generator()
+    local label = assert(particle.label)
+    local logger = log.logger({label = ("boltzmann (%s)"):format(label)})
 
-    return velocity
+    -- construct instance
+    return boltzmann(particle, rng, temperature, logger)
 end)
-
---
--- connect runtime accumulators to module profiler
---
-function M.profile(self, profiler)
-    profiler:on_profile{self, set = "setting particle velocities from Boltzmann distribution"}
-end
-
---
--- returns module description
---
-function M.description()
-    return "Boltzmann distribution"
-end
-
---
--- assemble module options
---
--- @param desc po.options_description
---
-function M.options(desc)
-    desc:add("temperature", po.float(), "Boltzmann distribution temperature")
-end
-
---
--- read module parameters from HDF5 group
---
-function M.read_parameters(args, group)
-    args.temperature = group:read_attribute("temperature", h5.float())
-end
-
---
--- write module parameters to HDF5 group
---
--- @param boltzmann module instance
--- @param group HDF5 group
---
-function M.write_parameters(boltzmann, group)
-    group:write_attribute("temperature", h5.float(), boltzmann.temperature)
-end
 
 return M

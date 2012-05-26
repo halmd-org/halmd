@@ -65,7 +65,7 @@ local function liquid(args)
     local lattice = mdsim.positions.lattice{box = box, particle = particle}
     lattice:set()
     -- set initial particle velocities
-    local boltzmann = mdsim.velocities.boltzmann{particle = particle}
+    local boltzmann = mdsim.velocities.boltzmann{particle = particle, temperature = args.temperature}
     boltzmann:set()
 
     -- H5MD file writer
@@ -163,6 +163,7 @@ local function parse_args()
         args[key] = value
     end, default = {1, 1, 1}, help = "relative aspect ratios of simulation box"})
     parser:add_argument("masses", {type = "vector", dtype = "number", default = {1}, help = "particle masses"})
+    parser:add_argument("temperature", {type = "number", default = 1.12, help = "initial system temperature"})
 
     parser:add_argument("ensemble", {type = "string", choices = {
         nve = "Constant NVE",
