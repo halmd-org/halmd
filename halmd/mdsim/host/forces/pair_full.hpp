@@ -23,7 +23,6 @@
 #include <boost/bind.hpp>
 #include <boost/foreach.hpp>
 #include <boost/shared_ptr.hpp>
-#include <boost/lexical_cast.hpp>
 #include <lua.hpp>
 #include <string>
 
@@ -184,12 +183,6 @@ void pair_full<dimension, float_type, potential_type>::compute_aux()
     }
 }
 
-template <int dimension, typename float_type, typename potential_type>
-static char const* module_name_wrapper(pair_full<dimension, float_type, potential_type> const&)
-{
-    return potential_type::module_name();
-}
-
 template <typename force_type>
 static typename signal<void ()>::slot_function_type
 wrap_compute(boost::shared_ptr<force_type> force)
@@ -201,34 +194,23 @@ template <int dimension, typename float_type, typename potential_type>
 void pair_full<dimension, float_type, potential_type>::luaopen(lua_State* L)
 {
     using namespace luabind;
-    static std::string class_name("pair_full_" + boost::lexical_cast<std::string>(dimension) + "_");
     module(L, "libhalmd")
     [
         namespace_("mdsim")
         [
-            namespace_("host")
+            namespace_("forces")
             [
-                namespace_("forces")
-                [
-                    namespace_(class_name.c_str())
+                class_<pair_full>()
+                    .property("r_cut", &pair_full::r_cut)
+                    .property("compute", &wrap_compute<pair_full>)
+                    .scope
                     [
-                        class_<pair_full>(potential_type::module_name())
-                            .property("r_cut", &pair_full::r_cut)
-                            .property("module_name", &module_name_wrapper<dimension, float_type, potential_type>)
-                            .property("compute", &wrap_compute<pair_full>)
-                            .scope
-                            [
-                                class_<runtime>("runtime")
-                                    .def_readonly("compute", &runtime::compute)
-                            ]
-                            .def_readonly("runtime", &pair_full::runtime_)
+                        class_<runtime>("runtime")
+                            .def_readonly("compute", &runtime::compute)
                     ]
-                ]
-            ]
+                    .def_readonly("runtime", &pair_full::runtime_)
 
-          , namespace_("forces")
-            [
-                def("pair_full", &boost::make_shared<pair_full,
+              , def("pair_full", &boost::make_shared<pair_full,
                     boost::shared_ptr<potential_type>
                   , boost::shared_ptr<particle_type>
                   , boost::shared_ptr<box_type>
