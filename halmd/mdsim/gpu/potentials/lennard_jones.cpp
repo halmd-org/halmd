@@ -1,5 +1,6 @@
 /*
- * Copyright © 2008-2010  Peter Colberg and Felix Höfling
+ * Copyright © 2010 Felix Höfling
+ * Copyright © 2008-2012 Peter Colberg
  *
  * This file is part of HALMD.
  *
@@ -26,10 +27,6 @@
 #include <halmd/mdsim/gpu/potentials/lennard_jones.hpp>
 #include <halmd/mdsim/gpu/potentials/lennard_jones_kernel.hpp>
 #include <halmd/utility/lua/lua.hpp>
-
-using namespace boost;
-using namespace boost::numeric::ublas;
-using namespace std;
 
 namespace halmd {
 namespace mdsim {
@@ -108,7 +105,7 @@ void lennard_jones<float_type>::luaopen(lua_State* L)
             [
                 namespace_("potentials")
                 [
-                    class_<lennard_jones, boost::shared_ptr<lennard_jones> >(module_name())
+                    class_<lennard_jones, boost::shared_ptr<lennard_jones> >("lennard_jones")
                         .def(constructor<
                             unsigned int
                           , unsigned int

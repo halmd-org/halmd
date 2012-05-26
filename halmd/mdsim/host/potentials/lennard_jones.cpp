@@ -1,5 +1,6 @@
 /*
- * Copyright © 2008-2011  Peter Colberg and Felix Höfling
+ * Copyright © 2010-2011 Felix Höfling
+ * Copyright © 2008-2012 Peter Colberg
  *
  * This file is part of HALMD.
  *
@@ -24,11 +25,6 @@
 
 #include <halmd/mdsim/host/potentials/lennard_jones.hpp>
 #include <halmd/utility/lua/lua.hpp>
-
-using namespace boost;
-using namespace boost::assign;
-using namespace boost::numeric::ublas;
-using namespace std;
 
 namespace halmd {
 namespace mdsim {
@@ -70,7 +66,7 @@ lennard_jones<float_type>::lennard_jones(
     // energy shift due to truncation at cutoff length
     for (unsigned i = 0; i < en_cut_.size1(); ++i) {
         for (unsigned j = 0; j < en_cut_.size2(); ++j) {
-            en_cut_(i, j) = get<1>((*this)(rr_cut_(i, j), i, j));
+            boost::tie(boost::tuples::ignore, en_cut_(i, j), boost::tuples::ignore) = (*this)(rr_cut_(i, j), i, j);
         }
     }
 
@@ -92,7 +88,7 @@ void lennard_jones<float_type>::luaopen(lua_State* L)
             [
                 namespace_("potentials")
                 [
-                    class_<lennard_jones, boost::shared_ptr<lennard_jones> >(module_name())
+                    class_<lennard_jones, boost::shared_ptr<lennard_jones> >("lennard_jones")
                         .def(constructor<
                             unsigned int
                           , unsigned int

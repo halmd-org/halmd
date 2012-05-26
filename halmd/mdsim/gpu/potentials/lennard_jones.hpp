@@ -1,5 +1,6 @@
 /*
- * Copyright © 2008-2010  Peter Colberg and Felix Höfling
+ * Copyright © 2010 Felix Höfling
+ * Copyright © 2008-2012 Peter Colberg
  *
  * This file is part of HALMD.
  *
@@ -43,10 +44,6 @@ public:
     typedef lennard_jones_kernel::lennard_jones gpu_potential_type;
     typedef boost::numeric::ublas::matrix<float_type> matrix_type;
     typedef logger logger_type;
-
-    static char const* module_name() { return "lennard_jones"; }
-
-    static void luaopen(lua_State* L);
 
     lennard_jones(
         unsigned int ntype1
@@ -92,6 +89,11 @@ public:
     {
         return sigma_;
     }
+
+    /**
+     * Bind class to Lua.
+     */
+    static void luaopen(lua_State* L);
 
 private:
     /** potential well depths in MD units */

@@ -1,5 +1,6 @@
 /*
- * Copyright © 2008-2011  Peter Colberg and Felix Höfling
+ * Copyright © 2010-2011 Felix Höfling
+ * Copyright © 2008-2012 Peter Colberg
  *
  * This file is part of HALMD.
  *
@@ -34,11 +35,9 @@ namespace gpu {
 namespace potentials {
 
 /**
- * define Lennard-Jones potential and parameters
- * for a single species (consituting a "simple liquid")
+ * Lennard-Jones potential for a single species (constituting a "simple liquid").
  *
- * The usual LJ units are employed, the only parameter is
- * the potential cutoff.
+ * The usual LJ units are employed, the only parameter is the potential cutoff.
  */
 template <typename float_type>
 class lennard_jones_simple
@@ -50,10 +49,6 @@ public:
     typedef lennard_jones_simple_kernel::lennard_jones_simple gpu_potential_type;
     typedef boost::numeric::ublas::matrix<float_type> matrix_type;
     typedef logger logger_type;
-
-    static char const* module_name() { return "lennard_jones_simple"; }
-
-    static void luaopen(lua_State* L);
 
     lennard_jones_simple(
         unsigned int ntype1
@@ -78,6 +73,11 @@ public:
     {
         return scalar_matrix_type(ntype1_, ntype2_, 1);
     }
+
+    /**
+     * Bind class to Lua.
+     */
+    static void luaopen(lua_State* L);
 
 private:
     /** cutoff length in MD units, r_cut() must return a matrix */

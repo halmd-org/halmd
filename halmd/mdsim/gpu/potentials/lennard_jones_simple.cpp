@@ -1,5 +1,6 @@
 /*
- * Copyright © 2008-2011  Peter Colberg and Felix Höfling
+ * Copyright © 2010-2011 Felix Höfling
+ * Copyright © 2008-2012 Peter Colberg
  *
  * This file is part of HALMD.
  *
@@ -24,10 +25,6 @@
 #include <halmd/mdsim/gpu/potentials/lennard_jones_simple.hpp>
 #include <halmd/mdsim/gpu/potentials/lennard_jones_simple_kernel.hpp>
 #include <halmd/utility/lua/lua.hpp>
-
-using namespace boost;
-using namespace boost::numeric::ublas;
-using namespace std;
 
 namespace halmd {
 namespace mdsim {
@@ -56,7 +53,7 @@ lennard_jones_simple<float_type>::lennard_jones_simple(
     float_type r6i_cut = rri_cut * rri_cut * rri_cut;
     en_cut_ = 4 * r6i_cut * (r6i_cut - 1);
 
-    LOG("using optimised version for a single species with ε=1, σ=1");
+    LOG("using optimised version for a single species with ε = 1, σ = 1");
     LOG("potential cutoff length: r_c = " << r_cut_);
     LOG("potential cutoff energy: U = " << en_cut_);
 
@@ -76,7 +73,7 @@ void lennard_jones_simple<float_type>::luaopen(lua_State* L)
             [
                 namespace_("potentials")
                 [
-                    class_<lennard_jones_simple, boost::shared_ptr<lennard_jones_simple> >(module_name())
+                    class_<lennard_jones_simple, boost::shared_ptr<lennard_jones_simple> >("lennard_jones_simple")
                         .def(constructor<
                             unsigned int
                           , unsigned int
