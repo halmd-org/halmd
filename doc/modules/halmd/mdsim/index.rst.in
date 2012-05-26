@@ -8,5 +8,6 @@ Simulation
    *
    integrators/index
    particle_groups/index
+   potentials/index
    velocities/index
 

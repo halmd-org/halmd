@@ -1,5 +1,6 @@
 --
--- Copyright © 2010  Peter Colberg and Felix Höfling
+-- Copyright © 2010-2012 Peter Colberg
+-- Copyright © 2010 Felix Höfling
 --
 -- This file is part of HALMD.
 --
@@ -22,96 +23,120 @@ local log               = require("halmd.io.log")
 local module            = require("halmd.utility.module")
 local numeric           = require("halmd.utility.numeric")
 
--- grab C++ wrappers
-local lennard_jones_wrapper = {
-    host = libhalmd.mdsim.host.potentials.lennard_jones
-}
-if libhalmd.mdsim.gpu then
-    lennard_jones_wrapper.gpu = libhalmd.mdsim.gpu.potentials.lennard_jones
-end
-local lennard_jones_simple_wrapper = {}
-if libhalmd.mdsim.gpu then
-    lennard_jones_simple_wrapper.gpu = libhalmd.mdsim.gpu.potentials.lennard_jones_simple
-end
-local h5 = libhalmd.h5
-local po = libhalmd.po
--- grab standard library
-local assert = assert
-local type = type
-local scalar_matrix = assert(numeric.scalar_matrix)
-
-
+---
+-- Lennard-Jones potential
+-- =======================
 --
--- construct Lennard-Jones module
+-- This module implements the Lennard-Jones potential,
+--
+-- .. math::
+--
+--    U_\text{LJ}\left(r_{ij}\right) = 4\epsilon_{ij} \left(
+--        \left(\frac{\sigma_{ij}}{r_{ij}}\right)^{12}
+--      - \left(\frac{\sigma_{ij}}{r_{ij}}\right)^6
+--    \right)
+--
+-- for the interaction between two particles of species :math:`i` and :math:`j`.
+--
+
+-- grab C++ wrappers
+local lennard_jones, lennard_jones_simple
+if device.gpu then
+    lennard_jones = assert(libhalmd.mdsim.gpu.potentials.lennard_jones)
+    lennard_jones_simple = assert(libhalmd.mdsim.gpu.potentials.lennard_jones_simple)
+else
+    lennard_jones = assert(libhalmd.mdsim.host.potentials.lennard_jones)
+end
+
+---
+-- Construct Lennard-Jones potential.
+--
+-- :param table args: keyword arguments
+-- :param args.particle: instance, or sequence of two instances, of :class:`halmd.mdsim.particle`
+-- :param table args.epsilon: matrix with elements :math:`\epsilon_{ij}` (defaults to ``1``)
+-- :param table args.sigma: matrix with elements :math:`\sigma_{ij}` (defaults to ``1``)
+-- :param table args.cutoff: matrix with elements :math:`r_{\text{c}, ij}`
+--
+-- If all elements of a matrix are equal, a scalar value should be passed instead.
+--
+-- .. note::
+--
+--    The cutoff is only relevant with :class:`halmd.mdsim.forces.pair_trunc`.
+--
+-- .. attribute:: epsilon
+--
+--    Matrix with elements :math:`\epsilon_{ij}`.
+--
+-- .. attribute:: sigma
+--
+--    Matrix with elements :math:`\sigma_{ij}`.
+--
+-- .. attribute:: r_cut
+--
+--    Matrix with elements :math:`r_{\text{c}, ij}` in reduced units.
+--
+-- .. attribute:: r_cut_sigma
+--
+--    Matrix with elements :math:`r_{\text{c}, ij}` in units of :math:`\sigma_{ij}`.
+--
+-- .. attribute:: description
+--
+--    Name of potential for profiler.
 --
 local M = module(function(args)
-    local cutoff = args.cutoff or 2.5 -- default value
-    local epsilon = args.epsilon or 1 -- default value
-    local sigma = args.sigma or 1 -- default value
+    local epsilon = args and args.epsilon or 1
+    if type(epsilon) ~= "table" and type(epsilon) ~= "number" then
+        error("bad argument 'epsilon'", 2)
+    end
+    local sigma = args and args.sigma or 1
+    if type(sigma) ~= "table" and type(sigma) ~= "number" then
+        error("bad argument 'sigma'", 2)
+    end
+    local cutoff = args and args.cutoff
+    if type(cutoff) ~= "table" and type(cutoff) ~= "number" then
+        error("bad argument 'cutoff'", 2)
+    end
+    local particle = args.particle
+    if type(particle) ~= "table" then
+        particle = {particle, particle}
+    end
+    if #particle ~= 2 then
+        error("bad argument 'particle'", 2)
+    end
 
-    local particle1 = assert(args.particle or args.particles[1])
-    local particle2 = assert(args.particle or args.particles[2])
-    local logger = log.logger({label = "lennard_jones"})
+    local nspecies = {}
+    local label = {}
+    for i = 1, #particle do
+        table.insert(nspecies, assert(particle[i].nspecies))
+        table.insert(label, assert(particle[i].label))
+    end
+    local label = ("lennard_jones (%s ↔ %s)"):format(label[1], label[2])
+    local logger = log.logger({label = label})
 
-    local potential
-    -- select optimised GPU version if 1 species and ε=1, σ=1
-    if device.gpu and epsilon == 1 and sigma == 1 then
-        local lennard_jones_simple = assert(lennard_jones_simple_wrapper.gpu)
-        potential = lennard_jones_simple(particle1.nspecies, particle2.nspecies, cutoff, logger)
+    -- construct instance
+    local self
+    if lennard_jones_simple and epsilon == 1 and sigma == 1 and type(cutoff) == "number" then
+        -- select optimised GPU version if ε = 1 and σ = 1
+        self = lennard_jones_simple(nspecies[1], nspecies[2], cutoff, logger)
     else
         if type(cutoff) == "number" then
-            cutoff = scalar_matrix(particle1.nspecies, particle2.nspecies, cutoff)
+            cutoff = numeric.scalar_matrix(nspecies[1], nspecies[2], cutoff)
         end
         if type(epsilon) == "number" then
-            epsilon = scalar_matrix(particle1.nspecies, particle2.nspecies, epsilon)
+            epsilon = numeric.scalar_matrix(nspecies[1], nspecies[2], epsilon)
         end
         if type(sigma) == "number" then
-            sigma = scalar_matrix(particle1.nspecies, particle2.nspecies, sigma)
+            sigma = numeric.scalar_matrix(nspecies[1], nspecies[2], sigma)
         end
-        local lennard_jones = assert(lennard_jones_wrapper[device.gpu and "gpu" or "host"])
-        potential = lennard_jones(particle1.nspecies, particle2.nspecies, cutoff, epsilon, sigma, logger)
+        self = lennard_jones(nspecies[1], nspecies[2], cutoff, epsilon, sigma, logger)
     end
-    return potential
+
+    -- attach description for profiler
+    self.description = property(function(self)
+        return "Lennard-Jones potential"
+    end)
+
+    return self
 end)
-
---
--- returns module description
---
-function M.description()
-    return "Lennard-Jones potential"
-end
-
---
--- assemble module options
---
--- @param desc po.options_description
---
-function M.options(desc)
-    desc:add("cutoff", po.float_array(), "truncate potential at cutoff radius")
-    desc:add("epsilon", po.float_array(), "potential well depths")
-    desc:add("sigma", po.float_array(), "collision diameters")
-    -- FIXME desc:add("smooth", po.float_array(), "C²-potential smoothing factor")
-end
-
---
--- read module parameters from HDF5 group
---
-function M.read_parameters(args, group)
-    -- FIXME args.cutoff = group:read_attribute("cutoff", h5.float_array())
-    -- FIXME args.epsilon = group:read_attribute("epsilon", h5.float_array())
-    -- FIXME args.sigma = group:read_attribute("sigma", h5.float_array())
-end
-
---
--- write module parameters to HDF5 group
---
--- @param lennard_jones module instance
--- @param group HDF5 group
---
-function M.write_parameters(lennard_jones, group)
-    -- FIXME :write_attribute("cutoff", h5.float_array(), lennard_jones.r_cut_sigma:data())
-    -- FIXME :write_attribute("epsilon", h5.float_array(), lennard_jones.epsilon:data())
-    -- FIXME :write_attribute("sigma", h5.float_array(), lennard_jones.sigma:data())
-end
 
 return M

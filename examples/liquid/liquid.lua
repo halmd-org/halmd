@@ -58,7 +58,7 @@ local function liquid(args)
     -- add velocity-Verlet integrator
     local integrator = mdsim.integrators.verlet({box = box, particle = particle, timestep = args.timestep})
     -- pair potential
-    local potential = mdsim.potentials.lennard_jones({particle = particle})
+    local potential = mdsim.potentials.lennard_jones({particle = particle, cutoff = 2.5})
     -- add force
     local force = mdsim.forces.pair_trunc{box = box, particle = particle, potential = potential}
     -- set initial particle positions
