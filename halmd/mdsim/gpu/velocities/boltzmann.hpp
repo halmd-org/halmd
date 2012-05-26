@@ -1,5 +1,6 @@
 /*
- * Copyright © 2008-2011  Peter Colberg and Felix Höfling
+ * Copyright © 2010 Felix Höfling
+ * Copyright © 2008-2012 Peter Colberg
  *
  * This file is part of HALMD.
  *
@@ -42,23 +43,9 @@ class boltzmann
   : public gpu::velocity<dimension, float_type>
 {
 public:
-    typedef gpu::velocity<dimension, float_type> _Base;
     typedef gpu::particle<dimension, float_type> particle_type;
-    typedef typename particle_type::vector_type vector_type;
-    typedef typename particle_type::gpu_vector_type gpu_vector_type;
     typedef random::gpu::random<RandomNumberGenerator> random_type;
-    typedef typename random_type::rng_type rng_type;
-#ifdef USE_VERLET_DSFUN
-    typedef boltzmann_wrapper<dimension, dsfloat, rng_type> wrapper_type;
-#else
-    typedef boltzmann_wrapper<dimension, float, rng_type> wrapper_type;
-#endif
-    typedef typename wrapper_type::gaussian_impl_type gaussian_impl_type;
     typedef logger logger_type;
-
-    static char const* module_name() { return "boltzmann"; }
-
-    static void luaopen(lua_State* L);
 
     boltzmann(
         boost::shared_ptr<particle_type> particle
@@ -66,17 +53,54 @@ public:
       , double temperature
       , boost::shared_ptr<logger_type> logger = boost::make_shared<logger_type>()
     );
+
+    /**
+     * Initialise velocities from Maxwell-Boltzmann distribution
+     */
     void set();
 
-    //! returns temperature
+    /**
+     * Returns temperature.
+     */
     float_type temperature() const
     {
         return temp_;
     }
 
-    static gaussian_impl_type get_gaussian_impl(int threads);
+    /**
+     * Bind class to Lua.
+     */
+    static void luaopen(lua_State* L);
 
 private:
+    typedef gpu::velocity<dimension, float_type> _Base;
+    typedef typename particle_type::vector_type vector_type;
+    typedef typename particle_type::gpu_vector_type gpu_vector_type;
+    typedef typename random_type::rng_type rng_type;
+#ifdef USE_VERLET_DSFUN
+    typedef boltzmann_wrapper<dimension, dsfloat, rng_type> wrapper_type;
+#else
+    typedef boltzmann_wrapper<dimension, float, rng_type> wrapper_type;
+#endif
+    typedef typename wrapper_type::gaussian_impl_type gaussian_impl_type;
+
+    static gaussian_impl_type get_gaussian_impl(int threads);
+
+    /** system state */
+    boost::shared_ptr<particle_type> particle_;
+    /** random number generator */
+    boost::shared_ptr<random_type> random_;
+    /** module logger */
+    boost::shared_ptr<logger_type> logger_;
+    /** generate Maxwell-Boltzmann distribution */
+    gaussian_impl_type const gaussian_impl_;
+    /** temperature */
+    float_type temp_;
+    /** block sum of velocity */
+    cuda::vector<gpu_vector_type> g_vcm_;
+    /** block sum of squared velocity */
+    cuda::vector<dsfloat> g_vv_;
+
     typedef utility::profiler profiler_type;
     typedef typename profiler_type::accumulator_type accumulator_type;
     typedef typename profiler_type::scoped_timer_type scoped_timer_type;
@@ -86,23 +110,13 @@ private:
         accumulator_type set;
     };
 
-    boost::shared_ptr<particle_type> particle_;
-    boost::shared_ptr<random_type> random_;
-    boost::shared_ptr<logger_type> logger_;
-    gaussian_impl_type const gaussian_impl_;
-    /** temperature */
-    float_type temp_;
-    /** block sum of velocity */
-    cuda::vector<gpu_vector_type> g_vcm_;
-    /** block sum of squared velocity */
-    cuda::vector<dsfloat> g_vv_;
     /** profiling runtime accumulators */
     runtime runtime_;
 };
 
-} // namespace mdsim
-} // namespace gpu
 } // namespace velocities
+} // namespace gpu
+} // namespace mdsim
 } // namespace halmd
 
 #endif /* ! HALMD_MDSIM_GPU_VELOCITIES_BOLTZMANN_HPP */

@@ -1,5 +1,6 @@
 /*
- * Copyright © 2008-2011  Peter Colberg and Felix Höfling
+ * Copyright © 2010 Felix Höfling
+ * Copyright © 2008-2012 Peter Colberg
  *
  * This file is part of HALMD.
  *
@@ -19,9 +20,6 @@
 
 #include <halmd/mdsim/gpu/velocities/boltzmann.hpp>
 #include <halmd/utility/lua/lua.hpp>
-
-using namespace boost;
-using namespace std;
 
 namespace halmd {
 namespace mdsim {
@@ -125,51 +123,35 @@ void boltzmann<dimension, float_type, RandomNumberGenerator>::set()
     );
     cuda::thread::synchronize();
 
-#ifdef USE_HILBERT_ORDER
-    // make thermostat independent of neighbour list update frequency or skin
-//     order_velocities(); boltzmann is not a thermostat!
-#endif
-
     LOG_DEBUG("assigned Boltzmann-distributed velocities");
-//    LOG_DEBUG("velocities rescaled by factor " << scale);
-}
-
-template <int dimension, typename float_type, typename RandomNumberGenerator>
-static char const* module_name_wrapper(boltzmann<dimension, float_type, RandomNumberGenerator> const&)
-{
-    return boltzmann<dimension, float_type, RandomNumberGenerator>::module_name();
 }
 
 template <int dimension, typename float_type, typename RandomNumberGenerator>
 void boltzmann<dimension, float_type, RandomNumberGenerator>::luaopen(lua_State* L)
 {
     using namespace luabind;
-    static string class_name(module_name() + ("_" + lexical_cast<string>(dimension) + "_"));
     module(L, "libhalmd")
     [
         namespace_("mdsim")
         [
-            namespace_("gpu")
+            namespace_("velocities")
             [
-                namespace_("velocities")
-                [
-                    class_<boltzmann, boost::shared_ptr<boltzmann> >(class_name.c_str())
-                        .def(constructor<
-                             boost::shared_ptr<particle_type>
-                           , boost::shared_ptr<random_type>
-                           , double
-                           , boost::shared_ptr<logger_type>
-                         >())
-                        .property("temperature", &boltzmann::temperature)
-                        .property("module_name", &module_name_wrapper<dimension, float_type, RandomNumberGenerator>)
-                        .def("set", &boltzmann::set)
-                        .scope
-                        [
-                            class_<runtime>("runtime")
-                                .def_readonly("set", &runtime::set)
-                        ]
-                        .def_readonly("runtime", &boltzmann::runtime_)
-                ]
+                class_<boltzmann>()
+                    .property("temperature", &boltzmann::temperature)
+                    .def("set", &boltzmann::set)
+                    .scope
+                    [
+                        class_<runtime>("runtime")
+                            .def_readonly("set", &runtime::set)
+                    ]
+                    .def_readonly("runtime", &boltzmann::runtime_)
+
+              , def("boltzmann", &boost::make_shared<boltzmann
+                  , boost::shared_ptr<particle_type>
+                  , boost::shared_ptr<random_type>
+                  , double
+                  , boost::shared_ptr<logger_type>
+                >)
             ]
         ]
     ];
@@ -186,7 +168,7 @@ HALMD_LUA_API int luaopen_libhalmd_mdsim_gpu_velocities_boltzmann(lua_State* L)
 template class boltzmann<3, float, random::gpu::rand48>;
 template class boltzmann<2, float, random::gpu::rand48>;
 
-} // namespace mdsim
-} // namespace gpu
 } // namespace velocities
+} // namespace gpu
+} // namespace mdsim
 } // namespace halmd
