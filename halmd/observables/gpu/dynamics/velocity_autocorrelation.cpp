@@ -57,7 +57,9 @@ velocity_autocorrelation<dimension, float_type>::compute(
   , sample_type const& second
 )
 {
-    return compute_vacf_(first.velocity(), second.velocity())();
+    typename sample_type::velocity_array_type const& velocity1 = first.velocity();
+    typename sample_type::velocity_array_type const& velocity2 = second.velocity();
+    return compute_vacf_(velocity1.begin(), velocity1.end(), velocity2.begin())();
 }
 
 template <typename tcf_type>

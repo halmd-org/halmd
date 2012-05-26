@@ -180,8 +180,10 @@ float_type verlet_nvt_hoover<dimension, float_type>::propagate_chain()
 {
     scoped_timer_type timer(runtime_.propagate);
 
+    typename particle_type::velocity_array_type const& velocity = particle_->velocity();
+
     // compute total kinetic energy multiplied by 2
-    float_type en_kin_2 = 2 * compute_en_kin_(particle_->velocity())();
+    float_type en_kin_2 = 2 * compute_en_kin_(velocity.begin(), velocity.end())();
 
     // head of the chain
     v_xi[1] += (mass_xi_[0] * v_xi[0] * v_xi[0] - temperature_) / mass_xi_[1] * timestep_4_;

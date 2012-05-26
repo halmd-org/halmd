@@ -75,14 +75,6 @@ public:
       , accumulator_type const& acc = accumulator_type()
     );
 
-    /**
-     * This method is provided for backward compatibility.
-     */
-     accumulator_type operator()(
-         cuda::vector<argument_type> const& g_input
-       , accumulator_type const& acc = accumulator_type()
-     );
-
 private:
     /** kernel execution parameters */
     cuda::config dim_;
@@ -120,15 +112,6 @@ inline accumulator_type reduction<accumulator_type, max_threads, 1>::operator()(
     assert(g_block_.size() == h_block_.capacity());
     cuda::copy(g_block_, h_block_, g_block_.size());
     return std::for_each(h_block_.begin(), h_block_.begin() + h_block_.capacity(), acc);
-}
-
-template <typename accumulator_type, unsigned int max_threads>
-inline accumulator_type reduction<accumulator_type, max_threads, 1>::operator()(
-    cuda::vector<argument_type> const& g_input
-  , accumulator_type const& acc
-)
-{
-    return (*this)(g_input.begin(), g_input.end(), acc);
 }
 
 /**
@@ -195,15 +178,6 @@ public:
       , accumulator_type const& acc = accumulator_type()
     );
 
-    /**
-     * This method is provided for backward compatibility.
-     */
-     accumulator_type operator()(
-         cuda::vector<first_argument_type> const& g_first
-       , cuda::vector<second_argument_type> const& g_second
-       , accumulator_type const& acc = accumulator_type()
-     );
-
 private:
     /** kernel execution parameters */
     cuda::config dim_;
@@ -242,16 +216,6 @@ inline accumulator_type reduction<accumulator_type, max_threads, 2>::operator()(
     assert(g_block_.size() == h_block_.capacity());
     cuda::copy(g_block_, h_block_, g_block_.size());
     return std::for_each(h_block_.begin(), h_block_.begin() + h_block_.capacity(), acc);
-}
-
-template <typename accumulator_type, unsigned int max_threads>
-inline accumulator_type reduction<accumulator_type, max_threads, 2>::operator()(
-     cuda::vector<first_argument_type> const& g_first
-   , cuda::vector<second_argument_type> const& g_second
-   , accumulator_type const& acc
-)
-{
-    return (*this)(g_first.begin(), g_first.end(), g_second.begin(), acc);
 }
 
 /**

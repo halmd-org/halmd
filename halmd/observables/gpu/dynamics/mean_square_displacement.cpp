@@ -57,7 +57,9 @@ mean_square_displacement<dimension, float_type>::compute(
   , sample_type const& second
 )
 {
-    return compute_msd_(first.position(), second.position())();
+    typename sample_type::position_array_type const& position1 = first.position();
+    typename sample_type::position_array_type const& position2 = second.position();
+    return compute_msd_(position1.begin(), position1.end(), position2.begin())();
 }
 
 template <typename tcf_type>
