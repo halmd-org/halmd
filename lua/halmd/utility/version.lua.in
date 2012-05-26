@@ -29,7 +29,8 @@ local version = assert(libhalmd.utility.version)
 local M = {}
 
 ---
--- Log HALMD version, build flags, command line and host name.
+-- Log HALMD version, build flags, command line and host name, and load
+-- :class:`halmd.utility.profiler` and :class:`halmd.utility.device`.
 --
 function M.prologue()
     local arg = {}
@@ -37,6 +38,8 @@ function M.prologue()
         table.insert(arg, v)
     end
     version.prologue(arg)
+    require("halmd.utility.profiler")
+    require("halmd.utility.device")
 end
 
 return M
