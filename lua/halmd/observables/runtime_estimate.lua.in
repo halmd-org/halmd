@@ -27,6 +27,26 @@ local timer_service     = require("halmd.utility.timer_service")
 -- Runtime Estimate
 -- ================
 --
+-- Given the number of steps, this module estimates the remaining runtime.
+--
+-- Example::
+--
+--    -- setup simulation box
+--    halmd.observables.sampler:setup()
+--
+--    -- number of MD steps
+--    local steps = 1000000
+--
+--    -- calculate remaining runtime every minute, and log every 15 minutes
+--    local runtime = halmd.observables.runtime_estimate({steps = steps, first = 10, interval = 900, sample = 60})
+--
+--    -- run simulation
+--    halmd.observables.sampler:run(steps)
+--
+-- A runtime estimate may be triggered by sending the process signal ``USR1``::
+--
+--    killall -USR1 halmd
+--
 
 -- grab C++ wrappers
 local runtime_estimate = assert(libhalmd.observables.runtime_estimate)
