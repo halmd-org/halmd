@@ -24,37 +24,33 @@ local profiler = assert(libhalmd.utility.profiler)
 -- Profiler
 -- ========
 --
--- .. currentmodule:: halmd.utility
+-- The profiler collects and logs profiling times.
 --
--- .. class:: profiler
+-- .. method:: profile()
 --
---    This is a singleton class.
+--    Log and reset runtime accumulators.
 --
---    .. method:: profile()
+-- .. method:: on_profile(acc, desc)
 --
---       Log and reset runtime accumulators.
+--    Connect accumulator for profiling.
 --
---    .. method:: on_profile(acc, desc)
+--    :param acc: runtime accumulator
+--    :param string desc: description of runtime accumulator
+--    :returns: connection
 --
---       Connect accumulator for profiling.
+-- .. method:: on_prepend_profile(slot)
 --
---       :param acc: runtime accumulator
---       :param string desc: description of runtime accumulator
---       :returns: connection
+--    Connect slot to signal.
 --
---    .. method:: on_prepend_profile(slot)
+--    :param slot: nullary function
+--    :returns: connection
 --
---       Connect slot to signal.
+-- .. method:: on_append_profile(slot)
 --
---       :param slot: nullary function
---       :returns: connection
+--    Connect slot to signal.
 --
---    .. method:: on_append_profile(slot)
---
---       Connect slot to signal.
---
---       :param slot: nullary function
---       :returns: connection
+--    :param slot: nullary function
+--    :returns: connection
 --
 
 -- construct singleton instance

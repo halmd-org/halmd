@@ -26,40 +26,36 @@ local clock = assert(libhalmd.mdsim.clock)
 --
 -- The clock tracks simulation step and time, and defines the integration time step.
 --
--- .. currentmodule:: halmd.mdsim
+-- Example::
 --
--- .. class:: clock
+--    local clock = require("halmd.mdsim.clock")
+--    clock:on_set_timestep(function(timestep)
+--        print(("time step has changed to %g"):format(timestep))
+--    end)
 --
---    This is a singleton class::
+-- .. attribute:: step
 --
---       local clock = require("halmd.mdsim.clock")
---       clock:on_set_timestep(function(timestep)
---           print(("time step has changed to %g"):format(timestep))
---       end)
+--    Current simulation step.
 --
---    .. attribute:: step
+-- .. attribute:: time
 --
---       Current simulation step.
+--    Current simulation time in MD units.
 --
---    .. attribute:: time
+-- .. attribute:: timestep
 --
---       Current simulation time in MD units.
+--    Integration time step in MD units.
 --
---    .. attribute:: timestep
+-- .. method:: set_timestep(timestep)
 --
---       Integration time step in MD units.
+--    Define integration time step.
 --
---    .. method:: set_timestep(timestep)
+--    The value of the time step is propagated to all integrators.
 --
---       Define integration time step.
+-- .. method:: on_set_timestep(slot)
 --
---       The value of the time step is propagated to all integrators.
+--    Connect a unary slot that accepts the integration time step.
 --
---    .. method:: on_set_timestep(slot)
---
---       Connect a unary slot that accepts the integration time step.
---
---       This slot is called after setting the time step with :meth:`set_timestep`.
+--    This slot is called after setting the time step with :meth:`set_timestep`.
 --
 
 -- construct singleton instance

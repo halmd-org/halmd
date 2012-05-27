@@ -24,89 +24,85 @@ local posix_signal = assert(libhalmd.utility.posix_signal)
 -- POSIX Signal
 -- ============
 --
--- .. currentmodule:: halmd.utility
+-- The POSIX signal handler intercepts process signals.
 --
--- .. class:: posix_signal
+-- .. method:: on_hup(slot)
 --
---    This is a singleton class.
+--   Connect slot to invoke on signal ``HUP``.
 --
---    .. method:: on_hup(slot)
+--   :param slot: unary slot that accepts signal number
+--   :returns: connection
 --
---      Connect slot to invoke on signal ``HUP``.
+-- .. method:: on_int(slot)
 --
---      :param slot: unary slot that accepts signal number
---      :returns: connection
+--   Connect slot to invoke on signal ``INT``.
 --
---    .. method:: on_int(slot)
+--   :param slot: unary slot that accepts signal number
+--   :returns: connection
 --
---      Connect slot to invoke on signal ``INT``.
+-- .. method:: on_alrm(slot)
 --
---      :param slot: unary slot that accepts signal number
---      :returns: connection
+--   Connect slot to invoke on signal ``ALRM``.
 --
---    .. method:: on_alrm(slot)
+--   :param slot: unary slot that accepts signal number
+--   :returns: connection
 --
---      Connect slot to invoke on signal ``ALRM``.
+-- .. method:: on_term(slot)
 --
---      :param slot: unary slot that accepts signal number
---      :returns: connection
+--   Connect slot to invoke on signal ``TERM``.
 --
---    .. method:: on_term(slot)
+--   :param slot: unary slot that accepts signal number
+--   :returns: connection
 --
---      Connect slot to invoke on signal ``TERM``.
+-- .. method:: on_usr1(slot)
 --
---      :param slot: unary slot that accepts signal number
---      :returns: connection
+--   Connect slot to invoke on signal ``USR1``.
 --
---    .. method:: on_usr1(slot)
+--   :param slot: unary slot that accepts signal number
+--   :returns: connection
 --
---      Connect slot to invoke on signal ``USR1``.
+-- .. method:: on_usr2(slot)
 --
---      :param slot: unary slot that accepts signal number
---      :returns: connection
+--   Connect slot to invoke on signal ``USR2``.
 --
---    .. method:: on_usr2(slot)
+--   :param slot: unary slot that accepts signal number
+--   :returns: connection
 --
---      Connect slot to invoke on signal ``USR2``.
+-- .. method:: on_cont(slot)
 --
---      :param slot: unary slot that accepts signal number
---      :returns: connection
+--   Connect slot to invoke on signal ``CONT``.
 --
---    .. method:: on_cont(slot)
+--   :param slot: unary slot that accepts signal number
+--   :returns: connection
 --
---      Connect slot to invoke on signal ``CONT``.
+-- .. method:: on_tstp(slot)
 --
---      :param slot: unary slot that accepts signal number
---      :returns: connection
+--   Connect slot to invoke on signal ``TSTP``.
 --
---    .. method:: on_tstp(slot)
+--   :param slot: unary slot that accepts signal number
+--   :returns: connection
 --
---      Connect slot to invoke on signal ``TSTP``.
+-- .. method:: on_ttin(slot)
 --
---      :param slot: unary slot that accepts signal number
---      :returns: connection
+--   Connect slot to invoke on signal ``TTIN``.
 --
---    .. method:: on_ttin(slot)
+--   :param slot: unary slot that accepts signal number
+--   :returns: connection
 --
---      Connect slot to invoke on signal ``TTIN``.
+-- .. method:: on_ttou(slot)
 --
---      :param slot: unary slot that accepts signal number
---      :returns: connection
+--   Connect slot to invoke on signal ``TTOU``.
 --
---    .. method:: on_ttou(slot)
+--   :param slot: unary slot that accepts signal number
+--   :returns: connection
 --
---      Connect slot to invoke on signal ``TTOU``.
+-- .. attribute:: wait
 --
---      :param slot: unary slot that accepts signal number
---      :returns: connection
+--   Nullary slot that blocks process until signal is received.
 --
---    .. attribute:: wait
+-- .. attribute:: poll
 --
---      Nullary slot that blocks process until signal is received.
---
---    .. attribute:: poll
---
---      Nullary slot that polls signal queue, and returns true if signal was handled.
+--   Nullary slot that polls signal queue, and returns true if signal was handled.
 --
 
 -- construct singleton instance

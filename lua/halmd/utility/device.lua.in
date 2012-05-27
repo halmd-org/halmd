@@ -45,15 +45,9 @@ local device = assert(libhalmd.utility.gpu.device)
 -- nvlock will lock the CUDA device for other processes using nvlock, similar
 -- to compute prohibitive mode. This allows scheduling one process per GPU.
 --
--- .. currentmodule:: halmd.utility
+-- .. attribute:: gpu
 --
--- .. class:: device
---
---    This is a singleton class.
---
---    .. attribute:: gpu
---
---       Ordinal number of the CUDA device.
+--    Ordinal number of the CUDA device.
 --
 
 -- construct singleton instance

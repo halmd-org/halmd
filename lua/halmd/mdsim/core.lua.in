@@ -28,95 +28,89 @@ local core = assert(libhalmd.mdsim.core)
 --
 -- The simulation core drives the MD step.
 --
--- .. currentmodule:: halmd.mdsim
+-- .. method:: setup()
 --
--- .. class:: core
+--    Prepare microscopic system state.
 --
---    This is a singleton class.
+--    This method is invoked by :meth:`halmd.observables.sampler.setup`.
 --
---    .. method:: setup()
+-- .. method:: mdstep()
 --
---       Prepare microscopic system state.
+--    Perform a single MD integration step.
 --
---       This method is invoked by :meth:`halmd.observables.sampler.setup`.
+--    This method is invoked by :meth:`halmd.observables.sampler.run`.
 --
---    .. method:: mdstep()
+-- .. method:: on_prepend_setup(slot)
 --
---       Perform a single MD integration step.
+--    Connect nullary slot to signal.
 --
---       This method is invoked by :meth:`halmd.observables.sampler.run`.
+--    :returns: signal connection
 --
---    .. method:: on_prepend_setup(slot)
+-- .. method:: on_setup(slot)
 --
---       Connect nullary slot to signal.
+--    Connect nullary slot to signal.
 --
---       :returns: signal connection
+--    :returns: signal connection
 --
---    .. method:: on_setup(slot)
+-- .. method:: on_append_setup(slot)
 --
---       Connect nullary slot to signal.
+--    Connect nullary slot to signal.
 --
---       :returns: signal connection
+--    :returns: signal connection
 --
---    .. method:: on_append_setup(slot)
+-- .. method:: on_prepend_integrate(slot)
 --
---       Connect nullary slot to signal.
+--    Connect nullary slot to signal.
 --
---       :returns: signal connection
+--    :returns: signal connection
 --
---    .. method:: on_prepend_integrate(slot)
+-- .. method:: on_integrate(slot)
 --
---       Connect nullary slot to signal.
+--    Connect nullary slot to signal.
 --
---       :returns: signal connection
+--    :returns: signal connection
 --
---    .. method:: on_integrate(slot)
+-- .. method:: on_append_integrate(slot)
 --
---       Connect nullary slot to signal.
+--    Connect nullary slot to signal.
 --
---       :returns: signal connection
+--    :returns: signal connection
 --
---    .. method:: on_append_integrate(slot)
+-- .. method:: on_prepend_force(slot)
 --
---       Connect nullary slot to signal.
+--    Connect nullary slot to signal.
 --
---       :returns: signal connection
+--    :returns: signal connection
 --
---    .. method:: on_prepend_force(slot)
+-- .. method:: on_force(slot)
 --
---       Connect nullary slot to signal.
+--    Connect nullary slot to signal.
 --
---       :returns: signal connection
+--    :returns: signal connection
 --
---    .. method:: on_force(slot)
+-- .. method:: on_append_force(slot)
 --
---       Connect nullary slot to signal.
+--    Connect nullary slot to signal.
 --
---       :returns: signal connection
+--    :returns: signal connection
 --
---    .. method:: on_append_force(slot)
+-- .. method:: on_prepend_finalize(slot)
 --
---       Connect nullary slot to signal.
+--    Connect nullary slot to signal.
 --
---       :returns: signal connection
+--    :returns: signal connection
 --
---    .. method:: on_prepend_finalize(slot)
+-- .. method:: on_finalize(slot)
 --
---       Connect nullary slot to signal.
+--    Connect nullary slot to signal.
 --
---       :returns: signal connection
+--    :returns: signal connection
 --
---    .. method:: on_finalize(slot)
+-- .. method:: on_append_finalize(slot)
 --
---       Connect nullary slot to signal.
+--    Connect nullary slot to signal.
 --
---       :returns: signal connection
---
---    .. method:: on_append_finalize(slot)
---
---       Connect nullary slot to signal.
---
---       :returns: signal connection
+--    :returns: signal connection
 --
 
 -- construct singleton instance

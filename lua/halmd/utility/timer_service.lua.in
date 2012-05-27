@@ -24,32 +24,28 @@ local timer_service = assert(libhalmd.utility.timer_service)
 -- Timer Service
 -- =============
 --
--- .. currentmodule:: halmd.utility
+-- The timer service emits periodic signals with intervals in real time.
 --
--- .. class:: timer_service
+-- .. method:: on_periodic(slot, interval)
 --
---    This is a singleton class.
+--    Connect function to call periodically at given interval.
 --
---    .. method:: on_periodic(slot, interval)
+--    :param slot: nullary function
+--    :param number interval: frequency of calls to function in seconds
+--    :returns: connection
 --
---       Connect function to call periodically at given interval.
+-- .. method:: on_periodic(slot, interval, start)
 --
---       :param slot: nullary function
---       :param number interval: frequency of calls to function in seconds
---       :returns: connection
+--    Connect function to call periodically at given interval.
 --
---    .. method:: on_periodic(slot, interval, start)
+--    :param slot: nullary function
+--    :param number interval: frequency of calls to function in seconds
+--    :param number start: time of first call in seconds
+--    :returns: connection
 --
---       Connect function to call periodically at given interval.
+-- .. attribute:: process
 --
---       :param slot: nullary function
---       :param number interval: frequency of calls to function in seconds
---       :param number start: time of first call in seconds
---       :returns: connection
---
---    .. attribute:: process
---
---       Nullary slot to process timer event queue.
+--    Nullary slot to process timer event queue.
 --
 
 -- construct singleton instance

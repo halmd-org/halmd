@@ -30,51 +30,49 @@ local sampler = assert(libhalmd.sampler)
 -- Sampler
 -- =======
 --
--- .. currentmodule:: halmd.observables
+-- The sampler concerts the sampling of observables.
 --
--- .. class:: sampler
+-- Example::
 --
---    This is a singleton class::
+--    local sampler = require("halmd.observables.sampler")
+--    sampler:setup()
+--    sampler:run(1000)
 --
---       local sampler = require("halmd.observables.sampler")
---       sampler:setup()
---       sampler:run(1000)
+-- .. method:: setup()
 --
---    .. method:: setup()
+--    Setup simulation domain.
 --
---       Setup simulation domain.
+--    This method invokes :meth:`halmd.mdsim.core.setup`.
 --
---       This method invokes :meth:`halmd.mdsim.core.setup`.
+-- .. method:: run(steps)
 --
---    .. method:: run(steps)
+--    Run simulation for given number of steps.
 --
---       Run simulation for given number of steps.
+--    This method invokes :meth:`halmd.mdsim.core.mdstep`.
 --
---       This method invokes :meth:`halmd.mdsim.core.mdstep`.
+-- .. method:: on_start(slot)
 --
---    .. method:: on_start(slot)
+--    Connect slot to signal.
 --
---       Connect slot to signal.
+--    :returns: signal connection
 --
---       :returns: signal connection
+-- .. method:: on_finish(slot)
 --
---    .. method:: on_finish(slot)
+--    Connect slot to signal.
 --
---       Connect slot to signal.
+--    :returns: signal connection
 --
---       :returns: signal connection
+-- .. method:: on_prepare(slot, interval)
 --
---    .. method:: on_prepare(slot, interval)
+--    Connect slot to signal.
 --
---       Connect slot to signal.
+--    :returns: signal connection
 --
---       :returns: signal connection
+-- .. method:: on_sample(slot, interval)
 --
---    .. method:: on_sample(slot, interval)
+--    Connect slot to signal.
 --
---       Connect slot to signal.
---
---       :returns: signal connection
+--    :returns: signal connection
 --
 
 -- construct singleton instance
