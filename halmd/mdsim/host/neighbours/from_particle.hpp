@@ -63,12 +63,12 @@ public:
     );
     void update();
 
-    connection on_prepend_update(boost::function<void ()> const& slot)
+    connection on_prepend_update(std::function<void ()> const& slot)
     {
         return on_prepend_update_.connect(slot);
     }
 
-    connection on_append_update(boost::function<void ()> const& slot)
+    connection on_append_update(std::function<void ()> const& slot)
     {
         return on_append_update_.connect(slot);
     }

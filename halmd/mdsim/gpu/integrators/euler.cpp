@@ -81,14 +81,14 @@ void euler<dimension, float_type>::integrate()
 }
 
 template <typename integrator_type>
-static boost::function<void ()>
+static std::function<void ()>
 wrap_integrate(boost::shared_ptr<integrator_type> self)
 {
     return bind(&integrator_type::integrate, self);
 }
 
 template <typename integrator_type>
-static boost::function<void ()>
+static std::function<void ()>
 wrap_finalize(boost::shared_ptr<integrator_type> self)
 {
     return bind(&integrator_type::finalize, self);

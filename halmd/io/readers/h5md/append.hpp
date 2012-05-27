@@ -20,7 +20,7 @@
 #ifndef HALMD_IO_READERS_H5MD_APPEND_HPP
 #define HALMD_IO_READERS_H5MD_APPEND_HPP
 
-#include <boost/function.hpp>
+#include <functional>
 #include <lua.hpp>
 
 #include <h5xx/h5xx.hpp>
@@ -80,7 +80,7 @@ public:
     template <typename T>
     connection on_read(
         subgroup_type& group
-      , boost::function<T ()> const& slot
+      , std::function<T ()> const& slot
       , std::vector<std::string> const& location
     );
     /** connect slot called before reading */
@@ -103,12 +103,12 @@ public:
     }
 
 private:
-    typedef boost::function<hsize_t (H5::Group const& group)> index_function_type;
+    typedef std::function<hsize_t (H5::Group const& group)> index_function_type;
 
     template <typename T>
     static void read_dataset(
         H5::Group const& group
-      , boost::function<T ()> const& slot
+      , std::function<T ()> const& slot
       , index_function_type const& index
     );
     static hsize_t read_step_index(

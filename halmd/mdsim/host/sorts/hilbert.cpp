@@ -131,7 +131,7 @@ static char const* module_name_wrapper(hilbert<dimension, float_type> const&)
 }
 
 template <typename sort_type>
-static boost::function<void ()>
+static std::function<void ()>
 wrap_order(boost::shared_ptr<sort_type> sort)
 {
     return bind(&sort_type::order, sort);

@@ -124,14 +124,14 @@ void verlet_nvt_andersen<dimension, float_type, RandomNumberGenerator>::finalize
 }
 
 template <typename integrator_type>
-static boost::function<void ()>
+static std::function<void ()>
 wrap_integrate(boost::shared_ptr<integrator_type> self)
 {
     return boost::bind(&integrator_type::integrate, self);
 }
 
 template <typename integrator_type>
-static boost::function<void ()>
+static std::function<void ()>
 wrap_finalize(boost::shared_ptr<integrator_type> self)
 {
     return boost::bind(&integrator_type::finalize, self);

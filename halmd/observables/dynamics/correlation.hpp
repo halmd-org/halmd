@@ -21,10 +21,10 @@
 #define HALMD_OBSERVABLES_DYNAMICS_CORRELATION_HPP
 
 #include <boost/bind.hpp>
-#include <boost/function.hpp>
 #include <boost/make_shared.hpp>
 #include <boost/shared_ptr.hpp>
 #include <boost/multi_array.hpp>
+#include <functional>
 
 #include <halmd/io/logger.hpp>
 #include <halmd/numeric/accumulator.hpp>
@@ -188,21 +188,21 @@ correlation<tcf_type>::get_count()
 }
 
 template <typename correlation_type>
-static boost::function<typename correlation_type::block_mean_type const& ()>
+static std::function<typename correlation_type::block_mean_type const& ()>
 wrap_mean(boost::shared_ptr<correlation_type> self)
 {
     return boost::bind(&correlation_type::get_mean, self);
 }
 
 template <typename correlation_type>
-static boost::function<typename correlation_type::block_error_type const& ()>
+static std::function<typename correlation_type::block_error_type const& ()>
 wrap_error(boost::shared_ptr<correlation_type> self)
 {
     return boost::bind(&correlation_type::get_error, self);
 }
 
 template <typename correlation_type>
-static boost::function<typename correlation_type::block_count_type const& ()>
+static std::function<typename correlation_type::block_count_type const& ()>
 wrap_count(boost::shared_ptr<correlation_type> self)
 {
     return boost::bind(&correlation_type::get_count, self);

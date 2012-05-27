@@ -67,7 +67,7 @@ public:
         posix_signal sig;
         posix_signal const& sig_const(sig);
         signal_handler handler(signum);
-        sig.on_signal(signum, boost::ref(handler));
+        sig.on_signal(signum, std::ref(handler));
         for (size_t j = 0; j < count_; ++j) {
             kill(getpid(), signum);
             sig_const.wait();
@@ -90,7 +90,7 @@ public:
         posix_signal sig;
         posix_signal const& sig_const(sig);
         signal_handler handler(signum);
-        sig.on_signal(signum, boost::ref(handler));
+        sig.on_signal(signum, std::ref(handler));
         for (size_t j = 0; j < count_; ++j) {
             BOOST_CHECK( !sig_const.poll() );
             kill(getpid(), signum);
@@ -109,7 +109,7 @@ BOOST_AUTO_TEST_CASE( test_alarm )
     posix_signal sig;
     posix_signal const& sig_const(sig);
     signal_handler handler(SIGALRM);
-    sig.on_signal(SIGALRM, boost::ref(handler));
+    sig.on_signal(SIGALRM, std::ref(handler));
     timer timer;
     alarm(1);
     BOOST_CHECK( !sig_const.poll() );

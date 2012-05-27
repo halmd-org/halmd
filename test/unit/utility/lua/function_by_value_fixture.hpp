@@ -120,111 +120,111 @@ struct function_by_value_fixture : lua_test_fixture
         return 1009;
     };
 
-    static boost::function<int ()> wrap_slot_by_value0()
+    static std::function<int ()> wrap_slot_by_value0()
     {
         return boost::bind(&slot_by_value0);
     }
 
-    static boost::function<int (int)> wrap_slot_by_value1()
+    static std::function<int (int)> wrap_slot_by_value1()
     {
         return boost::bind(&slot_by_value1, _1);
     }
 
-    static boost::function<int (int, int)> wrap_slot_by_value2()
+    static std::function<int (int, int)> wrap_slot_by_value2()
     {
         return boost::bind(&slot_by_value2, _1, _2);
     }
 
-    static boost::function<int (int, int, int)> wrap_slot_by_value3()
+    static std::function<int (int, int, int)> wrap_slot_by_value3()
     {
         return boost::bind(&slot_by_value3, _1, _2, _3);
     }
 
-    static boost::function<int (int, int, int, int)> wrap_slot_by_value4()
+    static std::function<int (int, int, int, int)> wrap_slot_by_value4()
     {
         return boost::bind(&slot_by_value4, _1, _2, _3, _4);
     }
 
-    static boost::function<int (int, int, int, int, int)> wrap_slot_by_value5()
+    static std::function<int (int, int, int, int, int)> wrap_slot_by_value5()
     {
         return boost::bind(&slot_by_value5, _1, _2, _3, _4, _5);
     }
 
-    static boost::function<int (int, int, int, int, int, int)> wrap_slot_by_value6()
+    static std::function<int (int, int, int, int, int, int)> wrap_slot_by_value6()
     {
         return boost::bind(&slot_by_value6, _1, _2, _3, _4, _5, _6);
     }
 
-    static boost::function<int (int, int, int, int, int, int, int)> wrap_slot_by_value7()
+    static std::function<int (int, int, int, int, int, int, int)> wrap_slot_by_value7()
     {
         return boost::bind(&slot_by_value7, _1, _2, _3, _4, _5, _6, _7);
     }
 
-    static boost::function<int (int, int, int, int, int, int, int, int)> wrap_slot_by_value8()
+    static std::function<int (int, int, int, int, int, int, int, int)> wrap_slot_by_value8()
     {
         return boost::bind(&slot_by_value8, _1, _2, _3, _4, _5, _6, _7, _8);
     }
 
-    static boost::function<int (int, int, int, int, int, int, int, int, int)> wrap_slot_by_value9()
+    static std::function<int (int, int, int, int, int, int, int, int, int)> wrap_slot_by_value9()
     {
         return boost::bind(&slot_by_value9, _1, _2, _3, _4, _5, _6, _7, _8, _9);
     }
 
-    static int call_slot_by_value0(boost::function<int ()> const& slot_by_value)
+    static int call_slot_by_value0(std::function<int ()> const& slot_by_value)
     {
         int value = slot_by_value();
         return value;
     }
 
-    static int call_slot_by_value1(boost::function<int (int)> const& slot_by_value, int arg1)
+    static int call_slot_by_value1(std::function<int (int)> const& slot_by_value, int arg1)
     {
         int value = slot_by_value(arg1);
         return value + arg1;
     }
 
-    static int call_slot_by_value2(boost::function<int (int, int)> const& slot_by_value, int arg1, int arg2)
+    static int call_slot_by_value2(std::function<int (int, int)> const& slot_by_value, int arg1, int arg2)
     {
         int value = slot_by_value(arg1, arg2);
         return value + arg1 + arg2;
     }
 
-    static int call_slot_by_value3(boost::function<int (int, int, int)> const& slot_by_value, int arg1, int arg2, int arg3)
+    static int call_slot_by_value3(std::function<int (int, int, int)> const& slot_by_value, int arg1, int arg2, int arg3)
     {
         int value = slot_by_value(arg1, arg2, arg3);
         return value + arg1 + arg2 + arg3;
     }
 
-    static int call_slot_by_value4(boost::function<int (int, int, int, int)> const& slot_by_value, int arg1, int arg2, int arg3, int arg4)
+    static int call_slot_by_value4(std::function<int (int, int, int, int)> const& slot_by_value, int arg1, int arg2, int arg3, int arg4)
     {
         int value = slot_by_value(arg1, arg2, arg3, arg4);
         return value + arg1 + arg2 + arg3 + arg4;
     }
 
-    static int call_slot_by_value5(boost::function<int (int, int, int, int, int)> const& slot_by_value, int arg1, int arg2, int arg3, int arg4, int arg5)
+    static int call_slot_by_value5(std::function<int (int, int, int, int, int)> const& slot_by_value, int arg1, int arg2, int arg3, int arg4, int arg5)
     {
         int value = slot_by_value(arg1, arg2, arg3, arg4, arg5);
         return value + arg1 + arg2 + arg3 + arg4 + arg5;
     }
 
-    static int call_slot_by_value6(boost::function<int (int, int, int, int, int, int)> const& slot_by_value, int arg1, int arg2, int arg3, int arg4, int arg5, int arg6)
+    static int call_slot_by_value6(std::function<int (int, int, int, int, int, int)> const& slot_by_value, int arg1, int arg2, int arg3, int arg4, int arg5, int arg6)
     {
         int value = slot_by_value(arg1, arg2, arg3, arg4, arg5, arg6);
         return value + arg1 + arg2 + arg3 + arg4 + arg5 + arg6;
     }
 
-    static int call_slot_by_value7(boost::function<int (int, int, int, int, int, int, int)> const& slot_by_value, int arg1, int arg2, int arg3, int arg4, int arg5, int arg6, int arg7)
+    static int call_slot_by_value7(std::function<int (int, int, int, int, int, int, int)> const& slot_by_value, int arg1, int arg2, int arg3, int arg4, int arg5, int arg6, int arg7)
     {
         int value = slot_by_value(arg1, arg2, arg3, arg4, arg5, arg6, arg7);
         return value + arg1 + arg2 + arg3 + arg4 + arg5 + arg6 + arg7;
     }
 
-    static int call_slot_by_value8(boost::function<int (int, int, int, int, int, int, int, int)> const& slot_by_value, int arg1, int arg2, int arg3, int arg4, int arg5, int arg6, int arg7, int arg8)
+    static int call_slot_by_value8(std::function<int (int, int, int, int, int, int, int, int)> const& slot_by_value, int arg1, int arg2, int arg3, int arg4, int arg5, int arg6, int arg7, int arg8)
     {
         int value = slot_by_value(arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8);
         return value + arg1 + arg2 + arg3 + arg4 + arg5 + arg6 + arg7 + arg8;
     }
 
-    static int call_slot_by_value9(boost::function<int (int, int, int, int, int, int, int, int, int)> const& slot_by_value, int arg1, int arg2, int arg3, int arg4, int arg5, int arg6, int arg7, int arg8, int arg9)
+    static int call_slot_by_value9(std::function<int (int, int, int, int, int, int, int, int, int)> const& slot_by_value, int arg1, int arg2, int arg3, int arg4, int arg5, int arg6, int arg7, int arg8, int arg9)
     {
         int value = slot_by_value(arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9);
         return value + arg1 + arg2 + arg3 + arg4 + arg5 + arg6 + arg7 + arg8 + arg9;

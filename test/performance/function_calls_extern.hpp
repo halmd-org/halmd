@@ -20,10 +20,11 @@
 #ifndef HALMD_TEST_PERFORMANCE_FUNCTION_CALLS_EXTERN_HPP
 #define HALMD_TEST_PERFORMANCE_FUNCTION_CALLS_EXTERN_HPP
 
-#include <boost/function.hpp>
+#include <functional>
+
 #include <halmd/utility/signal.hpp>
 
-boost::function<void (double)> bind_noop();
+std::function<void (double)> bind_noop();
 void bind_noop(halmd::signal<void (double)>& sig);
 void noop(double);
 

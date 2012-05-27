@@ -144,7 +144,7 @@ acquire(boost::shared_ptr<density_mode_type> density_mode, slot_type const& phas
 }
 
 template <typename sample_type, typename density_mode_type, typename slot_type>
-static boost::function<boost::shared_ptr<sample_type const> ()>
+static std::function<boost::shared_ptr<sample_type const> ()>
 wrap_acquire(boost::shared_ptr<density_mode_type> density_mode, slot_type const& phase_space)
 {
     return bind(&acquire<sample_type, density_mode_type, slot_type>, density_mode, phase_space);
@@ -153,7 +153,7 @@ wrap_acquire(boost::shared_ptr<density_mode_type> density_mode, slot_type const&
 template <int dimension, typename float_type>
 void density_mode<dimension, float_type>::luaopen(lua_State* L)
 {
-    typedef boost::function<boost::shared_ptr<phase_space_type const> ()> slot_type;
+    typedef std::function<boost::shared_ptr<phase_space_type const> ()> slot_type;
 
     using namespace luabind;
     module(L, "libhalmd")

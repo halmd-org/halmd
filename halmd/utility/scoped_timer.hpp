@@ -21,7 +21,7 @@
 #define HALMD_UTILITY_SCOPED_TIMER_HPP
 
 #include <boost/bind.hpp>
-#include <boost/function.hpp>
+#include <functional>
 
 namespace halmd {
 
@@ -44,7 +44,7 @@ public:
     ~scoped_timer();
 
 private:
-    boost::function<void ()> elapsed_;
+    std::function<void ()> elapsed_;
 
     template <typename UnaryFunctor>
     static void elapsed(UnaryFunctor& f, Timer const& t);

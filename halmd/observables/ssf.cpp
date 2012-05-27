@@ -18,7 +18,7 @@
  */
 
 #include <boost/bind.hpp>
-#include <boost/function.hpp>
+#include <functional>
 #include <stdexcept>
 
 #include <halmd/observables/ssf.hpp>
@@ -112,7 +112,7 @@ sample(boost::shared_ptr<ssf_type> ssf, slot_type const& mode1, slot_type const&
 }
 
 template <typename result_type, typename ssf_type, typename slot_type>
-static boost::function<result_type const& ()>
+static std::function<result_type const& ()>
 wrap_sample(boost::shared_ptr<ssf_type> ssf, slot_type const& mode1, slot_type const& mode2)
 {
     return bind(&sample<result_type, ssf_type, slot_type>, ssf, mode1, mode2);
@@ -121,7 +121,7 @@ wrap_sample(boost::shared_ptr<ssf_type> ssf, slot_type const& mode1, slot_type c
 template <int dimension>
 void ssf<dimension>::luaopen(lua_State* L)
 {
-    typedef boost::function<boost::shared_ptr<density_mode_type const> ()> slot_type;
+    typedef std::function<boost::shared_ptr<density_mode_type const> ()> slot_type;
 
     using namespace luabind;
     module(L, "libhalmd")

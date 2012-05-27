@@ -223,7 +223,7 @@ static wrap_finalise(boost::shared_ptr<blocking_scheme> self)
     return bind(&blocking_scheme::finalise, self);
 }
 
-static boost::function<blocking_scheme::block_time_type const& ()>
+static std::function<blocking_scheme::block_time_type const& ()>
 wrap_time(boost::shared_ptr<blocking_scheme> self)
 {
     return bind(&blocking_scheme::time, self);

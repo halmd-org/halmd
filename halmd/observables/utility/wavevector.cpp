@@ -129,7 +129,7 @@ void wavevector<dimension>::init_()
 }
 
 template <typename wavevector_type, typename wavenumber_array_type>
-static boost::function<wavenumber_array_type const& ()>
+static std::function<wavenumber_array_type const& ()>
 wrap_wavenumber(boost::shared_ptr<wavevector_type const> wavevector)
 {
     return bind(&wavevector_type::wavenumber, wavevector);

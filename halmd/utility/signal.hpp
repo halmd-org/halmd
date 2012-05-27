@@ -20,9 +20,9 @@
 #ifndef HALMD_UTILITY_SIGNAL_HPP
 #define HALMD_UTILITY_SIGNAL_HPP
 
-#include <boost/function.hpp>
 #include <boost/shared_ptr.hpp>
 #include <boost/weak_ptr.hpp>
+#include <functional>
 #include <list>
 
 namespace halmd {
@@ -52,7 +52,7 @@ class connection
 {
 private:
     typedef boost::shared_ptr<void> slots_pointer;
-    typedef boost::function<void (slots_pointer)> disconnector_type;
+    typedef std::function<void (slots_pointer)> disconnector_type;
 
 public:
     /**
@@ -217,7 +217,7 @@ public:
  * This class mimics a subset of the boost::signal interface. Some advanced
  * features of boost::signal such as return values and object tracking are
  * not implemented. The benefit of using this minimal signal class is
- * performance close to that of boost::function calls.
+ * performance close to that of std::function calls.
  *
  * http://www.boost.org/doc/libs/release/doc/html/signals.html
  */
@@ -226,10 +226,10 @@ class signal;
 
 template <typename... Args>
 class signal<void (Args...)>
-  : public slots<boost::function<void (Args...)> >
+  : public slots<std::function<void (Args...)> >
 {
 public:
-    typedef boost::function<void (Args...)> slot_function_type;
+    typedef std::function<void (Args...)> slot_function_type;
 
     void operator()(Args... args) const
     {

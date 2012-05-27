@@ -130,120 +130,120 @@ struct function_by_ref_fixture : lua_test_fixture
         return value;
     };
 
-    static boost::function<int& ()> wrap_slot_by_ref0()
+    static std::function<int& ()> wrap_slot_by_ref0()
     {
         return boost::bind(&slot_by_ref0);
     }
 
-    static boost::function<int& (int)> wrap_slot_by_ref1()
+    static std::function<int& (int)> wrap_slot_by_ref1()
     {
         return boost::bind(&slot_by_ref1, _1);
     }
 
-    static boost::function<int& (int, int)> wrap_slot_by_ref2()
+    static std::function<int& (int, int)> wrap_slot_by_ref2()
     {
         return boost::bind(&slot_by_ref2, _1, _2);
     }
 
-    static boost::function<int& (int, int, int)> wrap_slot_by_ref3()
+    static std::function<int& (int, int, int)> wrap_slot_by_ref3()
     {
         return boost::bind(&slot_by_ref3, _1, _2, _3);
     }
 
-    static boost::function<int& (int, int, int, int)> wrap_slot_by_ref4()
+    static std::function<int& (int, int, int, int)> wrap_slot_by_ref4()
     {
         return boost::bind(&slot_by_ref4, _1, _2, _3, _4);
     }
 
-    static boost::function<int& (int, int, int, int, int)> wrap_slot_by_ref5()
+    static std::function<int& (int, int, int, int, int)> wrap_slot_by_ref5()
     {
         return boost::bind(&slot_by_ref5, _1, _2, _3, _4, _5);
     }
 
-    static boost::function<int& (int, int, int, int, int, int)> wrap_slot_by_ref6()
+    static std::function<int& (int, int, int, int, int, int)> wrap_slot_by_ref6()
     {
         return boost::bind(&slot_by_ref6, _1, _2, _3, _4, _5, _6);
     }
 
-    static boost::function<int& (int, int, int, int, int, int, int)> wrap_slot_by_ref7()
+    static std::function<int& (int, int, int, int, int, int, int)> wrap_slot_by_ref7()
     {
         return boost::bind(&slot_by_ref7, _1, _2, _3, _4, _5, _6, _7);
     }
 
-    static boost::function<int& (int, int, int, int, int, int, int, int)> wrap_slot_by_ref8()
+    static std::function<int& (int, int, int, int, int, int, int, int)> wrap_slot_by_ref8()
     {
         return boost::bind(&slot_by_ref8, _1, _2, _3, _4, _5, _6, _7, _8);
     }
 
-    static boost::function<int& (int, int, int, int, int, int, int, int, int)> wrap_slot_by_ref9()
+    static std::function<int& (int, int, int, int, int, int, int, int, int)> wrap_slot_by_ref9()
     {
         return boost::bind(&slot_by_ref9, _1, _2, _3, _4, _5, _6, _7, _8, _9);
     }
 
-    static int call_slot_by_ref0(boost::function<int& ()> const& slot_by_ref)
+    static int call_slot_by_ref0(std::function<int& ()> const& slot_by_ref)
     {
         int& value = slot_by_ref();
         value += 100000;
         return value;
     }
 
-    static int call_slot_by_ref1(boost::function<int& (int)> const& slot_by_ref, int arg1)
+    static int call_slot_by_ref1(std::function<int& (int)> const& slot_by_ref, int arg1)
     {
         int& value = slot_by_ref(arg1);
         value += 100000;
         return value + arg1;
     }
 
-    static int call_slot_by_ref2(boost::function<int& (int, int)> const& slot_by_ref, int arg1, int arg2)
+    static int call_slot_by_ref2(std::function<int& (int, int)> const& slot_by_ref, int arg1, int arg2)
     {
         int& value = slot_by_ref(arg1, arg2);
         value += 100000;
         return value + arg1 + arg2;
     }
 
-    static int call_slot_by_ref3(boost::function<int& (int, int, int)> const& slot_by_ref, int arg1, int arg2, int arg3)
+    static int call_slot_by_ref3(std::function<int& (int, int, int)> const& slot_by_ref, int arg1, int arg2, int arg3)
     {
         int& value = slot_by_ref(arg1, arg2, arg3);
         value += 100000;
         return value + arg1 + arg2 + arg3;
     }
 
-    static int call_slot_by_ref4(boost::function<int& (int, int, int, int)> const& slot_by_ref, int arg1, int arg2, int arg3, int arg4)
+    static int call_slot_by_ref4(std::function<int& (int, int, int, int)> const& slot_by_ref, int arg1, int arg2, int arg3, int arg4)
     {
         int& value = slot_by_ref(arg1, arg2, arg3, arg4);
         value += 100000;
         return value + arg1 + arg2 + arg3 + arg4;
     }
 
-    static int call_slot_by_ref5(boost::function<int& (int, int, int, int, int)> const& slot_by_ref, int arg1, int arg2, int arg3, int arg4, int arg5)
+    static int call_slot_by_ref5(std::function<int& (int, int, int, int, int)> const& slot_by_ref, int arg1, int arg2, int arg3, int arg4, int arg5)
     {
         int& value = slot_by_ref(arg1, arg2, arg3, arg4, arg5);
         value += 100000;
         return value + arg1 + arg2 + arg3 + arg4 + arg5;
     }
 
-    static int call_slot_by_ref6(boost::function<int& (int, int, int, int, int, int)> const& slot_by_ref, int arg1, int arg2, int arg3, int arg4, int arg5, int arg6)
+    static int call_slot_by_ref6(std::function<int& (int, int, int, int, int, int)> const& slot_by_ref, int arg1, int arg2, int arg3, int arg4, int arg5, int arg6)
     {
         int& value = slot_by_ref(arg1, arg2, arg3, arg4, arg5, arg6);
         value += 100000;
         return value + arg1 + arg2 + arg3 + arg4 + arg5 + arg6;
     }
 
-    static int call_slot_by_ref7(boost::function<int& (int, int, int, int, int, int, int)> const& slot_by_ref, int arg1, int arg2, int arg3, int arg4, int arg5, int arg6, int arg7)
+    static int call_slot_by_ref7(std::function<int& (int, int, int, int, int, int, int)> const& slot_by_ref, int arg1, int arg2, int arg3, int arg4, int arg5, int arg6, int arg7)
     {
         int& value = slot_by_ref(arg1, arg2, arg3, arg4, arg5, arg6, arg7);
         value += 100000;
         return value + arg1 + arg2 + arg3 + arg4 + arg5 + arg6 + arg7;
     }
 
-    static int call_slot_by_ref8(boost::function<int& (int, int, int, int, int, int, int, int)> const& slot_by_ref, int arg1, int arg2, int arg3, int arg4, int arg5, int arg6, int arg7, int arg8)
+    static int call_slot_by_ref8(std::function<int& (int, int, int, int, int, int, int, int)> const& slot_by_ref, int arg1, int arg2, int arg3, int arg4, int arg5, int arg6, int arg7, int arg8)
     {
         int& value = slot_by_ref(arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8);
         value += 100000;
         return value + arg1 + arg2 + arg3 + arg4 + arg5 + arg6 + arg7 + arg8;
     }
 
-    static int call_slot_by_ref9(boost::function<int& (int, int, int, int, int, int, int, int, int)> const& slot_by_ref, int arg1, int arg2, int arg3, int arg4, int arg5, int arg6, int arg7, int arg8, int arg9)
+    static int call_slot_by_ref9(std::function<int& (int, int, int, int, int, int, int, int, int)> const& slot_by_ref, int arg1, int arg2, int arg3, int arg4, int arg5, int arg6, int arg7, int arg8, int arg9)
     {
         int& value = slot_by_ref(arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9);
         value += 100000;

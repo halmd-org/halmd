@@ -19,8 +19,8 @@
  */
 
 #include <boost/bind.hpp>
-#include <boost/function.hpp>
 #include <boost/lexical_cast.hpp>
+#include <functional>
 
 #include <halmd/io/logger.hpp>
 #include <halmd/observables/sampler.hpp>
@@ -89,7 +89,7 @@ void sampler::run(step_type steps)
 /**
  * Forward signal to slot at given interval
  */
-void sampler::prepare(boost::function<void ()> const& slot, step_type interval) const
+void sampler::prepare(std::function<void ()> const& slot, step_type interval) const
 {
     if (clock_->step() % interval == 0) {
         slot();
@@ -99,7 +99,7 @@ void sampler::prepare(boost::function<void ()> const& slot, step_type interval) 
 /**
  * Forward signal to slot at given interval
  */
-void sampler::sample(boost::function<void ()> const& slot, step_type interval) const
+void sampler::sample(std::function<void ()> const& slot, step_type interval) const
 {
     if (clock_->step() % interval == 0) {
         slot();
@@ -111,7 +111,7 @@ static void abort(boost::shared_ptr<mdsim::clock const> clock)
     throw std::runtime_error("gracefully aborting simulation at step " + boost::lexical_cast<std::string>(clock->step()));
 }
 
-static boost::function<void ()> wrap_abort(boost::shared_ptr<mdsim::clock const> clock)
+static std::function<void ()> wrap_abort(boost::shared_ptr<mdsim::clock const> clock)
 {
     return boost::bind(&abort, clock);
 }

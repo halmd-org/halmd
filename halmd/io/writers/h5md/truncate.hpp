@@ -20,8 +20,8 @@
 #ifndef HALMD_IO_WRITERS_H5MD_TRUNCATE_HPP
 #define HALMD_IO_WRITERS_H5MD_TRUNCATE_HPP
 
-#include <boost/function.hpp>
 #include <boost/multi_array.hpp>
+#include <functional>
 #include <lua.hpp>
 
 #include <h5xx/h5xx.hpp>
@@ -74,7 +74,7 @@ public:
     template <typename T>
     connection on_write(
         subgroup_type& dataset
-      , boost::function<T ()> const& slot
+      , std::function<T ()> const& slot
       , std::vector<std::string> const& location
     );
     /** connect slot called before writing */

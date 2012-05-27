@@ -18,9 +18,9 @@
  */
 
 #include <algorithm>
-#include <boost/function.hpp>
 #include <boost/make_shared.hpp>
 #include <boost/shared_ptr.hpp>
+#include <functional>
 #include <luabind/luabind.hpp>
 #include <luabind/out_value_policy.hpp>
 
@@ -47,8 +47,8 @@ static std::size_t wrap_dimension(phase_space_type const&)
 }
 
 template <typename phase_space_type>
-static boost::function<std::vector<typename phase_space_type::position_array_type::value_type>& ()>
-wrap_position(boost::shared_ptr<phase_space_type> self, boost::function<void ()>& array_to_sample)
+static std::function<std::vector<typename phase_space_type::position_array_type::value_type>& ()>
+wrap_position(boost::shared_ptr<phase_space_type> self, std::function<void ()>& array_to_sample)
 {
     typedef std::vector<typename phase_space_type::position_array_type::value_type> array_type;
     boost::shared_ptr<array_type> array = boost::make_shared<array_type>();
@@ -69,8 +69,8 @@ wrap_position(boost::shared_ptr<phase_space_type> self, boost::function<void ()>
 }
 
 template <typename phase_space_type>
-static boost::function<std::vector<typename phase_space_type::velocity_array_type::value_type>& ()>
-wrap_velocity(boost::shared_ptr<phase_space_type> self, boost::function<void ()>& array_to_sample)
+static std::function<std::vector<typename phase_space_type::velocity_array_type::value_type>& ()>
+wrap_velocity(boost::shared_ptr<phase_space_type> self, std::function<void ()>& array_to_sample)
 {
     typedef std::vector<typename phase_space_type::velocity_array_type::value_type> array_type;
     boost::shared_ptr<array_type> array = boost::make_shared<array_type>();
@@ -91,8 +91,8 @@ wrap_velocity(boost::shared_ptr<phase_space_type> self, boost::function<void ()>
 }
 
 template <typename phase_space_type>
-static boost::function<std::vector<typename phase_space_type::species_array_type::value_type>& ()>
-wrap_species(boost::shared_ptr<phase_space_type> self, boost::function<void ()>& array_to_sample)
+static std::function<std::vector<typename phase_space_type::species_array_type::value_type>& ()>
+wrap_species(boost::shared_ptr<phase_space_type> self, std::function<void ()>& array_to_sample)
 {
     typedef std::vector<typename phase_space_type::species_array_type::value_type> array_type;
     boost::shared_ptr<array_type> array = boost::make_shared<array_type>();
@@ -116,8 +116,8 @@ wrap_species(boost::shared_ptr<phase_space_type> self, boost::function<void ()>&
 }
 
 template <typename phase_space_type>
-static boost::function<std::vector<typename phase_space_type::mass_array_type::value_type>& ()>
-wrap_mass(boost::shared_ptr<phase_space_type> self, boost::function<void ()>& array_to_sample)
+static std::function<std::vector<typename phase_space_type::mass_array_type::value_type>& ()>
+wrap_mass(boost::shared_ptr<phase_space_type> self, std::function<void ()>& array_to_sample)
 {
     typedef std::vector<typename phase_space_type::mass_array_type::value_type> array_type;
     boost::shared_ptr<array_type> array = boost::make_shared<array_type>();

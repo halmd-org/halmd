@@ -110,57 +110,57 @@ struct function_exception_fixture : lua_test_fixture
         throw boost::make_tuple(std::string("exception9"), arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9);
     };
 
-    static boost::function<void ()> wrap_throw_exception0()
+    static std::function<void ()> wrap_throw_exception0()
     {
         return boost::bind(&throw_exception0);
     }
 
-    static boost::function<void (int)> wrap_throw_exception1()
+    static std::function<void (int)> wrap_throw_exception1()
     {
         return boost::bind(&throw_exception1, _1);
     }
 
-    static boost::function<void (int, int)> wrap_throw_exception2()
+    static std::function<void (int, int)> wrap_throw_exception2()
     {
         return boost::bind(&throw_exception2, _1, _2);
     }
 
-    static boost::function<void (int, int, int)> wrap_throw_exception3()
+    static std::function<void (int, int, int)> wrap_throw_exception3()
     {
         return boost::bind(&throw_exception3, _1, _2, _3);
     }
 
-    static boost::function<void (int, int, int, int)> wrap_throw_exception4()
+    static std::function<void (int, int, int, int)> wrap_throw_exception4()
     {
         return boost::bind(&throw_exception4, _1, _2, _3, _4);
     }
 
-    static boost::function<void (int, int, int, int, int)> wrap_throw_exception5()
+    static std::function<void (int, int, int, int, int)> wrap_throw_exception5()
     {
         return boost::bind(&throw_exception5, _1, _2, _3, _4, _5);
     }
 
-    static boost::function<void (int, int, int, int, int, int)> wrap_throw_exception6()
+    static std::function<void (int, int, int, int, int, int)> wrap_throw_exception6()
     {
         return boost::bind(&throw_exception6, _1, _2, _3, _4, _5, _6);
     }
 
-    static boost::function<void (int, int, int, int, int, int, int)> wrap_throw_exception7()
+    static std::function<void (int, int, int, int, int, int, int)> wrap_throw_exception7()
     {
         return boost::bind(&throw_exception7, _1, _2, _3, _4, _5, _6, _7);
     }
 
-    static boost::function<void (int, int, int, int, int, int, int, int)> wrap_throw_exception8()
+    static std::function<void (int, int, int, int, int, int, int, int)> wrap_throw_exception8()
     {
         return boost::bind(&throw_exception8, _1, _2, _3, _4, _5, _6, _7, _8);
     }
 
-    static boost::function<void (int, int, int, int, int, int, int, int, int)> wrap_throw_exception9()
+    static std::function<void (int, int, int, int, int, int, int, int, int)> wrap_throw_exception9()
     {
         return boost::bind(&throw_exception9, _1, _2, _3, _4, _5, _6, _7, _8, _9);
     }
 
-    static void catch_exception0(boost::function<void ()> const& slot)
+    static void catch_exception0(std::function<void ()> const& slot)
     {
         try {
             slot();
@@ -171,7 +171,7 @@ struct function_exception_fixture : lua_test_fixture
         }
     }
 
-    static void catch_exception1(boost::function<void (int)> const& slot, int arg1)
+    static void catch_exception1(std::function<void (int)> const& slot, int arg1)
     {
         try {
             slot(arg1);
@@ -182,7 +182,7 @@ struct function_exception_fixture : lua_test_fixture
         }
     }
 
-    static void catch_exception2(boost::function<void (int, int)> const& slot, int arg1, int arg2)
+    static void catch_exception2(std::function<void (int, int)> const& slot, int arg1, int arg2)
     {
         try {
             slot(arg1, arg2);
@@ -193,7 +193,7 @@ struct function_exception_fixture : lua_test_fixture
         }
     }
 
-    static void catch_exception3(boost::function<void (int, int, int)> const& slot, int arg1, int arg2, int arg3)
+    static void catch_exception3(std::function<void (int, int, int)> const& slot, int arg1, int arg2, int arg3)
     {
         try {
             slot(arg1, arg2, arg3);
@@ -204,7 +204,7 @@ struct function_exception_fixture : lua_test_fixture
         }
     }
 
-    static void catch_exception4(boost::function<void (int, int, int, int)> const& slot, int arg1, int arg2, int arg3, int arg4)
+    static void catch_exception4(std::function<void (int, int, int, int)> const& slot, int arg1, int arg2, int arg3, int arg4)
     {
         try {
             slot(arg1, arg2, arg3, arg4);
@@ -215,7 +215,7 @@ struct function_exception_fixture : lua_test_fixture
         }
     }
 
-    static void catch_exception5(boost::function<void (int, int, int, int, int)> const& slot, int arg1, int arg2, int arg3, int arg4, int arg5)
+    static void catch_exception5(std::function<void (int, int, int, int, int)> const& slot, int arg1, int arg2, int arg3, int arg4, int arg5)
     {
         try {
             slot(arg1, arg2, arg3, arg4, arg5);
@@ -226,7 +226,7 @@ struct function_exception_fixture : lua_test_fixture
         }
     }
 
-    static void catch_exception6(boost::function<void (int, int, int, int, int, int)> const& slot, int arg1, int arg2, int arg3, int arg4, int arg5, int arg6)
+    static void catch_exception6(std::function<void (int, int, int, int, int, int)> const& slot, int arg1, int arg2, int arg3, int arg4, int arg5, int arg6)
     {
         try {
             slot(arg1, arg2, arg3, arg4, arg5, arg6);
@@ -237,7 +237,7 @@ struct function_exception_fixture : lua_test_fixture
         }
     }
 
-    static void catch_exception7(boost::function<void (int, int, int, int, int, int, int)> const& slot, int arg1, int arg2, int arg3, int arg4, int arg5, int arg6, int arg7)
+    static void catch_exception7(std::function<void (int, int, int, int, int, int, int)> const& slot, int arg1, int arg2, int arg3, int arg4, int arg5, int arg6, int arg7)
     {
         try {
             slot(arg1, arg2, arg3, arg4, arg5, arg6, arg7);
@@ -248,7 +248,7 @@ struct function_exception_fixture : lua_test_fixture
         }
     }
 
-    static void catch_exception8(boost::function<void (int, int, int, int, int, int, int, int)> const& slot, int arg1, int arg2, int arg3, int arg4, int arg5, int arg6, int arg7, int arg8)
+    static void catch_exception8(std::function<void (int, int, int, int, int, int, int, int)> const& slot, int arg1, int arg2, int arg3, int arg4, int arg5, int arg6, int arg7, int arg8)
     {
         try {
             slot(arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8);
@@ -259,7 +259,7 @@ struct function_exception_fixture : lua_test_fixture
         }
     }
 
-    static void catch_exception9(boost::function<void (int, int, int, int, int, int, int, int, int)> const& slot, int arg1, int arg2, int arg3, int arg4, int arg5, int arg6, int arg7, int arg8, int arg9)
+    static void catch_exception9(std::function<void (int, int, int, int, int, int, int, int, int)> const& slot, int arg1, int arg2, int arg3, int arg4, int arg5, int arg6, int arg7, int arg8, int arg9)
     {
         try {
             slot(arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9);

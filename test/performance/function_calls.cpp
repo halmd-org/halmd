@@ -120,12 +120,12 @@ BOOST_AUTO_TEST_CASE( cpp_function )
 }
 
 /**
- * Measure boost::function call
+ * Measure std::function call
  */
-BOOST_AUTO_TEST_CASE( boost_function )
+BOOST_AUTO_TEST_CASE( std_function )
 {
-    boost::function<void (double)> f(bind_noop());
-    printer p("boost::function", I1E7);
+    std::function<void (double)> f(bind_noop());
+    printer p("std::function", I1E7);
     // warm up
     for (size_t i = 0; i < I1E7; ++i) {
         f(42.);

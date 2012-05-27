@@ -19,8 +19,8 @@
 
 #include <algorithm>
 #include <boost/bind.hpp>
-#include <boost/function.hpp>
 #include <boost/make_shared.hpp>
+#include <functional>
 
 #include <halmd/observables/host/phase_space.hpp>
 #include <halmd/utility/lua/lua.hpp>
@@ -141,7 +141,7 @@ void phase_space<dimension, float_type>::set(boost::shared_ptr<sample_type const
 }
 
 template <typename phase_space_type, typename sample_type>
-static boost::function<boost::shared_ptr<sample_type const> ()>
+static std::function<boost::shared_ptr<sample_type const> ()>
 wrap_acquire(boost::shared_ptr<phase_space_type> phase_space)
 {
     return boost::bind(&phase_space_type::acquire, phase_space);
@@ -155,7 +155,7 @@ position(boost::shared_ptr<phase_space_type> const& phase_space)
 }
 
 template <typename phase_space_type>
-static boost::function<typename phase_space_type::sample_type::position_array_type const& ()>
+static std::function<typename phase_space_type::sample_type::position_array_type const& ()>
 wrap_position(boost::shared_ptr<phase_space_type> phase_space)
 {
     return boost::bind(&position<phase_space_type>, phase_space);
@@ -169,7 +169,7 @@ velocity(boost::shared_ptr<phase_space_type> const& phase_space)
 }
 
 template <typename phase_space_type>
-static boost::function<typename phase_space_type::sample_type::velocity_array_type const& ()>
+static std::function<typename phase_space_type::sample_type::velocity_array_type const& ()>
 wrap_velocity(boost::shared_ptr<phase_space_type> phase_space)
 {
     return boost::bind(&velocity<phase_space_type>, phase_space);
@@ -199,7 +199,7 @@ species(boost::shared_ptr<phase_space_type> const& phase_space, boost::shared_pt
 }
 
 template <typename phase_space_type>
-static boost::function<typename phase_space_type::sample_type::species_array_type const& ()>
+static std::function<typename phase_space_type::sample_type::species_array_type const& ()>
 wrap_species(boost::shared_ptr<phase_space_type> phase_space)
 {
     return boost::bind(&species<phase_space_type>, phase_space, boost::shared_ptr<typename phase_space_type::sample_type::species_array_type>());
@@ -213,7 +213,7 @@ mass(boost::shared_ptr<phase_space_type> const& phase_space)
 }
 
 template <typename phase_space_type>
-static boost::function<typename phase_space_type::sample_type::mass_array_type const& ()>
+static std::function<typename phase_space_type::sample_type::mass_array_type const& ()>
 wrap_mass(boost::shared_ptr<phase_space_type> phase_space)
 {
     return boost::bind(&mass<phase_space_type>, phase_space);

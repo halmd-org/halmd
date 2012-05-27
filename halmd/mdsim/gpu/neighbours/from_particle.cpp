@@ -149,7 +149,7 @@ float_type from_particle<dimension, float_type>::defaults::occupancy() {
 }
 
 template <typename neighbour_type>
-static boost::function<void ()>
+static std::function<void ()>
 wrap_update(boost::shared_ptr<neighbour_type> neighbour)
 {
     return boost::bind(&neighbour_type::update, neighbour);

@@ -20,7 +20,7 @@
 #ifndef HALMD_UTILITY_PREDICATES_GREATER_HPP
 #define HALMD_UTILITY_PREDICATES_GREATER_HPP
 
-#include <boost/function.hpp>
+#include <functional>
 #include <lua.hpp>
 
 #include <halmd/io/logger.hpp>
@@ -35,7 +35,7 @@ class greater
 public:
     typedef halmd::signal<void ()> signal_type;
     typedef signal_type::slot_function_type slot_function_type;
-    typedef boost::function<value_type ()> function_type;
+    typedef std::function<value_type ()> function_type;
 
     greater(function_type const& func, value_type const& value) : func_(func), value_(value) {}
 

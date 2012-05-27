@@ -21,8 +21,8 @@
 #ifndef HALMD_MDSIM_CLOCK_HPP
 #define HALMD_MDSIM_CLOCK_HPP
 
-#include <boost/function.hpp>
 #include <boost/optional.hpp>
+#include <functional>
 #include <stdint.h> // uint64_t
 
 #include <halmd/utility/signal.hpp>
@@ -80,7 +80,7 @@ public:
     /**
      * connect slot to set time step signal
      */
-    connection on_set_timestep(boost::function<void (time_type)> const& slot)
+    connection on_set_timestep(std::function<void (time_type)> const& slot)
     {
         return on_set_timestep_.connect(slot);
     }

@@ -57,7 +57,7 @@ public:
     /**
      * Connect slot to signal emitted before starting simulation run
      */
-    connection on_start(boost::function<void ()> const& slot)
+    connection on_start(std::function<void ()> const& slot)
     {
         return on_start_.connect(slot);
     }
@@ -65,7 +65,7 @@ public:
     /**
      * Connect slot to signal emitted before MD integration step
      */
-    connection on_prepare(boost::function<void ()> const& slot, step_type interval)
+    connection on_prepare(std::function<void ()> const& slot, step_type interval)
     {
         return on_prepare_.connect(boost::bind(&sampler::prepare, this, slot, interval));
     }
@@ -73,7 +73,7 @@ public:
     /**
      * Connect slot to signal emitted after MD integration step
      */
-    connection on_sample(boost::function<void ()> const& slot, step_type interval)
+    connection on_sample(std::function<void ()> const& slot, step_type interval)
     {
         return on_sample_.connect(boost::bind(&sampler::sample, this, slot, interval));
     }
@@ -81,7 +81,7 @@ public:
     /**
      * Connect slot to signal emitted after finishing simulation run
      */
-    connection on_finish(boost::function<void ()> const& slot)
+    connection on_finish(std::function<void ()> const& slot)
     {
         return on_finish_.connect(slot);
     }
@@ -92,8 +92,8 @@ public:
     static void luaopen(lua_State* L);
 
 private:
-    void prepare(boost::function<void ()> const& slot, step_type interval) const;
-    void sample(boost::function<void ()> const& slot, step_type interval) const;
+    void prepare(std::function<void ()> const& slot, step_type interval) const;
+    void sample(std::function<void ()> const& slot, step_type interval) const;
 
     /** simulation clock */
     boost::shared_ptr<clock_type> clock_;

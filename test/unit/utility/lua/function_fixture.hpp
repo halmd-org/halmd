@@ -110,111 +110,111 @@ struct function_fixture : lua_test_fixture
         output << boost::make_tuple(std::string("slot9"), arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9);
     };
 
-    static boost::function<void ()> wrap_slot0()
+    static std::function<void ()> wrap_slot0()
     {
         return boost::bind(&slot0);
     }
 
-    static boost::function<void (int)> wrap_slot1()
+    static std::function<void (int)> wrap_slot1()
     {
         return boost::bind(&slot1, _1);
     }
 
-    static boost::function<void (int, int)> wrap_slot2()
+    static std::function<void (int, int)> wrap_slot2()
     {
         return boost::bind(&slot2, _1, _2);
     }
 
-    static boost::function<void (int, int, int)> wrap_slot3()
+    static std::function<void (int, int, int)> wrap_slot3()
     {
         return boost::bind(&slot3, _1, _2, _3);
     }
 
-    static boost::function<void (int, int, int, int)> wrap_slot4()
+    static std::function<void (int, int, int, int)> wrap_slot4()
     {
         return boost::bind(&slot4, _1, _2, _3, _4);
     }
 
-    static boost::function<void (int, int, int, int, int)> wrap_slot5()
+    static std::function<void (int, int, int, int, int)> wrap_slot5()
     {
         return boost::bind(&slot5, _1, _2, _3, _4, _5);
     }
 
-    static boost::function<void (int, int, int, int, int, int)> wrap_slot6()
+    static std::function<void (int, int, int, int, int, int)> wrap_slot6()
     {
         return boost::bind(&slot6, _1, _2, _3, _4, _5, _6);
     }
 
-    static boost::function<void (int, int, int, int, int, int, int)> wrap_slot7()
+    static std::function<void (int, int, int, int, int, int, int)> wrap_slot7()
     {
         return boost::bind(&slot7, _1, _2, _3, _4, _5, _6, _7);
     }
 
-    static boost::function<void (int, int, int, int, int, int, int, int)> wrap_slot8()
+    static std::function<void (int, int, int, int, int, int, int, int)> wrap_slot8()
     {
         return boost::bind(&slot8, _1, _2, _3, _4, _5, _6, _7, _8);
     }
 
-    static boost::function<void (int, int, int, int, int, int, int, int, int)> wrap_slot9()
+    static std::function<void (int, int, int, int, int, int, int, int, int)> wrap_slot9()
     {
         return boost::bind(&slot9, _1, _2, _3, _4, _5, _6, _7, _8, _9);
     }
 
-    static int call_slot0(boost::function<void ()> const& slot)
+    static int call_slot0(std::function<void ()> const& slot)
     {
         slot();
         return 0;
     }
 
-    static int call_slot1(boost::function<void (int)> const& slot, int arg1)
+    static int call_slot1(std::function<void (int)> const& slot, int arg1)
     {
         slot(arg1);
         return arg1;
     }
 
-    static int call_slot2(boost::function<void (int, int)> const& slot, int arg1, int arg2)
+    static int call_slot2(std::function<void (int, int)> const& slot, int arg1, int arg2)
     {
         slot(arg1, arg2);
         return arg1 + arg2;
     }
 
-    static int call_slot3(boost::function<void (int, int, int)> const& slot, int arg1, int arg2, int arg3)
+    static int call_slot3(std::function<void (int, int, int)> const& slot, int arg1, int arg2, int arg3)
     {
         slot(arg1, arg2, arg3);
         return arg1 + arg2 + arg3;
     }
 
-    static int call_slot4(boost::function<void (int, int, int, int)> const& slot, int arg1, int arg2, int arg3, int arg4)
+    static int call_slot4(std::function<void (int, int, int, int)> const& slot, int arg1, int arg2, int arg3, int arg4)
     {
         slot(arg1, arg2, arg3, arg4);
         return arg1 + arg2 + arg3 + arg4;
     }
 
-    static int call_slot5(boost::function<void (int, int, int, int, int)> const& slot, int arg1, int arg2, int arg3, int arg4, int arg5)
+    static int call_slot5(std::function<void (int, int, int, int, int)> const& slot, int arg1, int arg2, int arg3, int arg4, int arg5)
     {
         slot(arg1, arg2, arg3, arg4, arg5);
         return arg1 + arg2 + arg3 + arg4 + arg5;
     }
 
-    static int call_slot6(boost::function<void (int, int, int, int, int, int)> const& slot, int arg1, int arg2, int arg3, int arg4, int arg5, int arg6)
+    static int call_slot6(std::function<void (int, int, int, int, int, int)> const& slot, int arg1, int arg2, int arg3, int arg4, int arg5, int arg6)
     {
         slot(arg1, arg2, arg3, arg4, arg5, arg6);
         return arg1 + arg2 + arg3 + arg4 + arg5 + arg6;
     }
 
-    static int call_slot7(boost::function<void (int, int, int, int, int, int, int)> const& slot, int arg1, int arg2, int arg3, int arg4, int arg5, int arg6, int arg7)
+    static int call_slot7(std::function<void (int, int, int, int, int, int, int)> const& slot, int arg1, int arg2, int arg3, int arg4, int arg5, int arg6, int arg7)
     {
         slot(arg1, arg2, arg3, arg4, arg5, arg6, arg7);
         return arg1 + arg2 + arg3 + arg4 + arg5 + arg6 + arg7;
     }
 
-    static int call_slot8(boost::function<void (int, int, int, int, int, int, int, int)> const& slot, int arg1, int arg2, int arg3, int arg4, int arg5, int arg6, int arg7, int arg8)
+    static int call_slot8(std::function<void (int, int, int, int, int, int, int, int)> const& slot, int arg1, int arg2, int arg3, int arg4, int arg5, int arg6, int arg7, int arg8)
     {
         slot(arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8);
         return arg1 + arg2 + arg3 + arg4 + arg5 + arg6 + arg7 + arg8;
     }
 
-    static int call_slot9(boost::function<void (int, int, int, int, int, int, int, int, int)> const& slot, int arg1, int arg2, int arg3, int arg4, int arg5, int arg6, int arg7, int arg8, int arg9)
+    static int call_slot9(std::function<void (int, int, int, int, int, int, int, int, int)> const& slot, int arg1, int arg2, int arg3, int arg4, int arg5, int arg6, int arg7, int arg8, int arg9)
     {
         slot(arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9);
         return arg1 + arg2 + arg3 + arg4 + arg5 + arg6 + arg7 + arg8 + arg9;

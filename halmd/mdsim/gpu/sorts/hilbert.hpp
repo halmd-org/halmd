@@ -57,7 +57,7 @@ public:
     );
     void order();
 
-    connection on_order(boost::function<void ()> const& slot)
+    connection on_order(std::function<void ()> const& slot)
     {
         return on_order_.connect(slot);
     }

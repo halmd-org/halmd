@@ -22,10 +22,10 @@
 
 // Boost 1.37.0, or patch from http://svn.boost.org/trac/boost/ticket/1852
 #include <boost/circular_buffer.hpp>
-#include <boost/function.hpp>
 #include <boost/make_shared.hpp>
 #include <cassert>
 #include <cstddef> // std::size_t
+#include <functional>
 #include <lua.hpp>
 #include <stdexcept> // std::logic_error
 #include <vector>
@@ -76,7 +76,7 @@ private:
 
 public:
     typedef boost::circular_buffer<boost::shared_ptr<sample_type const> > block_type;
-    typedef boost::function<boost::shared_ptr<sample_type const> ()> sample_slot_type;
+    typedef std::function<boost::shared_ptr<sample_type const> ()> sample_slot_type;
     typedef typename block_type::iterator block_iterator;
     typedef typename block_type::const_iterator block_const_iterator;
     typedef mdsim::clock clock_type;

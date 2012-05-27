@@ -198,21 +198,21 @@ void verlet_nvt_hoover<dimension, float_type>::propagate_chain()
 }
 
 template <typename integrator_type>
-static boost::function<void ()>
+static std::function<void ()>
 wrap_integrate(boost::shared_ptr<integrator_type> self)
 {
     return bind(&integrator_type::integrate, self);
 }
 
 template <typename integrator_type>
-static boost::function<void ()>
+static std::function<void ()>
 wrap_finalize(boost::shared_ptr<integrator_type> self)
 {
     return bind(&integrator_type::finalize, self);
 }
 
 template <typename integrator_type>
-static boost::function<typename integrator_type::chain_type& ()>
+static std::function<typename integrator_type::chain_type& ()>
 wrap_xi(boost::shared_ptr<integrator_type> integrator)
 {
 #ifdef HALMD_NO_CXX11
@@ -225,7 +225,7 @@ wrap_xi(boost::shared_ptr<integrator_type> integrator)
 }
 
 template <typename integrator_type>
-static boost::function<typename integrator_type::chain_type& ()>
+static std::function<typename integrator_type::chain_type& ()>
 wrap_v_xi(boost::shared_ptr<integrator_type> integrator)
 {
 #ifdef HALMD_NO_CXX11
@@ -238,7 +238,7 @@ wrap_v_xi(boost::shared_ptr<integrator_type> integrator)
 }
 
 template <typename integrator_type>
-static boost::function<double ()>
+static std::function<double ()>
 wrap_en_nhc(boost::shared_ptr<integrator_type> integrator)
 {
     return bind(&integrator_type::en_nhc, integrator);

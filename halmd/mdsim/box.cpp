@@ -18,7 +18,6 @@
  */
 
 #include <boost/bind.hpp>
-#include <boost/function.hpp>
 #include <boost/shared_ptr.hpp>
 #include <cmath>
 #include <functional> // std::multiplies
@@ -79,22 +78,22 @@ static int wrap_dimension(box<dimension> const&)
 }
 
 template <typename box_type>
-static boost::function<typename box_type::vector_type ()>
+static std::function<typename box_type::vector_type ()>
 wrap_origin(boost::shared_ptr<box_type const> box)
 {
     return bind(&box_type::origin, box);
 }
 
 template <typename box_type>
-static boost::function<vector<typename box_type::vector_type> ()>
+static std::function<vector<typename box_type::vector_type> ()>
 wrap_edges(boost::shared_ptr<box_type const> box)
 {
     return bind(&box_type::edges, box);
 }
 
 template <typename box_type>
-static boost::function<std::vector<typename box_type::vector_type>& ()>
-edges_to_length(boost::function<typename box_type::vector_type ()>& length)
+static std::function<std::vector<typename box_type::vector_type>& ()>
+edges_to_length(std::function<typename box_type::vector_type ()>& length)
 {
     typedef typename box_type::vector_type vector_type;
     typedef std::vector<vector_type> edges_type;
