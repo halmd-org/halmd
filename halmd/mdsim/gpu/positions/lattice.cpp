@@ -175,17 +175,20 @@ void lattice<dimension, float_type>::fcc(
     LOG_DEBUG("number of particles inserted: " << npart);
 }
 
-template <int dimension, typename float_type>
-static char const* module_name_wrapper(lattice<dimension, float_type> const&)
+template <typename lattice_type>
+static std::function<void ()>
+wrap_set(boost::shared_ptr<lattice_type> self)
 {
-    return lattice<dimension, float_type>::module_name();
+    return [=]() {
+        self->set();
+    };
 }
 
 template <int dimension, typename float_type>
 void lattice<dimension, float_type>::luaopen(lua_State* L)
 {
     using namespace luabind;
-    static string class_name(module_name() + ("_" + lexical_cast<string>(dimension) + "_"));
+    static std::string class_name = "lattice_" + std::to_string(dimension) + "_";
     module(L, "libhalmd")
     [
         namespace_("mdsim")
@@ -201,9 +204,8 @@ void lattice<dimension, float_type>::luaopen(lua_State* L)
                            , typename box_type::vector_type const&
                            , boost::shared_ptr<logger_type>
                          >())
-                        .def("set", &lattice::set)
+                        .property("set", &wrap_set<lattice>)
                         .property("slab", &lattice::slab)
-                        .property("module_name", &module_name_wrapper<dimension, float_type>)
                         .scope
                         [
                             class_<runtime>("runtime")

@@ -46,8 +46,6 @@ public:
     typedef typename type_traits<dimension, float>::vector_type gpu_vector_type;
     typedef typename type_traits<dimension, unsigned int>::vector_type index_type;
 
-    static char const* module_name() { return "lattice"; }
-
     static void luaopen(lua_State* L);
 
     lattice(
