@@ -60,7 +60,7 @@ local M = module(function(args)
     local velocity = phase_space(particle, sample, logger)
 
     -- connect velocity to core
-    core:on_setup(velocity.set)
+    core.on_setup(velocity.set)
 
     return velocity
 end)

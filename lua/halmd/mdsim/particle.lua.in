@@ -94,8 +94,8 @@ local M = module(function(args)
 
     self.connect = function(self)
         if #conn == 0 then
-            table.insert(conn, core:on_prepend_setup(self.prepare))
-            table.insert(conn, core:on_prepend_force(self.prepare))
+            table.insert(conn, core.on_prepend_setup(self.prepare))
+            table.insert(conn, core.on_prepend_force(self.prepare))
 
             local runtime = assert(self.runtime)
             table.insert(conn, profiler:on_profile(runtime.rearrange, "rearrange particles by permutation"))

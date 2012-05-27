@@ -136,8 +136,8 @@ local M = module(function(args)
     self.connect = function()
         if #conn == 0 then
             table.insert(conn, clock.on_set_timestep(set_timestep))
-            table.insert(conn, core:on_integrate(self.integrate))
-            table.insert(conn, core:on_finalize(self.finalize))
+            table.insert(conn, core.on_integrate(self.integrate))
+            table.insert(conn, core.on_finalize(self.finalize))
             table.insert(conn, profiler:on_profile(self.runtime.integrate, "first half-step of velocity-Verlet"))
             table.insert(conn, profiler:on_profile(self.runtime.finalize, "second half-step of velocity-Verlet (+ Andersen thermostat)"))
         else

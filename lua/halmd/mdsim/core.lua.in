@@ -28,85 +28,85 @@ local core = assert(libhalmd.mdsim.core)
 --
 -- The simulation core drives the MD step.
 --
--- .. method:: setup(self)
+-- .. method:: setup()
 --
 --    Prepare microscopic system state.
 --
 --    This method is invoked by :meth:`halmd.observables.sampler.setup`.
 --
--- .. method:: mdstep(self)
+-- .. method:: mdstep()
 --
 --    Perform a single MD integration step.
 --
 --    This method is invoked by :meth:`halmd.observables.sampler.run`.
 --
--- .. method:: on_prepend_setup(self, slot)
+-- .. method:: on_prepend_setup(slot)
 --
 --    Connect nullary slot to signal.
 --
 --    :returns: signal connection
 --
--- .. method:: on_setup(self, slot)
+-- .. method:: on_setup(slot)
 --
 --    Connect nullary slot to signal.
 --
 --    :returns: signal connection
 --
--- .. method:: on_append_setup(self, slot)
+-- .. method:: on_append_setup(slot)
 --
 --    Connect nullary slot to signal.
 --
 --    :returns: signal connection
 --
--- .. method:: on_prepend_integrate(self, slot)
+-- .. method:: on_prepend_integrate(slot)
 --
 --    Connect nullary slot to signal.
 --
 --    :returns: signal connection
 --
--- .. method:: on_integrate(self, slot)
+-- .. method:: on_integrate(slot)
 --
 --    Connect nullary slot to signal.
 --
 --    :returns: signal connection
 --
--- .. method:: on_append_integrate(self, slot)
+-- .. method:: on_append_integrate(slot)
 --
 --    Connect nullary slot to signal.
 --
 --    :returns: signal connection
 --
--- .. method:: on_prepend_force(self, slot)
+-- .. method:: on_prepend_force(slot)
 --
 --    Connect nullary slot to signal.
 --
 --    :returns: signal connection
 --
--- .. method:: on_force(self, slot)
+-- .. method:: on_force(slot)
 --
 --    Connect nullary slot to signal.
 --
 --    :returns: signal connection
 --
--- .. method:: on_append_force(self, slot)
+-- .. method:: on_append_force(slot)
 --
 --    Connect nullary slot to signal.
 --
 --    :returns: signal connection
 --
--- .. method:: on_prepend_finalize(self, slot)
+-- .. method:: on_prepend_finalize(slot)
 --
 --    Connect nullary slot to signal.
 --
 --    :returns: signal connection
 --
--- .. method:: on_finalize(self, slot)
+-- .. method:: on_finalize(slot)
 --
 --    Connect nullary slot to signal.
 --
 --    :returns: signal connection
 --
--- .. method:: on_append_finalize(self, slot)
+-- .. method:: on_append_finalize(slot)
 --
 --    Connect nullary slot to signal.
 --
@@ -117,8 +117,7 @@ local core = assert(libhalmd.mdsim.core)
 local self = core()
 
 -- connect runtime accumulators to profiler
-local runtime = assert(self.runtime)
-profiler:on_profile(runtime.setup, "microscopic state preparation")
-profiler:on_profile(runtime.mdstep, "MD integration step")
+profiler:on_profile(self.runtime.setup, "microscopic state preparation")
+profiler:on_profile(self.runtime.mdstep, "MD integration step")
 
 return self

@@ -112,9 +112,9 @@ local M = module(function(args)
     self.connect = function(self)
         if #conn == 0 then
             -- system preparation
-            table.insert(conn, core:on_append_setup(self.compute))
+            table.insert(conn, core.on_append_setup(self.compute))
             -- compute forces every step
-            table.insert(conn, core:on_force(self.compute))
+            table.insert(conn, core.on_force(self.compute))
 
             local runtime = assert(self.runtime)
             table.insert(conn, profiler:on_profile(runtime.compute, desc))
