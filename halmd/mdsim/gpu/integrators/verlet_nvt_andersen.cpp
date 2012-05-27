@@ -127,14 +127,36 @@ template <typename integrator_type>
 static std::function<void ()>
 wrap_integrate(boost::shared_ptr<integrator_type> self)
 {
-    return boost::bind(&integrator_type::integrate, self);
+    return [=]() {
+        self->integrate();
+    };
 }
 
 template <typename integrator_type>
 static std::function<void ()>
 wrap_finalize(boost::shared_ptr<integrator_type> self)
 {
-    return boost::bind(&integrator_type::finalize, self);
+    return [=]() {
+        self->finalize();
+    };
+}
+
+template <typename integrator_type>
+static std::function<void (double)>
+wrap_set_timestep(boost::shared_ptr<integrator_type> self)
+{
+    return [=](double timestep) {
+        self->set_timestep(timestep);
+    };
+}
+
+template <typename integrator_type>
+static std::function<void (double)>
+wrap_set_temperature(boost::shared_ptr<integrator_type> self)
+{
+    return [=](double temperature) {
+        self->set_temperature(temperature);
+    };
 }
 
 template <int dimension, typename float_type, typename RandomNumberGenerator>
@@ -150,9 +172,9 @@ void verlet_nvt_andersen<dimension, float_type, RandomNumberGenerator>::luaopen(
                 class_<verlet_nvt_andersen>()
                     .property("integrate", &wrap_integrate<verlet_nvt_andersen>)
                     .property("finalize", &wrap_finalize<verlet_nvt_andersen>)
-                    .def("set_timestep", &verlet_nvt_andersen::set_timestep)
+                    .property("set_timestep", &wrap_set_timestep<verlet_nvt_andersen>)
                     .property("timestep", &verlet_nvt_andersen::timestep)
-                    .def("set_temperature", &verlet_nvt_andersen::set_temperature)
+                    .property("set_temperature", &wrap_set_temperature<verlet_nvt_andersen>)
                     .property("temperature", &verlet_nvt_andersen::temperature)
                     .property("collision_rate", &verlet_nvt_andersen::collision_rate)
                     .scope
