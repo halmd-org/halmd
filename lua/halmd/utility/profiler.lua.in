@@ -26,11 +26,11 @@ local profiler = assert(libhalmd.utility.profiler)
 --
 -- The profiler collects and logs profiling times.
 --
--- .. method:: profile(self)
+-- .. method:: profile()
 --
 --    Log and reset runtime accumulators.
 --
--- .. method:: on_profile(self, acc, desc)
+-- .. method:: on_profile(acc, desc)
 --
 --    Connect accumulator for profiling.
 --
@@ -38,14 +38,14 @@ local profiler = assert(libhalmd.utility.profiler)
 --    :param string desc: description of runtime accumulator
 --    :returns: connection
 --
--- .. method:: on_prepend_profile(self, slot)
+-- .. method:: on_prepend_profile(slot)
 --
 --    Connect slot to signal.
 --
 --    :param slot: nullary function
 --    :returns: connection
 --
--- .. method:: on_append_profile(self, slot)
+-- .. method:: on_append_profile(slot)
 --
 --    Connect slot to signal.
 --

@@ -117,7 +117,7 @@ local M = module(function(args)
             table.insert(conn, core.on_force(self.compute))
 
             local runtime = assert(self.runtime)
-            table.insert(conn, profiler:on_profile(runtime.compute, desc))
+            table.insert(conn, profiler.on_profile(runtime.compute, desc))
         else
             error("integrator is already connected", 2)
         end
