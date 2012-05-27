@@ -38,37 +38,37 @@ local sampler = assert(libhalmd.sampler)
 --    sampler:setup()
 --    sampler:run(1000)
 --
--- .. method:: setup()
+-- .. method:: setup(self)
 --
 --    Setup simulation domain.
 --
 --    This method invokes :meth:`halmd.mdsim.core.setup`.
 --
--- .. method:: run(steps)
+-- .. method:: run(self, steps)
 --
 --    Run simulation for given number of steps.
 --
 --    This method invokes :meth:`halmd.mdsim.core.mdstep`.
 --
--- .. method:: on_start(slot)
+-- .. method:: on_start(self, slot)
 --
 --    Connect slot to signal.
 --
 --    :returns: signal connection
 --
--- .. method:: on_finish(slot)
+-- .. method:: on_finish(self, slot)
 --
 --    Connect slot to signal.
 --
 --    :returns: signal connection
 --
--- .. method:: on_prepare(slot, interval)
+-- .. method:: on_prepare(self, slot, interval)
 --
 --    Connect slot to signal.
 --
 --    :returns: signal connection
 --
--- .. method:: on_sample(slot, interval)
+-- .. method:: on_sample(self, slot, interval)
 --
 --    Connect slot to signal.
 --

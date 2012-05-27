@@ -61,7 +61,7 @@ local type = type
 -- is written), which is useful to peek at output data during the
 -- simulation.
 --
--- .. method:: writer(args)
+-- .. method:: writer(self, args)
 --
 --    Construct a group writer.
 --
@@ -90,9 +90,9 @@ local type = type
 --       local sampler = require("halmd.observables.sampler")
 --       sampler:on_start(writer.write)
 --
--- .. attribute:: flush
+-- .. method:: flush()
 --
---    Callable slot to flush the output file to disk.
+--    Flush the output file to disk.
 --
 -- .. attribute:: root
 --

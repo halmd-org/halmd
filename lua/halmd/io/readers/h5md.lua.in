@@ -36,7 +36,7 @@ local h5md = assert(libhalmd.io.readers.h5md)
 -- :param table args: keyword arguments
 -- :param string args.path: pathname of input file
 --
--- .. method:: reader(args)
+-- .. method:: reader(self, args)
 --
 --    Construct a group reader.
 --
@@ -45,7 +45,7 @@ local h5md = assert(libhalmd.io.readers.h5md)
 --    :param string args.mode: read mode ("append" or "truncate")
 --    :returns: instance of group reader
 --
--- .. method:: close()
+-- .. method:: close(self)
 --
 --    Close file.
 --

@@ -153,7 +153,7 @@ function render_module(parsed)
         if #methods > 0 then
             for i = 1, #methods do
                 local entry = methods[i]
-                l("%s.. method:: %s", indent, entry.func)
+                l("%s.. method:: %s", indent, entry.func:gsub("%(", "(self, "):gsub(", %)", ")"))
                 l()
                 for j = 1, #entry do
                     l("%s%s%s", indent, indent, entry[j])

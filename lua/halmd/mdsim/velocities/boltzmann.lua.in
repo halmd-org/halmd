@@ -70,7 +70,7 @@ local boltzmann = assert(libhalmd.mdsim.velocities.boltzmann)
 -- :param args.particle: instance of :class:`halmd.mdsim.particle`
 -- :param number args.temperature: temperature of distribution
 --
--- .. method:: set()
+-- .. method:: set(self)
 --
 --    Initialise particle velocities from Boltzmann distribution.
 --

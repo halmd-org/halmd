@@ -54,7 +54,7 @@ end
 --    the same sampler with multiple observable modules for optimal
 --    performance.
 --
--- .. method:: acquire(args)
+-- .. method:: acquire(self, args)
 --
 --    Returns data slot to acquire phase space sample.
 --
@@ -65,39 +65,39 @@ end
 --    is not specified, the memory location is selected according to the
 --    compute device.
 --
--- .. method:: position()
+-- .. method:: position(self)
 --
 --    Returns data slot that acquires phase space sample and returns position array.
 --
 --    :returns: data slot that returns position array in host memory
 --
--- .. method:: velocity()
+-- .. method:: velocity(self)
 --
 --    Returns data slot that acquires phase space sample and returns velocity array.
 --
 --    :returns: data slot that returns velocity array in host memory
 --
--- .. method:: species()
+-- .. method:: species(self)
 --
 --    Returns data slot that acquires phase space sample and returns species array.
 --
 --    :returns: data slot that returns species array in host memory
 --
--- .. method:: mass()
+-- .. method:: mass(self)
 --
 --    Returns data slot that acquires phase space sample and returns mass array.
 --
 --    :returns: data slot that returns mass array in host memory
 --
--- .. method:: set(sample)
+-- .. method:: set(self, sample)
 --
 --    Set positions, velocities, species and masses from phase space sample.
 --
--- .. method:: connect()
+-- .. method:: connect(self)
 --
 --    Connect phase_space sampler to profiler. This is the default.
 --
--- .. method:: disconnect()
+-- .. method:: disconnect(self)
 --
 --    Disconnect phase_space sampler from profiler.
 --
@@ -105,7 +105,7 @@ end
 --
 --    The particle group used by the sampler.
 --
--- .. class:: writer(file, args)
+-- .. class:: writer(self, file, args)
 --
 --    Write trajectory of particle group to file.
 --
@@ -123,11 +123,11 @@ end
 --    If ``group`` is omitted, the particle group's label will be used as
 --    the name of the trajectory group.
 --
---    .. method:: connect()
+--    .. method:: connect(self)
 --
 --       Connect phase_space writer to observables sampler. This is the default.
 --
---    .. method:: disconnect()
+--    .. method:: disconnect(self)
 --
 --       Disconnect phase_space writer from observables sampler.
 --

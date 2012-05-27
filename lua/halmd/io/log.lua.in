@@ -155,31 +155,31 @@ end
 --    :param table args: keyword arguments (optional)
 --    :param string args.label: logging prefix (optional)
 --
---    .. method:: error(msg, ...)
+--    .. method:: error(self, msg, ...)
 --
 --       Log message with severity ``error``.
 --
 --       :param string msg: see `string.format`_
 --
---    .. method:: warning(msg, ...)
+--    .. method:: warning(self, msg, ...)
 --
 --       Log message with severity ``warning``.
 --
 --       :param string msg: see `string.format`_
 --
---    .. method:: info(msg, ...)
+--    .. method:: info(self, msg, ...)
 --
 --       Log message with severity ``info``.
 --
 --       :param string msg: see `string.format`_
 --
---    .. method:: debug(msg, ...)
+--    .. method:: debug(self, msg, ...)
 --
 --       Log message with severity ``debug``.
 --
 --       :param string msg: see `string.format`_
 --
---    .. method:: trace(msg, ...)
+--    .. method:: trace(self, msg, ...)
 --
 --       Log message with severity ``trace``.
 --

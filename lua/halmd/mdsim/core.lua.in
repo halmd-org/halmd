@@ -28,85 +28,85 @@ local core = assert(libhalmd.mdsim.core)
 --
 -- The simulation core drives the MD step.
 --
--- .. method:: setup()
+-- .. method:: setup(self)
 --
 --    Prepare microscopic system state.
 --
 --    This method is invoked by :meth:`halmd.observables.sampler.setup`.
 --
--- .. method:: mdstep()
+-- .. method:: mdstep(self)
 --
 --    Perform a single MD integration step.
 --
 --    This method is invoked by :meth:`halmd.observables.sampler.run`.
 --
--- .. method:: on_prepend_setup(slot)
+-- .. method:: on_prepend_setup(self, slot)
 --
 --    Connect nullary slot to signal.
 --
 --    :returns: signal connection
 --
--- .. method:: on_setup(slot)
+-- .. method:: on_setup(self, slot)
 --
 --    Connect nullary slot to signal.
 --
 --    :returns: signal connection
 --
--- .. method:: on_append_setup(slot)
+-- .. method:: on_append_setup(self, slot)
 --
 --    Connect nullary slot to signal.
 --
 --    :returns: signal connection
 --
--- .. method:: on_prepend_integrate(slot)
+-- .. method:: on_prepend_integrate(self, slot)
 --
 --    Connect nullary slot to signal.
 --
 --    :returns: signal connection
 --
--- .. method:: on_integrate(slot)
+-- .. method:: on_integrate(self, slot)
 --
 --    Connect nullary slot to signal.
 --
 --    :returns: signal connection
 --
--- .. method:: on_append_integrate(slot)
+-- .. method:: on_append_integrate(self, slot)
 --
 --    Connect nullary slot to signal.
 --
 --    :returns: signal connection
 --
--- .. method:: on_prepend_force(slot)
+-- .. method:: on_prepend_force(self, slot)
 --
 --    Connect nullary slot to signal.
 --
 --    :returns: signal connection
 --
--- .. method:: on_force(slot)
+-- .. method:: on_force(self, slot)
 --
 --    Connect nullary slot to signal.
 --
 --    :returns: signal connection
 --
--- .. method:: on_append_force(slot)
+-- .. method:: on_append_force(self, slot)
 --
 --    Connect nullary slot to signal.
 --
 --    :returns: signal connection
 --
--- .. method:: on_prepend_finalize(slot)
+-- .. method:: on_prepend_finalize(self, slot)
 --
 --    Connect nullary slot to signal.
 --
 --    :returns: signal connection
 --
--- .. method:: on_finalize(slot)
+-- .. method:: on_finalize(self, slot)
 --
 --    Connect nullary slot to signal.
 --
 --    :returns: signal connection
 --
--- .. method:: on_append_finalize(slot)
+-- .. method:: on_append_finalize(self, slot)
 --
 --    Connect nullary slot to signal.
 --

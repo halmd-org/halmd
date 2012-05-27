@@ -47,7 +47,7 @@ local h5 = assert(libhalmd.h5)
 -- :param table args.length: sequence of edge lengths, according to dimensionality
 -- :returns: instance of box
 --
--- .. method:: writer(file)
+-- .. method:: writer(self, file)
 --
 --    Write box specification to file.
 --
@@ -68,15 +68,13 @@ local h5 = assert(libhalmd.h5)
 --
 --    Edge lengths as a sequence.
 --
--- .. attribute:: origin
+-- .. method:: origin()
 --
---    Callable data slot for use with a writer.
---    The slot returns the box origin.
+--    Returns the box origin.
 --
--- .. attribute:: edges
+-- .. method:: edges()
 --
---    Callable data slot for use with a writer.
---    The slot returns the edge lengths as a matrix.
+--    Returns the edge lengths as a matrix.
 --
 local M = module(function(args)
     local length = args and args.length

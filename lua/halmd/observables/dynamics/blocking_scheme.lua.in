@@ -43,28 +43,28 @@ local correlation = assert(libhalmd.observables.dynamics.correlation)
 -- :param number args.shift: coarse-graining shift between odd and even levels (defaults to :math:`\lfloor\sqrt\text{size}\rfloor`)
 -- :param number args.separation: minimal separation of samples for time averages (defaults to :math:`\text{every}\times\text{size}`)
 --
--- .. method:: disconnect()
+-- .. method:: disconnect(self)
 --
 --    Disconnect blocking scheme from sampler.
 --
--- .. method:: connect()
+-- .. method:: connect(self)
 --
 --    Connect blocking scheme to sampler.
 --
 --    This is the default.
 --
--- .. class:: correlation(tcf, writer)
+-- .. class:: correlation(self, tcf, writer)
 --
 --    Compute time correlation function.
 --
 --    :param tcf: time correlation function
 --    :param writer: instance of :class:`halmd.io.writers.h5md`
 --
---    .. method:: disconnect()
+--    .. method:: disconnect(self)
 --
 --       Disconnect correlation function from blocking scheme.
 --
---    .. method:: connect()
+--    .. method:: connect(self)
 --
 --       Connect correlation function to blocking scheme.
 --

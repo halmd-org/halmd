@@ -45,7 +45,7 @@ local verlet_nvt_andersen = assert(libhalmd.mdsim.integrators.verlet_nvt_anderse
 -- :param number args.rate: collision rate
 -- :param number args.timestep: integration timestep (defaults to :attr:`halmd.mdsim.clock.timestep`)
 --
--- .. method:: set_timestep(timestep)
+-- .. method:: set_timestep(self, timestep)
 --
 --    Set integration time step in MD units.
 --
@@ -58,7 +58,7 @@ local verlet_nvt_andersen = assert(libhalmd.mdsim.integrators.verlet_nvt_anderse
 --
 --    Integration time step.
 --
--- .. method:: set_temperature(temperature)
+-- .. method:: set_temperature(self, temperature)
 --
 --    Set temperature of heat bath.
 --
@@ -72,27 +72,27 @@ local verlet_nvt_andersen = assert(libhalmd.mdsim.integrators.verlet_nvt_anderse
 --
 --    Collision rate with the heat bath.
 --
--- .. method:: disconnect()
+-- .. method:: disconnect(self)
 --
 --    Disconnect integrator from core and profiler.
 --
--- .. method:: connect()
+-- .. method:: connect(self)
 --
 --    Connect integrator to core and profiler.
 --
 --    By default the integrator is connected.
 --
--- .. attribute:: integrate
+-- .. method:: integrate()
 --
---    Nullary slot with first leapfrog half-step of velocity-Verlet algorithm
+--    First leapfrog half-step of velocity-Verlet algorithm.
 --
---    By default this slot is connected to :meth:`halmd.mdsim.core.on_integrate`.
+--    By default this function is connected to :meth:`halmd.mdsim.core.on_integrate`.
 --
--- .. attribute:: finalize
+-- .. method:: finalize()
 --
---    Nullary slot to calculate second half-step.
+--    Second leapfrog half-step of velocity-Verlet algorithm.
 --
---    By default this slot is connected to :meth:`halmd.mdsim.core.on_finalize`.
+--    By default this function is connected to :meth:`halmd.mdsim.core.on_finalize`.
 --
 local M = module(function(args)
     local particle = args and args.particle

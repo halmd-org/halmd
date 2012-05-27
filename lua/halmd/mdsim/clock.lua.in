@@ -45,13 +45,13 @@ local clock = assert(libhalmd.mdsim.clock)
 --
 --    Integration time step in MD units.
 --
--- .. method:: set_timestep(timestep)
+-- .. method:: set_timestep(self, timestep)
 --
 --    Define integration time step.
 --
 --    The value of the time step is propagated to all integrators.
 --
--- .. method:: on_set_timestep(slot)
+-- .. method:: on_set_timestep(self, slot)
 --
 --    Connect a unary slot that accepts the integration time step.
 --

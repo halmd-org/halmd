@@ -56,7 +56,7 @@ local verlet = assert(libhalmd.mdsim.integrators.verlet)
 -- :param args.box: instance of :class:`halmd.mdsim.box`
 -- :param number args.timestep: integration time step (defaults to :attr:`halmd.mdsim.clock.timestep`)
 --
--- .. method:: set_timestep
+-- .. method:: set_timestep(self, timestep)
 --
 --    Set integration time step in MD units.
 --
@@ -69,27 +69,27 @@ local verlet = assert(libhalmd.mdsim.integrators.verlet)
 --
 --    Integration time step in MD units.
 --
--- .. method:: disconnect()
+-- .. method:: disconnect(self)
 --
 --    Disconnect integrator from core and profiler.
 --
--- .. method:: connect()
+-- .. method:: connect(self)
 --
 --    Connect integrator to core and profiler.
 --
 --    By default the integrator is connected.
 --
--- .. attribute:: integrate
+-- .. method:: integrate()
 --
---    Nullary slot to calculate first half-step.
+--    Calculate first half-step.
 --
---    By default this slot is connected to :meth:`halmd.mdsim.core.on_integrate`.
+--    By default this function is connected to :meth:`halmd.mdsim.core.on_integrate`.
 --
--- .. attribute:: finalize
+-- .. method:: finalize()
 --
---    Nullary slot to calculate second half-step.
+--    Calculate second half-step.
 --
---    By default this slot is connected to :meth:`halmd.mdsim.core.on_finalize`.
+--    By default this function is connected to :meth:`halmd.mdsim.core.on_finalize`.
 --
 local M = module(function(args)
     local particle = args.particle

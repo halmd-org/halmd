@@ -45,13 +45,13 @@ local discontinuous = assert(libhalmd.mdsim.forces.trunc.discontinuous)
 --
 -- If ``trunc`` is not specified, the pair potential is :math:`C^0` continuous at the cutoff.
 --
--- .. method:: connect()
+-- .. method:: connect(self)
 --
 --    Connect force to core and profiler.
 --
 --    This is the default.
 --
--- .. method:: disconnect()
+-- .. method:: disconnect(self)
 --
 --    Disconnect force from core and profiler.
 --
@@ -59,9 +59,9 @@ local discontinuous = assert(libhalmd.mdsim.forces.trunc.discontinuous)
 --
 --       Currently this does not disconnect particle sorting, binning and neighbour lists.
 --
--- .. attribute:: compute
+-- .. method:: compute()
 --
---    Nullary slot to compute pair forces.
+--    Compute pair forces.
 --
 --    This function is connected to :meth:`halmd.mdsim.core.on_force` and
 --    :meth:`halmd.mdsim.core.on_append_setup` in :meth:`connect`.

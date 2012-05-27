@@ -26,83 +26,83 @@ local posix_signal = assert(libhalmd.utility.posix_signal)
 --
 -- The POSIX signal handler intercepts process signals.
 --
--- .. method:: on_hup(slot)
+-- .. method:: on_hup(self, slot)
 --
---   Connect slot to invoke on signal ``HUP``.
+--    Connect slot to invoke on signal ``HUP``.
 --
---   :param slot: unary slot that accepts signal number
---   :returns: connection
+--    :param slot: unary slot that accepts signal number
+--    :returns: connection
 --
--- .. method:: on_int(slot)
+-- .. method:: on_int(self, slot)
 --
---   Connect slot to invoke on signal ``INT``.
+--    Connect slot to invoke on signal ``INT``.
 --
---   :param slot: unary slot that accepts signal number
---   :returns: connection
+--    :param slot: unary slot that accepts signal number
+--    :returns: connection
 --
--- .. method:: on_alrm(slot)
+-- .. method:: on_alrm(self, slot)
 --
---   Connect slot to invoke on signal ``ALRM``.
+--    Connect slot to invoke on signal ``ALRM``.
 --
---   :param slot: unary slot that accepts signal number
---   :returns: connection
+--    :param slot: unary slot that accepts signal number
+--    :returns: connection
 --
--- .. method:: on_term(slot)
+-- .. method:: on_term(self, slot)
 --
---   Connect slot to invoke on signal ``TERM``.
+--    Connect slot to invoke on signal ``TERM``.
 --
---   :param slot: unary slot that accepts signal number
---   :returns: connection
+--    :param slot: unary slot that accepts signal number
+--    :returns: connection
 --
--- .. method:: on_usr1(slot)
+-- .. method:: on_usr1(self, slot)
 --
---   Connect slot to invoke on signal ``USR1``.
+--    Connect slot to invoke on signal ``USR1``.
 --
---   :param slot: unary slot that accepts signal number
---   :returns: connection
+--    :param slot: unary slot that accepts signal number
+--    :returns: connection
 --
--- .. method:: on_usr2(slot)
+-- .. method:: on_usr2(self, slot)
 --
---   Connect slot to invoke on signal ``USR2``.
+--    Connect slot to invoke on signal ``USR2``.
 --
---   :param slot: unary slot that accepts signal number
---   :returns: connection
+--    :param slot: unary slot that accepts signal number
+--    :returns: connection
 --
--- .. method:: on_cont(slot)
+-- .. method:: on_cont(self, slot)
 --
---   Connect slot to invoke on signal ``CONT``.
+--    Connect slot to invoke on signal ``CONT``.
 --
---   :param slot: unary slot that accepts signal number
---   :returns: connection
+--    :param slot: unary slot that accepts signal number
+--    :returns: connection
 --
--- .. method:: on_tstp(slot)
+-- .. method:: on_tstp(self, slot)
 --
---   Connect slot to invoke on signal ``TSTP``.
+--    Connect slot to invoke on signal ``TSTP``.
 --
---   :param slot: unary slot that accepts signal number
---   :returns: connection
+--    :param slot: unary slot that accepts signal number
+--    :returns: connection
 --
--- .. method:: on_ttin(slot)
+-- .. method:: on_ttin(self, slot)
 --
---   Connect slot to invoke on signal ``TTIN``.
+--    Connect slot to invoke on signal ``TTIN``.
 --
---   :param slot: unary slot that accepts signal number
---   :returns: connection
+--    :param slot: unary slot that accepts signal number
+--    :returns: connection
 --
--- .. method:: on_ttou(slot)
+-- .. method:: on_ttou(self, slot)
 --
---   Connect slot to invoke on signal ``TTOU``.
+--    Connect slot to invoke on signal ``TTOU``.
 --
---   :param slot: unary slot that accepts signal number
---   :returns: connection
+--    :param slot: unary slot that accepts signal number
+--    :returns: connection
 --
--- .. attribute:: wait
+-- .. method:: wait()
 --
---   Nullary slot that blocks process until signal is received.
+--    Block process until signal is received.
 --
--- .. attribute:: poll
+-- .. method:: poll()
 --
---   Nullary slot that polls signal queue, and returns true if signal was handled.
+--    Poll signal queue, and returns true if signal was handled.
 --
 
 -- construct singleton instance

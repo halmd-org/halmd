@@ -49,7 +49,7 @@ local thermodynamics = assert(libhalmd.observables.thermodynamics)
 -- :param args.group: instance of :mod:`halmd.mdsim.particle_groups`
 -- :param args.box: instance of :class:`halmd.mdsim.box`
 --
--- .. method:: writer(file, args)
+-- .. method:: writer(self, file, args)
 --
 --    Write state variables to file.
 --
@@ -58,45 +58,45 @@ local thermodynamics = assert(libhalmd.observables.thermodynamics)
 --    :param number args.every: sampling interval
 --    :returns: instance of group writer
 --
--- .. attribute:: nparticle
+-- .. method:: nparticle()
 --
---    Callable slot that returns number of particles.
+--    Returns number of particles.
 --
--- .. attribute:: density
+-- .. method:: density()
 --
---    Callable slot that returns number density.
+--    Returns number density.
 --
--- .. attribute:: en_kin
+-- .. method:: en_kin()
 --
---    Callable slot that returns kinetic energy.
+--    Returns kinetic energy.
 --
--- .. attribute:: en_pot
+-- .. method:: en_pot()
 --
---    Callable slot that returns potential energy.
+--    Returns potential energy.
 --
--- .. attribute:: en_tot
+-- .. method:: en_tot()
 --
---    Callable slot that returns total energy.
+--    Returns total energy.
 --
--- .. attribute:: pressure
+-- .. method:: pressure()
 --
---    Callable slot that returns virial pressure.
+--    Returns virial pressure.
 --
--- .. attribute:: temp
+-- .. method:: temp()
 --
---    Callable slot that returns temperature.
+--    Returns temperature.
 --
--- .. attribute:: v_cm
+-- .. method:: v_cm()
 --
---    Callable slot that returns center of mass velocity.
+--    Returns center of mass velocity.
 --
--- .. attribute:: virial
+-- .. method:: virial()
 --
---    Callable slot that returns virial.
+--    Returns virial.
 --
--- .. attribute:: hypervirial
+-- .. method:: hypervirial()
 --
---    Callable slot that returns hypervirial.
+--    Returns hypervirial.
 --
 local M = module(function(args)
     local group = args.group

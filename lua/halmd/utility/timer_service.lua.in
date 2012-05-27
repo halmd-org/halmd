@@ -26,7 +26,7 @@ local timer_service = assert(libhalmd.utility.timer_service)
 --
 -- The timer service emits periodic signals with intervals in real time.
 --
--- .. method:: on_periodic(slot, interval)
+-- .. method:: on_periodic(self, slot, interval)
 --
 --    Connect function to call periodically at given interval.
 --
@@ -34,7 +34,7 @@ local timer_service = assert(libhalmd.utility.timer_service)
 --    :param number interval: frequency of calls to function in seconds
 --    :returns: connection
 --
--- .. method:: on_periodic(slot, interval, start)
+-- .. method:: on_periodic(self, slot, interval, start)
 --
 --    Connect function to call periodically at given interval.
 --
@@ -43,9 +43,9 @@ local timer_service = assert(libhalmd.utility.timer_service)
 --    :param number start: time of first call in seconds
 --    :returns: connection
 --
--- .. attribute:: process
+-- .. method:: process()
 --
---    Nullary slot to process timer event queue.
+--    Process timer event queue.
 --
 
 -- construct singleton instance
