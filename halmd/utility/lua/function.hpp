@@ -1,5 +1,5 @@
 /*
- * Copyright © 2012  Peter Colberg
+ * Copyright © 2012 Peter Colberg
  *
  * This file is part of HALMD.
  *
@@ -25,172 +25,171 @@
 #include <stdexcept>
 
 /**
- * Luabind converter for Boost.Function
+ * Luabind converter for std::function
  */
 
-namespace halmd { namespace detail {
+namespace halmd {
+namespace detail {
 
-template <typename T>
-class lua_to_cpp_function;
-
-template <typename R, typename... Args>
-class lua_to_cpp_function<R (Args...)>
+template <typename F, typename R, typename... Args>
+class cpp_function_converter
+  : public luabind::detail::default_converter_generator<F>::type
 {
-public:
-    explicit lua_to_cpp_function(luabind::object const& function) : f_(function) {}
-
-    R operator()(Args... args) const
-    {
-        try {
-            return luabind::call_function<R>(f_, args...);
-        }
-        catch (luabind::error const& e) {
-            std::string error(lua_tostring(e.state(), -1));
-            lua_pop(e.state(), 1);
-            throw std::runtime_error(error);
-        }
-    }
-
 private:
-    luabind::object f_;
-};
+    typedef typename luabind::detail::default_converter_generator<F>::type _Base;
 
-template <typename... Args>
-class lua_to_cpp_function<void (Args...)>
-{
 public:
-    explicit lua_to_cpp_function(luabind::object const& function) : f_(function) {}
-
-    void operator()(Args... args) const
+    /**
+     * Convert from Lua to C++.
+     */
+    template <typename T>
+    std::function<R (Args...)> apply(lua_State* L, T t, int index)
     {
-        try {
-            luabind::call_function<void>(f_, args...);
-        }
-        catch (luabind::error const& e) {
-            std::string error(lua_tostring(e.state(), -1));
-            lua_pop(e.state(), 1);
-            throw std::runtime_error(error);
-        }
+        return _Base::apply(L, t, index);
     }
 
-private:
-    luabind::object f_;
-};
-
-template <typename Base>
-struct lua_function_converter
-  : Base
-{
-public:
-    //! compute Lua to C++ conversion score
-    template <typename T>
-    int match(lua_State* L, luabind::detail::by_value<std::function<T> > t, int index)
+    /**
+     * Convert from C++ to Lua.
+     */
+    void apply(lua_State* L, std::function<R (Args...)> const& value)
     {
-        return lua_isfunction(L, index) ? 0 : Base::match(L, t, index);
-    }
-
-    //! compute Lua to C++ conversion score
-    template <typename T>
-    int match(lua_State* L, luabind::detail::by_const_reference<std::function<T> > t, int index)
-    {
-        return lua_isfunction(L, index) ? 0 : Base::match(L, t, index);
-    }
-
-    //! convert from Lua to C++
-    template <typename T>
-    std::function<T> apply(lua_State* L, luabind::detail::by_value<std::function<T> > t, int index)
-    {
-        return lua_isfunction(L, index) ? lua_to_cpp_function<T>(luabind::object(luabind::from_stack(L, index))) : Base::apply(L, t, index);
-    }
-
-    //! convert from Lua to C++
-    template <typename T>
-    std::function<T> apply(lua_State* L, luabind::detail::by_const_reference<std::function<T> > t, int index)
-    {
-        return lua_isfunction(L, index) ? lua_to_cpp_function<T>(luabind::object(luabind::from_stack(L, index))) : Base::apply(L, t, index);
-    }
-
-    //! convert from C++ to Lua
-    template <typename T>
-    void apply(lua_State* L, std::function<T> const& value)
-    {
-        Base::apply(L, value);
-    }
-};
-
-template <typename Base>
-struct cpp_function_converter
-  : Base
-{
-    //! compute Lua to C++ conversion score
-    template <typename T>
-    int match(lua_State* L, luabind::detail::by_value<std::function<T> > t, int index)
-    {
-        return Base::match(L, t, index);
-    }
-
-    //! compute Lua to C++ conversion score
-    template <typename T>
-    int match(lua_State* L, luabind::detail::by_const_reference<std::function<T> > t, int index)
-    {
-        return Base::match(L, t, index);
-    }
-
-    //! convert from Lua to C++
-    template <typename T>
-    std::function<T> apply(lua_State* L, luabind::detail::by_value<std::function<T> > t, int index)
-    {
-        return Base::apply(L, t, index);
-    }
-
-    //! convert from Lua to C++
-    template <typename T>
-    std::function<T> apply(lua_State* L, luabind::detail::by_const_reference<std::function<T> > t, int index)
-    {
-        return Base::apply(L, t, index);
-    }
-
-    template <typename T>
-    void apply(lua_State* L, std::function<T> const& value)
-    {
-        if (!luabind::detail::class_registry::get_registry(L)->find_class(typeid(std::function<T>))) {
+        if (!luabind::detail::class_registry::get_registry(L)->find_class(typeid(std::function<R (Args...)>))) {
             luabind::module(L)
             [
-                luabind::class_<std::function<T> >()
-                    .def("__call", &std::function<T>::operator())
+                luabind::class_<std::function<R (Args...)> >()
+                    .def("__call", &std::function<R (Args...)>::operator())
             ];
         }
-        Base::apply(L, value);
+        _Base::apply(L, value);
     }
 };
 
-}} // namespace halmd::detail
+template <typename F, typename R, typename... Args>
+class lua_function_converter
+  : public cpp_function_converter<F, R, Args...>
+{
+private:
+    typedef cpp_function_converter<F, R, Args...> _Base;
+
+public:
+    /**
+     * Compute Lua to C++ conversion score.
+     */
+    template <typename T>
+    int match(lua_State* L, T t, int index)
+    {
+        return lua_isfunction(L, index) ? 0 : _Base::match(L, t, index);
+    }
+
+    /**
+     * Convert from Lua to C++.
+     */
+    template <typename T>
+    std::function<R (Args...)> apply(lua_State* L, T t, int index)
+    {
+        if (lua_isfunction(L, index)) {
+            luabind::object function(luabind::from_stack(L, index));
+            return [=](Args... args) -> R {
+                try {
+                    return luabind::call_function<R>(function, args...);
+                }
+                catch (luabind::error const& e) {
+                    std::string error(lua_tostring(e.state(), -1));
+                    lua_pop(e.state(), 1);
+                    throw std::runtime_error(error);
+                }
+            };
+        }
+        return _Base::apply(L, t, index);
+    }
+
+    /**
+     * Convert from C++ to Lua.
+     */
+    template <typename T>
+    void apply(lua_State* L, std::function<T> const& value)
+    {
+        _Base::apply(L, value);
+    }
+};
+
+template <typename F, typename... Args>
+class lua_function_converter<F, void, Args...>
+  : public cpp_function_converter<F, void, Args...>
+{
+private:
+    typedef cpp_function_converter<F, void, Args...> _Base;
+
+public:
+    /**
+     * Compute Lua to C++ conversion score.
+     */
+    template <typename T>
+    int match(lua_State* L, T t, int index)
+    {
+        return lua_isfunction(L, index) ? 0 : _Base::match(L, t, index);
+    }
+
+    /**
+     * Convert from Lua to C++.
+     */
+    template <typename T>
+    std::function<void (Args...)> apply(lua_State* L, T t, int index)
+    {
+        if (lua_isfunction(L, index)) {
+            luabind::object function(luabind::from_stack(L, index));
+            return [=](Args... args) {
+                try {
+                    luabind::call_function<void>(function, args...);
+                }
+                catch (luabind::error const& e) {
+                    std::string error(lua_tostring(e.state(), -1));
+                    lua_pop(e.state(), 1);
+                    throw std::runtime_error(error);
+                }
+            };
+        }
+        return _Base::apply(L, t, index);
+    }
+
+    /**
+     * Convert from C++ to Lua.
+     */
+    template <typename T>
+    void apply(lua_State* L, std::function<T> const& value)
+    {
+        _Base::apply(L, value);
+    }
+};
+
+} // namespace detail
+} // namespace halmd
 
 namespace luabind {
 
 template <typename R, typename... Args>
 struct default_converter<std::function<R (Args...)> >
-  : halmd::detail::lua_function_converter<halmd::detail::cpp_function_converter<luabind::detail::value_converter> > {};
+  : halmd::detail::lua_function_converter<std::function<R (Args...)>, R, Args...> {};
 
 template <typename R, typename... Args>
 struct default_converter<std::function<R (Args...)>&&>
-  : halmd::detail::lua_function_converter<halmd::detail::cpp_function_converter<luabind::detail::value_converter> > {};
+  : halmd::detail::lua_function_converter<std::function<R (Args...)>&&, R, Args...> {};
 
 template <typename R, typename... Args>
 struct default_converter<std::function<R (Args...)> const&>
-  : halmd::detail::lua_function_converter<halmd::detail::cpp_function_converter<luabind::detail::const_ref_converter> > {};
+  : halmd::detail::lua_function_converter<std::function<R (Args...)> const&, R, Args...> {};
 
 template <typename R, typename... Args>
 struct default_converter<std::function<R& (Args...)> >
-  : halmd::detail::cpp_function_converter<luabind::detail::value_converter> {};
+  : halmd::detail::cpp_function_converter<std::function<R& (Args...)>, R&, Args...> {};
 
 template <typename R, typename... Args>
 struct default_converter<std::function<R& (Args...)>&&>
-  : halmd::detail::cpp_function_converter<luabind::detail::value_converter> {};
+  : halmd::detail::cpp_function_converter<std::function<R& (Args...)>&&, R&, Args...> {};
 
 template <typename R, typename... Args>
 struct default_converter<std::function<R& (Args...)> const&>
-  : halmd::detail::cpp_function_converter<luabind::detail::const_ref_converter> {};
+  : halmd::detail::cpp_function_converter<std::function<R& (Args...)> const&, R&, Args...> {};
 
 } // namespace luabind
 
