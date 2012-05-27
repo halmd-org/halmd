@@ -56,7 +56,7 @@ local verlet = assert(libhalmd.mdsim.integrators.verlet)
 -- :param args.box: instance of :class:`halmd.mdsim.box`
 -- :param number args.timestep: integration time step (defaults to :attr:`halmd.mdsim.clock.timestep`)
 --
--- .. method:: set_timestep(self, timestep)
+-- .. method:: set_timestep(timestep)
 --
 --    Set integration time step in MD units.
 --
@@ -69,11 +69,11 @@ local verlet = assert(libhalmd.mdsim.integrators.verlet)
 --
 --    Integration time step in MD units.
 --
--- .. method:: disconnect(self)
+-- .. method:: disconnect()
 --
 --    Disconnect integrator from core and profiler.
 --
--- .. method:: connect(self)
+-- .. method:: connect()
 --
 --    Connect integrator to core and profiler.
 --
@@ -112,29 +112,29 @@ local M = module(function(args)
 
     local self = verlet(particle, box, timestep, logger)
 
-    -- sequence of signal connections
-    local conn = {}
     -- capture C++ method set_timestep
     local set_timestep = assert(self.set_timestep)
+    -- forward Lua method set_timestep to clock
+    self.set_timestep = property(function()
+        return clock.set_timestep
+    end)
 
-    self.connect = function(self)
+    -- sequence of signal connections
+    local conn = {}
+
+    self.connect = function()
         if #conn == 0 then
+            table.insert(conn, clock.on_set_timestep(set_timestep))
             table.insert(conn, core:on_integrate(self.integrate))
             table.insert(conn, core:on_finalize(self.finalize))
-
-            table.insert(conn, clock.on_set_timestep(function(timestep)
-                set_timestep(self, timestep)
-            end))
-
-            local runtime = assert(self.runtime)
-            table.insert(conn, profiler:on_profile(runtime.integrate, "first half-step of velocity-Verlet"))
-            table.insert(conn, profiler:on_profile(runtime.finalize, "second half-step of velocity-Verlet"))
+            table.insert(conn, profiler:on_profile(self.runtime.integrate, "first half-step of velocity-Verlet"))
+            table.insert(conn, profiler:on_profile(self.runtime.finalize, "second half-step of velocity-Verlet"))
         else
             error("integrator is already connected", 2)
         end
     end
 
-    self.disconnect = function(self)
+    self.disconnect = function()
         if #conn > 0 then
             for i = 1, #conn do
                 conn[i]:disconnect()
@@ -145,13 +145,8 @@ local M = module(function(args)
         end
     end
 
-    -- forward Lua method set_timestep to clock
-    self.set_timestep = function(self, timestep)
-        clock.set_timestep(timestep)
-    end
-
     -- connect integrator to core
-    self:connect()
+    self.connect()
 
     return self
 end)

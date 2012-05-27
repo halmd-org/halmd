@@ -97,14 +97,27 @@ template <typename integrator_type>
 static std::function<void ()>
 wrap_integrate(boost::shared_ptr<integrator_type> self)
 {
-    return bind(&integrator_type::integrate, self);
+    return [=]() {
+        self->integrate();
+    };
 }
 
 template <typename integrator_type>
 static std::function<void ()>
 wrap_finalize(boost::shared_ptr<integrator_type> self)
 {
-    return bind(&integrator_type::finalize, self);
+    return [=]() {
+        self->finalize();
+    };
+}
+
+template <typename integrator_type>
+static std::function<void (double)>
+wrap_set_timestep(boost::shared_ptr<integrator_type> self)
+{
+    return [=](double timestep) {
+        self->set_timestep(timestep);
+    };
 }
 
 template <int dimension, typename float_type>
@@ -120,8 +133,8 @@ void verlet<dimension, float_type>::luaopen(lua_State* L)
                 class_<verlet>()
                     .property("integrate", &wrap_integrate<verlet>)
                     .property("finalize", &wrap_finalize<verlet>)
+                    .property("set_timestep", &wrap_set_timestep<verlet>)
                     .property("timestep", &verlet::timestep)
-                    .def("set_timestep", &verlet::set_timestep)
                     .scope
                     [
                         class_<runtime>("runtime")
