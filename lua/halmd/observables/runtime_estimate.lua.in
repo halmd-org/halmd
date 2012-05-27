@@ -32,7 +32,7 @@ local timer_service     = require("halmd.utility.timer_service")
 -- Example::
 --
 --    -- setup simulation box
---    halmd.observables.sampler:setup()
+--    halmd.observables.sampler.setup()
 --
 --    -- number of MD steps
 --    local steps = 1000000
@@ -41,7 +41,7 @@ local timer_service     = require("halmd.utility.timer_service")
 --    local runtime = halmd.observables.runtime_estimate({steps = steps, first = 10, interval = 900, sample = 60})
 --
 --    -- run simulation
---    halmd.observables.sampler:run(steps)
+--    halmd.observables.sampler.run(steps)
 --
 -- A runtime estimate may be triggered by sending the process signal ``USR1``::
 --

@@ -106,14 +106,60 @@ void sampler::sample(std::function<void ()> const& slot, step_type interval) con
     }
 }
 
-static void abort(boost::shared_ptr<mdsim::clock const> clock)
+static std::function<void ()>
+wrap_abort(boost::shared_ptr<mdsim::clock const> clock)
 {
-    throw std::runtime_error("gracefully aborting simulation at step " + boost::lexical_cast<std::string>(clock->step()));
+    return [=]() {
+        throw std::runtime_error("gracefully aborting simulation at step " + boost::lexical_cast<std::string>(clock->step()));
+    };
 }
 
-static std::function<void ()> wrap_abort(boost::shared_ptr<mdsim::clock const> clock)
+static std::function<void ()>
+wrap_setup(boost::shared_ptr<sampler> self)
 {
-    return boost::bind(&abort, clock);
+    return [=]() {
+        return self->setup();
+    };
+}
+
+static std::function<void (sampler::step_type)>
+wrap_run(boost::shared_ptr<sampler> self)
+{
+    return [=](sampler::step_type steps) {
+        return self->run(steps);
+    };
+}
+
+static std::function<void (std::function<void ()> const&)>
+wrap_on_start(boost::shared_ptr<sampler> self)
+{
+    return [=](std::function<void ()> const& slot) {
+        return self->on_start(slot);
+    };
+}
+
+static std::function<void (std::function<void ()> const&)>
+wrap_on_finish(boost::shared_ptr<sampler> self)
+{
+    return [=](std::function<void ()> const& slot) {
+        return self->on_finish(slot);
+    };
+}
+
+static std::function<void (std::function<void ()> const&, sampler::step_type)>
+wrap_on_prepare(boost::shared_ptr<sampler> self)
+{
+    return [=](std::function<void ()> const& slot, sampler::step_type steps) {
+        return self->on_prepare(slot, steps);
+    };
+}
+
+static std::function<void (std::function<void ()> const&, sampler::step_type)>
+wrap_on_sample(boost::shared_ptr<sampler> self)
+{
+    return [=](std::function<void ()> const& slot, sampler::step_type steps) {
+        return self->on_sample(slot, steps);
+    };
 }
 
 void sampler::luaopen(lua_State* L)
@@ -126,12 +172,12 @@ void sampler::luaopen(lua_State* L)
                 boost::shared_ptr<sampler::clock_type>
               , boost::shared_ptr<sampler::core_type>
             >())
-            .def("setup", &sampler::setup)
-            .def("run", &sampler::run)
-            .def("on_start", &sampler::on_start)
-            .def("on_finish", &sampler::on_finish)
-            .def("on_prepare", &sampler::on_prepare)
-            .def("on_sample", &sampler::on_sample)
+            .property("setup", &wrap_setup)
+            .property("run", &wrap_run)
+            .property("on_start", &wrap_on_start)
+            .property("on_finish", &wrap_on_finish)
+            .property("on_prepare", &wrap_on_prepare)
+            .property("on_sample", &wrap_on_sample)
             .scope
             [
                 class_<runtime>("runtime")

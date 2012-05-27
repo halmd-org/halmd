@@ -120,13 +120,13 @@ local function liquid(args)
     -- FIXME observables.dynamics.correlation{sampler = density_mode, correlation = "intermediate_scattering_function"}
 
     -- setup simulation box
-    observables.sampler:setup()
+    observables.sampler.setup()
 
     -- estimate remaining runtime
     local runtime = observables.runtime_estimate({steps = args.steps, first = 10, interval = 900, sample = 60})
 
     -- run simulation
-    observables.sampler:run(args.steps)
+    observables.sampler.run(args.steps)
 
     -- log profiler results
     halmd.utility.profiler:profile()

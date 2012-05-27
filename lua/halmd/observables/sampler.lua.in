@@ -35,40 +35,40 @@ local sampler = assert(libhalmd.sampler)
 -- Example::
 --
 --    local sampler = require("halmd.observables.sampler")
---    sampler:setup()
---    sampler:run(1000)
+--    sampler.setup()
+--    sampler.run(1000)
 --
--- .. method:: setup(self)
+-- .. method:: setup()
 --
 --    Setup simulation domain.
 --
 --    This method invokes :meth:`halmd.mdsim.core.setup`.
 --
--- .. method:: run(self, steps)
+-- .. method:: run(steps)
 --
 --    Run simulation for given number of steps.
 --
 --    This method invokes :meth:`halmd.mdsim.core.mdstep`.
 --
--- .. method:: on_start(self, slot)
+-- .. method:: on_start(slot)
 --
 --    Connect slot to signal.
 --
 --    :returns: signal connection
 --
--- .. method:: on_finish(self, slot)
+-- .. method:: on_finish(slot)
 --
 --    Connect slot to signal.
 --
 --    :returns: signal connection
 --
--- .. method:: on_prepare(self, slot, interval)
+-- .. method:: on_prepare(slot, interval)
 --
 --    Connect slot to signal.
 --
 --    :returns: signal connection
 --
--- .. method:: on_sample(self, slot, interval)
+-- .. method:: on_sample(slot, interval)
 --
 --    Connect slot to signal.
 --
@@ -79,10 +79,10 @@ local sampler = assert(libhalmd.sampler)
 local self = sampler(clock, core)
 
 -- process timer service every step
-self:on_sample(timer_service.process, 1)
+self.on_sample(timer_service.process, 1)
 
 -- poll for blocked POSIX signals every step
-self:on_sample(posix_signal.poll, 1)
+self.on_sample(posix_signal.poll, 1)
 
 -- gracefully abort simulation on SIGTERM or SIGINT
 local abort = sampler.abort(clock)

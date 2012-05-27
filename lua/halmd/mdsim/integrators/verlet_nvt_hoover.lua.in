@@ -86,14 +86,14 @@ local M = module(function(args)
     writer:on_write(integrator.xi, {"position"})
     writer:on_write(integrator.v_xi, {"velocity"})
     -- connect writer to sampler
-    sampler:on_sample(writer.write, every)
+    sampler.on_sample(writer.write, every)
 
     -- connect chain energy to writers of observables file
     file = writers.file() -- singleton
     writer = file:writer{location = {"observables"}, mode = "append"}
     writer:on_write(integrator.en_nhc, {"total_energy_nose_hoover_chain"})
     -- connect writer to sampler
-    sampler:on_sample(writer.write, every)
+    sampler.on_sample(writer.write, every)
 
     return integrator
 end)
