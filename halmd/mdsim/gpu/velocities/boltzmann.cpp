@@ -126,6 +126,15 @@ void boltzmann<dimension, float_type, RandomNumberGenerator>::set()
     LOG_DEBUG("assigned Boltzmann-distributed velocities");
 }
 
+template <typename boltzmann_type>
+static std::function<void ()>
+wrap_set(boost::shared_ptr<boltzmann_type> self)
+{
+    return [=]() {
+        self->set();
+    };
+}
+
 template <int dimension, typename float_type, typename RandomNumberGenerator>
 void boltzmann<dimension, float_type, RandomNumberGenerator>::luaopen(lua_State* L)
 {
@@ -138,7 +147,7 @@ void boltzmann<dimension, float_type, RandomNumberGenerator>::luaopen(lua_State*
             [
                 class_<boltzmann>()
                     .property("temperature", &boltzmann::temperature)
-                    .def("set", &boltzmann::set)
+                    .property("set", &wrap_set<boltzmann>)
                     .scope
                     [
                         class_<runtime>("runtime")

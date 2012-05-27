@@ -98,6 +98,15 @@ boltzmann<dimension, float_type>::gaussian(float_type sigma)
     return std::make_pair(v_cm, vv);
 }
 
+template <typename boltzmann_type>
+static std::function<void ()>
+wrap_set(boost::shared_ptr<boltzmann_type> self)
+{
+    return [=]() {
+        self->set();
+    };
+}
+
 template <int dimension, typename float_type>
 void boltzmann<dimension, float_type>::luaopen(lua_State* L)
 {
@@ -110,7 +119,7 @@ void boltzmann<dimension, float_type>::luaopen(lua_State* L)
             [
                 class_<boltzmann>()
                     .property("temperature", &boltzmann::temperature)
-                    .def("set", &boltzmann::set)
+                    .property("set", &wrap_set<boltzmann>)
                     .scope
                     [
                         class_<runtime>("runtime")

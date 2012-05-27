@@ -66,7 +66,7 @@ local function liquid(args)
     lattice.set()
     -- set initial particle velocities
     local boltzmann = mdsim.velocities.boltzmann{particle = particle, temperature = args.temperature}
-    boltzmann:set()
+    boltzmann.set()
 
     -- H5MD file writer
     local writer = writers.h5md({path = ("%s.trj"):format(args.output)})
