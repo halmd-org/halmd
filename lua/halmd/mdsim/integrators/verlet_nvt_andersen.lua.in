@@ -113,7 +113,7 @@ local M = module(function(args)
     end
     local timestep = args.timestep
     if timestep then
-        clock:set_timestep(timestep)
+        clock.set_timestep(timestep)
     else
         timestep = assert(clock.timestep)
     end
@@ -133,7 +133,7 @@ local M = module(function(args)
             table.insert(conn, core:on_integrate(self.integrate))
             table.insert(conn, core:on_finalize(self.finalize))
 
-            table.insert(conn, clock:on_set_timestep(function(timestep)
+            table.insert(conn, clock.on_set_timestep(function(timestep)
                 set_timestep(self, timestep)
             end))
 
@@ -158,7 +158,7 @@ local M = module(function(args)
 
     -- forward Lua method set_timestep to clock
     self.set_timestep = function(self, timestep)
-        clock:set_timestep(timestep)
+        clock.set_timestep(timestep)
     end
 
     -- connect integrator to core

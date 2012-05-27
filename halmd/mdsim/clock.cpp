@@ -49,6 +49,22 @@ void clock::set_timestep(time_type timestep)
     LOG("integration time step: " << *timestep_);
 }
 
+static std::function<void (clock::time_type)>
+wrap_set_timestep(boost::shared_ptr<clock> self)
+{
+    return [=](clock::time_type timestep) {
+        self->set_timestep(timestep);
+    };
+}
+
+static std::function<connection (std::function<void (clock::time_type)> const&)>
+wrap_on_set_timestep(boost::shared_ptr<clock> self)
+{
+    return [=](std::function<void (clock::time_type)> const& slot) {
+        return self->on_set_timestep(slot);
+    };
+}
+
 HALMD_LUA_API int luaopen_libhalmd_mdsim_clock(lua_State* L)
 {
     using namespace luabind;
@@ -58,8 +74,8 @@ HALMD_LUA_API int luaopen_libhalmd_mdsim_clock(lua_State* L)
         [
             class_<clock, boost::shared_ptr<clock> >("clock")
                 .def(constructor<>())
-                .def("set_timestep", &clock::set_timestep)
-                .def("on_set_timestep", &clock::on_set_timestep)
+                .property("set_timestep", &wrap_set_timestep)
+                .property("on_set_timestep", &wrap_on_set_timestep)
                 .property("step", &clock::step)
                 .property("time", &clock::time)
                 .property("timestep", &clock::timestep)
