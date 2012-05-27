@@ -94,6 +94,15 @@ unsigned int random<RandomNumberGenerator>::defaults::shuffle_threads() {
     return 128;
 }
 
+template <typename random_type>
+static std::function<void (unsigned int)>
+wrap_seed(boost::shared_ptr<random_type> self)
+{
+    return [=](unsigned int seed) {
+        self->seed(seed);
+    };
+}
+
 template <typename RandomNumberGenerator>
 void random<RandomNumberGenerator>::luaopen(lua_State* L)
 {
@@ -107,7 +116,7 @@ void random<RandomNumberGenerator>::luaopen(lua_State* L)
             [
                 class_<random, boost::shared_ptr<random> >(class_name.c_str())
                     .def(constructor<>())
-                    .def("seed", &random::seed)
+                    .property("seed", &wrap_seed<random>)
             ]
         ]
     ];

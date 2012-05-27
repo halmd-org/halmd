@@ -36,6 +36,15 @@ void random::seed(unsigned int seed)
     rng_.seed(seed);
 }
 
+template <typename random_type>
+static std::function<void (unsigned int)>
+wrap_seed(boost::shared_ptr<random_type> self)
+{
+    return [=](unsigned int seed) {
+        self->seed(seed);
+    };
+}
+
 void random::luaopen(lua_State* L)
 {
     using namespace luabind;
@@ -47,7 +56,7 @@ void random::luaopen(lua_State* L)
             [
                 class_<random, boost::shared_ptr<random> >("gfsr4")
                     .def(constructor<>())
-                    .def("seed", &random::seed)
+                    .property("seed", &wrap_seed<random>)
             ]
         ]
     ];

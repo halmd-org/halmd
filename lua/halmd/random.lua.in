@@ -45,7 +45,7 @@ end
 -- :param number seed: random number generator seed
 --
 function M.seed(seed)
-    if not type(seed) ~= "number" then
+    if type(seed) ~= "number" then
         error("bad argument #1 (expected number)", 2)
     end
     for memory, generator in pairs(generator) do
