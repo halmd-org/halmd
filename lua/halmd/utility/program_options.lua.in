@@ -518,7 +518,7 @@ function M.argument_parser()
         return self
     end
 
-    local self = argument_parser({
+    return argument_parser({
         groups = {}
       , options = {}
       , desc = po.options_description()
@@ -530,8 +530,6 @@ function M.argument_parser()
             return result
         end
     })
-
-    return self
 end
 
 return M
