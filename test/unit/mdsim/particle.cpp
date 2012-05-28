@@ -32,6 +32,7 @@
 #include <halmd/mdsim/positions/lattice_primitive.hpp>
 #include <test/tools/constant_iterator.hpp>
 #include <test/tools/ctest.hpp>
+#include <test/tools/init.hpp>
 #ifdef HALMD_WITH_GPU
 # include <halmd/mdsim/gpu/particle.hpp>
 # include <test/tools/cuda.hpp>
@@ -72,7 +73,7 @@ make_lattice_iterator(lattice_type const& lattice, size_t n)
  * Test initialisation, getter and setter of particle positions.
  */
 template <typename particle_type>
-void particle_position(particle_type& particle)
+static void test_position(particle_type& particle)
 {
     typedef typename particle_type::position_type position_type;
     typedef typename particle_type::species_type species_type;
@@ -128,7 +129,7 @@ void particle_position(particle_type& particle)
  * Test initialisation, getter and setter of particle images.
  */
 template <typename particle_type>
-void particle_image(particle_type& particle)
+static void test_image(particle_type& particle)
 {
     typedef typename particle_type::image_type image_type;
     particle_type const& const_particle = particle;
@@ -165,7 +166,7 @@ void particle_image(particle_type& particle)
  * Test initialisation, getter and setter of particle velocities.
  */
 template <typename particle_type>
-void particle_velocity(particle_type& particle)
+static void test_velocity(particle_type& particle)
 {
     typedef typename particle_type::velocity_type velocity_type;
     typedef typename particle_type::mass_type mass_type;
@@ -221,7 +222,7 @@ void particle_velocity(particle_type& particle)
  * Test initialisation, getter and setter of particle tags.
  */
 template <typename particle_type>
-void particle_tag(particle_type& particle)
+static void test_tag(particle_type& particle)
 {
     typedef typename particle_type::tag_type tag_type;
     particle_type const& const_particle = particle;
@@ -254,7 +255,7 @@ void particle_tag(particle_type& particle)
  * Test initialisation, getter and setter of particle reverse tags.
  */
 template <typename particle_type>
-void particle_reverse_tag(particle_type& particle)
+static void test_reverse_tag(particle_type& particle)
 {
     typedef typename particle_type::reverse_tag_type reverse_tag_type;
     particle_type const& const_particle = particle;
@@ -293,7 +294,7 @@ void particle_reverse_tag(particle_type& particle)
  * Test initialisation, getter and setter of particle species.
  */
 template <typename particle_type>
-void particle_species(particle_type& particle)
+static void test_species(particle_type& particle)
 {
     typedef typename particle_type::species_type species_type;
     typedef typename particle_type::position_type position_type;
@@ -352,7 +353,7 @@ void particle_species(particle_type& particle)
  * Test initialisation, getter and setter of particle masses.
  */
 template <typename particle_type>
-void particle_mass(particle_type& particle)
+static void test_mass(particle_type& particle)
 {
     typedef typename particle_type::mass_type mass_type;
     typedef typename particle_type::velocity_type velocity_type;
@@ -408,7 +409,7 @@ void particle_mass(particle_type& particle)
  * Test initialisation, getter and setter of particle forces.
  */
 template <typename particle_type>
-void particle_force(particle_type& particle)
+static void test_force(particle_type& particle)
 {
     typedef typename particle_type::force_type force_type;
     particle_type const& const_particle = particle;
@@ -445,7 +446,7 @@ void particle_force(particle_type& particle)
  * Test initialisation, getter and setter of potential energy per particle.
  */
 template <typename particle_type>
-void particle_en_pot(particle_type& particle)
+static void test_en_pot(particle_type& particle)
 {
     typedef typename particle_type::en_pot_type en_pot_type;
     particle_type const& const_particle = particle;
@@ -481,7 +482,7 @@ void particle_en_pot(particle_type& particle)
  * Test initialisation, getter and setter of potential part of stress tensor per particle.
  */
 template <typename particle_type>
-void particle_stress_pot(particle_type& particle)
+static void test_stress_pot(particle_type& particle)
 {
     typedef typename particle_type::stress_pot_type stress_pot_type;
     particle_type const& const_particle = particle;
@@ -518,7 +519,7 @@ void particle_stress_pot(particle_type& particle)
  * Test initialisation, getter and setter of hypervirial per particle.
  */
 template <typename particle_type>
-void particle_hypervirial(particle_type& particle)
+static void test_hypervirial(particle_type& particle)
 {
     typedef typename particle_type::hypervirial_type hypervirial_type;
     particle_type const& const_particle = particle;
@@ -550,274 +551,194 @@ void particle_hypervirial(particle_type& particle)
     );
 }
 
-BOOST_AUTO_TEST_SUITE( host )
-
-/**
- * Fixture that constructs instance of host::particle.
- */
-template <unsigned int dimension>
-struct particle_fixture
+template <typename particle_type>
+static void
+test_suite_host(std::size_t nparticle, boost::unit_test::test_suite* ts)
 {
-    particle_fixture() : particle(12345) {}
+    auto position = [=]() {
+        particle_type particle(nparticle);
+        test_position(particle);
+    };
+    ts->add(BOOST_TEST_CASE( position ));
 
-#ifdef USE_HOST_SINGLE_PRECISION
-    halmd::mdsim::host::particle<dimension, float> particle;
-#else
-    halmd::mdsim::host::particle<dimension, double> particle;
-#endif
-};
+    auto image = [=]() {
+        particle_type particle(nparticle);
+        test_image(particle);
+    };
+    ts->add(BOOST_TEST_CASE( image ));
 
-BOOST_FIXTURE_TEST_SUITE( two, particle_fixture<2> )
+    auto velocity = [=]() {
+        particle_type particle(nparticle);
+        test_velocity(particle);
+    };
+    ts->add(BOOST_TEST_CASE( velocity ));
 
-BOOST_AUTO_TEST_CASE( position )
-{
-    particle_position(particle);
+    auto tag = [=]() {
+        particle_type particle(nparticle);
+        test_tag(particle);
+    };
+    ts->add(BOOST_TEST_CASE( tag ));
+
+    auto reverse_tag = [=]() {
+        particle_type particle(nparticle);
+        test_reverse_tag(particle);
+    };
+    ts->add(BOOST_TEST_CASE( reverse_tag ));
+
+    auto species = [=]() {
+        particle_type particle(nparticle);
+        test_species(particle);
+    };
+    ts->add(BOOST_TEST_CASE( species ));
+
+    auto mass = [=]() {
+        particle_type particle(nparticle);
+        test_mass(particle);
+    };
+    ts->add(BOOST_TEST_CASE( mass ));
+
+    auto force = [=]() {
+        particle_type particle(nparticle);
+        test_force(particle);
+    };
+    ts->add(BOOST_TEST_CASE( force ));
+
+    auto en_pot = [=]() {
+        particle_type particle(nparticle);
+        test_en_pot(particle);
+    };
+    ts->add(BOOST_TEST_CASE( en_pot ));
+
+    auto stress_pot = [=]() {
+        particle_type particle(nparticle);
+        test_stress_pot(particle);
+    };
+    ts->add(BOOST_TEST_CASE( stress_pot ));
+
+    auto hypervirial = [=]() {
+        particle_type particle(nparticle);
+        test_hypervirial(particle);
+    };
+    ts->add(BOOST_TEST_CASE( hypervirial ));
 }
 
-BOOST_AUTO_TEST_CASE( image )
+template <typename particle_type>
+static void
+test_suite_gpu(std::size_t nparticle, boost::unit_test::test_suite* ts)
 {
-    particle_image(particle);
+    auto position = [=]() {
+        set_cuda_device device;
+        particle_type particle(nparticle);
+        test_position(particle);
+    };
+    ts->add(BOOST_TEST_CASE( position ));
+
+    auto image = [=]() {
+        set_cuda_device device;
+        particle_type particle(nparticle);
+        test_image(particle);
+    };
+    ts->add(BOOST_TEST_CASE( image ));
+
+    auto velocity = [=]() {
+        set_cuda_device device;
+        particle_type particle(nparticle);
+        test_velocity(particle);
+    };
+    ts->add(BOOST_TEST_CASE( velocity ));
+
+    auto tag = [=]() {
+        set_cuda_device device;
+        particle_type particle(nparticle);
+        test_tag(particle);
+    };
+    ts->add(BOOST_TEST_CASE( tag ));
+
+    auto reverse_tag = [=]() {
+        set_cuda_device device;
+        particle_type particle(nparticle);
+        test_reverse_tag(particle);
+    };
+    ts->add(BOOST_TEST_CASE( reverse_tag ));
+
+    auto species = [=]() {
+        set_cuda_device device;
+        particle_type particle(nparticle);
+        test_species(particle);
+    };
+    ts->add(BOOST_TEST_CASE( species ));
+
+    auto mass = [=]() {
+        set_cuda_device device;
+        particle_type particle(nparticle);
+        test_mass(particle);
+    };
+    ts->add(BOOST_TEST_CASE( mass ));
+
+    auto force = [=]() {
+        set_cuda_device device;
+        particle_type particle(nparticle);
+        test_force(particle);
+    };
+    ts->add(BOOST_TEST_CASE( force ));
+
+    auto en_pot = [=]() {
+        set_cuda_device device;
+        particle_type particle(nparticle);
+        test_en_pot(particle);
+    };
+    ts->add(BOOST_TEST_CASE( en_pot ));
+
+    auto stress_pot = [=]() {
+        set_cuda_device device;
+        particle_type particle(nparticle);
+        test_stress_pot(particle);
+    };
+    ts->add(BOOST_TEST_CASE( stress_pot ));
+
+    auto hypervirial = [=]() {
+        set_cuda_device device;
+        particle_type particle(nparticle);
+        test_hypervirial(particle);
+    };
+    ts->add(BOOST_TEST_CASE( hypervirial ));
 }
 
-BOOST_AUTO_TEST_CASE( velocity )
+HALMD_TEST_INIT( particle )
 {
-    particle_velocity(particle);
-}
+    using namespace boost::unit_test;
 
-BOOST_AUTO_TEST_CASE( tag )
-{
-    particle_tag(particle);
-}
+    test_suite* ts_host = BOOST_TEST_SUITE( "host" );
+    framework::master_test_suite().add(ts_host);
 
-BOOST_AUTO_TEST_CASE( reverse_tag )
-{
-    particle_reverse_tag(particle);
-}
+    test_suite* ts_host_two = BOOST_TEST_SUITE( "two" );
+    ts_host->add(ts_host_two);
 
-BOOST_AUTO_TEST_CASE( species )
-{
-    particle_species(particle);
-}
-
-BOOST_AUTO_TEST_CASE( mass )
-{
-    particle_mass(particle);
-}
-
-BOOST_AUTO_TEST_CASE( force )
-{
-    particle_force(particle);
-}
-
-BOOST_AUTO_TEST_CASE( en_pot )
-{
-    particle_en_pot(particle);
-}
-
-BOOST_AUTO_TEST_CASE( stress_pot )
-{
-    particle_stress_pot(particle);
-}
-
-BOOST_AUTO_TEST_CASE( hypervirial )
-{
-    particle_hypervirial(particle);
-}
-
-BOOST_AUTO_TEST_SUITE_END() // two
-
-BOOST_FIXTURE_TEST_SUITE( three, particle_fixture<3> )
-
-BOOST_AUTO_TEST_CASE( position )
-{
-    particle_position(particle);
-}
-
-BOOST_AUTO_TEST_CASE( image )
-{
-    particle_image(particle);
-}
-
-BOOST_AUTO_TEST_CASE( velocity )
-{
-    particle_velocity(particle);
-}
-
-BOOST_AUTO_TEST_CASE( tag )
-{
-    particle_tag(particle);
-}
-
-BOOST_AUTO_TEST_CASE( reverse_tag )
-{
-    particle_reverse_tag(particle);
-}
-
-BOOST_AUTO_TEST_CASE( species )
-{
-    particle_species(particle);
-}
-
-BOOST_AUTO_TEST_CASE( mass )
-{
-    particle_mass(particle);
-}
-
-BOOST_AUTO_TEST_CASE( force )
-{
-    particle_force(particle);
-}
-
-BOOST_AUTO_TEST_CASE( en_pot )
-{
-    particle_en_pot(particle);
-}
-
-BOOST_AUTO_TEST_CASE( stress_pot )
-{
-    particle_stress_pot(particle);
-}
-
-BOOST_AUTO_TEST_CASE( hypervirial )
-{
-    particle_hypervirial(particle);
-}
-
-BOOST_AUTO_TEST_SUITE_END() // three
-
-BOOST_AUTO_TEST_SUITE_END() // host
+    test_suite* ts_host_three = BOOST_TEST_SUITE( "three" );
+    ts_host->add(ts_host_three);
 
 #ifdef HALMD_WITH_GPU
-BOOST_AUTO_TEST_SUITE( gpu )
+    test_suite* ts_gpu = BOOST_TEST_SUITE( "gpu" );
+    framework::master_test_suite().add(ts_gpu);
 
-/**
- * Fixture that constructs instance of gpu::particle.
- */
-template <unsigned int dimension>
-struct particle_fixture : set_cuda_device
-{
-    particle_fixture() : particle(12345) {}
+    test_suite* ts_gpu_two = BOOST_TEST_SUITE( "two" );
+    ts_gpu->add(ts_gpu_two);
 
-    halmd::mdsim::gpu::particle<dimension, float> particle;
-};
+    test_suite* ts_gpu_three = BOOST_TEST_SUITE( "three" );
+    ts_gpu->add(ts_gpu_three);
+#endif
 
-BOOST_FIXTURE_TEST_SUITE( two, particle_fixture<2> )
-
-BOOST_AUTO_TEST_CASE( position )
-{
-    particle_position(particle);
+    for (unsigned int nparticle : {109, 4789, 42589}) {
+#ifdef USE_HOST_SINGLE_PRECISION
+        test_suite_host<halmd::mdsim::host::particle<3, float> >(nparticle, ts_host_three);
+        test_suite_host<halmd::mdsim::host::particle<2, float> >(nparticle, ts_host_two);
+#else
+        test_suite_host<halmd::mdsim::host::particle<3, double> >(nparticle, ts_host_three);
+        test_suite_host<halmd::mdsim::host::particle<2, double> >(nparticle, ts_host_two);
+#endif
+#ifdef HALMD_WITH_GPU
+        test_suite_gpu<halmd::mdsim::gpu::particle<3, float> >(nparticle, ts_gpu_three);
+        test_suite_gpu<halmd::mdsim::gpu::particle<2, float> >(nparticle, ts_gpu_two);
+#endif
+    }
 }
-
-BOOST_AUTO_TEST_CASE( image )
-{
-    particle_image(particle);
-}
-
-BOOST_AUTO_TEST_CASE( velocity )
-{
-    particle_velocity(particle);
-}
-
-BOOST_AUTO_TEST_CASE( tag )
-{
-    particle_tag(particle);
-}
-
-BOOST_AUTO_TEST_CASE( reverse_tag )
-{
-    particle_reverse_tag(particle);
-}
-
-BOOST_AUTO_TEST_CASE( species )
-{
-    particle_species(particle);
-}
-
-BOOST_AUTO_TEST_CASE( mass )
-{
-    particle_mass(particle);
-}
-
-BOOST_AUTO_TEST_CASE( force )
-{
-    particle_force(particle);
-}
-
-BOOST_AUTO_TEST_CASE( en_pot )
-{
-    particle_en_pot(particle);
-}
-
-BOOST_AUTO_TEST_CASE( stress_pot )
-{
-    particle_stress_pot(particle);
-}
-
-BOOST_AUTO_TEST_CASE( hypervirial )
-{
-    particle_hypervirial(particle);
-}
-
-BOOST_AUTO_TEST_SUITE_END() // two
-
-BOOST_FIXTURE_TEST_SUITE( three, particle_fixture<3> )
-
-BOOST_AUTO_TEST_CASE( position )
-{
-    particle_position(particle);
-}
-
-BOOST_AUTO_TEST_CASE( image )
-{
-    particle_image(particle);
-}
-
-BOOST_AUTO_TEST_CASE( velocity )
-{
-    particle_velocity(particle);
-}
-
-BOOST_AUTO_TEST_CASE( tag )
-{
-    particle_tag(particle);
-}
-
-BOOST_AUTO_TEST_CASE( reverse_tag )
-{
-    particle_reverse_tag(particle);
-}
-
-BOOST_AUTO_TEST_CASE( species )
-{
-    particle_species(particle);
-}
-
-BOOST_AUTO_TEST_CASE( mass )
-{
-    particle_mass(particle);
-}
-
-BOOST_AUTO_TEST_CASE( force )
-{
-    particle_force(particle);
-}
-
-BOOST_AUTO_TEST_CASE( en_pot )
-{
-    particle_en_pot(particle);
-}
-
-BOOST_AUTO_TEST_CASE( stress_pot )
-{
-    particle_stress_pot(particle);
-}
-
-BOOST_AUTO_TEST_CASE( hypervirial )
-{
-    particle_hypervirial(particle);
-}
-
-BOOST_AUTO_TEST_SUITE_END() // three
-
-BOOST_AUTO_TEST_SUITE_END() // gpu
-#endif /* HALMD_WITH_GPU */
