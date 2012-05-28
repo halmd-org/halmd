@@ -211,22 +211,76 @@ connection blocking_scheme::on_append_finalise(slot_function_type const& slot)
     return on_append_finalise_.connect(slot);
 }
 
-blocking_scheme::slot_function_type
-static wrap_sample(boost::shared_ptr<blocking_scheme> self)
+static std::function<void ()>
+wrap_sample(boost::shared_ptr<blocking_scheme> self)
 {
-    return bind(&blocking_scheme::sample, self);
+    return [=]() {
+        self->sample();
+    };
 }
 
-blocking_scheme::slot_function_type
-static wrap_finalise(boost::shared_ptr<blocking_scheme> self)
+static std::function<void ()>
+wrap_finalise(boost::shared_ptr<blocking_scheme> self)
 {
-    return bind(&blocking_scheme::finalise, self);
+    return [=]() {
+        self->finalise();
+    };
 }
 
 static std::function<blocking_scheme::block_time_type const& ()>
 wrap_time(boost::shared_ptr<blocking_scheme> self)
 {
-    return bind(&blocking_scheme::time, self);
+    return [=]() -> blocking_scheme::block_time_type const& {
+        return self->time();
+    };
+}
+
+static std::function<connection (boost::shared_ptr<correlation_base>)>
+wrap_on_correlate(boost::shared_ptr<blocking_scheme> self)
+{
+    return [=](boost::shared_ptr<correlation_base> tcf) {
+        return self->on_correlate(tcf);
+    };
+}
+
+static std::function<connection (boost::shared_ptr<blocking_scheme::block_sample_type>)>
+wrap_on_sample(boost::shared_ptr<blocking_scheme> self)
+{
+    return [=](boost::shared_ptr<blocking_scheme::block_sample_type> block_sample) {
+        return self->on_sample(block_sample);
+    };
+}
+
+static std::function<connection (std::function<void ()> const&)>
+wrap_on_prepend_sample(boost::shared_ptr<blocking_scheme> self)
+{
+    return [=](std::function<void ()> const& slot) {
+        return self->on_prepend_sample(slot);
+    };
+}
+
+static std::function<connection (std::function<void ()> const&)>
+wrap_on_append_sample(boost::shared_ptr<blocking_scheme> self)
+{
+    return [=](std::function<void ()> const& slot) {
+        return self->on_append_sample(slot);
+    };
+}
+
+static std::function<connection (std::function<void ()> const&)>
+wrap_on_prepend_finalise(boost::shared_ptr<blocking_scheme> self)
+{
+    return [=](std::function<void ()> const& slot) {
+        return self->on_prepend_finalise(slot);
+    };
+}
+
+static std::function<connection (std::function<void ()> const&)>
+wrap_on_append_finalise(boost::shared_ptr<blocking_scheme> self)
+{
+    return [=](std::function<void ()> const& slot) {
+        return self->on_append_finalise(slot);
+    };
 }
 
 void blocking_scheme::luaopen(lua_State* L)
@@ -254,12 +308,12 @@ void blocking_scheme::luaopen(lua_State* L)
                     .property("separation", &blocking_scheme::separation)
                     .property("count", &blocking_scheme::count)
                     .property("time", &wrap_time)
-                    .def("on_correlate", &blocking_scheme::on_correlate)
-                    .def("on_sample", &blocking_scheme::on_sample)
-                    .def("on_prepend_sample", &blocking_scheme::on_prepend_sample)
-                    .def("on_append_sample", &blocking_scheme::on_append_sample)
-                    .def("on_prepend_finalise", &blocking_scheme::on_prepend_finalise)
-                    .def("on_append_finalise", &blocking_scheme::on_append_finalise)
+                    .property("on_correlate", &wrap_on_correlate)
+                    .property("on_sample", &wrap_on_sample)
+                    .property("on_prepend_sample", &wrap_on_prepend_sample)
+                    .property("on_append_sample", &wrap_on_append_sample)
+                    .property("on_prepend_finalise", &wrap_on_prepend_finalise)
+                    .property("on_append_finalise", &wrap_on_append_finalise)
             ]
         ]
     ];
