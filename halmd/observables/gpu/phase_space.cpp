@@ -18,7 +18,6 @@
  */
 
 #include <algorithm>
-#include <boost/bind.hpp>
 #include <boost/make_shared.hpp>
 #include <exception>
 #include <functional>
@@ -89,11 +88,13 @@ phase_space<gpu::samples::phase_space<dimension, float_type> >::acquire()
     return sample_;
 }
 
-template <typename phase_space_type, typename sample_type>
-static std::function<boost::shared_ptr<sample_type const> ()>
-wrap_acquire(boost::shared_ptr<phase_space_type> phase_space)
+template <typename phase_space_type>
+static std::function<boost::shared_ptr<typename phase_space_type::sample_type const> ()>
+wrap_acquire(boost::shared_ptr<phase_space_type> self)
 {
-    return boost::bind(&phase_space_type::acquire, phase_space);
+    return [=]() {
+        return self->acquire();
+    };
 }
 
 template <typename phase_space_type>
@@ -113,7 +114,7 @@ void phase_space<gpu::samples::phase_space<dimension, float_type> >::luaopen(lua
             namespace_("gpu")
             [
                 class_<phase_space>()
-                    .property("acquire", &wrap_acquire<phase_space, sample_type>)
+                    .property("acquire", &wrap_acquire<phase_space>)
                     .property("dimension", &wrap_dimension<phase_space>)
                     .scope
                     [
@@ -293,31 +294,21 @@ void phase_space<host::samples::phase_space<dimension, float_type> >::set(boost:
 }
 
 template <typename phase_space_type>
-static typename phase_space_type::sample_type::position_array_type const&
-position(boost::shared_ptr<phase_space_type> const& phase_space)
-{
-    return phase_space->acquire()->position();
-}
-
-template <typename phase_space_type>
 static std::function<typename phase_space_type::sample_type::position_array_type const& ()>
-wrap_position(boost::shared_ptr<phase_space_type> phase_space)
+wrap_position(boost::shared_ptr<phase_space_type> self)
 {
-    return boost::bind(&position<phase_space_type>, phase_space);
-}
-
-template <typename phase_space_type>
-static typename phase_space_type::sample_type::velocity_array_type const&
-velocity(boost::shared_ptr<phase_space_type> const& phase_space)
-{
-    return phase_space->acquire()->velocity();
+    return [=]() -> typename phase_space_type::sample_type::position_array_type const& {
+        return self->acquire()->position();
+    };
 }
 
 template <typename phase_space_type>
 static std::function<typename phase_space_type::sample_type::velocity_array_type const& ()>
-wrap_velocity(boost::shared_ptr<phase_space_type> phase_space)
+wrap_velocity(boost::shared_ptr<phase_space_type> self)
 {
-    return boost::bind(&velocity<phase_space_type>, phase_space);
+    return [=]() -> typename phase_space_type::sample_type::velocity_array_type const& {
+        return self->acquire()->velocity();
+    };
 }
 
 /**
@@ -327,41 +318,44 @@ wrap_velocity(boost::shared_ptr<phase_space_type> phase_space)
  * stored in the functor, and passed by reference to this function.
  */
 template <typename phase_space_type>
-static typename phase_space_type::sample_type::species_array_type const&
-species(boost::shared_ptr<phase_space_type> const& phase_space, boost::shared_ptr<typename phase_space_type::sample_type::species_array_type>& species)
+static std::function<std::vector<typename phase_space_type::sample_type::species_array_type::value_type> const& ()>
+wrap_species(boost::shared_ptr<phase_space_type> self)
 {
-    boost::shared_ptr<typename phase_space_type::sample_type const> sample = phase_space->acquire();
-    species.reset(new typename phase_space_type::sample_type::species_array_type(sample->species().size()));
-    std::transform(
-        sample->species().begin()
-      , sample->species().end()
-      , species->begin()
-      , [](typename phase_space_type::sample_type::species_array_type::value_type s) {
-            return s + 1;
-        }
-    );
-    return *species;
-}
+    typedef typename phase_space_type::sample_type sample_type;
+    typedef typename sample_type::species_array_type::value_type species_type;
 
-template <typename phase_space_type>
-static std::function<typename phase_space_type::sample_type::species_array_type const& ()>
-wrap_species(boost::shared_ptr<phase_space_type> phase_space)
-{
-    return boost::bind(&species<phase_space_type>, phase_space, boost::shared_ptr<typename phase_space_type::sample_type::species_array_type>());
-}
-
-template <typename phase_space_type>
-static typename phase_space_type::sample_type::mass_array_type const&
-mass(boost::shared_ptr<phase_space_type> const& phase_space)
-{
-    return phase_space->acquire()->mass();
+    boost::shared_ptr<std::vector<species_type>> species = boost::make_shared<std::vector<species_type>>();
+    return [=]() -> std::vector<species_type> const& {
+        boost::shared_ptr<sample_type const> sample = self->acquire();
+        species->resize(sample->species().size());
+        std::transform(
+            sample->species().begin()
+          , sample->species().end()
+          , species->begin()
+          , [](species_type s) {
+                return s + 1;
+            }
+        );
+        return *species;
+    };
 }
 
 template <typename phase_space_type>
 static std::function<typename phase_space_type::sample_type::mass_array_type const& ()>
-wrap_mass(boost::shared_ptr<phase_space_type> phase_space)
+wrap_mass(boost::shared_ptr<phase_space_type> self)
 {
-    return boost::bind(&mass<phase_space_type>, phase_space);
+    return [=]() -> typename phase_space_type::sample_type::mass_array_type const& {
+        return self->acquire()->mass();
+    };
+}
+
+template <typename phase_space_type>
+static std::function<void (boost::shared_ptr<typename phase_space_type::sample_type const>)>
+wrap_set(boost::shared_ptr<phase_space_type> self)
+{
+    return [=](boost::shared_ptr<typename phase_space_type::sample_type const> sample) {
+        self->set(sample);
+    };
 }
 
 template <int dimension, typename float_type>
@@ -373,13 +367,13 @@ void phase_space<host::samples::phase_space<dimension, float_type> >::luaopen(lu
         namespace_("observables")
         [
             class_<phase_space>()
-                .property("acquire", &wrap_acquire<phase_space, sample_type>)
+                .property("acquire", &wrap_acquire<phase_space>)
                 .property("position", &wrap_position<phase_space>)
                 .property("velocity", &wrap_velocity<phase_space>)
                 .property("species", &wrap_species<phase_space>)
                 .property("mass", &wrap_mass<phase_space>)
                 .property("dimension", &wrap_dimension<phase_space>)
-                .def("set", &phase_space::set)
+                .property("set", &wrap_set<phase_space>)
                 .scope
                 [
                     class_<runtime>("runtime")

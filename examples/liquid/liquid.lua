@@ -86,7 +86,7 @@ local function liquid(args)
     }
     local phase_space = observables.phase_space({box = box, group = particle_group})
     -- write trajectory of particle groups to H5MD file
-    phase_space:writer(writer, {every = args.sampling.trajectory})
+    phase_space.writer(writer, {every = args.sampling.trajectory})
 
     -- H5MD file writer
     local writer = writers.h5md({path = ("%s.obs"):format(args.output)})

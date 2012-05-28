@@ -54,7 +54,7 @@ end
 --    the same sampler with multiple observable modules for optimal
 --    performance.
 --
--- .. method:: acquire(self, args)
+-- .. method:: acquire(args)
 --
 --    Returns data slot to acquire phase space sample.
 --
@@ -65,39 +65,39 @@ end
 --    is not specified, the memory location is selected according to the
 --    compute device.
 --
--- .. method:: position(self)
+-- .. method:: position()
 --
 --    Returns data slot that acquires phase space sample and returns position array.
 --
 --    :returns: data slot that returns position array in host memory
 --
--- .. method:: velocity(self)
+-- .. method:: velocity()
 --
 --    Returns data slot that acquires phase space sample and returns velocity array.
 --
 --    :returns: data slot that returns velocity array in host memory
 --
--- .. method:: species(self)
+-- .. method:: species()
 --
 --    Returns data slot that acquires phase space sample and returns species array.
 --
 --    :returns: data slot that returns species array in host memory
 --
--- .. method:: mass(self)
+-- .. method:: mass()
 --
 --    Returns data slot that acquires phase space sample and returns mass array.
 --
 --    :returns: data slot that returns mass array in host memory
 --
--- .. method:: set(self, sample)
+-- .. method:: set(sample)
 --
 --    Set positions, velocities, species and masses from phase space sample.
 --
--- .. method:: connect(self)
+-- .. method:: connect()
 --
 --    Connect phase_space sampler to profiler. This is the default.
 --
--- .. method:: disconnect(self)
+-- .. method:: disconnect()
 --
 --    Disconnect phase_space sampler from profiler.
 --
@@ -105,7 +105,7 @@ end
 --
 --    The particle group used by the sampler.
 --
--- .. class:: writer(self, file, args)
+-- .. class:: writer(file, args)
 --
 --    Write trajectory of particle group to file.
 --
@@ -123,11 +123,11 @@ end
 --    If ``group`` is omitted, the particle group's label will be used as
 --    the name of the trajectory group.
 --
---    .. method:: connect(self)
+--    .. method:: connect()
 --
 --       Connect phase_space writer to observables sampler. This is the default.
 --
---    .. method:: disconnect(self)
+--    .. method:: disconnect()
 --
 --       Disconnect phase_space writer from observables sampler.
 --
@@ -153,7 +153,7 @@ local M = module(function(args)
     -- construct unified Lua object for host and gpu sampler
     local self = {group = group}
 
-    self.acquire = function(self, args)
+    self.acquire = function(args)
         local memory = args and args.memory
         if not memory then
             memory = device.gpu and "gpu" or "host"
@@ -165,23 +165,23 @@ local M = module(function(args)
         return assert(sampler.acquire)
     end
 
-    self.position = function(self)
+    self.position = function()
         return assert(samplers.host.position)
     end
 
-    self.velocity = function(self)
+    self.velocity = function()
         return assert(samplers.host.velocity)
     end
 
-    self.species = function(self)
+    self.species = function()
         return assert(samplers.host.species)
     end
 
-    self.mass = function(self)
+    self.mass = function()
         return assert(samplers.host.mass)
     end
 
-    self.writer = function(self, file, args)
+    self.writer = function(file, args)
         local name = args.group or assert(self.group.label)
         local writer = file:writer({location = {"trajectory", name}, mode = "append"})
 
@@ -195,20 +195,20 @@ local M = module(function(args)
         -- sequence of signal connections
         local conn = {}
 
-        writer.connect = function(self)
+        writer.connect = function()
             if #conn == 0 then
                 if every and every > 0 then
-                    table.insert(conn, sampler.on_sample(self.write, every))
+                    table.insert(conn, sampler.on_sample(writer.write, every))
                 else
-                    table.insert(conn, sampler.on_start(self.write))
-                    table.insert(conn, sampler.on_finish(self.write))
+                    table.insert(conn, sampler.on_start(writer.write))
+                    table.insert(conn, sampler.on_finish(writer.write))
                 end
             else
                 error("phase_space writer is already connected", 2)
             end
         end
 
-        writer.disconnect = function(self)
+        writer.disconnect = function()
             if #conn > 0 then
                 for i = 1, #conn do
                     conn[i]:disconnect()
@@ -225,15 +225,15 @@ local M = module(function(args)
         return writer
     end
 
-    self.set = function(self, ...)
+    self.set = function(...)
         logger:info(("setting particles from phase space sample"):format(label))
-        samplers.host:set(...)
+        samplers.host.set(...)
     end
 
     -- sequence of signal connections
     local conn = {}
 
-    self.connect = function(self)
+    self.connect = function()
         if #conn == 0 then
             for memory, sampler in pairs(samplers) do
                 local label = assert(self.group.label)
@@ -247,7 +247,7 @@ local M = module(function(args)
         end
     end
 
-    self.disconnect = function(self)
+    self.disconnect = function()
         if #conn > 0 then
             for i = 1, #conn do
                 conn[i]:disconnect()
@@ -259,7 +259,7 @@ local M = module(function(args)
     end
 
     -- connect runtime accumulators to module profiler
-    self:connect()
+    self.connect()
 
     return self
 end)
