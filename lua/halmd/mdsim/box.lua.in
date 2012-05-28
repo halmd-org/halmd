@@ -47,7 +47,7 @@ local h5 = assert(libhalmd.h5)
 -- :param table args.length: sequence of edge lengths, according to dimensionality
 -- :returns: instance of box
 --
--- .. method:: writer(self, file)
+-- .. method:: writer(file)
 --
 --    Write box specification to file.
 --
@@ -89,7 +89,7 @@ local M = module(function(args)
 
     local self = box(length)
 
-    self.writer = function(self, file)
+    self.writer = function(file)
         local writer = file:writer({location = {"observables", "box"}, mode = "truncate"})
         local group = assert(writer.group)
         group:write_attribute("type", h5.string(), "cuboid")

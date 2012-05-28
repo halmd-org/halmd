@@ -71,7 +71,7 @@ local function liquid(args)
     -- H5MD file writer
     local writer = writers.h5md({path = ("%s.trj"):format(args.output)})
     -- write box specification to H5MD file
-    box:writer(writer)
+    box.writer(writer)
 
     -- Set particle species, with continuous range of tags per species
     local species = {}
