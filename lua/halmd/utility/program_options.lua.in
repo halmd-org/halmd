@@ -33,8 +33,6 @@ local utility = require("halmd.utility") -- utility.sorted
 --
 local M = {}
 
-local argument_parser = {}
-
 local po = setmetatable({}, {__index = assert(libhalmd.program_options)})
 
 --
@@ -146,47 +144,6 @@ local function format_group_argument(option)
 end
 
 --
--- Returns formatted help message
---
-local function format_help(self)
-    local left = {}
-    local right = {}
-    local padding = 0
-    local options = assert(self._desc.options)
-    local groups = assert(self._groups)
-    for i = 1, #options do
-        local option = options[i]
-        local name, desc = format_argument(option)
-        if #name > padding then
-            padding = #name
-        end
-        table.insert(left, name)
-        table.insert(right, desc)
-        local long_name = assert(option.long_name)
-        local group = groups[long_name]
-        if group then
-            local options = assert(group._desc.options)
-            for i = 1, #options do
-                local name, desc = format_group_argument(options[i])
-                if #name > padding then
-                    padding = #name
-                end
-                table.insert(left, name)
-                table.insert(right, desc)
-            end
-        end
-    end
-    local msg = {}
-    local args = format_cmdline()
-    table.insert(msg, ("Usage: %s [args]\n"):format(args))
-    local fmt = ("  %%-%ds  %%s"):format(padding)
-    for i = 1, #left do
-        table.insert(msg, fmt:format(left[i], right[i]))
-    end
-    return table.concat(msg, "\n")
-end
-
---
 -- Raise an error with a formatted list of choices with value and description.
 -- Note that only argument values of type string are supported.
 --
@@ -225,307 +182,356 @@ end
 --    local parser = options.argument_parser()
 --
 function M.argument_parser()
-    local self = {
-        _desc = po.options_description(),
-        _options = {},
-        _groups = {},
-        _pcall = function(f, ...)
+
+    -- declare local variable for call in add_argument_group()
+    local argument_parser
+
+    --
+    -- Create instance of argument parser.
+    --
+    -- :param table _self: private member table
+    -- :returns: public member table
+    --
+    function argument_parser(_self)
+        local self = {}
+
+        ---
+        -- Add argument to parser.
+        --
+        -- :param string name: long name, and (optionally) short name separated by comma
+        -- :param table args: keyword arguments
+        -- :param string args.type: value type of option
+        -- :param string args.dtype: element type of ``vector`` or ``matrix`` (optional)
+        -- :param string args.help: description of option for --help (optional)
+        -- :param boolean args.composing: allow multiple occurences with single value (default: ``false``)
+        -- :param boolean args.multitoken: allow multiple occurences with multiple values (default: ``false``)
+        -- :param boolean args.required: require at minimum one occurence (default: ``false``)
+        -- :param table args.choices: allowed values with descriptions (optional)
+        -- :param function args.action: argument handler function (optional)
+        -- :param args.default: default option value (optional)
+        -- :param args.implicit: implicit option value (optional)
+        --
+        -- The following value types are supported:
+        --
+        -- ==========   =====================================
+        -- Type         Description
+        -- ==========   =====================================
+        -- boolean      Boolean
+        -- string       String
+        -- accumulate   Increment integer
+        -- vector       1-dimensional array of type ``dtype``
+        -- matrix       2-dimensional array of type ``dtype``
+        -- ==========   =====================================
+        --
+        -- These integral and floating-point value types are supported:
+        --
+        -- =======  ===============================
+        -- Type     Description
+        -- =======  ===============================
+        -- number   Double-precision floating-point
+        -- integer  Signed 64-bit integer
+        -- int32    Signed 32-bit integer
+        -- int64    Signed 64-bit integer
+        -- uint32   Unsigned 32-bit integer
+        -- uint64   Unsigned 64-bit integer
+        -- float32  Single-precision floating-point
+        -- float64  Double-precision floating-point
+        -- =======  ===============================
+        --
+        -- Example::
+        --
+        --    parser:add_argument("disable-gpu", {type = "boolean", help = "disable GPU acceleration"})
+        --
+        -- An optional table ``choices`` may be used to constrain the value of an argument::
+        --
+        --    parser.add_argument("ensemble", {type = "string", choices = {
+        --        nve = "Constant NVE",
+        --        nvt = "Constant NVT",
+        --        npt = "Constant NPT",
+        --    }, help = "statistical ensemble"})
+        --
+        -- Note that only arguments of ``type`` ``string`` are supported.
+        --
+        -- The optional ``action`` function receives the following arguments:
+        --
+        -- :param table args: parsed arguments
+        -- :param string key: args table key of this argument
+        -- :param value: parsed value of this argument
+        --
+        -- Note that if you specify ``action``, the argument value will *not* be stored
+        -- in the table returned by :func:`parse_args`, i.e. the argument handler
+        -- function has to store a value in ``args[key]`` itself.
+        --
+        -- Example::
+        --
+        --    parser.add_argument("filename", {type = "string", action = function(args, key, value)
+        --       -- substitute current time
+        --       args[key] = os.date(value)
+        --    end, default = "halmd_%Y%m%d_%H%M%S.trj", help = "trajectory filename"})
+        --
+        function self.add_argument(name, args)
+            if not name then
+                error("undefined argument name", 2)
+            end
+            local type = args.type
+            if not type then
+                error(("missing type for argument '%s'"):format(name), 2)
+            end
+            local value = argument_value(type, args.dtype, args.multitoken or args.composing)
+            local option
+            if args.help then
+                option = po.option_description(name, value, args.help)
+            else
+                option = po.option_description(name, value)
+            end
+            local long_name = assert(option.long_name)
+            local key = long_name:gsub("%-", "_")
+            _self.options[key] = option
+            _self.desc:add(option)
+
+            local action = args.action
+            local choices = args.choices
+            if choices then
+                if type ~= "string" then
+                    error(("choices not supported for argument type '%s'"):format(type), 2)
+                end
+                if action then
+                    value:notifier(function(args, value)
+                        if not choices[value] then
+                            _self.pcall(choices_notifier, long_name, value, choices)
+                        end
+                        _self.pcall(action, args, key, value)
+                    end)
+                else
+                    value:notifier(function(args, value)
+                        if not choices[value] then
+                            _self.pcall(choices_notifier, long_name, value, choices)
+                        end
+                        args[key] = value
+                    end)
+                end
+            elseif action then
+                value:notifier(function(args, value)
+                    _self.pcall(action, args, key, value)
+                end)
+            else
+                value:notifier(function(args, value)
+                    args[key] = value
+                end)
+            end
+
+            if args.multitoken then
+                if not _self.groups then
+                    error("multitoken arguments not allowed in argument group", 2)
+                end
+                value:multitoken()
+            elseif args.composing then
+                value:composing()
+            end
+            if args.required then
+                value:required()
+            end
+            if args.default then
+                value:default_value(args.default)
+            end
+            if args.implicit then
+                value:implicit_value(args.implicit)
+            end
+        end
+
+        if _self.groups then
+            ---
+            -- Add argument group.
+            --
+            -- :param name: name of argument group
+            -- :param table args: keyword arguments (optional)
+            -- :param string args.help: description of argument group for --help (optional)
+            -- :returns: argument group
+            --
+            -- Example::
+            --
+            --    local group = parser.add_argument_group("lennard-jones")
+            --    group.add_argument("epsilon", {type = "number", help = "potential well depths"})
+            --    group.add_argument("sigma", {type = "number", help = "collision diameter"})
+            --
+            function self.add_argument_group(name, args)
+                if not name then
+                    error("undefined argument group name", 2)
+                end
+                local value = po.multi_value.string()
+                local option
+                if args and args.help then
+                    option = po.option_description(name, value, args.help)
+                else
+                    option = po.option_description(name, value)
+                end
+                local long_name = assert(option.long_name)
+                local key = long_name:gsub("%-", "_")
+                _self.options[key] = option
+                _self.desc:add(option)
+                _self.groups[long_name] = po.options_description()
+
+                local group = argument_parser({
+                    options = {}
+                  , desc = _self.groups[long_name]
+                  , pcall = function(f, ...)
+                        local status, result = pcall(f, ...)
+                        if not status then
+                            exit_with_error(("in group '%s': %s"):format(name, result))
+                        end
+                        return result
+                    end
+                })
+
+                value:multitoken()
+                value:default_value({}, "")
+                value:notifier(function(args, value)
+                    args[key] = group.parse_args(value)
+                end)
+
+                return group
+            end
+        end
+
+        ---
+        -- Set default option values.
+        --
+        -- :param table defaults: argument names with default values
+        --
+        -- Example::
+        --
+        --     parser.set_defaults({particles = {9000, 1000}, number_density = 0.8})
+        --
+        function self.set_defaults(defaults)
+            local options = assert(_self.options)
+            for k, v in pairs(defaults) do
+                local option = options[k]
+                if not option then
+                    error(("undefined argument '%s'"):format(k), 2)
+                end
+                local semantic = assert(option.semantic)
+                if not pcall(semantic.default_value, semantic, v) then
+                    error(("invalid default value to argument '%s'"):format(k), 2)
+                end
+            end
+        end
+
+        --
+        -- Parse --help option.
+        --
+        -- :param table args: sequence of arguments
+        --
+        -- If --help is specified in args, print help and exit process.
+        --
+        local parse_help = function(args)
+            local desc = po.options_description()
+            local parser = po.command_line_parser(args)
+            desc:add(po.option_description("help", po.untyped_value()))
+            parser:options(desc)
+            parser:allow_unregistered()
+            parser:disallow_guessing()
+            local parsed = parser:run()
+            local vm = po.variables_map()
+            vm:store(parsed)
+            if vm:count("help") > 0 then
+                print(self)
+                os.exit(0)
+            end
+        end
+
+        ---
+        -- Parse arguments.
+        --
+        -- :param table args: sequence of arguments (optional)
+        -- :returns: parsed arguments
+        --
+        -- If ``args`` is not specified, the command-line arguments are parsed.
+        --
+        -- Example::
+        --
+        --    local args = parser.parse_args()
+        --
+        function self.parse_args(args)
+            local args = args or assert(_G.arg)
+            if _self.groups then
+                parse_help(args)
+            end
+            local parser = po.command_line_parser(args)
+            parser:options(_self.desc)
+            parser:disallow_guessing()
+            if _self.groups then
+                parser:positional(po.positional_options_description())
+            else
+                parser:group_parser()
+            end
+            local parsed = _self.pcall(parser.run, parser)
+            local vm = po.variables_map()
+            _self.pcall(vm.store, vm, parsed)
+            return _self.pcall(vm.notify, vm, {})
+        end
+
+        if _self.groups then
+            --
+            -- Returns formatted help message
+            --
+            local function format_help()
+                local left = {}
+                local right = {}
+                local padding = 0
+                local options = assert(_self.desc.options)
+                local groups = assert(_self.groups)
+                for i = 1, #options do
+                    local option = options[i]
+                    local name, desc = format_argument(option)
+                    if #name > padding then
+                        padding = #name
+                    end
+                    table.insert(left, name)
+                    table.insert(right, desc)
+                    local long_name = assert(option.long_name)
+                    local group = groups[long_name]
+                    if group then
+                        local options = assert(group.options)
+                        for i = 1, #options do
+                            local name, desc = format_group_argument(options[i])
+                            if #name > padding then
+                                padding = #name
+                            end
+                            table.insert(left, name)
+                            table.insert(right, desc)
+                        end
+                    end
+                end
+                local msg = {}
+                local args = format_cmdline()
+                table.insert(msg, ("Usage: %s [args]\n"):format(args))
+                local fmt = ("  %%-%ds  %%s"):format(padding)
+                for i = 1, #left do
+                    table.insert(msg, fmt:format(left[i], right[i]))
+                end
+                return table.concat(msg, "\n")
+            end
+
+            setmetatable(self, {__tostring = format_help})
+        end
+
+        return self
+    end
+
+    local self = argument_parser({
+        groups = {}
+      , options = {}
+      , desc = po.options_description()
+      , pcall = function(f, ...)
             local status, result = pcall(f, ...)
             if not status then
                 exit_with_error(result)
             end
             return result
-        end,
-    }
-    local mt = {
-        __index = argument_parser,
-        __tostring = format_help,
-    }
-    return setmetatable(self, mt)
-end
-
---
--- Create new argument group parser.
---
-local function argument_group_parser(name)
-    local self = {
-        _desc = po.options_description(),
-        _options = {},
-        _pcall = function(f, ...)
-            local status, result = pcall(f, ...)
-            if not status then
-                exit_with_error(("in group '%s': %s"):format(name, result))
-            end
-            return result
-        end,
-    }
-    local mt = {
-        __index = argument_parser,
-    }
-    return setmetatable(self, mt)
-end
-
----
--- Add argument to parser.
---
--- :param string name: long name, and (optionally) short name separated by comma
--- :param table args: keyword arguments
--- :param string args.type: value type of option
--- :param string args.dtype: element type of ``vector`` or ``matrix`` (optional)
--- :param string args.help: description of option for --help (optional)
--- :param boolean args.composing: allow multiple occurences with single value (default: ``false``)
--- :param boolean args.multitoken: allow multiple occurences with multiple values (default: ``false``)
--- :param boolean args.required: require at minimum one occurence (default: ``false``)
--- :param table args.choices: allowed values with descriptions (optional)
--- :param function args.action: argument handler function (optional)
--- :param args.default: default option value (optional)
--- :param args.implicit: implicit option value (optional)
---
--- The following value types are supported:
---
--- ==========   =====================================
--- Type         Description
--- ==========   =====================================
--- boolean      Boolean
--- string       String
--- accumulate   Increment integer
--- vector       1-dimensional array of type ``dtype``
--- matrix       2-dimensional array of type ``dtype``
--- ==========   =====================================
---
--- These integral and floating-point value types are supported:
---
--- =======  ===============================
--- Type     Description
--- =======  ===============================
--- number   Double-precision floating-point
--- integer  Signed 64-bit integer
--- int32    Signed 32-bit integer
--- int64    Signed 64-bit integer
--- uint32   Unsigned 32-bit integer
--- uint64   Unsigned 64-bit integer
--- float32  Single-precision floating-point
--- float64  Double-precision floating-point
--- =======  ===============================
---
--- Example::
---
---    parser:add_argument("disable-gpu", {type = "boolean", help = "disable GPU acceleration"})
---
--- An optional table ``choices`` may be used to constrain the value of an argument::
---
---    parser.add_argument("ensemble", {type = "string", choices = {
---        nve = "Constant NVE",
---        nvt = "Constant NVT",
---        npt = "Constant NPT",
---    }, help = "statistical ensemble"})
---
--- Note that only arguments of ``type`` ``string`` are supported.
---
--- The optional ``action`` function receives the following arguments:
---
--- :param table args: parsed arguments
--- :param string key: args table key of this argument
--- :param value: parsed value of this argument
---
--- Note that if you specify ``action``, the argument value will *not* be stored
--- in the table returned by :func:`parse_args`, i.e. the argument handler
--- function has to store a value in ``args[key]`` itself.
---
--- Example::
---
---    parser:add_argument("filename", {type = "string", action = function(args, key, value)
---       -- substitute current time
---       args[key] = os.date(value)
---    end, default = "halmd_%Y%m%d_%H%M%S.trj", help = "trajectory filename"})
---
-function argument_parser:add_argument(name, args)
-    if not name then
-        error("undefined argument name", 2)
-    end
-    local type = args.type
-    if not type then
-        error(("missing type for argument '%s'"):format(name), 2)
-    end
-    local value = argument_value(type, args.dtype, args.multitoken or args.composing)
-    local option
-    if args.help then
-        option = po.option_description(name, value, args.help)
-    else
-        option = po.option_description(name, value)
-    end
-    local long_name = assert(option.long_name)
-    local key = long_name:gsub("%-", "_")
-    self._options[key] = option
-    self._desc:add(option)
-
-    local action = args.action
-    local choices = args.choices
-    if choices then
-        if type ~= "string" then
-            error(("choices not supported for argument type '%s'"):format(type), 2)
         end
-        if action then
-            value:notifier(function(args, value)
-                if not choices[value] then
-                    self._pcall(choices_notifier, long_name, value, choices)
-                end
-                self._pcall(action, args, key, value)
-            end)
-        else
-            value:notifier(function(args, value)
-                if not choices[value] then
-                    self._pcall(choices_notifier, long_name, value, choices)
-                end
-                args[key] = value
-            end)
-        end
-    elseif action then
-        value:notifier(function(args, value)
-            self._pcall(action, args, key, value)
-        end)
-    else
-        value:notifier(function(args, value)
-            args[key] = value
-        end)
-    end
+    })
 
-    if args.multitoken then
-        if not self._groups then
-            error("multitoken arguments not allowed in argument group", 2)
-        end
-        value:multitoken()
-    elseif args.composing then
-        value:composing()
-    end
-    if args.required then
-        value:required()
-    end
-    if args.default then
-        value:default_value(args.default)
-    end
-    if args.implicit then
-        value:implicit_value(args.implicit)
-    end
-end
-
----
--- Add argument group.
---
--- :param name: name of argument group
--- :param table args: keyword arguments (optional)
--- :param string args.help: description of argument group for --help (optional)
--- :returns: argument group
---
--- Example::
---
---    local group = parser:add_argument_group("lennard-jones")
---    group:add_argument("epsilon", {type = "number", help = "potential well depths"})
---    group:add_argument("sigma", {type = "number", help = "collision diameter"})
---
-function argument_parser:add_argument_group(name, args)
-    if not name then
-        error("undefined argument group name", 2)
-    end
-    local value = po.multi_value.string()
-    local option
-    if args and args.help then
-        option = po.option_description(name, value, args.help)
-    else
-        option = po.option_description(name, value)
-    end
-    local long_name = assert(option.long_name)
-    local key = long_name:gsub("%-", "_")
-    self._options[key] = option
-    self._desc:add(option)
-
-    local group = argument_group_parser(name)
-    self._groups[long_name] = group
-
-    value:multitoken()
-    value:default_value({}, "")
-    value:notifier(function(args, value)
-        args[key] = group:parse_args(value)
-    end)
-
-    return group
-end
-
----
--- Set default option values.
---
--- :param table defaults: argument names with default values
---
--- Example::
---
---     parser:set_defaults({particles = {9000, 1000}, number_density = 0.8})
---
-function argument_parser:set_defaults(defaults)
-    local options = assert(self._options)
-    for k, v in pairs(defaults) do
-        local option = options[k]
-        if not option then
-            error(("undefined argument '%s'"):format(k), 2)
-        end
-        local semantic = assert(option.semantic)
-        if not pcall(semantic.default_value, semantic, v) then
-            error(("invalid default value to argument '%s'"):format(k), 2)
-        end
-    end
-end
-
---
--- Parse --help option.
---
--- :param table args: sequence of arguments
---
--- If --help is specified in args, print help and exit process.
---
-local function parse_help(self, args)
-    local desc = po.options_description()
-    local parser = po.command_line_parser(args)
-    desc:add(po.option_description("help", po.untyped_value()))
-    parser:options(desc)
-    parser:allow_unregistered()
-    parser:disallow_guessing()
-    local parsed = parser:run()
-    local vm = po.variables_map()
-    vm:store(parsed)
-    if vm:count("help") > 0 then
-        print(self)
-        os.exit(0)
-    end
-end
-
----
--- Parse arguments.
---
--- :param table args: sequence of arguments (optional)
--- :returns: parsed arguments
---
--- If ``args`` is not specified, the command-line arguments are parsed.
---
--- Example::
---
---    local args = parser:parse_args()
---
-function argument_parser:parse_args(args)
-    local args = args or assert(_G.arg)
-    if self._groups then
-        parse_help(self, args)
-    end
-    local parser = po.command_line_parser(args)
-    parser:options(self._desc)
-    parser:disallow_guessing()
-    if self._groups then
-        parser:positional(po.positional_options_description())
-    else
-        parser:group_parser()
-    end
-    local parsed = self._pcall(parser.run, parser)
-    local vm = po.variables_map()
-    self._pcall(vm.store, vm, parsed)
-    return self._pcall(vm.notify, vm, {})
+    return self
 end
 
 return M

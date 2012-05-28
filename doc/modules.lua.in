@@ -34,9 +34,10 @@ function parse_module(sourcedir, source)
     parsed.namespace = parsed.module:gsub("%.[^.]*$", "")
 
     local entry
+    local class
     for line in io.lines(parsed.path) do
         if not entry then
-            local m = line:match("^%-%-%-%s?(.-)%s*$")
+            local m = line:match("^%s*%-%-%-%s?(.-)%s*$")
             if m then
                 if entry then
                     for i = #entry, 1, -1 do
@@ -53,18 +54,19 @@ function parse_module(sourcedir, source)
                 end
             end
         else
-            local m = line:match("^%-%-%s?(.-)%s*$")
+            local m = line:match("^%s*%-%-%s?(.-)%s*$")
             if m then
                 if #m > 0 or #entry > 0 then
                     table.insert(entry, m)
                 end
             else
-                local mod, sep, func, name = line:match("^function%s*([%w_]+)([.:])(([%w_]+)%([^)]*%))")
+                local mod, func, name = line:match("^%s*function%s*([%w_]+)%.(([%w_]+)%([^)]*%))")
                 if mod then
-                    if sep == ":" then
-                        entry.class = mod
+                    if mod == "self" then
+                        entry.class = class
                     else
                         entry.module = mod
+                        class = name
                     end
                     entry.func = func
                     entry.name = name
@@ -153,7 +155,7 @@ function render_module(parsed)
         if #methods > 0 then
             for i = 1, #methods do
                 local entry = methods[i]
-                l("%s.. method:: %s", indent, entry.func:gsub("%(", "(self, "):gsub(", %)", ")"))
+                l("%s.. method:: %s", indent, entry.func)
                 l()
                 for j = 1, #entry do
                     l("%s%s%s", indent, indent, entry[j])
