@@ -26,70 +26,70 @@ local posix_signal = assert(libhalmd.utility.posix_signal)
 --
 -- The POSIX signal handler intercepts process signals.
 --
--- .. method:: on_hup(self, slot)
+-- .. method:: on_hup(slot)
 --
 --    Connect slot to invoke on signal ``HUP``.
 --
 --    :param slot: unary slot that accepts signal number
 --    :returns: connection
 --
--- .. method:: on_int(self, slot)
+-- .. method:: on_int(slot)
 --
 --    Connect slot to invoke on signal ``INT``.
 --
 --    :param slot: unary slot that accepts signal number
 --    :returns: connection
 --
--- .. method:: on_alrm(self, slot)
+-- .. method:: on_alrm(slot)
 --
 --    Connect slot to invoke on signal ``ALRM``.
 --
 --    :param slot: unary slot that accepts signal number
 --    :returns: connection
 --
--- .. method:: on_term(self, slot)
+-- .. method:: on_term(slot)
 --
 --    Connect slot to invoke on signal ``TERM``.
 --
 --    :param slot: unary slot that accepts signal number
 --    :returns: connection
 --
--- .. method:: on_usr1(self, slot)
+-- .. method:: on_usr1(slot)
 --
 --    Connect slot to invoke on signal ``USR1``.
 --
 --    :param slot: unary slot that accepts signal number
 --    :returns: connection
 --
--- .. method:: on_usr2(self, slot)
+-- .. method:: on_usr2(slot)
 --
 --    Connect slot to invoke on signal ``USR2``.
 --
 --    :param slot: unary slot that accepts signal number
 --    :returns: connection
 --
--- .. method:: on_cont(self, slot)
+-- .. method:: on_cont(slot)
 --
 --    Connect slot to invoke on signal ``CONT``.
 --
 --    :param slot: unary slot that accepts signal number
 --    :returns: connection
 --
--- .. method:: on_tstp(self, slot)
+-- .. method:: on_tstp(slot)
 --
 --    Connect slot to invoke on signal ``TSTP``.
 --
 --    :param slot: unary slot that accepts signal number
 --    :returns: connection
 --
--- .. method:: on_ttin(self, slot)
+-- .. method:: on_ttin(slot)
 --
 --    Connect slot to invoke on signal ``TTIN``.
 --
 --    :param slot: unary slot that accepts signal number
 --    :returns: connection
 --
--- .. method:: on_ttou(self, slot)
+-- .. method:: on_ttou(slot)
 --
 --    Connect slot to invoke on signal ``TTOU``.
 --

@@ -160,22 +160,30 @@ void posix_signal::handle(int signum) const
 }
 
 template <int signum>
-static connection
-wrap_on_signal(posix_signal& self, signal<void ()>::slot_function_type const& slot)
+static std::function<connection (std::function<void ()> const&)>
+wrap_on_signal(boost::shared_ptr<posix_signal> self)
 {
-    return self.on_signal(signum, bind(&signal<void ()>::slot_function_type::operator(), slot));
+    return [=](std::function<void ()> const& slot) {
+        return self->on_signal(signum, [=](int) {
+            slot();
+        });
+    };
 }
 
-static signal<void ()>::slot_function_type
+static std::function<void ()>
 wrap_wait(boost::shared_ptr<posix_signal> self)
 {
-    return bind(&posix_signal::wait, self);
+    return [=]() {
+        self->wait();
+    };
 }
 
-static signal<void ()>::slot_function_type
+static std::function<void ()>
 wrap_poll(boost::shared_ptr<posix_signal> self)
 {
-    return bind(&posix_signal::poll, self);
+    return [=]() {
+        self->poll();
+    };
 }
 
 void posix_signal::luaopen(lua_State* L)
@@ -187,16 +195,16 @@ void posix_signal::luaopen(lua_State* L)
         [
             class_<posix_signal, boost::shared_ptr<posix_signal> >("posix_signal")
                 .def(constructor<>())
-                .def("on_hup", &wrap_on_signal<SIGHUP>)
-                .def("on_int", &wrap_on_signal<SIGINT>)
-                .def("on_alrm", &wrap_on_signal<SIGALRM>)
-                .def("on_term", &wrap_on_signal<SIGTERM>)
-                .def("on_usr1", &wrap_on_signal<SIGUSR1>)
-                .def("on_usr2", &wrap_on_signal<SIGUSR2>)
-                .def("on_cont", &wrap_on_signal<SIGCONT>)
-                .def("on_tstp", &wrap_on_signal<SIGTSTP>)
-                .def("on_ttin", &wrap_on_signal<SIGTTIN>)
-                .def("on_ttou", &wrap_on_signal<SIGTTOU>)
+                .property("on_hup", &wrap_on_signal<SIGHUP>)
+                .property("on_int", &wrap_on_signal<SIGINT>)
+                .property("on_alrm", &wrap_on_signal<SIGALRM>)
+                .property("on_term", &wrap_on_signal<SIGTERM>)
+                .property("on_usr1", &wrap_on_signal<SIGUSR1>)
+                .property("on_usr2", &wrap_on_signal<SIGUSR2>)
+                .property("on_cont", &wrap_on_signal<SIGCONT>)
+                .property("on_tstp", &wrap_on_signal<SIGTSTP>)
+                .property("on_ttin", &wrap_on_signal<SIGTTIN>)
+                .property("on_ttou", &wrap_on_signal<SIGTTOU>)
                 .property("wait", &wrap_wait)
                 .property("poll", &wrap_poll)
         ]
