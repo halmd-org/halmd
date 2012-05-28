@@ -17,13 +17,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <boost/bind.hpp>
-
 #include <halmd/utility/lua/lua.hpp>
 #include <halmd/utility/timer_service.hpp>
-
-using namespace boost;
-using namespace std;
 
 namespace halmd {
 namespace utility {
@@ -55,10 +50,30 @@ void timer_service::event::operator()(time_type const& time)
     }
 }
 
-static timer_service::slot_function_type
-wrap_process(boost::shared_ptr<timer_service> ts)
+static std::function<void ()>
+wrap_process(boost::shared_ptr<timer_service> self)
 {
-    return bind(&timer_service::process, ts);
+    return [=]() {
+        self->process();
+    };
+}
+
+static std::function<connection (boost::function<void ()> const&, timer_service::time_type)>
+wrap_on_periodic(boost::shared_ptr<timer_service> self)
+{
+    typedef timer_service::time_type time_type;
+    return [=](std::function<void ()> const& slot, time_type interval) {
+        return self->on_periodic(slot, interval);
+    };
+}
+
+static std::function<connection (std::function<void ()> const&, timer_service::time_type, timer_service::time_type)>
+wrap_on_periodic_start(boost::shared_ptr<timer_service> self)
+{
+    typedef timer_service::time_type time_type;
+    return [=](std::function<void ()> const& slot, time_type interval, time_type start) {
+        return self->on_periodic(slot, interval, start);
+    };
 }
 
 void timer_service::luaopen(lua_State* L)
@@ -70,8 +85,8 @@ void timer_service::luaopen(lua_State* L)
         [
             class_<timer_service, boost::shared_ptr<timer_service> >("timer_service")
                 .def(constructor<>())
-                .def("on_periodic", static_cast<connection (timer_service::*)(slot_function_type const&, time_type)>(&timer_service::on_periodic))
-                .def("on_periodic", static_cast<connection (timer_service::*)(slot_function_type const&, time_type, time_type)>(&timer_service::on_periodic))
+                .property("on_periodic", &wrap_on_periodic)
+                .property("on_periodic", &wrap_on_periodic_start)
                 .property("process", &wrap_process)
         ]
     ];
