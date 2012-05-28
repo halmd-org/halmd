@@ -29,6 +29,5 @@ local module = require("halmd.utility.module")
 --
 --    *
 --    dynamics/index
---    samples/index
 --
 return module.loader("halmd.observables")
