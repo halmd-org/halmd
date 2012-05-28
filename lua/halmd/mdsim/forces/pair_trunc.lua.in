@@ -45,13 +45,13 @@ local discontinuous = assert(libhalmd.mdsim.forces.trunc.discontinuous)
 --
 -- If ``trunc`` is not specified, the pair potential is :math:`C^0` continuous at the cutoff.
 --
--- .. method:: connect(self)
+-- .. method:: connect()
 --
 --    Connect force to core and profiler.
 --
 --    This is the default.
 --
--- .. method:: disconnect(self)
+-- .. method:: disconnect()
 --
 --    Disconnect force from core and profiler.
 --
@@ -100,7 +100,7 @@ local M = module(function(args)
     local self = pair_trunc(potential, particle[1], particle[2], box, neighbour, trunc)
 
     -- attach potential instance as read-only Lua property
-    self.potential = property(function(self)
+    self.potential = property(function()
         return potential
     end)
 
@@ -109,7 +109,7 @@ local M = module(function(args)
     -- profiler description
     local desc = ("computation of %s interaction"):format(potential.description)
 
-    self.connect = function(self)
+    self.connect = function()
         if #conn == 0 then
             -- system preparation
             table.insert(conn, core.on_append_setup(self.compute))
@@ -123,7 +123,7 @@ local M = module(function(args)
         end
     end
 
-    self.disconnect = function(self)
+    self.disconnect = function()
         if #conn > 0 then
             for i = 1, #conn do
                 conn[i]:disconnect()
@@ -135,7 +135,7 @@ local M = module(function(args)
     end
 
     -- connect to core and profiler
-    self:connect()
+    self.connect()
 
     return self
 end)
