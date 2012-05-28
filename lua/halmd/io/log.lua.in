@@ -71,35 +71,35 @@ local M = {}
 --    end
 
 ---
--- .. function:: error(msg, ...)
+-- .. function:: error(format, ...)
 --
 --    Log message with severity ``error``.
 --
---    :param string msg: see `string.format`_
+--    :param string format: see `string.format`_
 --
--- .. function:: warning(msg, ...)
+-- .. function:: warning(format, ...)
 --
 --    Log message with severity ``warning``.
 --
---    :param string msg: see `string.format`_
+--    :param string format: see `string.format`_
 --
--- .. function:: info(msg, ...)
+-- .. function:: info(format, ...)
 --
 --    Log message with severity ``info``.
 --
---    :param string msg: see `string.format`_
+--    :param string format: see `string.format`_
 --
--- .. function:: debug(msg, ...)
+-- .. function:: debug(format, ...)
 --
 --    Log message with severity ``debug``.
 --
---    :param string msg: see `string.format`_
+--    :param string format: see `string.format`_
 --
--- .. function:: trace(msg, ...)
+-- .. function:: trace(format, ...)
 --
 --    Log message with severity ``trace``.
 --
---    :param string msg: see `string.format`_
+--    :param string format: see `string.format`_
 --
 -- .. _string.format: http://www.lua.org/manual/5.2/manual.html#pdf-string.format
 --
@@ -155,35 +155,35 @@ end
 --    :param table args: keyword arguments (optional)
 --    :param string args.label: logging prefix (optional)
 --
---    .. method:: error(self, msg, ...)
+--    .. method:: error(format, ...)
 --
 --       Log message with severity ``error``.
 --
---       :param string msg: see `string.format`_
+--       :param string format: see `string.format`_
 --
---    .. method:: warning(self, msg, ...)
+--    .. method:: warning(format, ...)
 --
 --       Log message with severity ``warning``.
 --
---       :param string msg: see `string.format`_
+--       :param string format: see `string.format`_
 --
---    .. method:: info(self, msg, ...)
+--    .. method:: info(format, ...)
 --
 --       Log message with severity ``info``.
 --
---       :param string msg: see `string.format`_
+--       :param string format: see `string.format`_
 --
---    .. method:: debug(self, msg, ...)
+--    .. method:: debug(format, ...)
 --
 --       Log message with severity ``debug``.
 --
---       :param string msg: see `string.format`_
+--       :param string format: see `string.format`_
 --
---    .. method:: trace(self, msg, ...)
+--    .. method:: trace(format, ...)
 --
 --       Log message with severity ``trace``.
 --
---       :param string msg: see `string.format`_
+--       :param string format: see `string.format`_
 --
 
 function M.logger(args)
@@ -195,7 +195,7 @@ function M.logger(args)
     end
     for k, v in pairs(level) do
         local log = assert(logger.log)
-        self[k] = function(self, format, ...)
+        self[k] = function(format, ...)
             local status, result = pcall(string.format, tostring(format), ...)
             if not status then
                 error(result, 2)
