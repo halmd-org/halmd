@@ -43,16 +43,6 @@ static texture<float4> v_;
 static texture<unsigned int> tag_;
 
 /**
- * Set particle masses to scalar.
- */
-template <int dimension>
-__global__ void set_mass(float4* g_velocity, unsigned int nparticle, float mass)
-{
-    fixed_vector<float, dimension> v = g_velocity[GTID];
-    g_velocity[GTID] <<= tie(v, mass);
-}
-
-/**
  * generate ascending index sequence
  */
 __global__ void gen_index(unsigned int* g_index)
@@ -115,7 +105,6 @@ particle_wrapper<dimension> const particle_wrapper<dimension>::kernel = {
 #else
   , particle_kernel::rearrange<fixed_vector<float, dimension> >
 #endif
-  , particle_kernel::set_mass<dimension>
 };
 
 template class particle_wrapper<3>;

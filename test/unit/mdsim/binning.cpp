@@ -79,15 +79,12 @@ transform_density(particle_type& particle, box_type const& box, float scale)
     position_type k = element_div(position_type(2 * M_PI), position_type(box.length()));
     // factors where f(r_i) have inflexion point at middle of box
     position_type lambda = element_div(position_type(scale), k);
-    // density transform
-    auto transform = [&](position_type const& r) {
-        return r + element_prod(lambda, sin(element_prod(k, r)));
-    };
 
     // set particle positions by applying density transform
     particle.set_position(
-        boost::make_transform_iterator(position.begin(), transform)
-      , boost::make_transform_iterator(position.end(), transform)
+        boost::make_transform_iterator(position.begin(), [&](position_type const& r) {
+            return r + element_prod(lambda, sin(element_prod(k, r)));
+        })
     );
 }
 
@@ -220,7 +217,6 @@ test_non_uniform_density(typename binning_type::cell_size_type const& shape, flo
     // place particles on lattice
     particle->set_position(
         boost::make_transform_iterator(boost::make_counting_iterator(size_type(0)), lattice)
-      , boost::make_transform_iterator(boost::make_counting_iterator(lattice.size()), lattice)
     );
     // transform density using sine shift
     transform_density(*particle, *box, scale);
