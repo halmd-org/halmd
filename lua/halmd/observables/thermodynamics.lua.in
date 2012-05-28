@@ -49,7 +49,7 @@ local thermodynamics = assert(libhalmd.observables.thermodynamics)
 -- :param args.group: instance of :mod:`halmd.mdsim.particle_groups`
 -- :param args.box: instance of :class:`halmd.mdsim.box`
 --
--- .. method:: writer(self, file, args)
+-- .. method:: writer(file, args)
 --
 --    Write state variables to file.
 --
@@ -113,7 +113,7 @@ local M = module(function(args)
     -- construct instance
     local self = thermodynamics(group, box, clock, logger)
 
-    self.writer = function(self, file, args)
+    self.writer = function(file, args)
         local writer = file:writer{location = {"observables"}, mode = "append"}
         writer:on_write(self.en_pot     , {"potential_energy"       , label})
         writer:on_write(self.en_kin     , {"kinetic_energy"         , label})

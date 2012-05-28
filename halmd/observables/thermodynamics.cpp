@@ -25,72 +25,101 @@ namespace observables {
 
 template <typename thermodynamics_type>
 static std::function<double ()>
-wrap_nparticle(boost::shared_ptr<thermodynamics_type> thermodynamics)
+wrap_nparticle(boost::shared_ptr<thermodynamics_type> self)
 {
-    return boost::bind(&thermodynamics_type::nparticle, thermodynamics);
+    return [=]() {
+        return self->nparticle();
+    };
 }
 
 template <typename thermodynamics_type>
 static std::function<double ()>
-wrap_density(boost::shared_ptr<thermodynamics_type> thermodynamics)
+wrap_density(boost::shared_ptr<thermodynamics_type> self)
 {
-    return boost::bind(&thermodynamics_type::density, thermodynamics);
+    return [=]() {
+        return self->density();
+    };
 }
 
 template <typename thermodynamics_type>
 static std::function<double ()>
-wrap_en_tot(boost::shared_ptr<thermodynamics_type> thermodynamics)
+wrap_en_tot(boost::shared_ptr<thermodynamics_type> self)
 {
-    return boost::bind(&thermodynamics_type::en_tot, thermodynamics);
+    return [=]() {
+        return self->en_tot();
+    };
 }
 
 template <typename thermodynamics_type>
 static std::function<double ()>
-wrap_en_pot(boost::shared_ptr<thermodynamics_type> thermodynamics)
+wrap_en_pot(boost::shared_ptr<thermodynamics_type> self)
 {
-    return boost::bind(&thermodynamics_type::en_pot, thermodynamics);
+    return [=]() {
+        return self->en_pot();
+    };
 }
 
 template <typename thermodynamics_type>
 static std::function<double ()>
-wrap_en_kin(boost::shared_ptr<thermodynamics_type> thermodynamics)
+wrap_en_kin(boost::shared_ptr<thermodynamics_type> self)
 {
-    return boost::bind(&thermodynamics_type::en_kin, thermodynamics);
+    return [=]() {
+        return self->en_kin();
+    };
 }
 
 template <typename thermodynamics_type>
 static std::function<typename thermodynamics_type::vector_type ()>
-wrap_v_cm(boost::shared_ptr<thermodynamics_type> thermodynamics)
+wrap_v_cm(boost::shared_ptr<thermodynamics_type> self)
 {
-    return boost::bind(&thermodynamics_type::v_cm, thermodynamics);
+    return [=]() {
+        return self->v_cm();
+    };
 }
 
 template <typename thermodynamics_type>
 static std::function<double ()>
-wrap_temp(boost::shared_ptr<thermodynamics_type> thermodynamics)
+wrap_temp(boost::shared_ptr<thermodynamics_type> self)
 {
-    return boost::bind(&thermodynamics_type::temp, thermodynamics);
+    return [=]() {
+        return self->temp();
+    };
 }
 
 template <typename thermodynamics_type>
 static std::function<double ()>
-wrap_pressure(boost::shared_ptr<thermodynamics_type> thermodynamics)
+wrap_pressure(boost::shared_ptr<thermodynamics_type> self)
 {
-    return boost::bind(&thermodynamics_type::pressure, thermodynamics);
+    return [=]() {
+        return self->pressure();
+    };
 }
 
 template <typename thermodynamics_type>
 static std::function<double ()>
-wrap_virial(boost::shared_ptr<thermodynamics_type> thermodynamics)
+wrap_virial(boost::shared_ptr<thermodynamics_type> self)
 {
-    return boost::bind(&thermodynamics_type::virial, thermodynamics);
+    return [=]() {
+        return self->virial();
+    };
 }
 
 template <typename thermodynamics_type>
 static std::function<double ()>
-wrap_hypervirial(boost::shared_ptr<thermodynamics_type> thermodynamics)
+wrap_hypervirial(boost::shared_ptr<thermodynamics_type> self)
 {
-    return boost::bind(&thermodynamics_type::hypervirial, thermodynamics);
+    return [=]() {
+        return self->hypervirial();
+    };
+}
+
+template <typename thermodynamics_type>
+static std::function<void ()>
+wrap_clear_cache(boost::shared_ptr<thermodynamics_type> self)
+{
+    return [=]() {
+        self->clear_cache();
+    };
 }
 
 template <int dimension>
@@ -110,7 +139,7 @@ void thermodynamics<dimension>::luaopen(lua_State* L)
             .property("v_cm", &wrap_v_cm<thermodynamics>)
             .property("virial", &wrap_virial<thermodynamics>)
             .property("hypervirial", &wrap_hypervirial<thermodynamics>)
-            .def("clear_cache", &thermodynamics::clear_cache)
+            .property("clear_cache", &wrap_clear_cache<thermodynamics>)
     ];
 }
 
