@@ -245,260 +245,317 @@ void particle<dimension, float_type>::rearrange(cuda::vector<unsigned int> const
 }
 
 template <typename particle_type>
-static void
-wrap_get_position(particle_type const& particle, vector<typename particle_type::position_type>& output)
+static std::function<std::vector<typename particle_type::position_type> ()>
+wrap_get_position(boost::shared_ptr<particle_type const> self)
 {
-    output.clear();
-    output.reserve(particle.nparticle());
-    particle.get_position(back_inserter(output));
-}
-
-template <typename particle_type>
-static void
-wrap_set_position(particle_type& particle, vector<typename particle_type::position_type> const& input)
-{
-    if (input.size() != particle.nparticle()) {
-        throw invalid_argument("input array size not equal to number of particles");
-    }
-    particle.set_position(input.begin(), input.end());
-}
-
-template <typename particle_type>
-static void
-wrap_get_image(particle_type const& particle, vector<typename particle_type::image_type>& output)
-{
-    output.clear();
-    output.reserve(particle.nparticle());
-    particle.get_image(back_inserter(output));
-}
-
-template <typename particle_type>
-static void
-wrap_set_image(particle_type& particle, vector<typename particle_type::image_type> const& input)
-{
-    if (input.size() != particle.nparticle()) {
-        throw invalid_argument("input array size not equal to number of particles");
-    }
-    particle.set_image(input.begin(), input.end());
-}
-
-template <typename particle_type>
-static void
-wrap_get_velocity(particle_type const& particle, vector<typename particle_type::velocity_type>& output)
-{
-    output.clear();
-    output.reserve(particle.nparticle());
-    particle.get_velocity(back_inserter(output));
-}
-
-template <typename particle_type>
-static void
-wrap_set_velocity(particle_type& particle, vector<typename particle_type::velocity_type> const& input)
-{
-    if (input.size() != particle.nparticle()) {
-        throw invalid_argument("input array size not equal to number of particles");
-    }
-    particle.set_velocity(input.begin(), input.end());
-}
-
-template <typename particle_type>
-static void
-wrap_get_tag(particle_type const& particle, vector<typename particle_type::tag_type>& output)
-{
-    output.clear();
-    output.reserve(particle.nparticle());
-    auto convert_0_to_1 = [&](typename particle_type::tag_type t) {
-        output.push_back(t + 1);
+    return [=]() -> std::vector<typename particle_type::position_type> {
+        std::vector<typename particle_type::position_type> output;
+        output.reserve(self->nparticle());
+        self->get_position(back_inserter(output));
+        return std::move(output);
     };
-    particle.get_tag(
-        boost::make_function_output_iterator(convert_0_to_1)
-    );
 }
 
 template <typename particle_type>
-static void
-wrap_set_tag(particle_type& particle, vector<typename particle_type::tag_type> const& input)
+static std::function<void (std::vector<typename particle_type::position_type> const&)>
+wrap_set_position(boost::shared_ptr<particle_type> self)
+{
+    return [=](std::vector<typename particle_type::position_type> const& input) {
+        if (input.size() != self->nparticle()) {
+            throw std::invalid_argument("input array size not equal to number of particles");
+        }
+        self->set_position(input.begin(), input.end());
+    };
+}
+
+template <typename particle_type>
+static std::function<std::vector<typename particle_type::image_type> ()>
+wrap_get_image(boost::shared_ptr<particle_type const> self)
+{
+    return [=]() -> std::vector<typename particle_type::image_type> {
+        std::vector<typename particle_type::image_type> output;
+        output.reserve(self->nparticle());
+        self->get_image(back_inserter(output));
+        return std::move(output);
+    };
+}
+
+template <typename particle_type>
+static std::function<void (std::vector<typename particle_type::image_type> const&)>
+wrap_set_image(boost::shared_ptr<particle_type> self)
+{
+    return [=](std::vector<typename particle_type::image_type> const& input) {
+        if (input.size() != self->nparticle()) {
+            throw std::invalid_argument("input array size not equal to number of particles");
+        }
+        self->set_image(input.begin(), input.end());
+    };
+}
+
+template <typename particle_type>
+static std::function<std::vector<typename particle_type::velocity_type> ()>
+wrap_get_velocity(boost::shared_ptr<particle_type const> self)
+{
+    return [=]() -> std::vector<typename particle_type::velocity_type> {
+        std::vector<typename particle_type::velocity_type> output;
+        output.reserve(self->nparticle());
+        self->get_velocity(back_inserter(output));
+        return std::move(output);
+    };
+}
+
+template <typename particle_type>
+static std::function<void (std::vector<typename particle_type::velocity_type> const&)>
+wrap_set_velocity(boost::shared_ptr<particle_type> self)
+{
+    return [=](std::vector<typename particle_type::velocity_type> const& input) {
+        if (input.size() != self->nparticle()) {
+            throw std::invalid_argument("input array size not equal to number of particles");
+        }
+        self->set_velocity(input.begin(), input.end());
+    };
+}
+
+template <typename particle_type>
+static std::function<std::vector<typename particle_type::tag_type> ()>
+wrap_get_tag(boost::shared_ptr<particle_type const> self)
+{
+    return [=]() -> std::vector<typename particle_type::tag_type> {
+        std::vector<typename particle_type::tag_type> output;
+        output.reserve(self->nparticle());
+        auto convert_0_to_1 = [&](typename particle_type::tag_type t) {
+            output.push_back(t + 1);
+        };
+        self->get_tag(
+            boost::make_function_output_iterator(convert_0_to_1)
+        );
+        return std::move(output);
+    };
+}
+
+template <typename particle_type>
+static std::function<void (std::vector<typename particle_type::tag_type> const&)>
+wrap_set_tag(boost::shared_ptr<particle_type> self)
 {
     typedef typename particle_type::tag_type tag_type;
-    if (input.size() != particle.nparticle()) {
-        throw invalid_argument("input array size not equal to number of particles");
-    }
-    tag_type nparticle = particle.nparticle();
-    auto convert_1_to_0 = [&](tag_type t) -> tag_type {
-        if (t < 1 || t > nparticle) {
-            throw std::invalid_argument("invalid particle tag");
+    return [=](std::vector<tag_type> const& input) {
+        if (input.size() != self->nparticle()) {
+            throw std::invalid_argument("input array size not equal to number of particles");
         }
-        return t - 1;
+        tag_type nparticle = self->nparticle();
+        auto convert_1_to_0 = [&](tag_type t) -> tag_type {
+            if (t < 1 || t > nparticle) {
+                throw std::invalid_argument("invalid particle tag");
+            }
+            return t - 1;
+        };
+        self->set_tag(
+            boost::make_transform_iterator(input.begin(), convert_1_to_0)
+          , boost::make_transform_iterator(input.end(), convert_1_to_0)
+        );
     };
-    particle.set_tag(
-        boost::make_transform_iterator(input.begin(), convert_1_to_0)
-      , boost::make_transform_iterator(input.end(), convert_1_to_0)
-    );
 }
 
 template <typename particle_type>
-static void
-wrap_get_reverse_tag(particle_type const& particle, vector<typename particle_type::reverse_tag_type>& output)
-{
-    output.clear();
-    output.reserve(particle.nparticle());
-    auto convert_0_to_1 = [&](typename particle_type::reverse_tag_type i) {
-        output.push_back(i + 1);
-    };
-    particle.get_reverse_tag(
-        boost::make_function_output_iterator(convert_0_to_1)
-    );
-}
-
-template <typename particle_type>
-static void
-wrap_set_reverse_tag(particle_type& particle, vector<typename particle_type::reverse_tag_type> const& input)
+static std::function<std::vector<typename particle_type::reverse_tag_type> ()>
+wrap_get_reverse_tag(boost::shared_ptr<particle_type const> self)
 {
     typedef typename particle_type::reverse_tag_type reverse_tag_type;
-    if (input.size() != particle.nparticle()) {
-        throw invalid_argument("input array size not equal to number of particles");
-    }
-    reverse_tag_type nparticle = particle.nparticle();
-    auto convert_1_to_0 = [&](reverse_tag_type i) -> reverse_tag_type {
-        if (i < 1 || i > nparticle) {
-            throw std::invalid_argument("invalid particle reverse tag");
-        }
-        return i - 1;
+    return [=]() -> std::vector<reverse_tag_type> {
+        std::vector<typename particle_type::reverse_tag_type> output;
+        output.reserve(self->nparticle());
+        auto convert_0_to_1 = [&](reverse_tag_type i) {
+            output.push_back(i + 1);
+        };
+        self->get_reverse_tag(
+            boost::make_function_output_iterator(convert_0_to_1)
+        );
+        return std::move(output);
     };
-    particle.set_reverse_tag(
-        boost::make_transform_iterator(input.begin(), convert_1_to_0)
-      , boost::make_transform_iterator(input.end(), convert_1_to_0)
-    );
 }
 
 template <typename particle_type>
-static void
-wrap_get_species(particle_type const& particle, vector<typename particle_type::species_type>& output)
+static std::function<void (std::vector<typename particle_type::reverse_tag_type> const&)>
+wrap_set_reverse_tag(boost::shared_ptr<particle_type> self)
 {
-    output.clear();
-    output.reserve(particle.nparticle());
-    auto convert_0_to_1 = [&](typename particle_type::species_type s) {
-        output.push_back(s + 1);
+    typedef typename particle_type::reverse_tag_type reverse_tag_type;
+    return [=](std::vector<reverse_tag_type> const& input) {
+        if (input.size() != self->nparticle()) {
+            throw std::invalid_argument("input array size not equal to number of particles");
+        }
+        reverse_tag_type nparticle = self->nparticle();
+        auto convert_1_to_0 = [&](reverse_tag_type i) -> reverse_tag_type {
+            if (i < 1 || i > nparticle) {
+                throw std::invalid_argument("invalid particle reverse tag");
+            }
+            return i - 1;
+        };
+        self->set_reverse_tag(
+            boost::make_transform_iterator(input.begin(), convert_1_to_0)
+          , boost::make_transform_iterator(input.end(), convert_1_to_0)
+        );
     };
-    particle.get_species(
-        boost::make_function_output_iterator(convert_0_to_1)
-    );
 }
 
 template <typename particle_type>
-static void
-wrap_set_species(particle_type& particle, vector<typename particle_type::species_type> const& input)
+static std::function<std::vector<typename particle_type::species_type> ()>
+wrap_get_species(boost::shared_ptr<particle_type const> self)
 {
     typedef typename particle_type::species_type species_type;
-    if (input.size() != particle.nparticle()) {
-        throw invalid_argument("input array size not equal to number of particles");
-    }
-    species_type nspecies = particle.nspecies();
-    auto convert_1_to_0 = [&](species_type s) -> species_type {
-        if (s < 1 || s > nspecies) {
-            throw std::invalid_argument("invalid particle species");
-        }
-        return s - 1;
+    return [=]() -> std::vector<species_type> {
+        std::vector<species_type> output;
+        output.reserve(self->nparticle());
+        auto convert_0_to_1 = [&](typename particle_type::species_type s) {
+            output.push_back(s + 1);
+        };
+        self->get_species(
+            boost::make_function_output_iterator(convert_0_to_1)
+        );
+        return std::move(output);
     };
-    particle.set_species(
-        boost::make_transform_iterator(input.begin(), convert_1_to_0)
-      , boost::make_transform_iterator(input.end(), convert_1_to_0)
-    );
 }
 
 template <typename particle_type>
-static void
-wrap_get_mass(particle_type const& particle, vector<typename particle_type::mass_type>& output)
+static std::function<void (std::vector<typename particle_type::species_type> const&)>
+wrap_set_species(boost::shared_ptr<particle_type> self)
 {
-    output.clear();
-    output.reserve(particle.nparticle());
-    particle.get_mass(back_inserter(output));
+    typedef typename particle_type::species_type species_type;
+    return [=](std::vector<species_type> const& input) {
+        if (input.size() != self->nparticle()) {
+            throw std::invalid_argument("input array size not equal to number of particles");
+        }
+        species_type nspecies = self->nspecies();
+        auto convert_1_to_0 = [&](species_type s) -> species_type {
+            if (s < 1 || s > nspecies) {
+                throw std::invalid_argument("invalid particle species");
+            }
+            return s - 1;
+        };
+        self->set_species(
+            boost::make_transform_iterator(input.begin(), convert_1_to_0)
+          , boost::make_transform_iterator(input.end(), convert_1_to_0)
+        );
+    };
 }
 
 template <typename particle_type>
-static void
-wrap_set_mass(particle_type& particle, vector<typename particle_type::mass_type> const& input)
+static std::function<std::vector<typename particle_type::mass_type> ()>
+wrap_get_mass(boost::shared_ptr<particle_type const> self)
 {
-    if (input.size() != particle.nparticle()) {
-        throw invalid_argument("input array size not equal to number of particles");
-    }
-    particle.set_mass(input.begin(), input.end());
+    return [=]() -> std::vector<typename particle_type::mass_type> {
+        std::vector<typename particle_type::mass_type> output;
+        output.reserve(self->nparticle());
+        self->get_mass(back_inserter(output));
+        return std::move(output);
+    };
 }
 
 template <typename particle_type>
-static void
-wrap_get_force(particle_type const& particle, vector<typename particle_type::force_type>& output)
+static std::function<void (std::vector<typename particle_type::mass_type> const&)>
+wrap_set_mass(boost::shared_ptr<particle_type> self)
 {
-    output.clear();
-    output.reserve(particle.nparticle());
-    particle.get_force(back_inserter(output));
+    return [=](std::vector<typename particle_type::mass_type> const& input) {
+        if (input.size() != self->nparticle()) {
+            throw std::invalid_argument("input array size not equal to number of particles");
+        }
+        self->set_mass(input.begin(), input.end());
+    };
 }
 
 template <typename particle_type>
-static void
-wrap_set_force(particle_type& particle, vector<typename particle_type::force_type> const& input)
+static std::function<std::vector<typename particle_type::force_type> ()>
+wrap_get_force(boost::shared_ptr<particle_type const> self)
 {
-    if (input.size() != particle.nparticle()) {
-        throw invalid_argument("input array size not equal to number of particles");
-    }
-    particle.set_force(input.begin(), input.end());
+    return [=]() -> std::vector<typename particle_type::force_type> {
+        std::vector<typename particle_type::force_type> output;
+        output.reserve(self->nparticle());
+        self->get_force(back_inserter(output));
+        return std::move(output);
+    };
 }
 
 template <typename particle_type>
-static void
-wrap_get_en_pot(particle_type const& particle, vector<typename particle_type::en_pot_type>& output)
+static std::function<void (std::vector<typename particle_type::force_type> const&)>
+wrap_set_force(boost::shared_ptr<particle_type> self)
 {
-    output.clear();
-    output.reserve(particle.nparticle());
-    particle.get_en_pot(back_inserter(output));
+    return [=](std::vector<typename particle_type::force_type> const& input) {
+        if (input.size() != self->nparticle()) {
+            throw std::invalid_argument("input array size not equal to number of particles");
+        }
+        self->set_force(input.begin(), input.end());
+    };
 }
 
 template <typename particle_type>
-static void
-wrap_set_en_pot(particle_type& particle, vector<typename particle_type::en_pot_type> const& input)
+static std::function<std::vector<typename particle_type::en_pot_type> ()>
+wrap_get_en_pot(boost::shared_ptr<particle_type const> self)
 {
-    if (input.size() != particle.nparticle()) {
-        throw invalid_argument("input array size not equal to number of particles");
-    }
-    particle.set_en_pot(input.begin(), input.end());
+    return [=]() -> std::vector<typename particle_type::en_pot_type> {
+        std::vector<typename particle_type::en_pot_type> output;
+        output.reserve(self->nparticle());
+        self->get_en_pot(back_inserter(output));
+        return std::move(output);
+    };
 }
 
 template <typename particle_type>
-static void
-wrap_get_stress_pot(particle_type const& particle, vector<typename particle_type::stress_pot_type>& output)
+static std::function<void (std::vector<typename particle_type::en_pot_type> const&)>
+wrap_set_en_pot(boost::shared_ptr<particle_type> self)
 {
-    output.clear();
-    output.reserve(particle.nparticle());
-    particle.get_stress_pot(back_inserter(output));
+    return [=](std::vector<typename particle_type::en_pot_type> const& input) {
+        if (input.size() != self->nparticle()) {
+            throw std::invalid_argument("input array size not equal to number of particles");
+        }
+        self->set_en_pot(input.begin(), input.end());
+    };
 }
 
 template <typename particle_type>
-static void
-wrap_set_stress_pot(particle_type& particle, vector<typename particle_type::stress_pot_type> const& input)
+static std::function<std::vector<typename particle_type::stress_pot_type> ()>
+wrap_get_stress_pot(boost::shared_ptr<particle_type const> self)
 {
-    if (input.size() != particle.nparticle()) {
-        throw invalid_argument("input array size not equal to number of particles");
-    }
-    particle.set_stress_pot(input.begin(), input.end());
+    return [=]() -> std::vector<typename particle_type::stress_pot_type> {
+        std::vector<typename particle_type::stress_pot_type> output;
+        output.reserve(self->nparticle());
+        self->get_stress_pot(back_inserter(output));
+        return std::move(output);
+    };
 }
 
 template <typename particle_type>
-static void
-wrap_get_hypervirial(particle_type const& particle, vector<typename particle_type::hypervirial_type>& output)
+static std::function<void (std::vector<typename particle_type::stress_pot_type> const&)>
+wrap_set_stress_pot(boost::shared_ptr<particle_type> self)
 {
-    output.clear();
-    output.reserve(particle.nparticle());
-    particle.get_hypervirial(back_inserter(output));
+    return [=](std::vector<typename particle_type::stress_pot_type> const& input) {
+        if (input.size() != self->nparticle()) {
+            throw std::invalid_argument("input array size not equal to number of particles");
+        }
+        self->set_stress_pot(input.begin(), input.end());
+    };
 }
 
 template <typename particle_type>
-static void
-wrap_set_hypervirial(particle_type& particle, vector<typename particle_type::hypervirial_type> const& input)
+static std::function<std::vector<typename particle_type::hypervirial_type> ()>
+wrap_get_hypervirial(boost::shared_ptr<particle_type const> self)
 {
-    if (input.size() != particle.nparticle()) {
-        throw invalid_argument("input array size not equal to number of particles");
-    }
-    particle.set_hypervirial(input.begin(), input.end());
+    return [=]() -> std::vector<typename particle_type::hypervirial_type> {
+        std::vector<typename particle_type::hypervirial_type> output;
+        output.reserve(self->nparticle());
+        self->get_hypervirial(back_inserter(output));
+        return std::move(output);
+    };
+}
+
+template <typename particle_type>
+static std::function<void (std::vector<typename particle_type::hypervirial_type> const&)>
+wrap_set_hypervirial(boost::shared_ptr<particle_type> self)
+{
+    return [=](std::vector<typename particle_type::hypervirial_type> const& input) {
+        if (input.size() != self->nparticle()) {
+            throw std::invalid_argument("input array size not equal to number of particles");
+        }
+        self->set_hypervirial(input.begin(), input.end());
+    };
 }
 
 template <int dimension, typename float_type>
@@ -508,24 +565,21 @@ static int wrap_dimension(particle<dimension, float_type> const&)
 }
 
 template <typename particle_type>
-static typename signal<void ()>::slot_function_type
+static std::function<void ()>
 wrap_aux_enable(boost::shared_ptr<particle_type> self)
 {
-    return bind(&particle_type::aux_enable, self);
+    return [=]() {
+        self->aux_enable();
+    };
 }
 
 template <typename particle_type>
-static typename signal<void ()>::slot_function_type
+static std::function<void ()>
 wrap_prepare(boost::shared_ptr<particle_type> self)
 {
-    return bind(&particle_type::prepare, self);
-}
-
-template <typename particle_type>
-typename signal<void ()>::slot_function_type
-wrap_set(boost::shared_ptr<particle_type> particle)
-{
-    return bind(&particle_type::set, particle);
+    return [=]() {
+        self->prepare();
+    };
 }
 
 template <typename particle_type>
@@ -540,7 +594,7 @@ template <int dimension, typename float_type>
 void particle<dimension, float_type>::luaopen(lua_State* L)
 {
     using namespace luabind;
-    static string class_name("particle_" + lexical_cast<string>(dimension));
+    static std::string class_name = "particle_" + std::to_string(dimension);
     module(L, "libhalmd")
     [
         namespace_("mdsim")
@@ -551,33 +605,31 @@ void particle<dimension, float_type>::luaopen(lua_State* L)
                     .def(constructor<size_t, unsigned int>())
                     .property("nparticle", &particle::nparticle)
                     .property("nspecies", &particle::nspecies)
-                    .def("get_position", &wrap_get_position<particle>, pure_out_value(_2))
-                    .def("set_position", &wrap_set_position<particle>)
-                    .def("get_image", &wrap_get_image<particle>, pure_out_value(_2))
-                    .def("set_image", &wrap_set_image<particle>)
-                    .def("get_velocity", &wrap_get_velocity<particle>, pure_out_value(_2))
-                    .def("set_velocity", &wrap_set_velocity<particle>)
-                    .def("get_tag", &wrap_get_tag<particle>, pure_out_value(_2))
-                    .def("set_tag", &wrap_set_tag<particle>)
-                    .def("get_reverse_tag", &wrap_get_reverse_tag<particle>, pure_out_value(_2))
-                    .def("set_reverse_tag", &wrap_set_reverse_tag<particle>)
-                    .def("get_species", &wrap_get_species<particle>, pure_out_value(_2))
-                    .def("set_species", &wrap_set_species<particle>)
-                    .def("get_mass", &wrap_get_mass<particle>, pure_out_value(_2))
-                    .def("set_mass", &wrap_set_mass<particle>)
-                    .def("set_mass", static_cast<void (particle::*)(float_type)>(&particle::set_mass))
-                    .def("get_force", &wrap_get_force<particle>, pure_out_value(_2))
-                    .def("set_force", &wrap_set_force<particle>)
-                    .def("get_en_pot", &wrap_get_en_pot<particle>, pure_out_value(_2))
-                    .def("set_en_pot", &wrap_set_en_pot<particle>)
-                    .def("get_stress_pot", &wrap_get_stress_pot<particle>, pure_out_value(_2))
-                    .def("set_stress_pot", &wrap_set_stress_pot<particle>)
-                    .def("get_hypervirial", &wrap_get_hypervirial<particle>, pure_out_value(_2))
-                    .def("set_hypervirial", &wrap_set_hypervirial<particle>)
+                    .property("get_position", &wrap_get_position<particle>)
+                    .property("set_image", &wrap_set_image<particle>)
+                    .property("get_image", &wrap_get_image<particle>)
+                    .property("set_image", &wrap_set_image<particle>)
+                    .property("get_velocity", &wrap_get_velocity<particle>)
+                    .property("set_velocity", &wrap_set_velocity<particle>)
+                    .property("get_tag", &wrap_get_tag<particle>)
+                    .property("set_tag", &wrap_set_tag<particle>)
+                    .property("get_reverse_tag", &wrap_get_reverse_tag<particle>)
+                    .property("set_reverse_tag", &wrap_set_reverse_tag<particle>)
+                    .property("get_species", &wrap_get_species<particle>)
+                    .property("set_species", &wrap_set_species<particle>)
+                    .property("get_mass", &wrap_get_mass<particle>)
+                    .property("set_mass", &wrap_set_mass<particle>)
+                    .property("get_force", &wrap_get_force<particle>)
+                    .property("set_force", &wrap_set_force<particle>)
+                    .property("get_en_pot", &wrap_get_en_pot<particle>)
+                    .property("set_en_pot", &wrap_set_en_pot<particle>)
+                    .property("get_stress_pot", &wrap_get_stress_pot<particle>)
+                    .property("set_stress_pot", &wrap_set_stress_pot<particle>)
+                    .property("get_hypervirial", &wrap_get_hypervirial<particle>)
+                    .property("set_hypervirial", &wrap_set_hypervirial<particle>)
                     .property("dimension", &wrap_dimension<dimension, float_type>)
                     .property("aux_enable", &wrap_aux_enable<particle>)
                     .property("prepare", &wrap_prepare<particle>)
-                    .property("set", &wrap_set<particle>)
                     .scope
                     [
                         class_<runtime>("runtime")

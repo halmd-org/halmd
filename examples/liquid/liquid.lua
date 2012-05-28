@@ -79,7 +79,7 @@ local function liquid(args)
         local nparticle = assert(args.particles[s])
         for i = 1, nparticle do table.insert(species, s) end
     end
-    particle:set_species(species)
+    particle.set_species(species)
 
     local particle_group = mdsim.particle_groups.all{
         particle = particle -- FIXME , species = species

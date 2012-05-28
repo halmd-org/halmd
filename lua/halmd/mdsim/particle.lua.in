@@ -62,6 +62,100 @@ end
 --
 --    Instance label.
 --
+-- .. warning::
+--
+--    During simulation, particle arrays are reordered in memory according
+--    to a space-filling curve. To access particles in initial order, use
+--    :meth:`get_reverse_tag` to retrieve the current particle indices.
+--
+-- .. method:: get_position()
+--
+--    Returns sequence with particle positions.
+--
+-- .. method:: set_position(position)
+--
+--    Set particle positions to given sequence.
+--
+-- .. method:: get_image()
+--
+--    Returns sequence with particle images.
+--
+-- .. method:: set_image(image)
+--
+--    Set particle images to given sequence.
+--
+-- .. method:: get_velocity()
+--
+--    Returns sequence with particle velocities.
+--
+-- .. method:: set_velocity(velocity)
+--
+--    Set particle velocities to given sequence.
+--
+-- .. method:: get_tag()
+--
+--    Returns sequence with particle tags.
+--
+-- .. method:: set_tag(tag)
+--
+--    Set particle tags to given sequence.
+--
+-- .. method:: get_reverse_tag()
+--
+--    Returns sequence with particle reverse tags.
+--
+-- .. method:: set_reverse_tag(reverse_tag)
+--
+--    Set particle reverse tags to given sequence.
+--
+-- .. method:: get_species()
+--
+--    Returns sequence with particle species.
+--
+-- .. method:: set_species(species)
+--
+--    Set particle species to given sequence.
+--
+-- .. method:: get_mass()
+--
+--    Returns sequence with particle masses.
+--
+-- .. method:: set_mass(mass)
+--
+--    Set particle masses to given sequence.
+--
+-- .. method:: get_force()
+--
+--    Returns sequence with particle forces.
+--
+-- .. method:: set_force(force)
+--
+--    Set particle forces to given sequence.
+--
+-- .. method:: get_en_pot()
+--
+--    Returns sequence with potential energies.
+--
+-- .. method:: set_en_pot(en_pot)
+--
+--    Set potential energies to given sequence.
+--
+-- .. method:: get_stress_pot()
+--
+--    Returns sequence with potential parts of stress tensors.
+--
+-- .. method:: set_stress_pot(stress_pot)
+--
+--    Set potential parts of stress tensors to given sequence.
+--
+-- .. method:: get_hypervirial()
+--
+--    Returns sequence with hypervirials.
+--
+-- .. method:: set_hypervirial(hypervirial)
+--
+--    Set hypervirials to given sequence.
+--
 local M = module(function(args)
     local box = args.box
     if not box then
