@@ -333,7 +333,7 @@ function M.reader(file, args)
         error("bad argument 'group'", 2)
     end
     local self = file:reader({location = {"trajectory", group}, mode = "append"})
-    local dataset = self.group:open_group("position"):open_dataset("sample")
+    local dataset = self.group:open_group("position"):open_dataset("value")
     local shape = assert(dataset.shape)
     local nparticle = assert(shape[2])
     local dimension = assert(shape[3])
