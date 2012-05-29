@@ -85,7 +85,7 @@ local M = module(function(args)
     local particle1 = assert(args.particle or args.particles[1])
     local particle2 = assert(args.particle or args.particles[2])
     local box = assert(args.box)
-    local dimension = #box.length
+    local dimension = #box.edges
     local logger = log.logger({label = "neighbour " .. label({particle1, particle2})})
 
     -- domain decomposition

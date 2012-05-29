@@ -73,16 +73,20 @@ double box<dimension>::volume() const
 
 template <typename box_type>
 static std::function<typename box_type::vector_type ()>
-wrap_origin(boost::shared_ptr<box_type const> box)
+wrap_origin(boost::shared_ptr<box_type const> self)
 {
-    return bind(&box_type::origin, box);
+    return [=]() {
+        return self->origin();
+    };
 }
 
 template <typename box_type>
 static std::function<vector<typename box_type::vector_type> ()>
-wrap_edges(boost::shared_ptr<box_type const> box)
+wrap_edges(boost::shared_ptr<box_type const> self)
 {
-    return bind(&box_type::edges, box);
+    return [=]() {
+        return self->edges();
+    };
 }
 
 template <typename box_type>
@@ -120,11 +124,13 @@ void box<dimension>::luaopen(lua_State* L)
                 .def(constructor<vector_type const&>())
                 .property("length", &box::length)
                 .property("volume", &box::volume)
-                .property("origin", &wrap_origin<box>)
-                .property("edges", &wrap_edges<box>)
+                .property("origin", &box::origin)
+                .property("edges", &box::edges)
                 .scope
                 [
-                    def("edges_to_length", &edges_to_length<box>, pure_out_value(_1))
+                    def("edges", &wrap_edges<box>)
+                  , def("origin", &wrap_origin<box>)
+                  , def("edges_to_length", &edges_to_length<box>, pure_out_value(_1))
                 ]
         ]
     ];

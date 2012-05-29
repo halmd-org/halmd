@@ -42,7 +42,7 @@ local M = module(function(args)
     local cell_length = args.cell_length or 1 -- default value
     -- dependencies
     local box = assert(args.box)
-    local dimension = #box.length
+    local dimension = #box.edges
     local logger = log.logger({label = "excluded_volume"})
 
     local excluded_volume

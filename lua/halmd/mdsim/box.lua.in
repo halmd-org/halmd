@@ -47,6 +47,28 @@ local h5 = assert(libhalmd.h5)
 -- :param table args.length: sequence of edge lengths, according to dimensionality
 -- :returns: instance of box
 --
+-- .. attribute:: edges
+--
+--    Edge vectors as a matrix.
+--
+--    For a cuboid simulation domain, ``edges`` is equal to ::
+--
+--       {{length[1], 0, 0},
+--        {0, length[2], 0},
+--        {0, 0, length[3]}}
+--
+--    This attribute can be used to infer the dimensionality of the system::
+--
+--       local dimension = #box.edges
+--
+-- .. attribute:: origin
+--
+--    Coordinates of the lowest corner of the box.
+--
+-- .. attribute:: length
+--
+--    Edge lengths as a sequence.
+--
 -- .. method:: writer(file)
 --
 --    Write box specification to file.
@@ -59,22 +81,6 @@ local h5 = assert(libhalmd.h5)
 --    Note that the box specification will not be written immediately,
 --    but upon the start of the simulation. The writer is connected
 --    to the on_start signal of sampler.
---
--- .. attribute:: length
---
---    Edge lengths as a sequence.
---
---    This attribute can be used to infer the dimensionality of the system::
---
---       local dimension = #box.length
---
--- .. method:: origin()
---
---    Returns the box origin.
---
--- .. method:: edges()
---
---    Returns the edge lengths as a matrix.
 --
 local M = module(function(args)
     local length = args and args.length
@@ -93,8 +99,8 @@ local M = module(function(args)
         local writer = file:writer({location = {"observables", "box"}, mode = "truncate"})
         local group = assert(writer.group)
         group:write_attribute("type", h5.string(), "cuboid")
-        writer:on_write(self.edges, {"edges"})
-        writer:on_write(self.origin, {"offset"})
+        writer:on_write(box.edges(self), {"edges"})
+        writer:on_write(box.origin(self), {"offset"})
         sampler.on_start(writer.write)
         return writer
     end
