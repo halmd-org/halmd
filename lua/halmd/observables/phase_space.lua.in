@@ -226,7 +226,7 @@ local M = module(function(args)
     end
 
     self.set = function(...)
-        logger:info(("setting particles from phase space sample"):format(label))
+        logger.info(("setting particles from phase space sample"):format(label))
         samplers.host.set(...)
     end
 
