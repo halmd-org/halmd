@@ -634,6 +634,7 @@ test_suite_host(std::size_t nparticle, boost::unit_test::test_suite* ts)
     ts->add(BOOST_TEST_CASE( hypervirial ));
 }
 
+#ifdef HALMD_WITH_GPU
 template <typename particle_type>
 static void
 test_suite_gpu(std::size_t nparticle, boost::unit_test::test_suite* ts)
@@ -715,6 +716,7 @@ test_suite_gpu(std::size_t nparticle, boost::unit_test::test_suite* ts)
     };
     ts->add(BOOST_TEST_CASE( hypervirial ));
 }
+#endif
 
 HALMD_TEST_INIT( particle )
 {
