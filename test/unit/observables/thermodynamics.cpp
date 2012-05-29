@@ -24,6 +24,7 @@
 
 #include <algorithm>
 #include <boost/make_shared.hpp>
+#include <boost/numeric/ublas/banded.hpp>
 #include <limits>
 
 #include <halmd/mdsim/box.hpp>
@@ -314,7 +315,10 @@ lennard_jones_fluid<modules_type>::lennard_jones_fluid()
     double det = accumulate(box_ratios.begin(), box_ratios.end(), 1., multiplies<double>());
     double volume = npart / density;
     double edge_length = pow(volume / det, 1. / dimension);
-    typename box_type::vector_type box_length = edge_length * box_ratios;
+    boost::numeric::ublas::diagonal_matrix<typename box_type::matrix_type::value_type> edges(dimension);
+    for (unsigned int i = 0; i < dimension; ++i) {
+        edges(i, i) = edge_length * box_ratios[i];
+    }
     slab = 1;
 
     typename potential_type::matrix_type rc_mat(1, 1);
@@ -327,7 +331,7 @@ lennard_jones_fluid<modules_type>::lennard_jones_fluid()
     // create modules
     random = boost::make_shared<random_type>();
     particle = boost::make_shared<particle_type>(npart);
-    box = boost::make_shared<box_type>(box_length);
+    box = boost::make_shared<box_type>(edges);
     potential = boost::make_shared<potential_type>(particle->nspecies(), particle->nspecies(), rc_mat, epsilon_mat, sigma_mat);
     binning = boost::make_shared<binning_type>(particle, box, potential->r_cut(), skin);
     neighbour = boost::make_shared<neighbour_type>(particle, particle, binning, binning, box, potential->r_cut(), skin);

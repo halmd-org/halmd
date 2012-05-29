@@ -44,8 +44,13 @@ local h5 = assert(libhalmd.h5)
 -- Construct box.
 --
 -- :param table args: keyword arguments
--- :param table args.length: sequence of edge lengths, according to dimensionality
+-- :param table args.edges: sequence of edge vectors (parallelepiped)
+-- :param table args.length: sequence of edge lengths (cuboid)
 -- :returns: instance of box
+--
+-- .. warning::
+--
+--    Non-cuboid geometries are not implemented, ``edges`` must be a diagonal matrix.
 --
 -- .. attribute:: edges
 --
@@ -61,13 +66,13 @@ local h5 = assert(libhalmd.h5)
 --
 --       local dimension = #box.edges
 --
--- .. attribute:: origin
---
---    Coordinates of the lowest corner of the box.
---
 -- .. attribute:: length
 --
 --    Edge lengths as a sequence.
+--
+-- .. attribute:: origin
+--
+--    Coordinates of the lowest corner of the box.
 --
 -- .. method:: writer(file)
 --
@@ -83,17 +88,37 @@ local h5 = assert(libhalmd.h5)
 --    to the on_start signal of sampler.
 --
 local M = module(function(args)
-    local length = args and args.length
-    if not length then
-        error("missing parameter: length", 2)
+    local edges = args and args.edges
+    if not edges then
+        local length = args and args.length
+        if type(length) == "table" and #length == dimension then
+            -- construct edge vectors from edge lengths of a cuboid domain
+            edges = {}
+            for i = 1, dimension do
+                local edge = {}
+                for j = 1, dimension do
+                    if i == j then
+                        table.insert(edge, length[i])
+                    else
+                        table.insert(edge, 0)
+                    end
+                end
+                table.insert(edges, edge)
+            end
+        end
     end
-    local dimension = #length
+    if type(edges) ~= "table" then
+        error("bad argument 'edges' or 'length'", 2)
+    end
+
+    local dimension = #edges
     local box = box[dimension]
     if not box then
         error(("invalid box dimension: %s"):format(dimension), 2)
     end
 
-    local self = box(length)
+    -- construct box from edge vectors
+    local self = box(edges)
 
     self.writer = function(file)
         local writer = file:writer({location = {"observables", "box"}, mode = "truncate"})
@@ -109,12 +134,18 @@ local M = module(function(args)
 end)
 
 ---
--- Read edge lengths of simulation domain from H5MD file.
+-- Read edge vectors of simulation domain from H5MD file.
 --
 -- http://nongnu.org/h5md/draft.html#box-specification
 --
 -- :param file: instance of :class:`halmd.io.readers.h5md`
--- :returns: edge lengths
+-- :returns: edge vectors
+--
+-- The return value may be used to restore the domain::
+--
+--    local file = readers.h5md({path = args.trajectory})
+--    local edges = mdsim.box.reader(file)
+--    local box = mdsim.box({edges = edges})
 --
 function M.reader(file)
     if not file then
@@ -133,10 +164,10 @@ function M.reader(file)
     if not box then
         error(("unsupported dimension: %d"):format(dimension), 2)
     end
-    local edges, length = box.edges_to_length()
+    local edges = box.make_edges()
     self:on_read(edges, {"edges"})
     self:read()
-    return length()
+    return edges()
 end
 
 return M

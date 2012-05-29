@@ -23,6 +23,7 @@
 #include <boost/test/unit_test.hpp>
 
 #include <algorithm>
+#include <boost/numeric/ublas/banded.hpp>
 #include <boost/function_output_iterator.hpp>
 #include <boost/iterator/counting_iterator.hpp>
 #include <boost/iterator/transform_iterator.hpp>
@@ -203,10 +204,16 @@ test_non_uniform_density(typename binning_type::cell_size_type const& shape, flo
     BOOST_TEST_MESSAGE( "number of lattice unit cells " << shape );
     BOOST_TEST_MESSAGE( "lower bound for edge length of cells " << length );
 
+    // convert box edge lengths to edge vectors
+    boost::numeric::ublas::diagonal_matrix<typename box_type::matrix_type::value_type> edges(shape.size());
+    for (unsigned int i = 0; i < shape.size(); ++i) {
+        edges(i, i) = shape[i];
+    }
+
     // create close-packed lattice of given shape
     halmd::close_packed_lattice<vector_type, shape_type> lattice(shape);
     // create simulation domain
-    boost::shared_ptr<box_type> box(new box_type(typename box_type::vector_type(lattice.shape())));
+    boost::shared_ptr<box_type> box(new box_type(edges));
     // create system of particles of number of lattice points
     boost::shared_ptr<particle_type> particle(new particle_type(lattice.size()));
     // create particle binning

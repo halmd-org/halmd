@@ -25,6 +25,7 @@
 #include <boost/assign.hpp>
 #include <boost/bind.hpp>
 #include <boost/make_shared.hpp>
+#include <boost/numeric/ublas/banded.hpp>
 #include <cmath>
 #include <functional>
 #include <limits>
@@ -264,11 +265,14 @@ lattice<modules_type>::lattice()
     density = 0.3;
     lattice_constant = pow(nunit_cell / density, 1.f / dimension);
     typename box_type::vector_type box_ratios(ncell);
-    typename box_type::vector_type box_length = lattice_constant * box_ratios;
+    boost::numeric::ublas::diagonal_matrix<typename box_type::matrix_type::value_type> edges(dimension);
+    for (unsigned int i = 0; i < dimension; ++i) {
+        edges(i, i) = lattice_constant * box_ratios[i];
+    }
     slab = 1;
 
     particle = boost::make_shared<particle_type>(npart);
-    box = boost::make_shared<box_type>(box_length);
+    box = boost::make_shared<box_type>(edges);
     position = boost::make_shared<position_type>(particle, box, slab);
     clock = boost::make_shared<clock_type>();
     boost::shared_ptr<particle_group_type> particle_group = boost::make_shared<particle_group_type>(particle, 0, particle->nparticle());

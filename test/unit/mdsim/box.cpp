@@ -26,6 +26,7 @@
 #include <boost/assign.hpp>
 #include <boost/foreach.hpp>
 #include <boost/make_shared.hpp>
+#include <boost/numeric/ublas/banded.hpp>
 #include <limits>
 
 #include <halmd/mdsim/box.hpp>
@@ -55,10 +56,14 @@ void construction()
 
     vector_type ratios = (dimension == 2) ? list_of(1.)(1.) : list_of(.001)(1.)(1000.);
     vector_type length = element_prod(vector_type(10), ratios);
+    boost::numeric::ublas::diagonal_matrix<typename box_type::matrix_type::value_type> edges(dimension);
+    for (unsigned int i = 0; i < dimension; ++i) {
+        edges(i, i) = length[i];
+    }
     double volume = (dimension == 2) ? 100 : 1000;
 
     BOOST_TEST_MESSAGE("Construction from edge lengths");
-    boost::shared_ptr<box_type> box = boost::make_shared<box_type>(length);
+    boost::shared_ptr<box_type> box = boost::make_shared<box_type>(edges);
     BOOST_CHECK_EQUAL(box->length(), length);
     BOOST_CHECK_CLOSE_FRACTION(box->volume(), volume, epsilon);
 }
@@ -72,7 +77,11 @@ void periodic_host()
     double const epsilon = numeric_limits<double>::epsilon();
 
     vector_type length = (dimension == 2) ? list_of(1./3)(1./5) : list_of(.001)(1.)(1000.);
-    box_type box(length);
+    boost::numeric::ublas::diagonal_matrix<typename box_type::matrix_type::value_type> edges(dimension);
+    for (unsigned int i = 0; i < dimension; ++i) {
+        edges(i, i) = length[i];
+    }
+    box_type box(edges);
 
     // set up list of positions that are (half-) multiples of the
     // edge lengths or completely unrelated

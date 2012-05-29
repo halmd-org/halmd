@@ -26,6 +26,7 @@
 #include <boost/assign.hpp>
 #include <boost/foreach.hpp>
 #include <boost/make_shared.hpp>
+#include <boost/numeric/ublas/banded.hpp>
 #include <limits>
 #include <numeric>
 
@@ -208,11 +209,14 @@ phase_space<modules_type>::phase_space()
     // floating-point number and which is small enough to have some overflow
     // from the periodic box. In addition, some of the coordinates should sit
     // precisely at the edge.
-    typename box_type::vector_type box_length = 40./3;
+    boost::numeric::ublas::diagonal_matrix<typename box_type::matrix_type::value_type> edges(dimension);
+    for (unsigned int i = 0; i < dimension; ++i) {
+        edges(i, i) = 40./3;
+    }
 
     // create modules
     particle = boost::make_shared<particle_type>(accumulate(npart.begin(), npart.end(), 0));
-    box = boost::make_shared<box_type>(box_length);
+    box = boost::make_shared<box_type>(edges);
     input_sample = boost::make_shared<input_sample_type>(particle->nparticle());
     clock = boost::make_shared<clock_type>();
 }

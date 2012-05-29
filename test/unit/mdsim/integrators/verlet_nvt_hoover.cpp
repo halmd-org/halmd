@@ -28,6 +28,7 @@
 #include <boost/bind.hpp>
 #include <boost/make_shared.hpp>
 #include <boost/numeric/ublas/assignment.hpp> // <<=
+#include <boost/numeric/ublas/banded.hpp>
 #include <limits>
 #include <iomanip>
 
@@ -289,7 +290,10 @@ verlet_nvt_hoover<modules_type>::verlet_nvt_hoover()
     double det = accumulate(box_ratios.begin(), box_ratios.end(), 1., multiplies<double>());
     double volume = npart / density;
     double edge_length = pow(volume / det, 1. / dimension);
-    typename box_type::vector_type box_length = edge_length * box_ratios;
+    boost::numeric::ublas::diagonal_matrix<typename box_type::matrix_type::value_type> edges(dimension);
+    for (unsigned int i = 0; i < dimension; ++i) {
+        edges(i, i) = edge_length * box_ratios[i];
+    }
     skin = 0.5;
 
     typedef typename potential_type::matrix_type matrix_type;
@@ -302,7 +306,7 @@ verlet_nvt_hoover<modules_type>::verlet_nvt_hoover()
 
     // create modules
     particle = boost::make_shared<particle_type>(npart);
-    box = boost::make_shared<box_type>(box_length);
+    box = boost::make_shared<box_type>(edges);
     random = boost::make_shared<random_type>();
     integrator = boost::make_shared<integrator_type>(particle, box, timestep, temp, resonance_frequency);
     potential = boost::make_shared<potential_type>(particle->nspecies(), particle->nspecies(), cutoff, epsilon, sigma);

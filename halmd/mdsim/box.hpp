@@ -1,5 +1,6 @@
 /*
- * Copyright © 2008-2011  Peter Colberg and Felix Höfling
+ * Copyright © 2010-2011 Felix Höfling
+ * Copyright © 2008-2012 Peter Colberg
  *
  * This file is part of HALMD.
  *
@@ -20,10 +21,10 @@
 #ifndef HALMD_MDSIM_BOX_HPP
 #define HALMD_MDSIM_BOX_HPP
 
+#include <boost/numeric/ublas/matrix.hpp>
 #include <lua.hpp>
-#include <vector>
 
-#include <halmd/mdsim/type_traits.hpp>
+#include <halmd/numeric/blas/fixed_vector.hpp>
 
 namespace halmd {
 namespace mdsim {
@@ -31,30 +32,72 @@ namespace mdsim {
 template <int dimension>
 class box
 {
+private:
+    typedef boost::numeric::ublas::zero_matrix<double> zero_matrix_type;
+
 public:
-    static void luaopen(lua_State* L);
+    typedef boost::numeric::ublas::matrix<double> matrix_type;
+    typedef fixed_vector<double, dimension> vector_type;
 
-    typedef typename type_traits<dimension, double>::vector_type vector_type;
+    /**
+     * Construct simulation domain with given edge vectors.
+     *
+     * http://nongnu.org/h5md/draft.html#box-specification
+     */
+    box(matrix_type const& edges);
 
-    box(vector_type const& length);
+    /**
+     * Enforce periodic boundary conditions on argument.
+     *
+     * Assumes that particle position wraps at most once per call.
+     *
+     * Map coordinates to (-length_half_[i], length_half_[i])
+     * which is appropriate too for relative vectors.
+     *
+     * Return reduction vector in units of box edge lengths.
+     *
+     * A GPU version is found in halmd/mdsim/gpu/box_kernel.cuh
+     */
+    template <typename T>
+    T reduce_periodic(T& r) const;
 
+    /**
+     * Extend periodically reduced distance vector by image vector.
+     *
+     * This is the inverse of reduce_periodic.
+     *
+     * A GPU version is found in halmd/mdsim/gpu/box_kernel.cuh
+     */
+    template <typename T>
+    void extend_periodic(T& r, T const& image) const;
+
+    /**
+     * Returns edge vectors.
+     */
+    matrix_type edges() const;
+
+    /**
+     * Returns coordinates of lowest corner of simulation domain.
+     */
+    vector_type origin() const;
+
+    /**
+     * Returns edge lengths.
+     */
     vector_type const& length() const
     {
         return length_;
     }
 
-    template <typename T>
-    T reduce_periodic(T& r) const;
-
-    template <typename T>
-    void extend_periodic(T& r, T const& image) const;
-
-    /** get origin */
-    vector_type origin() const;
-    /** get edge vectors */
-    std::vector<vector_type> edges() const;
-    /** get volume */
+    /*
+     * Calculates volume of box.
+     */
     double volume() const;
+
+    /**
+     * Bind class to Lua.
+     */
+    static void luaopen(lua_State* L);
 
 private:
     /** edge lengths of cuboid */
@@ -63,18 +106,6 @@ private:
     vector_type length_half_;
 };
 
-/**
- * enforce periodic boundary conditions on argument
- *
- * assumes that particle position wraps at most once per call
- *
- * map coordinates to (-length_half_[i], length_half_[i])
- * which is appropriate too for relative vectors
- *
- * return reduction vector in units of box edge lengths
- *
- * A GPU version is found in halmd/mdsim/gpu/box_kernel.cuh
- */
 template <int dimension> template <typename T>
 inline T box<dimension>::reduce_periodic(T& r) const
 {
@@ -94,13 +125,6 @@ inline T box<dimension>::reduce_periodic(T& r) const
     return image;
 }
 
-/**
- * extend periodically reduced distance vector by image vector
- *
- * This is the inverse of reduce_periodic.
- *
- * A GPU version is found in halmd/mdsim/gpu/box_kernel.cuh
- */
 template <int dimension> template <typename T>
 inline void box<dimension>::extend_periodic(T& r, T const& image) const
 {

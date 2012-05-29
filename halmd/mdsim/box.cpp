@@ -1,5 +1,6 @@
 /*
- * Copyright © 2008-2011  Peter Colberg and Felix Höfling
+ * Copyright © 2010-2011 Felix Höfling
+ * Copyright © 2008-2012 Peter Colberg
  *
  * This file is part of HALMD.
  *
@@ -17,34 +18,50 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <boost/bind.hpp>
 #include <boost/shared_ptr.hpp>
 #include <cmath>
-#include <functional> // std::multiplies
-#include <luabind/luabind.hpp>
-#include <luabind/out_value_policy.hpp>
-#include <numeric> // std::accumulate
+#include <functional>
+#include <numeric>
+#include <stdexcept>
+#include <utility>
 
 #include <halmd/io/logger.hpp>
-#include <halmd/io/utility/hdf5.hpp>
 #include <halmd/mdsim/box.hpp>
 #include <halmd/utility/lua/lua.hpp>
-
-using namespace boost;
-using namespace std;
 
 namespace halmd {
 namespace mdsim {
 
-/**
- * Set box edge lengths
- */
 template <int dimension>
-box<dimension>::box(vector_type const& length)
-  : length_(length)
-  , length_half_(0.5 * length_)
+box<dimension>::box(matrix_type const& edges)
 {
-    LOG("edge lengths of simulation box: " << length_);
+    if (edges.size1() != dimension || edges.size2() != dimension) {
+        throw std::invalid_argument("edge vectors have invalid dimensionality");
+    }
+    for (unsigned int i = 0; i < dimension; ++i) {
+        for (unsigned int j = 0; j < dimension; ++j) {
+            if (i == j) {
+                length_[i] = edges(i, i);
+            }
+            else if (edges(i, j) != 0) {
+                throw std::invalid_argument("non-cuboid geomtries are not supported");
+            }
+        }
+    }
+    length_half_ = 0.5 * length_;
+
+    LOG("edge lengths of simulation domain: " << length_);
+}
+
+template <int dimension>
+typename box<dimension>::matrix_type
+box<dimension>::edges() const
+{
+    matrix_type edges = zero_matrix_type(dimension, dimension);
+    for (unsigned int i = 0; i < dimension; ++i) {
+        edges(i, i) = length_[i];
+    }
+    return std::move(edges);
 }
 
 template <int dimension>
@@ -55,20 +72,9 @@ box<dimension>::origin() const
 }
 
 template <int dimension>
-vector<typename box<dimension>::vector_type>
-box<dimension>::edges() const
-{
-    vector<vector_type> edges(dimension, 0);
-    for (int i = 0; i < dimension; ++i) {
-        edges[i][i] = length_[i];
-    }
-    return edges;
-}
-
-template <int dimension>
 double box<dimension>::volume() const
 {
-    return accumulate(length_.begin(), length_.end(), 1., multiplies<double>());
+    return std::accumulate(length_.begin(), length_.end(), 1., std::multiplies<double>());
 }
 
 template <typename box_type>
@@ -81,32 +87,36 @@ wrap_origin(boost::shared_ptr<box_type const> self)
 }
 
 template <typename box_type>
-static std::function<vector<typename box_type::vector_type> ()>
+static std::function<std::vector<typename box_type::vector_type> ()>
 wrap_edges(boost::shared_ptr<box_type const> self)
 {
-    return [=]() {
-        return self->edges();
+    typedef std::vector<typename box_type::vector_type> matrix_type;
+    return [=]() -> matrix_type  {
+        typename box_type::matrix_type const& input = self->edges();
+        matrix_type output(input.size1());
+        for (unsigned int i = 0; i < input.size1(); ++i) {
+            for (unsigned int j = 0; j < input.size2(); ++j) {
+                output[i][j] = input(i, j);
+            }
+        }
+        return std::move(output);
     };
 }
 
+/**
+ * This function is a helper for the H5MD reader, which requires a
+ * reference to a value in order to pick the correct data type.
+ * Note that the reader does not support matrices, therefore
+ * a std::vector of fixed-size vectors is used instead. Both types
+ * have the same Lua representation, a table of tables.
+ */
 template <typename box_type>
 static std::function<std::vector<typename box_type::vector_type>& ()>
-edges_to_length(std::function<typename box_type::vector_type ()>& length)
+make_edges()
 {
-    typedef typename box_type::vector_type vector_type;
-    typedef std::vector<vector_type> edges_type;
-    boost::shared_ptr<edges_type> edges = boost::make_shared<edges_type>();
-    length = [=]() -> vector_type {
-        vector_type length;
-        if (edges->size() != box_type::vector_type::static_size) {
-            throw std::runtime_error("edges have mismatching dimension");
-        }
-        for (unsigned int i = 0; i < box_type::vector_type::static_size; ++i) {
-            length[i] = (*edges)[i][i];
-        }
-        return length;
-    };
-    return [=]() -> edges_type& {
+    typedef std::vector<typename box_type::vector_type> matrix_type;
+    boost::shared_ptr<matrix_type> edges = boost::make_shared<matrix_type>();
+    return [=]() -> matrix_type& {
         return *edges;
     };
 }
@@ -121,7 +131,7 @@ void box<dimension>::luaopen(lua_State* L)
         namespace_("mdsim")
         [
             class_<box, boost::shared_ptr<box> >(class_name.c_str())
-                .def(constructor<vector_type const&>())
+                .def(constructor<matrix_type const&>())
                 .property("length", &box::length)
                 .property("volume", &box::volume)
                 .property("origin", &box::origin)
@@ -130,7 +140,7 @@ void box<dimension>::luaopen(lua_State* L)
                 [
                     def("edges", &wrap_edges<box>)
                   , def("origin", &wrap_origin<box>)
-                  , def("edges_to_length", &edges_to_length<box>, pure_out_value(_1))
+                  , def("make_edges", &make_edges<box>)
                 ]
         ]
     ];

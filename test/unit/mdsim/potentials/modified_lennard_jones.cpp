@@ -26,6 +26,7 @@
 #include <boost/foreach.hpp>
 #include <boost/make_shared.hpp>
 #include <boost/numeric/ublas/assignment.hpp> // <<=
+#include <boost/numeric/ublas/banded.hpp>
 #include <cmath> // std::pow
 #include <limits>
 #include <numeric> // std::accumulate
@@ -206,7 +207,7 @@ void modified_lennard_jones<float_type>::test()
     // put every second particle at the origin
     unsigned int npart = particle->nparticle();
     vector_type dx(0);
-    dx[0] = box->edges()[0][0] / npart / 2;
+    dx[0] = box->edges()(0, 0) / npart / 2;
 
     cuda::host::vector<float4> r_list(particle->position().size());
     for (unsigned int k = 0; k < r_list.size(); ++k) {
@@ -263,6 +264,11 @@ modified_lennard_jones<float_type>::modified_lennard_jones()
     npart_list.push_back(1000);
     npart_list.push_back(2);
     float box_length = 100;
+    unsigned int const dimension = box_type::vector_type::static_size;
+    boost::numeric::ublas::diagonal_matrix<typename box_type::matrix_type::value_type> edges(dimension);
+    for (unsigned int i = 0; i < dimension; ++i) {
+        edges(i, i) = box_length;
+    }
     float cutoff = box_length / 2;
 
     typedef typename potential_type::matrix_type matrix_type;
@@ -290,7 +296,7 @@ modified_lennard_jones<float_type>::modified_lennard_jones()
 
     // create modules
     particle = boost::make_shared<particle_type>(accumulate(npart_list.begin(), npart_list.end(), 0), npart_list.size());
-    box = boost::make_shared<box_type>(typename box_type::vector_type(box_length));
+    box = boost::make_shared<box_type>(edges);
     potential = boost::make_shared<potential_type>(
         particle->nspecies(), particle->nspecies(), cutoff_array
       , epsilon_array, sigma_array, index_m_array, index_n_array

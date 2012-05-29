@@ -25,6 +25,7 @@
 #include <boost/assign.hpp>
 #include <boost/bind.hpp>
 #include <boost/make_shared.hpp>
+#include <boost/numeric/ublas/banded.hpp>
 #include <limits>
 #include <numeric>
 
@@ -151,12 +152,15 @@ ideal_gas<modules_type>::ideal_gas()
     double det = accumulate(box_ratios.begin(), box_ratios.end(), 1., multiplies<double>());
     double volume = npart / density;
     double edge_length = pow(volume / det, 1. / dimension);
-    typename box_type::vector_type box_length = edge_length * box_ratios;
+    boost::numeric::ublas::diagonal_matrix<typename box_type::matrix_type::value_type> edges(dimension);
+    for (unsigned int i = 0; i < dimension; ++i) {
+        edges(i, i) = edge_length * box_ratios[i];
+    }
     slab = 1;
 
     // create modules
     particle = boost::make_shared<particle_type>(npart);
-    box = boost::make_shared<box_type>(box_length);
+    box = boost::make_shared<box_type>(edges);
     random = boost::make_shared<random_type>();
     position = boost::make_shared<position_type>(particle, box, slab);
     velocity = boost::make_shared<velocity_type>(particle, random, temp);

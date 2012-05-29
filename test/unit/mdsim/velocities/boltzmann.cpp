@@ -25,6 +25,7 @@
 
 #include <boost/assign.hpp>
 #include <boost/make_shared.hpp>
+#include <boost/numeric/ublas/banded.hpp>
 #include <limits>
 
 #include <halmd/mdsim/box.hpp>
@@ -142,10 +143,14 @@ boltzmann<modules_type>::boltzmann()
     npart = gpu ? 10000 : 3000;
     temp = 2.0;
     density = 0.3;
-    typename box_type::vector_type box_length = pow(npart / density, 1. / dimension);
+    double box_length = std::pow(npart / density, 1. / dimension);
+    boost::numeric::ublas::diagonal_matrix<typename box_type::matrix_type::value_type> edges(dimension);
+    for (unsigned int i = 0; i < dimension; ++i) {
+        edges(i, i) = box_length;
+    }
 
     particle = boost::make_shared<particle_type>(npart);
-    box = boost::make_shared<box_type>(box_length);
+    box = boost::make_shared<box_type>(edges);
     random = boost::make_shared<random_type>();
     velocity = boost::make_shared<velocity_type>(particle, random, temp);
     clock = boost::make_shared<clock_type>();

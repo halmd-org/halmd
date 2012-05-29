@@ -25,6 +25,7 @@
 
 #include <array>
 #include <boost/numeric/ublas/assignment.hpp>
+#include <boost/numeric/ublas/banded.hpp>
 #include <cmath>
 #include <limits>
 
@@ -190,7 +191,7 @@ void test_local_r4<float_type>::test()
     // put every second particle at the origin
     unsigned int npart = particle->nparticle();
     vector_type dx(0);
-    dx[0] = box->edges()[0][0] / npart / 2;
+    dx[0] = box->edges()(0, 0) / npart / 2;
 
     cuda::host::vector<float4> r_list(particle->position().size());
     for (unsigned int k = 0; k < r_list.size(); ++k) {
@@ -263,6 +264,11 @@ test_local_r4<float_type>::test_local_r4()
     npart_list = {500, 300};
     // the box length should not be greater than 2*r_c
     float box_length = 10;
+    unsigned int const dimension = box_type::vector_type::static_size;
+    boost::numeric::ublas::diagonal_matrix<typename box_type::matrix_type::value_type> edges(dimension);
+    for (unsigned int i = 0; i < dimension; ++i) {
+        edges(i, i) = box_length;
+    }
     // smoothing parameter
     double const h = 1. / 256;
 
@@ -282,7 +288,7 @@ test_local_r4<float_type>::test_local_r4()
 
     // create modules
     particle = boost::make_shared<particle_type>(accumulate(npart_list.begin(), npart_list.end(), 0), npart_list.size());
-    box = boost::make_shared<box_type>(typename box_type::vector_type(box_length));
+    box = boost::make_shared<box_type>(edges);
     potential = boost::make_shared<potential_type>(particle->nspecies(), particle->nspecies(), cutoff_array, epsilon_array, sigma_array);
     host_potential = boost::make_shared<host_potential_type>(particle->nspecies(), particle->nspecies(), cutoff_array, epsilon_array, sigma_array);
     neighbour = boost::make_shared<neighbour_type>(particle);
