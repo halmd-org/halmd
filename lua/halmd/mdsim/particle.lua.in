@@ -172,7 +172,7 @@ local M = module(function(args)
     local label = args.label or "all"
 
     -- select particle class
-    local dimension = assert(box.dimension)
+    local dimension = #box.length
     local particle = assert(particle[dimension])
 
     -- construct particle instance

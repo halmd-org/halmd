@@ -100,7 +100,7 @@ local M = module(function(args)
     if not box then
         error("missing parameter: box", 2)
     end
-    local dimension = assert(box.dimension)
+    local dimension = #box.length
     local timestep = args.timestep
     if timestep then
         clock.set_timestep(timestep)

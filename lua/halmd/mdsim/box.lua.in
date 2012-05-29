@@ -60,13 +60,13 @@ local h5 = assert(libhalmd.h5)
 --    but upon the start of the simulation. The writer is connected
 --    to the on_start signal of sampler.
 --
--- .. attribute:: dimension
---
---    Dimensionality of system.
---
 -- .. attribute:: length
 --
 --    Edge lengths as a sequence.
+--
+--    This attribute can be used to infer the dimensionality of the system::
+--
+--       local dimension = #box.length
 --
 -- .. method:: origin()
 --

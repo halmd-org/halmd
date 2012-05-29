@@ -48,7 +48,7 @@ local M = module(function(args)
     local max_count = assert(args.max_count)
     assert(wavenumber or max_wavenumber)
     local box = assert(args.box)
-    local dimension = assert(box.dimension)
+    local dimension = #box.length
 
     local wavevector = assert(wavevector_wrapper[dimension])
     if wavenumber then

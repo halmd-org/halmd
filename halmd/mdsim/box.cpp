@@ -71,12 +71,6 @@ double box<dimension>::volume() const
     return accumulate(length_.begin(), length_.end(), 1., multiplies<double>());
 }
 
-template <int dimension>
-static int wrap_dimension(box<dimension> const&)
-{
-    return dimension;
-}
-
 template <typename box_type>
 static std::function<typename box_type::vector_type ()>
 wrap_origin(boost::shared_ptr<box_type const> box)
@@ -124,7 +118,6 @@ void box<dimension>::luaopen(lua_State* L)
         [
             class_<box, boost::shared_ptr<box> >(class_name.c_str())
                 .def(constructor<vector_type const&>())
-                .property("dimension", &wrap_dimension<dimension>)
                 .property("length", &box::length)
                 .property("volume", &box::volume)
                 .property("origin", &wrap_origin<box>)
