@@ -74,7 +74,10 @@ public:
     /**
      * Returns edge vectors.
      */
-    matrix_type edges() const;
+    matrix_type const& edges() const
+    {
+        return edges_;
+    }
 
     /**
      * Returns coordinates of lowest corner of simulation domain.
@@ -100,6 +103,8 @@ public:
     static void luaopen(lua_State* L);
 
 private:
+    /** edge vectors of cuboid */
+    matrix_type edges_;
     /** edge lengths of cuboid */
     vector_type length_;
     /** store half value for efficient use in reduce_periodic() */

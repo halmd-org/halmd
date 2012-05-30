@@ -38,30 +38,19 @@ box<dimension>::box(matrix_type const& edges)
     if (edges.size1() != dimension || edges.size2() != dimension) {
         throw std::invalid_argument("edge vectors have invalid dimensionality");
     }
+    edges_ = zero_matrix_type(dimension, dimension);
     for (unsigned int i = 0; i < dimension; ++i) {
-        for (unsigned int j = 0; j < dimension; ++j) {
-            if (i == j) {
-                length_[i] = edges(i, i);
-            }
-            else if (edges(i, j) != 0) {
-                throw std::invalid_argument("non-cuboid geomtries are not supported");
-            }
-        }
+        edges_(i, i) = edges(i, i);
+    }
+    if (norm_inf(edges_ - edges) != 0) {
+        throw std::invalid_argument("non-cuboid geomtries are not implemented");
+    }
+    for (unsigned int i = 0; i < dimension; ++i) {
+        length_[i] = edges_(i, i);
     }
     length_half_ = 0.5 * length_;
 
     LOG("edge lengths of simulation domain: " << length_);
-}
-
-template <int dimension>
-typename box<dimension>::matrix_type
-box<dimension>::edges() const
-{
-    matrix_type edges = zero_matrix_type(dimension, dimension);
-    for (unsigned int i = 0; i < dimension; ++i) {
-        edges(i, i) = length_[i];
-    }
-    return std::move(edges);
 }
 
 template <int dimension>
