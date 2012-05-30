@@ -3,7 +3,14 @@ set(CMAKE_BUILD_TYPE_INIT "Release")
 if(DEFINED CMAKE_CXX_COMPILER_ID)
   if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
 
-    set(CMAKE_CXX_FLAGS_INIT "-fPIC -Wall -std=c++11 -pedantic")
+    # HALMD requires a C++11 compiler, e.g. GCC 4.7. Until major GNU/Linux
+    # distributions have upgraded their stable releases to default to GCC 4.7,
+    # we also support GCC 4.6 in experimental C++0x mode.
+    if(NOT CMAKE_CXX_COMPILER_VERSION VERSION_LESS "4.7")
+      set(CMAKE_CXX_FLAGS_INIT "-fPIC -Wall -std=c++11 -pedantic")
+    else()
+      set(CMAKE_CXX_FLAGS_INIT "-fPIC -Wall -std=c++0x -pedantic")
+    endif()
     set(CMAKE_CXX_FLAGS_RELEASE_INIT "-O3 -DNDEBUG -DBOOST_DISABLE_ASSERTS -fvisibility=hidden")
 
   elseif(CMAKE_CXX_COMPILER_ID STREQUAL "Clang")

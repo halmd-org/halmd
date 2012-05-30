@@ -172,7 +172,7 @@ HALMD_GPU_ENABLED T error_of_mean(accumulator<T> const& acc)
 } // namespace detail
 } // namespace numeric
 
-#ifndef HALMD_NO_CXX11
+#ifndef HALMD_NO_TEMPLATE_ALIASES
 // import into top-level namespace
 template <typename T>
 using accumulator = halmd::numeric::detail::accumulator<T>;
