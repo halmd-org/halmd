@@ -51,85 +51,93 @@ local function liquid(args)
     -- create simulation domain with periodic boundary conditions
     local box = mdsim.box({length = length})
 
-    -- label particles A, B, …
-
     -- create system state
     local particle = mdsim.particle({box = box, particles = nparticle, species = nspecies})
-    -- add velocity-Verlet integrator
-    local integrator = mdsim.integrators.verlet({box = box, particle = particle, timestep = args.timestep})
-    -- pair potential
-    local potential = mdsim.potentials.lennard_jones({particle = particle, cutoff = 2.5})
-    -- add force
-    local force = mdsim.forces.pair_trunc{box = box, particle = particle, potential = potential}
-    -- set initial particle positions
-    local lattice = mdsim.positions.lattice{box = box, particle = particle}
-    lattice.set()
-    -- set initial particle velocities
-    local boltzmann = mdsim.velocities.boltzmann{particle = particle, temperature = args.temperature}
-    boltzmann.set()
-
-    -- H5MD file writer
-    local writer = writers.h5md({path = ("%s.trj"):format(args.output)})
-    -- write box specification to H5MD file
-    box.writer(writer)
-
-    -- Set particle species, with continuous range of tags per species
+    -- set particle species, with continuous range of tags per species
     local species = {}
     for s = 1, nspecies do
         local nparticle = assert(args.particles[s])
         for i = 1, nparticle do table.insert(species, s) end
     end
     particle.set_species(species)
+    -- set initial particle positions
+    local lattice = mdsim.positions.lattice({box = box, particle = particle})
+    lattice.set()
+    -- set initial particle velocities
+    local boltzmann = mdsim.velocities.boltzmann({
+        particle = particle
+      , temperature = args.temperature
+    })
+    boltzmann.set()
 
-    local particle_group = mdsim.particle_groups.all{
-        particle = particle -- FIXME , species = species
-    }
+    -- truncated Lennard-Jones potential
+    local potential = mdsim.potentials.lennard_jones({particle = particle, cutoff = 2.5})
+    -- smoothing at potential cutoff
+    local trunc = mdsim.forces.trunc.local_r4({h = 0.005})
+    -- compute forces
+    local force = mdsim.forces.pair_trunc({
+        box = box
+      , particle = particle
+      , potential = potential
+      , trunc = trunc
+    })
+
+    -- H5MD file writer
+    local writer = writers.h5md({path = ("%s.h5"):format(args.output)})
+    -- write box specification to H5MD file
+    box.writer(writer)
+
+    -- select all particles
+    local particle_group = mdsim.particle_groups.all({particle = particle})
+
+    -- sample phase space
     local phase_space = observables.phase_space({box = box, group = particle_group})
     -- write trajectory of particle groups to H5MD file
     phase_space.writer(writer, {every = args.sampling.trajectory})
 
-    -- H5MD file writer
-    local writer = writers.h5md({path = ("%s.obs"):format(args.output)})
     -- Sample macroscopic state variables.
     local msv = observables.thermodynamics({box = box, group = particle_group})
     msv.writer(writer, {every = args.sampling.state_vars})
 
-    -- Sample static structure factors, construct density modes before.
-    -- FIXME local density_mode = observables.density_mode{
-    -- FIXME     phase_space = phase_space, max_wavevector = 15
-    -- FIXME }
-    -- FIXME observables.ssf{density_mode = density_mode, every = args.sampling.structure}
-
-    -- setup blocking scheme for correlation functions
-    local max_lag = args.steps * integrator.timestep / 10
-    local blocking_scheme = observables.dynamics.blocking_scheme({max_lag = max_lag, every = 100, size = 10})
-
-    -- compute mean-square displacement
-    local msd = observables.dynamics.mean_square_displacement({phase_space = phase_space})
-    blocking_scheme.correlation(msd, writer)
-    -- compute mean-quartic displacement
-    local mqd = observables.dynamics.mean_quartic_displacement({phase_space = phase_space})
-    blocking_scheme.correlation(mqd, writer)
-    -- compute velocity autocorrelation function
-    local vacf = observables.dynamics.velocity_autocorrelation({phase_space = phase_space})
-    blocking_scheme.correlation(vacf, writer)
-    -- compute intermediate scattering function from density modes different than those used for ssf computation
-    -- FIXME density_mode = observables.density_mode{
-    -- FIXME     phase_space = phase_space, max_wavevector = 12, decimation = 2
-    -- FIXME }
-    -- FIXME observables.dynamics.correlation{sampler = density_mode, correlation = "intermediate_scattering_function"}
-
-    -- setup simulation box
+    -- setup simulation box and sample initial state
     observables.sampler.setup()
 
-    -- estimate remaining runtime
-    local runtime = observables.runtime_estimate({steps = args.steps, first = 10, interval = 900, sample = 60})
+    local function run(steps)
+        -- estimate remaining runtime
+        local runtime = observables.runtime_estimate({
+            steps = steps
+          , first = 10
+          , interval = 900
+          , sample = 60
+        })
+        -- run simulation
+        observables.sampler.run(steps)
+        -- log profiler results
+        halmd.utility.profiler.profile()
+    end
 
-    -- run simulation
-    observables.sampler.run(args.steps)
+    -- add velocity-Verlet integrator with Andersen thermostat
+    local integrator = mdsim.integrators.verlet_nvt_andersen({
+        box = box
+      , particle = particle
+      , timestep = args.timestep.thermostat
+      , temperature = args.temperature
+      , rate = args.rate
+    })
+    -- thermostat system
+    run(args.steps.thermostat)
 
-    -- log profiler results
-    halmd.utility.profiler.profile()
+    -- remove velocity-Verlet integrator with Andersen thermostat
+    integrator:disconnect()
+
+    -- add velocity-Verlet integrator
+    local integrator = mdsim.integrators.verlet({
+        box = box
+      , particle = particle
+      , timestep = args.timestep.equilibrate
+    })
+    -- thermostat system
+    run(args.steps.equilibrate)
 end
 
 --
@@ -141,7 +149,7 @@ local function parse_args()
     parser.add_argument("output,o", {type = "string", action = function(args, key, value)
         -- substitute current time
         args[key] = os.date(value)
-    end, default = "liquid_%Y%m%d_%H%M%S", help = "prefix of output files"})
+    end, default = "simple_liquid_equilibrate_%Y%m%d_%H%M%S", help = "prefix of output files"})
 
     parser.add_argument("verbose,v", {type = "accumulate", action = function(args, key, value)
         local level = {
@@ -164,19 +172,19 @@ local function parse_args()
     end, default = {1, 1, 1}, help = "relative aspect ratios of simulation box"})
     parser.add_argument("masses", {type = "vector", dtype = "number", default = {1}, help = "particle masses"})
     parser.add_argument("temperature", {type = "number", default = 1.12, help = "initial system temperature"})
+    parser.add_argument("rate", {type = "number", default = 0.1, help = "heat bath collision rate"})
 
-    parser.add_argument("ensemble", {type = "string", choices = {
-        nve = "Constant NVE",
-        nvt = "Constant NVT",
-    }, default = "nve", help = "statistical ensemble"})
+    local steps = parser.add_argument_group("steps", {help = "number of simulation steps"})
+    steps.add_argument("thermostat", {type = "integer", default = 10000, help = "with Verlet and Andersen thermostat"})
+    steps.add_argument("equilibrate", {type = "integer", default = 10000, help = "with Verlet"})
 
-    parser.add_argument("steps", {type = "integer", default = 10000, help = "number of simulation steps"})
-    parser.add_argument("timestep", {type = "number", default = 0.001, help = "integration time step"})
+    local timestep = parser.add_argument_group("timestep", {help = "integration time step"})
+    timestep.add_argument("thermostat", {type = "number", default = 0.01, help = "of Verlet and Andersen thermostat"})
+    timestep.add_argument("equilibrate", {type = "number", default = 0.001, help = "of Verlet"})
 
     local sampling = parser.add_argument_group("sampling", {help = "sampling intervals"})
-    sampling.add_argument("trajectory", {type = "integer", default = 1000, help = "sampling interval for trajectory"})
-    sampling.add_argument("structure", {type = "integer", default = 1000, help = "sampling interval for structural properties"})
-    sampling.add_argument("state-vars", {type = "integer", default = 1000, help = "sampling interval for state variables"})
+    sampling.add_argument("trajectory", {type = "integer", default = 1000, help = "for trajectory"})
+    sampling.add_argument("state-vars", {type = "integer", default = 1000, help = "for state variables"})
 
     return parser.parse_args()
 end
