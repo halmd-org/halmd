@@ -76,6 +76,14 @@ string file::path() const
     return file_.getFileName();
 }
 
+static std::function<void ()>
+wrap_close(boost::shared_ptr<file> self)
+{
+    return [=]() {
+        self->close();
+    };
+}
+
 void file::luaopen(lua_State* L)
 {
     using namespace luabind;
@@ -89,7 +97,7 @@ void file::luaopen(lua_State* L)
                 [
                     class_<file, boost::shared_ptr<file> >("file")
                         .def(constructor<string const&>())
-                        .def("close", &file::close)
+                        .property("close", &wrap_close)
                         .property("root", &file::root)
                         .property("path", &file::path)
                         .property("version", &file::version)

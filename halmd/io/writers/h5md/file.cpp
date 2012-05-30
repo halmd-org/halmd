@@ -86,10 +86,20 @@ std::string file::author()
     return realname();
 }
 
-static signal<void ()>::slot_function_type
-wrap_flush(boost::shared_ptr<file> instance)
+static std::function<void ()>
+wrap_close(boost::shared_ptr<file> self)
 {
-    return bind(&file::flush, instance);
+    return [=]() {
+        self->close();
+    };
+}
+
+static std::function<void ()>
+wrap_flush(boost::shared_ptr<file> self)
+{
+    return [=]() {
+        self->flush();
+    };
 }
 
 void file::luaopen(lua_State* L)
@@ -105,9 +115,8 @@ void file::luaopen(lua_State* L)
                 [
                     class_<file, boost::shared_ptr<file> >("file")
                         .def(constructor<string const&>())
-                        // wrap as slot to support periodic flushing of file
+                        .property("close", &wrap_close)
                         .property("flush", &wrap_flush)
-                        .def("close", &file::close)
                         .property("root", &file::root)
                         .property("path", &file::path)
                         .scope

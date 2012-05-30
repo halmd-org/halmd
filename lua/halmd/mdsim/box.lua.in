@@ -160,7 +160,7 @@ function M.reader(file)
     end
     local edges = box.make_edges()
     self:on_read(edges, {"edges"})
-    self:read()
+    self.read()
     return edges()
 end
 
