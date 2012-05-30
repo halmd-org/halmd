@@ -140,7 +140,8 @@ local function format_group_argument(option)
     else
         name = ("    %s"):format(long_name)
     end
-    return name, option.description
+    local desc = ("  %s"):format(option.description)
+    return name, desc
 end
 
 --
