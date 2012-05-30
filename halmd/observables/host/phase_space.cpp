@@ -108,6 +108,7 @@ void phase_space<dimension, float_type>::set(boost::shared_ptr<sample_type const
     typename particle_type::velocity_array_type& particle_velocity = particle_->velocity();
     typename particle_type::species_array_type& particle_species = particle_->species();
     typename particle_type::mass_array_type& particle_mass = particle_->mass();
+    typename particle_type::species_type const nspecies = particle_->nspecies();
 
     typename sample_type::position_array_type const& sample_position = sample->position();
     typename sample_type::velocity_array_type const& sample_velocity = sample->velocity();
@@ -130,10 +131,14 @@ void phase_space<dimension, float_type>::set(boost::shared_ptr<sample_type const
         vector_type shift;
         do {
             image += (shift = box_->reduce_periodic(r));
-        } while(shift != vector_type(0));
+        } while (shift != vector_type(0));
 
         particle_velocity[i] = sample_velocity[tag];
-        particle_species[i] = sample_species[tag];
+        unsigned int species = sample_species[tag];
+        if (species >= nspecies) {
+            throw std::invalid_argument("invalid species");
+        }
+        particle_species[i] = species;
         particle_mass[i] = sample_mass[tag];
         ++tag;
     }

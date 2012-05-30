@@ -234,6 +234,7 @@ void phase_space<host::samples::phase_space<dimension, float_type> >::set(boost:
     scoped_timer_type timer(runtime_.set);
 
     // assign particle coordinates and types
+    typename particle_type::species_type const nspecies = particle_->nspecies();
     typename sample_type::position_array_type const& sample_position = sample->position();
     typename sample_type::velocity_array_type const& sample_velocity = sample->velocity();
     typename sample_type::species_array_type const& sample_species = sample->species();
@@ -255,7 +256,11 @@ void phase_space<host::samples::phase_space<dimension, float_type> >::set(boost:
     std::size_t tag = 0;
     for (std::size_t i : h_group_) {
         assert(i < h_r_.size());
-        h_r_[i] <<= tie(sample_position[tag], sample_species[tag]);
+        unsigned int species = sample_species[tag];
+        if (species >= nspecies) {
+            throw std::invalid_argument("invalid species");
+        }
+        h_r_[i] <<= tie(sample_position[tag], species);
         h_v_[i] <<= tie(sample_velocity[tag], sample_mass[tag]);
         ++tag;
     }
