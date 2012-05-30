@@ -47,28 +47,37 @@ else()
   message(STATUS "Space dimension: ${DIMENSION}")
 endif()
 
+if(DIMENSION EQUAL 3)
+  set(EDGE_RATIOS "1,2,1.01")
+else()
+  set(EDGE_RATIOS "1,2")
+endif()
+
 execute_halmd(
-  --script "@CMAKE_SOURCE_DIR@/examples/liquid/liquid.lua"
+  "${BACKEND_OPTION}"
+  "@CMAKE_SOURCE_DIR@/examples/liquid/simple_liquid_equilibrate.lua"
   --verbose
   --output "${OUTPUT_PREFIX}"
-  --steps 1000
-  box --dimension "${DIMENSION}"--particles=300 --density 0.1
-  trajectory --every=1000
+  --particles 300
+  --ratios "${EDGE_RATIOS}"
+  --density 0.1
+  --steps thermostat=1000 equilibrate=1000
+  --sampling trajectory=1000
 )
 
 execute_halmd(
-  --script "@CMAKE_SOURCE_DIR@/examples/liquid/liquid.lua"
+  "${BACKEND_OPTION}"
+  "@CMAKE_SOURCE_DIR@/examples/liquid/simple_liquid_measure.lua"
   --verbose
   --output "${OUTPUT_PREFIX}_continued"
+  --trajectory "${OUTPUT_PREFIX}.h5"
   --steps 1000
-  "${BACKEND_OPTION}"
-  trajectory --file "${OUTPUT_PREFIX}.trj"
-  trajectory --every=1000
+  --sampling trajectory=1000
 )
 
 file(REMOVE
-  "${OUTPUT_PREFIX}.trj"
+  "${OUTPUT_PREFIX}.h5"
   "${OUTPUT_PREFIX}.log"
   "${OUTPUT_PREFIX}_continued.log"
-  "${OUTPUT_PREFIX}_continued.trj"
+  "${OUTPUT_PREFIX}_continued.h5"
 )
