@@ -315,9 +315,17 @@ end
 --
 --    The returned phase space sample has these attributes.
 --
---       .. attribute:: size
+--       .. attribute:: nparticle
 --
 --          Returns number of particles.
+--
+--       .. attribute:: nspecies
+--
+--          Returns number of species.
+--
+--          .. note::
+--
+--             This attribute is determined from the maximum element of the species array.
 --
 --       .. attribute:: dimension
 --

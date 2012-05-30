@@ -35,9 +35,15 @@ namespace host {
 namespace samples {
 
 template <typename phase_space_type>
-static std::size_t wrap_size(phase_space_type const& self)
+static std::size_t wrap_nparticle(phase_space_type const& self)
 {
     return self.position().size();
+}
+
+template <typename phase_space_type>
+static std::size_t wrap_nspecies(phase_space_type const& self)
+{
+    return 1 + *std::max_element(self.species().begin(), self.species().end());
 }
 
 template <typename phase_space_type>
@@ -152,7 +158,8 @@ void phase_space<dimension, float_type>::luaopen(lua_State* L)
                 [
                     class_<phase_space, boost::shared_ptr<phase_space> >(class_name.c_str())
                         .def(constructor<std::size_t>())
-                        .property("size", &wrap_size<phase_space>)
+                        .property("nparticle", &wrap_nparticle<phase_space>)
+                        .property("nspecies", &wrap_nspecies<phase_space>)
                         .property("dimension", &wrap_dimension<phase_space>)
                         .def("position", &wrap_position<phase_space>, pure_out_value(_2))
                         .def("velocity", &wrap_velocity<phase_space>, pure_out_value(_2))
