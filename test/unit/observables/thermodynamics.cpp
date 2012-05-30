@@ -250,8 +250,8 @@ void lennard_jones_fluid<modules_type>::test()
     const double en_limit = max(2e-5, steps * 1e-12);
     BOOST_CHECK_SMALL(max_en_diff / fabs(en_tot), en_limit);
 
-    // allow larger tolerance for the host simulation with fewer particles
-    BOOST_CHECK_CLOSE_FRACTION(temp, mean(temp_), gpu ? 3e-3 : 6e-3);
+    // use tolerance of 4.5σ, see below
+    BOOST_CHECK_CLOSE_FRACTION(temp, mean(temp_), 4.5 * error_of_mean(temp_));
     BOOST_CHECK_CLOSE_FRACTION(density, (float)thermodynamics->density(), eps_float);
 
     if (dimension == 3) {
@@ -277,8 +277,11 @@ void lennard_jones_fluid<modules_type>::test()
         // values from Johnson et al.: P = 1.023, Epot = -1.673  (Npart = 864)
         // values from RFA theory (Ayadim et al.): P = 1.0245, Epot = -1.6717
         // (allow larger tolerance for the host simulation with fewer particles)
-        BOOST_CHECK_CLOSE_FRACTION(mean(press), 1.023, gpu ? 3e-3 : 6e-3);
-        BOOST_CHECK_CLOSE_FRACTION(mean(en_pot), -1.673, gpu ? 2e-3 : 4e-3);
+        //
+        // tolerances are 4.5σ, where σ is taken empirically as the error of mean,
+        // with this choice, the test should pass with 99.999% probability
+        BOOST_CHECK_CLOSE_FRACTION(mean(press), 1.023, 4.5 * error_of_mean(press));
+        BOOST_CHECK_CLOSE_FRACTION(mean(en_pot), -1.673, 4.5 * error_of_mean(en_pot));
         // our own measurements using HAL's MD package FIXME find reference values
         BOOST_CHECK_CLOSE_FRACTION(cV, 1.648, gpu ? 1e-2 : 3e-2);
         BOOST_CHECK_CLOSE_FRACTION(chi_S, 0.35, 0.2);
