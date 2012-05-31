@@ -8,6 +8,16 @@ add_test(unit/utility/demangle
   test_unit_utility_demangle --log_level=test_suite
 )
 
+add_executable(test_unit_utility_cache
+  cache.cpp
+)
+target_link_libraries(test_unit_utility_cache
+  ${HALMD_TEST_LIBRARIES}
+)
+add_test(unit/utility/cache
+  test_unit_utility_cache --log_level=test_suite
+)
+
 add_executable(test_unit_utility_multi_index
   multi_index.cpp
 )
