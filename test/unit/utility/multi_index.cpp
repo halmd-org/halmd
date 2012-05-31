@@ -23,6 +23,7 @@
 #include <boost/array.hpp>
 
 #include <halmd/utility/multi_index.hpp>
+#include <test/tools/ctest.hpp>
 
 using namespace halmd;
 

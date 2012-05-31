@@ -29,6 +29,7 @@
 
 #include <halmd/utility/demangle.hpp>
 #include <halmd/utility/raw_array.hpp>
+#include <test/tools/ctest.hpp>
 #include <test/tools/init.hpp>
 
 template <typename T>
