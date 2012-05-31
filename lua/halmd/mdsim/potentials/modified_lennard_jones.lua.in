@@ -37,15 +37,17 @@ local assert = assert
 
 local M = module("halmd.mdsim.potentials.modified_lennard_jones")
 
+local fixed_array = {__len = function() return 3 end, __index = function() return 0 end}
+
 --
 -- construct modified Lennard-Jones module
 --
 function M.__new(args)
-    local cutoff = args.cutoff or {2.5, 2.5, 2.5} -- default value
-    local epsilon = args.epsilon or {1.0, 1.5, 0.5} -- default value
-    local sigma = args.sigma or {1.0, 0.8, 0.88} -- default value
-    local index_m = args.index_repulsion or {12, 12, 12} -- default value
-    local index_n = args.index_attraction or {6, 6, 6} -- default value
+    local cutoff  = setmetatable(args.cutoff           or {2.5, 2.5, 2.5 }, fixed_array) -- default value
+    local epsilon = setmetatable(args.epsilon          or {1.0, 1.5, 0.5 }, fixed_array) -- default value
+    local sigma   = setmetatable(args.sigma            or {1.0, 0.8, 0.88}, fixed_array) -- default value
+    local index_m = setmetatable(args.index_repulsion  or {12 , 12 , 12  }, fixed_array) -- default value
+    local index_n = setmetatable(args.index_attraction or {6  , 6  , 6   }, fixed_array) -- default value
 
     local particle = mdsim.particle() -- singleton
     local logger = assert(args.logger)
@@ -82,11 +84,11 @@ end
 -- read module parameters from HDF5 group
 --
 function M.read_parameters(args, group)
-    -- FIXME args.cutoff = group:read_attribute("cutoff", h5.float_array())
-    -- FIXME args.epsilon = group:read_attribute("epsilon", h5.float_array())
-    -- FIXME args.sigma = group:read_attribute("sigma", h5.float_array())
-    -- FIXME args.index_repulsion = group:read_attribute("index_repulsion", h5.uint_array())
-    -- FIXME args.index_attraction = group:read_attribute("index_attraction", h5.uint_array())
+    args.cutoff = group:read_attribute("cutoff", h5.float_array())
+    args.epsilon = group:read_attribute("epsilon", h5.float_array())
+    args.sigma = group:read_attribute("sigma", h5.float_array())
+    args.index_repulsion = group:read_attribute("index_repulsion", h5.uint_array())
+    args.index_attraction = group:read_attribute("index_attraction", h5.uint_array())
 end
 
 --
