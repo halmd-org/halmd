@@ -215,7 +215,7 @@ phase_space<modules_type>::phase_space()
     }
 
     // create modules
-    particle = boost::make_shared<particle_type>(accumulate(npart.begin(), npart.end(), 0));
+    particle = boost::make_shared<particle_type>(accumulate(npart.begin(), npart.end(), 0), npart.size());
     box = boost::make_shared<box_type>(edges);
     input_sample = boost::make_shared<input_sample_type>(particle->nparticle());
     clock = boost::make_shared<clock_type>();
