@@ -60,11 +60,13 @@ particle<dimension, float_type>::particle(size_t nparticle, unsigned int nspecie
   , aux_flag_(false)
   , aux_valid_(false)
 {
+    cache_proxy<reverse_tag_array_type> reverse_tag = reverse_tag_;
+
     std::fill(position_.begin(), position_.end(), 0);
     std::fill(image_.begin(), image_.end(), 0);
     std::fill(velocity_.begin(), velocity_.end(), 0);
     std::iota(tag_.begin(), tag_.end(), 0);
-    std::iota(reverse_tag_.begin(), reverse_tag_.end(), 0);
+    std::iota(reverse_tag->begin(), reverse_tag->end(), 0);
     std::fill(species_.begin(), species_.end(), 0);
     std::fill(mass_.begin(), mass_.end(), 1);
     std::fill(force_.begin(), force_.end(), 0);
@@ -111,6 +113,8 @@ void particle<dimension, float_type>::rearrange(std::vector<unsigned int> const&
 {
     scoped_timer_type timer(runtime_.rearrange);
 
+    cache_proxy<reverse_tag_array_type> reverse_tag = reverse_tag_;
+
     permute(position_.begin(), position_.end(), index.begin());
     permute(image_.begin(), image_.end(), index.begin());
     permute(velocity_.begin(), velocity_.end(), index.begin());
@@ -121,8 +125,8 @@ void particle<dimension, float_type>::rearrange(std::vector<unsigned int> const&
 
     // update reverse tags
     for (unsigned int i = 0; i < tag_.size(); ++i) {
-        assert(tag_[i] < reverse_tag_.size());
-        reverse_tag_[tag_[i]] = i;
+        assert(tag_[i] < reverse_tag->size());
+        (*reverse_tag)[tag_[i]] = i;
     }
 }
 

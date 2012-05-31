@@ -68,6 +68,8 @@ particle<dimension, float_type>::particle(size_t nparticle, unsigned int nspecie
   , aux_flag_(false)
   , aux_valid_(false)
 {
+    cache_proxy<reverse_tag_array_type> g_reverse_tag = g_reverse_tag_;
+
     LOG_DEBUG("number of CUDA execution blocks: " << dim.blocks_per_grid());
     LOG_DEBUG("number of CUDA execution threads per block: " << dim.threads_per_block());
 
@@ -111,7 +113,7 @@ particle<dimension, float_type>::particle(size_t nparticle, unsigned int nspecie
 #endif
         g_image_.reserve(dim.threads());
         g_tag_.reserve(dim.threads());
-        g_reverse_tag_.reserve(dim.threads());
+        g_reverse_tag->reserve(dim.threads());
         g_force_.reserve(dim.threads());
         g_en_pot_.reserve(dim.threads());
         g_stress_pot_.reserve(dim.threads());
@@ -128,7 +130,7 @@ particle<dimension, float_type>::particle(size_t nparticle, unsigned int nspecie
     cuda::memset(g_velocity_, 0, g_velocity_.capacity());
     cuda::memset(g_image_, 0, g_image_.capacity());
     cuda::memset(g_tag_, 0, g_tag_.capacity());
-    cuda::memset(g_reverse_tag_, 0, g_reverse_tag_.capacity());
+    cuda::memset(*g_reverse_tag, 0, g_reverse_tag->capacity());
     cuda::memset(g_force_, 0, g_force_.capacity());
     cuda::memset(g_en_pot_, 0, g_en_pot_.capacity());
     cuda::memset(g_stress_pot_, 0, g_stress_pot_.capacity());
@@ -190,12 +192,13 @@ void particle<dimension, float_type>::prepare()
 template <int dimension, typename float_type>
 void particle<dimension, float_type>::set()
 {
+    cache_proxy<reverse_tag_array_type> g_reverse_tag = g_reverse_tag_;
     try {
         cuda::configure(dim.grid, dim.block);
         get_particle_kernel<dimension>().gen_index(g_tag_);
         cuda::thread::synchronize();
         cuda::configure(dim.grid, dim.block);
-        get_particle_kernel<dimension>().gen_index(g_reverse_tag_);
+        get_particle_kernel<dimension>().gen_index(*g_reverse_tag);
         cuda::thread::synchronize();
     }
     catch (cuda::error const&) {
@@ -211,6 +214,9 @@ template <int dimension, typename float_type>
 void particle<dimension, float_type>::rearrange(cuda::vector<unsigned int> const& g_index)
 {
     scoped_timer_type timer(runtime_.rearrange);
+
+    cache_proxy<reverse_tag_array_type> g_reverse_tag = g_reverse_tag_;
+
     cuda::vector<float4> g_r_buf(g_tag_.size());
     cuda::vector<gpu_vector_type> g_image_buf(g_tag_.size());
     cuda::vector<float4> g_v_buf(g_tag_.size());
@@ -219,7 +225,7 @@ void particle<dimension, float_type>::rearrange(cuda::vector<unsigned int> const
     g_r_buf.reserve(g_position_.capacity());
     g_image_buf.reserve(g_image_.capacity());
     g_v_buf.reserve(g_velocity_.capacity());
-    g_tag.reserve(g_reverse_tag_.capacity());
+    g_tag.reserve(g_reverse_tag->capacity());
 
     cuda::configure(dim.grid, dim.block);
     get_particle_kernel<dimension>().r.bind(g_position_);
@@ -234,8 +240,8 @@ void particle<dimension, float_type>::rearrange(cuda::vector<unsigned int> const
     cuda::copy(g_tag, g_tag_);
 
     cuda::configure(dim.grid, dim.block);
-    get_particle_kernel<dimension>().gen_index(g_reverse_tag_);
-    radix_sort(g_tag.begin(), g_tag.end(), g_reverse_tag_.begin());
+    get_particle_kernel<dimension>().gen_index(*g_reverse_tag);
+    radix_sort(g_tag.begin(), g_tag.end(), g_reverse_tag->begin());
 }
 
 template <typename particle_type>

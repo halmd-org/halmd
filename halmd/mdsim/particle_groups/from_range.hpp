@@ -41,6 +41,7 @@ class from_range
 {
 private:
     typedef particle_group<particle_type> _Base;
+    typedef typename particle_type::reverse_tag_array_type reverse_tag_array_type;
 
 public:
     typedef typename _Base::iterator iterator;
@@ -106,7 +107,7 @@ from_range<particle_type>::from_range(
     if (end_ <= begin_) {
         throw std::logic_error("particle_group: inverse tag ranges not allowed");
     }
-    if (end_ > particle_->reverse_tag().size()) {
+    if (end_ > particle_->nparticle()) {
         throw std::logic_error("particle_group: tag range exceeds particle array");
     }
 }
@@ -115,14 +116,16 @@ template <typename particle_type>
 typename from_range<particle_type>::iterator
 from_range<particle_type>::begin() const
 {
-    return particle_->reverse_tag().begin() + begin_;
+    cache_proxy<reverse_tag_array_type const> reverse_tag = particle_->reverse_tag();
+    return reverse_tag->begin() + begin_;
 }
 
 template <typename particle_type>
 typename from_range<particle_type>::iterator
 from_range<particle_type>::end() const
 {
-    return particle_->reverse_tag().begin() + end_;
+    cache_proxy<reverse_tag_array_type const> reverse_tag = particle_->reverse_tag();
+    return reverse_tag->begin() + end_;
 }
 
 template <typename particle_type>

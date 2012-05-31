@@ -26,6 +26,7 @@
 
 #include <halmd/mdsim/type_traits.hpp>
 #include <halmd/utility/profiler.hpp>
+#include <halmd/utility/cache.hpp>
 #include <halmd/utility/raw_array.hpp>
 
 namespace halmd {
@@ -174,7 +175,7 @@ public:
     /**
      * Returns const reference to particle reverse tags.
      */
-    reverse_tag_array_type const& reverse_tag() const
+    cache<reverse_tag_array_type> const& reverse_tag() const
     {
         return reverse_tag_;
     }
@@ -182,7 +183,7 @@ public:
     /**
      * Returns non-const reference to particle reverse tags.
      */
-    reverse_tag_array_type& reverse_tag()
+    cache<reverse_tag_array_type>& reverse_tag()
     {
         return reverse_tag_;
     }
@@ -326,7 +327,7 @@ private:
     /** particle tags */
     tag_array_type tag_;
     /** reverse particle tags */
-    reverse_tag_array_type reverse_tag_;
+    cache<reverse_tag_array_type> reverse_tag_;
     /** particle species */
     species_array_type species_;
     /** particle masses */
@@ -478,8 +479,8 @@ inline iterator_type
 get_reverse_tag(particle_type const& particle, iterator_type const& first)
 {
     typedef typename particle_type::reverse_tag_array_type reverse_tag_array_type;
-    reverse_tag_array_type const& reverse_tag = particle.reverse_tag();
-    return std::copy(reverse_tag.begin(), reverse_tag.end(), first);
+    cache_proxy<reverse_tag_array_type const> reverse_tag = particle.reverse_tag();
+    return std::copy(reverse_tag->begin(), reverse_tag->end(), first);
 }
 
 /**
@@ -490,9 +491,9 @@ inline iterator_type
 set_reverse_tag(particle_type& particle, iterator_type const& first)
 {
     typedef typename particle_type::reverse_tag_array_type reverse_tag_array_type;
-    reverse_tag_array_type& reverse_tag = particle.reverse_tag();
+    cache_proxy<reverse_tag_array_type> reverse_tag = particle.reverse_tag();
     iterator_type input = first;
-    for (typename particle_type::reverse_tag_type& value : reverse_tag) {
+    for (typename particle_type::reverse_tag_type& value : *reverse_tag) {
         value = *input++;
     }
     return input;

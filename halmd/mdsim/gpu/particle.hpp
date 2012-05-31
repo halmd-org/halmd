@@ -27,6 +27,7 @@
 
 #include <cuda_wrapper/cuda_wrapper.hpp>
 #include <halmd/mdsim/type_traits.hpp>
+#include <halmd/utility/cache.hpp>
 #include <halmd/utility/profiler.hpp>
 
 namespace halmd {
@@ -180,7 +181,7 @@ public:
     /**
      * Returns non-const reference to particle reverse tags.
      */
-    reverse_tag_array_type const& reverse_tag() const
+    cache<reverse_tag_array_type> const& reverse_tag() const
     {
         return g_reverse_tag_;
     }
@@ -188,7 +189,7 @@ public:
     /**
      * Returns const reference to particle reverse tags.
      */
-    reverse_tag_array_type& reverse_tag()
+    cache<reverse_tag_array_type>& reverse_tag()
     {
         return g_reverse_tag_;
     }
@@ -300,7 +301,7 @@ private:
     /** particle tags */
     tag_array_type g_tag_;
     /** reverse particle tags */
-    reverse_tag_array_type g_reverse_tag_;
+    cache<reverse_tag_array_type> g_reverse_tag_;
     /** force per particle */
     force_array_type g_force_;
     /** potential energy per particle */
@@ -582,9 +583,9 @@ inline iterator_type
 get_reverse_tag(particle_type const& particle, iterator_type const& first)
 {
     typedef typename particle_type::reverse_tag_array_type reverse_tag_array_type;
-    reverse_tag_array_type const& g_reverse_tag = particle.reverse_tag();
-    cuda::host::vector<typename reverse_tag_array_type::value_type> h_reverse_tag(g_reverse_tag.size());
-    cuda::copy(g_reverse_tag, h_reverse_tag);
+    cache_proxy<reverse_tag_array_type const> g_reverse_tag = particle.reverse_tag();
+    cuda::host::vector<typename reverse_tag_array_type::value_type> h_reverse_tag(g_reverse_tag->size());
+    cuda::copy(*g_reverse_tag, h_reverse_tag);
     return std::copy(h_reverse_tag.begin(), h_reverse_tag.end(), first);
 }
 
@@ -596,13 +597,13 @@ inline iterator_type
 set_reverse_tag(particle_type& particle, iterator_type const& first)
 {
     typedef typename particle_type::reverse_tag_array_type reverse_tag_array_type;
-    reverse_tag_array_type& g_reverse_tag = particle.reverse_tag();
-    cuda::host::vector<typename reverse_tag_array_type::value_type> h_reverse_tag(g_reverse_tag.size());
+    cache_proxy<reverse_tag_array_type> g_reverse_tag = particle.reverse_tag();
+    cuda::host::vector<typename reverse_tag_array_type::value_type> h_reverse_tag(g_reverse_tag->size());
     iterator_type input = first;
     for (typename reverse_tag_array_type::value_type& reverse_tag : h_reverse_tag) {
         reverse_tag = *input++;
     }
-    cuda::copy(h_reverse_tag, g_reverse_tag);
+    cuda::copy(h_reverse_tag, *g_reverse_tag);
     return input;
 }
 
