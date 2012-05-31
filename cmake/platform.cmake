@@ -4,7 +4,15 @@ if(DEFINED CMAKE_CXX_COMPILER_ID)
   if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
 
     set(CMAKE_CXX_FLAGS_INIT "-fPIC -Wall -std=c++98 -pedantic -Wno-long-long")
-    set(CMAKE_CXX_FLAGS_RELEASE_INIT "-O3 -DNDEBUG -DBOOST_DISABLE_ASSERTS -fvisibility=hidden")
+    set(CMAKE_CXX_FLAGS_RELEASE_INIT "-O3 -DNDEBUG -DBOOST_DISABLE_ASSERTS")
+
+    # At least one version of GCC 4.4.x fails (GCC 4.4.1 on openSUSE 11.2, see #91)
+    # to catch exceptions across shared library boundaries with -fvisibility=hidden
+    if(CMAKE_CXX_COMPILER_VERSION VERSION_LESS "4.5")
+      set(CMAKE_CXX_FLAGS_RELEASE_INIT "${CMAKE_CXX_FLAGS_RELEASE_INIT} -fvisibility-inlines-hidden")
+    else()
+      set(CMAKE_CXX_FLAGS_RELEASE_INIT "${CMAKE_CXX_FLAGS_RELEASE_INIT} -fvisibility=hidden")
+    endif()
 
   elseif(CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
 
