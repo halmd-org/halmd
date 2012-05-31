@@ -159,7 +159,7 @@ ideal_gas<modules_type>::ideal_gas()
     slab = 1;
 
     // create modules
-    particle = boost::make_shared<particle_type>(npart);
+    particle = boost::make_shared<particle_type>(npart, 1);
     box = boost::make_shared<box_type>(edges);
     random = boost::make_shared<random_type>();
     position = boost::make_shared<position_type>(particle, box, slab);

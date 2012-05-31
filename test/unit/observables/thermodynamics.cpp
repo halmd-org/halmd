@@ -333,7 +333,7 @@ lennard_jones_fluid<modules_type>::lennard_jones_fluid()
 
     // create modules
     random = boost::make_shared<random_type>();
-    particle = boost::make_shared<particle_type>(npart);
+    particle = boost::make_shared<particle_type>(npart, 1);
     box = boost::make_shared<box_type>(edges);
     potential = boost::make_shared<potential_type>(particle->nspecies(), particle->nspecies(), rc_mat, epsilon_mat, sigma_mat);
     binning = boost::make_shared<binning_type>(particle, box, potential->r_cut(), skin);

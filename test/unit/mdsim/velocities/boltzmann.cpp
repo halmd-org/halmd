@@ -149,7 +149,7 @@ boltzmann<modules_type>::boltzmann()
         edges(i, i) = box_length;
     }
 
-    particle = boost::make_shared<particle_type>(npart);
+    particle = boost::make_shared<particle_type>(npart, 1);
     box = boost::make_shared<box_type>(edges);
     random = boost::make_shared<random_type>();
     velocity = boost::make_shared<velocity_type>(particle, random, temp);

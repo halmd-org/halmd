@@ -231,7 +231,7 @@ test_euler<modules_type>::test_euler()
     slab = 1;
 
     // create modules
-    particle = boost::make_shared<particle_type>(npart);
+    particle = boost::make_shared<particle_type>(npart, 1);
     box = boost::make_shared<box_type>(edges);
     integrator = boost::make_shared<integrator_type>(particle, box, timestep);
     random = boost::make_shared<random_type>();

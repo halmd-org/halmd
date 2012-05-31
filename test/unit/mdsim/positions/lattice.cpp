@@ -219,7 +219,7 @@ lattice<modules_type>::lattice()
     // same lattice spacing (a mismatch is a likely reason for failure of the test)
     npart *= slab_vol_frac;
 
-    particle = boost::make_shared<particle_type>(npart);
+    particle = boost::make_shared<particle_type>(npart, 1);
     box = boost::make_shared<box_type>(edges);
     position = boost::make_shared<position_type>(particle, box, slab);
     clock = boost::make_shared<clock_type>();

@@ -307,7 +307,7 @@ verlet_nvt_hoover<modules_type>::verlet_nvt_hoover()
     sigma <<= 1.;
 
     // create modules
-    particle = boost::make_shared<particle_type>(npart);
+    particle = boost::make_shared<particle_type>(npart, 1);
     box = boost::make_shared<box_type>(edges);
     random = boost::make_shared<random_type>();
     integrator = boost::make_shared<integrator_type>(particle, box, timestep, temp, resonance_frequency);

@@ -565,70 +565,70 @@ static void test_hypervirial(particle_type& particle)
 
 template <typename particle_type>
 static void
-test_suite_host(std::size_t nparticle, boost::unit_test::test_suite* ts)
+test_suite_host(std::size_t nparticle, unsigned int nspecies, boost::unit_test::test_suite* ts)
 {
     auto position = [=]() {
-        particle_type particle(nparticle);
+        particle_type particle(nparticle, nspecies);
         test_position(particle);
     };
     ts->add(BOOST_TEST_CASE( position ));
 
     auto image = [=]() {
-        particle_type particle(nparticle);
+        particle_type particle(nparticle, nspecies);
         test_image(particle);
     };
     ts->add(BOOST_TEST_CASE( image ));
 
     auto velocity = [=]() {
-        particle_type particle(nparticle);
+        particle_type particle(nparticle, nspecies);
         test_velocity(particle);
     };
     ts->add(BOOST_TEST_CASE( velocity ));
 
     auto tag = [=]() {
-        particle_type particle(nparticle);
+        particle_type particle(nparticle, nspecies);
         test_tag(particle);
     };
     ts->add(BOOST_TEST_CASE( tag ));
 
     auto reverse_tag = [=]() {
-        particle_type particle(nparticle);
+        particle_type particle(nparticle, nspecies);
         test_reverse_tag(particle);
     };
     ts->add(BOOST_TEST_CASE( reverse_tag ));
 
     auto species = [=]() {
-        particle_type particle(nparticle);
+        particle_type particle(nparticle, nspecies);
         test_species(particle);
     };
     ts->add(BOOST_TEST_CASE( species ));
 
     auto mass = [=]() {
-        particle_type particle(nparticle);
+        particle_type particle(nparticle, nspecies);
         test_mass(particle);
     };
     ts->add(BOOST_TEST_CASE( mass ));
 
     auto force = [=]() {
-        particle_type particle(nparticle);
+        particle_type particle(nparticle, nspecies);
         test_force(particle);
     };
     ts->add(BOOST_TEST_CASE( force ));
 
     auto en_pot = [=]() {
-        particle_type particle(nparticle);
+        particle_type particle(nparticle, nspecies);
         test_en_pot(particle);
     };
     ts->add(BOOST_TEST_CASE( en_pot ));
 
     auto stress_pot = [=]() {
-        particle_type particle(nparticle);
+        particle_type particle(nparticle, nspecies);
         test_stress_pot(particle);
     };
     ts->add(BOOST_TEST_CASE( stress_pot ));
 
     auto hypervirial = [=]() {
-        particle_type particle(nparticle);
+        particle_type particle(nparticle, nspecies);
         test_hypervirial(particle);
     };
     ts->add(BOOST_TEST_CASE( hypervirial ));
@@ -637,81 +637,81 @@ test_suite_host(std::size_t nparticle, boost::unit_test::test_suite* ts)
 #ifdef HALMD_WITH_GPU
 template <typename particle_type>
 static void
-test_suite_gpu(std::size_t nparticle, boost::unit_test::test_suite* ts)
+test_suite_gpu(std::size_t nparticle, unsigned int nspecies, boost::unit_test::test_suite* ts)
 {
     auto position = [=]() {
         set_cuda_device device;
-        particle_type particle(nparticle);
+        particle_type particle(nparticle, nspecies);
         test_position(particle);
     };
     ts->add(BOOST_TEST_CASE( position ));
 
     auto image = [=]() {
         set_cuda_device device;
-        particle_type particle(nparticle);
+        particle_type particle(nparticle, nspecies);
         test_image(particle);
     };
     ts->add(BOOST_TEST_CASE( image ));
 
     auto velocity = [=]() {
         set_cuda_device device;
-        particle_type particle(nparticle);
+        particle_type particle(nparticle, nspecies);
         test_velocity(particle);
     };
     ts->add(BOOST_TEST_CASE( velocity ));
 
     auto tag = [=]() {
         set_cuda_device device;
-        particle_type particle(nparticle);
+        particle_type particle(nparticle, nspecies);
         test_tag(particle);
     };
     ts->add(BOOST_TEST_CASE( tag ));
 
     auto reverse_tag = [=]() {
         set_cuda_device device;
-        particle_type particle(nparticle);
+        particle_type particle(nparticle, nspecies);
         test_reverse_tag(particle);
     };
     ts->add(BOOST_TEST_CASE( reverse_tag ));
 
     auto species = [=]() {
         set_cuda_device device;
-        particle_type particle(nparticle);
+        particle_type particle(nparticle, nspecies);
         test_species(particle);
     };
     ts->add(BOOST_TEST_CASE( species ));
 
     auto mass = [=]() {
         set_cuda_device device;
-        particle_type particle(nparticle);
+        particle_type particle(nparticle, nspecies);
         test_mass(particle);
     };
     ts->add(BOOST_TEST_CASE( mass ));
 
     auto force = [=]() {
         set_cuda_device device;
-        particle_type particle(nparticle);
+        particle_type particle(nparticle, nspecies);
         test_force(particle);
     };
     ts->add(BOOST_TEST_CASE( force ));
 
     auto en_pot = [=]() {
         set_cuda_device device;
-        particle_type particle(nparticle);
+        particle_type particle(nparticle, nspecies);
         test_en_pot(particle);
     };
     ts->add(BOOST_TEST_CASE( en_pot ));
 
     auto stress_pot = [=]() {
         set_cuda_device device;
-        particle_type particle(nparticle);
+        particle_type particle(nparticle, nspecies);
         test_stress_pot(particle);
     };
     ts->add(BOOST_TEST_CASE( stress_pot ));
 
     auto hypervirial = [=]() {
         set_cuda_device device;
-        particle_type particle(nparticle);
+        particle_type particle(nparticle, nspecies);
         test_hypervirial(particle);
     };
     ts->add(BOOST_TEST_CASE( hypervirial ));
@@ -742,17 +742,19 @@ HALMD_TEST_INIT( particle )
     ts_gpu->add(ts_gpu_three);
 #endif
 
+    unsigned int const nspecies = 1;
+
     for (unsigned int nparticle : {109, 4789, 42589}) {
 #ifdef USE_HOST_SINGLE_PRECISION
-        test_suite_host<halmd::mdsim::host::particle<3, float> >(nparticle, ts_host_three);
-        test_suite_host<halmd::mdsim::host::particle<2, float> >(nparticle, ts_host_two);
+        test_suite_host<halmd::mdsim::host::particle<3, float> >(nparticle, nspecies, ts_host_three);
+        test_suite_host<halmd::mdsim::host::particle<2, float> >(nparticle, nspecies, ts_host_two);
 #else
-        test_suite_host<halmd::mdsim::host::particle<3, double> >(nparticle, ts_host_three);
-        test_suite_host<halmd::mdsim::host::particle<2, double> >(nparticle, ts_host_two);
+        test_suite_host<halmd::mdsim::host::particle<3, double> >(nparticle, nspecies, ts_host_three);
+        test_suite_host<halmd::mdsim::host::particle<2, double> >(nparticle, nspecies, ts_host_two);
 #endif
 #ifdef HALMD_WITH_GPU
-        test_suite_gpu<halmd::mdsim::gpu::particle<3, float> >(nparticle, ts_gpu_three);
-        test_suite_gpu<halmd::mdsim::gpu::particle<2, float> >(nparticle, ts_gpu_two);
+        test_suite_gpu<halmd::mdsim::gpu::particle<3, float> >(nparticle, nspecies, ts_gpu_three);
+        test_suite_gpu<halmd::mdsim::gpu::particle<2, float> >(nparticle, nspecies, ts_gpu_two);
 #endif
     }
 }

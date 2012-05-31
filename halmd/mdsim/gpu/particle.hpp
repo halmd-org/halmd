@@ -1,5 +1,6 @@
 /*
- * Copyright © 2008-2012  Peter Colberg and Felix Höfling
+ * Copyright © 2008-2012 Peter Colberg
+ * Copyright © 2010-2012 Felix Höfling
  *
  * This file is part of HALMD.
  *
@@ -76,7 +77,7 @@ public:
      * All particle arrays, except the masses, are initialised to zero.
      * The particle masses are initialised to unit mass.
      */
-    particle(std::size_t nparticle, unsigned int nspecies = 1);
+    particle(std::size_t nparticle, unsigned int nspecies);
 
     /**
      * Returns number of particles.
