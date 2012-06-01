@@ -78,7 +78,7 @@ phase_space<gpu::samples::phase_space<dimension, float_type> >::acquire()
 
     cuda::configure(particle_->dim.grid, particle_->dim.block);
     phase_space_wrapper<dimension>::kernel.sample(
-        particle_group_->begin()
+        &*particle_group_->begin()
       , sample_->position()
       , sample_->velocity()
       , static_cast<vector_type>(box_->length())
@@ -203,7 +203,7 @@ phase_space<host::samples::phase_space<dimension, float_type> >::acquire()
     // copy particle data using reverse tags as on the GPU
     cuda::configure((particle_group_->size() + threads_ - 1) / threads_, threads_);
     phase_space_wrapper<dimension>::kernel.copy_particle_group(
-        particle_group_->begin()
+        &*particle_group_->begin()
       , h_group_
       , particle_group_->size()
     );
@@ -247,7 +247,7 @@ void phase_space<host::samples::phase_space<dimension, float_type> >::set(boost:
     // copy particle data using reverse tags as on the GPU
     cuda::configure((particle_group_->size() + 128 - 1) / 128, 128);
     phase_space_wrapper<dimension>::kernel.copy_particle_group(
-        particle_group_->begin()
+        &*particle_group_->begin()
       , h_group_
       , particle_group_->size()
     );
@@ -284,7 +284,7 @@ void phase_space<host::samples::phase_space<dimension, float_type> >::set(boost:
         phase_space_wrapper<dimension>::kernel.r.bind(particle_->position());
         cuda::configure(particle_->dim.grid, particle_->dim.block);
         phase_space_wrapper<dimension>::kernel.reduce_periodic(
-            particle_group_->begin()
+            &*particle_group_->begin()
           , particle_->position()
           , particle_->image()
           , static_cast<vector_type>(box_->length())
