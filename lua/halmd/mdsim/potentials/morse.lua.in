@@ -37,7 +37,7 @@ local assert = assert
 
 local M = module("halmd.mdsim.potentials.morse")
 
-local fixed_array = {__len = function() return 3 end, __index = function() return 0 end}
+local fixed_array = {__index = function() return 0 end}
 
 --
 -- construct Morse module
