@@ -21,8 +21,8 @@
 #include <boost/test/unit_test.hpp>
 
 #include <boost/assign.hpp>
-#include <boost/shared_ptr.hpp>
 #include <iterator>
+#include <memory>
 #include <numeric>
 
 #include <halmd/algorithm/host/pick_lattice_points.hpp>

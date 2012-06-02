@@ -21,8 +21,8 @@
 #define HALMD_OBSERVABLES_RUNTIME_ESTIMATE_HPP
 
 #include <boost/circular_buffer.hpp>
-#include <boost/shared_ptr.hpp>
 #include <lua.hpp>
+#include <memory>
 #include <string>
 
 #include <halmd/mdsim/clock.hpp>
@@ -51,7 +51,7 @@ public:
     static void luaopen(lua_State* L);
 
     runtime_estimate(
-        boost::shared_ptr<clock_type> clock
+        std::shared_ptr<clock_type> clock
       , step_type total_steps
     );
     /** sample current real-time and simulation step */
@@ -65,7 +65,7 @@ private:
     typedef std::pair<timer, step_type> timer_pair_type;
 
     /** simulation clock */
-    boost::shared_ptr<clock_type> clock_;
+    std::shared_ptr<clock_type> clock_;
     /** simulation step counter at start */
     step_type step_start_;
     /** simulation step counter at finish */

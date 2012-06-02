@@ -87,7 +87,7 @@ void truncate::read_dataset(
 }
 
 static std::function<void ()>
-wrap_read(boost::shared_ptr<truncate> self)
+wrap_read(std::shared_ptr<truncate> self)
 {
     return [=]() {
         self->read();
@@ -105,7 +105,7 @@ void truncate::luaopen(lua_State* L)
             [
                 namespace_("h5md")
                 [
-                    class_<truncate, boost::shared_ptr<truncate> >("truncate")
+                    class_<truncate, std::shared_ptr<truncate> >("truncate")
                         .def(constructor<H5::Group const&, vector<string> const&>())
                         .property("group", &truncate::group)
                         .property("read", &wrap_read)

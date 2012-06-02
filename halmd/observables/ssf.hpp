@@ -21,8 +21,8 @@
 #define HALMD_OBSERVABLES_SSF_HPP
 
 #include <boost/array.hpp>
-#include <boost/make_shared.hpp>
 #include <lua.hpp>
+#include <memory>
 #include <vector>
 
 #include <halmd/io/logger.hpp>
@@ -63,10 +63,10 @@ public:
      * @param logger logger instance
      */
     ssf(
-        boost::shared_ptr<wavevector_type const> wavevector
+        std::shared_ptr<wavevector_type const> wavevector
       , double norm
-      , boost::shared_ptr<clock_type const> clock
-      , boost::shared_ptr<logger_type> logger = boost::make_shared<logger_type>()
+      , std::shared_ptr<clock_type const> clock
+      , std::shared_ptr<logger_type> logger = std::make_shared<logger_type>()
     );
 
     /**
@@ -77,7 +77,7 @@ public:
     /**
      * Returns instance of wavevector class used to compute the SSF.
      */
-    boost::shared_ptr<wavevector_type const> wavevector() const
+    std::shared_ptr<wavevector_type const> wavevector() const
     {
         return wavevector_;
     }
@@ -92,13 +92,13 @@ private:
     typedef typename density_mode_type::mode_array_type rho_vector_type;
 
     /** wavevector grid */
-    boost::shared_ptr<wavevector_type const> wavevector_;
+    std::shared_ptr<wavevector_type const> wavevector_;
     /** normalisation factor */
     double norm_;
     /** simulation clock */
-    boost::shared_ptr<clock_type const> clock_;
+    std::shared_ptr<clock_type const> clock_;
     /** logger instance */
-    boost::shared_ptr<logger_type> logger_;
+    std::shared_ptr<logger_type> logger_;
     /** cached static structure factor */
     result_type result_;
     /** time stamp of data (simulation step) */

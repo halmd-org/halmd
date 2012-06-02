@@ -20,10 +20,9 @@
 #ifndef HALMD_OBSERVABLES_DYNAMICS_BLOCKING_SCHEME_HPP
 #define HALMD_OBSERVABLES_DYNAMICS_BLOCKING_SCHEME_HPP
 
-#include <boost/make_shared.hpp>
-#include <boost/shared_ptr.hpp>
 #include <boost/multi_array.hpp>
 #include <lua.hpp>
+#include <memory>
 
 #include <halmd/io/logger.hpp>
 #include <halmd/mdsim/clock.hpp>
@@ -66,19 +65,19 @@ public:
      *  @param separation         minimal sample separation for time averages (in simulation steps)
      */
     blocking_scheme(
-        boost::shared_ptr<clock_type const> clock
+        std::shared_ptr<clock_type const> clock
       , double maximum_lag_time
       , double resolution
       , unsigned int block_size
       , unsigned int shift = 0
       , unsigned int separation = 1
-      , boost::shared_ptr<logger_type> logger = boost::make_shared<logger_type>()
+      , std::shared_ptr<logger_type> logger = std::make_shared<logger_type>()
     );
 
     /** add a time correlation function */
-    connection on_correlate(boost::shared_ptr<correlation_base> tcf);
+    connection on_correlate(std::shared_ptr<correlation_base> tcf);
     /** add blocked input data, e.g., phase space points or density modes */
-    connection on_sample(boost::shared_ptr<block_sample_type> block_sample);
+    connection on_sample(std::shared_ptr<block_sample_type> block_sample);
 
     /** acquire and store current data from input sample,
      *  emit on_correlate_block for each full coarse-graining level
@@ -129,16 +128,16 @@ private:
     void process(unsigned int level);
 
      /** simulation clock */
-    boost::shared_ptr<clock_type const> clock_;
+    std::shared_ptr<clock_type const> clock_;
     /** module logger */
-    boost::shared_ptr<logger_type> logger_;
+    std::shared_ptr<logger_type> logger_;
     /** set of time correlation functions */
-    slots<boost::shared_ptr<correlation_base> > tcf_;
+    slots<std::shared_ptr<correlation_base> > tcf_;
     /** set of block structures holding the input samples (e.g., phase space point, density modes)
      *
      * We use std::set since it is a Unique Container.
      */
-    slots<boost::shared_ptr<block_sample_type> > block_sample_;
+    slots<std::shared_ptr<block_sample_type> > block_sample_;
     /** size (length) of the coarse-graining levels */
     unsigned int block_size_;
     /** minimal separation of samples in simulation steps */

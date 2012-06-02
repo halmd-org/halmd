@@ -50,10 +50,10 @@ struct particle_host : particle {};
 
 struct box
 {
-    box(boost::shared_ptr<test_dummy::particle> particle)
+    box(std::shared_ptr<test_dummy::particle> particle)
       : particle(particle) {}
 
-    boost::shared_ptr<test_dummy::particle> particle;
+    std::shared_ptr<test_dummy::particle> particle;
 };
 
 struct integrator
@@ -64,10 +64,10 @@ struct integrator
 struct verlet_host
   : integrator
 {
-    verlet_host(boost::shared_ptr<test_dummy::particle_host> particle)
+    verlet_host(std::shared_ptr<test_dummy::particle_host> particle)
       : particle(particle) {}
 
-    boost::shared_ptr<test_dummy::particle_host> particle;
+    std::shared_ptr<test_dummy::particle_host> particle;
 };
 
 } // namespace test_dummy
@@ -82,17 +82,17 @@ struct bind_test_dummy : lua_test_fixture
         [
             class_<particle>("particle")
 
-          , class_<particle_host, boost::shared_ptr<particle>, particle>("particle_host")
+          , class_<particle_host, std::shared_ptr<particle>, particle>("particle_host")
                 .def(constructor<>())
 
-          , class_<box, boost::shared_ptr<box> >("box")
-                .def(constructor<boost::shared_ptr<particle> >())
+          , class_<box, std::shared_ptr<box> >("box")
+                .def(constructor<std::shared_ptr<particle> >())
                 .def_readonly("particle", &box::particle)
 
           , class_<integrator>("integrator")
 
-          , class_<verlet_host, boost::shared_ptr<integrator>, integrator>("verlet_host")
-                .def(constructor<boost::shared_ptr<particle_host> >())
+          , class_<verlet_host, std::shared_ptr<integrator>, integrator>("verlet_host")
+                .def(constructor<std::shared_ptr<particle_host> >())
                 .def_readonly("particle", &verlet_host::particle)
         ];
     }

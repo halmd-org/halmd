@@ -36,9 +36,9 @@ namespace positions {
 
 template <int dimension, typename float_type>
 excluded_volume<dimension, float_type>::excluded_volume(
-    boost::shared_ptr<box_type const> box
+    std::shared_ptr<box_type const> box
   , float_type cell_length
-  , boost::shared_ptr<logger_type> logger
+  , std::shared_ptr<logger_type> logger
 )
   : box_(box)
   , logger_(logger)
@@ -159,11 +159,11 @@ void excluded_volume<dimension, float_type>::luaopen(lua_State* L)
         [
             namespace_("positions")
             [
-                class_<excluded_volume, boost::shared_ptr<excluded_volume> >(class_name.c_str())
+                class_<excluded_volume, std::shared_ptr<excluded_volume> >(class_name.c_str())
                     .def(constructor<
-                         boost::shared_ptr<box_type const>
+                         std::shared_ptr<box_type const>
                        , float_type
-                       , boost::shared_ptr<logger_type>
+                       , std::shared_ptr<logger_type>
                     >())
                     .def("exclude_sphere", &excluded_volume::exclude_sphere)
                     .def("exclude_spheres", &excluded_volume::exclude_spheres)

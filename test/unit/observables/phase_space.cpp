@@ -25,7 +25,6 @@
 #include <algorithm>
 #include <boost/assign.hpp>
 #include <boost/foreach.hpp>
-#include <boost/make_shared.hpp>
 #include <boost/numeric/ublas/banded.hpp>
 #include <limits>
 #include <numeric>
@@ -60,8 +59,8 @@ using namespace std;
  */
 #ifdef HALMD_WITH_GPU
 template <int dimension, typename float_type>
-boost::shared_ptr<observables::host::samples::phase_space<dimension, float_type> const>
-copy_sample(boost::shared_ptr<observables::gpu::samples::phase_space<dimension, float_type> const> sample)
+std::shared_ptr<observables::host::samples::phase_space<dimension, float_type> const>
+copy_sample(std::shared_ptr<observables::gpu::samples::phase_space<dimension, float_type> const> sample)
 {
     typedef observables::host::samples::phase_space<dimension, float_type> host_sample_type;
     typedef observables::gpu::samples::phase_space<dimension, float_type> gpu_sample_type;
@@ -69,7 +68,7 @@ copy_sample(boost::shared_ptr<observables::gpu::samples::phase_space<dimension, 
     typedef typename host_sample_type::position_array_type::value_type vector_type;
 
     // allocate memory
-    boost::shared_ptr<host_sample_type> result = boost::make_shared<host_sample_type>(sample->position().size());
+    std::shared_ptr<host_sample_type> result = std::make_shared<host_sample_type>(sample->position().size());
     cuda::host::vector<gpu_vector_type> h_buf(sample->position().size());
 
     // copy from GPU to host via page-locked memory
@@ -92,8 +91,8 @@ copy_sample(boost::shared_ptr<observables::gpu::samples::phase_space<dimension, 
 
 
 template <int dimension, typename float_type>
-boost::shared_ptr<observables::host::samples::phase_space<dimension, float_type> const>
-copy_sample(boost::shared_ptr<observables::host::samples::phase_space<dimension, float_type> const> sample)
+std::shared_ptr<observables::host::samples::phase_space<dimension, float_type> const>
+copy_sample(std::shared_ptr<observables::host::samples::phase_space<dimension, float_type> const> sample)
 {
     return sample;
 }
@@ -117,10 +116,10 @@ struct phase_space
 
     vector<unsigned int> npart;
 
-    boost::shared_ptr<box_type> box;
-    boost::shared_ptr<clock_type> clock;
-    boost::shared_ptr<particle_type> particle;
-    boost::shared_ptr<input_sample_type> input_sample;
+    std::shared_ptr<box_type> box;
+    std::shared_ptr<clock_type> clock;
+    std::shared_ptr<particle_type> particle;
+    std::shared_ptr<input_sample_type> input_sample;
 
     void test();
     phase_space();
@@ -154,7 +153,7 @@ void phase_space<modules_type>::test()
     }
 
     // copy input sample to particle
-    boost::shared_ptr<particle_group_type> particle_group = boost::make_shared<particle_group_type>(particle, 0, particle->nparticle());
+    std::shared_ptr<particle_group_type> particle_group = std::make_shared<particle_group_type>(particle, 0, particle->nparticle());
     input_phase_space_type(particle, particle_group, box, clock).set(input_sample);
 
     // randomly permute particles in memory
@@ -163,11 +162,11 @@ void phase_space<modules_type>::test()
     // acquire sample from particle, construct temporary sampler module
     clock->set_timestep(0); // bogus time-step
     clock->advance();
-    boost::shared_ptr<output_sample_type const> output_sample = output_phase_space_type(particle, particle_group, box, clock).acquire();
+    std::shared_ptr<output_sample_type const> output_sample = output_phase_space_type(particle, particle_group, box, clock).acquire();
     BOOST_CHECK(output_sample->step() == 1);
 
     // compare output and input, copy GPU sample to host before
-    boost::shared_ptr<input_sample_type const> result = copy_sample(output_sample);
+    std::shared_ptr<input_sample_type const> result = copy_sample(output_sample);
 
     typename input_sample_type::position_array_type const& result_position = result->position();
     typename input_sample_type::velocity_array_type const& result_velocity = result->velocity();
@@ -215,10 +214,10 @@ phase_space<modules_type>::phase_space()
     }
 
     // create modules
-    particle = boost::make_shared<particle_type>(accumulate(npart.begin(), npart.end(), 0), npart.size());
-    box = boost::make_shared<box_type>(edges);
-    input_sample = boost::make_shared<input_sample_type>(particle->nparticle());
-    clock = boost::make_shared<clock_type>();
+    particle = std::make_shared<particle_type>(accumulate(npart.begin(), npart.end(), 0), npart.size());
+    box = std::make_shared<box_type>(edges);
+    input_sample = std::make_shared<input_sample_type>(particle->nparticle());
+    clock = std::make_shared<clock_type>();
 }
 
 template <int dimension, typename float_type>

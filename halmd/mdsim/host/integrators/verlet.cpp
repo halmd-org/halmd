@@ -19,8 +19,8 @@
 
 #include <algorithm>
 #include <boost/bind.hpp>
-#include <boost/make_shared.hpp>
 #include <cmath>
+#include <memory>
 
 #include <halmd/mdsim/host/integrators/verlet.hpp>
 #include <halmd/utility/lua/lua.hpp>
@@ -32,10 +32,10 @@ namespace integrators {
 
 template <int dimension, typename float_type>
 verlet<dimension, float_type>::verlet(
-    boost::shared_ptr<particle_type> particle
-  , boost::shared_ptr<box_type const> box
+    std::shared_ptr<particle_type> particle
+  , std::shared_ptr<box_type const> box
   , double timestep
-  , boost::shared_ptr<logger_type> logger
+  , std::shared_ptr<logger_type> logger
 )
   // dependency injection
   : particle_(particle)
@@ -95,7 +95,7 @@ void verlet<dimension, float_type>::finalize()
 
 template <typename integrator_type>
 static std::function<void ()>
-wrap_integrate(boost::shared_ptr<integrator_type> self)
+wrap_integrate(std::shared_ptr<integrator_type> self)
 {
     return [=]() {
         self->integrate();
@@ -104,7 +104,7 @@ wrap_integrate(boost::shared_ptr<integrator_type> self)
 
 template <typename integrator_type>
 static std::function<void ()>
-wrap_finalize(boost::shared_ptr<integrator_type> self)
+wrap_finalize(std::shared_ptr<integrator_type> self)
 {
     return [=]() {
         self->finalize();
@@ -113,7 +113,7 @@ wrap_finalize(boost::shared_ptr<integrator_type> self)
 
 template <typename integrator_type>
 static std::function<void (double)>
-wrap_set_timestep(boost::shared_ptr<integrator_type> self)
+wrap_set_timestep(std::shared_ptr<integrator_type> self)
 {
     return [=](double timestep) {
         self->set_timestep(timestep);
@@ -143,11 +143,11 @@ void verlet<dimension, float_type>::luaopen(lua_State* L)
                     ]
                     .def_readonly("runtime", &verlet::runtime_)
 
-              , def("verlet", &boost::make_shared<verlet
-                  , boost::shared_ptr<particle_type>
-                  , boost::shared_ptr<box_type const>
+              , def("verlet", &std::make_shared<verlet
+                  , std::shared_ptr<particle_type>
+                  , std::shared_ptr<box_type const>
                   , double
-                  , boost::shared_ptr<logger_type>
+                  , std::shared_ptr<logger_type>
                 >)
             ]
         ]

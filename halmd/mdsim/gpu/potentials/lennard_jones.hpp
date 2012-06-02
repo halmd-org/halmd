@@ -21,10 +21,10 @@
 #ifndef HALMD_MDSIM_GPU_POTENTIALS_LENNARD_JONES_HPP
 #define HALMD_MDSIM_GPU_POTENTIALS_LENNARD_JONES_HPP
 
-#include <boost/make_shared.hpp>
 #include <boost/numeric/ublas/matrix.hpp>
 #include <cuda_wrapper/cuda_wrapper.hpp>
 #include <lua.hpp>
+#include <memory>
 
 #include <halmd/io/logger.hpp>
 #include <halmd/mdsim/gpu/potentials/lennard_jones_kernel.hpp>
@@ -51,7 +51,7 @@ public:
       , matrix_type const& cutoff
       , matrix_type const& epsilon
       , matrix_type const& sigma
-      , boost::shared_ptr<logger_type> logger = boost::make_shared<logger_type>()
+      , std::shared_ptr<logger_type> logger = std::make_shared<logger_type>()
     );
 
     /** bind textures before kernel invocation */
@@ -113,7 +113,7 @@ private:
     /** potential parameters at CUDA device */
     cuda::vector<float4> g_param_;
     /** module logger */
-    boost::shared_ptr<logger_type> logger_;
+    std::shared_ptr<logger_type> logger_;
 };
 
 } // namespace potentials

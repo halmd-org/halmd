@@ -17,23 +17,21 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <boost/bind.hpp>
-#include <boost/make_shared.hpp>
+#include <memory>
 
 #include <halmd/utility/predicates/greater.hpp>
 #include <halmd/utility/lua/lua.hpp>
-
-using namespace boost;
-using namespace std;
 
 namespace halmd {
 namespace predicates {
 
 template <typename greater_type>
 static typename greater_type::slot_function_type
-wrap_evaluate(boost::shared_ptr<greater_type const> greater)
+wrap_evaluate(std::shared_ptr<greater_type const> self)
 {
-    return bind(&greater_type::evaluate, greater);
+    return [=]() {
+        self->evaluate();
+    };
 }
 
 template <typename value_type>
@@ -48,7 +46,7 @@ void greater<value_type>::luaopen(lua_State* L, char const* class_name)
                 .property("evaluate", &wrap_evaluate<greater>)
                 .def("on_greater", &greater::on_greater)
 
-          , def("greater", &boost::make_shared<greater, function_type, value_type>)
+          , def("greater", &std::make_shared<greater, function_type, value_type>)
         ]
     ];
 }

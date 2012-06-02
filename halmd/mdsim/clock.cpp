@@ -18,7 +18,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <boost/shared_ptr.hpp>
+#include <memory>
 
 #include <halmd/io/logger.hpp>
 #include <halmd/mdsim/clock.hpp>
@@ -50,7 +50,7 @@ void clock::set_timestep(time_type timestep)
 }
 
 static std::function<void (clock::time_type)>
-wrap_set_timestep(boost::shared_ptr<clock> self)
+wrap_set_timestep(std::shared_ptr<clock> self)
 {
     return [=](clock::time_type timestep) {
         self->set_timestep(timestep);
@@ -58,7 +58,7 @@ wrap_set_timestep(boost::shared_ptr<clock> self)
 }
 
 static std::function<connection (std::function<void (clock::time_type)> const&)>
-wrap_on_set_timestep(boost::shared_ptr<clock> self)
+wrap_on_set_timestep(std::shared_ptr<clock> self)
 {
     return [=](std::function<void (clock::time_type)> const& slot) {
         return self->on_set_timestep(slot);
@@ -72,7 +72,7 @@ HALMD_LUA_API int luaopen_libhalmd_mdsim_clock(lua_State* L)
     [
         namespace_("mdsim")
         [
-            class_<clock, boost::shared_ptr<clock> >("clock")
+            class_<clock, std::shared_ptr<clock> >("clock")
                 .def(constructor<>())
                 .property("set_timestep", &wrap_set_timestep)
                 .property("on_set_timestep", &wrap_on_set_timestep)

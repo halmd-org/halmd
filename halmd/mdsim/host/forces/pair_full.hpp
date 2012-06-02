@@ -20,10 +20,9 @@
 #ifndef HALMD_MDSIM_HOST_FORCES_PAIR_FULL_HPP
 #define HALMD_MDSIM_HOST_FORCES_PAIR_FULL_HPP
 
-#include <boost/bind.hpp>
 #include <boost/foreach.hpp>
-#include <boost/shared_ptr.hpp>
 #include <lua.hpp>
+#include <memory>
 #include <string>
 
 #include <halmd/io/logger.hpp>
@@ -55,9 +54,9 @@ public:
     static void luaopen(lua_State* L);
 
     pair_full(
-        boost::shared_ptr<potential_type> potential
-      , boost::shared_ptr<particle_type> particle
-      , boost::shared_ptr<box_type> box
+        std::shared_ptr<potential_type> potential
+      , std::shared_ptr<particle_type> particle
+      , std::shared_ptr<box_type> box
     );
     void compute();
 
@@ -77,9 +76,9 @@ private:
         accumulator_type compute;
     };
 
-    boost::shared_ptr<potential_type> potential_;
-    boost::shared_ptr<particle_type> particle_;
-    boost::shared_ptr<box_type> box_;
+    std::shared_ptr<potential_type> potential_;
+    std::shared_ptr<particle_type> particle_;
+    std::shared_ptr<box_type> box_;
 
     /** profiling runtime accumulators */
     runtime runtime_;
@@ -90,9 +89,9 @@ private:
 
 template <int dimension, typename float_type, typename potential_type>
 pair_full<dimension, float_type, potential_type>::pair_full(
-    boost::shared_ptr<potential_type> potential
-  , boost::shared_ptr<particle_type> particle
-  , boost::shared_ptr<box_type> box
+    std::shared_ptr<potential_type> potential
+  , std::shared_ptr<particle_type> particle
+  , std::shared_ptr<box_type> box
 )
   // dependency injection
   : potential_(potential)
@@ -184,10 +183,12 @@ void pair_full<dimension, float_type, potential_type>::compute_aux()
 }
 
 template <typename force_type>
-static typename signal<void ()>::slot_function_type
-wrap_compute(boost::shared_ptr<force_type> force)
+static std::function<void ()>
+wrap_compute(std::shared_ptr<force_type> self)
 {
-    return boost::bind(&force_type::compute, force);
+    return [=]() {
+        self->compute();
+    };
 }
 
 template <int dimension, typename float_type, typename potential_type>
@@ -210,10 +211,10 @@ void pair_full<dimension, float_type, potential_type>::luaopen(lua_State* L)
                     ]
                     .def_readonly("runtime", &pair_full::runtime_)
 
-              , def("pair_full", &boost::make_shared<pair_full,
-                    boost::shared_ptr<potential_type>
-                  , boost::shared_ptr<particle_type>
-                  , boost::shared_ptr<box_type>
+              , def("pair_full", &std::make_shared<pair_full,
+                    std::shared_ptr<potential_type>
+                  , std::shared_ptr<particle_type>
+                  , std::shared_ptr<box_type>
                 >)
             ]
         ]

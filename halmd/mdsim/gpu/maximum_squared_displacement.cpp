@@ -18,7 +18,6 @@
  */
 
 #include <algorithm>
-#include <boost/bind.hpp>
 #include <exception>
 
 #include <halmd/io/logger.hpp>
@@ -41,8 +40,8 @@ namespace gpu {
  */
 template <int dimension, typename float_type>
 maximum_squared_displacement<dimension, float_type>::maximum_squared_displacement(
-    boost::shared_ptr<particle_type const> particle
-  , boost::shared_ptr<box_type const> box
+    std::shared_ptr<particle_type const> particle
+  , std::shared_ptr<box_type const> box
 )
   // dependency injection
   : particle_(particle)
@@ -122,16 +121,20 @@ float_type maximum_squared_displacement<dimension, float_type>::compute()
 
 template <int dimension, typename float_type>
 static typename signal<void ()>::slot_function_type
-wrap_zero(boost::shared_ptr<maximum_squared_displacement<dimension, float_type> > self)
+wrap_zero(std::shared_ptr<maximum_squared_displacement<dimension, float_type> > self)
 {
-    return bind(&maximum_squared_displacement<dimension, float_type>::zero, self);
+    return [=]() {
+        self->zero();
+    };
 }
 
 template <int dimension, typename float_type>
 static typename predicates::greater<float_type>::function_type
-wrap_compute(boost::shared_ptr<maximum_squared_displacement<dimension, float_type> > self)
+wrap_compute(std::shared_ptr<maximum_squared_displacement<dimension, float_type> > self)
 {
-    return bind(&maximum_squared_displacement<dimension, float_type>::compute, self);
+    return [=]() {
+        return self->compute();
+    };
 }
 
 template <int dimension, typename float_type>
@@ -145,10 +148,10 @@ void maximum_squared_displacement<dimension, float_type>::luaopen(lua_State* L)
         [
             namespace_("gpu")
             [
-                class_<maximum_squared_displacement, boost::shared_ptr<maximum_squared_displacement> >(class_name.c_str())
+                class_<maximum_squared_displacement, std::shared_ptr<maximum_squared_displacement> >(class_name.c_str())
                     .def(constructor<
-                        boost::shared_ptr<particle_type const>
-                      , boost::shared_ptr<box_type const>
+                        std::shared_ptr<particle_type const>
+                      , std::shared_ptr<box_type const>
                     >())
                     .property("zero", &wrap_zero<dimension, float_type>)
                     .property("compute", &wrap_compute<dimension, float_type>)

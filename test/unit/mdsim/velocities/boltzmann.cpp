@@ -24,7 +24,6 @@
 #include <boost/test/unit_test.hpp>
 
 #include <boost/assign.hpp>
-#include <boost/make_shared.hpp>
 #include <boost/numeric/ublas/banded.hpp>
 #include <limits>
 
@@ -76,12 +75,12 @@ struct boltzmann
     double temp;
     double density;
 
-    boost::shared_ptr<box_type> box;
-    boost::shared_ptr<clock_type> clock;
-    boost::shared_ptr<particle_type> particle;
-    boost::shared_ptr<random_type> random;
-    boost::shared_ptr<thermodynamics_type> thermodynamics;
-    boost::shared_ptr<velocity_type> velocity;
+    std::shared_ptr<box_type> box;
+    std::shared_ptr<clock_type> clock;
+    std::shared_ptr<particle_type> particle;
+    std::shared_ptr<random_type> random;
+    std::shared_ptr<thermodynamics_type> thermodynamics;
+    std::shared_ptr<velocity_type> velocity;
 
     void test();
     boltzmann();
@@ -149,13 +148,13 @@ boltzmann<modules_type>::boltzmann()
         edges(i, i) = box_length;
     }
 
-    particle = boost::make_shared<particle_type>(npart, 1);
-    box = boost::make_shared<box_type>(edges);
-    random = boost::make_shared<random_type>();
-    velocity = boost::make_shared<velocity_type>(particle, random, temp);
-    clock = boost::make_shared<clock_type>();
-    boost::shared_ptr<particle_group_type> group = boost::make_shared<particle_group_type>(particle, 0, particle->nparticle());
-    thermodynamics = boost::make_shared<thermodynamics_type>(group, box, clock);
+    particle = std::make_shared<particle_type>(npart, 1);
+    box = std::make_shared<box_type>(edges);
+    random = std::make_shared<random_type>();
+    velocity = std::make_shared<velocity_type>(particle, random, temp);
+    clock = std::make_shared<clock_type>();
+    std::shared_ptr<particle_group_type> group = std::make_shared<particle_group_type>(particle, 0, particle->nparticle());
+    thermodynamics = std::make_shared<thermodynamics_type>(group, box, clock);
 }
 
 template <int dimension, typename float_type>

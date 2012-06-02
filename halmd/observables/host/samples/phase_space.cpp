@@ -18,11 +18,10 @@
  */
 
 #include <algorithm>
-#include <boost/make_shared.hpp>
-#include <boost/shared_ptr.hpp>
 #include <functional>
 #include <luaponte/luaponte.hpp>
 #include <luaponte/out_value_policy.hpp>
+#include <memory>
 
 #include <halmd/observables/host/samples/phase_space.hpp>
 #include <halmd/observables/samples/blocking_scheme.hpp>
@@ -54,10 +53,10 @@ static std::size_t wrap_dimension(phase_space_type const&)
 
 template <typename phase_space_type>
 static std::function<std::vector<typename phase_space_type::position_array_type::value_type>& ()>
-wrap_position(boost::shared_ptr<phase_space_type> self, std::function<void ()>& array_to_sample)
+wrap_position(std::shared_ptr<phase_space_type> self, std::function<void ()>& array_to_sample)
 {
     typedef std::vector<typename phase_space_type::position_array_type::value_type> array_type;
-    boost::shared_ptr<array_type> array = boost::make_shared<array_type>();
+    std::shared_ptr<array_type> array = std::make_shared<array_type>();
     array_to_sample = [=]() {
         if (self->position().size() != array->size()) {
             throw std::runtime_error("phase space sample has mismatching size");
@@ -76,10 +75,10 @@ wrap_position(boost::shared_ptr<phase_space_type> self, std::function<void ()>& 
 
 template <typename phase_space_type>
 static std::function<std::vector<typename phase_space_type::velocity_array_type::value_type>& ()>
-wrap_velocity(boost::shared_ptr<phase_space_type> self, std::function<void ()>& array_to_sample)
+wrap_velocity(std::shared_ptr<phase_space_type> self, std::function<void ()>& array_to_sample)
 {
     typedef std::vector<typename phase_space_type::velocity_array_type::value_type> array_type;
-    boost::shared_ptr<array_type> array = boost::make_shared<array_type>();
+    std::shared_ptr<array_type> array = std::make_shared<array_type>();
     array_to_sample = [=]() {
         if (self->velocity().size() != array->size()) {
             throw std::runtime_error("phase space sample has mismatching size");
@@ -98,10 +97,10 @@ wrap_velocity(boost::shared_ptr<phase_space_type> self, std::function<void ()>& 
 
 template <typename phase_space_type>
 static std::function<std::vector<typename phase_space_type::species_array_type::value_type>& ()>
-wrap_species(boost::shared_ptr<phase_space_type> self, std::function<void ()>& array_to_sample)
+wrap_species(std::shared_ptr<phase_space_type> self, std::function<void ()>& array_to_sample)
 {
     typedef std::vector<typename phase_space_type::species_array_type::value_type> array_type;
-    boost::shared_ptr<array_type> array = boost::make_shared<array_type>();
+    std::shared_ptr<array_type> array = std::make_shared<array_type>();
     array_to_sample = [=]() {
         if (self->species().size() != array->size()) {
             throw std::runtime_error("phase space sample has mismatching size");
@@ -123,10 +122,10 @@ wrap_species(boost::shared_ptr<phase_space_type> self, std::function<void ()>& a
 
 template <typename phase_space_type>
 static std::function<std::vector<typename phase_space_type::mass_array_type::value_type>& ()>
-wrap_mass(boost::shared_ptr<phase_space_type> self, std::function<void ()>& array_to_sample)
+wrap_mass(std::shared_ptr<phase_space_type> self, std::function<void ()>& array_to_sample)
 {
     typedef std::vector<typename phase_space_type::mass_array_type::value_type> array_type;
-    boost::shared_ptr<array_type> array = boost::make_shared<array_type>();
+    std::shared_ptr<array_type> array = std::make_shared<array_type>();
     array_to_sample = [=]() {
         if (self->mass().size() != array->size()) {
             throw std::runtime_error("phase space sample has mismatching size");
@@ -156,7 +155,7 @@ void phase_space<dimension, float_type>::luaopen(lua_State* L)
             [
                 namespace_("samples")
                 [
-                    class_<phase_space, boost::shared_ptr<phase_space> >(class_name.c_str())
+                    class_<phase_space, std::shared_ptr<phase_space> >(class_name.c_str())
                         .def(constructor<std::size_t>())
                         .property("nparticle", &wrap_nparticle<phase_space>)
                         .property("nspecies", &wrap_nspecies<phase_space>)

@@ -42,7 +42,7 @@ void local_r4<float_type>::luaopen(lua_State* L)
             [
                 namespace_("trunc")
                 [
-                    class_<local_r4, boost::shared_ptr<local_r4> >(class_name.c_str())
+                    class_<local_r4, std::shared_ptr<local_r4> >(class_name.c_str())
                         .def(constructor<float_type>())
                 ]
             ]

@@ -20,10 +20,10 @@
 #ifndef HALMD_MDSIM_HOST_POTENTIALS_POWER_LAW_HPP
 #define HALMD_MDSIM_HOST_POTENTIALS_POWER_LAW_HPP
 
-#include <boost/make_shared.hpp>
 #include <boost/numeric/ublas/matrix.hpp>
 #include <boost/tuple/tuple.hpp>
 #include <lua.hpp>
+#include <memory>
 
 #include <halmd/io/logger.hpp>
 #include <halmd/numeric/pow.hpp>
@@ -58,7 +58,7 @@ public:
       , matrix_type const& epsilon
       , matrix_type const& sigma
       , uint_matrix_type const& index
-      , boost::shared_ptr<logger_type> logger = boost::make_shared<logger_type>()
+      , std::shared_ptr<logger_type> logger = std::make_shared<logger_type>()
     );
 
     /**
@@ -223,7 +223,7 @@ private:
     /** potential energy at cutoff in MD units */
     matrix_type en_cut_;
     /** module logger */
-    boost::shared_ptr<logger_type> logger_;
+    std::shared_ptr<logger_type> logger_;
 };
 
 } // namespace potentials

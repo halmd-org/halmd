@@ -22,10 +22,10 @@
 #define HALMD_MDSIM_HOST_POTENTIALS_LENNARD_JONES_HPP
 
 #include <boost/assign.hpp>
-#include <boost/make_shared.hpp>
 #include <boost/numeric/ublas/matrix.hpp>
 #include <boost/tuple/tuple.hpp>
 #include <lua.hpp>
+#include <memory>
 
 #include <halmd/io/logger.hpp>
 
@@ -50,7 +50,7 @@ public:
       , matrix_type const& cutoff
       , matrix_type const& epsilon
       , matrix_type const& sigma
-      , boost::shared_ptr<logger_type> logger = boost::make_shared<logger_type>()
+      , std::shared_ptr<logger_type> logger = std::make_shared<logger_type>()
     );
 
     /** compute potential and its derivative at squared distance 'rr' for particles of type 'a' and 'b' */
@@ -118,7 +118,7 @@ private:
     /** potential energy at cutoff length in MD units */
     matrix_type en_cut_;
     /** module logger */
-    boost::shared_ptr<logger_type> logger_;
+    std::shared_ptr<logger_type> logger_;
 };
 
 } // namespace potentials

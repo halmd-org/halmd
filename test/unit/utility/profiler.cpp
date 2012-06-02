@@ -20,8 +20,7 @@
 #define BOOST_TEST_MODULE profiler
 #include <boost/test/unit_test.hpp>
 
-#include <boost/make_shared.hpp>
-#include <boost/shared_ptr.hpp>
+#include <memory>
 
 #include <halmd/utility/profiler.hpp>
 #include <test/tools/ctest.hpp>
@@ -36,8 +35,8 @@ using namespace std;
 struct timer_map
 {
     typedef utility::profiler::accumulator_type accumulator_type;
-    boost::shared_ptr<accumulator_type> timer1;
-    boost::shared_ptr<accumulator_type> timer2;
+    std::shared_ptr<accumulator_type> timer1;
+    std::shared_ptr<accumulator_type> timer2;
 };
 
 //
@@ -46,17 +45,17 @@ struct timer_map
 
 BOOST_AUTO_TEST_CASE( test_profiler )
 {
-    boost::shared_ptr<utility::profiler> profiler;
+    std::shared_ptr<utility::profiler> profiler;
     timer_map timers;
-    timers.timer1 = boost::make_shared<timer_map::accumulator_type>();
-    timers.timer2 = boost::make_shared<timer_map::accumulator_type>();
+    timers.timer1 = std::make_shared<timer_map::accumulator_type>();
+    timers.timer2 = std::make_shared<timer_map::accumulator_type>();
 
     // repeat three times
     for (unsigned n=0; n < 3; n++) {
         BOOST_TEST_MESSAGE("Pass #" << n+1);
 
         // construct modules
-        profiler = boost::make_shared<utility::profiler>();
+        profiler = std::make_shared<utility::profiler>();
 
         // register profiling timers
         profiler->on_profile(timers.timer1, "first timer");

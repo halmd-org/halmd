@@ -54,7 +54,7 @@ void core::mdstep()
 }
 
 static std::function<void ()>
-wrap_setup(boost::shared_ptr<core> self)
+wrap_setup(std::shared_ptr<core> self)
 {
     return [=]() {
         self->setup();
@@ -62,7 +62,7 @@ wrap_setup(boost::shared_ptr<core> self)
 }
 
 static std::function<void ()>
-wrap_mdstep(boost::shared_ptr<core> self)
+wrap_mdstep(std::shared_ptr<core> self)
 {
     return [=]() {
         self->mdstep();
@@ -70,7 +70,7 @@ wrap_mdstep(boost::shared_ptr<core> self)
 }
 
 static std::function<void (std::function<void ()> const&)>
-wrap_on_prepend_setup(boost::shared_ptr<core> self)
+wrap_on_prepend_setup(std::shared_ptr<core> self)
 {
     return [=](std::function<void ()> const& slot) {
         return self->on_prepend_setup(slot);
@@ -78,7 +78,7 @@ wrap_on_prepend_setup(boost::shared_ptr<core> self)
 }
 
 static std::function<void (std::function<void ()> const&)>
-wrap_on_setup(boost::shared_ptr<core> self)
+wrap_on_setup(std::shared_ptr<core> self)
 {
     return [=](std::function<void ()> const& slot) {
         return self->on_setup(slot);
@@ -86,7 +86,7 @@ wrap_on_setup(boost::shared_ptr<core> self)
 }
 
 static std::function<void (std::function<void ()> const&)>
-wrap_on_append_setup(boost::shared_ptr<core> self)
+wrap_on_append_setup(std::shared_ptr<core> self)
 {
     return [=](std::function<void ()> const& slot) {
         return self->on_append_setup(slot);
@@ -94,7 +94,7 @@ wrap_on_append_setup(boost::shared_ptr<core> self)
 }
 
 static std::function<void (std::function<void ()> const&)>
-wrap_on_prepend_integrate(boost::shared_ptr<core> self)
+wrap_on_prepend_integrate(std::shared_ptr<core> self)
 {
     return [=](std::function<void ()> const& slot) {
         return self->on_prepend_integrate(slot);
@@ -102,7 +102,7 @@ wrap_on_prepend_integrate(boost::shared_ptr<core> self)
 }
 
 static std::function<void (std::function<void ()> const&)>
-wrap_on_integrate(boost::shared_ptr<core> self)
+wrap_on_integrate(std::shared_ptr<core> self)
 {
     return [=](std::function<void ()> const& slot) {
         return self->on_integrate(slot);
@@ -110,7 +110,7 @@ wrap_on_integrate(boost::shared_ptr<core> self)
 }
 
 static std::function<void (std::function<void ()> const&)>
-wrap_on_append_integrate(boost::shared_ptr<core> self)
+wrap_on_append_integrate(std::shared_ptr<core> self)
 {
     return [=](std::function<void ()> const& slot) {
         return self->on_append_integrate(slot);
@@ -118,7 +118,7 @@ wrap_on_append_integrate(boost::shared_ptr<core> self)
 }
 
 static std::function<void (std::function<void ()> const&)>
-wrap_on_prepend_force(boost::shared_ptr<core> self)
+wrap_on_prepend_force(std::shared_ptr<core> self)
 {
     return [=](std::function<void ()> const& slot) {
         return self->on_prepend_force(slot);
@@ -126,7 +126,7 @@ wrap_on_prepend_force(boost::shared_ptr<core> self)
 }
 
 static std::function<void (std::function<void ()> const&)>
-wrap_on_force(boost::shared_ptr<core> self)
+wrap_on_force(std::shared_ptr<core> self)
 {
     return [=](std::function<void ()> const& slot) {
         return self->on_force(slot);
@@ -134,7 +134,7 @@ wrap_on_force(boost::shared_ptr<core> self)
 }
 
 static std::function<void (std::function<void ()> const&)>
-wrap_on_append_force(boost::shared_ptr<core> self)
+wrap_on_append_force(std::shared_ptr<core> self)
 {
     return [=](std::function<void ()> const& slot) {
         return self->on_append_force(slot);
@@ -142,7 +142,7 @@ wrap_on_append_force(boost::shared_ptr<core> self)
 }
 
 static std::function<void (std::function<void ()> const&)>
-wrap_on_prepend_finalize(boost::shared_ptr<core> self)
+wrap_on_prepend_finalize(std::shared_ptr<core> self)
 {
     return [=](std::function<void ()> const& slot) {
         return self->on_prepend_finalize(slot);
@@ -150,7 +150,7 @@ wrap_on_prepend_finalize(boost::shared_ptr<core> self)
 }
 
 static std::function<void (std::function<void ()> const&)>
-wrap_on_finalize(boost::shared_ptr<core> self)
+wrap_on_finalize(std::shared_ptr<core> self)
 {
     return [=](std::function<void ()> const& slot) {
         return self->on_finalize(slot);
@@ -158,7 +158,7 @@ wrap_on_finalize(boost::shared_ptr<core> self)
 }
 
 static std::function<void (std::function<void ()> const&)>
-wrap_on_append_finalize(boost::shared_ptr<core> self)
+wrap_on_append_finalize(std::shared_ptr<core> self)
 {
     return [=](std::function<void ()> const& slot) {
         return self->on_append_finalize(slot);
@@ -172,7 +172,7 @@ void core::luaopen(lua_State* L)
     [
         namespace_("mdsim")
         [
-            class_<core, boost::shared_ptr<core> >("core")
+            class_<core, std::shared_ptr<core> >("core")
                 .def(constructor<>())
                 .property("setup", &wrap_setup)
                 .property("mdstep", &wrap_mdstep)

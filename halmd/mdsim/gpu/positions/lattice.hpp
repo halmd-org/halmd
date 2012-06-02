@@ -20,8 +20,8 @@
 #ifndef HALMD_MDSIM_GPU_POSITIONS_LATTICE_HPP
 #define HALMD_MDSIM_GPU_POSITIONS_LATTICE_HPP
 
-#include <boost/make_shared.hpp>
 #include <lua.hpp>
+#include <memory>
 #include <vector>
 
 #include <halmd/io/logger.hpp>
@@ -49,10 +49,10 @@ public:
     static void luaopen(lua_State* L);
 
     lattice(
-        boost::shared_ptr<particle_type> particle
-      , boost::shared_ptr<box_type const> box
+        std::shared_ptr<particle_type> particle
+      , std::shared_ptr<box_type const> box
       , typename box_type::vector_type const& slab
-      , boost::shared_ptr<logger_type> logger = boost::make_shared<logger_type>()
+      , std::shared_ptr<logger_type> logger = std::make_shared<logger_type>()
     );
     void set();
 
@@ -68,9 +68,9 @@ private:
         accumulator_type set;
     };
 
-    boost::shared_ptr<particle_type> particle_;
-    boost::shared_ptr<box_type const> box_;
-    boost::shared_ptr<logger_type> logger_;
+    std::shared_ptr<particle_type> particle_;
+    std::shared_ptr<box_type const> box_;
+    std::shared_ptr<logger_type> logger_;
     /** slab extents for each direction as fraction of the edge length of the box */
     typename box_type::vector_type slab_;
 

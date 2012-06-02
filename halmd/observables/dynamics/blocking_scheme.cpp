@@ -18,7 +18,6 @@
  */
 
 #include <algorithm>
-#include <boost/foreach.hpp>
 #include <cassert>
 #include <exception>
 
@@ -33,13 +32,13 @@ namespace observables {
 namespace dynamics {
 
 blocking_scheme::blocking_scheme(
-    boost::shared_ptr<clock_type const> clock
+    std::shared_ptr<clock_type const> clock
   , double maximum_lag_time
   , double resolution
   , unsigned int block_size
   , unsigned int shift
   , unsigned int separation
-  , boost::shared_ptr<logger_type> logger
+  , std::shared_ptr<logger_type> logger
 )
   // member initialisation
   : clock_(clock)
@@ -102,13 +101,13 @@ blocking_scheme::blocking_scheme(
     }
 }
 
-connection blocking_scheme::on_correlate(boost::shared_ptr<correlation_base> tcf)
+connection blocking_scheme::on_correlate(std::shared_ptr<correlation_base> tcf)
 {
     assert(find(tcf_.begin(), tcf_.end(), tcf) == tcf_.end());
     return tcf_.connect(tcf);
 }
 
-connection blocking_scheme::on_sample(boost::shared_ptr<block_sample_type> block_sample)
+connection blocking_scheme::on_sample(std::shared_ptr<block_sample_type> block_sample)
 {
     assert(block_sample->count() == count());
     assert(block_sample->block_size() == block_size_);
@@ -136,7 +135,7 @@ void blocking_scheme::sample()
         if ((step - origin_[i]) % interval_[i] == 0 && step >= origin_[i]) {
             // append current sample to block at level 'i' for each sample type
             LOG_TRACE("append sample(s) to blocking level " << i);
-            BOOST_FOREACH(boost::shared_ptr<block_sample_type> block_sample, block_sample_) {
+            for (std::shared_ptr<block_sample_type> block_sample : block_sample_) {
                 block_sample->push_back(i);
             }
 
@@ -170,7 +169,7 @@ void blocking_scheme::process(unsigned int level)
     // call all registered correlation modules
     // and correlate block data with first entry
     LOG_TRACE("compute correlations at blocking level " << level << " from step " << origin_[level]);
-    BOOST_FOREACH(boost::shared_ptr<correlation_base> tcf, tcf_) {
+    for (std::shared_ptr<correlation_base> tcf : tcf_) {
         tcf->compute(level);
     }
 
@@ -184,7 +183,7 @@ void blocking_scheme::process(unsigned int level)
     // for each block structure, discard all entries earlier
     // than the new time origin at this level
     LOG_TRACE("discard first " << skip << " entries at level " << level);
-    BOOST_FOREACH(boost::shared_ptr<block_sample_type> block_sample, block_sample_) {
+    for (std::shared_ptr<block_sample_type> block_sample : block_sample_) {
         for (unsigned int k = 0; k < skip && !block_sample->empty(level); ++k) {
             block_sample->pop_front(level);
         }
@@ -212,7 +211,7 @@ connection blocking_scheme::on_append_finalise(slot_function_type const& slot)
 }
 
 static std::function<void ()>
-wrap_sample(boost::shared_ptr<blocking_scheme> self)
+wrap_sample(std::shared_ptr<blocking_scheme> self)
 {
     return [=]() {
         self->sample();
@@ -220,7 +219,7 @@ wrap_sample(boost::shared_ptr<blocking_scheme> self)
 }
 
 static std::function<void ()>
-wrap_finalise(boost::shared_ptr<blocking_scheme> self)
+wrap_finalise(std::shared_ptr<blocking_scheme> self)
 {
     return [=]() {
         self->finalise();
@@ -228,31 +227,31 @@ wrap_finalise(boost::shared_ptr<blocking_scheme> self)
 }
 
 static std::function<blocking_scheme::block_time_type const& ()>
-wrap_time(boost::shared_ptr<blocking_scheme> self)
+wrap_time(std::shared_ptr<blocking_scheme> self)
 {
     return [=]() -> blocking_scheme::block_time_type const& {
         return self->time();
     };
 }
 
-static std::function<connection (boost::shared_ptr<correlation_base>)>
-wrap_on_correlate(boost::shared_ptr<blocking_scheme> self)
+static std::function<connection (std::shared_ptr<correlation_base>)>
+wrap_on_correlate(std::shared_ptr<blocking_scheme> self)
 {
-    return [=](boost::shared_ptr<correlation_base> tcf) {
+    return [=](std::shared_ptr<correlation_base> tcf) {
         return self->on_correlate(tcf);
     };
 }
 
-static std::function<connection (boost::shared_ptr<blocking_scheme::block_sample_type>)>
-wrap_on_sample(boost::shared_ptr<blocking_scheme> self)
+static std::function<connection (std::shared_ptr<blocking_scheme::block_sample_type>)>
+wrap_on_sample(std::shared_ptr<blocking_scheme> self)
 {
-    return [=](boost::shared_ptr<blocking_scheme::block_sample_type> block_sample) {
+    return [=](std::shared_ptr<blocking_scheme::block_sample_type> block_sample) {
         return self->on_sample(block_sample);
     };
 }
 
 static std::function<connection (std::function<void ()> const&)>
-wrap_on_prepend_sample(boost::shared_ptr<blocking_scheme> self)
+wrap_on_prepend_sample(std::shared_ptr<blocking_scheme> self)
 {
     return [=](std::function<void ()> const& slot) {
         return self->on_prepend_sample(slot);
@@ -260,7 +259,7 @@ wrap_on_prepend_sample(boost::shared_ptr<blocking_scheme> self)
 }
 
 static std::function<connection (std::function<void ()> const&)>
-wrap_on_append_sample(boost::shared_ptr<blocking_scheme> self)
+wrap_on_append_sample(std::shared_ptr<blocking_scheme> self)
 {
     return [=](std::function<void ()> const& slot) {
         return self->on_append_sample(slot);
@@ -268,7 +267,7 @@ wrap_on_append_sample(boost::shared_ptr<blocking_scheme> self)
 }
 
 static std::function<connection (std::function<void ()> const&)>
-wrap_on_prepend_finalise(boost::shared_ptr<blocking_scheme> self)
+wrap_on_prepend_finalise(std::shared_ptr<blocking_scheme> self)
 {
     return [=](std::function<void ()> const& slot) {
         return self->on_prepend_finalise(slot);
@@ -276,7 +275,7 @@ wrap_on_prepend_finalise(boost::shared_ptr<blocking_scheme> self)
 }
 
 static std::function<connection (std::function<void ()> const&)>
-wrap_on_append_finalise(boost::shared_ptr<blocking_scheme> self)
+wrap_on_append_finalise(std::shared_ptr<blocking_scheme> self)
 {
     return [=](std::function<void ()> const& slot) {
         return self->on_append_finalise(slot);
@@ -292,15 +291,15 @@ void blocking_scheme::luaopen(lua_State* L)
         [
             namespace_("dynamics")
             [
-                class_<blocking_scheme, boost::shared_ptr<blocking_scheme> >("blocking_scheme")
+                class_<blocking_scheme, std::shared_ptr<blocking_scheme> >("blocking_scheme")
                     .def(constructor<
-                        boost::shared_ptr<clock_type const>
+                        std::shared_ptr<clock_type const>
                       , double
                       , double
                       , unsigned int
                       , unsigned int
                       , unsigned int
-                      , boost::shared_ptr<logger_type>
+                      , std::shared_ptr<logger_type>
                     >())
                     .property("finalise", &wrap_finalise)
                     .property("sample", &wrap_sample)

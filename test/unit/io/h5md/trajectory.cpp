@@ -23,8 +23,7 @@
 #include <boost/test/unit_test.hpp>
 #include <boost/test/parameterized_test.hpp>
 
-#include <boost/make_shared.hpp>
-#include <boost/shared_ptr.hpp>
+#include <memory>
 #include <vector>
 
 #include <halmd/io/readers/h5md/append.hpp>
@@ -39,14 +38,14 @@
 boost::array<std::string, 3> const types = {{ "A", "B", "C" }};
 
 template <typename sample_type, typename writer_type>
-void on_write_sample(std::vector<boost::shared_ptr<sample_type> > const& samples, boost::shared_ptr<writer_type> writer)
+void on_write_sample(std::vector<std::shared_ptr<sample_type> > const& samples, std::shared_ptr<writer_type> writer)
 {
     typedef typename sample_type::position_array_type position_array_type;
     typedef typename sample_type::velocity_array_type velocity_array_type;
     typedef typename writer_type::subgroup_type subgroup_type;
 
     for (unsigned int type = 0; type < samples.size(); ++type) {
-        boost::shared_ptr<sample_type> sample = samples[type];
+        std::shared_ptr<sample_type> sample = samples[type];
         {
             subgroup_type group;
             writer->template on_write<position_array_type const&>(
@@ -73,7 +72,7 @@ void on_write_sample(std::vector<boost::shared_ptr<sample_type> > const& samples
 }
 
 template <typename sample_type, typename reader_type>
-void on_read_sample(std::vector<boost::shared_ptr<sample_type> > const& samples, boost::shared_ptr<reader_type> reader)
+void on_read_sample(std::vector<std::shared_ptr<sample_type> > const& samples, std::shared_ptr<reader_type> reader)
 {
     typedef typename sample_type::position_array_type position_array_type;
     typedef typename sample_type::velocity_array_type velocity_array_type;
@@ -82,9 +81,9 @@ void on_read_sample(std::vector<boost::shared_ptr<sample_type> > const& samples,
     typedef typename reader_type::subgroup_type subgroup_type;
 
     for (unsigned int type = 0; type < samples.size(); ++type) {
-        boost::shared_ptr<sample_type> sample = samples[type];
+        std::shared_ptr<sample_type> sample = samples[type];
         {
-            boost::shared_ptr<std::vector<position_type>> array = boost::make_shared<std::vector<position_type>>();
+            std::shared_ptr<std::vector<position_type>> array = std::make_shared<std::vector<position_type>>();
             subgroup_type group;
             reader->template on_read<std::vector<position_type>&>(
                 group
@@ -103,7 +102,7 @@ void on_read_sample(std::vector<boost::shared_ptr<sample_type> > const& samples,
             BOOST_CHECK_EQUAL(h5xx::path(group), "/trajectory/" + types[type] + "/position");
         }
         {
-            boost::shared_ptr<std::vector<velocity_type>> array = boost::make_shared<std::vector<velocity_type>>();
+            std::shared_ptr<std::vector<velocity_type>> array = std::make_shared<std::vector<velocity_type>>();
             subgroup_type group;
             reader->template on_read<std::vector<velocity_type>&>(
                 group
@@ -142,9 +141,9 @@ void h5md(std::vector<unsigned int> const& ntypes)
     BOOST_MESSAGE("Testing " << ntypes.size() << " particle types");
 
     // construct phase space sample and fill with positions and velocities
-    std::vector<boost::shared_ptr<double_sample_type> > double_sample;
+    std::vector<std::shared_ptr<double_sample_type> > double_sample;
     for (unsigned int type = 0; type < ntypes.size(); ++type) {
-        double_sample.push_back(boost::make_shared<double_sample_type>(ntypes[type]));
+        double_sample.push_back(std::make_shared<double_sample_type>(ntypes[type]));
         double_position_array_type& r_sample = double_sample[type]->position();
         double_velocity_array_type& v_sample = double_sample[type]->velocity();
         for (unsigned int i = 0; i < ntypes[type]; ++i) {
@@ -165,9 +164,9 @@ void h5md(std::vector<unsigned int> const& ntypes)
     }
 
     // copy sample to single precision
-    std::vector<boost::shared_ptr<float_sample_type> > float_sample;
+    std::vector<std::shared_ptr<float_sample_type> > float_sample;
     for (unsigned int type = 0; type < ntypes.size(); ++type) {
-        float_sample.push_back(boost::make_shared<float_sample_type>(ntypes[type]));
+        float_sample.push_back(std::make_shared<float_sample_type>(ntypes[type]));
         std::transform(
             double_sample[type]->position().begin()
           , double_sample[type]->position().end()
@@ -188,11 +187,11 @@ void h5md(std::vector<unsigned int> const& ntypes)
 
     // write single-precision sample to file
     // use time-step not exactly representable as float-point value
-    boost::shared_ptr<halmd::mdsim::clock> clock = boost::make_shared<halmd::mdsim::clock>();
-    boost::shared_ptr<halmd::io::writers::h5md::file> writer_file =
-        boost::make_shared<halmd::io::writers::h5md::file>(filename);
-    boost::shared_ptr<halmd::io::writers::h5md::append> writer =
-        boost::make_shared<halmd::io::writers::h5md::append>(writer_file->root(), std::vector<std::string>{"trajectory"}, clock);
+    std::shared_ptr<halmd::mdsim::clock> clock = std::make_shared<halmd::mdsim::clock>();
+    std::shared_ptr<halmd::io::writers::h5md::file> writer_file =
+        std::make_shared<halmd::io::writers::h5md::file>(filename);
+    std::shared_ptr<halmd::io::writers::h5md::append> writer =
+        std::make_shared<halmd::io::writers::h5md::append>(writer_file->root(), std::vector<std::string>{"trajectory"}, clock);
 
     on_write_sample(float_sample, writer);
 
@@ -203,8 +202,8 @@ void h5md(std::vector<unsigned int> const& ntypes)
     // resetting the shared_ptr first closes the HDF5 file
     writer.reset();
     writer_file.reset();
-    writer_file = boost::make_shared<halmd::io::writers::h5md::file>(filename);
-    writer = boost::make_shared<halmd::io::writers::h5md::append>(writer_file->root(), std::vector<std::string>{"trajectory"}, clock);
+    writer_file = std::make_shared<halmd::io::writers::h5md::file>(filename);
+    writer = std::make_shared<halmd::io::writers::h5md::append>(writer_file->root(), std::vector<std::string>{"trajectory"}, clock);
 
     on_write_sample(double_sample, writer);
 
@@ -233,15 +232,15 @@ void h5md(std::vector<unsigned int> const& ntypes)
     // read phase space sample #1 from file in double precision
     // reading is done upon construction, so we use an unnamed, temporary reader object
     // allocate memory for reading back the phase space sample
-    std::vector<boost::shared_ptr<double_sample_type> > double_sample_;
+    std::vector<std::shared_ptr<double_sample_type> > double_sample_;
     for (unsigned int type = 0; type < ntypes.size(); ++type) {
-        double_sample_.push_back(boost::make_shared<double_sample_type>(ntypes[type]));
+        double_sample_.push_back(std::make_shared<double_sample_type>(ntypes[type]));
     }
 
-    boost::shared_ptr<halmd::io::readers::h5md::file> reader_file =
-        boost::make_shared<halmd::io::readers::h5md::file>(filename);
-    boost::shared_ptr<halmd::io::readers::h5md::append> reader =
-        boost::make_shared<halmd::io::readers::h5md::append>(reader_file->root(), std::vector<std::string>{"trajectory"});
+    std::shared_ptr<halmd::io::readers::h5md::file> reader_file =
+        std::make_shared<halmd::io::readers::h5md::file>(filename);
+    std::shared_ptr<halmd::io::readers::h5md::append> reader =
+        std::make_shared<halmd::io::readers::h5md::append>(reader_file->root(), std::vector<std::string>{"trajectory"});
 
     on_read_sample(double_sample_, reader);
 
@@ -265,14 +264,14 @@ void h5md(std::vector<unsigned int> const& ntypes)
     }
 
     // read phase space sample #0 from file in single precision
-    std::vector<boost::shared_ptr<float_sample_type> > float_sample_;
+    std::vector<std::shared_ptr<float_sample_type> > float_sample_;
     for (unsigned int type = 0; type < ntypes.size(); ++type) {
-        float_sample_.push_back(boost::make_shared<float_sample_type>(ntypes[type]));
+        float_sample_.push_back(std::make_shared<float_sample_type>(ntypes[type]));
     }
 
     // reconstruct the reader to replace slots to double with float sample
     reader.reset();
-    reader = boost::make_shared<halmd::io::readers::h5md::append>(reader_file->root(), std::vector<std::string>{"trajectory"});
+    reader = std::make_shared<halmd::io::readers::h5md::append>(reader_file->root(), std::vector<std::string>{"trajectory"});
 
     // deconstruct file module to check that the HDF5 library
     // keeps the file open if reader module still exists

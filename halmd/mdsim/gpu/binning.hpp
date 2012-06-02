@@ -22,10 +22,9 @@
 
 #include <algorithm>
 #include <boost/bind.hpp>
-#include <boost/make_shared.hpp>
 #include <boost/numeric/ublas/matrix.hpp>
-#include <boost/shared_ptr.hpp>
 #include <lua.hpp>
+#include <memory>
 
 #include <halmd/io/logger.hpp>
 #include <halmd/algorithm/gpu/radix_sort.hpp>
@@ -57,11 +56,11 @@ public:
     static void luaopen(lua_State* L);
 
     binning(
-        boost::shared_ptr<particle_type const> particle
-      , boost::shared_ptr<box_type const> box
+        std::shared_ptr<particle_type const> particle
+      , std::shared_ptr<box_type const> box
       , matrix_type const& r_cut
       , double skin
-      , boost::shared_ptr<logger_type> logger = boost::make_shared<logger_type>()
+      , std::shared_ptr<logger_type> logger = std::make_shared<logger_type>()
       , double cell_occupancy = defaults::occupancy()
     );
     void update();
@@ -137,10 +136,10 @@ private:
         accumulator_type update;
     };
 
-    boost::shared_ptr<particle_type const> particle_;
-    boost::shared_ptr<box_type const> box_;
+    std::shared_ptr<particle_type const> particle_;
+    std::shared_ptr<box_type const> box_;
     /** module logger */
-    boost::shared_ptr<logger_type> logger_;
+    std::shared_ptr<logger_type> logger_;
     /** neighbour list skin in MD units */
     float_type r_skin_;
     /** average desired cell occupancy */

@@ -20,9 +20,9 @@
 #ifndef HALMD_OBSERVABLES_GPU_DENSITY_MODE_HPP
 #define HALMD_OBSERVABLES_GPU_DENSITY_MODE_HPP
 
-#include <boost/make_shared.hpp>
 #include <cuda_wrapper/cuda_wrapper.hpp>
 #include <lua.hpp>
+#include <memory>
 
 #include <halmd/io/logger.hpp>
 #include <halmd/mdsim/clock.hpp>
@@ -53,9 +53,9 @@ public:
     typedef logger logger_type;
 
     density_mode(
-        boost::shared_ptr<wavevector_type const> wavevector
-      , boost::shared_ptr<clock_type const> clock
-      , boost::shared_ptr<logger_type> logger = boost::make_shared<logger_type>()
+        std::shared_ptr<wavevector_type const> wavevector
+      , std::shared_ptr<clock_type const> clock
+      , std::shared_ptr<logger_type> logger = std::make_shared<logger_type>()
     );
 
     /**
@@ -63,12 +63,12 @@ public:
      *
      * FIXME operate on unsorted particle_group instead of phase_space
      */
-    boost::shared_ptr<sample_type const> acquire(phase_space_type const& phase_space);
+    std::shared_ptr<sample_type const> acquire(phase_space_type const& phase_space);
 
     /**
      * Returns wavevector instance.
      */
-    boost::shared_ptr<wavevector_type const> wavevector() const
+    std::shared_ptr<wavevector_type const> wavevector() const
     {
         return wavevector_;
     }
@@ -86,13 +86,13 @@ private:
     typedef density_mode_wrapper<dimension> wrapper_type;
 
     /** cached sample with density modes */
-    boost::shared_ptr<sample_type> rho_sample_;
+    std::shared_ptr<sample_type> rho_sample_;
     /** wavevector grid */
-    boost::shared_ptr<wavevector_type const> wavevector_;
+    std::shared_ptr<wavevector_type const> wavevector_;
     /** simulation clock */
-    boost::shared_ptr<clock_type const> clock_;
+    std::shared_ptr<clock_type const> clock_;
     /** logger instance */
-    boost::shared_ptr<logger_type> logger_;
+    std::shared_ptr<logger_type> logger_;
 
     /** total number of wavevectors */
     unsigned int nq_;

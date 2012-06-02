@@ -240,7 +240,7 @@ void particle<dimension, float_type>::rearrange(cuda::vector<unsigned int> const
 
 template <typename particle_type>
 static std::function<std::vector<typename particle_type::position_type> ()>
-wrap_get_position(boost::shared_ptr<particle_type const> self)
+wrap_get_position(std::shared_ptr<particle_type const> self)
 {
     return [=]() -> std::vector<typename particle_type::position_type> {
         std::vector<typename particle_type::position_type> output;
@@ -252,7 +252,7 @@ wrap_get_position(boost::shared_ptr<particle_type const> self)
 
 template <typename particle_type>
 static std::function<void (std::vector<typename particle_type::position_type> const&)>
-wrap_set_position(boost::shared_ptr<particle_type> self)
+wrap_set_position(std::shared_ptr<particle_type> self)
 {
     return [=](std::vector<typename particle_type::position_type> const& input) {
         if (input.size() != self->nparticle()) {
@@ -264,7 +264,7 @@ wrap_set_position(boost::shared_ptr<particle_type> self)
 
 template <typename particle_type>
 static std::function<std::vector<typename particle_type::image_type> ()>
-wrap_get_image(boost::shared_ptr<particle_type const> self)
+wrap_get_image(std::shared_ptr<particle_type const> self)
 {
     return [=]() -> std::vector<typename particle_type::image_type> {
         std::vector<typename particle_type::image_type> output;
@@ -276,7 +276,7 @@ wrap_get_image(boost::shared_ptr<particle_type const> self)
 
 template <typename particle_type>
 static std::function<void (std::vector<typename particle_type::image_type> const&)>
-wrap_set_image(boost::shared_ptr<particle_type> self)
+wrap_set_image(std::shared_ptr<particle_type> self)
 {
     return [=](std::vector<typename particle_type::image_type> const& input) {
         if (input.size() != self->nparticle()) {
@@ -288,7 +288,7 @@ wrap_set_image(boost::shared_ptr<particle_type> self)
 
 template <typename particle_type>
 static std::function<std::vector<typename particle_type::velocity_type> ()>
-wrap_get_velocity(boost::shared_ptr<particle_type const> self)
+wrap_get_velocity(std::shared_ptr<particle_type const> self)
 {
     return [=]() -> std::vector<typename particle_type::velocity_type> {
         std::vector<typename particle_type::velocity_type> output;
@@ -300,7 +300,7 @@ wrap_get_velocity(boost::shared_ptr<particle_type const> self)
 
 template <typename particle_type>
 static std::function<void (std::vector<typename particle_type::velocity_type> const&)>
-wrap_set_velocity(boost::shared_ptr<particle_type> self)
+wrap_set_velocity(std::shared_ptr<particle_type> self)
 {
     return [=](std::vector<typename particle_type::velocity_type> const& input) {
         if (input.size() != self->nparticle()) {
@@ -312,7 +312,7 @@ wrap_set_velocity(boost::shared_ptr<particle_type> self)
 
 template <typename particle_type>
 static std::function<std::vector<typename particle_type::tag_type> ()>
-wrap_get_tag(boost::shared_ptr<particle_type const> self)
+wrap_get_tag(std::shared_ptr<particle_type const> self)
 {
     return [=]() -> std::vector<typename particle_type::tag_type> {
         std::vector<typename particle_type::tag_type> output;
@@ -328,7 +328,7 @@ wrap_get_tag(boost::shared_ptr<particle_type const> self)
 
 template <typename particle_type>
 static std::function<void (std::vector<typename particle_type::tag_type> const&)>
-wrap_set_tag(boost::shared_ptr<particle_type> self)
+wrap_set_tag(std::shared_ptr<particle_type> self)
 {
     typedef typename particle_type::tag_type tag_type;
     return [=](std::vector<tag_type> const& input) {
@@ -349,7 +349,7 @@ wrap_set_tag(boost::shared_ptr<particle_type> self)
 
 template <typename particle_type>
 static std::function<std::vector<typename particle_type::reverse_tag_type> ()>
-wrap_get_reverse_tag(boost::shared_ptr<particle_type const> self)
+wrap_get_reverse_tag(std::shared_ptr<particle_type const> self)
 {
     typedef typename particle_type::reverse_tag_type reverse_tag_type;
     return [=]() -> std::vector<reverse_tag_type> {
@@ -366,7 +366,7 @@ wrap_get_reverse_tag(boost::shared_ptr<particle_type const> self)
 
 template <typename particle_type>
 static std::function<void (std::vector<typename particle_type::reverse_tag_type> const&)>
-wrap_set_reverse_tag(boost::shared_ptr<particle_type> self)
+wrap_set_reverse_tag(std::shared_ptr<particle_type> self)
 {
     typedef typename particle_type::reverse_tag_type reverse_tag_type;
     return [=](std::vector<reverse_tag_type> const& input) {
@@ -387,7 +387,7 @@ wrap_set_reverse_tag(boost::shared_ptr<particle_type> self)
 
 template <typename particle_type>
 static std::function<std::vector<typename particle_type::species_type> ()>
-wrap_get_species(boost::shared_ptr<particle_type const> self)
+wrap_get_species(std::shared_ptr<particle_type const> self)
 {
     typedef typename particle_type::species_type species_type;
     return [=]() -> std::vector<species_type> {
@@ -404,7 +404,7 @@ wrap_get_species(boost::shared_ptr<particle_type const> self)
 
 template <typename particle_type>
 static std::function<void (std::vector<typename particle_type::species_type> const&)>
-wrap_set_species(boost::shared_ptr<particle_type> self)
+wrap_set_species(std::shared_ptr<particle_type> self)
 {
     typedef typename particle_type::species_type species_type;
     return [=](std::vector<species_type> const& input) {
@@ -425,7 +425,7 @@ wrap_set_species(boost::shared_ptr<particle_type> self)
 
 template <typename particle_type>
 static std::function<std::vector<typename particle_type::mass_type> ()>
-wrap_get_mass(boost::shared_ptr<particle_type const> self)
+wrap_get_mass(std::shared_ptr<particle_type const> self)
 {
     return [=]() -> std::vector<typename particle_type::mass_type> {
         std::vector<typename particle_type::mass_type> output;
@@ -437,7 +437,7 @@ wrap_get_mass(boost::shared_ptr<particle_type const> self)
 
 template <typename particle_type>
 static std::function<void (std::vector<typename particle_type::mass_type> const&)>
-wrap_set_mass(boost::shared_ptr<particle_type> self)
+wrap_set_mass(std::shared_ptr<particle_type> self)
 {
     return [=](std::vector<typename particle_type::mass_type> const& input) {
         if (input.size() != self->nparticle()) {
@@ -449,7 +449,7 @@ wrap_set_mass(boost::shared_ptr<particle_type> self)
 
 template <typename particle_type>
 static std::function<std::vector<typename particle_type::force_type> ()>
-wrap_get_force(boost::shared_ptr<particle_type const> self)
+wrap_get_force(std::shared_ptr<particle_type const> self)
 {
     return [=]() -> std::vector<typename particle_type::force_type> {
         std::vector<typename particle_type::force_type> output;
@@ -461,7 +461,7 @@ wrap_get_force(boost::shared_ptr<particle_type const> self)
 
 template <typename particle_type>
 static std::function<void (std::vector<typename particle_type::force_type> const&)>
-wrap_set_force(boost::shared_ptr<particle_type> self)
+wrap_set_force(std::shared_ptr<particle_type> self)
 {
     return [=](std::vector<typename particle_type::force_type> const& input) {
         if (input.size() != self->nparticle()) {
@@ -473,7 +473,7 @@ wrap_set_force(boost::shared_ptr<particle_type> self)
 
 template <typename particle_type>
 static std::function<std::vector<typename particle_type::en_pot_type> ()>
-wrap_get_en_pot(boost::shared_ptr<particle_type const> self)
+wrap_get_en_pot(std::shared_ptr<particle_type const> self)
 {
     return [=]() -> std::vector<typename particle_type::en_pot_type> {
         std::vector<typename particle_type::en_pot_type> output;
@@ -485,7 +485,7 @@ wrap_get_en_pot(boost::shared_ptr<particle_type const> self)
 
 template <typename particle_type>
 static std::function<void (std::vector<typename particle_type::en_pot_type> const&)>
-wrap_set_en_pot(boost::shared_ptr<particle_type> self)
+wrap_set_en_pot(std::shared_ptr<particle_type> self)
 {
     return [=](std::vector<typename particle_type::en_pot_type> const& input) {
         if (input.size() != self->nparticle()) {
@@ -497,7 +497,7 @@ wrap_set_en_pot(boost::shared_ptr<particle_type> self)
 
 template <typename particle_type>
 static std::function<std::vector<typename particle_type::stress_pot_type> ()>
-wrap_get_stress_pot(boost::shared_ptr<particle_type const> self)
+wrap_get_stress_pot(std::shared_ptr<particle_type const> self)
 {
     return [=]() -> std::vector<typename particle_type::stress_pot_type> {
         std::vector<typename particle_type::stress_pot_type> output;
@@ -509,7 +509,7 @@ wrap_get_stress_pot(boost::shared_ptr<particle_type const> self)
 
 template <typename particle_type>
 static std::function<void (std::vector<typename particle_type::stress_pot_type> const&)>
-wrap_set_stress_pot(boost::shared_ptr<particle_type> self)
+wrap_set_stress_pot(std::shared_ptr<particle_type> self)
 {
     return [=](std::vector<typename particle_type::stress_pot_type> const& input) {
         if (input.size() != self->nparticle()) {
@@ -521,7 +521,7 @@ wrap_set_stress_pot(boost::shared_ptr<particle_type> self)
 
 template <typename particle_type>
 static std::function<std::vector<typename particle_type::hypervirial_type> ()>
-wrap_get_hypervirial(boost::shared_ptr<particle_type const> self)
+wrap_get_hypervirial(std::shared_ptr<particle_type const> self)
 {
     return [=]() -> std::vector<typename particle_type::hypervirial_type> {
         std::vector<typename particle_type::hypervirial_type> output;
@@ -533,7 +533,7 @@ wrap_get_hypervirial(boost::shared_ptr<particle_type const> self)
 
 template <typename particle_type>
 static std::function<void (std::vector<typename particle_type::hypervirial_type> const&)>
-wrap_set_hypervirial(boost::shared_ptr<particle_type> self)
+wrap_set_hypervirial(std::shared_ptr<particle_type> self)
 {
     return [=](std::vector<typename particle_type::hypervirial_type> const& input) {
         if (input.size() != self->nparticle()) {
@@ -551,7 +551,7 @@ static int wrap_dimension(particle<dimension, float_type> const&)
 
 template <typename particle_type>
 static std::function<void ()>
-wrap_aux_enable(boost::shared_ptr<particle_type> self)
+wrap_aux_enable(std::shared_ptr<particle_type> self)
 {
     return [=]() {
         self->aux_enable();
@@ -560,7 +560,7 @@ wrap_aux_enable(boost::shared_ptr<particle_type> self)
 
 template <typename particle_type>
 static std::function<void ()>
-wrap_prepare(boost::shared_ptr<particle_type> self)
+wrap_prepare(std::shared_ptr<particle_type> self)
 {
     return [=]() {
         self->prepare();
@@ -586,7 +586,7 @@ void particle<dimension, float_type>::luaopen(lua_State* L)
         [
             namespace_("gpu")
             [
-                class_<particle, boost::shared_ptr<particle>, wrap_particle<particle> >(class_name.c_str())
+                class_<particle, std::shared_ptr<particle>, wrap_particle<particle> >(class_name.c_str())
                     .def(constructor<size_t, unsigned int>())
                     .property("nparticle", &particle::nparticle)
                     .property("nspecies", &particle::nspecies)

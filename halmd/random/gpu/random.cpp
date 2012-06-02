@@ -17,7 +17,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <boost/shared_ptr.hpp>
+#include <memory>
 
 #include <halmd/random/gpu/rand48.hpp>
 #include <halmd/random/gpu/random.hpp>
@@ -96,7 +96,7 @@ unsigned int random<RandomNumberGenerator>::defaults::shuffle_threads() {
 
 template <typename random_type>
 static std::function<void (unsigned int)>
-wrap_seed(boost::shared_ptr<random_type> self)
+wrap_seed(std::shared_ptr<random_type> self)
 {
     return [=](unsigned int seed) {
         self->seed(seed);
@@ -114,7 +114,7 @@ void random<RandomNumberGenerator>::luaopen(lua_State* L)
         [
             namespace_("gpu")
             [
-                class_<random, boost::shared_ptr<random> >(class_name.c_str())
+                class_<random, std::shared_ptr<random> >(class_name.c_str())
                     .def(constructor<>())
                     .property("seed", &wrap_seed<random>)
             ]

@@ -20,10 +20,10 @@
 #ifndef HALMD_MDSIM_GPU_POTENTIALS_POWER_LAW_HPP
 #define HALMD_MDSIM_GPU_POTENTIALS_POWER_LAW_HPP
 
-#include <boost/make_shared.hpp>
 #include <boost/numeric/ublas/matrix.hpp>
 #include <cuda_wrapper/cuda_wrapper.hpp>
 #include <lua.hpp>
+#include <memory>
 
 #include <halmd/io/logger.hpp>
 #include <halmd/mdsim/gpu/potentials/power_law_kernel.hpp>
@@ -56,7 +56,7 @@ public:
       , matrix_type const& epsilon
       , matrix_type const& sigma
       , uint_matrix_type const& index
-      , boost::shared_ptr<logger_type> logger = boost::make_shared<logger_type>()
+      , std::shared_ptr<logger_type> logger = std::make_shared<logger_type>()
     );
 
     /** bind textures before kernel invocation */
@@ -123,7 +123,7 @@ private:
     /** squared cutoff radius and energy shift at CUDA device */
     cuda::vector<float2> g_rr_en_cut_;
     /** module logger */
-    boost::shared_ptr<logger_type> logger_;
+    std::shared_ptr<logger_type> logger_;
 };
 
 } // namespace potentials

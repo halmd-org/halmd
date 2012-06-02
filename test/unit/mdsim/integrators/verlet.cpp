@@ -23,8 +23,6 @@
 #include <boost/test/unit_test.hpp>
 
 #include <boost/assign.hpp>
-#include <boost/bind.hpp>
-#include <boost/make_shared.hpp>
 #include <boost/numeric/ublas/banded.hpp>
 #include <limits>
 #include <numeric>
@@ -89,15 +87,15 @@ struct ideal_gas
     fixed_vector<double, dimension> box_ratios;
     fixed_vector<double, dimension> slab;
 
-    boost::shared_ptr<box_type> box;
-    boost::shared_ptr<clock_type> clock;
-    boost::shared_ptr<core_type> core;
-    boost::shared_ptr<integrator_type> integrator;
-    boost::shared_ptr<particle_type> particle;
-    boost::shared_ptr<position_type> position;
-    boost::shared_ptr<random_type> random;
-    boost::shared_ptr<thermodynamics_type> thermodynamics;
-    boost::shared_ptr<velocity_type> velocity;
+    std::shared_ptr<box_type> box;
+    std::shared_ptr<clock_type> clock;
+    std::shared_ptr<core_type> core;
+    std::shared_ptr<integrator_type> integrator;
+    std::shared_ptr<particle_type> particle;
+    std::shared_ptr<position_type> position;
+    std::shared_ptr<random_type> random;
+    std::shared_ptr<thermodynamics_type> thermodynamics;
+    std::shared_ptr<velocity_type> velocity;
 
     void test();
     ideal_gas();
@@ -159,15 +157,15 @@ ideal_gas<modules_type>::ideal_gas()
     slab = 1;
 
     // create modules
-    particle = boost::make_shared<particle_type>(npart, 1);
-    box = boost::make_shared<box_type>(edges);
-    random = boost::make_shared<random_type>();
-    position = boost::make_shared<position_type>(particle, box, slab);
-    velocity = boost::make_shared<velocity_type>(particle, random, temp);
-    integrator = boost::make_shared<integrator_type>(particle, box, timestep);
-    clock = boost::make_shared<clock_type>();
-    boost::shared_ptr<particle_group_type> group = boost::make_shared<particle_group_type>(particle, 0, particle->nparticle());
-    thermodynamics = boost::make_shared<thermodynamics_type>(group, box, clock);
+    particle = std::make_shared<particle_type>(npart, 1);
+    box = std::make_shared<box_type>(edges);
+    random = std::make_shared<random_type>();
+    position = std::make_shared<position_type>(particle, box, slab);
+    velocity = std::make_shared<velocity_type>(particle, random, temp);
+    integrator = std::make_shared<integrator_type>(particle, box, timestep);
+    clock = std::make_shared<clock_type>();
+    std::shared_ptr<particle_group_type> group = std::make_shared<particle_group_type>(particle, 0, particle->nparticle());
+    thermodynamics = std::make_shared<thermodynamics_type>(group, box, clock);
 
     // create core and connect module slots to core signals
     this->connect();
@@ -176,14 +174,24 @@ ideal_gas<modules_type>::ideal_gas()
 template <typename modules_type>
 void ideal_gas<modules_type>::connect()
 {
-    core = boost::make_shared<core_type>();
+    core = std::make_shared<core_type>();
     // system preparation
-    core->on_setup( bind(&position_type::set, position) );
-    core->on_setup( bind(&velocity_type::set, velocity) );
-    core->on_append_setup( bind(&particle_type::prepare, particle) );
+    core->on_setup([=]() {
+        position->set();
+    });
+    core->on_setup([=]() {
+        velocity->set();
+    });
+    core->on_append_setup([=]() {
+        particle->prepare();
+    });
     // integration step
-    core->on_integrate( bind(&integrator_type::integrate, integrator) );
-    core->on_finalize( bind(&integrator_type::finalize, integrator) );
+    core->on_integrate([=]() {
+        integrator->integrate();
+    });
+    core->on_finalize([=]() {
+        integrator->finalize();
+    });
 }
 
 template <int dimension, typename float_type>

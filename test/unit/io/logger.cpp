@@ -22,10 +22,10 @@
 
 #include <boost/assign.hpp>
 #include <boost/foreach.hpp>
-#include <boost/shared_ptr.hpp>
 #include <fstream>
 #include <iostream>
 #include <map>
+#include <memory>
 #include <stdio.h>
 
 #include <halmd/io/logger.hpp>

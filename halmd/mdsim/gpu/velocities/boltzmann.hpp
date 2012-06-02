@@ -21,8 +21,8 @@
 #ifndef HALMD_MDSIM_GPU_VELOCITIES_BOLTZMANN_HPP
 #define HALMD_MDSIM_GPU_VELOCITIES_BOLTZMANN_HPP
 
-#include <boost/make_shared.hpp>
 #include <lua.hpp>
+#include <memory>
 #include <utility>
 
 #include <halmd/io/logger.hpp>
@@ -48,10 +48,10 @@ public:
     typedef logger logger_type;
 
     boltzmann(
-        boost::shared_ptr<particle_type> particle
-      , boost::shared_ptr<random_type> random
+        std::shared_ptr<particle_type> particle
+      , std::shared_ptr<random_type> random
       , double temperature
-      , boost::shared_ptr<logger_type> logger = boost::make_shared<logger_type>()
+      , std::shared_ptr<logger_type> logger = std::make_shared<logger_type>()
     );
 
     /**
@@ -87,11 +87,11 @@ private:
     static gaussian_impl_type get_gaussian_impl(int threads);
 
     /** system state */
-    boost::shared_ptr<particle_type> particle_;
+    std::shared_ptr<particle_type> particle_;
     /** random number generator */
-    boost::shared_ptr<random_type> random_;
+    std::shared_ptr<random_type> random_;
     /** module logger */
-    boost::shared_ptr<logger_type> logger_;
+    std::shared_ptr<logger_type> logger_;
     /** generate Maxwell-Boltzmann distribution */
     gaussian_impl_type const gaussian_impl_;
     /** temperature */

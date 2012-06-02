@@ -38,12 +38,12 @@ namespace neighbours {
  */
 template <int dimension, typename float_type>
 from_particle<dimension, float_type>::from_particle(
-    boost::shared_ptr<particle_type const> particle1
-  , boost::shared_ptr<particle_type const> particle2
-  , boost::shared_ptr<box_type const> box
+    std::shared_ptr<particle_type const> particle1
+  , std::shared_ptr<particle_type const> particle2
+  , std::shared_ptr<box_type const> box
   , matrix_type const& r_cut
   , double skin
-  , boost::shared_ptr<logger> logger
+  , std::shared_ptr<logger> logger
 )
   // dependency injection
   : particle1_(particle1)
@@ -122,9 +122,11 @@ void from_particle<dimension, float_type>::update()
 
 template <typename neighbour_type>
 static std::function<void ()>
-wrap_update(boost::shared_ptr<neighbour_type> neighbour)
+wrap_update(std::shared_ptr<neighbour_type> self)
 {
-    return boost::bind(&neighbour_type::update, neighbour);
+    return [=]() {
+        self->update();
+    };
 }
 
 template <int dimension, typename float_type>
@@ -140,14 +142,14 @@ void from_particle<dimension, float_type>::luaopen(lua_State* L)
             [
                 namespace_("neighbours")
                 [
-                    class_<from_particle, boost::shared_ptr<_Base>, _Base>(class_name.c_str())
+                    class_<from_particle, std::shared_ptr<_Base>, _Base>(class_name.c_str())
                         .def(constructor<
-                            boost::shared_ptr<particle_type const>
-                          , boost::shared_ptr<particle_type const>
-                          , boost::shared_ptr<box_type const>
+                            std::shared_ptr<particle_type const>
+                          , std::shared_ptr<particle_type const>
+                          , std::shared_ptr<box_type const>
                           , matrix_type const&
                           , double
-                          , boost::shared_ptr<logger_type>
+                          , std::shared_ptr<logger_type>
                          >())
                         .property("r_skin", &from_particle::r_skin)
                         .property("update", &wrap_update<from_particle>)

@@ -20,12 +20,8 @@
 #include <halmd/config.hpp>
 
 #include <algorithm>
-#include <boost/bind.hpp>
-#ifdef HALMD_NO_CXX11
-# include <boost/lambda/lambda.hpp>
-#endif
-#include <boost/make_shared.hpp>
 #include <cmath>
+#include <memory>
 
 #include <halmd/mdsim/gpu/integrators/verlet_nvt_hoover.hpp>
 #include <halmd/utility/demangle.hpp>
@@ -41,12 +37,12 @@ namespace integrators {
 
 template <int dimension, typename float_type>
 verlet_nvt_hoover<dimension, float_type>::verlet_nvt_hoover(
-    boost::shared_ptr<particle_type> particle
-  , boost::shared_ptr<box_type const> box
+    std::shared_ptr<particle_type> particle
+  , std::shared_ptr<box_type const> box
   , float_type timestep
   , float_type temperature
   , float_type resonance_frequency
-  , boost::shared_ptr<logger_type> logger
+  , std::shared_ptr<logger_type> logger
 )
   // public member initialisation
   : xi(0)
@@ -214,49 +210,47 @@ float_type verlet_nvt_hoover<dimension, float_type>::propagate_chain()
 
 template <typename integrator_type>
 static std::function<typename integrator_type::chain_type& ()>
-wrap_xi(boost::shared_ptr<integrator_type> integrator)
+wrap_xi(std::shared_ptr<integrator_type> self)
 {
-#ifdef HALMD_NO_CXX11
-    return lambda::var(integrator->xi);
-#else
     return [=]() -> typename integrator_type::chain_type& {
-        return integrator->xi;
+        return self->xi;
     };
-#endif
 }
 
 template <typename integrator_type>
 static std::function<typename integrator_type::chain_type& ()>
-wrap_v_xi(boost::shared_ptr<integrator_type> integrator)
+wrap_v_xi(std::shared_ptr<integrator_type> self)
 {
-#ifdef HALMD_NO_CXX11
-    return lambda::var(integrator->v_xi);
-#else
     return [=]() -> typename integrator_type::chain_type& {
-        return integrator->v_xi;
+        return self->v_xi;
     };
-#endif
 }
 
 template <typename integrator_type>
 static std::function<double ()>
-wrap_en_nhc(boost::shared_ptr<integrator_type> integrator)
+wrap_en_nhc(std::shared_ptr<integrator_type> self)
 {
-    return bind(&integrator_type::en_nhc, integrator);
+    return [=]()  {
+        return self->en_nhc();
+    };
 }
 
 template <typename integrator_type>
 static std::function<void ()>
-wrap_integrate(boost::shared_ptr<integrator_type> self)
+wrap_integrate(std::shared_ptr<integrator_type> self)
 {
-    return bind(&integrator_type::integrate, self);
+    return [=]() {
+        self->integrate();
+    };
 }
 
 template <typename integrator_type>
 static std::function<void ()>
-wrap_finalize(boost::shared_ptr<integrator_type> self)
+wrap_finalize(std::shared_ptr<integrator_type> self)
 {
-    return bind(&integrator_type::finalize, self);
+    return [=]() {
+        self->finalize();
+    };
 }
 
 template <int dimension, typename float_type>
@@ -292,13 +286,13 @@ void verlet_nvt_hoover<dimension, float_type>::luaopen(lua_State* L)
                     ]
                     .def_readonly("runtime", &verlet_nvt_hoover::runtime_)
 
-              , def("verlet_nvt_hoover", &boost::make_shared<verlet_nvt_hoover
-                  , boost::shared_ptr<particle_type>
-                  , boost::shared_ptr<box_type const>
+              , def("verlet_nvt_hoover", &std::make_shared<verlet_nvt_hoover
+                  , std::shared_ptr<particle_type>
+                  , std::shared_ptr<box_type const>
                   , float_type
                   , float_type
                   , float_type
-                  , boost::shared_ptr<logger_type>
+                  , std::shared_ptr<logger_type>
                 >)
             ]
         ]

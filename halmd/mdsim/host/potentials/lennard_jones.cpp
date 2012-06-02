@@ -51,7 +51,7 @@ lennard_jones<float_type>::lennard_jones(
   , matrix_type const& cutoff
   , matrix_type const& epsilon
   , matrix_type const& sigma
-  , boost::shared_ptr<logger_type> logger
+  , std::shared_ptr<logger_type> logger
 )
   // allocate potential parameters
   : epsilon_(check_shape(epsilon, ntype1, ntype2))
@@ -88,14 +88,14 @@ void lennard_jones<float_type>::luaopen(lua_State* L)
             [
                 namespace_("potentials")
                 [
-                    class_<lennard_jones, boost::shared_ptr<lennard_jones> >("lennard_jones")
+                    class_<lennard_jones, std::shared_ptr<lennard_jones> >("lennard_jones")
                         .def(constructor<
                             unsigned int
                           , unsigned int
                           , matrix_type const&
                           , matrix_type const&
                           , matrix_type const&
-                          , boost::shared_ptr<logger_type>
+                          , std::shared_ptr<logger_type>
                         >())
                         .property("r_cut", (matrix_type const& (lennard_jones::*)() const) &lennard_jones::r_cut)
                         .property("r_cut_sigma", &lennard_jones::r_cut_sigma)

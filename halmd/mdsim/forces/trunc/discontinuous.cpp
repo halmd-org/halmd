@@ -36,7 +36,7 @@ void discontinuous::luaopen(lua_State* L)
             [
                 namespace_("trunc")
                 [
-                    class_<discontinuous, boost::shared_ptr<discontinuous> >("discontinuous")
+                    class_<discontinuous, std::shared_ptr<discontinuous> >("discontinuous")
                         .def(constructor<>())
                 ]
             ]

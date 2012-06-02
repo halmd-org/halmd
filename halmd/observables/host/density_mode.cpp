@@ -17,7 +17,6 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <boost/bind.hpp>
 #include <boost/foreach.hpp>
 
 #include <halmd/observables/host/density_mode.hpp>
@@ -32,9 +31,9 @@ namespace host {
 
 template <int dimension, typename float_type>
 density_mode<dimension, float_type>::density_mode(
-    boost::shared_ptr<wavevector_type const> wavevector
-  , boost::shared_ptr<clock_type const> clock
-  , boost::shared_ptr<logger_type> logger
+    std::shared_ptr<wavevector_type const> wavevector
+  , std::shared_ptr<clock_type const> clock
+  , std::shared_ptr<logger_type> logger
 )
     // dependency injection
   : wavevector_(wavevector)
@@ -47,7 +46,7 @@ density_mode<dimension, float_type>::density_mode(
  * Acquire sample of all density modes from phase space sample
  */
 template <int dimension, typename float_type>
-boost::shared_ptr<typename density_mode<dimension, float_type>::sample_type const>
+std::shared_ptr<typename density_mode<dimension, float_type>::sample_type const>
 density_mode<dimension, float_type>::acquire(phase_space_type const& phase_space)
 {
     scoped_timer_type timer(runtime_.acquire);
@@ -65,7 +64,7 @@ density_mode<dimension, float_type>::acquire(phase_space_type const& phase_space
 
     // re-allocate memory which allows modules (e.g., dynamics::blocking_scheme)
     // to hold a previous copy of the sample
-    rho_sample_ = boost::make_shared<sample_type>(wavevector_->value().size(), clock_->step());
+    rho_sample_ = std::make_shared<sample_type>(wavevector_->value().size(), clock_->step());
 
     // compute density modes
     mode_array_type& rho_vector = rho_sample_->rho();
@@ -87,23 +86,25 @@ density_mode<dimension, float_type>::acquire(phase_space_type const& phase_space
 }
 
 template <typename sample_type, typename density_mode_type, typename slot_type>
-static boost::shared_ptr<sample_type const>
-acquire(boost::shared_ptr<density_mode_type> density_mode, slot_type const& phase_space)
+static std::shared_ptr<sample_type const>
+acquire(std::shared_ptr<density_mode_type> density_mode, slot_type const& phase_space)
 {
     return density_mode->acquire(*phase_space());
 }
 
 template <typename sample_type, typename density_mode_type, typename slot_type>
-static std::function<boost::shared_ptr<sample_type const> ()>
-wrap_acquire(boost::shared_ptr<density_mode_type> density_mode, slot_type const& phase_space)
+static std::function<std::shared_ptr<sample_type const> ()>
+wrap_acquire(std::shared_ptr<density_mode_type> density_mode, slot_type const& phase_space)
 {
-    return bind(&acquire<sample_type, density_mode_type, slot_type>, density_mode, phase_space);
+    return [=]() {
+       return density_mode->acquire(*phase_space());
+    };
 }
 
 template <int dimension, typename float_type>
 void density_mode<dimension, float_type>::luaopen(lua_State* L)
 {
-    typedef std::function<boost::shared_ptr<phase_space_type const> ()> slot_type;
+    typedef std::function<std::shared_ptr<phase_space_type const> ()> slot_type;
 
     using namespace luaponte;
     module(L, "libhalmd")
@@ -120,10 +121,10 @@ void density_mode<dimension, float_type>::luaopen(lua_State* L)
                 ]
                 .def_readonly("runtime", &density_mode::runtime_)
 
-          , def("density_mode", &boost::make_shared<density_mode
-              , boost::shared_ptr<wavevector_type const>
-              , boost::shared_ptr<clock_type const>
-              , boost::shared_ptr<logger_type>
+          , def("density_mode", &std::make_shared<density_mode
+              , std::shared_ptr<wavevector_type const>
+              , std::shared_ptr<clock_type const>
+              , std::shared_ptr<logger_type>
             >)
         ]
     ];

@@ -182,7 +182,7 @@ hsize_t append::read_time_index(
 }
 
 static std::function<void (typename append::step_difference_type)>
-wrap_read_at_step(boost::shared_ptr<append> self)
+wrap_read_at_step(std::shared_ptr<append> self)
 {
     return [=](typename append::step_difference_type offset) {
         self->read_at_step(offset);
@@ -190,7 +190,7 @@ wrap_read_at_step(boost::shared_ptr<append> self)
 }
 
 static std::function<void (typename append::time_difference_type)>
-wrap_read_at_time(boost::shared_ptr<append> self)
+wrap_read_at_time(std::shared_ptr<append> self)
 {
     return [=](typename append::time_difference_type offset) {
         self->read_at_time(offset);
@@ -208,7 +208,7 @@ void append::luaopen(lua_State* L)
             [
                 namespace_("h5md")
                 [
-                    class_<append, boost::shared_ptr<append> >("append")
+                    class_<append, std::shared_ptr<append> >("append")
                         .def(constructor<H5::Group const&, vector<string> const&>())
                         .property("group", &append::group)
                         .property("read_at_step", &wrap_read_at_step)

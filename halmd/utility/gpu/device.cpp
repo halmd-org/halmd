@@ -182,7 +182,7 @@ void device::luaopen(lua_State* L)
         [
             namespace_("gpu")
             [
-                class_<device, boost::shared_ptr<device> >("device")
+                class_<device, std::shared_ptr<device> >("device")
                     .def(constructor<>())
                     .property("gpu", &wrap_gpu)
                     .scope

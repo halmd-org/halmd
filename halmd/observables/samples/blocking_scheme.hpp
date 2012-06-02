@@ -22,11 +22,11 @@
 
 // Boost 1.37.0, or patch from http://svn.boost.org/trac/boost/ticket/1852
 #include <boost/circular_buffer.hpp>
-#include <boost/make_shared.hpp>
 #include <cassert>
 #include <cstddef> // std::size_t
 #include <functional>
 #include <lua.hpp>
+#include <memory>
 #include <stdexcept> // std::logic_error
 #include <vector>
 
@@ -75,8 +75,8 @@ private:
     typedef blocking_scheme_base _Base;
 
 public:
-    typedef boost::circular_buffer<boost::shared_ptr<sample_type const> > block_type;
-    typedef std::function<boost::shared_ptr<sample_type const> ()> sample_slot_type;
+    typedef boost::circular_buffer<std::shared_ptr<sample_type const> > block_type;
+    typedef std::function<std::shared_ptr<sample_type const> ()> sample_slot_type;
     typedef typename block_type::iterator block_iterator;
     typedef typename block_type::const_iterator block_const_iterator;
     typedef mdsim::clock clock_type;
@@ -87,7 +87,7 @@ public:
         sample_slot_type const& sample
       , std::size_t count
       , std::size_t size
-      , boost::shared_ptr<clock_type const> clock
+      , std::shared_ptr<clock_type const> clock
     );
     virtual void push_back(std::size_t index);
     virtual void pop_front(std::size_t index);
@@ -111,7 +111,7 @@ private:
     sample_slot_type sample_;
     std::vector<block_type> blocks_;
     std::size_t block_size_;
-    boost::shared_ptr<clock_type const> clock_;
+    std::shared_ptr<clock_type const> clock_;
 };
 
 
@@ -125,7 +125,7 @@ blocking_scheme<sample_type>::blocking_scheme(
     sample_slot_type const& sample
   , std::size_t count
   , std::size_t size
-  , boost::shared_ptr<clock_type const> clock
+  , std::shared_ptr<clock_type const> clock
 )
   : sample_(sample)
   , blocks_(count, block_type(size))
@@ -137,7 +137,7 @@ blocking_scheme<sample_type>::blocking_scheme(
 template <typename sample_type>
 void blocking_scheme<sample_type>::push_back(std::size_t index)
 {
-    boost::shared_ptr<sample_type const> sample = sample_();
+    std::shared_ptr<sample_type const> sample = sample_();
     if (sample->step() != clock_->step()) {
         throw std::logic_error("input sample was not updated");
     }
@@ -204,11 +204,11 @@ void blocking_scheme<sample_type>::luaopen(lua_State* L)
             [
                 class_<blocking_scheme, _Base>()
 
-              , def("blocking_scheme", &boost::make_shared<blocking_scheme
+              , def("blocking_scheme", &std::make_shared<blocking_scheme
                   , sample_slot_type
                   , std::size_t
                   , std::size_t
-                  , boost::shared_ptr<clock_type const>
+                  , std::shared_ptr<clock_type const>
                 >)
             ]
         ]

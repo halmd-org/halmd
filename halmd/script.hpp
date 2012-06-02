@@ -21,8 +21,8 @@
 #define HALMD_SCRIPT_HPP
 
 #include <boost/noncopyable.hpp>
-#include <boost/shared_ptr.hpp>
 #include <lua.hpp>
+#include <memory>
 #include <string>
 
 namespace halmd {
@@ -50,7 +50,7 @@ private:
     void lua_compat();
 
     /** RAII wrapper of Lua state */
-    boost::shared_ptr<lua_State const> const L_;
+    std::shared_ptr<lua_State const> const L_;
 };
 
 } // namespace halmd

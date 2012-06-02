@@ -73,7 +73,7 @@ public:
     append(
         H5::Group const& root
       , std::vector<std::string> const& location
-      , boost::shared_ptr<clock_type const> clock
+      , std::shared_ptr<clock_type const> clock
     );
     /** connect data slot for writing dataset */
     template <typename T>
@@ -112,7 +112,7 @@ private:
     /** signal emitted before after datasets */
     signal_type on_append_write_;
     /** simulation step and time */
-    boost::shared_ptr<clock_type const> clock_;
+    std::shared_ptr<clock_type const> clock_;
     /** shared step dataset */
     H5::DataSet step_;
     /** shared time dataset */

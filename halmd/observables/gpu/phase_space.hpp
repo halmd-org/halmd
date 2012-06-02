@@ -56,17 +56,17 @@ public:
      * Construct phase_space sampler from particle group.
      */
     phase_space(
-        boost::shared_ptr<particle_type> particle
-      , boost::shared_ptr<particle_group_type const> particle_group
-      , boost::shared_ptr<box_type const> box
-      , boost::shared_ptr<clock_type const> clock
-      , boost::shared_ptr<logger_type> logger = boost::make_shared<logger_type>()
+        std::shared_ptr<particle_type> particle
+      , std::shared_ptr<particle_group_type const> particle_group
+      , std::shared_ptr<box_type const> box
+      , std::shared_ptr<clock_type const> clock
+      , std::shared_ptr<logger_type> logger = std::make_shared<logger_type>()
     );
 
     /**
      * Acquire phase_space sample.
      */
-    boost::shared_ptr<sample_type const> acquire();
+    std::shared_ptr<sample_type const> acquire();
 
     /**
      * Bind class to Lua.
@@ -77,17 +77,17 @@ private:
     typedef typename sample_type::vector_type vector_type;
 
     /** particle instance to particle group */
-    boost::shared_ptr<particle_type> particle_;
+    std::shared_ptr<particle_type> particle_;
     /** particle group */
-    boost::shared_ptr<particle_group_type const> particle_group_;
+    std::shared_ptr<particle_group_type const> particle_group_;
     /** simulation box */
-    boost::shared_ptr<box_type const> box_;
+    std::shared_ptr<box_type const> box_;
     /** simulation clock */
-    boost::shared_ptr<clock_type const> clock_;
+    std::shared_ptr<clock_type const> clock_;
     /** logger instance */
-    boost::shared_ptr<logger_type> logger_;
+    std::shared_ptr<logger_type> logger_;
     /** cached phase_space sample */
-    boost::shared_ptr<sample_type> sample_;
+    std::shared_ptr<sample_type> sample_;
 
     typedef halmd::utility::profiler profiler_type;
     typedef typename profiler_type::accumulator_type accumulator_type;
@@ -122,22 +122,22 @@ public:
      * Construct phase_space sampler from particle group.
      */
     phase_space(
-        boost::shared_ptr<particle_type> particle
-      , boost::shared_ptr<particle_group_type const> particle_group
-      , boost::shared_ptr<box_type const> box
-      , boost::shared_ptr<clock_type const> clock
-      , boost::shared_ptr<logger_type> logger = boost::make_shared<logger_type>()
+        std::shared_ptr<particle_type> particle
+      , std::shared_ptr<particle_group_type const> particle_group
+      , std::shared_ptr<box_type const> box
+      , std::shared_ptr<clock_type const> clock
+      , std::shared_ptr<logger_type> logger = std::make_shared<logger_type>()
     );
 
     /**
      * Acquire phase_space sample.
      */
-    boost::shared_ptr<sample_type const> acquire();
+    std::shared_ptr<sample_type const> acquire();
 
     /**
      * Set particles from phase_space sample.
      */
-    void set(boost::shared_ptr<sample_type const> sample);
+    void set(std::shared_ptr<sample_type const> sample);
 
     /**
      * Bind class to Lua.
@@ -146,17 +146,17 @@ public:
 
 private:
     /** particle instance to particle group */
-    boost::shared_ptr<particle_type> particle_;
+    std::shared_ptr<particle_type> particle_;
     /** particle group */
-    boost::shared_ptr<particle_group_type const> particle_group_;
+    std::shared_ptr<particle_group_type const> particle_group_;
     /** simulation box */
-    boost::shared_ptr<box_type const> box_;
+    std::shared_ptr<box_type const> box_;
     /** simulation clock */
-    boost::shared_ptr<clock_type const> clock_;
+    std::shared_ptr<clock_type const> clock_;
     /** logger instance */
-    boost::shared_ptr<logger_type> logger_;
+    std::shared_ptr<logger_type> logger_;
     /** cached phase_space sample */
-    boost::shared_ptr<sample_type> sample_;
+    std::shared_ptr<sample_type> sample_;
 
     /** buffered positions in page-locked host memory */
     cuda::host::vector<float4> h_r_;

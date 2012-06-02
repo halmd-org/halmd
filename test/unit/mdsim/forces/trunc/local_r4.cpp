@@ -171,14 +171,14 @@ struct test_local_r4
     typedef typename particle_type::vector_type vector_type;
 
     std::vector<unsigned int> npart_list;
-    boost::shared_ptr<box_type> box;
-    boost::shared_ptr<potential_type> potential;
-    boost::shared_ptr<trunc_type> trunc;
-    boost::shared_ptr<host_trunc_type> host_trunc;
-    boost::shared_ptr<force_type> force;
-    boost::shared_ptr<neighbour_type> neighbour;
-    boost::shared_ptr<particle_type> particle;
-    boost::shared_ptr<host_potential_type> host_potential;
+    std::shared_ptr<box_type> box;
+    std::shared_ptr<potential_type> potential;
+    std::shared_ptr<trunc_type> trunc;
+    std::shared_ptr<host_trunc_type> host_trunc;
+    std::shared_ptr<force_type> force;
+    std::shared_ptr<neighbour_type> neighbour;
+    std::shared_ptr<particle_type> particle;
+    std::shared_ptr<host_potential_type> host_potential;
 
     test_local_r4();
     void test();
@@ -287,14 +287,14 @@ test_local_r4<float_type>::test_local_r4()
       , 2., 4.;
 
     // create modules
-    particle = boost::make_shared<particle_type>(accumulate(npart_list.begin(), npart_list.end(), 0), npart_list.size());
-    box = boost::make_shared<box_type>(edges);
-    potential = boost::make_shared<potential_type>(particle->nspecies(), particle->nspecies(), cutoff_array, epsilon_array, sigma_array);
-    host_potential = boost::make_shared<host_potential_type>(particle->nspecies(), particle->nspecies(), cutoff_array, epsilon_array, sigma_array);
-    neighbour = boost::make_shared<neighbour_type>(particle);
-    trunc = boost::make_shared<trunc_type>(h);
-    host_trunc = boost::make_shared<host_trunc_type>(h);
-    force = boost::make_shared<force_type>(potential, particle, particle, box, neighbour, trunc);
+    particle = std::make_shared<particle_type>(accumulate(npart_list.begin(), npart_list.end(), 0), npart_list.size());
+    box = std::make_shared<box_type>(edges);
+    potential = std::make_shared<potential_type>(particle->nspecies(), particle->nspecies(), cutoff_array, epsilon_array, sigma_array);
+    host_potential = std::make_shared<host_potential_type>(particle->nspecies(), particle->nspecies(), cutoff_array, epsilon_array, sigma_array);
+    neighbour = std::make_shared<neighbour_type>(particle);
+    trunc = std::make_shared<trunc_type>(h);
+    host_trunc = std::make_shared<host_trunc_type>(h);
+    force = std::make_shared<force_type>(potential, particle, particle, box, neighbour, trunc);
 }
 
 BOOST_FIXTURE_TEST_CASE( local_r4, set_cuda_device ) {

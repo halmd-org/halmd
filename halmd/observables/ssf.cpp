@@ -17,7 +17,6 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <boost/bind.hpp>
 #include <functional>
 #include <stdexcept>
 
@@ -34,10 +33,10 @@ namespace observables {
 
 template <int dimension>
 ssf<dimension>::ssf(
-    boost::shared_ptr<wavevector_type const> wavevector
+    std::shared_ptr<wavevector_type const> wavevector
   , double norm
-  , boost::shared_ptr<clock_type const> clock
-  , boost::shared_ptr<logger_type> logger
+  , std::shared_ptr<clock_type const> clock
+  , std::shared_ptr<logger_type> logger
 )
   // dependency injection
   : wavevector_(wavevector)
@@ -105,23 +104,18 @@ ssf<dimension>::sample(density_mode_type const& mode1, density_mode_type const& 
 }
 
 template <typename result_type, typename ssf_type, typename slot_type>
-static result_type const&
-sample(boost::shared_ptr<ssf_type> ssf, slot_type const& mode1, slot_type const& mode2)
-{
-    return ssf->sample(*mode1(), *mode2());
-}
-
-template <typename result_type, typename ssf_type, typename slot_type>
 static std::function<result_type const& ()>
-wrap_sample(boost::shared_ptr<ssf_type> ssf, slot_type const& mode1, slot_type const& mode2)
+wrap_sample(std::shared_ptr<ssf_type> ssf, slot_type const& mode1, slot_type const& mode2)
 {
-    return bind(&sample<result_type, ssf_type, slot_type>, ssf, mode1, mode2);
+    return [=]() -> result_type const& {
+        return ssf->sample(*mode1(), *mode2());
+    };
 }
 
 template <int dimension>
 void ssf<dimension>::luaopen(lua_State* L)
 {
-    typedef std::function<boost::shared_ptr<density_mode_type const> ()> slot_type;
+    typedef std::function<std::shared_ptr<density_mode_type const> ()> slot_type;
 
     using namespace luaponte;
     module(L, "libhalmd")
@@ -138,11 +132,11 @@ void ssf<dimension>::luaopen(lua_State* L)
                 ]
                 .def_readonly("runtime", &ssf::runtime_)
 
-          , def("ssf", &boost::make_shared<ssf
-              , boost::shared_ptr<wavevector_type const>
+          , def("ssf", &std::make_shared<ssf
+              , std::shared_ptr<wavevector_type const>
               , double
-              , boost::shared_ptr<clock_type const>
-              , boost::shared_ptr<logger_type>
+              , std::shared_ptr<clock_type const>
+              , std::shared_ptr<logger_type>
             >)
         ]
     ];

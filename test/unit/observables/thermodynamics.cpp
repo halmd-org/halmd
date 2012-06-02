@@ -23,7 +23,6 @@
 #include <boost/test/unit_test.hpp>
 
 #include <algorithm>
-#include <boost/make_shared.hpp>
 #include <boost/numeric/ublas/banded.hpp>
 #include <limits>
 
@@ -146,19 +145,19 @@ struct lennard_jones_fluid
     fixed_vector<double, dimension> box_ratios;
     fixed_vector<double, dimension> slab;
 
-    boost::shared_ptr<box_type> box;
-    boost::shared_ptr<clock_type> clock;
-    boost::shared_ptr<core_type> core;
-    boost::shared_ptr<potential_type> potential;
-    boost::shared_ptr<force_type> force;
-    boost::shared_ptr<binning_type> binning;
-    boost::shared_ptr<neighbour_type> neighbour;
-    boost::shared_ptr<msd_type> msd;
-    boost::shared_ptr<particle_type> particle;
-    boost::shared_ptr<position_type> position;
-    boost::shared_ptr<random_type> random;
-    boost::shared_ptr<thermodynamics_type> thermodynamics;
-    boost::shared_ptr<velocity_type> velocity;
+    std::shared_ptr<box_type> box;
+    std::shared_ptr<clock_type> clock;
+    std::shared_ptr<core_type> core;
+    std::shared_ptr<potential_type> potential;
+    std::shared_ptr<force_type> force;
+    std::shared_ptr<binning_type> binning;
+    std::shared_ptr<neighbour_type> neighbour;
+    std::shared_ptr<msd_type> msd;
+    std::shared_ptr<particle_type> particle;
+    std::shared_ptr<position_type> position;
+    std::shared_ptr<random_type> random;
+    std::shared_ptr<thermodynamics_type> thermodynamics;
+    std::shared_ptr<velocity_type> velocity;
 
     void test();
     lennard_jones_fluid();
@@ -169,13 +168,17 @@ template <typename modules_type>
 void lennard_jones_fluid<modules_type>::test()
 {
     // create NVT integrator
-    boost::shared_ptr<nvt_integrator_type> nvt_integrator = boost::make_shared<nvt_integrator_type>(
+    std::shared_ptr<nvt_integrator_type> nvt_integrator = std::make_shared<nvt_integrator_type>(
         particle, box, random
       , 0.005 /* time step */, temp, 1. /* collision rate */
     );
     vector<connection> conn;
-    conn.push_back(core->on_integrate( bind(&nvt_integrator_type::integrate, nvt_integrator) ));
-    conn.push_back(core->on_finalize( bind(&nvt_integrator_type::finalize, nvt_integrator) ));
+    conn.push_back(core->on_integrate([=]() {
+        nvt_integrator->integrate();
+    }));
+    conn.push_back(core->on_finalize([=]() {
+        nvt_integrator->finalize();
+    }));
     clock->set_timestep(nvt_integrator->timestep());
 
     // relax configuration and thermalise at given temperature, run for t*=30
@@ -190,9 +193,13 @@ void lennard_jones_fluid<modules_type>::test()
     conn.clear();
 
     // set different timestep and choose NVE integrator
-    boost::shared_ptr<nve_integrator_type> nve_integrator = boost::make_shared<nve_integrator_type>(particle, box, timestep);
-    core->on_integrate( bind(&nve_integrator_type::integrate, nve_integrator) );
-    core->on_finalize( bind(&nve_integrator_type::finalize, nve_integrator) );
+    std::shared_ptr<nve_integrator_type> nve_integrator = std::make_shared<nve_integrator_type>(particle, box, timestep);
+    core->on_integrate([=]() {
+        nve_integrator->integrate();
+    });
+    core->on_finalize([=]() {
+        nve_integrator->finalize();
+    });
     clock->set_timestep(nve_integrator->timestep());
 
     // stochastic thermostat => centre particle velocities around zero
@@ -332,19 +339,19 @@ lennard_jones_fluid<modules_type>::lennard_jones_fluid()
     sigma_mat(0, 0) = sigma;
 
     // create modules
-    random = boost::make_shared<random_type>();
-    particle = boost::make_shared<particle_type>(npart, 1);
-    box = boost::make_shared<box_type>(edges);
-    potential = boost::make_shared<potential_type>(particle->nspecies(), particle->nspecies(), rc_mat, epsilon_mat, sigma_mat);
-    binning = boost::make_shared<binning_type>(particle, box, potential->r_cut(), skin);
-    neighbour = boost::make_shared<neighbour_type>(particle, particle, binning, binning, box, potential->r_cut(), skin);
-    position = boost::make_shared<position_type>(particle, box, slab);
-    velocity = boost::make_shared<velocity_type>(particle, random, temp);
-    force = boost::make_shared<force_type>(potential, particle, particle, box, neighbour);
-    clock = boost::make_shared<clock_type>();
-    boost::shared_ptr<particle_group_type> group = boost::make_shared<particle_group_type>(particle, 0, particle->nparticle());
-    thermodynamics = boost::make_shared<thermodynamics_type>(group, box, clock);
-    msd = boost::make_shared<msd_type>(particle, box);
+    random = std::make_shared<random_type>();
+    particle = std::make_shared<particle_type>(npart, 1);
+    box = std::make_shared<box_type>(edges);
+    potential = std::make_shared<potential_type>(particle->nspecies(), particle->nspecies(), rc_mat, epsilon_mat, sigma_mat);
+    binning = std::make_shared<binning_type>(particle, box, potential->r_cut(), skin);
+    neighbour = std::make_shared<neighbour_type>(particle, particle, binning, binning, box, potential->r_cut(), skin);
+    position = std::make_shared<position_type>(particle, box, slab);
+    velocity = std::make_shared<velocity_type>(particle, random, temp);
+    force = std::make_shared<force_type>(potential, particle, particle, box, neighbour);
+    clock = std::make_shared<clock_type>();
+    std::shared_ptr<particle_group_type> group = std::make_shared<particle_group_type>(particle, 0, particle->nparticle());
+    thermodynamics = std::make_shared<thermodynamics_type>(group, box, clock);
+    msd = std::make_shared<msd_type>(particle, box);
 
     // create core and connect module slots to core signals
     this->connect();
@@ -353,27 +360,55 @@ lennard_jones_fluid<modules_type>::lennard_jones_fluid()
 template <typename modules_type>
 void lennard_jones_fluid<modules_type>::connect()
 {
-    core = boost::make_shared<core_type>();
+    core = std::make_shared<core_type>();
     // system preparation
-    core->on_prepend_setup( bind(&particle_type::prepare, particle) );
-    core->on_setup( bind(&position_type::set, position) );
-    core->on_setup( bind(&velocity_type::set, velocity) );
-    core->on_append_setup( bind(&msd_type::zero, msd) );
-    core->on_append_setup( bind(&binning_type::update, binning) );
-    core->on_append_setup( bind(&neighbour_type::update, neighbour) );
-    core->on_append_setup( bind(&force_type::compute, force) );
+    core->on_prepend_setup([=]() {
+        particle->prepare();
+    });
+    core->on_setup([=]() {
+        position->set();
+    });
+    core->on_setup([=]() {
+        velocity->set();
+    });
+    core->on_append_setup([=]() {
+        msd->zero();
+    });
+    core->on_append_setup([=]() {
+        binning->update();
+    });
+    core->on_append_setup([=]() {
+        neighbour->update();
+    });
+    core->on_append_setup([=]() {
+        force->compute();
+    });
 
     // integration step
-    core->on_prepend_force( bind(&particle_type::prepare, particle) );
-    core->on_force( bind(&force_type::compute, force) );
+    core->on_prepend_force([=]() {
+        particle->prepare();
+    });
+    core->on_force([=]() {
+        force->compute();
+    });
 
     // update neighbour lists if maximum squared displacement is greater than (skin/2)²
     float_type limit = pow(neighbour->r_skin() / 2, 2);
-    boost::shared_ptr<greater_type> greater = make_shared<greater_type>( bind(&msd_type::compute, msd), limit );
-    greater->on_greater( bind(&msd_type::zero, msd) );
-    greater->on_greater( bind(&binning_type::update, binning) );
-    greater->on_greater( bind(&neighbour_type::update, neighbour) );
-    core->on_prepend_force( bind(&greater_type::evaluate, greater) );
+    std::shared_ptr<greater_type> greater = std::make_shared<greater_type>([=]() {
+        return msd->compute();
+    }, limit);
+    greater->on_greater([=]() {
+        msd->zero();
+    });
+    greater->on_greater([=]() {
+        binning->update();
+    });
+    greater->on_greater([=]() {
+        neighbour->update();
+    });
+    core->on_prepend_force([=]() {
+        greater->evaluate();
+    });
 }
 
 template <int dimension, typename float_type>

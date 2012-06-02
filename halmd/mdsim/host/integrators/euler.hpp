@@ -20,9 +20,8 @@
 #ifndef HALMD_MDSIM_HOST_INTEGRATORS_EULER_HPP
 #define HALMD_MDSIM_HOST_INTEGRATORS_EULER_HPP
 
-#include <boost/make_shared.hpp>
-#include <boost/shared_ptr.hpp>
 #include <lua.hpp>
+#include <memory>
 
 #include <halmd/io/logger.hpp>
 #include <halmd/mdsim/box.hpp>
@@ -46,10 +45,10 @@ public:
     static void luaopen(lua_State* L);
 
     euler(
-        boost::shared_ptr<particle_type> particle
-      , boost::shared_ptr<box_type const> box
+        std::shared_ptr<particle_type> particle
+      , std::shared_ptr<box_type const> box
       , double timestep
-      , boost::shared_ptr<logger_type> logger = boost::make_shared<logger_type>()
+      , std::shared_ptr<logger_type> logger = std::make_shared<logger_type>()
     );
 
     void integrate();
@@ -73,15 +72,15 @@ private:
         accumulator_type integrate;
     };
 
-    boost::shared_ptr<particle_type> particle_;
-    boost::shared_ptr<box_type const> box_;
+    std::shared_ptr<particle_type> particle_;
+    std::shared_ptr<box_type const> box_;
 
     /** integration time-step */
     float_type timestep_;
     /** profiling runtime accumulators */
     runtime runtime_;
     /** module logger */
-    boost::shared_ptr<logger_type> logger_;
+    std::shared_ptr<logger_type> logger_;
 };
 
 } // namespace integrators

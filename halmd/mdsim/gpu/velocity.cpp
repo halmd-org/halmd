@@ -27,8 +27,8 @@ namespace gpu {
 
 template <int dimension, typename float_type>
 velocity<dimension, float_type>::velocity(
-    boost::shared_ptr<particle_type> particle
-  , boost::shared_ptr<logger_type> logger
+    std::shared_ptr<particle_type> particle
+  , std::shared_ptr<logger_type> logger
 )
   // dependency injection
   : particle_(particle)

@@ -19,8 +19,8 @@
 
 #include <algorithm>
 #include <boost/bind.hpp>
-#include <boost/make_shared.hpp>
 #include <cmath>
+#include <memory>
 
 #include <halmd/mdsim/host/integrators/verlet_nvt_andersen.hpp>
 #include <halmd/utility/lua/lua.hpp>
@@ -32,13 +32,13 @@ namespace integrators {
 
 template <int dimension, typename float_type>
 verlet_nvt_andersen<dimension, float_type>::verlet_nvt_andersen(
-    boost::shared_ptr<particle_type> particle
-  , boost::shared_ptr<box_type const> box
-  , boost::shared_ptr<random_type> random
+    std::shared_ptr<particle_type> particle
+  , std::shared_ptr<box_type const> box
+  , std::shared_ptr<random_type> random
   , float_type timestep
   , float_type temperature
   , float_type coll_rate
-  , boost::shared_ptr<logger_type> logger
+  , std::shared_ptr<logger_type> logger
 )
   : particle_(particle)
   , box_(box)
@@ -131,7 +131,7 @@ void verlet_nvt_andersen<dimension, float_type>::finalize()
 
 template <typename integrator_type>
 static std::function<void ()>
-wrap_integrate(boost::shared_ptr<integrator_type> self)
+wrap_integrate(std::shared_ptr<integrator_type> self)
 {
     return [=]() {
         self->integrate();
@@ -140,7 +140,7 @@ wrap_integrate(boost::shared_ptr<integrator_type> self)
 
 template <typename integrator_type>
 static std::function<void ()>
-wrap_finalize(boost::shared_ptr<integrator_type> self)
+wrap_finalize(std::shared_ptr<integrator_type> self)
 {
     return [=]() {
         self->finalize();
@@ -149,7 +149,7 @@ wrap_finalize(boost::shared_ptr<integrator_type> self)
 
 template <typename integrator_type>
 static std::function<void (double)>
-wrap_set_timestep(boost::shared_ptr<integrator_type> self)
+wrap_set_timestep(std::shared_ptr<integrator_type> self)
 {
     return [=](double timestep) {
         self->set_timestep(timestep);
@@ -158,7 +158,7 @@ wrap_set_timestep(boost::shared_ptr<integrator_type> self)
 
 template <typename integrator_type>
 static std::function<void (double)>
-wrap_set_temperature(boost::shared_ptr<integrator_type> self)
+wrap_set_temperature(std::shared_ptr<integrator_type> self)
 {
     return [=](double temperature) {
         self->set_temperature(temperature);
@@ -191,14 +191,14 @@ void verlet_nvt_andersen<dimension, float_type>::luaopen(lua_State* L)
                     ]
                     .def_readonly("runtime", &verlet_nvt_andersen::runtime_)
 
-              , def("verlet_nvt_andersen", &boost::make_shared<verlet_nvt_andersen
-                  , boost::shared_ptr<particle_type>
-                  , boost::shared_ptr<box_type const>
-                  , boost::shared_ptr<random_type>
+              , def("verlet_nvt_andersen", &std::make_shared<verlet_nvt_andersen
+                  , std::shared_ptr<particle_type>
+                  , std::shared_ptr<box_type const>
+                  , std::shared_ptr<random_type>
                   , float_type
                   , float_type
                   , float_type
-                  , boost::shared_ptr<logger_type>
+                  , std::shared_ptr<logger_type>
                 >)
             ]
         ]

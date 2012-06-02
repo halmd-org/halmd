@@ -18,9 +18,9 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <boost/shared_ptr.hpp>
 #include <cmath>
 #include <functional>
+#include <memory>
 #include <numeric>
 #include <stdexcept>
 #include <utility>
@@ -68,7 +68,7 @@ double box<dimension>::volume() const
 
 template <typename box_type>
 static std::function<typename box_type::vector_type ()>
-wrap_origin(boost::shared_ptr<box_type const> self)
+wrap_origin(std::shared_ptr<box_type const> self)
 {
     return [=]() {
         return self->origin();
@@ -77,7 +77,7 @@ wrap_origin(boost::shared_ptr<box_type const> self)
 
 template <typename box_type>
 static std::function<std::vector<typename box_type::vector_type> ()>
-wrap_edges(boost::shared_ptr<box_type const> self)
+wrap_edges(std::shared_ptr<box_type const> self)
 {
     typedef std::vector<typename box_type::vector_type> matrix_type;
     return [=]() -> matrix_type  {
@@ -104,7 +104,7 @@ static std::function<std::vector<typename box_type::vector_type>& ()>
 make_edges()
 {
     typedef std::vector<typename box_type::vector_type> matrix_type;
-    boost::shared_ptr<matrix_type> edges = boost::make_shared<matrix_type>();
+    std::shared_ptr<matrix_type> edges = std::make_shared<matrix_type>();
     return [=]() -> matrix_type& {
         return *edges;
     };
@@ -119,7 +119,7 @@ void box<dimension>::luaopen(lua_State* L)
     [
         namespace_("mdsim")
         [
-            class_<box, boost::shared_ptr<box> >(class_name.c_str())
+            class_<box, std::shared_ptr<box> >(class_name.c_str())
                 .def(constructor<matrix_type const&>())
                 .property("length", &box::length)
                 .property("volume", &box::volume)

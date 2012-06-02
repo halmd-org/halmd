@@ -18,7 +18,6 @@
  */
 
 #include <algorithm>
-#include <boost/bind.hpp>
 #include <boost/algorithm/string/compare.hpp>
 #include <boost/algorithm/string/find_iterator.hpp>
 #include <boost/algorithm/string/finder.hpp>
@@ -256,7 +255,9 @@ template <typename T>
 static po::typed_value<T>*
 notifier(po::typed_value<T>* semantic, luaponte::object const& functor)
 {
-    return semantic->notifier(bind(&notify<T>, functor, _1));
+    return semantic->notifier([=](T const& value) {
+        notify(functor, value);
+    });
 }
 
 template <typename T>
@@ -425,7 +426,7 @@ HALMD_LUA_API int luaopen_libhalmd_utility_lua_program_options(lua_State* L)
                 .def("notifier", &notifier<int>, return_reference_to(_1))
                 .def("required", &po::typed_value<int>::required, return_reference_to(_1))
 
-          , class_<po::option_description>("option_description")
+          , class_<po::option_description, boost::shared_ptr<po::option_description> >("option_description")
                 .def(constructor<char const*, po::value_semantic*>(), adopt(_3))
                 .def(constructor<char const*, po::value_semantic*, char const*>(), adopt(_3))
                 .def("key", &po::option_description::key)

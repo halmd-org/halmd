@@ -36,7 +36,7 @@ namespace halmd {
 script::script()
     // create Lua state, returns raw pointer
   : L(luaL_newstate())
-    // wrap Lua state with boost::shared_ptr, and use lua_close as deleter
+    // wrap Lua state with std::shared_ptr, and use lua_close as deleter
     // this ensure that any class member variables declared *after* the
     // wrapper L_ will be deconstructed *before* the Lua state,
     // e.g. the Lua script function captured from the HALMD script

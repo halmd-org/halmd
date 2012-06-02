@@ -66,7 +66,7 @@ public:
     /** logs timer resolution */
     profiler();
     /** connect accumulator for profiling */
-    connection on_profile(boost::shared_ptr<accumulator_type> acc, std::string const& desc);
+    connection on_profile(std::shared_ptr<accumulator_type> acc, std::string const& desc);
     /** connect to signal emitted before profiling */
     connection on_prepend_profile(slot_function_type const& slot);
     /** connect to signal emitted after profiling */
@@ -78,7 +78,7 @@ public:
 
 private:
     /** accumulator with description */
-    typedef std::pair<boost::shared_ptr<accumulator_type>, std::string> accumulator_pair_type;
+    typedef std::pair<std::shared_ptr<accumulator_type>, std::string> accumulator_pair_type;
     typedef slots<accumulator_pair_type> slots_type;
     typedef slots_type::const_iterator slots_const_iterator;
 

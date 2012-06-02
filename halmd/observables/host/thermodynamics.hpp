@@ -20,8 +20,8 @@
 #ifndef HALMD_OBSERVABLES_HOST_THERMODYNAMICS_HPP
 #define HALMD_OBSERVABLES_HOST_THERMODYNAMICS_HPP
 
-#include <boost/make_shared.hpp>
 #include <lua.hpp>
+#include <memory>
 
 #include <halmd/io/logger.hpp>
 #include <halmd/mdsim/box.hpp>
@@ -54,10 +54,10 @@ public:
     static void luaopen(lua_State* L);
 
     thermodynamics(
-        boost::shared_ptr<particle_group_type const> group
-      , boost::shared_ptr<box_type const> box
-      , boost::shared_ptr<clock_type const> clock
-      , boost::shared_ptr<logger_type> logger = boost::make_shared<logger_type>()
+        std::shared_ptr<particle_group_type const> group
+      , std::shared_ptr<box_type const> box
+      , std::shared_ptr<clock_type const> clock
+      , std::shared_ptr<logger_type> logger = std::make_shared<logger_type>()
     );
 
     /**
@@ -115,11 +115,11 @@ private:
     };
 
     /** simulation domain */
-    boost::shared_ptr<box_type const> box_;
+    std::shared_ptr<box_type const> box_;
     /** particle group */
-    boost::shared_ptr<particle_group_type const> group_;
+    std::shared_ptr<particle_group_type const> group_;
     /** module logger */
-    boost::shared_ptr<logger_type> logger_;
+    std::shared_ptr<logger_type> logger_;
 
     /** cached results */
     data_cache<double> en_kin_;

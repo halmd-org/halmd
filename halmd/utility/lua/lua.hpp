@@ -21,11 +21,11 @@
 #define HALMD_UTILITY_LUA_LUA_HPP
 
 #include <boost/lexical_cast.hpp> // Lua class names from template parameters
-#include <boost/shared_ptr.hpp> // pointer holder for luaponte::class_
+#include <memory> // pointer holder for luaponte::class_
 #include <lua.hpp>
 #include <luaponte/luaponte.hpp>
 #include <luaponte/exception_handler.hpp>
-#include <luaponte/shared_ptr_converter.hpp> //< boost::shared_ptr up- and down-casts
+#include <luaponte/shared_ptr_converter.hpp> //< std::shared_ptr up- and down-casts
 
 #include <halmd/config.hpp> // HALMD_LUA_API
 #include <halmd/utility/lua/array_converter.hpp>

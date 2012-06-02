@@ -21,8 +21,8 @@
 #ifndef HALMD_MDSIM_PARTICLE_GROUP_FROM_RANGE_HPP
 #define HALMD_MDSIM_PARTICLE_GROUP_FROM_RANGE_HPP
 
-#include <boost/make_shared.hpp>
 #include <lua.hpp>
+#include <memory>
 #include <stdexcept>
 
 #include <halmd/mdsim/particle_group.hpp>
@@ -49,7 +49,7 @@ public:
      * Select by tag range [begin, end).
      */
     from_range(
-        boost::shared_ptr<particle_type> particle
+        std::shared_ptr<particle_type> particle
       , std::size_t begin
       , std::size_t end
     );
@@ -86,7 +86,7 @@ public:
 
 private:
     /** particle instance */
-    boost::shared_ptr<particle_type> particle_;
+    std::shared_ptr<particle_type> particle_;
     /** first tag of range */
     std::size_t begin_;
     /** past last tag of range */
@@ -95,7 +95,7 @@ private:
 
 template <typename particle_type>
 from_range<particle_type>::from_range(
-    boost::shared_ptr<particle_type> particle
+    std::shared_ptr<particle_type> particle
   , std::size_t begin
   , std::size_t end
 )
@@ -150,14 +150,14 @@ from_range<particle_type>::particle() const
  * Convert from range of 1-based tags to 0-based iterator range
  */
 template <typename particle_type>
-static boost::shared_ptr<from_range<particle_type> >
+static std::shared_ptr<from_range<particle_type> >
 wrap_from_range(
-    boost::shared_ptr<particle_type> particle
+    std::shared_ptr<particle_type> particle
   , std::size_t first
   , std::size_t last
 )
 {
-    return boost::make_shared<from_range<particle_type> >(
+    return std::make_shared<from_range<particle_type> >(
         particle
       , first - 1
       , last

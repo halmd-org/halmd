@@ -213,9 +213,9 @@ test_non_uniform_density(typename binning_type::cell_size_type const& shape, flo
     // create close-packed lattice of given shape
     halmd::close_packed_lattice<vector_type, shape_type> lattice(shape);
     // create simulation domain
-    boost::shared_ptr<box_type> box(new box_type(edges));
+    std::shared_ptr<box_type> box(new box_type(edges));
     // create system of particles of number of lattice points
-    boost::shared_ptr<particle_type> particle(new particle_type(lattice.size(), 1));
+    std::shared_ptr<particle_type> particle(new particle_type(lattice.size(), 1));
     // create particle binning
     binning_type binning(particle, box, matrix_type(1, 1, length), 0);
 

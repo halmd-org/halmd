@@ -21,10 +21,10 @@
 #ifndef HALMD_MDSIM_GPU_POTENTIALS_LENNARD_JONES_SIMPLE_HPP
 #define HALMD_MDSIM_GPU_POTENTIALS_LENNARD_JONES_SIMPLE_HPP
 
-#include <boost/make_shared.hpp>
 #include <boost/numeric/ublas/matrix.hpp>
 #include <cuda_wrapper/cuda_wrapper.hpp>
 #include <lua.hpp>
+#include <memory>
 
 #include <halmd/io/logger.hpp>
 #include <halmd/mdsim/gpu/potentials/lennard_jones_simple_kernel.hpp>
@@ -54,7 +54,7 @@ public:
         unsigned int ntype1
       , unsigned int ntype2
       , float_type cutoff
-      , boost::shared_ptr<logger_type> logger = boost::make_shared<logger_type>()
+      , std::shared_ptr<logger_type> logger = std::make_shared<logger_type>()
     );
 
     void bind_textures() const {}
@@ -91,7 +91,7 @@ private:
     /** number of second particle types */
     unsigned int ntype2_;
     /** module logger */
-    boost::shared_ptr<logger_type> logger_;
+    std::shared_ptr<logger_type> logger_;
 };
 
 } // namespace potentials

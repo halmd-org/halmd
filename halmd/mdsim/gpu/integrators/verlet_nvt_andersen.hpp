@@ -20,8 +20,8 @@
 #ifndef HALMD_MDSIM_GPU_INTEGRATORS_VERLET_NVT_ANDERSEN_HPP
 #define HALMD_MDSIM_GPU_INTEGRATORS_VERLET_NVT_ANDERSEN_HPP
 
-#include <boost/make_shared.hpp>
 #include <lua.hpp>
+#include <memory>
 
 #include <cuda_wrapper/cuda_wrapper.hpp>
 #include <halmd/io/logger.hpp>
@@ -55,13 +55,13 @@ public:
      * Initialise Verlet-Andersen integrator.
      */
     verlet_nvt_andersen(
-        boost::shared_ptr<particle_type> particle
-      , boost::shared_ptr<box_type const> box
-      , boost::shared_ptr<random_type> random
+        std::shared_ptr<particle_type> particle
+      , std::shared_ptr<box_type const> box
+      , std::shared_ptr<random_type> random
       , float_type timestep
       , float_type temperature
       , float_type coll_rate
-      , boost::shared_ptr<logger_type> logger = boost::make_shared<logger_type>()
+      , std::shared_ptr<logger_type> logger = std::make_shared<logger_type>()
     );
 
     /**
@@ -115,11 +115,11 @@ public:
 
 private:
     /** system state */
-    boost::shared_ptr<particle_type> particle_;
+    std::shared_ptr<particle_type> particle_;
     /** simulation domain */
-    boost::shared_ptr<box_type const> box_;
+    std::shared_ptr<box_type const> box_;
     /** random number generator */
-    boost::shared_ptr<random_type> random_;
+    std::shared_ptr<random_type> random_;
     /** integration time-step */
     float_type timestep_;
     /** temperature of the heat bath */
@@ -131,7 +131,7 @@ private:
     /** probability of a collision with the heat bath during a timestep */
     float_type coll_prob_;
     /** module logger */
-    boost::shared_ptr<logger_type> logger_;
+    std::shared_ptr<logger_type> logger_;
 
     typedef utility::profiler profiler_type;
     typedef typename profiler_type::accumulator_type accumulator_type;

@@ -20,10 +20,9 @@
 #ifndef HALMD_MDSIM_GPU_NEIGHBOURS_FROM_PARTICLE_HPP
 #define HALMD_MDSIM_GPU_NEIGHBOURS_FROM_PARTICLE_HPP
 
-#include <boost/make_shared.hpp>
 #include <boost/numeric/ublas/matrix.hpp>
-#include <boost/shared_ptr.hpp>
 #include <lua.hpp>
+#include <memory>
 
 #include <halmd/io/logger.hpp>
 #include <halmd/mdsim/box.hpp>
@@ -68,12 +67,12 @@ public:
     static void luaopen(lua_State* L);
 
     from_particle(
-        boost::shared_ptr<particle_type const> particle1
-      , boost::shared_ptr<particle_type const> particle2
-      , boost::shared_ptr<box_type const> box
+        std::shared_ptr<particle_type const> particle1
+      , std::shared_ptr<particle_type const> particle2
+      , std::shared_ptr<box_type const> box
       , matrix_type const& r_cut
       , double skin
-      , boost::shared_ptr<logger_type> logger = boost::make_shared<logger_type>()
+      , std::shared_ptr<logger_type> logger = std::make_shared<logger_type>()
       , double cell_occupancy = defaults::occupancy()
     );
     void update();
@@ -134,10 +133,10 @@ private:
         accumulator_type update;
     };
 
-    boost::shared_ptr<particle_type const> particle1_;
-    boost::shared_ptr<particle_type const> particle2_;
-    boost::shared_ptr<box_type const> box_;
-    boost::shared_ptr<logger_type> logger_;
+    std::shared_ptr<particle_type const> particle1_;
+    std::shared_ptr<particle_type const> particle2_;
+    std::shared_ptr<box_type const> box_;
+    std::shared_ptr<logger_type> logger_;
 
     /** neighbour list skin in MD units */
     float_type r_skin_;

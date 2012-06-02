@@ -30,8 +30,8 @@ namespace halmd {
 namespace observables {
 
 sampler::sampler(
-    boost::shared_ptr<clock_type> clock
-  , boost::shared_ptr<core_type> core
+    std::shared_ptr<clock_type> clock
+  , std::shared_ptr<core_type> core
 )
   : clock_(clock)
   , core_(core) {}
@@ -107,7 +107,7 @@ void sampler::sample(std::function<void ()> const& slot, step_type interval) con
 }
 
 static std::function<void ()>
-wrap_abort(boost::shared_ptr<mdsim::clock const> clock)
+wrap_abort(std::shared_ptr<mdsim::clock const> clock)
 {
     return [=]() {
         throw std::runtime_error("gracefully aborting simulation at step " + boost::lexical_cast<std::string>(clock->step()));
@@ -115,7 +115,7 @@ wrap_abort(boost::shared_ptr<mdsim::clock const> clock)
 }
 
 static std::function<void ()>
-wrap_setup(boost::shared_ptr<sampler> self)
+wrap_setup(std::shared_ptr<sampler> self)
 {
     return [=]() {
         return self->setup();
@@ -123,7 +123,7 @@ wrap_setup(boost::shared_ptr<sampler> self)
 }
 
 static std::function<void (sampler::step_type)>
-wrap_run(boost::shared_ptr<sampler> self)
+wrap_run(std::shared_ptr<sampler> self)
 {
     return [=](sampler::step_type steps) {
         return self->run(steps);
@@ -131,7 +131,7 @@ wrap_run(boost::shared_ptr<sampler> self)
 }
 
 static std::function<void (std::function<void ()> const&)>
-wrap_on_start(boost::shared_ptr<sampler> self)
+wrap_on_start(std::shared_ptr<sampler> self)
 {
     return [=](std::function<void ()> const& slot) {
         return self->on_start(slot);
@@ -139,7 +139,7 @@ wrap_on_start(boost::shared_ptr<sampler> self)
 }
 
 static std::function<void (std::function<void ()> const&)>
-wrap_on_finish(boost::shared_ptr<sampler> self)
+wrap_on_finish(std::shared_ptr<sampler> self)
 {
     return [=](std::function<void ()> const& slot) {
         return self->on_finish(slot);
@@ -147,7 +147,7 @@ wrap_on_finish(boost::shared_ptr<sampler> self)
 }
 
 static std::function<void (std::function<void ()> const&, sampler::step_type)>
-wrap_on_prepare(boost::shared_ptr<sampler> self)
+wrap_on_prepare(std::shared_ptr<sampler> self)
 {
     return [=](std::function<void ()> const& slot, sampler::step_type steps) {
         return self->on_prepare(slot, steps);
@@ -155,7 +155,7 @@ wrap_on_prepare(boost::shared_ptr<sampler> self)
 }
 
 static std::function<void (std::function<void ()> const&, sampler::step_type)>
-wrap_on_sample(boost::shared_ptr<sampler> self)
+wrap_on_sample(std::shared_ptr<sampler> self)
 {
     return [=](std::function<void ()> const& slot, sampler::step_type steps) {
         return self->on_sample(slot, steps);
@@ -167,10 +167,10 @@ void sampler::luaopen(lua_State* L)
     using namespace luaponte;
     module(L, "libhalmd")
     [
-        class_<sampler, boost::shared_ptr<sampler> >("sampler")
+        class_<sampler, std::shared_ptr<sampler> >("sampler")
             .def(constructor<
-                boost::shared_ptr<sampler::clock_type>
-              , boost::shared_ptr<sampler::core_type>
+                std::shared_ptr<sampler::clock_type>
+              , std::shared_ptr<sampler::core_type>
             >())
             .property("setup", &wrap_setup)
             .property("run", &wrap_run)

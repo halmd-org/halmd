@@ -40,7 +40,7 @@ namespace h5md {
 append::append(
     H5::Group const& root
   , vector<string> const& location
-  , boost::shared_ptr<clock_type const> clock
+  , std::shared_ptr<clock_type const> clock
 )
   : clock_(clock)
 {
@@ -150,9 +150,11 @@ void append::write_step_time()
 }
 
 static append::slot_function_type
-wrap_write(boost::shared_ptr<append> instance)
+wrap_write(std::shared_ptr<append> self)
 {
-    return bind(&append::write, instance);
+    return [=]() {
+        self->write();
+    };
 }
 
 /**
@@ -174,8 +176,8 @@ void append::luaopen(lua_State* L)
             [
                 namespace_("h5md")
                 [
-                    class_<append, boost::shared_ptr<append> >("append")
-                        .def(constructor<H5::Group const&, vector<string> const&, boost::shared_ptr<clock_type const> >())
+                    class_<append, std::shared_ptr<append> >("append")
+                        .def(constructor<H5::Group const&, vector<string> const&, std::shared_ptr<clock_type const> >())
                         .property("group", &append::group)
                         .property("write", &wrap_write)
                         .def("on_write", &append::on_write<float>, pure_out_value(_2))

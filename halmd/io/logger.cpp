@@ -44,7 +44,7 @@ namespace halmd {
 logging::logging()
 {
 #ifdef BOOST_LOG_ATTRIBUTE_HPP_INCLUDED_ // Boost.Log < 2.0
-    core::get()->add_global_attribute("TimeStamp", make_shared<attributes::local_clock>());
+    core::get()->add_global_attribute("TimeStamp", boost::make_shared<attributes::local_clock>());
 #else
     core::get()->add_global_attribute("TimeStamp", attributes::local_clock());
 #endif
@@ -52,7 +52,7 @@ logging::logging()
 
 void logging::open_console(severity_level level)
 {
-    boost::shared_ptr<console_backend_type> backend(make_shared<console_backend_type>());
+    boost::shared_ptr<console_backend_type> backend(boost::make_shared<console_backend_type>());
     backend->add_stream(
         boost::shared_ptr<ostream>(&clog, empty_deleter())
     );
@@ -159,7 +159,7 @@ static void wrap_log(logger& logger_, logging::severity_level level, char const*
     BOOST_LOG_SEV(logger_, level) << msg;
 }
 
-static boost::shared_ptr<logger> get_logger()
+static std::shared_ptr<logger> get_logger()
 {
     return logger_;
 }
@@ -171,7 +171,7 @@ HALMD_LUA_API int luaopen_libhalmd_io_logger(lua_State* L)
     [
         namespace_("io")
         [
-            class_<logger, boost::shared_ptr<logger>, logger_wrapper>("logger")
+            class_<logger, std::shared_ptr<logger>, logger_wrapper>("logger")
                 .def(constructor<>())
                 .def(constructor<string>())
                 .scope
@@ -205,6 +205,6 @@ HALMD_LUA_API int luaopen_libhalmd_io_logger(lua_State* L)
 /** define logging singleton instance */
 logging logging::logging_;
 /** define global logger source */
-boost::shared_ptr<logger> const logger_ = make_shared<logger>();
+std::shared_ptr<logger> const logger_ = std::make_shared<logger>();
 
 } // namespace halmd

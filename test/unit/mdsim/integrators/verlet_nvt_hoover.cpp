@@ -25,8 +25,6 @@
 #include <boost/test/parameterized_test.hpp>
 
 #include <boost/assign.hpp>
-#include <boost/bind.hpp>
-#include <boost/make_shared.hpp>
 #include <boost/numeric/ublas/assignment.hpp> // <<=
 #include <boost/numeric/ublas/banded.hpp>
 #include <limits>
@@ -121,20 +119,20 @@ struct verlet_nvt_hoover
     fixed_vector<double, dimension> box_ratios;
     float skin;
 
-    boost::shared_ptr<box_type> box;
-    boost::shared_ptr<clock_type> clock;
-    boost::shared_ptr<core_type> core;
-    boost::shared_ptr<potential_type> potential;
-    boost::shared_ptr<force_type> force;
-    boost::shared_ptr<binning_type> binning;
-    boost::shared_ptr<neighbour_type> neighbour;
-    boost::shared_ptr<max_displacement_type> max_displacement;
-    boost::shared_ptr<integrator_type> integrator;
-    boost::shared_ptr<particle_type> particle;
-    boost::shared_ptr<position_type> position;
-    boost::shared_ptr<random_type> random;
-    boost::shared_ptr<thermodynamics_type> thermodynamics;
-    boost::shared_ptr<velocity_type> velocity;
+    std::shared_ptr<box_type> box;
+    std::shared_ptr<clock_type> clock;
+    std::shared_ptr<core_type> core;
+    std::shared_ptr<potential_type> potential;
+    std::shared_ptr<force_type> force;
+    std::shared_ptr<binning_type> binning;
+    std::shared_ptr<neighbour_type> neighbour;
+    std::shared_ptr<max_displacement_type> max_displacement;
+    std::shared_ptr<integrator_type> integrator;
+    std::shared_ptr<particle_type> particle;
+    std::shared_ptr<position_type> position;
+    std::shared_ptr<random_type> random;
+    std::shared_ptr<thermodynamics_type> thermodynamics;
+    std::shared_ptr<velocity_type> velocity;
 
     void test();
     verlet_nvt_hoover();
@@ -307,20 +305,20 @@ verlet_nvt_hoover<modules_type>::verlet_nvt_hoover()
     sigma <<= 1.;
 
     // create modules
-    particle = boost::make_shared<particle_type>(npart, 1);
-    box = boost::make_shared<box_type>(edges);
-    random = boost::make_shared<random_type>();
-    integrator = boost::make_shared<integrator_type>(particle, box, timestep, temp, resonance_frequency);
-    potential = boost::make_shared<potential_type>(particle->nspecies(), particle->nspecies(), cutoff, epsilon, sigma);
-    binning = boost::make_shared<binning_type>(particle, box, potential->r_cut(), skin);
-    neighbour = boost::make_shared<neighbour_type>(particle, particle, binning, binning, box, potential->r_cut(), skin);
-    force = boost::make_shared<force_type>(potential, particle, particle, box, neighbour);
-    position = boost::make_shared<position_type>(particle, box, 1);
-    velocity = boost::make_shared<velocity_type>(particle, random, start_temp);
-    clock = boost::make_shared<clock_type>();
-    boost::shared_ptr<particle_group_type> group = boost::make_shared<particle_group_type>(particle, 0, particle->nparticle());
-    thermodynamics = boost::make_shared<thermodynamics_type>(group, box, clock);
-    max_displacement = boost::make_shared<max_displacement_type>(particle, box);
+    particle = std::make_shared<particle_type>(npart, 1);
+    box = std::make_shared<box_type>(edges);
+    random = std::make_shared<random_type>();
+    integrator = std::make_shared<integrator_type>(particle, box, timestep, temp, resonance_frequency);
+    potential = std::make_shared<potential_type>(particle->nspecies(), particle->nspecies(), cutoff, epsilon, sigma);
+    binning = std::make_shared<binning_type>(particle, box, potential->r_cut(), skin);
+    neighbour = std::make_shared<neighbour_type>(particle, particle, binning, binning, box, potential->r_cut(), skin);
+    force = std::make_shared<force_type>(potential, particle, particle, box, neighbour);
+    position = std::make_shared<position_type>(particle, box, 1);
+    velocity = std::make_shared<velocity_type>(particle, random, start_temp);
+    clock = std::make_shared<clock_type>();
+    std::shared_ptr<particle_group_type> group = std::make_shared<particle_group_type>(particle, 0, particle->nparticle());
+    thermodynamics = std::make_shared<thermodynamics_type>(group, box, clock);
+    max_displacement = std::make_shared<max_displacement_type>(particle, box);
 
     // create core and connect module slots to core signals
     this->connect();
@@ -329,30 +327,61 @@ verlet_nvt_hoover<modules_type>::verlet_nvt_hoover()
 template <typename modules_type>
 void verlet_nvt_hoover<modules_type>::connect()
 {
-    core = boost::make_shared<core_type>();
+    core = std::make_shared<core_type>();
     // system preparation
-    core->on_prepend_setup( bind(&particle_type::prepare, particle) );
-    core->on_setup( bind(&position_type::set, position) );
-    core->on_setup( bind(&velocity_type::set, velocity) );
-    core->on_append_setup( bind(&max_displacement_type::zero, max_displacement) );
-    core->on_append_setup( bind(&binning_type::update, binning) );
-    core->on_append_setup( bind(&neighbour_type::update, neighbour) );
-    core->on_append_setup( bind(&force_type::compute, force) );
+    core->on_prepend_setup([=]() {
+        particle->prepare();
+    });
+    core->on_setup([=]() {
+        position->set();
+    });
+    core->on_setup([=]() {
+        velocity->set();
+    });
+    core->on_append_setup([=]() {
+        max_displacement->zero();
+    });
+    core->on_append_setup([=]() {
+        binning->update();
+    });
+    core->on_append_setup([=]() {
+        neighbour->update();
+    });
+    core->on_append_setup([=]() {
+        force->compute();
+    });
 
     // integration step
-    core->on_integrate( bind(&integrator_type::integrate, integrator) );
-    core->on_prepend_force( bind(&particle_type::prepare, particle) );
-    core->on_force( bind(&force_type::compute, force) );
-    core->on_finalize( bind(&integrator_type::finalize, integrator) );
+    core->on_integrate([=]() {
+        integrator->integrate();
+    });
+    core->on_prepend_force([=]() {
+        particle->prepare();
+    });
+    core->on_force([=]() {
+        force->compute();
+    });
+    core->on_finalize([=]() {
+        integrator->finalize();
+    });
 
     // update neighbour lists if maximum squared displacement is greater than (skin/2)²
     float_type limit = pow(neighbour->r_skin() / 2, 2);
-    boost::shared_ptr<greater_type> greater =
-        boost::make_shared<greater_type>(bind(&max_displacement_type::compute, max_displacement), limit);
-    greater->on_greater( bind(&max_displacement_type::zero, max_displacement) );
-    greater->on_greater( bind(&binning_type::update, binning) );
-    greater->on_greater( bind(&neighbour_type::update, neighbour) );
-    core->on_prepend_force( bind(&greater_type::evaluate, greater) );
+    std::shared_ptr<greater_type> greater = std::make_shared<greater_type>([=]() {
+        return max_displacement->compute();
+    }, limit);
+    greater->on_greater([=]() {
+        max_displacement->zero();
+    });
+    greater->on_greater([=]() {
+        binning->update();
+    });
+    greater->on_greater([=]() {
+        neighbour->update();
+    });
+    core->on_prepend_force([=]() {
+        greater->evaluate();
+    });
 }
 
 template <int dimension, typename float_type>

@@ -17,7 +17,6 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <boost/bind.hpp>
 #include <iomanip>
 #include <sstream>
 
@@ -33,7 +32,7 @@ namespace halmd {
 namespace observables {
 
 runtime_estimate::runtime_estimate(
-    boost::shared_ptr<clock_type> clock
+    std::shared_ptr<clock_type> clock
   , step_type total_steps
 )
   // dependency injection
@@ -79,15 +78,19 @@ string runtime_estimate::format_time(double time, unsigned int prec)
 }
 
 static runtime_estimate::slot_function_type
-wrap_sample(boost::shared_ptr<runtime_estimate> instance)
+wrap_sample(std::shared_ptr<runtime_estimate> self)
 {
-    return bind(&runtime_estimate::sample, instance);
+    return [=]() {
+        self->sample();
+    };
 }
 
 static runtime_estimate::slot_function_type
-wrap_estimate(boost::shared_ptr<runtime_estimate> instance)
+wrap_estimate(std::shared_ptr<runtime_estimate> self)
 {
-    return bind(&runtime_estimate::estimate, instance);
+    return [=]() {
+        self->estimate();
+    };
 }
 
 void runtime_estimate::luaopen(lua_State* L)
@@ -97,9 +100,9 @@ void runtime_estimate::luaopen(lua_State* L)
     [
         namespace_("observables")
         [
-            class_<runtime_estimate, boost::shared_ptr<runtime_estimate> >("runtime_estimate")
+            class_<runtime_estimate, std::shared_ptr<runtime_estimate> >("runtime_estimate")
                 .def(constructor<
-                    boost::shared_ptr<clock_type>
+                    std::shared_ptr<clock_type>
                   , step_type
                 >())
                 .property("sample", &wrap_sample)

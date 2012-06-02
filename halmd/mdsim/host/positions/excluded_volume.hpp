@@ -20,9 +20,9 @@
 #ifndef HALMD_MDSIM_HOST_POSITIONS_EXCLUDED_VOLUME_HPP
 #define HALMD_MDSIM_HOST_POSITIONS_EXCLUDED_VOLUME_HPP
 
-#include <boost/make_shared.hpp>
 #include <boost/multi_array.hpp>
 #include <lua.hpp>
+#include <memory>
 #include <vector>
 
 #include <halmd/io/logger.hpp>
@@ -49,9 +49,9 @@ public:
     static void luaopen(lua_State* L);
 
     excluded_volume(
-        boost::shared_ptr<box_type const> box
+        std::shared_ptr<box_type const> box
       , float_type cell_length
-      , boost::shared_ptr<logger_type> logger = boost::make_shared<logger_type>()
+      , std::shared_ptr<logger_type> logger = std::make_shared<logger_type>()
     );
     void exclude_sphere(
         vector_type const& centre
@@ -88,9 +88,9 @@ private:
     ) const;
 
     /** simulation box */
-    boost::shared_ptr<box_type const> box_;
+    std::shared_ptr<box_type const> box_;
     /** module logger */
-    boost::shared_ptr<logger_type> logger_;
+    std::shared_ptr<logger_type> logger_;
     /** number of cells per dimension */
     index_type ncell_;
     /** cell edge length per dimension */

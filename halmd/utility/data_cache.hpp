@@ -20,11 +20,11 @@
 #ifndef HALMD_UTILITY_DATA_CACHE_HPP
 #define HALMD_UTILITY_DATA_CACHE_HPP
 
-#include <boost/shared_ptr.hpp>
 #include <boost/type_traits/is_convertible.hpp>
 #include <boost/utility/enable_if.hpp>
 #include <exception>
 #include <limits>
+#include <memory>
 #include <stdexcept>
 
 #include <halmd/mdsim/clock.hpp>
@@ -45,7 +45,7 @@ public:
     typedef mdsim::clock clock_type;
 
     /** Construct cache and store simulation clock */
-    data_cache(boost::shared_ptr<clock_type const> clock)
+    data_cache(std::shared_ptr<clock_type const> clock)
       : clock_(clock), step_(std::numeric_limits<step_type>::max())
     {}
 
@@ -83,7 +83,7 @@ public:
 private:
     typedef clock_type::step_type step_type;
 
-    boost::shared_ptr<clock_type const> clock_;
+    std::shared_ptr<clock_type const> clock_;
 
     T data_;
     step_type step_;

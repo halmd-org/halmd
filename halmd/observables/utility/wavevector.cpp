@@ -130,9 +130,11 @@ void wavevector<dimension>::init_()
 
 template <typename wavevector_type, typename wavenumber_array_type>
 static std::function<wavenumber_array_type const& ()>
-wrap_wavenumber(boost::shared_ptr<wavevector_type const> wavevector)
+wrap_wavenumber(std::shared_ptr<wavevector_type const> self)
 {
-    return bind(&wavevector_type::wavenumber, wavevector);
+    return [=]() -> wavenumber_array_type const& {
+        return self->wavenumber();
+    };
 }
 
 template <int dimension>
@@ -152,7 +154,7 @@ void wavevector<dimension>::luaopen(lua_State* L)
         [
             namespace_("utility")
             [
-                class_<wavevector, boost::shared_ptr<wavevector> >(class_name.c_str())
+                class_<wavevector, std::shared_ptr<wavevector> >(class_name.c_str())
                     .def(constructor<
                          vector<double> const&
                        , vector_type const&

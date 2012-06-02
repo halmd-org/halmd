@@ -17,7 +17,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <boost/shared_ptr.hpp>
+#include <memory>
 
 #include <halmd/random/host/random.hpp>
 #include <halmd/utility/lua/lua.hpp>
@@ -38,7 +38,7 @@ void random::seed(unsigned int seed)
 
 template <typename random_type>
 static std::function<void (unsigned int)>
-wrap_seed(boost::shared_ptr<random_type> self)
+wrap_seed(std::shared_ptr<random_type> self)
 {
     return [=](unsigned int seed) {
         self->seed(seed);
@@ -54,7 +54,7 @@ void random::luaopen(lua_State* L)
         [
             namespace_("host")
             [
-                class_<random, boost::shared_ptr<random> >("gfsr4")
+                class_<random, std::shared_ptr<random> >("gfsr4")
                     .def(constructor<>())
                     .property("seed", &wrap_seed<random>)
             ]

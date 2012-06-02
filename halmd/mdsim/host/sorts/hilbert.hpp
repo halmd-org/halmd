@@ -21,8 +21,8 @@
 #define HALMD_MDSIM_HOST_SORT_HILBERT_HPP
 
 #include <lua.hpp>
+#include <memory>
 
-#include <boost/make_shared.hpp>
 #include <halmd/io/logger.hpp>
 #include <halmd/mdsim/box.hpp>
 #include <halmd/mdsim/host/binning.hpp>
@@ -50,10 +50,10 @@ public:
     static void luaopen(lua_State* L);
 
     hilbert(
-        boost::shared_ptr<particle_type> particle
-      , boost::shared_ptr<box_type const> box
-      , boost::shared_ptr<binning_type> binning
-      , boost::shared_ptr<logger_type> logger = boost::make_shared<logger_type>()
+        std::shared_ptr<particle_type> particle
+      , std::shared_ptr<box_type const> box
+      , std::shared_ptr<binning_type> binning
+      , std::shared_ptr<logger_type> logger = std::make_shared<logger_type>()
     );
     void order();
 
@@ -78,16 +78,16 @@ private:
 
     unsigned int map(vector_type r, unsigned int depth);
 
-    boost::shared_ptr<particle_type> particle_;
-    boost::shared_ptr<box_type const> box_;
-    boost::shared_ptr<binning_type> binning_;
+    std::shared_ptr<particle_type> particle_;
+    std::shared_ptr<box_type const> box_;
+    std::shared_ptr<binning_type> binning_;
 
     /** 1-dimensional Hilbert curve mapping of cell lists */
     std::vector<cell_list const*> map_;
     /** signal emitted after particle ordering */
     signal<void ()> on_order_;
     /** module logger */
-    boost::shared_ptr<logger_type> logger_;
+    std::shared_ptr<logger_type> logger_;
     /** profiling runtime accumulators */
     runtime runtime_;
 };

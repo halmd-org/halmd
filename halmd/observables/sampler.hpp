@@ -40,8 +40,8 @@ public:
     typedef mdsim::core core_type;
 
     sampler(
-        boost::shared_ptr<clock_type> clock
-      , boost::shared_ptr<core_type> core
+        std::shared_ptr<clock_type> clock
+      , std::shared_ptr<core_type> core
     );
 
     /**
@@ -67,7 +67,9 @@ public:
      */
     connection on_prepare(std::function<void ()> const& slot, step_type interval)
     {
-        return on_prepare_.connect(boost::bind(&sampler::prepare, this, slot, interval));
+        return on_prepare_.connect([=]() {
+            prepare(slot, interval);
+        });
     }
 
     /**
@@ -75,7 +77,9 @@ public:
      */
     connection on_sample(std::function<void ()> const& slot, step_type interval)
     {
-        return on_sample_.connect(boost::bind(&sampler::sample, this, slot, interval));
+        return on_sample_.connect([=]() {
+            sample(slot, interval);
+        });
     }
 
     /**
@@ -96,9 +100,9 @@ private:
     void sample(std::function<void ()> const& slot, step_type interval) const;
 
     /** simulation clock */
-    boost::shared_ptr<clock_type> clock_;
+    std::shared_ptr<clock_type> clock_;
     /** simulation core */
-    boost::shared_ptr<core_type> core_;
+    std::shared_ptr<core_type> core_;
     /** signal emitted before starting simulation run */
     signal<void ()> on_start_;
     /** signal emitted before MD integration step */

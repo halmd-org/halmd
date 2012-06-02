@@ -22,8 +22,8 @@
 
 #include <boost/multi_array.hpp>
 #include <boost/numeric/ublas/symmetric.hpp>
-#include <boost/shared_ptr.hpp>
 #include <lua.hpp>
+#include <memory>
 #include <vector>
 
 #include <halmd/mdsim/box.hpp>
@@ -46,8 +46,8 @@ public:
     static void luaopen(lua_State* L);
 
     maximum_squared_displacement(
-        boost::shared_ptr<particle_type const> particle
-      , boost::shared_ptr<box_type const> box
+        std::shared_ptr<particle_type const> particle
+      , std::shared_ptr<box_type const> box
     );
     void zero();
     float_type compute();
@@ -64,9 +64,9 @@ private:
     };
 
     //! system state
-    boost::shared_ptr<particle_type const> particle_;
+    std::shared_ptr<particle_type const> particle_;
     //! simulation box
-    boost::shared_ptr<box_type const> box_;
+    std::shared_ptr<box_type const> box_;
     /* particle positions at last maximum_squared_displacement list update */
     std::vector<vector_type> r0_;
     /** profiling runtime accumulators */

@@ -20,10 +20,9 @@
 #ifndef HALMD_UTILITY_SIGNAL_HPP
 #define HALMD_UTILITY_SIGNAL_HPP
 
-#include <boost/shared_ptr.hpp>
-#include <boost/weak_ptr.hpp>
 #include <functional>
 #include <list>
+#include <memory>
 
 namespace halmd {
 
@@ -51,7 +50,7 @@ class slots;
 class connection
 {
 private:
-    typedef boost::shared_ptr<void> slots_pointer;
+    typedef std::shared_ptr<void> slots_pointer;
     typedef std::function<void (slots_pointer)> disconnector_type;
 
 public:
@@ -78,7 +77,7 @@ public:
      */
     bool connected() const
     {
-        return slots_.lock();
+        return bool(slots_.lock());
     }
 
 private:
@@ -90,7 +89,7 @@ private:
 
     connection(slots_pointer slots, disconnector_type c) : slots_(slots), disconnect_(c) {}
 
-    boost::weak_ptr<void> slots_;
+    std::weak_ptr<void> slots_;
     disconnector_type disconnect_;
 };
 
@@ -109,7 +108,7 @@ private:
      * The list of slots is held with a shared pointer, which allows
      * tracking the slots with a weak pointer in connection objects.
      */
-    typedef boost::shared_ptr<slots_type> slots_pointer;
+    typedef std::shared_ptr<slots_type> slots_pointer;
     /**
      * We do not provide write access to the list container,
      * to ensure that connection iterators remain valid,
@@ -126,9 +125,9 @@ private:
     class disconnector
     {
     public:
-        void operator()(boost::shared_ptr<void> slots)
+        void operator()(std::shared_ptr<void> slots)
         {
-            slots_pointer slots_ = boost::static_pointer_cast<slots_type>(slots);
+            slots_pointer slots_ = std::static_pointer_cast<slots_type>(slots);
             slots_->erase(iter_);
         }
 
@@ -170,7 +169,7 @@ public:
      *
      * Instead of clearing the list of slots, we reallocate the list,
      * which breaks the link between weak pointers in connection objects
-     * and the boost::shared_ptr in signal holding the slots, and enables
+     * and the std::shared_ptr in signal holding the slots, and enables
      * connection objects to ignore calls to connection::disconnect().
      */
     void disconnect_all_slots()

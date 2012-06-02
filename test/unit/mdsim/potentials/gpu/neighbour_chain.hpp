@@ -40,7 +40,7 @@ public:
     typedef halmd::mdsim::gpu::particle<dimension, float_type> particle_type;
 
     neighbour_chain(
-        boost::shared_ptr<particle_type const> particle
+        std::shared_ptr<particle_type const> particle
     );
 
     /** neighbour lists */
@@ -66,7 +66,7 @@ private:
 
 template <int dimension, typename float_type>
 neighbour_chain<dimension, float_type>::neighbour_chain(
-    boost::shared_ptr<particle_type const> particle
+    std::shared_ptr<particle_type const> particle
 )
   // member initialisation
   : stride_(particle->dim.threads())  // total number of particles and ghost particles

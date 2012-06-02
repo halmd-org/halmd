@@ -22,11 +22,10 @@
 
 #include <algorithm>
 #include <boost/bind.hpp>
-#include <boost/make_shared.hpp>
 #include <boost/multi_array.hpp>
 #include <boost/numeric/ublas/matrix.hpp>
-#include <boost/shared_ptr.hpp>
 #include <lua.hpp>
+#include <memory>
 #include <vector>
 
 #include <halmd/algorithm/multi_range.hpp>
@@ -57,11 +56,11 @@ public:
     static void luaopen(lua_State* L);
 
     binning(
-        boost::shared_ptr<particle_type const> particle
-      , boost::shared_ptr<box_type const> box
+        std::shared_ptr<particle_type const> particle
+      , std::shared_ptr<box_type const> box
       , matrix_type const& r_cut
       , float_type skin
-      , boost::shared_ptr<logger_type> logger = boost::make_shared<logger_type>()
+      , std::shared_ptr<logger_type> logger = std::make_shared<logger_type>()
     );
     void update();
 
@@ -113,9 +112,9 @@ private:
     };
 
     //! system state
-    boost::shared_ptr<particle_type const> particle_;
+    std::shared_ptr<particle_type const> particle_;
     /** module logger */
-    boost::shared_ptr<logger_type> logger_;
+    std::shared_ptr<logger_type> logger_;
     /** neighbour list skin in MD units */
     float_type r_skin_;
     /** cell lists */

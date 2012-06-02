@@ -20,10 +20,9 @@
 #ifndef HALMD_MDSIM_HOST_FORCES_PAIR_TRUNC_HPP
 #define HALMD_MDSIM_HOST_FORCES_PAIR_TRUNC_HPP
 
-#include <boost/bind.hpp>
 #include <boost/foreach.hpp>
-#include <boost/shared_ptr.hpp>
 #include <lua.hpp>
+#include <memory>
 #include <string>
 
 #include <halmd/io/logger.hpp>
@@ -58,12 +57,12 @@ public:
     static void luaopen(lua_State* L);
 
     pair_trunc(
-        boost::shared_ptr<potential_type> potential
-      , boost::shared_ptr<particle_type> particle1
-      , boost::shared_ptr<particle_type> particle2
-      , boost::shared_ptr<box_type> box
-      , boost::shared_ptr<neighbour_type const> neighbour
-      , boost::shared_ptr<trunc_type const> trunc = boost::make_shared<trunc_type>()
+        std::shared_ptr<potential_type> potential
+      , std::shared_ptr<particle_type> particle1
+      , std::shared_ptr<particle_type> particle2
+      , std::shared_ptr<box_type> box
+      , std::shared_ptr<neighbour_type const> neighbour
+      , std::shared_ptr<trunc_type const> trunc = std::make_shared<trunc_type>()
     );
     void compute();
 
@@ -83,12 +82,12 @@ private:
         accumulator_type compute;
     };
 
-    boost::shared_ptr<potential_type> potential_;
-    boost::shared_ptr<particle_type> particle1_;
-    boost::shared_ptr<particle_type> particle2_;
-    boost::shared_ptr<box_type> box_;
-    boost::shared_ptr<neighbour_type const> neighbour_;
-    boost::shared_ptr<trunc_type const> trunc_;
+    std::shared_ptr<potential_type> potential_;
+    std::shared_ptr<particle_type> particle1_;
+    std::shared_ptr<particle_type> particle2_;
+    std::shared_ptr<box_type> box_;
+    std::shared_ptr<neighbour_type const> neighbour_;
+    std::shared_ptr<trunc_type const> trunc_;
 
     /** profiling runtime accumulators */
     runtime runtime_;
@@ -99,12 +98,12 @@ private:
 
 template <int dimension, typename float_type, typename potential_type, typename trunc_type>
 pair_trunc<dimension, float_type, potential_type, trunc_type>::pair_trunc(
-    boost::shared_ptr<potential_type> potential
-  , boost::shared_ptr<particle_type> particle1
-  , boost::shared_ptr<particle_type> particle2
-  , boost::shared_ptr<box_type> box
-  , boost::shared_ptr<neighbour_type const> neighbour
-  , boost::shared_ptr<trunc_type const> trunc
+    std::shared_ptr<potential_type> potential
+  , std::shared_ptr<particle_type> particle1
+  , std::shared_ptr<particle_type> particle2
+  , std::shared_ptr<box_type> box
+  , std::shared_ptr<neighbour_type const> neighbour
+  , std::shared_ptr<trunc_type const> trunc
 )
   // dependency injection
   : potential_(potential)
@@ -213,10 +212,12 @@ void pair_trunc<dimension, float_type, potential_type, trunc_type>::compute_aux(
 }
 
 template <typename force_type>
-static typename signal<void ()>::slot_function_type
-wrap_compute(boost::shared_ptr<force_type> force)
+static std::function<void ()>
+wrap_compute(std::shared_ptr<force_type> self)
 {
-    return boost::bind(&force_type::compute, force);
+    return [=]() {
+        self->compute();
+    };
 }
 
 template <int dimension, typename float_type, typename potential_type, typename trunc_type>
@@ -239,13 +240,13 @@ void pair_trunc<dimension, float_type, potential_type, trunc_type>::luaopen(lua_
                     ]
                     .def_readonly("runtime", &pair_trunc::runtime_)
 
-              , def("pair_trunc", &boost::make_shared<pair_trunc,
-                    boost::shared_ptr<potential_type>
-                  , boost::shared_ptr<particle_type>
-                  , boost::shared_ptr<particle_type>
-                  , boost::shared_ptr<box_type>
-                  , boost::shared_ptr<neighbour_type const>
-                  , boost::shared_ptr<trunc_type const>
+              , def("pair_trunc", &std::make_shared<pair_trunc,
+                    std::shared_ptr<potential_type>
+                  , std::shared_ptr<particle_type>
+                  , std::shared_ptr<particle_type>
+                  , std::shared_ptr<box_type>
+                  , std::shared_ptr<neighbour_type const>
+                  , std::shared_ptr<trunc_type const>
                 >)
             ]
         ]

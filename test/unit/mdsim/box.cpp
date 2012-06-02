@@ -25,7 +25,6 @@
 #include <algorithm>
 #include <boost/assign.hpp>
 #include <boost/foreach.hpp>
-#include <boost/make_shared.hpp>
 #include <boost/numeric/ublas/banded.hpp>
 #include <limits>
 
@@ -63,7 +62,7 @@ void construction()
     double volume = (dimension == 2) ? 100 : 1000;
 
     BOOST_TEST_MESSAGE("Construction from edge lengths");
-    boost::shared_ptr<box_type> box = boost::make_shared<box_type>(edges);
+    std::shared_ptr<box_type> box = std::make_shared<box_type>(edges);
     BOOST_CHECK_EQUAL(box->length(), length);
     BOOST_CHECK_CLOSE_FRACTION(box->volume(), volume, epsilon);
 }

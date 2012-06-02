@@ -21,9 +21,8 @@
 #include <boost/test/unit_test.hpp>
 
 #include <boost/filesystem.hpp>
-#include <boost/make_shared.hpp>
-#include <boost/shared_ptr.hpp>
 #include <ctime>
+#include <memory>
 
 #include <halmd/io/writers/h5md/file.hpp>
 #include <test/tools/ctest.hpp>
@@ -39,14 +38,14 @@ struct create_file
     typedef file_type::version_type version_type;
     /** create H5MD file */
     create_file() {
-        file = boost::make_shared<file_type>("h5md.h5");
+        file = std::make_shared<file_type>("h5md.h5");
     }
     /** close and unlink H5MD file */
     ~create_file() {
         file.reset();
         filesystem::remove("h5md.h5");
     }
-    boost::shared_ptr<file_type> file;
+    std::shared_ptr<file_type> file;
 };
 
 BOOST_FIXTURE_TEST_CASE( check_version, create_file )

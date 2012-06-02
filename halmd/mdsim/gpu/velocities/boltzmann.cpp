@@ -28,10 +28,10 @@ namespace velocities {
 
 template <int dimension, typename float_type, typename RandomNumberGenerator>
 boltzmann<dimension, float_type, RandomNumberGenerator>::boltzmann(
-    boost::shared_ptr<particle_type> particle
-  , boost::shared_ptr<random_type> random
+    std::shared_ptr<particle_type> particle
+  , std::shared_ptr<random_type> random
   , double temperature
-  , boost::shared_ptr<logger_type> logger
+  , std::shared_ptr<logger_type> logger
 )
   : _Base(particle, logger)
   // dependency injection
@@ -128,7 +128,7 @@ void boltzmann<dimension, float_type, RandomNumberGenerator>::set()
 
 template <typename boltzmann_type>
 static std::function<void ()>
-wrap_set(boost::shared_ptr<boltzmann_type> self)
+wrap_set(std::shared_ptr<boltzmann_type> self)
 {
     return [=]() {
         self->set();
@@ -155,11 +155,11 @@ void boltzmann<dimension, float_type, RandomNumberGenerator>::luaopen(lua_State*
                     ]
                     .def_readonly("runtime", &boltzmann::runtime_)
 
-              , def("boltzmann", &boost::make_shared<boltzmann
-                  , boost::shared_ptr<particle_type>
-                  , boost::shared_ptr<random_type>
+              , def("boltzmann", &std::make_shared<boltzmann
+                  , std::shared_ptr<particle_type>
+                  , std::shared_ptr<random_type>
                   , double
-                  , boost::shared_ptr<logger_type>
+                  , std::shared_ptr<logger_type>
                 >)
             ]
         ]

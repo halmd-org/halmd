@@ -26,10 +26,10 @@ namespace host {
 
 template <int dimension, typename float_type>
 thermodynamics<dimension, float_type>::thermodynamics(
-    boost::shared_ptr<particle_group_type const> group
-  , boost::shared_ptr<box_type const> box
-  , boost::shared_ptr<clock_type const> clock
-  , boost::shared_ptr<logger_type> logger
+    std::shared_ptr<particle_group_type const> group
+  , std::shared_ptr<box_type const> box
+  , std::shared_ptr<clock_type const> clock
+  , std::shared_ptr<logger_type> logger
 )
   // dependency injection
   : box_(box)
@@ -192,11 +192,11 @@ void thermodynamics<dimension, float_type>::luaopen(lua_State* L)
                 ]
                 .def_readonly("runtime", &thermodynamics::runtime_)
 
-          , def("thermodynamics", &boost::make_shared<thermodynamics
-              , boost::shared_ptr<particle_group_type const>
-              , boost::shared_ptr<box_type const>
-              , boost::shared_ptr<clock_type const>
-              , boost::shared_ptr<logger_type>
+          , def("thermodynamics", &std::make_shared<thermodynamics
+              , std::shared_ptr<particle_group_type const>
+              , std::shared_ptr<box_type const>
+              , std::shared_ptr<clock_type const>
+              , std::shared_ptr<logger_type>
             >)
         ]
     ];

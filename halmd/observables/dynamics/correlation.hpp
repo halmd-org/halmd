@@ -20,11 +20,9 @@
 #ifndef HALMD_OBSERVABLES_DYNAMICS_CORRELATION_HPP
 #define HALMD_OBSERVABLES_DYNAMICS_CORRELATION_HPP
 
-#include <boost/bind.hpp>
-#include <boost/make_shared.hpp>
-#include <boost/shared_ptr.hpp>
 #include <boost/multi_array.hpp>
 #include <functional>
+#include <memory>
 
 #include <halmd/io/logger.hpp>
 #include <halmd/numeric/accumulator.hpp>
@@ -71,9 +69,9 @@ public:
     static void luaopen(lua_State* L);
 
     correlation(
-        boost::shared_ptr<tcf_type> tcf
-      , boost::shared_ptr<block_sample_type> block_sample
-      , boost::shared_ptr<logger_type> logger = boost::make_shared<logger_type>()
+        std::shared_ptr<tcf_type> tcf
+      , std::shared_ptr<block_sample_type> block_sample
+      , std::shared_ptr<logger_type> logger = std::make_shared<logger_type>()
     );
 
     virtual void compute(unsigned int level);
@@ -93,11 +91,11 @@ private:
     };
 
     /** block structure holding the input data */
-    boost::shared_ptr<block_sample_type> block_sample_;
+    std::shared_ptr<block_sample_type> block_sample_;
     /** functor performing the specific computation */
-    boost::shared_ptr<tcf_type> tcf_;
+    std::shared_ptr<tcf_type> tcf_;
     /** module logger */
-    boost::shared_ptr<logger_type> logger_;
+    std::shared_ptr<logger_type> logger_;
     /** block structures holding accumulated result values */
     block_result_type result_;
     /** mean values */
@@ -113,9 +111,9 @@ private:
 
 template <typename tcf_type>
 correlation<tcf_type>::correlation(
-    boost::shared_ptr<tcf_type> tcf
-  , boost::shared_ptr<block_sample_type> block_sample
-  , boost::shared_ptr<logger_type> logger
+    std::shared_ptr<tcf_type> tcf
+  , std::shared_ptr<block_sample_type> block_sample
+  , std::shared_ptr<logger_type> logger
 )
   // dependency injection
   : block_sample_(block_sample)
@@ -189,23 +187,29 @@ correlation<tcf_type>::get_count()
 
 template <typename correlation_type>
 static std::function<typename correlation_type::block_mean_type const& ()>
-wrap_mean(boost::shared_ptr<correlation_type> self)
+wrap_mean(std::shared_ptr<correlation_type> self)
 {
-    return boost::bind(&correlation_type::get_mean, self);
+    return [=]() -> typename correlation_type::block_mean_type const& {
+        return self->get_mean();
+    };
 }
 
 template <typename correlation_type>
 static std::function<typename correlation_type::block_error_type const& ()>
-wrap_error(boost::shared_ptr<correlation_type> self)
+wrap_error(std::shared_ptr<correlation_type> self)
 {
-    return boost::bind(&correlation_type::get_error, self);
+    return [=]() -> typename correlation_type::block_error_type const& {
+        return self->get_error();
+    };
 }
 
 template <typename correlation_type>
 static std::function<typename correlation_type::block_count_type const& ()>
-wrap_count(boost::shared_ptr<correlation_type> self)
+wrap_count(std::shared_ptr<correlation_type> self)
 {
-    return boost::bind(&correlation_type::get_count, self);
+    return [=]() -> typename correlation_type::block_count_type const& {
+        return self->get_count();
+    };
 }
 
 template <typename tcf_type>
@@ -229,10 +233,10 @@ void correlation<tcf_type>::luaopen(lua_State* L)
                     ]
                     .def_readonly("runtime", &correlation::runtime_)
 
-              , def("correlation", &boost::make_shared<correlation
-                  , boost::shared_ptr<tcf_type>
-                  , boost::shared_ptr<block_sample_type>
-                  , boost::shared_ptr<logger_type>
+              , def("correlation", &std::make_shared<correlation
+                  , std::shared_ptr<tcf_type>
+                  , std::shared_ptr<block_sample_type>
+                  , std::shared_ptr<logger_type>
                 >)
             ]
         ]

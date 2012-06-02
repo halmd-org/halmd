@@ -17,7 +17,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <boost/shared_ptr.hpp>
+#include <memory>
 
 #include <halmd/io/logger.hpp>
 #include <halmd/io/utility/hdf5.hpp>
@@ -77,7 +77,7 @@ string file::path() const
 }
 
 static std::function<void ()>
-wrap_close(boost::shared_ptr<file> self)
+wrap_close(std::shared_ptr<file> self)
 {
     return [=]() {
         self->close();
@@ -95,7 +95,7 @@ void file::luaopen(lua_State* L)
             [
                 namespace_("h5md")
                 [
-                    class_<file, boost::shared_ptr<file> >("file")
+                    class_<file, std::shared_ptr<file> >("file")
                         .def(constructor<string const&>())
                         .property("close", &wrap_close)
                         .property("root", &file::root)

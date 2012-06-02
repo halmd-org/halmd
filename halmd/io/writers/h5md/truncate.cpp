@@ -134,9 +134,11 @@ void truncate::write()
 }
 
 static truncate::slot_function_type
-wrap_write(boost::shared_ptr<truncate> instance)
+wrap_write(std::shared_ptr<truncate> self)
 {
-    return bind(&truncate::write, instance);
+    return [=]() {
+        self->write();
+    };
 }
 
 /**
@@ -158,7 +160,7 @@ void truncate::luaopen(lua_State* L)
             [
                 namespace_("h5md")
                 [
-                    class_<truncate, boost::shared_ptr<truncate> >("truncate")
+                    class_<truncate, std::shared_ptr<truncate> >("truncate")
                         .def(constructor<H5::Group const&, vector<string> const&>())
                         .property("group", &truncate::group)
                         .property("write", &wrap_write)

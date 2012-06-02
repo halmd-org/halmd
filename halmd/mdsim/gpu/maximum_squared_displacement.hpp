@@ -20,8 +20,8 @@
 #ifndef HALMD_MDSIM_GPU_MAXIMUM_SQUARED_DISPLACEMENT_HPP
 #define HALMD_MDSIM_GPU_MAXIMUM_SQUARED_DISPLACEMENT_HPP
 
-#include <boost/shared_ptr.hpp>
 #include <lua.hpp>
+#include <memory>
 
 #include <halmd/mdsim/box.hpp>
 #include <halmd/mdsim/gpu/maximum_squared_displacement_kernel.hpp>
@@ -45,8 +45,8 @@ public:
     static void luaopen(lua_State* L);
 
     maximum_squared_displacement(
-        boost::shared_ptr<particle_type const> particle
-      , boost::shared_ptr<box_type const> box
+        std::shared_ptr<particle_type const> particle
+      , std::shared_ptr<box_type const> box
     );
     void zero();
     float_type compute();
@@ -64,8 +64,8 @@ private:
         accumulator_type compute;
     };
 
-    boost::shared_ptr<particle_type const> particle_;
-    boost::shared_ptr<box_type const> box_;
+    std::shared_ptr<particle_type const> particle_;
+    std::shared_ptr<box_type const> box_;
 
     cuda::config dim_reduce_;
     static displacement_impl_type get_displacement_impl(int threads);

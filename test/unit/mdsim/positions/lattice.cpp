@@ -25,7 +25,6 @@
 #include <boost/assign.hpp>
 #include <boost/bind.hpp>
 #include <boost/foreach.hpp>
-#include <boost/make_shared.hpp>
 #include <boost/numeric/ublas/banded.hpp>
 #include <cmath>
 #include <functional>
@@ -59,7 +58,7 @@ using namespace std;
 /** compute static structure factor of phase space sample for some wavevectors */
 template <typename sample_type, typename vector_type>
 vector<double> compute_ssf(
-    boost::shared_ptr<sample_type> sample
+    std::shared_ptr<sample_type> sample
   , vector<vector_type> const& wavevector
 )
 {
@@ -103,11 +102,11 @@ struct lattice
     float lattice_constant;
     fixed_vector<double, dimension> slab;
 
-    boost::shared_ptr<box_type> box;
-    boost::shared_ptr<particle_type> particle;
-    boost::shared_ptr<position_type> position;
-    boost::shared_ptr<phase_space_type> phase_space;
-    boost::shared_ptr<clock_type> clock;
+    std::shared_ptr<box_type> box;
+    std::shared_ptr<particle_type> particle;
+    std::shared_ptr<position_type> position;
+    std::shared_ptr<phase_space_type> phase_space;
+    std::shared_ptr<clock_type> clock;
 
     void test();
     lattice();
@@ -137,7 +136,7 @@ void lattice<modules_type>::test()
 
     // acquire phase space samples
     BOOST_TEST_MESSAGE("acquire phase space sample");
-    boost::shared_ptr<sample_type const> sample = phase_space->acquire();
+    std::shared_ptr<sample_type const> sample = phase_space->acquire();
 
     // compute static structure factors for a set of wavenumbers
     // which are points of the reciprocal lattice
@@ -219,12 +218,12 @@ lattice<modules_type>::lattice()
     // same lattice spacing (a mismatch is a likely reason for failure of the test)
     npart *= slab_vol_frac;
 
-    particle = boost::make_shared<particle_type>(npart, 1);
-    box = boost::make_shared<box_type>(edges);
-    position = boost::make_shared<position_type>(particle, box, slab);
-    clock = boost::make_shared<clock_type>();
-    boost::shared_ptr<particle_group_type> particle_group = boost::make_shared<particle_group_type>(particle, 0, particle->nparticle());
-    phase_space = boost::make_shared<phase_space_type>(particle, particle_group, box, clock);
+    particle = std::make_shared<particle_type>(npart, 1);
+    box = std::make_shared<box_type>(edges);
+    position = std::make_shared<position_type>(particle, box, slab);
+    clock = std::make_shared<clock_type>();
+    std::shared_ptr<particle_group_type> particle_group = std::make_shared<particle_group_type>(particle, 0, particle->nparticle());
+    phase_space = std::make_shared<phase_space_type>(particle, particle_group, box, clock);
 }
 
 template <int dimension, typename float_type>

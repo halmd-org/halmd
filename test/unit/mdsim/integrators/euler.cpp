@@ -24,7 +24,6 @@
 
 #include <algorithm>
 #include <boost/assign.hpp>
-#include <boost/make_shared.hpp>
 #include <boost/numeric/ublas/banded.hpp>
 #include <functional>
 #include <limits>
@@ -103,14 +102,14 @@ struct test_euler
     fixed_vector<double, dimension> box_ratios;
     fixed_vector<double, dimension> slab;
 
-    boost::shared_ptr<box_type> box;
-    boost::shared_ptr<particle_type> particle;
-    boost::shared_ptr<integrator_type> integrator;
-    boost::shared_ptr<random_type> random;
-    boost::shared_ptr<position_type> position;
-    boost::shared_ptr<velocity_type> velocity;
-    boost::shared_ptr<clock_type> clock;
-    boost::shared_ptr<phase_space_type> phase_space;
+    std::shared_ptr<box_type> box;
+    std::shared_ptr<particle_type> particle;
+    std::shared_ptr<integrator_type> integrator;
+    std::shared_ptr<random_type> random;
+    std::shared_ptr<position_type> position;
+    std::shared_ptr<velocity_type> velocity;
+    std::shared_ptr<clock_type> clock;
+    std::shared_ptr<phase_space_type> phase_space;
 
     test_euler();
     void linear_motion();
@@ -122,7 +121,7 @@ template <typename modules_type>
 void test_euler<modules_type>::linear_motion()
 {
     // copy initial positions and velocities from particle to host sample
-    boost::shared_ptr<sample_type const> initial_sample = phase_space->acquire();
+    std::shared_ptr<sample_type const> initial_sample = phase_space->acquire();
 
     // perform integration
     BOOST_TEST_MESSAGE("running Euler integration for linear motion over " << steps << " steps");
@@ -133,7 +132,7 @@ void test_euler<modules_type>::linear_motion()
     }
 
     // acquire sample with final positions and velocities
-    boost::shared_ptr<sample_type const> sample = phase_space->acquire();
+    std::shared_ptr<sample_type const> sample = phase_space->acquire();
 
     typename sample_type::position_array_type const& initial_position = initial_sample->position();
     typename sample_type::velocity_array_type const& initial_velocity = initial_sample->velocity();
@@ -164,7 +163,7 @@ template <typename modules_type>
 void test_euler<modules_type>::overdamped_motion()
 {
     // copy initial positions and velocities from particle to host sample
-    boost::shared_ptr<sample_type const> initial_sample = phase_space->acquire();
+    std::shared_ptr<sample_type const> initial_sample = phase_space->acquire();
 
     // reduce number of steps as the test runs much slower
     // and the outcome can't be well represented by float
@@ -180,7 +179,7 @@ void test_euler<modules_type>::overdamped_motion()
     }
 
     // acquire sample with final positions and velocities
-    boost::shared_ptr<sample_type const> sample = phase_space->acquire();
+    std::shared_ptr<sample_type const> sample = phase_space->acquire();
 
     // particlewise comparison with analytic solution
     // r_n = r_0 * (1 - Δt)^n → r_0 * exp(-n Δt)
@@ -231,15 +230,15 @@ test_euler<modules_type>::test_euler()
     slab = 1;
 
     // create modules
-    particle = boost::make_shared<particle_type>(npart, 1);
-    box = boost::make_shared<box_type>(edges);
-    integrator = boost::make_shared<integrator_type>(particle, box, timestep);
-    random = boost::make_shared<random_type>();
-    position = boost::make_shared<position_type>(particle, box, slab);
-    velocity = boost::make_shared<velocity_type>(particle, random, temp);
-    clock = boost::make_shared<clock_type>();
-    boost::shared_ptr<particle_group_type> particle_group = boost::make_shared<particle_group_type>(particle, 0, particle->nparticle());
-    phase_space = boost::make_shared<phase_space_type>(particle, particle_group, box, clock);
+    particle = std::make_shared<particle_type>(npart, 1);
+    box = std::make_shared<box_type>(edges);
+    integrator = std::make_shared<integrator_type>(particle, box, timestep);
+    random = std::make_shared<random_type>();
+    position = std::make_shared<position_type>(particle, box, slab);
+    velocity = std::make_shared<velocity_type>(particle, random, temp);
+    clock = std::make_shared<clock_type>();
+    std::shared_ptr<particle_group_type> particle_group = std::make_shared<particle_group_type>(particle, 0, particle->nparticle());
+    phase_space = std::make_shared<phase_space_type>(particle, particle_group, box, clock);
 
     // set positions and velocities
     BOOST_TEST_MESSAGE("position particles on lattice");
@@ -267,12 +266,12 @@ struct host_modules
 
     static bool const gpu = false;
 
-    static void set_velocity(boost::shared_ptr<particle_type> particle);
+    static void set_velocity(std::shared_ptr<particle_type> particle);
 };
 
 /** host specific helper function: set particle velocity to v = -r */
 template <int dimension, typename float_type>
-void host_modules<dimension, float_type>::set_velocity(boost::shared_ptr<particle_type> particle)
+void host_modules<dimension, float_type>::set_velocity(std::shared_ptr<particle_type> particle)
 {
     // copy -r[i] to v[i]
     transform(
@@ -325,12 +324,12 @@ struct gpu_modules
     };
 #endif
 
-    static void set_velocity(boost::shared_ptr<particle_type> particle);
+    static void set_velocity(std::shared_ptr<particle_type> particle);
 };
 
 /** GPU specific helper function: set particle velocity to v = -r */
 template <int dimension, typename float_type>
-void gpu_modules<dimension, float_type>::set_velocity(boost::shared_ptr<particle_type> particle)
+void gpu_modules<dimension, float_type>::set_velocity(std::shared_ptr<particle_type> particle)
 {
     using namespace algorithm::gpu;
     typedef typename particle_type::vector_type vector_type;

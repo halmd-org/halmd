@@ -18,9 +18,8 @@
  */
 
 #include <algorithm>
-#include <boost/bind.hpp>
-#include <boost/make_shared.hpp>
 #include <cmath>
+#include <memory>
 
 #include <halmd/mdsim/host/integrators/euler.hpp>
 #include <halmd/utility/lua/lua.hpp>
@@ -38,10 +37,10 @@ namespace integrators {
 // constructor
 template <int dimension, typename float_type>
 euler<dimension, float_type>::euler(
-    boost::shared_ptr<particle_type> particle
-  , boost::shared_ptr<box_type const> box
+    std::shared_ptr<particle_type> particle
+  , std::shared_ptr<box_type const> box
   , double timestep
-  , boost::shared_ptr<logger_type> logger
+  , std::shared_ptr<logger_type> logger
 )
   // dependency injection (initialize public variables)
   : particle_(particle)
@@ -84,16 +83,20 @@ void euler<dimension, float_type>::integrate()
 
 template <typename integrator_type>
 static std::function<void ()>
-wrap_integrate(boost::shared_ptr<integrator_type> self)
+wrap_integrate(std::shared_ptr<integrator_type> self)
 {
-    return bind(&integrator_type::integrate, self);
+    return [=]() {
+        self->integrate();
+    };
 }
 
 template <typename integrator_type>
 static std::function<void ()>
-wrap_finalize(boost::shared_ptr<integrator_type> self)
+wrap_finalize(std::shared_ptr<integrator_type> self)
 {
-    return bind(&integrator_type::finalize, self);
+    return [=]() {
+        self->finalize();
+    };
 }
 
 template <int dimension, typename float_type>
@@ -117,11 +120,11 @@ void euler<dimension, float_type>::luaopen(lua_State* L)
                     ]
                     .def_readonly("runtime", &euler::runtime_)
 
-              , def("euler", &boost::make_shared<euler
-                  , boost::shared_ptr<particle_type>
-                  , boost::shared_ptr<box_type const>
+              , def("euler", &std::make_shared<euler
+                  , std::shared_ptr<particle_type>
+                  , std::shared_ptr<box_type const>
                   , double
-                  , boost::shared_ptr<logger_type>
+                  , std::shared_ptr<logger_type>
                 >)
             ]
         ]

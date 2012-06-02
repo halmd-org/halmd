@@ -26,7 +26,7 @@
  */
 lua_test_fixture::lua_test_fixture()
   : L_(luaL_newstate(), lua_close) // call lua_close upon destruction
-  , L(get_pointer(L_))
+  , L(L_.get())
 {
     luaL_openlibs(L);
 

@@ -20,7 +20,7 @@
 #ifndef HALMD_MDSIM_HOST_VELOCITY_HPP
 #define HALMD_MDSIM_HOST_VELOCITY_HPP
 
-#include <boost/make_shared.hpp>
+#include <memory>
 
 #include <halmd/io/logger.hpp>
 #include <halmd/mdsim/host/particle.hpp>
@@ -38,16 +38,16 @@ public:
     typedef logger logger_type;
 
     velocity(
-        boost::shared_ptr<particle_type> particle
-      , boost::shared_ptr<logger_type> logger = boost::make_shared<logger_type>()
+        std::shared_ptr<particle_type> particle
+      , std::shared_ptr<logger_type> logger = std::make_shared<logger_type>()
     );
     void rescale(double factor);
     void shift(vector_type const& delta);
     void shift_rescale(vector_type const& delta, double factor);
 
 private:
-    boost::shared_ptr<particle_type> particle_;
-    boost::shared_ptr<logger_type> logger_;
+    std::shared_ptr<particle_type> particle_;
+    std::shared_ptr<logger_type> logger_;
 };
 
 } // namespace mdsim

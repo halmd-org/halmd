@@ -20,9 +20,9 @@
 #ifndef HALMD_TEST_TOOLS_LUA_HPP
 #define HALMD_TEST_TOOLS_LUA_HPP
 
-#include <boost/shared_ptr.hpp>
 #include <lua.hpp>
 #include <luaponte/luaponte.hpp>
+#include <memory>
 
 #define LUA_WARN( str )         BOOST_WARN_MESSAGE( lua_test_fixture::dostring( str ), lua_test_fixture::error(lua_test_fixture::L) )
 #define LUA_CHECK( str )        BOOST_CHECK_MESSAGE( lua_test_fixture::dostring( str ), lua_test_fixture::error(lua_test_fixture::L) )
@@ -36,7 +36,7 @@
 class lua_test_fixture
 {
 private:
-    boost::shared_ptr<lua_State> L_;
+    std::shared_ptr<lua_State> L_;
 
 public:
     lua_State* const L;

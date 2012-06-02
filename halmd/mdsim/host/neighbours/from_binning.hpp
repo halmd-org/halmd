@@ -20,10 +20,9 @@
 #ifndef HALMD_MDSIM_HOST_NEIGHBOURS_FROM_BINNING_HPP
 #define HALMD_MDSIM_HOST_NEIGHBOURS_FROM_BINNING_HPP
 
-#include <boost/make_shared.hpp>
 #include <boost/numeric/ublas/matrix.hpp>
-#include <boost/shared_ptr.hpp>
 #include <lua.hpp>
+#include <memory>
 #include <vector>
 
 #include <halmd/io/logger.hpp>
@@ -57,14 +56,14 @@ public:
     static void luaopen(lua_State* L);
 
     from_binning(
-        boost::shared_ptr<particle_type const> particle1
-      , boost::shared_ptr<particle_type const> particle2
-      , boost::shared_ptr<binning_type const> binning1
-      , boost::shared_ptr<binning_type const> binning2
-      , boost::shared_ptr<box_type const> box
+        std::shared_ptr<particle_type const> particle1
+      , std::shared_ptr<particle_type const> particle2
+      , std::shared_ptr<binning_type const> binning1
+      , std::shared_ptr<binning_type const> binning2
+      , std::shared_ptr<box_type const> box
       , matrix_type const& r_cut
       , double skin
-      , boost::shared_ptr<logger_type> logger = boost::make_shared<logger_type>()
+      , std::shared_ptr<logger_type> logger = std::make_shared<logger_type>()
     );
     void update();
 
@@ -105,12 +104,12 @@ private:
     typedef typename binning_type::cell_list cell_list;
     typedef typename binning_type::cell_lists cell_lists;
 
-    boost::shared_ptr<particle_type const> particle1_;
-    boost::shared_ptr<particle_type const> particle2_;
-    boost::shared_ptr<binning_type const> binning1_;
-    boost::shared_ptr<binning_type const> binning2_;
-    boost::shared_ptr<box_type const> box_;
-    boost::shared_ptr<logger_type> logger_;
+    std::shared_ptr<particle_type const> particle1_;
+    std::shared_ptr<particle_type const> particle2_;
+    std::shared_ptr<binning_type const> binning1_;
+    std::shared_ptr<binning_type const> binning2_;
+    std::shared_ptr<box_type const> box_;
+    std::shared_ptr<logger_type> logger_;
 
     void update_cell_neighbours(cell_size_type const& i);
     template <bool same_cell>

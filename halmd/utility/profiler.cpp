@@ -37,7 +37,7 @@ profiler::profiler()
     LOG("profiler timer resolution: " << 1.E9 * timer_type::elapsed_min() << " ns");
 }
 
-connection profiler::on_profile(boost::shared_ptr<accumulator_type> acc, string const& desc)
+connection profiler::on_profile(std::shared_ptr<accumulator_type> acc, string const& desc)
 {
     return accumulators_.connect(make_pair(acc, desc));
 }
@@ -146,16 +146,16 @@ void profiler::log() const
     }
 }
 
-static std::function<connection (boost::shared_ptr<profiler::accumulator_type>, std::string const&)>
-wrap_on_profile(boost::shared_ptr<profiler> self)
+static std::function<connection (std::shared_ptr<profiler::accumulator_type>, std::string const&)>
+wrap_on_profile(std::shared_ptr<profiler> self)
 {
-    return [=](boost::shared_ptr<profiler::accumulator_type> acc, std::string const& desc) {
+    return [=](std::shared_ptr<profiler::accumulator_type> acc, std::string const& desc) {
         return self->on_profile(acc, desc);
     };
 }
 
 static std::function<connection (std::function<void ()> const&)>
-wrap_on_prepend_profile(boost::shared_ptr<profiler> self)
+wrap_on_prepend_profile(std::shared_ptr<profiler> self)
 {
     return [=](std::function<void ()> const& slot) {
         return self->on_prepend_profile(slot);
@@ -163,7 +163,7 @@ wrap_on_prepend_profile(boost::shared_ptr<profiler> self)
 }
 
 static std::function<connection (std::function<void ()> const&)>
-wrap_on_append_profile(boost::shared_ptr<profiler> self)
+wrap_on_append_profile(std::shared_ptr<profiler> self)
 {
     return [=](std::function<void ()> const& slot) {
         return self->on_append_profile(slot);
@@ -171,7 +171,7 @@ wrap_on_append_profile(boost::shared_ptr<profiler> self)
 }
 
 static std::function<void()>
-wrap_profile(boost::shared_ptr<profiler> self)
+wrap_profile(std::shared_ptr<profiler> self)
 {
     return [=]() {
         self->profile();
@@ -185,7 +185,7 @@ void profiler::luaopen(lua_State* L)
     [
         namespace_("utility")
         [
-            class_<profiler, boost::shared_ptr<profiler> >("profiler")
+            class_<profiler, std::shared_ptr<profiler> >("profiler")
                 .def(constructor<>())
                 .property("on_profile", &wrap_on_profile)
                 .property("on_prepend_profile", &wrap_on_prepend_profile)

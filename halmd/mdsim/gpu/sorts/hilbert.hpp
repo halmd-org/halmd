@@ -20,8 +20,8 @@
 #ifndef HALMD_MDSIM_GPU_SORTS_HILBERT_HPP
 #define HALMD_MDSIM_GPU_SORTS_HILBERT_HPP
 
-#include <boost/make_shared.hpp>
 #include <lua.hpp>
+#include <memory>
 
 #include <halmd/io/logger.hpp>
 #include <halmd/mdsim/box.hpp>
@@ -51,9 +51,9 @@ public:
     static void luaopen(lua_State* L);
 
     hilbert(
-        boost::shared_ptr<particle_type> particle
-      , boost::shared_ptr<box_type const> box
-      , boost::shared_ptr<logger_type> logger = boost::make_shared<logger_type>()
+        std::shared_ptr<particle_type> particle
+      , std::shared_ptr<box_type const> box
+      , std::shared_ptr<logger_type> logger = std::make_shared<logger_type>()
     );
     void order();
 
@@ -76,15 +76,15 @@ private:
     void map(cuda::vector<unsigned int>& g_map);
     void permutation(cuda::vector<unsigned int>& g_map, cuda::vector<unsigned int>& g_index);
 
-    boost::shared_ptr<particle_type> particle_;
+    std::shared_ptr<particle_type> particle_;
     /** simulation box */
-    boost::shared_ptr<box_type const> box_;
+    std::shared_ptr<box_type const> box_;
     /** recursion depth */
     unsigned int depth_;
     /** signal emitted after particle ordering */
     signal<void ()> on_order_;
     /** module logger */
-    boost::shared_ptr<logger_type> logger_;
+    std::shared_ptr<logger_type> logger_;
     /** profiling runtime accumulators */
     runtime runtime_;
 };

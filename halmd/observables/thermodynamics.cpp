@@ -25,7 +25,7 @@ namespace observables {
 
 template <typename thermodynamics_type>
 static std::function<double ()>
-wrap_nparticle(boost::shared_ptr<thermodynamics_type> self)
+wrap_nparticle(std::shared_ptr<thermodynamics_type> self)
 {
     return [=]() {
         return self->nparticle();
@@ -34,7 +34,7 @@ wrap_nparticle(boost::shared_ptr<thermodynamics_type> self)
 
 template <typename thermodynamics_type>
 static std::function<double ()>
-wrap_density(boost::shared_ptr<thermodynamics_type> self)
+wrap_density(std::shared_ptr<thermodynamics_type> self)
 {
     return [=]() {
         return self->density();
@@ -43,7 +43,7 @@ wrap_density(boost::shared_ptr<thermodynamics_type> self)
 
 template <typename thermodynamics_type>
 static std::function<double ()>
-wrap_en_tot(boost::shared_ptr<thermodynamics_type> self)
+wrap_en_tot(std::shared_ptr<thermodynamics_type> self)
 {
     return [=]() {
         return self->en_tot();
@@ -52,7 +52,7 @@ wrap_en_tot(boost::shared_ptr<thermodynamics_type> self)
 
 template <typename thermodynamics_type>
 static std::function<double ()>
-wrap_en_pot(boost::shared_ptr<thermodynamics_type> self)
+wrap_en_pot(std::shared_ptr<thermodynamics_type> self)
 {
     return [=]() {
         return self->en_pot();
@@ -61,7 +61,7 @@ wrap_en_pot(boost::shared_ptr<thermodynamics_type> self)
 
 template <typename thermodynamics_type>
 static std::function<double ()>
-wrap_en_kin(boost::shared_ptr<thermodynamics_type> self)
+wrap_en_kin(std::shared_ptr<thermodynamics_type> self)
 {
     return [=]() {
         return self->en_kin();
@@ -70,7 +70,7 @@ wrap_en_kin(boost::shared_ptr<thermodynamics_type> self)
 
 template <typename thermodynamics_type>
 static std::function<typename thermodynamics_type::vector_type ()>
-wrap_v_cm(boost::shared_ptr<thermodynamics_type> self)
+wrap_v_cm(std::shared_ptr<thermodynamics_type> self)
 {
     return [=]() {
         return self->v_cm();
@@ -79,7 +79,7 @@ wrap_v_cm(boost::shared_ptr<thermodynamics_type> self)
 
 template <typename thermodynamics_type>
 static std::function<double ()>
-wrap_temp(boost::shared_ptr<thermodynamics_type> self)
+wrap_temp(std::shared_ptr<thermodynamics_type> self)
 {
     return [=]() {
         return self->temp();
@@ -88,7 +88,7 @@ wrap_temp(boost::shared_ptr<thermodynamics_type> self)
 
 template <typename thermodynamics_type>
 static std::function<double ()>
-wrap_pressure(boost::shared_ptr<thermodynamics_type> self)
+wrap_pressure(std::shared_ptr<thermodynamics_type> self)
 {
     return [=]() {
         return self->pressure();
@@ -97,7 +97,7 @@ wrap_pressure(boost::shared_ptr<thermodynamics_type> self)
 
 template <typename thermodynamics_type>
 static std::function<double ()>
-wrap_virial(boost::shared_ptr<thermodynamics_type> self)
+wrap_virial(std::shared_ptr<thermodynamics_type> self)
 {
     return [=]() {
         return self->virial();
@@ -106,7 +106,7 @@ wrap_virial(boost::shared_ptr<thermodynamics_type> self)
 
 template <typename thermodynamics_type>
 static std::function<double ()>
-wrap_hypervirial(boost::shared_ptr<thermodynamics_type> self)
+wrap_hypervirial(std::shared_ptr<thermodynamics_type> self)
 {
     return [=]() {
         return self->hypervirial();
@@ -115,7 +115,7 @@ wrap_hypervirial(boost::shared_ptr<thermodynamics_type> self)
 
 template <typename thermodynamics_type>
 static std::function<void ()>
-wrap_clear_cache(boost::shared_ptr<thermodynamics_type> self)
+wrap_clear_cache(std::shared_ptr<thermodynamics_type> self)
 {
     return [=]() {
         self->clear_cache();

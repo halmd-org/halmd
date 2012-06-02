@@ -161,7 +161,7 @@ void posix_signal::handle(int signum) const
 
 template <int signum>
 static std::function<connection (std::function<void ()> const&)>
-wrap_on_signal(boost::shared_ptr<posix_signal> self)
+wrap_on_signal(std::shared_ptr<posix_signal> self)
 {
     return [=](std::function<void ()> const& slot) {
         return self->on_signal(signum, [=](int) {
@@ -171,7 +171,7 @@ wrap_on_signal(boost::shared_ptr<posix_signal> self)
 }
 
 static std::function<void ()>
-wrap_wait(boost::shared_ptr<posix_signal> self)
+wrap_wait(std::shared_ptr<posix_signal> self)
 {
     return [=]() {
         self->wait();
@@ -179,7 +179,7 @@ wrap_wait(boost::shared_ptr<posix_signal> self)
 }
 
 static std::function<void ()>
-wrap_poll(boost::shared_ptr<posix_signal> self)
+wrap_poll(std::shared_ptr<posix_signal> self)
 {
     return [=]() {
         self->poll();
@@ -193,7 +193,7 @@ void posix_signal::luaopen(lua_State* L)
     [
         namespace_("utility")
         [
-            class_<posix_signal, boost::shared_ptr<posix_signal> >("posix_signal")
+            class_<posix_signal, std::shared_ptr<posix_signal> >("posix_signal")
                 .def(constructor<>())
                 .property("on_hup", &wrap_on_signal<SIGHUP>)
                 .property("on_int", &wrap_on_signal<SIGINT>)

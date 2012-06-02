@@ -24,7 +24,6 @@
 
 #include <boost/assign.hpp>
 #include <boost/foreach.hpp>
-#include <boost/make_shared.hpp>
 #include <boost/numeric/ublas/assignment.hpp> // <<=
 #include <boost/numeric/ublas/banded.hpp>
 #include <cmath> // std::pow
@@ -186,12 +185,12 @@ struct power_law
 
     typedef typename particle_type::vector_type vector_type;
 
-    boost::shared_ptr<box_type> box;
-    boost::shared_ptr<potential_type> potential;
-    boost::shared_ptr<force_type> force;
-    boost::shared_ptr<neighbour_type> neighbour;
-    boost::shared_ptr<particle_type> particle;
-    boost::shared_ptr<host_potential_type> host_potential;
+    std::shared_ptr<box_type> box;
+    std::shared_ptr<potential_type> potential;
+    std::shared_ptr<force_type> force;
+    std::shared_ptr<neighbour_type> neighbour;
+    std::shared_ptr<particle_type> particle;
+    std::shared_ptr<host_potential_type> host_potential;
     vector<unsigned int> npart_list;
 
     power_law();
@@ -294,18 +293,18 @@ power_law<float_type>::power_law()
       , 12, 24;
 
     // create modules
-    particle = boost::make_shared<particle_type>(accumulate(npart_list.begin(), npart_list.end(), 0), npart_list.size());
-    box = boost::make_shared<box_type>(edges);
-    potential = boost::make_shared<potential_type>(
+    particle = std::make_shared<particle_type>(accumulate(npart_list.begin(), npart_list.end(), 0), npart_list.size());
+    box = std::make_shared<box_type>(edges);
+    potential = std::make_shared<potential_type>(
         particle->nspecies(), particle->nspecies(), cutoff_array
       , epsilon_array, sigma_array, index_array
     );
-    host_potential = boost::make_shared<host_potential_type>(
+    host_potential = std::make_shared<host_potential_type>(
         particle->nspecies(), particle->nspecies(), cutoff_array
       , epsilon_array, sigma_array, index_array
     );
-    neighbour = boost::make_shared<neighbour_type>(particle);
-    force = boost::make_shared<force_type>(potential, particle, particle, box, neighbour);
+    neighbour = std::make_shared<neighbour_type>(particle);
+    force = std::make_shared<force_type>(potential, particle, particle, box, neighbour);
 }
 
 BOOST_FIXTURE_TEST_CASE( power_law_gpu, device ) {

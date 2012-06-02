@@ -20,10 +20,10 @@
 #ifndef HALMD_MDSIM_GPU_POTENTIALS_MORSE_HPP
 #define HALMD_MDSIM_GPU_POTENTIALS_MORSE_HPP
 
-#include <boost/make_shared.hpp>
 #include <boost/numeric/ublas/matrix.hpp>
 #include <cuda_wrapper/cuda_wrapper.hpp>
 #include <lua.hpp>
+#include <memory>
 
 #include <halmd/io/logger.hpp>
 #include <halmd/mdsim/gpu/potentials/morse_kernel.hpp>
@@ -55,7 +55,7 @@ public:
       , matrix_type const& epsilon
       , matrix_type const& sigma
       , matrix_type const& r_min
-      , boost::shared_ptr<logger_type> logger = boost::make_shared<logger_type>()
+      , std::shared_ptr<logger_type> logger = std::make_shared<logger_type>()
     );
 
     /** bind textures before kernel invocation */
@@ -120,7 +120,7 @@ private:
     /** squared cutoff radius at CUDA device */
     cuda::vector<float> g_rr_cut_;
     /** module logger */
-    boost::shared_ptr<logger_type> logger_;
+    std::shared_ptr<logger_type> logger_;
 };
 
 } // namespace potentials

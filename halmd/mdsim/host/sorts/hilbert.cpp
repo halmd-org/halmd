@@ -36,10 +36,10 @@ namespace sorts {
 
 template <int dimension, typename float_type>
 hilbert<dimension, float_type>::hilbert(
-    boost::shared_ptr<particle_type> particle
-  , boost::shared_ptr<box_type const> box
-  , boost::shared_ptr<binning_type> binning
-  , boost::shared_ptr<logger_type> logger
+    std::shared_ptr<particle_type> particle
+  , std::shared_ptr<box_type const> box
+  , std::shared_ptr<binning_type> binning
+  , std::shared_ptr<logger_type> logger
 )
   // dependency injection
   : particle_(particle)
@@ -132,9 +132,11 @@ static char const* module_name_wrapper(hilbert<dimension, float_type> const&)
 
 template <typename sort_type>
 static std::function<void ()>
-wrap_order(boost::shared_ptr<sort_type> sort)
+wrap_order(std::shared_ptr<sort_type> self)
 {
-    return bind(&sort_type::order, sort);
+    return [=]() {
+        self->order();
+    };
 }
 
 template <int dimension, typename float_type>
@@ -150,12 +152,12 @@ void hilbert<dimension, float_type>::luaopen(lua_State* L)
             [
                 namespace_("sorts")
                 [
-                    class_<hilbert, boost::shared_ptr<hilbert> >(class_name.c_str())
+                    class_<hilbert, std::shared_ptr<hilbert> >(class_name.c_str())
                         .def(constructor<
-                            boost::shared_ptr<particle_type>
-                          , boost::shared_ptr<box_type const>
-                          , boost::shared_ptr<binning_type>
-                          , boost::shared_ptr<logger_type>
+                            std::shared_ptr<particle_type>
+                          , std::shared_ptr<box_type const>
+                          , std::shared_ptr<binning_type>
+                          , std::shared_ptr<logger_type>
                         >())
                         .property("module_name", &module_name_wrapper<dimension, float_type>)
                         .property("order", &wrap_order<hilbert>)
