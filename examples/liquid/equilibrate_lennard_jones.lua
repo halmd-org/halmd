@@ -102,42 +102,28 @@ local function liquid(args)
     -- setup simulation box and sample initial state
     observables.sampler.setup()
 
-    local function run(steps)
-        -- estimate remaining runtime
-        local runtime = observables.runtime_estimate({
-            steps = steps
-          , first = 10
-          , interval = 900
-          , sample = 60
-        })
-        -- run simulation
-        observables.sampler.run(steps)
-        -- log profiler results
-        halmd.utility.profiler.profile()
-    end
-
     -- add velocity-Verlet integrator with Andersen thermostat
     local integrator = mdsim.integrators.verlet_nvt_andersen({
         box = box
       , particle = particle
-      , timestep = args.timestep.thermostat
+      , timestep = args.timestep
       , temperature = args.temperature
       , rate = args.rate
     })
-    -- thermostat system
-    run(args.steps.thermostat)
 
-    -- remove velocity-Verlet integrator with Andersen thermostat
-    integrator:disconnect()
-
-    -- add velocity-Verlet integrator
-    local integrator = mdsim.integrators.verlet({
-        box = box
-      , particle = particle
-      , timestep = args.timestep.equilibrate
+    -- estimate remaining runtime
+    local runtime = observables.runtime_estimate({
+        steps = args.steps
+      , first = 10
+      , interval = 900
+      , sample = 60
     })
-    -- thermostat system
-    run(args.steps.equilibrate)
+
+    -- run simulation
+    observables.sampler.run(args.steps)
+
+    -- log profiler results
+    halmd.utility.profiler.profile()
 end
 
 --
@@ -173,14 +159,8 @@ local function parse_args()
     parser.add_argument("masses", {type = "vector", dtype = "number", default = {1}, help = "particle masses"})
     parser.add_argument("temperature", {type = "number", default = 1.12, help = "initial system temperature"})
     parser.add_argument("rate", {type = "number", default = 0.1, help = "heat bath collision rate"})
-
-    local steps = parser.add_argument_group("steps", {help = "number of simulation steps"})
-    steps.add_argument("thermostat", {type = "integer", default = 10000, help = "with Verlet and Andersen thermostat"})
-    steps.add_argument("equilibrate", {type = "integer", default = 10000, help = "with Verlet"})
-
-    local timestep = parser.add_argument_group("timestep", {help = "integration time step"})
-    timestep.add_argument("thermostat", {type = "number", default = 0.01, help = "of Verlet and Andersen thermostat"})
-    timestep.add_argument("equilibrate", {type = "number", default = 0.001, help = "of Verlet"})
+    parser.add_argument("steps", {type = "integer", default = 10000, help = "number of simulation steps"})
+    parser.add_argument("timestep", {type = "number", default = 0.01, help = "integration time step"})
 
     local sampling = parser.add_argument_group("sampling", {help = "sampling intervals"})
     sampling.add_argument("trajectory", {type = "integer", default = 1000, help = "for trajectory"})

@@ -62,8 +62,8 @@ execute_halmd(
   --particles 100,200,1
   --ratios "${EDGE_RATIOS}"
   --density 0.1
-  --steps thermostat=500 equilibrate=500
-  --timestep thermostat=0.02 equilibrate=0.002
+  --steps 500
+  --timestep 0.02
   --sampling trajectory=500
 )
 
