@@ -55,7 +55,7 @@ endif()
 
 execute_halmd(
   "${BACKEND_OPTION}"
-  "@CMAKE_SOURCE_DIR@/examples/liquid/simple_liquid_equilibrate.lua"
+  "@CMAKE_SOURCE_DIR@/examples/liquid/equilibrate_lennard_jones.lua"
   --verbose
   --output "${OUTPUT_PREFIX}"
   --particles 300
@@ -67,7 +67,7 @@ execute_halmd(
 
 execute_halmd(
   "${BACKEND_OPTION}"
-  "@CMAKE_SOURCE_DIR@/examples/liquid/simple_liquid_measure.lua"
+  "@CMAKE_SOURCE_DIR@/examples/liquid/lennard_jones.lua"
   --verbose
   --output "${OUTPUT_PREFIX}_continued"
   --trajectory "${OUTPUT_PREFIX}.h5"
