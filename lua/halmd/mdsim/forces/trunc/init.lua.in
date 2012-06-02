@@ -1,5 +1,6 @@
 --
--- Copyright © 2012  Nicolas Höft
+-- Copyright © 2012 Nicolas Höft
+-- Copyright © 2012 Peter Colberg
 --
 -- This file is part of HALMD.
 --
@@ -18,5 +19,16 @@
 --
 
 local module = require("halmd.utility.module")
+
+---
+-- Smoothing Functions
+-- ===================
+--
+-- .. toctree::
+--    :maxdepth: 2
+--    :glob:
+--
+--    *
+--
 
 return module.loader("halmd.mdsim.forces.trunc")

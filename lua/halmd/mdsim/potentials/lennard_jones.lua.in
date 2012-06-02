@@ -131,9 +131,14 @@ local M = module(function(args)
         self = lennard_jones(nspecies[1], nspecies[2], cutoff, epsilon, sigma, logger)
     end
 
-    -- attach description for profiler
-    self.description = property(function(self)
+    -- add description for profiler
+    self.description = property(function()
         return "Lennard-Jones potential"
+    end)
+
+    -- add logger instance for pair_trunc
+    self.logger = property(function()
+        return logger
     end)
 
     return self

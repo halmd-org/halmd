@@ -90,7 +90,15 @@ local M = module(function(args)
     if not potential then
         error("bad argument 'potential'", 2)
     end
-    local trunc = args.trunc or discontinuous()
+    local logger = assert(potential.logger)
+    local trunc = args.trunc
+    if trunc then
+        -- log parameters if smoothing function was specified
+        trunc.log(logger)
+    else
+        -- otherwise default to empty function
+        trunc = discontinuous()
+    end
 
     -- create neighbour lists with cutoff radii of potential
     local r_cut = assert(potential.r_cut)
