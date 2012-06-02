@@ -18,8 +18,8 @@
  */
 
 #include <boost/algorithm/string/join.hpp> // boost::join
-#include <luabind/luabind.hpp>
-#include <luabind/out_value_policy.hpp>
+#include <luaponte/luaponte.hpp>
+#include <luaponte/out_value_policy.hpp>
 #include <stdexcept>
 #include <stdint.h> // uint64_t
 
@@ -165,7 +165,7 @@ wrap_write(boost::shared_ptr<append> instance)
  */
 void append::luaopen(lua_State* L)
 {
-    using namespace luabind;
+    using namespace luaponte;
     module(L, "libhalmd")
     [
         namespace_("io")

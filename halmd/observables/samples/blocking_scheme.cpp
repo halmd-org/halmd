@@ -28,7 +28,7 @@ namespace samples {
 
 HALMD_LUA_API int luaopen_libhalmd_observables_samples_blocking_scheme(lua_State* L)
 {
-    using namespace luabind;
+    using namespace luaponte;
     module(L, "libhalmd")
     [
         namespace_("observables")

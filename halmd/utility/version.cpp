@@ -46,7 +46,7 @@ static void prologue(vector<string> const& arg)
 
 HALMD_LUA_API int luaopen_libhalmd_utility_version(lua_State* L)
 {
-    using namespace luabind;
+    using namespace luaponte;
     module(L, "libhalmd")
     [
         namespace_("utility")

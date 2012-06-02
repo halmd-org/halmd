@@ -17,7 +17,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <luabind/class_info.hpp>
+#include <luaponte/class_info.hpp>
 #include <stdexcept>
 
 #include <halmd/io/logger.hpp>
@@ -45,7 +45,7 @@ script::script()
     // load Lua standard libraries
     luaL_openlibs(L);
     // load Luabind into Lua interpreter
-    load_luabind();
+    load_luaponte();
     // set Lua package path
     package_path();
     // set Lua C package path
@@ -67,9 +67,9 @@ static void translate_exception(lua_State* L, std::exception const& e)
 /**
  * Load Luabind into Lua interpreter
  */
-void script::load_luabind()
+void script::load_luaponte()
 {
-    using namespace luabind;
+    using namespace luaponte;
     // setup global structures and Lua class support
     open(L);
     // print Lua stack trace on error
@@ -165,7 +165,7 @@ void script::package_cpath()
  */
 void script::lua_compat()
 {
-    using namespace luabind;
+    using namespace luaponte;
 
 #if LUA_VERSION_NUM < 502
     // function unpack was moved into the table library
@@ -184,7 +184,7 @@ void script::lua_compat()
  */
 void script::dofile(string const& filename)
 {
-    using namespace luabind;
+    using namespace luaponte;
 
     // if filename is NULL, luaL_loadfile loads from standard input
     char const* fn = NULL;

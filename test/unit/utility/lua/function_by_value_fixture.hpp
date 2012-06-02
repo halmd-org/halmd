@@ -34,7 +34,7 @@ struct function_by_value_fixture : lua_test_fixture
 
     function_by_value_fixture()
     {
-        using namespace luabind;
+        using namespace luaponte;
         module(L, "test")
         [
             def("slot_by_value0", &wrap_slot_by_value0)

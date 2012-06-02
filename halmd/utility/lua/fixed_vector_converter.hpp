@@ -23,7 +23,7 @@
 #include <algorithm>
 #include <boost/bind.hpp>
 #include <boost/iterator/transform_iterator.hpp>
-#include <luabind/luabind.hpp>
+#include <luaponte/luaponte.hpp>
 
 #include <halmd/config.hpp>
 #include <halmd/numeric/blas/fixed_vector.hpp>
@@ -32,7 +32,7 @@
 # define luaL_len lua_objlen
 #endif
 
-namespace luabind {
+namespace luaponte {
 
 /**
  * Luabind converter for fixed-size algebraic vector
@@ -81,7 +81,7 @@ struct default_converter<halmd::fixed_vector<T, N>&&>
   : default_converter<halmd::fixed_vector<T, N> > {};
 #endif
 
-} // namespace luabind
+} // namespace luaponte
 
 #if LUA_VERSION_NUM < 502
 # undef luaL_len

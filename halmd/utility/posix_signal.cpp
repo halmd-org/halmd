@@ -188,7 +188,7 @@ wrap_poll(boost::shared_ptr<posix_signal> self)
 
 void posix_signal::luaopen(lua_State* L)
 {
-    using namespace luabind;
+    using namespace luaponte;
     module(L, "libhalmd")
     [
         namespace_("utility")

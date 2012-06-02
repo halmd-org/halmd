@@ -167,7 +167,7 @@ wrap_on_append_finalize(boost::shared_ptr<core> self)
 
 void core::luaopen(lua_State* L)
 {
-    using namespace luabind;
+    using namespace luaponte;
     module(L, "libhalmd")
     [
         namespace_("mdsim")

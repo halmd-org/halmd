@@ -21,11 +21,11 @@
 #define HALMD_UTILITY_LUA_OPTIONAL_CONVERTER_HPP
 
 #include <boost/optional.hpp>
-#include <luabind/luabind.hpp>
+#include <luaponte/luaponte.hpp>
 
 #include <halmd/config.hpp>
 
-namespace luabind {
+namespace luaponte {
 
 /**
  * Luabind converter for Boost.Optional
@@ -37,20 +37,20 @@ struct default_converter<boost::optional<T> >
     //! compute Lua to C++ conversion score
     static int compute_score(lua_State* L, int index)
     {
-        return luabind::object_cast_nothrow<T>(from_stack(L, index)) ? 0 : -1;
+        return luaponte::object_cast_nothrow<T>(from_stack(L, index)) ? 0 : -1;
     }
 
     //! convert from Lua to C++
     boost::optional<T> from(lua_State* L, int index)
     {
-        return luabind::object_cast<T>(from_stack(L, index));
+        return luaponte::object_cast<T>(from_stack(L, index));
     }
 
     //! convert from C++ to Lua
     void to(lua_State* L, boost::optional<T> const& value)
     {
         if (value) {
-            luabind::detail::convert_to_lua(L, *value);
+            luaponte::detail::convert_to_lua(L, *value);
         }
         else {
             lua_pushnil(L);
@@ -68,6 +68,6 @@ struct default_converter<boost::optional<T>&&>
   : default_converter<boost::optional<T> > {};
 #endif
 
-} // namespace luabind
+} // namespace luaponte
 
 #endif /* ! HALMD_UTILITY_LUA_OPTIONAL_CONVERTER_HPP */

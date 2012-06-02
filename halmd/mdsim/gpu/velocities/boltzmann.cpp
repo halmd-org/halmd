@@ -138,7 +138,7 @@ wrap_set(boost::shared_ptr<boltzmann_type> self)
 template <int dimension, typename float_type, typename RandomNumberGenerator>
 void boltzmann<dimension, float_type, RandomNumberGenerator>::luaopen(lua_State* L)
 {
-    using namespace luabind;
+    using namespace luaponte;
     module(L, "libhalmd")
     [
         namespace_("mdsim")

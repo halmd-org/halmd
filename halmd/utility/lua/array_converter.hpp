@@ -22,7 +22,7 @@
 
 #include <boost/array.hpp>
 #include <boost/multi_array.hpp>
-#include <luabind/luabind.hpp>
+#include <luaponte/luaponte.hpp>
 
 #include <halmd/config.hpp>
 
@@ -30,7 +30,7 @@
 # define luaL_len lua_objlen
 #endif
 
-namespace luabind {
+namespace luaponte {
 
 /**
  * Luabind converter for Boost array
@@ -59,7 +59,7 @@ struct default_converter<boost::array<T, N> >
     //! convert from C++ to Lua
     void to(lua_State* L, boost::array<T, N> const& array)
     {
-        luabind::object table = luabind::newtable(L);
+        luaponte::object table = luaponte::newtable(L);
         for (std::size_t i = 0; i < array.size(); ++i) {
             // default_converter<T> only invoked with reference wrapper
             table[i + 1] = boost::cref(array[i]);
@@ -106,7 +106,7 @@ struct default_converter<boost::multi_array<T, 1> >
     //! convert from C++ to Lua
     void to(lua_State* L, boost::multi_array<T, 1> const& array)
     {
-        luabind::object table = luabind::newtable(L);
+        luaponte::object table = luaponte::newtable(L);
         for (std::size_t i = 0; i < array.size(); ++i) {
             // default_converter<T> only invoked with reference wrapper
             table[i + 1] = boost::cref(array[i]);
@@ -125,7 +125,7 @@ struct default_converter<boost::multi_array<T, 1>&&>
   : default_converter<boost::multi_array<T, 1> > {};
 #endif
 
-} // namespace luabind
+} // namespace luaponte
 
 #if LUA_VERSION_NUM < 502
 # undef luaL_len

@@ -27,8 +27,8 @@
 #include <boost/iterator/transform_iterator.hpp>
 #include <exception>
 #include <iterator> // std::back_inserter
-#include <luabind/luabind.hpp>
-#include <luabind/out_value_policy.hpp>
+#include <luaponte/luaponte.hpp>
+#include <luaponte/out_value_policy.hpp>
 #include <numeric>
 
 #include <halmd/algorithm/gpu/radix_sort.hpp>
@@ -570,7 +570,7 @@ wrap_prepare(boost::shared_ptr<particle_type> self)
 template <typename particle_type>
 struct wrap_particle
   : particle_type
-  , luabind::wrap_base
+  , luaponte::wrap_base
 {
     wrap_particle(size_t nparticle, unsigned int nspecies) : particle_type(nparticle, nspecies) {}
 };
@@ -578,7 +578,7 @@ struct wrap_particle
 template <int dimension, typename float_type>
 void particle<dimension, float_type>::luaopen(lua_State* L)
 {
-    using namespace luabind;
+    using namespace luaponte;
     static std::string class_name = "particle_" + std::to_string(dimension);
     module(L, "libhalmd")
     [

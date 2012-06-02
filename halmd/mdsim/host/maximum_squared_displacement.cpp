@@ -92,7 +92,7 @@ wrap_compute(boost::shared_ptr<maximum_squared_displacement<dimension, float_typ
 template <int dimension, typename float_type>
 void maximum_squared_displacement<dimension, float_type>::luaopen(lua_State* L)
 {
-    using namespace luabind;
+    using namespace luaponte;
     static string class_name("maximum_squared_displacement_" + lexical_cast<string>(dimension) + "_");
     module(L, "libhalmd")
     [

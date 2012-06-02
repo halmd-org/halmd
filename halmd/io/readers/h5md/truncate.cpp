@@ -18,8 +18,8 @@
  */
 
 #include <boost/algorithm/string/join.hpp> // boost::join
-#include <luabind/luabind.hpp>
-#include <luabind/out_value_policy.hpp>
+#include <luaponte/luaponte.hpp>
+#include <luaponte/out_value_policy.hpp>
 #include <stdexcept>
 
 #include <halmd/io/utility/hdf5.hpp>
@@ -96,7 +96,7 @@ wrap_read(boost::shared_ptr<truncate> self)
 
 void truncate::luaopen(lua_State* L)
 {
-    using namespace luabind;
+    using namespace luaponte;
     module(L, "libhalmd")
     [
         namespace_("io")

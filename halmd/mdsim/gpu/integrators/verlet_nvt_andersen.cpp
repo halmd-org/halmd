@@ -162,7 +162,7 @@ wrap_set_temperature(boost::shared_ptr<integrator_type> self)
 template <int dimension, typename float_type, typename RandomNumberGenerator>
 void verlet_nvt_andersen<dimension, float_type, RandomNumberGenerator>::luaopen(lua_State* L)
 {
-    using namespace luabind;
+    using namespace luaponte;
     module(L, "libhalmd")
     [
         namespace_("mdsim")

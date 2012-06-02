@@ -79,7 +79,7 @@ lennard_jones<float_type>::lennard_jones(
 template <typename float_type>
 void lennard_jones<float_type>::luaopen(lua_State* L)
 {
-    using namespace luabind;
+    using namespace luaponte;
     module(L, "libhalmd")
     [
         namespace_("mdsim")

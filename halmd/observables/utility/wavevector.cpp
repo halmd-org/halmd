@@ -144,7 +144,7 @@ static unsigned int wrap_dimension(wavevector<dimension> const&)
 template <int dimension>
 void wavevector<dimension>::luaopen(lua_State* L)
 {
-    using namespace luabind;
+    using namespace luaponte;
     static string class_name("wavevector_" + lexical_cast<string>(dimension) + "_");
     module(L, "libhalmd")
     [

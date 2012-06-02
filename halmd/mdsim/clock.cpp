@@ -67,7 +67,7 @@ wrap_on_set_timestep(boost::shared_ptr<clock> self)
 
 HALMD_LUA_API int luaopen_libhalmd_mdsim_clock(lua_State* L)
 {
-    using namespace luabind;
+    using namespace luaponte;
     module(L, "libhalmd")
     [
         namespace_("mdsim")

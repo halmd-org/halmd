@@ -123,7 +123,7 @@ void ssf<dimension>::luaopen(lua_State* L)
 {
     typedef std::function<boost::shared_ptr<density_mode_type const> ()> slot_type;
 
-    using namespace luabind;
+    using namespace luaponte;
     module(L, "libhalmd")
     [
         namespace_("observables")

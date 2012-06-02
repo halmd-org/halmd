@@ -151,7 +151,7 @@ bool excluded_volume<dimension, float_type>::place_cell(
 template <int dimension, typename float_type>
 void excluded_volume<dimension, float_type>::luaopen(lua_State* L)
 {
-    using namespace luabind;
+    using namespace luaponte;
     static string const class_name("excluded_volume_" + lexical_cast<string>(dimension) + "_" + demangled_name<float_type>());
     module(L, "libhalmd")
     [

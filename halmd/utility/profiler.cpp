@@ -180,7 +180,7 @@ wrap_profile(boost::shared_ptr<profiler> self)
 
 void profiler::luaopen(lua_State* L)
 {
-    using namespace luabind;
+    using namespace luaponte;
     module(L, "libhalmd")
     [
         namespace_("utility")

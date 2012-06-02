@@ -24,7 +24,7 @@
 #include <boost/numeric/ublas/matrix_proxy.hpp> // row()
 #include <boost/numeric/ublas/symmetric.hpp>
 #include <boost/numeric/ublas/vector.hpp>
-#include <luabind/luabind.hpp>
+#include <luaponte/luaponte.hpp>
 
 #include <halmd/config.hpp>
 
@@ -32,7 +32,7 @@
 # define luaL_len lua_objlen
 #endif
 
-namespace luabind {
+namespace luaponte {
 
 /**
  * Luabind converter for Boost uBLAS vector
@@ -178,7 +178,7 @@ struct default_converter<boost::numeric::ublas::symmetric_matrix<T, F1, F2, A>&&
   : default_converter<boost::numeric::ublas::symmetric_matrix<T, F1, F2, A> > {};
 #endif
 
-} // namespace luabind
+} // namespace luaponte
 
 #if LUA_VERSION_NUM < 502
 # undef luaL_len

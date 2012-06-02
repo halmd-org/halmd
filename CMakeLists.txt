@@ -111,7 +111,7 @@ if(NOT HALMD_DOC_ONLY OR NOT HALMD_USE_GIT)
 
   set(HALMD_COMMON_LIBRARIES
     boost_log
-    luabind
+    luaponte
     ${Boost_DATE_TIME_LIBRARY}
     ${Boost_PROGRAM_OPTIONS_LIBRARY}
     ${Boost_RANDOM_LIBRARY}
@@ -140,7 +140,7 @@ if(NOT HALMD_DOC_ONLY OR NOT HALMD_USE_GIT)
   include_directories(${HALMD_SOURCE_DIR}/libs/boost-log)
   include_directories(${HALMD_SOURCE_DIR}/libs/cuda-wrapper)
   include_directories(${HALMD_SOURCE_DIR}/libs/h5xx)
-  include_directories(${HALMD_SOURCE_DIR}/libs/luabind)
+  include_directories(${HALMD_SOURCE_DIR}/libs/luaponte)
   include_directories(${HALMD_SOURCE_DIR})
   include_directories(${HALMD_BINARY_DIR})
   include_directories(${Boost_INCLUDE_DIR})
@@ -181,7 +181,7 @@ if(NOT HALMD_DOC_ONLY OR NOT HALMD_USE_GIT)
   )
 
   add_subdirectory(libs/boost-log/libs/log/src)
-  add_subdirectory(libs/luabind/src)
+  add_subdirectory(libs/luaponte/src)
   add_subdirectory(halmd)
   add_subdirectory(lua)
   add_subdirectory(test)

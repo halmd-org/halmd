@@ -60,7 +60,7 @@ select_tcf_by_acquire(std::function<boost::shared_ptr<typename tcf_type::sample_
 template <int dimension, typename float_type>
 void velocity_autocorrelation<dimension, float_type>::luaopen(lua_State* L)
 {
-    using namespace luabind;
+    using namespace luaponte;
     module(L, "libhalmd")
     [
         namespace_("observables")

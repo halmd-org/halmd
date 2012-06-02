@@ -34,7 +34,7 @@ struct function_fixture : lua_test_fixture
 
     function_fixture()
     {
-        using namespace luabind;
+        using namespace luaponte;
         module(L, "test")
         [
             def("slot0", &wrap_slot0)

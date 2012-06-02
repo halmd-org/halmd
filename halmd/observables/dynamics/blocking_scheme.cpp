@@ -285,7 +285,7 @@ wrap_on_append_finalise(boost::shared_ptr<blocking_scheme> self)
 
 void blocking_scheme::luaopen(lua_State* L)
 {
-    using namespace luabind;
+    using namespace luaponte;
     module(L, "libhalmd")
     [
         namespace_("observables")

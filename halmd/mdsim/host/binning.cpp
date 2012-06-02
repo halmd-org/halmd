@@ -103,7 +103,7 @@ wrap_update(boost::shared_ptr<binning_type> binning)
 template <int dimension, typename float_type>
 void binning<dimension, float_type>::luaopen(lua_State* L)
 {
-    using namespace luabind;
+    using namespace luaponte;
     static string class_name("binning_" + lexical_cast<string>(dimension) + "_");
     module(L, "libhalmd")
     [

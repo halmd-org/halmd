@@ -104,7 +104,7 @@ wrap_flush(boost::shared_ptr<file> self)
 
 void file::luaopen(lua_State* L)
 {
-    using namespace luabind;
+    using namespace luaponte;
     module(L, "libhalmd")
     [
         namespace_("io")

@@ -44,7 +44,7 @@ public:
     lua_State* const L;
 
 private:
-    void load_luabind();
+    void load_luaponte();
     void package_path();
     void package_cpath();
     void lua_compat();

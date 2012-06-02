@@ -20,7 +20,7 @@
 #ifndef HALMD_UTILITY_LUA_VECTOR_CONVERTER_HPP
 #define HALMD_UTILITY_LUA_VECTOR_CONVERTER_HPP
 
-#include <luabind/luabind.hpp>
+#include <luaponte/luaponte.hpp>
 #include <vector>
 
 #include <halmd/config.hpp>
@@ -29,7 +29,7 @@
 # define luaL_len lua_objlen
 #endif
 
-namespace luabind {
+namespace luaponte {
 
 /**
  * Luabind converter for STL vector
@@ -82,7 +82,7 @@ template <typename T>
 struct default_converter<std::vector<T>&>
   : default_converter<std::vector<T> > {};
 
-} // namespace luabind
+} // namespace luaponte
 
 #if LUA_VERSION_NUM < 502
 # undef luaL_len

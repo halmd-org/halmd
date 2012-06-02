@@ -135,7 +135,7 @@ wrap_compute(boost::shared_ptr<force_type> force)
 template <int dimension, typename float_type, typename potential_type>
 void pair_full<dimension, float_type, potential_type>::luaopen(lua_State* L)
 {
-    using namespace luabind;
+    using namespace luaponte;
     module(L, "libhalmd")
     [
         namespace_("mdsim")

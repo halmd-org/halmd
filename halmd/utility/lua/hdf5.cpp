@@ -18,9 +18,9 @@
  */
 
 #include <h5xx/h5xx.hpp>
-#include <luabind/luabind.hpp>
-#include <luabind/exception_handler.hpp>
-#include <luabind/out_value_policy.hpp>
+#include <luaponte/luaponte.hpp>
+#include <luaponte/exception_handler.hpp>
+#include <luaponte/out_value_policy.hpp>
 
 #include <halmd/config.hpp>
 #include <halmd/utility/lua/long_long_converter.hpp> // *int64_t on x86
@@ -41,16 +41,16 @@ struct type_wrapper {};
  * Read attribute in HDF5 group/dataset if exists, otherwise return nil
  */
 template <typename T>
-static luabind::object read_attribute(
+static luaponte::object read_attribute(
     H5::H5Object const& object, string const& name, type_wrapper<T> const&
   , lua_State* L
 )
 {
     if (h5xx::exists_attribute(object, name)) {
         T value = h5xx::read_attribute<T>(object, name);
-        return luabind::object(L, boost::cref(value));
+        return luaponte::object(L, boost::cref(value));
     }
-    return luabind::object(); // == nil
+    return luaponte::object(); // == nil
 }
 
 /**
@@ -99,7 +99,7 @@ static H5::DataSet wrap_open_dataset(H5::CommonFG const& group, std::string cons
  */
 HALMD_LUA_API int luaopen_libhalmd_utility_lua_hdf5(lua_State* L)
 {
-    using namespace luabind;
+    using namespace luaponte;
     register_exception_handler<H5::Exception>(&translate_h5_exception);
     module(L, "libhalmd")
     [

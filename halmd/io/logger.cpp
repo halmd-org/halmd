@@ -140,7 +140,7 @@ void logging::set_formatter(boost::shared_ptr<backend_type> backend) const
     );
 }
 
-struct logger_wrapper : logger, luabind::wrap_base
+struct logger_wrapper : logger, luaponte::wrap_base
 {
     logger_wrapper() {}
 
@@ -166,7 +166,7 @@ static boost::shared_ptr<logger> get_logger()
 
 HALMD_LUA_API int luaopen_libhalmd_io_logger(lua_State* L)
 {
-    using namespace luabind;
+    using namespace luaponte;
     module(L, "libhalmd")
     [
         namespace_("io")

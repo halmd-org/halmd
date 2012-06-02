@@ -232,9 +232,9 @@ BOOST_FIXTURE_TEST_CASE( global_lua_function, lua_test_fixture )
 /**
  * Measure Luabind function call
  */
-BOOST_FIXTURE_TEST_CASE( luabind_function, lua_test_fixture )
+BOOST_FIXTURE_TEST_CASE( luaponte_function, lua_test_fixture )
 {
-    using namespace luabind;
+    using namespace luaponte;
     module(L)
     [
         def("noop", &noop)

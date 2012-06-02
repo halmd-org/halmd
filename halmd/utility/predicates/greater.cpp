@@ -39,7 +39,7 @@ wrap_evaluate(boost::shared_ptr<greater_type const> greater)
 template <typename value_type>
 void greater<value_type>::luaopen(lua_State* L, char const* class_name)
 {
-    using namespace luabind;
+    using namespace luaponte;
     module(L, "libhalmd")
     [
         namespace_("predicates")

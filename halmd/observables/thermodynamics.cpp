@@ -125,7 +125,7 @@ wrap_clear_cache(boost::shared_ptr<thermodynamics_type> self)
 template <int dimension>
 void thermodynamics<dimension>::luaopen(lua_State* L)
 {
-    using namespace luabind;
+    using namespace luaponte;
     module(L)
     [
         class_<thermodynamics>()

@@ -97,7 +97,7 @@ wrap_finalize(boost::shared_ptr<integrator_type> self)
 template <int dimension, typename float_type>
 void euler<dimension, float_type>::luaopen(lua_State* L)
 {
-    using namespace luabind;
+    using namespace luaponte;
     module(L, "libhalmd")
     [
         namespace_("mdsim")

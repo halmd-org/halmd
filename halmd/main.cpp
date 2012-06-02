@@ -92,8 +92,8 @@ int main(int argc, char **argv)
         }
 
         script script;
-        luabind::object arg = luabind::newtable(script.L);
-        luabind::globals(script.L)["arg"] = arg;
+        luaponte::object arg = luaponte::newtable(script.L);
+        luaponte::globals(script.L)["arg"] = arg;
 
         int offset = -argc + 1;
         if (pos.size() > 1) {
@@ -106,8 +106,8 @@ int main(int argc, char **argv)
 #ifdef HALMD_WITH_GPU
         if (vm.count("disable-gpu")) {
 #endif
-            luabind::object package = luabind::globals(script.L)["package"]["loaded"];
-            package["halmd.utility.device"] = luabind::newtable(script.L);
+            luaponte::object package = luaponte::globals(script.L)["package"]["loaded"];
+            package["halmd.utility.device"] = luaponte::newtable(script.L);
 #ifdef HALMD_WITH_GPU
         }
 #endif

@@ -30,7 +30,7 @@ lua_test_fixture::lua_test_fixture()
 {
     luaL_openlibs(L);
 
-    luabind::open(L);
+    luaponte::open(L);
 }
 
 static int pcall_handler(lua_State* L)

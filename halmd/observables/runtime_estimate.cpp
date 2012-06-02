@@ -92,7 +92,7 @@ wrap_estimate(boost::shared_ptr<runtime_estimate> instance)
 
 void runtime_estimate::luaopen(lua_State* L)
 {
-    using namespace luabind;
+    using namespace luaponte;
     module(L, "libhalmd")
     [
         namespace_("observables")

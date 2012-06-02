@@ -167,7 +167,7 @@ wrap_from_range(
 template <typename particle_type>
 void from_range<particle_type>::luaopen(lua_State* L)
 {
-    using namespace luabind;
+    using namespace luaponte;
     module(L, "libhalmd")
     [
         namespace_("mdsim")

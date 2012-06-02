@@ -34,7 +34,7 @@ struct function_exception_fixture : lua_test_fixture
 
     function_exception_fixture()
     {
-        using namespace luabind;
+        using namespace luaponte;
         module(L, "test")
         [
             def("throw_exception0", &wrap_throw_exception0)

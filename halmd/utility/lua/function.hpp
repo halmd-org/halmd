@@ -21,7 +21,7 @@
 #define HALMD_UTILITY_LUA_FUNCTION_HPP
 
 #include <functional>
-#include <luabind/luabind.hpp>
+#include <luaponte/luaponte.hpp>
 #include <stdexcept>
 
 /**
@@ -33,10 +33,10 @@ namespace detail {
 
 template <typename F, typename R, typename... Args>
 class cpp_function_converter
-  : public luabind::detail::default_converter_generator<F>::type
+  : public luaponte::detail::default_converter_generator<F>::type
 {
 private:
-    typedef typename luabind::detail::default_converter_generator<F>::type _Base;
+    typedef typename luaponte::detail::default_converter_generator<F>::type _Base;
 
 public:
     /**
@@ -53,10 +53,10 @@ public:
      */
     void apply(lua_State* L, std::function<R (Args...)> const& value)
     {
-        if (!luabind::detail::class_registry::get_registry(L)->find_class(typeid(std::function<R (Args...)>))) {
-            luabind::module(L)
+        if (!luaponte::detail::class_registry::get_registry(L)->find_class(typeid(std::function<R (Args...)>))) {
+            luaponte::module(L)
             [
-                luabind::class_<std::function<R (Args...)> >()
+                luaponte::class_<std::function<R (Args...)> >()
                     .def("__call", &std::function<R (Args...)>::operator())
             ];
         }
@@ -88,12 +88,12 @@ public:
     std::function<R (Args...)> apply(lua_State* L, T t, int index)
     {
         if (lua_isfunction(L, index)) {
-            luabind::object function(luabind::from_stack(L, index));
+            luaponte::object function(luaponte::from_stack(L, index));
             return [=](Args... args) -> R {
                 try {
-                    return luabind::call_function<R>(function, args...);
+                    return luaponte::call_function<R>(function, args...);
                 }
-                catch (luabind::error const& e) {
+                catch (luaponte::error const& e) {
                     std::string error(lua_tostring(e.state(), -1));
                     lua_pop(e.state(), 1);
                     throw std::runtime_error(error);
@@ -137,12 +137,12 @@ public:
     std::function<void (Args...)> apply(lua_State* L, T t, int index)
     {
         if (lua_isfunction(L, index)) {
-            luabind::object function(luabind::from_stack(L, index));
+            luaponte::object function(luaponte::from_stack(L, index));
             return [=](Args... args) {
                 try {
-                    luabind::call_function<void>(function, args...);
+                    luaponte::call_function<void>(function, args...);
                 }
-                catch (luabind::error const& e) {
+                catch (luaponte::error const& e) {
                     std::string error(lua_tostring(e.state(), -1));
                     lua_pop(e.state(), 1);
                     throw std::runtime_error(error);
@@ -165,7 +165,7 @@ public:
 } // namespace detail
 } // namespace halmd
 
-namespace luabind {
+namespace luaponte {
 
 template <typename R, typename... Args>
 struct default_converter<std::function<R (Args...)> >
@@ -191,6 +191,6 @@ template <typename R, typename... Args>
 struct default_converter<std::function<R& (Args...)> const&>
   : halmd::detail::cpp_function_converter<std::function<R& (Args...)> const&, R&, Args...> {};
 
-} // namespace luabind
+} // namespace luaponte
 
 #endif /* ! HALMD_UTILITY_LUA_FUNCTION_HPP */

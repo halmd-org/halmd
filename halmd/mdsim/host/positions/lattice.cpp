@@ -185,7 +185,7 @@ wrap_set(boost::shared_ptr<lattice_type> self)
 template <int dimension, typename float_type>
 void lattice<dimension, float_type>::luaopen(lua_State* L)
 {
-    using namespace luabind;
+    using namespace luaponte;
     static std::string class_name = "lattice_" + std::to_string(dimension) + "_";
     module(L, "libhalmd")
     [

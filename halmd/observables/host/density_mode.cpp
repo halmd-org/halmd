@@ -105,7 +105,7 @@ void density_mode<dimension, float_type>::luaopen(lua_State* L)
 {
     typedef std::function<boost::shared_ptr<phase_space_type const> ()> slot_type;
 
-    using namespace luabind;
+    using namespace luaponte;
     module(L, "libhalmd")
     [
         namespace_("observables")

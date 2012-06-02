@@ -106,7 +106,7 @@ wrap_seed(boost::shared_ptr<random_type> self)
 template <typename RandomNumberGenerator>
 void random<RandomNumberGenerator>::luaopen(lua_State* L)
 {
-    using namespace luabind;
+    using namespace luaponte;
     static std::string const class_name = RandomNumberGenerator::name();
     module(L, "libhalmd")
     [

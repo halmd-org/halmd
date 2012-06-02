@@ -76,7 +76,7 @@ struct bind_test_dummy : lua_test_fixture
 {
     bind_test_dummy()
     {
-        using namespace luabind;
+        using namespace luaponte;
         using namespace test_dummy;
         module(L, "test_dummy")
         [

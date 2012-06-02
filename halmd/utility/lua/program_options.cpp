@@ -30,11 +30,11 @@
 #include <boost/program_options.hpp>
 #include <boost/program_options/cmdline.hpp>
 #include <boost/utility/enable_if.hpp>
-#include <luabind/luabind.hpp>
-#include <luabind/adopt_policy.hpp>
-#include <luabind/operator.hpp> // luabind::tostring
-#include <luabind/return_reference_to_policy.hpp>
-#include <luabind/shared_ptr_converter.hpp>
+#include <luaponte/luaponte.hpp>
+#include <luaponte/adopt_policy.hpp>
+#include <luaponte/operator.hpp> // luaponte::tostring
+#include <luaponte/return_reference_to_policy.hpp>
+#include <luaponte/shared_ptr_converter.hpp>
 #include <stdint.h>
 
 #include <halmd/config.hpp>
@@ -239,13 +239,13 @@ implicit_value_textual(po::typed_value<T>* semantic, T const& value, string cons
 }
 
 template <typename T>
-static void notify(luabind::object const& functor, T const& value)
+static void notify(luaponte::object const& functor, T const& value)
 {
-    luabind::object args(luabind::from_stack(functor.interpreter(), -1));
+    luaponte::object args(luaponte::from_stack(functor.interpreter(), -1));
     try {
-        luabind::call_function<void>(functor, args, value);
+        luaponte::call_function<void>(functor, args, value);
     }
-    catch (luabind::error const& e) {
+    catch (luaponte::error const& e) {
         string error(lua_tostring(e.state(), -1));
         lua_pop(e.state(), 1);
         throw runtime_error(error);
@@ -254,19 +254,19 @@ static void notify(luabind::object const& functor, T const& value)
 
 template <typename T>
 static po::typed_value<T>*
-notifier(po::typed_value<T>* semantic, luabind::object const& functor)
+notifier(po::typed_value<T>* semantic, luaponte::object const& functor)
 {
     return semantic->notifier(bind(&notify<T>, functor, _1));
 }
 
 template <typename T>
-struct typed_value_wrapper : po::typed_value<T>, luabind::wrap_base
+struct typed_value_wrapper : po::typed_value<T>, luaponte::wrap_base
 {
     typed_value_wrapper() : po::typed_value<T>(0) {}
 };
 
 template <>
-struct typed_value_wrapper<bool> : po::typed_value<bool>, luabind::wrap_base
+struct typed_value_wrapper<bool> : po::typed_value<bool>, luaponte::wrap_base
 {
     typed_value_wrapper() : po::typed_value<bool>(0)
     {
@@ -275,7 +275,7 @@ struct typed_value_wrapper<bool> : po::typed_value<bool>, luabind::wrap_base
     }
 };
 
-struct untyped_value_wrapper : po::untyped_value, luabind::wrap_base
+struct untyped_value_wrapper : po::untyped_value, luaponte::wrap_base
 {
     untyped_value_wrapper() : po::untyped_value(true) {} // zero tokens
 };
@@ -295,7 +295,7 @@ accum_default_value_textual(accumulating_value<T>* semantic, T const& value, str
 }
 
 template <typename T>
-struct accum_value_wrapper : accumulating_value<T>, luabind::wrap_base
+struct accum_value_wrapper : accumulating_value<T>, luaponte::wrap_base
 {
     accum_value_wrapper() : accumulating_value<T>(0) {}
 };
@@ -345,7 +345,7 @@ struct scoped_push
 {
     lua_State* const L;
 
-    scoped_push(luabind::object const& object) : L(object.interpreter())
+    scoped_push(luaponte::object const& object) : L(object.interpreter())
     {
         object.push(L);
     }
@@ -356,8 +356,8 @@ struct scoped_push
     }
 };
 
-static luabind::object
-variables_map_notify(lua_State* L, po::variables_map& vm, luabind::object const& args)
+static luaponte::object
+variables_map_notify(lua_State* L, po::variables_map& vm, luaponte::object const& args)
 {
     scoped_push p(args);
     po::notify(vm);
@@ -367,7 +367,7 @@ variables_map_notify(lua_State* L, po::variables_map& vm, luabind::object const&
 template <typename T>
 static void typed_value(lua_State* L, char const* name, char const* value, char const* multi_value)
 {
-    using namespace luabind;
+    using namespace luaponte;
     module(L, "libhalmd")
     [
         namespace_("program_options")
@@ -403,7 +403,7 @@ static void typed_value(lua_State* L, char const* name, char const* value, char 
 
 HALMD_LUA_API int luaopen_libhalmd_utility_lua_program_options(lua_State* L)
 {
-    using namespace luabind;
+    using namespace luaponte;
     module(L, "libhalmd")
     [
         namespace_("program_options")

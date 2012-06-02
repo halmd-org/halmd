@@ -21,8 +21,8 @@
 #include <boost/make_shared.hpp>
 #include <boost/shared_ptr.hpp>
 #include <functional>
-#include <luabind/luabind.hpp>
-#include <luabind/out_value_policy.hpp>
+#include <luaponte/luaponte.hpp>
+#include <luaponte/out_value_policy.hpp>
 
 #include <halmd/observables/host/samples/phase_space.hpp>
 #include <halmd/observables/samples/blocking_scheme.hpp>
@@ -146,7 +146,7 @@ wrap_mass(boost::shared_ptr<phase_space_type> self, std::function<void ()>& arra
 template <int dimension, typename float_type>
 void phase_space<dimension, float_type>::luaopen(lua_State* L)
 {
-    using namespace luabind;
+    using namespace luaponte;
     static std::string const class_name = "phase_space_" + std::to_string(dimension) + "_" + demangled_name<float_type>();
     module(L, "libhalmd")
     [

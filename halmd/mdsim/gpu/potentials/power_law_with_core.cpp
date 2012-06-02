@@ -116,7 +116,7 @@ power_law_with_core<float_type>::power_law_with_core(
 template <typename float_type>
 void power_law_with_core<float_type>::luaopen(lua_State* L)
 {
-    using namespace luabind;
+    using namespace luaponte;
     module(L, "libhalmd")
     [
         namespace_("mdsim")

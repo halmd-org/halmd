@@ -140,7 +140,7 @@ wrap_order(boost::shared_ptr<sort_type> sort)
 template <int dimension, typename float_type>
 void hilbert<dimension, float_type>::luaopen(lua_State* L)
 {
-    using namespace luabind;
+    using namespace luaponte;
     static string class_name("hilbert_" + lexical_cast<string>(dimension) + "_");
     module(L, "libhalmd")
     [

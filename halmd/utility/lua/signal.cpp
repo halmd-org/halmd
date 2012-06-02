@@ -17,7 +17,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <luabind/luabind.hpp>
+#include <luaponte/luaponte.hpp>
 
 #include <halmd/config.hpp>
 #include <halmd/utility/signal.hpp>
@@ -26,7 +26,7 @@ namespace halmd {
 
 HALMD_LUA_API int luaopen_libhalmd_utility_lua_signal(lua_State* L)
 {
-    using namespace luabind;
+    using namespace luaponte;
     module(L, "libhalmd")
     [
         class_<connection>("connection")

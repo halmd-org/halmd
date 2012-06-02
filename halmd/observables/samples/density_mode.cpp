@@ -28,7 +28,7 @@ namespace samples {
 template <int dimension>
 void density_mode<dimension>::luaopen(lua_State* L)
 {
-    using namespace luabind;
+    using namespace luaponte;
     module(L)
     [
         class_<density_mode>()

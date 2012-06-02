@@ -25,8 +25,8 @@
 #include <boost/tuple/tuple.hpp> // boost::tie
 #include <cmath> // std::signbit
 #include <limits>
-#include <luabind/luabind.hpp>
-#include <luabind/out_value_policy.hpp>
+#include <luaponte/luaponte.hpp>
+#include <luaponte/out_value_policy.hpp>
 #include <stdexcept>
 
 #include <halmd/io/logger.hpp>
@@ -199,7 +199,7 @@ wrap_read_at_time(boost::shared_ptr<append> self)
 
 void append::luaopen(lua_State* L)
 {
-    using namespace luabind;
+    using namespace luaponte;
     module(L, "libhalmd")
     [
         namespace_("io")

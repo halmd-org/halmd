@@ -195,7 +195,7 @@ std::size_t blocking_scheme<sample_type>::block_size() const
 template <typename sample_type>
 void blocking_scheme<sample_type>::luaopen(lua_State* L)
 {
-    using namespace luabind;
+    using namespace luaponte;
     module(L, "libhalmd")
     [
         namespace_("observables")

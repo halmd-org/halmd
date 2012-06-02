@@ -47,7 +47,7 @@ wrap_seed(boost::shared_ptr<random_type> self)
 
 void random::luaopen(lua_State* L)
 {
-    using namespace luabind;
+    using namespace luaponte;
     module(L, "libhalmd")
     [
         namespace_("random")

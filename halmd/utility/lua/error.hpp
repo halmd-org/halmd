@@ -20,7 +20,7 @@
 #ifndef HALMD_UTILITY_LUA_ERROR_HPP
 #define HALMD_UTILITY_LUA_ERROR_HPP
 
-#include <luabind/luabind.hpp>
+#include <luaponte/luaponte.hpp>
 
 namespace halmd {
 
@@ -35,11 +35,11 @@ public:
      *
      * @param pcall_callback lua_pcall error handler
      */
-    scoped_pcall_callback(luabind::pcall_callback_fun pcall_callback)
+    scoped_pcall_callback(luaponte::pcall_callback_fun pcall_callback)
     {
-        pcall_callback_ = luabind::get_pcall_callback();
+        pcall_callback_ = luaponte::get_pcall_callback();
 
-        luabind::set_pcall_callback(pcall_callback);
+        luaponte::set_pcall_callback(pcall_callback);
     }
 
     /**
@@ -47,12 +47,12 @@ public:
      */
     ~scoped_pcall_callback()
     {
-        luabind::set_pcall_callback(pcall_callback_);
+        luaponte::set_pcall_callback(pcall_callback_);
     }
 
 private:
     //! lua_pcall error handler of parent scope
-    luabind::pcall_callback_fun pcall_callback_;
+    luaponte::pcall_callback_fun pcall_callback_;
 };
 
 } // namespace halmd

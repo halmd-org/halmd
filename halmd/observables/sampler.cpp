@@ -164,7 +164,7 @@ wrap_on_sample(boost::shared_ptr<sampler> self)
 
 void sampler::luaopen(lua_State* L)
 {
-    using namespace luabind;
+    using namespace luaponte;
     module(L, "libhalmd")
     [
         class_<sampler, boost::shared_ptr<sampler> >("sampler")

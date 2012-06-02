@@ -32,7 +32,7 @@ namespace trunc {
 template <typename float_type>
 void local_r4<float_type>::luaopen(lua_State* L)
 {
-    using namespace luabind;
+    using namespace luaponte;
     static std::string class_name("local_r4_" + demangled_name<float_type>());
     module(L, "libhalmd")
     [

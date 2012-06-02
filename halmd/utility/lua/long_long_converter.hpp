@@ -20,11 +20,11 @@
 #ifndef HALMD_UTILITY_LUA_LONG_LONG_CONVERTER_HPP
 #define HALMD_UTILITY_LUA_LONG_LONG_CONVERTER_HPP
 
-#include <luabind/luabind.hpp>
+#include <luaponte/luaponte.hpp>
 
 #include <halmd/config.hpp>
 
-namespace luabind {
+namespace luaponte {
 
 /**
  * Luabind converter for long long integer
@@ -98,6 +98,6 @@ struct default_converter<unsigned long long&&>
   : default_converter<unsigned long long> {};
 #endif
 
-} // namespace luabind
+} // namespace luaponte
 
 #endif /* ! HALMD_UTILITY_LUA_LONG_LONG_CONVERTER_HPP */

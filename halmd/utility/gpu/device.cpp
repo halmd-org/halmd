@@ -175,7 +175,7 @@ static int wrap_gpu(device const&)
 
 void device::luaopen(lua_State* L)
 {
-    using namespace luabind;
+    using namespace luaponte;
     module(L, "libhalmd")
     [
         namespace_("utility")

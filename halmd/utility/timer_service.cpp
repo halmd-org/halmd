@@ -78,7 +78,7 @@ wrap_on_periodic_start(boost::shared_ptr<timer_service> self)
 
 void timer_service::luaopen(lua_State* L)
 {
-    using namespace luabind;
+    using namespace luaponte;
     module(L, "libhalmd")
     [
         namespace_("utility")

@@ -80,7 +80,7 @@ wrap_particle(particle_group<particle_type>& self)
 template <typename particle_type>
 void particle_group<particle_type>::luaopen(lua_State* L)
 {
-    using namespace luabind;
+    using namespace luaponte;
     module(L)
     [
         class_<particle_group>()

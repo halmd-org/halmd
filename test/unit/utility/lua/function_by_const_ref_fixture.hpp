@@ -34,7 +34,7 @@ struct function_by_const_ref_fixture : lua_test_fixture
 
     function_by_const_ref_fixture()
     {
-        using namespace luabind;
+        using namespace luaponte;
         module(L, "test")
         [
             def("slot_by_const_ref0", &wrap_slot_by_const_ref0)

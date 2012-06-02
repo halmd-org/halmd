@@ -227,7 +227,7 @@ wrap_set(boost::shared_ptr<phase_space_type> self)
 template <int dimension, typename float_type>
 void phase_space<dimension, float_type>::luaopen(lua_State* L)
 {
-    using namespace luabind;
+    using namespace luaponte;
     module(L, "libhalmd")
     [
         namespace_("observables")

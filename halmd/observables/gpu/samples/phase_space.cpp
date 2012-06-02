@@ -29,7 +29,7 @@ namespace samples {
 template <int dimension, typename float_type>
 void phase_space<dimension, float_type>::luaopen(lua_State* L)
 {
-    using namespace luabind;
+    using namespace luaponte;
     module(L)
     [
         class_<phase_space>()

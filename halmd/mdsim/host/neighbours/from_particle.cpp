@@ -130,7 +130,7 @@ wrap_update(boost::shared_ptr<neighbour_type> neighbour)
 template <int dimension, typename float_type>
 void from_particle<dimension, float_type>::luaopen(lua_State* L)
 {
-    using namespace luabind;
+    using namespace luaponte;
     static string class_name("from_particle_" + lexical_cast<string>(dimension) + "_");
     module(L, "libhalmd")
     [

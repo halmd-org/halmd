@@ -113,7 +113,7 @@ make_edges()
 template <int dimension>
 void box<dimension>::luaopen(lua_State* L)
 {
-    using namespace luabind;
+    using namespace luaponte;
     static std::string class_name("box_" + std::to_string(dimension));
     module(L, "libhalmd")
     [
