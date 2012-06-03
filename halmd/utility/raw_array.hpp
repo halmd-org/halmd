@@ -61,6 +61,35 @@ public:
     }
 
     /**
+     * Construct empty array.
+     */
+    raw_array() : size_(0), storage_(nullptr) {}
+
+    /**
+     * Move constructor.
+     */
+    raw_array(raw_array&& array) : size_(array.size_), storage_(array.storage_)
+    {
+        array.size_ = 0;
+        array.storage_ = nullptr;
+    }
+
+    /**
+     * Move assignment.
+     */
+    raw_array& operator=(raw_array&& array)
+    {
+        if (&array != this) {
+            deallocate(storage_);
+            size_ = array.size_;
+            storage_ = array.storage_;
+            array.size_ = 0;
+            array.storage_ = nullptr;
+        }
+        return *this;
+    }
+
+    /**
      * Returns iterator pointing to first element of array.
      */
     iterator begin()
@@ -137,9 +166,9 @@ private:
     }
 
     /** number of array elements */
-    size_type const size_;
+    size_type size_;
     /** uninitialised storage */
-    T* const storage_;
+    T* storage_;
 };
 
 } // namespace halmd

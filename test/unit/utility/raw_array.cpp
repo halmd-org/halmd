@@ -186,6 +186,90 @@ static void test_array_subscript(halmd::raw_array<T>& array)
 }
 
 template <typename T>
+static void test_move_constructor(halmd::raw_array<T>& array)
+{
+    typedef halmd::raw_array<T> array_type;
+    typename array_type::size_type const size = array.size();
+    typename array_type::pointer const begin = &*array.begin();
+
+    BOOST_CHECK_EQUAL( array.size(), size );
+    BOOST_CHECK_EQUAL( &*array.begin(), begin );
+    BOOST_CHECK_EQUAL( &*array.end(), begin + size );
+
+    // construct array from rvalue reference of non-empty array
+    array_type array2(std::move(array));
+
+    BOOST_CHECK_EQUAL( array.size(), 0lu );
+    BOOST_CHECK_EQUAL( &*array.begin(), &*array.end() );
+    BOOST_CHECK_EQUAL( array2.size(), size );
+    BOOST_CHECK_EQUAL( &*array2.begin(), begin );
+    BOOST_CHECK_EQUAL( &*array2.end(), begin + size );
+
+    // construct array from rvalue reference of non-empty array
+    array_type array3 = std::move(array2);
+
+    BOOST_CHECK_EQUAL( array2.size(), 0lu );
+    BOOST_CHECK_EQUAL( &*array2.begin(), &*array2.end() );
+    BOOST_CHECK_EQUAL( array3.size(), size );
+    BOOST_CHECK_EQUAL( &*array3.begin(), begin );
+    BOOST_CHECK_EQUAL( &*array3.end(), begin + size );
+
+    // construct array from rvalue reference of empty array
+    array_type array4 = std::move(array2);
+
+    BOOST_CHECK_EQUAL( array2.size(), 0lu );
+    BOOST_CHECK_EQUAL( &*array2.begin(), &*array2.end() );
+    BOOST_CHECK_EQUAL( array4.size(), 0lu );
+    BOOST_CHECK_EQUAL( &*array4.begin(), &*array4.end() );
+}
+
+template <typename T>
+static void test_move_assignment(halmd::raw_array<T>& array)
+{
+    typedef halmd::raw_array<T> array_type;
+    typename array_type::size_type const size = array.size();
+    typename array_type::pointer const begin = &*array.begin();
+
+    BOOST_CHECK_EQUAL( array.size(), size );
+    BOOST_CHECK_EQUAL( &*array.begin(), begin );
+    BOOST_CHECK_EQUAL( &*array.end(), begin + size );
+
+    // construct empty array
+    array_type array2;
+    BOOST_CHECK_EQUAL( array2.size(), 0lu );
+    BOOST_CHECK_EQUAL( &*array2.begin(), &*array2.end() );
+
+    // assign rvalue reference of non-empty array
+    array2 = std::move(array);
+
+    BOOST_CHECK_EQUAL( array.size(), 0lu );
+    BOOST_CHECK_EQUAL( &*array.begin(), &*array.end() );
+    BOOST_CHECK_EQUAL( array2.size(), size );
+    BOOST_CHECK_EQUAL( &*array2.begin(), begin );
+    BOOST_CHECK_EQUAL( &*array2.end(), begin + size );
+
+    // construct empty array
+    array_type array3;
+    BOOST_CHECK_EQUAL( array3.size(), 0lu );
+    BOOST_CHECK_EQUAL( &*array3.begin(), &*array3.end() );
+
+    // assign rvalue reference of empty array
+    array3 = std::move(array);
+
+    BOOST_CHECK_EQUAL( array.size(), 0lu );
+    BOOST_CHECK_EQUAL( &*array.begin(), &*array.end() );
+    BOOST_CHECK_EQUAL( array3.size(), 0lu );
+    BOOST_CHECK_EQUAL( &*array3.begin(), &*array3.end() );
+
+    // assign rvalue reference of self
+    array2 = std::move(array2);
+
+    BOOST_CHECK_EQUAL( array2.size(), size );
+    BOOST_CHECK_EQUAL( &*array2.begin(), begin );
+    BOOST_CHECK_EQUAL( &*array2.end(), begin + size );
+}
+
+template <typename T>
 static void test_suite(std::size_t size)
 {
     typedef halmd::raw_array<T> array_type;
@@ -212,6 +296,20 @@ static void test_suite(std::size_t size)
         test_array_subscript(array);
     };
     framework::master_test_suite().add(BOOST_TEST_CASE( array_subscript ));
+
+    auto move_constructor = [=]() {
+        BOOST_TEST_MESSAGE( " " << halmd::demangled_name<array_type>() << " of size " << size );
+        array_type array(size);
+        test_move_constructor(array);
+    };
+    framework::master_test_suite().add(BOOST_TEST_CASE( move_constructor ));
+
+    auto move_assignment = [=]() {
+        BOOST_TEST_MESSAGE( " " << halmd::demangled_name<array_type>() << " of size " << size );
+        array_type array(size);
+        test_move_assignment(array);
+    };
+    framework::master_test_suite().add(BOOST_TEST_CASE( move_assignment ));
 }
 
 /**
