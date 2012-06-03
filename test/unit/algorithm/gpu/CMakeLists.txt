@@ -30,15 +30,3 @@ target_link_libraries(test_unit_algorithm_scan
 add_test(unit/algorithm/gpu/scan
   test_unit_algorithm_scan --log_level=test_suite
 )
-
-add_executable(test_unit_algorithm_radix_sort
-  radix_sort.cpp
-)
-target_link_libraries(test_unit_algorithm_radix_sort
-  halmd_algorithm_gpu
-  halmd_random_gpu
-  ${HALMD_TEST_LIBRARIES}
-)
-add_test(unit/algorithm/gpu/radix_sort
-  test_unit_algorithm_radix_sort --log_level=test_suite
-)
