@@ -1,5 +1,5 @@
 /*
- * Copyright © 2008-2010  Peter Colberg
+ * Copyright © 2008-2010, 2012 Peter Colberg
  *
  * This file is part of HALMD.
  *
@@ -20,7 +20,16 @@
 #ifndef HALMD_ALGORITHM_HOST_PERMUTE_HPP
 #define HALMD_ALGORITHM_HOST_PERMUTE_HPP
 
+#include <halmd/config.hpp>
+
+#ifdef HALMD_WITH_GPU
+# include <cuda_wrapper/iterator_category.hpp>
+#endif
+
+#include <cassert>
 #include <iterator>
+#include <limits>
+#include <type_traits>
 #include <vector>
 
 namespace halmd {
@@ -35,23 +44,53 @@ namespace halmd {
  *   Information - CSLI Lecture Notes, no. 102), 2000.
  */
 template <typename input_iterator, typename index_iterator>
-void permute(input_iterator first, input_iterator last, index_iterator index)
+typename std::enable_if<
+    std::is_convertible<
+        typename std::iterator_traits<input_iterator>::iterator_category
+      , std::random_access_iterator_tag
+    >::value
+    && std::is_convertible<
+        typename std::iterator_traits<index_iterator>::iterator_category
+      , std::random_access_iterator_tag
+    >::value
+#ifdef HALMD_WITH_GPU
+    && !std::is_convertible<
+        typename std::iterator_traits<input_iterator>::iterator_category
+      , cuda::device_random_access_iterator_tag
+    >::value
+    && !std::is_convertible<
+        typename std::iterator_traits<index_iterator>::iterator_category
+      , cuda::device_random_access_iterator_tag
+    >::value
+#endif
+    && std::numeric_limits<
+        typename std::iterator_traits<index_iterator>::value_type
+    >::is_integer
+  , index_iterator>::type
+permute(
+    input_iterator const& first
+  , input_iterator const& last
+  , index_iterator const& index
+)
 {
     typedef typename std::iterator_traits<input_iterator>::difference_type difference_type;
     typedef typename std::iterator_traits<input_iterator>::value_type value_type;
 
-    std::vector<bool> follower(last - first, false);
-    for (difference_type i = 0; i < last - first; ++i) {
+    difference_type const count = last - first;
+    std::vector<bool> follower(count, false);
+    for (difference_type i = 0; i < count; ++i) {
         if (!follower[i]) {
             value_type temp = *(first + i);
             difference_type j = i;
             for (difference_type k = *(index + j); k != i; j = k, k = *(index + j)) {
+                assert(k < count);
                 *(first + j) = *(first + k);
                 follower[k] = true;
             }
             *(first + j) = temp;
         }
     }
+    return index + count;
 }
 
 } // namespace halmd

@@ -9,6 +9,16 @@ add_test(unit/algorithm/multi_range
   test_unit_algorithm_multi_range --log_level=test_suite
 )
 
+add_executable(test_unit_algorithm_permute
+  permute.cpp
+)
+target_link_libraries(test_unit_algorithm_permute
+  ${HALMD_TEST_LIBRARIES}
+)
+add_test(unit/algorithm/permute
+  test_unit_algorithm_permute --log_level=test_suite
+)
+
 add_executable(test_unit_algorithm_radix_sort
   radix_sort.cpp
 )
