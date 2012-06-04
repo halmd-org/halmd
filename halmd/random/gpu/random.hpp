@@ -50,7 +50,6 @@ public:
         unsigned int seed = boost::random_device()()
       , unsigned int blocks = defaults::blocks()
       , unsigned int threads = defaults::threads()
-      , unsigned int shuffle_threads = defaults::shuffle_threads()
     );
 
     /**
@@ -92,7 +91,6 @@ public:
 private:
     /** pseudo-random number generator */
     RandomNumberGenerator rng_;
-    unsigned int shuffle_threads_;
 };
 
 template <typename RandomNumberGenerator>
@@ -100,7 +98,6 @@ struct random<RandomNumberGenerator>::defaults
 {
     static unsigned int blocks();
     static unsigned int threads();
-    static unsigned int shuffle_threads();
 };
 
 /**
@@ -111,14 +108,11 @@ template <typename Sequence>
 void random<RandomNumberGenerator>::shuffle(Sequence& g_val)
 {
     typedef typename Sequence::value_type value_type;
-    typedef algorithm::gpu::radix_sort<value_type> sort_type;
 
     cuda::vector<unsigned int> g_sort_index;
     g_sort_index.resize(g_val.size());
-    g_sort_index.reserve(shuffle_threads_);
-    sort_type sort(g_val.size(), shuffle_threads_);
     get(g_sort_index);
-    sort(g_sort_index, g_val);
+    radix_sort(g_sort_index.begin(), g_sort_index.end(), g_val.begin());
     cuda::thread::synchronize();
 }
 

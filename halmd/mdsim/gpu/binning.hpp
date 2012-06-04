@@ -27,7 +27,6 @@
 #include <memory>
 
 #include <halmd/io/logger.hpp>
-#include <halmd/algorithm/gpu/radix_sort.hpp>
 #include <halmd/algorithm/multi_range.hpp>
 #include <halmd/mdsim/box.hpp>
 #include <halmd/mdsim/gpu/binning_kernel.hpp>
@@ -157,8 +156,6 @@ private:
     /** cell lists in global device memory */
     cuda::vector<unsigned int> g_cell_;
 
-    /** GPU radix sort */
-    algorithm::gpu::radix_sort<unsigned int> sort_;
     /** cell indices for particles */
     cuda::vector<unsigned int> g_cell_index_;
     /** particle permutation */

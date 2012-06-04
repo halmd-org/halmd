@@ -109,7 +109,7 @@ static void test_radix_sort_host(int count, int repeat)
 /**
  * Test halmd::radix_sort on GPU.
  */
-static void test_radix_sort_gpu(int count, int repeat, int threads)
+static void test_radix_sort_gpu(int count, int repeat)
 {
     std::vector<unsigned int> input = make_uniform_array(count);
     cuda::vector<unsigned int> g_input(count);
@@ -123,13 +123,10 @@ static void test_radix_sort_gpu(int count, int repeat, int threads)
 
     BOOST_TEST_MESSAGE( "  " << count << " elements" );
     BOOST_TEST_MESSAGE( "  " << repeat << " iterations" );
-    BOOST_TEST_MESSAGE( "  " << threads << " threads per block" );
 
     halmd::accumulator<double> elapsed;
-    halmd::algorithm::gpu::radix_sort<unsigned int> radix_sort(count, threads);
     for (int i = 0; i < repeat; ++i) {
         cuda::vector<unsigned int> g_output(count);
-        cuda::vector<unsigned int> g_value(count);
         BOOST_CHECK( cuda::copy(
             g_input.begin()
           , g_input.end()
@@ -137,8 +134,7 @@ static void test_radix_sort_gpu(int count, int repeat, int threads)
         );
         {
             halmd::scoped_timer<halmd::timer> t(elapsed);
-            radix_sort(g_output, g_value);
-            cuda::thread::synchronize();
+            halmd::radix_sort(g_output.begin(), g_output.end());
         }
         cuda::host::vector<unsigned int> h_output(count);
         BOOST_CHECK( cuda::copy(
@@ -159,7 +155,7 @@ static void test_radix_sort_gpu(int count, int repeat, int threads)
 /**
  * Test generation of permutation using halmd::radix_sort on GPU.
  */
-static void test_permutation_gpu(int count, int repeat, int threads)
+static void test_permutation_gpu(int count, int repeat)
 {
     std::vector<unsigned int> input_key = make_uniform_array(count);
     cuda::vector<unsigned int> g_input_key(count);
@@ -182,10 +178,8 @@ static void test_permutation_gpu(int count, int repeat, int threads)
 
     BOOST_TEST_MESSAGE( "  " << count << " elements" );
     BOOST_TEST_MESSAGE( "  " << repeat << " iterations" );
-    BOOST_TEST_MESSAGE( "  " << threads << " threads per block" );
 
     halmd::accumulator<double> elapsed;
-    halmd::algorithm::gpu::radix_sort<unsigned int> radix_sort(count, threads);
     for (int i = 0; i < repeat; ++i) {
         cuda::vector<unsigned int> g_output_key(count);
         BOOST_CHECK( cuda::copy(
@@ -203,8 +197,11 @@ static void test_permutation_gpu(int count, int repeat, int threads)
 
         {
             halmd::scoped_timer<halmd::timer> t(elapsed);
-            radix_sort(g_output_key, g_output_value);
-            cuda::thread::synchronize();
+            BOOST_CHECK( halmd::radix_sort(
+                g_output_key.begin()
+              , g_output_key.end()
+              , g_output_value.begin()) == g_output_value.end()
+            );
         }
 
         cuda::host::vector<unsigned int> h_output_key(count);
@@ -262,17 +259,19 @@ HALMD_TEST_INIT( radix_sort )
             ts->add(BOOST_TEST_CASE( radix_sort_host ));
         }
 #ifdef HALMD_WITH_GPU
-        for (int threads : {128, 256}) {
+        {
             int const repeat = std::max(100 / count, 5);
             auto radix_sort_gpu = [=]() {
                 set_cuda_device device;
-                test_radix_sort_gpu(count, repeat, threads);
+                test_radix_sort_gpu(count, repeat);
             };
             ts->add(BOOST_TEST_CASE( radix_sort_gpu ));
-
+        }
+        {
+            int const repeat = std::max(100 / count, 5);
             auto permutation_gpu = [=]() {
                 set_cuda_device device;
-                test_permutation_gpu(count, repeat, threads);
+                test_permutation_gpu(count, repeat);
             };
             ts->add(BOOST_TEST_CASE( permutation_gpu ));
         }

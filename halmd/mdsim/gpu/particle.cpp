@@ -232,10 +232,9 @@ void particle<dimension, float_type>::rearrange(cuda::vector<unsigned int> const
     g_v_buf.swap(g_velocity_);
     cuda::copy(g_tag, g_tag_);
 
-    algorithm::gpu::radix_sort<unsigned int> sort(g_tag_.size(), dim.threads_per_block());
     cuda::configure(dim.grid, dim.block);
     get_particle_kernel<dimension>().gen_index(g_reverse_tag_);
-    sort(g_tag, g_reverse_tag_);
+    radix_sort(g_tag.begin(), g_tag.end(), g_reverse_tag_.begin());
 }
 
 template <typename particle_type>

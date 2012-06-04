@@ -19,6 +19,7 @@
 
 #include <exception>
 
+#include <halmd/algorithm/gpu/radix_sort.hpp>
 #include <halmd/mdsim/gpu/binning.hpp>
 #include <halmd/utility/lua/lua.hpp>
 #include <halmd/utility/signal.hpp>
@@ -55,7 +56,6 @@ binning<dimension, float_type>::binning(
   // allocate parameters
   , r_skin_(skin)
   , nu_cell_(cell_occupancy)
-  , sort_(particle_->nparticle(), particle_->dim.threads_per_block())
 {
     float_type r_cut_max = *max_element(r_cut.data().begin(), r_cut.data().end());
     // find an optimal(?) cell size
@@ -152,7 +152,7 @@ void binning<dimension, float_type>::update()
     // generate permutation
     cuda::configure(particle_->dim.grid, particle_->dim.block);
     get_binning_kernel<dimension>().gen_index(g_cell_permutation_);
-    sort_(g_cell_index_, g_cell_permutation_);
+    radix_sort(g_cell_index_.begin(), g_cell_index_.end(), g_cell_permutation_.begin());
 
     // compute global cell offsets in sorted particle list
     cuda::memset(g_cell_offset_, 0xFF);

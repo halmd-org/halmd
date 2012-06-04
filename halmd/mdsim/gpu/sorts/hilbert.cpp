@@ -109,8 +109,7 @@ void hilbert<dimension, float_type>::permutation(cuda::vector<unsigned int>& g_m
 {
     cuda::configure(particle_->dim.grid, particle_->dim.block);
     wrapper_type::kernel.gen_index(g_index);
-    radix_sort<unsigned int> sort(particle_->nparticle(), particle_->dim.threads_per_block());
-    sort(g_map, g_index);
+    radix_sort(g_map.begin(), g_map.end(), g_index.begin());
 }
 
 template <int dimension, typename float_type>

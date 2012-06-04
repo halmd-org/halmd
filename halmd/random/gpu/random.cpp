@@ -33,11 +33,9 @@ random<RandomNumberGenerator>::random(
     unsigned int seed
   , unsigned int blocks
   , unsigned int threads
-  , unsigned int shuffle_threads
 )
   // allocate random number generator state
   : rng_(blocks, threads)
-  , shuffle_threads_(shuffle_threads)
 {
     random::seed(seed);
 }
@@ -88,10 +86,6 @@ unsigned int random<RandomNumberGenerator>::defaults::blocks() {
 template <typename RandomNumberGenerator>
 unsigned int random<RandomNumberGenerator>::defaults::threads() {
     return 32 << DEVICE_SCALE;
-}
-template <typename RandomNumberGenerator>
-unsigned int random<RandomNumberGenerator>::defaults::shuffle_threads() {
-    return 128;
 }
 
 template <typename random_type>

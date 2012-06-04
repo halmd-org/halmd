@@ -40,23 +40,38 @@ enum {
 /**
  * CUDA C++ wrapper
  */
-template <typename T>
 struct radix_sort_wrapper
 {
-    cuda::function<void (uint const*, uint*, uint, uint)> histogram_keys;
-    cuda::function<void (uint const*, uint*, T const*, T*, uint const*, uint, uint)> permute;
+    cuda::function<void (
+        unsigned int const*
+      , unsigned int*
+      , unsigned int
+      , unsigned int
+    )> histogram_key;
+
+    cuda::function<void (
+        unsigned int const*
+      , unsigned int*
+      , unsigned int const*
+      , unsigned int
+      , unsigned int
+    )> permute_key;
+
+    cuda::function<void (
+        unsigned int const*
+      , unsigned int*
+      , unsigned int const*
+      , unsigned int
+      , unsigned int
+      , unsigned int const*
+      , unsigned int*
+    )> permute_key_value;
+
     static radix_sort_wrapper const kernel;
 };
 
-// syntactic sugar
-template <typename T>
-radix_sort_wrapper<T> const& get_radix_sort_kernel()
-{
-    return radix_sort_wrapper<T>::kernel;
-}
-
-} // namespace algorithm
 } // namespace gpu
+} // namespace algorithm
 } // namespace halmd
 
 #endif /* ! HALMD_ALGORITHM_GPU_RADIX_SORT_KERNEL_HPP */

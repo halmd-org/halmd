@@ -28,11 +28,15 @@ namespace radix_sort_kernel {
 /**
  * atomically add value to 32-bit word in shared memory
  */
-template <uint count>
-__device__ void atomic_add(uint const& i, uint const& value, uint& r)
+template <unsigned int count>
+__device__ void atomic_add(
+    unsigned int const& i
+  , unsigned int const& value
+  , unsigned int& r
+)
 {
-    extern __shared__ uint s_bucket[];
-    const uint tid = threadIdx.x;
+    extern __shared__ unsigned int s_bucket[];
+    unsigned int const tid = threadIdx.x;
 
     // increment shared memory address within single thread of each half-warp
     if ((tid % HALF_WARP_SIZE) == (HALF_WARP_SIZE - count)) {
@@ -45,14 +49,22 @@ __device__ void atomic_add(uint const& i, uint const& value, uint& r)
     atomic_add<count - 1>(i, value, r);
 }
 
-template <> __device__ void atomic_add<0>(uint const&, uint const&, uint&) {}
+template <>
+__device__ void atomic_add<0>(
+    unsigned int const&
+  , unsigned int const&
+  , unsigned int&
+) {}
 
 /**
  * returns 32-bit word in shared memory and atomically adds value
  */
-__device__ uint atomic_add(uint const& i, uint const& value)
+__device__ unsigned int atomic_add(
+    unsigned int const& i
+  , unsigned int const& value
+)
 {
-    uint r;
+    unsigned int r;
     atomic_add<HALF_WARP_SIZE>(i, value, r);
     return r;
 }
@@ -60,7 +72,12 @@ __device__ uint atomic_add(uint const& i, uint const& value)
 /**
  * compute partial radix counts for given radix shift
  */
-__global__ void histogram_keys(uint const* g_in, uint* g_bucket, const uint count, const uint shift)
+__global__ void histogram_key(
+    unsigned int const* g_input_key
+  , unsigned int* g_bucket
+  , unsigned int const count
+  , unsigned int const shift
+)
 {
     //
     // Radix Sort for Vector Multiprocessors,
@@ -70,42 +87,42 @@ __global__ void histogram_keys(uint const* g_in, uint* g_bucket, const uint coun
     // http://www.cs.cmu.edu/~scandal/papers/cray-sort-supercomputing91.html
     //
 
-    extern __shared__ uint s_bucket[];
+    extern __shared__ unsigned int s_bucket[];
 
-    const uint tid = threadIdx.x;
-    const uint pid = threadIdx.x / HALF_WARP_SIZE;
-    const uint wid = threadIdx.x % HALF_WARP_SIZE;
-    const uint threads = blockDim.x;
-    const uint bid = blockIdx.x;
-    const uint blocks = gridDim.x;
+    unsigned int const tid = threadIdx.x;
+    unsigned int const pid = threadIdx.x / HALF_WARP_SIZE;
+    unsigned int const wid = threadIdx.x % HALF_WARP_SIZE;
+    unsigned int const threads = blockDim.x;
+    unsigned int const bid = blockIdx.x;
+    unsigned int const blocks = gridDim.x;
 
     // set bucket counts to zero
-    for (uint i = 0; i < BUCKETS_PER_THREAD; ++i) {
+    for (unsigned int i = 0; i < BUCKETS_PER_THREAD; ++i) {
         s_bucket[tid + i * threads] = 0;
     }
     __syncthreads();
 
     // number of partitions per block
-    const uint parts = threads / HALF_WARP_SIZE;
+    unsigned int const parts = threads / HALF_WARP_SIZE;
     // number of elements per partition, aligned to total thread count
-    const uint elems = ((count + blocks * threads - 1) / (blocks * threads)) * HALF_WARP_SIZE;
+    unsigned int const elems = ((count + blocks * threads - 1) / (blocks * threads)) * HALF_WARP_SIZE;
 
-    for (uint i = 0; i < elems; i += HALF_WARP_SIZE) {
+    for (unsigned int i = 0; i < elems; i += HALF_WARP_SIZE) {
         // global memory offset of sort key
-        const uint j = i + wid + (pid + parts * bid) * elems;
+        unsigned int const j = i + wid + (pid + parts * bid) * elems;
         // read sort key and transform according to radix shift
-        const uint radix = (j < count) ? (g_in[j] >> shift) & (BUCKET_SIZE - 1) : 0;
+        unsigned int const radix = (j < count) ? (g_input_key[j] >> shift) & (BUCKET_SIZE - 1) : 0;
 
         // atomically increment bucket count
         atomic_add(pid + parts * radix, (j < count) ? 1 : 0);
     }
 
     // write radix counts to global memory
-    for (uint i = 0; i < BUCKETS_PER_THREAD; ++i) {
+    for (unsigned int i = 0; i < BUCKETS_PER_THREAD; ++i) {
         // partition
-        const uint j = tid % parts;
+        unsigned int const j = tid % parts;
         // bucket
-        const uint k = tid / parts + i * threads / parts;
+        unsigned int const k = tid / parts + i * threads / parts;
         // write count to partition bucket in column major order
         g_bucket[j + (bid + k * blocks) * parts] = s_bucket[tid + i * threads];
     }
@@ -114,53 +131,101 @@ __global__ void histogram_keys(uint const* g_in, uint* g_bucket, const uint coun
 /**
  * permute array given radix counts prefix sums
  */
-template <typename T>
-__global__ void permute(uint const* g_in, uint* g_out, T const* g_data_in, T* g_data_out, uint const* g_bucket, const uint count, const uint shift)
+template <bool value>
+__device__ void permute(
+    unsigned int const* g_input_key
+  , unsigned int* g_output_key
+  , unsigned int const* g_bucket
+  , unsigned int const count
+  , unsigned int const shift
+  , unsigned int const* g_input_value = 0
+  , unsigned int* g_output_value = 0
+)
 {
-    extern __shared__ uint s_bucket[];
+    extern __shared__ unsigned int s_bucket[];
 
-    const uint tid = threadIdx.x;
-    const uint pid = threadIdx.x / HALF_WARP_SIZE;
-    const uint wid = threadIdx.x % HALF_WARP_SIZE;
-    const uint threads = blockDim.x;
-    const uint bid = blockIdx.x;
-    const uint blocks = gridDim.x;
+    unsigned int const tid = threadIdx.x;
+    unsigned int const pid = threadIdx.x / HALF_WARP_SIZE;
+    unsigned int const wid = threadIdx.x % HALF_WARP_SIZE;
+    unsigned int const threads = blockDim.x;
+    unsigned int const bid = blockIdx.x;
+    unsigned int const blocks = gridDim.x;
 
     // number of partitions per block
-    const uint parts = threads / HALF_WARP_SIZE;
+    unsigned int const parts = threads / HALF_WARP_SIZE;
     // number of elements per partition, aligned to total thread count
-    const uint elems = ((count + blocks * threads - 1) / (blocks * threads)) * HALF_WARP_SIZE;
+    unsigned int const elems = ((count + blocks * threads - 1) / (blocks * threads)) * HALF_WARP_SIZE;
 
     // read radix counts from global memory
-    for (uint i = 0; i < BUCKETS_PER_THREAD; ++i) {
+    for (unsigned int i = 0; i < BUCKETS_PER_THREAD; ++i) {
         // partition
-        const uint j = tid % parts;
+        unsigned int const j = tid % parts;
         // bucket
-        const uint k = tid / parts + i * threads / parts;
+        unsigned int const k = tid / parts + i * threads / parts;
         // read count from partition bucket in column major order
         s_bucket[tid + i * threads] = g_bucket[j + (bid + k * blocks) * parts];
     }
     __syncthreads();
 
-    for (uint i = 0; i < elems; i += HALF_WARP_SIZE) {
+    for (unsigned int i = 0; i < elems; i += HALF_WARP_SIZE) {
         // global memory offset of sort key
-        const uint j = i + wid + (pid + parts * bid) * elems;
+        unsigned int const j = i + wid + (pid + parts * bid) * elems;
         // read sort key from global memory
-        const uint key = (j < count) ? g_in[j] : 0;
+        unsigned int const key = (j < count) ? g_input_key[j] : 0;
         // transform sort key according to radix shift
-        const uint radix = (key >> shift) & (BUCKET_SIZE - 1);
+        unsigned int const radix = (key >> shift) & (BUCKET_SIZE - 1);
 
         // atomically read and increment global radix offset
-        const uint l = atomic_add(pid + parts * radix, (j < count) ? 1 : 0);
+        unsigned int const l = atomic_add(pid + parts * radix, (j < count) ? 1 : 0);
 
         // scatter write permuted array element to global memory
         if (j < count) {
             // write sort key
-            g_out[l] = key;
+            g_output_key[l] = key;
             // permute data array element
-            g_data_out[l] = g_data_in[j];
+            if (value) {
+                g_output_value[l] = g_input_value[j];
+            }
         }
     }
+}
+
+__global__ void permute_key(
+    unsigned int const* g_input_key
+  , unsigned int* g_output_key
+  , unsigned int const* g_bucket
+  , unsigned int const count
+  , unsigned int const shift
+)
+{
+    permute<false>(
+        g_input_key
+      , g_output_key
+      , g_bucket
+      , count
+      , shift
+    );
+}
+
+__global__ void permute_key_value(
+    unsigned int const* g_input_key
+  , unsigned int* g_output_key
+  , unsigned int const* g_bucket
+  , unsigned int const count
+  , unsigned int const shift
+  , unsigned int const* g_input_value
+  , unsigned int* g_output_value
+)
+{
+    permute<true>(
+        g_input_key
+      , g_output_key
+      , g_bucket
+      , count
+      , shift
+      , g_input_value
+      , g_output_value
+    );
 }
 
 } // namespace radix_sort_kernel
@@ -168,20 +233,14 @@ __global__ void permute(uint const* g_in, uint* g_out, T const* g_data_in, T* g_
 /**
  * device function wrappers
  */
-template <typename T>
-radix_sort_wrapper<T> const radix_sort_wrapper<T>::kernel = {
-    radix_sort_kernel::histogram_keys
-  , radix_sort_kernel::permute
+radix_sort_wrapper const radix_sort_wrapper::kernel = {
+    radix_sort_kernel::histogram_key
+  , radix_sort_kernel::permute_key
+  , radix_sort_kernel::permute_key_value
 };
 
-template class radix_sort_wrapper<int>;
-template class radix_sort_wrapper<unsigned int>;
-template class radix_sort_wrapper<float4>;
-template class radix_sort_wrapper<float2>;
+template class scan_wrapper<unsigned int>;
 
-} // namespace algorithm
 } // namespace gpu
-
-template class algorithm::gpu::scan_wrapper<unsigned int>;
-
+} // namespace algorithm
 } // namespace halmd
