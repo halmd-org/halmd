@@ -20,12 +20,6 @@
 #ifndef HALMD_ALGORITHM_HOST_RADIX_SORT_HPP
 #define HALMD_ALGORITHM_HOST_RADIX_SORT_HPP
 
-#include <halmd/config.hpp>
-
-#ifdef HALMD_WITH_GPU
-# include <cuda_wrapper/iterator_category.hpp>
-#endif
-
 #include <algorithm>
 #include <array>
 #include <iterator>
@@ -41,15 +35,13 @@ namespace halmd {
  */
 template <typename Iterator>
 typename std::enable_if<
-    std::numeric_limits<
+    std::is_convertible<
+        typename std::iterator_traits<Iterator>::iterator_category
+      , std::forward_iterator_tag
+    >::value
+    && std::numeric_limits<
         typename std::iterator_traits<Iterator>::value_type
     >::is_integer
-#ifdef HALMD_WITH_GPU
-    && !std::is_convertible<
-        typename std::iterator_traits<Iterator>::iterator_category
-      , cuda::device_random_access_iterator_tag
-    >::value
-#endif
   , void>::type radix_sort(Iterator const& first, Iterator const& last)
 {
     typedef typename std::iterator_traits<Iterator>::value_type value_type;

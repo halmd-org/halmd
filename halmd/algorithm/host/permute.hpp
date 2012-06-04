@@ -20,12 +20,6 @@
 #ifndef HALMD_ALGORITHM_HOST_PERMUTE_HPP
 #define HALMD_ALGORITHM_HOST_PERMUTE_HPP
 
-#include <halmd/config.hpp>
-
-#ifdef HALMD_WITH_GPU
-# include <cuda_wrapper/iterator_category.hpp>
-#endif
-
 #include <cassert>
 #include <iterator>
 #include <limits>
@@ -53,16 +47,6 @@ typename std::enable_if<
         typename std::iterator_traits<index_iterator>::iterator_category
       , std::random_access_iterator_tag
     >::value
-#ifdef HALMD_WITH_GPU
-    && !std::is_convertible<
-        typename std::iterator_traits<input_iterator>::iterator_category
-      , cuda::device_random_access_iterator_tag
-    >::value
-    && !std::is_convertible<
-        typename std::iterator_traits<index_iterator>::iterator_category
-      , cuda::device_random_access_iterator_tag
-    >::value
-#endif
     && std::numeric_limits<
         typename std::iterator_traits<index_iterator>::value_type
     >::is_integer
