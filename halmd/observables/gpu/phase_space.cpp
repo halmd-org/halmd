@@ -204,7 +204,7 @@ phase_space<host::samples::phase_space<dimension, float_type> >::acquire()
     cuda::configure((particle_group_->size() + threads_ - 1) / threads_, threads_);
     phase_space_wrapper<dimension>::kernel.copy_particle_group(
         &*particle_group_->begin()
-      , h_group_
+      , &*h_group_.gbegin()
       , particle_group_->size()
     );
     cuda::thread::synchronize();
@@ -248,7 +248,7 @@ void phase_space<host::samples::phase_space<dimension, float_type> >::set(std::s
     cuda::configure((particle_group_->size() + 128 - 1) / 128, 128);
     phase_space_wrapper<dimension>::kernel.copy_particle_group(
         &*particle_group_->begin()
-      , h_group_
+      , &*h_group_.gbegin()
       , particle_group_->size()
     );
     cuda::thread::synchronize();
