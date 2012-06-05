@@ -33,6 +33,14 @@ struct ctest_full_output
 };
 
 /**
+ * To avoid static initialization order fiasco, add the CTEST_FULL_OUTPUT
+ * printer as a global fixture instead of an __attribute__((constructor))
+ * function. The global fixture is instantiated before the test run.
+ */
+BOOST_GLOBAL_FIXTURE( ctest_full_output )
+
+#ifndef HALMD_TEST_NO_LOGGING
+/**
  * Enable logging to console.
  *
  * If built without debugging (NDEBUG), log with severity info.
@@ -44,12 +52,7 @@ struct ctest_logging
     ctest_logging();
 };
 
-/**
- * To avoid static initialization order fiasco, add the CTEST_FULL_OUTPUT
- * printer as a global fixture instead of an __attribute__((constructor))
- * function. The global fixture is instantiated before the test run.
- */
-BOOST_GLOBAL_FIXTURE( ctest_full_output )
 BOOST_GLOBAL_FIXTURE( ctest_logging )
+#endif
 
 #endif /* ! TEST_TOOLS_CTEST_HPP */
