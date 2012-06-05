@@ -4,6 +4,7 @@ add_executable(test_unit_mdsim_velocities_boltzmann
 if(HALMD_WITH_GPU)
   target_link_libraries(test_unit_mdsim_velocities_boltzmann
     halmd_mdsim_gpu_forces
+    halmd_mdsim_gpu_particle_groups
     halmd_mdsim_gpu_velocities
     halmd_mdsim_gpu
     halmd_observables_gpu
@@ -13,6 +14,7 @@ if(HALMD_WITH_GPU)
 endif()
 target_link_libraries(test_unit_mdsim_velocities_boltzmann
   halmd_mdsim_host_forces
+  halmd_mdsim_host_particle_groups
   halmd_mdsim_host_velocities
   halmd_mdsim_host
   halmd_mdsim

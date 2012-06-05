@@ -27,7 +27,7 @@
 #include <halmd/mdsim/box.hpp>
 #include <halmd/mdsim/clock.hpp>
 #include <halmd/mdsim/host/particle.hpp>
-#include <halmd/mdsim/particle_group.hpp>
+#include <halmd/mdsim/host/particle_group.hpp>
 #include <halmd/observables/thermodynamics.hpp>
 #include <halmd/utility/data_cache.hpp>
 #include <halmd/utility/profiler.hpp>
@@ -48,13 +48,14 @@ public:
     typedef mdsim::box<dimension> box_type;
     typedef mdsim::clock clock_type;
     typedef mdsim::host::particle<dimension, float_type> particle_type;
-    typedef mdsim::particle_group<particle_type> particle_group_type;
+    typedef mdsim::host::particle_group particle_group_type;
     typedef logger logger_type;
 
     static void luaopen(lua_State* L);
 
     thermodynamics(
-        std::shared_ptr<particle_group_type const> group
+        std::shared_ptr<particle_type const> particle
+      , std::shared_ptr<particle_group_type> group
       , std::shared_ptr<box_type const> box
       , std::shared_ptr<clock_type const> clock
       , std::shared_ptr<logger_type> logger = std::make_shared<logger_type>()
@@ -114,10 +115,12 @@ private:
         accumulator_type hypervirial;
     };
 
+    /** system state */
+    std::shared_ptr<particle_type const> particle_;
+    /** particle group */
+    std::shared_ptr<particle_group_type> group_;
     /** simulation domain */
     std::shared_ptr<box_type const> box_;
-    /** particle group */
-    std::shared_ptr<particle_group_type const> group_;
     /** module logger */
     std::shared_ptr<logger_type> logger_;
 
@@ -132,8 +135,8 @@ private:
     runtime runtime_;
 };
 
-} // namespace observables
 } // namespace host
+} // namespace observables
 } // namespace halmd
 
 #endif /* ! HALMD_OBSERVABLES_THERMODYNAMICS_HPP */

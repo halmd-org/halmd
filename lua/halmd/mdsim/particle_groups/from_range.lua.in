@@ -18,7 +18,8 @@
 -- along with this program.  If not, see <http://www.gnu.org/licenses/>.
 --
 
-local module = require("halmd.utility.module")
+local log       = require("halmd.io.log")
+local module    = require("halmd.utility.module")
 
 ---
 -- From Range
@@ -73,9 +74,15 @@ local M = module(function(args)
     if type(label) ~= "string" then
         error("invalid argument 'label'", 2)
     end
+    local logger = log.logger({prefix = ("group (%s)"):format(label)})
 
     -- construct particle group from tag range
-    local self = from_range(particle, range[1], range[2])
+    local self = from_range(particle, range, logger)
+
+    -- attach particle instance as read-only property
+    self.particle = property(function(self)
+        return particle
+    end)
 
     -- attach label as read-only property
     self.label = property(function(self)

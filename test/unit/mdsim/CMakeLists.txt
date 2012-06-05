@@ -1,5 +1,6 @@
 add_subdirectory(forces)
 add_subdirectory(integrators)
+add_subdirectory(particle_groups)
 add_subdirectory(positions)
 add_subdirectory(potentials)
 add_subdirectory(velocities)

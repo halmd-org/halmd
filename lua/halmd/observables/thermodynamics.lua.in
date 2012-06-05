@@ -107,11 +107,12 @@ local M = module(function(args)
     if not box then
         error("missing parameter 'box'", 2)
     end
+    local particle = assert(group.particle)
     local label = assert(group.label)
     local logger = log.logger({label = ("thermodynamics (%s)"):format(label)})
 
     -- construct instance
-    local self = thermodynamics(group, box, clock, logger)
+    local self = thermodynamics(particle, group, box, clock, logger)
 
     self.writer = function(file, args)
         local writer = file:writer{location = {"observables"}, mode = "append"}

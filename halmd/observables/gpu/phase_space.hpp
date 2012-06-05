@@ -26,7 +26,7 @@
 #include <halmd/mdsim/box.hpp>
 #include <halmd/mdsim/clock.hpp>
 #include <halmd/mdsim/gpu/particle.hpp>
-#include <halmd/mdsim/particle_group.hpp>
+#include <halmd/mdsim/gpu/particle_group.hpp>
 #include <halmd/observables/gpu/samples/phase_space.hpp>
 #include <halmd/observables/host/samples/phase_space.hpp>
 #include <halmd/utility/profiler.hpp>
@@ -47,7 +47,7 @@ class phase_space<gpu::samples::phase_space<dimension, float_type> >
 public:
     typedef gpu::samples::phase_space<dimension, float_type> sample_type;
     typedef mdsim::gpu::particle<dimension, float_type> particle_type;
-    typedef mdsim::particle_group<particle_type> particle_group_type;
+    typedef mdsim::gpu::particle_group particle_group_type;
     typedef mdsim::box<dimension> box_type;
     typedef mdsim::clock clock_type;
     typedef logger logger_type;
@@ -57,7 +57,7 @@ public:
      */
     phase_space(
         std::shared_ptr<particle_type> particle
-      , std::shared_ptr<particle_group_type const> particle_group
+      , std::shared_ptr<particle_group_type> particle_group
       , std::shared_ptr<box_type const> box
       , std::shared_ptr<clock_type const> clock
       , std::shared_ptr<logger_type> logger = std::make_shared<logger_type>()
@@ -79,7 +79,7 @@ private:
     /** particle instance to particle group */
     std::shared_ptr<particle_type> particle_;
     /** particle group */
-    std::shared_ptr<particle_group_type const> particle_group_;
+    std::shared_ptr<particle_group_type> particle_group_;
     /** simulation box */
     std::shared_ptr<box_type const> box_;
     /** simulation clock */
@@ -112,7 +112,7 @@ class phase_space<host::samples::phase_space<dimension, float_type> >
 public:
     typedef host::samples::phase_space<dimension, float_type> sample_type;
     typedef mdsim::gpu::particle<dimension, float_type> particle_type;
-    typedef mdsim::particle_group<particle_type> particle_group_type;
+    typedef mdsim::gpu::particle_group particle_group_type;
     typedef mdsim::box<dimension> box_type;
     typedef fixed_vector<float_type, dimension> vector_type;
     typedef logger logger_type;
@@ -123,7 +123,7 @@ public:
      */
     phase_space(
         std::shared_ptr<particle_type> particle
-      , std::shared_ptr<particle_group_type const> particle_group
+      , std::shared_ptr<particle_group_type> particle_group
       , std::shared_ptr<box_type const> box
       , std::shared_ptr<clock_type const> clock
       , std::shared_ptr<logger_type> logger = std::make_shared<logger_type>()
@@ -148,7 +148,7 @@ private:
     /** particle instance to particle group */
     std::shared_ptr<particle_type> particle_;
     /** particle group */
-    std::shared_ptr<particle_group_type const> particle_group_;
+    std::shared_ptr<particle_group_type> particle_group_;
     /** simulation box */
     std::shared_ptr<box_type const> box_;
     /** simulation clock */
@@ -164,8 +164,6 @@ private:
     cuda::host::vector<typename particle_type::gpu_vector_type> h_image_;
     /** buffered velocities in page-locked host memory */
     cuda::host::vector<float4> h_v_;
-    /** buffered reverse tags in page-locked host memory */
-    cuda::host::vector<unsigned int> h_group_;
     /** GPU threads per block */
     unsigned int threads_;
 

@@ -32,13 +32,14 @@
 #include <halmd/mdsim/box.hpp>
 #include <halmd/mdsim/clock.hpp>
 #include <halmd/mdsim/host/particle.hpp>
-#include <halmd/mdsim/particle_groups/from_range.hpp>
+#include <halmd/mdsim/host/particle_groups/all.hpp>
 #include <halmd/numeric/accumulator.hpp>
 #include <halmd/observables/host/phase_space.hpp>
 #include <halmd/observables/host/samples/phase_space.hpp>
 #ifdef HALMD_WITH_GPU
 # include <cuda_wrapper/cuda_wrapper.hpp>
 # include <halmd/mdsim/gpu/particle.hpp>
+# include <halmd/mdsim/gpu/particle_groups/all.hpp>
 # include <halmd/observables/gpu/phase_space.hpp>
 # include <halmd/observables/gpu/samples/phase_space.hpp>
 # include <halmd/utility/gpu/device.hpp>
@@ -102,7 +103,7 @@ struct phase_space
 {
     typedef typename modules_type::box_type box_type;
     typedef typename modules_type::particle_type particle_type;
-    typedef mdsim::particle_groups::from_range<particle_type> particle_group_type;
+    typedef typename modules_type::particle_group_type particle_group_type;
     typedef typename modules_type::input_phase_space_type input_phase_space_type;
     typedef typename input_phase_space_type::sample_type input_sample_type;
     typedef typename modules_type::output_phase_space_type output_phase_space_type;
@@ -153,7 +154,7 @@ void phase_space<modules_type>::test()
     }
 
     // copy input sample to particle
-    std::shared_ptr<particle_group_type> particle_group = std::make_shared<particle_group_type>(particle, 0, particle->nparticle());
+    std::shared_ptr<particle_group_type> particle_group = std::make_shared<particle_group_type>(particle);
     input_phase_space_type(particle, particle_group, box, clock).set(input_sample);
 
     // randomly permute particles in memory
@@ -225,7 +226,7 @@ struct host_modules
 {
     typedef mdsim::box<dimension> box_type;
     typedef mdsim::host::particle<dimension, float_type> particle_type;
-    typedef mdsim::particle_groups::from_range<particle_type> particle_group_type;
+    typedef mdsim::host::particle_groups::all<particle_type> particle_group_type;
     typedef observables::host::phase_space<dimension, float_type> input_phase_space_type;
     typedef input_phase_space_type output_phase_space_type;
     static bool const gpu = false;
@@ -244,6 +245,7 @@ struct gpu_host_modules
 {
     typedef mdsim::box<dimension> box_type;
     typedef mdsim::gpu::particle<dimension, float_type> particle_type;
+    typedef mdsim::gpu::particle_groups::all<particle_type> particle_group_type;
     typedef observables::gpu::phase_space<observables::host::samples::phase_space<dimension, float_type> > input_phase_space_type;
     typedef input_phase_space_type output_phase_space_type;
     static bool const gpu = true;
@@ -254,6 +256,7 @@ struct gpu_gpu_modules
 {
     typedef mdsim::box<dimension> box_type;
     typedef mdsim::gpu::particle<dimension, float_type> particle_type;
+    typedef mdsim::gpu::particle_groups::all<particle_type> particle_group_type;
     typedef observables::gpu::phase_space<observables::host::samples::phase_space<dimension, float_type> > input_phase_space_type;
     typedef observables::gpu::phase_space<observables::gpu::samples::phase_space<dimension, float_type> > output_phase_space_type;
     static bool const gpu = true;

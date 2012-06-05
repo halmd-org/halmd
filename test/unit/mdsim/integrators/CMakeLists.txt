@@ -6,6 +6,7 @@ add_executable(test_unit_mdsim_integrators_euler
 if(HALMD_WITH_GPU)
   target_link_libraries(test_unit_mdsim_integrators_euler
     halmd_mdsim_gpu_integrators
+    halmd_mdsim_gpu_particle_groups
     halmd_mdsim_gpu_positions
     halmd_mdsim_gpu_velocities
     halmd_mdsim_gpu
@@ -16,6 +17,7 @@ if(HALMD_WITH_GPU)
 endif()
 target_link_libraries(test_unit_mdsim_integrators_euler
   halmd_mdsim_host_integrators
+  halmd_mdsim_host_particle_groups
   halmd_mdsim_host_positions
   halmd_mdsim_host_velocities
   halmd_mdsim_host
@@ -59,6 +61,7 @@ if(HALMD_WITH_GPU)
   target_link_libraries(test_unit_mdsim_integrators_verlet
     halmd_mdsim_gpu_forces
     halmd_mdsim_gpu_integrators
+    halmd_mdsim_gpu_particle_groups
     halmd_mdsim_gpu_positions
     halmd_mdsim_gpu_velocities
     halmd_mdsim_gpu
@@ -69,6 +72,7 @@ if(HALMD_WITH_GPU)
 endif()
 target_link_libraries(test_unit_mdsim_integrators_verlet
   halmd_mdsim_host_forces
+  halmd_mdsim_host_particle_groups
   halmd_mdsim_host_integrators
   halmd_mdsim_host_positions
   halmd_mdsim_host_velocities
@@ -102,6 +106,7 @@ if(HALMD_WITH_GPU)
   target_link_libraries(test_unit_mdsim_integrators_verlet_nvt_andersen
     halmd_mdsim_gpu_forces
     halmd_mdsim_gpu_integrators
+    halmd_mdsim_gpu_particle_groups
     halmd_mdsim_gpu_positions
     halmd_mdsim_gpu_velocities
     halmd_mdsim_gpu
@@ -113,6 +118,7 @@ endif()
 target_link_libraries(test_unit_mdsim_integrators_verlet_nvt_andersen
   halmd_mdsim_host_forces
   halmd_mdsim_host_integrators
+  halmd_mdsim_host_particle_groups
   halmd_mdsim_host_positions
   halmd_mdsim_host_velocities
   halmd_mdsim_host
@@ -144,6 +150,7 @@ add_executable(test_unit_mdsim_integrators_verlet_nvt_hoover
 if(HALMD_WITH_GPU)
   target_link_libraries(test_unit_mdsim_integrators_verlet_nvt_hoover
     halmd_mdsim_gpu_forces
+    halmd_mdsim_gpu_particle_groups
     halmd_mdsim_gpu_integrators
     halmd_mdsim_gpu_neighbours
     halmd_mdsim_gpu_positions
@@ -159,6 +166,7 @@ target_link_libraries(test_unit_mdsim_integrators_verlet_nvt_hoover
   halmd_mdsim_host_forces
   halmd_mdsim_host_integrators
   halmd_mdsim_host_neighbours
+  halmd_mdsim_host_particle_groups
   halmd_mdsim_host_positions
   halmd_mdsim_host_potentials
   halmd_mdsim_host_velocities

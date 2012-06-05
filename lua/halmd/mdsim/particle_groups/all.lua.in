@@ -37,7 +37,7 @@ local module = require("halmd.utility.module")
 --
 
 -- grab C++ wrappers
-local from_range = assert(libhalmd.mdsim.particle_groups.from_range)
+local all = assert(libhalmd.mdsim.particle_groups.all)
 
 ---
 -- Construct particle group from all particles.
@@ -63,10 +63,14 @@ local M = module(function(args)
     if type(label) ~= "string" then
         error("invalid argument 'label'", 2)
     end
-    local range = {1, assert(particle.nparticle)}
 
-    -- construct particle group from tag range
-    local self = from_range(particle, range[1], range[2])
+    -- construct particle group
+    local self = all(particle)
+
+    -- attach particle instance as read-only property
+    self.particle = property(function(self)
+        return particle
+    end)
 
     -- attach label as read-only property
     self.label = property(function(self)

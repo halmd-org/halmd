@@ -35,10 +35,10 @@
 #include <halmd/mdsim/host/maximum_squared_displacement.hpp>
 #include <halmd/mdsim/host/neighbours/from_binning.hpp>
 #include <halmd/mdsim/host/particle.hpp>
+#include <halmd/mdsim/host/particle_groups/all.hpp>
 #include <halmd/mdsim/host/positions/lattice.hpp>
 #include <halmd/mdsim/host/potentials/lennard_jones.hpp>
 #include <halmd/mdsim/host/velocities/boltzmann.hpp>
-#include <halmd/mdsim/particle_groups/from_range.hpp>
 #include <halmd/numeric/accumulator.hpp>
 #include <halmd/observables/host/thermodynamics.hpp>
 #include <halmd/random/host/random.hpp>
@@ -50,6 +50,7 @@
 # include <halmd/mdsim/gpu/maximum_squared_displacement.hpp>
 # include <halmd/mdsim/gpu/neighbours/from_binning.hpp>
 # include <halmd/mdsim/gpu/particle.hpp>
+# include <halmd/mdsim/gpu/particle_groups/all.hpp>
 # include <halmd/mdsim/gpu/positions/lattice.hpp>
 # include <halmd/mdsim/gpu/potentials/lennard_jones.hpp>
 # include <halmd/mdsim/gpu/velocities/boltzmann.hpp>
@@ -118,7 +119,7 @@ struct lennard_jones_fluid
     typedef typename modules_type::nve_integrator_type nve_integrator_type;
     typedef typename modules_type::nvt_integrator_type nvt_integrator_type;
     typedef typename modules_type::particle_type particle_type;
-    typedef halmd::mdsim::particle_groups::from_range<particle_type> particle_group_type;
+    typedef typename modules_type::particle_group_type particle_group_type;
     typedef typename modules_type::position_type position_type;
     typedef typename modules_type::random_type random_type;
     typedef typename modules_type::thermodynamics_type thermodynamics_type;
@@ -349,8 +350,8 @@ lennard_jones_fluid<modules_type>::lennard_jones_fluid()
     velocity = std::make_shared<velocity_type>(particle, random, temp);
     force = std::make_shared<force_type>(potential, particle, particle, box, neighbour);
     clock = std::make_shared<clock_type>();
-    std::shared_ptr<particle_group_type> group = std::make_shared<particle_group_type>(particle, 0, particle->nparticle());
-    thermodynamics = std::make_shared<thermodynamics_type>(group, box, clock);
+    std::shared_ptr<particle_group_type> group = std::make_shared<particle_group_type>(particle);
+    thermodynamics = std::make_shared<thermodynamics_type>(particle, group, box, clock);
     msd = std::make_shared<msd_type>(particle, box);
 
     // create core and connect module slots to core signals
@@ -423,6 +424,7 @@ struct host_modules
     typedef mdsim::host::integrators::verlet<dimension, float_type> nve_integrator_type;
     typedef mdsim::host::integrators::verlet_nvt_andersen<dimension, float_type> nvt_integrator_type;
     typedef mdsim::host::particle<dimension, float_type> particle_type;
+    typedef mdsim::host::particle_groups::all<particle_type> particle_group_type;
     typedef mdsim::host::positions::lattice<dimension, float_type> position_type;
     typedef halmd::random::host::random random_type;
     typedef mdsim::host::velocities::boltzmann<dimension, float_type> velocity_type;
@@ -450,6 +452,7 @@ struct gpu_modules
     typedef mdsim::gpu::integrators::verlet<dimension, float_type> nve_integrator_type;
     typedef mdsim::gpu::integrators::verlet_nvt_andersen<dimension, float_type, halmd::random::gpu::rand48> nvt_integrator_type;
     typedef mdsim::gpu::particle<dimension, float_type> particle_type;
+    typedef mdsim::gpu::particle_groups::all<particle_type> particle_group_type;
     typedef mdsim::gpu::positions::lattice<dimension, float_type> position_type;
     typedef halmd::random::gpu::random<halmd::random::gpu::rand48> random_type;
     typedef observables::gpu::thermodynamics<dimension, float_type> thermodynamics_type;

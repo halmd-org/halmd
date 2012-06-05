@@ -26,14 +26,16 @@ namespace host {
 
 template <int dimension, typename float_type>
 thermodynamics<dimension, float_type>::thermodynamics(
-    std::shared_ptr<particle_group_type const> group
+    std::shared_ptr<particle_type const> particle
+  , std::shared_ptr<particle_group_type> group
   , std::shared_ptr<box_type const> box
   , std::shared_ptr<clock_type const> clock
   , std::shared_ptr<logger_type> logger
 )
   // dependency injection
-  : box_(box)
+  : particle_(particle)
   , group_(group)
+  , box_(box)
   , logger_(logger)
   // initialise members
   , en_kin_(clock)
@@ -47,7 +49,8 @@ thermodynamics<dimension, float_type>::thermodynamics(
 template <int dimension, typename float_type>
 unsigned int thermodynamics<dimension, float_type>::nparticle() const
 {
-    return group_->size();
+    cache_proxy<typename particle_group_type::size_type const> size = group_->size();
+    return *size;
 }
 
 template <int dimension, typename float_type>
@@ -60,20 +63,21 @@ template <int dimension, typename float_type>
 double thermodynamics<dimension, float_type>::en_kin()
 {
     if (!en_kin_.valid()) {
+        cache_proxy<typename particle_group_type::array_type const> group = group_->unordered();
+
         LOG_TRACE("acquire kinetic energy");
 
         scoped_timer_type timer(runtime_.en_kin);
 
-        particle_type const& particle = group_->particle();
-        typename particle_type::velocity_array_type const& velocity = particle.velocity();
-        typename particle_type::mass_array_type const& mass = particle.mass();
+        typename particle_type::velocity_array_type const& velocity = particle_->velocity();
+        typename particle_type::mass_array_type const& mass = particle_->mass();
 
         double mv2 = 0;
-        for (std::size_t i : *group_) {
+        for (std::size_t i : *group) {
             // assuming unit mass for all particle types
             mv2 += mass[i] * inner_prod(velocity[i], velocity[i]);
         }
-        en_kin_ = 0.5 * mv2 / group_->size();
+        en_kin_ = 0.5 * mv2 / group->size();
     }
     return en_kin_;
 }
@@ -83,17 +87,18 @@ typename thermodynamics<dimension, float_type>::vector_type const&
 thermodynamics<dimension, float_type>::v_cm()
 {
     if (!v_cm_.valid()) {
+        cache_proxy<typename particle_group_type::array_type const> group = group_->unordered();
+
         LOG_TRACE("acquire centre-of-mass velocity");
 
         scoped_timer_type timer(runtime_.v_cm);
 
-        particle_type const& particle = group_->particle();
-        typename particle_type::velocity_array_type const& velocity = particle.velocity();
-        typename particle_type::mass_array_type const& mass = particle.mass();
+        typename particle_type::velocity_array_type const& velocity = particle_->velocity();
+        typename particle_type::mass_array_type const& mass = particle_->mass();
 
         vector_type mv = 0;
         double m = 0;
-        for (std::size_t i : *group_) {
+        for (std::size_t i : *group) {
             mv += mass[i] * velocity[i];
             m += mass[i];
         }
@@ -106,18 +111,19 @@ template <int dimension, typename float_type>
 double thermodynamics<dimension, float_type>::en_pot()
 {
     if (!en_pot_.valid()) {
+        cache_proxy<typename particle_group_type::array_type const> group = group_->unordered();
+
         LOG_TRACE("acquire potential energy");
 
         scoped_timer_type timer(runtime_.en_pot);
 
-        particle_type const& particle = group_->particle();
-        typename particle_type::en_pot_array_type const& en_pot = particle.en_pot();
+        typename particle_type::en_pot_array_type const& en_pot = particle_->en_pot();
 
         double sum = 0;
-        for (std::size_t i : *group_) {
+        for (std::size_t i : *group) {
             sum += en_pot[i];
         }
-        en_pot_ = sum / group_->size();
+        en_pot_ = sum / group->size();
     }
     return en_pot_;
 }
@@ -126,18 +132,19 @@ template <int dimension, typename float_type>
 double thermodynamics<dimension, float_type>::virial()
 {
     if (!virial_.valid()) {
+        cache_proxy<typename particle_group_type::array_type const> group = group_->unordered();
+
         LOG_TRACE("acquire virial");
 
         scoped_timer_type timer(runtime_.virial);
 
-        particle_type const& particle = group_->particle();
-        typename particle_type::stress_pot_array_type const& stress_pot = particle.stress_pot();
+        typename particle_type::stress_pot_array_type const& stress_pot = particle_->stress_pot();
 
         double sum = 0;
-        for (std::size_t i : *group_) {
+        for (std::size_t i : *group) {
             sum += stress_pot[i][0];
         }
-        virial_ = sum / group_->size();
+        virial_ = sum / group->size();
     }
     return virial_;
 }
@@ -146,18 +153,19 @@ template <int dimension, typename float_type>
 double thermodynamics<dimension, float_type>::hypervirial()
 {
     if (!hypervirial_.valid()) {
+        cache_proxy<typename particle_group_type::array_type const> group = group_->unordered();
+
         LOG_TRACE("acquire hypervirial");
 
         scoped_timer_type timer(runtime_.hypervirial);
 
-        particle_type const& particle = group_->particle();
-        typename particle_type::hypervirial_array_type const& hypervirial = particle.hypervirial();
+        typename particle_type::hypervirial_array_type const& hypervirial = particle_->hypervirial();
 
         double sum = 0;
-        for (std::size_t i : *group_) {
+        for (std::size_t i : *group) {
             sum += hypervirial[i];
         }
-        hypervirial_ = sum / group_->size();
+        hypervirial_ = sum / group->size();
     }
     return hypervirial_;
 }
@@ -193,7 +201,8 @@ void thermodynamics<dimension, float_type>::luaopen(lua_State* L)
                 .def_readonly("runtime", &thermodynamics::runtime_)
 
           , def("thermodynamics", &std::make_shared<thermodynamics
-              , std::shared_ptr<particle_group_type const>
+              , std::shared_ptr<particle_type const>
+              , std::shared_ptr<particle_group_type>
               , std::shared_ptr<box_type const>
               , std::shared_ptr<clock_type const>
               , std::shared_ptr<logger_type>
@@ -223,6 +232,6 @@ template class thermodynamics<3, float>;
 template class thermodynamics<2, float>;
 #endif
 
-} // namespace observables
 } // namespace host
+} // namespace observables
 } // namespace halmd

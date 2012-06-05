@@ -735,8 +735,8 @@ set_hypervirial(particle_type& particle, iterator_type const& first)
     return input;
 }
 
-} // namespace mdsim
 } // namespace gpu
+} // namespace mdsim
 } // namespace halmd
 
 #endif /* ! HALMD_MDSIM_GPU_PARTICLE_HPP */

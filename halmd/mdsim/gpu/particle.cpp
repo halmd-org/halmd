@@ -35,7 +35,6 @@
 #include <halmd/io/logger.hpp>
 #include <halmd/mdsim/gpu/particle.hpp>
 #include <halmd/mdsim/gpu/particle_kernel.hpp>
-#include <halmd/mdsim/particle_groups/from_range.hpp>
 #include <halmd/utility/gpu/device.hpp>
 #include <halmd/utility/lua/lua.hpp>
 #include <halmd/utility/signal.hpp>
@@ -642,10 +641,6 @@ HALMD_LUA_API int luaopen_libhalmd_mdsim_gpu_particle(lua_State* L)
 {
     particle<3, float>::luaopen(L);
     particle<2, float>::luaopen(L);
-    particle_group<particle<3, float> >::luaopen(L);
-    particle_group<particle<2, float> >::luaopen(L);
-    particle_groups::from_range<particle<3, float> >::luaopen(L);
-    particle_groups::from_range<particle<2, float> >::luaopen(L);
     return 0;
 }
 
@@ -654,10 +649,5 @@ template class particle<3, float>;
 template class particle<2, float>;
 
 } // namespace gpu
-
-// explicit instantiation
-template class particle_groups::from_range<gpu::particle<3, float> >;
-template class particle_groups::from_range<gpu::particle<2, float> >;
-
 } // namespace mdsim
 } // namespace halmd

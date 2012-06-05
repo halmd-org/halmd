@@ -667,8 +667,8 @@ set_hypervirial(particle_type& particle, iterator_type const& first)
     return input;
 }
 
-} // namespace mdsim
 } // namespace host
+} // namespace mdsim
 } // namespace halmd
 
 #endif /* ! HALMD_MDSIM_HOST_PARTICLE_HPP */

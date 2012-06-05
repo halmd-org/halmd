@@ -34,7 +34,7 @@ namespace host {
 template <int dimension, typename float_type>
 phase_space<dimension, float_type>::phase_space(
     std::shared_ptr<particle_type> particle
-  , std::shared_ptr<particle_group_type const> particle_group
+  , std::shared_ptr<particle_group_type> particle_group
   , std::shared_ptr<box_type const> box
   , std::shared_ptr<clock_type const> clock
   , std::shared_ptr<logger_type> logger
@@ -57,6 +57,8 @@ phase_space<dimension, float_type>::acquire()
         return sample_;
     }
 
+    cache_proxy<typename particle_group_type::array_type const> group = particle_group_->ordered();
+
     scoped_timer_type timer(runtime_.acquire);
 
     LOG_TRACE("acquire sample");
@@ -65,7 +67,7 @@ phase_space<dimension, float_type>::acquire()
     // to hold a previous copy of the sample
     {
         scoped_timer_type timer(runtime_.reset);
-        sample_ = std::make_shared<sample_type>(particle_group_->size(), clock_->step());
+        sample_ = std::make_shared<sample_type>(group->size(), clock_->step());
     }
 
     typename particle_type::position_array_type& particle_position = particle_->position();
@@ -81,7 +83,7 @@ phase_space<dimension, float_type>::acquire()
 
     // copy particle data using index map
     std::size_t tag = 0;
-    for (std::size_t i : *particle_group_) {
+    for (std::size_t i : *group) {
         assert(i < particle_->nparticle());
 
         // periodically extended particle position
@@ -101,6 +103,8 @@ phase_space<dimension, float_type>::acquire()
 template <int dimension, typename float_type>
 void phase_space<dimension, float_type>::set(std::shared_ptr<sample_type const> sample)
 {
+    cache_proxy<typename particle_group_type::array_type const> group = particle_group_->ordered();
+
     scoped_timer_type timer(runtime_.set);
 
     typename particle_type::position_array_type& particle_position = particle_->position();
@@ -116,7 +120,7 @@ void phase_space<dimension, float_type>::set(std::shared_ptr<sample_type const> 
     typename sample_type::mass_array_type const& sample_mass = sample->mass();
 
     std::size_t tag = 0;
-    for (std::size_t i : *particle_group_) {
+    for (std::size_t i : *group) {
         assert(i < particle_->nparticle());
         vector_type& r = particle_position[i];
         r = sample_position[tag];
@@ -253,7 +257,7 @@ void phase_space<dimension, float_type>::luaopen(lua_State* L)
 
               , def("phase_space", &std::make_shared<phase_space
                    , std::shared_ptr<particle_type>
-                   , std::shared_ptr<particle_group_type const>
+                   , std::shared_ptr<particle_group_type>
                    , std::shared_ptr<box_type const>
                    , std::shared_ptr<clock_type const>
                    , std::shared_ptr<logger_type>

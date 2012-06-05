@@ -37,7 +37,7 @@ namespace gpu {
 template <int dimension, typename float_type>
 phase_space<gpu::samples::phase_space<dimension, float_type> >::phase_space(
     std::shared_ptr<particle_type> particle
-  , std::shared_ptr<particle_group_type const> particle_group
+  , std::shared_ptr<particle_group_type> particle_group
   , std::shared_ptr<box_type const> box
   , std::shared_ptr<clock_type const> clock
   , std::shared_ptr<logger_type> logger
@@ -61,6 +61,8 @@ phase_space<gpu::samples::phase_space<dimension, float_type> >::acquire()
         return sample_;
     }
 
+    cache_proxy<typename particle_group_type::array_type const> group = particle_group_->ordered();
+
     scoped_timer_type timer(runtime_.acquire);
 
     LOG_TRACE("acquire GPU sample");
@@ -69,7 +71,7 @@ phase_space<gpu::samples::phase_space<dimension, float_type> >::acquire()
     // to hold a previous copy of the sample
     {
         scoped_timer_type timer(runtime_.reset);
-        sample_ = std::make_shared<sample_type>(particle_group_->size(), clock_->step());
+        sample_ = std::make_shared<sample_type>(group->size(), clock_->step());
     }
 
     phase_space_wrapper<dimension>::kernel.r.bind(particle_->position());
@@ -78,11 +80,11 @@ phase_space<gpu::samples::phase_space<dimension, float_type> >::acquire()
 
     cuda::configure(particle_->dim.grid, particle_->dim.block);
     phase_space_wrapper<dimension>::kernel.sample(
-        &*particle_group_->begin()
+        &*group->begin()
       , sample_->position()
       , sample_->velocity()
       , static_cast<vector_type>(box_->length())
-      , particle_group_->size()
+      , group->size()
     );
 
     return sample_;
@@ -126,7 +128,7 @@ void phase_space<gpu::samples::phase_space<dimension, float_type> >::luaopen(lua
 
               , def("phase_space", &std::make_shared<phase_space
                    , std::shared_ptr<particle_type>
-                   , std::shared_ptr<particle_group_type const>
+                   , std::shared_ptr<particle_group_type>
                    , std::shared_ptr<box_type const>
                    , std::shared_ptr<clock_type const>
                    , std::shared_ptr<logger_type>
@@ -139,7 +141,7 @@ void phase_space<gpu::samples::phase_space<dimension, float_type> >::luaopen(lua
 template <int dimension, typename float_type>
 phase_space<host::samples::phase_space<dimension, float_type> >::phase_space(
     std::shared_ptr<particle_type> particle
-  , std::shared_ptr<particle_group_type const> particle_group
+  , std::shared_ptr<particle_group_type> particle_group
   , std::shared_ptr<box_type const> box
   , std::shared_ptr<clock_type const> clock
   , std::shared_ptr<logger_type> logger
@@ -154,7 +156,6 @@ phase_space<host::samples::phase_space<dimension, float_type> >::phase_space(
   , h_r_(particle_->nparticle())
   , h_image_(particle_->nparticle())
   , h_v_(particle_->nparticle())
-  , h_group_(particle_group_->size())
   , threads_(particle_->dim.threads_per_block()) {}
 
 /**
@@ -168,6 +169,8 @@ phase_space<host::samples::phase_space<dimension, float_type> >::acquire()
         LOG_TRACE("sample is up to date");
         return sample_;
     }
+
+    cache_proxy<typename particle_group_type::array_type const> group = particle_group_->ordered();
 
     scoped_timer_type timer(runtime_.acquire);
 
@@ -187,13 +190,13 @@ phase_space<host::samples::phase_space<dimension, float_type> >::acquire()
     // to hold a previous copy of the sample
     {
         scoped_timer_type timer(runtime_.reset);
-        sample_ = std::make_shared<sample_type>(particle_group_->size(), clock_->step());
+        sample_ = std::make_shared<sample_type>(group->size(), clock_->step());
     }
 
-    assert(particle_group_->size() == sample_->position().size());
-    assert(particle_group_->size() == sample_->velocity().size());
-    assert(particle_group_->size() == sample_->species().size());
-    assert(particle_group_->size() == sample_->mass().size());
+    assert(group->size() == sample_->position().size());
+    assert(group->size() == sample_->velocity().size());
+    assert(group->size() == sample_->species().size());
+    assert(group->size() == sample_->mass().size());
 
     typename sample_type::position_array_type& position = sample_->position();
     typename sample_type::velocity_array_type& velocity = sample_->velocity();
@@ -201,16 +204,11 @@ phase_space<host::samples::phase_space<dimension, float_type> >::acquire()
     typename sample_type::mass_array_type& mass = sample_->mass();
 
     // copy particle data using reverse tags as on the GPU
-    cuda::configure((particle_group_->size() + threads_ - 1) / threads_, threads_);
-    phase_space_wrapper<dimension>::kernel.copy_particle_group(
-        &*particle_group_->begin()
-      , &*h_group_.gbegin()
-      , particle_group_->size()
-    );
-    cuda::thread::synchronize();
+    cuda::host::vector<unsigned int> h_group(group->size());
+    cuda::copy(group->begin(), group->end(), h_group.begin());
 
     std::size_t tag = 0;
-    for (std::size_t i : h_group_) {
+    for (std::size_t i : h_group) {
         assert(i < h_r_.size());
 
         // periodically extended particle position
@@ -231,6 +229,8 @@ phase_space<host::samples::phase_space<dimension, float_type> >::acquire()
 template <int dimension, typename float_type>
 void phase_space<host::samples::phase_space<dimension, float_type> >::set(std::shared_ptr<sample_type const> sample)
 {
+    cache_proxy<typename particle_group_type::array_type const> group = particle_group_->ordered();
+
     scoped_timer_type timer(runtime_.set);
 
     // assign particle coordinates and types
@@ -240,21 +240,16 @@ void phase_space<host::samples::phase_space<dimension, float_type> >::set(std::s
     typename sample_type::species_array_type const& sample_species = sample->species();
     typename sample_type::mass_array_type const& sample_mass = sample->mass();
 
-    assert(sample_position.size() >= particle_group_->size());
-    assert(sample_velocity.size() >= particle_group_->size());
-    assert(sample_species.size() >= particle_group_->size());
+    assert(sample_position.size() >= group->size());
+    assert(sample_velocity.size() >= group->size());
+    assert(sample_species.size() >= group->size());
 
     // copy particle data using reverse tags as on the GPU
-    cuda::configure((particle_group_->size() + 128 - 1) / 128, 128);
-    phase_space_wrapper<dimension>::kernel.copy_particle_group(
-        &*particle_group_->begin()
-      , &*h_group_.gbegin()
-      , particle_group_->size()
-    );
-    cuda::thread::synchronize();
+    cuda::host::vector<unsigned int> h_group(group->size());
+    cuda::copy(group->begin(), group->end(), h_group.begin());
 
     std::size_t tag = 0;
-    for (std::size_t i : h_group_) {
+    for (std::size_t i : h_group) {
         assert(i < h_r_.size());
         unsigned int species = sample_species[tag];
         if (species >= nspecies) {
@@ -284,11 +279,11 @@ void phase_space<host::samples::phase_space<dimension, float_type> >::set(std::s
         phase_space_wrapper<dimension>::kernel.r.bind(particle_->position());
         cuda::configure(particle_->dim.grid, particle_->dim.block);
         phase_space_wrapper<dimension>::kernel.reduce_periodic(
-            &*particle_group_->begin()
+            &*group->begin()
           , particle_->position()
           , particle_->image()
           , static_cast<vector_type>(box_->length())
-          , particle_group_->size()
+          , group->size()
         );
     }
     catch (cuda::error const&)
@@ -392,7 +387,7 @@ void phase_space<host::samples::phase_space<dimension, float_type> >::luaopen(lu
             [
                 def("phase_space", &std::make_shared<phase_space
                    , std::shared_ptr<particle_type>
-                   , std::shared_ptr<particle_group_type const>
+                   , std::shared_ptr<particle_group_type>
                    , std::shared_ptr<box_type const>
                    , std::shared_ptr<clock_type const>
                    , std::shared_ptr<logger_type>

@@ -33,9 +33,9 @@
 #include <halmd/mdsim/clock.hpp>
 #include <halmd/mdsim/host/integrators/euler.hpp>
 #include <halmd/mdsim/host/particle.hpp>
+#include <halmd/mdsim/host/particle_groups/all.hpp>
 #include <halmd/mdsim/host/positions/lattice.hpp>
 #include <halmd/mdsim/host/velocities/boltzmann.hpp>
-#include <halmd/mdsim/particle_groups/from_range.hpp>
 #include <halmd/observables/host/phase_space.hpp>
 #include <halmd/random/host/random.hpp>
 #ifdef HALMD_WITH_GPU
@@ -43,6 +43,7 @@
 # include <halmd/algorithm/gpu/apply_kernel.hpp>
 # include <halmd/mdsim/gpu/integrators/euler.hpp>
 # include <halmd/mdsim/gpu/particle.hpp>
+# include <halmd/mdsim/gpu/particle_groups/all.hpp>
 # include <halmd/mdsim/gpu/positions/lattice.hpp>
 # include <halmd/mdsim/gpu/velocities/boltzmann.hpp>
 # include <halmd/observables/gpu/phase_space.hpp>
@@ -79,7 +80,7 @@ struct test_euler
     typedef typename modules_type::box_type box_type;
     typedef typename modules_type::integrator_type integrator_type;
     typedef typename modules_type::particle_type particle_type;
-    typedef mdsim::particle_groups::from_range<particle_type> particle_group_type;
+    typedef typename modules_type::particle_group_type particle_group_type;
     typedef typename modules_type::position_type position_type;
     typedef typename modules_type::random_type random_type;
     typedef typename modules_type::velocity_type velocity_type;
@@ -237,7 +238,7 @@ test_euler<modules_type>::test_euler()
     position = std::make_shared<position_type>(particle, box, slab);
     velocity = std::make_shared<velocity_type>(particle, random, temp);
     clock = std::make_shared<clock_type>();
-    std::shared_ptr<particle_group_type> particle_group = std::make_shared<particle_group_type>(particle, 0, particle->nparticle());
+    std::shared_ptr<particle_group_type> particle_group = std::make_shared<particle_group_type>(particle);
     phase_space = std::make_shared<phase_space_type>(particle, particle_group, box, clock);
 
     // set positions and velocities
@@ -255,6 +256,7 @@ struct host_modules
 {
     typedef mdsim::box<dimension> box_type;
     typedef mdsim::host::particle<dimension, float_type> particle_type;
+    typedef mdsim::host::particle_groups::all<particle_type> particle_group_type;
     typedef mdsim::host::integrators::euler<dimension, float_type> integrator_type;
     typedef halmd::random::host::random random_type;
     typedef mdsim::host::positions::lattice<dimension, float_type> position_type;
@@ -304,6 +306,7 @@ struct gpu_modules
 {
     typedef mdsim::box<dimension> box_type;
     typedef mdsim::gpu::particle<dimension, float_type> particle_type;
+    typedef mdsim::gpu::particle_groups::all<particle_type> particle_group_type;
     typedef mdsim::gpu::integrators::euler<dimension, float_type> integrator_type;
     typedef halmd::random::gpu::random<halmd::random::gpu::rand48> random_type;
     typedef mdsim::gpu::positions::lattice<dimension, float_type> position_type;
