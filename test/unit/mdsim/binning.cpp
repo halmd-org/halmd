@@ -143,8 +143,9 @@ test_binning(binning_type& binning, particle_type const& particle, box_type cons
     // check that particles are in the correct cell, and
     // output particle indices and cell counts to arrays
     auto cell_count_iterator = cell_count.begin();
-    binning.get_cell(
-        [&](cell_size_type const& cell) {
+    get_cell(
+        binning
+      , [&](cell_size_type const& cell) {
             return make_cell_iterator(cell, *cell_count_iterator++);
         }
     );

@@ -112,19 +112,6 @@ public:
         return g_cell_;
     }
 
-    /**
-     * Copy cells to multi-range output iterator.
-     *
-     * @param output multi-range output iterator
-     *
-     * A multi-range iterator is a functor that accepts a multi-dimensional
-     * index of array type, and returns an output iterator for the given
-     * index. The particle indices in the cell of the given index are
-     * then copied to the returned output iterator.
-     */
-    template <typename output_iterator>
-    void get_cell(output_iterator output) const;
-
 private:
     typedef utility::profiler profiler_type;
     typedef typename profiler_type::accumulator_type accumulator_type;
@@ -166,18 +153,32 @@ private:
     runtime runtime_;
 };
 
-template <int dimension, typename float_type>
-template <typename output_iterator>
-inline void binning<dimension, float_type>::get_cell(output_iterator output) const
+/**
+ * Copy cells to multi-range output iterator.
+ *
+ * @param output multi-range output iterator
+ *
+ * A multi-range iterator is a functor that accepts a multi-dimensional
+ * index of array type, and returns an output iterator for the given
+ * index. The particle indices in the cell of the given index are
+ * then copied to the returned output iterator.
+ */
+template <typename binning_type, typename output_iterator>
+inline void
+get_cell(binning_type const& binning, output_iterator output)
 {
-    cuda::host::vector<unsigned int> h_cell(g_cell_.size());
-    cuda::copy(g_cell_, h_cell);
+    typedef typename binning_type::cell_size_type cell_size_type;
+    cuda::vector<unsigned int> const& g_cell = binning.g_cell();
+    cell_size_type ncell = binning.ncell();
+    unsigned int cell_size = binning.cell_size();
+    cuda::host::vector<unsigned int> h_cell(g_cell.size());
+    cuda::copy(g_cell, h_cell);
     multi_range_for_each(
         cell_size_type(0)
-      , ncell_
+      , ncell
       , [&](cell_size_type const& index) {
-            auto first = h_cell.begin() + cell_size_ * multi_index_to_offset(index, ncell_);
-            auto last = first + cell_size_;
+            auto first = h_cell.begin() + cell_size * multi_index_to_offset(index, ncell);
+            auto last = first + cell_size;
             std::remove_copy(first, last, output(index), -1u);
         }
     );
