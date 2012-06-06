@@ -49,15 +49,17 @@ local random            = require("halmd.random")
 --
 -- .. math::
 --
---    \vec{v}_\text{scaled} \equiv \vec{v}_\text{shifted}\; \sqrt{\frac{d T^*}{E_\text{kin} - \vec{V}_\text{cm}^2}}
+--    \vec{v}_\text{scaled} \equiv \vec{v}_\text{shifted}\;
+--    \sqrt{\frac{T^* d}{2E_\text{kin} - \left(\vec{V}_\text{cm}\right)^2}}
 --
--- to yield the exact temperature, using the centre of mass velocity and kinetic energy,
+-- to yield the temperature :math:`T` for a system with :math:`d` positional
+-- degrees of freedom, using the centre of mass velocity and kinetic energy,
 --
 -- .. math::
 --
 --    \vec{V}_\text{cm} &= \frac{1}{N} \sum_{n = 1}^N \vec{v}_n \\
 --
---    E_\text{kin} &= \frac{1}{2N} \sum_{n = 1}^N v_n^2
+--    2E_\text{kin} &= \frac{1}{N} \sum_{n = 1}^N v_n^2
 --
 
 -- grab C++ wrappers
