@@ -135,8 +135,9 @@ particle<dimension, float_type>::particle(size_t nparticle, unsigned int nspecie
     cuda::memset(g_hypervirial_, 0, g_hypervirial_.capacity());
 
     // set particle masses to unit mass
-    particle::set_mass(
-        boost::make_transform_iterator(boost::counting_iterator<tag_type>(0), [](tag_type) {
+    set_mass(
+        *this
+      , boost::make_transform_iterator(boost::counting_iterator<tag_type>(0), [](tag_type) {
             return 1;
         })
     );
@@ -244,7 +245,7 @@ wrap_get_position(std::shared_ptr<particle_type const> self)
     return [=]() -> std::vector<typename particle_type::position_type> {
         std::vector<typename particle_type::position_type> output;
         output.reserve(self->nparticle());
-        self->get_position(back_inserter(output));
+        get_position(*self, back_inserter(output));
         return std::move(output);
     };
 }
@@ -257,7 +258,7 @@ wrap_set_position(std::shared_ptr<particle_type> self)
         if (input.size() != self->nparticle()) {
             throw std::invalid_argument("input array size not equal to number of particles");
         }
-        self->set_position(input.begin());
+        set_position(*self, input.begin());
     };
 }
 
@@ -268,7 +269,7 @@ wrap_get_image(std::shared_ptr<particle_type const> self)
     return [=]() -> std::vector<typename particle_type::image_type> {
         std::vector<typename particle_type::image_type> output;
         output.reserve(self->nparticle());
-        self->get_image(back_inserter(output));
+        get_image(*self, back_inserter(output));
         return std::move(output);
     };
 }
@@ -281,7 +282,7 @@ wrap_set_image(std::shared_ptr<particle_type> self)
         if (input.size() != self->nparticle()) {
             throw std::invalid_argument("input array size not equal to number of particles");
         }
-        self->set_image(input.begin());
+        set_image(*self, input.begin());
     };
 }
 
@@ -292,7 +293,7 @@ wrap_get_velocity(std::shared_ptr<particle_type const> self)
     return [=]() -> std::vector<typename particle_type::velocity_type> {
         std::vector<typename particle_type::velocity_type> output;
         output.reserve(self->nparticle());
-        self->get_velocity(back_inserter(output));
+        get_velocity(*self, back_inserter(output));
         return std::move(output);
     };
 }
@@ -305,7 +306,7 @@ wrap_set_velocity(std::shared_ptr<particle_type> self)
         if (input.size() != self->nparticle()) {
             throw std::invalid_argument("input array size not equal to number of particles");
         }
-        self->set_velocity(input.begin());
+        set_velocity(*self, input.begin());
     };
 }
 
@@ -316,8 +317,9 @@ wrap_get_tag(std::shared_ptr<particle_type const> self)
     return [=]() -> std::vector<typename particle_type::tag_type> {
         std::vector<typename particle_type::tag_type> output;
         output.reserve(self->nparticle());
-        self->get_tag(
-            boost::make_function_output_iterator([&](typename particle_type::tag_type t) {
+        get_tag(
+            *self
+          , boost::make_function_output_iterator([&](typename particle_type::tag_type t) {
                 output.push_back(t + 1);
             })
         );
@@ -335,8 +337,9 @@ wrap_set_tag(std::shared_ptr<particle_type> self)
             throw std::invalid_argument("input array size not equal to number of particles");
         }
         tag_type nparticle = self->nparticle();
-        self->set_tag(
-            boost::make_transform_iterator(input.begin(), [&](tag_type t) -> tag_type {
+        set_tag(
+            *self
+          , boost::make_transform_iterator(input.begin(), [&](tag_type t) -> tag_type {
                 if (t < 1 || t > nparticle) {
                     throw std::invalid_argument("invalid particle tag");
                 }
@@ -354,8 +357,9 @@ wrap_get_reverse_tag(std::shared_ptr<particle_type const> self)
     return [=]() -> std::vector<reverse_tag_type> {
         std::vector<typename particle_type::reverse_tag_type> output;
         output.reserve(self->nparticle());
-        self->get_reverse_tag(
-            boost::make_function_output_iterator([&](reverse_tag_type i) {
+        get_reverse_tag(
+            *self
+          , boost::make_function_output_iterator([&](reverse_tag_type i) {
                 output.push_back(i + 1);
             })
         );
@@ -373,8 +377,9 @@ wrap_set_reverse_tag(std::shared_ptr<particle_type> self)
             throw std::invalid_argument("input array size not equal to number of particles");
         }
         reverse_tag_type nparticle = self->nparticle();
-        self->set_reverse_tag(
-            boost::make_transform_iterator(input.begin(), [&](reverse_tag_type i) -> reverse_tag_type {
+        set_reverse_tag(
+            *self
+          , boost::make_transform_iterator(input.begin(), [&](reverse_tag_type i) -> reverse_tag_type {
                 if (i < 1 || i > nparticle) {
                     throw std::invalid_argument("invalid particle reverse tag");
                 }
@@ -392,8 +397,9 @@ wrap_get_species(std::shared_ptr<particle_type const> self)
     return [=]() -> std::vector<species_type> {
         std::vector<species_type> output;
         output.reserve(self->nparticle());
-        self->get_species(
-            boost::make_function_output_iterator([&](typename particle_type::species_type s) {
+        get_species(
+            *self
+          , boost::make_function_output_iterator([&](typename particle_type::species_type s) {
                 output.push_back(s + 1);
             })
         );
@@ -411,8 +417,9 @@ wrap_set_species(std::shared_ptr<particle_type> self)
             throw std::invalid_argument("input array size not equal to number of particles");
         }
         species_type nspecies = self->nspecies();
-        self->set_species(
-            boost::make_transform_iterator(input.begin(), [&](species_type s) -> species_type {
+        set_species(
+            *self
+          , boost::make_transform_iterator(input.begin(), [&](species_type s) -> species_type {
                 if (s < 1 || s > nspecies) {
                     throw std::invalid_argument("invalid particle species");
                 }
@@ -429,7 +436,7 @@ wrap_get_mass(std::shared_ptr<particle_type const> self)
     return [=]() -> std::vector<typename particle_type::mass_type> {
         std::vector<typename particle_type::mass_type> output;
         output.reserve(self->nparticle());
-        self->get_mass(back_inserter(output));
+        get_mass(*self, back_inserter(output));
         return std::move(output);
     };
 }
@@ -442,7 +449,7 @@ wrap_set_mass(std::shared_ptr<particle_type> self)
         if (input.size() != self->nparticle()) {
             throw std::invalid_argument("input array size not equal to number of particles");
         }
-        self->set_mass(input.begin());
+        set_mass(*self, input.begin());
     };
 }
 
@@ -453,7 +460,7 @@ wrap_get_force(std::shared_ptr<particle_type const> self)
     return [=]() -> std::vector<typename particle_type::force_type> {
         std::vector<typename particle_type::force_type> output;
         output.reserve(self->nparticle());
-        self->get_force(back_inserter(output));
+        get_force(*self, back_inserter(output));
         return std::move(output);
     };
 }
@@ -466,7 +473,7 @@ wrap_set_force(std::shared_ptr<particle_type> self)
         if (input.size() != self->nparticle()) {
             throw std::invalid_argument("input array size not equal to number of particles");
         }
-        self->set_force(input.begin());
+        set_force(*self, input.begin());
     };
 }
 
@@ -477,7 +484,7 @@ wrap_get_en_pot(std::shared_ptr<particle_type const> self)
     return [=]() -> std::vector<typename particle_type::en_pot_type> {
         std::vector<typename particle_type::en_pot_type> output;
         output.reserve(self->nparticle());
-        self->get_en_pot(back_inserter(output));
+        get_en_pot(*self, back_inserter(output));
         return std::move(output);
     };
 }
@@ -490,7 +497,7 @@ wrap_set_en_pot(std::shared_ptr<particle_type> self)
         if (input.size() != self->nparticle()) {
             throw std::invalid_argument("input array size not equal to number of particles");
         }
-        self->set_en_pot(input.begin());
+        set_en_pot(*self, input.begin());
     };
 }
 
@@ -501,7 +508,7 @@ wrap_get_stress_pot(std::shared_ptr<particle_type const> self)
     return [=]() -> std::vector<typename particle_type::stress_pot_type> {
         std::vector<typename particle_type::stress_pot_type> output;
         output.reserve(self->nparticle());
-        self->get_stress_pot(back_inserter(output));
+        get_stress_pot(*self, back_inserter(output));
         return std::move(output);
     };
 }
@@ -514,7 +521,7 @@ wrap_set_stress_pot(std::shared_ptr<particle_type> self)
         if (input.size() != self->nparticle()) {
             throw std::invalid_argument("input array size not equal to number of particles");
         }
-        self->set_stress_pot(input.begin());
+        set_stress_pot(*self, input.begin());
     };
 }
 
@@ -525,7 +532,7 @@ wrap_get_hypervirial(std::shared_ptr<particle_type const> self)
     return [=]() -> std::vector<typename particle_type::hypervirial_type> {
         std::vector<typename particle_type::hypervirial_type> output;
         output.reserve(self->nparticle());
-        self->get_hypervirial(back_inserter(output));
+        get_hypervirial(*self, back_inserter(output));
         return std::move(output);
     };
 }
@@ -538,7 +545,7 @@ wrap_set_hypervirial(std::shared_ptr<particle_type> self)
         if (input.size() != self->nparticle()) {
             throw std::invalid_argument("input array size not equal to number of particles");
         }
-        self->set_hypervirial(input.begin());
+        set_hypervirial(*self, input.begin());
     };
 }
 

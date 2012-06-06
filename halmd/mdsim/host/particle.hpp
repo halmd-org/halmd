@@ -242,7 +242,6 @@ public:
      */
     en_pot_array_type const& en_pot() const
     {
-        assert_aux_valid();
         return en_pot_;
     }
 
@@ -261,7 +260,6 @@ public:
      */
     stress_pot_array_type const& stress_pot() const
     {
-        assert_aux_valid();
         return stress_pot_;
     }
 
@@ -280,7 +278,6 @@ public:
      */
     hypervirial_array_type const& hypervirial() const
     {
-        assert_aux_valid();
         return hypervirial_;
     }
 
@@ -291,138 +288,6 @@ public:
     {
         return hypervirial_;
     }
-
-    /**
-     * Copy particle positions to given array.
-     */
-    template <typename iterator_type>
-    iterator_type get_position(iterator_type const& first) const;
-
-    /**
-     * Copy particle positions from given array.
-     */
-    template <typename iterator_type>
-    iterator_type set_position(iterator_type const& first);
-
-    /**
-     * Copy particle images to given array.
-     */
-    template <typename iterator_type>
-    iterator_type get_image(iterator_type const& first) const;
-
-    /**
-     * Copy particle images from given array.
-     */
-    template <typename iterator_type>
-    iterator_type set_image(iterator_type const& first);
-
-    /**
-     * Copy particle velocities to given array.
-     */
-    template <typename iterator_type>
-    iterator_type get_velocity(iterator_type const& first) const;
-
-    /**
-     * Copy particle velocities from given array.
-     */
-    template <typename iterator_type>
-    iterator_type set_velocity(iterator_type const& first);
-
-    /**
-     * Copy particle tags to given array.
-     */
-    template <typename iterator_type>
-    iterator_type get_tag(iterator_type const& first) const;
-
-    /**
-     * Copy particle tags from given array.
-     */
-    template <typename iterator_type>
-    iterator_type set_tag(iterator_type const& first);
-
-    /**
-     * Copy particle reverse tags to given array.
-     */
-    template <typename iterator_type>
-    iterator_type get_reverse_tag(iterator_type const& first) const;
-
-    /**
-     * Copy particle reverse tags from given array.
-     */
-    template <typename iterator_type>
-    iterator_type set_reverse_tag(iterator_type const& first);
-
-    /**
-     * Copy particle species to given array.
-     */
-    template <typename iterator_type>
-    iterator_type get_species(iterator_type const& first) const;
-
-    /**
-     * Copy particle species from given array.
-     */
-    template <typename iterator_type>
-    iterator_type set_species(iterator_type const& first);
-
-    /**
-     * Copy particle masses to given array.
-     */
-    template <typename iterator_type>
-    iterator_type get_mass(iterator_type const& first) const;
-
-    /**
-     * Copy particle masses from given array.
-     */
-    template <typename iterator_type>
-    iterator_type set_mass(iterator_type const& first);
-
-    /**
-     * Copy force per particle to given array.
-     */
-    template <typename iterator_type>
-    iterator_type get_force(iterator_type const& first) const;
-
-    /**
-     * Copy force per particle from given array.
-     */
-    template <typename iterator_type>
-    iterator_type set_force(iterator_type const& first);
-
-    /**
-     * Copy potential energy per particle to given array.
-     */
-    template <typename iterator_type>
-    iterator_type get_en_pot(iterator_type const& first) const;
-
-    /**
-     * Copy potential energy per particle from given array.
-     */
-    template <typename iterator_type>
-    iterator_type set_en_pot(iterator_type const& first);
-
-    /**
-     * Copy potential part of stress tensor per particle to given array.
-     */
-    template <typename iterator_type>
-    iterator_type get_stress_pot(iterator_type const& first) const;
-
-    /**
-     * Copy potential part of stress tensor per particle from given array.
-     */
-    template <typename iterator_type>
-    iterator_type set_stress_pot(iterator_type const& first);
-
-    /**
-     * Copy hypervirial per particle to given array.
-     */
-    template <typename iterator_type>
-    iterator_type get_hypervirial(iterator_type const& first) const;
-
-    /**
-     * Copy hypervirial per particle from given array.
-     */
-    template <typename iterator_type>
-    iterator_type set_hypervirial(iterator_type const& first);
 
     /**
      * Enable computation of auxiliary variables.
@@ -480,13 +345,6 @@ private:
     /** flag that indicates the auxiliary variables are computed this step */
     bool aux_valid_;
 
-    void assert_aux_valid() const
-    {
-        if (!aux_valid_) {
-            throw std::logic_error("auxiliary variables were not enabled in particle");
-        }
-    }
-
     typedef utility::profiler profiler_type;
     typedef typename profiler_type::accumulator_type accumulator_type;
     typedef typename profiler_type::scoped_timer_type scoped_timer_type;
@@ -500,200 +358,310 @@ private:
     runtime runtime_;
 };
 
-template <int dimension, typename float_type>
-template <typename iterator_type>
-inline iterator_type particle<dimension, float_type>::get_position(iterator_type const& first) const
+/**
+ * Copy particle positions to given array.
+ */
+template <typename particle_type, typename iterator_type>
+inline iterator_type
+get_position(particle_type const& particle, iterator_type const& first)
 {
-    return std::copy(position_.begin(), position_.end(), first);
+    typedef typename particle_type::position_array_type position_array_type;
+    position_array_type const& position = particle.position();
+    return std::copy(position.begin(), position.end(), first);
 }
 
-template <int dimension, typename float_type>
-template <typename iterator_type>
-inline iterator_type particle<dimension, float_type>::set_position(iterator_type const& first)
+/**
+ * Copy particle positions from given array.
+ */
+template <typename particle_type, typename iterator_type>
+inline iterator_type
+set_position(particle_type& particle, iterator_type const& first)
 {
+    typedef typename particle_type::position_array_type position_array_type;
+    position_array_type& position = particle.position();
     iterator_type input = first;
-    for (position_type& position : position_) {
-        position = *input++;
+    for (typename particle_type::position_type& value : position) {
+        value = *input++;
     }
     return input;
 }
 
-template <int dimension, typename float_type>
-template <typename iterator_type>
-inline iterator_type particle<dimension, float_type>::get_image(iterator_type const& first) const
+/**
+ * Copy particle images to given array.
+ */
+template <typename particle_type, typename iterator_type>
+inline iterator_type
+get_image(particle_type const& particle, iterator_type const& first)
 {
-    return std::copy(image_.begin(), image_.end(), first);
+    typedef typename particle_type::image_array_type image_array_type;
+    image_array_type const& image = particle.image();
+    return std::copy(image.begin(), image.end(), first);
 }
 
-template <int dimension, typename float_type>
-template <typename iterator_type>
-inline iterator_type particle<dimension, float_type>::set_image(iterator_type const& first)
+/**
+ * Copy particle images from given array.
+ */
+template <typename particle_type, typename iterator_type>
+inline iterator_type
+set_image(particle_type& particle, iterator_type const& first)
 {
+    typedef typename particle_type::image_array_type image_array_type;
+    image_array_type& image = particle.image();
     iterator_type input = first;
-    for (image_type& image : image_) {
-        image = *input++;
+    for (typename particle_type::image_type& value : image) {
+        value = *input++;
     }
     return input;
 }
 
-template <int dimension, typename float_type>
-template <typename iterator_type>
-inline iterator_type particle<dimension, float_type>::get_velocity(iterator_type const& first) const
+/**
+ * Copy particle velocities to given array.
+ */
+template <typename particle_type, typename iterator_type>
+inline iterator_type
+get_velocity(particle_type const& particle, iterator_type const& first)
 {
-    return std::copy(velocity_.begin(), velocity_.end(), first);
+    typedef typename particle_type::velocity_array_type velocity_array_type;
+    velocity_array_type const& velocity = particle.velocity();
+    return std::copy(velocity.begin(), velocity.end(), first);
 }
 
-template <int dimension, typename float_type>
-template <typename iterator_type>
-inline iterator_type particle<dimension, float_type>::set_velocity(iterator_type const& first)
+/**
+ * Copy particle velocities from given array.
+ */
+template <typename particle_type, typename iterator_type>
+inline iterator_type
+set_velocity(particle_type& particle, iterator_type const& first)
 {
+    typedef typename particle_type::velocity_array_type velocity_array_type;
+    velocity_array_type& velocity = particle.velocity();
     iterator_type input = first;
-    for (velocity_type& velocity : velocity_) {
-        velocity = *input++;
+    for (typename particle_type::velocity_type& value : velocity) {
+        value = *input++;
     }
     return input;
 }
 
-template <int dimension, typename float_type>
-template <typename iterator_type>
-inline iterator_type particle<dimension, float_type>::get_tag(iterator_type const& first) const
+/**
+ * Copy particle tags to given array.
+ */
+template <typename particle_type, typename iterator_type>
+inline iterator_type
+get_tag(particle_type const& particle, iterator_type const& first)
 {
-    return std::copy(tag_.begin(), tag_.end(), first);
+    typedef typename particle_type::tag_array_type tag_array_type;
+    tag_array_type const& tag = particle.tag();
+    return std::copy(tag.begin(), tag.end(), first);
 }
 
-template <int dimension, typename float_type>
-template <typename iterator_type>
-inline iterator_type particle<dimension, float_type>::set_tag(iterator_type const& first)
+/**
+ * Copy particle tags from given array.
+ */
+template <typename particle_type, typename iterator_type>
+inline iterator_type
+set_tag(particle_type& particle, iterator_type const& first)
 {
+    typedef typename particle_type::tag_array_type tag_array_type;
+    tag_array_type& tag = particle.tag();
     iterator_type input = first;
-    for (tag_type& tag : tag_) {
-        tag = *input++;
+    for (typename particle_type::tag_type& value : tag) {
+        value = *input++;
     }
     return input;
 }
 
-template <int dimension, typename float_type>
-template <typename iterator_type>
-inline iterator_type particle<dimension, float_type>::get_reverse_tag(iterator_type const& first) const
+/**
+ * Copy particle reverse tags to given array.
+ */
+template <typename particle_type, typename iterator_type>
+inline iterator_type
+get_reverse_tag(particle_type const& particle, iterator_type const& first)
 {
-    return std::copy(reverse_tag_.begin(), reverse_tag_.end(), first);
+    typedef typename particle_type::reverse_tag_array_type reverse_tag_array_type;
+    reverse_tag_array_type const& reverse_tag = particle.reverse_tag();
+    return std::copy(reverse_tag.begin(), reverse_tag.end(), first);
 }
 
-template <int dimension, typename float_type>
-template <typename iterator_type>
-inline iterator_type particle<dimension, float_type>::set_reverse_tag(iterator_type const& first)
+/**
+ * Copy particle reverse tags from given array.
+ */
+template <typename particle_type, typename iterator_type>
+inline iterator_type
+set_reverse_tag(particle_type& particle, iterator_type const& first)
 {
+    typedef typename particle_type::reverse_tag_array_type reverse_tag_array_type;
+    reverse_tag_array_type& reverse_tag = particle.reverse_tag();
     iterator_type input = first;
-    for (reverse_tag_type& reverse_tag : reverse_tag_) {
-        reverse_tag = *input++;
+    for (typename particle_type::reverse_tag_type& value : reverse_tag) {
+        value = *input++;
     }
     return input;
 }
 
-template <int dimension, typename float_type>
-template <typename iterator_type>
-inline iterator_type particle<dimension, float_type>::get_species(iterator_type const& first) const
+/**
+ * Copy particle species to given array.
+ */
+template <typename particle_type, typename iterator_type>
+inline iterator_type
+get_species(particle_type const& particle, iterator_type const& first)
 {
-    return std::copy(species_.begin(), species_.end(), first);
+    typedef typename particle_type::species_array_type species_array_type;
+    species_array_type const& species = particle.species();
+    return std::copy(species.begin(), species.end(), first);
 }
 
-template <int dimension, typename float_type>
-template <typename iterator_type>
-inline iterator_type particle<dimension, float_type>::set_species(iterator_type const& first)
+/**
+ * Copy particle species from given array.
+ */
+template <typename particle_type, typename iterator_type>
+inline iterator_type
+set_species(particle_type& particle, iterator_type const& first)
 {
+    typedef typename particle_type::species_array_type species_array_type;
+    species_array_type& species = particle.species();
     iterator_type input = first;
-    for (species_type& species : species_) {
-        species = *input++;
+    for (typename particle_type::species_type& value : species) {
+        value = *input++;
     }
     return input;
 }
 
-template <int dimension, typename float_type>
-template <typename iterator_type>
-inline iterator_type particle<dimension, float_type>::get_mass(iterator_type const& first) const
+/**
+ * Copy particle masses to given array.
+ */
+template <typename particle_type, typename iterator_type>
+inline iterator_type
+get_mass(particle_type const& particle, iterator_type const& first)
 {
-    return std::copy(mass_.begin(), mass_.end(), first);
+    typedef typename particle_type::mass_array_type mass_array_type;
+    mass_array_type const& mass = particle.mass();
+    return std::copy(mass.begin(), mass.end(), first);
 }
 
-template <int dimension, typename float_type>
-template <typename iterator_type>
-inline iterator_type particle<dimension, float_type>::set_mass(iterator_type const& first)
+/**
+ * Copy particle masses from given array.
+ */
+template <typename particle_type, typename iterator_type>
+inline iterator_type
+set_mass(particle_type& particle, iterator_type const& first)
 {
+    typedef typename particle_type::mass_array_type mass_array_type;
+    mass_array_type& mass = particle.mass();
     iterator_type input = first;
-    for (mass_type& mass : mass_) {
-        mass = *input++;
+    for (typename particle_type::mass_type& value : mass) {
+        value = *input++;
     }
     return input;
 }
 
-template <int dimension, typename float_type>
-template <typename iterator_type>
-inline iterator_type particle<dimension, float_type>::get_force(iterator_type const& first) const
+/**
+ * Copy force per particle to given array.
+ */
+template <typename particle_type, typename iterator_type>
+inline iterator_type
+get_force(particle_type const& particle, iterator_type const& first)
 {
-    return std::copy(force_.begin(), force_.end(), first);
+    typedef typename particle_type::force_array_type force_array_type;
+    force_array_type const& force = particle.force();
+    return std::copy(force.begin(), force.end(), first);
 }
 
-template <int dimension, typename float_type>
-template <typename iterator_type>
-inline iterator_type particle<dimension, float_type>::set_force(iterator_type const& first)
+/**
+ * Copy force per particle from given array.
+ */
+template <typename particle_type, typename iterator_type>
+inline iterator_type
+set_force(particle_type& particle, iterator_type const& first)
 {
+    typedef typename particle_type::force_array_type force_array_type;
+    force_array_type& force = particle.force();
     iterator_type input = first;
-    for (force_type& force : force_) {
-        force = *input++;
+    for (typename particle_type::force_type& value : force) {
+        value = *input++;
     }
     return input;
 }
 
-template <int dimension, typename float_type>
-template <typename iterator_type>
-inline iterator_type particle<dimension, float_type>::get_en_pot(iterator_type const& first) const
+/**
+ * Copy potential energy per particle to given array.
+ */
+template <typename particle_type, typename iterator_type>
+inline iterator_type
+get_en_pot(particle_type const& particle, iterator_type const& first)
 {
-    return std::copy(en_pot_.begin(), en_pot_.end(), first);
+    typedef typename particle_type::en_pot_array_type en_pot_array_type;
+    en_pot_array_type const& en_pot = particle.en_pot();
+    return std::copy(en_pot.begin(), en_pot.end(), first);
 }
 
-template <int dimension, typename float_type>
-template <typename iterator_type>
-inline iterator_type particle<dimension, float_type>::set_en_pot(iterator_type const& first)
+/**
+ * Copy potential energy per particle from given array.
+ */
+template <typename particle_type, typename iterator_type>
+inline iterator_type
+set_en_pot(particle_type& particle, iterator_type const& first)
 {
+    typedef typename particle_type::en_pot_array_type en_pot_array_type;
+    en_pot_array_type& en_pot = particle.en_pot();
     iterator_type input = first;
-    for (en_pot_type& en_pot : en_pot_) {
-        en_pot = *input++;
+    for (typename particle_type::en_pot_type& value : en_pot) {
+        value = *input++;
     }
     return input;
 }
 
-template <int dimension, typename float_type>
-template <typename iterator_type>
-inline iterator_type particle<dimension, float_type>::get_stress_pot(iterator_type const& first) const
+/**
+ * Copy potential part of stress tensor per particle to given array.
+ */
+template <typename particle_type, typename iterator_type>
+inline iterator_type
+get_stress_pot(particle_type const& particle, iterator_type const& first)
 {
-    return std::copy(stress_pot_.begin(), stress_pot_.end(), first);
+    typedef typename particle_type::stress_pot_array_type stress_pot_array_type;
+    stress_pot_array_type const& stress_pot = particle.stress_pot();
+    return std::copy(stress_pot.begin(), stress_pot.end(), first);
 }
 
-template <int dimension, typename float_type>
-template <typename iterator_type>
-inline iterator_type particle<dimension, float_type>::set_stress_pot(iterator_type const& first)
+/**
+ * Copy potential part of stress tensor per particle from given array.
+ */
+template <typename particle_type, typename iterator_type>
+inline iterator_type
+set_stress_pot(particle_type& particle, iterator_type const& first)
 {
+    typedef typename particle_type::stress_pot_array_type stress_pot_array_type;
+    stress_pot_array_type& stress_pot = particle.stress_pot();
     iterator_type input = first;
-    for (stress_pot_type& stress_pot : stress_pot_) {
-        stress_pot = *input++;
+    for (typename particle_type::stress_pot_type& value : stress_pot) {
+        value = *input++;
     }
     return input;
 }
 
-template <int dimension, typename float_type>
-template <typename iterator_type>
-inline iterator_type particle<dimension, float_type>::get_hypervirial(iterator_type const& first) const
+/**
+ * Copy hypervirial per particle to given array.
+ */
+template <typename particle_type, typename iterator_type>
+inline iterator_type
+get_hypervirial(particle_type const& particle, iterator_type const& first)
 {
-    return std::copy(hypervirial_.begin(), hypervirial_.end(), first);
+    typedef typename particle_type::hypervirial_array_type hypervirial_array_type;
+    hypervirial_array_type const& hypervirial = particle.hypervirial();
+    return std::copy(hypervirial.begin(), hypervirial.end(), first);
 }
 
-template <int dimension, typename float_type>
-template <typename iterator_type>
-inline iterator_type particle<dimension, float_type>::set_hypervirial(iterator_type const& first)
+/**
+ * Copy hypervirial per particle from given array.
+ */
+template <typename particle_type, typename iterator_type>
+inline iterator_type
+set_hypervirial(particle_type& particle, iterator_type const& first)
 {
+    typedef typename particle_type::hypervirial_array_type hypervirial_array_type;
+    hypervirial_array_type& hypervirial = particle.hypervirial();
     iterator_type input = first;
-    for (hypervirial_type& hypervirial : hypervirial_) {
-        hypervirial = *input++;
+    for (typename particle_type::hypervirial_type& value : hypervirial) {
+        value = *input++;
     }
     return input;
 }

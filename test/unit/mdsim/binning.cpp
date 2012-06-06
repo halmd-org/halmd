@@ -72,9 +72,7 @@ transform_density(particle_type& particle, box_type const& box, float scale)
     // get particle positions
     std::vector<position_type> position;
     position.reserve(particle.nparticle());
-    particle.get_position(
-        std::back_inserter(position)
-    );
+    get_position(particle, std::back_inserter(position));
 
     // wave number per dimension
     position_type k = element_div(position_type(2 * M_PI), position_type(box.length()));
@@ -82,8 +80,9 @@ transform_density(particle_type& particle, box_type const& box, float scale)
     position_type lambda = element_div(position_type(scale), k);
 
     // set particle positions by applying density transform
-    particle.set_position(
-        boost::make_transform_iterator(position.begin(), [&](position_type const& r) {
+    set_position(
+        particle
+      , boost::make_transform_iterator(position.begin(), [&](position_type const& r) {
             return r + element_prod(lambda, sin(element_prod(k, r)));
         })
     );
@@ -102,7 +101,7 @@ test_binning(binning_type& binning, particle_type const& particle, box_type cons
     // get particle positions
     std::vector<vector_type> position;
     position.reserve(particle.nparticle());
-    particle.get_position(back_inserter(position));
+    get_position(particle, back_inserter(position));
 
     // number of cells per dimension
     cell_size_type shape = binning.ncell();
@@ -222,8 +221,9 @@ test_non_uniform_density(typename binning_type::cell_size_type const& shape, flo
     BOOST_TEST_MESSAGE( "number density " << particle->nparticle() / box->volume() );
 
     // place particles on lattice
-    particle->set_position(
-        boost::make_transform_iterator(boost::make_counting_iterator(size_type(0)), lattice)
+    set_position(
+        *particle
+      , boost::make_transform_iterator(boost::make_counting_iterator(size_type(0)), lattice)
     );
     // transform density using sine shift
     transform_density(*particle, *box, scale);

@@ -216,7 +216,6 @@ public:
      */
     en_pot_array_type const& en_pot() const
     {
-        assert_aux_valid();
         return g_en_pot_;
     }
 
@@ -235,7 +234,6 @@ public:
      */
     stress_pot_array_type const& stress_pot() const
     {
-        assert_aux_valid();
         return g_stress_pot_;
     }
 
@@ -254,7 +252,6 @@ public:
      */
     hypervirial_array_type const& hypervirial() const
     {
-        assert_aux_valid();
         return g_hypervirial_;
     }
 
@@ -265,138 +262,6 @@ public:
     {
         return g_hypervirial_;
     }
-
-    /**
-     * Copy particle positions to given array.
-     */
-    template <typename iterator_type>
-    iterator_type get_position(iterator_type const& first) const;
-
-    /**
-     * Copy particle positions from given array.
-     */
-    template <typename iterator_type>
-    iterator_type set_position(iterator_type const& first);
-
-    /**
-     * Copy particle species to given array.
-     */
-    template <typename iterator_type>
-    iterator_type get_species(iterator_type const& first) const;
-
-    /**
-     * Copy particle species from given array.
-     */
-    template <typename iterator_type>
-    iterator_type set_species(iterator_type const& first);
-
-    /**
-     * Copy particle images to given array.
-     */
-    template <typename iterator_type>
-    iterator_type get_image(iterator_type const& first) const;
-
-    /**
-     * Copy particle images from given array.
-     */
-    template <typename iterator_type>
-    iterator_type set_image(iterator_type const& first);
-
-    /**
-     * Copy particle velocities to given array.
-     */
-    template <typename iterator_type>
-    iterator_type get_velocity(iterator_type const& first) const;
-
-    /**
-     * Copy particle velocities from given array.
-     */
-    template <typename iterator_type>
-    iterator_type set_velocity(iterator_type const& first);
-
-    /**
-     * Copy particle masses to given array.
-     */
-    template <typename iterator_type>
-    iterator_type get_mass(iterator_type const& first) const;
-
-    /**
-     * Copy particle masses from given array.
-     */
-    template <typename iterator_type>
-    iterator_type set_mass(iterator_type const& first);
-
-    /**
-     * Copy particle tags to given array.
-     */
-    template <typename iterator_type>
-    iterator_type get_tag(iterator_type const& first) const;
-
-    /**
-     * Copy particle tags from given array.
-     */
-    template <typename iterator_type>
-    iterator_type set_tag(iterator_type const& first);
-
-    /**
-     * Copy particle reverse tags to given array.
-     */
-    template <typename iterator_type>
-    iterator_type get_reverse_tag(iterator_type const& first) const;
-
-    /**
-     * Copy particle reverse tags from given array.
-     */
-    template <typename iterator_type>
-    iterator_type set_reverse_tag(iterator_type const& first);
-
-    /**
-     * Copy force per particle to given array.
-     */
-    template <typename iterator_type>
-    iterator_type get_force(iterator_type const& first) const;
-
-    /**
-     * Copy force per particle from given array.
-     */
-    template <typename iterator_type>
-    iterator_type set_force(iterator_type const& first);
-
-    /**
-     * Copy potential energy per particle to given array.
-     */
-    template <typename iterator_type>
-    iterator_type get_en_pot(iterator_type const& first) const;
-
-    /**
-     * Copy potential energy per particle from given array.
-     */
-    template <typename iterator_type>
-    iterator_type set_en_pot(iterator_type const& first);
-
-    /**
-     * Copy potential part of stress tensor per particle to given array.
-     */
-    template <typename iterator_type>
-    iterator_type get_stress_pot(iterator_type const& first) const;
-
-    /**
-     * Copy potential part of stress tensor per particle from given array.
-     */
-    template <typename iterator_type>
-    iterator_type set_stress_pot(iterator_type const& first);
-
-    /**
-     * Copy hypervirial per particle to given array.
-     */
-    template <typename iterator_type>
-    iterator_type get_hypervirial(iterator_type const& first) const;
-
-    /**
-     * Copy hypervirial per particle from given array.
-     */
-    template <typename iterator_type>
-    iterator_type set_hypervirial(iterator_type const& first);
 
     /**
      * Enable computation of auxiliary variables.
@@ -450,13 +315,6 @@ private:
     /** flag that indicates the auxiliary variables are computed this step */
     bool aux_valid_;
 
-    void assert_aux_valid() const
-    {
-        if (!aux_valid_) {
-            throw std::logic_error("auxiliary variables were not enabled in particle");
-        }
-    }
-
     typedef utility::profiler profiler_type;
     typedef typename profiler_type::accumulator_type accumulator_type;
     typedef typename profiler_type::scoped_timer_type scoped_timer_type;
@@ -470,299 +328,409 @@ private:
     runtime runtime_;
 };
 
-template <int dimension, typename float_type>
-template <typename iterator_type>
-inline iterator_type particle<dimension, float_type>::get_position(iterator_type const& first) const
+/**
+ * Copy particle positions to given array.
+ */
+template <typename particle_type, typename iterator_type>
+inline iterator_type
+get_position(particle_type const& particle, iterator_type const& first)
 {
-    cuda::host::vector<typename position_array_type::value_type> h_position(g_position_.size());
-    cuda::copy(g_position_, h_position);
+    typedef typename particle_type::position_array_type position_array_type;
+    position_array_type const& g_position = particle.position();
+    cuda::host::vector<typename position_array_type::value_type> h_position(g_position.size());
+    cuda::copy(g_position, h_position);
     iterator_type output = first;
     for (typename position_array_type::value_type const& v : h_position) {
-        position_type position;
-        species_type species;
+        typename particle_type::position_type position;
+        typename particle_type::species_type species;
         tie(position, species) <<= v;
         *output++ = position;
     }
     return output;
 }
 
-template <int dimension, typename float_type>
-template <typename iterator_type>
-inline iterator_type particle<dimension, float_type>::set_position(iterator_type const& first)
+/**
+ * Copy particle positions from given array.
+ */
+template <typename particle_type, typename iterator_type>
+inline iterator_type
+set_position(particle_type& particle, iterator_type const& first)
 {
-    cuda::host::vector<typename position_array_type::value_type> h_position(g_position_.size());
-    cuda::copy(g_position_, h_position);
+    typedef typename particle_type::position_array_type position_array_type;
+    position_array_type& g_position = particle.position();
+    cuda::host::vector<typename position_array_type::value_type> h_position(g_position.size());
+    cuda::copy(g_position, h_position);
     iterator_type input = first;
     for (typename position_array_type::value_type& v : h_position) {
-        position_type position;
-        species_type species;
+        typename particle_type::position_type position;
+        typename particle_type::species_type species;
         tie(position, species) <<= v;
         position = *input++;
         v <<= tie(position, species);
     }
 #ifdef USE_VERLET_DSFUN
-    cuda::memset(g_position_, 0, g_position_.capacity());
+    cuda::memset(g_position, 0, g_position.capacity());
 #endif
-    cuda::copy(h_position, g_position_);
+    cuda::copy(h_position, g_position);
     return input;
 }
 
-template <int dimension, typename float_type>
-template <typename iterator_type>
-inline iterator_type particle<dimension, float_type>::get_species(iterator_type const& first) const
+/**
+ * Copy particle species to given array.
+ */
+template <typename particle_type, typename iterator_type>
+inline iterator_type
+get_species(particle_type const& particle, iterator_type const& first)
 {
-    cuda::host::vector<typename position_array_type::value_type> h_position(g_position_.size());
-    cuda::copy(g_position_, h_position);
+    typedef typename particle_type::position_array_type position_array_type;
+    position_array_type const& g_position = particle.position();
+    cuda::host::vector<typename position_array_type::value_type> h_position(g_position.size());
+    cuda::copy(g_position, h_position);
     iterator_type output = first;
     for (typename position_array_type::value_type const& v : h_position) {
-        position_type position;
-        species_type species;
+        typename particle_type::position_type position;
+        typename particle_type::species_type species;
         tie(position, species) <<= v;
         *output++ = species;
     }
     return output;
 }
 
-template <int dimension, typename float_type>
-template <typename iterator_type>
-inline iterator_type particle<dimension, float_type>::set_species(iterator_type const& first)
+/**
+ * Copy particle species from given array.
+ */
+template <typename particle_type, typename iterator_type>
+inline iterator_type
+set_species(particle_type& particle, iterator_type const& first)
 {
-    cuda::host::vector<typename position_array_type::value_type> h_position(g_position_.size());
-    cuda::copy(g_position_, h_position);
+    typedef typename particle_type::position_array_type position_array_type;
+    position_array_type& g_position = particle.position();
+    cuda::host::vector<typename position_array_type::value_type> h_position(g_position.size());
+    cuda::copy(g_position, h_position);
     iterator_type input = first;
     for (typename position_array_type::value_type& v : h_position) {
-        position_type position;
-        species_type species;
+        typename particle_type::position_type position;
+        typename particle_type::species_type species;
         tie(position, species) <<= v;
         species = *input++;
         v <<= tie(position, species);
     }
-    cuda::copy(h_position, g_position_);
+    cuda::copy(h_position, g_position);
     return input;
 }
 
-template <int dimension, typename float_type>
-template <typename iterator_type>
-inline iterator_type particle<dimension, float_type>::get_image(iterator_type const& first) const
+/**
+ * Copy particle images to given array.
+ */
+template <typename particle_type, typename iterator_type>
+inline iterator_type
+get_image(particle_type const& particle, iterator_type const& first)
 {
-    cuda::host::vector<typename image_array_type::value_type> h_image(g_image_.size());
-    cuda::copy(g_image_, h_image);
+    typedef typename particle_type::image_array_type image_array_type;
+    image_array_type const& g_image = particle.image();
+    cuda::host::vector<typename image_array_type::value_type> h_image(g_image.size());
+    cuda::copy(g_image, h_image);
     return std::copy(h_image.begin(), h_image.end(), first);
 }
 
-template <int dimension, typename float_type>
-template <typename iterator_type>
-inline iterator_type particle<dimension, float_type>::set_image(iterator_type const& first)
+/**
+ * Copy particle images from given array.
+ */
+template <typename particle_type, typename iterator_type>
+inline iterator_type
+set_image(particle_type& particle, iterator_type const& first)
 {
-    cuda::host::vector<typename image_array_type::value_type> h_image(g_image_.size());
+    typedef typename particle_type::image_array_type image_array_type;
+    image_array_type& g_image = particle.image();
+    cuda::host::vector<typename image_array_type::value_type> h_image(g_image.size());
     iterator_type input = first;
     for (typename image_array_type::value_type& image : h_image) {
         image = *input++;
     }
-    cuda::copy(h_image, g_image_);
+    cuda::copy(h_image, g_image);
     return input;
 }
 
-template <int dimension, typename float_type>
-template <typename iterator_type>
-inline iterator_type particle<dimension, float_type>::get_velocity(iterator_type const& first) const
+/**
+ * Copy particle velocities to given array.
+ */
+template <typename particle_type, typename iterator_type>
+inline iterator_type
+get_velocity(particle_type const& particle, iterator_type const& first)
 {
-    cuda::host::vector<typename velocity_array_type::value_type> h_velocity(g_velocity_.size());
-    cuda::copy(g_velocity_, h_velocity);
+    typedef typename particle_type::velocity_array_type velocity_array_type;
+    velocity_array_type const& g_velocity = particle.velocity();
+    cuda::host::vector<typename velocity_array_type::value_type> h_velocity(g_velocity.size());
+    cuda::copy(g_velocity, h_velocity);
     iterator_type output = first;
     for (typename velocity_array_type::value_type const& v : h_velocity) {
-        velocity_type velocity;
-        mass_type mass;
+        typename particle_type::velocity_type velocity;
+        typename particle_type::mass_type mass;
         tie(velocity, mass) <<= v;
         *output++ = velocity;
     }
     return output;
 }
 
-template <int dimension, typename float_type>
-template <typename iterator_type>
-inline iterator_type particle<dimension, float_type>::set_velocity(iterator_type const& first)
+/**
+ * Copy particle velocities from given array.
+ */
+template <typename particle_type, typename iterator_type>
+inline iterator_type
+set_velocity(particle_type& particle, iterator_type const& first)
 {
-    cuda::host::vector<typename velocity_array_type::value_type> h_velocity(g_velocity_.size());
-    cuda::copy(g_velocity_, h_velocity);
+    typedef typename particle_type::velocity_array_type velocity_array_type;
+    velocity_array_type& g_velocity = particle.velocity();
+    cuda::host::vector<typename velocity_array_type::value_type> h_velocity(g_velocity.size());
+    cuda::copy(g_velocity, h_velocity);
     iterator_type input = first;
     for (typename velocity_array_type::value_type& v : h_velocity) {
-        velocity_type velocity;
-        mass_type mass;
+        typename particle_type::velocity_type velocity;
+        typename particle_type::mass_type mass;
         tie(velocity, mass) <<= v;
         velocity = *input++;
         v <<= tie(velocity, mass);
     }
 #ifdef USE_VERLET_DSFUN
-    cuda::memset(g_velocity_, 0, g_velocity_.capacity());
+    cuda::memset(g_velocity, 0, g_velocity.capacity());
 #endif
-    cuda::copy(h_velocity, g_velocity_);
+    cuda::copy(h_velocity, g_velocity);
     return input;
 }
 
-template <int dimension, typename float_type>
-template <typename iterator_type>
-inline iterator_type particle<dimension, float_type>::get_mass(iterator_type const& first) const
+/**
+ * Copy particle masses to given array.
+ */
+template <typename particle_type, typename iterator_type>
+inline iterator_type
+get_mass(particle_type const& particle, iterator_type const& first)
 {
-    cuda::host::vector<typename velocity_array_type::value_type> h_velocity(g_velocity_.size());
-    cuda::copy(g_velocity_, h_velocity);
+    typedef typename particle_type::velocity_array_type velocity_array_type;
+    velocity_array_type const& g_velocity = particle.velocity();
+    cuda::host::vector<typename velocity_array_type::value_type> h_velocity(g_velocity.size());
+    cuda::copy(g_velocity, h_velocity);
     iterator_type output = first;
     for (typename velocity_array_type::value_type const& v : h_velocity) {
-        velocity_type velocity;
-        mass_type mass;
+        typename particle_type::velocity_type velocity;
+        typename particle_type::mass_type mass;
         tie(velocity, mass) <<= v;
         *output++ = mass;
     }
     return output;
 }
 
-template <int dimension, typename float_type>
-template <typename iterator_type>
-inline iterator_type particle<dimension, float_type>::set_mass(iterator_type const& first)
+/**
+ * Copy particle masses from given array.
+ */
+template <typename particle_type, typename iterator_type>
+inline iterator_type
+set_mass(particle_type& particle, iterator_type const& first)
 {
-    cuda::host::vector<typename velocity_array_type::value_type> h_velocity(g_velocity_.size());
-    cuda::copy(g_velocity_, h_velocity);
+    typedef typename particle_type::velocity_array_type velocity_array_type;
+    velocity_array_type& g_velocity = particle.velocity();
+    cuda::host::vector<typename velocity_array_type::value_type> h_velocity(g_velocity.size());
+    cuda::copy(g_velocity, h_velocity);
     iterator_type input = first;
     for (typename velocity_array_type::value_type& v : h_velocity) {
-        velocity_type velocity;
-        mass_type mass;
+        typename particle_type::velocity_type velocity;
+        typename particle_type::mass_type mass;
         tie(velocity, mass) <<= v;
         mass = *input++;
         v <<= tie(velocity, mass);
     }
-    cuda::copy(h_velocity, g_velocity_);
+    cuda::copy(h_velocity, g_velocity);
     return input;
 }
 
-template <int dimension, typename float_type>
-template <typename iterator_type>
-inline iterator_type particle<dimension, float_type>::get_tag(iterator_type const& first) const
+/**
+ * Copy particle tags to given array.
+ */
+template <typename particle_type, typename iterator_type>
+inline iterator_type
+get_tag(particle_type const& particle, iterator_type const& first)
 {
-    cuda::host::vector<typename tag_array_type::value_type> h_tag(g_tag_.size());
-    cuda::copy(g_tag_, h_tag);
+    typedef typename particle_type::tag_array_type tag_array_type;
+    tag_array_type const& g_tag = particle.tag();
+    cuda::host::vector<typename tag_array_type::value_type> h_tag(g_tag.size());
+    cuda::copy(g_tag, h_tag);
     return std::copy(h_tag.begin(), h_tag.end(), first);
 }
 
-template <int dimension, typename float_type>
-template <typename iterator_type>
-inline iterator_type particle<dimension, float_type>::set_tag(iterator_type const& first)
+/**
+ * Copy particle tags from given array.
+ */
+template <typename particle_type, typename iterator_type>
+inline iterator_type
+set_tag(particle_type& particle, iterator_type const& first)
 {
-    cuda::host::vector<typename tag_array_type::value_type> h_tag(g_tag_.size());
+    typedef typename particle_type::tag_array_type tag_array_type;
+    tag_array_type& g_tag = particle.tag();
+    cuda::host::vector<typename tag_array_type::value_type> h_tag(g_tag.size());
     iterator_type input = first;
     for (typename tag_array_type::value_type& tag : h_tag) {
         tag = *input++;
     }
-    cuda::copy(h_tag, g_tag_);
+    cuda::copy(h_tag, g_tag);
     return input;
 }
 
-template <int dimension, typename float_type>
-template <typename iterator_type>
-inline iterator_type particle<dimension, float_type>::get_reverse_tag(iterator_type const& first) const
+/**
+ * Copy particle reverse tags to given array.
+ */
+template <typename particle_type, typename iterator_type>
+inline iterator_type
+get_reverse_tag(particle_type const& particle, iterator_type const& first)
 {
-    cuda::host::vector<typename reverse_tag_array_type::value_type> h_reverse_tag(g_reverse_tag_.size());
-    cuda::copy(g_reverse_tag_, h_reverse_tag);
+    typedef typename particle_type::reverse_tag_array_type reverse_tag_array_type;
+    reverse_tag_array_type const& g_reverse_tag = particle.reverse_tag();
+    cuda::host::vector<typename reverse_tag_array_type::value_type> h_reverse_tag(g_reverse_tag.size());
+    cuda::copy(g_reverse_tag, h_reverse_tag);
     return std::copy(h_reverse_tag.begin(), h_reverse_tag.end(), first);
 }
 
-template <int dimension, typename float_type>
-template <typename iterator_type>
-inline iterator_type particle<dimension, float_type>::set_reverse_tag(iterator_type const& first)
+/**
+ * Copy particle reverse tags from given array.
+ */
+template <typename particle_type, typename iterator_type>
+inline iterator_type
+set_reverse_tag(particle_type& particle, iterator_type const& first)
 {
-    cuda::host::vector<typename reverse_tag_array_type::value_type> h_reverse_tag(g_reverse_tag_.size());
+    typedef typename particle_type::reverse_tag_array_type reverse_tag_array_type;
+    reverse_tag_array_type& g_reverse_tag = particle.reverse_tag();
+    cuda::host::vector<typename reverse_tag_array_type::value_type> h_reverse_tag(g_reverse_tag.size());
     iterator_type input = first;
     for (typename reverse_tag_array_type::value_type& reverse_tag : h_reverse_tag) {
         reverse_tag = *input++;
     }
-    cuda::copy(h_reverse_tag, g_reverse_tag_);
+    cuda::copy(h_reverse_tag, g_reverse_tag);
     return input;
 }
 
-template <int dimension, typename float_type>
-template <typename iterator_type>
-inline iterator_type particle<dimension, float_type>::get_force(iterator_type const& first) const
+/**
+ * Copy force per particle to given array.
+ */
+template <typename particle_type, typename iterator_type>
+inline iterator_type
+get_force(particle_type const& particle, iterator_type const& first)
 {
-    cuda::host::vector<typename force_array_type::value_type> h_force(g_force_.size());
-    cuda::copy(g_force_, h_force);
+    typedef typename particle_type::force_array_type force_array_type;
+    force_array_type const& g_force = particle.force();
+    cuda::host::vector<typename force_array_type::value_type> h_force(g_force.size());
+    cuda::copy(g_force, h_force);
     return std::copy(h_force.begin(), h_force.end(), first);
 }
 
-template <int dimension, typename float_type>
-template <typename iterator_type>
-inline iterator_type particle<dimension, float_type>::set_force(iterator_type const& first)
+/**
+ * Copy force per particle from given array.
+ */
+template <typename particle_type, typename iterator_type>
+inline iterator_type
+set_force(particle_type& particle, iterator_type const& first)
 {
-    cuda::host::vector<typename force_array_type::value_type> h_force(g_force_.size());
+    typedef typename particle_type::force_array_type force_array_type;
+    force_array_type& g_force = particle.force();
+    cuda::host::vector<typename force_array_type::value_type> h_force(g_force.size());
     iterator_type input = first;
     for (typename force_array_type::value_type& force : h_force) {
         force = *input++;
     }
-    cuda::copy(h_force, g_force_);
+    cuda::copy(h_force, g_force);
     return input;
 }
 
-template <int dimension, typename float_type>
-template <typename iterator_type>
-inline iterator_type particle<dimension, float_type>::get_en_pot(iterator_type const& first) const
+/**
+ * Copy potential energy per particle to given array.
+ */
+template <typename particle_type, typename iterator_type>
+inline iterator_type
+get_en_pot(particle_type const& particle, iterator_type const& first)
 {
-    cuda::host::vector<typename en_pot_array_type::value_type> h_en_pot(g_en_pot_.size());
-    cuda::copy(g_en_pot_, h_en_pot);
+    typedef typename particle_type::en_pot_array_type en_pot_array_type;
+    en_pot_array_type const& g_en_pot = particle.en_pot();
+    cuda::host::vector<typename en_pot_array_type::value_type> h_en_pot(g_en_pot.size());
+    cuda::copy(g_en_pot, h_en_pot);
     return std::copy(h_en_pot.begin(), h_en_pot.end(), first);
 }
 
-template <int dimension, typename float_type>
-template <typename iterator_type>
-inline iterator_type particle<dimension, float_type>::set_en_pot(iterator_type const& first)
+/**
+ * Copy potential energy per particle from given array.
+ */
+template <typename particle_type, typename iterator_type>
+inline iterator_type
+set_en_pot(particle_type& particle, iterator_type const& first)
 {
-    cuda::host::vector<typename en_pot_array_type::value_type> h_en_pot(g_en_pot_.size());
+    typedef typename particle_type::en_pot_array_type en_pot_array_type;
+    en_pot_array_type& g_en_pot = particle.en_pot();
+    cuda::host::vector<typename en_pot_array_type::value_type> h_en_pot(g_en_pot.size());
     iterator_type input = first;
     for (typename en_pot_array_type::value_type& en_pot : h_en_pot) {
         en_pot = *input++;
     }
-    cuda::copy(h_en_pot, g_en_pot_);
+    cuda::copy(h_en_pot, g_en_pot);
     return input;
 }
 
-template <int dimension, typename float_type>
-template <typename iterator_type>
-inline iterator_type particle<dimension, float_type>::get_stress_pot(iterator_type const& first) const
+/**
+ * Copy potential part of stress tensor per particle to given array.
+ */
+template <typename particle_type, typename iterator_type>
+inline iterator_type
+get_stress_pot(particle_type const& particle, iterator_type const& first)
 {
-    cuda::host::vector<typename stress_pot_array_type::value_type> h_stress_pot(g_stress_pot_.size());
-    cuda::copy(g_stress_pot_, h_stress_pot);
+    typedef typename particle_type::stress_pot_array_type stress_pot_array_type;
+    stress_pot_array_type const& g_stress_pot = particle.stress_pot();
+    cuda::host::vector<typename stress_pot_array_type::value_type> h_stress_pot(g_stress_pot.size());
+    cuda::copy(g_stress_pot, h_stress_pot);
     return std::copy(h_stress_pot.begin(), h_stress_pot.end(), first);
 }
 
-template <int dimension, typename float_type>
-template <typename iterator_type>
-inline iterator_type particle<dimension, float_type>::set_stress_pot(iterator_type const& first)
+/**
+ * Copy potential part of stress tensor per particle from given array.
+ */
+template <typename particle_type, typename iterator_type>
+inline iterator_type
+set_stress_pot(particle_type& particle, iterator_type const& first)
 {
-    cuda::host::vector<typename stress_pot_array_type::value_type> h_stress_pot(g_stress_pot_.size());
+    typedef typename particle_type::stress_pot_array_type stress_pot_array_type;
+    stress_pot_array_type& g_stress_pot = particle.stress_pot();
+    cuda::host::vector<typename stress_pot_array_type::value_type> h_stress_pot(g_stress_pot.size());
     iterator_type input = first;
     for (typename stress_pot_array_type::value_type& stress_pot : h_stress_pot) {
         stress_pot = *input++;
     }
-    cuda::copy(h_stress_pot, g_stress_pot_);
+    cuda::copy(h_stress_pot, g_stress_pot);
     return input;
 }
 
-template <int dimension, typename float_type>
-template <typename iterator_type>
-inline iterator_type particle<dimension, float_type>::get_hypervirial(iterator_type const& first) const
+/**
+ * Copy hypervirial per particle to given array.
+ */
+template <typename particle_type, typename iterator_type>
+inline iterator_type
+get_hypervirial(particle_type const& particle, iterator_type const& first)
 {
-    cuda::host::vector<typename hypervirial_array_type::value_type> h_hypervirial(g_hypervirial_.size());
-    cuda::copy(g_hypervirial_, h_hypervirial);
+    typedef typename particle_type::hypervirial_array_type hypervirial_array_type;
+    hypervirial_array_type const& g_hypervirial = particle.hypervirial();
+    cuda::host::vector<typename hypervirial_array_type::value_type> h_hypervirial(g_hypervirial.size());
+    cuda::copy(g_hypervirial, h_hypervirial);
     return std::copy(h_hypervirial.begin(), h_hypervirial.end(), first);
 }
 
-template <int dimension, typename float_type>
-template <typename iterator_type>
-inline iterator_type particle<dimension, float_type>::set_hypervirial(iterator_type const& first)
+/**
+ * Copy hypervirial per particle from given array.
+ */
+template <typename particle_type, typename iterator_type>
+inline iterator_type
+set_hypervirial(particle_type& particle, iterator_type const& first)
 {
-    cuda::host::vector<typename hypervirial_array_type::value_type> h_hypervirial(g_hypervirial_.size());
+    typedef typename particle_type::hypervirial_array_type hypervirial_array_type;
+    hypervirial_array_type& g_hypervirial = particle.hypervirial();
+    cuda::host::vector<typename hypervirial_array_type::value_type> h_hypervirial(g_hypervirial.size());
     iterator_type input = first;
     for (typename hypervirial_array_type::value_type& hypervirial : h_hypervirial) {
         hypervirial = *input++;
     }
-    cuda::copy(h_hypervirial, g_hypervirial_);
+    cuda::copy(h_hypervirial, g_hypervirial);
     return input;
 }
 
