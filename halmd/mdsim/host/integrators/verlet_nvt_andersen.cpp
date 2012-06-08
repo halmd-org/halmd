@@ -70,44 +70,44 @@ void verlet_nvt_andersen<dimension, float_type>::set_temperature(double temperat
 template <int dimension, typename float_type>
 void verlet_nvt_andersen<dimension, float_type>::integrate()
 {
+    size_type const nparticle = particle_->nparticle();
+    cache_proxy<position_array_type> position = particle_->position();
+    cache_proxy<image_array_type> image = particle_->image();
+    cache_proxy<velocity_array_type> velocity = particle_->velocity();
+    cache_proxy<force_array_type const> force = particle_->force();
+    cache_proxy<mass_array_type const> mass = particle_->mass();
+
     scoped_timer_type timer(runtime_.integrate);
 
-    std::size_t const nparticle = particle_->nparticle();
-    typename particle_type::position_array_type& position = particle_->position();
-    typename particle_type::image_array_type& image = particle_->image();
-    typename particle_type::velocity_array_type& velocity = particle_->velocity();
-    typename particle_type::force_array_type const& force = particle_->force();
-    typename particle_type::mass_array_type const& mass = particle_->mass();
-
-    for (std::size_t i = 0; i < nparticle; ++i) {
-        vector_type& v = velocity[i];
-        vector_type& r = position[i];
-        v += force[i] * timestep_half_ / mass[i];
+    for (size_type i = 0; i < nparticle; ++i) {
+        vector_type& v = (*velocity)[i];
+        vector_type& r = (*position)[i];
+        v += (*force)[i] * timestep_half_ / (*mass)[i];
         r += v * timestep_;
-        image[i] += box_->reduce_periodic(r);
+        (*image)[i] += box_->reduce_periodic(r);
     }
 }
 
 template <int dimension, typename float_type>
 void verlet_nvt_andersen<dimension, float_type>::finalize()
 {
-    scoped_timer_type timer(runtime_.finalize);
+    size_type const nparticle = particle_->nparticle();
+    cache_proxy<velocity_array_type> velocity = particle_->velocity();
+    cache_proxy<force_array_type const> force = particle_->force();
+    cache_proxy<mass_array_type const> mass = particle_->mass();
 
-    std::size_t const nparticle = particle_->nparticle();
-    typename particle_type::velocity_array_type& velocity = particle_->velocity();
-    typename particle_type::force_array_type const& force = particle_->force();
-    typename particle_type::mass_array_type const& mass = particle_->mass();
+    scoped_timer_type timer(runtime_.finalize);
 
     // cache random numbers
     float_type rng_cache = 0;
     bool rng_cache_valid = false;
 
     // loop over all particles
-    for (std::size_t i = 0; i < nparticle; ++i) {
-        vector_type& v = velocity[i];
+    for (size_type i = 0; i < nparticle; ++i) {
+        vector_type& v = (*velocity)[i];
         // is deterministic step?
         if (random_->uniform<float_type>() > coll_prob_) {
-            v += force[i] * timestep_half_ / mass[i];
+            v += (*force)[i] * timestep_half_ / (*mass)[i];
         }
         // stochastic coupling with heat bath
         else {

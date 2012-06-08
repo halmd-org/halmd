@@ -57,7 +57,12 @@ phase_space<dimension, float_type>::acquire()
         return sample_;
     }
 
-    cache_proxy<typename particle_group_type::array_type const> group = particle_group_->ordered();
+    cache_proxy<group_array_type const> group = particle_group_->ordered();
+    cache_proxy<position_array_type> particle_position = particle_->position();
+    cache_proxy<image_array_type> particle_image = particle_->image();
+    cache_proxy<velocity_array_type> particle_velocity = particle_->velocity();
+    cache_proxy<species_array_type> particle_species = particle_->species();
+    cache_proxy<mass_array_type> particle_mass = particle_->mass();
 
     scoped_timer_type timer(runtime_.acquire);
 
@@ -70,12 +75,6 @@ phase_space<dimension, float_type>::acquire()
         sample_ = std::make_shared<sample_type>(group->size(), clock_->step());
     }
 
-    typename particle_type::position_array_type& particle_position = particle_->position();
-    typename particle_type::image_array_type& particle_image = particle_->image();
-    typename particle_type::velocity_array_type& particle_velocity = particle_->velocity();
-    typename particle_type::species_array_type& particle_species = particle_->species();
-    typename particle_type::mass_array_type& particle_mass = particle_->mass();
-
     typename sample_type::position_array_type& sample_position = sample_->position();
     typename sample_type::velocity_array_type& sample_velocity = sample_->velocity();
     typename sample_type::species_array_type& sample_species = sample_->species();
@@ -84,16 +83,14 @@ phase_space<dimension, float_type>::acquire()
     // copy particle data using index map
     std::size_t tag = 0;
     for (std::size_t i : *group) {
-        assert(i < particle_->nparticle());
-
         // periodically extended particle position
         vector_type& r = sample_position[tag];
-        r = particle_position[i];
-        box_->extend_periodic(r, particle_image[i]);
+        r = (*particle_position)[i];
+        box_->extend_periodic(r, (*particle_image)[i]);
 
-        sample_velocity[tag] = particle_velocity[i];
-        sample_species[tag] = particle_species[i];
-        sample_mass[tag] = particle_mass[i];
+        sample_velocity[tag] = (*particle_velocity)[i];
+        sample_species[tag] = (*particle_species)[i];
+        sample_mass[tag] = (*particle_mass)[i];
         ++tag;
     }
 
@@ -103,28 +100,26 @@ phase_space<dimension, float_type>::acquire()
 template <int dimension, typename float_type>
 void phase_space<dimension, float_type>::set(std::shared_ptr<sample_type const> sample)
 {
-    cache_proxy<typename particle_group_type::array_type const> group = particle_group_->ordered();
+    cache_proxy<group_array_type const> group = particle_group_->ordered();
+    cache_proxy<position_array_type> particle_position = particle_->position();
+    cache_proxy<image_array_type> particle_image = particle_->image();
+    cache_proxy<velocity_array_type> particle_velocity = particle_->velocity();
+    cache_proxy<species_array_type> particle_species = particle_->species();
+    cache_proxy<mass_array_type> particle_mass = particle_->mass();
+    species_type const nspecies = particle_->nspecies();
 
     scoped_timer_type timer(runtime_.set);
-
-    typename particle_type::position_array_type& particle_position = particle_->position();
-    typename particle_type::image_array_type& particle_image = particle_->image();
-    typename particle_type::velocity_array_type& particle_velocity = particle_->velocity();
-    typename particle_type::species_array_type& particle_species = particle_->species();
-    typename particle_type::mass_array_type& particle_mass = particle_->mass();
-    typename particle_type::species_type const nspecies = particle_->nspecies();
 
     typename sample_type::position_array_type const& sample_position = sample->position();
     typename sample_type::velocity_array_type const& sample_velocity = sample->velocity();
     typename sample_type::species_array_type const& sample_species = sample->species();
     typename sample_type::mass_array_type const& sample_mass = sample->mass();
 
-    std::size_t tag = 0;
-    for (std::size_t i : *group) {
-        assert(i < particle_->nparticle());
-        vector_type& r = particle_position[i];
+    size_type tag = 0;
+    for (size_type i : *group) {
+        vector_type& r = (*particle_position)[i];
         r = sample_position[tag];
-        vector_type& image = particle_image[i];
+        vector_type& image = (*particle_image)[i];
         image = 0;
 
         // The host implementation of reduce_periodic wraps the position at
@@ -137,13 +132,13 @@ void phase_space<dimension, float_type>::set(std::shared_ptr<sample_type const> 
             image += (shift = box_->reduce_periodic(r));
         } while (shift != vector_type(0));
 
-        particle_velocity[i] = sample_velocity[tag];
-        unsigned int species = sample_species[tag];
+        (*particle_velocity)[i] = sample_velocity[tag];
+        species_type species = sample_species[tag];
         if (species >= nspecies) {
             throw std::invalid_argument("invalid species");
         }
-        particle_species[i] = species;
-        particle_mass[i] = sample_mass[tag];
+        (*particle_species)[i] = species;
+        (*particle_mass)[i] = sample_mass[tag];
         ++tag;
     }
 }

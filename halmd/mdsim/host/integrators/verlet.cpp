@@ -58,21 +58,21 @@ void verlet<dimension, float_type>::set_timestep(double timestep)
 template <int dimension, typename float_type>
 void verlet<dimension, float_type>::integrate()
 {
+    cache_proxy<position_array_type> position = particle_->position();
+    cache_proxy<image_array_type> image = particle_->image();
+    cache_proxy<velocity_array_type> velocity = particle_->velocity();
+    cache_proxy<force_array_type const> force = particle_->force();
+    cache_proxy<mass_array_type const> mass = particle_->mass();
+    size_type const nparticle = particle_->nparticle();
+
     scoped_timer_type timer(runtime_.integrate);
 
-    typename particle_type::position_array_type& position = particle_->position();
-    typename particle_type::image_array_type& image = particle_->image();
-    typename particle_type::velocity_array_type& velocity = particle_->velocity();
-    typename particle_type::force_array_type const& force = particle_->force();
-    typename particle_type::mass_array_type const& mass = particle_->mass();
-
-    for (size_t i = 0; i < particle_->nparticle(); ++i) {
-        vector_type& v = velocity[i] += force[i] * timestep_half_ / mass[i];
-        vector_type& r = position[i] += v * timestep_;
-        // enforce periodic boundary conditions
-        // TODO: reduction is now to (-L/2, L/2) instead of (0, L) as before
-        // check that this is OK
-        image[i] += box_->reduce_periodic(r);
+    for (size_type i = 0; i < nparticle; ++i) {
+        vector_type& v = (*velocity)[i];
+        vector_type& r = (*position)[i];
+        v += (*force)[i] * timestep_half_ / (*mass)[i];
+        r += v * timestep_;
+        (*image)[i] += box_->reduce_periodic(r);
     }
 }
 
@@ -82,14 +82,15 @@ void verlet<dimension, float_type>::integrate()
 template <int dimension, typename float_type>
 void verlet<dimension, float_type>::finalize()
 {
+    cache_proxy<velocity_array_type> velocity = particle_->velocity();
+    cache_proxy<force_array_type const> force = particle_->force();
+    cache_proxy<mass_array_type const> mass = particle_->mass();
+    size_type const nparticle = particle_->nparticle();
+
     scoped_timer_type timer(runtime_.finalize);
 
-    typename particle_type::velocity_array_type& velocity = particle_->velocity();
-    typename particle_type::force_array_type const& force = particle_->force();
-    typename particle_type::mass_array_type const& mass = particle_->mass();
-
-    for (size_t i = 0; i < particle_->nparticle(); ++i) {
-        velocity[i] += force[i] * timestep_half_ / mass[i];
+    for (size_type i = 0; i < nparticle; ++i) {
+        (*velocity)[i] += (*force)[i] * timestep_half_ / (*mass)[i];
     }
 }
 

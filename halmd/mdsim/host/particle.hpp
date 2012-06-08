@@ -39,6 +39,7 @@ class particle
 public:
     typedef fixed_vector<float_type, dimension> vector_type;
 
+    typedef unsigned int size_type;
     typedef vector_type position_type;
     typedef vector_type image_type;
     typedef vector_type velocity_type;
@@ -74,7 +75,7 @@ public:
      * All particle arrays, except the masses, are initialised to zero.
      * The particle masses are initialised to unit mass.
      */
-    particle(std::size_t nparticle, unsigned int nspecies);
+    particle(size_type nparticle, unsigned int nspecies);
 
     /**
      * Returns number of particles.
@@ -84,20 +85,9 @@ public:
      * reactions that do not conserve the number of particles, or to
      * transfer particles between domains of different processors.
      */
-    std::size_t nparticle() const
+    size_type nparticle() const
     {
-        return tag_.size();
-    }
-
-    /**
-     * Returns number of particle placeholders.
-     *
-     * Currently the number of placeholders, i.e. the element count of the
-     * particle arrays in memory, is equal to the number of particles.
-     */
-    std::size_t nplaceholder() const
-    {
-        return tag_.size();
+        return nparticle_;
     }
 
     /**
@@ -111,7 +101,7 @@ public:
     /**
      * Returns const reference to particle positions.
      */
-    position_array_type const& position() const
+    cache<position_array_type> const& position() const
     {
         return position_;
     }
@@ -119,7 +109,7 @@ public:
     /**
      * Returns non-const reference to particle positions.
      */
-    position_array_type& position()
+    cache<position_array_type>& position()
     {
         return position_;
     }
@@ -127,7 +117,7 @@ public:
     /**
      * Returns non-const reference to particle images.
      */
-    image_array_type const& image() const
+    cache<image_array_type> const& image() const
     {
         return image_;
     }
@@ -135,7 +125,7 @@ public:
     /**
      * Returns const reference to particle images.
      */
-    image_array_type& image()
+    cache<image_array_type>& image()
     {
         return image_;
     }
@@ -143,7 +133,7 @@ public:
     /**
      * Returns const reference to particle velocities.
      */
-    velocity_array_type const& velocity() const
+    cache<velocity_array_type> const& velocity() const
     {
         return velocity_;
     }
@@ -151,7 +141,7 @@ public:
     /**
      * Returns non-const reference to particle velocities.
      */
-    velocity_array_type& velocity()
+    cache<velocity_array_type>& velocity()
     {
         return velocity_;
     }
@@ -159,7 +149,7 @@ public:
     /**
      * Returns const reference to particle tags.
      */
-    tag_array_type const& tag() const
+    cache<tag_array_type> const& tag() const
     {
         return tag_;
     }
@@ -167,7 +157,7 @@ public:
     /**
      * Returns non-const reference to particle tags.
      */
-    tag_array_type& tag()
+    cache<tag_array_type>& tag()
     {
         return tag_;
     }
@@ -191,7 +181,7 @@ public:
     /**
      * Returns const reference to particle species.
      */
-    species_array_type const& species() const
+    cache<species_array_type> const& species() const
     {
         return species_;
     }
@@ -199,7 +189,7 @@ public:
     /**
      * Returns non-const reference to particle species.
      */
-    species_array_type& species()
+    cache<species_array_type>& species()
     {
         return species_;
     }
@@ -207,7 +197,7 @@ public:
     /**
      * Returns const reference to particle masses.
      */
-    mass_array_type const& mass() const
+    cache<mass_array_type> const& mass() const
     {
         return mass_;
     }
@@ -215,7 +205,7 @@ public:
     /**
      * Returns non-const reference to particle masses.
      */
-    mass_array_type& mass()
+    cache<mass_array_type>& mass()
     {
         return mass_;
     }
@@ -223,7 +213,7 @@ public:
     /**
      * Returns non-const reference to force per particle.
      */
-    force_array_type const& force() const
+    cache<force_array_type> const& force() const
     {
         return force_;
     }
@@ -231,7 +221,7 @@ public:
     /**
      * Returns const reference to force per particle.
      */
-    force_array_type& force()
+    cache<force_array_type>& force()
     {
         return force_;
     }
@@ -241,7 +231,7 @@ public:
      *
      * This method checks that the computation of auxiliary variables was enabled.
      */
-    en_pot_array_type const& en_pot() const
+    cache<en_pot_array_type> const& en_pot() const
     {
         return en_pot_;
     }
@@ -249,7 +239,7 @@ public:
     /**
      * Returns non-const reference to potential energy per particle.
      */
-    en_pot_array_type& en_pot()
+    cache<en_pot_array_type>& en_pot()
     {
         return en_pot_;
     }
@@ -259,7 +249,7 @@ public:
      *
      * This method checks that the computation of auxiliary variables was enabled.
      */
-    stress_pot_array_type const& stress_pot() const
+    cache<stress_pot_array_type> const& stress_pot() const
     {
         return stress_pot_;
     }
@@ -267,7 +257,7 @@ public:
     /**
      * Returns non-const reference to potential part of stress tensor per particle.
      */
-    stress_pot_array_type& stress_pot()
+    cache<stress_pot_array_type>& stress_pot()
     {
         return stress_pot_;
     }
@@ -277,7 +267,7 @@ public:
      *
      * This method checks that the computation of auxiliary variables was enabled.
      */
-    hypervirial_array_type const& hypervirial() const
+    cache<hypervirial_array_type> const& hypervirial() const
     {
         return hypervirial_;
     }
@@ -285,7 +275,7 @@ public:
     /**
      * Returns non-const reference to hypervirial per particle.
      */
-    hypervirial_array_type& hypervirial()
+    cache<hypervirial_array_type>& hypervirial()
     {
         return hypervirial_;
     }
@@ -316,30 +306,32 @@ public:
     static void luaopen(lua_State* L);
 
 private:
+    /** number of particles */
+    unsigned int nparticle_;
     /** number of particle species */
     unsigned int nspecies_;
     /** positions, reduced to extended domain box */
-    position_array_type position_;
+    cache<position_array_type> position_;
     /** minimum image vectors */
-    image_array_type image_;
+    cache<image_array_type> image_;
     /** velocities */
-    velocity_array_type velocity_;
+    cache<velocity_array_type> velocity_;
     /** particle tags */
-    tag_array_type tag_;
+    cache<tag_array_type> tag_;
     /** reverse particle tags */
     cache<reverse_tag_array_type> reverse_tag_;
     /** particle species */
-    species_array_type species_;
+    cache<species_array_type> species_;
     /** particle masses */
-    mass_array_type mass_;
+    cache<mass_array_type> mass_;
     /** force per particle */
-    force_array_type force_;
+    cache<force_array_type> force_;
     /** potential energy per particle */
-    en_pot_array_type en_pot_;
+    cache<en_pot_array_type> en_pot_;
     /** potential part of stress tensor per particle */
-    stress_pot_array_type stress_pot_;
+    cache<stress_pot_array_type> stress_pot_;
     /** hypervirial per particle */
-    hypervirial_array_type hypervirial_;
+    cache<hypervirial_array_type> hypervirial_;
 
     /** flag for enabling the computation of auxiliary variables this step */
     bool aux_flag_;
@@ -367,8 +359,8 @@ inline iterator_type
 get_position(particle_type const& particle, iterator_type const& first)
 {
     typedef typename particle_type::position_array_type position_array_type;
-    position_array_type const& position = particle.position();
-    return std::copy(position.begin(), position.end(), first);
+    cache_proxy<position_array_type const> position = particle.position();
+    return std::copy(position->begin(), position->end(), first);
 }
 
 /**
@@ -379,9 +371,9 @@ inline iterator_type
 set_position(particle_type& particle, iterator_type const& first)
 {
     typedef typename particle_type::position_array_type position_array_type;
-    position_array_type& position = particle.position();
+    cache_proxy<position_array_type> position = particle.position();
     iterator_type input = first;
-    for (typename particle_type::position_type& value : position) {
+    for (typename particle_type::position_type& value : *position) {
         value = *input++;
     }
     return input;
@@ -395,8 +387,8 @@ inline iterator_type
 get_image(particle_type const& particle, iterator_type const& first)
 {
     typedef typename particle_type::image_array_type image_array_type;
-    image_array_type const& image = particle.image();
-    return std::copy(image.begin(), image.end(), first);
+    cache_proxy<image_array_type const> image = particle.image();
+    return std::copy(image->begin(), image->end(), first);
 }
 
 /**
@@ -407,9 +399,9 @@ inline iterator_type
 set_image(particle_type& particle, iterator_type const& first)
 {
     typedef typename particle_type::image_array_type image_array_type;
-    image_array_type& image = particle.image();
+    cache_proxy<image_array_type> image = particle.image();
     iterator_type input = first;
-    for (typename particle_type::image_type& value : image) {
+    for (typename particle_type::image_type& value : *image) {
         value = *input++;
     }
     return input;
@@ -423,8 +415,8 @@ inline iterator_type
 get_velocity(particle_type const& particle, iterator_type const& first)
 {
     typedef typename particle_type::velocity_array_type velocity_array_type;
-    velocity_array_type const& velocity = particle.velocity();
-    return std::copy(velocity.begin(), velocity.end(), first);
+    cache_proxy<velocity_array_type const> velocity = particle.velocity();
+    return std::copy(velocity->begin(), velocity->end(), first);
 }
 
 /**
@@ -435,9 +427,9 @@ inline iterator_type
 set_velocity(particle_type& particle, iterator_type const& first)
 {
     typedef typename particle_type::velocity_array_type velocity_array_type;
-    velocity_array_type& velocity = particle.velocity();
+    cache_proxy<velocity_array_type> velocity = particle.velocity();
     iterator_type input = first;
-    for (typename particle_type::velocity_type& value : velocity) {
+    for (typename particle_type::velocity_type& value : *velocity) {
         value = *input++;
     }
     return input;
@@ -451,8 +443,8 @@ inline iterator_type
 get_tag(particle_type const& particle, iterator_type const& first)
 {
     typedef typename particle_type::tag_array_type tag_array_type;
-    tag_array_type const& tag = particle.tag();
-    return std::copy(tag.begin(), tag.end(), first);
+    cache_proxy<tag_array_type const> tag = particle.tag();
+    return std::copy(tag->begin(), tag->end(), first);
 }
 
 /**
@@ -463,9 +455,9 @@ inline iterator_type
 set_tag(particle_type& particle, iterator_type const& first)
 {
     typedef typename particle_type::tag_array_type tag_array_type;
-    tag_array_type& tag = particle.tag();
+    cache_proxy<tag_array_type> tag = particle.tag();
     iterator_type input = first;
-    for (typename particle_type::tag_type& value : tag) {
+    for (typename particle_type::tag_type& value : *tag) {
         value = *input++;
     }
     return input;
@@ -507,8 +499,8 @@ inline iterator_type
 get_species(particle_type const& particle, iterator_type const& first)
 {
     typedef typename particle_type::species_array_type species_array_type;
-    species_array_type const& species = particle.species();
-    return std::copy(species.begin(), species.end(), first);
+    cache_proxy<species_array_type const> species = particle.species();
+    return std::copy(species->begin(), species->end(), first);
 }
 
 /**
@@ -519,9 +511,9 @@ inline iterator_type
 set_species(particle_type& particle, iterator_type const& first)
 {
     typedef typename particle_type::species_array_type species_array_type;
-    species_array_type& species = particle.species();
+    cache_proxy<species_array_type> species = particle.species();
     iterator_type input = first;
-    for (typename particle_type::species_type& value : species) {
+    for (typename particle_type::species_type& value : *species) {
         value = *input++;
     }
     return input;
@@ -535,8 +527,8 @@ inline iterator_type
 get_mass(particle_type const& particle, iterator_type const& first)
 {
     typedef typename particle_type::mass_array_type mass_array_type;
-    mass_array_type const& mass = particle.mass();
-    return std::copy(mass.begin(), mass.end(), first);
+    cache_proxy<mass_array_type const> mass = particle.mass();
+    return std::copy(mass->begin(), mass->end(), first);
 }
 
 /**
@@ -547,9 +539,9 @@ inline iterator_type
 set_mass(particle_type& particle, iterator_type const& first)
 {
     typedef typename particle_type::mass_array_type mass_array_type;
-    mass_array_type& mass = particle.mass();
+    cache_proxy<mass_array_type> mass = particle.mass();
     iterator_type input = first;
-    for (typename particle_type::mass_type& value : mass) {
+    for (typename particle_type::mass_type& value : *mass) {
         value = *input++;
     }
     return input;
@@ -563,8 +555,8 @@ inline iterator_type
 get_force(particle_type const& particle, iterator_type const& first)
 {
     typedef typename particle_type::force_array_type force_array_type;
-    force_array_type const& force = particle.force();
-    return std::copy(force.begin(), force.end(), first);
+    cache_proxy<force_array_type const> force = particle.force();
+    return std::copy(force->begin(), force->end(), first);
 }
 
 /**
@@ -575,9 +567,9 @@ inline iterator_type
 set_force(particle_type& particle, iterator_type const& first)
 {
     typedef typename particle_type::force_array_type force_array_type;
-    force_array_type& force = particle.force();
+    cache_proxy<force_array_type> force = particle.force();
     iterator_type input = first;
-    for (typename particle_type::force_type& value : force) {
+    for (typename particle_type::force_type& value : *force) {
         value = *input++;
     }
     return input;
@@ -591,8 +583,8 @@ inline iterator_type
 get_en_pot(particle_type const& particle, iterator_type const& first)
 {
     typedef typename particle_type::en_pot_array_type en_pot_array_type;
-    en_pot_array_type const& en_pot = particle.en_pot();
-    return std::copy(en_pot.begin(), en_pot.end(), first);
+    cache_proxy<en_pot_array_type const> en_pot = particle.en_pot();
+    return std::copy(en_pot->begin(), en_pot->end(), first);
 }
 
 /**
@@ -603,9 +595,9 @@ inline iterator_type
 set_en_pot(particle_type& particle, iterator_type const& first)
 {
     typedef typename particle_type::en_pot_array_type en_pot_array_type;
-    en_pot_array_type& en_pot = particle.en_pot();
+    cache_proxy<en_pot_array_type> en_pot = particle.en_pot();
     iterator_type input = first;
-    for (typename particle_type::en_pot_type& value : en_pot) {
+    for (typename particle_type::en_pot_type& value : *en_pot) {
         value = *input++;
     }
     return input;
@@ -619,8 +611,8 @@ inline iterator_type
 get_stress_pot(particle_type const& particle, iterator_type const& first)
 {
     typedef typename particle_type::stress_pot_array_type stress_pot_array_type;
-    stress_pot_array_type const& stress_pot = particle.stress_pot();
-    return std::copy(stress_pot.begin(), stress_pot.end(), first);
+    cache_proxy<stress_pot_array_type const> stress_pot = particle.stress_pot();
+    return std::copy(stress_pot->begin(), stress_pot->end(), first);
 }
 
 /**
@@ -631,9 +623,9 @@ inline iterator_type
 set_stress_pot(particle_type& particle, iterator_type const& first)
 {
     typedef typename particle_type::stress_pot_array_type stress_pot_array_type;
-    stress_pot_array_type& stress_pot = particle.stress_pot();
+    cache_proxy<stress_pot_array_type> stress_pot = particle.stress_pot();
     iterator_type input = first;
-    for (typename particle_type::stress_pot_type& value : stress_pot) {
+    for (typename particle_type::stress_pot_type& value : *stress_pot) {
         value = *input++;
     }
     return input;
@@ -647,8 +639,8 @@ inline iterator_type
 get_hypervirial(particle_type const& particle, iterator_type const& first)
 {
     typedef typename particle_type::hypervirial_array_type hypervirial_array_type;
-    hypervirial_array_type const& hypervirial = particle.hypervirial();
-    return std::copy(hypervirial.begin(), hypervirial.end(), first);
+    cache_proxy<hypervirial_array_type const> hypervirial = particle.hypervirial();
+    return std::copy(hypervirial->begin(), hypervirial->end(), first);
 }
 
 /**
@@ -659,9 +651,9 @@ inline iterator_type
 set_hypervirial(particle_type& particle, iterator_type const& first)
 {
     typedef typename particle_type::hypervirial_array_type hypervirial_array_type;
-    hypervirial_array_type& hypervirial = particle.hypervirial();
+    cache_proxy<hypervirial_array_type> hypervirial = particle.hypervirial();
     iterator_type input = first;
-    for (typename particle_type::hypervirial_type& value : hypervirial) {
+    for (typename particle_type::hypervirial_type& value : *hypervirial) {
         value = *input++;
     }
     return input;

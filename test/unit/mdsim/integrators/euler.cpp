@@ -276,9 +276,12 @@ template <int dimension, typename float_type>
 void host_modules<dimension, float_type>::set_velocity(std::shared_ptr<particle_type> particle)
 {
     // copy -r[i] to v[i]
-    transform(
-        particle->position().begin(), particle->position().end()
-      , particle->velocity().begin()
+    halmd::cache_proxy<typename particle_type::position_array_type const> position = particle->position();
+    halmd::cache_proxy<typename particle_type::velocity_array_type> velocity = particle->velocity();
+    std::transform(
+        position->begin()
+      , position->end()
+      , velocity->begin()
       , negate<typename particle_type::vector_type>()
     );
 }

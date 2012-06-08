@@ -20,7 +20,6 @@
 #include <halmd/config.hpp>
 
 #include <algorithm>
-#include <boost/foreach.hpp>
 #ifdef HALMD_NO_CXX11
 # include <boost/lambda/lambda.hpp>
 #endif
@@ -112,19 +111,21 @@ void verlet_nvt_hoover<dimension, float_type>::integrate()
 {
     scoped_timer_type timer(runtime_.integrate);
 
-    typename particle_type::position_array_type& position = particle_->position();
-    typename particle_type::image_array_type& image = particle_->image();
-    typename particle_type::velocity_array_type& velocity = particle_->velocity();
-    typename particle_type::force_array_type const& force = particle_->force();
-    typename particle_type::mass_array_type const& mass = particle_->mass();
+    size_type const nparticle = particle_->nparticle();
+    cache_proxy<position_array_type> position = particle_->position();
+    cache_proxy<image_array_type> image = particle_->image();
+    cache_proxy<velocity_array_type> velocity = particle_->velocity();
+    cache_proxy<force_array_type const> force = particle_->force();
+    cache_proxy<mass_array_type const> mass = particle_->mass();
 
     propagate_chain();
 
-    for (size_t i = 0; i < particle_->nparticle(); ++i) {
-        vector_type& v = velocity[i] += force[i] * timestep_half_ / mass[i];
-        vector_type& r = position[i] += v * timestep_;
-        // enforce periodic boundary conditions
-        image[i] += box_->reduce_periodic(r);
+    for (size_type i = 0; i < nparticle; ++i) {
+        vector_type& v = (*velocity)[i];
+        vector_type& r = (*position)[i];
+        v += (*force)[i] * timestep_half_ / (*mass)[i];
+        r += v * timestep_;
+        (*image)[i] += box_->reduce_periodic(r);
     }
 }
 
@@ -134,25 +135,26 @@ void verlet_nvt_hoover<dimension, float_type>::integrate()
 template <int dimension, typename float_type>
 void verlet_nvt_hoover<dimension, float_type>::finalize()
 {
+    size_type const nparticle = particle_->nparticle();
+    cache_proxy<velocity_array_type> velocity = particle_->velocity();
+    cache_proxy<force_array_type const> force = particle_->force();
+    cache_proxy<mass_array_type const> mass = particle_->mass();
+
     scoped_timer_type timer(runtime_.finalize);
 
-    typename particle_type::velocity_array_type& velocity = particle_->velocity();
-    typename particle_type::force_array_type const& force = particle_->force();
-    typename particle_type::mass_array_type const& mass = particle_->mass();
-
     // loop over all particles
-    for (size_t i = 0; i < particle_->nparticle(); ++i) {
-        velocity[i] += force[i] * timestep_half_ / mass[i];
+    for (size_type i = 0; i < nparticle; ++i) {
+        (*velocity)[i] += (*force)[i] * timestep_half_ / (*mass)[i];
     }
 
     propagate_chain();
 
     // compute energy contribution of chain variables
-    en_nhc_ = temperature_ * (dimension * particle_->nparticle() * xi[0] + xi[1]);
+    en_nhc_ = temperature_ * (dimension * nparticle * xi[0] + xi[1]);
     for (unsigned int i = 0; i < 2; ++i ) {
         en_nhc_ += mass_xi_[i] * v_xi[i] * v_xi[i] / 2;
     }
-    en_nhc_ /= particle_->nparticle();
+    en_nhc_ /= nparticle;
 }
 
 /**
@@ -161,11 +163,13 @@ void verlet_nvt_hoover<dimension, float_type>::finalize()
 template <int dimension, typename float_type>
 void verlet_nvt_hoover<dimension, float_type>::propagate_chain()
 {
+    cache_proxy<velocity_array_type> velocity = particle_->velocity();
+
     scoped_timer_type timer(runtime_.propagate);
 
     // compute total kinetic energy (multiplied by 2)
     float_type en_kin_2 = 0;
-    BOOST_FOREACH(vector_type const& v, particle_->velocity()) {
+    for (vector_type const& v : *velocity) {
         // assuming unit mass for all particle types
         en_kin_2 += inner_prod(v, v);
     }
@@ -184,7 +188,7 @@ void verlet_nvt_hoover<dimension, float_type>::propagate_chain()
 
     // rescale velocities and kinetic energy
     float_type s = exp(-v_xi[0] * timestep_half_);
-    BOOST_FOREACH(vector_type& v, particle_->velocity()) {
+    for (vector_type& v : *velocity) {
         v *= s;
     }
     en_kin_2 *= s * s;

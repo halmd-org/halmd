@@ -77,17 +77,24 @@ binning<dimension, float_type>::binning(
 template <int dimension, typename float_type>
 void binning<dimension, float_type>::update()
 {
+    cache_proxy<position_array_type const> position = particle_->position();
+    size_type const nparticle = particle_->nparticle();
+
     LOG_TRACE("update cell lists");
 
     scoped_timer_type timer(runtime_.update);
 
-    typename particle_type::position_array_type const& position = particle_->position();
-
     // empty cell lists without memory reallocation
-    for_each(cell_.data(), cell_.data() + cell_.num_elements(), bind(&cell_list::clear, _1));
+    std::for_each(
+        cell_.data()
+      , cell_.data() + cell_.num_elements()
+      , [](cell_list& cell) {
+            cell.clear();
+        }
+    );
     // add particles to cells
-    for (size_t i = 0; i < particle_->nparticle(); ++i) {
-        vector_type const& r = position[i];
+    for (size_type i = 0; i < nparticle; ++i) {
+        vector_type const& r = (*position)[i];
         cell_size_type index = element_mod(static_cast<cell_size_type>(element_div(r, cell_length_) + static_cast<vector_type>(ncell_)), ncell_);
         cell_(index).push_back(i);
     }

@@ -69,12 +69,15 @@ template <int dimension, typename float_type>
 std::pair<typename boltzmann<dimension, float_type>::vector_type, float_type>
 boltzmann<dimension, float_type>::gaussian(float_type sigma)
 {
+    cache_proxy<velocity_array_type> velocity = particle_->velocity();
+    size_type const nparticle = particle_->nparticle();
+
     vector_type v_cm = 0;
     float_type vv = 0;
     float_type r = 0;
     bool r_valid = false;
 
-    for(vector_type& v : particle_->velocity()) {
+    for (vector_type& v : *velocity) {
         // assign two components at a time
         for (unsigned int i = 0; i < dimension - 1; i += 2) {
             boost::tie(v[i], v[i + 1]) = random_->normal(sigma);
@@ -92,8 +95,8 @@ boltzmann<dimension, float_type>::gaussian(float_type sigma)
         v_cm += v;
         vv += inner_prod(v, v);
     }
-    v_cm /= particle_->velocity().size();
-    vv /= particle_->velocity().size();
+    v_cm /= nparticle;
+    vv /= nparticle;
 
     return std::make_pair(v_cm, vv);
 }

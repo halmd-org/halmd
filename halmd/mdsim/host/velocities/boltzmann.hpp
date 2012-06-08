@@ -73,6 +73,8 @@ public:
 private:
     typedef host::velocity<dimension, float_type> _Base;
     typedef typename particle_type::vector_type vector_type;
+    typedef typename particle_type::size_type size_type;
+    typedef typename particle_type::velocity_array_type velocity_array_type;
 
     /**
      * Assign new velocities from Gaussian distribution

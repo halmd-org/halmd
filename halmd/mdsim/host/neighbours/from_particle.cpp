@@ -80,26 +80,28 @@ void from_particle<dimension, float_type>::update()
 
     scoped_timer_type timer(runtime_.update);
 
-    typename particle_type::position_array_type const& position1 = particle1_->position();
-    typename particle_type::position_array_type const& position2 = particle2_->position();
-    typename particle_type::species_array_type const& species1 = particle1_->species();
-    typename particle_type::species_array_type const& species2 = particle2_->species();
+    cache_proxy<position_array_type const> position1 = particle1_->position();
+    cache_proxy<position_array_type const> position2 = particle2_->position();
+    cache_proxy<species_array_type const> species1 = particle1_->species();
+    cache_proxy<species_array_type const> species2 = particle2_->species();
+    size_type const nparticle1 = particle1_->nparticle();
+    size_type const nparticle2 = particle2_->nparticle();
 
     // whether Newton's third law applies
     bool const reactio = (particle1_ == particle2_);
 
-    for (size_t i = 0; i < particle1_->nparticle(); ++i) {
+    for (size_type i = 0; i < nparticle1; ++i) {
         // load first particle
-        vector_type r1 = position1[i];
-        unsigned int type1 = species1[i];
+        vector_type r1 = (*position1)[i];
+        species_type type1 = (*species1)[i];
 
         // clear particle's neighbour list
         neighbour_[i].clear();
 
-        for (size_t j = reactio ? (i + 1) : 0; j < particle2_->nparticle(); ++j) {
+        for (size_type j = reactio ? (i + 1) : 0; j < nparticle2; ++j) {
             // load second particle
-            vector_type r2 = position2[j];
-            unsigned int type2 = species2[j];
+            vector_type r2 = (*position2)[j];
+            species_type type2 = (*species2)[j];
 
             // particle distance vector
             vector_type r = r1 - r2;

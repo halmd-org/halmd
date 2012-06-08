@@ -19,7 +19,6 @@
 
 #include <algorithm>
 #include <boost/bind.hpp>
-#include <boost/foreach.hpp>
 #include <cmath>
 
 #include <halmd/mdsim/host/sorts/hilbert.hpp>
@@ -100,8 +99,8 @@ void hilbert<dimension, float_type>::order()
             binning_->update();
             // generate index sequence according to Hilbert-sorted cells
             index.reserve(particle_->nparticle());
-            BOOST_FOREACH(cell_list const* cell, map_) {
-                BOOST_FOREACH(unsigned int p, *cell) {
+            for (cell_list const* cell : map_) {
+                for (unsigned int p : *cell) {
                     index.push_back(p);
                 }
             }

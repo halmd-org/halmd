@@ -41,9 +41,10 @@ namespace mdsim {
 namespace host {
 
 template <int dimension, typename float_type>
-particle<dimension, float_type>::particle(size_t nparticle, unsigned int nspecies)
+particle<dimension, float_type>::particle(size_type nparticle, unsigned int nspecies)
   // allocate particle storage
-  : nspecies_(std::max(nspecies, 1u))
+  : nparticle_(nparticle)
+  , nspecies_(std::max(nspecies, 1u))
   , position_(nparticle)
   , image_(nparticle)
   , velocity_(nparticle)
@@ -59,21 +60,31 @@ particle<dimension, float_type>::particle(size_t nparticle, unsigned int nspecie
   , aux_flag_(false)
   , aux_valid_(false)
 {
+    cache_proxy<position_array_type> position = position_;
+    cache_proxy<image_array_type> image = image_;
+    cache_proxy<velocity_array_type> velocity = velocity_;
+    cache_proxy<tag_array_type> tag = tag_;
     cache_proxy<reverse_tag_array_type> reverse_tag = reverse_tag_;
+    cache_proxy<species_array_type> species = species_;
+    cache_proxy<mass_array_type> mass = mass_;
+    cache_proxy<force_array_type> force = force_;
+    cache_proxy<en_pot_array_type> en_pot = en_pot_;
+    cache_proxy<stress_pot_array_type> stress_pot = stress_pot_;
+    cache_proxy<hypervirial_array_type> hypervirial = hypervirial_;
 
-    std::fill(position_.begin(), position_.end(), 0);
-    std::fill(image_.begin(), image_.end(), 0);
-    std::fill(velocity_.begin(), velocity_.end(), 0);
-    std::iota(tag_.begin(), tag_.end(), 0);
+    std::fill(position->begin(), position->end(), 0);
+    std::fill(image->begin(), image->end(), 0);
+    std::fill(velocity->begin(), velocity->end(), 0);
+    std::iota(tag->begin(), tag->end(), 0);
     std::iota(reverse_tag->begin(), reverse_tag->end(), 0);
-    std::fill(species_.begin(), species_.end(), 0);
-    std::fill(mass_.begin(), mass_.end(), 1);
-    std::fill(force_.begin(), force_.end(), 0);
-    std::fill(en_pot_.begin(), en_pot_.end(), 0);
-    std::fill(stress_pot_.begin(), stress_pot_.end(), 0);
-    std::fill(hypervirial_.begin(), hypervirial_.end(), 0);
+    std::fill(species->begin(), species->end(), 0);
+    std::fill(mass->begin(), mass->end(), 1);
+    std::fill(force->begin(), force->end(), 0);
+    std::fill(en_pot->begin(), en_pot->end(), 0);
+    std::fill(stress_pot->begin(), stress_pot->end(), 0);
+    std::fill(hypervirial->begin(), hypervirial->end(), 0);
 
-    LOG("number of particles: " << tag_.size());
+    LOG("number of particles: " << nparticle_);
     LOG("number of particle species: " << nspecies_);
 }
 
@@ -87,17 +98,26 @@ void particle<dimension, float_type>::aux_enable()
 template <int dimension, typename float_type>
 void particle<dimension, float_type>::prepare()
 {
+    cache_proxy<force_array_type> force = force_;
+
     LOG_TRACE("zero forces");
-    std::fill(force_.begin(), force_.end(), 0);
+
+    std::fill(force->begin(), force->end(), 0);
 
     // indicate whether auxiliary variables are computed this step
     aux_valid_ = aux_flag_;
 
     if (aux_flag_) {
+        cache_proxy<en_pot_array_type> en_pot = en_pot_;
+        cache_proxy<stress_pot_array_type> stress_pot = stress_pot_;
+        cache_proxy<hypervirial_array_type> hypervirial = hypervirial_;
+
         LOG_TRACE("zero auxiliary variables");
-        std::fill(en_pot_.begin(), en_pot_.end(), 0);
-        std::fill(stress_pot_.begin(), stress_pot_.end(), 0);
-        std::fill(hypervirial_.begin(), hypervirial_.end(), 0);
+
+        std::fill(en_pot->begin(), en_pot->end(), 0);
+        std::fill(stress_pot->begin(), stress_pot->end(), 0);
+        std::fill(hypervirial->begin(), hypervirial->end(), 0);
+
         aux_flag_ = false;
     }
 }
@@ -112,20 +132,25 @@ void particle<dimension, float_type>::rearrange(std::vector<unsigned int> const&
 {
     scoped_timer_type timer(runtime_.rearrange);
 
+    cache_proxy<position_array_type> position = position_;
+    cache_proxy<image_array_type> image = image_;
+    cache_proxy<velocity_array_type> velocity = velocity_;
+    cache_proxy<tag_array_type> tag = tag_;
     cache_proxy<reverse_tag_array_type> reverse_tag = reverse_tag_;
+    cache_proxy<species_array_type> species = species_;
+    cache_proxy<mass_array_type> mass = mass_;
 
-    permute(position_.begin(), position_.end(), index.begin());
-    permute(image_.begin(), image_.end(), index.begin());
-    permute(velocity_.begin(), velocity_.end(), index.begin());
+    permute(position->begin(), position->end(), index.begin());
+    permute(image->begin(), image->end(), index.begin());
+    permute(velocity->begin(), velocity->end(), index.begin());
     // no permutation of forces
-    permute(tag_.begin(), tag_.end(), index.begin());
-    permute(species_.begin(), species_.end(), index.begin());
-    permute(mass_.begin(), mass_.end(), index.begin());
+    permute(tag->begin(), tag->end(), index.begin());
+    permute(species->begin(), species->end(), index.begin());
+    permute(mass->begin(), mass->end(), index.begin());
 
     // update reverse tags
-    for (unsigned int i = 0; i < tag_.size(); ++i) {
-        assert(tag_[i] < reverse_tag->size());
-        (*reverse_tag)[tag_[i]] = i;
+    for (unsigned int i = 0; i < nparticle_; ++i) {
+        (*reverse_tag)[(*tag)[i]] = i;
     }
 }
 
@@ -484,7 +509,7 @@ void particle<dimension, float_type>::luaopen(lua_State* L)
             namespace_("host")
             [
                 class_<particle, std::shared_ptr<particle>, wrap_particle<particle> >(class_name.c_str())
-                    .def(constructor<size_t, unsigned int>())
+                    .def(constructor<size_type, unsigned int>())
                     .property("nparticle", &particle::nparticle)
                     .property("nspecies", &particle::nspecies)
                     .property("get_position", &wrap_get_position<particle>)

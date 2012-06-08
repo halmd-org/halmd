@@ -46,6 +46,8 @@ public:
     void shift_rescale(vector_type const& delta, double factor);
 
 private:
+    typedef typename particle_type::velocity_array_type velocity_array_type;
+
     std::shared_ptr<particle_type> particle_;
     std::shared_ptr<logger_type> logger_;
 };

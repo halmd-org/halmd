@@ -160,23 +160,23 @@ template <int dimension, typename float_type>
 template <bool same_cell>
 void from_binning<dimension, float_type>::compute_cell_neighbours(size_t i, cell_list const& c)
 {
-    typename particle_type::position_array_type const& position1 = particle1_->position();
-    typename particle_type::position_array_type const& position2 = particle2_->position();
-    typename particle_type::species_array_type const& species1 = particle1_->species();
-    typename particle_type::species_array_type const& species2 = particle2_->species();
+    cache_proxy<position_array_type const> position1 = particle1_->position();
+    cache_proxy<position_array_type const> position2 = particle2_->position();
+    cache_proxy<species_array_type const> species1 = particle1_->species();
+    cache_proxy<species_array_type const> species2 = particle2_->species();
 
-    BOOST_FOREACH(size_t j, c) {
+    BOOST_FOREACH(size_type j, c) {
         // skip identical particle and particle pair permutations if same cell
         if (same_cell && particle1_ == particle2_ && j <= i) {
             continue;
         }
 
         // particle distance vector
-        vector_type r = position1[i] - position2[j];
+        vector_type r = (*position1)[i] - (*position2)[j];
         box_->reduce_periodic(r);
         // particle types
-        size_t a = species1[i];
-        size_t b = species2[j];
+        species_type a = (*species1)[i];
+        species_type b = (*species2)[j];
         // squared particle distance
         float_type rr = inner_prod(r, r);
 

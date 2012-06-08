@@ -63,15 +63,16 @@ lattice<dimension, float_type>::lattice(
 template <int dimension, typename float_type>
 void lattice<dimension, float_type>::set()
 {
-    assert(particle_->position().size() == particle_->nparticle());
+    cache_proxy<position_array_type> position = particle_->position();
+    cache_proxy<image_array_type> image = particle_->image();
 
     // assign fcc lattice points to a fraction of the particles in a slab at the centre
     vector_type length = element_prod(box_->length(), slab_);
     vector_type offset = -length / 2;
-    fcc(particle_->position().begin(), particle_->position().end(), length, offset);
+    fcc(position->begin(), position->end(), length, offset);
 
     // assign particle image vectors
-    fill(particle_->image().begin(), particle_->image().end(), 0);
+    fill(image->begin(), image->end(), 0);
 }
 
 /**

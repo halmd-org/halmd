@@ -89,6 +89,9 @@ public:
     }
 
 private:
+    typedef typename particle_type::size_type size_type;
+    typedef typename particle_type::position_array_type position_array_type;
+
     typedef utility::profiler profiler_type;
     typedef typename profiler_type::accumulator_type accumulator_type;
     typedef typename profiler_type::scoped_timer_type scoped_timer_type;

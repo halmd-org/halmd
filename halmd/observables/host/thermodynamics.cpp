@@ -49,7 +49,7 @@ thermodynamics<dimension, float_type>::thermodynamics(
 template <int dimension, typename float_type>
 unsigned int thermodynamics<dimension, float_type>::nparticle() const
 {
-    cache_proxy<typename particle_group_type::size_type const> size = group_->size();
+    cache_proxy<size_type const> size = group_->size();
     return *size;
 }
 
@@ -63,19 +63,17 @@ template <int dimension, typename float_type>
 double thermodynamics<dimension, float_type>::en_kin()
 {
     if (!en_kin_.valid()) {
-        cache_proxy<typename particle_group_type::array_type const> group = group_->unordered();
+        cache_proxy<group_array_type const> group = group_->unordered();
+        cache_proxy<velocity_array_type const> velocity = particle_->velocity();
+        cache_proxy<mass_array_type const> mass = particle_->mass();
 
         LOG_TRACE("acquire kinetic energy");
 
         scoped_timer_type timer(runtime_.en_kin);
 
-        typename particle_type::velocity_array_type const& velocity = particle_->velocity();
-        typename particle_type::mass_array_type const& mass = particle_->mass();
-
         double mv2 = 0;
-        for (std::size_t i : *group) {
-            // assuming unit mass for all particle types
-            mv2 += mass[i] * inner_prod(velocity[i], velocity[i]);
+        for (size_type i : *group) {
+            mv2 += (*mass)[i] * inner_prod((*velocity)[i], (*velocity)[i]);
         }
         en_kin_ = 0.5 * mv2 / group->size();
     }
@@ -87,20 +85,19 @@ typename thermodynamics<dimension, float_type>::vector_type const&
 thermodynamics<dimension, float_type>::v_cm()
 {
     if (!v_cm_.valid()) {
-        cache_proxy<typename particle_group_type::array_type const> group = group_->unordered();
+        cache_proxy<group_array_type const> group = group_->unordered();
+        cache_proxy<velocity_array_type const> velocity = particle_->velocity();
+        cache_proxy<mass_array_type const> mass = particle_->mass();
 
         LOG_TRACE("acquire centre-of-mass velocity");
 
         scoped_timer_type timer(runtime_.v_cm);
 
-        typename particle_type::velocity_array_type const& velocity = particle_->velocity();
-        typename particle_type::mass_array_type const& mass = particle_->mass();
-
         vector_type mv = 0;
         double m = 0;
-        for (std::size_t i : *group) {
-            mv += mass[i] * velocity[i];
-            m += mass[i];
+        for (size_type i : *group) {
+            mv += (*mass)[i] * (*velocity)[i];
+            m += (*mass)[i];
         }
         v_cm_ = mv / m;
     }
@@ -111,17 +108,16 @@ template <int dimension, typename float_type>
 double thermodynamics<dimension, float_type>::en_pot()
 {
     if (!en_pot_.valid()) {
-        cache_proxy<typename particle_group_type::array_type const> group = group_->unordered();
+        cache_proxy<group_array_type const> group = group_->unordered();
+        cache_proxy<en_pot_array_type const> en_pot = particle_->en_pot();
 
         LOG_TRACE("acquire potential energy");
 
         scoped_timer_type timer(runtime_.en_pot);
 
-        typename particle_type::en_pot_array_type const& en_pot = particle_->en_pot();
-
         double sum = 0;
-        for (std::size_t i : *group) {
-            sum += en_pot[i];
+        for (size_type i : *group) {
+            sum += (*en_pot)[i];
         }
         en_pot_ = sum / group->size();
     }
@@ -132,17 +128,16 @@ template <int dimension, typename float_type>
 double thermodynamics<dimension, float_type>::virial()
 {
     if (!virial_.valid()) {
-        cache_proxy<typename particle_group_type::array_type const> group = group_->unordered();
+        cache_proxy<group_array_type const> group = group_->unordered();
+        cache_proxy<stress_pot_array_type const> stress_pot = particle_->stress_pot();
 
         LOG_TRACE("acquire virial");
 
         scoped_timer_type timer(runtime_.virial);
 
-        typename particle_type::stress_pot_array_type const& stress_pot = particle_->stress_pot();
-
         double sum = 0;
-        for (std::size_t i : *group) {
-            sum += stress_pot[i][0];
+        for (size_type i : *group) {
+            sum += (*stress_pot)[i][0];
         }
         virial_ = sum / group->size();
     }
@@ -153,17 +148,16 @@ template <int dimension, typename float_type>
 double thermodynamics<dimension, float_type>::hypervirial()
 {
     if (!hypervirial_.valid()) {
-        cache_proxy<typename particle_group_type::array_type const> group = group_->unordered();
+        cache_proxy<group_array_type const> group = group_->unordered();
+        cache_proxy<hypervirial_array_type const> hypervirial = particle_->hypervirial();
 
         LOG_TRACE("acquire hypervirial");
 
         scoped_timer_type timer(runtime_.hypervirial);
 
-        typename particle_type::hypervirial_array_type const& hypervirial = particle_->hypervirial();
-
         double sum = 0;
-        for (std::size_t i : *group) {
-            sum += hypervirial[i];
+        for (size_type i : *group) {
+            sum += (*hypervirial)[i];
         }
         hypervirial_ = sum / group->size();
     }

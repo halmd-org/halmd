@@ -51,8 +51,9 @@ maximum_squared_displacement<dimension, float_type>::maximum_squared_displacemen
 template <int dimension, typename float_type>
 void maximum_squared_displacement<dimension, float_type>::zero()
 {
+    cache_proxy<position_array_type const> position = particle_->position();
     scoped_timer_type timer(runtime_.zero);
-    copy(particle_->position().begin(), particle_->position().end(), r0_.begin());
+    std::copy(position->begin(), position->end(), r0_.begin());
 }
 
 /**
@@ -61,13 +62,14 @@ void maximum_squared_displacement<dimension, float_type>::zero()
 template <int dimension, typename float_type>
 float_type maximum_squared_displacement<dimension, float_type>::compute()
 {
+    cache_proxy<position_array_type const> position = particle_->position();
+    size_type const nparticle = particle_->nparticle();
+
     scoped_timer_type timer(runtime_.compute);
 
-    typename particle_type::position_array_type const& position = particle_->position();
-
     float_type rr_max = 0;
-    for (size_t i = 0; i < particle_->nparticle(); ++i) {
-        vector_type r = position[i] - r0_[i];
+    for (typename particle_type::size_type i = 0; i < nparticle; ++i) {
+        vector_type r = (*position)[i] - r0_[i];
         box_->reduce_periodic(r);
         rr_max = max(rr_max, inner_prod(r, r));
     }

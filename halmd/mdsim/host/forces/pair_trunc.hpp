@@ -20,7 +20,6 @@
 #ifndef HALMD_MDSIM_HOST_FORCES_PAIR_TRUNC_HPP
 #define HALMD_MDSIM_HOST_FORCES_PAIR_TRUNC_HPP
 
-#include <boost/foreach.hpp>
 #include <lua.hpp>
 #include <memory>
 #include <string>
@@ -73,6 +72,18 @@ public:
     }
 
 private:
+    typedef typename particle_type::position_array_type position_array_type;
+    typedef typename particle_type::species_array_type species_array_type;
+    typedef typename particle_type::species_type species_type;
+    typedef typename particle_type::force_array_type force_array_type;
+    typedef typename particle_type::en_pot_array_type en_pot_array_type;
+    typedef typename particle_type::en_pot_type en_pot_type;
+    typedef typename particle_type::stress_pot_array_type stress_pot_array_type;
+    typedef typename particle_type::stress_pot_type stress_pot_type;
+    typedef typename particle_type::hypervirial_array_type hypervirial_array_type;
+    typedef typename particle_type::hypervirial_type hypervirial_type;
+    typedef typename particle_type::size_type size_type;
+
     typedef utility::profiler profiler_type;
     typedef typename profiler_type::accumulator_type accumulator_type;
     typedef typename profiler_type::scoped_timer_type scoped_timer_type;
@@ -142,34 +153,31 @@ template <int dimension, typename float_type, typename potential_type, typename 
 template <bool compute_aux1, bool compute_aux2>
 void pair_trunc<dimension, float_type, potential_type, trunc_type>::compute_aux()
 {
-    typename particle_type::position_array_type const& position1 = particle1_->position();
-    typename particle_type::position_array_type const& position2 = particle2_->position();
-    typename particle_type::species_array_type const& species1   = particle1_->species();
-    typename particle_type::species_array_type const& species2   = particle2_->species();
-    typename particle_type::force_array_type& force1             = particle1_->force();
-    typename particle_type::force_array_type& force2             = particle2_->force();
-    typename particle_type::en_pot_array_type& en_pot1           = particle1_->en_pot();
-    typename particle_type::en_pot_array_type& en_pot2           = particle2_->en_pot();
-    typename particle_type::stress_pot_array_type& stress_pot1   = particle1_->stress_pot();
-    typename particle_type::stress_pot_array_type& stress_pot2   = particle2_->stress_pot();
-    typename particle_type::hypervirial_array_type& hypervirial1 = particle1_->hypervirial();
-    typename particle_type::hypervirial_array_type& hypervirial2 = particle2_->hypervirial();
+    cache_proxy<position_array_type const> position1 = particle1_->position();
+    cache_proxy<position_array_type const> position2 = particle2_->position();
+    cache_proxy<species_array_type const> species1   = particle1_->species();
+    cache_proxy<species_array_type const> species2   = particle2_->species();
+    cache_proxy<force_array_type> force1             = particle1_->force();
+    cache_proxy<force_array_type> force2             = particle2_->force();
+    cache_proxy<en_pot_array_type> en_pot1           = particle1_->en_pot();
+    cache_proxy<en_pot_array_type> en_pot2           = particle2_->en_pot();
+    cache_proxy<stress_pot_array_type> stress_pot1   = particle1_->stress_pot();
+    cache_proxy<stress_pot_array_type> stress_pot2   = particle2_->stress_pot();
+    cache_proxy<hypervirial_array_type> hypervirial1 = particle1_->hypervirial();
+    cache_proxy<hypervirial_array_type> hypervirial2 = particle2_->hypervirial();
+    size_type const nparticle1                       = particle1_->nparticle();
 
     std::vector<typename neighbour_type::neighbour_list> const& lists = neighbour_->lists();
 
-    typedef typename particle_type::en_pot_type en_pot_type;
-    typedef typename particle_type::stress_pot_type stress_pot_type;
-    typedef typename particle_type::hypervirial_type hypervirial_type;
-
-    for (size_t i = 0; i < particle1_->nparticle(); ++i) {
+    for (size_type i = 0; i < nparticle1; ++i) {
         // calculate pairwise Lennard-Jones force with neighbour particles
-        BOOST_FOREACH(size_t j, lists[i]) {
+        for (size_type j : lists[i]) {
             // particle distance vector
-            vector_type r = position1[i] - position2[j];
+            vector_type r = (*position1)[i] - (*position2)[j];
             box_->reduce_periodic(r);
             // particle types
-            unsigned a = species1[i];
-            unsigned b = species2[j];
+            species_type a = (*species1)[i];
+            species_type b = (*species2)[j];
             // squared particle distance
             float_type rr = inner_prod(r, r);
 
@@ -184,28 +192,28 @@ void pair_trunc<dimension, float_type, potential_type, trunc_type>::compute_aux(
             (*trunc_)(std::sqrt(rr), potential_->r_cut(a, b), fval, pot);
 
             // add force contribution to both particles
-            force1[i] += r * fval;
-            force2[j] -= r * fval;
+            (*force1)[i] += r * fval;
+            (*force2)[j] -= r * fval;
 
             // contribution to potential energy
-            typename particle_type::en_pot_type en_pot = 0.5 * pot;
+            en_pot_type en_pot = 0.5 * pot;
             // potential part of stress tensor
-            typename particle_type::stress_pot_type stress_pot = 0.5 * fval * make_stress_tensor(rr, r);
+            stress_pot_type stress_pot = 0.5 * fval * make_stress_tensor(rr, r);
             // contribution to hypervirial
-            typename particle_type::hypervirial_type hypervirial = 0.5 * hvir / (dimension * dimension);
+            hypervirial_type hypervirial = 0.5 * hvir / (dimension * dimension);
 
             // store contributions for first particle
             if (compute_aux1) {
-                en_pot1[i]      += en_pot;
-                stress_pot1[i]  += stress_pot;
-                hypervirial1[i] += hypervirial;
+                (*en_pot1)[i]      += en_pot;
+                (*stress_pot1)[i]  += stress_pot;
+                (*hypervirial1)[i] += hypervirial;
             }
 
             // store contributions for second particle
             if (compute_aux2) {
-                en_pot2[j]      += en_pot;
-                stress_pot2[j]  += stress_pot;
-                hypervirial2[j] += hypervirial;
+                (*en_pot2)[j]      += en_pot;
+                (*stress_pot2)[j]  += stress_pot;
+                (*hypervirial2)[j] += hypervirial;
             }
         }
     }

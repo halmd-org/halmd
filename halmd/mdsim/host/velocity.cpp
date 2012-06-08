@@ -17,8 +17,6 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <boost/foreach.hpp>
-
 #include <halmd/mdsim/host/velocity.hpp>
 
 namespace halmd {
@@ -42,7 +40,8 @@ velocity<dimension, float_type>::velocity(
 template <int dimension, typename float_type>
 void velocity<dimension, float_type>::rescale(double factor)
 {
-    BOOST_FOREACH (vector_type& v, particle_->velocity()) {
+    cache_proxy<velocity_array_type> velocity = particle_->velocity();
+    for (vector_type& v : *velocity) {
         v *= factor;
     }
     LOG("velocities rescaled by factor " << factor);
@@ -54,7 +53,8 @@ void velocity<dimension, float_type>::rescale(double factor)
 template <int dimension, typename float_type>
 void velocity<dimension, float_type>::shift(vector_type const& delta)
 {
-    BOOST_FOREACH (vector_type& v, particle_->velocity()) {
+    cache_proxy<velocity_array_type> velocity = particle_->velocity();
+    for (vector_type& v : *velocity) {
         v += delta;
     }
 }
@@ -65,7 +65,8 @@ void velocity<dimension, float_type>::shift(vector_type const& delta)
 template <int dimension, typename float_type>
 void velocity<dimension, float_type>::shift_rescale(vector_type const& delta, double factor)
 {
-    BOOST_FOREACH (vector_type& v, particle_->velocity()) {
+    cache_proxy<velocity_array_type> velocity = particle_->velocity();
+    for (vector_type& v : *velocity) {
         v += delta;
         v *= factor;
     }

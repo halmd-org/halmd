@@ -102,6 +102,16 @@ public:
     virtual void clear_cache();
 
 private:
+    typedef typename particle_type::size_type size_type;
+    typedef typename particle_type::velocity_array_type velocity_array_type;
+    typedef typename particle_type::velocity_type velocity_type;
+    typedef typename particle_type::mass_array_type mass_array_type;
+    typedef typename particle_type::mass_type mass_type;
+    typedef typename particle_type::en_pot_array_type en_pot_array_type;
+    typedef typename particle_type::stress_pot_array_type stress_pot_array_type;
+    typedef typename particle_type::hypervirial_array_type hypervirial_array_type;
+    typedef typename particle_group_type::array_type group_array_type;
+
     typedef halmd::utility::profiler profiler_type;
     typedef profiler_type::accumulator_type accumulator_type;
     typedef profiler_type::scoped_timer_type scoped_timer_type;
