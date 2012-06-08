@@ -61,14 +61,19 @@ void verlet<dimension, float_type>::set_timestep(double timestep)
 template <int dimension, typename float_type>
 void verlet<dimension, float_type>::integrate()
 {
+    cache_proxy<force_array_type const> force = particle_->force();
+    cache_proxy<position_array_type> position = particle_->position();
+    cache_proxy<velocity_array_type> velocity = particle_->velocity();
+    cache_proxy<image_array_type> image = particle_->image();
+
     try {
         scoped_timer_type timer(runtime_.integrate);
-        cuda::configure(
-            particle_->dim.grid, particle_->dim.block
-        );
+        cuda::configure(particle_->dim.grid, particle_->dim.block);
         wrapper_->integrate(
-            particle_->position(), particle_->image(), particle_->velocity()
-          , particle_->force()
+            &*position->begin()
+          , &*image->begin()
+          , &*velocity->begin()
+          , &*force->begin()
           , timestep_
           , static_cast<vector_type>(box_->length())
         );
@@ -86,18 +91,15 @@ void verlet<dimension, float_type>::integrate()
 template <int dimension, typename float_type>
 void verlet<dimension, float_type>::finalize()
 {
-    // TODO: possibly a performance critical issue:
-    // the old implementation had this loop included in update_forces(),
-    // which saves one additional read of the forces plus the additional kernel execution
-    // and scheduling
+    cache_proxy<force_array_type const> force = particle_->force();
+    cache_proxy<velocity_array_type> velocity = particle_->velocity();
+
     try {
         scoped_timer_type timer(runtime_.finalize);
-        cuda::configure(
-            particle_->dim.grid, particle_->dim.block
-        );
+        cuda::configure(particle_->dim.grid, particle_->dim.block);
         wrapper_->finalize(
-            particle_->velocity()
-          , particle_->force()
+            &*velocity->begin()
+          , &*force->begin()
           , timestep_
         );
         cuda::thread::synchronize();

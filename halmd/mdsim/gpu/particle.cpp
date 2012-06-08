@@ -20,17 +20,7 @@
 
 #include <halmd/config.hpp>
 
-#include <algorithm>
-#include <boost/algorithm/string/predicate.hpp>
-#include <boost/function_output_iterator.hpp>
-#include <boost/iterator/counting_iterator.hpp>
-#include <boost/iterator/transform_iterator.hpp>
-#include <exception>
-#include <iterator> // std::back_inserter
-#include <luaponte/luaponte.hpp>
-#include <luaponte/out_value_policy.hpp>
-#include <numeric>
-
+#include <halmd/algorithm/gpu/iota.hpp>
 #include <halmd/algorithm/gpu/radix_sort.hpp>
 #include <halmd/io/logger.hpp>
 #include <halmd/mdsim/gpu/particle.hpp>
@@ -38,6 +28,16 @@
 #include <halmd/utility/gpu/device.hpp>
 #include <halmd/utility/lua/lua.hpp>
 #include <halmd/utility/signal.hpp>
+
+#include <boost/function_output_iterator.hpp>
+#include <boost/iterator/counting_iterator.hpp>
+#include <boost/iterator/transform_iterator.hpp>
+#include <luaponte/out_value_policy.hpp>
+
+#include <algorithm>
+#include <exception>
+#include <iterator>
+#include <numeric>
 
 namespace halmd {
 namespace mdsim {
@@ -49,10 +49,11 @@ namespace gpu {
  * @param particles number of particles per type or species
  */
 template <int dimension, typename float_type>
-particle<dimension, float_type>::particle(size_t nparticle, unsigned int nspecies)
+particle<dimension, float_type>::particle(size_type nparticle, unsigned int nspecies)
   // FIXME default CUDA kernel execution dimensions
   : dim(device::validate(cuda::config((nparticle + 128 - 1) / 128, 128)))
   // allocate global device memory
+  , nparticle_(nparticle)
   , nspecies_(std::max(nspecies, 1u))
   , g_position_(nparticle)
   , g_image_(nparticle)
@@ -67,7 +68,15 @@ particle<dimension, float_type>::particle(size_t nparticle, unsigned int nspecie
   , aux_flag_(false)
   , aux_valid_(false)
 {
+    cache_proxy<position_array_type> g_position = g_position_;
+    cache_proxy<image_array_type> g_image = g_image_;
+    cache_proxy<velocity_array_type> g_velocity = g_velocity_;
+    cache_proxy<tag_array_type> g_tag = g_tag_;
     cache_proxy<reverse_tag_array_type> g_reverse_tag = g_reverse_tag_;
+    cache_proxy<force_array_type> g_force = g_force_;
+    cache_proxy<en_pot_array_type> g_en_pot = g_en_pot_;
+    cache_proxy<stress_pot_array_type> g_stress_pot = g_stress_pot_;
+    cache_proxy<hypervirial_array_type> g_hypervirial = g_hypervirial_;
 
     LOG_DEBUG("number of CUDA execution blocks: " << dim.blocks_per_grid());
     LOG_DEBUG("number of CUDA execution threads per block: " << dim.threads_per_block());
@@ -103,20 +112,20 @@ particle<dimension, float_type>::particle(size_t nparticle, unsigned int nspecie
         // for the long-time stability of the integrator.
         //
         LOG("integrate using double-single precision");
-        g_position_.reserve(2 * dim.threads());
-        g_velocity_.reserve(2 * dim.threads());
+        g_position->reserve(2 * dim.threads());
+        g_velocity->reserve(2 * dim.threads());
 #else
         LOG_WARNING("integrate using single precision");
-        g_position_.reserve(dim.threads());
-        g_velocity_.reserve(dim.threads());
+        g_position->reserve(dim.threads());
+        g_velocity->reserve(dim.threads());
 #endif
-        g_image_.reserve(dim.threads());
-        g_tag_.reserve(dim.threads());
+        g_image->reserve(dim.threads());
+        g_tag->reserve(dim.threads());
         g_reverse_tag->reserve(dim.threads());
-        g_force_.reserve(dim.threads());
-        g_en_pot_.reserve(dim.threads());
-        g_stress_pot_.reserve(dim.threads());
-        g_hypervirial_.reserve(dim.threads());
+        g_force->reserve(dim.threads());
+        g_en_pot->reserve(dim.threads());
+        g_stress_pot->reserve(dim.threads());
+        g_hypervirial->reserve(dim.threads());
     }
     catch (cuda::error const&) {
         LOG_ERROR("failed to allocate particles in global device memory");
@@ -125,15 +134,15 @@ particle<dimension, float_type>::particle(size_t nparticle, unsigned int nspecie
 
     // initialise 'ghost' particles to zero
     // this avoids potential nonsense computations resulting in denormalised numbers
-    cuda::memset(g_position_, 0, g_position_.capacity());
-    cuda::memset(g_velocity_, 0, g_velocity_.capacity());
-    cuda::memset(g_image_, 0, g_image_.capacity());
-    cuda::memset(g_tag_, 0, g_tag_.capacity());
-    cuda::memset(*g_reverse_tag, 0, g_reverse_tag->capacity());
-    cuda::memset(g_force_, 0, g_force_.capacity());
-    cuda::memset(g_en_pot_, 0, g_en_pot_.capacity());
-    cuda::memset(g_stress_pot_, 0, g_stress_pot_.capacity());
-    cuda::memset(g_hypervirial_, 0, g_hypervirial_.capacity());
+    cuda::memset(g_position->begin(), g_position->begin() + g_position->capacity(), 0);
+    cuda::memset(g_velocity->begin(), g_velocity->begin() + g_velocity->capacity(), 0);
+    cuda::memset(g_image->begin(), g_image->begin() + g_image->capacity(), 0);
+    iota(g_tag->begin(), g_tag->begin() + g_tag->capacity(), 0);
+    iota(g_reverse_tag->begin(), g_reverse_tag->begin() + g_reverse_tag->capacity(), 0);
+    cuda::memset(g_force->begin(), g_force->begin() + g_force->capacity(), 0);
+    cuda::memset(g_en_pot->begin(), g_en_pot->begin() + g_en_pot->capacity(), 0);
+    cuda::memset(g_stress_pot->begin(), g_stress_pot->begin() + g_stress_pot->capacity(), 0);
+    cuda::memset(g_hypervirial->begin(), g_hypervirial->begin() + g_hypervirial->capacity(), 0);
 
     // set particle masses to unit mass
     set_mass(
@@ -144,7 +153,7 @@ particle<dimension, float_type>::particle(size_t nparticle, unsigned int nspecie
     );
 
     try {
-        cuda::copy(g_tag_.size(), get_particle_kernel<dimension>().nbox);
+        cuda::copy(nparticle_, get_particle_kernel<dimension>().nbox);
         cuda::copy(nspecies_, get_particle_kernel<dimension>().ntype);
     }
     catch (cuda::error const&) {
@@ -152,11 +161,8 @@ particle<dimension, float_type>::particle(size_t nparticle, unsigned int nspecie
         throw;
     }
 
-    // set particle tags and reverse tags
-    set();
-
-    LOG("number of particles: " << g_tag_.size());
-    LOG("number of particle placeholders: " << g_tag_.capacity());
+    LOG("number of particles: " << nparticle_);
+    LOG("number of particle placeholders: " << dim.threads());
     LOG("number of particle species: " << nspecies_);
 }
 
@@ -170,39 +176,26 @@ void particle<dimension, float_type>::aux_enable()
 template <int dimension, typename float_type>
 void particle<dimension, float_type>::prepare()
 {
+    cache_proxy<force_array_type> g_force = g_force_;
+
     LOG_TRACE("zero forces");
-    cuda::memset(g_force_, 0, g_force_.capacity());
+
+    cuda::memset(g_force->begin(), g_force->begin() + g_force->capacity(), 0);
 
     // indicate whether auxiliary variables are computed this step
     aux_valid_ = aux_flag_;
 
     if (aux_flag_) {
-        LOG_TRACE("zero auxiliary variables");
-        cuda::memset(g_en_pot_, 0, g_en_pot_.capacity());
-        cuda::memset(g_stress_pot_, 0, g_stress_pot_.capacity());
-        cuda::memset(g_hypervirial_, 0, g_hypervirial_.capacity());
-        aux_flag_ = false;
-    }
-}
+        cache_proxy<en_pot_array_type> g_en_pot = g_en_pot_;
+        cache_proxy<stress_pot_array_type> g_stress_pot = g_stress_pot_;
+        cache_proxy<hypervirial_array_type> g_hypervirial = g_hypervirial_;
 
-/**
- * set particle types
- */
-template <int dimension, typename float_type>
-void particle<dimension, float_type>::set()
-{
-    cache_proxy<reverse_tag_array_type> g_reverse_tag = g_reverse_tag_;
-    try {
-        cuda::configure(dim.grid, dim.block);
-        get_particle_kernel<dimension>().gen_index(g_tag_);
-        cuda::thread::synchronize();
-        cuda::configure(dim.grid, dim.block);
-        get_particle_kernel<dimension>().gen_index(*g_reverse_tag);
-        cuda::thread::synchronize();
-    }
-    catch (cuda::error const&) {
-        LOG_ERROR("failed to set particle tags");
-        throw;
+        LOG_TRACE("zero auxiliary variables");
+
+        cuda::memset(g_en_pot->begin(), g_en_pot->begin() + g_en_pot->capacity(), 0);
+        cuda::memset(g_stress_pot->begin(), g_stress_pot->begin() + g_stress_pot->capacity(), 0);
+        cuda::memset(g_hypervirial->begin(), g_hypervirial->begin() + g_hypervirial->capacity(), 0);
+        aux_flag_ = false;
     }
 }
 
@@ -212,35 +205,38 @@ void particle<dimension, float_type>::set()
 template <int dimension, typename float_type>
 void particle<dimension, float_type>::rearrange(cuda::vector<unsigned int> const& g_index)
 {
-    scoped_timer_type timer(runtime_.rearrange);
-
+    cache_proxy<position_array_type> g_position = g_position_;
+    cache_proxy<image_array_type> g_image = g_image_;
+    cache_proxy<velocity_array_type> g_velocity = g_velocity_;
+    cache_proxy<tag_array_type> g_tag = g_tag_;
     cache_proxy<reverse_tag_array_type> g_reverse_tag = g_reverse_tag_;
 
-    cuda::vector<float4> g_r_buf(g_tag_.size());
-    cuda::vector<gpu_vector_type> g_image_buf(g_tag_.size());
-    cuda::vector<float4> g_v_buf(g_tag_.size());
-    cuda::vector<unsigned int> g_tag(g_tag_.size());
+    scoped_timer_type timer(runtime_.rearrange);
 
-    g_r_buf.reserve(g_position_.capacity());
-    g_image_buf.reserve(g_image_.capacity());
-    g_v_buf.reserve(g_velocity_.capacity());
-    g_tag.reserve(g_reverse_tag->capacity());
+    cuda::vector<float4> position(nparticle_);
+    cuda::vector<gpu_vector_type> image(nparticle_);
+    cuda::vector<float4> velocity(nparticle_);
+    cuda::vector<unsigned int> tag(nparticle_);
 
-    cuda::configure(dim.grid, dim.block);
-    get_particle_kernel<dimension>().r.bind(g_position_);
-    get_particle_kernel<dimension>().image.bind(g_image_);
-    get_particle_kernel<dimension>().v.bind(g_velocity_);
-    get_particle_kernel<dimension>().tag.bind(g_tag_);
-    get_particle_kernel<dimension>().rearrange(g_index, g_r_buf, g_image_buf, g_v_buf, g_tag);
-
-    g_r_buf.swap(g_position_);
-    g_image_buf.swap(g_image_);
-    g_v_buf.swap(g_velocity_);
-    cuda::copy(g_tag, g_tag_);
+    position.reserve(g_position->capacity());
+    image.reserve(g_image->capacity());
+    velocity.reserve(g_velocity->capacity());
+    tag.reserve(g_reverse_tag->capacity());
 
     cuda::configure(dim.grid, dim.block);
-    get_particle_kernel<dimension>().gen_index(*g_reverse_tag);
-    radix_sort(g_tag.begin(), g_tag.end(), g_reverse_tag->begin());
+    get_particle_kernel<dimension>().r.bind(*g_position);
+    get_particle_kernel<dimension>().image.bind(*g_image);
+    get_particle_kernel<dimension>().v.bind(*g_velocity);
+    get_particle_kernel<dimension>().tag.bind(*g_tag);
+    get_particle_kernel<dimension>().rearrange(g_index, position, image, velocity, tag);
+
+    position.swap(*g_position);
+    image.swap(*g_image);
+    velocity.swap(*g_velocity);
+    cuda::copy(tag.begin(), tag.begin() + tag.capacity(), g_tag->begin());
+
+    iota(g_reverse_tag->begin(), g_reverse_tag->begin() + g_reverse_tag->capacity(), 0);
+    radix_sort(tag.begin(), tag.end(), g_reverse_tag->begin());
 }
 
 template <typename particle_type>
@@ -598,7 +594,7 @@ void particle<dimension, float_type>::luaopen(lua_State* L)
             namespace_("gpu")
             [
                 class_<particle, std::shared_ptr<particle>, wrap_particle<particle> >(class_name.c_str())
-                    .def(constructor<size_t, unsigned int>())
+                    .def(constructor<size_type, unsigned int>())
                     .property("nparticle", &particle::nparticle)
                     .property("nspecies", &particle::nspecies)
                     .property("get_position", &wrap_get_position<particle>)

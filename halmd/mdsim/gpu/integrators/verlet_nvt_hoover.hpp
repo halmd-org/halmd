@@ -108,6 +108,11 @@ public:
     chain_type v_xi;
 
 private:
+    typedef typename particle_type::position_array_type position_array_type;
+    typedef typename particle_type::image_array_type image_array_type;
+    typedef typename particle_type::velocity_array_type velocity_array_type;
+    typedef typename particle_type::force_array_type force_array_type;
+
     typedef verlet_nvt_hoover_wrapper<dimension, gpu_float_type> wrapper_type;
     typedef utility::profiler profiler_type;
     typedef typename profiler_type::accumulator_type accumulator_type;

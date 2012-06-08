@@ -52,6 +52,8 @@ public:
     float_type compute();
 
 private:
+    typedef typename particle_type::position_array_type position_array_type;
+
     typedef typename particle_type::vector_type vector_type;
     typedef typename maximum_squared_displacement_wrapper<dimension>::displacement_impl_type displacement_impl_type;
     typedef utility::profiler profiler_type;

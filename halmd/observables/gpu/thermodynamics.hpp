@@ -105,6 +105,13 @@ public:
     virtual void clear_cache();
 
 private:
+    typedef typename particle_type::size_type size_type;
+    typedef typename particle_type::velocity_array_type velocity_array_type;
+    typedef typename particle_type::en_pot_array_type en_pot_array_type;
+    typedef typename particle_type::stress_pot_array_type stress_pot_array_type;
+    typedef typename particle_type::hypervirial_array_type hypervirial_array_type;
+    typedef typename particle_group_type::array_type group_array_type;
+
     /** system state */
     std::shared_ptr<particle_type const> particle_;
     /** particle group */

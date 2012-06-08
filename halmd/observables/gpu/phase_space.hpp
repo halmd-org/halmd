@@ -74,6 +74,10 @@ public:
     static void luaopen(lua_State* L);
 
 private:
+    typedef typename particle_type::position_array_type position_array_type;
+    typedef typename particle_type::image_array_type image_array_type;
+    typedef typename particle_type::velocity_array_type velocity_array_type;
+    typedef typename particle_group_type::array_type group_array_type;
     typedef typename sample_type::vector_type vector_type;
 
     /** particle instance to particle group */
@@ -145,6 +149,11 @@ public:
     static void luaopen(lua_State* L);
 
 private:
+    typedef typename particle_type::position_array_type position_array_type;
+    typedef typename particle_type::image_array_type image_array_type;
+    typedef typename particle_type::velocity_array_type velocity_array_type;
+    typedef typename particle_group_type::array_type group_array_type;
+
     /** particle instance to particle group */
     std::shared_ptr<particle_type> particle_;
     /** particle group */

@@ -64,17 +64,17 @@ lattice<dimension, float_type>::lattice(
 template <int dimension, typename float_type>
 void lattice<dimension, float_type>::set()
 {
-    assert(particle_->position().size() == particle_->nparticle());
+    cache_proxy<position_array_type> position = particle_->position();
+    cache_proxy<image_array_type> image = particle_->image();
 
     // assign fcc lattice points to a fraction of the particles in a slab at the centre
     gpu_vector_type length = static_cast<gpu_vector_type>(element_prod(box_->length(), slab_));
     gpu_vector_type offset = -length / 2;
 
-    float4* r_it = particle_->position().data(); // use pointer as substitute for missing iterator
-    fcc(r_it, r_it + particle_->nparticle(), length, offset);
+    fcc(&*position->begin(), &*position->end(), length, offset);
 
     // reset particle image vectors
-    cuda::memset(particle_->image(), 0, particle_->image().capacity());
+    cuda::memset(image->begin(), image->begin() + image->capacity(), 0);
 }
 
 /**

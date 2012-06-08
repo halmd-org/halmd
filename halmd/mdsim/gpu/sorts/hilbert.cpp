@@ -72,12 +72,12 @@ void hilbert<dimension, float_type>::order()
     LOG_TRACE("order particles");
     {
         cuda::vector<unsigned int> g_index(particle_->nparticle());
-        g_index.reserve(particle_->position().capacity());
+        g_index.reserve(particle_->dim.threads());
         scoped_timer_type timer(runtime_.order);
         {
 
             cuda::vector<unsigned int> g_map(particle_->nparticle());
-            g_map.reserve(particle_->position().capacity());
+            g_map.reserve(particle_->dim.threads());
             this->map(g_map);
             this->permutation(g_map, g_index);
         }
@@ -92,10 +92,12 @@ void hilbert<dimension, float_type>::order()
 template <int dimension, typename float_type>
 void hilbert<dimension, float_type>::map(cuda::vector<unsigned int>& g_map)
 {
+    cache_proxy<position_array_type const> position = particle_->position();
+
     scoped_timer_type timer(runtime_.map);
     cuda::configure(particle_->dim.grid, particle_->dim.block);
     wrapper_type::kernel.map(
-        particle_->position()
+        &*position->begin()
       , g_map
       , static_cast<vector_type>(box_->length())
     );

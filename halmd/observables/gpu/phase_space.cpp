@@ -61,7 +61,10 @@ phase_space<gpu::samples::phase_space<dimension, float_type> >::acquire()
         return sample_;
     }
 
-    cache_proxy<typename particle_group_type::array_type const> group = particle_group_->ordered();
+    cache_proxy<group_array_type const> group = particle_group_->ordered();
+    cache_proxy<position_array_type const> position = particle_->position();
+    cache_proxy<image_array_type const> image = particle_->image();
+    cache_proxy<velocity_array_type const> velocity = particle_->velocity();
 
     scoped_timer_type timer(runtime_.acquire);
 
@@ -74,9 +77,9 @@ phase_space<gpu::samples::phase_space<dimension, float_type> >::acquire()
         sample_ = std::make_shared<sample_type>(group->size(), clock_->step());
     }
 
-    phase_space_wrapper<dimension>::kernel.r.bind(particle_->position());
-    phase_space_wrapper<dimension>::kernel.image.bind(particle_->image());
-    phase_space_wrapper<dimension>::kernel.v.bind(particle_->velocity());
+    phase_space_wrapper<dimension>::kernel.r.bind(*position);
+    phase_space_wrapper<dimension>::kernel.image.bind(*image);
+    phase_space_wrapper<dimension>::kernel.v.bind(*velocity);
 
     cuda::configure(particle_->dim.grid, particle_->dim.block);
     phase_space_wrapper<dimension>::kernel.sample(
@@ -170,16 +173,20 @@ phase_space<host::samples::phase_space<dimension, float_type> >::acquire()
         return sample_;
     }
 
-    cache_proxy<typename particle_group_type::array_type const> group = particle_group_->ordered();
+    cache_proxy<group_array_type const> group = particle_group_->ordered();
 
     scoped_timer_type timer(runtime_.acquire);
 
     LOG_TRACE("acquire host sample");
 
     try {
-        cuda::copy(particle_->position(), h_r_);
-        cuda::copy(particle_->image(), h_image_);
-        cuda::copy(particle_->velocity(), h_v_);
+        cache_proxy<position_array_type const> position = particle_->position();
+        cache_proxy<image_array_type const> image = particle_->image();
+        cache_proxy<velocity_array_type const> velocity = particle_->velocity();
+
+        cuda::copy(position->begin(), position->end(), h_r_.begin());
+        cuda::copy(image->begin(), image->end(), h_image_.begin());
+        cuda::copy(velocity->begin(), velocity->end(), h_v_.begin());
     }
     catch (cuda::error const&) {
         LOG_ERROR("failed to copy from GPU to host");
@@ -229,7 +236,10 @@ phase_space<host::samples::phase_space<dimension, float_type> >::acquire()
 template <int dimension, typename float_type>
 void phase_space<host::samples::phase_space<dimension, float_type> >::set(std::shared_ptr<sample_type const> sample)
 {
-    cache_proxy<typename particle_group_type::array_type const> group = particle_group_->ordered();
+    cache_proxy<group_array_type const> group = particle_group_->ordered();
+    cache_proxy<position_array_type> position = particle_->position();
+    cache_proxy<image_array_type> image = particle_->image();
+    cache_proxy<velocity_array_type> velocity = particle_->velocity();
 
     scoped_timer_type timer(runtime_.set);
 
@@ -262,11 +272,11 @@ void phase_space<host::samples::phase_space<dimension, float_type> >::set(std::s
 
     try {
 #ifdef USE_VERLET_DSFUN
-        cuda::memset(particle_->position(), 0, particle_->position().capacity());
-        cuda::memset(particle_->velocity(), 0, particle_->velocity().capacity());
+        cuda::memset(position->begin(), position->begin() + position->capacity(), 0);
+        cuda::memset(velocity->begin(), velocity->begin() + velocity->capacity(), 0);
 #endif
-        cuda::copy(h_r_, particle_->position());
-        cuda::copy(h_v_, particle_->velocity());
+        cuda::copy(h_r_.begin(), h_r_.end(), position->begin());
+        cuda::copy(h_v_.begin(), h_v_.end(), velocity->begin());
     }
     catch (cuda::error const&)
     {
@@ -276,12 +286,12 @@ void phase_space<host::samples::phase_space<dimension, float_type> >::set(std::s
 
     // shift particle positions to range (-L/2, L/2)
     try {
-        phase_space_wrapper<dimension>::kernel.r.bind(particle_->position());
+        phase_space_wrapper<dimension>::kernel.r.bind(*position);
         cuda::configure(particle_->dim.grid, particle_->dim.block);
         phase_space_wrapper<dimension>::kernel.reduce_periodic(
             &*group->begin()
-          , particle_->position()
-          , particle_->image()
+          , &*position->begin()
+          , &*image->begin()
           , static_cast<vector_type>(box_->length())
           , group->size()
         );

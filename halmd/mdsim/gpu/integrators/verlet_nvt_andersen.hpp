@@ -114,6 +114,11 @@ public:
     static void luaopen(lua_State* L);
 
 private:
+    typedef typename particle_type::position_array_type position_array_type;
+    typedef typename particle_type::image_array_type image_array_type;
+    typedef typename particle_type::velocity_array_type velocity_array_type;
+    typedef typename particle_type::force_array_type force_array_type;
+
     /** system state */
     std::shared_ptr<particle_type> particle_;
     /** simulation domain */

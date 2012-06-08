@@ -73,6 +73,8 @@ public:
     static void luaopen(lua_State* L);
 
 private:
+    typedef typename particle_type::velocity_array_type velocity_array_type;
+
     typedef gpu::velocity<dimension, float_type> _Base;
     typedef typename particle_type::vector_type vector_type;
     typedef typename particle_type::gpu_vector_type gpu_vector_type;

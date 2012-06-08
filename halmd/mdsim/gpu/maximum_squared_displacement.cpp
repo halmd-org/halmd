@@ -82,10 +82,12 @@ maximum_squared_displacement<dimension, float_type>::get_displacement_impl(int t
 template <int dimension, typename float_type>
 void maximum_squared_displacement<dimension, float_type>::zero()
 {
+    cache_proxy<position_array_type const> position = particle_->position();
+
     LOG_TRACE("zero maximum squared displacement");
 
     scoped_timer_type timer(runtime_.zero);
-    cuda::copy(particle_->position(), g_r0_);
+    cuda::copy(position->begin(), position->end(), g_r0_.begin());
 }
 
 /**
@@ -94,6 +96,8 @@ void maximum_squared_displacement<dimension, float_type>::zero()
 template <int dimension, typename float_type>
 float_type maximum_squared_displacement<dimension, float_type>::compute()
 {
+    cache_proxy<position_array_type const> position = particle_->position();
+
     LOG_TRACE("compute maximum squared displacement");
 
     scoped_timer_type timer(runtime_.compute);
@@ -104,7 +108,7 @@ float_type maximum_squared_displacement<dimension, float_type>::compute()
           , dim_reduce_.threads_per_block() * sizeof(float)
         );
         displacement_impl_(
-            particle_->position()
+            &*position->begin()
           , g_r0_
           , g_rr_
           , particle_->nparticle()

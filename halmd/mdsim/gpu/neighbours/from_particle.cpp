@@ -96,6 +96,9 @@ from_particle<dimension, float_type>::from_particle(
 template <int dimension, typename float_type>
 void from_particle<dimension, float_type>::update()
 {
+    cache_proxy<position_array_type const> position1 = particle1_->position();
+    cache_proxy<position_array_type const> position2 = particle2_->position();
+
     // Emit on_prepend_update signal, which may be connected e.g. to the
     // binning update slot. We don't call binning::update directly, since
     // the order of calls is setup at the Lua level, and it allows us to
@@ -119,9 +122,9 @@ void from_particle<dimension, float_type>::update()
       , particle1_->dim.threads_per_block() * (sizeof(unsigned int) + sizeof(vector_type))
     );
     get_from_particle_kernel<dimension>().update(
-        particle1_->position()
+        &*position1->begin()
       , particle1_->nparticle()
-      , particle2_->position()
+      , &*position2->begin()
       , particle2_->nparticle()
       , particle1_->nspecies()
       , particle2_->nspecies()

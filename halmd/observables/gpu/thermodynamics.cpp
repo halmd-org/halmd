@@ -53,7 +53,7 @@ thermodynamics<dimension, float_type>::thermodynamics(
 template <int dimension, typename float_type>
 unsigned int thermodynamics<dimension, float_type>::nparticle() const
 {
-    cache_proxy<typename particle_group_type::size_type const> size = group_->size();
+    cache_proxy<size_type const> size = group_->size();
     return *size;
 }
 
@@ -70,13 +70,14 @@ template <int dimension, typename float_type>
 double thermodynamics<dimension, float_type>::en_kin()
 {
     if (!en_kin_.valid()) {
-        cache_proxy<typename particle_group_type::array_type const> group = group_->unordered();
+        cache_proxy<group_array_type const> group = group_->unordered();
+        cache_proxy<velocity_array_type const> velocity = particle_->velocity();
 
         LOG_TRACE("acquire kinetic energy");
 
         scoped_timer_type timer(runtime_.en_kin);
 
-        _Kernel::get().velocity.bind(particle_->velocity());
+        _Kernel::get().velocity.bind(*velocity);
         en_kin_ = double(compute_en_kin_(group->begin(), group->end())()) / group->size();
     }
     return en_kin_;
@@ -90,13 +91,14 @@ typename thermodynamics<dimension, float_type>::vector_type const&
 thermodynamics<dimension, float_type>::v_cm()
 {
     if (!v_cm_.valid()) {
-        cache_proxy<typename particle_group_type::array_type const> group = group_->unordered();
+        cache_proxy<group_array_type const> group = group_->unordered();
+        cache_proxy<velocity_array_type const> velocity = particle_->velocity();
 
         LOG_TRACE("acquire centre-of-mass velocity");
 
         scoped_timer_type timer(runtime_.v_cm);
 
-        _Kernel::get().velocity.bind(particle_->velocity());
+        _Kernel::get().velocity.bind(*velocity);
         v_cm_ = vector_type(compute_v_cm_(group->begin(), group->end())());
     }
     return v_cm_;
@@ -109,13 +111,14 @@ template <int dimension, typename float_type>
 double thermodynamics<dimension, float_type>::en_pot()
 {
     if (!en_pot_.valid()) {
-        cache_proxy<typename particle_group_type::array_type const> group = group_->unordered();
+        cache_proxy<group_array_type const> group = group_->unordered();
+        cache_proxy<en_pot_array_type const> en_pot = particle_->en_pot();
 
         LOG_TRACE("acquire potential energy");
 
         scoped_timer_type timer(runtime_.en_pot);
 
-        _Kernel::get().en_pot.bind(particle_->en_pot());
+        _Kernel::get().en_pot.bind(*en_pot);
         en_pot_ = double(compute_en_pot_(group->begin(), group->end())()) / group->size();
     }
     return en_pot_;
@@ -128,13 +131,14 @@ template <int dimension, typename float_type>
 double thermodynamics<dimension, float_type>::virial()
 {
     if (!virial_.valid()) {
-        cache_proxy<typename particle_group_type::array_type const> group = group_->unordered();
+        cache_proxy<group_array_type const> group = group_->unordered();
+        cache_proxy<stress_pot_array_type const> stress_pot = particle_->stress_pot();
 
         LOG_TRACE("acquire virial");
 
         scoped_timer_type timer(runtime_.virial);
 
-        _Kernel::get().stress_pot.bind(particle_->stress_pot());
+        _Kernel::get().stress_pot.bind(*stress_pot);
         virial_ = double(compute_virial_(group->begin(), group->end())()) / group->size();
     }
     return virial_;
@@ -147,13 +151,14 @@ template <int dimension, typename float_type>
 double thermodynamics<dimension, float_type>::hypervirial()
 {
     if (!hypervirial_.valid()) {
-        cache_proxy<typename particle_group_type::array_type const> group = group_->unordered();
+        cache_proxy<group_array_type const> group = group_->unordered();
+        cache_proxy<hypervirial_array_type const> hypervirial = particle_->hypervirial();
 
         LOG_TRACE("acquire hypervirial");
 
         scoped_timer_type timer(runtime_.hypervirial);
 
-        _Kernel::get().en_pot.bind(particle_->hypervirial());
+        _Kernel::get().en_pot.bind(*hypervirial);
         hypervirial_ = double(compute_en_pot_(group->begin(), group->end())()) / group->size();
     }
     return hypervirial_;

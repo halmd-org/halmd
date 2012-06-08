@@ -108,16 +108,21 @@ void verlet_nvt_hoover<dimension, float_type>::set_mass(chain_type const& mass)
 template <int dimension, typename float_type>
 void verlet_nvt_hoover<dimension, float_type>::integrate()
 {
+    cache_proxy<force_array_type const> force = particle_->force();
+    cache_proxy<position_array_type> position = particle_->position();
+    cache_proxy<velocity_array_type> velocity = particle_->velocity();
+    cache_proxy<image_array_type> image = particle_->image();
+
     scoped_timer<timer> timer_(runtime_.integrate);
     float_type scale = propagate_chain();
 
     try {
         cuda::configure(particle_->dim.grid, particle_->dim.block);
         wrapper_type::kernel.integrate(
-            particle_->position()
-          , particle_->image()
-          , particle_->velocity()
-          , particle_->force()
+            &*position->begin()
+          , &*image->begin()
+          , &*velocity->begin()
+          , &*force->begin()
           , timestep_
           , scale
           , static_cast<vector_type>(box_->length())
@@ -136,15 +141,14 @@ void verlet_nvt_hoover<dimension, float_type>::integrate()
 template <int dimension, typename float_type>
 void verlet_nvt_hoover<dimension, float_type>::finalize()
 {
+    cache_proxy<force_array_type const> force = particle_->force();
+    cache_proxy<velocity_array_type> velocity = particle_->velocity();
+
     scoped_timer_type timer(runtime_.finalize);
 
-    // TODO: possibly a performance critical issue:
-    // the old implementation had this loop included in update_forces(),
-    // which saves one additional read of the forces plus the additional kernel execution
-    // and scheduling
     try {
         cuda::configure(particle_->dim.grid, particle_->dim.block);
-        wrapper_type::kernel.finalize(particle_->velocity(), particle_->force(), timestep_);
+        wrapper_type::kernel.finalize(&*velocity->begin(), &*force->begin(), timestep_);
         cuda::thread::synchronize();
 
         float_type scale = propagate_chain();
@@ -152,7 +156,7 @@ void verlet_nvt_hoover<dimension, float_type>::finalize()
         // rescale velocities
         scoped_timer_type timer2(runtime_.rescale);
         cuda::configure(particle_->dim.grid, particle_->dim.block);
-        wrapper_type::kernel.rescale(particle_->velocity(), scale);
+        wrapper_type::kernel.rescale(&*velocity->begin(), scale);
         cuda::thread::synchronize();
     }
     catch (cuda::error const&) {
@@ -174,12 +178,12 @@ void verlet_nvt_hoover<dimension, float_type>::finalize()
 template <int dimension, typename float_type>
 float_type verlet_nvt_hoover<dimension, float_type>::propagate_chain()
 {
+    cache_proxy<velocity_array_type const> velocity = particle_->velocity();
+
     scoped_timer_type timer(runtime_.propagate);
 
-    typename particle_type::velocity_array_type const& velocity = particle_->velocity();
-
     // compute total kinetic energy multiplied by 2
-    float_type en_kin_2 = 2 * compute_en_kin_(velocity.begin(), velocity.end())();
+    float_type en_kin_2 = 2 * compute_en_kin_(velocity->begin(), velocity->end())();
 
     // head of the chain
     v_xi[1] += (mass_xi_[0] * v_xi[0] * v_xi[0] - temperature_) / mass_xi_[1] * timestep_4_;

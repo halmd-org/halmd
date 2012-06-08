@@ -60,6 +60,12 @@ public:
     void compute();
 
 private:
+    typedef typename particle_type::position_array_type position_array_type;
+    typedef typename particle_type::force_array_type force_array_type;
+    typedef typename particle_type::en_pot_array_type en_pot_array_type;
+    typedef typename particle_type::stress_pot_array_type stress_pot_array_type;
+    typedef typename particle_type::hypervirial_array_type hypervirial_array_type;
+
     typedef utility::profiler profiler_type;
     typedef typename profiler_type::accumulator_type accumulator_type;
     typedef typename profiler_type::scoped_timer_type scoped_timer_type;
@@ -100,6 +106,12 @@ pair_full<dimension, float_type, potential_type>::pair_full(
 template <int dimension, typename float_type, typename potential_type>
 void pair_full<dimension, float_type, potential_type>::compute()
 {
+    cache_proxy<position_array_type const> position = particle_->position();
+    cache_proxy<force_array_type> force = particle_->force();
+    cache_proxy<en_pot_array_type> en_pot = particle_->en_pot();
+    cache_proxy<stress_pot_array_type> stress_pot = particle_->stress_pot();
+    cache_proxy<hypervirial_array_type> hypervirial = particle_->hypervirial();
+
     scoped_timer_type timer(runtime_.compute);
 
     potential_->bind_textures();
@@ -107,17 +119,25 @@ void pair_full<dimension, float_type, potential_type>::compute()
     cuda::configure(particle_->dim.grid, particle_->dim.block);
     if (!particle_->aux_valid()) {
         gpu_wrapper::kernel.compute(
-            particle_->force(), particle_->position()
-          , particle_->en_pot(), particle_->stress_pot(), particle_->hypervirial()
-          , particle_->nspecies(), particle_->nspecies()
+            &*force->begin()
+          , &*position->begin()
+          , &*en_pot->begin()
+          , &*stress_pot->begin()
+          , &*hypervirial->begin()
+          , particle_->nspecies()
+          , particle_->nspecies()
           , static_cast<vector_type>(box_->length())
         );
     }
     else {
         gpu_wrapper::kernel.compute_aux(
-            particle_->force(), particle_->position()
-          , particle_->en_pot(), particle_->stress_pot(), particle_->hypervirial()
-          , particle_->nspecies(), particle_->nspecies()
+            &*force->begin()
+          , &*position->begin()
+          , &*en_pot->begin()
+          , &*stress_pot->begin()
+          , &*hypervirial->begin()
+          , particle_->nspecies()
+          , particle_->nspecies()
           , static_cast<vector_type>(box_->length())
         );
     }

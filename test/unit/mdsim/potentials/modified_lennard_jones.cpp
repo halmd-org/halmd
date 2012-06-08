@@ -208,36 +208,35 @@ void modified_lennard_jones<float_type>::test()
     vector_type dx(0);
     dx[0] = box->edges()(0, 0) / npart / 2;
 
-    cuda::host::vector<float4> r_list(particle->position().size());
+    std::vector<vector_type> r_list(particle->nparticle());
+    std::vector<unsigned int> species(particle->nparticle());
     for (unsigned int k = 0; k < r_list.size(); ++k) {
-        vector_type r = (k % 2) ? k * dx : vector_type(0);
-        unsigned int type = (k < npart_list[0]) ? 0U : 1U;  // set particle type for a binary mixture
-        r_list[k] <<= tie(r, type);
+        r_list[k] = (k % 2) ? k * dx : vector_type(0);
+        species[k] = (k < npart_list[0]) ? 0U : 1U;  // set particle type for a binary mixture
     }
-    cuda::copy(r_list, particle->position());
+    BOOST_CHECK( set_position(*particle, r_list.begin()) == r_list.end() );
+    BOOST_CHECK( set_species(*particle, species.begin()) == species.end() );
 
     particle->aux_enable();              // enable computation of auxiliary quantities
     particle->prepare();
     force->compute();
 
     // read forces and other stuff from device
-    cuda::host::vector<typename particle_type::gpu_vector_type> f_list(particle->force().size());
-    cuda::copy(particle->force(), f_list);
+    std::vector<vector_type> f_list(particle->nparticle());
+    BOOST_CHECK( get_force(*particle, f_list.begin()) == f_list.end() );
 
-    cuda::host::vector<float> en_pot(particle->en_pot().size());
-    cuda::copy(particle->en_pot(), en_pot);
+    std::vector<float> en_pot(particle->nparticle());
+    BOOST_CHECK( get_en_pot(*particle, en_pot.begin()) == en_pot.end() );
 
-    cuda::host::vector<float> hypervirial(particle->hypervirial().size());
-    cuda::copy(particle->hypervirial(), hypervirial);
+    std::vector<float> hypervirial(particle->nparticle());
+    BOOST_CHECK( get_hypervirial(*particle, hypervirial.begin()) == hypervirial.end() );
 
     const float_type tolerance = 20 * numeric_limits<float_type>::epsilon(); // FIXME the prefactor is an unjustified guess
 
     for (unsigned int i = 0; i < npart; ++i) {
-        vector_type r1, r2;
-        unsigned int type1, type2;
-        tie(r1, type1) <<= r_list[i];
-        tie(r2, type2) <<= r_list[(i + 1) % npart];
-        vector_type r = r1 - r2;
+        unsigned int type1 = species[i];
+        unsigned int type2 = species[(i + 1) % npart];
+        vector_type r = r_list[i] - r_list[(i + 1) % npart];
         vector_type f = f_list[i];
 
         // reference values from host module

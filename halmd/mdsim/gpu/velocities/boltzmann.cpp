@@ -85,6 +85,8 @@ boltzmann<dimension, float_type, RandomNumberGenerator>::get_gaussian_impl(int t
 template <int dimension, typename float_type, typename RandomNumberGenerator>
 void boltzmann<dimension, float_type, RandomNumberGenerator>::set()
 {
+    cache_proxy<velocity_array_type> velocity = particle_->velocity();
+
     scoped_timer_type timer(runtime_.set);
 
     // generate Maxwell-Boltzmann distributed velocities,
@@ -95,7 +97,7 @@ void boltzmann<dimension, float_type, RandomNumberGenerator>::set()
       , random_->rng().dim.threads_per_block() * (1 + dimension) * sizeof(dsfloat)
     );
     gaussian_impl_(
-        particle_->velocity()
+        &*velocity->begin()
       , particle_->nparticle()
       , particle_->dim.threads()
       , temp_
@@ -113,7 +115,7 @@ void boltzmann<dimension, float_type, RandomNumberGenerator>::set()
       , g_vv_.size() * (1 + dimension) * sizeof(dsfloat)
     );
     wrapper_type::kernel.shift_rescale(
-        particle_->velocity()
+        &*velocity->begin()
       , particle_->nparticle()
       , particle_->dim.threads()
       , temp_

@@ -66,6 +66,12 @@ public:
     void compute();
 
 private:
+    typedef typename particle_type::position_array_type position_array_type;
+    typedef typename particle_type::force_array_type force_array_type;
+    typedef typename particle_type::en_pot_array_type en_pot_array_type;
+    typedef typename particle_type::stress_pot_array_type stress_pot_array_type;
+    typedef typename particle_type::hypervirial_array_type hypervirial_array_type;
+
     typedef utility::profiler profiler_type;
     typedef typename profiler_type::accumulator_type accumulator_type;
     typedef typename profiler_type::scoped_timer_type scoped_timer_type;
@@ -114,29 +120,44 @@ pair_trunc<dimension, float_type, potential_type, trunc_type>::pair_trunc(
 template <int dimension, typename float_type, typename potential_type, typename trunc_type>
 void pair_trunc<dimension, float_type, potential_type, trunc_type>::compute()
 {
+    cache_proxy<position_array_type const> position1 = particle1_->position();
+    cache_proxy<position_array_type const> position2 = particle2_->position();
+    cache_proxy<force_array_type> force1 = particle1_->force();
+    cache_proxy<en_pot_array_type> en_pot1 = particle1_->en_pot();
+    cache_proxy<stress_pot_array_type> stress_pot1 = particle1_->stress_pot();
+    cache_proxy<hypervirial_array_type> hypervirial1 = particle1_->hypervirial();
+
     scoped_timer_type timer(runtime_.compute);
 
     cuda::copy(neighbour_->size(), gpu_wrapper::kernel.neighbour_size);
     cuda::copy(neighbour_->stride(), gpu_wrapper::kernel.neighbour_stride);
-    gpu_wrapper::kernel.r1.bind(particle1_->position());
-    gpu_wrapper::kernel.r2.bind(particle2_->position());
+    gpu_wrapper::kernel.r1.bind(*position1);
+    gpu_wrapper::kernel.r2.bind(*position2);
     potential_->bind_textures();
 
     cuda::configure(particle1_->dim.grid, particle1_->dim.block);
     if (!particle1_->aux_valid()) {
         gpu_wrapper::kernel.compute(
-            particle1_->force(), neighbour_->g_neighbour()
-          , particle1_->en_pot(), particle1_->stress_pot(), particle1_->hypervirial()
-          , particle1_->nspecies(), particle2_->nspecies()
+            &*force1->begin()
+          , neighbour_->g_neighbour()
+          , &*en_pot1->begin()
+          , &*stress_pot1->begin()
+          , &*hypervirial1->begin()
+          , particle1_->nspecies()
+          , particle2_->nspecies()
           , static_cast<vector_type>(box_->length())
           , *trunc_
         );
     }
     else {
         gpu_wrapper::kernel.compute_aux(
-            particle1_->force(), neighbour_->g_neighbour()
-          , particle1_->en_pot(), particle1_->stress_pot(), particle1_->hypervirial()
-          , particle1_->nspecies(), particle2_->nspecies()
+            &*force1->begin()
+          , neighbour_->g_neighbour()
+          , &*en_pot1->begin()
+          , &*stress_pot1->begin()
+          , &*hypervirial1->begin()
+          , particle1_->nspecies()
+          , particle2_->nspecies()
           , static_cast<vector_type>(box_->length())
           , *trunc_
         );
