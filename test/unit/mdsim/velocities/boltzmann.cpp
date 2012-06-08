@@ -28,7 +28,6 @@
 #include <limits>
 
 #include <halmd/mdsim/box.hpp>
-#include <halmd/mdsim/clock.hpp>
 #include <halmd/mdsim/host/particle.hpp>
 #include <halmd/mdsim/host/particle_groups/all.hpp>
 #include <halmd/mdsim/host/velocities/boltzmann.hpp>
@@ -66,7 +65,6 @@ struct boltzmann
     typedef typename modules_type::random_type random_type;
     typedef typename modules_type::thermodynamics_type thermodynamics_type;
     typedef typename modules_type::velocity_type velocity_type;
-    typedef mdsim::clock clock_type;
     typedef typename particle_type::vector_type vector_type;
     typedef typename vector_type::value_type float_type;
     static unsigned int const dimension = vector_type::static_size;
@@ -77,7 +75,6 @@ struct boltzmann
     double density;
 
     std::shared_ptr<box_type> box;
-    std::shared_ptr<clock_type> clock;
     std::shared_ptr<particle_type> particle;
     std::shared_ptr<random_type> random;
     std::shared_ptr<thermodynamics_type> thermodynamics;
@@ -118,19 +115,16 @@ void boltzmann<modules_type>::test()
     // multiplication of the velocities by a constant factor
     double scale = 1.5;
     velocity->rescale(scale);
-    thermodynamics->clear_cache(); //< reset caches after rescaling the velocities
     BOOST_CHECK_CLOSE_FRACTION(thermodynamics->temp(), scale * scale * temp, rel_temp_tolerance);
 
     // shift mean velocity to zero
     fixed_vector<double, dimension> v_cm = thermodynamics->v_cm();
     velocity->shift(-v_cm);
-    thermodynamics->clear_cache(); //< reset caches after shifting the velocities
     vcm_tolerance = gpu ? 0.1 * eps_float : 2 * eps;
     BOOST_CHECK_SMALL(norm_inf(thermodynamics->v_cm()), vcm_tolerance);
 
     // first shift, then rescale in one step
     velocity->shift_rescale(v_cm, 1 / scale);
-    thermodynamics->clear_cache(); //< reset caches after modifying the velocities
     BOOST_CHECK_CLOSE_FRACTION(thermodynamics->temp(), temp, rel_temp_tolerance);
     BOOST_CHECK_SMALL(norm_inf(thermodynamics->v_cm() - v_cm), vcm_tolerance);
 }
@@ -153,9 +147,8 @@ boltzmann<modules_type>::boltzmann()
     box = std::make_shared<box_type>(edges);
     random = std::make_shared<random_type>();
     velocity = std::make_shared<velocity_type>(particle, random, temp);
-    clock = std::make_shared<clock_type>();
     std::shared_ptr<particle_group_type> group = std::make_shared<particle_group_type>(particle);
-    thermodynamics = std::make_shared<thermodynamics_type>(particle, group, box, clock);
+    thermodynamics = std::make_shared<thermodynamics_type>(particle, group, box);
 }
 
 template <int dimension, typename float_type>

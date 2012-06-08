@@ -1,5 +1,6 @@
 /*
- * Copyright © 2010-2012  Felix Höfling and Peter Colberg
+ * Copyright © 2010-2012 Felix Höfling
+ * Copyright © 2010-2012 Peter Colberg
  *
  * This file is part of HALMD.
  *
@@ -20,17 +21,18 @@
 #ifndef HALMD_OBSERVABLES_HOST_THERMODYNAMICS_HPP
 #define HALMD_OBSERVABLES_HOST_THERMODYNAMICS_HPP
 
-#include <lua.hpp>
-#include <memory>
-
 #include <halmd/io/logger.hpp>
 #include <halmd/mdsim/box.hpp>
-#include <halmd/mdsim/clock.hpp>
 #include <halmd/mdsim/host/particle.hpp>
 #include <halmd/mdsim/host/particle_group.hpp>
 #include <halmd/observables/thermodynamics.hpp>
-#include <halmd/utility/data_cache.hpp>
+#include <halmd/utility/cache.hpp>
 #include <halmd/utility/profiler.hpp>
+
+#include <lua.hpp>
+
+#include <memory>
+#include <tuple>
 
 namespace halmd {
 namespace observables {
@@ -46,7 +48,6 @@ private:
 public:
     typedef typename _Base::vector_type vector_type;
     typedef mdsim::box<dimension> box_type;
-    typedef mdsim::clock clock_type;
     typedef mdsim::host::particle<dimension, float_type> particle_type;
     typedef mdsim::host::particle_group particle_group_type;
     typedef logger logger_type;
@@ -57,7 +58,6 @@ public:
         std::shared_ptr<particle_type const> particle
       , std::shared_ptr<particle_group_type> group
       , std::shared_ptr<box_type const> box
-      , std::shared_ptr<clock_type const> clock
       , std::shared_ptr<logger_type> logger = std::make_shared<logger_type>()
     );
 
@@ -96,11 +96,6 @@ public:
      */
     virtual double hypervirial();
 
-    /**
-     * Clear cache.
-     */
-    virtual void clear_cache();
-
 private:
     typedef typename particle_type::size_type size_type;
     typedef typename particle_type::velocity_array_type velocity_array_type;
@@ -111,6 +106,37 @@ private:
     typedef typename particle_type::stress_pot_array_type stress_pot_array_type;
     typedef typename particle_type::hypervirial_array_type hypervirial_array_type;
     typedef typename particle_group_type::array_type group_array_type;
+
+    /** system state */
+    std::shared_ptr<particle_type const> particle_;
+    /** particle group */
+    std::shared_ptr<particle_group_type> group_;
+    /** simulation domain */
+    std::shared_ptr<box_type const> box_;
+    /** module logger */
+    std::shared_ptr<logger_type> logger_;
+
+    /** mean kinetic energy per particle */
+    double en_kin_;
+    /** mean potential energy per particle */
+    vector_type v_cm_;
+    /** mean potential energy per particle */
+    double en_pot_;
+    /** mean virial per particle */
+    double virial_;
+    /** mean hypervirial per particle */
+    double hypervirial_;
+
+    /** cache observers of mean kinetic energy per particle */
+    std::tuple<cache<>, cache<>, cache<>> en_kin_cache_;
+    /** cache observers of mean potential energy per particle */
+    std::tuple<cache<>, cache<>, cache<>> v_cm_cache_;
+    /** cache observers of mean potential energy per particle */
+    std::tuple<cache<>, cache<>> en_pot_cache_;
+    /** cache observers of mean virial per particle */
+    std::tuple<cache<>, cache<>> virial_cache_;
+    /** cache observers of mean hypervirial per particle */
+    std::tuple<cache<>, cache<>> hypervirial_cache_;
 
     typedef halmd::utility::profiler profiler_type;
     typedef profiler_type::accumulator_type accumulator_type;
@@ -124,22 +150,6 @@ private:
         accumulator_type virial;
         accumulator_type hypervirial;
     };
-
-    /** system state */
-    std::shared_ptr<particle_type const> particle_;
-    /** particle group */
-    std::shared_ptr<particle_group_type> group_;
-    /** simulation domain */
-    std::shared_ptr<box_type const> box_;
-    /** module logger */
-    std::shared_ptr<logger_type> logger_;
-
-    /** cached results */
-    data_cache<double> en_kin_;
-    data_cache<vector_type> v_cm_;
-    data_cache<double> en_pot_;
-    data_cache<double> virial_;
-    data_cache<double> hypervirial_;
 
     /** profiling runtime accumulators */
     runtime runtime_;

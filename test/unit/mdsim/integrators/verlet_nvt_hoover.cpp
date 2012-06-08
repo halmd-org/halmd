@@ -31,7 +31,6 @@
 #include <iomanip>
 
 #include <halmd/mdsim/box.hpp>
-#include <halmd/mdsim/clock.hpp>
 #include <halmd/mdsim/core.hpp>
 #include <halmd/mdsim/host/forces/pair_trunc.hpp>
 #include <halmd/mdsim/host/particle.hpp>
@@ -102,9 +101,6 @@ struct verlet_nvt_hoover
     typedef typename modules_type::velocity_type velocity_type;
     static bool const gpu = modules_type::gpu;
 
-    typedef mdsim::clock clock_type;
-    typedef typename clock_type::time_type time_type;
-    typedef typename clock_type::step_type step_type;
     typedef mdsim::core core_type;
     typedef typename particle_type::vector_type vector_type;
     typedef typename vector_type::value_type float_type;
@@ -121,7 +117,6 @@ struct verlet_nvt_hoover
     float skin;
 
     std::shared_ptr<box_type> box;
-    std::shared_ptr<clock_type> clock;
     std::shared_ptr<core_type> core;
     std::shared_ptr<potential_type> potential;
     std::shared_ptr<force_type> force;
@@ -163,12 +158,10 @@ void verlet_nvt_hoover<modules_type>::test()
     // equilibrate the system,
     // this avoids a jump in the conserved energy at the very beginning
     BOOST_TEST_MESSAGE("equilibrate over " << steps / 20 << " steps");
-    clock->set_timestep(integrator->timestep());
     for (uint64_t i = 0; i < steps / 20; ++i) {
         if (i + 1 == steps / 20) {
             particle->aux_enable();                    //< enable computation of potential energy
         }
-        clock->advance();
         core->mdstep();
     }
 
@@ -183,7 +176,6 @@ void verlet_nvt_hoover<modules_type>::test()
         }
 
         // perform MD step
-        clock->advance();
         core->mdstep();
 
         // measurement
@@ -316,9 +308,8 @@ verlet_nvt_hoover<modules_type>::verlet_nvt_hoover()
     force = std::make_shared<force_type>(potential, particle, particle, box, neighbour);
     position = std::make_shared<position_type>(particle, box, 1);
     velocity = std::make_shared<velocity_type>(particle, random, start_temp);
-    clock = std::make_shared<clock_type>();
     std::shared_ptr<particle_group_type> group = std::make_shared<particle_group_type>(particle);
-    thermodynamics = std::make_shared<thermodynamics_type>(particle, group, box, clock);
+    thermodynamics = std::make_shared<thermodynamics_type>(particle, group, box);
     max_displacement = std::make_shared<max_displacement_type>(particle, box);
 
     // create core and connect module slots to core signals

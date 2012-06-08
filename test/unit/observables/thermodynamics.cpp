@@ -27,7 +27,6 @@
 #include <limits>
 
 #include <halmd/mdsim/box.hpp>
-#include <halmd/mdsim/clock.hpp>
 #include <halmd/mdsim/core.hpp>
 #include <halmd/mdsim/host/forces/pair_trunc.hpp>
 #include <halmd/mdsim/host/integrators/verlet.hpp>
@@ -126,9 +125,6 @@ struct lennard_jones_fluid
     typedef typename modules_type::velocity_type velocity_type;
     static bool const gpu = modules_type::gpu;
 
-    typedef mdsim::clock clock_type;
-    typedef typename clock_type::time_type time_type;
-    typedef typename clock_type::step_type step_type;
     typedef mdsim::core core_type;
     typedef typename particle_type::vector_type vector_type;
     typedef typename vector_type::value_type float_type;
@@ -147,7 +143,6 @@ struct lennard_jones_fluid
     fixed_vector<double, dimension> slab;
 
     std::shared_ptr<box_type> box;
-    std::shared_ptr<clock_type> clock;
     std::shared_ptr<core_type> core;
     std::shared_ptr<potential_type> potential;
     std::shared_ptr<force_type> force;
@@ -180,14 +175,12 @@ void lennard_jones_fluid<modules_type>::test()
     conn.push_back(core->on_finalize([=]() {
         nvt_integrator->finalize();
     }));
-    clock->set_timestep(nvt_integrator->timestep());
 
     // relax configuration and thermalise at given temperature, run for t*=30
     BOOST_TEST_MESSAGE("thermalise initial state at T=" << temp);
     core->setup();
-    step_type steps = static_cast<step_type>(ceil(30 / nvt_integrator->timestep()));
-    for (step_type i = 0; i < steps; ++i) {
-        clock->advance();
+    unsigned int steps = static_cast<unsigned int>(ceil(30 / nvt_integrator->timestep()));
+    for (unsigned int i = 0; i < steps; ++i) {
         core->mdstep();
     }
     for_each(conn.begin(), conn.end(), bind(&connection::disconnect, _1));
@@ -201,11 +194,9 @@ void lennard_jones_fluid<modules_type>::test()
     core->on_finalize([=]() {
         nve_integrator->finalize();
     });
-    clock->set_timestep(nve_integrator->timestep());
 
     // stochastic thermostat => centre particle velocities around zero
     velocity->shift(-thermodynamics->v_cm());
-    thermodynamics->clear_cache(); //< reset caches after shifting the velocities
 
     const double vcm_limit = gpu ? 0.1 * eps_float : 20 * eps;
     BOOST_CHECK_SMALL(norm_inf(thermodynamics->v_cm()), vcm_limit);
@@ -215,13 +206,12 @@ void lennard_jones_fluid<modules_type>::test()
 
     // equilibration run, measure temperature in second half
     BOOST_TEST_MESSAGE("equilibrate initial state");
-    steps = static_cast<step_type>(ceil(30 / timestep));
-    step_type period = static_cast<step_type>(round(.01 / timestep));
-    for (step_type i = 0; i < steps; ++i) {
+    steps = static_cast<unsigned int>(ceil(30 / timestep));
+    unsigned int period = static_cast<unsigned int>(round(.01 / timestep));
+    for (unsigned int i = 0; i < steps; ++i) {
         if (i == steps - 1) {
             particle->aux_enable();              // enable auxiliary variables in last step
         }
-        clock->advance();
         core->mdstep();
         if(i > steps/2 && i % period == 0) {
             temp_(thermodynamics->temp());
@@ -233,7 +223,6 @@ void lennard_jones_fluid<modules_type>::test()
     double v_scale = sqrt(temp / mean(temp_));
     BOOST_TEST_MESSAGE("rescale velocities by factor " << v_scale);
     velocity->rescale(v_scale);
-    thermodynamics->clear_cache(); //< reset caches after rescaling the velocities
 
     double en_tot = thermodynamics->en_tot();
     double max_en_diff = 0; // maximal absolut deviation from initial total energy
@@ -241,16 +230,15 @@ void lennard_jones_fluid<modules_type>::test()
 
     // microcanonical simulation run
     BOOST_TEST_MESSAGE("run NVE simulation");
-    steps = static_cast<step_type>(ceil(60 / nve_integrator->timestep()));
-    period = static_cast<step_type>(round(0.05 / nve_integrator->timestep()));
-    for (step_type i = 0; i < steps; ++i) {
+    steps = static_cast<unsigned int>(ceil(60 / nve_integrator->timestep()));
+    period = static_cast<unsigned int>(round(0.05 / nve_integrator->timestep()));
+    for (unsigned int i = 0; i < steps; ++i) {
         // turn on evaluation of potential energy, virial, etc.
         if(i % period == 0) {
             particle->aux_enable();
         }
 
         // perform MD step
-        clock->advance();
         core->mdstep();
 
         // measurement
@@ -349,9 +337,8 @@ lennard_jones_fluid<modules_type>::lennard_jones_fluid()
     position = std::make_shared<position_type>(particle, box, slab);
     velocity = std::make_shared<velocity_type>(particle, random, temp);
     force = std::make_shared<force_type>(potential, particle, particle, box, neighbour);
-    clock = std::make_shared<clock_type>();
     std::shared_ptr<particle_group_type> group = std::make_shared<particle_group_type>(particle);
-    thermodynamics = std::make_shared<thermodynamics_type>(particle, group, box, clock);
+    thermodynamics = std::make_shared<thermodynamics_type>(particle, group, box);
     msd = std::make_shared<msd_type>(particle, box);
 
     // create core and connect module slots to core signals

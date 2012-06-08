@@ -28,7 +28,6 @@
 #include <numeric>
 
 #include <halmd/mdsim/box.hpp>
-#include <halmd/mdsim/clock.hpp>
 #include <halmd/mdsim/core.hpp>
 #include <halmd/mdsim/host/integrators/verlet.hpp>
 #include <halmd/mdsim/host/particle.hpp>
@@ -73,9 +72,6 @@ struct ideal_gas
     typedef typename modules_type::velocity_type velocity_type;
     static bool const gpu = modules_type::gpu;
 
-    typedef mdsim::clock clock_type;
-    typedef typename clock_type::time_type time_type;
-    typedef typename clock_type::step_type step_type;
     typedef mdsim::core core_type;
     typedef typename particle_type::vector_type vector_type;
     typedef typename vector_type::value_type float_type;
@@ -89,7 +85,6 @@ struct ideal_gas
     fixed_vector<double, dimension> slab;
 
     std::shared_ptr<box_type> box;
-    std::shared_ptr<clock_type> clock;
     std::shared_ptr<core_type> core;
     std::shared_ptr<integrator_type> integrator;
     std::shared_ptr<particle_type> particle;
@@ -118,14 +113,12 @@ void ideal_gas<modules_type>::test()
 
     // microcanonical simulation run
     BOOST_TEST_MESSAGE("run NVE simulation");
-    clock->set_timestep(integrator->timestep());
-    step_type steps = 1000;
-    for (step_type i = 0; i < steps; ++i) {
+    unsigned int constexpr steps = 1000;
+    for (unsigned int i = 0; i < steps; ++i) {
         // last step: evaluate auxiliary variables (potential energy, virial, ...)
         if (i == steps - 1) {
             particle->aux_enable();
         }
-        clock->advance();
         core->mdstep();
     }
 
@@ -145,7 +138,7 @@ ideal_gas<modules_type>::ideal_gas()
     // set module parameters
     density = 1;
     temp = 1;
-    time_type timestep = 0.001;
+    double timestep = 0.001;
     npart = 1000;
     box_ratios = (dimension == 3) ? list_of(1.)(2.)(1.01) : list_of(1.)(2.);
     double det = accumulate(box_ratios.begin(), box_ratios.end(), 1., multiplies<double>());
@@ -164,9 +157,8 @@ ideal_gas<modules_type>::ideal_gas()
     position = std::make_shared<position_type>(particle, box, slab);
     velocity = std::make_shared<velocity_type>(particle, random, temp);
     integrator = std::make_shared<integrator_type>(particle, box, timestep);
-    clock = std::make_shared<clock_type>();
     std::shared_ptr<particle_group_type> group = std::make_shared<particle_group_type>(particle);
-    thermodynamics = std::make_shared<thermodynamics_type>(particle, group, box, clock);
+    thermodynamics = std::make_shared<thermodynamics_type>(particle, group, box);
 
     // create core and connect module slots to core signals
     this->connect();

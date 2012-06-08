@@ -29,7 +29,6 @@
 #include <numeric>
 
 #include <halmd/mdsim/box.hpp>
-#include <halmd/mdsim/clock.hpp>
 #include <halmd/mdsim/core.hpp>
 #include <halmd/mdsim/host/integrators/verlet_nvt_andersen.hpp>
 #include <halmd/mdsim/host/particle.hpp>
@@ -75,12 +74,9 @@ struct verlet_nvt_andersen
     typedef typename particle_type::vector_type vector_type;
     typedef typename vector_type::value_type float_type;
     static unsigned int const dimension = vector_type::static_size;
-    typedef mdsim::clock clock_type;
-    typedef typename clock_type::time_type time_type;
-    typedef typename clock_type::step_type step_type;
     typedef mdsim::core core_type;
 
-    time_type timestep;
+    double timestep;
     float density;
     float temp;
     double coll_rate;
@@ -89,7 +85,6 @@ struct verlet_nvt_andersen
     fixed_vector<double, dimension> slab;
 
     std::shared_ptr<box_type> box;
-    std::shared_ptr<clock_type> clock;
     std::shared_ptr<core_type> core;
     std::shared_ptr<integrator_type> integrator;
     std::shared_ptr<particle_type> particle;
@@ -107,18 +102,16 @@ template <typename modules_type>
 void verlet_nvt_andersen<modules_type>::test()
 {
     // run for Δt*=500
-    step_type steps = static_cast<step_type>(ceil(500 / timestep));
+    unsigned int steps = static_cast<unsigned int>(ceil(500 / timestep));
     // ensure that sampling period is sufficiently large such that
     // the samples can be considered independent
-    step_type period = static_cast<step_type>(round(3. / (coll_rate * timestep)));
+    unsigned int period = static_cast<unsigned int>(round(3. / (coll_rate * timestep)));
     accumulator<double> temp_;
     boost::array<accumulator<double>, dimension> v_cm;   //< accumulate velocity component-wise
 
     core->setup();
     BOOST_TEST_MESSAGE("run NVT integrator over " << steps << " steps");
-    clock->set_timestep(integrator->timestep());
-    for (step_type i = 0; i < steps; ++i) {
-        clock->advance();
+    for (unsigned int i = 0; i < steps; ++i) {
         core->mdstep();
         if(i % period == 0) {
             temp_(thermodynamics->temp());
@@ -208,9 +201,8 @@ verlet_nvt_andersen<modules_type>::verlet_nvt_andersen()
     position = std::make_shared<position_type>(particle, box, slab);
     velocity = std::make_shared<velocity_type>(particle, random, temp);
     integrator = std::make_shared<integrator_type>(particle, box, random, timestep, temp, coll_rate);
-    clock = std::make_shared<clock_type>();
     std::shared_ptr<particle_group_type> group = std::make_shared<particle_group_type>(particle);
-    thermodynamics = std::make_shared<thermodynamics_type>(particle, group, box, clock);
+    thermodynamics = std::make_shared<thermodynamics_type>(particle, group, box);
 
     // create core and connect module slots to core signals
     this->connect();

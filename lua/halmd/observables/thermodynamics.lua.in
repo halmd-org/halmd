@@ -17,7 +17,6 @@
 -- along with this program.  If not, see <http://www.gnu.org/licenses/>.
 --
 
-local clock             = require("halmd.mdsim.clock")
 local log               = require("halmd.io.log")
 local module            = require("halmd.utility.module")
 local sampler           = require("halmd.observables.sampler")
@@ -112,7 +111,7 @@ local M = module(function(args)
     local logger = log.logger({label = ("thermodynamics (%s)"):format(label)})
 
     -- construct instance
-    local self = thermodynamics(particle, group, box, clock, logger)
+    local self = thermodynamics(particle, group, box, logger)
 
     self.writer = function(file, args)
         local writer = file:writer{location = {"observables"}, mode = "append"}

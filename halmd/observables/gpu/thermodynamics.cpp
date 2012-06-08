@@ -1,5 +1,6 @@
 /*
- * Copyright © 2010-2012  Felix Höfling and Peter Colberg
+ * Copyright © 2010-2012 Felix Höfling
+ * Copyright © 2010-2012 Peter Colberg
  *
  * This file is part of HALMD.
  *
@@ -33,7 +34,6 @@ thermodynamics<dimension, float_type>::thermodynamics(
     std::shared_ptr<particle_type const> particle
   , std::shared_ptr<particle_group_type> group
   , std::shared_ptr<box_type const> box
-  , std::shared_ptr<clock_type const> clock
   , std::shared_ptr<logger_type> logger
 )
   // dependency injection
@@ -41,12 +41,6 @@ thermodynamics<dimension, float_type>::thermodynamics(
   , group_(group)
   , box_(box)
   , logger_(logger)
-  // initialise members
-  , en_kin_(clock)
-  , v_cm_(clock)
-  , en_pot_(clock)
-  , virial_(clock)
-  , hypervirial_(clock)
 {
 }
 
@@ -69,16 +63,21 @@ double thermodynamics<dimension, float_type>::volume() const
 template <int dimension, typename float_type>
 double thermodynamics<dimension, float_type>::en_kin()
 {
-    if (!en_kin_.valid()) {
-        cache_proxy<group_array_type const> group = group_->unordered();
-        cache_proxy<velocity_array_type const> velocity = particle_->velocity();
+    cache<velocity_array_type> const& velocity_cache = particle_->velocity();
+    cache<size_type> const& group_cache = group_->size();
 
+    if (en_kin_cache_ != std::tie(velocity_cache, group_cache)) {
         LOG_TRACE("acquire kinetic energy");
+
+        cache_proxy<group_array_type const> group = group_->unordered();
+        cache_proxy<velocity_array_type const> velocity = velocity_cache;
 
         scoped_timer_type timer(runtime_.en_kin);
 
         _Kernel::get().velocity.bind(*velocity);
         en_kin_ = double(compute_en_kin_(group->begin(), group->end())()) / group->size();
+
+        en_kin_cache_ = std::tie(velocity_cache, group_cache);
     }
     return en_kin_;
 }
@@ -90,16 +89,21 @@ template <int dimension, typename float_type>
 typename thermodynamics<dimension, float_type>::vector_type const&
 thermodynamics<dimension, float_type>::v_cm()
 {
-    if (!v_cm_.valid()) {
-        cache_proxy<group_array_type const> group = group_->unordered();
-        cache_proxy<velocity_array_type const> velocity = particle_->velocity();
+    cache<velocity_array_type> const& velocity_cache = particle_->velocity();
+    cache<size_type> const& group_cache = group_->size();
 
+    if (v_cm_cache_ != std::tie(velocity_cache, group_cache)) {
         LOG_TRACE("acquire centre-of-mass velocity");
+
+        cache_proxy<group_array_type const> group = group_->unordered();
+        cache_proxy<velocity_array_type const> velocity = velocity_cache;
 
         scoped_timer_type timer(runtime_.v_cm);
 
         _Kernel::get().velocity.bind(*velocity);
         v_cm_ = vector_type(compute_v_cm_(group->begin(), group->end())());
+
+        v_cm_cache_ = std::tie(velocity_cache, group_cache);
     }
     return v_cm_;
 }
@@ -110,16 +114,21 @@ thermodynamics<dimension, float_type>::v_cm()
 template <int dimension, typename float_type>
 double thermodynamics<dimension, float_type>::en_pot()
 {
-    if (!en_pot_.valid()) {
-        cache_proxy<group_array_type const> group = group_->unordered();
-        cache_proxy<en_pot_array_type const> en_pot = particle_->en_pot();
+    cache<en_pot_array_type> const& en_pot_cache = particle_->en_pot();
+    cache<size_type> const& group_cache = group_->size();
 
+    if (en_pot_cache_ != std::tie(en_pot_cache, group_cache)) {
         LOG_TRACE("acquire potential energy");
+
+        cache_proxy<group_array_type const> group = group_->unordered();
+        cache_proxy<en_pot_array_type const> en_pot = en_pot_cache;
 
         scoped_timer_type timer(runtime_.en_pot);
 
         _Kernel::get().en_pot.bind(*en_pot);
         en_pot_ = double(compute_en_pot_(group->begin(), group->end())()) / group->size();
+
+        en_pot_cache_ = std::tie(en_pot_cache, group_cache);
     }
     return en_pot_;
 }
@@ -130,16 +139,21 @@ double thermodynamics<dimension, float_type>::en_pot()
 template <int dimension, typename float_type>
 double thermodynamics<dimension, float_type>::virial()
 {
-    if (!virial_.valid()) {
-        cache_proxy<group_array_type const> group = group_->unordered();
-        cache_proxy<stress_pot_array_type const> stress_pot = particle_->stress_pot();
+    cache<stress_pot_array_type> const& stress_pot_cache = particle_->stress_pot();
+    cache<size_type> const& group_cache = group_->size();
 
+    if (virial_cache_ != std::tie(stress_pot_cache, group_cache)) {
         LOG_TRACE("acquire virial");
+
+        cache_proxy<group_array_type const> group = group_->unordered();
+        cache_proxy<stress_pot_array_type const> stress_pot = stress_pot_cache;
 
         scoped_timer_type timer(runtime_.virial);
 
         _Kernel::get().stress_pot.bind(*stress_pot);
         virial_ = double(compute_virial_(group->begin(), group->end())()) / group->size();
+
+        virial_cache_ = std::tie(stress_pot_cache, group_cache);
     }
     return virial_;
 }
@@ -150,31 +164,23 @@ double thermodynamics<dimension, float_type>::virial()
 template <int dimension, typename float_type>
 double thermodynamics<dimension, float_type>::hypervirial()
 {
-    if (!hypervirial_.valid()) {
-        cache_proxy<group_array_type const> group = group_->unordered();
-        cache_proxy<hypervirial_array_type const> hypervirial = particle_->hypervirial();
+    cache<hypervirial_array_type> const& hypervirial_cache = particle_->hypervirial();
+    cache<size_type> const& group_cache = group_->size();
 
+    if (hypervirial_cache_ != std::tie(hypervirial_cache, group_cache)) {
         LOG_TRACE("acquire hypervirial");
+
+        cache_proxy<group_array_type const> group = group_->unordered();
+        cache_proxy<hypervirial_array_type const> hypervirial = hypervirial_cache;
 
         scoped_timer_type timer(runtime_.hypervirial);
 
         _Kernel::get().en_pot.bind(*hypervirial);
         hypervirial_ = double(compute_en_pot_(group->begin(), group->end())()) / group->size();
+
+        hypervirial_cache_ = std::tie(hypervirial_cache, group_cache);
     }
     return hypervirial_;
-}
-
-/**
- * clear data caches
- */
-template <int dimension, typename float_type>
-void thermodynamics<dimension, float_type>::clear_cache()
-{
-    en_kin_.clear();
-    v_cm_.clear();
-    en_pot_.clear();
-    virial_.clear();
-    hypervirial_.clear();
 }
 
 template <int dimension, typename float_type>
@@ -207,7 +213,6 @@ void thermodynamics<dimension, float_type>::luaopen(lua_State* L)
               , std::shared_ptr<particle_type const>
               , std::shared_ptr<particle_group_type>
               , std::shared_ptr<box_type const>
-              , std::shared_ptr<clock_type const>
               , std::shared_ptr<logger_type>
             >)
         ]

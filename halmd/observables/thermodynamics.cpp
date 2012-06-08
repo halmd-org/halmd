@@ -113,15 +113,6 @@ wrap_hypervirial(std::shared_ptr<thermodynamics_type> self)
     };
 }
 
-template <typename thermodynamics_type>
-static std::function<void ()>
-wrap_clear_cache(std::shared_ptr<thermodynamics_type> self)
-{
-    return [=]() {
-        self->clear_cache();
-    };
-}
-
 template <int dimension>
 void thermodynamics<dimension>::luaopen(lua_State* L)
 {
@@ -139,7 +130,6 @@ void thermodynamics<dimension>::luaopen(lua_State* L)
             .property("v_cm", &wrap_v_cm<thermodynamics>)
             .property("virial", &wrap_virial<thermodynamics>)
             .property("hypervirial", &wrap_hypervirial<thermodynamics>)
-            .property("clear_cache", &wrap_clear_cache<thermodynamics>)
     ];
 }
 

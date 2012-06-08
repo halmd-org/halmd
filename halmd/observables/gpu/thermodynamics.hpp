@@ -1,5 +1,6 @@
 /*
- * Copyright © 2010-2012  Felix Höfling and Peter Colberg
+ * Copyright © 2010-2012 Felix Höfling
+ * Copyright © 2010-2012 Peter Colberg
  *
  * This file is part of HALMD.
  *
@@ -26,12 +27,10 @@
 #include <halmd/algorithm/gpu/reduce.hpp>
 #include <halmd/io/logger.hpp>
 #include <halmd/mdsim/box.hpp>
-#include <halmd/mdsim/clock.hpp>
 #include <halmd/mdsim/gpu/particle.hpp>
 #include <halmd/mdsim/gpu/particle_group.hpp>
 #include <halmd/observables/gpu/thermodynamics_kernel.hpp>
 #include <halmd/observables/thermodynamics.hpp>
-#include <halmd/utility/data_cache.hpp>
 #include <halmd/utility/profiler.hpp>
 
 namespace halmd {
@@ -49,7 +48,6 @@ private:
 public:
     typedef typename _Base::vector_type vector_type;
     typedef mdsim::box<dimension> box_type;
-    typedef mdsim::clock clock_type;
     typedef mdsim::gpu::particle<dimension, float_type> particle_type;
     typedef mdsim::gpu::particle_group particle_group_type;
     typedef logger logger_type;
@@ -60,7 +58,6 @@ public:
         std::shared_ptr<particle_type const> particle
       , std::shared_ptr<particle_group_type> group
       , std::shared_ptr<box_type const> box
-      , std::shared_ptr<clock_type const> clock
       , std::shared_ptr<logger_type> logger = std::make_shared<logger_type>()
     );
 
@@ -99,11 +96,6 @@ public:
      */
     virtual double hypervirial();
 
-    /**
-     * Clear cache.
-     */
-    virtual void clear_cache();
-
 private:
     typedef typename particle_type::size_type size_type;
     typedef typename particle_type::velocity_array_type velocity_array_type;
@@ -121,12 +113,27 @@ private:
     /** module logger */
     std::shared_ptr<logger_type> logger_;
 
-    /** cached results */
-    data_cache<double> en_kin_;
-    data_cache<vector_type> v_cm_;
-    data_cache<double> en_pot_;
-    data_cache<double> virial_;
-    data_cache<double> hypervirial_;
+    /** mean kinetic energy per particle */
+    double en_kin_;
+    /** mean potential energy per particle */
+    vector_type v_cm_;
+    /** mean potential energy per particle */
+    double en_pot_;
+    /** mean virial per particle */
+    double virial_;
+    /** mean hypervirial per particle */
+    double hypervirial_;
+
+    /** cache observers of mean kinetic energy per particle */
+    std::tuple<cache<>, cache<>> en_kin_cache_;
+    /** cache observers of mean potential energy per particle */
+    std::tuple<cache<>, cache<>> v_cm_cache_;
+    /** cache observers of mean potential energy per particle */
+    std::tuple<cache<>, cache<>> en_pot_cache_;
+    /** cache observers of mean virial per particle */
+    std::tuple<cache<>, cache<>> virial_cache_;
+    /** cache observers of mean hypervirial per particle */
+    std::tuple<cache<>, cache<>> hypervirial_cache_;
 
     /** functor for total kinetic energy */
     reduction<gpu::kinetic_energy<dimension, dsfloat> > compute_en_kin_;
