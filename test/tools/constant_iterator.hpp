@@ -20,40 +20,32 @@
 #ifndef TEST_TOOLS_CONSTANT_ITERATOR_HPP
 #define TEST_TOOLS_CONSTANT_ITERATOR_HPP
 
-#include <cstddef> // std::size_t
+#include <boost/iterator/counting_iterator.hpp>
+#include <boost/iterator/transform_iterator.hpp>
 
 /**
- * Iterator for BOOST_CHECK_EQUAL_COLLECTIONS that returns constant.
- *
- * Note that this is *not* a complete iterator with regard to any of the
- * iterator categories of the STL, merely a helper for comparing a range
- * of values with a constant using BOOST_CHECK_EQUAL_COLLECTIONS.
+ * Functor that returns constant value.
  */
 template <typename T>
-class constant_iterator
+class constant_value
 {
 public:
-    constant_iterator(T const& value, std::size_t index) : value_(value), index_(index) {}
+    constant_value(T const& value) : value_(value) {}
 
-    bool operator!=(constant_iterator const& other)
-    {
-        return index_ != other.index_;
-    }
-
-    constant_iterator& operator++()
-    {
-        ++index_;
-        return *this;
-    }
-
-    T const& operator*() const
+    T operator()(std::size_t) const
     {
         return value_;
     }
 
 private:
     T value_;
-    std::size_t index_;
 };
+
+template <typename T>
+inline boost::transform_iterator<constant_value<T>, boost::counting_iterator<std::size_t>>
+make_constant_iterator(T const& value, std::size_t offset)
+{
+    return boost::make_transform_iterator(boost::make_counting_iterator(offset), constant_value<T>(value));
+}
 
 #endif /* TEST_TOOLS_CONSTANT_ITERATOR_HPP */

@@ -1,5 +1,6 @@
 halmd_add_modules(
   libhalmd_mdsim_gpu_binning
+  libhalmd_mdsim_gpu_force
   libhalmd_mdsim_gpu_maximum_squared_displacement
   libhalmd_mdsim_gpu_neighbour
   libhalmd_mdsim_gpu_particle
@@ -18,6 +19,7 @@ add_subdirectory(velocities)
 halmd_add_library(halmd_mdsim_gpu
   binning.cpp
   binning_kernel.cu
+  force.cpp
   maximum_squared_displacement.cpp
   maximum_squared_displacement_kernel.cu
   neighbour.cpp

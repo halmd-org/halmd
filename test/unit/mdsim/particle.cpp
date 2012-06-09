@@ -17,16 +17,11 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <halmd/config.hpp>
+
 #define BOOST_TEST_MODULE particle
 #include <boost/test/unit_test.hpp>
 
-#include <algorithm>
-#include <boost/array.hpp>
-#include <boost/iterator/counting_iterator.hpp>
-#include <boost/iterator/transform_iterator.hpp>
-#include <cmath>
-
-#include <halmd/config.hpp>
 #include <halmd/mdsim/host/particle.hpp>
 #include <halmd/mdsim/positions/lattice_primitive.hpp>
 #include <test/tools/constant_iterator.hpp>
@@ -36,6 +31,12 @@
 # include <halmd/mdsim/gpu/particle.hpp>
 # include <test/tools/cuda.hpp>
 #endif
+
+#include <boost/iterator/counting_iterator.hpp>
+#include <boost/iterator/transform_iterator.hpp>
+
+#include <algorithm>
+#include <cmath>
 
 /**
  * Primitive lattice with equal number of lattice points per dimension.
@@ -92,8 +93,8 @@ static void test_position(particle_type& particle)
     BOOST_CHECK_EQUAL_COLLECTIONS(
         position.begin()
       , position.end()
-      , constant_iterator<position_type>(0, 0)
-      , constant_iterator<position_type>(0, particle.nparticle())
+      , make_constant_iterator(position_type(0), 0)
+      , make_constant_iterator(position_type(0), particle.nparticle())
     );
 
     // assign square/cubic lattice vectors
@@ -143,8 +144,8 @@ static void test_image(particle_type& particle)
     BOOST_CHECK_EQUAL_COLLECTIONS(
         image.begin()
       , image.end()
-      , constant_iterator<image_type>(0, 0)
-      , constant_iterator<image_type>(0, particle.nparticle())
+      , make_constant_iterator(image_type(0), 0)
+      , make_constant_iterator(image_type(0), particle.nparticle())
     );
 
     // assign square/cubic lattice vectors
@@ -188,8 +189,8 @@ static void test_velocity(particle_type& particle)
     BOOST_CHECK_EQUAL_COLLECTIONS(
         velocity.begin()
       , velocity.end()
-      , constant_iterator<velocity_type>(0, 0)
-      , constant_iterator<velocity_type>(0, particle.nparticle())
+      , make_constant_iterator(velocity_type(0), 0)
+      , make_constant_iterator(velocity_type(0), particle.nparticle())
     );
 
     // assign square/cubic lattice vectors
@@ -322,8 +323,8 @@ static void test_species(particle_type& particle)
     BOOST_CHECK_EQUAL_COLLECTIONS(
         species.begin()
       , species.end()
-      , constant_iterator<species_type>(0, 0)
-      , constant_iterator<species_type>(0, particle.nparticle())
+      , make_constant_iterator(species_type(0), 0)
+      , make_constant_iterator(species_type(0), particle.nparticle())
     );
 
     // set species to ascending sequence of integers starting at 1 ≠ 0
@@ -380,8 +381,8 @@ static void test_mass(particle_type& particle)
     BOOST_CHECK_EQUAL_COLLECTIONS(
         mass.begin()
       , mass.end()
-      , constant_iterator<mass_type>(1, 0)
-      , constant_iterator<mass_type>(1, particle.nparticle())
+      , make_constant_iterator(mass_type(1), 0)
+      , make_constant_iterator(mass_type(1), particle.nparticle())
     );
 
     // set masses to ascending sequence of integers starting at 2 ≠ 1
@@ -410,156 +411,6 @@ static void test_mass(particle_type& particle)
       , velocity.end()
       , make_lattice_iterator(lattice, 0)
       , make_lattice_iterator(lattice, particle.nparticle())
-    );
-}
-
-/**
- * Test initialisation, getter and setter of particle forces.
- */
-template <typename particle_type>
-static void test_force(particle_type& particle)
-{
-    typedef typename particle_type::force_type force_type;
-    particle_type const& const_particle = particle;
-
-    // check that forces are initialised to zero
-    std::vector<force_type> force(particle.nparticle());
-    BOOST_CHECK(
-        get_force(const_particle, force.begin()) == force.end()
-    );
-    BOOST_CHECK_EQUAL_COLLECTIONS(
-        force.begin()
-      , force.end()
-      , constant_iterator<force_type>(0, 0)
-      , constant_iterator<force_type>(0, particle.nparticle())
-    );
-
-    // assign square/cubic lattice vectors
-    equilateral_lattice<force_type> lattice(particle.nparticle());
-    BOOST_CHECK(
-        set_force(particle, make_lattice_iterator(lattice, 0))
-            == make_lattice_iterator(lattice, particle.nparticle())
-    );
-    BOOST_CHECK(
-        get_force(const_particle, force.begin()) == force.end()
-    );
-    BOOST_CHECK_EQUAL_COLLECTIONS(
-        force.begin()
-      , force.end()
-      , make_lattice_iterator(lattice, 0)
-      , make_lattice_iterator(lattice, particle.nparticle())
-    );
-}
-
-/**
- * Test initialisation, getter and setter of potential energy per particle.
- */
-template <typename particle_type>
-static void test_en_pot(particle_type& particle)
-{
-    typedef typename particle_type::en_pot_type en_pot_type;
-    particle_type const& const_particle = particle;
-
-    // check that potential energies are initialised to zero
-    std::vector<en_pot_type> en_pot(particle.nparticle());
-    BOOST_CHECK(
-        get_en_pot(const_particle, en_pot.begin()) == en_pot.end()
-    );
-    BOOST_CHECK_EQUAL_COLLECTIONS(
-        en_pot.begin()
-      , en_pot.end()
-      , constant_iterator<en_pot_type>(0, 0)
-      , constant_iterator<en_pot_type>(0, particle.nparticle())
-    );
-
-    // set potential energies to ascending sequence of integers starting at 1 ≠ 0
-    BOOST_CHECK(
-        set_en_pot(particle, boost::counting_iterator<en_pot_type>(1))
-            == boost::counting_iterator<en_pot_type>(particle.nparticle() + 1)
-    );
-    BOOST_CHECK(
-        get_en_pot(const_particle, en_pot.begin()) == en_pot.end()
-    );
-    BOOST_CHECK_EQUAL_COLLECTIONS(
-        en_pot.begin()
-      , en_pot.end()
-      , boost::counting_iterator<en_pot_type>(1)
-      , boost::counting_iterator<en_pot_type>(particle.nparticle() + 1)
-    );
-}
-
-/**
- * Test initialisation, getter and setter of potential part of stress tensor per particle.
- */
-template <typename particle_type>
-static void test_stress_pot(particle_type& particle)
-{
-    typedef typename particle_type::stress_pot_type stress_pot_type;
-    particle_type const& const_particle = particle;
-
-    // check that stress tensors are initialised to zero
-    std::vector<stress_pot_type> stress_pot(particle.nparticle());
-    BOOST_CHECK(
-        get_stress_pot(const_particle, stress_pot.begin()) == stress_pot.end()
-    );
-    BOOST_CHECK_EQUAL_COLLECTIONS(
-        stress_pot.begin()
-      , stress_pot.end()
-      , constant_iterator<stress_pot_type>(0, 0)
-      , constant_iterator<stress_pot_type>(0, particle.nparticle())
-    );
-
-    // assign square/four-dimensional cubic lattice vectors
-    equilateral_lattice<stress_pot_type> lattice(particle.nparticle());
-    BOOST_CHECK(
-        set_stress_pot(particle, make_lattice_iterator(lattice, 0))
-            == make_lattice_iterator(lattice, particle.nparticle())
-    );
-    BOOST_CHECK(
-        get_stress_pot(const_particle, stress_pot.begin()) == stress_pot.end()
-    );
-    BOOST_CHECK_EQUAL_COLLECTIONS(
-        stress_pot.begin()
-      , stress_pot.end()
-      , make_lattice_iterator(lattice, 0)
-      , make_lattice_iterator(lattice, particle.nparticle())
-    );
-}
-
-/**
- * Test initialisation, getter and setter of hypervirial per particle.
- */
-template <typename particle_type>
-static void test_hypervirial(particle_type& particle)
-{
-    typedef typename particle_type::hypervirial_type hypervirial_type;
-    particle_type const& const_particle = particle;
-
-    // check that hypervirials are initialised to zero
-    std::vector<hypervirial_type> hypervirial(particle.nparticle());
-    BOOST_CHECK(
-        get_hypervirial(const_particle, hypervirial.begin()) == hypervirial.end()
-    );
-    BOOST_CHECK_EQUAL_COLLECTIONS(
-        hypervirial.begin()
-      , hypervirial.end()
-      , constant_iterator<hypervirial_type>(0, 0)
-      , constant_iterator<hypervirial_type>(0, particle.nparticle())
-    );
-
-    // set hypervirials to ascending sequence of integers starting at 1 ≠ 0
-    BOOST_CHECK(
-        set_hypervirial(particle, boost::counting_iterator<hypervirial_type>(1))
-            == boost::counting_iterator<hypervirial_type>(particle.nparticle() + 1)
-    );
-    BOOST_CHECK(
-        get_hypervirial(const_particle, hypervirial.begin()) == hypervirial.end()
-    );
-    BOOST_CHECK_EQUAL_COLLECTIONS(
-        hypervirial.begin()
-      , hypervirial.end()
-      , boost::counting_iterator<hypervirial_type>(1)
-      , boost::counting_iterator<hypervirial_type>(particle.nparticle() + 1)
     );
 }
 
@@ -608,30 +459,6 @@ test_suite_host(std::size_t nparticle, unsigned int nspecies, boost::unit_test::
         test_mass(particle);
     };
     ts->add(BOOST_TEST_CASE( mass ));
-
-    auto force = [=]() {
-        particle_type particle(nparticle, nspecies);
-        test_force(particle);
-    };
-    ts->add(BOOST_TEST_CASE( force ));
-
-    auto en_pot = [=]() {
-        particle_type particle(nparticle, nspecies);
-        test_en_pot(particle);
-    };
-    ts->add(BOOST_TEST_CASE( en_pot ));
-
-    auto stress_pot = [=]() {
-        particle_type particle(nparticle, nspecies);
-        test_stress_pot(particle);
-    };
-    ts->add(BOOST_TEST_CASE( stress_pot ));
-
-    auto hypervirial = [=]() {
-        particle_type particle(nparticle, nspecies);
-        test_hypervirial(particle);
-    };
-    ts->add(BOOST_TEST_CASE( hypervirial ));
 }
 
 #ifdef HALMD_WITH_GPU
@@ -687,34 +514,6 @@ test_suite_gpu(std::size_t nparticle, unsigned int nspecies, boost::unit_test::t
         test_mass(particle);
     };
     ts->add(BOOST_TEST_CASE( mass ));
-
-    auto force = [=]() {
-        set_cuda_device device;
-        particle_type particle(nparticle, nspecies);
-        test_force(particle);
-    };
-    ts->add(BOOST_TEST_CASE( force ));
-
-    auto en_pot = [=]() {
-        set_cuda_device device;
-        particle_type particle(nparticle, nspecies);
-        test_en_pot(particle);
-    };
-    ts->add(BOOST_TEST_CASE( en_pot ));
-
-    auto stress_pot = [=]() {
-        set_cuda_device device;
-        particle_type particle(nparticle, nspecies);
-        test_stress_pot(particle);
-    };
-    ts->add(BOOST_TEST_CASE( stress_pot ));
-
-    auto hypervirial = [=]() {
-        set_cuda_device device;
-        particle_type particle(nparticle, nspecies);
-        test_hypervirial(particle);
-    };
-    ts->add(BOOST_TEST_CASE( hypervirial ));
 }
 #endif
 
