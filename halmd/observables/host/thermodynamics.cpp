@@ -28,12 +28,13 @@ namespace host {
 template <int dimension, typename float_type>
 thermodynamics<dimension, float_type>::thermodynamics(
     std::shared_ptr<particle_type const> particle
+  , std::shared_ptr<force_type> force
   , std::shared_ptr<particle_group_type> group
   , std::shared_ptr<box_type const> box
   , std::shared_ptr<logger_type> logger
 )
-  // dependency injection
   : particle_(particle)
+  , force_(force)
   , group_(group)
   , box_(box)
   , logger_(logger)
@@ -62,19 +63,8 @@ double thermodynamics<dimension, float_type>::en_kin()
 
     if (en_kin_cache_ != std::tie(velocity_cache, mass_cache, group_cache)) {
         LOG_TRACE("acquire kinetic energy");
-
-        cache_proxy<group_array_type const> group = group_->unordered();
-        cache_proxy<velocity_array_type const> velocity = velocity_cache;
-        cache_proxy<mass_array_type const> mass = mass_cache;
-
         scoped_timer_type timer(runtime_.en_kin);
-
-        double mv2 = 0;
-        for (size_type i : *group) {
-            mv2 += (*mass)[i] * inner_prod((*velocity)[i], (*velocity)[i]);
-        }
-        en_kin_ = 0.5 * mv2 / group->size();
-
+        en_kin_ = get_mean_en_kin(*particle_, *group_);
         en_kin_cache_ = std::tie(velocity_cache, mass_cache, group_cache);
     }
     return en_kin_;
@@ -90,21 +80,8 @@ thermodynamics<dimension, float_type>::v_cm()
 
     if (v_cm_cache_ != std::tie(velocity_cache, mass_cache, group_cache)) {
         LOG_TRACE("acquire centre-of-mass velocity");
-
-        cache_proxy<group_array_type const> group = group_->unordered();
-        cache_proxy<velocity_array_type const> velocity = velocity_cache;
-        cache_proxy<mass_array_type const> mass = mass_cache;
-
         scoped_timer_type timer(runtime_.v_cm);
-
-        vector_type mv = 0;
-        double m = 0;
-        for (size_type i : *group) {
-            mv += (*mass)[i] * (*velocity)[i];
-            m += (*mass)[i];
-        }
-        v_cm_ = mv / m;
-
+        v_cm_ = get_v_cm(*particle_, *group_);
         v_cm_cache_ = std::tie(velocity_cache, mass_cache, group_cache);
     }
     return v_cm_;
@@ -113,23 +90,13 @@ thermodynamics<dimension, float_type>::v_cm()
 template <int dimension, typename float_type>
 double thermodynamics<dimension, float_type>::en_pot()
 {
-    cache<en_pot_array_type> const& en_pot_cache = particle_->en_pot();
+    cache<en_pot_array_type> const& en_pot_cache = force_->en_pot();
     cache<size_type> const& group_cache = group_->size();
 
     if (en_pot_cache_ != std::tie(en_pot_cache, group_cache)) {
         LOG_TRACE("acquire potential energy");
-
-        cache_proxy<group_array_type const> group = group_->unordered();
-        cache_proxy<en_pot_array_type const> en_pot = en_pot_cache;
-
         scoped_timer_type timer(runtime_.en_pot);
-
-        double sum = 0;
-        for (size_type i : *group) {
-            sum += (*en_pot)[i];
-        }
-        en_pot_ = sum / group->size();
-
+        en_pot_ = get_mean_en_pot(*force_, *group_);
         en_pot_cache_ = std::tie(en_pot_cache, group_cache);
     }
     return en_pot_;
@@ -138,23 +105,13 @@ double thermodynamics<dimension, float_type>::en_pot()
 template <int dimension, typename float_type>
 double thermodynamics<dimension, float_type>::virial()
 {
-    cache<stress_pot_array_type> const& stress_pot_cache = particle_->stress_pot();
+    cache<stress_pot_array_type> const& stress_pot_cache = force_->stress_pot();
     cache<size_type> const& group_cache = group_->size();
 
     if (virial_cache_ != std::tie(stress_pot_cache, group_cache)) {
         LOG_TRACE("acquire virial");
-
-        cache_proxy<group_array_type const> group = group_->unordered();
-        cache_proxy<stress_pot_array_type const> stress_pot = stress_pot_cache;
-
         scoped_timer_type timer(runtime_.virial);
-
-        double sum = 0;
-        for (size_type i : *group) {
-            sum += (*stress_pot)[i][0];
-        }
-        virial_ = sum / group->size();
-
+        virial_ = get_mean_virial(*force_, *group_);
         virial_cache_ = std::tie(stress_pot_cache, group_cache);
     }
     return virial_;
@@ -163,23 +120,13 @@ double thermodynamics<dimension, float_type>::virial()
 template <int dimension, typename float_type>
 double thermodynamics<dimension, float_type>::hypervirial()
 {
-    cache<hypervirial_array_type> const& hypervirial_cache = particle_->hypervirial();
+    cache<hypervirial_array_type> const& hypervirial_cache = force_->hypervirial();
     cache<size_type> const& group_cache = group_->size();
 
     if (hypervirial_cache_ != std::tie(hypervirial_cache, group_cache)) {
         LOG_TRACE("acquire hypervirial");
-
-        cache_proxy<group_array_type const> group = group_->unordered();
-        cache_proxy<hypervirial_array_type const> hypervirial = hypervirial_cache;
-
         scoped_timer_type timer(runtime_.hypervirial);
-
-        double sum = 0;
-        for (size_type i : *group) {
-            sum += (*hypervirial)[i];
-        }
-        hypervirial_ = sum / group->size();
-
+        hypervirial_ = get_mean_hypervirial(*force_, *group_);
         hypervirial_cache_ = std::tie(hypervirial_cache, group_cache);
     }
     return hypervirial_;
@@ -207,6 +154,7 @@ void thermodynamics<dimension, float_type>::luaopen(lua_State* L)
 
           , def("thermodynamics", &std::make_shared<thermodynamics
               , std::shared_ptr<particle_type const>
+              , std::shared_ptr<force_type>
               , std::shared_ptr<particle_group_type>
               , std::shared_ptr<box_type const>
               , std::shared_ptr<logger_type>

@@ -21,17 +21,18 @@
 #ifndef HALMD_OBSERVABLES_GPU_THERMODYNAMICS_HPP
 #define HALMD_OBSERVABLES_GPU_THERMODYNAMICS_HPP
 
-#include <lua.hpp>
-#include <memory>
-
-#include <halmd/algorithm/gpu/reduce.hpp>
 #include <halmd/io/logger.hpp>
 #include <halmd/mdsim/box.hpp>
+#include <halmd/mdsim/gpu/force.hpp>
 #include <halmd/mdsim/gpu/particle.hpp>
 #include <halmd/mdsim/gpu/particle_group.hpp>
-#include <halmd/observables/gpu/thermodynamics_kernel.hpp>
 #include <halmd/observables/thermodynamics.hpp>
 #include <halmd/utility/profiler.hpp>
+
+#include <lua.hpp>
+
+#include <memory>
+#include <tuple>
 
 namespace halmd {
 namespace observables {
@@ -43,12 +44,12 @@ class thermodynamics
 {
 private:
     typedef observables::thermodynamics<dimension> _Base;
-    typedef thermodynamics_kernel<dimension, float_type> _Kernel;
 
 public:
     typedef typename _Base::vector_type vector_type;
     typedef mdsim::box<dimension> box_type;
     typedef mdsim::gpu::particle<dimension, float_type> particle_type;
+    typedef mdsim::gpu::force<dimension, float_type> force_type;
     typedef mdsim::gpu::particle_group particle_group_type;
     typedef logger logger_type;
 
@@ -56,6 +57,7 @@ public:
 
     thermodynamics(
         std::shared_ptr<particle_type const> particle
+      , std::shared_ptr<force_type> force
       , std::shared_ptr<particle_group_type> group
       , std::shared_ptr<box_type const> box
       , std::shared_ptr<logger_type> logger = std::make_shared<logger_type>()
@@ -99,13 +101,15 @@ public:
 private:
     typedef typename particle_type::size_type size_type;
     typedef typename particle_type::velocity_array_type velocity_array_type;
-    typedef typename particle_type::en_pot_array_type en_pot_array_type;
-    typedef typename particle_type::stress_pot_array_type stress_pot_array_type;
-    typedef typename particle_type::hypervirial_array_type hypervirial_array_type;
+    typedef typename force_type::en_pot_array_type en_pot_array_type;
+    typedef typename force_type::stress_pot_array_type stress_pot_array_type;
+    typedef typename force_type::hypervirial_array_type hypervirial_array_type;
     typedef typename particle_group_type::array_type group_array_type;
 
     /** system state */
     std::shared_ptr<particle_type const> particle_;
+    /** particle forces */
+    std::shared_ptr<force_type> force_;
     /** particle group */
     std::shared_ptr<particle_group_type> group_;
     /** simulation domain */
@@ -134,15 +138,6 @@ private:
     std::tuple<cache<>, cache<>> virial_cache_;
     /** cache observers of mean hypervirial per particle */
     std::tuple<cache<>, cache<>> hypervirial_cache_;
-
-    /** functor for total kinetic energy */
-    reduction<gpu::kinetic_energy<dimension, dsfloat> > compute_en_kin_;
-    /** functor for centre-of-mass velocity */
-    reduction<gpu::velocity_of_centre_of_mass<dimension, dsfloat> > compute_v_cm_;
-    /** functor for total potential energy */
-    reduction<gpu::potential_energy<dsfloat> > compute_en_pot_;
-    /** functor for total virial sum */
-    reduction<gpu::virial<dimension, dsfloat> > compute_virial_;
 
     typedef halmd::utility::profiler profiler_type;
     typedef profiler_type::accumulator_type accumulator_type;

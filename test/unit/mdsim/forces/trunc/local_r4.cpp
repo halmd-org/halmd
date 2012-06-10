@@ -202,19 +202,12 @@ void test_local_r4<float_type>::test()
     BOOST_CHECK( set_position(*particle, r_list.begin()) == r_list.end() );
     BOOST_CHECK( set_species(*particle, species.begin()) == species.end() );
 
-    // enable computation of auxiliary quantities
-    particle->aux_enable();
-    // set forces and auxiliary quantities to zero
-    particle->prepare();
-    // add forces and auxiliary quantities
-    force->compute();
-
     // read forces and other stuff from device
-    std::vector<vector_type> f_list(particle->nparticle());
-    BOOST_CHECK( get_force(*particle, f_list.begin()) == f_list.end() );
-
     std::vector<float> en_pot(particle->nparticle());
-    BOOST_CHECK( get_en_pot(*particle, en_pot.begin()) == en_pot.end() );
+    BOOST_CHECK( get_en_pot(*force, en_pot.begin()) == en_pot.end() );
+
+    std::vector<vector_type> f_list(particle->nparticle());
+    BOOST_CHECK( get_net_force(*force, f_list.begin()) == f_list.end() );
 
     float_type const eps = std::numeric_limits<float_type>::epsilon();
 

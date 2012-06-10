@@ -33,9 +33,6 @@ namespace gpu {
 namespace forces {
 namespace pair_full_kernel {
 
-/** total number of particles */
-static __constant__ unsigned int npart_;
-
 /**
  * Compute pair forces, potential energy, and stress tensor for all particles
  */
@@ -52,6 +49,7 @@ __global__ void compute(
   , float* g_en_pot
   , stress_tensor_type* g_stress_pot
   , float* g_hypervirial
+  , unsigned int nparticle
   , unsigned int ntype1
   , unsigned int ntype2
   , vector_type box_length
@@ -78,7 +76,7 @@ __global__ void compute(
     vector_type f = 0;
 #endif
 
-    for (unsigned int j = 0; j < npart_; ++j) {
+    for (unsigned int j = 0; j < nparticle; ++j) {
         // load particle
         unsigned int type2;
         vector_type r2;
@@ -129,7 +127,6 @@ pair_full_wrapper<dimension, potential_type> const
 pair_full_wrapper<dimension, potential_type>::kernel = {
     pair_full_kernel::compute<false, fixed_vector<float, dimension>, potential_type>
   , pair_full_kernel::compute<true, fixed_vector<float, dimension>, potential_type>
-  , pair_full_kernel::npart_
 };
 
 } // namespace mdsim

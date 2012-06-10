@@ -215,19 +215,15 @@ void power_law<float_type>::test()
     BOOST_CHECK( set_position(*particle, r_list.begin()) == r_list.end() );
     BOOST_CHECK( set_species(*particle, species.begin()) == species.end() );
 
-    particle->aux_enable();              // enable computation of auxiliary quantities
-    particle->prepare();
-    force->compute();
-
     // read forces and other stuff from device
-    std::vector<vector_type> f_list(particle->nparticle());
-    BOOST_CHECK( get_force(*particle, f_list.begin()) == f_list.end() );
-
     std::vector<float> en_pot(particle->nparticle());
-    BOOST_CHECK( get_en_pot(*particle, en_pot.begin()) == en_pot.end() );
+    BOOST_CHECK( get_en_pot(*force, en_pot.begin()) == en_pot.end() );
 
     std::vector<float> hypervirial(particle->nparticle());
-    BOOST_CHECK( get_hypervirial(*particle, hypervirial.begin()) == hypervirial.end() );
+    BOOST_CHECK( get_hypervirial(*force, hypervirial.begin()) == hypervirial.end() );
+
+    std::vector<vector_type> f_list(particle->nparticle());
+    BOOST_CHECK( get_net_force(*force, f_list.begin()) == f_list.end() );
 
     for (unsigned int i = 0; i < npart; ++i) {
         unsigned int type1 = species[i];

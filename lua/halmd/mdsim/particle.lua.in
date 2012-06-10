@@ -124,38 +124,6 @@ end
 --
 --    Set particle masses to given sequence.
 --
--- .. method:: get_force()
---
---    Returns sequence with particle forces.
---
--- .. method:: set_force(force)
---
---    Set particle forces to given sequence.
---
--- .. method:: get_en_pot()
---
---    Returns sequence with potential energies.
---
--- .. method:: set_en_pot(en_pot)
---
---    Set potential energies to given sequence.
---
--- .. method:: get_stress_pot()
---
---    Returns sequence with potential parts of stress tensors.
---
--- .. method:: set_stress_pot(stress_pot)
---
---    Set potential parts of stress tensors to given sequence.
---
--- .. method:: get_hypervirial()
---
---    Returns sequence with hypervirials.
---
--- .. method:: set_hypervirial(hypervirial)
---
---    Set hypervirials to given sequence.
---
 local M = module(function(args)
     local box = args.box
     if not box then
@@ -188,9 +156,6 @@ local M = module(function(args)
 
     self.connect = function(self)
         if #conn == 0 then
-            table.insert(conn, core.on_prepend_setup(self.prepare))
-            table.insert(conn, core.on_prepend_force(self.prepare))
-
             local runtime = assert(self.runtime)
             table.insert(conn, profiler.on_profile(runtime.rearrange, "rearrange particles by permutation"))
         else

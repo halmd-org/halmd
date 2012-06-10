@@ -60,23 +60,12 @@ particle<dimension, float_type>::particle(size_type nparticle, unsigned int nspe
   , g_velocity_(nparticle)
   , g_tag_(nparticle)
   , g_reverse_tag_(nparticle)
-  , g_force_(nparticle)
-  , g_en_pot_(nparticle)
-  , g_stress_pot_(nparticle)
-  , g_hypervirial_(nparticle)
-  // disable auxiliary variables by default
-  , aux_flag_(false)
-  , aux_valid_(false)
 {
     cache_proxy<position_array_type> g_position = g_position_;
     cache_proxy<image_array_type> g_image = g_image_;
     cache_proxy<velocity_array_type> g_velocity = g_velocity_;
     cache_proxy<tag_array_type> g_tag = g_tag_;
     cache_proxy<reverse_tag_array_type> g_reverse_tag = g_reverse_tag_;
-    cache_proxy<force_array_type> g_force = g_force_;
-    cache_proxy<en_pot_array_type> g_en_pot = g_en_pot_;
-    cache_proxy<stress_pot_array_type> g_stress_pot = g_stress_pot_;
-    cache_proxy<hypervirial_array_type> g_hypervirial = g_hypervirial_;
 
     LOG_DEBUG("number of CUDA execution blocks: " << dim.blocks_per_grid());
     LOG_DEBUG("number of CUDA execution threads per block: " << dim.threads_per_block());
@@ -122,10 +111,6 @@ particle<dimension, float_type>::particle(size_type nparticle, unsigned int nspe
         g_image->reserve(dim.threads());
         g_tag->reserve(dim.threads());
         g_reverse_tag->reserve(dim.threads());
-        g_force->reserve(dim.threads());
-        g_en_pot->reserve(dim.threads());
-        g_stress_pot->reserve(dim.threads());
-        g_hypervirial->reserve(dim.threads());
     }
     catch (cuda::error const&) {
         LOG_ERROR("failed to allocate particles in global device memory");
@@ -139,10 +124,6 @@ particle<dimension, float_type>::particle(size_type nparticle, unsigned int nspe
     cuda::memset(g_image->begin(), g_image->begin() + g_image->capacity(), 0);
     iota(g_tag->begin(), g_tag->begin() + g_tag->capacity(), 0);
     iota(g_reverse_tag->begin(), g_reverse_tag->begin() + g_reverse_tag->capacity(), 0);
-    cuda::memset(g_force->begin(), g_force->begin() + g_force->capacity(), 0);
-    cuda::memset(g_en_pot->begin(), g_en_pot->begin() + g_en_pot->capacity(), 0);
-    cuda::memset(g_stress_pot->begin(), g_stress_pot->begin() + g_stress_pot->capacity(), 0);
-    cuda::memset(g_hypervirial->begin(), g_hypervirial->begin() + g_hypervirial->capacity(), 0);
 
     // set particle masses to unit mass
     set_mass(
@@ -164,39 +145,6 @@ particle<dimension, float_type>::particle(size_type nparticle, unsigned int nspe
     LOG("number of particles: " << nparticle_);
     LOG("number of particle placeholders: " << dim.threads());
     LOG("number of particle species: " << nspecies_);
-}
-
-template <int dimension, typename float_type>
-void particle<dimension, float_type>::aux_enable()
-{
-    LOG_TRACE("enable computation of auxiliary variables");
-    aux_flag_ = true;
-}
-
-template <int dimension, typename float_type>
-void particle<dimension, float_type>::prepare()
-{
-    cache_proxy<force_array_type> g_force = g_force_;
-
-    LOG_TRACE("zero forces");
-
-    cuda::memset(g_force->begin(), g_force->begin() + g_force->capacity(), 0);
-
-    // indicate whether auxiliary variables are computed this step
-    aux_valid_ = aux_flag_;
-
-    if (aux_flag_) {
-        cache_proxy<en_pot_array_type> g_en_pot = g_en_pot_;
-        cache_proxy<stress_pot_array_type> g_stress_pot = g_stress_pot_;
-        cache_proxy<hypervirial_array_type> g_hypervirial = g_hypervirial_;
-
-        LOG_TRACE("zero auxiliary variables");
-
-        cuda::memset(g_en_pot->begin(), g_en_pot->begin() + g_en_pot->capacity(), 0);
-        cuda::memset(g_stress_pot->begin(), g_stress_pot->begin() + g_stress_pot->capacity(), 0);
-        cuda::memset(g_hypervirial->begin(), g_hypervirial->begin() + g_hypervirial->capacity(), 0);
-        aux_flag_ = false;
-    }
 }
 
 /**
@@ -454,133 +402,11 @@ wrap_set_mass(std::shared_ptr<particle_type> self)
     };
 }
 
-template <typename particle_type>
-static std::function<std::vector<typename particle_type::force_type> ()>
-wrap_get_force(std::shared_ptr<particle_type const> self)
-{
-    return [=]() -> std::vector<typename particle_type::force_type> {
-        std::vector<typename particle_type::force_type> output;
-        output.reserve(self->nparticle());
-        get_force(*self, back_inserter(output));
-        return std::move(output);
-    };
-}
-
-template <typename particle_type>
-static std::function<void (std::vector<typename particle_type::force_type> const&)>
-wrap_set_force(std::shared_ptr<particle_type> self)
-{
-    return [=](std::vector<typename particle_type::force_type> const& input) {
-        if (input.size() != self->nparticle()) {
-            throw std::invalid_argument("input array size not equal to number of particles");
-        }
-        set_force(*self, input.begin());
-    };
-}
-
-template <typename particle_type>
-static std::function<std::vector<typename particle_type::en_pot_type> ()>
-wrap_get_en_pot(std::shared_ptr<particle_type const> self)
-{
-    return [=]() -> std::vector<typename particle_type::en_pot_type> {
-        std::vector<typename particle_type::en_pot_type> output;
-        output.reserve(self->nparticle());
-        get_en_pot(*self, back_inserter(output));
-        return std::move(output);
-    };
-}
-
-template <typename particle_type>
-static std::function<void (std::vector<typename particle_type::en_pot_type> const&)>
-wrap_set_en_pot(std::shared_ptr<particle_type> self)
-{
-    return [=](std::vector<typename particle_type::en_pot_type> const& input) {
-        if (input.size() != self->nparticle()) {
-            throw std::invalid_argument("input array size not equal to number of particles");
-        }
-        set_en_pot(*self, input.begin());
-    };
-}
-
-template <typename particle_type>
-static std::function<std::vector<typename particle_type::stress_pot_type> ()>
-wrap_get_stress_pot(std::shared_ptr<particle_type const> self)
-{
-    return [=]() -> std::vector<typename particle_type::stress_pot_type> {
-        std::vector<typename particle_type::stress_pot_type> output;
-        output.reserve(self->nparticle());
-        get_stress_pot(*self, back_inserter(output));
-        return std::move(output);
-    };
-}
-
-template <typename particle_type>
-static std::function<void (std::vector<typename particle_type::stress_pot_type> const&)>
-wrap_set_stress_pot(std::shared_ptr<particle_type> self)
-{
-    return [=](std::vector<typename particle_type::stress_pot_type> const& input) {
-        if (input.size() != self->nparticle()) {
-            throw std::invalid_argument("input array size not equal to number of particles");
-        }
-        set_stress_pot(*self, input.begin());
-    };
-}
-
-template <typename particle_type>
-static std::function<std::vector<typename particle_type::hypervirial_type> ()>
-wrap_get_hypervirial(std::shared_ptr<particle_type const> self)
-{
-    return [=]() -> std::vector<typename particle_type::hypervirial_type> {
-        std::vector<typename particle_type::hypervirial_type> output;
-        output.reserve(self->nparticle());
-        get_hypervirial(*self, back_inserter(output));
-        return std::move(output);
-    };
-}
-
-template <typename particle_type>
-static std::function<void (std::vector<typename particle_type::hypervirial_type> const&)>
-wrap_set_hypervirial(std::shared_ptr<particle_type> self)
-{
-    return [=](std::vector<typename particle_type::hypervirial_type> const& input) {
-        if (input.size() != self->nparticle()) {
-            throw std::invalid_argument("input array size not equal to number of particles");
-        }
-        set_hypervirial(*self, input.begin());
-    };
-}
-
 template <int dimension, typename float_type>
 static int wrap_dimension(particle<dimension, float_type> const&)
 {
     return dimension;
 }
-
-template <typename particle_type>
-static std::function<void ()>
-wrap_aux_enable(std::shared_ptr<particle_type> self)
-{
-    return [=]() {
-        self->aux_enable();
-    };
-}
-
-template <typename particle_type>
-static std::function<void ()>
-wrap_prepare(std::shared_ptr<particle_type> self)
-{
-    return [=]() {
-        self->prepare();
-    };
-}
-
-template <typename particle_type>
-struct wrap_particle
-  : particle_type
-  , luaponte::wrap_base
-{
-    wrap_particle(size_t nparticle, unsigned int nspecies) : particle_type(nparticle, nspecies) {}
-};
 
 template <int dimension, typename float_type>
 void particle<dimension, float_type>::luaopen(lua_State* L)
@@ -593,7 +419,7 @@ void particle<dimension, float_type>::luaopen(lua_State* L)
         [
             namespace_("gpu")
             [
-                class_<particle, std::shared_ptr<particle>, wrap_particle<particle> >(class_name.c_str())
+                class_<particle, std::shared_ptr<particle>>(class_name.c_str())
                     .def(constructor<size_type, unsigned int>())
                     .property("nparticle", &particle::nparticle)
                     .property("nspecies", &particle::nspecies)
@@ -611,17 +437,7 @@ void particle<dimension, float_type>::luaopen(lua_State* L)
                     .property("set_species", &wrap_set_species<particle>)
                     .property("get_mass", &wrap_get_mass<particle>)
                     .property("set_mass", &wrap_set_mass<particle>)
-                    .property("get_force", &wrap_get_force<particle>)
-                    .property("set_force", &wrap_set_force<particle>)
-                    .property("get_en_pot", &wrap_get_en_pot<particle>)
-                    .property("set_en_pot", &wrap_set_en_pot<particle>)
-                    .property("get_stress_pot", &wrap_get_stress_pot<particle>)
-                    .property("set_stress_pot", &wrap_set_stress_pot<particle>)
-                    .property("get_hypervirial", &wrap_get_hypervirial<particle>)
-                    .property("set_hypervirial", &wrap_set_hypervirial<particle>)
                     .property("dimension", &wrap_dimension<dimension, float_type>)
-                    .property("aux_enable", &wrap_aux_enable<particle>)
-                    .property("prepare", &wrap_prepare<particle>)
                     .scope
                     [
                         class_<runtime>("runtime")

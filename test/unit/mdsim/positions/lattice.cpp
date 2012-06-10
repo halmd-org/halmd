@@ -37,6 +37,7 @@
 #include <halmd/mdsim/host/particle_groups/all.hpp>
 #include <halmd/mdsim/host/positions/lattice.hpp>
 #include <halmd/numeric/accumulator.hpp>
+#include <halmd/numeric/blas/blas.hpp>
 #include <halmd/observables/host/phase_space.hpp>
 #ifdef HALMD_WITH_GPU
 # include <halmd/mdsim/gpu/particle.hpp>

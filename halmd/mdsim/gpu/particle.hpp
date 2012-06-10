@@ -25,8 +25,8 @@
 #include <halmd/utility/cache.hpp>
 #include <halmd/utility/profiler.hpp>
 
-#include <lua.hpp>
 #include <cuda_wrapper/cuda_wrapper.hpp>
+#include <lua.hpp>
 
 #include <algorithm>
 #include <vector>
@@ -50,20 +50,12 @@ public:
     typedef unsigned int reverse_tag_type;
     typedef unsigned int species_type;
     typedef float mass_type;
-    typedef vector_type force_type;
-    typedef float_type en_pot_type;
-    typedef typename type_traits<dimension, float_type>::stress_tensor_type stress_pot_type;
-    typedef float_type hypervirial_type;
 
     typedef cuda::vector<float4> position_array_type;
     typedef cuda::vector<gpu_vector_type> image_array_type;
     typedef cuda::vector<float4> velocity_array_type;
     typedef cuda::vector<tag_type> tag_array_type;
     typedef cuda::vector<reverse_tag_type> reverse_tag_array_type;
-    typedef cuda::vector<gpu_vector_type> force_array_type;
-    typedef cuda::vector<en_pot_type> en_pot_array_type;
-    typedef cuda::vector<typename type_traits<dimension, float_type>::gpu::stress_tensor_type> stress_pot_array_type;
-    typedef cuda::vector<hypervirial_type> hypervirial_array_type;
 
     void rearrange(cuda::vector<unsigned int> const& g_index);
 
@@ -183,96 +175,6 @@ public:
     }
 
     /**
-     * Returns non-const reference to force per particle.
-     */
-    cache<force_array_type> const& force() const
-    {
-        return g_force_;
-    }
-
-    /**
-     * Returns const reference to force per particle.
-     */
-    cache<force_array_type>& force()
-    {
-        return g_force_;
-    }
-
-    /**
-     * Returns const reference to potential energy per particle.
-     *
-     * This method checks that the computation of auxiliary variables was enabled.
-     */
-    cache<en_pot_array_type> const& en_pot() const
-    {
-        return g_en_pot_;
-    }
-
-    /**
-     * Returns non-const reference to potential energy per particle.
-     */
-    cache<en_pot_array_type>& en_pot()
-    {
-        return g_en_pot_;
-    }
-
-    /**
-     * Returns const reference to potential part of stress tensor per particle.
-     *
-     * This method checks that the computation of auxiliary variables was enabled.
-     */
-    cache<stress_pot_array_type> const& stress_pot() const
-    {
-        return g_stress_pot_;
-    }
-
-    /**
-     * Returns non-const reference to potential part of stress tensor per particle.
-     */
-    cache<stress_pot_array_type>& stress_pot()
-    {
-        return g_stress_pot_;
-    }
-
-    /**
-     * Returns const reference to hypervirial per particle.
-     *
-     * This method checks that the computation of auxiliary variables was enabled.
-     */
-    cache<hypervirial_array_type> const& hypervirial() const
-    {
-        return g_hypervirial_;
-    }
-
-    /**
-     * Returns non-const reference to hypervirial per particle.
-     */
-    cache<hypervirial_array_type>& hypervirial()
-    {
-        return g_hypervirial_;
-    }
-
-    /**
-     * Enable computation of auxiliary variables.
-     *
-     * The flag is reset by the next call to prepare().
-     */
-    void aux_enable();
-
-    /**
-     * Returns true if computation of auxiliary variables is enabled.
-     */
-    bool aux_valid() const
-    {
-        return aux_valid_;
-    }
-
-    /**
-     * Reset forces, and optionally auxiliary variables, to zero.
-     */
-    void prepare();
-
-    /**
      * Bind class to Lua.
      */
     static void luaopen(lua_State* L);
@@ -292,19 +194,6 @@ private:
     cache<tag_array_type> g_tag_;
     /** reverse particle tags */
     cache<reverse_tag_array_type> g_reverse_tag_;
-    /** force per particle */
-    cache<force_array_type> g_force_;
-    /** potential energy per particle */
-    cache<en_pot_array_type> g_en_pot_;
-    /** potential part of stress tensor per particle */
-    cache<stress_pot_array_type> g_stress_pot_;
-    /** hypervirial per particle */
-    cache<hypervirial_array_type> g_hypervirial_;
-
-    /** flag for enabling the computation of auxiliary variables this step */
-    bool aux_flag_;
-    /** flag that indicates the auxiliary variables are computed this step */
-    bool aux_valid_;
 
     typedef utility::profiler profiler_type;
     typedef typename profiler_type::accumulator_type accumulator_type;
@@ -594,134 +483,6 @@ set_reverse_tag(particle_type& particle, iterator_type const& first)
         reverse_tag = *input++;
     }
     cuda::copy(h_reverse_tag, *g_reverse_tag);
-    return input;
-}
-
-/**
- * Copy force per particle to given array.
- */
-template <typename particle_type, typename iterator_type>
-inline iterator_type
-get_force(particle_type const& particle, iterator_type const& first)
-{
-    typedef typename particle_type::force_array_type force_array_type;
-    cache_proxy<force_array_type const> g_force = particle.force();
-    cuda::host::vector<typename force_array_type::value_type> h_force(g_force->size());
-    cuda::copy(g_force->begin(), g_force->end(), h_force.begin());
-    return std::copy(h_force.begin(), h_force.end(), first);
-}
-
-/**
- * Copy force per particle from given array.
- */
-template <typename particle_type, typename iterator_type>
-inline iterator_type
-set_force(particle_type& particle, iterator_type const& first)
-{
-    typedef typename particle_type::force_array_type force_array_type;
-    cache_proxy<force_array_type> g_force = particle.force();
-    cuda::host::vector<typename force_array_type::value_type> h_force(g_force->size());
-    iterator_type input = first;
-    for (typename force_array_type::value_type& force : h_force) {
-        force = *input++;
-    }
-    cuda::copy(h_force.begin(), h_force.end(), g_force->begin());
-    return input;
-}
-
-/**
- * Copy potential energy per particle to given array.
- */
-template <typename particle_type, typename iterator_type>
-inline iterator_type
-get_en_pot(particle_type const& particle, iterator_type const& first)
-{
-    typedef typename particle_type::en_pot_array_type en_pot_array_type;
-    cache_proxy<en_pot_array_type const> g_en_pot = particle.en_pot();
-    cuda::host::vector<typename en_pot_array_type::value_type> h_en_pot(g_en_pot->size());
-    cuda::copy(g_en_pot->begin(), g_en_pot->end(), h_en_pot.begin());
-    return std::copy(h_en_pot.begin(), h_en_pot.end(), first);
-}
-
-/**
- * Copy potential energy per particle from given array.
- */
-template <typename particle_type, typename iterator_type>
-inline iterator_type
-set_en_pot(particle_type& particle, iterator_type const& first)
-{
-    typedef typename particle_type::en_pot_array_type en_pot_array_type;
-    cache_proxy<en_pot_array_type> g_en_pot = particle.en_pot();
-    cuda::host::vector<typename en_pot_array_type::value_type> h_en_pot(g_en_pot->size());
-    iterator_type input = first;
-    for (typename en_pot_array_type::value_type& en_pot : h_en_pot) {
-        en_pot = *input++;
-    }
-    cuda::copy(h_en_pot.begin(), h_en_pot.end(), g_en_pot->begin());
-    return input;
-}
-
-/**
- * Copy potential part of stress tensor per particle to given array.
- */
-template <typename particle_type, typename iterator_type>
-inline iterator_type
-get_stress_pot(particle_type const& particle, iterator_type const& first)
-{
-    typedef typename particle_type::stress_pot_array_type stress_pot_array_type;
-    cache_proxy<stress_pot_array_type const> g_stress_pot = particle.stress_pot();
-    cuda::host::vector<typename stress_pot_array_type::value_type> h_stress_pot(g_stress_pot->size());
-    cuda::copy(g_stress_pot->begin(), g_stress_pot->end(), h_stress_pot.begin());
-    return std::copy(h_stress_pot.begin(), h_stress_pot.end(), first);
-}
-
-/**
- * Copy potential part of stress tensor per particle from given array.
- */
-template <typename particle_type, typename iterator_type>
-inline iterator_type
-set_stress_pot(particle_type& particle, iterator_type const& first)
-{
-    typedef typename particle_type::stress_pot_array_type stress_pot_array_type;
-    cache_proxy<stress_pot_array_type> g_stress_pot = particle.stress_pot();
-    cuda::host::vector<typename stress_pot_array_type::value_type> h_stress_pot(g_stress_pot->size());
-    iterator_type input = first;
-    for (typename stress_pot_array_type::value_type& stress_pot : h_stress_pot) {
-        stress_pot = *input++;
-    }
-    cuda::copy(h_stress_pot.begin(), h_stress_pot.end(), g_stress_pot->begin());
-    return input;
-}
-
-/**
- * Copy hypervirial per particle to given array.
- */
-template <typename particle_type, typename iterator_type>
-inline iterator_type
-get_hypervirial(particle_type const& particle, iterator_type const& first)
-{
-    typedef typename particle_type::hypervirial_array_type hypervirial_array_type;
-    cache_proxy<hypervirial_array_type const> g_hypervirial = particle.hypervirial();
-    cuda::host::vector<typename hypervirial_array_type::value_type> h_hypervirial(g_hypervirial->size());
-    cuda::copy(g_hypervirial->begin(), g_hypervirial->end(), h_hypervirial.begin());
-    return std::copy(h_hypervirial.begin(), h_hypervirial.end(), first);
-}
-
-/**
- * Copy hypervirial per particle from given array.
- */
-template <typename particle_type, typename iterator_type>
-inline iterator_type
-set_hypervirial(particle_type& particle, iterator_type const& first)
-{
-    typedef typename particle_type::hypervirial_array_type hypervirial_array_type;
-    cache_proxy<hypervirial_array_type> g_hypervirial = particle.hypervirial();
-    cuda::host::vector<typename hypervirial_array_type::value_type> h_hypervirial(g_hypervirial->size());
-    iterator_type input = first;
-    for (typename hypervirial_array_type::value_type& hypervirial : h_hypervirial) {
-        hypervirial = *input++;
-    }
-    cuda::copy(h_hypervirial.begin(), h_hypervirial.end(), g_hypervirial->begin());
     return input;
 }
 

@@ -21,6 +21,7 @@
 #ifndef HALMD_MDSIM_HOST_PARTICLE_GROUP_HPP
 #define HALMD_MDSIM_HOST_PARTICLE_GROUP_HPP
 
+#include <halmd/numeric/blas/fixed_vector.hpp>
 #include <halmd/utility/cache.hpp>
 #include <halmd/utility/raw_array.hpp>
 
@@ -85,6 +86,113 @@ get_unordered(particle_group& group, iterator_type const& first)
     typedef typename particle_group::array_type array_type;
     cache_proxy<array_type const> unordered = group.unordered();
     return std::copy(unordered->begin(), unordered->end(), first);
+}
+
+/**
+ * Compute mean kinetic energy per particle.
+ */
+template <typename particle_type>
+double get_mean_en_kin(particle_type const& particle, particle_group& group)
+{
+    typedef typename particle_group::array_type group_array_type;
+    typedef typename particle_group::size_type size_type;
+    typedef typename particle_type::velocity_array_type velocity_array_type;
+    typedef typename particle_type::mass_array_type mass_array_type;
+
+    cache_proxy<group_array_type const> unordered = group.unordered();
+    cache_proxy<velocity_array_type const> velocity = particle.velocity();
+    cache_proxy<mass_array_type const> mass = particle.mass();
+
+    double mv2 = 0;
+    for (size_type i : *unordered) {
+        mv2 += (*mass)[i] * inner_prod((*velocity)[i], (*velocity)[i]);
+    }
+    return  0.5 * mv2 / unordered->size();
+}
+
+/**
+ * Compute velocity of centre of mass.
+ */
+template <typename particle_type>
+fixed_vector<double, particle_type::velocity_type::static_size>
+get_v_cm(particle_type const& particle, particle_group& group)
+{
+    typedef typename particle_group::array_type group_array_type;
+    typedef typename particle_group::size_type size_type;
+    typedef typename particle_type::velocity_array_type velocity_array_type;
+    typedef typename particle_type::mass_array_type mass_array_type;
+
+    cache_proxy<group_array_type const> unordered = group.unordered();
+    cache_proxy<velocity_array_type const> velocity = particle.velocity();
+    cache_proxy<mass_array_type const> mass = particle.mass();
+
+    fixed_vector<double, particle_type::velocity_type::static_size> mv = 0;
+    double m = 0;
+    for (size_type i : *unordered) {
+        mv += (*mass)[i] * (*velocity)[i];
+        m += (*mass)[i];
+    }
+    return mv / m;
+}
+
+/**
+ * Compute mean potential energy per particle.
+ */
+template <typename force_type>
+double get_mean_en_pot(force_type& force, particle_group& group)
+{
+    typedef typename particle_group::size_type size_type;
+    typedef typename particle_group::array_type group_array_type;
+    typedef typename force_type::en_pot_array_type en_pot_array_type;
+
+    cache_proxy<group_array_type const> unordered = group.unordered();
+    cache_proxy<en_pot_array_type const> en_pot = force.en_pot();
+
+    double sum = 0;
+    for (size_type i : *unordered) {
+        sum += (*en_pot)[i];
+    }
+    return sum / unordered->size();
+}
+
+/**
+ * Compute mean virial per particle.
+ */
+template <typename force_type>
+double get_mean_virial(force_type& force, particle_group& group)
+{
+    typedef typename particle_group::size_type size_type;
+    typedef typename particle_group::array_type group_array_type;
+    typedef typename force_type::stress_pot_array_type stress_pot_array_type;
+
+    cache_proxy<group_array_type const> unordered = group.unordered();
+    cache_proxy<stress_pot_array_type const> stress_pot = force.stress_pot();
+
+    double sum = 0;
+    for (size_type i : *unordered) {
+        sum += (*stress_pot)[i][0];
+    }
+    return sum / unordered->size();
+}
+
+/**
+ * Compute mean hypervirial per particle.
+ */
+template <typename force_type>
+double get_mean_hypervirial(force_type& force, particle_group& group)
+{
+    typedef typename particle_group::size_type size_type;
+    typedef typename particle_group::array_type group_array_type;
+    typedef typename force_type::hypervirial_array_type hypervirial_array_type;
+
+    cache_proxy<group_array_type const> unordered = group.unordered();
+    cache_proxy<hypervirial_array_type const> hypervirial = force.hypervirial();
+
+    double sum = 0;
+    for (size_type i : *unordered) {
+        sum += (*hypervirial)[i];
+    }
+    return sum / unordered->size();
 }
 
 } // namespace host

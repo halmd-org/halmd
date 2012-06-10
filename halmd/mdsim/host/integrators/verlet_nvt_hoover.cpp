@@ -33,14 +33,15 @@
 using namespace boost;
 using namespace std;
 
-namespace halmd
-{
-namespace mdsim { namespace host { namespace integrators
-{
+namespace halmd {
+namespace mdsim {
+namespace host {
+namespace integrators {
 
 template <int dimension, typename float_type>
 verlet_nvt_hoover<dimension, float_type>::verlet_nvt_hoover(
     std::shared_ptr<particle_type> particle
+  , std::shared_ptr<force_type> force
   , std::shared_ptr<box_type const> box
   , float_type timestep
   , float_type temperature
@@ -52,6 +53,7 @@ verlet_nvt_hoover<dimension, float_type>::verlet_nvt_hoover(
   , v_xi(0)
   // dependency injection
   , particle_(particle)
+  , force_(force)
   , box_(box)
   , logger_(logger)
   // member initialisation
@@ -111,19 +113,19 @@ void verlet_nvt_hoover<dimension, float_type>::integrate()
 {
     scoped_timer_type timer(runtime_.integrate);
 
-    size_type const nparticle = particle_->nparticle();
+    cache_proxy<net_force_array_type const> net_force = force_->net_force();
+    cache_proxy<mass_array_type const> mass = particle_->mass();
     cache_proxy<position_array_type> position = particle_->position();
     cache_proxy<image_array_type> image = particle_->image();
     cache_proxy<velocity_array_type> velocity = particle_->velocity();
-    cache_proxy<force_array_type const> force = particle_->force();
-    cache_proxy<mass_array_type const> mass = particle_->mass();
+    size_type const nparticle = particle_->nparticle();
 
     propagate_chain();
 
     for (size_type i = 0; i < nparticle; ++i) {
         vector_type& v = (*velocity)[i];
         vector_type& r = (*position)[i];
-        v += (*force)[i] * timestep_half_ / (*mass)[i];
+        v += (*net_force)[i] * timestep_half_ / (*mass)[i];
         r += v * timestep_;
         (*image)[i] += box_->reduce_periodic(r);
     }
@@ -135,16 +137,16 @@ void verlet_nvt_hoover<dimension, float_type>::integrate()
 template <int dimension, typename float_type>
 void verlet_nvt_hoover<dimension, float_type>::finalize()
 {
-    size_type const nparticle = particle_->nparticle();
-    cache_proxy<velocity_array_type> velocity = particle_->velocity();
-    cache_proxy<force_array_type const> force = particle_->force();
+    cache_proxy<net_force_array_type const> net_force = force_->net_force();
     cache_proxy<mass_array_type const> mass = particle_->mass();
+    cache_proxy<velocity_array_type> velocity = particle_->velocity();
+    size_type const nparticle = particle_->nparticle();
 
     scoped_timer_type timer(runtime_.finalize);
 
     // loop over all particles
     for (size_type i = 0; i < nparticle; ++i) {
-        (*velocity)[i] += (*force)[i] * timestep_half_ / (*mass)[i];
+        (*velocity)[i] += (*net_force)[i] * timestep_half_ / (*mass)[i];
     }
 
     propagate_chain();
@@ -287,6 +289,7 @@ void verlet_nvt_hoover<dimension, float_type>::luaopen(lua_State* L)
 
               , def("verlet_nvt_hoover", &std::make_shared<verlet_nvt_hoover
                   , std::shared_ptr<particle_type>
+                  , std::shared_ptr<force_type>
                   , std::shared_ptr<box_type const>
                   , float_type
                   , float_type
@@ -319,6 +322,7 @@ template class verlet_nvt_hoover<3, float>;
 template class verlet_nvt_hoover<2, float>;
 #endif
 
-}}} // namespace mdsim::host::integrators
-
+} // namespace integrators
+} // namespace host
+} // namespace mdsim
 } // namespace halmd

@@ -44,6 +44,7 @@ struct pair_full_wrapper
       , float*
       , unsigned int
       , unsigned int
+      , unsigned int
       , vector_type
     )> compute;
     /** compute forces and auxiliary stuff: internal energy, potential part of stress tensor, ... */
@@ -55,10 +56,9 @@ struct pair_full_wrapper
       , float*
       , unsigned int
       , unsigned int
+      , unsigned int
       , vector_type
     )> compute_aux;
-    /** total number of particles */
-    cuda::symbol<unsigned int> npart;
 
     static pair_full_wrapper const kernel;
 };

@@ -65,15 +65,28 @@ void virial<dimension, float_type>::operator()(argument_type const& i)
 }
 
 template <int dimension, typename float_type>
-thermodynamics_kernel<dimension, float_type> const
-thermodynamics_kernel<dimension, float_type>::kernel = {
-    velocity_
-  , en_pot_
-  , stress_pot_
-};
+cuda::texture<float4> const
+kinetic_energy<dimension, float_type>::texture_ = velocity_;
 
-template class thermodynamics_kernel<3, float>;
-template class thermodynamics_kernel<2, float>;
+template <int dimension, typename float_type>
+cuda::texture<float4> const
+velocity_of_centre_of_mass<dimension, float_type>::texture_ = velocity_;
+
+template <typename float_type>
+cuda::texture<float> const
+potential_energy<float_type>::texture_ = gpu::en_pot_;
+
+template <int dimension, typename float_type>
+cuda::texture<typename virial<dimension, float_type>::coalesced_stress_pot_type> const
+virial<dimension, float_type>::texture_ = stress_pot_;
+
+template class observables::gpu::kinetic_energy<3, dsfloat>;
+template class observables::gpu::kinetic_energy<2, dsfloat>;
+template class observables::gpu::velocity_of_centre_of_mass<3, dsfloat>;
+template class observables::gpu::velocity_of_centre_of_mass<2, dsfloat>;
+template class observables::gpu::potential_energy<dsfloat>;
+template class observables::gpu::virial<3, dsfloat>;
+template class observables::gpu::virial<2, dsfloat>;
 
 } // namespace gpu
 } // namespace observables

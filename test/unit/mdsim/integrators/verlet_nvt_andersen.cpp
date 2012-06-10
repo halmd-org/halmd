@@ -29,7 +29,6 @@
 #include <numeric>
 
 #include <halmd/mdsim/box.hpp>
-#include <halmd/mdsim/core.hpp>
 #include <halmd/mdsim/host/integrators/verlet_nvt_andersen.hpp>
 #include <halmd/mdsim/host/particle.hpp>
 #include <halmd/mdsim/host/particle_groups/all.hpp>
@@ -62,6 +61,7 @@ template <typename modules_type>
 struct verlet_nvt_andersen
 {
     typedef typename modules_type::box_type box_type;
+    typedef typename modules_type::force_type force_type;
     typedef typename modules_type::integrator_type integrator_type;
     typedef typename modules_type::particle_type particle_type;
     typedef typename modules_type::particle_group_type particle_group_type;
@@ -74,7 +74,6 @@ struct verlet_nvt_andersen
     typedef typename particle_type::vector_type vector_type;
     typedef typename vector_type::value_type float_type;
     static unsigned int const dimension = vector_type::static_size;
-    typedef mdsim::core core_type;
 
     double timestep;
     float density;
@@ -85,7 +84,6 @@ struct verlet_nvt_andersen
     fixed_vector<double, dimension> slab;
 
     std::shared_ptr<box_type> box;
-    std::shared_ptr<core_type> core;
     std::shared_ptr<integrator_type> integrator;
     std::shared_ptr<particle_type> particle;
     std::shared_ptr<position_type> position;
@@ -109,10 +107,12 @@ void verlet_nvt_andersen<modules_type>::test()
     accumulator<double> temp_;
     boost::array<accumulator<double>, dimension> v_cm;   //< accumulate velocity component-wise
 
-    core->setup();
+    position->set();
+    velocity->set();
     BOOST_TEST_MESSAGE("run NVT integrator over " << steps << " steps");
     for (unsigned int i = 0; i < steps; ++i) {
-        core->mdstep();
+        integrator->integrate();
+        integrator->finalize();
         if(i % period == 0) {
             temp_(thermodynamics->temp());
             fixed_vector<double, dimension> v(thermodynamics->v_cm());
@@ -200,41 +200,101 @@ verlet_nvt_andersen<modules_type>::verlet_nvt_andersen()
     random = std::make_shared<random_type>();
     position = std::make_shared<position_type>(particle, box, slab);
     velocity = std::make_shared<velocity_type>(particle, random, temp);
-    integrator = std::make_shared<integrator_type>(particle, box, random, timestep, temp, coll_rate);
+    std::shared_ptr<force_type> force = std::make_shared<force_type>(*particle);
+    integrator = std::make_shared<integrator_type>(particle, force, box, random, timestep, temp, coll_rate);
     std::shared_ptr<particle_group_type> group = std::make_shared<particle_group_type>(particle);
-    thermodynamics = std::make_shared<thermodynamics_type>(particle, group, box);
-
-    // create core and connect module slots to core signals
-    this->connect();
+    thermodynamics = std::make_shared<thermodynamics_type>(particle, force, group, box);
 }
 
-template <typename modules_type>
-void verlet_nvt_andersen<modules_type>::connect()
+/**
+ * Construct host array from host particle.
+ */
+template <typename array_type, typename particle_type>
+inline typename std::enable_if<
+    std::is_convertible<
+        typename std::iterator_traits<typename array_type::iterator>::iterator_category
+      , std::random_access_iterator_tag
+    >::value
+  , void>::type
+make_array_from_particle(array_type& array, particle_type const& particle)
 {
-    core = std::make_shared<core_type>();
-    // system preparation
-    core->on_prepend_setup([=]() {
-        particle->prepare();
-    });
-    core->on_setup([=]() {
-        position->set();
-    });
-    core->on_setup([=]() {
-        velocity->set();
-    });
-    // integration step
-    core->on_integrate([=]() {
-        integrator->integrate();
-    });
-    core->on_finalize([=]() {
-        integrator->finalize();
-    });
+    array_type output(particle.nparticle());
+    std::fill(output.begin(), output.end(), 0);
+    array = std::move(output);
 }
+
+#ifdef HALMD_WITH_GPU
+/**
+ * Construct GPU array from GPU particle.
+ */
+template <typename array_type, typename particle_type>
+inline typename std::enable_if<
+    std::is_convertible<
+        typename std::iterator_traits<typename array_type::iterator>::iterator_category
+      , cuda::device_random_access_iterator_tag
+    >::value
+  , void>::type
+make_array_from_particle(array_type& array, particle_type const& particle)
+{
+    array_type g_output(particle.nparticle());
+    g_output.reserve(particle.dim.threads());
+    cuda::memset(g_output.begin(), g_output.end(), 0);
+    array = std::move(g_output);
+}
+#endif
+
+/**
+ * Zero force.
+ */
+template <typename force_type>
+class zero_force
+  : public force_type
+{
+public:
+    typedef typename force_type::net_force_array_type net_force_array_type;
+    typedef typename force_type::en_pot_array_type en_pot_array_type;
+    typedef typename force_type::stress_pot_array_type stress_pot_array_type;
+    typedef typename force_type::hypervirial_array_type hypervirial_array_type;
+
+    template <typename particle_type>
+    zero_force(particle_type const& particle)
+    {
+        halmd::cache_proxy<net_force_array_type> net_force = net_force_;
+        halmd::cache_proxy<stress_pot_array_type> stress_pot = stress_pot_;
+        make_array_from_particle(*net_force, particle);
+        make_array_from_particle(*stress_pot, particle);
+    }
+
+    virtual halmd::cache<net_force_array_type> const& net_force()
+    {
+        return net_force_;
+    }
+
+    virtual halmd::cache<en_pot_array_type> const& en_pot()
+    {
+        throw std::runtime_error("not implemented");
+    }
+
+    virtual halmd::cache<stress_pot_array_type> const& stress_pot()
+    {
+        return stress_pot_;
+    }
+
+    virtual halmd::cache<hypervirial_array_type> const& hypervirial()
+    {
+        throw std::runtime_error("not implemented");
+    }
+
+private:
+    halmd::cache<net_force_array_type> net_force_;
+    halmd::cache<stress_pot_array_type> stress_pot_;
+};
 
 template <int dimension, typename float_type>
 struct host_modules
 {
     typedef mdsim::box<dimension> box_type;
+    typedef zero_force<mdsim::host::force<dimension, float_type>> force_type;
     typedef mdsim::host::integrators::verlet_nvt_andersen<dimension, float_type> integrator_type;
     typedef mdsim::host::particle<dimension, float_type> particle_type;
     typedef mdsim::host::particle_groups::all<particle_type> particle_group_type;
@@ -257,6 +317,7 @@ template <int dimension, typename float_type>
 struct gpu_modules
 {
     typedef mdsim::box<dimension> box_type;
+    typedef zero_force<mdsim::gpu::force<dimension, float_type>> force_type;
     typedef mdsim::gpu::integrators::verlet_nvt_andersen<dimension, float_type, halmd::random::gpu::rand48> integrator_type;
     typedef mdsim::gpu::particle<dimension, float_type> particle_type;
     typedef mdsim::gpu::particle_groups::all<particle_type> particle_group_type;

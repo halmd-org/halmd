@@ -29,29 +29,6 @@ namespace halmd {
 namespace observables {
 namespace gpu {
 
-template <int dimension, typename float_type>
-class thermodynamics_kernel
-{
-private:
-    typedef typename mdsim::type_traits<dimension, float>::gpu::stress_tensor_type coalesced_stress_pot_type;
-
-public:
-    /** particle velocities and masses */
-    cuda::texture<float4> velocity;
-    /** potential energies */
-    cuda::texture<float> en_pot;
-    /** potential parts of stress tensor */
-    cuda::texture<coalesced_stress_pot_type> stress_pot;
-
-    static thermodynamics_kernel const& get()
-    {
-        return kernel;
-    }
-
-private:
-    static thermodynamics_kernel const kernel;
-};
-
 /**
  * Compute total kinetic energy.
  */
@@ -83,14 +60,24 @@ public:
     /**
      * Returns total kinetic energy.
      */
-    float_type operator()() const
+    double operator()() const
     {
         return 0.5 * mv2_;
+    }
+
+    /**
+     * Returns reference to texture with velocities and masses.
+     */
+    static cuda::texture<float4> const& get()
+    {
+        return texture_;
     }
 
 private:
     /** sum over mass × square of velocity vector */
     float_type mv2_;
+    /** texture with velocities and masses */
+    static cuda::texture<float4> const texture_;
 };
 
 /**
@@ -128,9 +115,17 @@ public:
     /**
      * Returns velocity centre of mass.
      */
-    vector_type operator()() const
+    fixed_vector<double, dimension> operator()() const
     {
-        return mv_ / m_;
+        return fixed_vector<double, dimension>(mv_ / m_);
+    }
+
+    /**
+     * Returns reference to texture with velocities and masses.
+     */
+    static cuda::texture<float4> const& get()
+    {
+        return texture_;
     }
 
 private:
@@ -138,6 +133,8 @@ private:
     vector_type mv_;
     /** sum over mass */
     float_type m_;
+    /** texture with velocities and masses */
+    static cuda::texture<float4> const texture_;
 };
 
 /**
@@ -165,14 +162,24 @@ public:
     /**
      * Returns total potential energy.
      */
-    float_type operator()() const
+    double operator()() const
     {
         return en_pot_;
+    }
+
+    /**
+     * Returns reference to texture with potential energies.
+     */
+    static cuda::texture<float> const& get()
+    {
+        return texture_;
     }
 
 private:
     /** total potential energy */
     float_type en_pot_;
+    /** texture with potential energies */
+    static cuda::texture<float> const texture_;
 };
 
 /**
@@ -205,14 +212,24 @@ public:
     /**
      * Returns total virial sum.
      */
-    float_type operator()() const
+    double operator()() const
     {
         return virial_;
+    }
+
+    /**
+     * Returns reference to texture with stress tensors.
+     */
+    static cuda::texture<coalesced_stress_pot_type> const& get()
+    {
+        return texture_;
     }
 
 private:
     /** total virial sum */
     float_type virial_;
+    /** texture with stress tensors */
+    static cuda::texture<coalesced_stress_pot_type> const texture_;
 };
 
 } // namespace observables

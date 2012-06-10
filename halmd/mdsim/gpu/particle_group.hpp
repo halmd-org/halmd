@@ -21,6 +21,9 @@
 #ifndef HALMD_MDSIM_GPU_PARTICLE_GROUP_HPP
 #define HALMD_MDSIM_GPU_PARTICLE_GROUP_HPP
 
+#include <halmd/algorithm/gpu/reduce.hpp>
+#include <halmd/numeric/blas/fixed_vector.hpp>
+#include <halmd/observables/gpu/thermodynamics_kernel.hpp>
 #include <halmd/utility/cache.hpp>
 
 #include <cuda_wrapper/cuda_wrapper.hpp>
@@ -89,6 +92,95 @@ get_unordered(particle_group& group, iterator_type const& first)
     cuda::host::vector<typename array_type::value_type> h_unordered(g_unordered->size());
     cuda::copy(*g_unordered, h_unordered);
     return std::copy(h_unordered.begin(), h_unordered.end(), first);
+}
+
+/**
+ * Compute mean kinetic energy per particle.
+ */
+template <typename particle_type>
+double get_mean_en_kin(particle_type const& particle, particle_group& group)
+{
+    typedef typename particle_group::array_type group_array_type;
+    typedef typename particle_type::velocity_array_type velocity_array_type;
+    unsigned int constexpr dimension = particle_type::velocity_type::static_size;
+    typedef observables::gpu::kinetic_energy<dimension, dsfloat> accumulator_type;
+
+    cache_proxy<group_array_type const> unordered = group.unordered();
+    cache_proxy<velocity_array_type const> velocity = particle.velocity();
+
+    accumulator_type::get().bind(*velocity);
+    return reduce(unordered->begin(), unordered->end(), accumulator_type())() / unordered->size();
+}
+
+/**
+ * Compute velocity of centre of mass.
+ */
+template <typename particle_type>
+fixed_vector<double, particle_type::velocity_type::static_size>
+get_v_cm(particle_type const& particle, particle_group& group)
+{
+    typedef typename particle_group::array_type group_array_type;
+    typedef typename particle_type::velocity_array_type velocity_array_type;
+    unsigned int constexpr dimension = particle_type::velocity_type::static_size;
+    typedef observables::gpu::velocity_of_centre_of_mass<dimension, dsfloat> accumulator_type;
+
+    cache_proxy<group_array_type const> unordered = group.unordered();
+    cache_proxy<velocity_array_type const> velocity = particle.velocity();
+
+    accumulator_type::get().bind(*velocity);
+    return reduce(unordered->begin(), unordered->end(), accumulator_type())();
+}
+
+/**
+ * Compute mean potential energy per particle.
+ */
+template <typename force_type>
+double get_mean_en_pot(force_type& force, particle_group& group)
+{
+    typedef typename particle_group::array_type group_array_type;
+    typedef typename force_type::en_pot_array_type en_pot_array_type;
+    typedef observables::gpu::potential_energy<dsfloat> accumulator_type;
+
+    cache_proxy<group_array_type const> unordered = group.unordered();
+    cache_proxy<en_pot_array_type const> en_pot = force.en_pot();
+
+    accumulator_type::get().bind(*en_pot);
+    return reduce(unordered->begin(), unordered->end(), accumulator_type())() / unordered->size();
+}
+
+/**
+ * Compute mean virial per particle.
+ */
+template <typename force_type>
+double get_mean_virial(force_type& force, particle_group& group)
+{
+    typedef typename particle_group::array_type group_array_type;
+    typedef typename force_type::stress_pot_array_type stress_pot_array_type;
+    unsigned int constexpr dimension = force_type::net_force_type::static_size;
+    typedef observables::gpu::virial<dimension, dsfloat> accumulator_type;
+
+    cache_proxy<group_array_type const> unordered = group.unordered();
+    cache_proxy<stress_pot_array_type const> stress_pot = force.stress_pot();
+
+    accumulator_type::get().bind(*stress_pot);
+    return reduce(unordered->begin(), unordered->end(), accumulator_type())() / unordered->size();
+}
+
+/**
+ * Compute mean hypervirial per particle.
+ */
+template <typename force_type>
+double get_mean_hypervirial(force_type& force, particle_group& group)
+{
+    typedef typename particle_group::array_type group_array_type;
+    typedef typename force_type::hypervirial_array_type hypervirial_array_type;
+    typedef observables::gpu::potential_energy<dsfloat> accumulator_type;
+
+    cache_proxy<group_array_type const> unordered = group.unordered();
+    cache_proxy<hypervirial_array_type const> hypervirial = force.hypervirial();
+
+    accumulator_type::get().bind(*hypervirial);
+    return reduce(unordered->begin(), unordered->end(), accumulator_type())() / unordered->size();
 }
 
 } // namespace gpu

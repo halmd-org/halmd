@@ -21,13 +21,14 @@
 #ifndef HALMD_MDSIM_HOST_PARTICLE_HPP
 #define HALMD_MDSIM_HOST_PARTICLE_HPP
 
-#include <algorithm> // std::copy
-#include <lua.hpp>
-
-#include <halmd/mdsim/type_traits.hpp>
 #include <halmd/utility/profiler.hpp>
 #include <halmd/utility/cache.hpp>
 #include <halmd/utility/raw_array.hpp>
+#include <halmd/numeric/blas/fixed_vector.hpp>
+
+#include <lua.hpp>
+
+#include <algorithm>
 
 namespace halmd {
 namespace mdsim {
@@ -47,10 +48,6 @@ public:
     typedef unsigned int reverse_tag_type;
     typedef unsigned int species_type;
     typedef double mass_type;
-    typedef vector_type force_type;
-    typedef double en_pot_type;
-    typedef typename type_traits<dimension, float_type>::stress_tensor_type stress_pot_type;
-    typedef double hypervirial_type;
 
     typedef raw_array<position_type> position_array_type;
     typedef raw_array<image_type> image_array_type;
@@ -59,10 +56,6 @@ public:
     typedef raw_array<reverse_tag_type> reverse_tag_array_type;
     typedef raw_array<species_type> species_array_type;
     typedef raw_array<mass_type> mass_array_type;
-    typedef raw_array<force_type> force_array_type;
-    typedef raw_array<en_pot_type> en_pot_array_type;
-    typedef raw_array<stress_pot_type> stress_pot_array_type;
-    typedef raw_array<hypervirial_type> hypervirial_array_type;
 
     void rearrange(std::vector<unsigned int> const& index);
 
@@ -211,96 +204,6 @@ public:
     }
 
     /**
-     * Returns non-const reference to force per particle.
-     */
-    cache<force_array_type> const& force() const
-    {
-        return force_;
-    }
-
-    /**
-     * Returns const reference to force per particle.
-     */
-    cache<force_array_type>& force()
-    {
-        return force_;
-    }
-
-    /**
-     * Returns const reference to potential energy per particle.
-     *
-     * This method checks that the computation of auxiliary variables was enabled.
-     */
-    cache<en_pot_array_type> const& en_pot() const
-    {
-        return en_pot_;
-    }
-
-    /**
-     * Returns non-const reference to potential energy per particle.
-     */
-    cache<en_pot_array_type>& en_pot()
-    {
-        return en_pot_;
-    }
-
-    /**
-     * Returns const reference to potential part of stress tensor per particle.
-     *
-     * This method checks that the computation of auxiliary variables was enabled.
-     */
-    cache<stress_pot_array_type> const& stress_pot() const
-    {
-        return stress_pot_;
-    }
-
-    /**
-     * Returns non-const reference to potential part of stress tensor per particle.
-     */
-    cache<stress_pot_array_type>& stress_pot()
-    {
-        return stress_pot_;
-    }
-
-    /**
-     * Returns const reference to hypervirial per particle.
-     *
-     * This method checks that the computation of auxiliary variables was enabled.
-     */
-    cache<hypervirial_array_type> const& hypervirial() const
-    {
-        return hypervirial_;
-    }
-
-    /**
-     * Returns non-const reference to hypervirial per particle.
-     */
-    cache<hypervirial_array_type>& hypervirial()
-    {
-        return hypervirial_;
-    }
-
-    /**
-     * Enable computation of auxiliary variables.
-     *
-     * The flag is reset by the next call to prepare().
-     */
-    void aux_enable();
-
-    /**
-     * Returns true if computation of auxiliary variables is enabled.
-     */
-    bool aux_valid() const
-    {
-        return aux_valid_;
-    }
-
-    /**
-     * Reset forces, and optionally auxiliary variables, to zero.
-     */
-    void prepare();
-
-    /**
      * Bind class to Lua.
      */
     static void luaopen(lua_State* L);
@@ -324,19 +227,6 @@ private:
     cache<species_array_type> species_;
     /** particle masses */
     cache<mass_array_type> mass_;
-    /** force per particle */
-    cache<force_array_type> force_;
-    /** potential energy per particle */
-    cache<en_pot_array_type> en_pot_;
-    /** potential part of stress tensor per particle */
-    cache<stress_pot_array_type> stress_pot_;
-    /** hypervirial per particle */
-    cache<hypervirial_array_type> hypervirial_;
-
-    /** flag for enabling the computation of auxiliary variables this step */
-    bool aux_flag_;
-    /** flag that indicates the auxiliary variables are computed this step */
-    bool aux_valid_;
 
     typedef utility::profiler profiler_type;
     typedef typename profiler_type::accumulator_type accumulator_type;
@@ -547,117 +437,6 @@ set_mass(particle_type& particle, iterator_type const& first)
     return input;
 }
 
-/**
- * Copy force per particle to given array.
- */
-template <typename particle_type, typename iterator_type>
-inline iterator_type
-get_force(particle_type const& particle, iterator_type const& first)
-{
-    typedef typename particle_type::force_array_type force_array_type;
-    cache_proxy<force_array_type const> force = particle.force();
-    return std::copy(force->begin(), force->end(), first);
-}
-
-/**
- * Copy force per particle from given array.
- */
-template <typename particle_type, typename iterator_type>
-inline iterator_type
-set_force(particle_type& particle, iterator_type const& first)
-{
-    typedef typename particle_type::force_array_type force_array_type;
-    cache_proxy<force_array_type> force = particle.force();
-    iterator_type input = first;
-    for (typename particle_type::force_type& value : *force) {
-        value = *input++;
-    }
-    return input;
-}
-
-/**
- * Copy potential energy per particle to given array.
- */
-template <typename particle_type, typename iterator_type>
-inline iterator_type
-get_en_pot(particle_type const& particle, iterator_type const& first)
-{
-    typedef typename particle_type::en_pot_array_type en_pot_array_type;
-    cache_proxy<en_pot_array_type const> en_pot = particle.en_pot();
-    return std::copy(en_pot->begin(), en_pot->end(), first);
-}
-
-/**
- * Copy potential energy per particle from given array.
- */
-template <typename particle_type, typename iterator_type>
-inline iterator_type
-set_en_pot(particle_type& particle, iterator_type const& first)
-{
-    typedef typename particle_type::en_pot_array_type en_pot_array_type;
-    cache_proxy<en_pot_array_type> en_pot = particle.en_pot();
-    iterator_type input = first;
-    for (typename particle_type::en_pot_type& value : *en_pot) {
-        value = *input++;
-    }
-    return input;
-}
-
-/**
- * Copy potential part of stress tensor per particle to given array.
- */
-template <typename particle_type, typename iterator_type>
-inline iterator_type
-get_stress_pot(particle_type const& particle, iterator_type const& first)
-{
-    typedef typename particle_type::stress_pot_array_type stress_pot_array_type;
-    cache_proxy<stress_pot_array_type const> stress_pot = particle.stress_pot();
-    return std::copy(stress_pot->begin(), stress_pot->end(), first);
-}
-
-/**
- * Copy potential part of stress tensor per particle from given array.
- */
-template <typename particle_type, typename iterator_type>
-inline iterator_type
-set_stress_pot(particle_type& particle, iterator_type const& first)
-{
-    typedef typename particle_type::stress_pot_array_type stress_pot_array_type;
-    cache_proxy<stress_pot_array_type> stress_pot = particle.stress_pot();
-    iterator_type input = first;
-    for (typename particle_type::stress_pot_type& value : *stress_pot) {
-        value = *input++;
-    }
-    return input;
-}
-
-/**
- * Copy hypervirial per particle to given array.
- */
-template <typename particle_type, typename iterator_type>
-inline iterator_type
-get_hypervirial(particle_type const& particle, iterator_type const& first)
-{
-    typedef typename particle_type::hypervirial_array_type hypervirial_array_type;
-    cache_proxy<hypervirial_array_type const> hypervirial = particle.hypervirial();
-    return std::copy(hypervirial->begin(), hypervirial->end(), first);
-}
-
-/**
- * Copy hypervirial per particle from given array.
- */
-template <typename particle_type, typename iterator_type>
-inline iterator_type
-set_hypervirial(particle_type& particle, iterator_type const& first)
-{
-    typedef typename particle_type::hypervirial_array_type hypervirial_array_type;
-    cache_proxy<hypervirial_array_type> hypervirial = particle.hypervirial();
-    iterator_type input = first;
-    for (typename particle_type::hypervirial_type& value : *hypervirial) {
-        value = *input++;
-    }
-    return input;
-}
 
 } // namespace host
 } // namespace mdsim

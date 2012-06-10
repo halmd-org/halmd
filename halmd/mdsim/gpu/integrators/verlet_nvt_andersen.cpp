@@ -33,6 +33,7 @@ namespace integrators {
 template <int dimension, typename float_type, typename RandomNumberGenerator>
 verlet_nvt_andersen<dimension, float_type, RandomNumberGenerator>::verlet_nvt_andersen(
     std::shared_ptr<particle_type> particle
+  , std::shared_ptr<force_type> force
   , std::shared_ptr<box_type const> box
   , std::shared_ptr<random_type> random
   , float_type timestep
@@ -41,6 +42,7 @@ verlet_nvt_andersen<dimension, float_type, RandomNumberGenerator>::verlet_nvt_an
   , std::shared_ptr<logger_type> logger
 )
   : particle_(particle)
+  , force_(force)
   , box_(box)
   , random_(random)
   , coll_rate_(coll_rate)
@@ -75,7 +77,7 @@ void verlet_nvt_andersen<dimension, float_type, RandomNumberGenerator>::set_temp
 template <int dimension, typename float_type, typename RandomNumberGenerator>
 void verlet_nvt_andersen<dimension, float_type, RandomNumberGenerator>::integrate()
 {
-    cache_proxy<force_array_type const> force = particle_->force();
+    cache_proxy<net_force_array_type const> net_force = force_->net_force();
     cache_proxy<position_array_type> position = particle_->position();
     cache_proxy<velocity_array_type> velocity = particle_->velocity();
     cache_proxy<image_array_type> image = particle_->image();
@@ -87,7 +89,7 @@ void verlet_nvt_andersen<dimension, float_type, RandomNumberGenerator>::integrat
             &*position->begin()
           , &*image->begin()
           , &*velocity->begin()
-          , &*force->begin()
+          , &*net_force->begin()
           , timestep_
           , static_cast<vector_type>(box_->length())
         );
@@ -105,7 +107,7 @@ void verlet_nvt_andersen<dimension, float_type, RandomNumberGenerator>::integrat
 template <int dimension, typename float_type, typename RandomNumberGenerator>
 void verlet_nvt_andersen<dimension, float_type, RandomNumberGenerator>::finalize()
 {
-    cache_proxy<force_array_type const> force = particle_->force();
+    cache_proxy<net_force_array_type const> net_force = force_->net_force();
     cache_proxy<velocity_array_type> velocity = particle_->velocity();
 
     scoped_timer_type timer(runtime_.finalize);
@@ -115,7 +117,7 @@ void verlet_nvt_andersen<dimension, float_type, RandomNumberGenerator>::finalize
         cuda::configure(random_->rng().dim.grid, random_->rng().dim.block);
         wrapper_type::kernel.finalize(
             &*velocity->begin()
-          , &*force->begin()
+          , &*net_force->begin()
           , timestep_
           , sqrt_temperature_
           , coll_prob_
@@ -195,6 +197,7 @@ void verlet_nvt_andersen<dimension, float_type, RandomNumberGenerator>::luaopen(
 
               , def("verlet_nvt_andersen", &std::make_shared<verlet_nvt_andersen
                   , std::shared_ptr<particle_type>
+                  , std::shared_ptr<force_type>
                   , std::shared_ptr<box_type const>
                   , std::shared_ptr<random_type>
                   , float_type

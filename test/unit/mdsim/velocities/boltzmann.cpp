@@ -32,13 +32,12 @@
 #include <halmd/mdsim/host/particle_groups/all.hpp>
 #include <halmd/mdsim/host/velocities/boltzmann.hpp>
 #include <halmd/numeric/accumulator.hpp>
-#include <halmd/observables/host/thermodynamics.hpp>
+#include <halmd/numeric/blas/blas.hpp>
 #include <halmd/random/host/random.hpp>
 #ifdef HALMD_WITH_GPU
 # include <halmd/mdsim/gpu/particle.hpp>
 # include <halmd/mdsim/gpu/particle_groups/all.hpp>
 # include <halmd/mdsim/gpu/velocities/boltzmann.hpp>
-# include <halmd/observables/gpu/thermodynamics.hpp>
 # include <halmd/random/gpu/random.hpp>
 # include <halmd/utility/gpu/device.hpp>
 #endif
@@ -63,7 +62,6 @@ struct boltzmann
     typedef typename modules_type::particle_type particle_type;
     typedef typename modules_type::particle_group_type particle_group_type;
     typedef typename modules_type::random_type random_type;
-    typedef typename modules_type::thermodynamics_type thermodynamics_type;
     typedef typename modules_type::velocity_type velocity_type;
     typedef typename particle_type::vector_type vector_type;
     typedef typename vector_type::value_type float_type;
@@ -77,7 +75,6 @@ struct boltzmann
     std::shared_ptr<box_type> box;
     std::shared_ptr<particle_type> particle;
     std::shared_ptr<random_type> random;
-    std::shared_ptr<thermodynamics_type> thermodynamics;
     std::shared_ptr<velocity_type> velocity;
 
     void test();
@@ -87,6 +84,8 @@ struct boltzmann
 template <typename modules_type>
 void boltzmann<modules_type>::test()
 {
+    particle_group_type group(particle);
+
     // generate velocity distribution
     BOOST_TEST_MESSAGE("generate Maxwell-Boltzmann distribution");
     velocity->set();
@@ -100,14 +99,14 @@ void boltzmann<modules_type>::test()
     // with this choice, a single test passes with 99.999% probability
     double vcm_tolerance = 4.5 * sqrt(temp / (npart - 1));
     BOOST_TEST_MESSAGE("Absolute tolerance on instantaneous centre-of-mass velocity: " << vcm_tolerance);
-    BOOST_CHECK_SMALL(norm_inf(thermodynamics->v_cm()), vcm_tolerance);  //< norm_inf tests the max. value
+    BOOST_CHECK_SMALL(norm_inf(get_v_cm(*particle, group)), vcm_tolerance);  //< norm_inf tests the max. value
 
     // temperature ⇒ variance of velocity distribution
     // we have only one measurement of the variance,
     // tolerance is 4.5σ, σ = √<ΔT²> where <ΔT²> / T² = 2 / (dimension × N)
     double rel_temp_tolerance = 4.5 * sqrt(2. / (dimension * npart)) / temp;
     BOOST_TEST_MESSAGE("Relative tolerance on instantaneous temperature: " << rel_temp_tolerance);
-    BOOST_CHECK_CLOSE_FRACTION(thermodynamics->temp(), temp, rel_temp_tolerance);
+    BOOST_CHECK_CLOSE_FRACTION(2 * get_mean_en_kin(*particle, group) / dimension, temp, rel_temp_tolerance);
 
     //
     // test shifting and rescaling
@@ -115,18 +114,18 @@ void boltzmann<modules_type>::test()
     // multiplication of the velocities by a constant factor
     double scale = 1.5;
     velocity->rescale(scale);
-    BOOST_CHECK_CLOSE_FRACTION(thermodynamics->temp(), scale * scale * temp, rel_temp_tolerance);
+    BOOST_CHECK_CLOSE_FRACTION(2 * get_mean_en_kin(*particle, group) / dimension, scale * scale * temp, rel_temp_tolerance);
 
     // shift mean velocity to zero
-    fixed_vector<double, dimension> v_cm = thermodynamics->v_cm();
+    fixed_vector<double, dimension> v_cm = get_v_cm(*particle, group);
     velocity->shift(-v_cm);
     vcm_tolerance = gpu ? 0.1 * eps_float : 2 * eps;
-    BOOST_CHECK_SMALL(norm_inf(thermodynamics->v_cm()), vcm_tolerance);
+    BOOST_CHECK_SMALL(norm_inf(get_v_cm(*particle, group)), vcm_tolerance);
 
     // first shift, then rescale in one step
     velocity->shift_rescale(v_cm, 1 / scale);
-    BOOST_CHECK_CLOSE_FRACTION(thermodynamics->temp(), temp, rel_temp_tolerance);
-    BOOST_CHECK_SMALL(norm_inf(thermodynamics->v_cm() - v_cm), vcm_tolerance);
+    BOOST_CHECK_CLOSE_FRACTION(2 * get_mean_en_kin(*particle, group) / dimension, temp, rel_temp_tolerance);
+    BOOST_CHECK_SMALL(norm_inf(get_v_cm(*particle, group) - v_cm), vcm_tolerance);
 }
 
 template <typename modules_type>
@@ -147,8 +146,6 @@ boltzmann<modules_type>::boltzmann()
     box = std::make_shared<box_type>(edges);
     random = std::make_shared<random_type>();
     velocity = std::make_shared<velocity_type>(particle, random, temp);
-    std::shared_ptr<particle_group_type> group = std::make_shared<particle_group_type>(particle);
-    thermodynamics = std::make_shared<thermodynamics_type>(particle, group, box);
 }
 
 template <int dimension, typename float_type>
@@ -159,7 +156,6 @@ struct host_modules
     typedef mdsim::host::particle_groups::all<particle_type> particle_group_type;
     typedef halmd::random::host::random random_type;
     typedef mdsim::host::velocities::boltzmann<dimension, float_type> velocity_type;
-    typedef observables::host::thermodynamics<dimension, float_type> thermodynamics_type;
     static bool const gpu = false;
 };
 
@@ -178,7 +174,6 @@ struct gpu_modules
     typedef mdsim::gpu::particle<dimension, float_type> particle_type;
     typedef mdsim::gpu::particle_groups::all<particle_type> particle_group_type;
     typedef halmd::random::gpu::random<halmd::random::gpu::rand48> random_type;
-    typedef observables::gpu::thermodynamics<dimension, float_type> thermodynamics_type;
     typedef mdsim::gpu::velocities::boltzmann<dimension, float_type, halmd::random::gpu::rand48> velocity_type;
     static bool const gpu = true;
 };

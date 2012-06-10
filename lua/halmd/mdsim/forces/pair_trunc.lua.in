@@ -45,34 +45,39 @@ local discontinuous = assert(libhalmd.mdsim.forces.trunc.discontinuous)
 --
 -- If ``trunc`` is not specified, the pair potential is :math:`C^0` continuous at the cutoff.
 --
+-- .. attribute:: potential
+--
+--    Instance of :mod:`halmd.mdsim.potentials`.
+--
+-- .. method:: get_force()
+--
+--    Returns unordered sequence with particle forces.
+--
+-- .. method:: get_en_pot()
+--
+--    Returns unordered sequence with potential energies.
+--
+-- .. method:: get_stress_pot()
+--
+--    Returns unordered sequence with potential parts of stress tensors.
+--
+-- .. method:: get_hypervirial()
+--
+--    Returns unordered sequence with hypervirials.
+--
 -- .. method:: connect()
 --
---    Connect force to core and profiler.
+--    Connect force to profiler.
 --
 --    This is the default.
 --
 -- .. method:: disconnect()
 --
---    Disconnect force from core and profiler.
+--    Disconnect force from profiler.
 --
 --    .. warning::
 --
 --       Currently this does not disconnect particle sorting, binning and neighbour lists.
---
--- .. method:: compute()
---
---    Compute pair forces.
---
---    This function is connected to :meth:`halmd.mdsim.core.on_force` and
---    :meth:`halmd.mdsim.core.on_append_setup` in :meth:`connect`.
---
--- .. attribute:: potential
---
---    Instance of :mod:`halmd.mdsim.potentials`.
---
--- .. attribute:: r_cut
---
---    Matrix with elements :math:`r_{\text{c}, ij}` in reduced units.
 --
 local M = module(function(args)
     local particle = args and args.particle
@@ -105,7 +110,7 @@ local M = module(function(args)
     local neighbour = neighbour({box = box, particles = particle, r_cut = r_cut})
 
     -- construct force module
-    local self = pair_trunc(potential, particle[1], particle[2], box, neighbour, trunc)
+    local self = pair_trunc(potential, particle[1], particle[2], box, neighbour, trunc, logger)
 
     -- attach potential instance as read-only Lua property
     self.potential = property(function()
@@ -119,11 +124,6 @@ local M = module(function(args)
 
     self.connect = function()
         if #conn == 0 then
-            -- system preparation
-            table.insert(conn, core.on_append_setup(self.compute))
-            -- compute forces every step
-            table.insert(conn, core.on_force(self.compute))
-
             local runtime = assert(self.runtime)
             table.insert(conn, profiler.on_profile(runtime.compute, desc))
         else

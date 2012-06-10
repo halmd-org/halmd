@@ -34,10 +34,6 @@ namespace gpu {
 namespace forces {
 namespace pair_trunc_kernel {
 
-/** number of placeholders per neighbour list */
-static __constant__ unsigned int neighbour_size_;
-/** neighbour list stride */
-static __constant__ unsigned int neighbour_stride_;
 /** positions, types */
 static texture<float4> r1_;
 /** positions, types */
@@ -57,6 +53,8 @@ template <
 __global__ void compute(
     gpu_vector_type* g_f
   , unsigned int const* g_neighbour
+  , unsigned int neighbour_size
+  , unsigned int neighbour_stride
   , float* g_en_pot
   , stress_tensor_type* g_stress_pot
   , float* g_hypervirial
@@ -82,14 +80,14 @@ __global__ void compute(
     fixed_vector<float, (dimension - 1) * dimension / 2 + 1> stress_pot = 0;
 #ifdef USE_FORCE_DSFUN
     // force sum
-    fixed_vector<dsfloat, dimension> f = static_cast<vector_type>(g_f[i]);
+    fixed_vector<dsfloat, dimension> f = 0;
 #else
-    vector_type f = static_cast<vector_type>(g_f[i]);
+    vector_type f = 0;
 #endif
 
-    for (unsigned int k = 0; k < neighbour_size_; ++k) {
+    for (unsigned int k = 0; k < neighbour_size; ++k) {
         // coalesced read from neighbour list
-        unsigned int j = g_neighbour[k * neighbour_stride_ + i];
+        unsigned int j = g_neighbour[k * neighbour_stride + i];
         // skip placeholder particles
         if (j == particle_kernel::placeholder) {
             break;
@@ -147,8 +145,6 @@ pair_trunc_wrapper<dimension, potential_type, trunc_type> const
 pair_trunc_wrapper<dimension, potential_type, trunc_type>::kernel = {
     pair_trunc_kernel::compute<false, fixed_vector<float, dimension>, potential_type>
   , pair_trunc_kernel::compute<true, fixed_vector<float, dimension>, potential_type>
-  , pair_trunc_kernel::neighbour_size_
-  , pair_trunc_kernel::neighbour_stride_
   , pair_trunc_kernel::r1_
   , pair_trunc_kernel::r2_
 };

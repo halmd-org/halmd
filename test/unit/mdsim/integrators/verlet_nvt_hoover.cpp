@@ -159,9 +159,6 @@ void verlet_nvt_hoover<modules_type>::test()
     // this avoids a jump in the conserved energy at the very beginning
     BOOST_TEST_MESSAGE("equilibrate over " << steps / 20 << " steps");
     for (uint64_t i = 0; i < steps / 20; ++i) {
-        if (i + 1 == steps / 20) {
-            particle->aux_enable();                    //< enable computation of potential energy
-        }
         core->mdstep();
     }
 
@@ -170,11 +167,6 @@ void verlet_nvt_hoover<modules_type>::test()
 
     BOOST_TEST_MESSAGE("run NVT integrator over " << steps << " steps");
     for (uint64_t i = 0; i < steps; ++i) {
-        // enable auxiliary variables in force module
-        if(i % period == 0) {
-            particle->aux_enable();
-        }
-
         // perform MD step
         core->mdstep();
 
@@ -301,15 +293,15 @@ verlet_nvt_hoover<modules_type>::verlet_nvt_hoover()
     particle = std::make_shared<particle_type>(npart, 1);
     box = std::make_shared<box_type>(edges);
     random = std::make_shared<random_type>();
-    integrator = std::make_shared<integrator_type>(particle, box, timestep, temp, resonance_frequency);
     potential = std::make_shared<potential_type>(particle->nspecies(), particle->nspecies(), cutoff, epsilon, sigma);
     binning = std::make_shared<binning_type>(particle, box, potential->r_cut(), skin);
     neighbour = std::make_shared<neighbour_type>(particle, particle, binning, binning, box, potential->r_cut(), skin);
     force = std::make_shared<force_type>(potential, particle, particle, box, neighbour);
+    integrator = std::make_shared<integrator_type>(particle, force, box, timestep, temp, resonance_frequency);
     position = std::make_shared<position_type>(particle, box, 1);
     velocity = std::make_shared<velocity_type>(particle, random, start_temp);
     std::shared_ptr<particle_group_type> group = std::make_shared<particle_group_type>(particle);
-    thermodynamics = std::make_shared<thermodynamics_type>(particle, group, box);
+    thermodynamics = std::make_shared<thermodynamics_type>(particle, force, group, box);
     max_displacement = std::make_shared<max_displacement_type>(particle, box);
 
     // create core and connect module slots to core signals
@@ -321,9 +313,6 @@ void verlet_nvt_hoover<modules_type>::connect()
 {
     core = std::make_shared<core_type>();
     // system preparation
-    core->on_prepend_setup([=]() {
-        particle->prepare();
-    });
     core->on_setup([=]() {
         position->set();
     });
@@ -339,19 +328,10 @@ void verlet_nvt_hoover<modules_type>::connect()
     core->on_append_setup([=]() {
         neighbour->update();
     });
-    core->on_append_setup([=]() {
-        force->compute();
-    });
 
     // integration step
     core->on_integrate([=]() {
         integrator->integrate();
-    });
-    core->on_prepend_force([=]() {
-        particle->prepare();
-    });
-    core->on_force([=]() {
-        force->compute();
     });
     core->on_finalize([=]() {
         integrator->finalize();

@@ -165,8 +165,13 @@ void lennard_jones_fluid<modules_type>::test()
 {
     // create NVT integrator
     std::shared_ptr<nvt_integrator_type> nvt_integrator = std::make_shared<nvt_integrator_type>(
-        particle, box, random
-      , 0.005 /* time step */, temp, 1. /* collision rate */
+        particle
+      , force
+      , box
+      , random
+      , 0.005 /* time step */
+      , temp
+      , 1 /* collision rate */
     );
     vector<connection> conn;
     conn.push_back(core->on_integrate([=]() {
@@ -187,7 +192,7 @@ void lennard_jones_fluid<modules_type>::test()
     conn.clear();
 
     // set different timestep and choose NVE integrator
-    std::shared_ptr<nve_integrator_type> nve_integrator = std::make_shared<nve_integrator_type>(particle, box, timestep);
+    std::shared_ptr<nve_integrator_type> nve_integrator = std::make_shared<nve_integrator_type>(particle, force, box, timestep);
     core->on_integrate([=]() {
         nve_integrator->integrate();
     });
@@ -207,13 +212,10 @@ void lennard_jones_fluid<modules_type>::test()
     // equilibration run, measure temperature in second half
     BOOST_TEST_MESSAGE("equilibrate initial state");
     steps = static_cast<unsigned int>(ceil(30 / timestep));
-    unsigned int period = static_cast<unsigned int>(round(.01 / timestep));
+    unsigned int period = static_cast<unsigned int>(round(0.01 / timestep));
     for (unsigned int i = 0; i < steps; ++i) {
-        if (i == steps - 1) {
-            particle->aux_enable();              // enable auxiliary variables in last step
-        }
         core->mdstep();
-        if(i > steps/2 && i % period == 0) {
+        if(i > steps / 2 && i % period == 0) {
             temp_(thermodynamics->temp());
         }
     }
@@ -233,11 +235,6 @@ void lennard_jones_fluid<modules_type>::test()
     steps = static_cast<unsigned int>(ceil(60 / nve_integrator->timestep()));
     period = static_cast<unsigned int>(round(0.05 / nve_integrator->timestep()));
     for (unsigned int i = 0; i < steps; ++i) {
-        // turn on evaluation of potential energy, virial, etc.
-        if(i % period == 0) {
-            particle->aux_enable();
-        }
-
         // perform MD step
         core->mdstep();
 
@@ -338,7 +335,7 @@ lennard_jones_fluid<modules_type>::lennard_jones_fluid()
     velocity = std::make_shared<velocity_type>(particle, random, temp);
     force = std::make_shared<force_type>(potential, particle, particle, box, neighbour);
     std::shared_ptr<particle_group_type> group = std::make_shared<particle_group_type>(particle);
-    thermodynamics = std::make_shared<thermodynamics_type>(particle, group, box);
+    thermodynamics = std::make_shared<thermodynamics_type>(particle, force, group, box);
     msd = std::make_shared<msd_type>(particle, box);
 
     // create core and connect module slots to core signals
@@ -350,9 +347,6 @@ void lennard_jones_fluid<modules_type>::connect()
 {
     core = std::make_shared<core_type>();
     // system preparation
-    core->on_prepend_setup([=]() {
-        particle->prepare();
-    });
     core->on_setup([=]() {
         position->set();
     });
@@ -367,17 +361,6 @@ void lennard_jones_fluid<modules_type>::connect()
     });
     core->on_append_setup([=]() {
         neighbour->update();
-    });
-    core->on_append_setup([=]() {
-        force->compute();
-    });
-
-    // integration step
-    core->on_prepend_force([=]() {
-        particle->prepare();
-    });
-    core->on_force([=]() {
-        force->compute();
     });
 
     // update neighbour lists if maximum squared displacement is greater than (skin/2)²

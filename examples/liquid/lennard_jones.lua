@@ -70,6 +70,7 @@ local function liquid(args)
     local integrator = mdsim.integrators.verlet({
         box = box
       , particle = particle
+      , force = force
       , timestep = args.timestep
     })
 
@@ -89,7 +90,7 @@ local function liquid(args)
     phase_space.writer(writer, {every = args.sampling.trajectory})
 
     -- sample macroscopic state variables
-    local msv = observables.thermodynamics({box = box, group = particle_group})
+    local msv = observables.thermodynamics({box = box, group = particle_group, force = force})
     msv.writer(writer, {every = args.sampling.state_vars})
 
     -- setup blocking scheme for correlation functions

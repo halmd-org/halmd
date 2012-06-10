@@ -32,12 +32,14 @@ namespace integrators {
 template <int dimension, typename float_type>
 verlet<dimension, float_type>::verlet(
     std::shared_ptr<particle_type> particle
+  , std::shared_ptr<force_type> force
   , std::shared_ptr<box_type const> box
   , double timestep
   , std::shared_ptr<logger_type> logger
 )
   // dependency injection
   : particle_(particle)
+  , force_(force)
   , box_(box)
   , logger_(logger)
   // reference CUDA C++ verlet_wrapper
@@ -61,7 +63,7 @@ void verlet<dimension, float_type>::set_timestep(double timestep)
 template <int dimension, typename float_type>
 void verlet<dimension, float_type>::integrate()
 {
-    cache_proxy<force_array_type const> force = particle_->force();
+    cache_proxy<net_force_array_type const> net_force = force_->net_force();
     cache_proxy<position_array_type> position = particle_->position();
     cache_proxy<velocity_array_type> velocity = particle_->velocity();
     cache_proxy<image_array_type> image = particle_->image();
@@ -73,7 +75,7 @@ void verlet<dimension, float_type>::integrate()
             &*position->begin()
           , &*image->begin()
           , &*velocity->begin()
-          , &*force->begin()
+          , &*net_force->begin()
           , timestep_
           , static_cast<vector_type>(box_->length())
         );
@@ -91,7 +93,7 @@ void verlet<dimension, float_type>::integrate()
 template <int dimension, typename float_type>
 void verlet<dimension, float_type>::finalize()
 {
-    cache_proxy<force_array_type const> force = particle_->force();
+    cache_proxy<net_force_array_type const> net_force = force_->net_force();
     cache_proxy<velocity_array_type> velocity = particle_->velocity();
 
     try {
@@ -99,7 +101,7 @@ void verlet<dimension, float_type>::finalize()
         cuda::configure(particle_->dim.grid, particle_->dim.block);
         wrapper_->finalize(
             &*velocity->begin()
-          , &*force->begin()
+          , &*net_force->begin()
           , timestep_
         );
         cuda::thread::synchronize();
@@ -162,6 +164,7 @@ void verlet<dimension, float_type>::luaopen(lua_State* L)
 
               , def("verlet", &std::make_shared<verlet
                   , std::shared_ptr<particle_type>
+                  , std::shared_ptr<force_type>
                   , std::shared_ptr<box_type const>
                   , double
                   , std::shared_ptr<logger_type>

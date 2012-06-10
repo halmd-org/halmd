@@ -40,6 +40,7 @@ local verlet_nvt_andersen = assert(libhalmd.mdsim.integrators.verlet_nvt_anderse
 --
 -- :param table args: keyword arguments
 -- :param args.particle: instance of :class:`halmd.mdsim.particle`
+-- :param args.force: instance of :mod:`halmd.mdsim.forces`
 -- :param args.box: instance of :class:`halmd.mdsim.box`
 -- :param number args.temperature: temperature of heat bath
 -- :param number args.rate: collision rate
@@ -99,6 +100,10 @@ local M = module(function(args)
     if not particle then
         error("missing argument 'particle'", 2)
     end
+    local force = args and args.force
+    if not force then
+        error("missing argument 'force'", 2)
+    end
     local box = args.box
     if not box then
         error("missing argument 'box'", 2)
@@ -121,7 +126,7 @@ local M = module(function(args)
     local logger = log.logger({label = "verlet_nvt_andersen"})
 
     -- construct instance
-    local self = verlet_nvt_andersen(particle, box, rng, timestep, temperature, rate, logger)
+    local self = verlet_nvt_andersen(particle, force, box, rng, timestep, temperature, rate, logger)
 
     -- capture C++ method set_timestep
     local set_timestep = assert(self.set_timestep)

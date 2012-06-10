@@ -46,6 +46,7 @@ local thermodynamics = assert(libhalmd.observables.thermodynamics)
 --
 -- :param table args: keyword arguments
 -- :param args.group: instance of :mod:`halmd.mdsim.particle_groups`
+-- :param args.force: instance of :mod:`halmd.mdsim.forces`
 -- :param args.box: instance of :class:`halmd.mdsim.box`
 --
 -- .. method:: writer(file, args)
@@ -102,6 +103,10 @@ local M = module(function(args)
     if not group then
         error("missing parameter 'group'", 2)
     end
+    local force = args.force
+    if not force then
+        error("missing parameter 'force'", 2)
+    end
     local box = args.box
     if not box then
         error("missing parameter 'box'", 2)
@@ -111,7 +116,7 @@ local M = module(function(args)
     local logger = log.logger({label = ("thermodynamics (%s)"):format(label)})
 
     -- construct instance
-    local self = thermodynamics(particle, group, box, logger)
+    local self = thermodynamics(particle, force, group, box, logger)
 
     self.writer = function(file, args)
         local writer = file:writer{location = {"observables"}, mode = "append"}
@@ -130,10 +135,6 @@ local M = module(function(args)
             error("missing parameter 'every'", 2)
         end
         sampler.on_sample(writer.write, every)
-
-        -- turn on computation of auxiliary variables _before_ force computation
-        -- in each sampling step
-        sampler.on_prepare(group.particle.aux_enable, every)
 
         return writer
     end

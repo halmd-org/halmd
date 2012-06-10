@@ -38,22 +38,32 @@ struct pair_trunc_wrapper
 
     /** compute forces only */
     cuda::function<void (
-        coalesced_vector_type*, unsigned int const*, float*, stress_tensor_type*, float*
-      , unsigned int, unsigned int
+        coalesced_vector_type*
+      , unsigned int const*
+      , unsigned int
+      , unsigned int
+      , float*
+      , stress_tensor_type*
+      , float*
+      , unsigned int
+      , unsigned int
       , vector_type
       , smooth_type const
     )> compute;
     /** compute forces and auxiliary stuff: internal energy, potential part of stress tensor, ... */
     cuda::function<void (
-        coalesced_vector_type*, unsigned int const*, float*, stress_tensor_type*, float*
-      , unsigned int, unsigned int
+        coalesced_vector_type*
+      , unsigned int const*
+      , unsigned int
+      , unsigned int
+      , float*
+      , stress_tensor_type*
+      , float*
+      , unsigned int
+      , unsigned int
       , vector_type
       , smooth_type const
     )> compute_aux;
-    /** number of placeholders per neighbour list */
-    cuda::symbol<unsigned int> neighbour_size;
-    /** neighbour list stride */
-    cuda::symbol<unsigned int> neighbour_stride;
     /** positions, types */
     cuda::texture<float4> r1;
     /** positions, types */

@@ -38,6 +38,7 @@ namespace integrators {
 template <int dimension, typename float_type>
 verlet_nvt_hoover<dimension, float_type>::verlet_nvt_hoover(
     std::shared_ptr<particle_type> particle
+  , std::shared_ptr<force_type> force
   , std::shared_ptr<box_type const> box
   , float_type timestep
   , float_type temperature
@@ -49,6 +50,7 @@ verlet_nvt_hoover<dimension, float_type>::verlet_nvt_hoover(
   , v_xi(0)
   // dependency injection
   , particle_(particle)
+  , force_(force)
   , box_(box)
   , logger_(logger)
   // member initialisation
@@ -108,7 +110,7 @@ void verlet_nvt_hoover<dimension, float_type>::set_mass(chain_type const& mass)
 template <int dimension, typename float_type>
 void verlet_nvt_hoover<dimension, float_type>::integrate()
 {
-    cache_proxy<force_array_type const> force = particle_->force();
+    cache_proxy<net_force_array_type const> net_force = force_->net_force();
     cache_proxy<position_array_type> position = particle_->position();
     cache_proxy<velocity_array_type> velocity = particle_->velocity();
     cache_proxy<image_array_type> image = particle_->image();
@@ -122,7 +124,7 @@ void verlet_nvt_hoover<dimension, float_type>::integrate()
             &*position->begin()
           , &*image->begin()
           , &*velocity->begin()
-          , &*force->begin()
+          , &*net_force->begin()
           , timestep_
           , scale
           , static_cast<vector_type>(box_->length())
@@ -141,14 +143,14 @@ void verlet_nvt_hoover<dimension, float_type>::integrate()
 template <int dimension, typename float_type>
 void verlet_nvt_hoover<dimension, float_type>::finalize()
 {
-    cache_proxy<force_array_type const> force = particle_->force();
+    cache_proxy<net_force_array_type const> net_force = force_->net_force();
     cache_proxy<velocity_array_type> velocity = particle_->velocity();
 
     scoped_timer_type timer(runtime_.finalize);
 
     try {
         cuda::configure(particle_->dim.grid, particle_->dim.block);
-        wrapper_type::kernel.finalize(&*velocity->begin(), &*force->begin(), timestep_);
+        wrapper_type::kernel.finalize(&*velocity->begin(), &*net_force->begin(), timestep_);
         cuda::thread::synchronize();
 
         float_type scale = propagate_chain();
@@ -292,6 +294,7 @@ void verlet_nvt_hoover<dimension, float_type>::luaopen(lua_State* L)
 
               , def("verlet_nvt_hoover", &std::make_shared<verlet_nvt_hoover
                   , std::shared_ptr<particle_type>
+                  , std::shared_ptr<force_type>
                   , std::shared_ptr<box_type const>
                   , float_type
                   , float_type
