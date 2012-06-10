@@ -133,7 +133,7 @@ public:
      *
      *
      */
-    boost::tuple<float_type, float_type, float_type> operator() (float_type rr, unsigned a, unsigned b)
+    boost::tuple<float_type, float_type, float_type> operator()(float_type rr, unsigned a, unsigned b) const
     {
         switch (index_(a, b)) {
             case 6:  return impl_<6>(rr, a, b);
@@ -204,7 +204,7 @@ private:
      *
      */
     template <int const_index>
-    boost::tuple<float_type, float_type, float_type> impl_(float_type rr, unsigned a, unsigned b)
+    boost::tuple<float_type, float_type, float_type> impl_(float_type rr, unsigned a, unsigned b) const
     {
         // choose arbitrary index_ if template parameter index = 0
         unsigned int n = const_index > 0 ? const_index : index_(a, b);

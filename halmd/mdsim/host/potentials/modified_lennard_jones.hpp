@@ -75,7 +75,7 @@ public:
      *   r \partial_r r \partial_r U(r) &=& 4 \epsilon (\sigma/r)^{n} \left[ m^2 (\sigma/r)^{m-n} - n^2 \right]
      * @f}
      */
-    boost::tuple<float_type, float_type, float_type> operator() (float_type rr, unsigned a, unsigned b)
+    boost::tuple<float_type, float_type, float_type> operator()(float_type rr, unsigned a, unsigned b) const
     {
         float_type sigma2 = sigma2_(a, b);
         unsigned m_2 = index_m_2_(a, b);

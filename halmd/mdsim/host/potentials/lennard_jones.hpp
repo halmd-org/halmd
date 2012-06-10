@@ -54,7 +54,7 @@ public:
     );
 
     /** compute potential and its derivative at squared distance 'rr' for particles of type 'a' and 'b' */
-    boost::tuple<float_type, float_type, float_type> operator() (float_type rr, unsigned a, unsigned b)
+    boost::tuple<float_type, float_type, float_type> operator()(float_type rr, unsigned a, unsigned b) const
     {
         float_type sigma2 = sigma2_(a, b);
         float_type rri = sigma2 / rr;

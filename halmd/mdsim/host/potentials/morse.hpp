@@ -65,7 +65,7 @@ public:
      * @returns tuple of unit "force" @f$ -U'(r)/r @f$ and potential @f$ U(r) @f$
      * and hypervirial @f$ r \partial_r r \partial_r U(r) @f$
      */
-    boost::tuple<float_type, float_type, float_type> operator() (float_type rr, unsigned a, unsigned b)
+    boost::tuple<float_type, float_type, float_type> operator()(float_type rr, unsigned a, unsigned b) const
     {
         float_type r_sigma = sqrt(rr) / sigma_(a, b);
         float_type exp_dr = exp(r_min_sigma_(a, b) - r_sigma);
