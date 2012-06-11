@@ -23,7 +23,6 @@
 #include <luaponte/out_value_policy.hpp>
 
 #include <halmd/config.hpp>
-#include <halmd/utility/lua/long_long_converter.hpp> // *int64_t on x86
 #include <halmd/utility/lua/vector_converter.hpp>
 
 using namespace boost;
