@@ -38,6 +38,7 @@
 
 #include <halmd/config.hpp>
 #include <halmd/numeric/cast.hpp>
+#include <halmd/utility/lua/long_long_converter.hpp>
 #include <halmd/utility/lua/ublas.hpp>
 #include <halmd/utility/lua/vector_converter.hpp>
 #include <halmd/utility/program_options.hpp>
