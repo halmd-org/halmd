@@ -65,6 +65,19 @@ static void translate_exception(lua_State* L, std::exception const& e)
 }
 
 /**
+ * Translate Luaponte exception into Lua error message.
+ *
+ * Luaponte pushes the error message onto the stack.
+ */
+static void translate_lua_error(lua_State* L, luaponte::error const&)
+{
+    lua_pushliteral(L, "[Lua] ");
+    lua_pushvalue(L, -2);
+    lua_concat(L, 2);
+    lua_remove(L, -2);
+}
+
+/**
  * Load Luabind into Lua interpreter
  */
 void script::load_luaponte()
@@ -78,6 +91,7 @@ void script::load_luaponte()
     bind_class_info(L);
     // translate C++ exception into Lua error message
     register_exception_handler<std::exception>(&translate_exception);
+    register_exception_handler<luaponte::error>(&translate_lua_error);
 }
 
 /**
