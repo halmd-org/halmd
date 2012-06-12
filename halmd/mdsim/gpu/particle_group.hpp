@@ -109,7 +109,7 @@ double get_mean_en_kin(particle_type const& particle, particle_group& group)
     cache_proxy<velocity_array_type const> velocity = particle.velocity();
 
     accumulator_type::get().bind(*velocity);
-    return reduce(unordered->begin(), unordered->end(), accumulator_type())() / unordered->size();
+    return reduce(&*unordered->begin(), &*unordered->end(), accumulator_type())() / unordered->size();
 }
 
 /**
@@ -128,7 +128,7 @@ get_v_cm(particle_type const& particle, particle_group& group)
     cache_proxy<velocity_array_type const> velocity = particle.velocity();
 
     accumulator_type::get().bind(*velocity);
-    return reduce(unordered->begin(), unordered->end(), accumulator_type())();
+    return reduce(&*unordered->begin(), &*unordered->end(), accumulator_type())();
 }
 
 /**
@@ -145,7 +145,7 @@ double get_mean_en_pot(force_type& force, particle_group& group)
     cache_proxy<en_pot_array_type const> en_pot = force.en_pot();
 
     accumulator_type::get().bind(*en_pot);
-    return reduce(unordered->begin(), unordered->end(), accumulator_type())() / unordered->size();
+    return reduce(&*unordered->begin(), &*unordered->end(), accumulator_type())() / unordered->size();
 }
 
 /**
@@ -163,7 +163,7 @@ double get_mean_virial(force_type& force, particle_group& group)
     cache_proxy<stress_pot_array_type const> stress_pot = force.stress_pot();
 
     accumulator_type::get().bind(*stress_pot);
-    return reduce(unordered->begin(), unordered->end(), accumulator_type())() / unordered->size();
+    return reduce(&*unordered->begin(), &*unordered->end(), accumulator_type())() / unordered->size();
 }
 
 /**
@@ -180,7 +180,7 @@ double get_mean_hypervirial(force_type& force, particle_group& group)
     cache_proxy<hypervirial_array_type const> hypervirial = force.hypervirial();
 
     accumulator_type::get().bind(*hypervirial);
-    return reduce(unordered->begin(), unordered->end(), accumulator_type())() / unordered->size();
+    return reduce(&*unordered->begin(), &*unordered->end(), accumulator_type())() / unordered->size();
 }
 
 } // namespace gpu

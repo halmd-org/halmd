@@ -1,5 +1,5 @@
 /*
- * Copyright © 2012  Peter Colberg
+ * Copyright © 2012 Peter Colberg
  *
  * This file is part of HALMD.
  *
@@ -21,11 +21,15 @@
 #include <halmd/numeric/mp/dsfloat.hpp>
 #include <test/unit/algorithm/gpu/reduce_kernel.hpp>
 
-using namespace halmd;
-
-template class reduction_kernel<sum<float, dsfloat> >;
-template class reduction_kernel<sum_of_squares<float, dsfloat> >;
+template class halmd::reduction_kernel<sum<float, halmd::dsfloat> >;
+template class halmd::reduction_kernel<sum_with_constant<float, halmd::dsfloat> >;
+template class halmd::reduction_kernel<sum_of_squares<float, halmd::dsfloat> >;
+template class halmd::reduction_kernel<sum_of_squares_with_constant<float, halmd::dsfloat> >;
+template class halmd::reduction_kernel<sum_of_cubes<float, halmd::dsfloat> >;
 #ifdef HALMD_GPU_DOUBLE_PRECISION
-template class reduction_kernel<sum<float, double> >;
-template class reduction_kernel<sum_of_squares<float, double> >;
+template class halmd::reduction_kernel<sum<float, double> >;
+template class halmd::reduction_kernel<sum_with_constant<float, double> >;
+template class halmd::reduction_kernel<sum_of_squares<float, double> >;
+template class halmd::reduction_kernel<sum_of_squares_with_constant<float, double> >;
+template class halmd::reduction_kernel<sum_of_cubes<float, double> >;
 #endif

@@ -59,7 +59,10 @@ mean_quartic_displacement<dimension, float_type>::compute(
 {
     typename sample_type::position_array_type const& position1 = first.position();
     typename sample_type::position_array_type const& position2 = second.position();
-    return compute_mqd_(position1.begin(), position1.end(), position2.begin())();
+    return compute_mqd_(
+        std::make_tuple(&*position1.begin(), &*position2.begin())
+      , std::make_tuple(&*position1.end())
+    )();
 }
 
 template <typename tcf_type>

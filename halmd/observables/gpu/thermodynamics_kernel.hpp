@@ -35,9 +35,12 @@ namespace gpu {
 template <int dimension, typename float_type>
 class kinetic_energy
 {
+private:
+    typedef unsigned int size_type;
+
 public:
-    /** element type of input array */
-    typedef unsigned int argument_type;
+    /** element pointer type of input array */
+    typedef size_type const* iterator;
 
     /**
      * Initialise kinetic energy to zero.
@@ -47,7 +50,7 @@ public:
     /**
      * Accumulate kinetic energy of a particle.
      */
-    inline HALMD_GPU_ENABLED void operator()(argument_type const& i);
+    inline HALMD_GPU_ENABLED void operator()(size_type i);
 
     /**
      * Accumulate kinetic energy of another accumulator.
@@ -87,11 +90,12 @@ template <int dimension, typename float_type>
 class velocity_of_centre_of_mass
 {
 private:
+    typedef unsigned int size_type;
     typedef fixed_vector<float_type, dimension> vector_type;
 
 public:
-    /** element type of input array */
-    typedef unsigned int argument_type;
+    /** element pointer type of input array */
+    typedef size_type const* iterator;
 
     /**
      * Initialise momentan and mass to zero.
@@ -101,7 +105,7 @@ public:
     /**
      * Accumulate momentum and mass of a particle.
      */
-    inline HALMD_GPU_ENABLED void operator()(argument_type const& i);
+    inline HALMD_GPU_ENABLED void operator()(size_type i);
 
     /**
      * Accumulate velocity centre of mass of another accumulator.
@@ -143,13 +147,16 @@ private:
 template <typename float_type>
 class potential_energy
 {
+private:
+    typedef unsigned int size_type;
+
 public:
-    typedef unsigned int argument_type;
+    typedef size_type const* iterator;
 
     /**
      * Accumulate potential energy of a particle.
      */
-    inline HALMD_GPU_ENABLED void operator()(argument_type const& i);
+    inline HALMD_GPU_ENABLED void operator()(size_type i);
 
     /**
      * Accumulate potential energy of another accumulator.
@@ -189,17 +196,18 @@ template <int dimension, typename float_type>
 class virial
 {
 private:
+    typedef unsigned int size_type;
     typedef typename mdsim::type_traits<dimension, float>::stress_tensor_type stress_pot_type;
     typedef typename mdsim::type_traits<dimension, float>::gpu::stress_tensor_type coalesced_stress_pot_type;
 
 public:
-    /** element type of input array */
-    typedef unsigned int argument_type;
+    /** element pointer type of input array */
+    typedef size_type const* iterator;
 
     /**
      * Accumulate stress tensor diagonal of a particle.
      */
-    inline HALMD_GPU_ENABLED void operator()(argument_type const& i);
+    inline HALMD_GPU_ENABLED void operator()(size_type i);
 
     /**
      * Accumulate virial sum of another accumulator.

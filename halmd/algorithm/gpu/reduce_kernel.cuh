@@ -1,5 +1,5 @@
 /*
- * Copyright © 2008-2012  Peter Colberg
+ * Copyright © 2008-2012 Peter Colberg
  *
  * This file is part of HALMD.
  *
@@ -26,6 +26,7 @@
 #include <halmd/utility/gpu/thread.cuh>
 
 namespace halmd {
+namespace detail {
 
 template <unsigned int threads, typename accumulator_type>
 inline __device__ typename boost::enable_if_c<threads == 1, void>::type
@@ -84,58 +85,25 @@ inline __device__ void reduce(accumulator_type& acc)
     reduce<threads / 2>(acc, s_acc);
 }
 
-namespace detail {
-
 /**
  * Compute block sums of input array using unary accumulator.
  *
- * @param g_input input array
- * @param size number of elements in input array
+ * @param first input iterator to first element
+ * @param size number of elements
  * @param g_block_acc output block accumulators
  * @param input accumulator
  */
 template <unsigned int threads, typename accumulator_type>
 static __global__ void reduction(
-    typename accumulator_type::argument_type const* g_input
-  , unsigned int size
+    typename accumulator_type::iterator const first
+  , typename std::iterator_traits<typename accumulator_type::iterator>::difference_type size
   , accumulator_type* g_block_acc
   , accumulator_type acc
 )
 {
     // load values from global device memory
     for (unsigned int i = GTID; i < size; i += GTDIM) {
-        acc(g_input[i]);
-    }
-    // compute reduced value for all threads in block
-    reduce<threads>(acc);
-
-    if (TID < 1) {
-        // store block reduced value in global memory
-        g_block_acc[blockIdx.x] = acc;
-    }
-}
-
-/**
- * Compute block sums of two input arrays using binary accumulator.
- *
- * @param g_first first input array
- * @param g_second second input array
- * @param size number of elements in input arrays
- * @param g_block_acc output block accumulators
- * @param input accumulator
- */
-template <unsigned int threads, typename accumulator_type>
-static __global__ void reduction(
-    typename accumulator_type::first_argument_type const* g_first
-  , typename accumulator_type::second_argument_type const* g_second
-  , unsigned int size
-  , accumulator_type* g_block_acc
-  , accumulator_type acc
-)
-{
-    // load values from global device memory
-    for (unsigned int i = GTID; i < size; i += GTDIM) {
-        acc(g_first[i], g_second[i]);
+        acc(first[i]);
     }
     // compute reduced value for all threads in block
     reduce<threads>(acc);

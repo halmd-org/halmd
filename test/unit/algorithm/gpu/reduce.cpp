@@ -1,5 +1,6 @@
 /*
- * Copyright © 2010-2012  Felix Höfling and Peter Colberg
+ * Copyright © 2010-2012 Peter Colberg
+ * Copyright © 2011 Felix Höfling
  *
  * This file is part of HALMD.
  *
@@ -19,12 +20,6 @@
 
 #define BOOST_TEST_MODULE reduce
 #include <boost/test/unit_test.hpp>
-#include <boost/test/parameterized_test.hpp>
-
-#include <algorithm> // std::transform
-#include <boost/array.hpp>
-#include <boost/iterator/counting_iterator.hpp>
-#include <functional> // std::negate
 
 #include <halmd/algorithm/gpu/reduce.hpp>
 #include <halmd/numeric/accumulator.hpp>
@@ -35,8 +30,12 @@
 #include <test/tools/init.hpp>
 #include <test/unit/algorithm/gpu/reduce_kernel.hpp>
 
-using namespace boost;
-using namespace halmd;
+#include <boost/iterator/counting_iterator.hpp>
+#include <boost/test/parameterized_test.hpp>
+
+#include <algorithm>
+#include <array>
+#include <functional>
 
 BOOST_GLOBAL_FIXTURE( set_cuda_device )
 
@@ -44,30 +43,77 @@ BOOST_GLOBAL_FIXTURE( set_cuda_device )
  * Compute sum of natural numbers using a unary reduction.
  */
 template <typename accumulator_type>
-static void unary_reduce_float()
+static void reduce_sum()
 {
-    cuda::host::vector<float> h_v(make_counting_iterator(1), make_counting_iterator(12345679));
+    cuda::host::vector<float> h_v(
+        boost::make_counting_iterator(1)
+      , boost::make_counting_iterator(12345679)
+    );
+    BOOST_TEST_MESSAGE( "  summation of " << h_v.size() << " floats" );
     cuda::vector<float> g_v(h_v.size());
-    cuda::copy(h_v, g_v);
-    accumulator_type acc = reduce(g_v.begin(), g_v.end(), accumulator_type(0));
-    BOOST_CHECK_EQUAL(int64_t(double(acc())), 12345678LL * 12345679 / 2);
+    BOOST_CHECK( cuda::copy(h_v.begin(), h_v.end(), g_v.begin()) == g_v.end());
+    accumulator_type acc = halmd::reduce(
+        &*g_v.begin()
+      , &*g_v.end()
+      , accumulator_type(0)
+    );
+    BOOST_CHECK_EQUAL(std::int64_t(double(acc())), 12345678LL * 12345679 / 2);
 }
 
 /**
  * Test »32 bit integer arithmetic using double-single floating point (48 bit mantissa).
  */
-BOOST_AUTO_TEST_CASE( unary_reduce_float_to_double_single )
+BOOST_AUTO_TEST_CASE( reduce_sum_to_double_single )
 {
-    unary_reduce_float<sum<float, dsfloat> >();
+    reduce_sum<sum<float, halmd::dsfloat> >();
 }
 
 #ifdef HALMD_GPU_DOUBLE_PRECISION
 /**
  * Test »32 bit integer arithmetic using double-precision floating point (53 bit mantissa).
  */
-BOOST_AUTO_TEST_CASE( unary_reduce_float_to_double )
+BOOST_AUTO_TEST_CASE( reduce_sum_to_double )
 {
-    unary_reduce_float<sum<float, double> >();
+    reduce_sum<sum<float, double> >();
+}
+#endif
+
+/**
+ * Compute sum of natural numbers using a unary reduction.
+ */
+template <typename accumulator_type>
+static void reduce_sum_with_constant()
+{
+    cuda::host::vector<float> h_v(
+        boost::make_counting_iterator(1)
+      , boost::make_counting_iterator(12345679)
+    );
+    BOOST_TEST_MESSAGE( "  summation of " << h_v.size() << " floats" );
+    cuda::vector<float> g_v(h_v.size());
+    BOOST_CHECK( cuda::copy(h_v.begin(), h_v.end(), g_v.begin()) == g_v.end());
+    accumulator_type acc = halmd::reduce(
+        std::make_tuple(&*g_v.begin(), -1)
+      , std::make_tuple(&*g_v.end())
+      , accumulator_type(0)
+    );
+    BOOST_CHECK_EQUAL(std::int64_t(double(acc())), -12345678LL * 12345679 / 2);
+}
+
+/**
+ * Test »32 bit integer arithmetic using double-single floating point (48 bit mantissa).
+ */
+BOOST_AUTO_TEST_CASE( reduce_sum_with_constant_to_double_single )
+{
+    reduce_sum_with_constant<sum_with_constant<float, halmd::dsfloat> >();
+}
+
+#ifdef HALMD_GPU_DOUBLE_PRECISION
+/**
+ * Test »32 bit integer arithmetic using double-precision floating point (53 bit mantissa).
+ */
+BOOST_AUTO_TEST_CASE( reduce_sum_with_constant_to_double )
+{
+    reduce_sum_with_constant<sum_with_constant<float, double> >();
 }
 #endif
 
@@ -75,46 +121,172 @@ BOOST_AUTO_TEST_CASE( unary_reduce_float_to_double )
  * Compute sum of squares of natural numbers using a binary reduction.
  */
 template <typename accumulator_type>
-static void binary_reduce_float()
+static void reduce_sum_of_squares()
 {
-    cuda::host::vector<float> h_v1(make_counting_iterator(1), make_counting_iterator(123457));
+    cuda::host::vector<float> h_v1(
+        boost::make_counting_iterator(1)
+      , boost::make_counting_iterator(123457)
+    );
+    BOOST_TEST_MESSAGE( "  summation of squares of " << h_v1.size() << " floats" );
     cuda::host::vector<float> h_v2(h_v1.size());
-    std::transform(h_v1.begin(), h_v1.end(), h_v2.begin(), std::negate<float>());
+    std::transform(
+        h_v1.begin()
+      , h_v1.end()
+      , h_v2.begin()
+      , [](float value) {
+            return -value;
+        }
+    );
     cuda::vector<float> g_v1(h_v1.size());
     cuda::vector<float> g_v2(h_v2.size());
-    cuda::copy(h_v1, g_v1);
-    cuda::copy(h_v2, g_v2);
-    accumulator_type acc = reduce(g_v1.begin(), g_v1.end(), g_v2.begin(), accumulator_type(0));
-    BOOST_CHECK_EQUAL(int64_t(double(acc())), -123456LL * 123457 * (2 * 123456 + 1) / 6);
+    BOOST_CHECK( cuda::copy(h_v1.begin(), h_v1.end(), g_v1.begin()) == g_v1.end());
+    BOOST_CHECK( cuda::copy(h_v2.begin(), h_v2.end(), g_v2.begin()) == g_v2.end());
+    accumulator_type acc = halmd::reduce(
+        std::make_tuple(&*g_v1.begin(), &*g_v2.begin())
+      , std::make_tuple(&*g_v1.end())
+      , accumulator_type(0)
+    );
+    BOOST_CHECK_EQUAL(std::int64_t(double(acc())), -123456LL * 123457 * (2 * 123456 + 1) / 6);
 }
 
 /**
  * Test »32 bit integer arithmetic using double-single floating point (48 bit mantissa).
  */
-BOOST_AUTO_TEST_CASE( binary_reduce_float_to_double_single )
+BOOST_AUTO_TEST_CASE( reduce_sum_of_squares_to_double_single )
 {
-    binary_reduce_float<sum_of_squares<float, dsfloat> >();
+    reduce_sum_of_squares<sum_of_squares<float, halmd::dsfloat> >();
 }
 
 #ifdef HALMD_GPU_DOUBLE_PRECISION
 /**
  * Test »32 bit integer arithmetic using double-precision floating point (53 bit mantissa).
  */
-BOOST_AUTO_TEST_CASE( binary_reduce_float_to_double )
+BOOST_AUTO_TEST_CASE( reduce_sum_of_squares_to_double )
 {
-    binary_reduce_float<sum_of_squares<float, double> >();
+    reduce_sum_of_squares<sum_of_squares<float, double> >();
+}
+#endif
+
+/**
+ * Compute sum of squares of natural numbers using a binary reduction.
+ */
+template <typename accumulator_type>
+static void reduce_sum_of_squares_with_constant()
+{
+    cuda::host::vector<float> h_v1(
+        boost::make_counting_iterator(1)
+      , boost::make_counting_iterator(123457)
+    );
+    BOOST_TEST_MESSAGE( "  summation of squares of " << h_v1.size() << " floats" );
+    cuda::host::vector<float> h_v2(h_v1.size());
+    std::transform(
+        h_v1.begin()
+      , h_v1.end()
+      , h_v2.begin()
+      , [](float value) {
+            return -value;
+        }
+    );
+    cuda::vector<float> g_v1(h_v1.size());
+    cuda::vector<float> g_v2(h_v2.size());
+    BOOST_CHECK( cuda::copy(h_v1.begin(), h_v1.end(), g_v1.begin()) == g_v1.end());
+    BOOST_CHECK( cuda::copy(h_v2.begin(), h_v2.end(), g_v2.begin()) == g_v2.end());
+    accumulator_type acc = halmd::reduce(
+        std::make_tuple(&*g_v1.begin(), &*g_v2.begin(), 7)
+      , std::make_tuple(&*g_v1.end())
+      , accumulator_type(0)
+    );
+    BOOST_CHECK_EQUAL(std::int64_t(double(acc())), -7 * 123456LL * 123457 * (2 * 123456 + 1) / 6);
+}
+
+/**
+ * Test »32 bit integer arithmetic using double-single floating point (48 bit mantissa).
+ */
+BOOST_AUTO_TEST_CASE( reduce_sum_of_squares_with_constant_to_double_single )
+{
+    reduce_sum_of_squares_with_constant<sum_of_squares_with_constant<float, halmd::dsfloat> >();
+}
+
+#ifdef HALMD_GPU_DOUBLE_PRECISION
+/**
+ * Test »32 bit integer arithmetic using double-precision floating point (53 bit mantissa).
+ */
+BOOST_AUTO_TEST_CASE( reduce_sum_of_squares_with_constant_to_double )
+{
+    reduce_sum_of_squares_with_constant<sum_of_squares_with_constant<float, double> >();
+}
+#endif
+
+/**
+ * Compute sum of cubes of natural numbers using a binary reduction.
+ */
+template <typename accumulator_type>
+static void reduce_sum_of_cubes()
+{
+    cuda::host::vector<float> h_v1(
+        boost::make_counting_iterator(1)
+      , boost::make_counting_iterator(1235)
+    );
+    BOOST_TEST_MESSAGE( "  summation of cubes of " << h_v1.size() << " floats" );
+    cuda::host::vector<float> h_v2(h_v1.size());
+    std::transform(
+        h_v1.begin()
+      , h_v1.end()
+      , h_v2.begin()
+      , [](float value) {
+            return -value;
+        }
+    );
+    cuda::host::vector<float> h_v3(h_v1.size());
+    std::transform(
+        h_v1.begin()
+      , h_v1.end()
+      , h_v3.begin()
+      , [](float value) {
+            return 7 * value;
+        }
+    );
+    cuda::vector<float> g_v1(h_v1.size());
+    cuda::vector<float> g_v2(h_v2.size());
+    cuda::vector<float> g_v3(h_v3.size());
+    BOOST_CHECK( cuda::copy(h_v1.begin(), h_v1.end(), g_v1.begin()) == g_v1.end());
+    BOOST_CHECK( cuda::copy(h_v2.begin(), h_v2.end(), g_v2.begin()) == g_v2.end());
+    BOOST_CHECK( cuda::copy(h_v3.begin(), h_v3.end(), g_v3.begin()) == g_v3.end());
+    accumulator_type acc = halmd::reduce(
+        std::make_tuple(&*g_v1.begin(), &*g_v2.begin(), &*g_v3.begin())
+      , std::make_tuple(&*g_v1.end())
+      , accumulator_type(0)
+    );
+    BOOST_CHECK_EQUAL(std::int64_t(double(acc())), -7 * 1234LL * 1234LL * 1235LL * 1235LL / 4);
+}
+
+/**
+ * Test »32 bit integer arithmetic using double-single floating point (48 bit mantissa).
+ */
+BOOST_AUTO_TEST_CASE( reduce_sum_of_cubes_to_double_single )
+{
+    reduce_sum_of_cubes<sum_of_cubes<float, halmd::dsfloat> >();
+}
+
+#ifdef HALMD_GPU_DOUBLE_PRECISION
+/**
+ * Test »32 bit integer arithmetic using double-precision floating point (53 bit mantissa).
+ */
+BOOST_AUTO_TEST_CASE( reduce_sum_of_cubes_to_double )
+{
+    reduce_sum_of_cubes<sum_of_cubes<float, double> >();
 }
 #endif
 
 /**
  * benchmark reduce kernel
  */
-static void performance(size_t size)
+static void performance(std::size_t size)
 {
 #ifdef HALMD_GPU_DOUBLE_PRECISION
     typedef sum<float, double> accumulator_type;
 #else
-    typedef sum<float, dsfloat> accumulator_type;
+    typedef sum<float, halmd::dsfloat> accumulator_type;
 #endif
 
     const int count_local = 20;
@@ -123,27 +295,27 @@ static void performance(size_t size)
     const int threads = 64 << 3;
 
     try {
-        cuda::host::vector<float> h_v(make_counting_iterator(size_t(1)), make_counting_iterator(size));
+        cuda::host::vector<float> h_v(boost::make_counting_iterator(std::size_t(1)), boost::make_counting_iterator(size));
         cuda::vector<float> g_v(h_v.size());
-        cuda::copy(h_v, g_v);
+        BOOST_CHECK( cuda::copy(h_v.begin(), h_v.end(), g_v.begin()) == g_v.end());
 
-        boost::array<accumulator<double>, 2> elapsed;
+        std::array<halmd::accumulator<double>, 2> elapsed;
         for (int i = 0; i < count_local; ++i) {
             halmd::timer timer;
             // initialise kernel and allocate internal memory
-            reduction<accumulator_type> reduce(blocks, threads);
-            accumulator_type sum_local = reduce(g_v.begin(), g_v.end());
+            halmd::reduction<accumulator_type> reduce(blocks, threads);
+            accumulator_type sum_local = reduce(&*g_v.begin(), &*g_v.end());
             elapsed[0](timer.elapsed());
-            BOOST_CHECK_EQUAL(uint64_t(double(sum_local())), uint64_t(size - 1) * size / 2);
+            BOOST_CHECK_EQUAL(std::uint64_t(double(sum_local())), std::uint64_t(size - 1) * size / 2);
         }
 
         // pre-initialise kernel
-        reduction<accumulator_type> reduce(blocks, threads);
+        halmd::reduction<accumulator_type> reduce(blocks, threads);
         for (int i = 0; i < count_global; ++i) {
             halmd::timer timer;
-            accumulator_type sum_global = reduce(g_v.begin(), g_v.end());
+            accumulator_type sum_global = reduce(&*g_v.begin(), &*g_v.end());
             elapsed[1](timer.elapsed());
-            BOOST_CHECK_EQUAL(uint64_t(double(sum_global())), uint64_t(size - 1) * size / 2);
+            BOOST_CHECK_EQUAL(std::uint64_t(double(sum_global())), std::uint64_t(size - 1) * size / 2);
         }
 
         BOOST_TEST_MESSAGE("  summation of " << size << " floats: "
@@ -164,8 +336,8 @@ HALMD_TEST_INIT( init_unit_test_suite )
 {
     using namespace boost::unit_test::framework;
 
-    std::vector<size_t> sizes;
-    for (size_t s = 1; s <= (1L << 29); s <<= 1) {
+    std::vector<std::size_t> sizes;
+    for (std::size_t s = 1; s <= (1L << 29); s <<= 1) {
         sizes.push_back(s);
     }
 

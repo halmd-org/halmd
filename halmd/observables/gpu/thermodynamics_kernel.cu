@@ -33,7 +33,7 @@ static texture<float> en_pot_;
 static texture<void> stress_pot_;
 
 template <int dimension, typename float_type>
-void kinetic_energy<dimension, float_type>::operator()(argument_type const& i)
+void kinetic_energy<dimension, float_type>::operator()(size_type i)
 {
     fixed_vector<float, dimension> v;
     float mass;
@@ -42,7 +42,7 @@ void kinetic_energy<dimension, float_type>::operator()(argument_type const& i)
 }
 
 template <int dimension, typename float_type>
-void velocity_of_centre_of_mass<dimension, float_type>::operator()(argument_type const& i)
+void velocity_of_centre_of_mass<dimension, float_type>::operator()(size_type i)
 {
     fixed_vector<float, dimension> v;
     float mass;
@@ -52,13 +52,13 @@ void velocity_of_centre_of_mass<dimension, float_type>::operator()(argument_type
 }
 
 template <typename float_type>
-void potential_energy<float_type>::operator()(argument_type const& i)
+void potential_energy<float_type>::operator()(size_type i)
 {
     en_pot_ += tex1Dfetch(gpu::en_pot_, i);
 }
 
 template <int dimension, typename float_type>
-void virial<dimension, float_type>::operator()(argument_type const& i)
+void virial<dimension, float_type>::operator()(size_type i)
 {
     stress_pot_type s = tex1Dfetch(reinterpret_cast<texture<coalesced_stress_pot_type>&>(stress_pot_), i);
     virial_ += s[0];

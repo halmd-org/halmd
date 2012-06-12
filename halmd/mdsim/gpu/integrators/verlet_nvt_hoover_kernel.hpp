@@ -50,8 +50,8 @@ template <int dimension, typename float_type>
 class kinetic_energy
 {
 public:
-    /** element type of input array */
-    typedef float4 argument_type;
+    /** element pointer type of input array */
+    typedef float4 const* iterator;
 
     /**
      * Initialise kinetic energy to zero.
@@ -61,7 +61,7 @@ public:
     /**
      * Accumulate kinetic energy of a particle.
      */
-    HALMD_GPU_ENABLED void operator()(argument_type const& velocity)
+    HALMD_GPU_ENABLED void operator()(float4 const& velocity)
     {
         fixed_vector<float, dimension> v;
         float mass;

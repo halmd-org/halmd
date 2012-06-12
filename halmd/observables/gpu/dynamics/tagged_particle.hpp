@@ -22,6 +22,7 @@
 
 #include <halmd/config.hpp>
 #include <halmd/numeric/accumulator.hpp>
+#include <halmd/utility/iterator.hpp>
 
 namespace halmd {
 namespace observables {
@@ -35,12 +36,13 @@ private:
     typedef typename correlation_function::vector_type vector_type;
 
 public:
-    typedef float4 first_argument_type;
-    typedef float4 second_argument_type;
+    typedef zip_iterator<float4 const*, float4 const*> iterator;
 
-    HALMD_GPU_ENABLED void operator()(float4 const& first, float4 const& second)
+    HALMD_GPU_ENABLED void operator()(typename iterator::value_type const& value)
     {
-        acc_(correlation_function()(vector_type(first), vector_type(second)));
+        vector_type first, second;
+        tie(first, second) = value;
+        acc_(correlation_function()(first, second));
     }
 
     HALMD_GPU_ENABLED void operator()(tagged_particle const& acc)

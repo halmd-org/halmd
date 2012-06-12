@@ -59,7 +59,10 @@ velocity_autocorrelation<dimension, float_type>::compute(
 {
     typename sample_type::velocity_array_type const& velocity1 = first.velocity();
     typename sample_type::velocity_array_type const& velocity2 = second.velocity();
-    return compute_vacf_(velocity1.begin(), velocity1.end(), velocity2.begin())();
+    return compute_vacf_(
+        std::make_tuple(&*velocity1.begin(), &*velocity2.begin())
+      , std::make_tuple(&*velocity1.end())
+    )();
 }
 
 template <typename tcf_type>
