@@ -23,10 +23,6 @@
 #include <boost/ref.hpp>
 #include <luaponte/luaponte.hpp>
 
-#if LUA_VERSION_NUM < 502
-# define luaL_len lua_objlen
-#endif
-
 namespace halmd {
 
 // forward declaration
@@ -67,9 +63,5 @@ struct default_converter<halmd::cache<T>&>
   : default_converter<halmd::cache<T> > {};
 
 } // namespace luaponte
-
-#if LUA_VERSION_NUM < 502
-# undef luaL_len
-#endif
 
 #endif /* ! HALMD_UTILITY_LUA_CACHE_CONVERTER_HPP */
