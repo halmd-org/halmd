@@ -834,10 +834,10 @@ env-gnu-parallel:
 ## GCC (GNU Compiler Collection)
 ##
 
-GCC_VERSION = 4.7.0
+GCC_VERSION = 4.7.1
 GCC_TARBALL = gcc-$(GCC_VERSION).tar.bz2
-GCC_TARBALL_URL = http://mirror.csclub.uwaterloo.ca/gnu/gcc/gcc-$(GCC_VERSION)/$(GCC_TARBALL)
-GCC_TARBALL_SHA256 = a680083e016f656dab7acd45b9729912e70e71bbffcbf0e3e8aa1cccf19dc9a5
+GCC_TARBALL_URL = http://ftp.gwdg.de/pub/misc/gcc/releases/gcc-$(GCC_VERSION)/$(GCC_TARBALL)
+GCC_TARBALL_SHA256 = 16093f6fa01732adf378d97fe338f113c933bdf56da22bf87c76beff13da406f
 GCC_BUILD_DIR = gcc-$(GCC_VERSION)
 GCC_INSTALL_DIR = $(PREFIX)/gcc-$(GCC_VERSION)
 
