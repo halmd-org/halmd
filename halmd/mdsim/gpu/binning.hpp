@@ -179,9 +179,13 @@ get_cell(binning_type const& binning, output_iterator output)
         cell_size_type(0)
       , ncell
       , [&](cell_size_type const& index) {
-            auto first = h_cell.begin() + cell_size * multi_index_to_offset(index, ncell);
-            auto last = first + cell_size;
-            std::remove_copy(first, last, output(index), -1u);
+            unsigned int offset = multi_index_to_offset(index, ncell);
+            std::remove_copy(
+                h_cell.begin() + cell_size * offset
+              , h_cell.begin() + cell_size * (offset + 1)
+              , output(index)
+              , -1u
+            );
         }
     );
 }
