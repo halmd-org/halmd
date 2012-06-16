@@ -36,6 +36,7 @@
 #include <halmd/mdsim/host/particle_groups/all.hpp>
 #include <halmd/mdsim/host/positions/lattice.hpp>
 #include <halmd/mdsim/host/velocities/boltzmann.hpp>
+#include <halmd/numeric/blas/blas.hpp>
 #include <halmd/observables/host/phase_space.hpp>
 #include <halmd/random/host/random.hpp>
 #ifdef HALMD_WITH_GPU
