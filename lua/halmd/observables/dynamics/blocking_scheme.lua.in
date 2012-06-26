@@ -135,7 +135,7 @@ local M = module(function(args)
         -- construct blocking sample from acquire() function
         local count = assert(self.count)
         local size = assert(self.block_size)
-        local sample = blocking_sample(acquire, count, size, clock)
+        local sample = blocking_sample(acquire, count, size)
 
         -- construct correlation function for blocking scheme
         local result = correlation(tcf, sample, logger)

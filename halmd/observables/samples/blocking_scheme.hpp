@@ -1,5 +1,6 @@
 /*
- * Copyright © 2011  Peter Colberg and Felix Höfling
+ * Copyright © 2011 Felix Höfling
+ * Copyright © 2011-2012 Peter Colberg
  *
  * This file is part of HALMD.
  *
@@ -20,18 +21,18 @@
 #ifndef HALMD_OBSERVABLES_SAMPLES_BLOCKING_SCHEME_HPP
 #define HALMD_OBSERVABLES_SAMPLES_BLOCKING_SCHEME_HPP
 
+#include <halmd/utility/lua/lua.hpp>
+
 // Boost 1.37.0, or patch from http://svn.boost.org/trac/boost/ticket/1852
 #include <boost/circular_buffer.hpp>
-#include <cassert>
-#include <cstddef> // std::size_t
-#include <functional>
 #include <lua.hpp>
-#include <memory>
-#include <stdexcept> // std::logic_error
-#include <vector>
 
-#include <halmd/mdsim/clock.hpp>
-#include <halmd/utility/lua/lua.hpp>
+#include <cassert>
+#include <cstddef>
+#include <functional>
+#include <memory>
+#include <stdexcept>
+#include <vector>
 
 namespace halmd {
 namespace observables {
@@ -79,7 +80,6 @@ public:
     typedef std::function<std::shared_ptr<sample_type const> ()> sample_slot_type;
     typedef typename block_type::iterator block_iterator;
     typedef typename block_type::const_iterator block_const_iterator;
-    typedef mdsim::clock clock_type;
 
     static void luaopen(lua_State* L);
 
@@ -87,7 +87,6 @@ public:
         sample_slot_type const& sample
       , std::size_t count
       , std::size_t size
-      , std::shared_ptr<clock_type const> clock
     );
     virtual void push_back(std::size_t index);
     virtual void pop_front(std::size_t index);
@@ -111,7 +110,6 @@ private:
     sample_slot_type sample_;
     std::vector<block_type> blocks_;
     std::size_t block_size_;
-    std::shared_ptr<clock_type const> clock_;
 };
 
 
@@ -125,12 +123,10 @@ blocking_scheme<sample_type>::blocking_scheme(
     sample_slot_type const& sample
   , std::size_t count
   , std::size_t size
-  , std::shared_ptr<clock_type const> clock
 )
   : sample_(sample)
   , blocks_(count, block_type(size))
   , block_size_(size)
-  , clock_(clock)
 {
 }
 
@@ -138,9 +134,6 @@ template <typename sample_type>
 void blocking_scheme<sample_type>::push_back(std::size_t index)
 {
     std::shared_ptr<sample_type const> sample = sample_();
-    if (sample->step() != clock_->step()) {
-        throw std::logic_error("input sample was not updated");
-    }
     assert(index < blocks_.size());
     blocks_[index].push_back(sample);
 }
@@ -208,7 +201,6 @@ void blocking_scheme<sample_type>::luaopen(lua_State* L)
                   , sample_slot_type
                   , std::size_t
                   , std::size_t
-                  , std::shared_ptr<clock_type const>
                 >)
             ]
         ]

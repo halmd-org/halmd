@@ -1,5 +1,5 @@
 /*
- * Copyright © 2011  Peter Colberg
+ * Copyright © 2011-2012 Peter Colberg
  *
  * This file is part of HALMD.
  *
@@ -19,12 +19,22 @@
 
 #include <halmd/observables/samples/blocking_scheme.hpp>
 
-using namespace boost;
-using namespace std;
-
 namespace halmd {
 namespace observables {
 namespace samples {
+
+/**
+ * This function transforms a Lua function into a std::function, for
+ * use with the constructor of blocking_scheme<luaponte::object>.
+ */
+static std::function<std::shared_ptr<luaponte::object const> ()>
+blocking_scheme_adaptor(luaponte::object const& function)
+{
+    using namespace luaponte;
+    return [=]() {
+        return std::make_shared<object>(call_function<object>(function));
+    };
+}
 
 HALMD_LUA_API int luaopen_libhalmd_observables_samples_blocking_scheme(lua_State* L)
 {
@@ -35,12 +45,18 @@ HALMD_LUA_API int luaopen_libhalmd_observables_samples_blocking_scheme(lua_State
         [
             namespace_("samples")
             [
-                class_<blocking_scheme_base, std::shared_ptr<blocking_scheme_base> >("blocking_scheme_base")
+                class_<blocking_scheme_base>()
+
+              , def("blocking_scheme_adaptor", &blocking_scheme_adaptor)
             ]
         ]
     ];
+    blocking_scheme<luaponte::object>::luaopen(L);
     return 0;
 }
+
+// explicit instantiation
+template class blocking_scheme<luaponte::object>;
 
 } // namespace samples
 } // namespace observables

@@ -1,5 +1,6 @@
 /*
- * Copyright © 2011  Felix Höfling
+ * Copyright © 2011 Felix Höfling
+ * Copyright © 2011-2012 Peter Colberg
  *
  * This file is part of HALMD.
  *
@@ -19,11 +20,30 @@
 
 #include <halmd/observables/dynamics/correlation.hpp>
 
-using namespace boost;
-
 namespace halmd {
 namespace observables {
 namespace dynamics {
+
+/**
+ * Adapt Lua function as correlation function.
+ */
+class correlation_adaptor
+{
+public:
+    typedef luaponte::object sample_type;
+    typedef double result_type;
+    typedef std::function<result_type (sample_type, sample_type)> function_type;
+
+    correlation_adaptor(function_type const& function) : function_(function) {}
+
+    result_type compute(sample_type const& first, sample_type const& second) const
+    {
+        return function_(first, second);
+    }
+
+private:
+    function_type function_;
+};
 
 void correlation_base::luaopen(lua_State* L)
 {
@@ -34,7 +54,10 @@ void correlation_base::luaopen(lua_State* L)
         [
             namespace_("dynamics")
             [
-                class_<correlation_base>("correlation_base")
+                class_<correlation_base>()
+
+              , class_<correlation_adaptor, std::shared_ptr<correlation_adaptor>>("correlation_adaptor")
+                    .def(constructor<typename correlation_adaptor::function_type>())
             ]
         ]
     ];
@@ -43,8 +66,12 @@ void correlation_base::luaopen(lua_State* L)
 HALMD_LUA_API int luaopen_libhalmd_observables_dynamics_correlation(lua_State* L)
 {
     correlation_base::luaopen(L);
+    correlation<correlation_adaptor>::luaopen(L);
     return 0;
 }
+
+// explicit instantiation
+template class correlation<correlation_adaptor>;
 
 } // namespace dynamics
 } // namespace observables

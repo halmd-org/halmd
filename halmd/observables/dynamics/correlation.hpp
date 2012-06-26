@@ -1,5 +1,6 @@
 /*
- * Copyright © 2011  Felix Höfling
+ * Copyright © 2011 Felix Höfling
+ * Copyright © 2011-2012 Peter Colberg
  *
  * This file is part of HALMD.
  *
@@ -20,15 +21,16 @@
 #ifndef HALMD_OBSERVABLES_DYNAMICS_CORRELATION_HPP
 #define HALMD_OBSERVABLES_DYNAMICS_CORRELATION_HPP
 
-#include <boost/multi_array.hpp>
-#include <functional>
-#include <memory>
-
 #include <halmd/io/logger.hpp>
 #include <halmd/numeric/accumulator.hpp>
 #include <halmd/observables/samples/blocking_scheme.hpp>
 #include <halmd/utility/lua/lua.hpp>
 #include <halmd/utility/profiler.hpp>
+
+#include <boost/multi_array.hpp>
+
+#include <functional>
+#include <memory>
 
 namespace halmd {
 namespace observables {

@@ -1,0 +1,101 @@
+--
+-- Copyright © 2012 Peter Colberg
+--
+-- This file is part of HALMD.
+--
+-- HALMD is free software: you can redistribute it and/or modify
+-- it under the terms of the GNU General Public License as published by
+-- the Free Software Foundation, either version 3 of the License, or
+-- (at your option) any later version.
+--
+-- This program is distributed in the hope that it will be useful,
+-- but WITHOUT ANY WARRANTY; without even the implied warranty of
+-- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+-- GNU General Public License for more details.
+--
+-- You should have received a copy of the GNU General Public License
+-- along with this program.  If not, see <http://www.gnu.org/licenses/>.
+--
+
+local module = require("halmd.utility.module")
+
+---
+-- Correlation Function
+-- ====================
+--
+
+-- grab C++ wrappers
+local correlation_adaptor = assert(libhalmd.observables.dynamics.correlation_adaptor)
+local blocking_scheme_adaptor = assert(libhalmd.observables.samples.blocking_scheme_adaptor)
+
+---
+-- Construct user-defined correlation function.
+--
+-- :param args: keyword arguments
+-- :param args.acquire: callable that returns a value
+-- :param args.correlate: callable that accepts two values and returns a ``number``
+-- :param table args.group: sequence of strings of H5MD group names
+-- :param string args.desc: profiling description
+--
+-- .. method:: acquire()
+--
+--    Acquire sample.
+--
+--    :returns: sample
+--
+-- .. method:: correlate(first, second)
+--
+--    Correlate two samples.
+--
+--    :param first: first sample
+--    :param second: second sample
+--    :returns: value
+--
+-- .. attribute:: group
+--
+--    H5MD group.
+--
+-- .. attribute:: desc
+--
+--    Profiler description.
+--
+local M = module(function(args)
+    local acquire = args and args.acquire
+    if not acquire then
+        error("bad argument 'acquire'", 2)
+    end
+    local correlate = args and args.correlate
+    if not correlate then
+        error("bad argument 'correlate'", 2)
+    end
+    local group = args and args.group
+    if type(group) ~= "table" or #group == 0 then
+        error("bad argument 'group'", 2)
+    end
+    local desc = args and args.desc
+    if type(desc) ~= "string" then
+        error("bad argument 'desc'", 2)
+    end
+
+    -- construct instance
+    local self = correlation_adaptor(correlate)
+
+    -- attach acquire function as read-only property
+    self.acquire = property(function(self)
+        return blocking_scheme_adaptor(acquire)
+    end)
+
+    -- attach H5MD group
+    self.group = property(function(self)
+        return {"dynamics", table.unpack(group)}
+    end)
+
+    -- attach profiler description
+    self.desc = property(function(self)
+        return desc
+    end)
+
+    return self
+end)
+
+return M
