@@ -223,7 +223,7 @@ void lennard_jones_fluid<modules_type>::test()
     // microcanonical simulation run
     BOOST_TEST_MESSAGE("run NVE simulation");
     steps = static_cast<step_type>(ceil(60 / timestep));
-    period = static_cast<step_type>(round(0.05 / timestep));
+    period = static_cast<step_type>(round(0.32 / timestep)); // relaxation time (from VACF)
     for (step_type i = 0; i < steps; ++i) {
         // turn on evaluation of potential energy, virial, etc.
         if(i % period == 0) {
