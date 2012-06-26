@@ -94,9 +94,9 @@ local function liquid(args)
     end
 
     -- sample macroscopic state variables
+    local msv = observables.thermodynamics({box = box, group = particle_group, force = force})
     local interval = args.sampling.state_vars
     if interval > 0 then
-        local msv = observables.thermodynamics({box = box, group = particle_group, force = force})
         msv:writer(writer, {every = interval})
     end
 
@@ -120,6 +120,27 @@ local function liquid(args)
         -- compute velocity autocorrelation function
         local vacf = dynamics.velocity_autocorrelation({phase_space = phase_space})
         blocking_scheme:correlation(vacf, writer)
+
+        -- compute interdiffusion coefficient
+        local selfdiffusion = dynamics.correlation({
+            -- acquire centre of mass
+            acquire = function()
+                return msv:r_cm()
+            end
+            -- correlate centre of mass at first and second point in time
+          , correlate = function(first, second)
+                local result = 0
+                for i = 1, #first do
+                    result = result + math.pow(second[i] - first[i], 2)
+                end
+                return result
+            end
+            -- H5MD group names
+          , group = {particle_group.label, "selfdiffusion"}
+            -- profiling description
+          , desc = "selfdiffusion coefficient of A particles"
+        })
+        blocking_scheme:correlation(selfdiffusion, writer)
     end
 
     -- sample initial state
