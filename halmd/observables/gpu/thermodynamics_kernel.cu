@@ -18,6 +18,7 @@
  */
 
 #include <halmd/algorithm/gpu/reduce_kernel.cuh>
+#include <halmd/mdsim/gpu/box_kernel.cuh>
 #include <halmd/numeric/mp/dsfloat.hpp>
 #include <halmd/observables/gpu/thermodynamics_kernel.hpp>
 
@@ -25,6 +26,10 @@ namespace halmd {
 namespace observables {
 namespace gpu {
 
+/** particle positions and species */
+static texture<float4> position_;
+/** particle images */
+static texture<void> image_;
 /** particle velocities and masses */
 static texture<float4> velocity_;
 /** potential energies */
@@ -39,6 +44,23 @@ void kinetic_energy<dimension, float_type>::operator()(size_type i)
     float mass;
     tie(v, mass) <<= tex1Dfetch(velocity_, i);
     mv2_ += mass * inner_prod(v, v);
+}
+
+template <int dimension, typename float_type>
+void centre_of_mass<dimension, float_type>::operator()(typename iterator::value_type const& value)
+{
+    size_type i;
+    fixed_vector<float, dimension> box_length;
+    tie(i, box_length) = value;
+    fixed_vector<float, dimension> r, v, image;
+    unsigned int species;
+    float mass;
+    tie(r, species) <<= tex1Dfetch(position_, i);
+    tie(v, mass) <<= tex1Dfetch(velocity_, i);
+    image = tex1Dfetch(reinterpret_cast<texture<coalesced_vector_type>&>(image_), i);
+    mdsim::gpu::box_kernel::extend_periodic(r, image, box_length);
+    mr_ += mass * r;
+    m_ += mass;
 }
 
 template <int dimension, typename float_type>
@@ -70,6 +92,18 @@ kinetic_energy<dimension, float_type>::texture_ = velocity_;
 
 template <int dimension, typename float_type>
 cuda::texture<float4> const
+centre_of_mass<dimension, float_type>::position_texture_ = position_;
+
+template <int dimension, typename float_type>
+cuda::texture<typename centre_of_mass<dimension, float_type>::coalesced_vector_type> const
+centre_of_mass<dimension, float_type>::image_texture_ = image_;
+
+template <int dimension, typename float_type>
+cuda::texture<float4> const
+centre_of_mass<dimension, float_type>::velocity_texture_ = velocity_;
+
+template <int dimension, typename float_type>
+cuda::texture<float4> const
 velocity_of_centre_of_mass<dimension, float_type>::texture_ = velocity_;
 
 template <typename float_type>
@@ -82,6 +116,8 @@ virial<dimension, float_type>::texture_ = stress_pot_;
 
 template class observables::gpu::kinetic_energy<3, dsfloat>;
 template class observables::gpu::kinetic_energy<2, dsfloat>;
+template class observables::gpu::centre_of_mass<3, dsfloat>;
+template class observables::gpu::centre_of_mass<2, dsfloat>;
 template class observables::gpu::velocity_of_centre_of_mass<3, dsfloat>;
 template class observables::gpu::velocity_of_centre_of_mass<2, dsfloat>;
 template class observables::gpu::potential_energy<dsfloat>;
@@ -93,6 +129,8 @@ template class observables::gpu::virial<2, dsfloat>;
 
 template class reduction_kernel<observables::gpu::kinetic_energy<3, dsfloat> >;
 template class reduction_kernel<observables::gpu::kinetic_energy<2, dsfloat> >;
+template class reduction_kernel<observables::gpu::centre_of_mass<3, dsfloat> >;
+template class reduction_kernel<observables::gpu::centre_of_mass<2, dsfloat> >;
 template class reduction_kernel<observables::gpu::velocity_of_centre_of_mass<3, dsfloat> >;
 template class reduction_kernel<observables::gpu::velocity_of_centre_of_mass<2, dsfloat> >;
 template class reduction_kernel<observables::gpu::potential_energy<dsfloat> >;

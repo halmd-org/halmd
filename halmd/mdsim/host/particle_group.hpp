@@ -112,7 +112,37 @@ double get_mean_en_kin(particle_type const& particle, particle_group& group)
 }
 
 /**
- * Compute velocity of centre of mass, and mean mass.
+ * Compute centre of mass.
+ */
+template <typename particle_type, typename box_type>
+fixed_vector<double, particle_type::velocity_type::static_size>
+get_r_cm(particle_type const& particle, particle_group& group, box_type const& box)
+{
+    typedef typename particle_group::array_type group_array_type;
+    typedef typename particle_group::size_type size_type;
+    typedef typename particle_type::position_array_type position_array_type;
+    typedef typename particle_type::position_type position_type;
+    typedef typename particle_type::image_array_type image_array_type;
+    typedef typename particle_type::mass_array_type mass_array_type;
+
+    cache_proxy<group_array_type const> unordered = group.unordered();
+    cache_proxy<position_array_type const> position = particle.position();
+    cache_proxy<image_array_type const> image = particle.image();
+    cache_proxy<mass_array_type const> mass = particle.mass();
+
+    fixed_vector<double, particle_type::velocity_type::static_size> mr = 0;
+    double m = 0;
+    for (size_type i : *unordered) {
+        position_type r = (*position)[i];
+        box.extend_periodic(r, (*image)[i]);
+        mr += (*mass)[i] * r;
+        m += (*mass)[i];
+    }
+    return mr / m;
+}
+
+/**
+ * Compute velocity of centre of mass, and mean mass
  */
 template <typename particle_type>
 std::tuple<fixed_vector<double, particle_type::velocity_type::static_size>, double>

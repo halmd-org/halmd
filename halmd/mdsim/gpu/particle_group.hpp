@@ -114,7 +114,37 @@ double get_mean_en_kin(particle_type const& particle, particle_group& group)
 }
 
 /**
- * Compute velocity of centre of mass, and mean mass.
+ * Compute centre of mass.
+ */
+template <typename particle_type, typename box_type>
+fixed_vector<double, particle_type::velocity_type::static_size>
+get_r_cm(particle_type const& particle, particle_group& group, box_type const& box)
+{
+    typedef typename particle_group::array_type group_array_type;
+    typedef typename particle_type::position_array_type position_array_type;
+    typedef typename particle_type::position_type position_type;
+    typedef typename particle_type::velocity_array_type velocity_array_type;
+    typedef typename particle_type::image_array_type image_array_type;
+    unsigned int constexpr dimension = particle_type::position_type::static_size;
+    typedef observables::gpu::centre_of_mass<dimension, dsfloat> accumulator_type;
+
+    cache_proxy<group_array_type const> unordered = group.unordered();
+    cache_proxy<position_array_type const> position = particle.position();
+    cache_proxy<image_array_type const> image = particle.image();
+    cache_proxy<velocity_array_type const> velocity = particle.velocity();
+
+    accumulator_type::get_position().bind(*position);
+    accumulator_type::get_image().bind(*image);
+    accumulator_type::get_velocity().bind(*velocity);
+    return reduce(
+        std::make_tuple(&*unordered->begin(), static_cast<position_type>(box.length()))
+      , std::make_tuple(&*unordered->end())
+      , accumulator_type()
+   )();
+}
+
+/**
+ * Compute velocity of centre of mass.
  */
 template <typename particle_type>
 std::tuple<fixed_vector<double, particle_type::velocity_type::static_size>, double>

@@ -23,6 +23,9 @@
 #include <halmd/config.hpp>
 #include <halmd/numeric/blas/fixed_vector.hpp>
 #include <halmd/mdsim/type_traits.hpp>
+#include <halmd/utility/iterator.hpp>
+
+#include <cuda_wrapper/cuda_wrapper.hpp>
 
 #include <cuda_wrapper/cuda_wrapper.hpp>
 
@@ -86,6 +89,85 @@ private:
     float_type mv2_;
     /** texture with velocities and masses */
     static cuda::texture<float4> const texture_;
+};
+
+/**
+ * Compute centre of mass.
+ */
+template <int dimension, typename float_type>
+class centre_of_mass
+{
+private:
+    typedef unsigned int size_type;
+    typedef fixed_vector<float_type, dimension> vector_type;
+    typedef typename mdsim::type_traits<dimension, float>::gpu::coalesced_vector_type coalesced_vector_type;
+
+public:
+    /** element pointer type of input array */
+    typedef zip_iterator<size_type const*, constant_iterator<fixed_vector<float, dimension> > > iterator;
+
+    /**
+     * Initialise momentum and mass to zero.
+     */
+    centre_of_mass() : mr_(0), m_(0) {}
+
+    /**
+     * Accumulate momentum and mass of a particle.
+     */
+    inline HALMD_GPU_ENABLED void operator()(typename iterator::value_type const& value);
+
+    /**
+     * Accumulate centre of mass of another accumulator.
+     */
+    HALMD_GPU_ENABLED void operator()(centre_of_mass const& acc)
+    {
+        mr_ += acc.mr_;
+        m_ += acc.m_;
+    }
+
+    /**
+     * Returns centre of mass.
+     */
+    fixed_vector<double, dimension> operator()() const
+    {
+        return fixed_vector<double, dimension>(mr_ / m_);
+    }
+
+    /**
+     * Returns reference to texture with positions and species.
+     */
+    static cuda::texture<float4> const& get_position()
+    {
+        return position_texture_;
+    }
+
+    /**
+     * Returns reference to texture with images.
+     */
+    static cuda::texture<coalesced_vector_type> const& get_image()
+    {
+        return image_texture_;
+    }
+
+    /**
+     * Returns reference to texture with velocities and masses.
+     */
+    static cuda::texture<float4> const& get_velocity()
+    {
+        return velocity_texture_;
+    }
+
+private:
+    /** sum over momentum vector */
+    vector_type mr_;
+    /** sum over mass */
+    float_type m_;
+    /** texture with positions and species */
+    static cuda::texture<float4> const position_texture_;
+    /** texture with images */
+    static cuda::texture<coalesced_vector_type> const image_texture_;
+    /** texture with velocities and masses */
+    static cuda::texture<float4> const velocity_texture_;
 };
 
 /**
