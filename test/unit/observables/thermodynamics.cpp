@@ -233,7 +233,7 @@ void lennard_jones_fluid<modules_type>::test()
     // microcanonical simulation run
     BOOST_TEST_MESSAGE("run NVE simulation");
     steps = static_cast<unsigned int>(ceil(60 / nve_integrator->timestep()));
-    period = static_cast<unsigned int>(round(0.05 / nve_integrator->timestep()));
+    period = static_cast<unsigned int>(round(0.32 / nve_integrator->timestep())); // relaxation time (from VACF)
     for (unsigned int i = 0; i < steps; ++i) {
         // perform MD step
         core->mdstep();
