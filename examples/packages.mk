@@ -902,7 +902,7 @@ GMP_TARBALL = gmp-$(GMP_VERSION).tar.bz2
 GMP_TARBALL_URL = ftp://ftp.gmplib.org/pub/gmp-$(GMP_VERSION)/$(GMP_TARBALL)
 GMP_TARBALL_SHA256 = 35d4aade3e4bdf0915c944599b10d23f108ffedf6c3188aeec52221c5cf9a06f
 GMP_BUILD_DIR = gmp-$(GMP_VERSION)
-GMP_INSTALL_DIR = $(CURDIR)/$(GCC_BUILD_DIR)/gmp
+GMP_INSTALL_DIR = $(CURDIR)/.gmp-$(GMP_VERSION)
 
 .fetch-gmp:
 	@$(RM) $(GMP_TARBALL)
@@ -920,7 +920,7 @@ fetch-gmp: .fetch-gmp
 extract-gmp: .extract-gmp
 
 .configure-gmp: .extract-gmp
-	cd $(GMP_BUILD_DIR) && ./configure --prefix=$(GMP_INSTALL_DIR) --enable-cxx --disable-shared
+	cd $(GMP_BUILD_DIR) && CFLAGS=-fPIC ./configure --prefix=$(GMP_INSTALL_DIR) --enable-cxx --disable-shared
 	@$(TOUCH) $@
 
 configure-gmp: .configure-gmp
@@ -954,7 +954,7 @@ MPFR_TARBALL = mpfr-$(MPFR_VERSION).tar.bz2
 MPFR_TARBALL_URL = http://www.mpfr.org/mpfr-$(MPFR_VERSION)/$(MPFR_TARBALL)
 MPFR_TARBALL_SHA256 = 74a7bbbad168dd1cc414f1c9210b8fc16ccfc8e422d34b3371a8978e31eab680
 MPFR_BUILD_DIR = mpfr-$(MPFR_VERSION)
-MPFR_INSTALL_DIR = $(CURDIR)/$(GCC_BUILD_DIR)/mpfr
+MPFR_INSTALL_DIR = $(CURDIR)/.mpfr-$(MPFR_VERSION)
 
 .fetch-mpfr:
 	@$(RM) $(MPFR_TARBALL)
@@ -1006,7 +1006,7 @@ MPC_TARBALL = mpc-$(MPC_VERSION).tar.gz
 MPC_TARBALL_URL = http://www.multiprecision.org/mpc/download/$(MPC_TARBALL)
 MPC_TARBALL_SHA256 = fd3efe422f0d454592059e80f2c00d1a2e381bf2beda424c5094abd4deb049ac
 MPC_BUILD_DIR = mpc-$(MPC_VERSION)
-MPC_INSTALL_DIR = $(CURDIR)/$(GCC_BUILD_DIR)/mpc
+MPC_INSTALL_DIR = $(CURDIR)/.mpc-$(MPC_VERSION)
 
 .fetch-mpc:
 	@$(RM) $(MPC_TARBALL)
@@ -1058,7 +1058,7 @@ PPL_TARBALL = ppl-$(PPL_VERSION).tar.bz2
 PPL_TARBALL_URL = ftp://ftp.cs.unipr.it/pub/ppl/releases/$(PPL_VERSION)/$(PPL_TARBALL)
 PPL_TARBALL_SHA256 = e3fbd1c19ef44c6f020951807cdb6fc6a8153cd3a5c53b0ab9cf4c4f6e8cbbeb
 PPL_BUILD_DIR = ppl-$(PPL_VERSION)
-PPL_INSTALL_DIR = $(CURDIR)/$(GCC_BUILD_DIR)/ppl
+PPL_INSTALL_DIR = $(CURDIR)/.ppl-$(PPL_VERSION)
 
 .fetch-ppl:
 	@$(RM) $(PPL_TARBALL)
@@ -1110,7 +1110,7 @@ CLOOG_PPL_TARBALL = cloog-ppl-$(CLOOG_PPL_VERSION).tar.gz
 CLOOG_PPL_TARBALL_URL = ftp://ftp.fu-berlin.de/unix/languages/gcc/infrastructure/$(CLOOG_PPL_TARBALL)
 CLOOG_PPL_TARBALL_SHA256 = 7cd634d0b2b401b04096b545915ac67f883556e9a524e8e803a6bf6217a84d5f
 CLOOG_PPL_BUILD_DIR = cloog-ppl-$(CLOOG_PPL_VERSION)
-CLOOG_PPL_INSTALL_DIR = $(CURDIR)/$(GCC_BUILD_DIR)/cloog-ppl
+CLOOG_PPL_INSTALL_DIR = $(CURDIR)/.cloog-ppl-$(CLOOG_PPL_VERSION)
 
 .fetch-cloog-ppl:
 	@$(RM) $(CLOOG_PPL_TARBALL)
@@ -1259,3 +1259,226 @@ env-nvcuda-tools:
 	@echo
 	@echo '# add CMake $(NVCUDA_TOOLS_VERSION) to environment'
 	@echo 'export PATH="$(NVCUDA_TOOLS_INSTALL_DIR)/bin$${PATH+:$$PATH}"'
+
+##
+## git-annex
+##
+
+GIT_ANNEX_VERSION = 3.20120629
+GIT_ANNEX_BUILD_DIR = git-annex-$(GIT_ANNEX_VERSION)
+GIT_ANNEX_INSTALL_DIR = $(PREFIX)/git-annex-$(GIT_ANNEX_VERSION)
+
+.configure-git-annex: .install-ghc .install-haskell-cabal
+	HOME=$(CURDIR)/$(GIT_ANNEX_BUILD_DIR) PATH=$(GHC_INSTALL_DIR)/bin:$(HASKELL_CABAL_INSTALL_DIR)/bin:$(PATH) cabal update
+	@$(TOUCH) $@
+
+configure-git-annex: .configure-git-annex
+
+.build-git-annex: .configure-git-annex .install-pcre
+	HOME=$(CURDIR)/$(GIT_ANNEX_BUILD_DIR) PATH=$(GHC_INSTALL_DIR)/bin:$(HASKELL_CABAL_INSTALL_DIR)/bin:$(PATH) CPATH=$(PCRE_INSTALL_DIR)/include LIBRARY_PATH=$(PCRE_INSTALL_DIR)/lib cabal install git-annex-$(GIT_ANNEX_VERSION) --only-dependencies
+	@$(TOUCH) $@
+
+build-git-annex: .build-git-annex
+
+install-git-annex: .build-git-annex
+	HOME=$(CURDIR)/$(GIT_ANNEX_BUILD_DIR) PATH=$(GHC_INSTALL_DIR)/bin:$(HASKELL_CABAL_INSTALL_DIR)/bin:$(PATH) CPATH=$(PCRE_INSTALL_DIR)/include LIBRARY_PATH=$(PCRE_INSTALL_DIR)/lib cabal install git-annex-$(GIT_ANNEX_VERSION) --prefix=$(GIT_ANNEX_INSTALL_DIR)
+
+clean-git-annex:
+	@$(RM) .configure-git-annex
+	@$(RM) .build-git-annex
+	$(RM) $(GIT_ANNEX_BUILD_DIR)
+
+env-git-annex:
+	@echo
+	@echo '# add git-annex $(GIT_ANNEX_VERSION) to environment'
+	@echo 'export PATH="$(GIT_ANNEX_INSTALL_DIR)/bin$${PATH+:$$PATH}"'
+	@echo 'export MANPATH="$(GIT_ANNEX_INSTALL_DIR)/share/man$${MANPATH+:$$MANPATH}"'
+
+##
+## GHC (Glasgow Haskell Compiler)
+##
+
+GHC_VERSION = 7.4.2
+GHC_TARBALL = ghc-$(GHC_VERSION)-src.tar.bz2
+GHC_TARBALL_URL =  http://www.haskell.org/ghc/dist/$(GHC_VERSION)/$(GHC_TARBALL)
+GHC_TARBALL_SHA256 = f2ee1289a33cc70539287129841acc7eaf16112bb60c59b5a6ee91887bfd836d
+GHC_BUILD_DIR = ghc-$(GHC_VERSION)
+GHC_INSTALL_DIR = $(CURDIR)/.ghc-$(GHC_VERSION)
+
+.fetch-ghc:
+	@$(RM) $(GHC_TARBALL)
+	$(WGET) $(GHC_TARBALL_URL)
+	@echo '$(GHC_TARBALL_SHA256)  $(GHC_TARBALL)' | $(SHA256SUM)
+	@$(TOUCH) $@
+
+fetch-ghc: .fetch-ghc
+
+.extract-ghc: .fetch-ghc
+	$(RM) $(GHC_BUILD_DIR)
+	$(TAR) -xjf $(GHC_TARBALL)
+	@$(TOUCH) $@
+
+extract-ghc: .extract-ghc
+
+.configure-ghc: .extract-ghc .install-ghc-bootstrap .install-gmp
+	cd $(GHC_BUILD_DIR) && LIBRARY_PATH=$(GMP_INSTALL_DIR)/lib PATH=$(GHC_BOOTSTRAP_INSTALL_DIR)/bin:$(PATH) ./configure --prefix=$(GHC_INSTALL_DIR) --with-gmp-includes=$(GMP_INSTALL_DIR)/include --with-gmp-libraries=$(GMP_INSTALL_DIR)/lib
+	@$(TOUCH) $@
+
+configure-ghc: .configure-ghc
+
+.build-ghc: .configure-ghc
+	cd $(GHC_BUILD_DIR) && make $(PARALLEL_BUILD_FLAGS)
+	@$(TOUCH) $@
+
+build-ghc: .build-ghc
+
+.install-ghc: .build-ghc
+	cd $(GHC_BUILD_DIR) && make install
+	@$(TOUCH) $@
+
+clean-ghc:
+	@$(RM) .configure-ghc
+	@$(RM) .build-ghc
+	@$(RM) .extract-ghc
+	$(RM) $(GHC_BUILD_DIR)
+
+distclean-ghc: clean-ghc
+	@$(RM) .fetch-ghc
+	$(RM) $(GHC_TARBALL)
+
+##
+## Bootstraping GHC (Glasgow Haskell Compiler)
+##
+
+GHC_BOOTSTRAP_VERSION = 6.12.3
+GHC_BOOTSTRAP_TARBALL = ghc-$(GHC_BOOTSTRAP_VERSION)-x86_64-unknown-linux-n.tar.bz2
+GHC_BOOTSTRAP_TARBALL_URL =  http://www.haskell.org/ghc/dist/$(GHC_BOOTSTRAP_VERSION)/$(GHC_BOOTSTRAP_TARBALL)
+GHC_BOOTSTRAP_TARBALL_SHA256 = f0e13bdec040f06b1074595ddc39064f75214aee05d64554f4809dca3e138001
+GHC_BOOTSTRAP_BUILD_DIR = ghc-$(GHC_BOOTSTRAP_VERSION)
+GHC_BOOTSTRAP_INSTALL_DIR = $(CURDIR)/.ghc-$(GHC_BOOTSTRAP_VERSION)
+
+.fetch-ghc-bootstrap:
+	@$(RM) $(GHC_BOOTSTRAP_TARBALL)
+	$(WGET) $(GHC_BOOTSTRAP_TARBALL_URL)
+	@echo '$(GHC_BOOTSTRAP_TARBALL_SHA256)  $(GHC_BOOTSTRAP_TARBALL)' | $(SHA256SUM)
+	@$(TOUCH) $@
+
+fetch-ghc-bootstrap: .fetch-ghc-bootstrap
+
+.extract-ghc-bootstrap: .fetch-ghc-bootstrap
+	$(RM) $(GHC_BOOTSTRAP_BUILD_DIR)
+	$(TAR) -xjf $(GHC_BOOTSTRAP_TARBALL)
+	@$(TOUCH) $@
+
+extract-ghc-bootstrap: .extract-ghc-bootstrap
+
+.configure-ghc-bootstrap: .extract-ghc-bootstrap
+	cd $(GHC_BOOTSTRAP_BUILD_DIR) && ./configure --prefix=$(GHC_BOOTSTRAP_INSTALL_DIR)
+	@$(TOUCH) $@
+
+configure-ghc-bootstrap: .configure-ghc-bootstrap
+
+.install-ghc-bootstrap: .configure-ghc-bootstrap .install-gmp
+	cd $(GHC_BOOTSTRAP_BUILD_DIR) && make install
+	sed -i -e 's/-pgmc "\([^"]*\)"/-pgmc "\1" -pgma "\1" -pgml "\1" -pgmP "\1 -E -undef -traditional"/' $(GHC_BOOTSTRAP_INSTALL_DIR)/bin/ghc-$(GHC_BOOTSTRAP_VERSION)
+	ln -s -f -t $(GHC_BOOTSTRAP_INSTALL_DIR)/lib/ghc-$(GHC_BOOTSTRAP_VERSION) $(GMP_INSTALL_DIR)/lib/libgmp.a
+	@$(TOUCH) $@
+
+clean-ghc-bootstrap:
+	@$(RM) .configure-ghc-bootstrap
+	@$(RM) .extract-ghc-bootstrap
+	$(RM) $(GHC_BOOTSTRAP_BUILD_DIR)
+
+distclean-ghc-bootstrap: clean-ghc-bootstrap
+	@$(RM) .fetch-ghc-bootstrap
+	$(RM) $(GHC_BOOTSTRAP_TARBALL)
+
+##
+## Haskell Cabal
+##
+
+HASKELL_CABAL_VERSION = 0.14.0
+HASKELL_CABAL_TARBALL = cabal-install-$(HASKELL_CABAL_VERSION).tar.gz
+HASKELL_CABAL_TARBALL_URL = http://hackage.haskell.org/packages/archive/cabal-install/$(HASKELL_CABAL_VERSION)/$(HASKELL_CABAL_TARBALL)
+HASKELL_CABAL_TARBALL_SHA256 = f4f2b50269ff59d67b5f3d82d50f7706b6bad1117295a7c81f32bbe72add5bd8
+HASKELL_CABAL_BUILD_DIR = cabal-install-$(HASKELL_CABAL_VERSION)
+HASKELL_CABAL_INSTALL_DIR = $(CURDIR)/.cabal-install-$(HASKELL_CABAL_VERSION)
+
+.fetch-haskell-cabal:
+	@$(RM) $(HASKELL_CABAL_TARBALL)
+	$(WGET) $(HASKELL_CABAL_TARBALL_URL)
+	@echo '$(HASKELL_CABAL_TARBALL_SHA256)  $(HASKELL_CABAL_TARBALL)' | $(SHA256SUM)
+	@$(TOUCH) $@
+
+fetch-haskell-cabal: .fetch-haskell-cabal
+
+.extract-haskell-cabal: .fetch-haskell-cabal
+	$(RM) $(HASKELL_CABAL_BUILD_DIR)
+	$(TAR) -xzf $(HASKELL_CABAL_TARBALL)
+	@$(TOUCH) $@
+
+extract-haskell-cabal: .extract-haskell-cabal
+
+.install-haskell-cabal: .extract-haskell-cabal .install-ghc
+	cd $(HASKELL_CABAL_BUILD_DIR) && HOME=$(CURDIR)/$(HASKELL_CABAL_BUILD_DIR) PREFIX=$(HASKELL_CABAL_INSTALL_DIR) PATH=$(GHC_INSTALL_DIR)/bin:$(PATH) sh bootstrap.sh
+	@$(TOUCH) $@
+
+clean-haskell-cabal:
+	@$(RM) .extract-haskell-cabal
+	$(RM) $(HASKELL_CABAL_BUILD_DIR)
+
+distclean-haskell-cabal: clean-haskell-cabal
+	@$(RM) .fetch-haskell-cabal
+	$(RM) $(HASKELL_CABAL_TARBALL)
+
+##
+## PCRE (Perl Compatible Regular Expressions)
+##
+
+PCRE_VERSION = 8.30
+PCRE_TARBALL = pcre-$(PCRE_VERSION).tar.bz2
+PCRE_TARBALL_URL = http://sourceforge.net/projects/pcre/files/pcre/$(PCRE_VERSION)/$(PCRE_TARBALL)
+PCRE_TARBALL_SHA256 = c1113fd7db934e97ad8b3917d432e5b642e9eb9afd127eb797804937c965f4ac
+PCRE_BUILD_DIR = pcre-$(PCRE_VERSION)
+PCRE_INSTALL_DIR = $(CURDIR)/.pcre-$(PCRE_VERSION)
+
+.fetch-pcre:
+	@$(RM) $(PCRE_TARBALL)
+	$(WGET) $(PCRE_TARBALL_URL)
+	@echo '$(PCRE_TARBALL_SHA256)  $(PCRE_TARBALL)' | $(SHA256SUM)
+	@$(TOUCH) $@
+
+fetch-pcre: .fetch-pcre
+
+.extract-pcre: .fetch-pcre
+	$(RM) $(PCRE_BUILD_DIR)
+	$(TAR) -xjf $(PCRE_TARBALL)
+	@$(TOUCH) $@
+
+extract-pcre: .extract-pcre
+
+.configure-pcre: .extract-pcre
+	cd $(PCRE_BUILD_DIR) && CFLAGS=-fPIC ./configure --prefix=$(PCRE_INSTALL_DIR) --disable-shared
+	@$(TOUCH) $@
+
+configure-pcre: .configure-pcre
+
+.build-pcre: .configure-pcre
+	cd $(PCRE_BUILD_DIR) && make $(PARALLEL_BUILD_FLAGS)
+	@$(TOUCH) $@
+
+build-pcre: .build-pcre
+
+.install-pcre: .build-pcre
+	cd $(PCRE_BUILD_DIR) && make install
+	@$(TOUCH) $@
+
+clean-pcre:
+	@$(RM) .build-pcre
+	@$(RM) .configure-pcre
+	@$(RM) .extract-pcre
+	$(RM) $(PCRE_BUILD_DIR)
+
+distclean-pcre: clean-pcre
+	@$(RM) .fetch-pcre
+	$(RM) $(PCRE_TARBALL)
