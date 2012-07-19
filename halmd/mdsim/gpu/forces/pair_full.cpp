@@ -1,5 +1,6 @@
 /*
- * Copyright © 2008-2011  Peter Colberg and Felix Höfling
+ * Copyright © 2008-2012  Felix Höfling
+ * Copyright © 2008-2011  Peter Colberg
  *
  * This file is part of HALMD.
  *
@@ -19,6 +20,7 @@
 
 #include <halmd/mdsim/gpu/forces/pair_full.hpp>
 #include <halmd/mdsim/gpu/potentials/lennard_jones.hpp>
+#include <halmd/mdsim/gpu/potentials/lennard_jones_linear.hpp>
 #include <halmd/mdsim/gpu/potentials/lennard_jones_simple.hpp>
 #include <halmd/mdsim/gpu/potentials/modified_lennard_jones.hpp>
 #include <halmd/mdsim/gpu/potentials/morse.hpp>
@@ -40,6 +42,9 @@ HALMD_LUA_API int luaopen_libhalmd_mdsim_gpu_forces_pair_full(lua_State* L)
 
     pair_full<3, float, lennard_jones_simple<float> >::luaopen(L);
     pair_full<2, float, lennard_jones_simple<float> >::luaopen(L);
+
+    pair_full<3, float, lennard_jones_linear<float> >::luaopen(L);
+    pair_full<2, float, lennard_jones_linear<float> >::luaopen(L);
 
     pair_full<3, float, modified_lennard_jones<float> >::luaopen(L);
     pair_full<2, float, modified_lennard_jones<float> >::luaopen(L);

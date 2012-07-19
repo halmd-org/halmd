@@ -1,6 +1,8 @@
 halmd_add_library(halmd_mdsim_gpu_potentials
   lennard_jones.cpp
   lennard_jones_kernel.cu
+  lennard_jones_linear.cpp
+  lennard_jones_linear_kernel.cu
   lennard_jones_simple.cpp
   lennard_jones_simple_kernel.cu
   modified_lennard_jones.cpp
@@ -14,6 +16,7 @@ halmd_add_library(halmd_mdsim_gpu_potentials
 )
 halmd_add_modules(
   libhalmd_mdsim_gpu_potentials_lennard_jones
+  libhalmd_mdsim_gpu_potentials_lennard_jones_linear
   libhalmd_mdsim_gpu_potentials_lennard_jones_simple
   libhalmd_mdsim_gpu_potentials_modified_lennard_jones
   libhalmd_mdsim_gpu_potentials_morse

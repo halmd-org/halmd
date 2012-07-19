@@ -1,5 +1,6 @@
 --
--- Copyright © 2010-2011  Peter Colberg and Felix Höfling
+-- Copyright © 2010-2011  Peter Colberg
+-- Copyright © 2010-2012  Felix Höfling
 --
 -- This file is part of HALMD.
 --
@@ -48,6 +49,7 @@ function M.options(desc, globals)
     -- potential module choices with descriptions
     local choices = {
         lennard_jones           = potentials.lennard_jones.description()
+      , lennard_jones_linear    = potentials.lennard_jones_linear.description()
       , modified_lennard_jones  = potentials.modified_lennard_jones.description()
       , morse                   = potentials.morse.description()
       , power_law               = potentials.power_law.description()
