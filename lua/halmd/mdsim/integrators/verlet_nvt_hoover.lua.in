@@ -147,7 +147,6 @@ end
 -- @param desc po.options_description
 --
 function M.options(desc)
-    desc:add("timestep", po.float(), "integration timestep")
     desc:add("temperature", po.float(), "thermostat temperature")
     desc:add("resonance-frequency", po.float(), "resonance frequency of heat bath")
 -- FIXME reintroduce mass as alternative to resonance_frequency
