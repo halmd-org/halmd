@@ -1275,13 +1275,13 @@ GIT_ANNEX_INSTALL_DIR = $(PREFIX)/git-annex-$(GIT_ANNEX_VERSION)
 configure-git-annex: .configure-git-annex
 
 .build-git-annex: .configure-git-annex .install-pcre
-	HOME=$(CURDIR)/$(GIT_ANNEX_BUILD_DIR) PATH=$(GHC_INSTALL_DIR)/bin:$(HASKELL_CABAL_INSTALL_DIR)/bin:$(PATH) CPATH=$(PCRE_INSTALL_DIR)/include LIBRARY_PATH=$(PCRE_INSTALL_DIR)/lib cabal install git-annex-$(GIT_ANNEX_VERSION) --only-dependencies
+	HOME=$(CURDIR)/$(GIT_ANNEX_BUILD_DIR) PATH=$(GHC_INSTALL_DIR)/bin:$(HASKELL_CABAL_INSTALL_DIR)/bin:$(PATH) cabal install git-annex-$(GIT_ANNEX_VERSION) --extra-include-dirs=$(PCRE_INSTALL_DIR)/include --extra-lib-dirs=$(PCRE_INSTALL_DIR)/lib --only-dependencies
 	@$(TOUCH) $@
 
 build-git-annex: .build-git-annex
 
 install-git-annex: .build-git-annex
-	HOME=$(CURDIR)/$(GIT_ANNEX_BUILD_DIR) PATH=$(GHC_INSTALL_DIR)/bin:$(HASKELL_CABAL_INSTALL_DIR)/bin:$(PATH) CPATH=$(PCRE_INSTALL_DIR)/include LIBRARY_PATH=$(PCRE_INSTALL_DIR)/lib cabal install git-annex-$(GIT_ANNEX_VERSION) --prefix=$(GIT_ANNEX_INSTALL_DIR)
+	HOME=$(CURDIR)/$(GIT_ANNEX_BUILD_DIR) PATH=$(GHC_INSTALL_DIR)/bin:$(HASKELL_CABAL_INSTALL_DIR)/bin:$(PATH) cabal install git-annex-$(GIT_ANNEX_VERSION) --extra-include-dirs=$(PCRE_INSTALL_DIR)/include --extra-lib-dirs=$(PCRE_INSTALL_DIR)/lib --prefix=$(GIT_ANNEX_INSTALL_DIR)
 
 clean-git-annex:
 	@$(RM) .configure-git-annex
