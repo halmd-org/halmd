@@ -1,0 +1,107 @@
+--
+-- Copyright © 2010-2012 Felix Höfling
+-- Copyright © 2010      Peter Colberg
+--
+-- This file is part of HALMD.
+--
+-- HALMD is free software: you can redistribute it and/or modify
+-- it under the terms of the GNU General Public License as published by
+-- the Free Software Foundation, either version 3 of the License, or
+-- (at your option) any later version.
+--
+-- This program is distributed in the hope that it will be useful,
+-- but WITHOUT ANY WARRANTY; without even the implied warranty of
+-- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+-- GNU General Public License for more details.
+--
+-- You should have received a copy of the GNU General Public License
+-- along with this program.  If not, see <http://www.gnu.org/licenses/>.
+--
+
+local device            = require("halmd.device")
+local module            = require("halmd.utility.module")
+local mdsim = {
+    particle            = require("halmd.mdsim.particle")
+}
+
+-- grab C++ wrappers
+local lennard_jones_linear_wrapper = {
+    host = libhalmd.mdsim.host.potentials.lennard_jones_linear
+}
+if libhalmd.mdsim.gpu then
+    lennard_jones_linear_wrapper.gpu = libhalmd.mdsim.gpu.potentials.lennard_jones_linear
+end
+local h5 = libhalmd.h5
+local po = libhalmd.po
+-- grab standard library
+local assert = assert
+
+local M = module("halmd.mdsim.potentials.lennard_jones_linear")
+
+local fixed_array = {__index = function() return 0 end}
+
+--
+-- construct Lennard-Jones module
+--
+function M.__new(args)
+    local cutoff  = setmetatable(args.cutoff  or {2.5, 2.5, 2.5 }, fixed_array) -- default value
+    local epsilon = setmetatable(args.epsilon or {1.0, 1.5, 0.5 }, fixed_array) -- default value
+    local sigma   = setmetatable(args.sigma   or {1.0, 0.8, 0.88}, fixed_array) -- default value
+    local smooth  = args.smooth or 0 -- default value
+
+    local particle = mdsim.particle() -- singleton
+    local logger = assert(args.logger)
+
+    local potential
+    local lennard_jones_linear = assert(lennard_jones_linear_wrapper[device() and "gpu" or "host"])
+    potential = lennard_jones_linear(particle.ntype, cutoff, epsilon, sigma, logger)
+
+    -- store smooth parameter as property of potential
+    potential.smooth = property(function(self) return smooth end)
+
+    return potential
+end
+
+--
+-- returns module description
+--
+function M.description()
+    return "linearly truncated Lennard-Jones potential"
+end
+
+--
+-- assemble module options
+--
+-- @param desc po.options_description
+--
+function M.options(desc)
+    desc:add("cutoff", po.float_array(), "truncate potential at cutoff radius")
+    desc:add("epsilon", po.float_array(), "potential well depths")
+    desc:add("sigma", po.float_array(), "collision diameters")
+    desc:add("smooth", po.float(), "smoothing parameter for C²-continuous cutoff")
+end
+
+--
+-- read module parameters from HDF5 group
+--
+function M.read_parameters(args, group)
+    args.cutoff = group:read_attribute("cutoff", h5.float_array())
+    args.epsilon = group:read_attribute("epsilon", h5.float_array())
+    args.sigma = group:read_attribute("sigma", h5.float_array())
+    args.smooth = group:read_attribute("smooth", h5.float())
+end
+
+--
+-- write module parameters to HDF5 group
+--
+-- @param lennard_jones_linear module instance
+-- @param group HDF5 group
+--
+function M.write_parameters(lennard_jones_linear, group)
+    group:write_attribute("cutoff", h5.float_array(), lennard_jones_linear.r_cut_sigma:data())
+    group:write_attribute("epsilon", h5.float_array(), lennard_jones_linear.epsilon:data())
+    group:write_attribute("sigma", h5.float_array(), lennard_jones_linear.sigma:data())
+    group:write_attribute("smooth", h5.float(), lennard_jones_linear.smooth)
+end
+
+return M

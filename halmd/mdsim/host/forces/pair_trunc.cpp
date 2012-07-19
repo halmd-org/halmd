@@ -1,5 +1,6 @@
 /*
- * Copyright © 2008-2011  Peter Colberg and Felix Höfling
+ * Copyright © 2008-2012  Felix Höfling
+ * Copyright © 2008-2011  Peter Colberg
  *
  * This file is part of HALMD.
  *
@@ -19,6 +20,7 @@
 
 #include <halmd/mdsim/host/forces/pair_trunc.hpp>
 #include <halmd/mdsim/host/potentials/lennard_jones.hpp>
+#include <halmd/mdsim/host/potentials/lennard_jones_linear.hpp>
 #include <halmd/mdsim/host/potentials/modified_lennard_jones.hpp>
 #include <halmd/mdsim/host/potentials/morse.hpp>
 #include <halmd/mdsim/host/potentials/power_law.hpp>
@@ -46,6 +48,11 @@ HALMD_LUA_API int luaopen_libhalmd_mdsim_host_forces_pair_trunc(lua_State* L)
     pair_trunc<2, float_type, lennard_jones<float_type> >::luaopen(L);
     pair_trunc<3, float_type, lennard_jones<float_type>, local_r4<float_type> >::luaopen(L);
     pair_trunc<2, float_type, lennard_jones<float_type>, local_r4<float_type> >::luaopen(L);
+
+    pair_trunc<3, float_type, lennard_jones_linear<float_type> >::luaopen(L);
+    pair_trunc<2, float_type, lennard_jones_linear<float_type> >::luaopen(L);
+    pair_trunc<3, float_type, lennard_jones_linear<float_type>, local_r4<float_type> >::luaopen(L);
+    pair_trunc<2, float_type, lennard_jones_linear<float_type>, local_r4<float_type> >::luaopen(L);
 
     pair_trunc<3, float_type, modified_lennard_jones<float_type> >::luaopen(L);
     pair_trunc<2, float_type, modified_lennard_jones<float_type> >::luaopen(L);
@@ -80,6 +87,11 @@ template class pair_trunc<3, float_type, lennard_jones<float_type> >;
 template class pair_trunc<2, float_type, lennard_jones<float_type> >;
 template class pair_trunc<3, float_type, lennard_jones<float_type>, local_r4<float_type> >;
 template class pair_trunc<2, float_type, lennard_jones<float_type>, local_r4<float_type> >;
+
+template class pair_trunc<3, float_type, lennard_jones_linear<float_type> >;
+template class pair_trunc<2, float_type, lennard_jones_linear<float_type> >;
+template class pair_trunc<3, float_type, lennard_jones_linear<float_type>, local_r4<float_type> >;
+template class pair_trunc<2, float_type, lennard_jones_linear<float_type>, local_r4<float_type> >;
 
 template class pair_trunc<3, float_type, modified_lennard_jones<float_type> >;
 template class pair_trunc<2, float_type, modified_lennard_jones<float_type> >;

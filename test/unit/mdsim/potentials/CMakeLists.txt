@@ -24,6 +24,32 @@ if(WITH_CUDA)
   )
 endif()
 
+add_executable(test_unit_mdsim_potentials_lennard_jones_linear
+  lennard_jones_linear.cpp
+)
+if(WITH_CUDA)
+  target_link_libraries(test_unit_mdsim_potentials_lennard_jones_linear
+    halmd_mdsim_gpu_forces
+    halmd_mdsim_gpu_potentials
+    halmd_mdsim_gpu
+    halmd_algorithm_gpu
+    halmd_utility_gpu
+  )
+endif()
+target_link_libraries(test_unit_mdsim_potentials_lennard_jones_linear
+  halmd_mdsim_host_potentials
+  halmd_mdsim
+  ${HALMD_TEST_LIBRARIES}
+)
+add_test(unit/mdsim/potentials/lennard_jones_linear/host
+  test_unit_mdsim_potentials_lennard_jones_linear --run_test=lennard_jones_linear_host --log_level=test_suite
+)
+if(WITH_CUDA)
+  add_test(unit/mdsim/potentials/lennard_jones_linear/gpu
+    test_unit_mdsim_potentials_lennard_jones_linear --run_test=lennard_jones_linear_gpu --log_level=test_suite
+  )
+endif()
+
 add_executable(test_unit_mdsim_potentials_modified_lennard_jones
   modified_lennard_jones.cpp
 )
