@@ -240,11 +240,11 @@ env-luajit:
 ## Boost C++ libraries with Boost.Log
 ##
 
-BOOST_VERSION = 1.49.0
-BOOST_RELEASE = 1_49_0
+BOOST_VERSION = 1.50.0
+BOOST_RELEASE = 1_50_0
 BOOST_TARBALL = boost_$(BOOST_RELEASE).tar.bz2
 BOOST_TARBALL_URL = http://sourceforge.net/projects/boost/files/boost/$(BOOST_VERSION)/$(BOOST_TARBALL)
-BOOST_TARBALL_SHA256 = dd748a7f5507a7e7af74f452e1c52a64e651ed1f7263fce438a06641d2180d3c
+BOOST_TARBALL_SHA256 = c9ace2b8c81fa6703d1d17c7e478de3bc51101c5adbdeb3f6cb72cf3045a8529
 BOOST_BUILD_DIR = boost_$(BOOST_RELEASE)
 BOOST_INSTALL_DIR = $(PREFIX)/boost_$(BOOST_RELEASE)
 BOOST_BUILD_FLAGS = threading=multi variant=release --layout=tagged cxxflags=-fPIC dll-path=$(BOOST_INSTALL_DIR)/lib
@@ -268,17 +268,6 @@ define BOOST_PATCH
  #else
  #define BOOST_RANDOM_DETAIL_CONSTEXPR inline
  #endif
---- boost/lexical_cast.hpp
-+++ boost/lexical_cast.hpp
-@@ -1294,7 +1294,7 @@
-             bool shl_double(double val,T* out)
-             {   using namespace std;
-                 if (put_inf_nan(start,finish,val)) return true;
--                finish = start + sprintf(out,"%.*lg", static_cast<int>(boost::detail::lcast_get_precision<double >()), val );
-+                finish = start + sprintf(out,"%.*g", static_cast<int>(boost::detail::lcast_get_precision<double >()), val );
-                 return finish > start;
-             }
- #ifndef __MINGW32__
 --- boost/test/detail/global_typedef.hpp
 +++ boost/test/detail/global_typedef.hpp
 @@ -67,12 +67,13 @@
@@ -390,7 +379,7 @@ define BOOST_PATCH
  
  # define BOOST_PARAMETER_FUNCTION_DEFAULT_FUNCTION_GET_ARG(arg, tag_ns) \ 
      BOOST_PARAMETER_FUNCTION_CAST( \ 
-@@ -840,7 +840,7 @@
+@@ -842,7 +842,7 @@
  # define BOOST_PARAMETER_FUNCTION_DEFAULT_GET_ARG(r, tag_ns, arg) \ 
      , BOOST_PARAMETER_FUNCTION_CAST( \ 
            args[ \ 
@@ -398,7 +387,7 @@ define BOOST_PATCH
 +              boost::parameter::keyword<tag_ns::BOOST_PARAMETER_FN_ARG_KEYWORD(arg)>::get() \ 
            ] \ 
          , BOOST_PARAMETER_FN_ARG_PRED(arg) \ 
-       )
+         , Args \ 
 endef
 export BOOST_PATCH
 
