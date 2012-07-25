@@ -361,6 +361,44 @@ define BOOST_PATCH
      }
  
  #endif
+--- boost/parameter/name.hpp
++++ boost/parameter/name.hpp
+@@ -78,13 +78,13 @@
+ # if BOOST_WORKAROUND(BOOST_MSVC, < 1300)
+ #  define BOOST_PARAMETER_NAME_OBJECT(tag, name)                    \ 
+     static ::boost::parameter::keyword<tag> const& name             \ 
+-       = ::boost::parameter::keyword<tag>::instance;
++       = ::boost::parameter::keyword<tag>::get();
+ # else
+ #  define BOOST_PARAMETER_NAME_OBJECT(tag, name)                    \ 
+     namespace                                                       \ 
+     {                                                               \ 
+        ::boost::parameter::keyword<tag> const& name                 \ 
+-       = ::boost::parameter::keyword<tag>::instance;                \ 
++       = ::boost::parameter::keyword<tag>::get();                   \ 
+     }
+ # endif
+ 
+--- boost/parameter/preprocessor.hpp
++++ boost/parameter/preprocessor.hpp
+@@ -691,7 +691,7 @@
+ # define BOOST_PARAMETER_FUNCTION_DEFAULT_EVAL_DEFAULT(arg, tag_namespace) \ 
+     boost::parameter::keyword< \ 
+         tag_namespace::BOOST_PARAMETER_FN_ARG_KEYWORD(arg) \ 
+-    >::instance | boost::parameter::aux::use_default_tag()
++    >::get() | boost::parameter::aux::use_default_tag()
+ 
+ # define BOOST_PARAMETER_FUNCTION_DEFAULT_FUNCTION_GET_ARG(arg, tag_ns) \ 
+     BOOST_PARAMETER_FUNCTION_CAST( \ 
+@@ -840,7 +840,7 @@
+ # define BOOST_PARAMETER_FUNCTION_DEFAULT_GET_ARG(r, tag_ns, arg) \ 
+     , BOOST_PARAMETER_FUNCTION_CAST( \ 
+           args[ \ 
+-              boost::parameter::keyword<tag_ns::BOOST_PARAMETER_FN_ARG_KEYWORD(arg)>::instance \ 
++              boost::parameter::keyword<tag_ns::BOOST_PARAMETER_FN_ARG_KEYWORD(arg)>::get() \ 
+           ] \ 
+         , BOOST_PARAMETER_FN_ARG_PRED(arg) \ 
+       )
 endef
 export BOOST_PATCH
 
