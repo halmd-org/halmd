@@ -23,10 +23,6 @@
 #include <halmd/utility/signal.hpp>
 #include <test/tools/ctest.hpp>
 
-using namespace boost;
-using namespace halmd;
-using namespace std;
-
 class signal_counter_base
 {
 protected:
@@ -212,10 +208,10 @@ BOOST_AUTO_TEST_CASE( halmd_signal0 )
     BOOST_CHECK_EQUAL( immutable_sig.num_slots(), 0LU );
 
     signal_counter0 counter1, counter2;
-    connection conn1 = sig.connect(std::ref(counter1));
-    connection conn2 = sig.connect(std::ref(counter1));
-    connection conn3 = sig.connect(std::ref(counter2));
-    connection conn4 = sig.connect(std::ref(counter1));
+    halmd::connection conn1 = sig.connect(std::ref(counter1));
+    halmd::connection conn2 = sig.connect(std::ref(counter1));
+    halmd::connection conn3 = sig.connect(std::ref(counter2));
+    halmd::connection conn4 = sig.connect(std::ref(counter1));
     BOOST_CHECK( conn1.connected() );
     BOOST_CHECK( conn2.connected() );
     BOOST_CHECK( conn3.connected() );
@@ -270,10 +266,10 @@ BOOST_AUTO_TEST_CASE( halmd_signal1 )
     BOOST_CHECK_EQUAL( immutable_sig.num_slots(), 0LU );
 
     signal_counter1 counter1, counter2;
-    connection conn1 = sig.connect(std::ref(counter1));
-    connection conn2 = sig.connect(std::ref(counter1));
-    connection conn3 = sig.connect(std::ref(counter2));
-    connection conn4 = sig.connect(std::ref(counter1));
+    halmd::connection conn1 = sig.connect(std::ref(counter1));
+    halmd::connection conn2 = sig.connect(std::ref(counter1));
+    halmd::connection conn3 = sig.connect(std::ref(counter2));
+    halmd::connection conn4 = sig.connect(std::ref(counter1));
     BOOST_CHECK( conn1.connected() );
     BOOST_CHECK( conn2.connected() );
     BOOST_CHECK( conn3.connected() );
@@ -328,10 +324,10 @@ BOOST_AUTO_TEST_CASE( halmd_signal2 )
     BOOST_CHECK_EQUAL( immutable_sig.num_slots(), 0LU );
 
     signal_counter2 counter1, counter2;
-    connection conn1 = sig.connect(std::ref(counter1));
-    connection conn2 = sig.connect(std::ref(counter1));
-    connection conn3 = sig.connect(std::ref(counter2));
-    connection conn4 = sig.connect(std::ref(counter1));
+    halmd::connection conn1 = sig.connect(std::ref(counter1));
+    halmd::connection conn2 = sig.connect(std::ref(counter1));
+    halmd::connection conn3 = sig.connect(std::ref(counter2));
+    halmd::connection conn4 = sig.connect(std::ref(counter1));
     BOOST_CHECK( conn1.connected() );
     BOOST_CHECK( conn2.connected() );
     BOOST_CHECK( conn3.connected() );
@@ -386,10 +382,10 @@ BOOST_AUTO_TEST_CASE( halmd_signal3 )
     BOOST_CHECK_EQUAL( immutable_sig.num_slots(), 0LU );
 
     signal_counter3 counter1, counter2;
-    connection conn1 = sig.connect(std::ref(counter1));
-    connection conn2 = sig.connect(std::ref(counter1));
-    connection conn3 = sig.connect(std::ref(counter2));
-    connection conn4 = sig.connect(std::ref(counter1));
+    halmd::connection conn1 = sig.connect(std::ref(counter1));
+    halmd::connection conn2 = sig.connect(std::ref(counter1));
+    halmd::connection conn3 = sig.connect(std::ref(counter2));
+    halmd::connection conn4 = sig.connect(std::ref(counter1));
     BOOST_CHECK( conn1.connected() );
     BOOST_CHECK( conn2.connected() );
     BOOST_CHECK( conn3.connected() );
@@ -444,10 +440,10 @@ BOOST_AUTO_TEST_CASE( halmd_signal4 )
     BOOST_CHECK_EQUAL( immutable_sig.num_slots(), 0LU );
 
     signal_counter4 counter1, counter2;
-    connection conn1 = sig.connect(std::ref(counter1));
-    connection conn2 = sig.connect(std::ref(counter1));
-    connection conn3 = sig.connect(std::ref(counter2));
-    connection conn4 = sig.connect(std::ref(counter1));
+    halmd::connection conn1 = sig.connect(std::ref(counter1));
+    halmd::connection conn2 = sig.connect(std::ref(counter1));
+    halmd::connection conn3 = sig.connect(std::ref(counter2));
+    halmd::connection conn4 = sig.connect(std::ref(counter1));
     BOOST_CHECK( conn1.connected() );
     BOOST_CHECK( conn2.connected() );
     BOOST_CHECK( conn3.connected() );
@@ -504,10 +500,10 @@ BOOST_AUTO_TEST_CASE( halmd_signal5 )
     BOOST_CHECK_EQUAL( immutable_sig.num_slots(), 0LU );
 
     signal_counter5 counter1, counter2;
-    connection conn1 = sig.connect(std::ref(counter1));
-    connection conn2 = sig.connect(std::ref(counter1));
-    connection conn3 = sig.connect(std::ref(counter2));
-    connection conn4 = sig.connect(std::ref(counter1));
+    halmd::connection conn1 = sig.connect(std::ref(counter1));
+    halmd::connection conn2 = sig.connect(std::ref(counter1));
+    halmd::connection conn3 = sig.connect(std::ref(counter2));
+    halmd::connection conn4 = sig.connect(std::ref(counter1));
     BOOST_CHECK( conn1.connected() );
     BOOST_CHECK( conn2.connected() );
     BOOST_CHECK( conn3.connected() );
@@ -562,10 +558,10 @@ BOOST_AUTO_TEST_CASE( halmd_signal6 )
     BOOST_CHECK_EQUAL( immutable_sig.num_slots(), 0LU );
 
     signal_counter6 counter1, counter2;
-    connection conn1 = sig.connect(std::ref(counter1));
-    connection conn2 = sig.connect(std::ref(counter1));
-    connection conn3 = sig.connect(std::ref(counter2));
-    connection conn4 = sig.connect(std::ref(counter1));
+    halmd::connection conn1 = sig.connect(std::ref(counter1));
+    halmd::connection conn2 = sig.connect(std::ref(counter1));
+    halmd::connection conn3 = sig.connect(std::ref(counter2));
+    halmd::connection conn4 = sig.connect(std::ref(counter1));
     BOOST_CHECK( conn1.connected() );
     BOOST_CHECK( conn2.connected() );
     BOOST_CHECK( conn3.connected() );
@@ -620,10 +616,10 @@ BOOST_AUTO_TEST_CASE( halmd_signal7 )
     BOOST_CHECK_EQUAL( immutable_sig.num_slots(), 0LU );
 
     signal_counter7 counter1, counter2;
-    connection conn1 = sig.connect(std::ref(counter1));
-    connection conn2 = sig.connect(std::ref(counter1));
-    connection conn3 = sig.connect(std::ref(counter2));
-    connection conn4 = sig.connect(std::ref(counter1));
+    halmd::connection conn1 = sig.connect(std::ref(counter1));
+    halmd::connection conn2 = sig.connect(std::ref(counter1));
+    halmd::connection conn3 = sig.connect(std::ref(counter2));
+    halmd::connection conn4 = sig.connect(std::ref(counter1));
     BOOST_CHECK( conn1.connected() );
     BOOST_CHECK( conn2.connected() );
     BOOST_CHECK( conn3.connected() );
@@ -680,10 +676,10 @@ BOOST_AUTO_TEST_CASE( halmd_signal8 )
     BOOST_CHECK_EQUAL( immutable_sig.num_slots(), 0LU );
 
     signal_counter8 counter1, counter2;
-    connection conn1 = sig.connect(std::ref(counter1));
-    connection conn2 = sig.connect(std::ref(counter1));
-    connection conn3 = sig.connect(std::ref(counter2));
-    connection conn4 = sig.connect(std::ref(counter1));
+    halmd::connection conn1 = sig.connect(std::ref(counter1));
+    halmd::connection conn2 = sig.connect(std::ref(counter1));
+    halmd::connection conn3 = sig.connect(std::ref(counter2));
+    halmd::connection conn4 = sig.connect(std::ref(counter1));
     BOOST_CHECK( conn1.connected() );
     BOOST_CHECK( conn2.connected() );
     BOOST_CHECK( conn3.connected() );
@@ -738,10 +734,10 @@ BOOST_AUTO_TEST_CASE( halmd_signal9 )
     BOOST_CHECK_EQUAL( immutable_sig.num_slots(), 0LU );
 
     signal_counter9 counter1, counter2;
-    connection conn1 = sig.connect(std::ref(counter1));
-    connection conn2 = sig.connect(std::ref(counter1));
-    connection conn3 = sig.connect(std::ref(counter2));
-    connection conn4 = sig.connect(std::ref(counter1));
+    halmd::connection conn1 = sig.connect(std::ref(counter1));
+    halmd::connection conn2 = sig.connect(std::ref(counter1));
+    halmd::connection conn3 = sig.connect(std::ref(counter2));
+    halmd::connection conn4 = sig.connect(std::ref(counter1));
     BOOST_CHECK( conn1.connected() );
     BOOST_CHECK( conn2.connected() );
     BOOST_CHECK( conn3.connected() );
