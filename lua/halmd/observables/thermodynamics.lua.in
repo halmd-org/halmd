@@ -120,14 +120,14 @@ local M = module(function(args)
 
     self.writer = function(file, args)
         local writer = file:writer{location = {"observables"}, mode = "append"}
-        writer:on_write(self.en_pot     , {"potential_energy"       , label})
-        writer:on_write(self.en_kin     , {"kinetic_energy"         , label})
-        writer:on_write(self.en_tot     , {"total_energy"           , label})
-        writer:on_write(self.v_cm       , {"center_of_mass_velocity", label})
-        writer:on_write(self.pressure   , {"pressure"               , label})
-        writer:on_write(self.temp       , {"temperature"            , label})
-        writer:on_write(self.virial     , {"virial"                 , label})
-        writer:on_write(self.hypervirial, {"hypervirial"            , label})
+        writer:on_write(self.en_pot     , {label, "potential_energy"       })
+        writer:on_write(self.en_kin     , {label, "kinetic_energy"         })
+        writer:on_write(self.en_tot     , {label, "total_energy"           })
+        writer:on_write(self.v_cm       , {label, "center_of_mass_velocity"})
+        writer:on_write(self.pressure   , {label, "pressure"               })
+        writer:on_write(self.temp       , {label, "temperature"            })
+        writer:on_write(self.virial     , {label, "virial"                 })
+        writer:on_write(self.hypervirial, {label, "hypervirial"            })
 
         -- connect writer to sampler
         local every = args.every
