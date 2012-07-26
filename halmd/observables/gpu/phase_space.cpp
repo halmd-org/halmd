@@ -243,6 +243,14 @@ void phase_space<host::samples::phase_space<dimension, float_type> >::set(std::s
 
     scoped_timer_type timer(runtime_.set);
 
+    // allocate additional memory for double-single precision
+    h_r_.reserve(position->capacity());
+    h_v_.reserve(velocity->capacity());
+
+    // copy particle arrays from GPU to host
+    cuda::copy(position->begin(), position->begin() + position->capacity(), h_r_.begin());
+    cuda::copy(velocity->begin(), velocity->begin() + velocity->capacity(), h_v_.begin());
+
     // assign particle coordinates and types
     typename particle_type::species_type const nspecies = particle_->nspecies();
     typename sample_type::position_array_type const& sample_position = sample->position();
@@ -259,6 +267,7 @@ void phase_space<host::samples::phase_space<dimension, float_type> >::set(std::s
     cuda::copy(group->begin(), group->end(), h_group.begin());
 
     std::size_t tag = 0;
+    std::size_t nthreads = particle_->dim.threads();
     for (std::size_t i : h_group) {
         assert(i < h_r_.size());
         unsigned int species = sample_species[tag];
@@ -267,16 +276,16 @@ void phase_space<host::samples::phase_space<dimension, float_type> >::set(std::s
         }
         h_r_[i] <<= tie(sample_position[tag], species);
         h_v_[i] <<= tie(sample_velocity[tag], sample_mass[tag]);
+#ifdef USE_VERLET_DSFUN
+        h_r_[i + nthreads] = vector_type(0);
+        h_v_[i + nthreads] = vector_type(0);
+#endif
         ++tag;
     }
 
     try {
-#ifdef USE_VERLET_DSFUN
-        cuda::memset(position->begin(), position->begin() + position->capacity(), 0);
-        cuda::memset(velocity->begin(), velocity->begin() + velocity->capacity(), 0);
-#endif
-        cuda::copy(h_r_.begin(), h_r_.end(), position->begin());
-        cuda::copy(h_v_.begin(), h_v_.end(), velocity->begin());
+        cuda::copy(h_r_.begin(), h_r_.begin() + h_r_.capacity(), position->begin());
+        cuda::copy(h_v_.begin(), h_v_.begin() + h_v_.capacity(), velocity->begin());
     }
     catch (cuda::error const&)
     {
