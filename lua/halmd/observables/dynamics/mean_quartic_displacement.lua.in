@@ -73,7 +73,7 @@ local M = module(function(args)
 
     -- attach H5MD group
     self.group = property(function(self)
-        return {"dynamics", "mean_quartic_displacement", label}
+        return {"dynamics", label, "mean_quartic_displacement"}
     end)
 
     -- attach profiler description

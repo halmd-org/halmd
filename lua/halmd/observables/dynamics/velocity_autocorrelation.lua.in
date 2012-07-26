@@ -73,7 +73,7 @@ local M = module(function(args)
 
     -- attach H5MD group
     self.group = property(function(self)
-        return {"dynamics", "velocity_autocorrelation", label}
+        return {"dynamics", label, "velocity_autocorrelation"}
     end)
 
     -- attach profiler description
