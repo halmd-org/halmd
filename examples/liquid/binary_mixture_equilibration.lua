@@ -163,7 +163,7 @@ local function parse_args()
     parser.add_argument("output,o", {type = "string", action = function(args, key, value)
         -- substitute current time
         args[key] = os.date(value)
-    end, default = "equilibrate_binary_mixture_%Y%m%d_%H%M%S", help = "prefix of output files"})
+    end, default = "binary_mixture_equilibration_%Y%m%d_%H%M%S", help = "prefix of output files"})
 
     parser.add_argument("verbose,v", {type = "accumulate", action = function(args, key, value)
         local level = {
