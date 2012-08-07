@@ -1,5 +1,5 @@
 #
-# Copyright © 2011  Peter Colberg
+# Copyright © 2011-2012 Peter Colberg
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -67,7 +67,7 @@ CMAKE_CUDA_PATCH_SHA256 = 04b22de5479f8a869b2e4dcee08de69b2083d645ea5c1b35cef366
 CMAKE_BUILD_DIR = cmake-$(CMAKE_VERSION)
 CMAKE_INSTALL_DIR = $(PREFIX)/cmake-$(CMAKE_CUDA_VERSION)
 
-.fetch-cmake:
+.fetch-cmake-$(CMAKE_CUDA_VERSION):
 	@$(RM) $(CMAKE_TARBALL)
 	@$(RM) $(CMAKE_CUDA_PATCH)
 	$(WGET) $(CMAKE_TARBALL_URL)
@@ -76,39 +76,39 @@ CMAKE_INSTALL_DIR = $(PREFIX)/cmake-$(CMAKE_CUDA_VERSION)
 	@echo '$(CMAKE_CUDA_PATCH_SHA256)  $(CMAKE_CUDA_PATCH)' | $(SHA256SUM)
 	@$(TOUCH) $@
 
-fetch-cmake: .fetch-cmake
+fetch-cmake: .fetch-cmake-$(CMAKE_CUDA_VERSION)
 
-.extract-cmake: .fetch-cmake
+.extract-cmake-$(CMAKE_CUDA_VERSION): .fetch-cmake-$(CMAKE_CUDA_VERSION)
 	$(RM) $(CMAKE_BUILD_DIR)
 	$(TAR) -xzf $(CMAKE_TARBALL)
 	cd $(CMAKE_BUILD_DIR) && $(PATCH) -p1 < $(CURDIR)/$(CMAKE_CUDA_PATCH)
 	@$(TOUCH) $@
 
-extract-cmake: .extract-cmake
+extract-cmake: .extract-cmake-$(CMAKE_CUDA_VERSION)
 
-.configure-cmake: .extract-cmake
+.configure-cmake-$(CMAKE_CUDA_VERSION): .extract-cmake-$(CMAKE_CUDA_VERSION)
 	cd $(CMAKE_BUILD_DIR) && ./configure --prefix=$(CMAKE_INSTALL_DIR)
 	@$(TOUCH) $@
 
-configure-cmake: .configure-cmake
+configure-cmake: .configure-cmake-$(CMAKE_CUDA_VERSION)
 
-.build-cmake: .configure-cmake
+.build-cmake-$(CMAKE_CUDA_VERSION): .configure-cmake-$(CMAKE_CUDA_VERSION)
 	cd $(CMAKE_BUILD_DIR) && make $(PARALLEL_BUILD_FLAGS)
 	@$(TOUCH) $@
 
-build-cmake: .build-cmake
+build-cmake: .build-cmake-$(CMAKE_CUDA_VERSION)
 
-install-cmake: .build-cmake
+install-cmake: .build-cmake-$(CMAKE_CUDA_VERSION)
 	cd $(CMAKE_BUILD_DIR) && make install
 
 clean-cmake:
-	@$(RM) .build-cmake
-	@$(RM) .configure-cmake
-	@$(RM) .extract-cmake
+	@$(RM) .build-cmake-$(CMAKE_CUDA_VERSION)
+	@$(RM) .configure-cmake-$(CMAKE_CUDA_VERSION)
+	@$(RM) .extract-cmake-$(CMAKE_CUDA_VERSION)
 	$(RM) $(CMAKE_BUILD_DIR)
 
 distclean-cmake: clean-cmake
-	@$(RM) .fetch-cmake
+	@$(RM) .fetch-cmake-$(CMAKE_CUDA_VERSION)
 	$(RM) $(CMAKE_TARBALL)
 	$(RM) $(CMAKE_CUDA_PATCH)
 
@@ -141,37 +141,37 @@ LUA_CFLAGS += -DLUA_USE_READLINE
 LUA_LIBS += -lreadline -lncurses
 endif
 
-.fetch-lua:
+.fetch-lua-$(LUA_VERSION):
 	@$(RM) $(LUA_TARBALL)
 	$(WGET) $(LUA_TARBALL_URL)
 	@echo '$(LUA_TARBALL_SHA256)  $(LUA_TARBALL)' | $(SHA256SUM)
 	@$(TOUCH) $@
 
-fetch-lua: .fetch-lua
+fetch-lua: .fetch-lua-$(LUA_VERSION)
 
-.extract-lua: .fetch-lua
+.extract-lua-$(LUA_VERSION): .fetch-lua-$(LUA_VERSION)
 	$(RM) $(LUA_BUILD_DIR)
 	$(TAR) -xzf $(LUA_TARBALL)
 	@$(TOUCH) $@
 
-extract-lua: .extract-lua
+extract-lua: .extract-lua-$(LUA_VERSION)
 
-.build-lua: .extract-lua
+.build-lua-$(LUA_VERSION): .extract-lua-$(LUA_VERSION)
 	cd $(LUA_BUILD_DIR) && make linux CFLAGS="$(LUA_CFLAGS)" LIBS="$(LUA_LIBS)"
 	@$(TOUCH) $@
 
-build-lua: .build-lua
+build-lua: .build-lua-$(LUA_VERSION)
 
-install-lua: .build-lua
+install-lua: .build-lua-$(LUA_VERSION)
 	cd $(LUA_BUILD_DIR) && make install INSTALL_TOP=$(LUA_INSTALL_DIR)
 
 clean-lua:
-	@$(RM) .build-lua
-	@$(RM) .extract-lua
+	@$(RM) .build-lua-$(LUA_VERSION)
+	@$(RM) .extract-lua-$(LUA_VERSION)
 	$(RM) $(LUA_BUILD_DIR)
 
 distclean-lua: clean-lua
-	@$(RM) .fetch-lua
+	@$(RM) .fetch-lua-$(LUA_VERSION)
 	$(RM) $(LUA_TARBALL)
 
 env-lua:
@@ -193,40 +193,40 @@ LUAJIT_BUILD_DIR = LuaJIT-$(LUAJIT_VERSION)
 LUAJIT_INSTALL_DIR = $(PREFIX)/luajit-$(LUAJIT_VERSION)
 LUAJIT_CFLAGS = -fPIC
 
-.fetch-luajit:
+.fetch-luajit-$(LUAJIT_VERSION):
 	@$(RM) $(LUAJIT_TARBALL)
 	$(WGET) $(LUAJIT_TARBALL_URL)
 	@echo '$(LUAJIT_TARBALL_SHA256)  $(LUAJIT_TARBALL)' | $(SHA256SUM)
 	@$(TOUCH) $@
 
-fetch-luajit: .fetch-luajit
+fetch-luajit: .fetch-luajit-$(LUAJIT_VERSION)
 
-.extract-luajit: .fetch-luajit
+.extract-luajit-$(LUAJIT_VERSION): .fetch-luajit-$(LUAJIT_VERSION)
 	$(RM) $(LUAJIT_BUILD_DIR)
 	$(TAR) -xzf $(LUAJIT_TARBALL)
 	@$(TOUCH) $@
 
-extract-luajit: .extract-luajit
+extract-luajit: .extract-luajit-$(LUAJIT_VERSION)
 
-.build-luajit: .extract-luajit
+.build-luajit-$(LUAJIT_VERSION): .extract-luajit-$(LUAJIT_VERSION)
 	cd $(LUAJIT_BUILD_DIR) && make CFLAGS=$(LUAJIT_CFLAGS) $(PARALLEL_BUILD_FLAGS)
 	@$(TOUCH) $@
 
-build-luajit: .build-luajit
+build-luajit: .build-luajit-$(LUAJIT_VERSION)
 
-install-luajit: .build-luajit
+install-luajit: .build-luajit-$(LUAJIT_VERSION)
 	cd $(LUAJIT_BUILD_DIR) && make install PREFIX=$(LUAJIT_INSTALL_DIR)
 	ln -sf luajit-$(LUAJIT_VERSION) $(LUAJIT_INSTALL_DIR)/bin/lua
 	ln -sf libluajit-5.1.a $(LUAJIT_INSTALL_DIR)/lib/liblua.a
 	ln -sf luajit-2.0 $(LUAJIT_INSTALL_DIR)/include/lua
 
 clean-luajit:
-	@$(RM) .build-luajit
-	@$(RM) .extract-luajit
+	@$(RM) .build-luajit-$(LUAJIT_VERSION)
+	@$(RM) .extract-luajit-$(LUAJIT_VERSION)
 	$(RM) $(LUAJIT_BUILD_DIR)
 
 distclean-luajit: clean-luajit
-	@$(RM) .fetch-luajit
+	@$(RM) .fetch-luajit-$(LUAJIT_VERSION)
 	$(RM) $(LUAJIT_TARBALL)
 
 env-luajit:
@@ -391,44 +391,44 @@ define BOOST_PATCH
 endef
 export BOOST_PATCH
 
-.fetch-boost:
+.fetch-boost-$(BOOST_VERSION):
 	@$(RM) $(BOOST_TARBALL)
 	$(WGET) $(BOOST_TARBALL_URL)
 	@echo '$(BOOST_TARBALL_SHA256)  $(BOOST_TARBALL)' | $(SHA256SUM)
 	@$(TOUCH) $@
 
-fetch-boost: .fetch-boost
+fetch-boost: .fetch-boost-$(BOOST_VERSION)
 
-.extract-boost: .fetch-boost
+.extract-boost-$(BOOST_VERSION): .fetch-boost-$(BOOST_VERSION)
 	$(TAR) -xjf $(BOOST_TARBALL)
 	cd $(BOOST_BUILD_DIR) && echo "$$BOOST_PATCH" | sed -e 's/\\ $$/\\/' | $(PATCH) -p0
 	@$(TOUCH) $@
 
-extract-boost: .extract-boost
+extract-boost: .extract-boost-$(BOOST_VERSION)
 
-.configure-boost: .extract-boost
+.configure-boost-$(BOOST_VERSION): .extract-boost-$(BOOST_VERSION)
 	cd $(BOOST_BUILD_DIR) && ./bootstrap.sh
 	@$(TOUCH) $@
 
-configure-boost: .configure-boost
+configure-boost: .configure-boost-$(BOOST_VERSION)
 
-.build-boost: .configure-boost
+.build-boost-$(BOOST_VERSION): .configure-boost-$(BOOST_VERSION)
 	cd $(BOOST_BUILD_DIR) && ./bjam $(BOOST_BUILD_FLAGS) $(PARALLEL_BUILD_FLAGS)
 	@$(TOUCH) $@
 
-build-boost: .build-boost
+build-boost: .build-boost-$(BOOST_VERSION)
 
-install-boost: .build-boost
+install-boost: .build-boost-$(BOOST_VERSION)
 	cd $(BOOST_BUILD_DIR) && ./bjam $(BOOST_BUILD_FLAGS) install --prefix=$(BOOST_INSTALL_DIR)
 
 clean-boost:
 	$(RM) $(BOOST_BUILD_DIR)
-	@$(RM) .build-boost
-	@$(RM) .configure-boost
-	@$(RM) .extract-boost
+	@$(RM) .build-boost-$(BOOST_VERSION)
+	@$(RM) .configure-boost-$(BOOST_VERSION)
+	@$(RM) .extract-boost-$(BOOST_VERSION)
 
 distclean-boost: clean-boost
-	@$(RM) .fetch-boost
+	@$(RM) .fetch-boost-$(BOOST_VERSION)
 	$(RM) $(BOOST_TARBALL)
 
 env-boost:
@@ -453,44 +453,44 @@ HDF5_CONFIGURE_FLAGS = --enable-cxx
 HDF5_CFLAGS = -fPIC
 HDF5_CXXFLAGS = -fPIC
 
-.fetch-hdf5:
+.fetch-hdf5-$(HDF5_VERSION):
 	@$(RM) $(HDF5_TARBALL)
 	$(WGET) $(HDF5_TARBALL_URL)
 	@echo '$(HDF5_TARBALL_SHA256)  $(HDF5_TARBALL)' | $(SHA256SUM)
 	@$(TOUCH) $@
 
-fetch-hdf5: .fetch-hdf5
+fetch-hdf5: .fetch-hdf5-$(HDF5_VERSION)
 
-.extract-hdf5: .fetch-hdf5
+.extract-hdf5-$(HDF5_VERSION): .fetch-hdf5-$(HDF5_VERSION)
 	$(RM) $(HDF5_BUILD_DIR)
 	$(TAR) -xjf $(HDF5_TARBALL)
 	@$(TOUCH) $@
 
-extract-hdf5: .extract-hdf5
+extract-hdf5: .extract-hdf5-$(HDF5_VERSION)
 
-.configure-hdf5: .extract-hdf5
+.configure-hdf5-$(HDF5_VERSION): .extract-hdf5-$(HDF5_VERSION)
 	cd $(HDF5_BUILD_DIR) && CFLAGS="$(HDF5_CFLAGS)" CXXFLAGS="$(HDF5_CXXFLAGS)" ./configure $(HDF5_CONFIGURE_FLAGS) --prefix=$(HDF5_INSTALL_DIR)
 	@$(TOUCH) $@
 
-configure-hdf5: .configure-hdf5
+configure-hdf5: .configure-hdf5-$(HDF5_VERSION)
 
-.build-hdf5: .configure-hdf5
+.build-hdf5-$(HDF5_VERSION): .configure-hdf5-$(HDF5_VERSION)
 	cd $(HDF5_BUILD_DIR) && make $(PARALLEL_BUILD_FLAGS)
 	@$(TOUCH) $@
 
-build-hdf5: .build-hdf5
+build-hdf5: .build-hdf5-$(HDF5_VERSION)
 
-install-hdf5: .build-hdf5
+install-hdf5: .build-hdf5-$(HDF5_VERSION)
 	cd $(HDF5_BUILD_DIR) && make install
 
 clean-hdf5:
-	@$(RM) .build-hdf5
-	@$(RM) .configure-hdf5
-	@$(RM) .extract-hdf5
+	@$(RM) .build-hdf5-$(HDF5_VERSION)
+	@$(RM) .configure-hdf5-$(HDF5_VERSION)
+	@$(RM) .extract-hdf5-$(HDF5_VERSION)
 	$(RM) $(HDF5_BUILD_DIR)
 
 distclean-hdf5: clean-hdf5
-	@$(RM) .fetch-hdf5
+	@$(RM) .fetch-hdf5-$(HDF5_VERSION)
 	$(RM) $(HDF5_TARBALL)
 
 env-hdf5:
@@ -515,7 +515,7 @@ GIT_BUILD_DIR = git-$(GIT_VERSION)
 GIT_CONFIGURE_FLAGS = --without-python
 GIT_INSTALL_DIR = $(PREFIX)/git-$(GIT_VERSION)
 
-.fetch-git:
+.fetch-git-$(GIT_VERSION):
 	@$(RM) $(GIT_TARBALL)
 	@$(RM) $(GIT_MANPAGES_TARBALL)
 	$(WGET) $(GIT_TARBALL_URL)
@@ -524,40 +524,40 @@ GIT_INSTALL_DIR = $(PREFIX)/git-$(GIT_VERSION)
 	@echo '$(GIT_MANPAGES_TARBALL_SHA256)  $(GIT_MANPAGES_TARBALL)' | $(SHA256SUM)
 	@$(TOUCH) $@
 
-fetch-git: .fetch-git
+fetch-git: .fetch-git-$(GIT_VERSION)
 
-.extract-git: .fetch-git
+.extract-git-$(GIT_VERSION): .fetch-git-$(GIT_VERSION)
 	$(RM) $(GIT_BUILD_DIR)
 	$(TAR) -xzf $(GIT_TARBALL)
 	@$(TOUCH) $@
 
-extract-git: .extract-git
+extract-git: .extract-git-$(GIT_VERSION)
 
-.configure-git: .extract-git
+.configure-git-$(GIT_VERSION): .extract-git-$(GIT_VERSION)
 	cd $(GIT_BUILD_DIR) && ./configure $(GIT_CONFIGURE_FLAGS) --prefix=$(GIT_INSTALL_DIR)
 	@$(TOUCH) $@
 
-configure-git: .configure-git
+configure-git: .configure-git-$(GIT_VERSION)
 
-.build-git: .configure-git
+.build-git-$(GIT_VERSION): .configure-git-$(GIT_VERSION)
 	cd $(GIT_BUILD_DIR) && make $(PARALLEL_BUILD_FLAGS)
 	@$(TOUCH) $@
 
-build-git: .build-git
+build-git: .build-git-$(GIT_VERSION)
 
-install-git: .build-git
+install-git: .build-git-$(GIT_VERSION)
 	cd $(GIT_BUILD_DIR) && make install
 	install -d $(GIT_INSTALL_DIR)/share/man
 	cd $(GIT_INSTALL_DIR)/share/man && $(TAR) -xzf $(CURDIR)/$(GIT_MANPAGES_TARBALL)
 
 clean-git:
-	@$(RM) .build-git
-	@$(RM) .configure-git
-	@$(RM) .extract-git
+	@$(RM) .build-git-$(GIT_VERSION)
+	@$(RM) .configure-git-$(GIT_VERSION)
+	@$(RM) .extract-git-$(GIT_VERSION)
 	$(RM) $(GIT_BUILD_DIR)
 
 distclean-git: clean-git
-	@$(RM) .fetch-git
+	@$(RM) .fetch-git-$(GIT_VERSION)
 	$(RM) $(GIT_TARBALL)
 	$(RM) $(GIT_MANPAGES_TARBALL)
 
@@ -578,44 +578,44 @@ HTOP_TARBALL_SHA256 = 07db2cbe02835f9e186b9610ecc3beca330a5c9beadb3b6069dd0a1056
 HTOP_BUILD_DIR = htop-$(HTOP_VERSION)
 HTOP_INSTALL_DIR = $(PREFIX)/htop-$(HTOP_VERSION)
 
-.fetch-htop:
+.fetch-htop-$(HTOP_VERSION):
 	@$(RM) $(HTOP_TARBALL)
 	$(WGET) $(HTOP_TARBALL_URL)
 	@echo '$(HTOP_TARBALL_SHA256)  $(HTOP_TARBALL)' | $(SHA256SUM)
 	@$(TOUCH) $@
 
-fetch-htop: .fetch-htop
+fetch-htop: .fetch-htop-$(HTOP_VERSION)
 
-.extract-htop: .fetch-htop
+.extract-htop-$(HTOP_VERSION): .fetch-htop-$(HTOP_VERSION)
 	$(RM) $(HTOP_BUILD_DIR)
 	$(TAR) -xzf $(HTOP_TARBALL)
 	@$(TOUCH) $@
 
-extract-htop: .extract-htop
+extract-htop: .extract-htop-$(HTOP_VERSION)
 
-.configure-htop: .extract-htop
+.configure-htop-$(HTOP_VERSION): .extract-htop-$(HTOP_VERSION)
 	cd $(HTOP_BUILD_DIR) && ./configure --prefix=$(HTOP_INSTALL_DIR)
 	@$(TOUCH) $@
 
-configure-htop: .configure-htop
+configure-htop: .configure-htop-$(HTOP_VERSION)
 
-.build-htop: .configure-htop
+.build-htop-$(HTOP_VERSION): .configure-htop-$(HTOP_VERSION)
 	cd $(HTOP_BUILD_DIR) && make $(PARALLEL_BUILD_FLAGS)
 	@$(TOUCH) $@
 
-build-htop: .build-htop
+build-htop: .build-htop-$(HTOP_VERSION)
 
-install-htop: .build-htop
+install-htop: .build-htop-$(HTOP_VERSION)
 	cd $(HTOP_BUILD_DIR) && make install
 
 clean-htop:
-	@$(RM) .build-htop
-	@$(RM) .configure-htop
-	@$(RM) .extract-htop
+	@$(RM) .build-htop-$(HTOP_VERSION)
+	@$(RM) .configure-htop-$(HTOP_VERSION)
+	@$(RM) .extract-htop-$(HTOP_VERSION)
 	$(RM) $(HTOP_BUILD_DIR)
 
 distclean-htop: clean-htop
-	@$(RM) .fetch-htop
+	@$(RM) .fetch-htop-$(HTOP_VERSION)
 	$(RM) $(HTOP_TARBALL)
 
 env-htop:
@@ -636,38 +636,38 @@ PYTHON_SPHINX_BUILD_DIR = Sphinx-$(PYTHON_SPHINX_VERSION)
 PYTHON_SPHINX_INSTALL_DIR = $(PREFIX)/python-sphinx-$(PYTHON_SPHINX_VERSION)
 PYTHON_SPHINX_PYTHONPATH = $(PYTHON_SPHINX_INSTALL_DIR)/lib/python
 
-.fetch-python-sphinx:
+.fetch-python-sphinx-$(PYTHON_SPHINX_VERSION):
 	@$(RM) $(PYTHON_SPHINX_TARBALL)
 	$(WGET) $(PYTHON_SPHINX_TARBALL_URL)
 	@echo '$(PYTHON_SPHINX_TARBALL_SHA256)  $(PYTHON_SPHINX_TARBALL)' | $(SHA256SUM)
 	@$(TOUCH) $@
 
-fetch-python-sphinx: .fetch-python-sphinx
+fetch-python-sphinx: .fetch-python-sphinx-$(PYTHON_SPHINX_VERSION)
 
-.extract-python-sphinx: .fetch-python-sphinx
+.extract-python-sphinx-$(PYTHON_SPHINX_VERSION): .fetch-python-sphinx-$(PYTHON_SPHINX_VERSION)
 	$(RM) $(PYTHON_SPHINX_BUILD_DIR)
 	$(TAR) -xzf $(PYTHON_SPHINX_TARBALL)
 	@$(TOUCH) $@
 
-extract-python-sphinx: .extract-python-sphinx
+extract-python-sphinx: .extract-python-sphinx-$(PYTHON_SPHINX_VERSION)
 
-.build-python-sphinx: .extract-python-sphinx
+.build-python-sphinx-$(PYTHON_SPHINX_VERSION): .extract-python-sphinx-$(PYTHON_SPHINX_VERSION)
 	cd $(PYTHON_SPHINX_BUILD_DIR) && python setup.py build
 	@$(TOUCH) $@
 
-build-python-sphinx: .build-python-sphinx
+build-python-sphinx: .build-python-sphinx-$(PYTHON_SPHINX_VERSION)
 
-install-python-sphinx: .build-python-sphinx
+install-python-sphinx: .build-python-sphinx-$(PYTHON_SPHINX_VERSION)
 	install -d $(PYTHON_SPHINX_PYTHONPATH)
 	cd $(PYTHON_SPHINX_BUILD_DIR) && PYTHONPATH="$(PYTHON_SPHINX_PYTHONPATH)$${PYTHONPATH+:$$PYTHONPATH}" python setup.py install --home=$(PYTHON_SPHINX_INSTALL_DIR)
 
 clean-python-sphinx:
-	@$(RM) .build-python-sphinx
-	@$(RM) .extract-python-sphinx
+	@$(RM) .build-python-sphinx-$(PYTHON_SPHINX_VERSION)
+	@$(RM) .extract-python-sphinx-$(PYTHON_SPHINX_VERSION)
 	$(RM) $(PYTHON_SPHINX_BUILD_DIR)
 
 distclean-python-sphinx: clean-python-sphinx
-	@$(RM) .fetch-python-sphinx
+	@$(RM) .fetch-python-sphinx-$(PYTHON_SPHINX_VERSION)
 	$(RM) $(PYTHON_SPHINX_TARBALL)
 
 env-python-sphinx:
@@ -688,44 +688,44 @@ GRAPHVIZ_BUILD_DIR = graphviz-$(GRAPHVIZ_VERSION)
 GRAPHVIZ_CONFIGURE_FLAGS = --with-qt=no --enable-swig=no --enable-python=no
 GRAPHVIZ_INSTALL_DIR = $(PREFIX)/graphviz-$(GRAPHVIZ_VERSION)
 
-.fetch-graphviz:
+.fetch-graphviz-$(GRAPHVIZ_VERSION):
 	@$(RM) $(GRAPHVIZ_TARBALL)
 	$(WGET) $(GRAPHVIZ_TARBALL_URL)
 	@echo '$(GRAPHVIZ_TARBALL_SHA256)  $(GRAPHVIZ_TARBALL)' | $(SHA256SUM)
 	@$(TOUCH) $@
 
-fetch-graphviz: .fetch-graphviz
+fetch-graphviz: .fetch-graphviz-$(GRAPHVIZ_VERSION)
 
-.extract-graphviz: .fetch-graphviz
+.extract-graphviz-$(GRAPHVIZ_VERSION): .fetch-graphviz-$(GRAPHVIZ_VERSION)
 	$(RM) $(GRAPHVIZ_BUILD_DIR)
 	$(TAR) -xzf $(GRAPHVIZ_TARBALL)
 	@$(TOUCH) $@
 
-extract-graphviz: .extract-graphviz
+extract-graphviz: .extract-graphviz-$(GRAPHVIZ_VERSION)
 
-.configure-graphviz: .extract-graphviz
+.configure-graphviz-$(GRAPHVIZ_VERSION): .extract-graphviz-$(GRAPHVIZ_VERSION)
 	cd $(GRAPHVIZ_BUILD_DIR) && ./configure $(GRAPHVIZ_CONFIGURE_FLAGS) --prefix=$(GRAPHVIZ_INSTALL_DIR)
 	@$(TOUCH) $@
 
-configure-graphviz: .configure-graphviz
+configure-graphviz: .configure-graphviz-$(GRAPHVIZ_VERSION)
 
-.build-graphviz: .configure-graphviz
+.build-graphviz-$(GRAPHVIZ_VERSION): .configure-graphviz-$(GRAPHVIZ_VERSION)
 	cd $(GRAPHVIZ_BUILD_DIR) && make $(PARALLEL_BUILD_FLAGS)
 	@$(TOUCH) $@
 
-build-graphviz: .build-graphviz
+build-graphviz: .build-graphviz-$(GRAPHVIZ_VERSION)
 
-install-graphviz: .build-graphviz
+install-graphviz: .build-graphviz-$(GRAPHVIZ_VERSION)
 	cd $(GRAPHVIZ_BUILD_DIR) && make install
 
 clean-graphviz:
-	@$(RM) .build-graphviz
-	@$(RM) .configure-graphviz
-	@$(RM) .extract-graphviz
+	@$(RM) .build-graphviz-$(GRAPHVIZ_VERSION)
+	@$(RM) .configure-graphviz-$(GRAPHVIZ_VERSION)
+	@$(RM) .extract-graphviz-$(GRAPHVIZ_VERSION)
 	$(RM) $(GRAPHVIZ_BUILD_DIR)
 
 distclean-graphviz: clean-graphviz
-	@$(RM) .fetch-graphviz
+	@$(RM) .fetch-graphviz-$(GRAPHVIZ_VERSION)
 	$(RM) $(GRAPHVIZ_TARBALL)
 
 env-graphviz:
@@ -749,7 +749,7 @@ CLANG_BUILD_DIR = llvm-$(CLANG_VERSION).src
 CLANG_CONFIGURE_FLAGS = --enable-optimized --enable-bindings=none --with-gcc-toolchain=$(GCC_INSTALL_DIR)
 CLANG_INSTALL_DIR = $(PREFIX)/clang-$(CLANG_VERSION)
 
-.fetch-clang:
+.fetch-clang-$(CLANG_VERSION):
 	@$(RM) $(LLVM_TARBALL)
 	@$(RM) $(CLANG_TARBALL)
 	$(WGET) $(LLVM_TARBALL_URL)
@@ -758,39 +758,39 @@ CLANG_INSTALL_DIR = $(PREFIX)/clang-$(CLANG_VERSION)
 	@echo '$(CLANG_TARBALL_SHA256)  $(CLANG_TARBALL)' | $(SHA256SUM)
 	@$(TOUCH) $@
 
-fetch-clang: .fetch-clang
+fetch-clang: .fetch-clang-$(CLANG_VERSION)
 
-.extract-clang: .fetch-clang
+.extract-clang-$(CLANG_VERSION): .fetch-clang-$(CLANG_VERSION)
 	$(RM) $(CLANG_BUILD_DIR)
 	$(TAR) -xzf $(LLVM_TARBALL)
 	cd $(CLANG_BUILD_DIR)/tools && $(TAR) -xzf $(CURDIR)/$(CLANG_TARBALL) && mv clang-$(CLANG_VERSION).src clang
 	@$(TOUCH) $@
 
-extract-clang: .extract-clang
+extract-clang: .extract-clang-$(CLANG_VERSION)
 
-.configure-clang: .extract-clang
+.configure-clang-$(CLANG_VERSION): .extract-clang-$(CLANG_VERSION)
 	cd $(CLANG_BUILD_DIR) && ./configure $(CLANG_CONFIGURE_FLAGS) --prefix=$(CLANG_INSTALL_DIR)
 	@$(TOUCH) $@
 
-configure-clang: .configure-clang
+configure-clang: .configure-clang-$(CLANG_VERSION)
 
-.build-clang: .configure-clang
+.build-clang-$(CLANG_VERSION): .configure-clang-$(CLANG_VERSION)
 	cd $(CLANG_BUILD_DIR) && make $(PARALLEL_BUILD_FLAGS)
 	@$(TOUCH) $@
 
-build-clang: .build-clang
+build-clang: .build-clang-$(CLANG_VERSION)
 
-install-clang: .build-clang
+install-clang: .build-clang-$(CLANG_VERSION)
 	cd $(CLANG_BUILD_DIR) && make install
 
 clean-clang:
-	@$(RM) .build-clang
-	@$(RM) .configure-clang
-	@$(RM) .extract-clang
+	@$(RM) .build-clang-$(CLANG_VERSION)
+	@$(RM) .configure-clang-$(CLANG_VERSION)
+	@$(RM) .extract-clang-$(CLANG_VERSION)
 	$(RM) $(CLANG_BUILD_DIR)
 
 distclean-clang: clean-clang
-	@$(RM) .fetch-clang
+	@$(RM) .fetch-clang-$(CLANG_VERSION)
 	$(RM) $(LLVM_TARBALL)
 	$(RM) $(CLANG_TARBALL)
 
@@ -811,44 +811,44 @@ GNU_PARALLEL_TARBALL_SHA256 = 2bb8eb1f358963eb50d3f9f285b887c378e0a660061e7e3e9b
 GNU_PARALLEL_BUILD_DIR = parallel-$(GNU_PARALLEL_VERSION)
 GNU_PARALLEL_INSTALL_DIR = $(PREFIX)/parallel-$(GNU_PARALLEL_VERSION)
 
-.fetch-gnu-parallel:
+.fetch-gnu-parallel-$(GNU_PARALLEL_VERSION):
 	@$(RM) $(GNU_PARALLEL_TARBALL)
 	$(WGET) $(GNU_PARALLEL_TARBALL_URL)
 	@echo '$(GNU_PARALLEL_TARBALL_SHA256)  $(GNU_PARALLEL_TARBALL)' | $(SHA256SUM)
 	@$(TOUCH) $@
 
-fetch-gnu-parallel: .fetch-gnu-parallel
+fetch-gnu-parallel: .fetch-gnu-parallel-$(GNU_PARALLEL_VERSION)
 
-.extract-gnu-parallel: .fetch-gnu-parallel
+.extract-gnu-parallel-$(GNU_PARALLEL_VERSION): .fetch-gnu-parallel-$(GNU_PARALLEL_VERSION)
 	$(RM) $(GNU_PARALLEL_BUILD_DIR)
 	$(TAR) -xjf $(GNU_PARALLEL_TARBALL)
 	@$(TOUCH) $@
 
-extract-gnu-parallel: .extract-gnu-parallel
+extract-gnu-parallel: .extract-gnu-parallel-$(GNU_PARALLEL_VERSION)
 
-.configure-gnu-parallel: .extract-gnu-parallel
+.configure-gnu-parallel-$(GNU_PARALLEL_VERSION): .extract-gnu-parallel-$(GNU_PARALLEL_VERSION)
 	cd $(GNU_PARALLEL_BUILD_DIR) && ./configure --prefix=$(GNU_PARALLEL_INSTALL_DIR)
 	@$(TOUCH) $@
 
-configure-gnu-parallel: .configure-gnu-parallel
+configure-gnu-parallel: .configure-gnu-parallel-$(GNU_PARALLEL_VERSION)
 
-.build-gnu-parallel: .configure-gnu-parallel
+.build-gnu-parallel-$(GNU_PARALLEL_VERSION): .configure-gnu-parallel-$(GNU_PARALLEL_VERSION)
 	cd $(GNU_PARALLEL_BUILD_DIR) && make $(PARALLEL_BUILD_FLAGS)
 	@$(TOUCH) $@
 
-build-gnu-parallel: .build-gnu-parallel
+build-gnu-parallel: .build-gnu-parallel-$(GNU_PARALLEL_VERSION)
 
-install-gnu-parallel: .build-gnu-parallel
+install-gnu-parallel: .build-gnu-parallel-$(GNU_PARALLEL_VERSION)
 	cd $(GNU_PARALLEL_BUILD_DIR) && make install
 
 clean-gnu-parallel:
-	@$(RM) .build-gnu-parallel
-	@$(RM) .configure-gnu-parallel
-	@$(RM) .extract-gnu-parallel
+	@$(RM) .build-gnu-parallel-$(GNU_PARALLEL_VERSION)
+	@$(RM) .configure-gnu-parallel-$(GNU_PARALLEL_VERSION)
+	@$(RM) .extract-gnu-parallel-$(GNU_PARALLEL_VERSION)
 	$(RM) $(GNU_PARALLEL_BUILD_DIR)
 
 distclean-gnu-parallel: clean-gnu-parallel
-	@$(RM) .fetch-gnu-parallel
+	@$(RM) .fetch-gnu-parallel-$(GNU_PARALLEL_VERSION)
 	$(RM) $(GNU_PARALLEL_TARBALL)
 
 env-gnu-parallel:
@@ -856,69 +856,6 @@ env-gnu-parallel:
 	@echo '# add GNU Parallel $(GNU_PARALLEL_VERSION) to environment'
 	@echo 'export PATH="$(GNU_PARALLEL_INSTALL_DIR)/bin$${PATH+:$$PATH}"'
 	@echo 'export MANPATH="$(GNU_PARALLEL_INSTALL_DIR)/share/man$${MANPATH+:$$MANPATH}"'
-
-##
-## GCC (GNU Compiler Collection)
-##
-
-GCC_VERSION = 4.7.1
-GCC_TARBALL = gcc-$(GCC_VERSION).tar.bz2
-GCC_TARBALL_URL = http://ftp.gwdg.de/pub/misc/gcc/releases/gcc-$(GCC_VERSION)/$(GCC_TARBALL)
-GCC_TARBALL_SHA256 = 16093f6fa01732adf378d97fe338f113c933bdf56da22bf87c76beff13da406f
-GCC_BUILD_DIR = gcc-$(GCC_VERSION)
-GCC_INSTALL_DIR = $(PREFIX)/gcc-$(GCC_VERSION)
-
-.fetch-gcc:
-	@$(RM) $(GCC_TARBALL)
-	$(WGET) $(GCC_TARBALL_URL)
-	@echo '$(GCC_TARBALL_SHA256)  $(GCC_TARBALL)' | $(SHA256SUM)
-	@$(TOUCH) $@
-
-fetch-gcc: .fetch-gcc .fetch-gmp .fetch-mpfr .fetch-mpc .fetch-ppl .fetch-cloog-ppl
-
-.extract-gcc: .fetch-gcc
-	$(RM) $(GCC_BUILD_DIR)
-	$(TAR) -xjf $(GCC_TARBALL)
-	@$(TOUCH) $@
-
-extract-gcc: .extract-gcc
-
-.configure-gcc: .extract-gcc .install-gmp .install-mpfr .install-mpc .install-ppl .install-cloog-ppl
-	cd $(GCC_BUILD_DIR) && LDFLAGS=-L$(GMP_INSTALL_DIR)/lib ac_cv_lib_pwl_PWL_handle_timeout=no ./configure --prefix=$(GCC_INSTALL_DIR) --disable-multilib --enable-languages=c,c++,fortran,lto --with-gmp=$(GMP_INSTALL_DIR) --with-mpfr=$(MPFR_INSTALL_DIR) --with-mpc=$(MPC_INSTALL_DIR) --with-ppl=$(PPL_INSTALL_DIR) --with-cloog=$(CLOOG_PPL_INSTALL_DIR) --enable-build-with-cxx
-	@$(TOUCH) $@
-
-configure-gcc: .configure-gcc
-
-.build-gcc: .configure-gcc
-	cd $(GCC_BUILD_DIR) && make $(PARALLEL_BUILD_FLAGS)
-	@$(TOUCH) $@
-
-build-gcc: .build-gcc
-
-install-gcc: .build-gcc
-	cd $(GCC_BUILD_DIR) && make install
-
-clean-gcc:
-	@$(RM) .build-gcc
-	@$(RM) .configure-gcc
-	@$(RM) .extract-gcc
-	@$(RM) .install-gmp
-	@$(RM) .install-mpfr
-	@$(RM) .install-mpc
-	@$(RM) .install-ppl
-	@$(RM) .install-cloog-ppl
-	$(RM) $(GCC_BUILD_DIR)
-
-distclean-gcc: clean-gcc
-	@$(RM) .fetch-gcc
-	$(RM) $(GCC_TARBALL)
-
-env-gcc:
-	@echo
-	@echo '# add gcc $(GCC_VERSION) to environment'
-	@echo 'export PATH="$(GCC_INSTALL_DIR)/bin$${PATH+:$$PATH}"'
-	@echo 'export MANPATH="$(GCC_INSTALL_DIR)/share/man$${MANPATH+:$$MANPATH}"'
-	@echo 'export LD_LIBRARY_PATH="$(GCC_INSTALL_DIR)/lib64$${LD_LIBRARY_PATH+:$$LD_LIBRARY_PATH}"'
 
 ##
 ## GMP (GNU Multiple Precision Arithmetic Library)
@@ -931,45 +868,45 @@ GMP_TARBALL_SHA256 = 35d4aade3e4bdf0915c944599b10d23f108ffedf6c3188aeec52221c5cf
 GMP_BUILD_DIR = gmp-$(GMP_VERSION)
 GMP_INSTALL_DIR = $(CURDIR)/.gmp-$(GMP_VERSION)
 
-.fetch-gmp:
+.fetch-gmp-$(GMP_VERSION):
 	@$(RM) $(GMP_TARBALL)
 	$(WGET) $(GMP_TARBALL_URL)
 	@echo '$(GMP_TARBALL_SHA256)  $(GMP_TARBALL)' | $(SHA256SUM)
 	@$(TOUCH) $@
 
-fetch-gmp: .fetch-gmp
+fetch-gmp: .fetch-gmp-$(GMP_VERSION)
 
-.extract-gmp: .fetch-gmp
+.extract-gmp-$(GMP_VERSION): .fetch-gmp-$(GMP_VERSION)
 	$(RM) $(GMP_BUILD_DIR)
 	$(TAR) -xjf $(GMP_TARBALL)
 	@$(TOUCH) $@
 
-extract-gmp: .extract-gmp
+extract-gmp: .extract-gmp-$(GMP_VERSION)
 
-.configure-gmp: .extract-gmp
+.configure-gmp-$(GMP_VERSION): .extract-gmp-$(GMP_VERSION)
 	cd $(GMP_BUILD_DIR) && CFLAGS=-fPIC ./configure --prefix=$(GMP_INSTALL_DIR) --enable-cxx --disable-shared
 	@$(TOUCH) $@
 
-configure-gmp: .configure-gmp
+configure-gmp: .configure-gmp-$(GMP_VERSION)
 
-.build-gmp: .configure-gmp
+.build-gmp-$(GMP_VERSION): .configure-gmp-$(GMP_VERSION)
 	cd $(GMP_BUILD_DIR) && make $(PARALLEL_BUILD_FLAGS)
 	@$(TOUCH) $@
 
-build-gmp: .build-gmp
+build-gmp: .build-gmp-$(GMP_VERSION)
 
-.install-gmp: .build-gmp
+.install-gmp-$(GMP_VERSION): .build-gmp-$(GMP_VERSION)
 	cd $(GMP_BUILD_DIR) && make install
 	@$(TOUCH) $@
 
 clean-gmp:
-	@$(RM) .build-gmp
-	@$(RM) .configure-gmp
-	@$(RM) .extract-gmp
+	@$(RM) .build-gmp-$(GMP_VERSION)
+	@$(RM) .configure-gmp-$(GMP_VERSION)
+	@$(RM) .extract-gmp-$(GMP_VERSION)
 	$(RM) $(GMP_BUILD_DIR)
 
 distclean-gmp: clean-gmp
-	@$(RM) .fetch-gmp
+	@$(RM) .fetch-gmp-$(GMP_VERSION)
 	$(RM) $(GMP_TARBALL)
 
 ##
@@ -983,45 +920,45 @@ MPFR_TARBALL_SHA256 = 74a7bbbad168dd1cc414f1c9210b8fc16ccfc8e422d34b3371a8978e31
 MPFR_BUILD_DIR = mpfr-$(MPFR_VERSION)
 MPFR_INSTALL_DIR = $(CURDIR)/.mpfr-$(MPFR_VERSION)
 
-.fetch-mpfr:
+.fetch-mpfr-$(MPFR_VERSION):
 	@$(RM) $(MPFR_TARBALL)
 	$(WGET) $(MPFR_TARBALL_URL)
 	@echo '$(MPFR_TARBALL_SHA256)  $(MPFR_TARBALL)' | $(SHA256SUM)
 	@$(TOUCH) $@
 
-fetch-mpfr: .fetch-mpfr
+fetch-mpfr: .fetch-mpfr-$(MPFR_VERSION)
 
-.extract-mpfr: .fetch-mpfr
+.extract-mpfr-$(MPFR_VERSION): .fetch-mpfr-$(MPFR_VERSION)
 	$(RM) $(MPFR_BUILD_DIR)
 	$(TAR) -xjf $(MPFR_TARBALL)
 	@$(TOUCH) $@
 
-extract-mpfr: .extract-mpfr
+extract-mpfr: .extract-mpfr-$(MPFR_VERSION)
 
-.configure-mpfr: .extract-mpfr .install-gmp
+.configure-mpfr-$(MPFR_VERSION): .extract-mpfr-$(MPFR_VERSION) .install-gmp-$(GMP_VERSION)
 	cd $(MPFR_BUILD_DIR) && ./configure --prefix=$(MPFR_INSTALL_DIR) --with-gmp=$(GMP_INSTALL_DIR) --disable-shared
 	@$(TOUCH) $@
 
-configure-mpfr: .configure-mpfr
+configure-mpfr: .configure-mpfr-$(MPFR_VERSION)
 
-.build-mpfr: .configure-mpfr
+.build-mpfr-$(MPFR_VERSION): .configure-mpfr-$(MPFR_VERSION)
 	cd $(MPFR_BUILD_DIR) && make $(PARALLEL_BUILD_FLAGS)
 	@$(TOUCH) $@
 
-build-mpfr: .build-mpfr
+build-mpfr: .build-mpfr-$(MPFR_VERSION)
 
-.install-mpfr: .build-mpfr
+.install-mpfr-$(MPFR_VERSION): .build-mpfr-$(MPFR_VERSION)
 	cd $(MPFR_BUILD_DIR) && make install
 	@$(TOUCH) $@
 
 clean-mpfr:
-	@$(RM) .build-mpfr
-	@$(RM) .configure-mpfr
-	@$(RM) .extract-mpfr
+	@$(RM) .build-mpfr-$(MPFR_VERSION)
+	@$(RM) .configure-mpfr-$(MPFR_VERSION)
+	@$(RM) .extract-mpfr-$(MPFR_VERSION)
 	$(RM) $(MPFR_BUILD_DIR)
 
 distclean-mpfr: clean-mpfr
-	@$(RM) .fetch-mpfr
+	@$(RM) .fetch-mpfr-$(MPFR_VERSION)
 	$(RM) $(MPFR_TARBALL)
 
 ##
@@ -1035,45 +972,45 @@ MPC_TARBALL_SHA256 = fd3efe422f0d454592059e80f2c00d1a2e381bf2beda424c5094abd4deb
 MPC_BUILD_DIR = mpc-$(MPC_VERSION)
 MPC_INSTALL_DIR = $(CURDIR)/.mpc-$(MPC_VERSION)
 
-.fetch-mpc:
+.fetch-mpc-$(MPC_VERSION):
 	@$(RM) $(MPC_TARBALL)
 	$(WGET) $(MPC_TARBALL_URL)
 	@echo '$(MPC_TARBALL_SHA256)  $(MPC_TARBALL)' | $(SHA256SUM)
 	@$(TOUCH) $@
 
-fetch-mpc: .fetch-mpc
+fetch-mpc: .fetch-mpc-$(MPC_VERSION)
 
-.extract-mpc: .fetch-mpc
+.extract-mpc-$(MPC_VERSION): .fetch-mpc-$(MPC_VERSION)
 	$(RM) $(MPC_BUILD_DIR)
 	$(TAR) -xzf $(MPC_TARBALL)
 	@$(TOUCH) $@
 
-extract-mpc: .extract-mpc
+extract-mpc: .extract-mpc-$(MPC_VERSION)
 
-.configure-mpc: .extract-mpc .install-gmp .install-mpfr
+.configure-mpc-$(MPC_VERSION): .extract-mpc-$(MPC_VERSION) .install-gmp-$(GMP_VERSION) .install-mpfr-$(MPFR_VERSION)
 	cd $(MPC_BUILD_DIR) && ./configure --prefix=$(MPC_INSTALL_DIR) --with-gmp=$(GMP_INSTALL_DIR) --with-mpfr=$(MPFR_INSTALL_DIR) --disable-shared
 	@$(TOUCH) $@
 
-configure-mpc: .configure-mpc
+configure-mpc: .configure-mpc-$(MPC_VERSION)
 
-.build-mpc: .configure-mpc
+.build-mpc-$(MPC_VERSION): .configure-mpc-$(MPC_VERSION)
 	cd $(MPC_BUILD_DIR) && make $(PARALLEL_BUILD_FLAGS)
 	@$(TOUCH) $@
 
-build-mpc: .build-mpc
+build-mpc: .build-mpc-$(MPC_VERSION)
 
-.install-mpc: .build-mpc
+.install-mpc-$(MPC_VERSION): .build-mpc-$(MPC_VERSION)
 	cd $(MPC_BUILD_DIR) && make install
 	@$(TOUCH) $@
 
 clean-mpc:
-	@$(RM) .build-mpc
-	@$(RM) .configure-mpc
-	@$(RM) .extract-mpc
+	@$(RM) .build-mpc-$(MPC_VERSION)
+	@$(RM) .configure-mpc-$(MPC_VERSION)
+	@$(RM) .extract-mpc-$(MPC_VERSION)
 	$(RM) $(MPC_BUILD_DIR)
 
 distclean-mpc: clean-mpc
-	@$(RM) .fetch-mpc
+	@$(RM) .fetch-mpc-$(MPC_VERSION)
 	$(RM) $(MPC_TARBALL)
 
 ##
@@ -1087,45 +1024,45 @@ PPL_TARBALL_SHA256 = e3fbd1c19ef44c6f020951807cdb6fc6a8153cd3a5c53b0ab9cf4c4f6e8
 PPL_BUILD_DIR = ppl-$(PPL_VERSION)
 PPL_INSTALL_DIR = $(CURDIR)/.ppl-$(PPL_VERSION)
 
-.fetch-ppl:
+.fetch-ppl-$(PPL_VERSION):
 	@$(RM) $(PPL_TARBALL)
 	$(WGET) $(PPL_TARBALL_URL)
 	@echo '$(PPL_TARBALL_SHA256)  $(PPL_TARBALL)' | $(SHA256SUM)
 	@$(TOUCH) $@
 
-fetch-ppl: .fetch-ppl
+fetch-ppl: .fetch-ppl-$(PPL_VERSION)
 
-.extract-ppl: .fetch-ppl
+.extract-ppl-$(PPL_VERSION): .fetch-ppl-$(PPL_VERSION)
 	$(RM) $(PPL_BUILD_DIR)
 	$(TAR) -xjf $(PPL_TARBALL)
 	@$(TOUCH) $@
 
-extract-ppl: .extract-ppl
+extract-ppl: .extract-ppl-$(PPL_VERSION)
 
-.configure-ppl: .extract-ppl .install-gmp
+.configure-ppl-$(PPL_VERSION): .extract-ppl-$(PPL_VERSION) .install-gmp-$(GMP_VERSION)
 	cd $(PPL_BUILD_DIR) && CPPFLAGS=-I$(GMP_INSTALL_DIR)/include LDFLAGS=-L$(GMP_INSTALL_DIR)/lib ./configure --prefix=$(PPL_INSTALL_DIR) --enable-interfaces=c,cxx --disable-shared --disable-watchdog
 	@$(TOUCH) $@
 
-configure-ppl: .configure-ppl
+configure-ppl: .configure-ppl-$(PPL_VERSION)
 
-.build-ppl: .configure-ppl
+.build-ppl-$(PPL_VERSION): .configure-ppl-$(PPL_VERSION)
 	cd $(PPL_BUILD_DIR) && make $(PARALLEL_BUILD_FLAGS)
 	@$(TOUCH) $@
 
-build-ppl: .build-ppl
+build-ppl: .build-ppl-$(PPL_VERSION)
 
-.install-ppl: .build-ppl
+.install-ppl-$(PPL_VERSION): .build-ppl-$(PPL_VERSION)
 	cd $(PPL_BUILD_DIR) && make install
 	@$(TOUCH) $@
 
 clean-ppl:
-	@$(RM) .build-ppl
-	@$(RM) .configure-ppl
-	@$(RM) .extract-ppl
+	@$(RM) .build-ppl-$(PPL_VERSION)
+	@$(RM) .configure-ppl-$(PPL_VERSION)
+	@$(RM) .extract-ppl-$(PPL_VERSION)
 	$(RM) $(PPL_BUILD_DIR)
 
 distclean-ppl: clean-ppl
-	@$(RM) .fetch-ppl
+	@$(RM) .fetch-ppl-$(PPL_VERSION)
 	$(RM) $(PPL_TARBALL)
 
 ##
@@ -1139,46 +1076,109 @@ CLOOG_PPL_TARBALL_SHA256 = 7cd634d0b2b401b04096b545915ac67f883556e9a524e8e803a6b
 CLOOG_PPL_BUILD_DIR = cloog-ppl-$(CLOOG_PPL_VERSION)
 CLOOG_PPL_INSTALL_DIR = $(CURDIR)/.cloog-ppl-$(CLOOG_PPL_VERSION)
 
-.fetch-cloog-ppl:
+.fetch-cloog-ppl-$(CLOOG_PPL_VERSION):
 	@$(RM) $(CLOOG_PPL_TARBALL)
 	$(WGET) $(CLOOG_PPL_TARBALL_URL)
 	@echo '$(CLOOG_PPL_TARBALL_SHA256)  $(CLOOG_PPL_TARBALL)' | $(SHA256SUM)
 	@$(TOUCH) $@
 
-fetch-cloog-ppl: .fetch-cloog-ppl
+fetch-cloog-ppl: .fetch-cloog-ppl-$(CLOOG_PPL_VERSION)
 
-.extract-cloog-ppl: .fetch-cloog-ppl
+.extract-cloog-ppl-$(CLOOG_PPL_VERSION): .fetch-cloog-ppl-$(CLOOG_PPL_VERSION)
 	$(RM) $(CLOOG_PPL_BUILD_DIR)
 	$(TAR) -xzf $(CLOOG_PPL_TARBALL)
 	@$(TOUCH) $@
 
-extract-cloog-ppl: .extract-cloog-ppl
+extract-cloog-ppl: .extract-cloog-ppl-$(CLOOG_PPL_VERSION)
 
-.configure-cloog-ppl: .extract-cloog-ppl .install-ppl .install-gmp
+.configure-cloog-ppl-$(CLOOG_PPL_VERSION): .extract-cloog-ppl-$(CLOOG_PPL_VERSION) .install-ppl-$(PPL_VERSION) .install-gmp-$(GMP_VERSION)
 	cd $(CLOOG_PPL_BUILD_DIR) && ./configure --prefix=$(CLOOG_PPL_INSTALL_DIR) --with-ppl=$(PPL_INSTALL_DIR) --with-gmp=$(GMP_INSTALL_DIR) --disable-shared --with-host-libstdcxx=-lstdc++
 	@$(TOUCH) $@
 
-configure-cloog-ppl: .configure-cloog-ppl
+configure-cloog-ppl: .configure-cloog-ppl-$(CLOOG_PPL_VERSION)
 
-.build-cloog-ppl: .configure-cloog-ppl
+.build-cloog-ppl-$(CLOOG_PPL_VERSION): .configure-cloog-ppl-$(CLOOG_PPL_VERSION)
 	cd $(CLOOG_PPL_BUILD_DIR) && make $(PARALLEL_BUILD_FLAGS)
 	@$(TOUCH) $@
 
-build-cloog-ppl: .build-cloog-ppl
+build-cloog-ppl: .build-cloog-ppl-$(CLOOG_PPL_VERSION)
 
-.install-cloog-ppl: .build-cloog-ppl
+.install-cloog-ppl-$(CLOOG_PPL_VERSION): .build-cloog-ppl-$(CLOOG_PPL_VERSION)
 	cd $(CLOOG_PPL_BUILD_DIR) && make install
 	@$(TOUCH) $@
 
 clean-cloog-ppl:
-	@$(RM) .build-cloog-ppl
-	@$(RM) .configure-cloog-ppl
-	@$(RM) .extract-cloog-ppl
+	@$(RM) .build-cloog-ppl-$(CLOOG_PPL_VERSION)
+	@$(RM) .configure-cloog-ppl-$(CLOOG_PPL_VERSION)
+	@$(RM) .extract-cloog-ppl-$(CLOOG_PPL_VERSION)
 	$(RM) $(CLOOG_PPL_BUILD_DIR)
 
 distclean-cloog-ppl: clean-cloog-ppl
-	@$(RM) .fetch-cloog-ppl
+	@$(RM) .fetch-cloog-ppl-$(CLOOG_PPL_VERSION)
 	$(RM) $(CLOOG_PPL_TARBALL)
+
+##
+## GCC (GNU Compiler Collection)
+##
+
+GCC_VERSION = 4.7.1
+GCC_TARBALL = gcc-$(GCC_VERSION).tar.bz2
+GCC_TARBALL_URL = http://ftp.gwdg.de/pub/misc/gcc/releases/gcc-$(GCC_VERSION)/$(GCC_TARBALL)
+GCC_TARBALL_SHA256 = 16093f6fa01732adf378d97fe338f113c933bdf56da22bf87c76beff13da406f
+GCC_BUILD_DIR = gcc-$(GCC_VERSION)
+GCC_INSTALL_DIR = $(PREFIX)/gcc-$(GCC_VERSION)
+
+.fetch-gcc-$(GCC_VERSION):
+	@$(RM) $(GCC_TARBALL)
+	$(WGET) $(GCC_TARBALL_URL)
+	@echo '$(GCC_TARBALL_SHA256)  $(GCC_TARBALL)' | $(SHA256SUM)
+	@$(TOUCH) $@
+
+fetch-gcc: .fetch-gcc-$(GCC_VERSION) .fetch-gmp-$(GMP_VERSION) .fetch-mpfr-$(MPFR_VERSION) .fetch-mpc-$(MPC_VERSION) .fetch-ppl-$(PPL_VERSION) .fetch-cloog-ppl-$(CLOOG_PPL_VERSION)
+
+.extract-gcc-$(GCC_VERSION): .fetch-gcc-$(GCC_VERSION)
+	$(RM) $(GCC_BUILD_DIR)
+	$(TAR) -xjf $(GCC_TARBALL)
+	@$(TOUCH) $@
+
+extract-gcc: .extract-gcc-$(GCC_VERSION)
+
+.configure-gcc-$(GCC_VERSION): .extract-gcc-$(GCC_VERSION) .install-gmp-$(GMP_VERSION) .install-mpfr-$(MPFR_VERSION) .install-mpc-$(MPC_VERSION) .install-ppl-$(PPL_VERSION) .install-cloog-ppl-$(CLOOG_PPL_VERSION)
+	cd $(GCC_BUILD_DIR) && LDFLAGS=-L$(GMP_INSTALL_DIR)/lib ac_cv_lib_pwl_PWL_handle_timeout=no ./configure --prefix=$(GCC_INSTALL_DIR) --disable-multilib --enable-languages=c,c++,fortran,lto --with-gmp=$(GMP_INSTALL_DIR) --with-mpfr=$(MPFR_INSTALL_DIR) --with-mpc=$(MPC_INSTALL_DIR) --with-ppl=$(PPL_INSTALL_DIR) --with-cloog=$(CLOOG_PPL_INSTALL_DIR) --enable-build-with-cxx
+	@$(TOUCH) $@
+
+configure-gcc: .configure-gcc-$(GCC_VERSION)
+
+.build-gcc-$(GCC_VERSION): .configure-gcc-$(GCC_VERSION)
+	cd $(GCC_BUILD_DIR) && make $(PARALLEL_BUILD_FLAGS)
+	@$(TOUCH) $@
+
+build-gcc: .build-gcc-$(GCC_VERSION)
+
+install-gcc: .build-gcc-$(GCC_VERSION)
+	cd $(GCC_BUILD_DIR) && make install
+
+clean-gcc:
+	@$(RM) .build-gcc-$(GCC_VERSION)
+	@$(RM) .configure-gcc-$(GCC_VERSION)
+	@$(RM) .extract-gcc-$(GCC_VERSION)
+	@$(RM) .install-gmp-$(GMP_VERSION)
+	@$(RM) .install-mpfr-$(MPFR_VERSION)
+	@$(RM) .install-mpc-$(MPC_VERSION)
+	@$(RM) .install-ppl-$(PPL_VERSION)
+	@$(RM) .install-cloog-ppl-$(CLOOG_PPL_VERSION)
+	$(RM) $(GCC_BUILD_DIR)
+
+distclean-gcc: clean-gcc
+	@$(RM) .fetch-gcc-$(GCC_VERSION)
+	$(RM) $(GCC_TARBALL)
+
+env-gcc:
+	@echo
+	@echo '# add gcc $(GCC_VERSION) to environment'
+	@echo 'export PATH="$(GCC_INSTALL_DIR)/bin$${PATH+:$$PATH}"'
+	@echo 'export MANPATH="$(GCC_INSTALL_DIR)/share/man$${MANPATH+:$$MANPATH}"'
+	@echo 'export LD_LIBRARY_PATH="$(GCC_INSTALL_DIR)/lib64$${LD_LIBRARY_PATH+:$$LD_LIBRARY_PATH}"'
 
 ##
 ## HALMD Highly Accerelated Large-Scale Molecular Dynamics
@@ -1192,45 +1192,45 @@ HALMD_SOURCE_DIR = halmd-$(HALMD_VERSION)
 HALMD_BUILD_DIR = $(HALMD_SOURCE_DIR)/build/release
 HALMD_INSTALL_DIR = $(PREFIX)/halmd-$(HALMD_VERSION)
 
-.fetch-halmd:
+.fetch-halmd-$(HALMD_VERSION):
 	@$(RM) $(HALMD_TARBALL)
 	$(WGET) $(HALMD_TARBALL_URL)
 	@echo '$(HALMD_TARBALL_SHA256)  $(HALMD_TARBALL)' | $(SHA256SUM)
 	@$(TOUCH) $@
 
-fetch-halmd: .fetch-halmd
+fetch-halmd: .fetch-halmd-$(HALMD_VERSION)
 
-.extract-halmd: .fetch-halmd
+.extract-halmd-$(HALMD_VERSION): .fetch-halmd-$(HALMD_VERSION)
 	$(RM) $(HALMD_SOURCE_DIR)
 	$(TAR) -xjf $(HALMD_TARBALL)
 	@$(TOUCH) $@
 
-extract-halmd: .extract-halmd
+extract-halmd: .extract-halmd-$(HALMD_VERSION)
 
-.configure-halmd: .extract-halmd
+.configure-halmd-$(HALMD_VERSION): .extract-halmd-$(HALMD_VERSION)
 	mkdir -p $(HALMD_BUILD_DIR)
 	cd $(HALMD_BUILD_DIR) && cmake -DCMAKE_INSTALL_PREFIX=$(HALMD_INSTALL_DIR) $(CURDIR)/$(HALMD_SOURCE_DIR)
 	@$(TOUCH) $@
 
-configure-halmd: .configure-halmd
+configure-halmd: .configure-halmd-$(HALMD_VERSION)
 
-.build-halmd: .configure-halmd
+.build-halmd-$(HALMD_VERSION): .configure-halmd-$(HALMD_VERSION)
 	cd $(HALMD_BUILD_DIR) && make $(PARALLEL_BUILD_FLAGS)
 	@$(TOUCH) $@
 
-build-halmd: .build-halmd
+build-halmd: .build-halmd-$(HALMD_VERSION)
 
-install-halmd: .build-halmd
+install-halmd: .build-halmd-$(HALMD_VERSION)
 	cd $(HALMD_BUILD_DIR) && make install
 
 clean-halmd:
-	@$(RM) .build-halmd
-	@$(RM) .configure-halmd
-	@$(RM) .extract-halmd
+	@$(RM) .build-halmd-$(HALMD_VERSION)
+	@$(RM) .configure-halmd-$(HALMD_VERSION)
+	@$(RM) .extract-halmd-$(HALMD_VERSION)
 	$(RM) $(HALMD_SOURCE_DIR)
 
 distclean-halmd: clean-halmd
-	@$(RM) .fetch-halmd
+	@$(RM) .fetch-halmd-$(HALMD_VERSION)
 	$(RM) $(HALMD_TARBALL)
 
 env-halmd:
@@ -1249,129 +1249,43 @@ NVCUDA_TOOLS_SOURCE_DIR = nvcuda-tools-$(NVCUDA_TOOLS_VERSION)
 NVCUDA_TOOLS_BUILD_DIR = $(NVCUDA_TOOLS_SOURCE_DIR)/build/release
 NVCUDA_TOOLS_INSTALL_DIR = $(PREFIX)/nvcuda-tools-$(NVCUDA_TOOLS_VERSION)
 
-.fetch-nvcuda-tools:
+.fetch-nvcuda-tools-$(NVCUDA_TOOLS_VERSION):
 	$(RM) $(NVCUDA_TOOLS_SOURCE_DIR)
 	$(GIT) clone $(NVCUDA_TOOLS_GIT_URL) $(NVCUDA_TOOLS_SOURCE_DIR)
 	cd $(NVCUDA_TOOLS_SOURCE_DIR) && $(GIT) checkout $(NVCUDA_TOOLS_VERSION)
 	@$(TOUCH) $@
 
-fetch-nvcuda-tools: .fetch-nvcuda-tools
+fetch-nvcuda-tools: .fetch-nvcuda-tools-$(NVCUDA_TOOLS_VERSION)
 
-.configure-nvcuda-tools: .fetch-nvcuda-tools
+.configure-nvcuda-tools-$(NVCUDA_TOOLS_VERSION): .fetch-nvcuda-tools-$(NVCUDA_TOOLS_VERSION)
 	mkdir -p $(NVCUDA_TOOLS_BUILD_DIR)
 	cd $(NVCUDA_TOOLS_BUILD_DIR) && cmake -DCMAKE_INSTALL_PREFIX=$(NVCUDA_TOOLS_INSTALL_DIR) $(CURDIR)/$(NVCUDA_TOOLS_SOURCE_DIR)
 	@$(TOUCH) $@
 
-configure-nvcuda-tools: .configure-nvcuda-tools
+configure-nvcuda-tools: .configure-nvcuda-tools-$(NVCUDA_TOOLS_VERSION)
 
-.build-nvcuda-tools: .configure-nvcuda-tools
+.build-nvcuda-tools-$(NVCUDA_TOOLS_VERSION): .configure-nvcuda-tools-$(NVCUDA_TOOLS_VERSION)
 	cd $(NVCUDA_TOOLS_BUILD_DIR) && make $(PARALLEL_BUILD_FLAGS)
 	@$(TOUCH) $@
 
-build-nvcuda-tools: .build-nvcuda-tools
+build-nvcuda-tools: .build-nvcuda-tools-$(NVCUDA_TOOLS_VERSION)
 
-install-nvcuda-tools: .build-nvcuda-tools
+install-nvcuda-tools: .build-nvcuda-tools-$(NVCUDA_TOOLS_VERSION)
 	cd $(NVCUDA_TOOLS_BUILD_DIR) && make install
 
 clean-nvcuda-tools:
-	@$(RM) .build-nvcuda-tools
-	@$(RM) .configure-nvcuda-tools
+	@$(RM) .build-nvcuda-tools-$(NVCUDA_TOOLS_VERSION)
+	@$(RM) .configure-nvcuda-tools-$(NVCUDA_TOOLS_VERSION)
 	$(RM) $(NVCUDA_TOOLS_BUILD_DIR)
 
 distclean-nvcuda-tools: clean-nvcuda-tools
-	@$(RM) .fetch-nvcuda-tools
+	@$(RM) .fetch-nvcuda-tools-$(NVCUDA_TOOLS_VERSION)
 	$(RM) $(NVCUDA_TOOLS_SOURCE_DIR)
 
 env-nvcuda-tools:
 	@echo
 	@echo '# add CMake $(NVCUDA_TOOLS_VERSION) to environment'
 	@echo 'export PATH="$(NVCUDA_TOOLS_INSTALL_DIR)/bin$${PATH+:$$PATH}"'
-
-##
-## git-annex
-##
-
-GIT_ANNEX_VERSION = 3.20120721
-GIT_ANNEX_BUILD_DIR = git-annex-$(GIT_ANNEX_VERSION)
-GIT_ANNEX_INSTALL_DIR = $(PREFIX)/git-annex-$(GIT_ANNEX_VERSION)
-
-.configure-git-annex: .install-ghc .install-haskell-cabal
-	HOME=$(CURDIR)/$(GIT_ANNEX_BUILD_DIR) PATH=$(GHC_INSTALL_DIR)/bin:$(HASKELL_CABAL_INSTALL_DIR)/bin:$(PATH) cabal update
-	@$(TOUCH) $@
-
-configure-git-annex: .configure-git-annex
-
-.build-git-annex: .configure-git-annex .install-pcre
-	HOME=$(CURDIR)/$(GIT_ANNEX_BUILD_DIR) PATH=$(GHC_INSTALL_DIR)/bin:$(HASKELL_CABAL_INSTALL_DIR)/bin:$(PATH) cabal install git-annex-$(GIT_ANNEX_VERSION) --extra-include-dirs=$(PCRE_INSTALL_DIR)/include --extra-lib-dirs=$(PCRE_INSTALL_DIR)/lib --only-dependencies
-	@$(TOUCH) $@
-
-build-git-annex: .build-git-annex
-
-install-git-annex: .build-git-annex
-	HOME=$(CURDIR)/$(GIT_ANNEX_BUILD_DIR) PATH=$(GHC_INSTALL_DIR)/bin:$(HASKELL_CABAL_INSTALL_DIR)/bin:$(PATH) cabal install git-annex-$(GIT_ANNEX_VERSION) --extra-include-dirs=$(PCRE_INSTALL_DIR)/include --extra-lib-dirs=$(PCRE_INSTALL_DIR)/lib --prefix=$(GIT_ANNEX_INSTALL_DIR)
-
-clean-git-annex:
-	@$(RM) .configure-git-annex
-	@$(RM) .build-git-annex
-	$(RM) $(GIT_ANNEX_BUILD_DIR)
-
-env-git-annex:
-	@echo
-	@echo '# add git-annex $(GIT_ANNEX_VERSION) to environment'
-	@echo 'export PATH="$(GIT_ANNEX_INSTALL_DIR)/bin$${PATH+:$$PATH}"'
-	@echo 'export MANPATH="$(GIT_ANNEX_INSTALL_DIR)/share/man$${MANPATH+:$$MANPATH}"'
-
-##
-## GHC (Glasgow Haskell Compiler)
-##
-
-GHC_VERSION = 7.4.2
-GHC_TARBALL = ghc-$(GHC_VERSION)-src.tar.bz2
-GHC_TARBALL_URL =  http://www.haskell.org/ghc/dist/$(GHC_VERSION)/$(GHC_TARBALL)
-GHC_TARBALL_SHA256 = f2ee1289a33cc70539287129841acc7eaf16112bb60c59b5a6ee91887bfd836d
-GHC_BUILD_DIR = ghc-$(GHC_VERSION)
-GHC_INSTALL_DIR = $(CURDIR)/.ghc-$(GHC_VERSION)
-
-.fetch-ghc:
-	@$(RM) $(GHC_TARBALL)
-	$(WGET) $(GHC_TARBALL_URL)
-	@echo '$(GHC_TARBALL_SHA256)  $(GHC_TARBALL)' | $(SHA256SUM)
-	@$(TOUCH) $@
-
-fetch-ghc: .fetch-ghc
-
-.extract-ghc: .fetch-ghc
-	$(RM) $(GHC_BUILD_DIR)
-	$(TAR) -xjf $(GHC_TARBALL)
-	@$(TOUCH) $@
-
-extract-ghc: .extract-ghc
-
-.configure-ghc: .extract-ghc .install-ghc-bootstrap .install-gmp
-	cd $(GHC_BUILD_DIR) && LIBRARY_PATH=$(GMP_INSTALL_DIR)/lib PATH=$(GHC_BOOTSTRAP_INSTALL_DIR)/bin:$(PATH) ./configure --prefix=$(GHC_INSTALL_DIR) --with-gmp-includes=$(GMP_INSTALL_DIR)/include --with-gmp-libraries=$(GMP_INSTALL_DIR)/lib
-	@$(TOUCH) $@
-
-configure-ghc: .configure-ghc
-
-.build-ghc: .configure-ghc
-	cd $(GHC_BUILD_DIR) && make $(PARALLEL_BUILD_FLAGS)
-	@$(TOUCH) $@
-
-build-ghc: .build-ghc
-
-.install-ghc: .build-ghc
-	cd $(GHC_BUILD_DIR) && make install
-	@$(TOUCH) $@
-
-clean-ghc:
-	@$(RM) .configure-ghc
-	@$(RM) .build-ghc
-	@$(RM) .extract-ghc
-	$(RM) $(GHC_BUILD_DIR)
-
-distclean-ghc: clean-ghc
-	@$(RM) .fetch-ghc
-	$(RM) $(GHC_TARBALL)
 
 ##
 ## Bootstraping GHC (Glasgow Haskell Compiler)
@@ -1384,41 +1298,93 @@ GHC_BOOTSTRAP_TARBALL_SHA256 = f0e13bdec040f06b1074595ddc39064f75214aee05d64554f
 GHC_BOOTSTRAP_BUILD_DIR = ghc-$(GHC_BOOTSTRAP_VERSION)
 GHC_BOOTSTRAP_INSTALL_DIR = $(CURDIR)/.ghc-$(GHC_BOOTSTRAP_VERSION)
 
-.fetch-ghc-bootstrap:
+.fetch-ghc-bootstrap-$(GHC_BOOTSTRAP_VERSION):
 	@$(RM) $(GHC_BOOTSTRAP_TARBALL)
 	$(WGET) $(GHC_BOOTSTRAP_TARBALL_URL)
 	@echo '$(GHC_BOOTSTRAP_TARBALL_SHA256)  $(GHC_BOOTSTRAP_TARBALL)' | $(SHA256SUM)
 	@$(TOUCH) $@
 
-fetch-ghc-bootstrap: .fetch-ghc-bootstrap
+fetch-ghc-bootstrap: .fetch-ghc-bootstrap-$(GHC_BOOTSTRAP_VERSION)
 
-.extract-ghc-bootstrap: .fetch-ghc-bootstrap
+.extract-ghc-bootstrap-$(GHC_BOOTSTRAP_VERSION): .fetch-ghc-bootstrap-$(GHC_BOOTSTRAP_VERSION)
 	$(RM) $(GHC_BOOTSTRAP_BUILD_DIR)
 	$(TAR) -xjf $(GHC_BOOTSTRAP_TARBALL)
 	@$(TOUCH) $@
 
-extract-ghc-bootstrap: .extract-ghc-bootstrap
+extract-ghc-bootstrap: .extract-ghc-bootstrap-$(GHC_BOOTSTRAP_VERSION)
 
-.configure-ghc-bootstrap: .extract-ghc-bootstrap
+.configure-ghc-bootstrap-$(GHC_BOOTSTRAP_VERSION): .extract-ghc-bootstrap-$(GHC_BOOTSTRAP_VERSION)
 	cd $(GHC_BOOTSTRAP_BUILD_DIR) && ./configure --prefix=$(GHC_BOOTSTRAP_INSTALL_DIR)
 	@$(TOUCH) $@
 
-configure-ghc-bootstrap: .configure-ghc-bootstrap
+configure-ghc-bootstrap: .configure-ghc-bootstrap-$(GHC_BOOTSTRAP_VERSION)
 
-.install-ghc-bootstrap: .configure-ghc-bootstrap .install-gmp
+.install-ghc-bootstrap-$(GHC_BOOTSTRAP_VERSION): .configure-ghc-bootstrap-$(GHC_BOOTSTRAP_VERSION) .install-gmp-$(GMP_VERSION)
 	cd $(GHC_BOOTSTRAP_BUILD_DIR) && make install
 	sed -i -e 's/-pgmc "\([^"]*\)"/-pgmc "\1" -pgma "\1" -pgml "\1" -pgmP "\1 -E -undef -traditional"/' $(GHC_BOOTSTRAP_INSTALL_DIR)/bin/ghc-$(GHC_BOOTSTRAP_VERSION)
 	ln -s -f -t $(GHC_BOOTSTRAP_INSTALL_DIR)/lib/ghc-$(GHC_BOOTSTRAP_VERSION) $(GMP_INSTALL_DIR)/lib/libgmp.a
 	@$(TOUCH) $@
 
 clean-ghc-bootstrap:
-	@$(RM) .configure-ghc-bootstrap
-	@$(RM) .extract-ghc-bootstrap
+	@$(RM) .configure-ghc-bootstrap-$(GHC_BOOTSTRAP_VERSION)
+	@$(RM) .extract-ghc-bootstrap-$(GHC_BOOTSTRAP_VERSION)
 	$(RM) $(GHC_BOOTSTRAP_BUILD_DIR)
 
 distclean-ghc-bootstrap: clean-ghc-bootstrap
-	@$(RM) .fetch-ghc-bootstrap
+	@$(RM) .fetch-ghc-bootstrap-$(GHC_BOOTSTRAP_VERSION)
 	$(RM) $(GHC_BOOTSTRAP_TARBALL)
+
+##
+## GHC (Glasgow Haskell Compiler)
+##
+
+GHC_VERSION = 7.4.2
+GHC_TARBALL = ghc-$(GHC_VERSION)-src.tar.bz2
+GHC_TARBALL_URL =  http://www.haskell.org/ghc/dist/$(GHC_VERSION)/$(GHC_TARBALL)
+GHC_TARBALL_SHA256 = f2ee1289a33cc70539287129841acc7eaf16112bb60c59b5a6ee91887bfd836d
+GHC_BUILD_DIR = ghc-$(GHC_VERSION)
+GHC_INSTALL_DIR = $(CURDIR)/.ghc-$(GHC_VERSION)
+
+.fetch-ghc-$(GHC_VERSION):
+	@$(RM) $(GHC_TARBALL)
+	$(WGET) $(GHC_TARBALL_URL)
+	@echo '$(GHC_TARBALL_SHA256)  $(GHC_TARBALL)' | $(SHA256SUM)
+	@$(TOUCH) $@
+
+fetch-ghc: .fetch-ghc-$(GHC_VERSION)
+
+.extract-ghc-$(GHC_VERSION): .fetch-ghc-$(GHC_VERSION)
+	$(RM) $(GHC_BUILD_DIR)
+	$(TAR) -xjf $(GHC_TARBALL)
+	@$(TOUCH) $@
+
+extract-ghc: .extract-ghc-$(GHC_VERSION)
+
+.configure-ghc-$(GHC_VERSION): .extract-ghc-$(GHC_VERSION) .install-ghc-bootstrap-$(GHC_BOOTSTRAP_VERSION) .install-gmp-$(GMP_VERSION)
+	cd $(GHC_BUILD_DIR) && LIBRARY_PATH=$(GMP_INSTALL_DIR)/lib PATH=$(GHC_BOOTSTRAP_INSTALL_DIR)/bin:$(PATH) ./configure --prefix=$(GHC_INSTALL_DIR) --with-gmp-includes=$(GMP_INSTALL_DIR)/include --with-gmp-libraries=$(GMP_INSTALL_DIR)/lib
+	@$(TOUCH) $@
+
+configure-ghc: .configure-ghc-$(GHC_VERSION)
+
+.build-ghc-$(GHC_VERSION): .configure-ghc-$(GHC_VERSION)
+	cd $(GHC_BUILD_DIR) && make $(PARALLEL_BUILD_FLAGS)
+	@$(TOUCH) $@
+
+build-ghc: .build-ghc-$(GHC_VERSION)
+
+.install-ghc-$(GHC_VERSION): .build-ghc-$(GHC_VERSION)
+	cd $(GHC_BUILD_DIR) && make install
+	@$(TOUCH) $@
+
+clean-ghc:
+	@$(RM) .configure-ghc-$(GHC_VERSION)
+	@$(RM) .build-ghc-$(GHC_VERSION)
+	@$(RM) .extract-ghc-$(GHC_VERSION)
+	$(RM) $(GHC_BUILD_DIR)
+
+distclean-ghc: clean-ghc
+	@$(RM) .fetch-ghc-$(GHC_VERSION)
+	$(RM) $(GHC_TARBALL)
 
 ##
 ## Haskell Cabal
@@ -1431,31 +1397,31 @@ HASKELL_CABAL_TARBALL_SHA256 = f4f2b50269ff59d67b5f3d82d50f7706b6bad1117295a7c81
 HASKELL_CABAL_BUILD_DIR = cabal-install-$(HASKELL_CABAL_VERSION)
 HASKELL_CABAL_INSTALL_DIR = $(CURDIR)/.cabal-install-$(HASKELL_CABAL_VERSION)
 
-.fetch-haskell-cabal:
+.fetch-haskell-cabal-$(HASKELL_CABAL_VERSION):
 	@$(RM) $(HASKELL_CABAL_TARBALL)
 	$(WGET) $(HASKELL_CABAL_TARBALL_URL)
 	@echo '$(HASKELL_CABAL_TARBALL_SHA256)  $(HASKELL_CABAL_TARBALL)' | $(SHA256SUM)
 	@$(TOUCH) $@
 
-fetch-haskell-cabal: .fetch-haskell-cabal
+fetch-haskell-cabal: .fetch-haskell-cabal-$(HASKELL_CABAL_VERSION)
 
-.extract-haskell-cabal: .fetch-haskell-cabal
+.extract-haskell-cabal-$(HASKELL_CABAL_VERSION): .fetch-haskell-cabal-$(HASKELL_CABAL_VERSION)
 	$(RM) $(HASKELL_CABAL_BUILD_DIR)
 	$(TAR) -xzf $(HASKELL_CABAL_TARBALL)
 	@$(TOUCH) $@
 
-extract-haskell-cabal: .extract-haskell-cabal
+extract-haskell-cabal: .extract-haskell-cabal-$(HASKELL_CABAL_VERSION)
 
-.install-haskell-cabal: .extract-haskell-cabal .install-ghc
+.install-haskell-cabal-$(HASKELL_CABAL_VERSION): .extract-haskell-cabal-$(HASKELL_CABAL_VERSION) .install-ghc-$(GHC_VERSION)
 	cd $(HASKELL_CABAL_BUILD_DIR) && HOME=$(CURDIR)/$(HASKELL_CABAL_BUILD_DIR) PREFIX=$(HASKELL_CABAL_INSTALL_DIR) PATH=$(GHC_INSTALL_DIR)/bin:$(PATH) sh bootstrap.sh
 	@$(TOUCH) $@
 
 clean-haskell-cabal:
-	@$(RM) .extract-haskell-cabal
+	@$(RM) .extract-haskell-cabal-$(HASKELL_CABAL_VERSION)
 	$(RM) $(HASKELL_CABAL_BUILD_DIR)
 
 distclean-haskell-cabal: clean-haskell-cabal
-	@$(RM) .fetch-haskell-cabal
+	@$(RM) .fetch-haskell-cabal-$(HASKELL_CABAL_VERSION)
 	$(RM) $(HASKELL_CABAL_TARBALL)
 
 ##
@@ -1469,43 +1435,77 @@ PCRE_TARBALL_SHA256 = c1113fd7db934e97ad8b3917d432e5b642e9eb9afd127eb797804937c9
 PCRE_BUILD_DIR = pcre-$(PCRE_VERSION)
 PCRE_INSTALL_DIR = $(CURDIR)/.pcre-$(PCRE_VERSION)
 
-.fetch-pcre:
+.fetch-pcre-$(PCRE_VERSION):
 	@$(RM) $(PCRE_TARBALL)
 	$(WGET) $(PCRE_TARBALL_URL)
 	@echo '$(PCRE_TARBALL_SHA256)  $(PCRE_TARBALL)' | $(SHA256SUM)
 	@$(TOUCH) $@
 
-fetch-pcre: .fetch-pcre
+fetch-pcre: .fetch-pcre-$(PCRE_VERSION)
 
-.extract-pcre: .fetch-pcre
+.extract-pcre-$(PCRE_VERSION): .fetch-pcre-$(PCRE_VERSION)
 	$(RM) $(PCRE_BUILD_DIR)
 	$(TAR) -xjf $(PCRE_TARBALL)
 	@$(TOUCH) $@
 
-extract-pcre: .extract-pcre
+extract-pcre: .extract-pcre-$(PCRE_VERSION)
 
-.configure-pcre: .extract-pcre
+.configure-pcre-$(PCRE_VERSION): .extract-pcre-$(PCRE_VERSION)
 	cd $(PCRE_BUILD_DIR) && CFLAGS=-fPIC ./configure --prefix=$(PCRE_INSTALL_DIR) --disable-shared
 	@$(TOUCH) $@
 
-configure-pcre: .configure-pcre
+configure-pcre: .configure-pcre-$(PCRE_VERSION)
 
-.build-pcre: .configure-pcre
+.build-pcre-$(PCRE_VERSION): .configure-pcre-$(PCRE_VERSION)
 	cd $(PCRE_BUILD_DIR) && make $(PARALLEL_BUILD_FLAGS)
 	@$(TOUCH) $@
 
-build-pcre: .build-pcre
+build-pcre: .build-pcre-$(PCRE_VERSION)
 
-.install-pcre: .build-pcre
+.install-pcre-$(PCRE_VERSION): .build-pcre-$(PCRE_VERSION)
 	cd $(PCRE_BUILD_DIR) && make install
 	@$(TOUCH) $@
 
 clean-pcre:
-	@$(RM) .build-pcre
-	@$(RM) .configure-pcre
-	@$(RM) .extract-pcre
+	@$(RM) .build-pcre-$(PCRE_VERSION)
+	@$(RM) .configure-pcre-$(PCRE_VERSION)
+	@$(RM) .extract-pcre-$(PCRE_VERSION)
 	$(RM) $(PCRE_BUILD_DIR)
 
 distclean-pcre: clean-pcre
-	@$(RM) .fetch-pcre
+	@$(RM) .fetch-pcre-$(PCRE_VERSION)
 	$(RM) $(PCRE_TARBALL)
+
+##
+## git-annex
+##
+
+GIT_ANNEX_VERSION = 3.20120721
+GIT_ANNEX_BUILD_DIR = git-annex-$(GIT_ANNEX_VERSION)
+GIT_ANNEX_INSTALL_DIR = $(PREFIX)/git-annex-$(GIT_ANNEX_VERSION)
+
+.configure-git-annex-$(GIT_ANNEX_VERSION): .install-ghc-$(GHC_VERSION) .install-haskell-cabal-$(HASKELL_CABAL_VERSION)
+	HOME=$(CURDIR)/$(GIT_ANNEX_BUILD_DIR) PATH=$(GHC_INSTALL_DIR)/bin:$(HASKELL_CABAL_INSTALL_DIR)/bin:$(PATH) cabal update
+	@$(TOUCH) $@
+
+configure-git-annex: .configure-git-annex-$(GIT_ANNEX_VERSION)
+
+.build-git-annex-$(GIT_ANNEX_VERSION): .configure-git-annex-$(GIT_ANNEX_VERSION) .install-pcre-$(PCRE_VERSION)
+	HOME=$(CURDIR)/$(GIT_ANNEX_BUILD_DIR) PATH=$(GHC_INSTALL_DIR)/bin:$(HASKELL_CABAL_INSTALL_DIR)/bin:$(PATH) cabal install git-annex-$(GIT_ANNEX_VERSION) --extra-include-dirs=$(PCRE_INSTALL_DIR)/include --extra-lib-dirs=$(PCRE_INSTALL_DIR)/lib --only-dependencies
+	@$(TOUCH) $@
+
+build-git-annex: .build-git-annex-$(GIT_ANNEX_VERSION)
+
+install-git-annex: .build-git-annex-$(GIT_ANNEX_VERSION)
+	HOME=$(CURDIR)/$(GIT_ANNEX_BUILD_DIR) PATH=$(GHC_INSTALL_DIR)/bin:$(HASKELL_CABAL_INSTALL_DIR)/bin:$(PATH) cabal install git-annex-$(GIT_ANNEX_VERSION) --extra-include-dirs=$(PCRE_INSTALL_DIR)/include --extra-lib-dirs=$(PCRE_INSTALL_DIR)/lib --prefix=$(GIT_ANNEX_INSTALL_DIR)
+
+clean-git-annex:
+	@$(RM) .configure-git-annex-$(GIT_ANNEX_VERSION)
+	@$(RM) .build-git-annex-$(GIT_ANNEX_VERSION)
+	$(RM) $(GIT_ANNEX_BUILD_DIR)
+
+env-git-annex:
+	@echo
+	@echo '# add git-annex $(GIT_ANNEX_VERSION) to environment'
+	@echo 'export PATH="$(GIT_ANNEX_INSTALL_DIR)/bin$${PATH+:$$PATH}"'
+	@echo 'export MANPATH="$(GIT_ANNEX_INSTALL_DIR)/share/man$${MANPATH+:$$MANPATH}"'
