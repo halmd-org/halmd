@@ -34,6 +34,7 @@ local writers = {
 }
 
 -- grab C++ wrappers
+local h5 = libhalmd.h5
 local po = libhalmd.po
 -- grab standard library
 local assert = assert
@@ -74,6 +75,7 @@ function M.__new(args)
     local writer = file:writer{location = {"observables", "box"}, mode = "truncate"}
     writer:on_write(box.edges, {"edges"})
     writer:on_write(box.origin, {"offset"})
+    file.root:open_group("observables"):open_group("box"):write_attribute("type", h5.string(), "cuboid")
     sampler:on_start(writer.write)
 
     return writer
