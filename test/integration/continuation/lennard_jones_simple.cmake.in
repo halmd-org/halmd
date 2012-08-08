@@ -1,6 +1,7 @@
 #!@CMAKE_COMMAND@ -P
 #
-# Copyright © 2011  Peter Colberg and Felix Höfling
+# Copyright © 2011 Felix Höfling
+# Copyright © 2011-2012 Peter Colberg
 #
 # This file is part of HALMD.
 #
@@ -21,9 +22,6 @@
 ##
 # Test trajectory continuation for a simple, one-component Lennard-Jones fluid
 # where the optimised module for the GPU backend is used
-#
-# FIXME write C++ test to compare trajectory outputs
-#
 
 set(CMAKE_MODULE_PATH "@HALMD_TEST_CMAKE_BINARY_DIR@")
 
@@ -74,6 +72,20 @@ execute_halmd(
   --steps 1000
   --sampling trajectory=1000
 )
+
+execute_process(
+  COMMAND "@CMAKE_CURRENT_BINARY_DIR@/test_integration_continuation_compare_trajectory"
+    --log_level=test_suite
+    "${OUTPUT_PREFIX}.h5"
+    "${OUTPUT_PREFIX}_continued.h5"
+    -1
+    0
+  WORKING_DIRECTORY "@CMAKE_CURRENT_BINARY_DIR@"
+  RESULT_VARIABLE ${OUTPUT_PREFIX}_STATUS
+)
+if(NOT ${OUTPUT_PREFIX}_STATUS STREQUAL "0")
+  message(SEND_ERROR "failed to compare trajectory")
+endif()
 
 file(REMOVE
   "${OUTPUT_PREFIX}.h5"
