@@ -1,6 +1,13 @@
 ##
 # HALMD trajectory continuation tests
 #
+add_executable(test_integration_continuation_compare_trajectory
+  compare_trajectory.cpp
+)
+target_link_libraries(test_integration_continuation_compare_trajectory
+  ${HALMD_TEST_LIBRARIES}
+)
+
 configure_file(
   lennard_jones.cmake.in
   test_integration_continuation_lennard_jones.cmake
