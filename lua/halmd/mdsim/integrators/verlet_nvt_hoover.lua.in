@@ -104,7 +104,7 @@ function M.__new(args)
     integrator:connect()
 
     -- connect chain variables to writers of trajectory file
-    local file = writers.file{extension = "trj"} -- singleton
+    local file = writers.file() -- singleton
     local writer = file:writer{location = {"trajectory", "nose_hoover"}, mode = "append"}
     writer:on_write(integrator.xi, {"position"})
     writer:on_write(integrator.v_xi, {"velocity"})

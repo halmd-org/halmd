@@ -60,13 +60,13 @@ execute_halmd(
   --output "${OUTPUT_PREFIX}_continued"
   --steps 1000
   "${BACKEND_OPTION}"
-  trajectory --file "${OUTPUT_PREFIX}.trj"
+  trajectory --file "${OUTPUT_PREFIX}.h5"
   trajectory --every=1000
 )
 
 file(REMOVE
-  "${OUTPUT_PREFIX}.trj"
+  "${OUTPUT_PREFIX}.h5"
   "${OUTPUT_PREFIX}.log"
   "${OUTPUT_PREFIX}_continued.log"
-  "${OUTPUT_PREFIX}_continued.trj"
+  "${OUTPUT_PREFIX}_continued.h5"
 )

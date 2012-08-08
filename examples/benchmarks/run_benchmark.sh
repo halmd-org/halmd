@@ -52,7 +52,7 @@ do
       --config "${CONFIG_DIR}/run_benchmark.rc" \
       --output "${OUTPUT_PREFIX}" \
       ${HALMD_OPTIONS} \
-      trajectory --file "${PREVIOUS_OUTPUT_PREFIX}.trj"
+      trajectory --file "${PREVIOUS_OUTPUT_PREFIX}.h5"
 
     PREVIOUS_OUTPUT_PREFIX="${OUTPUT_PREFIX}"
 done

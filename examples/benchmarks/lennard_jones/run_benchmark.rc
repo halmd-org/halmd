@@ -4,7 +4,7 @@ integrator=verlet
 timestep=0.002
 
 [trajectory]
-file=equilibration_N64000_rho0.2.trj
+file=equilibration_N64000_rho0.2.h5
 
 [sampler]
 trajectory=10000

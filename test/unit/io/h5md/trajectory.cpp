@@ -106,7 +106,7 @@ void h5md(vector<unsigned int> const& ntypes)
     typedef fixed_vector<float, dimension> float_vector_type;
     typedef fixed_vector<double, dimension> double_vector_type;
 
-    string const filename("test_io_h5md_trajectory_" + lexical_cast<string>(dimension) + "d.trj");
+    string const filename("test_io_h5md_trajectory_" + lexical_cast<string>(dimension) + "d.h5");
 
     BOOST_MESSAGE("Testing " << ntypes.size() << " particle types");
 

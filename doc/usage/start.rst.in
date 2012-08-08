@@ -65,31 +65,31 @@ It is passed directly to HALMD, while parameters may be overwritten: ::
 The trajectory is written every 10,000 steps, i.e., at the beginning and the
 end of the simulation.  The initial configuration of the particles is a fcc
 lattice. The default output settings yield an HDF5 file with a time stamp in
-its name, ``halmd_%Y%m%d_%H%M%S.trj`` and a corresponding log file.
+its name, ``halmd_%Y%m%d_%H%M%S.h5`` and a corresponding log file.
 
 We may now continue the simulation at constant energy by resuming from the
 trajectory file and selecting a different integrator ::
 
   halmd -v \
     --integrator=verlet --timestep 0.001 --time 100 \
-    trajectory --file halmd_20110715_160545.trj \
+    trajectory --file halmd_20110715_160545.h5 \
     thermodynamics --every 100
 
 This will continue the simulation over 10⁵ steps and write observables like
 thermodynamic state variables every 100 steps (potential energy, instantaneous
-"temperature", pressure, ... to a file with the extension ``obs``.
+"temperature", pressure, ...
 
 If the HDF5 tools are properly installed, we may have a quick overview of the
 output file ::
 
-  h5ls halmd_20110715_160920.trj
+  h5ls halmd_20110715_160920.h5
 
 or look at a specific data set ::
 
-  h5dump -d observables/potential_energy halmd_20110713_161511.obs | less
+  h5dump -d observables/potential_energy halmd_20110713_161511.h5 | less
 
 For a more advanced inspection and analysis of the HDF5 output files, see
 :ref:`plotting`. You may try the exemplary script ::
 
-  halmd/examples/plotting/plot_h5md.py halmd_20110713_161511.obs
+  halmd/examples/plotting/plot_h5md.py halmd_20110713_161511.h5
 

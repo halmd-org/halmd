@@ -36,7 +36,7 @@ local files = {}
 --
 function M.__new(args)
     local format = args.format or "h5md" -- default value
-    local extension = args.extension or "obs" -- default value
+    local extension = args.extension or "h5" -- default value
     if not files[extension] then
         files[extension] = assert(writers[format]){path = args.output .. "." .. extension}
     end
