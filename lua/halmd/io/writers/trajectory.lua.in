@@ -71,7 +71,7 @@ function M.__new(args)
     --
     -- @future time series for NPT ensemble
     --
-    local writer = file:writer{location = {"trajectory", "box"}, mode = "truncate"}
+    local writer = file:writer{location = {"observables", "box"}, mode = "truncate"}
     writer:on_write(box.edges, {"edges"})
     writer:on_write(box.origin, {"offset"})
     sampler:on_start(writer.write)
