@@ -112,7 +112,7 @@ connection append::on_write(
     group = h5xx::open_group(group_, join(location, "/"));
     h5xx::link(step_, group, "step");
     h5xx::link(time_, group, "time");
-    return on_write_.connect(bind(&write_dataset<T>, H5::DataSet(), group, "sample", slot));
+    return on_write_.connect(bind(&write_dataset<T>, H5::DataSet(), group, "value", slot));
 }
 
 connection append::on_prepend_write(slot_function_type const& slot)

@@ -99,7 +99,7 @@ void append::read_dataset(
   , index_function_type const& index
 )
 {
-    H5::DataSet dataset = group.openDataSet("sample");
+    H5::DataSet dataset = group.openDataSet("value");
     h5xx::read_chunked_dataset(dataset, slot(), index(group));
 }
 
