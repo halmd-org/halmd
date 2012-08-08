@@ -70,20 +70,27 @@ void phase_space<dimension, float_type>::acquire()
         sample_->reset();
     }
 
+    // for each particle type, determine offset of particle tags
+    std::vector<unsigned int> offset(particle_->ntype);
+    for (size_t i = 0, j = 0; i < particle_->ntype; j += particle_->ntypes[i], ++i) {
+        offset[i] = j;
+    }
+
     for (size_t i = 0; i < particle_->nbox; ++i) {
         unsigned int type = particle_->type[i];
         unsigned int tag = particle_->tag[i];
+        unsigned int index = tag - offset[type];
 
         // periodically extended particle position
         assert(type < sample_->r.size());
-        assert(tag < sample_->r[type]->size());
-        vector_type& r = (*sample_->r[type])[tag] = particle_->r[i];
+        assert(index < sample_->r[type]->size());
+        vector_type& r = (*sample_->r[type])[index] = particle_->r[i];
         box_->extend_periodic(r, particle_->image[i]);
 
         // particle velocity
         assert(type < sample_->v.size());
-        assert(tag < sample_->v[type]->size());
-        (*sample_->v[type])[tag] = particle_->v[i];
+        assert(index < sample_->v[type]->size());
+        (*sample_->v[type])[index] = particle_->v[i];
     }
     sample_->step = clock_->step();
 }

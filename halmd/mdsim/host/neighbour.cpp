@@ -154,10 +154,7 @@ void neighbour<dimension, float_type>::compute_cell_neighbours(size_t i, cell_li
 {
     BOOST_FOREACH(size_t j, c) {
         // skip identical particle and particle pair permutations if same cell
-        if (same_cell
-         && particle_->type[j] <= particle_->type[i] //< lexical order of (type, tag)
-         && particle_->tag[j] <= particle_->tag[i]
-        ) {
+        if (same_cell && particle_->tag[j] <= particle_->tag[i]) {
             continue;
         }
 
