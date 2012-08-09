@@ -1191,6 +1191,7 @@ HALMD_TARBALL_SHA256 = 20e4405c15e4848f76a4afd4b8d94c7aada1eddc05811ec74e6c59d31
 HALMD_SOURCE_DIR = halmd-$(HALMD_VERSION)
 HALMD_BUILD_DIR = $(HALMD_SOURCE_DIR)/build/release
 HALMD_INSTALL_DIR = $(PREFIX)/halmd-$(HALMD_VERSION)
+HALMD_BUILD_ENV = CUDACC="nvcc --compiler-bindir=/usr/bin"
 
 .fetch-halmd-$(HALMD_VERSION):
 	@$(RM) $(HALMD_TARBALL)
@@ -1209,7 +1210,7 @@ extract-halmd: .extract-halmd-$(HALMD_VERSION)
 
 .configure-halmd-$(HALMD_VERSION): .extract-halmd-$(HALMD_VERSION)
 	mkdir -p $(HALMD_BUILD_DIR)
-	cd $(HALMD_BUILD_DIR) && cmake -DCMAKE_INSTALL_PREFIX=$(HALMD_INSTALL_DIR) $(CURDIR)/$(HALMD_SOURCE_DIR)
+	cd $(HALMD_BUILD_DIR) && $(HALMD_BUILD_ENV) cmake -DCMAKE_INSTALL_PREFIX=$(HALMD_INSTALL_DIR) $(CURDIR)/$(HALMD_SOURCE_DIR)
 	@$(TOUCH) $@
 
 configure-halmd: .configure-halmd-$(HALMD_VERSION)
