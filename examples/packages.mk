@@ -240,11 +240,11 @@ env-luajit:
 ## Boost C++ libraries with Boost.Log
 ##
 
-BOOST_VERSION = 1.50.0
-BOOST_RELEASE = 1_50_0
+BOOST_VERSION = 1.51.0
+BOOST_RELEASE = 1_51_0
 BOOST_TARBALL = boost_$(BOOST_RELEASE).tar.bz2
 BOOST_TARBALL_URL = http://sourceforge.net/projects/boost/files/boost/$(BOOST_VERSION)/$(BOOST_TARBALL)
-BOOST_TARBALL_SHA256 = c9ace2b8c81fa6703d1d17c7e478de3bc51101c5adbdeb3f6cb72cf3045a8529
+BOOST_TARBALL_SHA256 = fb2d2335a29ee7fe040a197292bfce982af84a645c81688a915c84c925b69696
 BOOST_BUILD_DIR = boost_$(BOOST_RELEASE)
 BOOST_INSTALL_DIR = $(PREFIX)/boost_$(BOOST_RELEASE)
 BOOST_BUILD_FLAGS = threading=multi variant=release --layout=tagged toolset=gcc cxxflags="-fPIC -std=c++11" dll-path=$(BOOST_INSTALL_DIR)/lib
