@@ -209,7 +209,7 @@ fetch-luajit: .fetch-luajit-$(LUAJIT_VERSION)
 extract-luajit: .extract-luajit-$(LUAJIT_VERSION)
 
 .build-luajit-$(LUAJIT_VERSION): .extract-luajit-$(LUAJIT_VERSION)
-	cd $(LUAJIT_BUILD_DIR) && make CFLAGS=$(LUAJIT_CFLAGS) $(PARALLEL_BUILD_FLAGS)
+	cd $(LUAJIT_BUILD_DIR) && make amalg CFLAGS=$(LUAJIT_CFLAGS) $(PARALLEL_BUILD_FLAGS)
 	@$(TOUCH) $@
 
 build-luajit: .build-luajit-$(LUAJIT_VERSION)
