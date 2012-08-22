@@ -20,12 +20,13 @@
 #ifndef HALMD_UTILITY_POSIX_SIGNAL_HPP
 #define HALMD_UTILITY_POSIX_SIGNAL_HPP
 
-#include <boost/unordered_map.hpp>
-#include <csignal>
-#include <lua.hpp>
-#include <string>
-
 #include <halmd/utility/signal.hpp>
+
+#include <lua.hpp>
+
+#include <csignal>
+#include <string>
+#include <unordered_map>
 
 namespace halmd {
 
@@ -47,7 +48,7 @@ public:
     static void luaopen(lua_State* L);
 
 private:
-    typedef boost::unordered_map<int, handler_type> handler_map_type;
+    typedef std::unordered_map<int, handler_type> handler_map_type;
 
     static sigset_t block_signals();
     static sigset_t set_;
