@@ -22,9 +22,6 @@
 #define BOOST_TEST_MODULE function_calls
 #include <boost/test/unit_test.hpp>
 
-#include <boost/signals2.hpp>
-#include <iomanip> // setw
-
 #include <halmd/utility/scoped_timer.hpp>
 #include <halmd/utility/signal.hpp>
 #include <halmd/utility/timer.hpp>
@@ -35,6 +32,8 @@
 # include <test/tools/cuda.hpp>
 # include <test/performance/function_calls_extern_kernel.hpp>
 #endif
+
+#include <iomanip>
 
 /**
  * This test suite compares the invokation times of different methods of
@@ -245,46 +244,6 @@ BOOST_FIXTURE_TEST_CASE( luaponte_function, lua_test_fixture )
     scoped_timer<timer> timer(p);
     // benchmark
     LUA_CHECK( "local noop = noop for i = 1, " xstr(I1E7) " do noop(42.) end" );
-}
-
-/**
- * Measure boost::signals2 call
- */
-BOOST_AUTO_TEST_CASE( boost_signals2 )
-{
-    boost::signals2::signal<void (double)> sig;
-    sig.connect(bind_noop());
-    printer p("boost::signals2", I1E7);
-    // warm up
-    for (size_t i = 0; i < I1E7; ++i) {
-        sig(42.);
-    }
-    scoped_timer<timer> timer(p);
-    // benchmark
-    for (size_t i = 0; i < I1E7; ++i) {
-        sig(42.);
-    }
-}
-
-/**
- * Measure boost::signals2 call with 10 slots
- */
-BOOST_AUTO_TEST_CASE( boost_signals2_10 )
-{
-    boost::signals2::signal<void (double)> sig;
-    for (size_t i = 0; i < 10; ++i) {
-        sig.connect(bind_noop());
-    }
-    printer p("boost::signals2 (10 slots)", I1E6);
-    // warm up
-    for (size_t i = 0; i < I1E6; ++i) {
-        sig(42.);
-    }
-    scoped_timer<timer> timer(p);
-    // benchmark
-    for (size_t i = 0; i < I1E6; ++i) {
-        sig(42.);
-    }
 }
 
 BOOST_AUTO_TEST_SUITE_END() // host
