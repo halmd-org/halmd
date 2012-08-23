@@ -46,10 +46,10 @@ velocity<dimension, float_type>::velocity(
 template <int dimension, typename float_type>
 void velocity<dimension, float_type>::rescale(double factor)
 {
+    LOG("rescale particle velocities by a factor of " << factor);
     BOOST_FOREACH (vector_type& v, particle_->v) {
         v *= factor;
     }
-    LOG("velocities rescaled by factor " << factor);
 }
 
 /**
@@ -58,6 +58,7 @@ void velocity<dimension, float_type>::rescale(double factor)
 template <int dimension, typename float_type>
 void velocity<dimension, float_type>::shift(vector_type const& delta)
 {
+    LOG("shift particle velocities by (" << delta << ")");
     BOOST_FOREACH (vector_type& v, particle_->v) {
         v += delta;
     }
@@ -69,6 +70,7 @@ void velocity<dimension, float_type>::shift(vector_type const& delta)
 template <int dimension, typename float_type>
 void velocity<dimension, float_type>::shift_rescale(vector_type const& delta, double factor)
 {
+    LOG("shift particle velocities by (" << delta << ") and rescale by a factor of " << factor);
     BOOST_FOREACH (vector_type& v, particle_->v) {
         v += delta;
         v *= factor;

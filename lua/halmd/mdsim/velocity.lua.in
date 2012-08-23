@@ -19,6 +19,9 @@
 
 local module            = require("halmd.utility.module")
 local velocities        = require("halmd.mdsim.velocities")
+local mdsim = {
+    core                = require("halmd.mdsim.core")
+}
 
 -- grab C++ wrappers
 local h5 = libhalmd.h5
@@ -35,10 +38,30 @@ local M = module("halmd.mdsim.velocity")
 function M.__new(args)
     local velocity = args.velocity or "boltzmann" -- default value
     local reader = args.reader
+    local self
     if reader and not args.velocity then
-        return velocities.phase_space{sample = reader.velocity}
+        self = velocities.phase_space{sample = reader.velocity}
+    else
+        self = velocities[velocity]()
     end
-    return velocities[velocity]()
+
+    -- optional shifting and rescaling of velocities at setup
+    local rescale = args.rescale
+    local shift = args.shift
+    -- connect rescaling slot to core
+    local core = mdsim.core() -- singleton
+    if rescale and shift then
+        core:on_setup(self:shift_rescale(shift, rescale))
+    elseif rescale then
+        core:on_setup(self:rescale(rescale))
+    elseif shift then
+        core:on_setup(self:shift(shift))
+    end
+    -- store parameters as module property
+    self.rescale = property(function() return rescale end)
+    self.shift = property(function() return shift end)
+
+    return self
 end
 
 --
@@ -54,6 +77,8 @@ function M.options(desc, globals)
     }
 
     globals:add("velocity", po.string():choices(choices), "select initial particle velocities module")
+    desc:add("rescale", po.float(), "rescale initial velocities by this factor")
+    desc:add("shift", po.float_array(), "shift initial velocities by this vector")
 end
 
 --
@@ -65,6 +90,13 @@ end
 function M.write_parameters(self, group, globals)
     if self.module ~= velocities.phase_space then
         globals:write_attribute("velocity", h5.string(), self.module.namespace)
+    end
+
+    if self.rescale then
+        group:write_attribute("rescale", h5.float(), self.rescale)
+    end
+    if self.shift then
+        group:write_attribute("shift", h5.float_array(), self.shift)
     end
 end
 

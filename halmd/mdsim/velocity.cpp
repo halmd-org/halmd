@@ -36,6 +36,27 @@ wrap_set(shared_ptr<velocity> self)
     return bind(&velocity::set, self);
 }
 
+template <typename velocity>
+typename signal<void ()>::slot_function_type
+wrap_rescale(shared_ptr<velocity> self, double factor)
+{
+    return bind(&velocity::rescale, self, factor);
+}
+
+template <typename velocity>
+typename signal<void ()>::slot_function_type
+wrap_shift(shared_ptr<velocity> self, typename velocity::vector_type const& delta)
+{
+    return bind(&velocity::shift, self, delta);
+}
+
+template <typename velocity>
+typename signal<void ()>::slot_function_type
+wrap_shift_rescale(shared_ptr<velocity> self, typename velocity::vector_type const& delta, double factor)
+{
+    return bind(&velocity::shift_rescale, self, delta, factor);
+}
+
 template <int dimension>
 void velocity<dimension>::luaopen(lua_State* L)
 {
@@ -47,6 +68,9 @@ void velocity<dimension>::luaopen(lua_State* L)
         [
             class_<velocity, shared_ptr<velocity> >(class_name.c_str())
                 .property("set", &wrap_set<velocity>)
+                .def("rescale", &wrap_rescale<velocity>)
+                .def("shift", &wrap_shift<velocity>)
+                .def("shift_rescale", &wrap_shift_rescale<velocity>)
         ]
     ];
 }
