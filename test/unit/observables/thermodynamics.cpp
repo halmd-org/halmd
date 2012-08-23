@@ -233,7 +233,9 @@ void lennard_jones_fluid<modules_type>::test()
     // microcanonical simulation run
     BOOST_TEST_MESSAGE("run NVE simulation");
     steps = static_cast<unsigned int>(ceil(60 / nve_integrator->timestep()));
-    period = static_cast<unsigned int>(round(0.32 / nve_integrator->timestep())); // relaxation time (from VACF)
+    period = static_cast<unsigned int>(round(
+        ((dimension == 3) ? 0.32 : 0.45) / nve_integrator->timestep()
+    )); // relaxation time (from VACF)
     for (unsigned int i = 0; i < steps; ++i) {
         // perform MD step
         core->mdstep();
@@ -259,37 +261,58 @@ void lennard_jones_fluid<modules_type>::test()
     BOOST_CHECK_CLOSE_FRACTION(temp, mean(temp_), 4.5 * error_of_mean(temp_));
     BOOST_CHECK_CLOSE_FRACTION(density, (float)thermodynamics->density(), eps_float);
 
+    // compute response coefficients from fluctuations
+    double cV = heat_capacity_nve(mean(temp_), variance(temp_), npart);
+    double chi_S = adiabatic_compressibility_nve<dimension>(
+        mean(press), variance(press), mean(hypervir), mean(temp_), density, npart
+    );
+
+    // long-tail corrections for trunctated LJ potential,
+    // see e.g. book by Allen & Tildesley or Johnsen et al. (1993)
+    //
+    // \f$ U_\mathrm{corr} = 0.5 \rho S_d \int_{r_c}^\infty r^{d-1} U(r) dr \f$
+    // where \f$ S_d \f$ denotes the surface of the unit sphere
+    double en_corr = (dimension == 3) ?
+        8./9 * M_PI * density * (pow(rc, -6) - 3) * pow(rc, -3)
+      : 2./5 * M_PI * density * (pow(rc, -6) - 2.5) * pow(rc, -4);
+
+    // \f$ P_\mathrm{corr} = - \rho^2 S_d / (2 * d) \int_{r_c}^\infty r^{d-1} r U'(r) dr \f$
+    // where \f$ S_d \f$ denotes the surface of the unit sphere
+    double press_corr = (dimension == 3) ?
+        32./9 * M_PI * pow(density, 2) * (pow(rc, -6) - 1.5) * pow(rc, -3)
+      : 12./5 * M_PI * pow(density, 2) * (pow(rc, -6) - 1.25) * pow(rc, -4);
+
+    BOOST_TEST_MESSAGE("Density: " << density);
+    BOOST_TEST_MESSAGE("Temperature: " << mean(temp_) << " ± " << error_of_mean(temp_));
+    BOOST_TEST_MESSAGE("Pressure: " << mean(press) << " ± " << error_of_mean(press));
+    BOOST_TEST_MESSAGE("Pressure (corrected): " << mean(press) + press_corr);
+    BOOST_TEST_MESSAGE("Potential energy: " << mean(en_pot) << " ± " << error_of_mean(en_pot));
+    BOOST_TEST_MESSAGE("Potential energy (corrected): " << mean(en_pot) + en_corr);
+    BOOST_TEST_MESSAGE("β P / ρ = " << mean(press) / mean(temp_) / density);
+    BOOST_TEST_MESSAGE("β U / N = " << mean(en_pot) / mean(temp_));
+    BOOST_TEST_MESSAGE("Heat capacity c_V = " << cV);
+    BOOST_TEST_MESSAGE("Adiabatic compressibility χ_S = " << chi_S);
+
+    // tolerances are 4.5σ, where σ is taken empirically as the error of mean,
+    // with this choice, the test should pass with 99.999% probability
     if (dimension == 3) {
-        double cV = heat_capacity_nve(mean(temp_), variance(temp_), npart);
-        double chi_S = adiabatic_compressibility_nve<dimension>(
-            mean(press), variance(press), mean(hypervir), mean(temp_), density, npart
-        );
-
-        // corrections for trunctated LJ potential, see e.g. Johnsen et al. (1993)
-        double press_corr = 32./9 * M_PI * pow(density, 2) * (pow(rc, -6) - 1.5) * pow(rc, -3);
-        double en_corr = 8./9 * M_PI * density * (pow(rc, -6) - 3) * pow(rc, -3);
-
-        BOOST_TEST_MESSAGE("Density: " << density);
-        BOOST_TEST_MESSAGE("Temperature: " << mean(temp_) << " ± " << error_of_mean(temp_));
-        BOOST_TEST_MESSAGE("Pressure: " << mean(press) << " ± " << error_of_mean(press));
-        BOOST_TEST_MESSAGE("Pressure (corrected): " << mean(press) + press_corr);
-        BOOST_TEST_MESSAGE("Potential energy: " << mean(en_pot) << " ± " << error_of_mean(en_pot));
-        BOOST_TEST_MESSAGE("Potential energy (corrected): " << mean(en_pot) + en_corr);
-        BOOST_TEST_MESSAGE("β P / ρ = " << mean(press) / mean(temp_) / density);
-        BOOST_TEST_MESSAGE("β U / N = " << mean(en_pot) / mean(temp_));
-        BOOST_TEST_MESSAGE("Heat capacity c_V = " << cV);
-        BOOST_TEST_MESSAGE("Adiabatic compressibility χ_S = " << chi_S);
         // values from Johnson et al.: P = 1.023, Epot = -1.673  (Npart = 864)
         // values from RFA theory (Ayadim et al.): P = 1.0245, Epot = -1.6717
-        // (allow larger tolerance for the host simulation with fewer particles)
-        //
-        // tolerances are 4.5σ, where σ is taken empirically as the error of mean,
-        // with this choice, the test should pass with 99.999% probability
         BOOST_CHECK_CLOSE_FRACTION(mean(press), 1.023, 4.5 * error_of_mean(press));
         BOOST_CHECK_CLOSE_FRACTION(mean(en_pot), -1.673, 4.5 * error_of_mean(en_pot));
         // our own measurements using HAL's MD package FIXME find reference values
-        BOOST_CHECK_CLOSE_FRACTION(cV, 1.648, gpu ? 1e-2 : 3e-2);
-        BOOST_CHECK_CLOSE_FRACTION(chi_S, 0.35, 0.2);
+        // (allow larger tolerance for the host simulation with fewer particles)
+        BOOST_CHECK_CLOSE_FRACTION(cV, 1.648, gpu ? 3e-2 : 5e-2);
+        BOOST_CHECK_CLOSE_FRACTION(chi_S, 0.35, 0.5);  // tolerance of 50% (sic!)
+    }
+    else if (dimension == 2) {
+        // our own measurements using HAL's MD package FIXME find reference values
+        BOOST_CHECK_CLOSE_FRACTION(mean(press), 1.24, .01 + 4.5 * error_of_mean(press));
+        BOOST_CHECK_CLOSE_FRACTION(mean(en_pot), -0.59, .01 + 4.5 * error_of_mean(en_pot));
+        BOOST_CHECK_CLOSE_FRACTION(cV, 1.7, gpu ? 5e-2 : 1e-1);
+        // measurement of the compressibility via the hypervirial yields really
+        // crappy results, thus we choose a tolerance of 80%
+        BOOST_CHECK_CLOSE_FRACTION(chi_S, 0.26, 0.8);
     }
 }
 
