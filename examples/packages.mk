@@ -1236,7 +1236,7 @@ distclean-halmd: clean-halmd
 
 env-halmd:
 	@echo
-	@echo '# add CMake $(HALMD_VERSION) to environment'
+	@echo '# add HALMD $(HALMD_VERSION) to environment'
 	@echo 'export PATH="$(HALMD_INSTALL_DIR)/bin$${PATH+:$$PATH}"'
 	@echo 'export MANPATH="$(HALMD_INSTALL_DIR)/share/man$${MANPATH+:$$MANPATH}"'
 
@@ -1285,7 +1285,7 @@ distclean-nvcuda-tools: clean-nvcuda-tools
 
 env-nvcuda-tools:
 	@echo
-	@echo '# add CMake $(NVCUDA_TOOLS_VERSION) to environment'
+	@echo '# add nvCUDA-tools $(NVCUDA_TOOLS_VERSION) to environment'
 	@echo 'export PATH="$(NVCUDA_TOOLS_INSTALL_DIR)/bin$${PATH+:$$PATH}"'
 
 ##
