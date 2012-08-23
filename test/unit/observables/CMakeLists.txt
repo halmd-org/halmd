@@ -93,12 +93,13 @@ add_executable(test_unit_observables_phase_space
 )
 if(HALMD_WITH_GPU)
   target_link_libraries(test_unit_observables_phase_space
+    halmd_algorithm_gpu
     halmd_mdsim_gpu_particle_groups
     halmd_mdsim_gpu_positions
     halmd_mdsim_gpu_velocities
     halmd_mdsim_gpu
     halmd_observables_gpu
-    halmd_algorithm_gpu
+    halmd_random_gpu
     halmd_utility_gpu
   )
 endif()
@@ -109,6 +110,7 @@ target_link_libraries(test_unit_observables_phase_space
   halmd_mdsim_host
   halmd_mdsim
   halmd_observables_host
+  halmd_random_host
   ${HALMD_TEST_LIBRARIES}
 )
 add_test(unit/observables/phase_space/host/2d

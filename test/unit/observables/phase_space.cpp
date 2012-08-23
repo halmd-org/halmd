@@ -1,5 +1,5 @@
 /*
- * Copyright © 2011  Felix Höfling
+ * Copyright © 2011-2012 Felix Höfling
  *
  * This file is part of HALMD.
  *
@@ -23,8 +23,6 @@
 #include <boost/test/unit_test.hpp>
 
 #include <algorithm>
-#include <boost/assign.hpp>
-#include <boost/foreach.hpp>
 #include <boost/numeric/ublas/banded.hpp>
 #include <limits>
 #include <numeric>
@@ -36,20 +34,19 @@
 #include <halmd/numeric/accumulator.hpp>
 #include <halmd/observables/host/phase_space.hpp>
 #include <halmd/observables/host/samples/phase_space.hpp>
+#include <halmd/random/host/random.hpp>
 #ifdef HALMD_WITH_GPU
 # include <cuda_wrapper/cuda_wrapper.hpp>
 # include <halmd/mdsim/gpu/particle.hpp>
 # include <halmd/mdsim/gpu/particle_groups/all.hpp>
 # include <halmd/observables/gpu/phase_space.hpp>
 # include <halmd/observables/gpu/samples/phase_space.hpp>
+# include <halmd/random/gpu/random.hpp>
 # include <halmd/utility/gpu/device.hpp>
 #endif
 #include <test/tools/ctest.hpp>
 
-using namespace boost;
-using namespace boost::assign; // list_of
 using namespace halmd;
-using namespace std;
 
 /**
  * test acquisition of phase space samples
@@ -98,6 +95,43 @@ copy_sample(std::shared_ptr<observables::host::samples::phase_space<dimension, f
     return sample;
 }
 
+/**
+ * randomly shuffle particle arrays
+ */
+#ifdef HALMD_WITH_GPU
+template <typename particle_type, typename rng_type>
+void shuffle(
+    std::shared_ptr<particle_type> particle
+  , std::shared_ptr<halmd::random::gpu::random<rng_type> > random
+)
+{
+    // generate random permutation
+    cuda::vector<unsigned int> g_index(particle->nparticle());
+    cuda::host::vector<unsigned int> h_index(g_index.size());
+    std::iota(h_index.begin(), h_index.end(), 0);
+    cuda::copy(h_index.begin(), h_index.end(), g_index.begin());
+    random->shuffle(g_index);
+
+    // shuffle particles
+    particle->rearrange(g_index);
+}
+#endif
+
+template <typename particle_type>
+void shuffle(
+    std::shared_ptr<particle_type> particle
+  , std::shared_ptr<halmd::random::host::random> random
+)
+{
+    // generate random permutation
+    std::vector<unsigned int> index(particle->nparticle());
+    std::iota(index.begin(), index.end(), 0);
+    random->shuffle(index.begin(), index.end());
+
+    // shuffle particles
+    particle->rearrange(index);
+}
+
 template <typename modules_type>
 struct phase_space
 {
@@ -108,6 +142,7 @@ struct phase_space
     typedef typename input_phase_space_type::sample_type input_sample_type;
     typedef typename modules_type::output_phase_space_type output_phase_space_type;
     typedef typename output_phase_space_type::sample_type output_sample_type;
+    typedef typename modules_type::random_type random_type;
     static bool const gpu = modules_type::gpu;
 
     typedef mdsim::clock clock_type;
@@ -115,12 +150,13 @@ struct phase_space
     typedef typename vector_type::value_type float_type;
     enum { dimension = vector_type::static_size };
 
-    vector<unsigned int> npart;
+    std::vector<unsigned int> npart;
 
     std::shared_ptr<box_type> box;
     std::shared_ptr<clock_type> clock;
     std::shared_ptr<particle_type> particle;
     std::shared_ptr<input_sample_type> input_sample;
+    std::shared_ptr<random_type> random;
 
     void test();
     phase_space();
@@ -129,7 +165,7 @@ struct phase_space
 template <typename modules_type>
 void phase_space<modules_type>::test()
 {
-    float_type const epsilon = numeric_limits<float_type>::epsilon();
+    float_type const epsilon = std::numeric_limits<float_type>::epsilon();
 
     typename input_sample_type::position_array_type& input_position = input_sample->position();
     typename input_sample_type::velocity_array_type& input_velocity = input_sample->velocity();
@@ -157,8 +193,11 @@ void phase_space<modules_type>::test()
     std::shared_ptr<particle_group_type> particle_group = std::make_shared<particle_group_type>(particle);
     input_phase_space_type(particle, particle_group, box, clock).set(input_sample);
 
-    // randomly permute particles in memory
-    // TODO
+    // randomly permute particles in memory, do it three times since permutations are
+    // not commutative
+    shuffle(particle, random);
+    shuffle(particle, random);
+    shuffle(particle, random);
 
     // acquire sample from particle, construct temporary sampler module
     clock->set_timestep(0); // bogus time-step
@@ -219,6 +258,7 @@ phase_space<modules_type>::phase_space()
     box = std::make_shared<box_type>(edges);
     input_sample = std::make_shared<input_sample_type>(particle->nparticle());
     clock = std::make_shared<clock_type>();
+    random = std::make_shared<random_type>();
 }
 
 template <int dimension, typename float_type>
@@ -229,6 +269,7 @@ struct host_modules
     typedef mdsim::host::particle_groups::all<particle_type> particle_group_type;
     typedef observables::host::phase_space<dimension, float_type> input_phase_space_type;
     typedef input_phase_space_type output_phase_space_type;
+    typedef halmd::random::host::random random_type;
     static bool const gpu = false;
 };
 
@@ -248,6 +289,7 @@ struct gpu_host_modules
     typedef mdsim::gpu::particle_groups::all<particle_type> particle_group_type;
     typedef observables::gpu::phase_space<observables::host::samples::phase_space<dimension, float_type> > input_phase_space_type;
     typedef input_phase_space_type output_phase_space_type;
+    typedef halmd::random::gpu::random<halmd::random::gpu::rand48> random_type;
     static bool const gpu = true;
 };
 
@@ -259,6 +301,7 @@ struct gpu_gpu_modules
     typedef mdsim::gpu::particle_groups::all<particle_type> particle_group_type;
     typedef observables::gpu::phase_space<observables::host::samples::phase_space<dimension, float_type> > input_phase_space_type;
     typedef observables::gpu::phase_space<observables::gpu::samples::phase_space<dimension, float_type> > output_phase_space_type;
+    typedef halmd::random::gpu::random<halmd::random::gpu::rand48> random_type;
     static bool const gpu = true;
 };
 
