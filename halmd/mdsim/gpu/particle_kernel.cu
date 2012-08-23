@@ -43,14 +43,6 @@ static texture<float4> v_;
 static texture<unsigned int> tag_;
 
 /**
- * generate ascending index sequence
- */
-__global__ void gen_index(unsigned int* g_index)
-{
-    g_index[GTID] = (GTID < nbox_) ? GTID : 0;
-}
-
-/**
  * rearrange particles by a given permutation
  */
 template <typename vector_type, typename aligned_vector_type>
@@ -66,26 +58,19 @@ __global__ void rearrange(
 
     int const i = g_index[GTID];
 
-    // copy position including type, and image vector
+    // copy position and velocity as float4 values, and image vector
     g_r[GTID] = tex1Dfetch(r_, i);
+    g_v[GTID] = tex1Dfetch(v_, i);
 #ifdef USE_VERLET_DSFUN
     g_r[GTID + GTDIM] = tex1Dfetch(r_, i + GTDIM);
+    g_v[GTID + GTDIM] = tex1Dfetch(v_, i + GTDIM);
 #endif
+
+    // copy image vector with its type depending on the space dimension
     g_image[GTID] = tex1Dfetch(reinterpret_cast<texture<aligned_vector_type>&>(image_), i);
 
-    // copy velocity, but split off tag and store separately
-    {
-        vector_type v;
-        float mass;
-#ifdef USE_VERLET_DSFUN
-        tie(v, mass) <<= make_tuple(tex1Dfetch(v_, i), tex1Dfetch(v_, i + GTDIM));
-        tie(g_v[GTID], g_v[GTID + GTDIM]) <<= tie(v, mass);
-#else
-        tie(v, mass) <<= tex1Dfetch(v_, i);
-        g_v[GTID] <<= tie(v, mass);
-#endif
-        g_tag[GTID] = tex1Dfetch(tag_, i);
-    }
+    // copy particle tags
+    g_tag[GTID] = tex1Dfetch(tag_, i);
 }
 
 } // namespace particle_kernel
@@ -99,7 +84,6 @@ particle_wrapper<dimension> const particle_wrapper<dimension>::kernel = {
   , particle_kernel::image_
   , particle_kernel::v_
   , particle_kernel::tag_
-  , particle_kernel::gen_index
 #ifdef USE_VERLET_DSFUN
   , particle_kernel::rearrange<fixed_vector<dsfloat, dimension> >
 #else

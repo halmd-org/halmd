@@ -45,8 +45,6 @@ struct particle_wrapper
     cuda::texture<float4> v;
     /** tags */
     cuda::texture<unsigned int> tag;
-    /** generate ascending index sequence */
-    cuda::function<void (unsigned int*)> gen_index;
     /** rearrange particles by a given permutation */
     cuda::function<void (unsigned int const*, float4*, aligned_vector_type*, float4*, unsigned int*)> rearrange;
     static particle_wrapper const kernel;
