@@ -46,8 +46,6 @@
 #endif
 #include <test/tools/ctest.hpp>
 
-using namespace halmd;
-
 /**
  * test acquisition of phase space samples
  */
@@ -57,11 +55,11 @@ using namespace halmd;
  */
 #ifdef HALMD_WITH_GPU
 template <int dimension, typename float_type>
-std::shared_ptr<observables::host::samples::phase_space<dimension, float_type> const>
-copy_sample(std::shared_ptr<observables::gpu::samples::phase_space<dimension, float_type> const> sample)
+std::shared_ptr<halmd::observables::host::samples::phase_space<dimension, float_type> const>
+copy_sample(std::shared_ptr<halmd::observables::gpu::samples::phase_space<dimension, float_type> const> sample)
 {
-    typedef observables::host::samples::phase_space<dimension, float_type> host_sample_type;
-    typedef observables::gpu::samples::phase_space<dimension, float_type> gpu_sample_type;
+    typedef halmd::observables::host::samples::phase_space<dimension, float_type> host_sample_type;
+    typedef halmd::observables::gpu::samples::phase_space<dimension, float_type> gpu_sample_type;
     typedef typename gpu_sample_type::position_array_type::value_type gpu_vector_type;
     typedef typename host_sample_type::position_array_type::value_type vector_type;
 
@@ -89,8 +87,8 @@ copy_sample(std::shared_ptr<observables::gpu::samples::phase_space<dimension, fl
 
 
 template <int dimension, typename float_type>
-std::shared_ptr<observables::host::samples::phase_space<dimension, float_type> const>
-copy_sample(std::shared_ptr<observables::host::samples::phase_space<dimension, float_type> const> sample)
+std::shared_ptr<halmd::observables::host::samples::phase_space<dimension, float_type> const>
+copy_sample(std::shared_ptr<halmd::observables::host::samples::phase_space<dimension, float_type> const> sample)
 {
     return sample;
 }
@@ -145,7 +143,7 @@ struct phase_space
     typedef typename modules_type::random_type random_type;
     static bool const gpu = modules_type::gpu;
 
-    typedef mdsim::clock clock_type;
+    typedef halmd::mdsim::clock clock_type;
     typedef typename particle_type::vector_type vector_type;
     typedef typename vector_type::value_type float_type;
     enum { dimension = vector_type::static_size };
@@ -264,10 +262,10 @@ phase_space<modules_type>::phase_space()
 template <int dimension, typename float_type>
 struct host_modules
 {
-    typedef mdsim::box<dimension> box_type;
-    typedef mdsim::host::particle<dimension, float_type> particle_type;
-    typedef mdsim::host::particle_groups::all<particle_type> particle_group_type;
-    typedef observables::host::phase_space<dimension, float_type> input_phase_space_type;
+    typedef halmd::mdsim::box<dimension> box_type;
+    typedef halmd::mdsim::host::particle<dimension, float_type> particle_type;
+    typedef halmd::mdsim::host::particle_groups::all<particle_type> particle_group_type;
+    typedef halmd::observables::host::phase_space<dimension, float_type> input_phase_space_type;
     typedef input_phase_space_type output_phase_space_type;
     typedef halmd::random::host::random random_type;
     static bool const gpu = false;
@@ -284,10 +282,10 @@ BOOST_AUTO_TEST_CASE( phase_space_host_3d ) {
 template <int dimension, typename float_type>
 struct gpu_host_modules
 {
-    typedef mdsim::box<dimension> box_type;
-    typedef mdsim::gpu::particle<dimension, float_type> particle_type;
-    typedef mdsim::gpu::particle_groups::all<particle_type> particle_group_type;
-    typedef observables::gpu::phase_space<observables::host::samples::phase_space<dimension, float_type> > input_phase_space_type;
+    typedef halmd::mdsim::box<dimension> box_type;
+    typedef halmd::mdsim::gpu::particle<dimension, float_type> particle_type;
+    typedef halmd::mdsim::gpu::particle_groups::all<particle_type> particle_group_type;
+    typedef halmd::observables::gpu::phase_space<halmd::observables::host::samples::phase_space<dimension, float_type> > input_phase_space_type;
     typedef input_phase_space_type output_phase_space_type;
     typedef halmd::random::gpu::random<halmd::random::gpu::rand48> random_type;
     static bool const gpu = true;
@@ -296,25 +294,25 @@ struct gpu_host_modules
 template <int dimension, typename float_type>
 struct gpu_gpu_modules
 {
-    typedef mdsim::box<dimension> box_type;
-    typedef mdsim::gpu::particle<dimension, float_type> particle_type;
-    typedef mdsim::gpu::particle_groups::all<particle_type> particle_group_type;
-    typedef observables::gpu::phase_space<observables::host::samples::phase_space<dimension, float_type> > input_phase_space_type;
-    typedef observables::gpu::phase_space<observables::gpu::samples::phase_space<dimension, float_type> > output_phase_space_type;
+    typedef halmd::mdsim::box<dimension> box_type;
+    typedef halmd::mdsim::gpu::particle<dimension, float_type> particle_type;
+    typedef halmd::mdsim::gpu::particle_groups::all<particle_type> particle_group_type;
+    typedef halmd::observables::gpu::phase_space<halmd::observables::host::samples::phase_space<dimension, float_type> > input_phase_space_type;
+    typedef halmd::observables::gpu::phase_space<halmd::observables::gpu::samples::phase_space<dimension, float_type> > output_phase_space_type;
     typedef halmd::random::gpu::random<halmd::random::gpu::rand48> random_type;
     static bool const gpu = true;
 };
 
-BOOST_FIXTURE_TEST_CASE( phase_space_gpu_host_2d, device ) {
+BOOST_FIXTURE_TEST_CASE( phase_space_gpu_host_2d, halmd::device ) {
     phase_space<gpu_host_modules<2, float> >().test();
 }
-BOOST_FIXTURE_TEST_CASE( phase_space_gpu_host_3d, device ) {
+BOOST_FIXTURE_TEST_CASE( phase_space_gpu_host_3d, halmd::device ) {
     phase_space<gpu_host_modules<3, float> >().test();
 }
-BOOST_FIXTURE_TEST_CASE( phase_space_gpu_gpu_2d, device ) {
+BOOST_FIXTURE_TEST_CASE( phase_space_gpu_gpu_2d, halmd::device ) {
     phase_space<gpu_gpu_modules<2, float> >().test();
 }
-BOOST_FIXTURE_TEST_CASE( phase_space_gpu_gpu_3d, device ) {
+BOOST_FIXTURE_TEST_CASE( phase_space_gpu_gpu_3d, halmd::device ) {
     phase_space<gpu_gpu_modules<3, float> >().test();
 }
 #endif // HALMD_WITH_GPU
