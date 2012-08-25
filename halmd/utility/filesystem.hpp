@@ -44,8 +44,13 @@ inline std::string absolute_path(std::string const& path)
  */
 inline bool contains_path(boost::filesystem::path const& p1, boost::filesystem::path const& p2)
 {
+#if defined(BOOST_FILESYSTEM_VERSION) && BOOST_FILESYSTEM_VERSION >= 3
     assert( p1.is_absolute() );
     assert( p2.is_absolute() );
+#else
+    assert( p1.is_complete() );
+    assert( p2.is_complete() );
+#endif
     boost::filesystem::path p(p2);
     while (!p.empty()) {
         if (boost::filesystem::equivalent(p1, p)) {
