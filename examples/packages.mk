@@ -216,9 +216,7 @@ build-luajit: .build-luajit-$(LUAJIT_VERSION)
 
 install-luajit: .build-luajit-$(LUAJIT_VERSION)
 	cd $(LUAJIT_BUILD_DIR) && make install PREFIX=$(LUAJIT_INSTALL_DIR)
-	ln -sf luajit-$(LUAJIT_VERSION) $(LUAJIT_INSTALL_DIR)/bin/lua
-	ln -sf libluajit-5.1.a $(LUAJIT_INSTALL_DIR)/lib/liblua.a
-	ln -sf luajit-2.0 $(LUAJIT_INSTALL_DIR)/include/lua
+	ln -sf luajit-$(LUAJIT_VERSION) $(LUAJIT_INSTALL_DIR)/bin/luajit
 
 clean-luajit:
 	@$(RM) .build-luajit-$(LUAJIT_VERSION)
