@@ -185,47 +185,37 @@ env-lua:
 ## LuaJIT
 ##
 
-LUAJIT_VERSION = 2.0.0-beta10
-LUAJIT_TARBALL = LuaJIT-$(LUAJIT_VERSION).tar.gz
-LUAJIT_TARBALL_URL = http://luajit.org/download/$(LUAJIT_TARBALL)
-LUAJIT_TARBALL_SHA256 = 750e9317ca2c61fa17e739abc582c55c1fe69749ba65442dfd7f04ce20cf9ff6
+LUAJIT_VERSION = 2.0.0-beta10-146-g751cd9d
+LUAJIT_GIT_URL = http://luajit.org/git/luajit-2.0.git
 LUAJIT_BUILD_DIR = LuaJIT-$(LUAJIT_VERSION)
 LUAJIT_INSTALL_DIR = $(PREFIX)/luajit-$(LUAJIT_VERSION)
 LUAJIT_CFLAGS = -fPIC -DLUAJIT_ENABLE_LUA52COMPAT -DLUAJIT_CPU_SSE2
 
 .fetch-luajit-$(LUAJIT_VERSION):
-	@$(RM) $(LUAJIT_TARBALL)
-	$(WGET) $(LUAJIT_TARBALL_URL)
-	@echo '$(LUAJIT_TARBALL_SHA256)  $(LUAJIT_TARBALL)' | $(SHA256SUM)
+	@$(RM) $(LUAJIT_BUILD_DIR)
+	$(GIT) clone $(LUAJIT_GIT_URL) $(LUAJIT_BUILD_DIR)
+	cd $(LUAJIT_BUILD_DIR) && $(GIT) checkout v$(LUAJIT_VERSION)
 	@$(TOUCH) $@
 
 fetch-luajit: .fetch-luajit-$(LUAJIT_VERSION)
 
-.extract-luajit-$(LUAJIT_VERSION): .fetch-luajit-$(LUAJIT_VERSION)
-	$(RM) $(LUAJIT_BUILD_DIR)
-	$(TAR) -xzf $(LUAJIT_TARBALL)
-	@$(TOUCH) $@
-
-extract-luajit: .extract-luajit-$(LUAJIT_VERSION)
-
-.build-luajit-$(LUAJIT_VERSION): .extract-luajit-$(LUAJIT_VERSION)
-	cd $(LUAJIT_BUILD_DIR) && make amalg "CFLAGS=$(LUAJIT_CFLAGS)" $(PARALLEL_BUILD_FLAGS)
+.build-luajit-$(LUAJIT_VERSION): .fetch-luajit-$(LUAJIT_VERSION)
+	cd $(LUAJIT_BUILD_DIR) && make amalg "CFLAGS=$(LUAJIT_CFLAGS)" "VERSION=$(LUAJIT_VERSION)" $(PARALLEL_BUILD_FLAGS)
 	@$(TOUCH) $@
 
 build-luajit: .build-luajit-$(LUAJIT_VERSION)
 
 install-luajit: .build-luajit-$(LUAJIT_VERSION)
-	cd $(LUAJIT_BUILD_DIR) && make install "PREFIX=$(LUAJIT_INSTALL_DIR)"
+	cd $(LUAJIT_BUILD_DIR) && make install "PREFIX=$(LUAJIT_INSTALL_DIR)" "VERSION=$(LUAJIT_VERSION)"
 	ln -sf luajit-$(LUAJIT_VERSION) $(LUAJIT_INSTALL_DIR)/bin/luajit
 
 clean-luajit:
 	@$(RM) .build-luajit-$(LUAJIT_VERSION)
-	@$(RM) .extract-luajit-$(LUAJIT_VERSION)
-	$(RM) $(LUAJIT_BUILD_DIR)
+	cd $(LUAJIT_BUILD_DIR) && make clean
 
 distclean-luajit: clean-luajit
 	@$(RM) .fetch-luajit-$(LUAJIT_VERSION)
-	$(RM) $(LUAJIT_TARBALL)
+	$(RM) $(LUAJIT_BUILD_DIR)
 
 env-luajit:
 	@echo
