@@ -266,12 +266,7 @@ wrap_get_tag(std::shared_ptr<particle_type const> self)
     return [=]() -> std::vector<typename particle_type::tag_type> {
         std::vector<typename particle_type::tag_type> output;
         output.reserve(self->nparticle());
-        get_tag(
-            *self
-          , boost::make_function_output_iterator([&](typename particle_type::tag_type t) {
-                output.push_back(t + 1);
-            })
-        );
+        get_tag(*self, back_inserter(output));
         return std::move(output);
     };
 }
@@ -289,10 +284,10 @@ wrap_set_tag(std::shared_ptr<particle_type> self)
         set_tag(
             *self
           , boost::make_transform_iterator(input.begin(), [&](tag_type t) -> tag_type {
-                if (t < 1 || t > nparticle) {
+                if (t >= nparticle) {
                     throw std::invalid_argument("invalid particle tag");
                 }
-                return t - 1;
+                return t;
             })
         );
     };
@@ -306,12 +301,7 @@ wrap_get_reverse_tag(std::shared_ptr<particle_type const> self)
     return [=]() -> std::vector<reverse_tag_type> {
         std::vector<typename particle_type::reverse_tag_type> output;
         output.reserve(self->nparticle());
-        get_reverse_tag(
-            *self
-          , boost::make_function_output_iterator([&](reverse_tag_type i) {
-                output.push_back(i + 1);
-            })
-        );
+        get_reverse_tag(*self, back_inserter(output));
         return std::move(output);
     };
 }
@@ -329,10 +319,10 @@ wrap_set_reverse_tag(std::shared_ptr<particle_type> self)
         set_reverse_tag(
             *self
           , boost::make_transform_iterator(input.begin(), [&](reverse_tag_type i) -> reverse_tag_type {
-                if (i < 1 || i > nparticle) {
+                if (i >= nparticle) {
                     throw std::invalid_argument("invalid particle reverse tag");
                 }
-                return i - 1;
+                return i;
             })
         );
     };
@@ -346,12 +336,7 @@ wrap_get_species(std::shared_ptr<particle_type const> self)
     return [=]() -> std::vector<species_type> {
         std::vector<species_type> output;
         output.reserve(self->nparticle());
-        get_species(
-            *self
-          , boost::make_function_output_iterator([&](typename particle_type::species_type s) {
-                output.push_back(s + 1);
-            })
-        );
+        get_species(*self, back_inserter(output));
         return std::move(output);
     };
 }
@@ -369,10 +354,10 @@ wrap_set_species(std::shared_ptr<particle_type> self)
         set_species(
             *self
           , boost::make_transform_iterator(input.begin(), [&](species_type s) -> species_type {
-                if (s < 1 || s > nspecies) {
+                if (s >= nspecies) {
                     throw std::invalid_argument("invalid particle species");
                 }
-                return s - 1;
+                return s;
             })
         );
     };
