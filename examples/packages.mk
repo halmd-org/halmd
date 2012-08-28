@@ -191,7 +191,7 @@ LUAJIT_TARBALL_URL = http://luajit.org/download/$(LUAJIT_TARBALL)
 LUAJIT_TARBALL_SHA256 = 750e9317ca2c61fa17e739abc582c55c1fe69749ba65442dfd7f04ce20cf9ff6
 LUAJIT_BUILD_DIR = LuaJIT-$(LUAJIT_VERSION)
 LUAJIT_INSTALL_DIR = $(PREFIX)/luajit-$(LUAJIT_VERSION)
-LUAJIT_CFLAGS = -fPIC
+LUAJIT_CFLAGS = -fPIC -DLUAJIT_ENABLE_LUA52COMPAT
 
 .fetch-luajit-$(LUAJIT_VERSION):
 	@$(RM) $(LUAJIT_TARBALL)
@@ -209,7 +209,7 @@ fetch-luajit: .fetch-luajit-$(LUAJIT_VERSION)
 extract-luajit: .extract-luajit-$(LUAJIT_VERSION)
 
 .build-luajit-$(LUAJIT_VERSION): .extract-luajit-$(LUAJIT_VERSION)
-	cd $(LUAJIT_BUILD_DIR) && make amalg CFLAGS=$(LUAJIT_CFLAGS) $(PARALLEL_BUILD_FLAGS)
+	cd $(LUAJIT_BUILD_DIR) && make amalg "CFLAGS=$(LUAJIT_CFLAGS)" $(PARALLEL_BUILD_FLAGS)
 	@$(TOUCH) $@
 
 build-luajit: .build-luajit-$(LUAJIT_VERSION)
