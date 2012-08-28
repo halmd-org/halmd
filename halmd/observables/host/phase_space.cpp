@@ -170,32 +170,12 @@ wrap_velocity(std::shared_ptr<phase_space_type> self)
     };
 }
 
-/**
- * Translate species from internal (0-based) to external (1-based) representation.
- *
- * This function returns a const reference to a species array that is
- * stored in the functor, and passed by reference to this function.
- */
 template <typename phase_space_type>
-static std::function<std::vector<typename phase_space_type::sample_type::species_array_type::value_type> const& ()>
+static std::function<typename phase_space_type::sample_type::species_array_type const& ()>
 wrap_species(std::shared_ptr<phase_space_type> self)
 {
-    typedef typename phase_space_type::sample_type sample_type;
-    typedef typename sample_type::species_array_type::value_type species_type;
-
-    std::shared_ptr<std::vector<species_type>> species = std::make_shared<std::vector<species_type>>();
-    return [=]() -> std::vector<species_type> const& {
-        std::shared_ptr<sample_type const> sample = self->acquire();
-        species->resize(sample->species().size());
-        std::transform(
-            sample->species().begin()
-          , sample->species().end()
-          , species->begin()
-          , [](species_type s) {
-                return s + 1;
-            }
-        );
-        return *species;
+    return [=]() -> typename phase_space_type::sample_type::species_array_type const& {
+        return self->acquire()->species();
     };
 }
 

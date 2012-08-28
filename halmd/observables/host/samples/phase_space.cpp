@@ -105,13 +105,10 @@ wrap_species(std::shared_ptr<phase_space_type> self, std::function<void ()>& arr
         if (self->species().size() != array->size()) {
             throw std::runtime_error("phase space sample has mismatching size");
         }
-        std::transform(
+        std::copy(
             array->begin()
           , array->end()
           , self->species().begin()
-          , [](typename phase_space_type::species_array_type::value_type s) {
-                return s - 1;
-            }
         );
         array->clear();
     };
