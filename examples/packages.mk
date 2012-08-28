@@ -215,7 +215,7 @@ extract-luajit: .extract-luajit-$(LUAJIT_VERSION)
 build-luajit: .build-luajit-$(LUAJIT_VERSION)
 
 install-luajit: .build-luajit-$(LUAJIT_VERSION)
-	cd $(LUAJIT_BUILD_DIR) && make install PREFIX=$(LUAJIT_INSTALL_DIR)
+	cd $(LUAJIT_BUILD_DIR) && make install "PREFIX=$(LUAJIT_INSTALL_DIR)"
 	ln -sf luajit-$(LUAJIT_VERSION) $(LUAJIT_INSTALL_DIR)/bin/luajit
 
 clean-luajit:
