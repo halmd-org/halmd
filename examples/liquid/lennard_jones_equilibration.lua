@@ -55,8 +55,8 @@ local function liquid(args)
     local particle = mdsim.particle({box = box, particles = nparticle, species = nspecies})
     -- set particle species, with continuous range of tags per species
     local species = {}
-    for s = 1, nspecies do
-        local nparticle = assert(args.particles[s])
+    for s = 0, nspecies - 1 do
+        local nparticle = assert(args.particles[s + 1])
         for i = 1, nparticle do table.insert(species, s) end
     end
     particle.set_species(species)

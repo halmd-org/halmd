@@ -59,12 +59,12 @@ local function liquid(args)
     local species = {}
     local groups = {}
     local offset = 0
-    for s = 1, nspecies do
-        local nparticle = assert(args.particles[s])
+    for s = 0, nspecies - 1 do
+        local nparticle = assert(args.particles[s + 1])
         for i = 1, nparticle do
             table.insert(species, s)
         end
-        local label = string.char(string.byte("A") + s - 1)
+        local label = string.char(string.byte("A") + s)
         groups[label] = mdsim.particle_groups.from_range({
             particle = particle
           , range = {offset + 1, offset + nparticle}
