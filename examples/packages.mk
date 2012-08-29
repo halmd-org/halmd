@@ -186,6 +186,7 @@ env-lua:
 ##
 
 LUAJIT_VERSION = 2.0.0-beta10-146-g751cd9d
+LUAJIT_RELEASE = 2.0.0-beta10
 LUAJIT_GIT_URL = http://luajit.org/git/luajit-2.0.git
 LUAJIT_BUILD_DIR = LuaJIT-$(LUAJIT_VERSION)
 LUAJIT_INSTALL_DIR = $(PREFIX)/luajit-$(LUAJIT_VERSION)
@@ -200,14 +201,14 @@ LUAJIT_CFLAGS = -fPIC -DLUAJIT_ENABLE_LUA52COMPAT -DLUAJIT_CPU_SSE2
 fetch-luajit: .fetch-luajit-$(LUAJIT_VERSION)
 
 .build-luajit-$(LUAJIT_VERSION): .fetch-luajit-$(LUAJIT_VERSION)
-	cd $(LUAJIT_BUILD_DIR) && make amalg "CFLAGS=$(LUAJIT_CFLAGS)" "VERSION=$(LUAJIT_VERSION)" $(PARALLEL_BUILD_FLAGS)
+	cd $(LUAJIT_BUILD_DIR) && make amalg "CFLAGS=$(LUAJIT_CFLAGS)" "PREFIX=$(LUAJIT_INSTALL_DIR)" $(PARALLEL_BUILD_FLAGS)
 	@$(TOUCH) $@
 
 build-luajit: .build-luajit-$(LUAJIT_VERSION)
 
 install-luajit: .build-luajit-$(LUAJIT_VERSION)
-	cd $(LUAJIT_BUILD_DIR) && make install "PREFIX=$(LUAJIT_INSTALL_DIR)" "VERSION=$(LUAJIT_VERSION)"
-	ln -sf luajit-$(LUAJIT_VERSION) $(LUAJIT_INSTALL_DIR)/bin/luajit
+	cd $(LUAJIT_BUILD_DIR) && make install "PREFIX=$(LUAJIT_INSTALL_DIR)"
+	ln -sf luajit-$(LUAJIT_RELEASE) $(LUAJIT_INSTALL_DIR)/bin/luajit
 
 clean-luajit:
 	@$(RM) .build-luajit-$(LUAJIT_VERSION)
