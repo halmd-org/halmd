@@ -1,5 +1,6 @@
 /*
- * Copyright © 2010-2011  Felix Höfling and Peter Colberg
+ * Copyright © 2010-2012 Felix Höfling
+ * Copyright © 2010-2012 Peter Colberg
  *
  * This file is part of HALMD.
  *
@@ -203,7 +204,7 @@ void lennard_jones_fluid<modules_type>::test()
     // stochastic thermostat => centre particle velocities around zero
     velocity->shift(-thermodynamics->v_cm());
 
-    const double vcm_limit = gpu ? 0.1 * eps_float : 20 * eps;
+    const double vcm_limit = gpu ? 0.5 * eps_float : 30 * eps;
     BOOST_CHECK_SMALL(norm_inf(thermodynamics->v_cm()), vcm_limit);
 
     // take averages of fluctuating quantities,
@@ -251,14 +252,16 @@ void lennard_jones_fluid<modules_type>::test()
     }
     BOOST_CHECK_SMALL(norm_inf(thermodynamics->v_cm()), vcm_limit);
 
-    // with the first released version of halmd (commit f5283a2),
+    // with the first released version of HAL's MD package (commit f5283a2),
     // an energy drift of less than 5e-6 ε was obtained over 2e8 MD steps
-    // using a smoothed potential (dt*=0.001, h=0.005)
-    const double en_limit = max(2e-5, steps * 1e-12);
+    // using a potential with smooth cutoff (dt*=0.001, h=0.005)
+    const double en_limit = max(3e-5, steps * 1e-12);
     BOOST_CHECK_SMALL(max_en_diff / fabs(en_tot), en_limit);
 
-    // use tolerance of 4.5σ, see below
-    BOOST_CHECK_CLOSE_FRACTION(temp, mean(temp_), 4.5 * error_of_mean(temp_));
+    // use tolerance of 4.5σ, see below;
+    // empirically determined standard deviation from many test runs:
+    // σ(T) = 0.004 for N=4000 and σ(T) = 0.007 for N=1500
+    BOOST_CHECK_CLOSE_FRACTION(temp, mean(temp_), 4.5 * (gpu ? 0.004 : 0.007) / temp);
     BOOST_CHECK_CLOSE_FRACTION(density, (float)thermodynamics->density(), eps_float);
 
     // compute response coefficients from fluctuations
@@ -293,26 +296,36 @@ void lennard_jones_fluid<modules_type>::test()
     BOOST_TEST_MESSAGE("Heat capacity c_V = " << cV);
     BOOST_TEST_MESSAGE("Adiabatic compressibility χ_S = " << chi_S);
 
-    // tolerances are 4.5σ, where σ is taken empirically as the error of mean,
-    // with this choice, the test should pass with 99.999% probability
+    // tolerances are 4.5σ, where σ is the standard deviation of the test
+    // results, with this choice, the test should pass with 99.999% probability
+    //
+    // quoted values for σ were obtained empirically from at least 100 test runs
     if (dimension == 3) {
         // values from Johnson et al.: P = 1.023, Epot = -1.673  (Npart = 864)
-        // values from RFA theory (Ayadim et al.): P = 1.0245, Epot = -1.6717
-        BOOST_CHECK_CLOSE_FRACTION(mean(press), 1.023, 4.5 * error_of_mean(press));
-        BOOST_CHECK_CLOSE_FRACTION(mean(en_pot), -1.673, 4.5 * error_of_mean(en_pot));
-        // our own measurements using HAL's MD package FIXME find reference values
-        // (allow larger tolerance for the host simulation with fewer particles)
-        BOOST_CHECK_CLOSE_FRACTION(cV, 1.648, gpu ? 3e-2 : 5e-2);
-        BOOST_CHECK_CLOSE_FRACTION(chi_S, 0.35, 0.5);  // tolerance of 50% (sic!)
+        // values from RFA theory (Ayadim et al.): P = 1.0245, Epot = -1.6717,
+        // standard deviations: σ(P) = 0.003, σ(Epot) = 0.002 for N = 4000,
+        // σ(P) = 0.005, σ(Epot) = 0.003 for N = 1500
+        BOOST_CHECK_CLOSE_FRACTION(mean(press), 1.023, 4.5 * (gpu ? 0.003 : 0.005) / 1.023);
+        BOOST_CHECK_CLOSE_FRACTION(mean(en_pot), -1.673, 4.5 * (gpu ? 0.002 : 0.003) / 1.673);
+        // our own measurements using HAL's MD package FIXME find reference values:
+        // c_V = 1.648, σ(c_V) = 0.02 for GPU and host test cases
+        // χ_S = 0.342 ± 0.002, σ(χ_S) = 0.05 for GPU and host test cases
+        BOOST_CHECK_CLOSE_FRACTION(cV, 1.648, 4.5 * 0.02 / 1.648);
+        BOOST_CHECK_CLOSE_FRACTION(chi_S, 0.342, 4.5 * 0.05 / 0.342);  // tolerance of 65% (sic!)
     }
     else if (dimension == 2) {
         // our own measurements using HAL's MD package FIXME find reference values
-        BOOST_CHECK_CLOSE_FRACTION(mean(press), 1.24, .01 + 4.5 * error_of_mean(press));
-        BOOST_CHECK_CLOSE_FRACTION(mean(en_pot), -0.59, .01 + 4.5 * error_of_mean(en_pot));
-        BOOST_CHECK_CLOSE_FRACTION(cV, 1.7, gpu ? 5e-2 : 1e-1);
+        // P = 1.235, σ(P) = 0.004 for N = 4000, σ(P) = 0.006 for N = 1500
+        // Epot = -0.589, σ(Epot) = 0.002 for N = 4000, σ(Epot) = 0.003 for N = 1500
+        BOOST_CHECK_CLOSE_FRACTION(mean(press), 1.235, 4.5 * (gpu ? 0.004 : 0.006) / 1.235);
+        BOOST_CHECK_CLOSE_FRACTION(mean(en_pot), -0.589, 4.5 * (gpu ? 0.002 : 0.003) / 0.589);
+        // c_V = 1.68, σ(c_V) = 0.03 for GPU and host test cases
+        BOOST_CHECK_CLOSE_FRACTION(cV, 1.68, 4.5 * 0.03 / 1.68);
+        // χ_S = 0.26, σ(χ_S) = 0.04 for GPU and host test cases
         // measurement of the compressibility via the hypervirial yields really
-        // crappy results, thus we choose a tolerance of 80%
-        BOOST_CHECK_CLOSE_FRACTION(chi_S, 0.26, 0.8);
+        // crappy results, the data do not even follow a gaussian but show a long tail,
+        // we thus use 10σ instead of 4.5σ implying a tolerance of 150%
+        BOOST_CHECK_CLOSE_FRACTION(chi_S, 0.26, 10 * 0.04 / 0.26);
     }
 }
 
