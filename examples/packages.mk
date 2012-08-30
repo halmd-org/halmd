@@ -226,6 +226,34 @@ env-luajit:
 	@echo 'export CMAKE_PREFIX_PATH="$(LUAJIT_INSTALL_DIR)$${CMAKE_PREFIX_PATH+:$$CMAKE_PREFIX_PATH}"'
 
 ##
+## luatrace
+##
+
+LUATRACE_VERSION = e2a78fa
+LUATRACE_GIT_URL = https://github.com/geoffleyland/luatrace.git
+LUATRACE_BUILD_DIR = luatrace-$(LUATRACE_VERSION)
+LUATRACE_INSTALL_DIR = $(PREFIX)/luatrace-$(LUATRACE_VERSION)
+
+.fetch-luatrace-$(LUATRACE_VERSION):
+	@$(RM) $(LUATRACE_BUILD_DIR)
+	$(GIT) clone $(LUATRACE_GIT_URL) $(LUATRACE_BUILD_DIR)
+	cd $(LUATRACE_BUILD_DIR) && $(GIT) checkout $(LUATRACE_VERSION)
+	@$(TOUCH) $@
+
+fetch-luatrace: .fetch-luatrace-$(LUATRACE_VERSION)
+
+install-luatrace: .fetch-luatrace-$(LUATRACE_VERSION)
+	cd $(LUATRACE_BUILD_DIR) && make install "LUA=$(LUAJIT_INSTALL_DIR)/bin/luatrace"
+
+clean-luatrace:
+	@$(RM) .build-luatrace-$(LUATRACE_VERSION)
+	cd $(LUATRACE_BUILD_DIR) && make clean
+
+distclean-luatrace: clean-luatrace
+	@$(RM) .fetch-luatrace-$(LUATRACE_VERSION)
+	$(RM) $(LUATRACE_BUILD_DIR)
+
+##
 ## Boost C++ libraries with Boost.Log
 ##
 
