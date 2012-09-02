@@ -230,6 +230,63 @@ env-luajit:
 	@echo 'export CMAKE_PREFIX_PATH="$(LUAJIT_INSTALL_DIR)$${CMAKE_PREFIX_PATH+:$$CMAKE_PREFIX_PATH}"'
 
 ##
+## GNU readline wrapper
+##
+
+RLWRAP_VERSION = 0.37
+RLWRAP_TARBALL = rlwrap-$(RLWRAP_VERSION).tar.gz
+RLWRAP_TARBALL_URL = http://utopia.knoware.nl/~hlub/rlwrap/$(RLWRAP_TARBALL)
+RLWRAP_TARBALL_SHA256 = 8403a2c184a33ee293a30637afd1362e7dbe0ee642c33b54b2fca68162498bbd
+RLWRAP_BUILD_DIR = rlwrap-$(RLWRAP_VERSION)
+RLWRAP_INSTALL_DIR = $(PREFIX)/rlwrap-$(RLWRAP_VERSION)
+
+.fetch-rlwrap-$(RLWRAP_VERSION):
+	@$(RM) $(RLWRAP_TARBALL)
+	$(WGET) $(RLWRAP_TARBALL_URL)
+	@echo '$(RLWRAP_TARBALL_SHA256)  $(RLWRAP_TARBALL)' | $(SHA256SUM)
+	@$(TOUCH) $@
+
+fetch-rlwrap: .fetch-rlwrap-$(RLWRAP_VERSION)
+
+.extract-rlwrap-$(RLWRAP_VERSION): .fetch-rlwrap-$(RLWRAP_VERSION)
+	$(RM) $(RLWRAP_BUILD_DIR)
+	$(TAR) -xzf $(RLWRAP_TARBALL)
+	@$(TOUCH) $@
+
+extract-rlwrap: .extract-rlwrap-$(RLWRAP_VERSION)
+
+.configure-rlwrap-$(RLWRAP_VERSION): .extract-rlwrap-$(RLWRAP_VERSION)
+	cd $(RLWRAP_BUILD_DIR) && ./configure -prefix=$(RLWRAP_INSTALL_DIR)
+	@$(TOUCH) $@
+
+configure-rlwrap: .configure-rlwrap-$(RLWRAP_VERSION)
+
+.build-rlwrap-$(RLWRAP_VERSION): .configure-rlwrap-$(RLWRAP_VERSION)
+	cd $(RLWRAP_BUILD_DIR) && make $(PARALLEL_BUILD_FLAGS)
+	@$(TOUCH) $@
+
+build-rlwrap: .build-rlwrap-$(RLWRAP_VERSION)
+
+install-rlwrap: .build-rlwrap-$(RLWRAP_VERSION)
+	cd $(RLWRAP_BUILD_DIR) && make install
+
+clean-rlwrap:
+	@$(RM) .build-rlwrap-$(RLWRAP_VERSION)
+	@$(RM) .configure-rlwrap-$(RLWRAP_VERSION)
+	@$(RM) .extract-rlwrap-$(RLWRAP_VERSION)
+	$(RM) $(RLWRAP_BUILD_DIR)
+
+distclean-rlwrap: clean-rlwrap
+	@$(RM) .fetch-rlwrap-$(RLWRAP_VERSION)
+	$(RM) $(RLWRAP_TARBALL)
+
+env-rlwrap:
+	@echo
+	@echo '# add rlwrap $(RLWRAP_VERSION) to environment'
+	@echo 'export PATH="$(RLWRAP_INSTALL_DIR)/bin$${PATH+:$$PATH}"'
+	@echo 'export MANPATH="$(RLWRAP_INSTALL_DIR)/share/man$${MANPATH+:$$MANPATH}"'
+
+##
 ## luatrace
 ##
 
