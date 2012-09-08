@@ -185,7 +185,7 @@ env-lua:
 ## LuaJIT
 ##
 
-LUAJIT_VERSION = 2.0.0-beta10-146-g751cd9d
+LUAJIT_VERSION = 2.0.0-beta10-152-g21cea85
 LUAJIT_RELEASE = 2.0.0-beta10
 LUAJIT_GIT_URL = http://luajit.org/git/luajit-2.0.git
 LUAJIT_BUILD_DIR = LuaJIT-$(LUAJIT_VERSION)
