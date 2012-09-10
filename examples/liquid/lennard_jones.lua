@@ -55,17 +55,18 @@ local function liquid(args)
     -- create system state
     local particle = mdsim.particle({box = box, particles = nparticle, species = nspecies})
 
-    -- truncated Lennard-Jones potential
-    local potential = mdsim.potentials.lennard_jones({particle = particle, cutoff = 2.5})
-    -- smoothing at potential cutoff
-    local trunc = mdsim.forces.trunc.local_r4({h = 0.005})
+    -- smoothly truncated Lennard-Jones potential
+    local potential = mdsim.potentials.lennard_jones({particle = particle, cutoff = args.cutoff})
+    -- smooth truncation
+    local trunc
+    if args.smoothing > 0 then
+        trunc = mdsim.forces.trunc.local_r4({h = args.smoothing})
+    end
     -- compute forces
     local force = mdsim.forces.pair_trunc({
-        box = box
-      , particle = particle
-      , potential = potential
-      , trunc = trunc
+        box = box, particle = particle, potential = potential, trunc = trunc
     })
+
     -- add velocity-Verlet integrator
     local integrator = mdsim.integrators.verlet({
         box = box
@@ -87,29 +88,39 @@ local function liquid(args)
     -- set particle positions, velocities, species
     phase_space.set(sample)
     -- write trajectory of particle groups to H5MD file
-    phase_space.writer(writer, {every = args.sampling.trajectory})
+    local interval = args.sampling.trajectory or args.steps
+    if interval > 0 then
+        phase_space.writer(writer, {every = interval})
+    end
 
     -- sample macroscopic state variables
-    local msv = observables.thermodynamics({box = box, group = particle_group, force = force})
-    msv.writer(writer, {every = args.sampling.state_vars})
+    local interval = args.sampling.state_vars
+    if interval > 0 then
+        local msv = observables.thermodynamics({box = box, group = particle_group, force = force})
+        msv.writer(writer, {every = interval})
+    end
 
-    -- setup blocking scheme for correlation functions
-    local max_lag = args.steps * integrator.timestep / 10
-    local blocking_scheme = dynamics.blocking_scheme({
-        max_lag = max_lag
-      , every = args.sampling.correlation
-      , size = 10
-    })
+    -- time correlation functions
+    local interval = args.sampling.correlation
+    if interval > 0 then
+        -- setup blocking scheme
+        local max_lag = args.steps * integrator.timestep / 10
+        local blocking_scheme = dynamics.blocking_scheme({
+            max_lag = max_lag
+          , every = interval
+          , size = 10
+        })
 
-    -- compute mean-square displacement
-    local msd = dynamics.mean_square_displacement({phase_space = phase_space})
-    blocking_scheme.correlation(msd, writer)
-    -- compute mean-quartic displacement
-    local mqd = dynamics.mean_quartic_displacement({phase_space = phase_space})
-    blocking_scheme.correlation(mqd, writer)
-    -- compute velocity autocorrelation function
-    local vacf = dynamics.velocity_autocorrelation({phase_space = phase_space})
-    blocking_scheme.correlation(vacf, writer)
+        -- compute mean-square displacement
+        local msd = dynamics.mean_square_displacement({phase_space = phase_space})
+        blocking_scheme.correlation(msd, writer)
+        -- compute mean-quartic displacement
+        local mqd = dynamics.mean_quartic_displacement({phase_space = phase_space})
+        blocking_scheme.correlation(mqd, writer)
+        -- compute velocity autocorrelation function
+        local vacf = dynamics.velocity_autocorrelation({phase_space = phase_space})
+        blocking_scheme.correlation(vacf, writer)
+    end
 
     -- setup simulation box and sample initial state
     observables.sampler.setup()
@@ -158,11 +169,13 @@ local function parse_args()
         args[key] = value
     end, help = "trajectory file name"})
 
+    parser.add_argument("cutoff", {type = "number", default = math.pow(2, 1 / 6), help = "potential cutoff radius"})
+    parser.add_argument("smoothing", {type = "number", default = 0.005, help = "cutoff smoothing parameter"})
     parser.add_argument("steps", {type = "integer", default = 10000, help = "number of simulation steps"})
     parser.add_argument("timestep", {type = "number", default = 0.001, help = "integration time step"})
 
-    local sampling = parser.add_argument_group("sampling", {help = "sampling intervals"})
-    sampling.add_argument("trajectory", {type = "integer", default = 1000, help = "for trajectory"})
+    local sampling = parser.add_argument_group("sampling", {help = "sampling intervals (0: disabled)"})
+    sampling.add_argument("trajectory", {type = "integer", help = "for trajectory"})
     sampling.add_argument("state-vars", {type = "integer", default = 1000, help = "for state variables"})
     sampling.add_argument("correlation", {type = "integer", default = 100, help = "for correlation functions"})
 
