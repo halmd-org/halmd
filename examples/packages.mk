@@ -618,13 +618,13 @@ extract-git: .extract-git-$(GIT_VERSION)
 configure-git: .configure-git-$(GIT_VERSION)
 
 .build-git-$(GIT_VERSION): .configure-git-$(GIT_VERSION)
-	cd $(GIT_BUILD_DIR) && make $(PARALLEL_BUILD_FLAGS)
+	cd $(GIT_BUILD_DIR) && make PREFIX=$(GIT_INSTALL_DIR) $(PARALLEL_BUILD_FLAGS)
 	@$(TOUCH) $@
 
 build-git: .build-git-$(GIT_VERSION)
 
 install-git: .build-git-$(GIT_VERSION)
-	cd $(GIT_BUILD_DIR) && make install
+	cd $(GIT_BUILD_DIR) && make PREFIX=$(GIT_INSTALL_DIR) install
 	install -d $(GIT_INSTALL_DIR)/share/man
 	cd $(GIT_INSTALL_DIR)/share/man && $(TAR) -xzf $(CURDIR)/$(GIT_MANPAGES_TARBALL)
 
