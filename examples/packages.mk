@@ -1262,10 +1262,10 @@ env-gcc:
 ## HALMD Highly Accerelated Large-Scale Molecular Dynamics
 ##
 
-HALMD_VERSION = 0.2-rc4
+HALMD_VERSION = 0.2.0
 HALMD_TARBALL = halmd-$(HALMD_VERSION).tar.bz2
-HALMD_TARBALL_URL = http://downloads.sourceforge.net/project/halmd/halmd/0.2/testing/$(HALMD_TARBALL)
-HALMD_TARBALL_SHA256 = 20e4405c15e4848f76a4afd4b8d94c7aada1eddc05811ec74e6c59d315f77189
+HALMD_TARBALL_URL = http://downloads.sourceforge.net/project/halmd/halmd/0.2/$(HALMD_TARBALL)
+HALMD_TARBALL_SHA256 = 95874a056b0962f3a694011a2262277b2929d2825388d46183791a367f70d6da
 HALMD_SOURCE_DIR = halmd-$(HALMD_VERSION)
 HALMD_BUILD_DIR = $(HALMD_SOURCE_DIR)/build/release
 HALMD_INSTALL_DIR = $(PREFIX)/halmd-$(HALMD_VERSION)
