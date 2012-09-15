@@ -52,8 +52,6 @@ script::script()
     package_cpath();
     // load HALMD Lua C++ wrapper
     luaopen_halmd(L);
-    // prepare Lua 5.2 compatible environment
-    lua_compat();
 }
 
 /**
@@ -170,22 +168,6 @@ void script::package_cpath()
     lua_rawset(L, -3);
     // remove table "package"
     lua_pop(L, 1);
-}
-
-/**
- * Prepare Lua 5.2 compatible environment
- *
- * http://www.lua.org/manual/5.2/manual.html#8.2
- */
-void script::lua_compat()
-{
-    using namespace luaponte;
-
-#if LUA_VERSION_NUM < 502
-    // function unpack was moved into the table library
-    globals(L)["table"]["unpack"] = globals(L)["unpack"];
-    globals(L)["unpack"] = nil;
-#endif
 }
 
 /*

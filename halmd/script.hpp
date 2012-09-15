@@ -47,7 +47,6 @@ private:
     void load_luaponte();
     void package_path();
     void package_cpath();
-    void lua_compat();
 
     /** RAII wrapper of Lua state */
     std::shared_ptr<lua_State const> const L_;
