@@ -108,7 +108,7 @@ local M = module(function(args)
     local dimension = #box.edges
     local timestep = args.timestep
     if timestep then
-        clock.set_timestep(timestep)
+        clock:set_timestep(timestep)
     else
         timestep = assert(clock.timestep)
     end
@@ -121,7 +121,7 @@ local M = module(function(args)
     local set_timestep = assert(self.set_timestep)
     -- forward Lua method set_timestep to clock
     self.set_timestep = function(self, timestep)
-        clock.set_timestep(timestep)
+        clock:set_timestep(timestep)
     end
 
     -- sequence of signal connections
@@ -129,7 +129,7 @@ local M = module(function(args)
 
     self.connect = function(self)
         if #conn == 0 then
-            table.insert(conn, clock.on_set_timestep(function(timestep) set_timestep(self, timestep) end))
+            table.insert(conn, clock:on_set_timestep(function(timestep) set_timestep(self, timestep) end))
             table.insert(conn, core:on_integrate(function() self:integrate() end))
             table.insert(conn, core:on_finalize(function() self:finalize() end))
             table.insert(conn, profiler:on_profile(self.runtime.integrate, "first half-step of velocity-Verlet"))
