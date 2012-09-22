@@ -160,14 +160,12 @@ void posix_signal::handle(int signum) const
 }
 
 template <int signum>
-static std::function<connection (std::function<void ()> const&)>
-wrap_on_signal(std::shared_ptr<posix_signal> self)
+static connection
+wrap_on_signal(posix_signal& self, std::function<void ()> const& slot)
 {
-    return [=](std::function<void ()> const& slot) {
-        return self->on_signal(signum, [=](int) {
-            slot();
-        });
-    };
+    return self.on_signal(signum, [=](int) {
+        slot();
+    });
 }
 
 static std::function<void ()>
@@ -195,16 +193,16 @@ void posix_signal::luaopen(lua_State* L)
         [
             class_<posix_signal, std::shared_ptr<posix_signal> >("posix_signal")
                 .def(constructor<>())
-                .property("on_hup", &wrap_on_signal<SIGHUP>)
-                .property("on_int", &wrap_on_signal<SIGINT>)
-                .property("on_alrm", &wrap_on_signal<SIGALRM>)
-                .property("on_term", &wrap_on_signal<SIGTERM>)
-                .property("on_usr1", &wrap_on_signal<SIGUSR1>)
-                .property("on_usr2", &wrap_on_signal<SIGUSR2>)
-                .property("on_cont", &wrap_on_signal<SIGCONT>)
-                .property("on_tstp", &wrap_on_signal<SIGTSTP>)
-                .property("on_ttin", &wrap_on_signal<SIGTTIN>)
-                .property("on_ttou", &wrap_on_signal<SIGTTOU>)
+                .def("on_hup", &wrap_on_signal<SIGHUP>)
+                .def("on_int", &wrap_on_signal<SIGINT>)
+                .def("on_alrm", &wrap_on_signal<SIGALRM>)
+                .def("on_term", &wrap_on_signal<SIGTERM>)
+                .def("on_usr1", &wrap_on_signal<SIGUSR1>)
+                .def("on_usr2", &wrap_on_signal<SIGUSR2>)
+                .def("on_cont", &wrap_on_signal<SIGCONT>)
+                .def("on_tstp", &wrap_on_signal<SIGTSTP>)
+                .def("on_ttin", &wrap_on_signal<SIGTTIN>)
+                .def("on_ttou", &wrap_on_signal<SIGTTOU>)
                 .property("wait", &wrap_wait)
                 .property("poll", &wrap_poll)
         ]

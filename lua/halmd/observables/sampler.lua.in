@@ -86,8 +86,8 @@ self.on_sample(posix_signal.poll, 1)
 
 -- gracefully abort simulation on SIGTERM or SIGINT
 local abort = sampler.abort(clock)
-posix_signal.on_term(abort)
-posix_signal.on_int(abort)
+posix_signal:on_term(abort)
+posix_signal:on_int(abort)
 
 -- connect runtime accumulators to module profiler
 local runtime = assert(self.runtime)
