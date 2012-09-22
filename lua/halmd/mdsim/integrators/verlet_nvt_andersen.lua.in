@@ -131,18 +131,18 @@ local M = module(function(args)
     -- capture C++ method set_timestep
     local set_timestep = assert(self.set_timestep)
     -- forward Lua method set_timestep to clock
-    self.set_timestep = property(function()
-        return clock.set_timestep
-    end)
+    self.set_timestep = function(self, timestep)
+        return clock.set_timestep(timestep)
+    end
 
     -- sequence of signal connections
     local conn = {}
 
-    self.connect = function()
+    self.connect = function(self)
         if #conn == 0 then
-            table.insert(conn, clock.on_set_timestep(set_timestep))
-            table.insert(conn, core:on_integrate(self.integrate))
-            table.insert(conn, core:on_finalize(self.finalize))
+            table.insert(conn, clock.on_set_timestep(function(timestep) set_timestep(self, timestep) end))
+            table.insert(conn, core:on_integrate(function() self:integrate() end))
+            table.insert(conn, core:on_finalize(function() self:finalize() end))
             table.insert(conn, profiler:on_profile(self.runtime.integrate, "first half-step of velocity-Verlet"))
             table.insert(conn, profiler:on_profile(self.runtime.finalize, "second half-step of velocity-Verlet (+ Andersen thermostat)"))
         else
@@ -150,7 +150,7 @@ local M = module(function(args)
         end
     end
 
-    self.disconnect = function()
+    self.disconnect = function(self)
         if #conn > 0 then
             for i = 1, #conn do
                 conn[i]:disconnect()
@@ -162,7 +162,7 @@ local M = module(function(args)
     end
 
     -- connect integrator to core
-    self.connect()
+    self:connect()
 
     return self
 end)

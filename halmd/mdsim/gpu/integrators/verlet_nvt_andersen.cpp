@@ -133,42 +133,6 @@ void verlet_nvt_andersen<dimension, float_type, RandomNumberGenerator>::finalize
     }
 }
 
-template <typename integrator_type>
-static std::function<void ()>
-wrap_integrate(std::shared_ptr<integrator_type> self)
-{
-    return [=]() {
-        self->integrate();
-    };
-}
-
-template <typename integrator_type>
-static std::function<void ()>
-wrap_finalize(std::shared_ptr<integrator_type> self)
-{
-    return [=]() {
-        self->finalize();
-    };
-}
-
-template <typename integrator_type>
-static std::function<void (double)>
-wrap_set_timestep(std::shared_ptr<integrator_type> self)
-{
-    return [=](double timestep) {
-        self->set_timestep(timestep);
-    };
-}
-
-template <typename integrator_type>
-static std::function<void (double)>
-wrap_set_temperature(std::shared_ptr<integrator_type> self)
-{
-    return [=](double temperature) {
-        self->set_temperature(temperature);
-    };
-}
-
 template <int dimension, typename float_type, typename RandomNumberGenerator>
 void verlet_nvt_andersen<dimension, float_type, RandomNumberGenerator>::luaopen(lua_State* L)
 {
@@ -180,11 +144,11 @@ void verlet_nvt_andersen<dimension, float_type, RandomNumberGenerator>::luaopen(
             namespace_("integrators")
             [
                 class_<verlet_nvt_andersen>()
-                    .property("integrate", &wrap_integrate<verlet_nvt_andersen>)
-                    .property("finalize", &wrap_finalize<verlet_nvt_andersen>)
-                    .property("set_timestep", &wrap_set_timestep<verlet_nvt_andersen>)
+                    .def("integrate", &verlet_nvt_andersen::integrate)
+                    .def("finalize", &verlet_nvt_andersen::finalize)
+                    .def("set_timestep", &verlet_nvt_andersen::set_timestep)
+                    .def("set_temperature", &verlet_nvt_andersen::set_temperature)
                     .property("timestep", &verlet_nvt_andersen::timestep)
-                    .property("set_temperature", &wrap_set_temperature<verlet_nvt_andersen>)
                     .property("temperature", &verlet_nvt_andersen::temperature)
                     .property("collision_rate", &verlet_nvt_andersen::collision_rate)
                     .scope
