@@ -88,15 +88,6 @@ unsigned int random<RandomNumberGenerator>::defaults::threads() {
     return 32 << DEVICE_SCALE;
 }
 
-template <typename random_type>
-static std::function<void (unsigned int)>
-wrap_seed(std::shared_ptr<random_type> self)
-{
-    return [=](unsigned int seed) {
-        self->seed(seed);
-    };
-}
-
 template <typename RandomNumberGenerator>
 void random<RandomNumberGenerator>::luaopen(lua_State* L)
 {
@@ -110,7 +101,7 @@ void random<RandomNumberGenerator>::luaopen(lua_State* L)
             [
                 class_<random, std::shared_ptr<random> >(class_name.c_str())
                     .def(constructor<>())
-                    .property("seed", &wrap_seed<random>)
+                    .def("seed", &random::seed)
             ]
         ]
     ];

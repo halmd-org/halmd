@@ -49,7 +49,7 @@ function M.seed(seed)
         error("bad argument #1 (expected number)", 2)
     end
     for memory, generator in pairs(generator) do
-        generator.seed(seed)
+        generator:seed(seed)
     end
 end
 

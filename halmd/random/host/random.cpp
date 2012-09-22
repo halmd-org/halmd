@@ -36,15 +36,6 @@ void random::seed(unsigned int seed)
     rng_.seed(seed);
 }
 
-template <typename random_type>
-static std::function<void (unsigned int)>
-wrap_seed(std::shared_ptr<random_type> self)
-{
-    return [=](unsigned int seed) {
-        self->seed(seed);
-    };
-}
-
 void random::luaopen(lua_State* L)
 {
     using namespace luaponte;
@@ -56,7 +47,7 @@ void random::luaopen(lua_State* L)
             [
                 class_<random, std::shared_ptr<random> >("gfsr4")
                     .def(constructor<>())
-                    .property("seed", &wrap_seed<random>)
+                    .def("seed", &random::seed)
             ]
         ]
     ];
