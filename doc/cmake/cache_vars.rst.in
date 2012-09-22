@@ -32,6 +32,11 @@ Cache variables are passed as options to CMake using ``-D...``
 
      Recommended value is ``-DHDF5_USE_STATIC_LIBS=TRUE``.
 
+   LUA_USE_STATIC_LIBS
+     Link to Lua libraries statically.
+
+     Recommended value is ``-DLUA_USE_STATIC_LIBS=TRUE``.
+
    HALMD_WITH_GPU
 
      Forcibly enable or disable GPU support.

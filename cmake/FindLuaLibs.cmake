@@ -34,6 +34,15 @@ find_path(LUA_INCLUDE_DIR lua.h
   /opt
 )
 
+if(LUA_USE_STATIC_LIBS)
+  set( _LUA_ORIG_CMAKE_FIND_LIBRARY_SUFFIXES ${CMAKE_FIND_LIBRARY_SUFFIXES})
+  if(WIN32)
+    set(CMAKE_FIND_LIBRARY_SUFFIXES .lib .a ${CMAKE_FIND_LIBRARY_SUFFIXES})
+  else()
+    set(CMAKE_FIND_LIBRARY_SUFFIXES .a ${CMAKE_FIND_LIBRARY_SUFFIXES})
+  endif()
+endif()
+
 find_library(LUA_LIBRARY
   NAMES luajit-5.2 luajit-5.1 lua lua52 lua5.2 lua-5.2 lua51 lua5.1 lua-5.1
   HINTS
@@ -49,6 +58,10 @@ find_library(LUA_LIBRARY
   /opt/csw
   /opt
 )
+
+if(LUA_USE_STATIC_LIBS)
+  set(CMAKE_FIND_LIBRARY_SUFFIXES ${_LUA_ORIG_CMAKE_FIND_LIBRARY_SUFFIXES})
+endif()
 
 if(LUA_LIBRARY)
   # include the math library for Unix

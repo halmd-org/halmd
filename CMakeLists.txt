@@ -52,6 +52,7 @@ if(NOT HALMD_DOC_ONLY OR NOT HALMD_USE_GIT)
   if(HALMD_USE_STATIC_LIBS)
     set(Boost_USE_STATIC_LIBS TRUE)
     set(HDF5_USE_STATIC_LIBS TRUE)
+    set(LUA_USE_STATIC_LIBS TRUE)
   endif()
 
   # Require thread-safe Boost libraries for thread-safe Boost Log
