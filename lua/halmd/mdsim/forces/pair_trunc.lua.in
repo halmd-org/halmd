@@ -99,7 +99,7 @@ local M = module(function(args)
     local trunc = args.trunc
     if trunc then
         -- log parameters if smoothing function was specified
-        trunc.log(logger)
+        trunc:log(logger)
     else
         -- otherwise default to empty function
         trunc = discontinuous()

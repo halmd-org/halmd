@@ -195,7 +195,7 @@ function M.logger(args)
     end
     for k, v in pairs(level) do
         local log = assert(logger.log)
-        self[k] = function(format, ...)
+        self[k] = function(self, format, ...)
             local status, result = pcall(string.format, tostring(format), ...)
             if not status then
                 error(result, 2)

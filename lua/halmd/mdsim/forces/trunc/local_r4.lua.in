@@ -214,11 +214,11 @@ local M = module(function(args)
     end)
 
     -- add function to output smoothing parameter to logger
-    self.log = function(logger)
+    self.log = function(self, logger)
         if not logger then
             error("bad argument #1", 2)
         end
-        logger.info("local r⁴ smoothing at cutoff: h = %g", h)
+        logger:info("local r⁴ smoothing at cutoff: h = %g", self.h)
     end
 
     return self
