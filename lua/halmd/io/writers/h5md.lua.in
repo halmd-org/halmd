@@ -126,7 +126,7 @@ local M = module(function(args)
     end
 
     -- flush H5MD file to disk on SIGUSR2
-    posix_signal.on_usr2(file.flush)
+    posix_signal.on_usr2(function() file:flush() end)
 
     return file
 end)

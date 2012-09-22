@@ -86,22 +86,6 @@ std::string file::author()
     return realname();
 }
 
-static std::function<void ()>
-wrap_close(std::shared_ptr<file> self)
-{
-    return [=]() {
-        self->close();
-    };
-}
-
-static std::function<void ()>
-wrap_flush(std::shared_ptr<file> self)
-{
-    return [=]() {
-        self->flush();
-    };
-}
-
 void file::luaopen(lua_State* L)
 {
     using namespace luaponte;
@@ -115,8 +99,8 @@ void file::luaopen(lua_State* L)
                 [
                     class_<file, std::shared_ptr<file> >("file")
                         .def(constructor<string const&>())
-                        .property("close", &wrap_close)
-                        .property("flush", &wrap_flush)
+                        .def("flush", &file::flush)
+                        .def("close", &file::close)
                         .property("root", &file::root)
                         .property("path", &file::path)
                         .scope

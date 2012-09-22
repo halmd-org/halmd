@@ -181,22 +181,6 @@ hsize_t append::read_time_index(
     return first - times.begin();
 }
 
-static std::function<void (typename append::step_difference_type)>
-wrap_read_at_step(std::shared_ptr<append> self)
-{
-    return [=](typename append::step_difference_type offset) {
-        self->read_at_step(offset);
-    };
-}
-
-static std::function<void (typename append::time_difference_type)>
-wrap_read_at_time(std::shared_ptr<append> self)
-{
-    return [=](typename append::time_difference_type offset) {
-        self->read_at_time(offset);
-    };
-}
-
 void append::luaopen(lua_State* L)
 {
     using namespace luaponte;
@@ -211,8 +195,8 @@ void append::luaopen(lua_State* L)
                     class_<append, std::shared_ptr<append> >("append")
                         .def(constructor<H5::Group const&, vector<string> const&>())
                         .property("group", &append::group)
-                        .property("read_at_step", &wrap_read_at_step)
-                        .property("read_at_time", &wrap_read_at_time)
+                        .def("read_at_step", &append::read_at_step)
+                        .def("read_at_time", &append::read_at_time)
                         .def("on_read", &append::on_read<float&>, pure_out_value(_2))
                         .def("on_read", &append::on_read<double&>, pure_out_value(_2))
                         .def("on_read", &append::on_read<fixed_vector<float, 2>&>, pure_out_value(_2))

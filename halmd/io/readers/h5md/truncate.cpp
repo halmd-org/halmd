@@ -86,14 +86,6 @@ void truncate::read_dataset(
     h5xx::read_dataset(dataset, slot());
 }
 
-static std::function<void ()>
-wrap_read(std::shared_ptr<truncate> self)
-{
-    return [=]() {
-        self->read();
-    };
-}
-
 void truncate::luaopen(lua_State* L)
 {
     using namespace luaponte;
@@ -108,7 +100,7 @@ void truncate::luaopen(lua_State* L)
                     class_<truncate, std::shared_ptr<truncate> >("truncate")
                         .def(constructor<H5::Group const&, vector<string> const&>())
                         .property("group", &truncate::group)
-                        .property("read", &wrap_read)
+                        .def("read", &truncate::read)
                         .def("on_read", &truncate::on_read<float&>, pure_out_value(_2))
                         .def("on_read", &truncate::on_read<double&>, pure_out_value(_2))
                         .def("on_read", &truncate::on_read<fixed_vector<float, 2>&>, pure_out_value(_2))
