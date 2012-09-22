@@ -35,8 +35,8 @@ local sampler = assert(libhalmd.sampler)
 -- Example::
 --
 --    local sampler = require("halmd.observables.sampler")
---    sampler.setup()
---    sampler.run(1000)
+--    sampler:setup()
+--    sampler:run(1000)
 --
 -- .. method:: setup()
 --
@@ -79,10 +79,10 @@ local sampler = assert(libhalmd.sampler)
 local self = sampler(clock, core)
 
 -- process timer service every step
-self.on_sample(function() timer_service:process() end, 1)
+self:on_sample(function() timer_service:process() end, 1)
 
 -- poll for blocked POSIX signals every step
-self.on_sample(posix_signal.poll, 1)
+self:on_sample(posix_signal.poll, 1)
 
 -- gracefully abort simulation on SIGTERM or SIGINT
 local abort = sampler.abort(clock)

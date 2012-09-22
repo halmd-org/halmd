@@ -18,8 +18,6 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <boost/bind.hpp>
-#include <boost/lexical_cast.hpp>
 #include <functional>
 
 #include <halmd/io/logger.hpp>
@@ -110,55 +108,7 @@ static std::function<void ()>
 wrap_abort(std::shared_ptr<mdsim::clock const> clock)
 {
     return [=]() {
-        throw std::runtime_error("gracefully aborting simulation at step " + boost::lexical_cast<std::string>(clock->step()));
-    };
-}
-
-static std::function<void ()>
-wrap_setup(std::shared_ptr<sampler> self)
-{
-    return [=]() {
-        return self->setup();
-    };
-}
-
-static std::function<void (sampler::step_type)>
-wrap_run(std::shared_ptr<sampler> self)
-{
-    return [=](sampler::step_type steps) {
-        return self->run(steps);
-    };
-}
-
-static std::function<void (std::function<void ()> const&)>
-wrap_on_start(std::shared_ptr<sampler> self)
-{
-    return [=](std::function<void ()> const& slot) {
-        return self->on_start(slot);
-    };
-}
-
-static std::function<void (std::function<void ()> const&)>
-wrap_on_finish(std::shared_ptr<sampler> self)
-{
-    return [=](std::function<void ()> const& slot) {
-        return self->on_finish(slot);
-    };
-}
-
-static std::function<void (std::function<void ()> const&, sampler::step_type)>
-wrap_on_prepare(std::shared_ptr<sampler> self)
-{
-    return [=](std::function<void ()> const& slot, sampler::step_type steps) {
-        return self->on_prepare(slot, steps);
-    };
-}
-
-static std::function<void (std::function<void ()> const&, sampler::step_type)>
-wrap_on_sample(std::shared_ptr<sampler> self)
-{
-    return [=](std::function<void ()> const& slot, sampler::step_type steps) {
-        return self->on_sample(slot, steps);
+        throw std::runtime_error("gracefully aborting simulation at step " + std::to_string(clock->step()));
     };
 }
 
@@ -172,12 +122,12 @@ void sampler::luaopen(lua_State* L)
                 std::shared_ptr<sampler::clock_type>
               , std::shared_ptr<sampler::core_type>
             >())
-            .property("setup", &wrap_setup)
-            .property("run", &wrap_run)
-            .property("on_start", &wrap_on_start)
-            .property("on_finish", &wrap_on_finish)
-            .property("on_prepare", &wrap_on_prepare)
-            .property("on_sample", &wrap_on_sample)
+            .def("setup", &sampler::setup)
+            .def("run", &sampler::run)
+            .def("on_start", &sampler::on_start)
+            .def("on_finish", &sampler::on_finish)
+            .def("on_prepare", &sampler::on_prepare)
+            .def("on_sample", &sampler::on_sample)
             .scope
             [
                 class_<runtime>("runtime")

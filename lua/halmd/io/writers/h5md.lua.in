@@ -77,7 +77,7 @@ local type = type
 --       writer:on_write(box.edges, {"edges"})
 --
 --       local sampler = require("halmd.observables.sampler")
---       sampler.on_start(writer.write)
+--       sampler:on_start(writer.write)
 --
 --    Example for creating and using an append writer::
 --
@@ -88,7 +88,7 @@ local type = type
 --       writer:on_write(observable.en_tot, {"total_energy"})
 --
 --       local sampler = require("halmd.observables.sampler")
---       sampler.on_start(writer.write)
+--       sampler:on_start(writer.write)
 --
 -- .. method:: flush()
 --

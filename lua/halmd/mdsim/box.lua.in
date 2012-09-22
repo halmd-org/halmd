@@ -120,7 +120,7 @@ local M = module(function(args)
         group:write_attribute("type", h5.string(), "cuboid")
         writer:on_write(box.edges(self), {"edges"})
         writer:on_write(box.origin(self), {"offset"})
-        sampler.on_start(writer.write)
+        sampler:on_start(writer.write)
         return writer
     end
 

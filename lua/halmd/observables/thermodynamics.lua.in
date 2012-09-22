@@ -134,7 +134,7 @@ local M = module(function(args)
         if not every then
             error("missing parameter 'every'", 2)
         end
-        sampler.on_sample(writer.write, every)
+        sampler:on_sample(writer.write, every)
 
         return writer
     end
