@@ -34,10 +34,9 @@ function parse_module(sourcedir, source)
     parsed.namespace = parsed.module:gsub("%.[^.]*$", "")
 
     local entry
-    local class
     for line in io.lines(parsed.path) do
         if not entry then
-            local m = line:match("^%s*%-%-%-%s?(.-)%s*$")
+            local m = line:match("^%-%-%-%s?(.-)%s*$")
             if m then
                 if entry then
                     for i = #entry, 1, -1 do
@@ -54,19 +53,18 @@ function parse_module(sourcedir, source)
                 end
             end
         else
-            local m = line:match("^%s*%-%-%s?(.-)%s*$")
+            local m = line:match("^%-%-%s?(.-)%s*$")
             if m then
                 if #m > 0 or #entry > 0 then
                     table.insert(entry, m)
                 end
             else
-                local mod, func, name = line:match("^%s*function%s*([%w_]+)%.(([%w_]+)%([^)]*%))")
+                local mod, sep, func, name = line:match("^function%s*([%w_]+)([.:])(([%w_]+)%([^)]*%))")
                 if mod then
-                    if mod == "self" then
-                        entry.class = class
+                    if sep == ":" then
+                        entry.class = mod
                     else
                         entry.module = mod
-                        class = name
                     end
                     entry.func = func
                     entry.name = name
