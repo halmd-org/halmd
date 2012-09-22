@@ -50,32 +50,6 @@ void timer_service::event::operator()(time_type const& time)
     }
 }
 
-static std::function<void ()>
-wrap_process(std::shared_ptr<timer_service> self)
-{
-    return [=]() {
-        self->process();
-    };
-}
-
-static std::function<connection (boost::function<void ()> const&, timer_service::time_type)>
-wrap_on_periodic(std::shared_ptr<timer_service> self)
-{
-    typedef timer_service::time_type time_type;
-    return [=](std::function<void ()> const& slot, time_type interval) {
-        return self->on_periodic(slot, interval);
-    };
-}
-
-static std::function<connection (std::function<void ()> const&, timer_service::time_type, timer_service::time_type)>
-wrap_on_periodic_start(std::shared_ptr<timer_service> self)
-{
-    typedef timer_service::time_type time_type;
-    return [=](std::function<void ()> const& slot, time_type interval, time_type start) {
-        return self->on_periodic(slot, interval, start);
-    };
-}
-
 void timer_service::luaopen(lua_State* L)
 {
     using namespace luaponte;
@@ -85,9 +59,9 @@ void timer_service::luaopen(lua_State* L)
         [
             class_<timer_service, std::shared_ptr<timer_service> >("timer_service")
                 .def(constructor<>())
-                .property("on_periodic", &wrap_on_periodic)
-                .property("on_periodic", &wrap_on_periodic_start)
-                .property("process", &wrap_process)
+                .def("on_periodic", static_cast<connection (timer_service::*)(slot_function_type const&, time_type)>(&timer_service::on_periodic))
+                .def("on_periodic", static_cast<connection (timer_service::*)(slot_function_type const&, time_type, time_type)>(&timer_service::on_periodic))
+                .def("process", &timer_service::process)
         ]
     ];
 }

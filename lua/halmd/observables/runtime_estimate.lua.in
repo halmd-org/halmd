@@ -86,8 +86,8 @@ local M = module(function(args)
 
     self.connect = function(self)
         if #conn == 0 then
-            table.insert(conn, timer_service.on_periodic(self.estimate, interval, first))
-            table.insert(conn, timer_service.on_periodic(self.sample, sample, 0))
+            table.insert(conn, timer_service:on_periodic(self.estimate, interval, first))
+            table.insert(conn, timer_service:on_periodic(self.sample, sample, 0))
             table.insert(conn, posix_signal.on_usr1(self.estimate))
         else
             error("runtime estimate is already connected", 2)
