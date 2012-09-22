@@ -59,8 +59,8 @@ local M = module(function(args)
 
     integrator.connect = function(self)
         if #conn == 0 then
-            table.insert(conn, core.on_integrate(self.integrate))
-            table.insert(conn, core.on_finalize(self.finalize))
+            table.insert(conn, core:on_integrate(self.integrate))
+            table.insert(conn, core:on_finalize(self.finalize))
         else
             error("integrator is already connected", 2)
         end

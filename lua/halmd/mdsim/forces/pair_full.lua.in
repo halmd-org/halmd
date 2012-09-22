@@ -50,9 +50,9 @@ local M = module(function(args)
     local force = assert(forces.pair_full)(potential, particle, box)
 
     -- system preparation
-    core.on_append_setup(force.compute)
+    core:on_append_setup(force.compute)
     -- compute forces every step
-    core.on_force(force.compute)
+    core:on_force(force.compute)
 
     -- store potential Lua object (which contains the C++ object) as a
     -- read-only Lua property, so we may read it in pair_full.profile

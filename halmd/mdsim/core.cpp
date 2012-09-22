@@ -53,118 +53,6 @@ void core::mdstep()
     on_append_finalize_();
 }
 
-static std::function<void ()>
-wrap_setup(std::shared_ptr<core> self)
-{
-    return [=]() {
-        self->setup();
-    };
-}
-
-static std::function<void ()>
-wrap_mdstep(std::shared_ptr<core> self)
-{
-    return [=]() {
-        self->mdstep();
-    };
-}
-
-static std::function<void (std::function<void ()> const&)>
-wrap_on_prepend_setup(std::shared_ptr<core> self)
-{
-    return [=](std::function<void ()> const& slot) {
-        return self->on_prepend_setup(slot);
-    };
-}
-
-static std::function<void (std::function<void ()> const&)>
-wrap_on_setup(std::shared_ptr<core> self)
-{
-    return [=](std::function<void ()> const& slot) {
-        return self->on_setup(slot);
-    };
-}
-
-static std::function<void (std::function<void ()> const&)>
-wrap_on_append_setup(std::shared_ptr<core> self)
-{
-    return [=](std::function<void ()> const& slot) {
-        return self->on_append_setup(slot);
-    };
-}
-
-static std::function<void (std::function<void ()> const&)>
-wrap_on_prepend_integrate(std::shared_ptr<core> self)
-{
-    return [=](std::function<void ()> const& slot) {
-        return self->on_prepend_integrate(slot);
-    };
-}
-
-static std::function<void (std::function<void ()> const&)>
-wrap_on_integrate(std::shared_ptr<core> self)
-{
-    return [=](std::function<void ()> const& slot) {
-        return self->on_integrate(slot);
-    };
-}
-
-static std::function<void (std::function<void ()> const&)>
-wrap_on_append_integrate(std::shared_ptr<core> self)
-{
-    return [=](std::function<void ()> const& slot) {
-        return self->on_append_integrate(slot);
-    };
-}
-
-static std::function<void (std::function<void ()> const&)>
-wrap_on_prepend_force(std::shared_ptr<core> self)
-{
-    return [=](std::function<void ()> const& slot) {
-        return self->on_prepend_force(slot);
-    };
-}
-
-static std::function<void (std::function<void ()> const&)>
-wrap_on_force(std::shared_ptr<core> self)
-{
-    return [=](std::function<void ()> const& slot) {
-        return self->on_force(slot);
-    };
-}
-
-static std::function<void (std::function<void ()> const&)>
-wrap_on_append_force(std::shared_ptr<core> self)
-{
-    return [=](std::function<void ()> const& slot) {
-        return self->on_append_force(slot);
-    };
-}
-
-static std::function<void (std::function<void ()> const&)>
-wrap_on_prepend_finalize(std::shared_ptr<core> self)
-{
-    return [=](std::function<void ()> const& slot) {
-        return self->on_prepend_finalize(slot);
-    };
-}
-
-static std::function<void (std::function<void ()> const&)>
-wrap_on_finalize(std::shared_ptr<core> self)
-{
-    return [=](std::function<void ()> const& slot) {
-        return self->on_finalize(slot);
-    };
-}
-
-static std::function<void (std::function<void ()> const&)>
-wrap_on_append_finalize(std::shared_ptr<core> self)
-{
-    return [=](std::function<void ()> const& slot) {
-        return self->on_append_finalize(slot);
-    };
-}
-
 void core::luaopen(lua_State* L)
 {
     using namespace luaponte;
@@ -174,20 +62,20 @@ void core::luaopen(lua_State* L)
         [
             class_<core, std::shared_ptr<core> >("core")
                 .def(constructor<>())
-                .property("setup", &wrap_setup)
-                .property("mdstep", &wrap_mdstep)
-                .property("on_prepend_setup", &wrap_on_prepend_setup)
-                .property("on_setup", &wrap_on_setup)
-                .property("on_append_setup", &wrap_on_append_setup)
-                .property("on_prepend_integrate", &wrap_on_prepend_integrate)
-                .property("on_integrate", &wrap_on_integrate)
-                .property("on_append_integrate", &wrap_on_append_integrate)
-                .property("on_prepend_force", &wrap_on_prepend_force)
-                .property("on_force", &wrap_on_force)
-                .property("on_append_force", &wrap_on_append_force)
-                .property("on_prepend_finalize", &wrap_on_prepend_finalize)
-                .property("on_finalize", &wrap_on_finalize)
-                .property("on_append_finalize", &wrap_on_append_finalize)
+                .def("setup", &core::setup)
+                .def("mdstep", &core::mdstep)
+                .def("on_prepend_setup", &core::on_prepend_setup)
+                .def("on_setup", &core::on_setup)
+                .def("on_append_setup", &core::on_append_setup)
+                .def("on_prepend_integrate", &core::on_prepend_integrate)
+                .def("on_integrate", &core::on_integrate)
+                .def("on_append_integrate", &core::on_append_integrate)
+                .def("on_prepend_force", &core::on_prepend_force)
+                .def("on_force", &core::on_force)
+                .def("on_append_force", &core::on_append_force)
+                .def("on_prepend_finalize", &core::on_prepend_finalize)
+                .def("on_finalize", &core::on_finalize)
+                .def("on_append_finalize", &core::on_append_finalize)
                 .scope
                 [
                     class_<runtime>("runtime")
