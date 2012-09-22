@@ -198,10 +198,10 @@ local M = module(function(args)
         writer.connect = function(self)
             if #conn == 0 then
                 if every and every > 0 then
-                    table.insert(conn, sampler:on_sample(self.write, every))
+                    table.insert(conn, assert(sampler:on_sample(self.write, every)))
                 else
-                    table.insert(conn, sampler:on_start(self.write))
-                    table.insert(conn, sampler:on_finish(self.write))
+                    table.insert(conn, assert(sampler:on_start(self.write)))
+                    table.insert(conn, assert(sampler:on_finish(self.write)))
                 end
             else
                 error("phase_space writer is already connected", 2)
@@ -239,8 +239,8 @@ local M = module(function(args)
                 local label = assert(self.group.label)
                 local desc = ("phase space sample of %s particles on %s"):format(label, memory)
                 local runtime = assert(sampler.runtime)
-                table.insert(conn, profiler:on_profile(runtime.acquire, ("acquisition of %s"):format(desc)))
-                table.insert(conn, profiler:on_profile(runtime.reset, ("reset %s"):format(desc)))
+                table.insert(conn, assert(profiler:on_profile(runtime.acquire, ("acquisition of %s"):format(desc))))
+                table.insert(conn, assert(profiler:on_profile(runtime.reset, ("reset %s"):format(desc))))
             end
         else
             error("phase_space sampler is already connected", 2)

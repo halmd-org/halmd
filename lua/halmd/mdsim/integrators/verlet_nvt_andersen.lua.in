@@ -140,11 +140,11 @@ local M = module(function(args)
 
     self.connect = function(self)
         if #conn == 0 then
-            table.insert(conn, clock:on_set_timestep(function(timestep) set_timestep(self, timestep) end))
-            table.insert(conn, core:on_integrate(function() self:integrate() end))
-            table.insert(conn, core:on_finalize(function() self:finalize() end))
-            table.insert(conn, profiler:on_profile(self.runtime.integrate, "first half-step of velocity-Verlet"))
-            table.insert(conn, profiler:on_profile(self.runtime.finalize, "second half-step of velocity-Verlet (+ Andersen thermostat)"))
+            table.insert(conn, assert(clock:on_set_timestep(function(timestep) set_timestep(self, timestep) end)))
+            table.insert(conn, assert(core:on_integrate(function() self:integrate() end)))
+            table.insert(conn, assert(core:on_finalize(function() self:finalize() end)))
+            table.insert(conn, assert(profiler:on_profile(self.runtime.integrate, "first half-step of velocity-Verlet")))
+            table.insert(conn, assert(profiler:on_profile(self.runtime.finalize, "second half-step of velocity-Verlet (+ Andersen thermostat)")))
         else
             error("integrator is already connected", 2)
         end

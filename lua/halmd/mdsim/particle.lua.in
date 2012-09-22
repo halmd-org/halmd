@@ -157,7 +157,7 @@ local M = module(function(args)
     self.connect = function(self)
         if #conn == 0 then
             local runtime = assert(self.runtime)
-            table.insert(conn, profiler:on_profile(runtime.rearrange, "rearrange particles by permutation"))
+            table.insert(conn, assert(profiler:on_profile(runtime.rearrange, "rearrange particles by permutation")))
         else
             error("particle is already connected", 2)
         end

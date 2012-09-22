@@ -102,8 +102,8 @@ local M = module(function(args)
 
     self.connect = function(self)
         if #conn == 0 then
-            table.insert(conn, sampler:on_sample(self.sample, every))
-            table.insert(conn, sampler:on_finish(self.finalise))
+            table.insert(conn, assert(sampler:on_sample(self.sample, every)))
+            table.insert(conn, assert(sampler:on_finish(self.finalise)))
         else
             error("blocking scheme is already connected", 2)
         end
@@ -152,10 +152,10 @@ local M = module(function(args)
 
         result.connect = function(result)
             if #conn == 0 then
-                table.insert(conn, self:on_sample(sample))
-                table.insert(conn, self:on_correlate(result))
-                table.insert(conn, self:on_append_finalise(writer.write))
-                table.insert(conn, profiler:on_profile(result.runtime.tcf, desc))
+                table.insert(conn, assert(self:on_sample(sample)))
+                table.insert(conn, assert(self:on_correlate(result)))
+                table.insert(conn, assert(self:on_append_finalise(writer.write)))
+                table.insert(conn, assert(profiler:on_profile(result.runtime.tcf, desc)))
             else
                 error("correlation function is already connected", 2)
             end
