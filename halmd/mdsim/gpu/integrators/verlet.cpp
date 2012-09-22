@@ -112,33 +112,6 @@ void verlet<dimension, float_type>::finalize()
     }
 }
 
-template <typename integrator_type>
-static std::function<void ()>
-wrap_integrate(std::shared_ptr<integrator_type> self)
-{
-    return [=]() {
-        self->integrate();
-    };
-}
-
-template <typename integrator_type>
-static std::function<void ()>
-wrap_finalize(std::shared_ptr<integrator_type> self)
-{
-    return [=]() {
-        self->finalize();
-    };
-}
-
-template <typename integrator_type>
-static std::function<void (double)>
-wrap_set_timestep(std::shared_ptr<integrator_type> self)
-{
-    return [=](double timestep) {
-        self->set_timestep(timestep);
-    };
-}
-
 template <int dimension, typename float_type>
 void verlet<dimension, float_type>::luaopen(lua_State* L)
 {
@@ -150,9 +123,9 @@ void verlet<dimension, float_type>::luaopen(lua_State* L)
             namespace_("integrators")
             [
                 class_<verlet>()
-                    .property("integrate", &wrap_integrate<verlet>)
-                    .property("finalize", &wrap_finalize<verlet>)
-                    .property("set_timestep", &wrap_set_timestep<verlet>)
+                    .def("integrate", &verlet::integrate)
+                    .def("finalize", &verlet::finalize)
+                    .def("set_timestep", &verlet::set_timestep)
                     .property("timestep", &verlet::timestep)
                     .scope
                     [
