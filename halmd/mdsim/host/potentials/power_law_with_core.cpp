@@ -22,6 +22,9 @@
 #include <stdexcept>
 #include <string>
 
+#include <halmd/mdsim/forces/trunc/local_r4.hpp>
+#include <halmd/mdsim/host/forces/pair_full.hpp>
+#include <halmd/mdsim/host/forces/pair_trunc.hpp>
 #include <halmd/mdsim/host/potentials/power_law_with_core.hpp>
 #include <halmd/utility/lua/lua.hpp>
 
@@ -124,8 +127,20 @@ HALMD_LUA_API int luaopen_libhalmd_mdsim_host_potentials_power_law_with_core(lua
 {
 #ifndef USE_HOST_SINGLE_PRECISION
     power_law_with_core<double>::luaopen(L);
+    forces::pair_full<3, double, power_law_with_core<double> >::luaopen(L);
+    forces::pair_full<2, double, power_law_with_core<double> >::luaopen(L);
+    forces::pair_trunc<3, double, power_law_with_core<double> >::luaopen(L);
+    forces::pair_trunc<2, double, power_law_with_core<double> >::luaopen(L);
+    forces::pair_trunc<3, double, power_law_with_core<double>, mdsim::forces::trunc::local_r4<double> >::luaopen(L);
+    forces::pair_trunc<2, double, power_law_with_core<double>, mdsim::forces::trunc::local_r4<double> >::luaopen(L);
 #else
     power_law_with_core<float>::luaopen(L);
+    forces::pair_full<3, float, power_law_with_core<float> >::luaopen(L);
+    forces::pair_full<2, float, power_law_with_core<float> >::luaopen(L);
+    forces::pair_trunc<3, float, power_law_with_core<float> >::luaopen(L);
+    forces::pair_trunc<2, float, power_law_with_core<float> >::luaopen(L);
+    forces::pair_trunc<3, float, power_law_with_core<float>, mdsim::forces::trunc::local_r4<float> >::luaopen(L);
+    forces::pair_trunc<2, float, power_law_with_core<float>, mdsim::forces::trunc::local_r4<float> >::luaopen(L);
 #endif
     return 0;
 }
@@ -138,6 +153,27 @@ template class power_law_with_core<float>;
 #endif
 
 } // namespace potentials
+
+namespace forces {
+
+// explicit instantiation of force modules
+#ifndef USE_HOST_SINGLE_PRECISION
+template class pair_full<3, double, potentials::power_law_with_core<double> >;
+template class pair_full<2, double, potentials::power_law_with_core<double> >;
+template class pair_trunc<3, double, potentials::power_law_with_core<double> >;
+template class pair_trunc<2, double, potentials::power_law_with_core<double> >;
+template class pair_trunc<3, double, potentials::power_law_with_core<double>, mdsim::forces::trunc::local_r4<double> >;
+template class pair_trunc<2, double, potentials::power_law_with_core<double>, mdsim::forces::trunc::local_r4<double> >;
+#else
+template class pair_full<3, float, potentials::power_law_with_core<float> >;
+template class pair_full<2, float, potentials::power_law_with_core<float> >;
+template class pair_trunc<3, float, potentials::power_law_with_core<float> >;
+template class pair_trunc<2, float, potentials::power_law_with_core<float> >;
+template class pair_trunc<3, float, potentials::power_law_with_core<float>, mdsim::forces::trunc::local_r4<float> >;
+template class pair_trunc<2, float, potentials::power_law_with_core<float>, mdsim::forces::trunc::local_r4<float> >;
+#endif
+
+} // namespace forces
 } // namespace host
 } // namespace mdsim
 } // namespace halmd

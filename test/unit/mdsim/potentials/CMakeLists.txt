@@ -3,7 +3,6 @@ add_executable(test_unit_mdsim_potentials_lennard_jones
 )
 if(HALMD_WITH_GPU)
   target_link_libraries(test_unit_mdsim_potentials_lennard_jones
-    halmd_mdsim_gpu_forces
     halmd_mdsim_gpu_potentials
     halmd_mdsim_gpu
     halmd_algorithm_gpu
@@ -29,7 +28,6 @@ add_executable(test_unit_mdsim_potentials_modified_lennard_jones
 )
 if(HALMD_WITH_GPU)
   target_link_libraries(test_unit_mdsim_potentials_modified_lennard_jones
-    halmd_mdsim_gpu_forces
     halmd_mdsim_gpu_potentials
     halmd_mdsim_gpu
     halmd_algorithm_gpu
@@ -55,7 +53,6 @@ add_executable(test_unit_mdsim_potentials_power_law
 )
 if(HALMD_WITH_GPU)
   target_link_libraries(test_unit_mdsim_potentials_power_law
-    halmd_mdsim_gpu_forces
     halmd_mdsim_gpu_potentials
     halmd_mdsim_gpu
     halmd_algorithm_gpu
@@ -81,7 +78,6 @@ add_executable(test_unit_mdsim_potentials_power_law_with_core
 )
 if(HALMD_WITH_GPU)
   target_link_libraries(test_unit_mdsim_potentials_power_law_with_core
-    halmd_mdsim_gpu_forces
     halmd_mdsim_gpu_potentials
     halmd_mdsim_gpu
     halmd_algorithm_gpu

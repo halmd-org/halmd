@@ -21,6 +21,9 @@
 #include <cmath>
 #include <string>
 
+#include <halmd/mdsim/forces/trunc/local_r4.hpp>
+#include <halmd/mdsim/host/forces/pair_full.hpp>
+#include <halmd/mdsim/host/forces/pair_trunc.hpp>
 #include <halmd/mdsim/host/potentials/morse.hpp>
 #include <halmd/utility/lua/lua.hpp>
 
@@ -108,8 +111,20 @@ HALMD_LUA_API int luaopen_libhalmd_mdsim_host_potentials_morse(lua_State* L)
 {
 #ifndef USE_HOST_SINGLE_PRECISION
     morse<double>::luaopen(L);
+    forces::pair_full<3, double, morse<double> >::luaopen(L);
+    forces::pair_full<2, double, morse<double> >::luaopen(L);
+    forces::pair_trunc<3, double, morse<double> >::luaopen(L);
+    forces::pair_trunc<2, double, morse<double> >::luaopen(L);
+    forces::pair_trunc<3, double, morse<double>, mdsim::forces::trunc::local_r4<double> >::luaopen(L);
+    forces::pair_trunc<2, double, morse<double>, mdsim::forces::trunc::local_r4<double> >::luaopen(L);
 #else
     morse<float>::luaopen(L);
+    forces::pair_full<3, float, morse<float> >::luaopen(L);
+    forces::pair_full<2, float, morse<float> >::luaopen(L);
+    forces::pair_trunc<3, float, morse<float> >::luaopen(L);
+    forces::pair_trunc<2, float, morse<float> >::luaopen(L);
+    forces::pair_trunc<3, float, morse<float>, mdsim::forces::trunc::local_r4<float> >::luaopen(L);
+    forces::pair_trunc<2, float, morse<float>, mdsim::forces::trunc::local_r4<float> >::luaopen(L);
 #endif
     return 0;
 }
@@ -122,6 +137,27 @@ template class morse<float>;
 #endif
 
 } // namespace potentials
+
+namespace forces {
+
+// explicit instantiation of force modules
+#ifndef USE_HOST_SINGLE_PRECISION
+template class pair_full<3, double, potentials::morse<double> >;
+template class pair_full<2, double, potentials::morse<double> >;
+template class pair_trunc<3, double, potentials::morse<double> >;
+template class pair_trunc<2, double, potentials::morse<double> >;
+template class pair_trunc<3, double, potentials::morse<double>, mdsim::forces::trunc::local_r4<double> >;
+template class pair_trunc<2, double, potentials::morse<double>, mdsim::forces::trunc::local_r4<double> >;
+#else
+template class pair_full<3, float, potentials::morse<float> >;
+template class pair_full<2, float, potentials::morse<float> >;
+template class pair_trunc<3, float, potentials::morse<float> >;
+template class pair_trunc<2, float, potentials::morse<float> >;
+template class pair_trunc<3, float, potentials::morse<float>, mdsim::forces::trunc::local_r4<float> >;
+template class pair_trunc<2, float, potentials::morse<float>, mdsim::forces::trunc::local_r4<float> >;
+#endif
+
+} // namespace forces
 } // namespace host
 } // namespace mdsim
 } // namespace halmd

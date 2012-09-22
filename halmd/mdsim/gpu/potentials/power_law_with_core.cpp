@@ -23,6 +23,9 @@
 #include <stdexcept>
 #include <string>
 
+#include <halmd/mdsim/forces/trunc/local_r4.hpp>
+#include <halmd/mdsim/gpu/forces/pair_full.hpp>
+#include <halmd/mdsim/gpu/forces/pair_trunc.hpp>
 #include <halmd/mdsim/gpu/potentials/power_law_with_core.hpp>
 #include <halmd/mdsim/gpu/potentials/power_law_with_core_kernel.hpp>
 #include <halmd/utility/lua/lua.hpp>
@@ -151,6 +154,12 @@ void power_law_with_core<float_type>::luaopen(lua_State* L)
 HALMD_LUA_API int luaopen_libhalmd_mdsim_gpu_potentials_power_law_with_core(lua_State* L)
 {
     power_law_with_core<float>::luaopen(L);
+    forces::pair_full<3, float, power_law_with_core<float> >::luaopen(L);
+    forces::pair_full<2, float, power_law_with_core<float> >::luaopen(L);
+    forces::pair_trunc<3, float, power_law_with_core<float> >::luaopen(L);
+    forces::pair_trunc<2, float, power_law_with_core<float> >::luaopen(L);
+    forces::pair_trunc<3, float, power_law_with_core<float>, mdsim::forces::trunc::local_r4<float> >::luaopen(L);
+    forces::pair_trunc<2, float, power_law_with_core<float>, mdsim::forces::trunc::local_r4<float> >::luaopen(L);
     return 0;
 }
 
@@ -158,6 +167,18 @@ HALMD_LUA_API int luaopen_libhalmd_mdsim_gpu_potentials_power_law_with_core(lua_
 template class power_law_with_core<float>;
 
 } // namespace potentials
+
+namespace forces {
+
+// explicit instantiation of force modules
+template class pair_full<3, float, potentials::power_law_with_core<float> >;
+template class pair_full<2, float, potentials::power_law_with_core<float> >;
+template class pair_trunc<3, float, potentials::power_law_with_core<float> >;
+template class pair_trunc<2, float, potentials::power_law_with_core<float> >;
+template class pair_trunc<3, float, potentials::power_law_with_core<float>, mdsim::forces::trunc::local_r4<float> >;
+template class pair_trunc<2, float, potentials::power_law_with_core<float>, mdsim::forces::trunc::local_r4<float> >;
+
+} // namespace forces
 } // namespace gpu
 } // namespace mdsim
 } // namespace halmd

@@ -3,7 +3,6 @@ add_executable(test_unit_mdsim_forces_trunc_local_r4
 )
 if(HALMD_WITH_GPU)
   target_link_libraries(test_unit_mdsim_forces_trunc_local_r4
-    halmd_mdsim_gpu_forces
     halmd_mdsim_gpu_potentials
     halmd_mdsim_gpu
     halmd_mdsim

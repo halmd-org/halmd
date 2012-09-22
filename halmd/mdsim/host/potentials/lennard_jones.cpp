@@ -23,6 +23,9 @@
 #include <stdexcept>
 #include <string>
 
+#include <halmd/mdsim/forces/trunc/local_r4.hpp>
+#include <halmd/mdsim/host/forces/pair_full.hpp>
+#include <halmd/mdsim/host/forces/pair_trunc.hpp>
 #include <halmd/mdsim/host/potentials/lennard_jones.hpp>
 #include <halmd/utility/lua/lua.hpp>
 
@@ -111,8 +114,20 @@ HALMD_LUA_API int luaopen_libhalmd_mdsim_host_potentials_lennard_jones(lua_State
 {
 #ifndef USE_HOST_SINGLE_PRECISION
     lennard_jones<double>::luaopen(L);
+    forces::pair_full<3, double, lennard_jones<double> >::luaopen(L);
+    forces::pair_full<2, double, lennard_jones<double> >::luaopen(L);
+    forces::pair_trunc<3, double, lennard_jones<double> >::luaopen(L);
+    forces::pair_trunc<2, double, lennard_jones<double> >::luaopen(L);
+    forces::pair_trunc<3, double, lennard_jones<double>, mdsim::forces::trunc::local_r4<double> >::luaopen(L);
+    forces::pair_trunc<2, double, lennard_jones<double>, mdsim::forces::trunc::local_r4<double> >::luaopen(L);
 #else
     lennard_jones<float>::luaopen(L);
+    forces::pair_full<3, float, lennard_jones<float> >::luaopen(L);
+    forces::pair_full<2, float, lennard_jones<float> >::luaopen(L);
+    forces::pair_trunc<3, float, lennard_jones<float> >::luaopen(L);
+    forces::pair_trunc<2, float, lennard_jones<float> >::luaopen(L);
+    forces::pair_trunc<3, float, lennard_jones<float>, mdsim::forces::trunc::local_r4<float> >::luaopen(L);
+    forces::pair_trunc<2, float, lennard_jones<float>, mdsim::forces::trunc::local_r4<float> >::luaopen(L);
 #endif
     return 0;
 }
@@ -125,6 +140,27 @@ template class lennard_jones<float>;
 #endif
 
 } // namespace potentials
+
+namespace forces {
+
+// explicit instantiation of force modules
+#ifndef USE_HOST_SINGLE_PRECISION
+template class pair_full<3, double, potentials::lennard_jones<double> >;
+template class pair_full<2, double, potentials::lennard_jones<double> >;
+template class pair_trunc<3, double, potentials::lennard_jones<double> >;
+template class pair_trunc<2, double, potentials::lennard_jones<double> >;
+template class pair_trunc<3, double, potentials::lennard_jones<double>, mdsim::forces::trunc::local_r4<double> >;
+template class pair_trunc<2, double, potentials::lennard_jones<double>, mdsim::forces::trunc::local_r4<double> >;
+#else
+template class pair_full<3, float, potentials::lennard_jones<float> >;
+template class pair_full<2, float, potentials::lennard_jones<float> >;
+template class pair_trunc<3, float, potentials::lennard_jones<float> >;
+template class pair_trunc<2, float, potentials::lennard_jones<float> >;
+template class pair_trunc<3, float, potentials::lennard_jones<float>, mdsim::forces::trunc::local_r4<float> >;
+template class pair_trunc<2, float, potentials::lennard_jones<float>, mdsim::forces::trunc::local_r4<float> >;
+#endif
+
+} // namespace forces
 } // namespace host
 } // namespace mdsim
 } // namespace halmd

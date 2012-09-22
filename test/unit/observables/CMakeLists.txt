@@ -4,7 +4,6 @@ add_executable(test_unit_observables_thermodynamics
 )
 if(HALMD_WITH_GPU)
   target_link_libraries(test_unit_observables_thermodynamics
-    halmd_mdsim_gpu_forces
     halmd_mdsim_gpu_particle_groups
     halmd_mdsim_gpu_integrators
     halmd_mdsim_gpu_neighbours
@@ -18,7 +17,6 @@ if(HALMD_WITH_GPU)
   )
 endif()
 target_link_libraries(test_unit_observables_thermodynamics
-  halmd_mdsim_host_forces
   halmd_mdsim_host_particle_groups
   halmd_mdsim_host_integrators
   halmd_mdsim_host_neighbours

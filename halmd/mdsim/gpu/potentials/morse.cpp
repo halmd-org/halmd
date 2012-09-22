@@ -23,6 +23,9 @@
 #include <cmath>
 #include <string>
 
+#include <halmd/mdsim/forces/trunc/local_r4.hpp>
+#include <halmd/mdsim/gpu/forces/pair_full.hpp>
+#include <halmd/mdsim/gpu/forces/pair_trunc.hpp>
 #include <halmd/mdsim/gpu/potentials/morse.hpp>
 #include <halmd/mdsim/gpu/potentials/morse_kernel.hpp>
 #include <halmd/utility/lua/lua.hpp>
@@ -125,6 +128,12 @@ void morse<float_type>::luaopen(lua_State* L)
 HALMD_LUA_API int luaopen_libhalmd_mdsim_gpu_potentials_morse(lua_State* L)
 {
     morse<float>::luaopen(L);
+    forces::pair_full<3, float, morse<float> >::luaopen(L);
+    forces::pair_full<2, float, morse<float> >::luaopen(L);
+    forces::pair_trunc<3, float, morse<float> >::luaopen(L);
+    forces::pair_trunc<2, float, morse<float> >::luaopen(L);
+    forces::pair_trunc<3, float, morse<float>, mdsim::forces::trunc::local_r4<float> >::luaopen(L);
+    forces::pair_trunc<2, float, morse<float>, mdsim::forces::trunc::local_r4<float> >::luaopen(L);
     return 0;
 }
 
@@ -132,6 +141,18 @@ HALMD_LUA_API int luaopen_libhalmd_mdsim_gpu_potentials_morse(lua_State* L)
 template class morse<float>;
 
 } // namespace potentials
+
+namespace forces {
+
+// explicit instantiation of force modules
+template class pair_full<3, float, potentials::morse<float> >;
+template class pair_full<2, float, potentials::morse<float> >;
+template class pair_trunc<3, float, potentials::morse<float> >;
+template class pair_trunc<2, float, potentials::morse<float> >;
+template class pair_trunc<3, float, potentials::morse<float>, mdsim::forces::trunc::local_r4<float> >;
+template class pair_trunc<2, float, potentials::morse<float>, mdsim::forces::trunc::local_r4<float> >;
+
+} // namespace forces
 } // namespace gpu
 } // namespace mdsim
 } // namespace halmd
