@@ -348,15 +348,6 @@ wrap_mass(std::shared_ptr<phase_space_type> self)
     };
 }
 
-template <typename phase_space_type>
-static std::function<void (std::shared_ptr<typename phase_space_type::sample_type const>)>
-wrap_set(std::shared_ptr<phase_space_type> self)
-{
-    return [=](std::shared_ptr<typename phase_space_type::sample_type const> sample) {
-        self->set(sample);
-    };
-}
-
 template <int dimension, typename float_type>
 void phase_space<host::samples::phase_space<dimension, float_type> >::luaopen(lua_State* L)
 {
@@ -372,7 +363,7 @@ void phase_space<host::samples::phase_space<dimension, float_type> >::luaopen(lu
                 .property("species", &wrap_species<phase_space>)
                 .property("mass", &wrap_mass<phase_space>)
                 .property("dimension", &wrap_dimension<phase_space>)
-                .property("set", &wrap_set<phase_space>)
+                .def("set", &phase_space::set)
                 .scope
                 [
                     class_<runtime>("runtime")
