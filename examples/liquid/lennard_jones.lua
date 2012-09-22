@@ -38,7 +38,7 @@ local function liquid(args)
     -- construct a phase space reader and sample
     local reader, sample = observables.phase_space.reader(file, {group = "all"})
     -- read phase space sample at last step in file
-    reader.read_at_step(-1)
+    reader:read_at_step(-1)
     -- determine system parameters from phase space sample
     local nparticle = assert(sample.nparticle)
     local nspecies = assert(sample.nspecies)
@@ -50,7 +50,7 @@ local function liquid(args)
     local box = mdsim.box({edges = edges})
 
     -- close H5MD trajectory file
-    file.close()
+    file:close()
 
     -- create system state
     local particle = mdsim.particle({box = box, particles = nparticle, species = nspecies})
@@ -78,7 +78,7 @@ local function liquid(args)
     -- H5MD file writer
     local writer = writers.h5md({path = ("%s.h5"):format(args.output)})
     -- write box specification to H5MD file
-    box.writer(writer)
+    box:writer(writer)
 
     -- select all particles
     local particle_group = mdsim.particle_groups.all({particle = particle})
@@ -86,18 +86,18 @@ local function liquid(args)
     -- sample phase space
     local phase_space = observables.phase_space({box = box, group = particle_group})
     -- set particle positions, velocities, species
-    phase_space.set(sample)
+    phase_space:set(sample)
     -- write trajectory of particle groups to H5MD file
     local interval = args.sampling.trajectory or args.steps
     if interval > 0 then
-        phase_space.writer(writer, {every = interval})
+        phase_space:writer(writer, {every = interval})
     end
 
     -- sample macroscopic state variables
     local interval = args.sampling.state_vars
     if interval > 0 then
         local msv = observables.thermodynamics({box = box, group = particle_group, force = force})
-        msv.writer(writer, {every = interval})
+        msv:writer(writer, {every = interval})
     end
 
     -- time correlation functions
@@ -113,17 +113,17 @@ local function liquid(args)
 
         -- compute mean-square displacement
         local msd = dynamics.mean_square_displacement({phase_space = phase_space})
-        blocking_scheme.correlation(msd, writer)
+        blocking_scheme:correlation(msd, writer)
         -- compute mean-quartic displacement
         local mqd = dynamics.mean_quartic_displacement({phase_space = phase_space})
-        blocking_scheme.correlation(mqd, writer)
+        blocking_scheme:correlation(mqd, writer)
         -- compute velocity autocorrelation function
         local vacf = dynamics.velocity_autocorrelation({phase_space = phase_space})
-        blocking_scheme.correlation(vacf, writer)
+        blocking_scheme:correlation(vacf, writer)
     end
 
     -- setup simulation box and sample initial state
-    observables.sampler.setup()
+    observables.sampler:setup()
 
     -- estimate remaining runtime
     local runtime = observables.runtime_estimate({
@@ -134,10 +134,10 @@ local function liquid(args)
     })
 
     -- run simulation
-    observables.sampler.run(args.steps)
+    observables.sampler:run(args.steps)
 
     -- log profiler results
-    halmd.utility.profiler.profile()
+    halmd.utility.profiler:profile()
 end
 
 --
@@ -146,12 +146,12 @@ end
 local function parse_args()
     local parser = halmd.utility.program_options.argument_parser()
 
-    parser.add_argument("output,o", {type = "string", action = function(args, key, value)
+    parser:add_argument("output,o", {type = "string", action = function(args, key, value)
         -- substitute current time
         args[key] = os.date(value)
     end, default = "lennard_jones_%Y%m%d_%H%M%S", help = "prefix of output files"})
 
-    parser.add_argument("verbose,v", {type = "accumulate", action = function(args, key, value)
+    parser:add_argument("verbose,v", {type = "accumulate", action = function(args, key, value)
         local level = {
             -- console, file
             {"warning", "info" },
@@ -162,24 +162,24 @@ local function parse_args()
         args[key] = level[value] or level[#level]
     end, default = 1, help = "increase logging verbosity"})
 
-    parser.add_argument("trajectory", {type = "string", required = true, action = function(args, key, value)
+    parser:add_argument("trajectory", {type = "string", required = true, action = function(args, key, value)
         if not readers.h5md.check(value) then
             error(("not an H5MD file: %s"):format(value), 0)
         end
         args[key] = value
     end, help = "trajectory file name"})
 
-    parser.add_argument("cutoff", {type = "number", default = math.pow(2, 1 / 6), help = "potential cutoff radius"})
-    parser.add_argument("smoothing", {type = "number", default = 0.005, help = "cutoff smoothing parameter"})
-    parser.add_argument("steps", {type = "integer", default = 10000, help = "number of simulation steps"})
-    parser.add_argument("timestep", {type = "number", default = 0.001, help = "integration time step"})
+    parser:add_argument("cutoff", {type = "number", default = math.pow(2, 1 / 6), help = "potential cutoff radius"})
+    parser:add_argument("smoothing", {type = "number", default = 0.005, help = "cutoff smoothing parameter"})
+    parser:add_argument("steps", {type = "integer", default = 10000, help = "number of simulation steps"})
+    parser:add_argument("timestep", {type = "number", default = 0.001, help = "integration time step"})
 
-    local sampling = parser.add_argument_group("sampling", {help = "sampling intervals (0: disabled)"})
-    sampling.add_argument("trajectory", {type = "integer", help = "for trajectory"})
-    sampling.add_argument("state-vars", {type = "integer", default = 1000, help = "for state variables"})
-    sampling.add_argument("correlation", {type = "integer", default = 100, help = "for correlation functions"})
+    local sampling = parser:add_argument_group("sampling", {help = "sampling intervals (0: disabled)"})
+    sampling:add_argument("trajectory", {type = "integer", help = "for trajectory"})
+    sampling:add_argument("state-vars", {type = "integer", default = 1000, help = "for state variables"})
+    sampling:add_argument("correlation", {type = "integer", default = 100, help = "for correlation functions"})
 
-    return parser.parse_args()
+    return parser:parse_args()
 end
 
 local args = parse_args()

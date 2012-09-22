@@ -59,16 +59,16 @@ local function liquid(args)
         local nparticle = assert(args.particles[s + 1])
         for i = 1, nparticle do table.insert(species, s) end
     end
-    particle.set_species(species)
+    particle:set_species(species)
     -- set initial particle positions
     local lattice = mdsim.positions.lattice({box = box, particle = particle})
-    lattice.set()
+    lattice:set()
     -- set initial particle velocities
     local boltzmann = mdsim.velocities.boltzmann({
         particle = particle
       , temperature = args.temperature
     })
-    boltzmann.set()
+    boltzmann:set()
 
     -- smoothly truncated Lennard-Jones potential
     local potential = mdsim.potentials.lennard_jones({particle = particle, cutoff = args.cutoff})
@@ -85,7 +85,7 @@ local function liquid(args)
     -- H5MD file writer
     local writer = writers.h5md({path = ("%s.h5"):format(args.output)})
     -- write box specification to H5MD file
-    box.writer(writer)
+    box:writer(writer)
 
     -- select all particles
     local particle_group = mdsim.particle_groups.all({particle = particle})
@@ -95,18 +95,18 @@ local function liquid(args)
     -- write trajectory of particle groups to H5MD file
     local interval = args.sampling.trajectory or args.steps
     if interval > 0 then
-        phase_space.writer(writer, {every = interval})
+        phase_space:writer(writer, {every = interval})
     end
 
     -- Sample macroscopic state variables.
     local interval = args.sampling.state_vars
     if interval > 0 then
         local msv = observables.thermodynamics({box = box, group = particle_group, force = force})
-        msv.writer(writer, {every = interval})
+        msv:writer(writer, {every = interval})
     end
 
     -- setup simulation box and sample initial state
-    observables.sampler.setup()
+    observables.sampler:setup()
 
     -- add velocity-Verlet integrator with Andersen thermostat
     local integrator = mdsim.integrators.verlet_nvt_andersen({
@@ -127,10 +127,10 @@ local function liquid(args)
     })
 
     -- run simulation
-    observables.sampler.run(args.steps)
+    observables.sampler:run(args.steps)
 
     -- log profiler results
-    halmd.utility.profiler.profile()
+    halmd.utility.profiler:profile()
 end
 
 --
@@ -139,12 +139,12 @@ end
 local function parse_args()
     local parser = halmd.utility.program_options.argument_parser()
 
-    parser.add_argument("output,o", {type = "string", action = function(args, key, value)
+    parser:add_argument("output,o", {type = "string", action = function(args, key, value)
         -- substitute current time
         args[key] = os.date(value)
     end, default = "lennard_jones_equilibration_%Y%m%d_%H%M%S", help = "prefix of output files"})
 
-    parser.add_argument("verbose,v", {type = "accumulate", action = function(args, key, value)
+    parser:add_argument("verbose,v", {type = "accumulate", action = function(args, key, value)
         local level = {
             -- console, file
             {"warning", "info" },
@@ -155,27 +155,27 @@ local function parse_args()
         args[key] = level[value] or level[#level]
     end, default = 1, help = "increase logging verbosity"})
 
-    parser.add_argument("particles", {type = "vector", dtype = "integer", default = {10000}, help = "number of particles"})
-    parser.add_argument("density", {type = "number", default = 0.75, help = "particle number density"})
-    parser.add_argument("ratios", {type = "vector", dtype = "number", action = function(args, key, value)
+    parser:add_argument("particles", {type = "vector", dtype = "integer", default = {10000}, help = "number of particles"})
+    parser:add_argument("density", {type = "number", default = 0.75, help = "particle number density"})
+    parser:add_argument("ratios", {type = "vector", dtype = "number", action = function(args, key, value)
         if #value ~= 2 and #value ~= 3 then
             error(("box ratios has invalid dimension '%d'"):format(#value), 0)
         end
         args[key] = value
     end, default = {1, 1, 1}, help = "relative aspect ratios of simulation box"})
-    parser.add_argument("cutoff", {type = "number", default = math.pow(2, 1 / 6), help = "potential cutoff radius"})
-    parser.add_argument("smoothing", {type = "number", default = 0.005, help = "cutoff smoothing parameter"})
-    parser.add_argument("masses", {type = "vector", dtype = "number", default = {1}, help = "particle masses"})
-    parser.add_argument("temperature", {type = "number", default = 1.5, help = "initial system temperature"})
-    parser.add_argument("rate", {type = "number", default = 0.1, help = "heat bath collision rate"})
-    parser.add_argument("steps", {type = "integer", default = 20000, help = "number of simulation steps"})
-    parser.add_argument("timestep", {type = "number", default = 0.005, help = "integration time step"})
+    parser:add_argument("cutoff", {type = "number", default = math.pow(2, 1 / 6), help = "potential cutoff radius"})
+    parser:add_argument("smoothing", {type = "number", default = 0.005, help = "cutoff smoothing parameter"})
+    parser:add_argument("masses", {type = "vector", dtype = "number", default = {1}, help = "particle masses"})
+    parser:add_argument("temperature", {type = "number", default = 1.5, help = "initial system temperature"})
+    parser:add_argument("rate", {type = "number", default = 0.1, help = "heat bath collision rate"})
+    parser:add_argument("steps", {type = "integer", default = 20000, help = "number of simulation steps"})
+    parser:add_argument("timestep", {type = "number", default = 0.005, help = "integration time step"})
 
-    local sampling = parser.add_argument_group("sampling", {help = "sampling intervals (0: disabled)"})
-    sampling.add_argument("trajectory", {type = "integer", help = "for trajectory"})
-    sampling.add_argument("state-vars", {type = "integer", default = 1000, help = "for state variables"})
+    local sampling = parser:add_argument_group("sampling", {help = "sampling intervals (0: disabled)"})
+    sampling:add_argument("trajectory", {type = "integer", help = "for trajectory"})
+    sampling:add_argument("state-vars", {type = "integer", default = 1000, help = "for state variables"})
 
-    return parser.parse_args()
+    return parser:parse_args()
 end
 
 local args = parse_args()
