@@ -239,8 +239,8 @@ local M = module(function(args)
                 local label = assert(self.group.label)
                 local desc = ("phase space sample of %s particles on %s"):format(label, memory)
                 local runtime = assert(sampler.runtime)
-                table.insert(conn, profiler.on_profile(runtime.acquire, ("acquisition of %s"):format(desc)))
-                table.insert(conn, profiler.on_profile(runtime.reset, ("reset %s"):format(desc)))
+                table.insert(conn, profiler:on_profile(runtime.acquire, ("acquisition of %s"):format(desc)))
+                table.insert(conn, profiler:on_profile(runtime.reset, ("reset %s"):format(desc)))
             end
         else
             error("phase_space sampler is already connected", 2)

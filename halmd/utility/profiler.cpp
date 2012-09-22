@@ -146,38 +146,6 @@ void profiler::log() const
     }
 }
 
-static std::function<connection (std::shared_ptr<profiler::accumulator_type>, std::string const&)>
-wrap_on_profile(std::shared_ptr<profiler> self)
-{
-    return [=](std::shared_ptr<profiler::accumulator_type> acc, std::string const& desc) {
-        return self->on_profile(acc, desc);
-    };
-}
-
-static std::function<connection (std::function<void ()> const&)>
-wrap_on_prepend_profile(std::shared_ptr<profiler> self)
-{
-    return [=](std::function<void ()> const& slot) {
-        return self->on_prepend_profile(slot);
-    };
-}
-
-static std::function<connection (std::function<void ()> const&)>
-wrap_on_append_profile(std::shared_ptr<profiler> self)
-{
-    return [=](std::function<void ()> const& slot) {
-        return self->on_append_profile(slot);
-    };
-}
-
-static std::function<void()>
-wrap_profile(std::shared_ptr<profiler> self)
-{
-    return [=]() {
-        self->profile();
-    };
-}
-
 void profiler::luaopen(lua_State* L)
 {
     using namespace luaponte;
@@ -187,10 +155,10 @@ void profiler::luaopen(lua_State* L)
         [
             class_<profiler, std::shared_ptr<profiler> >("profiler")
                 .def(constructor<>())
-                .property("on_profile", &wrap_on_profile)
-                .property("on_prepend_profile", &wrap_on_prepend_profile)
-                .property("on_append_profile", &wrap_on_append_profile)
-                .property("profile", &wrap_profile)
+                .def("on_profile", &profiler::on_profile)
+                .def("on_prepend_profile", &profiler::on_prepend_profile)
+                .def("on_append_profile", &profiler::on_append_profile)
+                .def("profile", &profiler::profile)
                 .scope
                 [
                     class_<accumulator_type>("accumulator")

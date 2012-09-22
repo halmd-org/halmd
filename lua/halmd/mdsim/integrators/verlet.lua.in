@@ -132,8 +132,8 @@ local M = module(function(args)
             table.insert(conn, clock.on_set_timestep(set_timestep))
             table.insert(conn, core.on_integrate(self.integrate))
             table.insert(conn, core.on_finalize(self.finalize))
-            table.insert(conn, profiler.on_profile(self.runtime.integrate, "first half-step of velocity-Verlet"))
-            table.insert(conn, profiler.on_profile(self.runtime.finalize, "second half-step of velocity-Verlet"))
+            table.insert(conn, profiler:on_profile(self.runtime.integrate, "first half-step of velocity-Verlet"))
+            table.insert(conn, profiler:on_profile(self.runtime.finalize, "second half-step of velocity-Verlet"))
         else
             error("integrator is already connected", 2)
         end

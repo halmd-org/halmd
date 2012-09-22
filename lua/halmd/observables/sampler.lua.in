@@ -91,10 +91,10 @@ posix_signal:on_int(abort)
 
 -- connect runtime accumulators to module profiler
 local runtime = assert(self.runtime)
-profiler.on_profile(runtime.total, "total simulation runtime")
-profiler.on_profile(runtime.start, "start-up of simulation")
-profiler.on_profile(runtime.prepare, "preparation for integration step")
-profiler.on_profile(runtime.sample, "evaluation of observables")
-profiler.on_profile(runtime.finish, "finishing simulation")
+profiler:on_profile(runtime.total, "total simulation runtime")
+profiler:on_profile(runtime.start, "start-up of simulation")
+profiler:on_profile(runtime.prepare, "preparation for integration step")
+profiler:on_profile(runtime.sample, "evaluation of observables")
+profiler:on_profile(runtime.finish, "finishing simulation")
 
 return self

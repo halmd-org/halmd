@@ -155,7 +155,7 @@ local M = module(function(args)
                 table.insert(conn, self:on_sample(sample))
                 table.insert(conn, self:on_correlate(result))
                 table.insert(conn, self:on_append_finalise(writer.write))
-                table.insert(conn, profiler.on_profile(result.runtime.tcf, desc))
+                table.insert(conn, profiler:on_profile(result.runtime.tcf, desc))
             else
                 error("correlation function is already connected", 2)
             end
