@@ -1,0 +1,212 @@
+--
+-- Copyright © 2012 Peter Colberg
+--
+-- This file is part of HALMD.
+--
+-- HALMD is free software: you can redistribute it and/or modify
+-- it under the terms of the GNU General Public License as published by
+-- the Free Software Foundation, either version 3 of the License, or
+-- (at your option) any later version.
+--
+-- This program is distributed in the hope that it will be useful,
+-- but WITHOUT ANY WARRANTY; without even the implied warranty of
+-- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+-- GNU General Public License for more details.
+--
+-- You should have received a copy of the GNU General Public License
+-- along with this program.  If not, see <http://www.gnu.org/licenses/>.
+--
+
+local clock             = require("halmd.mdsim.clock")
+local core              = require("halmd.mdsim.core")
+local log               = require("halmd.io.log")
+local module            = require("halmd.utility.module")
+local profiler          = require("halmd.utility.profiler")
+local random            = require("halmd.random")
+
+---
+-- Velocity Verlet with Boltzmann distribution
+-- ===========================================
+--
+-- This integrator combines the :class:`velocity-Verlet algorithm
+-- <halmd.mdsim.integrators.verlet>` and the :class:`Boltzmann velocity
+-- distribution <halmd.mdsim.velocities.boltzmann>`. At a periodic interval,
+-- the velocities are assigned from a Boltzmann velocity distribution in the
+-- second integration half-step.
+--
+-- This integrator is especially useful for cooling or heating a system to a
+-- nominal temperature. After an assignment from the Boltzmann distribution,
+-- the centre of mass velocity is shifted to exactly zero, and the velocities
+-- are rescaled to exactly the nominal temperature.
+--
+
+-- grab C++ wrappers
+local verlet            = assert(libhalmd.mdsim.integrators.verlet)
+local boltzmann         = assert(libhalmd.mdsim.velocities.boltzmann)
+
+-- round towards negative infinity
+local function round(x) return math.floor(x + 0.5) end
+
+---
+-- Construct integrator for given system of particles.
+--
+-- :param table args: keyword arguments
+-- :param args.particle: instance of :class:`halmd.mdsim.particle`
+-- :param args.force: instance of :mod:`halmd.mdsim.forces`
+-- :param args.box: instance of :class:`halmd.mdsim.box`
+-- :param number args.timestep: integration time step (defaults to :attr:`halmd.mdsim.clock.timestep`)
+-- :param number args.temperature: temperature of Boltzmann distribution
+-- :param number args.rate: nominal coupling rate
+--
+-- .. method:: set_timestep(timestep)
+--
+--    Set integration time step in MD units.
+--
+--    :param number timestep: integration timestep
+--
+--    This method forwards to :meth:`halmd.mdsim.clock.set_timestep`,
+--    to ensure that all integrators use an identical time step.
+--
+-- .. attribute:: timestep
+--
+--    Integration time step in MD units.
+--
+-- .. attribute:: temperature
+--
+--    Temperature of Boltzmann distribution in MD units.
+--
+-- .. attribute:: interval
+--
+--    Coupling interval in steps.
+--
+--    The interval equals :math:`\left\lfloor\frac{1}{\nu \tau}\right\rceil`,
+--    with nominal coupling rate :math:`\nu` and time-step :math:`\tau`.
+--
+-- .. attribute:: rate
+--
+--    Effective coupling rate per time in MD units.
+--
+--    The effective coupling rate equals :math:`\frac{1}{\Delta s\, \tau}`,
+--    with coupling interval :math:`\Delta s` and time-step :math:`\tau`.
+--
+-- .. method:: disconnect()
+--
+--    Disconnect integrator from core and profiler.
+--
+-- .. method:: connect()
+--
+--    Connect integrator to core and profiler.
+--
+--    By default the integrator is connected.
+--
+-- .. method:: integrate()
+--
+--    Calculate first half-step.
+--
+--    By default this function is connected to :meth:`halmd.mdsim.core.on_integrate`.
+--
+-- .. method:: finalize()
+--
+--    Calculate second half-step, or assign velocities from Boltzmann distribution.
+--
+--    By default this function is connected to :meth:`halmd.mdsim.core.on_finalize`.
+--
+local M = module(function(args)
+    local particle = args.particle
+    if not particle then
+        return error("missing parameter: particle")
+    end
+    local force = args and args.force
+    if not force then
+        return error("missing argument 'force'")
+    end
+    local box = args.box
+    if not box then
+        return error("missing parameter: box")
+    end
+    local temperature = args.temperature
+    if not temperature then
+        return error("missing argument 'temperature'")
+    end
+    local rate = args.rate
+    if not rate then
+        return error("missing argument 'rate'")
+    end
+    local dimension = #box.edges
+    local timestep = args.timestep
+    if timestep then
+        clock:set_timestep(timestep)
+    else
+        timestep = assert(clock.timestep)
+    end
+
+    local rng = random.generator()
+    local logger = log.logger({label = "verlet_boltzmann"})
+
+    local self = verlet(particle, force, box, timestep, logger)
+
+    -- capture C++ method set_timestep
+    local set_timestep = assert(self.set_timestep)
+    -- forward Lua method set_timestep to clock
+    self.set_timestep = function(self, timestep)
+        clock:set_timestep(timestep)
+    end
+
+    -- couple to bath roughly at given rate
+    local bath = boltzmann(particle, rng, temperature, logger)
+    local interval = math.max(1, round(1 / (rate * timestep)))
+    local rate = 1 / (interval * timestep)
+    local finalize
+    if interval > 1 then
+        function finalize()
+            local step = clock.step
+            if step % interval == 0 then bath:set() else self:finalize() end
+        end
+    else
+        function finalize()
+            bath:set()
+        end
+    end
+
+    -- add attributes
+    self.temperature    = property(function() return temperature end)
+    self.interval       = property(function() return interval end)
+    self.rate           = property(function() return rate end)
+
+    logger:info(("coupling interval: %d steps"):format(self.interval))
+    logger:info(("coupling rate: %g per unit time"):format(self.rate))
+
+    -- sequence of signal connections
+    local conn = {}
+
+    self.connect = function(self)
+        if #conn == 0 then
+            table.insert(conn, assert(clock:on_set_timestep(function(timestep) set_timestep(self, timestep) end)))
+            table.insert(conn, assert(core:on_integrate(function() self:integrate() end)))
+            table.insert(conn, assert(core:on_finalize(finalize)))
+            table.insert(conn, assert(profiler:on_profile(self.runtime.integrate, "first half-step of velocity-Verlet")))
+            table.insert(conn, assert(profiler:on_profile(self.runtime.finalize, "second half-step of velocity-Verlet")))
+            table.insert(conn, assert(profiler:on_profile(bath.runtime.set, "Boltzmann distribution")))
+        else
+            return error("integrator is already connected")
+        end
+    end
+
+    self.disconnect = function(self)
+        if #conn > 0 then
+            for i = 1, #conn do
+                conn[i]:disconnect()
+            end
+            conn = {}
+        else
+            return error("integrator is already disconnected")
+        end
+    end
+
+    -- connect integrator to core
+    self:connect()
+
+    return self
+end)
+
+return M
