@@ -31,6 +31,14 @@ local random            = require("halmd.random")
 --
 -- This module implements the :doc:`Verlet algorithm <verlet>` with the Andersen thermostat.
 --
+-- .. warning::
+--
+--    This integrator may cause a significant drift of the centre of mass velocity.
+--
+--    For heating or cooling a system to a nominal temperature before
+--    equilibration, we recommend the :class:`velocity-Verlet with Boltzmann
+--    distribution <halmd.mdsim.integrators.verlet_boltzmann>` integrator.
+--
 
 -- grab C++ wrappers
 local verlet_nvt_andersen = assert(libhalmd.mdsim.integrators.verlet_nvt_andersen)
