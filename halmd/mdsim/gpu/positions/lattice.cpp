@@ -175,15 +175,6 @@ void lattice<dimension, float_type>::fcc(
     LOG_DEBUG("number of particles inserted: " << npart);
 }
 
-template <typename lattice_type>
-static std::function<void ()>
-wrap_set(std::shared_ptr<lattice_type> self)
-{
-    return [=]() {
-        self->set();
-    };
-}
-
 template <int dimension, typename float_type>
 void lattice<dimension, float_type>::luaopen(lua_State* L)
 {
@@ -204,8 +195,8 @@ void lattice<dimension, float_type>::luaopen(lua_State* L)
                            , typename box_type::vector_type const&
                            , std::shared_ptr<logger_type>
                          >())
-                        .property("set", &wrap_set<lattice>)
                         .property("slab", &lattice::slab)
+                        .def("set", &lattice::set)
                         .scope
                         [
                             class_<runtime>("runtime")
