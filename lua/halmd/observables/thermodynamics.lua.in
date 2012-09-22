@@ -118,7 +118,7 @@ local M = module(function(args)
     -- construct instance
     local self = thermodynamics(particle, force, group, box, logger)
 
-    self.writer = function(file, args)
+    self.writer = function(self, file, args)
         local writer = file:writer{location = {"observables"}, mode = "append"}
         writer:on_write(self.en_pot     , {label, "potential_energy"       })
         writer:on_write(self.en_kin     , {label, "kinetic_energy"         })
