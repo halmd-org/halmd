@@ -108,8 +108,8 @@ local function liquid(args)
     -- setup simulation box and sample initial state
     observables.sampler:setup()
 
-    -- add velocity-Verlet integrator with Andersen thermostat
-    local integrator = mdsim.integrators.verlet_nvt_andersen({
+    -- add velocity-Verlet integrator with Boltzmann distribution
+    local integrator = mdsim.integrators.verlet_boltzmann({
         box = box
       , particle = particle
       , force = force
