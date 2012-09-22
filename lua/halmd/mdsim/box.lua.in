@@ -114,7 +114,7 @@ local M = module(function(args)
     -- construct box from edge vectors
     local self = box(edges)
 
-    self.writer = function(file)
+    self.writer = function(self, file)
         local writer = file:writer({location = {"observables", "box"}, mode = "truncate"})
         local group = assert(writer.group)
         group:write_attribute("type", h5.string(), "cuboid")
