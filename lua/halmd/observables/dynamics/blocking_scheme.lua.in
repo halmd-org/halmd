@@ -100,7 +100,7 @@ local M = module(function(args)
     -- sequence of signal connections
     local conn = {}
 
-    self.connect = function()
+    self.connect = function(self)
         if #conn == 0 then
             table.insert(conn, sampler.on_sample(self.sample, every))
             table.insert(conn, sampler.on_finish(self.finalise))
@@ -109,7 +109,7 @@ local M = module(function(args)
         end
     end
 
-    self.disconnect = function()
+    self.disconnect = function(self)
         if #conn > 0 then
             for i = 1, #conn do
                 conn[i]:disconnect()
@@ -120,7 +120,7 @@ local M = module(function(args)
         end
     end
 
-    self.correlation = function(tcf, writer)
+    self.correlation = function(self, tcf, writer)
         if not tcf then
             error("bad argument 'tcf'", 2)
         end
@@ -152,9 +152,9 @@ local M = module(function(args)
 
         result.connect = function(result)
             if #conn == 0 then
-                table.insert(conn, self.on_sample(sample))
-                table.insert(conn, self.on_correlate(result))
-                table.insert(conn, self.on_append_finalise(writer.write))
+                table.insert(conn, self:on_sample(sample))
+                table.insert(conn, self:on_correlate(result))
+                table.insert(conn, self:on_append_finalise(writer.write))
                 table.insert(conn, profiler.on_profile(result.runtime.tcf, desc))
             else
                 error("correlation function is already connected", 2)
@@ -179,7 +179,7 @@ local M = module(function(args)
     end
 
     -- connect blocking scheme to sampler
-    self.connect()
+    self:connect()
 
     return self
 end)

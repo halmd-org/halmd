@@ -234,54 +234,6 @@ wrap_time(std::shared_ptr<blocking_scheme> self)
     };
 }
 
-static std::function<connection (std::shared_ptr<correlation_base>)>
-wrap_on_correlate(std::shared_ptr<blocking_scheme> self)
-{
-    return [=](std::shared_ptr<correlation_base> tcf) {
-        return self->on_correlate(tcf);
-    };
-}
-
-static std::function<connection (std::shared_ptr<blocking_scheme::block_sample_type>)>
-wrap_on_sample(std::shared_ptr<blocking_scheme> self)
-{
-    return [=](std::shared_ptr<blocking_scheme::block_sample_type> block_sample) {
-        return self->on_sample(block_sample);
-    };
-}
-
-static std::function<connection (std::function<void ()> const&)>
-wrap_on_prepend_sample(std::shared_ptr<blocking_scheme> self)
-{
-    return [=](std::function<void ()> const& slot) {
-        return self->on_prepend_sample(slot);
-    };
-}
-
-static std::function<connection (std::function<void ()> const&)>
-wrap_on_append_sample(std::shared_ptr<blocking_scheme> self)
-{
-    return [=](std::function<void ()> const& slot) {
-        return self->on_append_sample(slot);
-    };
-}
-
-static std::function<connection (std::function<void ()> const&)>
-wrap_on_prepend_finalise(std::shared_ptr<blocking_scheme> self)
-{
-    return [=](std::function<void ()> const& slot) {
-        return self->on_prepend_finalise(slot);
-    };
-}
-
-static std::function<connection (std::function<void ()> const&)>
-wrap_on_append_finalise(std::shared_ptr<blocking_scheme> self)
-{
-    return [=](std::function<void ()> const& slot) {
-        return self->on_append_finalise(slot);
-    };
-}
-
 void blocking_scheme::luaopen(lua_State* L)
 {
     using namespace luaponte;
@@ -307,12 +259,12 @@ void blocking_scheme::luaopen(lua_State* L)
                     .property("separation", &blocking_scheme::separation)
                     .property("count", &blocking_scheme::count)
                     .property("time", &wrap_time)
-                    .property("on_correlate", &wrap_on_correlate)
-                    .property("on_sample", &wrap_on_sample)
-                    .property("on_prepend_sample", &wrap_on_prepend_sample)
-                    .property("on_append_sample", &wrap_on_append_sample)
-                    .property("on_prepend_finalise", &wrap_on_prepend_finalise)
-                    .property("on_append_finalise", &wrap_on_append_finalise)
+                    .def("on_correlate", &blocking_scheme::on_correlate)
+                    .def("on_sample", &blocking_scheme::on_sample)
+                    .def("on_prepend_sample", &blocking_scheme::on_prepend_sample)
+                    .def("on_append_sample", &blocking_scheme::on_append_sample)
+                    .def("on_prepend_finalise", &blocking_scheme::on_prepend_finalise)
+                    .def("on_append_finalise", &blocking_scheme::on_append_finalise)
             ]
         ]
     ];
