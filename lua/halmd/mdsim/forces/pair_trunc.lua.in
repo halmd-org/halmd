@@ -113,7 +113,7 @@ local M = module(function(args)
     local self = pair_trunc(potential, particle[1], particle[2], box, neighbour, trunc, logger)
 
     -- attach potential instance as read-only Lua property
-    self.potential = property(function()
+    self.potential = property(function(self)
         return potential
     end)
 
@@ -122,7 +122,7 @@ local M = module(function(args)
     -- profiler description
     local desc = ("computation of %s interaction"):format(potential.description)
 
-    self.connect = function()
+    self.connect = function(self)
         if #conn == 0 then
             local runtime = assert(self.runtime)
             table.insert(conn, profiler.on_profile(runtime.compute, desc))
@@ -131,7 +131,7 @@ local M = module(function(args)
         end
     end
 
-    self.disconnect = function()
+    self.disconnect = function(self)
         if #conn > 0 then
             for i = 1, #conn do
                 conn[i]:disconnect()
@@ -143,7 +143,7 @@ local M = module(function(args)
     end
 
     -- connect to core and profiler
-    self.connect()
+    self:connect()
 
     return self
 end)
