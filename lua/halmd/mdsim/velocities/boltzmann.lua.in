@@ -28,16 +28,12 @@ local random            = require("halmd.random")
 --
 -- This module initialises particle velocities from a Boltzmann distribution.
 --
--- .. warning::
---
---    Non-unit masses are not supported yet.
---
--- The velocity distribution of each dimension :math:`i` is a Gaussian with mean
--- :math:`\mu_{v_i} = 0` and width :math:`\sigma_{v_i} = \sqrt{T^*}`,
+-- The velocity distribution per degree of freedom is a Gaussian with mean
+-- :math:`\mu_{v} = 0` and width :math:`\sigma_{v} = \sqrt{\frac{kT}{m}}`,
 --
 -- .. math::
 --
---    f\left(v_i\right) = \sqrt{\frac{1}{2\pi T^*}} \exp\left(\frac{-v_i^2}{2 T^*}\right)
+--    f\left(v\right) = \sqrt{\frac{m}{2\pi kT}} \exp\left(\frac{-mv^2}{2 kT}\right)
 --
 -- To account for the finite size of the system, the velocities are shifted,
 --
@@ -50,16 +46,18 @@ local random            = require("halmd.random")
 -- .. math::
 --
 --    \vec{v}_\text{scaled} \equiv \vec{v}_\text{shifted}\;
---    \sqrt{\frac{T^* d}{2E_\text{kin} - \left(\vec{V}_\text{cm}\right)^2}}
+--    \sqrt{\frac{\frac{1}{2} kT f N}{E_\text{kin}
+--    - \frac{1}{2} M\left(\vec{V}_\text{cm}\right)^2}}
 --
--- to yield the temperature :math:`T` for a system with :math:`d` positional
--- degrees of freedom, using the centre of mass velocity and kinetic energy,
+-- to yield the temperature :math:`T` for a system with :math:`f` positional
+-- degrees of freedom, using centre of mass velocity and kinetic energy,
 --
 -- .. math::
 --
---    \vec{V}_\text{cm} &= \frac{1}{N} \sum_{n = 1}^N \vec{v}_n \\
+--    \vec{V}_\text{cm} &= \frac{\vec{P}_\text{cm}}{M}
+--    = \frac{\sum_{n = 1}^N m_n \vec{v}_n}{\sum_{n = 1}^N m_n} \\
 --
---    2E_\text{kin} &= \frac{1}{N} \sum_{n = 1}^N v_n^2
+--    E_\text{kin} &= \frac{1}{2} \sum_{n = 1}^N m_n v_n^2
 --
 
 -- grab C++ wrappers
