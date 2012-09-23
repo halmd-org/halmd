@@ -25,6 +25,7 @@
 #include <halmd/io/logger.hpp>
 #include <halmd/mdsim/gpu/particle.hpp>
 #include <halmd/mdsim/gpu/particle_kernel.hpp>
+#include <halmd/mdsim/gpu/velocity.hpp>
 #include <halmd/utility/gpu/device.hpp>
 #include <halmd/utility/lua/lua.hpp>
 #include <halmd/utility/signal.hpp>
@@ -392,6 +393,12 @@ void particle<dimension, float_type>::luaopen(lua_State* L)
                     .def("set_species", &wrap_set_species<particle>)
                     .def("get_mass", &wrap_get_mass<particle>)
                     .def("set_mass", &wrap_set_mass<particle>)
+                    .def("shift_velocity", &shift_velocity<particle>)
+                    .def("shift_velocity_group", &shift_velocity_group<particle>)
+                    .def("rescale_velocity", &rescale_velocity<particle>)
+                    .def("rescale_velocity_group", &rescale_velocity_group<particle>)
+                    .def("shift_rescale_velocity", &shift_rescale_velocity<particle>)
+                    .def("shift_rescale_velocity_group", &shift_rescale_velocity_group<particle>)
                     .property("dimension", &wrap_dimension<dimension, float_type>)
                     .scope
                     [

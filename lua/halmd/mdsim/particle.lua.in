@@ -124,6 +124,30 @@ end
 --
 --    Set particle masses to given sequence.
 --
+-- .. method:: shift_velocity(vector)
+--
+--    Shift all velocities by ``vector``.
+--
+-- .. method:: shift_velocity_group(group, vector)
+--
+--    Shift velocities of group by ``vector``.
+--
+-- .. method:: rescale_velocity(scalar)
+--
+--    Rescale magnitude of all velocities by ``scalar``.
+--
+-- .. method:: rescale_velocity_group(group, scalar)
+--
+--    Rescale magnitude of velocities of group by ``scalar``.
+--
+-- .. method:: shift_rescale_velocity(vector, scalar)
+--
+--    First shift, then rescale all velocities.
+--
+-- .. method:: shift_rescale_velocity_group(group, vector, scalar)
+--
+--    First shift, then rescale velocities of group.
+--
 local M = module(function(args)
     local box = args.box
     if not box then
