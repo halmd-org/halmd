@@ -128,7 +128,7 @@ void boltzmann<dimension, float_type, RandomNumberGenerator>::set()
     );
     cuda::thread::synchronize();
 
-    LOG_DEBUG("assigned Boltzmann-distributed velocities");
+    LOG_TRACE("assigned Boltzmann-distributed velocities");
 }
 
 template <int dimension, typename float_type, typename RandomNumberGenerator>

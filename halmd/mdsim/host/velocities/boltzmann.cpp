@@ -86,8 +86,8 @@ void boltzmann<dimension, float_type>::set()
     double scale = std::sqrt(nparticle * temp_ * dimension / (mv2 - m * inner_prod(v_cm, v_cm)));
     boltzmann::shift_rescale(-v_cm, scale);
 
-    LOG_DEBUG("velocities rescaled by factor " << scale);
-    LOG_DEBUG("assigned Boltzmann-distributed velocities");
+    LOG_TRACE("velocities rescaled by factor " << scale);
+    LOG_TRACE("assigned Boltzmann-distributed velocities");
 }
 
 template <int dimension, typename float_type>
