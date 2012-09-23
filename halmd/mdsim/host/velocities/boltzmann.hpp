@@ -21,15 +21,15 @@
 #ifndef HALMD_MDSIM_HOST_VELOCITIES_BOLTZMANN_HPP
 #define HALMD_MDSIM_HOST_VELOCITIES_BOLTZMANN_HPP
 
-#include <lua.hpp>
-#include <memory>
-#include <utility>
-
 #include <halmd/io/logger.hpp>
 #include <halmd/mdsim/host/particle.hpp>
 #include <halmd/mdsim/host/velocity.hpp>
 #include <halmd/random/host/random.hpp>
 #include <halmd/utility/profiler.hpp>
+
+#include <lua.hpp>
+
+#include <memory>
 
 namespace halmd {
 namespace mdsim {
@@ -75,14 +75,7 @@ private:
     typedef typename particle_type::vector_type vector_type;
     typedef typename particle_type::size_type size_type;
     typedef typename particle_type::velocity_array_type velocity_array_type;
-
-    /**
-     * Assign new velocities from Gaussian distribution
-     *
-     * @param sigma width of distribution
-     * @returns mean velocity and mean-square velocity
-     */
-    std::pair<vector_type, float_type> gaussian(float_type sigma);
+    typedef typename particle_type::mass_array_type mass_array_type;
 
     /** system state */
     std::shared_ptr<particle_type> particle_;

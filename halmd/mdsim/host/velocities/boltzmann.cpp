@@ -49,35 +49,19 @@ void boltzmann<dimension, float_type>::set()
 {
     scoped_timer_type timer(runtime_.set);
 
-    // assuming equal (unit) mass for all particle types
-    vector_type v_cm;
-    float_type vv;
-    boost::tie(v_cm, vv) = gaussian(sqrt(temp_));
-
-    // center velocities around origin, then rescale to exactly
-    // match the desired temperature;
-    // temp = vv / dimension
-    // vv changes to vv - v_cm^2 after shifting
-    float_type scale = std::sqrt(temp_ * dimension / (vv - inner_prod(v_cm, v_cm)));
-    boltzmann::shift_rescale(-v_cm, scale);
-
-    LOG_DEBUG("velocities rescaled by factor " << scale);
-    LOG_DEBUG("assigned Boltzmann-distributed velocities");
-}
-
-template <int dimension, typename float_type>
-std::pair<typename boltzmann<dimension, float_type>::vector_type, float_type>
-boltzmann<dimension, float_type>::gaussian(float_type sigma)
-{
     cache_proxy<velocity_array_type> velocity = particle_->velocity();
+    cache_proxy<mass_array_type const> mass = particle_->mass();
     size_type const nparticle = particle_->nparticle();
 
-    vector_type v_cm = 0;
-    float_type vv = 0;
-    float_type r = 0;
+    float_type const sigma = std::sqrt(temp_);
+    fixed_vector<double, dimension> mv = 0;
+    double mv2 = 0;
+    double m = 0;
+    float_type r;
     bool r_valid = false;
 
-    for (vector_type& v : *velocity) {
+    for (size_type i = 0; i < nparticle; ++i) {
+        vector_type& v = (*velocity)[i];
         // assign two components at a time
         for (unsigned int i = 0; i < dimension - 1; i += 2) {
             boost::tie(v[i], v[i + 1]) = random_->normal(sigma);
@@ -92,13 +76,18 @@ boltzmann<dimension, float_type>::gaussian(float_type sigma)
             }
             r_valid = !r_valid;
         }
-        v_cm += v;
-        vv += inner_prod(v, v);
+        v /= std::sqrt((*mass)[i]);
+        mv += (*mass)[i] * v;
+        mv2 += (*mass)[i] * inner_prod(v, v);
+        m += (*mass)[i];
     }
-    v_cm /= nparticle;
-    vv /= nparticle;
 
-    return std::make_pair(v_cm, vv);
+    fixed_vector<double, dimension> v_cm = mv / m;
+    double scale = std::sqrt(nparticle * temp_ * dimension / (mv2 - m * inner_prod(v_cm, v_cm)));
+    boltzmann::shift_rescale(-v_cm, scale);
+
+    LOG_DEBUG("velocities rescaled by factor " << scale);
+    LOG_DEBUG("assigned Boltzmann-distributed velocities");
 }
 
 template <int dimension, typename float_type>
