@@ -46,7 +46,6 @@ struct function_by_ref_fixture : lua_test_fixture
           , def("slot_by_ref6", &wrap_slot_by_ref6)
           , def("slot_by_ref7", &wrap_slot_by_ref7)
           , def("slot_by_ref8", &wrap_slot_by_ref8)
-          , def("slot_by_ref9", &wrap_slot_by_ref9)
           , def("call", &call_slot_by_ref0)
           , def("call", &call_slot_by_ref1)
           , def("call", &call_slot_by_ref2)
@@ -56,7 +55,6 @@ struct function_by_ref_fixture : lua_test_fixture
           , def("call", &call_slot_by_ref6)
           , def("call", &call_slot_by_ref7)
           , def("call", &call_slot_by_ref8)
-          , def("call", &call_slot_by_ref9)
         ];
     }
 
@@ -123,13 +121,6 @@ struct function_by_ref_fixture : lua_test_fixture
         return value;
     };
 
-    static int& slot_by_ref9(int arg1, int arg2, int arg3, int arg4, int arg5, int arg6, int arg7, int arg8, int arg9)
-    {
-        output << boost::make_tuple(std::string("slot_by_ref9"), arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9);
-        static int value = 9;
-        return value;
-    };
-
     static std::function<int& ()> wrap_slot_by_ref0()
     {
         return boost::bind(&slot_by_ref0);
@@ -173,11 +164,6 @@ struct function_by_ref_fixture : lua_test_fixture
     static std::function<int& (int, int, int, int, int, int, int, int)> wrap_slot_by_ref8()
     {
         return boost::bind(&slot_by_ref8, _1, _2, _3, _4, _5, _6, _7, _8);
-    }
-
-    static std::function<int& (int, int, int, int, int, int, int, int, int)> wrap_slot_by_ref9()
-    {
-        return boost::bind(&slot_by_ref9, _1, _2, _3, _4, _5, _6, _7, _8, _9);
     }
 
     static int call_slot_by_ref0(std::function<int& ()> const& slot_by_ref)
@@ -241,13 +227,6 @@ struct function_by_ref_fixture : lua_test_fixture
         int& value = slot_by_ref(arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8);
         value += 100000;
         return value + arg1 + arg2 + arg3 + arg4 + arg5 + arg6 + arg7 + arg8;
-    }
-
-    static int call_slot_by_ref9(std::function<int& (int, int, int, int, int, int, int, int, int)> const& slot_by_ref, int arg1, int arg2, int arg3, int arg4, int arg5, int arg6, int arg7, int arg8, int arg9)
-    {
-        int& value = slot_by_ref(arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9);
-        value += 100000;
-        return value + arg1 + arg2 + arg3 + arg4 + arg5 + arg6 + arg7 + arg8 + arg9;
     }
 };
 

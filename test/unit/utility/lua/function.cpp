@@ -54,8 +54,6 @@ BOOST_FIXTURE_TEST_CASE( cpp_function, function_fixture )
         BOOST_CHECK( output.is_equal("(slot7 10 20 30 40 50 60 70)") );
         LUA_CHECK( "assert(360 == test.call(test.slot8(), 10, 20, 30, 40, 50, 60, 70, 80))" );
         BOOST_CHECK( output.is_equal("(slot8 10 20 30 40 50 60 70 80)") );
-        LUA_CHECK( "assert(450 == test.call(test.slot9(), 10, 20, 30, 40, 50, 60, 70, 80, 90))" );
-        BOOST_CHECK( output.is_equal("(slot9 10 20 30 40 50 60 70 80 90)") );
     }
 }
 
@@ -63,26 +61,24 @@ BOOST_FIXTURE_TEST_CASE( cpp_function_call, function_fixture )
 {
     for (int i = 1; i <= 3; ++i) {
         BOOST_TEST_MESSAGE( "iteration " << i);
-        LUA_CHECK( "assert(nil == test.slot0()())" );
+        LUA_CHECK( "assert(nil == test.slot0()(nil))" );
         BOOST_CHECK( output.is_equal("(slot0)") );
-        LUA_CHECK( "assert(nil == test.slot1()(10))" );
+        LUA_CHECK( "assert(nil == test.slot1()(nil, 10))" );
         BOOST_CHECK( output.is_equal("(slot1 10)") );
-        LUA_CHECK( "assert(nil == test.slot2()(10, 20))" );
+        LUA_CHECK( "assert(nil == test.slot2()(nil, 10, 20))" );
         BOOST_CHECK( output.is_equal("(slot2 10 20)") );
-        LUA_CHECK( "assert(nil == test.slot3()(10, 20, 30))" );
+        LUA_CHECK( "assert(nil == test.slot3()(nil, 10, 20, 30))" );
         BOOST_CHECK( output.is_equal("(slot3 10 20 30)") );
-        LUA_CHECK( "assert(nil == test.slot4()(10, 20, 30, 40))" );
+        LUA_CHECK( "assert(nil == test.slot4()(nil, 10, 20, 30, 40))" );
         BOOST_CHECK( output.is_equal("(slot4 10 20 30 40)") );
-        LUA_CHECK( "assert(nil == test.slot5()(10, 20, 30, 40, 50))" );
+        LUA_CHECK( "assert(nil == test.slot5()(nil, 10, 20, 30, 40, 50))" );
         BOOST_CHECK( output.is_equal("(slot5 10 20 30 40 50)") );
-        LUA_CHECK( "assert(nil == test.slot6()(10, 20, 30, 40, 50, 60))" );
+        LUA_CHECK( "assert(nil == test.slot6()(nil, 10, 20, 30, 40, 50, 60))" );
         BOOST_CHECK( output.is_equal("(slot6 10 20 30 40 50 60)") );
-        LUA_CHECK( "assert(nil == test.slot7()(10, 20, 30, 40, 50, 60, 70))" );
+        LUA_CHECK( "assert(nil == test.slot7()(nil, 10, 20, 30, 40, 50, 60, 70))" );
         BOOST_CHECK( output.is_equal("(slot7 10 20 30 40 50 60 70)") );
-        LUA_CHECK( "assert(nil == test.slot8()(10, 20, 30, 40, 50, 60, 70, 80))" );
+        LUA_CHECK( "assert(nil == test.slot8()(nil, 10, 20, 30, 40, 50, 60, 70, 80))" );
         BOOST_CHECK( output.is_equal("(slot8 10 20 30 40 50 60 70 80)") );
-        LUA_CHECK( "assert(nil == test.slot9()(10, 20, 30, 40, 50, 60, 70, 80, 90))" );
-        BOOST_CHECK( output.is_equal("(slot9 10 20 30 40 50 60 70 80 90)") );
     }
 }
 
@@ -108,8 +104,6 @@ BOOST_FIXTURE_TEST_CASE( cpp_function_by_value, function_by_value_fixture )
         BOOST_CHECK( output.is_equal("(slot_by_value7 10 20 30 40 50 60 70)") );
         LUA_CHECK( "assert(1368 == test.call(test.slot_by_value8(), 10, 20, 30, 40, 50, 60, 70, 80))" );
         BOOST_CHECK( output.is_equal("(slot_by_value8 10 20 30 40 50 60 70 80)") );
-        LUA_CHECK( "assert(1459 == test.call(test.slot_by_value9(), 10, 20, 30, 40, 50, 60, 70, 80, 90))" );
-        BOOST_CHECK( output.is_equal("(slot_by_value9 10 20 30 40 50 60 70 80 90)") );
     }
 }
 
@@ -117,26 +111,24 @@ BOOST_FIXTURE_TEST_CASE( cpp_function_by_value_call, function_by_value_fixture )
 {
     for (int i = 1; i <= 3; ++i) {
         BOOST_TEST_MESSAGE( "iteration " << i);
-        LUA_CHECK( "assert(1000 == test.slot_by_value0()())" );
+        LUA_CHECK( "assert(1000 == test.slot_by_value0()(nil))" );
         BOOST_CHECK( output.is_equal("(slot_by_value0)") );
-        LUA_CHECK( "assert(1001 == test.slot_by_value1()(10))" );
+        LUA_CHECK( "assert(1001 == test.slot_by_value1()(nil, 10))" );
         BOOST_CHECK( output.is_equal("(slot_by_value1 10)") );
-        LUA_CHECK( "assert(1002 == test.slot_by_value2()(10, 20))" );
+        LUA_CHECK( "assert(1002 == test.slot_by_value2()(nil, 10, 20))" );
         BOOST_CHECK( output.is_equal("(slot_by_value2 10 20)") );
-        LUA_CHECK( "assert(1003 == test.slot_by_value3()(10, 20, 30))" );
+        LUA_CHECK( "assert(1003 == test.slot_by_value3()(nil, 10, 20, 30))" );
         BOOST_CHECK( output.is_equal("(slot_by_value3 10 20 30)") );
-        LUA_CHECK( "assert(1004 == test.slot_by_value4()(10, 20, 30, 40))" );
+        LUA_CHECK( "assert(1004 == test.slot_by_value4()(nil, 10, 20, 30, 40))" );
         BOOST_CHECK( output.is_equal("(slot_by_value4 10 20 30 40)") );
-        LUA_CHECK( "assert(1005 == test.slot_by_value5()(10, 20, 30, 40, 50))" );
+        LUA_CHECK( "assert(1005 == test.slot_by_value5()(nil, 10, 20, 30, 40, 50))" );
         BOOST_CHECK( output.is_equal("(slot_by_value5 10 20 30 40 50)") );
-        LUA_CHECK( "assert(1006 == test.slot_by_value6()(10, 20, 30, 40, 50, 60))" );
+        LUA_CHECK( "assert(1006 == test.slot_by_value6()(nil, 10, 20, 30, 40, 50, 60))" );
         BOOST_CHECK( output.is_equal("(slot_by_value6 10 20 30 40 50 60)") );
-        LUA_CHECK( "assert(1007 == test.slot_by_value7()(10, 20, 30, 40, 50, 60, 70))" );
+        LUA_CHECK( "assert(1007 == test.slot_by_value7()(nil, 10, 20, 30, 40, 50, 60, 70))" );
         BOOST_CHECK( output.is_equal("(slot_by_value7 10 20 30 40 50 60 70)") );
-        LUA_CHECK( "assert(1008 == test.slot_by_value8()(10, 20, 30, 40, 50, 60, 70, 80))" );
+        LUA_CHECK( "assert(1008 == test.slot_by_value8()(nil, 10, 20, 30, 40, 50, 60, 70, 80))" );
         BOOST_CHECK( output.is_equal("(slot_by_value8 10 20 30 40 50 60 70 80)") );
-        LUA_CHECK( "assert(1009 == test.slot_by_value9()(10, 20, 30, 40, 50, 60, 70, 80, 90))" );
-        BOOST_CHECK( output.is_equal("(slot_by_value9 10 20 30 40 50 60 70 80 90)") );
     }
 }
 
@@ -162,8 +154,6 @@ BOOST_FIXTURE_TEST_CASE( cpp_function_by_const_ref, function_by_const_ref_fixtur
         BOOST_CHECK( output.is_equal("(slot_by_const_ref7 10 20 30 40 50 60 70)") );
         LUA_CHECK( "assert(" + lexical_cast<string>(i) + "0368 == test.call(test.slot_by_const_ref8(), 10, 20, 30, 40, 50, 60, 70, 80))" );
         BOOST_CHECK( output.is_equal("(slot_by_const_ref8 10 20 30 40 50 60 70 80)") );
-        LUA_CHECK( "assert(" + lexical_cast<string>(i) + "0459 == test.call(test.slot_by_const_ref9(), 10, 20, 30, 40, 50, 60, 70, 80, 90))" );
-        BOOST_CHECK( output.is_equal("(slot_by_const_ref9 10 20 30 40 50 60 70 80 90)") );
     }
 }
 
@@ -189,8 +179,6 @@ BOOST_FIXTURE_TEST_CASE( cpp_function_by_ref, function_by_ref_fixture )
         BOOST_CHECK( output.is_equal("(slot_by_ref7 10 20 30 40 50 60 70)") );
         LUA_CHECK( "assert(" + lexical_cast<string>(i) + "00368 == test.call(test.slot_by_ref8(), 10, 20, 30, 40, 50, 60, 70, 80))" );
         BOOST_CHECK( output.is_equal("(slot_by_ref8 10 20 30 40 50 60 70 80)") );
-        LUA_CHECK( "assert(" + lexical_cast<string>(i) + "00459 == test.call(test.slot_by_ref9(), 10, 20, 30, 40, 50, 60, 70, 80, 90))" );
-        BOOST_CHECK( output.is_equal("(slot_by_ref9 10 20 30 40 50 60 70 80 90)") );
     }
 }
 
@@ -216,8 +204,6 @@ BOOST_FIXTURE_TEST_CASE( cpp_function_exception, function_exception_fixture )
         BOOST_CHECK( output.is_equal("(exception7 10 20 30 40 50 60 70)") );
         LUA_CHECK( "test.catch_exception(test.throw_exception8(), 10, 20, 30, 40, 50, 60, 70, 80)" );
         BOOST_CHECK( output.is_equal("(exception8 10 20 30 40 50 60 70 80)") );
-        LUA_CHECK( "test.catch_exception(test.throw_exception9(), 10, 20, 30, 40, 50, 60, 70, 80, 90)" );
-        BOOST_CHECK( output.is_equal("(exception9 10 20 30 40 50 60 70 80 90)") );
     }
 }
 
@@ -243,8 +229,6 @@ BOOST_FIXTURE_TEST_CASE( lua_function_slot, function_fixture )
         LUA_CHECK( "assert(output == 'slot7 10 20 30 40 50 60 70')" );
         LUA_CHECK( "assert(360 == test.call(function(...) output = table.concat({'slot8', ...}, ' ') end, 10, 20, 30, 40, 50, 60, 70, 80))" );
         LUA_CHECK( "assert(output == 'slot8 10 20 30 40 50 60 70 80')" );
-        LUA_CHECK( "assert(450 == test.call(function(...) output = table.concat({'slot9', ...}, ' ') end, 10, 20, 30, 40, 50, 60, 70, 80, 90))" );
-        LUA_CHECK( "assert(output == 'slot9 10 20 30 40 50 60 70 80 90')" );
     }
 }
 
@@ -270,8 +254,6 @@ BOOST_FIXTURE_TEST_CASE( lua_function_by_value, function_by_value_fixture )
         LUA_CHECK( "assert(output == 'slot_by_value7 10 20 30 40 50 60 70')" );
         LUA_CHECK( "assert(2368 == test.call(function(...) output = table.concat({'slot_by_value8', ...}, ' ') return 2008 end, 10, 20, 30, 40, 50, 60, 70, 80))" );
         LUA_CHECK( "assert(output == 'slot_by_value8 10 20 30 40 50 60 70 80')" );
-        LUA_CHECK( "assert(2459 == test.call(function(...) output = table.concat({'slot_by_value9', ...}, ' ') return 2009 end, 10, 20, 30, 40, 50, 60, 70, 80, 90))" );
-        LUA_CHECK( "assert(output == 'slot_by_value9 10 20 30 40 50 60 70 80 90')" );
     }
 }
 
@@ -295,8 +277,6 @@ BOOST_FIXTURE_TEST_CASE( lua_function_not_by_const_ref, function_by_const_ref_fi
         LUA_CHECK( "assert(output:match('No matching overload found'))" );
         LUA_CHECK( "status, output = pcall(test.call, function(...) end, 10, 20, 30, 40, 50, 60, 70)" );
         LUA_CHECK( "assert(output:match('No matching overload found'))" );
-        LUA_CHECK( "status, output = pcall(test.call, function(...) end, 10, 20, 30, 40, 50, 60, 70, 80, 90)" );
-        LUA_CHECK( "assert(output:match('No matching overload found'))" );
     }
 }
 
@@ -319,8 +299,6 @@ BOOST_FIXTURE_TEST_CASE( lua_function_not_by_ref, function_by_ref_fixture )
         LUA_CHECK( "status, output = pcall(test.call, function(...) end, 10, 20, 30, 40, 50, 60)" );
         LUA_CHECK( "assert(output:match('No matching overload found'))" );
         LUA_CHECK( "status, output = pcall(test.call, function(...) end, 10, 20, 30, 40, 50, 60, 70)" );
-        LUA_CHECK( "assert(output:match('No matching overload found'))" );
-        LUA_CHECK( "status, output = pcall(test.call, function(...) end, 10, 20, 30, 40, 50, 60, 70, 80, 90)" );
         LUA_CHECK( "assert(output:match('No matching overload found'))" );
     }
 }

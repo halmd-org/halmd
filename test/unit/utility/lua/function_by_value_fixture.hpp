@@ -46,7 +46,6 @@ struct function_by_value_fixture : lua_test_fixture
           , def("slot_by_value6", &wrap_slot_by_value6)
           , def("slot_by_value7", &wrap_slot_by_value7)
           , def("slot_by_value8", &wrap_slot_by_value8)
-          , def("slot_by_value9", &wrap_slot_by_value9)
           , def("call", &call_slot_by_value0)
           , def("call", &call_slot_by_value1)
           , def("call", &call_slot_by_value2)
@@ -56,7 +55,6 @@ struct function_by_value_fixture : lua_test_fixture
           , def("call", &call_slot_by_value6)
           , def("call", &call_slot_by_value7)
           , def("call", &call_slot_by_value8)
-          , def("call", &call_slot_by_value9)
         ];
     }
 
@@ -114,12 +112,6 @@ struct function_by_value_fixture : lua_test_fixture
         return 1008;
     };
 
-    static int slot_by_value9(int arg1, int arg2, int arg3, int arg4, int arg5, int arg6, int arg7, int arg8, int arg9)
-    {
-        output << boost::make_tuple(std::string("slot_by_value9"), arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9);
-        return 1009;
-    };
-
     static std::function<int ()> wrap_slot_by_value0()
     {
         return boost::bind(&slot_by_value0);
@@ -163,11 +155,6 @@ struct function_by_value_fixture : lua_test_fixture
     static std::function<int (int, int, int, int, int, int, int, int)> wrap_slot_by_value8()
     {
         return boost::bind(&slot_by_value8, _1, _2, _3, _4, _5, _6, _7, _8);
-    }
-
-    static std::function<int (int, int, int, int, int, int, int, int, int)> wrap_slot_by_value9()
-    {
-        return boost::bind(&slot_by_value9, _1, _2, _3, _4, _5, _6, _7, _8, _9);
     }
 
     static int call_slot_by_value0(std::function<int ()> const& slot_by_value)
@@ -222,12 +209,6 @@ struct function_by_value_fixture : lua_test_fixture
     {
         int value = slot_by_value(arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8);
         return value + arg1 + arg2 + arg3 + arg4 + arg5 + arg6 + arg7 + arg8;
-    }
-
-    static int call_slot_by_value9(std::function<int (int, int, int, int, int, int, int, int, int)> const& slot_by_value, int arg1, int arg2, int arg3, int arg4, int arg5, int arg6, int arg7, int arg8, int arg9)
-    {
-        int value = slot_by_value(arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9);
-        return value + arg1 + arg2 + arg3 + arg4 + arg5 + arg6 + arg7 + arg8 + arg9;
     }
 };
 

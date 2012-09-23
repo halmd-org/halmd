@@ -57,10 +57,21 @@ public:
             luaponte::module(L)
             [
                 luaponte::class_<std::function<R (Args...)> >()
-                    .def("__call", &std::function<R (Args...)>::operator())
+                    .def("__call", &call_method)
             ];
         }
         _Base::apply(L, value);
+    }
+
+private:
+    /**
+     * Wrapper to discard Lua object passed as first argument.
+     *
+     * This preserves the object:method(...) syntax.
+     */
+    static R call_method(std::function<R (Args...)> const& value, luaponte::object, Args... args)
+    {
+        return value(args...);
     }
 };
 

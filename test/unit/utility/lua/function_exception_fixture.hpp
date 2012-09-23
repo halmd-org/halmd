@@ -46,7 +46,6 @@ struct function_exception_fixture : lua_test_fixture
           , def("throw_exception6", &wrap_throw_exception6)
           , def("throw_exception7", &wrap_throw_exception7)
           , def("throw_exception8", &wrap_throw_exception8)
-          , def("throw_exception9", &wrap_throw_exception9)
           , def("catch_exception", &catch_exception0)
           , def("catch_exception", &catch_exception1)
           , def("catch_exception", &catch_exception2)
@@ -56,7 +55,6 @@ struct function_exception_fixture : lua_test_fixture
           , def("catch_exception", &catch_exception6)
           , def("catch_exception", &catch_exception7)
           , def("catch_exception", &catch_exception8)
-          , def("catch_exception", &catch_exception9)
         ];
     }
 
@@ -105,11 +103,6 @@ struct function_exception_fixture : lua_test_fixture
         throw boost::make_tuple(std::string("exception8"), arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8);
     };
 
-    static void throw_exception9(int arg1, int arg2, int arg3, int arg4, int arg5, int arg6, int arg7, int arg8, int arg9)
-    {
-        throw boost::make_tuple(std::string("exception9"), arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9);
-    };
-
     static std::function<void ()> wrap_throw_exception0()
     {
         return boost::bind(&throw_exception0);
@@ -153,11 +146,6 @@ struct function_exception_fixture : lua_test_fixture
     static std::function<void (int, int, int, int, int, int, int, int)> wrap_throw_exception8()
     {
         return boost::bind(&throw_exception8, _1, _2, _3, _4, _5, _6, _7, _8);
-    }
-
-    static std::function<void (int, int, int, int, int, int, int, int, int)> wrap_throw_exception9()
-    {
-        return boost::bind(&throw_exception9, _1, _2, _3, _4, _5, _6, _7, _8, _9);
     }
 
     static void catch_exception0(std::function<void ()> const& slot)
@@ -254,17 +242,6 @@ struct function_exception_fixture : lua_test_fixture
             slot(arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8);
         }
         catch (boost::tuple<std::string, int, int, int, int, int, int, int, int> const& t)
-        {
-            output << t;
-        }
-    }
-
-    static void catch_exception9(std::function<void (int, int, int, int, int, int, int, int, int)> const& slot, int arg1, int arg2, int arg3, int arg4, int arg5, int arg6, int arg7, int arg8, int arg9)
-    {
-        try {
-            slot(arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9);
-        }
-        catch (boost::tuple<std::string, int, int, int, int, int, int, int, int, int> const& t)
         {
             output << t;
         }

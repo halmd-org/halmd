@@ -46,7 +46,6 @@ struct function_fixture : lua_test_fixture
           , def("slot6", &wrap_slot6)
           , def("slot7", &wrap_slot7)
           , def("slot8", &wrap_slot8)
-          , def("slot9", &wrap_slot9)
           , def("call", &call_slot0)
           , def("call", &call_slot1)
           , def("call", &call_slot2)
@@ -56,7 +55,6 @@ struct function_fixture : lua_test_fixture
           , def("call", &call_slot6)
           , def("call", &call_slot7)
           , def("call", &call_slot8)
-          , def("call", &call_slot9)
         ];
     }
 
@@ -105,11 +103,6 @@ struct function_fixture : lua_test_fixture
         output << boost::make_tuple(std::string("slot8"), arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8);
     };
 
-    static void slot9(int arg1, int arg2, int arg3, int arg4, int arg5, int arg6, int arg7, int arg8, int arg9)
-    {
-        output << boost::make_tuple(std::string("slot9"), arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9);
-    };
-
     static std::function<void ()> wrap_slot0()
     {
         return boost::bind(&slot0);
@@ -153,11 +146,6 @@ struct function_fixture : lua_test_fixture
     static std::function<void (int, int, int, int, int, int, int, int)> wrap_slot8()
     {
         return boost::bind(&slot8, _1, _2, _3, _4, _5, _6, _7, _8);
-    }
-
-    static std::function<void (int, int, int, int, int, int, int, int, int)> wrap_slot9()
-    {
-        return boost::bind(&slot9, _1, _2, _3, _4, _5, _6, _7, _8, _9);
     }
 
     static int call_slot0(std::function<void ()> const& slot)
@@ -212,12 +200,6 @@ struct function_fixture : lua_test_fixture
     {
         slot(arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8);
         return arg1 + arg2 + arg3 + arg4 + arg5 + arg6 + arg7 + arg8;
-    }
-
-    static int call_slot9(std::function<void (int, int, int, int, int, int, int, int, int)> const& slot, int arg1, int arg2, int arg3, int arg4, int arg5, int arg6, int arg7, int arg8, int arg9)
-    {
-        slot(arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9);
-        return arg1 + arg2 + arg3 + arg4 + arg5 + arg6 + arg7 + arg8 + arg9;
     }
 };
 
