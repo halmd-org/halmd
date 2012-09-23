@@ -1,6 +1,6 @@
 /*
- * Copyright © 2011-2012  Felix Höfling
- * Copyright © 2011       Peter Colberg
+ * Copyright © 2011-2012 Felix Höfling
+ * Copyright © 2011-2012 Peter Colberg
  *
  * This file is part of HALMD.
  *
@@ -23,10 +23,6 @@
 #define BOOST_TEST_MODULE boltzmann
 #include <boost/test/unit_test.hpp>
 
-#include <boost/assign.hpp>
-#include <boost/numeric/ublas/banded.hpp>
-#include <limits>
-
 #include <halmd/mdsim/box.hpp>
 #include <halmd/mdsim/host/particle.hpp>
 #include <halmd/mdsim/host/particle_groups/all.hpp>
@@ -43,13 +39,13 @@
 #endif
 #include <test/tools/ctest.hpp>
 
-using namespace boost;
-using namespace boost::assign; // list_of
-using namespace halmd;
-using namespace std;
+#include <boost/assign.hpp>
+#include <boost/numeric/ublas/banded.hpp>
 
-const double eps = numeric_limits<double>::epsilon();
-const float eps_float = numeric_limits<float>::epsilon();
+#include <limits>
+
+const double eps = std::numeric_limits<double>::epsilon();
+const float eps_float = std::numeric_limits<float>::epsilon();
 
 /**
  * test initialisation of particle velocities: boltzmann module
@@ -117,7 +113,7 @@ void boltzmann<modules_type>::test()
     BOOST_CHECK_CLOSE_FRACTION(2 * get_mean_en_kin(*particle, group) / dimension, scale * scale * temp, rel_temp_tolerance);
 
     // shift mean velocity to zero
-    fixed_vector<double, dimension> v_cm = get_v_cm(*particle, group);
+    halmd::fixed_vector<double, dimension> v_cm = get_v_cm(*particle, group);
     velocity->shift(-v_cm);
     vcm_tolerance = gpu ? 0.1 * eps_float : 2 * eps;
     BOOST_CHECK_SMALL(norm_inf(get_v_cm(*particle, group)), vcm_tolerance);
@@ -151,11 +147,11 @@ boltzmann<modules_type>::boltzmann()
 template <int dimension, typename float_type>
 struct host_modules
 {
-    typedef mdsim::box<dimension> box_type;
-    typedef mdsim::host::particle<dimension, float_type> particle_type;
-    typedef mdsim::host::particle_groups::all<particle_type> particle_group_type;
+    typedef halmd::mdsim::box<dimension> box_type;
+    typedef halmd::mdsim::host::particle<dimension, float_type> particle_type;
+    typedef halmd::mdsim::host::particle_groups::all<particle_type> particle_group_type;
     typedef halmd::random::host::random random_type;
-    typedef mdsim::host::velocities::boltzmann<dimension, float_type> velocity_type;
+    typedef halmd::mdsim::host::velocities::boltzmann<dimension, float_type> velocity_type;
     static bool const gpu = false;
 };
 
@@ -170,18 +166,18 @@ BOOST_AUTO_TEST_CASE( boltzmann_host_3d ) {
 template <int dimension, typename float_type>
 struct gpu_modules
 {
-    typedef mdsim::box<dimension> box_type;
-    typedef mdsim::gpu::particle<dimension, float_type> particle_type;
-    typedef mdsim::gpu::particle_groups::all<particle_type> particle_group_type;
+    typedef halmd::mdsim::box<dimension> box_type;
+    typedef halmd::mdsim::gpu::particle<dimension, float_type> particle_type;
+    typedef halmd::mdsim::gpu::particle_groups::all<particle_type> particle_group_type;
     typedef halmd::random::gpu::random<halmd::random::gpu::rand48> random_type;
-    typedef mdsim::gpu::velocities::boltzmann<dimension, float_type, halmd::random::gpu::rand48> velocity_type;
+    typedef halmd::mdsim::gpu::velocities::boltzmann<dimension, float_type, halmd::random::gpu::rand48> velocity_type;
     static bool const gpu = true;
 };
 
-BOOST_FIXTURE_TEST_CASE( boltzmann_gpu_2d, device ) {
+BOOST_FIXTURE_TEST_CASE( boltzmann_gpu_2d, halmd::device ) {
     boltzmann<gpu_modules<2, float> >().test();
 }
-BOOST_FIXTURE_TEST_CASE( boltzmann_gpu_3d, device ) {
+BOOST_FIXTURE_TEST_CASE( boltzmann_gpu_3d, halmd::device ) {
     boltzmann<gpu_modules<3, float> >().test();
 }
 #endif // HALMD_WITH_GPU
