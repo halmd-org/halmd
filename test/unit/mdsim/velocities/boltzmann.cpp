@@ -122,17 +122,17 @@ void boltzmann<modules_type>::test()
     //
     // multiplication of the velocities by a constant factor
     double scale = 1.5;
-    rescale_velocity(*particle, scale);
+    rescale_velocity_group(*particle, group, scale);
     BOOST_CHECK_CLOSE_FRACTION(2 * get_mean_en_kin(*particle, group) / dimension, scale * scale * temp, rel_temp_tolerance);
 
     // shift mean velocity to zero
     halmd::fixed_vector<double, dimension> v_cm = get_v_cm(*particle, group);
-    shift_velocity(*particle, -v_cm);
+    shift_velocity_group(*particle, group, -v_cm);
     vcm_tolerance = gpu ? 0.1 * eps_float : 2 * eps;
     BOOST_CHECK_SMALL(norm_inf(get_v_cm(*particle, group)), vcm_tolerance);
 
     // first shift, then rescale in one step
-    shift_rescale_velocity(*particle, v_cm, 1 / scale);
+    shift_rescale_velocity_group(*particle, group, v_cm, 1 / scale);
     BOOST_CHECK_CLOSE_FRACTION(2 * get_mean_en_kin(*particle, group) / dimension, temp, rel_temp_tolerance);
     BOOST_CHECK_SMALL(norm_inf(get_v_cm(*particle, group) - v_cm), vcm_tolerance);
 }

@@ -1,5 +1,6 @@
 /*
- * Copyright © 2008-2010  Peter Colberg and Felix Höfling
+ * Copyright © 2008-2010, 2012 Peter Colberg
+ * Copyright © 2010 Felix Höfling
  *
  * This file is part of HALMD.
  *
@@ -54,6 +55,36 @@ __global__ void rescale(
 }
 
 /**
+ * Rescale magnitude of velocities of group by 'factor'
+ */
+template <typename vector_type>
+__global__ void rescale_group(
+    float4* g_v
+  , unsigned int const* g_group
+  , unsigned int nparticle
+  , unsigned int size
+  , dsfloat factor
+)
+{
+    for (unsigned int n = GTID; n < nparticle; n += GTDIM) {
+        unsigned int i = g_group[n];
+        vector_type v;
+        unsigned int tag;
+#ifdef USE_VERLET_DSFUN
+        tie(v, tag) <<= tie(g_v[i], g_v[i + size]);
+#else
+        tie(v, tag) <<= g_v[i];
+#endif
+        v *= factor;
+#ifdef USE_VERLET_DSFUN
+        tie(g_v[i], g_v[i + size]) <<= tie(v, tag);
+#else
+        g_v[i] <<= tie(v, tag);
+#endif
+    }
+}
+
+/**
  * Shift all velocities by 'delta'
  */
 template <typename vector_type>
@@ -65,6 +96,36 @@ __global__ void shift(
 )
 {
     for (unsigned int i = GTID; i < nparticle; i += GTDIM) {
+        vector_type v;
+        unsigned int tag;
+#ifdef USE_VERLET_DSFUN
+        tie(v, tag) <<= tie(g_v[i], g_v[i + size]);
+#else
+        tie(v, tag) <<= g_v[i];
+#endif
+        v += delta;
+#ifdef USE_VERLET_DSFUN
+        tie(g_v[i], g_v[i + size]) <<= tie(v, tag);
+#else
+        g_v[i] <<= tie(v, tag);
+#endif
+    }
+}
+
+/**
+ * Shift velocities of group by 'delta'
+ */
+template <typename vector_type>
+__global__ void shift_group(
+    float4* g_v
+  , unsigned int const* g_group
+  , unsigned int nparticle
+  , unsigned int size
+  , fixed_vector<dsfloat, vector_type::static_size> delta
+)
+{
+    for (unsigned int n = GTID; n < nparticle; n += GTDIM) {
+        unsigned int i = g_group[n];
         vector_type v;
         unsigned int tag;
 #ifdef USE_VERLET_DSFUN
@@ -111,18 +172,56 @@ __global__ void shift_rescale(
     }
 }
 
+/**
+ * First shift, then rescale velocities of group
+ */
+template <typename vector_type>
+__global__ void shift_rescale_group(
+    float4* g_v
+  , unsigned int const* g_group
+  , unsigned int nparticle
+  , unsigned int size
+  , fixed_vector<dsfloat, vector_type::static_size> delta
+  , dsfloat factor
+)
+{
+    for (unsigned int n = GTID; n < nparticle; n += GTDIM) {
+        unsigned int i = g_group[n];
+        vector_type v;
+        unsigned int tag;
+#ifdef USE_VERLET_DSFUN
+        tie(v, tag) <<= tie(g_v[i], g_v[i + size]);
+#else
+        tie(v, tag) <<= g_v[i];
+#endif
+        v += delta;
+        v *= factor;
+#ifdef USE_VERLET_DSFUN
+        tie(g_v[i], g_v[i + size]) <<= tie(v, tag);
+#else
+        g_v[i] <<= tie(v, tag);
+#endif
+    }
+}
+
 } // namespace velocity_kernel
 
 template <int dimension>
 velocity_wrapper<dimension> const velocity_wrapper<dimension>::kernel = {
 #ifdef USE_VERLET_DSFUN
     velocity_kernel::rescale<fixed_vector<dsfloat, dimension> >
+  , velocity_kernel::rescale_group<fixed_vector<dsfloat, dimension> >
   , velocity_kernel::shift<fixed_vector<dsfloat, dimension> >
+  , velocity_kernel::shift_group<fixed_vector<dsfloat, dimension> >
   , velocity_kernel::shift_rescale<fixed_vector<dsfloat, dimension> >
+  , velocity_kernel::shift_rescale_group<fixed_vector<dsfloat, dimension> >
 #else
     velocity_kernel::rescale<fixed_vector<float, dimension> >
+  , velocity_kernel::rescale_group<fixed_vector<float, dimension> >
   , velocity_kernel::shift<fixed_vector<float, dimension> >
+  , velocity_kernel::shift_group<fixed_vector<float, dimension> >
   , velocity_kernel::shift_rescale<fixed_vector<float, dimension> >
+  , velocity_kernel::shift_rescale_group<fixed_vector<float, dimension> >
 #endif
 };
 

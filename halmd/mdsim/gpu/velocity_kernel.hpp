@@ -1,5 +1,6 @@
 /*
- * Copyright © 2008-2010  Peter Colberg and Felix Höfling
+ * Copyright © 2008-2010, 2012 Peter Colberg
+ * Copyright © 2010 Felix Höfling
  *
  * This file is part of HALMD.
  *
@@ -35,8 +36,11 @@ struct velocity_wrapper
 {
     typedef typename type_traits<dimension, float>::gpu::coalesced_vector_type coalesced_vector_type;
     cuda::function<void (float4*, unsigned int, unsigned int, dsfloat)> rescale;
+    cuda::function<void (float4*, unsigned int const*, unsigned int, unsigned int, dsfloat)> rescale_group;
     cuda::function<void (float4*, unsigned int, unsigned int, fixed_vector<dsfloat, dimension>)> shift;
+    cuda::function<void (float4*, unsigned int const*, unsigned int, unsigned int, fixed_vector<dsfloat, dimension>)> shift_group;
     cuda::function<void (float4*, unsigned int, unsigned int, fixed_vector<dsfloat, dimension>, dsfloat)> shift_rescale;
+    cuda::function<void (float4*, unsigned int const*, unsigned int, unsigned int, fixed_vector<dsfloat, dimension>, dsfloat)> shift_rescale_group;
     static velocity_wrapper const kernel;
 };
 

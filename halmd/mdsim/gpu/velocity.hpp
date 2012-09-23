@@ -1,5 +1,5 @@
 /*
- * Copyright © 2010  Peter Colberg
+ * Copyright © 2010, 2012 Peter Colberg
  *
  * This file is part of HALMD.
  *
@@ -20,6 +20,7 @@
 #ifndef HALMD_MDSIM_GPU_VELOCITY_HPP
 #define HALMD_MDSIM_GPU_VELOCITY_HPP
 
+#include <halmd/mdsim/gpu/particle_group.hpp>
 #include <halmd/mdsim/gpu/velocity_kernel.hpp>
 #include <halmd/numeric/blas/fixed_vector.hpp>
 
@@ -45,6 +46,28 @@ inline void rescale_velocity(particle_type& particle, double factor)
 }
 
 /**
+ * Rescale magnitude of velocities of group by 'factor'
+ */
+template <typename particle_type>
+inline void rescale_velocity_group(particle_type& particle, particle_group& group, double factor)
+{
+    cache_proxy<typename particle_group::array_type const> unordered = group.unordered();
+    cache_proxy<typename particle_type::velocity_array_type> velocity = particle.velocity();
+
+    cuda::configure(
+        (unordered->size() + particle.dim.threads_per_block() - 1) / particle.dim.threads_per_block()
+      , particle.dim.block
+    );
+    get_velocity_kernel<particle_type::velocity_type::static_size>().rescale_group(
+        &*velocity->begin()
+      , &*unordered->begin()
+      , unordered->size()
+      , particle.dim.threads()
+      , factor
+    );
+}
+
+/**
  * Shift all velocities by 'delta'
  */
 template <typename particle_type>
@@ -62,6 +85,28 @@ inline void shift_velocity(particle_type& particle, fixed_vector<double, particl
 }
 
 /**
+ * Shift velocities of group by 'delta'
+ */
+template <typename particle_type>
+inline void shift_velocity_group(particle_type& particle, particle_group& group, fixed_vector<double, particle_type::velocity_type::static_size> const& delta)
+{
+    cache_proxy<typename particle_group::array_type const> unordered = group.unordered();
+    cache_proxy<typename particle_type::velocity_array_type> velocity = particle.velocity();
+
+    cuda::configure(
+        (unordered->size() + particle.dim.threads_per_block() - 1) / particle.dim.threads_per_block()
+      , particle.dim.block
+    );
+    get_velocity_kernel<particle_type::velocity_type::static_size>().shift_group(
+        &*velocity->begin()
+      , &*unordered->begin()
+      , unordered->size()
+      , particle.dim.threads()
+      , delta
+    );
+}
+
+/**
  * First shift, then rescale all velocities
  */
 template <typename particle_type>
@@ -73,6 +118,29 @@ inline void shift_rescale_velocity(particle_type& particle, fixed_vector<double,
     get_velocity_kernel<particle_type::velocity_type::static_size>().shift_rescale(
         &*velocity->begin()
       , particle.nparticle()
+      , particle.dim.threads()
+      , delta
+      , factor
+    );
+}
+
+/**
+ * First shift, then rescale velocities of group
+ */
+template <typename particle_type>
+inline void shift_rescale_velocity_group(particle_type& particle, particle_group& group, fixed_vector<double, particle_type::velocity_type::static_size> const& delta, double factor)
+{
+    cache_proxy<typename particle_group::array_type const> unordered = group.unordered();
+    cache_proxy<typename particle_type::velocity_array_type> velocity = particle.velocity();
+
+    cuda::configure(
+        (unordered->size() + particle.dim.threads_per_block() - 1) / particle.dim.threads_per_block()
+      , particle.dim.block
+    );
+    get_velocity_kernel<particle_type::velocity_type::static_size>().shift_rescale_group(
+        &*velocity->begin()
+      , &*unordered->begin()
+      , unordered->size()
       , particle.dim.threads()
       , delta
       , factor
