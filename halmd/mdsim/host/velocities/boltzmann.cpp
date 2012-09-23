@@ -19,6 +19,7 @@
  */
 
 #include <halmd/mdsim/host/velocities/boltzmann.hpp>
+#include <halmd/mdsim/host/velocity.hpp>
 #include <halmd/utility/lua/lua.hpp>
 
 namespace halmd {
@@ -33,9 +34,8 @@ boltzmann<dimension, float_type>::boltzmann(
   , double temperature
   , std::shared_ptr<logger_type> logger
 )
-  : _Base(particle, logger)
   // dependency injection
-  , particle_(particle)
+  : particle_(particle)
   , random_(random)
   , logger_(logger)
   // set parameters
@@ -84,7 +84,7 @@ void boltzmann<dimension, float_type>::set()
 
     fixed_vector<double, dimension> v_cm = mv / m;
     double scale = std::sqrt(nparticle * temp_ * dimension / (mv2 - m * inner_prod(v_cm, v_cm)));
-    boltzmann::shift_rescale(-v_cm, scale);
+    shift_rescale_velocity(*particle_, -v_cm, scale);
 
     LOG_TRACE("velocities rescaled by factor " << scale);
     LOG_TRACE("assigned Boltzmann-distributed velocities");

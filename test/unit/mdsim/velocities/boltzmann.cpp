@@ -27,6 +27,7 @@
 #include <halmd/mdsim/host/particle.hpp>
 #include <halmd/mdsim/host/particle_groups/all.hpp>
 #include <halmd/mdsim/host/velocities/boltzmann.hpp>
+#include <halmd/mdsim/host/velocity.hpp>
 #include <halmd/numeric/accumulator.hpp>
 #include <halmd/numeric/blas/blas.hpp>
 #include <halmd/random/host/random.hpp>
@@ -34,6 +35,7 @@
 # include <halmd/mdsim/gpu/particle.hpp>
 # include <halmd/mdsim/gpu/particle_groups/all.hpp>
 # include <halmd/mdsim/gpu/velocities/boltzmann.hpp>
+# include <halmd/mdsim/gpu/velocity.hpp>
 # include <halmd/random/gpu/random.hpp>
 # include <halmd/utility/gpu/device.hpp>
 #endif
@@ -120,17 +122,17 @@ void boltzmann<modules_type>::test()
     //
     // multiplication of the velocities by a constant factor
     double scale = 1.5;
-    velocity->rescale(scale);
+    rescale_velocity(*particle, scale);
     BOOST_CHECK_CLOSE_FRACTION(2 * get_mean_en_kin(*particle, group) / dimension, scale * scale * temp, rel_temp_tolerance);
 
     // shift mean velocity to zero
     halmd::fixed_vector<double, dimension> v_cm = get_v_cm(*particle, group);
-    velocity->shift(-v_cm);
+    shift_velocity(*particle, -v_cm);
     vcm_tolerance = gpu ? 0.1 * eps_float : 2 * eps;
     BOOST_CHECK_SMALL(norm_inf(get_v_cm(*particle, group)), vcm_tolerance);
 
     // first shift, then rescale in one step
-    velocity->shift_rescale(v_cm, 1 / scale);
+    shift_rescale_velocity(*particle, v_cm, 1 / scale);
     BOOST_CHECK_CLOSE_FRACTION(2 * get_mean_en_kin(*particle, group) / dimension, temp, rel_temp_tolerance);
     BOOST_CHECK_SMALL(norm_inf(get_v_cm(*particle, group) - v_cm), vcm_tolerance);
 }

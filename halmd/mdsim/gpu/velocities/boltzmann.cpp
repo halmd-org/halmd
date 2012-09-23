@@ -33,9 +33,8 @@ boltzmann<dimension, float_type, RandomNumberGenerator>::boltzmann(
   , double temperature
   , std::shared_ptr<logger_type> logger
 )
-  : _Base(particle, logger)
   // dependency injection
-  , particle_(particle)
+  : particle_(particle)
   , random_(random)
   , logger_(logger)
   // select thread-dependent implementation

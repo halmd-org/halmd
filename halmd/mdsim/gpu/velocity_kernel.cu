@@ -25,20 +25,18 @@ namespace mdsim {
 namespace gpu {
 namespace velocity_kernel {
 
-/** number of particles in simulation box */
-static __constant__ unsigned int nbox_;
-
 /**
  * Rescale magnitude of all velocities by 'factor'
  */
 template <typename vector_type>
 __global__ void rescale(
     float4* g_v
+  , unsigned int nparticle
   , unsigned int size
   , dsfloat factor
 )
 {
-    for (unsigned int i = GTID; i < nbox_; i += GTDIM) {
+    for (unsigned int i = GTID; i < nparticle; i += GTDIM) {
         vector_type v;
         unsigned int tag;
 #ifdef USE_VERLET_DSFUN
@@ -61,11 +59,12 @@ __global__ void rescale(
 template <typename vector_type>
 __global__ void shift(
     float4* g_v
+  , unsigned int nparticle
   , unsigned int size
   , fixed_vector<dsfloat, vector_type::static_size> delta
 )
 {
-    for (unsigned int i = GTID; i < nbox_; i += GTDIM) {
+    for (unsigned int i = GTID; i < nparticle; i += GTDIM) {
         vector_type v;
         unsigned int tag;
 #ifdef USE_VERLET_DSFUN
@@ -88,12 +87,13 @@ __global__ void shift(
 template <typename vector_type>
 __global__ void shift_rescale(
     float4* g_v
+  , unsigned int nparticle
   , unsigned int size
   , fixed_vector<dsfloat, vector_type::static_size> delta
   , dsfloat factor
 )
 {
-    for (unsigned int i = GTID; i < nbox_; i += GTDIM) {
+    for (unsigned int i = GTID; i < nparticle; i += GTDIM) {
         vector_type v;
         unsigned int tag;
 #ifdef USE_VERLET_DSFUN
@@ -124,7 +124,6 @@ velocity_wrapper<dimension> const velocity_wrapper<dimension>::kernel = {
   , velocity_kernel::shift<fixed_vector<float, dimension> >
   , velocity_kernel::shift_rescale<fixed_vector<float, dimension> >
 #endif
-  , velocity_kernel::nbox_
 };
 
 template class velocity_wrapper<3>;

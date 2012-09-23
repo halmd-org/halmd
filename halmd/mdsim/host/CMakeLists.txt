@@ -22,5 +22,4 @@ halmd_add_library(halmd_mdsim_host
   neighbour.cpp
   particle.cpp
   particle_group.cpp
-  velocity.cpp
 )

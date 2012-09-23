@@ -25,6 +25,5 @@ halmd_add_library(halmd_mdsim_gpu
   particle.cpp
   particle_group.cpp
   particle_kernel.cu
-  velocity.cpp
   velocity_kernel.cu
 )

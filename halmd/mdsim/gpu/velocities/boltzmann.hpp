@@ -27,7 +27,6 @@
 
 #include <halmd/io/logger.hpp>
 #include <halmd/mdsim/gpu/particle.hpp>
-#include <halmd/mdsim/gpu/velocity.hpp>
 #include <halmd/mdsim/gpu/velocities/boltzmann_kernel.hpp>
 #include <halmd/numeric/mp/dsfloat.hpp>
 #include <halmd/random/gpu/random.hpp>
@@ -40,7 +39,6 @@ namespace velocities {
 
 template <int dimension, typename float_type, typename RandomNumberGenerator>
 class boltzmann
-  : public gpu::velocity<dimension, float_type>
 {
 public:
     typedef gpu::particle<dimension, float_type> particle_type;
@@ -75,7 +73,6 @@ public:
 private:
     typedef typename particle_type::velocity_array_type velocity_array_type;
 
-    typedef gpu::velocity<dimension, float_type> _Base;
     typedef typename particle_type::vector_type vector_type;
     typedef typename particle_type::gpu_vector_type gpu_vector_type;
     typedef typename random_type::rng_type rng_type;

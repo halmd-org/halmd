@@ -34,10 +34,9 @@ template <int dimension>
 struct velocity_wrapper
 {
     typedef typename type_traits<dimension, float>::gpu::coalesced_vector_type coalesced_vector_type;
-    cuda::function<void (float4*, unsigned int, dsfloat)> rescale;
-    cuda::function<void (float4*, unsigned int, fixed_vector<dsfloat, dimension>)> shift;
-    cuda::function<void (float4*, unsigned int, fixed_vector<dsfloat, dimension>, dsfloat)> shift_rescale;
-    cuda::symbol<unsigned int> nbox;
+    cuda::function<void (float4*, unsigned int, unsigned int, dsfloat)> rescale;
+    cuda::function<void (float4*, unsigned int, unsigned int, fixed_vector<dsfloat, dimension>)> shift;
+    cuda::function<void (float4*, unsigned int, unsigned int, fixed_vector<dsfloat, dimension>, dsfloat)> shift_rescale;
     static velocity_wrapper const kernel;
 };
 

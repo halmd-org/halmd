@@ -23,7 +23,6 @@
 
 #include <halmd/io/logger.hpp>
 #include <halmd/mdsim/host/particle.hpp>
-#include <halmd/mdsim/host/velocity.hpp>
 #include <halmd/random/host/random.hpp>
 #include <halmd/utility/profiler.hpp>
 
@@ -38,7 +37,6 @@ namespace velocities {
 
 template <int dimension, typename float_type>
 class boltzmann
-  : public host::velocity<dimension, float_type>
 {
 public:
     typedef host::particle<dimension, float_type> particle_type;
@@ -71,7 +69,6 @@ public:
     static void luaopen(lua_State* L);
 
 private:
-    typedef host::velocity<dimension, float_type> _Base;
     typedef typename particle_type::vector_type vector_type;
     typedef typename particle_type::size_type size_type;
     typedef typename particle_type::velocity_array_type velocity_array_type;

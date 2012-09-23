@@ -39,6 +39,7 @@
 #include <halmd/mdsim/host/positions/lattice.hpp>
 #include <halmd/mdsim/host/potentials/lennard_jones.hpp>
 #include <halmd/mdsim/host/velocities/boltzmann.hpp>
+#include <halmd/mdsim/host/velocity.hpp>
 #include <halmd/numeric/accumulator.hpp>
 #include <halmd/observables/host/thermodynamics.hpp>
 #include <halmd/random/host/random.hpp>
@@ -54,6 +55,7 @@
 # include <halmd/mdsim/gpu/positions/lattice.hpp>
 # include <halmd/mdsim/gpu/potentials/lennard_jones.hpp>
 # include <halmd/mdsim/gpu/velocities/boltzmann.hpp>
+# include <halmd/mdsim/gpu/velocity.hpp>
 # include <halmd/observables/gpu/thermodynamics.hpp>
 # include <halmd/random/gpu/random.hpp>
 # include <halmd/utility/gpu/device.hpp>
@@ -202,7 +204,7 @@ void lennard_jones_fluid<modules_type>::test()
     });
 
     // stochastic thermostat => centre particle velocities around zero
-    velocity->shift(-thermodynamics->v_cm());
+    shift_velocity(*particle, -thermodynamics->v_cm());
 
     const double vcm_limit = gpu ? 0.5 * eps_float : 30 * eps;
     BOOST_CHECK_SMALL(norm_inf(thermodynamics->v_cm()), vcm_limit);
@@ -225,7 +227,7 @@ void lennard_jones_fluid<modules_type>::test()
     // rescale velocities to match the exact temperature
     double v_scale = sqrt(temp / mean(temp_));
     BOOST_TEST_MESSAGE("rescale velocities by factor " << v_scale);
-    velocity->rescale(v_scale);
+    rescale_velocity(*particle, v_scale);
 
     double en_tot = thermodynamics->en_tot();
     double max_en_diff = 0; // maximal absolut deviation from initial total energy

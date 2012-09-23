@@ -20,41 +20,67 @@
 #ifndef HALMD_MDSIM_GPU_VELOCITY_HPP
 #define HALMD_MDSIM_GPU_VELOCITY_HPP
 
-#include <memory>
-
-#include <halmd/io/logger.hpp>
-#include <halmd/mdsim/gpu/particle.hpp>
+#include <halmd/mdsim/gpu/velocity_kernel.hpp>
+#include <halmd/numeric/blas/fixed_vector.hpp>
 
 namespace halmd {
 namespace mdsim {
 namespace gpu {
 
-template <int dimension, typename float_type>
-class velocity
+/**
+ * Rescale magnitude of all velocities by 'factor'
+ */
+template <typename particle_type>
+inline void rescale_velocity(particle_type& particle, double factor)
 {
-public:
-    typedef gpu::particle<dimension, float_type> particle_type;
-    typedef fixed_vector<double, dimension> vector_type;
-    typedef logger logger_type;
+    cache_proxy<typename particle_type::velocity_array_type> velocity = particle.velocity();
 
-    velocity(
-        std::shared_ptr<particle_type> particle
-      , std::shared_ptr<logger_type> logger = std::make_shared<logger_type>()
+    cuda::configure(particle.dim.grid, particle.dim.block);
+    get_velocity_kernel<particle_type::velocity_type::static_size>().rescale(
+        &*velocity->begin()
+      , particle.nparticle()
+      , particle.dim.threads()
+      , factor
     );
-    void rescale(double factor);
-    void shift(vector_type const& delta);
-    void shift_rescale(vector_type const& delta, double factor);
+}
 
-private:
-    typedef typename particle_type::velocity_array_type velocity_array_type;
+/**
+ * Shift all velocities by 'delta'
+ */
+template <typename particle_type>
+inline void shift_velocity(particle_type& particle, fixed_vector<double, particle_type::velocity_type::static_size> const& delta)
+{
+    cache_proxy<typename particle_type::velocity_array_type> velocity = particle.velocity();
 
-    std::shared_ptr<particle_type> particle_;
-    std::shared_ptr<logger_type> logger_;
-    cuda::config dim_;
-};
+    cuda::configure(particle.dim.grid, particle.dim.block);
+    get_velocity_kernel<particle_type::velocity_type::static_size>().shift(
+        &*velocity->begin()
+      , particle.nparticle()
+      , particle.dim.threads()
+      , delta
+    );
+}
 
-} // namespace mdsim
+/**
+ * First shift, then rescale all velocities
+ */
+template <typename particle_type>
+inline void shift_rescale_velocity(particle_type& particle, fixed_vector<double, particle_type::velocity_type::static_size> const& delta, double factor)
+{
+    cache_proxy<typename particle_type::velocity_array_type> velocity = particle.velocity();
+
+    cuda::configure(particle.dim.grid, particle.dim.block);
+    get_velocity_kernel<particle_type::velocity_type::static_size>().shift_rescale(
+        &*velocity->begin()
+      , particle.nparticle()
+      , particle.dim.threads()
+      , delta
+      , factor
+    );
+}
+
 } // namespace gpu
+} // namespace mdsim
 } // namespace halmd
 
 #endif /* ! HALMD_MDSIM_GPU_VELOCITY_HPP */

@@ -20,40 +20,51 @@
 #ifndef HALMD_MDSIM_HOST_VELOCITY_HPP
 #define HALMD_MDSIM_HOST_VELOCITY_HPP
 
-#include <memory>
-
-#include <halmd/io/logger.hpp>
-#include <halmd/mdsim/host/particle.hpp>
+#include <halmd/numeric/blas/fixed_vector.hpp>
 
 namespace halmd {
 namespace mdsim {
 namespace host {
 
-template <int dimension, typename float_type>
-class velocity
+/**
+ * Rescale magnitude of all velocities by 'factor'
+ */
+template <typename particle_type>
+inline void rescale_velocity(particle_type& particle, double factor)
 {
-public:
-    typedef host::particle<dimension, float_type> particle_type;
-    typedef fixed_vector<double, dimension> vector_type;
-    typedef logger logger_type;
+    cache_proxy<typename particle_type::velocity_array_type> velocity = particle.velocity();
+    for (typename particle_type::velocity_type& v : *velocity) {
+        v *= factor;
+    }
+}
 
-    velocity(
-        std::shared_ptr<particle_type> particle
-      , std::shared_ptr<logger_type> logger = std::make_shared<logger_type>()
-    );
-    void rescale(double factor);
-    void shift(vector_type const& delta);
-    void shift_rescale(vector_type const& delta, double factor);
+/**
+ * Shift all velocities by 'delta'
+ */
+template <typename particle_type>
+inline void shift_velocity(particle_type& particle, fixed_vector<double, particle_type::velocity_type::static_size> const& delta)
+{
+    cache_proxy<typename particle_type::velocity_array_type> velocity = particle.velocity();
+    for (typename particle_type::velocity_type& v : *velocity) {
+        v += delta;
+    }
+}
 
-private:
-    typedef typename particle_type::velocity_array_type velocity_array_type;
+/**
+ * First shift, then rescale all velocities
+ */
+template <typename particle_type>
+inline void shift_rescale_velocity(particle_type& particle, fixed_vector<double, particle_type::velocity_type::static_size> const& delta, double factor)
+{
+    cache_proxy<typename particle_type::velocity_array_type> velocity = particle.velocity();
+    for (typename particle_type::velocity_type& v : *velocity) {
+        v += delta;
+        v *= factor;
+    }
+}
 
-    std::shared_ptr<particle_type> particle_;
-    std::shared_ptr<logger_type> logger_;
-};
-
-} // namespace mdsim
 } // namespace host
+} // namespace mdsim
 } // namespace halmd
 
 #endif /* ! HALMD_MDSIM_HOST_VELOCITY_HPP */
