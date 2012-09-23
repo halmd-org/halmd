@@ -49,27 +49,30 @@ __global__ void gaussian(
   , unsigned int npart
   , unsigned int nplace
   , float temp
-  , T* g_vcm
-  , dsfloat* g_vv
+  , T* g_mv
+  , dsfloat* g_mv2
+  , dsfloat* g_m
   , rng_type rng
 )
 {
     enum { dimension = vector_type::static_size };
     typedef typename vector_type::value_type float_type;
 
-    extern __shared__ char __s_array[]; // CUDA 3.0/3.1 breaks template __shared__ type
-    fixed_vector<dsfloat, dimension>* const s_vcm = reinterpret_cast<fixed_vector<dsfloat, dimension>*>(__s_array);
-    dsfloat* const s_vv = reinterpret_cast<dsfloat*>(&s_vcm[TDIM]);
+    extern __shared__ char __s_array[];
+    fixed_vector<dsfloat, dimension>* const s_mv = reinterpret_cast<fixed_vector<dsfloat, dimension>*>(__s_array);
+    dsfloat* const s_mv2 = reinterpret_cast<dsfloat*>(&s_mv[TDIM]);
+    dsfloat* const s_m = reinterpret_cast<dsfloat*>(&s_mv2[TDIM]);
 
-    fixed_vector<dsfloat, dimension> vcm = 0;
-    dsfloat vv = 0;
+    fixed_vector<dsfloat, dimension> mv = 0;
+    dsfloat mv2 = 0;
+    dsfloat m = 0;
 
     // read random number generator state from global device memory
     typename rng_type::state_type state = rng[GTID];
 
     // normal distribution parameters
     float const mean = 0.f;
-    float const sigma = sqrt(temp);
+    float const sigma = sqrtf(temp);
 
     // cache second normal variate for uneven dimensions
     bool cached = false;
@@ -77,11 +80,11 @@ __global__ void gaussian(
 
     for (uint i = GTID; i < npart; i += GTDIM) {
         vector_type v;
-        unsigned int tag;
+        float mass;
 #ifdef USE_VERLET_DSFUN
-        tie(v, tag) <<= tie(g_v[i], g_v[i + nplace]);
+        tie(v, mass) <<= tie(g_v[i], g_v[i + nplace]);
 #else
-        tie(v, tag) <<= g_v[i];
+        tie(v, mass) <<= g_v[i];
 #endif
         for (uint j = 0; j < dimension - 1; j += 2) {
             tie(v[j], v[j + 1]) = normal(rng, state, mean, sigma);
@@ -94,12 +97,14 @@ __global__ void gaussian(
                v[dimension - 1] = cache;
            }
         }
-        vcm += v;
-        vv += inner_prod(v, v);
+        v /= sqrtf(mass);
+        mv += mass * v;
+        mv2 += mass * inner_prod(v, v);
+        m += mass;
 #ifdef USE_VERLET_DSFUN
-        tie(g_v[i], g_v[i + nplace]) <<= tie(v, tag);
+        tie(g_v[i], g_v[i + nplace]) <<= tie(v, mass);
 #else
-        g_v[i] <<= tie(v, tag);
+        g_v[i] <<= tie(v, mass);
 #endif
     }
 
@@ -107,17 +112,19 @@ __global__ void gaussian(
     rng[GTID] = state;
 
     // reduced values for this thread
-    s_vcm[TID] = vcm;
-    s_vv[TID] = vv;
+    s_mv[TID] = mv;
+    s_mv2[TID] = mv2;
+    s_m[TID] = m;
     __syncthreads();
 
     // compute reduced value for all threads in block
-    reduce<threads / 2, complex_sum_>(vcm, vv, s_vcm, s_vv);
+    reduce<threads / 2, ternary_sum_>(mv, mv2, m, s_mv, s_mv2, s_m);
 
     if (TID < 1) {
         // store block reduced value in global memory
-        tie(g_vcm[blockIdx.x], g_vcm[blockIdx.x + BDIM]) = split(vcm);
-        g_vv[blockIdx.x] = vv;
+        tie(g_mv[blockIdx.x], g_mv[blockIdx.x + BDIM]) = split(mv);
+        g_mv2[blockIdx.x] = mv2;
+        g_m[blockIdx.x] = m;
     }
 }
 
@@ -125,53 +132,49 @@ template <
     typename vector_type
   , typename T
 >
-__global__ void shift_rescale(float4* g_v, uint npart, uint nplace, dsfloat temp, T const* g_vcm, dsfloat const* g_vv, uint size)
+__global__ void shift_rescale(float4* g_v, uint npart, uint nplace, dsfloat temp, T const* g_mv, dsfloat const* g_mv2, dsfloat const* g_m, uint size)
 {
     enum { dimension = vector_type::static_size };
     typedef typename vector_type::value_type float_type;
 
-    extern __shared__ char __s_array[]; // CUDA 3.0/3.1 breaks template __shared__ type
-    fixed_vector<dsfloat, dimension>* const s_vcm = reinterpret_cast<fixed_vector<dsfloat, dimension>*>(__s_array);
-    dsfloat* const s_vv = reinterpret_cast<dsfloat*>(&s_vcm[size]);
+    extern __shared__ char __s_array[];
+    fixed_vector<dsfloat, dimension>* const s_mv = reinterpret_cast<fixed_vector<dsfloat, dimension>*>(__s_array);
+    dsfloat* const s_mv2 = reinterpret_cast<dsfloat*>(&s_mv[size]);
+    dsfloat* const s_m = reinterpret_cast<dsfloat*>(&s_mv2[size]);
 
-    fixed_vector<dsfloat, dimension> vcm = 0;
-    dsfloat vv = 0;
+    fixed_vector<dsfloat, dimension> mv = 0;
+    dsfloat mv2 = 0;
+    dsfloat m = 0;
 
-    // compute mean center of mass velocity from block reduced values
     for (uint i = TID; i < size; i += TDIM) {
-        s_vcm[i] = fixed_vector<dsfloat, dimension>(g_vcm[i], g_vcm[i + size]);
-        s_vv[i] = g_vv[i];
+        s_mv[i] = vector_type(g_mv[i], g_mv[i + size]);
+        s_mv2[i] = g_mv2[i];
+        s_m[i] = g_m[i];
     }
     __syncthreads();
     for (uint i = 0; i < size; ++i) {
-        vcm += s_vcm[i];
-        vv += s_vv[i];
+        mv += s_mv[i];
+        mv2 += s_mv2[i];
+        m += s_m[i];
     }
-    vcm /= npart;
-    vv /= npart;
 
-    // center velocities around origin, then rescale to exactly
-    // match the desired temperature;
-    // temp = vv / dimension
-    // vv changes to vv - v_cm^2 after shifting
-
-    vv -= inner_prod(vcm, vcm);
-    float_type coeff = sqrt(temp * static_cast<int>(dimension) / vv);
+    vector_type vcm = mv / m;
+    float_type scale = sqrt(npart * temp * static_cast<int>(dimension) / (mv2 - m * inner_prod(vcm, vcm)));
 
     for (uint i = GTID; i < npart; i += GTDIM) {
         vector_type v;
-        unsigned int tag;
+        float mass;
 #ifdef USE_VERLET_DSFUN
-        tie(v, tag) <<= tie(g_v[i], g_v[i + nplace]);
+        tie(v, mass) <<= tie(g_v[i], g_v[i + nplace]);
 #else
-        tie(v, tag) <<= g_v[i];
+        tie(v, mass) <<= g_v[i];
 #endif
         v -= vcm;
-        v *= coeff;
+        v *= scale;
 #ifdef USE_VERLET_DSFUN
-        tie(g_v[i], g_v[i + nplace]) <<= tie(v, tag);
+        tie(g_v[i], g_v[i + nplace]) <<= tie(v, mass);
 #else
-        g_v[i] <<= tie(v, tag);
+        g_v[i] <<= tie(v, mass);
 #endif
     }
 }

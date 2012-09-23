@@ -44,6 +44,7 @@ template <int dimension>
 struct trace;
 struct sum_;
 struct complex_sum_;
+struct ternary_sum_;
 struct quaternion_sum_;
 struct max_;
 struct accumulate_;
@@ -124,6 +125,15 @@ transform(T0& r1, T1& i1, T0 r2, T1 i2)
 {
     r1 += r2;
     i1 += i2;
+}
+
+template <typename transform_, typename T0, typename T1, typename T2>
+__device__ typename enable_if<is_same<transform_, ternary_sum_>, void>::type
+transform(T0& r1, T1& i1, T2& j1, T0 r2, T1 i2, T2 j2)
+{
+    r1 += r2;
+    i1 += i2;
+    j1 += j2;
 }
 
 template <typename transform_, typename T0, typename T1, typename T2, typename T3>

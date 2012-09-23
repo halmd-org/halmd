@@ -43,8 +43,9 @@ boltzmann<dimension, float_type, RandomNumberGenerator>::boltzmann(
   // set parameters
   , temp_(temperature)
   // allocate GPU memory
-  , g_vcm_(2 * random_->rng().dim.blocks_per_grid())
-  , g_vv_(random_->rng().dim.blocks_per_grid())
+  , g_mv_(2 * random_->rng().dim.blocks_per_grid())
+  , g_mv2_(random_->rng().dim.blocks_per_grid())
+  , g_m_(random_->rng().dim.blocks_per_grid())
 {
     LOG("Boltzmann velocity distribution temperature: T = " << temp_);
 }
@@ -94,15 +95,16 @@ void boltzmann<dimension, float_type, RandomNumberGenerator>::set()
     cuda::configure(
         random_->rng().dim.grid
       , random_->rng().dim.block
-      , random_->rng().dim.threads_per_block() * (1 + dimension) * sizeof(dsfloat)
+      , random_->rng().dim.threads_per_block() * (2 + dimension) * sizeof(dsfloat)
     );
     gaussian_impl_(
         &*velocity->begin()
       , particle_->nparticle()
       , particle_->dim.threads()
       , temp_
-      , g_vcm_
-      , g_vv_
+      , g_mv_
+      , g_mv2_
+      , g_m_
       , random_->rng().rng()
     );
     cuda::thread::synchronize();
@@ -112,16 +114,17 @@ void boltzmann<dimension, float_type, RandomNumberGenerator>::set()
     cuda::configure(
         particle_->dim.grid
       , particle_->dim.block
-      , g_vv_.size() * (1 + dimension) * sizeof(dsfloat)
+      , g_mv2_.size() * (2 + dimension) * sizeof(dsfloat)
     );
     wrapper_type::kernel.shift_rescale(
         &*velocity->begin()
       , particle_->nparticle()
       , particle_->dim.threads()
       , temp_
-      , g_vcm_
-      , g_vv_
-      , g_vv_.size()
+      , g_mv_
+      , g_mv2_
+      , g_m_
+      , g_mv2_.size()
     );
     cuda::thread::synchronize();
 

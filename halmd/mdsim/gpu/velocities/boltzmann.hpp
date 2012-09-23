@@ -98,10 +98,12 @@ private:
     gaussian_impl_type const gaussian_impl_;
     /** temperature */
     float_type temp_;
-    /** block sum of velocity */
-    cuda::vector<gpu_vector_type> g_vcm_;
-    /** block sum of squared velocity */
-    cuda::vector<dsfloat> g_vv_;
+    /** block sum of momentum */
+    cuda::vector<gpu_vector_type> g_mv_;
+    /** block sum of kinetic energy without 1/2 */
+    cuda::vector<dsfloat> g_mv2_;
+    /** block sum of mass */
+    cuda::vector<dsfloat> g_m_;
 
     typedef utility::profiler profiler_type;
     typedef typename profiler_type::accumulator_type accumulator_type;

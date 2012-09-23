@@ -43,13 +43,13 @@ template <
 struct boltzmann_wrapper
 {
     typedef typename type_traits<dimension, float>::gpu::coalesced_vector_type coalesced_vector_type;
-    typedef cuda::function<void (float4*, unsigned int, unsigned int, float, coalesced_vector_type*, dsfloat*, rng_type)> gaussian_impl_type;
+    typedef cuda::function<void (float4*, unsigned int, unsigned int, float, coalesced_vector_type*, dsfloat*, dsfloat*, rng_type)> gaussian_impl_type;
     gaussian_impl_type gaussian_impl_32;
     gaussian_impl_type gaussian_impl_64;
     gaussian_impl_type gaussian_impl_128;
     gaussian_impl_type gaussian_impl_256;
     gaussian_impl_type gaussian_impl_512;
-    cuda::function<void (float4*, uint, uint, dsfloat, coalesced_vector_type const*, dsfloat const*, uint)> shift_rescale;
+    cuda::function<void (float4*, uint, uint, dsfloat, coalesced_vector_type const*, dsfloat const*, dsfloat const*, uint)> shift_rescale;
     static boltzmann_wrapper const kernel;
 };
 
