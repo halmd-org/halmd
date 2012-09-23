@@ -40,6 +40,8 @@
 #include <test/tools/ctest.hpp>
 
 #include <boost/assign.hpp>
+#include <boost/iterator/counting_iterator.hpp>
+#include <boost/iterator/transform_iterator.hpp>
 #include <boost/numeric/ublas/banded.hpp>
 
 #include <limits>
@@ -81,6 +83,15 @@ template <typename modules_type>
 void boltzmann<modules_type>::test()
 {
     particle_group_type group(particle);
+
+    // assign a flat distribution of particle masses
+    float_type scale_mass = float_type(0.2) / npart;
+    set_mass(*particle, boost::make_transform_iterator(
+        boost::make_counting_iterator(0)
+      , [=](int i) {
+            return float_type(0.9) + scale_mass * i;
+        }
+    ));
 
     // generate velocity distribution
     BOOST_TEST_MESSAGE("generate Maxwell-Boltzmann distribution");
