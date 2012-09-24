@@ -29,16 +29,7 @@ local thermodynamics = assert(libhalmd.observables.thermodynamics)
 -- ==============
 --
 -- This module calculates thermodynamic state variables for the particles of
--- a group, which includes
---
--- * potential energy
--- * kinetic energy
--- * total energy
--- * center of mass velocity
--- * pressure
--- * temperature
--- * virial
--- * hypervirial
+-- a group.
 --
 
 ---
