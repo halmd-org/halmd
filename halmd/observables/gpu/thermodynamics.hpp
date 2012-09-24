@@ -84,6 +84,11 @@ public:
     virtual vector_type const& v_cm();
 
     /**
+     * Compute mean particle mass.
+     */
+    virtual double mean_mass();
+
+    /**
      * Compute mean potential energy per particle.
      */
     virtual double en_pot();
@@ -119,8 +124,10 @@ private:
 
     /** mean kinetic energy per particle */
     double en_kin_;
-    /** mean potential energy per particle */
+    /** velocity of centre of mass */
     vector_type v_cm_;
+    /** mean mass */
+    double mean_mass_;
     /** mean potential energy per particle */
     double en_pot_;
     /** mean virial per particle */

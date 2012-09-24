@@ -68,15 +68,15 @@ local thermodynamics = assert(libhalmd.observables.thermodynamics)
 --
 -- .. method:: en_kin()
 --
---    Returns kinetic energy.
+--    Returns mean kinetic energy per particle.
 --
 -- .. method:: en_pot()
 --
---    Returns potential energy.
+--    Returns mean potential energy per particle.
 --
 -- .. method:: en_tot()
 --
---    Returns total energy.
+--    Returns mean total energy per particle.
 --
 -- .. method:: pressure()
 --
@@ -90,13 +90,17 @@ local thermodynamics = assert(libhalmd.observables.thermodynamics)
 --
 --    Returns center of mass velocity.
 --
+-- .. method:: mean_mass()
+--
+--    Returns mean particle mass.
+--
 -- .. method:: virial()
 --
---    Returns virial.
+--    Returns mean virial per particle.
 --
 -- .. method:: hypervirial()
 --
---    Returns hypervirial.
+--    Returns mean hypervirial per particle.
 --
 local M = module(function(args)
     local group = args.group

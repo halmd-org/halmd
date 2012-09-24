@@ -81,10 +81,26 @@ thermodynamics<dimension, float_type>::v_cm()
     if (v_cm_cache_ != std::tie(velocity_cache, mass_cache, group_cache)) {
         LOG_TRACE("acquire centre-of-mass velocity");
         scoped_timer_type timer(runtime_.v_cm);
-        v_cm_ = get_v_cm(*particle_, *group_);
+        std::tie(v_cm_, mean_mass_) = get_v_cm_and_mean_mass(*particle_, *group_);
         v_cm_cache_ = std::tie(velocity_cache, mass_cache, group_cache);
     }
     return v_cm_;
+}
+
+template <int dimension, typename float_type>
+double thermodynamics<dimension, float_type>::mean_mass()
+{
+    cache<velocity_array_type> const& velocity_cache = particle_->velocity();
+    cache<mass_array_type> const& mass_cache = particle_->mass();
+    cache<size_type> const& group_cache = group_->size();
+
+    if (v_cm_cache_ != std::tie(velocity_cache, mass_cache, group_cache)) {
+        LOG_TRACE("acquire centre-of-mass velocity");
+        scoped_timer_type timer(runtime_.v_cm);
+        std::tie(v_cm_, mean_mass_) = get_v_cm_and_mean_mass(*particle_, *group_);
+        v_cm_cache_ = std::tie(velocity_cache, mass_cache, group_cache);
+    }
+    return mean_mass_;
 }
 
 template <int dimension, typename float_type>

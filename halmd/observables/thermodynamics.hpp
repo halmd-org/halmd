@@ -60,6 +60,8 @@ public:
     virtual double en_kin() = 0;
     /** mean velocity per particle */
     virtual vector_type const& v_cm() = 0;
+    /** mean particle mass */
+    virtual double mean_mass() = 0;
     /** virial sum */
     virtual double virial() = 0;
     /** hypervirial sum */

@@ -20,10 +20,15 @@
 #ifndef HALMD_OBSERVABLES_GPU_THERMODYNAMICS_KERNEL_HPP
 #define HALMD_OBSERVABLES_GPU_THERMODYNAMICS_KERNEL_HPP
 
-#include <cuda_wrapper/cuda_wrapper.hpp>
 #include <halmd/config.hpp>
 #include <halmd/numeric/blas/fixed_vector.hpp>
 #include <halmd/mdsim/type_traits.hpp>
+
+#include <cuda_wrapper/cuda_wrapper.hpp>
+
+#ifndef __CUDACC__
+# include <tuple>
+#endif
 
 namespace halmd {
 namespace observables {
@@ -98,7 +103,7 @@ public:
     typedef size_type const* iterator;
 
     /**
-     * Initialise momentan and mass to zero.
+     * Initialise momentum and mass to zero.
      */
     velocity_of_centre_of_mass() : mv_(0), m_(0) {}
 
@@ -116,13 +121,15 @@ public:
         m_ += acc.m_;
     }
 
+#ifndef __CUDACC__
     /**
-     * Returns velocity centre of mass.
+     * Returns centre of mass momentum and total mass.
      */
-    fixed_vector<double, dimension> operator()() const
+    std::tuple<fixed_vector<double, dimension>, double> operator()() const
     {
-        return fixed_vector<double, dimension>(mv_ / m_);
+        return std::make_tuple(fixed_vector<double, dimension>(mv_), double(m_));
     }
+#endif
 
     /**
      * Returns reference to texture with velocities and masses.

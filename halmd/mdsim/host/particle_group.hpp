@@ -28,6 +28,7 @@
 #include <lua.hpp>
 
 #include <algorithm>
+#include <tuple>
 
 namespace halmd {
 namespace mdsim {
@@ -111,11 +112,11 @@ double get_mean_en_kin(particle_type const& particle, particle_group& group)
 }
 
 /**
- * Compute velocity of centre of mass.
+ * Compute velocity of centre of mass, and mean mass.
  */
 template <typename particle_type>
-fixed_vector<double, particle_type::velocity_type::static_size>
-get_v_cm(particle_type const& particle, particle_group& group)
+std::tuple<fixed_vector<double, particle_type::velocity_type::static_size>, double>
+get_v_cm_and_mean_mass(particle_type const& particle, particle_group& group)
 {
     typedef typename particle_group::array_type group_array_type;
     typedef typename particle_group::size_type size_type;
@@ -132,7 +133,17 @@ get_v_cm(particle_type const& particle, particle_group& group)
         mv += (*mass)[i] * (*velocity)[i];
         m += (*mass)[i];
     }
-    return mv / m;
+    return std::make_tuple(mv / m, m / unordered->size());
+}
+
+/**
+ * Compute velocity of centre of mass.
+ */
+template <typename particle_type>
+fixed_vector<double, particle_type::velocity_type::static_size>
+get_v_cm(particle_type const& particle, particle_group& group)
+{
+    return std::get<0>(get_v_cm_and_mean_mass(particle, group));
 }
 
 /**

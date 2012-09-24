@@ -79,6 +79,15 @@ wrap_v_cm(std::shared_ptr<thermodynamics_type> self)
 
 template <typename thermodynamics_type>
 static std::function<double ()>
+wrap_mean_mass(std::shared_ptr<thermodynamics_type> self)
+{
+    return [=]() {
+        return self->mean_mass();
+    };
+}
+
+template <typename thermodynamics_type>
+static std::function<double ()>
 wrap_temp(std::shared_ptr<thermodynamics_type> self)
 {
     return [=]() {
@@ -128,6 +137,7 @@ void thermodynamics<dimension>::luaopen(lua_State* L)
             .property("pressure", &wrap_pressure<thermodynamics>)
             .property("temp", &wrap_temp<thermodynamics>)
             .property("v_cm", &wrap_v_cm<thermodynamics>)
+            .property("mean_mass", &wrap_mean_mass<thermodynamics>)
             .property("virial", &wrap_virial<thermodynamics>)
             .property("hypervirial", &wrap_hypervirial<thermodynamics>)
     ];
