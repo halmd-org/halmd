@@ -21,24 +21,22 @@ local device            = require("halmd.utility.device")
 local module            = require("halmd.utility.module")
 
 -- grab C++ wrappers
-local maximum_squared_displacement_wrapper = {
+local max_displacement_wrapper = {
     host = {
-        [2] = libhalmd.mdsim.host.maximum_squared_displacement_2_
-      , [3] = libhalmd.mdsim.host.maximum_squared_displacement_3_
+        [2] = assert(libhalmd.mdsim.host.max_displacement_2)
+      , [3] = assert(libhalmd.mdsim.host.max_displacement_3)
     }
 }
-if libhalmd.mdsim.gpu then
-    maximum_squared_displacement_wrapper.gpu = {
-        [2] = libhalmd.mdsim.gpu.maximum_squared_displacement_2_
-      , [3] = libhalmd.mdsim.gpu.maximum_squared_displacement_3_
+if device.gpu then
+    max_displacement_wrapper.gpu = {
+        [2] = assert(libhalmd.mdsim.gpu.max_displacement_2)
+      , [3] = assert(libhalmd.mdsim.gpu.max_displacement_3)
     }
 end
--- grab standard library
-local assert = assert
 
 
 --
--- construct maximum_squared_displacement module
+-- construct max_displacement module
 --
 local M = module(function(args)
     -- dependency injection
@@ -46,13 +44,13 @@ local M = module(function(args)
     local particle = assert(args.particle)
     local dimension = assert(particle.dimension)
 
-    local maximum_squared_displacement
+    local displacement
     if device.gpu then
-        maximum_squared_displacement = assert(maximum_squared_displacement_wrapper.gpu[dimension])
+        displacement = assert(max_displacement_wrapper.gpu[dimension])
     else
-        maximum_squared_displacement = assert(maximum_squared_displacement_wrapper.host[dimension])
+        displacement = assert(max_displacement_wrapper.host[dimension])
     end
-    return maximum_squared_displacement(particle, box)
+    return displacement(particle, box)
 end)
 
 --

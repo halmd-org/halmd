@@ -20,16 +20,19 @@
 #ifndef HALMD_MDSIM_GPU_NEIGHBOURS_FROM_BINNING_HPP
 #define HALMD_MDSIM_GPU_NEIGHBOURS_FROM_BINNING_HPP
 
-#include <boost/numeric/ublas/matrix.hpp>
-#include <lua.hpp>
-#include <memory>
-
 #include <halmd/io/logger.hpp>
 #include <halmd/mdsim/box.hpp>
 #include <halmd/mdsim/gpu/binning.hpp>
+#include <halmd/mdsim/gpu/max_displacement.hpp>
 #include <halmd/mdsim/gpu/neighbour.hpp>
 #include <halmd/mdsim/gpu/particle.hpp>
+#include <halmd/utility/cache.hpp>
 #include <halmd/utility/profiler.hpp>
+
+#include <boost/numeric/ublas/matrix.hpp>
+#include <lua.hpp>
+
+#include <memory>
 
 namespace halmd {
 namespace mdsim {
@@ -49,23 +52,24 @@ public:
     typedef boost::numeric::ublas::matrix<float_type> matrix_type;
     typedef mdsim::box<dimension> box_type;
     typedef gpu::binning<dimension, float_type> binning_type;
+    typedef max_displacement<dimension, float_type> displacement_type;
     struct defaults;
     typedef logger logger_type;
+
+    typedef _Base::array_type array_type;
 
     static void luaopen(lua_State* L);
 
     from_binning(
-        std::shared_ptr<particle_type const> particle1
-      , std::shared_ptr<particle_type const> particle2 /* FIXME not implemented */
-      , std::shared_ptr<binning_type const> binning1
-      , std::shared_ptr<binning_type const> binning2 /* FIXME not implemented */
+        std::pair<std::shared_ptr<particle_type const>, std::shared_ptr<particle_type const>> particle
+      , std::pair<std::shared_ptr<binning_type>, std::shared_ptr<binning_type>> binning
+      , std::shared_ptr<displacement_type> displacement
       , std::shared_ptr<box_type const> box
       , matrix_type const& r_cut
       , double skin
       , std::shared_ptr<logger_type> logger = std::make_shared<logger_type>()
       , double cell_occupancy = defaults::occupancy()
     );
-    void update();
 
     connection on_prepend_update(std::function<void ()> const& slot)
     {
@@ -92,10 +96,7 @@ public:
     /**
      * neighbour lists
      */
-    virtual cuda::vector<unsigned int> const& g_neighbour() const
-    {
-       return g_neighbour_;
-    }
+    virtual cache<array_type> const& g_neighbour();
 
     /**
      * number of placeholders per neighbour list
@@ -115,6 +116,8 @@ public:
 
 private:
     typedef typename particle_type::position_array_type position_array_type;
+    typedef typename particle_type::reverse_tag_array_type reverse_tag_array_type;
+    typedef typename binning_type::array_type cell_array_type;
 
     typedef utility::profiler profiler_type;
     typedef typename profiler_type::accumulator_type accumulator_type;
@@ -125,9 +128,12 @@ private:
         accumulator_type update;
     };
 
+    void update();
+
     std::shared_ptr<particle_type const> particle_;
+    std::shared_ptr<binning_type> binning_;
+    std::shared_ptr<displacement_type> displacement_;
     std::shared_ptr<box_type const> box_;
-    std::shared_ptr<binning_type const> binning_;
     std::shared_ptr<logger_type> logger_;
 
     /** neighbour list skin in MD units */
@@ -139,7 +145,9 @@ private:
     /** FIXME average desired cell occupancy */
     float_type nu_cell_;
     /** neighbour lists */
-    cuda::vector<unsigned int> g_neighbour_;
+    cache<array_type> g_neighbour_;
+    /** cache observer for neighbour list update */
+    cache<> neighbour_cache_;
     /** number of placeholders per neighbour list */
     unsigned int size_;
     /** neighbour list stride */

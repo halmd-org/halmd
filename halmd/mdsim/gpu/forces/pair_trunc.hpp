@@ -66,7 +66,7 @@ public:
       , std::shared_ptr<particle_type const> particle1
       , std::shared_ptr<particle_type const> particle2
       , std::shared_ptr<box_type const> box
-      , std::shared_ptr<neighbour_type const> neighbour
+      , std::shared_ptr<neighbour_type> neighbour
       , std::shared_ptr<trunc_type const> trunc = std::make_shared<trunc_type>()
       , std::shared_ptr<logger_type> logger = std::make_shared<logger_type>()
     );
@@ -99,8 +99,14 @@ public:
 private:
     typedef typename particle_type::position_array_type position_array_type;
     typedef typename particle_type::position_type position_type;
+    typedef typename neighbour_type::array_type neighbour_array_type;
     typedef typename potential_type::gpu_potential_type gpu_potential_type;
     typedef pair_trunc_wrapper<dimension, gpu_potential_type, trunc_type> gpu_wrapper;
+
+    /** compute forces */
+    void compute();
+    /** compute forces with auxiliary variables */
+    void compute_aux();
 
     /** pair potential */
     std::shared_ptr<potential_type const> potential_;
@@ -111,7 +117,7 @@ private:
     /** simulation domain */
     std::shared_ptr<box_type const> box_;
     /** neighbour lists */
-    std::shared_ptr<neighbour_type const> neighbour_;
+    std::shared_ptr<neighbour_type> neighbour_;
     /** smoothing functor */
     std::shared_ptr<trunc_type const> trunc_;
     /** module logger */
@@ -154,7 +160,7 @@ pair_trunc<dimension, float_type, potential_type, trunc_type>::pair_trunc(
   , std::shared_ptr<particle_type const> particle1
   , std::shared_ptr<particle_type const> particle2
   , std::shared_ptr<box_type const> box
-  , std::shared_ptr<neighbour_type const> neighbour
+  , std::shared_ptr<neighbour_type> neighbour
   , std::shared_ptr<trunc_type const> trunc
   , std::shared_ptr<logger_type> logger
 )
@@ -189,37 +195,9 @@ pair_trunc<dimension, float_type, potential_type, trunc_type>::net_force()
     cache<position_array_type> const& position2_cache = particle2_->position();
 
     if (net_force_cache_ != std::tie(position1_cache, position2_cache)) {
-        LOG_TRACE("compute net force per particle");
-
-        cache_proxy<position_array_type const> position1 = position1_cache;
-        cache_proxy<position_array_type const> position2 = position2_cache;
-        cache_proxy<net_force_array_type> net_force = net_force_;
-
-        scoped_timer_type timer(runtime_.compute);
-
-        gpu_wrapper::kernel.r1.bind(*position1);
-        gpu_wrapper::kernel.r2.bind(*position2);
-        potential_->bind_textures();
-
-        cuda::configure(particle1_->dim.grid, particle1_->dim.block);
-        gpu_wrapper::kernel.compute(
-            &*net_force->begin()
-          , neighbour_->g_neighbour()
-          , neighbour_->size()
-          , neighbour_->stride()
-          , nullptr
-          , nullptr
-          , nullptr
-          , particle1_->nspecies()
-          , particle2_->nspecies()
-          , static_cast<position_type>(box_->length())
-          , *trunc_
-        );
-        cuda::thread::synchronize();
-
+        compute();
         net_force_cache_ = std::tie(position1_cache, position2_cache);
     }
-
     return net_force_;
 }
 
@@ -231,43 +209,12 @@ pair_trunc<dimension, float_type, potential_type, trunc_type>::en_pot()
     cache<position_array_type> const& position2_cache = particle2_->position();
 
     if (en_pot_cache_ != std::tie(position1_cache, position2_cache)) {
-        LOG_TRACE("compute potential energy per particle");
-
-        cache_proxy<position_array_type const> position1 = position1_cache;
-        cache_proxy<position_array_type const> position2 = position2_cache;
-        cache_proxy<net_force_array_type> net_force = net_force_;
-        cache_proxy<en_pot_array_type> en_pot = en_pot_;
-        cache_proxy<stress_pot_array_type> stress_pot = stress_pot_;
-        cache_proxy<hypervirial_array_type> hypervirial = hypervirial_;
-
-        scoped_timer_type timer(runtime_.compute);
-
-        gpu_wrapper::kernel.r1.bind(*position1);
-        gpu_wrapper::kernel.r2.bind(*position2);
-        potential_->bind_textures();
-
-        cuda::configure(particle1_->dim.grid, particle1_->dim.block);
-        gpu_wrapper::kernel.compute_aux(
-            &*net_force->begin()
-          , neighbour_->g_neighbour()
-          , neighbour_->size()
-          , neighbour_->stride()
-          , &*en_pot->begin()
-          , &*stress_pot->begin()
-          , &*hypervirial->begin()
-          , particle1_->nspecies()
-          , particle2_->nspecies()
-          , static_cast<position_type>(box_->length())
-          , *trunc_
-        );
-        cuda::thread::synchronize();
-
+        compute_aux();
         net_force_cache_ = std::tie(position1_cache, position2_cache);
         en_pot_cache_ = net_force_cache_;
         stress_pot_cache_ = net_force_cache_;
         hypervirial_cache_ = net_force_cache_;
     }
-
     return en_pot_;
 }
 
@@ -279,43 +226,12 @@ pair_trunc<dimension, float_type, potential_type, trunc_type>::stress_pot()
     cache<position_array_type> const& position2_cache = particle2_->position();
 
     if (stress_pot_cache_ != std::tie(position1_cache, position2_cache)) {
-        LOG_TRACE("compute potential part of stress tensor per particle");
-
-        cache_proxy<position_array_type const> position1 = position1_cache;
-        cache_proxy<position_array_type const> position2 = position2_cache;
-        cache_proxy<net_force_array_type> net_force = net_force_;
-        cache_proxy<en_pot_array_type> en_pot = en_pot_;
-        cache_proxy<stress_pot_array_type> stress_pot = stress_pot_;
-        cache_proxy<hypervirial_array_type> hypervirial = hypervirial_;
-
-        scoped_timer_type timer(runtime_.compute);
-
-        gpu_wrapper::kernel.r1.bind(*position1);
-        gpu_wrapper::kernel.r2.bind(*position2);
-        potential_->bind_textures();
-
-        cuda::configure(particle1_->dim.grid, particle1_->dim.block);
-        gpu_wrapper::kernel.compute_aux(
-            &*net_force->begin()
-          , neighbour_->g_neighbour()
-          , neighbour_->size()
-          , neighbour_->stride()
-          , &*en_pot->begin()
-          , &*stress_pot->begin()
-          , &*hypervirial->begin()
-          , particle1_->nspecies()
-          , particle2_->nspecies()
-          , static_cast<position_type>(box_->length())
-          , *trunc_
-        );
-        cuda::thread::synchronize();
-
+        compute_aux();
         net_force_cache_ = std::tie(position1_cache, position2_cache);
         en_pot_cache_ = net_force_cache_;
         stress_pot_cache_ = net_force_cache_;
         hypervirial_cache_ = net_force_cache_;
     }
-
     return stress_pot_;
 }
 
@@ -327,44 +243,83 @@ pair_trunc<dimension, float_type, potential_type, trunc_type>::hypervirial()
     cache<position_array_type> const& position2_cache = particle2_->position();
 
     if (hypervirial_cache_ != std::tie(position1_cache, position2_cache)) {
-        LOG_TRACE("compute hypervirial per particle");
-
-        cache_proxy<position_array_type const> position1 = position1_cache;
-        cache_proxy<position_array_type const> position2 = position2_cache;
-        cache_proxy<net_force_array_type> net_force = net_force_;
-        cache_proxy<en_pot_array_type> en_pot = en_pot_;
-        cache_proxy<stress_pot_array_type> stress_pot = stress_pot_;
-        cache_proxy<hypervirial_array_type> hypervirial = hypervirial_;
-
-        scoped_timer_type timer(runtime_.compute);
-
-        gpu_wrapper::kernel.r1.bind(*position1);
-        gpu_wrapper::kernel.r2.bind(*position2);
-        potential_->bind_textures();
-
-        cuda::configure(particle1_->dim.grid, particle1_->dim.block);
-        gpu_wrapper::kernel.compute_aux(
-            &*net_force->begin()
-          , neighbour_->g_neighbour()
-          , neighbour_->size()
-          , neighbour_->stride()
-          , &*en_pot->begin()
-          , &*stress_pot->begin()
-          , &*hypervirial->begin()
-          , particle1_->nspecies()
-          , particle2_->nspecies()
-          , static_cast<position_type>(box_->length())
-          , *trunc_
-        );
-        cuda::thread::synchronize();
-
+        compute_aux();
         net_force_cache_ = std::tie(position1_cache, position2_cache);
         en_pot_cache_ = net_force_cache_;
         stress_pot_cache_ = net_force_cache_;
         hypervirial_cache_ = net_force_cache_;
     }
-
     return hypervirial_;
+}
+
+
+template <int dimension, typename float_type, typename potential_type, typename trunc_type>
+inline void pair_trunc<dimension, float_type, potential_type, trunc_type>::compute()
+{
+    cache_proxy<position_array_type const> position1 = particle1_->position();
+    cache_proxy<position_array_type const> position2 = particle2_->position();
+    cache_proxy<neighbour_array_type const> g_neighbour = neighbour_->g_neighbour();
+    cache_proxy<net_force_array_type> net_force = net_force_;
+
+    LOG_TRACE("compute forces");
+
+    scoped_timer_type timer(runtime_.compute);
+
+    gpu_wrapper::kernel.r1.bind(*position1);
+    gpu_wrapper::kernel.r2.bind(*position2);
+    potential_->bind_textures();
+
+    cuda::configure(particle1_->dim.grid, particle1_->dim.block);
+    gpu_wrapper::kernel.compute(
+        &*net_force->begin()
+      , &*g_neighbour->begin()
+      , neighbour_->size()
+      , neighbour_->stride()
+      , nullptr
+      , nullptr
+      , nullptr
+      , particle1_->nspecies()
+      , particle2_->nspecies()
+      , static_cast<position_type>(box_->length())
+      , *trunc_
+    );
+    cuda::thread::synchronize();
+}
+
+template <int dimension, typename float_type, typename potential_type, typename trunc_type>
+inline void pair_trunc<dimension, float_type, potential_type, trunc_type>::compute_aux()
+{
+    cache_proxy<position_array_type const> position1 = particle1_->position();
+    cache_proxy<position_array_type const> position2 = particle2_->position();
+    cache_proxy<neighbour_array_type const> g_neighbour = neighbour_->g_neighbour();
+    cache_proxy<net_force_array_type> net_force = net_force_;
+    cache_proxy<en_pot_array_type> en_pot = en_pot_;
+    cache_proxy<stress_pot_array_type> stress_pot = stress_pot_;
+    cache_proxy<hypervirial_array_type> hypervirial = hypervirial_;
+
+    LOG_TRACE("compute forces with auxiliary variables");
+
+    scoped_timer_type timer(runtime_.compute);
+
+    gpu_wrapper::kernel.r1.bind(*position1);
+    gpu_wrapper::kernel.r2.bind(*position2);
+    potential_->bind_textures();
+
+    cuda::configure(particle1_->dim.grid, particle1_->dim.block);
+    gpu_wrapper::kernel.compute_aux(
+        &*net_force->begin()
+      , &*g_neighbour->begin()
+      , neighbour_->size()
+      , neighbour_->stride()
+      , &*en_pot->begin()
+      , &*stress_pot->begin()
+      , &*hypervirial->begin()
+      , particle1_->nspecies()
+      , particle2_->nspecies()
+      , static_cast<position_type>(box_->length())
+      , *trunc_
+    );
+    cuda::thread::synchronize();
 }
 
 template <int dimension, typename float_type, typename potential_type, typename trunc_type>
@@ -390,7 +345,7 @@ void pair_trunc<dimension, float_type, potential_type, trunc_type>::luaopen(lua_
                   , std::shared_ptr<particle_type const>
                   , std::shared_ptr<particle_type const>
                   , std::shared_ptr<box_type const>
-                  , std::shared_ptr<neighbour_type const>
+                  , std::shared_ptr<neighbour_type>
                   , std::shared_ptr<trunc_type const>
                   , std::shared_ptr<logger_type>
                 >)

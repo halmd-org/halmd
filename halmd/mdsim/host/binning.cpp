@@ -24,9 +24,6 @@
 #include <halmd/utility/lua/lua.hpp>
 #include <halmd/utility/signal.hpp>
 
-using namespace boost;
-using namespace std;
-
 namespace halmd {
 namespace mdsim {
 namespace host {
@@ -58,17 +55,30 @@ binning<dimension, float_type>::binning(
     for (size_t i = 0; i < r_cut.size1(); ++i) {
         for (size_t j = 0; j < r_cut.size2(); ++j) {
             r_cut_skin(i, j) = r_cut(i, j) + r_skin_;
-            r_cut_max = max(r_cut_skin(i, j), r_cut_max);
+            r_cut_max = std::max(r_cut_skin(i, j), r_cut_max);
         }
     }
     vector_type L = box->length();
     ncell_ = element_max(static_cast<cell_size_type>(L / r_cut_max), cell_size_type(1));
-    cell_.resize(ncell_);
+    cache_proxy<array_type> cell = cell_;
+    cell->resize(ncell_);
     cell_length_ = element_div(L, static_cast<vector_type>(ncell_));
 
     LOG("neighbour list skin: " << r_skin_);
     LOG("number of cells per dimension: " << ncell_);
     LOG("cell edge lengths: " << cell_length_);
+}
+
+template <int dimension, typename float_type>
+cache<typename binning<dimension, float_type>::array_type> const&
+binning<dimension, float_type>::cell()
+{
+    cache<position_array_type> const& position_cache = particle_->position();
+    if (cell_cache_ != position_cache) {
+        update();
+        cell_cache_ = position_cache;
+    }
+    return cell_;
 }
 
 /**
@@ -78,6 +88,7 @@ template <int dimension, typename float_type>
 void binning<dimension, float_type>::update()
 {
     cache_proxy<position_array_type const> position = particle_->position();
+    cache_proxy<array_type> cell = cell_;
     size_type const nparticle = particle_->nparticle();
 
     LOG_TRACE("update cell lists");
@@ -86,8 +97,8 @@ void binning<dimension, float_type>::update()
 
     // empty cell lists without memory reallocation
     std::for_each(
-        cell_.data()
-      , cell_.data() + cell_.num_elements()
+        cell->data()
+      , cell->data() + cell->num_elements()
       , [](cell_list& cell) {
             cell.clear();
         }
@@ -96,24 +107,15 @@ void binning<dimension, float_type>::update()
     for (size_type i = 0; i < nparticle; ++i) {
         vector_type const& r = (*position)[i];
         cell_size_type index = element_mod(static_cast<cell_size_type>(element_div(r, cell_length_) + static_cast<vector_type>(ncell_)), ncell_);
-        cell_(index).push_back(i);
+        (*cell)(index).push_back(i);
     }
-}
-
-template <typename binning_type>
-static std::function<void ()>
-wrap_update(std::shared_ptr<binning_type> self)
-{
-    return [=]() {
-        return self->update();
-    };
 }
 
 template <int dimension, typename float_type>
 void binning<dimension, float_type>::luaopen(lua_State* L)
 {
     using namespace luaponte;
-    static string class_name("binning_" + lexical_cast<string>(dimension) + "_");
+    static std::string const class_name("binning_" + std::to_string(dimension));
     module(L, "libhalmd")
     [
         namespace_("mdsim")
@@ -128,7 +130,6 @@ void binning<dimension, float_type>::luaopen(lua_State* L)
                       , float_type
                       , std::shared_ptr<logger_type>
                      >())
-                    .property("update", &wrap_update<binning>)
                     .property("r_skin", &binning::r_skin)
                     .scope
                     [

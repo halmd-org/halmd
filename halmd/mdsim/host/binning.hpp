@@ -20,19 +20,20 @@
 #ifndef HALMD_MDSIM_HOST_BINNING_HPP
 #define HALMD_MDSIM_HOST_BINNING_HPP
 
-#include <algorithm>
-#include <boost/bind.hpp>
-#include <boost/multi_array.hpp>
-#include <boost/numeric/ublas/matrix.hpp>
-#include <lua.hpp>
-#include <memory>
-#include <vector>
-
 #include <halmd/algorithm/multi_range.hpp>
 #include <halmd/io/logger.hpp>
 #include <halmd/mdsim/box.hpp>
 #include <halmd/mdsim/host/particle.hpp>
+#include <halmd/utility/cache.hpp>
 #include <halmd/utility/profiler.hpp>
+
+#include <boost/multi_array.hpp>
+#include <boost/numeric/ublas/matrix.hpp>
+#include <lua.hpp>
+
+#include <algorithm>
+#include <memory>
+#include <vector>
 
 namespace halmd {
 namespace mdsim {
@@ -49,7 +50,7 @@ public:
     typedef logger logger_type;
 
     typedef std::vector<unsigned int> cell_list;
-    typedef boost::multi_array<cell_list, dimension> cell_lists;
+    typedef boost::multi_array<cell_list, dimension> array_type;
     typedef fixed_vector<size_t, dimension> cell_size_type;
     typedef fixed_vector<ssize_t, dimension> cell_diff_type;
 
@@ -62,7 +63,6 @@ public:
       , float_type skin
       , std::shared_ptr<logger_type> logger = std::make_shared<logger_type>()
     );
-    void update();
 
     //! returns neighbour list skin in MD units
     float_type r_skin() const
@@ -83,10 +83,7 @@ public:
     }
 
     //! get cell lists
-    cell_lists const& cell() const
-    {
-        return cell_;
-    }
+    cache<array_type> const& cell();
 
 private:
     typedef typename particle_type::size_type size_type;
@@ -101,6 +98,8 @@ private:
         accumulator_type update;
     };
 
+    void update();
+
     //! system state
     std::shared_ptr<particle_type const> particle_;
     /** module logger */
@@ -108,7 +107,9 @@ private:
     /** neighbour list skin in MD units */
     float_type r_skin_;
     /** cell lists */
-    cell_lists cell_;
+    cache<array_type> cell_;
+    /** cache observer for cell list update */
+    cache<> cell_cache_;
     /** number of cells per dimension */
     cell_size_type ncell_;
     /** cell edge lengths */
@@ -129,16 +130,16 @@ private:
  */
 template <typename binning_type, typename output_iterator>
 inline void
-get_cell(binning_type const& binning, output_iterator output)
+get_cell(binning_type& binning, output_iterator output)
 {
-    typedef typename binning_type::cell_lists cell_lists;
+    typedef typename binning_type::array_type array_type;
     typedef typename binning_type::cell_size_type cell_size_type;
-    cell_lists const& cell = binning.cell();
+    cache_proxy<array_type const> cell = binning.cell();
     multi_range_for_each(
         cell_size_type(0)
       , binning.ncell()
       , [&](cell_size_type const& index) {
-            std::copy(cell(index).begin(), cell(index).end(), output(index));
+            std::copy((*cell)(index).begin(), (*cell)(index).end(), output(index));
         }
     );
 }

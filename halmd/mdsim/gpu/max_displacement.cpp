@@ -17,16 +17,12 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <halmd/io/logger.hpp>
+#include <halmd/mdsim/gpu/max_displacement.hpp>
+#include <halmd/utility/lua/lua.hpp>
+
 #include <algorithm>
 #include <exception>
-
-#include <halmd/io/logger.hpp>
-#include <halmd/mdsim/gpu/maximum_squared_displacement.hpp>
-#include <halmd/utility/lua/lua.hpp>
-#include <halmd/utility/predicates/greater.hpp>
-
-using namespace boost;
-using namespace std;
 
 namespace halmd {
 namespace mdsim {
@@ -39,7 +35,7 @@ namespace gpu {
  * @param box mdsim::box instance
  */
 template <int dimension, typename float_type>
-maximum_squared_displacement<dimension, float_type>::maximum_squared_displacement(
+max_displacement<dimension, float_type>::max_displacement(
     std::shared_ptr<particle_type const> particle
   , std::shared_ptr<box_type const> box
 )
@@ -57,20 +53,20 @@ maximum_squared_displacement<dimension, float_type>::maximum_squared_displacemen
 }
 
 template <int dimension, typename float_type>
-typename maximum_squared_displacement_wrapper<dimension>::displacement_impl_type
-maximum_squared_displacement<dimension, float_type>::get_displacement_impl(int threads)
+typename max_displacement_wrapper<dimension>::displacement_impl_type
+max_displacement<dimension, float_type>::get_displacement_impl(int threads)
 {
     switch (threads) {
       case 512:
-        return maximum_squared_displacement_wrapper<dimension>::kernel.displacement_impl[0];
+        return max_displacement_wrapper<dimension>::kernel.displacement_impl[0];
       case 256:
-        return maximum_squared_displacement_wrapper<dimension>::kernel.displacement_impl[1];
+        return max_displacement_wrapper<dimension>::kernel.displacement_impl[1];
       case 128:
-        return maximum_squared_displacement_wrapper<dimension>::kernel.displacement_impl[2];
+        return max_displacement_wrapper<dimension>::kernel.displacement_impl[2];
       case 64:
-        return maximum_squared_displacement_wrapper<dimension>::kernel.displacement_impl[3];
+        return max_displacement_wrapper<dimension>::kernel.displacement_impl[3];
       case 32:
-        return maximum_squared_displacement_wrapper<dimension>::kernel.displacement_impl[4];
+        return max_displacement_wrapper<dimension>::kernel.displacement_impl[4];
       default:
         throw std::logic_error("invalid reduction thread count");
     }
@@ -80,7 +76,7 @@ maximum_squared_displacement<dimension, float_type>::get_displacement_impl(int t
  * Zero maximum squared displacement
  */
 template <int dimension, typename float_type>
-void maximum_squared_displacement<dimension, float_type>::zero()
+void max_displacement<dimension, float_type>::zero()
 {
     cache_proxy<position_array_type const> position = particle_->position();
 
@@ -94,7 +90,7 @@ void maximum_squared_displacement<dimension, float_type>::zero()
  * Compute maximum squared displacement
  */
 template <int dimension, typename float_type>
-float_type maximum_squared_displacement<dimension, float_type>::compute()
+float_type max_displacement<dimension, float_type>::compute()
 {
     cache_proxy<position_array_type const> position = particle_->position();
 
@@ -120,67 +116,47 @@ float_type maximum_squared_displacement<dimension, float_type>::compute()
         LOG_ERROR("failed to reduce squared particle displacements on GPU");
         throw;
     }
-    return *max_element(h_rr_.begin(), h_rr_.end());
+    return std::sqrt(*std::max_element(h_rr_.begin(), h_rr_.end()));
 }
 
 template <int dimension, typename float_type>
-static typename signal<void ()>::slot_function_type
-wrap_zero(std::shared_ptr<maximum_squared_displacement<dimension, float_type> > self)
-{
-    return [=]() {
-        self->zero();
-    };
-}
-
-template <int dimension, typename float_type>
-static typename predicates::greater<float_type>::function_type
-wrap_compute(std::shared_ptr<maximum_squared_displacement<dimension, float_type> > self)
-{
-    return [=]() {
-        return self->compute();
-    };
-}
-
-template <int dimension, typename float_type>
-void maximum_squared_displacement<dimension, float_type>::luaopen(lua_State* L)
+void max_displacement<dimension, float_type>::luaopen(lua_State* L)
 {
     using namespace luaponte;
-    static string class_name("maximum_squared_displacement_" + lexical_cast<string>(dimension) + "_");
+    static std::string const class_name("max_displacement_" + std::to_string(dimension));
     module(L, "libhalmd")
     [
         namespace_("mdsim")
         [
             namespace_("gpu")
             [
-                class_<maximum_squared_displacement, std::shared_ptr<maximum_squared_displacement> >(class_name.c_str())
+                class_<max_displacement, std::shared_ptr<max_displacement> >(class_name.c_str())
                     .def(constructor<
                         std::shared_ptr<particle_type const>
                       , std::shared_ptr<box_type const>
                     >())
-                    .property("zero", &wrap_zero<dimension, float_type>)
-                    .property("compute", &wrap_compute<dimension, float_type>)
                     .scope
                     [
                         class_<runtime>("runtime")
                             .def_readonly("zero", &runtime::zero)
                             .def_readonly("compute", &runtime::compute)
                     ]
-                    .def_readonly("runtime", &maximum_squared_displacement::runtime_)
+                    .def_readonly("runtime", &max_displacement::runtime_)
             ]
         ]
     ];
 }
 
-HALMD_LUA_API int luaopen_libhalmd_mdsim_gpu_maximum_squared_displacement(lua_State* L)
+HALMD_LUA_API int luaopen_libhalmd_mdsim_gpu_max_displacement(lua_State* L)
 {
-    maximum_squared_displacement<3, float>::luaopen(L);
-    maximum_squared_displacement<2, float>::luaopen(L);
+    max_displacement<3, float>::luaopen(L);
+    max_displacement<2, float>::luaopen(L);
     return 0;
 }
 
 // explicit instantiation
-template class maximum_squared_displacement<3, float>;
-template class maximum_squared_displacement<2, float>;
+template class max_displacement<3, float>;
+template class max_displacement<2, float>;
 
 } // namespace mdsim
 } // namespace gpu

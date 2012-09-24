@@ -108,9 +108,6 @@ test_binning(binning_type& binning, particle_type const& particle, box_type cons
     // total number of cells
     unsigned int ncell = std::accumulate(shape.begin(), shape.end(), 1u, std::multiplies<unsigned int>());
 
-    BOOST_TEST_MESSAGE( "bin particles into " << ncell << " cells" );
-    binning.update();
-
     // allocate output array for indices of binned particles
     std::vector<unsigned int> particle_index;
     particle_index.reserve(particle.nparticle());
@@ -139,6 +136,8 @@ test_binning(binning_type& binning, particle_type const& particle, box_type cons
 
     // allocate output array for particles per cell counts
     std::vector<unsigned int> cell_count(ncell, 0);
+
+    BOOST_TEST_MESSAGE( "bin particles into " << ncell << " cells" );
 
     // check that particles are in the correct cell, and
     // output particle indices and cell counts to arrays

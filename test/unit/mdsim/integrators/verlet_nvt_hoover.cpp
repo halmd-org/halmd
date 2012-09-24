@@ -31,12 +31,11 @@
 #include <iomanip>
 
 #include <halmd/mdsim/box.hpp>
-#include <halmd/mdsim/core.hpp>
 #include <halmd/mdsim/host/forces/pair_trunc.hpp>
 #include <halmd/mdsim/host/particle.hpp>
 #include <halmd/mdsim/host/particle_groups/all.hpp>
 #include <halmd/mdsim/host/integrators/verlet_nvt_hoover.hpp>
-#include <halmd/mdsim/host/maximum_squared_displacement.hpp>
+#include <halmd/mdsim/host/max_displacement.hpp>
 #include <halmd/mdsim/host/neighbours/from_binning.hpp>
 #include <halmd/mdsim/host/positions/lattice.hpp>
 #include <halmd/mdsim/host/potentials/lennard_jones.hpp>
@@ -44,13 +43,12 @@
 #include <halmd/numeric/accumulator.hpp>
 #include <halmd/observables/host/thermodynamics.hpp>
 #include <halmd/random/host/random.hpp>
-#include <halmd/utility/predicates/greater.hpp>
 #ifdef HALMD_WITH_GPU
 # include <halmd/mdsim/gpu/forces/pair_trunc.hpp>
 # include <halmd/mdsim/gpu/particle.hpp>
 # include <halmd/mdsim/gpu/particle_groups/all.hpp>
 # include <halmd/mdsim/gpu/integrators/verlet_nvt_hoover.hpp>
-# include <halmd/mdsim/gpu/maximum_squared_displacement.hpp>
+# include <halmd/mdsim/gpu/max_displacement.hpp>
 # include <halmd/mdsim/gpu/neighbours/from_binning.hpp>
 # include <halmd/mdsim/gpu/positions/lattice.hpp>
 # include <halmd/mdsim/gpu/potentials/lennard_jones.hpp>
@@ -101,10 +99,8 @@ struct verlet_nvt_hoover
     typedef typename modules_type::velocity_type velocity_type;
     static bool const gpu = modules_type::gpu;
 
-    typedef mdsim::core core_type;
     typedef typename particle_type::vector_type vector_type;
     typedef typename vector_type::value_type float_type;
-    typedef predicates::greater<float_type> greater_type;
     static unsigned int const dimension = vector_type::static_size;
 
     float temp;
@@ -117,7 +113,6 @@ struct verlet_nvt_hoover
     float skin;
 
     std::shared_ptr<box_type> box;
-    std::shared_ptr<core_type> core;
     std::shared_ptr<potential_type> potential;
     std::shared_ptr<force_type> force;
     std::shared_ptr<binning_type> binning;
@@ -132,7 +127,6 @@ struct verlet_nvt_hoover
 
     void test();
     verlet_nvt_hoover();
-    void connect();
 };
 
 template <typename modules_type>
@@ -153,13 +147,15 @@ void verlet_nvt_hoover<modules_type>::test()
     double max_en_diff = 0;                       // integral of motion: Hamiltonian extended by NHC terms
 
     BOOST_TEST_MESSAGE("prepare system");
-    core->setup();
+    position->set();
+    velocity->set();
 
     // equilibrate the system,
     // this avoids a jump in the conserved energy at the very beginning
     BOOST_TEST_MESSAGE("equilibrate over " << steps / 20 << " steps");
     for (uint64_t i = 0; i < steps / 20; ++i) {
-        core->mdstep();
+        integrator->integrate();
+        integrator->finalize();
     }
 
     // compute modified Hamiltonian
@@ -168,7 +164,8 @@ void verlet_nvt_hoover<modules_type>::test()
     BOOST_TEST_MESSAGE("run NVT integrator over " << steps << " steps");
     for (uint64_t i = 0; i < steps; ++i) {
         // perform MD step
-        core->mdstep();
+        integrator->integrate();
+        integrator->finalize();
 
         // measurement
         if(i % period == 0) {
@@ -295,65 +292,14 @@ verlet_nvt_hoover<modules_type>::verlet_nvt_hoover()
     random = std::make_shared<random_type>();
     potential = std::make_shared<potential_type>(particle->nspecies(), particle->nspecies(), cutoff, epsilon, sigma);
     binning = std::make_shared<binning_type>(particle, box, potential->r_cut(), skin);
-    neighbour = std::make_shared<neighbour_type>(particle, particle, binning, binning, box, potential->r_cut(), skin);
+    max_displacement = std::make_shared<max_displacement_type>(particle, box);
+    neighbour = std::make_shared<neighbour_type>(std::make_pair(particle, particle), std::make_pair(binning, binning), max_displacement, box, potential->r_cut(), skin);
     force = std::make_shared<force_type>(potential, particle, particle, box, neighbour);
     integrator = std::make_shared<integrator_type>(particle, force, box, timestep, temp, resonance_frequency);
     position = std::make_shared<position_type>(particle, box, 1);
     velocity = std::make_shared<velocity_type>(particle, random, start_temp);
     std::shared_ptr<particle_group_type> group = std::make_shared<particle_group_type>(particle);
     thermodynamics = std::make_shared<thermodynamics_type>(particle, force, group, box);
-    max_displacement = std::make_shared<max_displacement_type>(particle, box);
-
-    // create core and connect module slots to core signals
-    this->connect();
-}
-
-template <typename modules_type>
-void verlet_nvt_hoover<modules_type>::connect()
-{
-    core = std::make_shared<core_type>();
-    // system preparation
-    core->on_setup([=]() {
-        position->set();
-    });
-    core->on_setup([=]() {
-        velocity->set();
-    });
-    core->on_append_setup([=]() {
-        max_displacement->zero();
-    });
-    core->on_append_setup([=]() {
-        binning->update();
-    });
-    core->on_append_setup([=]() {
-        neighbour->update();
-    });
-
-    // integration step
-    core->on_integrate([=]() {
-        integrator->integrate();
-    });
-    core->on_finalize([=]() {
-        integrator->finalize();
-    });
-
-    // update neighbour lists if maximum squared displacement is greater than (skin/2)²
-    float_type limit = pow(neighbour->r_skin() / 2, 2);
-    std::shared_ptr<greater_type> greater = std::make_shared<greater_type>([=]() {
-        return max_displacement->compute();
-    }, limit);
-    greater->on_greater([=]() {
-        max_displacement->zero();
-    });
-    greater->on_greater([=]() {
-        binning->update();
-    });
-    greater->on_greater([=]() {
-        neighbour->update();
-    });
-    core->on_prepend_force([=]() {
-        greater->evaluate();
-    });
 }
 
 template <int dimension, typename float_type>
@@ -364,7 +310,7 @@ struct host_modules
     typedef mdsim::host::forces::pair_trunc<dimension, float_type, potential_type> force_type;
     typedef mdsim::host::binning<dimension, float_type> binning_type;
     typedef mdsim::host::neighbours::from_binning<dimension, float_type> neighbour_type;
-    typedef mdsim::host::maximum_squared_displacement<dimension, float_type> max_displacement_type;
+    typedef mdsim::host::max_displacement<dimension, float_type> max_displacement_type;
     typedef mdsim::host::integrators::verlet_nvt_hoover<dimension, float_type> integrator_type;
     typedef mdsim::host::particle<dimension, float_type> particle_type;
     typedef mdsim::host::particle_groups::all<particle_type> particle_group_type;
@@ -391,7 +337,7 @@ struct gpu_modules
     typedef mdsim::gpu::forces::pair_trunc<dimension, float_type, potential_type> force_type;
     typedef mdsim::gpu::binning<dimension, float_type> binning_type;
     typedef mdsim::gpu::neighbours::from_binning<dimension, float_type> neighbour_type;
-    typedef mdsim::gpu::maximum_squared_displacement<dimension, float_type> max_displacement_type;
+    typedef mdsim::gpu::max_displacement<dimension, float_type> max_displacement_type;
     typedef mdsim::gpu::integrators::verlet_nvt_hoover<dimension, double> integrator_type;
     typedef mdsim::gpu::particle<dimension, float_type> particle_type;
     typedef mdsim::gpu::particle_groups::all<particle_type> particle_group_type;

@@ -20,7 +20,10 @@
 #ifndef HALMD_MDSIM_HOST_NEIGHBOUR_HPP
 #define HALMD_MDSIM_HOST_NEIGHBOUR_HPP
 
+#include <halmd/utility/cache.hpp>
+
 #include <lua.hpp>
+
 #include <vector>
 
 namespace halmd {
@@ -36,13 +39,14 @@ namespace host {
 class neighbour
 {
 public:
-    typedef std::vector<unsigned int> neighbour_list;
+    typedef std::vector<std::vector<unsigned int>> array_type;
+    typedef typename array_type::value_type neighbour_list;
 
     virtual ~neighbour() {}
     /** Lua bindings */
     static void luaopen(lua_State* L);
     /** neighbour lists */
-    virtual std::vector<neighbour_list> const& lists() const = 0;
+    virtual cache<array_type> const& lists() = 0;
 };
 
 } // namespace host

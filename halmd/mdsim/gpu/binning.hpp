@@ -20,19 +20,20 @@
 #ifndef HALMD_MDSIM_GPU_BINNING_HPP
 #define HALMD_MDSIM_GPU_BINNING_HPP
 
-#include <algorithm>
-#include <boost/bind.hpp>
-#include <boost/numeric/ublas/matrix.hpp>
-#include <lua.hpp>
-#include <memory>
-
 #include <halmd/io/logger.hpp>
 #include <halmd/algorithm/multi_range.hpp>
 #include <halmd/mdsim/box.hpp>
 #include <halmd/mdsim/gpu/binning_kernel.hpp>
 #include <halmd/mdsim/gpu/particle.hpp>
+#include <halmd/utility/cache.hpp>
 #include <halmd/utility/multi_index.hpp>
 #include <halmd/utility/profiler.hpp>
+
+#include <boost/numeric/ublas/matrix.hpp>
+#include <lua.hpp>
+
+#include <algorithm>
+#include <memory>
 
 namespace halmd {
 namespace mdsim {
@@ -49,6 +50,7 @@ public:
     struct defaults;
     typedef logger logger_type;
 
+    typedef cuda::vector<unsigned int> array_type;
     typedef fixed_vector<unsigned int, dimension> cell_size_type;
     typedef fixed_vector<int, dimension> cell_diff_type;
 
@@ -62,7 +64,6 @@ public:
       , std::shared_ptr<logger_type> logger = std::make_shared<logger_type>()
       , double cell_occupancy = defaults::occupancy()
     );
-    void update();
 
     //! returns neighbour list skin in MD units
     float_type r_skin() const
@@ -107,10 +108,7 @@ public:
     /**
      * cell lists
      */
-    cuda::vector<unsigned int> const& g_cell() const
-    {
-        return g_cell_;
-    }
+    cache<array_type> const& g_cell();
 
 private:
     typedef typename particle_type::position_array_type position_array_type;
@@ -123,6 +121,8 @@ private:
     {
         accumulator_type update;
     };
+
+    void update();
 
     std::shared_ptr<particle_type const> particle_;
     std::shared_ptr<box_type const> box_;
@@ -143,14 +143,16 @@ private:
     /** CUDA cell kernel execution configuration */
     cuda::config dim_cell_;
     /** cell lists in global device memory */
-    cuda::vector<unsigned int> g_cell_;
+    cache<array_type> g_cell_;
+    /** cache observer for cell list update */
+    cache<> cell_cache_;
 
     /** cell indices for particles */
-    cuda::vector<unsigned int> g_cell_index_;
+    array_type g_cell_index_;
     /** particle permutation */
-    cuda::vector<unsigned int> g_cell_permutation_;
+    array_type g_cell_permutation_;
     /** cell offsets in sorted particle list */
-    cuda::vector<unsigned int> g_cell_offset_;
+    array_type g_cell_offset_;
     /** profiling runtime accumulators */
     runtime runtime_;
 };
@@ -167,14 +169,15 @@ private:
  */
 template <typename binning_type, typename output_iterator>
 inline void
-get_cell(binning_type const& binning, output_iterator output)
+get_cell(binning_type& binning, output_iterator output)
 {
     typedef typename binning_type::cell_size_type cell_size_type;
-    cuda::vector<unsigned int> const& g_cell = binning.g_cell();
+    typedef typename binning_type::array_type array_type;
+    cache_proxy<array_type const> g_cell = binning.g_cell();
     cell_size_type ncell = binning.ncell();
     unsigned int cell_size = binning.cell_size();
-    cuda::host::vector<unsigned int> h_cell(g_cell.size());
-    cuda::copy(g_cell, h_cell);
+    cuda::host::vector<unsigned int> h_cell(g_cell->size());
+    cuda::copy(g_cell->begin(), g_cell->end(), h_cell.begin());
     multi_range_for_each(
         cell_size_type(0)
       , ncell

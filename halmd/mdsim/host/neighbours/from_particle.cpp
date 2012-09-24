@@ -20,9 +20,6 @@
 #include <halmd/mdsim/host/neighbours/from_particle.hpp>
 #include <halmd/utility/lua/lua.hpp>
 
-using namespace boost;
-using namespace std;
-
 namespace halmd {
 namespace mdsim {
 namespace host {
@@ -38,16 +35,17 @@ namespace neighbours {
  */
 template <int dimension, typename float_type>
 from_particle<dimension, float_type>::from_particle(
-    std::shared_ptr<particle_type const> particle1
-  , std::shared_ptr<particle_type const> particle2
+    std::pair<std::shared_ptr<particle_type const>, std::shared_ptr<particle_type const>> particle
+  , std::shared_ptr<displacement_type> displacement
   , std::shared_ptr<box_type const> box
   , matrix_type const& r_cut
   , double skin
   , std::shared_ptr<logger> logger
 )
   // dependency injection
-  : particle1_(particle1)
-  , particle2_(particle2)
+  : particle1_(particle.first)
+  , particle2_(particle.second)
+  , displacement_(displacement)
   , box_(box)
   , logger_(logger)
   // allocate parameters
@@ -61,11 +59,26 @@ from_particle<dimension, float_type>::from_particle(
         for (size_t j = 0; j < r_cut.size2(); ++j) {
             r_cut_skin(i, j) = r_cut(i, j) + r_skin_;
             rr_cut_skin_(i, j) = std::pow(r_cut_skin(i, j), 2);
-            r_cut_max = max(r_cut_skin(i, j), r_cut_max);
+            r_cut_max = std::max(r_cut_skin(i, j), r_cut_max);
         }
     }
 
     LOG("neighbour list skin: " << r_skin_);
+}
+
+template <int dimension, typename float_type>
+cache<std::vector<typename from_particle<dimension, float_type>::neighbour_list>> const&
+from_particle<dimension, float_type>::lists()
+{
+    cache<reverse_tag_array_type> const& reverse_tag_cache = particle1_->reverse_tag();
+    if (neighbour_cache_ != reverse_tag_cache || displacement_->compute() > r_skin_ / 2) {
+        on_prepend_update_();
+        update();
+        displacement_->zero();
+        neighbour_cache_ = reverse_tag_cache;
+        on_append_update_();
+    }
+    return neighbour_;
 }
 
 /**
@@ -74,8 +87,6 @@ from_particle<dimension, float_type>::from_particle(
 template <int dimension, typename float_type>
 void from_particle<dimension, float_type>::update()
 {
-    on_prepend_update_();
-
     LOG_TRACE("update neighbour lists");
 
     scoped_timer_type timer(runtime_.update);
@@ -84,6 +95,7 @@ void from_particle<dimension, float_type>::update()
     cache_proxy<position_array_type const> position2 = particle2_->position();
     cache_proxy<species_array_type const> species1 = particle1_->species();
     cache_proxy<species_array_type const> species2 = particle2_->species();
+    cache_proxy<array_type> neighbour = neighbour_;
     size_type const nparticle1 = particle1_->nparticle();
     size_type const nparticle2 = particle2_->nparticle();
 
@@ -96,7 +108,7 @@ void from_particle<dimension, float_type>::update()
         species_type type1 = (*species1)[i];
 
         // clear particle's neighbour list
-        neighbour_[i].clear();
+        (*neighbour)[i].clear();
 
         for (size_type j = reactio ? (i + 1) : 0; j < nparticle2; ++j) {
             // load second particle
@@ -115,27 +127,16 @@ void from_particle<dimension, float_type>::update()
             }
 
             // add particle to neighbour list
-            neighbour_[i].push_back(j);
+            (*neighbour)[i].push_back(j);
         }
     }
-
-    on_append_update_();
-}
-
-template <typename neighbour_type>
-static std::function<void ()>
-wrap_update(std::shared_ptr<neighbour_type> self)
-{
-    return [=]() {
-        self->update();
-    };
 }
 
 template <int dimension, typename float_type>
 void from_particle<dimension, float_type>::luaopen(lua_State* L)
 {
     using namespace luaponte;
-    static string class_name("from_particle_" + lexical_cast<string>(dimension) + "_");
+    static std::string const class_name("from_particle_" + std::to_string(dimension));
     module(L, "libhalmd")
     [
         namespace_("mdsim")
@@ -146,15 +147,14 @@ void from_particle<dimension, float_type>::luaopen(lua_State* L)
                 [
                     class_<from_particle, std::shared_ptr<_Base>, _Base>(class_name.c_str())
                         .def(constructor<
-                            std::shared_ptr<particle_type const>
-                          , std::shared_ptr<particle_type const>
+                            std::pair<std::shared_ptr<particle_type const>, std::shared_ptr<particle_type const>>
+                          , std::shared_ptr<displacement_type>
                           , std::shared_ptr<box_type const>
                           , matrix_type const&
                           , double
                           , std::shared_ptr<logger_type>
                          >())
                         .property("r_skin", &from_particle::r_skin)
-                        .property("update", &wrap_update<from_particle>)
                         .def("on_prepend_update", &from_particle::on_prepend_update)
                         .def("on_append_update", &from_particle::on_append_update)
                         .scope

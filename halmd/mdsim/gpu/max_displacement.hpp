@@ -17,16 +17,17 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef HALMD_MDSIM_GPU_MAXIMUM_SQUARED_DISPLACEMENT_HPP
-#define HALMD_MDSIM_GPU_MAXIMUM_SQUARED_DISPLACEMENT_HPP
-
-#include <lua.hpp>
-#include <memory>
+#ifndef HALMD_MDSIM_GPU_MAX_DISPLACEMENT_HPP
+#define HALMD_MDSIM_GPU_MAX_DISPLACEMENT_HPP
 
 #include <halmd/mdsim/box.hpp>
-#include <halmd/mdsim/gpu/maximum_squared_displacement_kernel.hpp>
+#include <halmd/mdsim/gpu/max_displacement_kernel.hpp>
 #include <halmd/mdsim/gpu/particle.hpp>
 #include <halmd/utility/profiler.hpp>
+
+#include <lua.hpp>
+
+#include <memory>
 
 namespace halmd {
 namespace mdsim {
@@ -36,7 +37,7 @@ namespace gpu {
  * Compute maximum squared displacement
  */
 template <int dimension, typename float_type>
-class maximum_squared_displacement
+class max_displacement
 {
 public:
     typedef gpu::particle<dimension, float_type> particle_type;
@@ -44,7 +45,7 @@ public:
 
     static void luaopen(lua_State* L);
 
-    maximum_squared_displacement(
+    max_displacement(
         std::shared_ptr<particle_type const> particle
       , std::shared_ptr<box_type const> box
     );
@@ -55,7 +56,7 @@ private:
     typedef typename particle_type::position_array_type position_array_type;
 
     typedef typename particle_type::vector_type vector_type;
-    typedef typename maximum_squared_displacement_wrapper<dimension>::displacement_impl_type displacement_impl_type;
+    typedef typename max_displacement_wrapper<dimension>::displacement_impl_type displacement_impl_type;
     typedef utility::profiler profiler_type;
     typedef typename profiler_type::accumulator_type accumulator_type;
     typedef typename profiler_type::scoped_timer_type scoped_timer_type;
@@ -73,7 +74,7 @@ private:
     static displacement_impl_type get_displacement_impl(int threads);
     displacement_impl_type displacement_impl_;
 
-    /** particle positions at last maximum displacement list update */
+    /** particle positions at last neighbour list update */
     cuda::vector<float4> g_r0_;
     /** block-reduced squared particle distances */
     cuda::vector<float> g_rr_;
@@ -87,4 +88,4 @@ private:
 } // namespace gpu
 } // namespace halmd
 
-#endif /* ! HALMD_MDSIM_GPU_MAXIMUM_SQUARED_DISPLACEMENT_HPP */
+#endif /* ! HALMD_MDSIM_GPU_MAX_DISPLACEMENT_HPP */

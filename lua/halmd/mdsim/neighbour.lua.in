@@ -23,7 +23,7 @@ local log                               = require("halmd.io.log")
 local module                            = require("halmd.utility.module")
 local mdsim = {
     binning                             = require("halmd.mdsim.binning")
-  , maximum_squared_displacement        = require("halmd.mdsim.maximum_squared_displacement")
+  , max_displacement                    = require("halmd.mdsim.max_displacement")
   , sort                                = require("halmd.mdsim.sorts.hilbert")
 }
 
@@ -31,35 +31,29 @@ local mdsim = {
 local neighbours = {
     from_binning = {
         host = {
-            [2] = libhalmd.mdsim.host.neighbours.from_binning_2_
-          , [3] = libhalmd.mdsim.host.neighbours.from_binning_3_
+            [2] = assert(libhalmd.mdsim.host.neighbours.from_binning_2)
+          , [3] = assert(libhalmd.mdsim.host.neighbours.from_binning_3)
         }
     }
   , from_particle = {
         host = {
-            [2] = libhalmd.mdsim.host.neighbours.from_particle_2_
-          , [3] = libhalmd.mdsim.host.neighbours.from_particle_3_
+            [2] = assert(libhalmd.mdsim.host.neighbours.from_particle_2)
+          , [3] = assert(libhalmd.mdsim.host.neighbours.from_particle_3)
         }
     }
 }
 if libhalmd.mdsim.gpu then
     neighbours.from_binning.gpu = {
-        [2] = libhalmd.mdsim.gpu.neighbours.from_binning_2_
-      , [3] = libhalmd.mdsim.gpu.neighbours.from_binning_3_
+        [2] = assert(libhalmd.mdsim.gpu.neighbours.from_binning_2)
+      , [3] = assert(libhalmd.mdsim.gpu.neighbours.from_binning_3)
     }
     neighbours.from_particle.gpu = {
-        [2] = libhalmd.mdsim.gpu.neighbours.from_particle_2_
-      , [3] = libhalmd.mdsim.gpu.neighbours.from_particle_3_
+        [2] = assert(libhalmd.mdsim.gpu.neighbours.from_particle_2)
+      , [3] = assert(libhalmd.mdsim.gpu.neighbours.from_particle_3)
     }
 end
-local predicates = libhalmd.predicates
 local h5 = libhalmd.h5
 local po = libhalmd.po
--- grab standard library
-local assert = assert
-local math = math
-local property = property
-local table = table
 
 
 --
@@ -84,9 +78,10 @@ local M = module(function(args)
     -- dependency injection
     local particle1 = assert(args.particle or args.particles[1])
     local particle2 = assert(args.particle or args.particles[2])
+    local particles = {particle1, particle2}
     local box = assert(args.box)
     local dimension = #box.edges
-    local logger = log.logger({label = "neighbour " .. label({particle1, particle2})})
+    local logger = log.logger({label = "neighbour " .. label(particles)})
 
     -- domain decomposition
     local binning
@@ -95,6 +90,7 @@ local M = module(function(args)
     end
 
     -- neighbour lists
+    local displacement = mdsim.max_displacement{box = box, particle = particle1}
     local neighbour
     if device.gpu then
         if binning then
@@ -105,59 +101,27 @@ local M = module(function(args)
         local defaults = assert(neighbour.defaults)
         local occupancy = args.occupancy or defaults.occupancy()
         if binning then
-            neighbour = neighbour(particle1, particle2, binning, binning, box, r_cut, skin, logger, occupancy)
+            neighbour = neighbour(particles, {binning, binning}, displacement, box, r_cut, skin, logger, occupancy)
         else
-            neighbour = neighbour(particle1, particle2, box, r_cut, skin, logger, occupancy)
+            neighbour = neighbour(particles, displacement, box, r_cut, skin, logger, occupancy)
         end
     else
         if binning then
-            neighbour = neighbours.from_binning.host[dimension](particle1, particle2, binning, binning, box, r_cut, skin, logger)
+            neighbour = neighbours.from_binning.host[dimension](particles, {binning, binning}, displacement, box, r_cut, skin, logger)
         else
-            neighbour = neighbours.from_particle.host[dimension](particle1, particle2, box, r_cut, skin, logger)
+            neighbour = neighbours.from_particle.host[dimension](particles, displacement, box, r_cut, skin, logger)
         end
     end
 
     -- store particle instances as Lua property
     neighbour.particles = property(function(self)
-        return {particle1, particle2}
+        return particles
     end)
 
-    -- if needed, bin particles before neighbour list update
-    if binning then
-        neighbour:on_prepend_update(binning.update)
-    end
-
-    -- maximum squared displacement computation
-    local maximum_squared_displacement = mdsim.maximum_squared_displacement{box = box, particle = particle1}
-
-    -- compare maximum squared displacement to squared half skin size
-    local limit = math.pow(neighbour.r_skin / 2, 2)
-    local greater = predicates.greater(maximum_squared_displacement.compute, limit)
-
-    -- evaluate maximum squared displacement every step
-    core:on_prepend_force(greater.evaluate)
-
+    -- sort particles before neighbour list update
     if not args.disable_sorting then
-        -- particle sorting
         local sort = mdsim.sort{box = box, particle = particle1, binning = binning}
-
-        -- system preparation after setting positions and velocities
-        core:on_append_setup(sort.order)
-
-        -- if maximum squared displacement is greater than squared half skin size:
-        greater:on_greater(sort.order)
-
-        -- after particle sorting, take a snapshot of coordinates and update neighbour lists
-        sort:on_order(maximum_squared_displacement.zero)
-        sort:on_order(neighbour.update)
-    else
-        -- system preparation after setting positions and velocities
-        core:on_append_setup(maximum_squared_displacement.zero)
-        core:on_append_setup(neighbour.update)
-
-        -- if maximum squared displacement is greater than squared half skin size:
-        greater:on_greater(maximum_squared_displacement.zero)
-        greater:on_greater(neighbour.update)
+        neighbour:on_prepend_update(sort.order)
     end
 
     return neighbour

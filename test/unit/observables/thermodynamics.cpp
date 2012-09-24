@@ -28,11 +28,10 @@
 #include <limits>
 
 #include <halmd/mdsim/box.hpp>
-#include <halmd/mdsim/core.hpp>
 #include <halmd/mdsim/host/forces/pair_trunc.hpp>
 #include <halmd/mdsim/host/integrators/verlet.hpp>
 #include <halmd/mdsim/host/integrators/verlet_nvt_andersen.hpp>
-#include <halmd/mdsim/host/maximum_squared_displacement.hpp>
+#include <halmd/mdsim/host/max_displacement.hpp>
 #include <halmd/mdsim/host/neighbours/from_binning.hpp>
 #include <halmd/mdsim/host/particle.hpp>
 #include <halmd/mdsim/host/particle_groups/all.hpp>
@@ -43,12 +42,11 @@
 #include <halmd/numeric/accumulator.hpp>
 #include <halmd/observables/host/thermodynamics.hpp>
 #include <halmd/random/host/random.hpp>
-#include <halmd/utility/predicates/greater.hpp>
 #ifdef HALMD_WITH_GPU
 # include <halmd/mdsim/gpu/forces/pair_trunc.hpp>
 # include <halmd/mdsim/gpu/integrators/verlet.hpp>
 # include <halmd/mdsim/gpu/integrators/verlet_nvt_andersen.hpp>
-# include <halmd/mdsim/gpu/maximum_squared_displacement.hpp>
+# include <halmd/mdsim/gpu/max_displacement.hpp>
 # include <halmd/mdsim/gpu/neighbours/from_binning.hpp>
 # include <halmd/mdsim/gpu/particle.hpp>
 # include <halmd/mdsim/gpu/particle_groups/all.hpp>
@@ -128,11 +126,9 @@ struct lennard_jones_fluid
     typedef typename modules_type::velocity_type velocity_type;
     static bool const gpu = modules_type::gpu;
 
-    typedef mdsim::core core_type;
     typedef typename particle_type::vector_type vector_type;
     typedef typename vector_type::value_type float_type;
     static unsigned int const dimension = vector_type::static_size;
-    typedef predicates::greater<float_type> greater_type;
 
     float density;
     float temp;
@@ -146,7 +142,6 @@ struct lennard_jones_fluid
     fixed_vector<double, dimension> slab;
 
     std::shared_ptr<box_type> box;
-    std::shared_ptr<core_type> core;
     std::shared_ptr<potential_type> potential;
     std::shared_ptr<force_type> force;
     std::shared_ptr<binning_type> binning;
@@ -160,7 +155,6 @@ struct lennard_jones_fluid
 
     void test();
     lennard_jones_fluid();
-    void connect();
 };
 
 template <typename modules_type>
@@ -176,32 +170,19 @@ void lennard_jones_fluid<modules_type>::test()
       , temp
       , 1 /* collision rate */
     );
-    vector<connection> conn;
-    conn.push_back(core->on_integrate([=]() {
-        nvt_integrator->integrate();
-    }));
-    conn.push_back(core->on_finalize([=]() {
-        nvt_integrator->finalize();
-    }));
 
     // relax configuration and thermalise at given temperature, run for t*=30
     BOOST_TEST_MESSAGE("thermalise initial state at T=" << temp);
-    core->setup();
+    position->set();
+    velocity->set();
     unsigned int steps = static_cast<unsigned int>(ceil(30 / nvt_integrator->timestep()));
     for (unsigned int i = 0; i < steps; ++i) {
-        core->mdstep();
+        nvt_integrator->integrate();
+        nvt_integrator->finalize();
     }
-    for_each(conn.begin(), conn.end(), bind(&connection::disconnect, _1));
-    conn.clear();
 
     // set different timestep and choose NVE integrator
     std::shared_ptr<nve_integrator_type> nve_integrator = std::make_shared<nve_integrator_type>(particle, force, box, timestep);
-    core->on_integrate([=]() {
-        nve_integrator->integrate();
-    });
-    core->on_finalize([=]() {
-        nve_integrator->finalize();
-    });
 
     // stochastic thermostat => centre particle velocities around zero
     shift_velocity(*particle, -thermodynamics->v_cm());
@@ -217,7 +198,8 @@ void lennard_jones_fluid<modules_type>::test()
     steps = static_cast<unsigned int>(ceil(30 / timestep));
     unsigned int period = static_cast<unsigned int>(round(0.01 / timestep));
     for (unsigned int i = 0; i < steps; ++i) {
-        core->mdstep();
+        nve_integrator->integrate();
+        nve_integrator->finalize();
         if(i > steps / 2 && i % period == 0) {
             temp_(thermodynamics->temp());
         }
@@ -241,7 +223,8 @@ void lennard_jones_fluid<modules_type>::test()
     )); // relaxation time (from VACF)
     for (unsigned int i = 0; i < steps; ++i) {
         // perform MD step
-        core->mdstep();
+        nve_integrator->integrate();
+        nve_integrator->finalize();
 
         // measurement
         if(i % period == 0) {
@@ -368,56 +351,13 @@ lennard_jones_fluid<modules_type>::lennard_jones_fluid()
     box = std::make_shared<box_type>(edges);
     potential = std::make_shared<potential_type>(particle->nspecies(), particle->nspecies(), rc_mat, epsilon_mat, sigma_mat);
     binning = std::make_shared<binning_type>(particle, box, potential->r_cut(), skin);
-    neighbour = std::make_shared<neighbour_type>(particle, particle, binning, binning, box, potential->r_cut(), skin);
+    msd = std::make_shared<msd_type>(particle, box);
+    neighbour = std::make_shared<neighbour_type>(std::make_pair(particle, particle), std::make_pair(binning, binning), msd, box, potential->r_cut(), skin);
     position = std::make_shared<position_type>(particle, box, slab);
     velocity = std::make_shared<velocity_type>(particle, random, temp);
     force = std::make_shared<force_type>(potential, particle, particle, box, neighbour);
     std::shared_ptr<particle_group_type> group = std::make_shared<particle_group_type>(particle);
     thermodynamics = std::make_shared<thermodynamics_type>(particle, force, group, box);
-    msd = std::make_shared<msd_type>(particle, box);
-
-    // create core and connect module slots to core signals
-    this->connect();
-}
-
-template <typename modules_type>
-void lennard_jones_fluid<modules_type>::connect()
-{
-    core = std::make_shared<core_type>();
-    // system preparation
-    core->on_setup([=]() {
-        position->set();
-    });
-    core->on_setup([=]() {
-        velocity->set();
-    });
-    core->on_append_setup([=]() {
-        msd->zero();
-    });
-    core->on_append_setup([=]() {
-        binning->update();
-    });
-    core->on_append_setup([=]() {
-        neighbour->update();
-    });
-
-    // update neighbour lists if maximum squared displacement is greater than (skin/2)²
-    float_type limit = pow(neighbour->r_skin() / 2, 2);
-    std::shared_ptr<greater_type> greater = std::make_shared<greater_type>([=]() {
-        return msd->compute();
-    }, limit);
-    greater->on_greater([=]() {
-        msd->zero();
-    });
-    greater->on_greater([=]() {
-        binning->update();
-    });
-    greater->on_greater([=]() {
-        neighbour->update();
-    });
-    core->on_prepend_force([=]() {
-        greater->evaluate();
-    });
 }
 
 template <int dimension, typename float_type>
@@ -428,7 +368,7 @@ struct host_modules
     typedef mdsim::host::forces::pair_trunc<dimension, float_type, potential_type> force_type;
     typedef mdsim::host::binning<dimension, float_type> binning_type;
     typedef mdsim::host::neighbours::from_binning<dimension, float_type> neighbour_type;
-    typedef mdsim::host::maximum_squared_displacement<dimension, float_type> msd_type;
+    typedef mdsim::host::max_displacement<dimension, float_type> msd_type;
     typedef mdsim::host::integrators::verlet<dimension, float_type> nve_integrator_type;
     typedef mdsim::host::integrators::verlet_nvt_andersen<dimension, float_type> nvt_integrator_type;
     typedef mdsim::host::particle<dimension, float_type> particle_type;
@@ -456,7 +396,7 @@ struct gpu_modules
     typedef mdsim::gpu::forces::pair_trunc<dimension, float_type, potential_type> force_type;
     typedef mdsim::gpu::binning<dimension, float_type> binning_type;
     typedef mdsim::gpu::neighbours::from_binning<dimension, float_type> neighbour_type;
-    typedef mdsim::gpu::maximum_squared_displacement<dimension, float_type> msd_type;
+    typedef mdsim::gpu::max_displacement<dimension, float_type> msd_type;
     typedef mdsim::gpu::integrators::verlet<dimension, float_type> nve_integrator_type;
     typedef mdsim::gpu::integrators::verlet_nvt_andersen<dimension, float_type, halmd::random::gpu::rand48> nvt_integrator_type;
     typedef mdsim::gpu::particle<dimension, float_type> particle_type;

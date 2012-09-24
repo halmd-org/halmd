@@ -19,7 +19,7 @@
 
 #include <halmd/algorithm/gpu/reduction.cuh>
 #include <halmd/mdsim/gpu/box_kernel.cuh>
-#include <halmd/mdsim/gpu/maximum_squared_displacement_kernel.hpp>
+#include <halmd/mdsim/gpu/max_displacement_kernel.hpp>
 #include <halmd/utility/gpu/thread.cuh>
 
 using namespace halmd::algorithm::gpu;
@@ -27,7 +27,7 @@ using namespace halmd::algorithm::gpu;
 namespace halmd {
 namespace mdsim {
 namespace gpu {
-namespace maximum_squared_displacement_kernel {
+namespace max_displacement_kernel {
 
 /**
  * maximum squared particle displacement
@@ -72,19 +72,19 @@ __global__ void displacement(
     }
 }
 
-} // namespace maximum_squared_displacement_kernel
+} // namespace max_displacement_kernel
 
 template <int dimension>
-maximum_squared_displacement_wrapper<dimension> maximum_squared_displacement_wrapper<dimension>::kernel = {
-    maximum_squared_displacement_kernel::displacement<fixed_vector<float, dimension>, 512>
-  , maximum_squared_displacement_kernel::displacement<fixed_vector<float, dimension>, 256>
-  , maximum_squared_displacement_kernel::displacement<fixed_vector<float, dimension>, 128>
-  , maximum_squared_displacement_kernel::displacement<fixed_vector<float, dimension>, 64>
-  , maximum_squared_displacement_kernel::displacement<fixed_vector<float, dimension>, 32>
+max_displacement_wrapper<dimension> max_displacement_wrapper<dimension>::kernel = {
+    max_displacement_kernel::displacement<fixed_vector<float, dimension>, 512>
+  , max_displacement_kernel::displacement<fixed_vector<float, dimension>, 256>
+  , max_displacement_kernel::displacement<fixed_vector<float, dimension>, 128>
+  , max_displacement_kernel::displacement<fixed_vector<float, dimension>, 64>
+  , max_displacement_kernel::displacement<fixed_vector<float, dimension>, 32>
 };
 
-template class maximum_squared_displacement_wrapper<3>;
-template class maximum_squared_displacement_wrapper<2>;
+template class max_displacement_wrapper<3>;
+template class max_displacement_wrapper<2>;
 
 } //namespace gpu
 } //namespace mdsim

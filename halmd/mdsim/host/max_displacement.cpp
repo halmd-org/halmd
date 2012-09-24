@@ -21,19 +21,15 @@
 #include <exception>
 
 #include <halmd/io/logger.hpp>
-#include <halmd/mdsim/host/maximum_squared_displacement.hpp>
-#include <halmd/utility/predicates/greater.hpp>
+#include <halmd/mdsim/host/max_displacement.hpp>
 #include <halmd/utility/lua/lua.hpp>
-
-using namespace boost;
-using namespace std;
 
 namespace halmd {
 namespace mdsim {
 namespace host {
 
 template <int dimension, typename float_type>
-maximum_squared_displacement<dimension, float_type>::maximum_squared_displacement(
+max_displacement<dimension, float_type>::max_displacement(
     std::shared_ptr<particle_type const> particle
   , std::shared_ptr<box_type const> box
 )
@@ -46,10 +42,10 @@ maximum_squared_displacement<dimension, float_type>::maximum_squared_displacemen
 }
 
 /**
- * zero maximum squared displacement
+ * zero maximum displacement
  */
 template <int dimension, typename float_type>
-void maximum_squared_displacement<dimension, float_type>::zero()
+void max_displacement<dimension, float_type>::zero()
 {
     cache_proxy<position_array_type const> position = particle_->position();
     scoped_timer_type timer(runtime_.zero);
@@ -57,10 +53,10 @@ void maximum_squared_displacement<dimension, float_type>::zero()
 }
 
 /**
- * compute maximum squared displacement
+ * compute maximum displacement
  */
 template <int dimension, typename float_type>
-float_type maximum_squared_displacement<dimension, float_type>::compute()
+float_type max_displacement<dimension, float_type>::compute()
 {
     cache_proxy<position_array_type const> position = particle_->position();
     size_type const nparticle = particle_->nparticle();
@@ -71,78 +67,58 @@ float_type maximum_squared_displacement<dimension, float_type>::compute()
     for (typename particle_type::size_type i = 0; i < nparticle; ++i) {
         vector_type r = (*position)[i] - r0_[i];
         box_->reduce_periodic(r);
-        rr_max = max(rr_max, inner_prod(r, r));
+        rr_max = std::max(rr_max, inner_prod(r, r));
     }
-    return rr_max;
+    return std::sqrt(rr_max);
 }
 
 template <int dimension, typename float_type>
-static typename signal<void ()>::slot_function_type
-wrap_zero(std::shared_ptr<maximum_squared_displacement<dimension, float_type> > self)
-{
-    return [=]() {
-        self->zero();
-    };
-}
-
-template <int dimension, typename float_type>
-static typename predicates::greater<float_type>::function_type
-wrap_compute(std::shared_ptr<maximum_squared_displacement<dimension, float_type> > self)
-{
-    return [=]() {
-        return self->compute();
-    };
-}
-
-template <int dimension, typename float_type>
-void maximum_squared_displacement<dimension, float_type>::luaopen(lua_State* L)
+void max_displacement<dimension, float_type>::luaopen(lua_State* L)
 {
     using namespace luaponte;
-    static string class_name("maximum_squared_displacement_" + lexical_cast<string>(dimension) + "_");
+    static std::string const class_name("max_displacement_" + std::to_string(dimension));
     module(L, "libhalmd")
     [
         namespace_("mdsim")
         [
             namespace_("host")
             [
-                class_<maximum_squared_displacement, std::shared_ptr<maximum_squared_displacement> >(class_name.c_str())
+                class_<max_displacement, std::shared_ptr<max_displacement> >(class_name.c_str())
                     .def(constructor<
                          std::shared_ptr<particle_type const>
                        , std::shared_ptr<box_type const>
                      >())
-                    .property("zero", &wrap_zero<dimension, float_type>)
-                    .property("compute", &wrap_compute<dimension, float_type>)
                     .scope
                     [
                         class_<runtime>("runtime")
                             .def_readonly("zero", &runtime::zero)
                             .def_readonly("compute", &runtime::compute)
                     ]
-                    .def_readonly("runtime", &maximum_squared_displacement::runtime_)
+                    .def_readonly("runtime", &max_displacement::runtime_)
             ]
         ]
     ];
 }
 
-HALMD_LUA_API int luaopen_libhalmd_mdsim_host_maximum_squared_displacement(lua_State* L)
+HALMD_LUA_API int luaopen_libhalmd_mdsim_host_max_displacement(lua_State* L)
 {
 #ifndef USE_HOST_SINGLE_PRECISION
-    maximum_squared_displacement<3, double>::luaopen(L);
-    maximum_squared_displacement<2, double>::luaopen(L);
+    max_displacement<3, double>::luaopen(L);
+    max_displacement<2, double>::luaopen(L);
 #else
-    maximum_squared_displacement<3, float>::luaopen(L);
-    maximum_squared_displacement<2, float>::luaopen(L);
+    max_displacement<3, float>::luaopen(L);
+    max_displacement<2, float>::luaopen(L);
 #endif
     return 0;
 }
 
 // explicit instantiation
 #ifndef USE_HOST_SINGLE_PRECISION
-template class maximum_squared_displacement<3, double>;
-template class maximum_squared_displacement<2, double>;
+template class max_displacement<3, double>;
+template class max_displacement<2, double>;
 #else
-template class maximum_squared_displacement<3, float>;
-template class maximum_squared_displacement<2, float>;
+template class max_displacement<3, float>;
+template class max_displacement<2, float>;
 #endif
 
 } // namespace host

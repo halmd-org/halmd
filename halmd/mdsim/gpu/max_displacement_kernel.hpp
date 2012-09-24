@@ -17,18 +17,19 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef HALMD_MDSIM_GPU_MAXIMUM_SQUARED_DISPLACEMENT_KERNEL_HPP
-#define HALMD_MDSIM_GPU_MAXIMUM_SQUARED_DISPLACEMENT_KERNEL_HPP
+#ifndef HALMD_MDSIM_GPU_MAX_DISPLACEMENT_KERNEL_HPP
+#define HALMD_MDSIM_GPU_MAX_DISPLACEMENT_KERNEL_HPP
+
+#include <halmd/numeric/blas/fixed_vector.hpp>
 
 #include <cuda_wrapper/cuda_wrapper.hpp>
-#include <halmd/numeric/blas/fixed_vector.hpp>
 
 namespace halmd {
 namespace mdsim {
 namespace gpu {
 
 template <int dimension>
-struct maximum_squared_displacement_wrapper
+struct max_displacement_wrapper
 {
     typedef fixed_vector<float, dimension> vector_type;
 
@@ -43,17 +44,17 @@ struct maximum_squared_displacement_wrapper
     /** maximum squared particle displacement */
     displacement_impl_type displacement_impl[5];
 
-    static maximum_squared_displacement_wrapper kernel;
+    static max_displacement_wrapper kernel;
 };
 
 template <int dimension>
-maximum_squared_displacement_wrapper<dimension> const& get_maximum_squared_displacement_kernel()
+max_displacement_wrapper<dimension> const& get_max_displacement_kernel()
 {
-    return maximum_squared_displacement_wrapper<dimension>::kernel;
+    return max_displacement_wrapper<dimension>::kernel;
 }
 
 } // namespace mdsim
 } // namespace gpu
 } // namespace halmd
 
-#endif /* ! HALMD_MDSIM_GPU_MAXIMUM_SQUARED_DISPLACEMENT_KERNEL_HPP */
+#endif /* ! HALMD_MDSIM_GPU_MAX_DISPLACEMENT_KERNEL_HPP */

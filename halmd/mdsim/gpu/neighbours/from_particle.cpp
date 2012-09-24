@@ -22,9 +22,6 @@
 #include <halmd/utility/lua/lua.hpp>
 #include <halmd/utility/signal.hpp>
 
-using namespace boost;
-using namespace std;
-
 namespace halmd {
 namespace mdsim {
 namespace gpu {
@@ -41,8 +38,8 @@ namespace neighbours {
  */
 template <int dimension, typename float_type>
 from_particle<dimension, float_type>::from_particle(
-    std::shared_ptr<particle_type const> particle1
-  , std::shared_ptr<particle_type const> particle2
+    std::pair<std::shared_ptr<particle_type const>, std::shared_ptr<particle_type const>> particle
+  , std::shared_ptr<displacement_type> displacement
   , std::shared_ptr<box_type const> box
   , matrix_type const& r_cut
   , double skin
@@ -50,8 +47,9 @@ from_particle<dimension, float_type>::from_particle(
   , double cell_occupancy
 )
   // dependency injection
-  : particle1_(particle1)
-  , particle2_(particle2)
+  : particle1_(particle.first)
+  , particle2_(particle.second)
+  , displacement_(displacement)
   , box_(box)
   , logger_(logger)
   // allocate parameters
@@ -64,7 +62,7 @@ from_particle<dimension, float_type>::from_particle(
     for (size_t i = 0; i < particle1_->nspecies(); ++i) {
         for (size_t j = 0; j < particle2_->nspecies(); ++j) {
             rr_cut_skin_(i, j) = std::pow(r_cut(i, j) + r_skin_, 2);
-            r_cut_max = max(r_cut(i, j), r_cut_max);
+            r_cut_max = std::max(r_cut(i, j), r_cut_max);
         }
     }
     cuda::copy(rr_cut_skin_.data(), g_rr_cut_skin_);
@@ -73,7 +71,7 @@ from_particle<dimension, float_type>::from_particle(
     // volume of unit sphere: V_d = π^(d/2) / Γ(1+d/2), Γ(1) = 1, Γ(1/2) = √π
     float_type unit_sphere[5] = {0, 2, M_PI, 4 * M_PI / 3, M_PI * M_PI / 2 };
     assert(dimension <= 4);
-    float_type neighbour_sphere = unit_sphere[dimension] * pow(r_cut_max + r_skin_, dimension);
+    float_type neighbour_sphere = unit_sphere[dimension] * std::pow(r_cut_max + r_skin_, dimension);
     // partial number density
     float_type density = particle1_->nparticle() / box_->volume();
     // number of placeholders per neighbour list
@@ -84,10 +82,26 @@ from_particle<dimension, float_type>::from_particle(
     // number of neighbour lists
     stride_ = particle1_->dim.threads();
     // allocate neighbour lists
-    g_neighbour_.resize(stride_ * size_);
+    cache_proxy<array_type> g_neighbour = g_neighbour_;
+    g_neighbour->resize(stride_ * size_);
 
     LOG("neighbour list skin: " << r_skin_);
     LOG("number of placeholders per neighbour list: " << size_);
+}
+
+template <int dimension, typename float_type>
+cache<typename from_particle<dimension, float_type>::array_type> const&
+from_particle<dimension, float_type>::g_neighbour()
+{
+    cache<reverse_tag_array_type> const& reverse_tag_cache = particle1_->reverse_tag();
+    if (neighbour_cache_ != reverse_tag_cache || displacement_->compute() > r_skin_ / 2) {
+        on_prepend_update_();
+        update();
+        displacement_->zero();
+        neighbour_cache_ = reverse_tag_cache;
+        on_append_update_();
+    }
+    return g_neighbour_;
 }
 
 /**
@@ -98,19 +112,14 @@ void from_particle<dimension, float_type>::update()
 {
     cache_proxy<position_array_type const> position1 = particle1_->position();
     cache_proxy<position_array_type const> position2 = particle2_->position();
-
-    // Emit on_prepend_update signal, which may be connected e.g. to the
-    // binning update slot. We don't call binning::update directly, since
-    // the order of calls is setup at the Lua level, and it allows us to
-    // pass binning as a const dependency.
-    on_prepend_update_();
+    cache_proxy<array_type> g_neighbour = g_neighbour_;
 
     LOG_TRACE("update neighbour lists");
 
     scoped_timer_type timer(runtime_.update);
 
     // mark neighbour list placeholders as virtual particles
-    cuda::memset(g_neighbour_, 0xFF);
+    cuda::memset(g_neighbour->begin(), g_neighbour->end(), 0xFF);
     // build neighbour lists
     cuda::vector<int> g_overflow(1);
     cuda::host::vector<int> h_overflow(1);
@@ -129,7 +138,7 @@ void from_particle<dimension, float_type>::update()
       , particle1_->nspecies()
       , particle2_->nspecies()
       , static_cast<vector_type>(box_->length())
-      , g_neighbour_
+      , &*g_neighbour->begin()
       , size_
       , stride_
       , g_overflow
@@ -138,10 +147,8 @@ void from_particle<dimension, float_type>::update()
     cuda::thread::synchronize();
     if (h_overflow.front() > 0) {
         LOG_ERROR("failed to bin " << h_overflow.front() << " particles");
-        throw runtime_error("neighbour list occupancy too large");
+        throw std::runtime_error("neighbour list occupancy too large");
     }
-
-    on_append_update_();
 }
 
 template <int dimension, typename float_type>
@@ -149,20 +156,11 @@ float_type from_particle<dimension, float_type>::defaults::occupancy() {
     return 0.4;
 }
 
-template <typename neighbour_type>
-static std::function<void ()>
-wrap_update(std::shared_ptr<neighbour_type> self)
-{
-    return [=]() {
-        self->update();
-    };
-}
-
 template <int dimension, typename float_type>
 void from_particle<dimension, float_type>::luaopen(lua_State* L)
 {
     using namespace luaponte;
-    static string class_name("from_particle_" + lexical_cast<string>(dimension) + "_");
+    static std::string const class_name("from_particle_" + std::to_string(dimension));
     module(L, "libhalmd")
     [
         namespace_("mdsim")
@@ -173,8 +171,8 @@ void from_particle<dimension, float_type>::luaopen(lua_State* L)
                 [
                     class_<from_particle, std::shared_ptr<_Base>, _Base>(class_name.c_str())
                         .def(constructor<
-                            std::shared_ptr<particle_type const>
-                          , std::shared_ptr<particle_type const>
+                            std::pair<std::shared_ptr<particle_type const>, std::shared_ptr<particle_type const>>
+                          , std::shared_ptr<displacement_type>
                           , std::shared_ptr<box_type const>
                           , matrix_type const&
                           , double
@@ -183,7 +181,6 @@ void from_particle<dimension, float_type>::luaopen(lua_State* L)
                         >())
                         .property("r_skin", &from_particle::r_skin)
                         .property("cell_occupancy", &from_particle::cell_occupancy)
-                        .property("update", &wrap_update<from_particle>)
                         .def("on_prepend_update", &from_particle::on_prepend_update)
                         .def("on_append_update", &from_particle::on_append_update)
                         .scope

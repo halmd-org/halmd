@@ -20,10 +20,10 @@
 #ifndef TEST_UNIT_MDSIM_POTENTIALS_GPU_NEIGHBOUR_CHAIN_HPP
 #define TEST_UNIT_MDSIM_POTENTIALS_GPU_NEIGHBOUR_CHAIN_HPP
 
-#include <cuda_wrapper/cuda_wrapper.hpp>
-
 #include <halmd/mdsim/gpu/neighbour.hpp>
 #include <halmd/mdsim/gpu/particle.hpp>
+
+#include <cuda_wrapper/cuda_wrapper.hpp>
 
 /** GPU neighbour list returning a chain
  *
@@ -44,7 +44,7 @@ public:
     );
 
     /** neighbour lists */
-    virtual cuda::vector<unsigned int> const& g_neighbour() const
+    virtual halmd::cache<cuda::vector<unsigned int>> const& g_neighbour()
     {
         return g_neighbour_;
     }
@@ -61,7 +61,7 @@ public:
 private:
     unsigned int stride_;
     /** neighbour lists */
-    cuda::vector<unsigned int> g_neighbour_;
+    halmd::cache<cuda::vector<unsigned int>> g_neighbour_;
 };
 
 template <int dimension, typename float_type>
@@ -71,15 +71,17 @@ neighbour_chain<dimension, float_type>::neighbour_chain(
   // member initialisation
   : stride_(particle->dim.threads())  // total number of particles and ghost particles
 {
+    halmd::cache_proxy<cuda::vector<unsigned int>> g_neighbour = g_neighbour_;
+
     // allocate neighbour lists of size 1
-    g_neighbour_.resize(stride_);
+    g_neighbour->resize(stride_);
 
     // fill each particle's neighbour list with the following particle
-    cuda::host::vector<unsigned int> neighbour(g_neighbour_.size());
+    cuda::host::vector<unsigned int> neighbour(g_neighbour->size());
     for (unsigned int i = 0; i < neighbour.size(); ++i) {
         neighbour[i] = (i + 1) % particle->nparticle(); // point only to real particles
     }
-    cuda::copy(neighbour, g_neighbour_); // copy data to GPU
+    cuda::copy(neighbour.begin(), neighbour.end(), g_neighbour->begin()); // copy data to GPU
 }
 
 #endif /* ! TEST_UNIT_MDSIM_POTENTIALS_GPU_NEIGHBOUR_CHAIN_HPP */

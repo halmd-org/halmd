@@ -17,13 +17,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <boost/foreach.hpp>
-
 #include <halmd/mdsim/host/neighbours/from_binning.hpp>
 #include <halmd/utility/lua/lua.hpp>
-
-using namespace boost;
-using namespace std;
 
 namespace halmd {
 namespace mdsim {
@@ -40,20 +35,20 @@ namespace neighbours {
  */
 template <int dimension, typename float_type>
 from_binning<dimension, float_type>::from_binning(
-    std::shared_ptr<particle_type const> particle1
-  , std::shared_ptr<particle_type const> particle2
-  , std::shared_ptr<binning_type const> binning1
-  , std::shared_ptr<binning_type const> binning2
+    std::pair<std::shared_ptr<particle_type const>, std::shared_ptr<particle_type const>> particle
+  , std::pair<std::shared_ptr<binning_type>, std::shared_ptr<binning_type>> binning
+  , std::shared_ptr<displacement_type> displacement
   , std::shared_ptr<box_type const> box
   , matrix_type const& r_cut
   , double skin
   , std::shared_ptr<logger> logger
 )
   // dependency injection
-  : particle1_(particle1)
-  , particle2_(particle2)
-  , binning1_(binning1)
-  , binning2_(binning2)
+  : particle1_(particle.first)
+  , particle2_(particle.second)
+  , binning1_(binning.first)
+  , binning2_(binning.second)
+  , displacement_(displacement)
   , box_(box)
   , logger_(logger)
   // allocate parameters
@@ -67,11 +62,26 @@ from_binning<dimension, float_type>::from_binning(
         for (size_t j = 0; j < r_cut.size2(); ++j) {
             r_cut_skin(i, j) = r_cut(i, j) + r_skin_;
             rr_cut_skin_(i, j) = std::pow(r_cut_skin(i, j), 2);
-            r_cut_max = max(r_cut_skin(i, j), r_cut_max);
+            r_cut_max = std::max(r_cut_skin(i, j), r_cut_max);
         }
     }
 
     LOG("neighbour list skin: " << r_skin_);
+}
+
+template <int dimension, typename float_type>
+cache<std::vector<typename from_binning<dimension, float_type>::neighbour_list>> const&
+from_binning<dimension, float_type>::lists()
+{
+    cache<reverse_tag_array_type> const& reverse_tag_cache = particle1_->reverse_tag();
+    if (neighbour_cache_ != reverse_tag_cache || displacement_->compute() > r_skin_ / 2) {
+        on_prepend_update_();
+        update();
+        displacement_->zero();
+        neighbour_cache_ = reverse_tag_cache;
+        on_append_update_();
+    }
+    return neighbour_;
 }
 
 /**
@@ -84,7 +94,6 @@ void from_binning<dimension, float_type>::update()
     // binning update slot. We don't call binning::update directly, since
     // the order of calls is setup at the Lua level, and it allows us to
     // pass binning as a const dependency.
-    on_prepend_update_();
 
     LOG_TRACE("update neighbour lists");
 
@@ -104,8 +113,6 @@ void from_binning<dimension, float_type>::update()
             }
         }
     }
-
-    on_append_update_();
 }
 
 /**
@@ -114,13 +121,14 @@ void from_binning<dimension, float_type>::update()
 template <int dimension, typename float_type>
 void from_binning<dimension, float_type>::update_cell_neighbours(cell_size_type const& i)
 {
+    cache_proxy<cell_array_type const> cell1 = binning1_->cell();
+    cache_proxy<cell_array_type const> cell2 = binning2_->cell();
+    cache_proxy<array_type> neighbour = neighbour_;
     cell_size_type const& ncell = binning1_->ncell();
-    cell_lists const& cell1 = binning1_->cell();
-    cell_lists const& cell2 = binning2_->cell();
 
-    BOOST_FOREACH(size_t p, cell1(i)) {
+    for (size_t p : (*cell1)(i)) {
         // empty neighbour list of particle
-        neighbour_[p].clear();
+        (*neighbour)[p].clear();
 
         cell_diff_type j;
         for (j[0] = -1; j[0] <= 1; ++j[0]) {
@@ -133,7 +141,7 @@ void from_binning<dimension, float_type>::update_cell_neighbours(cell_size_type 
                         }
                         // update neighbour list of particle
                         cell_size_type k = element_mod(static_cast<cell_size_type>(static_cast<cell_diff_type>(i + ncell) + j), ncell);
-                        compute_cell_neighbours<false>(p, cell2(k));
+                        compute_cell_neighbours<false>(p, (*cell2)(k));
                     }
                 }
                 else {
@@ -143,13 +151,13 @@ void from_binning<dimension, float_type>::update_cell_neighbours(cell_size_type 
                     }
                     // update neighbour list of particle
                     cell_size_type k = element_mod(static_cast<cell_size_type>(static_cast<cell_diff_type>(i + ncell) + j), ncell);
-                    compute_cell_neighbours<false>(p, cell2(k));
+                    compute_cell_neighbours<false>(p, (*cell2)(k));
                 }
             }
         }
 self:
         // visit this cell
-        compute_cell_neighbours<true>(p, cell2(i));
+        compute_cell_neighbours<true>(p, (*cell2)(i));
     }
 }
 
@@ -164,8 +172,9 @@ void from_binning<dimension, float_type>::compute_cell_neighbours(size_t i, cell
     cache_proxy<position_array_type const> position2 = particle2_->position();
     cache_proxy<species_array_type const> species1 = particle1_->species();
     cache_proxy<species_array_type const> species2 = particle2_->species();
+    cache_proxy<array_type> neighbour = neighbour_;
 
-    BOOST_FOREACH(size_type j, c) {
+    for (size_type j : c) {
         // skip identical particle and particle pair permutations if same cell
         if (same_cell && particle1_ == particle2_ && j <= i) {
             continue;
@@ -186,24 +195,15 @@ void from_binning<dimension, float_type>::compute_cell_neighbours(size_t i, cell
         }
 
         // add particle to neighbour list
-        neighbour_[i].push_back(j);
+        (*neighbour)[i].push_back(j);
     }
-}
-
-template <typename neighbour_type>
-static std::function<void ()>
-wrap_update(std::shared_ptr<neighbour_type> self)
-{
-    return [=]() {
-        self->update();
-    };
 }
 
 template <int dimension, typename float_type>
 void from_binning<dimension, float_type>::luaopen(lua_State* L)
 {
     using namespace luaponte;
-    static string class_name("from_binning_" + lexical_cast<string>(dimension) + "_");
+    static std::string const class_name("from_binning_" + std::to_string(dimension));
     module(L, "libhalmd")
     [
         namespace_("mdsim")
@@ -214,17 +214,15 @@ void from_binning<dimension, float_type>::luaopen(lua_State* L)
                 [
                     class_<from_binning, std::shared_ptr<_Base>, _Base>(class_name.c_str())
                         .def(constructor<
-                            std::shared_ptr<particle_type const>
-                          , std::shared_ptr<particle_type const>
-                          , std::shared_ptr<binning_type const>
-                          , std::shared_ptr<binning_type const>
+                            std::pair<std::shared_ptr<particle_type const>, std::shared_ptr<particle_type const>>
+                          , std::pair<std::shared_ptr<binning_type>, std::shared_ptr<binning_type>>
+                          , std::shared_ptr<displacement_type>
                           , std::shared_ptr<box_type const>
                           , matrix_type const&
                           , double
                           , std::shared_ptr<logger_type>
                          >())
                         .property("r_skin", &from_binning::r_skin)
-                        .property("update", &wrap_update<from_binning>)
                         .def("on_prepend_update", &from_binning::on_prepend_update)
                         .def("on_append_update", &from_binning::on_append_update)
                         .scope

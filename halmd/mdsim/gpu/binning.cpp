@@ -17,15 +17,12 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <exception>
-
 #include <halmd/algorithm/gpu/radix_sort.hpp>
 #include <halmd/mdsim/gpu/binning.hpp>
 #include <halmd/utility/lua/lua.hpp>
 #include <halmd/utility/signal.hpp>
 
-using namespace boost;
-using namespace std;
+#include <exception>
 
 namespace halmd {
 namespace mdsim {
@@ -57,7 +54,7 @@ binning<dimension, float_type>::binning(
   , r_skin_(skin)
   , nu_cell_(cell_occupancy)
 {
-    float_type r_cut_max = *max_element(r_cut.data().begin(), r_cut.data().end());
+    float_type r_cut_max = *std::max_element(r_cut.data().begin(), r_cut.data().end());
     // find an optimal(?) cell size
     // ideally, we would like to have warp_size placeholders per cell
     //
@@ -78,7 +75,7 @@ binning<dimension, float_type>::binning(
     // determine optimal value from 2,3) together with b,c)
     size_t warp_size = cuda::device::properties(cuda::device::get()).warp_size();
     double nwarps = particle_->nparticle() / (nu_cell_ * warp_size);
-    double volume = accumulate(box_->length().begin(), box_->length().end(), 1., multiplies<double>());
+    double volume = std::accumulate(box_->length().begin(), box_->length().end(), 1., std::multiplies<double>());
     ncell_ = static_cast<cell_size_type>(ceil(box_->length() * pow(nwarps / volume, 1./dimension)));
     LOG_DEBUG("desired values for number of cells: " << ncell_);
     LOG_DEBUG("upper bound on number of cells: " << ncell_max);
@@ -86,18 +83,18 @@ binning<dimension, float_type>::binning(
     ncell_ = element_min(ncell_, ncell_max);
 
     // compute derived values
-    size_t ncells = accumulate(ncell_.begin(), ncell_.end(), 1, multiplies<size_t>());
-    cell_size_ = warp_size * static_cast<size_t>(ceil(nwarps / ncells));
+    size_t ncells = std::accumulate(ncell_.begin(), ncell_.end(), 1, std::multiplies<size_t>());
+    cell_size_ = warp_size * static_cast<size_t>(std::ceil(nwarps / ncells));
     cell_length_ = element_div(static_cast<vector_type>(box_->length()), static_cast<vector_type>(ncell_));
     dim_cell_ = cuda::config(
         dim3(
-             accumulate(ncell_.begin(), ncell_.end() - 1, 1, multiplies<size_t>())
+             std::accumulate(ncell_.begin(), ncell_.end() - 1, 1, std::multiplies<size_t>())
            , ncell_.back()
         )
       , cell_size_
     );
 
-    if (*min_element(ncell_.begin(), ncell_.end()) < 3) {
+    if (*std::min_element(ncell_.begin(), ncell_.end()) < 3) {
         throw std::logic_error("number of cells per dimension must be at least 3");
     }
 
@@ -117,7 +114,8 @@ binning<dimension, float_type>::binning(
     }
 
     try {
-        g_cell_.resize(dim_cell_.threads());
+        cache_proxy<array_type> g_cell = g_cell_;
+        g_cell->resize(dim_cell_.threads());
         g_cell_offset_.resize(dim_cell_.blocks_per_grid());
         g_cell_index_.reserve(particle_->dim.threads());
         g_cell_index_.resize(particle_->nparticle());
@@ -130,6 +128,18 @@ binning<dimension, float_type>::binning(
     }
 }
 
+template <int dimension, typename float_type>
+cache<typename binning<dimension, float_type>::array_type> const&
+binning<dimension, float_type>::g_cell()
+{
+    cache<position_array_type> const& position_cache = particle_->position();
+    if (cell_cache_ != position_cache) {
+        update();
+        cell_cache_ = position_cache;
+    }
+    return g_cell_;
+}
+
 /**
  * Update cell lists
  */
@@ -137,6 +147,7 @@ template <int dimension, typename float_type>
 void binning<dimension, float_type>::update()
 {
     cache_proxy<position_array_type const> position = particle_->position();
+    cache_proxy<array_type> g_cell = g_cell_;
 
     LOG_TRACE("update cell lists");
 
@@ -166,20 +177,11 @@ void binning<dimension, float_type>::update()
     cuda::host::vector<int> h_ret(1);
     cuda::memset(g_ret, EXIT_SUCCESS);
     cuda::configure(dim_cell_.grid, dim_cell_.block);
-    get_binning_kernel<dimension>().assign_cells(g_ret, g_cell_index_, g_cell_offset_, g_cell_permutation_, g_cell_);
+    get_binning_kernel<dimension>().assign_cells(g_ret, g_cell_index_, g_cell_offset_, g_cell_permutation_, &*g_cell->begin());
     cuda::copy(g_ret, h_ret);
     if (h_ret.front() != EXIT_SUCCESS) {
         throw std::runtime_error("overcrowded placeholders in cell lists update");
     }
-}
-
-template <typename binning_type>
-typename signal<void ()>::slot_function_type
-wrap_update(std::shared_ptr<binning_type> self)
-{
-    return [=]() {
-        self->update();
-    };
 }
 
 template <int dimension, typename float_type>
@@ -191,7 +193,7 @@ template <int dimension, typename float_type>
 void binning<dimension, float_type>::luaopen(lua_State* L)
 {
     using namespace luaponte;
-    static string class_name("binning_" + lexical_cast<string>(dimension) + "_");
+    static std::string const class_name("binning_" + std::to_string(dimension));
     module(L, "libhalmd")
     [
         namespace_("mdsim")
@@ -207,7 +209,6 @@ void binning<dimension, float_type>::luaopen(lua_State* L)
                       , std::shared_ptr<logger_type>
                       , double
                     >())
-                    .property("update", &wrap_update<binning>)
                     .property("r_skin", &binning::r_skin)
                     .property("cell_occupancy", &binning::cell_occupancy)
                     .scope

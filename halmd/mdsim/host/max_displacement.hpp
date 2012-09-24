@@ -17,8 +17,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef HALMD_MDSIM_HOST_MAXIMUM_SQUARED_DISPLACEMENT_HPP
-#define HALMD_MDSIM_HOST_MAXIMUM_SQUARED_DISPLACEMENT_HPP
+#ifndef HALMD_MDSIM_HOST_MAX_DISPLACEMENT_HPP
+#define HALMD_MDSIM_HOST_MAX_DISPLACEMENT_HPP
 
 #include <boost/multi_array.hpp>
 #include <boost/numeric/ublas/symmetric.hpp>
@@ -35,7 +35,7 @@ namespace mdsim {
 namespace host {
 
 template <int dimension, typename float_type>
-class maximum_squared_displacement
+class max_displacement
 {
 public:
     typedef host::particle<dimension, float_type> particle_type;
@@ -45,7 +45,7 @@ public:
 
     static void luaopen(lua_State* L);
 
-    maximum_squared_displacement(
+    max_displacement(
         std::shared_ptr<particle_type const> particle
       , std::shared_ptr<box_type const> box
     );
@@ -70,7 +70,7 @@ private:
     std::shared_ptr<particle_type const> particle_;
     //! simulation box
     std::shared_ptr<box_type const> box_;
-    /* particle positions at last maximum_squared_displacement list update */
+    /* particle positions at last neighbour list update */
     std::vector<vector_type> r0_;
     /** profiling runtime accumulators */
     runtime runtime_;
@@ -80,4 +80,4 @@ private:
 } // namespace mdsim
 } // namespace halmd
 
-#endif /* ! HALMD_MDSIM_HOST_MAXIMUM_SQUARED_DISPLACEMENT_HPP */
+#endif /* ! HALMD_MDSIM_HOST_MAX_DISPLACEMENT_HPP */

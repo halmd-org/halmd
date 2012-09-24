@@ -20,15 +20,17 @@
 #ifndef HALMD_MDSIM_HOST_NEIGHBOURS_FROM_PARTICLE_HPP
 #define HALMD_MDSIM_HOST_NEIGHBOURS_FROM_PARTICLE_HPP
 
-#include <boost/numeric/ublas/matrix.hpp>
-#include <lua.hpp>
-#include <memory>
-
 #include <halmd/io/logger.hpp>
 #include <halmd/mdsim/box.hpp>
-#include <halmd/mdsim/host/particle.hpp>
+#include <halmd/mdsim/host/max_displacement.hpp>
 #include <halmd/mdsim/host/neighbour.hpp>
+#include <halmd/mdsim/host/particle.hpp>
 #include <halmd/utility/profiler.hpp>
+
+#include <boost/numeric/ublas/matrix.hpp>
+#include <lua.hpp>
+
+#include <memory>
 
 namespace halmd {
 namespace mdsim {
@@ -48,19 +50,21 @@ public:
     typedef boost::numeric::ublas::matrix<float_type> matrix_type;
     typedef mdsim::box<dimension> box_type;
     typedef typename _Base::neighbour_list neighbour_list;
+    typedef max_displacement<dimension, float_type> displacement_type;
     typedef logger logger_type;
+
+    typedef _Base::array_type array_type;
 
     static void luaopen(lua_State* L);
 
     from_particle(
-        std::shared_ptr<particle_type const> particle1
-      , std::shared_ptr<particle_type const> particle2
+        std::pair<std::shared_ptr<particle_type const>, std::shared_ptr<particle_type const>> particle
+      , std::shared_ptr<displacement_type> displacement
       , std::shared_ptr<box_type const> box
       , matrix_type const& r_cut
       , double skin
       , std::shared_ptr<logger_type> logger = std::make_shared<logger_type>()
     );
-    void update();
 
     connection on_prepend_update(std::function<void ()> const& slot)
     {
@@ -79,13 +83,11 @@ public:
     }
 
     //! returns neighbour lists
-    virtual std::vector<neighbour_list> const& lists() const
-    {
-        return neighbour_;
-    }
+    virtual cache<array_type> const& lists();
 
 private:
     typedef typename particle_type::position_array_type position_array_type;
+    typedef typename particle_type::reverse_tag_array_type reverse_tag_array_type;
     typedef typename particle_type::species_array_type species_array_type;
     typedef typename particle_type::species_type species_type;
     typedef typename particle_type::size_type size_type;
@@ -99,13 +101,18 @@ private:
         accumulator_type update;
     };
 
+    void update();
+
     std::shared_ptr<particle_type const> particle1_;
     std::shared_ptr<particle_type const> particle2_;
+    std::shared_ptr<displacement_type> displacement_;
     std::shared_ptr<box_type const> box_;
     std::shared_ptr<logger_type> logger_;
 
     /** neighbour lists */
-    std::vector<neighbour_list> neighbour_;
+    cache<array_type> neighbour_;
+    /** cache observer for neighbour list update */
+    cache<> neighbour_cache_;
     /** neighbour list skin in MD units */
     float_type r_skin_;
     /** (cutoff lengths + neighbour list skin)² */

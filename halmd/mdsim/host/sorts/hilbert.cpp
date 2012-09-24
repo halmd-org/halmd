@@ -48,7 +48,7 @@ hilbert<dimension, float_type>::hilbert(
 {
     cell_size_type const& ncell = binning_->ncell();
     vector_type const& cell_length = binning_->cell_length();
-    cell_lists const& cell = binning_->cell();
+    cache_proxy<cell_array_type const> cell = binning_->cell();
 
     // set Hilbert space-filling curve recursion depth
     unsigned int ncell_max = *max_element(ncell.begin(), ncell.end());
@@ -68,19 +68,19 @@ hilbert<dimension, float_type>::hilbert(
                 for (x[2] = 0; x[2] < ncell[2]; ++x[2]) {
                     vector_type r(x);
                     r = element_prod(r + vector_type(0.5), cell_length);
-                    pairs.push_back(std::make_pair(&cell(x), map(r, depth)));
+                    pairs.push_back(std::make_pair(&(*cell)(x), map(r, depth)));
                 }
             }
             else {
                 vector_type r(x);
                 r = element_prod(r + vector_type(0.5), cell_length);
-                pairs.push_back(std::make_pair(&cell(x), map(r, depth)));
+                pairs.push_back(std::make_pair(&(*cell)(x), map(r, depth)));
             }
         }
     }
     stable_sort(pairs.begin(), pairs.end(), bind(&pair::second, _1) < bind(&pair::second, _2));
     map_.clear();
-    map_.reserve(cell.size());
+    map_.reserve(cell->size());
     transform(pairs.begin(), pairs.end(), back_inserter(map_), bind(&pair::first, _1));
 }
 
@@ -90,13 +90,14 @@ hilbert<dimension, float_type>::hilbert(
 template <int dimension, typename float_type>
 void hilbert<dimension, float_type>::order()
 {
+    LOG_TRACE("order particles after Hilbert space-filling curve");
     {
         scoped_timer_type timer(runtime_.order);
         std::vector<unsigned int> index;
         {
             scoped_timer_type timer(runtime_.map);
             // particle binning
-            binning_->update();
+            binning_->cell();
             // generate index sequence according to Hilbert-sorted cells
             index.reserve(particle_->nparticle());
             for (cell_list const* cell : map_) {

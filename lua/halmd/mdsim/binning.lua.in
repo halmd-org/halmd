@@ -24,14 +24,14 @@ local module            = require("halmd.utility.module")
 -- grab C++ wrappers
 local binning_wrapper = {
     host = {
-        [2] = libhalmd.mdsim.host.binning_2_
-      , [3] = libhalmd.mdsim.host.binning_3_
+        [2] = assert(libhalmd.mdsim.host.binning_2)
+      , [3] = assert(libhalmd.mdsim.host.binning_3)
     }
 }
 if libhalmd.mdsim.gpu then
     binning_wrapper.gpu = {
-        [2] = libhalmd.mdsim.gpu.binning_2_
-      , [3] = libhalmd.mdsim.gpu.binning_3_
+        [2] = assert(libhalmd.mdsim.gpu.binning_2)
+      , [3] = assert(libhalmd.mdsim.gpu.binning_3)
     }
 end
 local h5 = libhalmd.h5

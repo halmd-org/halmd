@@ -20,6 +20,8 @@
 #ifndef HALMD_MDSIM_GPU_NEIGHBOUR_HPP
 #define HALMD_MDSIM_GPU_NEIGHBOUR_HPP
 
+#include <halmd/utility/cache.hpp>
+
 #include <lua.hpp>
 
 #include <cuda_wrapper/cuda_wrapper.hpp>
@@ -37,11 +39,13 @@ namespace gpu {
 class neighbour
 {
 public:
+    typedef cuda::vector<unsigned int> array_type;
+
     virtual ~neighbour() {}
     /** Lua bindings */
     static void luaopen(lua_State* L);
     /** neighbour lists */
-    virtual cuda::vector<unsigned int> const& g_neighbour() const = 0;
+    virtual cache<array_type> const& g_neighbour() = 0;
     /** number of placeholders per neighbour list */
     virtual unsigned int size() const = 0;
     /** neighbour list stride */

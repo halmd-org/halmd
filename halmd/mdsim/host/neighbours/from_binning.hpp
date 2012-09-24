@@ -20,17 +20,19 @@
 #ifndef HALMD_MDSIM_HOST_NEIGHBOURS_FROM_BINNING_HPP
 #define HALMD_MDSIM_HOST_NEIGHBOURS_FROM_BINNING_HPP
 
-#include <boost/numeric/ublas/matrix.hpp>
-#include <lua.hpp>
-#include <memory>
-#include <vector>
-
 #include <halmd/io/logger.hpp>
 #include <halmd/mdsim/box.hpp>
 #include <halmd/mdsim/host/binning.hpp>
-#include <halmd/mdsim/host/particle.hpp>
+#include <halmd/mdsim/host/max_displacement.hpp>
 #include <halmd/mdsim/host/neighbour.hpp>
+#include <halmd/mdsim/host/particle.hpp>
 #include <halmd/utility/profiler.hpp>
+
+#include <boost/numeric/ublas/matrix.hpp>
+#include <lua.hpp>
+
+#include <memory>
+#include <vector>
 
 namespace halmd {
 namespace mdsim {
@@ -51,21 +53,22 @@ public:
     typedef mdsim::box<dimension> box_type;
     typedef host::binning<dimension, float_type> binning_type;
     typedef typename _Base::neighbour_list neighbour_list;
+    typedef max_displacement<dimension, float_type> displacement_type;
     typedef logger logger_type;
+
+    typedef _Base::array_type array_type;
 
     static void luaopen(lua_State* L);
 
     from_binning(
-        std::shared_ptr<particle_type const> particle1
-      , std::shared_ptr<particle_type const> particle2
-      , std::shared_ptr<binning_type const> binning1
-      , std::shared_ptr<binning_type const> binning2
+        std::pair<std::shared_ptr<particle_type const>, std::shared_ptr<particle_type const>> particle
+      , std::pair<std::shared_ptr<binning_type>, std::shared_ptr<binning_type>> binning
+      , std::shared_ptr<displacement_type> displacement
       , std::shared_ptr<box_type const> box
       , matrix_type const& r_cut
       , double skin
       , std::shared_ptr<logger_type> logger = std::make_shared<logger_type>()
     );
-    void update();
 
     connection on_prepend_update(std::function<void ()> const& slot)
     {
@@ -84,13 +87,11 @@ public:
     }
 
     //! returns neighbour lists
-    virtual std::vector<neighbour_list> const& lists() const
-    {
-        return neighbour_;
-    }
+    virtual cache<array_type> const& lists();
 
 private:
     typedef typename particle_type::position_array_type position_array_type;
+    typedef typename particle_type::reverse_tag_array_type reverse_tag_array_type;
     typedef typename particle_type::species_array_type species_array_type;
     typedef typename particle_type::species_type species_type;
     typedef typename particle_type::size_type size_type;
@@ -107,21 +108,25 @@ private:
     typedef typename binning_type::cell_size_type cell_size_type;
     typedef typename binning_type::cell_diff_type cell_diff_type;
     typedef typename binning_type::cell_list cell_list;
-    typedef typename binning_type::cell_lists cell_lists;
+    typedef typename binning_type::array_type cell_array_type;
 
     std::shared_ptr<particle_type const> particle1_;
     std::shared_ptr<particle_type const> particle2_;
-    std::shared_ptr<binning_type const> binning1_;
-    std::shared_ptr<binning_type const> binning2_;
+    std::shared_ptr<binning_type> binning1_;
+    std::shared_ptr<binning_type> binning2_;
+    std::shared_ptr<displacement_type> displacement_;
     std::shared_ptr<box_type const> box_;
     std::shared_ptr<logger_type> logger_;
 
+    void update();
     void update_cell_neighbours(cell_size_type const& i);
     template <bool same_cell>
     void compute_cell_neighbours(size_t i, cell_list const& c);
 
     /** neighbour lists */
-    std::vector<neighbour_list> neighbour_;
+    cache<array_type> neighbour_;
+    /** cache observer for neighbour list update */
+    cache<> neighbour_cache_;
     /** neighbour list skin in MD units */
     float_type r_skin_;
     /** (cutoff lengths + neighbour list skin)² */
