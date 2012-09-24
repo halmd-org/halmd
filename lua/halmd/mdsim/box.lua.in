@@ -158,10 +158,10 @@ function M.reader(file)
     if not box then
         error(("unsupported dimension: %d"):format(dimension), 2)
     end
-    local edges = box.make_edges()
-    self:on_read(edges, {"edges"})
+    local box = {edges = box.make_edges()}
+    self:on_read(box.edges, {"edges"})
     self:read()
-    return edges()
+    return box:edges()
 end
 
 return M
