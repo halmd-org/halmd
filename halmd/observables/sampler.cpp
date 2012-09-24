@@ -34,12 +34,10 @@ sampler::sampler(
   : clock_(clock)
   , core_(core) {}
 
-void sampler::setup()
+void sampler::sample()
 {
-    LOG("setting up simulation box");
+    LOG_TRACE("sample state at step " << clock_->step());
 
-    on_prepare_();
-    core_->setup();
     on_sample_();
 }
 
@@ -62,11 +60,6 @@ void sampler::run(step_type steps)
 
             LOG_TRACE("performing MD step #" << clock_->step());
 
-            {
-                scoped_timer_type timer(runtime_.prepare);
-                on_prepare_();
-            }
-
             // perform complete MD integration step
             core_->mdstep();
 
@@ -84,24 +77,23 @@ void sampler::run(step_type steps)
     }
 }
 
-/**
- * Forward signal to slot at given interval
- */
-void sampler::prepare(std::function<void ()> const& slot, step_type interval) const
+connection sampler::on_sample(std::function<void ()> const& slot, step_type interval)
 {
-    if (clock_->step() % interval == 0) {
-        slot();
-    }
+    return on_sample_.connect([=]() {
+        if (clock_->step() % interval == 0) {
+            slot();
+        }
+    });
 }
 
-/**
- * Forward signal to slot at given interval
- */
-void sampler::sample(std::function<void ()> const& slot, step_type interval) const
+connection sampler::on_start(std::function<void ()> const& slot)
 {
-    if (clock_->step() % interval == 0) {
-        slot();
-    }
+    return on_start_.connect(slot);
+}
+
+connection sampler::on_finish(std::function<void ()> const& slot)
+{
+    return on_finish_.connect(slot);
 }
 
 static std::function<void ()>
@@ -122,19 +114,17 @@ void sampler::luaopen(lua_State* L)
                 std::shared_ptr<sampler::clock_type>
               , std::shared_ptr<sampler::core_type>
             >())
-            .def("setup", &sampler::setup)
+            .def("sample", &sampler::sample)
             .def("run", &sampler::run)
+            .def("on_sample", &sampler::on_sample)
             .def("on_start", &sampler::on_start)
             .def("on_finish", &sampler::on_finish)
-            .def("on_prepare", &sampler::on_prepare)
-            .def("on_sample", &sampler::on_sample)
             .scope
             [
                 class_<runtime>("runtime")
                     .def_readonly("total", &runtime::total)
-                    .def_readonly("start", &runtime::start)
-                    .def_readonly("prepare", &runtime::prepare)
                     .def_readonly("sample", &runtime::sample)
+                    .def_readonly("start", &runtime::start)
                     .def_readonly("finish", &runtime::finish)
 
               , def("abort", &wrap_abort)

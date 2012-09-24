@@ -105,8 +105,8 @@ local function liquid(args)
         msv:writer(writer, {every = interval})
     end
 
-    -- setup simulation box and sample initial state
-    observables.sampler:setup()
+    -- sample initial state
+    observables.sampler:sample()
 
     -- add velocity-Verlet integrator with Boltzmann distribution
     local integrator = mdsim.integrators.verlet_boltzmann({

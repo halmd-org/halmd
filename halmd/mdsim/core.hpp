@@ -34,23 +34,7 @@ public:
     typedef halmd::signal<void ()> signal_type;
     typedef signal_type::slot_function_type slot_function_type;
 
-    void setup();
     void mdstep();
-
-    connection on_prepend_setup(slot_function_type const& slot)
-    {
-        return on_prepend_setup_.connect(slot);
-    }
-
-    connection on_setup(slot_function_type const& slot)
-    {
-        return on_setup_.connect(slot);
-    }
-
-    connection on_append_setup(slot_function_type const& slot)
-    {
-        return on_append_setup_.connect(slot);
-    }
 
     connection on_prepend_integrate(slot_function_type const& slot)
     {
@@ -107,13 +91,9 @@ private:
 
     struct runtime
     {
-        accumulator_type setup;
         accumulator_type mdstep;
     };
 
-    signal_type on_prepend_setup_;
-    signal_type on_setup_;
-    signal_type on_append_setup_;
     signal_type on_prepend_integrate_;
     signal_type on_integrate_;
     signal_type on_append_integrate_;

@@ -35,14 +35,12 @@ local sampler = assert(libhalmd.sampler)
 -- Example::
 --
 --    local sampler = require("halmd.observables.sampler")
---    sampler:setup()
+--    sampler:sample()
 --    sampler:run(1000)
 --
--- .. method:: setup()
+-- .. method:: sample()
 --
---    Setup simulation domain.
---
---    This method invokes :meth:`halmd.mdsim.core.setup`.
+--    Sample current state.
 --
 -- .. method:: run(steps)
 --
@@ -50,27 +48,21 @@ local sampler = assert(libhalmd.sampler)
 --
 --    This method invokes :meth:`halmd.mdsim.core.mdstep`.
 --
+-- .. method:: on_sample(slot, interval)
+--
+--    Connect slot to signal emitted to sample current state.
+--
+--    :returns: signal connection
+--
 -- .. method:: on_start(slot)
 --
---    Connect slot to signal.
+--    Connect slot to signal emitted before starting simulation run.
 --
 --    :returns: signal connection
 --
 -- .. method:: on_finish(slot)
 --
---    Connect slot to signal.
---
---    :returns: signal connection
---
--- .. method:: on_prepare(slot, interval)
---
---    Connect slot to signal.
---
---    :returns: signal connection
---
--- .. method:: on_sample(slot, interval)
---
---    Connect slot to signal.
+--    Connect slot to signal emitted after finishing simulation run.
 --
 --    :returns: signal connection
 --
@@ -92,9 +84,8 @@ posix_signal:on_int(abort)
 -- connect runtime accumulators to module profiler
 local runtime = assert(self.runtime)
 profiler:on_profile(runtime.total, "total simulation runtime")
-profiler:on_profile(runtime.start, "start-up of simulation")
-profiler:on_profile(runtime.prepare, "preparation for integration step")
 profiler:on_profile(runtime.sample, "evaluation of observables")
+profiler:on_profile(runtime.start, "start-up of simulation")
 profiler:on_profile(runtime.finish, "finishing simulation")
 
 return self

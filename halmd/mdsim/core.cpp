@@ -24,18 +24,6 @@ namespace halmd {
 namespace mdsim {
 
 /**
- * Prepare microscopic system state
- */
-void core::setup()
-{
-    scoped_timer_type timer(runtime_.setup);
-
-    on_prepend_setup_();
-    on_setup_();
-    on_append_setup_();
-}
-
-/**
  * Perform a single MD integration step
  */
 void core::mdstep()
@@ -62,11 +50,7 @@ void core::luaopen(lua_State* L)
         [
             class_<core, std::shared_ptr<core> >("core")
                 .def(constructor<>())
-                .def("setup", &core::setup)
                 .def("mdstep", &core::mdstep)
-                .def("on_prepend_setup", &core::on_prepend_setup)
-                .def("on_setup", &core::on_setup)
-                .def("on_append_setup", &core::on_append_setup)
                 .def("on_prepend_integrate", &core::on_prepend_integrate)
                 .def("on_integrate", &core::on_integrate)
                 .def("on_append_integrate", &core::on_append_integrate)
@@ -79,7 +63,6 @@ void core::luaopen(lua_State* L)
                 .scope
                 [
                     class_<runtime>("runtime")
-                        .def_readonly("setup", &runtime::setup)
                         .def_readonly("mdstep", &runtime::mdstep)
                 ]
                 .def_readonly("runtime", &core::runtime_)

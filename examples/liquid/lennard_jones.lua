@@ -122,8 +122,8 @@ local function liquid(args)
         blocking_scheme:correlation(vacf, writer)
     end
 
-    -- setup simulation box and sample initial state
-    observables.sampler:setup()
+    -- sample initial state
+    observables.sampler:sample()
 
     -- estimate remaining runtime
     local runtime = observables.runtime_estimate({

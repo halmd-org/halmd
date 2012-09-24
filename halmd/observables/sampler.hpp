@@ -45,9 +45,9 @@ public:
     );
 
     /**
-     * Setup simulation box
+     * Sample current state
      */
-    void setup();
+    void sample();
 
     /**
      * Run simulation for given number of steps
@@ -55,40 +55,19 @@ public:
     void run(step_type steps);
 
     /**
+     * Connect slot to signal emitted to sample current state
+     */
+    connection on_sample(std::function<void ()> const& slot, step_type interval);
+
+    /**
      * Connect slot to signal emitted before starting simulation run
      */
-    connection on_start(std::function<void ()> const& slot)
-    {
-        return on_start_.connect(slot);
-    }
-
-    /**
-     * Connect slot to signal emitted before MD integration step
-     */
-    connection on_prepare(std::function<void ()> const& slot, step_type interval)
-    {
-        return on_prepare_.connect([=]() {
-            prepare(slot, interval);
-        });
-    }
-
-    /**
-     * Connect slot to signal emitted after MD integration step
-     */
-    connection on_sample(std::function<void ()> const& slot, step_type interval)
-    {
-        return on_sample_.connect([=]() {
-            sample(slot, interval);
-        });
-    }
+    connection on_start(std::function<void ()> const& slot);
 
     /**
      * Connect slot to signal emitted after finishing simulation run
      */
-    connection on_finish(std::function<void ()> const& slot)
-    {
-        return on_finish_.connect(slot);
-    }
+    connection on_finish(std::function<void ()> const& slot);
 
     /**
      * Bind class to Lua
@@ -96,19 +75,14 @@ public:
     static void luaopen(lua_State* L);
 
 private:
-    void prepare(std::function<void ()> const& slot, step_type interval) const;
-    void sample(std::function<void ()> const& slot, step_type interval) const;
-
     /** simulation clock */
     std::shared_ptr<clock_type> clock_;
     /** simulation core */
     std::shared_ptr<core_type> core_;
-    /** signal emitted before starting simulation run */
-    signal<void ()> on_start_;
-    /** signal emitted before MD integration step */
-    signal<void ()> on_prepare_;
     /** signal emitted after MD integration step */
     signal<void ()> on_sample_;
+    /** signal emitted before starting simulation run */
+    signal<void ()> on_start_;
     /** signal emitted after finishing simulation run */
     signal<void ()> on_finish_;
 
@@ -119,9 +93,8 @@ private:
     struct runtime
     {
         accumulator_type total;
-        accumulator_type start;
-        accumulator_type prepare;
         accumulator_type sample;
+        accumulator_type start;
         accumulator_type finish;
     };
 
