@@ -195,8 +195,8 @@ template <size_t N>
 inline HALMD_GPU_ENABLED
 fixed_vector<unsigned int, N> __double2uint_rd(fixed_vector<double, N> const& v)
 {
+    fixed_vector<unsigned int, N> w;
     for (size_t i = 0; i < N; ++i) {
-        fixed_vector<unsigned int, N> w;
         w[i] = ::__double2uint_rd(v[i]);
     }
     return w;
