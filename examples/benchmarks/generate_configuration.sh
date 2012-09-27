@@ -1,6 +1,6 @@
-#/usr/bin/bash
+#!/bin/bash
 #
-# Copyright © 2011  Felix Höfling
+# Copyright © 2011-2012  Felix Höfling
 #
 # This file is part of HALMD.
 #
@@ -22,24 +22,22 @@
 # Generate an initial configuration for a benchmarking suite
 #
 
-if [ "$1" = "--help" ]
+if [ "$1" = "--help" -o $# -eq 0 ]
 then
-    echo -e "Usage: generate_configuration.sh [BENCHMARK_NAME [HALMD_OPTIONS]]\n"
+    echo -e "Usage: generate_configuration.sh [BENCHMARK_NAME [SUFFIX [HALMD_OPTIONS]]]\n"
     exit
 fi
 
+SCRIPT_DIR="$(dirname $0)"
 BENCHMARK_NAME=${1:-"lennard_jones"}
-HALMD_OPTIONS=$2
+SUFFIX=${2:+_$2}
+HALMD_OPTIONS=$3
 
-INPUT_DIR=$PWD
-WORKING_DIR=$PWD/data
+CONFIG="${SCRIPT_DIR}/${BENCHMARK_NAME}/generate_configuration.rc"
+OUTPUT="${BENCHMARK_NAME}/configuration${SUFFIX}"
 
-CONFIG_DIR=${INPUT_DIR}/${BENCHMARK_NAME}
-OUTPUT_DIR=${WORKING_DIR}/${BENCHMARK_NAME}
-
-OUTPUT_PREFIX="${OUTPUT_DIR}/configuration"
 halmd \
   --verbose \
-  --config "${CONFIG_DIR}/generate_configuration.rc" \
-  --output "${OUTPUT_PREFIX}" \
+  --config "${CONFIG}" \
+  --output "${OUTPUT}" \
   ${HALMD_OPTIONS}

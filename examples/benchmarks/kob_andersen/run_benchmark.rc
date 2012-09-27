@@ -4,10 +4,17 @@ integrator=verlet
 timestep=0.001
 
 [trajectory]
-file=equilibration_N256000_rho1.2.h5
+file=configuration_N256000_rho1.2.h5
+every=10000
 
-[sampler]
-trajectory=10000
+[thermodynamics]
+every=10000
 
-[neighbour]
-occupancy=0.4
+[ssf]
+every=10000
+wavenumbers=0.105
+
+[blocking_scheme]
+every=10000
+size=2
+shift=0
