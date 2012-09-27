@@ -1,10 +1,19 @@
 steps=10000
-output=benchmark_N64000_rho0.2_%Y%m%d
+output=benchmark_N64000_rho0.4_%Y%m%d
 integrator=verlet
 timestep=0.002
 
 [trajectory]
-file=equilibration_N64000_rho0.2.trj
+file=configuration_N64000_rho0.4.h5
+every=10000
 
-[sampler]
-trajectory=10000
+[thermodynamics]
+every=10000
+
+[ssf]
+every=10000
+
+[blocking_scheme]
+every=10000
+size=2
+shift=0

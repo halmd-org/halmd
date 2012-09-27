@@ -18,8 +18,8 @@ sigma=1,.88,.8
 [boltzmann]
 temperature=0.7
 
-[sampler]
-trajectory=20000
+[trajectory]
+every=20000
 
 [neighbour]
 skin=0.5
