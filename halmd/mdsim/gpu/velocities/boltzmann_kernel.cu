@@ -147,7 +147,11 @@ __global__ void shift_rescale(float4* g_v, uint npart, uint nplace, dsfloat temp
     dsfloat m = 0;
 
     for (uint i = TID; i < size; i += TDIM) {
+#ifdef USE_VERLET_DSFUN
         s_mv[i] = vector_type(g_mv[i], g_mv[i + size]);
+#else
+        s_mv[i] = vector_type(g_mv[i]);
+#endif
         s_mv2[i] = g_mv2[i];
         s_m[i] = g_m[i];
     }
@@ -158,7 +162,7 @@ __global__ void shift_rescale(float4* g_v, uint npart, uint nplace, dsfloat temp
         m += s_m[i];
     }
 
-    vector_type vcm = mv / m;
+    vector_type vcm = vector_type(mv / m);
     float_type scale = sqrt(npart * temp * static_cast<int>(dimension) / (mv2 - m * inner_prod(vcm, vcm)));
 
     for (uint i = GTID; i < npart; i += GTDIM) {

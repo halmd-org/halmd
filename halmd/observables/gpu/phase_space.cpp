@@ -267,7 +267,9 @@ void phase_space<host::samples::phase_space<dimension, float_type> >::set(std::s
     cuda::copy(group->begin(), group->end(), h_group.begin());
 
     std::size_t tag = 0;
+#ifdef USE_VERLET_DSFUN
     std::size_t nthreads = particle_->dim.threads();
+#endif
     for (std::size_t i : h_group) {
         assert(i < h_r_.size());
         unsigned int species = sample_species[tag];

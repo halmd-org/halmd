@@ -338,7 +338,11 @@ struct gpu_modules
     typedef mdsim::gpu::binning<dimension, float_type> binning_type;
     typedef mdsim::gpu::neighbours::from_binning<dimension, float_type> neighbour_type;
     typedef mdsim::gpu::max_displacement<dimension, float_type> max_displacement_type;
+#ifdef USE_VERLET_DSFUN
     typedef mdsim::gpu::integrators::verlet_nvt_hoover<dimension, double> integrator_type;
+#else
+    typedef mdsim::gpu::integrators::verlet_nvt_hoover<dimension, float> integrator_type;
+#endif
     typedef mdsim::gpu::particle<dimension, float_type> particle_type;
     typedef mdsim::gpu::particle_groups::all<particle_type> particle_group_type;
     typedef mdsim::gpu::positions::lattice<dimension, float_type> position_type;
