@@ -46,6 +46,7 @@ namespace host {
  * @param unit_cell:    edge lengths @f$ (a_1, a_2, ...) @f$ of cuboid unit cell
  * @param tolerance:    relative tolerance on radii, defines thickness of shells
  * @param max_count:    maximal number of points in each shell
+ * @param filter:       filter on Miller index, entries should be 0 or 1
  * @returns list of lattice point shells, the points of each shell have the same
  *          distance to the origin (within the given tolerance)
  *
@@ -57,7 +58,13 @@ namespace host {
  * are not completely symmetric in space (some possible combinations @f$ (h,k,l) @f$ may
  * be missing for the largest sum @f$ h+k+l @f$)
  */
-template <typename float_type, typename vector_type, typename InputIterator, typename OutputIterator>
+template <
+    typename float_type
+  , typename vector_type
+  , typename filter_type
+  , typename InputIterator
+  , typename OutputIterator
+>
 BOOST_CONCEPT_REQUIRES(
     ((boost::InputIterator<InputIterator>))
     ((boost::OutputIterator<OutputIterator, std::pair<float_type const, vector_type> >))
@@ -68,6 +75,7 @@ pick_lattice_points_from_shell(
   , vector_type const& unit_cell
   , float_type tolerance
   , unsigned int max_count
+  , filter_type const& filter
 )
 {
     using namespace std;
@@ -103,8 +111,9 @@ pick_lattice_points_from_shell(
         for (unsigned int j = 1; j < dimension; ++j) {
             hkl[j] = idx[j] - idx[j-1];
         }
-        // condition: tuple elements are coprime
-        if (is_coprime(hkl))
+        // condition I: Miller index matches the filter
+        // condition II: tuple elements are coprime
+        if (element_prod(hkl, filter) == hkl && is_coprime(hkl))
         {
             // construct and store lattice points along the direction (hkl)
             // with magnitude close to the desired values

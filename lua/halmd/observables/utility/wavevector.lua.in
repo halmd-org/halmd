@@ -41,6 +41,7 @@ local M = module("halmd.observables.utility.wavevector")
 --     args.decimation      decimation of wavenumber grid (0=disabled, 1=logarithmic, ...)
 --     args.tolerance       relative tolerance on wavevector magnitude
 --     args.max_count       maximum number of wavevectors per wavenumber shell
+--     args.filter          filter on wavevectors
 -- @returns instance of wavevector module
 --
 function M.__new(args)
@@ -50,6 +51,7 @@ function M.__new(args)
     local decimation = args.decimation or 0 -- default value: disable decimation
     local tolerance = assert(args.tolerance)
     local max_count = assert(args.max_count)
+    local filter = assert(args.filter)
     assert(wavenumber or max_wavenumber)
 
     -- dependency injection
@@ -58,9 +60,9 @@ function M.__new(args)
 
     local wavevector = assert(wavevector_wrapper[dimension])
     if wavenumber then
-        return wavevector(wavenumber, box.length, tolerance, max_count)
+        return wavevector(wavenumber, box.length, tolerance, max_count, filter)
     else
-        return wavevector(max_wavenumber, decimation, box.length, tolerance, max_count)
+        return wavevector(max_wavenumber, decimation, box.length, tolerance, max_count, filter)
     end
 end
 

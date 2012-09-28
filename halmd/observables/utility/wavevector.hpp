@@ -43,6 +43,7 @@ class wavevector
 {
 public:
     typedef fixed_vector<double, dimension> vector_type;
+    typedef fixed_vector<unsigned int, dimension> filter_type;
     typedef std::vector<std::pair<double, vector_type> > map_type;
 
     static void luaopen(lua_State* L);
@@ -53,6 +54,7 @@ public:
       , vector_type const& box_length
       , double tolerance
       , unsigned int max_count
+      , filter_type const& filter
     );
 
     // construct class with upper limit on wavenumber,
@@ -66,6 +68,7 @@ public:
       , vector_type const& box_length
       , double tolerance
       , unsigned int max_count
+      , filter_type const& filter
     );
 
     //! returns tolerance on wavevector magnitude
@@ -78,6 +81,12 @@ public:
     unsigned int max_count() const
     {
         return max_count_;
+    }
+
+    //! returns wavevector filter
+    filter_type const& filter() const
+    {
+        return filter_;
     }
 
     //! returns list of wavevectors
@@ -104,6 +113,12 @@ protected:
     double tolerance_;
     /** maximum number of wavevectors per wavenumber */
     double max_count_;
+    /**
+     * filter for wavevectors
+     *
+     * A zero entry sets the respective wavevector coordinates to zero.
+     */
+    filter_type filter_;
     /**
      * list of wavevectors grouped by their magnitude,
      * the keys equal wavenumber_ (or a subset of)

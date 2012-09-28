@@ -41,12 +41,14 @@ wavevector<dimension>::wavevector(
   , vector_type const& box_length
   , double tolerance
   , unsigned int max_count
+  , filter_type const& filter
 )
   // initialise members
   : wavenumber_(wavenumber)
   , box_length_(box_length)
   , tolerance_(tolerance)
   , max_count_(max_count)
+  , filter_(filter)
 {
     ostringstream s;
     copy(wavenumber_.begin(), wavenumber_.end(), ostream_iterator<double>(s, " "));
@@ -62,17 +64,28 @@ wavevector<dimension>::wavevector(
   , vector_type const& box_length
   , double tolerance
   , unsigned int max_count
+  , filter_type const& filter
 )
   // initialise members
   : box_length_(box_length)
   , tolerance_(tolerance)
   , max_count_(max_count)
+  , filter_(filter)
 {
     LOG("maximum wavenumber: " << max_wavenumber);
 
+    // find minimal wavenumber constrained by filter and box length,
+    // which defines the initial spacing
+    vector_type q_basis = element_div(vector_type(2 * M_PI), box_length_);
+    double h = max_wavenumber;
+    for (unsigned int i = 0; i < dimension; ++i) {
+        if (filter_[i] > 0) {
+            h = min(h, q_basis[i]);
+        }
+    }
+    LOG("minimum wavenumber: " << h);
+
     // set up semi-linearly spaced wavenumber grid
-    // determine q_min for the initial spacing
-    double h = 2 * M_PI / norm_inf(box_length_); //< norm_inf returns the maximum coordinate
     unsigned int i = 0;
     for (double q = h; q < max_wavenumber; ) {
         wavenumber_.push_back(q);
@@ -91,6 +104,9 @@ void wavevector<dimension>::init_()
 {
     LOG("tolerance on wavevector magnitude: " << tolerance_);
     LOG("maximum number of wavevectors per wavenumber: " << max_count_);
+    if (filter_ != filter_type(1)) {
+        LOG("apply filter on wavevectors: " << filter_);
+    }
 
     // construct wavevectors and store as key/value pairs (wavenumber, wavevector)
     algorithm::host::pick_lattice_points_from_shell(
@@ -99,6 +115,7 @@ void wavevector<dimension>::init_()
       , element_div(vector_type(2 * M_PI), box_length_)
       , tolerance_
       , max_count_
+      , filter_
     );
 
     // sort wavevector map according to keys (wavenumber)
@@ -144,16 +161,19 @@ void wavevector<dimension>::luaopen(lua_State* L)
                          vector<double> const&
                        , vector_type const&
                        , double, unsigned int
+                       , filter_type const&
                     >())
                     .def(constructor<
                          double, unsigned int
                        , vector_type const&
                        , double, unsigned int
+                       , filter_type const&
                     >())
                     .property("wavenumber", &wavevector::wavenumber)
                     .property("value", &wavevector::value)
                     .property("tolerance", &wavevector::tolerance)
                     .property("max_count", &wavevector::max_count)
+                    .property("filter", &wavevector::filter)
             ]
         ]
     ];

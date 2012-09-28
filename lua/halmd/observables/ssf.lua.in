@@ -60,12 +60,18 @@ function M.__new(args)
     local decimation = args.decimation or 10 -- default value
     local tolerance = args.tolerance or 0.01 -- default value
     local max_count = args.max_count or 7 -- default value
+    local filter = args.wavevector_filter or { 1 } -- default value
 
     -- dependency injection
     local clock = mdsim.clock() -- singleton
     local particle = mdsim.particle() -- singleton
     local dimension = assert(particle.dimension)
     local logger = assert(args.logger)
+
+    -- complete missing values by repeating the last entry
+    for i = #filter + 1, dimension do
+        filter[i] = filter[#filter]
+    end
 
     -- construct local wavevector module
     local wavevector = assert(observables.utility.wavevector)
@@ -74,6 +80,7 @@ function M.__new(args)
             wavenumber = wavenumbers
           , tolerance = tolerance
           , max_count = max_count
+          , filter = filter
         }
     else -- use maximum_wavenumber
         wavevector = wavevector{
@@ -81,6 +88,7 @@ function M.__new(args)
           , decimation = decimation
           , tolerance = tolerance
           , max_count = max_count
+          , filter = filter
         }
     end
 
@@ -145,6 +153,7 @@ function M.options(desc)
     desc:add("decimation", po.uint():conflicts("wavenumbers"), "decimation of wavenumber grid")
     desc:add("tolerance", po.float(), "relative tolerance on wavevector magnitude")
     desc:add("max-count", po.uint(), "maximum number of wavevectors per wavenumber shell")
+    desc:add("wavevector-filter", po.uint_array(), "filter on wavevectors")
 end
 
 --
@@ -153,6 +162,7 @@ end
 function M.read_parameters(args, group)
     args.tolerance = group:read_attribute("tolerance", h5.float())
     args.max_count = group:read_attribute("max_count", h5.uint())
+    args.filter = group:read_attribute("wavevector_filter", h5.uint_array())
 end
 
 --
@@ -165,6 +175,7 @@ function M.write_parameters(ssf, group)
     -- wavenumbers are stored along with the ssf data, e.g., in structure/ssf/wavenumber
     group:write_attribute("tolerance", h5.float(), ssf.wavevector.tolerance)
     group:write_attribute("max_count", h5.uint(), ssf.wavevector.max_count)
+    group:write_attribute("wavevector_filter", h5.uint_array(), ssf.wavevector.filter)
 end
 
 return M
