@@ -178,13 +178,13 @@ void pair_trunc<dimension, float_type, potential_type>::compute()
     aux_valid_ = aux_flag_;
     if (!aux_flag_) {
         gpu_wrapper::kernel.compute(
-            particle_->g_f, neighbour_->g_neighbour(), g_en_pot_, g_stress_pot_, g_hypervirial_
+            particle_->g_r, particle_->g_f, neighbour_->g_neighbour(), g_en_pot_, g_stress_pot_, g_hypervirial_
           , static_cast<vector_type>(box_->length())
         );
     }
     else {
         gpu_wrapper::kernel.compute_aux(
-            particle_->g_f, neighbour_->g_neighbour(), g_en_pot_, g_stress_pot_, g_hypervirial_
+            particle_->g_r, particle_->g_f, neighbour_->g_neighbour(), g_en_pot_, g_stress_pot_, g_hypervirial_
           , static_cast<vector_type>(box_->length())
         );
         aux_flag_ = false;

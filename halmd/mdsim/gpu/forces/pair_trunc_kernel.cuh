@@ -54,7 +54,8 @@ template <
   , typename stress_tensor_type
 >
 __global__ void compute(
-    gpu_vector_type* g_f
+    float4* g_r
+  , gpu_vector_type* g_f
   , unsigned int const* g_neighbour
   , float* g_en_pot
   , stress_tensor_type* g_stress_pot
@@ -69,7 +70,7 @@ __global__ void compute(
     // load particle associated with this thread
     unsigned int type1;
     vector_type r1;
-    tie(r1, type1) = untagged<vector_type>(tex1Dfetch(r_, i));
+    tie(r1, type1) = untagged<vector_type>(g_r[i]);
 
     // contribution to potential energy and hypervirial
     float en_pot_ = 0;
