@@ -104,9 +104,9 @@ end
 function M.profile(self, profiler)
     profiler:on_profile{self, en_kin = "summation of kinetic energy"}
     profiler:on_profile{self, v_cm = "summation of centre-of-mass velocity"}
+    profiler:on_profile{self, virial = "summation of virial"}
     if device() then
         profiler:on_profile{self, en_pot = "summation of potential energy"}
-        profiler:on_profile{self, virial = "summation of virial"}
         profiler:on_profile{self, hypervirial = "summation of hypervirial"}
     end
 end

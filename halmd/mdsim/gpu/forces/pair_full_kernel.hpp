@@ -33,14 +33,15 @@ struct pair_full_wrapper
 {
     typedef fixed_vector<float, dimension> vector_type;
     typedef typename type_traits<dimension, float>::gpu::coalesced_vector_type coalesced_vector_type;
-    typedef typename type_traits<dimension, float>::gpu::stress_tensor_type stress_tensor_type;
+    typedef typename type_traits<dimension, float>::gpu::stress_tensor_first_type stress_tensor_first_type;
+    typedef typename type_traits<dimension, float>::gpu::stress_tensor_second_type stress_tensor_second_type;
 
     /** compute forces only */
     cuda::function<void (
         coalesced_vector_type*
       , float4 const*
       , float*
-      , stress_tensor_type*
+      , stress_tensor_first_type*, stress_tensor_second_type*
       , float*
       , vector_type
     )> compute;
@@ -49,7 +50,7 @@ struct pair_full_wrapper
         coalesced_vector_type*
       , float4 const*
       , float*
-      , stress_tensor_type*
+      , stress_tensor_first_type*, stress_tensor_second_type*
       , float*
       , vector_type
     )> compute_aux;

@@ -45,7 +45,7 @@ public:
 
     force() {}
     virtual double potential_energy() const = 0;
-    virtual stress_tensor_type stress_tensor_pot() const = 0;
+    virtual std::vector<stress_tensor_type> const& stress_tensor_pot() const = 0;
     virtual double hypervirial() const = 0;
 };
 

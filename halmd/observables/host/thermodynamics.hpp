@@ -20,8 +20,10 @@
 #ifndef HALMD_OBSERVABLES_HOST_THERMODYNAMICS_HPP
 #define HALMD_OBSERVABLES_HOST_THERMODYNAMICS_HPP
 
+#include <algorithm>
 #include <boost/make_shared.hpp>
 #include <boost/numeric/ublas/symmetric.hpp>
+#include <functional>
 #include <lua.hpp>
 #include <vector>
 
@@ -65,15 +67,11 @@ public:
 
     virtual double en_kin();
     virtual vector_type const& v_cm();
+    virtual double virial();
 
     virtual double en_pot()
     {
         return force_->potential_energy();
-    }
-
-    virtual double virial()
-    {
-        return force_->stress_tensor_pot()[0];
     }
 
     virtual double hypervirial()
@@ -92,6 +90,7 @@ private:
     {
         accumulator_type en_kin;
         accumulator_type v_cm;
+        accumulator_type virial;
     };
 
     /** module dependencies */
@@ -103,6 +102,7 @@ private:
     /** cached results */
     data_cache<double> en_kin_;
     data_cache<vector_type> v_cm_;
+    data_cache<double> virial_;
 
     /** profiling runtime accumulators */
     runtime runtime_;

@@ -43,6 +43,7 @@ thermodynamics<dimension, float_type>::thermodynamics(
   // initialise members
   , en_kin_(clock)
   , v_cm_(clock)
+  , virial_(clock)
 {
 }
 
@@ -85,6 +86,28 @@ thermodynamics<dimension, float_type>::v_cm()
 }
 
 template <int dimension, typename float_type>
+double thermodynamics<dimension, float_type>::virial()
+{
+    typedef typename force_type::stress_tensor_type stress_tensor_type;
+
+    if (!virial_.valid()) {
+        LOG_TRACE("acquire virial");
+
+        scoped_timer_type timer(runtime_.virial);
+
+        // the virial is the trace of the potential part of the stress tensor
+        // loop over particle contributions
+        double virial = 0;
+        BOOST_FOREACH (stress_tensor_type const& x, force_->stress_tensor_pot()) {
+            // compute trace
+            virial += std::accumulate(x.begin(), x.begin() + dimension, 0., std::plus<double>());
+        }
+        virial_ = virial / force_->stress_tensor_pot().size();
+    }
+    return virial_;
+}
+
+template <int dimension, typename float_type>
 void thermodynamics<dimension, float_type>::clear_cache()
 {
     en_kin_.clear();
@@ -115,6 +138,7 @@ void thermodynamics<dimension, float_type>::luaopen(lua_State* L)
                         class_<runtime>("runtime")
                             .def_readonly("en_kin", &runtime::en_kin)
                             .def_readonly("v_cm", &runtime::v_cm)
+                            .def_readonly("virial", &runtime::virial)
                     ]
                     .def_readonly("runtime", &thermodynamics::runtime_)
             ]

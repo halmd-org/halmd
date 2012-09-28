@@ -50,7 +50,9 @@ class pair_trunc
 public:
     typedef mdsim::gpu::force<dimension, float_type> _Base;
     typedef typename _Base::vector_type vector_type;
-    typedef typename _Base::gpu_stress_tensor_type gpu_stress_tensor_type;
+    typedef typename _Base::gpu_stress_tensor_first_type gpu_stress_tensor_first_type;
+    typedef typename _Base::gpu_stress_tensor_second_type gpu_stress_tensor_second_type;
+    typedef typename _Base::gpu_stress_tensor_const_references gpu_stress_tensor_const_references;
     typedef gpu::particle<dimension, float> particle_type;
     typedef mdsim::box<dimension> box_type;
     typedef gpu::neighbour neighbour_type;
@@ -87,10 +89,10 @@ public:
     }
 
     /** potential part of stress tensors of particles */
-    virtual cuda::vector<gpu_stress_tensor_type> const& stress_tensor_pot() const
+    virtual gpu_stress_tensor_const_references stress_tensor_pot() const
     {
         assert_aux_valid();
-        return g_stress_pot_;
+        return gpu_stress_tensor_const_references(g_stress_pot_first_, g_stress_pot_second_);
     }
 
     //! returns hyper virial of particles
@@ -131,8 +133,10 @@ private:
     bool aux_valid_;
     /** potential energy for each particle */
     cuda::vector<float> g_en_pot_;
-    /** potential part of stress tensor for each particle */
-    cuda::vector<gpu_stress_tensor_type> g_stress_pot_;
+    /** potential part of stress tensor for each particle (first part) */
+    cuda::vector<gpu_stress_tensor_first_type> g_stress_pot_first_;
+    /** potential part of stress tensor for each particle (second part) */
+    cuda::vector<gpu_stress_tensor_second_type> g_stress_pot_second_;
     /** hyper virial for each particle */
     cuda::vector<float> g_hypervirial_;
     /** profiling runtime accumulators */
@@ -158,7 +162,8 @@ pair_trunc<dimension, float_type, potential_type, trunc_type>::pair_trunc(
   , aux_valid_(false)
   // memory allocation
   , g_en_pot_(particle_->dim.threads())
-  , g_stress_pot_(particle_->dim.threads())
+  , g_stress_pot_first_(particle_->dim.threads())
+  , g_stress_pot_second_(particle_->dim.threads())
   , g_hypervirial_(particle_->dim.threads())
 {
 }
@@ -183,14 +188,16 @@ void pair_trunc<dimension, float_type, potential_type, trunc_type>::compute()
     aux_valid_ = aux_flag_;
     if (!aux_flag_) {
         gpu_wrapper::kernel.compute(
-            particle_->g_r, particle_->g_f, neighbour_->g_neighbour(), g_en_pot_, g_stress_pot_, g_hypervirial_
+            particle_->g_r, particle_->g_f, neighbour_->g_neighbour()
+          , g_en_pot_, g_stress_pot_first_, g_stress_pot_second_, g_hypervirial_
           , static_cast<vector_type>(box_->length())
           , *trunc_
         );
     }
     else {
         gpu_wrapper::kernel.compute_aux(
-            particle_->g_r, particle_->g_f, neighbour_->g_neighbour(), g_en_pot_, g_stress_pot_, g_hypervirial_
+            particle_->g_r, particle_->g_f, neighbour_->g_neighbour()
+          , g_en_pot_, g_stress_pot_first_, g_stress_pot_second_, g_hypervirial_
           , static_cast<vector_type>(box_->length())
           , *trunc_
         );

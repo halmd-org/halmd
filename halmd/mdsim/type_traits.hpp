@@ -41,18 +41,22 @@ namespace gpu {
 template <int N, typename value_type>
 struct basic_vector_type;
 
+template <> struct basic_vector_type<1, float> { typedef float1 type; };
 template <> struct basic_vector_type<2, float> { typedef float2 type; };
 template <> struct basic_vector_type<3, float> { typedef float3 type; };
 template <> struct basic_vector_type<4, float> { typedef float4 type; };
 
+// template <> struct basic_vector_type<1, double> { typedef double1 type; };
 // template <> struct basic_vector_type<2, double> { typedef double2 type; };
 // template <> struct basic_vector_type<3, double> { typedef double3 type; };
 // template <> struct basic_vector_type<4, double> { typedef double4 type; };
 
+template <> struct basic_vector_type<1, int> { typedef int1 type; };
 template <> struct basic_vector_type<2, int> { typedef int2 type; };
 template <> struct basic_vector_type<3, int> { typedef int3 type; };
 template <> struct basic_vector_type<4, int> { typedef int4 type; };
 
+template <> struct basic_vector_type<1, unsigned int> { typedef uint1 type; };
 template <> struct basic_vector_type<2, unsigned int> { typedef uint2 type; };
 template <> struct basic_vector_type<3, unsigned int> { typedef uint3 type; };
 template <> struct basic_vector_type<4, unsigned int> { typedef uint4 type; };
@@ -69,7 +73,8 @@ struct type_traits<3, value_type>
 {
     typedef typename basic_vector_type<4, value_type>::type coalesced_vector_type;
     typedef typename basic_vector_type<3, value_type>::type vector_type;
-    typedef typename basic_vector_type<4, value_type>::type stress_tensor_type;
+    typedef typename basic_vector_type<4, value_type>::type stress_tensor_first_type;
+    typedef typename basic_vector_type<2, value_type>::type stress_tensor_second_type;
 };
 
 template <typename value_type>
@@ -77,7 +82,8 @@ struct type_traits<2, value_type>
 {
     typedef typename basic_vector_type<2, value_type>::type coalesced_vector_type;
     typedef typename basic_vector_type<2, value_type>::type vector_type;
-    typedef typename basic_vector_type<2, value_type>::type stress_tensor_type;
+    typedef typename basic_vector_type<2, value_type>::type stress_tensor_first_type;
+    typedef typename basic_vector_type<1, value_type>::type stress_tensor_second_type;
 };
 
 }} // namespace detail::gpu
@@ -93,7 +99,9 @@ template <int dimension, typename value_type>
 struct type_traits
 {
     typedef fixed_vector<value_type, dimension> vector_type;
-    typedef fixed_vector<value_type, 1 + (dimension - 1) * dimension / 2> stress_tensor_type;
+    // diagonal elements are the first 'dimension' entries,
+    // followed by the off-diagonals T_12, T_13, ..., T_23, ...
+    typedef fixed_vector<value_type, (dimension + 1) * dimension / 2> stress_tensor_type;
 
 #ifdef WITH_CUDA
     typedef detail::gpu::type_traits<dimension, value_type> gpu;

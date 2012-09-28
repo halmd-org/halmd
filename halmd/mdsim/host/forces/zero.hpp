@@ -64,9 +64,9 @@ public:
     }
 
     //! potential part of stress tensor
-    virtual stress_tensor_type stress_tensor_pot() const
+    virtual std::vector<stress_tensor_type> const& stress_tensor_pot() const
     {
-        return stress_tensor_type(0);
+        return stress_pot_;
     }
 
     //! return hypervirial per particle
@@ -74,6 +74,10 @@ public:
     {
         return 0;
     }
+
+protected:
+    /** potential part of stress tensor, contribution from each particle separately */
+    std::vector<stress_tensor_type> stress_pot_;
 };
 
 } // namespace mdsim

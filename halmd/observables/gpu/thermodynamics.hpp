@@ -126,17 +126,16 @@ private:
       , double                                  // host_output_type
     > sum_scalar_;
 
-    typedef typename force_type::stress_tensor_type stress_tensor_type;
-    typedef typename force_type::gpu_stress_tensor_type gpu_stress_tensor_type;
+    typedef typename force_type::gpu_stress_tensor_first_type gpu_stress_tensor_first_type;
     algorithm::gpu::reduce<
         algorithm::gpu::sum_                    // reduce_transform
-      , stress_tensor_type                      // input_type
-      , gpu_stress_tensor_type                  // coalesced_input_type
+      , fixed_vector<float, dimension>          // input_type
+      , gpu_stress_tensor_first_type            // coalesced_input_type
       , dsfloat                                 // output_type
       , dsfloat                                 // coalesced_output_type
       , double                                  // host_output_type
-      , algorithm::gpu::at_0                    // input_transform
-    > sum_stress_tensor_diagonal_;
+      , algorithm::gpu::trace<dimension>        // input_transform
+    > sum_stress_tensor_trace_;
 
     /** profiling runtime accumulators */
     runtime runtime_;

@@ -54,7 +54,7 @@ __global__ void reduce_types(coalesced_input_type const* g_in,
 
     // load values from global device memory
     output_vector_type vv;
-    for (uint k = 0; k < ntypes; k++) {
+    for (uint k = 0; k < ntypes; ++k) {
         vv[k] = 0;
     }
     for (uint i = GTID; i < n; i += GTDIM) {
@@ -78,7 +78,7 @@ __global__ void reduce_types(coalesced_input_type const* g_in,
     if (TID < 1) {
         // store block reduced value in global memory
         // in groups of particle types
-        for (uint k = 0; k < ntypes; k++) {
+        for (uint k = 0; k < ntypes; ++k) {
             g_block_sum[BID + k * BDIM] =
                 transform<output_transform, output_type, output_type>(vv[k]);
         }
@@ -110,11 +110,11 @@ template class reduce_wrapper<
 
 template class reduce_wrapper<
     sum_                        // reduce_transform
-  , fixed_vector<float, 4>      // input_type
+  , fixed_vector<float, 3>      // input_type
   , float4                      // coalesced_input_type
   , dsfloat                     // output_type
   , dsfloat                     // coalesced_output_type
-  , at_0                        // input_transform
+  , trace<3>                    // input_transform
 >;
 
 template class reduce_wrapper<
@@ -123,7 +123,7 @@ template class reduce_wrapper<
   , float2                      // coalesced_input_type
   , dsfloat                     // output_type
   , dsfloat                     // coalesced_output_type
-  , at_0                        // input_transform
+  , trace<2>                    // input_transform
 >;
 
 template class reduce_wrapper<

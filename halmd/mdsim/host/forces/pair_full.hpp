@@ -89,7 +89,7 @@ public:
     }
 
     //! potential part of stress tensor
-    virtual stress_tensor_type stress_tensor_pot() const
+    virtual std::vector<stress_tensor_type> const& stress_tensor_pot() const
     {
         assert_aux_valid();
         return stress_pot_;
@@ -129,8 +129,8 @@ private:
     bool aux_valid_;
     /** average potential energy per particle */
     double en_pot_;
-    /** potential part of stress tensor */
-    stress_tensor_type stress_pot_;
+    /** potential part of stress tensor, contribution from each particle separately */
+    std::vector<stress_tensor_type> stress_pot_;
     /** hyper virial for each particle */
     double hypervirial_;
     /** profiling runtime accumulators */
@@ -153,6 +153,7 @@ pair_full<dimension, float_type, potential_type>::pair_full(
   // member initialisation
   , aux_flag_(false)          //< disable auxiliary variables by default
   , aux_valid_(false)
+  , stress_pot_(particle->nbox)
 {}
 
 /**
@@ -187,7 +188,7 @@ void pair_full<dimension, float_type, potential_type>::compute_impl_()
     // initialise potential energy and potential part of stress tensor
     if (do_aux) {
         en_pot_ = 0;
-        stress_pot_ = 0;
+        std::fill(stress_pot_.begin(), stress_pot_.end(), 0);
         hypervirial_ = 0;
     }
 
@@ -218,8 +219,11 @@ void pair_full<dimension, float_type, potential_type>::compute_impl_()
                 // add contribution to potential energy
                 en_pot_ += en_pot;
 
-                // ... and potential part of stress tensor
-                stress_pot_ += fval * make_stress_tensor(rr, r);
+                // store potential part of stress tensor,
+                // distribute over both particles
+                stress_tensor_type stress_pot = fval * make_stress_tensor(r);
+                stress_pot_[i] += .5 * stress_pot;
+                stress_pot_[j] += .5 * stress_pot;
 
                 // compute contribution to hypervirial
                 hypervirial_ += hvir / (dimension * dimension);
@@ -229,7 +233,6 @@ void pair_full<dimension, float_type, potential_type>::compute_impl_()
 
     if (do_aux) {
         en_pot_ /= particle_->nbox;
-        stress_pot_ /= particle_->nbox;
         hypervirial_ /= particle_->nbox;
 
         // ensure that system is still in valid state

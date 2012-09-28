@@ -37,6 +37,8 @@ template <int dimension, typename float_type>
 zero<dimension, float_type>::zero(shared_ptr<particle_type> particle)
   // dependency injection
   : particle(particle)
+  // memory allocation
+  , stress_pot_(particle->nbox)
 {
 }
 
@@ -45,6 +47,7 @@ void zero<dimension, float_type>::compute()
 {
     LOG_TRACE("zero particle forces");
     fill(particle->f.begin(), particle->f.end(), 0);
+    fill(stress_pot_.begin(), stress_pot_.end(), 0); // FIXME check aux flag
 }
 
 template <int dimension, typename float_type>

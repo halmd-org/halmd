@@ -26,27 +26,30 @@ namespace halmd {
 namespace mdsim {
 
 /**
- * Trace and off-diagonal elements of distance tensor
+ * Diagonal and off-diagonal elements of distance tensor T_ij = r_i r_j
  */
 template <typename float_type>
-HALMD_GPU_ENABLED typename type_traits<3, float_type>::stress_tensor_type
-make_stress_tensor(float_type rr, fixed_vector<float_type, 3> const& r)
+HALMD_GPU_ENABLED fixed_vector<float_type, 6>
+make_stress_tensor(fixed_vector<float_type, 3> const& r)
 {
-    typename type_traits<3, float_type>::stress_tensor_type v;
-    v[0] = rr;
-    v[1] = r[1] * r[2];
-    v[2] = r[2] * r[0];
+    fixed_vector<float_type, 6> v;
+    v[0] = r[0] * r[0];
+    v[1] = r[1] * r[1];
+    v[2] = r[2] * r[2];
     v[3] = r[0] * r[1];
+    v[4] = r[0] * r[2];
+    v[5] = r[1] * r[2];
     return v;
 }
 
 template <typename float_type>
-HALMD_GPU_ENABLED typename type_traits<2, float_type>::stress_tensor_type
-make_stress_tensor(float_type rr, fixed_vector<float_type, 2> const& r)
+HALMD_GPU_ENABLED fixed_vector<float_type, 3>
+make_stress_tensor(fixed_vector<float_type, 2> const& r)
 {
-    typename type_traits<2, float_type>::stress_tensor_type v;
-    v[0] = rr;
-    v[1] = r[0] * r[1];
+    fixed_vector<float_type, 3> v;
+    v[0] = r[0] * r[0];
+    v[1] = r[1] * r[1];
+    v[2] = r[0] * r[1];
     return v;
 }
 

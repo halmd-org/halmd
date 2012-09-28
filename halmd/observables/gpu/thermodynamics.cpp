@@ -53,7 +53,7 @@ thermodynamics<dimension, float_type>::thermodynamics(
   , sum_velocity_square_()
   , sum_velocity_vector_()
   , sum_scalar_()
-  , sum_stress_tensor_diagonal_()
+  , sum_stress_tensor_trace_()
 {
 }
 
@@ -113,7 +113,7 @@ double thermodynamics<dimension, float_type>::virial()
         LOG_TRACE("acquire virial");
 
         scoped_timer_type timer(runtime_.virial);
-        virial_ = sum_stress_tensor_diagonal_(force_->stress_tensor_pot()) / particle_->nbox;
+        virial_ = sum_stress_tensor_trace_(get<0>(force_->stress_tensor_pot())) / particle_->nbox;
     }
     return virial_;
 }

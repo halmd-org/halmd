@@ -20,6 +20,7 @@
 #ifndef HALMD_MDSIM_GPU_FORCE_HPP
 #define HALMD_MDSIM_GPU_FORCE_HPP
 
+#include <boost/tuple/tuple.hpp>
 #include <boost/shared_ptr.hpp>
 #include <lua.hpp>
 
@@ -39,13 +40,19 @@ public:
     typedef type_traits<dimension, float_type> _type_traits;
     typedef typename _type_traits::vector_type vector_type;
     typedef typename _type_traits::stress_tensor_type stress_tensor_type;
-    typedef typename _type_traits::gpu::stress_tensor_type gpu_stress_tensor_type;
+    typedef typename _type_traits::gpu::stress_tensor_first_type gpu_stress_tensor_first_type;
+    typedef typename _type_traits::gpu::stress_tensor_second_type gpu_stress_tensor_second_type;
+
+    typedef boost::tuple<
+        cuda::vector<gpu_stress_tensor_first_type> const&
+      , cuda::vector<gpu_stress_tensor_second_type> const&
+    > gpu_stress_tensor_const_references;
 
     static void luaopen(lua_State* L);
 
     force() {}
     virtual cuda::vector<float> const& potential_energy() const = 0;
-    virtual cuda::vector<gpu_stress_tensor_type> const& stress_tensor_pot() const = 0;
+    virtual gpu_stress_tensor_const_references stress_tensor_pot() const = 0;
     virtual cuda::vector<float> const& hypervirial() const = 0;
 };
 

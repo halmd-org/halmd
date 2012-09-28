@@ -39,11 +39,13 @@ zero<dimension, float_type>::zero(shared_ptr<particle_type> particle)
   : particle(particle)
   // memory allocation
   , g_en_pot_(particle->dim.threads())
-  , g_stress_pot_(particle->dim.threads())
+  , g_stress_pot_first_(particle->dim.threads())
+  , g_stress_pot_second_(particle->dim.threads())
   , g_hypervirial_(particle->dim.threads())
 {
     cuda::memset(g_en_pot_, 0);
-    cuda::memset(g_stress_pot_, 0);
+    cuda::memset(g_stress_pot_first_, 0);
+    cuda::memset(g_stress_pot_second_, 0);
     cuda::memset(g_hypervirial_, 0);
 }
 

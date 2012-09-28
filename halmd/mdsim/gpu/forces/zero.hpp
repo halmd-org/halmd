@@ -40,7 +40,9 @@ class zero
 {
 public:
     typedef mdsim::gpu::force<dimension, float_type> _Base;
-    typedef typename _Base::gpu_stress_tensor_type gpu_stress_tensor_type;
+    typedef typename _Base::gpu_stress_tensor_first_type gpu_stress_tensor_first_type;
+    typedef typename _Base::gpu_stress_tensor_second_type gpu_stress_tensor_second_type;
+    typedef typename _Base::gpu_stress_tensor_const_references gpu_stress_tensor_const_references;
 
     typedef gpu::particle<dimension, float_type> particle_type;
 
@@ -64,9 +66,9 @@ public:
     }
 
     /** potential part of stress tensors of particles */
-    virtual cuda::vector<gpu_stress_tensor_type> const& stress_tensor_pot() const
+    virtual gpu_stress_tensor_const_references stress_tensor_pot() const
     {
-        return g_stress_pot_;
+        return gpu_stress_tensor_const_references(g_stress_pot_first_, g_stress_pot_second_);
     }
 
     //! returns hyper virial of particles
@@ -78,8 +80,10 @@ public:
 protected:
     /** potential energy for each particle */
     cuda::vector<float> g_en_pot_;
-    /** potential part of stress tensor for each particle */
-    cuda::vector<gpu_stress_tensor_type> g_stress_pot_;
+    /** potential part of stress tensor for each particle (first part) */
+    cuda::vector<gpu_stress_tensor_first_type> g_stress_pot_first_;
+    /** potential part of stress tensor for each particle (second part) */
+    cuda::vector<gpu_stress_tensor_second_type> g_stress_pot_second_;
     /** hyper virial for each particle */
     cuda::vector<float> g_hypervirial_;
 };
