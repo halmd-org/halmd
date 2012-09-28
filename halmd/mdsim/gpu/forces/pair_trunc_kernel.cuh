@@ -35,8 +35,6 @@ namespace forces {
 namespace pair_trunc_kernel {
 
 /** positions, types */
-static texture<float4> r1_;
-/** positions, types */
 static texture<float4> r2_;
 
 /**
@@ -51,7 +49,8 @@ template <
   , typename trunc_type
 >
 __global__ void compute(
-    gpu_vector_type* g_f
+    float4 const* g_r1
+  , gpu_vector_type* g_f
   , unsigned int const* g_neighbour
   , unsigned int neighbour_size
   , unsigned int neighbour_stride
@@ -71,7 +70,7 @@ __global__ void compute(
     // load particle associated with this thread
     unsigned int type1;
     vector_type r1;
-    tie(r1, type1) <<= tex1Dfetch(r1_, i);
+    tie(r1, type1) <<= g_r1[i];
 
     // contribution to potential energy and hypervirial
     float en_pot_ = 0;
@@ -145,7 +144,6 @@ pair_trunc_wrapper<dimension, potential_type, trunc_type> const
 pair_trunc_wrapper<dimension, potential_type, trunc_type>::kernel = {
     pair_trunc_kernel::compute<false, fixed_vector<float, dimension>, potential_type>
   , pair_trunc_kernel::compute<true, fixed_vector<float, dimension>, potential_type>
-  , pair_trunc_kernel::r1_
   , pair_trunc_kernel::r2_
 };
 

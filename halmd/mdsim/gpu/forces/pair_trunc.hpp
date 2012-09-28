@@ -265,13 +265,13 @@ inline void pair_trunc<dimension, float_type, potential_type, trunc_type>::compu
 
     scoped_timer_type timer(runtime_.compute);
 
-    gpu_wrapper::kernel.r1.bind(*position1);
     gpu_wrapper::kernel.r2.bind(*position2);
     potential_->bind_textures();
 
     cuda::configure(particle1_->dim.grid, particle1_->dim.block);
     gpu_wrapper::kernel.compute(
-        &*net_force->begin()
+        &*position1->begin()
+      , &*net_force->begin()
       , &*g_neighbour->begin()
       , neighbour_->size()
       , neighbour_->stride()
@@ -301,13 +301,13 @@ inline void pair_trunc<dimension, float_type, potential_type, trunc_type>::compu
 
     scoped_timer_type timer(runtime_.compute);
 
-    gpu_wrapper::kernel.r1.bind(*position1);
     gpu_wrapper::kernel.r2.bind(*position2);
     potential_->bind_textures();
 
     cuda::configure(particle1_->dim.grid, particle1_->dim.block);
     gpu_wrapper::kernel.compute_aux(
-        &*net_force->begin()
+        &*position1->begin()
+      , &*net_force->begin()
       , &*g_neighbour->begin()
       , neighbour_->size()
       , neighbour_->stride()
