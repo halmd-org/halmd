@@ -113,6 +113,8 @@ struct verlet_nvt_hoover
     double timestep;
     double resonance_frequency;
     fixed_vector<double, dimension> box_ratios;
+    fixed_vector<double, dimension> slab;
+    double filling;
     float skin;
 
     shared_ptr<box_type> box;
@@ -281,6 +283,8 @@ verlet_nvt_hoover<modules_type>::verlet_nvt_hoover()
     resonance_frequency = 5.;
     box_ratios = (dimension == 3) ? list_of(1.)(2.)(1.01) : list_of(1.)(2.);
     skin = 0.5;
+    slab = 1;
+    filling = 1;
 
     vector<unsigned int> npart_vector = list_of(npart);
 
@@ -298,7 +302,7 @@ verlet_nvt_hoover<modules_type>::verlet_nvt_hoover()
     binning = make_shared<binning_type>(particle, box, potential->r_cut(), skin);
     neighbour = make_shared<neighbour_type>(particle, box, binning, potential->r_cut(), skin);
     force = make_shared<force_type>(potential, particle, box, neighbour);
-    position = make_shared<position_type>(particle, box, random, 1);
+    position = make_shared<position_type>(particle, box, random, slab, filling);
     velocity = make_shared<velocity_type>(particle, random, start_temp);
     clock = make_shared<clock_type>(timestep);
     thermodynamics = make_shared<thermodynamics_type>(particle, box, clock, force);

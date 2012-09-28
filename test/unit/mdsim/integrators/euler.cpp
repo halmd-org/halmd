@@ -97,6 +97,7 @@ struct test_euler
     unsigned int npart;
     fixed_vector<double, dimension> box_ratios;
     fixed_vector<double, dimension> slab;
+    double filling;
 
     shared_ptr<box_type> box;
     shared_ptr<particle_type> particle;
@@ -216,6 +217,7 @@ test_euler<modules_type>::test_euler()
     npart = gpu ? 4000 : 108; // optimize filling of fcc lattice, use only few particles on the host
     box_ratios = (dimension == 3) ? list_of<double>(1)(2)(1.01) : list_of<double>(1)(2);
     slab = 1;
+    filling = 1;
 
     vector<unsigned int> npart_vector = list_of(npart);
 
@@ -224,7 +226,7 @@ test_euler<modules_type>::test_euler()
     box = make_shared<box_type>(npart, density, box_ratios);
     integrator = make_shared<integrator_type>(particle, box, timestep);
     random = make_shared<random_type>();
-    position = make_shared<position_type>(particle, box, random, slab);
+    position = make_shared<position_type>(particle, box, random, slab, filling);
     velocity = make_shared<velocity_type>(particle, random, temp);
     clock = make_shared<clock_type>(1);
     sample = make_shared<sample_type>(particle->ntypes);

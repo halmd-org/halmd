@@ -84,6 +84,7 @@ struct lattice
     float density;
     float lattice_constant;
     fixed_vector<double, dimension> slab;
+    double filling;
 
     shared_ptr<box_type> box;
     shared_ptr<particle_type> particle;
@@ -272,13 +273,14 @@ lattice<modules_type>::lattice()
     density = 0.3;
     lattice_constant = pow(nunit_cell / density, 1.f / dimension);
     slab = 1;
+    filling = 1;
 
     vector<unsigned int> npart_vector = list_of(npart);
 
     particle = make_shared<particle_type>(npart_vector);
     box = make_shared<box_type>(npart, density, fixed_vector<double, dimension>(ncell));
     random = make_shared<random_type>();
-    position = make_shared<position_type>(particle, box, random, slab);
+    position = make_shared<position_type>(particle, box, random, slab, filling);
     sample = make_shared<sample_type>(particle->ntypes);
     clock = make_shared<clock_type>(0); // bogus time-step
     phase_space = make_shared<phase_space_type>(sample, particle, box, clock);

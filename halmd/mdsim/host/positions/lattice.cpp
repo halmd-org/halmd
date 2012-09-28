@@ -41,6 +41,7 @@ lattice<dimension, float_type>::lattice(
   , shared_ptr<box_type const> box
   , shared_ptr<random_type> random
   , vector_type const& slab
+  , double filling
   , shared_ptr<logger_type> logger
 )
   // dependency injection
@@ -49,15 +50,22 @@ lattice<dimension, float_type>::lattice(
   , random_(random)
   , logger_(logger)
   , slab_(slab)
+  , filling_(filling)
 {
     if (*min_element(slab_.begin(), slab_.end()) <= 0 ||
         *max_element(slab_.begin(), slab_.end()) > 1
        ) {
         throw std::logic_error("slab extents must be a fraction between 0 and 1");
     }
+    if (filling_ < 0 || filling_ > 1) {
+        throw std::logic_error("filling fraction of slab must be between 0 and 1");
+    }
 
     if (*min_element(slab_.begin(), slab_.end()) < 1) {
         LOG("restrict initial particle positions to slab: " << slab_);
+    }
+    if (filling_ < 1) {
+        LOG("fraction of particles filled into the slab: " << filling_);
     }
 }
 
@@ -69,7 +77,61 @@ void lattice<dimension, float_type>::set()
     // assign fcc lattice points to a fraction of the particles in a slab at the centre
     vector_type length = element_prod(box_->length(), slab_);
     vector_type offset = -length / 2;
-    fcc(particle_->r.begin(), particle_->r.end(), length, offset);
+    size_t nslab = static_cast<size_t>(round(filling_ * particle_->nbox));
+
+    typename vector<vector_type>::iterator r_it = particle_->r.begin();
+    fcc(r_it, r_it + nslab, length, offset);
+    r_it += nslab;
+
+    // book-keeping of total volume filled and of total number of particles inserted
+    double occupied_volume = accumulate(length.begin(), length.end(), 1., multiplies<double>());
+    size_t N = nslab;
+
+    // assign a second fcc lattice to the remaining particles outside the slab,
+    // we split the volume in (2 × dimension) cuboids as sketched below
+    //
+    //      +---------+-----------+---------+
+    //      |         |   i=1     |         |
+    //      |         +-----------+         |
+    //      |         |***********|         |
+    //      |  i=0    |***********|  i=0    |
+    //      |         |***********|         |
+    //      |         +-----------+         |
+    //      |         |   i=1     |         |
+    //      +---------+-----------+---------+
+    //
+    length = box_->length();  // start with the full box
+    offset = -length / 2;
+    for (unsigned int i = 0; i < dimension && r_it != particle_->r.end(); ++i) {
+        if (slab_[i] == 1) continue; // nothing to do
+
+        length[i] *= (1 - slab_[i]) / 2; // remove slab width in direction i and split in two
+
+        // compute particle density in remaining volume,
+        // the repeated computation ensures that rounding errors are captured
+        // and no particles get lost in the end
+        double density = (particle_->nbox - N) / (box_->volume() - occupied_volume);
+        // volume of both slabs
+        double slab_volume = 2 * accumulate(length.begin(), length.end(), 1., multiplies<double>());
+        // number of particles in both slabs,
+        // round upwards and limit by total number of particles in the box
+        nslab = min(static_cast<size_t>(ceil(density * slab_volume)), particle_->nbox - N);
+
+        // insert two slabs: left/right or below/above the central slab
+        fcc(r_it, r_it + nslab / 2, length, offset);
+        offset[i] = -offset[i] - length[i]; // equals box_->length()[i] * slab[i] / 2
+        fcc(r_it + nslab / 2, r_it + nslab, length, offset);
+        r_it += nslab;
+
+        // update book-keeping
+        N += nslab;
+        occupied_volume += slab_volume;
+
+        // select remaining part (central slab)
+        length[i] = box_->length()[i] * slab_[i];
+        offset[i] = -length[i] / 2;
+    }
+    assert(particle_->nbox == N);
 
     // randomise particle positions if there is more than 1 particle type
     // FIXME this requires a subsequent sort
@@ -211,9 +273,11 @@ void lattice<dimension, float_type>::luaopen(lua_State* L)
                            , shared_ptr<box_type const>
                            , shared_ptr<random_type>
                            , vector_type const&
+                           , double
                            , shared_ptr<logger_type>
                         >())
                         .property("slab", &lattice::slab)
+                        .property("filling", &lattice::filling)
                         .property("module_name", &module_name_wrapper<dimension, float_type>)
                         .scope
                         [

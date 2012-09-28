@@ -85,6 +85,7 @@ struct ideal_gas
     unsigned int npart;
     fixed_vector<double, dimension> box_ratios;
     fixed_vector<double, dimension> slab;
+    double filling;
 
     shared_ptr<box_type> box;
     shared_ptr<clock_type> clock;
@@ -146,6 +147,7 @@ ideal_gas<modules_type>::ideal_gas()
     npart = 1000;
     box_ratios = (dimension == 3) ? list_of(1.)(2.)(1.01) : list_of(1.)(2.);
     slab = 1;
+    filling = 1;
 
     vector<unsigned int> npart_vector = list_of(npart);
 
@@ -153,7 +155,7 @@ ideal_gas<modules_type>::ideal_gas()
     particle = make_shared<particle_type>(npart_vector);
     box = make_shared<box_type>(npart, density, box_ratios);
     random = make_shared<random_type>();
-    position = make_shared<position_type>(particle, box, random, slab);
+    position = make_shared<position_type>(particle, box, random, slab, filling);
     velocity = make_shared<velocity_type>(particle, random, temp);
     integrator = make_shared<integrator_type>(particle, box, timestep);
     force = make_shared<force_type>(particle);

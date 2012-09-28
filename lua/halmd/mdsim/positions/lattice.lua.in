@@ -51,6 +51,7 @@ local M = module("halmd.mdsim.positions.lattice")
 --
 function M.__new(args)
     local slab = args.slab or {} -- optional
+    local filling = args.filling or 1 -- optional
 
     -- dependency injection
     local particle = mdsim.particle() -- singleton
@@ -70,7 +71,7 @@ function M.__new(args)
     else
         lattice = lattice_wrapper.host[dimension]
     end
-    local position = lattice(particle, box, random, slab, logger)
+    local position = lattice(particle, box, random, slab, filling, logger)
 
     local core = mdsim.core()
     -- connect position to core
@@ -100,6 +101,7 @@ end
 --
 function M.options(desc)
     desc:add("slab", po.float_array(), "slab extents as a fraction of simulation box")
+    desc:add("filling", po.float(), "fraction of particles in the slab")
 end
 
 --
@@ -117,6 +119,7 @@ end
 --
 function M.write_parameters(lattice, group)
     group:write_attribute("slab", h5.float_array(), lattice.slab)
+    group:write_attribute("filling", h5.float(), lattice.filling)
 end
 
 return M

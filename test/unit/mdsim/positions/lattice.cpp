@@ -214,6 +214,7 @@ lattice<modules_type>::lattice()
     lattice_constant = pow(nunit_cell / density, 1.f / dimension);
 
     slab = (dimension == 3) ? list_of(1.)(.5)(1.) : list_of(1.)(1.);
+    double filling = 1; // any other value requires a much harder test
     double slab_vol_frac = accumulate(slab.begin(), slab.end(), 1., multiplies<double>());
     npart *= slab_vol_frac;
     // adjust density to make sure that the slab can accomodate an fcc lattice with the
@@ -225,7 +226,7 @@ lattice<modules_type>::lattice()
     particle = make_shared<particle_type>(npart_vector);
     box = make_shared<box_type>(npart, density, fixed_vector<double, dimension>(ncell));
     random = make_shared<random_type>();
-    position = make_shared<position_type>(particle, box, random, slab);
+    position = make_shared<position_type>(particle, box, random, slab, filling);
     sample = make_shared<sample_type>(particle->ntypes);
     clock = make_shared<clock_type>(0); // bogus time-step
     phase_space = make_shared<phase_space_type>(sample, particle, box, clock);

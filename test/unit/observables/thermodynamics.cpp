@@ -141,6 +141,7 @@ struct lennard_jones_fluid
     unsigned npart;
     fixed_vector<double, dimension> box_ratios;
     fixed_vector<double, dimension> slab;
+    double filling;
 
     shared_ptr<box_type> box;
     shared_ptr<clock_type> clock;
@@ -338,6 +339,7 @@ lennard_jones_fluid<modules_type>::lennard_jones_fluid()
     npart = gpu ? 4000 : 1500;
     box_ratios = (dimension == 3) ? list_of(1.)(2.)(1.01) : list_of(1.)(2.);
     slab = 1;
+    filling = 1;
 
     vector<unsigned int> npart_vector = list_of(npart);
     boost::array<float, 3> rc_array = list_of(rc)(rc)(rc);
@@ -351,7 +353,7 @@ lennard_jones_fluid<modules_type>::lennard_jones_fluid()
     potential = make_shared<potential_type>(particle->ntype, rc_array, epsilon_array, sigma_array);
     binning = make_shared<binning_type>(particle, box, potential->r_cut(), skin);
     neighbour = make_shared<neighbour_type>(particle, box, binning, potential->r_cut(), skin);
-    position = make_shared<position_type>(particle, box, random, slab);
+    position = make_shared<position_type>(particle, box, random, slab, filling);
     velocity = make_shared<velocity_type>(particle, random, temp);
     force = make_shared<force_type>(potential, particle, box, neighbour);
     clock = make_shared<clock_type>(timestep);

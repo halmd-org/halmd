@@ -60,11 +60,13 @@ public:
       , boost::shared_ptr<box_type const> box
       , boost::shared_ptr<random_type> random
       , typename box_type::vector_type const& slab
+      , double filling
       , boost::shared_ptr<logger_type> logger = boost::make_shared<logger_type>()
     );
     virtual void set();
 
     typename box_type::vector_type const& slab() const { return slab_; }
+    double filling() const { return filling_; }
 
 private:
     typedef utility::profiler profiler_type;
@@ -82,6 +84,8 @@ private:
     boost::shared_ptr<logger_type> logger_;
     /** slab extents for each direction as fraction of the edge length of the box */
     typename box_type::vector_type slab_;
+    /** fraction of particles that are filled into the slab */
+    double filling_;
 
     /**
      *  assign range of particle positions [first, last) to fcc lattice
