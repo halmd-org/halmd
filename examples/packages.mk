@@ -56,38 +56,23 @@ env: env-cmake env-lua env-boost env-hdf5
 ## CMake with CMake-CUDA patch
 ##
 
-CMAKE_VERSION = 2.8.9
-CMAKE_TARBALL = cmake-$(CMAKE_VERSION).tar.gz
-CMAKE_TARBALL_URL = http://www.cmake.org/files/v2.8/$(CMAKE_TARBALL)
-CMAKE_TARBALL_SHA256 = dc3dcc7399be8636471975f955086cdf800739862c240858a98e89719e45e6f9
-CMAKE_CUDA_VERSION = ${CMAKE_VERSION}-0-g96eb1e8
-CMAKE_CUDA_PATCH = cmake-cuda-${CMAKE_CUDA_VERSION}.patch
-CMAKE_CUDA_PATCH_URL = http://sourceforge.net/projects/halmd/files/libs/cmake/$(CMAKE_CUDA_PATCH)
-CMAKE_CUDA_PATCH_SHA256 = 04237a449098295c44295e014398912e36f61513e89b91da3324ca1ded277905
-CMAKE_BUILD_DIR = cmake-$(CMAKE_VERSION)
+CMAKE_CUDA_VERSION = 2.8.9-0-g96eb1e8
+CMAKE_CUDA_GIT_URL = http://git.halmd.org/cmake-cuda.git
+CMAKE_SOURCE_DIR = cmake-$(CMAKE_CUDA_VERSION)
+CMAKE_BUILD_DIR = $(CMAKE_SOURCE_DIR)/build
 CMAKE_INSTALL_DIR = $(PREFIX)/cmake-$(CMAKE_CUDA_VERSION)
 
 .fetch-cmake-$(CMAKE_CUDA_VERSION):
-	@$(RM) $(CMAKE_TARBALL)
-	@$(RM) $(CMAKE_CUDA_PATCH)
-	$(WGET) $(CMAKE_TARBALL_URL)
-	$(WGET) $(CMAKE_CUDA_PATCH_URL)
-	@echo '$(CMAKE_TARBALL_SHA256)  $(CMAKE_TARBALL)' | $(SHA256SUM)
-	@echo '$(CMAKE_CUDA_PATCH_SHA256)  $(CMAKE_CUDA_PATCH)' | $(SHA256SUM)
+	$(RM) $(CMAKE_SOURCE_DIR)
+	$(GIT) clone $(CMAKE_CUDA_GIT_URL) $(CMAKE_SOURCE_DIR)
+	cd $(CMAKE_SOURCE_DIR) && $(GIT) checkout $(CMAKE_CUDA_VERSION)
 	@$(TOUCH) $@
 
 fetch-cmake: .fetch-cmake-$(CMAKE_CUDA_VERSION)
 
-.extract-cmake-$(CMAKE_CUDA_VERSION): .fetch-cmake-$(CMAKE_CUDA_VERSION)
-	$(RM) $(CMAKE_BUILD_DIR)
-	$(TAR) -xzf $(CMAKE_TARBALL)
-	cd $(CMAKE_BUILD_DIR) && $(PATCH) -p1 < $(CURDIR)/$(CMAKE_CUDA_PATCH)
-	@$(TOUCH) $@
-
-extract-cmake: .extract-cmake-$(CMAKE_CUDA_VERSION)
-
-.configure-cmake-$(CMAKE_CUDA_VERSION): .extract-cmake-$(CMAKE_CUDA_VERSION)
-	cd $(CMAKE_BUILD_DIR) && ./configure --prefix=$(CMAKE_INSTALL_DIR)
+.configure-cmake-$(CMAKE_CUDA_VERSION): .fetch-cmake-$(CMAKE_CUDA_VERSION)
+	mkdir -p $(CMAKE_BUILD_DIR)
+	cd $(CMAKE_BUILD_DIR) && ../configure --prefix=$(CMAKE_INSTALL_DIR)
 	@$(TOUCH) $@
 
 configure-cmake: .configure-cmake-$(CMAKE_CUDA_VERSION)
@@ -109,8 +94,7 @@ clean-cmake:
 
 distclean-cmake: clean-cmake
 	@$(RM) .fetch-cmake-$(CMAKE_CUDA_VERSION)
-	$(RM) $(CMAKE_TARBALL)
-	$(RM) $(CMAKE_CUDA_PATCH)
+	$(RM) $(CMAKE_SOURCE_DIR)
 
 env-cmake:
 	@echo
