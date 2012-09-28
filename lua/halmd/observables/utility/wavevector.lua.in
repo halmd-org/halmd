@@ -19,6 +19,7 @@
 --
 
 local module  = require("halmd.utility.module")
+local numeric = require("halmd.numeric")
 local utility = require("halmd.utility")
 
 -- grab C++ wrappers
@@ -74,14 +75,18 @@ local wavevector = assert(libhalmd.observables.utility.wavevector)
 --
 -- :param table args: keyword arguments
 -- :param args.box:               instance of :class:`halmd.mdsim.box`
--- :param args.wavenumber:        list of wavenumbers
+-- :param table args.wavenumber:  list of wavenumbers
 -- :param boolean args.dense:     dense grid of wavevectors (*default:* ``false``)
 -- :param number args.tolerance:  relative tolerance on wavevector magnitude
 -- :param integer args.max_count: maximum number of wavevectors per wavenumber shell
+-- :param table args.filter:      filter on wavevectors (*default:* ``{1, …, 1}``)
 --
 -- If ``dense`` is ``true``, a dense grid of wavevectors is created. Otherwise,
 -- the arguments ``tolerance`` and ``max_count`` are required and a sparse
 -- sampling of wavevectors is returned.
+--
+-- The argument ``filter`` contains 0 or 1 for each Cartesian coordinate, 0
+-- deletes the respective wavevector component.
 --
 -- .. method:: wavenumber()
 --
@@ -104,12 +109,21 @@ local M = module(function(args)
     local wavenumber = utility.assert_type(utility.assert_kwarg(args, "wavenumber"), "table")
     local dense = utility.assert_type(not (args.dense == nil) and args.dense, "boolean")  -- default: false
 
+    -- provide default value: {1, …, 1}
+    local dimension = box.dimension
+    local filter = args.filter or numeric.scalar_matrix(1, dimension, 1)[1] -- construct 1×n matrix and take first row
+
+    utility.assert_type(filter, "table")
+    if #filter ~= dimension then
+        error("invalid size of argument 'filter'", 2)
+    end
+
     if dense then
-        return wavevector(wavenumber, box.length)
+        return wavevector(wavenumber, box.length, filter)
     else
         local tolerance = utility.assert_type(utility.assert_kwarg(args, "tolerance"), "number")
         local max_count = utility.assert_type(utility.assert_kwarg(args, "max_count"), "number")
-        return wavevector(wavenumber, box.length, tolerance, max_count)
+        return wavevector(wavenumber, box.length, tolerance, max_count, filter)
     end
 end)
 

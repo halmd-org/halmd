@@ -138,7 +138,13 @@ void lattice<modules_type>::test()
     );
 
     // setup wavevectors
-    wavevector = std::make_shared<wavevector_type>(wavenumber, box->length(), 1e-3, 2 * dimension);
+    wavevector = std::make_shared<wavevector_type>(
+        wavenumber
+      , box->length()
+      , 1e-3            // tolerance
+      , 2 * dimension   // maximum count
+      , typename wavevector_type::filter_type(1)  // disable filter
+    );
 
     // construct modules for density modes and static structure factor
     density_mode = std::make_shared<density_mode_type>(

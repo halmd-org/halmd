@@ -42,12 +42,14 @@ wavevector<dimension>::wavevector(
   , vector_type const& box_length
   , double tolerance
   , unsigned int max_count
+  , filter_type const& filter
 )
   // initialise members
   : wavenumber_(wavenumber)
   , box_length_(box_length)
   , tolerance_(tolerance)
   , max_count_(max_count)
+  , filter_(filter)
   , logger_(make_shared<logger>("wavevector"))
 {
     auto first = begin(wavenumber_);
@@ -63,6 +65,12 @@ wavevector<dimension>::wavevector(
 
     LOG("tolerance on magnitude: " << tolerance_);
     LOG("maximum shell size: " << max_count_);
+    if (filter_ != filter_type(1)) {
+        LOG("apply filter on wavevectors: " << filter_);
+        if (norm_inf(filter_) > 1 ) {
+            throw std::invalid_argument("filter values must be 0 or 1");
+        }
+    }
 
     // construct wavevectors and store as key/value pairs (wavenumber iterator, wavevector).
     multimap<decltype(first), vector_type> wavevector_map;
@@ -72,6 +80,7 @@ wavevector<dimension>::wavevector(
       , element_div(vector_type(2 * M_PI), box_length_)
       , tolerance_
       , max_count_
+      , filter_
     );
 
     if (wavevector_map.empty()) {
@@ -114,12 +123,14 @@ template <int dimension>
 wavevector<dimension>::wavevector(
     vector<double> const& wavenumber
   , vector_type const& box_length
+  , filter_type const& filter
 )
   // initialise members
   : wavenumber_(wavenumber)
   , box_length_(box_length)
   , tolerance_(0)
   , max_count_(0)
+  , filter_(filter)
   , logger_(make_shared<logger>("wavevector"))
 {
     typedef fixed_vector<int, dimension> index_type;
@@ -128,13 +139,24 @@ wavevector<dimension>::wavevector(
     std::sort(begin(wavenumber_), end(wavenumber_));
     double q_max = wavenumber_.back();
 
-    // determine unit cell in reciprocal lattice
-    // and number of grid points per dimension up up to q_max
+    LOG("construct dense grid of wavevectors");
+    LOG("maximum wavenumber: " << q_max);
+    if (filter_ != filter_type(1)) {
+        LOG("apply filter on wavevectors: " << filter_);
+        if (norm_inf(filter_) > 1 ) {
+            throw std::invalid_argument("filter values must be 0 or 1");
+        }
+    }
+
+    // determine unit cell in reciprocal lattice, 2π / L[i]
+    // and number of grid points per dimension up to q_max
     vector_type unit_cell = element_div(vector_type(2 * M_PI), box_length_);
     auto max_n = static_cast<index_type>(ceil(element_div(vector_type(q_max), unit_cell)));
 
-    LOG("construct dense grid of wavevectors");
-    LOG("maximum wavenumber: " << q_max);
+    // apply wavevector filter for each Cartesian component,
+    // max_n[j] = 0 implies q[j] = 0 below.
+    max_n = element_prod(max_n, static_cast<index_type>(filter_));
+
     LOG_DEBUG("grid points per dimension: " << (2 * max_n + index_type(1)));
 #ifndef NDEBUG
     ostringstream s;
@@ -241,11 +263,14 @@ void wavevector<dimension>::luaopen(lua_State* L)
                   , vector_type const&
                   , double
                   , unsigned int
+                  , filter_type const&
                  >)
               , def("wavevector", &make_shared<wavevector
                   , vector<double> const&
                   , vector_type const&
+                  , filter_type const&
                  >)
+
             ]
         ]
     ];
