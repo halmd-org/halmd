@@ -2,6 +2,7 @@ halmd_add_library(halmd_observables
   density_mode.cpp
   runtime_estimate.cpp
   phase_space.cpp
+  profiles.cpp
   sampler.cpp
   ssf.cpp
   thermodynamics.cpp
@@ -10,12 +11,13 @@ halmd_add_modules(
   libhalmd_observables_density_mode
   libhalmd_observables_runtime_estimate
   libhalmd_observables_phase_space
+  libhalmd_observables_profiles
   libhalmd_observables_sampler
   libhalmd_observables_ssf
   libhalmd_observables_thermodynamics
 )
 
-add_subdirectory(samples) # must appear first in order to register blocking_scheme_base before blocking_scheme
+add_subdirectory(samples) # must appear before dynamics in order to register blocking_scheme_base before blocking_scheme
 add_subdirectory(dynamics)
 add_subdirectory(host)
 if(WITH_CUDA)

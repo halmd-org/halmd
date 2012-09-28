@@ -55,6 +55,9 @@ local function script()
     observables.thermodynamics{force = force}
     -- Sample static structure factor.
     observables.ssf{}
+    -- Sample observable profiles.
+    observables.profiles{force = force}
+
     -- compute mean-square displacement
     observables.dynamics.correlation{correlation = "mean_square_displacement"}
     -- compute mean-quartic displacement
@@ -81,6 +84,7 @@ require("halmd.mdsim.integrator")
 require("halmd.mdsim.position")
 require("halmd.mdsim.velocity")
 require("halmd.observables.dynamics.correlation")
+require("halmd.observables.profiles")
 require("halmd.observables.sampler")
 require("halmd.observables.ssf")
 require("halmd.observables.thermodynamics")

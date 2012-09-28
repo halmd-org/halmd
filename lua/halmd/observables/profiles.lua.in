@@ -1,0 +1,156 @@
+--
+-- Copyright © 2010  Peter Colberg and Felix Höfling
+--
+-- This file is part of HALMD.
+--
+-- HALMD is free software: you can redistribute it and/or modify
+-- it under the terms of the GNU General Public License as published by
+-- the Free Software Foundation, either version 3 of the License, or
+-- (at your option) any later version.
+--
+-- This program is distributed in the hope that it will be useful,
+-- but WITHOUT ANY WARRANTY; without even the implied warranty of
+-- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+-- GNU General Public License for more details.
+--
+-- You should have received a copy of the GNU General Public License
+-- along with this program.  If not, see <http://www.gnu.org/licenses/>.
+--
+
+local module = require("halmd.utility.module")
+
+local device = require("halmd.device")
+local mdsim = {
+    box =      require("halmd.mdsim.box")
+  , clock =    require("halmd.mdsim.clock")
+  , core =     require("halmd.mdsim.core")
+  , particle = require("halmd.mdsim.particle")
+}
+local observables = {
+    sampler = require("halmd.observables.sampler")
+}
+local writers = {
+    file = require("halmd.io.writers.file")
+}
+
+-- grab C++ wrappers
+local profiles_wrapper = {
+    host = {
+        [2] = libhalmd.observables.host.profiles_2_
+      , [3] = libhalmd.observables.host.profiles_3_
+    }
+  , [2] = libhalmd.observables.profiles_2_
+  , [3] = libhalmd.observables.profiles_3_
+}
+if libhalmd.observables.gpu then
+    profiles_wrapper.gpu = {
+        [2] = libhalmd.observables.gpu.profiles_2_
+      , [3] = libhalmd.observables.gpu.profiles_3_
+    }
+end
+local po = libhalmd.po
+-- grab standard library
+local assert = assert
+local string = string
+
+local M = module("halmd.observables.profiles")
+
+--
+-- construct instance of profiles module
+--
+-- @param args parameter table
+-- @returns instance of profiles module
+--
+function M.__new(args)
+    local every = args.every or 100 -- default value
+    local ngrid = args.grid_points or { 10 } -- default value
+
+    -- dependency injection
+    local particle = mdsim.particle() -- singleton
+    local dimension = assert(particle.dimension)
+    local box = mdsim.box() -- singleton
+    local clock = mdsim.clock() -- singleton
+    local force = assert(args.force)
+    local logger = assert(args.logger)
+
+    -- complete missing values by repeating the last entry
+    for i = #ngrid + 1, dimension do
+        ngrid[i] = ngrid[#ngrid]
+    end
+
+    -- disable module if any element of 'ngrid' is zero
+    local product = 1
+    for i = 1, dimension do
+        product = product * ngrid[i]
+    end
+    if product == 0 then
+        return nil
+    end
+
+    -- construct module
+    local profiles = assert(profiles_wrapper[device() and "gpu" or "host"][dimension])
+    local observable = profiles(particle, box, clock, force, ngrid, logger)
+
+    -- convert (0-based) axis index to name
+    local function axis(index)
+        return string.char(string.byte("X") + index)
+    end
+
+    local file = writers.file() -- singleton
+    local sampler = observables.sampler() -- singleton
+
+    -- write position grid only once
+    local writer = file:writer{location = {"observables/profiles"}, mode = "truncate"}
+    for i = 0, dimension - 1 do
+        writer:on_write(observable:position(i), {"density", axis(i), "position"})
+        writer:on_write(observable:position(i), {"stress_tensor", axis(i), "position"}) -- FIXME hard link together
+    end
+    sampler:on_start(writer.write)
+
+    -- write profiles to observables file
+    local writer = file:writer{location = {"observables/profiles"}, mode = "append"}
+    writer:on_prepend_write(observable.sample) -- evaluate profiles before writing
+    for i = 0, dimension - 1 do
+        writer:on_write(observable:density_profile(i), {"density", axis(i)})
+        writer:on_write(observable:stress_tensor_profile(i), {"stress_tensor", axis(i)})
+    end
+--     sampler:on_prepare(observable.prepare, every)
+    sampler:on_sample(writer.write, every)
+
+    return observable
+end
+
+--
+-- returns module description
+--
+function M.description()
+    return "profiles of density, stress, ... along the axes"
+end
+
+--
+-- connect runtime accumulators to module profiler
+--
+function M.profile(self, profiler)
+    profiler:on_profile{self, sample = "computation of profiles"}
+    if device() then
+        profiler:on_profile{self, bins = "profiles: computation of bin indices"}
+        profiler:on_profile{self, sort = "profiles: sorting of bin indices"}
+        profiler:on_profile{self, boundaries  = "profiles: find bin boundaries"}
+        profiler:on_profile{self, stress_tensor = "profiles: collect stress tensors"}
+        profiler:on_profile{self, reduce = "profiles: reduce multi-dimensional histograms"}
+        profiler:on_profile{self, copy = "profiles: copy profiles from GPU to host"}
+    end
+end
+
+--
+-- assemble module options
+--
+-- @param desc po.options_description
+--
+function M.options(desc)
+    desc:add("grid-points", po.uint_array(),
+             "number of grid points along each axis. Zero (0) disables evaluation.")
+    desc:add("every", po.uint64(), "sampling interval in steps")
+end
+
+return M
