@@ -1262,31 +1262,23 @@ env-gcc:
 ## HALMD Highly Accerelated Large-Scale Molecular Dynamics
 ##
 
-HALMD_VERSION = 0.2.0
-HALMD_TARBALL = halmd-$(HALMD_VERSION).tar.bz2
-HALMD_TARBALL_URL = http://downloads.sourceforge.net/project/halmd/halmd/0.2/$(HALMD_TARBALL)
-HALMD_TARBALL_SHA256 = 95874a056b0962f3a694011a2262277b2929d2825388d46183791a367f70d6da
+HALMD_VERSION = 0.2.0-0-g8abed54
+HALMD_GIT_URL = http://git.halmd.org/halmd.git
 HALMD_SOURCE_DIR = halmd-$(HALMD_VERSION)
 HALMD_BUILD_DIR = $(HALMD_SOURCE_DIR)/build/release
 HALMD_INSTALL_DIR = $(PREFIX)/halmd-$(HALMD_VERSION)
 HALMD_BUILD_ENV = CUDACC="nvcc --compiler-bindir=/usr/bin"
 
 .fetch-halmd-$(HALMD_VERSION):
-	@$(RM) $(HALMD_TARBALL)
-	$(WGET) $(HALMD_TARBALL_URL)
-	@echo '$(HALMD_TARBALL_SHA256)  $(HALMD_TARBALL)' | $(SHA256SUM)
+	$(RM) $(HALMD_SOURCE_DIR)
+	$(GIT) clone $(HALMD_GIT_URL) $(HALMD_SOURCE_DIR)
+	cd $(HALMD_SOURCE_DIR) && $(GIT) checkout $(HALMD_VERSION)
+	cd $(HALMD_SOURCE_DIR) && $(GIT) submodule update --init
 	@$(TOUCH) $@
 
 fetch-halmd: .fetch-halmd-$(HALMD_VERSION)
 
-.extract-halmd-$(HALMD_VERSION): .fetch-halmd-$(HALMD_VERSION)
-	$(RM) $(HALMD_SOURCE_DIR)
-	$(TAR) -xjf $(HALMD_TARBALL)
-	@$(TOUCH) $@
-
-extract-halmd: .extract-halmd-$(HALMD_VERSION)
-
-.configure-halmd-$(HALMD_VERSION): .extract-halmd-$(HALMD_VERSION)
+.configure-halmd-$(HALMD_VERSION): .fetch-halmd-$(HALMD_VERSION)
 	mkdir -p $(HALMD_BUILD_DIR)
 	cd $(HALMD_BUILD_DIR) && $(HALMD_BUILD_ENV) cmake -DCMAKE_INSTALL_PREFIX=$(HALMD_INSTALL_DIR) $(CURDIR)/$(HALMD_SOURCE_DIR)
 	@$(TOUCH) $@
@@ -1305,12 +1297,11 @@ install-halmd: .build-halmd-$(HALMD_VERSION)
 clean-halmd:
 	@$(RM) .build-halmd-$(HALMD_VERSION)
 	@$(RM) .configure-halmd-$(HALMD_VERSION)
-	@$(RM) .extract-halmd-$(HALMD_VERSION)
-	$(RM) $(HALMD_SOURCE_DIR)
+	$(RM) $(HALMD_BUILD_DIR)
 
 distclean-halmd: clean-halmd
 	@$(RM) .fetch-halmd-$(HALMD_VERSION)
-	$(RM) $(HALMD_TARBALL)
+	$(RM) $(HALMD_SOURCE_DIR)
 
 env-halmd:
 	@echo
