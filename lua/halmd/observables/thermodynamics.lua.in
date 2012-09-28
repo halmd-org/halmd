@@ -81,6 +81,10 @@ local thermodynamics = assert(libhalmd.observables.thermodynamics)
 --
 --    Returns center of mass velocity.
 --
+-- .. method:: r_cm()
+--
+--    Returns center of mass.
+--
 -- .. method:: mean_mass()
 --
 --    Returns mean particle mass.

@@ -79,9 +79,14 @@ public:
     virtual double en_kin();
 
     /**
-     * Compute mean potential energy per particle.
+     * Compute velocity of centre of mass
      */
     virtual vector_type const& v_cm();
+
+    /**
+     * Compute centre of mass
+     */
+    virtual vector_type const& r_cm();
 
     /**
      * Compute mean particle mass.
@@ -126,6 +131,8 @@ private:
     double en_kin_;
     /** velocity of centre of mass */
     vector_type v_cm_;
+    /** centre of mass */
+    vector_type r_cm_;
     /** mean mass */
     double mean_mass_;
     /** mean potential energy per particle */
@@ -137,8 +144,10 @@ private:
 
     /** cache observers of mean kinetic energy per particle */
     std::tuple<cache<>, cache<>> en_kin_cache_;
-    /** cache observers of mean potential energy per particle */
+    /** cache observers of velocity of centre of mass */
     std::tuple<cache<>, cache<>> v_cm_cache_;
+    /** cache observers of centre of mass */
+    std::tuple<cache<>, cache<>> r_cm_cache_;
     /** cache observers of mean potential energy per particle */
     std::tuple<cache<>, cache<>> en_pot_cache_;
     /** cache observers of mean virial per particle */
@@ -154,6 +163,7 @@ private:
     {
         accumulator_type en_kin;
         accumulator_type v_cm;
+        accumulator_type r_cm;
         accumulator_type en_pot;
         accumulator_type virial;
         accumulator_type hypervirial;

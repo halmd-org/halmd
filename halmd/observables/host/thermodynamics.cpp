@@ -88,6 +88,23 @@ thermodynamics<dimension, float_type>::v_cm()
 }
 
 template <int dimension, typename float_type>
+typename thermodynamics<dimension, float_type>::vector_type const&
+thermodynamics<dimension, float_type>::r_cm()
+{
+    cache<velocity_array_type> const& position_cache = particle_->position();
+    cache<mass_array_type> const& mass_cache = particle_->mass();
+    cache<size_type> const& group_cache = group_->size();
+
+    if (r_cm_cache_ != std::tie(position_cache, mass_cache, group_cache)) {
+        LOG_TRACE("acquire centre-of-mass");
+        scoped_timer_type timer(runtime_.r_cm);
+        r_cm_ = get_r_cm(*particle_, *group_, *box_);
+        r_cm_cache_ = std::tie(position_cache, mass_cache, group_cache);
+    }
+    return r_cm_;
+}
+
+template <int dimension, typename float_type>
 double thermodynamics<dimension, float_type>::mean_mass()
 {
     cache<velocity_array_type> const& velocity_cache = particle_->velocity();
@@ -162,6 +179,7 @@ void thermodynamics<dimension, float_type>::luaopen(lua_State* L)
                     class_<runtime>("runtime")
                         .def_readonly("en_kin", &runtime::en_kin)
                         .def_readonly("v_cm", &runtime::v_cm)
+                        .def_readonly("r_cm", &runtime::r_cm)
                         .def_readonly("en_pot", &runtime::en_pot)
                         .def_readonly("virial", &runtime::virial)
                         .def_readonly("hypervirial", &runtime::hypervirial)
