@@ -1,0 +1,126 @@
+--
+-- Copyright © 2011  Felix Höfling
+--
+-- This file is part of HALMD.
+--
+-- HALMD is free software: you can redistribute it and/or modify
+-- it under the terms of the GNU General Public License as published by
+-- the Free Software Foundation, either version 3 of the License, or
+-- (at your option) any later version.
+--
+-- This program is distributed in the hope that it will be useful,
+-- but WITHOUT ANY WARRANTY; without even the implied warranty of
+-- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+-- GNU General Public License for more details.
+--
+-- You should have received a copy of the GNU General Public License
+-- along with this program.  If not, see <http://www.gnu.org/licenses/>.
+--
+local module = require("halmd.utility.module")
+
+local mdsim = {
+    clock = require("halmd.mdsim.clock")
+}
+local observables = {
+    binned_phase_space = require("halmd.observables.binned_phase_space")
+  , sampler = require("halmd.observables.sampler")
+}
+local writers = {
+    file = require("halmd.io.writers.file")
+}
+
+-- grab C++ wrappers
+local density_wrapper = libhalmd.observables.fields.density
+local po = libhalmd.po
+-- grab standard library
+local assert = assert
+local string = string
+
+local M = module("halmd.observables.fields.density")
+
+--
+-- construct fields.density module
+--
+-- @param args       parameter table
+--   args.species       particle species
+--   args.nbin          number of bins per space dimension
+--   args.every         sampling interval
+--
+function M.__new(args)
+    -- parameters
+    local species = args.species or 0 -- default value
+    local nbin = args.grid_points or { 10 } -- default value
+    local every = args.every or 100 -- default value
+
+    -- disable module if any element of 'nbin' is zero
+    local product = 1
+    for i = 1, #nbin do
+        product = product * nbin[i]
+    end
+    if product == 0 then
+        return nil
+    end
+
+    -- dependency injection
+    local clock = mdsim.clock() -- singleton
+    local logger = assert(args.logger)
+
+    -- construct sampler for binned phase space sample
+    local binned_phase_space = observables.binned_phase_space{ species = species, nbin = nbin }
+    local sample = assert(binned_phase_space.sample)
+
+    -- construct sampling module
+    local observable = assert(density_wrapper)(sample, clock, logger)
+
+    -- acquire sample before sampling
+    observable:on_sample(binned_phase_space.acquire)
+
+    local sampler = observables.sampler() -- singleton
+    local file = writers.file() -- singleton
+
+    -- convert (0-based) species index to name
+    local function name(index)
+        return string.char(string.byte("A") + index)
+    end
+
+    -- write wavenumbers only once
+    local writer = file:writer{location = {"observables", "fields", "density"}, mode = "truncate"}
+    -- FIXME position() is called twice, once for constructing and once for writing the dataset
+    writer:on_write(binned_phase_space:position(), {name(species), "position"})
+    sampler:on_start(writer.write)
+
+    -- write density field
+    local writer = file:writer{location = {"observables", "fields", "density"}, mode = "append"}
+    writer:on_prepend_write(observable.sample)
+    writer:on_write(observable.value, {name(species)})
+    sampler:on_sample(writer.write, every)
+
+    return observable
+end
+
+--
+-- connect runtime accumulators to module profiler
+--
+function M.profile(self, profiler)
+    profiler:on_profile{self, sample = "sampling of density field"}
+end
+
+--
+-- returns module description
+--
+function M.description()
+    return "number density field"
+end
+
+--
+-- assemble module options
+--
+-- @param desc po.options_description
+--
+function M.options(desc)
+    desc:add("species", po.uint(), "particle species")
+    desc:add("grid-points", po.uint_array(), "number of grid points along each axis. Zero (0) disables module.")
+    desc:add("every", po.uint64(), "sampling interval")
+end
+
+return M

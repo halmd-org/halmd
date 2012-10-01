@@ -20,6 +20,7 @@ halmd_add_modules(
 )
 
 add_subdirectory(samples) # must appear before dynamics in order to register blocking_scheme_base before blocking_scheme
+add_subdirectory(fields)
 add_subdirectory(dynamics)
 add_subdirectory(host)
 if(WITH_CUDA)

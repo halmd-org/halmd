@@ -19,4 +19,5 @@ halmd_add_modules(
 )
 
 add_subdirectory(dynamics)
+add_subdirectory(fields)
 add_subdirectory(samples)

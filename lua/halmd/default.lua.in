@@ -55,6 +55,8 @@ local function script()
     observables.thermodynamics{force = force}
     -- Sample static structure factor.
     observables.ssf{}
+    -- Sample density field
+    observables.fields.density{}
     -- Sample observable profiles.
     observables.profiles{force = force}
 
@@ -85,6 +87,7 @@ require("halmd.mdsim.position")
 require("halmd.mdsim.velocity")
 require("halmd.observables.binned_phase_space")
 require("halmd.observables.dynamics.correlation")
+require("halmd.observables.fields.density")
 require("halmd.observables.profiles")
 require("halmd.observables.sampler")
 require("halmd.observables.ssf")
