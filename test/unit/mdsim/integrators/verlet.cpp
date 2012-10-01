@@ -133,6 +133,9 @@ void ideal_gas<modules_type>::test()
     BOOST_CHECK_CLOSE_FRACTION(temp, (float)thermodynamics->temp(), eps_float);
     BOOST_CHECK_CLOSE_FRACTION(density, (float)thermodynamics->density(), eps_float);
     BOOST_CHECK_CLOSE_FRACTION(thermodynamics->pressure() / temp / density, 1., eps_float);
+    BOOST_CHECK_SMALL(thermodynamics->virial(), eps);  // virial vanishes without interactions
+    BOOST_CHECK_CLOSE_FRACTION(thermodynamics->en_kin(), .5 * dimension * temp, eps_float);
+    BOOST_CHECK_SMALL(thermodynamics->en_pot(), eps);
 }
 
 template <typename modules_type>
