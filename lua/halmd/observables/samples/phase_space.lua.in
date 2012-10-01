@@ -46,6 +46,7 @@ if libhalmd.observables.gpu then
 end
 -- grab standard library
 local assert = assert
+local property = property
 
 local M = module("halmd.observables.samples.phase_space")
 
@@ -72,6 +73,10 @@ function M.__new(args)
             phase_space = assert(phase_space_wrapper.host[memory][dimension])
         end
         sample[memory] = phase_space(particle.ntypes)
+
+        sample[memory].memory = property(function(self)
+            return memory
+        end)
     end
     return sample[memory]
 end
