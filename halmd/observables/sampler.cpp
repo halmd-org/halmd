@@ -135,7 +135,7 @@ connection sampler::on_finish(slot_function_type const& slot)
 void sampler::prepare(slot_function_type const& slot, step_type interval) const
 {
     step_type step = clock_->step();
-    if (step == 0 || (step + 1) % interval == 0 || (step + 1) == steps_) {
+    if (step == 0 || (interval > 0 && (step + 1) % interval == 0) || (step + 1) == steps_) {
         slot();
     }
 }
@@ -146,7 +146,7 @@ void sampler::prepare(slot_function_type const& slot, step_type interval) const
 void sampler::sample(slot_function_type const& slot, step_type interval) const
 {
     step_type step = clock_->step();
-    if (step == 0 || step % interval == 0 || step == steps_) {
+    if (step == 0 || (interval > 0 && step % interval == 0) || step == steps_) {
         slot();
     }
 }
