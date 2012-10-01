@@ -94,6 +94,9 @@ void ssf<dimension>::sample()
             v[0] = mean(acc);
             v[1] = (count(acc) > 1) ? error_of_mean(acc) : 0;
             v[2] = static_cast<double>(count(acc));
+            // reset accumulator after output
+            // FIXME the accumulator should be used for block averages
+            result_accumulator_[i][j].reset();
         }
     }
     step_ = clock_->step();   // store simulation step as time stamp
