@@ -1,0 +1,56 @@
+--
+-- Copyright © 2011  Felix Höfling
+--
+-- This file is part of HALMD.
+--
+-- HALMD is free software: you can redistribute it and/or modify
+-- it under the terms of the GNU General Public License as published by
+-- the Free Software Foundation, either version 3 of the License, or
+-- (at your option) any later version.
+--
+-- This program is distributed in the hope that it will be useful,
+-- but WITHOUT ANY WARRANTY; without even the implied warranty of
+-- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+-- GNU General Public License for more details.
+--
+-- You should have received a copy of the GNU General Public License
+-- along with this program.  If not, see <http://www.gnu.org/licenses/>.
+--
+
+local module = require("halmd.utility.module")
+
+-- grab C++ wrappers
+local binned_phase_space_wrapper = libhalmd.observables.samples.binned_phase_space
+
+-- grab standard library
+local assert = assert
+
+local M = module("halmd.observables.samples.binned_phase_space")
+
+--
+-- construct binned_phase_space module
+--
+-- @param args          parameter table
+--   args.data_sample      sample with phase space data
+--   args.species          particle species selected for binning
+--   args.nbin             number of bins per space dimension
+--   args.occupancy     average occupancy of binning cells (GPU only)
+--
+function M.__new(args)
+    local data_sample = assert(args.data_sample)
+    local species = assert(args.species)
+    local nbin = assert(args.nbin)
+    local occupancy = assert(args.occupancy)
+
+    local sample
+    if data_sample.memory == "gpu" then
+        local logger = assert(args.logger)
+        sample = assert(binned_phase_space_wrapper)(data_sample, species, nbin, occupancy, logger)
+    else
+        sample = assert(binned_phase_space_wrapper)(data_sample, species, nbin)
+    end
+
+    return sample
+end
+
+return M

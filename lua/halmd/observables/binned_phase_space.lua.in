@@ -1,0 +1,119 @@
+--
+-- Copyright © 2011  Felix Höfling
+--
+-- This file is part of HALMD.
+--
+-- HALMD is free software: you can redistribute it and/or modify
+-- it under the terms of the GNU General Public License as published by
+-- the Free Software Foundation, either version 3 of the License, or
+-- (at your option) any later version.
+--
+-- This program is distributed in the hope that it will be useful,
+-- but WITHOUT ANY WARRANTY; without even the implied warranty of
+-- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+-- GNU General Public License for more details.
+--
+-- You should have received a copy of the GNU General Public License
+-- along with this program.  If not, see <http://www.gnu.org/licenses/>.
+--
+
+local module = require("halmd.utility.module")
+
+local device = require("halmd.device")
+local mdsim = {
+    box =   require("halmd.mdsim.box")
+  , clock = require("halmd.mdsim.clock")
+}
+local observables = {
+    phase_space = require("halmd.observables.phase_space")
+  , samples = {
+        binned_phase_space = require("halmd.observables.samples.binned_phase_space")
+      , phase_space        = require("halmd.observables.samples.phase_space")
+    }
+}
+
+-- grab C++ wrappers
+local binned_phase_space_wrapper = libhalmd.observables.binned_phase_space
+local po = libhalmd.po
+-- grab standard library
+local assert = assert
+local property = property
+
+local M = module("halmd.observables.binned_phase_space")
+
+--
+-- construct binned_phase_space module
+--
+-- @param args       parameter table
+--   args.species       particle species selected for binning
+--   args.nbin          number of bins per space dimension
+--   args.occupancy     average occupancy of binning cells (GPU only)
+--   args.threads       number of CUDA threads per block (GPU only)
+--   args.disable_gpu   disable GPU acceleration, construct sample in host memory
+--
+function M.__new(args)
+    -- parameters
+    local species = assert(args.species)
+    local nbin = assert(args.nbin)
+    local occupancy = args.occupancy or 0.4 -- default value
+    local threads = args.threads or 64 -- default value, a small value turned out to be more efficient here
+
+    -- dependency injection
+    local memory = device() and not args.disable_gpu and "gpu" or "host"
+    local data_sample = assert(observables.samples.phase_space{memory = memory}) -- singleton
+    local dimension = assert(data_sample.dimension)
+    local box = mdsim.box() -- singleton
+    local clock = mdsim.clock() -- singleton
+    local logger = assert(args.logger)
+
+    -- complete missing values by repeating the last entry
+    for i = #nbin + 1, dimension do
+        nbin[i] = nbin[#nbin]
+    end
+
+    -- construct sample
+    local sample = observables.samples.binned_phase_space{
+        data_sample = data_sample, species = species, nbin = nbin, occupancy = occupancy
+    }
+
+    -- construct sampling module
+    local sampler
+    if memory == "gpu" then
+        sampler = assert(binned_phase_space_wrapper)(sample, box, clock, threads, logger)
+    else
+        sampler = assert(binned_phase_space_wrapper)(sample, box, clock, logger)
+    end
+
+    -- acquire phase space sample before binning
+    local phase_space = assert(observables.phase_space{memory = memory}) -- operates on phase space sample being a singleton
+    sampler:on_acquire(phase_space.acquire)
+
+    -- extend sampler module with read-only sample property
+    sampler.sample = property(function(self)
+        return sample
+    end)
+
+    return sampler
+end
+
+--
+-- connect runtime accumulators to module profiler
+--
+function M.profile(self, profiler)
+    profiler:on_profile{self, acquire = "binning of phase space sample"}
+end
+
+--
+-- assemble module options
+--
+-- @param desc po.options_description
+--
+function M.options(desc)
+    if device.with_gpu() then
+        desc:add("occupancy", po.float(), "desired average cell occupancy")
+        desc:add("threads", po.uint(), "number of CUDA threads per block")
+        desc:add("disable-gpu", po.bool_switch(), "disable GPU acceleration")
+    end
+end
+
+return M
