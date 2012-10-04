@@ -1,9 +1,9 @@
 [submodule "libs/h5xx"]
 	path = libs/h5xx
 	url = ../h5xx
-[submodule "libs/luabind"]
-	path = libs/luabind
-	url = ../luabind
+[submodule "libs/luaponte"]
+	path = libs/luaponte
+	url = ../luaponte
 [submodule "libs/boost-log"]
 	path = libs/boost-log
 	url = ../boost-log
