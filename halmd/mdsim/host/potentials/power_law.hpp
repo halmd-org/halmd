@@ -47,9 +47,6 @@ public:
     typedef boost::numeric::ublas::matrix<unsigned int> uint_matrix_type;
     typedef logger logger_type;
 
-    static void luaopen(lua_State* L);
-
-    static char const* module_name() { return "power_law"; }
 
     power_law(
         unsigned int ntype1
@@ -60,6 +57,11 @@ public:
       , uint_matrix_type const& index
       , std::shared_ptr<logger_type> logger = std::make_shared<logger_type>()
     );
+    
+    /**
+     * Bind class to Lua.
+     **/
+    static void luaopen(lua_State* L);
 
     /**
      * Compute potential and its derivative at squared distance 'rr'

@@ -30,10 +30,6 @@
 #include <halmd/mdsim/gpu/potentials/power_law_kernel.hpp>
 #include <halmd/utility/lua/lua.hpp>
 
-using namespace boost;
-using namespace boost::numeric::ublas;
-using namespace std;
-
 namespace halmd {
 namespace mdsim {
 namespace gpu {
@@ -119,7 +115,7 @@ void power_law<float_type>::luaopen(lua_State* L)
             [
                 namespace_("potentials")
                 [
-                    class_<power_law, std::shared_ptr<power_law> >(module_name())
+                    class_<power_law, std::shared_ptr<power_law> >("power_law")
                         .def(constructor<
                             unsigned
                           , unsigned

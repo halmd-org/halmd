@@ -45,10 +45,6 @@ public:
     typedef boost::numeric::ublas::matrix<unsigned> uint_matrix_type;
     typedef logger logger_type;
 
-    static char const* module_name() { return "power_law"; }
-
-    static void luaopen(lua_State* L);
-
     power_law(
         unsigned ntype1
       , unsigned ntype2
@@ -58,6 +54,11 @@ public:
       , uint_matrix_type const& index
       , std::shared_ptr<logger_type> logger = std::make_shared<logger_type>()
     );
+    
+    /**
+     * Bind module to Lua.
+     **/
+    static void luaopen(lua_State* L);
 
     /** bind textures before kernel invocation */
     void bind_textures() const
