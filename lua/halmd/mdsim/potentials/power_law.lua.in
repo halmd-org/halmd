@@ -22,93 +22,131 @@ local log               = require("halmd.io.log")
 local module            = require("halmd.utility.module")
 local numeric           = require("halmd.utility.numeric")
 
--- grab C++ wrappers
-local power_law_wrapper = {
-    host = libhalmd.mdsim.host.potentials.power_law
-}
-if libhalmd.mdsim.gpu then
-    power_law_wrapper.gpu = libhalmd.mdsim.gpu.potentials.power_law
-end
-local h5 = libhalmd.h5
-local po = libhalmd.po
--- grab standard library
-local assert = assert
-local type = type
-local scalar_matrix = assert(numeric.scalar_matrix)
-
-
+---
+-- Power-law potential
+-- =======================
 --
--- construct power law module
+-- This module implements the a power-law potential,
+--
+-- .. math::
+--
+--    U_\text{PL}\left(r_{ij}\right) = \epsilon_{ij} 
+--        \left(\frac{\sigma_{ij}}{r_{ij}}\right)^{n}
+--
+-- for the interaction between two particles of species :math:`i` and :math:`j`
+-- with the power-law index :math:`n`. Also known as *soft-sphere* potential.
+--
+
+-- grab C++ wrappers
+local power_law
+
+if device.gpu then
+    lennard_jones = assert(libhalmd.mdsim.gpu.potentials.power_law)
+else
+    lennard_jones = assert(libhalmd.mdsim.host.potentials.power_law)
+end
+
+---
+-- Construct power law potential.
+--
+-- :param table args: keyword arguments
+-- :param args.particle: instance, or sequence of two instances, of :class:`halmd.mdsim.particle`
+-- :param table args.epsilon: matrix with elements :math:`\epsilon_{ij}` (defaults to ``1``)
+-- :param table args.sigma: matrix with elements :math:`\sigma_{ij}` (defaults to ``1``)
+-- :param table args.cutoff: matrix with elements :math:`r_{\text{c}, ij}`
+-- :param number args.index: power-law index :math:`n` (defaults to ``12``)
+--
+-- If all elements of a matrix are equal, a scalar value should be passed instead.
+--
+-- .. note::
+--
+--    The cutoff is only relevant with :class:`halmd.mdsim.forces.pair_trunc`.
+--
+-- .. attribute:: epsilon
+--
+--    Matrix with elements :math:`\epsilon_{ij}`.
+--
+-- .. attribute:: sigma
+--
+--    Matrix with elements :math:`\sigma_{ij}`.
+--
+-- .. attribute:: r_cut
+--
+--    Matrix with elements :math:`r_{\text{c}, ij}` in reduced units.
+--
+-- .. attribute:: r_cut_sigma
+--
+--    Matrix with elements :math:`r_{\text{c}, ij}` in units of :math:`\sigma_{ij}`.
+--
+-- .. attribute:: index
+--
+--    Power-law index :math:`n`
+--
+-- .. attribute:: description
+--
+--    Name of potential for profiler.
 --
 local M = module(function(args)
-    local cutoff = args.cutoff or 2.5 -- default value
-    local epsilon = args.epsilon or 1 -- default value
-    local sigma = args.sigma or 1 -- default value
-    local index = args.index or 12 -- default value
+    local epsilon = args and args.epsilon or 1
+    if type(epsilon) ~= "table" and type(epsilon) ~= "number" then
+        error("bad argument 'epsilon'", 2)
+    end
+    local sigma = args and args.sigma or 1
+    if type(sigma) ~= "table" and type(sigma) ~= "number" then
+        error("bad argument 'sigma'", 2)
+    end
+    local cutoff = args and args.cutoff
+    if type(cutoff) ~= "table" and type(cutoff) ~= "number" then
+        error("bad argument 'cutoff'", 2)
+    end
+    local index = args and args.index or 12
+    if type(index) ~= "table" and type(index) ~= "number" then
+        error("bad argument 'index'", 2)
+    end
+    local particle = args.particle
+    if type(particle) ~= "table" then
+        particle = {particle, particle}
+    end
+    if #particle ~= 2 then
+        error("bad argument 'particle'", 2)
+    end
+    
+    local nspecies = {}
+    local label = {}
+    for i = 1, #particle do
+        table.insert(nspecies, assert(particle[i].nspecies))
+        table.insert(label, assert(particle[i].label))
+    end
 
-    local particle = assert(args.particle)
-    local logger = log.logger({label = "power_law"})
-
+    local label = ("power_law (%s ↔ %s)"):format(label[1], label[2])
+    local logger = log.logger({label = label})
+    -- construct instance
+    
     if type(cutoff) == "number" then
-        cutoff = scalar_matrix(particle1.nspecies, particle2.nspecies, cutoff)
+        cutoff = numeric.scalar_matrix(nspecies[1], nspecies[2], cutoff)
     end
     if type(epsilon) == "number" then
-        epsilon = scalar_matrix(particle1.nspecies, particle2.nspecies, epsilon)
+        epsilon = numeric.scalar_matrix(nspecies[1], nspecies[2], epsilon)
     end
     if type(sigma) == "number" then
-        sigma = scalar_matrix(particle1.nspecies, particle2.nspecies, sigma)
+        sigma = numeric.scalar_matrix(nspecies[1], nspecies[2], sigma)
     end
-
-    local power_law
-    if device.gpu then
-        power_law = assert(power_law_wrapper.gpu)
-    else
-        power_law = assert(power_law_wrapper.host)
-    end
-    return power_law(particle.nspecies, cutoff, epsilon, sigma, index, logger)
+    
+    local self = power_law(nspecies[1], nspecies[2], cutoff, epsilon, sigma, index, logger)
+    
+    -- add description for profiler
+    self.description = property(function()
+        return "Power law potential"
+    end)
+    
+    -- add logger instance for pair_trunc
+    self.logger = property(function()
+        return logger
+    end)
+    
+    return self
 end)
 
---
--- returns module description
---
-function M.description()
-    return "power law potential"
-end
 
---
--- assemble module options
---
--- @param desc po.options_description
---
-function M.options(desc)
-    desc:add("cutoff", po.float_array(), "truncate potential at cutoff radius")
-    desc:add("epsilon", po.float_array(), "potential well depths")
-    desc:add("sigma", po.float_array(), "collision diameters")
-    desc:add("index", po.uint_array(), "index of soft power-law potential")
-    -- FIXME desc:add("smooth", po.float_array(), "C²-potential smoothing factor")
-end
-
---
--- read module parameters from HDF5 group
---
-function M.read_parameters(args, group)
-    -- FIXME args.cutoff = group:read_attribute("cutoff", h5.float_array())
-    -- FIXME args.epsilon = group:read_attribute("epsilon", h5.float_array())
-    -- FIXME args.sigma = group:read_attribute("sigma", h5.float_array())
-    -- FIXME args.index = group:read_attribute("index", h5.uint_array())
-end
-
---
--- write module parameters to HDF5 group
---
--- @param power_law module instance
--- @param group HDF5 group
---
-function M.write_parameters(power_law, group)
-    -- FIXME :write_attribute("cutoff", h5.float_array(), power_law.r_cut_sigma:data())
-    -- FIXME :write_attribute("epsilon", h5.float_array(), power_law.epsilon:data())
-    -- FIXME :write_attribute("sigma", h5.float_array(), power_law.sigma:data())
-    -- FIXME :write_attribute("index", h5.uint_array(), power_law.index:data())
-end
 
 return M
