@@ -54,7 +54,7 @@ public:
       , uint_matrix_type const& index
       , std::shared_ptr<logger_type> logger = std::make_shared<logger_type>()
     );
-    
+
     /**
      * Bind module to Lua.
      **/
