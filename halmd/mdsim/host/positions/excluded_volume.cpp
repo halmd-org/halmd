@@ -1,5 +1,6 @@
 /*
  * Copyright © 2011  Peter Colberg
+ * Copyright © 2012  Nicolas Höft
  *
  * This file is part of HALMD.
  *
@@ -25,9 +26,6 @@
 #include <halmd/mdsim/host/positions/excluded_volume.hpp>
 #include <halmd/utility/demangle.hpp>
 #include <halmd/utility/lua/lua.hpp>
-
-using namespace boost;
-using namespace std;
 
 namespace halmd {
 namespace mdsim {
@@ -95,7 +93,7 @@ bool excluded_volume<dimension, float_type>::place_sphere(
       , upper
       , bind(&excluded_volume::place_cell, this, centre, diameter, _1)
     );
-    return equal(upper.begin(), upper.end(), result.begin());
+    return std::equal(upper.begin(), upper.end(), result.begin());
 }
 
 template <int dimension, typename float_type>
@@ -115,7 +113,7 @@ excluded_volume<dimension, float_type>::sphere_extents(
         assert(lower[i] >= 0);
         assert(upper[i] >= 0);
     }
-    return make_pair(index_type(lower), index_type(upper));
+    return std::make_pair(index_type(lower), index_type(upper));
 }
 
 template <int dimension, typename float_type>
@@ -126,7 +124,7 @@ void excluded_volume<dimension, float_type>::exclude_sphere_from_cell(
 )
 {
     // FIXME drop “spherical cow” approximation: a sphere is not a cube
-    cell_(element_mod(index, ncell_)).push_back(make_pair(centre, diameter));
+    cell_(element_mod(index, ncell_)).push_back(std::make_pair(centre, diameter));
 }
 
 template <int dimension, typename float_type>
@@ -152,22 +150,22 @@ template <int dimension, typename float_type>
 void excluded_volume<dimension, float_type>::luaopen(lua_State* L)
 {
     using namespace luaponte;
-    static string const class_name("excluded_volume_" + lexical_cast<string>(dimension) + "_" + demangled_name<float_type>());
     module(L, "libhalmd")
     [
         namespace_("mdsim")
         [
             namespace_("positions")
             [
-                class_<excluded_volume, std::shared_ptr<excluded_volume> >(class_name.c_str())
-                    .def(constructor<
-                         std::shared_ptr<box_type const>
-                       , float_type
-                       , std::shared_ptr<logger_type>
-                    >())
+                class_<excluded_volume>()
                     .def("exclude_sphere", &excluded_volume::exclude_sphere)
                     .def("exclude_spheres", &excluded_volume::exclude_spheres)
                     .def("place_sphere", &excluded_volume::place_sphere)
+
+              , def("excluded_volume", &std::make_shared<excluded_volume
+                    , std::shared_ptr<box_type const>
+                    , float_type
+                    , std::shared_ptr<logger_type>
+                >)
             ]
         ]
     ];
@@ -175,20 +173,26 @@ void excluded_volume<dimension, float_type>::luaopen(lua_State* L)
 
 HALMD_LUA_API int luaopen_libhalmd_mdsim_host_positions_excluded_volume(lua_State* L)
 {
+#ifndef USE_HOST_SINGLE_PRECISION
     excluded_volume<3, double>::luaopen(L);
     excluded_volume<2, double>::luaopen(L);
+#else
     excluded_volume<3, float>::luaopen(L);
     excluded_volume<2, float>::luaopen(L);
+#endif
     return 0;
 }
 
 // explicit instantiation
+#ifndef USE_HOST_SINGLE_PRECISION
 template class excluded_volume<3, double>;
 template class excluded_volume<2, double>;
+#else
 template class excluded_volume<3, float>;
 template class excluded_volume<2, float>;
+#endif
 
-} // namespace mdsim
-} // namespace host
 } // namespace positions
+} // namespace host
+} // namespace mdsin
 } // namespace halmd

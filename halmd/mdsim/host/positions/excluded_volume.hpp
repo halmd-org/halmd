@@ -1,5 +1,6 @@
 /*
  * Copyright © 2011  Peter Colberg
+ * Copyright © 2012  Nicolas Höft
  *
  * This file is part of HALMD.
  *
@@ -46,25 +47,45 @@ public:
     typedef typename sample_type::vector_type vector_type;
     typedef logger logger_type;
 
-    static void luaopen(lua_State* L);
-
     excluded_volume(
         std::shared_ptr<box_type const> box
       , float_type cell_length
       , std::shared_ptr<logger_type> logger = std::make_shared<logger_type>()
     );
+
+    /**
+     * Place a sphere and consider it for future calls to place_sphere()
+     */
     void exclude_sphere(
         vector_type const& centre
       , float_type diameter
     );
+
+    /**
+     * Place a number of spheres at specified positions with given radii
+     */
     void exclude_spheres(
         sample_type const& sample
       , std::vector<float_type> diameter
     );
+
+    /**
+     * Test if the placement of a sphere is possible with no overlap with other
+     * previously placed spheres
+     * 
+     * @param center center position of sphere
+     * @param diameter diameter of the sphere
+     * @return true if the placement is possible
+     */
     bool place_sphere(
         vector_type const& centre
       , float_type diameter
     ) const;
+
+    /**
+     * Bind class to Lua.
+     */
+    static void luaopen(lua_State* L);
 
 private:
     typedef std::pair<vector_type, float_type> sphere_type;
