@@ -1,5 +1,6 @@
 --
 -- Copyright © 2011  Peter Colberg
+-- Copyright © 2012  Nicolas Höft
 --
 -- This file is part of HALMD.
 --
@@ -22,36 +23,87 @@ local log               = require("halmd.io.log")
 local module            = require("halmd.utility.module")
 
 -- grab C++ wrappers
-local excluded_volume_wrapper = {
-    [3] = {
-        double = assert(libhalmd.mdsim.positions.excluded_volume_3_double)
-      , float = assert(libhalmd.mdsim.positions.excluded_volume_3_float)
-    }
-  , [2] = {
-        double = assert(libhalmd.mdsim.positions.excluded_volume_2_double)
-      , float = assert(libhalmd.mdsim.positions.excluded_volume_2_float)
-    }
-}
--- grab standard library
-local assert = assert
-local class_info = class_info
+local excluded_volume = assert(libhalmd.mdsim.positions.excluded_volume)
 
+---
+-- Excluded volume
+-- =======================
+--
+-- This module implements a method to place a number of spheres
+-- that have no overlap.
+--
+-- This example shows use of the excluded volume with the placement of 1000 particles
+-- at random positions with a diameter of ``1`` in a cubic box with each edge being
+-- ``50``::
+--
+--     local random = math.random
+--     math.randomseed(os.time())
+--     local edge = 50
+--     local box = halmd.mdsim.box{length = {edge, edge, edge}}
+--     local excluded = halmd.mdsim.positions.excluded_volume{box = box, cell_length = 1}
+--     local obstacles = {}
+--     local diameter = 1
+--     local repeats = 50
+--     for i = 1, 1000 do
+--         for j = 1, repeats do
+--             local r = {edge * random(), edge * random(), edge * random()}
+--             if excluded:place_sphere(r, diameter) then
+--                 obstacles[i] = r
+--                 excluded:exclude_sphere(r, diameter)
+--                 break
+--             end
+--         end
+--         if not obstacles[i] then
+--             error(("cannot place obstacle %d after %d repeats"):format(i, repeats))
+--         end
+--     end
+--     local particle = halmd.mdsim.particle{box = box, particles = #obstacles, species = 1}
+--     particle:set_position(obstacles)
+--
+-- .. note::
+--
+--    If one uses the random number generator from Lua , this should be done in
+--    conjunction with LuaJIT, only. Standard Lua uses the OS-dependent ``rand()`` function.
+--
+--    See http://luajit.org/extensions.html#math_random
+--
 
+---
+-- Construct excluded volume instance
+--
+-- :param table args: keyword arguments
+-- :param number args.box: instance of :class:`halmd.mdsim.box`
+-- :param number args.cell_length: cell length for internal binning (must not be
+--                                 smaller than largest sphere diameter)
+--
+-- .. method:: exclude_sphere(centre, diameter)
+--
+--    Place a single sphere at ``centre`` with a diameter of ``diameter``
+--
+-- .. method:: exclude_spheres(centres, diameters)
+--
+--    Place a set of spheres with their respective centres and diameters
+--
+-- .. method:: place_spheres(centre, diameter)
+--
+--    Test if a sphere at ``centre`` with diameter ``diameter`` can be placed without
+--    overlap with any other previously set sphere
+--
 local M = module(function(args)
-    -- parameters
-    local cell_length = args.cell_length or 1 -- default value
-    -- dependencies
-    local box = assert(args.box)
-    local dimension = #box.edges
+    local box = args.box
+    if not box then
+        error("missing argument: box", 2)
+    end
+    local cell_length = args.cell_length
+    if not cell_length then
+        error("missing argument: cell_length", 2)
+    end
+    if type(cell_length) ~= "number" then
+        error("bad argument 'cell_length'", 2)
+    end
+
     local logger = log.logger({label = "excluded_volume"})
 
-    local excluded_volume
-    -- FIXME query precision from HALMD C++ library
-    if device.gpu then
-        excluded_volume = assert(excluded_volume_wrapper[dimension].float)
-    else
-        excluded_volume = assert(excluded_volume_wrapper[dimension].double)
-    end
     return excluded_volume(box, cell_length, logger)
 end)
 

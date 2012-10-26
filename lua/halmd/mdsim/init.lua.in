@@ -33,5 +33,6 @@ local module = require("halmd.utility.module")
 --    particle_groups/index
 --    potentials/index
 --    velocities/index
+--    positions/index
 --
 return module.loader("halmd.mdsim")
