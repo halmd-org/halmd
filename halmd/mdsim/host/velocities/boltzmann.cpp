@@ -63,8 +63,8 @@ void boltzmann<dimension, float_type>::set()
     for (size_type i = 0; i < nparticle; ++i) {
         vector_type& v = (*velocity)[i];
         // assign two components at a time
-        for (unsigned int i = 0; i < dimension - 1; i += 2) {
-            boost::tie(v[i], v[i + 1]) = random_->normal(sigma);
+        for (unsigned int j = 0; j < dimension - 1; j += 2) {
+            boost::tie(v[j], v[j + 1]) = random_->normal(sigma);
         }
         // handle last component separately for odd dimensions
         if (dimension % 2 == 1) {
