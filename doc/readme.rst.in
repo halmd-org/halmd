@@ -1,16 +1,16 @@
 Introduction
 ============
 
-HALMD is a high-precision molecular dynamics package for the large-scale
-simulation of simple and complex liquids. HALMD supports acceleration through
-CUDA-enabled graphics processors. HALMD lays emphasis on long-time numerical
-stability by using double-single precision arithmetic for numerically crucial
-parts of the MD integration step. HALMD is freely available and licensed under
-the GPL.
+HAL's MD package (HALMD) is a high-precision molecular dynamics package for the
+large-scale simulation of simple and complex liquids. HALMD supports
+acceleration through CUDA-enabled graphics processors. HALMD lays emphasis on
+long-time numerical stability by using double-single precision arithmetic for
+numerically crucial parts of the MD integration step. HALMD is freely available
+and licensed under the GPL.
 
-HALMD is written and developed by
-`Peter Colberg <http://www.chem.utoronto.ca/~pcolberg>`_ and
-`Felix Höfling <http://www.mf.mpg.de/mpg/websiteMetallforschung/english/instForschungsthemen/instForschungsgruppen/abteilung6/020_Mitarbeiter/hoefling>`_.
+HAL's MD package is maintained and developed by `Felix Höfling
+<http://www.is.mpg.de/dietrich/hoefling>`_ and was initially written together
+with Peter Colberg.
 
 .. note::
 
@@ -22,7 +22,7 @@ HALMD is written and developed by
    Comp. Phys. Comm. *182*, 1120 (2011)
    `[arXiv:0912.3824] <http://arxiv.org/abs/0912.3824>`_.
 
-The name *HALMD* was chosen in honour of the machine `HAL
+The name *HAL's MD package* was chosen in honour of the machine `HAL
 <http://en.wikipedia.org/wiki/HAL_9000>`_ at the Arnold Sommerfeld Center
 for Theoretical Physics of the Ludwigs-Maximilians-Universität München.
 HAL has been the project's first GPGPU machine, equipped initially with two
