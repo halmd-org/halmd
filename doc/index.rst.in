@@ -8,9 +8,10 @@ HALMD documentation
    installation/index
    usage/index
    modules/index
-   faq
+   units
    validation
    benchmarks
+   faq
    developer/index
 
 .. toctree::
