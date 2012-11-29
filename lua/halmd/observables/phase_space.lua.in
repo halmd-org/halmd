@@ -117,7 +117,7 @@ end
 --    :param string args.group: name of trajectory group (optional)
 --    :returns: instance of group writer
 --
---    If ``every`` is not specified, a phase space sample will be written
+--    If ``every`` is not specified or 0, a phase space sample will be written
 --    at the start and end of the simulation.
 --
 --    If ``group`` is omitted, the particle group's label will be used as
@@ -182,7 +182,7 @@ local M = module(function(args)
     end
 
     self.writer = function(self, file, args)
-        local name = args.group or assert(self.group.label)
+        local name = args and args.group or assert(self.group.label)
         local writer = file:writer({location = {"trajectory", name}, mode = "append"})
 
         writer:on_write(self.position(), {"position"})
@@ -190,7 +190,7 @@ local M = module(function(args)
         writer:on_write(self.species(), {"species"})
         writer:on_write(self.mass(), {"mass"})
 
-        local every = args.every
+        local every = args and args.every
 
         -- sequence of signal connections
         local conn = {}
