@@ -24,12 +24,12 @@
 
 if [ "$1" = "--help" -o $# -eq 0 ]
 then
-    echo -e "Usage: run_benchmark.sh [BENCHMARK_NAME [COUNT [INPUT_FILE [SUFFIX [DEVICE_NAME [HALMD_OPTIONS]]]]]]\n"
+    echo -e "Usage: run_benchmark.sh BENCHMARK_NAME [COUNT [INPUT_FILE [SUFFIX [DEVICE_NAME [HALMD_OPTIONS]]]]]\n"
     exit
 fi
 
 SCRIPT_DIR="$(dirname $0)"
-BENCHMARK_NAME=${1:-"lennard_jones"}
+BENCHMARK_NAME=$1
 COUNT=${2:-5}
 INPUT_FILE=${3:-"${BENCHMARK_NAME}/configuration.h5"}
 SUFFIX=${4:+_$4}
@@ -39,26 +39,19 @@ HALMD_OPTIONS=$6
 HALMD_VERSION=$(halmd --version | cut -c 26- | sed -e '1s/.*-g\([a-z0-9]\+\).*/\1/;q')
 BENCHMARK_TAG="${DEVICE_NAME}_${HALMD_VERSION}${SUFFIX}"
 
-CONFIG="${SCRIPT_DIR}/${BENCHMARK_NAME}/run_benchmark.rc"
-OUTPUT_PREFIX="${BENCHMARK_NAME}/benchmark_${BENCHMARK_TAG}"
+SCRIPT="${SCRIPT_DIR}/${BENCHMARK_NAME}/run_benchmark.lua"
+OUTPUT="${BENCHMARK_NAME}/benchmark_${BENCHMARK_TAG}"
 
-# run benchmark several times by continuation of the trajectory
-PREVIOUS_OUTPUT="${INPUT_FILE%.h5}" # remove filename extension
-for I in $(seq $COUNT)
-do
-    OUTPUT="${OUTPUT_PREFIX}-${I}"
-    halmd \
-      --verbose \
-      --config "${CONFIG}" \
-      --output "${OUTPUT}" \
-      ${HALMD_OPTIONS} \
-      trajectory --file "${PREVIOUS_OUTPUT}.h5"
+# run benchmark
+halmd "${SCRIPT}" \
+  --trajectory "${INPUT_FILE}" \
+  --output "${OUTPUT}" \
+  --count "${COUNT}" \
+  --verbose \
+  ${HALMD_OPTIONS}
 
-    PREVIOUS_OUTPUT="${OUTPUT}"
-done
-
-TIMINGS=$(sed -n -e 's/.*MD integration step: \([0-9.]*\).*/\1/p' "${OUTPUT_PREFIX}"-*.log)
-PARTICLES=$(sed -n -e 's/.*total number of particles: \([0-9]*\).*/\1/p' "${OUTPUT_PREFIX}"-1.log)
+TIMINGS=$(sed -n -e 's/.*MD integration step: \([0-9.]*\).*/\1/p' "${OUTPUT}.log")
+PARTICLES=$(sed -n -e 's/.*number of particles: \([0-9]*\).*/\1/p' "${OUTPUT}.log")
 echo -e "$TIMINGS" | gawk -v N=$PARTICLES '{a += $1; n+=1}END{\
     a = a/n;
     print N, "particles"; \

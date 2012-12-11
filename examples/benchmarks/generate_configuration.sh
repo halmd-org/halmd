@@ -24,20 +24,20 @@
 
 if [ "$1" = "--help" -o $# -eq 0 ]
 then
-    echo -e "Usage: generate_configuration.sh [BENCHMARK_NAME [SUFFIX [HALMD_OPTIONS]]]\n"
+    echo -e "Usage: generate_configuration.sh BENCHMARK_NAME [SUFFIX [HALMD_OPTIONS]]\n"
     exit
 fi
 
 SCRIPT_DIR="$(dirname $0)"
-BENCHMARK_NAME=${1:-"lennard_jones"}
+BENCHMARK_NAME=$1
 SUFFIX=${2:+_$2}
 HALMD_OPTIONS=$3
 
-CONFIG="${SCRIPT_DIR}/${BENCHMARK_NAME}/generate_configuration.rc"
+SCRIPT="${SCRIPT_DIR}/${BENCHMARK_NAME}/generate_configuration.lua"
 OUTPUT="${BENCHMARK_NAME}/configuration${SUFFIX}"
 
 halmd \
+  "${SCRIPT}" \
   --verbose \
-  --config "${CONFIG}" \
   --output "${OUTPUT}" \
   ${HALMD_OPTIONS}
