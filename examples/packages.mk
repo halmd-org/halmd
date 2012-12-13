@@ -169,9 +169,10 @@ env-lua:
 ## LuaJIT
 ##
 
-LUAJIT_VERSION = 2.0.0-beta10-152-g21cea85
-LUAJIT_RELEASE = 2.0.0-beta10
-LUAJIT_GIT_URL = http://luajit.org/git/luajit-2.0.git
+LUAJIT_VERSION = 2.0.0
+LUAJIT_TARBALL = LuaJIT-$(LUAJIT_VERSION).tar.gz
+LUAJIT_TARBALL_URL = http://luajit.org/download/$(LUAJIT_TARBALL)
+LUAJIT_TARBALL_SHA256 = deaed645c4a093c5fb250c30c9933c9131ee05c94b13262d58f6e0b60b338c15
 LUAJIT_BUILD_DIR = LuaJIT-$(LUAJIT_VERSION)
 LUAJIT_INSTALL_DIR = $(PREFIX)/luajit-$(LUAJIT_VERSION)
 LUAJIT_CFLAGS = -fPIC -DLUAJIT_ENABLE_LUA52COMPAT -DLUAJIT_CPU_SSE2
@@ -181,14 +182,21 @@ LUAJIT_CFLAGS += -DLUAJIT_USE_VALGRIND
 endif
 
 .fetch-luajit-$(LUAJIT_VERSION):
-	@$(RM) $(LUAJIT_BUILD_DIR)
-	$(GIT) clone $(LUAJIT_GIT_URL) $(LUAJIT_BUILD_DIR)
-	cd $(LUAJIT_BUILD_DIR) && $(GIT) checkout v$(LUAJIT_VERSION)
+	@$(RM) $(LUAJIT_TARBALL)
+	$(WGET) $(LUAJIT_TARBALL_URL)
+	@echo '$(LUAJIT_TARBALL_SHA256)  $(LUAJIT_TARBALL)' | $(SHA256SUM)
 	@$(TOUCH) $@
 
 fetch-luajit: .fetch-luajit-$(LUAJIT_VERSION)
 
-.build-luajit-$(LUAJIT_VERSION): .fetch-luajit-$(LUAJIT_VERSION)
+.extract-luajit-$(LUAJIT_VERSION): .fetch-luajit-$(LUAJIT_VERSION)
+	$(RM) $(LUAJIT_BUILD_DIR)
+	$(TAR) -xzf $(LUAJIT_TARBALL)
+	@$(TOUCH) $@
+
+extract-luajit: .extract-luajit-$(LUAJIT_VERSION)
+
+.build-luajit-$(LUAJIT_VERSION): .extract-luajit-$(LUAJIT_VERSION)
 	cd $(LUAJIT_BUILD_DIR) && make amalg "CFLAGS=$(LUAJIT_CFLAGS)" "PREFIX=$(LUAJIT_INSTALL_DIR)" $(PARALLEL_BUILD_FLAGS)
 	@$(TOUCH) $@
 
@@ -196,15 +204,15 @@ build-luajit: .build-luajit-$(LUAJIT_VERSION)
 
 install-luajit: .build-luajit-$(LUAJIT_VERSION)
 	cd $(LUAJIT_BUILD_DIR) && make install "PREFIX=$(LUAJIT_INSTALL_DIR)"
-	ln -sf luajit-$(LUAJIT_RELEASE) $(LUAJIT_INSTALL_DIR)/bin/luajit
 
 clean-luajit:
 	@$(RM) .build-luajit-$(LUAJIT_VERSION)
-	cd $(LUAJIT_BUILD_DIR) && make clean
+	@$(RM) .extract-luajit-$(LUAJIT_VERSION)
+	$(RM) $(LUAJIT_BUILD_DIR)
 
 distclean-luajit: clean-luajit
 	@$(RM) .fetch-luajit-$(LUAJIT_VERSION)
-	$(RM) $(LUAJIT_BUILD_DIR)
+	$(RM) $(LUAJIT_TARBALL)
 
 env-luajit:
 	@echo
