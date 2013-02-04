@@ -44,7 +44,7 @@ local function lennard_jones(args)
     -- construct a phase space reader and sample
     local reader, sample = observables.phase_space.reader(file, {group = "all"})
     -- read phase space sample at last step in file
-    log.info("number of %s particles: %d", label, sample.nparticle)
+    log.info("number of particles: %d", sample.nparticle)
     reader:read_at_step(-1)
 
     -- read edge vectors of simulation domain from file
