@@ -43,15 +43,14 @@ SCRIPT="${SCRIPT_DIR}/${BENCHMARK_NAME}/run_benchmark.lua"
 OUTPUT="${BENCHMARK_NAME}/benchmark_${BENCHMARK_TAG}"
 
 # run benchmark
-halmd "${SCRIPT}" \
+halmd ${HALMD_OPTIONS} "${SCRIPT}" \
   --trajectory "${INPUT_FILE}" \
   --output "${OUTPUT}" \
   --count "${COUNT}" \
-  --verbose \
-  ${HALMD_OPTIONS}
+  --verbose
 
 TIMINGS=$(sed -n -e 's/.*MD integration step: \([0-9.]*\).*/\1/p' "${OUTPUT}.log")
-PARTICLES=$(sed -n -e 's/.*number of particles: \([0-9]*\).*/\1/p' "${OUTPUT}.log")
+PARTICLES=$(sed -n -e '/number of particles/{s/.*: \([0-9]*\).*/\1/p;q}' "${OUTPUT}.log")
 echo -e "$TIMINGS" | gawk -v N=$PARTICLES '{a += $1; n+=1}END{\
     a = a/n;
     print N, "particles"; \
