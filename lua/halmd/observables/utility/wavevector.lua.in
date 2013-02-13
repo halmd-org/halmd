@@ -1,5 +1,5 @@
 --
--- Copyright © 2011  Felix Höfling
+-- Copyright © 2011-2013  Felix Höfling
 --
 -- This file is part of HALMD.
 --
@@ -17,7 +17,7 @@
 -- along with this program.  If not, see <http://www.gnu.org/licenses/>.
 --
 
-local module            = require("halmd.utility.module")
+local module = require("halmd.utility.module")
 
 -- grab C++ wrappers
 local wavevector_wrapper = {
@@ -27,35 +27,87 @@ local wavevector_wrapper = {
 -- grab standard library
 local assert = assert
 
+---
+-- Wavevector
+-- ==========
+--
+-- The module constructs a set of wavevector shells compatible with the
+-- reciprocal space of a periodic simulation box and a list of wavenumbers. The
+-- wavevectors are of the form
+--
+-- .. math::
+--
+--   \vec k = (k_x, k_y, \dots) = \left(n_x \frac{2\pi}{L_x}, n_y
+--   \frac{2\pi}{L_y}, \dots \right)
+--
+-- where :math:`n_x, n_y, \dots` are integers and :math:`L_x, L_y, \dots`
+-- denote the edge length of the cuboid box.  A wavevector "shell" is defined
+-- by wavenumber, i.e. the magnitude :math:`k=|\vec k|`, allowing for a
+-- tolerance.
+--
+-- The wavenumbers may be passed explicitly. Alternatively, a semi-linearly
+-- spaced grid is constructed starting with the smallest wavenumber compatible
+-- with the extents of the simulation box. After a given number of points, the
+-- grid is "decimated" by doubling the spacing until a maximum wavenumber is
+-- reached. The number of wavevectors within each shell may be limited to avoid
+-- excessively large shells for large wavenumber.
+--
 
+---
+-- Construct instance of wavevector module.
 --
--- construct instance of wavevector module
---
--- @param args parameter table:
---     args.wavenumber      list of wavenumbers, or alternatively:
---     args.max_wavenumber  maximum wavenumber of semi-linearly spaced grid
---     args.decimation      decimation of wavenumber grid (0=disabled, 1=logarithmic, ...)
---     args.tolerance       relative tolerance on wavevector magnitude
---     args.max_count       maximum number of wavevectors per wavenumber shell
--- @returns instance of wavevector module
+-- :param table args: keyword arguments
+-- :param args.box:               instance of :class:`halmd.mdsim.box`
+-- :param args.wavenumber:        list of wavenumbers, *or alternatively:*
+-- :param args.max_wavenumber:    maximum wavenumber of semi-linearly spaced grid
+-- :param args.decimation:        decimation of wavenumber grid (0=disabled, 1=logarithmic, ...)
+-- :param number args.tolerance:  relative tolerance on wavevector magnitude
+-- :param integer args.max_count: maximum number of wavevectors per wavenumber shell
 --
 local M = module(function(args)
-    -- options
+    local box = assert(args.box)
     local wavenumber = args.wavenumber
-    local max_wavenumber = args.max_wavenumber
-    local decimation = args.decimation or 0 -- default value: disable decimation
+    if not wavenumber then
+        local max_wavenumber = assert(args.max_wavenumber)
+        local decimation = args.decimation or 0 -- default value: disable decimation
+    end
     local tolerance = assert(args.tolerance)
     local max_count = assert(args.max_count)
-    assert(wavenumber or max_wavenumber)
-    local box = assert(args.box)
-    local dimension = #box.edges
 
-    local wavevector = assert(wavevector_wrapper[dimension])
+    local wavevector = assert(wavevector_wrapper[box.dimension])
     if wavenumber then
         return wavevector(wavenumber, box.length, tolerance, max_count)
     else
         return wavevector(max_wavenumber, decimation, box.length, tolerance, max_count)
     end
 end)
+
+---
+-- .. function:: add_options(parser)
+--
+--    Add module options to command line parser.
+--
+--    :param parser: instance of :class:`halmd.utility.program_options.argument_parser`
+--
+
+function M.add_options(parser)
+    local parser = assert(parser)
+
+    parser:add_argument("wavenumbers", {type="vector", dtype="number", -- TODO conflicts="max-wavenumber",
+        help="list of wavenumbers"
+    })
+    parser:add_argument("max-wavenumber", {type="number", -- TODO conflicts="wavenumbers",
+        help="maximum wavenumber of semi-linearly spaced grid"
+    })
+    parser:add_argument("decimation", {type="integer", -- TODO conflicts="wavenumbers",
+        help="decimation of wavenumber grid"
+    })
+    parser:add_argument("tolerance", {type="number", default=0.01,
+        help="relative tolerance on wavevector magnitude"
+    })
+    parser:add_argument("max-count", {type="integer", default=7,
+        help="maximum number of wavevectors per wavenumber shell"
+    })
+end
 
 return M

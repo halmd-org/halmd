@@ -1,5 +1,6 @@
 --
--- Copyright © 2012  Peter Colberg
+-- Copyright © 2013 Felix Höfling
+-- Copyright © 2012 Peter Colberg
 --
 -- This file is part of HALMD.
 --
@@ -18,5 +19,16 @@
 --
 
 local module = require("halmd.utility.module")
+
+---
+-- Auxiliary modules
+-- =================
+--
+-- .. toctree::
+--    :maxdepth: 2
+--    :glob:
+--
+--    *
+--
 
 return module.loader("halmd.observables.utility")
