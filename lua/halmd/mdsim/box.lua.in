@@ -1,5 +1,6 @@
 --
--- Copyright © 2010-2012  Peter Colberg
+-- Copyright © 2013      Felix Höfling
+-- Copyright © 2010-2012 Peter Colberg
 --
 -- This file is part of HALMD.
 --
@@ -53,6 +54,10 @@ local h5 = assert(libhalmd.h5)
 --
 --    Non-cuboid geometries are not implemented, ``edges`` must be a diagonal matrix.
 --
+-- .. attribute:: dimension
+--
+--    Space dimension of the simulation box as a number.
+--
 -- .. attribute:: edges
 --
 --    Edge vectors as a matrix.
@@ -62,10 +67,6 @@ local h5 = assert(libhalmd.h5)
 --       {{length[1], 0, 0},
 --        {0, length[2], 0},
 --        {0, 0, length[3]}}
---
---    This attribute can be used to infer the dimensionality of the system::
---
---       local dimension = #box.edges
 --
 -- .. attribute:: length
 --
@@ -113,6 +114,9 @@ local M = module(function(args)
 
     -- construct box from edge vectors
     local self = box(edges)
+
+    -- store space dimension
+    self.dimension = property(function(self) return dimension end)
 
     self.writer = function(self, file)
         local writer = file:writer({location = {"observables", "box"}, mode = "truncate"})
