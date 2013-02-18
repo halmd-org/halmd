@@ -25,8 +25,6 @@
 
 #define MAX_BLOCK_SIZE 512
 
-using namespace boost;
-
 namespace halmd {
 namespace observables {
 namespace gpu {
@@ -41,13 +39,13 @@ __constant__ uint nq_;        // number of wavevectors
 // recursive reduction function,
 // terminate for threads=0
 template <unsigned threads, typename T>
-__device__ typename disable_if_c<threads>::type
+__device__ typename boost::disable_if_c<threads>::type
 sum_reduce(T*, T*) {}
 
 // reduce two array simultaneously by summation,
 // size of a,b must be at least 2 * threads
 template <unsigned threads, typename T>
-__device__ typename enable_if_c<threads>::type
+__device__ typename boost::enable_if_c<threads>::type
 sum_reduce(T* a, T* b)
 {
     if (TID < threads) {

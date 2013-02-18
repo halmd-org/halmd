@@ -22,7 +22,6 @@
 #include <halmd/observables/host/density_mode.hpp>
 #include <halmd/utility/lua/lua.hpp>
 
-using namespace boost;
 using namespace std;
 
 namespace halmd {

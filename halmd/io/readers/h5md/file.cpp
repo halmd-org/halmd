@@ -1,5 +1,4 @@
-/*
- * Copyright © 2011  Peter Colberg
+/* * Copyright © 2011  Peter Colberg
  *
  * This file is part of HALMD.
  *
@@ -27,7 +26,6 @@
 #include <halmd/utility/signal.hpp>
 #include <halmd/version.h>
 
-using namespace boost;
 using namespace std;
 
 namespace halmd {

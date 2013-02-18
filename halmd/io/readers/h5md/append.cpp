@@ -35,7 +35,7 @@
 #include <halmd/numeric/blas/fixed_vector.hpp>
 #include <halmd/utility/lua/lua.hpp>
 
-using namespace boost;
+using boost::tie;
 using namespace std;
 
 namespace halmd {
@@ -51,7 +51,7 @@ append::append(
     if (location.size() < 1) {
         throw invalid_argument("group location");
     }
-    group_ = root.openGroup(join(location, "/"));
+    group_ = root.openGroup(boost::join(location, "/"));
 }
 
 template <typename T>
@@ -64,7 +64,7 @@ connection append::on_read(
     if (location.size() < 1) {
         throw invalid_argument("dataset location");
     }
-    group = h5xx::open_group(group_, join(location, "/"));
+    group = h5xx::open_group(group_, boost::join(location, "/"));
     return on_read_.connect(bind(&read_dataset<T>, group, slot, _1));
 }
 

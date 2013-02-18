@@ -30,7 +30,6 @@
 #include <halmd/mdsim/host/potentials/modified_lennard_jones.hpp>
 #include <halmd/utility/lua/lua.hpp>
 
-using namespace boost;
 using namespace boost::assign;
 using namespace boost::numeric::ublas;
 using namespace std;

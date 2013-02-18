@@ -25,7 +25,6 @@
 #include <halmd/utility/scoped_timer.hpp>
 #include <halmd/utility/timer.hpp>
 
-using namespace boost;
 using namespace std;
 
 namespace halmd {

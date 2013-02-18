@@ -28,7 +28,6 @@
 #include <halmd/observables/utility/wavevector.hpp>
 #include <halmd/utility/lua/lua.hpp>
 
-using namespace boost;
 using namespace std;
 
 namespace halmd {
@@ -147,7 +146,7 @@ template <int dimension>
 void wavevector<dimension>::luaopen(lua_State* L)
 {
     using namespace luaponte;
-    static string class_name("wavevector_" + lexical_cast<string>(dimension) + "_");
+    static string class_name("wavevector_" + boost::lexical_cast<string>(dimension) + "_");
     module(L, "libhalmd")
     [
         namespace_("observables")

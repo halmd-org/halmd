@@ -31,7 +31,7 @@
 #include <halmd/utility/gpu/device.hpp>
 #include <halmd/utility/lua/lua.hpp>
 
-using namespace boost;
+using boost::lexical_cast;
 using namespace boost::algorithm;
 using namespace std;
 

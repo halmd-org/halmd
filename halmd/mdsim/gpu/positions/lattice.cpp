@@ -29,7 +29,6 @@
 #include <halmd/mdsim/positions/lattice_primitive.hpp>
 #include <halmd/utility/lua/lua.hpp>
 
-using namespace boost;
 using namespace std;
 
 namespace halmd {

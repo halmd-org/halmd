@@ -30,7 +30,6 @@
 #include <halmd/mdsim/gpu/potentials/morse_kernel.hpp>
 #include <halmd/utility/lua/lua.hpp>
 
-using namespace boost;
 using namespace boost::numeric::ublas;
 using namespace std;
 

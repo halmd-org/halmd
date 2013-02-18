@@ -27,6 +27,8 @@
 #include <halmd/utility/demangle.hpp>
 #include <halmd/utility/lua/lua.hpp>
 
+using boost::tie;
+
 namespace halmd {
 namespace mdsim {
 namespace host {

@@ -25,7 +25,6 @@
 #include <halmd/mdsim/sorts/hilbert_kernel.hpp>
 #include <halmd/utility/lua/lua.hpp>
 
-using namespace boost;
 using namespace std;
 
 namespace halmd {
@@ -143,7 +142,7 @@ template <int dimension, typename float_type>
 void hilbert<dimension, float_type>::luaopen(lua_State* L)
 {
     using namespace luaponte;
-    static string class_name("hilbert_" + lexical_cast<string>(dimension) + "_");
+    static string class_name("hilbert_" + boost::lexical_cast<string>(dimension) + "_");
     module(L, "libhalmd")
     [
         namespace_("mdsim")

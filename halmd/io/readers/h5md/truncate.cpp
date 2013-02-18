@@ -27,7 +27,6 @@
 #include <halmd/numeric/blas/fixed_vector.hpp>
 #include <halmd/utility/lua/lua.hpp>
 
-using namespace boost;
 using namespace std;
 
 namespace halmd {
@@ -43,7 +42,7 @@ truncate::truncate(
     if (location.size() < 1) {
         throw invalid_argument("group location");
     }
-    group_ = root.openGroup(join(location, "/"));
+    group_ = root.openGroup(boost::join(location, "/"));
 }
 
 template <typename T>
@@ -56,7 +55,7 @@ connection truncate::on_read(
     if (location.size() < 1) {
         throw invalid_argument("dataset location");
     }
-    dataset = group_.openDataSet(join(location, "/"));
+    dataset = group_.openDataSet(boost::join(location, "/"));
     return on_read_.connect(bind(&read_dataset<T>, dataset, slot));
 }
 

@@ -29,7 +29,6 @@
 #include <halmd/utility/signal.hpp>
 #include <halmd/version.h>
 
-using namespace boost;
 using namespace std;
 
 namespace halmd {

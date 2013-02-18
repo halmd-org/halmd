@@ -29,7 +29,7 @@
 #include <halmd/utility/lua/lua.hpp>
 #include <halmd/utility/raw_array.hpp>
 
-using namespace boost;
+using boost::multi_array;
 using namespace std;
 
 namespace halmd {
@@ -45,7 +45,7 @@ truncate::truncate(
     if (location.size() < 1) {
         throw invalid_argument("group location");
     }
-    group_ = h5xx::open_group(root, join(location, "/"));
+    group_ = h5xx::open_group(root, boost::join(location, "/"));
 }
 
 template <typename T>
@@ -113,7 +113,7 @@ connection truncate::on_write(
     if (location.size() < 1) {
         throw invalid_argument("dataset location");
     }
-    return on_write_.connect(bind(&write_dataset<T>, dataset, group_, join(location, "/"), slot));
+    return on_write_.connect(bind(&write_dataset<T>, dataset, group_, boost::join(location, "/"), slot));
 }
 
 connection truncate::on_prepend_write(slot_function_type const& slot)

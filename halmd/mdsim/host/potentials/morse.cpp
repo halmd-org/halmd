@@ -27,7 +27,6 @@
 #include <halmd/mdsim/host/potentials/morse.hpp>
 #include <halmd/utility/lua/lua.hpp>
 
-using namespace boost;
 using namespace boost::assign;
 using namespace boost::numeric::ublas;
 using namespace std;

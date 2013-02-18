@@ -25,7 +25,6 @@
 #include <halmd/config.hpp>
 #include <halmd/utility/lua/vector_converter.hpp>
 
-using namespace boost;
 using namespace std;
 
 namespace halmd {

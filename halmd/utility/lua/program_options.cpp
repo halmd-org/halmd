@@ -18,9 +18,9 @@
  */
 
 #include <algorithm>
-#include <boost/algorithm/string/compare.hpp>
 #include <boost/algorithm/string/find_iterator.hpp>
 #include <boost/algorithm/string/finder.hpp>
+#include <boost/any.hpp>
 #include <boost/type_traits/is_arithmetic.hpp>
 #include <boost/numeric/ublas/matrix.hpp>
 #include <boost/numeric/ublas/matrix_proxy.hpp>
@@ -28,6 +28,7 @@
 #include <boost/numeric/ublas/vector.hpp>
 #include <boost/program_options.hpp>
 #include <boost/program_options/cmdline.hpp>
+#include <boost/range/iterator_range.hpp> // boost::copy_range
 #include <boost/utility/enable_if.hpp>
 #include <luaponte/luaponte.hpp>
 #include <luaponte/adopt_policy.hpp>
@@ -45,7 +46,7 @@
 namespace po = boost::program_options;
 namespace ublas = boost::numeric::ublas;
 
-using namespace boost;
+using namespace boost::algorithm; // first_finder, make_split_iterator, split_iterator
 using namespace std;
 
 namespace std {
@@ -59,15 +60,15 @@ namespace std {
  * The value is unchanged.”
  */
 template <typename T>
-static typename boost::enable_if<is_arithmetic<T>, void>::type
-validate(any& v, vector<string> const& values, T*, int)
+static typename boost::enable_if<boost::is_arithmetic<T>, void>::type
+validate(boost::any& v, vector<string> const& values, T*, int)
 {
     po::validators::check_first_occurrence(v);
     string s(po::validators::get_single_string(values));
     try {
-        T value = lexical_cast<T>(s);
+        T value = boost::lexical_cast<T>(s);
         halmd::checked_narrowing_cast<lua_Number>(value);
-        v = any(value);
+        v = boost::any(value);
     }
     catch (exception const&) {
         throw po::invalid_option_value(s);
@@ -80,7 +81,7 @@ validate(any& v, vector<string> const& values, T*, int)
  * A vector is represented as a comma-delimited string, e.g. 1,2,3,4
  */
 template <typename T>
-void validate(any& v, vector<string> const& values, ublas::vector<T>*, int)
+void validate(boost::any& v, vector<string> const& values, ublas::vector<T>*, int)
 {
     po::validators::check_first_occurrence(v);
     string s(po::validators::get_single_string(values));
@@ -90,11 +91,11 @@ void validate(any& v, vector<string> const& values, ublas::vector<T>*, int)
          i != split_iterator<string::iterator>();
          ++i)
     {
-        any v;
+        boost::any v;
         vector<string> values;
-        values.push_back(copy_range<string>(*i));
+        values.push_back(boost::copy_range<string>(*i));
         validate(v, values, (T*)0, 0);
-        element.push_back(any_cast<T>(v));
+        element.push_back(boost::any_cast<T>(v));
     }
     value.resize(element.size());
     copy(element.begin(), element.end(), value.begin());
@@ -108,7 +109,7 @@ void validate(any& v, vector<string> const& values, ublas::vector<T>*, int)
  * comma-delimited string, e.g. 11,12,13:21,22,23:31,32,33
  */
 template <typename T>
-void validate(any& v, vector<string> const& values, ublas::matrix<T>*, int)
+void validate(boost::any& v, vector<string> const& values, ublas::matrix<T>*, int)
 {
     po::validators::check_first_occurrence(v);
     string s(po::validators::get_single_string(values));
@@ -118,11 +119,11 @@ void validate(any& v, vector<string> const& values, ublas::matrix<T>*, int)
          i != split_iterator<string::iterator>();
          ++i)
     {
-        any v;
+        boost::any v;
         vector<string> values;
-        values.push_back(copy_range<string>(*i));
+        values.push_back(boost::copy_range<string>(*i));
         validate(v, values, (ublas::vector<T>*)0, 0);
-        row.push_back(any_cast<ublas::vector<T> >(v));
+        row.push_back(boost::any_cast<ublas::vector<T> >(v));
     }
     if (!row.empty()) {
         if (row.front().size() == 1) {
@@ -162,7 +163,7 @@ void validate(any& v, vector<string> const& values, ublas::matrix<T>*, int)
  * Write Boost uBLAS vector to output stream
  */
 template <typename T>
-ostream& operator<<(ostream& os, numeric::ublas::vector<T> const& value)
+ostream& operator<<(ostream& os, ublas::vector<T> const& value)
 {
     for (size_t i = 0; i < value.size(); ++i) {
         if (i > 0) {
@@ -177,7 +178,7 @@ ostream& operator<<(ostream& os, numeric::ublas::vector<T> const& value)
  * Write Boost uBLAS matrix to output stream
  */
 template <typename T>
-ostream& operator<<(ostream& os, numeric::ublas::matrix<T> const& value)
+ostream& operator<<(ostream& os, ublas::matrix<T> const& value)
 {
     for (size_t i = 0; i < value.size1(); ++i) {
         if (i > 0) {

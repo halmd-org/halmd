@@ -29,7 +29,7 @@
 #include <halmd/utility/lua/lua.hpp>
 #include <halmd/utility/raw_array.hpp>
 
-using namespace boost;
+using boost::multi_array;
 using namespace std;
 
 namespace halmd {
@@ -47,7 +47,7 @@ append::append(
     if (location.size() < 1) {
         throw invalid_argument("group location");
     }
-    group_ = h5xx::open_group(root, join(location, "/"));
+    group_ = h5xx::open_group(root, boost::join(location, "/"));
     step_ = h5xx::create_chunked_dataset<step_type>(group_, "step");
     time_ = h5xx::create_chunked_dataset<time_type>(group_, "time");
     group_.unlink("step");
@@ -119,7 +119,7 @@ connection append::on_write(
     if (location.size() < 1) {
         throw invalid_argument("dataset location");
     }
-    group = h5xx::open_group(group_, join(location, "/"));
+    group = h5xx::open_group(group_, boost::join(location, "/"));
     h5xx::link(step_, group, "step");
     h5xx::link(time_, group, "time");
     return on_write_.connect(bind(&write_dataset<T>, H5::DataSet(), group, "value", slot));

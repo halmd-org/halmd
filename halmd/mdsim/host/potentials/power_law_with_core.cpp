@@ -28,7 +28,6 @@
 #include <halmd/mdsim/host/potentials/power_law_with_core.hpp>
 #include <halmd/utility/lua/lua.hpp>
 
-using namespace boost;
 using namespace boost::numeric::ublas;
 using namespace std;
 

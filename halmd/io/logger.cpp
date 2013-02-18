@@ -35,7 +35,6 @@
 #include <halmd/io/logger.hpp>
 #include <halmd/utility/lua/lua.hpp>
 
-using namespace boost;
 using namespace boost::log;
 using namespace std;
 

@@ -27,7 +27,6 @@
 #include <halmd/utility/lua/lua.hpp>
 #include <halmd/utility/posix_signal.hpp>
 
-using namespace boost;
 using namespace boost::system;
 using namespace std;
 
@@ -141,7 +140,7 @@ string posix_signal::name(int signum)
       case SIGTTOU:
         return "TTOU";
       default:
-        return lexical_cast<string>(signum);
+        return boost::lexical_cast<string>(signum);
     }
 }
 

@@ -26,7 +26,7 @@
 #include <halmd/utility/lua/lua.hpp>
 #include <halmd/version.h>
 
-using namespace boost;
+namespace fs = boost::filesystem;
 using namespace std;
 
 HALMD_LUA_API int luaopen_halmd(lua_State* L);
@@ -109,9 +109,9 @@ void script::package_path()
     lua_rawget(L, -3);
 
     // absolute path to HALMD build tree
-    filesystem::path build_path(HALMD_BINARY_DIR);
+    fs::path build_path(HALMD_BINARY_DIR);
     // absolute path to initial current working directory
-    filesystem::path initial_path(filesystem::initial_path());
+    fs::path initial_path(fs::initial_path());
 
     if (contains_path(build_path, initial_path)) {
         // search for Lua scripts in build tree using relative path
@@ -149,9 +149,9 @@ void script::package_cpath()
     lua_rawget(L, -3);
 
     // absolute path to HALMD build tree
-    filesystem::path build_path(HALMD_BINARY_DIR);
+    fs::path build_path(HALMD_BINARY_DIR);
     // absolute path to initial current working directory
-    filesystem::path initial_path(filesystem::initial_path());
+    fs::path initial_path(fs::initial_path());
 
     if (contains_path(build_path, initial_path)) {
         // search for Lua scripts in build tree using relative path

@@ -25,7 +25,6 @@
 #include <halmd/utility/lua/lua.hpp>
 #include <halmd/version.h>
 
-using namespace boost;
 using namespace std;
 
 namespace halmd {
@@ -40,7 +39,7 @@ static void prologue(vector<string> const& arg)
 #ifndef NDEBUG
     LOG_WARNING("built with enabled debugging");
 #endif
-    LOG("command line: " << join(arg, " "));
+    LOG("command line: " << boost::join(arg, " "));
     LOG("host name: " << host_name());
 }
 

@@ -26,7 +26,6 @@
 #include <halmd/utility/lua/lua.hpp>
 #include <halmd/utility/profiler.hpp>
 
-using namespace boost;
 using namespace std;
 
 namespace halmd {

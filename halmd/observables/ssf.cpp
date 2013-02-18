@@ -25,7 +25,6 @@
 #include <halmd/numeric/accumulator.hpp>
 #include <halmd/utility/signal.hpp>
 
-using namespace boost;
 using namespace std;
 
 namespace halmd {
