@@ -1,4 +1,5 @@
 /*
+ * Copyright © 2013 Felix Höfling
  * Copyright © 2008-2011  Peter Colberg
  *
  * This file is part of HALMD.
@@ -22,6 +23,7 @@
 
 // increase compiler compatibility, e.g. with Clang 2.8
 #define BOOST_LOG_NO_UNSPECIFIED_BOOL
+#include <boost/log/attributes/constant.hpp>
 #include <boost/log/sinks/sync_frontend.hpp>
 #include <boost/log/sinks/text_file_backend.hpp>
 #include <boost/log/sinks/text_ostream_backend.hpp>
@@ -29,6 +31,7 @@
 #include <boost/log/sources/severity_logger.hpp>
 #include <boost/noncopyable.hpp>
 #include <boost/shared_ptr.hpp>
+#include <luaponte/wrapper_base.hpp>
 #include <memory>
 
 namespace halmd {
@@ -122,7 +125,21 @@ private:
  *
  * This type may be used by modules to declare there own logger.
  */
-typedef boost::log::sources::severity_logger<logging::severity_level> logger;
+struct logger
+  : boost::log::sources::severity_logger<logging::severity_level>
+  , luaponte::wrap_base
+{
+    logger() {}
+
+    logger(std::string const& label)
+    {
+#ifdef BOOST_LOG_ATTRIBUTE_HPP_INCLUDED_ // Boost.Log < 2.0
+        add_attribute("Label", boost::make_shared<boost::log::attributes::constant<std::string> >(label));
+#else
+        add_attribute("Label", boost::log::attributes::constant<std::string>(label));
+#endif
+    }
+};
 
 /**
  * Default logger source

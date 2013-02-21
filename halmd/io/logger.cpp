@@ -1,4 +1,5 @@
 /*
+ * Copyright © 2013 Felix Höfling
  * Copyright © 2008-2012  Peter Colberg
  *
  * This file is part of HALMD.
@@ -20,7 +21,6 @@
 // increase compiler compatibility, e.g. with Clang 2.8
 #define BOOST_LOG_NO_UNSPECIFIED_BOOL
 #include <boost/log/attributes/clock.hpp>
-#include <boost/log/attributes/constant.hpp>
 #include <boost/log/filters/attr.hpp>
 #include <boost/log/filters/has_attr.hpp>
 #include <boost/log/formatters/attr.hpp>
@@ -139,20 +139,6 @@ void logging::set_formatter(boost::shared_ptr<backend_type> backend) const
     );
 }
 
-struct logger_wrapper : logger, luaponte::wrap_base
-{
-    logger_wrapper() {}
-
-    logger_wrapper(string const& label)
-    {
-#ifdef BOOST_LOG_ATTRIBUTE_HPP_INCLUDED_ // Boost.Log < 2.0
-        add_attribute("Label", boost::make_shared<attributes::constant<string> >(label));
-#else
-        add_attribute("Label", attributes::constant<string>(label));
-#endif
-    }
-};
-
 static void wrap_log(logger& logger_, logging::severity_level level, char const* msg)
 {
     BOOST_LOG_SEV(logger_, level) << msg;
@@ -170,7 +156,7 @@ HALMD_LUA_API int luaopen_libhalmd_io_logger(lua_State* L)
     [
         namespace_("io")
         [
-            class_<logger, std::shared_ptr<logger>, logger_wrapper>("logger")
+            class_<logger, std::shared_ptr<logger>>("logger")
                 .def(constructor<>())
                 .def(constructor<string>())
                 .scope
