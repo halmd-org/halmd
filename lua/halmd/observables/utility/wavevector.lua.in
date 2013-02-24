@@ -42,15 +42,23 @@ local assert = assert
 --
 -- where :math:`n_x, n_y, \dots` are integers and :math:`L_x, L_y, \dots`
 -- denote the edge length of the cuboid box.  A wavevector "shell" is defined
--- by wavenumber, i.e. the magnitude :math:`k=|\vec k|`, allowing for a
--- tolerance.
+-- by its wavenumber, i.e. the magnitude :math:`k=|\vec k|`, including a
+-- tolerance. The number of wavevectors within each shell may be limited to
+-- avoid excessively large shells for large wavenumber.
 --
--- The wavenumbers may be passed explicitly. Alternatively, a semi-linearly
--- spaced grid is constructed starting with the smallest wavenumber compatible
--- with the extents of the simulation box. After a given number of points, the
--- grid is "decimated" by doubling the spacing until a maximum wavenumber is
--- reached. The number of wavevectors within each shell may be limited to avoid
--- excessively large shells for large wavenumber.
+-- The list of wavenumbers may be constructed using :class:`halmd.observables.utility.semilog_grid`,
+-- where the smallest wavenumber is given by :math:`2\pi / \max(L_x, L_y, \dots)`.
+--
+-- Example::
+--
+--    local numeric = halmd.utility.numeric
+--    local utility = halmd.observables.utility
+--
+--    local box = halmd.mdsim.box({length={5,10,20}})
+--
+--    local qmin = 2 * math.pi / numeric.max(box.length)
+--    local grid = utility.semilog_grid({start=qmin, stop=5 * math.pi, decimation=10})
+--    local wavevector = utility.wavevector({box = box, wavenumber = grid.value, tolerance=0.05, max_count=7})
 --
 
 ---
@@ -58,28 +66,18 @@ local assert = assert
 --
 -- :param table args: keyword arguments
 -- :param args.box:               instance of :class:`halmd.mdsim.box`
--- :param args.wavenumber:        list of wavenumbers, *or alternatively:*
--- :param args.max_wavenumber:    maximum wavenumber of semi-linearly spaced grid
--- :param args.decimation:        decimation of wavenumber grid (0=disabled, 1=logarithmic, ...)
+-- :param args.wavenumber:        list of wavenumbers
 -- :param number args.tolerance:  relative tolerance on wavevector magnitude
 -- :param integer args.max_count: maximum number of wavevectors per wavenumber shell
 --
 local M = module(function(args)
     local box = assert(args.box)
-    local wavenumber = args.wavenumber
-    if not wavenumber then
-        local max_wavenumber = assert(args.max_wavenumber)
-        local decimation = args.decimation or 0 -- default value: disable decimation
-    end
+    local wavenumber = assert(args.wavenumber)
     local tolerance = assert(args.tolerance)
     local max_count = assert(args.max_count)
 
     local wavevector = assert(wavevector_wrapper[box.dimension])
-    if wavenumber then
-        return wavevector(wavenumber, box.length, tolerance, max_count)
-    else
-        return wavevector(max_wavenumber, decimation, box.length, tolerance, max_count)
-    end
+    return wavevector(wavenumber, box.length, tolerance, max_count)
 end)
 
 ---
@@ -93,14 +91,8 @@ end)
 function M.add_options(parser)
     local parser = assert(parser)
 
-    parser:add_argument("wavenumbers", {type="vector", dtype="number", -- TODO conflicts="max-wavenumber",
+    parser:add_argument("wavenumbers", {type="vector", dtype="number",
         help="list of wavenumbers"
-    })
-    parser:add_argument("max-wavenumber", {type="number", -- TODO conflicts="wavenumbers",
-        help="maximum wavenumber of semi-linearly spaced grid"
-    })
-    parser:add_argument("decimation", {type="integer", -- TODO conflicts="wavenumbers",
-        help="decimation of wavenumber grid"
     })
     parser:add_argument("tolerance", {type="number", default=0.01,
         help="relative tolerance on wavevector magnitude"

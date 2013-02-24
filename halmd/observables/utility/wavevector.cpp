@@ -1,5 +1,5 @@
 /*
- * Copyright © 2011  Felix Höfling
+ * Copyright © 2011-2013  Felix Höfling
  *
  * This file is part of HALMD.
  *
@@ -24,7 +24,6 @@
 #include <sstream>
 
 #include <halmd/algorithm/host/pick_lattice_points.hpp>
-#include <halmd/io/logger.hpp>
 #include <halmd/observables/utility/wavevector.hpp>
 #include <halmd/utility/lua/lua.hpp>
 
@@ -46,54 +45,25 @@ wavevector<dimension>::wavevector(
   , box_length_(box_length)
   , tolerance_(tolerance)
   , max_count_(max_count)
+  , logger_(make_shared<logger>("wavevector"))
 {
+    auto first = begin(wavenumber_);
+    auto last = end(wavenumber_);
+    LOG("use " << last - first << " wavenumbers"
+        << " from " << *min_element(first, last) << " to " << *max_element(first, last)
+    );
+#ifndef NDEBUG
     ostringstream s;
-    copy(wavenumber_.begin(), wavenumber_.end(), ostream_iterator<double>(s, " "));
-    LOG("wavenumber grid: " << s.str());
+    copy(first, last, ostream_iterator<double>(s, " "));
+    LOG_DEBUG("wavenumber grid: " << s.str());
+#endif
 
-    init_();
-}
-
-template <int dimension>
-wavevector<dimension>::wavevector(
-    double max_wavenumber
-  , unsigned int decimation
-  , vector_type const& box_length
-  , double tolerance
-  , unsigned int max_count
-)
-  // initialise members
-  : box_length_(box_length)
-  , tolerance_(tolerance)
-  , max_count_(max_count)
-{
-    LOG("maximum wavenumber: " << max_wavenumber);
-
-    // set up semi-linearly spaced wavenumber grid
-    // determine q_min for the initial spacing
-    double h = 2 * M_PI / norm_inf(box_length_); //< norm_inf returns the maximum coordinate
-    unsigned int i = 0;
-    for (double q = h; q < max_wavenumber; ) {
-        wavenumber_.push_back(q);
-        q += h;
-        // double grid spacing after every 'decimation' number of points
-        if (decimation > 0 && ++i % decimation == 0) {
-            h *= 2;
-        }
-    }
-
-    init_();
-}
-
-template <int dimension>
-void wavevector<dimension>::init_()
-{
-    LOG("tolerance on wavevector magnitude: " << tolerance_);
-    LOG("maximum number of wavevectors per wavenumber: " << max_count_);
+    LOG("tolerance on magnitude: " << tolerance_);
+    LOG("maximum shell size: " << max_count_);
 
     // construct wavevectors and store as key/value pairs (wavenumber, wavevector)
     algorithm::host::pick_lattice_points_from_shell(
-        wavenumber_.begin(), wavenumber_.end()
+        first, last
       , back_inserter(wavevector_)
       , element_div(vector_type(2 * M_PI), box_length_)
       , tolerance_
@@ -102,25 +72,25 @@ void wavevector<dimension>::init_()
 
     // sort wavevector map according to keys (wavenumber)
     stable_sort(
-        wavevector_.begin(), wavevector_.end()
+        begin(wavevector_), end(wavevector_)
       , bind(less<double>(), bind(&map_type::value_type::first, _1), bind(&map_type::value_type::first, _2))
     );
 
     // remove wavenumbers with no compatible wavevectors
-    for (vector<double>::iterator q_it = wavenumber_.begin(); q_it != wavenumber_.end(); ++q_it) {
+    for (vector<double>::iterator q_it = begin(wavenumber_); q_it != end(wavenumber_); ++q_it) {
         // find wavevector q with |q| = *q_it
-        typename map_type::const_iterator found = find_if(
-            wavevector_.begin(), wavevector_.end()
+        auto found = find_if(
+            begin(wavevector_), end(wavevector_)
           , bind(equal_to<double>(), bind(&map_type::value_type::first, _1), *q_it)
         );
-        if (found == wavevector_.end()) {
-            LOG_WARNING("No wavevector compatible with |q| ≈ " << *q_it << ". Value discarded");
+        if (found == end(wavevector_)) {
+            LOG_WARNING("reciprocal lattice not compatible with |q| ≈ " << *q_it << ", value discarded");
             wavenumber_.erase(q_it--);   // post-decrement iterator, increment at end of loop
         }
     }
 
     if (wavenumber_.empty()) {
-        LOG_WARNING("Wavenumber grid is empty.");
+        LOG_WARNING("empty wavenumber grid");
         throw std::logic_error("Constraints on wavevectors are incompatible with geometry of simulation box.");
     }
 
@@ -156,11 +126,6 @@ void wavevector<dimension>::luaopen(lua_State* L)
                 class_<wavevector, std::shared_ptr<wavevector> >(class_name.c_str())
                     .def(constructor<
                          vector<double> const&
-                       , vector_type const&
-                       , double, unsigned int
-                    >())
-                    .def(constructor<
-                         double, unsigned int
                        , vector_type const&
                        , double, unsigned int
                     >())

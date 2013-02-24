@@ -1,5 +1,5 @@
 /*
- * Copyright © 2011  Felix Höfling
+ * Copyright © 2011-2013  Felix Höfling
  *
  * This file is part of HALMD.
  *
@@ -20,10 +20,11 @@
 #ifndef HALMD_OBSERVABLES_UTILITY_WAVEVECTOR_HPP
 #define HALMD_OBSERVABLES_UTILITY_WAVEVECTOR_HPP
 
-#include <utility>
 #include <lua.hpp>
+#include <utility>
 #include <vector>
 
+#include <halmd/io/logger.hpp>
 #include <halmd/numeric/blas/fixed_vector.hpp>
 
 namespace halmd {
@@ -32,7 +33,7 @@ namespace utility {
 
 /**
  * construct set of wavevector shells compatible with the reciprocal
- * lattice and a list of wavenumbers
+ * lattice of the periodic simulation box and a list of wavenumbers
  *
  * The result in value() is a sorted container of key/value pairs
  * (wavenumber, wavevector).
@@ -48,22 +49,9 @@ public:
 
     static void luaopen(lua_State* L);
 
-    // construct class with list of wavenumbers
+    // constructor
     wavevector(
         std::vector<double> const& wavenumber
-      , vector_type const& box_length
-      , double tolerance
-      , unsigned int max_count
-    );
-
-    // construct class with upper limit on wavenumber,
-    // the grid is semi-linearly spaced starting with the smallest value
-    // that is compatible with the extents of the simulation box. After
-    // 'decimation' number of points, the grid spacing is doubled; the
-    // value 0 disables decimation.
-    wavevector(
-        double max_wavenumber
-      , unsigned int decimation
       , vector_type const& box_length
       , double tolerance
       , unsigned int max_count
@@ -94,9 +82,6 @@ public:
     }
 
 protected:
-    // common part of constructors
-    void init_();
-
     /** wavenumber grid */
     wavenumber_array_type wavenumber_;
     /** edge lengths of simulation box */
@@ -110,6 +95,8 @@ protected:
      * the keys equal wavenumber_ (or a subset of)
      */
     map_type wavevector_;
+    /** module logger */
+    std::shared_ptr<logger> logger_;
 };
 
 } // namespace observables
