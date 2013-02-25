@@ -158,10 +158,10 @@ pair_full<dimension, float_type, potential_type>::pair_full(
   , stress_pot_(particle_->nparticle())
   , hypervirial_(particle_->nparticle())
 {
-    cache_proxy<net_force_array_type> net_force = net_force_;
-    cache_proxy<en_pot_array_type> en_pot = en_pot_;
-    cache_proxy<stress_pot_array_type> stress_pot = stress_pot_;
-    cache_proxy<hypervirial_array_type> hypervirial = hypervirial_;
+    auto net_force = make_cache_mutable(net_force_);
+    auto en_pot = make_cache_mutable(en_pot_);
+    auto stress_pot = make_cache_mutable(stress_pot_);
+    auto hypervirial = make_cache_mutable(hypervirial_);
 
     net_force->reserve(particle_->dim.threads());
     en_pot->reserve(particle_->dim.threads());
@@ -199,9 +199,9 @@ pair_full<dimension, float_type, potential_type>::en_pot()
     if (en_pot_cache_ != position_cache) {
         compute_aux();
         net_force_cache_ = position_cache;
-        en_pot_cache_ = net_force_cache_;
-        stress_pot_cache_ = net_force_cache_;
-        hypervirial_cache_ = net_force_cache_;
+        en_pot_cache_ = position_cache;
+        stress_pot_cache_ = position_cache;
+        hypervirial_cache_ = position_cache;
     }
 
     return en_pot_;
@@ -216,9 +216,9 @@ pair_full<dimension, float_type, potential_type>::stress_pot()
     if (stress_pot_cache_ != position_cache) {
         compute_aux();
         net_force_cache_ = position_cache;
-        en_pot_cache_ = net_force_cache_;
-        stress_pot_cache_ = net_force_cache_;
-        hypervirial_cache_ = net_force_cache_;
+        en_pot_cache_ = position_cache;
+        stress_pot_cache_ = position_cache;
+        hypervirial_cache_ = position_cache;
     }
 
     return stress_pot_;
@@ -233,9 +233,9 @@ pair_full<dimension, float_type, potential_type>::hypervirial()
     if (hypervirial_cache_ != position_cache) {
         compute_aux();
         net_force_cache_ = position_cache;
-        en_pot_cache_ = net_force_cache_;
-        stress_pot_cache_ = net_force_cache_;
-        hypervirial_cache_ = net_force_cache_;
+        en_pot_cache_ = position_cache;
+        stress_pot_cache_ = position_cache;
+        hypervirial_cache_ = position_cache;
     }
 
     return hypervirial_;
@@ -246,8 +246,8 @@ inline void pair_full<dimension, float_type, potential_type>::compute()
 {
     LOG_TRACE("compute forces");
 
-    cache_proxy<position_array_type const> position = particle_->position();
-    cache_proxy<net_force_array_type> net_force = net_force_;
+    position_array_type const& position = read_cache(particle_->position());
+    auto net_force = make_cache_mutable(net_force_);
 
     scoped_timer_type timer(runtime_.compute);
 
@@ -256,7 +256,7 @@ inline void pair_full<dimension, float_type, potential_type>::compute()
     cuda::configure(particle_->dim.grid, particle_->dim.block);
     gpu_wrapper::kernel.compute(
         &*net_force->begin()
-        , &*position->begin()
+        , &*position.begin()
         , nullptr
         , nullptr
         , nullptr
@@ -273,11 +273,11 @@ inline void pair_full<dimension, float_type, potential_type>::compute_aux()
 {
     LOG_TRACE("compute forces with auxiliary variables");
 
-    cache_proxy<position_array_type const> position = particle_->position();
-    cache_proxy<net_force_array_type> net_force = net_force_;
-    cache_proxy<en_pot_array_type> en_pot = en_pot_;
-    cache_proxy<stress_pot_array_type> stress_pot = stress_pot_;
-    cache_proxy<hypervirial_array_type> hypervirial = hypervirial_;
+    position_array_type const& position = read_cache(particle_->position());
+    auto net_force = make_cache_mutable(net_force_);
+    auto en_pot = make_cache_mutable(en_pot_);
+    auto stress_pot = make_cache_mutable(stress_pot_);
+    auto hypervirial = make_cache_mutable(hypervirial_);
 
     scoped_timer_type timer(runtime_.compute);
 
@@ -286,7 +286,7 @@ inline void pair_full<dimension, float_type, potential_type>::compute_aux()
     cuda::configure(particle_->dim.grid, particle_->dim.block);
     gpu_wrapper::kernel.compute_aux(
         &*net_force->begin()
-        , &*position->begin()
+        , &*position.begin()
         , &*en_pot->begin()
         , &*stress_pot->begin()
         , &*hypervirial->begin()

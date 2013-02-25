@@ -77,19 +77,20 @@ void verlet_nvt_andersen<dimension, float_type, RandomNumberGenerator>::set_temp
 template <int dimension, typename float_type, typename RandomNumberGenerator>
 void verlet_nvt_andersen<dimension, float_type, RandomNumberGenerator>::integrate()
 {
-    cache_proxy<net_force_array_type const> net_force = force_->net_force();
-    cache_proxy<position_array_type> position = particle_->position();
-    cache_proxy<velocity_array_type> velocity = particle_->velocity();
-    cache_proxy<image_array_type> image = particle_->image();
+    net_force_array_type const& net_force = read_cache(force_->net_force());
+    auto position = make_cache_mutable(particle_->position());
+    auto velocity = make_cache_mutable(particle_->velocity());
+    auto image = make_cache_mutable(particle_->image());
 
     scoped_timer_type timer(runtime_.integrate);
+
     try {
         cuda::configure(particle_->dim.grid, particle_->dim.block);
         wrapper_type::kernel.integrate(
             &*position->begin()
           , &*image->begin()
           , &*velocity->begin()
-          , &*net_force->begin()
+          , &*net_force.begin()
           , timestep_
           , static_cast<vector_type>(box_->length())
         );
@@ -107,17 +108,18 @@ void verlet_nvt_andersen<dimension, float_type, RandomNumberGenerator>::integrat
 template <int dimension, typename float_type, typename RandomNumberGenerator>
 void verlet_nvt_andersen<dimension, float_type, RandomNumberGenerator>::finalize()
 {
-    cache_proxy<net_force_array_type const> net_force = force_->net_force();
-    cache_proxy<velocity_array_type> velocity = particle_->velocity();
+    net_force_array_type const& net_force = read_cache(force_->net_force());
+    auto velocity = make_cache_mutable(particle_->velocity());
 
     scoped_timer_type timer(runtime_.finalize);
+
     try {
         // use CUDA execution dimensions of 'random' since
         // the kernel makes use of the random number generator
         cuda::configure(random_->rng().dim.grid, random_->rng().dim.block);
         wrapper_type::kernel.finalize(
             &*velocity->begin()
-          , &*net_force->begin()
+          , &*net_force.begin()
           , timestep_
           , sqrt_temperature_
           , coll_prob_

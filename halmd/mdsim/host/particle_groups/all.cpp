@@ -34,7 +34,7 @@ all<particle_type>::all(std::shared_ptr<particle_type const> particle)
   , unordered_(particle_->nparticle())
   , size_(particle_->nparticle())
 {
-    cache_proxy<array_type> unordered = unordered_;
+    auto unordered = make_cache_mutable(unordered_);
     std::iota(unordered->begin(), unordered->end(), 0);
 }
 

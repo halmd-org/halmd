@@ -36,8 +36,7 @@ wrap_get_net_force(std::shared_ptr<force_type> self)
     return [=]() -> std::vector<typename force_type::net_force_type> {
         std::vector<typename force_type::net_force_type> output;
         {
-            cache_proxy<typename force_type::net_force_array_type const> net_force = self->net_force();
-            output.reserve(net_force->size());
+            output.reserve(self->net_force()->size());
         }
         get_net_force(*self, std::back_inserter(output));
         return std::move(output);
@@ -51,8 +50,7 @@ wrap_get_en_pot(std::shared_ptr<force_type> self)
     return [=]() -> std::vector<typename force_type::en_pot_type> {
         std::vector<typename force_type::en_pot_type> output;
         {
-            cache_proxy<typename force_type::en_pot_array_type const> en_pot = self->en_pot();
-            output.reserve(en_pot->size());
+            output.reserve(self->en_pot()->size());
         }
         get_en_pot(*self, std::back_inserter(output));
         return std::move(output);
@@ -66,8 +64,7 @@ wrap_get_stress_pot(std::shared_ptr<force_type> self)
     return [=]() -> std::vector<typename force_type::stress_pot_type> {
         std::vector<typename force_type::stress_pot_type> output;
         {
-            cache_proxy<typename force_type::stress_pot_array_type const> stress_pot = self->stress_pot();
-            output.reserve(stress_pot->size());
+            output.reserve(self->stress_pot()->size());
         }
         get_stress_pot(*self, std::back_inserter(output));
         return std::move(output);
@@ -81,8 +78,7 @@ wrap_get_hypervirial(std::shared_ptr<force_type> self)
     return [=]() -> std::vector<typename force_type::hypervirial_type> {
         std::vector<typename force_type::hypervirial_type> output;
         {
-            cache_proxy<typename force_type::hypervirial_array_type const> hypervirial = self->hypervirial();
-            output.reserve(hypervirial->size());
+            output.reserve(self->hypervirial()->size());
         }
         get_hypervirial(*self, std::back_inserter(output));
         return std::move(output);

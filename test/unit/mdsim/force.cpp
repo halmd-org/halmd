@@ -103,7 +103,10 @@ inline typename std::enable_if<
       , std::random_access_iterator_tag
     >::value
   , void>::type
-make_stress_array_from_iterator_range(typename force_type::stress_pot_array_type& array, iterator_type const& first, iterator_type const& last)
+make_stress_array_from_iterator_range(
+    typename force_type::stress_pot_array_type& array
+  , iterator_type const& first, iterator_type const& last
+)
 {
     make_array_from_iterator_range(array, first, last);
 }
@@ -138,9 +141,12 @@ inline typename std::enable_if<
       , cuda::device_random_access_iterator_tag
     >::value
   , void>::type
-make_stress_array_from_iterator_range(typename force_type::stress_pot_array_type& array, iterator_type const& first, iterator_type const& last)
+make_stress_array_from_iterator_range(
+    typename force_type::stress_pot_array_type& array
+  , iterator_type const& first, iterator_type const& last
+)
 {
-    int stress_pot_size = force_type::stress_pot_type::static_size;
+    int constexpr stress_pot_size = force_type::stress_pot_type::static_size;
     typename force_type::stress_pot_array_type g_stress_pot(last - first);
     g_stress_pot.reserve(g_stress_pot.size() * stress_pot_size);
     cuda::host::vector<typename force_type::stress_pot_array_type::value_type> h_stress_pot(g_stress_pot.size());
@@ -179,7 +185,7 @@ public:
     template <typename iterator_type>
     void set_net_force(iterator_type const& first, iterator_type const& last)
     {
-        halmd::cache_proxy<net_force_array_type> net_force = net_force_;
+        auto net_force = make_cache_mutable(net_force_);
         make_array_from_iterator_range(*net_force, first, last);
     }
 
@@ -191,7 +197,7 @@ public:
     template <typename iterator_type>
     void set_en_pot(iterator_type const& first, iterator_type const& last)
     {
-        halmd::cache_proxy<en_pot_array_type> en_pot = en_pot_;
+        auto en_pot = make_cache_mutable(en_pot_);
         make_array_from_iterator_range(*en_pot, first, last);
     }
 
@@ -203,8 +209,8 @@ public:
     template <typename iterator_type>
     void set_stress_pot(iterator_type const& first, iterator_type const& last)
     {
-        halmd::cache_proxy<stress_pot_array_type> stress_pot = stress_pot_;
-        make_stress_array_from_iterator_range<force_from_iterator_range, iterator_type>(*stress_pot, first, last);
+        auto stress_pot = make_cache_mutable(stress_pot_);
+        make_stress_array_from_iterator_range<force_from_iterator_range>(*stress_pot, first, last);
     }
 
     virtual halmd::cache<hypervirial_array_type> const& hypervirial()
@@ -215,7 +221,7 @@ public:
     template <typename iterator_type>
     void set_hypervirial(iterator_type const& first, iterator_type const& last)
     {
-        halmd::cache_proxy<hypervirial_array_type> hypervirial = hypervirial_;
+        auto hypervirial = make_cache_mutable(hypervirial_);
         make_array_from_iterator_range(*hypervirial, first, last);
     }
 

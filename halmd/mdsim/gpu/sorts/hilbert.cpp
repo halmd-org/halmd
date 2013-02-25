@@ -70,9 +70,9 @@ void hilbert<dimension, float_type>::order()
 {
     LOG_TRACE("order particles after Hilbert space-filling curve");
     {
+        scoped_timer_type timer(runtime_.order);
         cuda::vector<unsigned int> g_index(particle_->nparticle());
         g_index.reserve(particle_->dim.threads());
-        scoped_timer_type timer(runtime_.order);
         {
 
             cuda::vector<unsigned int> g_map(particle_->nparticle());
@@ -91,12 +91,13 @@ void hilbert<dimension, float_type>::order()
 template <int dimension, typename float_type>
 void hilbert<dimension, float_type>::map(cuda::vector<unsigned int>& g_map)
 {
-    cache_proxy<position_array_type const> position = particle_->position();
+    position_array_type const& position = read_cache(particle_->position());
 
     scoped_timer_type timer(runtime_.map);
+
     cuda::configure(particle_->dim.grid, particle_->dim.block);
     wrapper_type::kernel.map(
-        &*position->begin()
+        &*position.begin()
       , g_map
       , static_cast<vector_type>(box_->length())
     );

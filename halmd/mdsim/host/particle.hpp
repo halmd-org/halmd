@@ -248,9 +248,8 @@ template <typename particle_type, typename iterator_type>
 inline iterator_type
 get_position(particle_type const& particle, iterator_type const& first)
 {
-    typedef typename particle_type::position_array_type position_array_type;
-    cache_proxy<position_array_type const> position = particle.position();
-    return std::copy(position->begin(), position->end(), first);
+    auto const& position = read_cache(particle.position());
+    return std::copy(position.begin(), position.end(), first);
 }
 
 /**
@@ -260,10 +259,9 @@ template <typename particle_type, typename iterator_type>
 inline iterator_type
 set_position(particle_type& particle, iterator_type const& first)
 {
-    typedef typename particle_type::position_array_type position_array_type;
-    cache_proxy<position_array_type> position = particle.position();
+    auto position = make_cache_mutable(particle.position());
     iterator_type input = first;
-    for (typename particle_type::position_type& value : *position) {
+    for (auto& value : *position) {
         value = *input++;
     }
     return input;
@@ -276,9 +274,8 @@ template <typename particle_type, typename iterator_type>
 inline iterator_type
 get_image(particle_type const& particle, iterator_type const& first)
 {
-    typedef typename particle_type::image_array_type image_array_type;
-    cache_proxy<image_array_type const> image = particle.image();
-    return std::copy(image->begin(), image->end(), first);
+    auto const& image = read_cache(particle.image());
+    return std::copy(image.begin(), image.end(), first);
 }
 
 /**
@@ -288,10 +285,9 @@ template <typename particle_type, typename iterator_type>
 inline iterator_type
 set_image(particle_type& particle, iterator_type const& first)
 {
-    typedef typename particle_type::image_array_type image_array_type;
-    cache_proxy<image_array_type> image = particle.image();
+    auto image = make_cache_mutable(particle.image());
     iterator_type input = first;
-    for (typename particle_type::image_type& value : *image) {
+    for (auto& value : *image) {
         value = *input++;
     }
     return input;
@@ -304,9 +300,8 @@ template <typename particle_type, typename iterator_type>
 inline iterator_type
 get_velocity(particle_type const& particle, iterator_type const& first)
 {
-    typedef typename particle_type::velocity_array_type velocity_array_type;
-    cache_proxy<velocity_array_type const> velocity = particle.velocity();
-    return std::copy(velocity->begin(), velocity->end(), first);
+    auto const& velocity = read_cache(particle.velocity());
+    return std::copy(velocity.begin(), velocity.end(), first);
 }
 
 /**
@@ -316,10 +311,9 @@ template <typename particle_type, typename iterator_type>
 inline iterator_type
 set_velocity(particle_type& particle, iterator_type const& first)
 {
-    typedef typename particle_type::velocity_array_type velocity_array_type;
-    cache_proxy<velocity_array_type> velocity = particle.velocity();
+    auto velocity = make_cache_mutable(particle.velocity());
     iterator_type input = first;
-    for (typename particle_type::velocity_type& value : *velocity) {
+    for (auto& value : *velocity) {
         value = *input++;
     }
     return input;
@@ -332,9 +326,8 @@ template <typename particle_type, typename iterator_type>
 inline iterator_type
 get_tag(particle_type const& particle, iterator_type const& first)
 {
-    typedef typename particle_type::tag_array_type tag_array_type;
-    cache_proxy<tag_array_type const> tag = particle.tag();
-    return std::copy(tag->begin(), tag->end(), first);
+    auto const& tag = read_cache(particle.tag());
+    return std::copy(tag.begin(), tag.end(), first);
 }
 
 /**
@@ -344,10 +337,9 @@ template <typename particle_type, typename iterator_type>
 inline iterator_type
 set_tag(particle_type& particle, iterator_type const& first)
 {
-    typedef typename particle_type::tag_array_type tag_array_type;
-    cache_proxy<tag_array_type> tag = particle.tag();
+    auto tag = make_cache_mutable(particle.tag());
     iterator_type input = first;
-    for (typename particle_type::tag_type& value : *tag) {
+    for (auto& value : *tag) {
         value = *input++;
     }
     return input;
@@ -360,9 +352,8 @@ template <typename particle_type, typename iterator_type>
 inline iterator_type
 get_reverse_tag(particle_type const& particle, iterator_type const& first)
 {
-    typedef typename particle_type::reverse_tag_array_type reverse_tag_array_type;
-    cache_proxy<reverse_tag_array_type const> reverse_tag = particle.reverse_tag();
-    return std::copy(reverse_tag->begin(), reverse_tag->end(), first);
+    auto const& reverse_tag = read_cache(particle.reverse_tag());
+    return std::copy(reverse_tag.begin(), reverse_tag.end(), first);
 }
 
 /**
@@ -372,10 +363,9 @@ template <typename particle_type, typename iterator_type>
 inline iterator_type
 set_reverse_tag(particle_type& particle, iterator_type const& first)
 {
-    typedef typename particle_type::reverse_tag_array_type reverse_tag_array_type;
-    cache_proxy<reverse_tag_array_type> reverse_tag = particle.reverse_tag();
+    auto reverse_tag = make_cache_mutable(particle.reverse_tag());
     iterator_type input = first;
-    for (typename particle_type::reverse_tag_type& value : *reverse_tag) {
+    for (auto& value : *reverse_tag) {
         value = *input++;
     }
     return input;
@@ -388,9 +378,8 @@ template <typename particle_type, typename iterator_type>
 inline iterator_type
 get_species(particle_type const& particle, iterator_type const& first)
 {
-    typedef typename particle_type::species_array_type species_array_type;
-    cache_proxy<species_array_type const> species = particle.species();
-    return std::copy(species->begin(), species->end(), first);
+    auto const& species = read_cache(particle.species());
+    return std::copy(species.begin(), species.end(), first);
 }
 
 /**
@@ -400,10 +389,9 @@ template <typename particle_type, typename iterator_type>
 inline iterator_type
 set_species(particle_type& particle, iterator_type const& first)
 {
-    typedef typename particle_type::species_array_type species_array_type;
-    cache_proxy<species_array_type> species = particle.species();
+    auto species = make_cache_mutable(particle.species());
     iterator_type input = first;
-    for (typename particle_type::species_type& value : *species) {
+    for (auto& value : *species) {
         value = *input++;
     }
     return input;
@@ -416,9 +404,8 @@ template <typename particle_type, typename iterator_type>
 inline iterator_type
 get_mass(particle_type const& particle, iterator_type const& first)
 {
-    typedef typename particle_type::mass_array_type mass_array_type;
-    cache_proxy<mass_array_type const> mass = particle.mass();
-    return std::copy(mass->begin(), mass->end(), first);
+    auto const& mass = read_cache(particle.mass());
+    return std::copy(mass.begin(), mass.end(), first);
 }
 
 /**
@@ -428,10 +415,9 @@ template <typename particle_type, typename iterator_type>
 inline iterator_type
 set_mass(particle_type& particle, iterator_type const& first)
 {
-    typedef typename particle_type::mass_array_type mass_array_type;
-    cache_proxy<mass_array_type> mass = particle.mass();
+    auto mass = make_cache_mutable(particle.mass());
     iterator_type input = first;
-    for (typename particle_type::mass_type& value : *mass) {
+    for (auto& value : *mass) {
         value = *input++;
     }
     return input;

@@ -209,8 +209,8 @@ public:
     template <typename particle_type>
     zero_force(particle_type const& particle)
     {
-        halmd::cache_proxy<net_force_array_type> net_force = net_force_;
-        halmd::cache_proxy<stress_pot_array_type> stress_pot = stress_pot_;
+        auto net_force = make_cache_mutable(net_force_);
+        auto stress_pot = make_cache_mutable(stress_pot_);
         make_array_from_particle(*net_force, particle);
         make_array_from_particle(*stress_pot, particle);
     }

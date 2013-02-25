@@ -109,10 +109,10 @@ void verlet_nvt_hoover<dimension, float_type>::set_mass(chain_type const& mass)
 template <int dimension, typename float_type>
 void verlet_nvt_hoover<dimension, float_type>::integrate()
 {
-    cache_proxy<net_force_array_type const> net_force = force_->net_force();
-    cache_proxy<position_array_type> position = particle_->position();
-    cache_proxy<velocity_array_type> velocity = particle_->velocity();
-    cache_proxy<image_array_type> image = particle_->image();
+    net_force_array_type const& net_force = read_cache(force_->net_force());
+    auto position = make_cache_mutable(particle_->position());
+    auto velocity = make_cache_mutable(particle_->velocity());
+    auto image = make_cache_mutable(particle_->image());
 
     scoped_timer<timer> timer_(runtime_.integrate);
     float_type scale = propagate_chain();
@@ -123,7 +123,7 @@ void verlet_nvt_hoover<dimension, float_type>::integrate()
             &*position->begin()
           , &*image->begin()
           , &*velocity->begin()
-          , &*net_force->begin()
+          , &*net_force.begin()
           , timestep_
           , scale
           , static_cast<vector_type>(box_->length())
@@ -142,14 +142,14 @@ void verlet_nvt_hoover<dimension, float_type>::integrate()
 template <int dimension, typename float_type>
 void verlet_nvt_hoover<dimension, float_type>::finalize()
 {
-    cache_proxy<net_force_array_type const> net_force = force_->net_force();
-    cache_proxy<velocity_array_type> velocity = particle_->velocity();
+    net_force_array_type const& net_force = read_cache(force_->net_force());
+    auto velocity = make_cache_mutable(particle_->velocity());
 
     scoped_timer_type timer(runtime_.finalize);
 
     try {
         cuda::configure(particle_->dim.grid, particle_->dim.block);
-        wrapper_type::kernel.finalize(&*velocity->begin(), &*net_force->begin(), timestep_);
+        wrapper_type::kernel.finalize(&*velocity->begin(), &*net_force.begin(), timestep_);
         cuda::thread::synchronize();
 
         float_type scale = propagate_chain();
@@ -179,12 +179,12 @@ void verlet_nvt_hoover<dimension, float_type>::finalize()
 template <int dimension, typename float_type>
 float_type verlet_nvt_hoover<dimension, float_type>::propagate_chain()
 {
-    cache_proxy<velocity_array_type const> velocity = particle_->velocity();
+    velocity_array_type const& velocity = read_cache(particle_->velocity());
 
     scoped_timer_type timer(runtime_.propagate);
 
     // compute total kinetic energy multiplied by 2
-    float_type en_kin_2 = 2 * compute_en_kin_(&*velocity->begin(), &*velocity->end())();
+    float_type en_kin_2 = 2 * compute_en_kin_(&*velocity.begin(), &*velocity.end())();
 
     // head of the chain
     v_xi[1] += (mass_xi_[0] * v_xi[0] * v_xi[0] - temperature_) / mass_xi_[1] * timestep_4_;

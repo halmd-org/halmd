@@ -62,8 +62,8 @@ lattice<dimension, float_type>::lattice(
 template <int dimension, typename float_type>
 void lattice<dimension, float_type>::set()
 {
-    cache_proxy<position_array_type> position = particle_->position();
-    cache_proxy<image_array_type> image = particle_->image();
+    auto position = make_cache_mutable(particle_->position());
+    auto image = make_cache_mutable(particle_->image());
 
     // assign fcc lattice points to a fraction of the particles in a slab at the centre
     vector_type length = element_prod(box_->length(), slab_);

@@ -110,21 +110,22 @@ set_mass(chain_type const& mass)
 template <int dimension, typename float_type>
 void verlet_nvt_hoover<dimension, float_type>::integrate()
 {
-    scoped_timer_type timer(runtime_.integrate);
+    auto position = make_cache_mutable(particle_->position());
+    auto image = make_cache_mutable(particle_->image());
+    auto velocity = make_cache_mutable(particle_->velocity());
 
-    cache_proxy<net_force_array_type const> net_force = force_->net_force();
-    cache_proxy<mass_array_type const> mass = particle_->mass();
-    cache_proxy<position_array_type> position = particle_->position();
-    cache_proxy<image_array_type> image = particle_->image();
-    cache_proxy<velocity_array_type> velocity = particle_->velocity();
-    size_type const nparticle = particle_->nparticle();
+    net_force_array_type const& net_force = read_cache(force_->net_force());
+    mass_array_type const& mass = read_cache(particle_->mass());
+    size_type nparticle = particle_->nparticle();
+
+    scoped_timer_type timer(runtime_.integrate);
 
     propagate_chain();
 
     for (size_type i = 0; i < nparticle; ++i) {
         vector_type& v = (*velocity)[i];
         vector_type& r = (*position)[i];
-        v += (*net_force)[i] * timestep_half_ / (*mass)[i];
+        v += net_force[i] * timestep_half_ / mass[i];
         r += v * timestep_;
         (*image)[i] += box_->reduce_periodic(r);
     }
@@ -136,16 +137,17 @@ void verlet_nvt_hoover<dimension, float_type>::integrate()
 template <int dimension, typename float_type>
 void verlet_nvt_hoover<dimension, float_type>::finalize()
 {
-    cache_proxy<net_force_array_type const> net_force = force_->net_force();
-    cache_proxy<mass_array_type const> mass = particle_->mass();
-    cache_proxy<velocity_array_type> velocity = particle_->velocity();
-    size_type const nparticle = particle_->nparticle();
+    auto velocity = make_cache_mutable(particle_->velocity());
+
+    net_force_array_type const& net_force = read_cache(force_->net_force());
+    mass_array_type const& mass = read_cache(particle_->mass());
+    size_type nparticle = particle_->nparticle();
 
     scoped_timer_type timer(runtime_.finalize);
 
     // loop over all particles
     for (size_type i = 0; i < nparticle; ++i) {
-        (*velocity)[i] += (*net_force)[i] * timestep_half_ / (*mass)[i];
+        (*velocity)[i] += net_force[i] * timestep_half_ / mass[i];
     }
 
     propagate_chain();
@@ -164,7 +166,7 @@ void verlet_nvt_hoover<dimension, float_type>::finalize()
 template <int dimension, typename float_type>
 void verlet_nvt_hoover<dimension, float_type>::propagate_chain()
 {
-    cache_proxy<velocity_array_type> velocity = particle_->velocity();
+    auto velocity = make_cache_mutable(particle_->velocity());
 
     scoped_timer_type timer(runtime_.propagate);
 

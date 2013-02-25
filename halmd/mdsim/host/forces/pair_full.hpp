@@ -247,13 +247,16 @@ pair_full<dimension, float_type, potential_type>::hypervirial()
 template <int dimension, typename float_type, typename potential_type>
 inline void pair_full<dimension, float_type, potential_type>::compute()
 {
-    cache_proxy<position_array_type const> position1 = particle_->position();
-    cache_proxy<position_array_type const> position2 = particle_->position();
-    cache_proxy<species_array_type const> species1   = particle_->species();
-    cache_proxy<species_array_type const> species2   = particle_->species();
-    cache_proxy<net_force_array_type> net_force      = net_force_;
-    size_type const nparticle1                       = particle_->nparticle();
-    size_type const nparticle2                       = particle_->nparticle();
+    auto net_force = make_cache_mutable(net_force_);
+
+    position_array_type const& position1 = read_cache(particle_->position());
+    position_array_type const& position2 = read_cache(particle_->position());
+    species_array_type const& species1   = *particle_->species();
+    species_array_type const& species2   = *particle_->species();
+    size_type nparticle1 = particle_->nparticle();
+    size_type nparticle2 = particle_->nparticle();
+
+    LOG_TRACE("compute forces");
 
     scoped_timer_type timer(runtime_.compute);
 
@@ -267,11 +270,11 @@ inline void pair_full<dimension, float_type, potential_type>::compute()
                 continue;
             }
             // particle distance vector
-            position_type r = (*position1)[i] - (*position2)[j];
+            position_type r = position1[i] - position2[j];
             box_->reduce_periodic(r);
             // particle types
-            species_type a = (*species1)[i];
-            species_type b = (*species2)[j];
+            species_type a = species1[i];
+            species_type b = species2[j];
             // squared particle distance
             float_type rr = inner_prod(r, r);
 
@@ -288,16 +291,19 @@ inline void pair_full<dimension, float_type, potential_type>::compute()
 template <int dimension, typename float_type, typename potential_type>
 inline void pair_full<dimension, float_type, potential_type>::compute_aux()
 {
-    cache_proxy<position_array_type const> position1 = particle_->position();
-    cache_proxy<position_array_type const> position2 = particle_->position();
-    cache_proxy<species_array_type const> species1   = particle_->species();
-    cache_proxy<species_array_type const> species2   = particle_->species();
-    cache_proxy<net_force_array_type> net_force      = net_force_;
-    cache_proxy<en_pot_array_type> en_pot            = en_pot_;
-    cache_proxy<stress_pot_array_type> stress_pot    = stress_pot_;
-    cache_proxy<hypervirial_array_type> hypervirial  = hypervirial_;
-    size_type const nparticle1                       = particle_->nparticle();
-    size_type const nparticle2                       = particle_->nparticle();
+    cache_proxy<net_force_array_type> net_force     = net_force_;
+    cache_proxy<en_pot_array_type> en_pot           = en_pot_;
+    cache_proxy<stress_pot_array_type> stress_pot   = stress_pot_;
+    auto hypervirial = make_cache_mutable(hypervirial_);
+
+    position_array_type const& position1 = read_cache(particle_->position());
+    position_array_type const& position2 = read_cache(particle_->position());
+    species_array_type const& species1   = *particle_->species();
+    species_array_type const& species2   = *particle_->species();
+    size_type nparticle1 = particle_->nparticle();
+    size_type nparticle2 = particle_->nparticle();
+
+    LOG_TRACE("compute forces with auxiliary variables");
 
     scoped_timer_type timer(runtime_.compute);
 
@@ -314,11 +320,11 @@ inline void pair_full<dimension, float_type, potential_type>::compute_aux()
                 continue;
             }
             // particle distance vector
-            position_type r = (*position1)[i] - (*position2)[j];
+            position_type r = position1[i] - position2[j];
             box_->reduce_periodic(r);
             // particle types
-            species_type a = (*species1)[i];
-            species_type b = (*species2)[j];
+            species_type a = species1[i];
+            species_type b = species2[j];
             // squared particle distance
             float_type rr = inner_prod(r, r);
 

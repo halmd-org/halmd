@@ -277,11 +277,10 @@ template <int dimension, typename float_type>
 void host_modules<dimension, float_type>::set_velocity(std::shared_ptr<particle_type> particle)
 {
     // copy -r[i] to v[i]
-    halmd::cache_proxy<typename particle_type::position_array_type const> position = particle->position();
-    halmd::cache_proxy<typename particle_type::velocity_array_type> velocity = particle->velocity();
+    auto const& position = read_cache(particle->position());
+    auto velocity = make_cache_mutable(particle->velocity());
     std::transform(
-        position->begin()
-      , position->end()
+        position.begin(), position.end()
       , velocity->begin()
       , negate<typename particle_type::vector_type>()
     );
@@ -342,8 +341,8 @@ void gpu_modules<dimension, float_type>::set_velocity(std::shared_ptr<particle_t
     typedef typename particle_type::vector_type vector_type;
     typedef apply_wrapper<negate_, vector_type, float4, vector_type, float4> apply_negate_wrapper;
 
-    halmd::cache_proxy<typename particle_type::position_array_type const> position = particle->position();
-    halmd::cache_proxy<typename particle_type::velocity_array_type> velocity = particle->velocity();
+    auto const& position = read_cache(particle->position());
+    auto velocity = make_cache_mutable(particle->velocity());
 
     // copy -g_r[i] to g_v[i]
     //
@@ -358,7 +357,7 @@ void gpu_modules<dimension, float_type>::set_velocity(std::shared_ptr<particle_t
     // Caveat: overwrites particle tags in g_v (which are not used anyway)
     try {
         cuda::configure(particle->dim.grid, particle->dim.block);
-        apply_negate_wrapper::kernel.apply(&*position->begin(), &*velocity->begin(), position->capacity());
+        apply_negate_wrapper::kernel.apply(&*position.begin(), &*velocity->begin(), position.capacity());
         cuda::thread::synchronize();
     }
     catch (cuda::error const&) {

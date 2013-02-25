@@ -73,9 +73,8 @@ template <typename iterator_type>
 inline iterator_type
 get_ordered(particle_group& group, iterator_type const& first)
 {
-    typedef typename particle_group::array_type array_type;
-    cache_proxy<array_type const> ordered = group.ordered();
-    return std::copy(ordered->begin(), ordered->end(), first);
+    auto const& ordered = read_cache(group.ordered());
+    return std::copy(ordered.begin(), ordered.end(), first);
 }
 
 /**
@@ -85,9 +84,8 @@ template <typename iterator_type>
 inline iterator_type
 get_unordered(particle_group& group, iterator_type const& first)
 {
-    typedef typename particle_group::array_type array_type;
-    cache_proxy<array_type const> unordered = group.unordered();
-    return std::copy(unordered->begin(), unordered->end(), first);
+    auto const& unordered = read_cache(group.unordered());
+    return std::copy(unordered.begin(), unordered.end(), first);
 }
 
 /**
@@ -96,20 +94,15 @@ get_unordered(particle_group& group, iterator_type const& first)
 template <typename particle_type>
 double get_mean_en_kin(particle_type const& particle, particle_group& group)
 {
-    typedef typename particle_group::array_type group_array_type;
-    typedef typename particle_group::size_type size_type;
-    typedef typename particle_type::velocity_array_type velocity_array_type;
-    typedef typename particle_type::mass_array_type mass_array_type;
-
-    cache_proxy<group_array_type const> unordered = group.unordered();
-    cache_proxy<velocity_array_type const> velocity = particle.velocity();
-    cache_proxy<mass_array_type const> mass = particle.mass();
+    typename particle_group::array_type const& unordered        = *group.unordered();
+    auto const& velocity = read_cache(particle.velocity());
+    typename particle_type::mass_array_type const& mass         = *particle.mass();
 
     double mv2 = 0;
-    for (size_type i : *unordered) {
-        mv2 += (*mass)[i] * inner_prod((*velocity)[i], (*velocity)[i]);
+    for (typename particle_group::size_type i : unordered) {
+        mv2 += mass[i] * inner_prod(velocity[i], velocity[i]);
     }
-    return  0.5 * mv2 / unordered->size();
+    return  0.5 * mv2 / unordered.size();
 }
 
 /**
@@ -119,25 +112,18 @@ template <typename particle_type, typename box_type>
 fixed_vector<double, particle_type::velocity_type::static_size>
 get_r_cm(particle_type const& particle, particle_group& group, box_type const& box)
 {
-    typedef typename particle_group::array_type group_array_type;
-    typedef typename particle_group::size_type size_type;
-    typedef typename particle_type::position_array_type position_array_type;
-    typedef typename particle_type::position_type position_type;
-    typedef typename particle_type::image_array_type image_array_type;
-    typedef typename particle_type::mass_array_type mass_array_type;
-
-    cache_proxy<group_array_type const> unordered = group.unordered();
-    cache_proxy<position_array_type const> position = particle.position();
-    cache_proxy<image_array_type const> image = particle.image();
-    cache_proxy<mass_array_type const> mass = particle.mass();
+    auto const& unordered = read_cache(group.unordered());
+    auto const& position = read_cache(particle.position());
+    auto const& image = read_cache(particle.image());
+    auto const& mass = read_cache(particle.mass());
 
     fixed_vector<double, particle_type::velocity_type::static_size> mr = 0;
     double m = 0;
-    for (size_type i : *unordered) {
-        position_type r = (*position)[i];
-        box.extend_periodic(r, (*image)[i]);
-        mr += (*mass)[i] * r;
-        m += (*mass)[i];
+    for (typename particle_group::size_type i : unordered) {
+        auto r = position[i];
+        box.extend_periodic(r, image[i]);
+        mr += mass[i] * r;
+        m += mass[i];
     }
     return mr / m;
 }
@@ -149,22 +135,17 @@ template <typename particle_type>
 std::tuple<fixed_vector<double, particle_type::velocity_type::static_size>, double>
 get_v_cm_and_mean_mass(particle_type const& particle, particle_group& group)
 {
-    typedef typename particle_group::array_type group_array_type;
-    typedef typename particle_group::size_type size_type;
-    typedef typename particle_type::velocity_array_type velocity_array_type;
-    typedef typename particle_type::mass_array_type mass_array_type;
-
-    cache_proxy<group_array_type const> unordered = group.unordered();
-    cache_proxy<velocity_array_type const> velocity = particle.velocity();
-    cache_proxy<mass_array_type const> mass = particle.mass();
+    auto const& unordered = read_cache(group.unordered());
+    auto const& velocity = read_cache(particle.velocity());
+    auto const& mass = read_cache(particle.mass());
 
     fixed_vector<double, particle_type::velocity_type::static_size> mv = 0;
     double m = 0;
-    for (size_type i : *unordered) {
-        mv += (*mass)[i] * (*velocity)[i];
-        m += (*mass)[i];
+    for (typename particle_group::size_type i : unordered) {
+        mv += mass[i] * velocity[i];
+        m += mass[i];
     }
-    return std::make_tuple(mv / m, m / unordered->size());
+    return std::make_tuple(mv / m, m / unordered.size());
 }
 
 /**
@@ -183,18 +164,14 @@ get_v_cm(particle_type const& particle, particle_group& group)
 template <typename force_type>
 double get_mean_en_pot(force_type& force, particle_group& group)
 {
-    typedef typename particle_group::size_type size_type;
-    typedef typename particle_group::array_type group_array_type;
-    typedef typename force_type::en_pot_array_type en_pot_array_type;
-
-    cache_proxy<group_array_type const> unordered = group.unordered();
-    cache_proxy<en_pot_array_type const> en_pot = force.en_pot();
+    auto const& unordered = read_cache(group.unordered());
+    auto const& en_pot = read_cache(force.en_pot());
 
     double sum = 0;
-    for (size_type i : *unordered) {
-        sum += (*en_pot)[i];
+    for (typename particle_group::size_type i : unordered) {
+        sum += en_pot[i];
     }
-    return sum / unordered->size();
+    return sum / unordered.size();
 }
 
 /**
@@ -203,23 +180,19 @@ double get_mean_en_pot(force_type& force, particle_group& group)
 template <typename force_type>
 double get_mean_virial(force_type& force, particle_group& group)
 {
-    typedef typename particle_group::size_type size_type;
-    typedef typename particle_group::array_type group_array_type;
-    typedef typename force_type::stress_pot_array_type stress_pot_array_type;
-
     enum { dimension = force_type::net_force_type::static_size };
 
-    cache_proxy<group_array_type const> unordered = group.unordered();
-    cache_proxy<stress_pot_array_type const> stress_pot = force.stress_pot();
+    auto const& unordered = read_cache(group.unordered());
+    auto const& stress_pot = read_cache(force.stress_pot());
 
     double sum = 0;
-    for (size_type i : *unordered) {
+    for (typename particle_group::size_type i : unordered) {
         // compute trace of the stress tensor
         for (int j = 0; j < dimension; ++j) {
-            sum += (*stress_pot)[i][j];
+            sum += stress_pot[i][j];
         }
     }
-    return sum / unordered->size();
+    return sum / unordered.size();
 }
 
 /**
@@ -228,18 +201,14 @@ double get_mean_virial(force_type& force, particle_group& group)
 template <typename force_type>
 double get_mean_hypervirial(force_type& force, particle_group& group)
 {
-    typedef typename particle_group::size_type size_type;
-    typedef typename particle_group::array_type group_array_type;
-    typedef typename force_type::hypervirial_array_type hypervirial_array_type;
-
-    cache_proxy<group_array_type const> unordered = group.unordered();
-    cache_proxy<hypervirial_array_type const> hypervirial = force.hypervirial();
+    auto const& unordered = read_cache(group.unordered());
+    auto const& hypervirial = read_cache(force.hypervirial());
 
     double sum = 0;
-    for (size_type i : *unordered) {
-        sum += (*hypervirial)[i];
+    for (typename particle_group::size_type i : unordered) {
+        sum += hypervirial[i];
     }
-    return sum / unordered->size();
+    return sum / unordered.size();
 }
 
 } // namespace host

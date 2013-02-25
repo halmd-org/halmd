@@ -67,11 +67,11 @@ from_range<particle_type>::ordered()
     cache<array_type> const& reverse_tag_cache = particle_->reverse_tag();
     if (ordered_cache_ != reverse_tag_cache) {
         LOG_TRACE("ordered sequence of particle indices");
-        cache_proxy<array_type const> reverse_tag = reverse_tag_cache;
-        cache_proxy<array_type> ordered = ordered_;
+        array_type const& reverse_tag = read_cache(reverse_tag_cache);
+        auto ordered = make_cache_mutable(ordered_);
         cuda::copy(
-            reverse_tag->begin() + range_.first
-          , reverse_tag->begin() + range_.second
+            reverse_tag.begin() + range_.first
+          , reverse_tag.begin() + range_.second
           , ordered->begin()
         );
         ordered_cache_ = reverse_tag_cache;
@@ -86,11 +86,11 @@ from_range<particle_type>::unordered()
     cache<array_type> const& reverse_tag_cache = particle_->reverse_tag();
     if (unordered_cache_ != reverse_tag_cache) {
         LOG_TRACE("unordered sequence of particle indices");
-        cache_proxy<array_type const> reverse_tag = reverse_tag_cache;
-        cache_proxy<array_type> unordered = unordered_;
+        array_type const& reverse_tag = read_cache(reverse_tag_cache);
+        auto unordered = make_cache_mutable(unordered_);
         cuda::copy(
-            reverse_tag->begin() + range_.first
-          , reverse_tag->begin() + range_.second
+            reverse_tag.begin() + range_.first
+          , reverse_tag.begin() + range_.second
           , unordered->begin()
         );
         radix_sort(

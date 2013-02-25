@@ -178,10 +178,10 @@ pair_trunc<dimension, float_type, potential_type, trunc_type>::pair_trunc(
   , stress_pot_(particle1_->nparticle())
   , hypervirial_(particle1_->nparticle())
 {
-    cache_proxy<net_force_array_type> net_force = net_force_;
-    cache_proxy<en_pot_array_type> en_pot = en_pot_;
-    cache_proxy<stress_pot_array_type> stress_pot = stress_pot_;
-    cache_proxy<hypervirial_array_type> hypervirial = hypervirial_;
+    auto net_force = make_cache_mutable(net_force_);
+    auto en_pot = make_cache_mutable(en_pot_);
+    auto stress_pot = make_cache_mutable(stress_pot_);
+    auto hypervirial = make_cache_mutable(hypervirial_);
 
     net_force->reserve(particle1_->dim.threads());
     en_pot->reserve(particle1_->dim.threads());
@@ -265,23 +265,23 @@ pair_trunc<dimension, float_type, potential_type, trunc_type>::hypervirial()
 template <int dimension, typename float_type, typename potential_type, typename trunc_type>
 inline void pair_trunc<dimension, float_type, potential_type, trunc_type>::compute()
 {
-    cache_proxy<position_array_type const> position1 = particle1_->position();
-    cache_proxy<position_array_type const> position2 = particle2_->position();
-    cache_proxy<neighbour_array_type const> g_neighbour = neighbour_->g_neighbour();
-    cache_proxy<net_force_array_type> net_force = net_force_;
+    position_array_type const& position1 = read_cache(particle1_->position());
+    position_array_type const& position2 = read_cache(particle2_->position());
+    neighbour_array_type const& g_neighbour = read_cache(neighbour_->g_neighbour());
+    auto net_force = make_cache_mutable(net_force_);
 
     LOG_TRACE("compute forces");
 
     scoped_timer_type timer(runtime_.compute);
 
-    gpu_wrapper::kernel.r2.bind(*position2);
+    gpu_wrapper::kernel.r2.bind(position2);
     potential_->bind_textures();
 
     cuda::configure(particle1_->dim.grid, particle1_->dim.block);
     gpu_wrapper::kernel.compute(
-        &*position1->begin()
+        &*position1.begin()
       , &*net_force->begin()
-      , &*g_neighbour->begin()
+      , &*g_neighbour.begin()
       , neighbour_->size()
       , neighbour_->stride()
       , nullptr
@@ -298,26 +298,26 @@ inline void pair_trunc<dimension, float_type, potential_type, trunc_type>::compu
 template <int dimension, typename float_type, typename potential_type, typename trunc_type>
 inline void pair_trunc<dimension, float_type, potential_type, trunc_type>::compute_aux()
 {
-    cache_proxy<position_array_type const> position1 = particle1_->position();
-    cache_proxy<position_array_type const> position2 = particle2_->position();
-    cache_proxy<neighbour_array_type const> g_neighbour = neighbour_->g_neighbour();
-    cache_proxy<net_force_array_type> net_force = net_force_;
-    cache_proxy<en_pot_array_type> en_pot = en_pot_;
-    cache_proxy<stress_pot_array_type> stress_pot = stress_pot_;
-    cache_proxy<hypervirial_array_type> hypervirial = hypervirial_;
+    position_array_type const& position1 = read_cache(particle1_->position());
+    position_array_type const& position2 = read_cache(particle2_->position());
+    neighbour_array_type const& g_neighbour = read_cache(neighbour_->g_neighbour());
+    auto net_force = make_cache_mutable(net_force_);
+    auto en_pot = make_cache_mutable(en_pot_);
+    auto stress_pot = make_cache_mutable(stress_pot_);
+    auto hypervirial = make_cache_mutable(hypervirial_);
 
     LOG_TRACE("compute forces with auxiliary variables");
 
     scoped_timer_type timer(runtime_.compute);
 
-    gpu_wrapper::kernel.r2.bind(*position2);
+    gpu_wrapper::kernel.r2.bind(position2);
     potential_->bind_textures();
 
     cuda::configure(particle1_->dim.grid, particle1_->dim.block);
     gpu_wrapper::kernel.compute_aux(
-        &*position1->begin()
+        &*position1.begin()
       , &*net_force->begin()
-      , &*g_neighbour->begin()
+      , &*g_neighbour.begin()
       , neighbour_->size()
       , neighbour_->stride()
       , &*en_pot->begin()

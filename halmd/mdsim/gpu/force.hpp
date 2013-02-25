@@ -87,9 +87,9 @@ inline iterator_type
 get_net_force(force_type& force, iterator_type const& first)
 {
     typedef typename force_type::net_force_array_type net_force_array_type;
-    cache_proxy<net_force_array_type const> g_net_force = force.net_force();
-    cuda::host::vector<typename net_force_array_type::value_type> h_net_force(g_net_force->size());
-    cuda::copy(g_net_force->begin(), g_net_force->end(), h_net_force.begin());
+    net_force_array_type const& g_net_force = read_cache(force.net_force());
+    cuda::host::vector<typename net_force_array_type::value_type> h_net_force(g_net_force.size());
+    cuda::copy(g_net_force.begin(), g_net_force.end(), h_net_force.begin());
     return std::copy(h_net_force.begin(), h_net_force.end(), first);
 }
 
@@ -101,9 +101,9 @@ inline iterator_type
 get_en_pot(force_type& force, iterator_type const& first)
 {
     typedef typename force_type::en_pot_array_type en_pot_array_type;
-    cache_proxy<en_pot_array_type const> g_en_pot = force.en_pot();
-    cuda::host::vector<typename en_pot_array_type::value_type> h_en_pot(g_en_pot->size());
-    cuda::copy(g_en_pot->begin(), g_en_pot->end(), h_en_pot.begin());
+    en_pot_array_type const& g_en_pot = read_cache(force.en_pot());
+    cuda::host::vector<typename en_pot_array_type::value_type> h_en_pot(g_en_pot.size());
+    cuda::copy(g_en_pot.begin(), g_en_pot.end(), h_en_pot.begin());
     return std::copy(h_en_pot.begin(), h_en_pot.end(), first);
 }
 
@@ -116,10 +116,10 @@ get_stress_pot(force_type& force, iterator_type const& first)
 {
     // copy data from GPU to host
     typedef typename force_type::stress_pot_array_type stress_pot_array_type;
-    cache_proxy<stress_pot_array_type const> g_stress_pot = force.stress_pot();
-    cuda::host::vector<typename stress_pot_array_type::value_type> h_stress_pot(g_stress_pot->size());
-    h_stress_pot.reserve(g_stress_pot->capacity());
-    cuda::copy(g_stress_pot->begin(), g_stress_pot->begin() + g_stress_pot->capacity(), h_stress_pot.begin());
+    stress_pot_array_type const& g_stress_pot = read_cache(force.stress_pot());
+    cuda::host::vector<typename stress_pot_array_type::value_type> h_stress_pot(g_stress_pot.size());
+    h_stress_pot.reserve(g_stress_pot.capacity());
+    cuda::copy(g_stress_pot.begin(), g_stress_pot.begin() + g_stress_pot.capacity(), h_stress_pot.begin());
 
     // convert from column-major to row-major layout
     typedef typename force_type::stress_pot_type stress_pot_type;
@@ -139,9 +139,9 @@ inline iterator_type
 get_hypervirial(force_type& force, iterator_type const& first)
 {
     typedef typename force_type::hypervirial_array_type hypervirial_array_type;
-    cache_proxy<hypervirial_array_type const> g_hypervirial = force.hypervirial();
-    cuda::host::vector<typename hypervirial_array_type::value_type> h_hypervirial(g_hypervirial->size());
-    cuda::copy(g_hypervirial->begin(), g_hypervirial->end(), h_hypervirial.begin());
+    hypervirial_array_type const& g_hypervirial = read_cache(force.hypervirial());
+    cuda::host::vector<typename hypervirial_array_type::value_type> h_hypervirial(g_hypervirial.size());
+    cuda::copy(g_hypervirial.begin(), g_hypervirial.end(), h_hypervirial.begin());
     return std::copy(h_hypervirial.begin(), h_hypervirial.end(), first);
 }
 

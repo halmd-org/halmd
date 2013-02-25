@@ -34,7 +34,7 @@ namespace gpu {
 template <typename particle_type>
 inline void rescale_velocity(particle_type& particle, double factor)
 {
-    cache_proxy<typename particle_type::velocity_array_type> velocity = particle.velocity();
+    auto velocity = make_cache_mutable(particle.velocity());
 
     cuda::configure(particle.dim.grid, particle.dim.block);
     get_velocity_kernel<particle_type::velocity_type::static_size>().rescale(
@@ -51,17 +51,17 @@ inline void rescale_velocity(particle_type& particle, double factor)
 template <typename particle_type>
 inline void rescale_velocity_group(particle_type& particle, particle_group& group, double factor)
 {
-    cache_proxy<typename particle_group::array_type const> unordered = group.unordered();
-    cache_proxy<typename particle_type::velocity_array_type> velocity = particle.velocity();
+    auto const& unordered = read_cache(group.unordered());
+    auto velocity = make_cache_mutable(particle.velocity());
 
     cuda::configure(
-        (unordered->size() + particle.dim.threads_per_block() - 1) / particle.dim.threads_per_block()
+        (unordered.size() + particle.dim.threads_per_block() - 1) / particle.dim.threads_per_block()
       , particle.dim.block
     );
     get_velocity_kernel<particle_type::velocity_type::static_size>().rescale_group(
         &*velocity->begin()
-      , &*unordered->begin()
-      , unordered->size()
+      , &*unordered.begin()
+      , unordered.size()
       , particle.dim.threads()
       , factor
     );
@@ -73,7 +73,7 @@ inline void rescale_velocity_group(particle_type& particle, particle_group& grou
 template <typename particle_type>
 inline void shift_velocity(particle_type& particle, fixed_vector<double, particle_type::velocity_type::static_size> const& delta)
 {
-    cache_proxy<typename particle_type::velocity_array_type> velocity = particle.velocity();
+    auto velocity = make_cache_mutable(particle.velocity());
 
     cuda::configure(particle.dim.grid, particle.dim.block);
     get_velocity_kernel<particle_type::velocity_type::static_size>().shift(
@@ -90,17 +90,17 @@ inline void shift_velocity(particle_type& particle, fixed_vector<double, particl
 template <typename particle_type>
 inline void shift_velocity_group(particle_type& particle, particle_group& group, fixed_vector<double, particle_type::velocity_type::static_size> const& delta)
 {
-    cache_proxy<typename particle_group::array_type const> unordered = group.unordered();
-    cache_proxy<typename particle_type::velocity_array_type> velocity = particle.velocity();
+    auto const& unordered = read_cache(group.unordered());
+    auto velocity = make_cache_mutable(particle.velocity());
 
     cuda::configure(
-        (unordered->size() + particle.dim.threads_per_block() - 1) / particle.dim.threads_per_block()
+        (unordered.size() + particle.dim.threads_per_block() - 1) / particle.dim.threads_per_block()
       , particle.dim.block
     );
     get_velocity_kernel<particle_type::velocity_type::static_size>().shift_group(
         &*velocity->begin()
-      , &*unordered->begin()
-      , unordered->size()
+      , &*unordered.begin()
+      , unordered.size()
       , particle.dim.threads()
       , delta
     );
@@ -112,7 +112,7 @@ inline void shift_velocity_group(particle_type& particle, particle_group& group,
 template <typename particle_type>
 inline void shift_rescale_velocity(particle_type& particle, fixed_vector<double, particle_type::velocity_type::static_size> const& delta, double factor)
 {
-    cache_proxy<typename particle_type::velocity_array_type> velocity = particle.velocity();
+    auto velocity = make_cache_mutable(particle.velocity());
 
     cuda::configure(particle.dim.grid, particle.dim.block);
     get_velocity_kernel<particle_type::velocity_type::static_size>().shift_rescale(
@@ -130,17 +130,17 @@ inline void shift_rescale_velocity(particle_type& particle, fixed_vector<double,
 template <typename particle_type>
 inline void shift_rescale_velocity_group(particle_type& particle, particle_group& group, fixed_vector<double, particle_type::velocity_type::static_size> const& delta, double factor)
 {
-    cache_proxy<typename particle_group::array_type const> unordered = group.unordered();
-    cache_proxy<typename particle_type::velocity_array_type> velocity = particle.velocity();
+    auto const& unordered = read_cache(group.unordered());
+    auto velocity = make_cache_mutable(particle.velocity());
 
     cuda::configure(
-        (unordered->size() + particle.dim.threads_per_block() - 1) / particle.dim.threads_per_block()
+        (unordered.size() + particle.dim.threads_per_block() - 1) / particle.dim.threads_per_block()
       , particle.dim.block
     );
     get_velocity_kernel<particle_type::velocity_type::static_size>().shift_rescale_group(
         &*velocity->begin()
-      , &*unordered->begin()
-      , unordered->size()
+      , &*unordered.begin()
+      , unordered.size()
       , particle.dim.threads()
       , delta
       , factor

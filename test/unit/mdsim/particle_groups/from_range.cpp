@@ -78,8 +78,7 @@ test_ordered(
     std::shared_ptr<particle_type> particle = std::make_shared<particle_type>(nparticle, nspecies);
     std::shared_ptr<particle_group_type> group = std::make_shared<from_range_type>(particle, range);
     {
-        halmd::cache_proxy<size_type const> size = group->size();
-        BOOST_CHECK_EQUAL( *size, range.second - range.first);
+        BOOST_CHECK_EQUAL( *group->size(), range.second - range.first );
     }
 
     halmd::cache<> size_cache = group->size();
@@ -141,8 +140,7 @@ test_unordered(
     std::shared_ptr<particle_type> particle = std::make_shared<particle_type>(nparticle, nspecies);
     std::shared_ptr<particle_group_type> group = std::make_shared<from_range_type>(particle, range);
     {
-        halmd::cache_proxy<size_type const> size = group->size();
-        BOOST_CHECK_EQUAL( *size, range.second - range.first);
+        BOOST_CHECK_EQUAL( *group->size(), range.second - range.first );
     }
 
     halmd::cache<> size_cache = group->size();

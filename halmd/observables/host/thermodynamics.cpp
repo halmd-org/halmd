@@ -44,8 +44,7 @@ thermodynamics<dimension, float_type>::thermodynamics(
 template <int dimension, typename float_type>
 unsigned int thermodynamics<dimension, float_type>::nparticle() const
 {
-    cache_proxy<size_type const> size = group_->size();
-    return *size;
+    return *group_->size();
 }
 
 template <int dimension, typename float_type>

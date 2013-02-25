@@ -121,12 +121,13 @@ void from_binning<dimension, float_type>::update()
 template <int dimension, typename float_type>
 void from_binning<dimension, float_type>::update_cell_neighbours(cell_size_type const& i)
 {
-    cache_proxy<cell_array_type const> cell1 = binning1_->cell();
-    cache_proxy<cell_array_type const> cell2 = binning2_->cell();
-    cache_proxy<array_type> neighbour = neighbour_;
+    cell_array_type const& cell1 = read_cache(binning1_->cell());
+    cell_array_type const& cell2 = read_cache(binning2_->cell());
+
+    auto neighbour = make_cache_mutable(neighbour_);
     cell_size_type const& ncell = binning1_->ncell();
 
-    for (size_t p : (*cell1)(i)) {
+    for (size_t p : cell1(i)) {
         // empty neighbour list of particle
         (*neighbour)[p].clear();
 
@@ -141,7 +142,7 @@ void from_binning<dimension, float_type>::update_cell_neighbours(cell_size_type 
                         }
                         // update neighbour list of particle
                         cell_size_type k = element_mod(static_cast<cell_size_type>(static_cast<cell_diff_type>(i + ncell) + j), ncell);
-                        compute_cell_neighbours<false>(p, (*cell2)(k));
+                        compute_cell_neighbours<false>(p, cell2(k));
                     }
                 }
                 else {
@@ -151,13 +152,13 @@ void from_binning<dimension, float_type>::update_cell_neighbours(cell_size_type 
                     }
                     // update neighbour list of particle
                     cell_size_type k = element_mod(static_cast<cell_size_type>(static_cast<cell_diff_type>(i + ncell) + j), ncell);
-                    compute_cell_neighbours<false>(p, (*cell2)(k));
+                    compute_cell_neighbours<false>(p, cell2(k));
                 }
             }
         }
 self:
         // visit this cell
-        compute_cell_neighbours<true>(p, (*cell2)(i));
+        compute_cell_neighbours<true>(p, cell2(i));
     }
 }
 
@@ -168,11 +169,12 @@ template <int dimension, typename float_type>
 template <bool same_cell>
 void from_binning<dimension, float_type>::compute_cell_neighbours(size_t i, cell_list const& c)
 {
-    cache_proxy<position_array_type const> position1 = particle1_->position();
-    cache_proxy<position_array_type const> position2 = particle2_->position();
-    cache_proxy<species_array_type const> species1 = particle1_->species();
-    cache_proxy<species_array_type const> species2 = particle2_->species();
-    cache_proxy<array_type> neighbour = neighbour_;
+    auto neighbour = make_cache_mutable(neighbour_);
+
+    position_array_type const& position1 = read_cache(particle1_->position());
+    position_array_type const& position2 = read_cache(particle2_->position());
+    species_array_type const& species1 = read_cache(particle1_->species());
+    species_array_type const& species2 = read_cache(particle2_->species());
 
     for (size_type j : c) {
         // skip identical particle and particle pair permutations if same cell
@@ -181,11 +183,11 @@ void from_binning<dimension, float_type>::compute_cell_neighbours(size_t i, cell
         }
 
         // particle distance vector
-        vector_type r = (*position1)[i] - (*position2)[j];
+        vector_type r = position1[i] - position2[j];
         box_->reduce_periodic(r);
         // particle types
-        species_type a = (*species1)[i];
-        species_type b = (*species2)[j];
+        species_type a = species1[i];
+        species_type b = species2[j];
         // squared particle distance
         float_type rr = inner_prod(r, r);
 

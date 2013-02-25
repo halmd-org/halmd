@@ -62,17 +62,18 @@ void euler<dimension, float_type>::set_timestep(double timestep)
 template <int dimension, typename float_type>
 void euler<dimension, float_type>::integrate()
 {
-    cache_proxy<velocity_array_type const> velocity = particle_->velocity();
-    cache_proxy<position_array_type> position = particle_->position();
-    cache_proxy<image_array_type> image = particle_->image();
+    velocity_array_type const& velocity = read_cache(particle_->velocity());
+    auto position = make_cache_mutable(particle_->position());
+    auto image = make_cache_mutable(particle_->image());
+
+    scoped_timer_type timer(runtime_.integrate);
 
     try {
-        scoped_timer_type timer(runtime_.integrate);
         cuda::configure(particle_->dim.grid, particle_->dim.block);
         wrapper_type::kernel.integrate(
             &*position->begin()
           , &*image->begin()
-          , &*velocity->begin()
+          , &*velocity.begin()
           , timestep_
           , static_cast<vector_type>(box_->length())
         );

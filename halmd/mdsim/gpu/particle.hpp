@@ -216,9 +216,9 @@ inline iterator_type
 get_position(particle_type const& particle, iterator_type const& first)
 {
     typedef typename particle_type::position_array_type position_array_type;
-    cache_proxy<position_array_type const> g_position = particle.position();
-    cuda::host::vector<typename position_array_type::value_type> h_position(g_position->size());
-    cuda::copy(g_position->begin(), g_position->end(), h_position.begin());
+    position_array_type const& g_position = read_cache(particle.position());
+    cuda::host::vector<typename position_array_type::value_type> h_position(g_position.size());
+    cuda::copy(g_position.begin(), g_position.end(), h_position.begin());
     iterator_type output = first;
     for (typename position_array_type::value_type const& v : h_position) {
         typename particle_type::position_type position;
@@ -237,7 +237,7 @@ inline iterator_type
 set_position(particle_type& particle, iterator_type const& first)
 {
     typedef typename particle_type::position_array_type position_array_type;
-    cache_proxy<position_array_type> g_position = particle.position();
+    auto g_position = make_cache_mutable(particle.position());
     cuda::host::vector<typename position_array_type::value_type> h_position(g_position->size());
     cuda::copy(g_position->begin(), g_position->end(), h_position.begin());
     iterator_type input = first;
@@ -263,9 +263,9 @@ inline iterator_type
 get_species(particle_type const& particle, iterator_type const& first)
 {
     typedef typename particle_type::position_array_type position_array_type;
-    cache_proxy<position_array_type const> g_position = particle.position();
-    cuda::host::vector<typename position_array_type::value_type> h_position(g_position->size());
-    cuda::copy(g_position->begin(), g_position->end(), h_position.begin());
+    position_array_type const& g_position = read_cache(particle.position());
+    cuda::host::vector<typename position_array_type::value_type> h_position(g_position.size());
+    cuda::copy(g_position.begin(), g_position.end(), h_position.begin());
     iterator_type output = first;
     for (typename position_array_type::value_type const& v : h_position) {
         typename particle_type::position_type position;
@@ -284,7 +284,7 @@ inline iterator_type
 set_species(particle_type& particle, iterator_type const& first)
 {
     typedef typename particle_type::position_array_type position_array_type;
-    cache_proxy<position_array_type> g_position = particle.position();
+    auto g_position = make_cache_mutable(particle.position());
     cuda::host::vector<typename position_array_type::value_type> h_position(g_position->size());
     cuda::copy(g_position->begin(), g_position->end(), h_position.begin());
     iterator_type input = first;
@@ -307,9 +307,9 @@ inline iterator_type
 get_image(particle_type const& particle, iterator_type const& first)
 {
     typedef typename particle_type::image_array_type image_array_type;
-    cache_proxy<image_array_type const> g_image = particle.image();
-    cuda::host::vector<typename image_array_type::value_type> h_image(g_image->size());
-    cuda::copy(g_image->begin(), g_image->end(), h_image.begin());
+    image_array_type const& g_image = read_cache(particle.image());
+    cuda::host::vector<typename image_array_type::value_type> h_image(g_image.size());
+    cuda::copy(g_image.begin(), g_image.end(), h_image.begin());
     return std::copy(h_image.begin(), h_image.end(), first);
 }
 
@@ -321,7 +321,7 @@ inline iterator_type
 set_image(particle_type& particle, iterator_type const& first)
 {
     typedef typename particle_type::image_array_type image_array_type;
-    cache_proxy<image_array_type> g_image = particle.image();
+    auto g_image = make_cache_mutable(particle.image());
     cuda::host::vector<typename image_array_type::value_type> h_image(g_image->size());
     iterator_type input = first;
     for (typename image_array_type::value_type& image : h_image) {
@@ -339,9 +339,9 @@ inline iterator_type
 get_velocity(particle_type const& particle, iterator_type const& first)
 {
     typedef typename particle_type::velocity_array_type velocity_array_type;
-    cache_proxy<velocity_array_type const> g_velocity = particle.velocity();
-    cuda::host::vector<typename velocity_array_type::value_type> h_velocity(g_velocity->size());
-    cuda::copy(g_velocity->begin(), g_velocity->end(), h_velocity.begin());
+    velocity_array_type const& g_velocity = read_cache(particle.velocity());
+    cuda::host::vector<typename velocity_array_type::value_type> h_velocity(g_velocity.size());
+    cuda::copy(g_velocity.begin(), g_velocity.end(), h_velocity.begin());
     iterator_type output = first;
     for (typename velocity_array_type::value_type const& v : h_velocity) {
         typename particle_type::velocity_type velocity;
@@ -360,7 +360,7 @@ inline iterator_type
 set_velocity(particle_type& particle, iterator_type const& first)
 {
     typedef typename particle_type::velocity_array_type velocity_array_type;
-    cache_proxy<velocity_array_type> g_velocity = particle.velocity();
+    auto g_velocity = make_cache_mutable(particle.velocity());
     cuda::host::vector<typename velocity_array_type::value_type> h_velocity(g_velocity->size());
     cuda::copy(g_velocity->begin(), g_velocity->end(), h_velocity.begin());
     iterator_type input = first;
@@ -386,9 +386,9 @@ inline iterator_type
 get_mass(particle_type const& particle, iterator_type const& first)
 {
     typedef typename particle_type::velocity_array_type velocity_array_type;
-    cache_proxy<velocity_array_type const> g_velocity = particle.velocity();
-    cuda::host::vector<typename velocity_array_type::value_type> h_velocity(g_velocity->size());
-    cuda::copy(g_velocity->begin(), g_velocity->end(), h_velocity.begin());
+    velocity_array_type const& g_velocity = read_cache(particle.velocity());
+    cuda::host::vector<typename velocity_array_type::value_type> h_velocity(g_velocity.size());
+    cuda::copy(g_velocity.begin(), g_velocity.end(), h_velocity.begin());
     iterator_type output = first;
     for (typename velocity_array_type::value_type const& v : h_velocity) {
         typename particle_type::velocity_type velocity;
@@ -407,7 +407,7 @@ inline iterator_type
 set_mass(particle_type& particle, iterator_type const& first)
 {
     typedef typename particle_type::velocity_array_type velocity_array_type;
-    cache_proxy<velocity_array_type> g_velocity = particle.velocity();
+    auto g_velocity = make_cache_mutable(particle.velocity());
     cuda::host::vector<typename velocity_array_type::value_type> h_velocity(g_velocity->size());
     cuda::copy(g_velocity->begin(), g_velocity->end(), h_velocity.begin());
     iterator_type input = first;
@@ -430,9 +430,9 @@ inline iterator_type
 get_tag(particle_type const& particle, iterator_type const& first)
 {
     typedef typename particle_type::tag_array_type tag_array_type;
-    cache_proxy<tag_array_type const> g_tag = particle.tag();
-    cuda::host::vector<typename tag_array_type::value_type> h_tag(g_tag->size());
-    cuda::copy(g_tag->begin(), g_tag->end(), h_tag.begin());
+    tag_array_type const& g_tag = read_cache(particle.tag());
+    cuda::host::vector<typename tag_array_type::value_type> h_tag(g_tag.size());
+    cuda::copy(g_tag.begin(), g_tag.end(), h_tag.begin());
     return std::copy(h_tag.begin(), h_tag.end(), first);
 }
 
@@ -444,7 +444,7 @@ inline iterator_type
 set_tag(particle_type& particle, iterator_type const& first)
 {
     typedef typename particle_type::tag_array_type tag_array_type;
-    cache_proxy<tag_array_type> g_tag = particle.tag();
+    auto g_tag = make_cache_mutable(particle.tag());
     cuda::host::vector<typename tag_array_type::value_type> h_tag(g_tag->size());
     iterator_type input = first;
     for (typename tag_array_type::value_type& tag : h_tag) {
@@ -462,9 +462,9 @@ inline iterator_type
 get_reverse_tag(particle_type const& particle, iterator_type const& first)
 {
     typedef typename particle_type::reverse_tag_array_type reverse_tag_array_type;
-    cache_proxy<reverse_tag_array_type const> g_reverse_tag = particle.reverse_tag();
-    cuda::host::vector<typename reverse_tag_array_type::value_type> h_reverse_tag(g_reverse_tag->size());
-    cuda::copy(*g_reverse_tag, h_reverse_tag);
+    reverse_tag_array_type const& g_reverse_tag = read_cache(particle.reverse_tag());
+    cuda::host::vector<typename reverse_tag_array_type::value_type> h_reverse_tag(g_reverse_tag.size());
+    cuda::copy(g_reverse_tag.begin(), g_reverse_tag.end(), h_reverse_tag.begin());
     return std::copy(h_reverse_tag.begin(), h_reverse_tag.end(), first);
 }
 
@@ -476,13 +476,13 @@ inline iterator_type
 set_reverse_tag(particle_type& particle, iterator_type const& first)
 {
     typedef typename particle_type::reverse_tag_array_type reverse_tag_array_type;
-    cache_proxy<reverse_tag_array_type> g_reverse_tag = particle.reverse_tag();
+    auto g_reverse_tag = make_cache_mutable(particle.reverse_tag());
     cuda::host::vector<typename reverse_tag_array_type::value_type> h_reverse_tag(g_reverse_tag->size());
     iterator_type input = first;
     for (typename reverse_tag_array_type::value_type& reverse_tag : h_reverse_tag) {
         reverse_tag = *input++;
     }
-    cuda::copy(h_reverse_tag, *g_reverse_tag);
+    cuda::copy(h_reverse_tag.begin(), h_reverse_tag.end(), g_reverse_tag->begin());
     return input;
 }
 

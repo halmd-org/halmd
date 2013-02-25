@@ -57,22 +57,22 @@ phase_space<dimension, float_type>::acquire()
         return sample_;
     }
 
-    cache_proxy<group_array_type const> group = particle_group_->ordered();
-    cache_proxy<position_array_type> particle_position = particle_->position();
-    cache_proxy<image_array_type> particle_image = particle_->image();
-    cache_proxy<velocity_array_type> particle_velocity = particle_->velocity();
-    cache_proxy<species_array_type> particle_species = particle_->species();
-    cache_proxy<mass_array_type> particle_mass = particle_->mass();
-
-    scoped_timer_type timer(runtime_.acquire);
+    group_array_type const& group = read_cache(particle_group_->ordered());
+    position_array_type const& particle_position = read_cache(particle_->position());
+    image_array_type const& particle_image = read_cache(particle_->image());
+    velocity_array_type const& particle_velocity = read_cache(particle_->velocity());
+    species_array_type const& particle_species = read_cache(particle_->species());
+    mass_array_type const& particle_mass = read_cache(particle_->mass());
 
     LOG_TRACE("acquire sample");
+
+    scoped_timer_type timer(runtime_.acquire);
 
     // re-allocate memory which allows modules (e.g., dynamics::blocking_scheme)
     // to hold a previous copy of the sample
     {
         scoped_timer_type timer(runtime_.reset);
-        sample_ = std::make_shared<sample_type>(group->size(), clock_->step());
+        sample_ = std::make_shared<sample_type>(group.size(), clock_->step());
     }
 
     typename sample_type::position_array_type& sample_position = sample_->position();
@@ -82,15 +82,15 @@ phase_space<dimension, float_type>::acquire()
 
     // copy particle data using index map
     std::size_t tag = 0;
-    for (std::size_t i : *group) {
+    for (std::size_t i : group) {
         // periodically extended particle position
         vector_type& r = sample_position[tag];
-        r = (*particle_position)[i];
-        box_->extend_periodic(r, (*particle_image)[i]);
+        r = particle_position[i];
+        box_->extend_periodic(r, particle_image[i]);
 
-        sample_velocity[tag] = (*particle_velocity)[i];
-        sample_species[tag] = (*particle_species)[i];
-        sample_mass[tag] = (*particle_mass)[i];
+        sample_velocity[tag] = particle_velocity[i];
+        sample_species[tag] = particle_species[i];
+        sample_mass[tag] = particle_mass[i];
         ++tag;
     }
 
@@ -100,23 +100,24 @@ phase_space<dimension, float_type>::acquire()
 template <int dimension, typename float_type>
 void phase_space<dimension, float_type>::set(std::shared_ptr<sample_type const> sample)
 {
-    cache_proxy<group_array_type const> group = particle_group_->ordered();
-    cache_proxy<position_array_type> particle_position = particle_->position();
-    cache_proxy<image_array_type> particle_image = particle_->image();
-    cache_proxy<velocity_array_type> particle_velocity = particle_->velocity();
-    cache_proxy<species_array_type> particle_species = particle_->species();
-    cache_proxy<mass_array_type> particle_mass = particle_->mass();
-    species_type const nspecies = particle_->nspecies();
+    auto particle_position = make_cache_mutable(particle_->position());
+    auto particle_image = make_cache_mutable(particle_->image());
+    auto particle_velocity = make_cache_mutable(particle_->velocity());
+    auto particle_species = make_cache_mutable(particle_->species());
+    auto particle_mass = make_cache_mutable(particle_->mass());
 
-    scoped_timer_type timer(runtime_.set);
+    group_array_type const& group = read_cache(particle_group_->ordered());
+    species_type nspecies = particle_->nspecies();
 
     typename sample_type::position_array_type const& sample_position = sample->position();
     typename sample_type::velocity_array_type const& sample_velocity = sample->velocity();
     typename sample_type::species_array_type const& sample_species = sample->species();
     typename sample_type::mass_array_type const& sample_mass = sample->mass();
 
+    scoped_timer_type timer(runtime_.set);
+
     size_type tag = 0;
-    for (size_type i : *group) {
+    for (size_type i : group) {
         vector_type& r = (*particle_position)[i];
         r = sample_position[tag];
         vector_type& image = (*particle_image)[i];

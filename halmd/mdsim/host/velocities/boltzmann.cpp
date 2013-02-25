@@ -49,9 +49,11 @@ void boltzmann<dimension, float_type>::set()
 {
     scoped_timer_type timer(runtime_.set);
 
-    cache_proxy<velocity_array_type> velocity = particle_->velocity();
-    cache_proxy<mass_array_type const> mass = particle_->mass();
-    size_type const nparticle = particle_->nparticle();
+    LOG_TRACE("assign Boltzmann-distributed velocities");
+
+    auto velocity = make_cache_mutable(particle_->velocity());
+    mass_array_type const& mass = read_cache(particle_->mass());
+    size_type nparticle = particle_->nparticle();
 
     float_type const sigma = std::sqrt(temp_);
     fixed_vector<double, dimension> mv = 0;
@@ -76,18 +78,17 @@ void boltzmann<dimension, float_type>::set()
             }
             r_valid = !r_valid;
         }
-        v /= std::sqrt((*mass)[i]);
-        mv += (*mass)[i] * v;
-        mv2 += (*mass)[i] * inner_prod(v, v);
-        m += (*mass)[i];
+        double m_i = mass[i];
+        v /= std::sqrt(m_i);
+        mv += m_i * v;
+        mv2 += m_i * inner_prod(v, v);
+        m += m_i;
     }
 
     fixed_vector<double, dimension> v_cm = mv / m;
     double scale = std::sqrt(nparticle * temp_ * dimension / (mv2 - m * inner_prod(v_cm, v_cm)));
+    LOG_TRACE("shift velocities by " << -v_cm << " and resacle by factor " << scale);
     shift_rescale_velocity(*particle_, -v_cm, scale);
-
-    LOG_TRACE("velocities rescaled by factor " << scale);
-    LOG_TRACE("assigned Boltzmann-distributed velocities");
 }
 
 template <int dimension, typename float_type>

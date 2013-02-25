@@ -1,4 +1,5 @@
 /*
+ * Copyright © 2013 Felix Höfling
  * Copyright © 2012 Peter Colberg
  *
  * This file is part of HALMD.
@@ -60,6 +61,34 @@ public:
     cache(cache const&) = delete;
     /** deleted implicit assignment operator */
     cache& operator=(cache const&) = delete;
+    /** define default move constructor */
+    cache(cache&& c) = default;
+    /** define default move assignment operator */
+    cache& operator=(cache&& c) = default;
+
+    /**
+     * Returns const pointer to cached value for read access.
+     */
+    operator T const*() const
+    {
+        return &value_;
+    }
+
+    /**
+     * Returns const pointer to cached value for read access.
+     */
+    T const* operator->() const
+    {
+        return &value_;
+    }
+
+    /**
+     * Returns const reference to cached value for read access.
+     */
+    T const& operator*() const
+    {
+        return value_;
+    }
 
 private:
     friend class cache<void>;
@@ -233,6 +262,39 @@ private:
     /** const reference to cached value */
     reference value_;
 };
+
+/**
+ * Convenience function for write access to a cached value.
+ *
+ * Returns cache_proxy<T> by move constructor/assignment.
+ *
+ * Example:
+ *
+ *     cache<double> c(1.0);
+ *     auto c_ = make_cache_mutable(c);
+ *     *c_ = 2.0;
+ *     assert(read_cache(c) == 2.0);
+ */
+template <typename T>
+cache_proxy<T> make_cache_mutable(cache<T>& c) {
+    return cache_proxy<T>(c);
+}
+
+/**
+ * Convenience function for read access to a cached value.
+ *
+ * Returns const reference to cached value.
+ *
+ * Example:
+ *
+ *     const cache<double> c(1.0);
+ *     auto const& c_ = read_cache(c);
+ *     assert(c_ == 1.0);
+ */
+template <typename T>
+T const& read_cache(cache<T> const& c) {
+    return *cache_proxy<T const>(c);
+}
 
 } // namespace halmd
 

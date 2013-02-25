@@ -62,11 +62,11 @@ particle<dimension, float_type>::particle(size_type nparticle, unsigned int nspe
   , g_tag_(nparticle)
   , g_reverse_tag_(nparticle)
 {
-    cache_proxy<position_array_type> g_position = g_position_;
-    cache_proxy<image_array_type> g_image = g_image_;
-    cache_proxy<velocity_array_type> g_velocity = g_velocity_;
-    cache_proxy<tag_array_type> g_tag = g_tag_;
-    cache_proxy<reverse_tag_array_type> g_reverse_tag = g_reverse_tag_;
+    auto g_position = make_cache_mutable(g_position_);
+    auto g_image = make_cache_mutable(g_image_);
+    auto g_velocity = make_cache_mutable(g_velocity_);
+    auto g_tag = make_cache_mutable(g_tag_);
+    auto g_reverse_tag = make_cache_mutable(g_reverse_tag_);
 
     LOG_DEBUG("number of CUDA execution blocks: " << dim.blocks_per_grid());
     LOG_DEBUG("number of CUDA execution threads per block: " << dim.threads_per_block());
@@ -154,11 +154,11 @@ particle<dimension, float_type>::particle(size_type nparticle, unsigned int nspe
 template <int dimension, typename float_type>
 void particle<dimension, float_type>::rearrange(cuda::vector<unsigned int> const& g_index)
 {
-    cache_proxy<position_array_type> g_position = g_position_;
-    cache_proxy<image_array_type> g_image = g_image_;
-    cache_proxy<velocity_array_type> g_velocity = g_velocity_;
-    cache_proxy<tag_array_type> g_tag = g_tag_;
-    cache_proxy<reverse_tag_array_type> g_reverse_tag = g_reverse_tag_;
+    auto g_position = make_cache_mutable(g_position_);
+    auto g_image = make_cache_mutable(g_image_);
+    auto g_velocity = make_cache_mutable(g_velocity_);
+    auto g_tag = make_cache_mutable(g_tag_);
+    auto g_reverse_tag = make_cache_mutable(g_reverse_tag_);
 
     scoped_timer_type timer(runtime_.rearrange);
 

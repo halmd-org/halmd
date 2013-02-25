@@ -83,9 +83,7 @@ template <typename force_type, typename iterator_type>
 inline iterator_type
 get_net_force(force_type& force, iterator_type const& first)
 {
-    typedef typename force_type::net_force_array_type net_force_array_type;
-    cache_proxy<net_force_array_type const> net_force = force.net_force();
-    return std::copy(net_force->begin(), net_force->end(), first);
+    return std::copy(force.net_force()->begin(), force.net_force()->end(), first);
 }
 
 /**
@@ -95,9 +93,7 @@ template <typename force_type, typename iterator_type>
 inline iterator_type
 get_en_pot(force_type& force, iterator_type const& first)
 {
-    typedef typename force_type::en_pot_array_type en_pot_array_type;
-    cache_proxy<en_pot_array_type const> en_pot = force.en_pot();
-    return std::copy(en_pot->begin(), en_pot->end(), first);
+    return std::copy(force.en_pot()->begin(), force.en_pot()->end(), first);
 }
 
 /**
@@ -107,9 +103,7 @@ template <typename force_type, typename iterator_type>
 inline iterator_type
 get_stress_pot(force_type& force, iterator_type const& first)
 {
-    typedef typename force_type::stress_pot_array_type stress_pot_array_type;
-    cache_proxy<stress_pot_array_type const> stress_pot = force.stress_pot();
-    return std::copy(stress_pot->begin(), stress_pot->end(), first);
+    return std::copy(force.stress_pot()->begin(), force.stress_pot()->end(), first);
 }
 
 /**
@@ -119,9 +113,7 @@ template <typename force_type, typename iterator_type>
 inline iterator_type
 get_hypervirial(force_type& force, iterator_type const& first)
 {
-    typedef typename force_type::hypervirial_array_type hypervirial_array_type;
-    cache_proxy<hypervirial_array_type const> hypervirial = force.hypervirial();
-    return std::copy(hypervirial->begin(), hypervirial->end(), first);
+    return std::copy(force.hypervirial()->begin(), force.hypervirial()->end(), first);
 }
 
 } // namespace host

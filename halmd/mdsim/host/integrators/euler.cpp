@@ -66,16 +66,17 @@ void euler<dimension, float_type>::set_timestep(double timestep)
 template <int dimension, typename float_type>
 void euler<dimension, float_type>::integrate()
 {
-    cache_proxy<position_array_type> position = particle_->position();
-    cache_proxy<image_array_type> image = particle_->image();
-    cache_proxy<velocity_array_type const> velocity = particle_->velocity();
-    size_type const nparticle = particle_->nparticle();
+    auto position = make_cache_mutable(particle_->position());
+    auto image = make_cache_mutable(particle_->image());
+
+    velocity_array_type const& velocity = read_cache(particle_->velocity());
+    size_type nparticle = particle_->nparticle();
 
     scoped_timer_type timer(runtime_.integrate);
 
     for (size_type i = 0 ; i < nparticle; ++i) {
         vector_type& r = (*position)[i];
-        r += (*velocity)[i] * timestep_;
+        r += velocity[i] * timestep_;
         (*image)[i] += box_->reduce_periodic(r);
     }
 }

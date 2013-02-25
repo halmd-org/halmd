@@ -259,13 +259,14 @@ pair_trunc<dimension, float_type, potential_type, trunc_type>::hypervirial()
 template <int dimension, typename float_type, typename potential_type, typename trunc_type>
 inline void pair_trunc<dimension, float_type, potential_type, trunc_type>::compute()
 {
-    cache_proxy<position_array_type const> position1 = particle1_->position();
-    cache_proxy<position_array_type const> position2 = particle2_->position();
-    cache_proxy<species_array_type const> species1   = particle1_->species();
-    cache_proxy<species_array_type const> species2   = particle2_->species();
-    cache_proxy<neighbour_array_type const> lists    = neighbour_->lists();
-    cache_proxy<net_force_array_type> net_force      = net_force_;
-    size_type const nparticle1                       = particle1_->nparticle();
+    auto net_force = make_cache_mutable(net_force_);
+
+    neighbour_array_type const& lists    = *neighbour_->lists();
+    position_array_type const& position1 = read_cache(particle1_->position());
+    position_array_type const& position2 = read_cache(particle2_->position());
+    species_array_type const& species1   = *particle1_->species();
+    species_array_type const& species2   = *particle2_->species();
+    size_type nparticle1 = particle1_->nparticle();
 
     LOG_TRACE("compute forces");
 
@@ -275,13 +276,13 @@ inline void pair_trunc<dimension, float_type, potential_type, trunc_type>::compu
 
     for (size_type i = 0; i < nparticle1; ++i) {
         // calculate pairwise Lennard-Jones force with neighbour particles
-        for (size_type j : (*lists)[i]) {
+        for (size_type j : lists[i]) {
             // particle distance vector
-            position_type r = (*position1)[i] - (*position2)[j];
+            position_type r = position1[i] - position2[j];
             box_->reduce_periodic(r);
             // particle types
-            species_type a = (*species1)[i];
-            species_type b = (*species2)[j];
+            species_type a = species1[i];
+            species_type b = species2[j];
             // squared particle distance
             float_type rr = inner_prod(r, r);
 
@@ -305,16 +306,17 @@ inline void pair_trunc<dimension, float_type, potential_type, trunc_type>::compu
 template <int dimension, typename float_type, typename potential_type, typename trunc_type>
 inline void pair_trunc<dimension, float_type, potential_type, trunc_type>::compute_aux()
 {
-    cache_proxy<position_array_type const> position1 = particle1_->position();
-    cache_proxy<position_array_type const> position2 = particle2_->position();
-    cache_proxy<species_array_type const> species1   = particle1_->species();
-    cache_proxy<species_array_type const> species2   = particle2_->species();
-    cache_proxy<neighbour_array_type const> lists    = neighbour_->lists();
     cache_proxy<net_force_array_type> net_force      = net_force_;
     cache_proxy<en_pot_array_type> en_pot            = en_pot_;
     cache_proxy<stress_pot_array_type> stress_pot    = stress_pot_;
     cache_proxy<hypervirial_array_type> hypervirial  = hypervirial_;
-    size_type const nparticle1                       = particle1_->nparticle();
+
+    neighbour_array_type const& lists    = *neighbour_->lists();
+    position_array_type const& position1 = read_cache(particle1_->position());
+    position_array_type const& position2 = read_cache(particle2_->position());
+    species_array_type const& species1   = *particle1_->species();
+    species_array_type const& species2   = *particle2_->species();
+    size_type nparticle1 = particle1_->nparticle();
 
     LOG_TRACE("compute forces with auxiliary variables");
 
@@ -327,13 +329,13 @@ inline void pair_trunc<dimension, float_type, potential_type, trunc_type>::compu
 
     for (size_type i = 0; i < nparticle1; ++i) {
         // calculate pairwise Lennard-Jones force with neighbour particles
-        for (size_type j : (*lists)[i]) {
+        for (size_type j : lists[i]) {
             // particle distance vector
-            position_type r = (*position1)[i] - (*position2)[j];
+            position_type r = position1[i] - position2[j];
             box_->reduce_periodic(r);
             // particle types
-            species_type a = (*species1)[i];
-            species_type b = (*species2)[j];
+            species_type a = species1[i];
+            species_type b = species2[j];
             // squared particle distance
             float_type rr = inner_prod(r, r);
 

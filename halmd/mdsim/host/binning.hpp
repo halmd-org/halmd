@@ -134,12 +134,12 @@ get_cell(binning_type& binning, output_iterator output)
 {
     typedef typename binning_type::array_type array_type;
     typedef typename binning_type::cell_size_type cell_size_type;
-    cache_proxy<array_type const> cell = binning.cell();
+    array_type const& cell = read_cache(binning.cell());
     multi_range_for_each(
         cell_size_type(0)
       , binning.ncell()
       , [&](cell_size_type const& index) {
-            std::copy((*cell)(index).begin(), (*cell)(index).end(), output(index));
+            std::copy(cell(index).begin(), cell(index).end(), output(index));
         }
     );
 }

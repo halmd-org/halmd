@@ -1,4 +1,5 @@
 /*
+ * Copyright © 2013 Felix Höfling
  * Copyright © 2012 Peter Colberg
  *
  * This file is part of HALMD.
@@ -26,6 +27,7 @@
 #include <boost/iterator/counting_iterator.hpp>
 #include <boost/iterator/reverse_iterator.hpp>
 #include <vector>
+#include <utility>
 
 #include <halmd/utility/cache.hpp>
 #include <halmd/utility/raw_array.hpp>
@@ -41,10 +43,9 @@ static void test_cache(
 {
     BOOST_CHECK( position_cache == position );
     {
-        halmd::cache_proxy<value_type const> position_proxy = position;
         BOOST_CHECK_EQUAL_COLLECTIONS(
-            (*position_proxy).begin()
-          , position_proxy->end()
+            (*position).begin()
+          , position->end()
           , first
           , last
         );
@@ -68,10 +69,9 @@ static void test_cache(
     }
     BOOST_CHECK( position_cache != position );
     {
-        halmd::cache_proxy<value_type const> position_proxy = position;
         BOOST_CHECK_EQUAL_COLLECTIONS(
-            boost::make_reverse_iterator((*position_proxy).end())
-          , boost::make_reverse_iterator(position_proxy->begin())
+            boost::make_reverse_iterator(read_cache(position).end())
+          , boost::make_reverse_iterator(position->begin())
           , first
           , last
         );
@@ -128,9 +128,31 @@ BOOST_AUTO_TEST_CASE( observer )
     position_cache = position;
     BOOST_CHECK( position_cache == position );
 
-    BOOST_CHECK_EQUAL( *halmd::cache_proxy<double const>(position), M_PI );
+    // read access
+    BOOST_CHECK_EQUAL( *position, M_PI );
+    BOOST_CHECK_EQUAL( read_cache(position), M_PI );
     BOOST_CHECK( position == position_cache );
 
+    // (attempted) write access invalidates cache
+    halmd::cache_proxy<double> position_proxy = make_cache_mutable(position);
+    BOOST_CHECK_EQUAL( *position_proxy, M_PI );
+    BOOST_CHECK( position != position_cache );
+    position_cache = position;
+
+    // move constructor
+    halmd::cache<double> position2 = std::move(position);
+    BOOST_CHECK_EQUAL( read_cache(position2), M_PI );
+    BOOST_CHECK_EQUAL( *position_proxy, M_PI );
+    BOOST_CHECK( position != position_cache );
+    BOOST_CHECK( position2 == position_cache );
+
+    // move assignment operator
+    position = std::move(position2);
+    BOOST_CHECK_EQUAL( read_cache(position), M_PI );
+    BOOST_CHECK( position == position_cache );
+    BOOST_CHECK( position2 != position_cache );
+
+    // invalidate cache observer
     position_cache = halmd::cache<>();
     BOOST_CHECK( position != position_cache );
 }

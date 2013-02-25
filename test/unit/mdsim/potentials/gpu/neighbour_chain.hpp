@@ -71,7 +71,7 @@ neighbour_chain<dimension, float_type>::neighbour_chain(
   // member initialisation
   : stride_(particle->dim.threads())  // total number of particles and ghost particles
 {
-    halmd::cache_proxy<cuda::vector<unsigned int>> g_neighbour = g_neighbour_;
+    auto g_neighbour = make_cache_mutable(g_neighbour_);
 
     // allocate neighbour lists of size 1
     g_neighbour->resize(stride_);

@@ -76,9 +76,9 @@ inline iterator_type
 get_ordered(particle_group& group, iterator_type const& first)
 {
     typedef typename particle_group::array_type array_type;
-    cache_proxy<array_type const> g_ordered = group.ordered();
-    cuda::host::vector<typename array_type::value_type> h_ordered(g_ordered->size());
-    cuda::copy(*g_ordered, h_ordered);
+    array_type const& g_ordered = read_cache(group.ordered());
+    cuda::host::vector<typename array_type::value_type> h_ordered(g_ordered.size());
+    cuda::copy(g_ordered, h_ordered);
     return std::copy(h_ordered.begin(), h_ordered.end(), first);
 }
 
@@ -90,9 +90,9 @@ inline iterator_type
 get_unordered(particle_group& group, iterator_type const& first)
 {
     typedef typename particle_group::array_type array_type;
-    cache_proxy<array_type const> g_unordered = group.unordered();
-    cuda::host::vector<typename array_type::value_type> h_unordered(g_unordered->size());
-    cuda::copy(*g_unordered, h_unordered);
+    array_type const& g_unordered = read_cache(group.unordered());
+    cuda::host::vector<typename array_type::value_type> h_unordered(g_unordered.size());
+    cuda::copy(g_unordered, h_unordered);
     return std::copy(h_unordered.begin(), h_unordered.end(), first);
 }
 
@@ -103,15 +103,12 @@ template <typename particle_type>
 double get_mean_en_kin(particle_type const& particle, particle_group& group)
 {
     typedef typename particle_group::array_type group_array_type;
-    typedef typename particle_type::velocity_array_type velocity_array_type;
     unsigned int constexpr dimension = particle_type::velocity_type::static_size;
     typedef observables::gpu::kinetic_energy<dimension, dsfloat> accumulator_type;
 
-    cache_proxy<group_array_type const> unordered = group.unordered();
-    cache_proxy<velocity_array_type const> velocity = particle.velocity();
-
-    accumulator_type::get().bind(*velocity);
-    return reduce(&*unordered->begin(), &*unordered->end(), accumulator_type())() / unordered->size();
+    group_array_type const& unordered = read_cache(group.unordered());
+    accumulator_type::get().bind(*particle.velocity());
+    return reduce(&*unordered.begin(), &*unordered.end(), accumulator_type())() / unordered.size();
 }
 
 /**
@@ -122,24 +119,18 @@ fixed_vector<double, particle_type::velocity_type::static_size>
 get_r_cm(particle_type const& particle, particle_group& group, box_type const& box)
 {
     typedef typename particle_group::array_type group_array_type;
-    typedef typename particle_type::position_array_type position_array_type;
     typedef typename particle_type::position_type position_type;
-    typedef typename particle_type::velocity_array_type velocity_array_type;
-    typedef typename particle_type::image_array_type image_array_type;
     unsigned int constexpr dimension = particle_type::position_type::static_size;
     typedef observables::gpu::centre_of_mass<dimension, dsfloat> accumulator_type;
 
-    cache_proxy<group_array_type const> unordered = group.unordered();
-    cache_proxy<position_array_type const> position = particle.position();
-    cache_proxy<image_array_type const> image = particle.image();
-    cache_proxy<velocity_array_type const> velocity = particle.velocity();
+    group_array_type const& unordered = read_cache(group.unordered());
 
-    accumulator_type::get_position().bind(*position);
-    accumulator_type::get_image().bind(*image);
-    accumulator_type::get_velocity().bind(*velocity);
+    accumulator_type::get_position().bind(*particle.position());
+    accumulator_type::get_image().bind(*particle.image());
+    accumulator_type::get_velocity().bind(*particle.velocity());
     return reduce(
-        std::make_tuple(&*unordered->begin(), static_cast<position_type>(box.length()))
-      , std::make_tuple(&*unordered->end())
+        std::make_tuple(&*unordered.begin(), static_cast<position_type>(box.length()))
+      , std::make_tuple(&*unordered.end())
       , accumulator_type()
    )();
 }
@@ -152,18 +143,16 @@ std::tuple<fixed_vector<double, particle_type::velocity_type::static_size>, doub
 get_v_cm_and_mean_mass(particle_type const& particle, particle_group& group)
 {
     typedef typename particle_group::array_type group_array_type;
-    typedef typename particle_type::velocity_array_type velocity_array_type;
     unsigned int constexpr dimension = particle_type::velocity_type::static_size;
     typedef observables::gpu::velocity_of_centre_of_mass<dimension, dsfloat> accumulator_type;
 
-    cache_proxy<group_array_type const> unordered = group.unordered();
-    cache_proxy<velocity_array_type const> velocity = particle.velocity();
+    group_array_type const& unordered = read_cache(group.unordered());
 
-    accumulator_type::get().bind(*velocity);
-    fixed_vector<double, particle_type::velocity_type::static_size> mv;
+    accumulator_type::get().bind(*particle.velocity());
+    fixed_vector<double, dimension> mv;
     double m;
-    std::tie(mv, m) = reduce(&*unordered->begin(), &*unordered->end(), accumulator_type())();
-    return std::make_tuple(mv / m, m / unordered->size());
+    std::tie(mv, m) = reduce(&*unordered.begin(), &*unordered.end(), accumulator_type())();
+    return std::make_tuple(mv / m, m / unordered.size());
 }
 
 /**
@@ -183,14 +172,12 @@ template <typename force_type>
 double get_mean_en_pot(force_type& force, particle_group& group)
 {
     typedef typename particle_group::array_type group_array_type;
-    typedef typename force_type::en_pot_array_type en_pot_array_type;
     typedef observables::gpu::potential_energy<dsfloat> accumulator_type;
 
-    cache_proxy<group_array_type const> unordered = group.unordered();
-    cache_proxy<en_pot_array_type const> en_pot = force.en_pot();
+    group_array_type const& unordered = read_cache(group.unordered());
 
-    accumulator_type::get().bind(*en_pot);
-    return reduce(&*unordered->begin(), &*unordered->end(), accumulator_type())() / unordered->size();
+    accumulator_type::get().bind(*force.en_pot());
+    return reduce(&*unordered.begin(), &*unordered.end(), accumulator_type())() / unordered.size();
 }
 
 /**
@@ -200,17 +187,15 @@ template <typename force_type>
 double get_mean_virial(force_type& force, particle_group& group)
 {
     typedef typename particle_group::array_type group_array_type;
-    typedef typename force_type::stress_pot_array_type stress_pot_array_type;
     typedef typename force_type::stress_pot_type stress_pot_type;
     unsigned int constexpr dimension = force_type::net_force_type::static_size;
     typedef observables::gpu::virial<dimension, dsfloat> accumulator_type;
 
-    cache_proxy<group_array_type const> unordered = group.unordered();
-    cache_proxy<stress_pot_array_type const> stress_pot = force.stress_pot();
+    group_array_type const& unordered = read_cache(group.unordered());
 
-    unsigned int stride = stress_pot->capacity() / stress_pot_type::static_size;
-    accumulator_type::get().bind(*stress_pot);
-    return reduce(&*unordered->begin(), &*unordered->end(), accumulator_type(stride))() / unordered->size();
+    unsigned int stride = force.stress_pot()->capacity() / stress_pot_type::static_size;
+    accumulator_type::get().bind(*force.stress_pot());
+    return reduce(&*unordered.begin(), &*unordered.end(), accumulator_type(stride))() / unordered.size();
 }
 
 /**
@@ -220,14 +205,12 @@ template <typename force_type>
 double get_mean_hypervirial(force_type& force, particle_group& group)
 {
     typedef typename particle_group::array_type group_array_type;
-    typedef typename force_type::hypervirial_array_type hypervirial_array_type;
     typedef observables::gpu::potential_energy<dsfloat> accumulator_type;
 
-    cache_proxy<group_array_type const> unordered = group.unordered();
-    cache_proxy<hypervirial_array_type const> hypervirial = force.hypervirial();
+    group_array_type const& unordered = read_cache(group.unordered());
 
-    accumulator_type::get().bind(*hypervirial);
-    return reduce(&*unordered->begin(), &*unordered->end(), accumulator_type())() / unordered->size();
+    accumulator_type::get().bind(*force.hypervirial());
+    return reduce(&*unordered.begin(), &*unordered.end(), accumulator_type())() / unordered.size();
 }
 
 } // namespace gpu

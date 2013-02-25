@@ -82,7 +82,7 @@ from_particle<dimension, float_type>::from_particle(
     // number of neighbour lists
     stride_ = particle1_->dim.threads();
     // allocate neighbour lists
-    cache_proxy<array_type> g_neighbour = g_neighbour_;
+    auto g_neighbour = make_cache_mutable(g_neighbour_);
     g_neighbour->resize(stride_ * size_);
 
     LOG("neighbour list skin: " << r_skin_);
@@ -110,9 +110,9 @@ from_particle<dimension, float_type>::g_neighbour()
 template <int dimension, typename float_type>
 void from_particle<dimension, float_type>::update()
 {
-    cache_proxy<position_array_type const> position1 = particle1_->position();
-    cache_proxy<position_array_type const> position2 = particle2_->position();
-    cache_proxy<array_type> g_neighbour = g_neighbour_;
+    position_array_type const& position1 = read_cache(particle1_->position());
+    position_array_type const& position2 = read_cache(particle2_->position());
+    auto g_neighbour = make_cache_mutable(g_neighbour_);
 
     LOG_TRACE("update neighbour lists");
 
@@ -131,9 +131,9 @@ void from_particle<dimension, float_type>::update()
       , particle1_->dim.threads_per_block() * (sizeof(unsigned int) + sizeof(vector_type))
     );
     get_from_particle_kernel<dimension>().update(
-        &*position1->begin()
+        &*position1.begin()
       , particle1_->nparticle()
-      , &*position2->begin()
+      , &*position2.begin()
       , particle2_->nparticle()
       , particle1_->nspecies()
       , particle2_->nspecies()

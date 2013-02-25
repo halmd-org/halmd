@@ -85,7 +85,7 @@ boltzmann<dimension, float_type, RandomNumberGenerator>::get_gaussian_impl(int t
 template <int dimension, typename float_type, typename RandomNumberGenerator>
 void boltzmann<dimension, float_type, RandomNumberGenerator>::set()
 {
-    cache_proxy<velocity_array_type> velocity = particle_->velocity();
+    auto velocity = make_cache_mutable(particle_->velocity());
 
     scoped_timer_type timer(runtime_.set);
 

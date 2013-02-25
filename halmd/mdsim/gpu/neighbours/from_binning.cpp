@@ -82,7 +82,7 @@ from_binning<dimension, float_type>::from_binning(
     // number of neighbour lists
     stride_ = particle_->dim.threads();
     // allocate neighbour lists
-    cache_proxy<array_type> g_neighbour = g_neighbour_;
+    auto g_neighbour = make_cache_mutable(g_neighbour_);
     g_neighbour->resize(stride_ * size_);
 
     LOG("neighbour list skin: " << r_skin_);
@@ -121,9 +121,9 @@ from_binning<dimension, float_type>::g_neighbour()
 template <int dimension, typename float_type>
 void from_binning<dimension, float_type>::update()
 {
-    cache_proxy<position_array_type const> position = particle_->position();
-    cache_proxy<cell_array_type const> g_cell = binning_->g_cell();
-    cache_proxy<array_type> g_neighbour = g_neighbour_;
+    position_array_type const& position = read_cache(particle_->position());
+    cell_array_type const& g_cell = read_cache(binning_->g_cell());
+    auto g_neighbour = make_cache_mutable(g_neighbour_);
 
     LOG_TRACE("update neighbour lists");
 
@@ -136,12 +136,12 @@ void from_binning<dimension, float_type>::update()
     cuda::host::vector<int> h_ret(1);
     cuda::memset(g_ret, EXIT_SUCCESS);
     cuda::configure(binning_->dim_cell().grid, binning_->dim_cell().block, binning_->cell_size() * (2 + dimension) * sizeof(int));
-    get_from_binning_kernel<dimension>().r.bind(*position);
+    get_from_binning_kernel<dimension>().r.bind(position);
     get_from_binning_kernel<dimension>().rr_cut_skin.bind(g_rr_cut_skin_);
     get_from_binning_kernel<dimension>().update_neighbours(
         g_ret
       , &*g_neighbour->begin()
-      , &*g_cell->begin()
+      , &*g_cell.begin()
       , rr_cut_skin_.size1()
       , rr_cut_skin_.size2()
       , binning_->ncell()

@@ -53,13 +53,13 @@ particle<dimension, float_type>::particle(size_type nparticle, unsigned int nspe
   , species_(nparticle)
   , mass_(nparticle)
 {
-    cache_proxy<position_array_type> position = position_;
-    cache_proxy<image_array_type> image = image_;
-    cache_proxy<velocity_array_type> velocity = velocity_;
-    cache_proxy<tag_array_type> tag = tag_;
-    cache_proxy<reverse_tag_array_type> reverse_tag = reverse_tag_;
-    cache_proxy<species_array_type> species = species_;
-    cache_proxy<mass_array_type> mass = mass_;
+    auto position = make_cache_mutable(position_);
+    auto image = make_cache_mutable(image_);
+    auto velocity = make_cache_mutable(velocity_);
+    auto tag = make_cache_mutable(tag_);
+    auto reverse_tag = make_cache_mutable(reverse_tag_);
+    auto species = make_cache_mutable(species_);
+    auto mass = make_cache_mutable(mass_);
 
     std::fill(position->begin(), position->end(), 0);
     std::fill(image->begin(), image->end(), 0);
@@ -83,13 +83,13 @@ void particle<dimension, float_type>::rearrange(std::vector<unsigned int> const&
 {
     scoped_timer_type timer(runtime_.rearrange);
 
-    cache_proxy<position_array_type> position = position_;
-    cache_proxy<image_array_type> image = image_;
-    cache_proxy<velocity_array_type> velocity = velocity_;
-    cache_proxy<tag_array_type> tag = tag_;
-    cache_proxy<reverse_tag_array_type> reverse_tag = reverse_tag_;
-    cache_proxy<species_array_type> species = species_;
-    cache_proxy<mass_array_type> mass = mass_;
+    auto position = make_cache_mutable(position_);
+    auto image = make_cache_mutable(image_);
+    auto velocity = make_cache_mutable(velocity_);
+    auto tag = make_cache_mutable(tag_);
+    auto reverse_tag = make_cache_mutable(reverse_tag_);
+    auto species = make_cache_mutable(species_);
+    auto mass = make_cache_mutable(mass_);
 
     permute(position->begin(), position->end(), index.begin());
     permute(image->begin(), image->end(), index.begin());

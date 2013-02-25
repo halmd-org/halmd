@@ -72,19 +72,20 @@ void verlet_nvt_andersen<dimension, float_type>::set_temperature(double temperat
 template <int dimension, typename float_type>
 void verlet_nvt_andersen<dimension, float_type>::integrate()
 {
-    cache_proxy<net_force_array_type const> net_force = force_->net_force();
-    cache_proxy<mass_array_type const> mass = particle_->mass();
-    cache_proxy<position_array_type> position = particle_->position();
-    cache_proxy<image_array_type> image = particle_->image();
-    cache_proxy<velocity_array_type> velocity = particle_->velocity();
-    size_type const nparticle = particle_->nparticle();
+    auto position = make_cache_mutable(particle_->position());
+    auto image = make_cache_mutable(particle_->image());
+    auto velocity = make_cache_mutable(particle_->velocity());
+
+    net_force_array_type const& net_force = read_cache(force_->net_force());
+    mass_array_type const& mass = read_cache(particle_->mass());
+    size_type nparticle = particle_->nparticle();
 
     scoped_timer_type timer(runtime_.integrate);
 
     for (size_type i = 0; i < nparticle; ++i) {
         vector_type& v = (*velocity)[i];
         vector_type& r = (*position)[i];
-        v += (*net_force)[i] * timestep_half_ / (*mass)[i];
+        v += net_force[i] * timestep_half_ / mass[i];
         r += v * timestep_;
         (*image)[i] += box_->reduce_periodic(r);
     }
@@ -93,10 +94,11 @@ void verlet_nvt_andersen<dimension, float_type>::integrate()
 template <int dimension, typename float_type>
 void verlet_nvt_andersen<dimension, float_type>::finalize()
 {
-    cache_proxy<net_force_array_type const> net_force = force_->net_force();
-    cache_proxy<mass_array_type const> mass = particle_->mass();
-    cache_proxy<velocity_array_type> velocity = particle_->velocity();
-    size_type const nparticle = particle_->nparticle();
+    auto velocity = make_cache_mutable(particle_->velocity());
+
+    net_force_array_type const& net_force = read_cache(force_->net_force());
+    mass_array_type const& mass = read_cache(particle_->mass());
+    size_type nparticle = particle_->nparticle();
 
     scoped_timer_type timer(runtime_.finalize);
 
@@ -109,7 +111,7 @@ void verlet_nvt_andersen<dimension, float_type>::finalize()
         vector_type& v = (*velocity)[i];
         // is deterministic step?
         if (random_->uniform<float_type>() > coll_prob_) {
-            v += (*net_force)[i] * timestep_half_ / (*mass)[i];
+            v += net_force[i] * timestep_half_ / mass[i];
         }
         // stochastic coupling with heat bath
         else {

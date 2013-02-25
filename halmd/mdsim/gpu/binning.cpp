@@ -114,7 +114,7 @@ binning<dimension, float_type>::binning(
     }
 
     try {
-        cache_proxy<array_type> g_cell = g_cell_;
+        auto g_cell = make_cache_mutable(g_cell_);
         g_cell->resize(dim_cell_.threads());
         g_cell_offset_.resize(dim_cell_.blocks_per_grid());
         g_cell_index_.reserve(particle_->dim.threads());
@@ -146,8 +146,8 @@ binning<dimension, float_type>::g_cell()
 template <int dimension, typename float_type>
 void binning<dimension, float_type>::update()
 {
-    cache_proxy<position_array_type const> position = particle_->position();
-    cache_proxy<array_type> g_cell = g_cell_;
+    position_array_type const& position = read_cache(particle_->position());
+    auto g_cell = make_cache_mutable(g_cell_);
 
     LOG_TRACE("update cell lists");
 
@@ -156,7 +156,7 @@ void binning<dimension, float_type>::update()
     // compute cell indices for particle positions
     cuda::configure(particle_->dim.grid, particle_->dim.block);
     get_binning_kernel<dimension>().compute_cell(
-        &*position->begin()
+        &*position.begin()
       , g_cell_index_
       , cell_length_
       , static_cast<fixed_vector<uint, dimension> >(ncell_)

@@ -45,8 +45,7 @@ struct default_converter<halmd::cache<T> >
     //! convert from C++ to Lua
     void to(lua_State* L, halmd::cache<T> const& cache)
     {
-        halmd::cache_proxy<T const> value = cache;
-        object(L, boost::cref(*value)).push(L);
+        object(L, boost::cref(*cache)).push(L);
     }
 };
 

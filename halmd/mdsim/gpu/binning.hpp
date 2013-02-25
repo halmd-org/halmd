@@ -173,11 +173,11 @@ get_cell(binning_type& binning, output_iterator output)
 {
     typedef typename binning_type::cell_size_type cell_size_type;
     typedef typename binning_type::array_type array_type;
-    cache_proxy<array_type const> g_cell = binning.g_cell();
+    array_type const& g_cell = read_cache(binning.g_cell());
     cell_size_type ncell = binning.ncell();
     unsigned int cell_size = binning.cell_size();
-    cuda::host::vector<unsigned int> h_cell(g_cell->size());
-    cuda::copy(g_cell->begin(), g_cell->end(), h_cell.begin());
+    cuda::host::vector<unsigned int> h_cell(g_cell.size());
+    cuda::copy(g_cell.begin(), g_cell.end(), h_cell.begin());
     multi_range_for_each(
         cell_size_type(0)
       , ncell
