@@ -1,5 +1,6 @@
 --
--- Copyright © 2011  Peter Colberg
+-- Copyright © 2013 Felix Höfling
+-- Copyright © 2011 Peter Colberg
 --
 -- This file is part of HALMD.
 --
@@ -32,18 +33,19 @@ local module = require("halmd.utility.module")
 local M = module.loader("halmd.utility")
 
 ---
--- Functions
--- ---------
+-- Functions on tables
+-- -------------------
+--
 
 ---
--- Test if table is empty
+-- Test if table is empty.
 --
 function M.empty(t)
   return next(t) == nil
 end
 
 ---
--- Returns table with sorted keys of table t as values
+-- Returns table with sorted keys of table t as values.
 --
 function M.keys(t)
     local keys = {}
@@ -55,7 +57,7 @@ function M.keys(t)
 end
 
 ---
--- Returns iterator over pairs of table t sorted by key
+-- Returns iterator over pairs of table t sorted by key.
 --
 function M.sorted(t)
     local keys = M.keys(t)
@@ -72,7 +74,7 @@ function M.sorted(t)
 end
 
 ---
--- Returns table with keys as values and values as keys
+-- Returns table with keys as values and values as keys.
 --
 function M.reverse(t)
     local result = {}
@@ -80,6 +82,47 @@ function M.reverse(t)
         result[v] = k
     end
     return result
+end
+
+---
+-- Assertions
+-- ----------
+--
+
+---
+-- Assert keyword argument of table and return its value.
+--
+-- :param table args: argument table
+-- :param string key: parameter key
+-- :param number level: call stack level for error message *(default: 2)*
+--
+-- :returns: `args[key]`
+--
+function M.assert_kwarg(args, key, level)
+    local level = level or 2
+    M.assert_type(args, "table", level + 1)
+    local value = args[key]
+    if not value then
+        error(("missing keyword argument: %s"):format(key), level + 1)
+    end
+    return value
+end
+
+---
+-- Assert type of variable.
+--
+-- :param var: variable to check
+-- :param string name: Lua type name
+-- :param number level: call stack level for error message *(default: 2)*
+--
+-- :returns: `var`
+--
+function M.assert_type(var, name, level)
+    local level = level or 2
+    if type(var) ~= name then
+        error(("invalid type: %s expected, got %s"):format(name, type(var)), level + 1)
+    end
+    return var
 end
 
 return M
