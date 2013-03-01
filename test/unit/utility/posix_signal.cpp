@@ -116,7 +116,7 @@ BOOST_AUTO_TEST_CASE( test_alarm )
     BOOST_CHECK_EQUAL( handler.count(), 0LU );
     sig_const.wait();
     BOOST_CHECK( !sig_const.poll() );
-    BOOST_CHECK_CLOSE_FRACTION( timer.elapsed(), 1., 0.01 ); // 10 ms tolerance
+    BOOST_CHECK_CLOSE_FRACTION( timer.elapsed(), 1., 0.05 ); // 50 ms tolerance
     BOOST_CHECK_EQUAL( handler.count(), 1LU );
 }
 
