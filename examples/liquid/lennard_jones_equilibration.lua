@@ -1,6 +1,7 @@
 #!/usr/bin/env halmd
 --
--- Copyright © 2010-2012  Peter Colberg and Felix Höfling
+-- Copyright © 2010-2013 Felix Höfling
+-- Copyright © 2010-2012 Peter Colberg
 --
 -- This file is part of HALMD.
 --
@@ -24,7 +25,6 @@ local halmd = require("halmd")
 local log = halmd.io.log
 local mdsim = halmd.mdsim
 local observables = halmd.observables
-local readers = halmd.io.readers
 local writers = halmd.io.writers
 
 --
@@ -83,9 +83,9 @@ local function liquid(args)
     })
 
     -- H5MD file writer
-    local writer = writers.h5md({path = ("%s.h5"):format(args.output)})
+    local file = writers.h5md({path = ("%s.h5"):format(args.output)})
     -- write box specification to H5MD file
-    box:writer(writer)
+    box:writer(file)
 
     -- select all particles
     local particle_group = mdsim.particle_groups.all({particle = particle})
@@ -95,7 +95,9 @@ local function liquid(args)
     -- write trajectory of particle groups to H5MD file
     local interval = args.sampling.trajectory or args.steps
     if interval > 0 then
-        phase_space:writer(writer, {every = interval})
+        phase_space:writer({
+            file = file, fields = {"position", "velocity", "species", "mass"}, every = interval
+        })
     end
 
     -- Sample macroscopic state variables.
@@ -103,7 +105,7 @@ local function liquid(args)
     local interval = args.sampling.state_vars
     if interval > 0 then
         msv = observables.thermodynamics({box = box, group = particle_group, force = force})
-        msv:writer(writer, {every = interval})
+        msv:writer(file, {every = interval})
     end
 
     local accumulator = observables.utility.accumulator({
@@ -112,7 +114,7 @@ local function liquid(args)
        , desc = "Averaged total energy"
      })
      accumulator:writer({
-         file = writer
+         file = file
        , location = {"observables", "averaged_total_energy"}
        , fields = {"mean", "error_of_mean", "variance"}
        , every = 200

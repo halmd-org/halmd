@@ -1,7 +1,7 @@
 #!/usr/bin/env halmd
 --
+-- Copyright © 2011-2013 Felix Höfling
 -- Copyright © 2010-2012 Peter Colberg
--- Copyright © 2011-2012 Felix Höfling
 --
 -- This file is part of HALMD.
 --
@@ -44,7 +44,11 @@ local function liquid(args)
     local label = "A"
     while trajectory:exists_group(label) do
         -- construct a phase space reader and sample
-        local reader, sample = observables.phase_space.reader(file, {group = label})
+        local reader, sample = observables.phase_space.reader({
+            file = file
+          , location = {"trajectory", label}
+          , fields = {"position", "velocity", "species", "mass"}
+        })
         samples[label] = sample
         -- read phase space sample at last step in file
         log.info("number of %s particles: %d", label, sample.nparticle)
@@ -98,9 +102,9 @@ local function liquid(args)
     })
 
     -- H5MD file writer
-    local writer = writers.h5md({path = ("%s.h5"):format(args.output)})
+    local file = writers.h5md({path = ("%s.h5"):format(args.output)})
     -- write box specification to H5MD file
-    box:writer(writer)
+    box:writer(file)
 
     -- sample each particle group separately
     local offset = 0
@@ -118,11 +122,15 @@ local function liquid(args)
         -- set particle positions, velocities, species
         phase_space:set(sample)
         -- write trajectory of particle groups to H5MD file
-        phase_space:writer(writer, {every = args.sampling.trajectory})
+        phase_space:writer({
+            file = file
+          , fields = {"position", "velocity", "species", "mass"}
+          , every = args.sampling.trajectory
+        })
 
         -- sample macroscopic state variables
         local msv = observables.thermodynamics({box = box, group = group, force = force})
-        msv:writer(writer, {every = args.sampling.state_vars})
+        msv:writer(file, {every = args.sampling.state_vars})
 
         -- setup blocking scheme for correlation functions
         local max_lag = args.steps * integrator.timestep / 10
@@ -134,13 +142,13 @@ local function liquid(args)
 
         -- compute mean-square displacement
         local msd = dynamics.mean_square_displacement({phase_space = phase_space})
-        blocking_scheme:correlation(msd, writer)
+        blocking_scheme:correlation(msd, file)
         -- compute mean-quartic displacement
         local mqd = dynamics.mean_quartic_displacement({phase_space = phase_space})
-        blocking_scheme:correlation(mqd, writer)
+        blocking_scheme:correlation(mqd, file)
         -- compute velocity autocorrelation function
         local vacf = dynamics.velocity_autocorrelation({phase_space = phase_space})
-        blocking_scheme:correlation(vacf, writer)
+        blocking_scheme:correlation(vacf, file)
     end
 
     -- sample initial state

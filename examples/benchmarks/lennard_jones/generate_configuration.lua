@@ -67,15 +67,18 @@ local function lennard_jones(args)
     })
 
     -- H5MD file writer
-    local writer = writers.h5md({path = ("%s.h5"):format(args.output)})
+    local file = writers.h5md({path = ("%s.h5"):format(args.output)})
     -- write box specification to H5MD file
-    box:writer(writer)
+    box:writer(file)
 
     -- sample group of all particles
     local all_group = mdsim.particle_groups.all({particle = particle})
 
     -- connect H5MD writer, output only first and last step
-    observables.phase_space({box = box, group = all_group}):writer(writer)
+    observables.phase_space({box = box, group = all_group}):writer({
+        file = file
+      , fields = {"position", "velocity", "species", "mass"}
+    })
 
     -- estimate remaining runtime
     observables.runtime_estimate({steps = steps, first = 10, interval = 900, sample = 60})

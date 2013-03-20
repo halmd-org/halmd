@@ -101,9 +101,9 @@ local function shear_viscosity(args)
     })
 
     -- H5MD file writer
-    local writer = writers.h5md({path = ("%s.h5"):format(args.output)})
+    local file = writers.h5md({path = ("%s.h5"):format(args.output)})
     -- write box specification to H5MD file
-    box:writer(writer)
+    box:writer(file)
 
     -- select all particles
     local particle_group = mdsim.particle_groups.all({particle = particle})
@@ -115,7 +115,7 @@ local function shear_viscosity(args)
     local msv = observables.thermodynamics({box = box, group = particle_group, force = force})
     local interval = args.sampling.state_vars
     if interval > 0 then
-        msv:writer(writer, {every = interval})
+        msv:writer(file, {every = interval})
     end
 
     local total_energy = observables.utility.accumulator({
@@ -170,7 +170,7 @@ local function shear_viscosity(args)
     })
 
     temperature:writer({
-        file = writer
+        file = file
       , location = {"observables", msv.group.label, "averaged_temperature"}
       , every = math.floor(args.steps / 1000)
       , reset = true
@@ -194,10 +194,10 @@ local function shear_viscosity(args)
     })
 
     local helfand_moment = dynamics.helfand_moment({thermodynamics = msv, interval = 5})
-    blocking_scheme:correlation(helfand_moment, writer)
+    blocking_scheme:correlation(helfand_moment, file)
 
     local stress_tensor_autocorrelation = dynamics.stress_tensor_autocorrelation({thermodynamics = msv})
-    blocking_scheme:correlation(stress_tensor_autocorrelation, writer)
+    blocking_scheme:correlation(stress_tensor_autocorrelation, file)
 
     runtime = observables.runtime_estimate({
         steps = args.steps

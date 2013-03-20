@@ -1,7 +1,7 @@
 #!/usr/bin/env halmd
 --
+-- Copyright © 2011-2013 Felix Höfling
 -- Copyright © 2010-2012 Peter Colberg
--- Copyright © 2011-2012 Felix Höfling
 --
 -- This file is part of HALMD.
 --
@@ -25,7 +25,6 @@ local halmd = require("halmd")
 local log = halmd.io.log
 local mdsim = halmd.mdsim
 local observables = halmd.observables
-local readers = halmd.io.readers
 local writers = halmd.io.writers
 local utility = halmd.utility
 
@@ -107,9 +106,9 @@ local function liquid(args)
     })
 
     -- H5MD file writer
-    local writer = writers.h5md({path = ("%s.h5"):format(args.output)})
+    local file = writers.h5md({path = ("%s.h5"):format(args.output)})
     -- write box specification to H5MD file
-    box:writer(writer)
+    box:writer(file)
 
     -- select all particles
     local particle_group = mdsim.particle_groups.all({particle = particle})
@@ -119,11 +118,15 @@ local function liquid(args)
         -- sample phase space
         local phase_space = observables.phase_space({box = box, group = group})
         -- write trajectory of particle groups to H5MD file
-        phase_space:writer(writer, {every = args.sampling.trajectory})
+        phase_space:writer({
+            file = file
+          , fields = {"position", "velocity", "species", "mass"}
+          , every = args.sampling.trajectory
+        })
 
         -- Sample macroscopic state variables.
         local msv = observables.thermodynamics({box = box, group = group, force = force})
-        msv:writer(writer, {every = args.sampling.state_vars})
+        msv:writer(file, {every = args.sampling.state_vars})
     end
 
     -- sample initial state

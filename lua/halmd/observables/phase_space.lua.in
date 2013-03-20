@@ -17,12 +17,13 @@
 -- along with this program.  If not, see <http://www.gnu.org/licenses/>.
 --
 
-local clock             = require("halmd.mdsim.clock")
-local device            = require("halmd.utility.device")
-local log               = require("halmd.io.log")
-local module            = require("halmd.utility.module")
-local profiler          = require("halmd.utility.profiler")
-local sampler           = require("halmd.observables.sampler")
+local clock    = require("halmd.mdsim.clock")
+local device   = require("halmd.utility.device")
+local log      = require("halmd.io.log")
+local module   = require("halmd.utility.module")
+local profiler = require("halmd.utility.profiler")
+local sampler  = require("halmd.observables.sampler")
+local utility  = require("halmd.utility")
 
 -- grab C++ classes
 local phase_space = {host = assert(libhalmd.observables.host.phase_space)}
@@ -105,23 +106,33 @@ end
 --
 --    The particle group used by the sampler.
 --
--- .. class:: writer(file, args)
+-- .. class:: writer(args)
 --
 --    Write trajectory of particle group to file.
 --
 --    http://nongnu.org/h5md/draft.html#trajectory-group
 --
---    :param file: instance of file writer
---    :param table args: keyword arguments (optional)
+--    :param table args: keyword arguments
+--    :param args.file: instance of file writer
+--    :param table args.fields: data field names to be written
+--    :param string table args.location: location within file (optional)
 --    :param number args.every: sampling interval (optional)
---    :param string args.group: name of trajectory group (optional)
 --    :returns: instance of group writer
+--
+--    The table ``fields`` specifies which data fields are written. It may
+--    either be passed as an indexed table, e.g. ``{"position", "velocity"}``,
+--    or as a dictionary, e.g., ``{r = "position", v = "velocity"}``; the table
+--    form is interpreted as ``{position = "position", ...}``. The keys denote
+--    the field names in the file and are appended to ``location``. The values
+--    specify the methods of the ``phase_space`` module, valid values are
+--    ``position``, ``velocity``, ``species``, ``mass``.
+--
+--    The argument ``location`` specifies a path in a structured file format
+--    like H5MD given as a table of strings. If omitted it defaults to
+--    ``{"trajectory", group.label}``.
 --
 --    If ``every`` is not specified or 0, a phase space sample will be written
 --    at the start and end of the simulation.
---
---    If ``group`` is omitted, the particle group's label will be used as
---    the name of the trajectory group.
 --
 --    .. method:: connect()
 --
@@ -181,16 +192,23 @@ local M = module(function(args)
         return assert(samplers.host.mass)
     end
 
-    self.writer = function(self, file, args)
-        local name = args and args.group or assert(self.group.label)
-        local writer = file:writer({location = {"trajectory", name}, mode = "append"})
+    self.writer = function(self, args)
+        local file = utility.assert_kwarg(args, "file")
+        local fields = utility.assert_type(utility.assert_kwarg(args, "fields"), "table")
+        local location = utility.assert_type(
+            args.location or {"trajectory", assert(self.group.label)}
+          , "table")
+        local every = args.every
 
-        writer:on_write(self.position(), {"position"})
-        writer:on_write(self.velocity(), {"velocity"})
-        writer:on_write(self.species(), {"species"})
-        writer:on_write(self.mass(), {"mass"})
+        local writer = file:writer({location = location, mode = "append"})
 
-        local every = args and args.every
+        -- register data fields with writer,
+        -- the keys of 'field' may either be strings (dictionary) or numbers (table),
+        -- in the latter case, the value string is assigned to the group name
+        for k,v in pairs(fields) do
+            local name = (type(k) == "string") and k or v
+            writer:on_write(assert(self[v])(), {name})
+        end
 
         -- sequence of signal connections
         local conn = {}
@@ -285,16 +303,32 @@ end
 --
 --    http://nongnu.org/h5md/draft.html#trajectory-group
 --
---    :param file: instance of :class:`halmd.io.readers.h5md`
 --    :param table args: keyword arguments
---    :param string args.group: name of trajectory group
+--    :param args.file: instance of file reader, e.g, :class:`halmd.io.readers.h5md`
+--    :param string table args.fields: data field names to be read
+--    :param string table args.location: location within file
 --
 --    Returns a group reader, and a phase space sample.
 --
+--    The table ``fields`` specifies which data fields are read, valid
+--    values are ``position``, ``velocity``, ``species``, ``mass``. See
+--    :meth:`halmd.observables.phase_space:writer` for details.
+--
+--    The argument ``location`` specifies a path in a structured file format
+--    like H5MD given as a table of strings, for example ``{"trajectory", group
+--    label}``.
+--
+--    Construction of the reader module opens the file for inspection of the
+--    space dimension and particle number, which are then used to allocate a
+--    phase space sample in host memory. The sample is only filled upon
+--    calling, e.g., ``read_at_step()``.
+--
 --    Example::
 --
---       local file = halmd.io.readers.h5md({path = "kob_andersen.h5"})
---       local reader, sample = halmd.observables.phase_space.reader(file, {group = "all"})
+--       local file = halmd.io.readers.h5md({path = "input.h5"})
+--       local reader, sample = halmd.observables.phase_space.reader({
+--          file = file, fields = {"position"}, location = {"trajectory", "all"}
+--       })
 --       reader:read_at_step(0)
 --       local nparticle = assert(sample.size)
 --       local dimension = assert(sample.dimension)
@@ -332,31 +366,33 @@ end
 --          Returns dimension of positional coordinates.
 --
 
-function M.reader(file, args)
-    if not file then
-        error("bad argument 'file'", 2)
-    end
-    local group = args and args.group
-    if type(group) ~= "string" then
-        error("bad argument 'group'", 2)
-    end
-    local self = file:reader({location = {"trajectory", group}, mode = "append"})
-    local dataset = self.group:open_group("position"):open_dataset("value")
+function M.reader(args)
+    local file = utility.assert_kwarg(args, "file")
+    local fields = utility.assert_type(utility.assert_kwarg(args, "fields"), "table")
+    local location = utility.assert_type(utility.assert_kwarg(args, "location"), "table")
+
+    local self = file:reader({location = location, mode = "append"})
+    local group = assert(#fields > 0) and ({next(fields)})[2] -- some field name
+    local dataset = self.group:open_group(group):open_dataset("value")
     local shape = assert(dataset.shape)
     local nparticle = assert(shape[2])
     local dimension = assert(shape[3])
-    local phase_space = assert(phase_space[dimension])
+    local phase_space = phase_space[dimension]
     if not phase_space then
-        error(("unsupported positional dimension: %d"):format(dimension), 2)
+        error(("unsupported space dimension: %d"):format(dimension), 2)
     end
     local sample = phase_space(nparticle)
-    local names = {"position", "velocity", "species", "mass"}
-    for i = 1, #names do
-        local name = names[i]
-        local array, array_to_sample = sample[name](sample)
+
+    -- register data fields with reader,
+    -- the keys of 'field' may either be strings (dictionary) or numbers (table),
+    -- in the latter case, the value string is assigned the field name
+    for k,v in pairs(fields) do
+        local name = (type(k) == "string") and k or v
+        local array, array_to_sample = assert(sample[v])(sample)
         self:on_read(array, {name})
         self:on_append_read(array_to_sample)
     end
+
     return self, sample
 end
 

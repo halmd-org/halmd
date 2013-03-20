@@ -82,9 +82,9 @@ local function kob_andersen(args)
     })
 
     -- H5MD file writer
-    local writer = writers.h5md({path = ("%s.h5"):format(args.output)})
+    local file = writers.h5md({path = ("%s.h5"):format(args.output)})
     -- write box specification to H5MD file
-    box:writer(writer)
+    box:writer(file)
 
     -- sample each particle group separately and write to H5MD file
     local offset = 0
@@ -97,7 +97,10 @@ local function kob_andersen(args)
         offset = offset + ngroup[s + 1]
 
         -- connect H5MD writer, output only first and last step
-        observables.phase_space({box = box, group = group}):writer(writer)
+        observables.phase_space({box = box, group = group}):writer({
+            file = file
+          , fields = {"position", "velocity", "species", "mass"}
+        })
     end
 
     -- estimate remaining runtime

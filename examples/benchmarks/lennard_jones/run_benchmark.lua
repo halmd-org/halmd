@@ -42,7 +42,9 @@ local function lennard_jones(args)
 
     local trajectory = file.root:open_group("trajectory")
     -- construct a phase space reader and sample
-    local reader, sample = observables.phase_space.reader(file, {group = "all"})
+    local reader, sample = observables.phase_space.reader({
+        file = file, location = {"trajectory", "all"}, fields = {"position", "velocity", "species", "mass"}
+    })
     -- read phase space sample at last step in file
     log.info("number of particles: %d", sample.nparticle)
     reader:read_at_step(-1)
@@ -56,9 +58,9 @@ local function lennard_jones(args)
     file:close()
 
     -- open H5MD file writer
-    local writer = writers.h5md({path = ("%s.h5"):format(args.output)})
+    local file = writers.h5md({path = ("%s.h5"):format(args.output)})
     -- write box specification to H5MD file
-    box:writer(writer)
+    box:writer(file)
 
     -- create system state
     local particle = mdsim.particle({box = box, particles = sample.nparticle, species = 1})
@@ -70,7 +72,7 @@ local function lennard_jones(args)
     -- set particle positions, velocities, species
     phase_space:set(sample)
     -- write phase space data of group to H5MD file, but only first and last step
-    phase_space:writer(writer)
+    phase_space:writer({file = file, fields = {"position", "velocity", "species", "mass"}})
 
     -- define interaction of Kob-Andersen mixture using truncated Lennard-Jones potential
     local potential = mdsim.potentials.lennard_jones({particle = particle, cutoff = cutoff})
