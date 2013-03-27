@@ -1,5 +1,6 @@
 /*
- * Copyright © 2008, 2012  Peter Colberg
+ * Copyright © 2013       Nicolas Höft
+ * Copyright © 2008, 2012 Peter Colberg
  *
  * This file is part of HALMD.
  *
@@ -33,7 +34,7 @@ class close_packed_lattice;
 /**
  * Two-dimensional hexagonal close-packed unit lattice.
  *
- * @tparam Position 2-dimensional floating-n array type
+ * @tparam Position 2-dimensional floating-point array type
  * @tparam Shape 2-dimensional integer array type
  */
 template <typename Position, typename Shape>
@@ -92,7 +93,7 @@ private:
 /**
  * Three-dimensional face centered cubic unit lattice.
  *
- * @tparam Position 3-dimensional floating-n array type
+ * @tparam Position 3-dimensional floating-point array type
  * @tparam Shape 3-dimensional integer array type
  */
 template <typename Position, typename Shape>
@@ -155,7 +156,7 @@ class primitive_lattice;
 /**
  * Two-dimensional square unit lattice.
  *
- * @tparam Position 2-dimensional floating-n array type
+ * @tparam Position 2-dimensional floating-point array type
  * @tparam Shape 2-dimensional integer array type
  */
 template <typename Position, typename Shape>
@@ -214,7 +215,7 @@ private:
 /**
  * Three-dimensional primitive cubic unit lattice.
  *
- * @tparam Position 3-dimensional floating-n array type
+ * @tparam Position 3-dimensional floating-point array type
  * @tparam Shape 3-dimensional integer array type
  */
 template <typename Position, typename Shape>
@@ -274,7 +275,7 @@ private:
 /**
  * Four-dimensional primitive tesseractic unit lattice.
  *
- * @tparam Position 4-dimensional floating-n array type
+ * @tparam Position 4-dimensional floating-point array type
  * @tparam Shape 4-dimensional integer array type
  */
 template <typename Position, typename Shape>
@@ -331,6 +332,70 @@ private:
     /** number of unit cells per dimension */
     shape_type shape_;
 };
+
+/**
+ * Six-dimensional primitive 6-cube unit lattice.
+ *
+ * @tparam Position 6-dimensional floating-point array type
+ * @tparam Shape 6-dimensional integer array type
+ */
+template <typename Position, typename Shape>
+class primitive_lattice<Position, Shape
+  , typename boost::enable_if_c<(Position::static_size == 6)>::type>
+{
+public:
+    typedef Position result_type;
+    typedef Shape shape_type;
+    typedef typename shape_type::value_type size_type;
+
+    /**
+     * Construct unit lattice primitive of given shape.
+     *
+     * @param shape number of unit cells per dimension
+     */
+    explicit HALMD_GPU_ENABLED primitive_lattice(shape_type const& shape) : shape_(shape) {}
+
+    /**
+     * Returns lattice position for given particle index.
+     *
+     * @param n particle index with 0 ≤ index < size()
+     */
+    HALMD_GPU_ENABLED result_type operator()(size_type n) const
+    {
+        shape_type cell = offset_to_multi_index(n, shape_);
+        result_type r;
+        r[0] = cell[0] + float_type(0.5);
+        r[1] = cell[1] + float_type(0.5);
+        r[2] = cell[2] + float_type(0.5);
+        r[3] = cell[3] + float_type(0.5);
+        r[4] = cell[4] + float_type(0.5);
+        r[5] = cell[5] + float_type(0.5);
+        return r;
+    }
+
+    /**
+     * Returns number of unit cells per dimension.
+     */
+    HALMD_GPU_ENABLED shape_type const& shape() const
+    {
+        return shape_;
+    }
+
+    /**
+     * Returns total number of lattice points.
+     */
+    HALMD_GPU_ENABLED size_type size() const
+    {
+        return shape_[0] * shape_[1] * shape_[2] * shape_[3] * shape_[4] * shape_[5];
+    }
+
+private:
+    typedef typename result_type::value_type float_type;
+
+    /** number of unit cells per dimension */
+    shape_type shape_;
+};
+
 
 } // namespace halmd
 
