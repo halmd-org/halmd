@@ -354,7 +354,7 @@ inline void pair_trunc<dimension, float_type, potential_type, trunc_type>::compu
             // contribution to potential energy
             en_pot_type en = 0.5 * pot;
             // potential part of stress tensor
-            stress_pot_type stress = 0.5 * fval * make_stress_tensor(rr, r);
+            stress_pot_type stress = 0.5 * fval * make_stress_tensor(r);
             // contribution to hypervirial
             hypervirial_type hyper = 0.5 * hvir / (dimension * dimension);
 

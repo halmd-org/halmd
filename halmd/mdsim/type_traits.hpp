@@ -71,7 +71,6 @@ struct type_traits<3, value_type>
 {
     typedef typename basic_vector_type<4, value_type>::type coalesced_vector_type;
     typedef typename basic_vector_type<3, value_type>::type vector_type;
-    typedef typename basic_vector_type<4, value_type>::type stress_tensor_type;
 };
 
 template <typename value_type>
@@ -79,7 +78,6 @@ struct type_traits<2, value_type>
 {
     typedef typename basic_vector_type<2, value_type>::type coalesced_vector_type;
     typedef typename basic_vector_type<2, value_type>::type vector_type;
-    typedef typename basic_vector_type<2, value_type>::type stress_tensor_type;
 };
 
 }} // namespace detail::gpu
@@ -95,7 +93,9 @@ template <int dimension, typename value_type>
 struct type_traits
 {
     typedef fixed_vector<value_type, dimension> vector_type;
-    typedef fixed_vector<value_type, 1 + (dimension - 1) * dimension / 2> stress_tensor_type;
+    // diagonal elements are the first 'dimension' elements
+    // followed by the off-diagonals T_12, T_13, ..., T_23, ...
+    typedef fixed_vector<value_type, (dimension + 1) * dimension / 2> stress_tensor_type;
 
 #ifdef HALMD_WITH_GPU
     typedef detail::gpu::type_traits<dimension, value_type> gpu;

@@ -1,6 +1,7 @@
 /*
- * Copyright © 2012 Peter Colberg
- * Copyright © 2012 Felix Höfling
+ * Copyright © 2012-2013 Felix Höfling
+ * Copyright © 2013      Nicolas Höft
+ * Copyright © 2012      Peter Colberg
  *
  * This file is part of HALMD.
  *
@@ -206,12 +207,17 @@ double get_mean_virial(force_type& force, particle_group& group)
     typedef typename particle_group::array_type group_array_type;
     typedef typename force_type::stress_pot_array_type stress_pot_array_type;
 
+    enum { dimension = force_type::net_force_type::static_size };
+
     cache_proxy<group_array_type const> unordered = group.unordered();
     cache_proxy<stress_pot_array_type const> stress_pot = force.stress_pot();
 
     double sum = 0;
     for (size_type i : *unordered) {
-        sum += (*stress_pot)[i][0];
+        // compute trace of the stress tensor
+        for (int j = 0; j < dimension; ++j) {
+            sum += (*stress_pot)[i][j];
+        }
     }
     return sum / unordered->size();
 }

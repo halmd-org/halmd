@@ -1,5 +1,6 @@
 /*
- * Copyright © 2012  Peter Colberg
+ * Copyright © 2013 Nicolas Höft
+ * Copyright © 2012 Peter Colberg
  *
  * This file is part of HALMD.
  *
@@ -17,6 +18,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <halmd/mdsim/force_kernel.hpp>
 #include <halmd/algorithm/gpu/reduce_kernel.cuh>
 #include <halmd/mdsim/gpu/box_kernel.cuh>
 #include <halmd/numeric/mp/dsfloat.hpp>
@@ -35,7 +37,7 @@ static texture<float4> velocity_;
 /** potential energies */
 static texture<float> en_pot_;
 /** potential parts of stress tensor */
-static texture<void> stress_pot_;
+static texture<float> stress_pot_;
 
 template <int dimension, typename float_type>
 void kinetic_energy<dimension, float_type>::operator()(size_type i)
@@ -82,8 +84,13 @@ void potential_energy<float_type>::operator()(size_type i)
 template <int dimension, typename float_type>
 void virial<dimension, float_type>::operator()(size_type i)
 {
-    stress_pot_type s = tex1Dfetch(reinterpret_cast<texture<coalesced_stress_pot_type>&>(stress_pot_), i);
-    virial_ += s[0];
+    typedef fixed_vector<float, dimension> stress_pot_diagonal;
+    stress_pot_diagonal v;
+    v = mdsim::read_stress_tensor_diagonal<stress_pot_diagonal>(stress_pot_, i, stride_);
+    // add trace of the potential part of the stress tensor
+    for (int j = 0; j < dimension; ++j) {
+        virial_ += v[j];
+    }
 }
 
 template <int dimension, typename float_type>
@@ -111,7 +118,7 @@ cuda::texture<float> const
 potential_energy<float_type>::texture_ = gpu::en_pot_;
 
 template <int dimension, typename float_type>
-cuda::texture<typename virial<dimension, float_type>::coalesced_stress_pot_type> const
+cuda::texture<float> const
 virial<dimension, float_type>::texture_ = stress_pot_;
 
 template class observables::gpu::kinetic_energy<3, dsfloat>;

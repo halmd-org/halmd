@@ -34,7 +34,6 @@ struct pair_trunc_wrapper
 {
     typedef fixed_vector<float, dimension> vector_type;
     typedef typename type_traits<dimension, float>::gpu::coalesced_vector_type coalesced_vector_type;
-    typedef typename type_traits<dimension, float>::gpu::stress_tensor_type stress_tensor_type;
 
     /** compute forces only */
     cuda::function<void (
@@ -44,7 +43,7 @@ struct pair_trunc_wrapper
       , unsigned int
       , unsigned int
       , float*
-      , stress_tensor_type*
+      , float*
       , float*
       , unsigned int
       , unsigned int
@@ -59,7 +58,7 @@ struct pair_trunc_wrapper
       , unsigned int
       , unsigned int
       , float*
-      , stress_tensor_type*
+      , float*
       , float*
       , unsigned int
       , unsigned int

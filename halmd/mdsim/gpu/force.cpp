@@ -1,4 +1,6 @@
 /*
+ * Copyright © 2013 Felix Höfling
+ * Copyright © 2013 Nicolas Höft
  * Copyright © 2012 Peter Colberg
  *
  * This file is part of HALMD.

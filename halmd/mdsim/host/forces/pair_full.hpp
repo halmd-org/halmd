@@ -118,7 +118,7 @@ private:
     cache<net_force_array_type> net_force_;
     /** potential energy per particle */
     cache<en_pot_array_type> en_pot_;
-    /** potential part of stress tensor per particle */
+    /** potential part of stress tensor of each particle */
     cache<stress_pot_array_type> stress_pot_;
     /** hypervirial per particle */
     cache<hypervirial_array_type> hypervirial_;
@@ -332,7 +332,7 @@ inline void pair_full<dimension, float_type, potential_type>::compute_aux()
             // contribution to potential energy
             en_pot_type en = 0.5 * pot;
             // potential part of stress tensor
-            stress_pot_type stress = 0.5 * fval * make_stress_tensor(rr, r);
+            stress_pot_type stress = 0.5 * fval * make_stress_tensor(r);
             // contribution to hypervirial
             hypervirial_type hyper = 0.5 * hvir / (dimension * dimension);
 

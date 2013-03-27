@@ -1,4 +1,6 @@
 /*
+ * Copyright © 2013 Nicolas Höft
+ * Copyright © 2013 Felix Höfling
  * Copyright © 2012 Peter Colberg
  *
  * This file is part of HALMD.
@@ -28,6 +30,7 @@
 #include <test/tools/ctest.hpp>
 #include <test/tools/init.hpp>
 #ifdef HALMD_WITH_GPU
+# include <halmd/mdsim/force_kernel.hpp>
 # include <halmd/mdsim/gpu/force.hpp>
 # include <test/tools/cuda.hpp>
 #endif
@@ -90,6 +93,21 @@ make_array_from_iterator_range(array_type& array, iterator_type const& first, it
     array = std::move(output);
 }
 
+/**
+ * Construct host stress pot array from iterator range.
+ */
+template <typename force_type, typename iterator_type>
+inline typename std::enable_if<
+    std::is_convertible<
+        typename std::iterator_traits<typename force_type::stress_pot_array_type::iterator>::iterator_category
+      , std::random_access_iterator_tag
+    >::value
+  , void>::type
+make_stress_array_from_iterator_range(typename force_type::stress_pot_array_type& array, iterator_type const& first, iterator_type const& last)
+{
+    make_array_from_iterator_range(array, first, last);
+}
+
 #ifdef HALMD_WITH_GPU
 /**
  * Construct GPU array from iterator range.
@@ -109,7 +127,35 @@ make_array_from_iterator_range(array_type& array, iterator_type const& first, it
     cuda::copy(h_output.begin(), h_output.end(), g_output.begin());
     array = std::move(g_output);
 }
-#endif
+
+/**
+ * Construct GPU stress tensor array from iterator range.
+ */
+template <typename force_type, typename iterator_type>
+inline typename std::enable_if<
+    std::is_convertible<
+        typename std::iterator_traits<typename force_type::stress_pot_array_type::iterator>::iterator_category
+      , cuda::device_random_access_iterator_tag
+    >::value
+  , void>::type
+make_stress_array_from_iterator_range(typename force_type::stress_pot_array_type& array, iterator_type const& first, iterator_type const& last)
+{
+    int stress_pot_size = force_type::stress_pot_type::static_size;
+    typename force_type::stress_pot_array_type g_stress_pot(last - first);
+    g_stress_pot.reserve(g_stress_pot.size() * stress_pot_size);
+    cuda::host::vector<typename force_type::stress_pot_array_type::value_type> h_stress_pot(g_stress_pot.size());
+    h_stress_pot.reserve(g_stress_pot.capacity());
+
+    // convert stress tensor to column-major memory layout
+    unsigned int stride = h_stress_pot.capacity() / stress_pot_size;
+    for (iterator_type it = first; it != last; ++it) {
+        halmd::mdsim::write_stress_tensor(&h_stress_pot[it - first], *it, stride);
+    }
+    // copy from memory from host to GPU
+    cuda::copy(h_stress_pot.begin(), h_stress_pot.begin() + h_stress_pot.capacity(), g_stress_pot.begin());
+    array = std::move(g_stress_pot);
+}
+#endif // HALMD_WITH_GPU
 
 /**
  * Force with members initialised from iterator range.
@@ -122,6 +168,7 @@ public:
     typedef typename force_type::net_force_array_type net_force_array_type;
     typedef typename force_type::en_pot_array_type en_pot_array_type;
     typedef typename force_type::stress_pot_array_type stress_pot_array_type;
+    typedef typename force_type::stress_pot_type stress_pot_type;
     typedef typename force_type::hypervirial_array_type hypervirial_array_type;
 
     virtual halmd::cache<net_force_array_type> const& net_force()
@@ -157,7 +204,7 @@ public:
     void set_stress_pot(iterator_type const& first, iterator_type const& last)
     {
         halmd::cache_proxy<stress_pot_array_type> stress_pot = stress_pot_;
-        make_array_from_iterator_range(*stress_pot, first, last);
+        make_stress_array_from_iterator_range<force_from_iterator_range, iterator_type>(*stress_pot, first, last);
     }
 
     virtual halmd::cache<hypervirial_array_type> const& hypervirial()

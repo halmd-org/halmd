@@ -61,7 +61,7 @@ public:
     virtual cache<en_pot_array_type> const& en_pot() = 0;
 
     /**
-     * Returns const reference to potential part of stress tensor per particle.
+     * Returns const reference to potential part of stress tensor of each particle.
      */
     virtual cache<stress_pot_array_type> const& stress_pot() = 0;
 

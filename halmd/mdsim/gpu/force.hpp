@@ -1,4 +1,6 @@
 /*
+ * Copyright © 2013 Felix Höfling
+ * Copyright © 2013 Nicolas Höft
  * Copyright © 2012 Peter Colberg
  *
  * This file is part of HALMD.
@@ -20,6 +22,7 @@
 #ifndef HALMD_MDSIM_GPU_FORCE_HPP
 #define HALMD_MDSIM_GPU_FORCE_HPP
 
+#include <halmd/mdsim/force_kernel.hpp>
 #include <halmd/mdsim/type_traits.hpp>
 #include <halmd/numeric/blas/fixed_vector.hpp>
 #include <halmd/utility/cache.hpp>
@@ -45,7 +48,7 @@ public:
 
     typedef cuda::vector<typename type_traits<dimension, float_type>::gpu::coalesced_vector_type> net_force_array_type;
     typedef cuda::vector<en_pot_type> en_pot_array_type;
-    typedef cuda::vector<typename type_traits<dimension, float_type>::gpu::stress_tensor_type> stress_pot_array_type;
+    typedef cuda::vector<typename stress_pot_type::value_type> stress_pot_array_type;
     typedef cuda::vector<hypervirial_type> hypervirial_array_type;
 
     virtual ~force() {}
@@ -111,11 +114,21 @@ template <typename force_type, typename iterator_type>
 inline iterator_type
 get_stress_pot(force_type& force, iterator_type const& first)
 {
+    // copy data from GPU to host
     typedef typename force_type::stress_pot_array_type stress_pot_array_type;
     cache_proxy<stress_pot_array_type const> g_stress_pot = force.stress_pot();
     cuda::host::vector<typename stress_pot_array_type::value_type> h_stress_pot(g_stress_pot->size());
-    cuda::copy(g_stress_pot->begin(), g_stress_pot->end(), h_stress_pot.begin());
-    return std::copy(h_stress_pot.begin(), h_stress_pot.end(), first);
+    h_stress_pot.reserve(g_stress_pot->capacity());
+    cuda::copy(g_stress_pot->begin(), g_stress_pot->begin() + g_stress_pot->capacity(), h_stress_pot.begin());
+
+    // convert from column-major to row-major layout
+    typedef typename force_type::stress_pot_type stress_pot_type;
+    unsigned int stride = h_stress_pot.capacity() / stress_pot_type::static_size;
+    iterator_type output = first;
+    for (auto const& stress : h_stress_pot) {
+        *output++ = read_stress_tensor<stress_pot_type>(&stress, stride);
+    }
+    return output;
 }
 
 /**

@@ -1,4 +1,5 @@
 /*
+ * Copyright © 2013  Nicolas Höft
  * Copyright © 2012  Peter Colberg
  *
  * This file is part of HALMD.
@@ -27,7 +28,6 @@
 
 #include <cuda_wrapper/cuda_wrapper.hpp>
 
-#include <cuda_wrapper/cuda_wrapper.hpp>
 
 #ifndef __CUDACC__
 # include <tuple>
@@ -286,12 +286,15 @@ class virial
 {
 private:
     typedef unsigned int size_type;
-    typedef typename mdsim::type_traits<dimension, float>::stress_tensor_type stress_pot_type;
-    typedef typename mdsim::type_traits<dimension, float>::gpu::stress_tensor_type coalesced_stress_pot_type;
 
 public:
     /** element pointer type of input array */
     typedef size_type const* iterator;
+
+    /**
+     * Initialise virial sum to zero and store number of strides
+     */
+    virial(unsigned int stride) : virial_(0), stride_(stride) {}
 
     /**
      * Accumulate stress tensor diagonal of a particle.
@@ -317,7 +320,7 @@ public:
     /**
      * Returns reference to texture with stress tensors.
      */
-    static cuda::texture<coalesced_stress_pot_type> const& get()
+    static cuda::texture<float> const& get()
     {
         return texture_;
     }
@@ -326,7 +329,15 @@ private:
     /** total virial sum */
     float_type virial_;
     /** texture with stress tensors */
-    static cuda::texture<coalesced_stress_pot_type> const texture_;
+    static cuda::texture<float> const texture_;
+    /**
+     * stride of the stress tensor array in device memory
+     *
+     * Note that the stride is defined by GTDIM in the force kernel, which may
+     * be different in the reduce kernel. Thus we pass the value inside the
+     * accumulation functor.
+     **/
+    unsigned int stride_;
 };
 
 } // namespace observables

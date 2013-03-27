@@ -24,6 +24,7 @@
 #include <halmd/mdsim/gpu/box_kernel.cuh>
 #include <halmd/mdsim/gpu/forces/pair_trunc_kernel.hpp>
 #include <halmd/mdsim/gpu/particle_kernel.cuh>
+#include <halmd/mdsim/type_traits.hpp>
 #include <halmd/numeric/blas/blas.hpp>
 #include <halmd/numeric/mp/dsfloat.hpp>
 #include <halmd/utility/gpu/thread.cuh>
@@ -45,7 +46,6 @@ template <
   , typename vector_type
   , typename potential_type
   , typename gpu_vector_type
-  , typename stress_tensor_type
   , typename trunc_type
 >
 __global__ void compute(
@@ -55,7 +55,7 @@ __global__ void compute(
   , unsigned int neighbour_size
   , unsigned int neighbour_stride
   , float* g_en_pot
-  , stress_tensor_type* g_stress_pot
+  , float* g_stress_pot
   , float* g_hypervirial
   , unsigned int ntype1
   , unsigned int ntype2
@@ -76,7 +76,7 @@ __global__ void compute(
     float en_pot_ = 0;
     float hypervirial_ = 0;
     // contribution to stress tensor
-    fixed_vector<float, (dimension - 1) * dimension / 2 + 1> stress_pot = 0;
+    typename type_traits<dimension, float>::stress_tensor_type stress_pot = 0;
 #ifdef USE_FORCE_DSFUN
     // force sum
     fixed_vector<dsfloat, dimension> f = 0;
@@ -122,7 +122,7 @@ __global__ void compute(
             // potential energy contribution of this particle
             en_pot_ += 0.5f * en_pot;
             // contribution to stress tensor from this particle
-            stress_pot += 0.5f * fval * make_stress_tensor(rr, r);
+            stress_pot += 0.5f * fval * make_stress_tensor(r);
             // contribution to hypervirial
             hypervirial_ += 0.5f * hvir / (dimension * dimension);
         }
@@ -132,7 +132,7 @@ __global__ void compute(
     g_f[i] = static_cast<vector_type>(f);
     if (do_aux) {
         g_en_pot[i] = en_pot_;
-        g_stress_pot[i] = stress_pot;
+        write_stress_tensor(g_stress_pot + i, stress_pot, GTDIM);
         g_hypervirial[i] = hypervirial_;
     }
 }

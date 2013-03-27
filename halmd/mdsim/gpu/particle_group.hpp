@@ -1,6 +1,7 @@
 /*
  * Copyright © 2012 Peter Colberg
  * Copyright © 2012 Felix Höfling
+ * Copyright © 2013 Nicolas Höft
  *
  * This file is part of HALMD.
  *
@@ -200,14 +201,16 @@ double get_mean_virial(force_type& force, particle_group& group)
 {
     typedef typename particle_group::array_type group_array_type;
     typedef typename force_type::stress_pot_array_type stress_pot_array_type;
+    typedef typename force_type::stress_pot_type stress_pot_type;
     unsigned int constexpr dimension = force_type::net_force_type::static_size;
     typedef observables::gpu::virial<dimension, dsfloat> accumulator_type;
 
     cache_proxy<group_array_type const> unordered = group.unordered();
     cache_proxy<stress_pot_array_type const> stress_pot = force.stress_pot();
 
+    unsigned int stride = stress_pot->capacity() / stress_pot_type::static_size;
     accumulator_type::get().bind(*stress_pot);
-    return reduce(&*unordered->begin(), &*unordered->end(), accumulator_type())() / unordered->size();
+    return reduce(&*unordered->begin(), &*unordered->end(), accumulator_type(stride))() / unordered->size();
 }
 
 /**

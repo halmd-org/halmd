@@ -1,6 +1,7 @@
 /*
+ * Copyright © 2010-2013 Felix Höfling
+ * Copyright © 2013      Nicolas Höft
  * Copyright © 2008-2012 Peter Colberg
- * Copyright © 2010-2011 Felix Höfling
  *
  * This file is part of HALMD.
  *
@@ -53,6 +54,7 @@ private:
 public:
     typedef typename _Base::net_force_array_type net_force_array_type;
     typedef typename _Base::en_pot_array_type en_pot_array_type;
+    typedef typename _Base::stress_pot_type stress_pot_type;
     typedef typename _Base::stress_pot_array_type stress_pot_array_type;
     typedef typename _Base::hypervirial_array_type hypervirial_array_type;
 
@@ -127,7 +129,7 @@ private:
     cache<net_force_array_type> net_force_;
     /** potential energy per particle */
     cache<en_pot_array_type> en_pot_;
-    /** potential part of stress tensor per particle */
+    /** potential part of stress tensor for each particle */
     cache<stress_pot_array_type> stress_pot_;
     /** hypervirial per particle */
     cache<hypervirial_array_type> hypervirial_;
@@ -183,7 +185,14 @@ pair_trunc<dimension, float_type, potential_type, trunc_type>::pair_trunc(
 
     net_force->reserve(particle1_->dim.threads());
     en_pot->reserve(particle1_->dim.threads());
-    stress_pot->reserve(particle1_->dim.threads());
+    //
+    // The GPU stores the stress tensor elements in column-major order to
+    // optimise access patterns for coalescable access. Increase capacity of
+    // GPU array such that there are 4 (6) in 2D (3D) elements per particle
+    // available, although stress_pot_->size() still returns the number of
+    // particles.
+    //
+    stress_pot->reserve(stress_pot_type::static_size * particle1_->dim.threads());
     hypervirial->reserve(particle1_->dim.threads());
 }
 

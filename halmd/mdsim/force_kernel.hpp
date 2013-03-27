@@ -1,5 +1,7 @@
 /*
- * Copyright © 2008-2010  Peter Colberg and Felix Höfling
+ * Copyright © 2008-2013 Felix Höfling
+ * Copyright © 2013      Nicolas Höft
+ * Copyright © 2008-2010 Peter Colberg
  *
  * This file is part of HALMD.
  *
@@ -26,29 +28,116 @@ namespace halmd {
 namespace mdsim {
 
 /**
- * Trace and off-diagonal elements of distance tensor
+ * Diagonal and off-diagonal elements of distance tensor
  */
 template <typename float_type>
 HALMD_GPU_ENABLED typename type_traits<3, float_type>::stress_tensor_type
-make_stress_tensor(float_type rr, fixed_vector<float_type, 3> const& r)
+make_stress_tensor(fixed_vector<float_type, 3> const& r)
 {
     typename type_traits<3, float_type>::stress_tensor_type v;
-    v[0] = rr;
-    v[1] = r[1] * r[2];
-    v[2] = r[2] * r[0];
+    v[0] = r[0] * r[0];
+    v[1] = r[1] * r[1];
+    v[2] = r[2] * r[2];
     v[3] = r[0] * r[1];
+    v[4] = r[0] * r[2];
+    v[5] = r[1] * r[2];
     return v;
 }
 
 template <typename float_type>
 HALMD_GPU_ENABLED typename type_traits<2, float_type>::stress_tensor_type
-make_stress_tensor(float_type rr, fixed_vector<float_type, 2> const& r)
+make_stress_tensor(fixed_vector<float_type, 2> const& r)
 {
     typename type_traits<2, float_type>::stress_tensor_type v;
-    v[0] = rr;
-    v[1] = r[0] * r[1];
+    v[0] = r[0] * r[0];
+    v[1] = r[1] * r[1];
+    v[2] = r[0] * r[1];
     return v;
 }
+
+
+/**
+ * In GPU memory, the stress tensor contribution from each particle is stored
+ * as an array of float_type elements ordered differently than in host memory:
+ * row-major order on the host, column-major order on the GPU in the sense that
+ * the whole array is considered a (particle number) by
+ * (stress_tensor_type::static_size) matrix. [The tensor is actually flattened
+ * to a 1-dimensional vector.]
+ */
+
+/**
+ * write stress tensor in column-major order
+ */
+template <typename stress_tensor_type>
+HALMD_GPU_ENABLED void
+write_stress_tensor(float* g_stress, stress_tensor_type const& v, unsigned int stride)
+{
+    enum { size = stress_tensor_type::static_size };
+    for (int i = 0; i < size; ++i) {
+        g_stress[i * stride] = v[i];
+    }
+}
+
+/**
+ * read stress tensor in column-major order
+ */
+template <typename stress_tensor_type>
+HALMD_GPU_ENABLED stress_tensor_type
+read_stress_tensor(float const* g_stress, unsigned int stride)
+{
+    stress_tensor_type v;
+    enum { size = stress_tensor_type::static_size };
+    for (int i = 0; i < size; ++i) {
+        v[i] = g_stress[i * stride];
+    }
+    return v;
+}
+
+/**
+ * read diagonal elements of stress tensor in column-major order
+ */
+template <typename vector_type>
+HALMD_GPU_ENABLED vector_type
+read_stress_tensor_diagonal(float const* g_stress, unsigned int stride)
+{
+    vector_type v;
+    enum { dimension = vector_type::static_size };
+    for (int i = 0; i < dimension; ++i) {
+        v[i] = g_stress[i * stride];
+    }
+    return v;
+}
+
+#ifdef __CUDACC__
+
+/**
+ * read stress tensor in column-major order from texture
+ */
+template <typename stress_tensor_type>
+HALMD_GPU_ENABLED stress_tensor_type
+read_stress_tensor(texture<float> const& stress_pot_texture, unsigned int i, unsigned int stride)
+{
+    stress_tensor_type v;
+    enum { size = stress_tensor_type::static_size };
+    for (int j = 0; j < size; ++j) {
+        v[j] = tex1Dfetch(stress_pot_texture, i + j * stride);
+    }
+    return v;
+}
+
+/**
+ * read diagonal elements of stress tensor in column-major order from texture
+ */
+template <typename vector_type>
+HALMD_GPU_ENABLED vector_type
+read_stress_tensor_diagonal(texture<float> const& stress_pot_texture, unsigned int i, unsigned int stride)
+{
+    // as the first d(=dimension) elements are the diagonal elements,
+    // read_stress_tensor() can be used for reading the diagonal
+    return read_stress_tensor<vector_type>(stress_pot_texture, i, stride);
+}
+
+#endif // __CUDACC__
 
 } // namespace mdsim
 } // namespace halmd
