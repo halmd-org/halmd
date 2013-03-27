@@ -53,6 +53,7 @@ public:
     typedef typename _Base::en_pot_array_type en_pot_array_type;
     typedef typename _Base::stress_pot_array_type stress_pot_array_type;
     typedef typename _Base::hypervirial_array_type hypervirial_array_type;
+    typedef typename _Base::stress_pot_type stress_pot_type;
 
     typedef particle<dimension, float_type> particle_type;
     typedef box<dimension> box_type;
@@ -97,7 +98,6 @@ private:
     typedef typename particle_type::species_type species_type;
     typedef typename particle_type::size_type size_type;
     typedef typename _Base::en_pot_type en_pot_type;
-    typedef typename _Base::stress_pot_type stress_pot_type;
     typedef typename _Base::hypervirial_type hypervirial_type;
 
     /** compute forces */
