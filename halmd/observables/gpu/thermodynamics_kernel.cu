@@ -23,6 +23,7 @@
 #include <halmd/mdsim/gpu/box_kernel.cuh>
 #include <halmd/numeric/mp/dsfloat.hpp>
 #include <halmd/observables/gpu/thermodynamics_kernel.hpp>
+#include <halmd/mdsim/force_kernel.hpp>
 
 namespace halmd {
 namespace observables {
@@ -94,6 +95,18 @@ void virial<dimension, float_type>::operator()(size_type i)
 }
 
 template <int dimension, typename float_type>
+void stress_tensor<dimension, float_type>::operator()(size_type i)
+{
+    fixed_vector<float, dimension> v;
+    float mass;
+
+    stress_tensor_ += mdsim::read_stress_tensor<stress_tensor_type>(stress_pot_, i, stride_);
+    tie(v, mass) <<= tex1Dfetch(velocity_, i);
+    // compute the kinetic part of the stress tensor
+    stress_tensor_ += mass * mdsim::make_stress_tensor(v);
+}
+
+template <int dimension, typename float_type>
 cuda::texture<float4> const
 kinetic_energy<dimension, float_type>::texture_ = velocity_;
 
@@ -121,6 +134,14 @@ template <int dimension, typename float_type>
 cuda::texture<float> const
 virial<dimension, float_type>::texture_ = stress_pot_;
 
+template <int dimension, typename float_type>
+cuda::texture<float> const
+stress_tensor<dimension, float_type>::stress_pot_texture_ = stress_pot_;
+
+template <int dimension, typename float_type>
+cuda::texture<float4> const
+stress_tensor<dimension, float_type>::velocity_texture_ = velocity_;
+
 template class observables::gpu::kinetic_energy<3, dsfloat>;
 template class observables::gpu::kinetic_energy<2, dsfloat>;
 template class observables::gpu::centre_of_mass<3, dsfloat>;
@@ -130,6 +151,8 @@ template class observables::gpu::velocity_of_centre_of_mass<2, dsfloat>;
 template class observables::gpu::potential_energy<dsfloat>;
 template class observables::gpu::virial<3, dsfloat>;
 template class observables::gpu::virial<2, dsfloat>;
+template class observables::gpu::stress_tensor<3, dsfloat>;
+template class observables::gpu::stress_tensor<2, dsfloat>;
 
 } // namespace gpu
 } // namespace observables
@@ -143,5 +166,7 @@ template class reduction_kernel<observables::gpu::velocity_of_centre_of_mass<2, 
 template class reduction_kernel<observables::gpu::potential_energy<dsfloat> >;
 template class reduction_kernel<observables::gpu::virial<3, dsfloat> >;
 template class reduction_kernel<observables::gpu::virial<2, dsfloat> >;
+template class reduction_kernel<observables::gpu::stress_tensor<3, dsfloat> >;
+template class reduction_kernel<observables::gpu::stress_tensor<2, dsfloat> >;
 
 } // namespace halmd

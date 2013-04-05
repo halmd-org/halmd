@@ -1,5 +1,6 @@
 /*
  * Copyright © 2010-2012 Felix Höfling
+ * Copyright © 2013      Nicolas Höft
  * Copyright © 2010-2012 Peter Colberg
  *
  * This file is part of HALMD.
@@ -165,6 +166,23 @@ double thermodynamics<dimension, float_type>::hypervirial()
 }
 
 template <int dimension, typename float_type>
+typename thermodynamics<dimension, float_type>::stress_tensor_type const&
+thermodynamics<dimension, float_type>::stress_tensor()
+{
+    cache<stress_pot_array_type> const& stress_pot_cache = force_->stress_pot();
+    cache<velocity_array_type> const& velocity_cache = particle_->velocity();
+    cache<size_type> const& group_cache = group_->size();
+
+    if (stress_tensor_cache_ != std::tie(stress_pot_cache, velocity_cache, group_cache)) {
+        LOG_TRACE("acquire stress tensor");
+        scoped_timer_type timer(runtime_.stress_tensor);
+        stress_tensor_ = get_mean_stress_tensor(*force_, *particle_, *group_);
+        stress_tensor_cache_ = std::tie(stress_pot_cache, velocity_cache, group_cache);
+    }
+    return stress_tensor_;
+}
+
+template <int dimension, typename float_type>
 void thermodynamics<dimension, float_type>::luaopen(lua_State* L)
 {
     using namespace luaponte;
@@ -182,6 +200,7 @@ void thermodynamics<dimension, float_type>::luaopen(lua_State* L)
                         .def_readonly("en_pot", &runtime::en_pot)
                         .def_readonly("virial", &runtime::virial)
                         .def_readonly("hypervirial", &runtime::hypervirial)
+                        .def_readonly("stress_tensor", &runtime::stress_tensor)
                 ]
                 .def_readonly("runtime", &thermodynamics::runtime_)
 

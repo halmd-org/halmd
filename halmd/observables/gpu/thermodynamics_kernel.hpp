@@ -345,6 +345,79 @@ private:
     unsigned int stride_;
 };
 
+/**
+ * Compute (full) stress tensor sum from potential part of the stress tensor.
+ */
+template <int dimension, typename float_type>
+class stress_tensor
+{
+private:
+    typedef unsigned int size_type;
+    typedef typename mdsim::type_traits<dimension, float_type>::stress_tensor_type stress_tensor_type;
+
+public:
+    /** element pointer type of input array */
+    typedef size_type const* iterator;
+
+    /**
+     * Initialise stress tensor sum to zero and store number of strides
+     */
+    stress_tensor(unsigned int stride) : stride_(stride), stress_tensor_(0) {}
+
+    /**
+     * Accumulate stress tensor diagonal of a particle.
+     */
+    inline HALMD_GPU_ENABLED void operator()(size_type i);
+
+    /**
+     * Accumulate stress tensor sum of another accumulator.
+     */
+    HALMD_GPU_ENABLED void operator()(stress_tensor const& acc)
+    {
+        stress_tensor_ += acc.stress_tensor_;
+    }
+
+    /**
+     * Returns total stress tensor sum.
+     */
+    stress_tensor_type operator()() const
+    {
+        return stress_tensor_;
+    }
+
+    /**
+     * Returns reference to texture with velocities.
+     */
+    static cuda::texture<float4> const& get_velocity()
+    {
+        return velocity_texture_;
+    }
+
+    /**
+     * Returns reference to texture with potential part of stress tensors.
+     */
+    static cuda::texture<float> const& get_stress_pot()
+    {
+        return stress_pot_texture_;
+    }
+
+private:
+    /** texture with velocities */
+    static cuda::texture<float4> const velocity_texture_;
+    /** texture with stress tensors */
+    static cuda::texture<float> const stress_pot_texture_;
+    /**
+     * stride of the stress tensor array in device memory
+     *
+     * Note that the stride is defined by GTDIM in the force kernel, which may
+     * be different in the reduce kernel. Thus we pass the value inside the
+     * accumulation functor.
+     **/
+    unsigned int stride_;
+    /** sum of stress tensors */
+    stress_tensor_type stress_tensor_;
+};
+
 } // namespace observables
 } // namespace gpu
 } // namespace halmd

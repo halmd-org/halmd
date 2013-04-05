@@ -1,5 +1,6 @@
 /*
  * Copyright © 2010-2011  Felix Höfling
+ * Copyright © 2013       Nicolas Höft
  *
  * This file is part of HALMD.
  *
@@ -42,6 +43,7 @@ class thermodynamics
 {
 public:
     typedef typename mdsim::type_traits<dimension, double>::vector_type vector_type;
+    typedef typename mdsim::type_traits<dimension, double>::stress_tensor_type stress_tensor_type;
     typedef typename signal<void ()>::slot_function_type slot_function_type;
 
     static void luaopen(lua_State* L);
@@ -68,6 +70,8 @@ public:
     virtual double virial() = 0;
     /** hypervirial sum */
     virtual double hypervirial() = 0;
+    /** (symmetric) stress tensor */
+    virtual stress_tensor_type const& stress_tensor() = 0;
 
     // compute derived quantities on the fly
 

@@ -1,5 +1,7 @@
 --
--- Copyright © 2010-2012  Peter Colberg and Felix Höfling
+-- Copyright © 2010-2012  Felix Höfling
+-- Copyright © 2013       Nicolas Höft
+-- Copyright © 2010-2012  Peter Colberg
 --
 -- This file is part of HALMD.
 --
@@ -97,6 +99,12 @@ local thermodynamics = assert(libhalmd.observables.thermodynamics)
 --
 --    Returns mean hypervirial per particle.
 --
+-- .. method:: stress_tensor()
+--
+--    Returns mean stress tensor elements per particle as a vector.
+--    In the first d(=dimension) elements contain the diagonal elements followed
+--    by off-diagonals T_12, T_13, ..., T_23, ...
+--
 local M = module(function(args)
     local group = args.group
     if not group then
@@ -119,14 +127,15 @@ local M = module(function(args)
 
     self.writer = function(self, file, args)
         local writer = file:writer{location = {"observables"}, mode = "append"}
-        writer:on_write(self.en_pot     , {label, "potential_energy"       })
-        writer:on_write(self.en_kin     , {label, "kinetic_energy"         })
-        writer:on_write(self.en_tot     , {label, "total_energy"           })
-        writer:on_write(self.v_cm       , {label, "center_of_mass_velocity"})
-        writer:on_write(self.pressure   , {label, "pressure"               })
-        writer:on_write(self.temp       , {label, "temperature"            })
-        writer:on_write(self.virial     , {label, "virial"                 })
-        writer:on_write(self.hypervirial, {label, "hypervirial"            })
+        writer:on_write(self.en_pot       , {label, "potential_energy"       })
+        writer:on_write(self.en_kin       , {label, "kinetic_energy"         })
+        writer:on_write(self.en_tot       , {label, "total_energy"           })
+        writer:on_write(self.v_cm         , {label, "center_of_mass_velocity"})
+        writer:on_write(self.pressure     , {label, "pressure"               })
+        writer:on_write(self.temp         , {label, "temperature"            })
+        writer:on_write(self.virial       , {label, "virial"                 })
+        writer:on_write(self.hypervirial  , {label, "hypervirial"            })
+        writer:on_write(self.stress_tensor, {label, "stress_tensor"          })
 
         -- connect writer to sampler
         local every = args.every
@@ -151,11 +160,13 @@ function M.profile(self, profiler)
             profiler:on_profile({self, [name] = ("summation of %s of %s particles"):format(desc, label)})
         end
     end
-    profile("en_kin"     , "kinetic energy"         )
-    profile("v_cm"       , "centre-of-mass velocity")
-    profile("en_pot"     , "potential energy"       )
-    profile("virial"     , "virial"                 )
-    profile("hypervirial", "hypervirial"            )
+    profile("en_kin"       , "kinetic energy"         )
+    profile("v_cm"         , "centre-of-mass velocity")
+    profile("r_cm"         , "centre-of-mass"         )
+    profile("en_pot"       , "potential energy"       )
+    profile("virial"       , "virial"                 )
+    profile("hypervirial"  , "hypervirial"            )
+    profile("stress_tensor", "stress tensor"          )
 end
 
 return M

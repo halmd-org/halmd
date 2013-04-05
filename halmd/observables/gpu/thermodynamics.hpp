@@ -1,5 +1,6 @@
 /*
  * Copyright © 2010-2012 Felix Höfling
+ * Copyright © 2013      Nicolas Höft
  * Copyright © 2010-2012 Peter Colberg
  *
  * This file is part of HALMD.
@@ -47,6 +48,7 @@ private:
 
 public:
     typedef typename _Base::vector_type vector_type;
+    typedef typename _Base::stress_tensor_type stress_tensor_type;
     typedef mdsim::box<dimension> box_type;
     typedef mdsim::gpu::particle<dimension, float_type> particle_type;
     typedef mdsim::gpu::force<dimension, float_type> force_type;
@@ -108,6 +110,11 @@ public:
      */
     virtual double hypervirial();
 
+    /**
+     * Compute mean stress tensor elements per particle.
+     */
+    virtual stress_tensor_type const& stress_tensor();
+
 private:
     typedef typename particle_type::size_type size_type;
     typedef typename particle_type::velocity_array_type velocity_array_type;
@@ -141,6 +148,8 @@ private:
     double virial_;
     /** mean hypervirial per particle */
     double hypervirial_;
+    /** mean stress tensor elements per particle */
+    stress_tensor_type stress_tensor_;
 
     /** cache observers of mean kinetic energy per particle */
     std::tuple<cache<>, cache<>> en_kin_cache_;
@@ -154,6 +163,8 @@ private:
     std::tuple<cache<>, cache<>> virial_cache_;
     /** cache observers of mean hypervirial per particle */
     std::tuple<cache<>, cache<>> hypervirial_cache_;
+    /** cache observers of mean stress tensor elements per particle */
+    std::tuple<cache<>, cache<>, cache<>> stress_tensor_cache_;
 
     typedef halmd::utility::profiler profiler_type;
     typedef profiler_type::accumulator_type accumulator_type;
@@ -167,6 +178,7 @@ private:
         accumulator_type en_pot;
         accumulator_type virial;
         accumulator_type hypervirial;
+        accumulator_type stress_tensor;
     };
 
     /** profiling runtime accumulators */

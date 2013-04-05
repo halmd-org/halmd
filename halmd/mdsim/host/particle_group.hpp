@@ -25,6 +25,8 @@
 #include <halmd/numeric/blas/fixed_vector.hpp>
 #include <halmd/utility/cache.hpp>
 #include <halmd/utility/raw_array.hpp>
+#include <halmd/mdsim/type_traits.hpp>
+#include <halmd/mdsim/force_kernel.hpp>
 
 #include <lua.hpp>
 
@@ -209,6 +211,36 @@ double get_mean_hypervirial(force_type& force, particle_group& group)
         sum += hypervirial[i];
     }
     return sum / unordered.size();
+}
+
+/**
+ * Compute mean stress tensor elements per particle.
+ */
+template <typename force_type, typename particle_type>
+typename type_traits<force_type::net_force_type::static_size, double>::stress_tensor_type
+get_mean_stress_tensor(force_type& force, particle_type& particle, particle_group& group)
+{
+    typedef typename particle_group::size_type size_type;
+    typedef typename particle_group::array_type group_array_type;
+    typedef typename force_type::stress_pot_array_type stress_pot_array_type;
+    typedef typename particle_type::velocity_array_type velocity_array_type;
+    typedef typename particle_type::mass_array_type mass_array_type;
+
+    enum { dimension = force_type::net_force_type::static_size };
+
+    typedef typename type_traits<dimension, double>::stress_tensor_type stress_tensor_type;
+
+    group_array_type const& unordered = read_cache(group.unordered());
+    stress_pot_array_type const& stress_pot = read_cache(force.stress_pot());
+    velocity_array_type const& velocity = read_cache(particle.velocity());
+    mass_array_type const& mass = read_cache(particle.mass());
+
+    stress_tensor_type stress_tensor_sum(0);
+    for (size_type i : unordered) {
+        stress_tensor_type stress_kin = mass[i] * make_stress_tensor(velocity[i]);
+        stress_tensor_sum += stress_pot[i] + stress_kin;
+    }
+    return stress_tensor_sum / unordered.size();
 }
 
 } // namespace host
