@@ -83,12 +83,12 @@ local M = module(function(args)
     local box = assert(args.box)
     local dimension = #box.edges
     local logger = log.logger({label = "neighbour " .. label(particles)})
-    local defaults = assert(neighbour.defaults)
-    local occupancy = args.occupancy or defaults.occupancy()
+    local occupancy = args.occupancy -- may be nil
 
     -- domain decomposition
     local binning
     if not args.disable_binning then
+        -- FIXME disabling binning is neither documented nor working
         binning = mdsim.binning({box = box, particle = particle2, r_cut = r_cut, skin = skin, occupancy = occupancy})
     end
 
@@ -98,9 +98,11 @@ local M = module(function(args)
     if device.gpu then
         if binning then
             neighbour = assert(neighbours.from_binning.gpu[dimension])
+            occupancy = occupancy or assert(neighbour.defaults).occupancy()
             neighbour = neighbour(particles, {binning, binning}, displacement, box, r_cut, skin, logger, occupancy)
         else
             neighbour = assert(neighbours.from_particle.gpu[dimension])
+            occupancy = occupancy or assert(neighbour.defaults).occupancy()
             neighbour = neighbour(particles, displacement, box, r_cut, skin, logger, occupancy)
         end
     else
