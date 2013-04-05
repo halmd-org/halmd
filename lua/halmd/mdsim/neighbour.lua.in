@@ -1,4 +1,5 @@
 --
+-- Copyright © 2013       Nicolas Höft
 -- Copyright © 2010-2011  Peter Colberg
 --
 -- This file is part of HALMD.
@@ -82,11 +83,13 @@ local M = module(function(args)
     local box = assert(args.box)
     local dimension = #box.edges
     local logger = log.logger({label = "neighbour " .. label(particles)})
+    local defaults = assert(neighbour.defaults)
+    local occupancy = args.occupancy or defaults.occupancy()
 
     -- domain decomposition
     local binning
     if not args.disable_binning then
-        binning = mdsim.binning{box = box, particle = particle2, r_cut = r_cut, skin = skin}
+        binning = mdsim.binning({box = box, particle = particle2, r_cut = r_cut, skin = skin, occupancy = occupancy})
     end
 
     -- neighbour lists
@@ -95,14 +98,9 @@ local M = module(function(args)
     if device.gpu then
         if binning then
             neighbour = assert(neighbours.from_binning.gpu[dimension])
-        else
-            neighbour = assert(neighbours.from_particle.gpu[dimension])
-        end
-        local defaults = assert(neighbour.defaults)
-        local occupancy = args.occupancy or defaults.occupancy()
-        if binning then
             neighbour = neighbour(particles, {binning, binning}, displacement, box, r_cut, skin, logger, occupancy)
         else
+            neighbour = assert(neighbours.from_particle.gpu[dimension])
             neighbour = neighbour(particles, displacement, box, r_cut, skin, logger, occupancy)
         end
     else

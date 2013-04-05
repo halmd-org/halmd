@@ -1,6 +1,7 @@
 --
--- Copyright © 2010-2012 Peter Colberg
 -- Copyright © 2010-2011 Felix Höfling
+-- Copyright © 2013      Nicolas Höft
+-- Copyright © 2010-2012 Peter Colberg
 --
 -- This file is part of HALMD.
 --
@@ -42,8 +43,14 @@ local discontinuous = assert(libhalmd.mdsim.forces.trunc.discontinuous)
 -- :param args.box: instance of :mod:`halmd.mdsim.box`
 -- :param args.potential: instance of :mod:`halmd.mdsim.potentials`
 -- :param args.trunc: instance of :mod:`halmd.mdsim.forces.trunc` (optional)
+-- :param args.neighbour: instance of :mod:`halmd.mdsim.neighbour` (optional)
 --
 -- If ``trunc`` is not specified, the pair potential is :math:`C^0` continuous at the cutoff.
+--
+-- If ``neighbour`` is left unspecified, a default neighbour list module is
+-- constructed using the default parameters of :mod:`halmd.mdsim.neighbour`. If
+-- if a different value for, e.g., the ``occupancy`` parameter is needed, the
+-- neighbour list module has to be provided explicitly.
 --
 -- .. attribute:: potential
 --
@@ -107,7 +114,7 @@ local M = module(function(args)
 
     -- create neighbour lists with cutoff radii of potential
     local r_cut = assert(potential.r_cut)
-    local neighbour = neighbour({box = box, particles = particle, r_cut = r_cut})
+    local neighbour = args.neighbour or neighbour({box = box, particles = particle, r_cut = r_cut})
 
     -- construct force module
     local self = pair_trunc(potential, particle[1], particle[2], box, neighbour, trunc, logger)
