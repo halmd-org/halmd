@@ -75,7 +75,7 @@ density_mode<dimension, float_type>::acquire()
         auto rho_q = begin(rho_vector);
         for (auto const& q : wavevector) {
             float_type q_r = inner_prod(q, r);
-            *rho_q++ += mode_type(cos(q_r), -sin(q_r));
+            *rho_q++ += mode_type({{ cos(q_r), -sin(q_r) }});
         }
     }
 

@@ -21,9 +21,9 @@
 #ifndef HALMD_OBSERVABLES_SAMPLES_DENSITY_MODE_HPP
 #define HALMD_OBSERVABLES_SAMPLES_DENSITY_MODE_HPP
 
-#include <complex>
 #include <lua.hpp>
 
+#include <halmd/numeric/blas/fixed_vector.hpp>
 #include <halmd/utility/raw_array.hpp>
 
 namespace halmd {
@@ -38,7 +38,7 @@ namespace samples {
 class density_mode
 {
 public:
-    typedef raw_array<std::complex<double>> mode_array_type;
+    typedef raw_array<fixed_vector<double, 2>> mode_array_type;
 
     /**
      * Construct sample of given size.

@@ -75,7 +75,7 @@ ssf<dimension>::sample(density_mode_type const& mode1, density_mode_type const& 
         // iterate over wavevectors and density modes simultaneously
         for (size_t i = idx_range.first; i != idx_range.second; ++i, ++rho_q1, ++rho_q2) {
             // compute Re[rho_q rho_q^*]
-            double re = (real(*rho_q1) * real(*rho_q2) + imag(*rho_q1) * imag(*rho_q2));
+            double re = ((*rho_q1)[0] * (*rho_q2)[0] + (*rho_q1)[1] * (*rho_q2)[1]);
             // accumulate results for this wavenumber
             acc(re / norm_);
         }

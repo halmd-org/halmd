@@ -115,7 +115,7 @@ density_mode<dimension, float_type>::acquire()
     cuda::copy(g_sin_, h_sin_);
     cuda::copy(g_cos_, h_cos_);
     for (unsigned int i = 0; i < nq_; ++i) {
-        rho[i] = mode_type(h_cos_[i], -h_sin_[i]);
+        rho[i] = {{ h_cos_[i], -h_sin_[i] }};
     }
 
     return rho_sample_;
