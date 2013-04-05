@@ -243,6 +243,11 @@ public:
     typedef size_type const* iterator;
 
     /**
+     * Initialise potential energy to zero
+     */
+    potential_energy() : en_pot_(0) {}
+
+    /**
      * Accumulate potential energy of a particle.
      */
     inline HALMD_GPU_ENABLED void operator()(size_type i);
