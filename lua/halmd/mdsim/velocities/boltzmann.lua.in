@@ -81,7 +81,7 @@ local boltzmann = assert(libhalmd.mdsim.velocities.boltzmann)
 local M = module(function(args)
     local particle = args.particle
     if not particle then
-        error("bad argument 'parameter'", 2)
+        error("bad argument 'particle'", 2)
     end
     local temperature = args.temperature
     if not temperature then

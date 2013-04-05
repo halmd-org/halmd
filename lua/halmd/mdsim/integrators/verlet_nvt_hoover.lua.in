@@ -1,5 +1,7 @@
 --
--- Copyright © 2011  Peter Colberg and Felix Höfling
+-- Copyright © 2011  Felix Höfling
+-- Copyright © 2012  Nicolas Höft
+-- Copyright © 2011  Peter Colberg
 --
 -- This file is part of HALMD.
 --
@@ -23,50 +25,165 @@ local device            = require("halmd.utility.device")
 local log               = require("halmd.io.log")
 local module            = require("halmd.utility.module")
 local sampler           = require("halmd.observables.sampler")
-local mdsim = {
-    box                 = require("halmd.mdsim.box")
-  , particle            = require("halmd.mdsim.particle")
-}
 local writers = {
     file                = require("halmd.io.writers.file")
 }
 
+---
+-- Velocity Verlet with Nosé-Hoover thermostat
+-- ============================================
+--
+-- This NVT-ensemble integrator implements the :doc:`Verlet algorithm <verlet>` algorithm
+-- with Nosé-Hoover chain thermostat with a chain length :math:`M = 2`.
+--
+-- For reference and detailed description of the algorithm see the original papers by S. Nosé, W.G. Hoover and Martyna et al.:
+--
+-- - `S. Nosé, J. Chem. Phys. 81, 511 <http://dx.doi.org/10.1063/1.447334>`_ (1984)
+--
+-- - `W. G. Hoover, Phys. Rev. A 31, 1695 <http://dx.doi.org/10.1063/1.447334>`_ (1985)
+--
+-- - `J. Martyna et al., J. Chem. Phys. 97, 2635 <http://dx.doi.org/10.1063/1.463940>`_ (1992)
+--
+
 -- grab C++ wrappers
 local verlet_nvt_hoover = assert(libhalmd.mdsim.integrators.verlet_nvt_hoover)
-local h5 = libhalmd.h5
-local po = libhalmd.po
+local h5 = assert(libhalmd.h5)
 
-
+---
+-- Construct velocity-Verlet integrator with Nosé-Hoover chain thermostat.
 --
--- construct verlet_nvt_hoover module
+-- :param table args: keyword arguments
+-- :param args.particle: instance of :class:`halmd.mdsim.particle`
+-- :param args.force: instance of :mod:`halmd.mdsim.forces`
+-- :param args.box: instance of :class:`halmd.mdsim.box`
+-- :param number args.timestep: integration time step (defaults to :attr:`halmd.mdsim.clock.timestep`)
+-- :param number args.temperature: temperature of heat bath
+-- :param number args.resonance_frequency: Coupling rate of the thermostat
+-- :param number args.every: Number of time steps between writing of theromostat chain values
+--
+-- .. method:: set_timestep(timestep)
+--
+--    Set integration time step in MD units.
+--
+--    :param number timestep: integration timestep
+--
+--    This method forwards to :meth:`halmd.mdsim.clock.set_timestep`,
+--    to ensure that all integrators use an identical time step.
+--
+-- .. attribute:: timestep
+--
+--    Integration time step in MD units.
+--
+-- .. method:: set_temperature(temperature)
+--
+--    Set temperature of heat bath.
+--
+--    :param number temperature: temperature of heat bath
+--
+-- .. attribute:: temperature
+--
+--    Temperature of heat bath.
+--
+-- .. attribute:: resonance_frequency
+--
+--    Resonance frequency of the Nosé-Hoover thermostat, this is connected to the mass of the thermostat via
+--    :math:`m_1 = d T / \Omega^2` and :math:`m_2 = T/\Omega^2`, where :math:`\Omega` is
+--    :math:`2\pi\times\textrm{Coupling frequency}` and :math:`d` the dimension.
+--
+-- .. method:: set_mass(mass)
+--
+--    Set mass of heat bath.
+--
+--    :param table mass: Sequence of masses :math:`m_1, m_2` for the heat bath coupling.
+--
+-- .. attribute:: mass
+--
+--    Array of masses :math:`m_1, m_2` of heat bath, connected to the coupling strength of the thermostat.
+--
+-- .. method:: disconnect()
+--
+--    Disconnect integrator from core and profiler.
+--
+-- .. method:: connect()
+--
+--    Connect integrator to core and profiler.
+--
+--    By default the integrator is connected.
+--
+-- .. method:: integrate()
+--
+--    Calculate first half-step.
+--
+--    By default this function is connected to :meth:`halmd.mdsim.core.on_integrate`.
+--
+-- .. method:: finalize()
+--
+--    Calculate second half-step.
+--
+--    By default this function is connected to :meth:`halmd.mdsim.core.on_finalize`.
 --
 local M = module(function(args)
-    local temperature = args.temperature or 1.12 -- default value
-    local resonance_frequency = args.resonance_frequency or 5 -- default value
-    local every = args.every or 100 -- default value
+    local particle = args.particle
+    if not particle then
+        error("missing parameter: particle", 2)
+    end
+    local force = args and args.force
+    if not force then
+        error("missing argument 'force'", 2)
+    end
+    local box = args.box
+    if not box then
+        error("missing parameter: box", 2)
+    end
+    local timestep = args.timestep
+    if timestep then
+        clock:set_timestep(timestep)
+    else
+        timestep = assert(clock.timestep)
+    end
+
+    local temperature = args.temperature
+    if not temperature then
+        error("missing parameter: temperature", 2)
+    end
+    local resonance_frequency = args.resonance_frequency
+    if not resonance_frequency then
+        error("missing parameter: resonance_frequency", 2)
+    end
+    local every = args.every
+    if not every then
+        error("missing parameter: every", 2)
+    end
+
     local logger = log.logger({label = "verlet_nvt_hoover"})
 
-    -- dependency injection
-    local particle = mdsim.particle() -- singleton
-    local dimension = assert(particle.dimension)
-    local box = mdsim.box() -- singleton
-    local timestep = assert(clock.timestep)
+    local self = verlet_nvt_hoover(particle, box, timestep, temperature, resonance_frequency, logger)
 
-    local integrator = verlet_nvt_hoover(particle, box, timestep, temperature, resonance_frequency, logger)
+    local set_timestep = assert(self.set_timestep)
+    self.set_timestep = function(self, timestep)
+        clock:set_timestep(timestep)
+    end
 
     -- sequence of signal connections
     local conn = {}
 
-    integrator.connect = function(self)
+    self.connect = function(self)
         if #conn == 0 then
+            table.insert(conn, assert(clock:on_set_timestep(function(timestep) set_timestep(self, timestep) end)))
             table.insert(conn, assert(core:on_integrate(self.integrate)))
             table.insert(conn, assert(core:on_finalize(self.finalize)))
+            table.insert(conn, assert(profiler:on_profile(self.runtime.integrate, "first half-step of velocity-Verlet (+ Nosé-Hoover chain)")))
+            table.insert(conn, assert(profiler:on_profile(self.runtime.finalize, "second half-step of velocity-Verlet (+ Nosé-Hoover chain)")))
+            table.insert(conn, assert(profiler:on_profile(self.runtime.propagate, "propagate Nosé-Hoover chain")))
+            if device.gpu then
+                table.insert(conn, assert(profiler:on_profile{self.runtime.rescale, "rescale velocities in Nosé-Hoover thermostat"}))
+            end
         else
             error("integrator is already connected", 2)
         end
     end
 
-    integrator.disconnect = function(self)
+    self.disconnect = function(self)
         if #conn > 0 then
             for i = 1, #conn do
                 conn[i]:disconnect()
@@ -77,71 +194,38 @@ local M = module(function(args)
         end
     end
 
-    -- connect integrator to core
-    integrator:connect()
+    -- add description for profiler
+    self.description = property(function()
+        return "Thermostatted velocity-Verlet integrator using a Nosé-Hoover chain"
+    end)
 
-    -- connect chain variables to writers of trajectory file
-    local file = writers.file{extension = "trj"} -- singleton
-    local writer = file:writer{location = {"trajectory", "nose_hoover"}, mode = "append"}
-    writer:on_write(integrator.xi, {"position"})
-    writer:on_write(integrator.v_xi, {"velocity"})
-    -- connect writer to sampler
-    sampler:on_sample(writer.write, every)
+    self.writer = function(self, file, args)
+        -- connect writer to sampler
+        local every = args.every
+        if not every then
+            error("missing parameter 'every'", 2)
+        end
 
-    -- connect chain energy to writers of observables file
-    file = writers.file() -- singleton
-    writer = file:writer{location = {"observables"}, mode = "append"}
-    writer:on_write(integrator.en_nhc, {"total_energy_nose_hoover_chain"})
-    -- connect writer to sampler
-    sampler:on_sample(writer.write, every)
+        -- connect chain variables to writers of trajectory file
+        local writer = file:writer{location = {"trajectory", "nose_hoover"}, mode = "append"}
+        writer:on_write(self.xi, {"position"})
+        writer:on_write(self.v_xi, {"velocity"})
+        -- connect writer to sampler
+        sampler:on_sample(writer.write, every)
 
-    return integrator
-end)
+        -- connect chain energy to writers of observables file
+        writer = file:writer{location = {"observables"}, mode = "append"}
+        writer:on_write(self.en_nhc, {"total_energy_nose_hoover_chain"})
+        -- connect writer to sampler
+        sampler:on_sample(writer.write, every)
 
---
--- connect runtime accumulators to module profiler
---
-function M.profile(self, profiler)
-    profiler:on_profile{self, integrate = "first half-step of velocity-Verlet (+ Nosé-Hoover chain)"}
-    profiler:on_profile{self, finalize = "second half-step of velocity-Verlet (+ Nosé-Hoover chain)"}
-    profiler:on_profile{self, propagate = "propagate Nosé-Hoover chain"}
-    if device.gpu then
-        profiler:on_profile{self, rescale = "rescale velocities in Nosé-Hoover thermostat"}
+        return writer
     end
-end
 
---
--- returns module description
---
-function M.description()
-    return "Thermostatted velocity-Verlet integrator using a Nosé-Hoover chain"
-end
+    -- connect integrator to core
+    self:connect()
 
---
--- assemble module options
---
--- @param desc po.options_description
---
-function M.options(desc)
-    desc:add("timestep", po.float(), "integration timestep")
-    desc:add("temperature", po.float(), "thermostat temperature")
-    desc:add("resonance-frequency", po.float(), "resonance frequency of heat bath")
--- FIXME reintroduce mass as alternative to resonance_frequency
---    desc:add("mass", po.float_array(), "coupling parameters: `mass' of heat bath variables")
-    desc:add("every", po.uint64(), "sample interval for heat bath variables")
-end
-
---
--- write module parameters to HDF5 group
---
--- @param integrator module instance
--- @param group HDF5 group
---
-function M.write_parameters(integrator, group)
-    group:write_attribute("timestep", h5.float(), integrator.timestep)
-    group:write_attribute("temperature", h5.float(), integrator.temperature)
-    group:write_attribute("resonance_frequency", h5.float(), integrator.resonance_frequency)
-    group:write_attribute("mass", h5.float_array(), integrator.mass)
-end
+    return self
+end)
 
 return M
