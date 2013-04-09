@@ -188,7 +188,7 @@ local function parse_args()
     parser:add_argument("temperature", {type = "number", default = 0.7, help = "initial system temperature"})
     parser:add_argument("rate", {type = "number", default = 0.1, help = "heat bath collision rate"})
     parser:add_argument("steps", {type = "integer", default = 10000, help = "number of simulation steps"})
-    parser:add_argument("timestep", {type = "number", default = 0.01, help = "integration time step"})
+    parser:add_argument("timestep", {type = "number", default = 0.005, help = "integration time step"})
 
     local sampling = parser:add_argument_group("sampling", {help = "sampling intervals"})
     sampling:add_argument("trajectory", {type = "integer", default = 1000, help = "for trajectory"})

@@ -61,7 +61,7 @@ execute_halmd(
   --ratios "${EDGE_RATIOS}"
   --density 0.1
   --steps 500
-  --timestep 0.02
+  --timestep 0.002
   --sampling trajectory=500
 )
 
