@@ -66,11 +66,12 @@ void euler<dimension, float_type>::set_timestep(double timestep)
 template <int dimension, typename float_type>
 void euler<dimension, float_type>::integrate()
 {
-    auto position = make_cache_mutable(particle_->position());
-    auto image = make_cache_mutable(particle_->image());
-
     velocity_array_type const& velocity = read_cache(particle_->velocity());
     size_type nparticle = particle_->nparticle();
+
+    // invalidate the particle caches after accessing the velocity!
+    auto position = make_cache_mutable(particle_->position());
+    auto image = make_cache_mutable(particle_->image());
 
     scoped_timer_type timer(runtime_.integrate);
 

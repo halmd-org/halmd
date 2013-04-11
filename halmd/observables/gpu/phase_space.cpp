@@ -237,6 +237,8 @@ template <int dimension, typename float_type>
 void phase_space<host::samples::phase_space<dimension, float_type> >::set(std::shared_ptr<sample_type const> sample)
 {
     group_array_type const& group = read_cache(particle_group_->ordered());
+
+    // invalidate particle caches after accessing the particle group!
     auto position = make_cache_mutable(particle_->position());
     auto image = make_cache_mutable(particle_->image());
     auto velocity = make_cache_mutable(particle_->velocity());

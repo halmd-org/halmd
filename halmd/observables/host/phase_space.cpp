@@ -100,14 +100,15 @@ phase_space<dimension, float_type>::acquire()
 template <int dimension, typename float_type>
 void phase_space<dimension, float_type>::set(std::shared_ptr<sample_type const> sample)
 {
+    group_array_type const& group = read_cache(particle_group_->ordered());
+    species_type nspecies = particle_->nspecies();
+
+    // invalidate particle caches after accessing the particle group!
     auto particle_position = make_cache_mutable(particle_->position());
     auto particle_image = make_cache_mutable(particle_->image());
     auto particle_velocity = make_cache_mutable(particle_->velocity());
     auto particle_species = make_cache_mutable(particle_->species());
     auto particle_mass = make_cache_mutable(particle_->mass());
-
-    group_array_type const& group = read_cache(particle_group_->ordered());
-    species_type nspecies = particle_->nspecies();
 
     typename sample_type::position_array_type const& sample_position = sample->position();
     typename sample_type::velocity_array_type const& sample_velocity = sample->velocity();

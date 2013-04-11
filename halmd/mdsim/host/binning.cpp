@@ -60,6 +60,7 @@ binning<dimension, float_type>::binning(
     }
     vector_type L = box->length();
     ncell_ = element_max(static_cast<cell_size_type>(L / r_cut_max), cell_size_type(1));
+
     auto cell = make_cache_mutable(cell_);
     cell->resize(ncell_);
     cell_length_ = element_div(L, static_cast<vector_type>(ncell_));
@@ -87,11 +88,10 @@ binning<dimension, float_type>::cell()
 template <int dimension, typename float_type>
 void binning<dimension, float_type>::update()
 {
-    auto && cell = make_cache_mutable(cell_);
-//    auto cell = make_cache_mutable(cell_);
-
     position_array_type const& position = read_cache(particle_->position());
     size_type const nparticle = particle_->nparticle();
+
+    auto cell = make_cache_mutable(cell_);
 
     LOG_TRACE("update cell lists");
 

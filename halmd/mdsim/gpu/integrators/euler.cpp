@@ -63,6 +63,8 @@ template <int dimension, typename float_type>
 void euler<dimension, float_type>::integrate()
 {
     velocity_array_type const& velocity = read_cache(particle_->velocity());
+
+    // invalidate the particle caches after accessing the velocity!
     auto position = make_cache_mutable(particle_->position());
     auto image = make_cache_mutable(particle_->image());
 

@@ -72,13 +72,14 @@ void verlet_nvt_andersen<dimension, float_type>::set_temperature(double temperat
 template <int dimension, typename float_type>
 void verlet_nvt_andersen<dimension, float_type>::integrate()
 {
-    auto position = make_cache_mutable(particle_->position());
-    auto image = make_cache_mutable(particle_->image());
-    auto velocity = make_cache_mutable(particle_->velocity());
-
     net_force_array_type const& net_force = read_cache(force_->net_force());
     mass_array_type const& mass = read_cache(particle_->mass());
     size_type nparticle = particle_->nparticle();
+
+    // invalidate the particle caches after accessing the force!
+    auto position = make_cache_mutable(particle_->position());
+    auto image = make_cache_mutable(particle_->image());
+    auto velocity = make_cache_mutable(particle_->velocity());
 
     scoped_timer_type timer(runtime_.integrate);
 
@@ -94,11 +95,12 @@ void verlet_nvt_andersen<dimension, float_type>::integrate()
 template <int dimension, typename float_type>
 void verlet_nvt_andersen<dimension, float_type>::finalize()
 {
-    auto velocity = make_cache_mutable(particle_->velocity());
-
     net_force_array_type const& net_force = read_cache(force_->net_force());
     mass_array_type const& mass = read_cache(particle_->mass());
     size_type nparticle = particle_->nparticle();
+
+    // invalidate the particle caches after accessing the force!
+    auto velocity = make_cache_mutable(particle_->velocity());
 
     scoped_timer_type timer(runtime_.finalize);
 

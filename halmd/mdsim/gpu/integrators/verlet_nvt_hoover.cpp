@@ -110,6 +110,8 @@ template <int dimension, typename float_type>
 void verlet_nvt_hoover<dimension, float_type>::integrate()
 {
     net_force_array_type const& net_force = read_cache(force_->net_force());
+
+    // invalidate the particle caches after accessing the force!
     auto position = make_cache_mutable(particle_->position());
     auto velocity = make_cache_mutable(particle_->velocity());
     auto image = make_cache_mutable(particle_->image());
@@ -143,6 +145,8 @@ template <int dimension, typename float_type>
 void verlet_nvt_hoover<dimension, float_type>::finalize()
 {
     net_force_array_type const& net_force = read_cache(force_->net_force());
+
+    // invalidate the particle caches after accessing the force!
     auto velocity = make_cache_mutable(particle_->velocity());
 
     scoped_timer_type timer(runtime_.finalize);
