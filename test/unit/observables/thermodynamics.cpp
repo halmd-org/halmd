@@ -185,7 +185,9 @@ void lennard_jones_fluid<modules_type>::test()
     std::shared_ptr<nve_integrator_type> nve_integrator = std::make_shared<nve_integrator_type>(particle, force, box, timestep);
 
     // stochastic thermostat => centre particle velocities around zero
-    shift_velocity(*particle, -thermodynamics->v_cm());
+    fixed_vector<double, dimension> v_cm = thermodynamics->v_cm();
+    BOOST_TEST_MESSAGE("shift particle velocities by" << v_cm);
+    shift_velocity(*particle, -v_cm);
 
     const double vcm_limit = gpu ? 0.5 * eps_float : 30 * eps;
     BOOST_CHECK_SMALL(norm_inf(thermodynamics->v_cm()), vcm_limit);
