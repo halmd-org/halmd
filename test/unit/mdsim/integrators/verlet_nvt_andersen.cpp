@@ -1,5 +1,6 @@
 /*
  * Copyright © 2010-2012  Felix Höfling
+ * Copyright © 2013       Nicolas Höft
  * Copyright © 2010-2011  Peter Colberg
  *
  * This file is part of HALMD.
@@ -241,6 +242,47 @@ make_array_from_particle(array_type& array, particle_type const& particle)
     cuda::memset(g_output.begin(), g_output.end(), 0);
     array = std::move(g_output);
 }
+
+/**
+ * Construct stress pot tensor array from particle.
+ */
+template <typename force_type, typename particle_type>
+inline typename std::enable_if<
+    std::is_convertible<
+        typename std::iterator_traits<typename force_type::stress_pot_array_type::iterator>::iterator_category
+      , std::random_access_iterator_tag
+    >::value
+  , void>::type
+make_stress_pot_from_particle(
+    typename force_type::stress_pot_array_type& array,
+    particle_type const& particle
+)
+{
+   make_array_from_particle(array, particle);
+}
+
+
+/**
+ * Construct stress tensor GPU array from GPU particle.
+ */
+template <typename force_type, typename particle_type>
+inline typename std::enable_if<
+    std::is_convertible<
+        typename std::iterator_traits<typename force_type::stress_pot_array_type::iterator>::iterator_category
+      , cuda::device_random_access_iterator_tag
+    >::value
+  , void>::type
+make_stress_pot_from_particle(
+    typename force_type::stress_pot_array_type& array,
+    particle_type const& particle
+)
+{
+    int constexpr stress_pot_size = force_type::stress_pot_type::static_size;
+    typename force_type::stress_pot_array_type g_output(particle.nparticle());
+    g_output.reserve(particle.dim.threads() * stress_pot_size);
+    cuda::memset(g_output.begin(), g_output.begin() + g_output.capacity(), 0);
+    array = std::move(g_output);
+}
 #endif
 
 /**
@@ -262,7 +304,7 @@ public:
         auto net_force = make_cache_mutable(net_force_);
         auto stress_pot = make_cache_mutable(stress_pot_);
         make_array_from_particle(*net_force, particle);
-        make_array_from_particle(*stress_pot, particle);
+        make_stress_pot_from_particle<zero_force>(*stress_pot, particle);
     }
 
     virtual halmd::cache<net_force_array_type> const& net_force()
