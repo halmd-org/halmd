@@ -76,26 +76,22 @@ template <int dimension, typename float_type>
 void max_displacement<dimension, float_type>::luaopen(lua_State* L)
 {
     using namespace luaponte;
-    static std::string const class_name("max_displacement_" + std::to_string(dimension));
     module(L, "libhalmd")
     [
         namespace_("mdsim")
         [
-            namespace_("host")
-            [
-                class_<max_displacement, std::shared_ptr<max_displacement> >(class_name.c_str())
-                    .def(constructor<
-                         std::shared_ptr<particle_type const>
-                       , std::shared_ptr<box_type const>
-                     >())
-                    .scope
-                    [
-                        class_<runtime>("runtime")
-                            .def_readonly("zero", &runtime::zero)
-                            .def_readonly("compute", &runtime::compute)
-                    ]
-                    .def_readonly("runtime", &max_displacement::runtime_)
-            ]
+            class_<max_displacement>()
+                .scope
+                [
+                    class_<runtime>("runtime")
+                        .def_readonly("zero", &runtime::zero)
+                        .def_readonly("compute", &runtime::compute)
+                ]
+                .def_readonly("runtime", &max_displacement::runtime_)
+          , def("max_displacement", &std::make_shared<max_displacement
+                  , std::shared_ptr<particle_type const>
+                  , std::shared_ptr<box_type const>
+               >)
         ]
     ];
 }

@@ -1,4 +1,5 @@
 --
+-- Copyright © 2013  Nicolas Höft
 -- Copyright © 2011  Peter Colberg
 --
 -- This file is part of HALMD.
@@ -17,48 +18,76 @@
 -- along with this program.  If not, see <http://www.gnu.org/licenses/>.
 --
 
-local device            = require("halmd.utility.device")
-local module            = require("halmd.utility.module")
+local utility  = require("halmd.utility")
+local module   = require("halmd.utility.module")
+local profiler = require("halmd.utility.profiler")
 
 -- grab C++ wrappers
-local max_displacement_wrapper = {
-    host = {
-        [2] = assert(libhalmd.mdsim.host.max_displacement_2)
-      , [3] = assert(libhalmd.mdsim.host.max_displacement_3)
-    }
-}
-if device.gpu then
-    max_displacement_wrapper.gpu = {
-        [2] = assert(libhalmd.mdsim.gpu.max_displacement_2)
-      , [3] = assert(libhalmd.mdsim.gpu.max_displacement_3)
-    }
-end
+local max_displacement = assert(libhalmd.mdsim.max_displacement)
 
-
+---
+-- Maximum Displacement
+-- ====================
 --
--- construct max_displacement module
+-- This module monitors the maximum displacement of particles with regard to a
+-- certain start position. As this is only needed for the
+-- :class:`halmd.mdsim.neighbour` module, it exports no functions and direct
+-- construction is not necessary.
+--
+
+
+---
+-- Construct Maximum Displacement module
+--
+-- :param table args: keyword arguments
+-- :param args.particle: instance of :class:`halmd.mdsim.particle`
+-- :param args.box: instance of :class:`halmd.mdsim.box`
+--
+-- .. method:: disconnect()
+--
+--    Disconnect displacement from core and profiler.
+--
+-- .. method:: connect()
+--
+--    Connect displacement to core and profiler.
+--
+--    By default this module is connected.
 --
 local M = module(function(args)
     -- dependency injection
-    local box = assert(args.box)
-    local particle = assert(args.particle)
-    local dimension = assert(particle.dimension)
+    local box      = utility.assert_kwarg(args, "box")
+    local particle = utility.assert_kwarg(args, "particle")
 
-    local displacement
-    if device.gpu then
-        displacement = assert(max_displacement_wrapper.gpu[dimension])
-    else
-        displacement = assert(max_displacement_wrapper.host[dimension])
+    local self = max_displacement(particle, box)
+
+    local conn = {}
+
+    self.connect = function(self)
+        if #conn == 0 then
+            local runtime = assert(self.runtime)
+            table.insert(conn, assert(profiler:on_profile(runtime.zero, "zero maximum displacement")))
+            table.insert(conn, assert(profiler:on_profile(runtime.compute, "compute maximum displacement")))
+        else
+            error("max_displacement is already connected", 2)
+        end
     end
-    return displacement(particle, box)
+
+    self.disconnect = function(self)
+        if #conn > 0 then
+            for i = 1, #conn do
+                conn[i]:disconnect()
+            end
+            conn = {}
+        else
+            error("max_displacement is already disconnected", 2)
+        end
+    end
+
+    -- connect module to core
+    self:connect()
+
+    return self
 end)
 
---
--- connect runtime accumulators to module profiler
---
-function M.profile(self, profiler)
-    profiler:on_profile{self, zero = "zero maximum displacement"}
-    profiler:on_profile{self, compute = "compute maximum displacement"}
-end
 
 return M
