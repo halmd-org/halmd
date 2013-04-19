@@ -1,5 +1,6 @@
 /*
  * Copyright © 2008-2011  Peter Colberg
+ * Copyright © 2013       Nicolas Höft
  *
  * This file is part of HALMD.
  *
@@ -117,29 +118,25 @@ template <int dimension, typename float_type>
 void binning<dimension, float_type>::luaopen(lua_State* L)
 {
     using namespace luaponte;
-    static std::string const class_name("binning_" + std::to_string(dimension));
     module(L, "libhalmd")
     [
         namespace_("mdsim")
         [
-            namespace_("host")
-            [
-                class_<binning, std::shared_ptr<binning> >(class_name.c_str())
-                    .def(constructor<
-                        std::shared_ptr<particle_type const>
-                      , std::shared_ptr<box_type const>
-                      , matrix_type const&
-                      , float_type
-                      , std::shared_ptr<logger_type>
-                     >())
-                    .property("r_skin", &binning::r_skin)
-                    .scope
-                    [
-                        class_<runtime>("runtime")
-                            .def_readonly("update", &runtime::update)
-                    ]
-                    .def_readonly("runtime", &binning::runtime_)
-            ]
+            class_<binning>()
+                .property("r_skin", &binning::r_skin)
+                .scope
+                [
+                    class_<runtime>("runtime")
+                        .def_readonly("update", &runtime::update)
+                ]
+                .def_readonly("runtime", &binning::runtime_)
+          , def("binning", &std::make_shared<binning
+                  , std::shared_ptr<particle_type const>
+                  , std::shared_ptr<box_type const>
+                  , matrix_type const&
+                  , float_type
+                  , std::shared_ptr<logger_type>
+              >)
         ]
     ];
 }

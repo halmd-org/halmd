@@ -1,5 +1,7 @@
 /*
- * Copyright © 2008-2011  Peter Colberg and Felix Höfling
+ * Copyright © 2008-2011  Felix Höfling
+ * Copyright © 2013       Nicolas Höft
+ * Copyright © 2008-2011  Peter Colberg
  *
  * This file is part of HALMD.
  *
@@ -193,35 +195,34 @@ template <int dimension, typename float_type>
 void binning<dimension, float_type>::luaopen(lua_State* L)
 {
     using namespace luaponte;
-    static std::string const class_name("binning_" + std::to_string(dimension));
+    std::string const defaults_name("defaults_" +  std::to_string(dimension));
     module(L, "libhalmd")
     [
         namespace_("mdsim")
         [
-            namespace_("gpu")
+            class_<binning>()
+                .property("r_skin", &binning::r_skin)
+                .property("cell_occupancy", &binning::cell_occupancy)
+                .scope
+                [
+                    class_<runtime>("runtime")
+                        .def_readonly("update", &runtime::update)
+                ]
+                .def_readonly("runtime", &binning::runtime_)
+          , def("binning", &std::make_shared<binning
+                    , std::shared_ptr<particle_type const>
+                    , std::shared_ptr<box_type const>
+                    , matrix_type const&
+                    , double
+                    , std::shared_ptr<logger_type>
+                    , double
+              >)
+          , namespace_(defaults_name.c_str())
             [
-                class_<binning, std::shared_ptr<binning> >(class_name.c_str())
-                    .def(constructor<
-                        std::shared_ptr<particle_type const>
-                      , std::shared_ptr<box_type const>
-                      , matrix_type const&
-                      , double
-                      , std::shared_ptr<logger_type>
-                      , double
-                    >())
-                    .property("r_skin", &binning::r_skin)
-                    .property("cell_occupancy", &binning::cell_occupancy)
-                    .scope
-                    [
-                        namespace_("defaults")
-                        [
-                            def("occupancy", &defaults::occupancy)
-                        ]
-
-                      , class_<runtime>("runtime")
-                            .def_readonly("update", &runtime::update)
-                    ]
-                    .def_readonly("runtime", &binning::runtime_)
+                namespace_("binning")
+                [
+                    def("occupancy", &defaults::occupancy)
+                ]
             ]
         ]
     ];
@@ -238,6 +239,6 @@ HALMD_LUA_API int luaopen_libhalmd_mdsim_gpu_binning(lua_State* L)
 template class binning<3, float>;
 template class binning<2, float>;
 
-} // namespace mdsim
 } // namespace gpu
+} // namespace mdsim
 } // namespace halmd

@@ -1,5 +1,6 @@
 --
 -- Copyright © 2010-2011  Peter Colberg
+-- Copyright © 2013       Nicolas Höft
 --
 -- This file is part of HALMD.
 --
@@ -17,96 +18,110 @@
 -- along with this program.  If not, see <http://www.gnu.org/licenses/>.
 --
 
-local device            = require("halmd.utility.device")
 local log               = require("halmd.io.log")
+local utility           = require("halmd.utility")
+local device            = require("halmd.utility.device")
 local module            = require("halmd.utility.module")
+local profiler          = require("halmd.utility.profiler")
 
 -- grab C++ wrappers
-local binning_wrapper = {
-    host = {
-        [2] = assert(libhalmd.mdsim.host.binning_2)
-      , [3] = assert(libhalmd.mdsim.host.binning_3)
-    }
+local binning = assert(libhalmd.mdsim.binning)
+local defaults = {
+    [2] = assert(libhalmd.mdsim.defaults_2)
+  , [3] = assert(libhalmd.mdsim.defaults_3)
 }
-if libhalmd.mdsim.gpu then
-    binning_wrapper.gpu = {
-        [2] = assert(libhalmd.mdsim.gpu.binning_2)
-      , [3] = assert(libhalmd.mdsim.gpu.binning_3)
-    }
-end
-local h5 = libhalmd.h5
-local po = libhalmd.po
--- grab standard library
 local assert = assert
 
-
+---
+-- Binning
+-- ========
 --
--- construct binning module
+-- This module implements the method of cell lists. It splits up the simulation box
+-- into smaller boxes and assigns each particle into one sub-box. This enables faster
+-- look-up for particles that interact with a cut-off potential.
+--
+
+---
+-- Construct binning module instance.
+--
+-- :param table args: keyword arguments
+-- :param args.particle: instance of :class:`halmd.mdsim.particle`
+-- :param args.box: instance of :class:`halmd.mdsim.box`
+-- :param table args.r_cut: cutoff radius matrix for the potentials
+-- :param number args.skin: neighbour list skin *(default: ``0.5``)*
+-- :param number args.occupancy: Desired cell occupancy. Defaults to
+--    :class:`halmd.mdsim.defaults.binning.occupancy()` *(GPU variant only)*.
+--
+-- .. attribute:: r_cut
+--
+--    Cut-off radius matrix for the particle interactions.
+--
+-- .. attribute:: r_skin
+--
+--    "Skin" of the particle. This is an additional distance ratio added to the cutoff
+--    radius for the minimal edge lengths of the cells.
+--
+-- .. attribute:: cell_occupancy
+--
+--    Current cell occupancy. *Only available on GPU variant.*
+--
+-- .. method:: disconnect()
+--
+--    Disconnect binning module from core and profiler.
+--
+-- .. method:: connect()
+--
+--    Connect binning module to core and profiler.
+--
+--    By default the binning module is connected.
 --
 local M = module(function(args)
     -- cutoff radius matrix of truncated potential
-    local r_cut = assert(args.r_cut)
+    local r_cut = utility.assert_kwarg(args, "r_cut")
     -- neighbour list skin
-    local skin = assert(args.skin)
+    local skin = utility.assert_kwarg(args, "skin")
 
     -- dependency injection
-    local box = assert(args.box)
-    local particle = assert(args.particle)
-    local dimension = assert(particle.dimension)
+    local box = utility.assert_kwarg(args, "box")
+    local particle = utility.assert_kwarg(args, "particle")
     local logger = log.logger({label = "binning"})
 
-    -- command line options
-    local skin = args.skin or 0.5 -- default value
+    local dimension = assert(particle.dimension)
 
-    local binning
+    local self
     if device.gpu then
-        local defaults = assert(binning_wrapper.gpu[dimension].defaults)
-        local occupancy = args.occupancy or defaults.occupancy()
-        binning = binning_wrapper.gpu[dimension](particle, box, r_cut, skin, logger, occupancy)
+        local occupancy = args.occupancy or assert(defaults[dimension].binning.occupancy)()
+        self = binning(particle, box, r_cut, skin, logger, occupancy)
     else
-        binning = binning_wrapper.host[dimension](particle, box, r_cut, skin, logger)
+        self = binning(particle, box, r_cut, skin, logger)
     end
-    return binning
+
+    local conn = {}
+
+    self.connect = function(self)
+        if #conn == 0 then
+            local runtime = assert(self.runtime)
+            table.insert(conn, assert(profiler:on_profile(runtime.update, "cell lists update")))
+        else
+            error("Binning module is already connected")
+        end
+    end
+
+    self.disconnect = function(self)
+        if #conn > 0 then
+            for i = 1, #conn do
+                conn[i]:disconnect()
+            end
+            conn = {}
+        else
+            error("Binning module is already disconnected")
+        end
+    end
+
+    -- connect binning module to core
+    self:connect()
+
+    return self
 end)
-
---
--- connect runtime accumulators to module profiler
---
-function M.profile(self, profiler)
-    profiler:on_profile{self, update = "cell lists update"}
-end
-
---
--- assemble module options
---
--- @param desc po.options_description
---
-function M.options(desc)
-    if binning_wrapper.gpu then
-        desc:add("occupancy", po.float(), "desired average cell occupancy")
-    end
-end
-
---
--- read module parameters from HDF5 group
---
-function M.read_parameters(args, group)
-    if binning_wrapper.gpu then
-        args.occupancy = group:read_attribute("occupancy", h5.float())
-    end
-end
-
---
--- write module parameters to HDF5 group
---
--- @param binning module instance
--- @param group HDF5 group
---
-function M.write_parameters(binning, group)
-    group:write_attribute("skin", h5.float(), binning.r_skin)
-    if binning.cell_occupancy then
-        group:write_attribute("occupancy", h5.float(), binning.cell_occupancy)
-    end
-end
 
 return M
