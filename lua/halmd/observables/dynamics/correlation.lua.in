@@ -1,4 +1,5 @@
 --
+-- Copyright © 2013 Nicolas Höft
 -- Copyright © 2012 Peter Colberg
 --
 -- This file is part of HALMD.
@@ -17,11 +18,51 @@
 -- along with this program.  If not, see <http://www.gnu.org/licenses/>.
 --
 
-local module = require("halmd.utility.module")
+local utility = require("halmd.utility")
+local module  = require("halmd.utility.module")
 
 ---
 -- Correlation Function
 -- ====================
+--
+-- This module permits the implementation of a user-defined time correlation
+-- function within the Lua simulation script.
+--
+-- The following example shows the use of this module together with
+-- :class:`halmd.observables.dynamics.blocking_scheme` to determine the
+-- mean-square displacement of the centre of mass of a certain particle group.
+-- From this, the collective self-diffusion constant may be obtained.  The
+-- centre of mass is computed efficiently by
+-- :meth:`halmd.observables.thermodynamics.r_cm`, the squared displacement is
+-- then computed by the script function passed as ``correlate``. ::
+--
+--     local msv = observables.thermodynamics({box = box, group = group, force = force})
+--     local collective_msd = dynamics.correlation({
+--         -- acquire centre of mass
+--         acquire = function()
+--             return msv:r_cm()
+--         end
+--         -- correlate centre of mass at first and second point in time
+--         , correlate = function(first, second)
+--             local result = 0
+--             for i = 1, #first do
+--                 result = result + math.pow(second[i] - first[i], 2)
+--             end
+--             return result
+--         end
+--         -- H5MD path
+--         , group = {"AA", "mean_square_displacement"}
+--         -- profiling description
+--         , desc = "collective mean-square displacement of AA particles"
+--     })
+--
+--     local blocking_scheme = dynamics.blocking_scheme({
+--         max_lag = max_lag
+--         , every = 100
+--         , size = 10
+--         , separation = separation
+--     })
+--     blocking_scheme:correlation(collective_msd, writer)
 --
 
 -- grab C++ wrappers
@@ -60,22 +101,10 @@ local blocking_scheme_adaptor = assert(libhalmd.observables.samples.blocking_sch
 --    Profiler description.
 --
 local M = module(function(args)
-    local acquire = args and args.acquire
-    if not acquire then
-        error("bad argument 'acquire'", 2)
-    end
-    local correlate = args and args.correlate
-    if not correlate then
-        error("bad argument 'correlate'", 2)
-    end
-    local group = args and args.group
-    if type(group) ~= "table" or #group == 0 then
-        error("bad argument 'group'", 2)
-    end
-    local desc = args and args.desc
-    if type(desc) ~= "string" then
-        error("bad argument 'desc'", 2)
-    end
+    local acquire   = utility.assert_kwarg(args, "acquire")
+    local correlate = utility.assert_kwarg(args, "correlate")
+    local group     = utility.assert_type(utility.assert_kwarg(args, "group"), "table")
+    local desc      = utility.assert_type(utility.assert_kwarg(args, "desc"), "string")
 
     -- construct instance
     local self = correlation_adaptor(correlate)
