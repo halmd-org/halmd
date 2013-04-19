@@ -1,5 +1,7 @@
 --
--- Copyright © 2010  Peter Colberg and Felix Höfling
+-- Copyright © 2010  Felix Höfling
+-- Copyright © 2013  Nicolas Höft
+-- Copyright © 2010  Peter Colberg
 --
 -- This file is part of HALMD.
 --
@@ -18,95 +20,96 @@
 --
 
 local core              = require("halmd.mdsim.core")
-local device            = require("halmd.utility.device")
 local log               = require("halmd.io.log")
+local utility           = require("halmd.utility")
 local module            = require("halmd.utility.module")
+local profiler          = require("halmd.utility.profiler")
 
 -- grab C++ wrappers
-local lattice_wrapper = {
-    host = {
-        [2] = libhalmd.mdsim.host.positions.lattice_2_
-      , [3] = libhalmd.mdsim.host.positions.lattice_3_
-    }
-}
-if libhalmd.mdsim.gpu then
-    lattice_wrapper.gpu = {
-        [2] = libhalmd.mdsim.gpu.positions.lattice_2_
-      , [3] = libhalmd.mdsim.gpu.positions.lattice_3_
-    }
-end
-local h5 = libhalmd.h5
-local po = libhalmd.po
--- grab standard library
-local assert = assert
+local lattice = assert(libhalmd.mdsim.positions.lattice)
 
 
+---
+-- Lattice
+-- =======
 --
--- construct lattice module
+-- This module places particles on a face-centered cubic (fcc) lattice.
+-- Optionally, the lattice may be restricted to a cuboid ("slab") centred and
+-- aligned with the simulation box.
+--
+
+---
+-- Construct Lattice module
+--
+-- :param table args: keyword arguments
+-- :param args.particle: Instance of :class:`halmd.mdsim.particle`.
+-- :param args.box: Instance of :mod:`halmd.mdsim.box`.
+-- :param table args.slab: Vector specifying the fraction of the box size to be
+--   filled *(optional)*.
+--
+-- .. attribute:: slab
+--
+--    Restrict the lattice to a slab of given extents relative to the box size,
+--    the slab is centred within the simulation box. More generally, the
+--    lattice may be restricted to a cuboid aligned with the box since each
+--    direction may be less than unity. The default is `{1, … 1}`, i.e., no
+--    restriction.
+--
+-- .. method:: set()
+--
+--    Set all particle positions on an fcc lattice.
+--
+-- .. method:: connect()
+--
+--    Connect module to profiler.
+--
+--    This module is connected by default.
+--
+-- .. method:: disconnect()
+--
+--    Disconnect module from profiler.
 --
 local M = module(function(args)
-    local particle = assert(args.particle, "missing parameter: particle")
-    local box = assert(args.box, "missing parameter: box")
+    local particle = utility.assert_kwarg(args, "particle")
+    local box = utility.assert_kwarg(args, "box")
     local slab = args.slab or {} -- optional
 
-    -- dependency injection
+    -- fill up missing values with 1
     local dimension = assert(particle.dimension)
+    for i = #slab + 1, dimension do
+        slab[i] = 1
+    end
+
+    -- construct module logger
     local logger = log.logger({label = "lattice"})
 
-    -- fill up missing values with 1
-    for i = #slab + 1, dimension do
-        slab[i] = 1 -- full box size
+    local self = lattice(particle, box, slab, logger)
+
+    local conn = {}
+
+    self.connect = function(self)
+        if #conn == 0 then
+            local runtime = assert(self.runtime)
+            table.insert(conn, assert(profiler:on_profile(runtime.set, "setting particle positions on lattice")))
+        else
+            error("lattice module is already connected", 2)
+        end
     end
 
-    local lattice
-    if device.gpu then
-        lattice = lattice_wrapper.gpu[dimension]
-    else
-        lattice = lattice_wrapper.host[dimension]
+    self.disconnect = function(self)
+        if #conn > 0 then
+            for i = 1, #conn do
+                conn[i]:disconnect()
+            end
+            conn = {}
+        else
+            error("lattice module is already disconnected", 2)
+        end
     end
-    local position = lattice(particle, box, slab, logger)
+    -- connect to profiler
+    self:connect()
 
-    return position
+    return self
 end)
-
---
--- connect runtime accumulators to module profiler
---
-function M.profile(self, profiler)
-    profiler:on_profile{self, set = "setting particle positions on lattice"}
-end
-
---
--- returns module description
---
-function M.description()
-    return "Face-centered cubic lattice"
-end
-
---
--- assemble module options
---
--- @param desc po.options_description
---
-function M.options(desc)
-    desc:add("slab", po.float_array(), "slab extents as a fraction of simulation box")
-end
-
---
--- read module parameters from HDF5 group
---
-function M.read_parameters(args, group)
-    args.slab = group:read_attribute("slab", h5.float_array())
-end
-
---
--- write module parameters to HDF5 group
---
--- @param instance of lattice module
--- @param group HDF5 group
---
-function M.write_parameters(lattice, group)
-    group:write_attribute("slab", h5.float_array(), lattice.slab)
-end
 
 return M

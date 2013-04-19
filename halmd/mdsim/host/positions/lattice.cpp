@@ -1,5 +1,7 @@
 /*
- * Copyright © 2008-2011  Peter Colberg and Felix Höfling
+ * Copyright © 2008-2011  Felix Höfling
+ * Copyright © 2013       Nicolas Höft
+ * Copyright © 2008-2011  Peter Colberg
  *
  * This file is part of HALMD.
  *
@@ -177,31 +179,27 @@ template <int dimension, typename float_type>
 void lattice<dimension, float_type>::luaopen(lua_State* L)
 {
     using namespace luaponte;
-    static std::string class_name = "lattice_" + std::to_string(dimension) + "_";
     module(L, "libhalmd")
     [
         namespace_("mdsim")
         [
-            namespace_("host")
+            namespace_("positions")
             [
-                namespace_("positions")
-                [
-                    class_<lattice, std::shared_ptr<lattice> >(class_name.c_str())
-                        .def(constructor<
-                             std::shared_ptr<particle_type>
-                           , std::shared_ptr<box_type const>
-                           , vector_type const&
-                           , std::shared_ptr<logger_type>
-                        >())
-                        .property("slab", &lattice::slab)
-                        .def("set", &lattice::set)
-                        .scope
-                        [
-                            class_<runtime>("runtime")
-                                .def_readonly("set", &runtime::set)
-                        ]
-                        .def_readonly("runtime", &lattice::runtime_)
-                ]
+                class_<lattice>()
+                    .property("slab", &lattice::slab)
+                    .def("set", &lattice::set)
+                    .scope
+                    [
+                        class_<runtime>("runtime")
+                            .def_readonly("set", &runtime::set)
+                    ]
+                    .def_readonly("runtime", &lattice::runtime_)
+              , def("lattice", &std::make_shared<lattice
+                  , std::shared_ptr<particle_type>
+                    , std::shared_ptr<box_type const>
+                    , vector_type const&
+                    , std::shared_ptr<logger_type>
+                  >)
             ]
         ]
     ];
