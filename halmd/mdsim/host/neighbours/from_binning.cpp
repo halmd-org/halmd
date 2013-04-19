@@ -1,4 +1,5 @@
 /*
+ * Copyright © 2013       Nicolas Höft
  * Copyright © 2008-2011  Peter Colberg
  *
  * This file is part of HALMD.
@@ -205,35 +206,31 @@ template <int dimension, typename float_type>
 void from_binning<dimension, float_type>::luaopen(lua_State* L)
 {
     using namespace luaponte;
-    static std::string const class_name("from_binning_" + std::to_string(dimension));
     module(L, "libhalmd")
     [
         namespace_("mdsim")
         [
-            namespace_("host")
+            namespace_("neighbours")
             [
-                namespace_("neighbours")
-                [
-                    class_<from_binning, std::shared_ptr<_Base>, _Base>(class_name.c_str())
-                        .def(constructor<
-                            std::pair<std::shared_ptr<particle_type const>, std::shared_ptr<particle_type const>>
-                          , std::pair<std::shared_ptr<binning_type>, std::shared_ptr<binning_type>>
-                          , std::shared_ptr<displacement_type>
-                          , std::shared_ptr<box_type const>
-                          , matrix_type const&
-                          , double
-                          , std::shared_ptr<logger_type>
-                         >())
-                        .property("r_skin", &from_binning::r_skin)
-                        .def("on_prepend_update", &from_binning::on_prepend_update)
-                        .def("on_append_update", &from_binning::on_append_update)
-                        .scope
-                        [
-                            class_<runtime>("runtime")
-                                .def_readonly("update", &runtime::update)
-                        ]
-                        .def_readonly("runtime", &from_binning::runtime_)
-                ]
+                class_<from_binning, _Base>()
+                    .property("r_skin", &from_binning::r_skin)
+                    .def("on_prepend_update", &from_binning::on_prepend_update)
+                    .def("on_append_update", &from_binning::on_append_update)
+                    .scope
+                    [
+                        class_<runtime>("runtime")
+                            .def_readonly("update", &runtime::update)
+                    ]
+                    .def_readonly("runtime", &from_binning::runtime_)
+              , def("from_binning", &std::make_shared<from_binning
+                  , std::pair<std::shared_ptr<particle_type const>, std::shared_ptr<particle_type const>>
+                  , std::pair<std::shared_ptr<binning_type>, std::shared_ptr<binning_type>>
+                  , std::shared_ptr<displacement_type>
+                  , std::shared_ptr<box_type const>
+                  , matrix_type const&
+                  , double
+                  , std::shared_ptr<logger_type>
+                  >)
             ]
         ]
     ];

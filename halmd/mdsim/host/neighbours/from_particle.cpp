@@ -137,34 +137,30 @@ template <int dimension, typename float_type>
 void from_particle<dimension, float_type>::luaopen(lua_State* L)
 {
     using namespace luaponte;
-    static std::string const class_name("from_particle_" + std::to_string(dimension));
     module(L, "libhalmd")
     [
         namespace_("mdsim")
         [
-            namespace_("host")
+            namespace_("neighbours")
             [
-                namespace_("neighbours")
-                [
-                    class_<from_particle, std::shared_ptr<_Base>, _Base>(class_name.c_str())
-                        .def(constructor<
-                            std::pair<std::shared_ptr<particle_type const>, std::shared_ptr<particle_type const>>
-                          , std::shared_ptr<displacement_type>
-                          , std::shared_ptr<box_type const>
-                          , matrix_type const&
-                          , double
-                          , std::shared_ptr<logger_type>
-                         >())
-                        .property("r_skin", &from_particle::r_skin)
-                        .def("on_prepend_update", &from_particle::on_prepend_update)
-                        .def("on_append_update", &from_particle::on_append_update)
-                        .scope
-                        [
-                            class_<runtime>("runtime")
-                                .def_readonly("update", &runtime::update)
-                        ]
-                        .def_readonly("runtime", &from_particle::runtime_)
-                ]
+                class_<from_particle, _Base>()
+                    .property("r_skin", &from_particle::r_skin)
+                    .def("on_prepend_update", &from_particle::on_prepend_update)
+                    .def("on_append_update", &from_particle::on_append_update)
+                    .scope
+                    [
+                        class_<runtime>("runtime")
+                            .def_readonly("update", &runtime::update)
+                    ]
+                    .def_readonly("runtime", &from_particle::runtime_)
+              , def("from_particle", &std::make_shared<from_particle
+                        , std::pair<std::shared_ptr<particle_type const>, std::shared_ptr<particle_type const>>
+                        , std::shared_ptr<displacement_type>
+                        , std::shared_ptr<box_type const>
+                        , matrix_type const&
+                        , double
+                        , std::shared_ptr<logger_type>
+                  >)
             ]
         ]
     ];

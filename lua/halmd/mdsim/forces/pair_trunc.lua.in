@@ -114,7 +114,7 @@ local M = module(function(args)
 
     -- create neighbour lists with cutoff radii of potential
     local r_cut = assert(potential.r_cut)
-    local neighbour = args.neighbour or neighbour({box = box, particles = particle, r_cut = r_cut})
+    local neighbour = args.neighbour or neighbour({box = box, particle = particle, r_cut = r_cut})
 
     -- construct force module
     local self = pair_trunc(potential, particle[1], particle[2], box, neighbour, trunc, logger)

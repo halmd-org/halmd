@@ -18,44 +18,27 @@
 -- along with this program.  If not, see <http://www.gnu.org/licenses/>.
 --
 
-local core                              = require("halmd.mdsim.core")
-local device                            = require("halmd.utility.device")
-local log                               = require("halmd.io.log")
-local module                            = require("halmd.utility.module")
+local core              = require("halmd.mdsim.core")
+local log               = require("halmd.io.log")
+local utility           = require("halmd.utility")
+local device            = require("halmd.utility.device")
+local module            = require("halmd.utility.module")
+local profiler          = require("halmd.utility.profiler")
 local mdsim = {
-    binning                             = require("halmd.mdsim.binning")
-  , max_displacement                    = require("halmd.mdsim.max_displacement")
-  , sort                                = require("halmd.mdsim.sorts.hilbert")
+    binning             = require("halmd.mdsim.binning")
+  , max_displacement    = require("halmd.mdsim.max_displacement")
+  , sort                = require("halmd.mdsim.sorts.hilbert")
 }
 
 -- grab C++ wrappers
 local neighbours = {
-    from_binning = {
-        host = {
-            [2] = assert(libhalmd.mdsim.host.neighbours.from_binning_2)
-          , [3] = assert(libhalmd.mdsim.host.neighbours.from_binning_3)
-        }
-    }
-  , from_particle = {
-        host = {
-            [2] = assert(libhalmd.mdsim.host.neighbours.from_particle_2)
-          , [3] = assert(libhalmd.mdsim.host.neighbours.from_particle_3)
-        }
-    }
+    from_binning  = assert(libhalmd.mdsim.neighbours.from_binning)
+  , from_particle = assert(libhalmd.mdsim.neighbours.from_particle)
 }
-if libhalmd.mdsim.gpu then
-    neighbours.from_binning.gpu = {
-        [2] = assert(libhalmd.mdsim.gpu.neighbours.from_binning_2)
-      , [3] = assert(libhalmd.mdsim.gpu.neighbours.from_binning_3)
-    }
-    neighbours.from_particle.gpu = {
-        [2] = assert(libhalmd.mdsim.gpu.neighbours.from_particle_2)
-      , [3] = assert(libhalmd.mdsim.gpu.neighbours.from_particle_3)
-    }
-end
-local h5 = libhalmd.h5
-local po = libhalmd.po
-
+local defaults = {
+    [2] = assert(libhalmd.mdsim.defaults_2)
+  , [3] = assert(libhalmd.mdsim.defaults_3)
+}
 
 --
 -- returns species label given a table of particle instances
@@ -65,110 +48,138 @@ local function label(particles)
     return "(" .. particles[1].label .. " ← " .. particles[2].label .. ")"
 end
 
+
+---
+-- Neighbour List
+-- ==============
 --
--- construct neighbour module
+-- This module provides the implementation for a Verlet neighbour list. It
+-- stores the neighbours for each particle that are within a certain radius to
+-- reduce the computational cost for the force calculation in each time step.
 --
--- @param r_cut symmetric matrix with potential cutoff radii
+-- Due to its nature it can only work with finite interaction potentials.
+--
+
+---
+-- Construct neighbour module.
+--
+-- :param table args: keyword arguments
+-- :param args.particle: instance, or sequence of two instances, of :class:`halmd.mdsim.particle`
+-- :param args.box: instance of :class:`halmd.mdsim.box`
+-- :param number args.r_cut: cutoff radius of the potential
+-- :param number args.skin: neighbour list skin *(default: ``0.5``)*
+-- :param number args.occupancy: Desired cell occupancy. Defaults to
+--   :class:`halmd.mdsim.defaults.occupancy()` *(GPU variant only)*
+-- :param boolean args.disable_binning: Disable use of binning module and
+--   construct neighbour lists from particle positions directly (*default:
+--   false*).
+-- :param boolean args.disable_sorting: Disable use of Hilbert sorting
+--   :class:`halmd.mdsim.sorts.hilbert` (*default: false*).
+--
+-- .. attribute:: particle
+--
+--    Sequence of the two instances of :class:`halmd.mdsim.particle`.
+--
+-- .. attribute:: cell_occupancy
+--
+--    Current cell occupancy. *Only available on GPU variant.*
+--
+-- .. attribute:: r_skin
+--
+--    "Skin" of the particle. This is an additional distance ratio added to the cutoff
+--    radius. Particles within this extended sphere are stored as neighbours.
+--
+-- .. method:: disconnect()
+--
+--    Disconnect neighbour module from core and profiler.
+--
+-- .. method:: connect()
+--
+--    Connect neighbour module to core and profiler.
+--
+--    By default the neighbour module is connected.
 --
 local M = module(function(args)
     -- cutoff radius matrix of truncated potential
-    local r_cut = assert(args.r_cut)
+    local r_cut = utility.assert_kwarg(args, "r_cut")
     -- neighbour list skin
     local skin = args.skin or 0.5 -- default value
 
     -- dependency injection
-    local particle1 = assert(args.particle or args.particles[1])
-    local particle2 = assert(args.particle or args.particles[2])
-    local particles = {particle1, particle2}
+    local particle = utility.assert_kwarg(args, "particle")
+    if type(particle) ~= "table" then
+        particle = {particle, particle}
+    end
+    if #particle ~= 2 then
+        error("bad argument 'particle'", 2)
+    end
     local box = assert(args.box)
     local dimension = #box.edges
-    local logger = log.logger({label = "neighbour " .. label(particles)})
+    local logger = log.logger({label = "neighbour " .. label(particle)})
     local occupancy = args.occupancy -- may be nil
 
     -- domain decomposition
     local binning
     if not args.disable_binning then
-        -- FIXME disabling binning is neither documented nor working
-        binning = mdsim.binning({box = box, particle = particle2, r_cut = r_cut, skin = skin, occupancy = occupancy})
+        -- FIXME disabling binning not working
+        binning = mdsim.binning({box = box, particle = particle[2], r_cut = r_cut, skin = skin, occupancy = occupancy})
     end
 
+    local self
+
     -- neighbour lists
-    local displacement = mdsim.max_displacement{box = box, particle = particle1}
-    local neighbour
+    local displacement = mdsim.max_displacement{box = box, particle = particle[1]}
     if device.gpu then
         if binning then
-            neighbour = assert(neighbours.from_binning.gpu[dimension])
-            occupancy = occupancy or assert(neighbour.defaults).occupancy()
-            neighbour = neighbour(particles, {binning, binning}, displacement, box, r_cut, skin, logger, occupancy)
+            occupancy = occupancy or assert(defaults[dimension].from_binning.occupancy)()
+            self = neighbours.from_binning(particle, {binning, binning}, displacement, box, r_cut, skin, logger, occupancy)
         else
-            neighbour = assert(neighbours.from_particle.gpu[dimension])
-            occupancy = occupancy or assert(neighbour.defaults).occupancy()
-            neighbour = neighbour(particles, displacement, box, r_cut, skin, logger, occupancy)
+            occupancy = occupancy or assert(defaults[dimension].from_particle.occupancy)()
+            self = neighbours.from_particle(particle, displacement, box, r_cut, skin, logger, occupancy)
         end
     else
         if binning then
-            neighbour = neighbours.from_binning.host[dimension](particles, {binning, binning}, displacement, box, r_cut, skin, logger)
+            self = neighbours.from_binning(particle, {binning, binning}, displacement, box, r_cut, skin, logger)
         else
-            neighbour = neighbours.from_particle.host[dimension](particles, displacement, box, r_cut, skin, logger)
+            self = neighbours.from_particle(particle, displacement, box, r_cut, skin, logger)
+        end
+    end
+
+    local conn = {}
+
+    self.connect = function(self)
+        if #conn == 0 then
+            local runtime = assert(self.runtime)
+            profiler:on_profile(runtime.update, "update of neighbour lists " .. label(self.particle))
+        else
+            error("Neighbour module is already connected")
+        end
+    end
+
+    self.disconnect = function(self)
+        if #conn > 0 then
+            for i = 1, #conn do
+                conn[i]:disconnect()
+            end
+            conn = {}
+        else
+            error("Neighbour module is already disconnected")
         end
     end
 
     -- store particle instances as Lua property
-    neighbour.particles = property(function(self)
-        return particles
-    end)
+    self.particle = property(function(self) return particle end)
 
     -- sort particles before neighbour list update
     if not args.disable_sorting then
-        local sort = mdsim.sort{box = box, particle = particle1, binning = binning}
-        neighbour:on_prepend_update(sort.order)
+        local sort = mdsim.sort{box = box, particle = particle[1], binning = binning}
+        self:on_prepend_update(sort.order)
     end
 
-    return neighbour
+    -- connect neighbour module to core
+    self:connect()
+
+    return self
 end)
-
---
--- connect runtime accumulators to module profiler
---
-function M.profile(self, profiler)
-    profiler:on_profile{self, update = "update of neighbour lists " .. label(self.particles)}
-end
-
---
--- assemble module options
---
--- @param desc po.options_description
---
-function M.options(desc)
-    desc:add("skin", po.float(), "neighbour list skin")
-    if neighbours.from_binning.gpu then
-        desc:add("occupancy", po.float(), "desired average cell occupancy")
-    end
-    desc:add("disable-binning", po.bool_switch(), "disable domain decomposition")
-    desc:add("disable-sorting", po.bool_switch(), "disable domain decomposition")
-end
-
---
--- read module parameters from HDF5 group
---
-function M.read_parameters(args, group)
-    args.skin = group:read_attribute("skin", h5.float())
-    if neighbours.from_binning.gpu then
-        args.occupancy = group:read_attribute("occupancy", h5.float())
-    end
-end
-
---
--- write module parameters to HDF5 group
---
--- @param neighbour module instance
--- @param group HDF5 group
---
-function M.write_parameters(neighbour, group)
-    group:write_attribute("skin", h5.float(), neighbour.r_skin)
-    if neighbour.cell_occupancy then
-        group:write_attribute("occupancy", h5.float(), neighbour.cell_occupancy)
-    end
-end
 
 return M
