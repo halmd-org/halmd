@@ -224,25 +224,6 @@ make_array_from_particle(array_type& array, particle_type const& particle)
     array = std::move(output);
 }
 
-#ifdef HALMD_WITH_GPU
-/**
- * Construct GPU array from GPU particle.
- */
-template <typename array_type, typename particle_type>
-inline typename std::enable_if<
-    std::is_convertible<
-        typename std::iterator_traits<typename array_type::iterator>::iterator_category
-      , cuda::device_random_access_iterator_tag
-    >::value
-  , void>::type
-make_array_from_particle(array_type& array, particle_type const& particle)
-{
-    array_type g_output(particle.nparticle());
-    g_output.reserve(particle.dim.threads());
-    cuda::memset(g_output.begin(), g_output.end(), 0);
-    array = std::move(g_output);
-}
-
 /**
  * Construct stress pot tensor array from particle.
  */
@@ -261,6 +242,24 @@ make_stress_pot_from_particle(
    make_array_from_particle(array, particle);
 }
 
+#ifdef HALMD_WITH_GPU
+/**
+ * Construct GPU array from GPU particle.
+ */
+template <typename array_type, typename particle_type>
+inline typename std::enable_if<
+    std::is_convertible<
+        typename std::iterator_traits<typename array_type::iterator>::iterator_category
+      , cuda::device_random_access_iterator_tag
+    >::value
+  , void>::type
+make_array_from_particle(array_type& array, particle_type const& particle)
+{
+    array_type g_output(particle.nparticle());
+    g_output.reserve(particle.dim.threads());
+    cuda::memset(g_output.begin(), g_output.end(), 0);
+    array = std::move(g_output);
+}
 
 /**
  * Construct stress tensor GPU array from GPU particle.
