@@ -26,10 +26,15 @@ local profiler          = require("halmd.utility.profiler")
 
 -- grab C++ wrappers
 local binning = assert(libhalmd.mdsim.binning)
-local defaults = {
-    [2] = assert(libhalmd.mdsim.defaults_2)
-  , [3] = assert(libhalmd.mdsim.defaults_3)
-}
+
+local defaults
+if device.gpu then
+    defaults = {
+        [2] = assert(libhalmd.mdsim.defaults_2)
+      , [3] = assert(libhalmd.mdsim.defaults_3)
+    }
+end
+
 local assert = assert
 
 ---

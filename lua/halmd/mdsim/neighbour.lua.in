@@ -35,10 +35,14 @@ local neighbours = {
     from_binning  = assert(libhalmd.mdsim.neighbours.from_binning)
   , from_particle = assert(libhalmd.mdsim.neighbours.from_particle)
 }
-local defaults = {
-    [2] = assert(libhalmd.mdsim.defaults_2)
-  , [3] = assert(libhalmd.mdsim.defaults_3)
-}
+
+local defaults
+if device.gpu then
+    defaults = {
+        [2] = assert(libhalmd.mdsim.defaults_2)
+      , [3] = assert(libhalmd.mdsim.defaults_3)
+    }
+end
 
 --
 -- returns species label given a table of particle instances
@@ -67,7 +71,7 @@ end
 -- :param args.particle: instance, or sequence of two instances, of :class:`halmd.mdsim.particle`
 -- :param args.box: instance of :class:`halmd.mdsim.box`
 -- :param number args.r_cut: cutoff radius of the potential
--- :param number args.skin: neighbour list skin *(default: ``0.5``)*
+-- :param number args.skin: neighbour list skin *(default: 0.5)*
 -- :param number args.occupancy: Desired cell occupancy. Defaults to
 --   :class:`halmd.mdsim.defaults.occupancy()` *(GPU variant only)*
 -- :param boolean args.disable_binning: Disable use of binning module and
