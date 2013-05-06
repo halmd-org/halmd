@@ -91,7 +91,7 @@ local M = module(function(args)
             writer:on_write(ssf:value(i - 1, j - 1), {label1, label2})
         end
     end
-    sampler:on_sample(writer.write, every)
+    sampler:on_sample(writer.write, every, 0)
 
     return ssf
 end)

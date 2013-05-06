@@ -102,7 +102,7 @@ local M = module(function(args)
 
     self.connect = function(self)
         if #conn == 0 then
-            table.insert(conn, assert(sampler:on_sample(self.sample, every)))
+            table.insert(conn, assert(sampler:on_sample(self.sample, every, 0)))
             table.insert(conn, assert(sampler:on_finish(self.finalise)))
         else
             error("blocking scheme is already connected", 2)

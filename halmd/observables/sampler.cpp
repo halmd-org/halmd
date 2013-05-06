@@ -77,10 +77,11 @@ void sampler::run(step_type steps)
     }
 }
 
-connection sampler::on_sample(std::function<void ()> const& slot, step_type interval)
+connection sampler::on_sample(std::function<void ()> const& slot, step_type interval, step_type start)
 {
     return on_sample_.connect([=]() {
-        if (clock_->step() % interval == 0) {
+        step_type step = clock_->step();
+        if(step >= start && (step - start) % interval == 0) {
             slot();
         }
     });

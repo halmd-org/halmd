@@ -198,7 +198,7 @@ local M = module(function(args)
         writer.connect = function(self)
             if #conn == 0 then
                 if every and every > 0 then
-                    table.insert(conn, assert(sampler:on_sample(self.write, every)))
+                    table.insert(conn, assert(sampler:on_sample(self.write, every, 0)))
                 else
                     table.insert(conn, assert(sampler:on_start(self.write)))
                     table.insert(conn, assert(sampler:on_finish(self.write)))

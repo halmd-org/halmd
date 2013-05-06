@@ -57,7 +57,7 @@ public:
     /**
      * Connect slot to signal emitted to sample current state
      */
-    connection on_sample(std::function<void ()> const& slot, step_type interval);
+    connection on_sample(std::function<void ()> const& slot, step_type interval, step_type start);
 
     /**
      * Connect slot to signal emitted before starting simulation run

@@ -48,9 +48,11 @@ local sampler = assert(libhalmd.sampler)
 --
 --    This method invokes :meth:`halmd.mdsim.core.mdstep`.
 --
--- .. method:: on_sample(slot, interval)
+-- .. method:: on_sample(slot, interval, start)
 --
---    Connect slot to signal emitted to sample current state.
+--    Connect slot to signal emitted to sample current state. ``slot()`` will
+--    be executed every ``interval`` timesteps with the first time being
+--    executed at timestep ``start``. ``start`` must be greater or equal to zero.
 --
 --    :returns: signal connection
 --
@@ -71,10 +73,10 @@ local sampler = assert(libhalmd.sampler)
 local self = sampler(clock, core)
 
 -- process timer service every step
-self:on_sample(function() timer_service:process() end, 1)
+self:on_sample(function() timer_service:process() end, 1, 0)
 
 -- poll for blocked POSIX signals every step
-self:on_sample(posix_signal.poll, 1)
+self:on_sample(posix_signal.poll, 1, 0)
 
 -- gracefully abort simulation on SIGTERM or SIGINT
 local abort = sampler.abort(clock)
