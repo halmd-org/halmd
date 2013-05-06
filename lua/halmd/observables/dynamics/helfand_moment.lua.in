@@ -1,0 +1,138 @@
+--
+-- Copyright © 2013 Nicolas Höft
+--
+-- This file is part of HALMD.
+--
+-- HALMD is free software: you can redistribute it and/or modify
+-- it under the terms of the GNU General Public License as published by
+-- the Free Software Foundation, either version 3 of the License, or
+-- (at your option) any later version.
+--
+-- This program is distributed in the hope that it will be useful,
+-- but WITHOUT ANY WARRANTY; without even the implied warranty of
+-- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+-- GNU General Public License for more details.
+--
+-- You should have received a copy of the GNU General Public License
+-- along with this program.  If not, see <http://www.gnu.org/licenses/>.
+--
+
+local clock       = require("halmd.mdsim.clock")
+local utility     = require("halmd.utility")
+local module      = require("halmd.utility.module")
+local correlation = require("halmd.observables.dynamics.correlation")
+local accumulator = require("halmd.observables.utility.accumulator")
+
+---
+-- Helfand Moment
+-- ==============
+--
+-- This module calculates the mean-squared difference of the Helfand moment
+-- :math:`G_{\alpha\beta}(t)` (with :math:`\alpha, \beta \in \{x, y, z\}`),
+--
+-- .. math::
+--     \langle [G_{\alpha\beta}(t) - G_{\alpha\beta}(0)]^2 \rangle \, \text{,}
+--
+-- where :math:`G_{\alpha\beta}(t)` is defined as the integral over the stress
+-- tensor elements :math:`\Pi_{\alpha\beta}`,
+--
+-- .. math::
+--     G_{\alpha\beta}(t) = \int_0^t \! \mathrm{d}t' \, \Pi_{\alpha\beta}(t') \, \text{.}
+--
+-- This integral is computed numerically using :mod:`halmd.observables.utility.accumulator`
+-- with the specified integration interval.
+--
+-- The above equations can be used to calculate the shear viscosity :math:`\eta`
+-- with the Einstein-Helfand relation
+--
+-- .. math::
+--     \eta = \lim_{t\to\infty} \frac{1}{2tk_BTV} \langle [G_{\alpha\beta}(t) - G_{\alpha\beta}(0)]^2 \rangle \, \text{.}
+--
+-- .. note::
+--     Analogue to :mod:`halmd.observables.dynamics.mean_square_displacement`,
+--     this module returns the sum over all :math:`d` (= dimension) off-diagonal elements,
+--     not just one component.
+--
+
+
+---
+-- Construct helfand moment
+--
+-- This module implements a :mod:`halmd.observables.dynamics.correlation` module.
+--
+-- :param args: keyword arguments
+-- :param args.thermodynamics: instance of :class:`halmd.observables.thermodynamics`
+-- :param number args.integration_interval: Interval used to integrate the stress tensor.
+--
+-- .. method:: acquire()
+--
+--    Acquire stress tensor
+--
+--    :returns: Stress tensor sample
+--
+-- .. method:: correlate(first, second)
+--
+--    Correlate two stress tensor samples.
+--
+--    :param first: first phase space sample
+--    :param second: second phase space sample
+--    :returns: mean-squared integral of the off diagonal elements of the stress tensor
+--
+-- .. attribute:: group
+--
+--    H5MD group.
+--
+-- .. attribute:: desc
+--
+--    Profiler description.
+--
+-- .. method:: disconnect()
+--
+--    Disconnect module from core.
+--
+local M = module(function(args)
+    local msv = utility.assert_kwarg(args, "thermodynamics")
+    local integration_interval = utility.assert_type(utility.assert_kwarg(args, "integration_interval"), "number")
+
+    local resolution = integration_interval * assert(clock.timestep)
+    local label = assert(msv.group.label)
+    local dimension = assert(msv.dimension)
+
+    local stress_tensor = accumulator({
+        aquire = msv.stress_tensor
+      , every = integration_interval
+      , desc = "stress tensor"
+    })
+
+    -- construct correlation module from helfand moment
+    local self = assert(correlation({
+        -- acquire function as read-only property
+        acquire = function(self)
+            return stress_tensor:sum()
+        end
+
+      , correlate = function(first, second)
+            local result = 0
+            -- skip the diagonal elements
+            for i = dimension + 1, #first do
+                -- integrate via rectangular rule by multiplying with Δt * interval
+                result = result + math.pow((second[i] - first[i]) * resolution, 2)
+            end
+            -- analogue to the msd do not divide by the dimension
+            return result
+        end
+        -- H5MD group
+      , group = {label, "helfand_moment"}
+        -- profiler description
+      , desc = ("helfand moment of %s"):format(label)
+    }))
+
+    -- add disconnect() function in order to remove the stress tensor accumulator
+    self.disconnect = function(self)
+        stress_tensor:disconnect()
+    end
+
+    return self
+end)
+
+return M
