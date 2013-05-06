@@ -22,6 +22,7 @@
 
 #include <boost/type_traits/is_arithmetic.hpp>
 #include <boost/type_traits/is_integral.hpp>
+#include <boost/type_traits/is_floating_point.hpp>
 #include <boost/type_traits/is_same.hpp>
 #include <boost/utility/enable_if.hpp>
 
@@ -260,9 +261,24 @@ inline HALMD_GPU_ENABLED dsfloat min(dsfloat const& v, dsfloat const& w)
 } // namespace detail
 } // namespace numeric
 } // namespace mp
+
 // import into top-level namespace
 using detail::numeric::mp::dsfloat;
 
 } // namespace halmd
+
+namespace boost
+{
+
+//
+// In order to make dsfloat completely act like a number, it is necessary
+// to specify it as floating point number by the means of
+// boost::is_floating_point<>. Therefore, add a specialization for
+// boost::is_floating_point<dsfloat>.
+//
+template<>
+struct is_floating_point<halmd::dsfloat> : public boost::true_type {};
+
+} // namespace boost
 
 #endif /* ! HALMD_NUMERIC_MP_DSFLOAT_CUH */

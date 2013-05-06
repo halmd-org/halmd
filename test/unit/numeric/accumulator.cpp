@@ -1,5 +1,6 @@
 /*
  * Copyright © 2010  Felix Höfling
+ * Copyright © 2013  Nicolas Höft
  *
  * This file is part of HALMD.
  *
@@ -19,7 +20,7 @@
 
 #define BOOST_TEST_MODULE accumulator
 #include <boost/test/unit_test.hpp>
-
+#include <halmd/numeric/blas/fixed_vector.hpp>
 #include <halmd/numeric/accumulator.hpp>
 #include <test/tools/ctest.hpp>
 
@@ -37,7 +38,46 @@ BOOST_AUTO_TEST_CASE( test_accumulator )
         BOOST_CHECK_CLOSE_FRACTION(variance(a), 8.25, 1e-14);
         BOOST_CHECK_CLOSE_FRACTION(sigma(a), 2.8722813232690143, 1e-14);
         BOOST_CHECK_CLOSE_FRACTION(error_of_mean(a), 0.9574271077563381, 1e-14);
+        BOOST_CHECK_CLOSE_FRACTION(sum(a), 45., 1e-14);
 
         a = halmd::accumulator<double>();  // check value initialization
     }
+
+    int constexpr dim = 2;
+    halmd::accumulator<halmd::fixed_vector<double, dim>> av;
+    halmd::accumulator<halmd::fixed_vector<double, dim>> av2;
+
+    for (unsigned i = 0; i <= 1; i++) {
+        for (unsigned j = 0; j < 10; j++) {
+            halmd::fixed_vector<double, dim> v;
+            for (unsigned int d = 0; d < dim; d++) {
+                v[d] = j;
+            }
+            av(v);
+            av2(v);
+        }
+
+        BOOST_CHECK_EQUAL(count(av), 10u);
+        for (unsigned int d = 0; d < dim; d++) {
+            BOOST_CHECK_CLOSE_FRACTION(mean(av)[d], 4.5, 1e-14);
+            BOOST_CHECK_CLOSE_FRACTION(variance(av)[d], 8.25, 1e-14);
+            BOOST_CHECK_CLOSE_FRACTION(sigma(av)[d], 2.8722813232690143, 1e-14);
+            BOOST_CHECK_CLOSE_FRACTION(error_of_mean(av)[d], 0.9574271077563381, 1e-14);
+            BOOST_CHECK_CLOSE_FRACTION(sum(av)[d], 45., 1e-14);
+        }
+        // test functor for accumulators
+        av2(av);
+        BOOST_CHECK_EQUAL(count(av2), 20u);
+        for (unsigned int d = 0; d < dim; d++) {
+            BOOST_CHECK_CLOSE_FRACTION(mean(av2)[d], 4.5, 1e-14);
+            BOOST_CHECK_CLOSE_FRACTION(variance(av2)[d], 8.25, 1e-14);
+            BOOST_CHECK_CLOSE_FRACTION(sigma(av2)[d], 2.8722813232690143, 1e-14);
+            BOOST_CHECK_CLOSE_FRACTION(error_of_mean(av2)[d], 0.65894652766046917965, 1e-14);
+            BOOST_CHECK_CLOSE_FRACTION(sum(av2)[d], 90., 1e-14);
+        }
+
+        av = halmd::accumulator<halmd::fixed_vector<double, dim>>();  // check value initialization
+        av2 = halmd::accumulator<halmd::fixed_vector<double, dim>>();
+    }
+
 }

@@ -1,4 +1,5 @@
 /*
+ * Copyright © 2013       Nicolas Höft
  * Copyright © 2008-2010  Peter Colberg
  *
  * This file is part of HALMD.
@@ -24,6 +25,7 @@
 
 #include <boost/type_traits/is_convertible.hpp>
 #include <boost/type_traits/is_same.hpp>
+#include <boost/type_traits/has_multiplies.hpp>
 #include <boost/utility/enable_if.hpp>
 #ifndef __CUDACC__
 # include <cmath>
@@ -33,6 +35,22 @@
 namespace halmd {
 namespace numeric {
 namespace detail {
+
+//
+// In order to make the accumulator work with fixed_vector and
+// matrices that do not implement operator*(), the multiplication has been
+// replaced with element_prod(). For types like double or float that
+// do no have an element_prod() implementation, provide one using
+// simple multiplication.
+//
+template <typename T>
+inline HALMD_GPU_ENABLED
+typename boost::enable_if<boost::has_multiplies<T>, T>::type
+element_prod(T const& v, T const& w)
+{
+    return v * w;
+}
+
 
 /**
  * Accumulator with statistical evaluation functions
@@ -80,7 +98,8 @@ public:
         T const t = static_cast<T>(value) - m_;
         n_++;
         m_ += t / n_;
-        v_ += t * (static_cast<T>(value) - m_);
+        // see above for use of element_prod()
+        v_ += element_prod(t, (static_cast<T>(value) - m_));
     }
 
     /**
@@ -97,7 +116,7 @@ public:
             typename accumulator<T>::size_type const count = n_ + acc.n_;
             v_ += acc.v_;
             T const diff = m_ - acc.m_;
-            v_ += diff * diff * n_ * acc.n_ / count;
+            v_ += element_prod(diff, diff) * n_ * acc.n_ / count;
             m_ = (n_ * m_ + acc.n_ * acc.m_) / count;
             n_ = count;
         }
@@ -167,6 +186,15 @@ template <typename T>
 HALMD_GPU_ENABLED T error_of_mean(accumulator<T> const& acc)
 {
     return sqrt((acc.v_ / acc.n_) / (acc.n_ - 1));
+}
+
+/**
+ * Returns the sum of the accumulated values.
+ */
+template <typename T>
+HALMD_GPU_ENABLED T sum(accumulator<T> const& acc)
+{
+    return mean(acc) * count(acc);
 }
 
 } // namespace detail
