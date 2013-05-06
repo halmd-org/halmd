@@ -214,11 +214,11 @@ double get_mean_hypervirial(force_type& force, particle_group& group)
 }
 
 /**
- * Compute mean stress tensor elements per particle.
+ * Compute stress tensor.
  */
 template <typename force_type, typename particle_type>
 typename type_traits<force_type::net_force_type::static_size, double>::stress_tensor_type
-get_mean_stress_tensor(force_type& force, particle_type& particle, particle_group& group)
+get_stress_tensor(force_type& force, particle_type& particle, particle_group& group)
 {
     typedef typename particle_group::size_type size_type;
     typedef typename particle_group::array_type group_array_type;
@@ -235,12 +235,12 @@ get_mean_stress_tensor(force_type& force, particle_type& particle, particle_grou
     velocity_array_type const& velocity = read_cache(particle.velocity());
     mass_array_type const& mass = read_cache(particle.mass());
 
-    stress_tensor_type stress_tensor_sum(0);
+    stress_tensor_type stress_tensor(0);
     for (size_type i : unordered) {
         stress_tensor_type stress_kin = mass[i] * make_stress_tensor(velocity[i]);
-        stress_tensor_sum += stress_pot[i] + stress_kin;
+        stress_tensor += stress_pot[i] + stress_kin;
     }
-    return stress_tensor_sum / unordered.size();
+    return stress_tensor;
 }
 
 } // namespace host

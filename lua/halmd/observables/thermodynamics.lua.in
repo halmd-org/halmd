@@ -101,9 +101,9 @@ local thermodynamics = assert(libhalmd.observables.thermodynamics)
 --
 -- .. method:: stress_tensor()
 --
---    Returns mean stress tensor elements per particle as a vector.
---    In the first d(=dimension) elements contain the diagonal elements followed
---    by off-diagonals T_12, T_13, ..., T_23, ...
+--    Returns the elements of the stress tensor as a vector.
+--    The first :math:`d` (= `dimension`) elements contain the diagonal followed
+--    by :math:`d(d-1)/2` off-diagonal elements :math:`T_{xy}, T_{xz}, \dots, T_{yz}, \dots`
 --
 local M = module(function(args)
     local group = args.group

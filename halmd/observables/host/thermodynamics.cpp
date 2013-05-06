@@ -176,7 +176,7 @@ thermodynamics<dimension, float_type>::stress_tensor()
     if (stress_tensor_cache_ != std::tie(stress_pot_cache, velocity_cache, group_cache)) {
         LOG_TRACE("acquire stress tensor");
         scoped_timer_type timer(runtime_.stress_tensor);
-        stress_tensor_ = get_mean_stress_tensor(*force_, *particle_, *group_);
+        stress_tensor_ = get_stress_tensor(*force_, *particle_, *group_);
         stress_tensor_cache_ = std::tie(stress_pot_cache, velocity_cache, group_cache);
     }
     return stress_tensor_;

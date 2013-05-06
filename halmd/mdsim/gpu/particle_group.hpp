@@ -214,11 +214,11 @@ double get_mean_hypervirial(force_type& force, particle_group& group)
 }
 
 /**
- * Compute mean stress tensor elements per particle.
+ * Compute stress tensor.
  */
 template <typename force_type, typename particle_type>
 typename type_traits<force_type::net_force_type::static_size, double>::stress_tensor_type
-get_mean_stress_tensor(force_type& force, particle_type& particle, particle_group& group)
+get_stress_tensor(force_type& force, particle_type& particle, particle_group& group)
 {
     typedef typename particle_group::size_type size_type;
     typedef typename particle_group::array_type group_array_type;
@@ -238,8 +238,7 @@ get_mean_stress_tensor(force_type& force, particle_type& particle, particle_grou
     accumulator_type::get_stress_pot().bind(stress_pot);
     accumulator_type::get_velocity().bind(*particle.velocity());
 
-    stress_tensor_type stress_tensor_sum(reduce(&*unordered.begin(), &*unordered.end(), accumulator_type(stride))());
-    return stress_tensor_sum / unordered.size();
+    return stress_tensor_type(reduce(&*unordered.begin(), &*unordered.end(), accumulator_type(stride))());
 }
 
 } // namespace gpu
