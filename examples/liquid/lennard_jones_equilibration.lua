@@ -99,11 +99,31 @@ local function liquid(args)
     end
 
     -- Sample macroscopic state variables.
+    local msv
     local interval = args.sampling.state_vars
     if interval > 0 then
-        local msv = observables.thermodynamics({box = box, group = particle_group, force = force})
+        msv = observables.thermodynamics({box = box, group = particle_group, force = force})
         msv:writer(writer, {every = interval})
     end
+
+    print(class_info(msv:stress_tensor()).name)
+    local accumulator = observables.utility.accumulator({
+            aquire = msv.en_tot
+          , every = 10
+          , group = {"averaged_total_energy"}
+          , desc = "Averaged total energy"
+        })
+     accumulator:writer(writer, {
+            observables = {
+                {accumulator.mean, "mean"}
+              , {accumulator.error, "error"}
+              , {accumulator.sum, "sum"}
+            }
+          , every = 200
+          , reset = true
+        })
+    --]]
+    --local sum_writer = writer:writer{location = {"observables"}, mode = "append"}
 
     -- sample initial state
     observables.sampler:sample()

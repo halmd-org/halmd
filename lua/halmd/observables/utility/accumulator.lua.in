@@ -1,0 +1,164 @@
+--
+-- Copyright © 2013  Nicolas Höft
+--
+-- This file is part of HALMD.
+--
+-- HALMD is free software: you can redistribute it and/or modify
+-- it under the terms of the GNU General Public License as published by
+-- the Free Software Foundation, either version 3 of the License, or
+-- (at your option) any later version.
+--
+-- This program is distributed in the hope that it will be useful,
+-- but WITHOUT ANY WARRANTY; without even the implied warranty of
+-- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+-- GNU General Public License for more details.
+--
+-- You should have received a copy of the GNU General Public License
+-- along with this program.  If not, see <http://www.gnu.org/licenses/>.
+--
+
+local log      = require("halmd.io.log")
+local utility  = require("halmd.utility")
+local module   = require("halmd.utility.module")
+local sampler  = require("halmd.observables.sampler")
+
+local accumulator = assert(libhalmd.observables.utility.accumulator)
+
+---
+-- Accumulator
+-- ===========
+--
+
+---
+-- Construct summation module.
+--
+-- :param args: keyword arguments
+-- :param args.acquire: callable that returns a number
+-- :param number args.every: Interval for aquiring the value
+-- :param number args.start: Start step for aquiring the value (default: ``0``)
+-- :param string args.desc: profiling description
+--
+-- .. method:: writer(file, args)
+--
+--    Write calulated sum to file.
+--
+--    :param file: instance of file writer
+--    :param table args: keyword arguments
+--    :param table args.observables: Sequence of pairs of observables and their respective name to be written. Defaults to writing ``mean`` and ``error``.
+--    :param number args.every: sampling interval
+--    :param boolean args.reset: Reset accumulator after writing (disabled by default).
+--    :param table args.group: Sequence of strings of H5MD group names. The actual group will be placed as a children of the group ``observables``.
+--
+--    :returns: instance of group writer
+--
+-- .. method:: sample()
+--
+--    Sample the state using
+--
+-- .. method:: sum()
+--
+--    Current sum. Calculated by ``mean × count``.
+--
+-- .. method:: mean()
+--
+--    Mean of accumulated values.
+--
+-- .. method:: error()
+--
+--    Error of mean of accumulated values.
+--
+-- .. method:: variance()
+--
+--    Variance of mean of accumulated values.
+--
+-- .. method:: count()
+--
+--    Number samples accumulated.
+--
+-- .. method:: reset()
+--
+--    Reset the sum and number of samples.
+--
+-- .. method:: disconnect()
+--
+--    Disconnect accumulator from core.
+--
+-- .. method:: connect()
+--
+--    Connect accumulator to core.
+--
+--    This module is connected by default.
+--
+-- .. attribute:: desc
+--
+--    Profiler description.
+--
+local M = module(function(args)
+    local aquire = utility.assert_kwarg(args, "aquire")
+    local every = utility.assert_type(utility.assert_kwarg(args, "every"), "number")
+    local start = utility.assert_type(args.start or 0, "number")
+
+    local desc = utility.assert_type(utility.assert_kwarg(args, "desc"), "string")
+    local logger = log.logger({label = ("accumulator (%s)"):format(desc)})
+
+    local self = accumulator(aquire, logger)
+
+    local conn = {}
+
+    self.connect = function(self)
+        if #conn == 0 then
+            table.insert(conn, assert(sampler:on_sample(self.sample, every, start)))
+
+        else
+            error("accumulator is already connected")
+        end
+    end
+
+    self.disconnect = function(self)
+        if #conn > 0 then
+            for i = 1, #conn do
+                conn[i]:disconnect()
+            end
+            conn = {}
+        else
+            error("accumulator is already disconnected")
+        end
+    end
+
+    self.writer = function(self, file, args)
+        local writer = file:writer{location = {"observables"}, mode = "append"}
+        local every = utility.assert_kwarg(args, "every")
+        local observables = args.observables or {{self.mean, "mean"}, {self.error, "error"}}
+
+        local group = utility.assert_type(utility.assert_kwarg(args, "group"), "table")
+        if #group == 0 then
+            error("bad argument 'group'", 2)
+        end
+
+        observables = utility.assert_type(observables, "table")
+        if #observables == 0 then
+            error("bad argument 'observables'", 2)
+        end
+
+        for i = 1, #observables do
+            local obs = observables[i]
+            writer:on_write(obs[1], {table.unpack(group), obs[2]})
+        end
+
+        sampler:on_sample(writer.write, every, start)
+
+        if args.reset then
+            writer:on_append_write(self.reset)
+        end
+
+        return writer
+    end
+
+    self.desc = property(function(self) return desc end)
+
+    self:connect()
+
+    return self
+end)
+
+return M
