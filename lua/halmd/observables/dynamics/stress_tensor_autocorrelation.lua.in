@@ -1,0 +1,110 @@
+--
+-- Copyright © 2013 Nicolas Höft
+--
+-- This file is part of HALMD.
+--
+-- HALMD is free software: you can redistribute it and/or modify
+-- it under the terms of the GNU General Public License as published by
+-- the Free Software Foundation, either version 3 of the License, or
+-- (at your option) any later version.
+--
+-- This program is distributed in the hope that it will be useful,
+-- but WITHOUT ANY WARRANTY; without even the implied warranty of
+-- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+-- GNU General Public License for more details.
+--
+-- You should have received a copy of the GNU General Public License
+-- along with this program.  If not, see <http://www.gnu.org/licenses/>.
+--
+
+local utility     = require("halmd.utility")
+local module      = require("halmd.utility.module")
+local correlation = require("halmd.observables.dynamics.correlation")
+
+
+---
+-- Stress Tensor Autocorrelation Function
+-- ======================================
+--
+-- This module calculates the autocorrelation of the off-diagonal elements of
+-- the stess tensor :math:`\Pi`:
+--
+-- .. math::
+--     \langle \Pi_{\alpha\beta}(t)  \Pi_{\alpha\beta}(0) \rangle \, \text{.}
+--
+--
+-- The above quantity can be used to calculate the shear viscosity :math:`\eta`
+-- with the Green-Kubo relation for the shear viscosity
+--
+-- .. math::
+--     \eta = \ \frac{1}{k_BTV} \int_0^\infty \! \mathrm{d}t \, \langle \Pi_{\alpha\beta}(t)  \Pi_{\alpha\beta}(0) \rangle \, \text{.}
+--
+-- .. note::
+--     Analogue to :mod:`halmd.observables.dynamics.velocity_autocorrelation`,
+--     this module returns the sum over all :math:`d` (= dimension) off-diagonal elements,
+--     not just one component.
+--
+
+
+---
+-- Construct stress tensor autocorrelation function.
+--
+-- This module implements a :mod:`halmd.observables.dynamics.correlation` module.
+--
+-- :param args: keyword arguments
+-- :param args.thermodynamics: instance of :class:`halmd.observables.thermodynamics`
+--
+-- .. method:: acquire()
+--
+--    Acquire stress tensor
+--
+--    :returns: Stress tensor sample
+--
+-- .. method:: correlate(first, second)
+--
+--    Correlate two stress tensor samples.
+--
+--    :param first: first phase space sample
+--    :param second: second phase space sample
+--    :returns: stress tensor autocorrelation function between two samples.
+--
+-- .. attribute:: group
+--
+--    H5MD group.
+--
+-- .. attribute:: desc
+--
+--    Profiler description.
+--
+local M = module(function(args)
+    local msv = utility.assert_kwarg(args, "thermodynamics")
+
+    local label = assert(msv.group.label)
+    local dimension = assert(msv.dimension)
+
+    -- construct correlation module for the stress tensor autocorrelation
+    local self = assert(correlation({
+        -- acquire stress tensor
+        acquire = function(self)
+            return msv:stress_tensor()
+        end
+
+      , correlate = function(first, second)
+            local result = 0
+            -- skip the diagonal elements
+            for i = dimension + 1, #first do
+                result = result + second[i] * first[i]
+            end
+            -- analogue to the vacf do not divide by the dimension
+            return result
+        end
+        -- H5MD group
+      , group = {label, "stress_tensor_autocorrelation"}
+        -- profiler description
+      , desc = ("stress tensor autocorrelation of %s"):format(label)
+    }))
+
+    return self
+end)
+
+return M
