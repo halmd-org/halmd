@@ -105,6 +105,14 @@ local thermodynamics = assert(libhalmd.observables.thermodynamics)
 --    The first :math:`d` (= `dimension`) elements contain the diagonal followed
 --    by :math:`d(d-1)/2` off-diagonal elements :math:`T_{xy}, T_{xz}, \dots, T_{yz}, \dots`
 --
+-- .. attribute:: dimension
+--
+--    Space dimension of the simulation box as a number.
+--
+-- .. attribute:: group
+--
+--    Instance of :mod:`halmd.mdsim.particle_groups` used to construct the module.
+--
 local M = module(function(args)
     local group = args.group
     if not group then
@@ -146,6 +154,9 @@ local M = module(function(args)
 
         return writer
     end
+
+    self.dimension = property(function(self) return box.dimension end)
+    self.group = property(function(self) return group end)
 
     return self
 end)
