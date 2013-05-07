@@ -31,9 +31,8 @@ namespace observables {
 namespace utility {
 
 /**
- * Calculate a sum based on sampling function.
- * This class basically wraps numeric/accumulator and exports
- * its functions to lua.
+ * Calculate a sum based on an acquire function. This class basically wraps
+ * numeric/accumulator and binds its methods to Lua.
  */
 template <typename sample_type>
 class accumulator
@@ -81,8 +80,8 @@ public:
     }
 
 
-    /** variance */
-    value_type error() const
+    /** standard error of mean value */
+    value_type error_of_mean() const
     {
         return numeric::detail::error_of_mean(acc_);
     }
@@ -104,7 +103,9 @@ public:
     static void luaopen(lua_State* L);
 
 protected:
+    /** acquire function yielding the data to be accumulated */
     sample_function_type sample_;
+    /** accumulator instance */
     accumulator_type acc_;
     /** module logger */
     std::shared_ptr<logger_type> logger_;

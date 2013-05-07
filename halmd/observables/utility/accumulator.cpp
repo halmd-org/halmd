@@ -63,10 +63,10 @@ wrap_mean(std::shared_ptr<accumulator_type> self)
 
 template <typename accumulator_type>
 static std::function<typename accumulator_type::value_type ()>
-wrap_error(std::shared_ptr<accumulator_type> self)
+wrap_error_of_mean(std::shared_ptr<accumulator_type> self)
 {
     return [=]() {
-        return self->error();
+        return self->error_of_mean();
     };
 }
 
@@ -103,7 +103,7 @@ void accumulator<sample_type>::luaopen(lua_State* L)
                     .property("sample", &wrap_sample<accumulator<sample_type> >)
                     .property("sum", &wrap_sum<accumulator<sample_type> >)
                     .property("mean", &wrap_mean<accumulator<sample_type> >)
-                    .property("error", &wrap_error<accumulator<sample_type> >)
+                    .property("error_of_mean", &wrap_error_of_mean<accumulator<sample_type> >)
                     .property("variance", &wrap_variance<accumulator<sample_type> >)
                     .property("count", &wrap_count<accumulator<sample_type> >)
                     .property("reset", &wrap_reset<accumulator<sample_type> >)

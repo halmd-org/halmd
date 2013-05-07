@@ -170,9 +170,10 @@ local function shear_viscosity(args)
     })
 
     temperature:writer({
-        every = math.floor(args.steps / 1000)
+        file = writer
+      , location = {"observables", msv.group.label, "averaged_temperature"}
+      , every = math.floor(args.steps / 1000)
       , reset = true
-      , group = {"thermodynamics", msv.group.label, "averaged_temperature"}
     })
 
     -- replace thermostat integrator by NVE velocity-Verlet

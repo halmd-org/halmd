@@ -1,5 +1,6 @@
 --
 -- Copyright © 2013  Nicolas Höft
+-- Copyright © 2013  Felix Höfling
 --
 -- This file is part of HALMD.
 --
@@ -28,56 +29,46 @@ local accumulator = assert(libhalmd.observables.utility.accumulator)
 -- Accumulator
 -- ===========
 --
+-- This module accumulates values (e.g., the pressure) over the course of the
+-- simulation and returns statistical measures (e.g., sum, mean, and variance).
+--
 
 ---
--- Construct summation module.
+-- Construct accumulator module.
 --
 -- :param args: keyword arguments
 -- :param args.acquire: callable that returns a number
--- :param number args.every: Interval for aquiring the value
--- :param number args.start: Start step for aquiring the value (default: ``0``)
+-- :param number args.every: interval for aquiring the value
+-- :param number args.start: start step for aquiring the value (default: ``0``)
 -- :param string args.desc: profiling description
---
--- .. method:: writer(file, args)
---
---    Write calulated sum to file.
---
---    :param file: instance of file writer
---    :param table args: keyword arguments
---    :param table args.observables: Sequence of pairs of observables and their respective name to be written. Defaults to writing ``mean`` and ``error``.
---    :param number args.every: sampling interval
---    :param boolean args.reset: Reset accumulator after writing (disabled by default).
---    :param table args.group: Sequence of strings of H5MD group names. The actual group will be placed as a children of the group ``observables``.
---
---    :returns: instance of group writer
 --
 -- .. method:: sample()
 --
---    Sample the state using
+--    Sample next value by calling ``args.acquire``.
 --
 -- .. method:: sum()
 --
---    Current sum. Calculated by ``mean × count``.
+--    Sum of accumulated values. Calculated as ``mean × count``.
 --
 -- .. method:: mean()
 --
 --    Mean of accumulated values.
 --
--- .. method:: error()
+-- .. method:: error_of_mean()
 --
---    Error of mean of accumulated values.
+--    Standard error of mean of accumulated values.
 --
 -- .. method:: variance()
 --
---    Variance of mean of accumulated values.
+--    Variance of accumulated values.
 --
 -- .. method:: count()
 --
---    Number samples accumulated.
+--    Number of samples accumulated.
 --
 -- .. method:: reset()
 --
---    Reset the sum and number of samples.
+--    Reset the accumulator.
 --
 -- .. method:: disconnect()
 --
@@ -92,6 +83,32 @@ local accumulator = assert(libhalmd.observables.utility.accumulator)
 -- .. attribute:: desc
 --
 --    Profiler description.
+--
+-- .. method:: writer(file, args)
+--
+--    Write statistical measures to a file.
+--
+--    :param table args: keyword arguments
+--    :param args.file: instance of file writer
+--    :param table args.fields: data fields to be written
+--    :param string table args.location: location within file
+--    :param number args.every: sampling interval
+--    :param boolean args.reset: Reset accumulator after writing if true (disabled by default).
+--
+--    :returns: instance of group writer
+--
+--    The table ``fields`` specifies which statistical measures are written,
+--    valid values are ``sum``, ``mean``, ``error_of_mean``, ``variance``, and
+--    ``count``.  It may either be passed as an indexed table, e.g. ``{"mean",
+--    "error_of_mean"}``, or as a dictionary, e.g., ``{mu = "mean", sigma =
+--    "variance"}``. The table form is interpreted as ``{mean = "mean", ...}``. In
+--    the dictionary form, the keys denote the group names in the file and the
+--    values the methods of the ``accumulator`` module and the . Defaults to
+--    ``{"mean", "error_of_mean", "count"}``.
+--
+--    The argument ``location`` specifies a path in a structured file format
+--    like H5MD given as a table of strings, for example ``{"observables", group
+--    label}``.
 --
 local M = module(function(args)
     local aquire = utility.assert_kwarg(args, "aquire")
@@ -108,7 +125,6 @@ local M = module(function(args)
     self.connect = function(self)
         if #conn == 0 then
             table.insert(conn, assert(sampler:on_sample(self.sample, every, start)))
-
         else
             error("accumulator is already connected")
         end
@@ -125,24 +141,20 @@ local M = module(function(args)
         end
     end
 
-    self.writer = function(self, file, args)
-        local writer = file:writer{location = {"observables"}, mode = "append"}
+    self.writer = function(self, args)
+        local file = utility.assert_kwarg(args, "file")
+        local fields = utility.assert_type(args.fields or {"mean", "error_of_mean", "count"}, "table")
+        local location = utility.assert_type(utility.assert_kwarg(args, "location"), "table")
         local every = utility.assert_kwarg(args, "every")
-        local observables = args.observables or {{self.mean, "mean"}, {self.error, "error"}}
 
-        local group = utility.assert_type(utility.assert_kwarg(args, "group"), "table")
-        if #group == 0 then
-            error("bad argument 'group'", 2)
-        end
+        local writer = file:writer({location = location, mode = "append"})
 
-        observables = utility.assert_type(observables, "table")
-        if #observables == 0 then
-            error("bad argument 'observables'", 2)
-        end
-
-        for i = 1, #observables do
-            local obs = observables[i]
-            writer:on_write(obs[1], {table.unpack(group), obs[2]})
+        -- register data slots with writer, the keys of 'field' may either be
+        -- strings (dictionary) or numbers (table), in the latter case, the
+        -- value string is used as field name
+        for k,v in pairs(fields) do
+            local name = (type(k) == "string") and k or v
+            writer:on_write(assert(self[v]), {name})
         end
 
         sampler:on_sample(writer.write, every, start)

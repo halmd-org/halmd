@@ -106,24 +106,18 @@ local function liquid(args)
         msv:writer(writer, {every = interval})
     end
 
-    print(class_info(msv:stress_tensor()).name)
     local accumulator = observables.utility.accumulator({
-            aquire = msv.en_tot
-          , every = 10
-          , group = {"averaged_total_energy"}
-          , desc = "Averaged total energy"
-        })
-     accumulator:writer(writer, {
-            observables = {
-                {accumulator.mean, "mean"}
-              , {accumulator.error, "error"}
-              , {accumulator.sum, "sum"}
-            }
-          , every = 200
-          , reset = true
-        })
-    --]]
-    --local sum_writer = writer:writer{location = {"observables"}, mode = "append"}
+         aquire = msv.en_tot
+       , every = 10
+       , desc = "Averaged total energy"
+     })
+     accumulator:writer({
+         file = writer
+       , location = {"observables", "averaged_total_energy"}
+       , fields = {"mean", "error_of_mean", "variance"}
+       , every = 200
+       , reset = true
+     })
 
     -- sample initial state
     observables.sampler:sample()
