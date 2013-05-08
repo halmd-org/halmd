@@ -27,22 +27,30 @@ local correlation = require("halmd.observables.dynamics.correlation")
 -- ======================================
 --
 -- This module calculates the autocorrelation of the off-diagonal elements of
--- the stess tensor :math:`\Pi`:
+-- the stess tensor :math:`\Pi_{\alpha\beta}`:
 --
 -- .. math::
---     \langle \Pi_{\alpha\beta}(t)  \Pi_{\alpha\beta}(0) \rangle \, \text{.}
 --
+--     C_{\alpha\beta}(t) = \frac{1}{N} \langle \Pi_{\alpha\beta}(t)  \Pi_{\alpha\beta}(0) \rangle
+--     \, \text{.}
 --
--- The above quantity can be used to calculate the shear viscosity :math:`\eta`
--- with the Green-Kubo relation for the shear viscosity
+-- By normalisation with the particle number :math:`N`, the result remains
+-- finite in the thermodynamic limit. The stress tensor is obtained from
+-- :meth:`halmd.observables.thermodynamics.stress_tensor()`.
+--
+-- The shear viscosity :math:`\eta` is found from this autocorrelation via the
+-- Green--Kubo relation
 --
 -- .. math::
---     \eta = \ \frac{1}{k_BTV} \int_0^\infty \! \mathrm{d}t \, \langle \Pi_{\alpha\beta}(t)  \Pi_{\alpha\beta}(0) \rangle \, \text{.}
+--
+--     \eta = \frac{1}{\rho k_B T} \int_0^\infty \! C_{\alpha\beta}(t) \, \mathrm{d}t \,
+--     \text{.}
 --
 -- .. note::
---     Analogue to :mod:`halmd.observables.dynamics.velocity_autocorrelation`,
---     this module returns the sum over all :math:`d` (= dimension) off-diagonal elements,
---     not just one component.
+--
+--     The module returns the sum over all off-diagonal elements,
+--     :math:`\sum_{\alpha < \beta} C_{\alpha\beta}(t)`, analogously to
+--     :mod:`halmd.observables.dynamics.mean_square_displacement`.
 --
 
 
@@ -81,6 +89,7 @@ local M = module(function(args)
 
     local label = assert(msv.group.label)
     local dimension = assert(msv.dimension)
+    local nparticle = (function() return msv:nparticle() end)() -- FIXME
 
     -- construct correlation module for the stress tensor autocorrelation
     local self = assert(correlation({
@@ -95,13 +104,13 @@ local M = module(function(args)
             for i = dimension + 1, #first do
                 result = result + second[i] * first[i]
             end
-            -- analogue to the vacf do not divide by the dimension
-            return result
+            -- normalise by the number of particle used to compute the stress tensor
+            return result / nparticle
         end
         -- H5MD group
       , group = {label, "stress_tensor_autocorrelation"}
         -- profiler description
-      , desc = ("stress tensor autocorrelation of %s"):format(label)
+      , desc = ("stress tensor autocorrelation of %s particles"):format(label)
     }))
 
     return self
