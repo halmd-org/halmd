@@ -1,5 +1,6 @@
 --
 -- Copyright © 2013 Nicolas Höft
+-- Copyright © 2013 Felix Höfling
 --
 -- This file is part of HALMD.
 --
@@ -27,42 +28,61 @@ local accumulator = require("halmd.observables.utility.accumulator")
 -- Helfand Moment
 -- ==============
 --
--- This module calculates the mean-squared difference of the Helfand moment
--- :math:`G_{\alpha\beta}(t)` (with :math:`\alpha, \beta \in \{x, y, z\}`),
+-- This module calculates mean-square difference of the Helfand moment for the
+-- stress tensor [1]_\ [2]_,
 --
 -- .. math::
---     \langle [G_{\alpha\beta}(t) - G_{\alpha\beta}(0)]^2 \rangle \, \text{,}
+--     \delta G^2_{\alpha\beta}(t) := \frac{1}{N}
+--      \bigl\langle [G_{\alpha\beta}(t) - G_{\alpha\beta}(0)]^2 \bigr\rangle
+--      \qquad \alpha, \beta \in \{x, y, z\} \, ,
 --
--- where :math:`G_{\alpha\beta}(t)` is defined as the integral over the stress
--- tensor elements :math:`\Pi_{\alpha\beta}`,
---
--- .. math::
---     G_{\alpha\beta}(t) = \int_0^t \! \mathrm{d}t' \, \Pi_{\alpha\beta}(t') \, \text{.}
---
--- This integral is computed numerically using :mod:`halmd.observables.utility.accumulator`
--- with the specified integration interval.
---
--- The above equations can be used to calculate the shear viscosity :math:`\eta`
--- with the Einstein-Helfand relation
+-- where the Helfand moment :math:`G_{\alpha\beta}(t)` is defined as the time
+-- integral of the stress tensor :math:`\Pi_{\alpha\beta}(t)`,
 --
 -- .. math::
---     \eta = \lim_{t\to\infty} \frac{1}{2tk_BTV} \langle [G_{\alpha\beta}(t) - G_{\alpha\beta}(0)]^2 \rangle \, \text{.}
+--     G_{\alpha\beta}(t) = \int_0^t \! \Pi_{\alpha\beta}(t') \, \mathrm{d}t'
+--     \approx \sum_{k=0}^{n-1} \Pi_{\alpha\beta}(k \delta t) \, \delta t \,
+--     \qquad t = n \, \delta t \, .
+--
+-- The normalisation with the particle number :math:`N` renders :math:`\delta
+-- G^2_{\alpha\beta}(t)` finite in the thermodynamic limit. The stress tensor
+-- is obtained from :meth:`halmd.observables.thermodynamics.stress_tensor()`,
+-- and the integral is computed numerically over discrete time intervals
+-- :math:`\delta t` using :mod:`halmd.observables.utility.accumulator`.
+--
+-- The shear viscosity :math:`\eta` is obtained from :math:`\delta
+-- G^2_{\alpha\beta}(t)` by virtue of the Einstein–Helfand relation
+--
+-- .. math::
+--     \eta = \frac{1}{\rho k_B T} \lim_{t\to\infty}
+--     \frac{\mathrm{d}}{2 \mathrm{d}t} \delta G^2_{\alpha\beta}(t) \, .
+--
+-- .. [1] B. J. Alder, D. M. Gass, and T. E. Wainwright,
+--       *Studies in molecular dynamics. VIII. The transport coefficients for a hard-sphere fluid*,
+--       J. Chem. Phys. **53**, 3813 (1970)
+--       `[Link] <http://dx.doi.org/10.1063/1.1673845>`__.
+--
+-- .. [2] S. Viscardy and P. Gaspard,
+--        *Viscosity in molecular dynamics with periodic boundary conditions*,
+--        Phys. Rev. E **68**, 041204 (2003)
+--        `[Link] <http://dx.doi.org/10.1103/PhysRevE.68.041204>`__.
 --
 -- .. note::
---     Analogue to :mod:`halmd.observables.dynamics.mean_square_displacement`,
---     this module returns the sum over all :math:`d` (= dimension) off-diagonal elements,
---     not just one component.
+--
+--     The module returns the sum over all off-diagonal elements,
+--     :math:`\sum_{\alpha < \beta} \delta G^2_{\alpha\beta}(t)` analogously to
+--     :mod:`halmd.observables.dynamics.mean_square_displacement`.
 --
 
-
 ---
--- Construct helfand moment
+-- Construct Helfand moment
 --
 -- This module implements a :mod:`halmd.observables.dynamics.correlation` module.
 --
 -- :param args: keyword arguments
 -- :param args.thermodynamics: instance of :class:`halmd.observables.thermodynamics`
--- :param number args.integration_interval: Interval used to integrate the stress tensor.
+-- :param number args.interval: time interval for the integration of the stress
+--   tensor in simulation steps
 --
 -- .. method:: acquire()
 --
@@ -76,7 +96,8 @@ local accumulator = require("halmd.observables.utility.accumulator")
 --
 --    :param first: first phase space sample
 --    :param second: second phase space sample
---    :returns: mean-squared integral of the off diagonal elements of the stress tensor
+--    :returns: mean-square integral of the off-diagonal elements of the stress
+--      tensor
 --
 -- .. attribute:: group
 --
@@ -92,15 +113,16 @@ local accumulator = require("halmd.observables.utility.accumulator")
 --
 local M = module(function(args)
     local msv = utility.assert_kwarg(args, "thermodynamics")
-    local integration_interval = utility.assert_type(utility.assert_kwarg(args, "integration_interval"), "number")
+    local interval = utility.assert_type(utility.assert_kwarg(args, "interval"), "number")
 
-    local resolution = integration_interval * assert(clock.timestep)
+    local resolution = interval * assert(clock.timestep)
     local label = assert(msv.group.label)
     local dimension = assert(msv.dimension)
+    local nparticle = (function() return msv:nparticle() end)() -- FIXME
 
     local stress_tensor = accumulator({
         aquire = msv.stress_tensor
-      , every = integration_interval
+      , every = interval
       , desc = "stress tensor"
     })
 
@@ -115,16 +137,16 @@ local M = module(function(args)
             local result = 0
             -- skip the diagonal elements
             for i = dimension + 1, #first do
-                -- integrate via rectangular rule by multiplying with Δt * interval
+                -- integrate via rectangular rule by multiplying with Δt
                 result = result + math.pow((second[i] - first[i]) * resolution, 2)
             end
-            -- analogue to the msd do not divide by the dimension
-            return result
+            -- normalise by the number of particle used to compute the stress tensor
+            return result / nparticle
         end
         -- H5MD group
-      , group = {label, "helfand_moment"}
+      , group = {label, "mean_square_helfand_moment"}
         -- profiler description
-      , desc = ("helfand moment of %s"):format(label)
+      , desc = ("MSD of the Helfand moment of %s particles"):format(label)
     }))
 
     -- add disconnect() function in order to remove the stress tensor accumulator

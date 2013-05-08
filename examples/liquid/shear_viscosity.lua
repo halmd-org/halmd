@@ -193,7 +193,7 @@ local function shear_viscosity(args)
       , size = 10
     })
 
-    local helfand_moment = dynamics.helfand_moment({thermodynamics = msv, integration_interval = 5})
+    local helfand_moment = dynamics.helfand_moment({thermodynamics = msv, interval = 5})
     blocking_scheme:correlation(helfand_moment, writer)
 
     local stress_tensor_autocorrelation = dynamics.stress_tensor_autocorrelation({thermodynamics = msv})
