@@ -18,6 +18,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <exception>
 #include <functional>
 
 #include <halmd/io/logger.hpp>
@@ -79,6 +80,9 @@ void sampler::run(step_type steps)
 
 connection sampler::on_sample(std::function<void ()> const& slot, step_type interval, step_type start)
 {
+    if (interval == 0) {
+        throw std::logic_error("Slot must not be connected to signal 'on_sample' with zero sampling interval");
+    }
     return on_sample_.connect([=]() {
         step_type step = clock_->step();
         if(step >= start && (step - start) % interval == 0) {
