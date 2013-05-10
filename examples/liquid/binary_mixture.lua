@@ -130,7 +130,14 @@ local function liquid(args)
 
         -- sample macroscopic state variables
         local msv = observables.thermodynamics({box = box, group = group, force = force})
-        msv:writer(file, {every = args.sampling.state_vars})
+        msv:writer({
+            file = file
+          , fields = {
+                "potential_energy", "pressure", "temperature"  -- fluctuating quantities
+              , "total_energy", "center_of_mass_velocity"      -- conserved quantities
+            }
+          , every = args.sampling.state_vars
+        })
 
         -- setup blocking scheme for correlation functions
         local max_lag = args.steps * integrator.timestep / 10

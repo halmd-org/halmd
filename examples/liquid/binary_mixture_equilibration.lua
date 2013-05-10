@@ -126,7 +126,7 @@ local function liquid(args)
 
         -- Sample macroscopic state variables.
         local msv = observables.thermodynamics({box = box, group = group, force = force})
-        msv:writer(file, {every = args.sampling.state_vars})
+        msv:writer({file = file, every = args.sampling.state_vars})
     end
 
     -- sample initial state

@@ -105,11 +105,11 @@ local function liquid(args)
     local interval = args.sampling.state_vars
     if interval > 0 then
         msv = observables.thermodynamics({box = box, group = particle_group, force = force})
-        msv:writer(file, {every = interval})
+        msv:writer({file = file, every = interval})
     end
 
     local accumulator = observables.utility.accumulator({
-         aquire = msv.en_tot
+         aquire = msv.total_energy
        , every = 10
        , desc = "Averaged total energy"
      })

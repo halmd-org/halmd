@@ -77,7 +77,7 @@ double thermodynamics<dimension, float_type>::en_kin()
 }
 
 /**
- * compute mean velocity
+ * compute centre-of-mass velocity
  */
 template <int dimension, typename float_type>
 typename thermodynamics<dimension, float_type>::vector_type const&
@@ -106,7 +106,7 @@ thermodynamics<dimension, float_type>::r_cm()
     cache<size_type> const& group_cache = group_->size();
 
     if (r_cm_cache_ != std::tie(position_cache, group_cache)) {
-        LOG_TRACE("acquire centre-of-mass velocity");
+        LOG_TRACE("acquire centre of mass");
         scoped_timer_type timer(runtime_.v_cm);
         r_cm_ = get_r_cm(*particle_, *group_, *box_);
         r_cm_cache_ = std::tie(position_cache, group_cache);
@@ -124,7 +124,7 @@ double thermodynamics<dimension, float_type>::mean_mass()
     cache<size_type> const& group_cache = group_->size();
 
     if (v_cm_cache_ != std::tie(velocity_cache, group_cache)) {
-        LOG_TRACE("acquire centre-of-mass velocity");
+        LOG_TRACE("acquire mean particle mass");
         scoped_timer_type timer(runtime_.v_cm);
         std::tie(v_cm_, mean_mass_) = get_v_cm_and_mean_mass(*particle_, *group_);
         v_cm_cache_ = std::tie(velocity_cache, group_cache);

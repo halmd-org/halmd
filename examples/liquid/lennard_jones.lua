@@ -100,7 +100,14 @@ local function liquid(args)
     local msv = observables.thermodynamics({box = box, group = particle_group, force = force})
     local interval = args.sampling.state_vars
     if interval > 0 then
-        msv:writer(file, {every = interval})
+        msv:writer({
+            file = file
+          , fields = {
+                "potential_energy", "pressure", "temperature"  -- fluctuating quantities
+              , "total_energy", "center_of_mass_velocity"      -- conserved quantities
+            }
+          , every = args.sampling.state_vars
+        })
     end
 
     -- time correlation functions
@@ -128,7 +135,7 @@ local function liquid(args)
         local selfdiffusion = dynamics.correlation({
             -- acquire centre of mass
             acquire = function()
-                return msv:r_cm()
+                return msv:center_of_mass()
             end
             -- correlate centre of mass at first and second point in time
           , correlate = function(first, second)

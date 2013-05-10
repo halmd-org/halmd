@@ -1,5 +1,5 @@
 --
--- Copyright © 2010-2012  Felix Höfling
+-- Copyright © 2010-2013  Felix Höfling
 -- Copyright © 2013       Nicolas Höft
 -- Copyright © 2010-2012  Peter Colberg
 --
@@ -19,9 +19,10 @@
 -- along with this program.  If not, see <http://www.gnu.org/licenses/>.
 --
 
-local log               = require("halmd.io.log")
-local module            = require("halmd.utility.module")
-local sampler           = require("halmd.observables.sampler")
+local log     = require("halmd.io.log")
+local module  = require("halmd.utility.module")
+local sampler = require("halmd.observables.sampler")
+local utility = require("halmd.utility")
 
 -- grab C++ wrappers
 local thermodynamics = assert(libhalmd.observables.thermodynamics)
@@ -30,102 +31,144 @@ local thermodynamics = assert(libhalmd.observables.thermodynamics)
 -- Thermodynamics
 -- ==============
 --
--- This module calculates thermodynamic state variables for the particles of
--- a group.
+-- This module calculates the instantaneous values of thermodynamic state
+-- variables for the particles of a given group.
 --
 
 ---
--- Construct thermodynamics observable.
+-- Construct thermodynamics module.
 --
 -- :param table args: keyword arguments
 -- :param args.group: instance of :mod:`halmd.mdsim.particle_groups`
 -- :param args.force: instance of :mod:`halmd.mdsim.forces`
 -- :param args.box: instance of :class:`halmd.mdsim.box`
 --
--- .. method:: writer(file, args)
---
---    Write state variables to file.
---
---    :param file: instance of file writer
---    :param table args: keyword arguments
---    :param number args.every: sampling interval
---    :returns: instance of group writer
---
 -- .. method:: nparticle()
 --
---    Returns number of particles.
+--    Returns the number of particles :math:`N` selected by ``args.group``.
 --
 -- .. method:: density()
 --
---    Returns number density.
+--    Returns the number density :math:`\rho = N / V` using the volume from
+--    ``args.box``.
 --
--- .. method:: en_kin()
+-- .. method:: kinetic_energy()
 --
---    Returns mean kinetic energy per particle.
+--    Returns the mean kinetic energy per particle:
+--    :math:`e_{\text{kin}} = \frac{1}{N} \sum_{i=1}^N \frac{1}{2} m_i \vec v_i^2`.
 --
--- .. method:: en_pot()
+-- .. method:: potential_energy()
 --
---    Returns mean potential energy per particle.
+--    Returns the mean potential energy per particle:
+--    :math:`e_{\text{pot}} = \frac{1}{N} \sum_{i=1}^N U_{\text{tot}}(\vec r_i)`,
+--    where :math:`U_{\text{tot}}` denotes the sum of external and pair
+--    potentials.
 --
--- .. method:: en_tot()
+-- .. method:: total_energy()
 --
---    Returns mean total energy per particle.
+--    Returns the mean total energy per particle:
+--    :math:`e_{\text{tot}} = e_{\text{kin}} + e_{\text{pot}}`.
 --
 -- .. method:: pressure()
 --
---    Returns virial pressure.
+--    Returns the pressure computed from the virial:
+--    :math:`p = \rho (k_B T - \mathcal{V} / d)`.
 --
--- .. method:: temp()
+-- .. method:: temperature()
 --
---    Returns temperature.
+--    Returns the instantaneous temperature as given by the kinetic energy:
+--    :math:`k_B T = 2 e_{\text{kin}} / d`.
 --
--- .. method:: v_cm()
+-- .. method:: center_of_mass_velocity()
 --
---    Returns center of mass velocity.
+--    Returns the centre-of-mass velocity:
+--    :math:`\vec v_{\text{cm}} = \sum_{i=1}^N m_i \vec v_i / \sum_{i=1}^N m_i`.
 --
--- .. method:: r_cm()
+-- .. method:: center_of_mass()
 --
---    Returns center of mass.
+--    Returns the centre of mass:
+--    :math:`\vec r_{\text{cm}} = \sum_{i=1}^N m_i \vec r_i' / \sum_{i=1}^N m_i`,
+--    where :math:`\vec r_i'` refers to absolute particle positions, i.e.,
+--    extended by their image vectors for periodic boundary conditions.
 --
 -- .. method:: mean_mass()
 --
---    Returns mean particle mass.
+--    Returns the mean particle mass: :math:`\bar m = \frac{1}{N} \sum_{i=1}^N m_i`.
 --
 -- .. method:: virial()
 --
---    Returns mean virial per particle.
+--    Returns mean virial per particle as computed from the trace of the
+--    potential part of the stress tensor:
+--
+--    .. math::
+--
+--      \mathcal{V} = \frac{1}{2 N} \sum_{i \neq j} r_{ij} \, U'(r_{ij}) \, .
 --
 -- .. method:: hypervirial()
 --
---    Returns mean hypervirial per particle.
+--    Returns the mean hypervirial per particle, see the book by M. P. Allen
+--    and D. J. Tildesley (Clarendon Press, Oxford, 1987) for a definition.
+--    This quantity may be used to determine the isochoric compressibility from
+--    NVE simulations, which does not work very well in practice. A superior
+--    route is to extrapolate the static structure factor to zero wavenumber.
+--
+--    *This method will be deprecated in the next release.*
 --
 -- .. method:: stress_tensor()
 --
---    Returns the elements of the stress tensor as a vector.
---    The first :math:`d` (= `dimension`) elements contain the diagonal followed
---    by :math:`d(d-1)/2` off-diagonal elements :math:`T_{xy}, T_{xz}, \dots, T_{yz}, \dots`
+--    Returns the elements of the stress tensor :math:`\Pi_{\alpha\beta}` as a
+--    vector. The first :math:`d` (= `dimension`) elements contain the diagonal
+--    followed by :math:`d(d-1)/2` off-diagonal elements :math:`\Pi_{xy},
+--    \Pi_{xz}, \dots, \Pi_{yz}, \dots`
+--    The stress tensor is computed as
+--
+--    .. math::
+--
+--      \Pi_{\alpha\beta} = \sum_{i=1}^N \left[
+--        m_i v_{i\alpha} v_{i\beta} +
+--        \frac{1}{2}\sum_{j \neq i} \frac{r_{ij\alpha} r_{ij\beta}}{r_{ij}} \, U'(r_{ij})
+--        \right] \/,
+--
+--    where :math:`\vec r_{ij} = \vec r_i - \vec r_j` in nearest image convention.
 --
 -- .. attribute:: dimension
 --
---    Space dimension of the simulation box as a number.
+--    Space dimension :math:`d` of the simulation box as a number.
 --
 -- .. attribute:: group
 --
 --    Instance of :mod:`halmd.mdsim.particle_groups` used to construct the module.
 --
+-- .. method:: writer(args)
+--
+--    Write state variables to a file.
+--
+--    :param table args: keyword arguments
+--    :param args.file: instance of file writer
+--    :param number args.every: sampling interval
+--    :param string table args.location: location within file (optional)
+--    :param table args.fields: data fields to be written (optional)
+--    :returns: instance of group writer
+--
+--    The argument ``location`` specifies a path in a structured file format
+--    like H5MD given as a table of strings. If omitted it defaults to
+--    ``{"observables", group.label}``.
+--
+--    The table ``fields`` specifies which data fields are written. It may
+--    either be passed as an indexed table, e.g. ``{"pressure"}``,
+--    or as a dictionary, e.g., ``{p = "pressure"}``; the table
+--    form is interpreted as ``{pressure = "pressure", …}``. The keys denote
+--    the field names in the file and are appended to ``location``. The values
+--    specify the data methods of the ``thermodynamics`` module, i.e., all
+--    methods described above except for ``dimension`` and ``group``. The default
+--    is ``{"potential_energy", "pressure", "temperature",
+--    "center_of_mass_velocity"}``.
+--
 local M = module(function(args)
-    local group = args.group
-    if not group then
-        error("missing parameter 'group'", 2)
-    end
-    local force = args.force
-    if not force then
-        error("missing parameter 'force'", 2)
-    end
-    local box = args.box
-    if not box then
-        error("missing parameter 'box'", 2)
-    end
+    local group = utility.assert_kwarg(args, "group")
+    local force = utility.assert_kwarg(args, "force")
+    local box = utility.assert_kwarg(args, "box")
+
     local particle = assert(group.particle)
     local label = assert(group.label)
     local logger = log.logger({label = ("thermodynamics (%s)"):format(label)})
@@ -133,30 +176,55 @@ local M = module(function(args)
     -- construct instance
     local self = thermodynamics(particle, force, group, box, logger)
 
-    self.writer = function(self, file, args)
-        local writer = file:writer{location = {"observables"}, mode = "append"}
-        writer:on_write(self.en_pot       , {label, "potential_energy"       })
-        writer:on_write(self.en_kin       , {label, "kinetic_energy"         })
-        writer:on_write(self.en_tot       , {label, "total_energy"           })
-        writer:on_write(self.v_cm         , {label, "center_of_mass_velocity"})
-        writer:on_write(self.pressure     , {label, "pressure"               })
-        writer:on_write(self.temp         , {label, "temperature"            })
-        writer:on_write(self.virial       , {label, "virial"                 })
-        writer:on_write(self.hypervirial  , {label, "hypervirial"            })
-        writer:on_write(self.stress_tensor, {label, "stress_tensor"          })
+    self.dimension = property(function(self) return box.dimension end)
+    self.group = property(function(self) return group end)
+
+    self.writer = function(self, args)
+        local file = utility.assert_kwarg(args, "file")
+        local every = utility.assert_kwarg(args, "every")
+        local location = utility.assert_type(args.location or {"observables", group.label}, "table")
+        local fields = utility.assert_type(
+            args.fields or {"potential_energy", "pressure", "temperature", "center_of_mass_velocity"}
+          , "table")
+
+        local writer = file:writer{location = location, mode = "append"}
+
+        -- register data fields with writer,
+        -- the keys of 'field' may either be strings (dictionary) or numbers (table),
+        -- in the latter case, the value string is assigned to the group name
+        for k,v in pairs(fields) do
+            local name = (type(k) == "string") and k or v
+            writer:on_write(assert(self[v]), {name})
+        end
+
+        -- sequence of signal connections
+        local conn = {}
+
+        writer.connect = function(self)
+            if #conn == 0 then
+                table.insert(conn, assert(sampler:on_sample(self.write, every, 0)))
+                    -- FIXME register profilers
+            else
+                error("thermodynamics writer is already connected", 2)
+            end
+        end
+
+        writer.disconnect = function(self)
+            if #conn > 0 then
+                for i = 1, #conn do
+                    conn[i]:disconnect()
+                end
+                conn = {}
+            else
+                error("thermodynamics writer is already disconnected", 2)
+            end
+        end
 
         -- connect writer to sampler
-        local every = args.every
-        if not every then
-            error("missing parameter 'every'", 2)
-        end
-        sampler:on_sample(writer.write, every, 0)
+        writer:connect()
 
         return writer
     end
-
-    self.dimension = property(function(self) return box.dimension end)
-    self.group = property(function(self) return group end)
 
     return self
 end)

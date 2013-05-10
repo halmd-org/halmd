@@ -37,8 +37,8 @@ local function rescale_velocities(args)
     local msv   = assert(args.msv)
     local group = assert(msv.group)
 
-    local vcm  = msv:v_cm()
-    local epot = msv:en_pot()
+    local vcm  = msv:center_of_mass_velocity()
+    local epot = msv:potential_energy()
     local dimension = #vcm
 
     for d = 1, dimension do
@@ -47,7 +47,7 @@ local function rescale_velocities(args)
 
     group.particle:shift_velocity_group(group, vcm)
 
-    local ekin = msv:en_kin()
+    local ekin = msv:kinetic_energy()
 
     local scale = 1
     if (args.total_energy) then
@@ -115,11 +115,11 @@ local function shear_viscosity(args)
     local msv = observables.thermodynamics({box = box, group = particle_group, force = force})
     local interval = args.sampling.state_vars
     if interval > 0 then
-        msv:writer(file, {every = interval})
+        msv:writer({file = file, every = args.sampling.state_vars})
     end
 
     local total_energy = observables.utility.accumulator({
-        aquire = msv.en_tot
+        aquire = msv.total_energy
       , every = 500
       , start = math.floor(equi_steps / 2)
       , desc = "averaged total energy"
@@ -164,7 +164,7 @@ local function shear_viscosity(args)
     total_energy:disconnect()
 
     local temperature = observables.utility.accumulator({
-        aquire = msv.temp
+        aquire = msv.temperature
       , every = 200
       , desc = "averaged temperature"
     })
@@ -175,6 +175,12 @@ local function shear_viscosity(args)
       , every = math.floor(args.steps / 1000)
       , reset = true
     })
+
+    -- monitor total energy in NVE run in addition to the fields registered above
+    interval = args.sampling.state_vars
+    if interval > 0 then
+        msv:writer({file = file, fields = {"total_energy"}, every = interval})
+    end
 
     -- replace thermostat integrator by NVE velocity-Verlet
     integrator = mdsim.integrators.verlet({

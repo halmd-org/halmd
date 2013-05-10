@@ -33,14 +33,15 @@ local module  = require("halmd.utility.module")
 -- mean-square displacement of the centre of mass of a certain particle group.
 -- From this, the collective self-diffusion constant may be obtained.  The
 -- centre of mass is computed efficiently by
--- :meth:`halmd.observables.thermodynamics.r_cm`, the squared displacement is
--- then computed by the script function passed as ``correlate``. ::
+-- :meth:`halmd.observables.thermodynamics.center_of_mass`, the squared
+-- displacement is then computed by the script function passed as
+-- ``correlate``. ::
 --
 --     local msv = observables.thermodynamics({box = box, group = group, force = force})
 --     local collective_msd = dynamics.correlation({
 --         -- acquire centre of mass
 --         acquire = function()
---             return msv:r_cm()
+--             return msv:center_of_mass()
 --         end
 --         -- correlate centre of mass at first and second point in time
 --         , correlate = function(first, second)
