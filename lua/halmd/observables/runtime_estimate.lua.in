@@ -83,17 +83,6 @@ local M = module(function(args)
 
     -- sequence of signal connections
     local conn = {}
-
-    self.connect = function(self)
-        if #conn == 0 then
-            table.insert(conn, assert(timer_service:on_periodic(self.estimate, interval, first)))
-            table.insert(conn, assert(timer_service:on_periodic(self.sample, sample, 0)))
-            table.insert(conn, assert(posix_signal:on_usr1(self.estimate)))
-        else
-            error("runtime estimate is already connected", 2)
-        end
-    end
-
     self.disconnect = function(self)
         if #conn > 0 then
             for i = 1, #conn do
@@ -105,7 +94,10 @@ local M = module(function(args)
         end
     end
 
-    self:connect()
+    -- connect to timer service and signal handler
+    table.insert(conn, assert(timer_service:on_periodic(self.estimate, interval, first)))
+    table.insert(conn, assert(timer_service:on_periodic(self.sample, sample, 0)))
+    table.insert(conn, assert(posix_signal:on_usr1(self.estimate)))
 
     return self
 end)

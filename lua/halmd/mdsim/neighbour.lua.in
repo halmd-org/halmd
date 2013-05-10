@@ -97,12 +97,6 @@ end
 --
 --    Disconnect neighbour module from core and profiler.
 --
--- .. method:: connect()
---
---    Connect neighbour module to core and profiler.
---
---    By default the neighbour module is connected.
---
 local M = module(function(args)
     -- cutoff radius matrix of truncated potential
     local r_cut = utility.assert_kwarg(args, "r_cut")
@@ -149,17 +143,16 @@ local M = module(function(args)
         end
     end
 
-    local conn = {}
+    -- store particle instances as Lua property
+    self.particle = property(function(self) return particle end)
 
-    self.connect = function(self)
-        if #conn == 0 then
-            local runtime = assert(self.runtime)
-            profiler:on_profile(runtime.update, "update of neighbour lists " .. label(self.particle))
-        else
-            error("Neighbour module is already connected")
-        end
+    -- sort particles before neighbour list update
+    if not args.disable_sorting then
+        local sort = mdsim.sort{box = box, particle = particle[1], binning = binning}
+        self:on_prepend_update(sort.order)
     end
 
+    local conn = {}
     self.disconnect = function(self)
         if #conn > 0 then
             for i = 1, #conn do
@@ -171,17 +164,9 @@ local M = module(function(args)
         end
     end
 
-    -- store particle instances as Lua property
-    self.particle = property(function(self) return particle end)
-
-    -- sort particles before neighbour list update
-    if not args.disable_sorting then
-        local sort = mdsim.sort{box = box, particle = particle[1], binning = binning}
-        self:on_prepend_update(sort.order)
-    end
-
-    -- connect neighbour module to core
-    self:connect()
+    -- connect neighbour module to profiler
+    local runtime = assert(self.runtime)
+    profiler:on_profile(runtime.update, "update of neighbour lists " .. label(self.particle))
 
     return self
 end)

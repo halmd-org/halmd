@@ -164,6 +164,10 @@ local thermodynamics = assert(libhalmd.observables.thermodynamics)
 --    is ``{"potential_energy", "pressure", "temperature",
 --    "center_of_mass_velocity"}``.
 --
+--    .. method:: disconnect()
+--
+--       Disconnect thermodynamics writer from observables sampler.
+--
 local M = module(function(args)
     local group = utility.assert_kwarg(args, "group")
     local force = utility.assert_kwarg(args, "force")
@@ -199,16 +203,6 @@ local M = module(function(args)
 
         -- sequence of signal connections
         local conn = {}
-
-        writer.connect = function(self)
-            if #conn == 0 then
-                table.insert(conn, assert(sampler:on_sample(self.write, every, 0)))
-                    -- FIXME register profilers
-            else
-                error("thermodynamics writer is already connected", 2)
-            end
-        end
-
         writer.disconnect = function(self)
             if #conn > 0 then
                 for i = 1, #conn do
@@ -221,7 +215,8 @@ local M = module(function(args)
         end
 
         -- connect writer to sampler
-        writer:connect()
+        table.insert(conn, assert(sampler:on_sample(writer.write, every, 0)))
+        -- FIXME register profilers
 
         return writer
     end

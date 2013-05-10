@@ -177,16 +177,6 @@ local M = module(function(args)
 
     -- sequence of signal connections
     local conn = {}
-
-    self.connect = function(self)
-        if #conn == 0 then
-            local runtime = assert(self.runtime)
-            table.insert(conn, assert(profiler:on_profile(runtime.rearrange, "rearrange particles by permutation")))
-        else
-            error("particle is already connected", 2)
-        end
-    end
-
     self.disconnect = function(self)
         if #conn > 0 then
             for i = 1, #conn do
@@ -198,8 +188,11 @@ local M = module(function(args)
         end
     end
 
-    -- zero particle forces every step before partial forces are added
-    self:connect()
+    -- zero particle forces every step before partial forces are added -- FIXME ???
+
+    -- connect to profiler
+    local runtime = assert(self.runtime)
+    table.insert(conn, assert(profiler:on_profile(runtime.rearrange, "rearrange particles by permutation")))
 
     return self
 end)

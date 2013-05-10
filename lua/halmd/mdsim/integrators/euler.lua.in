@@ -42,20 +42,11 @@ local M = module(function(args)
     local timestep = assert(clock.timestep)
     local logger = log.logger({label = "euler"})
 
-    local integrator = euler(particle, box, timestep, logger)
+    local self = euler(particle, box, timestep, logger)
 
     -- sequence of signal connections
     local conn = {}
-
-    integrator.connect = function(self)
-        if #conn == 0 then
-            table.insert(conn, assert(core:on_integrate(self.integrate)))
-        else
-            error("integrator is already connected", 2)
-        end
-    end
-
-    integrator.disconnect = function(self)
+    self.disconnect = function(self)
         if #conn > 0 then
             for i = 1, #conn do
                 conn[i]:disconnect()
@@ -67,9 +58,9 @@ local M = module(function(args)
     end
 
     -- connect integrator to core
-    integrator:connect()
+    table.insert(conn, assert(core:on_integrate(self.integrate)))
 
-    return integrator
+    return self
 end)
 
 --

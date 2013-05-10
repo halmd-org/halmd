@@ -104,12 +104,6 @@ local h5 = assert(libhalmd.h5)
 --
 --    Disconnect integrator from core and profiler.
 --
--- .. method:: connect()
---
---    Connect integrator to core and profiler.
---
---    By default the integrator is connected.
---
 -- .. method:: integrate()
 --
 --    Calculate first half-step.
@@ -166,23 +160,6 @@ local M = module(function(args)
 
     -- sequence of signal connections
     local conn = {}
-
-    self.connect = function(self)
-        if #conn == 0 then
-            table.insert(conn, assert(clock:on_set_timestep(function(timestep) set_timestep(self, timestep) end)))
-            table.insert(conn, assert(core:on_integrate(self.integrate)))
-            table.insert(conn, assert(core:on_finalize(self.finalize)))
-            table.insert(conn, assert(profiler:on_profile(self.runtime.integrate, "first half-step of velocity-Verlet (+ Nosé-Hoover chain)")))
-            table.insert(conn, assert(profiler:on_profile(self.runtime.finalize, "second half-step of velocity-Verlet (+ Nosé-Hoover chain)")))
-            table.insert(conn, assert(profiler:on_profile(self.runtime.propagate, "propagate Nosé-Hoover chain")))
-            if device.gpu then
-                table.insert(conn, assert(profiler:on_profile{self.runtime.rescale, "rescale velocities in Nosé-Hoover thermostat"}))
-            end
-        else
-            error("integrator is already connected", 2)
-        end
-    end
-
     self.disconnect = function(self)
         if #conn > 0 then
             for i = 1, #conn do
@@ -193,11 +170,6 @@ local M = module(function(args)
             error("integrator is already disconnected", 2)
         end
     end
-
-    -- add description for profiler
-    self.description = property(function()
-        return "Thermostatted velocity-Verlet integrator using a Nosé-Hoover chain"
-    end)
 
     self.writer = function(self, file, args)
         -- connect writer to sampler
@@ -219,11 +191,26 @@ local M = module(function(args)
         -- connect writer to sampler
         sampler:on_sample(writer.write, every, 0)
 
+        -- FIXME disconnect()
+
         return writer
     end
 
-    -- connect integrator to core
-    self:connect()
+    -- connect integrator to core and profiler
+    table.insert(conn, assert(clock:on_set_timestep(function(timestep) set_timestep(self, timestep) end)))
+    table.insert(conn, assert(core:on_integrate(self.integrate)))
+    table.insert(conn, assert(core:on_finalize(self.finalize)))
+
+    local runtime = assert(self.runtime)
+    table.insert(conn, assert(profiler:on_profile(runtime.integrate,
+        "first half-step of velocity-Verlet (+ Nosé-Hoover chain)")))
+    table.insert(conn, assert(profiler:on_profile(runtime.finalize,
+        "second half-step of velocity-Verlet (+ Nosé-Hoover chain)")))
+    table.insert(conn, assert(profiler:on_profile(runtime.propagate, "propagate Nosé-Hoover chain")))
+    if device.gpu then
+        table.insert(conn, assert(profiler:on_profile{runtime.rescale,
+            "rescale velocities in Nosé-Hoover thermostat"}))
+    end
 
     return self
 end)

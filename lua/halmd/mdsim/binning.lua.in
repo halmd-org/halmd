@@ -72,13 +72,7 @@ local assert = assert
 --
 -- .. method:: disconnect()
 --
---    Disconnect binning module from core and profiler.
---
--- .. method:: connect()
---
---    Connect binning module to core and profiler.
---
---    By default the binning module is connected.
+--    Disconnect binning module from profiler.
 --
 local M = module(function(args)
     -- cutoff radius matrix of truncated potential
@@ -101,17 +95,7 @@ local M = module(function(args)
         self = binning(particle, box, r_cut, skin, logger)
     end
 
-    local conn = {}
-
-    self.connect = function(self)
-        if #conn == 0 then
-            local runtime = assert(self.runtime)
-            table.insert(conn, assert(profiler:on_profile(runtime.update, "cell lists update")))
-        else
-            error("Binning module is already connected")
-        end
-    end
-
+    local conn = {} -- sequence of signal connections
     self.disconnect = function(self)
         if #conn > 0 then
             for i = 1, #conn do
@@ -123,8 +107,9 @@ local M = module(function(args)
         end
     end
 
-    -- connect binning module to core
-    self:connect()
+    -- connect binning module to profiler
+    local runtime = assert(self.runtime)
+    table.insert(conn, assert(profiler:on_profile(runtime.update, "cell lists update")))
 
     return self
 end)

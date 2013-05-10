@@ -74,12 +74,6 @@ local verlet = assert(libhalmd.mdsim.integrators.verlet)
 --
 --    Disconnect integrator from core and profiler.
 --
--- .. method:: connect()
---
---    Connect integrator to core and profiler.
---
---    By default the integrator is connected.
---
 -- .. method:: integrate()
 --
 --    Calculate first half-step.
@@ -126,19 +120,6 @@ local M = module(function(args)
 
     -- sequence of signal connections
     local conn = {}
-
-    self.connect = function(self)
-        if #conn == 0 then
-            table.insert(conn, assert(clock:on_set_timestep(function(timestep) set_timestep(self, timestep) end)))
-            table.insert(conn, assert(core:on_integrate(function() self:integrate() end)))
-            table.insert(conn, assert(core:on_finalize(function() self:finalize() end)))
-            table.insert(conn, assert(profiler:on_profile(self.runtime.integrate, "first half-step of velocity-Verlet")))
-            table.insert(conn, assert(profiler:on_profile(self.runtime.finalize, "second half-step of velocity-Verlet")))
-        else
-            error("integrator is already connected", 2)
-        end
-    end
-
     self.disconnect = function(self)
         if #conn > 0 then
             for i = 1, #conn do
@@ -150,8 +131,14 @@ local M = module(function(args)
         end
     end
 
-    -- connect integrator to core
-    self:connect()
+    -- connect integrator to core and profiler
+    table.insert(conn, assert(clock:on_set_timestep(function(timestep) set_timestep(self, timestep) end)))
+    table.insert(conn, assert(core:on_integrate(function() self:integrate() end)))
+    table.insert(conn, assert(core:on_finalize(function() self:finalize() end)))
+
+    local runtime = assert(self.runtime)
+    table.insert(conn, assert(profiler:on_profile(runtime.integrate, "first half-step of velocity-Verlet")))
+    table.insert(conn, assert(profiler:on_profile(runtime.finalize, "second half-step of velocity-Verlet")))
 
     return self
 end)

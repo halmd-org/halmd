@@ -45,13 +45,7 @@ local max_displacement = assert(libhalmd.mdsim.max_displacement)
 --
 -- .. method:: disconnect()
 --
---    Disconnect displacement from core and profiler.
---
--- .. method:: connect()
---
---    Connect displacement to core and profiler.
---
---    By default this module is connected.
+--    Disconnect module from profiler.
 --
 local M = module(function(args)
     -- dependency injection
@@ -61,17 +55,6 @@ local M = module(function(args)
     local self = max_displacement(particle, box)
 
     local conn = {}
-
-    self.connect = function(self)
-        if #conn == 0 then
-            local runtime = assert(self.runtime)
-            table.insert(conn, assert(profiler:on_profile(runtime.zero, "zero maximum displacement")))
-            table.insert(conn, assert(profiler:on_profile(runtime.compute, "compute maximum displacement")))
-        else
-            error("max_displacement is already connected", 2)
-        end
-    end
-
     self.disconnect = function(self)
         if #conn > 0 then
             for i = 1, #conn do
@@ -83,8 +66,10 @@ local M = module(function(args)
         end
     end
 
-    -- connect module to core
-    self:connect()
+    -- connect module to profiler
+    local runtime = assert(self.runtime)
+    table.insert(conn, assert(profiler:on_profile(runtime.zero, "zero maximum displacement")))
+    table.insert(conn, assert(profiler:on_profile(runtime.compute, "compute maximum displacement")))
 
     return self
 end)

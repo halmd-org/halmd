@@ -85,12 +85,6 @@ local verlet_nvt_andersen = assert(libhalmd.mdsim.integrators.verlet_nvt_anderse
 --
 --    Disconnect integrator from core and profiler.
 --
--- .. method:: connect()
---
---    Connect integrator to core and profiler.
---
---    By default the integrator is connected.
---
 -- .. method:: integrate()
 --
 --    First leapfrog half-step of velocity-Verlet algorithm.
@@ -145,19 +139,6 @@ local M = module(function(args)
 
     -- sequence of signal connections
     local conn = {}
-
-    self.connect = function(self)
-        if #conn == 0 then
-            table.insert(conn, assert(clock:on_set_timestep(function(timestep) set_timestep(self, timestep) end)))
-            table.insert(conn, assert(core:on_integrate(function() self:integrate() end)))
-            table.insert(conn, assert(core:on_finalize(function() self:finalize() end)))
-            table.insert(conn, assert(profiler:on_profile(self.runtime.integrate, "first half-step of velocity-Verlet")))
-            table.insert(conn, assert(profiler:on_profile(self.runtime.finalize, "second half-step of velocity-Verlet (+ Andersen thermostat)")))
-        else
-            error("integrator is already connected", 2)
-        end
-    end
-
     self.disconnect = function(self)
         if #conn > 0 then
             for i = 1, #conn do
@@ -169,8 +150,15 @@ local M = module(function(args)
         end
     end
 
-    -- connect integrator to core
-    self:connect()
+    -- connect integrator to core and profiler
+    table.insert(conn, assert(clock:on_set_timestep(function(timestep) set_timestep(self, timestep) end)))
+    table.insert(conn, assert(core:on_integrate(function() self:integrate() end)))
+    table.insert(conn, assert(core:on_finalize(function() self:finalize() end)))
+
+    local runtime = assert(self.runtime)
+    table.insert(conn, assert(profiler:on_profile(runtime.integrate, "first half-step of velocity-Verlet")))
+    table.insert(conn, assert(profiler:on_profile(runtime.finalize,
+        "second half-step of velocity-Verlet (+ Andersen thermostat)")))
 
     return self
 end)

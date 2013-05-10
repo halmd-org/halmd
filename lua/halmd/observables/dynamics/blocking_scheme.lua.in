@@ -97,29 +97,6 @@ local M = module(function(args)
     -- construct instance
     local self = blocking_scheme(clock, max_lag, resolution, size, shift, separation, logger)
 
-    -- sequence of signal connections
-    local conn = {}
-
-    self.connect = function(self)
-        if #conn == 0 then
-            table.insert(conn, assert(sampler:on_sample(self.sample, every, 0)))
-            table.insert(conn, assert(sampler:on_finish(self.finalise)))
-        else
-            error("blocking scheme is already connected", 2)
-        end
-    end
-
-    self.disconnect = function(self)
-        if #conn > 0 then
-            for i = 1, #conn do
-                conn[i]:disconnect()
-            end
-            conn = {}
-        else
-            error("blocking scheme is already disconnected", 2)
-        end
-    end
-
     self.correlation = function(self, tcf, writer)
         if not tcf then
             error("bad argument 'tcf'", 2)
@@ -149,18 +126,6 @@ local M = module(function(args)
 
         -- sequence of signal connections
         local conn = {}
-
-        result.connect = function(result)
-            if #conn == 0 then
-                table.insert(conn, assert(self:on_sample(sample)))
-                table.insert(conn, assert(self:on_correlate(result)))
-                table.insert(conn, assert(self:on_append_finalise(writer.write)))
-                table.insert(conn, assert(profiler:on_profile(result.runtime.tcf, desc)))
-            else
-                error("correlation function is already connected", 2)
-            end
-        end
-
         result.disconnect = function(result)
             if #conn > 0 then
                 for i = 1, #conn do
@@ -172,14 +137,31 @@ local M = module(function(args)
             end
         end
 
-        -- connect correlation function to blocking scheme
-        result:connect()
+        -- connect correlation function to blocking scheme and profiler
+        table.insert(conn, assert(self:on_sample(sample)))
+        table.insert(conn, assert(self:on_correlate(result)))
+        table.insert(conn, assert(self:on_append_finalise(writer.write)))
+        table.insert(conn, assert(profiler:on_profile(assert(result.runtime).tcf, desc)))
 
         return result
     end
 
+    -- sequence of signal connections
+    local conn = {}
+    self.disconnect = function(self)
+        if #conn > 0 then
+            for i = 1, #conn do
+                conn[i]:disconnect()
+            end
+            conn = {}
+        else
+            error("blocking scheme is already disconnected", 2)
+        end
+    end
+
     -- connect blocking scheme to sampler
-    self:connect()
+    table.insert(conn, assert(sampler:on_sample(self.sample, every, 0)))
+    table.insert(conn, assert(sampler:on_finish(self.finalise)))
 
     return self
 end)

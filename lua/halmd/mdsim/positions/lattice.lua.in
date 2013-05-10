@@ -59,12 +59,6 @@ local lattice = assert(libhalmd.mdsim.positions.lattice)
 --
 --    Set all particle positions on an fcc lattice.
 --
--- .. method:: connect()
---
---    Connect module to profiler.
---
---    This module is connected by default.
---
 -- .. method:: disconnect()
 --
 --    Disconnect module from profiler.
@@ -85,17 +79,8 @@ local M = module(function(args)
 
     local self = lattice(particle, box, slab, logger)
 
+    -- sequence of signal connections
     local conn = {}
-
-    self.connect = function(self)
-        if #conn == 0 then
-            local runtime = assert(self.runtime)
-            table.insert(conn, assert(profiler:on_profile(runtime.set, "setting particle positions on lattice")))
-        else
-            error("lattice module is already connected", 2)
-        end
-    end
-
     self.disconnect = function(self)
         if #conn > 0 then
             for i = 1, #conn do
@@ -106,8 +91,10 @@ local M = module(function(args)
             error("lattice module is already disconnected", 2)
         end
     end
+
     -- connect to profiler
-    self:connect()
+    local runtime = assert(self.runtime)
+    table.insert(conn, assert(profiler:on_profile(runtime.set, "setting particle positions on lattice")))
 
     return self
 end)

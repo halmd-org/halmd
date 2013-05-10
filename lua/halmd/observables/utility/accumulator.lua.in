@@ -74,12 +74,6 @@ local accumulator = assert(libhalmd.observables.utility.accumulator)
 --
 --    Disconnect accumulator from core.
 --
--- .. method:: connect()
---
---    Connect accumulator to core.
---
---    This module is connected by default.
---
 -- .. attribute:: desc
 --
 --    Profiler description.
@@ -121,26 +115,7 @@ local M = module(function(args)
 
     local self = accumulator(aquire, logger)
 
-    local conn = {}
-
-    self.connect = function(self)
-        if #conn == 0 then
-            table.insert(conn, assert(sampler:on_sample(self.sample, every, start)))
-        else
-            error("accumulator is already connected")
-        end
-    end
-
-    self.disconnect = function(self)
-        if #conn > 0 then
-            for i = 1, #conn do
-                conn[i]:disconnect()
-            end
-            conn = {}
-        else
-            error("accumulator is already disconnected")
-        end
-    end
+    self.desc = property(function(self) return desc end)
 
     self.writer = function(self, args)
         local file = utility.assert_kwarg(args, "file")
@@ -167,9 +142,20 @@ local M = module(function(args)
         return writer
     end
 
-    self.desc = property(function(self) return desc end)
+    local conn = {}
+    self.disconnect = function(self)
+        if #conn > 0 then
+            for i = 1, #conn do
+                conn[i]:disconnect()
+            end
+            conn = {}
+        else
+            error("accumulator is already disconnected")
+        end
+    end
 
-    self:connect()
+    -- connect to sampler
+    table.insert(conn, assert(sampler:on_sample(self.sample, every, start)))
 
     return self
 end)

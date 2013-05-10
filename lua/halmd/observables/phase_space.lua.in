@@ -94,10 +94,6 @@ end
 --
 --    Set positions, velocities, species and masses from phase space sample.
 --
--- .. method:: connect()
---
---    Connect phase_space sampler to profiler. This is the default.
---
 -- .. method:: disconnect()
 --
 --    Disconnect phase_space sampler from profiler.
@@ -133,10 +129,6 @@ end
 --
 --    If ``every`` is not specified or 0, a phase space sample will be written
 --    at the start and end of the simulation.
---
---    .. method:: connect()
---
---       Connect phase_space writer to observables sampler. This is the default.
 --
 --    .. method:: disconnect()
 --
@@ -212,20 +204,6 @@ local M = module(function(args)
 
         -- sequence of signal connections
         local conn = {}
-
-        writer.connect = function(self)
-            if #conn == 0 then
-                if every and every > 0 then
-                    table.insert(conn, assert(sampler:on_sample(self.write, every, 0)))
-                else
-                    table.insert(conn, assert(sampler:on_start(self.write)))
-                    table.insert(conn, assert(sampler:on_finish(self.write)))
-                end
-            else
-                error("phase_space writer is already connected", 2)
-            end
-        end
-
         writer.disconnect = function(self)
             if #conn > 0 then
                 for i = 1, #conn do
@@ -238,7 +216,12 @@ local M = module(function(args)
         end
 
         -- connect writer to sampler
-        writer:connect()
+        if every and every > 0 then
+            table.insert(conn, assert(sampler:on_sample(writer.write, every, 0)))
+        else
+            table.insert(conn, assert(sampler:on_start(writer.write)))
+            table.insert(conn, assert(sampler:on_finish(writer.write)))
+        end
 
         return writer
     end
@@ -250,21 +233,6 @@ local M = module(function(args)
 
     -- sequence of signal connections
     local conn = {}
-
-    self.connect = function(self)
-        if #conn == 0 then
-            for memory, sampler in pairs(samplers) do
-                local label = assert(self.group.label)
-                local desc = ("phase space sample of %s particles on %s"):format(label, memory)
-                local runtime = assert(sampler.runtime)
-                table.insert(conn, assert(profiler:on_profile(runtime.acquire, ("acquisition of %s"):format(desc))))
-                table.insert(conn, assert(profiler:on_profile(runtime.reset, ("reset %s"):format(desc))))
-            end
-        else
-            error("phase_space sampler is already connected", 2)
-        end
-    end
-
     self.disconnect = function(self)
         if #conn > 0 then
             for i = 1, #conn do
@@ -276,8 +244,14 @@ local M = module(function(args)
         end
     end
 
-    -- connect runtime accumulators to module profiler
-    self:connect()
+    -- connect runtime accumulators to profiler
+    for memory, sampler in pairs(samplers) do
+        local label = assert(self.group.label)
+        local desc = ("phase space sample of %s particles on %s"):format(label, memory)
+        local runtime = assert(sampler.runtime)
+        table.insert(conn, assert(profiler:on_profile(runtime.acquire, ("acquisition of %s"):format(desc))))
+        table.insert(conn, assert(profiler:on_profile(runtime.reset, ("reset %s"):format(desc))))
+    end
 
     return self
 end)

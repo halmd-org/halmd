@@ -72,12 +72,6 @@ local discontinuous = assert(libhalmd.mdsim.forces.trunc.discontinuous)
 --
 --    Returns unordered sequence with hypervirials.
 --
--- .. method:: connect()
---
---    Connect force to profiler.
---
---    This is the default.
---
 -- .. method:: disconnect()
 --
 --    Disconnect force from profiler.
@@ -126,18 +120,6 @@ local M = module(function(args)
 
     -- sequence of signal connections
     local conn = {}
-    -- profiler description
-    local desc = ("computation of %s interaction"):format(potential.description)
-
-    self.connect = function(self)
-        if #conn == 0 then
-            local runtime = assert(self.runtime)
-            table.insert(conn, assert(profiler:on_profile(runtime.compute, desc)))
-        else
-            error("integrator is already connected", 2)
-        end
-    end
-
     self.disconnect = function(self)
         if #conn > 0 then
             for i = 1, #conn do
@@ -149,8 +131,9 @@ local M = module(function(args)
         end
     end
 
-    -- connect to core and profiler
-    self:connect()
+    -- connect to profiler
+    local desc = ("computation of %s interaction"):format(potential.description)
+    table.insert(conn, assert(profiler:on_profile(assert(self.runtime).compute, desc)))
 
     return self
 end)
