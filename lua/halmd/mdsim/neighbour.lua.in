@@ -153,16 +153,7 @@ local M = module(function(args)
     end
 
     local conn = {}
-    self.disconnect = function(self)
-        if #conn > 0 then
-            for i = 1, #conn do
-                conn[i]:disconnect()
-            end
-            conn = {}
-        else
-            error("Neighbour module is already disconnected")
-        end
-    end
+    self.disconnect = utility.signal.disconnect(conn, "neighbour list module")
 
     -- connect neighbour module to profiler
     local runtime = assert(self.runtime)

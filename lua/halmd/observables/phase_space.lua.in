@@ -204,16 +204,7 @@ local M = module(function(args)
 
         -- sequence of signal connections
         local conn = {}
-        writer.disconnect = function(self)
-            if #conn > 0 then
-                for i = 1, #conn do
-                    conn[i]:disconnect()
-                end
-                conn = {}
-            else
-                error("phase_space writer is already disconnected", 2)
-            end
-        end
+        writer.disconnect = utility.signal.disconnect(conn, "phase_space writer")
 
         -- connect writer to sampler
         if every and every > 0 then
@@ -233,16 +224,7 @@ local M = module(function(args)
 
     -- sequence of signal connections
     local conn = {}
-    self.disconnect = function(self)
-        if #conn > 0 then
-            for i = 1, #conn do
-                conn[i]:disconnect()
-            end
-            conn = {}
-        else
-            error("phase_space sampler is already disconnected", 2)
-        end
-    end
+    self.disconnect = utility.signal.disconnect(conn, "phase_space sampler")
 
     -- connect runtime accumulators to profiler
     for memory, sampler in pairs(samplers) do

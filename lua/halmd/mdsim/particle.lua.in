@@ -21,6 +21,7 @@ local core              = require("halmd.mdsim.core")
 local device            = require("halmd.utility.device")
 local module            = require("halmd.utility.module")
 local profiler          = require("halmd.utility.profiler")
+local utility           = require("halmd.utility")
 
 ---
 -- Particle
@@ -177,16 +178,7 @@ local M = module(function(args)
 
     -- sequence of signal connections
     local conn = {}
-    self.disconnect = function(self)
-        if #conn > 0 then
-            for i = 1, #conn do
-                conn[i]:disconnect()
-            end
-            conn = {}
-        else
-            error("particle is already disconnected", 2)
-        end
-    end
+    self.disconnect = utility.signal.disconnect(conn, "particle module")
 
     -- zero particle forces every step before partial forces are added -- FIXME ???
 

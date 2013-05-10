@@ -96,16 +96,7 @@ local M = module(function(args)
     end
 
     local conn = {} -- sequence of signal connections
-    self.disconnect = function(self)
-        if #conn > 0 then
-            for i = 1, #conn do
-                conn[i]:disconnect()
-            end
-            conn = {}
-        else
-            error("Binning module is already disconnected")
-        end
-    end
+    self.disconnect = utility.signal.disconnect(conn, "binning module")
 
     -- connect binning module to profiler
     local runtime = assert(self.runtime)

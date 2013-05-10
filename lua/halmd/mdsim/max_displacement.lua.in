@@ -55,16 +55,7 @@ local M = module(function(args)
     local self = max_displacement(particle, box)
 
     local conn = {}
-    self.disconnect = function(self)
-        if #conn > 0 then
-            for i = 1, #conn do
-                conn[i]:disconnect()
-            end
-            conn = {}
-        else
-            error("max_displacement is already disconnected", 2)
-        end
-    end
+    self.disconnect = utility.signal.disconnect(conn, "max_displacement module")
 
     -- connect module to profiler
     local runtime = assert(self.runtime)

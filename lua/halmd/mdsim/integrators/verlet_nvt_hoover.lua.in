@@ -28,6 +28,7 @@ local sampler           = require("halmd.observables.sampler")
 local writers = {
     file                = require("halmd.io.writers.file")
 }
+local utility           = require("halmd.utility")
 
 ---
 -- Velocity Verlet with Nosé-Hoover thermostat
@@ -160,16 +161,7 @@ local M = module(function(args)
 
     -- sequence of signal connections
     local conn = {}
-    self.disconnect = function(self)
-        if #conn > 0 then
-            for i = 1, #conn do
-                conn[i]:disconnect()
-            end
-            conn = {}
-        else
-            error("integrator is already disconnected", 2)
-        end
-    end
+    self.disconnect = utility.signal.disconnect(conn, "integrator")
 
     self.writer = function(self, file, args)
         -- connect writer to sampler

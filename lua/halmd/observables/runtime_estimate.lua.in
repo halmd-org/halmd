@@ -22,6 +22,7 @@ local clock             = require("halmd.mdsim.clock")
 local module            = require("halmd.utility.module")
 local posix_signal      = require("halmd.utility.posix_signal")
 local timer_service     = require("halmd.utility.timer_service")
+local utility           = require("halmd.utility")
 
 ---
 -- Runtime Estimate
@@ -83,16 +84,7 @@ local M = module(function(args)
 
     -- sequence of signal connections
     local conn = {}
-    self.disconnect = function(self)
-        if #conn > 0 then
-            for i = 1, #conn do
-                conn[i]:disconnect()
-            end
-            conn = {}
-        else
-            error("runtime estimate is already disconnected", 2)
-        end
-    end
+    self.disconnect = utility.signal.disconnect(conn, "runtime estimate")
 
     -- connect to timer service and signal handler
     table.insert(conn, assert(timer_service:on_periodic(self.estimate, interval, first)))

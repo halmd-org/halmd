@@ -143,16 +143,7 @@ local M = module(function(args)
     end
 
     local conn = {}
-    self.disconnect = function(self)
-        if #conn > 0 then
-            for i = 1, #conn do
-                conn[i]:disconnect()
-            end
-            conn = {}
-        else
-            error("accumulator is already disconnected")
-        end
-    end
+    self.disconnect = utility.signal.disconnect(conn, "accumulator module")
 
     -- connect to sampler
     table.insert(conn, assert(sampler:on_sample(self.sample, every, start)))

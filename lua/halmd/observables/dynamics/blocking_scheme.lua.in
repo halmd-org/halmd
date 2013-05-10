@@ -22,6 +22,7 @@ local log               = require("halmd.io.log")
 local module            = require("halmd.utility.module")
 local profiler          = require("halmd.utility.profiler")
 local sampler           = require("halmd.observables.sampler")
+local utility           = require("halmd.utility")
 
 ---
 -- Blocking Scheme
@@ -126,16 +127,7 @@ local M = module(function(args)
 
         -- sequence of signal connections
         local conn = {}
-        result.disconnect = function(result)
-            if #conn > 0 then
-                for i = 1, #conn do
-                    conn[i]:disconnect()
-                end
-                conn = {}
-            else
-                error("correlation function is already disconnected", 2)
-            end
-        end
+        result.disconnect = utility.signal.disconnect(conn, "correlation function")
 
         -- connect correlation function to blocking scheme and profiler
         table.insert(conn, assert(self:on_sample(sample)))
@@ -148,16 +140,7 @@ local M = module(function(args)
 
     -- sequence of signal connections
     local conn = {}
-    self.disconnect = function(self)
-        if #conn > 0 then
-            for i = 1, #conn do
-                conn[i]:disconnect()
-            end
-            conn = {}
-        else
-            error("blocking scheme is already disconnected", 2)
-        end
-    end
+    self.disconnect = utility.signal.disconnect(conn, "blocking scheme")
 
     -- connect blocking scheme to sampler
     table.insert(conn, assert(sampler:on_sample(self.sample, every, 0)))

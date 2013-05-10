@@ -203,23 +203,14 @@ local M = module(function(args)
 
         -- sequence of signal connections
         local conn = {}
-        writer.disconnect = function(self)
-            if #conn > 0 then
-                for i = 1, #conn do
-                    conn[i]:disconnect()
-                end
-                conn = {}
-            else
-                error("thermodynamics writer is already disconnected", 2)
-            end
-        end
+        writer.disconnect = utility.signal.disconnect(conn, "thermodynamics writer")
 
         -- connect writer to sampler
         table.insert(conn, assert(sampler:on_sample(writer.write, every, 0)))
-        -- FIXME register profilers
-
         return writer
     end
+
+    -- FIXME connect profilers
 
     return self
 end)

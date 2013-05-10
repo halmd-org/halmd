@@ -22,6 +22,7 @@ local core              = require("halmd.mdsim.core")
 local log               = require("halmd.io.log")
 local module            = require("halmd.utility.module")
 local profiler          = require("halmd.utility.profiler")
+local utility           = require("halmd.utility")
 
 ---
 -- Velocity Verlet
@@ -120,16 +121,7 @@ local M = module(function(args)
 
     -- sequence of signal connections
     local conn = {}
-    self.disconnect = function(self)
-        if #conn > 0 then
-            for i = 1, #conn do
-                conn[i]:disconnect()
-            end
-            conn = {}
-        else
-            error("integrator is already disconnected", 2)
-        end
-    end
+    self.disconnect = utility.signal.disconnect(conn, "integrator")
 
     -- connect integrator to core and profiler
     table.insert(conn, assert(clock:on_set_timestep(function(timestep) set_timestep(self, timestep) end)))

@@ -1,0 +1,48 @@
+--
+-- Copyright © 2013 Felix Höfling
+--
+-- This file is part of HALMD.
+--
+-- HALMD is free software: you can redistribute it and/or modify
+-- it under the terms of the GNU General Public License as published by
+-- the Free Software Foundation, either version 3 of the License, or
+-- (at your option) any later version.
+--
+-- This program is distributed in the hope that it will be useful,
+-- but WITHOUT ANY WARRANTY; without even the implied warranty of
+-- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+-- GNU General Public License for more details.
+--
+-- You should have received a copy of the GNU General Public License
+-- along with this program.  If not, see <http://www.gnu.org/licenses/>.
+--
+
+local utility  = require("halmd.utility")
+
+local M = {}
+
+---
+-- Returns a callable that disconnects a sequence of signal connections.
+--
+-- :param conn: sequence of signal connections
+-- :param string name: module name to appear in the error message
+-- :param number level: call stack level for error message *(default: 2)*
+--
+function M.disconnect(conn, desc, level)
+    local conn = utility.assert_type(conn, "table")
+    local desc = utility.assert_type(desc, "string")
+    local level = level or 2
+
+    return function(self)
+        if #conn > 0 then
+            for i = 1, #conn do
+                conn[i]:disconnect()
+            end
+            conn = {}
+        else
+            error(("%s has already been disconnected").format(desc), level + 1)
+        end
+    end
+end
+
+return M

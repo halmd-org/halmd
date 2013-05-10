@@ -24,6 +24,7 @@ local neighbour         = require("halmd.mdsim.neighbour")
 local device            = require("halmd.utility.device")
 local module            = require("halmd.utility.module")
 local profiler          = require("halmd.utility.profiler")
+local utility           = require("halmd.utility")
 
 ---
 -- Truncated Pair Force
@@ -120,16 +121,7 @@ local M = module(function(args)
 
     -- sequence of signal connections
     local conn = {}
-    self.disconnect = function(self)
-        if #conn > 0 then
-            for i = 1, #conn do
-                conn[i]:disconnect()
-            end
-            conn = {}
-        else
-            error("integrator is already disconnected", 2)
-        end
-    end
+    self.disconnect = utility.signal.disconnect(conn, "force module")
 
     -- connect to profiler
     local desc = ("computation of %s interaction"):format(potential.description)

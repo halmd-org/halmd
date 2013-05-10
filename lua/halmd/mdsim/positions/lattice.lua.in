@@ -81,16 +81,7 @@ local M = module(function(args)
 
     -- sequence of signal connections
     local conn = {}
-    self.disconnect = function(self)
-        if #conn > 0 then
-            for i = 1, #conn do
-                conn[i]:disconnect()
-            end
-            conn = {}
-        else
-            error("lattice module is already disconnected", 2)
-        end
-    end
+    self.disconnect = utility.signal.disconnect(conn, "lattice module")
 
     -- connect to profiler
     local runtime = assert(self.runtime)
