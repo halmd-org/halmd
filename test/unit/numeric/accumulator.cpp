@@ -28,8 +28,8 @@ BOOST_AUTO_TEST_CASE( test_accumulator )
 {
     halmd::accumulator<double> a;
 
-    for (unsigned i=0; i <= 1; i++) {
-        for (unsigned j=0; j < 10; j++) {
+    for (unsigned int i = 0; i <= 1; ++i) {
+        for (unsigned int j = 0; j < 10; ++j) {
             a(j);
         }
 
@@ -43,14 +43,14 @@ BOOST_AUTO_TEST_CASE( test_accumulator )
         a = halmd::accumulator<double>();  // check value initialization
     }
 
-    int constexpr dim = 2;
+    unsigned int constexpr dim = 2;
     halmd::accumulator<halmd::fixed_vector<double, dim>> av;
     halmd::accumulator<halmd::fixed_vector<double, dim>> av2;
 
-    for (unsigned i = 0; i <= 1; i++) {
-        for (unsigned j = 0; j < 10; j++) {
+    for (unsigned i = 0; i <= 1; ++i) {
+        for (unsigned j = 0; j < 10; ++j) {
             halmd::fixed_vector<double, dim> v;
-            for (unsigned int d = 0; d < dim; d++) {
+            for (unsigned int d = 0; d < dim; ++d) {
                 v[d] = j;
             }
             av(v);
@@ -58,7 +58,7 @@ BOOST_AUTO_TEST_CASE( test_accumulator )
         }
 
         BOOST_CHECK_EQUAL(count(av), 10u);
-        for (unsigned int d = 0; d < dim; d++) {
+        for (unsigned int d = 0; d < dim; ++d) {
             BOOST_CHECK_CLOSE_FRACTION(mean(av)[d], 4.5, 1e-14);
             BOOST_CHECK_CLOSE_FRACTION(variance(av)[d], 8.25, 1e-14);
             BOOST_CHECK_CLOSE_FRACTION(sigma(av)[d], 2.8722813232690143, 1e-14);
@@ -68,7 +68,7 @@ BOOST_AUTO_TEST_CASE( test_accumulator )
         // test functor for accumulators
         av2(av);
         BOOST_CHECK_EQUAL(count(av2), 20u);
-        for (unsigned int d = 0; d < dim; d++) {
+        for (unsigned int d = 0; d < dim; ++d) {
             BOOST_CHECK_CLOSE_FRACTION(mean(av2)[d], 4.5, 1e-14);
             BOOST_CHECK_CLOSE_FRACTION(variance(av2)[d], 8.25, 1e-14);
             BOOST_CHECK_CLOSE_FRACTION(sigma(av2)[d], 2.8722813232690143, 1e-14);
