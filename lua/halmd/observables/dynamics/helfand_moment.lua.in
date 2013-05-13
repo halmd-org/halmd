@@ -54,7 +54,7 @@ local accumulator = require("halmd.observables.utility.accumulator")
 -- G^2_{\alpha\beta}(t)` by virtue of the Einstein–Helfand relation
 --
 -- .. math::
---     \eta = \frac{1}{\rho k_B T} \lim_{t\to\infty}
+--     \eta = \frac{\rho}{k_B T} \lim_{t\to\infty}
 --     \frac{\mathrm{d}}{2 \mathrm{d}t} \delta G^2_{\alpha\beta}(t) \, .
 --
 -- .. [1] B. J. Alder, D. M. Gass, and T. E. Wainwright,

@@ -43,7 +43,7 @@ local correlation = require("halmd.observables.dynamics.correlation")
 --
 -- .. math::
 --
---     \eta = \frac{1}{\rho k_B T} \int_0^\infty \! C_{\alpha\beta}(t) \, \mathrm{d}t \,
+--     \eta = \frac{\rho}{k_B T} \int_0^\infty \! C_{\alpha\beta}(t) \, \mathrm{d}t \,
 --     \text{.}
 --
 -- .. note::
