@@ -48,12 +48,6 @@ local correlation = assert(libhalmd.observables.dynamics.correlation)
 --
 --    Disconnect blocking scheme from sampler.
 --
--- .. method:: connect()
---
---    Connect blocking scheme to sampler.
---
---    This is the default.
---
 -- .. class:: correlation(tcf, writer)
 --
 --    Compute time correlation function.
@@ -64,12 +58,6 @@ local correlation = assert(libhalmd.observables.dynamics.correlation)
 --    .. method:: disconnect()
 --
 --       Disconnect correlation function from blocking scheme.
---
---    .. method:: connect()
---
---       Connect correlation function to blocking scheme.
---
---       This is the default.
 --
 local M = module(function(args)
     local max_lag = args.max_lag
