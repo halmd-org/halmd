@@ -22,6 +22,11 @@ local utility  = require("halmd.utility")
 local M = {}
 
 ---
+-- HALMD Signal
+-- ============
+--
+
+---
 -- Returns a callable that disconnects a sequence of signal connections.
 --
 -- :param conn: sequence of signal connections
