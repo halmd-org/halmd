@@ -111,8 +111,10 @@ end
 --    :param table args: keyword arguments
 --    :param args.file: instance of file writer
 --    :param table args.fields: data field names to be written
---    :param string table args.location: location within file (optional)
+--    :param args.location: location within file (optional)
 --    :param number args.every: sampling interval (optional)
+--    :type args.location: string table
+--
 --    :returns: instance of group writer
 --
 --    The table ``fields`` specifies which data fields are written. It may

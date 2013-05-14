@@ -84,10 +84,11 @@ local accumulator = assert(libhalmd.observables.utility.accumulator)
 --
 --    :param table args: keyword arguments
 --    :param args.file: instance of file writer
---    :param string table args.location: location within file
+--    :param args.location: location within file
 --    :param table args.fields: data fields to be written *(optional)*
 --    :param number args.every: sampling interval
 --    :param boolean args.reset: Reset accumulator after writing if true (disabled by default).
+--    :type args.location: string table
 --
 --    :returns: instance of group writer
 --

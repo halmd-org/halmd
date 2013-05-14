@@ -146,8 +146,10 @@ local thermodynamics = assert(libhalmd.observables.thermodynamics)
 --    :param table args: keyword arguments
 --    :param args.file: instance of file writer
 --    :param number args.every: sampling interval
---    :param string table args.location: location within file (optional)
+--    :param args.location: location within file (optional)
 --    :param table args.fields: data fields to be written (optional)
+--    :type args.location: string table
+--
 --    :returns: instance of group writer
 --
 --    The argument ``location`` specifies a path in a structured file format
