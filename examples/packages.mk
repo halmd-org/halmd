@@ -317,11 +317,11 @@ distclean-luatrace: clean-luatrace
 ## Boost C++ libraries with Boost.Log
 ##
 
-BOOST_VERSION = 1.51.0
-BOOST_RELEASE = 1_51_0
+BOOST_VERSION = 1.53.0
+BOOST_RELEASE = 1_53_0
 BOOST_TARBALL = boost_$(BOOST_RELEASE).tar.bz2
 BOOST_TARBALL_URL = http://sourceforge.net/projects/boost/files/boost/$(BOOST_VERSION)/$(BOOST_TARBALL)
-BOOST_TARBALL_SHA256 = fb2d2335a29ee7fe040a197292bfce982af84a645c81688a915c84c925b69696
+BOOST_TARBALL_SHA256 = f88a041b01882b0c9c5c05b39603ec8383fb881f772f6f9e6e6fd0e0cddb9196
 BOOST_BUILD_DIR = boost_$(BOOST_RELEASE)
 BOOST_INSTALL_DIR = $(PREFIX)/boost_$(BOOST_RELEASE)
 BOOST_BUILD_FLAGS = threading=multi variant=release --layout=tagged toolset=gcc cxxflags="-fPIC -std=c++11" dll-path=$(BOOST_INSTALL_DIR)/lib
@@ -334,17 +334,35 @@ BOOST_BUILD_FLAGS += --without-python
 endif
 
 define BOOST_PATCH
---- boost/random/detail/integer_log2.hpp
-+++ boost/random/detail/integer_log2.hpp
-@@ -27,7 +27,7 @@
- #elif defined(BOOST_MSVC)
- #define BOOST_RANDOM_DETAIL_CONSTEXPR __forceinline
- #elif defined(__GNUC__) && __GNUC__ >= 4
--#define BOOST_RANDOM_DETAIL_CONSTEXPR __attribute__((const)) __attribute__((always_inline))
-+#define BOOST_RANDOM_DETAIL_CONSTEXPR inline __attribute__((const)) __attribute__((always_inline))
- #else
- #define BOOST_RANDOM_DETAIL_CONSTEXPR inline
- #endif
+--- boost/numeric/ublas/traits.hpp
++++ boost/numeric/ublas/traits.hpp
+@@ -31,22 +31,22 @@
+ 
+ // anonymous namespace to avoid ADL issues
+ namespace {
+-  template<class T> T boost_numeric_ublas_sqrt (const T& t) {
++  template<class T> static inline T boost_numeric_ublas_sqrt (const T& t) {
+     using namespace std;
+     // we'll find either std::sqrt or else another version via ADL:
+     return sqrt (t);
+   }
+-  template<class T> T boost_numeric_ublas_abs (const T& t) {
++  template<class T> static inline T boost_numeric_ublas_abs (const T& t) {
+     using namespace std;
+     // we'll find either std::abs or else another version via ADL:
+     return abs (t);
+   }
+   // unsigned types are always non-negative
+-  template<> unsigned int boost_numeric_ublas_abs (const unsigned int& t) {
++  template<> inline unsigned int boost_numeric_ublas_abs (const unsigned int& t) {
+     return t;
+   }
+   // unsigned types are always non-negative
+-  template<> unsigned long boost_numeric_ublas_abs (const unsigned long& t) {
++  template<> inline unsigned long boost_numeric_ublas_abs (const unsigned long& t) {
+     return t;
+   }
+ }
 --- boost/test/detail/global_typedef.hpp
 +++ boost/test/detail/global_typedef.hpp
 @@ -67,12 +67,13 @@
@@ -465,6 +483,17 @@ define BOOST_PATCH
            ] \ 
          , BOOST_PARAMETER_FN_ARG_PRED(arg) \ 
          , Args \ 
+--- boost/test/test_tools.hpp
++++ boost/test/test_tools.hpp
+@@ -306,7 +306,7 @@
+ 
+ typedef unit_test::const_string      const_string;
+ 
+-namespace { bool dummy_cond = false; }
++namespace { bool const dummy_cond = false; }
+ 
+ // ************************************************************************** //
+ // **************                print_log_value               ************** //
 endef
 export BOOST_PATCH
 
