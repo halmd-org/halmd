@@ -201,7 +201,6 @@ fetch-luajit: .fetch-luajit-$(LUAJIT_VERSION)
 	$(RM) $(LUAJIT_BUILD_DIR)
 	$(TAR) -xzf $(LUAJIT_TARBALL)
 	cd $(LUAJIT_BUILD_DIR) && $(PATCH) -p1 < $(CURDIR)/$(LUAJIT_PATCH)
-	cd $(LUAJIT_BUILD_DIR) && $(PATCH) -p1 < $(CURDIR)/$(LUAJIT_PATCH)
 	@$(TOUCH) $@
 
 extract-luajit: .extract-luajit-$(LUAJIT_VERSION)
