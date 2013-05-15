@@ -1,5 +1,6 @@
 #
 # Copyright © 2011-2013 Peter Colberg
+# Copyright © 2013      Nicolas Höft
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -31,6 +32,7 @@ WGET = wget
 GIT = git
 TAR = tar
 RM = rm -rf
+SED = sed
 CP = cp -r
 TOUCH = touch
 PATCH = patch
@@ -199,18 +201,19 @@ fetch-luajit: .fetch-luajit-$(LUAJIT_VERSION)
 	$(RM) $(LUAJIT_BUILD_DIR)
 	$(TAR) -xzf $(LUAJIT_TARBALL)
 	cd $(LUAJIT_BUILD_DIR) && $(PATCH) -p1 < $(CURDIR)/$(LUAJIT_PATCH)
+	cd $(LUAJIT_BUILD_DIR) && $(PATCH) -p1 < $(CURDIR)/$(LUAJIT_PATCH)
 	@$(TOUCH) $@
 
 extract-luajit: .extract-luajit-$(LUAJIT_VERSION)
 
 .build-luajit-$(LUAJIT_VERSION): .extract-luajit-$(LUAJIT_VERSION)
-	cd $(LUAJIT_BUILD_DIR) && make amalg "CFLAGS=$(LUAJIT_CFLAGS)" "PREFIX=$(LUAJIT_INSTALL_DIR)" $(PARALLEL_BUILD_FLAGS)
+	cd $(LUAJIT_BUILD_DIR) && $(MAKE) amalg "CFLAGS=$(LUAJIT_CFLAGS)" "PREFIX=$(LUAJIT_INSTALL_DIR)" $(PARALLEL_BUILD_FLAGS)
 	@$(TOUCH) $@
 
 build-luajit: .build-luajit-$(LUAJIT_VERSION)
 
 install-luajit: .build-luajit-$(LUAJIT_VERSION)
-	cd $(LUAJIT_BUILD_DIR) && make install "PREFIX=$(LUAJIT_INSTALL_DIR)"
+	cd $(LUAJIT_BUILD_DIR) && $(MAKE) install "PREFIX=$(LUAJIT_INSTALL_DIR)"
 
 clean-luajit:
 	@$(RM) .build-luajit-$(LUAJIT_VERSION)
@@ -507,7 +510,7 @@ fetch-boost: .fetch-boost-$(BOOST_VERSION)
 
 .extract-boost-$(BOOST_VERSION): .fetch-boost-$(BOOST_VERSION)
 	$(TAR) -xjf $(BOOST_TARBALL)
-	cd $(BOOST_BUILD_DIR) && echo "$$BOOST_PATCH" | sed -e 's/\\ $$/\\/' | $(PATCH) -p0
+	cd $(BOOST_BUILD_DIR) && echo "$$BOOST_PATCH" | $(SED) -e 's/\\ $$/\\/' | $(PATCH) -p0
 	@$(TOUCH) $@
 
 extract-boost: .extract-boost-$(BOOST_VERSION)
@@ -548,14 +551,13 @@ env-boost:
 ##
 ## HDF5 C++ library
 ##
-
-HDF5_VERSION = 1.8.9
+HDF5_VERSION = 1.8.10-patch1
 HDF5_TARBALL = hdf5-$(HDF5_VERSION).tar.bz2
 HDF5_TARBALL_URL = http://www.hdfgroup.org/ftp/HDF5/releases/hdf5-$(HDF5_VERSION)/src/$(HDF5_TARBALL)
-HDF5_TARBALL_SHA256 = fafe54856b00f0d6531629f66e2c476ab6ee03458803088f270bbfc4a60966c7
+HDF5_TARBALL_SHA256 = 292afb3615ad9e68f4d5d18ebb11e4a73f2aece39f2da3875a457ff1e109fc41
 HDF5_BUILD_DIR = hdf5-$(HDF5_VERSION)
 HDF5_INSTALL_DIR = $(PREFIX)/hdf5-$(HDF5_VERSION)
-HDF5_CONFIGURE_FLAGS = --enable-cxx
+HDF5_CONFIGURE_FLAGS = --enable-shared --disable-deprecated-symbols  --enable-cxx
 HDF5_CFLAGS = -fPIC
 HDF5_CXXFLAGS = -fPIC
 
@@ -581,13 +583,13 @@ extract-hdf5: .extract-hdf5-$(HDF5_VERSION)
 configure-hdf5: .configure-hdf5-$(HDF5_VERSION)
 
 .build-hdf5-$(HDF5_VERSION): .configure-hdf5-$(HDF5_VERSION)
-	cd $(HDF5_BUILD_DIR) && make $(PARALLEL_BUILD_FLAGS)
+	cd $(HDF5_BUILD_DIR) && $(MAKE) $(PARALLEL_BUILD_FLAGS)
 	@$(TOUCH) $@
 
 build-hdf5: .build-hdf5-$(HDF5_VERSION)
 
 install-hdf5: .build-hdf5-$(HDF5_VERSION)
-	cd $(HDF5_BUILD_DIR) && make install
+	cd $(HDF5_BUILD_DIR) && $(MAKE) install
 
 clean-hdf5:
 	@$(RM) .build-hdf5-$(HDF5_VERSION)
@@ -609,14 +611,13 @@ env-hdf5:
 ##
 ## Git version control
 ##
-
-GIT_VERSION = 1.7.12
+GIT_VERSION = 1.8.2.3
 GIT_TARBALL = git-$(GIT_VERSION).tar.gz
 GIT_TARBALL_URL = http://git-core.googlecode.com/files/$(GIT_TARBALL)
-GIT_TARBALL_SHA256 = 3b8661782dc280d3d4be5193bcb8a1895c1ba272cf02efb70857bbcc4415f505
+GIT_TARBALL_SHA256 = ba8d42d47b0955b17905af0133b01ab8e3f28f0e39b9967ec446403c0b49991f
 GIT_MANPAGES_TARBALL = git-manpages-$(GIT_VERSION).tar.gz
 GIT_MANPAGES_TARBALL_URL = http://git-core.googlecode.com/files/$(GIT_MANPAGES_TARBALL)
-GIT_MANPAGES_TARBALL_SHA256 = 146a4e0899a028fd4256654e472ecfe3bef995fb029ea71c35ff9618f14dc127
+GIT_MANPAGES_TARBALL_SHA256 = 8e91d7a49cda92ed999eb9632ae3f0f22b1910e54de58c9e53107687c18f1414
 GIT_BUILD_DIR = git-$(GIT_VERSION)
 GIT_CONFIGURE_FLAGS = --without-python
 GIT_INSTALL_DIR = $(PREFIX)/git-$(GIT_VERSION)
@@ -843,16 +844,16 @@ env-graphviz:
 ##
 ## Clang C++ compiler
 ##
-
-CLANG_VERSION = 3.1
+CLANG_VERSION = 3.2
 LLVM_TARBALL = llvm-$(CLANG_VERSION).src.tar.gz
 LLVM_TARBALL_URL = http://llvm.org/releases/$(CLANG_VERSION)/$(LLVM_TARBALL)
-LLVM_TARBALL_SHA256 = 1ea05135197b5400c1f88d00ff280d775ce778f8f9ea042e25a1e1e734a4b9ab
+LLVM_TARBALL_SHA256 = 125090c4d26740f1d5e9838477c931ed7d9ad70d599ba265f46f3a42cb066343
 CLANG_TARBALL = clang-$(CLANG_VERSION).src.tar.gz
 CLANG_TARBALL_URL = http://llvm.org/releases/$(CLANG_VERSION)/$(CLANG_TARBALL)
-CLANG_TARBALL_SHA256 = ff63e215dcd3e2838ffdea38502f8d35bab17e487f3c3799579961e452d5a786
+CLANG_TARBALL_SHA256 = 2aaaf03f7c0f6b16fe97ecc81247dc2bf2d4bec7620a77cc74670b7e07ff5658
 CLANG_BUILD_DIR = llvm-$(CLANG_VERSION).src
-CLANG_CONFIGURE_FLAGS = --enable-optimized --enable-bindings=none --with-gcc-toolchain=$(GCC_INSTALL_DIR)
+CLANG_CONFIGURE_FLAGS = --enable-optimized --enable-bindings=none --enable-shared --with-gcc-toolchain=$(GCC_INSTALL_DIR)
+CLANG_BUILD_FLAGS = REQUIRES_RTTI=1
 CLANG_INSTALL_DIR = $(PREFIX)/clang-$(CLANG_VERSION)
 
 .fetch-clang-$(CLANG_VERSION):
@@ -1227,10 +1228,10 @@ distclean-cloog-ppl: clean-cloog-ppl
 ## GCC (GNU Compiler Collection)
 ##
 
-GCC_VERSION = 4.7.1
+GCC_VERSION = 4.7.3
 GCC_TARBALL = gcc-$(GCC_VERSION).tar.bz2
 GCC_TARBALL_URL = http://ftp.gwdg.de/pub/misc/gcc/releases/gcc-$(GCC_VERSION)/$(GCC_TARBALL)
-GCC_TARBALL_SHA256 = 16093f6fa01732adf378d97fe338f113c933bdf56da22bf87c76beff13da406f
+GCC_TARBALL_SHA256 = 2f7c37eb4fc14422ff2358a9ef59c974a75ab41204ef0e49fc34ab1d8981a9c3
 GCC_BUILD_DIR = gcc-$(GCC_VERSION)
 GCC_INSTALL_DIR = $(PREFIX)/gcc-$(GCC_VERSION)
 
