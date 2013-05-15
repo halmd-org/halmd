@@ -1,5 +1,5 @@
 #
-# Copyright © 2011-2012 Peter Colberg
+# Copyright © 2011-2013 Peter Colberg
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -169,10 +169,13 @@ env-lua:
 ## LuaJIT
 ##
 
-LUAJIT_VERSION = 2.0.0
+LUAJIT_VERSION = 2.0.1
 LUAJIT_TARBALL = LuaJIT-$(LUAJIT_VERSION).tar.gz
 LUAJIT_TARBALL_URL = http://luajit.org/download/$(LUAJIT_TARBALL)
-LUAJIT_TARBALL_SHA256 = deaed645c4a093c5fb250c30c9933c9131ee05c94b13262d58f6e0b60b338c15
+LUAJIT_TARBALL_SHA256 = 2371cceb53453d8a7b36451e6a0ccdb66236924545d6042ddd4c34e9668990c0
+LUAJIT_PATCH = v2.0.1_hotfix1.patch
+LUAJIT_PATCH_URL = http://luajit.org/download/$(LUAJIT_PATCH)
+LUAJIT_PATCH_SHA256 = 143898de3fe84455684fddb92947d36c1a51c6a6e3884813fe5e025bd4652368
 LUAJIT_BUILD_DIR = LuaJIT-$(LUAJIT_VERSION)
 LUAJIT_INSTALL_DIR = $(PREFIX)/luajit-$(LUAJIT_VERSION)
 LUAJIT_CFLAGS = -fPIC -DLUAJIT_ENABLE_LUA52COMPAT -DLUAJIT_CPU_SSE2
@@ -183,8 +186,11 @@ endif
 
 .fetch-luajit-$(LUAJIT_VERSION):
 	@$(RM) $(LUAJIT_TARBALL)
+	@$(RM) $(LUAJIT_PATCH)
 	$(WGET) $(LUAJIT_TARBALL_URL)
+	$(WGET) $(LUAJIT_PATCH_URL)
 	@echo '$(LUAJIT_TARBALL_SHA256)  $(LUAJIT_TARBALL)' | $(SHA256SUM)
+	@echo '$(LUAJIT_PATCH_SHA256)  $(LUAJIT_PATCH)' | $(SHA256SUM)
 	@$(TOUCH) $@
 
 fetch-luajit: .fetch-luajit-$(LUAJIT_VERSION)
@@ -192,6 +198,7 @@ fetch-luajit: .fetch-luajit-$(LUAJIT_VERSION)
 .extract-luajit-$(LUAJIT_VERSION): .fetch-luajit-$(LUAJIT_VERSION)
 	$(RM) $(LUAJIT_BUILD_DIR)
 	$(TAR) -xzf $(LUAJIT_TARBALL)
+	cd $(LUAJIT_BUILD_DIR) && $(PATCH) -p1 < $(CURDIR)/$(LUAJIT_PATCH)
 	@$(TOUCH) $@
 
 extract-luajit: .extract-luajit-$(LUAJIT_VERSION)
