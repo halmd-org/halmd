@@ -190,6 +190,7 @@ if(NOT HALMD_DOC_ONLY OR NOT HALMD_USE_GIT)
     add_subdirectory(libs/cuda-wrapper/test)
   endif()
   add_subdirectory(libs/h5xx/test)
+  add_subdirectory(libs/luaponte/test)
 
 else()
 
