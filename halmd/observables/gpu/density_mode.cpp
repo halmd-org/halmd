@@ -1,5 +1,6 @@
 /*
- * Copyright © 2011-2012  Felix Höfling and Peter Colberg
+ * Copyright © 2011-2013 Felix Höfling
+ * Copyright © 2011-2012 Peter Colberg
  *
  * This file is part of HALMD.
  *
@@ -29,12 +30,10 @@ namespace gpu {
 template <int dimension, typename float_type>
 density_mode<dimension, float_type>::density_mode(
     std::shared_ptr<wavevector_type const> wavevector
-  , std::shared_ptr<clock_type const> clock
   , std::shared_ptr<logger_type> logger
 )
     // dependency injection
   : wavevector_(wavevector)
-  , clock_(clock)
   , logger_(logger)
     // member initialisation
   , nq_(wavevector_->value().size())
@@ -84,20 +83,11 @@ density_mode<dimension, float_type>::acquire(phase_space_type const& phase_space
 {
     scoped_timer_type timer(runtime_.acquire);
 
-    if (rho_sample_ && rho_sample_->step() == clock_->step()) {
-        LOG_TRACE("sample is up to date");
-        return rho_sample_;
-    }
-
     LOG_TRACE("acquire sample");
-
-    if (phase_space.step() != clock_->step()) {
-        throw logic_error("GPU phase space sample was not updated");
-    }
 
     // re-allocate memory which allows modules (e.g., dynamics::blocking_scheme)
     // to hold a previous copy of the sample
-    rho_sample_ = std::make_shared<sample_type>(nq_, clock_->step());
+    rho_sample_ = std::make_shared<sample_type>(nq_);
 
     // compute density modes
     mode_array_type& rho = rho_sample_->rho();
@@ -164,7 +154,6 @@ void density_mode<dimension, float_type>::luaopen(lua_State* L)
 
           , def("density_mode", &std::make_shared<density_mode
               , std::shared_ptr<wavevector_type const>
-              , std::shared_ptr<clock_type const>
               , std::shared_ptr<logger_type>
             >)
         ]

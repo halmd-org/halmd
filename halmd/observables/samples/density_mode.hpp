@@ -1,5 +1,6 @@
 /*
- * Copyright © 2011-2012  Felix Höfling and Peter Colberg
+ * Copyright © 2011-2013  Felix Höfling
+ * Copyright © 2011-2012 Peter Colberg
  *
  * This file is part of HALMD.
  *
@@ -21,11 +22,8 @@
 #define HALMD_OBSERVABLES_SAMPLES_DENSITY_MODE_HPP
 
 #include <complex>
-#include <limits>
 #include <lua.hpp>
-#include <stdexcept> // std::logic_error
 
-#include <halmd/mdsim/clock.hpp>
 #include <halmd/utility/raw_array.hpp>
 
 namespace halmd {
@@ -42,15 +40,13 @@ class density_mode
 {
 public:
     typedef raw_array<std::complex<double>> mode_array_type;
-    typedef typename mdsim::clock::step_type step_type;
 
     /**
      * Construct sample of given size.
      *
      * @param nq total number of wavevectors
-     * @param step simulation step when sample is taken (optional)
      */
-    density_mode(std::size_t nq, step_type step = std::numeric_limits<step_type>::max());
+    density_mode(std::size_t nq) : rho_(nq) {}
 
     /**
      * Returns const reference to density modes, one entry per wavevector.
@@ -75,17 +71,6 @@ public:
     }
 
     /**
-     * Returns simulation step when the sample was taken.
-     */
-    step_type step() const
-    {
-        if (step_ == std::numeric_limits<step_type>::max()) {
-            throw std::logic_error("step not set in density modes sample");
-        }
-        return step_;
-    }
-
-    /**
      * Bind class to Lua.
      */
     static void luaopen(lua_State* L);
@@ -93,16 +78,7 @@ public:
 private:
     /** density modes */
     mode_array_type rho_;
-    /** simulation step when sample was taken */
-    step_type step_;
 };
-
-template <int dimension>
-inline density_mode<dimension>::density_mode(std::size_t nq, step_type step)
-  : rho_(nq)
-  , step_(step)
-{
-}
 
 } // namespace samples
 } // namespace observables

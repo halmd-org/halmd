@@ -1,5 +1,6 @@
 /*
- * Copyright © 2011-2012  Felix Höfling and Peter Colberg
+ * Copyright © 2011-2013 Felix Höfling
+ * Copyright © 2011-2012 Peter Colberg
  *
  * This file is part of HALMD.
  *
@@ -24,7 +25,6 @@
 #include <memory>
 
 #include <halmd/io/logger.hpp>
-#include <halmd/mdsim/clock.hpp>
 #include <halmd/observables/host/samples/phase_space.hpp>
 #include <halmd/observables/samples/density_mode.hpp>
 #include <halmd/observables/utility/wavevector.hpp>
@@ -47,12 +47,10 @@ public:
     typedef host::samples::phase_space<dimension, float_type> phase_space_type;
     typedef observables::utility::wavevector<dimension> wavevector_type;
     typedef observables::samples::density_mode<dimension> sample_type;
-    typedef mdsim::clock clock_type;
     typedef logger logger_type;
 
     density_mode(
         std::shared_ptr<wavevector_type const> wavevector
-      , std::shared_ptr<clock_type const> clock
       , std::shared_ptr<logger_type> logger = std::make_shared<logger_type>()
     );
 
@@ -85,8 +83,6 @@ private:
     std::shared_ptr<sample_type> rho_sample_;
     /** wavevector grid */
     std::shared_ptr<wavevector_type const> wavevector_;
-    /** simulation clock */
-    std::shared_ptr<clock_type const> clock_;
     /** logger instance */
     std::shared_ptr<logger_type> logger_;
 

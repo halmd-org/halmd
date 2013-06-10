@@ -1,5 +1,6 @@
 /*
- * Copyright © 2011-2012  Felix Höfling and Peter Colberg
+ * Copyright © 2011-2013  Felix Höfling
+ * Copyright © 2011-2012 Peter Colberg
  *
  * This file is part of HALMD.
  *
@@ -32,7 +33,6 @@ void density_mode<dimension>::luaopen(lua_State* L)
     module(L)
     [
         class_<density_mode>()
-            .property("step", &density_mode::step)
     ];
 }
 

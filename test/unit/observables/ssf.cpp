@@ -1,5 +1,6 @@
 /*
- * Copyright © 2011-2012  Felix Höfling and Peter Colberg
+ * Copyright © 2011-2013 Felix Höfling
+ * Copyright © 2011-2012 Peter Colberg
  *
  * This file is part of HALMD.
  *
@@ -148,7 +149,7 @@ void lattice<modules_type>::test()
     wavevector = std::make_shared<wavevector_type>(wavenumber, box->length(), 1e-3, 2 * dimension);
 
     // construct modules for density modes and static structure factor
-    density_mode = std::make_shared<density_mode_type>(wavevector, clock);
+    density_mode = std::make_shared<density_mode_type>(wavevector);
     ssf = std::make_shared<ssf_type>(wavevector, particle->nparticle(), clock);
 
     // generate lattices
