@@ -1,5 +1,5 @@
 --
--- Copyright © 2011-2012  Felix Höfling
+-- Copyright © 2011-2013  Felix Höfling
 --
 -- This file is part of HALMD.
 --
@@ -17,107 +17,127 @@
 -- along with this program.  If not, see <http://www.gnu.org/licenses/>.
 --
 
-local clock             = require("halmd.mdsim.clock")
-local log               = require("halmd.io.log")
-local module            = require("halmd.utility.module")
-local observables = {
-    phase_space         = require("halmd.observables.phase_space")
-  , utility = {
-        wavevector      = require("halmd.observables.utility.wavevector")
-    }
-}
+local log      = require("halmd.io.log")
+local utility  = require("halmd.utility")
+local module   = require("halmd.utility.module")
+local profiler = require("halmd.utility.profiler")
+local sampler  = require("halmd.observables.sampler")
 
 -- grab C++ wrappers
-local density_mode_wrapper = libhalmd.observables.density_mode
-local po = libhalmd.po
+local density_mode = assert(libhalmd.observables.density_mode)
+
 -- grab standard library
 local assert = assert
-local ipairs = ipairs
 local property = property
-local type = type
 
+---
+-- Density mode
+-- ============
+--
+-- The module computes the complex Fourier modes of the particle density field,
+--
+-- .. math::
+--
+--     \rho(\vec k) = \sum_{n=1}^N \exp(\text{i} \vec k \cdot \vec r_n) \/.
+--
+-- The auxiliary module :class:`halmd.obseravbles.utility.wavevector` provides
+-- suitable wavevectors that are compatible with the reciprocal lattice of the
+-- periodic simulation box.
+--
 
+---
+-- Construct instance of :class:`halmd.observables.density_mode`.
 --
--- construct instance of density_mode module
+-- :param table args: keyword arguments
+-- :param args.group:      instance of :mod:`halmd.mdsim.particle_groups`
+-- :param args.wavevector: instance of :class:`halmd.observables.utility.wavevector`
+-- :returns: instance of density mode sampler
 --
--- @param args              parameter table:
---     args.phase_space     list of phase_space samplers with attached labels
---     args.wavenumbers     explicit list of wavenumbers, specify alternatively:
---     args.max_wavenumber  maximum wavenumber
---     args.decimation      decimation parameter for wavenumber grid
---     args.tolerance       tolerance on wavevector magnitude
---     args.max_count       maximum count of wavevectors per wavenumber
--- @returns list of density_mode instances
+-- .. method:: disconnect()
+--
+--    Disconnect density mode sampler from profiler.
+--
+-- .. attribute:: label
+--
+--    The label of the underlying particle group.
+--
+-- .. attribute:: count
+--
+--    The particle count of the underlying particle group.
+--
+-- .. class:: writer(args)
+--
+--    Write time series of density modes to file.
+--
+--    :param table args: keyword arguments (optional)
+--    :param args.file: instance of file writer
+--    :param args.location: location within file *(optional)*
+--    :param number args.every: sampling interval
+--    :type args.location: string table
+--    :returns: instance of density mode writer
+--
+--    The argument ``location`` specifies a path in a structured file format
+--    like H5MD given as a table of strings. If omitted it defaults to
+--    ``{"structure", self.label, "density_modes"}``.
+--
+--    .. method:: disconnect()
+--
+--       Disconnect density mode writer from observables sampler.
 --
 local M = module(function(args)
-    -- dependency injection
-    local phase_space = assert(args.phase_space, "missing parameter: phase_space")
-    assert(type(phase_space) == "table", "invalid table")
-    local logger = log.logger({label = "density_mode"})
+    local group = utility.assert_kwarg(args, "group")
+    local particle = assert(group.particle)
+    local wavevector = utility.assert_kwarg(args, "wavevector")
 
-    local wavenumbers = args.wavenumbers
-    local max_wavenumber = args.max_wavenumber or 12.6 -- default value, approx. 4π
-    local decimation = args.decimation or 10 -- default value
-    local tolerance = args.tolerance or 0.01 -- default value
-    local max_count = args.max_count or 7 -- default value
+    -- inherit label from particle group
+    local label = assert(group.label)
+    local logger = log.logger({label = ("density_mode (%s)"):format(label)})
 
-    -- construct local wavevector module
-    local wavevector = assert(observables.utility.wavevector)
-    if wavenumbers then
-        wavevector = wavevector{
-            wavenumber = wavenumbers
-          , tolerance = tolerance
-          , max_count = max_count
-        }
-    else -- use maximum_wavenumber
-        wavevector = wavevector{
-            max_wavenumber = max_wavenumber
-          , decimation = decimation
-          , tolerance = tolerance
-          , max_count = max_count
-        }
+    local self = density_mode(particle, group, wavevector, logger)
+
+    -- store label and particle count as Lua properties
+    self.label = property(function(self) return label end)
+
+    local count = assert(group.size)
+    self.count = property(function(self) return count end)
+
+    self.writer = function(self, args)
+        local file = utility.assert_kwarg(args, "file")
+        local location = utility.assert_type(
+            args.location or {"structure", assert(self.label), "density_mode"}
+          , "table")
+        local every = utility.assert_kwarg(args, "every")
+
+        -- write wavevectors only at start of simulation
+        local writer = file:writer{location = location, mode = "truncate"}
+--        writer:on_write(wavevector.value, {"wavevector"})
+--        writer:write() -- FIXME pass arguments directly to write(), avoiding on_write
+
+        -- write time series of density modes: register acquisitor with writer
+        local writer = file:writer{location = location, mode = "append"}
+--        writer:on_write(self:acquisitor(), {"value"}) -- FIXME resolve cache<shared_ptr<...>>
+
+        -- sequence of signal connections
+        local conn = {}
+        writer.disconnect = utility.signal.disconnect(conn, ("density_mode writer (%s)"):format(label))
+
+        -- connect writer to sampler
+        if every > 0 then
+            table.insert(conn, assert(sampler:on_sample(writer.write, every, 0)))
+        end
+
+        return writer
     end
 
-    -- construct list of density modes
-    local observable = {}
-    for i, phase_space in ipairs(phase_space) do
-        local sample = assert(phase_space.sample)
-        density_mode = density_mode_wrapper(sample, wavevector, clock, logger) -- FIXME
+    -- sequence of signal connections
+    local conn = {}
+    self.disconnect = utility.signal.disconnect(conn, ("density_mode (%s)"):format(label))
 
-        -- acquire phase space before acquiring density modes
-        density_mode:on_acquire(phase_space.acquire)
+    -- connect runtime accumulators to module profiler
+    local desc = ("computation of density modes for %s particles"):format(label)
+    table.insert(conn, assert(profiler:on_profile(self.runtime.acquire, desc)))
 
-        -- store label as Lua property
-        local label = assert(phase_space.label)
-        density_mode.label = property(function(self) return label end)
-
-        observable[i] = density_mode
-    end
-
-    return observable
+    return self
 end)
-
---
--- connect runtime accumulators to module profiler
---
-function M.profile(self, profiler)
-    for i, density_mode in ipairs(self) do
-        local label = assert(density_mode.label)
-        profiler:on_profile{density_mode, acquire = "computation of density modes for " .. label .. " particles"}
-    end
-end
-
---
--- assemble module options
---
--- @param desc po.options_description
---
-function M.options(desc)
-    desc:add("wavenumbers", po.float_array():conflicts("max-wavenumber"), "list of wavenumbers")
-    desc:add("max-wavenumber", po.float():conflicts("wavenumbers"), "maximum wavenumber of semi-linearly spaced grid")
-    desc:add("decimation", po.uint():conflicts("wavenumbers"), "decimation of wavenumber grid")
-    desc:add("tolerance", po.float(), "relative tolerance on wavevector magnitude")
-    desc:add("max-count", po.uint(), "maximum number of wavevectors per wavenumber shell")
-end
 
 return M
