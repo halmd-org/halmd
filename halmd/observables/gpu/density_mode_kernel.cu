@@ -33,9 +33,6 @@ namespace density_mode_kernel {
 // pass wavevectors via texture
 texture<void> q_;
 
-// global constants
-__constant__ uint nq_;        // number of wavevectors
-
 // recursive reduction function,
 // terminate for threads=0
 template <unsigned threads, typename T>
@@ -81,8 +78,8 @@ __device__ sum_reduce_type sum_reduce_select[] = {
 template <typename vector_type, typename coalesced_vector_type>
 __global__ void compute(
     coalesced_vector_type const* g_r
-  , unsigned int const* g_idx, unsigned int npart
-  , float* g_sin_block, float* g_cos_block
+  , unsigned int const* g_idx, int npart
+  , float* g_sin_block, float* g_cos_block, int nq
 )
 {
     enum { dimension = vector_type::static_size };
@@ -91,11 +88,11 @@ __global__ void compute(
     __shared__ float cos_[MAX_BLOCK_SIZE];
 
     // outer loop over wavevectors
-    for (uint i=0; i < nq_; i++) {
+    for (int i=0; i < nq; i++) {
         vector_type q = tex1Dfetch(reinterpret_cast<texture<coalesced_vector_type>&>(q_), i);
         sin_[TID] = 0;
         cos_[TID] = 0;
-        for (uint j = GTID; j < npart; j += GTDIM) {
+        for (int j = GTID; j < npart; j += GTDIM) {
             // retrieve particle position via index array
             unsigned int idx = g_idx[j];
             vector_type r = g_r[idx];
@@ -131,16 +128,16 @@ __global__ void compute(
 __global__ void finalise(
     float const* g_sin_block, float const* g_cos_block
   , float* g_sin, float* g_cos
-  , uint bdim)
+  , int nq, int bdim)
 {
     __shared__ float s_sum[MAX_BLOCK_SIZE];
     __shared__ float c_sum[MAX_BLOCK_SIZE];
 
     // outer loop over wavevectors, distributed over block grid
-    for (uint i = BID; i < nq_; i += BDIM) {
+    for (int i = BID; i < nq; i += BDIM) {
         s_sum[TID] = 0;
         c_sum[TID] = 0;
-        for (uint j = TID; j < bdim; j += TDIM) {
+        for (int j = TID; j < bdim; j += TDIM) {
             s_sum[TID] += g_sin_block[i * bdim + j];
             c_sum[TID] += g_cos_block[i * bdim + j];
         }
@@ -168,7 +165,6 @@ __global__ void finalise(
 template <int dimension>
 density_mode_wrapper<dimension> const density_mode_wrapper<dimension>::kernel = {
     density_mode_kernel::q_
-  , density_mode_kernel::nq_
   , density_mode_kernel::compute<fixed_vector<float, dimension> >
   , density_mode_kernel::finalise
 };
@@ -176,6 +172,6 @@ density_mode_wrapper<dimension> const density_mode_wrapper<dimension>::kernel = 
 template class density_mode_wrapper<3>;
 template class density_mode_wrapper<2>;
 
-} // namespace observables
 } // namespace gpu
+} // namespace observables
 } // namespace halmd

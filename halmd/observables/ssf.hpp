@@ -48,7 +48,7 @@ template <int dimension>
 class ssf
 {
 public:
-    typedef observables::samples::density_mode<dimension> density_mode_type;
+    typedef observables::samples::density_mode density_mode_type;
     typedef observables::utility::wavevector<dimension> wavevector_type;
     typedef mdsim::clock clock_type;
     typedef logger logger_type;

@@ -50,7 +50,7 @@ public:
     typedef mdsim::gpu::particle<dimension, float_type> particle_type;
     typedef mdsim::gpu::particle_group particle_group_type;
     typedef observables::utility::wavevector<dimension> wavevector_type;
-    typedef observables::samples::density_mode<dimension> sample_type;
+    typedef observables::samples::density_mode sample_type;
     typedef logger logger_type;
 
     density_mode(
@@ -66,14 +66,6 @@ public:
     std::shared_ptr<sample_type const> acquire();
 
     /**
-     * Returns wavevector instance.
-     */
-    std::shared_ptr<wavevector_type const> wavevector() const
-    {
-        return wavevector_;
-    }
-
-    /**
      * Bind class to Lua.
      */
     static void luaopen(lua_State* L);
@@ -81,8 +73,8 @@ public:
 private:
     typedef typename mdsim::type_traits<dimension, float>::vector_type vector_type;
     typedef typename mdsim::type_traits<dimension, float>::gpu::coalesced_vector_type gpu_vector_type;
-    typedef typename sample_type::mode_array_type mode_array_type;
-    typedef typename mode_array_type::value_type mode_type;
+    typedef sample_type::mode_array_type mode_array_type;
+    typedef mode_array_type::value_type mode_type;
     typedef density_mode_wrapper<dimension> wrapper_type;
 
     /** system state */
@@ -128,8 +120,8 @@ private:
     runtime runtime_;
 };
 
-} // namespace observables
 } // namespace gpu
+} // namespace observables
 } // namespace halmd
 
 #endif /* ! HALMD_OBSERVABLES_GPU_DENSITY_MODE_HPP */

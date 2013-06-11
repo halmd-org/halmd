@@ -35,7 +35,6 @@ namespace samples {
  *
  * @f$ \rho_{\vec q} = \sum_{i=1}^N \exp(\textrm{i}\vec q \cdot \vec r_i) @f$
  */
-template <int dimension>
 class density_mode
 {
 public:

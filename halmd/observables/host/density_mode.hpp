@@ -48,7 +48,7 @@ public:
     typedef mdsim::host::particle<dimension, float_type> particle_type;
     typedef mdsim::host::particle_group particle_group_type;
     typedef observables::utility::wavevector<dimension> wavevector_type;
-    typedef observables::samples::density_mode<dimension> sample_type;
+    typedef observables::samples::density_mode sample_type;
     typedef logger logger_type;
 
     density_mode(
@@ -64,22 +64,14 @@ public:
     std::shared_ptr<sample_type const> acquire();
 
     /**
-     * Returns wavevector instance.
-     */
-    std::shared_ptr<wavevector_type const> wavevector() const
-    {
-        return wavevector_;
-    }
-
-    /**
      * Bind class to Lua.
      */
     static void luaopen(lua_State* L);
 
 private:
     typedef fixed_vector<float_type, dimension> vector_type;
-    typedef typename sample_type::mode_array_type mode_array_type;
-    typedef typename mode_array_type::value_type mode_type;
+    typedef sample_type::mode_array_type mode_array_type;
+    typedef mode_array_type::value_type mode_type;
 
     /** system state */
     std::shared_ptr<particle_type const> particle_;

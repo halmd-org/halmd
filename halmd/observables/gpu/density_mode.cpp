@@ -31,8 +31,8 @@ template <int dimension, typename float_type>
 density_mode<dimension, float_type>::density_mode(
     shared_ptr<particle_type const> particle
   , shared_ptr<particle_group_type> particle_group
-  , std::shared_ptr<wavevector_type const> wavevector
-  , std::shared_ptr<logger_type> logger
+  , shared_ptr<wavevector_type const> wavevector
+  , shared_ptr<logger_type> logger
 )
     // dependency injection
   : particle_(particle)
@@ -49,8 +49,8 @@ density_mode<dimension, float_type>::density_mode(
   , h_sin_(nq_), h_cos_(nq_)
 {
     LOG_DEBUG(
-        "[density_mode] CUDA configuration: " << dim_.blocks_per_grid() << " blocks of "
-     << dim_.threads_per_block() << " threads each"
+        "CUDA configuration: " << dim_.blocks_per_grid() << " blocks of "
+        << dim_.threads_per_block() << " threads each"
     );
     // copy wavevectors to CUDA device
     try {
@@ -64,16 +64,7 @@ density_mode<dimension, float_type>::density_mode(
         cuda::copy(q, g_q_);
     }
     catch (cuda::error const&) {
-        LOG_ERROR("failed to initialise device constants");
-        throw;
-    }
-
-    // copy parameters to CUDA device
-    try {
-        cuda::copy(nq_, wrapper_type::kernel.nq);
-    }
-    catch (cuda::error const&) {
-        LOG_ERROR("failed to initialise device constants");
+        LOG_ERROR("failed to copy wavevectors to device");
         throw;
     }
 }
@@ -82,7 +73,7 @@ density_mode<dimension, float_type>::density_mode(
  * Acquire sample of all density modes from particle group
  */
 template <int dimension, typename float_type>
-std::shared_ptr<typename density_mode<dimension, float_type>::sample_type const>
+shared_ptr<typename density_mode<dimension, float_type>::sample_type const>
 density_mode<dimension, float_type>::acquire()
 {
     scoped_timer_type timer(runtime_.acquire);
@@ -91,7 +82,7 @@ density_mode<dimension, float_type>::acquire()
 
     // re-allocate memory which allows modules (e.g., dynamics::blocking_scheme)
     // to hold a previous copy of the sample
-    rho_sample_ = std::make_shared<sample_type>(nq_);
+    rho_sample_ = make_shared<sample_type>(nq_);
 
     // compute density modes
     mode_array_type& rho = rho_sample_->rho();
@@ -104,7 +95,7 @@ density_mode<dimension, float_type>::acquire()
         // compute exp(i q·r) for all wavevector/particle pairs and perform block sums
         wrapper_type::kernel.compute(
             position, &*unordered.begin(), unordered.size()
-          , g_sin_block_, g_cos_block_
+          , g_sin_block_, g_cos_block_, nq_
         );
         cuda::thread::synchronize();
 
@@ -113,7 +104,7 @@ density_mode<dimension, float_type>::acquire()
             nq_                        // #blocks: one per wavevector
           , dim_.block                 // #threads per block, must be a power of 2
         );
-        wrapper_type::kernel.finalise(g_sin_block_, g_cos_block_, g_sin_, g_cos_, dim_.blocks_per_grid());
+        wrapper_type::kernel.finalise(g_sin_block_, g_cos_block_, g_sin_, g_cos_, nq_, dim_.blocks_per_grid());
     }
     catch (cuda::error const&) {
         LOG_ERROR("failed to compute density modes on GPU");
@@ -131,8 +122,8 @@ density_mode<dimension, float_type>::acquire()
 }
 
 template <typename sample_type, typename density_mode_type>
-static std::function<std::shared_ptr<sample_type const> ()>
-wrap_acquire(std::shared_ptr<density_mode_type> density_mode)
+static function<shared_ptr<sample_type const> ()>
+wrap_acquire(shared_ptr<density_mode_type> density_mode)
 {
     return [=]() {
        return density_mode->acquire();
@@ -147,21 +138,22 @@ void density_mode<dimension, float_type>::luaopen(lua_State* L)
     [
         namespace_("observables")
         [
-            class_<density_mode>()
-                .def("acquire", &wrap_acquire<sample_type, density_mode>)
-                .property("wavevector", &density_mode::wavevector)
-                .scope
-                [
-                    class_<runtime>("runtime")
-                        .def_readonly("acquire", &runtime::acquire)
-                ]
-                .def_readonly("runtime", &density_mode::runtime_)
-
-          , def("density_mode", &std::make_shared<density_mode
+            namespace_("gpu")
+            [
+                class_<density_mode>()
+                    .def("acquire", &wrap_acquire<sample_type, density_mode>)
+                    .scope
+                    [
+                        class_<runtime>("runtime")
+                            .def_readonly("acquire", &runtime::acquire)
+                    ]
+                    .def_readonly("runtime", &density_mode::runtime_)
+            ]
+          , def("density_mode", &make_shared<density_mode
               , shared_ptr<particle_type const>
               , shared_ptr<particle_group_type>
-              , std::shared_ptr<wavevector_type const>
-              , std::shared_ptr<logger_type>
+              , shared_ptr<wavevector_type const>
+              , shared_ptr<logger_type>
             >)
         ]
     ];
@@ -178,6 +170,6 @@ HALMD_LUA_API int luaopen_libhalmd_observables_gpu_density_mode(lua_State* L)
 template class density_mode<3, float>;
 template class density_mode<2, float>;
 
-}}  // namespace observables::gpu
-
+}  // namespace gpu
+}  // namespace observables
 }  // namespace halmd

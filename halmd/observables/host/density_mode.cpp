@@ -60,7 +60,7 @@ density_mode<dimension, float_type>::acquire()
     // compute density modes
     mode_array_type& rho_vector = rho_sample_->rho();
     // initialise result array
-    fill(rho_vector.begin(), rho_vector.end(), 0);
+    fill(begin(rho_vector), end(rho_vector), 0);
 
     // compute sum of exponentials: rho_q = sum_r exp(-i q·r)
     // 1st loop: iterate over particles
@@ -70,7 +70,7 @@ density_mode<dimension, float_type>::acquire()
     for (typename particle_group_type::size_type i : unordered) {
         vector_type const& r = position[i];
         // 2nd loop: iterate over wavevectors
-        auto rho_q = rho_vector.begin();
+        auto rho_q = begin(rho_vector);
         for (auto const& q_pair : wavevector_->value()) {
             float_type q_r = inner_prod(static_cast<vector_type>(q_pair.second), r);
             *rho_q++ += mode_type(cos(q_r), -sin(q_r));
@@ -79,14 +79,7 @@ density_mode<dimension, float_type>::acquire()
 
     return rho_sample_;
 }
-/*
-template <typename sample_type, typename density_mode_type, typename slot_type>
-static shared_ptr<sample_type const>
-acquire(shared_ptr<density_mode_type> density_mode)
-{
-    return density_mode->acquire();
-}
-*/
+
 template <typename sample_type, typename density_mode_type>
 static function<shared_ptr<sample_type const> ()>
 wrap_acquire(shared_ptr<density_mode_type> density_mode)
@@ -104,16 +97,17 @@ void density_mode<dimension, float_type>::luaopen(lua_State* L)
     [
         namespace_("observables")
         [
-            class_<density_mode>()
-                .def("acquire", &wrap_acquire<sample_type, density_mode>)
-                .property("wavevector", &density_mode::wavevector)
-                .scope
-                [
-                    class_<runtime>("runtime")
-                        .def_readonly("acquire", &runtime::acquire)
-                ]
-                .def_readonly("runtime", &density_mode::runtime_)
-
+            namespace_("host")
+            [
+                class_<density_mode>()
+                    .def("acquire", &wrap_acquire<sample_type, density_mode>)
+                    .scope
+                    [
+                        class_<runtime>("runtime")
+                            .def_readonly("acquire", &runtime::acquire)
+                    ]
+                    .def_readonly("runtime", &density_mode::runtime_)
+            ]
           , def("density_mode", &make_shared<density_mode
               , shared_ptr<particle_type const>
               , shared_ptr<particle_group_type>
@@ -145,6 +139,6 @@ template class density_mode<3, float>;
 template class density_mode<2, float>;
 #endif
 
-}}  // namespace observables::host
-
+}  // namespace host
+}  // namespace observables
 }  // namespace halmd

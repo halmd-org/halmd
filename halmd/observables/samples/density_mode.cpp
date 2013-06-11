@@ -26,29 +26,29 @@ namespace halmd {
 namespace observables {
 namespace samples {
 
-template <int dimension>
-void density_mode<dimension>::luaopen(lua_State* L)
+void density_mode::luaopen(lua_State* L)
 {
     using namespace luaponte;
     module(L)
     [
-        class_<density_mode>()
+        namespace_("observables")
+        [
+            namespace_("samples")
+            [
+                class_<density_mode>()
+            ]
+        ]
     ];
 }
 
 HALMD_LUA_API int luaopen_libhalmd_observables_samples_density_mode(lua_State* L)
 {
-    density_mode<3>::luaopen(L);
-    density_mode<2>::luaopen(L);
-    observables::samples::blocking_scheme<density_mode<3> >::luaopen(L);
-    observables::samples::blocking_scheme<density_mode<2> >::luaopen(L);
+    density_mode::luaopen(L);
+    blocking_scheme<density_mode>::luaopen(L);
     return 0;
 }
 
-template class density_mode<3>;
-template class density_mode<2>;
-template class blocking_scheme<density_mode<3> >;
-template class blocking_scheme<density_mode<2> >;
+template class blocking_scheme<density_mode>;
 
 } // namespace samples
 } // namespace observables
