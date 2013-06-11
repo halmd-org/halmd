@@ -20,10 +20,8 @@
 local module = require("halmd.utility.module")
 
 -- grab C++ wrappers
-local wavevector_wrapper = {
-    [2] = libhalmd.observables.utility.wavevector_2_
-  , [3] = libhalmd.observables.utility.wavevector_3_
-}
+local wavevector = assert(libhalmd.observables.utility.wavevector)
+
 -- grab standard library
 local assert = assert
 
@@ -70,20 +68,28 @@ local assert = assert
 -- :param number args.tolerance:  relative tolerance on wavevector magnitude
 -- :param integer args.max_count: maximum number of wavevectors per wavenumber shell
 --
+-- .. method:: wavenumber()
+--
+--    Returns data slot that yiels the wavenumber grid.
+--
+-- .. method:: value()
+--
+--    Returns data slot that yiels the list of wavevectors grouped by their
+--    magnitude in ascending order.
+--
 local M = module(function(args)
     local box = assert(args.box)
     local wavenumber = assert(args.wavenumber)
     local tolerance = assert(args.tolerance)
     local max_count = assert(args.max_count)
 
-    local wavevector = assert(wavevector_wrapper[box.dimension])
     return wavevector(wavenumber, box.length, tolerance, max_count)
 end)
 
 ---
 -- .. function:: add_options(parser)
 --
---    Add module options to command line parser.
+--    Add module options to command line parser: ``wavenumbers``, ``tolerance``, ``max-count``.
 --
 --    :param parser: instance of :class:`halmd.utility.program_options.argument_parser`
 --

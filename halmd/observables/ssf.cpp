@@ -62,32 +62,30 @@ ssf<dimension>::sample(density_mode_type const& mode1, density_mode_type const& 
 
     LOG_TRACE("sampling");
 
-    typename rho_vector_type::const_iterator rho_q1 = mode1.rho().begin();
-    typename rho_vector_type::const_iterator rho_q2 = mode2.rho().begin();
+    typename rho_vector_type::const_iterator rho1_begin = mode1.rho().begin();
+    typename rho_vector_type::const_iterator rho2_begin = mode2.rho().begin();
     typename result_type::iterator result = result_.begin();
 
-    typename wavevector_type::map_type const& wavevector = wavevector_->value();
-    typename wavevector_type::map_type::const_iterator q = wavevector.begin();
-    typename wavevector_type::map_type::const_iterator q_next = q; ++q_next;
-
     // accumulate products of density modes with equal wavenumber,
-    // iterate over sorted list of wavevectors
-    accumulator<double> acc;
-    while (q != wavevector.end()) {
-        // compute Re[rho_q rho_q^*], add result to output accumulator
-        double re = (real(*rho_q1) * real(*rho_q2) + imag(*rho_q1) * imag(*rho_q2));
-        acc(re / norm_);
-        // find end of range with equal wavenumber
-        if (q_next == wavevector.end() || q->first != q_next->first) {
-            // transform accumulator to array (mean, error_of_mean, count)
-            (*result)[0] = mean(acc);
-            (*result)[1] = count(acc) > 1 ? error_of_mean(acc) : 0;
-            (*result)[2] = count(acc);
-            acc.reset();
-            // next wavenumber: increment output iterator
-            ++result;
+    // iterate over wavevector shells encoded as index ranges to the wavevector array
+    for (auto idx_range : wavevector_->shell()) {
+        accumulator<double> acc;
+        auto rho_q1 = rho1_begin + idx_range.first;
+        auto rho_q2 = rho2_begin + idx_range.first;
+        // iterate over wavevectors and density modes simultaneously
+        for (size_t i = idx_range.first; i != idx_range.second; ++i, ++rho_q1, ++rho_q2) {
+            // compute Re[rho_q rho_q^*]
+            double re = (real(*rho_q1) * real(*rho_q2) + imag(*rho_q1) * imag(*rho_q2));
+            // accumulate results for this wavenumber
+            acc(re / norm_);
         }
-        ++q; ++q_next; ++rho_q1; ++rho_q2;
+        // transform accumulator to array (mean, error_of_mean, count)
+        // and write to output iterator
+        *result++ = {{
+            mean(acc)
+          , count(acc) > 1 ? error_of_mean(acc) : 0
+          , static_cast<double>(count(acc))
+        }};
     }
 
     // store simulation step as time stamp

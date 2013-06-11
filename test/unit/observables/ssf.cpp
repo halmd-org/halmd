@@ -167,19 +167,14 @@ void lattice<modules_type>::test()
     BOOST_CHECK(result.size() == wavenumber.size());
 
     // compare with expected result
-    typedef typename wavevector_type::map_type::const_iterator iterator_type;
-    iterator_type q_begin = wavevector->value().begin();
-    iterator_type q_end = q_begin;
-    for (unsigned i = 0; i < result.size(); ++i) {
-        // find range with wavevectors of magnitude q
-        double q = wavevector->wavenumber()[i];
-        q_begin = q_end;
-        for ( ; q_end != wavevector->value().end(); ++q_end) {
-            if (q_end->first > q)
-                break;
-        }
-        unsigned nq = q_end - q_begin;
+    auto shell = wavevector->shell().begin();
+    for (unsigned i = 0; i < result.size(); ++i, ++shell) {
+        // range with wavevectors of magnitude q
+        unsigned nq = shell->second - shell->first;
         BOOST_CHECK(nq > 0);
+
+        auto q_begin = wavevector->value().begin() + shell->first;
+        auto q_end = q_begin + nq;
 
         // determine (h,k,l) of each wavevector and its contribution to the
         // structure factor
@@ -195,12 +190,12 @@ void lattice<modules_type>::test()
         // and zero otherwise. Thus, S_q = ncell * nunit_cell = npart
         // for matching wavevectors.
         double S_q = 0;
-        for (iterator_type q_it = q_begin; q_it != q_end; ++q_it) {
+        for (auto q_it = q_begin; q_it != q_end; ++q_it) {
             // compute elementwise product (h,k,l) × ncell
             // since fractions cannot be represented by double
             typedef fixed_vector<unsigned, dimension> index_type; // caveat: we assume q[i] ≥ 0
             index_type hkl_ncell = static_cast<index_type>(
-                round(element_prod(q_it->second, box->length() / (2 * M_PI)))
+                round(element_prod(*q_it, box->length() / (2 * M_PI)))
             );
             // check whether all entries are multiples of ncell
             // and if yes, count number of odd multiples

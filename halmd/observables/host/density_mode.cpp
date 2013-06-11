@@ -53,9 +53,11 @@ density_mode<dimension, float_type>::acquire()
 
     LOG_TRACE("acquire sample");
 
+    auto const& wavevector = wavevector_->value(); // array of wavevectors
+
     // re-allocate memory which allows modules (e.g., dynamics::blocking_scheme)
     // to hold a previous copy of the sample
-    rho_sample_ = make_shared<sample_type>(wavevector_->value().size());
+    rho_sample_ = make_shared<sample_type>(wavevector.size());
 
     // compute density modes
     mode_array_type& rho_vector = rho_sample_->rho();
@@ -71,8 +73,8 @@ density_mode<dimension, float_type>::acquire()
         vector_type const& r = position[i];
         // 2nd loop: iterate over wavevectors
         auto rho_q = begin(rho_vector);
-        for (auto const& q_pair : wavevector_->value()) {
-            float_type q_r = inner_prod(static_cast<vector_type>(q_pair.second), r);
+        for (auto const& q : wavevector) {
+            float_type q_r = inner_prod(q, r);
             *rho_q++ += mode_type(cos(q_r), -sin(q_r));
         }
     }

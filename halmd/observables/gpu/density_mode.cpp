@@ -54,14 +54,14 @@ density_mode<dimension, float_type>::density_mode(
     );
     // copy wavevectors to CUDA device
     try {
-        cuda::host::vector<gpu_vector_type> q(nq_);
-        for (unsigned int i = 0; i < nq_; ++i) {
-            // select wavevector from pair (wavenumber, wavevector),
-            // cast from fixed_vector<double, ...> to fixed_vector<float, ...>
-            // and finally to gpu_vector_type (float4 or float2)
-            q[i] = static_cast<vector_type>(wavevector_->value()[i].second);
+        // cast from fixed_vector<double, ...> to fixed_vector<float, ...>
+        // and finally to gpu_vector_type (float4 or float2)
+        auto const& q = wavevector_->value();
+        cuda::host::vector<gpu_vector_type> h_q(nq_);
+        for (unsigned int i = 0; i < q.size(); ++i) {
+            h_q[i] = static_cast<vector_type>(q[i]);
         }
-        cuda::copy(q, g_q_);
+        cuda::copy(h_q, g_q_);
     }
     catch (cuda::error const&) {
         LOG_ERROR("failed to copy wavevectors to device");

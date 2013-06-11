@@ -1,5 +1,5 @@
 /*
- * Copyright © 2011-2013  Felix Höfling
+ * Copyright © 2011-2013 Felix Höfling
  *
  * This file is part of HALMD.
  *
@@ -34,9 +34,6 @@ namespace utility {
 /**
  * construct set of wavevector shells compatible with the reciprocal
  * lattice of the periodic simulation box and a list of wavenumbers
- *
- * The result in value() is a sorted container of key/value pairs
- * (wavenumber, wavevector).
  */
 
 template <int dimension>
@@ -44,8 +41,9 @@ class wavevector
 {
 public:
     typedef fixed_vector<double, dimension> vector_type;
-    typedef std::vector<std::pair<double, vector_type> > map_type;
     typedef std::vector<double> wavenumber_array_type;
+    typedef std::vector<vector_type> wavevector_array_type;
+    typedef std::vector<std::pair<std::size_t, std::size_t>> shell_array_type;
 
     static void luaopen(lua_State* L);
 
@@ -70,7 +68,7 @@ public:
     }
 
     //! returns list of wavevectors
-    map_type const& value() const
+    wavevector_array_type const& value() const
     {
         return wavevector_;
     }
@@ -79,6 +77,17 @@ public:
     wavenumber_array_type const& wavenumber() const
     {
         return wavenumber_;
+    }
+
+    /*
+     * returns list of wavevector shells
+     *
+     * The values are index ranges on the wavevector array, the order of shells
+     * coincides with the wavenumber grid.
+     */
+    shell_array_type const& shell() const
+    {
+        return shell_;
     }
 
 protected:
@@ -90,11 +99,10 @@ protected:
     double tolerance_;
     /** maximum number of wavevectors per wavenumber */
     double max_count_;
-    /**
-     * list of wavevectors grouped by their magnitude,
-     * the keys equal wavenumber_ (or a subset of)
-     */
-    map_type wavevector_;
+    // list of wavevectors grouped by their magnitude in ascending order
+    wavevector_array_type wavevector_;
+    // list of wavevector shells
+    shell_array_type shell_;
     /** module logger */
     std::shared_ptr<logger> logger_;
 };

@@ -17,10 +17,10 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <boost/bind.hpp>
 #include <cmath>
 #include <exception>
 #include <iterator>
+#include <map>
 #include <sstream>
 
 #include <halmd/algorithm/host/pick_lattice_points.hpp>
@@ -61,79 +61,92 @@ wavevector<dimension>::wavevector(
     LOG("tolerance on magnitude: " << tolerance_);
     LOG("maximum shell size: " << max_count_);
 
-    // construct wavevectors and store as key/value pairs (wavenumber, wavevector)
+    // construct wavevectors and store as key/value pairs (wavenumber, wavevector),
+    // wavenumbers are equivalent if they differ by less than tolerance_
+    auto less_tol = [=] (double x, double y) { return x * (1 + tolerance_) < y; }; // comparison functor
+    multimap<double, vector_type, decltype(less_tol)> wavevector_map(less_tol);
     algorithm::host::pick_lattice_points_from_shell(
         first, last
-      , back_inserter(wavevector_)
+      , inserter(wavevector_map, end(wavevector_map))
       , element_div(vector_type(2 * M_PI), box_length_)
       , tolerance_
       , max_count_
     );
 
-    // sort wavevector map according to keys (wavenumber)
-    stable_sort(
-        begin(wavevector_), end(wavevector_)
-      , bind(less<double>(), bind(&map_type::value_type::first, _1), bind(&map_type::value_type::first, _2))
-    );
+    if (wavevector_map.empty()) {
+        LOG_WARNING("no matching wavevectors");
+        throw logic_error("Constraints on wavevectors are incompatible with geometry of simulation box.");
+    }
 
-    // remove wavenumbers with no compatible wavevectors
-    for (vector<double>::iterator q_it = begin(wavenumber_); q_it != end(wavenumber_); ++q_it) {
-        // find wavevector q with |q| = *q_it
-        auto found = find_if(
-            begin(wavevector_), end(wavevector_)
-          , bind(equal_to<double>(), bind(&map_type::value_type::first, _1), *q_it)
-        );
-        if (found == end(wavevector_)) {
+    for (auto q_it = begin(wavenumber_); q_it != end(wavenumber_); ++q_it) {
+        // find wavevector range with |q| = *q_it
+        auto q_range = wavevector_map.equal_range(*q_it);
+
+        if (q_range.first != q_range.second) {
+            // append wavevectors to wavevector list and store shell
+            typename shell_array_type::value_type idx;
+            idx.first = wavevector_.size();
+            for (auto it = q_range.first; it != q_range.second; ++it) {
+                assert(abs(it->first - *q_it) < *q_it * tolerance_);
+                assert(abs(norm_2(it->second) - *q_it) < 2 * *q_it * tolerance_);
+                wavevector_.push_back(it->second);
+            }
+            idx.second = wavevector_.size();
+            shell_.push_back(idx);
+        }
+        else {
+            // remove wavenumbers with empty wavevector shells
             LOG_WARNING("reciprocal lattice not compatible with |q| ≈ " << *q_it << ", value discarded");
             wavenumber_.erase(q_it--);   // post-decrement iterator, increment at end of loop
         }
     }
 
-    if (wavenumber_.empty()) {
-        LOG_WARNING("empty wavenumber grid");
-        throw std::logic_error("Constraints on wavevectors are incompatible with geometry of simulation box.");
-    }
-
-    LOG_DEBUG("total number of wavevectors: " << wavevector_.size());
+    LOG_DEBUG("total number of wavevectors found: " << wavevector_.size());
 }
 
-template <typename wavevector_type, typename wavenumber_array_type>
-static std::function<wavenumber_array_type const& ()>
-wrap_wavenumber(std::shared_ptr<wavevector_type const> self)
+template <typename wavevector_type>
+static function<typename wavevector_type::wavevector_array_type const& ()>
+wrap_value(shared_ptr<wavevector_type const> self)
 {
-    return [=]() -> wavenumber_array_type const& {
-        return self->wavenumber();
+    return [=]() -> typename wavevector_type::wavevector_array_type const& {
+        return self->value();
     };
 }
 
-template <int dimension>
-static unsigned int wrap_dimension(wavevector<dimension> const&)
+template <typename wavevector_type>
+static function<typename wavevector_type::wavenumber_array_type const& ()>
+wrap_wavenumber(shared_ptr<wavevector_type const> self)
 {
-    return dimension;
+    return [=]() -> typename wavevector_type::wavenumber_array_type const& {
+        return self->wavenumber();
+    };
 }
 
 template <int dimension>
 void wavevector<dimension>::luaopen(lua_State* L)
 {
     using namespace luaponte;
-    static string class_name("wavevector_" + boost::lexical_cast<string>(dimension) + "_");
     module(L, "libhalmd")
     [
         namespace_("observables")
         [
             namespace_("utility")
             [
-                class_<wavevector, std::shared_ptr<wavevector> >(class_name.c_str())
+                class_<wavevector>()
                     .def(constructor<
                          vector<double> const&
                        , vector_type const&
                        , double, unsigned int
                     >())
-                    .property("wavenumber", &wrap_wavenumber<wavevector, wavenumber_array_type>)
-                    .property("value", &wavevector::value)
-                    .property("tolerance", &wavevector::tolerance)
-                    .property("max_count", &wavevector::max_count)
-                    .property("dimension", &wrap_dimension<dimension>)
+                    .property("wavenumber", &wrap_wavenumber<wavevector>)
+                    .property("value", &wrap_value<wavevector>)
+
+               , def("wavevector", &make_shared<wavevector
+                  , vector<double> const&
+                  , vector_type const&
+                  , double
+                  , unsigned int
+                 >)
             ]
         ]
     ];
