@@ -18,8 +18,6 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <boost/foreach.hpp>
-
 #include <halmd/observables/host/density_mode.hpp>
 #include <halmd/utility/lua/lua.hpp>
 
@@ -31,21 +29,25 @@ namespace host {
 
 template <int dimension, typename float_type>
 density_mode<dimension, float_type>::density_mode(
-    std::shared_ptr<wavevector_type const> wavevector
-  , std::shared_ptr<logger_type> logger
+    shared_ptr<particle_type const> particle
+  , shared_ptr<particle_group_type> particle_group
+  , shared_ptr<wavevector_type const> wavevector
+  , shared_ptr<logger_type> logger
 )
     // dependency injection
-  : wavevector_(wavevector)
+  : particle_(particle)
+  , particle_group_(particle_group)
+  , wavevector_(wavevector)
   , logger_(logger)
 {
 }
 
 /**
- * Acquire sample of all density modes from phase space sample
+ * Acquire sample of all density modes from particle group
  */
 template <int dimension, typename float_type>
-std::shared_ptr<typename density_mode<dimension, float_type>::sample_type const>
-density_mode<dimension, float_type>::acquire(phase_space_type const& phase_space)
+shared_ptr<typename density_mode<dimension, float_type>::sample_type const>
+density_mode<dimension, float_type>::acquire()
 {
     scoped_timer_type timer(runtime_.acquire);
 
@@ -53,19 +55,23 @@ density_mode<dimension, float_type>::acquire(phase_space_type const& phase_space
 
     // re-allocate memory which allows modules (e.g., dynamics::blocking_scheme)
     // to hold a previous copy of the sample
-    rho_sample_ = std::make_shared<sample_type>(wavevector_->value().size());
+    rho_sample_ = make_shared<sample_type>(wavevector_->value().size());
 
     // compute density modes
     mode_array_type& rho_vector = rho_sample_->rho();
     // initialise result array
     fill(rho_vector.begin(), rho_vector.end(), 0);
+
     // compute sum of exponentials: rho_q = sum_r exp(-i q·r)
     // 1st loop: iterate over particles
-    BOOST_FOREACH (vector_type const& r, phase_space.position()) {
-        typename mode_array_type::iterator rho_q = rho_vector.begin();
-        typedef pair<double, vector_type> map_value_type; // pair: (wavenumber, wavevector)
+    auto const& unordered = read_cache(particle_group_->unordered());
+    auto const& position  = read_cache(particle_->position());
+
+    for (typename particle_group_type::size_type i : unordered) {
+        vector_type const& r = position[i];
         // 2nd loop: iterate over wavevectors
-        BOOST_FOREACH (map_value_type const& q_pair, wavevector_->value()) {
+        auto rho_q = rho_vector.begin();
+        for (auto const& q_pair : wavevector_->value()) {
             float_type q_r = inner_prod(static_cast<vector_type>(q_pair.second), r);
             *rho_q++ += mode_type(cos(q_r), -sin(q_r));
         }
@@ -73,35 +79,33 @@ density_mode<dimension, float_type>::acquire(phase_space_type const& phase_space
 
     return rho_sample_;
 }
-
+/*
 template <typename sample_type, typename density_mode_type, typename slot_type>
-static std::shared_ptr<sample_type const>
-acquire(std::shared_ptr<density_mode_type> density_mode, slot_type const& phase_space)
+static shared_ptr<sample_type const>
+acquire(shared_ptr<density_mode_type> density_mode)
 {
-    return density_mode->acquire(*phase_space());
+    return density_mode->acquire();
 }
-
-template <typename sample_type, typename density_mode_type, typename slot_type>
-static std::function<std::shared_ptr<sample_type const> ()>
-wrap_acquire(std::shared_ptr<density_mode_type> density_mode, slot_type const& phase_space)
+*/
+template <typename sample_type, typename density_mode_type>
+static function<shared_ptr<sample_type const> ()>
+wrap_acquire(shared_ptr<density_mode_type> density_mode)
 {
     return [=]() {
-       return density_mode->acquire(*phase_space());
+       return density_mode->acquire();
     };
 }
 
 template <int dimension, typename float_type>
 void density_mode<dimension, float_type>::luaopen(lua_State* L)
 {
-    typedef std::function<std::shared_ptr<phase_space_type const> ()> slot_type;
-
     using namespace luaponte;
     module(L, "libhalmd")
     [
         namespace_("observables")
         [
             class_<density_mode>()
-                .def("acquire", &wrap_acquire<sample_type, density_mode, slot_type>)
+                .def("acquire", &wrap_acquire<sample_type, density_mode>)
                 .property("wavevector", &density_mode::wavevector)
                 .scope
                 [
@@ -110,9 +114,11 @@ void density_mode<dimension, float_type>::luaopen(lua_State* L)
                 ]
                 .def_readonly("runtime", &density_mode::runtime_)
 
-          , def("density_mode", &std::make_shared<density_mode
-              , std::shared_ptr<wavevector_type const>
-              , std::shared_ptr<logger_type>
+          , def("density_mode", &make_shared<density_mode
+              , shared_ptr<particle_type const>
+              , shared_ptr<particle_group_type>
+              , shared_ptr<wavevector_type const>
+              , shared_ptr<logger_type>
             >)
         ]
     ];

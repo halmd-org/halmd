@@ -25,7 +25,8 @@
 #include <memory>
 
 #include <halmd/io/logger.hpp>
-#include <halmd/observables/host/samples/phase_space.hpp>
+#include <halmd/mdsim/host/particle.hpp>
+#include <halmd/mdsim/host/particle_group.hpp>
 #include <halmd/observables/samples/density_mode.hpp>
 #include <halmd/observables/utility/wavevector.hpp>
 #include <halmd/utility/profiler.hpp>
@@ -44,22 +45,23 @@ template <int dimension, typename float_type>
 class density_mode
 {
 public:
-    typedef host::samples::phase_space<dimension, float_type> phase_space_type;
+    typedef mdsim::host::particle<dimension, float_type> particle_type;
+    typedef mdsim::host::particle_group particle_group_type;
     typedef observables::utility::wavevector<dimension> wavevector_type;
     typedef observables::samples::density_mode<dimension> sample_type;
     typedef logger logger_type;
 
     density_mode(
-        std::shared_ptr<wavevector_type const> wavevector
-      , std::shared_ptr<logger_type> logger = std::make_shared<logger_type>()
+        std::shared_ptr<particle_type const> particle
+      , std::shared_ptr<particle_group_type> particle_group
+      , std::shared_ptr<wavevector_type const> wavevector
+      , std::shared_ptr<logger_type> logger = std::make_shared<logger_type>("density_mode")
     );
 
     /**
-     * Compute density modes from phase space sample and store with given time stamp.
-     *
-     * FIXME operate on unsorted particle_group instead of phase_space
+     * Compute density modes from particle group.
      */
-    std::shared_ptr<sample_type const> acquire(phase_space_type const& phase_space);
+    std::shared_ptr<sample_type const> acquire();
 
     /**
      * Returns wavevector instance.
@@ -79,12 +81,17 @@ private:
     typedef typename sample_type::mode_array_type mode_array_type;
     typedef typename mode_array_type::value_type mode_type;
 
-    /** cached sample with density modes */
-    std::shared_ptr<sample_type> rho_sample_;
+    /** system state */
+    std::shared_ptr<particle_type const> particle_;
+    /** particle group */
+    std::shared_ptr<particle_group_type> particle_group_;
     /** wavevector grid */
     std::shared_ptr<wavevector_type const> wavevector_;
     /** logger instance */
     std::shared_ptr<logger_type> logger_;
+
+    /** cached sample with density modes */
+    std::shared_ptr<sample_type> rho_sample_;
 
     typedef halmd::utility::profiler profiler_type;
     typedef typename profiler_type::accumulator_type accumulator_type;

@@ -26,9 +26,10 @@
 #include <memory>
 
 #include <halmd/io/logger.hpp>
+#include <halmd/mdsim/gpu/particle.hpp>
+#include <halmd/mdsim/gpu/particle_group.hpp>
 #include <halmd/mdsim/type_traits.hpp>
 #include <halmd/observables/gpu/density_mode_kernel.hpp>
-#include <halmd/observables/gpu/samples/phase_space.hpp>
 #include <halmd/observables/samples/density_mode.hpp>
 #include <halmd/observables/utility/wavevector.hpp>
 #include <halmd/utility/profiler.hpp>
@@ -46,22 +47,23 @@ template <int dimension, typename float_type>
 class density_mode
 {
 public:
-    typedef gpu::samples::phase_space<dimension, float_type> phase_space_type;
+    typedef mdsim::gpu::particle<dimension, float_type> particle_type;
+    typedef mdsim::gpu::particle_group particle_group_type;
     typedef observables::utility::wavevector<dimension> wavevector_type;
     typedef observables::samples::density_mode<dimension> sample_type;
     typedef logger logger_type;
 
     density_mode(
-        std::shared_ptr<wavevector_type const> wavevector
-      , std::shared_ptr<logger_type> logger = std::make_shared<logger_type>()
+        std::shared_ptr<particle_type const> particle
+      , std::shared_ptr<particle_group_type> particle_group
+      , std::shared_ptr<wavevector_type const> wavevector
+      , std::shared_ptr<logger_type> logger = std::make_shared<logger_type>("density_mode")
     );
 
     /**
-     * Compute density modes from phase space sample.
-     *
-     * FIXME operate on unsorted particle_group instead of phase_space
+     * Compute density modes from particle group.
      */
-    std::shared_ptr<sample_type const> acquire(phase_space_type const& phase_space);
+    std::shared_ptr<sample_type const> acquire();
 
     /**
      * Returns wavevector instance.
@@ -83,13 +85,17 @@ private:
     typedef typename mode_array_type::value_type mode_type;
     typedef density_mode_wrapper<dimension> wrapper_type;
 
-    /** cached sample with density modes */
-    std::shared_ptr<sample_type> rho_sample_;
+    /** system state */
+    std::shared_ptr<particle_type const> particle_;
+    /** particle forces */
+    std::shared_ptr<particle_group_type> particle_group_;
     /** wavevector grid */
     std::shared_ptr<wavevector_type const> wavevector_;
     /** logger instance */
     std::shared_ptr<logger_type> logger_;
 
+    /** cached sample with density modes */
+    std::shared_ptr<sample_type> rho_sample_;
     /** total number of wavevectors */
     unsigned int nq_;
     /** grid and block dimensions for CUDA calls */

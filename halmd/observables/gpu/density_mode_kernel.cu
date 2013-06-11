@@ -79,7 +79,11 @@ __device__ sum_reduce_type sum_reduce_select[] = {
  *  @returns block sums of sin(q·r), cos(q·r) for each wavevector
  */
 template <typename vector_type, typename coalesced_vector_type>
-__global__ void compute(coalesced_vector_type const* g_r, uint npart, float* g_sin_block, float* g_cos_block)
+__global__ void compute(
+    coalesced_vector_type const* g_r
+  , unsigned int const* g_idx, unsigned int npart
+  , float* g_sin_block, float* g_cos_block
+)
 {
     enum { dimension = vector_type::static_size };
 
@@ -92,8 +96,9 @@ __global__ void compute(coalesced_vector_type const* g_r, uint npart, float* g_s
         sin_[TID] = 0;
         cos_[TID] = 0;
         for (uint j = GTID; j < npart; j += GTDIM) {
-            // retrieve particle position
-            vector_type r = g_r[j];
+            // retrieve particle position via index array
+            unsigned int idx = g_idx[j];
+            vector_type r = g_r[idx];
 
             float q_r = inner_prod(q, r);
             sin_[TID] += sin(q_r);

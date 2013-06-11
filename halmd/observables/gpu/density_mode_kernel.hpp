@@ -39,7 +39,7 @@ struct density_mode_wrapper
     /** number of wavevectors */
     cuda::symbol<unsigned int> nq;
     /** compute density_mode for all particles of a single species */
-    cuda::function<void (float4 const*, unsigned int, float*, float*)> compute;
+    cuda::function<void (float4 const*, unsigned int const*, unsigned int, float*, float*)> compute;
     /** finalise computation by summing block sums per wavevector */
     cuda::function<void (float const*, float const*, float*, float*, uint)> finalise;
 

@@ -29,6 +29,7 @@
 #include <cmath>
 #include <functional>
 #include <limits>
+#include <memory>
 #include <numeric>
 
 #include <halmd/mdsim/box.hpp>
@@ -38,7 +39,6 @@
 #include <halmd/mdsim/host/positions/lattice.hpp>
 #include <halmd/numeric/accumulator.hpp>
 #include <halmd/observables/host/density_mode.hpp>
-#include <halmd/observables/host/phase_space.hpp>
 #include <halmd/observables/ssf.hpp>
 #include <halmd/observables/utility/wavevector.hpp>
 #ifdef HALMD_WITH_GPU
@@ -46,15 +46,15 @@
 # include <halmd/mdsim/gpu/particle_groups/all.hpp>
 # include <halmd/mdsim/gpu/positions/lattice.hpp>
 # include <halmd/observables/gpu/density_mode.hpp>
-# include <halmd/observables/gpu/phase_space.hpp>
 # include <halmd/utility/gpu/device.hpp>
 #endif
 #include <test/tools/ctest.hpp>
 
-using namespace boost;
-using namespace boost::assign; // list_of
+using boost::assign::list_of;
 using namespace halmd;
 using namespace std;
+
+// FIXME for some reason the namespace is polluted by boost::make_shared
 
 /**
  * test computation of static structure factor
@@ -70,8 +70,6 @@ struct lattice
     typedef typename modules_type::particle_type particle_type;
     typedef typename modules_type::particle_group_type particle_group_type;
     typedef typename modules_type::position_type position_type;
-    typedef typename modules_type::sample_type sample_type;
-    typedef typename modules_type::phase_space_type phase_space_type;
     typedef typename modules_type::density_mode_type density_mode_type;
     typedef typename density_mode_type::sample_type density_mode_sample_type;
     static bool const gpu = modules_type::gpu;
@@ -90,14 +88,13 @@ struct lattice
     float lattice_constant;
     fixed_vector<double, dimension> slab;
 
-    std::shared_ptr<box_type> box;
-    std::shared_ptr<particle_type> particle;
-    std::shared_ptr<position_type> position;
-    std::shared_ptr<phase_space_type> phase_space;
-    std::shared_ptr<wavevector_type> wavevector;
-    std::shared_ptr<density_mode_type> density_mode;
-    std::shared_ptr<ssf_type> ssf;
-    std::shared_ptr<clock_type> clock;
+    shared_ptr<box_type> box;
+    shared_ptr<particle_type> particle;
+    shared_ptr<position_type> position;
+    shared_ptr<wavevector_type> wavevector;
+    shared_ptr<density_mode_type> density_mode;
+    shared_ptr<ssf_type> ssf;
+    shared_ptr<clock_type> clock;
 
     void test();
     lattice();
@@ -149,20 +146,20 @@ void lattice<modules_type>::test()
     wavevector = std::make_shared<wavevector_type>(wavenumber, box->length(), 1e-3, 2 * dimension);
 
     // construct modules for density modes and static structure factor
-    density_mode = std::make_shared<density_mode_type>(wavevector);
+    density_mode = std::make_shared<density_mode_type>(
+        particle
+      , std::make_shared<particle_group_type>(particle)
+      , wavevector
+    );
     ssf = std::make_shared<ssf_type>(wavevector, particle->nparticle(), clock);
 
     // generate lattices
     BOOST_TEST_MESSAGE("generate fcc lattice");
     position->set();
 
-    // acquire phase space sample
-    BOOST_TEST_MESSAGE("acquire phase space sample");
-    std::shared_ptr<sample_type const> sample = phase_space->acquire();
-
     // compute density modes
     BOOST_TEST_MESSAGE("compute density modes");
-    std::shared_ptr<density_mode_sample_type const> mode = density_mode->acquire(*sample);
+    shared_ptr<density_mode_sample_type const> mode = density_mode->acquire();
 
     // compute static structure factor
     BOOST_TEST_MESSAGE("compute static structure factor");
@@ -276,8 +273,6 @@ lattice<modules_type>::lattice()
     box = std::make_shared<box_type>(edges);
     position = std::make_shared<position_type>(particle, box, slab);
     clock = std::make_shared<clock_type>();
-    std::shared_ptr<particle_group_type> particle_group = std::make_shared<particle_group_type>(particle);
-    phase_space = std::make_shared<phase_space_type>(particle, particle_group, box, clock);
 }
 
 template <int dimension, typename float_type>
@@ -287,8 +282,6 @@ struct host_modules
     typedef mdsim::host::particle<dimension, float_type> particle_type;
     typedef mdsim::host::particle_groups::all<particle_type> particle_group_type;
     typedef mdsim::host::positions::lattice<dimension, float_type> position_type;
-    typedef observables::host::samples::phase_space<dimension, float_type> sample_type;
-    typedef observables::host::phase_space<dimension, float_type> phase_space_type;
     typedef observables::host::density_mode<dimension, float_type> density_mode_type;
     static bool const gpu = false;
 };
@@ -308,8 +301,6 @@ struct gpu_modules
     typedef mdsim::gpu::particle<dimension, float_type> particle_type;
     typedef mdsim::gpu::particle_groups::all<particle_type> particle_group_type;
     typedef mdsim::gpu::positions::lattice<dimension, float_type> position_type;
-    typedef observables::gpu::samples::phase_space<dimension, float_type> sample_type;
-    typedef observables::gpu::phase_space<sample_type> phase_space_type;
     typedef observables::gpu::density_mode<dimension, float_type> density_mode_type;
     static bool const gpu = true;
 };

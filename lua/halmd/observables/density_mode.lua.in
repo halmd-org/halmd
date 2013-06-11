@@ -82,7 +82,7 @@ local M = module(function(args)
     local observable = {}
     for i, phase_space in ipairs(phase_space) do
         local sample = assert(phase_space.sample)
-        density_mode = density_mode_wrapper(sample, wavevector, clock, logger)
+        density_mode = density_mode_wrapper(sample, wavevector, clock, logger) -- FIXME
 
         -- acquire phase space before acquiring density modes
         density_mode:on_acquire(phase_space.acquire)

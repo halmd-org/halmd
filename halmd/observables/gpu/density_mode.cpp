@@ -29,11 +29,15 @@ namespace gpu {
 
 template <int dimension, typename float_type>
 density_mode<dimension, float_type>::density_mode(
-    std::shared_ptr<wavevector_type const> wavevector
+    shared_ptr<particle_type const> particle
+  , shared_ptr<particle_group_type> particle_group
+  , std::shared_ptr<wavevector_type const> wavevector
   , std::shared_ptr<logger_type> logger
 )
     // dependency injection
-  : wavevector_(wavevector)
+  : particle_(particle)
+  , particle_group_(particle_group)
+  , wavevector_(wavevector)
   , logger_(logger)
     // member initialisation
   , nq_(wavevector_->value().size())
@@ -75,11 +79,11 @@ density_mode<dimension, float_type>::density_mode(
 }
 
 /**
- * Acquire sample of all density modes from phase space sample
+ * Acquire sample of all density modes from particle group
  */
 template <int dimension, typename float_type>
 std::shared_ptr<typename density_mode<dimension, float_type>::sample_type const>
-density_mode<dimension, float_type>::acquire(phase_space_type const& phase_space)
+density_mode<dimension, float_type>::acquire()
 {
     scoped_timer_type timer(runtime_.acquire);
 
@@ -94,11 +98,14 @@ density_mode<dimension, float_type>::acquire(phase_space_type const& phase_space
     try {
         cuda::configure(dim_.grid, dim_.block);
         wrapper_type::kernel.q.bind(g_q_);
+        auto const& unordered = read_cache(particle_group_->unordered());
+        auto const& position  = read_cache(particle_->position());
 
         // compute exp(i q·r) for all wavevector/particle pairs and perform block sums
         wrapper_type::kernel.compute(
-            phase_space.position(), phase_space.position().size()
-          , g_sin_block_, g_cos_block_);
+            position, &*unordered.begin(), unordered.size()
+          , g_sin_block_, g_cos_block_
+        );
         cuda::thread::synchronize();
 
         // finalise block sums for each wavevector
@@ -123,27 +130,25 @@ density_mode<dimension, float_type>::acquire(phase_space_type const& phase_space
     return rho_sample_;
 }
 
-template <typename sample_type, typename density_mode_type, typename slot_type>
+template <typename sample_type, typename density_mode_type>
 static std::function<std::shared_ptr<sample_type const> ()>
-wrap_acquire(std::shared_ptr<density_mode_type> density_mode, slot_type const& phase_space)
+wrap_acquire(std::shared_ptr<density_mode_type> density_mode)
 {
     return [=]() {
-       return density_mode->acquire(*phase_space());
+       return density_mode->acquire();
     };
 }
 
 template <int dimension, typename float_type>
 void density_mode<dimension, float_type>::luaopen(lua_State* L)
 {
-    typedef std::function<std::shared_ptr<phase_space_type const> ()> slot_type;
-
     using namespace luaponte;
     module(L, "libhalmd")
     [
         namespace_("observables")
         [
             class_<density_mode>()
-                .def("acquire", &wrap_acquire<sample_type, density_mode, slot_type>)
+                .def("acquire", &wrap_acquire<sample_type, density_mode>)
                 .property("wavevector", &density_mode::wavevector)
                 .scope
                 [
@@ -153,6 +158,8 @@ void density_mode<dimension, float_type>::luaopen(lua_State* L)
                 .def_readonly("runtime", &density_mode::runtime_)
 
           , def("density_mode", &std::make_shared<density_mode
+              , shared_ptr<particle_type const>
+              , shared_ptr<particle_group_type>
               , std::shared_ptr<wavevector_type const>
               , std::shared_ptr<logger_type>
             >)
