@@ -75,7 +75,7 @@ public:
       , std::vector<std::string> const& location
       , std::shared_ptr<clock_type const> clock
     );
-    /** connect data slot for writing dataset */
+    /** connect data slot for writing dataset, return created HDF5 group by reference */
     template <typename T>
     connection on_write(
         subgroup_type& group

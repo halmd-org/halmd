@@ -1,5 +1,6 @@
 /*
- * Copyright © 2011  Peter Colberg
+ * Copyright © 2013 Felix Höfling
+ * Copyright © 2011 Peter Colberg
  *
  * This file is part of HALMD.
  *
@@ -18,10 +19,13 @@
  */
 
 #include <boost/algorithm/string/join.hpp> // boost::join
+#include <boost/type_traits/has_dereference.hpp>
 #include <luaponte/luaponte.hpp>
 #include <luaponte/out_value_policy.hpp>
+#include <memory>
 #include <stdexcept>
 #include <stdint.h> // uint64_t
+#include <type_traits>
 
 #include <halmd/io/utility/hdf5.hpp>
 #include <halmd/io/writers/h5md/append.hpp>
@@ -95,7 +99,24 @@ static H5::DataSet create_dataset(
 }
 
 template <typename T>
-static void write_dataset(
+static typename std::enable_if<boost::has_dereference<T>::type::value, void>::type
+write_dataset(
+    H5::DataSet& dataset
+  , H5::Group const& group
+  , string const& name
+  , std::function<T ()> const& slot
+)
+{
+    auto const& data = *slot();
+    if (!dataset.getId()) {
+        dataset = create_dataset(group, name, data);
+    }
+    h5xx::write_chunked_dataset(dataset, data);
+}
+
+template <typename T>
+static typename std::enable_if<!boost::has_dereference<T>::type::value, void>::type
+write_dataset(
     H5::DataSet& dataset
   , H5::Group const& group
   , string const& name
@@ -234,6 +255,8 @@ void append::luaopen(lua_State* L)
                         .def("on_write", &append::on_write<vector<fixed_vector<double, 6> > >, pure_out_value(_2))
                         .def("on_write", &append::on_write<vector<fixed_vector<double, 6> >&>, pure_out_value(_2))
                         .def("on_write", &append::on_write<vector<fixed_vector<double, 6> > const&>, pure_out_value(_2))
+
+                        // phase_space: position, velocity
                         .def("on_write", &append::on_write<raw_array<fixed_vector<float, 2>>&>, pure_out_value(_2))
                         .def("on_write", &append::on_write<raw_array<fixed_vector<float, 2>> const&>, pure_out_value(_2))
                         .def("on_write", &append::on_write<raw_array<fixed_vector<float, 3>>&>, pure_out_value(_2))
@@ -246,6 +269,10 @@ void append::luaopen(lua_State* L)
                         .def("on_write", &append::on_write<raw_array<fixed_vector<double, 3>> const&>, pure_out_value(_2))
                         .def("on_write", &append::on_write<raw_array<fixed_vector<double, 6>>&>, pure_out_value(_2))
                         .def("on_write", &append::on_write<raw_array<fixed_vector<double, 6>> const&>, pure_out_value(_2))
+                        // density_mode
+                        .def("on_write", &append::on_write<std::shared_ptr<raw_array<fixed_vector<double, 2>> const>>, pure_out_value(_2))
+                        .def("on_write", &append::on_write<std::shared_ptr<raw_array<fixed_vector<double, 3>> const>>, pure_out_value(_2))
+
                         .def("on_write", &append::on_write<raw_array<float>&>, pure_out_value(_2))
                         .def("on_write", &append::on_write<raw_array<float> const&>, pure_out_value(_2))
                         .def("on_write", &append::on_write<raw_array<double>&>, pure_out_value(_2))
