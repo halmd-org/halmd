@@ -27,9 +27,10 @@
 #include <halmd/io/logger.hpp>
 #include <halmd/mdsim/host/particle.hpp>
 #include <halmd/mdsim/host/particle_group.hpp>
-#include <halmd/observables/samples/density_mode.hpp>
 #include <halmd/observables/utility/wavevector.hpp>
+#include <halmd/utility/cache.hpp>
 #include <halmd/utility/profiler.hpp>
+#include <halmd/utility/raw_array.hpp>
 
 namespace halmd {
 namespace observables {
@@ -39,7 +40,11 @@ namespace host {
  * Compute Fourier modes of the particle density.
  *
  * @f$ \rho_{\vec q} = \sum_{i=1}^N \exp(\textrm{i}\vec q \cdot \vec r_i) @f$
- * for each particle type
+ *
+ * The result is stored and returned within a std::shared_ptr, allowing
+ * efficient copying, e.g., in dynamics::blocking_scheme.  Further, the result
+ * may be tracked by std::weak_ptr providing a similar functionality as
+ * halmd::cache
  */
 template <int dimension, typename float_type>
 class density_mode
@@ -48,7 +53,7 @@ public:
     typedef mdsim::host::particle<dimension, float_type> particle_type;
     typedef mdsim::host::particle_group particle_group_type;
     typedef observables::utility::wavevector<dimension> wavevector_type;
-    typedef observables::samples::density_mode sample_type;
+    typedef raw_array<fixed_vector<double, 2>> result_type;
     typedef logger logger_type;
 
     density_mode(
@@ -58,10 +63,24 @@ public:
       , std::shared_ptr<logger_type> logger = std::make_shared<logger_type>("density_mode")
     );
 
-    /**
-     * Compute density modes from particle group.
+    /** Compute density modes from particle group.
+     *
+     * The result is re-computed only if the particle positions have been
+     * modified. In this case, the data array managed by std::shared_ptr is
+     * re-allocated before.
      */
-    std::shared_ptr<sample_type const> acquire();
+    std::shared_ptr<result_type const> acquire();
+
+    /**
+     * Functor wrapping acquire() for class instance stored within std::shared_ptr
+     */
+    static std::function<std::shared_ptr<result_type const> ()>
+    acquisitor(std::shared_ptr<density_mode> self)
+    {
+        return [=]() {
+           return self->acquire();
+        };
+    }
 
     /**
      * Bind class to Lua.
@@ -70,20 +89,22 @@ public:
 
 private:
     typedef fixed_vector<float_type, dimension> vector_type;
-    typedef sample_type::mode_array_type mode_array_type;
-    typedef mode_array_type::value_type mode_type;
 
     /** system state */
     std::shared_ptr<particle_type const> particle_;
     /** particle group */
     std::shared_ptr<particle_group_type> particle_group_;
-    /** wavevector grid */
+    /** wavevector list */
     std::shared_ptr<wavevector_type const> wavevector_;
     /** logger instance */
     std::shared_ptr<logger_type> logger_;
 
-    /** cached sample with density modes */
-    std::shared_ptr<sample_type> rho_sample_;
+    /** result for the density modes */
+    std::shared_ptr<result_type> result_;
+    /** cache observer for particle positions */
+    cache<> position_cache_;
+    /** cache observer for particle group */
+    cache<> group_cache_;
 
     typedef halmd::utility::profiler profiler_type;
     typedef typename profiler_type::accumulator_type accumulator_type;

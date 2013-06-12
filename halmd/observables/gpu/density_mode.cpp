@@ -73,61 +73,65 @@ density_mode<dimension, float_type>::density_mode(
  * Acquire sample of all density modes from particle group
  */
 template <int dimension, typename float_type>
-shared_ptr<typename density_mode<dimension, float_type>::sample_type const>
+shared_ptr<typename density_mode<dimension, float_type>::result_type const>
 density_mode<dimension, float_type>::acquire()
 {
-    scoped_timer_type timer(runtime_.acquire);
+    // check validity of caches
+    auto const& group_cache  = particle_group_->ordered();
+    auto const& position_cache = particle_->position();
 
-    LOG_TRACE("acquire sample");
+    if (group_cache_ != group_cache || position_cache_ != position_cache) {
+        // obtain read access to input caches
+        auto const& group = read_cache(group_cache);
+        auto const& position = read_cache(position_cache);
 
-    // re-allocate memory which allows modules (e.g., dynamics::blocking_scheme)
-    // to hold a previous copy of the sample
-    rho_sample_ = make_shared<sample_type>(nq_);
+        LOG_TRACE("acquire sample");
 
-    // compute density modes
-    mode_array_type& rho = rho_sample_->rho();
-    try {
-        cuda::configure(dim_.grid, dim_.block);
-        wrapper_type::kernel.q.bind(g_q_);
-        auto const& unordered = read_cache(particle_group_->unordered());
-        auto const& position  = read_cache(particle_->position());
+        scoped_timer_type timer(runtime_.acquire);
 
-        // compute exp(i q·r) for all wavevector/particle pairs and perform block sums
-        wrapper_type::kernel.compute(
-            position, &*unordered.begin(), unordered.size()
-          , g_sin_block_, g_cos_block_, nq_
-        );
-        cuda::thread::synchronize();
+        // allocate new memory which allows modules (e.g.,
+        // dynamics::blocking_scheme) to hold a previous copy of the result or
+        // to track the update via std::weak_ptr.
+        result_ = make_shared<result_type>(nq_);
 
-        // finalise block sums for each wavevector
-        cuda::configure(
-            nq_                        // #blocks: one per wavevector
-          , dim_.block                 // #threads per block, must be a power of 2
-        );
-        wrapper_type::kernel.finalise(g_sin_block_, g_cos_block_, g_sin_, g_cos_, nq_, dim_.blocks_per_grid());
+        // compute density modes
+        try {
+            cuda::configure(dim_.grid, dim_.block);
+            wrapper_type::kernel.q.bind(g_q_);
+
+            // compute exp(i q·r) for all wavevector/particle pairs and perform block sums
+            wrapper_type::kernel.compute(
+                position, &*group.begin(), group.size()
+              , g_sin_block_, g_cos_block_, nq_
+            );
+            cuda::thread::synchronize();
+
+            // finalise block sums for each wavevector
+            cuda::configure(
+                nq_                        // #blocks: one per wavevector
+              , dim_.block                 // #threads per block, must be a power of 2
+            );
+            wrapper_type::kernel.finalise(g_sin_block_, g_cos_block_, g_sin_, g_cos_, nq_, dim_.blocks_per_grid());
+        }
+        catch (cuda::error const&) {
+            LOG_ERROR("failed to compute density modes on GPU");
+            throw;
+        }
+
+        // copy data from device and store in density_mode sample
+        cuda::copy(g_sin_, h_sin_);
+        cuda::copy(g_cos_, h_cos_);
+        auto rho_q = begin(*result_);
+        for (unsigned int i = 0; i < nq_; ++i) {
+            *rho_q++ = {{ h_cos_[i], -h_sin_[i] }};
+        }
+
+        // update cache observers
+        group_cache_ = group_cache;
+        position_cache_ = position_cache;
     }
-    catch (cuda::error const&) {
-        LOG_ERROR("failed to compute density modes on GPU");
-        throw;
-    }
 
-    // copy data from device and store in density_mode sample
-    cuda::copy(g_sin_, h_sin_);
-    cuda::copy(g_cos_, h_cos_);
-    for (unsigned int i = 0; i < nq_; ++i) {
-        rho[i] = {{ h_cos_[i], -h_sin_[i] }};
-    }
-
-    return rho_sample_;
-}
-
-template <typename sample_type, typename density_mode_type>
-static function<shared_ptr<sample_type const> ()>
-wrap_acquire(shared_ptr<density_mode_type> density_mode)
-{
-    return [=]() {
-       return density_mode->acquire();
-    };
+    return result_;
 }
 
 template <int dimension, typename float_type>
@@ -141,7 +145,7 @@ void density_mode<dimension, float_type>::luaopen(lua_State* L)
             namespace_("gpu")
             [
                 class_<density_mode>()
-                    .def("acquire", &wrap_acquire<sample_type, density_mode>)
+                    .property("acquisitor", &density_mode::acquisitor)
                     .scope
                     [
                         class_<runtime>("runtime")

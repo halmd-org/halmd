@@ -69,7 +69,7 @@ local property = property
 --
 --    Write time series of density modes to file.
 --
---    :param table args: keyword arguments (optional)
+--    :param table args: keyword arguments
 --    :param args.file: instance of file writer
 --    :param args.location: location within file *(optional)*
 --    :param number args.every: sampling interval
@@ -110,12 +110,12 @@ local M = module(function(args)
 
         -- write wavevectors only at start of simulation
         local writer = file:writer{location = location, mode = "truncate"}
---        writer:on_write(wavevector.value, {"wavevector"})
---        writer:write() -- FIXME pass arguments directly to write(), avoiding on_write
+        writer:on_write(wavevector.value, {"wavevector"})
+        writer:write() -- FIXME pass arguments directly to write(), avoiding on_write
 
         -- write time series of density modes: register acquisitor with writer
         local writer = file:writer{location = location, mode = "append"}
---        writer:on_write(self:acquisitor(), {"value"}) -- FIXME resolve cache<shared_ptr<...>>
+        writer:on_write(self.acquisitor, {"value"})
 
         -- sequence of signal connections
         local conn = {}

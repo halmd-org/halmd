@@ -39,56 +39,58 @@ density_mode<dimension, float_type>::density_mode(
   , particle_group_(particle_group)
   , wavevector_(wavevector)
   , logger_(logger)
-{
-}
+{}
 
 /**
- * Acquire sample of all density modes from particle group
+ * Acquire density modes from particle positions
  */
 template <int dimension, typename float_type>
-shared_ptr<typename density_mode<dimension, float_type>::sample_type const>
+shared_ptr<typename density_mode<dimension, float_type>::result_type const>
 density_mode<dimension, float_type>::acquire()
 {
-    scoped_timer_type timer(runtime_.acquire);
+    // check validity of caches
+    auto const& group_cache  = particle_group_->ordered();
+    auto const& position_cache = particle_->position();
 
-    LOG_TRACE("acquire sample");
+    if (group_cache_ != group_cache || position_cache_ != position_cache) {
+        // obtain read access to input caches
+        auto const& group = read_cache(group_cache);
+        auto const& position = read_cache(position_cache);
 
-    auto const& wavevector = wavevector_->value(); // array of wavevectors
+        LOG_TRACE("acquire sample");
 
-    // re-allocate memory which allows modules (e.g., dynamics::blocking_scheme)
-    // to hold a previous copy of the sample
-    rho_sample_ = make_shared<sample_type>(wavevector.size());
+        scoped_timer_type timer(runtime_.acquire);
 
-    // compute density modes
-    mode_array_type& rho_vector = rho_sample_->rho();
-    // initialise result array
-    fill(begin(rho_vector), end(rho_vector), 0);
+        auto const& wavevector = wavevector_->value(); // array of wavevectors
 
-    // compute sum of exponentials: rho_q = sum_r exp(-i q·r)
-    // 1st loop: iterate over particles
-    auto const& unordered = read_cache(particle_group_->unordered());
-    auto const& position  = read_cache(particle_->position());
+        // allocate new memory which allows modules (e.g.,
+        // dynamics::blocking_scheme) to hold a previous copy of the result or
+        // to track the update via std::weak_ptr.
+        result_ = make_shared<result_type>(wavevector.size());
 
-    for (typename particle_group_type::size_type i : unordered) {
-        vector_type const& r = position[i];
-        // 2nd loop: iterate over wavevectors
-        auto rho_q = begin(rho_vector);
-        for (auto const& q : wavevector) {
-            float_type q_r = inner_prod(q, r);
-            *rho_q++ += mode_type({{ cos(q_r), -sin(q_r) }});
+        // compute density modes
+        // initialise result array
+        fill(begin(*result_), end(*result_), 0);
+
+        // compute sum of exponentials: rho_q = sum_r exp(-i q·r)
+        // 1st loop: iterate over particle group
+        for (auto i : group) {
+            vector_type const& r = position[i];
+            // 2nd loop: iterate over wavevectors
+            typedef typename result_type::value_type mode_type;
+            auto rho_q = begin(*result_);
+            for (auto const& q : wavevector) {
+                float_type q_r = inner_prod(q, r);
+                *rho_q++ += mode_type({{ cos(q_r), -sin(q_r) }});
+            }
         }
+
+        // update cache observers
+        group_cache_ = group_cache;
+        position_cache_ = position_cache;
     }
 
-    return rho_sample_;
-}
-
-template <typename sample_type, typename density_mode_type>
-static function<shared_ptr<sample_type const> ()>
-wrap_acquire(shared_ptr<density_mode_type> density_mode)
-{
-    return [=]() {
-       return density_mode->acquire();
-    };
+    return result_;
 }
 
 template <int dimension, typename float_type>
@@ -102,7 +104,7 @@ void density_mode<dimension, float_type>::luaopen(lua_State* L)
             namespace_("host")
             [
                 class_<density_mode>()
-                    .def("acquire", &wrap_acquire<sample_type, density_mode>)
+                    .property("acquisitor", &density_mode::acquisitor)
                     .scope
                     [
                         class_<runtime>("runtime")
