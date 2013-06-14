@@ -77,6 +77,13 @@ local assert = assert
 --    Returns data slot that yiels the list of wavevectors grouped by their
 --    magnitude in ascending order.
 --
+-- .. method:: __eq(other)
+--
+--    :param other: instance of :class:`halmd.observables.utility.wavevector`
+--
+--    Implements the equality operator ``a = b`` and returns true if the other
+--    ``wavevector`` instance is the same as this one.
+--
 local M = module(function(args)
     local box = assert(args.box)
     local wavenumber = assert(args.wavenumber)

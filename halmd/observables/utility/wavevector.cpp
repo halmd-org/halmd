@@ -122,6 +122,15 @@ wrap_wavenumber(shared_ptr<wavevector_type const> self)
     };
 }
 
+template <typename T>
+static bool equal(shared_ptr<T const> self, shared_ptr<T const> other)
+{
+    // compare pointers of managed objects. I could not get working
+    // owner_equal() or owner_before() with shared_ptr's passed from Lua
+    return self == other;
+}
+
+
 template <int dimension>
 void wavevector<dimension>::luaopen(lua_State* L)
 {
@@ -140,8 +149,9 @@ void wavevector<dimension>::luaopen(lua_State* L)
                     >())
                     .property("wavenumber", &wrap_wavenumber<wavevector>)
                     .property("value", &wrap_value<wavevector>)
+                    .def("__eq", &equal<wavevector>) // operator= in Lua
 
-               , def("wavevector", &make_shared<wavevector
+              , def("wavevector", &make_shared<wavevector
                   , vector<double> const&
                   , vector_type const&
                   , double
