@@ -1,0 +1,60 @@
+#include <cassert>
+#include <memory>
+
+template <typename T, typename U>
+inline bool equals(const std::weak_ptr<T>& t, const std::weak_ptr<U>& u)
+{
+    return !t.owner_before(u) && !u.owner_before(t);
+}
+
+template <typename T, typename U>
+inline bool equals(const std::shared_ptr<T>& t, const std::shared_ptr<U>& u)
+{
+    return !t.owner_before(u) && !u.owner_before(t);
+}
+
+template <typename T, typename U>
+inline bool equals(const std::weak_ptr<T>& t, const std::shared_ptr<U>& u)
+{
+    return !t.owner_before(u) && !u.owner_before(t);
+}
+
+int main()
+{
+    auto p1 = std::make_shared<int>(1);
+    auto p2 = std::make_shared<int>(2);
+    std::weak_ptr<int> w1 = p1;
+
+    assert(w1.use_count() == 1);
+    assert( equals(w1, p1));
+    assert(!equals(w1, p2));
+    assert(!equals(p1, p2));
+
+    p2 = p1;
+    assert(w1.use_count() == 2);
+    assert( equals(w1, p1));
+    assert( equals(w1, p2));
+    assert( equals(p1, p2));
+
+    p1.reset();
+    p1 = std::make_shared<int>(0); // try to re-allocate the same control block
+    assert(w1.use_count() == 1);
+    assert(!equals(w1, p1));
+    assert( equals(w1, p2));
+    assert(!equals(p1, p2));
+
+    p2.reset();
+    assert(w1.use_count() == 0);
+    assert(!equals(w1, p1));
+    assert(!equals(w1, p2));
+    assert(!equals(p1, p2));
+
+    p1.reset();
+    assert( equals(p1, p2)); // empty shared_ptr's are equal
+
+    std::shared_ptr<int const> const& p3 = p1;
+    // p3 = p1; // won't compile
+    // *p3 = 0; // won't compile
+
+    return 0;
+}
