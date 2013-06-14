@@ -32,8 +32,9 @@
 #include <halmd/observables/gpu/density_mode_kernel.hpp>
 #include <halmd/observables/utility/wavevector.hpp>
 #include <halmd/utility/cache.hpp>
-#include <halmd/utility/raw_array.hpp>
+#include <halmd/utility/owner_equal.hpp>
 #include <halmd/utility/profiler.hpp>
+#include <halmd/utility/raw_array.hpp>
 
 namespace halmd {
 namespace observables {
@@ -85,6 +86,13 @@ public:
         };
     }
 
+    /**
+     * Return wavevector instance passed to constructor
+     */
+    std::shared_ptr<wavevector_type const> wavevector()
+    {
+        return wavevector_;
+    }
 
     /**
      * Bind class to Lua.

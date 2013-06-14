@@ -105,6 +105,7 @@ void density_mode<dimension, float_type>::luaopen(lua_State* L)
             [
                 class_<density_mode>()
                     .property("acquisitor", &density_mode::acquisitor)
+                    .property("wavevector", &density_mode::wavevector)
                     .scope
                     [
                         class_<runtime>("runtime")

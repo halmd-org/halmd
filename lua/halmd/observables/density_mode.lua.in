@@ -57,6 +57,10 @@ local property = property
 --
 --    Disconnect density mode sampler from profiler.
 --
+-- .. attribute:: wavevector
+--
+--    The wavevector instance passed upon construction.
+--
 -- .. attribute:: label
 --
 --    The label of the underlying particle group.
