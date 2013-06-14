@@ -1,5 +1,6 @@
 /*
- * Copyright © 2011-2012  Felix Höfling and Peter Colberg
+ * Copyright © 2011-2013 Felix Höfling
+ * Copyright © 2011-2012 Peter Colberg
  *
  * This file is part of HALMD.
  *
@@ -26,16 +27,15 @@
 #include <vector>
 
 #include <halmd/io/logger.hpp>
-#include <halmd/mdsim/clock.hpp>
-#include <halmd/observables/samples/density_mode.hpp>
 #include <halmd/observables/utility/wavevector.hpp>
 #include <halmd/utility/profiler.hpp>
+#include <halmd/utility/raw_array.hpp>
 
 namespace halmd {
 namespace observables {
 
 /**
- * Compute static structure factor.
+ * Compute static structure factor for isotropic system.
  *
  * @f$ S_q^{(\alpha\beta)} = \langle \frac{1}{N} \rho_{\vec q}^{(\alpha)} \rho_{-\vec q}^{(\beta)} \rangle @f$
  * with the partial density modes
@@ -48,38 +48,38 @@ template <int dimension>
 class ssf
 {
 public:
-    typedef observables::samples::density_mode density_mode_type;
+    typedef raw_array<boost::array<double, 3>> result_type;
+    typedef std::shared_ptr<raw_array<fixed_vector<double, 2>> const> mode_type;
+    typedef std::function<mode_type ()> mode_acquisitor_type;
     typedef observables::utility::wavevector<dimension> wavevector_type;
-    typedef mdsim::clock clock_type;
     typedef logger logger_type;
-    typedef std::vector<boost::array<double, 3> > result_type;
 
     /**
      * Construct static structure factor instance.
      *
-     * @param wavevector wavevector grid
-     * @param norm normalisation factor (e.g. total number of particles)
-     * @param clock simulation clock
-     * @param logger logger instance
+     * The argument 'norm' is the normalisation factor (e.g. total number of particles).
      */
     ssf(
-        std::shared_ptr<wavevector_type const> wavevector
+        mode_acquisitor_type mode1
+      , mode_acquisitor_type mode2
+      , std::shared_ptr<wavevector_type const> wavevector
       , double norm
-      , std::shared_ptr<clock_type const> clock
-      , std::shared_ptr<logger_type> logger = std::make_shared<logger_type>()
+      , std::shared_ptr<logger_type> logger = std::make_shared<logger_type>("ssf")
     );
 
     /**
      * Compute SSF from samples of density Fourier modes.
      */
-    result_type const& sample(density_mode_type const& mode1, density_mode_type const& mode2);
+    result_type const& sample();
 
     /**
-     * Returns instance of wavevector class used to compute the SSF.
+     * Functor wrapping sample() for class instance stored within std::shared_ptr
      */
-    std::shared_ptr<wavevector_type const> wavevector() const
+    static std::function<result_type const& ()> sampler(std::shared_ptr<ssf> self)
     {
-        return wavevector_;
+        return [=]() -> result_type const& {
+            return self->sample();
+        };
     }
 
     /**
@@ -88,21 +88,22 @@ public:
     static void luaopen(lua_State* L);
 
 private:
-    typedef typename clock_type::step_type step_type;
-    typedef typename density_mode_type::mode_array_type rho_vector_type;
-
+    /** acquisitors yielding the density modes */
+    mode_acquisitor_type mode1_;
+    mode_acquisitor_type mode2_;
     /** wavevector grid */
     std::shared_ptr<wavevector_type const> wavevector_;
-    /** normalisation factor */
-    double norm_;
-    /** simulation clock */
-    std::shared_ptr<clock_type const> clock_;
     /** logger instance */
     std::shared_ptr<logger_type> logger_;
-    /** cached static structure factor */
+
+    /** normalisation factor */
+    double norm_;
+    /** cached result for the static structure factor */
     result_type result_;
-    /** time stamp of data (simulation step) */
-    step_type step_;
+
+    /** observers for input data cached within std::shared_ptr */
+    std::weak_ptr<typename mode_type::element_type> mode1_observer_;
+    std::weak_ptr<typename mode_type::element_type> mode2_observer_;
 
     typedef halmd::utility::profiler profiler_type;
     typedef profiler_type::accumulator_type accumulator_type;

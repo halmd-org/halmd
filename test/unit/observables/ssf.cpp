@@ -33,7 +33,6 @@
 #include <numeric>
 
 #include <halmd/mdsim/box.hpp>
-#include <halmd/mdsim/clock.hpp>
 #include <halmd/mdsim/host/particle.hpp>
 #include <halmd/mdsim/host/particle_groups/all.hpp>
 #include <halmd/mdsim/host/positions/lattice.hpp>
@@ -71,7 +70,6 @@ struct lattice
     typedef typename modules_type::particle_group_type particle_group_type;
     typedef typename modules_type::position_type position_type;
     typedef typename modules_type::density_mode_type density_mode_type;
-    typedef typename density_mode_type::sample_type density_mode_sample_type;
     static bool const gpu = modules_type::gpu;
     typedef typename particle_type::vector_type vector_type;
     typedef typename vector_type::value_type float_type;
@@ -79,7 +77,6 @@ struct lattice
     typedef observables::utility::wavevector<dimension> wavevector_type;
     typedef observables::ssf<dimension> ssf_type;
     typedef typename ssf_type::result_type ssf_result_type;
-    typedef mdsim::clock clock_type;
 
     fixed_vector<unsigned, dimension> ncell;
     unsigned nunit_cell;
@@ -94,7 +91,6 @@ struct lattice
     shared_ptr<wavevector_type> wavevector;
     shared_ptr<density_mode_type> density_mode;
     shared_ptr<ssf_type> ssf;
-    shared_ptr<clock_type> clock;
 
     void test();
     lattice();
@@ -151,19 +147,24 @@ void lattice<modules_type>::test()
       , std::make_shared<particle_group_type>(particle)
       , wavevector
     );
-    ssf = std::make_shared<ssf_type>(wavevector, particle->nparticle(), clock);
+    ssf = std::make_shared<ssf_type>(
+        density_mode_type::acquisitor(density_mode)
+      , density_mode_type::acquisitor(density_mode)
+      , wavevector
+      , particle->nparticle()
+    );
 
     // generate lattices
     BOOST_TEST_MESSAGE("generate fcc lattice");
     position->set();
 
-    // compute density modes
+    // explicitly trigger computation of density modes
     BOOST_TEST_MESSAGE("compute density modes");
-    shared_ptr<density_mode_sample_type const> mode = density_mode->acquire();
+    density_mode->acquire();
 
     // compute static structure factor
     BOOST_TEST_MESSAGE("compute static structure factor");
-    ssf_result_type const& result = ssf->sample(*mode, *mode);
+    ssf_result_type const& result = ssf->sample();
     BOOST_CHECK(result.size() == wavenumber.size());
 
     // compare with expected result
@@ -267,7 +268,6 @@ lattice<modules_type>::lattice()
     particle = std::make_shared<particle_type>(npart, 1);
     box = std::make_shared<box_type>(edges);
     position = std::make_shared<position_type>(particle, box, slab);
-    clock = std::make_shared<clock_type>();
 }
 
 template <int dimension, typename float_type>

@@ -1,5 +1,5 @@
 --
--- Copyright © 2011-2012  Felix Höfling
+-- Copyright © 2011-2013 Felix Höfling
 --
 -- This file is part of HALMD.
 --
@@ -17,126 +17,156 @@
 -- along with this program.  If not, see <http://www.gnu.org/licenses/>.
 --
 
-local clock             = require("halmd.mdsim.clock")
-local log               = require("halmd.io.log")
-local module            = require("halmd.utility.module")
-local sampler           = require("halmd.observables.sampler")
-local observables = {
-    density_mode        = require("halmd.observables.density_mode")
-}
-local writers = {
-    file                = require("halmd.io.writers.file")
-}
+local module   = require("halmd.utility.module")
 
--- grab C++ wrappers
-local ssf_wrapper = {
-    [2] = libhalmd.observables.ssf_2_
-  , [3] = libhalmd.observables.ssf_3_
-}
-local h5 = libhalmd.h5
-local po = libhalmd.po
+local log      = require("halmd.io.log")
+local utility  = require("halmd.utility")
+local profiler = require("halmd.utility.profiler")
+local sampler  = require("halmd.observables.sampler")
+
+-- grab C++ wrapper
+local ssf = assert(libhalmd.observables.ssf)
+
 -- grab standard library
 local assert = assert
-local ipairs = ipairs
-local string = string
-local type = type
+local property = property
 
+---
+-- Static structure factor
+-- =======================
+--
+-- The module computes the static structure factor
+--
+-- .. math::
+--
+--     S_q^{(\alpha\beta)} = \frac{1}{N} \bigl\langle \rho_\alpha(\vec q)^* \rho_\beta(\vec q) \bigr\rangle
+-- 
+-- from the Fourier modes of a given pair of (partial) density fields,
+--
+-- .. math::
+--
+--     \rho_\alpha(\vec k) = \sum_{n=1}^{N_\alpha} \exp(\text{i} \vec k \cdot \vec r_n) \/.
+--
+-- and the total number of particles :math:`N = \sum_\alpha N_\alpha`. The
+-- result is averaged over wavevectors of similar magnitude according to the
+-- shells defined by :class:`halmd.observables.utility.wavevector`.
+--
+-- For details see, e.g., Hansen & McDonald: Theory of simple liquids, chapter 4.1.
+--
 
+---
+-- Construct instance of :class:`halmd.observables.ssf`.
 --
--- construct instances of ssf module for each density pair (e.g., AA, AB, BB, ...)
+-- :param table args: keyword arguments
+-- :param table args.density_modes: instances of :class:`halmd.observables.density_mode`
+-- :param string args.label: module label *(optional)*
+-- :returns: instance of static structure factor module
 --
--- @param args parameter table
---   args.density_mode      list of density_mode instances with attached labels
---   args.every             sampling interval
--- @returns instance of ssf module
+-- The argument ``density_modes`` is a table of 1 or 2 instances of
+-- :class:`halmd.observables.density_mode` yielding the partial density modes
+-- :math:`\rho_\alpha(\vec k)` and :math:`\rho_beta(\vec k)`. The same instance
+-- of :class:`halmd.observables.utility.wavevector` must have been used to
+-- construct the 2 instances of ``density_mode`` instances. Passing only one
+-- instance implies :math:`\rho_\alpha(\vec k) = \rho_beta(\vec k)`. The
+-- normalisation factor is computed from the :math:`N_\alpha`'s taken from
+-- :attr:`halmd.observables.density_mode.count`.
+--
+-- The optional argument ``label`` defaults to ``density_modes[1].label ..
+-- "/" .. density_modes[2].label``.
+--
+-- .. method:: disconnect()
+--
+--    Disconnect static structure factor module from profiler.
+--
+-- .. attribute:: label
+--
+--    The module label passed upon construction or derived from the density modes.
+--
+-- .. class:: writer(args)
+--
+--    Write time series of static structure factor to file.
+--
+--    :param table args: keyword arguments
+--    :param args.file: instance of file writer
+--    :param args.location: location within file *(optional)*
+--    :param number args.every: sampling interval
+--    :type args.location: string table
+--    :returns: instance of density mode writer
+--
+--    The argument ``location`` specifies a path in a structured file format
+--    like H5MD given as a table of strings. If omitted it defaults to
+--    ``{"structure", self.label, "static_structure_factor"}``.
+--
+--    .. method:: disconnect()
+--
+--       Disconnect static structure factor writer from observables sampler.
 --
 local M = module(function(args)
-    -- command line options
-    local density_mode = assert(args.density_mode, "missing parameter: density_mode")
-    local every = assert(args.every, "missing parameter: every")
-    assert(type(density_mode) == "table", "invalid table")
-
-    -- dependency injection
-    local dimension = assert(density_mode.wavevector.dimension)
-    local logger = log.logger({label = "ssf"})
-
-    -- drop additional table keys of density modes -- FIXME
-    local density_mode_ = {}
-    for i, rho in ipairs(density_mode) do
-        density_mode_[i] = rho
+    local mode = utility.assert_type(utility.assert_kwarg(args, "density_modes"), "table")
+    local wavevector = assert(mode[1].wavevector) -- obtain wavevector from density mode
+    -- replicate first density_mode instance if only one has been given
+    if #mode == 1 then
+        mode[2] = mode[1]
+    else
+        -- wavevector instances must match
+        local wavevector2 = assert(mode[2].wavevector)
+        assert(wavevector == wavevector2)
     end
 
-    -- construct ssf module from list of density modes
-    local ssf = assert(ssf_wrapper[dimension])(density_mode_, clock, logger)
 
-    -- acquire density modes before sampling static structure factor
-    for i, rho in ipairs(density_mode) do
-        ssf:on_sample(rho.acquire)
-    end
+    -- use specified label or construct it from the density mode labels
+    local label = args["label"] or assert(mode[1].label) .. "/" .. assert(mode[2].label)
+    local logger = log.logger({label = ("ssf (%s)"):format(label)})
 
-    local file = writers.file() -- singleton
+    -- determine normalisation factor
+    local norm = assert(mode[1].count) * assert(mode[2].count)
 
-    -- write wavenumbers only once, use wavenumber object of first density_mode
-    local writer = file:writer{location = {"structure", "ssf"}, mode = "truncate"}
-    writer:on_write(density_mode[1].wavenumber, {"wavenumber"})
-    sampler:on_start(writer.write)
+    -- pass acquisitors instead of the density_mode modules
+    local rho1 = assert(mode[1].acquisitor)
+    local rho2 = assert(mode[2].acquisitor)
 
-    -- write all partial structure factors
-    local writer = file:writer{location = {"structure", "ssf"}, mode = "append"}
-    writer:on_prepend_write(ssf.sample)
-    for i = 1, #density_mode do
-        local label1 = assert(density_mode[i].label)
-        for j = i, #density_mode do
-            local label2 = assert(density_mode[j].label)
-            writer:on_write(ssf:value(i - 1, j - 1), {label1, label2})
+    local self = ssf(rho1, rho2, wavevector, norm, logger)
+
+    -- store label as Lua property
+    self.label = property(function(self) return label end)
+
+    self.writer = function(self, args)
+        local file = utility.assert_kwarg(args, "file")
+        local location = utility.assert_type(
+            args.location or {"structure", label, "static_structure_factor"}
+          , "table")
+        local every = utility.assert_kwarg(args, "every")
+
+        -- write wavevectors only at start of simulation
+        local writer = file:writer{location = location, mode = "truncate"}
+        writer:on_write(wavevector.wavenumber, {"wavenumber"})
+        writer:write() -- FIXME pass arguments directly to write(), avoiding on_write
+
+        -- write time series of density modes: register acquisitor with writer
+        local writer = file:writer{location = location, mode = "append"}
+        writer:on_write(self.sampler, {"value"})
+
+        -- sequence of signal connections
+        local conn = {}
+        writer.disconnect = utility.signal.disconnect(conn, ("density_mode writer (%s)"):format(label))
+
+        -- connect writer to sampler
+        if every > 0 then
+            table.insert(conn, assert(sampler:on_sample(writer.write, every, 0)))
         end
+
+        return writer
     end
-    sampler:on_sample(writer.write, every, 0)
 
-    return ssf
+    -- sequence of signal connections
+    local conn = {}
+    self.disconnect = utility.signal.disconnect(conn, ("density_mode (%s)"):format(label))
+
+    -- connect runtime accumulators to module profiler
+    local desc = ("computation of static structure factor (%s)"):format(label)
+    table.insert(conn, assert(profiler:on_profile(self.runtime.sample, desc)))
+
+    return self
 end)
-
---
--- connect runtime accumulators to module profiler
---
-function M.profile(self, profiler)
-    profiler:on_profile{self, sample = "computation of static structure factor"}
-end
-
---
--- returns module description
---
-function M.description()
-    return "static structure factor"
-end
-
---
--- assemble module options
---
--- @param desc po.options_description
---
-function M.options(desc)
-    desc:add("every", po.uint64(), "sample interval for static structure factor")
-end
-
---
--- read module parameters from HDF5 group
---
-function M.read_parameters(args, group)
-    args.tolerance = group:read_attribute("tolerance", h5.float())
-    args.max_count = group:read_attribute("max_count", h5.uint())
-end
-
---
--- write module parameters to HDF5 group
---
--- @param ssf     module instance
--- @param group   HDF5 group
---
-function M.write_parameters(ssf, group)
-    -- wavenumbers are stored along with the ssf data, e.g., in structure/ssf/wavenumber
-    group:write_attribute("tolerance", h5.float(), ssf.wavevector.tolerance)
-    group:write_attribute("max_count", h5.uint(), ssf.wavevector.max_count)
-end
 
 return M
