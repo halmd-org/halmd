@@ -39,13 +39,13 @@ local property = property
 --
 -- .. math::
 --
---     S_q^{(\alpha\beta)} = \frac{1}{N} \bigl\langle \rho_\alpha(\vec q)^* \rho_\beta(\vec q) \bigr\rangle
+--     S_{(\alpha\beta)}(\vec k) = \frac{1}{N} \bigl\langle \rho_\alpha(\vec k)^* \rho_\beta(\vec k) \bigr\rangle
 -- 
 -- from the Fourier modes of a given pair of (partial) density fields,
 --
 -- .. math::
 --
---     \rho_\alpha(\vec k) = \sum_{n=1}^{N_\alpha} \exp(\text{i} \vec k \cdot \vec r_n) \/.
+--     \rho_\alpha(\vec k) = \sum_{n=1}^{N_\alpha} \exp(\text{i} \vec k \cdot \vec r_n) \/,
 --
 -- and the total number of particles :math:`N = \sum_\alpha N_\alpha`. The
 -- result is averaged over wavevectors of similar magnitude according to the
@@ -64,11 +64,11 @@ local property = property
 --
 -- The argument ``density_modes`` is a table of 1 or 2 instances of
 -- :class:`halmd.observables.density_mode` yielding the partial density modes
--- :math:`\rho_\alpha(\vec k)` and :math:`\rho_beta(\vec k)`. The same instance
--- of :class:`halmd.observables.utility.wavevector` must have been used to
--- construct the 2 instances of ``density_mode`` instances. Passing only one
--- instance implies :math:`\rho_\alpha(\vec k) = \rho_beta(\vec k)`. The
--- normalisation factor is computed from the :math:`N_\alpha`'s taken from
+-- :math:`\rho_\alpha(\vec k)` and :math:`\rho_\beta(\vec k)`. They must have
+-- been constructed with the same instance of
+-- :class:`halmd.observables.utility.wavevector`. Passing only one instance
+-- implies :math:`\alpha = \beta`. The normalisation factor is computed from
+-- the :math:`N_\alpha`'s taken from
 -- :attr:`halmd.observables.density_mode.count`.
 --
 -- The optional argument ``label`` defaults to ``density_modes[1].label ..
@@ -94,8 +94,8 @@ local property = property
 --    :returns: instance of density mode writer
 --
 --    The argument ``location`` specifies a path in a structured file format
---    like H5MD given as a table of strings. If omitted it defaults to
---    ``{"structure", self.label, "static_structure_factor"}``.
+--    like H5MD given as a table of strings. It defaults to ``{"structure",
+--    self.label, "static_structure_factor"}``.
 --
 --    .. method:: disconnect()
 --
@@ -113,13 +113,12 @@ local M = module(function(args)
         assert(wavevector == wavevector2)
     end
 
-
     -- use specified label or construct it from the density mode labels
     local label = args["label"] or assert(mode[1].label) .. "/" .. assert(mode[2].label)
     local logger = log.logger({label = ("ssf (%s)"):format(label)})
 
     -- determine normalisation factor
-    local norm = assert(mode[1].count) * assert(mode[2].count)
+    local norm = assert(mode[1].count) + assert(mode[2].count)
 
     -- pass acquisitors instead of the density_mode modules
     local rho1 = assert(mode[1].acquisitor)

@@ -59,7 +59,7 @@ local property = property
 --
 -- .. attribute:: wavevector
 --
---    The wavevector instance passed upon construction.
+--    The ``wavevector`` instance passed upon construction.
 --
 -- .. attribute:: label
 --
@@ -67,7 +67,7 @@ local property = property
 --
 -- .. attribute:: count
 --
---    The particle count of the underlying particle group.
+--    The particle count :math:`N` of the underlying particle group.
 --
 -- .. class:: writer(args)
 --
@@ -81,8 +81,8 @@ local property = property
 --    :returns: instance of density mode writer
 --
 --    The argument ``location`` specifies a path in a structured file format
---    like H5MD given as a table of strings. If omitted it defaults to
---    ``{"structure", self.label, "density_modes"}``.
+--    like H5MD given as a table of strings. It defaults to ``{"structure",
+--    self.label, "density_modes"}``.
 --
 --    .. method:: disconnect()
 --
