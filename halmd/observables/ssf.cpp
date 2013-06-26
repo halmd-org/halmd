@@ -49,6 +49,7 @@ ssf<dimension>::ssf(
   , norm_(norm)
   , result_(wavevector_->wavenumber().size())
 {
+    LOG("normalisation factor: " << norm)
 }
 
 template <int dimension>

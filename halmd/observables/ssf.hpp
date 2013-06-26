@@ -48,6 +48,7 @@ template <int dimension>
 class ssf
 {
 public:
+    // typedef raw_array<accumulator<double>> result_type; FIXME
     typedef raw_array<boost::array<double, 3>> result_type;
     typedef std::shared_ptr<raw_array<fixed_vector<double, 2>> const> mode_type;
     typedef std::function<mode_type ()> mode_acquisitor_type;
