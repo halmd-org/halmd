@@ -78,7 +78,7 @@ local function liquid(args)
     -- set initial particle velocities
     local boltzmann = mdsim.velocities.boltzmann({
         particle = particle
-      , temperature = args.temperature
+      , temperature = args.initial_temperature
     })
     boltzmann:set()
 
@@ -110,8 +110,15 @@ local function liquid(args)
     -- write box specification to H5MD file
     box:writer(file)
 
-    -- select all particles
-    local particle_group = mdsim.particle_groups.all({particle = particle})
+    -- sample macroscopic state variables for all particles.
+    if args.sampling.state_vars > 0 then
+        local msv = observables.thermodynamics({
+            box = box
+          , group = mdsim.particle_groups.all({particle = particle})
+          , force = force
+        })
+        msv:writer({file = file, every = args.sampling.state_vars})
+    end
 
     -- sample each particle group separately
     for label, group in utility.sorted(groups) do
@@ -124,7 +131,7 @@ local function liquid(args)
           , every = args.sampling.trajectory
         })
 
-        -- Sample macroscopic state variables.
+        -- Sample macroscopic state variables per particle group.
         local msv = observables.thermodynamics({box = box, group = group, force = force})
         msv:writer({file = file, every = args.sampling.state_vars})
     end
@@ -132,26 +139,49 @@ local function liquid(args)
     -- sample initial state
     observables.sampler:sample()
 
-    -- add velocity-Verlet integrator with Boltzmann distribution
-    local integrator = mdsim.integrators.verlet_boltzmann({
-        box = box
-      , particle = particle
-      , force = force
-      , timestep = args.timestep
-      , temperature = args.temperature
-      , rate = args.rate
-    })
+    -- convert integration time in number of steps
+    local steps = math.ceil(args.time / args.timestep)
 
     -- estimate remaining runtime
     local runtime = observables.runtime_estimate({
-        steps = args.steps
-      , first = 10
-      , interval = 900
-      , sample = 60
+        steps = steps, first = 10, interval = 900, sample = 60
     })
 
-    -- run simulation
-    observables.sampler:run(args.steps)
+    -- add velocity-Verlet integrator with Boltzmann thermostat (NVT)
+    local integrator = mdsim.integrators.verlet_boltzmann({
+        box = box, particle = particle, force = force
+      , timestep = args.timestep, temperature = args.initial_temperature, rate = args.rate
+    })
+
+    -- run first 10% of the simulation in NVT ensemble at elevated temperature
+    -- in order to melt the initial fcc crystal
+    observables.sampler:run(steps / 10)
+
+    -- disconnect NVT integrator from sampler and profiler
+    integrator.disconnect()
+
+    -- run remaining first half of the simulation in NVT ensemble at the target temperature
+    -- FIXME provide method set_temperature()
+    integrator = mdsim.integrators.verlet_boltzmann({
+        box = box, particle = particle, force = force
+      , timestep = args.timestep, temperature = args.temperature, rate = args.rate
+    })
+    observables.sampler:run(steps / 2 - steps / 10)
+
+    -- log intermediate profiler results and reset accumulators
+    halmd.utility.profiler:profile()
+
+    -- disconnect NVT integrator from sampler and profiler
+    integrator.disconnect()
+
+    -- add velocity-Verlet integrator (NVE)
+    integrator = mdsim.integrators.verlet({
+        box = box, particle = particle, force = force, timestep = args.timestep
+    })
+
+    -- run remaining part of the simulation in NVE ensemble
+    -- to prepare for the NVE production run
+    observables.sampler:run(steps - steps / 2)
 
     -- log profiler results
     halmd.utility.profiler:profile()
@@ -188,13 +218,14 @@ local function parse_args()
         args[key] = value
     end, default = {1, 1, 1}, help = "relative aspect ratios of simulation box"})
     parser:add_argument("masses", {type = "vector", dtype = "number", default = {1}, help = "particle masses"})
-    parser:add_argument("temperature", {type = "number", default = 0.7, help = "initial system temperature"})
+    parser:add_argument("initial-temperature", {type = "number", default = 1.5, help = "initial temperature"})
+    parser:add_argument("temperature", {type = "number", default = 0.7, help = "target temperature"})
     parser:add_argument("rate", {type = "number", default = 0.1, help = "heat bath collision rate"})
-    parser:add_argument("steps", {type = "integer", default = 10000, help = "number of simulation steps"})
-    parser:add_argument("timestep", {type = "number", default = 0.005, help = "integration time step"})
+    parser:add_argument("time", {type = "number", default = 1000, help = "integration time"})
+    parser:add_argument("timestep", {type = "number", default = 0.002, help = "integration time step"})
 
-    local sampling = parser:add_argument_group("sampling", {help = "sampling intervals"})
-    sampling:add_argument("trajectory", {type = "integer", default = 1000, help = "for trajectory"})
+    local sampling = parser:add_argument_group("sampling", {help = "sampling intervals (0: disabled)"})
+    sampling:add_argument("trajectory", {type = "integer", help = "for trajectory"})
     sampling:add_argument("state-vars", {type = "integer", default = 1000, help = "for state variables"})
 
     return parser:parse_args()
