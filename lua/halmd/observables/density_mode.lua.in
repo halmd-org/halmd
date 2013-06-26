@@ -40,7 +40,7 @@ local property = property
 --
 --     \rho(\vec k) = \sum_{n=1}^N \exp(\text{i} \vec k \cdot \vec r_n) \/.
 --
--- The auxiliary module :class:`halmd.obseravbles.utility.wavevector` provides
+-- The auxiliary module :class:`halmd.observables.utility.wavevector` provides
 -- suitable wavevectors that are compatible with the reciprocal lattice of the
 -- periodic simulation box.
 --
@@ -112,14 +112,15 @@ local M = module(function(args)
           , "table")
         local every = utility.assert_kwarg(args, "every")
 
-        -- write wavevectors only at start of simulation
+        -- write wavevectors
         local writer = file:writer{location = location, mode = "truncate"}
         writer:on_write(wavevector.value, {"wavevector"})
         writer:write() -- FIXME pass arguments directly to write(), avoiding on_write
 
         -- write time series of density modes: register acquisitor with writer
+        local group_name = table.remove(location) -- strip off last component
         local writer = file:writer{location = location, mode = "append"}
-        writer:on_write(self.acquisitor, {"value"})
+        writer:on_write(self.acquisitor, {group_name})
 
         -- sequence of signal connections
         local conn = {}
