@@ -28,6 +28,7 @@ local observables = halmd.observables
 local dynamics = halmd.observables.dynamics
 local readers = halmd.io.readers
 local writers = halmd.io.writers
+local numeric = halmd.utility.numeric
 
 --
 -- Setup and run simulation
@@ -108,6 +109,48 @@ local function liquid(args)
             }
           , every = args.sampling.state_vars
         })
+    end
+
+    -- set up wavevector grid compatible with the periodic simulation box
+    local grid = args.wavevector.wavenumbers
+    if not grid then
+        grid = observables.utility.semilog_grid({
+            start = 2 * math.pi / numeric.max(box.length)
+          , stop = args.wavevector.maximum
+          , decimation = args.wavevector.decimation
+        }).value
+    end
+    local wavevector = observables.utility.wavevector({
+        box = box, wavenumber = grid
+      , tolerance = args.wavevector.tolerance, max_count = args.wavevector.max_count
+    })
+
+    -- compute density modes and output their time series
+    local density_mode = observables.density_mode({group = particle_group, wavevector = wavevector})
+    local interval = args.sampling.structure
+    if interval > 0 then
+        density_mode:writer({file = file, every = interval})
+    end
+
+    -- compute static structure factor from density modes
+    local ssf = observables.ssf({density_modes = {density_mode}, norm = nparticle})
+    local interval = args.sampling.structure
+    if interval > 0 then
+        -- output averages over a certain number of configurations each
+        local average = args.sampling.average
+        if average and average > 0 then
+            halmd.io.log.warning("Averaging of static structure factors not yet supported")
+--            local total_ssf = observables.utility.accumulator({
+--                aquire = ssf.acquire, every = interval, desc = "ssf"
+--            })
+--            total_ssf:writer({
+--                file = file
+--              , location = {"structure", ssf.label, "static_structure_factor"}
+--              , every = average * interval
+--              , reset = true})
+        else
+            ssf:writer({file = file, every = interval})
+        end
     end
 
     -- time correlation functions
@@ -208,7 +251,13 @@ local function parse_args()
     local sampling = parser:add_argument_group("sampling", {help = "sampling intervals (0: disabled)"})
     sampling:add_argument("trajectory", {type = "integer", help = "for trajectory"})
     sampling:add_argument("state-vars", {type = "integer", default = 1000, help = "for state variables"})
+    sampling:add_argument("structure", {type = "integer", default = 1000, help = "for density modes, static structure factor"})
     sampling:add_argument("correlation", {type = "integer", default = 100, help = "for correlation functions"})
+    sampling:add_argument("average", {type = "integer", help = "output averages of given number of samples"})
+
+    local wavevector = parser:add_argument_group("wavevector", {help = "wavevector shells in reciprocal space"})
+    observables.utility.wavevector.add_options(wavevector)
+    observables.utility.semilog_grid.add_options(wavevector, {maximum = 15})
 
     return parser:parse_args()
 end
