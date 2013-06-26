@@ -67,21 +67,24 @@ local M = module(function(args)
 end)
 
 ---
--- .. function:: add_options(parser)
+-- .. function:: add_options(parser, defaults)
 --
 --    Add module options to command line parser.
 --
 --    :param parser: instance of :class:`halmd.utility.program_options.argument_parser`
+--    :param dictionary defaults: default values for the options
 --
 
-function M.add_options(parser)
+function M.add_options(parser, defaults)
     local parser = assert(parser)
 
-    parser:add_argument("maximum", {type="number",
-        help="maximum value of semi-logarithmically spaced grid"
+    parser:add_argument("maximum", {type = "number"
+      , default = defaults and defaults.maximum
+      , help = "maximum value of semi-logarithmically spaced grid"
     })
-    parser:add_argument("decimation", {type="integer",
-        help="decimation of grid"
+    parser:add_argument("decimation", {type = "integer"
+      , default = defaults and defaults.decimation or 0
+      , help = "decimation of grid"
     })
 end
 

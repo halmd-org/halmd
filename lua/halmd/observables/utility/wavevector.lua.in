@@ -94,24 +94,28 @@ local M = module(function(args)
 end)
 
 ---
--- .. function:: add_options(parser)
+-- .. function:: add_options(parser, defaults)
 --
 --    Add module options to command line parser: ``wavenumbers``, ``tolerance``, ``max-count``.
 --
 --    :param parser: instance of :class:`halmd.utility.program_options.argument_parser`
+--    :param dictionary defaults: default values for the options
 --
 
-function M.add_options(parser)
+function M.add_options(parser, defaults)
     local parser = assert(parser)
 
-    parser:add_argument("wavenumbers", {type="vector", dtype="number",
-        help="list of wavenumbers"
+    parser:add_argument("wavenumbers", {type = "vector", dtype = "number"
+      , default = defaults and defaults.wavenumbers
+      , help = "list of wavenumbers"
     })
-    parser:add_argument("tolerance", {type="number", default=0.01,
-        help="relative tolerance on wavevector magnitude"
+    parser:add_argument("tolerance", {type="number"
+      , default = defaults and defaults.number or 0.01
+      , help = "relative tolerance on wavevector magnitude"
     })
-    parser:add_argument("max-count", {type="integer", default=7,
-        help="maximum number of wavevectors per wavenumber shell"
+    parser:add_argument("max-count", {type="integer"
+      , default = defaults and defaults.max_count or 7
+      , help = "maximum number of wavevectors per wavenumber shell"
     })
 end
 
