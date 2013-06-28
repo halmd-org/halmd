@@ -79,6 +79,9 @@ local function liquid(args)
       , timestep = args.timestep
     })
 
+    -- convert integration time to number of steps
+    local steps = math.ceil(args.time / args.timestep)
+
     -- H5MD file writer
     local file = writers.h5md({path = ("%s.h5"):format(args.output)})
     -- write box specification to H5MD file
@@ -92,7 +95,7 @@ local function liquid(args)
     -- set particle positions, velocities, species
     phase_space:set(sample)
     -- write trajectory of particle groups to H5MD file
-    local interval = args.sampling.trajectory or args.steps
+    local interval = args.sampling.trajectory or steps
     if interval > 0 then
         phase_space:writer({file = file, fields = {"position", "velocity", "species", "mass"}, every = interval})
     end
@@ -157,7 +160,7 @@ local function liquid(args)
     local interval = args.sampling.correlation
     if interval > 0 then
         -- setup blocking scheme
-        local max_lag = args.steps * integrator.timestep / 10
+        local max_lag = steps * integrator.timestep / 10
         local blocking_scheme = dynamics.blocking_scheme({
             max_lag = max_lag
           , every = interval
@@ -201,14 +204,11 @@ local function liquid(args)
 
     -- estimate remaining runtime
     local runtime = observables.runtime_estimate({
-        steps = args.steps
-      , first = 10
-      , interval = 900
-      , sample = 60
+        steps = steps, first = 10, interval = 900, sample = 60
     })
 
     -- run simulation
-    observables.sampler:run(args.steps)
+    observables.sampler:run(steps)
 
     -- log profiler results
     halmd.utility.profiler:profile()
@@ -245,7 +245,7 @@ local function parse_args()
 
     parser:add_argument("cutoff", {type = "number", default = math.pow(2, 1 / 6), help = "potential cutoff radius"})
     parser:add_argument("smoothing", {type = "number", default = 0.005, help = "cutoff smoothing parameter"})
-    parser:add_argument("steps", {type = "integer", default = 10000, help = "number of simulation steps"})
+    parser:add_argument("time", {type = "number", default = 100, help = "integration time"})
     parser:add_argument("timestep", {type = "number", default = 0.001, help = "integration time step"})
 
     local sampling = parser:add_argument_group("sampling", {help = "sampling intervals (0: disabled)"})

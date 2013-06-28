@@ -59,7 +59,7 @@ execute_halmd(
   --particles 300
   --ratios "${EDGE_RATIOS}"
   --density 0.1
-  --steps 1000
+  --time 1
   --sampling trajectory=1000
 )
 
@@ -69,7 +69,7 @@ execute_halmd(
   --verbose
   --output "${OUTPUT_PREFIX}_continued"
   --trajectory "${OUTPUT_PREFIX}.h5"
-  --steps 1000
+  --time 1
   --sampling trajectory=1000
 )
 

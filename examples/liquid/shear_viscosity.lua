@@ -140,10 +140,7 @@ local function shear_viscosity(args)
 
     -- estimate remaining runtime
     local runtime = observables.runtime_estimate({
-        steps = equi_steps
-      , first = 10
-      , interval = 900
-      , sample = 60
+        steps = equi_steps, first = 10, interval = 900, sample = 60
     })
 
     -- run equilibration
@@ -157,6 +154,9 @@ local function shear_viscosity(args)
     --
     -- After equilibration, we can measure the correlation functions now
     --
+
+    -- convert integration time to number of steps
+    local steps = math.ceil(args.time / args.timestep)
 
     -- determine the mean energy from equilibration run
     -- and rescale velocities to match the mean energy of the equilibration
@@ -172,7 +172,7 @@ local function shear_viscosity(args)
     temperature:writer({
         file = file
       , location = {"observables", msv.group.label, "averaged_temperature"}
-      , every = math.floor(args.steps / 1000)
+      , every = math.floor(steps / 1000)
       , reset = true
     })
 
@@ -191,7 +191,7 @@ local function shear_viscosity(args)
     })
 
     -- setup blocking scheme
-    local max_lag = args.steps * integrator.timestep / 10
+    local max_lag = steps * integrator.timestep / 10
     local interval = 100
     local blocking_scheme = dynamics.blocking_scheme({
         max_lag = max_lag
@@ -206,14 +206,11 @@ local function shear_viscosity(args)
     blocking_scheme:correlation(stress_tensor_autocorrelation, file)
 
     runtime = observables.runtime_estimate({
-        steps = args.steps
-      , first = 10
-      , interval = 900
-      , sample = 60
+        steps = steps, first = 10, interval = 900, sample = 60
     })
 
     -- run NVE simulation
-    observables.sampler:run(args.steps)
+    observables.sampler:run(steps)
 
     -- log profiler results
     halmd.utility.profiler:profile()
@@ -247,7 +244,7 @@ local function parse_args()
     parser:add_argument("masses", {type = "vector", dtype = "number", default = {1}, help = "particle masses"})
     parser:add_argument("temperature", {type = "number", default = 0.722, help = "initial system temperature"})
     parser:add_argument("rate", {type = "number", default = 5, help = "heat bath collision rate"})
-    parser:add_argument("steps", {type = "integer", default = 1e7, help = "number of simulation steps"})
+    parser:add_argument("time", {type = "number", default = 1e4, help = "integration time"})
     parser:add_argument("timestep", {type = "number", default = 0.001, help = "integration time step"})
 
     local sampling = parser:add_argument_group("sampling", {help = "sampling intervals (0: disabled)"})

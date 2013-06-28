@@ -101,6 +101,9 @@ local function liquid(args)
       , timestep = args.timestep
     })
 
+    -- convert integration time to number of steps
+    local steps = math.ceil(args.time / args.timestep)
+
     -- H5MD file writer
     local file = writers.h5md({path = ("%s.h5"):format(args.output)})
     -- write box specification to H5MD file
@@ -189,7 +192,7 @@ local function liquid(args)
         end
 
         -- setup blocking scheme for correlation functions
-        local max_lag = args.steps * integrator.timestep / 10
+        local max_lag = steps * integrator.timestep / 10
         local blocking_scheme = dynamics.blocking_scheme({
             max_lag = max_lag
           , every = args.sampling.correlation
@@ -212,14 +215,11 @@ local function liquid(args)
 
     -- estimate remaining runtime
     local runtime = observables.runtime_estimate({
-        steps = args.steps
-      , first = 10
-      , interval = 900
-      , sample = 60
+        steps = steps, first = 10, interval = 900, sample = 60
     })
 
     -- run simulation
-    observables.sampler:run(args.steps)
+    observables.sampler:run(steps)
 
     -- log profiler results
     halmd.utility.profiler:profile()
@@ -254,7 +254,7 @@ local function parse_args()
         args[key] = value
     end, help = "trajectory file name"})
 
-    parser:add_argument("steps", {type = "integer", default = 10000, help = "number of simulation steps"})
+    parser:add_argument("time", {type = "number", default = 1000, help = "integration time"})
     parser:add_argument("timestep", {type = "number", default = 0.001, help = "integration time step"})
 
     local sampling = parser:add_argument_group("sampling", {help = "sampling intervals"})

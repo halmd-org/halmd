@@ -139,7 +139,7 @@ local function liquid(args)
     -- sample initial state
     observables.sampler:sample()
 
-    -- convert integration time in number of steps
+    -- convert integration time to number of steps
     local steps = math.ceil(args.time / args.timestep)
 
     -- estimate remaining runtime
