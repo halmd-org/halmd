@@ -61,9 +61,23 @@ wavevector<dimension>::wavevector(
     LOG("tolerance on magnitude: " << tolerance_);
     LOG("maximum shell size: " << max_count_);
 
-    // construct wavevectors and store as key/value pairs (wavenumber, wavevector),
-    // wavenumbers are equivalent if they differ by less than tolerance_
-    auto less_tol = [=] (double x, double y) { return x * (1 + tolerance_) < y; }; // comparison functor
+    // construct wavevectors and store as key/value pairs (wavenumber, wavevector).
+    //
+    // The use of floating-point numbers as keys could result in rounding
+    // issues (which is unlikely since they are not subject to arithmetic
+    // operations), hence we consider keys equivalent if they differ by less
+    // than the floating point precision.
+    // x ~ y <=> !less_tol(x, y) && !less_tol(y, x) <=> |x – y| ≤ ε max(|x|, |y|)
+    // assuming x, y ≥ 0:
+    // !(x ~ y) <=> y – x > ε y or x – y > ε x <=> x < y(1 – ε) or y < x(1 – ε)
+    auto less_tol = [=](double x, double y) { // comparison functor
+        return x < y * (1 - numeric_limits<double>::epsilon());
+    };
+    // Note that the comparison predicate passed to std::multimap must define a
+    // strict weak ordering, i.e. the equivalence relation must be transitive:
+    // a ~ b, b ~ c ⇒ a ~ c. This is only the case for less_tol() if the
+    // supplied keys are separated by more than ε.
+    // (Counter example for ε = 0.1: 1 ~ 1.1, 1.1 ~ 1.2, but not 1 ~ 1.2).
     multimap<double, vector_type, decltype(less_tol)> wavevector_map(less_tol);
     algorithm::host::pick_lattice_points_from_shell(
         first, last
