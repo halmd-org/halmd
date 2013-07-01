@@ -61,24 +61,8 @@ wavevector<dimension>::wavevector(
     LOG("tolerance on magnitude: " << tolerance_);
     LOG("maximum shell size: " << max_count_);
 
-    // construct wavevectors and store as key/value pairs (wavenumber, wavevector).
-    //
-    // The use of floating-point numbers as keys could result in rounding
-    // issues (which is unlikely since they are not subject to arithmetic
-    // operations), hence we consider keys equivalent if they differ by less
-    // than the floating point precision.
-    // x ~ y <=> !less_tol(x, y) && !less_tol(y, x) <=> |x – y| ≤ ε max(|x|, |y|)
-    // assuming x, y ≥ 0:
-    // !(x ~ y) <=> y – x > ε y or x – y > ε x <=> x < y(1 – ε) or y < x(1 – ε)
-    auto less_tol = [=](double x, double y) { // comparison functor
-        return x < y * (1 - numeric_limits<double>::epsilon());
-    };
-    // Note that the comparison predicate passed to std::multimap must define a
-    // strict weak ordering, i.e. the equivalence relation must be transitive:
-    // a ~ b, b ~ c ⇒ a ~ c. This is only the case for less_tol() if the
-    // supplied keys are separated by more than ε.
-    // (Counter example for ε = 0.1: 1 ~ 1.1, 1.1 ~ 1.2, but not 1 ~ 1.2).
-    multimap<double, vector_type, decltype(less_tol)> wavevector_map(less_tol);
+    // construct wavevectors and store as key/value pairs (wavenumber iterator, wavevector).
+    multimap<decltype(first), vector_type> wavevector_map;
     algorithm::host::pick_lattice_points_from_shell(
         first, last
       , inserter(wavevector_map, end(wavevector_map))
@@ -92,16 +76,17 @@ wavevector<dimension>::wavevector(
         throw logic_error("Constraints on wavevectors are incompatible with geometry of simulation box.");
     }
 
+    vector<decltype(first)> discarded;
     for (auto q_it = begin(wavenumber_); q_it != end(wavenumber_); ++q_it) {
         // find wavevector range with |q| = *q_it
-        auto q_range = wavevector_map.equal_range(*q_it);
+        auto q_range = wavevector_map.equal_range(q_it);
 
         if (q_range.first != q_range.second) {
             // append wavevectors to wavevector list and store shell
             typename shell_array_type::value_type idx;
             idx.first = wavevector_.size();
             for (auto it = q_range.first; it != q_range.second; ++it) {
-                assert(abs(it->first - *q_it) < *q_it * tolerance_);
+                assert(abs(*it->first - *q_it) < *q_it * tolerance_);
                 assert(abs(norm_2(it->second) - *q_it) < 2 * *q_it * tolerance_);
                 wavevector_.push_back(it->second);
             }
@@ -109,10 +94,14 @@ wavevector<dimension>::wavevector(
             shell_.push_back(idx);
         }
         else {
-            // remove wavenumbers with empty wavevector shells
+            // remove wavenumbers with empty wavevector shells,
+            // postpone deletion since we must not invalidate the iterators stored in wavevector_map
             LOG_WARNING("reciprocal lattice not compatible with |q| ≈ " << *q_it << ", value discarded");
-            wavenumber_.erase(q_it--);   // post-decrement iterator, increment at end of loop
+            discarded.push_back(q_it);
         }
+    }
+    for (auto q_it : discarded) {
+        wavenumber_.erase(q_it);
     }
 
     LOG_DEBUG("total number of wavevectors found: " << wavevector_.size());

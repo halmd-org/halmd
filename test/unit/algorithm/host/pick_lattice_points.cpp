@@ -49,10 +49,10 @@ void pick_lattice_points()
 
     vector<double> radii = list_of(.5)(1)(1.5)(1.91)(2)(2.7)(3)(3)(4)(5)(30);
     vector<unsigned int> count = (dimension == 3)
-        ? list_of(0)(0)(0)(1)(1)(0)(2)(2)(1)(2)(max_count)
-        : list_of(0)(2)(0)(2)(2)(1)(4)(4)(4)(6)(max_count);
+        ? list_of(0)(0)(0)(1)(1)(0)(1)(1)(1)(2)(max_count)
+        : list_of(0)(2)(0)(2)(2)(1)(2)(2)(4)(6)(max_count);
 
-    multimap<double, vector_type> lattice_points;
+    multimap<typename vector<double>::const_iterator, vector_type> lattice_points;
 
     // call with empty list of radii
     BOOST_MESSAGE("test empty range");
@@ -102,17 +102,16 @@ void pick_lattice_points()
     BOOST_CHECK_EQUAL(lattice_points.size(), (dimension == 3) ? 14u : 28u);  // not equal to sum(count)
 
     // check conditions and counts on constructed lattice points
-    for (unsigned int i = 0; i < radii.size(); ++i) {
-        double r = radii[i];
+    auto r_it = std::begin(radii);
+    for (unsigned int i = 0; i < radii.size(); ++i, ++r_it) {
+        double r = *r_it;
         // check total count per shell
-        unsigned int c = lattice_points.count(r);
+        unsigned int c = lattice_points.count(r_it);
         BOOST_CHECK_MESSAGE(c == count[i], c << " != " << count[i] << " for r = " << r);
         BOOST_CHECK_MESSAGE(c <= max_count, "count(r = " << r << ") = " << c);
 
-        typedef typename multimap<double, vector_type>::const_iterator iterator_type;
-        typedef pair<iterator_type, iterator_type> range_type;
         unsigned int sum = 0;
-        for (range_type shell = lattice_points.equal_range(r); shell.first != shell.second; ++shell.first) {
+        for (auto shell = lattice_points.equal_range(r_it); shell.first != shell.second; ++shell.first) {
             // check that distance to origin is within the tolerance
             vector_type const& point = shell.first->second;
             BOOST_CHECK_SMALL(norm_2(point) / r - 1, epsilon);

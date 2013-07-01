@@ -60,7 +60,7 @@ namespace host {
 template <typename float_type, typename vector_type, typename InputIterator, typename OutputIterator>
 BOOST_CONCEPT_REQUIRES(
     ((boost::InputIterator<InputIterator>))
-    ((boost::OutputIterator<OutputIterator, std::pair<float_type const, vector_type> >))
+    ((boost::OutputIterator<OutputIterator, std::pair<InputIterator, vector_type> >))
   , (void)) // return type
 pick_lattice_points_from_shell(
     InputIterator radius_begin, InputIterator radius_end
@@ -119,7 +119,7 @@ pick_lattice_points_from_shell(
                     // 2) check if this is good enough
                     if (n > 0 && (abs(n * r0_norm - *r_it) <= *r_it * tolerance)) {
                         vector_type point = n * r0;
-                        *result++ = make_pair(*r_it, point);
+                        *result++ = make_pair(r_it, point);
                         ++count[i];
 #ifndef NDEBUG
                         index_type hkl_reduced = hkl / greatest_common_divisor(hkl);
