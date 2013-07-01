@@ -1,4 +1,5 @@
 /*
+ * Copyright © 2013 Felix Höfling
  * Copyright © 2012 Peter Colberg
  *
  * This file is part of HALMD.
@@ -170,6 +171,42 @@ private:
     /** uninitialised storage */
     T* storage_;
 };
+
+template<typename T>
+typename raw_array<T>::iterator begin(raw_array<T>& a)
+{
+    return a.begin();
+}
+
+template<typename T>
+typename raw_array<T>::const_iterator begin(raw_array<T> const& a)
+{
+    return a.begin();
+}
+
+template<typename T>
+typename raw_array<T>::const_iterator cbegin(raw_array<T> const& a)
+{
+    return a.begin();
+}
+
+template<typename T>
+typename raw_array<T>::iterator end(raw_array<T>& a)
+{
+    return a.end();
+}
+
+template<typename T>
+typename raw_array<T>::const_iterator end(raw_array<T> const& a)
+{
+    return a.end();
+}
+
+template<typename T>
+typename raw_array<T>::const_iterator cend(raw_array<T> const& a)
+{
+    return a.end();
+}
 
 } // namespace halmd
 

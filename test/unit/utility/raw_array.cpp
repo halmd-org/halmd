@@ -1,4 +1,5 @@
 /*
+ * Copyright © 2013 Felix Höfling
  * Copyright © 2012 Peter Colberg
  *
  * This file is part of HALMD.
@@ -96,6 +97,21 @@ static void test_construct(halmd::raw_array<T> const& array, std::size_t size)
     >::value, "begin() const returns const_iterator");
 
     static_assert(std::is_same<
+        decltype(begin(*static_cast<array_type*>(0)))
+      , typename array_type::iterator
+    >::value, "begin(…) returns iterator");
+
+    static_assert(std::is_same<
+        decltype(begin(*static_cast<array_type const*>(0)))
+      , typename array_type::const_iterator
+    >::value, "begin(…) returns const iterator");
+
+    static_assert(std::is_same<
+        decltype(cbegin(*static_cast<array_type const*>(0)))
+      , typename array_type::const_iterator
+    >::value, "cbegin(…) returns const_iterator");
+
+    static_assert(std::is_same<
         decltype((*static_cast<array_type*>(0)).end())
       , typename array_type::iterator
     >::value, "end() returns iterator");
@@ -104,6 +120,21 @@ static void test_construct(halmd::raw_array<T> const& array, std::size_t size)
         decltype((*static_cast<array_type const*>(0)).end())
       , typename array_type::const_iterator
     >::value, "end() const returns const_iterator");
+
+    static_assert(std::is_same<
+        decltype(end(*static_cast<array_type*>(0)))
+      , typename array_type::iterator
+    >::value, "end(…) returns iterator");
+
+    static_assert(std::is_same<
+        decltype(end(*static_cast<array_type const*>(0)))
+      , typename array_type::const_iterator
+    >::value, "end(…) returns const iterator");
+
+    static_assert(std::is_same<
+        decltype(cend(*static_cast<array_type const*>(0)))
+      , typename array_type::const_iterator
+    >::value, "cend(…) returns const_iterator");
 
     static_assert(std::is_same<
         decltype((*static_cast<array_type*>(0))[0])
