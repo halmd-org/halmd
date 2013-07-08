@@ -32,13 +32,14 @@ class correlation_adaptor
 public:
     typedef luaponte::object sample_type;
     typedef double result_type;
+    typedef accumulator<double> accumulator_type;
     typedef std::function<result_type (sample_type, sample_type)> function_type;
 
     correlation_adaptor(function_type const& function) : function_(function) {}
 
-    result_type compute(sample_type const& first, sample_type const& second) const
+    void operator() (sample_type const& first, sample_type const& second, accumulator_type& result) const
     {
-        return function_(first, second);
+        result(function_(first, second));
     }
 
 private:

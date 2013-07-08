@@ -63,9 +63,9 @@ public:
      *
      * @param first  phase space sample at initial time t1
      * @param second phase space sample at later time t2
-     * @returns MSD at lag time t2 - t1, averaged over all particles
+     * @param result returns MSD at lag time t2 - t1, averaged over all particles
      */
-    accumulator_type compute(sample_type const& first, sample_type const& second);
+    void operator() (sample_type const& first, sample_type const& second, accumulator_type& result);
 
 private:
     typedef observables::dynamics::mean_square_displacement<dimension, float> correlate_function_type;

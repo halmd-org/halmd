@@ -60,7 +60,7 @@ class correlation
 public:
     typedef typename tcf_type::sample_type sample_type;
     typedef typename tcf_type::result_type result_type;
-    typedef accumulator<result_type> accumulator_type;
+    typedef typename tcf_type::accumulator_type accumulator_type;
     typedef observables::samples::blocking_scheme<sample_type> block_sample_type;
     typedef boost::multi_array<accumulator_type, 2> block_result_type;
     typedef boost::multi_array<typename accumulator_type::value_type, 2> block_mean_type;
@@ -145,9 +145,9 @@ void correlation<tcf_type>::compute(unsigned int level)
     output_iterator out = result_[level].begin();
     for (input_iterator second = first; second != block.end(); ++second) {
         scoped_timer_type timer(runtime_.tcf);
-        // call TCF-specific compute routine and
-        // store result in output accumulator
-        (*out++)(tcf_->compute(**first, **second));
+        // call TCF functor which correlates the two samples and stores the
+        // result in the output accumulator
+        (*tcf_)(**first, **second, *out++);
     }
 }
 

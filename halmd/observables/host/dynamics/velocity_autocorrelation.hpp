@@ -45,7 +45,7 @@ public:
 
     static void luaopen(lua_State* L);
 
-    accumulator_type compute(sample_type const& first, sample_type const& second);
+    void operator() (sample_type const& first, sample_type const& second, accumulator_type& result);
 
 private:
     typedef observables::dynamics::velocity_autocorrelation<dimension, float_type> correlate_function_type;

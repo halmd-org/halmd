@@ -35,10 +35,10 @@ namespace dynamics {
  * @returns accumulated velocity autocorrelation
  */
 template <int dimension, typename float_type>
-typename velocity_autocorrelation<dimension, float_type>::accumulator_type
-velocity_autocorrelation<dimension, float_type>::compute(
+void velocity_autocorrelation<dimension, float_type>::operator() (
     sample_type const& first
   , sample_type const& second
+  , accumulator_type& result
 )
 {
     accumulator_type acc;
@@ -47,7 +47,7 @@ velocity_autocorrelation<dimension, float_type>::compute(
         // accumulate velocity autocorrelation
         acc(correlate_function_type()(*v1, *v2));
     }
-    return acc;
+    result(acc);
 }
 
 template <typename tcf_type>

@@ -31,10 +31,10 @@ namespace host {
 namespace dynamics {
 
 template <int dimension, typename float_type>
-typename mean_square_displacement<dimension, float_type>::accumulator_type
-mean_square_displacement<dimension, float_type>::compute(
+void mean_square_displacement<dimension, float_type>::operator() (
     sample_type const& first
   , sample_type const& second
+  , accumulator_type& result
 )
 {
     accumulator_type acc;
@@ -43,7 +43,7 @@ mean_square_displacement<dimension, float_type>::compute(
         // accumulate square displacement
         acc(correlate_function_type()(*r1, *r2));
     }
-    return acc;
+    result(acc);
 }
 
 template <typename tcf_type>

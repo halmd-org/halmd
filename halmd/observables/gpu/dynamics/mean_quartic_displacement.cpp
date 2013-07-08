@@ -51,18 +51,19 @@ unsigned int mean_quartic_displacement<dimension, float_type>::defaults::threads
 }
 
 template <int dimension, typename float_type>
-typename mean_quartic_displacement<dimension, float_type>::accumulator_type
-mean_quartic_displacement<dimension, float_type>::compute(
+void mean_quartic_displacement<dimension, float_type>::operator() (
     sample_type const& first
   , sample_type const& second
+  , accumulator_type& result
 )
 {
     typename sample_type::position_array_type const& position1 = first.position();
     typename sample_type::position_array_type const& position2 = second.position();
-    return compute_mqd_(
+    accumulator_type acc = compute_mqd_(
         std::make_tuple(&*position1.begin(), &*position2.begin())
       , std::make_tuple(&*position1.end())
     )();
+    result(acc);
 }
 
 template <typename tcf_type>
