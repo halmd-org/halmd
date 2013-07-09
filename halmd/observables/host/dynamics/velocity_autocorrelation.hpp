@@ -41,11 +41,10 @@ public:
     typedef host::samples::phase_space<dimension, float_type> sample_type;
     typedef typename sample_type::vector_type vector_type;
     typedef double result_type;
-    typedef accumulator<result_type> accumulator_type;
 
     static void luaopen(lua_State* L);
 
-    void operator() (sample_type const& first, sample_type const& second, accumulator_type& result);
+    void operator() (sample_type const& first, sample_type const& second, accumulator<result_type>& result);
 
 private:
     typedef observables::dynamics::velocity_autocorrelation<dimension, float_type> correlate_function_type;

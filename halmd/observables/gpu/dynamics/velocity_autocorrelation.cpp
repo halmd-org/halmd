@@ -54,12 +54,12 @@ template <int dimension, typename float_type>
 void velocity_autocorrelation<dimension, float_type>::operator() (
     sample_type const& first
   , sample_type const& second
-  , accumulator_type& result
+  , accumulator<result_type>& result
 )
 {
     typename sample_type::velocity_array_type const& velocity1 = first.velocity();
     typename sample_type::velocity_array_type const& velocity2 = second.velocity();
-    accumulator_type acc = compute_vacf_(
+    accumulator<result_type> acc = compute_vacf_(
         std::make_tuple(&*velocity1.begin(), &*velocity2.begin())
       , std::make_tuple(&*velocity1.end())
     )();

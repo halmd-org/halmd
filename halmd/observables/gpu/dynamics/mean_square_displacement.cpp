@@ -54,12 +54,12 @@ template <int dimension, typename float_type>
 void mean_square_displacement<dimension, float_type>::operator() (
     sample_type const& first
   , sample_type const& second
-  , accumulator_type& result
+  , accumulator<result_type>& result
 )
 {
     typename sample_type::position_array_type const& position1 = first.position();
     typename sample_type::position_array_type const& position2 = second.position();
-    accumulator_type acc = compute_msd_(
+    accumulator<result_type> acc = compute_msd_(
         std::make_tuple(&*position1.begin(), &*position2.begin())
       , std::make_tuple(&*position1.end())
     )();

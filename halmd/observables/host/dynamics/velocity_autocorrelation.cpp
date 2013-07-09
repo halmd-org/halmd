@@ -38,10 +38,10 @@ template <int dimension, typename float_type>
 void velocity_autocorrelation<dimension, float_type>::operator() (
     sample_type const& first
   , sample_type const& second
-  , accumulator_type& result
+  , accumulator<result_type>& result
 )
 {
-    accumulator_type acc;
+    accumulator<result_type> acc;
     typename sample_type::position_array_type::const_iterator v1, v2, end = first.velocity().end();
     for (v1 = first.velocity().begin(), v2 = second.velocity().begin(); v1 != end; ++v1, ++v2) {
         // accumulate velocity autocorrelation

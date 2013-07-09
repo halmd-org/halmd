@@ -38,10 +38,10 @@ template <int dimension, typename float_type>
 void mean_quartic_displacement<dimension, float_type>::operator() (
     sample_type const& first
   , sample_type const& second
-  , accumulator_type& result
+  , accumulator<result_type>& result
 )
 {
-    accumulator_type acc;
+    accumulator<result_type> acc;
     typename sample_type::position_array_type::const_iterator r1, r2, end = first.position().end();
     for (r1 = first.position().begin(), r2 = second.position().begin(); r1 != end; ++r1, ++r2) {
         // accumulate quartic displacement

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2011 Felix Höfling
+ * Copyright © 2011-2013 Felix Höfling
  * Copyright © 2011-2012 Peter Colberg
  *
  * This file is part of HALMD.
@@ -106,12 +106,12 @@ class correlation
 
 public:
     typedef typename tcf_type::sample_type sample_type;
-    typedef typename tcf_type::accumulator_type accumulator_type;
+    typedef typename tcf_type::result_type result_type;
 
     typedef observables::samples::blocking_scheme<sample_type> block_sample_type;
-    typedef boost::multi_array<accumulator_type, rank_> block_result_type;
-    typedef boost::multi_array<typename accumulator_type::value_type, rank_> block_mean_type;
-    typedef boost::multi_array<typename accumulator_type::size_type, rank_> block_count_type;
+    typedef boost::multi_array<accumulator<result_type>, rank_> block_result_type;
+    typedef boost::multi_array<result_type, rank_> block_mean_type;
+    typedef boost::multi_array<typename accumulator<result_type>::size_type, rank_> block_count_type;
     typedef logger logger_type;
 
     static void luaopen(lua_State* L);

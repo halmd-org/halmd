@@ -41,7 +41,6 @@ class mean_square_displacement
 public:
     typedef gpu::samples::phase_space<dimension, float_type> sample_type;
     typedef double result_type;
-    typedef accumulator<result_type> accumulator_type;
 
     struct defaults
     {
@@ -65,7 +64,7 @@ public:
      * @param second phase space sample at later time t2
      * @param result returns MSD at lag time t2 - t1, averaged over all particles
      */
-    void operator() (sample_type const& first, sample_type const& second, accumulator_type& result);
+    void operator() (sample_type const& first, sample_type const& second, accumulator<result_type>& result);
 
 private:
     typedef observables::dynamics::mean_square_displacement<dimension, float> correlate_function_type;
