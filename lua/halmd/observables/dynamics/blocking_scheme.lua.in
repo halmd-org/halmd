@@ -1,5 +1,6 @@
 --
--- Copyright © 2011-2012 Peter Colberg and Felix Höfling
+-- Copyright © 2011-2013 Felix Höfling
+-- Copyright © 2011-2012 Peter Colberg
 --
 -- This file is part of HALMD.
 --
@@ -53,50 +54,45 @@ local correlation = assert(libhalmd.observables.dynamics.correlation)
 --    Compute time correlation function.
 --
 --    :param tcf: time correlation function
---    :param writer: instance of :class:`halmd.io.writers.h5md`
+--    :param file: instance of :class:`halmd.io.writers.h5md`
+--    :param location: locatin within file *(optional)*
+--    :type args.location: string table
+--
+--    The argument ``location`` specifies a path in a structured file format
+--    like H5MD given as a table of strings. If omitted it is defined by the
+--    time correlation function, typically ``{"dynamics", tcf.label,
+--    tcf_name}``.
 --
 --    .. method:: disconnect()
 --
 --       Disconnect correlation function from blocking scheme.
 --
 local M = module(function(args)
-    local max_lag = args.max_lag
-    if type(max_lag) ~= "number" then
-        error("bad argument 'max_lag'", 2)
-    end
-    local every = args.every
-    if type(every) ~= "number" then
-        error("bad argument 'every'", 2)
-    end
-    local size = args.size
-    if type(size) ~= "number" then
-        error("bad argument 'size'", 2)
-    end
-    local shift = args.shift or math.floor(math.sqrt(size))
-    if type(shift) ~= "number" then
-        error("bad argument 'shift'", 2)
-    end
-    local separation = args.separation or every * size
-    if type(separation) ~= "number" then
-        error("bad argument 'separation'", 2)
-    end
+    local max_lag = utility.assert_type(utility.assert_kwarg(args, "max_lag"), "number")
+    local every = utility.assert_type(utility.assert_kwarg(args, "every"), "number")
+    local size = utility.assert_type(args.size, "number")
+    local shift = utility.assert_type(args.shift or math.floor(math.sqrt(size)), "number")
+    local separation = utility.assert_type(args.separation or every * size, "number")
     local resolution = every * assert(clock.timestep)
     local logger = log.logger({label = "blocking_scheme"})
 
     -- construct instance
     local self = blocking_scheme(clock, max_lag, resolution, size, shift, separation, logger)
 
-    self.correlation = function(self, tcf, writer)
+    self.correlation = function(self, tcf, file, location)
         if not tcf then
             error("bad argument 'tcf'", 2)
         end
-        if not writer then
-            error("bad argument 'writer'", 2)
+        if not file then
+            error("bad argument 'file'", 2)
         end
         local acquire = assert(tcf.acquire)
-        local correlate = assert(tcf)
-        local group = assert(tcf.group)
         local desc = assert(tcf.desc)
+
+        -- emit notification to blocking_scheme logger
+        logger:info("register " .. desc)
+        -- switch to tcf-specific logger
+        local logger = log.logger({label = desc})
 
         -- construct blocking sample from acquire() function
         local count = assert(self.count)
@@ -107,9 +103,10 @@ local M = module(function(args)
         local result = correlation(tcf, sample, logger)
 
         -- write correlation function results
-        local writer = writer:writer({location = group, mode = "truncate"})
+        assert(tcf.writer)
+        local writer = tcf:writer({file = file, location = location})
         writer:on_write(self.time, {"time"}) -- FIXME hardlink
-        writer:on_write(result.mean, {"mean"})
+        writer:on_write(result.mean, {"value"})
         writer:on_write(result.error, {"error"})
         writer:on_write(result.count, {"count"})
 

@@ -191,9 +191,9 @@ local function liquid(args)
                 end
                 return result
             end
-            -- H5MD group names
-          , group = {particle_group.label, "selfdiffusion"}
-            -- profiling description
+            -- file location
+          , location = {"dynamics", particle_group.label, "selfdiffusion"}
+            -- module description
           , desc = "selfdiffusion coefficient of A particles"
         })
         blocking_scheme:correlation(selfdiffusion, file)

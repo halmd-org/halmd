@@ -1,5 +1,6 @@
 --
 -- Copyright © 2013 Nicolas Höft
+-- Copyright © 2013 Felix Höfling
 -- Copyright © 2012 Peter Colberg
 --
 -- This file is part of HALMD.
@@ -51,9 +52,7 @@ local module  = require("halmd.utility.module")
 --             end
 --             return result
 --         end
---         -- H5MD path
---         , group = {"AA", "mean_square_displacement"}
---         -- profiling description
+--         -- module description
 --         , desc = "collective mean-square displacement of AA particles"
 --     })
 --
@@ -63,7 +62,10 @@ local module  = require("halmd.utility.module")
 --         , size = 10
 --         , separation = separation
 --     })
---     blocking_scheme:correlation(collective_msd, writer)
+--     blocking_scheme:correlation(
+--         collective_msd, file
+--       , {"dynamics", "AA", "collective_mean_square_displacement"}
+--     )
 --
 
 -- grab C++ wrappers
@@ -76,8 +78,13 @@ local blocking_scheme_adaptor = assert(libhalmd.observables.samples.blocking_sch
 -- :param args: keyword arguments
 -- :param args.acquire: callable that returns a value
 -- :param args.correlate: callable that accepts two values and returns a ``number``
--- :param table args.group: sequence of strings of H5MD group names
--- :param string args.desc: profiling description
+-- :param args.location: default location within file
+-- :type args.location: string table
+-- :param string args.desc: module description
+--
+-- The argument location is defines the default value of ``writer()``. For H5MD
+-- files, it obeys the structure {``"dynamics"``, particle group, name of
+-- correlation function}.
 --
 -- .. method:: acquire()
 --
@@ -93,18 +100,28 @@ local blocking_scheme_adaptor = assert(libhalmd.observables.samples.blocking_sch
 --    :param second: second sample
 --    :returns: value
 --
--- .. attribute:: group
---
---    H5MD group.
---
 -- .. attribute:: desc
 --
---    Profiler description.
+--    Module description.
+--
+-- .. class:: writer(args)
+--
+--    Construct file writer.
+--
+--    :param table args: keyword arguments
+--    :param args.file: instance of file writer
+--    :param args.location: location within file
+--    :type args.location: string table
+--    :return: file writer as returned by ``file:writer()``.
+--
+--    The argument ``location`` specifies a path in a structured file format
+--    like H5MD given as a table of strings. It defaults to ``args.location``
+--    passed upon construction of the correlation module.
 --
 local M = module(function(args)
     local acquire   = utility.assert_kwarg(args, "acquire")
     local correlate = utility.assert_kwarg(args, "correlate")
-    local group     = utility.assert_type(utility.assert_kwarg(args, "group"), "table")
+    local location  = utility.assert_type(utility.assert_kwarg(args, "location"), "table")
     local desc      = utility.assert_type(utility.assert_kwarg(args, "desc"), "string")
 
     -- construct instance
@@ -115,15 +132,19 @@ local M = module(function(args)
         return blocking_scheme_adaptor(acquire)
     end)
 
-    -- attach H5MD group
-    self.group = property(function(self)
-        return {"dynamics", table.unpack(group)}
-    end)
-
-    -- attach profiler description
+    -- attach module description
     self.desc = property(function(self)
         return desc
     end)
+
+    -- attach writer function as property
+    self.writer = property(function(self) return function(self, args)
+        local file = utility.assert_kwarg(args, "file")
+        local location = utility.assert_type(args.location or location, "table")
+
+        local writer = file:writer({location = location, mode = "truncate"})
+        return writer
+    end end)
 
     return self
 end)

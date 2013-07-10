@@ -1,6 +1,5 @@
 --
 -- Copyright © 2013 Nicolas Höft
--- Copyright © 2013 Felix Höfling
 --
 -- This file is part of HALMD.
 --
@@ -99,17 +98,27 @@ local accumulator = require("halmd.observables.utility.accumulator")
 --    :returns: mean-square integral of the off-diagonal elements of the stress
 --      tensor
 --
--- .. attribute:: group
---
---    H5MD group.
---
 -- .. attribute:: desc
 --
---    Profiler description.
+--    Module description.
 --
 -- .. method:: disconnect()
 --
 --    Disconnect module from core.
+--
+-- .. class:: writer(args)
+--
+--    Construct file writer.
+--
+--    :param table args: keyword arguments
+--    :param args.file: instance of file writer
+--    :param args.location: location within file *(optional)*
+--    :type args.location: string table
+--    :return: file writer as returned by ``file:writer()``.
+--
+--    The argument ``location`` specifies a path in a structured file format
+--    like H5MD given as a table of strings. It defaults to ``{"dynamics",
+--    self.label, "mean_square_helfand_moment"}``.
 --
 local M = module(function(args)
     local msv = utility.assert_kwarg(args, "thermodynamics")
@@ -143,9 +152,9 @@ local M = module(function(args)
             -- normalise by the number of particle used to compute the stress tensor
             return result / nparticle
         end
-        -- H5MD group
-      , group = {label, "mean_square_helfand_moment"}
-        -- profiler description
+        -- file location
+      , location = {"dynamics", label, "mean_square_helfand_moment"}
+        -- module description
       , desc = ("MSD of the Helfand moment of %s particles"):format(label)
     }))
 

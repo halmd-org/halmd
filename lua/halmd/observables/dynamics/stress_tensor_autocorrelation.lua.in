@@ -1,5 +1,6 @@
 --
 -- Copyright © 2013 Nicolas Höft
+-- Copyright © 2013 Felix Höfling
 --
 -- This file is part of HALMD.
 --
@@ -76,13 +77,23 @@ local correlation = require("halmd.observables.dynamics.correlation")
 --    :param second: second phase space sample
 --    :returns: stress tensor autocorrelation function between two samples.
 --
--- .. attribute:: group
---
---    H5MD group.
---
 -- .. attribute:: desc
 --
---    Profiler description.
+--    Module description.
+--
+-- .. class:: writer(args)
+--
+--    Construct file writer.
+--
+--    :param table args: keyword arguments
+--    :param args.file: instance of file writer
+--    :param args.location: location within file *(optional)*
+--    :type args.location: string table
+--    :return: file writer as returned by ``file:writer()``.
+--
+--    The argument ``location`` specifies a path in a structured file format
+--    like H5MD given as a table of strings. It defaults to ``{"dynamics",
+--    self.label, "stress_tensor_autocorrelation"}``.
 --
 local M = module(function(args)
     local msv = utility.assert_kwarg(args, "thermodynamics")
@@ -107,9 +118,9 @@ local M = module(function(args)
             -- normalise by the number of particle used to compute the stress tensor
             return result / nparticle
         end
-        -- H5MD group
-      , group = {label, "stress_tensor_autocorrelation"}
-        -- profiler description
+        -- file location
+      , location = {"dynamics", label, "stress_tensor_autocorrelation"}
+        -- module description
       , desc = ("stress tensor autocorrelation of %s particles"):format(label)
     }))
 
