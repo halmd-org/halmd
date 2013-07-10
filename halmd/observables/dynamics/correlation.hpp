@@ -118,7 +118,8 @@ public:
 
     correlation(
         std::shared_ptr<tcf_type> tcf
-      , std::shared_ptr<block_sample_type> block_sample
+      , std::shared_ptr<block_sample_type> block_sample1
+      , std::shared_ptr<block_sample_type> block_sample2
       , std::shared_ptr<logger_type> logger = std::make_shared<logger_type>("dynamics.correlation")
     );
 
@@ -147,8 +148,9 @@ private:
         utility::profiler::accumulator_type tcf;
     };
 
-    /** block structure holding the input data */
-    std::shared_ptr<block_sample_type> block_sample_;
+    /** block structures holding the input data */
+    std::shared_ptr<block_sample_type> block_sample1_;
+    std::shared_ptr<block_sample_type> block_sample2_;
     /** functor performing the specific computation */
     std::shared_ptr<tcf_type> tcf_;
     /** module logger */
@@ -170,18 +172,27 @@ private:
 template <typename tcf_type>
 correlation<tcf_type>::correlation(
     std::shared_ptr<tcf_type> tcf
-  , std::shared_ptr<block_sample_type> block_sample
+  , std::shared_ptr<block_sample_type> block_sample1
+  , std::shared_ptr<block_sample_type> block_sample2
   , std::shared_ptr<logger_type> logger
 )
   // dependency injection
-  : block_sample_(block_sample)
+  : block_sample1_(block_sample1)
+  , block_sample2_(block_sample2)
   , tcf_(tcf)
   , logger_(logger)
 {
+    if (block_sample1_->count() != block_sample2_->count()
+     || block_sample1_->block_size() != block_sample2_->block_size())
+    {
+        LOG_ERROR("blocking schemes have incompatible shapes");
+        throw std::logic_error("failed to setup time correlation function.");
+    }
+
     // construct shape of total result array from shape of correlation function
     boost::array<typename block_result_type::size_type, rank_> extents;
-    extents[0] = block_sample_->count();
-    extents[1] = block_sample_->block_size();
+    extents[0] = block_sample1_->count();
+    extents[1] = block_sample1_->block_size();
     auto shape = detail::get_shape(*tcf_);
     for (unsigned int i = 2; i < rank_; ++i) {
         extents[i] = shape[i - 2];
@@ -198,16 +209,13 @@ void correlation<tcf_type>::compute(unsigned int level)
 {
     LOG_TRACE("compute correlations at level " << level);
 
-    typedef typename block_sample_type::block_type block_type;
-    typedef typename block_type::const_iterator input_iterator;
-    typedef typename block_result_type::reference::iterator output_iterator;
-
-    // iterate over block and correlate the first entry (at time t1)
-    // with all entries (at t1 + n * Δt), accumulate result for each lag time
-    block_type const& block = block_sample_->index(level);
-    input_iterator first = block.begin();
-    output_iterator out = result_[level].begin();
-    for (input_iterator second = first; second != block.end(); ++second) {
+    // iterate over block and correlate the first entry of block_sample1_ (at
+    // time t1) with all entries of block_sample2_ (at t1 + n * Δt), accumulate
+    // result for each lag time
+    auto out = result_[level].begin();
+    auto first = block_sample1_->index(level).begin();
+    auto const& block2 = block_sample2_->index(level);
+    for (auto second = block2.begin(); second != block2.end(); ++second) {
         scoped_timer_type timer(runtime_.tcf);
         // call TCF functor which correlates the two samples and stores the
         // result in the output accumulator
@@ -280,6 +288,7 @@ void correlation<tcf_type>::luaopen(lua_State* L)
 
               , def("correlation", &std::make_shared<correlation
                   , std::shared_ptr<tcf_type>
+                  , std::shared_ptr<block_sample_type>
                   , std::shared_ptr<block_sample_type>
                   , std::shared_ptr<logger_type>
                 >)

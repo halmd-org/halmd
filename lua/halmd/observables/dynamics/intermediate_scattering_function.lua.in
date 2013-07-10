@@ -58,15 +58,15 @@ local intermediate_scattering_function = assert(libhalmd.observables.dynamics.in
 -- :param string args.label: module label *(optional)*
 -- :returns: instance of intermediate scattering function module
 --
--- The argument ``density_modes`` is a table of 1 or 2 instances of
--- :class:`halmd.observables.density_mode` yielding the partial density modes
--- :math:`\rho_\alpha(\vec k, t)` and :math:`\rho_\beta(\vec k, t)`. They must
--- have been constructed with the same instance of
+-- The argument ``density_mode`` is an instance or a table of up to 2 instances
+-- of :class:`halmd.observables.density_mode` yielding the partial density
+-- modes :math:`\rho_\alpha(\vec k, t)` and :math:`\rho_\beta(\vec k, t)`. They
+-- must have been constructed with the same instance of
 -- :class:`halmd.observables.utility.wavevector`. Passing only one instance
 -- implies :math:`\alpha = \beta`.
 --
--- The optional argument ``label`` defaults to ``density_modes[1].label ..  "/"
--- .. density_modes[2].label``.
+-- The optional argument ``label`` defaults to ``density_mode[1].label ..  "/"
+-- .. density_mode[2].label``.
 --
 -- .. method:: disconnect()
 --
@@ -101,13 +101,12 @@ local intermediate_scattering_function = assert(libhalmd.observables.dynamics.in
 --    self.label, "intermediate_scattering_function"}``.
 --
 local M = module(function(args)
-    local mode = utility.assert_type(utility.assert_kwarg(args, "density_modes"), "table")
-    assert(#mode > 0)
+    local mode = utility.assert_kwarg(args, "density_mode")
+    if not (type(mode) == "table") then
+        mode = { mode } -- convert single instance to a table
+    end
     local wavevector = assert(mode[1].wavevector) -- obtain wavevector from density mode
-    -- replicate first density_mode instance if only one has been given
-    if #mode == 1 then
-        mode[2] = mode[1]
-    else
+    if mode[2] then
         -- wavevector instances must match
         local wavevector2 = assert(mode[2].wavevector)
         assert(wavevector == wavevector2)
@@ -115,20 +114,19 @@ local M = module(function(args)
     local norm = utility.assert_kwarg(args, "norm")
 
     -- use specified label or construct it from the density mode labels
-    local label = args["label"] or assert(mode[1].label) .. "/" .. assert(mode[2].label)
---    local logger = log.logger({label = ("ssf (%s)"):format(label)})
+    local label = args["label"] or assert(mode[1].label) .. "/" .. assert(mode[#mode].label)
 
     -- pass acquisitors instead of the density_mode modules
-    local rho1 = assert(mode[1].acquisitor)
-    local rho2 = assert(mode[2].acquisitor)
+    local rho = {}
+    for i,m in ipairs(mode) do
+        rho[i] = assert(m.acquisitor)
+    end
 
     -- construct instance
     local self = intermediate_scattering_function(wavevector, norm)
 
-    -- attach acquisitor as read-only property
-    self.acquire = property(function(self)
-        return rho1 -- FIXME rho2
-    end)
+    -- attach acquisitor(s) as read-only property
+    self.acquire = property(function(self) return rho end)
 
     -- attach label
     self.label = property(function(self) return label end)

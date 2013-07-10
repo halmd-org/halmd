@@ -59,10 +59,16 @@ local correlation = assert(libhalmd.observables.dynamics.correlation)
 --    :param location: locatin within file *(optional)*
 --    :type args.location: string table
 --
+--    The argument ``tcf`` specifies the time correlation function. It is
+--    expected to provide the attributes ``acquire`` (1 or 2 callables that
+--    yield the samples to be correlated) and ``desc`` (module description) as
+--    well as a method ``writer`` (file writer). Suitable modules are found in
+--    :mod:`halmd.observables.dynamics`, see there for details.
+--
 --    The argument ``location`` specifies a path in a structured file format
 --    like H5MD given as a table of strings. If omitted it is defined by the
---    time correlation function, typically ``{"dynamics", tcf.label,
---    tcf_name}``.
+--    time correlation function, typically {``"dynamics"``, particle group,
+--    name of correlation function}.
 --
 --    .. method:: disconnect()
 --
@@ -88,21 +94,28 @@ local M = module(function(args)
         if not file then
             error("bad argument 'file'", 2)
         end
-        local acquire = assert(tcf.acquire)
         local desc = assert(tcf.desc)
+        local acquire = assert(tcf.acquire)
+        -- convert single acquisitor to a table
+        if not (type(acquire) == "table") then
+            acquire = { acquire }
+        end
 
         -- emit notification to blocking_scheme logger
         logger:info("register " .. desc)
         -- switch to tcf-specific logger
         local logger = log.logger({label = desc})
 
-        -- construct blocking sample from acquire() function
+        -- construct blocking sample(s) from acquire() function(s)
         local count = assert(self.count)
         local size = assert(self.block_size)
-        local sample = blocking_sample(acquire, count, size)
+        local sample = {}
+        for i,fcn in ipairs(acquire) do
+            sample[i] = blocking_sample(fcn, count, size)
+        end
 
         -- construct correlation function for blocking scheme
-        local result = correlation(tcf, sample, logger)
+        local result = correlation(tcf, sample[1], sample[#sample], logger)
 
         -- write correlation function results
         assert(tcf.writer)
@@ -117,7 +130,9 @@ local M = module(function(args)
         result.disconnect = utility.signal.disconnect(conn, "correlation function")
 
         -- connect correlation function to blocking scheme and profiler
-        table.insert(conn, assert(self:on_sample(sample)))
+        for i,s in ipairs(sample) do
+            table.insert(conn, assert(self:on_sample(s)))
+        end
         table.insert(conn, assert(self:on_correlate(result)))
         table.insert(conn, assert(self:on_append_finalise(writer.write)))
         table.insert(conn, assert(profiler:on_profile(assert(result.runtime).tcf, desc)))

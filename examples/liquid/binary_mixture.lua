@@ -212,13 +212,11 @@ local function liquid(args)
         -- compute intermediate scattering function from correlation of density
         -- modes of previous particle groups and of this one
         for l, rho in pairs(density_mode) do
-            if l == label then
-                local isf = dynamics.intermediate_scattering_function({
-                    density_modes = {rho, density_mode[label]}
-                  , norm = nparticle
-                })
-                blocking_scheme:correlation(isf, file)
-            end
+            local isf = dynamics.intermediate_scattering_function({
+                density_mode = (l == label) and rho or {rho, density_mode[label]}
+              , norm = nparticle
+            })
+            blocking_scheme:correlation(isf, file)
         end
    end
 
