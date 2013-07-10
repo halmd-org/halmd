@@ -120,7 +120,7 @@ local M = module(function(args)
 
     -- use specified label or construct it from the density mode labels
     local label = args["label"] or assert(mode[1].label) .. "/" .. assert(mode[2].label)
-    local logger = log.logger({label = ("ssf (%s)"):format(label)})
+    local logger = log.logger({label = ("static structure factor (%s)"):format(label)})
 
     -- pass acquisitors instead of the density_mode modules
     local rho1 = assert(mode[1].acquisitor)
@@ -150,7 +150,7 @@ local M = module(function(args)
 
         -- sequence of signal connections
         local conn = {}
-        writer.disconnect = utility.signal.disconnect(conn, ("density_mode writer (%s)"):format(label))
+        writer.disconnect = utility.signal.disconnect(conn, ("ssf writer (%s)"):format(label))
 
         -- connect writer to sampler
         if every > 0 then
@@ -162,7 +162,7 @@ local M = module(function(args)
 
     -- sequence of signal connections
     local conn = {}
-    self.disconnect = utility.signal.disconnect(conn, ("density_mode (%s)"):format(label))
+    self.disconnect = utility.signal.disconnect(conn, ("ssf (%s)"):format(label))
 
     -- connect runtime accumulators to module profiler
     local desc = ("computation of static structure factor (%s)"):format(label)
