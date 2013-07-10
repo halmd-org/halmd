@@ -176,6 +176,9 @@ local function liquid(args)
         -- compute velocity autocorrelation function
         local vacf = dynamics.velocity_autocorrelation({phase_space = phase_space})
         blocking_scheme:correlation(vacf, file)
+        -- compute intermediate scattering function
+        local isf = dynamics.intermediate_scattering_function({density_modes = {density_mode}, norm = nparticle})
+        blocking_scheme:correlation(isf, file)
 
         -- compute interdiffusion coefficient
         local selfdiffusion = dynamics.correlation({

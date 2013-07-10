@@ -1,0 +1,160 @@
+--
+-- Copyright © 2013 Felix Höfling
+-- Copyright © 2012 Peter Colberg
+--
+-- This file is part of HALMD.
+--
+-- HALMD is free software: you can redistribute it and/or modify
+-- it under the terms of the GNU General Public License as published by
+-- the Free Software Foundation, either version 3 of the License, or
+-- (at your option) any later version.
+--
+-- This program is distributed in the hope that it will be useful,
+-- but WITHOUT ANY WARRANTY; without even the implied warranty of
+-- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+-- GNU General Public License for more details.
+--
+-- You should have received a copy of the GNU General Public License
+-- along with this program.  If not, see <http://www.gnu.org/licenses/>.
+--
+
+local utility = require("halmd.utility")
+local module = require("halmd.utility.module")
+
+-- grab C++ wrappers
+local intermediate_scattering_function = assert(libhalmd.observables.dynamics.intermediate_scattering_function)
+
+---
+-- Intermediate scattering function
+-- ================================
+--
+-- The module computes the intermediate scattering function
+--
+-- .. math::
+--
+--     S_{(\alpha\beta)}(\vec k, t) = \frac{1}{N} \bigl\langle
+--     \rho_\alpha(\vec k, t)^* \rho_\beta(\vec k, 0) \bigr\rangle
+-- 
+-- from the Fourier modes of a given pair of (partial) density fields,
+--
+-- .. math::
+--
+--     \rho_\alpha(\vec k, t) = \sum_{n=1}^{N_\alpha}
+--     \exp\boldsymbol(\text{i} \vec k \cdot \vec r_n(t)\boldsymbol) \/,
+--
+-- and the total number of particles :math:`N`. The result is averaged over
+-- wavevectors of similar magnitude according to the shells defined by
+-- :class:`halmd.observables.utility.wavevector`.
+--
+-- For details see, e.g., Hansen & McDonald: Theory of simple liquids, chapter 7.4.
+--
+
+---
+-- Construct instance of :class:`halmd.observables.dynamics.intermediate_scattering_function`.
+--
+-- :param table args: keyword arguments
+-- :param table args.density_modes: instances of :class:`halmd.observables.density_mode`
+-- :param number args.norm: normalisation factor
+-- :param string args.label: module label *(optional)*
+-- :returns: instance of intermediate scattering function module
+--
+-- The argument ``density_modes`` is a table of 1 or 2 instances of
+-- :class:`halmd.observables.density_mode` yielding the partial density modes
+-- :math:`\rho_\alpha(\vec k, t)` and :math:`\rho_\beta(\vec k, t)`. They must
+-- have been constructed with the same instance of
+-- :class:`halmd.observables.utility.wavevector`. Passing only one instance
+-- implies :math:`\alpha = \beta`.
+--
+-- The optional argument ``label`` defaults to ``density_modes[1].label ..  "/"
+-- .. density_modes[2].label``.
+--
+-- .. method:: disconnect()
+--
+--    Disconnect module from profiler.
+--
+-- .. method:: acquire()
+--
+--    Acquire density mode sample.
+--
+--    :returns: density mode sample
+--
+-- .. attribute:: label
+--
+--    The module label passed upon construction or derived from the density modes.
+--
+-- .. attribute:: desc
+--
+--    Module description.
+--
+-- .. class:: writer(args)
+--
+--    Construct file writer and output wavenumbers.
+--
+--    :param table args: keyword arguments
+--    :param args.file: instance of file writer
+--    :param args.location: location within file *(optional)*
+--    :type args.location: string table
+--    :return: file writer as returned by ``file:writer()``.
+--
+--    The argument ``location`` specifies a path in a structured file format
+--    like H5MD given as a table of strings. It defaults to ``{"dynamics",
+--    self.label, "intermediate_scattering_function"}``.
+--
+local M = module(function(args)
+    local mode = utility.assert_type(utility.assert_kwarg(args, "density_modes"), "table")
+    assert(#mode > 0)
+    local wavevector = assert(mode[1].wavevector) -- obtain wavevector from density mode
+    -- replicate first density_mode instance if only one has been given
+    if #mode == 1 then
+        mode[2] = mode[1]
+    else
+        -- wavevector instances must match
+        local wavevector2 = assert(mode[2].wavevector)
+        assert(wavevector == wavevector2)
+    end
+    local norm = utility.assert_kwarg(args, "norm")
+
+    -- use specified label or construct it from the density mode labels
+    local label = args["label"] or assert(mode[1].label) .. "/" .. assert(mode[2].label)
+--    local logger = log.logger({label = ("ssf (%s)"):format(label)})
+
+    -- pass acquisitors instead of the density_mode modules
+    local rho1 = assert(mode[1].acquisitor)
+    local rho2 = assert(mode[2].acquisitor)
+
+    -- construct instance
+    local self = intermediate_scattering_function(wavevector, norm)
+
+    -- attach acquisitor as read-only property
+    self.acquire = property(function(self)
+        return rho1 -- FIXME rho2
+    end)
+
+    -- attach label
+    self.label = property(function(self) return label end)
+
+    -- attach module description
+    self.desc = property(function(self)
+        return ("intermediate scattering function (%s)"):format(label)
+    end)
+
+    -- attach writer function as property
+    self.writer = property(function(self) return function(self, args)
+        local file = utility.assert_kwarg(args, "file")
+        local location = utility.assert_type(
+            args.location or {"dynamics", label, "intermediate_scattering_function"}
+          , "table")
+
+        -- write wavenumbers
+        local writer = file:writer({location = location, mode = "truncate"})
+        local conn = writer:on_write(wavevector.wavenumber, {"wavenumber"})
+        writer:write() -- FIXME pass arguments directly to write(), avoiding on_write
+        conn:disconnect()
+
+        return writer
+    end end)
+
+    return self
+end)
+
+return M

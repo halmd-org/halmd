@@ -208,7 +208,19 @@ local function liquid(args)
         -- compute velocity autocorrelation function
         local vacf = dynamics.velocity_autocorrelation({phase_space = phase_space})
         blocking_scheme:correlation(vacf, file)
-    end
+
+        -- compute intermediate scattering function from correlation of density
+        -- modes of previous particle groups and of this one
+        for l, rho in pairs(density_mode) do
+            if l == label then
+                local isf = dynamics.intermediate_scattering_function({
+                    density_modes = {rho, density_mode[label]}
+                  , norm = nparticle
+                })
+                blocking_scheme:correlation(isf, file)
+            end
+        end
+   end
 
     -- sample initial state
     observables.sampler:sample()
