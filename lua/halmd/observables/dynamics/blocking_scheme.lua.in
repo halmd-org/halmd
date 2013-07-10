@@ -18,12 +18,12 @@
 -- along with this program.  If not, see <http://www.gnu.org/licenses/>.
 --
 
-local clock             = require("halmd.mdsim.clock")
-local log               = require("halmd.io.log")
-local module            = require("halmd.utility.module")
-local profiler          = require("halmd.utility.profiler")
-local sampler           = require("halmd.observables.sampler")
-local utility           = require("halmd.utility")
+local log           = require("halmd.io.log")
+local clock         = require("halmd.mdsim.clock")
+local sampler       = require("halmd.observables.sampler")
+local utility       = require("halmd.utility")
+local module        = require("halmd.utility.module")
+local profiler      = require("halmd.utility.profiler")
 
 ---
 -- Blocking Scheme
@@ -44,6 +44,7 @@ local correlation = assert(libhalmd.observables.dynamics.correlation)
 -- :param number args.size: size of each block, determines coarse-graining factor
 -- :param number args.shift: coarse-graining shift between odd and even levels (defaults to :math:`\lfloor\sqrt\text{size}\rfloor`)
 -- :param number args.separation: minimal separation of samples for time averages (defaults to :math:`\text{every}\times\text{size}`)
+-- :param number args.flush: interval in seconds for flushing the accumulated results to the file (*default:* 900)
 --
 -- .. method:: disconnect()
 --
@@ -74,6 +75,7 @@ local M = module(function(args)
     local shift = utility.assert_type(args.shift or math.floor(math.sqrt(size)), "number")
     local separation = utility.assert_type(args.separation or every * size, "number")
     local resolution = every * assert(clock.timestep)
+    local flush = utility.assert_type(args.flush or 900, "number")
     local logger = log.logger({label = "blocking_scheme"})
 
     -- construct instance
@@ -119,6 +121,9 @@ local M = module(function(args)
         table.insert(conn, assert(self:on_correlate(result)))
         table.insert(conn, assert(self:on_append_finalise(writer.write)))
         table.insert(conn, assert(profiler:on_profile(assert(result.runtime).tcf, desc)))
+
+        -- periodically write current values of accumulated results
+        table.insert(conn, assert(utility.timer_service:on_periodic(writer.write, flush, 0)))
 
         return result
     end
