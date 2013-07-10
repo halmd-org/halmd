@@ -17,7 +17,9 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <halmd/numeric/blas/fixed_vector.hpp>
 #include <halmd/observables/samples/blocking_scheme.hpp>
+#include <halmd/utility/raw_array.hpp>
 
 namespace halmd {
 namespace observables {
@@ -52,11 +54,13 @@ HALMD_LUA_API int luaopen_libhalmd_observables_samples_blocking_scheme(lua_State
         ]
     ];
     blocking_scheme<luaponte::object>::luaopen(L);
+    blocking_scheme<raw_array<fixed_vector<double, 2>>>::luaopen(L);
     return 0;
 }
 
 // explicit instantiation
 template class blocking_scheme<luaponte::object>;
+template class blocking_scheme<raw_array<fixed_vector<double, 2>>>;
 
 } // namespace samples
 } // namespace observables
