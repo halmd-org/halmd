@@ -85,7 +85,7 @@ local M = module(function(args)
 
     -- attach module description
     self.desc = property(function(self)
-        return ("velocity autocorrelation function of %s"):format(label)
+        return ("velocity autocorrelation function of %s particles"):format(label)
     end)
 
     -- attach writer function as property
