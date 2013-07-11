@@ -76,19 +76,22 @@ local blocking_scheme_adaptor = assert(libhalmd.observables.samples.blocking_sch
 -- Construct user-defined correlation function.
 --
 -- :param args: keyword arguments
--- :param args.acquire: callable that returns a value
+-- :param args.acquire: callable(s) that return a value
 -- :param args.correlate: callable that accepts two values and returns a ``number``
 -- :param args.location: default location within file
 -- :type args.location: string table
 -- :param string args.desc: module description
 --
--- The argument location is defines the default value of ``writer()``. For H5MD
--- files, it obeys the structure {``"dynamics"``, particle group, name of
+-- The argument ``acquire`` is a callable or a table of up to 2 callables that
+-- yield the samples to be correlated.
+--
+-- The argument ``location`` defines the default value of ``writer()``. For
+-- H5MD files, it obeys the structure {``"dynamics"``, particle group, name of
 -- correlation function}.
 --
 -- .. method:: acquire()
 --
---    Acquire sample.
+--    Acquire sample(s).
 --
 --    :returns: sample
 --
@@ -124,12 +127,21 @@ local M = module(function(args)
     local location  = utility.assert_type(utility.assert_kwarg(args, "location"), "table")
     local desc      = utility.assert_type(utility.assert_kwarg(args, "desc"), "string")
 
+    -- ensure that acquire is a table
+    if not (type(acquire) == "table") then
+        acquire = { acquire }
+    end
+    -- convert Lua function(s) to C++ std::function(s)
+    for i,v in ipairs(acquire) do
+        acquire[i] = blocking_scheme_adaptor(v)
+    end
+
     -- construct instance
     local self = correlation_adaptor(correlate)
 
-    -- attach acquire function as read-only property
+    -- attach acquire function(s) as read-only property
     self.acquire = property(function(self)
-        return blocking_scheme_adaptor(acquire)
+        return acquire
     end)
 
     -- attach module description
