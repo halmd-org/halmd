@@ -172,7 +172,7 @@ local function liquid(args)
             -- compute static structure factor from correlation of density
             -- modes of previous particle groups and of this one
             for label, rho in pairs(density_mode) do
-                local ssf = observables.ssf({density_modes = {rho, density_mode_}, norm = nparticle})
+                local ssf = observables.ssf({density_mode = {rho, density_mode_}, norm = nparticle})
                 -- output averages over a certain number of configurations each
                 local average = args.sampling.average
                 if average and average > 0 then

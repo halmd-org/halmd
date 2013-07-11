@@ -82,7 +82,7 @@ local property = property
 --
 --    The argument ``location`` specifies a path in a structured file format
 --    like H5MD given as a table of strings. It defaults to ``{"structure",
---    self.label, "density_modes"}``.
+--    self.label, "density_mode"}``.
 --
 --    .. method:: disconnect()
 --

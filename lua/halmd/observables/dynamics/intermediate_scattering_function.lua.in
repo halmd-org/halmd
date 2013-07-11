@@ -53,7 +53,7 @@ local intermediate_scattering_function = assert(libhalmd.observables.dynamics.in
 -- Construct instance of :class:`halmd.observables.dynamics.intermediate_scattering_function`.
 --
 -- :param table args: keyword arguments
--- :param table args.density_modes: instances of :class:`halmd.observables.density_mode`
+-- :param table args.density_mode: instance(s) of :class:`halmd.observables.density_mode`
 -- :param number args.norm: normalisation factor
 -- :param string args.label: module label *(optional)*
 -- :returns: instance of intermediate scattering function module

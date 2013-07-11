@@ -136,7 +136,7 @@ local function liquid(args)
     end
 
     -- compute static structure factor from density modes
-    local ssf = observables.ssf({density_modes = {density_mode}, norm = nparticle})
+    local ssf = observables.ssf({density_mode = density_mode, norm = nparticle})
     local interval = args.sampling.structure
     if interval > 0 then
         -- output averages over a certain number of configurations each

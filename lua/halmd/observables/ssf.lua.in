@@ -58,20 +58,20 @@ local property = property
 -- Construct instance of :class:`halmd.observables.ssf`.
 --
 -- :param table args: keyword arguments
--- :param table args.density_modes: instances of :class:`halmd.observables.density_mode`
+-- :param args.density_mode: instance(s) of :class:`halmd.observables.density_mode`
 -- :param number args.norm: normalisation factor
 -- :param string args.label: module label *(optional)*
 -- :returns: instance of static structure factor module
 --
--- The argument ``density_modes`` is a table of 1 or 2 instances of
--- :class:`halmd.observables.density_mode` yielding the partial density modes
--- :math:`\rho_\alpha(\vec k)` and :math:`\rho_\beta(\vec k)`. They must have
--- been constructed with the same instance of
+-- The argument ``density_mode`` is an instance or a table of 1 or 2 instances
+-- of :class:`halmd.observables.density_mode` yielding the partial density
+-- modes :math:`\rho_\alpha(\vec k)` and :math:`\rho_\beta(\vec k)`. They must
+-- have been constructed with the same instance of
 -- :class:`halmd.observables.utility.wavevector`. Passing only one instance
 -- implies :math:`\alpha = \beta`.
 --
--- The optional argument ``label`` defaults to ``density_modes[1].label ..
--- "/" .. density_modes[2].label``.
+-- The optional argument ``label`` defaults to ``density_mode[1].label ..  "/"
+-- .. density_mode[2].label``.
 --
 -- .. method:: disconnect()
 --
@@ -106,12 +106,12 @@ local property = property
 --       Disconnect static structure factor writer from observables sampler.
 --
 local M = module(function(args)
-    local mode = utility.assert_type(utility.assert_kwarg(args, "density_modes"), "table")
+    local mode = utility.assert_kwarg(args, "density_mode")
+    if not (type(mode) == "table") then
+        mode = { mode } -- convert single instance to a table
+    end
     local wavevector = assert(mode[1].wavevector) -- obtain wavevector from density mode
-    -- replicate first density_mode instance if only one has been given
-    if #mode == 1 then
-        mode[2] = mode[1]
-    else
+    if mode[2] then
         -- wavevector instances must match
         local wavevector2 = assert(mode[2].wavevector)
         assert(wavevector == wavevector2)
@@ -119,12 +119,12 @@ local M = module(function(args)
     local norm = utility.assert_kwarg(args, "norm")
 
     -- use specified label or construct it from the density mode labels
-    local label = args["label"] or assert(mode[1].label) .. "/" .. assert(mode[2].label)
+    local label = args["label"] or assert(mode[1].label) .. "/" .. assert(mode[#mode].label)
     local logger = log.logger({label = ("static structure factor (%s)"):format(label)})
 
     -- pass acquisitors instead of the density_mode modules
     local rho1 = assert(mode[1].acquisitor)
-    local rho2 = assert(mode[2].acquisitor)
+    local rho2 = assert(mode[#mode].acquisitor)
 
     local self = ssf(rho1, rho2, wavevector, norm, logger)
 
