@@ -1,0 +1,138 @@
+--
+-- Copyright © 2013 Nicolas Höft
+--
+-- This file is part of HALMD.
+--
+-- HALMD is free software: you can redistribute it and/or modify
+-- it under the terms of the GNU General Public License as published by
+-- the Free Software Foundation, either version 3 of the License, or
+-- (at your option) any later version.
+--
+-- This program is distributed in the hope that it will be useful,
+-- but WITHOUT ANY WARRANTY; without even the implied warranty of
+-- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+-- GNU General Public License for more details.
+--
+-- You should have received a copy of the GNU General Public License
+-- along with this program.  If not, see <http://www.gnu.org/licenses/>.
+--
+
+local utility  = require("halmd.utility")
+local module   = require("halmd.utility.module")
+local profiler = require("halmd.utility.profiler")
+
+---
+-- Tabulated Force Generator
+-- =========================
+--
+-- This module is intended to be used in combination with :mod:`halmd.mdsim.forces.tabulated`.
+-- If the external potential can be calculated from a potential listed in
+-- :class:`halmd.mdsim.potentials`, this helper force will generate the needed
+-- coefficients for the interpolation scheme in :mod:`halmd.mdsim.forces.tabulated`.
+--
+-- For the given potential, the first species (``0``) always corresponds to
+-- the test particle that can move freely in space.
+-- All other species in ``particle`` can be used to distinguish different
+-- particles. The ``particle`` io instance must only contain particles that
+-- form the external tabulated potential.
+--
+--
+-- Generated coefficients
+-- ----------------------
+-- The generated coefficients are the potential values and its derivatives. Depending
+-- on the dimension of the system, the generated coefficients are (in that order):
+-- :math:`V(r)`, :math:`\partial_x V(r)`, :math:`\partial_y V(r)`,
+-- :math:`\partial_x \partial_y V(r)`, :math:`\partial_z V(r)`,
+-- :math:`\partial_x \partial_z V(r)`, :math:`\partial_y \partial_z V(r)`,
+-- :math:`\partial_x \partial_y \partial_z V(r)`, where :math:`r` is the
+-- position of the knot.
+--
+-- The partial derivatives in :math:`z`-direction are calculated only for 3D
+-- systems, i.e. :math:`2^d` coefficients will be calculated for each knot.
+--
+-- The coefficients will be returned as a one-dimensional array, where the index
+-- of the first coefficient can be determined by
+-- :math:`2^d\times` ``multi_index_to_offset()``.
+--
+-- .. note::
+--
+--    The coefficient generator is implemented as host variant only.
+--
+
+-- grab C++ wrappers
+local tabulated_generator = assert(libhalmd.mdsim.forces.tabulated_generator)
+
+---
+-- Construct tabulated force.
+--
+-- :param table args: keyword arguments
+-- :param args.potential: instance of :class:`halmd.mdsim.potentials`
+-- :param args.particle: instance of :class:`halmd.mdsim.particle`
+-- :param args.box: instance of :mod:`halmd.mdsim.box`
+-- :param args.grid_size: number of grid points in each dimension
+-- :type args.grid_size: number table
+-- :returns: instance of tabulated coefficient generator
+--
+-- .. method:: get_coefficients()
+--
+--    Return the calculated coefficients
+--
+-- .. method:: write_coefficients(args)
+--
+--    Write interpolation coefficients for external force to file.
+--
+--    :param table args: keyword arguments
+--    :param args.file: instance of file reader
+--    :param args.location: location within file (optional)
+--    :type args.location: string table
+--
+--    The argument ``location`` specifies a path in a structured file format
+--    like H5MD given as a table of strings. If omitted it defaults to
+--    ``{"parameters"}``.
+--
+-- .. method:: disconnect()
+--
+--    Disconnect force from profiler.
+--
+local M = module(function(args)
+    local potential = utility.assert_kwarg(args, "potential")
+    local particle = utility.assert_kwarg(args, "particle")
+    local box = utility.assert_kwarg(args, "box")
+    local grid_size = utility.assert_type(utility.assert_kwarg(args, "grid_size"), "table")
+
+    if #grid_size ~= box.dimension then
+        error("mismatch of dimensions of 'box' and 'grid_size'", 2)
+    end
+
+    if particle.memory ~= potential.memory then
+        error("mismatch of memory locations of 'particle' and 'potential'", 2)
+    end
+
+    local logger = assert(potential.logger)
+
+    -- construct force module
+    local self = tabulated_generator(potential, particle, box, grid_size, logger)
+
+    self.write_coefficients = function(self, args)
+        local file = utility.assert_kwarg(args, "file")
+        local location = utility.assert_type(
+            args.location or {"parameters"}
+          , "table")
+        local writer = file:writer({location = location, mode = "truncate"})
+        writer:on_write(self.get_coefficients, {"tabulated_coefficients"})
+        writer:write()
+    end
+
+    -- sequence of signal connections
+    local conn = {}
+    self.disconnect = utility.signal.disconnect(conn, "tabulated generator module")
+
+    -- connect to profiler
+    local desc = ("computation of tabulated force coefficients (%s)"):format(potential.description)
+
+    table.insert(conn, assert(profiler:on_profile(assert(self.runtime).compute, desc)))
+
+    return self
+end)
+
+return M
