@@ -80,4 +80,42 @@ function M.trans(m)
     return t
 end
 
+
+local function offset_to_multi_index(offset, index, dims, dim)
+    if dim == #index then
+        index[dim] = offset
+    else
+        index[dim] = offset % dims[dim]
+        offset_to_multi_index(math.floor(offset / dims[dim]), index, dims, dim+1)
+    end
+end
+
+--
+-- Convert multi-dimensional index to one-dimensional offset
+--
+function M.offset_to_multi_index(offset, dims)
+    local index = {}
+    -- reserve array size
+    for i = 1, #dims do
+        index[i] = 0
+    end
+    offset_to_multi_index(offset-1, index, dims, 1)
+    return index
+end
+
+
+local function multi_index_to_offset(index, dims, dim)
+    if dim == #index then
+        return index[dim]
+    end
+    return index[dim] + dims[dim] * multi_index_to_offset(index, dims+1)
+end
+
+--
+-- Convert one-dimensional offset to multi-dimensional index
+--
+function M.multi_index_to_offset(index, dims)
+    return multi_index_to_offset(index, dims, 1) + 1
+end
+
 return M
