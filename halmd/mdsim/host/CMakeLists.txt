@@ -6,6 +6,7 @@ halmd_add_modules(
   libhalmd_mdsim_host_particle_group
 )
 
+add_subdirectory(forces)
 add_subdirectory(integrators)
 add_subdirectory(neighbours)
 add_subdirectory(particle_groups)
