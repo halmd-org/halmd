@@ -1,6 +1,7 @@
 #
 # Copyright © 2011-2013 Peter Colberg
 # Copyright © 2013      Nicolas Höft
+# Copyright © 2013      Felix Höfling
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -28,15 +29,17 @@ endif
 ## define commonly used commands
 ##
 
-WGET = wget
-GIT = git
-TAR = tar
-RM = rm -rf
-SED = sed
-CP = cp -r
-TOUCH = touch
-PATCH = patch
+CMAKE     = cmake
+CP        = cp -r
+GIT       = git
+MKDIR     = mkdir -p
+PATCH     = patch
+RM        = rm -rf
+SED       = sed
 SHA256SUM = sha256sum --check
+TAR       = tar
+TOUCH     = touch
+WGET      = wget
 
 ##
 ## define top-level targets
@@ -73,20 +76,20 @@ CMAKE_INSTALL_DIR = $(PREFIX)/cmake-$(CMAKE_CUDA_VERSION)
 fetch-cmake: .fetch-cmake-$(CMAKE_CUDA_VERSION)
 
 .configure-cmake-$(CMAKE_CUDA_VERSION): .fetch-cmake-$(CMAKE_CUDA_VERSION)
-	mkdir -p $(CMAKE_BUILD_DIR)
+	$(MKDIR) $(CMAKE_BUILD_DIR)
 	cd $(CMAKE_BUILD_DIR) && ../configure --prefix=$(CMAKE_INSTALL_DIR)
 	@$(TOUCH) $@
 
 configure-cmake: .configure-cmake-$(CMAKE_CUDA_VERSION)
 
 .build-cmake-$(CMAKE_CUDA_VERSION): .configure-cmake-$(CMAKE_CUDA_VERSION)
-	cd $(CMAKE_BUILD_DIR) && make $(PARALLEL_BUILD_FLAGS)
+	cd $(CMAKE_BUILD_DIR) && $(MAKE) $(PARALLEL_BUILD_FLAGS)
 	@$(TOUCH) $@
 
 build-cmake: .build-cmake-$(CMAKE_CUDA_VERSION)
 
 install-cmake: .build-cmake-$(CMAKE_CUDA_VERSION)
-	cd $(CMAKE_BUILD_DIR) && make install
+	cd $(CMAKE_BUILD_DIR) && $(MAKE) install
 
 clean-cmake:
 	@$(RM) .build-cmake-$(CMAKE_CUDA_VERSION)
@@ -143,13 +146,13 @@ fetch-lua: .fetch-lua-$(LUA_VERSION)
 extract-lua: .extract-lua-$(LUA_VERSION)
 
 .build-lua-$(LUA_VERSION): .extract-lua-$(LUA_VERSION)
-	cd $(LUA_BUILD_DIR) && make linux CFLAGS="$(LUA_CFLAGS)" LIBS="$(LUA_LIBS)"
+	cd $(LUA_BUILD_DIR) && $(MAKE) linux CFLAGS="$(LUA_CFLAGS)" LIBS="$(LUA_LIBS)"
 	@$(TOUCH) $@
 
 build-lua: .build-lua-$(LUA_VERSION)
 
 install-lua: .build-lua-$(LUA_VERSION)
-	cd $(LUA_BUILD_DIR) && make install INSTALL_TOP=$(LUA_INSTALL_DIR)
+	cd $(LUA_BUILD_DIR) && $(MAKE) install INSTALL_TOP=$(LUA_INSTALL_DIR)
 
 clean-lua:
 	@$(RM) .build-lua-$(LUA_VERSION)
@@ -171,13 +174,10 @@ env-lua:
 ## LuaJIT
 ##
 
-LUAJIT_VERSION = 2.0.1
+LUAJIT_VERSION = 2.0.2
 LUAJIT_TARBALL = LuaJIT-$(LUAJIT_VERSION).tar.gz
 LUAJIT_TARBALL_URL = http://luajit.org/download/$(LUAJIT_TARBALL)
-LUAJIT_TARBALL_SHA256 = 2371cceb53453d8a7b36451e6a0ccdb66236924545d6042ddd4c34e9668990c0
-LUAJIT_PATCH = v2.0.1_hotfix1.patch
-LUAJIT_PATCH_URL = http://luajit.org/download/$(LUAJIT_PATCH)
-LUAJIT_PATCH_SHA256 = 143898de3fe84455684fddb92947d36c1a51c6a6e3884813fe5e025bd4652368
+LUAJIT_TARBALL_SHA256 = c05202974a5890e777b181908ac237625b499aece026654d7cc33607e3f46c38
 LUAJIT_BUILD_DIR = LuaJIT-$(LUAJIT_VERSION)
 LUAJIT_INSTALL_DIR = $(PREFIX)/luajit-$(LUAJIT_VERSION)
 LUAJIT_CFLAGS = -fPIC -DLUAJIT_ENABLE_LUA52COMPAT -DLUAJIT_CPU_SSE2
@@ -188,11 +188,8 @@ endif
 
 .fetch-luajit-$(LUAJIT_VERSION):
 	@$(RM) $(LUAJIT_TARBALL)
-	@$(RM) $(LUAJIT_PATCH)
 	$(WGET) $(LUAJIT_TARBALL_URL)
-	$(WGET) $(LUAJIT_PATCH_URL)
 	@echo '$(LUAJIT_TARBALL_SHA256)  $(LUAJIT_TARBALL)' | $(SHA256SUM)
-	@echo '$(LUAJIT_PATCH_SHA256)  $(LUAJIT_PATCH)' | $(SHA256SUM)
 	@$(TOUCH) $@
 
 fetch-luajit: .fetch-luajit-$(LUAJIT_VERSION)
@@ -200,7 +197,6 @@ fetch-luajit: .fetch-luajit-$(LUAJIT_VERSION)
 .extract-luajit-$(LUAJIT_VERSION): .fetch-luajit-$(LUAJIT_VERSION)
 	$(RM) $(LUAJIT_BUILD_DIR)
 	$(TAR) -xzf $(LUAJIT_TARBALL)
-	cd $(LUAJIT_BUILD_DIR) && $(PATCH) -p1 < $(CURDIR)/$(LUAJIT_PATCH)
 	@$(TOUCH) $@
 
 extract-luajit: .extract-luajit-$(LUAJIT_VERSION)
@@ -263,13 +259,13 @@ extract-rlwrap: .extract-rlwrap-$(RLWRAP_VERSION)
 configure-rlwrap: .configure-rlwrap-$(RLWRAP_VERSION)
 
 .build-rlwrap-$(RLWRAP_VERSION): .configure-rlwrap-$(RLWRAP_VERSION)
-	cd $(RLWRAP_BUILD_DIR) && make $(PARALLEL_BUILD_FLAGS)
+	cd $(RLWRAP_BUILD_DIR) && $(MAKE) $(PARALLEL_BUILD_FLAGS)
 	@$(TOUCH) $@
 
 build-rlwrap: .build-rlwrap-$(RLWRAP_VERSION)
 
 install-rlwrap: .build-rlwrap-$(RLWRAP_VERSION)
-	cd $(RLWRAP_BUILD_DIR) && make install
+	cd $(RLWRAP_BUILD_DIR) && $(MAKE) install
 
 clean-rlwrap:
 	@$(RM) .build-rlwrap-$(RLWRAP_VERSION)
@@ -305,18 +301,18 @@ LUATRACE_INSTALL_DIR = $(PREFIX)/luatrace-$(LUATRACE_VERSION)
 fetch-luatrace: .fetch-luatrace-$(LUATRACE_VERSION)
 
 install-luatrace: .fetch-luatrace-$(LUATRACE_VERSION)
-	cd $(LUATRACE_BUILD_DIR) && make install "LUA=$(LUAJIT_INSTALL_DIR)/bin/luatrace"
+	cd $(LUATRACE_BUILD_DIR) && $(MAKE) install "LUA=$(LUAJIT_INSTALL_DIR)/bin/luatrace"
 
 clean-luatrace:
 	@$(RM) .build-luatrace-$(LUATRACE_VERSION)
-	cd $(LUATRACE_BUILD_DIR) && make clean
+	cd $(LUATRACE_BUILD_DIR) && $(MAKE) clean
 
 distclean-luatrace: clean-luatrace
 	@$(RM) .fetch-luatrace-$(LUATRACE_VERSION)
 	$(RM) $(LUATRACE_BUILD_DIR)
 
 ##
-## Boost C++ libraries with Boost.Log
+## Boost C++ libraries with C++11 ABI
 ##
 
 BOOST_VERSION = 1.53.0
@@ -550,13 +546,13 @@ env-boost:
 ##
 ## HDF5 C++ library
 ##
-HDF5_VERSION = 1.8.10-patch1
+HDF5_VERSION = 1.8.11
 HDF5_TARBALL = hdf5-$(HDF5_VERSION).tar.bz2
 HDF5_TARBALL_URL = http://www.hdfgroup.org/ftp/HDF5/releases/hdf5-$(HDF5_VERSION)/src/$(HDF5_TARBALL)
-HDF5_TARBALL_SHA256 = 292afb3615ad9e68f4d5d18ebb11e4a73f2aece39f2da3875a457ff1e109fc41
+HDF5_TARBALL_SHA256 = 5ea1ba82fc77350ee628b795ae6ede05feeaf1c6b437911a9478de456600cafb
 HDF5_BUILD_DIR = hdf5-$(HDF5_VERSION)
 HDF5_INSTALL_DIR = $(PREFIX)/hdf5-$(HDF5_VERSION)
-HDF5_CONFIGURE_FLAGS = --enable-shared --disable-deprecated-symbols  --enable-cxx
+HDF5_CONFIGURE_FLAGS = --enable-parallel --enable-shared --disable-deprecated-symbols  --enable-cxx
 HDF5_CFLAGS = -fPIC
 HDF5_CXXFLAGS = -fPIC
 
@@ -646,13 +642,13 @@ extract-git: .extract-git-$(GIT_VERSION)
 configure-git: .configure-git-$(GIT_VERSION)
 
 .build-git-$(GIT_VERSION): .configure-git-$(GIT_VERSION)
-	cd $(GIT_BUILD_DIR) && make PREFIX=$(GIT_INSTALL_DIR) $(PARALLEL_BUILD_FLAGS)
+	cd $(GIT_BUILD_DIR) && $(MAKE) PREFIX=$(GIT_INSTALL_DIR) $(PARALLEL_BUILD_FLAGS)
 	@$(TOUCH) $@
 
 build-git: .build-git-$(GIT_VERSION)
 
 install-git: .build-git-$(GIT_VERSION)
-	cd $(GIT_BUILD_DIR) && make PREFIX=$(GIT_INSTALL_DIR) install
+	cd $(GIT_BUILD_DIR) && $(MAKE) PREFIX=$(GIT_INSTALL_DIR) install
 	install -d $(GIT_INSTALL_DIR)/share/man
 	cd $(GIT_INSTALL_DIR)/share/man && $(TAR) -xzf $(CURDIR)/$(GIT_MANPAGES_TARBALL)
 
@@ -706,13 +702,13 @@ extract-htop: .extract-htop-$(HTOP_VERSION)
 configure-htop: .configure-htop-$(HTOP_VERSION)
 
 .build-htop-$(HTOP_VERSION): .configure-htop-$(HTOP_VERSION)
-	cd $(HTOP_BUILD_DIR) && make $(PARALLEL_BUILD_FLAGS)
+	cd $(HTOP_BUILD_DIR) && $(MAKE) $(PARALLEL_BUILD_FLAGS)
 	@$(TOUCH) $@
 
 build-htop: .build-htop-$(HTOP_VERSION)
 
 install-htop: .build-htop-$(HTOP_VERSION)
-	cd $(HTOP_BUILD_DIR) && make install
+	cd $(HTOP_BUILD_DIR) && $(MAKE) install
 
 clean-htop:
 	@$(RM) .build-htop-$(HTOP_VERSION)
@@ -816,13 +812,13 @@ extract-graphviz: .extract-graphviz-$(GRAPHVIZ_VERSION)
 configure-graphviz: .configure-graphviz-$(GRAPHVIZ_VERSION)
 
 .build-graphviz-$(GRAPHVIZ_VERSION): .configure-graphviz-$(GRAPHVIZ_VERSION)
-	cd $(GRAPHVIZ_BUILD_DIR) && make $(PARALLEL_BUILD_FLAGS)
+	cd $(GRAPHVIZ_BUILD_DIR) && $(MAKE) $(PARALLEL_BUILD_FLAGS)
 	@$(TOUCH) $@
 
 build-graphviz: .build-graphviz-$(GRAPHVIZ_VERSION)
 
 install-graphviz: .build-graphviz-$(GRAPHVIZ_VERSION)
-	cd $(GRAPHVIZ_BUILD_DIR) && make install
+	cd $(GRAPHVIZ_BUILD_DIR) && $(MAKE) install
 
 clean-graphviz:
 	@$(RM) .build-graphviz-$(GRAPHVIZ_VERSION)
@@ -843,13 +839,13 @@ env-graphviz:
 ##
 ## Clang C++ compiler
 ##
-CLANG_VERSION = 3.2
+CLANG_VERSION = 3.3
 LLVM_TARBALL = llvm-$(CLANG_VERSION).src.tar.gz
 LLVM_TARBALL_URL = http://llvm.org/releases/$(CLANG_VERSION)/$(LLVM_TARBALL)
-LLVM_TARBALL_SHA256 = 125090c4d26740f1d5e9838477c931ed7d9ad70d599ba265f46f3a42cb066343
-CLANG_TARBALL = clang-$(CLANG_VERSION).src.tar.gz
+LLVM_TARBALL_SHA256 = 68766b1e70d05a25e2f502e997a3cb3937187a3296595cf6e0977d5cd6727578
+CLANG_TARBALL = cfe-$(CLANG_VERSION).src.tar.gz
 CLANG_TARBALL_URL = http://llvm.org/releases/$(CLANG_VERSION)/$(CLANG_TARBALL)
-CLANG_TARBALL_SHA256 = 2aaaf03f7c0f6b16fe97ecc81247dc2bf2d4bec7620a77cc74670b7e07ff5658
+CLANG_TARBALL_SHA256 = b1b55de4ab3a57d3e0331a83e0284610191c77d924e3446498d9113d08dfb996
 CLANG_BUILD_DIR = llvm-$(CLANG_VERSION).src
 CLANG_CONFIGURE_FLAGS = --enable-optimized --enable-bindings=none --enable-shared --with-gcc-toolchain=$(GCC_INSTALL_DIR)
 CLANG_BUILD_FLAGS = REQUIRES_RTTI=1
@@ -869,7 +865,7 @@ fetch-clang: .fetch-clang-$(CLANG_VERSION)
 .extract-clang-$(CLANG_VERSION): .fetch-clang-$(CLANG_VERSION)
 	$(RM) $(CLANG_BUILD_DIR)
 	$(TAR) -xzf $(LLVM_TARBALL)
-	cd $(CLANG_BUILD_DIR)/tools && $(TAR) -xzf $(CURDIR)/$(CLANG_TARBALL) && mv clang-$(CLANG_VERSION).src clang
+	cd $(CLANG_BUILD_DIR)/tools && $(TAR) -xzf $(CURDIR)/$(CLANG_TARBALL) && mv cfe-$(CLANG_VERSION).src clang
 	@$(TOUCH) $@
 
 extract-clang: .extract-clang-$(CLANG_VERSION)
@@ -881,13 +877,13 @@ extract-clang: .extract-clang-$(CLANG_VERSION)
 configure-clang: .configure-clang-$(CLANG_VERSION)
 
 .build-clang-$(CLANG_VERSION): .configure-clang-$(CLANG_VERSION)
-	cd $(CLANG_BUILD_DIR) && make $(PARALLEL_BUILD_FLAGS)
+	cd $(CLANG_BUILD_DIR) && $(MAKE) $(CLANG_BUILD_FLAGS) $(PARALLEL_BUILD_FLAGS)
 	@$(TOUCH) $@
 
 build-clang: .build-clang-$(CLANG_VERSION)
 
 install-clang: .build-clang-$(CLANG_VERSION)
-	cd $(CLANG_BUILD_DIR) && make install
+	cd $(CLANG_BUILD_DIR) && $(MAKE) install
 
 clean-clang:
 	@$(RM) .build-clang-$(CLANG_VERSION)
@@ -905,6 +901,7 @@ env-clang:
 	@echo '# add Clang $(CLANG_VERSION) to environment'
 	@echo 'export PATH="$(CLANG_INSTALL_DIR)/bin$${PATH+:$$PATH}"'
 	@echo 'export MANPATH="$(CLANG_INSTALL_DIR)/share/man$${MANPATH+:$$MANPATH}"'
+»   @echo 'export LD_LIBRARY_PATH="$(CLANG_INSTALL_DIR)/lib$${LD_LIBRARY_PATH+:$$LD_LIBRARY_PATH}"'
 
 ##
 ## GNU Parallel
@@ -939,13 +936,13 @@ extract-gnu-parallel: .extract-gnu-parallel-$(GNU_PARALLEL_VERSION)
 configure-gnu-parallel: .configure-gnu-parallel-$(GNU_PARALLEL_VERSION)
 
 .build-gnu-parallel-$(GNU_PARALLEL_VERSION): .configure-gnu-parallel-$(GNU_PARALLEL_VERSION)
-	cd $(GNU_PARALLEL_BUILD_DIR) && make $(PARALLEL_BUILD_FLAGS)
+	cd $(GNU_PARALLEL_BUILD_DIR) && $(MAKE) $(PARALLEL_BUILD_FLAGS)
 	@$(TOUCH) $@
 
 build-gnu-parallel: .build-gnu-parallel-$(GNU_PARALLEL_VERSION)
 
 install-gnu-parallel: .build-gnu-parallel-$(GNU_PARALLEL_VERSION)
-	cd $(GNU_PARALLEL_BUILD_DIR) && make install
+	cd $(GNU_PARALLEL_BUILD_DIR) && $(MAKE) install
 
 clean-gnu-parallel:
 	@$(RM) .build-gnu-parallel-$(GNU_PARALLEL_VERSION)
@@ -996,13 +993,13 @@ extract-gmp: .extract-gmp-$(GMP_VERSION)
 configure-gmp: .configure-gmp-$(GMP_VERSION)
 
 .build-gmp-$(GMP_VERSION): .configure-gmp-$(GMP_VERSION)
-	cd $(GMP_BUILD_DIR) && make $(PARALLEL_BUILD_FLAGS)
+	cd $(GMP_BUILD_DIR) && $(MAKE) $(PARALLEL_BUILD_FLAGS)
 	@$(TOUCH) $@
 
 build-gmp: .build-gmp-$(GMP_VERSION)
 
 .install-gmp-$(GMP_VERSION): .build-gmp-$(GMP_VERSION)
-	cd $(GMP_BUILD_DIR) && make install
+	cd $(GMP_BUILD_DIR) && $(MAKE) install
 	@$(TOUCH) $@
 
 clean-gmp:
@@ -1048,13 +1045,13 @@ extract-mpfr: .extract-mpfr-$(MPFR_VERSION)
 configure-mpfr: .configure-mpfr-$(MPFR_VERSION)
 
 .build-mpfr-$(MPFR_VERSION): .configure-mpfr-$(MPFR_VERSION)
-	cd $(MPFR_BUILD_DIR) && make $(PARALLEL_BUILD_FLAGS)
+	cd $(MPFR_BUILD_DIR) && $(MAKE) $(PARALLEL_BUILD_FLAGS)
 	@$(TOUCH) $@
 
 build-mpfr: .build-mpfr-$(MPFR_VERSION)
 
 .install-mpfr-$(MPFR_VERSION): .build-mpfr-$(MPFR_VERSION)
-	cd $(MPFR_BUILD_DIR) && make install
+	cd $(MPFR_BUILD_DIR) && $(MAKE) install
 	@$(TOUCH) $@
 
 clean-mpfr:
@@ -1100,13 +1097,13 @@ extract-mpc: .extract-mpc-$(MPC_VERSION)
 configure-mpc: .configure-mpc-$(MPC_VERSION)
 
 .build-mpc-$(MPC_VERSION): .configure-mpc-$(MPC_VERSION)
-	cd $(MPC_BUILD_DIR) && make $(PARALLEL_BUILD_FLAGS)
+	cd $(MPC_BUILD_DIR) && $(MAKE) $(PARALLEL_BUILD_FLAGS)
 	@$(TOUCH) $@
 
 build-mpc: .build-mpc-$(MPC_VERSION)
 
 .install-mpc-$(MPC_VERSION): .build-mpc-$(MPC_VERSION)
-	cd $(MPC_BUILD_DIR) && make install
+	cd $(MPC_BUILD_DIR) && $(MAKE) install
 	@$(TOUCH) $@
 
 clean-mpc:
@@ -1152,13 +1149,13 @@ extract-ppl: .extract-ppl-$(PPL_VERSION)
 configure-ppl: .configure-ppl-$(PPL_VERSION)
 
 .build-ppl-$(PPL_VERSION): .configure-ppl-$(PPL_VERSION)
-	cd $(PPL_BUILD_DIR) && make $(PARALLEL_BUILD_FLAGS)
+	cd $(PPL_BUILD_DIR) && $(MAKE) $(PARALLEL_BUILD_FLAGS)
 	@$(TOUCH) $@
 
 build-ppl: .build-ppl-$(PPL_VERSION)
 
 .install-ppl-$(PPL_VERSION): .build-ppl-$(PPL_VERSION)
-	cd $(PPL_BUILD_DIR) && make install
+	cd $(PPL_BUILD_DIR) && $(MAKE) install
 	@$(TOUCH) $@
 
 clean-ppl:
@@ -1204,13 +1201,13 @@ extract-cloog-ppl: .extract-cloog-ppl-$(CLOOG_PPL_VERSION)
 configure-cloog-ppl: .configure-cloog-ppl-$(CLOOG_PPL_VERSION)
 
 .build-cloog-ppl-$(CLOOG_PPL_VERSION): .configure-cloog-ppl-$(CLOOG_PPL_VERSION)
-	cd $(CLOOG_PPL_BUILD_DIR) && make $(PARALLEL_BUILD_FLAGS)
+	cd $(CLOOG_PPL_BUILD_DIR) && $(MAKE) $(PARALLEL_BUILD_FLAGS)
 	@$(TOUCH) $@
 
 build-cloog-ppl: .build-cloog-ppl-$(CLOOG_PPL_VERSION)
 
 .install-cloog-ppl-$(CLOOG_PPL_VERSION): .build-cloog-ppl-$(CLOOG_PPL_VERSION)
-	cd $(CLOOG_PPL_BUILD_DIR) && make install
+	cd $(CLOOG_PPL_BUILD_DIR) && $(MAKE) install
 	@$(TOUCH) $@
 
 clean-cloog-ppl:
@@ -1227,11 +1224,12 @@ distclean-cloog-ppl: clean-cloog-ppl
 ## GCC (GNU Compiler Collection)
 ##
 
-GCC_VERSION = 4.7.3
+GCC_VERSION = 4.8.1
 GCC_TARBALL = gcc-$(GCC_VERSION).tar.bz2
 GCC_TARBALL_URL = http://ftp.gwdg.de/pub/misc/gcc/releases/gcc-$(GCC_VERSION)/$(GCC_TARBALL)
-GCC_TARBALL_SHA256 = 2f7c37eb4fc14422ff2358a9ef59c974a75ab41204ef0e49fc34ab1d8981a9c3
+GCC_TARBALL_SHA256 = 545b44be3ad9f2c4e90e6880f5c9d4f0a8f0e5f67e1ffb0d45da9fa01bb05813
 GCC_BUILD_DIR = gcc-$(GCC_VERSION)
+GCC_BUILD_FLAGS = --enable-cxx-flags=-fPIC --enable-languages=c,c++,fortran,lto --disable-multilib
 GCC_INSTALL_DIR = $(PREFIX)/gcc-$(GCC_VERSION)
 
 .fetch-gcc-$(GCC_VERSION):
@@ -1250,29 +1248,25 @@ fetch-gcc: .fetch-gcc-$(GCC_VERSION) .fetch-gmp-$(GMP_VERSION) .fetch-mpfr-$(MPF
 extract-gcc: .extract-gcc-$(GCC_VERSION)
 
 .configure-gcc-$(GCC_VERSION): .extract-gcc-$(GCC_VERSION) .install-gmp-$(GMP_VERSION) .install-mpfr-$(MPFR_VERSION) .install-mpc-$(MPC_VERSION) .install-ppl-$(PPL_VERSION) .install-cloog-ppl-$(CLOOG_PPL_VERSION)
-	cd $(GCC_BUILD_DIR) && LDFLAGS=-L$(GMP_INSTALL_DIR)/lib ac_cv_lib_pwl_PWL_handle_timeout=no ./configure --prefix=$(GCC_INSTALL_DIR) --disable-multilib --enable-languages=c,c++,fortran,lto --with-gmp=$(GMP_INSTALL_DIR) --with-mpfr=$(MPFR_INSTALL_DIR) --with-mpc=$(MPC_INSTALL_DIR) --with-ppl=$(PPL_INSTALL_DIR) --with-cloog=$(CLOOG_PPL_INSTALL_DIR) --enable-build-with-cxx
+	cd $(GCC_BUILD_DIR) && LDFLAGS=-L$(GMP_INSTALL_DIR)/lib ac_cv_lib_pwl_PWL_handle_timeout=no ./configure --prefix=$(GCC_INSTALL_DIR) --with-gmp=$(GMP_INSTALL_DIR) --with-mpfr=$(MPFR_INSTALL_DIR) --with-mpc=$(MPC_INSTALL_DIR) --with-ppl=$(PPL_INSTALL_DIR) --with-cloog=$(CLOOG_PPL_INSTALL_DIR) --enable-build-with-cxx $(GCC_BUILD_FLAGS)
 	@$(TOUCH) $@
 
 configure-gcc: .configure-gcc-$(GCC_VERSION)
 
 .build-gcc-$(GCC_VERSION): .configure-gcc-$(GCC_VERSION)
-	cd $(GCC_BUILD_DIR) && make $(PARALLEL_BUILD_FLAGS)
+	cd $(GCC_BUILD_DIR) && $(MAKE) $(PARALLEL_BUILD_FLAGS)
 	@$(TOUCH) $@
 
 build-gcc: .build-gcc-$(GCC_VERSION)
 
 install-gcc: .build-gcc-$(GCC_VERSION)
-	cd $(GCC_BUILD_DIR) && make install
+	cd $(GCC_BUILD_DIR) && $(MAKE) install
+	cd $(GMP_INSTALL_DIR) && $(CP) include $(GCC_INSTALL_DIR)
 
 clean-gcc:
 	@$(RM) .build-gcc-$(GCC_VERSION)
 	@$(RM) .configure-gcc-$(GCC_VERSION)
 	@$(RM) .extract-gcc-$(GCC_VERSION)
-	@$(RM) .install-gmp-$(GMP_VERSION)
-	@$(RM) .install-mpfr-$(MPFR_VERSION)
-	@$(RM) .install-mpc-$(MPC_VERSION)
-	@$(RM) .install-ppl-$(PPL_VERSION)
-	@$(RM) .install-cloog-ppl-$(CLOOG_PPL_VERSION)
 	$(RM) $(GCC_BUILD_DIR)
 
 distclean-gcc: clean-gcc
@@ -1307,20 +1301,20 @@ HALMD_BUILD_ENV = CUDACC="nvcc --compiler-bindir=/usr/bin"
 fetch-halmd: .fetch-halmd-$(HALMD_VERSION)
 
 .configure-halmd-$(HALMD_VERSION): .fetch-halmd-$(HALMD_VERSION)
-	mkdir -p $(HALMD_BUILD_DIR)
+	$(MKDIR) $(HALMD_BUILD_DIR)
 	cd $(HALMD_BUILD_DIR) && $(HALMD_BUILD_ENV) cmake -DCMAKE_INSTALL_PREFIX=$(HALMD_INSTALL_DIR) $(CURDIR)/$(HALMD_SOURCE_DIR)
 	@$(TOUCH) $@
 
 configure-halmd: .configure-halmd-$(HALMD_VERSION)
 
 .build-halmd-$(HALMD_VERSION): .configure-halmd-$(HALMD_VERSION)
-	cd $(HALMD_BUILD_DIR) && make $(PARALLEL_BUILD_FLAGS)
+	cd $(HALMD_BUILD_DIR) && $(MAKE) $(PARALLEL_BUILD_FLAGS)
 	@$(TOUCH) $@
 
 build-halmd: .build-halmd-$(HALMD_VERSION)
 
 install-halmd: .build-halmd-$(HALMD_VERSION)
-	cd $(HALMD_BUILD_DIR) && make install
+	cd $(HALMD_BUILD_DIR) && $(MAKE) install
 
 clean-halmd:
 	@$(RM) .build-halmd-$(HALMD_VERSION)
@@ -1356,20 +1350,20 @@ NVCUDA_TOOLS_INSTALL_DIR = $(PREFIX)/nvcuda-tools-$(NVCUDA_TOOLS_VERSION)
 fetch-nvcuda-tools: .fetch-nvcuda-tools-$(NVCUDA_TOOLS_VERSION)
 
 .configure-nvcuda-tools-$(NVCUDA_TOOLS_VERSION): .fetch-nvcuda-tools-$(NVCUDA_TOOLS_VERSION)
-	mkdir -p $(NVCUDA_TOOLS_BUILD_DIR)
+	$(MKDIR) $(NVCUDA_TOOLS_BUILD_DIR)
 	cd $(NVCUDA_TOOLS_BUILD_DIR) && cmake -DCMAKE_INSTALL_PREFIX=$(NVCUDA_TOOLS_INSTALL_DIR) $(CURDIR)/$(NVCUDA_TOOLS_SOURCE_DIR)
 	@$(TOUCH) $@
 
 configure-nvcuda-tools: .configure-nvcuda-tools-$(NVCUDA_TOOLS_VERSION)
 
 .build-nvcuda-tools-$(NVCUDA_TOOLS_VERSION): .configure-nvcuda-tools-$(NVCUDA_TOOLS_VERSION)
-	cd $(NVCUDA_TOOLS_BUILD_DIR) && make $(PARALLEL_BUILD_FLAGS)
+	cd $(NVCUDA_TOOLS_BUILD_DIR) && $(MAKE) $(PARALLEL_BUILD_FLAGS)
 	@$(TOUCH) $@
 
 build-nvcuda-tools: .build-nvcuda-tools-$(NVCUDA_TOOLS_VERSION)
 
 install-nvcuda-tools: .build-nvcuda-tools-$(NVCUDA_TOOLS_VERSION)
-	cd $(NVCUDA_TOOLS_BUILD_DIR) && make install
+	cd $(NVCUDA_TOOLS_BUILD_DIR) && $(MAKE) install
 
 clean-nvcuda-tools:
 	@$(RM) .build-nvcuda-tools-$(NVCUDA_TOOLS_VERSION)
@@ -1418,8 +1412,8 @@ extract-ghc-bootstrap: .extract-ghc-bootstrap-$(GHC_BOOTSTRAP_VERSION)
 configure-ghc-bootstrap: .configure-ghc-bootstrap-$(GHC_BOOTSTRAP_VERSION)
 
 .install-ghc-bootstrap-$(GHC_BOOTSTRAP_VERSION): .configure-ghc-bootstrap-$(GHC_BOOTSTRAP_VERSION) .install-gmp-$(GMP_VERSION)
-	cd $(GHC_BOOTSTRAP_BUILD_DIR) && make install
-	sed -i -e 's/-pgmc "\([^"]*\)"/-pgmc "\1" -pgma "\1" -pgml "\1" -pgmP "\1 -E -undef -traditional"/' $(GHC_BOOTSTRAP_INSTALL_DIR)/bin/ghc-$(GHC_BOOTSTRAP_VERSION)
+	cd $(GHC_BOOTSTRAP_BUILD_DIR) && $(MAKE) install
+	$(SED) -i -e 's/-pgmc "\([^"]*\)"/-pgmc "\1" -pgma "\1" -pgml "\1" -pgmP "\1 -E -undef -traditional"/' $(GHC_BOOTSTRAP_INSTALL_DIR)/bin/ghc-$(GHC_BOOTSTRAP_VERSION)
 	ln -s -f -t $(GHC_BOOTSTRAP_INSTALL_DIR)/lib/ghc-$(GHC_BOOTSTRAP_VERSION) $(GMP_INSTALL_DIR)/lib/libgmp.a
 	@$(TOUCH) $@
 
@@ -1465,13 +1459,13 @@ extract-ghc: .extract-ghc-$(GHC_VERSION)
 configure-ghc: .configure-ghc-$(GHC_VERSION)
 
 .build-ghc-$(GHC_VERSION): .configure-ghc-$(GHC_VERSION)
-	cd $(GHC_BUILD_DIR) && make $(PARALLEL_BUILD_FLAGS)
+	cd $(GHC_BUILD_DIR) && $(MAKE) $(PARALLEL_BUILD_FLAGS)
 	@$(TOUCH) $@
 
 build-ghc: .build-ghc-$(GHC_VERSION)
 
 .install-ghc-$(GHC_VERSION): .build-ghc-$(GHC_VERSION)
-	cd $(GHC_BUILD_DIR) && make install
+	cd $(GHC_BUILD_DIR) && $(MAKE) install
 	@$(TOUCH) $@
 
 clean-ghc:
@@ -1555,13 +1549,13 @@ extract-pcre: .extract-pcre-$(PCRE_VERSION)
 configure-pcre: .configure-pcre-$(PCRE_VERSION)
 
 .build-pcre-$(PCRE_VERSION): .configure-pcre-$(PCRE_VERSION)
-	cd $(PCRE_BUILD_DIR) && make $(PARALLEL_BUILD_FLAGS)
+	cd $(PCRE_BUILD_DIR) && $(MAKE) $(PARALLEL_BUILD_FLAGS)
 	@$(TOUCH) $@
 
 build-pcre: .build-pcre-$(PCRE_VERSION)
 
 .install-pcre-$(PCRE_VERSION): .build-pcre-$(PCRE_VERSION)
-	cd $(PCRE_BUILD_DIR) && make install
+	cd $(PCRE_BUILD_DIR) && $(MAKE) install
 	@$(TOUCH) $@
 
 clean-pcre:
@@ -1578,7 +1572,7 @@ distclean-pcre: clean-pcre
 ## git-annex
 ##
 
-GIT_ANNEX_VERSION = 3.20120807
+GIT_ANNEX_VERSION = 4.20130723
 GIT_ANNEX_BUILD_DIR = git-annex-$(GIT_ANNEX_VERSION)
 GIT_ANNEX_INSTALL_DIR = $(PREFIX)/git-annex-$(GIT_ANNEX_VERSION)
 
