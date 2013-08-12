@@ -61,21 +61,30 @@ env: env-cmake env-lua env-boost env-hdf5
 ## CMake with CMake-CUDA patch
 ##
 
-CMAKE_CUDA_VERSION = 2.8.9-0-g96eb1e8
-CMAKE_CUDA_GIT_URL = http://git.halmd.org/cmake-cuda.git
-CMAKE_SOURCE_DIR = cmake-$(CMAKE_CUDA_VERSION)
+CMAKE_CUDA_VERSION = 2.8.9
+CMAKE_CUDA_TARBALL = $(CMAKE_CUDA_VERSION).tar.gz
+CMAKE_CUDA_TARBALL_SHA256 = c4b4af5d65642866aa3c0d66db27e8e0d7fce2cddf4021b882173f99f5b90b9e
+CMAKE_CUDA_TARBALL_URL = http://git.halmd.org/cmake-cuda/archive/$(CMAKE_CUDA_TARBALL)
+CMAKE_SOURCE_DIR = cmake-cuda-$(CMAKE_CUDA_VERSION)
 CMAKE_BUILD_DIR = $(CMAKE_SOURCE_DIR)/build
 CMAKE_INSTALL_DIR = $(PREFIX)/cmake-$(CMAKE_CUDA_VERSION)
 
 .fetch-cmake-$(CMAKE_CUDA_VERSION):
-	$(RM) $(CMAKE_SOURCE_DIR)
-	$(GIT) clone $(CMAKE_CUDA_GIT_URL) $(CMAKE_SOURCE_DIR)
-	cd $(CMAKE_SOURCE_DIR) && $(GIT) checkout $(CMAKE_CUDA_VERSION)
+	@$(RM) $(CMAKE_CUDA_TARBALL)
+	$(WGET) $(CMAKE_CUDA_TARBALL_URL)
+	@echo '$(CMAKE_CUDA_TARBALL_SHA256)  $(CMAKE_CUDA_TARBALL)' | $(SHA256SUM)
 	@$(TOUCH) $@
 
 fetch-cmake: .fetch-cmake-$(CMAKE_CUDA_VERSION)
 
-.configure-cmake-$(CMAKE_CUDA_VERSION): .fetch-cmake-$(CMAKE_CUDA_VERSION)
+.extract-cmake-$(CMAKE_CUDA_VERSION): .fetch-cmake-$(CMAKE_CUDA_VERSION)
+	$(RM) $(CMAKE_SOURCE_DIR)
+	$(TAR) -xzf $(CMAKE_CUDA_TARBALL)
+	@$(TOUCH) $@
+
+extract-cmake: .extract-cmake-$(CMAKE_CUDA_VERSION)
+
+.configure-cmake-$(CMAKE_CUDA_VERSION): .extract-cmake-$(CMAKE_CUDA_VERSION)
 	$(MKDIR) $(CMAKE_BUILD_DIR)
 	cd $(CMAKE_BUILD_DIR) && ../configure --prefix=$(CMAKE_INSTALL_DIR)
 	@$(TOUCH) $@
@@ -96,10 +105,11 @@ clean-cmake:
 	@$(RM) .configure-cmake-$(CMAKE_CUDA_VERSION)
 	@$(RM) .extract-cmake-$(CMAKE_CUDA_VERSION)
 	$(RM) $(CMAKE_BUILD_DIR)
+	$(RM) $(CMAKE_SOURCE_DIR)
 
 distclean-cmake: clean-cmake
 	@$(RM) .fetch-cmake-$(CMAKE_CUDA_VERSION)
-	$(RM) $(CMAKE_SOURCE_DIR)
+	$(RM) $(CMAKE_CUDA_TARBALL)
 
 env-cmake:
 	@echo
