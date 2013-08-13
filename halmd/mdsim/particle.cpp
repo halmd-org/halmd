@@ -51,12 +51,17 @@ particle<dimension>::particle(vector<unsigned int> const& particles)
         throw logic_error("invalid number of particles");
     }
 
+    // workaround for bug in Boost 1.53.0
+    //
+    // see http://lists.boost.org/boost-users/2013/03/78142.php
+    string(*p_lexical_cast)(const unsigned int&) = &boost::lexical_cast<string, unsigned int>;
+
     vector<string> ntypes_(ntypes.size());
     transform(
         ntypes.begin()
       , ntypes.end()
       , ntypes_.begin()
-      , lexical_cast<string, unsigned int>
+      , p_lexical_cast
     );
 
     LOG("number of particles: " << nbox);
