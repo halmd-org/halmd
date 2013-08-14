@@ -57,7 +57,7 @@ local discontinuous = assert(libhalmd.mdsim.forces.trunc.discontinuous)
 --
 --    Instance of :mod:`halmd.mdsim.potentials`.
 --
--- .. method:: get_force()
+-- .. method:: get_net_force()
 --
 --    Returns unordered sequence with particle forces.
 --
@@ -82,21 +82,16 @@ local discontinuous = assert(libhalmd.mdsim.forces.trunc.discontinuous)
 --       Currently this does not disconnect particle sorting, binning and neighbour lists.
 --
 local M = module(function(args)
-    local particle = args and args.particle
+    local particle = utility.assert_kwarg(args, "particle")
     if type(particle) ~= "table" then
         particle = {particle, particle}
     end
     if #particle ~= 2 then
         error("bad argument 'particle'", 2)
     end
-    local box = args.box
-    if not box then
-        error("bad argument 'box'", 2)
-    end
-    local potential = args.potential
-    if not potential then
-        error("bad argument 'potential'", 2)
-    end
+    local box = utility.assert_kwarg(args, "box")
+    local potential = utility.assert_kwarg(args, "potential")
+
     local logger = assert(potential.logger)
     local trunc = args.trunc
     if trunc then
