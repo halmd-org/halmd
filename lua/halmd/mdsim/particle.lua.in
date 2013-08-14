@@ -18,6 +18,7 @@
 --
 
 local core              = require("halmd.mdsim.core")
+local utility           = require("halmd.utility")
 local device            = require("halmd.utility.device")
 local module            = require("halmd.utility.module")
 local profiler          = require("halmd.utility.profiler")
@@ -29,16 +30,16 @@ local utility           = require("halmd.utility")
 --
 
 -- grab C++ wrappers
-local particle
+local particle = {}
+particle.host = {
+    [2] = assert(libhalmd.mdsim.host.particle_2)
+  , [3] = assert(libhalmd.mdsim.host.particle_3)
+}
+
 if device.gpu then
-    particle = {
+    particle.gpu = {
         [2] = assert(libhalmd.mdsim.gpu.particle_2)
       , [3] = assert(libhalmd.mdsim.gpu.particle_3)
-    }
-else
-    particle = {
-        [2] = assert(libhalmd.mdsim.host.particle_2)
-      , [3] = assert(libhalmd.mdsim.host.particle_3)
     }
 end
 
@@ -49,6 +50,12 @@ end
 -- :param number args.box: instance of :class:`halmd.mdsim.box`
 -- :param number args.particles: number of particles
 -- :param number args.species: number of species
+-- :param string args.memory: device where the particle information is stored (optional)
+--
+--    The supported values for ``memory`` are "host" and "gpu". If ``memory``
+--    is not specified, the memory location is selected according to the
+--    compute device.
+--
 -- :param string args.label: instance label (defaults to ``all``)
 --
 -- .. attribute:: nparticle
@@ -62,6 +69,10 @@ end
 -- .. attribute:: label
 --
 --    Instance label.
+--
+-- .. attribute:: memory
+--
+--    Device where the particle memory resides.
 --
 -- .. warning::
 --
@@ -150,23 +161,20 @@ end
 --    First shift, then rescale velocities of group.
 --
 local M = module(function(args)
-    local box = args.box
-    if not box then
-        error("missing argument: box", 2)
-    end
-    local nparticle = args.particles
-    if not nparticle then
-        error("missing argument: particles", 2)
-    end
-    local nspecies = args.species
-    if not nspecies then
-        error("missing argument: species", 2)
-    end
+    local box = utility.assert_kwarg(args, "box")
+    local nparticle = utility.assert_type(utility.assert_kwarg(args, "particles"), "number")
+    local nspecies = utility.assert_type(utility.assert_kwarg(args, "species"), "number")
+
     local label = args.label or "all"
+
+    local memory = args and args.memory or (device.gpu and "gpu" or "host")
+    if not particle[memory] then
+        error(("unsupported particle memory type '%s'"):format(memory), 2)
+    end
 
     -- select particle class
     local dimension = #box.edges
-    local particle = assert(particle[dimension])
+    local particle = assert(particle[memory][dimension])
 
     -- construct particle instance
     local self = particle(nparticle, nspecies)
@@ -174,6 +182,10 @@ local M = module(function(args)
     -- store particle label as Lua property
     self.label = property(function(self)
         return label
+    end)
+
+    self.memory = property(function(self)
+        return memory
     end)
 
     -- sequence of signal connections
