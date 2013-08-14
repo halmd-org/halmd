@@ -43,9 +43,6 @@ public:
     typedef boost::numeric::ublas::matrix<float_type> matrix_type;
     typedef logger logger_type;
 
-    static char const* module_name() { return "morse"; }
-
-    static void luaopen(lua_State* L);
     morse(
         unsigned int ntype1
       , unsigned int ntype2
@@ -111,6 +108,11 @@ public:
     {
         return r_min_sigma_;
     }
+    
+    /**
+     * Bind module to Lua.
+     */
+    static void luaopen(lua_State* L);
 
 private:
     /** depths of potential well in MD units */

@@ -30,9 +30,6 @@
 #include <halmd/mdsim/gpu/potentials/morse_kernel.hpp>
 #include <halmd/utility/lua/lua.hpp>
 
-using namespace boost::numeric::ublas;
-using namespace std;
-
 namespace halmd {
 namespace mdsim {
 namespace gpu {
@@ -103,7 +100,7 @@ void morse<float_type>::luaopen(lua_State* L)
             [
                 namespace_("potentials")
                 [
-                    class_<morse, std::shared_ptr<morse> >(module_name())
+                    class_<morse, std::shared_ptr<morse> >("morse")
                         .def(constructor<
                             unsigned int
                           , unsigned int
