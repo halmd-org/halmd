@@ -262,13 +262,12 @@ inline void pair_full<dimension, float_type, potential_type>::compute()
 
     std::fill(net_force->begin(), net_force->end(), 0);
 
+    // whether Newton's third law applies
+    bool const reactio = (particle_ == particle_);
+
     for (size_type i = 0; i < nparticle1; ++i) {
         // calculate untruncated pairwise Lennard-Jones force with all other particles
-        for (size_type j = 0; j < nparticle2; ++j) {
-            // skip self-interaction
-            if (i == j ) {
-                continue;
-            }
+        for (size_type j = reactio ? (i + 1) : 0; j < nparticle2; ++j) {
             // particle distance vector
             position_type r = position1[i] - position2[j];
             box_->reduce_periodic(r);
