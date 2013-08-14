@@ -325,14 +325,15 @@ distclean-luatrace: clean-luatrace
 ## Boost C++ libraries with C++11 ABI
 ##
 
-BOOST_VERSION = 1.53.0
-BOOST_RELEASE = 1_53_0
+BOOST_VERSION = 1.54.0
+BOOST_RELEASE = 1_54_0
+BOOST_ABI = c++11
 BOOST_TARBALL = boost_$(BOOST_RELEASE).tar.bz2
 BOOST_TARBALL_URL = http://sourceforge.net/projects/boost/files/boost/$(BOOST_VERSION)/$(BOOST_TARBALL)
-BOOST_TARBALL_SHA256 = f88a041b01882b0c9c5c05b39603ec8383fb881f772f6f9e6e6fd0e0cddb9196
+BOOST_TARBALL_SHA256 = 047e927de336af106a24bceba30069980c191529fd76b8dff8eb9a328b48ae1d
 BOOST_BUILD_DIR = boost_$(BOOST_RELEASE)
-BOOST_INSTALL_DIR = $(PREFIX)/boost_$(BOOST_RELEASE)
-BOOST_BUILD_FLAGS = threading=multi variant=release --layout=tagged toolset=gcc cxxflags="-fPIC -std=c++11" dll-path=$(BOOST_INSTALL_DIR)/lib
+BOOST_INSTALL_DIR = $(PREFIX)/boost_$(BOOST_RELEASE)-$(BOOST_ABI)
+BOOST_BUILD_FLAGS = threading=multi variant=release --layout=tagged toolset=gcc cxxflags="-fPIC -std=$(BOOST_ABI)" dll-path=$(BOOST_INSTALL_DIR)/lib
 
 ifndef USE_BZIP2
 BOOST_BUILD_FLAGS += -sNO_BZIP2=1
@@ -502,6 +503,17 @@ define BOOST_PATCH
  
  // ************************************************************************** //
  // **************                print_log_value               ************** //
+--- boost/log/utility/once_block.hpp
++++ boost/log/utility/once_block.hpp
+@@ -176,7 +176,7 @@
+  * been executed.
+  */
+ #define BOOST_LOG_ONCE_BLOCK_FLAG(flag_var)\ 
+-    BOOST_LOG_ONCE_BLOCK_INTERNAL(\ 
++    BOOST_LOG_ONCE_BLOCK_FLAG_INTERNAL(\ 
+         flag_var,\ 
+         BOOST_LOG_UNIQUE_IDENTIFIER_NAME(_boost_log_once_block_sentry_))
+ 
 endef
 export BOOST_PATCH
 
