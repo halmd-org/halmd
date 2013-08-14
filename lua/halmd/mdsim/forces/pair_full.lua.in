@@ -1,5 +1,7 @@
 --
--- Copyright © 2010-2011  Peter Colberg and Felix Höfling
+-- Copyright © 2010-2011  Felix Höfling
+-- Copyright © 2013       Nicolas Höft
+-- Copyright © 2010-2011  Peter Colberg
 --
 -- This file is part of HALMD.
 --
@@ -18,64 +20,84 @@
 --
 
 local core              = require("halmd.mdsim.core")
+local utility           = require("halmd.utility")
 local device            = require("halmd.utility.device")
 local module            = require("halmd.utility.module")
-local mdsim = {
-    box                 = require("halmd.mdsim.box")
-  , neighbour           = require("halmd.mdsim.neighbour")
-  , particle            = require("halmd.mdsim.particle")
-  , potential           = require("halmd.mdsim.potential")
-}
+local profiler          = require("halmd.utility.profiler")
 
--- grab modules
-local forces = libhalmd.mdsim.forces
-
--- grab standard library
-local property = property
-local assert = assert
-
-
+---
+-- Full Pair Force
+-- ===============
 --
--- construct pair force module with full (not truncated) interaction
+--
+
+-- grab C++ wrappers
+local pair_full = assert(libhalmd.mdsim.forces.pair_full)
+
+---
+-- Construct full pair force.
+--
+-- :param table args: keyword arguments
+-- :param args.particle: instance of :class:`halmd.mdsim.particle`
+-- :param args.box: instance of :mod:`halmd.mdsim.box`
+-- :param args.potential: instance of :mod:`halmd.mdsim.potentials`
+--
+-- .. attribute:: potential
+--
+--    Instance of :mod:`halmd.mdsim.potentials`.
+--
+-- .. method:: get_net_force()
+--
+--    Returns unordered sequence with particle forces.
+--
+-- .. method:: get_en_pot()
+--
+--    Returns unordered sequence with potential energies.
+--
+-- .. method:: get_stress_pot()
+--
+--    Returns unordered sequence with potential parts of stress tensors.
+--
+-- .. method:: get_hypervirial()
+--
+--    Returns unordered sequence with hypervirials.
+--
+-- .. method:: disconnect()
+--
+--    Disconnect force from profiler.
+--
 --
 local M = module(function(args)
-    -- construct global potential module
-    local potential = mdsim.potential()
-
-    local particle = mdsim.particle() -- singleton
-    local dimension = assert(particle.dimension)
-    local box = mdsim.box() -- singleton
+    local particle = utility.assert_kwarg(args, "particle")
+    --if type(particle) ~= "table" then
+    --    particle = {particle, particle}
+    --end
+    --if #particle ~= 2 then
+    --    error("bad argument 'particle'", 2)
+    --end
+    local box = utility.assert_kwarg(args, "box")
+    local potential = utility.assert_kwarg(args, "potential")
+    local logger = assert(potential.logger)
 
     -- construct force module
-    local force = assert(forces.pair_full)(potential, particle, box)
+    local self = pair_full(potential, particle, box, logger)
 
-    -- system preparation
-    core:on_append_setup(force.compute)
-    -- compute forces every step
-    core:on_force(force.compute)
+    -- sequence of signal connections
+    local conn = {}
+    self.disconnect = utility.signal.disconnect(conn, "force module")
 
     -- store potential Lua object (which contains the C++ object) as a
-    -- read-only Lua property, so we may read it in pair_full.profile
+    -- read-only Lua property, so we may read it in profiler:on_profile
     -- and retrieve the description of the potential for the log entry
-    force.potential = property(function(self)
+    self.potential = property(function(self)
         return potential
     end)
 
-    return force
+    local desc = ("computation of %s interaction"):format(potential.description)
+    table.insert(conn, assert(profiler:on_profile(assert(self.runtime).compute, desc)))
+
+    return self
 end)
 
---
--- connect runtime accumulators to module profiler
---
-function M.profile(self, profiler)
-    profiler:on_profile{self, compute = "computation of " .. self.potential.module.description() .. " interaction"}
-end
-
---
--- returns module description
---
-function M.description()
-    return "Full pair interaction"
-end
 
 return M
