@@ -1,0 +1,31 @@
+Changelog
+*********
+
+Version 0.2.1
+=============
+
+**Improvements**
+
+* improve performance of force kernel for truncated pair interactions by about
+  10% due to inefficient use of the texture cache
+
+**Bug fixes**
+
+* fix regex benchmark scripts
+
+* fix build failure with Boost C++ library ≥ 1.53.0
+
+* fix build failure with nvcc option -arch=sm_20 and CMake switch
+  VERLET_DSFUN=FALSE
+
+
+Version 0.2.0
+=============
+
+Version 0.2.0 is a complete rewrite of branch 0.1.x, aiming at a modular code
+base. Most algorithms, in particular the actual MD simulation algorithms, have
+been kept.
+
+This version features a slightly larger choice of potentials and NVT
+integrators, but it brings only rudimentary support for dynamic correlations
+functions.

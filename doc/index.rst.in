@@ -12,6 +12,7 @@ HALMD documentation
    benchmarks
    units
    developer/index
+   changelog
 
 .. toctree::
    :hidden:
