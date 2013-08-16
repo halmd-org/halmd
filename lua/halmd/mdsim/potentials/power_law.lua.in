@@ -21,6 +21,7 @@
 
 local device            = require("halmd.utility.device")
 local log               = require("halmd.io.log")
+local utility           = require("halmd.utility")
 local module            = require("halmd.utility.module")
 local numeric           = require("halmd.utility.numeric")
 
@@ -40,12 +41,10 @@ local numeric           = require("halmd.utility.numeric")
 --
 
 -- grab C++ wrappers
-local power_law
+local power_law = { host = assert(libhalmd.mdsim.host.potentials.power_law) }
 
 if device.gpu then
-    lennard_jones = assert(libhalmd.mdsim.gpu.potentials.power_law)
-else
-    lennard_jones = assert(libhalmd.mdsim.host.potentials.power_law)
+    power_law.gpu = assert(libhalmd.mdsim.gpu.potentials.power_law)
 end
 
 ---
@@ -97,7 +96,7 @@ local M = module(function(args)
     if type(sigma) ~= "table" and type(sigma) ~= "number" then
         error("bad argument 'sigma'", 2)
     end
-    local cutoff = args and args.cutoff
+    local cutoff = utility.assert_kwarg(args, "cutoff")
     if type(cutoff) ~= "table" and type(cutoff) ~= "number" then
         error("bad argument 'cutoff'", 2)
     end
@@ -105,13 +104,17 @@ local M = module(function(args)
     if type(index) ~= "table" and type(index) ~= "number" then
         error("bad argument 'index'", 2)
     end
-    local particle = args.particle
+    local particle = utility.assert_kwarg(args, "particle")
     if type(particle) ~= "table" then
         particle = {particle, particle}
     end
     if #particle ~= 2 then
         error("bad argument 'particle'", 2)
     end
+    if particle[1].memory ~= particle[2].memory then
+        error("'memory' of particle instances do not match", 2)
+    end
+    local memory = particle[1].memory
 
     local nspecies = {}
     local label = {}
@@ -134,7 +137,7 @@ local M = module(function(args)
         sigma = numeric.scalar_matrix(nspecies[1], nspecies[2], sigma)
     end
 
-    local self = power_law(nspecies[1], nspecies[2], cutoff, epsilon, sigma, index, logger)
+    local self = power_law[memory](nspecies[1], nspecies[2], cutoff, epsilon, sigma, index, logger)
 
     -- add description for profiler
     self.description = property(function()
