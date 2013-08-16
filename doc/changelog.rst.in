@@ -13,7 +13,7 @@ Version 0.2.1
 
 * fix regex benchmark scripts
 
-* fix build failure with Boost C++ library ≥ 1.53.0
+* fix build failure with Boost C++ 1.53.0
 
 * fix build failure with nvcc option -arch=sm_20 and CMake switch
   VERLET_DSFUN=FALSE
@@ -29,3 +29,43 @@ been kept.
 This version features a slightly larger choice of potentials and NVT
 integrators, but it brings only rudimentary support for dynamic correlations
 functions.
+
+Version 0.1.2
+=============
+
+**Improvements**
+
+* fully support mobility filters for the VACF
+
+Version 0.1.2
+=============
+
+**Improvements**
+
+* revise documentation
+
+**Bug fixes**
+
+* fix build failure with Boost C++ 1.46
+
+Version 0.1.1
+=============
+
+**New features**
+
+* computation of shear viscosity
+
+* displacement/mobility filters for dynamic correlation functions
+
+**Bug fixes**
+
+* fix build failure with CUDA 3.2
+
+* fix build failure with Boost C++ 1.42
+
+Version 0.1.0
+=============
+
+The first release of HAL's MD package, forming the basis for the preprint at
+http://arxiv.org/abs/0912.3824, later published in Comput. Phys. Commun.
+**182**, 1120 (2011).
