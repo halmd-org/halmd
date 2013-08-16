@@ -49,27 +49,6 @@ if(NOT HALMD_DOC_ONLY OR NOT HALMD_USE_GIT)
 
   project(HALMD CXX)
 
-  if(HALMD_USE_STATIC_LIBS)
-    set(Boost_USE_STATIC_LIBS TRUE)
-    set(HDF5_USE_STATIC_LIBS TRUE)
-    set(LUA_USE_STATIC_LIBS TRUE)
-  endif()
-
-  # Require thread-safe Boost libraries for thread-safe Boost Log
-  set(Boost_USE_MULTITHREADED TRUE)
-
-  find_package(Boost 1.49.0 QUIET REQUIRED COMPONENTS
-    date_time
-    filesystem
-    program_options
-    random
-    system
-    thread
-    unit_test_framework
-  )
-  find_package(HDF5 QUIET REQUIRED)
-  find_package(LuaLibs QUIET REQUIRED)
-
   # By default, enable GPU support only if CUDA is available.
   # If HALMD_WITH_GPU is explicitly set to TRUE, require CUDA.
   if(NOT DEFINED HALMD_WITH_GPU)
@@ -93,6 +72,31 @@ if(NOT HALMD_DOC_ONLY OR NOT HALMD_USE_GIT)
   else()
     set(HALMD_WITH_GPU FALSE)
   endif()
+
+  if(HALMD_USE_STATIC_LIBS)
+    set(Boost_USE_STATIC_LIBS TRUE)
+    set(HDF5_USE_STATIC_LIBS TRUE)
+    set(LUA_USE_STATIC_LIBS TRUE)
+  endif()
+
+  # Require thread-safe Boost libraries for thread-safe Boost Log
+  set(Boost_USE_MULTITHREADED TRUE)
+
+  find_package(Boost 1.49.0 QUIET REQUIRED COMPONENTS
+    date_time
+    filesystem
+    program_options
+    random
+    system
+    thread
+    unit_test_framework
+  )
+  find_package(HDF5 QUIET REQUIRED)
+  find_package(LuaLibs QUIET REQUIRED)
+
+  # be verbose about library versions (but suppress all the gory details given by find_package)
+  message(STATUS "Boost version: ${Boost_MAJOR_VERSION}.${Boost_MINOR_VERSION}.${Boost_SUBMINOR_VERSION}")
+  message(STATUS "Lua library version: ${LUA_VERSION_STRING}")
 
   # Set HALMD build variant flags
   include(${CMAKE_SOURCE_DIR}/cmake/variant.cmake)
