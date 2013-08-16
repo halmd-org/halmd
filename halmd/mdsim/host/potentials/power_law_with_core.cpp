@@ -28,9 +28,6 @@
 #include <halmd/mdsim/host/potentials/power_law_with_core.hpp>
 #include <halmd/utility/lua/lua.hpp>
 
-using namespace boost::numeric::ublas;
-using namespace std;
-
 namespace halmd {
 namespace mdsim {
 namespace host {
@@ -75,7 +72,7 @@ power_law_with_core<float_type>::power_law_with_core(
     // energy shift due to truncation at cutoff length
     for (unsigned i = 0; i < ntype1; ++i) {
         for (unsigned j = 0; j < ntype2; ++j) {
-            en_cut_(i, j) = get<1>((*this)(rr_cut_(i, j), i, j));
+            boost::tie(boost::tuples::ignore, en_cut_(i, j), boost::tuples::ignore) = (*this)(rr_cut_(i, j), i, j);
         }
     }
 
