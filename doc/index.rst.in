@@ -13,6 +13,7 @@ HALMD documentation
    benchmarks
    faq
    developer/index
+   changelog
 
 .. toctree::
    :hidden:
