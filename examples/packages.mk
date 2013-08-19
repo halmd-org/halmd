@@ -103,12 +103,12 @@ install-cmake: .build-cmake-$(CMAKE_CUDA_VERSION)
 clean-cmake:
 	@$(RM) .build-cmake-$(CMAKE_CUDA_VERSION)
 	@$(RM) .configure-cmake-$(CMAKE_CUDA_VERSION)
-	@$(RM) .extract-cmake-$(CMAKE_CUDA_VERSION)
 	$(RM) $(CMAKE_BUILD_DIR)
-	$(RM) $(CMAKE_SOURCE_DIR)
 
 distclean-cmake: clean-cmake
 	@$(RM) .fetch-cmake-$(CMAKE_CUDA_VERSION)
+	@$(RM) .extract-cmake-$(CMAKE_CUDA_VERSION)
+	$(RM) $(CMAKE_SOURCE_DIR)
 	$(RM) $(CMAKE_CUDA_TARBALL)
 
 env-cmake:
@@ -1246,15 +1246,15 @@ env-gcc:
 	@echo 'export LD_LIBRARY_PATH="$(GCC_INSTALL_DIR)/lib64$${LD_LIBRARY_PATH+:$$LD_LIBRARY_PATH}"'
 
 ##
-## HALMD Highly Accerelated Large-Scale Molecular Dynamics
+## HALMD Highly Accerelated Large-scale Molecular Dynamics
 ##
 
-HALMD_VERSION = 0.2.0-0-g8abed54
+HALMD_VERSION = 0.2.1
 HALMD_GIT_URL = http://git.halmd.org/halmd.git
 HALMD_SOURCE_DIR = halmd-$(HALMD_VERSION)
 HALMD_BUILD_DIR = $(HALMD_SOURCE_DIR)/build/release
 HALMD_INSTALL_DIR = $(PREFIX)/halmd-$(HALMD_VERSION)
-HALMD_BUILD_ENV = CUDACC="nvcc --compiler-bindir=/usr/bin"
+HALMD_BUILD_ENV = 
 
 .fetch-halmd-$(HALMD_VERSION):
 	$(RM) $(HALMD_SOURCE_DIR)
@@ -1300,7 +1300,7 @@ env-halmd:
 ## nvCUDA-tools - A collection of tools for NVIDIA CUDA compute devices
 ##
 
-NVCUDA_TOOLS_VERSION = 9bf4182
+NVCUDA_TOOLS_VERSION = master
 NVCUDA_TOOLS_GIT_URL = http://github.com/fhoefling/nvcuda-tools.git
 NVCUDA_TOOLS_SOURCE_DIR = nvcuda-tools-$(NVCUDA_TOOLS_VERSION)
 NVCUDA_TOOLS_BUILD_DIR = $(NVCUDA_TOOLS_SOURCE_DIR)/build/release
