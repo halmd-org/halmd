@@ -41,7 +41,7 @@ static texture<float> en_pot_;
 static texture<float> stress_pot_;
 
 template <int dimension, typename float_type>
-void kinetic_energy<dimension, float_type>::operator()(size_type i)
+__device__ void kinetic_energy<dimension, float_type>::operator()(size_type i)
 {
     fixed_vector<float, dimension> v;
     float mass;
@@ -50,7 +50,7 @@ void kinetic_energy<dimension, float_type>::operator()(size_type i)
 }
 
 template <int dimension, typename float_type>
-void centre_of_mass<dimension, float_type>::operator()(typename iterator::value_type const& value)
+__device__ void centre_of_mass<dimension, float_type>::operator()(typename iterator::value_type const& value)
 {
     size_type i;
     fixed_vector<float, dimension> box_length;
@@ -67,7 +67,7 @@ void centre_of_mass<dimension, float_type>::operator()(typename iterator::value_
 }
 
 template <int dimension, typename float_type>
-void velocity_of_centre_of_mass<dimension, float_type>::operator()(size_type i)
+__device__ void velocity_of_centre_of_mass<dimension, float_type>::operator()(size_type i)
 {
     fixed_vector<float, dimension> v;
     float mass;
@@ -77,13 +77,13 @@ void velocity_of_centre_of_mass<dimension, float_type>::operator()(size_type i)
 }
 
 template <typename float_type>
-void potential_energy<float_type>::operator()(size_type i)
+__device__ void potential_energy<float_type>::operator()(size_type i)
 {
     en_pot_ += tex1Dfetch(gpu::en_pot_, i);
 }
 
 template <int dimension, typename float_type>
-void virial<dimension, float_type>::operator()(size_type i)
+__device__ void virial<dimension, float_type>::operator()(size_type i)
 {
     typedef fixed_vector<float, dimension> stress_pot_diagonal;
     stress_pot_diagonal v;
@@ -95,7 +95,7 @@ void virial<dimension, float_type>::operator()(size_type i)
 }
 
 template <int dimension, typename float_type>
-void stress_tensor<dimension, float_type>::operator()(size_type i)
+__device__ void stress_tensor<dimension, float_type>::operator()(size_type i)
 {
     fixed_vector<float, dimension> v;
     float mass;

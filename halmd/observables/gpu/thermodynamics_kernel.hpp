@@ -71,7 +71,7 @@ public:
     /**
      * Returns total kinetic energy.
      */
-    double operator()() const
+    HALMD_GPU_ENABLED double operator()() const
     {
         return 0.5 * mv2_;
     }
@@ -128,7 +128,7 @@ public:
     /**
      * Returns centre of mass.
      */
-    fixed_vector<double, dimension> operator()() const
+    HALMD_GPU_ENABLED fixed_vector<double, dimension> operator()() const
     {
         return fixed_vector<double, dimension>(mr_ / m_);
     }
@@ -207,7 +207,7 @@ public:
     /**
      * Returns centre of mass momentum and total mass.
      */
-    std::tuple<fixed_vector<double, dimension>, double> operator()() const
+    HALMD_GPU_ENABLED std::tuple<fixed_vector<double, dimension>, double> operator()() const
     {
         return std::make_tuple(fixed_vector<double, dimension>(mv_), double(m_));
     }
@@ -263,7 +263,7 @@ public:
     /**
      * Returns total potential energy.
      */
-    double operator()() const
+    HALMD_GPU_ENABLED double operator()() const
     {
         return en_pot_;
     }
@@ -317,7 +317,7 @@ public:
     /**
      * Returns total virial sum.
      */
-    double operator()() const
+    HALMD_GPU_ENABLED double operator()() const
     {
         return virial_;
     }
@@ -380,7 +380,7 @@ public:
     /**
      * Returns total stress tensor sum.
      */
-    stress_tensor_type operator()() const
+    HALMD_GPU_ENABLED stress_tensor_type operator()() const
     {
         return stress_tensor_;
     }
