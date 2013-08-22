@@ -1,5 +1,6 @@
 --
 -- Copyright © 2010  Peter Colberg
+-- Copyright © 2013  Nicolas Höft
 --
 -- This file is part of HALMD.
 --
@@ -19,59 +20,58 @@
 
 local device            = require("halmd.utility.device")
 local log               = require("halmd.io.log")
+local utility           = require("halmd.utility")
 local module            = require("halmd.utility.module")
+local profiler          = require("halmd.utility.profiler")
 
 -- grab C++ wrappers
-local hilbert_wrapper = {
-    host = {
-        [2] = libhalmd.mdsim.host.sorts.hilbert_2_
-      , [3] = libhalmd.mdsim.host.sorts.hilbert_3_
-    }
-}
-if libhalmd.mdsim.gpu then
-    hilbert_wrapper.gpu = {
-        [2] = libhalmd.mdsim.gpu.sorts.hilbert_2_
-      , [3] = libhalmd.mdsim.gpu.sorts.hilbert_3_
-    }
-end
--- grab standard library
-local assert = assert
+local hilbert =  assert(libhalmd.mdsim.sorts.hilbert)
 
-
+---
+-- Hilbert sort
+-- ============
 --
--- construct hilbert module
+-- This module will sort the particles in the memory by a space-filling Hilbert curve.
+-- This module will be constructed automatically by :class:`halmd.mdsim.neighbour`, i.e. manual
+-- construction is not needed.
+--
+
+---
+-- Construct Hilbert sort module.
+--
+-- :param table args: keyword arguments
+-- :param args.particle: instance of :class:`halmd.mdsim.particle`
+-- :param args.box: instance of :class:`halmd.mdsim.box`
+-- :param args.binning: instance of :class:`halmd.mdsim.binning`
+--
+-- .. method:: order
+--
+--    Sort the particles with a space filling Hilbert curve
+--
+-- .. method:: disconnect()
+--
+--    Disconnect neighbour module from core and profiler.
 --
 local M = module(function(args)
     -- dependency injection
-    local particle = assert(args.particle)
-    local box = assert(args.box)
+    local particle = utility.assert_kwarg(args, "particle")
+    local box = utility.assert_kwarg(args, "box")
     local dimension = assert(particle.dimension)
-    local binning = assert(args.binning)
-    local logger = log.logger({label = "hilbert"})
+    local binning = utility.assert_kwarg(args, "binning")
+    local logger = log.logger({label = "hilbert (" .. particle.label .. ")"})
 
-    local sort
-    if device.gpu then
-        sort = assert(hilbert_wrapper.gpu[dimension])(particle, box, logger)
-    else
-        sort = assert(hilbert_wrapper.host[dimension])(particle, box, binning, logger)
-    end
+    local self = hilbert(particle, box, logger)
 
-    return sort
+    local conn = {}
+    self.disconnect = utility.signal.disconnect(conn, "hilbert sort module")
+
+    -- connect hilbert module to profiler
+    local runtime = assert(self.runtime)
+
+    table.insert(conn, assert(profiler:on_profile(runtime.order, "order particles by permutation")))
+    table.insert(conn, assert(profiler:on_profile(runtime.map, "map particles to Hilbert curve")))
+
+    return self
 end)
-
---
--- connect runtime accumulators to module profiler
---
-function M.profile(self, profiler)
-    profiler:on_profile{self, order = "order particles by permutation"}
-    profiler:on_profile{self, map = "map particles to Hilbert curve"}
-end
-
---
--- returns module description
---
-function M.description()
-    return "Hilbert space-filling curve"
-end
 
 return M

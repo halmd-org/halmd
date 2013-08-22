@@ -1,5 +1,6 @@
 /*
  * Copyright © 2008-2010  Peter Colberg
+ * Copyright © 2013       Nicolas Höft
  *
  * This file is part of HALMD.
  *
@@ -46,8 +47,6 @@ public:
     typedef hilbert_wrapper<dimension> wrapper_type;
     typedef logger logger_type;
 
-    static char const* module_name() { return "hilbert"; }
-
     static void luaopen(lua_State* L);
 
     hilbert(
@@ -91,9 +90,9 @@ private:
     runtime runtime_;
 };
 
-} // namespace mdsim
-} // namespace gpu
 } // namespace sorts
+} // namespace gpu
+} // namespace mdsim
 } // namespace halmd
 
 #endif /* ! HALMD_MDSIM_GPU_SORTS_HILBERT_HPP */

@@ -1,5 +1,6 @@
 /*
  * Copyright © 2008-2010  Peter Colberg
+ * Copyright © 2013       Nicolas Höft
  *
  * This file is part of HALMD.
  *
@@ -27,7 +28,6 @@
 #include <halmd/utility/lua/lua.hpp>
 
 using namespace halmd::algorithm::gpu;
-using namespace std;
 
 namespace halmd {
 namespace mdsim {
@@ -46,7 +46,7 @@ hilbert<dimension, float_type>::hilbert(
   , logger_(logger)
 {
     // FIXME set Hilbert space-filling curve recursion depth
-    float_type max_length = *max_element(box_->length().begin(), box_->length().end());
+    float_type max_length = *std::max_element(box_->length().begin(), box_->length().end());
     depth_ = static_cast<unsigned int>(std::ceil(std::log(max_length) / M_LN2));
     // 32-bit integer for 2D/3D Hilbert code allows a maximum of 16/10 levels
     depth_ = std::min((dimension == 3) ? 10U : 16U, depth_);
@@ -133,32 +133,27 @@ template <int dimension, typename float_type>
 void hilbert<dimension, float_type>::luaopen(lua_State* L)
 {
     using namespace luaponte;
-    static string class_name("hilbert_" + boost::lexical_cast<string>(dimension) + "_");
     module(L, "libhalmd")
     [
         namespace_("mdsim")
         [
-            namespace_("gpu")
+            namespace_("sorts")
             [
-                namespace_("sorts")
-                [
-                    class_<hilbert, std::shared_ptr<hilbert> >(class_name.c_str())
-                        .def(constructor<
-                            std::shared_ptr<particle_type>
-                          , std::shared_ptr<box_type const>
-                          , std::shared_ptr<logger_type>
-                        >())
-                        .property("module_name", &module_name_wrapper<dimension, float_type>)
-                        .property("order", &wrap_order<hilbert>)
-                        .def("on_order", &hilbert::on_order)
-                        .scope
-                        [
-                            class_<runtime>("runtime")
-                                .def_readonly("order", &runtime::order)
-                                .def_readonly("map", &runtime::map)
-                        ]
-                        .def_readonly("runtime", &hilbert::runtime_)
-                ]
+                class_<hilbert>()
+                    .property("order", &wrap_order<hilbert>)
+                    .def("on_order", &hilbert::on_order)
+                    .scope
+                    [
+                        class_<runtime>("runtime")
+                            .def_readonly("order", &runtime::order)
+                            .def_readonly("map", &runtime::map)
+                    ]
+                    .def_readonly("runtime", &hilbert::runtime_)
+              , def("hilbert", &std::make_shared<hilbert
+                    , std::shared_ptr<particle_type>
+                    , std::shared_ptr<box_type const>
+                    , std::shared_ptr<logger_type>
+                >)
             ]
         ]
     ];
@@ -175,7 +170,7 @@ HALMD_LUA_API int luaopen_libhalmd_mdsim_gpu_sorts_hilbert(lua_State* L)
 template class hilbert<3, float>;
 template class hilbert<2, float>;
 
-} // namespace mdsim
-} // namespace gpu
 } // namespace sorts
+} // namespace gpu
+} // namespace mdsim
 } // namespace halmd

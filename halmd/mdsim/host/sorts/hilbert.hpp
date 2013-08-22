@@ -45,8 +45,6 @@ public:
     typedef host::binning<dimension, float_type> binning_type;
     typedef logger logger_type;
 
-    static char const* module_name() { return "hilbert"; }
-
     static void luaopen(lua_State* L);
 
     hilbert(

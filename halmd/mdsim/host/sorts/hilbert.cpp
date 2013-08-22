@@ -25,8 +25,6 @@
 #include <halmd/mdsim/sorts/hilbert_kernel.hpp>
 #include <halmd/utility/lua/lua.hpp>
 
-using namespace std;
-
 namespace halmd {
 namespace mdsim {
 namespace host {
@@ -50,10 +48,10 @@ hilbert<dimension, float_type>::hilbert(
     cell_array_type const& cell = read_cache(binning_->cell());
 
     // set Hilbert space-filling curve recursion depth
-    unsigned int ncell_max = *max_element(ncell.begin(), ncell.end());
+    unsigned int ncell_max = *std::max_element(ncell.begin(), ncell.end());
     unsigned int depth = static_cast<int>(std::ceil(std::log(static_cast<double>(ncell_max)) / M_LN2));
     // 32-bit integer for 2D Hilbert code allows a maximum of 16/10 levels
-    depth = min((dimension == 3) ? 10U : 16U, depth);
+    depth = std::min((dimension == 3) ? 10U : 16U, depth);
 
     LOG("vertex recursion depth: " << depth);
 
@@ -142,33 +140,28 @@ template <int dimension, typename float_type>
 void hilbert<dimension, float_type>::luaopen(lua_State* L)
 {
     using namespace luaponte;
-    static string class_name("hilbert_" + boost::lexical_cast<string>(dimension) + "_");
     module(L, "libhalmd")
     [
         namespace_("mdsim")
         [
-            namespace_("host")
+            namespace_("sorts")
             [
-                namespace_("sorts")
-                [
-                    class_<hilbert, std::shared_ptr<hilbert> >(class_name.c_str())
-                        .def(constructor<
-                            std::shared_ptr<particle_type>
-                          , std::shared_ptr<box_type const>
-                          , std::shared_ptr<binning_type>
-                          , std::shared_ptr<logger_type>
-                        >())
-                        .property("module_name", &module_name_wrapper<dimension, float_type>)
-                        .property("order", &wrap_order<hilbert>)
-                        .def("on_order", &hilbert::on_order)
-                        .scope
-                        [
-                            class_<runtime>("runtime")
-                                .def_readonly("order", &runtime::order)
-                                .def_readonly("map", &runtime::map)
-                        ]
-                        .def_readonly("runtime", &hilbert::runtime_)
-                ]
+                class_<hilbert>()
+                    .property("order", &wrap_order<hilbert>)
+                    .def("on_order", &hilbert::on_order)
+                    .scope
+                    [
+                        class_<runtime>("runtime")
+                            .def_readonly("order", &runtime::order)
+                            .def_readonly("map", &runtime::map)
+                    ]
+                    .def_readonly("runtime", &hilbert::runtime_)
+                , def("hilbert", &std::make_shared<hilbert
+                    , std::shared_ptr<particle_type>
+                    , std::shared_ptr<box_type const>
+                    , std::shared_ptr<binning_type>
+                    , std::shared_ptr<logger_type>
+                >)
             ]
         ]
     ];
