@@ -1,6 +1,7 @@
 --
--- Copyright © 2010  Peter Colberg
+-- Copyright © 2013  Felix Höfling
 -- Copyright © 2013  Nicolas Höft
+-- Copyright © 2010  Peter Colberg
 --
 -- This file is part of HALMD.
 --
@@ -31,9 +32,23 @@ local hilbert =  assert(libhalmd.mdsim.sorts.hilbert)
 -- Hilbert sort
 -- ============
 --
--- This module will sort the particles in the memory by a space-filling Hilbert curve.
--- This module will be constructed automatically by :class:`halmd.mdsim.neighbour`, i.e. manual
--- construction is not needed.
+-- This module re-orders the particle data in :class:`halmd.mdsim.particle`
+-- according to a space-filling Hilbert curve. The idea behind is that
+-- interacting particles, being close in space, are also close in memory for
+-- better cache efficiency. The module is used and constructed internally by
+-- :class:`halmd.mdsim.neighbour`, i.e. manual construction is not needed.
+--
+-- For details see:
+--
+-- - S. Aluru and F. Sevilgen, *Parallel domain decomposition and load
+--   balancing using space-filling curves,*
+--   `Proc. 4th IEEE Int. Conf. High Performance Computing, <http://dx.doi.org/10.1109/HIPC.1997.634498>`_
+--   p. 230 (1997)
+--
+-- - J. Anderson, C. D. Lorenz, and A. Travesset, *General purpose molecular
+--   dynamics simulations fully implemented on graphics processing units,*
+--   `J. Comp. Phys. <http://dx.doi.org/10.1016/j.jcp.2008.01.047>`_ **227**,
+--   5342 (2008)
 --
 
 ---
@@ -46,7 +61,7 @@ local hilbert =  assert(libhalmd.mdsim.sorts.hilbert)
 --
 -- .. method:: order
 --
---    Sort the particles with a space filling Hilbert curve
+--    Sort the particles according to a space-filling Hilbert curve.
 --
 -- .. method:: disconnect()
 --
@@ -58,12 +73,12 @@ local M = module(function(args)
     local box = utility.assert_kwarg(args, "box")
     local dimension = assert(particle.dimension)
     local binning = utility.assert_kwarg(args, "binning")
-    local logger = log.logger({label = "hilbert (" .. particle.label .. ")"})
+    local logger = log.logger({label = "Hilbert sort (" .. particle.label .. ")"})
 
     local self = hilbert(particle, box, logger)
 
     local conn = {}
-    self.disconnect = utility.signal.disconnect(conn, "hilbert sort module")
+    self.disconnect = utility.signal.disconnect(conn, "Hilbert sort module")
 
     -- connect hilbert module to profiler
     local runtime = assert(self.runtime)
