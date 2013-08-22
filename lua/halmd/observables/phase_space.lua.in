@@ -151,8 +151,9 @@ local M = module(function(args)
 
     -- construct phase space samplers
     local samplers = {}
-    for memory, phase_space in pairs(phase_space) do
-        samplers[memory] = phase_space(particle, group, box, clock, logger)
+    samplers.host = phase_space.host(particle, group, box, clock, logger)
+    if particle.memory == "gpu" then
+        samplers.gpu = phase_space.gpu(particle, group, box, clock, logger)
     end
 
     -- construct unified Lua object for host and gpu sampler
@@ -161,7 +162,7 @@ local M = module(function(args)
     self.acquire = function(self, args)
         local memory = args and args.memory
         if not memory then
-            memory = device.gpu and "gpu" or "host"
+            memory = samplers.gpu and "gpu" or "host"
         end
         local sampler = samplers[memory]
         if not sampler then
@@ -241,16 +242,16 @@ local M = module(function(args)
 end)
 
 -- grab C++ classes
-local phase_space
+local phase_space = {}
+phase_space.host = {
+    [2] = assert(libhalmd.observables.host.samples.phase_space_2_double)
+  , [3] = assert(libhalmd.observables.host.samples.phase_space_3_double)
+}
+
 if device.gpu then
-    phase_space = {
+    phase_space.gpu = {
         [2] = assert(libhalmd.observables.host.samples.phase_space_2_float)
       , [3] = assert(libhalmd.observables.host.samples.phase_space_3_float)
-    }
-else
-    phase_space = {
-        [2] = assert(libhalmd.observables.host.samples.phase_space_2_double)
-      , [3] = assert(libhalmd.observables.host.samples.phase_space_3_double)
     }
 end
 
@@ -263,8 +264,15 @@ end
 --
 --    :param table args: keyword arguments
 --    :param args.file: instance of file reader, e.g, :class:`halmd.io.readers.h5md`
---    :param string table args.fields: data field names to be read
---    :param string table args.location: location within file
+--    :param args.fields: data field names to be read
+--    :param args.location: location within file
+--    :param string args.memory: memory location of phase space sample (optional)
+--    :type args.fields: string table
+--    :type args.location: string table
+--
+--    The supported values for ``memory`` are "host" and "gpu". If ``memory``
+--    is not specified, the memory location is selected according to the
+--    compute device.
 --
 --    Returns a group reader, and a phase space sample.
 --
@@ -329,13 +337,18 @@ function M.reader(args)
     local fields = utility.assert_type(utility.assert_kwarg(args, "fields"), "table")
     local location = utility.assert_type(utility.assert_kwarg(args, "location"), "table")
 
+    local memory = args and args.memory or (device.gpu and "gpu" or "host")
+    if not phase_space[memory] then
+        error(("unsupported phase space memory type '%s'"):format(memory), 2)
+    end
+
     local self = file:reader({location = location, mode = "append"})
     local group = assert(#fields > 0) and ({next(fields)})[2] -- some field name
     local dataset = self.group:open_group(group):open_dataset("value")
     local shape = assert(dataset.shape)
     local nparticle = assert(shape[2])
     local dimension = assert(shape[3])
-    local phase_space = phase_space[dimension]
+    local phase_space = phase_space[memory][dimension]
     if not phase_space then
         error(("unsupported space dimension: %d"):format(dimension), 2)
     end
