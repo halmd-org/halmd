@@ -114,12 +114,6 @@ void hilbert<dimension, float_type>::permutation(cuda::vector<unsigned int>& g_m
     radix_sort(g_map.begin(), g_map.end(), g_index.begin());
 }
 
-template <int dimension, typename float_type>
-static char const* module_name_wrapper(hilbert<dimension, float_type> const&)
-{
-    return hilbert<dimension, float_type>::module_name();
-}
-
 template <typename sort_type>
 static std::function<void ()>
 wrap_order(std::shared_ptr<sort_type> self)

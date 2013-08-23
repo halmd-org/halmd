@@ -64,14 +64,12 @@ public:
 private:
     typedef typename particle_type::position_array_type position_array_type;
 
-    typedef utility::profiler profiler_type;
-    typedef typename profiler_type::accumulator_type accumulator_type;
-    typedef typename profiler_type::scoped_timer_type scoped_timer_type;
+    typedef utility::profiler::scoped_timer_type scoped_timer_type;
 
     struct runtime
     {
-        accumulator_type order;
-        accumulator_type map;
+        utility::profiler::accumulator_type order;
+        utility::profiler::accumulator_type map;
     };
 
     void map(cuda::vector<unsigned int>& g_map);

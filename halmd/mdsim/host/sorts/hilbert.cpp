@@ -121,12 +121,6 @@ unsigned int hilbert<dimension, float_type>::map(vector_type r, unsigned int dep
     return mdsim::sorts::hilbert_kernel::map(r, depth);
 }
 
-template <int dimension, typename float_type>
-static char const* module_name_wrapper(hilbert<dimension, float_type> const&)
-{
-    return hilbert<dimension, float_type>::module_name();
-}
-
 template <typename sort_type>
 static std::function<void ()>
 wrap_order(std::shared_ptr<sort_type> self)
