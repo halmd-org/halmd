@@ -156,11 +156,11 @@ void hilbert<dimension, float_type>::luaopen(lua_State* L)
                             .def_readonly("map", &runtime::map)
                     ]
                     .def_readonly("runtime", &hilbert::runtime_)
-                , def("hilbert", &std::make_shared<hilbert
-                    , std::shared_ptr<particle_type>
-                    , std::shared_ptr<box_type const>
-                    , std::shared_ptr<binning_type>
-                    , std::shared_ptr<logger_type>
+              , def("hilbert", &std::make_shared<hilbert
+                  , std::shared_ptr<particle_type>
+                  , std::shared_ptr<box_type const>
+                  , std::shared_ptr<binning_type>
+                  , std::shared_ptr<logger_type>
                 >)
             ]
         ]

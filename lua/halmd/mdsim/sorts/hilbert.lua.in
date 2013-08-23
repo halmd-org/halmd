@@ -71,11 +71,15 @@ local M = module(function(args)
     -- dependency injection
     local particle = utility.assert_kwarg(args, "particle")
     local box = utility.assert_kwarg(args, "box")
-    local dimension = assert(particle.dimension)
     local binning = utility.assert_kwarg(args, "binning")
     local logger = log.logger({label = "Hilbert sort (" .. particle.label .. ")"})
 
-    local self = hilbert(particle, box, logger)
+    local self
+    if particle.memory == "gpu" then
+        self = hilbert(particle, box, logger)
+    else
+        self = hilbert(particle, box, binning, logger)
+    end
 
     local conn = {}
     self.disconnect = utility.signal.disconnect(conn, "Hilbert sort module")
