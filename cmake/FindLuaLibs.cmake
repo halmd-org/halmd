@@ -83,6 +83,23 @@ if(LUA_INCLUDE_DIR AND EXISTS "${LUA_INCLUDE_DIR}/lua.h")
 
   string(REGEX REPLACE "^#define[ \t]+LUA_RELEASE[ \t]+\"Lua ([^\"]+)\".*" "\\1" LUA_VERSION_STRING "${lua_version_str}")
   unset(lua_version_str)
+
+  # the above does not work for Lua 5.2
+  if(LUA_VERSION_STRING STREQUAL "")
+    file(STRINGS "${LUA_INCLUDE_DIR}/lua.h" lua_version_str REGEX "^#define[ \t]+LUA_VERSION_MAJOR[ \t]+\".+\"")
+    string(REGEX REPLACE "^#define[ \t]+LUA_VERSION_MAJOR[ \t]+\"([^\"]+)\".*" "\\1" lua_version_major "${lua_version_str}")
+
+    file(STRINGS "${LUA_INCLUDE_DIR}/lua.h" lua_version_str REGEX "^#define[ \t]+LUA_VERSION_MINOR[ \t]+\".+\"")
+    string(REGEX REPLACE "^#define[ \t]+LUA_VERSION_MINOR[ \t]+\"([^\"]+)\".*" "\\1" lua_version_minor "${lua_version_str}")
+
+    file(STRINGS "${LUA_INCLUDE_DIR}/lua.h" lua_version_str REGEX "^#define[ \t]+LUA_VERSION_RELEASE[ \t]+\".+\"")
+    string(REGEX REPLACE "^#define[ \t]+LUA_VERSION_RELEASE[ \t]+\"([^\"]+)\".*" "\\1" lua_version_release "${lua_version_str}")
+
+    set(LUA_VERSION_STRING "${lua_version_major}.${lua_version_minor}.${lua_version_release}")
+    unset(lua_version_major)
+    unset(lua_version_minor)
+    unset(lua_version_release)
+  endif()
 endif()
 
 include(FindPackageHandleStandardArgs)
