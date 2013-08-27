@@ -45,8 +45,6 @@ public:
     typedef boost::numeric::ublas::matrix<unsigned> uint_matrix_type;
     typedef logger logger_type;
 
-    static char const* module_name() { return "modified_lennard_jones"; }
-
     static void luaopen(lua_State* L);
 
     modified_lennard_jones(

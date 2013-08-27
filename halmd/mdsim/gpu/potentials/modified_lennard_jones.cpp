@@ -139,7 +139,7 @@ void modified_lennard_jones<float_type>::luaopen(lua_State* L)
             [
                 namespace_("potentials")
                 [
-                    class_<modified_lennard_jones, std::shared_ptr<modified_lennard_jones> >(module_name())
+                    class_<modified_lennard_jones, std::shared_ptr<modified_lennard_jones> >("modified_lennard_jones")
                         .def(constructor<
                             unsigned
                           , unsigned
