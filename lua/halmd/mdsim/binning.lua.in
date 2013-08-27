@@ -35,8 +35,6 @@ if device.gpu then
     }
 end
 
-local assert = assert
-
 ---
 -- Binning
 -- ========
@@ -88,7 +86,7 @@ local M = module(function(args)
     local dimension = assert(particle.dimension)
 
     local self
-    if device.gpu then
+    if particle.memory == "gpu" then
         local occupancy = args.occupancy or assert(defaults[dimension].binning.occupancy)()
         self = binning(particle, box, r_cut, skin, logger, occupancy)
     else

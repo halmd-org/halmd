@@ -111,6 +111,12 @@ local M = module(function(args)
     if #particle ~= 2 then
         error("bad argument 'particle'", 2)
     end
+
+    local memory = particle[1].memory
+    if memory ~= particle[2].memory then
+        error("incompatible 'memory' attributes of particle instances", 2)
+    end
+
     local box = assert(args.box)
     local dimension = #box.edges
     local logger = log.logger({label = "neighbour " .. label(particle)})
@@ -127,7 +133,7 @@ local M = module(function(args)
 
     -- neighbour lists
     local displacement = mdsim.max_displacement{box = box, particle = particle[1]}
-    if device.gpu then
+    if memory == "gpu" then
         if binning then
             occupancy = occupancy or assert(defaults[dimension].from_binning.occupancy)()
             self = neighbours.from_binning(particle, {binning, binning}, displacement, box, r_cut, skin, logger, occupancy)

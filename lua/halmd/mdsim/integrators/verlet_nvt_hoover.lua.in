@@ -25,9 +25,6 @@ local device            = require("halmd.utility.device")
 local log               = require("halmd.io.log")
 local module            = require("halmd.utility.module")
 local sampler           = require("halmd.observables.sampler")
-local writers = {
-    file                = require("halmd.io.writers.file")
-}
 local utility           = require("halmd.utility")
 
 ---
@@ -48,7 +45,6 @@ local utility           = require("halmd.utility")
 
 -- grab C++ wrappers
 local verlet_nvt_hoover = assert(libhalmd.mdsim.integrators.verlet_nvt_hoover)
-local h5 = assert(libhalmd.h5)
 
 ---
 -- Construct velocity-Verlet integrator with Nosé-Hoover chain thermostat.
@@ -118,18 +114,9 @@ local h5 = assert(libhalmd.h5)
 --    By default this function is connected to :meth:`halmd.mdsim.core.on_finalize`.
 --
 local M = module(function(args)
-    local particle = args.particle
-    if not particle then
-        error("missing parameter: particle", 2)
-    end
-    local force = args and args.force
-    if not force then
-        error("missing argument 'force'", 2)
-    end
-    local box = args.box
-    if not box then
-        error("missing parameter: box", 2)
-    end
+    local particle = utility.assert_kwarg(args, "particle")
+    local force = utility.assert_kwarg(args, "force")
+    local box = utility.assert_kwarg(args, "box")
     local timestep = args.timestep
     if timestep then
         clock:set_timestep(timestep)
@@ -137,18 +124,9 @@ local M = module(function(args)
         timestep = assert(clock.timestep)
     end
 
-    local temperature = args.temperature
-    if not temperature then
-        error("missing parameter: temperature", 2)
-    end
-    local resonance_frequency = args.resonance_frequency
-    if not resonance_frequency then
-        error("missing parameter: resonance_frequency", 2)
-    end
-    local every = args.every
-    if not every then
-        error("missing parameter: every", 2)
-    end
+    local temperature = utility.assert_kwarg(args, "temperature")
+    local resonance_frequency = utility.assert_kwarg(args, "resonance_frequency")
+    local every = utility.assert_kwarg(args, "every")
 
     local logger = log.logger({label = "verlet_nvt_hoover"})
 
@@ -165,10 +143,7 @@ local M = module(function(args)
 
     self.writer = function(self, file, args)
         -- connect writer to sampler
-        local every = args.every
-        if not every then
-            error("missing parameter 'every'", 2)
-        end
+        local every = utility.assert_kwarg(args, "every")
 
         -- connect chain variables to writers of trajectory file
         local writer = file:writer{location = {"trajectory", "nose_hoover"}, mode = "append"}
@@ -199,7 +174,8 @@ local M = module(function(args)
     table.insert(conn, assert(profiler:on_profile(runtime.finalize,
         "second half-step of velocity-Verlet (+ Nosé-Hoover chain)")))
     table.insert(conn, assert(profiler:on_profile(runtime.propagate, "propagate Nosé-Hoover chain")))
-    if device.gpu then
+
+    if particle.memory == "gpu" then
         table.insert(conn, assert(profiler:on_profile{runtime.rescale,
             "rescale velocities in Nosé-Hoover thermostat"}))
     end
