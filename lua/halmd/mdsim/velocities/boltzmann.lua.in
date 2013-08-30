@@ -19,6 +19,7 @@
 
 local device            = require("halmd.utility.device")
 local log               = require("halmd.io.log")
+local utility           = require("halmd.utility")
 local module            = require("halmd.utility.module")
 local random            = require("halmd.random")
 
@@ -79,15 +80,10 @@ local boltzmann = assert(libhalmd.mdsim.velocities.boltzmann)
 --    Temperature of distribution in reduced units.
 --
 local M = module(function(args)
-    local particle = args.particle
-    if not particle then
-        error("bad argument 'particle'", 2)
-    end
-    local temperature = args.temperature
-    if not temperature then
-        error("bad argument 'temperature'", 2)
-    end
-    local rng = random.generator()
+    local particle = utility.assert_kwarg(args, "particle")
+    local temperature = utility.assert_kwarg(args, "temperature")
+
+    local rng = random.generator({memory = particle.memory})
     local label = assert(particle.label)
     local logger = log.logger({label = ("boltzmann (%s)"):format(label)})
 

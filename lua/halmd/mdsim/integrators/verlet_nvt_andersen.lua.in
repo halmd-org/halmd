@@ -99,33 +99,18 @@ local verlet_nvt_andersen = assert(libhalmd.mdsim.integrators.verlet_nvt_anderse
 --    By default this function is connected to :meth:`halmd.mdsim.core.on_finalize`.
 --
 local M = module(function(args)
-    local particle = args and args.particle
-    if not particle then
-        error("missing argument 'particle'", 2)
-    end
-    local force = args and args.force
-    if not force then
-        error("missing argument 'force'", 2)
-    end
-    local box = args.box
-    if not box then
-        error("missing argument 'box'", 2)
-    end
-    local temperature = args.temperature
-    if not temperature then
-        error("missing argument 'temperature'", 2)
-    end
-    local rate = args.rate
-    if not rate then
-        error("missing argument 'rate'", 2)
-    end
+    local particle = utility.assert_kwarg(args, "particle")
+    local force = utility.assert_kwarg(args, "force")
+    local box = utility.assert_kwarg(args, "box")
+    local temperature = utility.assert_kwarg(args, "temperature")
+    local rate = utility.assert_kwarg(args, "rate")
     local timestep = args.timestep
     if timestep then
         clock:set_timestep(timestep)
     else
         timestep = assert(clock.timestep)
     end
-    local rng = random.generator()
+    local rng = random.generator({memory = particle.memory})
     local logger = log.logger({label = "verlet_nvt_andersen"})
 
     -- construct instance

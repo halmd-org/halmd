@@ -107,26 +107,11 @@ local function round(x) return math.floor(x + 0.5) end
 --    By default this function is connected to :meth:`halmd.mdsim.core.on_finalize`.
 --
 local M = module(function(args)
-    local particle = args.particle
-    if not particle then
-        return error("missing parameter: particle")
-    end
-    local force = args and args.force
-    if not force then
-        return error("missing argument 'force'")
-    end
-    local box = args.box
-    if not box then
-        return error("missing parameter: box")
-    end
-    local temperature = args.temperature
-    if not temperature then
-        return error("missing argument 'temperature'")
-    end
-    local rate = args.rate
-    if not rate then
-        return error("missing argument 'rate'")
-    end
+    local particle = utility.assert_kwarg(args, "particle")
+    local force = utility.assert_kwarg(args, "force")
+    local box = utility.assert_kwarg(args, "box")
+    local temperature = utility.assert_kwarg(args, "temperature")
+    local rate = utility.assert_kwarg(args, "rate")
     local dimension = #box.edges
     local timestep = args.timestep
     if timestep then
@@ -135,7 +120,7 @@ local M = module(function(args)
         timestep = assert(clock.timestep)
     end
 
-    local rng = random.generator()
+    local rng = random.generator({memory = particle.memory})
     local logger = log.logger({label = "verlet_boltzmann"})
 
     local self = verlet(particle, force, box, timestep, logger)
