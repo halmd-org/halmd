@@ -121,7 +121,7 @@ local M = module(function(args)
     end
 
     local rng = random.generator({memory = particle.memory})
-    local logger = log.logger({label = "verlet_boltzmann"})
+    local logger = log.logger({label = "verlet_nvt_boltzmann"})
 
     local self = verlet(particle, force, box, timestep, logger)
 

@@ -148,7 +148,7 @@ local function liquid(args)
     })
 
     -- add velocity-Verlet integrator with Boltzmann thermostat (NVT)
-    local integrator = mdsim.integrators.verlet_boltzmann({
+    local integrator = mdsim.integrators.verlet_nvt_boltzmann({
         box = box, particle = particle, force = force
       , timestep = args.timestep, temperature = args.initial_temperature, rate = args.rate
     })
@@ -162,7 +162,7 @@ local function liquid(args)
 
     -- run remaining first half of the simulation in NVT ensemble at the target temperature
     -- FIXME provide method set_temperature()
-    integrator = mdsim.integrators.verlet_boltzmann({
+    integrator = mdsim.integrators.verlet_nvt_boltzmann({
         box = box, particle = particle, force = force
       , timestep = args.timestep, temperature = args.temperature, rate = args.rate
     })

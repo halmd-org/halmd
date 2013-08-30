@@ -38,7 +38,7 @@ local utility           = require("halmd.utility")
 --
 --    For heating or cooling a system to a nominal temperature before
 --    equilibration, we recommend the :class:`velocity-Verlet with Boltzmann
---    distribution <halmd.mdsim.integrators.verlet_boltzmann>` integrator.
+--    distribution <halmd.mdsim.integrators.verlet_nvt_boltzmann>` integrator.
 --
 
 -- grab C++ wrappers

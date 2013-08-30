@@ -128,7 +128,7 @@ local function liquid(args)
     observables.sampler:sample()
 
     -- add velocity-Verlet integrator with Boltzmann distribution
-    local integrator = mdsim.integrators.verlet_boltzmann({
+    local integrator = mdsim.integrators.verlet_nvt_boltzmann({
         box = box
       , particle = particle
       , force = force
