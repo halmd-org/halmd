@@ -80,6 +80,17 @@ function M.trans(m)
     return t
 end
 
+--
+-- returns diagonal of n⨯n matrix
+--
+function M.diag(m)
+    local t = {}
+    for i = 1, #m do
+        t[i] = m[i][i]
+    end
+    return t
+end
+
 
 local function offset_to_multi_index(offset, index, dims, dim)
     if dim == #index then
