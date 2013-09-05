@@ -1,0 +1,125 @@
+--
+-- Copyright © 2013 Nicolas Höft
+--
+-- This file is part of HALMD.
+--
+-- HALMD is free software: you can redistribute it and/or modify
+-- it under the terms of the GNU General Public License as published by
+-- the Free Software Foundation, either version 3 of the License, or
+-- (at your option) any later version.
+--
+-- This program is distributed in the hope that it will be useful,
+-- but WITHOUT ANY WARRANTY; without even the implied warranty of
+-- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+-- GNU General Public License for more details.
+--
+-- You should have received a copy of the GNU General Public License
+-- along with this program.  If not, see <http://www.gnu.org/licenses/>.
+--
+
+local utility  = require("halmd.utility")
+local module   = require("halmd.utility.module")
+local profiler = require("halmd.utility.profiler")
+local log      = require("halmd.io.log")
+
+---
+-- Tabulated External Force
+-- ========================
+--
+-- This force module enables the possibility of using a precalculated external potential.
+-- This can be useful if the external potential is known and does not change in
+-- time. The interpolation points are distributed on a uniform grid and must be
+-- calculated before usage.
+--
+-- Depending on the interpolation scheme, more than just the potential values will be needed.
+-- If the scheme needs coefficients that can be calculated from the derivatives of the
+-- potential, :mod:`halmd.mdsim.forces.tabulated_generator` can be used for the calculation
+-- of the coefficients.
+--
+-- .. note::
+--
+--    Particle species are unsupported, all particles from the given :class:`halmd.mdsim.particle`
+--    instance are treated equally.
+--
+
+-- grab C++ wrappers
+local tabulated_external = assert(libhalmd.mdsim.forces.tabulated_external)
+
+---
+-- Construct tabulated external force.
+--
+-- :param table args: keyword arguments
+-- :param args.particle: instance of :class:`halmd.mdsim.particle`
+-- :param args.box: instance of :mod:`halmd.mdsim.box`
+-- :param args.interpolation: instance of :mod:`halmd.mdsim.forces.interpolation`
+-- :returns: instance of tabulated_external force module
+--
+-- .. method:: set_coefficients(coefficients)
+--
+--    Set the interpolation coefficients as needed by the scheme
+--
+--    :param table coefficients: coefficients as needed by the interpolation scheme
+--
+-- .. method:: read_coefficients(args)
+--
+--    Read interpolation coefficients for external force from file.
+--
+--    :param table args: keyword arguments
+--    :param args.file: instance of file reader
+--    :param args.location: location within file (optional)
+--    :type args.location: string table
+--
+--    The argument ``location`` specifies a path in a structured file format
+--    like H5MD given as a table of strings. If omitted it defaults to
+--    ``{"parameters"}``.
+--
+-- .. method:: disconnect()
+--
+--    Disconnect force from profiler and particle module.
+--
+--
+local M = module(function(args)
+    local particle = utility.assert_kwarg(args, "particle")
+    local box = utility.assert_kwarg(args, "box")
+    local interpolation = utility.assert_kwarg(args, "interpolation")
+
+    local label = ("tabulated_external force (%s)"):format(assert(particle.label))
+    local logger = log.logger({label = label})
+
+    interpolation:log(logger)
+
+    -- construct force module
+    local self = tabulated_external(particle, box, interpolation, logger)
+
+    self.read_coefficients = function(self, args)
+        local file = utility.assert_kwarg(args, "file")
+        local location = utility.assert_type(
+            args.location or {"parameters"}
+          , "table")
+        local reader = file:reader({location = location, mode = "truncate"})
+        local array, array_to_sample = assert(self.coefficients)(self)
+        reader:on_read(array, {"tabulated_coefficients"})
+        reader:on_append_read(array_to_sample)
+        reader:read()
+    end
+
+    -- sequence of signal connections
+    local conn = {}
+    self.disconnect = utility.signal.disconnect(conn, "force module")
+
+    -- test if the cache is up-to-date
+    table.insert(conn, assert(particle:on_prepend_force(function() self:check_cache() end)))
+    -- apply the force (if necessary)
+    table.insert(conn, assert(particle:on_force(function() self:apply() end)))
+
+    -- connect to profiler
+    table.insert(conn, assert(profiler:on_profile(assert(self.runtime).compute, "computation of tabulated external force")))
+
+    return self
+end)
+
+--TODO: move generator as module function?
+-- function M.generator(args) [..}
+
+
+return M
