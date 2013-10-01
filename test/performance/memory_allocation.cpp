@@ -23,6 +23,7 @@
 #include <cmath>
 
 #include <cuda_wrapper/cuda_wrapper.hpp>
+#include <halmd/utility/raw_array.hpp>
 #include <halmd/utility/timer.hpp>
 #include <test/tools/ctest.hpp>
 #include <test/tools/cuda.hpp>
@@ -49,6 +50,7 @@ void vector(size_t size)
     double alloc_device = 0;
     double alloc_host = 0;
     double alloc_host_stl = 0;
+    double alloc_host_raw = 0;
     double copy = 0;
     double copy_stl = 0;
 
@@ -70,6 +72,11 @@ void vector(size_t size)
             std::vector<char> stl_array(size);
             alloc_host_stl += timer.elapsed();
 
+            // allocate conventional host memory without initialisation of elements
+            timer.restart();
+            halmd::raw_array<char> raw_array(size);
+            alloc_host_raw += timer.elapsed();
+
             // copy from device to host
             timer.restart();
             cuda::copy(g_array, h_array);
@@ -83,11 +90,13 @@ void vector(size_t size)
         alloc_device /= count;
         alloc_host /= count;
         alloc_host_stl /= count;
+        alloc_host_raw /= count;
         copy /= count;
         copy_stl /= count;
         BOOST_TEST_MESSAGE("  allocation of " << size << " bytes on the device: " << alloc_device * 1e3 << " ms");
         BOOST_TEST_MESSAGE("  allocation of " << size << " bytes on the host (page-locked): " << alloc_host * 1e3 << " ms");
         BOOST_TEST_MESSAGE("  allocation of " << size << " bytes on the host (STL): " << alloc_host_stl * 1e3 << " ms");
+        BOOST_TEST_MESSAGE("  allocation of " << size << " bytes on the host (raw): " << alloc_host_raw * 1e3 << " ms");
         BOOST_TEST_MESSAGE("  copying of " << size << " bytes (device → host): " << copy * 1e3 << " ms");
         BOOST_TEST_MESSAGE("  copying of " << size << " bytes (host → host): " << copy_stl * 1e3 << " ms");
     }
