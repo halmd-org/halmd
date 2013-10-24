@@ -108,7 +108,7 @@ local function liquid(args)
     -- H5MD file writer
     local file = writers.h5md({path = ("%s.h5"):format(args.output)})
     -- write box specification to H5MD file
-    box:writer(file)
+    box:writer({file = file, location = {"observables"}})
 
     -- sample macroscopic state variables for all particles.
     if args.sampling.state_vars > 0 then

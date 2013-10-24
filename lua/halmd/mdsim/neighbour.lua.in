@@ -118,7 +118,7 @@ local M = module(function(args)
     end
 
     local box = assert(args.box)
-    local dimension = #box.edges
+    local dimension = #box:edges()
     local logger = log.logger({label = "neighbour " .. label(particle)})
     local occupancy = args.occupancy -- may be nil
 

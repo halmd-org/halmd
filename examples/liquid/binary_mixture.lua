@@ -62,7 +62,7 @@ local function liquid(args)
     local dimension = assert(samples.A.dimension)
 
     -- read edge vectors of simulation domain from file
-    local edges = mdsim.box.reader(file)
+    local edges = mdsim.box.reader({file = file})
     -- create simulation domain with periodic boundary conditions
     local box = mdsim.box({edges = edges})
 
@@ -108,7 +108,7 @@ local function liquid(args)
     -- H5MD file writer
     local file = writers.h5md({path = ("%s.h5"):format(args.output)})
     -- write box specification to H5MD file
-    box:writer(file)
+    box:writer({file = file, location = {"observables"}})
 
     -- set up wavevector grid compatible with the periodic simulation box
     -- if the computation of structural information is requested

@@ -69,7 +69,7 @@ local function lennard_jones(args)
     -- H5MD file writer
     local file = writers.h5md({path = ("%s.h5"):format(args.output)})
     -- write box specification to H5MD file
-    box:writer(file)
+    box:writer({file = file, location = {"observables"}})
 
     -- sample group of all particles
     local all_group = mdsim.particle_groups.all({particle = particle})

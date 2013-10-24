@@ -18,9 +18,10 @@
 -- along with this program.  If not, see <http://www.gnu.org/licenses/>.
 --
 
-local module            = require("halmd.utility.module")
-local numeric           = require("halmd.utility.numeric")
-local sampler           = require("halmd.observables.sampler")
+local utility = require("halmd.utility")
+local module  = require("halmd.utility.module")
+local numeric = require("halmd.utility.numeric")
+local sampler = require("halmd.observables.sampler")
 
 -- grab C++ wrappers
 local box = {
@@ -58,9 +59,17 @@ local h5 = assert(libhalmd.h5)
 --
 --    Space dimension of the simulation box as a number.
 --
--- .. attribute:: edges
+-- .. attribute:: length
 --
---    Edge vectors as a matrix.
+--    Edge lengths as a sequence.
+--
+-- .. attribute:: volume
+--
+--    Box volume.
+--
+-- .. method:: edges()
+--
+--    Returns the edge vectors as a matrix.
 --
 --    For a cuboid simulation domain, ``edges`` is equal to ::
 --
@@ -68,43 +77,49 @@ local h5 = assert(libhalmd.h5)
 --        {0, length[2], 0},
 --        {0, 0, length[3]}}
 --
--- .. attribute:: length
+-- .. method:: origin()
 --
---    Edge lengths as a sequence.
+--    Returns the coordinates of the lowest corner of the box.
 --
--- .. attribute:: origin
---
---    Coordinates of the lowest corner of the box.
---
--- .. method:: writer(file)
+-- .. method:: writer(args)
 --
 --    Write box specification to file.
 --
 --    http://nongnu.org/h5md/draft.html#box-specification
 --
---    :param file: instance of file writer
+--    :param table args: keyword arguments
+--    :param args.writer: instance of group writer (optional)
+--    :param args.file: instance of H5MD file (optional)
+--    :param args.location: location within file (optional)
+--    :type args.location: string table
+--
 --    :returns: instance of group writer
 --
---    Note that the box specification will not be written immediately,
---    but upon the start of the simulation. The writer is connected
---    to the on_start signal of sampler.
+--    If the argument ``writer`` is present, a box varying in time is assumed
+--    and the box data are written as a time series upon every invocation of
+--    writer:write(). Sharing the same writer instance enables hard-linking of
+--    the datasets ``step`` and ``time``.
+--
+--    Otherwise, a ``file`` instance along with a ``location`` must be given.
+--    The current box information is immediately written to the subgroup
+--    ``"box"`` as time-independent data.
+--
+--    The argument ``location`` specifies a path in a structured file format
+--    like H5MD given as a table of strings, the group name ``"box"`` is
+--    appended.
 --
 local M = module(function(args)
     local edges = args and args.edges
     if not edges then
-        local length = args and args.length
-        if type(length) == "table" then
-            -- construct edge vectors from edge lengths of a cuboid domain
-            local dimension = #length
-            edges = numeric.scalar_matrix(dimension, dimension, 0)
-            for i = 1, dimension do
-                edges[i][i] = length[i]
-            end
+        local length = utility.assert_type(utility.assert_kwarg(args, "length"), "table")
+        -- construct edge vectors from edge lengths of a cuboid domain
+        local dimension = #length
+        edges = numeric.scalar_matrix(dimension, dimension, 0)
+        for i = 1, dimension do
+            edges[i][i] = length[i]
         end
     end
-    if type(edges) ~= "table" then
-        error("bad argument 'edges' or 'length'", 2)
-    end
+    utility.assert_type(edges, "table")
 
     local dimension = #edges
     local box = box[dimension]
@@ -113,22 +128,49 @@ local M = module(function(args)
     end
 
     -- construct box from edge vectors
-    local self = box(edges)
+    local box = box(edges)
 
     -- store space dimension
-    self.dimension = property(function(self) return dimension end)
+    box.dimension = property(function(self) return dimension end)
 
-    self.writer = function(self, file)
-        local writer = file:writer({location = {"observables", "box"}, mode = "truncate"})
-        local group = assert(writer.group)
-        group:write_attribute("type", h5.string(), "cuboid")
-        writer:on_write(box.edges(self), {"edges"})
-        writer:on_write(box.origin(self), {"offset"})
-        sampler:on_start(writer.write)
+    box.writer = function(self, args)
+        local writer = args and args.writer
+        local write_once = false;
+        if not writer then
+            -- assume that the box is fixed in time and construct suitable writer
+            local file = utility.assert_kwarg(args, "file")
+            local location = utility.assert_type(utility.assert_kwarg(args, "location"), "table")
+
+            -- TODO hard-link static box groups at different locations
+            writer = file:writer({location = location, mode = "truncate"})
+            write_once = true;
+        end
+
+        -- create box group
+        local group = assert(writer.group):open_group("box")
+        group:write_attribute("dimension", h5.int(), dimension)
+
+        -- store boundary condition
+        local boundary = {}
+        for i = 1, dimension do
+            boundary[i] = "periodic"
+        end
+        group:write_attribute("boundary", h5.string(), boundary[1])
+--        FIXME support string arrays in h5xx
+--        assert(writer.group):open_group("box"):write_attribute("boundary", h5.string_array(), boundary)
+
+        -- register edges and origin for writing
+        writer:on_write(self.edges, {"box", "edges"})
+        writer:on_write(self.origin, {"box", "offset"})
+
+        if write_once then
+            writer:write()
+        end
+
         return writer
     end
 
-    return self
+    return box
 end)
 
 ---
@@ -142,19 +184,18 @@ end)
 -- The return value may be used to restore the domain::
 --
 --    local file = readers.h5md({path = args.trajectory})
---    local edges = mdsim.box.reader(file)
+--    local edges = mdsim.box.reader({file = file})
 --    local box = mdsim.box({edges = edges})
 --
-function M.reader(file)
-    if not file then
-        error("bad argument 'file'", 2)
-    end
-    local self = file:reader({location = {"observables", "box"}, mode = "truncate"})
+function M.reader(args)
+    local file = utility.assert_kwarg(args, "file")
+    local location = utility.assert_type(
+        args.location or {"observables", "box"}
+      , "table")
+
+    local self = file:reader({location = location, mode = "truncate"}) -- FIXME mode depends on data present
     local group = assert(self.group)
-    local geometry = group:read_attribute("type", h5.string())
-    if geometry ~= "cuboid" then
-        error(("unsupported geometry: %s"):format(geometry), 2)
-    end
+    local boundary = group:read_attribute("boundary", h5.string())
     local dataset = self.group:open_dataset("edges")
     local shape = assert(dataset.shape)
     local dimension = assert(shape[1])
@@ -162,10 +203,10 @@ function M.reader(file)
     if not box then
         error(("unsupported dimension: %d"):format(dimension), 2)
     end
-    local box = {edges = box.make_edges()}
-    self:on_read(box.edges, {"edges"})
+    local m = { edges = box.make_edges() }
+    self:on_read(m.edges, {"edges"})
     self:read()
-    return box:edges()
+    return m:edges()
 end
 
 return M

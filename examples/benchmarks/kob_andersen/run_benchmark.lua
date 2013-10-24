@@ -58,7 +58,7 @@ local function kob_andersen(args)
     end
 
     -- read edge vectors of simulation domain from file
-    local edges = mdsim.box.reader(file)
+    local edges = mdsim.box.reader({file = file})
     -- create simulation box
     local box = mdsim.box({edges = edges})
 
@@ -68,7 +68,7 @@ local function kob_andersen(args)
     -- open H5MD file writer
     local file = writers.h5md({path = ("%s.h5"):format(args.output)})
     -- write box specification to H5MD file
-    box:writer(file)
+    box:writer({file = file, location = {"observables"}})
 
     -- create system state
     local particle = mdsim.particle({box = box, particles = nparticle, species = 2})

@@ -173,7 +173,7 @@ local M = module(function(args)
     end
 
     -- select particle class
-    local dimension = #box.edges
+    local dimension = #box:edges()
     local particle = assert(particle[memory][dimension])
 
     -- construct particle instance

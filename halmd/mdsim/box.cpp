@@ -121,15 +121,13 @@ void box<dimension>::luaopen(lua_State* L)
         [
             class_<box, std::shared_ptr<box> >(class_name.c_str())
                 .def(constructor<matrix_type const&>())
+                .property("edges", &wrap_edges<box>)
+                .property("origin", &wrap_origin<box>)
                 .property("length", &box::length)
                 .property("volume", &box::volume)
-                .property("origin", &box::origin)
-                .property("edges", &box::edges)
                 .scope
                 [
-                    def("edges", &wrap_edges<box>)
-                  , def("origin", &wrap_origin<box>)
-                  , def("make_edges", &make_edges<box>)
+                    def("make_edges", &make_edges<box>)
                 ]
         ]
     ];

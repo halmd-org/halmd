@@ -112,7 +112,7 @@ local M = module(function(args)
     local box = utility.assert_kwarg(args, "box")
     local temperature = utility.assert_kwarg(args, "temperature")
     local rate = utility.assert_kwarg(args, "rate")
-    local dimension = #box.edges
+    local dimension = #box:edges()
     local timestep = args.timestep
     if timestep then
         clock:set_timestep(timestep)
