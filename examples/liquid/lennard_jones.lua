@@ -39,7 +39,7 @@ local function liquid(args)
 
     -- construct a phase space reader and sample
     local reader, sample = observables.phase_space.reader({
-        file = file, location = {"trajectory", "all"}, fields = {"position", "velocity", "species", "mass"}
+        file = file, location = {"particles", "all"}, fields = {"position", "velocity", "species", "mass"}
     })
     -- read phase space sample at last step in file
     reader:read_at_step(-1)
@@ -244,7 +244,7 @@ local function parse_args()
             error(("not an H5MD file: %s"):format(value), 0)
         end
         args[key] = value
-    end, help = "trajectory file name"})
+    end, help = "H5MD trajectory file"})
 
     parser:add_argument("cutoff", {type = "number", default = math.pow(2, 1 / 6), help = "potential cutoff radius"})
     parser:add_argument("smoothing", {type = "number", default = 0.005, help = "cutoff smoothing parameter"})

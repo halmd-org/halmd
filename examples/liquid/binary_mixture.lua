@@ -37,16 +37,16 @@ local function liquid(args)
     -- open H5MD trajectory file for reading
     local file = readers.h5md({path = args.trajectory})
 
-    local trajectory = file.root:open_group("trajectory")
     local samples = {}
     local nparticle = 0
     local nspecies = 0
     local label = "A"
-    while trajectory:exists_group(label) do
+    local group = file.root:open_group("particles")
+    while group:exists_group(label) do
         -- construct a phase space reader and sample
         local reader, sample = observables.phase_space.reader({
             file = file
-          , location = {"trajectory", label}
+          , location = {"particles", label}
           , fields = {"position", "velocity", "species", "mass"}
         })
         samples[label] = sample
@@ -58,6 +58,7 @@ local function liquid(args)
         nspecies = nspecies + 1
         label = string.char(string.byte(label) + 1)
     end
+    local group = nil -- let garbage collector close the HDF5 group (hopefully)
     local dimension = assert(samples.A.dimension)
 
     -- read edge vectors of simulation domain from file
@@ -262,7 +263,7 @@ local function parse_args()
             error(("not an H5MD file: %s"):format(value), 0)
         end
         args[key] = value
-    end, help = "trajectory file name"})
+    end, help = "H5MD trajectory file"})
 
     parser:add_argument("time", {type = "number", default = 1000, help = "integration time"})
     parser:add_argument("timestep", {type = "number", default = 0.001, help = "integration time step"})

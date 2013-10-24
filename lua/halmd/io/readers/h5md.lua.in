@@ -126,7 +126,7 @@ end)
 --    local parser = halmd.utility.program_options.argument_parser()
 --
 --    parser:add_argument("trajectory", {
---        help = "trajectory file name"
+--        help = "H5MD trajectory file"
 --      , type = "string"
 --      , required = true
 --      , action = function(args, key, value)

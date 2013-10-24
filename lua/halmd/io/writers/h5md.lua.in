@@ -72,7 +72,7 @@ local type = type
 --
 --    Example for creating and using a truncate writer::
 --
---       local writer = file:writer({location = {"trajectory", "box"}, mode = "truncate"})
+--       local writer = file:writer({location = {"particles", "box"}, mode = "truncate"})
 --       writer:on_write(box.origin, {"offset"})
 --       writer:on_write(box.edges, {"edges"})
 --

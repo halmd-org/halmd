@@ -335,10 +335,10 @@ end
 --
 -- Example::
 --
---    parser:add_argument("filename", {type = "string", action = function(args, key, value)
+--    parser:add_argument("output", {type = "string", action = function(args, key, value)
 --       -- substitute current time
 --       args[key] = os.date(value)
---    end, default = "halmd_%Y%m%d_%H%M%S.trj", help = "trajectory filename"})
+--    end, default = "halmd_%Y%m%d_%H%M%S.h5", help = "H5MD output file"})
 --
 function argument_parser:add_argument(name, args)
     if not name then

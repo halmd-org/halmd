@@ -40,10 +40,9 @@ local function lennard_jones(args)
     -- open H5MD trajectory file and read phase space data for A and B particles
     local file = readers.h5md({path = args.trajectory})
 
-    local trajectory = file.root:open_group("trajectory")
     -- construct a phase space reader and sample
     local reader, sample = observables.phase_space.reader({
-        file = file, location = {"trajectory", "all"}, fields = {"position", "velocity", "species", "mass"}
+        file = file, location = {"particles", "all"}, fields = {"position", "velocity", "species", "mass"}
     })
     -- read phase space sample at last step in file
     log.info("number of particles: %d", sample.nparticle)
@@ -115,7 +114,7 @@ local function parse_args()
             error(("not an H5MD file: %s"):format(value), 0)
         end
         args[key] = value
-    end, help = "trajectory file name"})
+    end, help = "H5MD trajectory file"})
 
     parser:add_argument("count", {type = "number", default = 5, help = "number of repetitions"})
 

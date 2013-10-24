@@ -106,7 +106,7 @@ end
 --
 --    Write trajectory of particle group to file.
 --
---    http://nongnu.org/h5md/draft.html#trajectory-group
+--    http://nongnu.org/h5md/draft.html#particles-group
 --
 --    :param table args: keyword arguments
 --    :param args.file: instance of file writer
@@ -127,7 +127,7 @@ end
 --
 --    The argument ``location`` specifies a path in a structured file format
 --    like H5MD given as a table of strings. If omitted it defaults to
---    ``{"trajectory", group.label}``.
+--    ``{"particles", group.label}``.
 --
 --    If ``every`` is not specified or 0, a phase space sample will be written
 --    at the start and end of the simulation.
@@ -191,7 +191,7 @@ local M = module(function(args)
         local file = utility.assert_kwarg(args, "file")
         local fields = utility.assert_type(utility.assert_kwarg(args, "fields"), "table")
         local location = utility.assert_type(
-            args.location or {"trajectory", assert(self.group.label)}
+            args.location or {"particles", assert(self.group.label)}
           , "table")
         local every = args.every
 
@@ -258,9 +258,9 @@ end
 ---
 -- .. class:: reader(file, args)
 --
---    Construct reader for given trajectory group.
+--    Construct reader for given particles group.
 --
---    http://nongnu.org/h5md/draft.html#trajectory-group
+--    http://nongnu.org/h5md/draft.html#particles-group
 --
 --    :param table args: keyword arguments
 --    :param args.file: instance of file reader, e.g, :class:`halmd.io.readers.h5md`
@@ -281,7 +281,7 @@ end
 --    :meth:`halmd.observables.phase_space:writer` for details.
 --
 --    The argument ``location`` specifies a path in a structured file format
---    like H5MD given as a table of strings, for example ``{"trajectory", group
+--    like H5MD given as a table of strings, for example ``{"particles", group
 --    label}``.
 --
 --    Construction of the reader module opens the file for inspection of the
@@ -293,7 +293,7 @@ end
 --
 --       local file = halmd.io.readers.h5md({path = "input.h5"})
 --       local reader, sample = halmd.observables.phase_space.reader({
---          file = file, fields = {"position"}, location = {"trajectory", "all"}
+--          file = file, fields = {"position"}, location = {"particles", "all"}
 --       })
 --       reader:read_at_step(0)
 --       local nparticle = assert(sample.size)

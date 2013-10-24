@@ -40,14 +40,13 @@ local function kob_andersen(args)
     -- open H5MD trajectory file and read phase space data for A and B particles
     local file = readers.h5md({path = args.trajectory})
 
-    local trajectory = file.root:open_group("trajectory")
     local samples = {}
     local nparticle = 0
     for i, label in ipairs({'A', 'B'}) do
         -- construct a phase space reader and sample
         local reader, sample = observables.phase_space.reader({
             file = file
-          , location = {"trajectory", label}
+          , location = {"particles", label}
           , fields = {"position", "velocity", "species", "mass"}
         })
         samples[label] = sample
@@ -136,7 +135,7 @@ local function parse_args()
             error(("not an H5MD file: %s"):format(value), 0)
         end
         args[key] = value
-    end, help = "trajectory file name"})
+    end, help = "H5MD trajectory file"})
 
     parser:add_argument("count", {type = "number", default = 5, help = "number of repetitions"})
 

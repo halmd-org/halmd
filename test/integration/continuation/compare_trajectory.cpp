@@ -47,8 +47,8 @@ BOOST_AUTO_TEST_CASE( compare_trajectory )
     H5::H5File file2(arg[2], H5F_ACC_RDONLY);
     hssize_t offset1 = boost::lexical_cast<hssize_t>(arg[3]);
     hssize_t offset2 = boost::lexical_cast<hssize_t>(arg[4]);
-    H5::Group trajectory1 = file1.openGroup("trajectory");
-    H5::Group trajectory2 = file2.openGroup("trajectory");
+    H5::Group trajectory1 = file1.openGroup("particles");
+    H5::Group trajectory2 = file2.openGroup("particles");
 
     unsigned int ngroup = trajectory1.getNumObjs();
     for (unsigned int i = 0; i < ngroup; ++i) {
