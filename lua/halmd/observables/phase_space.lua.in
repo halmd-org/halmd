@@ -137,14 +137,8 @@ end
 --       Disconnect phase_space writer from observables sampler.
 --
 local M = module(function(args)
-    local group = args.group
-    if not group then
-        error("missing parameter 'group'", 2)
-    end
-    local box = args.box
-    if not box then
-        error("missing parameter 'box'", 2)
-    end
+    local group = utility.assert_kwarg(args, "group")
+    local box = utility.assert_kwarg(args, "box")
     local particle = assert(group.particle)
     local label = assert(group.label)
     local logger = log.logger({label = ("phase_space (%s)"):format(label)})
@@ -205,6 +199,10 @@ local M = module(function(args)
             writer:on_write(assert(self[v])(), {name})
         end
 
+        -- store box information
+--        box:writer({file = file, location = location}) -- box is fixed in time
+        box:writer({writer = writer}) -- box is variable in time
+
         -- sequence of signal connections
         local conn = {}
         writer.disconnect = utility.signal.disconnect(conn, "phase_space writer")
@@ -256,7 +254,7 @@ if device.gpu then
 end
 
 ---
--- .. class:: reader(file, args)
+-- .. class:: reader(args)
 --
 --    Construct reader for given particles group.
 --

@@ -1,4 +1,5 @@
 /*
+ * Copyright © 2013 Felix Höfling
  * Copyright © 2012 Peter Colberg
  *
  * This file is part of HALMD.
@@ -28,13 +29,60 @@
 
 #include <vector>
 
+void compare_datasets(H5::DataSet const& ds1, H5::DataSet const& ds2, hssize_t offset1, hssize_t offset2)
+{
+    std::vector<hsize_t> dims(ds1.getSpace().getSimpleExtentNdims());
+    ds1.getSpace().getSimpleExtentDims(&*dims.begin());
+
+    BOOST_REQUIRE( dims.size() == 2 || dims.size() == 3 );
+    if (dims.size() == 2) {
+        // compare scalar mass, species, …
+        // assumes lossless conversion from integer to floating-point
+        std::vector<double> array1, array2;
+        h5xx::read_chunked_dataset(ds1, array1, offset1);
+        h5xx::read_chunked_dataset(ds2, array2, offset2);
+        BOOST_CHECK_EQUAL_COLLECTIONS(
+            array1.begin()
+          , array1.end()
+          , array2.begin()
+          , array2.end()
+        );
+    }
+    else if (dims.size() == 3) {
+        // compare 2 or 3-dimensional positions, velocities, …
+        BOOST_REQUIRE( dims[2] == 2 || dims[2] == 3 );
+        if (dims[2] == 3) {
+            std::vector<halmd::fixed_vector<double, 3> > array1, array2;
+            h5xx::read_chunked_dataset(ds1, array1, offset1);
+            h5xx::read_chunked_dataset(ds2, array2, offset2);
+            BOOST_CHECK_EQUAL_COLLECTIONS(
+                array1.begin()
+              , array1.end()
+              , array2.begin()
+              , array2.end()
+            );
+        }
+        else if (dims[2] == 2) {
+            std::vector<halmd::fixed_vector<double, 2> > array1, array2;
+            h5xx::read_chunked_dataset(ds1, array1, offset1);
+            h5xx::read_chunked_dataset(ds2, array2, offset2);
+            BOOST_CHECK_EQUAL_COLLECTIONS(
+                array1.begin()
+              , array1.end()
+              , array2.begin()
+              , array2.end()
+            );
+        }
+    }
+}
+
 /**
- * This test case compares two H5MD trajectory groups given a pair of
+ * This test case compares two H5MD particles groups given a pair of
  * H5MD files and dataset offsets. The comparison is binary exact, which
  * assumes reproducible floating-point operations used in the periodic
  * extension of particle positions for writing.
  */
-BOOST_AUTO_TEST_CASE( compare_trajectory )
+BOOST_AUTO_TEST_CASE( compare_particles )
 {
     using namespace boost::unit_test::framework;
     std::vector<std::string> arg(
@@ -58,52 +106,24 @@ BOOST_AUTO_TEST_CASE( compare_trajectory )
 
         unsigned int narray = group1.getNumObjs();
         for (unsigned int j = 0; j < narray; ++j) {
-            H5::DataSet value1 = group1.openGroup(group1.getObjnameByIdx(j)).openDataSet("value");
-            BOOST_TEST_MESSAGE( "dataset " << h5xx::path(value1) );
-            H5::DataSet value2 = group2.openGroup(group1.getObjnameByIdx(j)).openDataSet("value");
+            H5::Group subgroup1 = group1.openGroup(group1.getObjnameByIdx(j));
+            H5::Group subgroup2 = group2.openGroup(group2.getObjnameByIdx(j));
+            if (group1.getObjnameByIdx(j) == "box") {
+                H5::DataSet value1 = subgroup1.openGroup("edges").openDataSet("value");
+                BOOST_TEST_MESSAGE( "dataset " << h5xx::path(value1) );
+                H5::DataSet value2 = subgroup2.openGroup("edges").openDataSet("value");
+                compare_datasets(value1, value2, offset1, offset2);
 
-            std::vector<hsize_t> dims(value1.getSpace().getSimpleExtentNdims());
-            value1.getSpace().getSimpleExtentDims(&*dims.begin());
-
-            BOOST_REQUIRE( dims.size() == 2 || dims.size() == 3 );
-            if (dims.size() == 2) {
-                // compare scalar mass, species, …
-                // assumes lossless conversion from integer to floating-point
-                std::vector<double> array1, array2;
-                h5xx::read_chunked_dataset(value1, array1, offset1);
-                h5xx::read_chunked_dataset(value2, array2, offset2);
-                BOOST_CHECK_EQUAL_COLLECTIONS(
-                    array1.begin()
-                  , array1.end()
-                  , array2.begin()
-                  , array2.end()
-                );
+                value1 = subgroup1.openGroup("offset").openDataSet("value");
+                BOOST_TEST_MESSAGE( "dataset " << h5xx::path(value1) );
+                value2 = subgroup2.openGroup("offset").openDataSet("value");
+                compare_datasets(value1, value2, offset1, offset2);
             }
-            else if (dims.size() == 3) {
-                // compare 2 or 3-dimensional positions, velocities, …
-                BOOST_REQUIRE( dims[2] == 2 || dims[2] == 3 );
-                if (dims[2] == 3) {
-                    std::vector<halmd::fixed_vector<double, 3> > array1, array2;
-                    h5xx::read_chunked_dataset(value1, array1, offset1);
-                    h5xx::read_chunked_dataset(value2, array2, offset2);
-                    BOOST_CHECK_EQUAL_COLLECTIONS(
-                        array1.begin()
-                      , array1.end()
-                      , array2.begin()
-                      , array2.end()
-                    );
-                }
-                else if (dims[2] == 2) {
-                    std::vector<halmd::fixed_vector<double, 2> > array1, array2;
-                    h5xx::read_chunked_dataset(value1, array1, offset1);
-                    h5xx::read_chunked_dataset(value2, array2, offset2);
-                    BOOST_CHECK_EQUAL_COLLECTIONS(
-                        array1.begin()
-                      , array1.end()
-                      , array2.begin()
-                      , array2.end()
-                    );
-                }
+            else {
+                H5::DataSet value1 = subgroup1.openDataSet("value");
+                BOOST_TEST_MESSAGE( "dataset " << h5xx::path(value1) );
+                H5::DataSet value2 = subgroup2.openDataSet("value");
+                compare_datasets(value1, value2, offset1, offset2);
             }
         }
     }
