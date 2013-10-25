@@ -1,5 +1,6 @@
 /*
- * Copyright © 2011  Peter Colberg
+ * Copyright © 2013 Felix Höfling
+ * Copyright © 2011 Peter Colberg
  *
  * This file is part of HALMD.
  *
@@ -39,16 +40,22 @@ namespace h5md {
 /**
  * This overwrites any existing file at the given path.
  */
-file::file(string const& path)
+file::file(string const& path, string const& author_name, string const& author_email)
 {
     file_ = H5::H5File(path, H5F_ACC_TRUNC);
 
-    H5::Group attr = file_.createGroup("h5md");
-    h5xx::write_attribute(attr, "creation_time", time(NULL));
-    h5xx::write_attribute(attr, "creator", PROGRAM_NAME);
-    h5xx::write_attribute(attr, "creator_version", PROGRAM_VERSION);
-    h5xx::write_attribute(attr, "version", file::version());
-    h5xx::write_attribute(attr, "author", file::author());
+    H5::Group h5md = file_.createGroup("h5md");
+    h5xx::write_attribute(h5md, "version", file::version());
+
+    H5::Group creator = h5md.createGroup("creator");
+    h5xx::write_attribute(creator, "name", PROGRAM_NAME);
+    h5xx::write_attribute(creator, "version", PROGRAM_VERSION);
+
+    H5::Group author = h5md.createGroup("author");
+    h5xx::write_attribute(author, "name", author_name.empty() ? realname() : author_name);
+    if (!author_email.empty()) {
+        h5xx::write_attribute(author, "email", author_email);
+    }
 
     LOG("write to H5MD file: " << absolute_path(file_.getFileName()));
 }
@@ -76,13 +83,8 @@ string file::path() const
 
 file::version_type file::version()
 {
-    version_type version = {{ 0, 0 }};
+    version_type version = {{ 1, 0 }};
     return version;
-}
-
-std::string file::author()
-{
-    return realname();
 }
 
 void file::luaopen(lua_State* L)
@@ -97,7 +99,7 @@ void file::luaopen(lua_State* L)
                 namespace_("h5md")
                 [
                     class_<file, std::shared_ptr<file> >("file")
-                        .def(constructor<string const&>())
+                        .def(constructor<string const&, string const&, string const&>())
                         .def("flush", &file::flush)
                         .def("close", &file::close)
                         .property("root", &file::root)

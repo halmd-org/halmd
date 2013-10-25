@@ -1,5 +1,6 @@
 --
--- Copyright © 2010-2011  Peter Colberg
+-- Copyright © 2013      Felix Höfling
+-- Copyright © 2010-2011 Peter Colberg
 --
 -- This file is part of HALMD.
 --
@@ -17,19 +18,13 @@
 -- along with this program.  If not, see <http://www.gnu.org/licenses/>.
 --
 
-local module            = require("halmd.utility.module")
 local clock             = require("halmd.mdsim.clock")
+local module            = require("halmd.utility.module")
 local posix_signal      = require("halmd.utility.posix_signal")
+local utility           = require("halmd.utility")
 
 -- grab C++ modules
 local h5md = libhalmd.io.writers.h5md
-local h5 = libhalmd.h5
--- grab standard library
-local assert = assert
-local error = error
-local io = io
-local setmetatable = setmetatable
-local type = type
 
 ---
 -- H5MD Writer
@@ -45,11 +40,15 @@ local type = type
 --
 -- :param table args: keyword arguments
 -- :param string args.path: pathname of output file
+-- :param string args.email: email address of file author *(optional)*
 -- :returns: instance of file writer
 --
--- Create the output file and writes the H5MD attribute group.
+-- Create the output file and writes the H5MD metadata.
 --
 -- http://nongnu.org/h5md/draft.html#global-attributes
+--
+-- The author name is retrieved from the password file entry for the real user
+-- id of the calling process.
 --
 -- .. warning:: The output file will be truncated if it exists.
 --
@@ -103,16 +102,13 @@ local type = type
 --    Filename of the file.
 --
 local M = module(function(args)
-    local path = args.path
-    if not path then
-        error("missing argument 'path'", 2)
-    end
-    local file = h5md.file(path)
+    local path = utility.assert_kwarg(args, "path")
+    local email = args.email or ""
+    local file = h5md.file(path, "", email) -- retrieve author name automatically if field is empty
 
     file.writer = function(self, args)
-        assert(type(args) == "table", "missing argument table")
+        local mode = utility.assert_kwarg(args, "mode")
         local writer
-        local mode = assert(args.mode, "missing mode")
         if mode == "append" then
             writer = h5md.append(self.root, args.location, clock)
 

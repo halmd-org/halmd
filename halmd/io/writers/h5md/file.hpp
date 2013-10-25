@@ -1,5 +1,6 @@
 /*
- * Copyright © 2011  Peter Colberg
+ * Copyright © 2013 Felix Höfling
+ * Copyright © 2011 Peter Colberg
  *
  * This file is part of HALMD.
  *
@@ -21,9 +22,9 @@
 #define HALMD_IO_WRITERS_H5MD_FILE_HPP
 
 #include <boost/array.hpp>
-#include <lua.hpp>
-
 #include <h5xx/h5xx.hpp>
+#include <lua.hpp>
+#include <string>
 
 namespace halmd {
 namespace io {
@@ -34,7 +35,7 @@ namespace h5md {
  * H5MD file writer
  *
  * This class provides a common base for all H5MD file writers.
- * It creates the H5MD file and writes the H5MD attributes.
+ * It creates the H5MD file and writes the H5MD metadata.
  */
 class file
 {
@@ -42,8 +43,15 @@ public:
     /** H5MD major and minor file version type */
     typedef boost::array<int, 2> version_type;
 
-    /** create H5MD file */
-    file(std::string const& path);
+    /**
+     * create H5MD file
+     *
+     * If author_name is an empty string it is retrieved from the password file
+     * entry for the real user id of the calling process. If author_email is
+     * empty output of this optional field is skipped.
+     */
+    file(std::string const& path, std::string const& author_name = "", std::string const& author_email = "");
+
     /** flush file to disk */
     void flush();
     /** explicitly close file */
@@ -52,10 +60,10 @@ public:
     H5::Group root() const;
     /** get file pathname */
     std::string path() const;
+
     /** get H5MD file version */
     static version_type version();
-    /** get H5MD file author */
-    static std::string author();
+
     /** Lua bindings */
     static void luaopen(lua_State* L);
 

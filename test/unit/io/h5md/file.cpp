@@ -1,5 +1,6 @@
 /*
- * Copyright © 2011  Peter Colberg
+ * Copyright © 2013 Felix Höfling
+ * Copyright © 2011 Peter Colberg
  *
  * This file is part of HALMD.
  *
@@ -38,7 +39,7 @@ struct create_file
     typedef file_type::version_type version_type;
     /** create H5MD file */
     create_file() {
-        file = std::make_shared<file_type>("h5md.h5");
+        file = std::make_shared<file_type>("h5md.h5", "", "info@halmd.org");
     }
     /** close and unlink H5MD file */
     ~create_file() {
@@ -50,24 +51,26 @@ struct create_file
 
 BOOST_FIXTURE_TEST_CASE( check_version, create_file )
 {
-    H5::Group attr = file->root().openGroup("h5md");
-    version_type version = h5xx::read_attribute<version_type>(attr, "version");
+    H5::Group group = file->root().openGroup("h5md");
+    version_type version = h5xx::read_attribute<version_type>(group, "version");
     BOOST_CHECK_EQUAL( version[0], file->version()[0] );
     BOOST_CHECK_EQUAL( version[1], file->version()[1] );
 }
 
 BOOST_FIXTURE_TEST_CASE( read_attributes, create_file )
 {
-    H5::Group attr = file->root().openGroup("h5md");
-    version_type version = h5xx::read_attribute<version_type>(attr, "version");
+    H5::Group group = file->root().openGroup("h5md");
+    version_type version = h5xx::read_attribute<version_type>(group, "version");
     BOOST_TEST_MESSAGE( "H5MD major version:\t" << version[0] );
     BOOST_TEST_MESSAGE( "H5MD minor version:\t" << version[1] );
-    time_t creation_time = h5xx::read_attribute<time_t>(attr, "creation_time");
-    char creation_time_fmt[256];
-    BOOST_CHECK( strftime(creation_time_fmt, sizeof(creation_time_fmt), "%c", localtime(&creation_time)) );
-    BOOST_TEST_MESSAGE( "H5MD creation time:\t" << creation_time_fmt );
-    BOOST_TEST_MESSAGE( "H5MD creator:\t\t" << h5xx::read_attribute<string>(attr, "creator") );
-    BOOST_TEST_MESSAGE( "H5MD creator version:\t" << h5xx::read_attribute<string>(attr, "creator_version") );
+    H5::Group creator = group.openGroup("creator");
+    BOOST_TEST_MESSAGE( "H5MD creator name:\t\t" << h5xx::read_attribute<string>(creator, "name") );
+    BOOST_TEST_MESSAGE( "H5MD creator version:\t" << h5xx::read_attribute<string>(creator, "version") );
+    H5::Group author = group.openGroup("author");
+    BOOST_TEST_MESSAGE( "H5MD author name:\t\t" << h5xx::read_attribute<string>(author, "name") );
+    if (h5xx::exists_attribute(author, "email")) {
+        BOOST_TEST_MESSAGE( "H5MD author email:\t\t" << h5xx::read_attribute<string>(author, "email") );
+    }
 }
 
 BOOST_FIXTURE_TEST_CASE( flush_file, create_file )

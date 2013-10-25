@@ -1,5 +1,6 @@
 /*
- * Copyright © 2011  Peter Colberg
+ * Copyright © 2013 Felix Höfling
+ * Copyright © 2011 Peter Colberg
  *
  * This file is part of HALMD.
  *
@@ -21,10 +22,9 @@
 #define HALMD_IO_READERS_H5MD_FILE_HPP
 
 #include <boost/array.hpp>
-#include <ctime> // std::time_t
-#include <lua.hpp>
-
 #include <h5xx/h5xx.hpp>
+#include <lua.hpp>
+#include <string>
 
 namespace halmd {
 namespace io {
@@ -34,7 +34,7 @@ namespace h5md {
 /**
  * H5MD file reader
  *
- * This class opens the H5MD file and reads the H5MD attributes.
+ * This class opens the H5MD file and reads the H5MD metadata.
  */
 class file
 {
@@ -55,49 +55,46 @@ public:
     /** Lua bindings */
     static void luaopen(lua_State* L);
 
-    /** get H5MD creation time */
-    std::time_t creation_time() const
-    {
-        return creation_time_;
-    }
-
-    /** get H5MD creator */
-    std::string const& creator() const
-    {
-        return creator_;
-    }
-
-    /** get H5MD creator version */
-    std::string const& creator_version() const
-    {
-        return creator_version_;
-    }
-
     /** get H5MD file version */
     version_type const& version() const
     {
         return version_;
     }
 
-    /** get H5MD file author */
-    std::string const& author() const
+    /** get name of H5MD file creator */
+    std::string const& creator_name() const
     {
-        return author_;
+        return creator_name_;
+    }
+
+    /** get version of H5MD file creator */
+    std::string const& creator_version() const
+    {
+        return creator_version_;
+    }
+
+    /** get name of H5MD file author */
+    std::string const& author_name() const
+    {
+        return author_name_;
+    }
+
+    /** get name of H5MD file author */
+    std::string const& author_email() const
+    {
+        return author_email_;
     }
 
 private:
     /** H5MD file */
     H5::H5File file_;
-    /** H5MD creation time */
-    std::time_t creation_time_;
-    /** H5MD creator */
-    std::string creator_;
-    /** H5MD creator version */
-    std::string creator_version_;
     /** H5MD file version */
     version_type version_;
-    /** H5MD file author */
-    std::string author_;
+    /** H5MD meta data */
+    std::string creator_name_;
+    std::string creator_version_;
+    std::string author_name_;
+    std::string author_email_;
 };
 
 } // namespace h5md
