@@ -26,6 +26,12 @@ FAQ
 
   Try lowering the ``--timestep`` value.
 
+**Linking fails with: undefined reference to `boost::filesystem3::detail::copy_file(...)'** ::
+
+  Check that the ABI version of the installed Boost C++ library conforms to
+  C++11. This can be achieved by building Boost C++ with the GCC option
+  ``--std=c++11``.
+
 **nvcc fails with 'cudafe++' died due to signal 11 (Invalid memory reference)**
 
   This is due to a bug in the CUDA compiler, which may be circumvented by
