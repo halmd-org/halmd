@@ -40,11 +40,14 @@ local correlation = assert(libhalmd.observables.dynamics.correlation)
 --
 -- :param args: keyword arguments
 -- :param number args.max_lag: maximum lag time in MD units
--- :param number args.every: sampling interval of lowest coarse-graining level
+-- :param number args.every: sampling interval of lowest coarse-graining level in integration steps
 -- :param number args.size: size of each block, determines coarse-graining factor
--- :param number args.shift: coarse-graining shift between odd and even levels (defaults to :math:`\lfloor\sqrt\text{size}\rfloor`)
--- :param number args.separation: minimal separation of samples for time averages (defaults to :math:`\text{every}\times\text{size}`)
--- :param number args.flush: interval in seconds for flushing the accumulated results to the file (*default:* 900)
+-- :param number args.shift: coarse-graining shift between odd and even levels
+--      (*default:* :math:`\lfloor\sqrt\text{size}\rfloor`)
+-- :param number args.separation: minimal separation of samples for time
+--      averages in sampling steps (*default:* -- :math:`\text{every}\times\text{size}`)
+-- :param number args.flush: interval in seconds for flushing the accumulated
+--      results to the file (*default:* 900)
 --
 -- .. method:: disconnect()
 --
@@ -150,6 +153,7 @@ local M = module(function(args)
     -- connect blocking scheme to sampler
     table.insert(conn, assert(sampler:on_sample(self.sample, every, 0)))
     table.insert(conn, assert(sampler:on_finish(self.finalise)))
+    logger:info("sampling interval in integration steps: " .. every)
 
     return self
 end)
