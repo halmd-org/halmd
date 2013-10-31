@@ -1,5 +1,6 @@
 /*
- * Copyright © 2010-2013 Felix Höfling
+ * Copyright © 2010-2012 Felix Höfling
+ * Copyright © 2013      Nicolas Höft
  * Copyright © 2010-2012 Peter Colberg
  *
  * This file is part of HALMD.
@@ -147,7 +148,6 @@ void lennard_jones_fluid<modules_type>::test()
     // create NVT integrator
     std::shared_ptr<nvt_integrator_type> nvt_integrator = std::make_shared<nvt_integrator_type>(
         particle
-      , force
       , box
       , random
       , 0.005 /* time step */
@@ -159,18 +159,22 @@ void lennard_jones_fluid<modules_type>::test()
     BOOST_TEST_MESSAGE("thermalise initial state at T=" << temp);
     position->set();
     velocity->set();
+
     unsigned int steps = static_cast<unsigned int>(ceil(30 / nvt_integrator->timestep()));
     for (unsigned int i = 0; i < steps; ++i) {
         nvt_integrator->integrate();
+        if (i == steps - 1) {
+            particle->aux_enable();
+        }
         nvt_integrator->finalize();
     }
 
     // set different timestep and choose NVE integrator
-    std::shared_ptr<nve_integrator_type> nve_integrator = std::make_shared<nve_integrator_type>(particle, force, box, timestep);
+    std::shared_ptr<nve_integrator_type> nve_integrator = std::make_shared<nve_integrator_type>(particle, box, timestep);
 
     // stochastic thermostat => centre particle velocities around zero
     fixed_vector<double, dimension> v_cm = thermodynamics->v_cm();
-    BOOST_TEST_MESSAGE("shift particle velocities by" << v_cm);
+    BOOST_TEST_MESSAGE("shift particle velocities by " << v_cm);
     shift_velocity(*particle, -v_cm);
 
     const double vcm_limit = gpu ? 0.5 * eps_float : 30 * eps;
@@ -185,8 +189,12 @@ void lennard_jones_fluid<modules_type>::test()
     unsigned int period = static_cast<unsigned int>(round(0.01 / timestep));
     for (unsigned int i = 0; i < steps; ++i) {
         nve_integrator->integrate();
+        // calculate the auxiliary variables in the last step for total energy
+        if (i == steps - 1) {
+            particle->aux_enable();
+        }
         nve_integrator->finalize();
-        if(i > steps / 2 && i % period == 0) {
+        if (i > steps / 2 && i % period == 0) {
             temp_(thermodynamics->temp());
         }
     }
@@ -210,10 +218,14 @@ void lennard_jones_fluid<modules_type>::test()
     for (unsigned int i = 0; i < steps; ++i) {
         // perform MD step
         nve_integrator->integrate();
+        if (i % period == 0) {
+            // enable auxiliary variables when measurement is happening
+            particle->aux_enable();
+        }
         nve_integrator->finalize();
 
         // measurement
-        if(i % period == 0) {
+        if (i % period == 0) {
             temp_(thermodynamics->temp());
             press(thermodynamics->pressure());
             en_pot(thermodynamics->en_pot());
@@ -330,8 +342,10 @@ lennard_jones_fluid<modules_type>::lennard_jones_fluid()
     position = std::make_shared<position_type>(particle, box, slab);
     velocity = std::make_shared<velocity_type>(particle, random, temp);
     force = std::make_shared<force_type>(potential, particle, particle, box, neighbour);
+    particle->on_prepend_force([=](){force->check_cache();});
+    particle->on_force([=](){force->apply();});
     std::shared_ptr<particle_group_type> group = std::make_shared<particle_group_type>(particle);
-    thermodynamics = std::make_shared<thermodynamics_type>(particle, force, group, box);
+    thermodynamics = std::make_shared<thermodynamics_type>(particle, group, box);
 }
 
 template <int dimension, typename float_type>

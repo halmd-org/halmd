@@ -135,6 +135,18 @@ end
 --
 --    Set particle masses to given sequence.
 --
+-- .. method:: get_force()
+--
+--    Returns unordered sequence with particle forces.
+--
+-- .. method:: get_potential_energy()
+--
+--    Returns unordered sequence with potential energies.
+--
+-- .. method:: get_stress_pot()
+--
+--    Returns unordered sequence with potential parts of stress tensors.
+--
 -- .. method:: shift_velocity(vector)
 --
 --    Shift all velocities by ``vector``.
@@ -158,6 +170,33 @@ end
 -- .. method:: shift_rescale_velocity_group(group, vector, scalar)
 --
 --    First shift, then rescale velocities of group.
+--
+-- .. method:: aux_enable()
+--
+--    Enable the computation of auxliliary variables in the next on_force()
+--    step. These are: ``stress_pot`` and ``potential_energy`` and derived
+--    properties (such as the total energy or the virial). The auxiliary
+--    variables should be activated like this::
+--
+--      sampler:on_prepare(function() particle:aux_enable() end, every, start)
+--
+-- .. method:: on_prepend_force(slot)
+--
+--    Connect nullary slot to signal.
+--
+--    :returns: signal connection
+--
+-- .. method:: on_force(slot)
+--
+--    Connect nullary slot to signal.
+--
+--    :returns: signal connection
+--
+-- .. method:: on_append_force(slot)
+--
+--    Connect nullary slot to signal.
+--
+--    :returns: signal connection
 --
 local M = module(function(args)
     local box = utility.assert_kwarg(args, "box")
@@ -190,8 +229,6 @@ local M = module(function(args)
     -- sequence of signal connections
     local conn = {}
     self.disconnect = utility.signal.disconnect(conn, "particle module")
-
-    -- zero particle forces every step before partial forces are added -- FIXME ???
 
     -- connect to profiler
     local runtime = assert(self.runtime)

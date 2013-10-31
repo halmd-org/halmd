@@ -57,18 +57,6 @@ local discontinuous = assert(libhalmd.mdsim.forces.trunc.discontinuous)
 --
 --    Instance of :mod:`halmd.mdsim.potentials`.
 --
--- .. method:: get_net_force()
---
---    Returns unordered sequence with particle forces.
---
--- .. method:: get_en_pot()
---
---    Returns unordered sequence with potential energies.
---
--- .. method:: get_stress_pot()
---
---    Returns unordered sequence with potential parts of stress tensors.
---
 -- .. method:: disconnect()
 --
 --    Disconnect force from profiler.
@@ -120,6 +108,11 @@ local M = module(function(args)
     -- sequence of signal connections
     local conn = {}
     self.disconnect = utility.signal.disconnect(conn, "force module")
+
+    -- test if the cache is up-to-date
+    table.insert(conn, assert(particle[1]:on_prepend_force(function() self:check_cache() end)))
+    -- apply the force (if necessary)
+    table.insert(conn, assert(particle[1]:on_force(function() self:apply() end)))
 
     -- connect to profiler
     local desc = ("computation of %s interaction"):format(potential.description)

@@ -137,6 +137,7 @@ void verlet_nvt_hoover<modules_type>::test()
 
     // run for Δt*=500
     uint64_t steps = static_cast<uint64_t>(ceil(500 / timestep));
+    uint64_t equi_steps = static_cast<uint64_t>(ceil(steps / 20));
     // skip Δt*=50 for equilibration
     uint64_t skip = static_cast<uint64_t>(ceil(50 / timestep));
     // ensure that sampling period is sufficiently large such that
@@ -152,9 +153,12 @@ void verlet_nvt_hoover<modules_type>::test()
 
     // equilibrate the system,
     // this avoids a jump in the conserved energy at the very beginning
-    BOOST_TEST_MESSAGE("equilibrate over " << steps / 20 << " steps");
-    for (uint64_t i = 0; i < steps / 20; ++i) {
+    BOOST_TEST_MESSAGE("equilibrate over " << equi_steps << " steps");
+    for (uint64_t i = 0; i < equi_steps; ++i) {
         integrator->integrate();
+        if (i == equi_steps - 1) {
+            particle->aux_enable();
+        }
         integrator->finalize();
     }
 
@@ -165,10 +169,13 @@ void verlet_nvt_hoover<modules_type>::test()
     for (uint64_t i = 0; i < steps; ++i) {
         // perform MD step
         integrator->integrate();
+        if (i % period == 0) {
+            particle->aux_enable();
+        }
         integrator->finalize();
 
         // measurement
-        if(i % period == 0) {
+        if (i % period == 0) {
             // measure temperature after thermalisation
             if (i >= skip) {
                 temp_(thermodynamics->temp());
@@ -295,11 +302,13 @@ verlet_nvt_hoover<modules_type>::verlet_nvt_hoover()
     max_displacement = std::make_shared<max_displacement_type>(particle, box);
     neighbour = std::make_shared<neighbour_type>(std::make_pair(particle, particle), std::make_pair(binning, binning), max_displacement, box, potential->r_cut(), skin);
     force = std::make_shared<force_type>(potential, particle, particle, box, neighbour);
-    integrator = std::make_shared<integrator_type>(particle, force, box, timestep, temp, resonance_frequency);
+    particle->on_prepend_force([=](){force->check_cache();});
+    particle->on_force([=](){force->apply();});
+    integrator = std::make_shared<integrator_type>(particle, box, timestep, temp, resonance_frequency);
     position = std::make_shared<position_type>(particle, box, 1);
     velocity = std::make_shared<velocity_type>(particle, random, start_temp);
     std::shared_ptr<particle_group_type> group = std::make_shared<particle_group_type>(particle);
-    thermodynamics = std::make_shared<thermodynamics_type>(particle, force, group, box);
+    thermodynamics = std::make_shared<thermodynamics_type>(particle, group, box);
 }
 
 template <int dimension, typename float_type>

@@ -62,7 +62,6 @@ template <typename modules_type>
 struct verlet_nvt_andersen
 {
     typedef typename modules_type::box_type box_type;
-    typedef typename modules_type::force_type force_type;
     typedef typename modules_type::integrator_type integrator_type;
     typedef typename modules_type::particle_type particle_type;
     typedef typename modules_type::particle_group_type particle_group_type;
@@ -110,11 +109,12 @@ void verlet_nvt_andersen<modules_type>::test()
 
     position->set();
     velocity->set();
+
     BOOST_TEST_MESSAGE("run NVT integrator over " << steps << " steps");
     for (unsigned int i = 0; i < steps; ++i) {
         integrator->integrate();
         integrator->finalize();
-        if(i % period == 0) {
+        if (i % period == 0) {
             temp_(thermodynamics->temp());
             fixed_vector<double, dimension> v(thermodynamics->v_cm());
             for (unsigned int i = 0; i < dimension; ++i) {
@@ -168,7 +168,7 @@ void verlet_nvt_andersen<modules_type>::test()
     // σ² = Var[ΔE² / (k T²)] / C → (dimension / 2) × (dimension + 6 / N) / C
     // (one measurement only from the average over C samples)
     double cv = pow(.5 * dimension, 2.) * npart * variance(temp_);
-    double cv_variance=  (.5 * dimension) * (dimension + 6. / npart) / count(temp_);
+    double cv_variance = (.5 * dimension) * (dimension + 6. / npart) / count(temp_);
     double rel_cv_tolerance = 4.5 * sqrt(cv_variance) / (.5 * dimension);
     BOOST_TEST_MESSAGE("Relative tolerance on specific heat: " << rel_cv_tolerance);
     BOOST_CHECK_CLOSE_FRACTION(cv, .5 * dimension, rel_cv_tolerance);
@@ -201,10 +201,9 @@ verlet_nvt_andersen<modules_type>::verlet_nvt_andersen()
     random = std::make_shared<random_type>();
     position = std::make_shared<position_type>(particle, box, slab);
     velocity = std::make_shared<velocity_type>(particle, random, temp);
-    std::shared_ptr<force_type> force = std::make_shared<force_type>(*particle);
-    integrator = std::make_shared<integrator_type>(particle, force, box, random, timestep, temp, coll_rate);
+    integrator = std::make_shared<integrator_type>(particle, box, random, timestep, temp, coll_rate);
     std::shared_ptr<particle_group_type> group = std::make_shared<particle_group_type>(particle);
-    thermodynamics = std::make_shared<thermodynamics_type>(particle, force, group, box);
+    thermodynamics = std::make_shared<thermodynamics_type>(particle, group, box);
 }
 
 /**
@@ -227,15 +226,15 @@ make_array_from_particle(array_type& array, particle_type const& particle)
 /**
  * Construct stress pot tensor array from particle.
  */
-template <typename force_type, typename particle_type>
+template <typename particle_type>
 inline typename std::enable_if<
     std::is_convertible<
-        typename std::iterator_traits<typename force_type::stress_pot_array_type::iterator>::iterator_category
+        typename std::iterator_traits<typename particle_type::stress_pot_array_type::iterator>::iterator_category
       , std::random_access_iterator_tag
     >::value
   , void>::type
 make_stress_pot_from_particle(
-    typename force_type::stress_pot_array_type& array,
+    typename particle_type::stress_pot_array_type& array,
     particle_type const& particle
 )
 {
@@ -264,72 +263,30 @@ make_array_from_particle(array_type& array, particle_type const& particle)
 /**
  * Construct stress tensor GPU array from GPU particle.
  */
-template <typename force_type, typename particle_type>
+template <typename particle_type>
 inline typename std::enable_if<
     std::is_convertible<
-        typename std::iterator_traits<typename force_type::stress_pot_array_type::iterator>::iterator_category
+        typename std::iterator_traits<typename particle_type::stress_pot_array_type::iterator>::iterator_category
       , cuda::device_random_access_iterator_tag
     >::value
   , void>::type
 make_stress_pot_from_particle(
-    typename force_type::stress_pot_array_type& array,
+    typename particle_type::stress_pot_array_type& array,
     particle_type const& particle
 )
 {
-    int constexpr stress_pot_size = force_type::stress_pot_type::static_size;
-    typename force_type::stress_pot_array_type g_output(particle.nparticle());
+    int constexpr stress_pot_size = particle_type::stress_pot_type::static_size;
+    typename particle_type::stress_pot_array_type g_output(particle.nparticle());
     g_output.reserve(particle.dim.threads() * stress_pot_size);
     cuda::memset(g_output.begin(), g_output.begin() + g_output.capacity(), 0);
     array = std::move(g_output);
 }
 #endif
 
-/**
- * Zero force.
- */
-template <typename force_type>
-class zero_force
-  : public force_type
-{
-public:
-    typedef typename force_type::net_force_array_type net_force_array_type;
-    typedef typename force_type::en_pot_array_type en_pot_array_type;
-    typedef typename force_type::stress_pot_array_type stress_pot_array_type;
-
-    template <typename particle_type>
-    zero_force(particle_type const& particle)
-    {
-        auto net_force = make_cache_mutable(net_force_);
-        auto stress_pot = make_cache_mutable(stress_pot_);
-        make_array_from_particle(*net_force, particle);
-        make_stress_pot_from_particle<zero_force>(*stress_pot, particle);
-    }
-
-    virtual halmd::cache<net_force_array_type> const& net_force()
-    {
-        return net_force_;
-    }
-
-    virtual halmd::cache<en_pot_array_type> const& en_pot()
-    {
-        throw std::runtime_error("not implemented");
-    }
-
-    virtual halmd::cache<stress_pot_array_type> const& stress_pot()
-    {
-        return stress_pot_;
-    }
-
-private:
-    halmd::cache<net_force_array_type> net_force_;
-    halmd::cache<stress_pot_array_type> stress_pot_;
-};
-
 template <int dimension, typename float_type>
 struct host_modules
 {
     typedef mdsim::box<dimension> box_type;
-    typedef zero_force<mdsim::host::force<dimension, float_type>> force_type;
     typedef mdsim::host::integrators::verlet_nvt_andersen<dimension, float_type> integrator_type;
     typedef mdsim::host::particle<dimension, float_type> particle_type;
     typedef mdsim::host::particle_groups::all<particle_type> particle_group_type;
@@ -352,7 +309,6 @@ template <int dimension, typename float_type>
 struct gpu_modules
 {
     typedef mdsim::box<dimension> box_type;
-    typedef zero_force<mdsim::gpu::force<dimension, float_type>> force_type;
     typedef mdsim::gpu::integrators::verlet_nvt_andersen<dimension, float_type, halmd::random::gpu::rand48> integrator_type;
     typedef mdsim::gpu::particle<dimension, float_type> particle_type;
     typedef mdsim::gpu::particle_groups::all<particle_type> particle_group_type;

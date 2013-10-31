@@ -110,7 +110,7 @@ local function shear_viscosity(args)
     local phase_space = observables.phase_space({box = box, group = particle_group})
 
     -- Sample macroscopic state variables.
-    local msv = observables.thermodynamics({box = box, group = particle_group, force = force})
+    local msv = observables.thermodynamics({box = box, group = particle_group})
     local interval = args.sampling.state_vars
     if interval > 0 then
         msv:writer({file = file, every = args.sampling.state_vars})
@@ -130,7 +130,6 @@ local function shear_viscosity(args)
     local integrator = mdsim.integrators.verlet_nvt_boltzmann({
         box = box
       , particle = particle
-      , force = force
       , timestep = args.timestep
       , temperature = args.temperature
       , rate = args.rate

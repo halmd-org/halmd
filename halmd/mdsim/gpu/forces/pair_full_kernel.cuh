@@ -52,10 +52,12 @@ __global__ void compute(
   , unsigned int ntype1
   , unsigned int ntype2
   , vector_type box_length
+  , bool force_zero
 )
 {
     enum { dimension = vector_type::static_size };
     typedef typename vector_type::value_type value_type;
+    typedef typename type_traits<dimension, float>::stress_tensor_type stress_tensor_type;
     unsigned int const i = GTID;
 
     // load particle associated with this thread
@@ -66,9 +68,9 @@ __global__ void compute(
     // contribution to potential energy
     float en_pot_ = 0;
     // contribution to stress tensor
-    typename type_traits<dimension, float>::stress_tensor_type stress_pot = 0;
-#ifdef USE_FORCE_DSFUN
+    stress_tensor_type stress_pot = 0;
     // force sum
+#ifdef USE_FORCE_DSFUN
     fixed_vector<dsfloat, dimension> f = 0;
 #else
     vector_type f = 0;
@@ -107,6 +109,14 @@ __global__ void compute(
         }
     }
 
+    // add old force and auxiliary variables if not zero
+    if (!force_zero) {
+        f += static_cast<vector_type>(g_f[i]);
+        if (do_aux) {
+            en_pot_ += g_en_pot[i];
+            stress_pot += read_stress_tensor<stress_tensor_type>(g_stress_pot + i, GTDIM);
+        }
+    }
     // write results to global memory
     g_f[i] = static_cast<vector_type>(f);
     if (do_aux) {

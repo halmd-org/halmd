@@ -1,6 +1,7 @@
 /*
- * Copyright © 2008-2012 Peter Colberg
  * Copyright © 2010-2012 Felix Höfling
+ * Copyright © 2013      Nicolas Höft
+ * Copyright © 2008-2012 Peter Colberg
  *
  * This file is part of HALMD.
  *
@@ -61,12 +62,34 @@ particle<dimension, float_type>::particle(size_type nparticle, unsigned int nspe
   , g_velocity_(nparticle)
   , g_tag_(nparticle)
   , g_reverse_tag_(nparticle)
+  , g_force_(nparticle)
+  , g_en_pot_(nparticle)
+  , g_stress_pot_(nparticle)
+  // enable auxiliary variables by default to allow sampling of initial state
+  , aux_flag_(true)
+  , aux_valid_(false)
+  , force_zero_(true)
+  , force_dirty_(true)
 {
     auto g_position = make_cache_mutable(g_position_);
     auto g_image = make_cache_mutable(g_image_);
     auto g_velocity = make_cache_mutable(g_velocity_);
     auto g_tag = make_cache_mutable(g_tag_);
     auto g_reverse_tag = make_cache_mutable(g_reverse_tag_);
+    auto g_force = make_cache_mutable(g_force_);
+    auto g_en_pot = make_cache_mutable(g_en_pot_);
+    auto g_stress_pot = make_cache_mutable(g_stress_pot_);
+
+    g_force->reserve(dim.threads());
+    g_en_pot->reserve(dim.threads());
+    //
+    // The GPU stores the stress tensor elements in column-major order to
+    // optimise access patterns for coalescable access. Increase capacity of
+    // GPU array such that there are 4 (6) in 2D (3D) elements per particle
+    // available, although stress_pot_->size() still returns the number of
+    // particles.
+    //
+    g_stress_pot->reserve(stress_pot_type::static_size * dim.threads());
 
     LOG_DEBUG("number of CUDA execution blocks: " << dim.blocks_per_grid());
     LOG_DEBUG("number of CUDA execution threads per block: " << dim.threads_per_block());
@@ -125,6 +148,9 @@ particle<dimension, float_type>::particle(size_type nparticle, unsigned int nspe
     cuda::memset(g_image->begin(), g_image->begin() + g_image->capacity(), 0);
     iota(g_tag->begin(), g_tag->begin() + g_tag->capacity(), 0);
     iota(g_reverse_tag->begin(), g_reverse_tag->begin() + g_reverse_tag->capacity(), 0);
+    cuda::memset(g_force->begin(), g_force->begin() + g_force->capacity(), 0);
+    cuda::memset(g_en_pot->begin(), g_en_pot->begin() + g_en_pot->capacity(), 0);
+    cuda::memset(g_stress_pot->begin(), g_stress_pot->begin() + g_stress_pot->capacity(), 0);
 
     // set particle masses to unit mass
     set_mass(
@@ -146,6 +172,13 @@ particle<dimension, float_type>::particle(size_type nparticle, unsigned int nspe
     LOG("number of particles: " << nparticle_);
     LOG("number of particle placeholders: " << dim.threads());
     LOG("number of particle species: " << nspecies_);
+}
+
+template <int dimension, typename float_type>
+void particle<dimension, float_type>::aux_enable()
+{
+    LOG_TRACE("enable computation of auxiliary variables");
+    aux_flag_ = true;
 }
 
 /**
@@ -186,6 +219,41 @@ void particle<dimension, float_type>::rearrange(cuda::vector<unsigned int> const
 
     iota(g_reverse_tag->begin(), g_reverse_tag->begin() + g_reverse_tag->capacity(), 0);
     radix_sort(tag.begin(), tag.end(), g_reverse_tag->begin());
+}
+
+template <int dimension, typename float_type>
+void particle<dimension, float_type>::update_force_()
+{
+    on_prepend_force_();          // ask force modules whether force cache is dirty
+    if (force_dirty_) {
+        LOG_TRACE("request force" << (aux_flag_ ? " and auxiliary variables" : ""));
+
+        aux_valid_ = aux_flag_;   // tell force modules whether to compute auxiliary variables
+        aux_flag_ = false;        // disable auxiliary variables for next call
+        force_zero_ = true;       // tell first force module to reset the force
+        on_force_();
+        force_dirty_ = false;
+    }
+    on_append_force_();
+}
+
+template <int dimension, typename float_type>
+void particle<dimension, float_type>::update_aux_()
+{
+    aux_valid_ = true;            // ensure that the auxiliary variables are taken into account
+    on_prepend_force_();          // ask force modules whether force cache is dirty
+    if (force_dirty_) {
+        if (!aux_flag_) {
+            LOG_WARNING_ONCE("auxiliary variables inactive in prior force computation, use aux_enable()");
+        }
+
+        LOG_TRACE("request force and auxiliary variables");
+        force_zero_ = true;       // tell first force module to reset the force
+        aux_flag_ = false;        // disable auxiliary variables for next call
+        on_force_();
+        force_dirty_ = false;
+    }
+    on_append_force_();
 }
 
 template <typename particle_type>
@@ -358,11 +426,54 @@ wrap_set_mass(particle_type& self, std::vector<typename particle_type::mass_type
     set_mass(self, input.begin());
 }
 
+template <typename particle_type>
+static std::function<std::vector<typename particle_type::force_type> ()>
+wrap_get_force(std::shared_ptr<particle_type> self)
+{
+    return [=]() -> std::vector<typename particle_type::force_type> {
+        std::vector<typename particle_type::force_type> output;
+        {
+            output.reserve(self->force()->size());
+        }
+        get_force(*self, std::back_inserter(output));
+        return std::move(output);
+    };
+}
+
+template <typename particle_type>
+static std::function<std::vector<typename particle_type::en_pot_type> ()>
+wrap_get_potential_energy(std::shared_ptr<particle_type> self)
+{
+    return [=]() -> std::vector<typename particle_type::en_pot_type> {
+        std::vector<typename particle_type::en_pot_type> output;
+        {
+            output.reserve(self->potential_energy()->size());
+        }
+        get_potential_energy(*self, std::back_inserter(output));
+        return std::move(output);
+    };
+}
+
+template <typename particle_type>
+static std::function<std::vector<typename particle_type::stress_pot_type> ()>
+wrap_get_stress_pot(std::shared_ptr<particle_type> self)
+{
+    return [=]() -> std::vector<typename particle_type::stress_pot_type> {
+        std::vector<typename particle_type::stress_pot_type> output;
+        {
+            output.reserve(self->stress_pot()->size());
+        }
+        get_stress_pot(*self, std::back_inserter(output));
+        return std::move(output);
+    };
+}
+
 template <int dimension, typename float_type>
 static int wrap_dimension(particle<dimension, float_type> const&)
 {
     return dimension;
 }
+
 
 template <int dimension, typename float_type>
 void particle<dimension, float_type>::luaopen(lua_State* L)
@@ -393,6 +504,9 @@ void particle<dimension, float_type>::luaopen(lua_State* L)
                     .def("set_species", &wrap_set_species<particle>)
                     .def("get_mass", &wrap_get_mass<particle>)
                     .def("set_mass", &wrap_set_mass<particle>)
+                    .def("get_force", &wrap_get_force<particle>)
+                    .def("get_potential_energy", &wrap_get_potential_energy<particle>)
+                    .def("get_stress_pot", &wrap_get_stress_pot<particle>)
                     .def("shift_velocity", &shift_velocity<particle>)
                     .def("shift_velocity_group", &shift_velocity_group<particle>)
                     .def("rescale_velocity", &rescale_velocity<particle>)
@@ -400,6 +514,10 @@ void particle<dimension, float_type>::luaopen(lua_State* L)
                     .def("shift_rescale_velocity", &shift_rescale_velocity<particle>)
                     .def("shift_rescale_velocity_group", &shift_rescale_velocity_group<particle>)
                     .property("dimension", &wrap_dimension<dimension, float_type>)
+                    .def("aux_enable", &particle::aux_enable)
+                    .def("on_prepend_force", &particle::on_prepend_force)
+                    .def("on_force", &particle::on_force)
+                    .def("on_append_force", &particle::on_append_force)
                     .scope
                     [
                         class_<runtime>("runtime")

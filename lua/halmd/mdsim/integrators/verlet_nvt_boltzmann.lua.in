@@ -53,7 +53,6 @@ local function round(x) return math.floor(x + 0.5) end
 --
 -- :param table args: keyword arguments
 -- :param args.particle: instance of :class:`halmd.mdsim.particle`
--- :param args.force: instance of :mod:`halmd.mdsim.forces`
 -- :param args.box: instance of :class:`halmd.mdsim.box`
 -- :param number args.timestep: integration time step (defaults to :attr:`halmd.mdsim.clock.timestep`)
 -- :param number args.temperature: temperature of Boltzmann distribution
@@ -108,7 +107,6 @@ local function round(x) return math.floor(x + 0.5) end
 --
 local M = module(function(args)
     local particle = utility.assert_kwarg(args, "particle")
-    local force = utility.assert_kwarg(args, "force")
     local box = utility.assert_kwarg(args, "box")
     local temperature = utility.assert_kwarg(args, "temperature")
     local rate = utility.assert_kwarg(args, "rate")
@@ -123,7 +121,7 @@ local M = module(function(args)
     local rng = random.generator({memory = particle.memory})
     local logger = log.logger({label = "verlet_nvt_boltzmann"})
 
-    local self = verlet(particle, force, box, timestep, logger)
+    local self = verlet(particle, box, timestep, logger)
 
     -- capture C++ method set_timestep
     local set_timestep = assert(self.set_timestep)

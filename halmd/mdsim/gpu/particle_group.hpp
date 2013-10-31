@@ -168,56 +168,56 @@ get_v_cm(particle_type const& particle, particle_group& group)
 /**
  * Compute mean potential energy per particle.
  */
-template <typename force_type>
-double get_mean_en_pot(force_type& force, particle_group& group)
+template <typename particle_type>
+double get_mean_en_pot(particle_type& particle, particle_group& group)
 {
     typedef typename particle_group::array_type group_array_type;
     typedef observables::gpu::potential_energy<dsfloat> accumulator_type;
 
     group_array_type const& unordered = read_cache(group.unordered());
 
-    accumulator_type::get().bind(*force.en_pot());
+    accumulator_type::get().bind(*particle.potential_energy());
     return reduce(&*unordered.begin(), &*unordered.end(), accumulator_type())() / unordered.size();
 }
 
 /**
  * Compute mean virial per particle.
  */
-template <typename force_type>
-double get_mean_virial(force_type& force, particle_group& group)
+template <typename particle_type>
+double get_mean_virial(particle_type& particle, particle_group& group)
 {
     typedef typename particle_group::array_type group_array_type;
-    typedef typename force_type::stress_pot_type stress_pot_type;
-    unsigned int constexpr dimension = force_type::net_force_type::static_size;
+    typedef typename particle_type::stress_pot_type stress_pot_type;
+    unsigned int constexpr dimension = particle_type::force_type::static_size;
     typedef observables::gpu::virial<dimension, dsfloat> accumulator_type;
 
     group_array_type const& unordered = read_cache(group.unordered());
 
-    unsigned int stride = force.stress_pot()->capacity() / stress_pot_type::static_size;
-    accumulator_type::get().bind(*force.stress_pot());
+    unsigned int stride = particle.stress_pot()->capacity() / stress_pot_type::static_size;
+    accumulator_type::get().bind(*particle.stress_pot());
     return reduce(&*unordered.begin(), &*unordered.end(), accumulator_type(stride))() / unordered.size();
 }
 
 /**
  * Compute stress tensor.
  */
-template <typename force_type, typename particle_type>
-typename type_traits<force_type::net_force_type::static_size, double>::stress_tensor_type
-get_stress_tensor(force_type& force, particle_type& particle, particle_group& group)
+template <typename particle_type>
+typename type_traits<particle_type::force_type::static_size, double>::stress_tensor_type
+get_stress_tensor(particle_type& particle, particle_group& group)
 {
     typedef typename particle_group::size_type size_type;
     typedef typename particle_group::array_type group_array_type;
-    typedef typename force_type::stress_pot_array_type stress_pot_array_type;
-    typedef typename force_type::stress_pot_type stress_pot_type;
+    typedef typename particle_type::stress_pot_array_type stress_pot_array_type;
+    typedef typename particle_type::stress_pot_type stress_pot_type;
     typedef typename particle_type::velocity_array_type velocity_array_type;
 
-    enum { dimension = force_type::net_force_type::static_size };
+    enum { dimension = particle_type::force_type::static_size };
 
     typedef typename type_traits<dimension, double>::stress_tensor_type stress_tensor_type;
     typedef observables::gpu::stress_tensor<dimension, dsfloat> accumulator_type;
 
     group_array_type const& unordered = read_cache(group.unordered());
-    stress_pot_array_type const& stress_pot = read_cache(force.stress_pot());
+    stress_pot_array_type const& stress_pot = read_cache(particle.stress_pot());
 
     unsigned int stride = stress_pot.capacity() / stress_pot_type::static_size;
     accumulator_type::get_stress_pot().bind(stress_pot);

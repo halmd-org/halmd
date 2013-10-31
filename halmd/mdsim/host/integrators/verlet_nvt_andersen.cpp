@@ -33,7 +33,6 @@ namespace integrators {
 template <int dimension, typename float_type>
 verlet_nvt_andersen<dimension, float_type>::verlet_nvt_andersen(
     std::shared_ptr<particle_type> particle
-  , std::shared_ptr<force_type> force
   , std::shared_ptr<box_type const> box
   , std::shared_ptr<random_type> random
   , float_type timestep
@@ -42,7 +41,6 @@ verlet_nvt_andersen<dimension, float_type>::verlet_nvt_andersen(
   , std::shared_ptr<logger_type> logger
 )
   : particle_(particle)
-  , force_(force)
   , box_(box)
   , random_(random)
   , coll_rate_(coll_rate)
@@ -72,7 +70,7 @@ void verlet_nvt_andersen<dimension, float_type>::set_temperature(double temperat
 template <int dimension, typename float_type>
 void verlet_nvt_andersen<dimension, float_type>::integrate()
 {
-    net_force_array_type const& net_force = read_cache(force_->net_force());
+    force_array_type const& force = read_cache(particle_->force());
     mass_array_type const& mass = read_cache(particle_->mass());
     size_type nparticle = particle_->nparticle();
 
@@ -86,7 +84,7 @@ void verlet_nvt_andersen<dimension, float_type>::integrate()
     for (size_type i = 0; i < nparticle; ++i) {
         vector_type& v = (*velocity)[i];
         vector_type& r = (*position)[i];
-        v += net_force[i] * timestep_half_ / mass[i];
+        v += force[i] * timestep_half_ / mass[i];
         r += v * timestep_;
         (*image)[i] += box_->reduce_periodic(r);
     }
@@ -95,7 +93,7 @@ void verlet_nvt_andersen<dimension, float_type>::integrate()
 template <int dimension, typename float_type>
 void verlet_nvt_andersen<dimension, float_type>::finalize()
 {
-    net_force_array_type const& net_force = read_cache(force_->net_force());
+    force_array_type const& force = read_cache(particle_->force());
     mass_array_type const& mass = read_cache(particle_->mass());
     size_type nparticle = particle_->nparticle();
 
@@ -113,7 +111,7 @@ void verlet_nvt_andersen<dimension, float_type>::finalize()
         vector_type& v = (*velocity)[i];
         // is deterministic step?
         if (random_->uniform<float_type>() > coll_prob_) {
-            v += net_force[i] * timestep_half_ / mass[i];
+            v += force[i] * timestep_half_ / mass[i];
         }
         // stochastic coupling with heat bath
         else {
@@ -163,7 +161,6 @@ void verlet_nvt_andersen<dimension, float_type>::luaopen(lua_State* L)
 
               , def("verlet_nvt_andersen", &std::make_shared<verlet_nvt_andersen
                   , std::shared_ptr<particle_type>
-                  , std::shared_ptr<force_type>
                   , std::shared_ptr<box_type const>
                   , std::shared_ptr<random_type>
                   , float_type

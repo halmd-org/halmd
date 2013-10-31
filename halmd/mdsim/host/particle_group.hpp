@@ -163,11 +163,11 @@ get_v_cm(particle_type const& particle, particle_group& group)
 /**
  * Compute mean potential energy per particle.
  */
-template <typename force_type>
-double get_mean_en_pot(force_type& force, particle_group& group)
+template <typename particle_type>
+double get_mean_en_pot(particle_type& particle, particle_group& group)
 {
     auto const& unordered = read_cache(group.unordered());
-    auto const& en_pot = read_cache(force.en_pot());
+    auto const& en_pot = read_cache(particle.potential_energy());
 
     double sum = 0;
     for (typename particle_group::size_type i : unordered) {
@@ -179,13 +179,13 @@ double get_mean_en_pot(force_type& force, particle_group& group)
 /**
  * Compute mean virial per particle.
  */
-template <typename force_type>
-double get_mean_virial(force_type& force, particle_group& group)
+template <typename particle_type>
+double get_mean_virial(particle_type& particle, particle_group& group)
 {
-    enum { dimension = force_type::net_force_type::static_size };
+    enum { dimension = particle_type::force_type::static_size };
 
     auto const& unordered = read_cache(group.unordered());
-    auto const& stress_pot = read_cache(force.stress_pot());
+    auto const& stress_pot = read_cache(particle.stress_pot());
 
     double sum = 0;
     for (typename particle_group::size_type i : unordered) {
@@ -197,25 +197,26 @@ double get_mean_virial(force_type& force, particle_group& group)
     return sum / unordered.size();
 }
 
+
 /**
  * Compute stress tensor.
  */
-template <typename force_type, typename particle_type>
-typename type_traits<force_type::net_force_type::static_size, double>::stress_tensor_type
-get_stress_tensor(force_type& force, particle_type& particle, particle_group& group)
+template <typename particle_type>
+typename type_traits<particle_type::force_type::static_size, double>::stress_tensor_type
+get_stress_tensor(particle_type& particle, particle_group& group)
 {
     typedef typename particle_group::size_type size_type;
     typedef typename particle_group::array_type group_array_type;
-    typedef typename force_type::stress_pot_array_type stress_pot_array_type;
+    typedef typename particle_type::stress_pot_array_type stress_pot_array_type;
     typedef typename particle_type::velocity_array_type velocity_array_type;
     typedef typename particle_type::mass_array_type mass_array_type;
 
-    enum { dimension = force_type::net_force_type::static_size };
+    enum { dimension = particle_type::force_type::static_size };
 
     typedef typename type_traits<dimension, double>::stress_tensor_type stress_tensor_type;
 
     group_array_type const& unordered = read_cache(group.unordered());
-    stress_pot_array_type const& stress_pot = read_cache(force.stress_pot());
+    stress_pot_array_type const& stress_pot = read_cache(particle.stress_pot());
     velocity_array_type const& velocity = read_cache(particle.velocity());
     mass_array_type const& mass = read_cache(particle.mass());
 

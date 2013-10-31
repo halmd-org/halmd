@@ -51,21 +51,6 @@ public:
         return on_append_integrate_.connect(slot);
     }
 
-    connection on_prepend_force(slot_function_type const& slot)
-    {
-        return on_prepend_force_.connect(slot);
-    }
-
-    connection on_force(slot_function_type const& slot)
-    {
-        return on_force_.connect(slot);
-    }
-
-    connection on_append_force(slot_function_type const& slot)
-    {
-        return on_append_force_.connect(slot);
-    }
-
     connection on_prepend_finalize(slot_function_type const& slot)
     {
         return on_prepend_finalize_.connect(slot);
@@ -97,9 +82,6 @@ private:
     signal_type on_prepend_integrate_;
     signal_type on_integrate_;
     signal_type on_append_integrate_;
-    signal_type on_prepend_force_;
-    signal_type on_force_;
-    signal_type on_append_force_;
     signal_type on_prepend_finalize_;
     signal_type on_finalize_;
     signal_type on_append_finalize_;

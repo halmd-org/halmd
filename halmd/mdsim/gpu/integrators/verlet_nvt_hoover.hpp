@@ -28,7 +28,6 @@
 #include <halmd/algorithm/gpu/reduce.hpp>
 #include <halmd/io/logger.hpp>
 #include <halmd/mdsim/box.hpp>
-#include <halmd/mdsim/gpu/force.hpp>
 #include <halmd/mdsim/gpu/integrators/verlet_nvt_hoover_kernel.hpp>
 #include <halmd/mdsim/gpu/particle.hpp>
 #include <halmd/numeric/mp/dsfloat.hpp>
@@ -44,7 +43,6 @@ class verlet_nvt_hoover
 {
 public:
     typedef particle<dimension, float> particle_type;
-    typedef force<dimension, float> force_type;
     typedef box<dimension> box_type;
     typedef logger logger_type;
     typedef fixed_vector<float_type, 2> chain_type;
@@ -58,7 +56,6 @@ public:
 
     verlet_nvt_hoover(
         std::shared_ptr<particle_type> particle
-      , std::shared_ptr<force_type> force
       , std::shared_ptr<box_type const> box
       , float_type timestep
       , float_type temperature
@@ -114,7 +111,7 @@ private:
     typedef typename particle_type::position_array_type position_array_type;
     typedef typename particle_type::image_array_type image_array_type;
     typedef typename particle_type::velocity_array_type velocity_array_type;
-    typedef typename force_type::net_force_array_type net_force_array_type;
+    typedef typename particle_type::force_array_type force_array_type;
 
     typedef verlet_nvt_hoover_wrapper<dimension, gpu_float_type> wrapper_type;
     typedef utility::profiler profiler_type;
@@ -134,8 +131,6 @@ private:
 
     /** system state */
     std::shared_ptr<particle_type> particle_;
-    /** particle forces */
-    std::shared_ptr<force_type> force_;
     /** simulation domain */
     std::shared_ptr<box_type const> box_;
     /** module logger */

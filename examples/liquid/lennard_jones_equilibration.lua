@@ -105,7 +105,7 @@ local function liquid(args)
     local msv
     local interval = args.sampling.state_vars
     if interval > 0 then
-        msv = observables.thermodynamics({box = box, group = particle_group, force = force})
+        msv = observables.thermodynamics({box = box, group = particle_group})
         msv:writer({file = file, every = interval})
     end
 
@@ -129,7 +129,6 @@ local function liquid(args)
     local integrator = mdsim.integrators.verlet_nvt_boltzmann({
         box = box
       , particle = particle
-      , force = force
       , timestep = args.timestep
       , temperature = args.temperature
       , rate = args.rate

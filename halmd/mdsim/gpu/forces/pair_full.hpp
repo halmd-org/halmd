@@ -24,7 +24,6 @@
 
 #include <halmd/io/logger.hpp>
 #include <halmd/mdsim/box.hpp>
-#include <halmd/mdsim/gpu/force.hpp>
 #include <halmd/mdsim/gpu/forces/pair_full_kernel.hpp>
 #include <halmd/mdsim/gpu/particle.hpp>
 #include <halmd/utility/lua/lua.hpp>
@@ -43,42 +42,30 @@ namespace forces {
  */
 template <int dimension, typename float_type, typename potential_type>
 class pair_full
-  : public force<dimension, float_type>
 {
-private:
-    typedef force<dimension, float_type> _Base;
-
 public:
-    typedef typename _Base::net_force_array_type net_force_array_type;
-    typedef typename _Base::en_pot_array_type en_pot_array_type;
-    typedef typename _Base::stress_pot_type stress_pot_type;
-    typedef typename _Base::stress_pot_array_type stress_pot_array_type;
-
     typedef particle<dimension, float_type> particle_type;
     typedef box<dimension> box_type;
     typedef logger logger_type;
 
     pair_full(
         std::shared_ptr<potential_type const> potential
-      , std::shared_ptr<particle_type const> particle
+      , std::shared_ptr<particle_type> particle
       , std::shared_ptr<box_type const> box
       , std::shared_ptr<logger_type> logger = std::make_shared<logger_type>()
     );
 
     /**
-     * Returns const reference to net force per particle.
+     * Check if the force cache (of the particle module) is up-to-date and if
+     * not, mark the cache as dirty.
      */
-    virtual cache<net_force_array_type> const& net_force();
+    void check_cache();
 
     /**
-     * Returns const reference to potential energy per particle.
+     * Compute and apply the force to the particles.
      */
-    virtual cache<en_pot_array_type> const& en_pot();
+    void apply();
 
-    /**
-     * Returns const reference to potential part of stress tensor per particle.
-     */
-    virtual cache<stress_pot_array_type> const& stress_pot();
 
     /**
      * Bind class to Lua.
@@ -91,33 +78,29 @@ private:
     typedef typename potential_type::gpu_potential_type gpu_potential_type;
     typedef pair_full_wrapper<dimension, gpu_potential_type> gpu_wrapper;
 
+    typedef typename particle_type::force_array_type force_array_type;
+    typedef typename particle_type::en_pot_array_type en_pot_array_type;
+    typedef typename particle_type::stress_pot_type stress_pot_type;
+    typedef typename particle_type::stress_pot_array_type stress_pot_array_type;
+
     /** compute forces */
-    void compute();
+    void compute_();
     /** compute forces with auxiliary variables */
-    void compute_aux();
+    void compute_aux_();
 
     /** pair potential */
     std::shared_ptr<potential_type const> potential_;
     /** system state */
-    std::shared_ptr<particle_type const> particle_;
+    std::shared_ptr<particle_type> particle_;
     /** simulation domain */
     std::shared_ptr<box_type const> box_;
     /** module logger */
     std::shared_ptr<logger_type> logger_;
 
-    /** net force per particle */
-    cache<net_force_array_type> net_force_;
-    /** potential energy per particle */
-    cache<en_pot_array_type> en_pot_;
-    /** potential part of stress tensor for each particle  */
-    cache<stress_pot_array_type> stress_pot_;
-
-    /** cache observer of net force per particle */
-    cache<> net_force_cache_;
-    /** cache observer of potential energy per particle */
-    cache<> en_pot_cache_;
-    /** cache observer of potential part of stress tensor per particle */
-    cache<> stress_pot_cache_;
+    /** cache observer of force per particle */
+    cache<> force_cache_;
+    /** cache observer of auxiliary variables */
+    cache<> aux_cache_;
 
     typedef utility::profiler profiler_type;
     typedef typename profiler_type::accumulator_type accumulator_type;
@@ -135,7 +118,7 @@ private:
 template <int dimension, typename float_type, typename potential_type>
 pair_full<dimension, float_type, potential_type>::pair_full(
     std::shared_ptr<potential_type const> potential
-  , std::shared_ptr<particle_type const> particle
+  , std::shared_ptr<particle_type> particle
   , std::shared_ptr<box_type const> box
   , std::shared_ptr<logger_type> logger
 )
@@ -143,83 +126,45 @@ pair_full<dimension, float_type, potential_type>::pair_full(
   , particle_(particle)
   , box_(box)
   , logger_(logger)
-  , net_force_(particle_->nparticle())
-  , en_pot_(particle_->nparticle())
-  , stress_pot_(particle_->nparticle())
 {
     if (std::min(potential_->size1(), potential_->size2()) < particle_->nspecies()) {
         throw std::invalid_argument("size of potential coefficients less than number of particle species");
     }
-
-    auto net_force = make_cache_mutable(net_force_);
-    auto en_pot = make_cache_mutable(en_pot_);
-    auto stress_pot = make_cache_mutable(stress_pot_);
-
-    net_force->reserve(particle_->dim.threads());
-    en_pot->reserve(particle_->dim.threads());
-    //
-    // The GPU stores the stress tensor elements in column-major order to
-    // optimise access patterns for coalescable access. Increase capacity of
-    // GPU array such that there are 4 (6) in 2D (3D) elements per particle
-    // available, although stress_pot_->size() still returns the number of
-    // particles.
-    //
-    stress_pot->reserve(stress_pot_type::static_size * particle_->dim.threads());
 }
 
 template <int dimension, typename float_type, typename potential_type>
-cache<typename pair_full<dimension, float_type, potential_type>::net_force_array_type> const&
-pair_full<dimension, float_type, potential_type>::net_force()
+inline void pair_full<dimension, float_type, potential_type>::check_cache()
 {
     cache<position_array_type> const& position_cache = particle_->position();
 
-    if (net_force_cache_ != position_cache) {
-        compute();
-        net_force_cache_ = position_cache;
+    if (force_cache_ != position_cache ||
+        (particle_->aux_valid() && aux_cache_ != position_cache)) {
+        particle_->mark_force_dirty();
     }
-
-    return net_force_;
 }
 
 template <int dimension, typename float_type, typename potential_type>
-cache<typename pair_full<dimension, float_type, potential_type>::en_pot_array_type> const&
-pair_full<dimension, float_type, potential_type>::en_pot()
+inline void pair_full<dimension, float_type, potential_type>::apply()
 {
-    cache<position_array_type> const& position_cache = particle_->position();
-
-    if (en_pot_cache_ != position_cache) {
-        compute_aux();
-        net_force_cache_ = position_cache;
-        en_pot_cache_ = position_cache;
-        stress_pot_cache_ = position_cache;
+    if (particle_->aux_valid()) {
+        compute_aux_();
+        force_cache_ = particle_->position();
+        aux_cache_ = force_cache_;
     }
-
-    return en_pot_;
+    else {
+        compute_();
+        force_cache_ = particle_->position();
+    }
+    particle_->force_zero_disable();
 }
 
 template <int dimension, typename float_type, typename potential_type>
-cache<typename pair_full<dimension, float_type, potential_type>::stress_pot_array_type> const&
-pair_full<dimension, float_type, potential_type>::stress_pot()
-{
-    cache<position_array_type> const& position_cache = particle_->position();
-
-    if (stress_pot_cache_ != position_cache) {
-        compute_aux();
-        net_force_cache_ = position_cache;
-        en_pot_cache_ = position_cache;
-        stress_pot_cache_ = position_cache;
-    }
-
-    return stress_pot_;
-}
-
-template <int dimension, typename float_type, typename potential_type>
-inline void pair_full<dimension, float_type, potential_type>::compute()
+inline void pair_full<dimension, float_type, potential_type>::compute_()
 {
     LOG_TRACE("compute forces");
 
     position_array_type const& position = read_cache(particle_->position());
-    auto net_force = make_cache_mutable(net_force_);
+    auto force = make_cache_mutable(particle_->mutable_force());
 
     scoped_timer_type timer(runtime_.compute);
 
@@ -227,7 +172,7 @@ inline void pair_full<dimension, float_type, potential_type>::compute()
 
     cuda::configure(particle_->dim.grid, particle_->dim.block);
     gpu_wrapper::kernel.compute(
-        &*net_force->begin()
+        &*force->begin()
         , &*position.begin()
         , nullptr
         , nullptr
@@ -235,19 +180,20 @@ inline void pair_full<dimension, float_type, potential_type>::compute()
         , particle_->nspecies()
         , particle_->nspecies()
         , static_cast<position_type>(box_->length())
+        , particle_->force_zero()
     );
     cuda::thread::synchronize();
 }
 
 template <int dimension, typename float_type, typename potential_type>
-inline void pair_full<dimension, float_type, potential_type>::compute_aux()
+inline void pair_full<dimension, float_type, potential_type>::compute_aux_()
 {
     LOG_TRACE("compute forces with auxiliary variables");
 
     position_array_type const& position = read_cache(particle_->position());
-    auto net_force = make_cache_mutable(net_force_);
-    auto en_pot = make_cache_mutable(en_pot_);
-    auto stress_pot = make_cache_mutable(stress_pot_);
+    auto force = make_cache_mutable(particle_->mutable_force());
+    auto en_pot = make_cache_mutable(particle_->mutable_potential_energy());
+    auto stress_pot = make_cache_mutable(particle_->mutable_stress_pot());
 
     scoped_timer_type timer(runtime_.compute);
 
@@ -255,7 +201,7 @@ inline void pair_full<dimension, float_type, potential_type>::compute_aux()
 
     cuda::configure(particle_->dim.grid, particle_->dim.block);
     gpu_wrapper::kernel.compute_aux(
-        &*net_force->begin()
+        &*force->begin()
         , &*position.begin()
         , &*en_pot->begin()
         , &*stress_pot->begin()
@@ -263,6 +209,7 @@ inline void pair_full<dimension, float_type, potential_type>::compute_aux()
         , particle_->nspecies()
         , particle_->nspecies()
         , static_cast<position_type>(box_->length())
+        , particle_->force_zero()
     );
     cuda::thread::synchronize();
 }
@@ -277,7 +224,9 @@ void pair_full<dimension, float_type, potential_type>::luaopen(lua_State* L)
         [
             namespace_("forces")
             [
-                class_<pair_full, _Base>()
+                class_<pair_full>()
+                    .def("check_cache", &pair_full::check_cache)
+                    .def("apply", &pair_full::apply)
                     .scope
                     [
                         class_<runtime>("runtime")
@@ -287,7 +236,7 @@ void pair_full<dimension, float_type, potential_type>::luaopen(lua_State* L)
 
               , def("pair_full", &std::make_shared<pair_full,
                     std::shared_ptr<potential_type const>
-                  , std::shared_ptr<particle_type const>
+                  , std::shared_ptr<particle_type>
                   , std::shared_ptr<box_type const>
                   , std::shared_ptr<logger_type>
                 >)

@@ -44,6 +44,7 @@ struct pair_full_wrapper
       , unsigned int
       , unsigned int
       , vector_type
+      , bool
     )> compute;
     /** compute forces and auxiliary stuff: internal energy, potential part of stress tensor, ... */
     cuda::function<void (
@@ -55,6 +56,7 @@ struct pair_full_wrapper
       , unsigned int
       , unsigned int
       , vector_type
+      , bool
     )> compute_aux;
 
     static pair_full_wrapper const kernel;

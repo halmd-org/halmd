@@ -28,14 +28,12 @@ namespace host {
 
 template <int dimension, typename float_type>
 thermodynamics<dimension, float_type>::thermodynamics(
-    std::shared_ptr<particle_type const> particle
-  , std::shared_ptr<force_type> force
+    std::shared_ptr<particle_type> particle
   , std::shared_ptr<particle_group_type> group
   , std::shared_ptr<box_type const> box
   , std::shared_ptr<logger_type> logger
 )
   : particle_(particle)
-  , force_(force)
   , group_(group)
   , box_(box)
   , logger_(logger)
@@ -123,13 +121,13 @@ double thermodynamics<dimension, float_type>::mean_mass()
 template <int dimension, typename float_type>
 double thermodynamics<dimension, float_type>::en_pot()
 {
-    cache<en_pot_array_type> const& en_pot_cache = force_->en_pot();
+    cache<en_pot_array_type> const& en_pot_cache = particle_->potential_energy();
     cache<size_type> const& group_cache = group_->size();
 
     if (en_pot_cache_ != std::tie(en_pot_cache, group_cache)) {
         LOG_TRACE("acquire potential energy");
         scoped_timer_type timer(runtime_.en_pot);
-        en_pot_ = get_mean_en_pot(*force_, *group_);
+        en_pot_ = get_mean_en_pot(*particle_, *group_);
         en_pot_cache_ = std::tie(en_pot_cache, group_cache);
     }
     return en_pot_;
@@ -138,13 +136,13 @@ double thermodynamics<dimension, float_type>::en_pot()
 template <int dimension, typename float_type>
 double thermodynamics<dimension, float_type>::virial()
 {
-    cache<stress_pot_array_type> const& stress_pot_cache = force_->stress_pot();
+    cache<stress_pot_array_type> const& stress_pot_cache = particle_->stress_pot();
     cache<size_type> const& group_cache = group_->size();
 
     if (virial_cache_ != std::tie(stress_pot_cache, group_cache)) {
         LOG_TRACE("acquire virial");
         scoped_timer_type timer(runtime_.virial);
-        virial_ = get_mean_virial(*force_, *group_);
+        virial_ = get_mean_virial(*particle_, *group_);
         virial_cache_ = std::tie(stress_pot_cache, group_cache);
     }
     return virial_;
@@ -154,14 +152,14 @@ template <int dimension, typename float_type>
 typename thermodynamics<dimension, float_type>::stress_tensor_type const&
 thermodynamics<dimension, float_type>::stress_tensor()
 {
-    cache<stress_pot_array_type> const& stress_pot_cache = force_->stress_pot();
+    cache<stress_pot_array_type> const& stress_pot_cache = particle_->stress_pot();
     cache<velocity_array_type> const& velocity_cache = particle_->velocity();
     cache<size_type> const& group_cache = group_->size();
 
     if (stress_tensor_cache_ != std::tie(stress_pot_cache, velocity_cache, group_cache)) {
         LOG_TRACE("acquire stress tensor");
         scoped_timer_type timer(runtime_.stress_tensor);
-        stress_tensor_ = get_stress_tensor(*force_, *particle_, *group_);
+        stress_tensor_ = get_stress_tensor(*particle_, *group_);
         stress_tensor_cache_ = std::tie(stress_pot_cache, velocity_cache, group_cache);
     }
     return stress_tensor_;
@@ -189,8 +187,7 @@ void thermodynamics<dimension, float_type>::luaopen(lua_State* L)
                 .def_readonly("runtime", &thermodynamics::runtime_)
 
           , def("thermodynamics", &std::make_shared<thermodynamics
-              , std::shared_ptr<particle_type const>
-              , std::shared_ptr<force_type>
+              , std::shared_ptr<particle_type>
               , std::shared_ptr<particle_group_type>
               , std::shared_ptr<box_type const>
               , std::shared_ptr<logger_type>

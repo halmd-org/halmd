@@ -1,5 +1,6 @@
 /*
  * Copyright © 2010-2011 Felix Höfling
+ * Copyright © 2013      Nicolas Höft
  * Copyright © 2008-2012 Peter Colberg
  *
  * This file is part of HALMD.
@@ -24,7 +25,6 @@
 #include <halmd/io/logger.hpp>
 #include <halmd/mdsim/box.hpp>
 #include <halmd/mdsim/force_kernel.hpp>
-#include <halmd/mdsim/host/force.hpp>
 #include <halmd/mdsim/host/particle.hpp>
 #include <halmd/utility/lua/lua.hpp>
 #include <halmd/utility/profiler.hpp>
@@ -43,42 +43,29 @@ namespace forces {
  */
 template <int dimension, typename float_type, typename potential_type>
 class pair_full
-  : public force<dimension, float_type>
 {
-private:
-    typedef force<dimension, float_type> _Base;
-
 public:
-    typedef typename _Base::net_force_array_type net_force_array_type;
-    typedef typename _Base::en_pot_array_type en_pot_array_type;
-    typedef typename _Base::stress_pot_array_type stress_pot_array_type;
-    typedef typename _Base::stress_pot_type stress_pot_type;
-
     typedef particle<dimension, float_type> particle_type;
     typedef box<dimension> box_type;
     typedef logger logger_type;
 
     pair_full(
         std::shared_ptr<potential_type const> potential
-      , std::shared_ptr<particle_type const> particle
+      , std::shared_ptr<particle_type> particle
       , std::shared_ptr<box_type const> box
       , std::shared_ptr<logger_type> logger = std::make_shared<logger_type>()
     );
 
     /**
-     * Returns const reference to net force per particle.
+     * Check if the force cache (of the particle module) is up-to-date and if
+     * not, mark the cache as dirty.
      */
-    virtual cache<net_force_array_type> const& net_force();
+    void check_cache();
 
     /**
-     * Returns const reference to potential energy per particle.
+     * Compute and apply the force to the particles.
      */
-    virtual cache<en_pot_array_type> const& en_pot();
-
-    /**
-     * Returns const reference to potential part of stress tensor per particle.
-     */
-    virtual cache<stress_pot_array_type> const& stress_pot();
+    void apply();
 
     /**
      * Bind class to Lua.
@@ -91,35 +78,30 @@ private:
     typedef typename particle_type::species_array_type species_array_type;
     typedef typename particle_type::species_type species_type;
     typedef typename particle_type::size_type size_type;
-    typedef typename _Base::en_pot_type en_pot_type;
+    typedef typename particle_type::force_array_type force_array_type;
+    typedef typename particle_type::en_pot_array_type en_pot_array_type;
+    typedef typename particle_type::stress_pot_array_type stress_pot_array_type;
+    typedef typename particle_type::stress_pot_type stress_pot_type;
+    typedef typename particle_type::en_pot_type en_pot_type;
 
     /** compute forces */
-    void compute();
+    void compute_();
     /** compute forces with auxiliary variables */
-    void compute_aux();
+    void compute_aux_();
 
     /** pair potential */
     std::shared_ptr<potential_type const> potential_;
     /** system state */
-    std::shared_ptr<particle_type const> particle_;
+    std::shared_ptr<particle_type> particle_;
     /** simulation domain */
     std::shared_ptr<box_type const> box_;
     /** module logger */
     std::shared_ptr<logger_type> logger_;
 
-    /** net force per particle */
-    cache<net_force_array_type> net_force_;
-    /** potential energy per particle */
-    cache<en_pot_array_type> en_pot_;
-    /** potential part of stress tensor of each particle */
-    cache<stress_pot_array_type> stress_pot_;
-
-    /** cache observer of net force per particle */
-    std::tuple<cache<>, cache<>> net_force_cache_;
-    /** cache observer of potential energy per particle */
-    std::tuple<cache<>, cache<>> en_pot_cache_;
-    /** cache observer of potential part of stress tensor per particle */
-    std::tuple<cache<>, cache<>> stress_pot_cache_;
+    /** cache observer of force per particle */
+    std::tuple<cache<>, cache<>> force_cache_;
+    /** cache observer of auxiliary variables */
+    std::tuple<cache<>, cache<>> aux_cache_;
 
     typedef utility::profiler profiler_type;
     typedef typename profiler_type::accumulator_type accumulator_type;
@@ -136,7 +118,7 @@ private:
 template <int dimension, typename float_type, typename potential_type>
 pair_full<dimension, float_type, potential_type>::pair_full(
     std::shared_ptr<potential_type const> potential
-  , std::shared_ptr<particle_type const> particle
+  , std::shared_ptr<particle_type> particle
   , std::shared_ptr<box_type const> box
   , std::shared_ptr<logger_type> logger
 )
@@ -144,9 +126,6 @@ pair_full<dimension, float_type, potential_type>::pair_full(
   , particle_(particle)
   , box_(box)
   , logger_(logger)
-  , net_force_(particle_->nparticle())
-  , en_pot_(particle_->nparticle())
-  , stress_pot_(particle_->nparticle())
 {
     if (std::min(potential_->size1(), potential_->size2()) < particle_->nspecies()) {
         throw std::invalid_argument("size of potential coefficients less than number of particle species");
@@ -154,67 +133,43 @@ pair_full<dimension, float_type, potential_type>::pair_full(
 }
 
 template <int dimension, typename float_type, typename potential_type>
-cache<typename pair_full<dimension, float_type, potential_type>::net_force_array_type> const&
-pair_full<dimension, float_type, potential_type>::net_force()
+inline void pair_full<dimension, float_type, potential_type>::check_cache()
 {
     cache<position_array_type> const& position_cache = particle_->position();
     cache<species_array_type> const& species_cache = particle_->species();
 
-    if (net_force_cache_ != std::tie(position_cache, species_cache)) {
-        LOG_TRACE("compute net force per particle");
+    auto current_state = std::tie(position_cache, species_cache);
 
-        compute();
-
-        net_force_cache_ = std::tie(position_cache, species_cache);
+    if (force_cache_ != current_state ||
+        (particle_->aux_valid() && aux_cache_ != current_state)) {
+        particle_->mark_force_dirty();
     }
-
-    return net_force_;
 }
 
 template <int dimension, typename float_type, typename potential_type>
-cache<typename pair_full<dimension, float_type, potential_type>::en_pot_array_type> const&
-pair_full<dimension, float_type, potential_type>::en_pot()
+inline void pair_full<dimension, float_type, potential_type>::apply()
 {
     cache<position_array_type> const& position_cache = particle_->position();
     cache<species_array_type> const& species_cache = particle_->species();
 
-    if (en_pot_cache_ != std::tie(position_cache, species_cache)) {
-        LOG_TRACE("compute potential energy per particle");
+    auto current_state = std::tie(position_cache, species_cache);
 
-        compute_aux();
-
-        net_force_cache_ = std::tie(position_cache, species_cache);
-        en_pot_cache_ = net_force_cache_;
-        stress_pot_cache_ = net_force_cache_;
+    if (particle_->aux_valid()) {
+        compute_aux_();
+        force_cache_ = current_state;
+        aux_cache_ = force_cache_;
     }
-
-    return en_pot_;
+    else {
+        compute_();
+        force_cache_ = current_state;
+    }
+    particle_->force_zero_disable();
 }
 
 template <int dimension, typename float_type, typename potential_type>
-cache<typename pair_full<dimension, float_type, potential_type>::stress_pot_array_type> const&
-pair_full<dimension, float_type, potential_type>::stress_pot()
+inline void pair_full<dimension, float_type, potential_type>::compute_()
 {
-    cache<position_array_type> const& position_cache = particle_->position();
-    cache<species_array_type> const& species_cache = particle_->species();
-
-    if (stress_pot_cache_ != std::tie(position_cache, species_cache)) {
-        LOG_TRACE("compute potential part of stress tensor per particle");
-
-        compute_aux();
-
-        net_force_cache_ = std::tie(position_cache, species_cache);
-        en_pot_cache_ = net_force_cache_;
-        stress_pot_cache_ = net_force_cache_;
-    }
-
-    return stress_pot_;
-}
-
-template <int dimension, typename float_type, typename potential_type>
-inline void pair_full<dimension, float_type, potential_type>::compute()
-{
-    auto net_force = make_cache_mutable(net_force_);
+    auto force = make_cache_mutable(particle_->mutable_force());
 
     position_array_type const& position1 = read_cache(particle_->position());
     position_array_type const& position2 = read_cache(particle_->position());
@@ -227,7 +182,10 @@ inline void pair_full<dimension, float_type, potential_type>::compute()
 
     scoped_timer_type timer(runtime_.compute);
 
-    std::fill(net_force->begin(), net_force->end(), 0);
+    // reset the force and auxiliary variables to zero if necessary
+    if (particle_->force_zero()) {
+        std::fill(force->begin(), force->end(), 0);
+    }
 
     // whether Newton's third law applies
     bool const reactio = (particle_ == particle_);
@@ -248,18 +206,18 @@ inline void pair_full<dimension, float_type, potential_type>::compute()
             boost::tie(fval, pot) = (*potential_)(rr, a, b);
 
             // add force contribution to both particles
-            (*net_force)[i] += r * fval;
-            (*net_force)[j] -= r * fval;
+            (*force)[i] += r * fval;
+            (*force)[j] -= r * fval;
         }
     }
 }
 
 template <int dimension, typename float_type, typename potential_type>
-inline void pair_full<dimension, float_type, potential_type>::compute_aux()
+inline void pair_full<dimension, float_type, potential_type>::compute_aux_()
 {
-    cache_proxy<net_force_array_type> net_force     = net_force_;
-    cache_proxy<en_pot_array_type> en_pot           = en_pot_;
-    cache_proxy<stress_pot_array_type> stress_pot   = stress_pot_;
+    auto force      = make_cache_mutable(particle_->mutable_force());
+    auto en_pot     = make_cache_mutable(particle_->mutable_potential_energy());
+    auto stress_pot = make_cache_mutable(particle_->mutable_stress_pot());
 
     position_array_type const& position1 = read_cache(particle_->position());
     position_array_type const& position2 = read_cache(particle_->position());
@@ -272,9 +230,12 @@ inline void pair_full<dimension, float_type, potential_type>::compute_aux()
 
     scoped_timer_type timer(runtime_.compute);
 
-    std::fill(net_force->begin(), net_force->end(), 0);
-    std::fill(en_pot->begin(), en_pot->end(), 0);
-    std::fill(stress_pot->begin(), stress_pot->end(), 0);
+    // reset the force and auxiliary variables to zero if necessary
+    if (particle_->force_zero()) {
+        std::fill(force->begin(), force->end(), 0);
+        std::fill(en_pot->begin(), en_pot->end(), 0);
+        std::fill(stress_pot->begin(), stress_pot->end(), 0);
+    }
 
     for (size_type i = 0; i < nparticle1; ++i) {
         // calculate untruncated pairwise Lennard-Jones force with all other particles
@@ -296,8 +257,8 @@ inline void pair_full<dimension, float_type, potential_type>::compute_aux()
             boost::tie(fval, pot) = (*potential_)(rr, a, b);
 
             // add force contribution to both particles
-            (*net_force)[i] += r * fval;
-            (*net_force)[j] -= r * fval;
+            (*force)[i] += r * fval;
+            (*force)[j] -= r * fval;
 
             // contribution to potential energy
             en_pot_type en = 0.5 * pot;
@@ -315,6 +276,7 @@ inline void pair_full<dimension, float_type, potential_type>::compute_aux()
     }
 }
 
+
 template <int dimension, typename float_type, typename potential_type>
 void pair_full<dimension, float_type, potential_type>::luaopen(lua_State* L)
 {
@@ -325,7 +287,9 @@ void pair_full<dimension, float_type, potential_type>::luaopen(lua_State* L)
         [
             namespace_("forces")
             [
-                class_<pair_full, _Base>()
+                class_<pair_full>()
+                    .def("check_cache", &pair_full::check_cache)
+                    .def("apply", &pair_full::apply)
                     .scope
                     [
                         class_<runtime>("runtime")
@@ -335,7 +299,7 @@ void pair_full<dimension, float_type, potential_type>::luaopen(lua_State* L)
 
               , def("pair_full", &std::make_shared<pair_full,
                     std::shared_ptr<potential_type const>
-                  , std::shared_ptr<particle_type const>
+                  , std::shared_ptr<particle_type>
                   , std::shared_ptr<box_type const>
                   , std::shared_ptr<logger_type>
                 >)

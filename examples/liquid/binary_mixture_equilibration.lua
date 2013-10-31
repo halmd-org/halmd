@@ -112,7 +112,6 @@ local function liquid(args)
         local msv = observables.thermodynamics({
             box = box
           , group = mdsim.particle_groups.all({particle = particle})
-          , force = force
         })
         msv:writer({file = file, every = args.sampling.state_vars})
     end
@@ -129,7 +128,7 @@ local function liquid(args)
         })
 
         -- Sample macroscopic state variables per particle group.
-        local msv = observables.thermodynamics({box = box, group = group, force = force})
+        local msv = observables.thermodynamics({box = box, group = group})
         msv:writer({file = file, every = args.sampling.state_vars})
     end
 
@@ -146,7 +145,7 @@ local function liquid(args)
 
     -- add velocity-Verlet integrator with Boltzmann thermostat (NVT)
     local integrator = mdsim.integrators.verlet_nvt_boltzmann({
-        box = box, particle = particle, force = force
+        box = box, particle = particle
       , timestep = args.timestep, temperature = args.initial_temperature, rate = args.rate
     })
 
@@ -160,7 +159,7 @@ local function liquid(args)
     -- run remaining first half of the simulation in NVT ensemble at the target temperature
     -- FIXME provide method set_temperature()
     integrator = mdsim.integrators.verlet_nvt_boltzmann({
-        box = box, particle = particle, force = force
+        box = box, particle = particle
       , timestep = args.timestep, temperature = args.temperature, rate = args.rate
     })
     observables.sampler:run(steps / 2 - steps / 10)
@@ -173,7 +172,7 @@ local function liquid(args)
 
     -- add velocity-Verlet integrator (NVE)
     integrator = mdsim.integrators.verlet({
-        box = box, particle = particle, force = force, timestep = args.timestep
+        box = box, particle = particle, timestep = args.timestep
     })
 
     -- run remaining part of the simulation in NVE ensemble

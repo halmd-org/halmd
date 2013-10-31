@@ -1,6 +1,7 @@
 /*
- * Copyright © 2008-2012 Peter Colberg
  * Copyright © 2010-2012 Felix Höfling
+ * Copyright © 2013      Nicolas Höft
+ * Copyright © 2008-2012 Peter Colberg
  *
  * This file is part of HALMD.
  *
@@ -21,6 +22,7 @@
 #ifndef HALMD_MDSIM_HOST_PARTICLE_HPP
 #define HALMD_MDSIM_HOST_PARTICLE_HPP
 
+#include <halmd/mdsim/type_traits.hpp>
 #include <halmd/utility/profiler.hpp>
 #include <halmd/utility/cache.hpp>
 #include <halmd/utility/raw_array.hpp>
@@ -38,6 +40,9 @@ template <int dimension, typename float_type>
 class particle
 {
 public:
+    typedef halmd::signal<void ()> signal_type;
+    typedef signal_type::slot_function_type slot_function_type;
+
     typedef fixed_vector<float_type, dimension> vector_type;
 
     typedef unsigned int size_type;
@@ -48,6 +53,9 @@ public:
     typedef unsigned int reverse_tag_type;
     typedef unsigned int species_type;
     typedef double mass_type;
+    typedef fixed_vector<float_type, dimension> force_type;
+    typedef double en_pot_type;
+    typedef typename type_traits<dimension, float_type>::stress_tensor_type stress_pot_type;
 
     typedef raw_array<position_type> position_array_type;
     typedef raw_array<image_type> image_array_type;
@@ -56,6 +64,9 @@ public:
     typedef raw_array<reverse_tag_type> reverse_tag_array_type;
     typedef raw_array<species_type> species_array_type;
     typedef raw_array<mass_type> mass_array_type;
+    typedef raw_array<force_type> force_array_type;
+    typedef raw_array<en_pot_type> en_pot_array_type;
+    typedef raw_array<stress_pot_type> stress_pot_array_type;
 
     void rearrange(std::vector<unsigned int> const& index);
 
@@ -202,6 +213,112 @@ public:
     {
         return mass_;
     }
+        /**
+     * Returns const reference to particle force.
+     */
+    cache<force_array_type> const& force()
+    {
+        update_force_();
+        return force_;
+    }
+
+    /**
+     * Returns non-const reference to particle force.
+     */
+    cache<force_array_type>& mutable_force()
+    {
+        return force_;
+    }
+
+    /**
+     * Returns const reference to potential energy of particles.
+     */
+    cache<en_pot_array_type> const& potential_energy()
+    {
+        update_aux_();
+        return en_pot_;
+    }
+
+    /**
+     * Returns non-const reference to potential energy of particles.
+     */
+    cache<en_pot_array_type>& mutable_potential_energy()
+    {
+        return en_pot_;
+    }
+
+    /**
+     * Returns const reference to potential part of stress tensor.
+     */
+    cache<stress_pot_array_type> const& stress_pot()
+    {
+        update_aux_();
+        return stress_pot_;
+    }
+
+    /**
+     * Returns non-const reference to potential part of stress tensor.
+     */
+    cache<stress_pot_array_type>& mutable_stress_pot()
+    {
+        return stress_pot_;
+    }
+
+    /**
+     * Enable computation of auxiliary variables.
+     *
+     * The flag is reset after the next call to on_force_().
+     */
+    void aux_enable();
+
+    /**
+     * Returns true if computation of auxiliary variables is enabled.
+     */
+    bool aux_valid() const
+    {
+        return aux_valid_;
+    }
+
+    /**
+     * Returns true if the force has to be reset to zero prior to reading.
+     */
+    bool force_zero()
+    {
+        return force_zero_;
+    }
+
+    /**
+     * Disable a reset of the force to zero upon reading.
+     *
+     * Must be called after computation of the first force contribution.
+     */
+    void force_zero_disable()
+    {
+        force_zero_ = false;
+    }
+
+    /**
+     * Indicate that a force update (ie. calling on_force_()) is required
+     */
+    void mark_force_dirty()
+    {
+        force_dirty_ = true;
+    }
+
+    connection on_prepend_force(slot_function_type const& slot)
+    {
+        return on_prepend_force_.connect(slot);
+    }
+
+    connection on_force(slot_function_type const& slot)
+    {
+        return on_force_.connect(slot);
+    }
+
+    connection on_append_force(slot_function_type const& slot)
+    {
+        return on_append_force_.connect(slot);
+    }
 
     /**
      * Bind class to Lua.
@@ -227,6 +344,35 @@ private:
     cache<species_array_type> species_;
     /** particle masses */
     cache<mass_array_type> mass_;
+    /** total force on particles */
+    cache<force_array_type> force_;
+    /** potential energy per particle */
+    cache<en_pot_array_type> en_pot_;
+    /** potential part of stress tensor for each particle */
+    cache<stress_pot_array_type> stress_pot_;
+
+    /** flag that the computation of auxiliary variables is requested */
+    bool aux_flag_;
+    /** flag that auxiliary variables are computed at this step */
+    bool aux_valid_;
+    /** flag that the force has to be reset to zero prior to reading */
+    bool force_zero_;
+    /** flag that the force cache is dirty (not up to date) */
+    bool force_dirty_;
+
+    /**
+     * Update all forces and auxiliary variables if needed (the latter only if
+     * enable_aux() was called before).
+     */
+    void update_force_();
+
+    /**
+     * Update all forces and auxiliary variables.
+     *
+     * Emit a warning if the force update would be necessary solely to compute
+     * the auxiliary variables, which indicates a performance problem.
+     */
+    void update_aux_();
 
     typedef utility::profiler profiler_type;
     typedef typename profiler_type::accumulator_type accumulator_type;
@@ -239,6 +385,10 @@ private:
 
     /** profiling runtime accumulators */
     runtime runtime_;
+
+    signal_type on_prepend_force_;
+    signal_type on_force_;
+    signal_type on_append_force_;
 };
 
 /**
@@ -421,6 +571,36 @@ set_mass(particle_type& particle, iterator_type const& first)
         value = *input++;
     }
     return input;
+}
+
+/**
+ * Copy force per particle to given array.
+ */
+template <typename particle_type, typename iterator_type>
+inline iterator_type
+get_force(particle_type& particle, iterator_type const& first)
+{
+    return std::copy(particle.force()->begin(), particle.force()->end(), first);
+}
+
+/**
+ * Copy potential energy per particle to given array.
+ */
+template <typename particle_type, typename iterator_type>
+inline iterator_type
+get_potential_energy(particle_type& particle, iterator_type const& first)
+{
+    return std::copy(particle.potential_energy()->begin(), particle.potential_energy()->end(), first);
+}
+
+/**
+ * Copy potential part of stress tensor per particle to given array.
+ */
+template <typename particle_type, typename iterator_type>
+inline iterator_type
+get_stress_pot(particle_type& particle, iterator_type const& first)
+{
+    return std::copy(particle.stress_pot()->begin(), particle.stress_pot()->end(), first);
 }
 
 

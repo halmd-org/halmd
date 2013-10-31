@@ -33,9 +33,6 @@ void core::mdstep()
     on_prepend_integrate_();
     on_integrate_();
     on_append_integrate_();
-    on_prepend_force_();
-    on_force_();
-    on_append_force_();
     on_prepend_finalize_();
     on_finalize_();
     on_append_finalize_();
@@ -54,9 +51,6 @@ void core::luaopen(lua_State* L)
                 .def("on_prepend_integrate", &core::on_prepend_integrate)
                 .def("on_integrate", &core::on_integrate)
                 .def("on_append_integrate", &core::on_append_integrate)
-                .def("on_prepend_force", &core::on_prepend_force)
-                .def("on_force", &core::on_force)
-                .def("on_append_force", &core::on_append_force)
                 .def("on_prepend_finalize", &core::on_prepend_finalize)
                 .def("on_finalize", &core::on_finalize)
                 .def("on_append_finalize", &core::on_append_finalize)

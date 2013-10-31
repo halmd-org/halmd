@@ -54,7 +54,6 @@ local verlet = assert(libhalmd.mdsim.integrators.verlet)
 --
 -- :param table args: keyword arguments
 -- :param args.particle: instance of :class:`halmd.mdsim.particle`
--- :param args.force: instance of :mod:`halmd.mdsim.forces`
 -- :param args.box: instance of :class:`halmd.mdsim.box`
 -- :param number args.timestep: integration time step (defaults to :attr:`halmd.mdsim.clock.timestep`)
 --
@@ -88,18 +87,8 @@ local verlet = assert(libhalmd.mdsim.integrators.verlet)
 --    By default this function is connected to :meth:`halmd.mdsim.core.on_finalize`.
 --
 local M = module(function(args)
-    local particle = args.particle
-    if not particle then
-        error("missing parameter: particle", 2)
-    end
-    local force = args and args.force
-    if not force then
-        error("missing argument 'force'", 2)
-    end
-    local box = args.box
-    if not box then
-        error("missing parameter: box", 2)
-    end
+    local particle = utility.assert_kwarg(args, "particle")
+    local box = utility.assert_kwarg(args, "box")
     local dimension = #box:edges()
     local timestep = args.timestep
     if timestep then
@@ -110,7 +99,7 @@ local M = module(function(args)
 
     local logger = log.logger({label = "verlet"})
 
-    local self = verlet(particle, force, box, timestep, logger)
+    local self = verlet(particle, box, timestep, logger)
 
     -- capture C++ method set_timestep
     local set_timestep = assert(self.set_timestep)

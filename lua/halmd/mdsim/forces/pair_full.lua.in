@@ -46,21 +46,9 @@ local pair_full = assert(libhalmd.mdsim.forces.pair_full)
 --
 --    Instance of :mod:`halmd.mdsim.potentials`.
 --
--- .. method:: get_net_force()
---
---    Returns unordered sequence with particle forces.
---
--- .. method:: get_en_pot()
---
---    Returns unordered sequence with potential energies.
---
--- .. method:: get_stress_pot()
---
---    Returns unordered sequence with potential parts of stress tensors.
---
 -- .. method:: disconnect()
 --
---    Disconnect force from profiler.
+--    Disconnect force from profiler and particle module.
 --
 --
 local M = module(function(args)
@@ -85,6 +73,11 @@ local M = module(function(args)
     -- sequence of signal connections
     local conn = {}
     self.disconnect = utility.signal.disconnect(conn, "force module")
+
+    -- test if the cache is up-to-date
+    table.insert(conn, assert(particle:on_prepend_force(function() self:check_cache() end)))
+    -- apply the force (if necessary)
+    table.insert(conn, assert(particle:on_force(function() self:apply() end)))
 
     -- store potential Lua object (which contains the C++ object) as a
     -- read-only Lua property, so we may read it in profiler:on_profile

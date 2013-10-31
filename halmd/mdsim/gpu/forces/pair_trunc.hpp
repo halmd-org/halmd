@@ -25,7 +25,6 @@
 #include <halmd/io/logger.hpp>
 #include <halmd/mdsim/box.hpp>
 #include <halmd/mdsim/forces/trunc/discontinuous.hpp>
-#include <halmd/mdsim/gpu/force.hpp>
 #include <halmd/mdsim/gpu/forces/pair_trunc_kernel.hpp>
 #include <halmd/mdsim/gpu/neighbour.hpp>
 #include <halmd/mdsim/gpu/particle.hpp>
@@ -46,17 +45,8 @@ namespace forces {
  */
 template <int dimension, typename float_type, typename potential_type, typename trunc_type = mdsim::forces::trunc::discontinuous>
 class pair_trunc
-  : public force<dimension, float_type>
 {
-private:
-    typedef force<dimension, float_type> _Base;
-
 public:
-    typedef typename _Base::net_force_array_type net_force_array_type;
-    typedef typename _Base::en_pot_array_type en_pot_array_type;
-    typedef typename _Base::stress_pot_type stress_pot_type;
-    typedef typename _Base::stress_pot_array_type stress_pot_array_type;
-
     typedef particle<dimension, float_type> particle_type;
     typedef box<dimension> box_type;
     typedef neighbour neighbour_type;
@@ -64,7 +54,7 @@ public:
 
     pair_trunc(
         std::shared_ptr<potential_type const> potential
-      , std::shared_ptr<particle_type const> particle1
+      , std::shared_ptr<particle_type> particle1
       , std::shared_ptr<particle_type const> particle2
       , std::shared_ptr<box_type const> box
       , std::shared_ptr<neighbour_type> neighbour
@@ -73,19 +63,15 @@ public:
     );
 
     /**
-     * Returns const reference to net force per particle.
+     * Check if the force cache (of the particle module) is up-to-date and if
+     * not, mark the cache as dirty.
      */
-    virtual cache<net_force_array_type> const& net_force();
+    void check_cache();
 
     /**
-     * Returns const reference to potential energy per particle.
+     * Compute and apply the force to the particles in particle1.
      */
-    virtual cache<en_pot_array_type> const& en_pot();
-
-    /**
-     * Returns const reference to potential part of stress tensor per particle.
-     */
-    virtual cache<stress_pot_array_type> const& stress_pot();
+    void apply();
 
     /**
      * Bind class to Lua.
@@ -99,15 +85,20 @@ private:
     typedef typename potential_type::gpu_potential_type gpu_potential_type;
     typedef pair_trunc_wrapper<dimension, gpu_potential_type, trunc_type> gpu_wrapper;
 
+    typedef typename particle_type::force_array_type force_array_type;
+    typedef typename particle_type::en_pot_array_type en_pot_array_type;
+    typedef typename particle_type::stress_pot_type stress_pot_type;
+    typedef typename particle_type::stress_pot_array_type stress_pot_array_type;
+
     /** compute forces */
-    void compute();
+    void compute_();
     /** compute forces with auxiliary variables */
-    void compute_aux();
+    void compute_aux_();
 
     /** pair potential */
     std::shared_ptr<potential_type const> potential_;
     /** state of first system */
-    std::shared_ptr<particle_type const> particle1_;
+    std::shared_ptr<particle_type> particle1_;
     /** state of second system */
     std::shared_ptr<particle_type const> particle2_;
     /** simulation domain */
@@ -119,19 +110,10 @@ private:
     /** module logger */
     std::shared_ptr<logger_type> logger_;
 
-    /** net force per particle */
-    cache<net_force_array_type> net_force_;
-    /** potential energy per particle */
-    cache<en_pot_array_type> en_pot_;
-    /** potential part of stress tensor for each particle */
-    cache<stress_pot_array_type> stress_pot_;
-
-    /** cache observer of net force per particle */
-    std::tuple<cache<>, cache<>> net_force_cache_;
-    /** cache observer of potential energy per particle */
-    std::tuple<cache<>, cache<>> en_pot_cache_;
-    /** cache observer of potential part of stress tensor per particle */
-    std::tuple<cache<>, cache<>> stress_pot_cache_;
+    /** cache observer of force per particle */
+    std::tuple<cache<>, cache<>> force_cache_;
+    /** cache observer of auxiliary variables */
+    std::tuple<cache<>, cache<>> aux_cache_;
 
     typedef utility::profiler profiler_type;
     typedef typename profiler_type::accumulator_type accumulator_type;
@@ -149,7 +131,7 @@ private:
 template <int dimension, typename float_type, typename potential_type, typename trunc_type>
 pair_trunc<dimension, float_type, potential_type, trunc_type>::pair_trunc(
     std::shared_ptr<potential_type const> potential
-  , std::shared_ptr<particle_type const> particle1
+  , std::shared_ptr<particle_type> particle1
   , std::shared_ptr<particle_type const> particle2
   , std::shared_ptr<box_type const> box
   , std::shared_ptr<neighbour_type> neighbour
@@ -163,83 +145,53 @@ pair_trunc<dimension, float_type, potential_type, trunc_type>::pair_trunc(
   , neighbour_(neighbour)
   , trunc_(trunc)
   , logger_(logger)
-  , net_force_(particle1_->nparticle())
-  , en_pot_(particle1_->nparticle())
-  , stress_pot_(particle1_->nparticle())
 {
     if (std::min(potential_->size1(), potential_->size2()) < std::max(particle1_->nspecies(), particle2_->nspecies())) {
         throw std::invalid_argument("size of potential coefficients less than number of particle species");
     }
-
-    auto net_force = make_cache_mutable(net_force_);
-    auto en_pot = make_cache_mutable(en_pot_);
-    auto stress_pot = make_cache_mutable(stress_pot_);
-
-    net_force->reserve(particle1_->dim.threads());
-    en_pot->reserve(particle1_->dim.threads());
-    //
-    // The GPU stores the stress tensor elements in column-major order to
-    // optimise access patterns for coalescable access. Increase capacity of
-    // GPU array such that there are 4 (6) in 2D (3D) elements per particle
-    // available, although stress_pot_->size() still returns the number of
-    // particles.
-    //
-    stress_pot->reserve(stress_pot_type::static_size * particle1_->dim.threads());
 }
 
 template <int dimension, typename float_type, typename potential_type, typename trunc_type>
-cache<typename pair_trunc<dimension, float_type, potential_type, trunc_type>::net_force_array_type> const&
-pair_trunc<dimension, float_type, potential_type, trunc_type>::net_force()
+inline void pair_trunc<dimension, float_type, potential_type, trunc_type>::check_cache()
 {
     cache<position_array_type> const& position1_cache = particle1_->position();
     cache<position_array_type> const& position2_cache = particle2_->position();
 
-    if (net_force_cache_ != std::tie(position1_cache, position2_cache)) {
-        compute();
-        net_force_cache_ = std::tie(position1_cache, position2_cache);
+    auto current_state = std::tie(position1_cache, position2_cache);
+
+    if (force_cache_ != current_state ||
+        (particle1_->aux_valid() && aux_cache_ != current_state)) {
+        particle1_->mark_force_dirty();
     }
-    return net_force_;
 }
 
 template <int dimension, typename float_type, typename potential_type, typename trunc_type>
-cache<typename pair_trunc<dimension, float_type, potential_type, trunc_type>::en_pot_array_type> const&
-pair_trunc<dimension, float_type, potential_type, trunc_type>::en_pot()
+inline void pair_trunc<dimension, float_type, potential_type, trunc_type>::apply()
 {
     cache<position_array_type> const& position1_cache = particle1_->position();
     cache<position_array_type> const& position2_cache = particle2_->position();
 
-    if (en_pot_cache_ != std::tie(position1_cache, position2_cache)) {
-        compute_aux();
-        net_force_cache_ = std::tie(position1_cache, position2_cache);
-        en_pot_cache_ = net_force_cache_;
-        stress_pot_cache_ = net_force_cache_;
+    auto current_state = std::tie(position1_cache, position2_cache);
+
+    if (particle1_->aux_valid()) {
+        compute_aux_();
+        force_cache_ = current_state;
+        aux_cache_ = force_cache_;
     }
-    return en_pot_;
+    else {
+        compute_();
+        force_cache_ = current_state;
+    }
+    particle1_->force_zero_disable();
 }
 
 template <int dimension, typename float_type, typename potential_type, typename trunc_type>
-cache<typename pair_trunc<dimension, float_type, potential_type, trunc_type>::stress_pot_array_type> const&
-pair_trunc<dimension, float_type, potential_type, trunc_type>::stress_pot()
-{
-    cache<position_array_type> const& position1_cache = particle1_->position();
-    cache<position_array_type> const& position2_cache = particle2_->position();
-
-    if (stress_pot_cache_ != std::tie(position1_cache, position2_cache)) {
-        compute_aux();
-        net_force_cache_ = std::tie(position1_cache, position2_cache);
-        en_pot_cache_ = net_force_cache_;
-        stress_pot_cache_ = net_force_cache_;
-    }
-    return stress_pot_;
-}
-
-template <int dimension, typename float_type, typename potential_type, typename trunc_type>
-inline void pair_trunc<dimension, float_type, potential_type, trunc_type>::compute()
+inline void pair_trunc<dimension, float_type, potential_type, trunc_type>::compute_()
 {
     position_array_type const& position1 = read_cache(particle1_->position());
     position_array_type const& position2 = read_cache(particle2_->position());
     neighbour_array_type const& g_neighbour = read_cache(neighbour_->g_neighbour());
-    auto net_force = make_cache_mutable(net_force_);
+    auto force = make_cache_mutable(particle1_->mutable_force());
 
     LOG_TRACE("compute forces");
 
@@ -251,7 +203,7 @@ inline void pair_trunc<dimension, float_type, potential_type, trunc_type>::compu
     cuda::configure(particle1_->dim.grid, particle1_->dim.block);
     gpu_wrapper::kernel.compute(
         &*position1.begin()
-      , &*net_force->begin()
+      , &*force->begin()
       , &*g_neighbour.begin()
       , neighbour_->size()
       , neighbour_->stride()
@@ -261,19 +213,20 @@ inline void pair_trunc<dimension, float_type, potential_type, trunc_type>::compu
       , particle2_->nspecies()
       , static_cast<position_type>(box_->length())
       , *trunc_
+      , particle1_->force_zero()
     );
     cuda::thread::synchronize();
 }
 
 template <int dimension, typename float_type, typename potential_type, typename trunc_type>
-inline void pair_trunc<dimension, float_type, potential_type, trunc_type>::compute_aux()
+inline void pair_trunc<dimension, float_type, potential_type, trunc_type>::compute_aux_()
 {
     position_array_type const& position1 = read_cache(particle1_->position());
     position_array_type const& position2 = read_cache(particle2_->position());
     neighbour_array_type const& g_neighbour = read_cache(neighbour_->g_neighbour());
-    auto net_force = make_cache_mutable(net_force_);
-    auto en_pot = make_cache_mutable(en_pot_);
-    auto stress_pot = make_cache_mutable(stress_pot_);
+    auto force = make_cache_mutable(particle1_->mutable_force());
+    auto en_pot = make_cache_mutable(particle1_->mutable_potential_energy());
+    auto stress_pot = make_cache_mutable(particle1_->mutable_stress_pot());
 
     LOG_TRACE("compute forces with auxiliary variables");
 
@@ -285,7 +238,7 @@ inline void pair_trunc<dimension, float_type, potential_type, trunc_type>::compu
     cuda::configure(particle1_->dim.grid, particle1_->dim.block);
     gpu_wrapper::kernel.compute_aux(
         &*position1.begin()
-      , &*net_force->begin()
+      , &*force->begin()
       , &*g_neighbour.begin()
       , neighbour_->size()
       , neighbour_->stride()
@@ -295,6 +248,7 @@ inline void pair_trunc<dimension, float_type, potential_type, trunc_type>::compu
       , particle2_->nspecies()
       , static_cast<position_type>(box_->length())
       , *trunc_
+      , particle1_->force_zero()
     );
     cuda::thread::synchronize();
 }
@@ -309,7 +263,9 @@ void pair_trunc<dimension, float_type, potential_type, trunc_type>::luaopen(lua_
         [
             namespace_("forces")
             [
-                class_<pair_trunc, _Base>()
+                class_<pair_trunc>()
+                    .def("check_cache", &pair_trunc::check_cache)
+                    .def("apply", &pair_trunc::apply)
                     .scope
                     [
                         class_<runtime>("runtime")
@@ -319,7 +275,7 @@ void pair_trunc<dimension, float_type, potential_type, trunc_type>::luaopen(lua_
 
               , def("pair_trunc", &std::make_shared<pair_trunc,
                     std::shared_ptr<potential_type const>
-                  , std::shared_ptr<particle_type const>
+                  , std::shared_ptr<particle_type>
                   , std::shared_ptr<particle_type const>
                   , std::shared_ptr<box_type const>
                   , std::shared_ptr<neighbour_type>

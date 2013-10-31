@@ -75,7 +75,6 @@ local function liquid(args)
     local integrator = mdsim.integrators.verlet({
         box = box
       , particle = particle
-      , force = force
       , timestep = args.timestep
     })
 
@@ -99,7 +98,7 @@ local function liquid(args)
     end
 
     -- sample macroscopic state variables
-    local msv = observables.thermodynamics({box = box, group = particle_group, force = force})
+    local msv = observables.thermodynamics({box = box, group = particle_group})
     local interval = args.sampling.state_vars
     if interval > 0 then
         msv:writer({

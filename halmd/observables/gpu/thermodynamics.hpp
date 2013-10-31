@@ -24,7 +24,6 @@
 
 #include <halmd/io/logger.hpp>
 #include <halmd/mdsim/box.hpp>
-#include <halmd/mdsim/gpu/force.hpp>
 #include <halmd/mdsim/gpu/particle.hpp>
 #include <halmd/mdsim/gpu/particle_group.hpp>
 #include <halmd/observables/thermodynamics.hpp>
@@ -51,15 +50,13 @@ public:
     typedef typename _Base::stress_tensor_type stress_tensor_type;
     typedef mdsim::box<dimension> box_type;
     typedef mdsim::gpu::particle<dimension, float_type> particle_type;
-    typedef mdsim::gpu::force<dimension, float_type> force_type;
     typedef mdsim::gpu::particle_group particle_group_type;
     typedef logger logger_type;
 
     static void luaopen(lua_State* L);
 
     thermodynamics(
-        std::shared_ptr<particle_type const> particle
-      , std::shared_ptr<force_type> force
+        std::shared_ptr<particle_type> particle
       , std::shared_ptr<particle_group_type> group
       , std::shared_ptr<box_type const> box
       , std::shared_ptr<logger_type> logger = std::make_shared<logger_type>()
@@ -105,6 +102,7 @@ public:
      */
     virtual double virial();
 
+
     /**
      * Compute mean stress tensor elements per particle.
      */
@@ -113,14 +111,12 @@ public:
 private:
     typedef typename particle_type::size_type size_type;
     typedef typename particle_type::velocity_array_type velocity_array_type;
-    typedef typename force_type::en_pot_array_type en_pot_array_type;
-    typedef typename force_type::stress_pot_array_type stress_pot_array_type;
+    typedef typename particle_type::en_pot_array_type en_pot_array_type;
+    typedef typename particle_type::stress_pot_array_type stress_pot_array_type;
     typedef typename particle_group_type::array_type group_array_type;
 
     /** system state */
-    std::shared_ptr<particle_type const> particle_;
-    /** particle forces */
-    std::shared_ptr<force_type> force_;
+    std::shared_ptr<particle_type> particle_;
     /** particle group */
     std::shared_ptr<particle_group_type> group_;
     /** simulation domain */

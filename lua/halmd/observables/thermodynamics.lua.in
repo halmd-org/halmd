@@ -41,7 +41,6 @@ local h5 = assert(libhalmd.h5)
 --
 -- :param table args: keyword arguments
 -- :param args.group: instance of :mod:`halmd.mdsim.particle_groups`
--- :param args.force: instance of :mod:`halmd.mdsim.forces`
 -- :param args.box: instance of :class:`halmd.mdsim.box`
 --
 -- .. method:: particle_number()
@@ -105,6 +104,7 @@ local h5 = assert(libhalmd.h5)
 --
 --      \mathcal{V} = \frac{1}{2 N} \sum_{i \neq j} r_{ij} \, U'(r_{ij}) \, .
 --
+--
 -- .. method:: stress_tensor()
 --
 --    Returns the elements of the stress tensor :math:`\Pi_{\alpha\beta}` as a
@@ -163,7 +163,6 @@ local h5 = assert(libhalmd.h5)
 --
 local M = module(function(args)
     local group = utility.assert_kwarg(args, "group")
-    local force = utility.assert_kwarg(args, "force")
     local box = utility.assert_kwarg(args, "box")
 
     local particle = assert(group.particle)
@@ -171,7 +170,7 @@ local M = module(function(args)
     local logger = log.logger({label = ("thermodynamics (%s)"):format(label)})
 
     -- construct instance
-    local self = thermodynamics(particle, force, group, box, logger)
+    local self = thermodynamics(particle, group, box, logger)
 
     self.dimension = property(function(self) return box.dimension end)
     self.group = property(function(self) return group end)
@@ -201,15 +200,29 @@ local M = module(function(args)
 
         writer = file:writer{location = location, mode = "append"}
 
+        -- this table consists of thermodynamic variables that will need
+        -- an update of the aux variables in the force/particle module
+        local aux_table = {
+            potential_energy = true
+          , total_energy = true
+          , stress_tensor = true
+          , virial = true
+          , pressure = true
+        }
+
         -- register data fields with writer,
         -- the keys of 'field' may either be strings (dictionary) or numbers (table),
         -- in the latter case, the value string is assigned to the group name
+        local aux = false
         for k,v in pairs(fields) do
             local name = (type(k) == "string") and k or v
             if name == "particle_number" or name == "volume" then
                 logger:warning("skip repeated output of " .. name)
             else
                 writer:on_write(assert(self[v]), {name})
+            end
+            if aux_table[name] then
+                aux = true
             end
         end
 
@@ -218,9 +231,14 @@ local M = module(function(args)
         writer.disconnect = utility.signal.disconnect(conn, "thermodynamics writer")
 
         -- connect writer to sampler
+        if aux then
+            table.insert(conn, assert(sampler:on_prepare(function() group.particle:aux_enable() end, every, 0)))
+        end
         table.insert(conn, assert(sampler:on_sample(writer.write, every, 0)))
         return writer
     end
+    local conn = {}
+    self.disconnect = utility.signal.disconnect(conn, "thermodynamics module")
 
     -- FIXME connect profilers
 

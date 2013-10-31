@@ -26,7 +26,6 @@
 #include <cuda_wrapper/cuda_wrapper.hpp>
 #include <halmd/io/logger.hpp>
 #include <halmd/mdsim/box.hpp>
-#include <halmd/mdsim/gpu/force.hpp>
 #include <halmd/mdsim/gpu/integrators/verlet_kernel.hpp>
 #include <halmd/mdsim/gpu/particle.hpp>
 #include <halmd/utility/profiler.hpp>
@@ -41,7 +40,6 @@ class verlet
 {
 public:
     typedef particle<dimension, float_type> particle_type;
-    typedef force<dimension, float_type> force_type;
     typedef box<dimension> box_type;
     typedef logger logger_type;
     typedef typename particle_type::vector_type vector_type;
@@ -50,7 +48,6 @@ public:
 
     verlet(
         std::shared_ptr<particle_type> particle
-      , std::shared_ptr<force_type> force
       , std::shared_ptr<box_type const> box
       , double timestep
       , std::shared_ptr<logger_type> logger = std::make_shared<logger_type>()
@@ -69,7 +66,7 @@ private:
     typedef typename particle_type::position_array_type position_array_type;
     typedef typename particle_type::image_array_type image_array_type;
     typedef typename particle_type::velocity_array_type velocity_array_type;
-    typedef typename force_type::net_force_array_type net_force_array_type;
+    typedef typename particle_type::force_array_type force_array_type;
 
     typedef utility::profiler profiler_type;
     typedef typename profiler_type::accumulator_type accumulator_type;
@@ -83,8 +80,6 @@ private:
 
     /** system state */
     std::shared_ptr<particle_type> particle_;
-    /** particle forces */
-    std::shared_ptr<force_type> force_;
     /** simulation domain */
     std::shared_ptr<box_type const> box_;
     /** module logger */

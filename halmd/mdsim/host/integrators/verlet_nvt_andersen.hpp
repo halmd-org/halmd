@@ -25,7 +25,6 @@
 
 #include <halmd/io/logger.hpp>
 #include <halmd/mdsim/box.hpp>
-#include <halmd/mdsim/host/force.hpp>
 #include <halmd/mdsim/host/particle.hpp>
 #include <halmd/random/host/random.hpp>
 #include <halmd/utility/profiler.hpp>
@@ -40,7 +39,6 @@ class verlet_nvt_andersen
 {
 public:
     typedef host::particle<dimension, float_type> particle_type;
-    typedef force<dimension, float_type> force_type;
     typedef mdsim::box<dimension> box_type;
     typedef random::host::random random_type;
     typedef logger logger_type;
@@ -54,7 +52,6 @@ public:
      */
     verlet_nvt_andersen(
         std::shared_ptr<particle_type> particle
-      , std::shared_ptr<force_type> force
       , std::shared_ptr<box_type const> box
       , std::shared_ptr<random_type> random
       , float_type timestep
@@ -116,14 +113,12 @@ private:
     typedef typename particle_type::position_array_type position_array_type;
     typedef typename particle_type::image_array_type image_array_type;
     typedef typename particle_type::velocity_array_type velocity_array_type;
-    typedef typename force_type::net_force_array_type net_force_array_type;
+    typedef typename particle_type::force_array_type force_array_type;
     typedef typename particle_type::mass_array_type mass_array_type;
     typedef typename particle_type::size_type size_type;
 
     /** system state */
     std::shared_ptr<particle_type> particle_;
-    /** particle forces */
-    std::shared_ptr<force_type> force_;
     /** simulation domain */
     std::shared_ptr<box_type const> box_;
     /** random number generator */

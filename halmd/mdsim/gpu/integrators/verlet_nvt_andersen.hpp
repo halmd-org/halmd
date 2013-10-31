@@ -26,7 +26,6 @@
 #include <cuda_wrapper/cuda_wrapper.hpp>
 #include <halmd/io/logger.hpp>
 #include <halmd/mdsim/box.hpp>
-#include <halmd/mdsim/gpu/force.hpp>
 #include <halmd/mdsim/gpu/integrators/verlet_nvt_andersen_kernel.hpp>
 #include <halmd/mdsim/gpu/particle.hpp>
 #include <halmd/random/gpu/random.hpp>
@@ -42,7 +41,6 @@ class verlet_nvt_andersen
 {
 public:
     typedef particle<dimension, float_type> particle_type;
-    typedef force<dimension, float_type> force_type;
     typedef random::gpu::random<RandomNumberGenerator> random_type;
     typedef box<dimension> box_type;
     typedef logger logger_type;
@@ -58,7 +56,6 @@ public:
      */
     verlet_nvt_andersen(
         std::shared_ptr<particle_type> particle
-      , std::shared_ptr<force_type> force
       , std::shared_ptr<box_type const> box
       , std::shared_ptr<random_type> random
       , float_type timestep
@@ -120,12 +117,10 @@ private:
     typedef typename particle_type::position_array_type position_array_type;
     typedef typename particle_type::image_array_type image_array_type;
     typedef typename particle_type::velocity_array_type velocity_array_type;
-    typedef typename force_type::net_force_array_type net_force_array_type;
+    typedef typename particle_type::force_array_type force_array_type;
 
     /** system state */
     std::shared_ptr<particle_type> particle_;
-    /** particle forces */
-    std::shared_ptr<force_type> force_;
     /** simulation domain */
     std::shared_ptr<box_type const> box_;
     /** random number generator */

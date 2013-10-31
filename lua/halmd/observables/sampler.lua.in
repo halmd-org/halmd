@@ -50,15 +50,17 @@ local sampler = assert(libhalmd.sampler)
 --
 -- .. method:: on_prepare(slot, interval, start)
 --
---    Connect slot to signal emitted just before sampling current state. ``slot()`` will
---    be executed every ``interval`` timesteps with the first time being
---    executed at timestep ``start``. ``start`` must be greater or equal to zero.
+--    Connect slot to signal emitted just before sampling current state.
+--    ``slot()`` will be executed every ``interval`` timesteps with the first
+--    time being executed at timestep ``start``. ``start`` must be greater or
+--    equal to zero.
 --
 -- .. method:: on_sample(slot, interval, start)
 --
 --    Connect slot to signal emitted to sample current state. ``slot()`` will
 --    be executed every ``interval`` timesteps with the first time being
---    executed at timestep ``start``. ``start`` must be greater or equal to zero.
+--    executed at timestep ``start``. ``start`` must be greater or equal to
+--    zero.
 --
 --    :returns: signal connection
 --

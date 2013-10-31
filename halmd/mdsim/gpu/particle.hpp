@@ -1,6 +1,7 @@
 /*
- * Copyright © 2008-2012 Peter Colberg
  * Copyright © 2010-2012 Felix Höfling
+ * Copyright © 2013      Nicolas Höft
+ * Copyright © 2008-2012 Peter Colberg
  *
  * This file is part of HALMD.
  *
@@ -24,6 +25,8 @@
 #include <halmd/mdsim/type_traits.hpp>
 #include <halmd/utility/cache.hpp>
 #include <halmd/utility/profiler.hpp>
+#include <halmd/utility/signal.hpp>
+#include <halmd/mdsim/force_kernel.hpp>
 
 #include <cuda_wrapper/cuda_wrapper.hpp>
 #include <lua.hpp>
@@ -39,6 +42,9 @@ template <int dimension, typename float_type>
 class particle
 {
 public:
+    typedef halmd::signal<void ()> signal_type;
+    typedef signal_type::slot_function_type slot_function_type;
+
     typedef typename type_traits<dimension, float_type>::vector_type vector_type;
     typedef typename type_traits<dimension, float>::gpu::coalesced_vector_type gpu_vector_type;
 
@@ -50,12 +56,18 @@ public:
     typedef unsigned int reverse_tag_type;
     typedef unsigned int species_type;
     typedef float mass_type;
+    typedef fixed_vector<float_type, dimension> force_type;
+    typedef float_type en_pot_type;
+    typedef typename type_traits<dimension, float_type>::stress_tensor_type stress_pot_type;
 
     typedef cuda::vector<float4> position_array_type;
     typedef cuda::vector<gpu_vector_type> image_array_type;
     typedef cuda::vector<float4> velocity_array_type;
     typedef cuda::vector<tag_type> tag_array_type;
     typedef cuda::vector<reverse_tag_type> reverse_tag_array_type;
+    typedef cuda::vector<typename type_traits<dimension, float_type>::gpu::coalesced_vector_type> force_array_type;
+    typedef cuda::vector<en_pot_type> en_pot_array_type;
+    typedef cuda::vector<typename stress_pot_type::value_type> stress_pot_array_type;
 
     void rearrange(cuda::vector<unsigned int> const& g_index);
 
@@ -95,7 +107,7 @@ public:
     }
 
     /**
-     * Returns non-const reference to particle positions and species.
+     * Returns const reference to particle positions and species.
      */
     cache<position_array_type> const& position() const
     {
@@ -103,7 +115,7 @@ public:
     }
 
     /**
-     * Returns const reference to particle positions and species.
+     * Returns non-const reference to particle positions and species.
      */
     cache<position_array_type>& position()
     {
@@ -111,7 +123,7 @@ public:
     }
 
     /**
-     * Returns non-const reference to particle images.
+     * Returns const reference to particle images.
      */
     cache<image_array_type> const& image() const
     {
@@ -119,7 +131,7 @@ public:
     }
 
     /**
-     * Returns const reference to particle images.
+     * Returns non-const reference to particle images.
      */
     cache<image_array_type>& image()
     {
@@ -127,7 +139,7 @@ public:
     }
 
     /**
-     * Returns non-const reference to particle velocities and masses.
+     * Returns const reference to particle velocities and masses.
      */
     cache<velocity_array_type> const& velocity() const
     {
@@ -135,7 +147,7 @@ public:
     }
 
     /**
-     * Returns const reference to particle velocities and masses.
+     * Returns non-const reference to particle velocities and masses.
      */
     cache<velocity_array_type>& velocity()
     {
@@ -143,7 +155,7 @@ public:
     }
 
     /**
-     * Returns non-const reference to particle tags.
+     * Returns const reference to particle tags.
      */
     cache<tag_array_type> const& tag() const
     {
@@ -151,7 +163,7 @@ public:
     }
 
     /**
-     * Returns const reference to particle tags.
+     * Returns non-const reference to particle tags.
      */
     cache<tag_array_type>& tag()
     {
@@ -159,7 +171,7 @@ public:
     }
 
     /**
-     * Returns non-const reference to particle reverse tags.
+     * Returns const reference to particle reverse tags.
      */
     cache<reverse_tag_array_type> const& reverse_tag() const
     {
@@ -167,11 +179,117 @@ public:
     }
 
     /**
-     * Returns const reference to particle reverse tags.
+     * Returns non-const reference to particle reverse tags.
      */
     cache<reverse_tag_array_type>& reverse_tag()
     {
         return g_reverse_tag_;
+    }
+
+    /**
+     * Returns const reference to particle force.
+     */
+    cache<force_array_type> const& force()
+    {
+        update_force_();
+        return g_force_;
+    }
+
+    /**
+     * Returns non-const reference to particle force.
+     */
+    cache<force_array_type>& mutable_force()
+    {
+        return g_force_;
+    }
+
+    /**
+     * Returns const reference to potential energy of particles.
+     */
+    cache<en_pot_array_type> const& potential_energy()
+    {
+        update_aux_();
+        return g_en_pot_;
+    }
+
+    /**
+     * Returns non-const reference to potential energy of particles.
+     */
+    cache<en_pot_array_type>& mutable_potential_energy()
+    {
+        return g_en_pot_;
+    }
+
+    /**
+     * Returns const reference to potential part of stress tensor.
+     */
+    cache<stress_pot_array_type> const& stress_pot()
+    {
+        update_aux_();
+        return g_stress_pot_;
+    }
+    /**
+     * Returns non-const reference to potential part of stress tensor.
+     */
+    cache<stress_pot_array_type>& mutable_stress_pot()
+    {
+        return g_stress_pot_;
+    }
+
+    /**
+     * Enable computation of auxiliary variables.
+     *
+     * The flag is reset after the next call to on_force_().
+     */
+    void aux_enable();
+
+    /**
+     * Returns true if computation of auxiliary variables is enabled.
+     */
+    bool aux_valid() const
+    {
+        return aux_valid_;
+    }
+
+    /**
+     * Returns true if the force has to be reset to zero prior to reading.
+     */
+    bool force_zero()
+    {
+        return force_zero_;
+    }
+
+    /**
+     * Disable a reset of the force to zero upon reading.
+     *
+     * Must be called after computation of the first force contribution.
+     */
+    void force_zero_disable()
+    {
+        force_zero_ = false;
+    }
+
+    /**
+     * Indicate that a force update (ie. calling on_force_()) is required
+     */
+    void mark_force_dirty()
+    {
+        force_dirty_ = true;
+    }
+
+    connection on_prepend_force(slot_function_type const& slot)
+    {
+        return on_prepend_force_.connect(slot);
+    }
+
+    connection on_force(slot_function_type const& slot)
+    {
+        return on_force_.connect(slot);
+    }
+
+    connection on_append_force(slot_function_type const& slot)
+    {
+        return on_append_force_.connect(slot);
     }
 
     /**
@@ -194,6 +312,35 @@ private:
     cache<tag_array_type> g_tag_;
     /** reverse particle tags */
     cache<reverse_tag_array_type> g_reverse_tag_;
+    /** total force on particles */
+    cache<force_array_type> g_force_;
+    /** potential energy per particle */
+    cache<en_pot_array_type> g_en_pot_;
+    /** potential part of stress tensor for each particle */
+    cache<stress_pot_array_type> g_stress_pot_;
+
+    /** flag that the computation of auxiliary variables is requested */
+    bool aux_flag_;
+    /** flag that auxiliary variables are computed at this step */
+    bool aux_valid_;
+    /** flag that the force has to be reset to zero prior to reading */
+    bool force_zero_;
+    /** flag that the force cache is dirty (not up to date) */
+    bool force_dirty_;
+
+    /**
+     * Update all forces and auxiliary variables if needed (the latter only if
+     * enable_aux() was called before).
+     */
+    void update_force_();
+
+    /**
+     * Update all forces and auxiliary variables.
+     *
+     * Emit a warning if the force update would be necessary solely to compute
+     * the auxiliary variables, which indicates a performance problem.
+     */
+    void update_aux_();
 
     typedef utility::profiler profiler_type;
     typedef typename profiler_type::accumulator_type accumulator_type;
@@ -206,6 +353,10 @@ private:
 
     /** profiling runtime accumulators */
     runtime runtime_;
+
+    signal_type on_prepend_force_;
+    signal_type on_force_;
+    signal_type on_append_force_;
 };
 
 /**
@@ -484,6 +635,58 @@ set_reverse_tag(particle_type& particle, iterator_type const& first)
     }
     cuda::copy(h_reverse_tag.begin(), h_reverse_tag.end(), g_reverse_tag->begin());
     return input;
+}
+
+/**
+ * Copy net force per particle to given array.
+ */
+template <typename particle_type, typename iterator_type>
+inline iterator_type
+get_force(particle_type& particle, iterator_type const& first)
+{
+    typedef typename particle_type::force_array_type force_array_type;
+    force_array_type const& g_force = read_cache(particle.force());
+    cuda::host::vector<typename force_array_type::value_type> h_force(g_force.size());
+    cuda::copy(g_force.begin(), g_force.end(), h_force.begin());
+    return std::copy(h_force.begin(), h_force.end(), first);
+}
+
+/**
+ * Copy potential energy per particle to given array.
+ */
+template <typename particle_type, typename iterator_type>
+inline iterator_type
+get_potential_energy(particle_type& particle, iterator_type const& first)
+{
+    typedef typename particle_type::en_pot_array_type en_pot_array_type;
+    en_pot_array_type const& g_en_pot = read_cache(particle.potential_energy());
+    cuda::host::vector<typename en_pot_array_type::value_type> h_en_pot(g_en_pot.size());
+    cuda::copy(g_en_pot.begin(), g_en_pot.end(), h_en_pot.begin());
+    return std::copy(h_en_pot.begin(), h_en_pot.end(), first);
+}
+
+/**
+ * Copy potential part of stress tensor per particle to given array.
+ */
+template <typename particle_type, typename iterator_type>
+inline iterator_type
+get_stress_pot(particle_type& particle, iterator_type const& first)
+{
+    // copy data from GPU to host
+    typedef typename particle_type::stress_pot_array_type stress_pot_array_type;
+    stress_pot_array_type const& g_stress_pot = read_cache(particle.stress_pot());
+    cuda::host::vector<typename stress_pot_array_type::value_type> h_stress_pot(g_stress_pot.size());
+    h_stress_pot.reserve(g_stress_pot.capacity());
+    cuda::copy(g_stress_pot.begin(), g_stress_pot.begin() + g_stress_pot.capacity(), h_stress_pot.begin());
+
+    // convert from column-major to row-major layout
+    typedef typename particle_type::stress_pot_type stress_pot_type;
+    unsigned int stride = h_stress_pot.capacity() / stress_pot_type::static_size;
+    iterator_type output = first;
+    for (auto const& stress : h_stress_pot) {
+        *output++ = read_stress_tensor<stress_pot_type>(&stress, stride);
+    }
+    return output;
 }
 
 } // namespace gpu

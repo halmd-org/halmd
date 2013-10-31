@@ -1,6 +1,7 @@
 /*
- * Copyright © 2008-2012 Peter Colberg
  * Copyright © 2010-2012 Felix Höfling
+ * Copyright © 2013      Nicolas Höft
+ * Copyright © 2008-2012 Peter Colberg
  *
  * This file is part of HALMD.
  *
@@ -52,6 +53,14 @@ particle<dimension, float_type>::particle(size_type nparticle, unsigned int nspe
   , reverse_tag_(nparticle)
   , species_(nparticle)
   , mass_(nparticle)
+  , force_(nparticle)
+  , en_pot_(nparticle)
+  , stress_pot_(nparticle)
+  // enable auxiliary variables by default to allow sampling of initial state
+  , aux_flag_(true)
+  , aux_valid_(false)
+  , force_zero_(true)
+  , force_dirty_(true)
 {
     auto position = make_cache_mutable(position_);
     auto image = make_cache_mutable(image_);
@@ -60,6 +69,9 @@ particle<dimension, float_type>::particle(size_type nparticle, unsigned int nspe
     auto reverse_tag = make_cache_mutable(reverse_tag_);
     auto species = make_cache_mutable(species_);
     auto mass = make_cache_mutable(mass_);
+    auto force = make_cache_mutable(force_);
+    auto en_pot = make_cache_mutable(en_pot_);
+    auto stress_pot = make_cache_mutable(stress_pot_);
 
     std::fill(position->begin(), position->end(), 0);
     std::fill(image->begin(), image->end(), 0);
@@ -68,9 +80,19 @@ particle<dimension, float_type>::particle(size_type nparticle, unsigned int nspe
     std::iota(reverse_tag->begin(), reverse_tag->end(), 0);
     std::fill(species->begin(), species->end(), 0);
     std::fill(mass->begin(), mass->end(), 1);
+    std::fill(force->begin(), force->end(), 0);
+    std::fill(en_pot->begin(), en_pot->end(), 0);
+    std::fill(stress_pot->begin(), stress_pot->end(), 0);
 
     LOG("number of particles: " << nparticle_);
     LOG("number of particle species: " << nspecies_);
+}
+
+template <int dimension, typename float_type>
+void particle<dimension, float_type>::aux_enable()
+{
+    LOG_TRACE("enable computation of auxiliary variables");
+    aux_flag_ = true;
 }
 
 /**
@@ -97,11 +119,47 @@ void particle<dimension, float_type>::rearrange(std::vector<unsigned int> const&
     permute(tag->begin(), tag->end(), index.begin());
     permute(species->begin(), species->end(), index.begin());
     permute(mass->begin(), mass->end(), index.begin());
+    // no permutation of forces
 
     // update reverse tags
     for (unsigned int i = 0; i < nparticle_; ++i) {
         (*reverse_tag)[(*tag)[i]] = i;
     }
+}
+
+template <int dimension, typename float_type>
+void particle<dimension, float_type>::update_force_()
+{
+    on_prepend_force_();          // ask force modules whether force cache is dirty
+    if (force_dirty_) {
+        LOG_TRACE("request force" << (aux_flag_ ? " and auxiliary variables" : ""));
+
+        aux_valid_ = aux_flag_;   // tell force modules whether to compute auxiliary variables
+        aux_flag_ = false;        // disable auxiliary variables for next call
+        force_zero_ = true;       // tell first force module to reset the force
+        on_force_();
+        force_dirty_ = false;
+    }
+    on_append_force_();
+}
+
+template <int dimension, typename float_type>
+void particle<dimension, float_type>::update_aux_()
+{
+    aux_valid_ = true;            // ensure that the auxiliary variables are taken into account
+    on_prepend_force_();          // ask force modules whether force cache is dirty
+    if (force_dirty_) {
+        if (!aux_flag_) {
+            LOG_WARNING_ONCE("auxiliary variables inactive in prior force computation, use aux_enable()");
+        }
+
+        LOG_TRACE("request force and auxiliary variables");
+        force_zero_ = true;       // tell first force module to reset the force
+        aux_flag_ = false;        // disable auxiliary variables for next call
+        on_force_();
+        force_dirty_ = false;
+    }
+    on_append_force_();
 }
 
 template <typename particle_type>
@@ -274,6 +332,47 @@ wrap_set_mass(particle_type& self, std::vector<typename particle_type::mass_type
     set_mass(self, input.begin());
 }
 
+template <typename particle_type>
+static std::function<std::vector<typename particle_type::force_type> ()>
+wrap_get_force(std::shared_ptr<particle_type> self)
+{
+    return [=]() -> std::vector<typename particle_type::force_type> {
+        std::vector<typename particle_type::force_type> output;
+        {
+            output.reserve(self->force()->size());
+        }
+        get_force(*self, std::back_inserter(output));
+        return std::move(output);
+    };
+}
+
+template <typename particle_type>
+static std::function<std::vector<typename particle_type::en_pot_type> ()>
+wrap_get_potential_energy(std::shared_ptr<particle_type> self)
+{
+    return [=]() -> std::vector<typename particle_type::en_pot_type> {
+        std::vector<typename particle_type::en_pot_type> output;
+        {
+            output.reserve(self->potential_energy()->size());
+        }
+        get_potential_energy(*self, std::back_inserter(output));
+        return std::move(output);
+    };
+}
+
+template <typename particle_type>
+static std::function<std::vector<typename particle_type::stress_pot_type> ()>
+wrap_get_stress_pot(std::shared_ptr<particle_type> self)
+{
+    return [=]() -> std::vector<typename particle_type::stress_pot_type> {
+        std::vector<typename particle_type::stress_pot_type> output;
+        {
+            output.reserve(self->stress_pot()->size());
+        }
+        get_stress_pot(*self, std::back_inserter(output));
+        return std::move(output);
+    };
+}
 
 template <int dimension, typename float_type>
 static int wrap_dimension(particle<dimension, float_type> const&)
@@ -310,6 +409,9 @@ void particle<dimension, float_type>::luaopen(lua_State* L)
                     .def("set_species", &wrap_set_species<particle>)
                     .def("get_mass", &wrap_get_mass<particle>)
                     .def("set_mass", &wrap_set_mass<particle>)
+                    .def("get_force", &wrap_get_force<particle>)
+                    .def("get_potential_energy", &wrap_get_potential_energy<particle>)
+                    .def("get_stress_pot", &wrap_get_stress_pot<particle>)
                     .def("shift_velocity", &shift_velocity<particle>)
                     .def("shift_velocity_group", &shift_velocity_group<particle>)
                     .def("rescale_velocity", &rescale_velocity<particle>)
@@ -317,6 +419,10 @@ void particle<dimension, float_type>::luaopen(lua_State* L)
                     .def("shift_rescale_velocity", &shift_rescale_velocity<particle>)
                     .def("shift_rescale_velocity_group", &shift_rescale_velocity_group<particle>)
                     .property("dimension", &wrap_dimension<dimension, float_type>)
+                    .def("aux_enable", &particle::aux_enable)
+                    .def("on_prepend_force", &particle::on_prepend_force)
+                    .def("on_force", &particle::on_force)
+                    .def("on_append_force", &particle::on_append_force)
                     .scope[
                         class_<runtime>("runtime")
                             .def_readonly("rearrange", &runtime::rearrange)

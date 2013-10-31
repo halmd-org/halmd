@@ -195,10 +195,10 @@ void lennard_jones<float_type>::test()
 
     // read forces and other stuff from device
     std::vector<float> en_pot(particle->nparticle());
-    BOOST_CHECK( get_en_pot(*force, en_pot.begin()) == en_pot.end() );
+    BOOST_CHECK( get_potential_energy(*particle, en_pot.begin()) == en_pot.end() );
 
     std::vector<vector_type> f_list(particle->nparticle());
-    BOOST_CHECK( get_net_force(*force, f_list.begin()) == f_list.end() );
+    BOOST_CHECK( get_force(*particle, f_list.begin()) == f_list.end() );
 
     const float_type tolerance = 10 * numeric_limits<float_type>::epsilon();
 
@@ -256,6 +256,8 @@ lennard_jones<float_type>::lennard_jones()
     host_potential = std::make_shared<host_potential_type>(cutoff_array, epsilon_array, sigma_array);
     neighbour = std::make_shared<neighbour_type>(particle);
     force = std::make_shared<force_type>(potential, particle, particle, box, neighbour);
+    particle->on_prepend_force([=](){force->check_cache();});
+    particle->on_force([=](){force->apply();});
 }
 
 BOOST_FIXTURE_TEST_CASE( lennard_jones_gpu, device ) {

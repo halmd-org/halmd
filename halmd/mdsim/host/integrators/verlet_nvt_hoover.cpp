@@ -40,7 +40,6 @@ namespace integrators {
 template <int dimension, typename float_type>
 verlet_nvt_hoover<dimension, float_type>::verlet_nvt_hoover(
     std::shared_ptr<particle_type> particle
-  , std::shared_ptr<force_type> force
   , std::shared_ptr<box_type const> box
   , float_type timestep
   , float_type temperature
@@ -52,7 +51,6 @@ verlet_nvt_hoover<dimension, float_type>::verlet_nvt_hoover(
   , v_xi(0)
   // dependency injection
   , particle_(particle)
-  , force_(force)
   , box_(box)
   , logger_(logger)
   // member initialisation
@@ -110,7 +108,7 @@ set_mass(chain_type const& mass)
 template <int dimension, typename float_type>
 void verlet_nvt_hoover<dimension, float_type>::integrate()
 {
-    net_force_array_type const& net_force = read_cache(force_->net_force());
+    force_array_type const& force = read_cache(particle_->force());
     mass_array_type const& mass = read_cache(particle_->mass());
     size_type nparticle = particle_->nparticle();
 
@@ -126,7 +124,7 @@ void verlet_nvt_hoover<dimension, float_type>::integrate()
     for (size_type i = 0; i < nparticle; ++i) {
         vector_type& v = (*velocity)[i];
         vector_type& r = (*position)[i];
-        v += net_force[i] * timestep_half_ / mass[i];
+        v += force[i] * timestep_half_ / mass[i];
         r += v * timestep_;
         (*image)[i] += box_->reduce_periodic(r);
     }
@@ -138,7 +136,7 @@ void verlet_nvt_hoover<dimension, float_type>::integrate()
 template <int dimension, typename float_type>
 void verlet_nvt_hoover<dimension, float_type>::finalize()
 {
-    net_force_array_type const& net_force = read_cache(force_->net_force());
+    force_array_type const& force = read_cache(particle_->force());
     mass_array_type const& mass = read_cache(particle_->mass());
     size_type nparticle = particle_->nparticle();
 
@@ -149,7 +147,7 @@ void verlet_nvt_hoover<dimension, float_type>::finalize()
 
     // loop over all particles
     for (size_type i = 0; i < nparticle; ++i) {
-        (*velocity)[i] += net_force[i] * timestep_half_ / mass[i];
+        (*velocity)[i] += force[i] * timestep_half_ / mass[i];
     }
 
     propagate_chain();
@@ -292,7 +290,6 @@ void verlet_nvt_hoover<dimension, float_type>::luaopen(lua_State* L)
 
               , def("verlet_nvt_hoover", &std::make_shared<verlet_nvt_hoover
                   , std::shared_ptr<particle_type>
-                  , std::shared_ptr<force_type>
                   , std::shared_ptr<box_type const>
                   , float_type
                   , float_type

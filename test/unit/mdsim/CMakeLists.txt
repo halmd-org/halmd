@@ -88,27 +88,6 @@ add_test(unit/mdsim/clock
   test_unit_mdsim_clock --log_level=test_suite
 )
 
-add_executable(test_unit_mdsim_force
-  force.cpp
-)
-if(HALMD_WITH_GPU)
-  target_link_libraries(test_unit_mdsim_force
-    halmd_mdsim_gpu
-  )
-endif()
-target_link_libraries(test_unit_mdsim_force
-  halmd_mdsim_host
-  ${HALMD_TEST_LIBRARIES}
-)
-add_test(unit/mdsim/force/host
-  test_unit_mdsim_force --run_test=host --log_level=test_suite
-)
-if(HALMD_WITH_GPU)
-  add_test(unit/mdsim/force/gpu
-    test_unit_mdsim_force --run_test=gpu --log_level=test_suite
-  )
-endif()
-
 add_executable(test_unit_mdsim_particle
   particle.cpp
 )
