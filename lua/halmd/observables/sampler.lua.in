@@ -48,6 +48,12 @@ local sampler = assert(libhalmd.sampler)
 --
 --    This method invokes :meth:`halmd.mdsim.core.mdstep`.
 --
+-- .. method:: on_prepare(slot, interval, start)
+--
+--    Connect slot to signal emitted just before sampling current state. ``slot()`` will
+--    be executed every ``interval`` timesteps with the first time being
+--    executed at timestep ``start``. ``start`` must be greater or equal to zero.
+--
 -- .. method:: on_sample(slot, interval, start)
 --
 --    Connect slot to signal emitted to sample current state. ``slot()`` will
@@ -86,6 +92,7 @@ posix_signal:on_int(abort)
 -- connect runtime accumulators to module profiler
 local runtime = assert(self.runtime)
 profiler:on_profile(runtime.total, "total simulation runtime")
+profiler:on_profile(runtime.prepare, "preparation for integration step")
 profiler:on_profile(runtime.sample, "evaluation of observables")
 profiler:on_profile(runtime.start, "start-up of simulation")
 profiler:on_profile(runtime.finish, "finishing simulation")

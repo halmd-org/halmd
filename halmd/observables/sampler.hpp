@@ -1,6 +1,7 @@
 /*
  * Copyright © 2010-2012 Peter Colberg
  * Copyright © 2010-2011 Felix Höfling
+ * Copyright © 2013      Nicolas Höft
  *
  * This file is part of HALMD.
  *
@@ -55,6 +56,11 @@ public:
     void run(step_type steps);
 
     /**
+     * Connect slot to signal emitted before MD integration step
+     */
+    connection on_prepare(std::function<void ()> const& slot, step_type interval, step_type start);
+
+    /**
      * Connect slot to signal emitted to sample current state
      */
     connection on_sample(std::function<void ()> const& slot, step_type interval, step_type start);
@@ -79,6 +85,8 @@ private:
     std::shared_ptr<clock_type> clock_;
     /** simulation core */
     std::shared_ptr<core_type> core_;
+    /** signal emitted before MD integration step */
+    signal<void ()> on_prepare_;
     /** signal emitted after MD integration step */
     signal<void ()> on_sample_;
     /** signal emitted before starting simulation run */
@@ -93,6 +101,7 @@ private:
     struct runtime
     {
         accumulator_type total;
+        accumulator_type prepare;
         accumulator_type sample;
         accumulator_type start;
         accumulator_type finish;

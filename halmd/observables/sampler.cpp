@@ -1,6 +1,7 @@
 /*
  * Copyright © 2010-2012 Peter Colberg
  * Copyright © 2010-2011 Felix Höfling
+ * Copyright © 2013      Nicolas Höft
  *
  * This file is part of HALMD.
  *
@@ -38,7 +39,7 @@ sampler::sampler(
 void sampler::sample()
 {
     LOG_TRACE("sample state at step " << clock_->step());
-
+    on_prepare_();
     on_sample_();
 }
 
@@ -61,6 +62,10 @@ void sampler::run(step_type steps)
 
             LOG_TRACE("performing MD step #" << clock_->step());
 
+            {
+                scoped_timer_type timer(runtime_.prepare);
+                on_prepare_();
+            }
             // perform complete MD integration step
             core_->mdstep();
 
@@ -78,6 +83,19 @@ void sampler::run(step_type steps)
     }
 }
 
+connection sampler::on_prepare(std::function<void ()> const& slot, step_type interval, step_type start)
+{
+    if (interval == 0) {
+        throw std::logic_error("Slot must not be connected to signal 'on_prepare' with zero sampling interval");
+    }
+    return on_prepare_.connect([=]() {
+        step_type step = clock_->step();
+        if (step >= start && (step - start) % interval == 0) {
+            slot();
+        }
+    });
+}
+
 connection sampler::on_sample(std::function<void ()> const& slot, step_type interval, step_type start)
 {
     if (interval == 0) {
@@ -85,7 +103,7 @@ connection sampler::on_sample(std::function<void ()> const& slot, step_type inte
     }
     return on_sample_.connect([=]() {
         step_type step = clock_->step();
-        if(step >= start && (step - start) % interval == 0) {
+        if (step >= start && (step - start) % interval == 0) {
             slot();
         }
     });
@@ -121,6 +139,7 @@ void sampler::luaopen(lua_State* L)
             >())
             .def("sample", &sampler::sample)
             .def("run", &sampler::run)
+            .def("on_prepare", &sampler::on_prepare)
             .def("on_sample", &sampler::on_sample)
             .def("on_start", &sampler::on_start)
             .def("on_finish", &sampler::on_finish)
@@ -128,6 +147,7 @@ void sampler::luaopen(lua_State* L)
             [
                 class_<runtime>("runtime")
                     .def_readonly("total", &runtime::total)
+                    .def_readonly("prepare", &runtime::prepare)
                     .def_readonly("sample", &runtime::sample)
                     .def_readonly("start", &runtime::start)
                     .def_readonly("finish", &runtime::finish)
