@@ -1,5 +1,6 @@
 --
--- Copyright © 2011  Peter Colberg
+-- Copyright © 2013 Felix Höfling
+-- Copyright © 2011 Peter Colberg
 --
 -- This file is part of HALMD.
 --
@@ -18,6 +19,7 @@
 --
 
 local module = require("halmd.utility.module")
+local utility = require("halmd.utility")
 
 ---
 -- H5MD Reader
@@ -83,45 +85,32 @@ local h5md = assert(libhalmd.io.readers.h5md)
 --    Name of author of the file.
 --
 local M = module(function(args)
-    local path = args and args.path
-    if type(path) ~= "string" then
-        error("bad argument 'path'", 2)
-    end
+    local path = utility.assert_type(utility.assert_kwarg(args, "path"), "string")
 
     -- open H5MD file for reading
     local file = h5md.file(path)
 
     file.reader = function(self, args)
-        local location = args and args.location
-        if type(location) ~= "table" then
-            error("bad argument 'location'", 2)
-        end
-        local mode = args.mode
-        if type(mode) ~= "string" then
-            error("bad argument 'mode'", 2)
-        end
+        local location = utility.assert_type(utility.assert_kwarg(args, "location"), "table")
+        local mode = utility.assert_type(utility.assert_kwarg(args, "mode"), "string")
 
-        local reader
-        if mode == "append" then
-            reader = h5md.append(self.root, location)
-        elseif mode == "truncate" then
-            reader = h5md.truncate(self.root, location)
-        else
-            error(("invalid mode: %s"):format(mode), 2)
-        end
-        return reader
+        local reader = assert(h5md[mode], "invalid mode: " .. mode)
+        return reader(self.root, location)
     end
 
     return file
 end)
 
 ---
--- Check whether file is H5MD file.
+-- Check whether file is a valid H5MD file.
 --
 -- :param path: filename
--- :returns: ``true`` if file is H5MD file, ``false`` if not, or ``nil`` if file does not exist
+-- :returns: ``true`` if the file is a valid H5MD file, ``false`` if not, or
+--           ``nil`` if the file does not exist
 --
--- This function is useful to validate a command-line argument::
+-- An error message is emitted if the return value is not ``true``.
+--
+-- The function is useful to validate a command-line argument::
 --
 --    local parser = halmd.utility.program_options.argument_parser()
 --
@@ -130,18 +119,22 @@ end)
 --      , type = "string"
 --      , required = true
 --      , action = function(args, key, value)
---            if not halmd.io.readers.h5md.check(value) then
---                error(("not an H5MD file: %s"):format(value), 0)
---            end
+--            halmd.io.readers.h5md.check(value)
 --            args[key] = value
 --        end
 --    })
 --
 function M.check(path)
-    if type(path) ~= "string" then
-        error("bad argument 'path'", 2)
+    utility.assert_type(path, "string")
+    local val = io.open(path, "r") and h5md.file.check(path)
+
+    if val == nil then
+        error("can't read from file: " .. path, 2)
+    elseif not val then
+        error("invalid H5MD file: " .. path, 2)
     end
-    return io.open(path, "r") and h5md.file.check(path)
+
+    return val
 end
 
 return M

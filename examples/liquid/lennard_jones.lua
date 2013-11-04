@@ -238,9 +238,7 @@ local function parse_args()
     end, default = 1, help = "increase logging verbosity"})
 
     parser:add_argument("trajectory", {type = "string", required = true, action = function(args, key, value)
-        if not readers.h5md.check(value) then
-            error(("not an H5MD file: %s"):format(value), 0)
-        end
+        readers.h5md.check(value)
         args[key] = value
     end, help = "H5MD trajectory file"})
 
