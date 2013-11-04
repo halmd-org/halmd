@@ -49,7 +49,7 @@ local function liquid(args)
     local dimension = assert(sample.dimension)
 
     -- read edge vectors of simulation domain from file
-    local edges = mdsim.box.reader({file = file})
+    local edges = mdsim.box.reader({file = file, location = {"particles", "all"}})
     -- create simulation domain with periodic boundary conditions
     local box = mdsim.box({edges = edges})
 
@@ -84,8 +84,6 @@ local function liquid(args)
 
     -- H5MD file writer
     local file = writers.h5md({path = ("%s.h5"):format(args.output)})
-    -- write box specification to H5MD file
-    box:writer({file = file, location = {"observables"}})
 
     -- select all particles
     local particle_group = mdsim.particle_groups.all({particle = particle})

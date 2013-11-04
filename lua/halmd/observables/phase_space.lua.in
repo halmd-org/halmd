@@ -200,8 +200,8 @@ local M = module(function(args)
         end
 
         -- store box information
---        box:writer({file = file, location = location}) -- box is fixed in time
-        box:writer({writer = writer}) -- box is variable in time
+        box:writer({file = file, location = location}) -- box is fixed in time
+--        box:writer({writer = writer}) -- box is variable in time
 
         -- sequence of signal connections
         local conn = {}

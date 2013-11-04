@@ -87,8 +87,6 @@ local function liquid(args)
 
     -- H5MD file writer
     local file = writers.h5md({path = ("%s.h5"):format(args.output)})
-    -- write box specification to H5MD file
-    box:writer({file = file, location = {"observables"}})
 
     -- select all particles
     local particle_group = mdsim.particle_groups.all({particle = particle})

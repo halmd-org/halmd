@@ -178,22 +178,29 @@ end)
 --
 -- http://nongnu.org/h5md/draft.html#box-specification
 --
--- :param file: instance of :class:`halmd.io.readers.h5md`
+-- :param table args: keyword arguments
+-- :param args.file: instance of :class:`halmd.io.readers.h5md`
+-- :param args.location: location of box group within file
 -- :returns: edge vectors
+--
+--    The argument ``location`` specifies a path in a structured file format
+--    like H5MD given as a table of strings, the group name ``"box"`` is
+--    appended.
 --
 -- The return value may be used to restore the domain::
 --
 --    local file = readers.h5md({path = args.trajectory})
---    local edges = mdsim.box.reader({file = file})
+--    local edges = mdsim.box.reader({file = file, location = {"particles", "all"}})
 --    local box = mdsim.box({edges = edges})
 --
 function M.reader(args)
     local file = utility.assert_kwarg(args, "file")
-    local location = utility.assert_type(
-        args.location or {"observables", "box"}
-      , "table")
+    local location = utility.assert_type(utility.assert_kwarg(args, "location"), "table")
 
-    local self = file:reader({location = location, mode = "truncate"}) -- FIXME mode depends on data present
+    -- append "box" to location path
+    location[#location + 1] = "box"
+
+    local self = file:reader({location = location, mode = "truncate"}) -- FIXME mode depends on data present, see phase_space
     local group = assert(self.group)
     local boundary = group:read_attribute("boundary", h5.string()) -- TODO evaluate/return result
     local dimension = group:read_attribute("dimension", h5.int())

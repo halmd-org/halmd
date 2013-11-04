@@ -42,6 +42,7 @@ local function kob_andersen(args)
 
     local samples = {}
     local nparticle = 0
+    local edges
     for i, label in ipairs({'A', 'B'}) do
         -- construct a phase space reader and sample
         local reader, sample = observables.phase_space.reader({
@@ -53,22 +54,20 @@ local function kob_andersen(args)
         -- read phase space sample at last step in file
         log.info("number of %s particles: %d", label, sample.nparticle)
         reader:read_at_step(-1)
+        -- read edge vectors of simulation domain from particle group
+        edges = mdsim.box.reader({file = file, location = {"particles", label}})
         -- determine system parameters from phase space sample
         nparticle = nparticle + sample.nparticle
     end
 
-    -- read edge vectors of simulation domain from file
-    local edges = mdsim.box.reader({file = file})
-    -- create simulation box
-    local box = mdsim.box({edges = edges})
-
     -- close H5MD trajectory file
     file:close()
 
+    -- create simulation box
+    local box = mdsim.box({edges = edges})
+
     -- open H5MD file writer
     local file = writers.h5md({path = ("%s.h5"):format(args.output)})
-    -- write box specification to H5MD file
-    box:writer({file = file, location = {"observables"}})
 
     -- create system state
     local particle = mdsim.particle({box = box, particles = nparticle, species = 2})
