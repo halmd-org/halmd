@@ -25,10 +25,19 @@ namespace observables {
 
 template <typename thermodynamics_type>
 static std::function<double ()>
-wrap_nparticle(std::shared_ptr<thermodynamics_type> self)
+wrap_particle_number(std::shared_ptr<thermodynamics_type> self)
 {
     return [=]() {
-        return self->nparticle();
+        return self->particle_number();
+    };
+}
+
+template <typename thermodynamics_type>
+static std::function<double ()>
+wrap_volume(std::shared_ptr<thermodynamics_type> self)
+{
+    return [=]() {
+        return self->volume();
     };
 }
 
@@ -147,7 +156,8 @@ void thermodynamics<dimension>::luaopen(lua_State* L)
     module(L)
     [
         class_<thermodynamics>()
-            .property("nparticle", &wrap_nparticle<thermodynamics>)
+            .property("particle_number", &wrap_particle_number<thermodynamics>)
+            .property("volume", &wrap_volume<thermodynamics>)
             .property("density", &wrap_density<thermodynamics>)
             .property("kinetic_energy", &wrap_en_kin<thermodynamics>)
             .property("potential_energy", &wrap_en_pot<thermodynamics>)

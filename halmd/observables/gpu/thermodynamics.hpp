@@ -68,7 +68,7 @@ public:
     /**
      * Returns number of particles.
      */
-    virtual unsigned int nparticle() const;
+    virtual unsigned int particle_number() const;
 
     /**
      * Returns volume.

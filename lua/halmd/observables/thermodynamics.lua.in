@@ -26,6 +26,7 @@ local utility = require("halmd.utility")
 
 -- grab C++ wrappers
 local thermodynamics = assert(libhalmd.observables.thermodynamics)
+local h5 = assert(libhalmd.h5)
 
 ---
 -- Thermodynamics
@@ -43,7 +44,7 @@ local thermodynamics = assert(libhalmd.observables.thermodynamics)
 -- :param args.force: instance of :mod:`halmd.mdsim.forces`
 -- :param args.box: instance of :class:`halmd.mdsim.box`
 --
--- .. method:: nparticle()
+-- .. method:: particle_number()
 --
 --    Returns the number of particles :math:`N` selected by ``args.group``.
 --
@@ -193,14 +194,33 @@ local M = module(function(args)
             args.fields or {"potential_energy", "pressure", "temperature", "center_of_mass_velocity"}
           , "table")
 
-        local writer = file:writer{location = location, mode = "append"}
+        -- declare H5MD module "thermodynamics",
+        -- non-existing subgroups are created as needed
+        local module_group = file.root:open_group("h5md"):open_group("modules"):open_group("thermodynamics")
+        module_group:write_attribute("version", h5.int_array(), {1, 0})
+
+        -- store particle number and box volume in 'truncate' mode
+        -- assuming unchanging values
+        -- FIXME should be queried from box and particle_group
+        local writer = file:writer{location = location, mode = "truncate"}
+        writer.group:write_attribute("dimension", h5.int(), self.dimension)
+
+        writer:on_write(self.particle_number, {"particle_number"})
+        writer:on_write(self.volume, {"volume"})
+        writer:write()
+
+        writer = file:writer{location = location, mode = "append"}
 
         -- register data fields with writer,
         -- the keys of 'field' may either be strings (dictionary) or numbers (table),
         -- in the latter case, the value string is assigned to the group name
         for k,v in pairs(fields) do
             local name = (type(k) == "string") and k or v
-            writer:on_write(assert(self[v]), {name})
+            if name == "particle_number" or name == "volume" then
+                logger:warning("skip repeated output of " .. name)
+            else
+                writer:on_write(assert(self[v]), {name})
+            end
         end
 
         -- sequence of signal connections

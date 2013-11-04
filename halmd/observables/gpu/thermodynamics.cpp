@@ -47,7 +47,7 @@ thermodynamics<dimension, float_type>::thermodynamics(
 }
 
 template <int dimension, typename float_type>
-unsigned int thermodynamics<dimension, float_type>::nparticle() const
+unsigned int thermodynamics<dimension, float_type>::particle_number() const
 {
     return read_cache(group_->size());
 }

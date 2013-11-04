@@ -53,7 +53,7 @@ public:
     // basic quantities with backend-specific evaluation
 
     /** particle number */
-    virtual unsigned int nparticle() const = 0;
+    virtual unsigned int particle_number() const = 0;
     /** box volume */
     virtual double volume() const = 0;
     /** potential energy per particle */
@@ -84,7 +84,7 @@ public:
     /** system temperature */
     double temp() { return 2 * en_kin() / dimension; }
     /** number density */
-    double density() { return nparticle() / volume(); }
+    double density() { return particle_number() / volume(); }
     /** total energy per particle */
     double en_tot() { return en_pot() + en_kin(); }
 };
