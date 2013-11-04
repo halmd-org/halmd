@@ -80,7 +80,7 @@ modified_lennard_jones<float_type>::modified_lennard_jones(
     // energy shift due to truncation at cutoff length
     for (unsigned i = 0; i < ntype1; ++i) {
         for (unsigned j = 0; j < ntype2; ++j) {
-            en_cut_(i, j) = get<1>((*this)(rr_cut_(i, j), i, j));
+            boost::tie(boost::tuples::ignore, en_cut_(i, j)) = (*this)(rr_cut_(i, j), i, j);
         }
     }
 

@@ -53,7 +53,6 @@ public:
     typedef typename _Base::en_pot_array_type en_pot_array_type;
     typedef typename _Base::stress_pot_type stress_pot_type;
     typedef typename _Base::stress_pot_array_type stress_pot_array_type;
-    typedef typename _Base::hypervirial_array_type hypervirial_array_type;
 
     typedef particle<dimension, float_type> particle_type;
     typedef box<dimension> box_type;
@@ -80,11 +79,6 @@ public:
      * Returns const reference to potential part of stress tensor per particle.
      */
     virtual cache<stress_pot_array_type> const& stress_pot();
-
-    /**
-     * Returns const reference to hypervirial per particle.
-     */
-    virtual cache<hypervirial_array_type> const& hypervirial();
 
     /**
      * Bind class to Lua.
@@ -117,8 +111,6 @@ private:
     cache<en_pot_array_type> en_pot_;
     /** potential part of stress tensor for each particle  */
     cache<stress_pot_array_type> stress_pot_;
-    /** hypervirial per particle */
-    cache<hypervirial_array_type> hypervirial_;
 
     /** cache observer of net force per particle */
     cache<> net_force_cache_;
@@ -126,8 +118,6 @@ private:
     cache<> en_pot_cache_;
     /** cache observer of potential part of stress tensor per particle */
     cache<> stress_pot_cache_;
-    /** cache observer of hypervirial per particle */
-    cache<> hypervirial_cache_;
 
     typedef utility::profiler profiler_type;
     typedef typename profiler_type::accumulator_type accumulator_type;
@@ -156,12 +146,10 @@ pair_full<dimension, float_type, potential_type>::pair_full(
   , net_force_(particle_->nparticle())
   , en_pot_(particle_->nparticle())
   , stress_pot_(particle_->nparticle())
-  , hypervirial_(particle_->nparticle())
 {
     auto net_force = make_cache_mutable(net_force_);
     auto en_pot = make_cache_mutable(en_pot_);
     auto stress_pot = make_cache_mutable(stress_pot_);
-    auto hypervirial = make_cache_mutable(hypervirial_);
 
     net_force->reserve(particle_->dim.threads());
     en_pot->reserve(particle_->dim.threads());
@@ -173,7 +161,6 @@ pair_full<dimension, float_type, potential_type>::pair_full(
     // particles.
     //
     stress_pot->reserve(stress_pot_type::static_size * particle_->dim.threads());
-    hypervirial->reserve(particle_->dim.threads());
 }
 
 template <int dimension, typename float_type, typename potential_type>
@@ -201,7 +188,6 @@ pair_full<dimension, float_type, potential_type>::en_pot()
         net_force_cache_ = position_cache;
         en_pot_cache_ = position_cache;
         stress_pot_cache_ = position_cache;
-        hypervirial_cache_ = position_cache;
     }
 
     return en_pot_;
@@ -218,27 +204,9 @@ pair_full<dimension, float_type, potential_type>::stress_pot()
         net_force_cache_ = position_cache;
         en_pot_cache_ = position_cache;
         stress_pot_cache_ = position_cache;
-        hypervirial_cache_ = position_cache;
     }
 
     return stress_pot_;
-}
-
-template <int dimension, typename float_type, typename potential_type>
-cache<typename pair_full<dimension, float_type, potential_type>::hypervirial_array_type> const&
-pair_full<dimension, float_type, potential_type>::hypervirial()
-{
-    cache<position_array_type> const& position_cache = particle_->position();
-
-    if (hypervirial_cache_ != position_cache) {
-        compute_aux();
-        net_force_cache_ = position_cache;
-        en_pot_cache_ = position_cache;
-        stress_pot_cache_ = position_cache;
-        hypervirial_cache_ = position_cache;
-    }
-
-    return hypervirial_;
 }
 
 template <int dimension, typename float_type, typename potential_type>
@@ -259,7 +227,6 @@ inline void pair_full<dimension, float_type, potential_type>::compute()
         , &*position.begin()
         , nullptr
         , nullptr
-        , nullptr
         , particle_->nparticle()
         , particle_->nspecies()
         , particle_->nspecies()
@@ -277,7 +244,6 @@ inline void pair_full<dimension, float_type, potential_type>::compute_aux()
     auto net_force = make_cache_mutable(net_force_);
     auto en_pot = make_cache_mutable(en_pot_);
     auto stress_pot = make_cache_mutable(stress_pot_);
-    auto hypervirial = make_cache_mutable(hypervirial_);
 
     scoped_timer_type timer(runtime_.compute);
 
@@ -289,7 +255,6 @@ inline void pair_full<dimension, float_type, potential_type>::compute_aux()
         , &*position.begin()
         , &*en_pot->begin()
         , &*stress_pot->begin()
-        , &*hypervirial->begin()
         , particle_->nparticle()
         , particle_->nspecies()
         , particle_->nspecies()

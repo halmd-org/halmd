@@ -40,7 +40,6 @@ struct pair_full_wrapper
       , float4 const*
       , float*
       , float*
-      , float*
       , unsigned int
       , unsigned int
       , unsigned int
@@ -50,7 +49,6 @@ struct pair_full_wrapper
     cuda::function<void (
         coalesced_vector_type*
       , float4 const*
-      , float*
       , float*
       , float*
       , unsigned int

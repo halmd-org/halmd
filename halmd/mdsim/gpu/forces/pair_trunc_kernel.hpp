@@ -44,7 +44,6 @@ struct pair_trunc_wrapper
       , unsigned int
       , float*
       , float*
-      , float*
       , unsigned int
       , unsigned int
       , vector_type
@@ -57,7 +56,6 @@ struct pair_trunc_wrapper
       , unsigned int const*
       , unsigned int
       , unsigned int
-      , float*
       , float*
       , float*
       , unsigned int

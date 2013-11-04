@@ -56,7 +56,6 @@ public:
     typedef typename _Base::en_pot_array_type en_pot_array_type;
     typedef typename _Base::stress_pot_type stress_pot_type;
     typedef typename _Base::stress_pot_array_type stress_pot_array_type;
-    typedef typename _Base::hypervirial_array_type hypervirial_array_type;
 
     typedef particle<dimension, float_type> particle_type;
     typedef box<dimension> box_type;
@@ -87,11 +86,6 @@ public:
      * Returns const reference to potential part of stress tensor per particle.
      */
     virtual cache<stress_pot_array_type> const& stress_pot();
-
-    /**
-     * Returns const reference to hypervirial per particle.
-     */
-    virtual cache<hypervirial_array_type> const& hypervirial();
 
     /**
      * Bind class to Lua.
@@ -131,8 +125,6 @@ private:
     cache<en_pot_array_type> en_pot_;
     /** potential part of stress tensor for each particle */
     cache<stress_pot_array_type> stress_pot_;
-    /** hypervirial per particle */
-    cache<hypervirial_array_type> hypervirial_;
 
     /** cache observer of net force per particle */
     std::tuple<cache<>, cache<>> net_force_cache_;
@@ -140,8 +132,6 @@ private:
     std::tuple<cache<>, cache<>> en_pot_cache_;
     /** cache observer of potential part of stress tensor per particle */
     std::tuple<cache<>, cache<>> stress_pot_cache_;
-    /** cache observer of hypervirial per particle */
-    std::tuple<cache<>, cache<>> hypervirial_cache_;
 
     typedef utility::profiler profiler_type;
     typedef typename profiler_type::accumulator_type accumulator_type;
@@ -176,12 +166,10 @@ pair_trunc<dimension, float_type, potential_type, trunc_type>::pair_trunc(
   , net_force_(particle1_->nparticle())
   , en_pot_(particle1_->nparticle())
   , stress_pot_(particle1_->nparticle())
-  , hypervirial_(particle1_->nparticle())
 {
     auto net_force = make_cache_mutable(net_force_);
     auto en_pot = make_cache_mutable(en_pot_);
     auto stress_pot = make_cache_mutable(stress_pot_);
-    auto hypervirial = make_cache_mutable(hypervirial_);
 
     net_force->reserve(particle1_->dim.threads());
     en_pot->reserve(particle1_->dim.threads());
@@ -193,7 +181,6 @@ pair_trunc<dimension, float_type, potential_type, trunc_type>::pair_trunc(
     // particles.
     //
     stress_pot->reserve(stress_pot_type::static_size * particle1_->dim.threads());
-    hypervirial->reserve(particle1_->dim.threads());
 }
 
 template <int dimension, typename float_type, typename potential_type, typename trunc_type>
@@ -222,7 +209,6 @@ pair_trunc<dimension, float_type, potential_type, trunc_type>::en_pot()
         net_force_cache_ = std::tie(position1_cache, position2_cache);
         en_pot_cache_ = net_force_cache_;
         stress_pot_cache_ = net_force_cache_;
-        hypervirial_cache_ = net_force_cache_;
     }
     return en_pot_;
 }
@@ -239,28 +225,9 @@ pair_trunc<dimension, float_type, potential_type, trunc_type>::stress_pot()
         net_force_cache_ = std::tie(position1_cache, position2_cache);
         en_pot_cache_ = net_force_cache_;
         stress_pot_cache_ = net_force_cache_;
-        hypervirial_cache_ = net_force_cache_;
     }
     return stress_pot_;
 }
-
-template <int dimension, typename float_type, typename potential_type, typename trunc_type>
-cache<typename pair_trunc<dimension, float_type, potential_type, trunc_type>::hypervirial_array_type> const&
-pair_trunc<dimension, float_type, potential_type, trunc_type>::hypervirial()
-{
-    cache<position_array_type> const& position1_cache = particle1_->position();
-    cache<position_array_type> const& position2_cache = particle2_->position();
-
-    if (hypervirial_cache_ != std::tie(position1_cache, position2_cache)) {
-        compute_aux();
-        net_force_cache_ = std::tie(position1_cache, position2_cache);
-        en_pot_cache_ = net_force_cache_;
-        stress_pot_cache_ = net_force_cache_;
-        hypervirial_cache_ = net_force_cache_;
-    }
-    return hypervirial_;
-}
-
 
 template <int dimension, typename float_type, typename potential_type, typename trunc_type>
 inline void pair_trunc<dimension, float_type, potential_type, trunc_type>::compute()
@@ -286,7 +253,6 @@ inline void pair_trunc<dimension, float_type, potential_type, trunc_type>::compu
       , neighbour_->stride()
       , nullptr
       , nullptr
-      , nullptr
       , particle1_->nspecies()
       , particle2_->nspecies()
       , static_cast<position_type>(box_->length())
@@ -304,7 +270,6 @@ inline void pair_trunc<dimension, float_type, potential_type, trunc_type>::compu
     auto net_force = make_cache_mutable(net_force_);
     auto en_pot = make_cache_mutable(en_pot_);
     auto stress_pot = make_cache_mutable(stress_pot_);
-    auto hypervirial = make_cache_mutable(hypervirial_);
 
     LOG_TRACE("compute forces with auxiliary variables");
 
@@ -322,7 +287,6 @@ inline void pair_trunc<dimension, float_type, potential_type, trunc_type>::compu
       , neighbour_->stride()
       , &*en_pot->begin()
       , &*stress_pot->begin()
-      , &*hypervirial->begin()
       , particle1_->nspecies()
       , particle2_->nspecies()
       , static_cast<position_type>(box_->length())

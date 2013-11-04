@@ -199,21 +199,6 @@ double get_mean_virial(force_type& force, particle_group& group)
 }
 
 /**
- * Compute mean hypervirial per particle.
- */
-template <typename force_type>
-double get_mean_hypervirial(force_type& force, particle_group& group)
-{
-    typedef typename particle_group::array_type group_array_type;
-    typedef observables::gpu::potential_energy<dsfloat> accumulator_type;
-
-    group_array_type const& unordered = read_cache(group.unordered());
-
-    accumulator_type::get().bind(*force.hypervirial());
-    return reduce(&*unordered.begin(), &*unordered.end(), accumulator_type())() / unordered.size();
-}
-
-/**
  * Compute stress tensor.
  */
 template <typename force_type, typename particle_type>

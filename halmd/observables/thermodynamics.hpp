@@ -68,8 +68,6 @@ public:
     virtual double mean_mass() = 0;
     /** virial sum */
     virtual double virial() = 0;
-    /** hypervirial sum */
-    virtual double hypervirial() = 0;
     /** (symmetric) stress tensor */
     virtual stress_tensor_type const& stress_tensor() = 0;
 

@@ -44,12 +44,10 @@ public:
     typedef fixed_vector<float_type, dimension> net_force_type;
     typedef float_type en_pot_type;
     typedef typename type_traits<dimension, float_type>::stress_tensor_type stress_pot_type;
-    typedef float_type hypervirial_type;
 
     typedef cuda::vector<typename type_traits<dimension, float_type>::gpu::coalesced_vector_type> net_force_array_type;
     typedef cuda::vector<en_pot_type> en_pot_array_type;
     typedef cuda::vector<typename stress_pot_type::value_type> stress_pot_array_type;
-    typedef cuda::vector<hypervirial_type> hypervirial_array_type;
 
     virtual ~force() {}
 
@@ -67,11 +65,6 @@ public:
      * Returns const reference to potential part of stress tensor per particle.
      */
     virtual cache<stress_pot_array_type> const& stress_pot() = 0;
-
-    /**
-     * Returns const reference to hypervirial per particle.
-     */
-    virtual cache<hypervirial_array_type> const& hypervirial() = 0;
 
     /**
      * Bind class to Lua.
@@ -129,20 +122,6 @@ get_stress_pot(force_type& force, iterator_type const& first)
         *output++ = read_stress_tensor<stress_pot_type>(&stress, stride);
     }
     return output;
-}
-
-/**
- * Copy hypervirial per particle to given array.
- */
-template <typename force_type, typename iterator_type>
-inline iterator_type
-get_hypervirial(force_type& force, iterator_type const& first)
-{
-    typedef typename force_type::hypervirial_array_type hypervirial_array_type;
-    hypervirial_array_type const& g_hypervirial = read_cache(force.hypervirial());
-    cuda::host::vector<typename hypervirial_array_type::value_type> h_hypervirial(g_hypervirial.size());
-    cuda::copy(g_hypervirial.begin(), g_hypervirial.end(), h_hypervirial.begin());
-    return std::copy(h_hypervirial.begin(), h_hypervirial.end(), first);
 }
 
 } // namespace gpu

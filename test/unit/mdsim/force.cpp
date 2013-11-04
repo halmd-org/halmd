@@ -175,7 +175,6 @@ public:
     typedef typename force_type::en_pot_array_type en_pot_array_type;
     typedef typename force_type::stress_pot_array_type stress_pot_array_type;
     typedef typename force_type::stress_pot_type stress_pot_type;
-    typedef typename force_type::hypervirial_array_type hypervirial_array_type;
 
     virtual halmd::cache<net_force_array_type> const& net_force()
     {
@@ -213,23 +212,10 @@ public:
         make_stress_array_from_iterator_range<force_from_iterator_range>(*stress_pot, first, last);
     }
 
-    virtual halmd::cache<hypervirial_array_type> const& hypervirial()
-    {
-        return hypervirial_;
-    }
-
-    template <typename iterator_type>
-    void set_hypervirial(iterator_type const& first, iterator_type const& last)
-    {
-        auto hypervirial = make_cache_mutable(hypervirial_);
-        make_array_from_iterator_range(*hypervirial, first, last);
-    }
-
 private:
     halmd::cache<net_force_array_type> net_force_;
     halmd::cache<en_pot_array_type> en_pot_;
     halmd::cache<stress_pot_array_type> stress_pot_;
-    halmd::cache<hypervirial_array_type> hypervirial_;
 };
 
 /**
@@ -363,49 +349,6 @@ static void test_stress_pot(unsigned int nparticle)
     );
 }
 
-/**
- * Test initialisation, getter and setter of hypervirial per particle.
- */
-template <typename force_type>
-static void test_hypervirial(unsigned int nparticle)
-{
-    typedef typename force_type::hypervirial_type hypervirial_type;
-    force_from_iterator_range<force_type> force;
-
-    // initialise hypervirials to zero
-    force.set_hypervirial(
-        make_constant_iterator(hypervirial_type(0), 0)
-      , make_constant_iterator(hypervirial_type(0), nparticle)
-    );
-    std::vector<hypervirial_type> hypervirial(nparticle);
-    BOOST_CHECK( get_hypervirial(
-        force
-      , hypervirial.begin()) == hypervirial.end()
-    );
-    BOOST_CHECK_EQUAL_COLLECTIONS(
-        hypervirial.begin()
-      , hypervirial.end()
-      , make_constant_iterator(hypervirial_type(0), 0)
-      , make_constant_iterator(hypervirial_type(0), nparticle)
-    );
-
-    // set hypervirials to ascending sequence of integers starting at 1 ≠ 0
-    force.set_hypervirial(
-        boost::counting_iterator<hypervirial_type>(1)
-      , boost::counting_iterator<hypervirial_type>(nparticle + 1)
-    );
-    BOOST_CHECK( get_hypervirial(
-        force
-      , hypervirial.begin()) == hypervirial.end()
-    );
-    BOOST_CHECK_EQUAL_COLLECTIONS(
-        hypervirial.begin()
-      , hypervirial.end()
-      , boost::counting_iterator<hypervirial_type>(1)
-      , boost::counting_iterator<hypervirial_type>(nparticle + 1)
-    );
-}
-
 template <typename force_type>
 static void
 test_suite_host(unsigned int nparticle, boost::unit_test::test_suite* ts)
@@ -424,11 +367,6 @@ test_suite_host(unsigned int nparticle, boost::unit_test::test_suite* ts)
         test_stress_pot<force_type>(nparticle);
     };
     ts->add(BOOST_TEST_CASE( stress_pot ));
-
-    auto hypervirial = [=]() {
-        test_hypervirial<force_type>(nparticle);
-    };
-    ts->add(BOOST_TEST_CASE( hypervirial ));
 }
 
 #ifdef HALMD_WITH_GPU
@@ -453,12 +391,6 @@ test_suite_gpu(unsigned int nparticle, boost::unit_test::test_suite* ts)
         test_stress_pot<force_type>(nparticle);
     };
     ts->add(BOOST_TEST_CASE( stress_pot ));
-
-    auto hypervirial = [=]() {
-        set_cuda_device device;
-        test_hypervirial<force_type>(nparticle);
-    };
-    ts->add(BOOST_TEST_CASE( hypervirial ));
 }
 #endif
 

@@ -106,11 +106,6 @@ public:
     virtual double virial();
 
     /**
-     * Compute mean hypervirial per particle.
-     */
-    virtual double hypervirial();
-
-    /**
      * Compute mean stress tensor elements per particle.
      */
     virtual stress_tensor_type const& stress_tensor();
@@ -120,7 +115,6 @@ private:
     typedef typename particle_type::velocity_array_type velocity_array_type;
     typedef typename force_type::en_pot_array_type en_pot_array_type;
     typedef typename force_type::stress_pot_array_type stress_pot_array_type;
-    typedef typename force_type::hypervirial_array_type hypervirial_array_type;
     typedef typename particle_group_type::array_type group_array_type;
 
     /** system state */
@@ -146,8 +140,6 @@ private:
     double en_pot_;
     /** mean virial per particle */
     double virial_;
-    /** mean hypervirial per particle */
-    double hypervirial_;
     /** mean stress tensor elements per particle */
     stress_tensor_type stress_tensor_;
 
@@ -161,8 +153,6 @@ private:
     std::tuple<cache<>, cache<>> en_pot_cache_;
     /** cache observers of mean virial per particle */
     std::tuple<cache<>, cache<>> virial_cache_;
-    /** cache observers of mean hypervirial per particle */
-    std::tuple<cache<>, cache<>> hypervirial_cache_;
     /** cache observers of mean stress tensor elements per particle */
     std::tuple<cache<>, cache<>, cache<>> stress_tensor_cache_;
 
@@ -177,7 +167,6 @@ private:
         accumulator_type r_cm;
         accumulator_type en_pot;
         accumulator_type virial;
-        accumulator_type hypervirial;
         accumulator_type stress_tensor;
     };
 

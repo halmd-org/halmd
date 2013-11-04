@@ -83,17 +83,15 @@ public:
      * Compute force and potential for interaction.
      *
      * @param rr squared distance between particles
-     * @returns tuple of unit "force" @f$ -U'(r)/r @f$, potential @f$ U(r) @f$,
-     * and hypervirial @f$ r \partial_r r \partial_r U(r) @f$
+     * @returns tuple of unit "force" @f$ -U'(r)/r @f$, potential @f$ U(r) @f$
      *
      * @f{eqnarray*}{
      *   U(r) &=& \epsilon \left(\frac{r - r_\mathrm{core}}{\sigma}\right)^{-n} \\
-     *   - \frac{U'(r)}{r} &=& n \frac{n}{r(r-r_\mathrm{core})} U(r) \\
-     *   r \partial_r r \partial_r U(r) &=& n \frac{r (n r + r_\mathrm{core}) }{ (r-r_\mathrm{core})^2 } U(r)
+     *   - \frac{U'(r)}{r} &=& n \frac{n}{r(r-r_\mathrm{core})} U(r)
      * @f}
      */
     template <typename float_type>
-    HALMD_GPU_ENABLED tuple<float_type, float_type, float_type> operator()(float_type rr) const
+    HALMD_GPU_ENABLED tuple<float_type, float_type> operator()(float_type rr) const
     {
         float_type rr_ss = rr / pair_[SIGMA2];
         // The computation of the square root can not be avoided
@@ -106,9 +104,8 @@ public:
         float_type en_pot = eps_dri_n - pair_rr_en_cut_[1];
         float_type n_eps_dri_n_1 = n * dri * eps_dri_n;
         float_type fval = n_eps_dri_n_1 / (pair_[SIGMA2] * r_s);
-        float_type hvir = n_eps_dri_n_1 * ((n + 1) * dri * rr_ss - r_s);
 
-        return make_tuple(fval, en_pot, hvir);
+        return make_tuple(fval, en_pot);
     }
 
 private:

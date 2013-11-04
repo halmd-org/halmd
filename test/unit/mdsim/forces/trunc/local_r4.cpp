@@ -88,9 +88,9 @@ BOOST_AUTO_TEST_CASE( local_r4 )
         double rr = std::pow(row[0], 2);
         double const rcut = potential.r_cut(0, 0);
 
-        double fval, en_pot, hvir;
+        double fval, en_pot;
         // AA interaction
-        boost::tie(fval, en_pot, hvir) = potential(rr, 0, 0);
+        boost::tie(fval, en_pot) = potential(rr, 0, 0);
 
         trunc(row[0], rcut, fval, en_pot);
 
@@ -112,9 +112,9 @@ BOOST_AUTO_TEST_CASE( local_r4 )
         double rr = std::pow(row[0], 2);
         double const rcut = potential.r_cut(0, 1);
 
-        double fval, en_pot, hvir;
+        double fval, en_pot;
         // AB interaction
-        boost::tie(fval, en_pot, hvir) = potential(rr, 0, 1);
+        boost::tie(fval, en_pot) = potential(rr, 0, 1);
 
         trunc(row[0], rcut, fval, en_pot);
 
@@ -135,9 +135,9 @@ BOOST_AUTO_TEST_CASE( local_r4 )
 
     for (row_type const& row : results_bb) {
         double rr = std::pow(row[0], 2);
-        double fval, en_pot, hvir;
+        double fval, en_pot;
         // BB interaction
-        boost::tie(fval, en_pot, hvir) = potential(rr, 1, 1);
+        boost::tie(fval, en_pot) = potential(rr, 1, 1);
         double const rcut = potential.r_cut(1, 1);
 
         trunc(row[0], rcut, fval, en_pot);
@@ -218,9 +218,9 @@ void test_local_r4<float_type>::test()
         vector_type f = f_list[i];
 
         // reference values from host module
-        double fval, en_pot_, hvir;
+        double fval, en_pot_;
         double rr = inner_prod(r, r);
-        boost::tie(fval, en_pot_, hvir) = (*host_potential)(rr, type1, type2);
+        boost::tie(fval, en_pot_) = (*host_potential)(rr, type1, type2);
 
         if (rr < host_potential->rr_cut(type1, type2)) {
             double rcut = host_potential->r_cut(type1, type2);

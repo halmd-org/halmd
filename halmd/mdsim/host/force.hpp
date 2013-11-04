@@ -41,12 +41,10 @@ public:
     typedef fixed_vector<float_type, dimension> net_force_type;
     typedef double en_pot_type;
     typedef typename type_traits<dimension, float_type>::stress_tensor_type stress_pot_type;
-    typedef double hypervirial_type;
 
     typedef raw_array<net_force_type> net_force_array_type;
     typedef raw_array<en_pot_type> en_pot_array_type;
     typedef raw_array<stress_pot_type> stress_pot_array_type;
-    typedef raw_array<hypervirial_type> hypervirial_array_type;
 
     virtual ~force() {}
 
@@ -64,11 +62,6 @@ public:
      * Returns const reference to potential part of stress tensor of each particle.
      */
     virtual cache<stress_pot_array_type> const& stress_pot() = 0;
-
-    /**
-     * Returns const reference to hypervirial per particle.
-     */
-    virtual cache<hypervirial_array_type> const& hypervirial() = 0;
 
     /**
      * Bind class to Lua.
@@ -104,16 +97,6 @@ inline iterator_type
 get_stress_pot(force_type& force, iterator_type const& first)
 {
     return std::copy(force.stress_pot()->begin(), force.stress_pot()->end(), first);
-}
-
-/**
- * Copy hypervirial per particle to given array.
- */
-template <typename force_type, typename iterator_type>
-inline iterator_type
-get_hypervirial(force_type& force, iterator_type const& first)
-{
-    return std::copy(force.hypervirial()->begin(), force.hypervirial()->end(), first);
 }
 
 } // namespace host

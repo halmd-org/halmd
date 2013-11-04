@@ -102,70 +102,67 @@ BOOST_AUTO_TEST_CASE( power_law_host )
     BOOST_CHECK(index(1, 0) == index_array(1, 0));
     BOOST_CHECK(index(1, 1) == index_array(1, 1));
 
-    // evaluate some points of the potential, force, and hypervirial
-    typedef boost::array<double, 4> array_type;
+    // evaluate some points of potential and force
+    typedef boost::array<double, 3> array_type;
     double const eps = numeric_limits<double>::epsilon();
 
-    // expected results (r, fval, en_pot, hvir) for ε=1, σ=1, n=12, rc=5σ
+    // expected results (r, fval, en_pot) for ε=1, σ=1, n=12, rc=5σ
     boost::array<array_type, 5> results_aa = {{
-        {{0.2, 7.32421875e10, 2.44140625e8, 3.515625e10}}
-      , {{0.5, 196608., 4095.999999995904, 589824.}}
-      , {{1., 12., 0.999999995904, 144.}}
-      , {{2., 0.000732421875, 0.000244136529, 0.03515625}}
-      , {{10., 1.2e-13, -4.095e-9, 1.44e-10}}
+        {{0.2, 7.32421875e10, 2.44140625e8}}
+      , {{0.5, 196608., 4095.999999995904}}
+      , {{1., 12., 0.999999995904}}
+      , {{2., 0.000732421875, 0.000244136529}}
+      , {{10., 1.2e-13, -4.095e-9}}
     }};
 
     BOOST_FOREACH (array_type const& a, results_aa) {
         double rr = std::pow(a[0], 2);
-        double fval, en_pot, hvir;
-        tie(fval, en_pot, hvir) = potential(rr, 0, 0);  // interaction AA
+        double fval, en_pot;
+        tie(fval, en_pot) = potential(rr, 0, 0);  // interaction AA
 
         double tolerance = (1 + index_array(0, 0) / 2) * eps;
         BOOST_CHECK_CLOSE_FRACTION(fval, a[1], tolerance);
         BOOST_CHECK_CLOSE_FRACTION(en_pot, a[2], tolerance);
-        BOOST_CHECK_CLOSE_FRACTION(hvir, a[3], tolerance);
     };
 
     // interaction AB: ε=.5, σ=2, n=24, rc=5σ
     boost::array<array_type, 5> results_ab = {{
-        {{0.2, 3.e26, 5.e23, 2.88e26}}
-      , {{0.5, 1.3510798882111488e16,  1.40737488355328e14, 8.106479329266893e16}}
-      , {{1., 2.01326592e8, 8.388608e6, 4.831838208e9}}
-      , {{2., 3., 0.5, 288.}}
-      , {{10., 2.01326592e-18, 0., 4.831838208e-15}}
+        {{0.2, 3.e26, 5.e23}}
+      , {{0.5, 1.3510798882111488e16,  1.40737488355328e14}}
+      , {{1., 2.01326592e8, 8.388608e6}}
+      , {{2., 3., 0.5}}
+      , {{10., 2.01326592e-18, 0.}}
     }};
 
 
     BOOST_FOREACH (array_type const& a, results_ab) {
         double rr = std::pow(a[0], 2);
-        double fval, en_pot, hvir;
-        tie(fval, en_pot, hvir) = potential(rr, 0, 1);  // interaction AB
+        double fval, en_pot;
+        tie(fval, en_pot) = potential(rr, 0, 1);  // interaction AB
 
         double tolerance = (1 + index_array(0, 1) / 2) * eps;
         BOOST_CHECK_CLOSE_FRACTION(fval, a[1], tolerance);
         BOOST_CHECK_CLOSE_FRACTION(en_pot, a[2], tolerance);
-        BOOST_CHECK_CLOSE_FRACTION(hvir, a[3], tolerance);
     };
 
     // interaction BB: ε=.25, σ=4, n=3, rc=5σ
     boost::array<array_type, 5> results_bb = {{
-        {{0.2, 150000., 1999.998, 18000.}}
-      , {{0.5, 1536., 127.998, 1152.}}
-      , {{1., 48., 15.998, 144.}}
-      , {{2., 1.5, 1.998, 18.}}
-      , {{10., 0.00048, 0.014, 0.144}}
+        {{0.2, 150000., 1999.998}}
+      , {{0.5, 1536., 127.998}}
+      , {{1., 48., 15.998}}
+      , {{2., 1.5, 1.998}}
+      , {{10., 0.00048, 0.014}}
     }};
 
 
     BOOST_FOREACH (array_type const& a, results_bb) {
         double rr = std::pow(a[0], 2);
-        double fval, en_pot, hvir;
-        tie(fval, en_pot, hvir) = potential(rr, 1, 1);  // interaction BB
+        double fval, en_pot;
+        tie(fval, en_pot) = potential(rr, 1, 1);  // interaction BB
 
         double tolerance = (1 + index_array(1, 1) / 2) * eps;
         BOOST_CHECK_CLOSE_FRACTION(fval, a[1], tolerance);
         BOOST_CHECK_CLOSE_FRACTION(en_pot, a[2], tolerance);
-        BOOST_CHECK_CLOSE_FRACTION(hvir, a[3], tolerance);
     };
 }
 
@@ -219,9 +216,6 @@ void power_law<float_type>::test()
     std::vector<float> en_pot(particle->nparticle());
     BOOST_CHECK( get_en_pot(*force, en_pot.begin()) == en_pot.end() );
 
-    std::vector<float> hypervirial(particle->nparticle());
-    BOOST_CHECK( get_hypervirial(*force, hypervirial.begin()) == hypervirial.end() );
-
     std::vector<vector_type> f_list(particle->nparticle());
     BOOST_CHECK( get_net_force(*force, f_list.begin()) == f_list.end() );
 
@@ -232,11 +226,10 @@ void power_law<float_type>::test()
         vector_type f = f_list[i];
 
         // reference values from host module
-        float_type fval, en_pot_, hvir;
-        tie(fval, en_pot_, hvir) = (*host_potential)(inner_prod(r, r), type1, type2);
+        float_type fval, en_pot_;
+        tie(fval, en_pot_) = (*host_potential)(inner_prod(r, r), type1, type2);
         // the GPU force module stores only a fraction of these values
         en_pot_ /= 2;
-        hvir /= 2 * dimension * dimension;
 
         // estimated upper bound on floating-point error for power function
         float_type const eps = numeric_limits<float_type>::epsilon();
@@ -248,7 +241,6 @@ void power_law<float_type>::test()
 
         // the prefactor is not justified, it is needed for absolute differences on the order 1e-18
         BOOST_CHECK_CLOSE_FRACTION(en_pot_, en_pot[i], 5 * tolerance);
-        BOOST_CHECK_CLOSE_FRACTION(hvir, hypervirial[i], tolerance);
     }
 }
 

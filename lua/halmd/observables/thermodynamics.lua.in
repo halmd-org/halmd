@@ -105,16 +105,6 @@ local h5 = assert(libhalmd.h5)
 --
 --      \mathcal{V} = \frac{1}{2 N} \sum_{i \neq j} r_{ij} \, U'(r_{ij}) \, .
 --
--- .. method:: hypervirial()
---
---    Returns the mean hypervirial per particle, see the book by M. P. Allen
---    and D. J. Tildesley (Clarendon Press, Oxford, 1987) for a definition.
---    This quantity may be used to determine the isochoric compressibility from
---    NVE simulations, which does not work very well in practice. A superior
---    route is to extrapolate the static structure factor to zero wavenumber.
---
---    *This method will be deprecated in the next release.*
---
 -- .. method:: stress_tensor()
 --
 --    Returns the elements of the stress tensor :math:`\Pi_{\alpha\beta}` as a
@@ -252,7 +242,6 @@ function M.profile(self, profiler)
     profile("r_cm"         , "centre-of-mass"         )
     profile("en_pot"       , "potential energy"       )
     profile("virial"       , "virial"                 )
-    profile("hypervirial"  , "hypervirial"            )
     profile("stress_tensor", "stress tensor"          )
 end
 

@@ -198,22 +198,6 @@ double get_mean_virial(force_type& force, particle_group& group)
 }
 
 /**
- * Compute mean hypervirial per particle.
- */
-template <typename force_type>
-double get_mean_hypervirial(force_type& force, particle_group& group)
-{
-    auto const& unordered = read_cache(group.unordered());
-    auto const& hypervirial = read_cache(force.hypervirial());
-
-    double sum = 0;
-    for (typename particle_group::size_type i : unordered) {
-        sum += hypervirial[i];
-    }
-    return sum / unordered.size();
-}
-
-/**
  * Compute stress tensor.
  */
 template <typename force_type, typename particle_type>

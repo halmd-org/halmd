@@ -246,7 +246,6 @@ public:
     typedef typename force_type::net_force_array_type net_force_array_type;
     typedef typename force_type::en_pot_array_type en_pot_array_type;
     typedef typename force_type::stress_pot_array_type stress_pot_array_type;
-    typedef typename force_type::hypervirial_array_type hypervirial_array_type;
     typedef typename force_type::stress_pot_type stress_pot_type;
 
     template <typename particle_type>
@@ -271,11 +270,6 @@ public:
     virtual halmd::cache<stress_pot_array_type> const& stress_pot()
     {
         return stress_pot_;
-    }
-
-    virtual halmd::cache<hypervirial_array_type> const& hypervirial()
-    {
-        throw std::runtime_error("not implemented");
     }
 
 private:

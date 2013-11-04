@@ -70,7 +70,7 @@ power_law<float_type>::power_law(
     // energy shift due to truncation at cutoff length
     for (unsigned i = 0; i < en_cut_.size1(); ++i) {
         for (unsigned j = 0; j < en_cut_.size2(); ++j) {
-            boost::tie(boost::tuples::ignore, en_cut_(i, j), boost::tuples::ignore) = (*this)(rr_cut_(i, j), i, j);
+            boost::tie(boost::tuples::ignore, en_cut_(i, j)) = (*this)(rr_cut_(i, j), i, j);
         }
     }
 

@@ -55,7 +55,7 @@ public:
     );
 
     /** compute potential and its derivative at squared distance 'rr' for particles of type 'a' and 'b' */
-    boost::tuple<float_type, float_type, float_type> operator() (float_type rr, unsigned a, unsigned b) const
+    boost::tuple<float_type, float_type> operator() (float_type rr, unsigned a, unsigned b) const
     {
         float_type sigma2 = sigma2_(a, b);
         float_type rri = sigma2 / rr;
@@ -64,8 +64,7 @@ public:
         float_type r = sqrt(rr);
         float_type fval = 48 * rri * eps_r6i * (r6i - 0.5) / sigma2 - force_cut_(a, b) / r;
         float_type en_pot = 4 * eps_r6i * (r6i - 1) - en_cut_(a, b) + (r - r_cut_(a, b)) * force_cut_(a, b);
-        float_type hvir = 576 * eps_r6i * (r6i - 0.25) + r * force_cut_(a, b);
-        return boost::make_tuple(fval, en_pot, hvir);
+        return boost::make_tuple(fval, en_pot);
     }
 
     matrix_type const& r_cut() const

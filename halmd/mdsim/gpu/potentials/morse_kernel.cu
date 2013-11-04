@@ -80,20 +80,18 @@ public:
      * Compute force and potential for interaction.
      *
      * @param rr squared distance between particles
-     * @returns tuple of unit "force" @f$ -U'(r)/r @f$, potential @f$ U(r) @f$,
-     * and hypervirial @f$ r \partial_r r \partial_r U(r) @f$
+     * @returns tuple of unit "force" @f$ -U'(r)/r @f$ and potential @f$ U(r) @f$
      */
     template <typename float_type>
-    HALMD_GPU_ENABLED tuple<float_type, float_type, float_type> operator()(float_type rr) const
+    HALMD_GPU_ENABLED tuple<float_type, float_type> operator()(float_type rr) const
     {
         float_type r_sigma = sqrt(rr) / pair_[SIGMA];
         float_type exp_dr = exp(pair_[R_MIN_SIGMA] - r_sigma);
         float_type eps_exp_dr = pair_[EPSILON] * exp_dr;
         float_type fval = 2 * eps_exp_dr * (exp_dr - 1) * r_sigma / rr;
         float_type en_pot = eps_exp_dr * (exp_dr - 2) - pair_[EN_CUT];
-        float_type hvir = 2 * eps_exp_dr * r_sigma * ((exp_dr - 1) - r_sigma * (2 * exp_dr - 1));
 
-        return make_tuple(fval, en_pot, hvir);
+        return make_tuple(fval, en_pot);
     }
 
 private:

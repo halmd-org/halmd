@@ -56,7 +56,6 @@ __global__ void compute(
   , unsigned int neighbour_stride
   , float* g_en_pot
   , float* g_stress_pot
-  , float* g_hypervirial
   , unsigned int ntype1
   , unsigned int ntype2
   , vector_type box_length
@@ -72,9 +71,8 @@ __global__ void compute(
     vector_type r1;
     tie(r1, type1) <<= g_r1[i];
 
-    // contribution to potential energy and hypervirial
+    // contribution to potential energy
     float en_pot_ = 0;
-    float hypervirial_ = 0;
     // contribution to stress tensor
     typename type_traits<dimension, float>::stress_tensor_type stress_pot = 0;
 #ifdef USE_FORCE_DSFUN
@@ -110,8 +108,8 @@ __global__ void compute(
             continue;
         }
 
-        value_type fval, en_pot, hvir;
-        tie(fval, en_pot, hvir) = potential(rr);
+        value_type fval, en_pot;
+        tie(fval, en_pot) = potential(rr);
 
         // apply smoothing function to force and potential
         trunc(sqrt(rr), sqrt(potential.rr_cut()), fval, en_pot);
@@ -123,8 +121,6 @@ __global__ void compute(
             en_pot_ += 0.5f * en_pot;
             // contribution to stress tensor from this particle
             stress_pot += 0.5f * fval * make_stress_tensor(r);
-            // contribution to hypervirial
-            hypervirial_ += 0.5f * hvir / (dimension * dimension);
         }
     }
 
@@ -133,7 +129,6 @@ __global__ void compute(
     if (do_aux) {
         g_en_pot[i] = en_pot_;
         write_stress_tensor(g_stress_pot + i, stress_pot, GTDIM);
-        g_hypervirial[i] = hypervirial_;
     }
 }
 

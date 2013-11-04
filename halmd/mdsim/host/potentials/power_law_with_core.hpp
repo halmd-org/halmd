@@ -133,7 +133,7 @@ public:
      *
      *
      */
-    boost::tuple<float_type, float_type, float_type> operator()(float_type rr, unsigned a, unsigned b) const
+    boost::tuple<float_type, float_type> operator()(float_type rr, unsigned a, unsigned b) const
     {
         switch (index_(a, b)) {
             case 6:  return impl_<6>(rr, a, b);
@@ -194,17 +194,15 @@ private:
      * @param a type of first interacting particle
      * @param b type of second interacting particle
      * @returns tuple of unit "force" @f$ -U'(r)/r @f$ and potential @f$ U(r) @f$
-     * and hypervirial @f$ r \partial_r r \partial_r U(r) @f$ with
      *
      * @f{eqnarray*}{
      *   U(r) &=& \epsilon \left(\frac{r - r_\mathrm{core}}{\sigma}\right)^{-n} \\
-     *   - \frac{U'(r)}{r} &=& n \frac{n}{r(r-r_\mathrm{core})} U(r) \\
-     *   r \partial_r r \partial_r U(r) &=& n \frac{r (n r + r_\mathrm{core}) }{ (r-r_\mathrm{core})^2 } U(r)
+     *   - \frac{U'(r)}{r} &=& n \frac{n}{r(r-r_\mathrm{core})} U(r)
      * @f}
      *
      */
     template <int const_index>
-    boost::tuple<float_type, float_type, float_type> impl_(float_type rr, unsigned a, unsigned b) const
+    boost::tuple<float_type, float_type> impl_(float_type rr, unsigned a, unsigned b) const
     {
         // choose arbitrary index_ if template parameter index = 0
         unsigned int n = const_index > 0 ? const_index : index_(a, b);
@@ -218,9 +216,8 @@ private:
         float_type en_pot = eps_dri_n - en_cut_(a, b);
         float_type n_eps_dri_n_1 = n * dri * eps_dri_n;
         float_type fval = n_eps_dri_n_1 / (sigma2_(a, b) * r_s);
-        float_type hvir = n_eps_dri_n_1 * ((n + 1) * dri * rr_ss - r_s);
 
-        return boost::make_tuple(fval, en_pot, hvir);
+        return boost::make_tuple(fval, en_pot);
     }
 
     /** interaction strength in MD units */

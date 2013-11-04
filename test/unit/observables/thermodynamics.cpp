@@ -91,22 +91,6 @@ inline double heat_capacity_nve(double en_kin, double variance, unsigned npart)
     return 1 / (2./3 - npart * variance / (en_kin * en_kin));
 }
 
-/**
- * from pressure fluctuations and the hypervirial function, one can
- * compute the compressibility. In the microcanonical ensemble, the
- * adiabatic compressibility is obtained most easily.
- * see Allen, Tildesley: Computer Simulation of Liquids (Oxford, 1989)
- */
-
-template<int dimension>
-inline double adiabatic_compressibility_nve(
-    double press, double press_variance, double hypervirial, double temp, double density, unsigned npart
-)
-{
-      double x = press_variance * npart / density / temp;
-      return 1 / (2. / dimension * temp * density + press + hypervirial * density - x);
-}
-
 template <typename modules_type>
 struct lennard_jones_fluid
 {
@@ -193,7 +177,7 @@ void lennard_jones_fluid<modules_type>::test()
     BOOST_CHECK_SMALL(norm_inf(thermodynamics->v_cm()), vcm_limit);
 
     // take averages of fluctuating quantities,
-    accumulator<double> temp_, press, en_pot, hypervir;
+    accumulator<double> temp_, press, en_pot;
 
     // equilibration run, measure temperature in second half
     BOOST_TEST_MESSAGE("equilibrate initial state");
@@ -233,7 +217,6 @@ void lennard_jones_fluid<modules_type>::test()
             temp_(thermodynamics->temp());
             press(thermodynamics->pressure());
             en_pot(thermodynamics->en_pot());
-            hypervir(thermodynamics->hypervirial());
             max_en_diff = max(abs(thermodynamics->en_tot() - en_tot), max_en_diff);
         }
     }
@@ -253,9 +236,6 @@ void lennard_jones_fluid<modules_type>::test()
 
     // compute response coefficients from fluctuations
     double cV = heat_capacity_nve(mean(temp_), variance(temp_), npart);
-    double chi_S = adiabatic_compressibility_nve<dimension>(
-        mean(press), variance(press), mean(hypervir), mean(temp_), density, npart
-    );
 
     // long-tail corrections for trunctated LJ potential,
     // see e.g. book by Allen & Tildesley or Johnsen et al. (1993)
@@ -281,7 +261,6 @@ void lennard_jones_fluid<modules_type>::test()
     BOOST_TEST_MESSAGE("β P / ρ = " << mean(press) / mean(temp_) / density);
     BOOST_TEST_MESSAGE("β U / N = " << mean(en_pot) / mean(temp_));
     BOOST_TEST_MESSAGE("Heat capacity c_V = " << cV);
-    BOOST_TEST_MESSAGE("Adiabatic compressibility χ_S = " << chi_S);
 
     // tolerances are 4.5σ, where σ is the standard deviation of the test
     // results, with this choice, the test should pass with 99.999% probability
@@ -296,9 +275,7 @@ void lennard_jones_fluid<modules_type>::test()
         BOOST_CHECK_CLOSE_FRACTION(mean(en_pot), -1.673, 4.5 * (gpu ? 0.002 : 0.003) / 1.673);
         // our own measurements using HAL's MD package FIXME find reference values:
         // c_V = 1.648, σ(c_V) = 0.02 for GPU and host test cases
-        // χ_S = 0.342 ± 0.002, σ(χ_S) = 0.05 for GPU and host test cases
         BOOST_CHECK_CLOSE_FRACTION(cV, 1.648, 4.5 * 0.02 / 1.648);
-        BOOST_CHECK_CLOSE_FRACTION(chi_S, 0.342, 4.5 * 0.05 / 0.342);  // tolerance of 65% (sic!)
     }
     else if (dimension == 2) {
         // our own measurements using HAL's MD package FIXME find reference values
@@ -308,11 +285,6 @@ void lennard_jones_fluid<modules_type>::test()
         BOOST_CHECK_CLOSE_FRACTION(mean(en_pot), -0.589, 4.5 * (gpu ? 0.002 : 0.003) / 0.589);
         // c_V = 1.68, σ(c_V) = 0.03 for GPU and host test cases
         BOOST_CHECK_CLOSE_FRACTION(cV, 1.68, 4.5 * 0.03 / 1.68);
-        // χ_S = 0.26, σ(χ_S) = 0.04 for GPU and host test cases
-        // measurement of the compressibility via the hypervirial yields really
-        // crappy results, the data do not even follow a gaussian but show a long tail,
-        // we thus use 10σ instead of 4.5σ implying a tolerance of 150%
-        BOOST_CHECK_CLOSE_FRACTION(chi_S, 0.26, 10 * 0.04 / 0.26);
     }
 }
 

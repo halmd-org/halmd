@@ -64,16 +64,14 @@ public:
     /** compute potential and its derivatives at squared distance 'rr' for particles of type 'a' and 'b'
      *
      * @param rr squared distance between particles
-     * @returns tuple of unit "force" @f$ -U'(r)/r @f$, potential @f$ U(r) @f$,
-     * and hypervirial @f$ r \partial_r r \partial_r U(r) @f$
+     * @returns tuple of unit "force" @f$ -U'(r)/r @f$, potential @f$ U(r) @f$
      *
      * @f{eqnarray*}{
      *   - U'(r) / r &=& 4 r^{-2} \epsilon (\sigma/r)^{n} \left[ m (\sigma/r)^{m-n} - n \right] \\
-     *   U(r) &=& 4 \epsilon (\sigma/r)^{n} \left[ (\sigma/r)^{m-n} - 1 \right] \\
-     *   r \partial_r r \partial_r U(r) &=& 4 \epsilon (\sigma/r)^{n} \left[ m^2 (\sigma/r)^{m-n} - n^2 \right]
+     *   U(r) &=& 4 \epsilon (\sigma/r)^{n} \left[ (\sigma/r)^{m-n} - 1 \right]
      * @f}
      */
-    boost::tuple<float_type, float_type, float_type> operator()(float_type rr, unsigned a, unsigned b) const
+    boost::tuple<float_type, float_type> operator()(float_type rr, unsigned a, unsigned b) const
     {
         float_type sigma2 = sigma2_(a, b);
         unsigned m_2 = index_m_2_(a, b);
@@ -84,9 +82,8 @@ public:
         float_type eps_rni = epsilon_(a, b) * rni;
         float_type fval = 8 * rri * eps_rni * (m_2 * rmni - n_2) / sigma2;
         float_type en_pot = 4 * eps_rni * (rmni - 1) - en_cut_(a, b);
-        float_type hvir = 16 * eps_rni * (m_2 * m_2 * rmni - n_2 * n_2);
 
-        return boost::make_tuple(fval, en_pot, hvir);
+        return boost::make_tuple(fval, en_pot);
     }
 
     matrix_type const& r_cut() const

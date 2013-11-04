@@ -73,20 +73,6 @@ wrap_get_stress_pot(std::shared_ptr<force_type> self)
     };
 }
 
-template <typename force_type>
-static std::function<std::vector<typename force_type::hypervirial_type> ()>
-wrap_get_hypervirial(std::shared_ptr<force_type> self)
-{
-    return [=]() -> std::vector<typename force_type::hypervirial_type> {
-        std::vector<typename force_type::hypervirial_type> output;
-        {
-            output.reserve(self->hypervirial()->size());
-        }
-        get_hypervirial(*self, std::back_inserter(output));
-        return std::move(output);
-    };
-}
-
 template <int dimension, typename float_type>
 void force<dimension, float_type>::luaopen(lua_State* L)
 {
@@ -97,7 +83,6 @@ void force<dimension, float_type>::luaopen(lua_State* L)
             .property("get_net_force", &wrap_get_net_force<force>)
             .property("get_en_pot", &wrap_get_en_pot<force>)
             .property("get_stress_pot", &wrap_get_stress_pot<force>)
-            .property("get_hypervirial", &wrap_get_hypervirial<force>)
     ];
 }
 

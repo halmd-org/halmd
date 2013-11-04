@@ -54,7 +54,6 @@ public:
     typedef typename _Base::net_force_array_type net_force_array_type;
     typedef typename _Base::en_pot_array_type en_pot_array_type;
     typedef typename _Base::stress_pot_array_type stress_pot_array_type;
-    typedef typename _Base::hypervirial_array_type hypervirial_array_type;
     typedef typename _Base::stress_pot_type stress_pot_type;
 
     typedef particle<dimension, float_type> particle_type;
@@ -88,11 +87,6 @@ public:
     virtual cache<stress_pot_array_type> const& stress_pot();
 
     /**
-     * Returns const reference to hypervirial per particle.
-     */
-    virtual cache<hypervirial_array_type> const& hypervirial();
-
-    /**
      * Bind class to Lua.
      */
     static void luaopen(lua_State* L);
@@ -104,7 +98,6 @@ private:
     typedef typename particle_type::species_type species_type;
     typedef typename particle_type::size_type size_type;
     typedef typename _Base::en_pot_type en_pot_type;
-    typedef typename _Base::hypervirial_type hypervirial_type;
     typedef typename neighbour_type::array_type neighbour_array_type;
 
     /** compute forces */
@@ -133,8 +126,6 @@ private:
     cache<en_pot_array_type> en_pot_;
     /** potential part of stress tensor per particle */
     cache<stress_pot_array_type> stress_pot_;
-    /** hypervirial per particle */
-    cache<hypervirial_array_type> hypervirial_;
 
     /** cache observer of net force per particle */
     std::tuple<cache<>, cache<>, cache<>, cache<>> net_force_cache_;
@@ -142,8 +133,6 @@ private:
     std::tuple<cache<>, cache<>, cache<>, cache<>> en_pot_cache_;
     /** cache observer of potential part of stress tensor per particle */
     std::tuple<cache<>, cache<>, cache<>, cache<>> stress_pot_cache_;
-    /** cache observer of hypervirial per particle */
-    std::tuple<cache<>, cache<>, cache<>, cache<>> hypervirial_cache_;
 
 
     typedef utility::profiler profiler_type;
@@ -179,7 +168,6 @@ pair_trunc<dimension, float_type, potential_type, trunc_type>::pair_trunc(
   , net_force_(particle1_->nparticle())
   , en_pot_(particle1_->nparticle())
   , stress_pot_(particle1_->nparticle())
-  , hypervirial_(particle1_->nparticle())
 {
 }
 
@@ -213,7 +201,6 @@ pair_trunc<dimension, float_type, potential_type, trunc_type>::en_pot()
         net_force_cache_ = std::tie(position1_cache, species1_cache, position2_cache, species2_cache);
         en_pot_cache_ = net_force_cache_;
         stress_pot_cache_ = net_force_cache_;
-        hypervirial_cache_ = net_force_cache_;
     }
     return en_pot_;
 }
@@ -232,28 +219,8 @@ pair_trunc<dimension, float_type, potential_type, trunc_type>::stress_pot()
         net_force_cache_ = std::tie(position1_cache, species1_cache, position2_cache, species2_cache);
         en_pot_cache_ = net_force_cache_;
         stress_pot_cache_ = net_force_cache_;
-        hypervirial_cache_ = net_force_cache_;
     }
     return stress_pot_;
-}
-
-template <int dimension, typename float_type, typename potential_type, typename trunc_type>
-cache<typename pair_trunc<dimension, float_type, potential_type, trunc_type>::hypervirial_array_type> const&
-pair_trunc<dimension, float_type, potential_type, trunc_type>::hypervirial()
-{
-    cache<position_array_type> const& position1_cache = particle1_->position();
-    cache<position_array_type> const& position2_cache = particle2_->position();
-    cache<species_array_type> const& species1_cache = particle1_->species();
-    cache<species_array_type> const& species2_cache = particle2_->species();
-
-    if (hypervirial_cache_ != std::tie(position1_cache, species1_cache, position2_cache, species2_cache)) {
-        compute_aux();
-        net_force_cache_ = std::tie(position1_cache, species1_cache, position2_cache, species2_cache);
-        en_pot_cache_ = net_force_cache_;
-        stress_pot_cache_ = net_force_cache_;
-        hypervirial_cache_ = net_force_cache_;
-    }
-    return hypervirial_;
 }
 
 template <int dimension, typename float_type, typename potential_type, typename trunc_type>
@@ -290,8 +257,8 @@ inline void pair_trunc<dimension, float_type, potential_type, trunc_type>::compu
             if (rr >= potential_->rr_cut(a, b))
                 continue;
 
-            float_type fval, pot, hvir;
-            boost::tie(fval, pot, hvir) = (*potential_)(rr, a, b);
+            float_type fval, pot;
+            boost::tie(fval, pot) = (*potential_)(rr, a, b);
 
             // optionally smooth potential yielding continuous 2nd derivative
             (*trunc_)(std::sqrt(rr), potential_->r_cut(a, b), fval, pot);
@@ -309,7 +276,6 @@ inline void pair_trunc<dimension, float_type, potential_type, trunc_type>::compu
     cache_proxy<net_force_array_type> net_force      = net_force_;
     cache_proxy<en_pot_array_type> en_pot            = en_pot_;
     cache_proxy<stress_pot_array_type> stress_pot    = stress_pot_;
-    cache_proxy<hypervirial_array_type> hypervirial  = hypervirial_;
 
     neighbour_array_type const& lists    = *neighbour_->lists();
     position_array_type const& position1 = read_cache(particle1_->position());
@@ -325,7 +291,6 @@ inline void pair_trunc<dimension, float_type, potential_type, trunc_type>::compu
     std::fill(net_force->begin(), net_force->end(), 0);
     std::fill(en_pot->begin(), en_pot->end(), 0);
     std::fill(stress_pot->begin(), stress_pot->end(), 0);
-    std::fill(hypervirial->begin(), hypervirial->end(), 0);
 
     for (size_type i = 0; i < nparticle1; ++i) {
         // calculate pairwise Lennard-Jones force with neighbour particles
@@ -343,8 +308,8 @@ inline void pair_trunc<dimension, float_type, potential_type, trunc_type>::compu
             if (rr >= potential_->rr_cut(a, b))
                 continue;
 
-            float_type fval, pot, hvir;
-            boost::tie(fval, pot, hvir) = (*potential_)(rr, a, b);
+            float_type fval, pot;
+            boost::tie(fval, pot) = (*potential_)(rr, a, b);
 
             // optionally smooth potential yielding continuous 2nd derivative
             (*trunc_)(std::sqrt(rr), potential_->r_cut(a, b), fval, pot);
@@ -357,18 +322,14 @@ inline void pair_trunc<dimension, float_type, potential_type, trunc_type>::compu
             en_pot_type en = 0.5 * pot;
             // potential part of stress tensor
             stress_pot_type stress = 0.5 * fval * make_stress_tensor(r);
-            // contribution to hypervirial
-            hypervirial_type hyper = 0.5 * hvir / (dimension * dimension);
 
             // store contributions for first particle
             (*en_pot)[i]      += en;
             (*stress_pot)[i]  += stress;
-            (*hypervirial)[i] += hyper;
 
             // store contributions for second particle
             (*en_pot)[j]      += en;
             (*stress_pot)[j]  += stress;
-            (*hypervirial)[j] += hyper;
         }
     }
 }

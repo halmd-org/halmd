@@ -71,7 +71,7 @@ lennard_jones_linear<float_type>::lennard_jones_linear(
     for (unsigned i = 0; i < ntype1; ++i) {
         for (unsigned j = 0; j < ntype2; ++j) {
             float_type fval;
-            boost::tie(fval, en_cut_(i, j), boost::tuples::ignore) = (*this)(rr_cut_(i, j), i, j);
+            boost::tie(fval, en_cut_(i, j)) = (*this)(rr_cut_(i, j), i, j);
             force_cut_(i, j) = fval * r_cut_(i, j);
         }
     }

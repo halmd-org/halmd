@@ -151,21 +151,6 @@ double thermodynamics<dimension, float_type>::virial()
 }
 
 template <int dimension, typename float_type>
-double thermodynamics<dimension, float_type>::hypervirial()
-{
-    cache<hypervirial_array_type> const& hypervirial_cache = force_->hypervirial();
-    cache<size_type> const& group_cache = group_->size();
-
-    if (hypervirial_cache_ != std::tie(hypervirial_cache, group_cache)) {
-        LOG_TRACE("acquire hypervirial");
-        scoped_timer_type timer(runtime_.hypervirial);
-        hypervirial_ = get_mean_hypervirial(*force_, *group_);
-        hypervirial_cache_ = std::tie(hypervirial_cache, group_cache);
-    }
-    return hypervirial_;
-}
-
-template <int dimension, typename float_type>
 typename thermodynamics<dimension, float_type>::stress_tensor_type const&
 thermodynamics<dimension, float_type>::stress_tensor()
 {
@@ -199,7 +184,6 @@ void thermodynamics<dimension, float_type>::luaopen(lua_State* L)
                         .def_readonly("r_cm", &runtime::r_cm)
                         .def_readonly("en_pot", &runtime::en_pot)
                         .def_readonly("virial", &runtime::virial)
-                        .def_readonly("hypervirial", &runtime::hypervirial)
                         .def_readonly("stress_tensor", &runtime::stress_tensor)
                 ]
                 .def_readonly("runtime", &thermodynamics::runtime_)

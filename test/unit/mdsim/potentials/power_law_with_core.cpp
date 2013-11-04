@@ -123,24 +123,24 @@ BOOST_AUTO_TEST_CASE( power_law_with_core_host )
     BOOST_CHECK(index(1, 0) == index_array(1, 0));
     BOOST_CHECK(index(1, 1) == index_array(1, 1));
 
-    // evaluate some points of the potential, force, and hypervirial
-    typedef boost::array<double, 4> array_type;
+    // evaluate some points of potential and force
+    typedef boost::array<double, 3> array_type;
     const double eps = numeric_limits<double>::epsilon();
 
-    // expected results (r, fval, en_pot, hvir)
+    // expected results (r, fval, en_pot)
     // interaction AA: ε=1, σ=1, rc=5σ, r_core=0.375σ, n=6
     boost::array<array_type, 5> results_aa = {{
-        {{0.5, 2.5165824e7, 262143.9998978285, 1.69869312e8}}
-      , {{0.6666666666666667, 50122.75353685236, 1624.34839207839, 334151.6902456824}}
-      , {{1., 161.0612736, 16.77711382854513, 1642.82499072}}
-      , {{2., 0.1002646166123735, 0.05420782921016794, 3.054214475269223}}
-      , {{10., 7.840541955650863e-8, -0.0001009137012623106, 0.0000491815813581736}}
+        {{0.5, 2.5165824e7, 262143.9998978285}}
+      , {{0.6666666666666667, 50122.75353685236, 1624.34839207839}}
+      , {{1., 161.0612736, 16.77711382854513}}
+      , {{2., 0.1002646166123735, 0.05420782921016794}}
+      , {{10., 7.840541955650863e-8, -0.0001009137012623106}}
     }};
 
     BOOST_FOREACH (array_type const& a, results_aa) {
         double rr = std::pow(a[0], 2);
-        double fval, en_pot, hvir;
-        tie(fval, en_pot, hvir) = potential(rr, 0, 0);  // interaction AA
+        double fval, en_pot;
+        tie(fval, en_pot) = potential(rr, 0, 0);  // interaction AA
 
         // tolerance due to floating-point rounding depends on difference (r-r_core)
         double r = a[0] / sigma_array(0, 0);        //< r in units of σ
@@ -148,22 +148,21 @@ BOOST_AUTO_TEST_CASE( power_law_with_core_host )
 
         BOOST_CHECK_CLOSE_FRACTION(fval, a[1], tolerance);
         BOOST_CHECK_CLOSE_FRACTION(en_pot, a[2], tolerance);
-        BOOST_CHECK_CLOSE_FRACTION(hvir, a[3], tolerance);
     };
 
     // interaction AB: ε=0.5, σ=2, rc=6σ, r_core=0.5σ, n=12
     boost::array<array_type, 5> results_ab = {{
-        {{1.333333333333333, 2.9386561536e10, 1.088391168e9, 2.664381579264e12}}
-      , {{1.5, 1.34217728e8, 8.388607999999999e6, 1.1475615744e10}}
-      , {{2., 12288., 2047.999999999347, 1.2288e6}}
-      , {{4., 0.00385367331462947, 0.003853672662073555, 1.007093292889835}}
-      , {{20., 2.92202811508691e-14, -6.516306057676999e-10, 1.482544791023043e-10}}
+        {{1.333333333333333, 2.9386561536e10, 1.088391168e9}}
+      , {{1.5, 1.34217728e8, 8.388607999999999e6}}
+      , {{2., 12288., 2047.999999999347}}
+      , {{4., 0.00385367331462947, 0.003853672662073555}}
+      , {{20., 2.92202811508691e-14, -6.516306057676999e-10}}
     }};
 
     BOOST_FOREACH (array_type const& a, results_ab) {
         double rr = std::pow(a[0], 2);
-        double fval, en_pot, hvir;
-        tie(fval, en_pot, hvir) = potential(rr, 0, 1);  // interaction AB
+        double fval, en_pot;
+        tie(fval, en_pot) = potential(rr, 0, 1);  // interaction AB
 
         // tolerance due to floating-point rounding depends on difference (r-r_core)
         double r = a[0] / sigma_array(0, 1);        //< r in units of σ
@@ -171,22 +170,21 @@ BOOST_AUTO_TEST_CASE( power_law_with_core_host )
 
         BOOST_CHECK_CLOSE_FRACTION(fval, a[1], tolerance);
         BOOST_CHECK_CLOSE_FRACTION(en_pot, a[2], tolerance);
-        BOOST_CHECK_CLOSE_FRACTION(hvir, a[3], tolerance);
     };
 
     // interaction BB: ε=0.25, σ=4, rc=7σ, r_core=.75σ, n=7
     boost::array<array_type, 5> results_bb = {{
-        {{3.333333333333333, 5.64350976e7, 8.957951999999329e6, 4.953747456e10}}
-      , {{3.5, 2.097152e6, 524287.9999993289, 1.41295616e9}}
-      , {{4., 7168., 4095.999999328911, 3.555328e6}}
-      , {{8., 0.00917504, 0.05242812891136, 6.928990208}}
-      , {{20., 2.055117329014365e-7, 9.310909815212629e-6, 0.0006914865365860098}}
+        {{3.333333333333333, 5.64350976e7, 8.957951999999329e6}}
+      , {{3.5, 2.097152e6, 524287.9999993289}}
+      , {{4., 7168., 4095.999999328911}}
+      , {{8., 0.00917504, 0.05242812891136}}
+      , {{20., 2.055117329014365e-7, 9.310909815212629e-6}}
     }};
 
     BOOST_FOREACH (array_type const& a, results_bb) {
         double rr = std::pow(a[0], 2);
-        double fval, en_pot, hvir;
-        tie(fval, en_pot, hvir) = potential(rr, 1, 1);  // interaction BB
+        double fval, en_pot;
+        tie(fval, en_pot) = potential(rr, 1, 1);  // interaction BB
 
         // tolerance due to floating-point rounding depends on difference (r-r_core)
         double r = a[0] / sigma_array(1, 1);        //< r in units of σ
@@ -194,7 +192,6 @@ BOOST_AUTO_TEST_CASE( power_law_with_core_host )
 
         BOOST_CHECK_CLOSE_FRACTION(fval, a[1], tolerance);
         BOOST_CHECK_CLOSE_FRACTION(en_pot, a[2], tolerance);
-        BOOST_CHECK_CLOSE_FRACTION(hvir, a[3], tolerance);
     };
 }
 
@@ -248,9 +245,6 @@ void power_law_with_core<float_type>::test()
     std::vector<float> en_pot(particle->nparticle());
     BOOST_CHECK( get_en_pot(*force, en_pot.begin()) == en_pot.end() );
 
-    std::vector<float> hypervirial(particle->nparticle());
-    BOOST_CHECK( get_hypervirial(*force, hypervirial.begin()) == hypervirial.end() );
-
     std::vector<vector_type> f_list(particle->nparticle());
     BOOST_CHECK( get_net_force(*force, f_list.begin()) == f_list.end() );
 
@@ -261,11 +255,10 @@ void power_law_with_core<float_type>::test()
         vector_type f = f_list[i];
 
         // reference values from host module
-        float_type fval, en_pot_, hvir;
-        tie(fval, en_pot_, hvir) = (*host_potential)(inner_prod(r, r), type1, type2);
+        float_type fval, en_pot_;
+        tie(fval, en_pot_) = (*host_potential)(inner_prod(r, r), type1, type2);
         // the GPU force module stores only a fraction of these values
         en_pot_ /= 2;
-        hvir /= 2 * dimension * dimension;
 
         // estimated upper bound on floating-point error for (r - r_core)^n
         float_type const eps = numeric_limits<float_type>::epsilon();
@@ -279,7 +272,6 @@ void power_law_with_core<float_type>::test()
 
         // the prefactor is not justified, it is needed for absolute differences on the order 1e-14
         BOOST_CHECK_CLOSE_FRACTION(en_pot_, en_pot[i], 3 * tolerance);
-        BOOST_CHECK_CLOSE_FRACTION(hvir, hypervirial[i], tolerance);
     }
 }
 

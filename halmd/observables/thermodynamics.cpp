@@ -132,15 +132,6 @@ wrap_virial(std::shared_ptr<thermodynamics_type> self)
 }
 
 template <typename thermodynamics_type>
-static std::function<double ()>
-wrap_hypervirial(std::shared_ptr<thermodynamics_type> self)
-{
-    return [=]() {
-        return self->hypervirial();
-    };
-}
-
-template <typename thermodynamics_type>
 static std::function<typename thermodynamics_type::stress_tensor_type ()>
 wrap_stress_tensor(std::shared_ptr<thermodynamics_type> self)
 {
@@ -168,7 +159,6 @@ void thermodynamics<dimension>::luaopen(lua_State* L)
             .property("center_of_mass", &wrap_r_cm<thermodynamics>)
             .property("mean_mass", &wrap_mean_mass<thermodynamics>)
             .property("virial", &wrap_virial<thermodynamics>)
-            .property("hypervirial", &wrap_hypervirial<thermodynamics>)
             .property("stress_tensor", &wrap_stress_tensor<thermodynamics>)
     ];
 }

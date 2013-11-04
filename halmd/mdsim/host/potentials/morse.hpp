@@ -60,18 +60,16 @@ public:
      * @param a type of first interacting particle
      * @param b type of second interacting particle
      * @returns tuple of unit "force" @f$ -U'(r)/r @f$ and potential @f$ U(r) @f$
-     * and hypervirial @f$ r \partial_r r \partial_r U(r) @f$
      */
-    boost::tuple<float_type, float_type, float_type> operator()(float_type rr, unsigned a, unsigned b) const
+    boost::tuple<float_type, float_type> operator()(float_type rr, unsigned a, unsigned b) const
     {
         float_type r_sigma = sqrt(rr) / sigma_(a, b);
         float_type exp_dr = exp(r_min_sigma_(a, b) - r_sigma);
         float_type eps_exp_dr = epsilon_(a, b) * exp_dr;
         float_type fval = 2 * eps_exp_dr * (exp_dr - 1) * r_sigma / rr;
         float_type en_pot = eps_exp_dr * (exp_dr - 2) - en_cut_(a, b);
-        float_type hvir = 2 * eps_exp_dr * r_sigma * ((exp_dr - 1) - r_sigma * (2 * exp_dr - 1));
 
-        return boost::make_tuple(fval, en_pot, hvir);
+        return boost::make_tuple(fval, en_pot);
     }
 
     matrix_type const& r_cut() const
@@ -108,7 +106,7 @@ public:
     {
         return r_min_sigma_;
     }
-    
+
     /**
      * Bind module to Lua.
      */

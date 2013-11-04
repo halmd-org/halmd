@@ -133,7 +133,7 @@ public:
      *
      *
      */
-    boost::tuple<float_type, float_type, float_type> operator()(float_type rr, unsigned a, unsigned b) const
+    boost::tuple<float_type, float_type> operator()(float_type rr, unsigned a, unsigned b) const
     {
         switch (index_(a, b)) {
             case 6:  return impl_<6>(rr, a, b);
@@ -187,10 +187,9 @@ private:
      * @param a type of first interacting particle
      * @param b type of second interacting particle
      * @returns tuple of unit "force" @f$ -U'(r)/r @f$ and potential @f$ U(r) @f$
-     * and hypervirial @f$ r \partial_r r \partial_r U(r) @f$
      */
     template <int const_index>
-    boost::tuple<float_type, float_type, float_type> impl_(float_type rr, unsigned a, unsigned b) const
+    boost::tuple<float_type, float_type> impl_(float_type rr, unsigned a, unsigned b) const
     {
         // choose arbitrary index_ if template parameter index = 0
         unsigned int n = const_index > 0 ? const_index : index_(a, b);
@@ -203,9 +202,8 @@ private:
         float_type eps_rni = epsilon_(a, b) * rni;
         float_type fval = n * eps_rni / rr;
         float_type en_pot = eps_rni - en_cut_(a, b);
-        float_type hvir = n * n * eps_rni;
 
-        return boost::make_tuple(fval, en_pot, hvir);
+        return boost::make_tuple(fval, en_pot);
     }
 
     /** interaction strength in MD units */

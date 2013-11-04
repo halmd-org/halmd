@@ -81,17 +81,15 @@ public:
      * Compute force and potential for interaction.
      *
      * @param rr squared distance between particles
-     * @returns tuple of unit "force" @f$ -U'(r)/r @f$, potential @f$ U(r) @f$,
-     * and hypervirial @f$ r \partial_r r \partial_r U(r) @f$
+     * @returns tuple of unit "force" @f$ -U'(r)/r @f$ and potential @f$ U(r) @f$
      *
      * @f{eqnarray*}{
      *   - U'(r) / r &=& 4 r^{-2} \epsilon (\sigma/r)^{n} \left[ m (\sigma/r)^{m-n} - n \right] \\
-     *   U(r) &=& 4 \epsilon (\sigma/r)^{n} \left[ (\sigma/r)^{m-n} - 1 \right] \\
-     *   r \partial_r r \partial_r U(r) &=& 4 \epsilon (\sigma/r)^{n} \left[ m^2 (\sigma/r)^{m-n} - n^2 \right]
+     *   U(r) &=& 4 \epsilon (\sigma/r)^{n} \left[ (\sigma/r)^{m-n} - 1 \right]
      * @f}
      */
     template <typename float_type>
-    HALMD_GPU_ENABLED tuple<float_type, float_type, float_type> operator()(float_type rr) const
+    HALMD_GPU_ENABLED tuple<float_type, float_type> operator()(float_type rr) const
     {
         float_type rri = pair_[SIGMA2] / rr;
         unsigned short m_2 = static_cast<unsigned short>(pair_[INDEX_M_2]);
@@ -101,9 +99,8 @@ public:
         float_type eps_rni = pair_[EPSILON] * rni;
         float_type fval = 8 * rri * eps_rni * (m_2 * rmni - n_2) / pair_[SIGMA2];
         float_type en_pot = 4 * eps_rni * (rmni - 1) - pair_rr_en_cut_[1];
-        float_type hvir = 16 * eps_rni * (m_2 * m_2 * rmni - n_2 * n_2);
 
-        return make_tuple(fval, en_pot, hvir);
+        return make_tuple(fval, en_pot);
     }
 
 private:
