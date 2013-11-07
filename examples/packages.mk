@@ -819,7 +819,7 @@ fetch-gmp: .fetch-gmp-$(GMP_VERSION)
 extract-gmp: .extract-gmp-$(GMP_VERSION)
 
 .configure-gmp-$(GMP_VERSION): .extract-gmp-$(GMP_VERSION)
-	cd $(GMP_BUILD_DIR) && CFLAGS=-fPIC ./configure --prefix=$(GMP_INSTALL_DIR) --enable-cxx --disable-shared
+	cd $(GMP_BUILD_DIR) && CFLAGS=-fPIC ./configure --prefix=$(GMP_INSTALL_DIR) --libdir=$(GMP_INSTALL_DIR)/lib --enable-cxx --disable-shared
 	@$(TOUCH) $@
 
 configure-gmp: .configure-gmp-$(GMP_VERSION)
@@ -975,7 +975,7 @@ fetch-ppl: .fetch-ppl-$(PPL_VERSION)
 extract-ppl: .extract-ppl-$(PPL_VERSION)
 
 .configure-ppl-$(PPL_VERSION): .extract-ppl-$(PPL_VERSION) .install-gmp-$(GMP_VERSION)
-	cd $(PPL_BUILD_DIR) && CPPFLAGS=-I$(GMP_INSTALL_DIR)/include LDFLAGS=-L$(GMP_INSTALL_DIR)/lib ./configure --prefix=$(PPL_INSTALL_DIR) --enable-interfaces=c,cxx --disable-shared --disable-watchdog
+	cd $(PPL_BUILD_DIR) && ./configure --prefix=$(PPL_INSTALL_DIR) --libdir=$(PPL_INSTALL_DIR)/lib --with-gmp=$(GMP_INSTALL_DIR) --with-gmp-library=$(GMP_INSTALL_DIR)/lib --enable-interfaces=c,cxx --disable-shared --disable-watchdog
 	@$(TOUCH) $@
 
 configure-ppl: .configure-ppl-$(PPL_VERSION)
@@ -1027,7 +1027,7 @@ fetch-cloog-ppl: .fetch-cloog-ppl-$(CLOOG_PPL_VERSION)
 extract-cloog-ppl: .extract-cloog-ppl-$(CLOOG_PPL_VERSION)
 
 .configure-cloog-ppl-$(CLOOG_PPL_VERSION): .extract-cloog-ppl-$(CLOOG_PPL_VERSION) .install-ppl-$(PPL_VERSION) .install-gmp-$(GMP_VERSION)
-	cd $(CLOOG_PPL_BUILD_DIR) && ./configure --prefix=$(CLOOG_PPL_INSTALL_DIR) --with-ppl=$(PPL_INSTALL_DIR) --with-gmp=$(GMP_INSTALL_DIR) --disable-shared --with-host-libstdcxx=-lstdc++
+	cd $(CLOOG_PPL_BUILD_DIR) && LDFLAGS="-L$(PPL_INSTALL_DIR)/lib -lm" ./configure --prefix=$(CLOOG_PPL_INSTALL_DIR) --libdir=$(CLOOG_PPL_INSTALL_DIR)/lib --with-ppl=$(PPL_INSTALL_DIR) --with-gmp=$(GMP_INSTALL_DIR) --with-gmp-library=$(GMP_INSTALL_DIR)/lib --disable-shared --with-host-libstdcxx=-lstdc++
 	@$(TOUCH) $@
 
 configure-cloog-ppl: .configure-cloog-ppl-$(CLOOG_PPL_VERSION)
@@ -1080,7 +1080,7 @@ fetch-gcc: .fetch-gcc-$(GCC_VERSION) .fetch-gmp-$(GMP_VERSION) .fetch-mpfr-$(MPF
 extract-gcc: .extract-gcc-$(GCC_VERSION)
 
 .configure-gcc-$(GCC_VERSION): .extract-gcc-$(GCC_VERSION) .install-gmp-$(GMP_VERSION) .install-mpfr-$(MPFR_VERSION) .install-mpc-$(MPC_VERSION) .install-ppl-$(PPL_VERSION) .install-cloog-ppl-$(CLOOG_PPL_VERSION)
-	cd $(GCC_BUILD_DIR) && LDFLAGS=-L$(GMP_INSTALL_DIR)/lib ac_cv_lib_pwl_PWL_handle_timeout=no ./configure --prefix=$(GCC_INSTALL_DIR) --with-gmp=$(GMP_INSTALL_DIR) --with-mpfr=$(MPFR_INSTALL_DIR) --with-mpc=$(MPC_INSTALL_DIR) --with-ppl=$(PPL_INSTALL_DIR) --with-cloog=$(CLOOG_PPL_INSTALL_DIR) --enable-build-with-cxx $(GCC_BUILD_FLAGS)
+	cd $(GCC_BUILD_DIR) && ac_cv_lib_pwl_PWL_handle_timeout=no ./configure --prefix=$(GCC_INSTALL_DIR) --with-gmp=$(GMP_INSTALL_DIR) --with-gmp-library=$(GMP_INSTALL_DIR)/lib --with-mpfr=$(MPFR_INSTALL_DIR) --with-mpc=$(MPC_INSTALL_DIR) --with-ppl=$(PPL_INSTALL_DIR) --with-ppl-library=$(PPL_INSTALL_DIR)/lib --with-cloog=$(CLOOG_PPL_INSTALL_DIR) --enable-build-with-cxx $(GCC_BUILD_FLAGS)
 	@$(TOUCH) $@
 
 configure-gcc: .configure-gcc-$(GCC_VERSION)
