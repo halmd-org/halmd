@@ -29,9 +29,11 @@ endif
 ## define commonly used commands
 ##
 
+BASE64    = base64 -di
 CMAKE     = cmake
 CP        = cp -r
 GIT       = git
+GUNZIP    = gzip -d
 MKDIR     = mkdir -p
 PATCH     = patch
 RM        = rm -rf
@@ -125,8 +127,8 @@ ifdef USE_LUA51
 LUA_VERSION = 5.1.5
 LUA_TARBALL_SHA256 = 2640fc56a795f29d28ef15e13c34a47e223960b0240e8cb0a82d9b0738695333
 else
-LUA_VERSION = 5.2.1
-LUA_TARBALL_SHA256 = 64304da87976133196f9e4c15250b70f444467b6ed80d7cfd7b3b982b5177be5
+LUA_VERSION = 5.2.2
+LUA_TARBALL_SHA256 = 3fd67de3f5ed133bf312906082fa524545c6b9e1b952e8215ffbd27113f49f00
 endif
 LUA_TARBALL = lua-$(LUA_VERSION).tar.gz
 LUA_TARBALL_URL = http://www.lua.org/ftp/$(LUA_TARBALL)
@@ -331,6 +333,8 @@ BOOST_ABI = c++11
 BOOST_TARBALL = boost_$(BOOST_RELEASE).tar.bz2
 BOOST_TARBALL_URL = http://sourceforge.net/projects/boost/files/boost/$(BOOST_VERSION)/$(BOOST_TARBALL)
 BOOST_TARBALL_SHA256 = 047e927de336af106a24bceba30069980c191529fd76b8dff8eb9a328b48ae1d
+BOOST_PATCH = boost_$(BOOST_RELEASE).patch
+BOOST_PATCH_SHA256 = 28771aa1f84f8bf03360f2ba9189e714025554d4555cb01331bf590f13846db5
 BOOST_BUILD_DIR = boost_$(BOOST_RELEASE)
 BOOST_INSTALL_DIR = $(PREFIX)/boost_$(BOOST_RELEASE)-$(BOOST_ABI)
 BOOST_BUILD_FLAGS = threading=multi variant=release --layout=tagged toolset=gcc cxxflags="-fPIC -std=$(BOOST_ABI)" dll-path=$(BOOST_INSTALL_DIR)/lib
@@ -342,192 +346,54 @@ ifndef USE_PYTHON
 BOOST_BUILD_FLAGS += --without-python
 endif
 
-define BOOST_PATCH
---- boost/numeric/ublas/traits.hpp
-+++ boost/numeric/ublas/traits.hpp
-@@ -31,22 +31,22 @@
- 
- // anonymous namespace to avoid ADL issues
- namespace {
--  template<class T> T boost_numeric_ublas_sqrt (const T& t) {
-+  template<class T> static inline T boost_numeric_ublas_sqrt (const T& t) {
-     using namespace std;
-     // we'll find either std::sqrt or else another version via ADL:
-     return sqrt (t);
-   }
--  template<class T> T boost_numeric_ublas_abs (const T& t) {
-+  template<class T> static inline T boost_numeric_ublas_abs (const T& t) {
-     using namespace std;
-     // we'll find either std::abs or else another version via ADL:
-     return abs (t);
-   }
-   // unsigned types are always non-negative
--  template<> unsigned int boost_numeric_ublas_abs (const unsigned int& t) {
-+  template<> inline unsigned int boost_numeric_ublas_abs (const unsigned int& t) {
-     return t;
-   }
-   // unsigned types are always non-negative
--  template<> unsigned long boost_numeric_ublas_abs (const unsigned long& t) {
-+  template<> inline unsigned long boost_numeric_ublas_abs (const unsigned long& t) {
-     return t;
-   }
- }
---- boost/test/detail/global_typedef.hpp
-+++ boost/test/detail/global_typedef.hpp
-@@ -67,12 +67,13 @@
- // helper templates to prevent ODR violations 
- template<class T> 
- struct static_constant { 
--    static T value; 
-+    static T const& value()
-+    {
-+        static T const v = {};
-+        return v;
-+    }
- }; 
- 
--template<class T> 
--T static_constant<T>::value; 
--
- //____________________________________________________________________________// 
- 
- } // namespace ut_detail
---- boost/test/floating_point_comparison.hpp
-+++ boost/test/floating_point_comparison.hpp
-@@ -248,7 +248,7 @@
- };
- 
- namespace {
--check_is_close_t const& check_is_close = unit_test::ut_detail::static_constant<check_is_close_t>::value;
-+check_is_close_t const& check_is_close = unit_test::ut_detail::static_constant<check_is_close_t>::value();
- }
- 
- //____________________________________________________________________________//
-@@ -270,7 +270,7 @@
- };
- 
- namespace {
--check_is_small_t const& check_is_small = unit_test::ut_detail::static_constant<check_is_small_t>::value;
-+check_is_small_t const& check_is_small = unit_test::ut_detail::static_constant<check_is_small_t>::value();
- }
- 
- //____________________________________________________________________________//
---- boost/parameter/keyword.hpp
-+++ boost/parameter/keyword.hpp
-@@ -91,18 +91,13 @@
-     // every instantiation of a function template is the same object.
-     // We provide a reference to a common instance of each keyword
-     // object and prevent construction by users.
--    static keyword<Tag> const instance;
--
--    // This interface is deprecated
--    static keyword<Tag>& get()
-+    static keyword<Tag> const& get()
-     {
--        return const_cast<keyword<Tag>&>(instance);
-+        static keyword<Tag> const instance = {};
-+        return instance;
-     }
- };
- 
--template <class Tag>
--keyword<Tag> const keyword<Tag>::instance = {};
--
- // Reduces boilerplate required to declare and initialize keywords
- // without violating ODR.  Declares a keyword tag type with the given
- // name in namespace tag_namespace, and declares and initializes a
-@@ -123,7 +118,7 @@
-       };                                                                \ 
-     }                                                                   \ 
-     static ::boost::parameter::keyword<tag_namespace::name> const& name \ 
--       = ::boost::parameter::keyword<tag_namespace::name>::instance;
-+       = ::boost::parameter::keyword<tag_namespace::name>::get();
- 
- #else
- 
-@@ -141,7 +136,7 @@
-     namespace                                                       \ 
-     {                                                               \ 
-        ::boost::parameter::keyword<tag_namespace::name> const& name \ 
--       = ::boost::parameter::keyword<tag_namespace::name>::instance;\ 
-+       = ::boost::parameter::keyword<tag_namespace::name>::get();   \ 
-     }
- 
- #endif
---- boost/parameter/name.hpp
-+++ boost/parameter/name.hpp
-@@ -78,13 +78,13 @@
- # if BOOST_WORKAROUND(BOOST_MSVC, < 1300)
- #  define BOOST_PARAMETER_NAME_OBJECT(tag, name)                    \ 
-     static ::boost::parameter::keyword<tag> const& name             \ 
--       = ::boost::parameter::keyword<tag>::instance;
-+       = ::boost::parameter::keyword<tag>::get();
- # else
- #  define BOOST_PARAMETER_NAME_OBJECT(tag, name)                    \ 
-     namespace                                                       \ 
-     {                                                               \ 
-        ::boost::parameter::keyword<tag> const& name                 \ 
--       = ::boost::parameter::keyword<tag>::instance;                \ 
-+       = ::boost::parameter::keyword<tag>::get();                   \ 
-     }
- # endif
- 
---- boost/parameter/preprocessor.hpp
-+++ boost/parameter/preprocessor.hpp
-@@ -691,7 +691,7 @@
- # define BOOST_PARAMETER_FUNCTION_DEFAULT_EVAL_DEFAULT(arg, tag_namespace) \ 
-     boost::parameter::keyword< \ 
-         tag_namespace::BOOST_PARAMETER_FN_ARG_KEYWORD(arg) \ 
--    >::instance | boost::parameter::aux::use_default_tag()
-+    >::get() | boost::parameter::aux::use_default_tag()
- 
- # define BOOST_PARAMETER_FUNCTION_DEFAULT_FUNCTION_GET_ARG(arg, tag_ns) \ 
-     BOOST_PARAMETER_FUNCTION_CAST( \ 
-@@ -842,7 +842,7 @@
- # define BOOST_PARAMETER_FUNCTION_DEFAULT_GET_ARG(r, tag_ns, arg) \ 
-     , BOOST_PARAMETER_FUNCTION_CAST( \ 
-           args[ \ 
--              boost::parameter::keyword<tag_ns::BOOST_PARAMETER_FN_ARG_KEYWORD(arg)>::instance \ 
-+              boost::parameter::keyword<tag_ns::BOOST_PARAMETER_FN_ARG_KEYWORD(arg)>::get() \ 
-           ] \ 
-         , BOOST_PARAMETER_FN_ARG_PRED(arg) \ 
-         , Args \ 
---- boost/test/test_tools.hpp
-+++ boost/test/test_tools.hpp
-@@ -306,7 +306,7 @@
- 
- typedef unit_test::const_string      const_string;
- 
--namespace { bool dummy_cond = false; }
-+namespace { bool const dummy_cond = false; }
- 
- // ************************************************************************** //
- // **************                print_log_value               ************** //
---- boost/log/utility/once_block.hpp
-+++ boost/log/utility/once_block.hpp
-@@ -176,7 +176,7 @@
-  * been executed.
-  */
- #define BOOST_LOG_ONCE_BLOCK_FLAG(flag_var)\ 
--    BOOST_LOG_ONCE_BLOCK_INTERNAL(\ 
-+    BOOST_LOG_ONCE_BLOCK_FLAG_INTERNAL(\ 
-         flag_var,\ 
-         BOOST_LOG_UNIQUE_IDENTIFIER_NAME(_boost_log_once_block_sentry_))
- 
+define BOOST_PATCH_FILE
+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
+EIH35HBOKor5/gbndk+xdxkAAA==
 endef
-export BOOST_PATCH
+export BOOST_PATCH_FILE
 
 .fetch-boost-$(BOOST_VERSION):
 	@$(RM) $(BOOST_TARBALL)
+	@$(RM) $(BOOST_PATCH)
 	$(WGET) $(BOOST_TARBALL_URL)
+	echo "$$BOOST_PATCH_FILE" | $(BASE64) | $(GUNZIP) > $(BOOST_PATCH)
 	@echo '$(BOOST_TARBALL_SHA256)  $(BOOST_TARBALL)' | $(SHA256SUM)
+	@echo '$(BOOST_PATCH_SHA256)  $(BOOST_PATCH)' | $(SHA256SUM)
 	@$(TOUCH) $@
 
 fetch-boost: .fetch-boost-$(BOOST_VERSION)
 
 .extract-boost-$(BOOST_VERSION): .fetch-boost-$(BOOST_VERSION)
 	$(TAR) -xjf $(BOOST_TARBALL)
-	cd $(BOOST_BUILD_DIR) && echo "$$BOOST_PATCH" | $(SED) -e 's/\\ $$/\\/' | $(PATCH) -p0
+	cd $(BOOST_BUILD_DIR) && $(PATCH) -p0 < ../$(BOOST_PATCH)
 	@$(TOUCH) $@
 
 extract-boost: .extract-boost-$(BOOST_VERSION)
@@ -556,6 +422,7 @@ clean-boost:
 distclean-boost: clean-boost
 	@$(RM) .fetch-boost-$(BOOST_VERSION)
 	$(RM) $(BOOST_TARBALL)
+	$(RM) $(BOOST_PATCH)
 
 env-boost:
 	@echo
@@ -628,13 +495,13 @@ env-hdf5:
 ##
 ## Git version control
 ##
-GIT_VERSION = 1.8.2.3
+GIT_VERSION = 1.8.4
 GIT_TARBALL = git-$(GIT_VERSION).tar.gz
 GIT_TARBALL_URL = http://git-core.googlecode.com/files/$(GIT_TARBALL)
-GIT_TARBALL_SHA256 = ba8d42d47b0955b17905af0133b01ab8e3f28f0e39b9967ec446403c0b49991f
+GIT_TARBALL_SHA256 = 51e8522c256ef8091c6fd5846b9cef8ba4e764819193b5b6cec570f530e6cb94
 GIT_MANPAGES_TARBALL = git-manpages-$(GIT_VERSION).tar.gz
 GIT_MANPAGES_TARBALL_URL = http://git-core.googlecode.com/files/$(GIT_MANPAGES_TARBALL)
-GIT_MANPAGES_TARBALL_SHA256 = 8e91d7a49cda92ed999eb9632ae3f0f22b1910e54de58c9e53107687c18f1414
+GIT_MANPAGES_TARBALL_SHA256 = 854552e693b22a7ff1c25d2d710d87c8f7dad14888c946c10be60893fdee091f
 GIT_BUILD_DIR = git-$(GIT_VERSION)
 GIT_CONFIGURE_FLAGS = --without-python
 GIT_INSTALL_DIR = $(PREFIX)/git-$(GIT_VERSION)
@@ -866,7 +733,7 @@ env-clang:
 	@echo '# add Clang $(CLANG_VERSION) to environment'
 	@echo 'export PATH="$(CLANG_INSTALL_DIR)/bin$${PATH+:$$PATH}"'
 	@echo 'export MANPATH="$(CLANG_INSTALL_DIR)/share/man$${MANPATH+:$$MANPATH}"'
-»   @echo 'export LD_LIBRARY_PATH="$(CLANG_INSTALL_DIR)/lib$${LD_LIBRARY_PATH+:$$LD_LIBRARY_PATH}"'
+	@echo 'export LD_LIBRARY_PATH="$(CLANG_INSTALL_DIR)/lib$${LD_LIBRARY_PATH+:$$LD_LIBRARY_PATH}"'
 
 ##
 ## GNU Parallel
@@ -931,7 +798,7 @@ env-gnu-parallel:
 
 GMP_VERSION = 5.0.4
 GMP_TARBALL = gmp-$(GMP_VERSION).tar.bz2
-GMP_TARBALL_URL = ftp://ftp.gmplib.org/pub/gmp-$(GMP_VERSION)/$(GMP_TARBALL)
+GMP_TARBALL_URL = http://ftp.gnu.org/gnu/gmp/$(GMP_TARBALL)
 GMP_TARBALL_SHA256 = 35d4aade3e4bdf0915c944599b10d23f108ffedf6c3188aeec52221c5cf9a06f
 GMP_BUILD_DIR = gmp-$(GMP_VERSION)
 GMP_INSTALL_DIR = $(CURDIR)/.gmp-$(GMP_VERSION)
@@ -1189,10 +1056,10 @@ distclean-cloog-ppl: clean-cloog-ppl
 ## GCC (GNU Compiler Collection)
 ##
 
-GCC_VERSION = 4.8.1
+GCC_VERSION = 4.8.2
 GCC_TARBALL = gcc-$(GCC_VERSION).tar.bz2
 GCC_TARBALL_URL = http://ftp.gwdg.de/pub/misc/gcc/releases/gcc-$(GCC_VERSION)/$(GCC_TARBALL)
-GCC_TARBALL_SHA256 = 545b44be3ad9f2c4e90e6880f5c9d4f0a8f0e5f67e1ffb0d45da9fa01bb05813
+GCC_TARBALL_SHA256 = 09dc2276c73424bbbfda1dbddc62bbbf900c9f185acf7f3e1d773ce2d7e3cdc8
 GCC_BUILD_DIR = gcc-$(GCC_VERSION)
 GCC_BUILD_FLAGS = --enable-cxx-flags=-fPIC --enable-languages=c,c++,fortran,lto --disable-multilib
 GCC_INSTALL_DIR = $(PREFIX)/gcc-$(GCC_VERSION)
@@ -1226,7 +1093,7 @@ build-gcc: .build-gcc-$(GCC_VERSION)
 
 install-gcc: .build-gcc-$(GCC_VERSION)
 	cd $(GCC_BUILD_DIR) && $(MAKE) install
-	cd $(GMP_INSTALL_DIR) && $(CP) include $(GCC_INSTALL_DIR)
+	cd $(GMP_INSTALL_DIR) && $(CP) include `$(GCC_INSTALL_DIR)/bin/gcc -print-file-name=plugin`
 
 clean-gcc:
 	@$(RM) .build-gcc-$(GCC_VERSION)
