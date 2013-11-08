@@ -1,5 +1,6 @@
 /*
- * Copyright © 2008-2011  Peter Colberg and Felix Höfling
+ * Copyright © 2008-2013 Felix Höfling
+ * Copyright © 2008-2011 Peter Colberg
  *
  * This file is part of HALMD.
  *
@@ -47,21 +48,13 @@ public:
     typedef boost::numeric::ublas::matrix<unsigned int> uint_matrix_type;
     typedef logger logger_type;
 
-
     power_law(
-        unsigned int ntype1
-      , unsigned int ntype2
-      , matrix_type const& cutoff
+        matrix_type const& cutoff
       , matrix_type const& epsilon
       , matrix_type const& sigma
       , uint_matrix_type const& index
       , std::shared_ptr<logger_type> logger = std::make_shared<logger_type>()
     );
-
-    /**
-     * Bind class to Lua.
-     **/
-    static void luaopen(lua_State* L);
 
     /**
      * Compute potential and its derivative at squared distance 'rr'
@@ -180,6 +173,21 @@ public:
     {
         return index_;
     }
+
+    unsigned int size1() const
+    {
+        return epsilon_.size1();
+    }
+
+    unsigned int size2() const
+    {
+        return epsilon_.size2();
+    }
+
+    /**
+     * Bind class to Lua.
+     **/
+    static void luaopen(lua_State* L);
 
 private:
     /** optimise pow() function by providing the index at compile time

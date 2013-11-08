@@ -1,7 +1,7 @@
 --
--- Copyright © 2010  Felix Höfling
--- Copyright © 2013  Nicolas Höft
--- Copyright © 2010  Peter Colberg
+-- Copyright © 2010,2013 Felix Höfling
+-- Copyright © 2013      Nicolas Höft
+-- Copyright © 2010      Peter Colberg
 --
 -- This file is part of HALMD.
 --
@@ -52,13 +52,26 @@ end
 -- Construct Morse potential.
 --
 -- :param table args: keyword arguments
--- :param args.particle: instance, or sequence of two instances, of :class:`halmd.mdsim.particle`
--- :param table args.epsilon: matrix with elements :math:`\epsilon_{ij}` (defaults to ``1``)
--- :param table args.sigma: matrix with elements :math:`\sigma_{ij}` (defaults to ``1``)
--- :param table args.cutoff: matrix with elements :math:`r_{\text{c}, ij}`
--- :param table args.minimum: Minimum/equilibrium distance :math:`r_\text{min}` in units of :math:`\sigma_{ij}`
 --
--- If all elements of a matrix are equal, a scalar value should be passed instead.
+-- :param table args: keyword arguments
+-- :param table args.epsilon: matrix with elements :math:`\epsilon_{ij}` (*default:* ``1``)
+-- :param table args.sigma: matrix with elements :math:`\sigma_{ij}` (*default:* ``1``)
+-- :param table args.minimum: Minimum/equilibrium distance :math:`r_\text{min}` in units of :math:`\sigma_{ij}`
+-- :param table args.cutoff: matrix with elements :math:`r_{\text{c}, ij}`
+-- :param number args.species: number of particle species *(optional)*
+-- :param string args.memory: select memory location *(optional)*
+-- :param string args.label: instance label *(optional)*
+--
+-- If the argument ``species`` is omitted, it is inferred from the first
+-- dimension of the parameter matrices.
+--
+-- If all elements of a matrix are equal, a scalar value may be passed instead
+-- which is promoted to a square matrix of size given by the number of particle
+-- ``species``.
+--
+-- The supported values for ``memory`` are "host" and "gpu". If ``memory`` is
+-- not specified, the memory location is selected according to the compute
+-- device.
 --
 -- .. note::
 --
@@ -88,6 +101,10 @@ end
 --
 --    Name of potential for profiler.
 --
+-- .. attribute:: memory
+--
+--    Device where the particle memory resides.
+--
 local M = module(function(args)
     local epsilon = args and args.epsilon or 1
     if type(epsilon) ~= "table" and type(epsilon) ~= "number" then
@@ -105,50 +122,47 @@ local M = module(function(args)
     if type(cutoff) ~= "table" and type(cutoff) ~= "number" then
         error("bad argument 'cutoff'", 2)
     end
-    local particle = utility.assert_kwarg(args, "particle")
-    if type(particle) ~= "table" then
-        particle = {particle, particle}
-    end
-    if #particle ~= 2 then
-        error("bad argument 'particle'", 2)
-    end
 
-    if particle[1].memory ~= particle[2].memory then
-        error("'memory' of particle instances do not match", 2)
-    end
+    local memory = args and args.memory or (device.gpu and "gpu" or "host")
 
-    local memory = particle[1].memory
-
-    local nspecies = {}
-    local label = {}
-    for i = 1, #particle do
-        table.insert(nspecies, assert(particle[i].nspecies))
-        table.insert(label, assert(particle[i].label))
-    end
-
-    local label = ("morse (%s ↔ %s)"):format(label[1], label[2])
+    local label = args and args.label and utility.assert_type(label, "string")
+    label = "lennard_jones" .. (label and (" (%s)"):format(label) or "")
     local logger = log.logger({label = label})
 
+    -- derive number of species from parameter matrices
+    local species = args and args.species
+        or (type(epsilon) == "table" and #epsilon) or (type(sigma) == "table" and #sigma)
+        or (type(minimum) == "table" and #minimum)
+        or (type(cutoff) == "table" and #cutoff) or 1
+    utility.assert_type(species, "number")
+
+    -- promote scalars to matrices
     if type(cutoff) == "number" then
-        cutoff = numeric.scalar_matrix(nspecies[1], nspecies[2], cutoff)
+        cutoff = numeric.scalar_matrix(species, species, cutoff)
     end
     if type(epsilon) == "number" then
-        epsilon = numeric.scalar_matrix(nspecies[1], nspecies[2], epsilon)
+        epsilon = numeric.scalar_matrix(species, species, epsilon)
     end
     if type(sigma) == "number" then
-        sigma = numeric.scalar_matrix(nspecies[1], nspecies[2], sigma)
+        sigma = numeric.scalar_matrix(species, species, sigma)
     end
     if type(minimum) == "number" then
-        minimum = numeric.scalar_matrix(nspecies[1], nspecies[2], minimum)
+        minimum = numeric.scalar_matrix(species, species, minimum)
     end
 
-    local self
-    self = morse[memory](nspecies[1], nspecies[2], cutoff, epsilon, sigma, minimum, logger)
+    -- construct instance
+    if not morse[memory] then
+        error(("unsupported memory type '%s'"):format(memory), 2)
+    end
+    local self = morse[memory](cutoff, epsilon, sigma, minimum, logger)
 
     -- add description for profiler
     self.description = property(function()
         return "Morse potential"
     end)
+
+    -- store memory location
+    self.memory = property(function(self) return memory end)
 
     -- add logger instance
     self.logger = property(function()

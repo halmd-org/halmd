@@ -1,5 +1,5 @@
 /*
- * Copyright © 2011-2012 Felix Höfling
+ * Copyright © 2011-2013 Felix Höfling
  *
  * This file is part of HALMD.
  *
@@ -65,7 +65,7 @@ BOOST_AUTO_TEST_CASE( lennard_jones_linear_host )
     sigma_array <<= 1., 2., 2., 4.;
 
     // construct module
-    potential_type potential(ntype, ntype, cutoff_array, epsilon_array, sigma_array);
+    potential_type potential(cutoff_array, epsilon_array, sigma_array);
 
     // test paramters
     matrix_type epsilon = potential.epsilon();
@@ -241,10 +241,10 @@ lennard_jones_linear<float_type>::lennard_jones_linear()
 
     unsigned int nspecies = particle->nspecies();
     potential = std::make_shared<potential_type>(
-        nspecies, nspecies, cutoff_array, epsilon_array, sigma_array
+        cutoff_array, epsilon_array, sigma_array
     );
     host_potential = std::make_shared<host_potential_type>(
-        nspecies, nspecies, cutoff_array, epsilon_array, sigma_array
+        cutoff_array, epsilon_array, sigma_array
     );
     neighbour = std::make_shared<neighbour_type>(particle);
     force = std::make_shared<force_type>(potential, particle, particle, box, neighbour);

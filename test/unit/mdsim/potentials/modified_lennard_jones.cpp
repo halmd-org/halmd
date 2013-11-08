@@ -1,5 +1,5 @@
 /*
- * Copyright © 2011  Felix Höfling
+ * Copyright © 2011-2013 Felix Höfling
  *
  * This file is part of HALMD.
  *
@@ -85,7 +85,7 @@ BOOST_AUTO_TEST_CASE( modified_lennard_jones_host )
       , 2, 6;
 
     // construct module
-    potential_type potential(ntype, ntype, cutoff_array, epsilon_array, sigma_array, index_m_array, index_n_array);
+    potential_type potential(cutoff_array, epsilon_array, sigma_array, index_m_array, index_n_array);
 
     // test paramters
     matrix_type epsilon = potential.epsilon();
@@ -284,12 +284,10 @@ modified_lennard_jones<float_type>::modified_lennard_jones()
     particle = std::make_shared<particle_type>(accumulate(npart_list.begin(), npart_list.end(), 0), npart_list.size());
     box = std::make_shared<box_type>(edges);
     potential = std::make_shared<potential_type>(
-        particle->nspecies(), particle->nspecies(), cutoff_array
-      , epsilon_array, sigma_array, index_m_array, index_n_array
+        cutoff_array, epsilon_array, sigma_array, index_m_array, index_n_array
     );
     host_potential = std::make_shared<host_potential_type>(
-        particle->nspecies(), particle->nspecies(), cutoff_array
-      , epsilon_array, sigma_array, index_m_array, index_n_array
+        cutoff_array, epsilon_array, sigma_array, index_m_array, index_n_array
     );
     neighbour = std::make_shared<neighbour_type>(particle);
     force = std::make_shared<force_type>(potential, particle, particle, box, neighbour);

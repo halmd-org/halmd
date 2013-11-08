@@ -1,6 +1,6 @@
 /*
- * Copyright © 2012 Nicolas Höft
- * Copyright © 2011 Felix Höfling
+ * Copyright © 2012      Nicolas Höft
+ * Copyright © 2011-2013 Felix Höfling
  *
  * This file is part of HALMD.
  *
@@ -69,7 +69,7 @@ BOOST_AUTO_TEST_CASE( local_r4 )
     double const h = 1. / 256;
 
     // construct potential module
-    potential_type potential(ntype, ntype, cutoff_array, epsilon_array, sigma_array);
+    potential_type potential(cutoff_array, epsilon_array, sigma_array);
     trunc_type trunc(h);
 
     double const eps = std::numeric_limits<double>::epsilon();
@@ -281,8 +281,8 @@ test_local_r4<float_type>::test_local_r4()
     // create modules
     particle = std::make_shared<particle_type>(accumulate(npart_list.begin(), npart_list.end(), 0), npart_list.size());
     box = std::make_shared<box_type>(edges);
-    potential = std::make_shared<potential_type>(particle->nspecies(), particle->nspecies(), cutoff_array, epsilon_array, sigma_array);
-    host_potential = std::make_shared<host_potential_type>(particle->nspecies(), particle->nspecies(), cutoff_array, epsilon_array, sigma_array);
+    potential = std::make_shared<potential_type>(cutoff_array, epsilon_array, sigma_array);
+    host_potential = std::make_shared<host_potential_type>(cutoff_array, epsilon_array, sigma_array);
     neighbour = std::make_shared<neighbour_type>(particle);
     trunc = std::make_shared<trunc_type>(h);
     host_trunc = std::make_shared<host_trunc_type>(h);

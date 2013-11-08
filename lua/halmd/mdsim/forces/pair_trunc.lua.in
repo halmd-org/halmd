@@ -1,5 +1,5 @@
 --
--- Copyright © 2010-2011 Felix Höfling
+-- Copyright © 2010-2013 Felix Höfling
 -- Copyright © 2013      Nicolas Höft
 -- Copyright © 2010-2012 Peter Colberg
 --
@@ -87,6 +87,13 @@ local M = module(function(args)
     end
     local box = utility.assert_kwarg(args, "box")
     local potential = utility.assert_kwarg(args, "potential")
+
+    if particle[1].memory ~= particle[2].memory then
+        error("mismatch of memory locations of 'particle' instances", 2)
+    end
+    if particle[1].memory ~= potential.memory then
+        error("mismatch of memory locations of 'particle' and 'potential'", 2)
+    end
 
     local logger = assert(potential.logger)
     local trunc = args.trunc

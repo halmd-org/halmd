@@ -1,5 +1,6 @@
 /*
- * Copyright © 2008-2010  Peter Colberg and Felix Höfling
+ * Copyright © 2008-2013 Felix Höfling
+ * Copyright © 2008-2010 Peter Colberg
  *
  * This file is part of HALMD.
  *
@@ -45,9 +46,7 @@ public:
     typedef logger logger_type;
 
     morse(
-        unsigned int ntype1
-      , unsigned int ntype2
-      , matrix_type const& cutoff
+        matrix_type const& cutoff
       , matrix_type const& epsilon
       , matrix_type const& sigma
       , matrix_type const& r_min
@@ -94,6 +93,16 @@ public:
     matrix_type const& r_min_sigma() const
     {
         return r_min_sigma_;
+    }
+
+    unsigned int size1() const
+    {
+        return epsilon_.size1();
+    }
+
+    unsigned int size2() const
+    {
+        return epsilon_.size2();
     }
 
     /**

@@ -93,7 +93,7 @@ local function shear_viscosity(args)
     boltzmann:set()
 
     -- Lennard-Jones potential
-    local potential = mdsim.potentials.lennard_jones({particle = particle, cutoff = args.cutoff})
+    local potential = mdsim.potentials.lennard_jones({cutoff = args.cutoff})
 
     -- compute forces
     local force = mdsim.forces.pair_trunc({

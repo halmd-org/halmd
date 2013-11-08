@@ -50,13 +50,12 @@ end
 -- :param number args.box: instance of :class:`halmd.mdsim.box`
 -- :param number args.particles: number of particles
 -- :param number args.species: number of species
--- :param string args.memory: device where the particle information is stored (optional)
+-- :param string args.memory: device where the particle information is stored *(optional)*
+-- :param string args.label: instance label (*default:* ``all``)
 --
---    The supported values for ``memory`` are "host" and "gpu". If ``memory``
---    is not specified, the memory location is selected according to the
---    compute device.
---
--- :param string args.label: instance label (defaults to ``all``)
+--  The supported values for ``memory`` are "host" and "gpu". If ``memory`` is
+--  not specified, the memory location is selected according to the compute
+--  device.
 --
 -- .. attribute:: nparticle
 --

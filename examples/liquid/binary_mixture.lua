@@ -75,8 +75,7 @@ local function liquid(args)
 
     -- truncated Lennard-Jones potential
     local potential = mdsim.potentials.lennard_jones({
-        particle = particle
-      , epsilon = {
+        epsilon = {
             {1  , 1.5} -- AA, AB
           , {1.5, 0.5} -- BA, BB
         }

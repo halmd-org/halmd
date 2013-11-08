@@ -1,5 +1,5 @@
 /*
- * Copyright © 2010-2012 Felix Höfling
+ * Copyright © 2010-2013 Felix Höfling
  * Copyright © 2010-2012 Peter Colberg
  *
  * This file is part of HALMD.
@@ -323,7 +323,7 @@ lennard_jones_fluid<modules_type>::lennard_jones_fluid()
     random = std::make_shared<random_type>();
     particle = std::make_shared<particle_type>(npart, 1);
     box = std::make_shared<box_type>(edges);
-    potential = std::make_shared<potential_type>(particle->nspecies(), particle->nspecies(), rc_mat, epsilon_mat, sigma_mat);
+    potential = std::make_shared<potential_type>(rc_mat, epsilon_mat, sigma_mat);
     binning = std::make_shared<binning_type>(particle, box, potential->r_cut(), skin);
     msd = std::make_shared<msd_type>(particle, box);
     neighbour = std::make_shared<neighbour_type>(std::make_pair(particle, particle), std::make_pair(binning, binning), msd, box, potential->r_cut(), skin);

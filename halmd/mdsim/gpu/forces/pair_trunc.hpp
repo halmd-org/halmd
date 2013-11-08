@@ -167,6 +167,10 @@ pair_trunc<dimension, float_type, potential_type, trunc_type>::pair_trunc(
   , en_pot_(particle1_->nparticle())
   , stress_pot_(particle1_->nparticle())
 {
+    if (std::min(potential_->size1(), potential_->size2()) < std::max(particle1_->nspecies(), particle2_->nspecies())) {
+        throw std::invalid_argument("size of potential coefficients less than number of particle species");
+    }
+
     auto net_force = make_cache_mutable(net_force_);
     auto en_pot = make_cache_mutable(en_pot_);
     auto stress_pot = make_cache_mutable(stress_pot_);

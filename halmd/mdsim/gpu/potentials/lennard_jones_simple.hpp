@@ -1,5 +1,5 @@
 /*
- * Copyright © 2010-2011 Felix Höfling
+ * Copyright © 2010-2013 Felix Höfling
  * Copyright © 2008-2012 Peter Colberg
  *
  * This file is part of HALMD.
@@ -51,27 +51,36 @@ public:
     typedef logger logger_type;
 
     lennard_jones_simple(
-        unsigned int ntype1
-      , unsigned int ntype2
-      , float_type cutoff
+        float_type cutoff
       , std::shared_ptr<logger_type> logger = std::make_shared<logger_type>()
     );
 
     void bind_textures() const {}
 
+    // FIXME are the following functions actually needed?
     matrix_type r_cut() const
     {
-        return scalar_matrix_type(ntype1_, ntype2_, r_cut_);
+        return scalar_matrix_type(1, 1, r_cut_);
     }
 
     matrix_type epsilon() const
     {
-        return scalar_matrix_type(ntype1_, ntype2_, 1);
+        return scalar_matrix_type(1, 1, 1);
     }
 
     matrix_type sigma() const
     {
-        return scalar_matrix_type(ntype1_, ntype2_, 1);
+        return scalar_matrix_type(1, 1, 1);
+    }
+
+    unsigned int size1() const
+    {
+        return -1UL;
+    }
+
+    unsigned int size2() const
+    {
+        return -1UL;
     }
 
     /**
@@ -86,10 +95,6 @@ private:
     float_type rr_cut_;
     /** potential energy at cutoff length in MD units */
     float_type en_cut_;
-    /** number of first particle types */
-    unsigned int ntype1_;
-    /** number of second particle types */
-    unsigned int ntype2_;
     /** module logger */
     std::shared_ptr<logger_type> logger_;
 };

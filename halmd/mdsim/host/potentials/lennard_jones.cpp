@@ -1,5 +1,5 @@
 /*
- * Copyright © 2010-2011 Felix Höfling
+ * Copyright © 2010-2013 Felix Höfling
  * Copyright © 2008-2012 Peter Colberg
  *
  * This file is part of HALMD.
@@ -36,12 +36,12 @@ namespace potentials {
 
 template <typename matrix_type>
 static matrix_type const&
-check_shape(matrix_type const& m, unsigned int size1, unsigned int size2)
+check_shape(matrix_type const& m1, matrix_type const& m2)
 {
-    if (m.size1() != size1 || m.size2() != size2) {
+    if (m1.size1() != m2.size1() || m1.size2() != m2.size2()) {
         throw std::invalid_argument("parameter matrix has invalid shape");
     }
-    return m;
+    return m1;
 }
 
 /**
@@ -49,21 +49,19 @@ check_shape(matrix_type const& m, unsigned int size1, unsigned int size2)
  */
 template <typename float_type>
 lennard_jones<float_type>::lennard_jones(
-    unsigned int ntype1
-  , unsigned int ntype2
-  , matrix_type const& cutoff
+    matrix_type const& cutoff
   , matrix_type const& epsilon
   , matrix_type const& sigma
   , std::shared_ptr<logger_type> logger
 )
   // allocate potential parameters
-  : epsilon_(check_shape(epsilon, ntype1, ntype2))
-  , sigma_(check_shape(sigma, ntype1, ntype2))
-  , r_cut_sigma_(check_shape(cutoff, ntype1, ntype2))
+  : epsilon_(epsilon)
+  , sigma_(check_shape(sigma, epsilon))
+  , r_cut_sigma_(check_shape(cutoff, epsilon))
   , r_cut_(element_prod(sigma_, r_cut_sigma_))
   , rr_cut_(element_prod(r_cut_, r_cut_))
   , sigma2_(element_prod(sigma_, sigma_))
-  , en_cut_(ntype1, ntype2)
+  , en_cut_(size1(), size2())
   , logger_(logger)
 {
     // energy shift due to truncation at cutoff length
@@ -93,9 +91,7 @@ void lennard_jones<float_type>::luaopen(lua_State* L)
                 [
                     class_<lennard_jones, std::shared_ptr<lennard_jones> >("lennard_jones")
                         .def(constructor<
-                            unsigned int
-                          , unsigned int
-                          , matrix_type const&
+                            matrix_type const&
                           , matrix_type const&
                           , matrix_type const&
                           , std::shared_ptr<logger_type>

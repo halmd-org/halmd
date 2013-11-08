@@ -1,5 +1,5 @@
 /*
- * Copyright © 2010-2011 Felix Höfling
+ * Copyright © 2010-2013 Felix Höfling
  * Copyright © 2008-2012 Peter Colberg
  *
  * This file is part of HALMD.
@@ -39,16 +39,12 @@ namespace potentials {
  */
 template <typename float_type>
 lennard_jones_simple<float_type>::lennard_jones_simple(
-    unsigned int ntype1
-  , unsigned int ntype2
-  , float_type cutoff
+    float_type cutoff
   , std::shared_ptr<logger_type> logger
 )
   // initialise members
   : r_cut_(cutoff)
   , rr_cut_(cutoff * cutoff)
-  , ntype1_(ntype1)
-  , ntype2_(ntype2)
   , logger_(logger)
 {
     // energy shift due to truncation at cutoff length
@@ -78,9 +74,7 @@ void lennard_jones_simple<float_type>::luaopen(lua_State* L)
                 [
                     class_<lennard_jones_simple, std::shared_ptr<lennard_jones_simple> >("lennard_jones_simple")
                         .def(constructor<
-                            unsigned int
-                          , unsigned int
-                          , float_type
+                            float_type
                           , std::shared_ptr<logger_type>
                         >())
                         // provide Lua interface coherent with lennard_jones

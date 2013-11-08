@@ -148,6 +148,9 @@ pair_full<dimension, float_type, potential_type>::pair_full(
   , en_pot_(particle_->nparticle())
   , stress_pot_(particle_->nparticle())
 {
+    if (std::min(potential_->size1(), potential_->size2()) < particle_->nspecies()) {
+        throw std::invalid_argument("size of potential coefficients less than number of particle species");
+    }
 }
 
 template <int dimension, typename float_type, typename potential_type>

@@ -67,7 +67,6 @@ local function kob_andersen(args)
 
     -- define interaction of Kob-Andersen mixture using truncated Lennard-Jones potential
     local potential = mdsim.potentials.lennard_jones({
-        particle = particle
       , epsilon = {{1, 1.5}, {1.5, 0.5}} -- ((AA, AB), (BA, BB))
       , sigma = {{1, 0.8}, {0.8, 0.88}} -- ((AA, AB), (BA, BB))
       , cutoff = 2.5

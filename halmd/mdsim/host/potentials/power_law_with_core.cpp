@@ -1,5 +1,6 @@
 /*
- * Copyright © 2011  Michael Kopp and Felix Höfling
+ * Copyright © 2011-2013 Felix Höfling
+ * Copyright © 2011      Michael Kopp
  *
  * This file is part of HALMD.
  *
@@ -33,14 +34,14 @@ namespace mdsim {
 namespace host {
 namespace potentials {
 
-template <typename matrix_type>
-static matrix_type const&
-check_shape(matrix_type const& m, unsigned int size1, unsigned int size2)
+template <typename T, typename S>
+static T const&
+check_shape(T const& m1, S const& m2)
 {
-    if (m.size1() != size1 || m.size2() != size2) {
+    if (m1.size1() != m2.size1() || m1.size2() != m2.size2()) {
         throw std::invalid_argument("parameter matrix has invalid shape");
     }
-    return m;
+    return m1;
 }
 
 /**
@@ -48,9 +49,7 @@ check_shape(matrix_type const& m, unsigned int size1, unsigned int size2)
  */
 template <typename float_type>
 power_law_with_core<float_type>::power_law_with_core(
-    unsigned int ntype1
-  , unsigned int ntype2
-  , matrix_type const& cutoff
+    matrix_type const& cutoff
   , matrix_type const& core
   , matrix_type const& epsilon
   , matrix_type const& sigma
@@ -58,20 +57,20 @@ power_law_with_core<float_type>::power_law_with_core(
   , std::shared_ptr<logger_type> logger
 )
   // allocate potential parameters
-  : epsilon_(check_shape(epsilon, ntype1, ntype2))
-  , sigma_(check_shape(sigma, ntype1, ntype2))
-  , index_(check_shape(index, ntype1, ntype2))
+  : epsilon_(epsilon)
+  , sigma_(check_shape(sigma, epsilon))
+  , index_(check_shape(index, epsilon))
   , sigma2_(element_prod(sigma_, sigma_))
-  , r_cut_sigma_(check_shape(cutoff, ntype1, ntype2))
+  , r_cut_sigma_(check_shape(cutoff, epsilon))
   , r_cut_(element_prod(sigma_, r_cut_sigma_))
   , rr_cut_(element_prod(r_cut_, r_cut_))
-  , r_core_sigma_(check_shape(core, ntype1, ntype2))
-  , en_cut_(ntype1, ntype2)
+  , r_core_sigma_(check_shape(core, epsilon))
+  , en_cut_(size1(), size2())
   , logger_(logger)
 {
     // energy shift due to truncation at cutoff length
-    for (unsigned i = 0; i < ntype1; ++i) {
-        for (unsigned j = 0; j < ntype2; ++j) {
+    for (unsigned i = 0; i < en_cut_.size1(); ++i) {
+        for (unsigned j = 0; j < en_cut_.size2(); ++j) {
             boost::tie(boost::tuples::ignore, en_cut_(i, j)) = (*this)(rr_cut_(i, j), i, j);
         }
     }
@@ -96,11 +95,9 @@ void power_law_with_core<float_type>::luaopen(lua_State* L)
             [
                 namespace_("potentials")
                 [
-                    class_<power_law_with_core, std::shared_ptr<power_law_with_core> >(module_name())
+                    class_<power_law_with_core, std::shared_ptr<power_law_with_core> >("power_law_with_core")
                         .def(constructor<
-                            unsigned int                // ntype
-                          , unsigned int                // ntype
-                          , matrix_type const&          // cutoff
+                            matrix_type const&          // cutoff
                           , matrix_type const&          // core
                           , matrix_type const&          // epsilon
                           , matrix_type const&          // sigma

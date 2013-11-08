@@ -1,5 +1,6 @@
 /*
- * Copyright © 2008-2011  Peter Colberg and Felix Höfling
+ * Copyright © 2008-2013 Felix Höfling
+ * Copyright © 2008-2011 Peter Colberg
  *
  * This file is part of HALMD.
  *
@@ -32,14 +33,22 @@ namespace mdsim {
 namespace host {
 namespace potentials {
 
+template <typename matrix_type>
+static matrix_type const&
+check_shape(matrix_type const& m1, matrix_type const& m2)
+{
+    if (m1.size1() != m2.size1() || m1.size2() != m2.size2()) {
+        throw std::invalid_argument("parameter matrix has invalid shape");
+    }
+    return m1;
+}
+
 /**
  * Initialise Morse potential parameters
  */
 template <typename float_type>
 morse<float_type>::morse(
-    unsigned ntype1
-  , unsigned ntype2
-  , matrix_type const& cutoff
+    matrix_type const& cutoff
   , matrix_type const& epsilon
   , matrix_type const& sigma
   , matrix_type const& r_min
@@ -47,12 +56,12 @@ morse<float_type>::morse(
 )
   // allocate potential parameters
   : epsilon_(epsilon)
-  , sigma_(sigma)
-  , r_min_sigma_(r_min)
-  , r_cut_sigma_(cutoff)
+  , sigma_(check_shape(sigma, epsilon))
+  , r_min_sigma_(check_shape(r_min, epsilon))
+  , r_cut_sigma_(check_shape(cutoff, epsilon))
   , r_cut_(element_prod(sigma_, r_cut_sigma_))
   , rr_cut_(element_prod(r_cut_, r_cut_))
-  , en_cut_(ntype1, ntype2)
+  , en_cut_(size1(), size2())
   , logger_(logger)
 {
     // energy shift due to truncation at cutoff length
@@ -83,9 +92,7 @@ void morse<float_type>::luaopen(lua_State* L)
                 [
                     class_<morse, std::shared_ptr<morse> >("morse")
                         .def(constructor<
-                            unsigned int
-                          , unsigned int
-                          , matrix_type const&
+                            matrix_type const&
                           , matrix_type const&
                           , matrix_type const&
                           , matrix_type const&

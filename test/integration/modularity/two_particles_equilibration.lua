@@ -110,11 +110,9 @@ local function setup(args)
     particle = particle_; particle_ = nil
 
     -- truncated Lennard-Jones potential
-    -- FIXME the dependence of the potential on a particle instance makes no sense
     -- FIXME move cutoff to pair_trunc
     local potential = mdsim.potentials.lennard_jones({
-        particle = particle["A"]
-      , epsilon = {
+        epsilon = {
             {1  , 1.5} -- AA, AB
           , {1.5, 0.5} -- BA, BB
         }

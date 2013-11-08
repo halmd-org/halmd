@@ -1,5 +1,5 @@
 /*
- * Copyright © 2010-2011 Felix Höfling
+ * Copyright © 2010-2013 Felix Höfling
  * Copyright © 2008-2012 Peter Colberg
  *
  * This file is part of HALMD.
@@ -45,9 +45,7 @@ public:
     typedef logger logger_type;
 
     lennard_jones(
-        unsigned int ntype1
-      , unsigned int ntype2
-      , matrix_type const& cutoff
+        matrix_type const& cutoff
       , matrix_type const& epsilon
       , matrix_type const& sigma
       , std::shared_ptr<logger_type> logger = std::make_shared<logger_type>()
@@ -94,6 +92,16 @@ public:
     matrix_type const& sigma() const
     {
         return sigma_;
+    }
+
+    unsigned int size1() const
+    {
+        return epsilon_.size1();
+    }
+
+    unsigned int size2() const
+    {
+        return epsilon_.size2();
     }
 
     /**

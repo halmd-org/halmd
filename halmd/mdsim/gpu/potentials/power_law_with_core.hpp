@@ -1,5 +1,6 @@
 /*
- * Copyright © 2011  Michael Kopp and Felix Höfling
+ * Copyright © 2011-2013 Felix Höfling
+ * Copyright © 2011      Michael Kopp
  *
  * This file is part of HALMD.
  *
@@ -45,14 +46,8 @@ public:
     typedef boost::numeric::ublas::matrix<unsigned> uint_matrix_type;
     typedef logger logger_type;
 
-    static char const* module_name() { return "power_law_with_core"; }
-
-    static void luaopen(lua_State* L);
-
     power_law_with_core(
-        unsigned ntype1
-      , unsigned ntype2
-      , matrix_type const& cutoff
+        matrix_type const& cutoff
       , matrix_type const& core
       , matrix_type const& epsilon
       , matrix_type const& sigma
@@ -106,6 +101,21 @@ public:
     {
         return index_;
     }
+
+    unsigned int size1() const
+    {
+        return epsilon_.size1();
+    }
+
+    unsigned int size2() const
+    {
+        return epsilon_.size2();
+    }
+
+    /**
+     * Bind class to Lua.
+     */
+    static void luaopen(lua_State* L);
 
 private:
     /** potential well depths in MD units */

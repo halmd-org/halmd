@@ -1,5 +1,5 @@
 /*
- * Copyright © 2011-2012  Felix Höfling
+ * Copyright © 2011-2013 Felix Höfling
  *
  * This file is part of HALMD.
  *
@@ -81,7 +81,7 @@ BOOST_AUTO_TEST_CASE( power_law_host )
       , 24, 3;
 
     // construct module
-    potential_type potential(ntype, ntype, cutoff_array, epsilon_array, sigma_array, index_array);
+    potential_type potential(cutoff_array, epsilon_array, sigma_array, index_array);
 
     // test paramters
     matrix_type epsilon = potential.epsilon();
@@ -283,12 +283,10 @@ power_law<float_type>::power_law()
     particle = std::make_shared<particle_type>(accumulate(npart_list.begin(), npart_list.end(), 0), npart_list.size());
     box = std::make_shared<box_type>(edges);
     potential = std::make_shared<potential_type>(
-        particle->nspecies(), particle->nspecies(), cutoff_array
-      , epsilon_array, sigma_array, index_array
+        cutoff_array, epsilon_array, sigma_array, index_array
     );
     host_potential = std::make_shared<host_potential_type>(
-        particle->nspecies(), particle->nspecies(), cutoff_array
-      , epsilon_array, sigma_array, index_array
+        cutoff_array, epsilon_array, sigma_array, index_array
     );
     neighbour = std::make_shared<neighbour_type>(particle);
     force = std::make_shared<force_type>(potential, particle, particle, box, neighbour);

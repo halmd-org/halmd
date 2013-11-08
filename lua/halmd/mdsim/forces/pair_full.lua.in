@@ -1,7 +1,7 @@
 --
--- Copyright © 2010-2011  Felix Höfling
--- Copyright © 2013       Nicolas Höft
--- Copyright © 2010-2011  Peter Colberg
+-- Copyright © 2010-2013 Felix Höfling
+-- Copyright © 2013      Nicolas Höft
+-- Copyright © 2010-2011 Peter Colberg
 --
 -- This file is part of HALMD.
 --
@@ -74,6 +74,10 @@ local M = module(function(args)
     local box = utility.assert_kwarg(args, "box")
     local potential = utility.assert_kwarg(args, "potential")
     local logger = assert(potential.logger)
+
+    if particle.memory ~= potential.memory then
+        error("mismatch of memory locations of 'particle' and 'potential'", 2)
+    end
 
     -- construct force module
     local self = pair_full(potential, particle, box, logger)
