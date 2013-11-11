@@ -75,12 +75,12 @@ public:
 
     unsigned int size1() const
     {
-        return -1UL;
+        return -1U;
     }
 
     unsigned int size2() const
     {
-        return -1UL;
+        return -1U;
     }
 
     /**

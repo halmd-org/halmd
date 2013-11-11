@@ -239,7 +239,6 @@ lennard_jones_linear<float_type>::lennard_jones_linear()
     );
     box = std::make_shared<box_type>(edges);
 
-    unsigned int nspecies = particle->nspecies();
     potential = std::make_shared<potential_type>(
         cutoff_array, epsilon_array, sigma_array
     );
