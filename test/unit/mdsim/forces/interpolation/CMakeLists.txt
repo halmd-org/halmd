@@ -12,6 +12,7 @@ if(HALMD_WITH_GPU)
 endif()
 target_link_libraries(test_unit_mdsim_forces_interpolation_cubic_hermite
   halmd_mdsim_forces_interpolation
+  halmd_mdsim
   ${HALMD_TEST_LIBRARIES}
 )
 add_test(unit/mdsim/forces/interpolation/cubic_hermite/host
