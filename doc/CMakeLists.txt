@@ -124,15 +124,20 @@ add_custom_command(OUTPUT pdf
     -c "${CMAKE_CURRENT_BINARY_DIR}"
     "${CMAKE_CURRENT_BINARY_DIR}"
     "${CMAKE_CURRENT_BINARY_DIR}/pdf"
-  COMMAND ${CMAKE_MAKE_PROGRAM}
-    -C pdf LATEXOPTS=-interaction=${HALMD_DOC_LATEX_MODE}
   COMMAND ${CMAKE_COMMAND}
     -E touch pdf
   DEPENDS ${HALMD_DOC_INPUT_FILES}
+  COMMENT "Generate HALMD LaTeX documentation"
+)
+
+add_custom_command(OUTPUT pdf/halmd.pdf
+  COMMAND make -C pdf LATEXOPTS=-interaction=${HALMD_DOC_LATEX_MODE}
+  DEPENDS pdf
   COMMENT "Build HALMD PDF documentation"
 )
+
 add_custom_target(halmd_doc_pdf ALL
-  DEPENDS pdf
+  DEPENDS pdf/halmd.pdf
 )
 install(FILES "${CMAKE_CURRENT_BINARY_DIR}/pdf/halmd.pdf"
   DESTINATION "share/doc/halmd"
