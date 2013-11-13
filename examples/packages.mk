@@ -441,9 +441,13 @@ HDF5_TARBALL_URL = http://www.hdfgroup.org/ftp/HDF5/releases/hdf5-$(HDF5_VERSION
 HDF5_TARBALL_SHA256 = 5ea1ba82fc77350ee628b795ae6ede05feeaf1c6b437911a9478de456600cafb
 HDF5_BUILD_DIR = hdf5-$(HDF5_VERSION)
 HDF5_INSTALL_DIR = $(PREFIX)/hdf5-$(HDF5_VERSION)
-HDF5_CONFIGURE_FLAGS = --enable-parallel --enable-shared --disable-deprecated-symbols  --enable-cxx
+HDF5_CONFIGURE_FLAGS = --enable-shared --disable-deprecated-symbols --enable-cxx
 HDF5_CFLAGS = -fPIC
 HDF5_CXXFLAGS = -fPIC
+
+ifdef ENABLE_PARALLEL_HDF5
+    HDF5_CONFIGURE_FLAGS += --enable-parallel
+endif
 
 .fetch-hdf5-$(HDF5_VERSION):
 	@$(RM) $(HDF5_TARBALL)
@@ -1121,7 +1125,7 @@ HALMD_GIT_URL = http://git.halmd.org/halmd.git
 HALMD_SOURCE_DIR = halmd-$(HALMD_VERSION)
 HALMD_BUILD_DIR = $(HALMD_SOURCE_DIR)/build/release
 HALMD_INSTALL_DIR = $(PREFIX)/halmd-$(HALMD_VERSION)
-HALMD_BUILD_ENV = 
+HALMD_BUILD_ENV =
 
 .fetch-halmd-$(HALMD_VERSION):
 	$(RM) $(HALMD_SOURCE_DIR)
@@ -1211,3 +1215,54 @@ env-nvcuda-tools:
 	@echo '# add nvCUDA-tools $(NVCUDA_TOOLS_VERSION) to environment'
 	@echo 'export PATH="$(NVCUDA_TOOLS_INSTALL_DIR)/bin$${PATH+:$$PATH}"'
 
+##
+## Ninja - a small build system with a focus on speed
+##
+NINJA_VERSION = 1.4.0
+NINJA_TARBALL = ninja-$(NINJA_VERSION).tar.gz
+NINJA_TARBALL_REMOTE = v$(NINJA_VERSION).tar.gz
+NINJA_TARBALL_URL = https://github.com/martine/ninja/archive/$(NINJA_TARBALL_REMOTE)
+NINJA_TARBALL_SHA256 = 701cab33c5c69bcdeedad7a3f7bff4c3e61d38e8c2a0ab79d86e3b702de4c317
+NINJA_BUILD_DIR = ninja-$(NINJA_VERSION)
+NINJA_CONFIGURE_FLAGS =
+NINJA_INSTALL_DIR = $(PREFIX)/ninja-$(NINJA_VERSION)
+
+.fetch-ninja-$(NINJA_VERSION):
+	@$(RM) $(NINJA_TARBALL)
+	$(WGET) $(NINJA_TARBALL_URL) -O $(NINJA_TARBALL)
+	@echo '$(NINJA_TARBALL_SHA256)  $(NINJA_TARBALL)' | $(SHA256SUM)
+	@$(TOUCH) $@
+
+fetch-ninja: .fetch-ninja-$(NINJA_VERSION)
+
+.extract-ninja-$(NINJA_VERSION): .fetch-ninja-$(NINJA_VERSION)
+	$(RM) $(NINJA_BUILD_DIR)
+	$(TAR) -xzf $(NINJA_TARBALL)
+	@$(TOUCH) $@
+
+extract-ninja: .extract-ninja-$(NINJA_VERSION)
+
+.build-ninja-$(NINJA_VERSION): .extract-ninja-$(NINJA_VERSION)
+	cd $(NINJA_BUILD_DIR) && ./bootstrap.py $(NINJA_CONFIGURE_FLAGS)
+	@$(TOUCH) $@
+
+build-ninja: .build-ninja-$(NINJA_VERSION)
+
+install-ninja: .build-ninja-$(NINJA_VERSION)
+	install -d $(NINJA_INSTALL_DIR)/bin
+	cd $(NINJA_BUILD_DIR) && cp ninja $(NINJA_INSTALL_DIR)/bin
+
+clean-ninja:
+	@$(RM) .build-ninja-$(NINJA_VERSION)
+	@$(RM) .extract-ninja-$(NINJA_VERSION)
+	$(RM) $(NINJA_BUILD_DIR)
+
+distclean-ninja: clean-ninja
+	@$(RM) .fetch-ninja-$(NINJA_VERSION)
+	$(RM) $(NINJA_TARBALL)
+	$(RM) $(NINJA_MANPAGES_TARBALL)
+
+env-ninja:
+	@echo
+	@echo '# add Ninja $(NINJA_VERSION) to environment'
+	@echo 'export PATH="$(NINJA_INSTALL_DIR)/bin$${PATH+:$$PATH}"'
