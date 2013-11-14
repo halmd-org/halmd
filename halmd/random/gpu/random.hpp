@@ -107,8 +107,6 @@ template <typename RandomNumberGenerator>
 template <typename Sequence>
 void random<RandomNumberGenerator>::shuffle(Sequence& g_val)
 {
-    typedef typename Sequence::value_type value_type;
-
     cuda::vector<unsigned int> g_sort_index;
     g_sort_index.resize(g_val.size());
     get(g_sort_index);

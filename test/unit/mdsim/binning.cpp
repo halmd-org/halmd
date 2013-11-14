@@ -197,7 +197,6 @@ test_non_uniform_density(typename binning_type::cell_size_type const& shape, flo
     typedef typename binning_type::box_type box_type;
     typedef typename binning_type::cell_size_type shape_type;
     typedef typename particle_type::position_type vector_type;
-    typedef typename vector_type::value_type float_type;
     typedef typename shape_type::value_type size_type;
 
     BOOST_TEST_MESSAGE( "number of lattice unit cells " << shape );

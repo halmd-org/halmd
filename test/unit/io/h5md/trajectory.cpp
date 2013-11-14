@@ -74,8 +74,6 @@ void on_write_sample(std::vector<std::shared_ptr<sample_type> > const& samples, 
 template <typename sample_type, typename reader_type>
 void on_read_sample(std::vector<std::shared_ptr<sample_type> > const& samples, std::shared_ptr<reader_type> reader)
 {
-    typedef typename sample_type::position_array_type position_array_type;
-    typedef typename sample_type::velocity_array_type velocity_array_type;
     typedef typename sample_type::position_array_type::value_type position_type;
     typedef typename sample_type::velocity_array_type::value_type velocity_type;
     typedef typename reader_type::subgroup_type subgroup_type;
@@ -128,8 +126,6 @@ void h5md(std::vector<unsigned int> const& ntypes)
 {
     typedef halmd::observables::host::samples::phase_space<dimension, float> float_sample_type;
     typedef halmd::observables::host::samples::phase_space<dimension, double> double_sample_type;
-    typedef typename float_sample_type::position_array_type float_position_array_type;
-    typedef typename float_sample_type::velocity_array_type float_velocity_array_type;
     typedef typename double_sample_type::position_array_type double_position_array_type;
     typedef typename double_sample_type::velocity_array_type double_velocity_array_type;
 

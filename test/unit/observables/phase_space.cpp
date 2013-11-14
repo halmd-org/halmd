@@ -61,7 +61,6 @@ copy_sample(std::shared_ptr<halmd::observables::gpu::samples::phase_space<dimens
     typedef halmd::observables::host::samples::phase_space<dimension, float_type> host_sample_type;
     typedef halmd::observables::gpu::samples::phase_space<dimension, float_type> gpu_sample_type;
     typedef typename gpu_sample_type::position_array_type::value_type gpu_vector_type;
-    typedef typename host_sample_type::position_array_type::value_type vector_type;
 
     // allocate memory
     std::shared_ptr<host_sample_type> result = std::make_shared<host_sample_type>(sample->position().size());

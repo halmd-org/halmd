@@ -132,9 +132,6 @@ struct verlet_nvt_hoover
 template <typename modules_type>
 void verlet_nvt_hoover<modules_type>::test()
 {
-    typedef typename mdsim::type_traits<dimension, double>::vector_type vector_type;
-    typedef typename mdsim::type_traits<dimension, float>::vector_type gpu_vector_type;
-
     // run for Δt*=500
     uint64_t steps = static_cast<uint64_t>(ceil(500 / timestep));
     uint64_t equi_steps = static_cast<uint64_t>(ceil(steps / 20));

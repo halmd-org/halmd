@@ -205,11 +205,9 @@ template <typename particle_type>
 typename type_traits<particle_type::force_type::static_size, double>::stress_tensor_type
 get_stress_tensor(particle_type& particle, particle_group& group)
 {
-    typedef typename particle_group::size_type size_type;
     typedef typename particle_group::array_type group_array_type;
     typedef typename particle_type::stress_pot_array_type stress_pot_array_type;
     typedef typename particle_type::stress_pot_type stress_pot_type;
-    typedef typename particle_type::velocity_array_type velocity_array_type;
 
     enum { dimension = particle_type::force_type::static_size };
 

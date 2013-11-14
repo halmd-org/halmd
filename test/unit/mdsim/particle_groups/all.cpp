@@ -127,7 +127,6 @@ test_unordered(
 {
     typedef typename test_suite_type::particle_type particle_type;
     typedef typename test_suite_type::particle_group_type particle_group_type;
-    typedef typename particle_group_type::array_type array_type;
     typedef typename particle_group_type::size_type size_type;
     typedef typename test_suite_type::all_type all_type;
 
