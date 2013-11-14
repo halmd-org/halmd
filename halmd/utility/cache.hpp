@@ -123,7 +123,7 @@ public:
     /**
      * Default constructor.
      */
-    cache() {}
+    cache() : initial_(-1UL) {}
 
     /**
      * Observe given cached value.
