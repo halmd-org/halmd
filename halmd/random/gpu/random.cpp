@@ -1,5 +1,6 @@
 /*
- * Copyright © 2010-2011  Peter Colberg and Felix Höfling
+ * Copyright © 2010-2013 Felix Höfling
+ * Copyright © 2010-2011 Peter Colberg
  *
  * This file is part of HALMD.
  *
@@ -19,6 +20,7 @@
 
 #include <memory>
 
+#include <halmd/io/logger.hpp>
 #include <halmd/random/gpu/rand48.hpp>
 #include <halmd/random/gpu/random.hpp>
 #include <halmd/random/gpu/random_kernel.hpp>
@@ -27,6 +29,8 @@
 namespace halmd {
 namespace random {
 namespace gpu {
+
+std::shared_ptr<logger> const logger_ = std::make_shared<logger>("random (GPU)");
 
 template <typename RandomNumberGenerator>
 random<RandomNumberGenerator>::random(
@@ -37,12 +41,16 @@ random<RandomNumberGenerator>::random(
   // allocate random number generator state
   : rng_(blocks, threads)
 {
+    LOG("random number generator type: " << rng_.name());
+    LOG_DEBUG("number of CUDA execution blocks: " << blocks);
+    LOG_DEBUG("number of CUDA execution threads per block: " << threads);
     random::seed(seed);
 }
 
 template <typename RandomNumberGenerator>
 void random<RandomNumberGenerator>::seed(unsigned int seed)
 {
+    LOG("set RNG seed: " << seed);
     rng_.seed(seed);
 }
 
@@ -101,6 +109,7 @@ void random<RandomNumberGenerator>::luaopen(lua_State* L)
             [
                 class_<random, std::shared_ptr<random> >(class_name.c_str())
                     .def(constructor<>())
+                    .def(constructor<unsigned int>())
                     .def("seed", &random::seed)
             ]
         ]
@@ -113,8 +122,9 @@ HALMD_LUA_API int luaopen_libhalmd_random_gpu_random(lua_State* L)
     return 0;
 }
 
-} // namespace random
 } // namespace gpu
+} // namespace random
+
 template class random::gpu::random<random::gpu::rand48>;
 
 } // namespace halmd

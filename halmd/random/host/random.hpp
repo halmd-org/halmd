@@ -41,6 +41,8 @@ class random
 public:
     typedef boost::mt19937 random_generator; // FIXME template parameter
 
+    static char const* rng_name() { return "mt19937"; }
+
     /**
      * Initialise random number generator.
      *
@@ -214,8 +216,8 @@ void random::unit_vector(fixed_vector<value_type, 4>& v)
     v[3] *= s;
 }
 
-} // namespace random
 } // namespace host
+} // namespace random
 } // namespace halmd
 
 #endif /* ! HALMD_RANDOM_HOST_RANDOM_HPP */

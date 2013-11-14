@@ -167,6 +167,7 @@ local function parse_args()
         }
         args[key] = level[value] or level[#level]
     end, default = 1, help = "increase logging verbosity"})
+    parser:add_argument("random-seed", {type = "integer", help = "seed for random number generator"})
 
     parser:add_argument("particles", {type = "vector", dtype = "integer", default = {10000}, help = "number of particles"})
     parser:add_argument("density", {type = "number", default = 0.75, help = "particle number density"})
@@ -188,6 +189,7 @@ local function parse_args()
     sampling:add_argument("trajectory", {type = "integer", help = "for trajectory"})
     sampling:add_argument("state-vars", {type = "integer", default = 1000, help = "for state variables"})
 
+
     return parser:parse_args()
 end
 
@@ -199,6 +201,11 @@ halmd.io.log.open_console({severity = args.verbose[1]})
 halmd.io.log.open_file(("%s.log"):format(args.output), {severity = args.verbose[2]})
 -- log version
 halmd.utility.version.prologue()
+
+-- seed the random number generator
+if args.random_seed then
+    halmd.random.generator({seed = args.random_seed})
+end
 
 -- run simulation
 liquid(args)

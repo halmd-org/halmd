@@ -1,4 +1,5 @@
 --
+-- Copyright © 2013 Felix Höfling
 -- Copyright © 2012 Peter Colberg
 --
 -- This file is part of HALMD.
@@ -17,58 +18,66 @@
 -- along with this program.  If not, see <http://www.gnu.org/licenses/>.
 --
 
-local device = require("halmd.utility.device")
+local device  = require("halmd.utility.device")
+local module  = require("halmd.utility.module")
+local utility = require("halmd.utility")
+
+-- grab C++ wrappers
+local random = {host = assert(libhalmd.random.host.mt19937)}
+if device.gpu then
+    random.gpu = assert(libhalmd.random.gpu.rand48)
+end
 
 ---
 -- Random Numbers
 -- ==============
 --
--- This module provides random number generators and random distributions.
+-- This module provides pseudo-random number generators and random
+-- distributions.
 --
+
+-- keep random number generators as singleton instances
 local M = {}
 
--- grab C++ wrappers
-local random = {host = assert(libhalmd.random.host.gfsr4)}
-if device.gpu then
-    random.gpu = assert(libhalmd.random.gpu.rand48)
-end
-
--- construct random number generators with default seed
-local generator = {}
-for memory, random in pairs(random) do
-    generator[memory] = random()
-end
-
 ---
--- Seed random number generator.
---
--- :param number seed: random number generator seed
---
-function M.seed(seed)
-    if type(seed) ~= "number" then
-        error("bad argument #1 (expected number)", 2)
-    end
-    for memory, generator in pairs(generator) do
-        generator:seed(seed)
-    end
-end
-
----
--- Get random number generator.
+-- Get pseudo-random number generator.
 --
 -- :param table args: keyword arguments
--- :param string args.memory: ``host`` or ``gpu`` (defaults to compute device)
--- :returns: random number generator
+-- :param string args.memory: ``host`` or ``gpu`` (*default:* compute device)
+-- :param number args.seed: initial seed value *(optional)*
+--
+-- :returns: pseudo-random number generator
+--
+-- The first call for each memory argument constructs a singleton instance of
+-- the pseudo-random number generator, which is returned in subsequent calls.
+--
+-- If the argument ``seed`` is omitted, the initial seed is obtained from the
+-- system's random device, e.g., ``/dev/urandom`` on Linux.
+--
+-- .. method:: seed(seed)
+--
+--    Set (or reset) the seed of the pseudo-random number generator.
 --
 function M.generator(args)
-    local memory = args and args.memory
-    if not memory then
-        memory = device.gpu and "gpu" or "host"
+    local memory = args and args.memory or (device.gpu and "gpu" or "host")
+    local seed = args and args.seed
+    utility.assert_type(memory, "string")
+    if seed then
+        utility.assert_type(seed, "number")
     end
-    local self = generator[memory]
+
+    -- retrieve singleton instance if it exists
+    local self = M[memory]
     if not self then
-        error("bad argument 'memory'", 2)
+        local rng = random[memory]
+        if not rng then
+            error("bad argument 'memory'", 2)
+        end
+        -- construct random number generator
+        self = seed and rng(seed) or rng()
+        M[memory] = self
     end
+
     return self
 end
 

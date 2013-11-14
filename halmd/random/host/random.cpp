@@ -1,5 +1,6 @@
 /*
- * Copyright © 2008-2011  Peter Colberg
+ * Copyright © 2013      Felix Höfling
+ * Copyright © 2008-2011 Peter Colberg
  *
  * This file is part of HALMD.
  *
@@ -19,6 +20,7 @@
 
 #include <memory>
 
+#include <halmd/io/logger.hpp>
 #include <halmd/random/host/random.hpp>
 #include <halmd/utility/lua/lua.hpp>
 
@@ -26,13 +28,17 @@ namespace halmd {
 namespace random {
 namespace host {
 
+std::shared_ptr<logger> const logger_ = std::make_shared<logger>("random (host)");
+
 random::random(unsigned int seed)
 {
+    LOG("random number generator type: " << rng_name());
     random::seed(seed);
 }
 
 void random::seed(unsigned int seed)
 {
+    LOG("set RNG seed: " << seed);
     rng_.seed(seed);
 }
 
@@ -45,8 +51,9 @@ void random::luaopen(lua_State* L)
         [
             namespace_("host")
             [
-                class_<random, std::shared_ptr<random> >("gfsr4")
+                class_<random, std::shared_ptr<random> >(rng_name())
                     .def(constructor<>())
+                    .def(constructor<unsigned int>())
                     .def("seed", &random::seed)
             ]
         ]
@@ -59,6 +66,6 @@ HALMD_LUA_API int luaopen_libhalmd_random_host_random(lua_State* L)
     return 0;
 }
 
-} // namespace random
 } // namespace host
+} // namespace random
 } // namespace halmd

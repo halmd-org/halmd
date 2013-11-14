@@ -114,8 +114,8 @@ void random<RandomNumberGenerator>::shuffle(Sequence& g_val)
     cuda::thread::synchronize();
 }
 
-} // namespace random
 } // namespace gpu
+} // namespace random
 } // namespace halmd
 
 #endif /* ! HALMD_RANDOM_GPU_RANDOM_HPP */
