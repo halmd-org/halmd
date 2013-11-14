@@ -66,10 +66,10 @@ particle<dimension, float_type>::particle(size_type nparticle, unsigned int nspe
   , g_en_pot_(nparticle)
   , g_stress_pot_(nparticle)
   // enable auxiliary variables by default to allow sampling of initial state
-  , aux_flag_(true)
-  , aux_valid_(false)
   , force_zero_(true)
   , force_dirty_(true)
+  , aux_dirty_(true)
+  , aux_enabled_(true)
 {
     auto g_position = make_cache_mutable(g_position_);
     auto g_image = make_cache_mutable(g_image_);
@@ -178,7 +178,7 @@ template <int dimension, typename float_type>
 void particle<dimension, float_type>::aux_enable()
 {
     LOG_TRACE("enable computation of auxiliary variables");
-    aux_flag_ = true;
+    aux_enabled_ = true;
 }
 
 /**
@@ -222,35 +222,23 @@ void particle<dimension, float_type>::rearrange(cuda::vector<unsigned int> const
 }
 
 template <int dimension, typename float_type>
-void particle<dimension, float_type>::update_force_()
+void particle<dimension, float_type>::update_force_(bool with_aux)
 {
-    on_prepend_force_();          // ask force modules whether force cache is dirty
-    if (force_dirty_) {
-        LOG_TRACE("request force" << (aux_flag_ ? " and auxiliary variables" : ""));
+    on_prepend_force_();               // ask force modules whether force cache is dirty
 
-        aux_valid_ = aux_flag_;   // tell force modules whether to compute auxiliary variables
-        aux_flag_ = false;        // disable auxiliary variables for next call
-        force_zero_ = true;       // tell first force module to reset the force
-        on_force_();
-        force_dirty_ = false;
-    }
-    on_append_force_();
-}
-
-template <int dimension, typename float_type>
-void particle<dimension, float_type>::update_aux_()
-{
-    aux_valid_ = true;            // ensure that the auxiliary variables are taken into account
-    on_prepend_force_();          // ask force modules whether force cache is dirty
-    if (force_dirty_) {
-        if (!aux_flag_) {
-            LOG_WARNING_ONCE("auxiliary variables inactive in prior force computation, use aux_enable()");
+    if (force_dirty_ || (with_aux && aux_dirty_)) {
+        if (with_aux && aux_dirty_) {
+            if (!force_dirty_) {
+                LOG_WARNING_ONCE("auxiliary variables inactive in prior force computation, use aux_enable()");
+            }
+            aux_enabled_ = true;       // turn on computation of aux variables
         }
+        LOG_TRACE("request force" << (aux_enabled_ ? " and auxiliary variables" : ""));
 
-        LOG_TRACE("request force and auxiliary variables");
-        force_zero_ = true;       // tell first force module to reset the force
-        aux_flag_ = false;        // disable auxiliary variables for next call
+        force_zero_ = true;            // tell first force module to reset the force
         on_force_();
+        aux_dirty_ = !aux_enabled_;    // mark aux variables dirty if not computed
+        aux_enabled_ = false;          // disable aux variables for next call
         force_dirty_ = false;
     }
     on_append_force_();

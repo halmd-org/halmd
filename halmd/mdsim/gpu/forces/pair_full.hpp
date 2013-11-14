@@ -138,7 +138,7 @@ inline void pair_full<dimension, float_type, potential_type>::check_cache()
     cache<position_array_type> const& position_cache = particle_->position();
 
     if (force_cache_ != position_cache ||
-        (particle_->aux_valid() && aux_cache_ != position_cache)) {
+        (particle_->aux_enabled() && aux_cache_ != position_cache)) {
         particle_->mark_force_dirty();
     }
 }
@@ -146,7 +146,7 @@ inline void pair_full<dimension, float_type, potential_type>::check_cache()
 template <int dimension, typename float_type, typename potential_type>
 inline void pair_full<dimension, float_type, potential_type>::apply()
 {
-    if (particle_->aux_valid()) {
+    if (particle_->aux_enabled()) {
         compute_aux_();
         force_cache_ = particle_->position();
         aux_cache_ = force_cache_;

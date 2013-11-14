@@ -235,7 +235,7 @@ public:
      */
     cache<en_pot_array_type> const& potential_energy()
     {
-        update_aux_();
+        update_force_(true);
         return en_pot_;
     }
 
@@ -252,7 +252,7 @@ public:
      */
     cache<stress_pot_array_type> const& stress_pot()
     {
-        update_aux_();
+        update_force_(true);
         return stress_pot_;
     }
 
@@ -267,16 +267,16 @@ public:
     /**
      * Enable computation of auxiliary variables.
      *
-     * The flag is reset after the next call to on_force_().
+     * The flag is reset after the next trigger of on_force_().
      */
     void aux_enable();
 
     /**
      * Returns true if computation of auxiliary variables is enabled.
      */
-    bool aux_valid() const
+    bool aux_enabled() const
     {
-        return aux_valid_;
+        return aux_enabled_;
     }
 
     /**
@@ -298,11 +298,12 @@ public:
     }
 
     /**
-     * Indicate that a force update (ie. calling on_force_()) is required
+     * Indicate that a force update (ie. triggering on_force_()) is required
      */
     void mark_force_dirty()
     {
         force_dirty_ = true;
+        aux_dirty_ = true;
     }
 
     connection on_prepend_force(slot_function_type const& slot)
@@ -351,28 +352,27 @@ private:
     /** potential part of stress tensor for each particle */
     cache<stress_pot_array_type> stress_pot_;
 
-    /** flag that the computation of auxiliary variables is requested */
-    bool aux_flag_;
-    /** flag that auxiliary variables are computed at this step */
-    bool aux_valid_;
     /** flag that the force has to be reset to zero prior to reading */
     bool force_zero_;
     /** flag that the force cache is dirty (not up to date) */
     bool force_dirty_;
+    /** flag that the caches of the auxiliary variables are dirty (not up to date) */
+    bool aux_dirty_;
+    /** flag that the computation of auxiliary variables is requested */
+    bool aux_enabled_;
 
     /**
-     * Update all forces and auxiliary variables if needed (the latter only if
-     * enable_aux() was called before).
-     */
-    void update_force_();
-
-    /**
-     * Update all forces and auxiliary variables.
+     * Update all forces and auxiliary variables if needed. The auxiliary
+     * variables are guaranteed to be up-to-date upon return if with_aux was
+     * set to true.
+     *
+     * Auxiliary variables are computed only if they are out of date
+     * (aux_dirty_ == true) and if either with_aux or aux_enabled_ is true.
      *
      * Emit a warning if the force update would be necessary solely to compute
      * the auxiliary variables, which indicates a performance problem.
      */
-    void update_aux_();
+    void update_force_(bool with_aux=false);
 
     typedef utility::profiler profiler_type;
     typedef typename profiler_type::accumulator_type accumulator_type;

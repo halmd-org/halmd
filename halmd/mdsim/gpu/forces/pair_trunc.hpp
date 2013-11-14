@@ -160,7 +160,7 @@ inline void pair_trunc<dimension, float_type, potential_type, trunc_type>::check
     auto current_state = std::tie(position1_cache, position2_cache);
 
     if (force_cache_ != current_state ||
-        (particle1_->aux_valid() && aux_cache_ != current_state)) {
+        (particle1_->aux_enabled() && aux_cache_ != current_state)) {
         particle1_->mark_force_dirty();
     }
 }
@@ -173,7 +173,7 @@ inline void pair_trunc<dimension, float_type, potential_type, trunc_type>::apply
 
     auto current_state = std::tie(position1_cache, position2_cache);
 
-    if (particle1_->aux_valid()) {
+    if (particle1_->aux_enabled()) {
         compute_aux_();
         force_cache_ = current_state;
         aux_cache_ = force_cache_;

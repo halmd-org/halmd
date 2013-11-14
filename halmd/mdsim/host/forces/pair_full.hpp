@@ -141,7 +141,7 @@ inline void pair_full<dimension, float_type, potential_type>::check_cache()
     auto current_state = std::tie(position_cache, species_cache);
 
     if (force_cache_ != current_state ||
-        (particle_->aux_valid() && aux_cache_ != current_state)) {
+        (particle_->aux_enabled() && aux_cache_ != current_state)) {
         particle_->mark_force_dirty();
     }
 }
@@ -154,7 +154,7 @@ inline void pair_full<dimension, float_type, potential_type>::apply()
 
     auto current_state = std::tie(position_cache, species_cache);
 
-    if (particle_->aux_valid()) {
+    if (particle_->aux_enabled()) {
         compute_aux_();
         force_cache_ = current_state;
         aux_cache_ = force_cache_;
