@@ -109,6 +109,7 @@ private:
     struct runtime
     {
         accumulator_type compute;
+        accumulator_type compute_aux;
     };
 
     /** profiling runtime accumulators */
@@ -194,7 +195,7 @@ inline void pair_full<dimension, float_type, potential_type>::compute_aux_()
     auto en_pot = make_cache_mutable(particle_->mutable_potential_energy());
     auto stress_pot = make_cache_mutable(particle_->mutable_stress_pot());
 
-    scoped_timer_type timer(runtime_.compute);
+    scoped_timer_type timer(runtime_.compute_aux);
 
     potential_->bind_textures();
 
@@ -230,6 +231,7 @@ void pair_full<dimension, float_type, potential_type>::luaopen(lua_State* L)
                     [
                         class_<runtime>("runtime")
                             .def_readonly("compute", &runtime::compute)
+                            .def_readonly("compute_aux", &runtime::compute_aux)
                     ]
                     .def_readonly("runtime", &pair_full::runtime_)
 

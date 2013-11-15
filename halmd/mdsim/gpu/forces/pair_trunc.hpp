@@ -122,6 +122,7 @@ private:
     struct runtime
     {
         accumulator_type compute;
+        accumulator_type compute_aux;
     };
 
     /** profiling runtime accumulators */
@@ -229,7 +230,7 @@ inline void pair_trunc<dimension, float_type, potential_type, trunc_type>::compu
 
     LOG_TRACE("compute forces with auxiliary variables");
 
-    scoped_timer_type timer(runtime_.compute);
+    scoped_timer_type timer(runtime_.compute_aux);
 
     gpu_wrapper::kernel.r2.bind(position2);
     potential_->bind_textures();
@@ -269,6 +270,7 @@ void pair_trunc<dimension, float_type, potential_type, trunc_type>::luaopen(lua_
                     [
                         class_<runtime>("runtime")
                             .def_readonly("compute", &runtime::compute)
+                            .def_readonly("compute_aux", &runtime::compute_aux)
                     ]
                     .def_readonly("runtime", &pair_trunc::runtime_)
 

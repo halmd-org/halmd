@@ -115,8 +115,9 @@ local M = module(function(args)
     table.insert(conn, assert(particle[1]:on_force(function() self:apply() end)))
 
     -- connect to profiler
-    local desc = ("computation of %s interaction"):format(potential.description)
+    local desc = ("computation of %s"):format(potential.description)
     table.insert(conn, assert(profiler:on_profile(assert(self.runtime).compute, desc)))
+    table.insert(conn, assert(profiler:on_profile(assert(self.runtime).compute_aux, desc .. " and auxiliary variables")))
 
     return self
 end)

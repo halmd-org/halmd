@@ -123,6 +123,7 @@ private:
     struct runtime
     {
         accumulator_type compute;
+        accumulator_type compute_aux;
     };
 
     /** profiling runtime accumulators */
@@ -253,7 +254,7 @@ inline void pair_trunc<dimension, float_type, potential_type, trunc_type>::compu
 
     LOG_TRACE("compute forces with auxiliary variables");
 
-    scoped_timer_type timer(runtime_.compute);
+    scoped_timer_type timer(runtime_.compute_aux);
 
     // reset the force and auxiliary variables to zero if necessary
     if (particle1_->force_zero()) {
@@ -321,6 +322,7 @@ void pair_trunc<dimension, float_type, potential_type, trunc_type>::luaopen(lua_
                     [
                         class_<runtime>("runtime")
                             .def_readonly("compute", &runtime::compute)
+                            .def_readonly("compute_aux", &runtime::compute_aux)
                     ]
                     .def_readonly("runtime", &pair_trunc::runtime_)
 
