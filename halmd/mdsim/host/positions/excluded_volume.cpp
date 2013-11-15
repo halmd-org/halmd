@@ -38,7 +38,7 @@ template <int dimension, typename float_type>
 excluded_volume<dimension, float_type>::excluded_volume(
     std::shared_ptr<box_type const> box
   , float_type cell_length
-  , std::shared_ptr<logger_type> logger
+  , std::shared_ptr<logger> logger
 )
   : box_(box)
   , logger_(logger)
@@ -166,7 +166,7 @@ void excluded_volume<dimension, float_type>::luaopen(lua_State* L)
               , def("excluded_volume", &std::make_shared<excluded_volume
                     , std::shared_ptr<box_type const>
                     , float_type
-                    , std::shared_ptr<logger_type>
+                    , std::shared_ptr<logger>
                 >)
             ]
         ]

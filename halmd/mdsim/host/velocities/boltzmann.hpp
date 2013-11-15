@@ -41,13 +41,12 @@ class boltzmann
 public:
     typedef host::particle<dimension, float_type> particle_type;
     typedef random::host::random random_type;
-    typedef logger logger_type;
 
     boltzmann(
         std::shared_ptr<particle_type> particle
       , std::shared_ptr<random_type> random
       , double temperature
-      , std::shared_ptr<logger_type> logger = std::make_shared<logger_type>()
+      , std::shared_ptr<logger> logger = std::make_shared<logger>()
     );
 
     /**
@@ -79,7 +78,7 @@ private:
     /** random number generator */
     std::shared_ptr<random_type> random_;
     /** module logger */
-    std::shared_ptr<logger_type> logger_;
+    std::shared_ptr<logger> logger_;
     /** temperature */
     float_type temp_;
 

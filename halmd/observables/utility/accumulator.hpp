@@ -41,14 +41,13 @@ public:
     typedef sample_type value_type;
     typedef numeric::detail::accumulator<value_type> accumulator_type;
     typedef std::function<value_type ()> sample_function_type;
-    typedef logger logger_type;
 
     /**
      * Initialise accumulator
      */
     accumulator(
         sample_function_type const& sample
-      , std::shared_ptr<logger_type> logger = std::make_shared<logger_type>()
+      , std::shared_ptr<logger> logger = std::make_shared<logger>()
     )
       : sample_(sample)
       , logger_(logger)
@@ -108,7 +107,7 @@ protected:
     /** accumulator instance */
     accumulator_type acc_;
     /** module logger */
-    std::shared_ptr<logger_type> logger_;
+    std::shared_ptr<logger> logger_;
 };
 
 

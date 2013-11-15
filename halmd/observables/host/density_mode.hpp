@@ -55,13 +55,12 @@ public:
     typedef mdsim::host::particle_group particle_group_type;
     typedef observables::utility::wavevector<dimension> wavevector_type;
     typedef raw_array<fixed_vector<double, 2>> result_type;
-    typedef logger logger_type;
 
     density_mode(
         std::shared_ptr<particle_type const> particle
       , std::shared_ptr<particle_group_type> particle_group
       , std::shared_ptr<wavevector_type const> wavevector
-      , std::shared_ptr<logger_type> logger = std::make_shared<logger_type>("density_mode")
+      , std::shared_ptr<logger> logger = std::make_shared<logger>("density_mode")
     );
 
     /** Compute density modes from particle group.
@@ -106,7 +105,7 @@ private:
     /** wavevector list */
     std::shared_ptr<wavevector_type const> wavevector_;
     /** logger instance */
-    std::shared_ptr<logger_type> logger_;
+    std::shared_ptr<logger> logger_;
 
     /** result for the density modes */
     std::shared_ptr<result_type> result_;

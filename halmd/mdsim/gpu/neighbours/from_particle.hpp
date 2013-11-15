@@ -65,7 +65,6 @@ public:
     typedef mdsim::box<dimension> box_type;
     typedef max_displacement<dimension, float_type> displacement_type;
     struct defaults;
-    typedef logger logger_type;
 
     typedef _Base::array_type array_type;
 
@@ -77,7 +76,7 @@ public:
       , std::shared_ptr<box_type const> box
       , matrix_type const& r_cut
       , double skin
-      , std::shared_ptr<logger_type> logger = std::make_shared<logger_type>()
+      , std::shared_ptr<logger> logger = std::make_shared<logger>()
       , double cell_occupancy = defaults::occupancy()
     );
 
@@ -142,7 +141,7 @@ private:
     std::shared_ptr<particle_type const> particle2_;
     std::shared_ptr<displacement_type> displacement_;
     std::shared_ptr<box_type const> box_;
-    std::shared_ptr<logger_type> logger_;
+    std::shared_ptr<logger> logger_;
 
     /** neighbour list skin in MD units */
     float_type r_skin_;

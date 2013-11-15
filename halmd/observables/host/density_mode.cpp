@@ -32,7 +32,7 @@ density_mode<dimension, float_type>::density_mode(
     shared_ptr<particle_type const> particle
   , shared_ptr<particle_group_type> particle_group
   , shared_ptr<wavevector_type const> wavevector
-  , shared_ptr<logger_type> logger
+  , shared_ptr<logger> logger
 )
     // dependency injection
   : particle_(particle)
@@ -117,7 +117,7 @@ void density_mode<dimension, float_type>::luaopen(lua_State* L)
               , shared_ptr<particle_type const>
               , shared_ptr<particle_group_type>
               , shared_ptr<wavevector_type const>
-              , shared_ptr<logger_type>
+              , shared_ptr<logger>
             >)
         ]
     ];

@@ -53,7 +53,6 @@ public:
     typedef mdsim::clock clock_type;
     typedef clock_type::step_type step_type;
     typedef clock_type::time_type time_type;
-    typedef logger logger_type;
     typedef boost::multi_array<time_type, 2> block_time_type;
 
     /**
@@ -71,7 +70,7 @@ public:
       , unsigned int block_size
       , unsigned int shift = 0
       , unsigned int separation = 1
-      , std::shared_ptr<logger_type> logger = std::make_shared<logger_type>()
+      , std::shared_ptr<logger> logger = std::make_shared<logger>()
     );
 
     /** add a time correlation function */
@@ -130,7 +129,7 @@ private:
      /** simulation clock */
     std::shared_ptr<clock_type const> clock_;
     /** module logger */
-    std::shared_ptr<logger_type> logger_;
+    std::shared_ptr<logger> logger_;
     /** set of time correlation functions */
     slots<std::shared_ptr<correlation_base> > tcf_;
     /** set of block structures holding the input samples (e.g., phase space point, density modes)

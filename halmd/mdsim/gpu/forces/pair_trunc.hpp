@@ -50,7 +50,6 @@ public:
     typedef particle<dimension, float_type> particle_type;
     typedef box<dimension> box_type;
     typedef neighbour neighbour_type;
-    typedef logger logger_type;
 
     pair_trunc(
         std::shared_ptr<potential_type const> potential
@@ -59,7 +58,7 @@ public:
       , std::shared_ptr<box_type const> box
       , std::shared_ptr<neighbour_type> neighbour
       , std::shared_ptr<trunc_type const> trunc = std::make_shared<trunc_type>()
-      , std::shared_ptr<logger_type> logger = std::make_shared<logger_type>()
+      , std::shared_ptr<logger> logger = std::make_shared<logger>()
     );
 
     /**
@@ -108,7 +107,7 @@ private:
     /** smoothing functor */
     std::shared_ptr<trunc_type const> trunc_;
     /** module logger */
-    std::shared_ptr<logger_type> logger_;
+    std::shared_ptr<logger> logger_;
 
     /** cache observer of force per particle */
     std::tuple<cache<>, cache<>> force_cache_;
@@ -136,7 +135,7 @@ pair_trunc<dimension, float_type, potential_type, trunc_type>::pair_trunc(
   , std::shared_ptr<box_type const> box
   , std::shared_ptr<neighbour_type> neighbour
   , std::shared_ptr<trunc_type const> trunc
-  , std::shared_ptr<logger_type> logger
+  , std::shared_ptr<logger> logger
 )
   : potential_(potential)
   , particle1_(particle1)
@@ -280,7 +279,7 @@ void pair_trunc<dimension, float_type, potential_type, trunc_type>::luaopen(lua_
                   , std::shared_ptr<box_type const>
                   , std::shared_ptr<neighbour_type>
                   , std::shared_ptr<trunc_type const>
-                  , std::shared_ptr<logger_type>
+                  , std::shared_ptr<logger>
                 >)
             ]
         ]

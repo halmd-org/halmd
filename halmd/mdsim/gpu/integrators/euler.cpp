@@ -37,7 +37,7 @@ euler<dimension, float_type>::euler(
     std::shared_ptr<particle_type> particle
   , std::shared_ptr<box_type const> box
   , double timestep
-  , std::shared_ptr<logger_type> logger
+  , std::shared_ptr<logger> logger
 )
   // dependency injection
   : particle_(particle)
@@ -132,7 +132,7 @@ void euler<dimension, float_type>::luaopen(lua_State* L)
                   , std::shared_ptr<particle_type>
                   , std::shared_ptr<box_type const>
                   , double
-                  , std::shared_ptr<logger_type>
+                  , std::shared_ptr<logger>
                 >)
             ]
         ]

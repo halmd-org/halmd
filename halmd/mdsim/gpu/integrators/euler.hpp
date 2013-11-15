@@ -42,7 +42,6 @@ class euler
 public:
     typedef gpu::particle<dimension, float_type> particle_type;
     typedef mdsim::box<dimension> box_type;
-    typedef logger logger_type;
     typedef typename particle_type::vector_type vector_type;
     typedef euler_wrapper<dimension> wrapper_type;
 
@@ -52,7 +51,7 @@ public:
         std::shared_ptr<particle_type> particle
       , std::shared_ptr<box_type const> box
       , double timestep
-      , std::shared_ptr<logger_type> logger = std::make_shared<logger_type>()
+      , std::shared_ptr<logger> logger = std::make_shared<logger>()
     );
 
     void integrate();
@@ -80,7 +79,7 @@ private:
     std::shared_ptr<particle_type> particle_;
     std::shared_ptr<box_type const> box_;
     /** module logger */
-    std::shared_ptr<logger_type> logger_;
+    std::shared_ptr<logger> logger_;
     /** integration time-step */
     float_type timestep_;
     /** profiling runtime accumulators */

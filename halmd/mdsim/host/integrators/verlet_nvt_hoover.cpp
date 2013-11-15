@@ -44,7 +44,7 @@ verlet_nvt_hoover<dimension, float_type>::verlet_nvt_hoover(
   , float_type timestep
   , float_type temperature
   , float_type resonance_frequency
-  , std::shared_ptr<logger_type> logger
+  , std::shared_ptr<logger> logger
 )
   // public member initialisation
   : xi(0)
@@ -298,7 +298,7 @@ void verlet_nvt_hoover<dimension, float_type>::luaopen(lua_State* L)
                   , float_type
                   , float_type
                   , float_type
-                  , std::shared_ptr<logger_type>
+                  , std::shared_ptr<logger>
                 >)
             ]
         ]

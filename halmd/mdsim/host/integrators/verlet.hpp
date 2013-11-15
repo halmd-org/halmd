@@ -40,7 +40,6 @@ public:
     typedef host::particle<dimension, float_type> particle_type;
     typedef typename particle_type::vector_type vector_type;
     typedef mdsim::box<dimension> box_type;
-    typedef logger logger_type;
 
     static void luaopen(lua_State* L);
 
@@ -48,7 +47,7 @@ public:
         std::shared_ptr<particle_type> particle
       , std::shared_ptr<box_type const> box
       , double timestep
-      , std::shared_ptr<logger_type> logger = std::make_shared<logger_type>()
+      , std::shared_ptr<logger> logger = std::make_shared<logger>()
     );
     void integrate();
     void finalize();
@@ -86,7 +85,7 @@ private:
     /** half time-step */
     float_type timestep_half_;
     /** module logger */
-    std::shared_ptr<logger_type> logger_;
+    std::shared_ptr<logger> logger_;
     /** profiling runtime accumulators */
     runtime runtime_;
 };

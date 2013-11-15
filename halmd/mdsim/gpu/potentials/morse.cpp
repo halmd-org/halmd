@@ -55,7 +55,7 @@ morse<float_type>::morse(
   , matrix_type const& epsilon
   , matrix_type const& sigma
   , matrix_type const& r_min
-  , std::shared_ptr<logger_type> logger
+  , std::shared_ptr<logger> logger
 )
   // allocate potential parameters
   : epsilon_(epsilon)
@@ -115,7 +115,7 @@ void morse<float_type>::luaopen(lua_State* L)
                           , matrix_type const&
                           , matrix_type const&
                           , matrix_type const&
-                          , std::shared_ptr<logger_type>
+                          , std::shared_ptr<logger>
                         >())
                         .property("r_cut", (matrix_type const& (morse::*)() const) &morse::r_cut)
                         .property("r_cut_sigma", &morse::r_cut_sigma)

@@ -45,7 +45,6 @@ public:
     typedef typename particle_group::array_type array_type;
     typedef typename particle_group::size_type size_type;
     typedef std::pair<size_type, size_type> range_type;
-    typedef logger logger_type;
 
     /**
      * Select by tag range [begin, end).
@@ -53,7 +52,7 @@ public:
     from_range(
         std::shared_ptr<particle_type const> particle
       , range_type const& range
-      , std::shared_ptr<logger_type> logger = std::make_shared<logger_type>()
+      , std::shared_ptr<logger> logger = std::make_shared<logger>()
     );
 
     /**
@@ -85,7 +84,7 @@ private:
     /** particle tag range */
     range_type const range_;
     /** module logger */
-    std::shared_ptr<logger_type> logger_;
+    std::shared_ptr<logger> logger_;
     /** ordered sequence of particle indices */
     cache<array_type> ordered_;
     /** unordered sequence of particle indices */

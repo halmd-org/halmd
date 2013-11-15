@@ -47,7 +47,6 @@ public:
     typedef typename particle_type::vector_type vector_type;
     typedef boost::numeric::ublas::matrix<float_type> matrix_type;
     typedef mdsim::box<dimension> box_type;
-    typedef logger logger_type;
 
     typedef std::vector<unsigned int> cell_list;
     typedef boost::multi_array<cell_list, dimension> array_type;
@@ -61,7 +60,7 @@ public:
       , std::shared_ptr<box_type const> box
       , matrix_type const& r_cut
       , float_type skin
-      , std::shared_ptr<logger_type> logger = std::make_shared<logger_type>()
+      , std::shared_ptr<logger> logger = std::make_shared<logger>()
     );
 
     //! returns neighbour list skin in MD units
@@ -102,7 +101,7 @@ private:
     //! system state
     std::shared_ptr<particle_type const> particle_;
     /** module logger */
-    std::shared_ptr<logger_type> logger_;
+    std::shared_ptr<logger> logger_;
     /** neighbour list skin in MD units */
     float_type r_skin_;
     /** cell lists */

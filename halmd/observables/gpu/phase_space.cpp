@@ -40,7 +40,7 @@ phase_space<gpu::samples::phase_space<dimension, float_type> >::phase_space(
   , std::shared_ptr<particle_group_type> particle_group
   , std::shared_ptr<box_type const> box
   , std::shared_ptr<clock_type const> clock
-  , std::shared_ptr<logger_type> logger
+  , std::shared_ptr<logger> logger
 )
   // dependency injection
   : particle_(particle)
@@ -134,7 +134,7 @@ void phase_space<gpu::samples::phase_space<dimension, float_type> >::luaopen(lua
                    , std::shared_ptr<particle_group_type>
                    , std::shared_ptr<box_type const>
                    , std::shared_ptr<clock_type const>
-                   , std::shared_ptr<logger_type>
+                   , std::shared_ptr<logger>
                 >)
             ]
         ]
@@ -147,7 +147,7 @@ phase_space<host::samples::phase_space<dimension, float_type> >::phase_space(
   , std::shared_ptr<particle_group_type> particle_group
   , std::shared_ptr<box_type const> box
   , std::shared_ptr<clock_type const> clock
-  , std::shared_ptr<logger_type> logger
+  , std::shared_ptr<logger> logger
 )
   // dependency injection
   : particle_(particle)
@@ -384,7 +384,7 @@ void phase_space<host::samples::phase_space<dimension, float_type> >::luaopen(lu
                    , std::shared_ptr<particle_group_type>
                    , std::shared_ptr<box_type const>
                    , std::shared_ptr<clock_type const>
-                   , std::shared_ptr<logger_type>
+                   , std::shared_ptr<logger>
                 >)
             ]
         ]

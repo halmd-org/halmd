@@ -109,7 +109,7 @@ void accumulator<sample_type>::luaopen(lua_State* L)
                     .property("reset", &wrap_reset<accumulator<sample_type> >)
               , def("accumulator", &std::make_shared<accumulator,
                     sample_function_type
-                  , std::shared_ptr<logger_type>
+                  , std::shared_ptr<logger>
                 >)
             ]
         ]

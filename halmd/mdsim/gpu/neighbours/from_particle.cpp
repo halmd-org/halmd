@@ -184,7 +184,7 @@ void from_particle<dimension, float_type>::luaopen(lua_State* L)
                     , std::shared_ptr<box_type const>
                     , matrix_type const&
                     , double
-                    , std::shared_ptr<logger_type>
+                    , std::shared_ptr<logger>
                     , double
                   >)
             ]

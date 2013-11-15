@@ -36,7 +36,7 @@ template <typename particle_type>
 from_range<particle_type>::from_range(
     std::shared_ptr<particle_type const> particle
   , range_type const& range
-  , std::shared_ptr<logger_type> logger
+  , std::shared_ptr<logger> logger
 )
   : particle_(particle)
   , range_(check_range(range))
@@ -118,7 +118,7 @@ static std::shared_ptr<from_range<particle_type> >
 wrap_from_range(
     std::shared_ptr<particle_type const> particle
   , typename from_range<particle_type>::range_type const& range
-  , std::shared_ptr<typename from_range<particle_type>::logger_type> logger
+  , std::shared_ptr<logger> logger
 )
 {
     return std::make_shared<from_range<particle_type> >(

@@ -40,7 +40,7 @@ namespace potentials {
 template <typename float_type>
 lennard_jones_simple<float_type>::lennard_jones_simple(
     float_type cutoff
-  , std::shared_ptr<logger_type> logger
+  , std::shared_ptr<logger> logger
 )
   // initialise members
   : r_cut_(cutoff)
@@ -75,7 +75,7 @@ void lennard_jones_simple<float_type>::luaopen(lua_State* L)
                     class_<lennard_jones_simple, std::shared_ptr<lennard_jones_simple> >("lennard_jones_simple")
                         .def(constructor<
                             float_type
-                          , std::shared_ptr<logger_type>
+                          , std::shared_ptr<logger>
                         >())
                         // provide Lua interface coherent with lennard_jones
                         .property("r_cut", &lennard_jones_simple::r_cut)

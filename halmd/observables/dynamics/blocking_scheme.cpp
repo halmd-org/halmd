@@ -37,7 +37,7 @@ blocking_scheme::blocking_scheme(
   , unsigned int block_size
   , unsigned int shift
   , unsigned int separation
-  , std::shared_ptr<logger_type> logger
+  , std::shared_ptr<logger> logger
 )
   // member initialisation
   : clock_(clock)
@@ -250,7 +250,7 @@ void blocking_scheme::luaopen(lua_State* L)
                       , unsigned int
                       , unsigned int
                       , unsigned int
-                      , std::shared_ptr<logger_type>
+                      , std::shared_ptr<logger>
                     >())
                     .property("finalise", &wrap_finalise)
                     .property("sample", &wrap_sample)

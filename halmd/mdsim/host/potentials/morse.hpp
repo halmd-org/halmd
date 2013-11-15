@@ -42,14 +42,13 @@ class morse
 {
 public:
     typedef boost::numeric::ublas::matrix<float_type> matrix_type;
-    typedef logger logger_type;
 
     morse(
         matrix_type const& cutoff
       , matrix_type const& epsilon
       , matrix_type const& sigma
       , matrix_type const& r_min
-      , std::shared_ptr<logger_type> logger = std::make_shared<logger_type>()
+      , std::shared_ptr<logger> logger = std::make_shared<logger>()
     );
 
     /**
@@ -137,7 +136,7 @@ private:
     /** potential energy at cutoff length in MD units */
     matrix_type en_cut_;
     /** module logger */
-    std::shared_ptr<logger_type> logger_;
+    std::shared_ptr<logger> logger_;
 };
 
 } // namespace potentials

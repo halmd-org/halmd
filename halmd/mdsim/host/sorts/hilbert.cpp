@@ -35,7 +35,7 @@ hilbert<dimension, float_type>::hilbert(
     std::shared_ptr<particle_type> particle
   , std::shared_ptr<box_type const> box
   , std::shared_ptr<binning_type> binning
-  , std::shared_ptr<logger_type> logger
+  , std::shared_ptr<logger> logger
 )
   // dependency injection
   : particle_(particle)
@@ -154,7 +154,7 @@ void hilbert<dimension, float_type>::luaopen(lua_State* L)
                   , std::shared_ptr<particle_type>
                   , std::shared_ptr<box_type const>
                   , std::shared_ptr<binning_type>
-                  , std::shared_ptr<logger_type>
+                  , std::shared_ptr<logger>
                 >)
             ]
         ]

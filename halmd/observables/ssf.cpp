@@ -38,7 +38,7 @@ ssf<dimension>::ssf(
   , mode_acquisitor_type mode2
   , shared_ptr<wavevector_type const> wavevector
   , double norm
-  , shared_ptr<logger_type> logger
+  , shared_ptr<logger> logger
 )
   // dependency injection
   : mode1_(mode1)
@@ -125,7 +125,7 @@ void ssf<dimension>::luaopen(lua_State* L)
               , mode_acquisitor_type
               , std::shared_ptr<wavevector_type const>
               , double
-              , std::shared_ptr<logger_type>
+              , std::shared_ptr<logger>
             >)
         ]
     ];

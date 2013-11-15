@@ -44,13 +44,12 @@ class lennard_jones_linear
 public:
     typedef lennard_jones_linear_kernel::lennard_jones_linear gpu_potential_type;
     typedef boost::numeric::ublas::matrix<float_type> matrix_type;
-    typedef logger logger_type;
 
     lennard_jones_linear(
         matrix_type const& cutoff
       , matrix_type const& epsilon
       , matrix_type const& sigma
-      , std::shared_ptr<logger_type> logger = std::make_shared<logger_type>()
+      , std::shared_ptr<logger> logger = std::make_shared<logger>()
     );
 
     /** bind textures before kernel invocation */
@@ -127,7 +126,7 @@ private:
     /** squared cutoff radius at CUDA device */
     cuda::vector<float> g_rr_cut_;
     /** module logger */
-    std::shared_ptr<logger_type> logger_;
+    std::shared_ptr<logger> logger_;
 };
 
 } // namespace potentials

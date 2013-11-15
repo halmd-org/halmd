@@ -47,7 +47,6 @@ public:
     typedef particle<dimension, float_type> particle_type;
     typedef typename particle_type::vector_type vector_type;
     typedef box<dimension> box_type;
-    typedef logger logger_type;
     typedef fixed_vector<float_type, 2> chain_type;
 
     static void luaopen(lua_State* L);
@@ -58,7 +57,7 @@ public:
       , float_type timestep
       , float_type temperature
       , float_type resonance_frequency
-      , std::shared_ptr<logger_type> logger = std::make_shared<logger_type>()
+      , std::shared_ptr<logger> logger = std::make_shared<logger>()
     );
 
     void integrate();
@@ -132,7 +131,7 @@ private:
     /** simulation domain */
     std::shared_ptr<box_type const> box_;
     /** module logger */
-    std::shared_ptr<logger_type> logger_;
+    std::shared_ptr<logger> logger_;
 
     /** integration time-step */
     float_type timestep_;

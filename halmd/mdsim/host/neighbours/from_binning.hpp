@@ -54,7 +54,6 @@ public:
     typedef host::binning<dimension, float_type> binning_type;
     typedef typename _Base::neighbour_list neighbour_list;
     typedef max_displacement<dimension, float_type> displacement_type;
-    typedef logger logger_type;
 
     typedef _Base::array_type array_type;
 
@@ -67,7 +66,7 @@ public:
       , std::shared_ptr<box_type const> box
       , matrix_type const& r_cut
       , double skin
-      , std::shared_ptr<logger_type> logger = std::make_shared<logger_type>()
+      , std::shared_ptr<logger> logger = std::make_shared<logger>()
     );
 
     connection on_prepend_update(std::function<void ()> const& slot)
@@ -115,7 +114,7 @@ private:
     std::shared_ptr<binning_type> binning2_;
     std::shared_ptr<displacement_type> displacement_;
     std::shared_ptr<box_type const> box_;
-    std::shared_ptr<logger_type> logger_;
+    std::shared_ptr<logger> logger_;
 
     void update();
     void update_cell_neighbours(cell_size_type const& i);

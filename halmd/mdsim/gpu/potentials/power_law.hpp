@@ -44,14 +44,13 @@ public:
     typedef power_law_kernel::power_law gpu_potential_type;
     typedef boost::numeric::ublas::matrix<float_type> matrix_type;
     typedef boost::numeric::ublas::matrix<unsigned> uint_matrix_type;
-    typedef logger logger_type;
 
     power_law(
         matrix_type const& cutoff
       , matrix_type const& epsilon
       , matrix_type const& sigma
       , uint_matrix_type const& index
-      , std::shared_ptr<logger_type> logger = std::make_shared<logger_type>()
+      , std::shared_ptr<logger> logger = std::make_shared<logger>()
     );
 
     /** bind textures before kernel invocation */
@@ -133,7 +132,7 @@ private:
     /** squared cutoff radius and energy shift at CUDA device */
     cuda::vector<float2> g_rr_en_cut_;
     /** module logger */
-    std::shared_ptr<logger_type> logger_;
+    std::shared_ptr<logger> logger_;
 };
 
 } // namespace potentials

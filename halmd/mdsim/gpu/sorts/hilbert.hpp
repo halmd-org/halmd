@@ -45,14 +45,13 @@ public:
     typedef typename particle_type::gpu_vector_type gpu_vector_type;
     typedef mdsim::box<dimension> box_type;
     typedef hilbert_wrapper<dimension> wrapper_type;
-    typedef logger logger_type;
 
     static void luaopen(lua_State* L);
 
     hilbert(
         std::shared_ptr<particle_type> particle
       , std::shared_ptr<box_type const> box
-      , std::shared_ptr<logger_type> logger = std::make_shared<logger_type>()
+      , std::shared_ptr<logger> logger = std::make_shared<logger>()
     );
     void order();
 
@@ -83,7 +82,7 @@ private:
     /** signal emitted after particle ordering */
     signal<void ()> on_order_;
     /** module logger */
-    std::shared_ptr<logger_type> logger_;
+    std::shared_ptr<logger> logger_;
     /** profiling runtime accumulators */
     runtime runtime_;
 };

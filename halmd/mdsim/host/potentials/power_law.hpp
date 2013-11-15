@@ -46,14 +46,13 @@ class power_law
 public:
     typedef boost::numeric::ublas::matrix<float_type> matrix_type;
     typedef boost::numeric::ublas::matrix<unsigned int> uint_matrix_type;
-    typedef logger logger_type;
 
     power_law(
         matrix_type const& cutoff
       , matrix_type const& epsilon
       , matrix_type const& sigma
       , uint_matrix_type const& index
-      , std::shared_ptr<logger_type> logger = std::make_shared<logger_type>()
+      , std::shared_ptr<logger> logger = std::make_shared<logger>()
     );
 
     /**
@@ -231,7 +230,7 @@ private:
     /** potential energy at cutoff in MD units */
     matrix_type en_cut_;
     /** module logger */
-    std::shared_ptr<logger_type> logger_;
+    std::shared_ptr<logger> logger_;
 };
 
 } // namespace potentials

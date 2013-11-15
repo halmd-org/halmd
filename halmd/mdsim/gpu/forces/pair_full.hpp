@@ -46,13 +46,12 @@ class pair_full
 public:
     typedef particle<dimension, float_type> particle_type;
     typedef box<dimension> box_type;
-    typedef logger logger_type;
 
     pair_full(
         std::shared_ptr<potential_type const> potential
       , std::shared_ptr<particle_type> particle
       , std::shared_ptr<box_type const> box
-      , std::shared_ptr<logger_type> logger = std::make_shared<logger_type>()
+      , std::shared_ptr<logger> logger = std::make_shared<logger>()
     );
 
     /**
@@ -95,7 +94,7 @@ private:
     /** simulation domain */
     std::shared_ptr<box_type const> box_;
     /** module logger */
-    std::shared_ptr<logger_type> logger_;
+    std::shared_ptr<logger> logger_;
 
     /** cache observer of force per particle */
     cache<> force_cache_;
@@ -120,7 +119,7 @@ pair_full<dimension, float_type, potential_type>::pair_full(
     std::shared_ptr<potential_type const> potential
   , std::shared_ptr<particle_type> particle
   , std::shared_ptr<box_type const> box
-  , std::shared_ptr<logger_type> logger
+  , std::shared_ptr<logger> logger
 )
   : potential_(potential)
   , particle_(particle)
@@ -238,7 +237,7 @@ void pair_full<dimension, float_type, potential_type>::luaopen(lua_State* L)
                     std::shared_ptr<potential_type const>
                   , std::shared_ptr<particle_type>
                   , std::shared_ptr<box_type const>
-                  , std::shared_ptr<logger_type>
+                  , std::shared_ptr<logger>
                 >)
             ]
         ]

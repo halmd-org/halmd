@@ -48,7 +48,6 @@ public:
     typedef boost::numeric::ublas::matrix<float_type> matrix_type;
     typedef mdsim::box<dimension> box_type;
     struct defaults;
-    typedef logger logger_type;
 
     typedef cuda::vector<unsigned int> array_type;
     typedef fixed_vector<unsigned int, dimension> cell_size_type;
@@ -61,7 +60,7 @@ public:
       , std::shared_ptr<box_type const> box
       , matrix_type const& r_cut
       , double skin
-      , std::shared_ptr<logger_type> logger = std::make_shared<logger_type>()
+      , std::shared_ptr<logger> logger = std::make_shared<logger>()
       , double cell_occupancy = defaults::occupancy()
     );
 
@@ -126,7 +125,7 @@ private:
     std::shared_ptr<particle_type const> particle_;
     std::shared_ptr<box_type const> box_;
     /** module logger */
-    std::shared_ptr<logger_type> logger_;
+    std::shared_ptr<logger> logger_;
     /** neighbour list skin in MD units */
     float_type r_skin_;
     /** average desired cell occupancy */

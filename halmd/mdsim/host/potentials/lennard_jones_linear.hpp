@@ -43,13 +43,12 @@ class lennard_jones_linear
 {
 public:
     typedef boost::numeric::ublas::matrix<float_type> matrix_type;
-    typedef logger logger_type;
 
     lennard_jones_linear(
         matrix_type const& cutoff
       , matrix_type const& epsilon
       , matrix_type const& sigma
-      , std::shared_ptr<logger_type> logger = std::make_shared<logger_type>()
+      , std::shared_ptr<logger> logger = std::make_shared<logger>()
     );
 
     /** compute potential and its derivative at squared distance 'rr' for particles of type 'a' and 'b' */
@@ -128,7 +127,7 @@ private:
     /** force at cutoff length in MD units */
     matrix_type force_cut_;
     /** module logger */
-    std::shared_ptr<logger_type> logger_;
+    std::shared_ptr<logger> logger_;
 };
 
 } // namespace potentials

@@ -41,7 +41,6 @@ public:
     typedef host::particle<dimension, float_type> particle_type;
     typedef typename particle_type::vector_type vector_type;
     typedef mdsim::box<dimension> box_type;
-    typedef logger logger_type;
 
     static void luaopen(lua_State* L);
 
@@ -49,7 +48,7 @@ public:
         std::shared_ptr<particle_type> particle
       , std::shared_ptr<box_type const> box
       , vector_type const& slab
-      , std::shared_ptr<logger_type> logger = std::make_shared<logger_type>()
+      , std::shared_ptr<logger> logger = std::make_shared<logger>()
     );
     void set();
 
@@ -69,7 +68,7 @@ private:
 
     std::shared_ptr<particle_type> particle_;
     std::shared_ptr<box_type const> box_;
-    std::shared_ptr<logger_type> logger_;
+    std::shared_ptr<logger> logger_;
     /** slab extents for each direction as fraction of the edge length of the box */
     vector_type slab_;
 

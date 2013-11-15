@@ -42,13 +42,12 @@ class lennard_jones
 {
 public:
     typedef boost::numeric::ublas::matrix<float_type> matrix_type;
-    typedef logger logger_type;
 
     lennard_jones(
         matrix_type const& cutoff
       , matrix_type const& epsilon
       , matrix_type const& sigma
-      , std::shared_ptr<logger_type> logger = std::make_shared<logger_type>()
+      , std::shared_ptr<logger> logger = std::make_shared<logger>()
     );
 
     /** compute potential and its derivative at squared distance 'rr' for particles of type 'a' and 'b' */
@@ -125,7 +124,7 @@ private:
     /** potential energy at cutoff length in MD units */
     matrix_type en_cut_;
     /** module logger */
-    std::shared_ptr<logger_type> logger_;
+    std::shared_ptr<logger> logger_;
 };
 
 } // namespace potentials

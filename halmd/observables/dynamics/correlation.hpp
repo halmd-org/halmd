@@ -112,7 +112,6 @@ public:
     typedef boost::multi_array<accumulator<result_type>, rank_> block_result_type;
     typedef boost::multi_array<result_type, rank_> block_mean_type;
     typedef boost::multi_array<typename accumulator<result_type>::size_type, rank_> block_count_type;
-    typedef logger logger_type;
 
     static void luaopen(lua_State* L);
 
@@ -120,7 +119,7 @@ public:
         std::shared_ptr<tcf_type> tcf
       , std::shared_ptr<block_sample_type> block_sample1
       , std::shared_ptr<block_sample_type> block_sample2
-      , std::shared_ptr<logger_type> logger = std::make_shared<logger_type>("dynamics.correlation")
+      , std::shared_ptr<logger> logger = std::make_shared<logger>("dynamics.correlation")
     );
 
     virtual void compute(unsigned int level);
@@ -154,7 +153,7 @@ private:
     /** functor performing the specific computation */
     std::shared_ptr<tcf_type> tcf_;
     /** module logger */
-    std::shared_ptr<logger_type> logger_;
+    std::shared_ptr<logger> logger_;
 
     /** block structures holding accumulated result values */
     block_result_type result_;
@@ -174,7 +173,7 @@ correlation<tcf_type>::correlation(
     std::shared_ptr<tcf_type> tcf
   , std::shared_ptr<block_sample_type> block_sample1
   , std::shared_ptr<block_sample_type> block_sample2
-  , std::shared_ptr<logger_type> logger
+  , std::shared_ptr<logger> logger
 )
   // dependency injection
   : block_sample1_(block_sample1)
@@ -290,7 +289,7 @@ void correlation<tcf_type>::luaopen(lua_State* L)
                   , std::shared_ptr<tcf_type>
                   , std::shared_ptr<block_sample_type>
                   , std::shared_ptr<block_sample_type>
-                  , std::shared_ptr<logger_type>
+                  , std::shared_ptr<logger>
                 >)
             ]
         ]

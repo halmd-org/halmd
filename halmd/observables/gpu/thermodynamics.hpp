@@ -51,7 +51,6 @@ public:
     typedef mdsim::box<dimension> box_type;
     typedef mdsim::gpu::particle<dimension, float_type> particle_type;
     typedef mdsim::gpu::particle_group particle_group_type;
-    typedef logger logger_type;
 
     static void luaopen(lua_State* L);
 
@@ -59,7 +58,7 @@ public:
         std::shared_ptr<particle_type> particle
       , std::shared_ptr<particle_group_type> group
       , std::shared_ptr<box_type const> box
-      , std::shared_ptr<logger_type> logger = std::make_shared<logger_type>()
+      , std::shared_ptr<logger> logger = std::make_shared<logger>()
     );
 
     /**
@@ -122,7 +121,7 @@ private:
     /** simulation domain */
     std::shared_ptr<box_type const> box_;
     /** module logger */
-    std::shared_ptr<logger_type> logger_;
+    std::shared_ptr<logger> logger_;
 
     /** mean kinetic energy per particle */
     double en_kin_;

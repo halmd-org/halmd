@@ -35,7 +35,7 @@ thermodynamics<dimension, float_type>::thermodynamics(
     std::shared_ptr<particle_type> particle
   , std::shared_ptr<particle_group_type> group
   , std::shared_ptr<box_type const> box
-  , std::shared_ptr<logger_type> logger
+  , std::shared_ptr<logger> logger
 )
   : particle_(particle)
   , group_(group)
@@ -218,7 +218,7 @@ void thermodynamics<dimension, float_type>::luaopen(lua_State* L)
               , std::shared_ptr<particle_type>
               , std::shared_ptr<particle_group_type>
               , std::shared_ptr<box_type const>
-              , std::shared_ptr<logger_type>
+              , std::shared_ptr<logger>
             >)
         ]
     ];

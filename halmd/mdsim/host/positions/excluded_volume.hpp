@@ -45,12 +45,11 @@ public:
     typedef mdsim::box<dimension> box_type;
     typedef observables::host::samples::phase_space<dimension, float_type> sample_type;
     typedef typename sample_type::vector_type vector_type;
-    typedef logger logger_type;
 
     excluded_volume(
         std::shared_ptr<box_type const> box
       , float_type cell_length
-      , std::shared_ptr<logger_type> logger = std::make_shared<logger_type>()
+      , std::shared_ptr<logger> logger = std::make_shared<logger>()
     );
 
     /**
@@ -111,7 +110,7 @@ private:
     /** simulation box */
     std::shared_ptr<box_type const> box_;
     /** module logger */
-    std::shared_ptr<logger_type> logger_;
+    std::shared_ptr<logger> logger_;
     /** number of cells per dimension */
     index_type ncell_;
     /** cell edge length per dimension */

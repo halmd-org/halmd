@@ -43,7 +43,6 @@ public:
     typedef mdsim::host::particle_group particle_group_type;
     typedef mdsim::box<dimension> box_type;
     typedef mdsim::clock clock_type;
-    typedef logger logger_type;
 
     /**
      * Construct phase_space sampler from particle group.
@@ -53,7 +52,7 @@ public:
       , std::shared_ptr<particle_group_type> particle_group
       , std::shared_ptr<box_type const> box
       , std::shared_ptr<clock_type const> clock
-      , std::shared_ptr<logger_type> logger = std::make_shared<logger_type>()
+      , std::shared_ptr<logger> logger = std::make_shared<logger>()
     );
 
     /**
@@ -90,7 +89,7 @@ private:
     /** simulation clock */
     std::shared_ptr<clock_type const> clock_;
     /** logger instance */
-    std::shared_ptr<logger_type> logger_;
+    std::shared_ptr<logger> logger_;
     /** cached phase_space sample */
     std::shared_ptr<sample_type> sample_;
 

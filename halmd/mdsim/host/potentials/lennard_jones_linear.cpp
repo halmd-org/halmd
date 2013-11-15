@@ -52,7 +52,7 @@ lennard_jones_linear<float_type>::lennard_jones_linear(
     matrix_type const& cutoff
   , matrix_type const& epsilon
   , matrix_type const& sigma
-  , std::shared_ptr<logger_type> logger
+  , std::shared_ptr<logger> logger
 )
   // allocate and pre-compute potential parameters
   : epsilon_(epsilon)
@@ -98,7 +98,7 @@ void lennard_jones_linear<float_type>::luaopen(lua_State* L)
                             matrix_type const&
                           , matrix_type const&
                           , matrix_type const&
-                          , std::shared_ptr<logger_type>
+                          , std::shared_ptr<logger>
                         >())
                         .property("r_cut", (matrix_type const& (lennard_jones_linear::*)() const) &lennard_jones_linear::r_cut)
                         .property("r_cut_sigma", &lennard_jones_linear::r_cut_sigma)

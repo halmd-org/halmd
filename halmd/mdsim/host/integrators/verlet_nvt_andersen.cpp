@@ -38,7 +38,7 @@ verlet_nvt_andersen<dimension, float_type>::verlet_nvt_andersen(
   , float_type timestep
   , float_type temperature
   , float_type coll_rate
-  , std::shared_ptr<logger_type> logger
+  , std::shared_ptr<logger> logger
 )
   : particle_(particle)
   , box_(box)
@@ -170,7 +170,7 @@ void verlet_nvt_andersen<dimension, float_type>::luaopen(lua_State* L)
                   , float_type
                   , float_type
                   , float_type
-                  , std::shared_ptr<logger_type>
+                  , std::shared_ptr<logger>
                 >)
             ]
         ]

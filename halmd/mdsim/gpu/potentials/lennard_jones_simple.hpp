@@ -48,11 +48,10 @@ private:
 public:
     typedef lennard_jones_simple_kernel::lennard_jones_simple gpu_potential_type;
     typedef boost::numeric::ublas::matrix<float_type> matrix_type;
-    typedef logger logger_type;
 
     lennard_jones_simple(
         float_type cutoff
-      , std::shared_ptr<logger_type> logger = std::make_shared<logger_type>()
+      , std::shared_ptr<logger> logger = std::make_shared<logger>()
     );
 
     void bind_textures() const {}
@@ -96,7 +95,7 @@ private:
     /** potential energy at cutoff length in MD units */
     float_type en_cut_;
     /** module logger */
-    std::shared_ptr<logger_type> logger_;
+    std::shared_ptr<logger> logger_;
 };
 
 } // namespace potentials

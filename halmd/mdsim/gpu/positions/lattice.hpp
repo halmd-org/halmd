@@ -41,7 +41,6 @@ class lattice
 public:
     typedef gpu::particle<dimension, float_type> particle_type;
     typedef mdsim::box<dimension> box_type;
-    typedef logger logger_type;
     typedef typename particle_type::vector_type vector_type;
     typedef typename type_traits<dimension, float>::vector_type gpu_vector_type;
     typedef typename type_traits<dimension, unsigned int>::vector_type index_type;
@@ -52,7 +51,7 @@ public:
         std::shared_ptr<particle_type> particle
       , std::shared_ptr<box_type const> box
       , typename box_type::vector_type const& slab
-      , std::shared_ptr<logger_type> logger = std::make_shared<logger_type>()
+      , std::shared_ptr<logger> logger = std::make_shared<logger>()
     );
     void set();
 
@@ -72,7 +71,7 @@ private:
 
     std::shared_ptr<particle_type> particle_;
     std::shared_ptr<box_type const> box_;
-    std::shared_ptr<logger_type> logger_;
+    std::shared_ptr<logger> logger_;
     /** slab extents for each direction as fraction of the edge length of the box */
     typename box_type::vector_type slab_;
 

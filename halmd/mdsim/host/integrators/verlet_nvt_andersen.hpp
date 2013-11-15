@@ -41,7 +41,6 @@ public:
     typedef host::particle<dimension, float_type> particle_type;
     typedef mdsim::box<dimension> box_type;
     typedef random::host::random random_type;
-    typedef logger logger_type;
 
 private:
     typedef typename particle_type::vector_type vector_type;
@@ -57,7 +56,7 @@ public:
       , float_type timestep
       , float_type temperature
       , float_type coll_rate
-      , std::shared_ptr<logger_type> logger = std::make_shared<logger_type>()
+      , std::shared_ptr<logger> logger = std::make_shared<logger>()
     );
 
     /**
@@ -136,7 +135,7 @@ private:
     /** probability of a collision with the heat bath during a timestep */
     float_type coll_prob_;
     /** module logger */
-    std::shared_ptr<logger_type> logger_;
+    std::shared_ptr<logger> logger_;
 
     typedef utility::profiler::accumulator_type accumulator_type;
     typedef utility::profiler::scoped_timer_type scoped_timer_type;

@@ -53,7 +53,6 @@ public:
     typedef std::shared_ptr<raw_array<fixed_vector<double, 2>> const> mode_type;
     typedef std::function<mode_type ()> mode_acquisitor_type;
     typedef observables::utility::wavevector<dimension> wavevector_type;
-    typedef logger logger_type;
 
     /**
      * Construct static structure factor instance.
@@ -65,7 +64,7 @@ public:
       , mode_acquisitor_type mode2
       , std::shared_ptr<wavevector_type const> wavevector
       , double norm
-      , std::shared_ptr<logger_type> logger = std::make_shared<logger_type>("ssf")
+      , std::shared_ptr<logger> logger = std::make_shared<logger>("ssf")
     );
 
     /**
@@ -95,7 +94,7 @@ private:
     /** wavevector grid */
     std::shared_ptr<wavevector_type const> wavevector_;
     /** logger instance */
-    std::shared_ptr<logger_type> logger_;
+    std::shared_ptr<logger> logger_;
 
     /** normalisation factor */
     double norm_;

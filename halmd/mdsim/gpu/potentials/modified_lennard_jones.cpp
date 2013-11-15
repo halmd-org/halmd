@@ -59,7 +59,7 @@ modified_lennard_jones<float_type>::modified_lennard_jones(
   , matrix_type const& sigma
   , uint_matrix_type const& index_m
   , uint_matrix_type const& index_n
-  , std::shared_ptr<logger_type> logger
+  , std::shared_ptr<logger> logger
 )
   // allocate potential parameters
   : epsilon_(epsilon)
@@ -145,7 +145,7 @@ void modified_lennard_jones<float_type>::luaopen(lua_State* L)
                           , matrix_type const&
                           , uint_matrix_type const&
                           , uint_matrix_type const&
-                          , std::shared_ptr<logger_type>
+                          , std::shared_ptr<logger>
                         >())
                         .property("r_cut", (matrix_type const& (modified_lennard_jones::*)() const) &modified_lennard_jones::r_cut)
                         .property("r_cut_sigma", &modified_lennard_jones::r_cut_sigma)

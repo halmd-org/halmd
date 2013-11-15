@@ -61,7 +61,7 @@ power_law_with_core<float_type>::power_law_with_core(
   , matrix_type const& epsilon
   , matrix_type const& sigma
   , uint_matrix_type const& index
-  , std::shared_ptr<logger_type> logger
+  , std::shared_ptr<logger> logger
 )
   // allocate potential parameters
   : epsilon_(check_shape(epsilon, epsilon))
@@ -130,7 +130,7 @@ void power_law_with_core<float_type>::luaopen(lua_State* L)
                           , matrix_type const&
                           , matrix_type const&
                           , uint_matrix_type const&
-                          , std::shared_ptr<logger_type>
+                          , std::shared_ptr<logger>
                         >())
                         .property("r_cut", (matrix_type const& (power_law_with_core::*)() const) &power_law_with_core::r_cut)
                         .property("r_cut_sigma", &power_law_with_core::r_cut_sigma)

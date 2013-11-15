@@ -41,7 +41,6 @@ class verlet
 public:
     typedef particle<dimension, float_type> particle_type;
     typedef box<dimension> box_type;
-    typedef logger logger_type;
     typedef typename particle_type::vector_type vector_type;
 
     static void luaopen(lua_State* L);
@@ -50,7 +49,7 @@ public:
         std::shared_ptr<particle_type> particle
       , std::shared_ptr<box_type const> box
       , double timestep
-      , std::shared_ptr<logger_type> logger = std::make_shared<logger_type>()
+      , std::shared_ptr<logger> logger = std::make_shared<logger>()
     );
     void integrate();
     void finalize();
@@ -82,7 +81,7 @@ private:
     /** simulation domain */
     std::shared_ptr<box_type const> box_;
     /** module logger */
-    std::shared_ptr<logger_type> logger_;
+    std::shared_ptr<logger> logger_;
     /** CUDA C++ wrapper */
     verlet_wrapper<dimension> const* wrapper_;
     /** integration time-step */
