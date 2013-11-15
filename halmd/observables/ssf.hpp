@@ -106,9 +106,8 @@ private:
     std::weak_ptr<typename mode_type::element_type> mode1_observer_;
     std::weak_ptr<typename mode_type::element_type> mode2_observer_;
 
-    typedef halmd::utility::profiler profiler_type;
-    typedef profiler_type::accumulator_type accumulator_type;
-    typedef profiler_type::scoped_timer_type scoped_timer_type;
+    typedef halmd::utility::profiler::accumulator_type accumulator_type;
+    typedef halmd::utility::profiler::scoped_timer_type scoped_timer_type;
 
     struct runtime
     {

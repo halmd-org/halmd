@@ -57,9 +57,8 @@ private:
 
     typedef typename particle_type::vector_type vector_type;
     typedef typename max_displacement_wrapper<dimension>::displacement_impl_type displacement_impl_type;
-    typedef utility::profiler profiler_type;
-    typedef typename profiler_type::accumulator_type accumulator_type;
-    typedef typename profiler_type::scoped_timer_type scoped_timer_type;
+    typedef utility::profiler::accumulator_type accumulator_type;
+    typedef utility::profiler::scoped_timer_type scoped_timer_type;
 
     struct runtime
     {

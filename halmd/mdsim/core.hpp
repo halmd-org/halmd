@@ -70,9 +70,8 @@ public:
     static void luaopen(lua_State* L);
 
 private:
-    typedef utility::profiler profiler_type;
-    typedef profiler_type::accumulator_type accumulator_type;
-    typedef profiler_type::scoped_timer_type scoped_timer_type;
+    typedef utility::profiler::accumulator_type accumulator_type;
+    typedef utility::profiler::scoped_timer_type scoped_timer_type;
 
     struct runtime
     {

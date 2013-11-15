@@ -95,9 +95,8 @@ private:
     std::shared_ptr<sample_type> sample_;
 
     typedef typename sample_type::vector_type vector_type;
-    typedef halmd::utility::profiler profiler_type;
-    typedef typename profiler_type::accumulator_type accumulator_type;
-    typedef typename profiler_type::scoped_timer_type scoped_timer_type;
+    typedef halmd::utility::profiler::accumulator_type accumulator_type;
+    typedef halmd::utility::profiler::scoped_timer_type scoped_timer_type;
 
     struct runtime
     {

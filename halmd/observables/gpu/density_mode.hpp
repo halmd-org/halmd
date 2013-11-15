@@ -139,9 +139,8 @@ private:
     /** cos(q r) for each wavevector as page-locked host memory */
     cuda::host::vector<float> h_cos_;
 
-    typedef halmd::utility::profiler profiler_type;
-    typedef typename profiler_type::accumulator_type accumulator_type;
-    typedef typename profiler_type::scoped_timer_type scoped_timer_type;
+    typedef halmd::utility::profiler::accumulator_type accumulator_type;
+    typedef halmd::utility::profiler::scoped_timer_type scoped_timer_type;
 
     struct runtime
     {

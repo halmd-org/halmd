@@ -102,9 +102,8 @@ private:
     /** block sum of mass */
     cuda::vector<dsfloat> g_m_;
 
-    typedef utility::profiler profiler_type;
-    typedef typename profiler_type::accumulator_type accumulator_type;
-    typedef typename profiler_type::scoped_timer_type scoped_timer_type;
+    typedef utility::profiler::accumulator_type accumulator_type;
+    typedef utility::profiler::scoped_timer_type scoped_timer_type;
 
     struct runtime
     {

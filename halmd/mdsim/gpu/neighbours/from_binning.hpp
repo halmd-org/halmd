@@ -119,9 +119,8 @@ private:
     typedef typename particle_type::reverse_tag_array_type reverse_tag_array_type;
     typedef typename binning_type::array_type cell_array_type;
 
-    typedef utility::profiler profiler_type;
-    typedef typename profiler_type::accumulator_type accumulator_type;
-    typedef typename profiler_type::scoped_timer_type scoped_timer_type;
+    typedef utility::profiler::accumulator_type accumulator_type;
+    typedef utility::profiler::scoped_timer_type scoped_timer_type;
 
     struct runtime
     {

@@ -141,11 +141,11 @@ public:
 
 private:
     typedef correlation_base _Base;
-    typedef utility::profiler::scoped_timer_type scoped_timer_type;
+    typedef halmd::utility::profiler::scoped_timer_type scoped_timer_type;
 
     struct runtime
     {
-        utility::profiler::accumulator_type tcf;
+        halmd::utility::profiler::accumulator_type tcf;
     };
 
     /** block structures holding the input data */

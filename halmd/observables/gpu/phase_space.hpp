@@ -93,9 +93,8 @@ private:
     /** cached phase_space sample */
     std::shared_ptr<sample_type> sample_;
 
-    typedef halmd::utility::profiler profiler_type;
-    typedef typename profiler_type::accumulator_type accumulator_type;
-    typedef typename profiler_type::scoped_timer_type scoped_timer_type;
+    typedef halmd::utility::profiler::accumulator_type accumulator_type;
+    typedef halmd::utility::profiler::scoped_timer_type scoped_timer_type;
 
     struct runtime
     {
@@ -176,9 +175,8 @@ private:
     /** GPU threads per block */
     unsigned int threads_;
 
-    typedef halmd::utility::profiler profiler_type;
-    typedef typename profiler_type::accumulator_type accumulator_type;
-    typedef typename profiler_type::scoped_timer_type scoped_timer_type;
+    typedef halmd::utility::profiler::accumulator_type accumulator_type;
+    typedef halmd::utility::profiler::scoped_timer_type scoped_timer_type;
 
     struct runtime
     {

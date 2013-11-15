@@ -94,9 +94,8 @@ private:
     /** signal emitted after finishing simulation run */
     signal<void ()> on_finish_;
 
-    typedef utility::profiler profiler_type;
-    typedef profiler_type::accumulator_type accumulator_type;
-    typedef profiler_type::scoped_timer_type scoped_timer_type;
+    typedef halmd::utility::profiler::accumulator_type accumulator_type;
+    typedef halmd::utility::profiler::scoped_timer_type scoped_timer_type;
 
     struct runtime
     {
