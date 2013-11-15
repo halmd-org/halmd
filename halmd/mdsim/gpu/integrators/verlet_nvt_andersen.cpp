@@ -75,6 +75,8 @@ void verlet_nvt_andersen<dimension, float_type, RandomNumberGenerator>::set_temp
 template <int dimension, typename float_type, typename RandomNumberGenerator>
 void verlet_nvt_andersen<dimension, float_type, RandomNumberGenerator>::integrate()
 {
+    LOG_TRACE("update positions and velocities");
+
     force_array_type const& force = read_cache(particle_->force());
 
     // invalidate the particle caches after accessing the force!
@@ -108,6 +110,8 @@ void verlet_nvt_andersen<dimension, float_type, RandomNumberGenerator>::integrat
 template <int dimension, typename float_type, typename RandomNumberGenerator>
 void verlet_nvt_andersen<dimension, float_type, RandomNumberGenerator>::finalize()
 {
+    LOG_TRACE("update velocities");
+
     force_array_type const& force = read_cache(particle_->force());
 
     // invalidate the particle caches after accessing the force!

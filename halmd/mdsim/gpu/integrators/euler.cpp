@@ -62,6 +62,8 @@ void euler<dimension, float_type>::set_timestep(double timestep)
 template <int dimension, typename float_type>
 void euler<dimension, float_type>::integrate()
 {
+    LOG_TRACE("update positions")
+
     velocity_array_type const& velocity = read_cache(particle_->velocity());
 
     // invalidate the particle caches after accessing the velocity!

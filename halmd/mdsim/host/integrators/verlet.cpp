@@ -57,6 +57,8 @@ void verlet<dimension, float_type>::set_timestep(double timestep)
 template <int dimension, typename float_type>
 void verlet<dimension, float_type>::integrate()
 {
+    LOG_TRACE("update positions and velocities")
+
     force_array_type const& force = read_cache(particle_->force());
     mass_array_type const& mass = read_cache(particle_->mass());
     size_type nparticle = particle_->nparticle();
@@ -83,6 +85,8 @@ void verlet<dimension, float_type>::integrate()
 template <int dimension, typename float_type>
 void verlet<dimension, float_type>::finalize()
 {
+    LOG_TRACE("update velocities")
+
     force_array_type const& force = read_cache(particle_->force());
     mass_array_type const& mass = read_cache(particle_->mass());
     size_type nparticle = particle_->nparticle();

@@ -61,6 +61,8 @@ void verlet<dimension, float_type>::set_timestep(double timestep)
 template <int dimension, typename float_type>
 void verlet<dimension, float_type>::integrate()
 {
+    LOG_TRACE("update positions and velocities");
+
     force_array_type const& force = read_cache(particle_->force());
 
     // invalidate the particle caches after accessing the force!
@@ -94,6 +96,8 @@ void verlet<dimension, float_type>::integrate()
 template <int dimension, typename float_type>
 void verlet<dimension, float_type>::finalize()
 {
+    LOG_TRACE("update velocities");
+
     force_array_type const& force = read_cache(particle_->force());
 
     // invalidate the particle caches after accessing the force!
