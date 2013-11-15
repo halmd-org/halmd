@@ -21,7 +21,7 @@
 local utility     = require("halmd.utility")
 local module      = require("halmd.utility.module")
 local correlation = require("halmd.observables.dynamics.correlation")
-
+local sampler     = require("halmd.observables.sampler")
 
 ---
 -- Stress Tensor Autocorrelation Function
@@ -95,12 +95,16 @@ local correlation = require("halmd.observables.dynamics.correlation")
 --    like H5MD given as a table of strings. It defaults to ``{"dynamics",
 --    self.label, "stress_tensor_autocorrelation"}``.
 --
+--    .. method:: disconnect()
+--
+--       Disconnect thermodynamics writer from observables sampler.
+--
 local M = module(function(args)
     local msv = utility.assert_kwarg(args, "thermodynamics")
 
     local label = assert(msv.group.label)
     local dimension = assert(msv.dimension)
-    local nparticle = (function() return msv:nparticle() end)() -- FIXME
+    local nparticle = msv:particle_number()
 
     -- construct correlation module for the stress tensor autocorrelation
     local self = assert(correlation({
@@ -123,6 +127,11 @@ local M = module(function(args)
         -- module description
       , desc = ("stress tensor autocorrelation of %s particles"):format(label)
     }))
+
+    local conn = {}
+    self.disconnect = utility.signal.disconnect(conn, "thermodynamics writer")
+
+    table.insert(conn, assert(sampler:on_prepare(function() msv.group.particle:aux_enable() end, every, 0)))
 
     return self
 end)

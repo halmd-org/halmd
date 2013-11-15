@@ -133,6 +133,7 @@ local M = module(function(args)
         aquire = msv.stress_tensor
       , every = interval
       , desc = "stress tensor"
+      , aux_enable = {msv.group.particle}
     })
 
     -- construct correlation module from helfand moment

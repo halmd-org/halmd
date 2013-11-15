@@ -113,6 +113,7 @@ local function liquid(args)
          aquire = msv.total_energy
        , every = 10
        , desc = "Averaged total energy"
+       , aux_enable = {particle}
      })
      accumulator:writer({
          file = file

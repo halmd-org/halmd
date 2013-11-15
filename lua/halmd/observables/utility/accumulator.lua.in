@@ -39,8 +39,16 @@ local accumulator = assert(libhalmd.observables.utility.accumulator)
 -- :param args: keyword arguments
 -- :param args.acquire: callable that returns a number
 -- :param number args.every: interval for aquiring the value
--- :param number args.start: start step for aquiring the value (default: ``0``)
+-- :param number args.start: start step for aquiring the value (*default:* ``0``)
 -- :param string args.desc: profiling description
+-- :param table args.aux_enable: sequence of :class:`halmd.mdsim.particle` instances *(optional)*
+--
+-- The parameter ``aux_enable`` is useful if ``acquire()`` depends on one of
+-- the auxiliary force variables, see :meth:`halmd.mdsim.particle.aux_enable`
+-- for details. In sampling steps of the accumulator, each ``particle``
+-- instance listed in ``aux_enable`` is notified to update the auxiliary
+-- variables before the integration step. Thereby, redundant force calculations
+-- can be avoided.
 --
 -- .. method:: sample()
 --
@@ -145,6 +153,13 @@ local M = module(function(args)
 
     local conn = {}
     self.disconnect = utility.signal.disconnect(conn, "accumulator module")
+
+    if args.aux_enable then
+        local particles = utility.assert_type(args.aux_enable, "table")
+        for i,p in ipairs(particles) do
+            table.insert(conn, assert(sampler:on_prepare(function() p:aux_enable() end, every, start)))
+        end
+    end
 
     -- connect to sampler
     table.insert(conn, assert(sampler:on_sample(self.sample, every, start)))

@@ -113,7 +113,7 @@ local function shear_viscosity(args)
     local msv = observables.thermodynamics({box = box, group = particle_group})
     local interval = args.sampling.state_vars
     if interval > 0 then
-        msv:writer({file = file, every = args.sampling.state_vars})
+        msv:writer({file = file, every = interval})
     end
 
     local total_energy = observables.utility.accumulator({
@@ -121,6 +121,7 @@ local function shear_viscosity(args)
       , every = 500
       , start = math.floor(equi_steps / 2)
       , desc = "averaged total energy"
+      , aux_enable = {particle}
     })
 
     -- sample initial state
@@ -164,6 +165,7 @@ local function shear_viscosity(args)
         aquire = msv.temperature
       , every = 200
       , desc = "averaged temperature"
+      , aux_enable = {particle}
     })
 
     temperature:writer({
