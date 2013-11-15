@@ -137,8 +137,7 @@ inline void pair_full<dimension, float_type, potential_type>::check_cache()
 {
     cache<position_array_type> const& position_cache = particle_->position();
 
-    if (force_cache_ != position_cache ||
-        (particle_->aux_enabled() && aux_cache_ != position_cache)) {
+    if (force_cache_ != position_cache) {
         particle_->mark_force_dirty();
     }
 }
