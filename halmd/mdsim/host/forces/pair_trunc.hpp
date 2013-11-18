@@ -58,7 +58,7 @@ public:
       , std::shared_ptr<box_type const> box
       , std::shared_ptr<neighbour_type> neighbour
       , std::shared_ptr<trunc_type const> trunc = std::make_shared<trunc_type>()
-      , std::shared_ptr<logger> logger = std::make_shared<logger>()
+      , std::shared_ptr<halmd::logger> logger = std::make_shared<halmd::logger>()
     );
 
     /**

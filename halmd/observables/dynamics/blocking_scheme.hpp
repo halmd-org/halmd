@@ -70,7 +70,7 @@ public:
       , unsigned int block_size
       , unsigned int shift = 0
       , unsigned int separation = 1
-      , std::shared_ptr<logger> logger = std::make_shared<logger>()
+      , std::shared_ptr<halmd::logger> logger = std::make_shared<halmd::logger>()
     );
 
     /** add a time correlation function */

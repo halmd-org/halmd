@@ -59,7 +59,7 @@ public:
       , float_type timestep
       , float_type temperature
       , float_type resonance_frequency
-      , std::shared_ptr<logger> logger = std::make_shared<logger>()
+      , std::shared_ptr<halmd::logger> logger = std::make_shared<halmd::logger>()
     );
 
     void integrate();

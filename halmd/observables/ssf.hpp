@@ -64,7 +64,7 @@ public:
       , mode_acquisitor_type mode2
       , std::shared_ptr<wavevector_type const> wavevector
       , double norm
-      , std::shared_ptr<logger> logger = std::make_shared<logger>("ssf")
+      , std::shared_ptr<halmd::logger> logger = std::make_shared<halmd::logger>("ssf")
     );
 
     /**

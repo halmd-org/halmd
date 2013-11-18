@@ -54,7 +54,7 @@ public:
       , matrix_type const& sigma
       , uint_matrix_type const& index_m
       , uint_matrix_type const& index_n
-      , std::shared_ptr<logger> logger = std::make_shared<logger>()
+      , std::shared_ptr<halmd::logger> logger = std::make_shared<halmd::logger>()
     );
 
     /** compute potential and its derivatives at squared distance 'rr' for particles of type 'a' and 'b'

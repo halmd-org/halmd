@@ -53,7 +53,7 @@ public:
     from_range(
         std::shared_ptr<particle_type const> particle
       , range_type const& range
-      , std::shared_ptr<logger> logger = std::make_shared<logger>()
+      , std::shared_ptr<halmd::logger> logger = std::make_shared<halmd::logger>()
     );
 
     /**

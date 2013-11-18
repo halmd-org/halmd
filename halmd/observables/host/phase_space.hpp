@@ -52,7 +52,7 @@ public:
       , std::shared_ptr<particle_group_type> particle_group
       , std::shared_ptr<box_type const> box
       , std::shared_ptr<clock_type const> clock
-      , std::shared_ptr<logger> logger = std::make_shared<logger>()
+      , std::shared_ptr<halmd::logger> logger = std::make_shared<halmd::logger>()
     );
 
     /**

@@ -48,7 +48,7 @@ public:
         matrix_type const& cutoff
       , matrix_type const& epsilon
       , matrix_type const& sigma
-      , std::shared_ptr<logger> logger = std::make_shared<logger>()
+      , std::shared_ptr<halmd::logger> logger = std::make_shared<halmd::logger>()
     );
 
     /** compute potential and its derivative at squared distance 'rr' for particles of type 'a' and 'b' */

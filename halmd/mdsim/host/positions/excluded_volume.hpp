@@ -49,7 +49,7 @@ public:
     excluded_volume(
         std::shared_ptr<box_type const> box
       , float_type cell_length
-      , std::shared_ptr<logger> logger = std::make_shared<logger>()
+      , std::shared_ptr<halmd::logger> logger = std::make_shared<halmd::logger>()
     );
 
     /**

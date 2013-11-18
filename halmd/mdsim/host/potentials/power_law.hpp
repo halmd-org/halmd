@@ -52,7 +52,7 @@ public:
       , matrix_type const& epsilon
       , matrix_type const& sigma
       , uint_matrix_type const& index
-      , std::shared_ptr<logger> logger = std::make_shared<logger>()
+      , std::shared_ptr<halmd::logger> logger = std::make_shared<halmd::logger>()
     );
 
     /**

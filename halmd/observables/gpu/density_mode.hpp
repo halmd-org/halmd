@@ -63,7 +63,7 @@ public:
         std::shared_ptr<particle_type const> particle
       , std::shared_ptr<particle_group_type> particle_group
       , std::shared_ptr<wavevector_type const> wavevector
-      , std::shared_ptr<logger> logger = std::make_shared<logger>("density_mode")
+      , std::shared_ptr<halmd::logger> logger = std::make_shared<halmd::logger>("density_mode")
     );
 
     /** Compute density modes from particle group.

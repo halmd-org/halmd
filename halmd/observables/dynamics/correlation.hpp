@@ -119,7 +119,7 @@ public:
         std::shared_ptr<tcf_type> tcf
       , std::shared_ptr<block_sample_type> block_sample1
       , std::shared_ptr<block_sample_type> block_sample2
-      , std::shared_ptr<logger> logger = std::make_shared<logger>("dynamics.correlation")
+      , std::shared_ptr<halmd::logger> logger = std::make_shared<halmd::logger>("dynamics.correlation")
     );
 
     virtual void compute(unsigned int level);

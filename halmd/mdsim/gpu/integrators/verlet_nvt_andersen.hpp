@@ -60,7 +60,7 @@ public:
       , float_type timestep
       , float_type temperature
       , float_type coll_rate
-      , std::shared_ptr<logger> logger = std::make_shared<logger>()
+      , std::shared_ptr<halmd::logger> logger = std::make_shared<halmd::logger>()
     );
 
     /**

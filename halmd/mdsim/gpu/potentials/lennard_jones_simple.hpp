@@ -51,7 +51,7 @@ public:
 
     lennard_jones_simple(
         float_type cutoff
-      , std::shared_ptr<logger> logger = std::make_shared<logger>()
+      , std::shared_ptr<halmd::logger> logger = std::make_shared<halmd::logger>()
     );
 
     void bind_textures() const {}

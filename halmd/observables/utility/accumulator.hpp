@@ -47,7 +47,7 @@ public:
      */
     accumulator(
         sample_function_type const& sample
-      , std::shared_ptr<logger> logger = std::make_shared<logger>()
+      , std::shared_ptr<halmd::logger> logger = std::make_shared<halmd::logger>()
     )
       : sample_(sample)
       , logger_(logger)
