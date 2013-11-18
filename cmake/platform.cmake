@@ -17,6 +17,10 @@ if(DEFINED CMAKE_CXX_COMPILER_ID)
 
     set(CMAKE_CXX_FLAGS_INIT "-fPIC -Wall -std=c++11 -pedantic")
     set(CMAKE_CXX_FLAGS_RELEASE_INIT "-O3 -DNDEBUG -DBOOST_DISABLE_ASSERTS -fvisibility=hidden")
+    # clang doesn't print colored diagnostics when invoked from Ninja
+    if (UNIX AND CMAKE_GENERATOR STREQUAL "Ninja")
+      set(CMAKE_CXX_FLAGS_INIT "${CMAKE_CXX_FLAGS_INIT} -fcolor-diagnostics")
+    endif()
 
   elseif(CMAKE_CXX_COMPILER_ID STREQUAL "Intel")
 
