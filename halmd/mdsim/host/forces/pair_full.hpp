@@ -142,6 +142,10 @@ inline void pair_full<dimension, float_type, potential_type>::check_cache()
     if (force_cache_ != current_state) {
         particle_->mark_force_dirty();
     }
+
+    if (aux_cache_ != current_state) {
+        particle_->mark_aux_dirty();
+    }
 }
 
 template <int dimension, typename float_type, typename potential_type>

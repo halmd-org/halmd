@@ -303,6 +303,14 @@ public:
     void mark_force_dirty()
     {
         force_dirty_ = true;
+    }
+
+    /**
+     * Indicate that an auxiliary update (ie. triggering on_force_() with
+     * aux_enabled) is required
+     */
+    void mark_aux_dirty()
+    {
         aux_dirty_ = true;
     }
 

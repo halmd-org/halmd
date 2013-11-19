@@ -224,22 +224,24 @@ void particle<dimension, float_type>::rearrange(cuda::vector<unsigned int> const
 template <int dimension, typename float_type>
 void particle<dimension, float_type>::update_force_(bool with_aux)
 {
-    on_prepend_force_();               // ask force modules whether force cache is dirty
+    on_prepend_force_();          // ask force modules whether force/aux cache is dirty
 
     if (force_dirty_ || (with_aux && aux_dirty_)) {
         if (with_aux && aux_dirty_) {
             if (!force_dirty_) {
                 LOG_WARNING_ONCE("auxiliary variables inactive in prior force computation, use aux_enable()");
             }
-            aux_enabled_ = true;       // turn on computation of aux variables
+            aux_enabled_ = true;  // turn on computation of aux variables
         }
         LOG_TRACE("request force" << (aux_enabled_ ? " and auxiliary variables" : ""));
 
-        force_zero_ = true;            // tell first force module to reset the force
-        on_force_();
-        aux_dirty_ = !aux_enabled_;    // mark aux variables dirty if not computed
-        aux_enabled_ = false;          // disable aux variables for next call
-        force_dirty_ = false;
+        force_zero_ = true;       // tell first force module to reset the force
+        on_force_();              // compute forces
+        force_dirty_ = false;     // mark force cache as clean
+        if (aux_enabled_) {
+            aux_dirty_ = false;   // aux cache is clean only if requested
+        }
+        aux_enabled_ = false;     // disable aux variables for next call
     }
     on_append_force_();
 }

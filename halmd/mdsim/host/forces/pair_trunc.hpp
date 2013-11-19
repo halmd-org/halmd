@@ -161,6 +161,10 @@ inline void pair_trunc<dimension, float_type, potential_type, trunc_type>::check
     if (force_cache_ != current_state) {
         particle1_->mark_force_dirty();
     }
+
+    if (aux_cache_ != current_state) {
+        particle1_->mark_aux_dirty();
+    }
 }
 
 template <int dimension, typename float_type, typename potential_type, typename trunc_type>
