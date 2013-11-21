@@ -1,5 +1,5 @@
 /*
- * Copyright © 2011  Felix Höfling
+ * Copyright © 2011,2013 Felix Höfling
  *
  * This file is part of HALMD.
  *
@@ -28,6 +28,7 @@
 #include <halmd/mdsim/clock.hpp>
 #include <halmd/mdsim/type_traits.hpp>
 #include <halmd/observables/density_mode.hpp>
+#include <halmd/observables/modulation.hpp>
 #include <halmd/observables/gpu/density_mode_kernel.hpp>
 #include <halmd/observables/gpu/samples/phase_space.hpp>
 #include <halmd/observables/utility/wavevector.hpp>
@@ -38,12 +39,20 @@ namespace observables {
 namespace gpu {
 
 /**
- *  compute Fourier modes of the particle density
+ *  compute Fourier modes of the particle density including a modulation factor
+ *  (for grazing incidence diffraction experiments)
  *
- *  @f$ \rho_{\vec q} = \sum_{i=1}^N \exp(\textrm{i}\vec q \cdot \vec r_i) @f$
+ *  @f$ \rho_{\vec q} = \sum_{i=1}^N f(\vec r) \exp(\textrm{i}\vec q \cdot \vec r_i) @f$
  *  for each particle type
+ *
+ *  The template parameter modulation_type is a functor with the signature
+ *  "float_type (vector_type const&)" and takes @f$ \vec r_i @f$ as its
+ *  arguments.
  */
-template <int dimension, typename float_type>
+template <
+    int dimension, typename float_type
+  , typename modulation_type = typename modulation::unity<dimension, float_type>
+>
 class density_mode
   : public observables::density_mode<dimension>
 {
@@ -55,7 +64,7 @@ public:
     typedef typename _Base::density_mode_sample_type density_mode_sample_type;
     typedef typename _Base::wavevector_type wavevector_type;
     typedef gpu::samples::phase_space<dimension, float_type> phase_space_type;
-    typedef density_mode_wrapper<dimension> wrapper_type;
+    typedef density_mode_wrapper<dimension, modulation_type> wrapper_type;
     typedef logger logger_type;
     typedef typename _Base::slot_function_type slot_function_type;
     typedef mdsim::clock clock_type;
@@ -72,6 +81,7 @@ public:
       , boost::shared_ptr<wavevector_type const> wavevector
       , boost::shared_ptr<clock_type const> clock
       , boost::shared_ptr<logger_type> logger = boost::make_shared<logger_type>()
+      , modulation_type const& modulation = modulation_type()
     );
 
     /**
@@ -122,6 +132,9 @@ private:
     boost::shared_ptr<wavevector_type const> wavevector_;
     boost::shared_ptr<clock_type const> clock_;
     boost::shared_ptr<logger_type> logger_;
+
+    /** modulation profile (for grazing incidence diffraction experiments) */
+    modulation_type modulation_;
 
     /** total number of wavevectors */
     unsigned int nq_;

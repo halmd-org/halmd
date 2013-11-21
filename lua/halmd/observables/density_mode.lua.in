@@ -30,22 +30,14 @@ local samples = {
 }
 
 -- grab C++ wrappers
-local density_mode_wrapper = {
-    host = {
-        [2] = libhalmd.observables.host.density_mode_2_
-      , [3] = libhalmd.observables.host.density_mode_3_
-    }
-  , [2] = libhalmd.observables.density_mode_2_
-  , [3] = libhalmd.observables.density_mode_3_
+local density_mode_wrapper = assert(libhalmd.observables.density_mode)
+local modulation_wrapper = {
+    [2] = assert(libhalmd.observables.density_mode_2_)
+  , [3] = assert(libhalmd.observables.density_mode_3_)
 }
-if libhalmd.observables.gpu then
-    density_mode_wrapper.gpu = {
-        [2] = libhalmd.observables.gpu.density_mode_2_
-      , [3] = libhalmd.observables.gpu.density_mode_3_
-    }
-end
 -- grab standard library
 local assert = assert
+local unpack = unpack or table.unpack -- support Lua 5.1 and 5.2
 
 local M = module("halmd.observables.density_mode")
 
@@ -54,11 +46,15 @@ local M = module("halmd.observables.density_mode")
 --
 -- @param args              parameter table:
 --     args.wavevector      instance of wavevector module
+--     args.modulation      modulation type for GID experiments, a table with
+--                          an identifier ("unity", "exponential", "catenary")
+--                          followed by a parameter list
 -- @returns instance of density_mode module
 --
 function M.__new(args)
     -- dependency injection
     local wavevector = assert(args.wavevector)
+    local modulation = args.modulation or { "unity" }
     local clock = mdsim.clock() -- singleton
 
     local sample
@@ -70,13 +66,15 @@ function M.__new(args)
     local dimension = assert(sample.dimension)
     local logger = assert(args.logger)
 
-    local density_mode
-    if device() then
-        density_mode = assert(density_mode_wrapper.gpu[dimension])
-    else
-        density_mode = assert(density_mode_wrapper.host[dimension])
-    end
-    local observable = density_mode(sample, wavevector, clock, logger)
+    -- construct modulation functor
+    local name = assert(table.remove(modulation, 1))
+    local float_type = (sample.memory == "gpu") and "float" or "double"
+    local modulation_wrapper = assert(modulation_wrapper[dimension][float_type][name],
+                                      "unknown modulation type: " .. name)
+    local modulation = modulation_wrapper(unpack(modulation)) -- pass arguments to constructor
+
+    -- construct instance
+    local observable = density_mode_wrapper(sample, wavevector, clock, logger, modulation)
 
     local phase_space
     if device() then

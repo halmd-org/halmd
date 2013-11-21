@@ -1,5 +1,5 @@
 /*
- * Copyright © 2011  Felix Höfling
+ * Copyright © 2011,2013 Felix Höfling
  *
  * This file is part of HALMD.
  *
@@ -27,18 +27,20 @@ namespace halmd {
 namespace observables {
 namespace gpu {
 
-template <int dimension, typename float_type>
-density_mode<dimension, float_type>::density_mode(
+template <int dimension, typename float_type, typename modulation_type>
+density_mode<dimension, float_type, modulation_type>::density_mode(
     shared_ptr<phase_space_type const> phase_space
   , shared_ptr<wavevector_type const> wavevector
   , shared_ptr<clock_type const> clock
   , shared_ptr<logger_type> logger
+  , modulation_type const& modulation
 )
     // dependency injection
   : phase_space_(phase_space)
   , wavevector_(wavevector)
   , clock_(clock)
   , logger_(logger)
+  , modulation_(modulation)
     // member initialisation
   , nq_(wavevector_->value().size())
   , dim_(50, 64 << DEVICE_SCALE) // at most 512 threads per block
@@ -49,6 +51,11 @@ density_mode<dimension, float_type>::density_mode(
   , g_sin_(nq_), g_cos_(nq_)
   , h_sin_(nq_), h_cos_(nq_)
 {
+    std::string m = modulation.message();
+    if (!m.empty()) {
+        LOG(m);
+    }
+
     LOG_DEBUG(
         "[density_mode] CUDA configuration: " << dim_.blocks_per_grid() << " blocks of "
      << dim_.threads_per_block() << " threads each"
@@ -82,8 +89,8 @@ density_mode<dimension, float_type>::density_mode(
 /**
  * Acquire sample of all density modes from phase space sample
  */
-template <int dimension, typename float_type>
-void density_mode<dimension, float_type>::acquire()
+template <int dimension, typename float_type, typename modulation_type>
+void density_mode<dimension, float_type, modulation_type>::acquire()
 {
     scoped_timer_type timer(runtime_.acquire);
 
@@ -116,10 +123,12 @@ void density_mode<dimension, float_type>::acquire()
             cuda::configure(dim_.grid, dim_.block);
             wrapper_type::kernel.q.bind(g_q_);
 
-            // compute exp(i q·r) for all wavevector/particle pairs and perform block sums
+            // compute f(r) exp(i q·r) for all wavevector/particle pairs and perform block sums
             wrapper_type::kernel.compute(
                 *phase_space_->r[type], phase_space_->r[type]->size()
-              , g_sin_block_, g_cos_block_);
+              , g_sin_block_, g_cos_block_
+              , modulation_
+            );
             cuda::thread::synchronize();
 
             // finalise block sums for each wavevector
@@ -144,24 +153,17 @@ void density_mode<dimension, float_type>::acquire()
     rho_sample_.step = clock_->step();
 }
 
-template <int dimension, typename float_type>
-void density_mode<dimension, float_type>::luaopen(lua_State* L)
+template <int dimension, typename float_type, typename modulation_type>
+void density_mode<dimension, float_type, modulation_type>::luaopen(lua_State* L)
 {
     using namespace luabind;
-    static string class_name("density_mode_" + lexical_cast<string>(dimension) + "_");
     module(L, "libhalmd")
     [
         namespace_("observables")
         [
             namespace_("gpu")
             [
-                class_<density_mode, shared_ptr<_Base>, _Base>(class_name.c_str())
-                    .def(constructor<
-                        shared_ptr<phase_space_type const>
-                      , shared_ptr<wavevector_type const>
-                      , shared_ptr<clock_type const>
-                      , shared_ptr<logger_type>
-                    >())
+                class_<density_mode, _Base>()
                     .scope
                     [
                         class_<runtime>("runtime")
@@ -169,6 +171,13 @@ void density_mode<dimension, float_type>::luaopen(lua_State* L)
                     ]
                     .def_readonly("runtime", &density_mode::runtime_)
             ]
+          , def("density_mode", &make_shared<density_mode
+              , shared_ptr<phase_space_type const>
+              , shared_ptr<wavevector_type const>
+              , shared_ptr<clock_type const>
+              , shared_ptr<logger_type>
+              , modulation_type
+            >)
         ]
     ];
 }
@@ -177,12 +186,20 @@ HALMD_LUA_API int luaopen_libhalmd_observables_gpu_density_mode(lua_State* L)
 {
     density_mode<3, float>::luaopen(L);
     density_mode<2, float>::luaopen(L);
+    density_mode<3, float, modulation::exponential<3, float> >::luaopen(L);
+    density_mode<2, float, modulation::exponential<2, float> >::luaopen(L);
+    density_mode<3, float, modulation::catenary<3, float> >::luaopen(L);
+    density_mode<2, float, modulation::catenary<2, float> >::luaopen(L);
     return 0;
 }
 
 // explicit instantiation
 template class density_mode<3, float>;
 template class density_mode<2, float>;
+template class density_mode<3, float, modulation::exponential<3, float> >;
+template class density_mode<2, float, modulation::exponential<2, float> >;
+template class density_mode<3, float, modulation::catenary<3, float> >;
+template class density_mode<2, float, modulation::catenary<2, float> >;
 
 }}  // namespace observables::gpu
 

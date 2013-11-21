@@ -1,5 +1,5 @@
 /*
- * Copyright © 2011  Felix Höfling
+ * Copyright © 2011,2013 Felix Höfling
  *
  * This file is part of HALMD.
  *
@@ -29,28 +29,34 @@ namespace halmd {
 namespace observables {
 namespace host {
 
-template <int dimension, typename float_type>
-density_mode<dimension, float_type>::density_mode(
+template <int dimension, typename float_type, typename modulation_type>
+density_mode<dimension, float_type, modulation_type>::density_mode(
     shared_ptr<phase_space_type const> phase_space
   , shared_ptr<wavevector_type const> wavevector
   , shared_ptr<clock_type const> clock
   , shared_ptr<logger_type> logger
+  , modulation_type const& modulation
 )
     // dependency injection
   : phase_space_(phase_space)
   , wavevector_(wavevector)
   , clock_(clock)
   , logger_(logger)
+  , modulation_(modulation)
     // memory allocation
   , rho_sample_(phase_space_->r.size(), wavevector_->value().size())
 {
+    std::string m = modulation.message();
+    if (!m.empty()) {
+        LOG(m);
+    }
 }
 
 /**
  * Acquire sample of all density modes from phase space sample
  */
-template <int dimension, typename float_type>
-void density_mode<dimension, float_type>::acquire()
+template <int dimension, typename float_type, typename modulation_type>
+void density_mode<dimension, float_type, modulation_type>::acquire()
 {
     scoped_timer_type timer(runtime_.acquire);
 
@@ -82,7 +88,7 @@ void density_mode<dimension, float_type>::acquire()
         mode_vector_type& rho_vector = *rho_sample_.rho[type]; //< dereference shared_ptr
         // initialise result array
         fill(rho_vector.begin(), rho_vector.end(), 0);
-        // compute sum of exponentials: rho_q = sum_r exp(-i q·r)
+        // compute sum of exponentials: rho_q = sum_r [f(r) * exp(-i q·r)]
         // 2nd loop: iterate over particles of the same type
         BOOST_FOREACH (vector_type const& r, *r_sample) {
             typename mode_vector_type::iterator rho_q = rho_vector.begin();
@@ -90,7 +96,7 @@ void density_mode<dimension, float_type>::acquire()
             // 3rd loop: iterate over wavevectors
             BOOST_FOREACH (map_value_type const& q_pair, wavevector_->value()) {
                 float_type q_r = inner_prod(static_cast<vector_type>(q_pair.second), r);
-                *rho_q++ += mode_type(cos(q_r), -sin(q_r));
+                *rho_q++ += modulation_(r) * mode_type(cos(q_r), -sin(q_r));
             }
         }
         ++type;
@@ -98,24 +104,17 @@ void density_mode<dimension, float_type>::acquire()
     rho_sample_.step = clock_->step();
 }
 
-template <int dimension, typename float_type>
-void density_mode<dimension, float_type>::luaopen(lua_State* L)
+template <int dimension, typename float_type, typename modulation_type>
+void density_mode<dimension, float_type, modulation_type>::luaopen(lua_State* L)
 {
     using namespace luabind;
-    static string class_name("density_mode_" + lexical_cast<string>(dimension) + "_");
     module(L, "libhalmd")
     [
         namespace_("observables")
         [
             namespace_("host")
             [
-                class_<density_mode, shared_ptr<_Base>, _Base>(class_name.c_str())
-                    .def(constructor<
-                        shared_ptr<phase_space_type const>
-                      , shared_ptr<wavevector_type const>
-                      , shared_ptr<clock_type const>
-                      , shared_ptr<logger_type>
-                    >())
+                class_<density_mode, _Base>()
                     .scope
                     [
                         class_<runtime>("runtime")
@@ -123,6 +122,13 @@ void density_mode<dimension, float_type>::luaopen(lua_State* L)
                     ]
                     .def_readonly("runtime", &density_mode::runtime_)
             ]
+          , def("density_mode", &make_shared<density_mode
+              , shared_ptr<phase_space_type const>
+              , shared_ptr<wavevector_type const>
+              , shared_ptr<clock_type const>
+              , shared_ptr<logger_type>
+              , modulation_type
+            >)
         ]
     ];
 }
@@ -132,9 +138,17 @@ HALMD_LUA_API int luaopen_libhalmd_observables_host_density_mode(lua_State* L)
 #ifndef USE_HOST_SINGLE_PRECISION
     density_mode<3, double>::luaopen(L);
     density_mode<2, double>::luaopen(L);
+    density_mode<3, double, modulation::exponential<3, double> >::luaopen(L);
+    density_mode<2, double, modulation::exponential<2, double> >::luaopen(L);
+    density_mode<3, double, modulation::catenary<3, double> >::luaopen(L);
+    density_mode<2, double, modulation::catenary<2, double> >::luaopen(L);
 #else
     density_mode<3, float>::luaopen(L);
     density_mode<2, float>::luaopen(L);
+    density_mode<3, float, modulation::exponential<3, float> >::luaopen(L);
+    density_mode<2, float, modulation::exponential<2, float> >::luaopen(L);
+    density_mode<3, float, modulation::catenary<3, float> >::luaopen(L);
+    density_mode<2, float, modulation::catenary<2, float> >::luaopen(L);
 #endif
     return 0;
 }
@@ -143,9 +157,17 @@ HALMD_LUA_API int luaopen_libhalmd_observables_host_density_mode(lua_State* L)
 #ifndef USE_HOST_SINGLE_PRECISION
 template class density_mode<3, double>;
 template class density_mode<2, double>;
+template class density_mode<3, double, modulation::exponential<3, double> >;
+template class density_mode<2, double, modulation::exponential<2, double> >;
+template class density_mode<3, double, modulation::catenary<3, double> >;
+template class density_mode<2, double, modulation::catenary<2, double> >;
 #else
 template class density_mode<3, float>;
 template class density_mode<2, float>;
+template class density_mode<3, float, modulation::exponential<3, float> >;
+template class density_mode<2, float, modulation::exponential<2, float> >;
+template class density_mode<3, float, modulation::catenary<3, float> >;
+template class density_mode<2, float, modulation::catenary<2, float> >;
 #endif
 
 }}  // namespace observables::host

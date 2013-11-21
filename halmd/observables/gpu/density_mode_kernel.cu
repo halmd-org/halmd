@@ -75,13 +75,19 @@ __device__ sum_reduce_type sum_reduce_select[] = {
 // FIXME provide complex data type for CUDA
 
 /**
- *  compute exp(i q·r) for each particle/wavevector pair
+ *  compute f(r) exp(i q·r) for each particle/wavevector pair
  *  and sum results wavevector-wise within a block
  *
- *  @returns block sums of sin(q·r), cos(q·r) for each wavevector
+ *  @returns block sums of f(r) sin(q·r), f(r) cos(q·r) for each wavevector
  */
-template <typename vector_type, typename coalesced_vector_type>
-__global__ void compute(coalesced_vector_type const* g_r, uint npart, float* g_sin_block, float* g_cos_block)
+template <typename vector_type, typename coalesced_vector_type, typename modulation_type>
+__global__ void compute(
+    coalesced_vector_type const* g_r
+  , uint npart
+  , float* g_sin_block
+  , float* g_cos_block
+  , modulation_type const modulation
+)
 {
     enum { dimension = vector_type::static_size };
 
@@ -97,9 +103,11 @@ __global__ void compute(coalesced_vector_type const* g_r, uint npart, float* g_s
             // retrieve particle position
             vector_type r = g_r[j];
 
+            // single-particle contribution: f(r) * exp(-i q·r)
             float q_r = inner_prod(q, r);
-            sin_[TID] += sin(q_r);
-            cos_[TID] += cos(q_r);
+            float m = modulation(r);
+            sin_[TID] += m * sin(q_r);
+            cos_[TID] += m * cos(q_r);
         }
         __syncthreads();
 
@@ -162,8 +170,9 @@ __global__ void finalise(
 
 } // namespace density_mode_kernel
 
-template <int dimension>
-density_mode_wrapper<dimension> const density_mode_wrapper<dimension>::kernel = {
+template <int dimension, typename modulation_type>
+density_mode_wrapper<dimension, modulation_type> const
+density_mode_wrapper<dimension, modulation_type>::kernel = {
     density_mode_kernel::q_
   , density_mode_kernel::nq_
   , density_mode_kernel::compute<fixed_vector<float, dimension> >
@@ -172,6 +181,10 @@ density_mode_wrapper<dimension> const density_mode_wrapper<dimension>::kernel = 
 
 template class density_mode_wrapper<3>;
 template class density_mode_wrapper<2>;
+template class density_mode_wrapper<3, modulation::exponential<3, float> >;
+template class density_mode_wrapper<2, modulation::exponential<2, float> >;
+template class density_mode_wrapper<3, modulation::catenary<3, float> >;
+template class density_mode_wrapper<2, modulation::catenary<2, float> >;
 
 } // namespace observables
 } // namespace gpu

@@ -23,12 +23,16 @@
 #include <cuda_wrapper/cuda_wrapper.hpp>
 
 #include <halmd/mdsim/type_traits.hpp>
+#include <halmd/observables/modulation.hpp>
 
 namespace halmd {
 namespace observables {
 namespace gpu {
 
-template <int dimension>
+template <
+    int dimension
+  , typename modulation_type = modulation::unity<dimension, float>
+>
 struct density_mode_wrapper
 {
     typedef typename mdsim::type_traits<dimension, float>::gpu::vector_type vector_type;
@@ -39,7 +43,7 @@ struct density_mode_wrapper
     /** number of wavevectors */
     cuda::symbol<unsigned int> nq;
     /** compute density_mode for all particles of a single species */
-    cuda::function<void (coalesced_vector_type const*, unsigned int, float*, float*)> compute;
+    cuda::function<void (coalesced_vector_type const*, unsigned int, float*, float*, modulation_type const)> compute;
     /** finalise computation by summing block sums per wavevector */
     cuda::function<void (float const*, float const*, float*, float*, uint)> finalise;
 

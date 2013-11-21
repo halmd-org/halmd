@@ -1,5 +1,5 @@
 /*
- * Copyright © 2011  Felix Höfling
+ * Copyright © 2011,2013 Felix Höfling
  *
  * This file is part of HALMD.
  *
@@ -23,6 +23,7 @@
 #include <string>
 
 #include <halmd/observables/density_mode.hpp>
+#include <halmd/observables/modulation.hpp>
 #include <halmd/utility/lua/lua.hpp>
 #include <halmd/utility/signal.hpp>
 
@@ -60,6 +61,29 @@ void density_mode<dimension>::luaopen(lua_State* L)
                 .property("wavenumber", &wrap_wavenumber<density_mode>)
                 .property("acquire", &acquire_wrapper<density_mode>)
                 .def("on_acquire", &density_mode::on_acquire)
+                .scope
+                [
+                    namespace_("float")
+                    [
+                        class_<modulation::unity<dimension, float> >("unity")
+                            .def(constructor<>())
+                      , class_<modulation::exponential<dimension, float> >("exponential")
+                            .def(constructor<float, float>())
+                      , class_<modulation::catenary<dimension, float> >("catenary")
+                            .def(constructor<float, float, float>())
+                    ]
+#ifndef USE_HOST_SINGLE_PRECISION
+                  , namespace_("double")
+                    [
+                        class_<modulation::unity<dimension, double> >("unity")
+                            .def(constructor<>())
+                      , class_<modulation::exponential<dimension, double> >("exponential")
+                            .def(constructor<double, double>())
+                      , class_<modulation::catenary<dimension, double> >("catenary")
+                            .def(constructor<double, double, double>())
+                    ]
+#endif
+                ]
         ]
     ];
 }

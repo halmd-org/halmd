@@ -61,6 +61,7 @@ function M.__new(args)
     local tolerance = args.tolerance or 0.01 -- default value
     local max_count = args.max_count or 7 -- default value
     local filter = args.wavevector_filter or { 1 } -- default value
+    local s_modulation = args.modulation or "unity" -- split upon "," and forward to density_mode
 
     -- dependency injection
     local clock = mdsim.clock() -- singleton
@@ -92,8 +93,14 @@ function M.__new(args)
         }
     end
 
+    -- split string argument for modulation upon "," into table, convert parameters to numbers
+    local modulation = {}
+    for s in string.gmatch(s_modulation, "[^,]+") do
+        table.insert(modulation, (#modulation == 0) and s or tonumber(s))
+    end
+
     -- construct density_mode module
-    local density_mode = assert(observables.density_mode{wavevector = wavevector})
+    local density_mode = assert(observables.density_mode{wavevector = wavevector, modulation = modulation})
 
     -- construct ssf module
     local ssf = assert(ssf_wrapper[dimension])(density_mode, clock, particle.nbox, logger)
@@ -154,6 +161,7 @@ function M.options(desc)
     desc:add("tolerance", po.float(), "relative tolerance on wavevector magnitude")
     desc:add("max-count", po.uint(), "maximum number of wavevectors per wavenumber shell")
     desc:add("wavevector-filter", po.uint_array(), "filter on wavevectors")
+    desc:add("modulation", po.string(), "modulation of density modes (for GID experiments)")
 end
 
 --

@@ -35,7 +35,7 @@ namespace observables {
 /**
  *  compute Fourier modes of the particle density
  *
- *  @f$ \rho_{\vec q} = \sum_{i=1}^N \exp(\textrm{i}\vec q \cdot \vec r_i) @f$
+ *  @f$ \rho_{\vec q} = \sum_{i=1}^N f(\vec r_i) \exp(\textrm{i}\vec q \cdot \vec r_i) @f$
  *  for each particle species
  */
 template <int dimension>
