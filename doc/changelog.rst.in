@@ -1,6 +1,39 @@
 Changelog
 *********
 
+Version 0.3.0
+=============
+
+**New features**
+
+* potentials: local, smooth cutoff for continuously differentiable forces
+  <Nicolas Höft>
+
+* potentials: Lennard-Jones potential with shifted force ("linear cutoff")
+  <Felix Höfling>
+
+* observables: computation of full stress tensor <Felix Höfling>
+
+* observables: density profiles (along a Cartesian axis) and d-dimensional
+  density fields <Felix Höfling>
+
+* observables: scattered intensity in grazing-incidence diffraction (GID)
+  experiments <Felix Höfling>
+
+* simulation setup: fill slab of initial lattice with a fraction of particles
+  only and distribute the rest at lattices around that slab <Felix Höfling>
+
+* FIXME Rotne-Prager tensor <Michael Kopp>
+
+**Bug fixes**
+
+* properly handle a sampling interval of zero (disable sampling)
+  <Felix Höfling>
+
+* static structure factor: reset internal accumulators after call to sample()
+  <Felix Höfling>
+
+
 Version 0.2.1
 =============
 
@@ -30,12 +63,14 @@ This version features a slightly larger choice of potentials and NVT
 integrators, but it brings only rudimentary support for dynamic correlations
 functions.
 
+
 Version 0.1.2
 =============
 
 **Improvements**
 
 * fully support mobility filters for the VACF
+
 
 Version 0.1.2
 =============
@@ -47,6 +82,7 @@ Version 0.1.2
 **Bug fixes**
 
 * fix build failure with Boost C++ 1.46
+
 
 Version 0.1.1
 =============
@@ -62,6 +98,7 @@ Version 0.1.1
 * fix build failure with CUDA 3.2
 
 * fix build failure with Boost C++ 1.42
+
 
 Version 0.1.0
 =============
