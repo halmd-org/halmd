@@ -48,8 +48,8 @@ file::file(string const& path, string const& author_name, string const& author_e
     h5xx::write_attribute(h5md, "version", file::version());
 
     H5::Group creator = h5md.createGroup("creator");
-    h5xx::write_attribute(creator, "name", PROGRAM_NAME);
-    h5xx::write_attribute(creator, "version", PROGRAM_VERSION);
+    h5xx::write_attribute(creator, "name", PROGRAM_DESC_ASCII);
+    h5xx::write_attribute(creator, "version", PROGRAM_VERSION PROGRAM_VARIANT);
 
     H5::Group author = h5md.createGroup("author");
     h5xx::write_attribute(author, "name", author_name.empty() ? realname() : author_name);

@@ -18,6 +18,7 @@
  */
 
 #include <boost/algorithm/string/join.hpp>
+#include <cstring>
 #include <vector>
 
 #include <halmd/io/logger.hpp>
@@ -35,7 +36,10 @@ namespace halmd {
 static void prologue(vector<string> const& arg)
 {
     LOG(PROJECT_NAME " (" PROGRAM_DESC ") " PROGRAM_VERSION);
-    LOG("variant: " << PROGRAM_VARIANT);
+    if (strlen(PROGRAM_VARIANT) > 0) {
+        LOG("variant:" << PROGRAM_VARIANT);
+    }
+    LOG("built with " PROGRAM_COMPILER << " for " << PROGRAM_LIBRARIES);
 #ifndef NDEBUG
     LOG_WARNING("built with enabled debugging");
 #endif
