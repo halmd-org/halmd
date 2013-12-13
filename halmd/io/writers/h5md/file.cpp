@@ -46,8 +46,8 @@ file::file(string const& path)
 
     H5::Group attr = file_.createGroup("h5md");
     h5xx::write_attribute(attr, "creation_time", time(NULL));
-    h5xx::write_attribute(attr, "creator", PROGRAM_NAME);
-    h5xx::write_attribute(attr, "creator_version", PROGRAM_VERSION);
+    h5xx::write_attribute(attr, "creator", PROGRAM_DESC_ASCII);
+    h5xx::write_attribute(attr, "creator_version", PROGRAM_VERSION PROGRAM_VARIANT);
     h5xx::write_attribute(attr, "version", file::version());
     h5xx::write_attribute(attr, "author", file::author());
 

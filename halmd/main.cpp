@@ -1,5 +1,6 @@
 /*
- * Copyright © 2008-2011  Peter Colberg and Felix Höfling
+ * Copyright © 2008-2013 Felix Höfling
+ * Copyright © 2008-2011 Peter Colberg
  *
  * This file is part of HALMD.
  *
@@ -23,6 +24,7 @@
 #include <boost/lambda/bind.hpp>
 #include <boost/lambda/casts.hpp>
 #include <cstdlib> // EXIT_SUCCESS, EXIT_FAILURE
+#include <cstring>
 
 #include <halmd/io/logger.hpp>
 #include <halmd/script.hpp>
@@ -98,11 +100,15 @@ int main(int argc, char **argv)
         // print version information to stdout
         //
         if (vm.count("version")) {
-            cout << PROJECT_NAME " (" PROGRAM_DESC ") " PROGRAM_VERSION << endl << endl
-                 << "Copyright © " PROGRAM_COPYRIGHT << endl
+            cout << PROJECT_NAME " (" PROGRAM_DESC ") " PROGRAM_VERSION << endl;
+            if (strlen(PROGRAM_VARIANT) > 0) {
+                cout << "variant:" PROGRAM_VARIANT << endl;
+            }
+            cout << "built with " PROGRAM_COMPILER << " for " << PROGRAM_LIBRARIES << endl << endl
+                 << "Copyright © " PROGRAM_COPYRIGHT << endl << endl
                  << "This is free software. "
                     "You may redistribute copies of it under the terms of" << endl
-                 << "the GNU General Public License "
+                 << "the GNU General Public License version 3 or later "
                     "<http://www.gnu.org/licenses/gpl.html>." << endl
                  << "There is NO WARRANTY, to the extent permitted by law." << endl;
             return EXIT_SUCCESS;
@@ -129,7 +135,10 @@ int main(int argc, char **argv)
         );
 
         LOG(PROJECT_NAME " (" PROGRAM_DESC ") " PROGRAM_VERSION);
-        LOG("variant: " << PROGRAM_VARIANT);
+        if (strlen(PROGRAM_VARIANT) > 0) {
+            LOG("variant:" << PROGRAM_VARIANT);
+        }
+        LOG("built with " PROGRAM_COMPILER << " for " << PROGRAM_LIBRARIES);
 #ifndef NDEBUG
         LOG_WARNING("built with enabled debugging");
 #endif
