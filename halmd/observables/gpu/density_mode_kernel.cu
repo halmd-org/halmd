@@ -183,6 +183,8 @@ template class density_mode_wrapper<3>;
 template class density_mode_wrapper<2>;
 template class density_mode_wrapper<3, modulation::exponential<3, float> >;
 template class density_mode_wrapper<2, modulation::exponential<2, float> >;
+template class density_mode_wrapper<3, modulation::exponential_slab<3, float> >;
+template class density_mode_wrapper<2, modulation::exponential_slab<2, float> >;
 template class density_mode_wrapper<3, modulation::catenary<3, float> >;
 template class density_mode_wrapper<2, modulation::catenary<2, float> >;
 

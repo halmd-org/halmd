@@ -140,6 +140,8 @@ HALMD_LUA_API int luaopen_libhalmd_observables_host_density_mode(lua_State* L)
     density_mode<2, double>::luaopen(L);
     density_mode<3, double, modulation::exponential<3, double> >::luaopen(L);
     density_mode<2, double, modulation::exponential<2, double> >::luaopen(L);
+    density_mode<3, double, modulation::exponential_slab<3, double> >::luaopen(L);
+    density_mode<2, double, modulation::exponential_slab<2, double> >::luaopen(L);
     density_mode<3, double, modulation::catenary<3, double> >::luaopen(L);
     density_mode<2, double, modulation::catenary<2, double> >::luaopen(L);
 #else
@@ -147,6 +149,8 @@ HALMD_LUA_API int luaopen_libhalmd_observables_host_density_mode(lua_State* L)
     density_mode<2, float>::luaopen(L);
     density_mode<3, float, modulation::exponential<3, float> >::luaopen(L);
     density_mode<2, float, modulation::exponential<2, float> >::luaopen(L);
+    density_mode<3, float, modulation::exponential_slab<3, float> >::luaopen(L);
+    density_mode<2, float, modulation::exponential_slab<2, float> >::luaopen(L);
     density_mode<3, float, modulation::catenary<3, float> >::luaopen(L);
     density_mode<2, float, modulation::catenary<2, float> >::luaopen(L);
 #endif
@@ -159,6 +163,8 @@ template class density_mode<3, double>;
 template class density_mode<2, double>;
 template class density_mode<3, double, modulation::exponential<3, double> >;
 template class density_mode<2, double, modulation::exponential<2, double> >;
+template class density_mode<3, double, modulation::exponential_slab<3, double> >;
+template class density_mode<2, double, modulation::exponential_slab<2, double> >;
 template class density_mode<3, double, modulation::catenary<3, double> >;
 template class density_mode<2, double, modulation::catenary<2, double> >;
 #else
@@ -166,6 +172,8 @@ template class density_mode<3, float>;
 template class density_mode<2, float>;
 template class density_mode<3, float, modulation::exponential<3, float> >;
 template class density_mode<2, float, modulation::exponential<2, float> >;
+template class density_mode<3, float, modulation::exponential_slab<3, float> >;
+template class density_mode<2, float, modulation::exponential_slab<2, float> >;
 template class density_mode<3, float, modulation::catenary<3, float> >;
 template class density_mode<2, float, modulation::catenary<2, float> >;
 #endif

@@ -188,6 +188,8 @@ HALMD_LUA_API int luaopen_libhalmd_observables_gpu_density_mode(lua_State* L)
     density_mode<2, float>::luaopen(L);
     density_mode<3, float, modulation::exponential<3, float> >::luaopen(L);
     density_mode<2, float, modulation::exponential<2, float> >::luaopen(L);
+    density_mode<3, float, modulation::exponential_slab<3, float> >::luaopen(L);
+    density_mode<2, float, modulation::exponential_slab<2, float> >::luaopen(L);
     density_mode<3, float, modulation::catenary<3, float> >::luaopen(L);
     density_mode<2, float, modulation::catenary<2, float> >::luaopen(L);
     return 0;
@@ -198,6 +200,8 @@ template class density_mode<3, float>;
 template class density_mode<2, float>;
 template class density_mode<3, float, modulation::exponential<3, float> >;
 template class density_mode<2, float, modulation::exponential<2, float> >;
+template class density_mode<3, float, modulation::exponential_slab<3, float> >;
+template class density_mode<2, float, modulation::exponential_slab<2, float> >;
 template class density_mode<3, float, modulation::catenary<3, float> >;
 template class density_mode<2, float, modulation::catenary<2, float> >;
 

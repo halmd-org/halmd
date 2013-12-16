@@ -98,6 +98,49 @@ private:
     float_type box_height_;
 };
 
+/** exponential slab: @f$ f(\vec r) = [\exp(-\kappa (r_z - z_0)) - 1] \Theta(\kappa (r_z - z_0)) + 1
+ *  \quad \mathrm{for} \quad \sgn(\kappa) (r_z - z_0) < w $@f
+ */
+template <int dimension, typename float_type>
+class exponential_slab
+  : public std::unary_function<float_type, fixed_vector<float_type, dimension> const&>
+{
+public:
+    exponential_slab(float_type kappa, float_type width, float_type offset, float_type box_height)
+      : kappa_(kappa), kappa_width_(std::abs(kappa * width)), offset_(offset), box_height_(box_height) {}
+
+    HALMD_GPU_ENABLED float_type operator() (fixed_vector<float_type, dimension> const& r) const
+    {
+        float_type z = r[dimension-1];
+#ifdef __CUDACC__
+        z -= rintf(fdividef(z, box_height_)) * box_height_;     // fold into periodic box
+        float_type arg = kappa_ * (z - offset_);
+        return arg > 0 ? (arg < kappa_width_ ? expf(-arg) : 0) : 1;
+#else
+        z -= rint(z / box_height_) * box_height_;
+        float_type arg = kappa_ * (z - offset_);
+        return arg > 0 ? (arg < kappa_width_ ? exp(-arg) : 0) : 1;
+#endif
+    }
+
+#ifndef __CUDACC__
+    std::string message() const
+    {
+        std::ostringstream s;
+        s << "use exponential slab modulation: κ = " << kappa_
+          << ", w = " << kappa_width_ / kappa_ << ", z0 = " << offset_
+          << ", precision = " << demangled_name<float_type>();
+        return s.str();
+    }
+#endif
+
+private:
+    float_type kappa_;
+    float_type kappa_width_;
+    float_type offset_;
+    float_type box_height_;
+};
+
 /** catenary: @f$ f(\vec r) = [\cosh(\kappa (r_z - z_0))) / \cosh(\kappa (w - z_0)) - 1] \Theta(w - |r_z - z_0|) + 1 $@f*/
 template <int dimension, typename float_type>
 class catenary
