@@ -20,7 +20,8 @@
 local device            = require("halmd.device")
 local module            = require("halmd.utility.module")
 local mdsim = {
-    clock               = require("halmd.mdsim.clock")
+    box                 = require("halmd.mdsim.box")
+  , clock               = require("halmd.mdsim.clock")
 }
 local observables = {
     phase_space         = require("halmd.observables.phase_space")
@@ -55,6 +56,7 @@ function M.__new(args)
     -- dependency injection
     local wavevector = assert(args.wavevector)
     local modulation = args.modulation or { "unity" }
+    local box = mdsim.box() -- singleton
     local clock = mdsim.clock() -- singleton
 
     local sample
@@ -71,6 +73,13 @@ function M.__new(args)
     local float_type = (sample.memory == "gpu") and "float" or "double"
     local modulation_wrapper = assert(modulation_wrapper[dimension][float_type][name],
                                       "unknown modulation type: " .. name)
+    -- append box height for "exponential", "catenary"
+    -- FIXME this is an inefficient hack, the proper solution would compute the
+    -- density modes from the original, wrapped particle positions (in
+    -- mdsim::particle, not samples::phase_space)
+    if name ~= "unity" then
+        table.insert(modulation, box.length[dimension-1])
+    end
     local modulation = modulation_wrapper(unpack(modulation)) -- pass arguments to constructor
 
     -- construct instance

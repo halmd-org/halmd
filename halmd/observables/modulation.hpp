@@ -65,15 +65,19 @@ class exponential
   : public std::unary_function<float_type, fixed_vector<float_type, dimension> const&>
 {
 public:
-    exponential(float_type kappa, float_type offset)
-      : kappa_(kappa), offset_(offset) {}
+    exponential(float_type kappa, float_type offset, float_type box_height)
+      : kappa_(kappa), offset_(offset), box_height_(box_height) {}
 
     HALMD_GPU_ENABLED float_type operator() (fixed_vector<float_type, dimension> const& r) const
     {
-        float_type arg = kappa_ * (r[dimension-1] - offset_);
+        float_type z = r[dimension-1];
 #ifdef __CUDACC__
+        z -= rintf(fdividef(z, box_height_)) * box_height_;     // fold into periodic box
+        float_type arg = kappa_ * (z - offset_);
         return arg > 0 ? expf(-arg) : 1;
 #else
+        z -= rint(z / box_height_) * box_height_;
+        float_type arg = kappa_ * (z - offset_);
         return arg > 0 ? exp(-arg) : 1;
 #endif
     }
@@ -91,6 +95,7 @@ public:
 private:
     float_type kappa_;
     float_type offset_;
+    float_type box_height_;
 };
 
 /** catenary: @f$ f(\vec r) = [\cosh(\kappa (r_z - z_0))) / \cosh(\kappa (w - z_0)) - 1] \Theta(w - |r_z - z_0|) + 1 $@f*/
@@ -99,15 +104,19 @@ class catenary
   : public std::unary_function<float_type, fixed_vector<float_type, dimension> const&>
 {
 public:
-    catenary(float_type kappa, float_type width, float_type offset)
-      : kappa_(kappa), width_(width), offset_(offset), norm_(cosh(kappa_ * width_)) {}
+    catenary(float_type kappa, float_type width, float_type offset, float_type box_height)
+      : kappa_(kappa), width_(width), offset_(offset), norm_(cosh(kappa_ * width_)), box_height_(box_height) {}
 
     HALMD_GPU_ENABLED float_type operator() (fixed_vector<float_type, dimension> const& r) const
     {
-        float_type z = r[dimension-1] - offset_;
+        float_type z = r[dimension-1];
 #ifdef __CUDACC__
+        z -= rintf(fdividef(z, box_height_)) * box_height_;     // fold into periodic box
+        z -= offset_;
         return fabsf(z) < width_ ? coshf(kappa_ * z) / norm_ : 1;
 #else
+        z -= rint(z / box_height_) * box_height_;
+        z -= offset_;
         return std::abs(z) < width_ ? cosh(kappa_ * z) / norm_ : 1;
 #endif
     }
@@ -127,6 +136,7 @@ private:
     float_type width_;
     float_type offset_;
     float_type norm_;
+    float_type box_height_;
 };
 
 } // namespace modulation

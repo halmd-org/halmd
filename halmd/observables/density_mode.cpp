@@ -68,9 +68,9 @@ void density_mode<dimension>::luaopen(lua_State* L)
                         class_<modulation::unity<dimension, float> >("unity")
                             .def(constructor<>())
                       , class_<modulation::exponential<dimension, float> >("exponential")
-                            .def(constructor<float, float>())
-                      , class_<modulation::catenary<dimension, float> >("catenary")
                             .def(constructor<float, float, float>())
+                      , class_<modulation::catenary<dimension, float> >("catenary")
+                            .def(constructor<float, float, float, float>())
                     ]
 #ifndef USE_HOST_SINGLE_PRECISION
                   , namespace_("double")
@@ -78,9 +78,9 @@ void density_mode<dimension>::luaopen(lua_State* L)
                         class_<modulation::unity<dimension, double> >("unity")
                             .def(constructor<>())
                       , class_<modulation::exponential<dimension, double> >("exponential")
-                            .def(constructor<double, double>())
-                      , class_<modulation::catenary<dimension, double> >("catenary")
                             .def(constructor<double, double, double>())
+                      , class_<modulation::catenary<dimension, double> >("catenary")
+                            .def(constructor<double, double, double, double>())
                     ]
 #endif
                 ]
