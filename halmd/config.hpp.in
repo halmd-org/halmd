@@ -22,8 +22,6 @@
 
 #define HALMD_LUA_API extern "C"
 
-#cmakedefine HALMD_WITH_GPU
-
 #ifdef HALMD_WITH_GPU
 # define HALMD_GPU_ARCH @HALMD_GPU_ARCH@
 # if HALMD_GPU_ARCH >= 130

@@ -63,6 +63,7 @@ if(CUDA_FOUND)
   enable_language(CUDA)
 
   set(HALMD_WITH_GPU TRUE)
+  add_definitions(-DHALMD_WITH_GPU)
 
   # FIXME deprecated, use HALMD_WITH_GPU instead
   set(WITH_CUDA TRUE)

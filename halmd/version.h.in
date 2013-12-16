@@ -32,9 +32,6 @@
 #define PROGRAM_DESC_ASCII	"@PROGRAM_DESC_ASCII@"
 #define PROGRAM_VERSION		"@PROGRAM_VERSION@"
 
-// only defined within this scope, undefine at the end
-#cmakedefine HALMD_WITH_GPU
-
 #ifdef HALMD_WITH_GPU
 # define _PROGRAM_VARIANT_1	" +GPU"
 #else
@@ -89,10 +86,5 @@
 #   define PROGRAM_COMPILER	"@CMAKE_CXX_COMPILER_ID@ @CMAKE_CXX_COMPILER_VERSION@"
 #endif
 #define PROGRAM_LIBRARIES	"Lua @LUA_VERSION_STRING@"
-
-// undefine here, include halmd/config.hpp if needed
-#ifdef HALMD_WITH_GPU
-#undef HALMD_WITH_GPU
-#endif
 
 #endif /* !HALMD_VERSION_H */
