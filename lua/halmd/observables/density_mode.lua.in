@@ -1,5 +1,5 @@
 --
--- Copyright © 2011  Felix Höfling
+-- Copyright © 2011-2014 Felix Höfling
 --
 -- This file is part of HALMD.
 --
@@ -38,7 +38,17 @@ local modulation_wrapper = {
 }
 -- grab standard library
 local assert = assert
+local pairs = pairs
 local unpack = unpack or table.unpack -- support Lua 5.1 and 5.2
+
+-- copy the entries of a table (does a shallow copy for nested tables)
+local function table_copy(t)
+  local t2 = {}
+  for k,v in pairs(t) do
+    t2[k] = v
+  end
+  return t2
+end
 
 local M = module("halmd.observables.density_mode")
 
@@ -55,7 +65,7 @@ local M = module("halmd.observables.density_mode")
 function M.__new(args)
     -- dependency injection
     local wavevector = assert(args.wavevector)
-    local modulation = args.modulation or { "unity" }
+    local modulation = table_copy(args.modulation) or { "unity" } -- copy table to leave caller's table untouched
     local box = mdsim.box() -- singleton
     local clock = mdsim.clock() -- singleton
 

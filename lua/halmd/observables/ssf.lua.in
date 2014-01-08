@@ -1,5 +1,5 @@
 --
--- Copyright © 2011  Felix Höfling
+-- Copyright © 2011-2014 Felix Höfling
 --
 -- This file is part of HALMD.
 --
@@ -42,6 +42,7 @@ local h5 = libhalmd.h5
 local po = libhalmd.po
 -- grab standard library
 local assert = assert
+local property = property
 local string = string
 
 local M = module("halmd.observables.ssf")
@@ -131,6 +132,15 @@ function M.__new(args)
     end
     sampler:on_sample(writer.write, every)
 
+    -- store modulation parameters as Lua property, split off name from parameters first
+    local name = table.remove(modulation, 1)
+    ssf.modulation = property(function(self)
+        return {
+            name = name
+          , parameters = modulation
+        }
+    end)
+
     return ssf
 end
 
@@ -184,6 +194,11 @@ function M.write_parameters(ssf, group)
     group:write_attribute("tolerance", h5.float(), ssf.wavevector.tolerance)
     group:write_attribute("max_count", h5.uint(), ssf.wavevector.max_count)
     group:write_attribute("wavevector_filter", h5.uint_array(), ssf.wavevector.filter)
+    if ssf.modulation.name ~= "unity" then
+        local modulation = assert(group:open_group("modulation"))
+        modulation:write_attribute("name", h5.string(), ssf.modulation.name)
+        modulation:write_attribute("parameters", h5.float_array(), ssf.modulation.parameters)
+    end
 end
 
 return M

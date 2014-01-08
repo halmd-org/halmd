@@ -1,5 +1,6 @@
 --
--- Copyright © 2010-2011  Peter Colberg
+-- Copyright © 2010-2011 Peter Colberg
+-- Copyright © 2014      Felix Höfling
 --
 -- This file is part of HALMD.
 --
@@ -103,11 +104,9 @@ function M.__new(args)
                 __index = function(self, name)
                     local namespace = assert(module.namespace)
                     local group = param:open_group(namespace)
-                    local method = group[name]
-                    if method then
-                        return function(self, ...)
-                            method(group, ...)
-                        end
+                    local method = assert(group[name])
+                    return function(self, ...)
+                        return method(group, ...)
                     end
                 end
             })
