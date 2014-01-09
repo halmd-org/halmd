@@ -82,6 +82,47 @@ if(WITH_CUDA)
   )
 endif()
 
+# modulation functions for density modes
+if(WITH_CUDA)
+  add_executable(test_unit_observables_modulation
+    modulation.cpp
+    modulation_kernel.cu
+  )
+  target_link_libraries(test_unit_observables_modulation
+    halmd_utility_gpu
+  )
+else()
+  add_executable(test_unit_observables_modulation
+    modulation.cpp
+  )
+endif()
+target_link_libraries(test_unit_observables_modulation
+  ${HALMD_TEST_LIBRARIES}
+)
+add_test(unit/observables/modulation/host/unity
+  test_unit_observables_modulation --run_test=modulation_host_unity --log_level=test_suite
+)
+add_test(unit/observables/modulation/host/exponential
+  test_unit_observables_modulation --run_test=modulation_host_exponential --log_level=test_suite
+)
+add_test(unit/observables/modulation/host/exponential_slab
+  test_unit_observables_modulation --run_test=modulation_host_exponential_slab --log_level=test_suite
+)
+add_test(unit/observables/modulation/host/catenary
+  test_unit_observables_modulation --run_test=modulation_host_catenary --log_level=test_suite
+)
+if(WITH_CUDA)
+    add_test(unit/observables/modulation/gpu/exponential
+      test_unit_observables_modulation --run_test=modulation_gpu_exponential --log_level=test_suite
+    )
+    add_test(unit/observables/modulation/gpu/exponential_slab
+      test_unit_observables_modulation --run_test=modulation_gpu_exponential_slab --log_level=test_suite
+    )
+    add_test(unit/observables/modulation/gpu/catenary
+      test_unit_observables_modulation --run_test=modulation_gpu_catenary --log_level=test_suite
+    )
+endif()
+
 # phase space sampler
 add_executable(test_unit_observables_phase_space
   phase_space.cpp
