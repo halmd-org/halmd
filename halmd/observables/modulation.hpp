@@ -44,7 +44,7 @@ namespace modulation {
 /** unity: @f$ f(\vec r) = 1 $@f*/
 template <int dimension, typename float_type>
 struct unity
-  : public std::unary_function<float_type, fixed_vector<float_type, dimension> const&>
+  : public std::unary_function<fixed_vector<float_type, dimension>, float_type>
 {
     HALMD_GPU_ENABLED float_type operator() (fixed_vector<float_type, dimension> const& r) const
     {
@@ -62,7 +62,7 @@ struct unity
 /** exponential: @f$ f(\vec r) = [\exp(-\kappa (r_z - z_0)) - 1] \Theta(\kappa (r_z - z_0)) + 1 $@f*/
 template <int dimension, typename float_type>
 class exponential
-  : public std::unary_function<float_type, fixed_vector<float_type, dimension> const&>
+  : public std::unary_function<fixed_vector<float_type, dimension>, float_type>
 {
 public:
     exponential(float_type kappa, float_type offset, float_type box_height)
@@ -103,7 +103,7 @@ private:
  */
 template <int dimension, typename float_type>
 class exponential_slab
-  : public std::unary_function<float_type, fixed_vector<float_type, dimension> const&>
+  : public std::unary_function<fixed_vector<float_type, dimension>, float_type>
 {
 public:
     exponential_slab(float_type kappa, float_type width, float_type offset, float_type box_height)
@@ -141,14 +141,16 @@ private:
     float_type box_height_;
 };
 
-/** catenary: @f$ f(\vec r) = [\cosh(\kappa (r_z - z_0))) / \cosh(\kappa (w - z_0)) - 1] \Theta(w - |r_z - z_0|) + 1 $@f*/
+/** catenary: @f$ f(\vec r) = [\cosh(\kappa (r_z - z_0))) / \cosh(\kappa w / 2)) - 1] \Theta(w / 2 - |r_z - z_0|) + 1 $@f*/
 template <int dimension, typename float_type>
 class catenary
-  : public std::unary_function<float_type, fixed_vector<float_type, dimension> const&>
+  : public std::unary_function<fixed_vector<float_type, dimension>, float_type>
 {
 public:
     catenary(float_type kappa, float_type width, float_type offset, float_type box_height)
-      : kappa_(kappa), width_(width), offset_(offset), norm_(cosh(kappa_ * width_)), box_height_(box_height) {}
+      : kappa_(kappa), width_2_(width / 2), offset_(offset), box_height_(box_height)
+      , norm_(cosh(kappa_ * width_2_))
+    {}
 
     HALMD_GPU_ENABLED float_type operator() (fixed_vector<float_type, dimension> const& r) const
     {
@@ -156,11 +158,11 @@ public:
 #ifdef __CUDACC__
         z -= rintf(fdividef(z, box_height_)) * box_height_;     // fold into periodic box
         z -= offset_;
-        return fabsf(z) < width_ ? coshf(kappa_ * z) / norm_ : 1;
+        return fabsf(z) < width_2_ ? coshf(kappa_ * z) / norm_ : 1;
 #else
         z -= rint(z / box_height_) * box_height_;
         z -= offset_;
-        return std::abs(z) < width_ ? cosh(kappa_ * z) / norm_ : 1;
+        return std::abs(z) < width_2_ ? cosh(kappa_ * z) / norm_ : 1;
 #endif
     }
 
@@ -168,7 +170,7 @@ public:
     std::string message() const
     {
         std::ostringstream s;
-        s << "use catenary modulation: κ = " << kappa_ << ", w = " << width_ << ", z0 = " << offset_
+        s << "use catenary modulation: κ = " << kappa_ << ", w = " << 2 * width_2_ << ", z0 = " << offset_
           << ", precision = " << demangled_name<float_type>();
         return s.str();
     }
@@ -176,10 +178,10 @@ public:
 
 private:
     float_type kappa_;
-    float_type width_;
+    float_type width_2_;
     float_type offset_;
-    float_type norm_;
     float_type box_height_;
+    float_type norm_;
 };
 
 } // namespace modulation
