@@ -128,7 +128,7 @@ public:
     {
         std::ostringstream s;
         s << "use exponential slab modulation: κ = " << kappa_
-          << ", w = " << kappa_width_ / kappa_ << ", z0 = " << offset_
+          << ", w = " << std::abs(kappa_width_ / kappa_) << ", z0 = " << offset_
           << ", precision = " << demangled_name<float_type>();
         return s.str();
     }
