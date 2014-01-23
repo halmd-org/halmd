@@ -1,0 +1,95 @@
+--
+-- Copyright © 2011 Michael Kopp
+--
+-- This file is part of HALMD.
+--
+-- HALMD is free software: you can redistribute it and/or modify
+-- it under the terms of the GNU General Public License as published by
+-- the Free Software Foundation, either version 3 of the License, or
+-- (at your option) any later version.
+--
+-- This program is distributed in the hope that it will be useful,
+-- but WITHOUT ANY WARRANTY; without even the implied warranty of
+-- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+-- GNU General Public License for more details.
+--
+-- You should have received a copy of the GNU General Public License
+-- along with this program.  If not, see <http://www.gnu.org/licenses/>.
+--
+
+require("halmd.modules")
+require("halmd.mdsim.mobilities")
+
+-- grab modules
+local mdsim = halmd.mdsim
+-- grab C++ wrappers
+local h5 = libhalmd.h5
+local po = libhalmd.po
+-- grab standard library
+local assert = assert
+local pairs = pairs
+local property = property
+
+-- creates the module (1st var) and then runs the command (2nd var) on it
+module("halmd.mdsim.mobility", halmd.modules.register)
+
+--
+-- construct mobility module
+--
+function new(args)
+    -- If mobility module not explicitely required by commandline/config file don't use one.
+    if not args.mobility
+    then
+        return nil
+    end
+
+    -- initialise velocities in each MD step
+    mdsim.fields.constant_velocity{set_flag = true}
+
+    local name = args.mobility
+    local mobility = assert(mdsim.mobilities[name] , "error while selecting mobility module!")() -- select module and construct it
+
+    -- add a function `name' to class `mobility' in luabind
+    -- Functions of classes are exposed to luabind by using `.property(..)'.
+    -- This function simply returns the name of the module.
+    mobility.name = property(function(self)
+        return name
+    end)
+    return mobility
+end
+
+--
+-- assemble module options
+--
+-- @param desc po.options_description
+--
+function options(desc, globals)
+
+    -- mobility module choices with descriptions
+    local choices = {}
+    -- search for mobility modules
+    for mobility, module in pairs(mdsim.mobilities) do
+        if module.name then -- FIXME rename `name' to `description'
+            choices[mobility] = module.name()
+        end
+    end
+
+    globals:add("mobility", po.string():choices(choices), "select mobility module")
+end
+
+--
+-- read module parameters from HDF5 group
+--
+function read_parameters(args, group, globals)
+    args.mobility = globals:read_attribute("mobility", h5.string())
+end
+
+--
+-- write module parameters to HDF5 group
+--
+-- @param mobility module instance
+-- @param group HDF5 group
+--
+function write_parameters(mobility, group, globals)
+    globals:write_attribute("mobility", h5.string(), mobility.name)
+end

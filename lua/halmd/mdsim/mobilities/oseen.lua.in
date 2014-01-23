@@ -1,0 +1,131 @@
+--
+-- Copyright © 2011 Michael Kopp
+--
+-- This file is part of HALMD.
+--
+-- HALMD is free software: you can redistribute it and/or modify
+-- it under the terms of the GNU General Public License as published by
+-- the Free Software Foundation, either version 3 of the License, or
+-- (at your option) any later version.
+--
+-- This program is distributed in the hope that it will be useful,
+-- but WITHOUT ANY WARRANTY; without even the implied warranty of
+-- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+-- GNU General Public License for more details.
+--
+-- You should have received a copy of the GNU General Public License
+-- along with this program.  If not, see <http://www.gnu.org/licenses/>.
+--
+
+require("halmd.modules")
+
+require("halmd.device")
+require("halmd.mdsim.core")
+require("halmd.mdsim.particle")
+
+
+
+-- grab modules
+local device = halmd.device
+local mdsim = halmd.mdsim
+-- grab C++ wrappers -- distinguish gpu and cpu case
+local oseen_wrapper = {
+    host = {
+        [2] = libhalmd.mdsim.host.mobilities.oseen_2_
+      , [3] = libhalmd.mdsim.host.mobilities.oseen_3_
+    }
+}
+if libhalmd.mdsim.gpu then
+    oseen_wrapper.gpu = {
+        [2] = libhalmd.mdsim.gpu.mobilities.oseen_2_
+      , [3] = libhalmd.mdsim.gpu.mobilities.oseen_3_
+    }
+end
+-- to import from comamndline / HF5 files:
+local h5 = libhalmd.h5
+local po = libhalmd.po
+-- grab standard library
+local assert = assert
+local table = table
+
+
+module("halmd.mdsim.mobilities.oseen", halmd.modules.register)
+
+--
+-- construct oseen tensor module
+--
+-- @param args.viscosity viscosity
+-- @param args.radius hydrodynamic radius of particle
+--
+function new(args)
+    local viscosity = args.viscosity or 1 -- default value
+    local radius = args.radius or 1 -- default value
+    local order = args.order or 3 -- default value (Rotne Prager)
+
+    local particle = assert(mdsim.particle()) -- singleton
+    local dimension = assert(particle.dimension)
+    local box = assert(mdsim.box()) -- singleton
+    local logger = assert(args.logger)
+
+    local oseen
+    if device() then -- decide which implementation gpu/cpu to use
+        oseen = assert(oseen_wrapper.gpu[dimension], "error selecting oseen gpu module")
+    else
+        oseen = assert(oseen_wrapper.host[dimension], "error selecting oseen host module")
+    end
+    local mobility = oseen(particle, box, radius, viscosity, order, logger) -- call constructor
+
+    -- connect signals to core
+    local core = mdsim.core()
+    core:on_finalize{mobility.compute_velocities, tracker = mobility}
+
+    return mobility
+end
+
+--
+-- connect runtime accumulators to module profiler
+--
+function profile(self, profiler)
+    profiler:on_profile{self, compute_velocities = "compute velocities due to hydrodynamic interactions directly"}
+    profiler:on_profile{self, compute = "compute mobility matrix from hydrodynamic interactions"}
+end
+
+--
+-- returns module description
+--
+function name()
+    return "Oseen tensor"
+end
+
+--
+-- assemble module options
+--
+-- @param desc po.options_description
+--
+function options(desc)
+    desc:add("viscosity" , po.float() , "dynamic viscosity of medium")
+    desc:add("radius" , po.float() , "hydrodynamic radius of all particles")
+    desc:add("order" , po.float() , "order of accuracy of hydrodynamic interactions")
+end
+
+--
+-- read module parameters from HDF5 group
+--
+function read_parameters(args, group)
+    args.viscosity  = group:read_attribute("viscosity" , h5.float() )
+    args.radius     = group:read_attribute("radius" , h5.float() )
+    args.order      = group:read_attribute("order" , h5.float() )
+end
+
+--
+-- write module parameters to HDF5 group
+--
+-- @param oseen module instance
+-- @param group HDF5 group
+--
+function write_parameters(oseen, group)
+    group:write_attribute("viscosity", h5.float(), oseen.viscosity)
+    group:write_attribute("radius", h5.float(), oseen.radius)
+    group:write_attribute("order", h5.float(), oseen.order)
+end
+
