@@ -147,7 +147,7 @@ template<
   , typename vector_type_     // dsfun-vector
   , typename gpu_vector_type  // forces: gpu::vector<gpu_vector_type> (float4 in 3D, float2 in 2d)
 >
-__global__ void _compute_velocities(
+__global__ void compute_velocity(
     const float4* g_r
   , const gpu_vector_type* g_f
   , float4* g_v
@@ -256,11 +256,11 @@ __global__ void _compute_velocities(
 template <int dimension>
 oseen_wrapper<dimension> const oseen_wrapper<dimension>::wrapper = {
 #ifdef USE_OSEEN_DSFUN
-    oseen_kernel::_compute_velocities<1, fixed_vector<float, dimension>, fixed_vector<dsfloat, dimension> > // _oseen
-  , oseen_kernel::_compute_velocities<3, fixed_vector<float, dimension>, fixed_vector<dsfloat, dimension> > // _rotne
+    oseen_kernel::compute_velocity<1, fixed_vector<float, dimension>, fixed_vector<dsfloat, dimension> > // Oseen
+  , oseen_kernel::compute_velocity<3, fixed_vector<float, dimension>, fixed_vector<dsfloat, dimension> > // Rotne-Prager
 #else
-    oseen_kernel::_compute_velocities<1, fixed_vector<float, dimension>, fixed_vector<float, dimension> > // _oseen
-  , oseen_kernel::_compute_velocities<3, fixed_vector<float, dimension>, fixed_vector<float, dimension> > // _rotne
+    oseen_kernel::compute_velocity<1, fixed_vector<float, dimension>, fixed_vector<float, dimension> > // Oseen
+  , oseen_kernel::compute_velocity<3, fixed_vector<float, dimension>, fixed_vector<float, dimension> > // Rotne-Prager
 #endif
 };
 

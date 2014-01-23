@@ -1,5 +1,5 @@
 /*
- * Copyright © 2011-2012  Michael Kopp
+ * Copyright © 2011-2012 Michael Kopp
  *
  * This file is part of HALMD.
  *
@@ -36,8 +36,17 @@ struct oseen_wrapper
 {
     typedef typename type_traits<dimension, float>::vector_type vector_type;
     typedef typename type_traits<dimension, float>::gpu::coalesced_vector_type gpu_vector_type;
-    cuda::function<void (const float4*, const gpu_vector_type*, float4*, const unsigned int, const vector_type, const float, const float)> compute_velocities_oseen;
-    cuda::function<void (const float4*, const gpu_vector_type*, float4*, const unsigned int, const vector_type, const float, const float)> compute_velocities_rotne;
+
+    cuda::function<void (
+        float4 const*, gpu_vector_type const*, float4*
+      , const unsigned int, const vector_type, const float, const float
+    )> compute_velocity_oseen;
+
+    cuda::function<void (
+        float4 const*, gpu_vector_type const*, float4*
+      , const unsigned int, const vector_type, const float, const float
+    )> compute_velocity_rotne;
+
     static oseen_wrapper const wrapper;
 };
 

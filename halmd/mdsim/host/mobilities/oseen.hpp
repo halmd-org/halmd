@@ -1,6 +1,6 @@
 /*
  * Copyright © 2011 Michael Kopp
- * // derived from velocities/boltzmann.{h,c}pp
+ * Copyright © 2014 Felix Höfling
  *
  * This file is part of HALMD.
  *
@@ -43,12 +43,6 @@ public:
     typedef host::particle<dimension, float_type> particle_type;
     typedef typename particle_type::vector_type vector_type;
     typedef typename mdsim::box<dimension> box_type;
-    typedef logger logger_type;
-
-    static char const* module_name() { return "oseen"; }
-
-    boost::shared_ptr<particle_type> particle;
-    boost::shared_ptr<box_type> box;
 
     static void luaopen(lua_State* L);
 
@@ -62,58 +56,55 @@ public:
     oseen(
         boost::shared_ptr<particle_type> particle
       , boost::shared_ptr<box_type> box
-      , float radius //FIXME List of radii for different particles?
+      , float radius
       , float viscosity
       , int order
-      , boost::shared_ptr<logger_type> logger = boost::make_shared<logger_type>()
+      , boost::shared_ptr<halmd::logger> logger = boost::make_shared<halmd::logger>()
     );
 
     // inherited functions
-    virtual void compute_velocities();
+    virtual void compute_velocity();
     virtual void compute();
 
-    // // getter // //
-    //! returns hydrodynamic radius
+    /** returns hydrodynamic radius */
     inline float radius() const
     {
         return radius_;
     }
-    //! returns dynamic viscosity
+
+    /** returns dynamic viscosity */
     inline float viscosity() const
     {
         return viscosity_;
     }
-    //! return order of accuracy of hydrodynamic interaction in (a/r)
+
+    /** return order of accuracy of hydrodynamic interaction in (a/r) */
     inline int order() const
     {
         return order_;
     }
-    //! return self mobility of one particle
-    inline float self_mobility() const
-    {
-        return float(self_mobility_);
-    }
 
 private:
+    /** particle instance */
+    boost::shared_ptr<particle_type> particle_;
+    /** box instance */
+    boost::shared_ptr<box_type> box_;
     /** module logger */
-    boost::shared_ptr<logger_type> logger_;
-    typedef utility::profiler profiler_type;
-    typedef typename profiler_type::accumulator_type accumulator_type;
+    boost::shared_ptr<logger> logger_;
+
+    /** hydrodynamic radius */
+    float radius_;
+    /** dynamic viscosity of fluid */
+    float viscosity_;
+    /** order of accuracy of hydrodynamic interaction in (a/r) */
+    int order_;
 
     struct runtime
     {
-        accumulator_type compute_velocities;
-        accumulator_type compute;
+        utility::profiler::accumulator_type compute_velocity;
+        utility::profiler::accumulator_type compute;
     };
 
-    //! hydrodynamic radius
-    float radius_;
-    //! dynamic viscosity of fluid
-    float viscosity_;
-    //! order of accuracy of hydrodynamic interaction in (a/r)
-    int order_;
-    //! self mobility 1/(6 pi eta a)
-    float_type self_mobility_;
     /** profiling runtime accumulators */
     runtime runtime_;
 };

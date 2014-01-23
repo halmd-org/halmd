@@ -1,5 +1,6 @@
 /*
- * Copyright © 2011-2012  Michael Kopp
+ * Copyright © 2011-2012 Michael Kopp
+ * Copyright © 2011-2012 Felix Höfling
  *
  * This file is part of HALMD.
  *
@@ -20,17 +21,16 @@
 #ifndef HALMD_MDSIM_GPU_MOBILITIES_OSEEN_HPP
 #define HALMD_MDSIM_GPU_MOBILITIES_OSEEN_HPP
 
+#include <cuda_wrapper/cuda_wrapper.hpp> // cuda::vector
 #include <lua.hpp>
 #include <utility>
 
-#include <cuda_wrapper/cuda_wrapper.hpp> // cuda::vector
 #include <halmd/mdsim/box.hpp>
 #include <halmd/mdsim/gpu/particle.hpp>
 #include <halmd/mdsim/gpu/mobilities/oseen_kernel.hpp>
 #include <halmd/mdsim/mobility.hpp>
-#include <halmd/numeric/mp/dsfloat.hpp>
-#include <halmd/utility/profiler.hpp>
 #include <halmd/io/logger.hpp>
+#include <halmd/utility/profiler.hpp>
 
 namespace halmd {
 namespace mdsim {
@@ -48,19 +48,14 @@ template <int dimension, typename float_type>
 class oseen
   : public mdsim::mobility<dimension>
 {
+    typedef mdsim::mobility<dimension> _Base;
+
 public:
     typedef mdsim::box<dimension> box_type;
-    typedef mdsim::mobility<dimension> _Base;
     typedef gpu::particle<dimension, float_type> particle_type;
     typedef typename particle_type::vector_type vector_type;
     typedef typename particle_type::gpu_vector_type gpu_vector_type;
     typedef halmd::mdsim::gpu::mobilities::oseen_wrapper<dimension> wrapper_type;
-    typedef logger logger_type;
-
-    static char const* module_name() { return "oseen"; }
-
-    boost::shared_ptr<particle_type> particle;
-    boost::shared_ptr<box_type> box;
 
     static void luaopen(lua_State* L);
 
@@ -70,62 +65,59 @@ public:
       , float radius
       , float viscosity
       , int order
-      , boost::shared_ptr<logger_type> logger = boost::make_shared<logger_type>()
+      , boost::shared_ptr<halmd::logger> logger = boost::make_shared<halmd::logger>()
     );
 
     // inherited functions
     virtual void compute();
-    virtual void compute_velocities();
+    virtual void compute_velocity();
 
-    //! returns radius
+    /** returns radius */
     float radius() const
     {
         return radius_;
     }
 
-    //! returns dynamic viscosity of fluid
+    /** returns dynamic viscosity of fluid */
     float viscosity() const
     {
         return viscosity_;
     }
 
-    //! returns self mobility of particle
-    float self_mobility() const
-    {
-        return self_mobility_ ;
-    }
-
-    //! returns order of integration
+    /** returns order of integration */
     int order() const
     {
         return order_;
     }
 
 protected:
-    //! module logger
-    boost::shared_ptr<logger_type> logger_;
-    typedef utility::profiler profiler_type;
-    typedef typename profiler_type::accumulator_type accumulator_type;
+    /** particle instance */
+    boost::shared_ptr<particle_type> particle_;
+    /** box instance */
+    boost::shared_ptr<box_type> box_;
+    /** module logger */
+    boost::shared_ptr<logger> logger_;
+
+    /** hydrodynamic radius */
+    float radius_;
+    /** dynamic viscosity of fluid */
+    float viscosity_;
+    /** order of accuracy of hydrodynamic interaction in (a/r) */
+    int order_;
+
+    typedef utility::profiler::accumulator_type accumulator_type;
 
     struct runtime
     {
-        accumulator_type compute_velocities;
+        accumulator_type compute_velocity;
         accumulator_type compute;
     };
 
-    //! hydrodynamic radius
-    float radius_;
-    //! dynamic viscosity of fluid
-    float viscosity_;
-    //! self mobility (1/(6 pi eta a)), a = radius_, eta = viscosity_
-    float self_mobility_;
-    //! order of accuracy of hydrodynamic interaction in (a/r)
-    int order_;
-    //! profiling runtime accumulators
+    /** profiling runtime accumulators */
     runtime runtime_;
 };
 
-} // namespace velocities
+} // namespace mobilities
 } // namespace gpu
 } // namespace mdsim
 } // namespace halmd

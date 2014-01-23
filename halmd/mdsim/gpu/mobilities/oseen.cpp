@@ -1,5 +1,6 @@
 /*
- * Copyright © 2011-2012  Michael Kopp
+ * Copyright © 2011-2012 Michael Kopp
+ * Copyright © 2011-2014 Felix Höfling
  *
  * This file is part of HALMD.
  *
@@ -17,7 +18,6 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <halmd/io/logger.hpp>
 #include <halmd/mdsim/gpu/mobilities/oseen.hpp>
 #include <halmd/utility/lua/lua.hpp>
 #include <halmd/utility/scoped_timer.hpp>
@@ -38,28 +38,26 @@ oseen<dimension, float_type>::oseen(
   , float radius
   , float viscosity
   , int order
-  , boost::shared_ptr<logger_type> logger
+  , boost::shared_ptr<logger> logger
 )
   // dependency injection
-  : particle(particle)
-  , box(box)
+  : particle_(particle)
+  , box_(box)
   , logger_(logger)
   // set parameters
   , radius_(radius)
   , viscosity_(viscosity)
-  , self_mobility_(1/(6*3.14159265358979312*viscosity*radius))
   , order_(order)
 {
-    // log
     LOG("Particle radii: a = " << radius_);
-    LOG("Dynamic viscosity of fluid: eta = " << viscosity_);
+    LOG("Dynamic viscosity of fluid: η = " << viscosity_);
     LOG("Order of accurancy of hydrodynamic interaction in (a/r): " << order_);
-    if( order_ <= 2 ) LOG( "Using Oseen Tensor for hydrodynamic interaction");
-    if( order_ >= 3 ) LOG( "Using Rotne-Prager Tensor for hydrodynamic interaction");
+    if( order_ <= 2 ) LOG( "using Oseen tensor for hydrodynamic interaction");
+    if( order_ >= 3 ) LOG( "using Rotne-Prager tensor for hydrodynamic interaction");
 #ifdef USE_OSEEN_DSFUN
-    LOG("Accumulating velocities in double-single precision");
+    LOG("accumulating velocities in double-single precision");
 #else
-    LOG_WARNING("Accumulating velocities in single precision");
+    LOG_WARNING("accumulating velocities in single precision");
 #endif
 }
 
@@ -67,45 +65,48 @@ oseen<dimension, float_type>::oseen(
  * compute velocities from forces
  */
 template <int dimension, typename float_type>
-void oseen<dimension, float_type>::compute_velocities()
+void oseen<dimension, float_type>::compute_velocity()
 {
-    scoped_timer<timer> timer_(runtime_.compute_velocities); // measure time 'till destruction
+    scoped_timer<timer> timer_(runtime_.compute_velocity);
 
-    // call kernel
+    // Stokes mobility: μ = 1 / 6 π η a, a = radius, η = shear viscosity
+    float_type self_mobility = 1 / (6 * 3.14159265358979312 * viscosity_ * radius_);
+
     try {
-        // configure cuda parameter (place this immediately before wrapper)
         cuda::configure(
-            particle->dim.grid
-          , particle->dim.block
+            particle_->dim.grid
+          , particle_->dim.block
           , WARP_SIZE * (sizeof(float4) + sizeof(typename wrapper_type::gpu_vector_type))
           // Allocate shared memory for position (float4) and forces (float4 in 3D, float2 in 2D).
         );
-        if (order_ <= 2) // oseen
-            wrapper_type::wrapper.compute_velocities_oseen(
-                    particle->g_r, particle->g_f, particle->g_v, particle->nbox, static_cast<vector_type>(box->length()), radius_, self_mobility_
-                    );
-        else // rotne
-            wrapper_type::wrapper.compute_velocities_rotne(
-                    particle->g_r, particle->g_f, particle->g_v, particle->nbox, static_cast<vector_type>(box->length()), radius_, self_mobility_
-                    );
+        if (order_ <= 2) // Oseen tensor
+        {
+            wrapper_type::wrapper.compute_velocity_oseen(
+                particle_->g_r, particle_->g_f, particle_->g_v
+              , particle_->nbox, static_cast<vector_type>(box_->length()), radius_, self_mobility
+            );
+        }
+        else {
+            // Rotne-Prager tensor
+            wrapper_type::wrapper.compute_velocity_rotne(
+                particle_->g_r, particle_->g_f, particle_->g_v
+              , particle_->nbox, static_cast<vector_type>(box_->length()), radius_, self_mobility
+            );
+        }
         cuda::thread::synchronize();
-
-        // Since parameters such as radius, self mobility etc. are constants, one
-        // could also store them on the GPU (cuda::symbol<>) instead of passing them
-        // as arguments.
-
     }
     catch (cuda::error const&) {
-        LOG_ERROR("failed to stream computation of velocities via oseen on GPU");
+        LOG_ERROR("failed to stream computation of velocities via mobility tensor on GPU");
         throw;
     }
 }
 
-//! Compute mobility matrix -- not implemented yet
+//! Compute mobility matrix -- not yet implemented
 template <int dimension, typename float_type>
 void oseen<dimension, float_type>::compute()
 {
-    scoped_timer<timer> timer_(runtime_.compute); // measure time 'till destruction
+    scoped_timer<timer> timer_(runtime_.compute);
+    LOG_ERROR("computation and storage of mobility matrix not yet implemented");
 }
 
 // Wrapper to connect set with slots.
@@ -118,16 +119,17 @@ wrap_compute(shared_ptr<mobility_type> self)
 
 template <typename mobility_type>
 typename signal<void ()>::slot_function_type
-wrap_compute_velocities(shared_ptr<mobility_type> self)
+wrap_compute_velocity(shared_ptr<mobility_type> self)
 {
-    return bind(&mobility_type::compute_velocities, self);
+    return bind(&mobility_type::compute_velocity, self);
 }
 
 template <int dimension, typename float_type>
 void oseen<dimension, float_type>::luaopen(lua_State* L)
 {
     using namespace luabind;
-    static string class_name(module_name() + ("_" + lexical_cast<string>(dimension) + "_"));
+    static string class_name("oseen_" + lexical_cast<string>(dimension) + "_");
+
     module(L, "libhalmd")
     [
         namespace_("mdsim")
@@ -143,19 +145,18 @@ void oseen<dimension, float_type>::luaopen(lua_State* L)
                           , float
                           , float
                           , int
-                          , shared_ptr<logger_type>
+                          , shared_ptr<logger>
                          >())
                         .property("compute", &wrap_compute<oseen>)
-                        .property("compute_velocities", &wrap_compute_velocities<oseen>)
+                        .property("compute_velocity", &wrap_compute_velocity<oseen>)
                         .property("radius", &oseen::radius)
                         .property("viscosity", &oseen::viscosity)
                         .property("order", &oseen::order)
-                        .property("self_mobility", &oseen::self_mobility)
                         .scope
                         [
                             class_<runtime>("runtime")
                                 .def_readonly("compute", &runtime::compute)
-                                .def_readonly("compute_velocities", &runtime::compute_velocities)
+                                .def_readonly("compute_velocity", &runtime::compute_velocity)
                         ]
                         .def_readonly("runtime", &oseen::runtime_)
                 ]

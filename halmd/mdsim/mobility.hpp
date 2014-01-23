@@ -44,10 +44,12 @@ public:
 
     mobility() {}
     virtual ~mobility() {}
-    //! Compute mobility matrix. (Not yet implemented)
-    virtual void compute() = 0; // matrix
-    //! Compute velocities directly from positions and forces.
-    virtual void compute_velocities() = 0;
+
+    /** Compute mobility matrix. (Not yet implemented) */
+    virtual void compute() = 0;
+
+    /** Compute velocities directly from positions and forces. */
+    virtual void compute_velocity() = 0;
 };
 
 } // namespace mdsim

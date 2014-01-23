@@ -36,27 +36,24 @@ wrap_compute(shared_ptr<mobility_type> mobility)
 
 template <typename mobility_type>
 typename signal<void ()>::slot_function_type
-wrap_compute_velocities(shared_ptr<mobility_type> mobility)
+wrap_compute_velocity(shared_ptr<mobility_type> mobility)
 {
-    return bind(&mobility_type::compute_velocities, mobility);
+    return bind(&mobility_type::compute_velocity, mobility);
 }
 
 template <int dimension>
 void mobility<dimension>::luaopen(lua_State* L)
 {
     using namespace luabind;
-    // construct name to use in lua scripts
     static string class_name("mobility_" + lexical_cast<string>(dimension) + "_");
-    // tell lua(bind) what class/functions exist
+
     module(L, "libhalmd")
     [
         namespace_("mdsim")
         [
-            // the class (in < >) will be known as specified in the static string above
             class_<mobility, shared_ptr<mobility> >(class_name.c_str())
-                //  bind actual functions to their lua equivalent
                 .def("compute", &mobility::compute)
-                .def("compute_velocities", &mobility::compute_velocities)
+                .def("compute_velocity", &mobility::compute_velocity)
         ]
     ];
 }
