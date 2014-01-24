@@ -117,6 +117,10 @@ function M.__new(args)
 --     sampler:on_prepare(observable.prepare, every)
     sampler:on_sample(writer.write, every)
 
+    -- turn on computation of auxiliary variables _before_ force computation
+    -- in each sampling step
+    sampler:on_prepare(force.aux_enable, every)
+
     return observable
 end
 
