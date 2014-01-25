@@ -100,7 +100,7 @@ pick_lattice_points_from_shell(
     partial_sum(miller_sum_max.begin(), miller_sum_max.end(), miller_sum_max.begin());
     LOG_DEBUG("generate lattice points with a maximum sum of Miller indices: " << miller_sum_max[dimension-1]);
 
-    // generate all lattice points bounded h+k+l ≤ miller_sum_max,
+    // generate all lattice points bounded by 0 ≤ h+k+l ≤ miller_sum_max,
     // loop over tuple index (hkl), or (hk) in two dimensions,
     // using idx[2] = h+k+l, idx[1] = h+k, and idx[0] = h as loop variables
     index_type idx(0);
@@ -113,8 +113,7 @@ pick_lattice_points_from_shell(
         }
         // condition I: Miller index matches the filter
         // condition II: tuple elements are coprime
-        if (element_prod(hkl, filter) == hkl && is_coprime(hkl))
-        {
+        if (element_prod(hkl, filter) == hkl && is_coprime(hkl)) {
             // construct and store lattice points along the direction (hkl)
             // with magnitude close to the desired values
             vector_type r0 = element_prod(unit_cell, static_cast<vector_type>(hkl));
@@ -141,11 +140,23 @@ pick_lattice_points_from_shell(
                 }
             }
         }
+        else if (norm_inf(hkl) == 0) {
+            // store lattice point (0,…,0) if radius 0 has been given
+            unsigned int i = 0;
+            for (InputIterator r_it = radius_begin; r_it != radius_end; ++r_it, ++i) {
+                if (*r_it == 0 && count[i] < max_count) {
+                    LOG_TRACE("  r = " << 0 << ", (hkl) = " << hkl);
+                    *result++ = make_pair(0, vector_type(0));
+                    ++count[i];
+                    break;
+                }
+            }
+        }
         // increment index tuple at end of loop,
-        // obey 0 ≤ idx[j] ≤ miller_sum_max[j]
+        // obey 0 ≤ idx[j] ≤ min(idx[j+1], miller_sum_max[j])
         ++idx[0];                            // always increment first 'digit' (element)
         for (unsigned int j = 0; j < dimension - 1; ++j) {
-            if (idx[j] <= miller_sum_max[j]) {  // test upper bound
+            if (idx[j] <= std::min(idx[j+1], miller_sum_max[j])) {  // test upper bound
                 break;                          // still within range, exit loop
             }
             idx[j] = 0;                         // reset this 'digit'

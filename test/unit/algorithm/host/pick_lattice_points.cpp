@@ -49,10 +49,10 @@ void pick_lattice_points()
     const vector_type unit_cell =
         (dimension == 3) ? list_of(2)(3)(5) : list_of(1)(1);
 
-    vector<double> radii = list_of(.5)(1)(1.5)(1.91)(2)(2.7)(3)(3)(4)(5)(30);
+    vector<double> radii = list_of(.5)(1)(1.5)(1.91)(2)(2.7)(3)(3)(0)(4)(5)(30);
     vector<unsigned int> count = (dimension == 3)
-        ? list_of(0)(0)(0)(1)(1)(0)(2)(2)(1)(2)(max_count)
-        : list_of(0)(2)(0)(2)(2)(1)(4)(4)(4)(6)(max_count);
+        ? list_of(0)(0)(0)(1)(1)(0)(2)(2)(1)(1)(2)(max_count)
+        : list_of(0)(2)(0)(2)(2)(1)(4)(4)(1)(4)(6)(max_count);
 
     multimap<double, vector_type> lattice_points;
 
@@ -73,7 +73,9 @@ void pick_lattice_points()
       , inserter(lattice_points, lattice_points.begin())
       , vector_type(0), epsilon, max_count, filter
     );
-    BOOST_CHECK_EQUAL(lattice_points.size(), 0u);
+    BOOST_CHECK_EQUAL(lattice_points.size(), 1u); // only r=0
+    BOOST_CHECK_EQUAL(lattice_points.count(0), 1u);
+    lattice_points.clear();
 
     // call with zero tolerance
     BOOST_MESSAGE("test zero tolerance");
@@ -82,7 +84,7 @@ void pick_lattice_points()
       , inserter(lattice_points, lattice_points.begin())
       , unit_cell, 0., max_count, filter //< tolerance must be a floating-point type!
     );
-    BOOST_CHECK_EQUAL(lattice_points.size(), (dimension == 3) ? 11u : 18u);
+    BOOST_CHECK_EQUAL(lattice_points.size(), (dimension == 3) ? 12u : 19u);
     lattice_points.clear();
 
     // call with zero max_count
@@ -95,13 +97,15 @@ void pick_lattice_points()
     BOOST_CHECK_EQUAL(lattice_points.size(), 0u);
 
     // call with zero filter
-    BOOST_MESSAGE("test zero max_count");
+    BOOST_MESSAGE("test zero filter");
     pick_lattice_points_from_shell(
         radii.begin(), radii.end()
       , inserter(lattice_points, lattice_points.begin())
       , unit_cell, epsilon, max_count, index_type(0)
     );
-    BOOST_CHECK_EQUAL(lattice_points.size(), 0);
+    BOOST_CHECK_EQUAL(lattice_points.size(), 1u); // only r=0
+    BOOST_CHECK_EQUAL(lattice_points.count(0), 1u);
+    lattice_points.clear();
 
      // construct lattice points
     BOOST_MESSAGE("construct lattice points");
@@ -110,7 +114,7 @@ void pick_lattice_points()
       , inserter(lattice_points, lattice_points.begin())
       , unit_cell, epsilon, max_count, filter
     );
-    BOOST_CHECK_EQUAL(lattice_points.size(), (dimension == 3) ? 14u : 28u);  // not equal to sum(count)
+    BOOST_CHECK_EQUAL(lattice_points.size(), (dimension == 3) ? 15u : 29u);  // not equal to sum(count)
 
     // check conditions and counts on constructed lattice points
     for (unsigned int i = 0; i < radii.size(); ++i) {
@@ -126,6 +130,10 @@ void pick_lattice_points()
         for (range_type shell = lattice_points.equal_range(r); shell.first != shell.second; ++shell.first) {
             // check that distance to origin is within the tolerance
             vector_type const& point = shell.first->second;
+            if (r == 0) {
+                BOOST_CHECK_EQUAL(norm_inf(point), 0);
+                continue;
+            }
             BOOST_CHECK_SMALL(norm_2(point) / r - 1, epsilon + numeric_limits<double>::epsilon());
 
             // check ascending sum of Miller indices
