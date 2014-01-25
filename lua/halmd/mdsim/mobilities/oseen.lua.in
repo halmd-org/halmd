@@ -17,17 +17,14 @@
 -- along with this program.  If not, see <http://www.gnu.org/licenses/>.
 --
 
-require("halmd.modules")
+local device            = require("halmd.device")
+local module            = require("halmd.utility.module")
+local mdsim = {
+    box                 = require("halmd.mdsim.box")
+  , core                = require("halmd.mdsim.core")
+  , particle            = require("halmd.mdsim.particle")
+}
 
-require("halmd.device")
-require("halmd.mdsim.core")
-require("halmd.mdsim.particle")
-
-
-
--- grab modules
-local device = halmd.device
-local mdsim = halmd.mdsim
 -- grab C++ wrappers -- distinguish gpu and cpu case
 local oseen_wrapper = {
     host = {
@@ -41,26 +38,23 @@ if libhalmd.mdsim.gpu then
       , [3] = libhalmd.mdsim.gpu.mobilities.oseen_3_
     }
 end
--- to import from comamndline / HF5 files:
 local h5 = libhalmd.h5
 local po = libhalmd.po
 -- grab standard library
 local assert = assert
-local table = table
 
-
-module("halmd.mdsim.mobilities.oseen", halmd.modules.register)
+local M = module("halmd.mdsim.mobilities.oseen")
 
 --
--- construct oseen tensor module
+-- construct Oseen/Rotne-Prager tensor module
 --
 -- @param args.viscosity viscosity
 -- @param args.radius hydrodynamic radius of particle
 --
-function new(args)
+function M.__new(args)
     local viscosity = args.viscosity or 1 -- default value
     local radius = args.radius or 1 -- default value
-    local order = args.order or 3 -- default value (Rotne Prager)
+    local order = args.order or 3 -- default value (Rotne-Prager)
 
     local particle = assert(mdsim.particle()) -- singleton
     local dimension = assert(particle.dimension)
@@ -77,7 +71,7 @@ function new(args)
 
     -- connect signals to core
     local core = mdsim.core()
-    core:on_finalize{mobility.compute_velocities, tracker = mobility}
+    core:on_finalize{mobility.compute_velocity, tracker = mobility}
 
     return mobility
 end
@@ -85,16 +79,16 @@ end
 --
 -- connect runtime accumulators to module profiler
 --
-function profile(self, profiler)
-    profiler:on_profile{self, compute_velocities = "compute velocities due to hydrodynamic interactions directly"}
+function M.profile(self, profiler)
+    profiler:on_profile{self, compute_velocity = "compute velocities due to hydrodynamic interactions directly"}
     profiler:on_profile{self, compute = "compute mobility matrix from hydrodynamic interactions"}
 end
 
 --
 -- returns module description
 --
-function name()
-    return "Oseen tensor"
+function M.description()
+    return "Oseen or Rotne-Prager tensor"
 end
 
 --
@@ -102,7 +96,7 @@ end
 --
 -- @param desc po.options_description
 --
-function options(desc)
+function M.options(desc)
     desc:add("viscosity" , po.float() , "dynamic viscosity of medium")
     desc:add("radius" , po.float() , "hydrodynamic radius of all particles")
     desc:add("order" , po.float() , "order of accuracy of hydrodynamic interactions")
@@ -129,3 +123,4 @@ function write_parameters(oseen, group)
     group:write_attribute("order", h5.float(), oseen.order)
 end
 
+return M

@@ -24,6 +24,7 @@
 #include <boost/shared_ptr.hpp>
 #include <lua.hpp>
 
+#include <halmd/io/logger.hpp>
 #include <halmd/mdsim/box.hpp> // reduce_periodic
 #include <halmd/mdsim/mobility.hpp>
 #include <halmd/mdsim/host/particle.hpp>

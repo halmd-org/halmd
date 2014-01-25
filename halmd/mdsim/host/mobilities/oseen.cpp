@@ -22,7 +22,6 @@
 #include <cmath> // sqrt(), pow(), M_PI
 #include <algorithm> // fill
 
-#include <halmd/io/logger.hpp>
 #include <halmd/mdsim/host/mobilities/oseen.hpp>
 #include <halmd/utility/lua/lua.hpp>
 #include <halmd/utility/scoped_timer.hpp>
@@ -43,7 +42,7 @@ oseen<dimension, float_type>::oseen(
   , float radius
   , float viscosity
   , int order
-  , boost::shared_ptr<logger_type> logger
+  , boost::shared_ptr<logger> logger
 )
   // dependency injection
   : particle_(particle)
@@ -82,15 +81,15 @@ void oseen<dimension, float_type>::compute_velocity()
     scoped_timer<timer> timer_(runtime_.compute_velocity); // measure time 'till destruction
 
     // self mobility 1/(6 pi eta a)
-    float_type self_mobility = 1 / (6 * M_PI * viscosity_ * radius_)
+    float_type self_mobility = 1 / (6 * M_PI * viscosity_ * radius_);
 
-    for(unsigned int i = 0; i < particle_->nbox; ++i)
+    for (unsigned int i = 0; i < particle_->nbox; ++i)
     {
         // self mobility
         particle_->v[i] += particle_->f[i];
 
         // interaction
-        for(unsigned int j = i + 1; j < particle_->nbox; ++j)
+        for (unsigned int j = i + 1; j < particle_->nbox; ++j)
         {
             // vector connecting the two particles i and j
             vector_type dr =  particle_->r[i] - particle_->r[j];
@@ -101,12 +100,12 @@ void oseen<dimension, float_type>::compute_velocity()
             float_type dist = sqrt( dist2 );
             float_type b = radius_ / dist; //< to simplify following calculations
 
-            if( order_ <= 2 ) { //oseen
+            if (order_ <= 2) { //oseen
                 particle_->v[i] += (particle_->f[j] + (inner_prod(dr,particle_->f[j]) / dist2) * dr) * 0.75f * b;
                 particle_->v[j] += (particle_->f[i] + (inner_prod(dr,particle_->f[i]) / dist2) * dr) * 0.75f * b;
             }
             else if (order_ <= 4) { // rotne prager
-                if( dist < 2*radius_ ) { // close branch
+                if (dist < 2 * radius_) { // close branch
                     LOG_ONCE( "Particles are at distance " << dist << " -- using close branch" );
                     particle_->v[i] += ( 1 - (9.f / 32) * dist / radius_ ) * particle_->f[j] + ( (3.f / 32) * inner_prod(dr, particle_->f[j]) / (radius_ * dist) ) * dr;
                     particle_->v[j] += ( 1 - (9.f / 32) * dist / radius_ ) * particle_->f[i] + ( (3.f / 32) * inner_prod(dr, particle_->f[i]) / (radius_ * dist) ) * dr;
@@ -148,7 +147,7 @@ template <int dimension, typename float_type>
 void oseen<dimension, float_type>::luaopen(lua_State* L)
 {
     using namespace luabind;
-    static string class_name("oseen_" + lexical_cast<string>(dimension) + "_"));
+    static string class_name("oseen_" + lexical_cast<string>(dimension) + "_");
     module(L, "libhalmd")
     [
         namespace_("mdsim")
@@ -164,7 +163,7 @@ void oseen<dimension, float_type>::luaopen(lua_State* L)
                           , double
                           , double
                           , int
-                          , shared_ptr<logger_type>
+                          , shared_ptr<logger>
                         >())
                         .property("radius", &oseen::radius)
                         .property("viscosity", &oseen::viscosity)

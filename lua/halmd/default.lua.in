@@ -45,6 +45,8 @@ local function script()
     mdsim.position{reader = reader}
     -- set initial particle velocities (optionally from reader)
     mdsim.velocity{reader = reader}
+    -- setup mobility module
+    mdsim.mobility()
 
     -- Construct sampler.
     local sampler = observables.sampler()
@@ -83,6 +85,7 @@ require("halmd.io.writers.trajectory")
 require("halmd.mdsim.box")
 require("halmd.mdsim.force")
 require("halmd.mdsim.integrator")
+require("halmd.mdsim.mobility")
 require("halmd.mdsim.position")
 require("halmd.mdsim.velocity")
 require("halmd.observables.binned_phase_space")
