@@ -88,7 +88,7 @@ function M.__new(args)
     -- density modes from the original, wrapped particle positions (in
     -- mdsim::particle, not samples::phase_space)
     if name ~= "unity" then
-        table.insert(modulation, box.length[dimension-1])
+        table.insert(modulation, box.length[dimension])
     end
     local modulation = modulation_wrapper(unpack(modulation)) -- pass arguments to constructor
 
