@@ -144,6 +144,7 @@ HALMD_LUA_API int luaopen_libhalmd_mdsim_box(lua_State* L)
 // explicit instantiation
 template class box<3>;
 template class box<2>;
+template class box<1>;
 
 } // namespace mdsim
 } // namespace halmd
