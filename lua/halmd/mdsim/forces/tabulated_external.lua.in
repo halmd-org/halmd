@@ -52,6 +52,7 @@ local tabulated_external = assert(libhalmd.mdsim.forces.tabulated_external)
 -- :param args.particle: instance of :class:`halmd.mdsim.particle`
 -- :param args.box: instance of :mod:`halmd.mdsim.box`
 -- :param args.interpolation: instance of :mod:`halmd.mdsim.forces.interpolation`
+-- :param args.virial_interpolation: instance of :mod:`halmd.mdsim.forces.interpolation`
 -- :returns: instance of tabulated_external force module
 --
 -- .. method:: set_coefficients(coefficients)
@@ -82,6 +83,7 @@ local M = module(function(args)
     local particle = utility.assert_kwarg(args, "particle")
     local box = utility.assert_kwarg(args, "box")
     local interpolation = utility.assert_kwarg(args, "interpolation")
+    local virial_interpolation = utility.assert_kwarg(args, "virial_interpolation")
 
     local label = ("tabulated_external force (%s)"):format(assert(particle.label))
     local logger = log.logger({label = label})
@@ -89,7 +91,7 @@ local M = module(function(args)
     interpolation:log(logger)
 
     -- construct force module
-    local self = tabulated_external(particle, box, interpolation, logger)
+    local self = tabulated_external(particle, box, interpolation, virial_interpolation, logger)
 
     self.read_coefficients = function(self, args)
         local file = utility.assert_kwarg(args, "file")
@@ -100,6 +102,9 @@ local M = module(function(args)
         local array, array_to_sample = assert(self.coefficients)(self)
         reader:on_read(array, {"tabulated_coefficients"})
         reader:on_append_read(array_to_sample)
+        local virial, virial_to_sample = assert(self.virial_coefficients)(self)
+        reader:on_read(virial, {"virial_coefficients"})
+        reader:on_append_read(virial_to_sample)
         reader:read()
     end
 

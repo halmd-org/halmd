@@ -24,6 +24,7 @@
 #include <halmd/mdsim/box.hpp>
 #include <halmd/mdsim/host/particle.hpp>
 #include <halmd/utility/profiler.hpp>
+#include <halmd/mdsim/forces/interpolation/linear.hpp>
 
 #include <lua.hpp>
 
@@ -38,7 +39,7 @@ namespace forces {
 /**
  * class template for modules implementing an external force based on pretabulated values
  */
-template <int dimension, typename float_type, typename interpolation_type>
+template <int dimension, typename float_type, typename force_interpolation_type>
 class tabulated_external
 {
 public:
@@ -48,12 +49,14 @@ public:
     typedef particle<dimension, float_type> particle_type;
     typedef box<dimension> box_type;
     typedef typename particle_type::position_type position_type;
+    typedef typename mdsim::forces::interpolation::linear<dimension, float_type> virial_interpolation_type;
     typedef logger logger_type;
 
     tabulated_external(
         std::shared_ptr<particle_type> particle
       , std::shared_ptr<box_type const> box
-      , std::shared_ptr<interpolation_type> interpolation
+      , std::shared_ptr<force_interpolation_type> force_interpolation
+      , std::shared_ptr<virial_interpolation_type> virial_interpolation
       , std::shared_ptr<logger_type> logger = std::make_shared<logger_type>()
     );
 
@@ -73,7 +76,7 @@ public:
      */
     coefficient_array_type const& coefficients() const
     {
-        return coefficients_;
+        return force_coefficients_;
     }
 
     /**
@@ -81,7 +84,23 @@ public:
      */
     coefficient_array_type& coefficients()
     {
-        return coefficients_;
+        return force_coefficients_;
+    }
+
+    /**
+     * Return the const reference of the interpolation coefficients
+     */
+    coefficient_array_type const& virial_coefficients() const
+    {
+        return virial_coefficients_;
+    }
+
+    /**
+     * Return the reference of the interpolation coefficients
+     */
+    coefficient_array_type& virial_coefficients()
+    {
+        return virial_coefficients_;
     }
 
     /**
@@ -89,7 +108,7 @@ public:
      */
     size_t ncoefficients() const
     {
-        return coefficients_.size();
+        return force_coefficients_.size();
     }
 
     /**
@@ -114,13 +133,17 @@ private:
     std::shared_ptr<box_type const> box_;
     /** edges of the precalculated grid */
     std::shared_ptr<position_type const> grid_edges_;
-    /** interpolation functor */
-    std::shared_ptr<interpolation_type const> interpolation_;
+    /** force interpolation functor */
+    std::shared_ptr<force_interpolation_type const> force_interpolation_;
+    /** virial interpolation functor */
+    std::shared_ptr<virial_interpolation_type const> virial_interpolation_;
     /** module logger */
     std::shared_ptr<logger_type> logger_;
 
-    /** coeffcients for the interpolation scheme */
-    coefficient_array_type coefficients_;
+    /** coeffcients for the force interpolation scheme */
+    coefficient_array_type force_coefficients_;
+    /** coeffcients for the virial interpolation scheme */
+    coefficient_array_type virial_coefficients_;
 
     /** cache observer of net force per particle */
     cache<> force_cache_;

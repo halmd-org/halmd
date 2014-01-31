@@ -80,6 +80,14 @@ public:
     }
 
     /**
+     * Return the const reference of the interpolation coefficients
+     */
+    coefficient_array_type const& virial_coefficients() const
+    {
+        return virial_coefficients_;
+    }
+
+    /**
      * Calculate the interpolation coefficients for the given potenial
      */
     void compute();
@@ -112,6 +120,8 @@ private:
 
     /** constraints for the interpolation scheme */
     coefficient_array_type coefficients_;
+    /** constraints for the interpolation scheme */
+    coefficient_array_type virial_coefficients_;
 
     typedef utility::profiler profiler_type;
     typedef typename profiler_type::accumulator_type accumulator_type;
@@ -141,6 +151,7 @@ tabulated_generator<dimension, float_type, potential_type>::tabulated_generator(
 {
     size_type total_knots = std::accumulate(grid_size.begin(), grid_size.end(), 1,  std::multiplies<size_type>());
     coefficients_ = coefficient_array_type(coefficients_per_knot * total_knots);
+    virial_coefficients_ = coefficient_array_type(total_knots);
 }
 
 template <int dimension, typename float_type, typename potential_type>
@@ -177,6 +188,7 @@ tabulated_generator<dimension, float_type, potential_type>::compute()
       , grid_size_
       , [&](grid_size_type const& index) {
           size_type c_offset = coefficients_per_knot * multi_index_to_offset(index, grid_size_);
+          size_type virial_c_offset = multi_index_to_offset(index, grid_size_);
           position_type r1 = element_prod(static_cast<position_type>(index), grid_basis);
 
           // use a fixed species, always assume that the test particle
@@ -186,6 +198,7 @@ tabulated_generator<dimension, float_type, potential_type>::compute()
           vector_type first_der(0);
           vector_type sec_der(0);
           float_type third_der(0);
+          float_type virial(0);
 
           for (size_type i = 0; i < nparticle; ++i) {
               species_type const b = species[i];
@@ -206,6 +219,7 @@ tabulated_generator<dimension, float_type, potential_type>::compute()
               // The potential functor returns the force, but we need the first
               // derivative of the potential, therefore apply minus sign
               first_der -= r * fval;
+              virial += rr * fval;
 
               if (dimension > 1) {
                   float_type second_derivative, third_derivative;
@@ -235,6 +249,7 @@ tabulated_generator<dimension, float_type, potential_type>::compute()
             coefficients_[c_offset + 6] = sec_der[2];   // d²/dydz
             coefficients_[c_offset + 7] = third_der;    // d³/dxdydz
           }
+          virial_coefficients_[virial_c_offset] = virial;
       }
     );
 
@@ -252,6 +267,16 @@ get_coefficients(force_type& force, iterator_type const& first)
     return std::copy(force.coefficients().begin(), force.coefficients().end(), first);
 }
 
+/**
+ * Copy coefficients array to given array.
+ */
+template <typename force_type, typename iterator_type>
+inline iterator_type
+get_virial_coefficients(force_type& force, iterator_type const& first)
+{
+    return std::copy(force.virial_coefficients().begin(), force.virial_coefficients().end(), first);
+}
+
 template <typename force_type>
 static std::function<std::vector<typename force_type::coefficient_value_type> ()>
 wrap_get_coefficients(std::shared_ptr<force_type> self)
@@ -262,6 +287,20 @@ wrap_get_coefficients(std::shared_ptr<force_type> self)
             output.reserve(self->coefficients().size());
         }
         get_coefficients(*self, std::back_inserter(output));
+        return std::move(output);
+    };
+}
+
+template <typename force_type>
+static std::function<std::vector<typename force_type::coefficient_value_type> ()>
+wrap_get_virial_coefficients(std::shared_ptr<force_type> self)
+{
+    return [=]() -> std::vector<typename force_type::coefficient_value_type> {
+        std::vector<typename force_type::coefficient_value_type> output;
+        {
+            output.reserve(self->virial_coefficients().size());
+        }
+        get_virial_coefficients(*self, std::back_inserter(output));
         return std::move(output);
     };
 }
@@ -278,6 +317,7 @@ void tabulated_generator<dimension, float_type, potential_type>::luaopen(lua_Sta
             [
                 class_<tabulated_generator>()
                     .property("get_coefficients", &wrap_get_coefficients<tabulated_generator>)
+                    .property("get_virial_coefficients", &wrap_get_virial_coefficients<tabulated_generator>)
                     .scope
                     [
                         class_<runtime>("runtime")

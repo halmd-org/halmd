@@ -19,6 +19,7 @@
 
 #include <halmd/mdsim/force_kernel.hpp>
 #include <halmd/mdsim/forces/interpolation/cubic_hermite.hpp>
+#include <halmd/mdsim/forces/interpolation/linear.hpp>
 #include <halmd/mdsim/gpu/box_kernel.cuh>
 #include <halmd/mdsim/gpu/forces/tabulated_external_kernel.hpp>
 #include <halmd/mdsim/gpu/particle_kernel.cuh>
@@ -40,7 +41,8 @@ template <
     bool do_aux               //< compute auxiliary variables in addition to force
   , typename vector_type
   , typename gpu_vector_type
-  , typename interpolation_type
+  , typename force_interpolation_type
+  , typename virial_interpolation_type
 >
 __global__ void compute(
     float4 const* g_r
@@ -49,14 +51,16 @@ __global__ void compute(
   , float* g_stress_pot
   , unsigned int ntype
   , vector_type box_length
-  , float const* g_neighbour_coefficients
-  , interpolation_type interpolation
+  , float const* g_force_coefficients
+  , float const* g_virial_coefficients
+  , force_interpolation_type force_interpolation
+  , virial_interpolation_type virial_interpolation
   , bool force_zero
 )
 {
     enum { dimension = vector_type::static_size };
     typedef typename vector_type::value_type value_type;
-    typedef typename interpolation_type::index_type grid_index_type;
+    typedef typename force_interpolation_type::index_type grid_index_type;
     typedef typename type_traits<dimension, float>::stress_tensor_type stress_tensor_type;
 /*#ifdef USE_FORCE_DSFUN
     typedef fixed_vector<dsfloat, dimension> force_vector_type;
@@ -84,11 +88,16 @@ __global__ void compute(
 
     // apply interpolation
     // http://publib.boulder.ibm.com/infocenter/comphelp/v8v101/index.jsp?topic=/com.ibm.xlcpp8a.doc/language/ref/keyword_template_qualifier.htm
-    tie(en_pot_, f) = interpolation.template operator()<force_vector_type>(r, g_neighbour_coefficients);
+    tie(en_pot_, f) = force_interpolation.template operator()<force_vector_type>(r, g_force_coefficients);
 
     if (do_aux) {
         // contribution to stress tensor from this particle
-        // TODO: interpolate stress tensor
+        float virial;
+        force_vector_type dummy;
+        tie(virial, dummy) = virial_interpolation.template operator()<force_vector_type>(r, g_virial_coefficients);
+        for (int d = 0; d < dimension; ++d) {
+            stress_pot[d] = virial/dimension;
+        }
     }
 
     // add old force and auxiliary variables if not zero
@@ -110,19 +119,19 @@ __global__ void compute(
 
 } // namespace tabulated_external_kernel
 
-template <int dimension, typename interpolation_type>
-tabulated_external_wrapper<dimension, interpolation_type> const
-tabulated_external_wrapper<dimension, interpolation_type>::kernel = {
+template <int dimension, typename interpolation_type, typename virial_interpolation_type>
+tabulated_external_wrapper<dimension, interpolation_type, virial_interpolation_type> const
+tabulated_external_wrapper<dimension, interpolation_type, virial_interpolation_type>::kernel = {
     tabulated_external_kernel::compute<false, fixed_vector<float, dimension> >
   , tabulated_external_kernel::compute<true, fixed_vector<float, dimension> >
 };
 
 using namespace halmd::mdsim::forces::interpolation;
 // explicit instantiation
-template class tabulated_external_wrapper<3, cubic_hermite<3, float> >;
-template class tabulated_external_wrapper<2, cubic_hermite<2, float> >;
-template class tabulated_external_wrapper<3, cubic_hermite<3, double> >;
-template class tabulated_external_wrapper<2, cubic_hermite<2, double> >;
+template class tabulated_external_wrapper<3, cubic_hermite<3, float>, linear<3, float> >;
+template class tabulated_external_wrapper<2, cubic_hermite<2, float>, linear<2, float> >;
+template class tabulated_external_wrapper<3, cubic_hermite<3, double>, linear<3, float> >;
+template class tabulated_external_wrapper<2, cubic_hermite<2, double>, linear<2, float> >;
 
 } // namespace forces
 } // namespace gpu

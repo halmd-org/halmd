@@ -28,7 +28,7 @@ namespace mdsim {
 namespace gpu {
 namespace forces {
 
-template <int dimension, typename interpolation_type>
+template <int dimension, typename force_interpolation_type, typename virial_interpolation_type>
 struct tabulated_external_wrapper
 {
     typedef fixed_vector<float, dimension> vector_type;
@@ -43,7 +43,9 @@ struct tabulated_external_wrapper
       , unsigned int
       , vector_type
       , float const*
-      , interpolation_type const
+      , float const*
+      , force_interpolation_type const
+      , virial_interpolation_type const
       , bool
     )> compute;
 
@@ -56,7 +58,9 @@ struct tabulated_external_wrapper
       , unsigned int
       , vector_type
       , float const*
-      , interpolation_type const
+      , float const*
+      , force_interpolation_type const
+      , virial_interpolation_type const
       , bool
     )> compute_aux;
 

@@ -120,6 +120,7 @@ local M = module(function(args)
           , "table")
         local writer = file:writer({location = location, mode = "truncate"})
         writer:on_write(self.get_coefficients, {"tabulated_coefficients"})
+        writer:on_write(self.get_virial_coefficients, {"virial_coefficients"})
         writer:write()
     end
 

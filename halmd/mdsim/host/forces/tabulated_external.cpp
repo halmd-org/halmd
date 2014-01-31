@@ -28,24 +28,28 @@ namespace mdsim {
 namespace host {
 namespace forces {
 
-template <int dimension, typename float_type, typename interpolation_type>
-tabulated_external<dimension, float_type, interpolation_type>::tabulated_external(
+template <int dimension, typename float_type, typename force_interpolation_type>
+tabulated_external<dimension, float_type, force_interpolation_type>::tabulated_external(
     std::shared_ptr<particle_type> particle
   , std::shared_ptr<box_type const> box
-  , std::shared_ptr<interpolation_type> interpolation
+  , std::shared_ptr<force_interpolation_type> force_interpolation
+  , std::shared_ptr<virial_interpolation_type> virial_interpolation
   , std::shared_ptr<logger_type> logger
 )
   : particle_(particle)
   , box_(box)
-  , interpolation_(interpolation)
+  , force_interpolation_(force_interpolation)
+  , virial_interpolation_(virial_interpolation)
   , logger_(logger)
-  , coefficients_(interpolation_->total_knots() * interpolation_type::coefficients_per_knot)
+  , force_coefficients_(force_interpolation_->total_knots() * force_interpolation_type::coefficients_per_knot)
+  , virial_coefficients_(virial_interpolation_->total_knots() * virial_interpolation_type::coefficients_per_knot)
 {
-    std::fill(coefficients_.begin(), coefficients_.end(), 0);
+    std::fill(force_coefficients_.begin(), force_coefficients_.end(), 0);
+    std::fill(virial_coefficients_.begin(), virial_coefficients_.end(), 0);
 }
 
-template <int dimension, typename float_type, typename interpolation_type>
-void tabulated_external<dimension, float_type, interpolation_type>::check_cache()
+template <int dimension, typename float_type, typename force_interpolation_type>
+void tabulated_external<dimension, float_type, force_interpolation_type>::check_cache()
 {
     cache<position_array_type> const& position_cache = particle_->position();
 
@@ -58,8 +62,8 @@ void tabulated_external<dimension, float_type, interpolation_type>::check_cache(
     }
 }
 
-template <int dimension, typename float_type, typename interpolation_type>
-void tabulated_external<dimension, float_type, interpolation_type>::apply()
+template <int dimension, typename float_type, typename force_interpolation_type>
+void tabulated_external<dimension, float_type, force_interpolation_type>::apply()
 {
     cache<position_array_type> const& position_cache = particle_->position();
 
@@ -75,8 +79,8 @@ void tabulated_external<dimension, float_type, interpolation_type>::apply()
     particle_->force_zero_disable();
 }
 
-template <int dimension, typename float_type, typename interpolation_type>
-inline void tabulated_external<dimension, float_type, interpolation_type>::compute_()
+template <int dimension, typename float_type, typename force_interpolation_type>
+inline void tabulated_external<dimension, float_type, force_interpolation_type>::compute_()
 {
     position_array_type const& position = read_cache(particle_->position());
     auto force = make_cache_mutable(particle_->mutable_force());
@@ -98,7 +102,7 @@ inline void tabulated_external<dimension, float_type, interpolation_type>::compu
 
         force_type f;
         float_type pot;
-        tie(pot, f) = interpolation_->template operator()<force_type>(r, &*coefficients_.begin());
+        tie(pot, f) = force_interpolation_->template operator()<force_type>(r, &*force_coefficients_.begin());
 
         if(std::isnan(pot)) {
             throw std::runtime_error("Potential energy diverged");
@@ -108,8 +112,8 @@ inline void tabulated_external<dimension, float_type, interpolation_type>::compu
     }
 }
 
-template <int dimension, typename float_type, typename interpolation_type>
-inline void tabulated_external<dimension, float_type, interpolation_type>::compute_aux_()
+template <int dimension, typename float_type, typename force_interpolation_type>
+inline void tabulated_external<dimension, float_type, force_interpolation_type>::compute_aux_()
 {
     position_array_type const& position = read_cache(particle_->position());
     auto force = make_cache_mutable(particle_->mutable_force());
@@ -134,7 +138,7 @@ inline void tabulated_external<dimension, float_type, interpolation_type>::compu
 
         force_type f;
         float_type pot;
-        tie(pot, f) = interpolation_->template operator()<force_type>(r, &*coefficients_.begin());
+        tie(pot, f) = force_interpolation_->template operator()<force_type>(r, &*force_coefficients_.begin());
 
         (*force)[i] = f;
 
@@ -143,9 +147,12 @@ inline void tabulated_external<dimension, float_type, interpolation_type>::compu
         }
 
         // contributions of stress tensor and potential energy
-        (*en_pot)[i]      += pot;
-        // TODO: full stress tensor?
-        (*stress_pot)[i]  += make_stress_tensor(r, f);
+        (*en_pot)[i] += pot;
+        float_type virial;
+        tie(virial, f) = virial_interpolation_->template operator()<force_type>(r, &*virial_coefficients_.begin());
+        for (int d = 0; d < dimension; ++d) {
+            (*stress_pot)[i][d] = virial/dimension;
+        }
     }
 }
 
@@ -219,27 +226,80 @@ wrap_coefficients(std::shared_ptr<force_type> self, std::function<void ()>& arra
     };
 }
 
-template <typename force_type>
-static std::function<void ()>
-wrap_check_cache(std::shared_ptr<force_type> self)
+
+template<typename tabulated_type, typename iterator_type>
+inline iterator_type
+set_virial_coefficients(tabulated_type& tabulated, iterator_type const& first)
 {
-    return [=]() {
-        self->check_cache();
+    typedef typename tabulated_type::coefficient_array_type coefficient_array_type;
+    typedef typename tabulated_type::coefficient_value_type value_type;
+
+    coefficient_array_type& coefficients = tabulated.virial_coefficients();
+    iterator_type input = first;
+    for (auto& value : coefficients) {
+        value = *input++;
+    }
+    return input;
+}
+
+/**
+ * Copy interpolation coeffcients per particle to given array.
+ */
+template <typename tabulated_type, typename iterator_type>
+inline iterator_type
+get_virial_coefficients(tabulated_type& tabulated, iterator_type const& first)
+{
+    typedef typename tabulated_type::coefficient_array_type coefficient_array_type;
+    coefficient_array_type const& coefficient = tabulated.virial_coefficients();
+    return std::copy(coefficient.begin(), coefficient.end(), first);
+}
+
+template<typename tabulated_type>
+static void
+wrap_set_virial_coefficients(std::shared_ptr<tabulated_type> self, std::vector<typename tabulated_type::coefficient_value_type> const& input)
+{
+    if(input.size() != self->virial_coefficients().size()) {
+        throw std::invalid_argument("input array size not equal to number needed virial coefficients");
+    }
+    set_virial_coefficients(*self, input.begin());
+}
+
+template<typename tabulated_type>
+static std::function<std::vector<typename tabulated_type::coefficient_value_type> const& ()>
+wrap_get_virial_coefficients(std::shared_ptr<tabulated_type> self)
+{
+    return [=]() -> std::vector<typename tabulated_type::coefficient_value_type> const& {
+        std::vector<typename tabulated_type::coefficient_value_type> output;
+        {
+            output.reserve(self->virial_coefficients().size());
+        }
+        get_virial_coefficients(*self, std::back_inserter(output));
+        return std::move(output);
     };
 }
 
-template <typename force_type>
-static std::function<void ()>
-wrap_apply(std::shared_ptr<force_type> self)
+template <typename tabulated_type>
+static std::function<std::vector<typename tabulated_type::coefficient_value_type>& ()>
+wrap_virial_coefficients(std::shared_ptr<tabulated_type> self, std::function<void ()>& array_to_sample)
 {
-    return [=]() {
-        self->apply();
+    typedef std::vector<typename tabulated_type::coefficient_value_type> array_type;
+    std::shared_ptr<array_type> array = std::make_shared<array_type>();
+
+    array_to_sample = [=]() {
+        if (self->virial_coefficients().size() != array->size()) {
+            throw std::runtime_error("input array size not equal to number needed virial coefficients");
+        }
+        set_virial_coefficients(*self, array->begin());
+        array->clear();
+    };
+    return [=]() -> array_type& {
+        return *array;
     };
 }
 
 
-template <int dimension, typename float_type, typename interpolation_type>
-void tabulated_external<dimension, float_type, interpolation_type>::luaopen(lua_State* L)
+template <int dimension, typename float_type, typename force_interpolation_type>
+void tabulated_external<dimension, float_type, force_interpolation_type>::luaopen(lua_State* L)
 {
     using namespace luaponte;
     module(L, "libhalmd")
@@ -251,6 +311,8 @@ void tabulated_external<dimension, float_type, interpolation_type>::luaopen(lua_
                 class_<tabulated_external>()
                     .def("set_coefficients", &wrap_set_coefficients<tabulated_external>)
                     .property("get_coefficients", &wrap_get_coefficients<tabulated_external>)
+                    .def("set_virial_coefficients", &wrap_set_virial_coefficients<tabulated_external>)
+                    .property("get_virial_coefficients", &wrap_get_virial_coefficients<tabulated_external>)
                     .scope
                     [
                         class_<runtime>("runtime")
@@ -258,13 +320,14 @@ void tabulated_external<dimension, float_type, interpolation_type>::luaopen(lua_
                     ]
                     .def_readonly("runtime", &tabulated_external::runtime_)
                     .def("coefficients", &wrap_coefficients<tabulated_external>, pure_out_value(_2))
-                    .def("check_cache", &wrap_check_cache<tabulated_external>)
-                    .def("apply", &wrap_apply<tabulated_external>)
-
+                    .def("virial_coefficients", &wrap_virial_coefficients<tabulated_external>, pure_out_value(_2))
+                    .def("check_cache", &tabulated_external::check_cache)
+                    .def("apply", &tabulated_external::apply)
               , def("tabulated_external", &std::make_shared<tabulated_external,
                     std::shared_ptr<particle_type>
                   , std::shared_ptr<box_type const>
-                  , std::shared_ptr<interpolation_type>
+                  , std::shared_ptr<force_interpolation_type>
+                  , std::shared_ptr<virial_interpolation_type>
                   , std::shared_ptr<logger_type>
                 >)
             ]
