@@ -1,0 +1,121 @@
+--
+-- Copyright © 2014 Nicolas Höft
+--
+-- This file is part of HALMD.
+--
+-- HALMD is free software: you can redistribute it and/or modify
+-- it under the terms of the GNU General Public License as published by
+-- the Free Software Foundation, either version 3 of the License, or
+-- (at your option) any later version.
+--
+-- This program is distributed in the hope that it will be useful,
+-- but WITHOUT ANY WARRANTY; without even the implied warranty of
+-- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+-- GNU General Public License for more details.
+--
+-- You should have received a copy of the GNU General Public License
+-- along with this program.  If not, see <http://www.gnu.org/licenses/>.
+--
+
+local utility = require("halmd.utility")
+local device  = require("halmd.utility.device")
+local module  = require("halmd.utility.module")
+
+---
+-- Linear interpolation
+-- ====================
+--
+-- When passed to :class:`halmd.mdsim.forces.tabulated`, this function
+-- calculates the potential energy and force from lattice points of
+-- precalculated potential energy points and coefficients at the lattice points.
+--
+-- In 1D the interpolated value :math:`\tilde V(x)` is calculated by the following
+-- expression:
+--
+-- .. math::
+--
+--    \tilde V(x) = (1 - x_r) V(x_0) + x_r V(x_1)
+--
+-- where the neighbouring knots are given by :math:`x_0` and :math:`x_1` with
+-- :math:`x_1 > x_0`. :math:`x_r` is the reduced distance
+-- :math:`\frac{x - x_0}{x_1 - x_0}`.
+--
+-- In higher dimensions this scheme is extended to bi- and triliniear interpolation.
+--
+-- Coefficients
+-- ------------
+--
+-- The Cubic Hermite interpolation needs one coefficient per neighbour
+-- to determine the interpolated value.
+--
+
+
+-- grab C++ wrappers
+local linear = {
+    single = assert(libhalmd.mdsim.forces.interpolation.linear_float)
+  , double = assert(libhalmd.mdsim.forces.interpolation.linear_double)
+}
+
+---
+-- Construct linear interpolator.
+--
+-- :param table args: keyword arguments
+-- :param args.box: instance of :mod:`halmd.mdsim.box`
+-- :param table args.length: length of the (optional, defaults to ``box.length``)
+-- :param table args.origin: distance of the box to the origin (optional, defaults to ``box.origin``)
+-- :param number args.nknots: number of knots in each dimension, including
+-- :type args.nknots: number table
+-- :param string args.precision: floating point number precision
+-- :returns: instance of cubic hermite interpolation scheme
+--
+-- If ``box`` is not given, the arguments ``length`` and ``origin`` have to be supplied. This
+-- enables the possibility to have a smaller "unit cell" of the interpolation area,
+-- while the simulation box may be multiples of this unit cell. ``length`` and ``origin`` both
+-- precede ``box``.
+--
+-- The linear interpolator supports "single" and "double" as floating point number precision.
+--
+-- .. attribute:: nknots()
+--
+--    Returns the number of grid points in each spatial direction as a sequence.
+--
+-- .. attribute:: total_knots()
+--
+--    Returns the total number of grid knots needed.
+--
+-- .. attribute:: grid_basis()
+--
+--    Returns the edge lengths of one grid cell.
+--
+-- .. method:: log(logger)
+--
+--    Output interpolation scheme to logger
+--
+--    :param logger: instance of :class:`halmd.io.log.logger`
+--
+local M = module(function(args)
+    local precision = utility.assert_type(utility.assert_kwarg(args, "precision"), "string")
+    local nknots = utility.assert_type(utility.assert_kwarg(args, "nknots"), "table")
+
+    local length = args.length or utility.assert_kwarg(args, "box").length
+    local origin = args.origin or utility.assert_kwarg(args, "box").origin()
+
+    if not linear[precision] then
+        error("Unsupported precision", 2)
+    end
+
+    local self = linear[precision](length, origin, nknots)
+
+    self.log = function(self, logger)
+        if not logger then
+            error("bad argument #1", 2)
+        end
+        logger:info("Linear interpolation")
+    end
+
+    self.coefficients_per_knot = property(function() return 1 end)
+
+    return self
+end)
+
+return M
