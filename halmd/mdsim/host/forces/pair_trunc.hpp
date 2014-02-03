@@ -1,6 +1,6 @@
 /*
  * Copyright © 2010-2011 Felix Höfling
- * Copyright © 2013      Nicolas Höft
+ * Copyright © 2013-2014 Nicolas Höft
  * Copyright © 2008-2012 Peter Colberg
  *
  * This file is part of HALMD.
@@ -156,7 +156,7 @@ inline void pair_trunc<dimension, float_type, potential_type, trunc_type>::check
     cache<species_array_type> const& species1_cache = particle1_->species();
     cache<species_array_type> const& species2_cache = particle2_->species();
 
-    auto current_state = std::tie(position1_cache, species1_cache, position2_cache, species2_cache);
+    auto current_state = std::tie(position1_cache, position2_cache, species1_cache, species2_cache);
 
     if (force_cache_ != current_state) {
         particle1_->mark_force_dirty();
@@ -175,7 +175,7 @@ inline void pair_trunc<dimension, float_type, potential_type, trunc_type>::apply
     cache<species_array_type> const& species1_cache = particle1_->species();
     cache<species_array_type> const& species2_cache = particle2_->species();
 
-    auto current_state = std::tie(position1_cache, species1_cache, position2_cache, species2_cache);
+    auto current_state = std::tie(position1_cache, position2_cache, species1_cache, species2_cache);
 
     if (particle1_->aux_enabled()) {
         compute_aux_();
@@ -211,8 +211,11 @@ inline void pair_trunc<dimension, float_type, potential_type, trunc_type>::compu
         std::fill(force->begin(), force->end(), 0);
     }
 
+    // whether Newton's third law applies
+    bool const reactio = (particle1_ == particle2_);
+
     for (size_type i = 0; i < nparticle1; ++i) {
-        // calculate pairwise Lennard-Jones force with neighbour particles
+        // calculate pairwise force with neighbour particles
         for (size_type j : lists[i]) {
             // particle distance vector
             position_type r = position1[i] - position2[j];
@@ -235,7 +238,9 @@ inline void pair_trunc<dimension, float_type, potential_type, trunc_type>::compu
 
             // add force contribution to both particles
             (*force)[i] += r * fval;
-            (*force)[j] -= r * fval;
+            if (reactio) {
+                (*force)[j] -= r * fval;
+            }
         }
     }
 }
@@ -265,8 +270,11 @@ inline void pair_trunc<dimension, float_type, potential_type, trunc_type>::compu
         std::fill(stress_pot->begin(), stress_pot->end(), 0);
     }
 
+    // whether Newton's third law applies
+    bool const reactio = (particle1_ == particle2_);
+
     for (size_type i = 0; i < nparticle1; ++i) {
-        // calculate pairwise Lennard-Jones force with neighbour particles
+        // calculate pairwise force with neighbour particles
         for (size_type j : lists[i]) {
             // particle distance vector
             position_type r = position1[i] - position2[j];
@@ -289,7 +297,9 @@ inline void pair_trunc<dimension, float_type, potential_type, trunc_type>::compu
 
             // add force contribution to both particles
             (*force)[i] += r * fval;
-            (*force)[j] -= r * fval;
+            if (reactio) {
+                (*force)[j] -= r * fval;
+            }
 
             // contribution to potential energy
             en_pot_type en = 0.5 * pot;
@@ -301,8 +311,10 @@ inline void pair_trunc<dimension, float_type, potential_type, trunc_type>::compu
             (*stress_pot)[i]  += stress;
 
             // store contributions for second particle
-            (*en_pot)[j]      += en;
-            (*stress_pot)[j]  += stress;
+            if (reactio) {
+                (*en_pot)[j]      += en;
+                (*stress_pot)[j]  += stress;
+            }
         }
     }
 }
