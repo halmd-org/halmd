@@ -1,5 +1,7 @@
 /*
- * Copyright © 2008-2011  Peter Colberg and Felix Höfling
+ * Copyright © 2008-2011 Felix Höfling
+ * Copyright © 2014      Nicolas Höft
+ * Copyright © 2008-2011 Peter Colberg
  *
  * This file is part of HALMD.
  *
@@ -36,11 +38,12 @@ struct pair_full_wrapper
 
     /** compute forces only */
     cuda::function<void (
-        coalesced_vector_type*
+        float4 const*
       , float4 const*
-      , float*
-      , float*
       , unsigned int
+      , coalesced_vector_type*
+      , float*
+      , float*
       , unsigned int
       , unsigned int
       , vector_type
@@ -48,11 +51,12 @@ struct pair_full_wrapper
     )> compute;
     /** compute forces and auxiliary stuff: internal energy, potential part of stress tensor, ... */
     cuda::function<void (
-        coalesced_vector_type*
+        float4 const*
       , float4 const*
-      , float*
-      , float*
       , unsigned int
+      , coalesced_vector_type*
+      , float*
+      , float*
       , unsigned int
       , unsigned int
       , vector_type
@@ -62,9 +66,9 @@ struct pair_full_wrapper
     static pair_full_wrapper const kernel;
 };
 
-} // namespace mdsim
-} // namespace gpu
 } // namespace forces
+} // namespace gpu
+} // namespace mdsim
 } // namespace halmd
 
 #endif  /* ! HALMD_MDSIM_GPU_FORCES_PAIR_FULL_KERNEL_HPP */

@@ -1,6 +1,6 @@
 /*
  * Copyright © 2010-2013 Felix Höfling
- * Copyright © 2013      Nicolas Höft
+ * Copyright © 2013-2014 Nicolas Höft
  * Copyright © 2008-2012 Peter Colberg
  *
  * This file is part of HALMD.
@@ -49,7 +49,8 @@ public:
 
     pair_full(
         std::shared_ptr<potential_type const> potential
-      , std::shared_ptr<particle_type> particle
+      , std::shared_ptr<particle_type> particle1
+      , std::shared_ptr<particle_type const> particle2
       , std::shared_ptr<box_type const> box
       , std::shared_ptr<halmd::logger> logger = std::make_shared<halmd::logger>()
     );
@@ -61,7 +62,7 @@ public:
     void check_cache();
 
     /**
-     * Compute and apply the force to the particles.
+     * Compute and apply the force to the particles in particle1.
      */
     void apply();
 
@@ -89,17 +90,19 @@ private:
 
     /** pair potential */
     std::shared_ptr<potential_type const> potential_;
-    /** system state */
-    std::shared_ptr<particle_type> particle_;
+    /** state of first system */
+    std::shared_ptr<particle_type> particle1_;
+    /** state of second system */
+    std::shared_ptr<particle_type const> particle2_;
     /** simulation domain */
     std::shared_ptr<box_type const> box_;
     /** module logger */
     std::shared_ptr<logger> logger_;
 
     /** cache observer of force per particle */
-    cache<> force_cache_;
+    std::tuple<cache<>, cache<>> force_cache_;
     /** cache observer of auxiliary variables */
-    cache<> aux_cache_;
+    std::tuple<cache<>, cache<>> aux_cache_;
 
     typedef utility::profiler::accumulator_type accumulator_type;
     typedef utility::profiler::scoped_timer_type scoped_timer_type;
@@ -117,16 +120,18 @@ private:
 template <int dimension, typename float_type, typename potential_type>
 pair_full<dimension, float_type, potential_type>::pair_full(
     std::shared_ptr<potential_type const> potential
-  , std::shared_ptr<particle_type> particle
+  , std::shared_ptr<particle_type> particle1
+  , std::shared_ptr<particle_type const> particle2
   , std::shared_ptr<box_type const> box
   , std::shared_ptr<logger> logger
 )
   : potential_(potential)
-  , particle_(particle)
+  , particle1_(particle1)
+  , particle2_(particle2)
   , box_(box)
   , logger_(logger)
 {
-    if (std::min(potential_->size1(), potential_->size2()) < particle_->nspecies()) {
+    if (std::min(potential_->size1(), potential_->size2()) < std::max(particle1_->nspecies(), particle2_->nspecies())) {
         throw std::invalid_argument("size of potential coefficients less than number of particle species");
     }
 }
@@ -134,55 +139,65 @@ pair_full<dimension, float_type, potential_type>::pair_full(
 template <int dimension, typename float_type, typename potential_type>
 inline void pair_full<dimension, float_type, potential_type>::check_cache()
 {
-    cache<position_array_type> const& position_cache = particle_->position();
+    cache<position_array_type> const& position1_cache = particle1_->position();
+    cache<position_array_type> const& position2_cache = particle2_->position();
 
-    if (force_cache_ != position_cache) {
-        particle_->mark_force_dirty();
+    auto current_state = std::tie(position1_cache, position2_cache);
+
+    if (force_cache_ != current_state) {
+        particle1_->mark_force_dirty();
     }
 
-    if (aux_cache_ != position_cache) {
-        particle_->mark_aux_dirty();
+    if (aux_cache_ != current_state) {
+        particle1_->mark_aux_dirty();
     }
 }
 
 template <int dimension, typename float_type, typename potential_type>
 inline void pair_full<dimension, float_type, potential_type>::apply()
 {
-    if (particle_->aux_enabled()) {
+    cache<position_array_type> const& position1_cache = particle1_->position();
+    cache<position_array_type> const& position2_cache = particle2_->position();
+
+    auto current_state = std::tie(position1_cache, position2_cache);
+
+    if (particle1_->aux_enabled()) {
         compute_aux_();
-        force_cache_ = particle_->position();
+        force_cache_ = current_state;
         aux_cache_ = force_cache_;
     }
     else {
         compute_();
-        force_cache_ = particle_->position();
+        force_cache_ = current_state;
     }
-    particle_->force_zero_disable();
+    particle1_->force_zero_disable();
 }
 
 template <int dimension, typename float_type, typename potential_type>
 inline void pair_full<dimension, float_type, potential_type>::compute_()
 {
-    LOG_TRACE("compute forces");
+    position_array_type const& position1 = read_cache(particle1_->position());
+    position_array_type const& position2 = read_cache(particle2_->position());
+    auto force = make_cache_mutable(particle1_->mutable_force());
 
-    position_array_type const& position = read_cache(particle_->position());
-    auto force = make_cache_mutable(particle_->mutable_force());
+    LOG_TRACE("compute forces");
 
     scoped_timer_type timer(runtime_.compute);
 
     potential_->bind_textures();
 
-    cuda::configure(particle_->dim.grid, particle_->dim.block);
+    cuda::configure(particle1_->dim.grid, particle1_->dim.block);
     gpu_wrapper::kernel.compute(
-        &*force->begin()
-        , &*position.begin()
-        , nullptr
-        , nullptr
-        , particle_->nparticle()
-        , particle_->nspecies()
-        , particle_->nspecies()
-        , static_cast<position_type>(box_->length())
-        , particle_->force_zero()
+        &*position1.begin()
+      , &*position2.begin()
+      , particle2_->nparticle()
+      , &*force->begin()
+      , nullptr
+      , nullptr
+      , particle1_->nspecies()
+      , particle2_->nspecies()
+      , static_cast<position_type>(box_->length())
+      , particle1_->force_zero()
     );
     cuda::thread::synchronize();
 }
@@ -190,28 +205,30 @@ inline void pair_full<dimension, float_type, potential_type>::compute_()
 template <int dimension, typename float_type, typename potential_type>
 inline void pair_full<dimension, float_type, potential_type>::compute_aux_()
 {
-    LOG_TRACE("compute forces with auxiliary variables");
+    position_array_type const& position1 = read_cache(particle1_->position());
+    position_array_type const& position2 = read_cache(particle2_->position());
+    auto force = make_cache_mutable(particle1_->mutable_force());
+    auto en_pot = make_cache_mutable(particle1_->mutable_potential_energy());
+    auto stress_pot = make_cache_mutable(particle1_->mutable_stress_pot());
 
-    position_array_type const& position = read_cache(particle_->position());
-    auto force = make_cache_mutable(particle_->mutable_force());
-    auto en_pot = make_cache_mutable(particle_->mutable_potential_energy());
-    auto stress_pot = make_cache_mutable(particle_->mutable_stress_pot());
+    LOG_TRACE("compute forces with auxiliary variables");
 
     scoped_timer_type timer(runtime_.compute_aux);
 
     potential_->bind_textures();
 
-    cuda::configure(particle_->dim.grid, particle_->dim.block);
+    cuda::configure(particle1_->dim.grid, particle1_->dim.block);
     gpu_wrapper::kernel.compute_aux(
-        &*force->begin()
-        , &*position.begin()
-        , &*en_pot->begin()
-        , &*stress_pot->begin()
-        , particle_->nparticle()
-        , particle_->nspecies()
-        , particle_->nspecies()
-        , static_cast<position_type>(box_->length())
-        , particle_->force_zero()
+        &*position1.begin()
+      , &*position2.begin()
+      , particle2_->nparticle()
+      , &*force->begin()
+      , &*en_pot->begin()
+      , &*stress_pot->begin()
+      , particle1_->nspecies()
+      , particle2_->nspecies()
+      , static_cast<position_type>(box_->length())
+      , particle1_->force_zero()
     );
     cuda::thread::synchronize();
 }
@@ -240,6 +257,7 @@ void pair_full<dimension, float_type, potential_type>::luaopen(lua_State* L)
               , def("pair_full", &std::make_shared<pair_full,
                     std::shared_ptr<potential_type const>
                   , std::shared_ptr<particle_type>
+                  , std::shared_ptr<particle_type const>
                   , std::shared_ptr<box_type const>
                   , std::shared_ptr<logger>
                 >)

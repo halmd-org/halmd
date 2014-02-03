@@ -1,5 +1,7 @@
 /*
- * Copyright © 2008-2011  Peter Colberg and Felix Höfling
+ * Copyright © 2008-2011 Felix Höfling
+ * Copyright © 2014      Nicolas Höft
+ * Copyright © 2008-2011 Peter Colberg
  *
  * This file is part of HALMD.
  *
@@ -44,11 +46,12 @@ template <
   , typename gpu_vector_type
 >
 __global__ void compute(
-    gpu_vector_type* g_f
-  , float4 const* g_r
+    float4 const* g_r1
+  , float4 const* g_r2
+  , unsigned int npart2
+  ,  gpu_vector_type* g_f
   , float* g_en_pot
   , float* g_stress_pot
-  , unsigned int nparticle
   , unsigned int ntype1
   , unsigned int ntype2
   , vector_type box_length
@@ -63,7 +66,7 @@ __global__ void compute(
     // load particle associated with this thread
     unsigned int type1;
     vector_type r1;
-    tie(r1, type1) <<= g_r[i];
+    tie(r1, type1) <<= g_r1[i];
 
     // contribution to potential energy
     float en_pot_ = 0;
@@ -76,11 +79,11 @@ __global__ void compute(
     vector_type f = 0;
 #endif
 
-    for (unsigned int j = 0; j < nparticle; ++j) {
+    for (unsigned int j = 0; j < npart2; ++j) {
         // load particle
         unsigned int type2;
         vector_type r2;
-        tie(r2, type2) <<= g_r[j];
+        tie(r2, type2) <<= g_r2[j];
         // pair potential
         potential_type const potential(type1, type2, ntype1, ntype2);
 
@@ -92,7 +95,7 @@ __global__ void compute(
         value_type rr = inner_prod(r, r);
 
         // skip self-interaction (branch only here to keep memory reads together)
-        if (i == j) {
+        if (g_r1 == g_r2 && i == j) {
             continue;
         }
 
@@ -134,9 +137,9 @@ pair_full_wrapper<dimension, potential_type>::kernel = {
   , pair_full_kernel::compute<true, fixed_vector<float, dimension>, potential_type>
 };
 
-} // namespace mdsim
-} // namespace gpu
 } // namespace forces
+} // namespace gpu
+} // namespace mdsim
 } // namespace halmd
 
 #endif /* ! HALMD_MDSIM_GPU_FORCES_PAIR_FULL_KERNEL_CUH */

@@ -1,6 +1,6 @@
 /*
  * Copyright © 2010-2011 Felix Höfling
- * Copyright © 2013      Nicolas Höft
+ * Copyright © 2013-2014 Nicolas Höft
  * Copyright © 2008-2012 Peter Colberg
  *
  * This file is part of HALMD.
@@ -50,7 +50,8 @@ public:
 
     pair_full(
         std::shared_ptr<potential_type const> potential
-      , std::shared_ptr<particle_type> particle
+      , std::shared_ptr<particle_type> particle1
+      , std::shared_ptr<particle_type const> particle2
       , std::shared_ptr<box_type const> box
       , std::shared_ptr<halmd::logger> logger = std::make_shared<halmd::logger>()
     );
@@ -90,17 +91,19 @@ private:
 
     /** pair potential */
     std::shared_ptr<potential_type const> potential_;
-    /** system state */
-    std::shared_ptr<particle_type> particle_;
+    /** state of first system */
+    std::shared_ptr<particle_type> particle1_;
+    /** state of second system */
+    std::shared_ptr<particle_type const> particle2_;
     /** simulation domain */
     std::shared_ptr<box_type const> box_;
     /** module logger */
     std::shared_ptr<logger> logger_;
 
     /** cache observer of force per particle */
-    std::tuple<cache<>, cache<>> force_cache_;
+    std::tuple<cache<>, cache<>, cache<>, cache<>> force_cache_;
     /** cache observer of auxiliary variables */
-    std::tuple<cache<>, cache<>> aux_cache_;
+    std::tuple<cache<>, cache<>, cache<>, cache<>> aux_cache_;
 
     typedef utility::profiler::accumulator_type accumulator_type;
     typedef utility::profiler::scoped_timer_type scoped_timer_type;
@@ -117,16 +120,18 @@ private:
 template <int dimension, typename float_type, typename potential_type>
 pair_full<dimension, float_type, potential_type>::pair_full(
     std::shared_ptr<potential_type const> potential
-  , std::shared_ptr<particle_type> particle
+  , std::shared_ptr<particle_type> particle1
+  , std::shared_ptr<particle_type const> particle2
   , std::shared_ptr<box_type const> box
   , std::shared_ptr<logger> logger
 )
   : potential_(potential)
-  , particle_(particle)
+  , particle1_(particle1)
+  , particle2_(particle2)
   , box_(box)
   , logger_(logger)
 {
-    if (std::min(potential_->size1(), potential_->size2()) < particle_->nspecies()) {
+    if (std::min(potential_->size1(), potential_->size2()) < std::max(particle1_->nspecies(), particle2_->nspecies())) {
         throw std::invalid_argument("size of potential coefficients less than number of particle species");
     }
 }
@@ -134,29 +139,33 @@ pair_full<dimension, float_type, potential_type>::pair_full(
 template <int dimension, typename float_type, typename potential_type>
 inline void pair_full<dimension, float_type, potential_type>::check_cache()
 {
-    cache<position_array_type> const& position_cache = particle_->position();
-    cache<species_array_type> const& species_cache = particle_->species();
+    cache<position_array_type> const& position1_cache = particle1_->position();
+    cache<position_array_type> const& position2_cache = particle2_->position();
+    cache<species_array_type> const& species1_cache = particle1_->species();
+    cache<species_array_type> const& species2_cache = particle2_->species();
 
-    auto current_state = std::tie(position_cache, species_cache);
+    auto current_state = std::tie(position1_cache, position2_cache, species1_cache, species2_cache);
 
     if (force_cache_ != current_state) {
-        particle_->mark_force_dirty();
+        particle1_->mark_force_dirty();
     }
 
     if (aux_cache_ != current_state) {
-        particle_->mark_aux_dirty();
+        particle1_->mark_aux_dirty();
     }
 }
 
 template <int dimension, typename float_type, typename potential_type>
 inline void pair_full<dimension, float_type, potential_type>::apply()
 {
-    cache<position_array_type> const& position_cache = particle_->position();
-    cache<species_array_type> const& species_cache = particle_->species();
+    cache<position_array_type> const& position1_cache = particle1_->position();
+    cache<position_array_type> const& position2_cache = particle2_->position();
+    cache<species_array_type> const& species1_cache = particle1_->species();
+    cache<species_array_type> const& species2_cache = particle2_->species();
 
-    auto current_state = std::tie(position_cache, species_cache);
+    auto current_state = std::tie(position1_cache, position2_cache, species1_cache, species2_cache);
 
-    if (particle_->aux_enabled()) {
+    if (particle1_->aux_enabled()) {
         compute_aux_();
         force_cache_ = current_state;
         aux_cache_ = force_cache_;
@@ -165,35 +174,35 @@ inline void pair_full<dimension, float_type, potential_type>::apply()
         compute_();
         force_cache_ = current_state;
     }
-    particle_->force_zero_disable();
+    particle1_->force_zero_disable();
 }
 
 template <int dimension, typename float_type, typename potential_type>
 inline void pair_full<dimension, float_type, potential_type>::compute_()
 {
-    auto force = make_cache_mutable(particle_->mutable_force());
+    auto force = make_cache_mutable(particle1_->mutable_force());
 
-    position_array_type const& position1 = read_cache(particle_->position());
-    position_array_type const& position2 = read_cache(particle_->position());
-    species_array_type const& species1   = *particle_->species();
-    species_array_type const& species2   = *particle_->species();
-    size_type nparticle1 = particle_->nparticle();
-    size_type nparticle2 = particle_->nparticle();
+    position_array_type const& position1 = read_cache(particle1_->position());
+    position_array_type const& position2 = read_cache(particle2_->position());
+    species_array_type const& species1   = *particle1_->species();
+    species_array_type const& species2   = *particle2_->species();
+    size_type nparticle1 = particle1_->nparticle();
+    size_type nparticle2 = particle2_->nparticle();
 
     LOG_TRACE("compute forces");
 
     scoped_timer_type timer(runtime_.compute);
 
     // reset the force and auxiliary variables to zero if necessary
-    if (particle_->force_zero()) {
+    if (particle1_->force_zero()) {
         std::fill(force->begin(), force->end(), 0);
     }
 
     // whether Newton's third law applies
-    bool const reactio = (particle_ == particle_);
+    bool const reactio = (particle1_ == particle2_);
 
     for (size_type i = 0; i < nparticle1; ++i) {
-        // calculate untruncated pairwise Lennard-Jones force with all other particles
+        // calculate untruncated pairwise force with all other particles
         for (size_type j = reactio ? (i + 1) : 0; j < nparticle2; ++j) {
             // particle distance vector
             position_type r = position1[i] - position2[j];
@@ -209,7 +218,9 @@ inline void pair_full<dimension, float_type, potential_type>::compute_()
 
             // add force contribution to both particles
             (*force)[i] += r * fval;
-            (*force)[j] -= r * fval;
+            if (reactio) {
+                (*force)[j] -= r * fval;
+            }
         }
     }
 }
@@ -217,35 +228,34 @@ inline void pair_full<dimension, float_type, potential_type>::compute_()
 template <int dimension, typename float_type, typename potential_type>
 inline void pair_full<dimension, float_type, potential_type>::compute_aux_()
 {
-    auto force      = make_cache_mutable(particle_->mutable_force());
-    auto en_pot     = make_cache_mutable(particle_->mutable_potential_energy());
-    auto stress_pot = make_cache_mutable(particle_->mutable_stress_pot());
+    auto force      = make_cache_mutable(particle1_->mutable_force());
+    auto en_pot     = make_cache_mutable(particle1_->mutable_potential_energy());
+    auto stress_pot = make_cache_mutable(particle1_->mutable_stress_pot());
 
-    position_array_type const& position1 = read_cache(particle_->position());
-    position_array_type const& position2 = read_cache(particle_->position());
-    species_array_type const& species1   = *particle_->species();
-    species_array_type const& species2   = *particle_->species();
-    size_type nparticle1 = particle_->nparticle();
-    size_type nparticle2 = particle_->nparticle();
+    position_array_type const& position1 = read_cache(particle1_->position());
+    position_array_type const& position2 = read_cache(particle2_->position());
+    species_array_type const& species1   = *particle1_->species();
+    species_array_type const& species2   = *particle2_->species();
+    size_type nparticle1 = particle1_->nparticle();
+    size_type nparticle2 = particle2_->nparticle();
 
     LOG_TRACE("compute forces with auxiliary variables");
 
     scoped_timer_type timer(runtime_.compute_aux);
 
     // reset the force and auxiliary variables to zero if necessary
-    if (particle_->force_zero()) {
+    if (particle1_->force_zero()) {
         std::fill(force->begin(), force->end(), 0);
         std::fill(en_pot->begin(), en_pot->end(), 0);
         std::fill(stress_pot->begin(), stress_pot->end(), 0);
     }
 
+    // whether Newton's third law applies
+    bool const reactio = (particle1_ == particle2_);
+
     for (size_type i = 0; i < nparticle1; ++i) {
-        // calculate untruncated pairwise Lennard-Jones force with all other particles
-        for (size_type j = 0; j < nparticle2; ++j) {
-            // skip self-interaction
-            if (i == j ) {
-                continue;
-            }
+        // calculate untruncated pairwise force with all other particles
+        for (size_type j = reactio ? (i + 1) : 0; j < nparticle2; ++j) {
             // particle distance vector
             position_type r = position1[i] - position2[j];
             box_->reduce_periodic(r);
@@ -260,7 +270,9 @@ inline void pair_full<dimension, float_type, potential_type>::compute_aux_()
 
             // add force contribution to both particles
             (*force)[i] += r * fval;
-            (*force)[j] -= r * fval;
+            if (reactio) {
+                (*force)[j] -= r * fval;
+            }
 
             // contribution to potential energy
             en_pot_type en = 0.5 * pot;
@@ -272,8 +284,10 @@ inline void pair_full<dimension, float_type, potential_type>::compute_aux_()
             (*stress_pot)[i]  += stress;
 
             // add contributions for second particle
-            (*en_pot)[j]      += en;
-            (*stress_pot)[j]  += stress;
+            if (reactio) {
+                (*en_pot)[j]      += en;
+                (*stress_pot)[j]  += stress;
+            }
         }
     }
 }
@@ -303,6 +317,7 @@ void pair_full<dimension, float_type, potential_type>::luaopen(lua_State* L)
               , def("pair_full", &std::make_shared<pair_full,
                     std::shared_ptr<potential_type const>
                   , std::shared_ptr<particle_type>
+                  , std::shared_ptr<particle_type const>
                   , std::shared_ptr<box_type const>
                   , std::shared_ptr<logger>
                 >)
