@@ -1,5 +1,5 @@
 --
--- Copyright © 2010-2013 Felix Höfling
+-- Copyright © 2010-2014 Felix Höfling
 -- Copyright © 2013      Nicolas Höft
 -- Copyright © 2010-2011 Peter Colberg
 --
@@ -41,6 +41,19 @@ local pair_full = assert(libhalmd.mdsim.forces.pair_full)
 -- :param args.particle: instance, or sequence of two instances, of :class:`halmd.mdsim.particle`
 -- :param args.box: instance of :mod:`halmd.mdsim.box`
 -- :param args.potential: instance of :mod:`halmd.mdsim.potentials`
+--
+-- The module computes the full potential forces (untruncated, in minimum image
+-- convention) excerted by the particles of the second `particle` instance on
+-- those of the first one. The two instances agree if only a single instance is
+-- passed. Recomputation is triggered by the signals `on_force` and
+-- `on_prepend_force` of `args.particle[1]`.
+--
+-- .. note::
+--
+--   If two different instances of :class:`halmd.mdsim.particle` are passed,
+--   Newton's 3rd law is not obeyed. To restore such a behaviour, the module
+--   must be constructed a second time with the order of particle instances
+--   reversed.
 --
 -- .. attribute:: potential
 --

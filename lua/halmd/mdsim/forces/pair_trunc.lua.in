@@ -1,5 +1,5 @@
 --
--- Copyright © 2010-2013 Felix Höfling
+-- Copyright © 2010-2014 Felix Höfling
 -- Copyright © 2013      Nicolas Höft
 -- Copyright © 2010-2012 Peter Colberg
 --
@@ -46,7 +46,21 @@ local discontinuous = assert(libhalmd.mdsim.forces.trunc.discontinuous)
 -- :param args.trunc: instance of :mod:`halmd.mdsim.forces.trunc` (optional)
 -- :param args.neighbour: instance of :mod:`halmd.mdsim.neighbour` (optional)
 --
--- If ``trunc`` is not specified, the pair potential is :math:`C^0` continuous at the cutoff.
+-- The module computes the truncated potential forces excerted by the particles
+-- of the second `particle` instance on those of the first one. The two
+-- instances agree if only a single instance is passed. Recomputation is
+-- triggered by the signals `on_force` and `on_prepend_force` of
+-- `args.particle[1]`.
+--
+-- .. note::
+--
+--   If two different instances of :class:`halmd.mdsim.particle` are passed,
+--   Newton's 3rd law is not obeyed. To restore such a behaviour, the module
+--   must be constructed a second time with the order of particle instances
+--   reversed.
+--
+-- If ``trunc`` is not specified, the pair potential is :math:`C^0` continuous
+-- at the cutoff.
 --
 -- If ``neighbour`` is left unspecified, a default neighbour list module is
 -- constructed using the default parameters of :mod:`halmd.mdsim.neighbour`. If
