@@ -79,6 +79,10 @@ private:
     cuda::vector<float> g_rr_;
     /** block-reduced squared particle distances */
     cuda::host::vector<float> h_rr_;
+    /** cache observer of position updates */
+    cache<> position_cache_;
+    /** the last calculated displacement */
+    float_type displacement_;
     /** profiling runtime accumulators */
     runtime runtime_;
 };

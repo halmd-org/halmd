@@ -38,6 +38,7 @@ max_displacement<dimension, float_type>::max_displacement(
   , box_(box)
   // allocate parameters
   , r0_(particle_->nparticle())
+  , displacement_(0)
 {
 }
 
@@ -47,9 +48,12 @@ max_displacement<dimension, float_type>::max_displacement(
 template <int dimension, typename float_type>
 void max_displacement<dimension, float_type>::zero()
 {
-    position_array_type const& position = read_cache(particle_->position());
+    cache<position_array_type> const& position_cache = particle_->position();
+    position_array_type const& position = read_cache(position_cache);
     scoped_timer_type timer(runtime_.zero);
     std::copy(position.begin(), position.end(), r0_.begin());
+    displacement_ = 0;
+    position_cache_ = position_cache;
 }
 
 /**
@@ -58,18 +62,24 @@ void max_displacement<dimension, float_type>::zero()
 template <int dimension, typename float_type>
 float_type max_displacement<dimension, float_type>::compute()
 {
-    position_array_type const& position = read_cache(particle_->position());
-    size_type const nparticle = particle_->nparticle();
+    cache<position_array_type> const& position_cache = particle_->position();
 
-    scoped_timer_type timer(runtime_.compute);
+    if (position_cache != position_cache_) {
+        position_array_type const& position = read_cache(position_cache);
+        size_type const nparticle = particle_->nparticle();
 
-    float_type rr_max = 0;
-    for (typename particle_type::size_type i = 0; i < nparticle; ++i) {
-        vector_type r = position[i] - r0_[i];
-        box_->reduce_periodic(r);
-        rr_max = std::max(rr_max, inner_prod(r, r));
+        scoped_timer_type timer(runtime_.compute);
+
+        float_type rr_max = 0;
+        for (typename particle_type::size_type i = 0; i < nparticle; ++i) {
+            vector_type r = position[i] - r0_[i];
+            box_->reduce_periodic(r);
+            rr_max = std::max(rr_max, inner_prod(r, r));
+        }
+        displacement_ = std::sqrt(rr_max);
+        position_cache_ = position_cache;
     }
-    return std::sqrt(rr_max);
+    return displacement_;
 }
 
 template <int dimension, typename float_type>

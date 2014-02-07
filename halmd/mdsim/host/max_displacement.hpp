@@ -71,6 +71,10 @@ private:
     std::shared_ptr<box_type const> box_;
     /* particle positions at last neighbour list update */
     std::vector<vector_type> r0_;
+    /** cache observer of position updates */
+    cache<> position_cache_;
+    /** the last calculated displacement */
+    float_type displacement_;
     /** profiling runtime accumulators */
     runtime runtime_;
 };
