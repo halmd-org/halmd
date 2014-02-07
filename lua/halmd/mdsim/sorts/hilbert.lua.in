@@ -71,8 +71,12 @@ local M = module(function(args)
     -- dependency injection
     local particle = utility.assert_kwarg(args, "particle")
     local box = utility.assert_kwarg(args, "box")
-    local binning = utility.assert_kwarg(args, "binning")
-    local logger = log.logger({label = "Hilbert sort (" .. particle.label .. ")"})
+    local binning
+    if particle.memory == "host" then
+        binning = utility.assert_kwarg(args, "binning")
+    end
+    local label = (" (%s)"):format(assert(particle.label))
+    local logger = log.logger({label = "Hilbert sort" .. label})
 
     local self
     if particle.memory == "gpu" then
@@ -87,8 +91,8 @@ local M = module(function(args)
     -- connect hilbert module to profiler
     local runtime = assert(self.runtime)
 
-    table.insert(conn, assert(profiler:on_profile(runtime.order, "order particles by permutation")))
-    table.insert(conn, assert(profiler:on_profile(runtime.map, "map particles to Hilbert curve")))
+    table.insert(conn, assert(profiler:on_profile(runtime.order, "order particles by permutation" .. label)))
+    table.insert(conn, assert(profiler:on_profile(runtime.map, "map particles to Hilbert curve" .. label)))
 
     return self
 end)

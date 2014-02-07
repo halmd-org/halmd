@@ -81,8 +81,9 @@ local M = module(function(args)
     -- dependency injection
     local box = utility.assert_kwarg(args, "box")
     local particle = utility.assert_kwarg(args, "particle")
-    local logger = log.logger({label = "binning"})
+    local label = (" (%s)"):format(assert(particle.label))
 
+    local logger = log.logger({label = "binning" .. label})
     local dimension = assert(particle.dimension)
 
     local self
@@ -98,7 +99,7 @@ local M = module(function(args)
 
     -- connect binning module to profiler
     local runtime = assert(self.runtime)
-    table.insert(conn, assert(profiler:on_profile(runtime.update, "cell lists update")))
+    table.insert(conn, assert(profiler:on_profile(runtime.update, "cell lists update" .. label)))
 
     return self
 end)

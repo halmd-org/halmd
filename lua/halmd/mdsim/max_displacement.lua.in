@@ -54,13 +54,15 @@ local M = module(function(args)
 
     local self = max_displacement(particle, box)
 
+    local label = (" (%s)"):format(assert(particle.label))
+
     local conn = {}
     self.disconnect = utility.signal.disconnect(conn, "max_displacement module")
 
     -- connect module to profiler
     local runtime = assert(self.runtime)
-    table.insert(conn, assert(profiler:on_profile(runtime.zero, "zero maximum displacement")))
-    table.insert(conn, assert(profiler:on_profile(runtime.compute, "compute maximum displacement")))
+    table.insert(conn, assert(profiler:on_profile(runtime.zero, "zero maximum displacement" .. label)))
+    table.insert(conn, assert(profiler:on_profile(runtime.compute, "compute maximum displacement" .. label)))
 
     return self
 end)
