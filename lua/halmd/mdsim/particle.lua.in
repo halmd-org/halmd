@@ -198,6 +198,13 @@ end
 --
 --    :returns: signal connection
 --
+-- .. method:: __eq(other)
+--
+--    :param other: instance of :class:`halmd.mdsim.particle`
+--
+--    Implements the equality operator ``a = b`` and returns true if the other
+--    ``particle`` instance is the same as this one.
+--
 local M = module(function(args)
     local box = utility.assert_kwarg(args, "box")
     local nparticle = utility.assert_type(utility.assert_kwarg(args, "particles"), "number")

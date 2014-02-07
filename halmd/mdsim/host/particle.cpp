@@ -370,6 +370,14 @@ static int wrap_dimension(particle<dimension, float_type> const&)
     return dimension;
 }
 
+template <typename T>
+static bool equal(std::shared_ptr<T const> self, std::shared_ptr<T const> other)
+{
+    // compare pointers of managed objects. I could not get working
+    // owner_equal() or owner_before() with shared_ptr's passed from Lua
+    return self == other;
+}
+
 template <int dimension, typename float_type>
 void particle<dimension, float_type>::luaopen(lua_State* L)
 {
@@ -413,6 +421,7 @@ void particle<dimension, float_type>::luaopen(lua_State* L)
                     .def("on_prepend_force", &particle::on_prepend_force)
                     .def("on_force", &particle::on_force)
                     .def("on_append_force", &particle::on_append_force)
+                    .def("__eq", &equal<particle>) // operator= in Lua
                     .scope[
                         class_<runtime>("runtime")
                             .def_readonly("rearrange", &runtime::rearrange)
