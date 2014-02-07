@@ -134,7 +134,7 @@ local M = module(function(args)
 
     local memory = args and args.memory or (device.gpu and "gpu" or "host")
 
-    local label = args and args.label and utility.assert_type(label, "string")
+    local label = args and args.label and utility.assert_type(args.label, "string")
     label = "lennard_jones" .. (label and (" (%s)"):format(label) or "")
     local logger = log.logger({label = label})
 
