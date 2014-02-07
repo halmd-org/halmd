@@ -24,6 +24,7 @@ local utility           = require("halmd.utility")
 local device            = require("halmd.utility.device")
 local module            = require("halmd.utility.module")
 local profiler          = require("halmd.utility.profiler")
+local numeric           = require("halmd.utility.numeric")
 local mdsim = {
     binning             = require("halmd.mdsim.binning")
   , max_displacement    = require("halmd.mdsim.max_displacement")
@@ -70,7 +71,7 @@ end
 -- :param table args: keyword arguments
 -- :param args.particle: instance, or sequence of two instances, of :class:`halmd.mdsim.particle`
 -- :param args.box: instance of :class:`halmd.mdsim.box`
--- :param number args.r_cut: cutoff radius of the potential
+-- :param table args.r_cut: matrix with elements :math:`r_{\text{c}, ij}`
 -- :param number args.skin: neighbour list skin *(default: 0.5)*
 -- :param number args.occupancy: Desired cell occupancy. Defaults to
 --   :class:`halmd.mdsim.defaults.occupancy()` *(GPU variant only)*
@@ -79,10 +80,22 @@ end
 --   false*).
 -- :param boolean args.disable_sorting: Disable use of Hilbert sorting
 --   :class:`halmd.mdsim.sorts.hilbert` (*default: false*).
+-- :param args.displacement: instance of :mod:`halmd.mdsim.max_displacement` *(optional)*
+--
+-- If all elements in ``r_cut`` matrix are equal, a scalar value may be passed instead.
+--
+-- If ``displacement`` is left unspecified, a default displacement module of
+-- :mod:`halmd.mdsim.max_displacement` is constructed. Providing an instance of
+-- this module allows the reuse of the displacement module (e.g. when different
+-- neighbour lists share the first instance of ``particle``).
 --
 -- .. attribute:: particle
 --
 --    Sequence of the two instances of :class:`halmd.mdsim.particle`.
+--
+-- .. attribute:: displacement
+--
+--    Instance of :class:`halmd.mdsim.max_displacement`.
 --
 -- .. attribute:: cell_occupancy
 --
@@ -100,6 +113,13 @@ end
 local M = module(function(args)
     -- cutoff radius matrix of truncated potential
     local r_cut = utility.assert_kwarg(args, "r_cut")
+    if type(r_cut) ~= "table" and type(r_cut) ~= "number" then
+        error("bad argument 'r_cut'", 2)
+    end
+    -- promote scalar to matrix
+    if type(r_cut) == "number" then
+        r_cut = numeric.scalar_matrix(1, 1, r_cut)
+    end
     -- neighbour list skin
     local skin = args.skin or 0.5 -- default value
 
@@ -117,7 +137,7 @@ local M = module(function(args)
         error("incompatible 'memory' attributes of particle instances", 2)
     end
 
-    local box = assert(args.box)
+    local box = utility.assert_kwarg(args, "box")
     local dimension = #box:edges()
     local logger = log.logger({label = "neighbour " .. label(particle)})
     local occupancy = args.occupancy -- may be nil
@@ -132,7 +152,7 @@ local M = module(function(args)
     local self
 
     -- neighbour lists
-    local displacement = mdsim.max_displacement{box = box, particle = particle[1]}
+    local displacement = args.displacement or mdsim.max_displacement{box = box, particle = particle[1]}
     if memory == "gpu" then
         if binning then
             occupancy = occupancy or assert(defaults[dimension].from_binning.occupancy)()
@@ -151,6 +171,9 @@ local M = module(function(args)
 
     -- store particle instances as Lua property
     self.particle = property(function(self) return particle end)
+
+    -- store displacement instance as Lua property
+    self.displacement = property(function(self) return displacement end)
 
     -- sort particles before neighbour list update
     if not args.disable_sorting then
