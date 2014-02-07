@@ -132,8 +132,8 @@ local M = module(function(args)
     local memory = args and args.memory or (device.gpu and "gpu" or "host")
 
     local label = args and args.label and utility.assert_type(args.label, "string")
-    label = "lennard_jones_linear" .. (label and (" (%s)"):format(label) or "")
-    local logger = log.logger({label = label})
+    label = label and (" (%s)"):format(label) or ""
+    local logger = log.logger({label =  "lennard_jones_linear" .. label})
 
     -- derive number of species from parameter matrices
     local species = args and args.species
@@ -160,7 +160,7 @@ local M = module(function(args)
 
     -- add description for profiler
     self.description = property(function()
-        return "linearly truncated Lennard-Jones potential"
+        return "linearly truncated Lennard-Jones potential" .. label
     end)
 
     -- store memory location

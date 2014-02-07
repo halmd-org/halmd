@@ -123,8 +123,8 @@ local M = module(function(args)
     local memory = args and args.memory or (device.gpu and "gpu" or "host")
 
     local label = args and args.label and utility.assert_type(args.label, "string")
-    label = "lennard_jones" .. (label and (" (%s)"):format(label) or "")
-    local logger = log.logger({label = label})
+    label = label and (" (%s)"):format(label) or ""
+    local logger = log.logger({label =  "power_law" .. label})
 
     -- derive number of species from parameter matrices
     local species = args and args.species
@@ -155,7 +155,7 @@ local M = module(function(args)
 
     -- add description for profiler
     self.description = property(function()
-        return "Power law potential"
+        return "Power law potential" .. label
     end)
 
     -- store memory location
