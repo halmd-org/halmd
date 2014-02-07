@@ -80,7 +80,7 @@ end
 --   false*).
 -- :param boolean args.disable_sorting: Disable use of Hilbert sorting
 --   :class:`halmd.mdsim.sorts.hilbert` (*default: false*).
--- :param args.displacement: instance of :mod:`halmd.mdsim.max_displacement` *(optional)*
+-- :param args.displacement: instance or two instances of :mod:`halmd.mdsim.max_displacement` *(optional)*
 --
 -- If all elements in ``r_cut`` matrix are equal, a scalar value may be passed instead.
 --
@@ -95,7 +95,7 @@ end
 --
 -- .. attribute:: displacement
 --
---    Instance of :class:`halmd.mdsim.max_displacement`.
+--    Sequence of two instances of :class:`halmd.mdsim.max_displacement`.
 --
 -- .. attribute:: cell_occupancy
 --
@@ -145,14 +145,29 @@ local M = module(function(args)
     -- domain decomposition
     local binning
     if not args.disable_binning then
-        -- FIXME disabling binning not working
+        -- FIXME disabling binning not working on host
         binning = mdsim.binning({box = box, particle = particle[2], r_cut = r_cut, skin = skin, occupancy = occupancy})
     end
 
-    local self
+    local displacement = args.displacement
+    if not displacement then
+        if particle[1] == particle[2] then
+            displacement = mdsim.max_displacement{box = box, particle = particle[1]}
+        else
+            displacement = {mdsim.max_displacement{box = box, particle = particle[1]},  mdsim.max_displacement{box = box, particle = particle[2]}}
+        end
+    end
+
+    if type(displacement) ~= "table" then
+        displacement = {displacement, displacement}
+    end
+
+    if displacement[1].particle ~= particle[1] or displacement[2].particle ~= particle[2] then
+        error("'particle' instances of displacement modules do not match with 'particle' argument", 2)
+    end
 
     -- neighbour lists
-    local displacement = args.displacement or mdsim.max_displacement{box = box, particle = particle[1]}
+    local self
     if memory == "gpu" then
         if binning then
             occupancy = occupancy or assert(defaults[dimension].from_binning.occupancy)()
@@ -172,7 +187,7 @@ local M = module(function(args)
     -- store particle instances as Lua property
     self.particle = property(function(self) return particle end)
 
-    -- store displacement instance as Lua property
+    -- store displacement instances as Lua property
     self.displacement = property(function(self) return displacement end)
 
     -- sort particles before neighbour list update

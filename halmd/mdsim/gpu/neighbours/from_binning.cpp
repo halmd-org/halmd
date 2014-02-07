@@ -42,7 +42,7 @@ template <int dimension, typename float_type>
 from_binning<dimension, float_type>::from_binning(
     std::pair<std::shared_ptr<particle_type const>, std::shared_ptr<particle_type const>> particle
   , std::pair<std::shared_ptr<binning_type>, std::shared_ptr<binning_type>> binning
-  , std::shared_ptr<displacement_type> displacement
+  , std::pair<std::shared_ptr<displacement_type>, std::shared_ptr<displacement_type>> displacement
   , std::shared_ptr<box_type const> box
   , matrix_type const& r_cut
   , double skin
@@ -52,7 +52,7 @@ from_binning<dimension, float_type>::from_binning(
   // dependency injection
   : particle_(particle.first)
   , binning_(binning.first)
-  , displacement_(displacement)
+  , displacement_(displacement.first)
   , box_(box)
   , logger_(logger)
   // allocate parameters
@@ -186,7 +186,7 @@ void from_binning<dimension, float_type>::luaopen(lua_State* L)
               , def("from_binning", &std::make_shared<from_binning
                   , std::pair<std::shared_ptr<particle_type const>,  std::shared_ptr<particle_type const>>
                   , std::pair<std::shared_ptr<binning_type>, std::shared_ptr<binning_type>>
-                  , std::shared_ptr<displacement_type>
+                  , std::pair<std::shared_ptr<displacement_type>, std::shared_ptr<displacement_type>>
                   , std::shared_ptr<box_type const>
                   , matrix_type const&
                   , double

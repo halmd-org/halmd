@@ -72,7 +72,7 @@ public:
 
     from_particle(
         std::pair<std::shared_ptr<particle_type const>, std::shared_ptr<particle_type const>> particle
-      , std::shared_ptr<displacement_type> displacement
+      , std::pair<std::shared_ptr<displacement_type>, std::shared_ptr<displacement_type>> displacement
       , std::shared_ptr<box_type const> box
       , matrix_type const& r_cut
       , double skin
@@ -139,7 +139,8 @@ private:
 
     std::shared_ptr<particle_type const> particle1_;
     std::shared_ptr<particle_type const> particle2_;
-    std::shared_ptr<displacement_type> displacement_;
+    std::shared_ptr<displacement_type> displacement1_;
+    std::shared_ptr<displacement_type> displacement2_;
     std::shared_ptr<box_type const> box_;
     std::shared_ptr<logger> logger_;
 

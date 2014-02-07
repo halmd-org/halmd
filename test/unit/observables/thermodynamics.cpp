@@ -338,7 +338,7 @@ lennard_jones_fluid<modules_type>::lennard_jones_fluid()
     potential = std::make_shared<potential_type>(rc_mat, epsilon_mat, sigma_mat);
     binning = std::make_shared<binning_type>(particle, box, potential->r_cut(), skin);
     msd = std::make_shared<msd_type>(particle, box);
-    neighbour = std::make_shared<neighbour_type>(std::make_pair(particle, particle), std::make_pair(binning, binning), msd, box, potential->r_cut(), skin);
+    neighbour = std::make_shared<neighbour_type>(std::make_pair(particle, particle), std::make_pair(binning, binning), std::make_pair(msd, msd), box, potential->r_cut(), skin);
     position = std::make_shared<position_type>(particle, box, slab);
     velocity = std::make_shared<velocity_type>(particle, random, temp);
     force = std::make_shared<force_type>(potential, particle, particle, box, neighbour);

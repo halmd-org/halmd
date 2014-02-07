@@ -297,7 +297,7 @@ verlet_nvt_hoover<modules_type>::verlet_nvt_hoover()
     potential = std::make_shared<potential_type>(cutoff, epsilon, sigma);
     binning = std::make_shared<binning_type>(particle, box, potential->r_cut(), skin);
     max_displacement = std::make_shared<max_displacement_type>(particle, box);
-    neighbour = std::make_shared<neighbour_type>(std::make_pair(particle, particle), std::make_pair(binning, binning), max_displacement, box, potential->r_cut(), skin);
+    neighbour = std::make_shared<neighbour_type>(std::make_pair(particle, particle), std::make_pair(binning, binning), std::make_pair(max_displacement, max_displacement), box, potential->r_cut(), skin);
     force = std::make_shared<force_type>(potential, particle, particle, box, neighbour);
     particle->on_prepend_force([=](){force->check_cache();});
     particle->on_force([=](){force->apply();});

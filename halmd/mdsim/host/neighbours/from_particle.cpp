@@ -36,7 +36,7 @@ namespace neighbours {
 template <int dimension, typename float_type>
 from_particle<dimension, float_type>::from_particle(
     std::pair<std::shared_ptr<particle_type const>, std::shared_ptr<particle_type const>> particle
-  , std::shared_ptr<displacement_type> displacement
+  , std::pair<std::shared_ptr<displacement_type>, std::shared_ptr<displacement_type>> displacement
   , std::shared_ptr<box_type const> box
   , matrix_type const& r_cut
   , double skin
@@ -45,7 +45,8 @@ from_particle<dimension, float_type>::from_particle(
   // dependency injection
   : particle1_(particle.first)
   , particle2_(particle.second)
-  , displacement_(displacement)
+  , displacement1_(displacement.first)
+  , displacement2_(displacement.second)
   , box_(box)
   , logger_(logger)
   // allocate parameters
@@ -71,10 +72,12 @@ cache<std::vector<typename from_particle<dimension, float_type>::neighbour_list>
 from_particle<dimension, float_type>::lists()
 {
     cache<reverse_tag_array_type> const& reverse_tag_cache = particle1_->reverse_tag();
-    if (neighbour_cache_ != reverse_tag_cache || displacement_->compute() > r_skin_ / 2) {
+    if (neighbour_cache_ != reverse_tag_cache || displacement1_->compute() > r_skin_ / 2
+        || displacement2_->compute() > r_skin_ / 2) {
         on_prepend_update_();
         update();
-        displacement_->zero();
+        displacement1_->zero();
+        displacement2_->zero();
         neighbour_cache_ = reverse_tag_cache;
         on_append_update_();
     }
@@ -155,7 +158,7 @@ void from_particle<dimension, float_type>::luaopen(lua_State* L)
                     .def_readonly("runtime", &from_particle::runtime_)
               , def("from_particle", &std::make_shared<from_particle
                         , std::pair<std::shared_ptr<particle_type const>, std::shared_ptr<particle_type const>>
-                        , std::shared_ptr<displacement_type>
+                        , std::pair<std::shared_ptr<displacement_type>, std::shared_ptr<displacement_type>>
                         , std::shared_ptr<box_type const>
                         , matrix_type const&
                         , double
