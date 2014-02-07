@@ -43,6 +43,10 @@ local max_displacement = assert(libhalmd.mdsim.max_displacement)
 -- :param args.particle: instance of :class:`halmd.mdsim.particle`
 -- :param args.box: instance of :class:`halmd.mdsim.box`
 --
+-- .. attribute:: particle
+--
+--    Instance of :class:`halmd.mdsim.particle`.
+--
 -- .. method:: disconnect()
 --
 --    Disconnect module from profiler.
@@ -58,6 +62,9 @@ local M = module(function(args)
 
     local conn = {}
     self.disconnect = utility.signal.disconnect(conn, "max_displacement module")
+
+    -- store particle instance as Lua property
+    self.particle = property(function(self) return particle end)
 
     -- connect module to profiler
     local runtime = assert(self.runtime)
