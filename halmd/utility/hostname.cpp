@@ -1,5 +1,6 @@
 /*
  * Copyright © 2010  Peter Colberg
+ * Copyright © 2014  Nicolas Höft
  *
  * This file is part of HALMD.
  *
@@ -29,12 +30,14 @@ namespace halmd {
 std::string host_name()
 {
     boost::asio::io_service ios;
+    boost::system::error_code ec;
     namespace bai = boost::asio::ip;
     bai::tcp::resolver resolver(ios);
     bai::tcp::resolver::query query(bai::host_name(), "", bai::tcp::resolver::query::canonical_name);
-    bai::tcp::resolver::iterator addr_iter = resolver.resolve(query);
+    // use non-throwing variant of resolve()
+    bai::tcp::resolver::iterator addr_iter = resolver.resolve(query, ec);
     bai::tcp::resolver::iterator end;
-    if (addr_iter != end) {
+    if (addr_iter != end && !ec) {
         return addr_iter->host_name();
     }
     return query.host_name(); // failed to resolve canonical host name
