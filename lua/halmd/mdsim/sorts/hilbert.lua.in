@@ -1,6 +1,6 @@
 --
 -- Copyright © 2013  Felix Höfling
--- Copyright © 2013  Nicolas Höft
+-- Copyright © 2013-2014  Nicolas Höft
 -- Copyright © 2010  Peter Colberg
 --
 -- This file is part of HALMD.
@@ -57,7 +57,10 @@ local hilbert =  assert(libhalmd.mdsim.sorts.hilbert)
 -- :param table args: keyword arguments
 -- :param args.particle: instance of :class:`halmd.mdsim.particle`
 -- :param args.box: instance of :class:`halmd.mdsim.box`
--- :param args.binning: instance of :class:`halmd.mdsim.binning`
+-- :param args.binning: instance of :class:`halmd.mdsim.binning` *(see below)*
+--
+-- If ``particle`` instance resides in GPU memory (i.e. ``particle.memory`` is ``gpu``),
+-- a ``binning`` instance is not required for construction of the Hilber sort module.
 --
 -- .. method:: order
 --
