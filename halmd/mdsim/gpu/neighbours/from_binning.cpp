@@ -1,6 +1,6 @@
 /*
  * Copyright © 2008-2011 Felix Höfling
- * Copyright © 2013      Nicolas Höft
+ * Copyright © 2013-2014 Nicolas Höft
  * Copyright © 2008-2011 Peter Colberg
  *
  * This file is part of HALMD.
@@ -51,7 +51,7 @@ from_binning<dimension, float_type>::from_binning(
 )
   // dependency injection
   : particle_(particle.first)
-  , binning_(binning.first)
+  , binning_(binning.second)
   , displacement_(displacement.first)
   , box_(box)
   , logger_(logger)
