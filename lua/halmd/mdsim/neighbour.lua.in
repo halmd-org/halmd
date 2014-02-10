@@ -1,5 +1,5 @@
 --
--- Copyright © 2013       Nicolas Höft
+-- Copyright © 2013-2014  Nicolas Höft
 -- Copyright © 2010-2011  Peter Colberg
 --
 -- This file is part of HALMD.
@@ -89,6 +89,9 @@ end
 -- this module allows the reuse of the displacement module (e.g. when different
 -- neighbour lists share the first instance of ``particle``).
 --
+-- For the ``host`` implementation of the ``particle`` module with binning
+-- disabled, Hilbert sorting is disabled also.
+--
 -- .. attribute:: particle
 --
 --    Sequence of the two instances of :class:`halmd.mdsim.particle`.
@@ -99,7 +102,7 @@ end
 --
 -- .. attribute:: cell_occupancy
 --
---    Current cell occupancy. *Only available on GPU variant.*
+--    Average cell occupancy. *Only available on GPU variant.*
 --
 -- .. attribute:: r_skin
 --
@@ -145,16 +148,28 @@ local M = module(function(args)
     -- domain decomposition
     local binning
     if not args.disable_binning then
-        -- FIXME disabling binning not working on host
-        binning = mdsim.binning({box = box, particle = particle[2], r_cut = r_cut, skin = skin, occupancy = occupancy})
+        binning = {}
+        binning[1] = mdsim.binning({
+            box = box, particle = particle[1], r_cut = r_cut, skin = skin, occupancy = occupancy
+        })
+        if particle[1] == particle[2] then
+            binning[2] = binning[1]
+        else
+            binning[2] = mdsim.binning({
+                box = box, particle = particle[2], r_cut = r_cut, skin = skin, occupancy = occupancy
+            })
+        end
     end
 
     local displacement = args.displacement
     if not displacement then
         if particle[1] == particle[2] then
-            displacement = mdsim.max_displacement{box = box, particle = particle[1]}
+            displacement = mdsim.max_displacement({box = box, particle = particle[1]})
         else
-            displacement = {mdsim.max_displacement{box = box, particle = particle[1]},  mdsim.max_displacement{box = box, particle = particle[2]}}
+            displacement = {
+                mdsim.max_displacement({box = box, particle = particle[1]})
+              , mdsim.max_displacement({box = box, particle = particle[2]})
+            }
         end
     end
 
@@ -171,14 +186,14 @@ local M = module(function(args)
     if memory == "gpu" then
         if binning then
             occupancy = occupancy or assert(defaults[dimension].from_binning.occupancy)()
-            self = neighbours.from_binning(particle, {binning, binning}, displacement, box, r_cut, skin, logger, occupancy)
+            self = neighbours.from_binning(particle, binning, displacement, box, r_cut, skin, logger, occupancy)
         else
             occupancy = occupancy or assert(defaults[dimension].from_particle.occupancy)()
             self = neighbours.from_particle(particle, displacement, box, r_cut, skin, logger, occupancy)
         end
     else
         if binning then
-            self = neighbours.from_binning(particle, {binning, binning}, displacement, box, r_cut, skin, logger)
+            self = neighbours.from_binning(particle, binning, displacement, box, r_cut, skin, logger)
         else
             self = neighbours.from_particle(particle, displacement, box, r_cut, skin, logger)
         end
@@ -192,8 +207,12 @@ local M = module(function(args)
 
     -- sort particles before neighbour list update
     if not args.disable_sorting then
-        local sort = mdsim.sort{box = box, particle = particle[1], binning = binning}
-        self:on_prepend_update(sort.order)
+        -- the host variant of the Hilbert sort module requires a binning module,
+        -- disable sorting if binning is not available
+        if memory ~= "host" or binning then
+            local sort = mdsim.sort({box = box, particle = particle[1], binning = binning and binning[1]})
+            self:on_prepend_update(sort.order)
+        end
     end
 
     local conn = {}
