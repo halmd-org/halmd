@@ -61,6 +61,7 @@ __global__ void compute(
   , vector_type box_length
   , trunc_type const trunc
   , bool force_zero
+  , float aux_weight
 )
 {
     enum { dimension = vector_type::static_size };
@@ -120,9 +121,9 @@ __global__ void compute(
         f += fval * r;
         if (do_aux) {
             // potential energy contribution of this particle
-            en_pot_ += 0.5f * en_pot;
+            en_pot_ += aux_weight * en_pot;
             // contribution to stress tensor from this particle
-            stress_pot += 0.5f * fval * make_stress_tensor(r);
+            stress_pot += aux_weight * fval * make_stress_tensor(r);
         }
     }
 

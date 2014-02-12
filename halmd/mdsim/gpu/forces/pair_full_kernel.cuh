@@ -49,13 +49,14 @@ __global__ void compute(
     float4 const* g_r1
   , float4 const* g_r2
   , unsigned int npart2
-  ,  gpu_vector_type* g_f
+  , gpu_vector_type* g_f
   , float* g_en_pot
   , float* g_stress_pot
   , unsigned int ntype1
   , unsigned int ntype2
   , vector_type box_length
   , bool force_zero
+  , float aux_weight
 )
 {
     enum { dimension = vector_type::static_size };
@@ -106,9 +107,9 @@ __global__ void compute(
         f += fval * r;
         if (do_aux) {
             // potential energy contribution of this particle
-            en_pot_ += 0.5f * en_pot;
+            en_pot_ += aux_weight * en_pot;
             // contribution to stress tensor from this particle
-            stress_pot += 0.5f * fval * make_stress_tensor(r);
+            stress_pot += aux_weight * fval * make_stress_tensor(r);
         }
     }
 

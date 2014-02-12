@@ -49,6 +49,7 @@ struct pair_trunc_wrapper
       , vector_type
       , smooth_type const
       , bool
+      , float
     )> compute;
     /** compute forces and auxiliary stuff: internal energy, potential part of stress tensor, ... */
     cuda::function<void (
@@ -64,6 +65,7 @@ struct pair_trunc_wrapper
       , vector_type
       , smooth_type const
       , bool
+      , float
     )> compute_aux;
     /** positions, types */
     cuda::texture<float4> r2;

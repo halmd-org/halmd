@@ -52,6 +52,7 @@ public:
       , std::shared_ptr<particle_type> particle1
       , std::shared_ptr<particle_type const> particle2
       , std::shared_ptr<box_type const> box
+      , float_type aux_weight = 1
       , std::shared_ptr<halmd::logger> logger = std::make_shared<halmd::logger>()
     );
 
@@ -96,6 +97,8 @@ private:
     std::shared_ptr<particle_type const> particle2_;
     /** simulation domain */
     std::shared_ptr<box_type const> box_;
+    /** weight for auxiliary variables */
+    float_type aux_weight_;
     /** module logger */
     std::shared_ptr<logger> logger_;
 
@@ -123,12 +126,14 @@ pair_full<dimension, float_type, potential_type>::pair_full(
   , std::shared_ptr<particle_type> particle1
   , std::shared_ptr<particle_type const> particle2
   , std::shared_ptr<box_type const> box
+  , float_type aux_weight
   , std::shared_ptr<logger> logger
 )
   : potential_(potential)
   , particle1_(particle1)
   , particle2_(particle2)
   , box_(box)
+  , aux_weight_(aux_weight)
   , logger_(logger)
 {
     if (std::min(potential_->size1(), potential_->size2()) < std::max(particle1_->nspecies(), particle2_->nspecies())) {
@@ -198,6 +203,7 @@ inline void pair_full<dimension, float_type, potential_type>::compute_()
       , particle2_->nspecies()
       , static_cast<position_type>(box_->length())
       , particle1_->force_zero()
+      , 1 // aux_weight is relevant for kernel.compute_aux() only
     );
     cuda::thread::synchronize();
 }
@@ -217,6 +223,11 @@ inline void pair_full<dimension, float_type, potential_type>::compute_aux_()
 
     potential_->bind_textures();
 
+    float_type weight = aux_weight_;
+    if (particle1_ == particle2_) {
+        weight /= 2;
+    }
+
     cuda::configure(particle1_->dim.grid, particle1_->dim.block);
     gpu_wrapper::kernel.compute_aux(
         &*position1.begin()
@@ -229,6 +240,7 @@ inline void pair_full<dimension, float_type, potential_type>::compute_aux_()
       , particle2_->nspecies()
       , static_cast<position_type>(box_->length())
       , particle1_->force_zero()
+      , weight
     );
     cuda::thread::synchronize();
 }
@@ -259,6 +271,7 @@ void pair_full<dimension, float_type, potential_type>::luaopen(lua_State* L)
                   , std::shared_ptr<particle_type>
                   , std::shared_ptr<particle_type const>
                   , std::shared_ptr<box_type const>
+                  , float_type
                   , std::shared_ptr<logger>
                 >)
             ]

@@ -57,6 +57,7 @@ public:
       , std::shared_ptr<particle_type const> particle2
       , std::shared_ptr<box_type const> box
       , std::shared_ptr<neighbour_type> neighbour
+      , float_type aux_weight = 1
       , std::shared_ptr<trunc_type const> trunc = std::make_shared<trunc_type>()
       , std::shared_ptr<halmd::logger> logger = std::make_shared<halmd::logger>()
     );
@@ -105,6 +106,8 @@ private:
     std::shared_ptr<box_type const> box_;
     /** neighbour lists */
     std::shared_ptr<neighbour_type> neighbour_;
+    /** weight for auxiliary variables */
+    float_type aux_weight_;
     /** smoothing functor */
     std::shared_ptr<trunc_type const> trunc_;
     /** module logger */
@@ -135,6 +138,7 @@ pair_trunc<dimension, float_type, potential_type, trunc_type>::pair_trunc(
   , std::shared_ptr<particle_type const> particle2
   , std::shared_ptr<box_type const> box
   , std::shared_ptr<neighbour_type> neighbour
+  , float_type aux_weight
   , std::shared_ptr<trunc_type const> trunc
   , std::shared_ptr<logger> logger
 )
@@ -143,6 +147,7 @@ pair_trunc<dimension, float_type, potential_type, trunc_type>::pair_trunc(
   , particle2_(particle2)
   , box_(box)
   , neighbour_(neighbour)
+  , aux_weight_(aux_weight)
   , trunc_(trunc)
   , logger_(logger)
 {
@@ -181,13 +186,12 @@ inline void pair_trunc<dimension, float_type, potential_type, trunc_type>::apply
         compute_aux_();
         force_cache_ = current_state;
         aux_cache_ = force_cache_;
-        particle1_->force_zero_disable();
     }
     else {
         compute_();
         force_cache_ = current_state;
-        particle1_->force_zero_disable();
     }
+    particle1_->force_zero_disable();
 }
 
 template <int dimension, typename float_type, typename potential_type, typename trunc_type>
@@ -273,6 +277,11 @@ inline void pair_trunc<dimension, float_type, potential_type, trunc_type>::compu
     // whether Newton's third law applies
     bool const reactio = (particle1_ == particle2_);
 
+    float_type weight = aux_weight_;
+    if (reactio) {
+        weight /= 2;
+    }
+
     for (size_type i = 0; i < nparticle1; ++i) {
         // calculate pairwise force with neighbour particles
         for (size_type j : lists[i]) {
@@ -302,9 +311,9 @@ inline void pair_trunc<dimension, float_type, potential_type, trunc_type>::compu
             }
 
             // contribution to potential energy
-            en_pot_type en = 0.5 * pot;
+            en_pot_type en = weight * pot;
             // potential part of stress tensor
-            stress_pot_type stress = 0.5 * fval * make_stress_tensor(r);
+            stress_pot_type stress = weight * fval * make_stress_tensor(r);
 
             // store contributions for first particle
             (*en_pot)[i]      += en;
@@ -346,6 +355,7 @@ void pair_trunc<dimension, float_type, potential_type, trunc_type>::luaopen(lua_
                   , std::shared_ptr<particle_type const>
                   , std::shared_ptr<box_type const>
                   , std::shared_ptr<neighbour_type>
+                  , float_type
                   , std::shared_ptr<trunc_type const>
                   , std::shared_ptr<logger>
                 >)

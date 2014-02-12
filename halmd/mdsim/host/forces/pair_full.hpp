@@ -53,6 +53,7 @@ public:
       , std::shared_ptr<particle_type> particle1
       , std::shared_ptr<particle_type const> particle2
       , std::shared_ptr<box_type const> box
+      , float_type aux_weight = 1
       , std::shared_ptr<halmd::logger> logger = std::make_shared<halmd::logger>()
     );
 
@@ -97,6 +98,8 @@ private:
     std::shared_ptr<particle_type const> particle2_;
     /** simulation domain */
     std::shared_ptr<box_type const> box_;
+    /** weight for auxiliary variables */
+    float_type aux_weight_;
     /** module logger */
     std::shared_ptr<logger> logger_;
 
@@ -123,12 +126,14 @@ pair_full<dimension, float_type, potential_type>::pair_full(
   , std::shared_ptr<particle_type> particle1
   , std::shared_ptr<particle_type const> particle2
   , std::shared_ptr<box_type const> box
+  , float_type aux_weight
   , std::shared_ptr<logger> logger
 )
   : potential_(potential)
   , particle1_(particle1)
   , particle2_(particle2)
   , box_(box)
+  , aux_weight_(aux_weight)
   , logger_(logger)
 {
     if (std::min(potential_->size1(), potential_->size2()) < std::max(particle1_->nspecies(), particle2_->nspecies())) {
@@ -253,6 +258,11 @@ inline void pair_full<dimension, float_type, potential_type>::compute_aux_()
     // whether Newton's third law applies
     bool const reactio = (particle1_ == particle2_);
 
+    float_type weight = aux_weight_;
+    if (reactio) {
+        weight /= 2;
+    }
+
     for (size_type i = 0; i < nparticle1; ++i) {
         // calculate untruncated pairwise force with all other particles
         for (size_type j = reactio ? (i + 1) : 0; j < nparticle2; ++j) {
@@ -275,9 +285,9 @@ inline void pair_full<dimension, float_type, potential_type>::compute_aux_()
             }
 
             // contribution to potential energy
-            en_pot_type en = 0.5 * pot;
+            en_pot_type en = weight * pot;
             // potential part of stress tensor
-            stress_pot_type stress = 0.5 * fval * make_stress_tensor(r);
+            stress_pot_type stress = weight * fval * make_stress_tensor(r);
 
             // add contributions for first particle
             (*en_pot)[i]      += en;
@@ -319,6 +329,7 @@ void pair_full<dimension, float_type, potential_type>::luaopen(lua_State* L)
                   , std::shared_ptr<particle_type>
                   , std::shared_ptr<particle_type const>
                   , std::shared_ptr<box_type const>
+                  , float
                   , std::shared_ptr<logger>
                 >)
             ]

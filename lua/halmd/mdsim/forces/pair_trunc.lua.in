@@ -45,12 +45,19 @@ local discontinuous = assert(libhalmd.mdsim.forces.trunc.discontinuous)
 -- :param args.potential: instance of :mod:`halmd.mdsim.potentials`
 -- :param args.trunc: instance of :mod:`halmd.mdsim.forces.trunc` (optional)
 -- :param args.neighbour: instance of :mod:`halmd.mdsim.neighbour` (optional)
+-- :param number args.weight: weight of the auxiliary variables *(default: 1)*
 --
 -- The module computes the truncated potential forces excerted by the particles
 -- of the second `particle` instance on those of the first one. The two
 -- instances agree if only a single instance is passed. Recomputation is
 -- triggered by the signals `on_force` and `on_prepend_force` of
 -- `args.particle[1]`.
+--
+-- The argument ``weight`` determines the fraction of the potential energy and the stress
+-- tensor that that is added to by the interaction of this force module. A value of `1`
+-- is defined as adding the full potential energy and stress tensor of each interaction.
+-- This is especially useful when considering pair forces where the particle instances (`A`
+-- and `B`) are distinct and only `AB` but not `BA` interaction is calculated.
 --
 -- .. note::
 --
@@ -88,6 +95,7 @@ local M = module(function(args)
         error("bad argument 'particle'", 2)
     end
     local box = utility.assert_kwarg(args, "box")
+    local weight = utility.assert_type(args.weight or 1, "number")
     local potential = utility.assert_kwarg(args, "potential")
 
     if particle[1].memory ~= particle[2].memory then
@@ -112,7 +120,7 @@ local M = module(function(args)
     local neighbour = args.neighbour or neighbour({box = box, particle = particle, r_cut = r_cut})
 
     -- construct force module
-    local self = pair_trunc(potential, particle[1], particle[2], box, neighbour, trunc, logger)
+    local self = pair_trunc(potential, particle[1], particle[2], box, neighbour, weight, trunc, logger)
 
     -- attach potential instance as read-only Lua property
     self.potential = property(function(self)

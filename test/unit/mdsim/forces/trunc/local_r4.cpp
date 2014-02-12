@@ -286,7 +286,7 @@ test_local_r4<float_type>::test_local_r4()
     neighbour = std::make_shared<neighbour_type>(particle);
     trunc = std::make_shared<trunc_type>(h);
     host_trunc = std::make_shared<host_trunc_type>(h);
-    force = std::make_shared<force_type>(potential, particle, particle, box, neighbour, trunc);
+    force = std::make_shared<force_type>(potential, particle, particle, box, neighbour, 1, trunc);
     particle->on_prepend_force([=](){force->check_cache();});
     particle->on_force([=](){force->apply();});
 }

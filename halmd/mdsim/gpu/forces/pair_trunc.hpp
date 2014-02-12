@@ -57,6 +57,7 @@ public:
       , std::shared_ptr<particle_type const> particle2
       , std::shared_ptr<box_type const> box
       , std::shared_ptr<neighbour_type> neighbour
+      , float_type aux_weight = 1
       , std::shared_ptr<trunc_type const> trunc = std::make_shared<trunc_type>()
       , std::shared_ptr<halmd::logger> logger = std::make_shared<halmd::logger>()
     );
@@ -104,6 +105,8 @@ private:
     std::shared_ptr<box_type const> box_;
     /** neighbour lists */
     std::shared_ptr<neighbour_type> neighbour_;
+    /** weight for auxiliary variables */
+    float_type aux_weight_;
     /** smoothing functor */
     std::shared_ptr<trunc_type const> trunc_;
     /** module logger */
@@ -134,6 +137,7 @@ pair_trunc<dimension, float_type, potential_type, trunc_type>::pair_trunc(
   , std::shared_ptr<particle_type const> particle2
   , std::shared_ptr<box_type const> box
   , std::shared_ptr<neighbour_type> neighbour
+  , float_type aux_weight
   , std::shared_ptr<trunc_type const> trunc
   , std::shared_ptr<logger> logger
 )
@@ -142,6 +146,7 @@ pair_trunc<dimension, float_type, potential_type, trunc_type>::pair_trunc(
   , particle2_(particle2)
   , box_(box)
   , neighbour_(neighbour)
+  , aux_weight_(aux_weight)
   , trunc_(trunc)
   , logger_(logger)
 {
@@ -216,6 +221,7 @@ inline void pair_trunc<dimension, float_type, potential_type, trunc_type>::compu
       , static_cast<position_type>(box_->length())
       , *trunc_
       , particle1_->force_zero()
+      , 1 // only relevant for kernel.compute_aux()
     );
     cuda::thread::synchronize();
 }
@@ -237,6 +243,11 @@ inline void pair_trunc<dimension, float_type, potential_type, trunc_type>::compu
     gpu_wrapper::kernel.r2.bind(position2);
     potential_->bind_textures();
 
+    float_type weight = aux_weight_;
+    if (particle1_ == particle2_) {
+        weight /= 2;
+    }
+
     cuda::configure(particle1_->dim.grid, particle1_->dim.block);
     gpu_wrapper::kernel.compute_aux(
         &*position1.begin()
@@ -251,6 +262,7 @@ inline void pair_trunc<dimension, float_type, potential_type, trunc_type>::compu
       , static_cast<position_type>(box_->length())
       , *trunc_
       , particle1_->force_zero()
+      , weight
     );
     cuda::thread::synchronize();
 }
@@ -282,6 +294,7 @@ void pair_trunc<dimension, float_type, potential_type, trunc_type>::luaopen(lua_
                   , std::shared_ptr<particle_type const>
                   , std::shared_ptr<box_type const>
                   , std::shared_ptr<neighbour_type>
+                  , float_type
                   , std::shared_ptr<trunc_type const>
                   , std::shared_ptr<logger>
                 >)

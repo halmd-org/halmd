@@ -41,12 +41,19 @@ local pair_full = assert(libhalmd.mdsim.forces.pair_full)
 -- :param args.particle: instance, or sequence of two instances, of :class:`halmd.mdsim.particle`
 -- :param args.box: instance of :mod:`halmd.mdsim.box`
 -- :param args.potential: instance of :mod:`halmd.mdsim.potentials`
+-- :param number args.weight: weight of the auxiliary variables *(default: 1)*
 --
 -- The module computes the full potential forces (untruncated, in minimum image
 -- convention) excerted by the particles of the second `particle` instance on
 -- those of the first one. The two instances agree if only a single instance is
 -- passed. Recomputation is triggered by the signals `on_force` and
 -- `on_prepend_force` of `args.particle[1]`.
+--
+-- The argument ``weight`` determines the fraction of the potential energy and the stress
+-- tensor that that is added to by the interaction of this force module. A value of `1`
+-- is defined as adding the full potential energy and stress tensor of each interaction.
+-- This is especially useful when considering pair forces where the particle instances (`A`
+-- and `B`) are distinct and only `AB` but not `BA` interaction is calculated.
 --
 -- .. note::
 --
@@ -73,6 +80,7 @@ local M = module(function(args)
         error("bad argument 'particle'", 2)
     end
     local box = utility.assert_kwarg(args, "box")
+    local weight = utility.assert_type(args.weight or 1, "number")
     local potential = utility.assert_kwarg(args, "potential")
     local logger = assert(potential.logger)
 
@@ -84,7 +92,7 @@ local M = module(function(args)
     end
 
     -- construct force module
-    local self = pair_full(potential, particle[1], particle[2], box, logger)
+    local self = pair_full(potential, particle[1], particle[2], box, weight, logger)
 
     -- sequence of signal connections
     local conn = {}
