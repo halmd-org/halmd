@@ -127,7 +127,7 @@ local M = module(function(args)
     local resolution = interval * assert(clock.timestep)
     local label = assert(msv.group.label)
     local dimension = assert(msv.dimension)
-    local nparticle = (function() return msv:nparticle() end)() -- FIXME
+    local nparticle = msv:particle_number()
 
     local stress_tensor = accumulator({
         aquire = msv.stress_tensor
