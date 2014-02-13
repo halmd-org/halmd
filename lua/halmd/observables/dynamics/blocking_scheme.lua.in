@@ -1,5 +1,5 @@
 --
--- Copyright © 2011-2013 Felix Höfling
+-- Copyright © 2011-2014 Felix Höfling
 -- Copyright © 2011-2012 Peter Colberg
 --
 -- This file is part of HALMD.
@@ -120,17 +120,28 @@ local M = module(function(args)
         -- construct correlation function for blocking scheme
         local result = correlation(tcf, sample[1], sample[#sample], logger)
 
-        -- write correlation function results
-        assert(tcf.writer)
-        local writer = tcf:writer({file = file, location = location})
-        writer:on_write(self.time, {"time"}) -- FIXME hardlink
-        writer:on_write(result.mean, {"value"})
-        writer:on_write(result.error, {"error"})
-        writer:on_write(result.count, {"count"})
-
         -- sequence of signal connections
         local conn = {}
         result.disconnect = utility.signal.disconnect(conn, "correlation function")
+
+        -- establish internal connections of the correlation function
+        -- e.g., particle:enable_aux() → sampler.on_prepare_force,
+        -- and append to our connection table
+        if tcf.connect then
+            conn_ = tcf:connect({every = every}) -- FIXME pass actual grid of sampling steps
+            for i,c in ipairs(conn_) do
+                table.insert(conn, c)
+            end
+        end
+
+        -- write correlation function results
+        assert(tcf.writer)
+        local writer = tcf:writer({file = file, location = location})
+        -- the parentheses are needed since on_write returns a tuple
+        table.insert(conn, (writer:on_write(self.time, {"time"}))) -- FIXME hardlink
+        table.insert(conn, (writer:on_write(result.mean, {"value"})))
+        table.insert(conn, (writer:on_write(result.error, {"error"})))
+        table.insert(conn, (writer:on_write(result.count, {"count"})))
 
         -- connect correlation function to blocking scheme and profiler
         for i,s in ipairs(sample) do

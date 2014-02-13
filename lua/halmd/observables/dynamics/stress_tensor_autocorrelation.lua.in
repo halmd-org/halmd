@@ -1,6 +1,6 @@
 --
--- Copyright © 2013 Nicolas Höft
--- Copyright © 2013 Felix Höfling
+-- Copyright © 2013      Nicolas Höft
+-- Copyright © 2013-2014 Felix Höfling
 --
 -- This file is part of HALMD.
 --
@@ -81,6 +81,19 @@ local sampler     = require("halmd.observables.sampler")
 --
 --    Module description.
 --
+-- .. method:: connect(args)
+--
+--    :param table args: keyword arguments
+--    :param args.every: sampling interval
+--    :returns: sequence of signal connections
+--
+--    *Internal use only.* This function is called upon registration by
+--    ``blocking_scheme:correlation()``.
+--
+--    Connect ``msv.group.particle:aux_enable()`` to the signal
+--    ``on_prepend_force`` of :class:`halmd.observables.sampler` using the
+--    interval ``every``.
+--
 -- .. class:: writer(args)
 --
 --    Construct file writer.
@@ -94,10 +107,6 @@ local sampler     = require("halmd.observables.sampler")
 --    The argument ``location`` specifies a path in a structured file format
 --    like H5MD given as a table of strings. It defaults to ``{"dynamics",
 --    self.label, "stress_tensor_autocorrelation"}``.
---
---    .. method:: disconnect()
---
---       Disconnect thermodynamics writer from observables sampler.
 --
 local M = module(function(args)
     local msv = utility.assert_kwarg(args, "thermodynamics")
@@ -128,8 +137,14 @@ local M = module(function(args)
       , desc = ("stress tensor autocorrelation of %s particles"):format(label)
     }))
 
-    local conn = {}
-    self.disconnect = utility.signal.disconnect(conn, "thermodynamics writer")
+    self.connect = function(self, args)
+        local every = utility.assert_kwarg(args, "every")
+
+        local conn = {
+            assert(sampler:on_prepare(function() msv.group.particle:aux_enable() end, every, 0))
+        }
+        return conn
+    end
 
     return self
 end)
