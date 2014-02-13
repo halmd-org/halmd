@@ -185,7 +185,6 @@ local function shear_viscosity(args)
     integrator = mdsim.integrators.verlet({
         box = box
       , particle = particle
-      , force = force
       , timestep = args.timestep
     })
 
