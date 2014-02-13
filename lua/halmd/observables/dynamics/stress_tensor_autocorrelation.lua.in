@@ -131,8 +131,6 @@ local M = module(function(args)
     local conn = {}
     self.disconnect = utility.signal.disconnect(conn, "thermodynamics writer")
 
-    table.insert(conn, assert(sampler:on_prepare(function() msv.group.particle:aux_enable() end, every, 0)))
-
     return self
 end)
 
