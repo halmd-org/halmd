@@ -178,7 +178,7 @@ local function parse_args()
         end
         args[key] = value
     end, default = {1, 1, 1}, help = "relative aspect ratios of simulation box"})
-    parser:add_argument("cutoff", {type = "number", default = math.pow(2, 1 / 6), help = "potential cutoff radius"})
+    parser:add_argument("cutoff", {type = "float32", default = math.pow(2, 1 / 6), help = "potential cutoff radius"})
     parser:add_argument("smoothing", {type = "number", default = 0.005, help = "cutoff smoothing parameter"})
     parser:add_argument("masses", {type = "vector", dtype = "number", default = {1}, help = "particle masses"})
     parser:add_argument("temperature", {type = "number", default = 1.5, help = "initial system temperature"})

@@ -238,7 +238,7 @@ local function parse_args()
     end, default = 1, help = "increase logging verbosity"})
 
     parser:add_argument("density", {type = "number", default = 0.8442, help = "particle number density"})
-    parser:add_argument("cutoff", {type = "number", default = 2.5, help = "potential cutoff radius"})
+    parser:add_argument("cutoff", {type = "float32", default = 2.5, help = "potential cutoff radius"})
     parser:add_argument("masses", {type = "vector", dtype = "number", default = {1}, help = "particle masses"})
     parser:add_argument("temperature", {type = "number", default = 0.722, help = "initial system temperature"})
     parser:add_argument("rate", {type = "number", default = 5, help = "heat bath collision rate"})

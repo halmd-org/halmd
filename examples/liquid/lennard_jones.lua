@@ -241,7 +241,7 @@ local function parse_args()
         args[key] = value
     end, help = "H5MD trajectory file"})
 
-    parser:add_argument("cutoff", {type = "number", default = math.pow(2, 1 / 6), help = "potential cutoff radius"})
+    parser:add_argument("cutoff", {type = "float32", default = math.pow(2, 1 / 6), help = "potential cutoff radius"})
     parser:add_argument("smoothing", {type = "number", default = 0.005, help = "cutoff smoothing parameter"})
     parser:add_argument("time", {type = "number", default = 100, help = "integration time"})
     parser:add_argument("timestep", {type = "number", default = 0.001, help = "integration time step"})
