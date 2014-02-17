@@ -20,6 +20,7 @@
 local module   = require("halmd.utility.module")
 
 local log      = require("halmd.io.log")
+local clock    = require("halmd.mdsim.clock")
 local utility  = require("halmd.utility")
 local profiler = require("halmd.utility.profiler")
 local sampler  = require("halmd.observables.sampler")
@@ -40,7 +41,7 @@ local property = property
 -- .. math::
 --
 --     S_{(\alpha\beta)}(\vec k) = \frac{1}{N} \bigl\langle \rho_\alpha(\vec k)^* \rho_\beta(\vec k) \bigr\rangle
--- 
+--
 -- from the Fourier modes of a given pair of (partial) density fields,
 --
 -- .. math::
@@ -154,7 +155,7 @@ local M = module(function(args)
 
         -- connect writer to sampler
         if every > 0 then
-            table.insert(conn, assert(sampler:on_sample(writer.write, every, 0)))
+            table.insert(conn, assert(sampler:on_sample(writer.write, every, clock.step)))
         end
 
         return writer

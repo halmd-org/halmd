@@ -209,7 +209,7 @@ local M = module(function(args)
 
         -- connect writer to sampler
         if every and every > 0 then
-            table.insert(conn, assert(sampler:on_sample(writer.write, every, 0)))
+            table.insert(conn, assert(sampler:on_sample(writer.write, every, clock.step)))
         else
             table.insert(conn, assert(sampler:on_start(writer.write)))
             table.insert(conn, assert(sampler:on_finish(writer.write)))

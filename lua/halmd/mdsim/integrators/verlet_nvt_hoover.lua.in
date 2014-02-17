@@ -150,13 +150,13 @@ local M = module(function(args)
         writer:on_write(self.xi, {"position"})
         writer:on_write(self.v_xi, {"velocity"})
         -- connect writer to sampler
-        sampler:on_sample(writer.write, every, 0)
+        sampler:on_sample(writer.write, every, clock.step)
 
         -- connect chain energy to writers of observables file
         writer = file:writer{location = {"observables"}, mode = "append"}
         writer:on_write(self.en_nhc, {"nose_hoover", "total_energy"})
         -- connect writer to sampler
-        sampler:on_sample(writer.write, every, 0)
+        sampler:on_sample(writer.write, every, clock.step)
 
         -- FIXME disconnect()
 

@@ -18,6 +18,7 @@
 -- along with this program.  If not, see <http://www.gnu.org/licenses/>.
 --
 
+local clock       = require("halmd.mdsim.clock")
 local utility     = require("halmd.utility")
 local module      = require("halmd.utility.module")
 local correlation = require("halmd.observables.dynamics.correlation")
@@ -141,7 +142,7 @@ local M = module(function(args)
         local every = utility.assert_kwarg(args, "every")
 
         local conn = {
-            assert(sampler:on_prepare(function() msv.group.particle:aux_enable() end, every, 0))
+            assert(sampler:on_prepare(function() msv.group.particle:aux_enable() end, every, clock.step))
         }
         return conn
     end

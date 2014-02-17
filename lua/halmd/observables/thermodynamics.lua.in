@@ -20,6 +20,7 @@
 --
 
 local log     = require("halmd.io.log")
+local clock   = require("halmd.mdsim.clock")
 local module  = require("halmd.utility.module")
 local sampler = require("halmd.observables.sampler")
 local utility = require("halmd.utility")
@@ -234,7 +235,7 @@ local M = module(function(args)
         if aux then
             table.insert(conn, assert(sampler:on_prepare(function() group.particle:aux_enable() end, every, 0)))
         end
-        table.insert(conn, assert(sampler:on_sample(writer.write, every, 0)))
+        table.insert(conn, assert(sampler:on_sample(writer.write, every, clock.step)))
         return writer
     end
     local conn = {}

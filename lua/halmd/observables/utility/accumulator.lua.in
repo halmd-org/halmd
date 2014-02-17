@@ -19,6 +19,7 @@
 --
 
 local log      = require("halmd.io.log")
+local clock    = require("halmd.mdsim.clock")
 local utility  = require("halmd.utility")
 local module   = require("halmd.utility.module")
 local sampler  = require("halmd.observables.sampler")
@@ -39,7 +40,7 @@ local accumulator = assert(libhalmd.observables.utility.accumulator)
 -- :param args: keyword arguments
 -- :param args.acquire: callable that returns a number
 -- :param number args.every: interval for aquiring the value
--- :param number args.start: start step for aquiring the value (*default:* ``0``)
+-- :param number args.start: start step for aquiring the value (*default:* :attr:`halmd.mdsim.clock.step`)
 -- :param string args.desc: profiling description
 -- :param table args.aux_enable: sequence of :class:`halmd.mdsim.particle` instances *(optional)*
 --
@@ -117,7 +118,7 @@ local accumulator = assert(libhalmd.observables.utility.accumulator)
 local M = module(function(args)
     local aquire = utility.assert_kwarg(args, "aquire")
     local every = utility.assert_type(utility.assert_kwarg(args, "every"), "number")
-    local start = utility.assert_type(args.start or 0, "number")
+    local start = utility.assert_type(args.start or clock.step, "number")
 
     local desc = utility.assert_type(utility.assert_kwarg(args, "desc"), "string")
     local logger = log.logger({label = ("accumulator (%s)"):format(desc)})

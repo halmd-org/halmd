@@ -162,7 +162,7 @@ local M = module(function(args)
     self.disconnect = utility.signal.disconnect(conn, "blocking scheme")
 
     -- connect blocking scheme to sampler
-    table.insert(conn, assert(sampler:on_sample(self.sample, every, 0)))
+    table.insert(conn, assert(sampler:on_sample(self.sample, every, clock.step)))
     table.insert(conn, assert(sampler:on_finish(self.finalise)))
     logger:info("sampling interval in integration steps: " .. every)
 
