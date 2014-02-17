@@ -1,6 +1,6 @@
 /*
  * Copyright © 2008-2011  Felix Höfling
- * Copyright © 2013       Nicolas Höft
+ * Copyright © 2013-2014  Nicolas Höft
  * Copyright © 2008-2011  Peter Colberg
  *
  * This file is part of HALMD.
@@ -54,9 +54,24 @@ binning<dimension, float_type>::binning(
   , logger_(logger)
   // allocate parameters
   , r_skin_(skin)
+  , r_cut_max_(*std::max_element(r_cut.data().begin(), r_cut.data().end()))
   , nu_cell_(cell_occupancy)
 {
-    float_type r_cut_max = *std::max_element(r_cut.data().begin(), r_cut.data().end());
+    set_occupancy(cell_occupancy);
+
+    try {
+        cuda::copy(particle_->nparticle(), get_binning_kernel<dimension>().nbox);
+    }
+    catch (cuda::error const&) {
+        LOG_ERROR("failed to copy cell parameters to device symbols");
+        throw;
+    }
+}
+
+template <int dimension, typename float_type>
+void binning<dimension, float_type>::set_occupancy(double cell_occupancy)
+{
+    nu_cell_ = cell_occupancy;
     // find an optimal(?) cell size
     // ideally, we would like to have warp_size placeholders per cell
     //
@@ -73,7 +88,7 @@ binning<dimension, float_type>::binning(
     //
     // upper bound on ncell_ provided by 1)
     cell_size_type ncell_max =
-        static_cast<cell_size_type>(box_->length() / (r_cut_max + r_skin_));
+        static_cast<cell_size_type>(box_->length() / (r_cut_max_ + r_skin_));
     // determine optimal value from 2,3) together with b,c)
     size_t warp_size = cuda::device::properties(cuda::device::get()).warp_size();
     double nwarps = particle_->nparticle() / (nu_cell_ * warp_size);
@@ -106,14 +121,6 @@ binning<dimension, float_type>::binning(
     LOG("desired average cell occupancy: " << nu_cell_);
     nu_cell_eff_ = static_cast<double>(particle_->nparticle()) / dim_cell_.threads();
     LOG("effective average cell occupancy: " << nu_cell_eff_);
-
-    try {
-        cuda::copy(particle_->nparticle(), get_binning_kernel<dimension>().nbox);
-    }
-    catch (cuda::error const&) {
-        LOG_ERROR("failed to copy cell parameters to device symbols");
-        throw;
-    }
 
     try {
         auto g_cell = make_cache_mutable(g_cell_);
@@ -153,37 +160,42 @@ void binning<dimension, float_type>::update()
 
     LOG_TRACE("update cell lists");
 
-    scoped_timer_type timer(runtime_.update);
+    bool overcrowded = false;
+    do {
+        scoped_timer_type timer(runtime_.update);
 
-    // compute cell indices for particle positions
-    cuda::configure(particle_->dim.grid, particle_->dim.block);
-    get_binning_kernel<dimension>().compute_cell(
-        &*position.begin()
-      , g_cell_index_
-      , cell_length_
-      , static_cast<fixed_vector<uint, dimension> >(ncell_)
-    );
+        // compute cell indices for particle positions
+        cuda::configure(particle_->dim.grid, particle_->dim.block);
+        get_binning_kernel<dimension>().compute_cell(
+            &*position.begin()
+        , g_cell_index_
+        , cell_length_
+        , static_cast<fixed_vector<uint, dimension> >(ncell_)
+        );
 
-    // generate permutation
-    cuda::configure(particle_->dim.grid, particle_->dim.block);
-    get_binning_kernel<dimension>().gen_index(g_cell_permutation_);
-    radix_sort(g_cell_index_.begin(), g_cell_index_.end(), g_cell_permutation_.begin());
+        // generate permutation
+        cuda::configure(particle_->dim.grid, particle_->dim.block);
+        get_binning_kernel<dimension>().gen_index(g_cell_permutation_);
+        radix_sort(g_cell_index_.begin(), g_cell_index_.end(), g_cell_permutation_.begin());
 
-    // compute global cell offsets in sorted particle list
-    cuda::memset(g_cell_offset_, 0xFF);
-    cuda::configure(particle_->dim.grid, particle_->dim.block);
-    get_binning_kernel<dimension>().find_cell_offset(g_cell_index_, g_cell_offset_);
+        // compute global cell offsets in sorted particle list
+        cuda::memset(g_cell_offset_, 0xFF);
+        cuda::configure(particle_->dim.grid, particle_->dim.block);
+        get_binning_kernel<dimension>().find_cell_offset(g_cell_index_, g_cell_offset_);
 
-    // assign particles to cells
-    cuda::vector<int> g_ret(1);
-    cuda::host::vector<int> h_ret(1);
-    cuda::memset(g_ret, EXIT_SUCCESS);
-    cuda::configure(dim_cell_.grid, dim_cell_.block);
-    get_binning_kernel<dimension>().assign_cells(g_ret, g_cell_index_, g_cell_offset_, g_cell_permutation_, &*g_cell->begin());
-    cuda::copy(g_ret, h_ret);
-    if (h_ret.front() != EXIT_SUCCESS) {
-        throw std::runtime_error("overcrowded placeholders in cell lists update");
-    }
+        // assign particles to cells
+        cuda::vector<int> g_ret(1);
+        cuda::host::vector<int> h_ret(1);
+        cuda::memset(g_ret, EXIT_SUCCESS);
+        cuda::configure(dim_cell_.grid, dim_cell_.block);
+        get_binning_kernel<dimension>().assign_cells(g_ret, g_cell_index_, g_cell_offset_, g_cell_permutation_, &*g_cell->begin());
+        cuda::copy(g_ret, h_ret);
+        overcrowded = h_ret.front() != EXIT_SUCCESS;
+        if (overcrowded) {
+            LOG("overcrowded placeholders in cell lists update, reducing occupancy");
+            set_occupancy(nu_cell_ / 2);
+        }
+    } while(overcrowded);
 }
 
 template <int dimension, typename float_type>

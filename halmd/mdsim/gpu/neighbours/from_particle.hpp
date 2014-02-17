@@ -1,5 +1,7 @@
 /*
- * Copyright © 2008-2011  Peter Colberg and Felix Höfling
+ * Copyright © 2008-2011  Felix Höfling
+ * Copyright © 2014       Nicolas Höft
+ * Copyright © 2008-2011  Peter Colberg
  *
  * This file is part of HALMD.
  *
@@ -136,6 +138,7 @@ private:
     };
 
     void update();
+    void set_occupancy(double occupancy);
 
     std::shared_ptr<particle_type const> particle1_;
     std::shared_ptr<particle_type const> particle2_;
@@ -146,6 +149,8 @@ private:
 
     /** neighbour list skin in MD units */
     float_type r_skin_;
+    /** maximum cutoff length */
+    float_type r_cut_max_;
     /** (cutoff lengths + neighbour list skin)² */
     matrix_type rr_cut_skin_;
     /** (cutoff lengths + neighbour list skin)² */

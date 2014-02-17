@@ -57,27 +57,40 @@ from_binning<dimension, float_type>::from_binning(
   , logger_(logger)
   // allocate parameters
   , r_skin_(skin)
+  , r_cut_max_(*std::max_element(r_cut.data().begin(), r_cut.data().end()))
   , rr_cut_skin_(r_cut.size1(), r_cut.size2())
   , g_rr_cut_skin_(rr_cut_skin_.data().size())
   , nu_cell_(cell_occupancy) // FIXME neighbour list occupancy
 {
-    typename matrix_type::value_type r_cut_max = 0;
     for (size_t i = 0; i < r_cut.size1(); ++i) {
         for (size_t j = 0; j < r_cut.size2(); ++j) {
             rr_cut_skin_(i, j) = std::pow(r_cut(i, j) + r_skin_, 2);
-            r_cut_max = std::max(r_cut(i, j), r_cut_max);
         }
     }
+    try {
+        cuda::copy(particle_->nparticle(), get_from_binning_kernel<dimension>().nbox);
+        cuda::copy(rr_cut_skin_.data(), g_rr_cut_skin_);
+    }
+    catch (cuda::error const&) {
+        LOG_ERROR("failed to copy neighbour list parameters to device symbols");
+        throw;
+    }
+    set_occupancy(cell_occupancy);
+}
 
+template <int dimension, typename float_type>
+void from_binning<dimension, float_type>::set_occupancy(double cell_occupancy)
+{
+    nu_cell_ = cell_occupancy;
     // volume of n-dimensional sphere with neighbour list radius
     // volume of unit sphere: V_d = π^(d/2) / Γ(1+d/2), Γ(1) = 1, Γ(1/2) = √π
     float_type unit_sphere[5] = {0, 2, M_PI, 4 * M_PI / 3, M_PI * M_PI / 2 };
     assert(dimension <= 4);
-    float_type neighbour_sphere = unit_sphere[dimension] * std::pow(r_cut_max + r_skin_, dimension);
+    float_type neighbour_sphere = unit_sphere[dimension] * std::pow(r_cut_max_ + r_skin_, dimension);
     // partial number density
     float_type density = particle_->nparticle() / box_->volume();
     // number of placeholders per neighbour list
-    size_ = static_cast<size_t>(ceil(neighbour_sphere * (density / binning_->effective_cell_occupancy())));
+    size_ = static_cast<size_t>(ceil(neighbour_sphere * (density / cell_occupancy)));
     // at least cell_size (or warp_size?) placeholders
     // FIXME what is a sensible lower bound?
     size_ = std::max(size_, binning_->cell_size());
@@ -91,8 +104,6 @@ from_binning<dimension, float_type>::from_binning(
     LOG("number of placeholders per neighbour list: " << size_);
 
     try {
-        cuda::copy(particle_->nparticle(), get_from_binning_kernel<dimension>().nbox);
-        cuda::copy(rr_cut_skin_.data(), g_rr_cut_skin_);
         cuda::copy(size_, get_from_binning_kernel<dimension>().neighbour_size);
         cuda::copy(stride_, get_from_binning_kernel<dimension>().neighbour_stride);
     }
@@ -129,31 +140,36 @@ void from_binning<dimension, float_type>::update()
 
     LOG_TRACE("update neighbour lists");
 
-    scoped_timer_type timer(runtime_.update);
+    bool overcrowded = false;
+    do {
+        scoped_timer_type timer(runtime_.update);
 
-    // mark neighbour list placeholders as virtual particles
-    cuda::memset(g_neighbour->begin(), g_neighbour->end(), 0xFF);
-    // build neighbour lists
-    cuda::vector<int> g_ret(1);
-    cuda::host::vector<int> h_ret(1);
-    cuda::memset(g_ret, EXIT_SUCCESS);
-    cuda::configure(binning_->dim_cell().grid, binning_->dim_cell().block, binning_->cell_size() * (2 + dimension) * sizeof(int));
-    get_from_binning_kernel<dimension>().r.bind(position);
-    get_from_binning_kernel<dimension>().rr_cut_skin.bind(g_rr_cut_skin_);
-    get_from_binning_kernel<dimension>().update_neighbours(
-        g_ret
-      , &*g_neighbour->begin()
-      , &*g_cell.begin()
-      , rr_cut_skin_.size1()
-      , rr_cut_skin_.size2()
-      , binning_->ncell()
-      , static_cast<vector_type>(box_->length())
-    );
-    cuda::thread::synchronize();
-    cuda::copy(g_ret, h_ret);
-    if (h_ret.front() != EXIT_SUCCESS) {
-        throw std::runtime_error("overcrowded placeholders in neighbour lists update");
-    }
+        // mark neighbour list placeholders as virtual particles
+        cuda::memset(g_neighbour->begin(), g_neighbour->end(), 0xFF);
+        // build neighbour lists
+        cuda::vector<int> g_ret(1);
+        cuda::host::vector<int> h_ret(1);
+        cuda::memset(g_ret, EXIT_SUCCESS);
+        cuda::configure(binning_->dim_cell().grid, binning_->dim_cell().block, binning_->cell_size() * (2 + dimension) * sizeof(int));
+        get_from_binning_kernel<dimension>().r.bind(position);
+        get_from_binning_kernel<dimension>().rr_cut_skin.bind(g_rr_cut_skin_);
+        get_from_binning_kernel<dimension>().update_neighbours(
+            g_ret
+        , &*g_neighbour->begin()
+        , &*g_cell.begin()
+        , rr_cut_skin_.size1()
+        , rr_cut_skin_.size2()
+        , binning_->ncell()
+        , static_cast<vector_type>(box_->length())
+        );
+        cuda::thread::synchronize();
+        cuda::copy(g_ret, h_ret);
+        overcrowded = h_ret.front() != EXIT_SUCCESS;
+        if (overcrowded) {
+            LOG("overcrowded placeholders in neighbour lists update, reducing occupancy");
+            set_occupancy(nu_cell_ / 2);
+        }
+    } while (overcrowded);
 }
 
 template <int dimension, typename float_type>

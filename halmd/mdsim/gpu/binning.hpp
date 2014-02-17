@@ -1,5 +1,7 @@
 /*
- * Copyright © 2008-2012  Peter Colberg and Felix Höfling
+ * Copyright © 2008-2012  Felix Höfling
+ * Copyright © 2014       Nicolas Höft
+ * Copyright © 2008-2012  Peter Colberg
  *
  * This file is part of HALMD.
  *
@@ -121,6 +123,7 @@ private:
     };
 
     void update();
+    void set_occupancy(double cell_occupancy);
 
     std::shared_ptr<particle_type const> particle_;
     std::shared_ptr<box_type const> box_;
@@ -128,6 +131,8 @@ private:
     std::shared_ptr<logger> logger_;
     /** neighbour list skin in MD units */
     float_type r_skin_;
+    /** maximum cutoff */
+    float_type r_cut_max_;
     /** average desired cell occupancy */
     float_type nu_cell_;
     /** average effective cell occupancy */

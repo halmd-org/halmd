@@ -1,5 +1,7 @@
 /*
- * Copyright © 2008-2011  Peter Colberg and Felix Höfling
+ * Copyright © 2008-2011  Felix Höfling
+ * Copyright © 2014       Nicolas Höft
+ * Copyright © 2008-2011  Peter Colberg
  *
  * This file is part of HALMD.
  *
@@ -55,24 +57,31 @@ from_particle<dimension, float_type>::from_particle(
   , logger_(logger)
   // allocate parameters
   , r_skin_(skin)
+  , r_cut_max_(*std::max_element(r_cut.data().begin(), r_cut.data().end()))
   , rr_cut_skin_(particle1_->nspecies(), particle2_->nspecies())
   , g_rr_cut_skin_(rr_cut_skin_.data().size())
   , nu_cell_(cell_occupancy) // FIXME neighbour list occupancy
 {
-    typename matrix_type::value_type r_cut_max = 0;
     for (size_t i = 0; i < particle1_->nspecies(); ++i) {
         for (size_t j = 0; j < particle2_->nspecies(); ++j) {
             rr_cut_skin_(i, j) = std::pow(r_cut(i, j) + r_skin_, 2);
-            r_cut_max = std::max(r_cut(i, j), r_cut_max);
         }
     }
     cuda::copy(rr_cut_skin_.data(), g_rr_cut_skin_);
+    LOG("neighbour list skin: " << r_skin_);
 
+    set_occupancy(cell_occupancy);
+}
+
+template <int dimension, typename float_type>
+void from_particle<dimension, float_type>::set_occupancy(double cell_occupancy)
+{
+    nu_cell_ = cell_occupancy;
     // volume of n-dimensional sphere with neighbour list radius
     // volume of unit sphere: V_d = π^(d/2) / Γ(1+d/2), Γ(1) = 1, Γ(1/2) = √π
     float_type unit_sphere[5] = {0, 2, M_PI, 4 * M_PI / 3, M_PI * M_PI / 2 };
     assert(dimension <= 4);
-    float_type neighbour_sphere = unit_sphere[dimension] * std::pow(r_cut_max + r_skin_, dimension);
+    float_type neighbour_sphere = unit_sphere[dimension] * std::pow(r_cut_max_ + r_skin_, dimension);
     // partial number density
     float_type density = particle1_->nparticle() / box_->volume();
     // number of placeholders per neighbour list
@@ -85,8 +94,6 @@ from_particle<dimension, float_type>::from_particle(
     // allocate neighbour lists
     auto g_neighbour = make_cache_mutable(g_neighbour_);
     g_neighbour->resize(stride_ * size_);
-
-    LOG("neighbour list skin: " << r_skin_);
     LOG("number of placeholders per neighbour list: " << size_);
 }
 
@@ -119,39 +126,44 @@ void from_particle<dimension, float_type>::update()
 
     LOG_TRACE("update neighbour lists");
 
-    scoped_timer_type timer(runtime_.update);
 
-    // mark neighbour list placeholders as virtual particles
-    cuda::memset(g_neighbour->begin(), g_neighbour->end(), 0xFF);
-    // build neighbour lists
-    cuda::vector<int> g_overflow(1);
-    cuda::host::vector<int> h_overflow(1);
-    cuda::memset(g_overflow, 0);
-    get_from_particle_kernel<dimension>().rr_cut_skin.bind(g_rr_cut_skin_);
-    cuda::configure(
-        particle1_->dim.grid
-      , particle1_->dim.block
-      , particle1_->dim.threads_per_block() * (sizeof(unsigned int) + sizeof(vector_type))
-    );
-    get_from_particle_kernel<dimension>().update(
-        &*position1.begin()
-      , particle1_->nparticle()
-      , &*position2.begin()
-      , particle2_->nparticle()
-      , particle1_->nspecies()
-      , particle2_->nspecies()
-      , static_cast<vector_type>(box_->length())
-      , &*g_neighbour->begin()
-      , size_
-      , stride_
-      , g_overflow
-    );
-    cuda::copy(g_overflow, h_overflow);
-    cuda::thread::synchronize();
-    if (h_overflow.front() > 0) {
-        LOG_ERROR("failed to bin " << h_overflow.front() << " particles");
-        throw std::runtime_error("neighbour list occupancy too large");
-    }
+    bool overcrowded = false;
+    do {
+        scoped_timer_type timer(runtime_.update);
+
+        // mark neighbour list placeholders as virtual particles
+        cuda::memset(g_neighbour->begin(), g_neighbour->end(), 0xFF);
+        // build neighbour lists
+        cuda::vector<int> g_overflow(1);
+        cuda::host::vector<int> h_overflow(1);
+        cuda::memset(g_overflow, 0);
+        get_from_particle_kernel<dimension>().rr_cut_skin.bind(g_rr_cut_skin_);
+        cuda::configure(
+            particle1_->dim.grid
+        , particle1_->dim.block
+        , particle1_->dim.threads_per_block() * (sizeof(unsigned int) + sizeof(vector_type))
+        );
+        get_from_particle_kernel<dimension>().update(
+            &*position1.begin()
+        , particle1_->nparticle()
+        , &*position2.begin()
+        , particle2_->nparticle()
+        , particle1_->nspecies()
+        , particle2_->nspecies()
+        , static_cast<vector_type>(box_->length())
+        , &*g_neighbour->begin()
+        , size_
+        , stride_
+        , g_overflow
+        );
+        cuda::copy(g_overflow, h_overflow);
+        cuda::thread::synchronize();
+        overcrowded = h_overflow.front() > 0;
+        if (overcrowded) {
+            LOG("failed to bin " << h_overflow.front() << " particles, reducing occupancy");
+            set_occupancy(nu_cell_ / 2);
+        }
+    } while (overcrowded);
 }
 
 template <int dimension, typename float_type>
