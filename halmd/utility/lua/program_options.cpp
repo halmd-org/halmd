@@ -1,5 +1,6 @@
 /*
- * Copyright © 2008-2012  Peter Colberg
+ * Copyright © 2014      Felix Höfling
+ * Copyright © 2008-2012 Peter Colberg
  *
  * This file is part of HALMD.
  *
@@ -35,6 +36,7 @@
 #include <luaponte/operator.hpp> // luaponte::tostring
 #include <luaponte/return_reference_to_policy.hpp>
 #include <luaponte/shared_ptr_converter.hpp>
+#include <sstream>
 #include <stdint.h>
 
 #include <halmd/config.hpp>
@@ -215,6 +217,28 @@ static po::typed_value<T>*
 default_value(po::typed_value<T>* semantic, T const& value)
 {
     return semantic->default_value(value);
+}
+
+// boost::program_options uses boost::lexical_cast to format default values for
+// output, which messes up with rounding of floating-point numbers, e.g., 0.1
+// becomes "0.10000000000000001". To resolve the issue, we specialise the
+// template for T=float,double and let std::ostringstream convert the value.
+template <>
+po::typed_value<float>*
+default_value(po::typed_value<float>* semantic, float const& value)
+{
+    std::ostringstream ss;
+    ss << value;
+    return semantic->default_value(value, ss.str());
+}
+
+template <>
+po::typed_value<double>*
+default_value(po::typed_value<double>* semantic, double const& value)
+{
+    std::ostringstream ss;
+    ss << value;
+    return semantic->default_value(value, ss.str());
 }
 
 template <typename T>
