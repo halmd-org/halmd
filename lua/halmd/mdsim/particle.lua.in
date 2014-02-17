@@ -47,9 +47,9 @@ end
 -- Construct particle instance.
 --
 -- :param table args: keyword arguments
--- :param number args.box: instance of :class:`halmd.mdsim.box`
 -- :param number args.particles: number of particles
--- :param number args.species: number of species
+-- :param number args.species: number of species (*default:* 1)
+-- :param number args.dimension: dimension of space (*default:* 3)
 -- :param string args.memory: device where the particle information is stored *(optional)*
 -- :param string args.label: instance label (*default:* ``all``)
 --
@@ -206,11 +206,11 @@ end
 --    ``particle`` instance is the same as this one.
 --
 local M = module(function(args)
-    local box = utility.assert_kwarg(args, "box")
+    utility.assert_type(args, "table")
     local nparticle = utility.assert_type(utility.assert_kwarg(args, "particles"), "number")
-    local nspecies = utility.assert_type(utility.assert_kwarg(args, "species"), "number")
-
-    local label = args.label or "all"
+    local dimension = utility.assert_type(args.dimension or 3, "number")
+    local nspecies = utility.assert_type(args.species or 1, "number")
+    local label = utility.assert_type(args.label or "all", "string")
 
     local memory = args and args.memory or (device.gpu and "gpu" or "host")
     if not particle[memory] then
@@ -218,7 +218,6 @@ local M = module(function(args)
     end
 
     -- select particle class
-    local dimension = #box:edges()
     local particle = assert(particle[memory][dimension])
 
     -- construct particle instance

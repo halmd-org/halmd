@@ -57,7 +57,7 @@ local function liquid(args)
     file:close()
 
     -- create system state
-    local particle = mdsim.particle({box = box, particles = nparticle, species = nspecies})
+    local particle = mdsim.particle({dimension = dimension, particles = nparticle, species = nspecies})
 
     -- smoothly truncated Lennard-Jones potential
     local potential = mdsim.potentials.lennard_jones({cutoff = args.cutoff, species = particle.nspecies})

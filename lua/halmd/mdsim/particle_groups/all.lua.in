@@ -30,7 +30,7 @@ local module = require("halmd.utility.module")
 -- Example::
 --
 --    -- construct particle instance for given simulation domain
---    local system = halmd.mdsim.particle({box = box, particles = 10000, species = 1})
+--    local system = halmd.mdsim.particle({particles = 10000})
 --
 --    -- select all particles
 --    local group_all = halmd.mdsim.particle_groups.all({particle = particle})

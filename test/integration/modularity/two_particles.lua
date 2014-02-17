@@ -68,7 +68,9 @@ local function restore(args)
     -- create system state, one particle instance per species
     local particle = {}
     for label, sample in pairs(samples) do
-        local p = mdsim.particle({box = box, particles = sample.nparticle, species = nspecies, label = label})
+        local p = mdsim.particle({
+            dimension = box.dimension, particles = sample.nparticle, species = nspecies, label = label
+        })
         observables.phase_space({
             box = box
           , group = mdsim.particle_groups.all({particle = p})

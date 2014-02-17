@@ -60,7 +60,7 @@ local function lennard_jones(args)
     local file = writers.h5md({path = ("%s.h5"):format(args.output)})
 
     -- create system state
-    local particle = mdsim.particle({box = box, particles = sample.nparticle, species = 1})
+    local particle = mdsim.particle({dimension = dimension, particles = sample.nparticle})
 
     -- setup particles from trajectory sample
     local all_group = mdsim.particle_groups.all({particle = particle, label = "all"})

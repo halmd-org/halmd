@@ -31,7 +31,7 @@ local module    = require("halmd.utility.module")
 -- Example::
 --
 --    -- construct particle instance for given simulation domain
---    local system = halmd.mdsim.particle({box = box, particles = 10000, species = 2})
+--    local system = halmd.mdsim.particle({particles = 10000, species = 2})
 --
 --    -- select each species, assuming particles of a species have contiguous tags
 --    local group_A = halmd.mdsim.particle_groups.from_range({particle = system, range = {1, 5000}, label = "A"})

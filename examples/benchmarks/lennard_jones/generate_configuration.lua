@@ -45,7 +45,7 @@ local function lennard_jones(args)
     local box = mdsim.box({edges = {{length, 0, 0}, {0, length, 0}, {0, 0, length}}})
 
     -- create system state with 1 particle species
-    local particle = mdsim.particle({box = box, particles = nparticle, species = 1})
+    local particle = mdsim.particle({dimension = dimension, particles = nparticle})
 
     -- set initial particle positions
     mdsim.positions.lattice({box = box, particle = particle}):set()

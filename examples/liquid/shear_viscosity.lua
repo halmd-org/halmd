@@ -80,7 +80,7 @@ local function shear_viscosity(args)
     local box = mdsim.box({length = {length, length, length}})
 
     -- create system state
-    local particle = mdsim.particle({box = box, particles = nparticle, species = 1})
+    local particle = mdsim.particle({dimension = dimension, particles = nparticle})
 
     -- set initial particle positions
     local lattice = mdsim.positions.lattice({box = box, particle = particle})

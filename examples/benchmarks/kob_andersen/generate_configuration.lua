@@ -50,7 +50,7 @@ local function kob_andersen(args)
     local box = mdsim.box({edges = {{length, 0, 0}, {0, length, 0}, {0, 0, length}}})
 
     -- create system state
-    local particle = mdsim.particle({box = box, particles = nparticle, species = 2})
+    local particle = mdsim.particle({dimension = dimension, particles = nparticle, species = 2})
 
     -- set particle species, with continuous range of tags per species:
     -- construct array with particle species: (0, 0, … 0, 1, 1, … 1)

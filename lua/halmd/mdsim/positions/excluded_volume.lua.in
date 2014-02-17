@@ -57,7 +57,7 @@ local excluded_volume = assert(libhalmd.mdsim.positions.excluded_volume)
 --             error(("cannot place obstacle %d after %d repeats"):format(i, repeats))
 --         end
 --     end
---     local particle = halmd.mdsim.particle{box = box, particles = #obstacles, species = 1}
+--     local particle = halmd.mdsim.particle{dimension = box.dimension, particles = #obstacles}
 --     particle:set_position(obstacles)
 --
 -- .. note::

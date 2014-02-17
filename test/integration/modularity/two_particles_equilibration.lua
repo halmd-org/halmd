@@ -73,8 +73,7 @@ local function setup(args)
     local box = mdsim.box({length = length})
 
     -- create system state for all particles first
-    -- FIXME particle does actually not depend on box, replace by "dimension"
-    local particle = mdsim.particle({box = box, particles = np[1] + np[2], species = 2})
+    local particle = mdsim.particle({dimension = dimension, particles = np[1] + np[2], species = 2})
     -- set particle species, with continuous range of tags per species
     local species = {}
     local groups = {}
