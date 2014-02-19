@@ -1,5 +1,6 @@
 /*
- * Copyright © 2012  Peter Colberg
+ * Copyright © 2014 Felix Höfling
+ * Copyright © 2012 Peter Colberg
  *
  * This file is part of HALMD.
  *
@@ -127,6 +128,7 @@ test_binning(binning_type& binning, particle_type const& particle, box_type cons
     auto make_cell_iterator = [&](cell_size_type const& cell, unsigned int& count) {
         return boost::make_function_output_iterator(
             [&](unsigned int index) {
+                assert( index < particle.nparticle() );
                 BOOST_CHECK_EQUAL( cell, floor(element_prod(position[index], unit_ncell)) );
                 particle_index.push_back(index);
                 ++count;
@@ -134,21 +136,22 @@ test_binning(binning_type& binning, particle_type const& particle, box_type cons
         );
     };
 
-    // allocate output array for particles per cell counts
-    std::vector<unsigned int> cell_count(ncell, 0);
+    // output array for counting the particles per cell
+    std::vector<unsigned int> cell_count;
 
     BOOST_TEST_MESSAGE( "bin particles into " << ncell << " cells" );
 
+    // get_cell() triggers the update of the cell list if out of date
+    //
     // check that particles are in the correct cell, and
     // output particle indices and cell counts to arrays
-    auto cell_count_iterator = cell_count.begin();
     get_cell(
         binning
       , [&](cell_size_type const& cell) {
-            return make_cell_iterator(cell, *cell_count_iterator++);
+            cell_count.push_back(0);
+            return make_cell_iterator(cell, cell_count.back());
         }
     );
-    BOOST_CHECK( cell_count_iterator == cell_count.end() );
 
     // print statistics on cell occupation, which depends on density distribution
     halmd::accumulator<double> acc;
