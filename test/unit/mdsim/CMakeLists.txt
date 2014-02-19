@@ -18,6 +18,7 @@ endif()
 target_link_libraries(test_unit_mdsim_binning
   halmd_mdsim_host
   halmd_mdsim
+  halmd_utility
   ${HALMD_TEST_LIBRARIES}
 )
 add_test(unit/mdsim/binning/host/2d

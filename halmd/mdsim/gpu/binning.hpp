@@ -1,5 +1,5 @@
 /*
- * Copyright © 2008-2012  Felix Höfling
+ * Copyright © 2008-2014  Felix Höfling
  * Copyright © 2014       Nicolas Höft
  * Copyright © 2008-2012  Peter Colberg
  *
@@ -22,6 +22,12 @@
 #ifndef HALMD_MDSIM_GPU_BINNING_HPP
 #define HALMD_MDSIM_GPU_BINNING_HPP
 
+#include <algorithm>
+#include <boost/numeric/ublas/matrix.hpp>
+#include <cuda_wrapper/cuda_wrapper.hpp>
+#include <lua.hpp>
+#include <memory>
+
 #include <halmd/io/logger.hpp>
 #include <halmd/algorithm/multi_range.hpp>
 #include <halmd/mdsim/box.hpp>
@@ -30,12 +36,6 @@
 #include <halmd/utility/cache.hpp>
 #include <halmd/utility/multi_index.hpp>
 #include <halmd/utility/profiler.hpp>
-
-#include <boost/numeric/ublas/matrix.hpp>
-#include <lua.hpp>
-
-#include <algorithm>
-#include <memory>
 
 namespace halmd {
 namespace mdsim {
@@ -49,7 +49,6 @@ public:
     typedef typename particle_type::vector_type vector_type;
     typedef boost::numeric::ublas::matrix<float_type> matrix_type;
     typedef mdsim::box<dimension> box_type;
-    struct defaults;
 
     typedef cuda::vector<unsigned int> array_type;
     typedef fixed_vector<unsigned int, dimension> cell_size_type;
@@ -62,26 +61,14 @@ public:
       , std::shared_ptr<box_type const> box
       , matrix_type const& r_cut
       , double skin
+      , double cell_occupancy = 0.5
       , std::shared_ptr<halmd::logger> logger = std::make_shared<halmd::logger>()
-      , double cell_occupancy = defaults::occupancy()
     );
 
     //! returns neighbour list skin in MD units
     float_type r_skin() const
     {
         return r_skin_;
-    }
-
-    //! returns average desired cell occupancy
-    float_type cell_occupancy() const
-    {
-        return nu_cell_;
-    }
-
-    //! returns average effective cell occupancy
-    float_type effective_cell_occupancy() const
-    {
-        return nu_cell_eff_;
     }
 
     //! returns cell size
@@ -114,29 +101,23 @@ public:
 private:
     typedef typename particle_type::position_array_type position_array_type;
 
-    typedef utility::profiler::accumulator_type accumulator_type;
-    typedef utility::profiler::scoped_timer_type scoped_timer_type;
-
-    struct runtime
-    {
-        accumulator_type update;
-    };
-
+    /** update cell lists */
     void update();
-    void set_occupancy(double cell_occupancy);
+    /** set number of placeholders per cell and reallocate memory */
+    void set_cell_size(size_t cell_size);
 
     std::shared_ptr<particle_type const> particle_;
     std::shared_ptr<box_type const> box_;
     /** module logger */
     std::shared_ptr<logger> logger_;
+
     /** neighbour list skin in MD units */
     float_type r_skin_;
     /** maximum cutoff */
     float_type r_cut_max_;
-    /** average desired cell occupancy */
-    float_type nu_cell_;
-    /** average effective cell occupancy */
-    float_type nu_cell_eff_;
+    /** CUDA device properties */
+    cuda::device::properties device_properties_;
+
     /** number of cells per dimension */
     cell_size_type ncell_;
     /** number of placeholders per cell */
@@ -145,6 +126,7 @@ private:
     vector_type cell_length_;
     /** CUDA cell kernel execution configuration */
     cuda::config dim_cell_;
+
     /** cell lists in global device memory */
     cache<array_type> g_cell_;
     /** cache observer for cell list update */
@@ -156,6 +138,14 @@ private:
     array_type g_cell_permutation_;
     /** cell offsets in sorted particle list */
     array_type g_cell_offset_;
+
+    typedef utility::profiler::scoped_timer_type scoped_timer_type;
+
+    struct runtime
+    {
+        utility::profiler::accumulator_type update;
+    };
+
     /** profiling runtime accumulators */
     runtime runtime_;
 };
@@ -186,21 +176,11 @@ get_cell(binning_type& binning, output_iterator output)
       , ncell
       , [&](cell_size_type const& index) {
             unsigned int offset = multi_index_to_offset(index, ncell);
-            std::remove_copy(
-                h_cell.begin() + cell_size * offset
-              , h_cell.begin() + cell_size * (offset + 1)
-              , output(index)
-              , -1u
-            );
+            auto begin = h_cell.begin() + cell_size * offset;
+            std::remove_copy(begin, begin + cell_size, output(index), -1u);
         }
     );
 }
-
-template <int dimension, typename float_type>
-struct binning<dimension, float_type>::defaults
-{
-    static float_type occupancy();
-};
 
 } // namespace mdsim
 } // namespace gpu

@@ -68,7 +68,7 @@ binning<dimension, float_type>::binning(
 
     LOG("neighbour list skin: " << r_skin_);
     LOG("number of cells per dimension: " << ncell_);
-    LOG("cell edge lengths: " << cell_length_);
+    LOG("edge lengths of cells: " << cell_length_);
 }
 
 template <int dimension, typename float_type>

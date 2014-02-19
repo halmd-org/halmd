@@ -27,14 +27,6 @@ local profiler          = require("halmd.utility.profiler")
 -- grab C++ wrappers
 local binning = assert(libhalmd.mdsim.binning)
 
-local defaults
-if device.gpu then
-    defaults = {
-        [2] = assert(libhalmd.mdsim.defaults_2)
-      , [3] = assert(libhalmd.mdsim.defaults_3)
-    }
-end
-
 ---
 -- Binning
 -- ========
@@ -52,8 +44,7 @@ end
 -- :param args.box: instance of :class:`halmd.mdsim.box`
 -- :param table args.r_cut: cutoff radius matrix for the potentials
 -- :param number args.skin: neighbour list skin *(default: ``0.5``)*
--- :param number args.occupancy: Desired cell occupancy. Defaults to
---    :class:`halmd.mdsim.defaults.binning.occupancy()` *(GPU variant only)*.
+-- :param number args.occupancy: initial cell occupancy *(GPU variant only, default: ``0.5``)*
 --
 -- .. attribute:: r_cut
 --
@@ -63,10 +54,6 @@ end
 --
 --    "Skin" of the particle. This is an additional distance ratio added to the cutoff
 --    radius for the minimal edge lengths of the cells.
---
--- .. attribute:: cell_occupancy
---
---    Current cell occupancy. *Only available on GPU variant.*
 --
 -- .. method:: disconnect()
 --
@@ -88,8 +75,8 @@ local M = module(function(args)
 
     local self
     if particle.memory == "gpu" then
-        local occupancy = args.occupancy or assert(defaults[dimension].binning.occupancy)()
-        self = binning(particle, box, r_cut, skin, logger, occupancy)
+        local occupancy = args.occupancy or 0.5
+        self = binning(particle, box, r_cut, skin, occupancy, logger)
     else
         self = binning(particle, box, r_cut, skin, logger)
     end

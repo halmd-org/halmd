@@ -1,5 +1,6 @@
 /*
- * Copyright © 2008-2011  Peter Colberg
+ * Copyright © 2014      Felix Höfling
+ * Copyright © 2008-2011 Peter Colberg
  *
  * This file is part of HALMD.
  *
@@ -33,25 +34,28 @@ struct binning_wrapper
     typedef fixed_vector<float, dimension> vector_type;
     typedef fixed_vector<unsigned int, dimension> index_type;
 
-    /** number of particles in simulation box */
-    cuda::symbol<unsigned int> nbox;
     /** assign particles to cells */
-    cuda::function<void (int*, unsigned int const*, unsigned int const*, unsigned int const*, unsigned int*)> assign_cells;
+    cuda::function<void (
+        int*
+      , unsigned int const*
+      , unsigned int const*
+      , unsigned int const*
+      , unsigned int*
+      , unsigned int const
+      , unsigned int const
+    )> assign_cells;
+
     /** compute global cell offsets in particle list */
-    cuda::function<void (unsigned int*, unsigned int*)> find_cell_offset;
+    cuda::function<void (unsigned int*, unsigned int*, unsigned int const)> find_cell_offset;
+
     /** generate ascending index sequence */
-    cuda::function<void (unsigned int*)> gen_index;
+    cuda::function<void (unsigned int*, unsigned int const)> gen_index;
+
     /** compute cell indices for particle positions */
     cuda::function<void (float4 const*, unsigned int*, vector_type, index_type)> compute_cell;
 
-    static binning_wrapper kernel;
+    static binning_wrapper const kernel;
 };
-
-template <int dimension>
-binning_wrapper<dimension> const& get_binning_kernel()
-{
-    return binning_wrapper<dimension>::kernel;
-}
 
 } // namespace mdsim
 } // namespace gpu

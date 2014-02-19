@@ -88,14 +88,6 @@ private:
     typedef typename particle_type::size_type size_type;
     typedef typename particle_type::position_array_type position_array_type;
 
-    typedef utility::profiler::accumulator_type accumulator_type;
-    typedef utility::profiler::scoped_timer_type scoped_timer_type;
-
-    struct runtime
-    {
-        accumulator_type update;
-    };
-
     void update();
 
     //! system state
@@ -112,6 +104,14 @@ private:
     cell_size_type ncell_;
     /** cell edge lengths */
     vector_type cell_length_;
+
+    typedef utility::profiler::scoped_timer_type scoped_timer_type;
+
+    struct runtime
+    {
+        utility::profiler::accumulator_type update;
+    };
+
     /** profiling runtime accumulators */
     runtime runtime_;
 };

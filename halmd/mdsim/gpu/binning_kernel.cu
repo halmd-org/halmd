@@ -1,5 +1,6 @@
 /*
- * Copyright © 2008-2011  Peter Colberg
+ * Copyright © 2014      Felix Höfling
+ * Copyright © 2008-2011 Peter Colberg
  *
  * This file is part of HALMD.
  *
@@ -25,9 +26,6 @@ namespace halmd {
 namespace mdsim {
 namespace gpu {
 namespace binning_kernel {
-
-/** number of particles in simulation box */
-__constant__ unsigned int nbox_;
 
 /**
  * compute cell indices for given particle positions
@@ -74,10 +72,10 @@ __global__ void compute_cell(
 /**
  * compute global cell offsets in particle list
  */
-__global__ void find_cell_offset(unsigned int* g_cell, unsigned int* g_cell_offset)
+__global__ void find_cell_offset(unsigned int* g_cell, unsigned int* g_cell_offset, unsigned int const nbox)
 {
     const unsigned int j = g_cell[GTID];
-    const unsigned int k = (GTID > 0 && GTID < nbox_) ? g_cell[GTID - 1] : j;
+    const unsigned int k = (GTID > 0 && GTID < nbox) ? g_cell[GTID - 1] : j;
 
     if (GTID == 0 || k < j) {
         // particle marks the start of a cell
@@ -89,50 +87,57 @@ __global__ void find_cell_offset(unsigned int* g_cell, unsigned int* g_cell_offs
  * assign particles to cells
  */
 __global__ void assign_cells(
-  int* g_ret,
-  unsigned int const* g_cell,
-  unsigned int const* g_cell_offset,
-  unsigned int const* g_itag,
-  unsigned int* g_otag)
+    int* g_ret
+  , unsigned int const* g_cell
+  , unsigned int const* g_cell_offset
+  , unsigned int const* g_itag
+  , unsigned int* g_otag
+  , unsigned int const nbox
+  , unsigned int const cell_size
+)
 {
     __shared__ unsigned int s_offset[1];
 
-    if (threadIdx.x == 0) {
+    if (TID == 0) {
         s_offset[0] = g_cell_offset[BID];
     }
     __syncthreads();
+
     // global offset of first particle in this block's cell
     const unsigned int offset = s_offset[0];
-    // global offset of this thread's particle
-    const unsigned int n = offset + threadIdx.x;
-    // mark as virtual particle
-    unsigned int tag = particle_kernel::placeholder;
-    // mark as real particle if appropriate
-    if (offset != particle_kernel::placeholder && n < nbox_ && g_cell[n] == BID) {
-        tag = g_itag[n];
+
+    // iterate over cell list
+    for (unsigned int i = TID; i < cell_size; i += TDIM) {
+        // global offset of this thread's particle
+        const unsigned int n = offset + i;
+        // mark as virtual particle
+        unsigned int tag = particle_kernel::placeholder;
+        // mark as real particle if appropriate
+        if (offset != particle_kernel::placeholder && n < nbox && g_cell[n] == BID) {
+            tag = g_itag[n];
+        }
+        // return failure if any cell list is fully occupied
+        if (tag != particle_kernel::placeholder && (i + 1) == cell_size) {
+            *g_ret = EXIT_FAILURE;
+        }
+        // store particle in this block's cell
+        g_otag[BID * cell_size + i] = tag;
     }
-    // return failure if any cell list is fully occupied
-    if (tag != particle_kernel::placeholder && (threadIdx.x + 1) == blockDim.x) {
-        *g_ret = EXIT_FAILURE;
-    }
-    // store particle in this block's cell
-    g_otag[BID * blockDim.x + threadIdx.x] = tag;
 }
 
 /**
  * generate ascending index sequence
  */
-__global__ void gen_index(unsigned int* g_index)
+__global__ void gen_index(unsigned int* g_index, unsigned int const nbox)
 {
-    g_index[GTID] = (GTID < nbox_) ? GTID : 0;
+    g_index[GTID] = (GTID < nbox) ? GTID : 0;
 }
 
 } // namespace binning_kernel
 
 template <int dimension>
-binning_wrapper<dimension> binning_wrapper<dimension>::kernel = {
-    binning_kernel::nbox_
-  , binning_kernel::assign_cells
+binning_wrapper<dimension> const binning_wrapper<dimension>::kernel = {
+    binning_kernel::assign_cells
   , binning_kernel::find_cell_offset
   , binning_kernel::gen_index
   , binning_kernel::compute_cell<dimension>

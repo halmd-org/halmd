@@ -1,5 +1,5 @@
 /*
- * Copyright © 2008-2011 Felix Höfling
+ * Copyright © 2008-2014 Felix Höfling
  * Copyright © 2013-2014 Nicolas Höft
  * Copyright © 2008-2011 Peter Colberg
  *
@@ -140,6 +140,11 @@ void from_binning<dimension, float_type>::update()
 
     LOG_TRACE("update neighbour lists");
 
+    typename binning_type::cell_size_type ncell = binning_->ncell();
+    if (*std::min_element(ncell.begin(), ncell.end()) < 3) {
+        throw std::logic_error("number of cells per dimension must be at least 3");
+    }
+
     bool overcrowded = false;
     do {
         scoped_timer_type timer(runtime_.update);
@@ -159,7 +164,7 @@ void from_binning<dimension, float_type>::update()
         , &*g_cell.begin()
         , rr_cut_skin_.size1()
         , rr_cut_skin_.size2()
-        , binning_->ncell()
+        , ncell
         , static_cast<vector_type>(box_->length())
         );
         cuda::thread::synchronize();

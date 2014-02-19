@@ -113,6 +113,12 @@ test_binning(binning_type& binning, particle_type const& particle, box_type cons
     std::vector<unsigned int> particle_index;
     particle_index.reserve(particle.nparticle());
 
+    // setup profiling timer and connect to profiler
+    // (we have no access to the private struct binning.runtime)
+    halmd::utility::profiler profiler;
+    std::shared_ptr<halmd::accumulator<double>> runtime = std::make_shared<halmd::accumulator<double>>();
+    profiler.on_profile(runtime, "update cell list");
+
     // number of cells per unit length
     vector_type unit_ncell = element_div(vector_type(shape), vector_type(box.length()));
 
@@ -141,17 +147,25 @@ test_binning(binning_type& binning, particle_type const& particle, box_type cons
 
     BOOST_TEST_MESSAGE( "bin particles into " << ncell << " cells" );
 
-    // get_cell() triggers the update of the cell list if out of date
-    //
-    // check that particles are in the correct cell, and
-    // output particle indices and cell counts to arrays
-    get_cell(
-        binning
-      , [&](cell_size_type const& cell) {
-            cell_count.push_back(0);
-            return make_cell_iterator(cell, cell_count.back());
-        }
-    );
+    {
+        halmd::utility::profiler::scoped_timer_type timer(*runtime);
+
+        // get_cell() triggers the update of the cell list if out of date
+        //
+        // check that particles are in the correct cell, and
+        // output particle indices and cell counts to arrays
+        get_cell(
+            binning
+          , [&](cell_size_type const& cell) {
+                cell_count.push_back(0);
+                return make_cell_iterator(cell, cell_count.back());
+            }
+        );
+
+    }
+
+    // output profiling timers
+    profiler.profile();
 
     // print statistics on cell occupation, which depends on density distribution
     halmd::accumulator<double> acc;
