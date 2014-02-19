@@ -125,6 +125,8 @@ HALMD_LUA_API int luaopen_libhalmd_utility_lua_hdf5(lua_State* L)
                 .def("read_attribute", &read_attribute<vector<int64_t> >)
                 .def("read_attribute", &read_attribute<vector<uint64_t> >)
                 .def("read_attribute", &read_attribute<vector<double> >)
+                .def("read_attribute", &read_attribute<vector<string> >)
+
                 .def("write_attribute", &write_attribute<bool>)
                 .def("write_attribute", &write_attribute<int>)
                 .def("write_attribute", &write_attribute<unsigned int>)
@@ -137,6 +139,7 @@ HALMD_LUA_API int luaopen_libhalmd_utility_lua_hdf5(lua_State* L)
                 .def("write_attribute", &write_attribute<vector<int64_t> >)
                 .def("write_attribute", &write_attribute<vector<uint64_t> >)
                 .def("write_attribute", &write_attribute<vector<double> >)
+                .def("write_attribute", &write_attribute<vector<string> >)
 
           , class_<H5::H5File, bases<H5::IdComponent, H5::CommonFG> >("file")
 
@@ -170,6 +173,8 @@ HALMD_LUA_API int luaopen_libhalmd_utility_lua_hdf5(lua_State* L)
           , class_<type_wrapper<vector<uint64_t> > >("uint64_array")
                 .def(constructor<>())
           , class_<type_wrapper<vector<double> > >("float_array")
+                .def(constructor<>())
+          , class_<type_wrapper<vector<string> > >("string_array")
                 .def(constructor<>())
         ]
     ];
