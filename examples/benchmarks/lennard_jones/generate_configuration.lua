@@ -42,7 +42,7 @@ local function lennard_jones(args)
     local length = math.pow(nparticle / density, 1 / 3)
 
     -- create simulation box
-    local box = mdsim.box({edges = {{length, 0, 0}, {0, length, 0}, {0, 0, length}}})
+    local box = mdsim.box({length = {length, length, length}})
 
     -- create system state with 1 particle species
     local particle = mdsim.particle({dimension = dimension, particles = nparticle})

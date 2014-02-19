@@ -47,7 +47,7 @@ local function kob_andersen(args)
     local length = math.pow(nparticle / density, 1 / 3)
 
     -- create simulation box
-    local box = mdsim.box({edges = {{length, 0, 0}, {0, length, 0}, {0, 0, length}}})
+    local box = mdsim.box({length = {length, length, length}})
 
     -- create system state
     local particle = mdsim.particle({dimension = dimension, particles = nparticle, species = 2})
