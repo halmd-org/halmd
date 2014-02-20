@@ -1,5 +1,7 @@
 --
--- Copyright © 2011-2012  Michael Kopp and Felix Höfling
+-- Copyright © 2011-2012  Michael Kopp
+-- Copyright © 2011-2012  Felix Höfling
+-- Copyright © 2014       Nicolas Höft
 --
 -- This file is part of HALMD.
 --
@@ -17,66 +19,95 @@
 -- along with this program.  If not, see <http://www.gnu.org/licenses/>.
 --
 
-local clock             = require("halmd.mdsim.clock")
-local core              = require("halmd.mdsim.core")
-local log               = require("halmd.io.log")
-local module            = require("halmd.utility.module")
-local mdsim = {
-    box                 = require("halmd.mdsim.box")
-  , particle            = require("halmd.mdsim.particle")
-}
-local utility           = require("halmd.utility")
+local clock    = require("halmd.mdsim.clock")
+local core     = require("halmd.mdsim.core")
+local log      = require("halmd.io.log")
+local utility  = require("halmd.utility")
+local module   = require("halmd.utility.module")
+local profiler = require("halmd.utility.profiler")
+
+---
+-- Euler
+-- =====
+--
+-- This integrator implements the explicit Euler method.
+--
+-- The algorithm propagates the positions in time as follows:
+--
+-- .. math::
+--
+--    \vec{r}(t + \tau) = \vec{r}(t) + \tau \vec{v}(t)
+--
+-- where :math:`\tau` is the timestep.
+--
 
 -- grab C++ wrappers
 local euler = assert(libhalmd.mdsim.integrators.euler)
-local h5 = libhalmd.h5
 
-
+---
+-- Construct Euler integrator for given system of particles
 --
--- construct euler module
+-- :param table args: keyword arguments
+-- :param args.particle: instance of :class:`halmd.mdsim.particle`
+-- :param args.box: instance of :class:`halmd.mdsim.box`
+-- :param number args.timestep: integration time step (defaults to :attr:`halmd.mdsim.clock.timestep`)
+--
+-- .. method:: set_timestep(timestep)
+--
+--    Set integration time step in MD units.
+--
+--    :param number timestep: integration timestep
+--
+--    This method forwards to :meth:`halmd.mdsim.clock.set_timestep`,
+--    to ensure that all integrators use an identical time step.
+--
+-- .. attribute:: timestep
+--
+--    Integration time step in MD units.
+--
+-- .. method:: disconnect()
+--
+--    Disconnect integrator from core and profiler.
+--
+-- .. method:: integrate()
+--
+--    Calculate integration step
+--
+--    By default this function is connected to :meth:`halmd.mdsim.core.on_integrate`.
 --
 local M = module(function(args)
-    -- dependency injection
-    local particle = mdsim.particle() -- singleton
-    local dimension = assert(particle.dimension)
-    local box = mdsim.box() -- singleton
-    local timestep = assert(clock.timestep)
+    local particle = utility.assert_kwarg(args, "particle")
+    local box = utility.assert_kwarg(args, "box")
+
+    local timestep = args.timestep
+    if timestep then
+        clock:set_timestep(timestep)
+    else
+        timestep = assert(clock.timestep)
+    end
     local logger = log.logger({label = "euler"})
 
     local self = euler(particle, box, timestep, logger)
+
+    -- capture C++ method set_timestep
+    local set_timestep = assert(self.set_timestep)
+    -- forward Lua method set_timestep to clock
+    self.set_timestep = function(self, timestep)
+        clock:set_timestep(timestep)
+    end
 
     -- sequence of signal connections
     local conn = {}
     self.disconnect = utility.signal.disconnect(conn, "integrator")
 
     -- connect integrator to core
-    table.insert(conn, assert(core:on_integrate(self.integrate)))
+    table.insert(conn, assert(core:on_integrate(function() self:integrate() end)))
+    table.insert(conn, assert(clock:on_set_timestep(function(timestep) set_timestep(self, timestep) end)))
+
+    local runtime = assert(self.runtime)
+    table.insert(conn, assert(profiler:on_profile(runtime.integrate, "Euler integration step")))
 
     return self
 end)
-
---
--- connect runtime accumulators to module profiler
---
-function M.profile(self, profiler)
-    profiler:on_profile{self, integrate = "Euler integration"}
-end
-
---
--- returns module description
---
-function M.description()
-    return "Euler integrator"
-end
-
---
--- write module parameters to HDF5 group
---
--- @param euler module instance
--- @param group HDF5 group
---
-function M.write_parameters(euler, group)
-    group:write_attribute("timestep", h5.float(), euler.timestep)
-end
 
 return M
