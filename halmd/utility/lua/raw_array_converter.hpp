@@ -1,4 +1,5 @@
 /*
+ * Copyright © 2014 Felix Höfling
  * Copyright © 2012 Peter Colberg
  *
  * This file is part of HALMD.
@@ -21,6 +22,9 @@
 #define HALMD_UTILITY_LUA_RAW_ARRAY_CONVERTER_HPP
 
 #include <luaponte/luaponte.hpp>
+
+#include <halmd/io/logger.hpp>
+#include <halmd/utility/demangle.hpp>
 
 #if LUA_VERSION_NUM < 502
 # define luaL_len lua_objlen
@@ -59,6 +63,7 @@ struct default_converter<halmd::raw_array<T> >
     {
         std::size_t len = luaL_len(L, index);
         object table(from_stack(L, index));
+        LOG_TRACE("convert Lua table of size " << len << " to halmd::raw_array<" << demangled_name<T>() << ">");
         halmd::raw_array<T> v(len);
         for (std::size_t i = 0; i < len; ++i) {
             v[i] = object_cast<T>(table[i + 1]);
@@ -71,6 +76,7 @@ struct default_converter<halmd::raw_array<T> >
      */
     void to(lua_State* L, halmd::raw_array<T> const& v)
     {
+        LOG_TRACE("convert halmd::raw_array<" << demangled_name<T>() << "> of size " << v.size() << " to Lua table");
         object table = newtable(L);
         for (std::size_t i = 0; i < v.size(); ++i) {
             // default_converter<T> only invoked with reference wrapper

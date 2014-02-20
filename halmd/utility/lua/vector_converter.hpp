@@ -1,5 +1,6 @@
 /*
- * Copyright © 2010  Peter Colberg
+ * Copyright © 2014 Felix Höfling
+ * Copyright © 2010 Peter Colberg
  *
  * This file is part of HALMD.
  *
@@ -24,6 +25,8 @@
 #include <vector>
 
 #include <halmd/config.hpp>
+#include <halmd/io/logger.hpp>
+#include <halmd/utility/demangle.hpp>
 
 #if LUA_VERSION_NUM < 502
 # define luaL_len lua_objlen
@@ -50,6 +53,7 @@ struct default_converter<std::vector<T> >
     {
         std::size_t len = luaL_len(L, index);
         object table(from_stack(L, index));
+        LOG_TRACE("convert Lua table of size " << len << " to std::vector<" << demangled_name<T>() << ">");
         std::vector<T> v;
         v.reserve(len);
         for (std::size_t i = 0; i < len; ++i) {
@@ -61,6 +65,7 @@ struct default_converter<std::vector<T> >
     //! convert from C++ to Lua
     void to(lua_State* L, std::vector<T> const& v)
     {
+        LOG_TRACE("convert std::vector<" << demangled_name<T>() << "> of size " << v.size() << " to Lua table");
         object table = newtable(L);
         for (std::size_t i = 0; i < v.size(); ++i) {
             // default_converter<T> only invoked with reference wrapper
