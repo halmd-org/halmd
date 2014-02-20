@@ -101,11 +101,11 @@ local M = module(function(args)
     self.disconnect = utility.signal.disconnect(conn, "integrator")
 
     -- connect integrator to core
-    table.insert(conn, assert(core:on_integrate(function() self:integrate() end)))
-    table.insert(conn, assert(clock:on_set_timestep(function(timestep) set_timestep(self, timestep) end)))
+    table.insert(conn, core:on_integrate(function() self:integrate() end))
+    table.insert(conn, clock:on_set_timestep(function(timestep) set_timestep(self, timestep) end))
 
     local runtime = assert(self.runtime)
-    table.insert(conn, assert(profiler:on_profile(runtime.integrate, "Euler integration step")))
+    table.insert(conn, profiler:on_profile(runtime.integrate, "Euler integration step"))
 
     return self
 end)

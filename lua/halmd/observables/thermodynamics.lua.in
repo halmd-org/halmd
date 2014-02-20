@@ -233,9 +233,9 @@ local M = module(function(args)
 
         -- connect writer to sampler
         if aux then
-            table.insert(conn, assert(sampler:on_prepare(function() group.particle:aux_enable() end, every, 0)))
+            table.insert(conn, sampler:on_prepare(function() group.particle:aux_enable() end, every, 0))
         end
-        table.insert(conn, assert(sampler:on_sample(writer.write, every, clock.step)))
+        table.insert(conn, sampler:on_sample(writer.write, every, clock.step))
         return writer
     end
     local conn = {}

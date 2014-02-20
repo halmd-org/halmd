@@ -145,14 +145,14 @@ local M = module(function(args)
 
         -- connect correlation function to blocking scheme and profiler
         for i,s in ipairs(sample) do
-            table.insert(conn, assert(self:on_sample(s)))
+            table.insert(conn, self:on_sample(s))
         end
-        table.insert(conn, assert(self:on_correlate(result)))
-        table.insert(conn, assert(self:on_append_finalise(writer.write)))
-        table.insert(conn, assert(profiler:on_profile(assert(result.runtime).tcf, desc)))
+        table.insert(conn, self:on_correlate(result))
+        table.insert(conn, self:on_append_finalise(writer.write))
+        table.insert(conn, profiler:on_profile(assert(result.runtime).tcf, desc))
 
         -- periodically write current values of accumulated results
-        table.insert(conn, assert(utility.timer_service:on_periodic(writer.write, flush, 0)))
+        table.insert(conn, utility.timer_service:on_periodic(writer.write, flush, 0))
 
         return result
     end
@@ -162,8 +162,8 @@ local M = module(function(args)
     self.disconnect = utility.signal.disconnect(conn, "blocking scheme")
 
     -- connect blocking scheme to sampler
-    table.insert(conn, assert(sampler:on_sample(self.sample, every, clock.step)))
-    table.insert(conn, assert(sampler:on_finish(self.finalise)))
+    table.insert(conn, sampler:on_sample(self.sample, every, clock.step))
+    table.insert(conn, sampler:on_finish(self.finalise))
     logger:info("sampling interval in integration steps: " .. every)
 
     return self

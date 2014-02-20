@@ -87,9 +87,9 @@ local M = module(function(args)
     self.disconnect = utility.signal.disconnect(conn, "runtime estimate")
 
     -- connect to timer service and signal handler
-    table.insert(conn, assert(timer_service:on_periodic(self.estimate, interval, first)))
-    table.insert(conn, assert(timer_service:on_periodic(self.sample, sample, 0)))
-    table.insert(conn, assert(posix_signal:on_usr1(self.estimate)))
+    table.insert(conn, timer_service:on_periodic(self.estimate, interval, first))
+    table.insert(conn, timer_service:on_periodic(self.sample, sample, 0))
+    table.insert(conn, posix_signal:on_usr1(self.estimate))
 
     return self
 end)

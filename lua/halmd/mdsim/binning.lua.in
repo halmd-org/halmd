@@ -86,7 +86,7 @@ local M = module(function(args)
 
     -- connect binning module to profiler
     local runtime = assert(self.runtime)
-    table.insert(conn, assert(profiler:on_profile(runtime.update, "cell lists update" .. label)))
+    table.insert(conn, profiler:on_profile(runtime.update, "cell lists update" .. label))
 
     return self
 end)

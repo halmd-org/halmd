@@ -158,12 +158,12 @@ local M = module(function(args)
     if args.aux_enable then
         local particles = utility.assert_type(args.aux_enable, "table")
         for i,p in ipairs(particles) do
-            table.insert(conn, assert(sampler:on_prepare(function() p:aux_enable() end, every, start)))
+            table.insert(conn, sampler:on_prepare(function() p:aux_enable() end, every, start))
         end
     end
 
     -- connect to sampler
-    table.insert(conn, assert(sampler:on_sample(self.sample, every, start)))
+    table.insert(conn, sampler:on_sample(self.sample, every, start))
 
     return self
 end)

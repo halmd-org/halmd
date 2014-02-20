@@ -85,7 +85,7 @@ local M = module(function(args)
 
     -- connect to profiler
     local runtime = assert(self.runtime)
-    table.insert(conn, assert(profiler:on_profile(runtime.set, "setting particle positions on lattice")))
+    table.insert(conn, profiler:on_profile(runtime.set, "setting particle positions on lattice"))
 
     return self
 end)

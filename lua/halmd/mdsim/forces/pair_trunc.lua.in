@@ -124,14 +124,14 @@ local M = module(function(args)
     self.disconnect = utility.signal.disconnect(conn, "force module")
 
     -- test if the cache is up-to-date
-    table.insert(conn, assert(particle[1]:on_prepend_force(function() self:check_cache() end)))
+    table.insert(conn, particle[1]:on_prepend_force(function() self:check_cache() end))
     -- apply the force (if necessary)
-    table.insert(conn, assert(particle[1]:on_force(function() self:apply() end)))
+    table.insert(conn, particle[1]:on_force(function() self:apply() end))
 
     -- connect to profiler
     local desc = ("computation of %s"):format(potential.description)
-    table.insert(conn, assert(profiler:on_profile(assert(self.runtime).compute, desc)))
-    table.insert(conn, assert(profiler:on_profile(assert(self.runtime).compute_aux, desc .. " and auxiliary variables")))
+    table.insert(conn, profiler:on_profile(assert(self.runtime).compute, desc))
+    table.insert(conn, profiler:on_profile(assert(self.runtime).compute_aux, desc .. " and auxiliary variables"))
 
     return self
 end)

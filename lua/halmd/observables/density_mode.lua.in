@@ -129,7 +129,7 @@ local M = module(function(args)
 
         -- connect writer to sampler
         if every > 0 then
-            table.insert(conn, assert(sampler:on_sample(writer.write, every, clock.step)))
+            table.insert(conn, sampler:on_sample(writer.write, every, clock.step))
         end
 
         return writer
@@ -141,7 +141,7 @@ local M = module(function(args)
 
     -- connect runtime accumulators to module profiler
     local desc = ("computation of density modes for %s particles"):format(label)
-    table.insert(conn, assert(profiler:on_profile(self.runtime.acquire, desc)))
+    table.insert(conn, profiler:on_profile(self.runtime.acquire, desc))
 
     return self
 end)

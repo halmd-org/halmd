@@ -209,10 +209,10 @@ local M = module(function(args)
 
         -- connect writer to sampler
         if every and every > 0 then
-            table.insert(conn, assert(sampler:on_sample(writer.write, every, clock.step)))
+            table.insert(conn, sampler:on_sample(writer.write, every, clock.step))
         else
-            table.insert(conn, assert(sampler:on_start(writer.write)))
-            table.insert(conn, assert(sampler:on_finish(writer.write)))
+            table.insert(conn, sampler:on_start(writer.write))
+            table.insert(conn, sampler:on_finish(writer.write))
         end
 
         return writer
@@ -232,8 +232,8 @@ local M = module(function(args)
         local label = assert(self.group.label)
         local desc = ("phase space sample of %s particles on %s"):format(label, memory)
         local runtime = assert(sampler.runtime)
-        table.insert(conn, assert(profiler:on_profile(runtime.acquire, ("acquisition of %s"):format(desc))))
-        table.insert(conn, assert(profiler:on_profile(runtime.reset, ("reset %s"):format(desc))))
+        table.insert(conn, profiler:on_profile(runtime.acquire, ("acquisition of %s"):format(desc)))
+        table.insert(conn, profiler:on_profile(runtime.reset, ("reset %s"):format(desc)))
     end
 
     return self

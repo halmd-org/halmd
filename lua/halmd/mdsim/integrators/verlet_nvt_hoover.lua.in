@@ -164,16 +164,16 @@ local M = module(function(args)
     end
 
     -- connect integrator to core and profiler
-    table.insert(conn, assert(clock:on_set_timestep(function(timestep) set_timestep(self, timestep) end)))
-    table.insert(conn, assert(core:on_integrate(self.integrate)))
-    table.insert(conn, assert(core:on_finalize(self.finalize)))
+    table.insert(conn, clock:on_set_timestep(function(timestep) set_timestep(self, timestep) end))
+    table.insert(conn, core:on_integrate(self.integrate))
+    table.insert(conn, core:on_finalize(self.finalize))
 
     local runtime = assert(self.runtime)
     table.insert(conn, assert(profiler:on_profile(runtime.integrate,
         "first half-step of velocity-Verlet (+ Nosé-Hoover chain)")))
     table.insert(conn, assert(profiler:on_profile(runtime.finalize,
         "second half-step of velocity-Verlet (+ Nosé-Hoover chain)")))
-    table.insert(conn, assert(profiler:on_profile(runtime.propagate, "propagate Nosé-Hoover chain")))
+    table.insert(conn, profiler:on_profile(runtime.propagate, "propagate Nosé-Hoover chain"))
 
     if particle.memory == "gpu" then
         table.insert(conn, assert(profiler:on_profile{runtime.rescale,

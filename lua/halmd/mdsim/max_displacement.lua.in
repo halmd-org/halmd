@@ -68,8 +68,8 @@ local M = module(function(args)
 
     -- connect module to profiler
     local runtime = assert(self.runtime)
-    table.insert(conn, assert(profiler:on_profile(runtime.zero, "zero maximum displacement" .. label)))
-    table.insert(conn, assert(profiler:on_profile(runtime.compute, "compute maximum displacement" .. label)))
+    table.insert(conn, profiler:on_profile(runtime.zero, "zero maximum displacement" .. label))
+    table.insert(conn, profiler:on_profile(runtime.compute, "compute maximum displacement" .. label))
 
     return self
 end)

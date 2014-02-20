@@ -220,7 +220,7 @@ local M = module(function(args)
 
     -- connect neighbour module to profiler
     local runtime = assert(self.runtime)
-    table.insert(conn, assert(profiler:on_profile(runtime.update, "update of neighbour lists " .. label(self.particle))))
+    table.insert(conn, profiler:on_profile(runtime.update, "update of neighbour lists " .. label(self.particle)))
 
     return self
 end)
