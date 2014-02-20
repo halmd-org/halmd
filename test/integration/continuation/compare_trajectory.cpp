@@ -1,6 +1,6 @@
 /*
- * Copyright © 2013 Felix Höfling
- * Copyright © 2012 Peter Colberg
+ * Copyright © 2013-2014 Felix Höfling
+ * Copyright © 2012      Peter Colberg
  *
  * This file is part of HALMD.
  *
@@ -75,11 +75,11 @@ void compare_datasets(H5::DataSet const& ds1, H5::DataSet const& ds2)
     std::vector<hsize_t> dims(ds1.getSpace().getSimpleExtentNdims());
     ds1.getSpace().getSimpleExtentDims(&*dims.begin());
 
-    BOOST_REQUIRE( dims.size() == 1 || dims.size() == 2 );
-    if (dims.size() == 1) {
-        // compare data of rank 1, e.g., box offset
-        // assumes lossless conversion from integer to floating-point
-        std::vector<double> array1, array2;
+    // compare 2 or 3-dimensional list of vectors, e.g., box edges
+    BOOST_REQUIRE( dims.size() == 2 );
+    BOOST_REQUIRE( dims[1] == 2 || dims[1] == 3 );
+    if (dims[1] == 3) {
+        std::vector<halmd::fixed_vector<double, 3> > array1, array2;
         h5xx::read_dataset(ds1, array1);
         h5xx::read_dataset(ds2, array2);
         BOOST_CHECK_EQUAL_COLLECTIONS(
@@ -87,27 +87,14 @@ void compare_datasets(H5::DataSet const& ds1, H5::DataSet const& ds2)
           , array2.begin(), array2.end()
         );
     }
-    else if (dims.size() == 2) {
-        // compare 2 or 3-dimensional list of vectors, e.g., box edges
-        BOOST_REQUIRE( dims[1] == 2 || dims[1] == 3 );
-        if (dims[1] == 3) {
-            std::vector<halmd::fixed_vector<double, 3> > array1, array2;
-            h5xx::read_dataset(ds1, array1);
-            h5xx::read_dataset(ds2, array2);
-            BOOST_CHECK_EQUAL_COLLECTIONS(
-                array1.begin(), array1.end()
-              , array2.begin(), array2.end()
-            );
-        }
-        else if (dims[1] == 2) {
-            std::vector<halmd::fixed_vector<double, 2> > array1, array2;
-            h5xx::read_dataset(ds1, array1);
-            h5xx::read_dataset(ds2, array2);
-            BOOST_CHECK_EQUAL_COLLECTIONS(
-                array1.begin(), array1.end()
-              , array2.begin(), array2.end()
-            );
-        }
+    else if (dims[1] == 2) {
+        std::vector<halmd::fixed_vector<double, 2> > array1, array2;
+        h5xx::read_dataset(ds1, array1);
+        h5xx::read_dataset(ds2, array2);
+        BOOST_CHECK_EQUAL_COLLECTIONS(
+            array1.begin(), array1.end()
+          , array2.begin(), array2.end()
+        );
     }
 }
 
@@ -147,11 +134,6 @@ BOOST_AUTO_TEST_CASE( compare_particles )
                 H5::DataSet value1 = subgroup1.openDataSet("edges");
                 BOOST_TEST_MESSAGE( "dataset " << h5xx::path(value1) );
                 H5::DataSet value2 = subgroup2.openDataSet("edges");
-                compare_datasets(value1, value2);
-
-                value1 = subgroup1.openDataSet("offset");
-                BOOST_TEST_MESSAGE( "dataset " << h5xx::path(value1) );
-                value2 = subgroup2.openDataSet("offset");
                 compare_datasets(value1, value2);
             }
             else {
