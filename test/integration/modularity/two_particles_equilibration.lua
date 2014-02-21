@@ -1,6 +1,6 @@
 #!/usr/bin/env halmd
 --
--- Copyright © 2013 Felix Höfling
+-- Copyright © 2013-2014 Felix Höfling
 --
 -- This file is part of HALMD.
 --
@@ -44,11 +44,11 @@ local function copy_particle(args)
       , memory = particle.memory
       , label = label
     })
-    local input = observables.phase_space({box = box, group = group}):acquire()
+    local input = observables.phase_space({box = box, group = group}):acquire({memory = "host"})
     observables.phase_space({
         box = box
       , group = mdsim.particle_groups.all({particle = new_particle})
-    }):set(input()) -- calling a data slot from Lua fails
+    }):set(input(nil)) -- FIXME calling a data slot from Lua requires a dummy argument
 
     return new_particle
 end
@@ -200,7 +200,7 @@ local function equilibrate(box, particle, force, args)
     observables.sampler:run(math.floor(steps / 10))
 
     -- switch to actual target temperature
-    for i in integrator do i:set_temperature(temp) end
+    for k,v in pairs(integrator) do v:set_temperature(temp) end
 
     -- run remaining first half of the simulation in NVT ensemble at the target temperature
     observables.sampler:run(math.floor(steps / 2) - math.floor(steps / 10))
@@ -213,7 +213,7 @@ local function equilibrate(box, particle, force, args)
     for k,v in pairs(integrator) do
         v:disconnect()
         integrator[k] = mdsim.integrators.verlet({
-            box = box, particle = p[k], timestep = timestep
+            box = box, particle = particle[k], timestep = timestep
         })
     end
 
