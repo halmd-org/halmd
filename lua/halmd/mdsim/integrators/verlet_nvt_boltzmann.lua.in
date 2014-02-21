@@ -1,4 +1,5 @@
 --
+-- Copyright © 2014 Felix Höfling
 -- Copyright © 2012 Peter Colberg
 --
 -- This file is part of HALMD.
@@ -89,9 +90,9 @@ local function round(x) return math.floor(x + 0.5) end
 --    The effective coupling rate equals :math:`\frac{1}{\Delta s\, \tau}`,
 --    with coupling interval :math:`\Delta s` and time-step :math:`\tau`.
 --
--- .. method:: disconnect()
+-- .. method:: set_temperature(temperature)
 --
---    Disconnect integrator from core and profiler.
+--    Set the temperature of the Boltzmann distribution to the given value.
 --
 -- .. method:: integrate()
 --
@@ -105,12 +106,16 @@ local function round(x) return math.floor(x + 0.5) end
 --
 --    By default this function is connected to :meth:`halmd.mdsim.core.on_finalize`.
 --
+-- .. method:: disconnect()
+--
+--    Disconnect integrator from core and profiler.
+--
 local M = module(function(args)
     local particle = utility.assert_kwarg(args, "particle")
     local box = utility.assert_kwarg(args, "box")
     local temperature = utility.assert_kwarg(args, "temperature")
     local rate = utility.assert_kwarg(args, "rate")
-    local dimension = #box:edges()
+    local dimension = box.dimension
     local timestep = args.timestep
     if timestep then
         clock:set_timestep(timestep)
@@ -146,10 +151,14 @@ local M = module(function(args)
         end
     end
 
+    self.set_temperature = function(self, temperature)
+        bath.temperature = temperature
+    end
+
     -- add attributes
-    self.temperature    = property(function() return temperature end)
-    self.interval       = property(function() return interval end)
-    self.rate           = property(function() return rate end)
+    self.temperature = property(function() return bath.temperature end)
+    self.interval    = property(function() return interval end)
+    self.rate        = property(function() return rate end)
 
     logger:info(("coupling interval: %d steps"):format(self.interval))
     logger:info(("coupling rate: %g per unit time"):format(self.rate))
