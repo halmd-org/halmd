@@ -1,5 +1,5 @@
 /*
- * Copyright © 2010 Felix Höfling
+ * Copyright © 2010-2014 Felix Höfling
  * Copyright © 2008-2012 Peter Colberg
  *
  * This file is part of HALMD.
@@ -63,6 +63,11 @@ public:
     {
         return temp_;
     }
+
+    /**
+     * Set temperature.
+     */
+    void set_temperature(double temperature);
 
     /**
      * Bind class to Lua.

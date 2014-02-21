@@ -63,6 +63,11 @@ public:
     }
 
     /**
+     * Set temperature.
+     */
+    void set_temperature(double temperature);
+
+    /**
      * Bind class to Lua.
      */
     static void luaopen(lua_State* L);

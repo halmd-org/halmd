@@ -1,4 +1,5 @@
 --
+-- Copyright © 2014      Felix Höfling
 -- Copyright © 2010-2012 Peter Colberg
 --
 -- This file is part of HALMD.
@@ -77,7 +78,8 @@ local boltzmann = assert(libhalmd.mdsim.velocities.boltzmann)
 --
 -- .. attribute:: temperature
 --
---    Temperature of distribution in reduced units.
+--    Temperature of the distribution in reduced units. The value can be
+--    changed by assignment.
 --
 local M = module(function(args)
     local particle = utility.assert_kwarg(args, "particle")

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2010 Felix Höfling
+ * Copyright © 2010-2014 Felix Höfling
  * Copyright © 2008-2012 Peter Colberg
  *
  * This file is part of HALMD.
@@ -39,14 +39,19 @@ boltzmann<dimension, float_type, RandomNumberGenerator>::boltzmann(
   , logger_(logger)
   // select thread-dependent implementation
   , gaussian_impl_(get_gaussian_impl(random_->rng().dim.threads_per_block()))
-  // set parameters
-  , temp_(temperature)
   // allocate GPU memory
   , g_mv_(2 * random_->rng().dim.blocks_per_grid())
   , g_mv2_(random_->rng().dim.blocks_per_grid())
   , g_m_(random_->rng().dim.blocks_per_grid())
 {
-    LOG("Boltzmann velocity distribution temperature: T = " << temp_);
+    set_temperature(temperature);
+}
+
+template <int dimension, typename float_type, typename RandomNumberGenerator>
+void boltzmann<dimension, float_type, RandomNumberGenerator>::set_temperature(double temperature)
+{
+    temp_ =  temperature;
+    LOG("temperature of Boltzmann distribution: " << temp_);
 }
 
 template <int dimension, typename float_type, typename RandomNumberGenerator>
@@ -141,7 +146,7 @@ void boltzmann<dimension, float_type, RandomNumberGenerator>::luaopen(lua_State*
             namespace_("velocities")
             [
                 class_<boltzmann>()
-                    .property("temperature", &boltzmann::temperature)
+                    .property("temperature", &boltzmann::temperature, &boltzmann::set_temperature)
                     .def("set", &boltzmann::set)
                     .scope
                     [

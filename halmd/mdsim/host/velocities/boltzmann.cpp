@@ -1,5 +1,5 @@
 /*
- * Copyright © 2010 Felix Höfling
+ * Copyright © 2010-2014 Felix Höfling
  * Copyright © 2008-2012 Peter Colberg
  *
  * This file is part of HALMD.
@@ -38,10 +38,15 @@ boltzmann<dimension, float_type>::boltzmann(
   : particle_(particle)
   , random_(random)
   , logger_(logger)
-  // set parameters
-  , temp_(temperature)
 {
-    LOG("Boltzmann velocity distribution temperature: T = " << temp_);
+    set_temperature(temperature);
+}
+
+template <int dimension, typename float_type>
+void boltzmann<dimension, float_type>::set_temperature(double temperature)
+{
+    temp_ =  temperature;
+    LOG("temperature of Boltzmann distribution: " << temp_);
 }
 
 template <int dimension, typename float_type>
@@ -87,7 +92,7 @@ void boltzmann<dimension, float_type>::set()
 
     fixed_vector<double, dimension> v_cm = mv / m;
     double scale = std::sqrt(nparticle * temp_ * dimension / (mv2 - m * inner_prod(v_cm, v_cm)));
-    LOG_TRACE("shift velocities by " << -v_cm << " and resacle by factor " << scale);
+    LOG_TRACE("shift velocities by " << -v_cm << " and rescale by factor " << scale);
     shift_rescale_velocity(*particle_, -v_cm, scale);
 }
 
@@ -102,7 +107,7 @@ void boltzmann<dimension, float_type>::luaopen(lua_State* L)
             namespace_("velocities")
             [
                 class_<boltzmann>()
-                    .property("temperature", &boltzmann::temperature)
+                    .property("temperature", &boltzmann::temperature, &boltzmann::set_temperature)
                     .def("set", &boltzmann::set)
                     .scope
                     [
