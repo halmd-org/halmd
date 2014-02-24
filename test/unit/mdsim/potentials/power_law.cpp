@@ -252,7 +252,7 @@ power_law<float_type>::power_law()
     // set module parameters
     npart_list.push_back(1000);
     npart_list.push_back(2);
-    float box_length = 100;
+    float box_length = 50;
     unsigned int const dimension = box_type::vector_type::static_size;
     boost::numeric::ublas::diagonal_matrix<typename box_type::matrix_type::value_type> edges(dimension);
     for (unsigned int i = 0; i < dimension; ++i) {
