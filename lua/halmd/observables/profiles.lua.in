@@ -62,8 +62,13 @@ local M = module("halmd.observables.profiles")
 -- @returns instance of profiles module
 --
 function M.__new(args)
-    local every = args.every or 100 -- default value
+    local every = args.every
     local ngrid = args.grid_points or { 10 } -- default value
+
+    -- disabled by default
+    if not every then
+        return nil
+    end
 
     -- dependency injection
     local particle = mdsim.particle() -- singleton

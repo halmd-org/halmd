@@ -50,7 +50,12 @@ function M.__new(args)
     -- parameters
     local species = args.species or 0 -- default value
     local nbin = args.grid_points or { 10 } -- default value
-    local every = args.every or 100 -- default value
+    local every = args.every
+
+    -- observable is disabled by default
+    if not every then
+        return nil
+    end
 
     -- disable module if any element of 'nbin' is zero
     local product = 1
