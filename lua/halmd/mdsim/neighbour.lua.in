@@ -81,13 +81,14 @@ end
 -- :param boolean args.disable_sorting: Disable use of Hilbert sorting
 --   :class:`halmd.mdsim.sorts.hilbert` (*default: false*).
 -- :param args.displacement: instance or two instances of :mod:`halmd.mdsim.max_displacement` *(optional)*
+-- :param args.binning: instance or two instances of :mod:`halmd.mdsim.binning` *(optional)*
 --
 -- If all elements in ``r_cut`` matrix are equal, a scalar value may be passed instead.
 --
--- If ``displacement`` is left unspecified, a default displacement module of
--- :mod:`halmd.mdsim.max_displacement` is constructed. Providing an instance of
--- this module allows the reuse of the displacement module (e.g. when different
--- neighbour lists share the first instance of ``particle``).
+-- If ``displacement`` or ``binning`` is left unspecified, a default module of
+-- :mod:`halmd.mdsim.max_displacement` or :mod:`halmd.mdsim.binning` is constructed.
+-- Providing an instance of the respective module allows the reuse of the module
+-- (e.g. when different neighbour lists share the first instance of ``particle``).
 --
 -- For the ``host`` implementation of the ``particle`` module with binning
 -- disabled, Hilbert sorting is disabled also.
@@ -99,6 +100,10 @@ end
 -- .. attribute:: displacement
 --
 --    Sequence of two instances of :class:`halmd.mdsim.max_displacement`.
+--
+-- .. attribute:: binning
+--
+--    Sequence of two instances of :class:`halmd.mdsim.binning`. May be ``nil`` if binning was disabled.
 --
 -- .. attribute:: cell_occupancy
 --
@@ -148,16 +153,22 @@ local M = module(function(args)
     -- domain decomposition
     local binning
     if not args.disable_binning then
-        binning = {}
-        binning[1] = mdsim.binning({
-            box = box, particle = particle[1], r_cut = r_cut, skin = skin, occupancy = occupancy
-        })
-        if particle[1] == particle[2] then
-            binning[2] = binning[1]
-        else
-            binning[2] = mdsim.binning({
-                box = box, particle = particle[2], r_cut = r_cut, skin = skin, occupancy = occupancy
-            })
+        binning = args.binning
+        if not binning then
+            if particle[1] == particle[2] then
+                binning = mdsim.binning({box = box, particle = particle[1], r_cut = r_cut, skin = skin, occupancy = occupancy})
+            else
+                binning = {
+                    mdsim.binning({box = box, particle = particle[1], r_cut = r_cut, skin = skin, occupancy = occupancy})
+                  , mdsim.binning({box = box, particle = particle[2], r_cut = r_cut, skin = skin, occupancy = occupancy})
+                }
+            end
+        end
+        if type(binning) ~= "table" then
+            binning = {binning, binning}
+        end
+        if binning[1].particle ~= particle[1] or binning[2].particle ~= particle[2] then
+            error("'particle' instances of binning modules do not match with 'particle' argument", 2)
         end
     end
 
@@ -204,6 +215,9 @@ local M = module(function(args)
 
     -- store displacement instances as Lua property
     self.displacement = property(function(self) return displacement end)
+
+    -- store binning instances as Lua property
+    self.binning = property(function(self) return binning end)
 
     -- sort particles before neighbour list update
     if not args.disable_sorting then
