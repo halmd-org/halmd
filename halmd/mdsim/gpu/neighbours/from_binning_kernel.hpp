@@ -1,5 +1,6 @@
 /*
- * Copyright © 2008-2011  Peter Colberg
+ * Copyright © 2008-2011 Peter Colberg
+ * Copyright © 2014      Nicolas Höft
  *
  * This file is part of HALMD.
  *
@@ -36,30 +37,24 @@ struct from_binning_wrapper
 
     /** (cutoff lengths + neighbour list skin)² */
     cuda::texture<float> rr_cut_skin;
-    /** neighbour list length */
-    cuda::symbol<unsigned int> neighbour_size;
-    /** neighbour list stride */
-    cuda::symbol<unsigned int> neighbour_stride;
-    /** number of particles in simulation box */
-    cuda::symbol<unsigned int> nbox;
     /** positions, tags */
     cuda::texture<float4> r;
+
     /** update neighbour lists */
     cuda::function<void (
-        int*, unsigned int*, unsigned int const*
-      , unsigned int, unsigned int
+        int*
+      , unsigned int*
+      , unsigned int
+      , unsigned int
+      , unsigned int const*
+      , unsigned int
+      , unsigned int
       , cell_size_type
       , vector_type
     )> update_neighbours;
 
     static from_binning_wrapper kernel;
 };
-
-template <int dimension>
-from_binning_wrapper<dimension> const& get_from_binning_kernel()
-{
-    return from_binning_wrapper<dimension>::kernel;
-}
 
 } // namespace neighbours
 } // namespace gpu

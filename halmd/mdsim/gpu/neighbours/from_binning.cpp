@@ -32,9 +32,11 @@ namespace neighbours {
 /**
  * construct neighbour list module
  *
- * @param particle mdsim::gpu::particle instance
+ * @param particle mdsim::gpu::particle instances
+ * @param binning mdsim::gpu::binning instances
+ * @param displacement mdsim::gpu::displacement instances
  * @param box mdsim::box instance
- * @param cutoff force cutoff radius
+ * @param r_cut force cutoff radius
  * @param skin neighbour list skin
  * @param cell_occupancy desired average cell occupancy
  */
@@ -68,7 +70,6 @@ from_binning<dimension, float_type>::from_binning(
         }
     }
     try {
-        cuda::copy(particle_->nparticle(), get_from_binning_kernel<dimension>().nbox);
         cuda::copy(rr_cut_skin_.data(), g_rr_cut_skin_);
     }
     catch (cuda::error const&) {
@@ -102,15 +103,6 @@ void from_binning<dimension, float_type>::set_occupancy(double cell_occupancy)
 
     LOG("neighbour list skin: " << r_skin_);
     LOG("number of placeholders per neighbour list: " << size_);
-
-    try {
-        cuda::copy(size_, get_from_binning_kernel<dimension>().neighbour_size);
-        cuda::copy(stride_, get_from_binning_kernel<dimension>().neighbour_stride);
-    }
-    catch (cuda::error const&) {
-        LOG_ERROR("failed to copy neighbour list parameters to device symbols");
-        throw;
-    }
 }
 
 template <int dimension, typename float_type>
@@ -155,17 +147,23 @@ void from_binning<dimension, float_type>::update()
         cuda::vector<int> g_ret(1);
         cuda::host::vector<int> h_ret(1);
         cuda::memset(g_ret, EXIT_SUCCESS);
-        cuda::configure(binning_->dim_cell().grid, binning_->dim_cell().block, binning_->cell_size() * (2 + dimension) * sizeof(int));
-        get_from_binning_kernel<dimension>().r.bind(position);
-        get_from_binning_kernel<dimension>().rr_cut_skin.bind(g_rr_cut_skin_);
-        get_from_binning_kernel<dimension>().update_neighbours(
+        cuda::configure(
+            binning_->dim_cell().grid, binning_->dim_cell().block
+          , binning_->cell_size() * (2 + dimension) * sizeof(int)  // shared memory
+        );
+        auto const* kernel = &from_binning_wrapper<dimension>::kernel;
+        kernel->r.bind(position);
+        kernel->rr_cut_skin.bind(g_rr_cut_skin_);
+        kernel->update_neighbours(
             g_ret
-        , &*g_neighbour->begin()
-        , &*g_cell.begin()
-        , rr_cut_skin_.size1()
-        , rr_cut_skin_.size2()
-        , ncell
-        , static_cast<vector_type>(box_->length())
+          , &*g_neighbour->begin()
+          , size_
+          , stride_
+          , &*g_cell.begin()
+          , rr_cut_skin_.size1()
+          , rr_cut_skin_.size2()
+          , binning_->ncell()
+          , static_cast<vector_type>(box_->length())
         );
         cuda::thread::synchronize();
         cuda::copy(g_ret, h_ret);

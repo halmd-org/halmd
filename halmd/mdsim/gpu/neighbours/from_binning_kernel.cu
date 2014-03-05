@@ -1,5 +1,6 @@
 /*
- * Copyright © 2008-2011  Peter Colberg
+ * Copyright © 2008-2011 Peter Colberg
+ * Copyright © 2014      Nicolas Höft
  *
  * This file is part of HALMD.
  *
@@ -31,12 +32,6 @@ namespace from_binning_kernel {
 
 /** (cutoff lengths + neighbour list skin)² */
 texture<float> rr_cut_skin_;
-/** neighbour list length */
-__constant__ unsigned int neighbour_size_;
-/** neighbour list stride */
-__constant__ unsigned int neighbour_stride_;
-/** number of particles in simulation box */
-__constant__ unsigned int nbox_;
 /** positions, tags */
 texture<float4> r_;
 
@@ -89,6 +84,8 @@ __device__ void update_cell_neighbours(
   , unsigned int const& n
   , unsigned int& count
   , unsigned int* g_neighbour
+  , unsigned int neighbour_size
+  , unsigned int neighbour_stride
   , vector_type const& box_length
 )
 {
@@ -126,9 +123,9 @@ __device__ void update_cell_neighbours(
 
         // enforce cutoff length with neighbour list skin
         float rr_cut_skin = tex1Dfetch(rr_cut_skin_, type * ntype2 + s_type[i]);
-        if (rr <= rr_cut_skin && count < neighbour_size_) {
+        if (rr <= rr_cut_skin && count < neighbour_size) {
             // scattered write to neighbour list
-            g_neighbour[count * neighbour_stride_ + n] = m;
+            g_neighbour[count * neighbour_stride + n] = m;
             // increment neighbour list particle count
             count++;
         }
@@ -142,6 +139,8 @@ template <unsigned int dimension>
 __global__ void update_neighbours(
     int* g_ret
   , unsigned int* g_neighbour
+  , unsigned int neighbour_size
+  , unsigned int neighbour_stride
   , unsigned int const* g_cell
   , unsigned int ntype1
   , unsigned int ntype2
@@ -200,8 +199,8 @@ __global__ void update_neighbours(
                         goto self;
                     }
                     // visit 26 neighbour cells, grouped into 13 pairs of mutually opposite cells
-                    update_cell_neighbours<false>(j, ncell, g_cell, r, type, ntype1, ntype2, n, count, g_neighbour, box_length);
-                    update_cell_neighbours<false>(-j, ncell, g_cell, r, type, ntype1, ntype2, n, count, g_neighbour, box_length);
+                    update_cell_neighbours<false>(j, ncell, g_cell, r, type, ntype1, ntype2, n, count, g_neighbour, neighbour_size, neighbour_stride, box_length);
+                    update_cell_neighbours<false>(-j, ncell, g_cell, r, type, ntype1, ntype2, n, count, g_neighbour, neighbour_size, neighbour_stride, box_length);
                 }
             }
             else {
@@ -209,17 +208,17 @@ __global__ void update_neighbours(
                     goto self;
                 }
                 // visit 8 neighbour cells, grouped into 4 pairs of mutually opposite cells
-                update_cell_neighbours<false>(j, ncell, g_cell, r, type, ntype1, ntype2, n, count, g_neighbour, box_length);
-                update_cell_neighbours<false>(-j, ncell, g_cell, r, type, ntype1, ntype2, n, count, g_neighbour, box_length);
+                update_cell_neighbours<false>(j, ncell, g_cell, r, type, ntype1, ntype2, n, count, g_neighbour, neighbour_size, neighbour_stride, box_length);
+                update_cell_neighbours<false>(-j, ncell, g_cell, r, type, ntype1, ntype2, n, count, g_neighbour, neighbour_size, neighbour_stride, box_length);
             }
         }
     }
 
 self:
-    update_cell_neighbours<true>(j, ncell, g_cell, r, type, ntype1, ntype2, n, count, g_neighbour, box_length);
+    update_cell_neighbours<true>(j, ncell, g_cell, r, type, ntype1, ntype2, n, count, g_neighbour, neighbour_size, neighbour_stride, box_length);
 
     // return failure if any neighbour list is fully occupied
-    if (count == neighbour_size_) {
+    if (count == neighbour_size) {
         *g_ret = EXIT_FAILURE;
     }
 }
@@ -229,9 +228,6 @@ self:
 template <int dimension>
 from_binning_wrapper<dimension> from_binning_wrapper<dimension>::kernel = {
     from_binning_kernel::rr_cut_skin_
-  , from_binning_kernel::neighbour_size_
-  , from_binning_kernel::neighbour_stride_
-  , from_binning_kernel::nbox_
   , from_binning_kernel::r_
   , from_binning_kernel::update_neighbours<dimension>
 };
