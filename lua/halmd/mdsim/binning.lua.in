@@ -1,6 +1,6 @@
 --
 -- Copyright © 2010-2011  Peter Colberg
--- Copyright © 2013       Nicolas Höft
+-- Copyright © 2013-2014  Nicolas Höft
 --
 -- This file is part of HALMD.
 --
@@ -55,6 +55,10 @@ local binning = assert(libhalmd.mdsim.binning)
 --    "Skin" of the particle. This is an additional distance ratio added to the cutoff
 --    radius for the minimal edge lengths of the cells.
 --
+-- .. attribute:: particle
+--
+--    Instance of :class:`halmd.mdsim.particle`.
+--
 -- .. method:: disconnect()
 --
 --    Disconnect binning module from profiler.
@@ -63,7 +67,7 @@ local M = module(function(args)
     -- cutoff radius matrix of truncated potential
     local r_cut = utility.assert_kwarg(args, "r_cut")
     -- neighbour list skin
-    local skin = utility.assert_kwarg(args, "skin")
+    local skin = args.skin or 0.5
 
     -- dependency injection
     local box = utility.assert_kwarg(args, "box")
@@ -80,6 +84,9 @@ local M = module(function(args)
     else
         self = binning(particle, box, r_cut, skin, logger)
     end
+
+    -- store particle instance as Lua property
+    self.particle = property(function(self) return particle end)
 
     local conn = {} -- sequence of signal connections
     self.disconnect = utility.signal.disconnect(conn, "binning module")
