@@ -160,7 +160,7 @@ private:
     /** neighbour lists */
     cache<array_type> g_neighbour_;
     /** cache observer for neighbour list update */
-    cache<> neighbour_cache_;
+    std::tuple<cache<>, cache<>> neighbour_cache_;
     /** number of placeholders per neighbour list */
     unsigned int size_;
     /** neighbour list stride */

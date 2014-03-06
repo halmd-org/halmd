@@ -71,14 +71,18 @@ template <int dimension, typename float_type>
 cache<std::vector<typename from_particle<dimension, float_type>::neighbour_list>> const&
 from_particle<dimension, float_type>::lists()
 {
-    cache<reverse_tag_array_type> const& reverse_tag_cache = particle1_->reverse_tag();
-    if (neighbour_cache_ != reverse_tag_cache || displacement1_->compute() > r_skin_ / 2
+    cache<reverse_tag_array_type> const& reverse_tag_cache1 = particle1_->reverse_tag();
+    cache<reverse_tag_array_type> const& reverse_tag_cache2 = particle2_->reverse_tag();
+
+    auto current_cache = std::tie(reverse_tag_cache1, reverse_tag_cache2);
+
+    if (neighbour_cache_ != current_cache || displacement1_->compute() > r_skin_ / 2
         || displacement2_->compute() > r_skin_ / 2) {
         on_prepend_update_();
         update();
         displacement1_->zero();
         displacement2_->zero();
-        neighbour_cache_ = reverse_tag_cache;
+        neighbour_cache_ = current_cache;
         on_append_update_();
     }
     return neighbour_;

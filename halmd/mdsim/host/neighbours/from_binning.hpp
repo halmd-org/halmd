@@ -125,7 +125,7 @@ private:
     /** neighbour lists */
     cache<array_type> neighbour_;
     /** cache observer for neighbour list update */
-    cache<> neighbour_cache_;
+    std::tuple<cache<>, cache<>> neighbour_cache_;
     /** neighbour list skin in MD units */
     float_type r_skin_;
     /** (cutoff lengths + neighbour list skin)² */
