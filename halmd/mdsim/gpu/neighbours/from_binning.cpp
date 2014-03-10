@@ -52,9 +52,12 @@ from_binning<dimension, float_type>::from_binning(
   , double cell_occupancy
 )
   // dependency injection
-  : particle_(particle.first)
-  , binning_(binning.second)
-  , displacement_(displacement.first)
+  : particle1_(particle.first)
+  , particle2_(particle.second)
+  , binning1_(binning.first)
+  , binning2_(binning.second)
+  , displacement1_(displacement.first)
+  , displacement2_(displacement.second)
   , box_(box)
   , logger_(logger)
   // allocate parameters
@@ -89,14 +92,14 @@ void from_binning<dimension, float_type>::set_occupancy(double cell_occupancy)
     assert(dimension <= 4);
     float_type neighbour_sphere = unit_sphere[dimension] * std::pow(r_cut_max_ + r_skin_, dimension);
     // partial number density
-    float_type density = particle_->nparticle() / box_->volume();
+    float_type density = particle2_->nparticle() / box_->volume();
     // number of placeholders per neighbour list
     size_ = static_cast<size_t>(ceil(neighbour_sphere * (density / cell_occupancy)));
     // at least cell_size (or warp_size?) placeholders
     // FIXME what is a sensible lower bound?
-    size_ = std::max(size_, binning_->cell_size());
+    size_ = std::max(size_, binning2_->cell_size());
     // number of neighbour lists
-    stride_ = particle_->dim.threads();
+    stride_ = particle1_->dim.threads();
     // allocate neighbour lists
     auto g_neighbour = make_cache_mutable(g_neighbour_);
     g_neighbour->resize(stride_ * size_);
@@ -109,12 +112,18 @@ template <int dimension, typename float_type>
 cache<typename from_binning<dimension, float_type>::array_type> const&
 from_binning<dimension, float_type>::g_neighbour()
 {
-    cache<reverse_tag_array_type> const& reverse_tag_cache = particle_->reverse_tag();
-    if (neighbour_cache_ != reverse_tag_cache || displacement_->compute() > r_skin_ / 2) {
+    cache<reverse_tag_array_type> const& reverse_tag_cache1 = particle1_->reverse_tag();
+    cache<reverse_tag_array_type> const& reverse_tag_cache2 = particle2_->reverse_tag();
+
+    auto current_cache = std::tie(reverse_tag_cache1, reverse_tag_cache2);
+
+    if (neighbour_cache_ != current_cache || displacement1_->compute() > r_skin_ / 2
+        || displacement2_->compute() > r_skin_ / 2) {
         on_prepend_update_();
         update();
-        displacement_->zero();
-        neighbour_cache_ = reverse_tag_cache;
+        displacement1_->zero();
+        displacement2_->zero();
+        neighbour_cache_ = current_cache;
         on_append_update_();
     }
     return g_neighbour_;
@@ -126,16 +135,21 @@ from_binning<dimension, float_type>::g_neighbour()
 template <int dimension, typename float_type>
 void from_binning<dimension, float_type>::update()
 {
-    position_array_type const& position = read_cache(particle_->position());
-    cell_array_type const& g_cell = read_cache(binning_->g_cell());
+    position_array_type const& position1 = read_cache(particle1_->position());
+    position_array_type const& position2 = read_cache(particle2_->position());
+    cell_array_type const& g_cell2 = read_cache(binning2_->g_cell());
     auto g_neighbour = make_cache_mutable(g_neighbour_);
 
     LOG_TRACE("update neighbour lists");
 
-    typename binning_type::cell_size_type ncell = binning_->ncell();
+    typename binning_type::cell_size_type ncell = binning2_->ncell();
     if (*std::min_element(ncell.begin(), ncell.end()) < 3) {
         throw std::logic_error("number of cells per dimension must be at least 3");
     }
+
+    // if the number of cells in each spatial direction do not match or
+    // the cell sizes are different, the naive implementation is required
+    bool use_naive = binning1_->ncell() != binning2_->ncell() || binning1_->cell_size() != binning2_->cell_size();
 
     bool overcrowded = false;
     do {
@@ -147,24 +161,62 @@ void from_binning<dimension, float_type>::update()
         cuda::vector<int> g_ret(1);
         cuda::host::vector<int> h_ret(1);
         cuda::memset(g_ret, EXIT_SUCCESS);
-        cuda::configure(
-            binning_->dim_cell().grid, binning_->dim_cell().block
-          , binning_->cell_size() * (2 + dimension) * sizeof(int)  // shared memory
-        );
         auto const* kernel = &from_binning_wrapper<dimension>::kernel;
-        kernel->r.bind(position);
-        kernel->rr_cut_skin.bind(g_rr_cut_skin_);
-        kernel->update_neighbours(
-            g_ret
-          , &*g_neighbour->begin()
-          , size_
-          , stride_
-          , &*g_cell.begin()
-          , rr_cut_skin_.size1()
-          , rr_cut_skin_.size2()
-          , binning_->ncell()
-          , static_cast<vector_type>(box_->length())
-        );
+        if (!use_naive) {
+            // update the cell list of binning1 here, as the naive implementation
+            // does not need it and calling binning1_->g_cell() may trigger
+            // a cell list update
+            cell_array_type const& g_cell1 = read_cache(binning1_->g_cell());
+            // g_cell() triggers an update and now the cell list sizes may mismatch
+            // If so, redo the neighbour list update with the naive implementation
+            if (binning1_->cell_size() != binning2_->cell_size()) {
+                use_naive = true;
+                // make sure to retry the neighbour list update
+                overcrowded = true;
+                continue;
+            }
+            cuda::configure(
+                binning2_->dim_cell().grid, binning2_->dim_cell().block
+              , binning2_->cell_size() * (2 + dimension) * sizeof(int)  // shared memory
+            );
+            kernel->rr_cut_skin.bind(g_rr_cut_skin_);
+            kernel->r1.bind(position1);
+            kernel->r2.bind(position2);
+            kernel->update_neighbours(
+                g_ret
+              , &*g_neighbour->begin()
+              , size_
+              , stride_
+              , &*g_cell1.begin()
+              , &*g_cell2.begin()
+              , rr_cut_skin_.size1()
+              , rr_cut_skin_.size2()
+              , g_cell1.size()
+              , binning2_->ncell()
+              , static_cast<vector_type>(box_->length())
+            );
+        }
+        else {
+            cuda::configure(particle1_->dim.grid, particle1_->dim.block);
+            kernel->rr_cut_skin.bind(g_rr_cut_skin_);
+            kernel->r2.bind(position2);
+            kernel->update_neighbours_naive(
+                g_ret
+              , &*position1.begin()
+              , particle1_->nparticle()
+              , particle1_ == particle2_
+              , &*g_neighbour->begin()
+              , size_
+              , stride_
+              , &*g_cell2.begin()
+              , rr_cut_skin_.size1()
+              , rr_cut_skin_.size2()
+              , binning2_->ncell()
+              , binning2_->cell_length()
+              , binning2_->cell_size()
+              , static_cast<vector_type>(box_->length())
+            );
+        }
         cuda::thread::synchronize();
         cuda::copy(g_ret, h_ret);
         overcrowded = h_ret.front() != EXIT_SUCCESS;

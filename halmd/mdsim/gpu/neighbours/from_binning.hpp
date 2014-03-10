@@ -131,9 +131,12 @@ private:
     void update();
     void set_occupancy(double occupancy);
 
-    std::shared_ptr<particle_type const> particle_;
-    std::shared_ptr<binning_type> binning_;
-    std::shared_ptr<displacement_type> displacement_;
+    std::shared_ptr<particle_type const> particle1_;
+    std::shared_ptr<particle_type const> particle2_;
+    std::shared_ptr<binning_type> binning1_;
+    std::shared_ptr<binning_type> binning2_;
+    std::shared_ptr<displacement_type> displacement1_;
+    std::shared_ptr<displacement_type> displacement2_;
     std::shared_ptr<box_type const> box_;
     std::shared_ptr<logger> logger_;
 
@@ -150,7 +153,7 @@ private:
     /** neighbour lists */
     cache<array_type> g_neighbour_;
     /** cache observer for neighbour list update */
-    cache<> neighbour_cache_;
+    std::tuple<cache<>, cache<>> neighbour_cache_;
     /** number of placeholders per neighbour list */
     unsigned int size_;
     /** neighbour list stride */

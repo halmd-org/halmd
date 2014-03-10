@@ -37,8 +37,10 @@ struct from_binning_wrapper
 
     /** (cutoff lengths + neighbour list skin)² */
     cuda::texture<float> rr_cut_skin;
-    /** positions, tags */
-    cuda::texture<float4> r;
+    /** positions, tags of particle1 */
+    cuda::texture<float4> r1;
+    /** positions, tags of particle2 */
+    cuda::texture<float4> r2;
 
     /** update neighbour lists */
     cuda::function<void (
@@ -47,11 +49,31 @@ struct from_binning_wrapper
       , unsigned int
       , unsigned int
       , unsigned int const*
+      , unsigned int const*
+      , unsigned int
       , unsigned int
       , unsigned int
       , cell_size_type
       , vector_type
     )> update_neighbours;
+
+    /** update neighbour lists that uses a 'naive' implementation */
+    cuda::function<void (
+        int*
+      , float4 const*
+      , unsigned int
+      , bool
+      , unsigned int*
+      , unsigned int
+      , unsigned int
+      , unsigned int const*
+      , unsigned int
+      , unsigned int
+      , cell_size_type
+      , vector_type
+      , unsigned int
+      , vector_type
+    )> update_neighbours_naive;
 
     static from_binning_wrapper kernel;
 };

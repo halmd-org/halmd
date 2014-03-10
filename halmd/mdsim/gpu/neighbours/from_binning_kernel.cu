@@ -32,22 +32,25 @@ namespace from_binning_kernel {
 
 /** (cutoff lengths + neighbour list skin)² */
 texture<float> rr_cut_skin_;
-/** positions, tags */
-texture<float4> r_;
+/** positions, tags of particle1 */
+texture<float4> r1_;
+/** positions, tags of particle2 */
+texture<float4> r2_;
 
 /**
  * compute neighbour cell
  */
 inline __device__ unsigned int compute_neighbour_cell(
-    fixed_vector<int, 3> const& offset
+    unsigned int const cell_index
+  , fixed_vector<int, 3> const& offset
   , fixed_vector<int, 3> const& ncell
 )
 {
-    // cell belonging to this execution block
+    // cell index of specified cell offset
     fixed_vector<int, 3> cell;
-    cell[0] = BID % ncell[0];
-    cell[1] = (BID / ncell[0]) % ncell[1];
-    cell[2] = BID / ncell[0] / ncell[1];
+    cell[0] = cell_index % ncell[0];
+    cell[1] = (cell_index / ncell[0]) % ncell[1];
+    cell[2] = cell_index / ncell[0] / ncell[1];
     // neighbour cell of this cell
     cell = element_mod(cell + ncell + offset, ncell);
 
@@ -55,18 +58,44 @@ inline __device__ unsigned int compute_neighbour_cell(
 }
 
 inline __device__ unsigned int compute_neighbour_cell(
-    fixed_vector<int, 2> const& offset
+    unsigned int const cell_index
+  , fixed_vector<int, 2> const& offset
   , fixed_vector<int, 2> const& ncell
 )
 {
-    // cell belonging to this execution block
+    // cell index of specified cell offset
     fixed_vector<int, 2> cell;
-    cell[0] = BID % ncell[0];
-    cell[1] = BID / ncell[0];
+    cell[0] = cell_index % ncell[0];
+    cell[1] = cell_index / ncell[0];
     // neighbour cell of this cell
     cell = element_mod(cell + ncell + offset, ncell);
 
     return cell[1] * ncell[0] + cell[0];
+}
+
+/**
+ * compute cell indices for given particle positions
+ */
+template <typename vector_type, typename cell_size_type>
+inline __device__ unsigned int compute_cell_index(
+    vector_type r
+  , vector_type cell_length
+  , cell_size_type ncell
+)
+{
+    enum { dimension = vector_type::static_size };
+
+    cell_size_type index = element_mod(
+        static_cast<cell_size_type>(element_div(r, cell_length) + static_cast<vector_type>(ncell))
+      , ncell
+    );
+    // FIXME check PTX to ensure CUDA unrolls this loop
+    unsigned int offset = index[dimension - 1];
+    for (int i = dimension - 2; i >= 0; i--) {
+        offset *= ncell[i];
+        offset += index[i];
+    }
+    return offset;
 }
 
 /**
@@ -76,7 +105,8 @@ template <bool same_cell, typename vector_type, typename cell_size_type, typenam
 __device__ void update_cell_neighbours(
     cell_difference_type const& offset
   , cell_size_type const& ncell
-  , unsigned int const* g_cell
+  , unsigned int const* g_cell1
+  , unsigned int const* g_cell2
   , vector_type const& r
   , unsigned int type
   , unsigned int ntype1
@@ -97,11 +127,11 @@ __device__ void update_cell_neighbours(
     __syncthreads();
 
     // compute cell index
-    unsigned int const cell = compute_neighbour_cell(offset, static_cast<cell_difference_type>(ncell));
+    unsigned int const cell = compute_neighbour_cell(BID, offset, static_cast<cell_difference_type>(ncell));
     // load particles in cell
-    unsigned int const n_ = g_cell[cell * blockDim.x + threadIdx.x];
+    unsigned int const n_ = g_cell2[cell * blockDim.x + threadIdx.x];
     s_n[threadIdx.x] = n_;
-    tie(s_r[threadIdx.x], s_type[threadIdx.x]) <<= tex1Dfetch(r_, n_);
+    tie(s_r[threadIdx.x], s_type[threadIdx.x]) <<= tex1Dfetch(r2_, n_);
     __syncthreads();
 
     if (n == particle_kernel::placeholder) return;
@@ -112,7 +142,7 @@ __device__ void update_cell_neighbours(
         // skip placeholder particles
         if (m == particle_kernel::placeholder) break;
         // skip same particle
-        if (same_cell && i == threadIdx.x) continue;
+        if (same_cell && n == m && g_cell1 == g_cell2) continue;
 
         // particle distance vector
         vector_type dr = r - s_r[i];
@@ -141,18 +171,20 @@ __global__ void update_neighbours(
   , unsigned int* g_neighbour
   , unsigned int neighbour_size
   , unsigned int neighbour_stride
-  , unsigned int const* g_cell
+  , unsigned int const* g_cell1
+  , unsigned int const* g_cell2
   , unsigned int ntype1
   , unsigned int ntype2
+  , unsigned int total_cell_size1
   , fixed_vector<unsigned int, dimension> ncell
   , fixed_vector<float, dimension> box_length
 )
 {
     // load particle from cell placeholder
-    unsigned int const n = g_cell[GTID];
+    unsigned int const n = g_cell1[GTID];
     unsigned int type;
     fixed_vector<float, dimension> r;
-    tie(r, type) <<= tex1Dfetch(r_, n);
+    tie(r, type) <<= tex1Dfetch(r1_, n);
     // number of particles in neighbour list
     unsigned int count = 0;
 
@@ -199,8 +231,8 @@ __global__ void update_neighbours(
                         goto self;
                     }
                     // visit 26 neighbour cells, grouped into 13 pairs of mutually opposite cells
-                    update_cell_neighbours<false>(j, ncell, g_cell, r, type, ntype1, ntype2, n, count, g_neighbour, neighbour_size, neighbour_stride, box_length);
-                    update_cell_neighbours<false>(-j, ncell, g_cell, r, type, ntype1, ntype2, n, count, g_neighbour, neighbour_size, neighbour_stride, box_length);
+                    update_cell_neighbours<false>(j, ncell, g_cell1, g_cell2, r, type, ntype1, ntype2, n, count, g_neighbour, neighbour_size, neighbour_stride, box_length);
+                    update_cell_neighbours<false>(-j, ncell, g_cell1, g_cell2, r, type, ntype1, ntype2, n, count, g_neighbour, neighbour_size, neighbour_stride, box_length);
                 }
             }
             else {
@@ -208,14 +240,149 @@ __global__ void update_neighbours(
                     goto self;
                 }
                 // visit 8 neighbour cells, grouped into 4 pairs of mutually opposite cells
-                update_cell_neighbours<false>(j, ncell, g_cell, r, type, ntype1, ntype2, n, count, g_neighbour, neighbour_size, neighbour_stride, box_length);
-                update_cell_neighbours<false>(-j, ncell, g_cell, r, type, ntype1, ntype2, n, count, g_neighbour, neighbour_size, neighbour_stride, box_length);
+                update_cell_neighbours<false>(j, ncell, g_cell1, g_cell2, r, type, ntype1, ntype2, n, count, g_neighbour, neighbour_size, neighbour_stride, box_length);
+                update_cell_neighbours<false>(-j, ncell, g_cell1, g_cell2, r, type, ntype1, ntype2, n, count, g_neighbour, neighbour_size, neighbour_stride, box_length);
             }
         }
     }
 
 self:
-    update_cell_neighbours<true>(j, ncell, g_cell, r, type, ntype1, ntype2, n, count, g_neighbour, neighbour_size, neighbour_stride, box_length);
+    update_cell_neighbours<true>(j, ncell, g_cell1, g_cell2, r, type, ntype1, ntype2, n, count, g_neighbour, neighbour_size, neighbour_stride, box_length);
+
+    // return failure if any neighbour list is fully occupied
+    if (count == neighbour_size) {
+        *g_ret = EXIT_FAILURE;
+    }
+}
+
+
+/**
+ * update neighbour list with particles of given cell using a naive implementation
+ * that iterates through the given neighbour cell
+ * As the threads do not necessarily have particles that are in the same cell, we hope
+ * that the cache hides this bottleneck.
+ */
+template <bool same_cell, typename vector_type, typename cell_size_type, typename cell_difference_type>
+__device__ void update_cell_neighbours_naive(
+    cell_difference_type const& offset
+  , unsigned int const cell_index
+  , cell_size_type const& ncell
+  , unsigned int const* g_cell
+  , bool same_particle
+  , vector_type const& r
+  , unsigned int type
+  , unsigned int ntype1
+  , unsigned int ntype2
+  , unsigned int const& n
+  , unsigned int& count
+  , unsigned int* g_neighbour
+  , unsigned int neighbour_size
+  , unsigned int neighbour_stride
+  , unsigned int cell_size
+  , vector_type const& box_length
+)
+{
+    // compute cell index
+    unsigned int const cell = compute_neighbour_cell(cell_index, offset, static_cast<cell_difference_type>(ncell));
+
+    for (unsigned int i = 0; i < cell_size; ++i) {
+        // load index of particle in neighbour cell
+        unsigned int const m = g_cell[cell * cell_size + i];
+        // skip placeholder particles
+        if (m == particle_kernel::placeholder) break;
+
+        // skip same particle
+        if (same_cell && m == n && same_particle) continue;
+
+        vector_type r2;
+        unsigned int type2;
+        tie(r2, type2) <<= tex1Dfetch(r2_, m);
+
+        // particle distance vector
+        vector_type dr = r - r2;
+        // enforce periodic boundary conditions
+        box_kernel::reduce_periodic(dr, box_length);
+        // squared particle distance
+        float rr = inner_prod(dr, dr);
+
+        // enforce cutoff length with neighbour list skin
+        float rr_cut_skin = tex1Dfetch(rr_cut_skin_, type * ntype2 + type2);
+        if (rr <= rr_cut_skin && count < neighbour_size) {
+            // scattered write to neighbour list
+            g_neighbour[count * neighbour_stride + n] = m;
+            // increment neighbour list particle count
+            count++;
+        }
+    }
+}
+
+/**
+ * update neighbour lists
+ *
+ * This "naive" implementation calculates the cell index of particle "A" (whose
+ * neighbour list is being constructed) on-the-fly and then iterates through the
+ * neighbour cells of particle "B".
+ * This can cause multiple independent reads of the same cell when A-particles in the
+ * same block are not in the same cell.
+ */
+template <unsigned int dimension>
+__global__ void update_neighbours_naive(
+    int* g_ret
+  , float4 const* g_r1
+  , unsigned int nparticle
+  , bool same_particle
+  , unsigned int* g_neighbour
+  , unsigned int neighbour_size
+  , unsigned int neighbour_stride
+  , unsigned int const* g_cell2
+  , unsigned int ntype1
+  , unsigned int ntype2
+  , fixed_vector<unsigned int, dimension> ncell
+  , fixed_vector<float, dimension> cell_length
+  , unsigned int cell_size
+  , fixed_vector<float, dimension> box_length
+)
+{
+    // make sure we do not read the position of particle placeholders
+    if (GTID >= nparticle)
+        return;
+    unsigned int const n = GTID;
+    // load particle from global memory associated with this thread
+    unsigned int type;
+    fixed_vector<float, dimension> r;
+    tie(r, type) <<= g_r1[n];
+
+    // number of particles in neighbour list
+    unsigned int count = 0;
+    // cell offset of particle
+    unsigned int cell_index = compute_cell_index(r, cell_length, ncell);
+
+    fixed_vector<int, dimension> j;
+    for (j[0] = -1; j[0] <= 1; ++j[0]) {
+        for (j[1] = -1; j[1] <= 1; ++j[1]) {
+            if (dimension == 3) {
+                for (j[2] = -1; j[2] <= 1; ++j[2]) {
+                    if (j[0] == 0 && j[1] == 0 && j[2] == 0) {
+                        goto self;
+                    }
+                    // visit 26 neighbour cells, grouped into 13 pairs of mutually opposite cells
+                    update_cell_neighbours_naive<false>(j, cell_index, ncell, g_cell2, same_particle, r, type, ntype1, ntype2, n, count, g_neighbour, neighbour_size, neighbour_stride, cell_size, box_length);
+                    update_cell_neighbours_naive<false>(-j, cell_index, ncell, g_cell2, same_particle, r, type, ntype1, ntype2, n, count, g_neighbour, neighbour_size, neighbour_stride, cell_size, box_length);
+                }
+            }
+            else {
+                if (j[0] == 0 && j[1] == 0) {
+                    goto self;
+                }
+                // visit 8 neighbour cells, grouped into 4 pairs of mutually opposite cells
+                update_cell_neighbours_naive<false>(j, cell_index, ncell, g_cell2, same_particle, r, type, ntype1, ntype2, n, count, g_neighbour, neighbour_size, neighbour_stride, cell_size, box_length);
+                update_cell_neighbours_naive<false>(-j, cell_index, ncell, g_cell2, same_particle,r, type, ntype1, ntype2, n, count, g_neighbour, neighbour_size, neighbour_stride, cell_size, box_length);
+            }
+        }
+    }
+
+self:
+    update_cell_neighbours_naive<true>(j, cell_index, ncell, g_cell2, same_particle, r, type, ntype1, ntype2, n, count, g_neighbour, neighbour_size, neighbour_stride, cell_size, box_length);
 
     // return failure if any neighbour list is fully occupied
     if (count == neighbour_size) {
@@ -228,8 +395,10 @@ self:
 template <int dimension>
 from_binning_wrapper<dimension> from_binning_wrapper<dimension>::kernel = {
     from_binning_kernel::rr_cut_skin_
-  , from_binning_kernel::r_
+  , from_binning_kernel::r1_
+  , from_binning_kernel::r2_
   , from_binning_kernel::update_neighbours<dimension>
+  , from_binning_kernel::update_neighbours_naive<dimension>
 };
 
 template class from_binning_wrapper<3>;
