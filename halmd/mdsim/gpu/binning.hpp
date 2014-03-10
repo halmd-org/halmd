@@ -71,10 +71,20 @@ public:
         return r_skin_;
     }
 
-    //! returns cell size
+    /**
+     * cell size, i.e. number of particle placeholders per cell
+     */
     unsigned int cell_size() const
     {
         return cell_size_;
+    }
+
+    /**
+     * cells edge lengths
+     */
+    vector_type cell_length() const
+    {
+        return cell_length_;
     }
 
     /**
