@@ -36,7 +36,7 @@ SUFFIX=${4:+_$4}
 DEVICE_NAME=${5:-$(nvidia-smi -a | sed -ne '/Product Name/{s/.*Tesla \([A-Z][0-9]\+\).*/\1/p;q}')}
 HALMD_OPTIONS=$6
 
-HALMD_VERSION=$(halmd --version | cut -c 26- | sed -e '1s/.*-g\([a-z0-9]\+\).*/\1/;q')
+HALMD_VERSION=$(halmd --version | cut -c 26- | sed -e '1s/-patch.* \([a-z0-9]\+\)\]/-g\1/;q')
 BENCHMARK_TAG="${DEVICE_NAME}_${HALMD_VERSION}${SUFFIX}"
 
 SCRIPT="${SCRIPT_DIR}/${BENCHMARK_NAME}/run_benchmark.lua"
