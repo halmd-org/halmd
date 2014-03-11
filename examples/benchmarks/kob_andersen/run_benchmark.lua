@@ -101,7 +101,7 @@ local function kob_andersen(args)
 
     -- define velocity-Verlet integrator
     local integrator = mdsim.integrators.verlet({
-        box = box, particle = particle, force = force, timestep = timestep
+        box = box, particle = particle, timestep = timestep
     })
 
     -- estimate remaining runtime
@@ -126,7 +126,7 @@ local function parse_args()
     parser:add_argument("output,o", {type = "string", action = function(args, key, value)
         -- substitute current time
         args[key] = os.date(value)
-    end, default = "kob_andersen_equilibration_%Y%m%d_%H%M%S", help = "prefix of output files"})
+    end, default = "kob_andersen_benchmark_%Y%m%d_%H%M%S", help = "prefix of output files"})
 
     parser:add_argument("trajectory", {type = "string", required = true, action = function(args, key, value)
         readers.h5md.check(value)

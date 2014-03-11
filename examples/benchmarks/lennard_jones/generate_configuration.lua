@@ -62,7 +62,7 @@ local function lennard_jones(args)
 
     -- define velocity-Verlet integrator with Andersen thermostat
     local integrator = mdsim.integrators.verlet_nvt_andersen({
-        box = box, particle = particle, force = force
+        box = box, particle = particle
       , timestep = timestep, temperature = temperature, rate = 0.1
     })
 
@@ -100,7 +100,7 @@ local function parse_args()
     parser:add_argument("output,o", {type = "string", action = function(args, key, value)
         -- substitute current time
         args[key] = os.date(value)
-    end, default = "lennard_jones_equilibration_%Y%m%d_%H%M%S", help = "prefix of output files"})
+    end, default = "lennard_jones_benchmark_configuration_%Y%m%d_%H%M%S", help = "prefix of output files"})
 
     parser:add_argument("verbose,v", {type = "accumulate", action = function(args, key, value)
         local level = {
