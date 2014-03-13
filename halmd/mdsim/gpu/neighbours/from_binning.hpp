@@ -57,6 +57,12 @@ public:
     typedef max_displacement<dimension, float_type> displacement_type;
     struct defaults;
 
+    enum algorithm
+    {
+        shared_mem = 1
+      , naive      = 2
+    };
+
     typedef _Base::array_type array_type;
 
     static void luaopen(lua_State* L);
@@ -70,6 +76,7 @@ public:
       , double skin
       , std::shared_ptr<halmd::logger> logger = std::make_shared<halmd::logger>()
       , double cell_occupancy = defaults::occupancy()
+      , algorithm preferred_algorithm = shared_mem
     );
 
     connection on_prepend_update(std::function<void ()> const& slot)
@@ -150,6 +157,8 @@ private:
     cuda::vector<float_type> g_rr_cut_skin_;
     /** FIXME average desired cell occupancy */
     float_type nu_cell_;
+    /** preferred algorithm for update */
+    algorithm preferred_algorithm_;
     /** neighbour lists */
     cache<array_type> g_neighbour_;
     /** cache observer for neighbour list update */

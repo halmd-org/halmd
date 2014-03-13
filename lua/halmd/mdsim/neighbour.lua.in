@@ -38,10 +38,15 @@ local neighbours = {
 }
 
 local defaults
+local algorithm
 if device.gpu then
     defaults = {
         [2] = assert(libhalmd.mdsim.defaults_2)
       , [3] = assert(libhalmd.mdsim.defaults_3)
+    }
+    algorithm = {
+        shared_mem = 1
+      , naive      = 2
     }
 end
 
@@ -73,6 +78,7 @@ end
 -- :param args.box: instance of :class:`halmd.mdsim.box`
 -- :param table args.r_cut: matrix with elements :math:`r_{\text{c}, ij}`
 -- :param number args.skin: neighbour list skin *(default: 0.5)*
+-- :param string args.algorithm: Preferred implementation of the neighbour list *(GPU variant only)*
 -- :param number args.occupancy: Desired cell occupancy. Defaults to
 --   :class:`halmd.mdsim.defaults.occupancy()` *(GPU variant only)*
 -- :param boolean args.disable_binning: Disable use of binning module and
@@ -92,6 +98,13 @@ end
 --
 -- For the ``host`` implementation of the ``particle`` module with binning
 -- disabled, Hilbert sorting is disabled also.
+--
+-- Specifying ``algorithm`` will affect the GPU implementation of the neighbour list
+-- build when binning is enabled only. The available algorithms are ``naive`` and
+-- ``shared_mem``, where the latter tends to be faster on older GPUs (i.e. ≤ Tesla C1060),
+-- but slower on at least GTX 260 and later.
+-- Note that the ``shared_mem`` algorithm works only when both binning modules have equal
+-- number of cells in each spatial direction.
 --
 -- .. attribute:: particle
 --
@@ -143,6 +156,13 @@ local M = module(function(args)
     local memory = particle[1].memory
     if memory ~= particle[2].memory then
         error("incompatible 'memory' attributes of particle instances", 2)
+    end
+    local preferred_algorithm
+    if memory == "gpu" then
+        preferred_algorithm = utility.assert_type(args.algorithm or "shared_mem", "string")
+        if not algorithm[preferred_algorithm] then
+            error(("unsupported neighbour list algorithm '%s'"):format(preferred_algorithm), 2)
+        end
     end
 
     local box = utility.assert_kwarg(args, "box")
@@ -197,7 +217,7 @@ local M = module(function(args)
     if memory == "gpu" then
         if binning then
             occupancy = occupancy or assert(defaults[dimension].from_binning.occupancy)()
-            self = neighbours.from_binning(particle, binning, displacement, box, r_cut, skin, logger, occupancy)
+            self = neighbours.from_binning(particle, binning, displacement, box, r_cut, skin, logger, occupancy, algorithm[preferred_algorithm])
         else
             occupancy = occupancy or assert(defaults[dimension].from_particle.occupancy)()
             self = neighbours.from_particle(particle, displacement, box, r_cut, skin, logger, occupancy)

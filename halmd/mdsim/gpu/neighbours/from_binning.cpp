@@ -50,6 +50,7 @@ from_binning<dimension, float_type>::from_binning(
   , double skin
   , std::shared_ptr<logger> logger
   , double cell_occupancy
+  , algorithm preferred_algorithm
 )
   // dependency injection
   : particle1_(particle.first)
@@ -66,6 +67,7 @@ from_binning<dimension, float_type>::from_binning(
   , rr_cut_skin_(r_cut.size1(), r_cut.size2())
   , g_rr_cut_skin_(rr_cut_skin_.data().size())
   , nu_cell_(cell_occupancy) // FIXME neighbour list occupancy
+  , preferred_algorithm_(preferred_algorithm)
 {
     for (size_t i = 0; i < r_cut.size1(); ++i) {
         for (size_t j = 0; j < r_cut.size2(); ++j) {
@@ -149,7 +151,11 @@ void from_binning<dimension, float_type>::update()
 
     // if the number of cells in each spatial direction do not match or
     // the cell sizes are different, the naive implementation is required
-    bool use_naive = binning1_->ncell() != binning2_->ncell() || binning1_->cell_size() != binning2_->cell_size();
+    bool use_naive = preferred_algorithm_ == naive || binning1_->ncell() != binning2_->ncell() || binning1_->cell_size() != binning2_->cell_size();
+
+    if (use_naive && preferred_algorithm_ == shared_mem) {
+        LOG_WARNING_ONCE("neighbour list algorithm falling back to 'naive' due to incompatible binning modules");
+    }
 
     bool overcrowded = false;
     do {
@@ -263,6 +269,7 @@ void from_binning<dimension, float_type>::luaopen(lua_State* L)
                   , double
                   , std::shared_ptr<logger>
                   , double
+                  , algorithm
                   >)
             ]
           , namespace_(defaults_name.c_str())
