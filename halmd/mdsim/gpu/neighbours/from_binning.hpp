@@ -74,9 +74,9 @@ public:
       , std::shared_ptr<box_type const> box
       , matrix_type const& r_cut
       , double skin
-      , std::shared_ptr<halmd::logger> logger = std::make_shared<halmd::logger>()
       , double cell_occupancy = defaults::occupancy()
       , algorithm preferred_algorithm = shared_mem
+      , std::shared_ptr<halmd::logger> logger = std::make_shared<halmd::logger>()
     );
 
     connection on_prepend_update(std::function<void ()> const& slot)

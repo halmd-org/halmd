@@ -217,10 +217,10 @@ local M = module(function(args)
     if memory == "gpu" then
         if binning then
             occupancy = occupancy or assert(defaults[dimension].from_binning.occupancy)()
-            self = neighbours.from_binning(particle, binning, displacement, box, r_cut, skin, logger, occupancy, algorithm[preferred_algorithm])
+            self = neighbours.from_binning(particle, binning, displacement, box, r_cut, skin, occupancy, algorithm[preferred_algorithm], logger)
         else
             occupancy = occupancy or assert(defaults[dimension].from_particle.occupancy)()
-            self = neighbours.from_particle(particle, displacement, box, r_cut, skin, logger, occupancy)
+            self = neighbours.from_particle(particle, displacement, box, r_cut, skin, occupancy, logger)
         end
     else
         if binning then

@@ -48,9 +48,9 @@ from_binning<dimension, float_type>::from_binning(
   , std::shared_ptr<box_type const> box
   , matrix_type const& r_cut
   , double skin
-  , std::shared_ptr<logger> logger
   , double cell_occupancy
   , algorithm preferred_algorithm
+  , std::shared_ptr<logger> logger
 )
   // dependency injection
   : particle1_(particle.first)
@@ -267,9 +267,9 @@ void from_binning<dimension, float_type>::luaopen(lua_State* L)
                   , std::shared_ptr<box_type const>
                   , matrix_type const&
                   , double
-                  , std::shared_ptr<logger>
                   , double
                   , algorithm
+                  , std::shared_ptr<logger>
                   >)
             ]
           , namespace_(defaults_name.c_str())
