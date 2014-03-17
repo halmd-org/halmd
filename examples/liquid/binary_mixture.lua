@@ -154,7 +154,7 @@ local function liquid(args)
             file = file
           , fields = {
                 "potential_energy", "pressure", "temperature"  -- fluctuating quantities
-              , "total_energy", "center_of_mass_velocity"      -- conserved quantities
+              , "internal_energy", "center_of_mass_velocity"   -- conserved quantities
             }
           , every = args.sampling.state_vars
         })

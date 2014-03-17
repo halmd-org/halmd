@@ -31,7 +31,7 @@ local readers = halmd.io.readers
 local writers = halmd.io.writers
 
 --
--- Shift velocities to zero mean and rescale them to total energy or temperature
+-- Shift velocities to zero mean and rescale them to internal energy or temperature
 --
 local function rescale_velocities(args)
     local msv   = assert(args.msv)
@@ -50,18 +50,18 @@ local function rescale_velocities(args)
     local ekin = msv:kinetic_energy()
 
     local scale = 1
-    if (args.total_energy) then
-        if(args.total_energy < epot) then
+    if (args.internal_energy) then
+        if(args.internal_energy < epot) then
             error("Rescaling not possible, potential energy = %f", epot)
         end
-        scale = math.sqrt((args.total_energy - epot) / ekin)
-        log.info("Rescaling velocities of group '%s' with factor %f to total energy %f", group.label, scale, args.total_energy)
+        scale = math.sqrt((args.internal_energy - epot) / ekin)
+        log.info("Rescaling velocities of group '%s' with factor %f to internal energy %f", group.label, scale, args.internal_energy)
     elseif args.temperature then
         -- to set the temperature correctly, rescale the velocities using the new kinectic energy
         scale = math.sqrt(args.temperature * dimension / ekin)
         log.info("Rescaling velocities of group '%s' with factor %f to temperature %f", group.label, scale, args.temperature)
     else
-        error("Cannot rescale velocities. Missing temperature or total energy.")
+        error("Cannot rescale velocities. Missing temperature or internal energy.")
     end
 
     group.particle:rescale_velocity_group(group, scale)
@@ -116,11 +116,11 @@ local function shear_viscosity(args)
         msv:writer({file = file, every = interval})
     end
 
-    local total_energy = observables.utility.accumulator({
-        aquire = msv.total_energy
+    local internal_energy = observables.utility.accumulator({
+        aquire = msv.internal_energy
       , every = 500
       , start = math.floor(equi_steps / 2)
-      , desc = "averaged total energy"
+      , desc = "averaged internal energy"
       , aux_enable = {particle}
     })
 
@@ -158,8 +158,8 @@ local function shear_viscosity(args)
 
     -- determine the mean energy from equilibration run
     -- and rescale velocities to match the mean energy of the equilibration
-    rescale_velocities({msv = msv, total_energy = total_energy:mean()})
-    total_energy:disconnect()
+    rescale_velocities({msv = msv, internal_energy = internal_energy:mean()})
+    internal_energy:disconnect()
 
     local temperature = observables.utility.accumulator({
         aquire = msv.temperature
@@ -175,10 +175,10 @@ local function shear_viscosity(args)
       , reset = true
     })
 
-    -- monitor total energy in NVE run in addition to the fields registered above
+    -- monitor internal energy in NVE run in addition to the fields registered above
     interval = args.sampling.state_vars
     if interval > 0 then
-        msv:writer({file = file, fields = {"total_energy"}, every = interval})
+        msv:writer({file = file, fields = {"internal_energy"}, every = interval})
     end
 
     -- replace thermostat integrator by NVE velocity-Verlet

@@ -110,14 +110,14 @@ local function liquid(args)
     end
 
     local accumulator = observables.utility.accumulator({
-         aquire = msv.total_energy
+         aquire = msv.internal_energy
        , every = 10
-       , desc = "Averaged total energy"
+       , desc = "Averaged internal energy"
        , aux_enable = {particle}
      })
      accumulator:writer({
          file = file
-       , location = {"observables", "averaged_total_energy"}
+       , location = {"observables", "averaged_internal_energy"}
        , fields = {"mean", "error_of_mean", "variance"}
        , every = 200
        , reset = true

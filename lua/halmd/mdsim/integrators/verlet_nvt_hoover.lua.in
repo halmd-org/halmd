@@ -154,7 +154,7 @@ local M = module(function(args)
 
         -- connect chain energy to writers of observables file
         writer = file:writer{location = {"observables"}, mode = "append"}
-        writer:on_write(self.en_nhc, {"nose_hoover", "total_energy"})
+        writer:on_write(self.en_nhc, {"nose_hoover", "internal_energy"})
         -- connect writer to sampler
         sampler:on_sample(writer.write, every, clock.step)
 

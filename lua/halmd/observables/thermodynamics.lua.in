@@ -1,5 +1,5 @@
 --
--- Copyright © 2010-2013  Felix Höfling
+-- Copyright © 2010-2014  Felix Höfling
 -- Copyright © 2013       Nicolas Höft
 -- Copyright © 2010-2012  Peter Colberg
 --
@@ -56,19 +56,19 @@ local h5 = assert(libhalmd.h5)
 -- .. method:: kinetic_energy()
 --
 --    Returns the mean kinetic energy per particle:
---    :math:`e_{\text{kin}} = \frac{1}{N} \sum_{i=1}^N \frac{1}{2} m_i \vec v_i^2`.
+--    :math:`u_{\text{kin}} = \frac{1}{N} \sum_{i=1}^N \frac{1}{2} m_i \vec v_i^2`.
 --
 -- .. method:: potential_energy()
 --
 --    Returns the mean potential energy per particle:
---    :math:`e_{\text{pot}} = \frac{1}{N} \sum_{i=1}^N U_{\text{tot}}(\vec r_i)`,
+--    :math:`u_{\text{pot}} = \frac{1}{N} \sum_{i=1}^N U_{\text{tot}}(\vec r_i)`,
 --    where :math:`U_{\text{tot}}` denotes the sum of external and pair
 --    potentials.
 --
--- .. method:: total_energy()
+-- .. method:: internal_energy()
 --
---    Returns the mean total energy per particle:
---    :math:`e_{\text{tot}} = e_{\text{kin}} + e_{\text{pot}}`.
+--    Returns the mean internal energy per particle:
+--    :math:`u_{\text{int}} = u_{\text{kin}} + u_{\text{pot}}`.
 --
 -- .. method:: pressure()
 --
@@ -78,7 +78,7 @@ local h5 = assert(libhalmd.h5)
 -- .. method:: temperature()
 --
 --    Returns the instantaneous temperature as given by the kinetic energy:
---    :math:`k_B T = 2 e_{\text{kin}} / d`.
+--    :math:`k_B T = 2 u_{\text{kin}} / d`.
 --
 -- .. method:: center_of_mass_velocity()
 --
@@ -144,12 +144,12 @@ local h5 = assert(libhalmd.h5)
 --
 --    :returns: instance of group writer
 --
---    The argument ``location`` specifies a path in a structured file format
---    like H5MD given as a table of strings. If omitted it defaults to
---    ``{"observables", group.label}``.
+--    The optional argument ``location`` specifies a path in a structured file
+--    format like H5MD given as a table of strings. It defaults to
+--    ``{"observables", group.global and nil or group.label}``.
 --
---    The table ``fields`` specifies which data fields are written. It may
---    either be passed as an indexed table, e.g. ``{"pressure"}``,
+--    The optional table ``fields`` specifies which data fields are written. It
+--    may either be passed as an indexed table, e.g. ``{"pressure"}``,
 --    or as a dictionary, e.g., ``{p = "pressure"}``; the table
 --    form is interpreted as ``{pressure = "pressure", …}``. The keys denote
 --    the field names in the file and are appended to ``location``. The values
@@ -179,7 +179,9 @@ local M = module(function(args)
     self.writer = function(self, args)
         local file = utility.assert_kwarg(args, "file")
         local every = utility.assert_kwarg(args, "every")
-        local location = utility.assert_type(args.location or {"observables", group.label}, "table")
+        local location = utility.assert_type(
+            args.location or {"observables", group.global and nil or group.label}
+          , "table")
         local fields = utility.assert_type(
             args.fields or {"potential_energy", "pressure", "temperature", "center_of_mass_velocity"}
           , "table")
@@ -189,14 +191,14 @@ local M = module(function(args)
         local module_group = file.root:open_group("h5md"):open_group("modules"):open_group("thermodynamics")
         module_group:write_attribute("version", h5.int_array(), {1, 0})
 
-        -- store particle number and box volume in 'truncate' mode
+        -- store particle number and density in 'truncate' mode
         -- assuming unchanging values
         -- FIXME should be queried from box and particle_group
         local writer = file:writer{location = location, mode = "truncate"}
         writer.group:write_attribute("dimension", h5.int(), self.dimension)
 
         writer:on_write(self.particle_number, {"particle_number"})
-        writer:on_write(self.volume, {"volume"})
+        writer:on_write(self.density, {"density"})
         writer:write()
 
         writer = file:writer{location = location, mode = "append"}
@@ -205,7 +207,7 @@ local M = module(function(args)
         -- an update of the aux variables in the force/particle module
         local aux_table = {
             potential_energy = true
-          , total_energy = true
+          , internal_energy = true
           , stress_tensor = true
           , virial = true
           , pressure = true
@@ -217,7 +219,7 @@ local M = module(function(args)
         local aux = false
         for k,v in pairs(fields) do
             local name = (type(k) == "string") and k or v
-            if name == "particle_number" or name == "volume" then
+            if name == "particle_number" or name == "density" then
                 logger:warning("skip repeated output of " .. name)
             else
                 writer:on_write(assert(self[v]), {name})

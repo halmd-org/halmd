@@ -84,7 +84,7 @@ local h5md = libhalmd.io.writers.h5md
 --       writer:on_prepend_write(observable.sample)
 --       writer:on_write(observable.en_pot, {"potential_energy"})
 --       writer:on_write(observable.en_kin, {"kinetic_energy"})
---       writer:on_write(observable.en_tot, {"total_energy"})
+--       writer:on_write(observable.en_tot, {"internal_energy"})
 --
 --       local sampler = require("halmd.observables.sampler")
 --       sampler:on_start(writer.write)

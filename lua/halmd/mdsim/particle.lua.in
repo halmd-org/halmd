@@ -175,7 +175,7 @@ end
 --
 --    Enable the computation of auxliliary variables in the next on_force()
 --    step. These are: ``stress_pot`` and ``potential_energy`` and derived
---    properties (such as the total energy or the virial). The auxiliary
+--    properties (such as the internal energy or the virial). The auxiliary
 --    variables should be activated like this::
 --
 --      sampler:on_prepare(function() particle:aux_enable() end, every, start)
