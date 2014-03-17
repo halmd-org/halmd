@@ -32,6 +32,7 @@
 #include <halmd/utility/profiler.hpp>
 
 #include <boost/numeric/ublas/matrix.hpp>
+#include <cuda_wrapper/cuda_wrapper.hpp>
 #include <lua.hpp>
 
 #include <memory>
@@ -167,6 +168,9 @@ private:
     unsigned int size_;
     /** neighbour list stride */
     unsigned int stride_;
+
+    /** CUDA device properties */
+    cuda::device::properties device_properties_;
 
     /** profiling runtime accumulators */
     runtime runtime_;

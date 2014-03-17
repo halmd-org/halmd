@@ -68,6 +68,7 @@ from_binning<dimension, float_type>::from_binning(
   , g_rr_cut_skin_(rr_cut_skin_.data().size())
   , nu_cell_(cell_occupancy) // FIXME neighbour list occupancy
   , preferred_algorithm_(preferred_algorithm)
+  , device_properties_(cuda::device::get())
 {
     for (size_t i = 0; i < r_cut.size1(); ++i) {
         for (size_t j = 0; j < r_cut.size2(); ++j) {
@@ -151,10 +152,12 @@ void from_binning<dimension, float_type>::update()
 
     // if the number of cells in each spatial direction do not match or
     // the cell sizes are different, the naive implementation is required
-    bool use_naive = preferred_algorithm_ == naive || binning1_->ncell() != binning2_->ncell() || binning1_->cell_size() != binning2_->cell_size();
+    bool use_naive = preferred_algorithm_ == naive
+                  || binning1_->ncell() != binning2_->ncell()
+                  || binning1_->cell_size() != binning2_->cell_size();
 
     if (use_naive && preferred_algorithm_ == shared_mem) {
-        LOG_WARNING_ONCE("neighbour list algorithm falling back to 'naive' due to incompatible binning modules");
+        LOG_WARNING_ONCE("falling back to 'naive' neighbour list algorithm due to incompatible binning modules");
     }
 
     bool overcrowded = false;
@@ -176,15 +179,22 @@ void from_binning<dimension, float_type>::update()
             // g_cell() triggers an update and now the cell list sizes may mismatch
             // If so, redo the neighbour list update with the naive implementation
             if (binning1_->cell_size() != binning2_->cell_size()) {
+                LOG_WARNING_ONCE("falling back to 'naive' neighbour list algorithm due to mismatching cell list sizes");
                 use_naive = true;
-                // make sure to retry the neighbour list update
-                overcrowded = true;
+                overcrowded = true;    // make sure to retry the neighbour list update
                 continue;
             }
-            cuda::configure(
-                binning2_->dim_cell().grid, binning2_->dim_cell().block
-              , binning2_->cell_size() * (2 + dimension) * sizeof(int)  // shared memory
-            );
+
+            // determine and check size of shared memory
+            size_t smem_size = binning2_->cell_size() * (2 + dimension) * sizeof(int);
+            if (smem_size > device_properties_.shared_mem_per_block()) {
+                LOG_WARNING_ONCE("falling back to 'naive' neighbour list algorithm due to insufficient shared memory");
+                use_naive = true;
+                overcrowded = true;    // make sure to retry the neighbour list update
+                continue;
+            }
+
+            cuda::configure(binning2_->dim_cell().grid, binning2_->dim_cell().block, smem_size);
             kernel->rr_cut_skin.bind(g_rr_cut_skin_);
             kernel->r1.bind(position1);
             kernel->r2.bind(position2);
@@ -270,7 +280,7 @@ void from_binning<dimension, float_type>::luaopen(lua_State* L)
                   , double
                   , algorithm
                   , std::shared_ptr<logger>
-                  >)
+                >)
             ]
           , namespace_(defaults_name.c_str())
             [
