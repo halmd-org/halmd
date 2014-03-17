@@ -1,6 +1,6 @@
 --
--- Copyright © 2012 Peter Colberg
--- Copyright © 2012 Felix Höfling
+-- Copyright © 2012-2014 Felix Höfling
+-- Copyright © 2012      Peter Colberg
 --
 -- This file is part of HALMD.
 --
@@ -18,7 +18,8 @@
 -- along with this program.  If not, see <http://www.gnu.org/licenses/>.
 --
 
-local module = require("halmd.utility.module")
+local module  = require("halmd.utility.module")
+local utility = require("halmd.utility")
 
 ---
 -- All
@@ -45,6 +46,8 @@ local all = assert(libhalmd.mdsim.particle_groups.all)
 -- :param table args: keyword arguments
 -- :param args.particle: instance of :class:`halmd.mdsim.particle`
 -- :param string args.label: group label (defaults to :attr:`halmd.mdsim.particle.label`)
+-- :param boolean args.global: particle group comprises the whole simulation
+--                             world (*default:* ``true``)
 --
 -- .. attribute:: particle
 --
@@ -54,15 +57,14 @@ local all = assert(libhalmd.mdsim.particle_groups.all)
 --
 --    Number of particles in group.
 --
+-- .. attribute:: global
+--
+--    The value of ``args.global`` passed upon construction.
+--
 local M = module(function(args)
-    local particle = args.particle
-    if not particle then
-        error("missing argument 'particle'", 2)
-    end
-    local label = args.label or assert(particle.label)
-    if type(label) ~= "string" then
-        error("invalid argument 'label'", 2)
-    end
+    local particle = utility.assert_kwarg(args, "particle")
+    local label = utility.assert_type(args.label or assert(particle.label), "string")
+    local global = utility.assert_type(args.global or true, "boolean")
 
     -- construct particle group
     local self = all(particle)
@@ -75,6 +77,11 @@ local M = module(function(args)
     -- attach label as read-only property
     self.label = property(function(self)
         return label
+    end)
+
+    -- attach global property
+    self.global = property(function(self)
+        return global
     end)
 
     return self

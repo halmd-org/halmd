@@ -1,6 +1,6 @@
 --
--- Copyright © 2012 Peter Colberg
--- Copyright © 2012 Felix Höfling
+-- Copyright © 2012-2014 Felix Höfling
+-- Copyright © 2012      Peter Colberg
 --
 -- This file is part of HALMD.
 --
@@ -18,8 +18,9 @@
 -- along with this program.  If not, see <http://www.gnu.org/licenses/>.
 --
 
-local log       = require("halmd.io.log")
-local module    = require("halmd.utility.module")
+local log     = require("halmd.io.log")
+local module  = require("halmd.utility.module")
+local utility = require("halmd.utility")
 
 ---
 -- From Range
@@ -48,6 +49,8 @@ local from_range = assert(libhalmd.mdsim.particle_groups.from_range)
 -- :param args.particle: instance of :class:`halmd.mdsim.particle`
 -- :param table args.range: particle tag range ``{first, last}``
 -- :param string args.label: group label
+-- :param boolean args.global: particle group can comprise the whole simulation
+--                             world (*default:* ``false``)
 --
 -- .. note::
 --
@@ -61,19 +64,22 @@ local from_range = assert(libhalmd.mdsim.particle_groups.from_range)
 --
 --    Number of particles in group.
 --
+-- .. attribute:: global
+--
+--    True if the particle group comprises the whole simulation world. This
+--    requires that ``args.global`` was set to true upon construction and
+--    that ``size`` equals the number of particles in ``particle``.
+--
 local M = module(function(args)
-    local particle = args.particle
-    if not particle then
-        error("missing argument 'particle'", 2)
-    end
-    local range = args.range
+    local particle = utility.assert_kwarg(args, "particle")
+    local range = utility.assert_kwarg(args, "range")
+    local label = utility.assert_type(args.label or assert(particle.label), "string")
+    local global = utility.assert_type(args.global or true, "boolean")
+
     if type(range) ~= "table" or #range ~= 2 then
         error("invalid argument 'range'", 2)
     end
-    local label = args.label
-    if type(label) ~= "string" then
-        error("invalid argument 'label'", 2)
-    end
+
     local logger = log.logger({prefix = ("group (%s)"):format(label)})
 
     -- construct particle group from tag range
@@ -87,6 +93,11 @@ local M = module(function(args)
     -- attach label as read-only property
     self.label = property(function(self)
         return label
+    end)
+
+    -- attach global property
+    self.global = property(function(self)
+        return global and (self.size == particle.nparticle)
     end)
 
     return self
