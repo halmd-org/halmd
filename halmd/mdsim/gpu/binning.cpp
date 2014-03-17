@@ -221,7 +221,6 @@ template <int dimension, typename float_type>
 void binning<dimension, float_type>::luaopen(lua_State* L)
 {
     using namespace luaponte;
-    std::string const defaults_name("defaults_" +  std::to_string(dimension));
     module(L, "libhalmd")
     [
         namespace_("mdsim")
