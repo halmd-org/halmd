@@ -1,6 +1,6 @@
 #!/usr/bin/env halmd
 --
--- Copyright © 2011-2013 Felix Höfling
+-- Copyright © 2011-2014 Felix Höfling
 -- Copyright © 2010-2012 Peter Colberg
 --
 -- This file is part of HALMD.
@@ -24,6 +24,7 @@ local halmd = require("halmd")
 -- grab modules
 local log = halmd.io.log
 local mdsim = halmd.mdsim
+local numeric = halmd.utility.numeric
 local observables = halmd.observables
 local writers = halmd.io.writers
 local utility = halmd.utility
@@ -34,20 +35,16 @@ local utility = halmd.utility
 local function liquid(args)
     -- total number of particles from sum of particles per species
     local nspecies = #args.particles
-    local nparticle = 0
-    for i = 1, nspecies do
-        nparticle = nparticle + args.particles[i]
-    end
+    local nparticle = utility.numeric.sum(args.particles)
+
     -- derive edge lengths from number of particles, density and edge ratios
     local volume = nparticle / args.density
-    local dimension = #args.ratios
-    local det = 1
-    for i = 1, #args.ratios do
-        det = det * args.ratios[i]
-    end
+    local ratios = args.ratios
+    local dimension = #ratios
+    local unit_edge = math.pow(volume / numeric.prod(ratios), 1 / dimension)
     local length = {}
-    for i = 1, #args.ratios do
-        length[i] = args.ratios[i] * math.pow(volume / det, 1 / dimension)
+    for i = 1, #ratios do
+        length[i] = unit_edge * ratios[i]
     end
     -- create simulation domain with periodic boundary conditions
     local box = mdsim.box({length = length})
