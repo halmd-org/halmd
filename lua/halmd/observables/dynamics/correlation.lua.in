@@ -62,10 +62,10 @@ local module  = require("halmd.utility.module")
 --         , size = 10
 --         , separation = separation
 --     })
---     blocking_scheme:correlation(
---         collective_msd, file
---       , {"dynamics", "AA", "collective_mean_square_displacement"}
---     )
+--     blocking_scheme:correlation({
+--         tcf = collective_msd, file = file
+--       , location = {"dynamics", "AA", "collective_mean_square_displacement"}
+--     })
 --
 
 -- grab C++ wrappers

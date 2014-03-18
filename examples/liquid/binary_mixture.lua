@@ -199,13 +199,13 @@ local function liquid(args)
 
         -- compute mean-square displacement
         local msd = dynamics.mean_square_displacement({phase_space = phase_space})
-        blocking_scheme:correlation(msd, file)
+        blocking_scheme:correlation({tcf = msd, file = file})
         -- compute mean-quartic displacement
         local mqd = dynamics.mean_quartic_displacement({phase_space = phase_space})
-        blocking_scheme:correlation(mqd, file)
+        blocking_scheme:correlation({tcf = mqd, file = file})
         -- compute velocity autocorrelation function
         local vacf = dynamics.velocity_autocorrelation({phase_space = phase_space})
-        blocking_scheme:correlation(vacf, file)
+        blocking_scheme:correlation({tcf = vacf, file = file})
 
         -- compute intermediate scattering function from correlation of density
         -- modes of previous particle groups and of this one
@@ -214,7 +214,7 @@ local function liquid(args)
                 density_mode = (l == label) and rho or {rho, density_mode[label]}
               , norm = nparticle
             })
-            blocking_scheme:correlation(isf, file)
+            blocking_scheme:correlation({tcf = isf, file = file})
         end
    end
 

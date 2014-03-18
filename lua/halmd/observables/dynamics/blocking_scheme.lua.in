@@ -53,13 +53,14 @@ local correlation = assert(libhalmd.observables.dynamics.correlation)
 --
 --    Disconnect blocking scheme from sampler.
 --
--- .. class:: correlation(tcf, writer)
+-- .. class:: correlation(args)
 --
 --    Compute time correlation function.
 --
---    :param tcf: time correlation function
---    :param file: instance of :class:`halmd.io.writers.h5md`
---    :param location: locatin within file *(optional)*
+--    :param table args: keyword arguments
+--    :param args.tcf: time correlation function
+--    :param args.file: instance of :class:`halmd.io.writers.h5md`
+--    :param args.location: location within file *(optional)*
 --    :type args.location: string table
 --
 --    The argument ``tcf`` specifies the time correlation function. It is
@@ -90,13 +91,11 @@ local M = module(function(args)
     -- construct instance
     local self = blocking_scheme(clock, max_lag, resolution, size, shift, separation, logger)
 
-    self.correlation = function(self, tcf, file, location)
-        if not tcf then
-            error("bad argument 'tcf'", 2)
-        end
-        if not file then
-            error("bad argument 'file'", 2)
-        end
+    self.correlation = function(self, args)
+        local tcf = utility.assert_kwarg(args, "tcf")
+        local file = utility.assert_kwarg(args, "file")
+        local location = args.location -- may be nil
+
         local desc = assert(tcf.desc)
         local acquire = assert(tcf.acquire)
         -- convert single acquisitor to a table

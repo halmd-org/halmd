@@ -166,16 +166,16 @@ local function liquid(args)
 
         -- compute mean-square displacement
         local msd = dynamics.mean_square_displacement({phase_space = phase_space})
-        blocking_scheme:correlation(msd, file)
+        blocking_scheme:correlation({tcf = msd, file = file})
         -- compute mean-quartic displacement
         local mqd = dynamics.mean_quartic_displacement({phase_space = phase_space})
-        blocking_scheme:correlation(mqd, file)
+        blocking_scheme:correlation({tcf = mqd, file = file})
         -- compute velocity autocorrelation function
         local vacf = dynamics.velocity_autocorrelation({phase_space = phase_space})
-        blocking_scheme:correlation(vacf, file)
+        blocking_scheme:correlation({tcf = vacf, file = file})
         -- compute intermediate scattering function
         local isf = dynamics.intermediate_scattering_function({density_mode = density_mode, norm = nparticle})
-        blocking_scheme:correlation(isf, file)
+        blocking_scheme:correlation({tcf = isf, file = file })
 
         -- compute interdiffusion coefficient
         local selfdiffusion = dynamics.correlation({
@@ -196,7 +196,7 @@ local function liquid(args)
             -- module description
           , desc = "selfdiffusion coefficient of A particles"
         })
-        blocking_scheme:correlation(selfdiffusion, file)
+        blocking_scheme:correlation({tcf = selfdiffusion, file = file})
     end
 
     -- sample initial state

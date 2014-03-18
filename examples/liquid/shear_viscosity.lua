@@ -198,10 +198,10 @@ local function shear_viscosity(args)
     })
 
     local helfand_moment = dynamics.helfand_moment({thermodynamics = msv, interval = 5})
-    blocking_scheme:correlation(helfand_moment, file)
+    blocking_scheme:correlation({tcf = helfand_moment, file = file})
 
     local stress_tensor_autocorrelation = dynamics.stress_tensor_autocorrelation({thermodynamics = msv})
-    blocking_scheme:correlation(stress_tensor_autocorrelation, file)
+    blocking_scheme:correlation({tcf = stress_tensor_autocorrelation, file = file})
 
     runtime = observables.runtime_estimate({
         steps = steps, first = 10, interval = 900, sample = 60
