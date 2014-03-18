@@ -141,9 +141,9 @@ end
 
 local function multi_index_to_offset(index, dims, dim)
     if dim == #index then
-        return index[dim]
+        return index[dim] - 1
     end
-    return index[dim] + dims[dim] * multi_index_to_offset(index, dims, dim+1)
+    return (index[dim] - 1) + dims[dim] * multi_index_to_offset(index, dims, dim+1)
 end
 
 ---
