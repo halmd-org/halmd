@@ -34,31 +34,10 @@ local excluded_volume = assert(libhalmd.mdsim.positions.excluded_volume)
 --
 -- This example shows use of the excluded volume with the placement of 1000 particles
 -- at random positions with a diameter of ``1`` in a cubic box with each edge being
--- ``50``::
+-- ``50``:
 --
---     local random = math.random
---     math.randomseed(os.time())
---     local edge = 50
---     local box = halmd.mdsim.box{length = {edge, edge, edge}}
---     local excluded = halmd.mdsim.positions.excluded_volume{box = box, cell_length = 1}
---     local obstacles = {}
---     local diameter = 1
---     local repeats = 50
---     for i = 1, 1000 do
---         for j = 1, repeats do
---             local r = {edge * random(), edge * random(), edge * random()}
---             if excluded:place_sphere(r, diameter) then
---                 obstacles[i] = r
---                 excluded:exclude_sphere(r, diameter)
---                 break
---             end
---         end
---         if not obstacles[i] then
---             error(("cannot place obstacle %d after %d repeats"):format(i, repeats))
---         end
---     end
---     local particle = halmd.mdsim.particle{dimension = box.dimension, particles = #obstacles}
---     particle:set_position(obstacles)
+-- .. literalinclude:: /test/lua/mdsim/positions/excluded_volume.lua
+--    :lines: 40-65
 --
 -- .. note::
 --

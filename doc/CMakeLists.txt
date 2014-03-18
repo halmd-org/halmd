@@ -61,6 +61,15 @@ foreach(input ${files})
   endif()
 endforeach()
 
+# Copy test scripts for inlining of Lua examples into documentation.
+file(GLOB_RECURSE files RELATIVE ${CMAKE_SOURCE_DIR} ${CMAKE_SOURCE_DIR}/test/lua/*)
+foreach(input ${files})
+  if(NOT input MATCHES "(^|/)\\.[^/]+$")
+    configure_file(${CMAKE_SOURCE_DIR}/${input} ${input} @ONLY)
+    list(APPEND HALMD_DOC_INPUT_FILES ${CMAKE_CURRENT_BINARY_DIR}/${input})
+  endif()
+endforeach()
+
 # Extract module documentation from Lua sources
 configure_file(modules.lua.in modules.lua)
 file(GLOB_RECURSE files RELATIVE "${CMAKE_SOURCE_DIR}/lua" "${CMAKE_SOURCE_DIR}/lua/halmd/*.lua.in")

@@ -1,5 +1,6 @@
 --
--- Copyright © 2011  Peter Colberg
+-- Copyright © 2014 Felix Höfling
+-- Copyright © 2011 Peter Colberg
 --
 -- This file is part of HALMD.
 --
@@ -17,23 +18,13 @@
 -- along with this program.  If not, see <http://www.gnu.org/licenses/>.
 --
 
-require("halmd")
+local halmd = require("halmd")
+halmd.io.log.open_console()
 
-return function()
-    local particle = halmd.mdsim.particle{
-        particles = {5000}
-      , masses = {1}
-      , label = {"A"}
-      , dimension = 3
-    }
-    halmd.mdsim.box{
-        particles = {particle}
-    }
-    local sample = halmd.observables.samples.phase_space{
-        memory = "host"
-      , particle = particle
-    }
-    local excluded = halmd.mdsim.positions.excluded_volume{}
+function test()
+    local box = halmd.mdsim.box{length = {20, 20, 20}}
+
+    local excluded = halmd.mdsim.positions.excluded_volume({box = box, cell_length = 10})
     excluded:exclude_sphere({3, 3, 3}, 1)
     assert(not excluded:place_sphere({3, 3, 3}, 1))
     assert(excluded:place_sphere({4, 4, 4}, 1))
@@ -43,3 +34,37 @@ return function()
     assert(not excluded:place_sphere({4, 4, 4}, 1))
     excluded:exclude_sphere({3, 3, 3}, 10)
 end
+
+-- the following function body is part of the documentation in
+-- lua/mdsim/positions/excluded_volume.lua.in and shall not be indented
+function example()
+local random = math.random
+math.randomseed(os.time())
+
+local edge = 50
+local box = halmd.mdsim.box{length = {edge, edge, edge}}
+local excluded = halmd.mdsim.positions.excluded_volume{box = box, cell_length = 1}
+
+local obstacles = {}
+local diameter = 1
+local repeats = 50
+for i = 1, 1000 do
+    for j = 1, repeats do
+        local r = {edge * random(), edge * random(), edge * random()}
+        if excluded:place_sphere(r, diameter) then
+            obstacles[i] = r
+            excluded:exclude_sphere(r, diameter)
+            break
+        end
+    end
+    if not obstacles[i] then
+        error(("cannot place obstacle %d after %d repeats"):format(i, repeats))
+    end
+end
+
+local particle = halmd.mdsim.particle{dimension = box.dimension, particles = #obstacles}
+particle:set_position(obstacles)
+end
+
+test()
+example()
