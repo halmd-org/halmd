@@ -37,7 +37,7 @@ local excluded_volume = assert(libhalmd.mdsim.positions.excluded_volume)
 -- ``50``:
 --
 -- .. literalinclude:: /test/lua/mdsim/positions/excluded_volume.lua
---    :lines: 40-65
+--    :lines: 41-66
 --
 -- .. note::
 --
