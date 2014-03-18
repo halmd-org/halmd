@@ -36,10 +36,15 @@ function test(dims)
     for i = 1, ndim do
         local index = numeric.offset_to_multi_index(i, dims)
         local offset = numeric.multi_index_to_offset(index, dims)
-        log.info("offset: %d, index: %d %d %d %d", offset, index[1], index[2], index[3], index[4])
+        local output_str = "offset: %d, index: "
+        for d = 1, #dims do
+            output_str = output_str .. "%d "
+        end
+        log.info(output_str, offset, table.unpack(index))
         assert(i == offset)
     end
 end
 
 test({2, 1, 3, 3})
+test({2, 3, 3})
 test({1})
