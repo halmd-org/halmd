@@ -1,7 +1,7 @@
 --
--- Copyright © 2013 Felix Höfling
--- Copyright © 2014 Nicolas Höft
--- Copyright © 2011 Peter Colberg
+-- Copyright © 2013-2014 Felix Höfling
+-- Copyright © 2014      Nicolas Höft
+-- Copyright © 2011      Peter Colberg
 --
 -- This file is part of HALMD.
 --
@@ -23,7 +23,7 @@
 -- Numeric
 -- =======
 --
--- This module provides utilities for simple numerics in Lua.
+-- This module provides simple numeric routines in Lua.
 --
 
 local M = {}
@@ -34,6 +34,7 @@ local M = {}
 -- :param table t: input table
 -- :param comp: callable that takes two elements of ``t`` and returns ``true`` or ``false``
 -- :returns: last element in ``t`` that satisfied ``comp(a,b)``
+--
 function M.find_comp(t, comp)
     if #t == 0 then return nil end
     local value = t[1]
@@ -45,11 +46,12 @@ function M.find_comp(t, comp)
     return value
 end
 
---_
+---
 -- Find the maximum value in a table
 --
 -- :param table t: input table
 -- :returns: maximum value in ``t``
+--
 function M.max(t)
     return M.find_comp(t, function(a,b) return a < b end)
 end
@@ -59,6 +61,7 @@ end
 --
 -- :param table t: input table
 -- :returns: minmum value in ``t``
+--
 function M.min(t)
     return M.find_comp(t, function(a,b) return a > b end)
 end
@@ -70,6 +73,7 @@ end
 -- :param number columns: number of columns
 -- :param value: value for each element of the matrix
 -- :returns: matrix of dimension :math:`\text{rows} \times \text{columns}` with each element set to ``value``
+--
 function M.scalar_matrix(rows, columns, value)
     local mat = {}
     for i = 1, rows do
@@ -87,6 +91,7 @@ end
 --
 -- :param matrix m: input matrix
 -- :returns: transpose of ``m``
+--
 function M.trans(m)
     local t = {}
     for i = 1, #m do
@@ -102,10 +107,11 @@ function M.trans(m)
 end
 
 ---
--- Return diagonal elements of n⨯n matrix
+-- Return diagonal elements of n×n matrix
 --
 -- :param matrix m: input square matrix
 -- :returns: table of diagonal elements of ``m``
+--
 function M.diag(m)
     local t = {}
     for i = 1, #m do
@@ -114,46 +120,41 @@ function M.diag(m)
     return t
 end
 
-local function offset_to_multi_index(offset, index, dims, dim)
-    if dim == #index then
-        index[dim] = offset + 1
-    else
-        index[dim] = offset % dims[dim] + 1
-        return offset_to_multi_index(math.floor(offset / dims[dim]), index, dims, dim+1)
-    end
-end
-
 ---
 -- Convert one-dimensional offset to multi-dimensional index
 --
--- :param number offset: 1-based one-dimensional index
--- :param table dims: maximum dimension of multi-dimensional array
--- :returns: 1-based multi dimensional index
+-- Assumes contiguous storage of the array data in row-major order.
+--
+-- :param number offset: 1-based one-dimensional offset
+-- :param table dims: dimensions (shape) of multi-dimensional array
+-- :returns: 1-based multi-dimensional index of array element at ``offset``
+--
 function M.offset_to_multi_index(offset, dims)
     local index = {}
-    -- reserve array size
+    offset = offset - 1 -- convert to 0-based offset
     for i = 1, #dims do
-        index[i] = 0
+        local d = dims[i]
+        index[i] = offset % d + 1
+        offset = math.floor(offset / d)
     end
-    offset_to_multi_index(offset-1, index, dims, 1)
     return index
-end
-
-local function multi_index_to_offset(index, dims, dim)
-    if dim == #index then
-        return index[dim] - 1
-    end
-    return (index[dim] - 1) + dims[dim] * multi_index_to_offset(index, dims, dim+1)
 end
 
 ---
 -- Convert multi-dimensional index to one-dimensional offset
 --
--- :param table index: multidimensional index
--- :param table dims: maximum dimension of multi-dimensional array
--- :returns: 1-based offset of ``index``
+-- Assumes contiguous storage of the array data in row-major order.
+--
+-- :param table index: 1-based multi-dimensional index
+-- :param table dims: dimensions (shape) of multi-dimensional array
+-- :returns: 1-based offset of array element at ``index``
+--
 function M.multi_index_to_offset(index, dims)
-    return multi_index_to_offset(index, dims, 1) + 1
+    local offset = 1
+    for i = #dims, 1, -1 do
+        offset = index[i] + dims[i] * (offset - 1)
+    end
+    return offset
 end
 
 return M

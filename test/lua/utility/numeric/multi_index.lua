@@ -20,7 +20,7 @@
 --
 
 local halmd = require("halmd")
-halmd.io.log.open_console()
+halmd.io.log.open_console({severity = "info"}) -- or "debug"
 
 -- grab modules
 local log = halmd.io.log
@@ -40,7 +40,7 @@ function test(dims)
         for d = 1, #dims do
             output_str = output_str .. "%d "
         end
-        log.info(output_str, offset, table.unpack(index))
+        log.debug(output_str, offset, table.unpack(index))
         assert(i == offset)
     end
 end
