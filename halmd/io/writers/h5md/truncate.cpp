@@ -21,7 +21,7 @@
 #include <luaponte/luaponte.hpp>
 #include <luaponte/out_value_policy.hpp>
 #include <stdexcept>
-#include <stdint.h> // uint64_t
+#include <stdint.h> // uint32_t, uint64_t
 
 #include <halmd/io/utility/hdf5.hpp>
 #include <halmd/io/writers/h5md/truncate.hpp>
@@ -170,6 +170,9 @@ void truncate::luaopen(lua_State* L)
                         .def("on_write", &truncate::on_write<double>, pure_out_value(_2))
                         .def("on_write", &truncate::on_write<double&>, pure_out_value(_2))
                         .def("on_write", &truncate::on_write<double const&>, pure_out_value(_2))
+                        .def("on_write", &truncate::on_write<uint32_t>, pure_out_value(_2))
+                        .def("on_write", &truncate::on_write<uint32_t&>, pure_out_value(_2))
+                        .def("on_write", &truncate::on_write<uint32_t const&>, pure_out_value(_2))
                         .def("on_write", &truncate::on_write<uint64_t>, pure_out_value(_2))
                         .def("on_write", &truncate::on_write<uint64_t&>, pure_out_value(_2))
                         .def("on_write", &truncate::on_write<uint64_t const&>, pure_out_value(_2))

@@ -24,7 +24,7 @@
 #include <luaponte/out_value_policy.hpp>
 #include <memory>
 #include <stdexcept>
-#include <stdint.h> // uint64_t
+#include <stdint.h> // uint32_t, uint64_t
 #include <type_traits>
 
 #include <halmd/io/utility/hdf5.hpp>
@@ -207,6 +207,9 @@ void append::luaopen(lua_State* L)
                         .def("on_write", &append::on_write<double>, pure_out_value(_2))
                         .def("on_write", &append::on_write<double&>, pure_out_value(_2))
                         .def("on_write", &append::on_write<double const&>, pure_out_value(_2))
+                        .def("on_write", &append::on_write<uint32_t>, pure_out_value(_2))
+                        .def("on_write", &append::on_write<uint32_t&>, pure_out_value(_2))
+                        .def("on_write", &append::on_write<uint32_t const&>, pure_out_value(_2))
                         .def("on_write", &append::on_write<uint64_t>, pure_out_value(_2))
                         .def("on_write", &append::on_write<uint64_t&>, pure_out_value(_2))
                         .def("on_write", &append::on_write<uint64_t const&>, pure_out_value(_2))

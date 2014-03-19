@@ -24,7 +24,7 @@ namespace halmd {
 namespace observables {
 
 template <typename thermodynamics_type>
-static std::function<double ()>
+static std::function<unsigned int ()>
 wrap_particle_number(std::shared_ptr<thermodynamics_type> self)
 {
     return [=]() {
