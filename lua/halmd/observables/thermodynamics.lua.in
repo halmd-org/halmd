@@ -180,7 +180,7 @@ local M = module(function(args)
         local file = utility.assert_kwarg(args, "file")
         local every = utility.assert_kwarg(args, "every")
         local location = utility.assert_type(
-            args.location or {"observables", group.global and nil or group.label}
+            args.location or {"observables", not group.global and group.label or nil}
           , "table")
         local fields = utility.assert_type(
             args.fields or {"potential_energy", "pressure", "temperature", "center_of_mass_velocity"}
