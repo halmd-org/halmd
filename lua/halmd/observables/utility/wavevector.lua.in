@@ -17,13 +17,11 @@
 -- along with this program.  If not, see <http://www.gnu.org/licenses/>.
 --
 
-local module = require("halmd.utility.module")
+local module  = require("halmd.utility.module")
+local utility = require("halmd.utility")
 
 -- grab C++ wrappers
 local wavevector = assert(libhalmd.observables.utility.wavevector)
-
--- grab standard library
-local assert = assert
 
 ---
 -- Wavevector
@@ -85,10 +83,10 @@ local assert = assert
 --    ``wavevector`` instance is the same as this one.
 --
 local M = module(function(args)
-    local box = assert(args.box)
-    local wavenumber = assert(args.wavenumber)
-    local tolerance = assert(args.tolerance)
-    local max_count = assert(args.max_count)
+    local box = utility.assert_kwarg(args, "box")
+    local wavenumber = utility.assert_kwarg(args, "wavenumber")
+    local tolerance = utility.assert_type(utility.assert_kwarg(args, "tolerance"), "number")
+    local max_count = utility.assert_type(utility.assert_kwarg(args, "max_count"), "number")
 
     return wavevector(wavenumber, box.length, tolerance, max_count)
 end)
@@ -110,11 +108,11 @@ function M.add_options(parser, defaults)
       , help = "list of wavenumbers"
     })
     parser:add_argument("tolerance", {type="number"
-      , default = defaults and defaults.number or 0.01
+      , default = defaults and defaults.tolerance
       , help = "relative tolerance on wavevector magnitude"
     })
     parser:add_argument("max-count", {type="integer"
-      , default = defaults and defaults.max_count or 7
+      , default = defaults and defaults.max_count
       , help = "maximum number of wavevectors per wavenumber shell"
     })
 end

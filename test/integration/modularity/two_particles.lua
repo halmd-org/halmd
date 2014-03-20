@@ -285,8 +285,8 @@ local function parse_args()
     sampling:add_argument("average", {type = "integer", help = "output averages of given number of samples"})
 
     local wavevector = parser:add_argument_group("wavevector", {help = "wavevector shells in reciprocal space"})
-    observables.utility.wavevector.add_options(wavevector)
-    observables.utility.semilog_grid.add_options(wavevector, {maximum = 25})
+    observables.utility.wavevector.add_options(wavevector, {tolerance = 0.01, max_count = 7})
+    observables.utility.semilog_grid.add_options(wavevector, {maximum = 25, decimation = 0})
 
     return parser:parse_args()
 end

@@ -17,7 +17,8 @@
 -- along with this program.  If not, see <http://www.gnu.org/licenses/>.
 --
 
-local module = require("halmd.utility.module")
+local module  = require("halmd.utility.module")
+local utility = require("halmd.utility")
 
 -- grab C++ wrappers
 local semilog_grid = assert(libhalmd.observables.utility.semilog_grid)
@@ -33,7 +34,7 @@ local semilog_grid = assert(libhalmd.observables.utility.semilog_grid)
 -- obtained by ``decimation=1``, decimation is disabled by default.
 --
 -- Example::
--- 
+--
 --    -- construct grid from 0.1 to 4, double spacing every 3 points
 --    local grid = semilog_grid({start=0.1, stop=4, decimation=3})
 --
@@ -59,9 +60,9 @@ local semilog_grid = assert(libhalmd.observables.utility.semilog_grid)
 -- :param integer args.decimation: decimation parameter: 0=disabled *(default)*, 1=logarithmic, …
 --
 local M = module(function(args)
-    local start = assert(args.start)
-    local stop = assert(args.stop)
-    local decimation = args.decimation or 0 -- default value: disable decimation
+    local start = utility.assert_type(utility.assert_kwarg(args, "start"), "number")
+    local stop  = utility.assert_type(utility.assert_kwarg(args, "stop"), "number")
+    local decimation = utility.assert_type(args.decimation or 0, "number") -- default value: disable decimation
 
     return semilog_grid(start, stop, decimation)
 end)
@@ -69,7 +70,7 @@ end)
 ---
 -- .. function:: add_options(parser, defaults)
 --
---    Add module options to command line parser.
+--    Add module options ``maximum`` and ``decimation`` to command line parser.
 --
 --    :param parser: instance of :class:`halmd.utility.program_options.argument_parser`
 --    :param dictionary defaults: default values for the options
@@ -83,7 +84,7 @@ function M.add_options(parser, defaults)
       , help = "maximum value of semi-logarithmically spaced grid"
     })
     parser:add_argument("decimation", {type = "integer"
-      , default = defaults and defaults.decimation or 0
+      , default = defaults and defaults.decimation
       , help = "decimation of grid"
     })
 end
