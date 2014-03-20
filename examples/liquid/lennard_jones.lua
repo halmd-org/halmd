@@ -1,6 +1,6 @@
 #!/usr/bin/env halmd
 --
--- Copyright © 2010-2013 Felix Höfling
+-- Copyright © 2010-2014 Felix Höfling
 -- Copyright © 2010-2012 Peter Colberg
 --
 -- This file is part of HALMD.
@@ -111,31 +111,33 @@ local function liquid(args)
         })
     end
 
-    -- set up wavevector grid compatible with the periodic simulation box
-    local grid = args.wavevector.wavenumbers
-    if not grid then
-        grid = observables.utility.semilog_grid({
-            start = 2 * math.pi / numeric.max(box.length)
-          , stop = args.wavevector.maximum
-          , decimation = args.wavevector.decimation
-        }).value
-    end
-    local wavevector = observables.utility.wavevector({
-        box = box, wavenumber = grid
-      , tolerance = args.wavevector.tolerance, max_count = args.wavevector.max_count
-    })
-
-    -- compute density modes and output their time series
-    local density_mode = observables.density_mode({group = particle_group, wavevector = wavevector})
+    -- set up wavevectors, compute density modes and static structure factor
+    local density_mode
     local interval = args.sampling.structure
-    if interval > 0 then
-        density_mode:writer({file = file, every = interval})
-    end
+    if interval > 0 or args.sampling.correlation > 0 then
+        -- set up wavevector grid compatible with the periodic simulation box
+        local grid = args.wavevector.wavenumbers
+        if not grid then
+            grid = observables.utility.semilog_grid({
+                start = 2 * math.pi / numeric.max(box.length)
+              , stop = args.wavevector.maximum
+              , decimation = args.wavevector.decimation
+            }).value
+        end
+        wavevector = observables.utility.wavevector({
+            box = box, wavenumber = grid
+          , tolerance = args.wavevector.tolerance, max_count = args.wavevector.max_count
+        })
 
-    -- compute static structure factor from density modes
-    local ssf = observables.ssf({density_mode = density_mode, norm = nparticle})
-    local interval = args.sampling.structure
-    if interval > 0 then
+        -- compute density modes and output their time series,
+        local density_mode = observables.density_mode({group = particle_group, wavevector = wavevector})
+        if interval > 0 then
+            density_mode:writer({file = file, every = interval})
+        end
+
+        -- compute static structure factor from density modes
+        local ssf = observables.ssf({density_mode = density_mode, norm = nparticle})
+
         -- output averages over a certain number of configurations each
         local average = args.sampling.average
         if average and average > 0 then
@@ -155,7 +157,7 @@ local function liquid(args)
 
     -- time correlation functions
     local interval = args.sampling.correlation
-    if interval > 0 then
+    if interval > 0 and density_mode then
         -- setup blocking scheme
         local max_lag = steps * integrator.timestep / 10
         local blocking_scheme = dynamics.blocking_scheme({

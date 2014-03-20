@@ -1,6 +1,6 @@
 #!/usr/bin/env halmd
 --
--- Copyright © 2011-2013 Felix Höfling
+-- Copyright © 2011-2014 Felix Höfling
 -- Copyright © 2010-2012 Peter Colberg
 --
 -- This file is part of HALMD.
@@ -110,8 +110,7 @@ local function liquid(args)
     -- set up wavevector grid compatible with the periodic simulation box
     -- if the computation of structural information is requested
     local wavevector
-    local density_mode = {}
-    if args.sampling.structure > 0 then
+    if args.sampling.structure > 0 or args.sampling.correlation > 0 then
         local grid = args.wavevector.wavenumbers
         if not grid then
             grid = observables.utility.semilog_grid({
@@ -127,6 +126,7 @@ local function liquid(args)
     end
 
     -- sample each particle group separately
+    local density_mode = {}
     local offset = 0
     for label, sample in utility.sorted(samples) do
         -- select particles of species
