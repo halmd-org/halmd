@@ -24,7 +24,7 @@ local halmd = require("halmd")
 -- grab modules
 local log = halmd.io.log
 local mdsim = halmd.mdsim
-local numeric = halmd.utility.numeric
+local numeric = halmd.numeric
 local observables = halmd.observables
 local writers = halmd.io.writers
 local utility = halmd.utility
@@ -35,7 +35,7 @@ local utility = halmd.utility
 local function liquid(args)
     -- total number of particles from sum of particles per species
     local nspecies = #args.particles
-    local nparticle = utility.numeric.sum(args.particles)
+    local nparticle = numeric.sum(args.particles)
 
     -- derive edge lengths from number of particles, density and edge ratios
     local volume = nparticle / args.density

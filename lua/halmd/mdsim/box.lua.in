@@ -19,10 +19,10 @@
 --
 
 local log     = require("halmd.io.log")
+local numeric = require("halmd.numeric")
 local sampler = require("halmd.observables.sampler")
 local utility = require("halmd.utility")
 local module  = require("halmd.utility.module")
-local numeric = require("halmd.utility.numeric")
 
 -- grab C++ wrappers
 local box = {

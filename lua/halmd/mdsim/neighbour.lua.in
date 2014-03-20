@@ -20,11 +20,11 @@
 
 local core              = require("halmd.mdsim.core")
 local log               = require("halmd.io.log")
+local numeric           = require("halmd.numeric")
 local utility           = require("halmd.utility")
 local device            = require("halmd.utility.device")
 local module            = require("halmd.utility.module")
 local profiler          = require("halmd.utility.profiler")
-local numeric           = require("halmd.utility.numeric")
 local mdsim = {
     binning             = require("halmd.mdsim.binning")
   , max_displacement    = require("halmd.mdsim.max_displacement")

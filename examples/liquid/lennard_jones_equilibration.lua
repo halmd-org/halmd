@@ -24,7 +24,7 @@ local halmd = require("halmd")
 -- grab modules
 local log = halmd.io.log
 local mdsim = halmd.mdsim
-local numeric = halmd.utility.numeric
+local numeric = halmd.numeric
 local observables = halmd.observables
 local writers = halmd.io.writers
 

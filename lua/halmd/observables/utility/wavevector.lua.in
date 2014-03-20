@@ -49,7 +49,7 @@ local assert = assert
 --
 -- Example::
 --
---    local numeric = halmd.utility.numeric
+--    local numeric = halmd.numeric
 --    local utility = halmd.observables.utility
 --
 --    local box = halmd.mdsim.box({length={5,10,20}})

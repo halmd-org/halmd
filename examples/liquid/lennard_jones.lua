@@ -24,11 +24,11 @@ local halmd = require("halmd")
 -- grab modules
 local log = halmd.io.log
 local mdsim = halmd.mdsim
+local numeric = halmd.numeric
 local observables = halmd.observables
 local dynamics = halmd.observables.dynamics
 local readers = halmd.io.readers
 local writers = halmd.io.writers
-local numeric = halmd.utility.numeric
 
 --
 -- Setup and run simulation

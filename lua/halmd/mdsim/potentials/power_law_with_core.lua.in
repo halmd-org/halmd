@@ -21,9 +21,9 @@
 
 local device            = require("halmd.utility.device")
 local log               = require("halmd.io.log")
+local numeric           = require("halmd.numeric")
 local utility           = require("halmd.utility")
 local module            = require("halmd.utility.module")
-local numeric           = require("halmd.utility.numeric")
 
 ---
 -- Power-law with hard core potential
