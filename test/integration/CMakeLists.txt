@@ -1,2 +1,3 @@
 add_subdirectory(continuation)
 add_subdirectory(modularity)
+add_subdirectory(validation)
