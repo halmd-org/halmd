@@ -47,7 +47,7 @@ local function copy_particle(args)
     local input = observables.phase_space({box = box, group = group}):acquire({memory = "host"})
     observables.phase_space({
         box = box
-      , group = mdsim.particle_groups.all({particle = new_particle})
+      , group = mdsim.particle_groups.all({particle = new_particle, global=false})
     }):set(input(nil)) -- FIXME calling a data slot from Lua requires a dummy argument
 
     return new_particle
@@ -157,14 +157,14 @@ local function equilibrate(box, particle, force, args)
 --     if args.sampling.state_vars > 0 then
 --         local msv = observables.thermodynamics({
 --             box = box
---           , group = mdsim.particle_groups.all({particle = particle})
+--           , group = mdsim.particle_groups.all({particle = particle, global = false})
 --         })
 --         msv:writer({file = file, every = args.sampling.state_vars})
 --     end
 
     -- sample each particle instance separately
     for label, p in utility.sorted(particle) do
-        local group = mdsim.particle_groups.all({particle = p})
+        local group = mdsim.particle_groups.all({particle = p, global = false})
         -- write phase space trajectory to H5MD file
         observables.phase_space({box = box, group = group})
           : writer({

@@ -74,7 +74,7 @@ local M = module(function(args)
     local particle = utility.assert_kwarg(args, "particle")
     local range = utility.assert_kwarg(args, "range")
     local label = utility.assert_type(args.label or assert(particle.label), "string")
-    local global = utility.assert_type(args.global or true, "boolean")
+    local global = utility.assert_type(args.global or false, "boolean")
 
     if type(range) ~= "table" or #range ~= 2 then
         error("invalid argument 'range'", 2)

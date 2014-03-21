@@ -64,7 +64,7 @@ local all = assert(libhalmd.mdsim.particle_groups.all)
 local M = module(function(args)
     local particle = utility.assert_kwarg(args, "particle")
     local label = utility.assert_type(args.label or assert(particle.label), "string")
-    local global = utility.assert_type(args.global or true, "boolean")
+    local global = utility.assert_type(args.global == nil and true or args.global, "boolean")
 
     -- construct particle group
     local self = all(particle)
