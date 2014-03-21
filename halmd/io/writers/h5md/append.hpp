@@ -114,9 +114,13 @@ private:
     /** simulation step and time */
     std::shared_ptr<clock_type const> clock_;
     /** shared step dataset */
-    H5::DataSet step_;
+    H5::DataSet step_dataset_;
     /** shared time dataset */
-    H5::DataSet time_;
+    H5::DataSet time_dataset_;
+    /** last simulation step written */
+    int64_t last_step_;
+    /** last simulation time written */
+    time_type last_time_;
 };
 
 } // namespace h5md

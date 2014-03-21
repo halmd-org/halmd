@@ -1,6 +1,6 @@
 /*
- * Copyright © 2013 Felix Höfling
- * Copyright © 2011 Peter Colberg
+ * Copyright © 2013-2014 Felix Höfling
+ * Copyright © 2011      Peter Colberg
  *
  * This file is part of HALMD.
  *
@@ -23,6 +23,7 @@
 #include <luaponte/luaponte.hpp>
 #include <luaponte/out_value_policy.hpp>
 #include <memory>
+#include <limits>
 #include <stdexcept>
 #include <stdint.h> // uint32_t, uint64_t
 #include <type_traits>
@@ -47,13 +48,15 @@ append::append(
   , std::shared_ptr<clock_type const> clock
 )
   : clock_(clock)
+  , last_step_(numeric_limits<int64_t>::lowest())
+  , last_time_(numeric_limits<time_type>::lowest())
 {
     if (location.size() < 1) {
         throw invalid_argument("group location");
     }
     group_ = h5xx::open_group(root, boost::join(location, "/"));
-    step_ = h5xx::create_chunked_dataset<step_type>(group_, "step");
-    time_ = h5xx::create_chunked_dataset<time_type>(group_, "time");
+    step_dataset_ = h5xx::create_chunked_dataset<step_type>(group_, "step");
+    time_dataset_ = h5xx::create_chunked_dataset<time_type>(group_, "time");
     group_.unlink("step");
     group_.unlink("time");
 }
@@ -141,8 +144,8 @@ connection append::on_write(
         throw invalid_argument("dataset location");
     }
     group = h5xx::open_group(group_, boost::join(location, "/"));
-    h5xx::link(step_, group, "step");
-    h5xx::link(time_, group, "time");
+    h5xx::link(step_dataset_, group, "step");
+    h5xx::link(time_dataset_, group, "time");
     return on_write_.connect(bind(&write_dataset<T>, H5::DataSet(), group, "value", slot));
 }
 
@@ -166,8 +169,17 @@ void append::write()
 
 void append::write_step_time()
 {
-    h5xx::write_chunked_dataset(step_, clock_->step());
-    h5xx::write_chunked_dataset(time_, clock_->time());
+    step_type step = clock_->step();
+    time_type time = clock_->time();
+    if (static_cast<int64_t>(step) <= last_step_ || time <= last_time_) {
+        throw std::logic_error("Writing to H5MD file failed at step " + boost::lexical_cast<std::string>(step) +
+                               "\nH5MD enforces a strictly increasing order.");
+    }
+
+    h5xx::write_chunked_dataset(step_dataset_, step);
+    h5xx::write_chunked_dataset(time_dataset_, time);
+    last_step_ = step;
+    last_time_ = time;
 }
 
 static append::slot_function_type
