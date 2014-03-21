@@ -115,7 +115,6 @@ local function liquid(args)
      accumulator:writer({
          file = file
        , location = {"observables", "averaged_internal_energy"}
-       , fields = {"mean", "error_of_mean", "variance"}
        , every = 200
        , reset = true
      })

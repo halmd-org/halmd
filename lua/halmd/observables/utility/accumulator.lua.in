@@ -1,6 +1,6 @@
 --
--- Copyright © 2013  Nicolas Höft
--- Copyright © 2013  Felix Höfling
+-- Copyright © 2013      Nicolas Höft
+-- Copyright © 2013-2014 Felix Höfling
 --
 -- This file is part of HALMD.
 --
@@ -94,7 +94,6 @@ local accumulator = assert(libhalmd.observables.utility.accumulator)
 --    :param table args: keyword arguments
 --    :param args.file: instance of file writer
 --    :param args.location: location within file
---    :param table args.fields: data fields to be written *(optional)*
 --    :param number args.every: sampling interval
 --    :param boolean args.reset: Reset accumulator after writing if true (disabled by default).
 --    :type args.location: string table
@@ -102,18 +101,8 @@ local accumulator = assert(libhalmd.observables.utility.accumulator)
 --    :returns: instance of group writer
 --
 --    The argument ``location`` specifies a path in a structured file format
---    like H5MD given as a table of strings, for example ``{"observables", group
---    label}``.
---
---    The table ``fields`` specifies which statistical measures are written,
---    It may either be passed as an indexed table, e.g. ``{"mean",
---    "error_of_mean"}``, or as a dictionary, e.g., ``{mu = "mean", sigma =
---    "variance"}``; the table form is interpreted as ``{mean = "mean", ...}``.
---    The keys denote the field names in the file and are appended to
---    ``location``. The values specify the data slots, i.e, the methods of the
---    ``accumulator`` module, valid values are ``sum``, ``mean``,
---    ``error_of_mean``, ``variance``, and ``count``.  Defaults to ``{"mean",
---    "error_of_mean", "count"}``.
+--    like H5MD given as a table of strings, for example ``{"observables",
+--    "averaged_pressure"}``.
 --
 local M = module(function(args)
     local aquire = utility.assert_kwarg(args, "aquire")
@@ -130,20 +119,18 @@ local M = module(function(args)
     self.writer = function(self, args)
         local file = utility.assert_kwarg(args, "file")
         local location = utility.assert_type(utility.assert_kwarg(args, "location"), "table")
-        local fields = utility.assert_type(args.fields or {"mean", "error_of_mean", "count"}, "table")
         local every = utility.assert_kwarg(args, "every")
 
+        -- split off last component of location
+        assert(#location > 0)
+        local name = table.remove(location, #location)
         local writer = file:writer({location = location, mode = "append"})
 
-        -- register data slots with writer, the keys of 'field' may either be
-        -- strings (dictionary) or numbers (table), in the latter case, the
-        -- value string is used as group name
-        for k,v in pairs(fields) do
-            local name = (type(k) == "string") and k or v
-            writer:on_write(assert(self[v]), {name})
-        end
+        -- register data slots with writer
+        writer:on_write(self.mean, self.error_of_mean, self.count, {name})
 
-        sampler:on_sample(writer.write, every, start)
+        -- register writer with sampler
+        sampler:on_sample(writer.write, every, start + every)
 
         if args.reset then
             writer:on_append_write(self.reset)
