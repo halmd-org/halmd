@@ -1,5 +1,6 @@
 /*
- * Copyright © 2011-2012  Peter Colberg
+ * Copyright © 2014      Felix Höfling
+ * Copyright © 2011-2012 Peter Colberg
  *
  * This file is part of HALMD.
  *
@@ -80,6 +81,15 @@ public:
     connection on_write(
         subgroup_type& group
       , std::function<T ()> const& slot
+      , std::vector<std::string> const& location
+    );
+    /** connect data slot for writing an accumulated dataset, return created HDF5 group by reference */
+    template <typename T>
+    connection on_write_averaged(
+        subgroup_type& group
+      , std::function<T ()> const& value_slot
+      , std::function<T ()> const& error_slot
+      , std::function<uint64_t ()> const& count_slot
       , std::vector<std::string> const& location
     );
     /** connect slot called before writing */

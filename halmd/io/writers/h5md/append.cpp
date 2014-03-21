@@ -149,6 +149,30 @@ connection append::on_write(
     return on_write_.connect(bind(&write_dataset<T>, H5::DataSet(), group, "value", slot));
 }
 
+template <typename T>
+connection append::on_write_averaged(
+    subgroup_type& group
+  , std::function<T ()> const& value_slot
+  , std::function<T ()> const& error_slot
+  , std::function<uint64_t ()> const& count_slot
+  , vector<string> const& location
+)
+{
+    if (location.size() < 1) {
+        throw invalid_argument("dataset location");
+    }
+    group = h5xx::open_group(group_, boost::join(location, "/"));
+    h5xx::link(step_dataset_, group, "step");
+    h5xx::link(time_dataset_, group, "time");
+
+    H5::DataSet value_dataset, error_dataset, count_dataset;
+    return on_write_.connect( [=]() mutable {
+        write_dataset(value_dataset, group, "value", value_slot);
+        write_dataset(error_dataset, group, "error", error_slot);
+        write_dataset(count_dataset, group, "count", count_slot);
+    });
+}
+
 connection append::on_prepend_write(slot_function_type const& slot)
 {
     return on_prepend_write_.connect(slot);
@@ -225,6 +249,7 @@ void append::luaopen(lua_State* L)
                         .def("on_write", &append::on_write<uint64_t>, pure_out_value(_2))
                         .def("on_write", &append::on_write<uint64_t&>, pure_out_value(_2))
                         .def("on_write", &append::on_write<uint64_t const&>, pure_out_value(_2))
+
                         .def("on_write", &append::on_write<fixed_vector<float, 2> >, pure_out_value(_2))
                         .def("on_write", &append::on_write<fixed_vector<float, 2>&>, pure_out_value(_2))
                         .def("on_write", &append::on_write<fixed_vector<float, 2> const&>, pure_out_value(_2))
@@ -243,6 +268,7 @@ void append::luaopen(lua_State* L)
                         .def("on_write", &append::on_write<fixed_vector<double, 6> >, pure_out_value(_2))
                         .def("on_write", &append::on_write<fixed_vector<double, 6>&>, pure_out_value(_2))
                         .def("on_write", &append::on_write<fixed_vector<double, 6> const&>, pure_out_value(_2))
+
                         .def("on_write", &append::on_write<vector<float> >, pure_out_value(_2))
                         .def("on_write", &append::on_write<vector<float>&>, pure_out_value(_2))
                         .def("on_write", &append::on_write<vector<float> const&>, pure_out_value(_2))
@@ -252,6 +278,7 @@ void append::luaopen(lua_State* L)
                         .def("on_write", &append::on_write<vector<unsigned int> >, pure_out_value(_2))
                         .def("on_write", &append::on_write<vector<unsigned int>&>, pure_out_value(_2))
                         .def("on_write", &append::on_write<vector<unsigned int> const&>, pure_out_value(_2))
+
                         .def("on_write", &append::on_write<vector<fixed_vector<float, 2> > >, pure_out_value(_2))
                         .def("on_write", &append::on_write<vector<fixed_vector<float, 2> >&>, pure_out_value(_2))
                         .def("on_write", &append::on_write<vector<fixed_vector<float, 2> > const&>, pure_out_value(_2))
@@ -309,6 +336,7 @@ void append::luaopen(lua_State* L)
                         .def("on_write", &append::on_write<vector<boost::array<double, 6> > >, pure_out_value(_2))
                         .def("on_write", &append::on_write<vector<boost::array<double, 6> >&>, pure_out_value(_2))
                         .def("on_write", &append::on_write<vector<boost::array<double, 6> > const&>, pure_out_value(_2))
+
                         .def("on_write", &append::on_write<multi_array<float, 2> >, pure_out_value(_2))
                         .def("on_write", &append::on_write<multi_array<float, 2>&>, pure_out_value(_2))
                         .def("on_write", &append::on_write<multi_array<float, 2> const&>, pure_out_value(_2))
@@ -336,6 +364,17 @@ void append::luaopen(lua_State* L)
                         .def("on_write", &append::on_write<multi_array<uint64_t, 6> >, pure_out_value(_2))
                         .def("on_write", &append::on_write<multi_array<uint64_t, 6>&>, pure_out_value(_2))
                         .def("on_write", &append::on_write<multi_array<uint64_t, 6> const&>, pure_out_value(_2))
+
+                        .def("on_write", &append::on_write_averaged<float>, pure_out_value(_2))
+                        .def("on_write", &append::on_write_averaged<double>, pure_out_value(_2))
+
+                        .def("on_write", &append::on_write_averaged<fixed_vector<float, 2>>, pure_out_value(_2))
+                        .def("on_write", &append::on_write_averaged<fixed_vector<float, 3>>, pure_out_value(_2))
+                        .def("on_write", &append::on_write_averaged<fixed_vector<float, 6>>, pure_out_value(_2))
+                        .def("on_write", &append::on_write_averaged<fixed_vector<double, 2>>, pure_out_value(_2))
+                        .def("on_write", &append::on_write_averaged<fixed_vector<double, 3>>, pure_out_value(_2))
+                        .def("on_write", &append::on_write_averaged<fixed_vector<double, 6>>, pure_out_value(_2))
+
                         .def("on_prepend_write", &append::on_prepend_write)
                         .def("on_append_write", &append::on_append_write)
                 ]
