@@ -27,7 +27,6 @@ local observables = halmd.observables
 local dynamics = halmd.observables.dynamics
 local readers = halmd.io.readers
 local writers = halmd.io.writers
-local utility = halmd.utility
 
 --
 -- restore phase space point from file, using distinct instances of the
@@ -132,7 +131,7 @@ local function production(box, particle, force, args)
         local grid = args.wavevector.wavenumbers
         if not grid then
             grid = observables.utility.semilog_grid({
-                start = 2 * math.pi / utility.numeric.max(box.length)
+                start = 2 * math.pi / halmd.numeric.max(box.length)
               , stop = args.wavevector.maximum
               , decimation = args.wavevector.decimation
             }).value

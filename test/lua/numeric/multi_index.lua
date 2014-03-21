@@ -24,7 +24,7 @@ halmd.io.log.open_console({severity = "info"}) -- or "debug"
 
 -- grab modules
 local log = halmd.io.log
-local numeric = halmd.utility.numeric
+local numeric = halmd.numeric
 
 function test(dims)
     local ndim = 1
