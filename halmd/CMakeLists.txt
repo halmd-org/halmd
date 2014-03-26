@@ -25,6 +25,19 @@ macro(halmd_add_modules)
 endmacro()
 
 ##
+# Add optional HALMD potential
+#
+# This macro autmatically adds a CMake option to enable or disable
+# the specified potential, as well as sets up the HALMD module
+macro(halmd_add_potential LIBRARY POTENTIAL)
+  option(WITH_POTENTIAL_${POTENTIAL} "Enable potential ${POTENTIAL}" ON)
+  if(${WITH_POTENTIAL_${POTENTIAL}})
+    halmd_add_library(${LIBRARY} ${ARGN})
+    halmd_add_modules("lib${LIBRARY}")
+  endif()
+endmacro()
+
+##
 # HALMD C++ modules
 #
 add_subdirectory(algorithm)
