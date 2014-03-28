@@ -66,7 +66,7 @@ BOOST_AUTO_TEST_CASE( validation )
     // program_name filename USE_HOST
     using namespace boost::unit_test::framework;
 
-    BOOST_REQUIRE_EQUAL( master_test_suite().argc, 3u );
+    BOOST_REQUIRE_EQUAL( master_test_suite().argc, 3 );
     char** argv = master_test_suite().argv;
 
     bool gpu = boost::lexical_cast<bool>(argv[2]);
