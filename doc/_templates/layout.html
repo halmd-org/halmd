@@ -2,16 +2,50 @@
 
 {% extends "!layout.html" %}
 
-{% block rootrellink %}
-  <li><a href="{{ pathto('readme') }}">Home</a>&nbsp;|</li>
-  <li><a href="{{ pathto('index') }}">Documentation</a>&nbsp;|</li>
-  <li><a href="{{ pathto('faq') }}">FAQ</a>&nbsp;|</li>
-  <li><a href="{{ pathto('installation/download') }}">Download</a>&nbsp;|</li>
-  <li><a href="http://www.hostedredmine.com/projects/halmd">Development</a>&nbsp;&raquo;</li>
-{% endblock %}
+{%- block header %}
+    <div class="logo" style="text-align: center; padding: 10px 10px 15px 15px">
+      <a href="{{ pathto(master_doc) }}">
+        <img class="logo" src="{{ pathto('_static/halmd_logo.png', 1) }}" alt="HAL’s MD package"/>
+      </a>
+    </div>
+    <div class="header-wrapper">
+      <div class="header">
+        <div class="rel">
+          <div class="left">
+            <a href="{{ pathto('readme') }}">Home</a>{{ reldelim2 }}
+            <a href="{{ pathto('installation/download') }}">Get it</a>{{ reldelim2 }}
+            <a href="{{ pathto('index') }}">Docs</a>{{ reldelim2 }}
+            <a href="http://www.hostedredmine.com/projects/halmd">Extend/Develop</a>{{ reldelim1 }}
+          </div>
+          <div class="right">
+            {%- for rellink in rellinks|reverse %}
+            <a href="{{ pathto(rellink[0]) }}" title="{{ rellink[1]|striptags|e }}"
+               {{ accesskey(rellink[2]) }}>{{ rellink[3] }}</a>
+            {%- if not loop.last %}{{ reldelim2 }}{% endif %}
+            {%- endfor %}
+          </div>
+          <div class="clearer"></div>
+        </div>
+      </div>
+    </div>
+{%- endblock %}
 
-{% block header %}
-<div style="background-color: white; text-align: left; padding: 10px 10px 15px 15px">
-  <img src="{{ pathto("_static/halmd_logo.png", 1) }}" alt="HAL's MD package" />
-</div>
-{% endblock %}
+{# override sidebars in conf.py, show TOC by default #}
+{%- block sidebartoc %}
+  {%- if sidebars != None %}
+    {%- for sidebartemplate in sidebars %}
+    {%- include sidebartemplate %}
+    {%- endfor %}
+  {%- else %}
+    <h3>{{ _('Table Of Contents') }}</h3>
+    {{ toctree() }}
+  {%- endif %}
+{%- endblock %}
+
+{%- block extrahead %}
+  {# move sidebar when scrolling #}
+  <script type="text/javascript" src="{{ pathto('_static/sidebar.js', 1) }}"></script>
+  {#<link rel="stylesheet" type="text/css" href="http://fonts.googleapis.com/css?family=Droid+Serif|Droid+Sans|Droid+Sans+Mono">#}
+  <link rel="stylesheet" type="text/css" href="http://fonts.googleapis.com/css?family=Gloria+Hallelujah|Quattrocento Sans|Droid+Sans+Mono">
+{%- endblock -%}
+

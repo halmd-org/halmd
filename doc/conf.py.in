@@ -138,7 +138,7 @@ html_static_path = ['@CMAKE_CURRENT_SOURCE_DIR@/_static']
 
 # Custom sidebar templates, maps document names to template names.
 html_sidebars = {
-  'readme': ['indexsidebar.html', 'searchbox.html'],
+  'readme': ['indexsidebar.html'],
 }
 
 # Additional templates that should be rendered to pages, maps page names to

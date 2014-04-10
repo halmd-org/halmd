@@ -1,0 +1,55 @@
+@import "agogo.css";
+
+body {
+  margin: 0em 2em 0em 2em;
+  font-size: 100%;
+}
+
+div.header div.rel {
+  margin-top: 0em;
+}
+
+div.document .docutils.literal {
+  color: #3465a4;
+  background: transparent;
+}
+
+/** initial position of sidebar */
+
+div.sidebar {
+  position: relative;
+  top: 0px;
+}
+
+pre {
+  overflow: auto;
+  overflow-y: hidden;  /* fixes display issues on Chrome browsers */
+  font-family: {{ theme_fixedfont }};
+  font-size: 100%;
+  margin: -1px -3px;
+  padding: 0 3px;
+// background-color: #f4debf;
+  border-top: 1px solid #ac9;
+  border-bottom: 1px solid #ac9;
+}
+
+/**
+ * Styling for field lists
+ *
+ * @see NumPy's doc/source/_static/scipy.css
+ */
+
+.field-list th {
+  color: rgb(0,102,204);
+}
+
+table.field-list th {
+  background-color: #ede;
+  border-left: 1px solid #aaa !important;
+  padding-left: 5px;
+}
+
+table.field-list {
+  border-collapse: separate;
+  border-spacing: 10px;
+}
