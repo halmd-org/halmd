@@ -26,36 +26,37 @@ local module = require("halmd.utility.module")
 -- ==================
 --
 -- When passed to :class:`halmd.mdsim.forces.pair_trunc`, this function
--- transforms the potential into a C²-continuous function, and the force
--- into a C¹-continuous function. The degree of smoothing is controlled
--- with a dimensionless parameter.
+-- transforms the potential :math:`V(r)` into a C²-continuous function, and the
+-- force into a C¹-continuous function. The degree of smoothing is controlled
+-- with a dimensionless parameter. Before smoothing the potential is shifted to
+-- :math:`V(r_c)=0` by the force module.
 --
 -- The smoothing function is
 --
 -- .. math::
 --
---    f\left(\xi\right) = \frac{\xi^4}{1 + \xi^4}, \qquad \xi = \frac{r - r_c}{h r_c},
+--    g\left(\xi\right) = \frac{\xi^4}{1 + \xi^4}, \qquad \xi = \frac{r - r_c}{h r_c},
 --
 -- with smoothing parameter :math:`h \ll 1` and cutoff distance :math:`r_c`,
 -- and its derivative
 --
 -- .. math::
 --
---    f^\prime\left(\xi\right) = 4 \frac{\xi^3}{\left(1 + \xi^4\right)^2}.
+--    g^\prime\left(\xi\right) = 4 \frac{\xi^3}{\left(1 + \xi^4\right)^2}.
 --
 -- The C²-continuous potential is
 --
 -- .. math::
 --
---    V_{C^2}\left(r\right) = V\left(r\right) f\left(\frac{r - r_c}{h r_c}\right),
+--    V_{C^2}\left(r\right) = V\left(r\right) g\left(\frac{r - r_c}{h r_c}\right),
 --
 -- and the C¹-continuous force is
 --
 -- .. math::
 --
 --    \lvert\vec{F}_{C^1}\left(\vec{r}\right)\rvert =
---      \lvert\vec{F}\left(\vec{r}\right)\rvert f\left(\frac{r - r_c}{h r_c}\right)
---      - \frac{1}{h r_c} V\left(r\right) f^\prime\left(\frac{r - r_c}{h r_c}\right).
+--      \lvert\vec{F}\left(\vec{r}\right)\rvert g\left(\frac{r - r_c}{h r_c}\right)
+--      - \frac{1}{h r_c} V\left(r\right) g^\prime\left(\frac{r - r_c}{h r_c}\right).
 --
 --
 -- The following figure shows unmodified and C²-smooth variants of the
@@ -78,12 +79,12 @@ local module = require("halmd.utility.module")
 --    V_c = lambda r, r_c: numpy.piecewise(r, [r < r_c, r >= r_c], [lambda r: V(r) - V(r_c), 0])
 --
 --    # smoothing function
---    f_xi = lambda xi: pow(xi, 4) / (1 + pow(xi, 4))
+--    g_xi = lambda xi: pow(xi, 4) / (1 + pow(xi, 4))
 --    # smoothing function with scale parameter
---    f = lambda r, r_c, h: f_xi((r - r_c) / (h * r_c))
+--    g = lambda r, r_c, h: g_xi((r - r_c) / (h * r_c))
 --
 --    # smoothed Lennard-Jones potential
---    V_s = lambda r, r_c, h: f(r, r_c, h) * V_c(r, r_c)
+--    V_s = lambda r, r_c, h: g(r, r_c, h) * V_c(r, r_c)
 --
 --    # particle distance
 --    r = numpy.linspace(1, 1.4, 1000)
@@ -137,16 +138,16 @@ local module = require("halmd.utility.module")
 --    F_c = lambda r, r_c: numpy.piecewise(r, [r < r_c, r >= r_c], [F, 0])
 --
 --    # smoothing function
---    f_xi = lambda xi: pow(xi, 4) / (1 + pow(xi, 4))
+--    g_xi = lambda xi: pow(xi, 4) / (1 + pow(xi, 4))
 --    # smoothing function with scale parameter
---    f = lambda r, r_c, h: f_xi((r - r_c) / (h * r_c))
+--    g = lambda r, r_c, h: g_xi((r - r_c) / (h * r_c))
 --    # first derivative of smoothing function
---    Df_xi = lambda xi: 4 * pow(xi, 3) / pow(1 + pow(xi, 4), 2)
+--    Dg_xi = lambda xi: 4 * pow(xi, 3) / pow(1 + pow(xi, 4), 2)
 --    # first derivative of smoothing function with scale parameter
---    Df = lambda r, r_c, h: Df_xi((r - r_c) / (h * r_c)) / (h * r_c)
+--    Dg = lambda r, r_c, h: Dg_xi((r - r_c) / (h * r_c)) / (h * r_c)
 --
 --    # smoothed Lennard-Jones force
---    F_s = lambda r, r_c, h: F_c(r, r_c) * f(r, r_c, h) - V_c(r, r_c) * Df(r, r_c, h)
+--    F_s = lambda r, r_c, h: F_c(r, r_c) * g(r, r_c, h) - V_c(r, r_c) * Dg(r, r_c, h)
 --
 --    # particle distance
 --    r = numpy.linspace(1, 1.4, 1000)

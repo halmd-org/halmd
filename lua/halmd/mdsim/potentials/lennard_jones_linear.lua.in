@@ -41,7 +41,7 @@ local module            = require("halmd.utility.module")
 --
 -- for the interaction between two particles of species :math:`i` and
 -- :math:`j`.  Here, :math:`r_c` denotes the cutoff distance and :math:`F_c = -
--- U_\text{LJ}(r_c)` the force at the cutoff for the untruncated potential.
+-- U_\text{LJ}\prime(r_c)` the force at the cutoff for the untruncated potential.
 --
 -- This linear truncation scheme modifies the potential drastically and at all
 -- distances by adding a constant force, and we do not recommend it for future
