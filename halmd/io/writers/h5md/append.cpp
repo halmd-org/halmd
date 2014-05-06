@@ -195,7 +195,7 @@ void append::write_step_time()
 {
     step_type step = clock_->step();
     time_type time = clock_->time();
-    if (static_cast<int64_t>(step) <= last_step_ || time <= last_time_) {
+    if (static_cast<int64_t>(step) <= last_step_ || time < last_time_) {
         throw std::logic_error("Writing to H5MD file failed at step " + boost::lexical_cast<std::string>(step) +
                                "\nH5MD enforces a strictly increasing order.");
     }
