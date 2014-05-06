@@ -101,6 +101,9 @@ local function liquid(args)
       , trunc = trunc
     })
 
+    -- convert integration time to number of steps
+    local steps = math.ceil(args.time / args.timestep)
+
     -- H5MD file writer
     local file = writers.h5md({path = ("%s.h5"):format(args.output)})
 
@@ -121,7 +124,7 @@ local function liquid(args)
         phase_space:writer({
             file = file
           , fields = {"position", "velocity", "species", "mass"}
-          , every = args.sampling.trajectory
+          , every = args.sampling.trajectory or steps
         })
 
         -- Sample macroscopic state variables per particle group.
@@ -131,9 +134,6 @@ local function liquid(args)
 
     -- sample initial state
     observables.sampler:sample()
-
-    -- convert integration time to number of steps
-    local steps = math.ceil(args.time / args.timestep)
 
     -- estimate remaining runtime
     local runtime = observables.runtime_estimate({

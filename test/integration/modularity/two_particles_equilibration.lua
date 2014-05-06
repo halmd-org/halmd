@@ -170,7 +170,7 @@ local function equilibrate(box, particle, force, args)
           : writer({
                 file = file
               , fields = {"position", "velocity", "species", "mass"}
-              , every = args.sampling.trajectory
+              , every = args.sampling.trajectory or steps
             })
 
         -- thermodynamic variables
