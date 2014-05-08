@@ -1,0 +1,85 @@
+.. _ubuntu:
+
+Installation in Ubuntu
+======================
+In the following a quick step-by-step guide how to download and install HALMD in
+Ubuntu will be given.
+
+Ubuntu 14.04 LTS
+----------------
+First, make sure you have all required packages installed::
+
+  sudo apt-get install git build-essential libluajit-5.1-dev zlib1g-dev wget
+
+Clone the HALMD source code repository::
+
+  git clone --recursive http://git.halmd.org/halmd.git
+
+Then you will have to build boost from source using ``examples/packages.mk``::
+
+   mkdir halmd-prerequisites
+   cd halmd-prerequisites
+   nice make CONCURRENCY_LEVEL=4 -f ../halmd/examples/packages.mk install-boost install-hdf5 install-cmake
+
+This step is required as using the according packages from the Ubuntu
+repository will not work—all these packages need special build options not
+provided in the official packages.  Note that this installation will require
+some time but you need to do this only once. A more detailed description of the
+package installation can be found in :ref:`automatic`.
+
+After executing the above commands, the necessary packages will be installed in ``~/opt``.
+In order to make these packages available for the subsequent build tools, run
+::
+
+    source <(make -f ../halmd/examples/packages.mk env-boost env-hdf5 env-cmake)
+
+Alternatively, you may append the output to your ``~/.bashrc``. You can verify
+that everything went well by running ``cmake --version`` which should output
+something like ``cmake version 2.8.12.1 with native CUDA support`` (the
+important part is ``with native CUDA support``).
+
+Now, we can start building HALMD. First, create a build directory (this can be
+anywhere, for convenience we create it in our home directory) and then run
+cmake to generate the necessary Makefiles
+::
+
+   mkdir ~/halmd-build && cd ~/halmd-build
+   cmake ~/halmd -DCMAKE_INSTALL_DIRECTORY=~/opt/halmd/
+
+There may be warnings now about missing packages (e.g. Sphinx) but this is not
+essential now as it is only required to build the manual page. If you are
+building with CUDA support, make sure that the CUDA compiler has been detected
+and works. If there was a problem and you were able to fix this, it may be
+necessary to remove the build directory completely and rerun ``cmake ~/halmd``
+afterwards.
+
+You are now ready to build HALMD. Execute
+::
+
+   nice make -j4
+
+and the build process will start.
+
+.. note::
+
+    The build process is very memory hungry, consider reducing the number of
+    parallel builds to a lower number (i.e. use ``-j2`` instead of ``-j4``if
+    you want 2 parallel builds) if you experience problems.
+
+If successful, you can run ``./halmd/halmd --version`` from the build directory
+and this should give you simple version information about HALMD.
+
+If you want to install HALMD, simply run ``make install`` from the build
+directory. In order to be able to run halmd from everywhere, run
+::
+
+   echo "export PATH=\"${HOME}/opt/halmd/bin\${PATH+:\$PATH}\"" >> ~/.bashrc
+
+and log out and in again.
+
+You can test now a simple example by running
+::
+
+    halmd ~/opt/halmd/share/doc/halmd/examples/liquid/lennard_jones_equilibration.lua -v
+
+You may now clean-up the build directories ``halmd-prerequisites`` and ``halmd-build``.
