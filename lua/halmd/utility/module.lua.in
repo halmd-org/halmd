@@ -35,7 +35,7 @@ end
 --
 -- Example::
 --
---    local module = require("halmd.module")
+--    local module = require("halmd.utility.module")
 --
 --    local M = module(function(args)
 --        -- create and return instance
