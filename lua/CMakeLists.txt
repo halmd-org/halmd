@@ -18,6 +18,6 @@ endforeach()
 
 # install Lua files from build tree
 install(DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/halmd"
-  DESTINATION share
+  DESTINATION share/halmd/lua
   FILES_MATCHING PATTERN "*.lua"
 )
