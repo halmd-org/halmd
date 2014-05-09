@@ -14,6 +14,7 @@ HALMD documentation
    faq
    developer/index
    changelog
+   archive
 
 .. toctree::
    :hidden:
