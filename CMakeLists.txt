@@ -100,6 +100,8 @@ if(NOT HALMD_DOC_ONLY OR NOT HALMD_USE_GIT)
 
   # Set HALMD build variant flags
   include(${CMAKE_SOURCE_DIR}/cmake/variant.cmake)
+  # Set HALMD potential list
+  include(${CMAKE_SOURCE_DIR}/cmake/potentials.cmake)
 
   # set appropriate RPATH on installed binaries as well as in build tree
   #

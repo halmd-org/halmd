@@ -1,8 +1,8 @@
-halmd_add_library(
+halmd_add_potential(
   halmd_mdsim_host_potentials_lennard_jones
+  lennard_jones
   lennard_jones.cpp
 )
-halmd_add_modules(libhalmd_mdsim_host_potentials_lennard_jones)
 
 halmd_add_potential(
   halmd_mdsim_host_potentials_lennard_jones_linear
