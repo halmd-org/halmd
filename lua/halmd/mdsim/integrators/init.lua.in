@@ -20,6 +20,8 @@
 local module = require("halmd.utility.module")
 
 ---
+-- .. _integrators:
+--
 -- Integrators
 -- ===========
 --

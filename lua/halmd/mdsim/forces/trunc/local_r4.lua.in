@@ -22,6 +22,8 @@ local device = require("halmd.utility.device")
 local module = require("halmd.utility.module")
 
 ---
+-- .. _smooth_r4:
+--
 -- Local r⁴ smoothing
 -- ==================
 --

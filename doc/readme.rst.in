@@ -1,77 +1,90 @@
 Introduction
-============
+************
 
-HAL's MD package (HALMD) is a high-precision molecular dynamics package for the
-large-scale simulation of simple and complex liquids. HALMD supports
-acceleration through CUDA-enabled graphics processors. HALMD lays emphasis on
-long-time numerical stability by using double-single precision arithmetic for
-numerically crucial parts of the MD integration step. HALMD is freely available
-and licensed under the GPL.
+*HAL’s MD package* is a high-precision molecular dynamics package for
+large-scale simulations of the complex dynamics in inhomogeneous liquids. It
+has been specifically designed to support acceleration through `CUDA
+<http://en.wikipedia.org/wiki/CUDA>`_-enabled graphics processors.
 
-HAL's MD package is maintained and developed by `Felix Höfling
+*HAL’s MD package* is maintained and developed by `Felix Höfling
 <http://www.is.mpg.de/dietrich/hoefling>`_ and was initially written together
-with Peter Colberg.
+with Peter Colberg. Special credit goes to various contributors.
 
 .. note::
 
    A description of the implementation, performance tests, numerical stability
-   tests and an application to the glass transition of the Kob-Andersen mixture
-   is found in the article by Peter H. Colberg and Felix Höfling, `Highly
-   accelerated simulations of glassy dynamics using GPUs: Caveats on limited
-   floating-point precision <http://dx.doi.org/10.1016/j.cpc.2011.01.009>`_,
-   Comp. Phys. Comm. *182*, 1120 (2011)
-   `[arXiv:0912.3824] <http://arxiv.org/abs/0912.3824>`_.
+   tests, and an application to the slow glassy dynamics of the Kob-Andersen
+   mixture is found in the article by Peter H. Colberg and Felix Höfling,
+   `Highly accelerated simulations of glassy dynamics using GPUs: Caveats on
+   limited floating-point precision
+   <http://dx.doi.org/10.1016/j.cpc.2011.01.009>`_, Comput. Phys. Commun.
+   **182**, 1120 (2011) `[arXiv:0912.3824] <http://arxiv.org/abs/0912.3824>`_.
 
-The name *HAL's MD package* was chosen in honour of the machine `HAL
-<http://en.wikipedia.org/wiki/HAL_9000>`_ at the Arnold Sommerfeld Center
-for Theoretical Physics of the Ludwigs-Maximilians-Universität München.
-HAL has been the project's first GPGPU machine, equipped initially with two
-NVIDIA GeForce 8800 Ultra. HAL survived a critical air condition failure and
-to this day houses two NVIDIA GeForce GTX 280.
+
+Physics applications
+====================
+
+*HAL’s MD package* is designed to study
+
+* the spatio-temporal dynamics of inhomogeneous and complex liquids
+
+* both two- and three-dimensional systems
+
+* particles interacting via many truncated and untruncated pair
+  :ref:`potentials <potentials>` (bonded and external potentials coming soon)
+
+* microcanonical (NVE) and canonical (NVT) ensembles (:ref:`integrators`)
+
+* glass transition, liquid–vapour interfaces, demixing of binary fluids,
+  confined fluids, porous media, …
+
 
 Features
 ========
 
-HAL's MD package features
+*HAL’s MD package* features
 
-* GPU acceleration by up to a factor of 80 (with GeForce GTX 280),
+* GPU-acceleration: 1 NVIDIA Kepler K20Xm GPU comparable to 100 CPU cores
+  (:ref:`benchmarks`)
 
-* double-single arithmetic for excellent numerical long-time stability,
+* high performance and excellent numerical long-time stability (e.g., energy
+  conservation)
 
-* potential smoothing for optimal energy conservation,
+* user scripts, which define complex simulation protocols
 
-* online evaluation of various dynamic correlation functions,
+* online evaluation of :ref:`observables <observables>` including dynamic correlation functions
 
-* simulations at constant energy in the NVE ensemble,
+* structured, compressed, and portable `H5MD <http://http://nongnu.org/h5md>`_
+  output files
 
-* Andersen thermostat for NVT simulations.
+* extensibility by the generic and modular design
 
-
-Physics applications
----------------------
-
-HAL's MD package is designed to study
-
-* the dynamics of simple liquids and binary mixtures,
-
-* particles interacting via attractive or purely repulsive potentials
-  (truncated and shifted Lennard-Jones potentials),
-
-* both two- and three-dimensional systems.
+* free availability under GPL license
 
 
 Technical features
 ------------------
 
-HAL's MD package employs
+*HAL’s MD package* brings
 
-* simulation parameters passed via command line options, INI-style
-  configuration files and HDF5 output files,
+* an extensive automatic test suite using `CMake <http://cmake.org>`_
 
-* compressed and structured output of trajectories, thermodynamic variables and
-  correlation functions in `HDF5 <http://hdfgroup.org/HDF5/>`_ format,
+* double-single floating-point precision for numerically critical hot spots
 
-* a modular design with various backends loaded as dynamic libraries or
-  separate executables,
+* :ref:`C²-smooth potential cutoffs <smooth_r4>` for improved energy conservation
 
-* easily extensible template-based C++ code.
+* an integrated, lightweight `Lua <http://lua.org>`_ interpreter
+
+* template-based C++ code taking advantage of `C++11 <http://en.wikipedia.org/wiki/C++11>`_
+
+
+Historical footnote
+===================
+
+The name *HAL’s MD package* was chosen in honour of the machine `HAL
+<http://en.wikipedia.org/wiki/HAL_9000>`_ at the Arnold Sommerfeld Center for
+Theoretical Physics of the Ludwigs-Maximilians-Universität München. HAL has
+been the project's first GPGPU machine in 2007, equipped initially with two
+NVIDIA GeForce 8800 Ultra. HAL survived a critical air condition failure in the
+server room.
+

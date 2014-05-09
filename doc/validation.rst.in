@@ -42,7 +42,7 @@ values for the truncated and shifted Lennard--Jones potential in three dimension
     *Optimum free energy in the reference functional approach for the integral equations theory*,
     `J. Phys.: Condens. Matter 21, 115103 <http://dx.doi.org/10.1088/0953-8984/21/11/115103>`_ (2009).
 
-[*] Result obtained with *HAL's MD package* (4000 particles, NVT ensemble with Nosé--Hoover chain)
+[*] Result obtained with *HAL’s MD package* (4000 particles, NVT ensemble with Nosé--Hoover chain)
 
 Transport
 ---------
