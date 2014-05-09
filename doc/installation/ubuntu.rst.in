@@ -63,7 +63,7 @@ and the build process will start.
 .. note::
 
     The build process is very memory hungry, consider reducing the number of
-    parallel builds to a lower number (i.e. use ``-j2`` instead of ``-j4``if
+    parallel builds to a lower number (i.e. use ``-j2`` instead of ``-j4`` if
     you want 2 parallel builds) if you experience problems.
 
 If successful, you can run ``./halmd/halmd --version`` from the build directory
