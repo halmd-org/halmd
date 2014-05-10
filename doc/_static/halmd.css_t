@@ -10,12 +10,21 @@ div.header div.rel {
 }
 
 div.document .docutils.literal {
-  color: #3465a4;
-  background: transparent;
+  color: #333;
+  border-bottom: 1px solid #ddd;
+  /* font-size: 90%; */
+}
+
+a .docutils.literal {
+  color: #ce5c00 !important;
+  border-bottom: none !important;
+}
+
+a:hover .docutils.literal {
+  color: #ce8200 !important;
 }
 
 /** initial position of sidebar */
-
 div.sidebar {
   position: relative;
   top: 0px;
@@ -25,12 +34,73 @@ pre {
   overflow: auto;
   overflow-y: hidden;  /* fixes display issues on Chrome browsers */
   font-family: {{ theme_fixedfont }};
-  font-size: 100%;
+  font-size: {{ theme_fixedfont_size }};
   margin: -1px -3px;
   padding: 0 3px;
-// background-color: #f4debf;
-  border-top: 1px solid #ac9;
-  border-bottom: 1px solid #ac9;
+  background-color: #f4debf;
+  border: 1px solid #ac9;
+  /* border-bottom: 1px solid #ac9; */
+}
+
+/* overwrite default highlight class */
+div.document div.highlight {
+  background-color: transparent;
+  border-top: 0;
+  border-bottom: 0;
+  margin-top: 0;
+  margin-bottom: 0;
+}
+
+/* remove underline style from links in body and footer */
+div.bodywrapper a, div.footer a {
+  text-decoration: none;
+}
+
+/* hovered links get a lighter color */
+div.bodywrapper a:hover, div.footer a:hover {
+  color: #ce8200;
+}
+
+div.bodywrapper a:hoover, div.footer a:hoover{
+  color: #ce8200;
+}
+
+/* left-align list elelements (e.g. parameter lists) */
+div.document ul {
+  text-align: left;
+}
+/* make level-2 TOC elements a little smaller */
+li.toctree-l2 {
+    font-size: 90%;
+}
+/* remove large margin to sub elements */
+div.document ul {
+    margin-top : 0;
+}
+
+/* underline footer links when hovering */
+div.footer a:hover {
+  text-decoration: underline;
+}
+
+/* improve table display */
+table.docutils {
+    border: 0;
+    border-collapse: collapse;
+}
+
+table.docutils td, table.docutils th {
+    padding: 1px 8px 1px 5px;
+    border-top: 0;
+    border-left: 0;
+    border-right: 0;
+    border-bottom: 1px solid #aaa;
+}
+
+/* missing rubric style in agogo.css */
+p.rubric {
+    margin-top: 30px;
+    font-weight: bold;
 }
 
 /**

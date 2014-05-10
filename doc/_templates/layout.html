@@ -3,7 +3,7 @@
 {% extends "!layout.html" %}
 
 {%- block header %}
-    <div class="logo" style="text-align: center; padding: 10px 10px 15px 15px">
+    <div class="logo" style="text-align: left; padding: 10px 10px 15px 15px">
       <a href="{{ pathto(master_doc) }}">
         <img class="logo" src="{{ pathto('_static/halmd_logo.png', 1) }}" alt="HAL’s MD package"/>
       </a>
@@ -45,7 +45,7 @@
 {%- block extrahead %}
   {# move sidebar when scrolling #}
   <script type="text/javascript" src="{{ pathto('_static/sidebar.js', 1) }}"></script>
-  {#<link rel="stylesheet" type="text/css" href="http://fonts.googleapis.com/css?family=Droid+Serif|Droid+Sans|Droid+Sans+Mono">#}
-  <link rel="stylesheet" type="text/css" href="http://fonts.googleapis.com/css?family=Gloria+Hallelujah|Quattrocento Sans|Droid+Sans+Mono">
+  {# load fonts from Google #}
+  <link rel="stylesheet" type="text/css" href="http://fonts.googleapis.com/css?family=Gentium+Basic|Open+Sans|Droid+Sans+Mono">
 {%- endblock -%}
 
