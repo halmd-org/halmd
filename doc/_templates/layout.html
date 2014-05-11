@@ -15,7 +15,7 @@
             <a href="{{ pathto('readme') }}">Home</a>{{ reldelim2 }}
             <a href="{{ pathto('installation/download') }}">Get it</a>{{ reldelim2 }}
             <a href="{{ pathto('index') }}">Docs</a>{{ reldelim2 }}
-            <a href="http://www.hostedredmine.com/projects/halmd">Extend/Develop</a>{{ reldelim1 }}
+            <a href="{{ pathto('develop') }}">Extend/Develop</a>{{ reldelim1 }}
           </div>
           <div class="right">
             {%- for rellink in rellinks|reverse %}

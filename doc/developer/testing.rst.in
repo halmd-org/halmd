@@ -1,3 +1,5 @@
+.. _testing:
+
 Test suite
 **********
 
@@ -15,7 +17,7 @@ Boost Test.
 
 .. rubric:: test/lua
 
-Lua unit tests. Unit tests of pure Lua components using Boost Test.
+Lua unit tests. Unit tests of pure Lua components.
 
 .. rubric:: test/performance
 

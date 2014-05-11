@@ -54,7 +54,7 @@ Features
 
 * online evaluation of :ref:`observables <observables>` including dynamic correlation functions
 
-* structured, compressed, and portable `H5MD <http://http://nongnu.org/h5md>`_
+* structured, compressed, and portable `H5MD <http://nongnu.org/h5md>`_
   output files
 
 * extensibility by the generic and modular design

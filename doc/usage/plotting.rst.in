@@ -4,7 +4,7 @@ Plotting the results
 ====================
 
 Convenient and powerful access to the HDF5 output files is provided by the
-Python packages `h5py <http://alfven.org/wp/hdf5-for-python>`_ together with
+Python packages `h5py <http://www.h5py.org>`_ together with
 `PyLab <http://www.scipy.org/PyLab>`_. An examplary Python script for
 accessing, post-processing and plotting the output data of HALMD is provided in
 the sources at ``examples/plotting/plot_h5md.py``; it requires H5Py ≥ 2.0.1.

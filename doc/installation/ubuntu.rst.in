@@ -7,6 +7,10 @@ Ubuntu will be given.
 
 Ubuntu 14.04 LTS
 ----------------
+
+Prepare installation
+````````````````````
+
 First, make sure you have all required packages installed::
 
   sudo apt-get install git build-essential libluajit-5.1-dev zlib1g-dev wget
@@ -14,6 +18,10 @@ First, make sure you have all required packages installed::
 Clone the HALMD source code repository::
 
   git clone --recursive http://git.halmd.org/halmd.git
+
+
+Build and install prerequisites
+```````````````````````````````
 
 Then you will have to build boost from source using ``examples/packages.mk``::
 
@@ -37,6 +45,9 @@ Alternatively, you may append the output to your ``~/.bashrc``. You can verify
 that everything went well by running ``cmake --version`` which should output
 something like ``cmake version 2.8.12.1 with native CUDA support`` (the
 important part is ``with native CUDA support``).
+
+Build and install HALMD
+```````````````````````
 
 Now, we can start building HALMD. First, create a build directory (this can be
 anywhere, for convenience we create it in our home directory) and then run
