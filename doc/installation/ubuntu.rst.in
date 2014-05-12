@@ -13,7 +13,7 @@ Prepare installation
 
 First, make sure you have all required packages installed::
 
-  sudo apt-get install git build-essential libluajit-5.1-dev zlib1g-dev wget
+  sudo apt-get install git build-essential libluajit-5.1-dev zlib1g-dev wget nvidia-cuda-toolkit
 
 Clone the HALMD source code repository::
 
