@@ -432,10 +432,10 @@ env-boost:
 ##
 ## HDF5 C++ library
 ##
-HDF5_VERSION = 1.8.11
+HDF5_VERSION = 1.8.12
 HDF5_TARBALL = hdf5-$(HDF5_VERSION).tar.bz2
 HDF5_TARBALL_URL = http://www.hdfgroup.org/ftp/HDF5/releases/hdf5-$(HDF5_VERSION)/src/$(HDF5_TARBALL)
-HDF5_TARBALL_SHA256 = 5ea1ba82fc77350ee628b795ae6ede05feeaf1c6b437911a9478de456600cafb
+HDF5_TARBALL_SHA256 = 6d080f913a226a3ce390a11d9b571b2d5866581a2aa4434c398cd371c7063639
 HDF5_BUILD_DIR = hdf5-$(HDF5_VERSION)
 HDF5_INSTALL_DIR = $(PREFIX)/hdf5-$(HDF5_VERSION)
 HDF5_CONFIGURE_FLAGS = --enable-shared --disable-deprecated-symbols --enable-cxx
