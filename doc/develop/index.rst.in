@@ -6,6 +6,7 @@ Developer guide
 .. toctree::
    :maxdepth: 2
 
+   overview
    debugging
    floating_point
    luabind
