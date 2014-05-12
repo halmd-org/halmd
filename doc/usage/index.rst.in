@@ -5,7 +5,7 @@ Usage
    :maxdepth: 2
 
    start
-   hdf5
+   h5md
    plotting
    multi-gpu
 

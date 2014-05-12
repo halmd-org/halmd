@@ -1,0 +1,76 @@
+H5MD data files
+***************
+
+Why H5MD?
+=========
+
+The `H5MD <http://nongnu.org/h5md>`_ file format presents a unique standard to
+store data for and from molecular simulations along with derived quantities
+such as physical observables.
+
+H5MD builds on the technology of the "Hierarchical Data Format 5" `(HDF5)
+<http://hdfgroup.org/HDF5>`_ , which is a well established scientific file
+format, with bindings for C, C++, Fortran, Python and support by Matlab,
+Mathematica, … An excellent overview is found in the documentation of the
+project `HDF5 for Python <http://docs.h5py.org>`_.
+
+.. Note::
+
+   The output files of *HAL’s MD package* comply with H5MD version 1.0,
+   published in
+
+   P. de Buyl, P. H. Colberg, and F. Höfling, `H5MD: a structured, efficient,
+   and portable file format for molecular data
+   <http://dx.doi.org/10.1016/j.cpc.2014.01.018>`_, Comput. Phys. Commun.
+   (2014), in press, `[arXiv:1308.6382] <http://arxiv.org/abs/1308.6382>`_
+
+
+Working with HDF5 files
+=======================
+
+Using the h5ls/h5dump tools
+---------------------------
+
+For a quick analysis of HDF5 data files, use the ``h5ls`` tool (bundled with the HDF5 library)::
+
+  h5ls -v file
+
+Alternatively, the structure of a file may be inspected with the ``h5dump`` tool::
+
+  h5dump -A file
+
+The contents of individual groups or datasets may be displayed as follows::
+
+  h5dump -g /path/to/group file
+  h5dump -d /path/to/dataset file
+
+
+Using Python and h5py
+---------------------
+
+`h5py <http://www.h5py.org>`_ is a Python module wrapping the HDF5 library. It
+is based on NumPy, which implements a MATLAB-like interface to
+multi-dimensional arrays.  This is where the H5MD format reveals its true
+strength, as NumPy allows arbitrary transformations of HDF5 datasets, all while
+using a real programming language.
+
+As a simple example, we open a H5MD file and print a dataset::
+
+  import h5py
+  f = h5py.File("file", "r")
+  d = f["path/to/dataset"]
+  print d
+  print d[0:5]
+  f.close()
+
+Attributes may be read with the attrs class member::
+
+  print f["h5md"].attrs["version"]
+  if "observables" in f.keys():
+      print f["observables"].attrs["dimension"]
+
+
+For further information, refer to the `Numpy and Scipy Documentation
+<http://docs.scipy.org/doc/>`_ and the `HDF5 for Python Documentation
+<http://docs.h5py.org>`_.
+
