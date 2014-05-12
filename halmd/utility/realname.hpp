@@ -70,6 +70,9 @@ inline std::string realname(uid_t uid = getuid())
         return result->pw_name;
     }
     std::size_t pos = gecos.find_first_of(',');
+    if (pos == 0) {
+        return result->pw_name;
+    }
     if (pos != std::string::npos) {
         return gecos.substr(0, pos);
     }
