@@ -1,95 +1,78 @@
 Getting started
 ===============
 
+*HAL’s MD package* is configured and steered with customisable simulation
+scripts written in `Lua 5 <http://lua.org>`_. For a quick start refer to one of
+the `"liquid" <http://git.halmd.org/halmd/tree/master/examples>`_ scripts found
+in ``share/doc/halmd/examples`` in the installation directory.
+
+
 Program parameters
 ------------------
 
-HALMD has three ways of accepting program parameters:
+*HAL’s MD package* brings a command line parser which allows one to define
+script parameters. The possible command line options are described in the
+help::
 
-* pass directly as command line options
-* read from parameter config file [RC format]
-* read from HDF5 data file, optionally resuming from a prior trajectory
-
-Options are described in the command line help::
-
-  halmd --help
-
-The group of global options must precede module-specific options, which are
-introduced by their respective module name.
+  halmd script.lua --help
 
 
-A first example: Lennard-Jones fluids
--------------------------------------
+Example: a Lennard-Jones fluid
+------------------------------
 
-
-Many simulation scenarios can be controlled by command line options, there is
-no need to setup a separate simulation script. Let us consider a simple fluid
-with 20,000 Lennard-Jones particles at density :math:`\rho^*=0.8`.
-Equilibration is done with the Andersen thermostat at a temperature
+Let us consider a simple fluid with 20,000 Lennard-Jones particles at density :math:`\rho^*=0.8`.
+Equilibration is done with a Boltzmann thermostat at temperature
 :math:`T^*=2` over 10,000 steps ::
 
-  halmd -v \
-    --force=lennard_jones --integrator=verlet_nvt_andersen \
+  halmd liquid/lennard_jones_equilibration.lua -v \
     --timestep 0.005 --time 50 \
-    box --density 0.8 --particles 20000 \
-    verlet_nvt_andersen --temperature 2 \
-    trajectory --every 10000
+    --density 0.8 --particles 20000 \
+    --temperature 2 \
+    --sampling state-vars=100
 
 Many parameters have sensible default values and may be omitted, e.g, the
-collision rate of the Andersen thermostat (10), or the cutoff radius of the
-potential (:math:`r_c=2.5\sigma`). The option ``-v`` makes the output more
-verbose, check that your CUDA device has beed detected properly.
+collision rate of the thermostat (0.1), or the cutoff radius of the potential
+(:math:`r_c=2^{1/6}\sigma` corresponding to a purely repulsive potential). The
+option ``-v`` makes the output more verbose, check that your CUDA device has
+beed detected properly.
 
-The equivalent parameter configuration file would look like this ::
+The system state is written at the beginning and the end of the simulation if
+not specified differently. The initial configuration of the particles is an fcc
+lattice. The default output settings yield an H5MD file with a time stamp in
+its name, ``lennard_jones_equilibration_%Y%m%d_%H%M%S.h5`` and a corresponding
+log file.
 
-  # file example.rc
-  force=lennard_jones
-  integrator=verlet_nvt_andersen
-  timestep=0.005
-  time=50
+We may now continue the simulation at constant energy by resuming from the H5MD
+file using the accompanying script ::
 
-  [box]
-  density=0.8
-  particles=20000
-
-  [verlet_nvt_andersen]
-  temperature=2
-
-  [trajectory]
-  every=10000
-
-It is passed directly to HALMD, while parameters may be overwritten: ::
-
-  halmd -v -c example.rc --time 10
-
-The trajectory is written every 10,000 steps, i.e., at the beginning and the
-end of the simulation.  The initial configuration of the particles is a fcc
-lattice. The default output settings yield an HDF5 file with a time stamp in
-its name, ``halmd_%Y%m%d_%H%M%S.h5`` and a corresponding log file.
-
-We may now continue the simulation at constant energy by resuming from the
-trajectory file and selecting a different integrator ::
-
-  halmd -v \
-    --integrator=verlet --timestep 0.001 --time 100 \
-    trajectory --file halmd_20110715_160545.h5 \
-    thermodynamics --every 100
+  halmd liquid/lennard_jones.lua -v \
+    --timestep 0.001 --time 100 \
+    --trajectory output_from_previous_run.h5 \
+    --sampling state-vars=1000
 
 This will continue the simulation over 10⁵ steps and write observables like
-thermodynamic state variables every 100 steps (potential energy, instantaneous
-"temperature", pressure, ...
+thermodynamic state variables every 1000 steps (potential energy, instantaneous
+"temperature", pressure, …)
 
-If the HDF5 tools are properly installed, we may have a quick overview of the
+
+Inspection of the results
+-------------------------
+
+If the HDF5 tools are properly installed, you may have a quick overview of the
 output file ::
 
-  h5ls halmd_20110715_160920.h5
+  h5ls output.h5
 
 or look at a specific data set ::
 
-  h5dump -d observables/potential_energy halmd_20110713_161511.h5 | less
+  h5dump -d observables/potential_energy output.h5 | less
 
 For a more advanced inspection and analysis of the HDF5 output files, see
 :ref:`plotting`. You may try the exemplary script ::
 
-  halmd/examples/plotting/plot_h5md.py halmd_20110713_161511.h5
+  plotting/plot_h5md.py output.h5
+
+You may also have a look at the `H5MD tools
+<http://github.com/fhoefling/h5md-tools>`_, a collection of analysis and plot
+scripts.
 
