@@ -1,9 +1,3 @@
-set(HALMD_VARIANT_HILBERT_ORDER TRUE CACHE BOOL
-  "Use Hilbert space-filling curve particle ordering")
-if(HALMD_VARIANT_HILBERT_ORDER)
-  add_definitions(-DUSE_HILBERT_ORDER)
-endif(HALMD_VARIANT_HILBERT_ORDER)
-
 set(HALMD_VARIANT_HILBERT_ALT_3D FALSE CACHE BOOL
   "Use alternative 3D Hilbert curve vertex rules")
 if(HALMD_VARIANT_HILBERT_ALT_3D)
@@ -12,12 +6,6 @@ endif(HALMD_VARIANT_HILBERT_ALT_3D)
 
 if(HALMD_WITH_GPU)
   add_definitions(-DHALMD_WITH_GPU)
-
-  set(HALMD_VARIANT_CELL_SUMMATION_ORDER TRUE CACHE BOOL
-    "Use opposite cell summation order")
-  if(HALMD_VARIANT_CELL_SUMMATION_ORDER)
-    add_definitions(-DUSE_CELL_SUMMATION_ORDER)
-  endif(HALMD_VARIANT_CELL_SUMMATION_ORDER)
 
   set(HALMD_VARIANT_FORCE_DSFUN TRUE CACHE BOOL
     "Use double-single precision functions in cell summation")

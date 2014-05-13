@@ -22,6 +22,9 @@ Cache variables are passed as options to CMake using ``-D...``
 
      This variable is only needed if libraries are installed in non-standard paths.
 
+   HALMD_USE_STATIC_LIBS
+     Compile separate, statically linked executable for each backend.
+
    Boost_USE_STATIC_LIBS
      Link to Boost libraries statically.
 
@@ -46,38 +49,31 @@ Cache variables are passed as options to CMake using ``-D...``
      fail if CUDA is not available. If HALMD_WITH_GPU is explicitly set to
      FALSE, GPU support will be disabled even if CUDA is available.
 
-   HALMD_USE_STATIC_LIBS
-     Compile separate, statically linked executable for each backend.
+   HALMD_POTENTIALS
 
-   HALMD_VARIANT_CELL_SUMMATION_ORDER
-     Use opposite cell summation order (GPU backends only).
-
-     Default value is ``TRUE``.
+     Semicolon-separated list of potential modules that shall be instantiated.
+     By default, all available potentials are enabled.
 
    HALMD_VARIANT_FORCE_DSFUN
-     Use double-single precision functions in force summation (GPU backends only).
+     Use double-single precision functions in force summation (GPU backend only).
 
      Default value is ``TRUE``.
 
    HALMD_VARIANT_HILBERT_ALT_3D
-     Use alternative 3D Hilbert curve vertex rules (GPU backends only).
+     Use alternative vertex rules for the 3D Hilbert curve used for particle
+     ordering (GPU backend only).
 
      Default value is ``FALSE``.
 
-   HALMD_VARIANT_HILBERT_ORDER
-     Use Hilbert space-filling curve particle ordering (GPU backends only).
-
-     Default value is ``TRUE``.
-
    HALMD_VARIANT_HOST_SINGLE_PRECISION
-     Use single-precision math in host implementation (host backends only).
+     Use single-precision math in host implementation (host backend only).
 
      Default value is ``FALSE``.
 
      This option requires SSE, which is enabled by default on x86_64.
 
    HALMD_VARIANT_VERLET_DSFUN
-     Use double-single precision functions in Verlet integrator (GPU backends only).
+     Use double-single precision functions in Verlet integrator (GPU backend only).
 
      Default value is ``TRUE``.
 
