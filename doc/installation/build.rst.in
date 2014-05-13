@@ -148,10 +148,6 @@ compile with the following compilers.
 
   - Clang 3.2 (upstream)
 
-* Intel C++ compiler
-
-  - Intel C++ compiler 13.1
-
 The following C++ compilers **fail** to compile HALMD.
 
 * GCC ≤ 4.5
@@ -160,7 +156,7 @@ The following C++ compilers **fail** to compile HALMD.
 
   - Clang 2.7 on Debian GNU/Linux squeeze (x86_64)
 
-* Intel C++ compiler ≤ 12.1
+* Intel C++ compiler ≤ 14.0
 
 * XL C++
 
