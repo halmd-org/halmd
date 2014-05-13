@@ -34,6 +34,9 @@ endif()
 # Output source version for Dashboard test reports
 message(STATUS "Building HALMD ${PROGRAM_VERSION}")
 
+# Set HALMD potential list needed for building everything or only the docs
+include(${CMAKE_SOURCE_DIR}/cmake/potentials.cmake)
+
 if(HALMD_USE_GIT)
   if(HALMD_DOC_ONLY)
     set(HALMD_DOC_ONLY TRUE)
@@ -100,8 +103,6 @@ if(NOT HALMD_DOC_ONLY OR NOT HALMD_USE_GIT)
 
   # Set HALMD build variant flags
   include(${CMAKE_SOURCE_DIR}/cmake/variant.cmake)
-  # Set HALMD potential list
-  include(${CMAKE_SOURCE_DIR}/cmake/potentials.cmake)
 
   # set appropriate RPATH on installed binaries as well as in build tree
   #
