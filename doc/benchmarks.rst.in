@@ -40,10 +40,12 @@ Parameters:
 +--------------------+------------------+-----------+---------------+----------------------------+
 |                    | 33.2 ns          | 470       | single        | CUDA 4.2, -arch compute_12 |
 +--------------------+------------------+-----------+---------------+----------------------------+
+| NVIDIA Tesla K20Xm | 19.7 ns          | 792       | double-single | CUDA 5.5, -arch compute_12 |
++--------------------+------------------+-----------+---------------+----------------------------+
 
 Results were obtained from 1 independent measurement based on release version
 0.2.0. Each run consisted of NVT equilibration at :math:`T^*=1.2` over
-:math:`\Delta t^*=100` (10⁴ steps), followed by benchmarking 5 times 10⁴ NVE
+:math:`\Delta t^*=100` (10⁴ steps), followed by benchmarking 10⁴ NVE 5 times
 steps in a row.
 
 Supercooled binary mixture (Kob-Andersen)
@@ -82,8 +84,10 @@ Parameters:
 +--------------------+------------------+-----------+---------------+----------------------------+
 |                    | 29.6 ns          | 132       | single        | CUDA 4.2, -arch compute_12 |
 +--------------------+------------------+-----------+---------------+----------------------------+
+| NVIDIA Tesla K20Xm | 16.2 ns          | 242       | double-single | CUDA 5.5, -arch compute_12 |
++--------------------+------------------+-----------+---------------+----------------------------+
 
 Results were obtained from 1 independent measurement and are based on release
 version 0.2.0. Each run consisted of NVT equilibration at :math:`T^*=0.7` over
-:math:`\Delta t^*=100` (2×10⁴ steps), followed by benchmarking 5 times 10⁴ NVE
-steps in a row.
+:math:`\Delta t^*=100` (2×10⁴ steps), followed by benchmarking 10⁴ NVE steps 5
+times in a row.
