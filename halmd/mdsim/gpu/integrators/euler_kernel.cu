@@ -1,5 +1,6 @@
 /*
- * Copyright © 2011-2012  Michael Kopp and Felix Höfling
+ * Copyright © 2011-2014 Felix Höfling
+ * Copyright © 2011-2012 Michael Kopp
  *
  * This file is part of HALMD.
  *
@@ -47,12 +48,15 @@ __global__ void integrate(
   , fixed_vector<float, dimension> box_length
 )
 {
+    typedef fixed_vector<float_type, dimension> vector_type;
+    typedef fixed_vector<float, dimension> float_vector_type;
+
     // kernel execution parameters
     unsigned int const thread = GTID;
     unsigned int const nthread = GTDIM;
 
     // read position, species, velocity, mass, image from global memory
-    fixed_vector<float_type, dimension> r, v;
+    vector_type r, v;
     unsigned int species;
     float mass;
 #ifdef USE_VERLET_DSFUN
@@ -62,12 +66,11 @@ __global__ void integrate(
     tie(r, species) <<= g_position[thread];
     tie(v, mass) <<= g_velocity[thread];
 #endif
-    fixed_vector<float, dimension> image = g_image[thread];
 
     // Euler integration
     r += v * timestep;
     // enforce periodic boundary conditions
-    image += box_kernel::reduce_periodic(r, box_length);
+    float_vector_type image = box_kernel::reduce_periodic(r, box_length);
 
     // store position, species, image in global memory
 #ifdef USE_VERLET_DSFUN
@@ -75,7 +78,9 @@ __global__ void integrate(
 #else
     g_position[thread] <<= tie(r, species);
 #endif
-    g_image[thread] = image;
+    if (!(image == float_vector_type(0))) {
+        g_image[thread] = image + static_cast<float_vector_type>(g_image[thread]);
+    }
 }
 
 } // namespace euler_kernel
