@@ -43,8 +43,8 @@ local binning = assert(libhalmd.mdsim.binning)
 -- :param args.particle: instance of :class:`halmd.mdsim.particle`
 -- :param args.box: instance of :class:`halmd.mdsim.box`
 -- :param table args.r_cut: cutoff radius matrix for the potentials
--- :param number args.skin: neighbour list skin *(default: ``0.5``)*
--- :param number args.occupancy: initial cell occupancy *(GPU variant only, default: ``0.5``)*
+-- :param number args.skin: neighbour list skin (*default:* ``0.5``)
+-- :param number args.occupancy: initial cell occupancy (*GPU variant only, default:* ``0.5``)
 --
 -- .. attribute:: r_cut
 --

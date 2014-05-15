@@ -7,9 +7,51 @@ body {
   margin-left: auto;
   margin-right: auto;
 }
+/* left-align text, justified is not very readable in browsers as it needs hyphenation */
+div.body {
+  text-align: left;
+}
 
 div.header div.rel {
-  margin-top: 0em;
+  margin-top: 0;
+}
+
+div.header div.rel ul {
+  line-height: 100%;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+div.header div.rel ul.left li {
+  float: left;
+}
+div.header div.rel ul.right li{
+  float: right;
+}
+div.header div.rel li {
+  margin: 0;
+  border-right: 1px solid black;
+  white-space: nowrap;
+}
+
+div.header div.rel ul.left li:nth-child(-n+4):after {
+  content: "»";
+}
+div.header div.rel ul.left li:nth-child(-n+3):after {
+  content: "";
+}
+
+div.header div.rel a {
+  padding: 5px;
+}
+
+div.header div.rel ul.left li:last-child {
+  border: 0;
+}
+
+div.header div.rel ul.right li:first-child {
+  border: 0;
 }
 
 div.document .docutils.literal {
@@ -68,17 +110,17 @@ div.bodywrapper a:hoover, div.footer a:hoover{
   color: #ce8200;
 }
 
-/* left-align list elelements (e.g. parameter lists) */
+/* left-align list elements (e.g. parameter lists) */
 div.document ul {
   text-align: left;
 }
 /* make level-2 TOC elements a little smaller */
 li.toctree-l2 {
-    font-size: 90%;
+  font-size: 90%;
 }
 /* remove large margin to sub elements */
 div.document ul {
-    margin-top : 0;
+  margin-top : 0;
 }
 
 /* underline footer links when hovering */
@@ -88,22 +130,38 @@ div.footer a:hover {
 
 /* improve table display */
 table.docutils {
-    border: 0;
-    border-collapse: collapse;
+  border: 0;
+  border-collapse: collapse;
 }
 
 table.docutils td, table.docutils th {
-    padding: 1px 8px 1px 5px;
-    border-top: 0;
-    border-left: 0;
-    border-right: 0;
-    border-bottom: 1px solid #aaa;
+  padding: 1px 8px 1px 5px;
+  border-top: 0;
+  border-left: 0;
+  border-right: 0;
+  border-bottom: 1px solid #aaa;
+}
+
+/* make every second row with grey background */
+table.docutils tr:nth-child(odd) {
+  text-align: left;
+  background: #eee;
+}
+/* table header with white background and left align it*/
+table.docutils th {
+  text-align: left;
+  background: white;
+}
+
+/* make sure images have a small margin */
+table.docutils img {
+  margin-bottom: 2px;
 }
 
 /* missing rubric style in agogo.css */
 p.rubric {
-    margin-top: 30px;
-    font-weight: bold;
+  margin-top: 30px;
+  font-weight: bold;
 }
 
 /**
