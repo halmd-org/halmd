@@ -8,6 +8,8 @@ The benchmark results were produced by the scripts in ``examples/benchmarks``, e
     examples/benchmarks/generate_configuration.sh lennard_jones
     examples/benchmarks/run_benchmark.sh lennard_jones
 
+The Tesla GPUs had ECC *enabled*, no overclocking or other tweaking was done.
+
 
 Simple Lennard-Jones fluid in 3 dimensions
 ==========================================
@@ -22,31 +24,29 @@ Parameters:
 | Hardware           | time per MD step | steps per | FP precision  | compilation details        |
 |                    | and particle     | second    |               |                            |
 +====================+==================+===========+===============+============================+
-| Intel Xeon E5620   | 1.40 µs          | 11.2      | double        | GCC 4.4.1, -O3             |
+| Intel Xeon E5-2640 | 1.44 µs          | 10.8      | double        | GCC 4.7.2, -O3             |
 +--------------------+------------------+-----------+---------------+----------------------------+
-| NVIDIA Tesla S1070 | 58.6 ns          | 267       | double-single | CUDA 4.2, -arch compute_12 |
+| NVIDIA Tesla S1070 | 57.0 ns          | 274       | double-single | CUDA 5.5, -arch compute_12 |
 +--------------------+------------------+-----------+---------------+----------------------------+
-|                    | 54.3 ns          | 288       | single        | CUDA 4.2, -arch compute_12 |
+|                    | 55.1 ns          | 284       | single        | CUDA 5.5, -arch compute_12 |
 +--------------------+------------------+-----------+---------------+----------------------------+
-| NVIDIA Tesla C2050 | 40.5 ns          | 386       | double-single | CUDA 4.2, -arch compute_12 |
+| NVIDIA Tesla C2050 | 39.4 ns          | 397       | double-single | CUDA 5.5, -arch compute_12 |
 +--------------------+------------------+-----------+---------------+----------------------------+
-|                    | 34.6 ns          | 452       | single        | CUDA 4.2, -arch compute_12 |
+|                    | 34.3 ns          | 456       | single        | CUDA 5.5, -arch compute_12 |
 +--------------------+------------------+-----------+---------------+----------------------------+
-| NVIDIA Tesla S2050 | 46.4 ns          | 337       | double-single | CUDA 4.2, -arch compute_20 |
+| NVIDIA Tesla K20m  | 22.2 ns          | 702       | double-single | CUDA 5.5, -arch compute_12 |
 +--------------------+------------------+-----------+---------------+----------------------------+
-|                    | 39.6 ns          | 395       | single        | CUDA 4.2, -arch compute_12 |
-+--------------------+------------------+-----------+---------------+----------------------------+
-| NVIDIA Tesla M2090 | 37.8 ns          | 414       | double-single | CUDA 4.2, -arch compute_20 |
-+--------------------+------------------+-----------+---------------+----------------------------+
-|                    | 33.2 ns          | 470       | single        | CUDA 4.2, -arch compute_12 |
+|                    | 20.7 ns          | 756       | single        | CUDA 5.5, -arch compute_12 |
 +--------------------+------------------+-----------+---------------+----------------------------+
 | NVIDIA Tesla K20Xm | 19.7 ns          | 792       | double-single | CUDA 5.5, -arch compute_12 |
 +--------------------+------------------+-----------+---------------+----------------------------+
+|                    | 18.4 ns          | 851       | single        | CUDA 5.5, -arch compute_12 |
++--------------------+------------------+-----------+---------------+----------------------------+
 
-Results were obtained from 1 independent measurement based on release version
-0.2.0. Each run consisted of NVT equilibration at :math:`T^*=1.2` over
-:math:`\Delta t^*=100` (10⁴ steps), followed by benchmarking 10⁴ NVE 5 times
-steps in a row.
+Results were obtained from 1 independent measurement based on pre-release
+version 1.0-alpha1. Each run consisted of NVT equilibration at :math:`T^*=1.2`
+over :math:`\Delta t^*=100` (10⁴ steps), followed by benchmarking 10⁴ NVE 5
+times steps in a row.
 
 Supercooled binary mixture (Kob-Andersen)
 =========================================
@@ -66,28 +66,26 @@ Parameters:
 | Hardware           | time per MD step | steps per | FP precision  | compilation details        |
 |                    | and particle     | second    |               |                            |
 +====================+==================+===========+===============+============================+
-| Intel Xeon E5620   | 1.96 µs          | 2.00      | double        | GCC 4.4.1, -O3             |
+| Intel Xeon E5-2640 | 2.03 µs          | 1.93      | double        | GCC 4.7.2, -O3             |
 +--------------------+------------------+-----------+---------------+----------------------------+
-| NVIDIA Tesla S1070 | 68.7 ns          | 56.9      | double-single | CUDA 4.2, -arch compute_12 |
+| NVIDIA Tesla S1070 | 65.7 ns          | 59.4      | double-single | CUDA 5.5, -arch compute_12 |
 +--------------------+------------------+-----------+---------------+----------------------------+
-|                    | 68.4 ns          | 57.3      | single        | CUDA 4.2, -arch compute_12 |
+|                    | 66.3 ns          | 58.9      | single        | CUDA 5.5, -arch compute_12 |
 +--------------------+------------------+-----------+---------------+----------------------------+
-| NVIDIA Tesla C2050 | 41.9 ns          | 93.3      | double-single | CUDA 4.2, -arch compute_12 |
+| NVIDIA Tesla C2050 | 39.2 ns          | 99.7      | double-single | CUDA 5.5, -arch compute_12 |
 +--------------------+------------------+-----------+---------------+----------------------------+
-|                    | 35.0 ns          | 112       | single        | CUDA 4.2, -arch compute_12 |
+|                    | 32.4 ns          | 120       | single        | CUDA 5.5, -arch compute_12 |
 +--------------------+------------------+-----------+---------------+----------------------------+
-| NVIDIA Tesla S2050 | 44.4 ns          | 88.0      | double-single | CUDA 4.2, -arch compute_20 |
+| NVIDIA Tesla K20m  | 18.5 ns          | 211       | double-single | CUDA 5.5, -arch compute_12 |
 +--------------------+------------------+-----------+---------------+----------------------------+
-|                    | 38.0 ns          | 103       | single        | CUDA 4.2, -arch compute_12 |
-+--------------------+------------------+-----------+---------------+----------------------------+
-| NVIDIA Tesla M2090 | 35.8 ns          | 109       | double-single | CUDA 4.2, -arch compute_20 |
-+--------------------+------------------+-----------+---------------+----------------------------+
-|                    | 29.6 ns          | 132       | single        | CUDA 4.2, -arch compute_12 |
+|                    | 17.0 ns          | 230       | single        | CUDA 5.5, -arch compute_12 |
 +--------------------+------------------+-----------+---------------+----------------------------+
 | NVIDIA Tesla K20Xm | 16.2 ns          | 242       | double-single | CUDA 5.5, -arch compute_12 |
 +--------------------+------------------+-----------+---------------+----------------------------+
+|                    | 15.0 ns          | 261       | single        | CUDA 5.5, -arch compute_12 |
++--------------------+------------------+-----------+---------------+----------------------------+
 
-Results were obtained from 1 independent measurement and are based on release
-version 0.2.0. Each run consisted of NVT equilibration at :math:`T^*=0.7` over
-:math:`\Delta t^*=100` (2×10⁴ steps), followed by benchmarking 10⁴ NVE steps 5
-times in a row.
+Results were obtained from 1 independent measurement and are based on
+pre-release version 1.0-alpha1. Each run consisted of NVT equilibration at
+:math:`T^*=0.7` over :math:`\Delta t^*=100` (2×10⁴ steps), followed by
+benchmarking 10⁴ NVE steps 5 times in a row.
