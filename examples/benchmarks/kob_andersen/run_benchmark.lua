@@ -87,7 +87,7 @@ local function kob_andersen(args)
         -- set particle positions, velocities, species
         phase_space:set(sample)
         -- write phase space data of group to H5MD file, but only first and last step
-        phase_space:writer({file = file, fields = {"position", "velocity", "species", "mass"}})
+        phase_space:writer({file = file, fields = {"position", "velocity", "species", "mass"}, every = steps})
     end
 
     -- define interaction of Kob-Andersen mixture using truncated Lennard-Jones potential
