@@ -4,9 +4,3 @@
 [submodule "libs/luaponte"]
 	path = libs/luaponte
 	url = ../luaponte
-[submodule "libs/boost-log"]
-	path = libs/boost-log
-	url = ../boost-log
-[submodule "libs/cuda-wrapper"]
-	path = libs/cuda-wrapper
-	url = ../cuda-wrapper

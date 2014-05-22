@@ -43,12 +43,18 @@ if(HALMD_USE_STATIC_LIBS)
   set(HDF5_USE_STATIC_LIBS TRUE)
 endif()
 
-# Require thread-safe Boost libraries for thread-safe Boost Log
+# Require thread-safe Boost libraries
 set(Boost_USE_MULTITHREADED TRUE)
 
-find_package(Boost 1.43.0 QUIET REQUIRED COMPONENTS
+# define BOOST_LOG_DYN_LINK in case of dynamic linkage
+if(NOT Boost_USE_STATIC_LIBS)
+   add_definitions(-DBOOST_LOG_DYN_LINK)
+endif()
+
+find_package(Boost 1.55.0 QUIET REQUIRED COMPONENTS
   date_time
   filesystem
+  log
   program_options
   random
   system
@@ -156,12 +162,12 @@ set(CMAKE_BUILD_WITH_INSTALL_RPATH FALSE)
 set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
 
 set(HALMD_COMMON_LIBRARIES
-  boost_log
   luabind
   ${Boost_DATE_TIME_LIBRARY}
   ${Boost_PROGRAM_OPTIONS_LIBRARY}
   ${Boost_RANDOM_LIBRARY}
   ${Boost_FILESYSTEM_LIBRARY}
+  ${Boost_LOG_LIBRARY}
   ${Boost_SYSTEM_LIBRARY}
   ${Boost_THREAD_LIBRARY}
   ${HDF5_CPP_LIBRARY}
@@ -183,7 +189,6 @@ list(APPEND HALMD_COMMON_LIBRARIES
 enable_testing()
 include(CTest)
 
-include_directories(${HALMD_SOURCE_DIR}/libs/boost-log)
 include_directories(${HALMD_SOURCE_DIR}/libs/cuda-wrapper)
 include_directories(${HALMD_SOURCE_DIR}/libs/h5xx)
 include_directories(${HALMD_SOURCE_DIR}/libs/luabind)
@@ -226,7 +231,6 @@ install(DIRECTORY ${CMAKE_SOURCE_DIR}/examples
   PATTERN packages.mk EXCLUDE
 )
 
-add_subdirectory(libs/boost-log/libs/log/src)
 add_subdirectory(libs/luabind/src)
 add_subdirectory(halmd)
 add_subdirectory(lua)
