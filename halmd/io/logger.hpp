@@ -113,7 +113,7 @@ private:
     logging();
     /** set log output format of backend */
     template <typename backend_type>
-    void set_formatter(boost::shared_ptr<backend_type> backend) const;
+    void set_formatter(boost::shared_ptr<backend_type> backend);
 
     /** console log sink */
     boost::shared_ptr<console_sink_type> console_;
