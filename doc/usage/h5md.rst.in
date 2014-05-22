@@ -22,7 +22,7 @@ project `HDF5 for Python <http://docs.h5py.org>`_.
    P. de Buyl, P. H. Colberg, and F. Höfling, `H5MD: a structured, efficient,
    and portable file format for molecular data
    <http://dx.doi.org/10.1016/j.cpc.2014.01.018>`_, Comput. Phys. Commun.
-   (2014), in press, `[arXiv:1308.6382] <http://arxiv.org/abs/1308.6382>`_
+   **185**, 1546 (2014), `[arXiv:1308.6382] <http://arxiv.org/abs/1308.6382>`_
 
 
 Working with HDF5 files
