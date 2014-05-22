@@ -76,19 +76,23 @@ if(NOT HALMD_DOC_ONLY OR NOT HALMD_USE_GIT)
     set(HALMD_WITH_GPU FALSE)
   endif()
 
+  set(HALMD_USE_STATIC_LIBS FALSE CACHE BOOL
+      "Use static linkage for Boost, HDF5, and Lua libraries"
+  )
+
   if(HALMD_USE_STATIC_LIBS)
     set(Boost_USE_STATIC_LIBS TRUE)
     set(HDF5_USE_STATIC_LIBS TRUE)
     set(LUA_USE_STATIC_LIBS TRUE)
   endif()
 
-  # Require thread-safe Boost libraries
-  set(Boost_USE_MULTITHREADED TRUE)
-
   # define BOOST_LOG_DYN_LINK in case of dynamic linkage
   if(NOT Boost_USE_STATIC_LIBS)
      add_definitions(-DBOOST_LOG_DYN_LINK)
   endif()
+
+  # Require thread-safe Boost libraries
+  set(Boost_USE_MULTITHREADED TRUE)
 
   find_package(Boost 1.55.0 QUIET REQUIRED COMPONENTS
     date_time
@@ -128,8 +132,8 @@ if(NOT HALMD_DOC_ONLY OR NOT HALMD_USE_GIT)
     ${Boost_DATE_TIME_LIBRARY}
     ${Boost_PROGRAM_OPTIONS_LIBRARY}
     ${Boost_RANDOM_LIBRARY}
+    ${Boost_LOG_LIBRARY} # must precede Boost.Filesystem for static linkage
     ${Boost_FILESYSTEM_LIBRARY}
-    ${Boost_LOG_LIBRARY}
     ${Boost_SYSTEM_LIBRARY}
     ${Boost_THREAD_LIBRARY}
     ${HDF5_CPP_LIBRARY}
