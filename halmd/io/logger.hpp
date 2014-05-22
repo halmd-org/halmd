@@ -110,7 +110,7 @@ private:
     logging();
     /** set log output format of backend */
     template <typename backend_type>
-    void set_formatter(boost::shared_ptr<backend_type> backend) const;
+    void set_formatter(boost::shared_ptr<backend_type> backend);
 
     /** console log sink */
     boost::shared_ptr<console_sink_type> console_;
@@ -133,11 +133,7 @@ struct logger
 
     logger(std::string const& label)
     {
-#ifdef BOOST_LOG_ATTRIBUTE_HPP_INCLUDED_ // Boost.Log < 2.0
-        add_attribute("Label", boost::make_shared<boost::log::attributes::constant<std::string> >(label));
-#else
         add_attribute("Label", boost::log::attributes::constant<std::string>(label));
-#endif
     }
 };
 

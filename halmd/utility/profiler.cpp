@@ -1,5 +1,6 @@
 /*
- * Copyright © 2010-2011  Peter Colberg and Felix Höfling
+ * Copyright © 2010-2011 Felix Höfling
+ * Copyright © 2010-2011 Peter Colberg
  *
  * This file is part of HALMD.
  *
@@ -26,9 +27,53 @@
 #include <halmd/utility/lua/lua.hpp>
 #include <halmd/utility/profiler.hpp>
 
-using namespace std;
-
 namespace halmd {
+
+// put this operator<< into the namespace of accumulator, in order to make ADL
+// find the implementation
+namespace numeric {
+namespace detail {
+/**
+ * output accumulator results to stream,
+ * use a suitable unit of time
+ */
+template <typename value_type>
+static std::ostream& operator<<(std::ostream& os, accumulator<value_type> const& acc)
+{
+    value_type value = mean(acc);
+    value_type error = count(acc) > 1 ? error_of_mean(acc) : 0;
+
+    value_type const conversion[] = { 24 * 3600, 3600, 60, 1, 1e-3, 1e-6, 1e-9 };
+    char const* const unit[] = { "d", "h", "min", "s", "ms", "µs", "ns" };
+    unsigned const N = 7;
+
+    unsigned i;
+    for (i = 0; i < N - 1; ++i) {
+        if (value > conversion[i]) {
+            break;
+        }
+    }
+    value /= conversion[i];
+    error /= conversion[i];
+
+    // let number of digits depend on the error value
+    if (count(acc) > 1) {
+        unsigned prec = static_cast<unsigned>(std::max(0., ceil(-log10(error)) + 1));
+        os << std::fixed << std::setprecision(prec) << value << " " << unit[i];
+        // at least 2 digits for the error
+        prec = static_cast<unsigned>(std::max(2., ceil(log10(error))));
+        os << resetiosflags(std::ios_base::floatfield) << std::setprecision(prec)
+           << " (" << error << " " << unit[i] << ", " << count(acc) << " calls)";
+    }
+    else {
+        os << std::setprecision(3) << value << " " << unit[i];
+    }
+
+    return os;
+}
+} // namespace detail
+} // namespace numeric
+
 namespace utility {
 
 profiler::profiler()
@@ -36,7 +81,7 @@ profiler::profiler()
     LOG("profiler timer resolution: " << 1.E9 * timer_type::elapsed_min() << " ns");
 }
 
-connection profiler::on_profile(std::shared_ptr<accumulator_type> acc, string const& desc)
+connection profiler::on_profile(std::shared_ptr<accumulator_type> acc, std::string const& desc)
 {
     return accumulators_.connect(make_pair(acc, desc));
 }
@@ -61,44 +106,6 @@ void profiler::profile()
     on_append_profile_();
 }
 
-/**
- * output accumulator results to stream,
- * use a suitable unit of time
- */
-template <typename value_type>
-static ostream& operator<<(ostream& os, accumulator<value_type> const& acc)
-{
-    value_type value = mean(acc);
-    value_type error = count(acc) > 1 ? error_of_mean(acc) : 0;
-
-    value_type const conversion[] = { 24 * 3600, 3600, 60, 1, 1e-3, 1e-6, 1e-9 };
-    char const* const unit[] = { "d", "h", "min", "s", "ms", "µs", "ns" };
-    unsigned const N = 7;
-
-    unsigned i;
-    for (i = 0; i < N - 1; ++i) {
-        if (value > conversion[i]) {
-            break;
-        }
-    }
-    value /= conversion[i];
-    error /= conversion[i];
-
-    // let number of digits depend on the error value
-    if (count(acc) > 1) {
-        unsigned prec = static_cast<unsigned>(max(0., ceil(-log10(error)) + 1));
-        os << fixed << setprecision(prec) << value << " " << unit[i];
-        // at least 2 digits for the error
-        prec = static_cast<unsigned>(max(2., ceil(log10(error))));
-        os << resetiosflags(ios_base::floatfield) << setprecision(prec)
-           << " (" << error << " " << unit[i] << ", " << count(acc) << " calls)";
-    }
-    else {
-        os << setprecision(3) << value << " " << unit[i];
-    }
-
-    return os;
-}
 
 /**
  * return total runtime from runtime accumulator:
@@ -130,7 +137,7 @@ void profiler::log() const
 {
     if (accumulators_.empty()) return;
 
-    vector<accumulator_pair_type> accumulators(accumulators_.begin(), accumulators_.end());
+    std::vector<accumulator_pair_type> accumulators(accumulators_.begin(), accumulators_.end());
 
     stable_sort(accumulators.begin(), accumulators.end(), less_total_runtime());
 
@@ -139,7 +146,7 @@ void profiler::log() const
         double fraction = total_runtime(*acc.first) / maximum_runtime;
         HALMD_LOG(
             count(*acc.first) > 0 ? logging::info : logging::debug
-          , "[" << setw(5) << fixed << setprecision(1) << fraction * 100 << "%] "
+          , "[" << std::setw(5) << std::fixed << std::setprecision(1) << fraction * 100 << "%] "
                 << acc.second << ": " << *acc.first
         );
     }

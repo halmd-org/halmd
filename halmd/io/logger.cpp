@@ -1,5 +1,6 @@
 /*
  * Copyright © 2013 Felix Höfling
+ * Copyright © 2014 Nicolas Höft
  * Copyright © 2008-2012  Peter Colberg
  *
  * This file is part of HALMD.
@@ -21,52 +22,44 @@
 // increase compiler compatibility, e.g. with Clang 2.8
 #define BOOST_LOG_NO_UNSPECIFIED_BOOL
 #include <boost/log/attributes/clock.hpp>
-#include <boost/log/filters/attr.hpp>
-#include <boost/log/filters/has_attr.hpp>
-#include <boost/log/formatters/attr.hpp>
-#include <boost/log/formatters/date_time.hpp>
-#include <boost/log/formatters/format.hpp>
-#include <boost/log/formatters/if.hpp>
-#include <boost/log/formatters/message.hpp>
-#include <boost/log/formatters/stream.hpp>
-#include <boost/log/utility/empty_deleter.hpp>
+#include <boost/log/support/date_time.hpp>
+#include <boost/log/expressions.hpp>
+#include <boost/utility/empty_deleter.hpp>
 #include <boost/version.hpp>
 
 #include <halmd/io/logger.hpp>
 #include <halmd/utility/lua/lua.hpp>
 
 using namespace boost::log;
-using namespace std;
 
 namespace halmd {
 
+BOOST_LOG_ATTRIBUTE_KEYWORD(severity, "Severity", logging::severity_level)
+BOOST_LOG_ATTRIBUTE_KEYWORD(label_attr, "Label", std::string)
+
 logging::logging()
 {
-#ifdef BOOST_LOG_ATTRIBUTE_HPP_INCLUDED_ // Boost.Log < 2.0
-    core::get()->add_global_attribute("TimeStamp", boost::make_shared<attributes::local_clock>());
-#else
     core::get()->add_global_attribute("TimeStamp", attributes::local_clock());
-#endif
 }
 
 void logging::open_console(severity_level level)
 {
     boost::shared_ptr<console_backend_type> backend(boost::make_shared<console_backend_type>());
     backend->add_stream(
-        boost::shared_ptr<ostream>(&clog, empty_deleter())
+        boost::shared_ptr<std::ostream>(&std::clog, boost::empty_deleter())
     );
-    set_formatter(backend);
     backend->auto_flush(true);
 
     core::get()->remove_sink(console_);
     console_ = boost::make_shared<console_sink_type>(backend);
     console_->set_filter(
 #ifdef NDEBUG
-        filters::attr<severity_level>("Severity") <= min(level, info)
+        severity <= std::min(level, info)
 #else
-        filters::attr<severity_level>("Severity") <= level
+        severity <= level
 #endif
     );
+    set_formatter(console_);
     core::get()->add_sink(console_);
 }
 
@@ -76,25 +69,25 @@ void logging::close_console()
     console_.reset();
 }
 
-void logging::open_file(string file_name, severity_level level)
+void logging::open_file(std::string file_name, severity_level level)
 {
     boost::shared_ptr<file_backend_type> backend(
         boost::make_shared<file_backend_type>(
             keywords::file_name = file_name
         )
     );
-    set_formatter(backend);
     backend->auto_flush(true);
 
     core::get()->remove_sink(file_);
     file_ = boost::make_shared<file_sink_type>(backend);
     file_->set_filter(
 #ifdef NDEBUG
-        filters::attr<severity_level>("Severity") <= min(level, info)
+        severity <= std::min(level, info)
 #else
-        filters::attr<severity_level>("Severity") <= level
+        severity <= level
 #endif
     );
+    set_formatter(file_);
     core::get()->add_sink(file_);
 }
 
@@ -104,7 +97,7 @@ void logging::close_file()
     file_.reset();
 }
 
-static inline ostream& operator<<(ostream& os, logging::severity_level level)
+static inline std::ostream& operator<<(std::ostream& os, logging::severity_level level)
 {
     switch (level)
     {
@@ -123,19 +116,19 @@ static inline ostream& operator<<(ostream& os, logging::severity_level level)
 }
 
 template <typename backend_type>
-void logging::set_formatter(boost::shared_ptr<backend_type> backend) const
+void logging::set_formatter(boost::shared_ptr<backend_type> backend)
 {
-    backend->set_formatter(formatters::stream
-        << formatters::date_time("TimeStamp", "[%d-%m-%Y %H:%M:%S.%f]")
-        << formatters::if_(filters::attr<severity_level>("Severity") != logging::info)
+    backend->set_formatter(expressions::stream
+        << expressions::format_date_time<boost::posix_time::ptime>("TimeStamp", "[%d-%m-%Y %H:%M:%S.%f]")
+        << expressions::if_(severity != logging::info)
            [
-               formatters::stream << " [" << formatters::attr<logging::severity_level>("Severity") << "]"
+               expressions::stream << " [" << severity << "]"
            ]
-        << formatters::if_(filters::has_attr("Label"))
+        << expressions::if_(expressions::has_attr(label_attr))
            [
-               formatters::stream << " " << formatters::attr("Label") << ":"
+               expressions::stream << " " << label_attr << ":"
            ]
-        << " " << formatters::message()
+        << " " << expressions::smessage
     );
 }
 
@@ -158,7 +151,7 @@ HALMD_LUA_API int luaopen_libhalmd_io_logger(lua_State* L)
         [
             class_<logger, std::shared_ptr<logger>>("logger")
                 .def(constructor<>())
-                .def(constructor<string>())
+                .def(constructor<std::string>())
                 .scope
                 [
                     def("log", &wrap_log)
