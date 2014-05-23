@@ -72,7 +72,7 @@ local function restore(args)
         })
         observables.phase_space({
             box = box
-          , group = mdsim.particle_groups.all({particle = p})
+          , group = mdsim.particle_groups.all({particle = p, global = false})
         }):set(sample)
         particle[label] = p
     end
@@ -151,7 +151,7 @@ local function production(box, particle, force, args)
     -- sample each particle instance (i.e., species) separately
     for label, p in pairs(particle) do
         -- select particles of species
-        local group = mdsim.particle_groups.all({particle = p})
+        local group = mdsim.particle_groups.all({particle = p, global = false})
 
         -- write phase space trajectory to H5MD file
         local phase_space = observables.phase_space({box = box, group = group})
@@ -168,7 +168,7 @@ local function production(box, particle, force, args)
                 file = file
               , fields = {
                     "potential_energy", "pressure", "temperature"  -- fluctuating quantities
-                  , "total_energy", "center_of_mass_velocity"      -- conserved quantities
+                  , "internal_energy", "center_of_mass_velocity"   -- conserved quantities
                 }
               , every = args.sampling.state_vars
             })
