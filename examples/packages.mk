@@ -1,7 +1,7 @@
 #
-# Copyright © 2011-2013 Peter Colberg
+# Copyright © 2011-2014 Peter Colberg
 # Copyright © 2013      Nicolas Höft
-# Copyright © 2013      Felix Höfling
+# Copyright © 2013-2014 Felix Höfling
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -47,17 +47,17 @@ WGET      = wget
 ## define top-level targets
 ##
 
-build: build-cmake build-lua build-boost build-hdf5
+build: build-cmake build-lua build-luajit build-boost build-hdf5 build-git build-python-sphinx build-graphviz build-clang build-gcc build-halmd build-nvcuda-tools build-ninja
 
-fetch: fetch-cmake fetch-lua fetch-boost fetch-hdf5
+fetch: fetch-cmake fetch-lua fetch-luajit fetch-boost fetch-hdf5 fetch-git fetch-python-sphinx fetch-graphviz fetch-clang fetch-gcc fetch-halmd fetch-nvcuda-tools fetch-ninja
 
-install: install-cmake install-lua install-boost install-hdf5
+install: install-cmake install-lua install-luajit install-boost install-hdf5 install-git install-python-sphinx install-graphviz install-clang install-gcc install-halmd install-nvcuda-tools install-ninja
 
-clean: clean-cmake clean-lua clean-boost clean-hdf5
+clean: clean-cmake clean-lua clean-luajit clean-boost clean-hdf5 clean-git clean-python-sphinx clean-graphviz clean-clang clean-gcc clean-halmd clean-nvcuda-tools clean-ninja
 
-distclean: distclean-cmake distclean-lua distclean-boost distclean-hdf5
+distclean: distclean-cmake distclean-lua distclean-luajit distclean-boost distclean-hdf5 distclean-git distclean-python-sphinx distclean-graphviz distclean-clang distclean-gcc distclean-halmd distclean-nvcuda-tools distclean-ninja
 
-env: env-cmake env-lua env-boost env-hdf5
+env: env-cmake env-lua env-luajit env-boost env-hdf5 env-git env-python-sphinx env-graphviz env-clang env-gcc env-halmd env-nvcuda-tools env-ninja
 
 ##
 ## CMake with CMake-CUDA patch
@@ -114,8 +114,6 @@ distclean-cmake: clean-cmake
 	$(RM) $(CMAKE_CUDA_TARBALL)
 
 env-cmake:
-	@echo
-	@echo '# add CMake $(CMAKE_VERSION) to environment'
 	@echo 'export PATH="$(CMAKE_INSTALL_DIR)/bin$${PATH+:$$PATH}"'
 	@echo 'export MANPATH="$(CMAKE_INSTALL_DIR)/man$${MANPATH+:$$MANPATH}"'
 
@@ -127,8 +125,8 @@ ifdef USE_LUA51
 LUA_VERSION = 5.1.5
 LUA_TARBALL_SHA256 = 2640fc56a795f29d28ef15e13c34a47e223960b0240e8cb0a82d9b0738695333
 else
-LUA_VERSION = 5.2.2
-LUA_TARBALL_SHA256 = 3fd67de3f5ed133bf312906082fa524545c6b9e1b952e8215ffbd27113f49f00
+LUA_VERSION = 5.2.3
+LUA_TARBALL_SHA256 = 13c2fb97961381f7d06d5b5cea55b743c163800896fd5c5e2356201d3619002d
 endif
 LUA_TARBALL = lua-$(LUA_VERSION).tar.gz
 LUA_TARBALL_URL = http://www.lua.org/ftp/$(LUA_TARBALL)
@@ -176,8 +174,6 @@ distclean-lua: clean-lua
 	$(RM) $(LUA_TARBALL)
 
 env-lua:
-	@echo
-	@echo '# add Lua $(LUA_VERSION) to environment'
 	@echo 'export PATH="$(LUA_INSTALL_DIR)/bin$${PATH+:$$PATH}"'
 	@echo 'export MANPATH="$(LUA_INSTALL_DIR)/man$${MANPATH+:$$MANPATH}"'
 	@echo 'export CMAKE_PREFIX_PATH="$(LUA_INSTALL_DIR)$${CMAKE_PREFIX_PATH+:$$CMAKE_PREFIX_PATH}"'
@@ -186,10 +182,10 @@ env-lua:
 ## LuaJIT
 ##
 
-LUAJIT_VERSION = 2.0.2
+LUAJIT_VERSION = 2.0.3
 LUAJIT_TARBALL = LuaJIT-$(LUAJIT_VERSION).tar.gz
 LUAJIT_TARBALL_URL = http://luajit.org/download/$(LUAJIT_TARBALL)
-LUAJIT_TARBALL_SHA256 = c05202974a5890e777b181908ac237625b499aece026654d7cc33607e3f46c38
+LUAJIT_TARBALL_SHA256 = 55be6cb2d101ed38acca32c5b1f99ae345904b365b642203194c585d27bebd79
 LUAJIT_BUILD_DIR = LuaJIT-$(LUAJIT_VERSION)
 LUAJIT_INSTALL_DIR = $(PREFIX)/luajit-$(LUAJIT_VERSION)
 LUAJIT_CFLAGS = -fPIC -DLUAJIT_ENABLE_LUA52COMPAT -DLUAJIT_CPU_SSE2
@@ -232,74 +228,15 @@ distclean-luajit: clean-luajit
 	$(RM) $(LUAJIT_TARBALL)
 
 env-luajit:
-	@echo
-	@echo '# add LuaJIT $(LUAJIT_VERSION) to environment'
 	@echo 'export PATH="$(LUAJIT_INSTALL_DIR)/bin$${PATH+:$$PATH}"'
 	@echo 'export MANPATH="$(LUAJIT_INSTALL_DIR)/man$${MANPATH+:$$MANPATH}"'
 	@echo 'export CMAKE_PREFIX_PATH="$(LUAJIT_INSTALL_DIR)$${CMAKE_PREFIX_PATH+:$$CMAKE_PREFIX_PATH}"'
 
 ##
-## GNU readline wrapper
-##
-
-RLWRAP_VERSION = 0.37
-RLWRAP_TARBALL = rlwrap-$(RLWRAP_VERSION).tar.gz
-RLWRAP_TARBALL_URL = http://utopia.knoware.nl/~hlub/rlwrap/$(RLWRAP_TARBALL)
-RLWRAP_TARBALL_SHA256 = 8403a2c184a33ee293a30637afd1362e7dbe0ee642c33b54b2fca68162498bbd
-RLWRAP_BUILD_DIR = rlwrap-$(RLWRAP_VERSION)
-RLWRAP_INSTALL_DIR = $(PREFIX)/rlwrap-$(RLWRAP_VERSION)
-
-.fetch-rlwrap-$(RLWRAP_VERSION):
-	@$(RM) $(RLWRAP_TARBALL)
-	$(WGET) $(RLWRAP_TARBALL_URL)
-	@echo '$(RLWRAP_TARBALL_SHA256)  $(RLWRAP_TARBALL)' | $(SHA256SUM)
-	@$(TOUCH) $@
-
-fetch-rlwrap: .fetch-rlwrap-$(RLWRAP_VERSION)
-
-.extract-rlwrap-$(RLWRAP_VERSION): .fetch-rlwrap-$(RLWRAP_VERSION)
-	$(RM) $(RLWRAP_BUILD_DIR)
-	$(TAR) -xzf $(RLWRAP_TARBALL)
-	@$(TOUCH) $@
-
-extract-rlwrap: .extract-rlwrap-$(RLWRAP_VERSION)
-
-.configure-rlwrap-$(RLWRAP_VERSION): .extract-rlwrap-$(RLWRAP_VERSION)
-	cd $(RLWRAP_BUILD_DIR) && ./configure -prefix=$(RLWRAP_INSTALL_DIR)
-	@$(TOUCH) $@
-
-configure-rlwrap: .configure-rlwrap-$(RLWRAP_VERSION)
-
-.build-rlwrap-$(RLWRAP_VERSION): .configure-rlwrap-$(RLWRAP_VERSION)
-	cd $(RLWRAP_BUILD_DIR) && $(MAKE) $(PARALLEL_BUILD_FLAGS)
-	@$(TOUCH) $@
-
-build-rlwrap: .build-rlwrap-$(RLWRAP_VERSION)
-
-install-rlwrap: .build-rlwrap-$(RLWRAP_VERSION)
-	cd $(RLWRAP_BUILD_DIR) && $(MAKE) install
-
-clean-rlwrap:
-	@$(RM) .build-rlwrap-$(RLWRAP_VERSION)
-	@$(RM) .configure-rlwrap-$(RLWRAP_VERSION)
-	@$(RM) .extract-rlwrap-$(RLWRAP_VERSION)
-	$(RM) $(RLWRAP_BUILD_DIR)
-
-distclean-rlwrap: clean-rlwrap
-	@$(RM) .fetch-rlwrap-$(RLWRAP_VERSION)
-	$(RM) $(RLWRAP_TARBALL)
-
-env-rlwrap:
-	@echo
-	@echo '# add rlwrap $(RLWRAP_VERSION) to environment'
-	@echo 'export PATH="$(RLWRAP_INSTALL_DIR)/bin$${PATH+:$$PATH}"'
-	@echo 'export MANPATH="$(RLWRAP_INSTALL_DIR)/share/man$${MANPATH+:$$MANPATH}"'
-
-##
 ## luatrace
 ##
 
-LUATRACE_VERSION = e2a78fa
+LUATRACE_VERSION = 6150cfd
 LUATRACE_GIT_URL = https://github.com/geoffleyland/luatrace.git
 LUATRACE_BUILD_DIR = luatrace-$(LUATRACE_VERSION)
 LUATRACE_INSTALL_DIR = $(PREFIX)/luatrace-$(LUATRACE_VERSION)
@@ -422,23 +359,21 @@ distclean-boost: clean-boost
 	$(RM) $(BOOST_PATCH)
 
 env-boost:
-	@echo
-	@echo '# add Boost $(BOOST_VERSION) to environment'
 	@echo 'export PATH="$(BOOST_INSTALL_DIR)/bin$${PATH+:$$PATH}"'
 	@echo 'export LD_LIBRARY_PATH="$(BOOST_INSTALL_DIR)/lib$${LD_LIBRARY_PATH+:$$LD_LIBRARY_PATH}"'
 	@echo 'export PYTHONPATH="$(BOOST_INSTALL_DIR)/lib$${PYTHONPATH+:$$PYTHONPATH}"'
 	@echo 'export CMAKE_PREFIX_PATH="$(BOOST_INSTALL_DIR)$${CMAKE_PREFIX_PATH+:$$CMAKE_PREFIX_PATH}"'
 
 ##
-## HDF5 C++ library
+## HDF5 library
 ##
-HDF5_VERSION = 1.8.12
+HDF5_VERSION = 1.8.13
 HDF5_TARBALL = hdf5-$(HDF5_VERSION).tar.bz2
 HDF5_TARBALL_URL = http://www.hdfgroup.org/ftp/HDF5/releases/hdf5-$(HDF5_VERSION)/src/$(HDF5_TARBALL)
-HDF5_TARBALL_SHA256 = 6d080f913a226a3ce390a11d9b571b2d5866581a2aa4434c398cd371c7063639
+HDF5_TARBALL_SHA256 = c2f5a412107aba6f99fd7a4a9db6ce5f5fc8171ec931472784e5839d26aa17ef
 HDF5_BUILD_DIR = hdf5-$(HDF5_VERSION)
 HDF5_INSTALL_DIR = $(PREFIX)/hdf5-$(HDF5_VERSION)
-HDF5_CONFIGURE_FLAGS = --enable-shared --disable-deprecated-symbols --enable-cxx
+HDF5_CONFIGURE_FLAGS = --enable-shared --disable-deprecated-symbols --enable-cxx --enable-fortran
 HDF5_CFLAGS = -fPIC
 HDF5_CXXFLAGS = -fPIC
 
@@ -487,8 +422,6 @@ distclean-hdf5: clean-hdf5
 	$(RM) $(HDF5_TARBALL)
 
 env-hdf5:
-	@echo
-	@echo '# add HDF5 $(HDF5_VERSION) to environment'
 	@echo 'export PATH="$(HDF5_INSTALL_DIR)/bin$${PATH+:$$PATH}"'
 	@echo 'export LD_LIBRARY_PATH="$(HDF5_INSTALL_DIR)/lib$${LD_LIBRARY_PATH+:$$LD_LIBRARY_PATH}"'
 	@echo 'export CMAKE_PREFIX_PATH="$(HDF5_INSTALL_DIR)$${CMAKE_PREFIX_PATH+:$$CMAKE_PREFIX_PATH}"'
@@ -496,13 +429,13 @@ env-hdf5:
 ##
 ## Git version control
 ##
-GIT_VERSION = 1.8.4
+GIT_VERSION = 1.9.2
 GIT_TARBALL = git-$(GIT_VERSION).tar.gz
-GIT_TARBALL_URL = http://git-core.googlecode.com/files/$(GIT_TARBALL)
-GIT_TARBALL_SHA256 = 51e8522c256ef8091c6fd5846b9cef8ba4e764819193b5b6cec570f530e6cb94
+GIT_TARBALL_URL = https://www.kernel.org/pub/software/scm/git/$(GIT_TARBALL)
+GIT_TARBALL_SHA256 = d0dceb2e881f6a8f6eada128f782904b8711ea93a4c86dd38da99a7773edc25b
 GIT_MANPAGES_TARBALL = git-manpages-$(GIT_VERSION).tar.gz
-GIT_MANPAGES_TARBALL_URL = http://git-core.googlecode.com/files/$(GIT_MANPAGES_TARBALL)
-GIT_MANPAGES_TARBALL_SHA256 = 854552e693b22a7ff1c25d2d710d87c8f7dad14888c946c10be60893fdee091f
+GIT_MANPAGES_TARBALL_URL = https://www.kernel.org/pub/software/scm/git/$(GIT_MANPAGES_TARBALL)
+GIT_MANPAGES_TARBALL_SHA256 = bcf7cb8aa17885f6923c33cf420ecf249e097510079c2996396c6369014c4ca8
 GIT_BUILD_DIR = git-$(GIT_VERSION)
 GIT_CONFIGURE_FLAGS = --without-python
 GIT_INSTALL_DIR = $(PREFIX)/git-$(GIT_VERSION)
@@ -554,8 +487,6 @@ distclean-git: clean-git
 	$(RM) $(GIT_MANPAGES_TARBALL)
 
 env-git:
-	@echo
-	@echo '# add Git $(GIT_VERSION) to environment'
 	@echo 'export PATH="$(GIT_INSTALL_DIR)/bin$${PATH+:$$PATH}"'
 	@echo 'export MANPATH="$(GIT_INSTALL_DIR)/share/man$${MANPATH+:$$MANPATH}"'
 
@@ -563,10 +494,10 @@ env-git:
 ## python-sphinx
 ##
 
-PYTHON_SPHINX_VERSION = 1.1.3
+PYTHON_SPHINX_VERSION = 1.2.1
 PYTHON_SPHINX_TARBALL = Sphinx-$(PYTHON_SPHINX_VERSION).tar.gz
 PYTHON_SPHINX_TARBALL_URL = http://pypi.python.org/packages/source/S/Sphinx/$(PYTHON_SPHINX_TARBALL)
-PYTHON_SPHINX_TARBALL_SHA256 = 34dc95b70a2b07a61b5d61034c34b05f82514aab54ad27adedb49cee911bb8e9
+PYTHON_SPHINX_TARBALL_SHA256 = 182e5c81c3250e1752e744b6a35af4ef680bb6251276b49ef7d17f1d25e9ce70
 PYTHON_SPHINX_BUILD_DIR = Sphinx-$(PYTHON_SPHINX_VERSION)
 PYTHON_SPHINX_INSTALL_DIR = $(PREFIX)/python-sphinx-$(PYTHON_SPHINX_VERSION)
 PYTHON_SPHINX_PYTHONPATH = $(PYTHON_SPHINX_INSTALL_DIR)/lib/python
@@ -606,8 +537,6 @@ distclean-python-sphinx: clean-python-sphinx
 	$(RM) $(PYTHON_SPHINX_TARBALL)
 
 env-python-sphinx:
-	@echo
-	@echo '# add python-sphinx $(PYTHON_SPHINX_VERSION) to environment'
 	@echo 'export PATH="$(PYTHON_SPHINX_INSTALL_DIR)/bin$${PATH+:$$PATH}"'
 	@echo 'export PYTHONPATH="$(PYTHON_SPHINX_PYTHONPATH)$${PYTHONPATH+:$$PYTHONPATH}"'
 
@@ -664,25 +593,27 @@ distclean-graphviz: clean-graphviz
 	$(RM) $(GRAPHVIZ_TARBALL)
 
 env-graphviz:
-	@echo
-	@echo '# add Graphviz $(GRAPHVIZ_VERSION) to environment'
 	@echo 'export PATH="$(GRAPHVIZ_INSTALL_DIR)/bin$${PATH+:$$PATH}"'
 	@echo 'export MANPATH="$(GRAPHVIZ_INSTALL_DIR)/share/man$${MANPATH+:$$MANPATH}"'
 
 ##
 ## Clang C++ compiler
 ##
-CLANG_VERSION = 3.3
+CLANG_VERSION = 3.4
 LLVM_TARBALL = llvm-$(CLANG_VERSION).src.tar.gz
 LLVM_TARBALL_URL = http://llvm.org/releases/$(CLANG_VERSION)/$(LLVM_TARBALL)
-LLVM_TARBALL_SHA256 = 68766b1e70d05a25e2f502e997a3cb3937187a3296595cf6e0977d5cd6727578
-CLANG_TARBALL = cfe-$(CLANG_VERSION).src.tar.gz
+LLVM_TARBALL_SHA256 = 25a5612d692c48481b9b397e2b55f4870e447966d66c96d655241702d44a2628
+CLANG_TARBALL = clang-$(CLANG_VERSION).src.tar.gz
 CLANG_TARBALL_URL = http://llvm.org/releases/$(CLANG_VERSION)/$(CLANG_TARBALL)
-CLANG_TARBALL_SHA256 = b1b55de4ab3a57d3e0331a83e0284610191c77d924e3446498d9113d08dfb996
-CLANG_BUILD_DIR = llvm-$(CLANG_VERSION).src
-CLANG_CONFIGURE_FLAGS = --enable-optimized --enable-bindings=none --enable-shared --with-gcc-toolchain=$(GCC_INSTALL_DIR)
+CLANG_TARBALL_SHA256 = 22a9780db3b85a7f2eb9ea1f7f6e00da0249e3d12851e8dea0f62f1783242b1b
+CLANG_BUILD_DIR = llvm-$(CLANG_VERSION)
+CLANG_CONFIGURE_FLAGS = --enable-optimized --enable-bindings=none --enable-shared
 CLANG_BUILD_FLAGS = REQUIRES_RTTI=1
 CLANG_INSTALL_DIR = $(PREFIX)/clang-$(CLANG_VERSION)
+
+ifdef CLANG_GCC_TOOLCHAIN
+    CLANG_CONFIGURE_FLAGS += --with-gcc-toolchain=$(CLANG_GCC_TOOLCHAIN)
+endif
 
 .fetch-clang-$(CLANG_VERSION):
 	@$(RM) $(LLVM_TARBALL)
@@ -698,7 +629,7 @@ fetch-clang: .fetch-clang-$(CLANG_VERSION)
 .extract-clang-$(CLANG_VERSION): .fetch-clang-$(CLANG_VERSION)
 	$(RM) $(CLANG_BUILD_DIR)
 	$(TAR) -xzf $(LLVM_TARBALL)
-	cd $(CLANG_BUILD_DIR)/tools && $(TAR) -xzf $(CURDIR)/$(CLANG_TARBALL) && mv cfe-$(CLANG_VERSION).src clang
+	cd $(CLANG_BUILD_DIR)/tools && $(TAR) -xzf $(CURDIR)/$(CLANG_TARBALL) && mv clang-$(CLANG_VERSION) clang
 	@$(TOUCH) $@
 
 extract-clang: .extract-clang-$(CLANG_VERSION)
@@ -730,8 +661,6 @@ distclean-clang: clean-clang
 	$(RM) $(CLANG_TARBALL)
 
 env-clang:
-	@echo
-	@echo '# add Clang $(CLANG_VERSION) to environment'
 	@echo 'export PATH="$(CLANG_INSTALL_DIR)/bin$${PATH+:$$PATH}"'
 	@echo 'export MANPATH="$(CLANG_INSTALL_DIR)/share/man$${MANPATH+:$$MANPATH}"'
 	@echo 'export LD_LIBRARY_PATH="$(CLANG_INSTALL_DIR)/lib$${LD_LIBRARY_PATH+:$$LD_LIBRARY_PATH}"'
@@ -788,8 +717,6 @@ distclean-gnu-parallel: clean-gnu-parallel
 	$(RM) $(GNU_PARALLEL_TARBALL)
 
 env-gnu-parallel:
-	@echo
-	@echo '# add GNU Parallel $(GNU_PARALLEL_VERSION) to environment'
 	@echo 'export PATH="$(GNU_PARALLEL_INSTALL_DIR)/bin$${PATH+:$$PATH}"'
 	@echo 'export MANPATH="$(GNU_PARALLEL_INSTALL_DIR)/share/man$${MANPATH+:$$MANPATH}"'
 
@@ -1057,10 +984,10 @@ distclean-cloog-ppl: clean-cloog-ppl
 ## GCC (GNU Compiler Collection)
 ##
 
-GCC_VERSION = 4.8.2
+GCC_VERSION = 4.9.0
 GCC_TARBALL = gcc-$(GCC_VERSION).tar.bz2
 GCC_TARBALL_URL = http://ftp.gwdg.de/pub/misc/gcc/releases/gcc-$(GCC_VERSION)/$(GCC_TARBALL)
-GCC_TARBALL_SHA256 = 09dc2276c73424bbbfda1dbddc62bbbf900c9f185acf7f3e1d773ce2d7e3cdc8
+GCC_TARBALL_SHA256 = b9b047a97bade9c1c89970bc8e211ff57b7b8998a1730a80a653d329f8ed1257
 GCC_BUILD_DIR = gcc-$(GCC_VERSION)
 GCC_BUILD_FLAGS = --enable-cxx-flags=-fPIC --enable-languages=c,c++,fortran,lto --disable-multilib
 GCC_INSTALL_DIR = $(PREFIX)/gcc-$(GCC_VERSION)
@@ -1107,8 +1034,6 @@ distclean-gcc: clean-gcc
 	$(RM) $(GCC_TARBALL)
 
 env-gcc:
-	@echo
-	@echo '# add gcc $(GCC_VERSION) to environment'
 	@echo 'export PATH="$(GCC_INSTALL_DIR)/bin$${PATH+:$$PATH}"'
 	@echo 'export MANPATH="$(GCC_INSTALL_DIR)/share/man$${MANPATH+:$$MANPATH}"'
 	@echo 'export LD_LIBRARY_PATH="$(GCC_INSTALL_DIR)/lib64$${LD_LIBRARY_PATH+:$$LD_LIBRARY_PATH}"'
@@ -1117,7 +1042,7 @@ env-gcc:
 ## HALMD Highly Accerelated Large-scale Molecular Dynamics
 ##
 
-HALMD_VERSION = 0.2.1
+HALMD_VERSION = 1.0-alpha1
 HALMD_GIT_URL = http://git.halmd.org/halmd.git
 HALMD_SOURCE_DIR = halmd-$(HALMD_VERSION)
 HALMD_BUILD_DIR = $(HALMD_SOURCE_DIR)/build/release
@@ -1160,7 +1085,6 @@ distclean-halmd: clean-halmd
 
 env-halmd:
 	@echo
-	@echo '# add HALMD $(HALMD_VERSION) to environment'
 	@echo 'export PATH="$(HALMD_INSTALL_DIR)/bin$${PATH+:$$PATH}"'
 	@echo 'export MANPATH="$(HALMD_INSTALL_DIR)/share/man$${MANPATH+:$$MANPATH}"'
 
@@ -1209,7 +1133,6 @@ distclean-nvcuda-tools: clean-nvcuda-tools
 
 env-nvcuda-tools:
 	@echo
-	@echo '# add nvCUDA-tools $(NVCUDA_TOOLS_VERSION) to environment'
 	@echo 'export PATH="$(NVCUDA_TOOLS_INSTALL_DIR)/bin$${PATH+:$$PATH}"'
 
 ##
@@ -1261,5 +1184,4 @@ distclean-ninja: clean-ninja
 
 env-ninja:
 	@echo
-	@echo '# add Ninja $(NINJA_VERSION) to environment'
 	@echo 'export PATH="$(NINJA_INSTALL_DIR)/bin$${PATH+:$$PATH}"'
