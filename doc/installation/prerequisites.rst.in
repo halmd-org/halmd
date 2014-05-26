@@ -36,13 +36,7 @@ A detailed step-by-step guide for manual installation is given in section
     support to CMake and is not to be confused nor compatible with the CUDA
     module in CMake 2.8.
 
-* `Git <http://git-scm.com/>`_ ≥ 1.5.6.2
-
-  The source code of HALMD is managed by Git, a fast and efficient, distributed
-  version control system. Git is available for many operating systems and
-  their flavours.
-
-* `Boost C++ Libraries <http://www.boost.org/>`_ ≥ 1.49.0
+* `Boost C++ Libraries <http://www.boost.org/>`_ ≥ 1.55.0
 
   The C++ part of HALMD uses of libraries in the Boost C++ collection.
 
