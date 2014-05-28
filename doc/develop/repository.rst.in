@@ -1,0 +1,45 @@
+.. _repository:
+
+Cloning the repository
+**********************
+
+*HALʹs MD package* is maintained in a public Git repository. `Git
+<http://git-scm.com/>`_ is a fast and efficient, distributed version control
+system. A copy of the repository is created by ::
+
+  git clone --recursive http://git.halmd.org/halmd.git
+
+which is redirected to `GitHub <http://github.com>`_. If you prefer the git
+protocol use ::
+
+  git clone --recursive git://github.com/fhoefling/halmd.git
+
+This will create a directory ``halmd``, which holds a hidden copy of the
+repository and a working copy of the source files.
+
+Selecting a release version
+===========================
+
+By default, the above command yields the tip of the development branch.
+A specific release version is checked out by ::
+
+  git checkout TAG
+
+where ``TAG`` is a valid release tag as listed from ::
+
+  git tag -n3
+
+
+Git tutorials
+=============
+
+If you are new to Git or version control in general, the `Git tutorial
+<http://www.kernel.org/pub/software/scm/git/docs/gittutorial.html>`_
+will get you started.
+
+Former Subversion users may also read the `Git SVN Crash Course
+<http://git.or.cz/course/svn.html>`_.
+
+For in-depth documentation, see the `Git User's Manual
+<http://www.kernel.org/pub/software/scm/git/docs/user-manual.html>`_.
+

@@ -3,45 +3,16 @@
 Downloading the source code
 ***************************
 
-Cloning the repository
-======================
+The following release tarballs of *HAL’s MD package* are available:
 
-HALMD is maintained in a public `Git <http://git-scm.com/>`_ repository ::
+* latest `testing <http://code.halmd.org/tar/halmd-testing.tar.bz2>`_ release
 
-  git clone --recursive http://git.halmd.org/halmd.git
+.. blank.
 
-which is redirected to `GitHub <http://github.com>`_. If you prefer the git
-protocol use ::
+* version `0.2.1 <http://code.halmd.org/tar/halmd-0.2.1.tar.bz2>`_
+* version `0.2.0 <http://code.halmd.org/tar/halmd-0.2.0.tar.bz2>`_
 
-  git clone --recursive git://github.com/fhoefling/halmd.git
+.. blank.
 
-This will create a directory ``halmd``, which holds a hidden copy of the
-repository and a working copy of the source files.
-
-
-Selecting a release version
-===========================
-
-By default, the above command yields the tip of the development branch.
-A specific release version is checked out by ::
-
-  git checkout TAG
-
-where ``TAG`` is a valid release tag as listed from ::
-
-  git tag -n3
-
-
-Git tutorials
-=============
-
-If you are new to Git or version control in general, the `Git tutorial
-<http://www.kernel.org/pub/software/scm/git/docs/gittutorial.html>`_
-will get you started.
-
-Former Subversion users may also read the `Git SVN Crash Course
-<http://git.or.cz/course/svn.html>`_.
-
-For in-depth documentation, see the `Git User's Manual
-<http://www.kernel.org/pub/software/scm/git/docs/user-manual.html>`_.
+* version `0.1.3 <http://code.halmd.org/tar/halmd-0.1.3.tar.bz2>`_
 
