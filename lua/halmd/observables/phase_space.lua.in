@@ -106,7 +106,7 @@ end
 --
 --    Write trajectory of particle group to file.
 --
---    http://nongnu.org/h5md/draft.html#particles-group
+--    http://nongnu.org/h5md/h5md.html#particles-group
 --
 --    :param table args: keyword arguments
 --    :param args.file: instance of file writer
@@ -258,7 +258,7 @@ end
 --
 --    Construct reader for given particles group.
 --
---    http://nongnu.org/h5md/draft.html#particles-group
+--    http://nongnu.org/h5md/h5md.html#particles-group
 --
 --    :param table args: keyword arguments
 --    :param args.file: instance of file reader, e.g, :class:`halmd.io.readers.h5md`
