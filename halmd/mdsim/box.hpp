@@ -42,7 +42,7 @@ public:
     /**
      * Construct simulation domain with given edge vectors.
      *
-     * http://nongnu.org/h5md/draft.html#box-specification
+     * http://nongnu.org/h5md/h5md.html#simulation-box
      */
     box(matrix_type const& edges);
 

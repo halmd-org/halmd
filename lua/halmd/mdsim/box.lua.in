@@ -86,7 +86,7 @@ local h5 = assert(libhalmd.h5)
 --
 --    Write box specification to file.
 --
---    http://nongnu.org/h5md/draft.html#box-specification
+--    http://nongnu.org/h5md/h5md.html#simulation-box
 --
 --    :param table args: keyword arguments
 --    :param args.writer: instance of group writer (optional)
@@ -174,7 +174,7 @@ end)
 ---
 -- Read edge vectors of simulation domain from H5MD file.
 --
--- http://nongnu.org/h5md/draft.html#box-specification
+-- http://nongnu.org/h5md/h5md.html#simulation-box
 --
 -- :param table args: keyword arguments
 -- :param args.file: instance of :class:`halmd.io.readers.h5md`
