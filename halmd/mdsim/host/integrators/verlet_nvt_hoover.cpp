@@ -1,5 +1,6 @@
 /*
- * Copyright © 2008-2012  Peter Colberg and Felix Höfling
+ * Copyright © 2008-2014 Felix Höfling
+ * Copyright © 2008-2012 Peter Colberg
  *
  * This file is part of HALMD.
  *
@@ -20,9 +21,6 @@
 #include <halmd/config.hpp>
 
 #include <algorithm>
-#ifdef HALMD_NO_CXX11
-# include <boost/lambda/lambda.hpp>
-#endif
 #include <cmath>
 #include <memory>
 
@@ -227,33 +225,25 @@ wrap_finalize(std::shared_ptr<integrator_type> self)
 
 template <typename integrator_type>
 static std::function<typename integrator_type::chain_type& ()>
-wrap_xi(std::shared_ptr<integrator_type> self)
+wrap_position(std::shared_ptr<integrator_type> self)
 {
-#ifdef HALMD_NO_CXX11
-    return lambda::var(self->xi);
-#else
     return [=]() -> typename integrator_type::chain_type& {
         return self->xi;
     };
-#endif
 }
 
 template <typename integrator_type>
 static std::function<typename integrator_type::chain_type& ()>
-wrap_v_xi(std::shared_ptr<integrator_type> self)
+wrap_velocity(std::shared_ptr<integrator_type> self)
 {
-#ifdef HALMD_NO_CXX11
-    return lambda::var(self->v_xi);
-#else
     return [=]() -> typename integrator_type::chain_type& {
         return self->v_xi;
     };
-#endif
 }
 
 template <typename integrator_type>
 static std::function<double ()>
-wrap_en_nhc(std::shared_ptr<integrator_type> self)
+wrap_internal_energy(std::shared_ptr<integrator_type> self)
 {
     return [=]() {
         return self->en_nhc();
@@ -275,9 +265,9 @@ void verlet_nvt_hoover<dimension, float_type>::luaopen(lua_State* L)
                     .property("finalize", &wrap_finalize<verlet_nvt_hoover>)
                     .property("timestep", &verlet_nvt_hoover::timestep)
                     .property("temperature", &verlet_nvt_hoover::temperature)
-                    .property("xi", &wrap_xi<verlet_nvt_hoover>)
-                    .property("v_xi", &wrap_v_xi<verlet_nvt_hoover>)
-                    .property("en_nhc", &wrap_en_nhc<verlet_nvt_hoover>)
+                    .property("position", &wrap_position<verlet_nvt_hoover>)
+                    .property("velocity", &wrap_velocity<verlet_nvt_hoover>)
+                    .property("internal_energy", &wrap_internal_energy<verlet_nvt_hoover>)
                     .property("mass", &verlet_nvt_hoover::mass)
                     .property("resonance_frequency", &verlet_nvt_hoover::resonance_frequency)
                     .def("set_timestep", &verlet_nvt_hoover::set_timestep)

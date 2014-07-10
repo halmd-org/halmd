@@ -1,7 +1,7 @@
 --
--- Copyright © 2011  Felix Höfling
--- Copyright © 2012  Nicolas Höft
--- Copyright © 2011  Peter Colberg
+-- Copyright © 2011-2014 Felix Höfling
+-- Copyright © 2012      Nicolas Höft
+-- Copyright © 2011      Peter Colberg
 --
 -- This file is part of HALMD.
 --
@@ -24,17 +24,19 @@ local core              = require("halmd.mdsim.core")
 local device            = require("halmd.utility.device")
 local log               = require("halmd.io.log")
 local module            = require("halmd.utility.module")
+local profiler          = require("halmd.utility.profiler")
 local sampler           = require("halmd.observables.sampler")
 local utility           = require("halmd.utility")
 
 ---
--- Velocity Verlet with Nosé-Hoover thermostat
+-- Velocity Verlet with Nosé–Hoover thermostat
 -- ============================================
 --
 -- This NVT-ensemble integrator implements the :doc:`Verlet algorithm <verlet>` algorithm
--- with Nosé-Hoover chain thermostat with a chain length :math:`M = 2`.
+-- with Nosé–Hoover chain thermostat with a chain length :math:`M = 2`.
 --
--- For reference and detailed description of the algorithm see the original papers by S. Nosé, W.G. Hoover and Martyna et al.:
+-- For reference and detailed description of the algorithm see the original
+-- papers by S. Nosé, W.G. Hoover and Martyna et al.:
 --
 -- - `S. Nosé, J. Chem. Phys. 81, 511 <http://dx.doi.org/10.1063/1.447334>`_ (1984)
 --
@@ -45,18 +47,17 @@ local utility           = require("halmd.utility")
 
 -- grab C++ wrappers
 local verlet_nvt_hoover = assert(libhalmd.mdsim.integrators.verlet_nvt_hoover)
+local h5 = assert(libhalmd.h5)
 
 ---
--- Construct velocity-Verlet integrator with Nosé-Hoover chain thermostat.
+-- Construct velocity-Verlet integrator with Nosé–Hoover chain thermostat.
 --
 -- :param table args: keyword arguments
 -- :param args.particle: instance of :class:`halmd.mdsim.particle`
--- :param args.force: instance of :mod:`halmd.mdsim.forces`
 -- :param args.box: instance of :class:`halmd.mdsim.box`
 -- :param number args.timestep: integration time step (defaults to :attr:`halmd.mdsim.clock.timestep`)
 -- :param number args.temperature: temperature of heat bath
--- :param number args.resonance_frequency: Coupling rate of the thermostat
--- :param number args.every: Number of time steps between writing of theromostat chain values
+-- :param number args.resonance_frequency: coupling frequency of the thermostat
 --
 -- .. method:: set_timestep(timestep)
 --
@@ -83,9 +84,10 @@ local verlet_nvt_hoover = assert(libhalmd.mdsim.integrators.verlet_nvt_hoover)
 --
 -- .. attribute:: resonance_frequency
 --
---    Resonance frequency of the Nosé-Hoover thermostat, this is connected to the mass of the thermostat via
---    :math:`m_1 = d T / \Omega^2` and :math:`m_2 = T/\Omega^2`, where :math:`\Omega` is
---    :math:`2\pi\times\textrm{Coupling frequency}` and :math:`d` the dimension.
+--    Resonance frequency of the Nosé–Hoover thermostat, this is connected to the mass of the thermostat via
+--    :math:`m_1 = d N T / \Omega^2` and :math:`m_2 = T/\Omega^2`, where :math:`\Omega` is
+--    :math:`2\pi\times\textrm{resonance frequency}`, :math:`N` the total number
+--    of (point) particles, and :math:`d` the dimension of space.
 --
 -- .. method:: set_mass(mass)
 --
@@ -95,11 +97,8 @@ local verlet_nvt_hoover = assert(libhalmd.mdsim.integrators.verlet_nvt_hoover)
 --
 -- .. attribute:: mass
 --
---    Array of masses :math:`m_1, m_2` of heat bath, connected to the coupling strength of the thermostat.
---
--- .. method:: disconnect()
---
---    Disconnect integrator from core and profiler.
+--    Array of masses :math:`m_1, m_2` of heat bath, connected to the coupling
+--    strength of the thermostat.
 --
 -- .. method:: integrate()
 --
@@ -113,9 +112,57 @@ local verlet_nvt_hoover = assert(libhalmd.mdsim.integrators.verlet_nvt_hoover)
 --
 --    By default this function is connected to :meth:`halmd.mdsim.core.on_finalize`.
 --
+-- .. method:: position()
+--
+--    Return current values of thermostat chain variables (which are
+--    generalised positions).
+--
+-- .. method:: velocity()
+--
+--    Return current "velocities" of the thermostat chain variables.
+--
+-- .. method:: internal_energy()
+--
+--    Return internal energy of thermostat variables divided by `particle.nparticle`.
+--
+-- .. method:: disconnect()
+--
+--    Disconnect integrator from core and profiler.
+--
+-- .. class:: writer(args)
+--
+--    Write heat bath variables (generalised positions and velocities) and
+--    derived quantities (internal energy) to file.
+--
+--    :param table args: keyword arguments
+--    :param args.file: instance of file writer
+--    :param table args.fields: data field names to be written
+--    :param args.location: location within file (optional)
+--    :param number args.every: sampling interval (optional)
+--    :type args.location: string table
+--
+--    :returns: instance of group writer
+--
+--    The table ``fields`` specifies which data fields are written. It may
+--    either be passed as an indexed table, e.g. ``{"position", "velocity"}``,
+--    or as a dictionary, e.g., ``{xi = "position", v_xi = "velocity"}``; the table
+--    form is interpreted as ``{position = "position", ...}``. The keys denote
+--    the field names in the file and are appended to ``location``. Valid
+--    values are ``position``, ``velocity``, ``internal_energy``.
+--
+--    The argument ``location`` specifies a path in a structured file format
+--    like H5MD given as a table of strings. If omitted it defaults to
+--    ``{"observables", "nose_hoover"}``.
+--
+--    If ``every`` is not specified or 0, a phase space sample will be written
+--    at the start and end of the simulation.
+--
+--    .. method:: disconnect()
+--
+--       Disconnect Nosé–Hoover writer from observables sampler.
+--
 local M = module(function(args)
     local particle = utility.assert_kwarg(args, "particle")
-    local force = utility.assert_kwarg(args, "force")
     local box = utility.assert_kwarg(args, "box")
     local timestep = args.timestep
     if timestep then
@@ -126,7 +173,6 @@ local M = module(function(args)
 
     local temperature = utility.assert_kwarg(args, "temperature")
     local resonance_frequency = utility.assert_kwarg(args, "resonance_frequency")
-    local every = utility.assert_kwarg(args, "every")
 
     local logger = log.logger({label = "verlet_nvt_hoover"})
 
@@ -137,31 +183,55 @@ local M = module(function(args)
         clock:set_timestep(timestep)
     end
 
-    -- sequence of signal connections
-    local conn = {}
-    self.disconnect = utility.signal.disconnect(conn, "integrator")
-
-    self.writer = function(self, file, args)
-        -- connect writer to sampler
+    self.writer = function(self, args)
+        local file = utility.assert_kwarg(args, "file")
         local every = utility.assert_kwarg(args, "every")
+        local location = utility.assert_type(
+            args.location or {"observables", "nose_hoover"}
+          , "table")
+        local fields = utility.assert_type(
+            args.fields or {"position", "velocity", "internal_energy"}
+          , "table")
 
-        -- connect chain variables to writers of output file
-        local writer = file:writer{location = {"particles", "nose_hoover"}, mode = "append"}
-        writer:on_write(self.xi, {"position"})
-        writer:on_write(self.v_xi, {"velocity"})
+        -- store degrees of freedom of thermostatted system in 'truncate' mode
+        -- FIXME shouldn't we store the size of the 1-dimensional thermostat chain here?
+        local writer = file:writer{location = location, mode = "truncate"}
+        writer.group:write_attribute("dimension", h5.int(), box.dimension) -- space dimension
+
+        -- FIXME the following signal connection causes a segmentation
+        -- fault/bus error which I was not able to debug or track down with
+        -- reasonable effort. GDB says it is located in luaponte:
+        --
+        --    at /home/fluids/hoefling/projects/gpgpu/halmd/libs/luaponte/luaponte/detail/call.hpp:280
+        --    280             ctx.candidates[ctx.candidate_index++] = &self;
+        --
+        -- write number of particles assuming a fixed value
+        -- FIXME enforce integer datatype
+--        writer:on_write(function() return particle.nparticle end, {"particle_number"})
+--        writer:write()
+
+        writer = file:writer{location = location, mode = "append"}
+
+        -- register data fields with writer,
+        -- the keys of 'field' may either be strings (dictionary) or numbers (table),
+        -- in the latter case, the value string is assigned to the group name
+        for k,v in pairs(fields) do
+            local name = (type(k) == "string") and k or v
+            writer:on_write(assert(self[v]), {name})
+        end
+
+        -- sequence of signal connections
+        local conn = {}
+        writer.disconnect = utility.signal.disconnect(conn, "Nosé–Hoover writer")
+
         -- connect writer to sampler
-        sampler:on_sample(writer.write, every, clock.step)
-
-        -- connect chain energy to writers of observables file
-        writer = file:writer{location = {"observables"}, mode = "append"}
-        writer:on_write(self.en_nhc, {"nose_hoover", "internal_energy"})
-        -- connect writer to sampler
-        sampler:on_sample(writer.write, every, clock.step)
-
-        -- FIXME disconnect()
-
+        table.insert(conn, sampler:on_sample(writer.write, every, clock.step))
         return writer
     end
+
+    -- sequence of signal connections
+    local conn = {}
+    self.disconnect = utility.signal.disconnect(conn, "Nosé–Hoover integrator")
 
     -- connect integrator to core and profiler
     table.insert(conn, clock:on_set_timestep(function(timestep) set_timestep(self, timestep) end))
@@ -169,15 +239,15 @@ local M = module(function(args)
     table.insert(conn, core:on_finalize(self.finalize))
 
     local runtime = assert(self.runtime)
-    table.insert(conn, assert(profiler:on_profile(runtime.integrate,
-        "first half-step of velocity-Verlet (+ Nosé-Hoover chain)")))
-    table.insert(conn, assert(profiler:on_profile(runtime.finalize,
-        "second half-step of velocity-Verlet (+ Nosé-Hoover chain)")))
-    table.insert(conn, profiler:on_profile(runtime.propagate, "propagate Nosé-Hoover chain"))
+    table.insert(conn, profiler:on_profile(runtime.integrate,
+        "first half-step of velocity-Verlet (+ Nosé–Hoover chain)"))
+    table.insert(conn, profiler:on_profile(runtime.finalize,
+        "second half-step of velocity-Verlet (+ Nosé–Hoover chain)"))
+    table.insert(conn, profiler:on_profile(runtime.propagate, "propagate Nosé–Hoover chain"))
 
     if particle.memory == "gpu" then
-        table.insert(conn, assert(profiler:on_profile{runtime.rescale,
-            "rescale velocities in Nosé-Hoover thermostat"}))
+        table.insert(conn, profiler:on_profile(runtime.rescale,
+            "rescale velocities in Nosé–Hoover thermostat"))
     end
 
     return self
