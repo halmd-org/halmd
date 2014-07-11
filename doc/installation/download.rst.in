@@ -16,3 +16,19 @@ The following release tarballs of *HAL’s MD package* are available:
 
 * version `0.1.3 <http://code.halmd.org/tar/halmd-0.1.3.tar.bz2>`_
 
+
+Download and verify the integrity of the tar balls with the following command
+(in bash)::
+
+  TAR="halmd-0.2.1.tar.bz2" URL="http://code.halmd.org/tar"; \
+  wget "$URL/$TAR" && openssl dgst -sha512 \
+    -verify <(wget -qO- "$URL/cert.pem" | openssl x509 -noout -pubkey) \
+    -signature <(wget -qO- "$URL/$TAR.sig") "$TAR"
+
+The files are signed with an `X.509 certificate
+<http://code.halmd.org/tar/cert.pem>`_ issued for Felix Hoefling by `MPG-CA
+<http://ca.mpg.de/>`_. The SHA1 fingerprint of the certificate is
+BA:FB:6E:55:81:8E:C5:4C:DD:47:93:52:CF:EA:1D:FE:0B:4D:35:8A as shown by::
+
+  wget -qO- http://code.halmd.org/tar/cert.pem | openssl x509 -fingerprint -noout
+
