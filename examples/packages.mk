@@ -47,17 +47,17 @@ WGET      = wget
 ## define top-level targets
 ##
 
-build: build-cmake build-lua build-luajit build-boost build-hdf5 build-git build-python-sphinx build-graphviz build-clang build-gcc build-halmd build-nvcuda-tools build-ninja
+build: build-cmake build-lua build-luajit build-boost build-hdf5 build-git build-python-sphinx build-graphviz build-gdb build-clang build-gcc build-halmd build-nvcuda-tools build-ninja
 
-fetch: fetch-cmake fetch-lua fetch-luajit fetch-boost fetch-hdf5 fetch-git fetch-python-sphinx fetch-graphviz fetch-clang fetch-gcc fetch-halmd fetch-nvcuda-tools fetch-ninja
+fetch: fetch-cmake fetch-lua fetch-luajit fetch-boost fetch-hdf5 fetch-git fetch-python-sphinx fetch-graphviz fetch-gdb fetch-clang fetch-gcc fetch-halmd fetch-nvcuda-tools fetch-ninja
 
-install: install-cmake install-lua install-luajit install-boost install-hdf5 install-git install-python-sphinx install-graphviz install-clang install-gcc install-halmd install-nvcuda-tools install-ninja
+install: install-cmake install-lua install-luajit install-boost install-hdf5 install-git install-python-sphinx install-graphviz install-gdb install-clang install-gcc install-halmd install-nvcuda-tools install-ninja
 
-clean: clean-cmake clean-lua clean-luajit clean-boost clean-hdf5 clean-git clean-python-sphinx clean-graphviz clean-clang clean-gcc clean-halmd clean-nvcuda-tools clean-ninja
+clean: clean-cmake clean-lua clean-luajit clean-boost clean-hdf5 clean-git clean-python-sphinx clean-graphviz clean-gdb clean-clang clean-gcc clean-halmd clean-nvcuda-tools clean-ninja
 
-distclean: distclean-cmake distclean-lua distclean-luajit distclean-boost distclean-hdf5 distclean-git distclean-python-sphinx distclean-graphviz distclean-clang distclean-gcc distclean-halmd distclean-nvcuda-tools distclean-ninja
+distclean: distclean-cmake distclean-lua distclean-luajit distclean-boost distclean-hdf5 distclean-git distclean-python-sphinx distclean-graphviz distclean-gdb distclean-clang distclean-gcc distclean-halmd distclean-nvcuda-tools distclean-ninja
 
-env: env-cmake env-lua env-luajit env-boost env-hdf5 env-git env-python-sphinx env-graphviz env-clang env-gcc env-halmd env-nvcuda-tools env-ninja
+env: env-cmake env-lua env-luajit env-boost env-hdf5 env-git env-python-sphinx env-graphviz env-gdb env-clang env-gcc env-halmd env-nvcuda-tools env-ninja
 
 ##
 ## CMake with CMake-CUDA patch
@@ -595,6 +595,62 @@ distclean-graphviz: clean-graphviz
 env-graphviz:
 	@echo 'export PATH="$(GRAPHVIZ_INSTALL_DIR)/bin$${PATH+:$$PATH}"'
 	@echo 'export MANPATH="$(GRAPHVIZ_INSTALL_DIR)/share/man$${MANPATH+:$$MANPATH}"'
+
+##
+## GDB debugger
+##
+
+GDB_VERSION = 7.7.1
+GDB_TARBALL_SHA256 = eefadb9831e3695d1eaef34e98b8f1fb441df6fe5071317ea49c6bd6ba213eff
+GDB_TARBALL = gdb-$(GDB_VERSION).tar.gz
+GDB_TARBALL_URL = http://ftp.gnu.org/gnu/gdb/$(GDB_TARBALL)
+GDB_BUILD_DIR = gdb-$(GDB_VERSION)
+GDB_INSTALL_DIR = $(PREFIX)/gdb-$(GDB_VERSION)
+
+.fetch-gdb-$(GDB_VERSION):
+	@$(RM) $(GDB_TARBALL)
+	$(WGET) $(GDB_TARBALL_URL)
+	@echo '$(GDB_TARBALL_SHA256)  $(GDB_TARBALL)' | $(SHA256SUM)
+	@$(TOUCH) $@
+
+fetch-gdb: .fetch-gdb-$(GDB_VERSION)
+
+.extract-gdb-$(GDB_VERSION): .fetch-gdb-$(GDB_VERSION)
+	$(RM) $(GDB_BUILD_DIR)
+	$(TAR) -xzf $(GDB_TARBALL)
+	@$(TOUCH) $@
+
+extract-gdb: .extract-gdb-$(GDB_VERSION)
+
+.configure-gdb-$(GDB_VERSION): .extract-gdb-$(GDB_VERSION)
+	cd $(GDB_BUILD_DIR) && ./configure $(GDB_CONFIGURE_FLAGS) --prefix=$(GDB_INSTALL_DIR)
+	@$(TOUCH) $@
+
+configure-gdb: .configure-gdb-$(GDB_VERSION)
+
+.build-gdb-$(GDB_VERSION): .configure-gdb-$(GDB_VERSION)
+	cd $(GDB_BUILD_DIR) && $(MAKE)
+	@$(TOUCH) $@
+
+build-gdb: .build-gdb-$(GDB_VERSION)
+
+install-gdb: .build-gdb-$(GDB_VERSION)
+	cd $(GDB_BUILD_DIR) && $(MAKE) install
+
+clean-gdb:
+	@$(RM) .build-gdb-$(GDB_VERSION)
+	@$(RM) .extract-gdb-$(GDB_VERSION)
+	@$(RM) .configure-gdb-$(GDB_VERSION)
+	$(RM) $(GDB_BUILD_DIR)
+
+distclean-gdb: clean-gdb
+	@$(RM) .fetch-gdb-$(GDB_VERSION)
+	$(RM) $(GDB_TARBALL)
+
+env-gdb:
+	@echo 'export PATH="$(GDB_INSTALL_DIR)/bin$${PATH+:$$PATH}"'
+	@echo 'export MANPATH="$(GDB_INSTALL_DIR)/man$${MANPATH+:$$MANPATH}"'
+	@echo 'export CMAKE_PREFIX_PATH="$(GDB_INSTALL_DIR)$${CMAKE_PREFIX_PATH+:$$CMAKE_PREFIX_PATH}"'
 
 ##
 ## Clang C++ compiler
