@@ -47,9 +47,9 @@ end
 -- Construct particle instance.
 --
 -- :param table args: keyword arguments
+-- :param number args.dimension: dimension of space
 -- :param number args.particles: number of particles
 -- :param number args.species: number of species (*default:* 1)
--- :param number args.dimension: dimension of space (*default:* 3)
 -- :param string args.memory: device where the particle information is stored *(optional)*
 -- :param string args.label: instance label (*default:* ``all``)
 --
@@ -207,8 +207,8 @@ end
 --
 local M = module(function(args)
     utility.assert_type(args, "table")
+    local dimension = utility.assert_type(utility.assert_kwarg(args, "dimension"), "number")
     local nparticle = utility.assert_type(utility.assert_kwarg(args, "particles"), "number")
-    local dimension = utility.assert_type(args.dimension or 3, "number")
     local nspecies = utility.assert_type(args.species or 1, "number")
     local label = utility.assert_type(args.label or "all", "string")
 

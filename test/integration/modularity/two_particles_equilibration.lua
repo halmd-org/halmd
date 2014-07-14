@@ -38,7 +38,7 @@ local function copy_particle(args)
     local label = args.label or particle.label
 
     local new_particle = mdsim.particle({
-        box = box
+        dimension = box.dimension
       , particles = group.size
       , species = group.particle.nspecies
       , memory = particle.memory
