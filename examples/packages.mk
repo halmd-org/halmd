@@ -373,7 +373,7 @@ HDF5_TARBALL_URL = http://www.hdfgroup.org/ftp/HDF5/releases/hdf5-$(HDF5_VERSION
 HDF5_TARBALL_SHA256 = c2f5a412107aba6f99fd7a4a9db6ce5f5fc8171ec931472784e5839d26aa17ef
 HDF5_BUILD_DIR = hdf5-$(HDF5_VERSION)
 HDF5_INSTALL_DIR = $(PREFIX)/hdf5-$(HDF5_VERSION)
-HDF5_CONFIGURE_FLAGS = --enable-shared --disable-deprecated-symbols --enable-cxx --enable-fortran
+HDF5_CONFIGURE_FLAGS = --enable-shared --enable-cxx --enable-fortran
 HDF5_CFLAGS = -fPIC
 HDF5_CXXFLAGS = -fPIC
 
