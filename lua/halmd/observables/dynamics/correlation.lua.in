@@ -1,7 +1,7 @@
 --
--- Copyright © 2013 Nicolas Höft
--- Copyright © 2013 Felix Höfling
--- Copyright © 2012 Peter Colberg
+-- Copyright © 2013      Nicolas Höft
+-- Copyright © 2013-2014 Felix Höfling
+-- Copyright © 2012      Peter Colberg
 --
 -- This file is part of HALMD.
 --
@@ -76,14 +76,20 @@ local blocking_scheme_adaptor = assert(libhalmd.observables.samples.blocking_sch
 -- Construct user-defined correlation function.
 --
 -- :param args: keyword arguments
--- :param args.acquire: callable(s) that return a value
--- :param args.correlate: callable that accepts two values and returns a ``number``
+-- :param args.acquire: callable(s) that return a (multi-dimensional) value
+-- :param args.correlate: callable that accepts two values and returns a ``number`` or a numeric ``table``
+-- :param args.shape: array shape of the result (*optional*)
+-- :type args.shape: number table
 -- :param args.location: default location within file
 -- :type args.location: string table
 -- :param string args.desc: module description
 --
 -- The argument ``acquire`` is a callable or a table of up to 2 callables that
 -- yield the samples to be correlated.
+--
+-- The argument ``shape`` specifies the array shape of the outcomes of
+-- ``correlate``. It is only required if the result is a ``table``. Currently,
+-- only 1-dimensional arrays are supported, for which ``shape = { size }``.
 --
 -- The argument ``location`` defines the default value of ``writer()``. For
 -- H5MD files, it obeys the structure {``"dynamics"``, particle group, name of
@@ -124,6 +130,7 @@ local blocking_scheme_adaptor = assert(libhalmd.observables.samples.blocking_sch
 local M = module(function(args)
     local acquire   = utility.assert_kwarg(args, "acquire")
     local correlate = utility.assert_kwarg(args, "correlate")
+    local shape     = utility.assert_type(args.shape or {}, "table")
     local location  = utility.assert_type(utility.assert_kwarg(args, "location"), "table")
     local desc      = utility.assert_type(utility.assert_kwarg(args, "desc"), "string")
 
@@ -137,7 +144,7 @@ local M = module(function(args)
     end
 
     -- construct instance
-    local self = correlation_adaptor(correlate)
+    local self = correlation_adaptor(correlate, shape)
 
     -- attach acquire function(s) as read-only property
     self.acquire = property(function(self)
