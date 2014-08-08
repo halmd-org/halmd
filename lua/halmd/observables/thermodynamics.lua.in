@@ -73,7 +73,7 @@ local h5 = assert(libhalmd.h5)
 -- .. method:: pressure()
 --
 --    Returns the pressure computed from the virial:
---    :math:`p = \rho (k_B T - \mathcal{V} / d)`.
+--    :math:`p = \rho (k_B T + \mathcal{V} / d)`.
 --
 -- .. method:: temperature()
 --
@@ -103,7 +103,7 @@ local h5 = assert(libhalmd.h5)
 --
 --    .. math::
 --
---      \mathcal{V} = \frac{1}{2 N} \sum_{i \neq j} r_{ij} \, U'(r_{ij}) \, .
+--      \mathcal{V} = - \frac{1}{2 N} \sum_{i \neq j} r_{ij} \, U'(r_{ij}) \, .
 --
 --
 -- .. method:: stress_tensor()
@@ -117,7 +117,7 @@ local h5 = assert(libhalmd.h5)
 --    .. math::
 --
 --      \Pi_{\alpha\beta} = \sum_{i=1}^N \left[
---        m_i v_{i\alpha} v_{i\beta} +
+--        m_i v_{i\alpha} v_{i\beta} -
 --        \frac{1}{2}\sum_{j \neq i} \frac{r_{ij\alpha} r_{ij\beta}}{r_{ij}} \, U'(r_{ij})
 --        \right] \/,
 --
