@@ -17,9 +17,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <test/unit/mdsim/geometries/simple.hpp>
-
 #include <halmd/mdsim/gpu/region_kernel.cu>
+#include <test/unit/mdsim/geometries/simple.hpp>
 
 namespace halmd {
 namespace mdsim {

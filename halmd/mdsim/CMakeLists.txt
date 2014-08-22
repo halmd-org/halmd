@@ -10,6 +10,7 @@ halmd_add_modules(
 )
 
 add_subdirectory(forces)
+add_subdirectory(geometries)
 
 if(HALMD_WITH_GPU)
   add_subdirectory(gpu)

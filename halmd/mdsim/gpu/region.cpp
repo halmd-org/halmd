@@ -23,6 +23,8 @@
 #include <halmd/mdsim/gpu/region.hpp>
 #include <halmd/utility/lua/lua.hpp>
 
+#include <halmd/mdsim/geometries/cuboid.hpp>
+
 namespace halmd {
 namespace mdsim {
 namespace gpu {
@@ -174,6 +176,8 @@ void region_base::luaopen(lua_State* L)
 HALMD_LUA_API int luaopen_libhalmd_mdsim_gpu_region(lua_State* L)
 {
     region_base::luaopen(L);
+    region<3, float, mdsim::geometries::cuboid<3, float>>::luaopen(L);
+    region<2, float, mdsim::geometries::cuboid<2, float>>::luaopen(L);
     return 0;
 }
 

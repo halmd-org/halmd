@@ -1,5 +1,5 @@
 --
--- Copyright © 2012  Peter Colberg
+-- Copyright © 2014 Nicolas Höft
 --
 -- This file is part of HALMD.
 --
@@ -20,21 +20,16 @@
 local module = require("halmd.utility.module")
 
 ---
--- Simulation
--- ==========
+-- Geometric selectors
+-- ===================
+--
+-- A collection of geometric selectors for the :class:`regions module <halmd.mdsim.region>`.
 --
 -- .. toctree::
 --    :maxdepth: 2
 --    :glob:
 --
 --    *
---    forces/index
---    integrators/index
---    particle_groups/index
---    potentials/index
---    velocities/index
---    positions/index
---    sorts/index
---    geometries/index
 --
-return module.loader("halmd.mdsim")
+
+return module.loader("halmd.mdsim.geometries")
