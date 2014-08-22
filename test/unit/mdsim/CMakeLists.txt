@@ -89,6 +89,7 @@ add_test(unit/mdsim/clock
   test_unit_mdsim_clock --log_level=test_suite
 )
 
+# module particle
 add_executable(test_unit_mdsim_particle
   particle.cpp
 )
@@ -103,6 +104,7 @@ target_link_libraries(test_unit_mdsim_particle
   halmd_mdsim_host
   ${HALMD_TEST_LIBRARIES}
 )
+
 add_test(unit/mdsim/particle/host/2d
   test_unit_mdsim_particle --run_test=host/two --log_level=test_suite
 )
@@ -115,5 +117,44 @@ if(HALMD_WITH_GPU)
   )
   add_test(unit/mdsim/particle/gpu/3d
     test_unit_mdsim_particle --run_test=gpu/three --log_level=test_suite
+  )
+endif()
+
+# module region
+if(HALMD_WITH_GPU)
+  add_executable(test_unit_mdsim_region
+    region.cpp
+    region_kernel.cu
+  )
+else (HALMD_WITH_GPU)
+  add_executable(test_unit_mdsim_region
+    region.cpp
+  )
+endif()
+if(HALMD_WITH_GPU)
+  target_link_libraries(test_unit_mdsim_region
+    halmd_mdsim_gpu
+    halmd_algorithm_gpu
+  )
+endif()
+target_link_libraries(test_unit_mdsim_region
+  halmd_mdsim
+  halmd_mdsim_host
+  halmd_utility
+  ${HALMD_TEST_LIBRARIES}
+)
+
+add_test(unit/mdsim/region/host/2d
+  test_unit_mdsim_region --run_test=host/two --log_level=test_suite
+)
+add_test(unit/mdsim/region/host/3d
+  test_unit_mdsim_region --run_test=host/three --log_level=test_suite
+)
+if(HALMD_WITH_GPU)
+  add_test(unit/mdsim/region/gpu/2d
+    test_unit_mdsim_region --run_test=gpu/two --log_level=test_suite
+  )
+  add_test(unit/mdsim/region/gpu/3d
+    test_unit_mdsim_region --run_test=gpu/three --log_level=test_suite
   )
 endif()
