@@ -104,10 +104,10 @@ local function restore(args)
         end
     end
 
-    return box, particle, force, args
+    return box, particle, args
 end
 
-local function production(box, particle, force, args)
+local function production(box, particle, args)
     local timestep = args.timestep                -- integration timestep
     local steps = math.ceil(args.time / timestep) -- number of integration steps
 
@@ -115,8 +115,7 @@ local function production(box, particle, force, args)
     local integrator = {}
     for k,v in pairs(particle) do
         integrator[k] = mdsim.integrators.verlet({
-            -- FIXME remove dependency on force
-            box = box, particle = v, timestep = timestep, force = force["AA"]
+            box = box, particle = v, timestep = timestep
         })
     end
 
@@ -162,8 +161,7 @@ local function production(box, particle, force, args)
             })
 
         -- sample macroscopic state variables
-        -- FIXME remove dependency on force
-        observables.thermodynamics({box = box, group = group, force = force["AA"]})
+        observables.thermodynamics({box = box, group = group})
           : writer({
                 file = file
               , fields = {

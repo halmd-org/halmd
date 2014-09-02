@@ -48,7 +48,7 @@ local function copy_particle(args)
     local input = observables.phase_space({box = box, group = group}):acquire({memory = "host"})
     observables.phase_space({
         box = box
-      , group = mdsim.particle_groups.all({particle = new_particle, global=false})
+      , group = mdsim.particle_groups.all({particle = new_particle, global = false})
     }):set(input(nil)) -- FIXME calling a data slot from Lua requires a dummy argument
 
     return new_particle
@@ -137,13 +137,13 @@ local function setup(args)
         end
     end
 
-    return box, particle, force, args
+    return box, particle, args
 end
 
 --
 -- equilibrate system of several instances of the particle module
 --
-local function equilibrate(box, particle, force, args)
+local function equilibrate(box, particle, args)
 
     local temp = args.temperature         -- target temperature
     local temp0 = 2 * temp                -- initial temperature
