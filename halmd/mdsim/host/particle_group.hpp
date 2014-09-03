@@ -1,6 +1,6 @@
 /*
  * Copyright © 2012-2013 Felix Höfling
- * Copyright © 2013      Nicolas Höft
+ * Copyright © 2013-2015 Nicolas Höft
  * Copyright © 2012      Peter Colberg
  *
  * This file is part of HALMD.
@@ -22,6 +22,7 @@
 #ifndef HALMD_MDSIM_HOST_PARTICLE_GROUP_HPP
 #define HALMD_MDSIM_HOST_PARTICLE_GROUP_HPP
 
+#include <halmd/io/logger.hpp>
 #include <halmd/numeric/blas/fixed_vector.hpp>
 #include <halmd/utility/cache.hpp>
 #include <halmd/utility/raw_array.hpp>
@@ -31,6 +32,7 @@
 #include <lua.hpp>
 
 #include <algorithm>
+#include <stdexcept>
 #include <tuple>
 
 namespace halmd {
@@ -96,9 +98,9 @@ get_unordered(particle_group& group, iterator_type const& first)
 template <typename particle_type>
 double get_mean_en_kin(particle_type const& particle, particle_group& group)
 {
-    typename particle_group::array_type const& unordered        = *group.unordered();
+    typename particle_group::array_type const& unordered = *group.unordered();
     auto const& velocity = read_cache(particle.velocity());
-    typename particle_type::mass_array_type const& mass         = *particle.mass();
+    typename particle_type::mass_array_type const& mass = *particle.mass();
 
     double mv2 = 0;
     for (typename particle_group::size_type i : unordered) {
@@ -226,6 +228,46 @@ get_stress_tensor(particle_type& particle, particle_group& group)
         stress_tensor += stress_pot[i] + stress_kin;
     }
     return stress_tensor;
+}
+
+/**
+ * Copy all particles from a group into a given particle instance of the
+ * same size as the group
+ */
+template <typename particle_type>
+void particle_group_to_particle(particle_type const& particle_src, particle_group& group, particle_type& particle_dst)
+{
+    typedef typename particle_group::size_type size_type;
+    typedef typename particle_group::array_type group_array_type;
+    enum { dimension = particle_type::force_type::static_size };
+
+    if(*group.size() != particle_dst.nparticle()) {
+        LOG_TRACE("group size: " << *group.size() << ", destination particle size: " << particle_dst.nparticle());
+        throw std::logic_error("source group size and destination particle size must match!");
+    }
+
+    auto const& ordered = read_cache(group.ordered());
+    auto position = make_cache_mutable(particle_dst.position());
+    auto image    = make_cache_mutable(particle_dst.image());
+    auto velocity = make_cache_mutable(particle_dst.velocity());
+    auto species  = make_cache_mutable(particle_dst.species());
+    auto mass     = make_cache_mutable(particle_dst.mass());
+
+    auto const& position_src = read_cache(particle_src.position());
+    auto const& image_src    = read_cache(particle_src.image());
+    auto const& velocity_src = read_cache(particle_src.velocity());
+    auto const& species_src  = read_cache(particle_src.species());
+    auto const& mass_src     = read_cache(particle_src.mass());
+
+    size_type i = 0;
+    for (size_type j : ordered) {
+        (*position)[i] = position_src[j];
+        (*image)[i] = image_src[j];
+        (*velocity)[i] = velocity_src[j];
+        (*species)[i] = species_src[j];
+        (*mass)[i] = mass_src[j];
+        ++i;
+    }
 }
 
 } // namespace host

@@ -1,7 +1,7 @@
 /*
- * Copyright © 2012 Peter Colberg
- * Copyright © 2012 Felix Höfling
- * Copyright © 2013 Nicolas Höft
+ * Copyright © 2012      Peter Colberg
+ * Copyright © 2012      Felix Höfling
+ * Copyright © 2013-2015 Nicolas Höft
  *
  * This file is part of HALMD.
  *
@@ -23,8 +23,10 @@
 #define HALMD_MDSIM_GPU_PARTICLE_GROUP_HPP
 
 #include <halmd/algorithm/gpu/reduce.hpp>
+#include <halmd/io/logger.hpp>
 #include <halmd/numeric/blas/fixed_vector.hpp>
 #include <halmd/observables/gpu/thermodynamics_kernel.hpp>
+#include <halmd/mdsim/gpu/particle_group_kernel.hpp>
 #include <halmd/utility/cache.hpp>
 
 #include <cuda_wrapper/cuda_wrapper.hpp>
@@ -32,6 +34,7 @@
 
 #include <algorithm>
 #include <tuple>
+#include <stdexcept>
 
 namespace halmd {
 namespace mdsim {
@@ -222,6 +225,44 @@ get_stress_tensor(particle_type& particle, particle_group& group)
     accumulator_type::get_velocity().bind(*particle.velocity());
 
     return stress_tensor_type(reduce(&*unordered.begin(), &*unordered.end(), accumulator_type(stride))());
+}
+
+/**
+ * Copy all particles from a group into a given particle instance of the
+ * same size as the group
+ */
+template <typename particle_type>
+void particle_group_to_particle(particle_type const& particle_src, particle_group& group, particle_type& particle_dst)
+{
+    typedef typename particle_group::array_type group_array_type;
+    enum { dimension = particle_type::force_type::static_size };
+
+    if(*group.size() != particle_dst.nparticle()) {
+        LOG_TRACE("group size: " << *group.size() << ", destination particle size: " << particle_dst.nparticle());
+        throw std::logic_error("source group size and destination particle size must match!");
+    }
+
+    auto const& ordered = read_cache(group.ordered());
+    auto position = make_cache_mutable(particle_dst.position());
+    auto image    = make_cache_mutable(particle_dst.image());
+    auto velocity = make_cache_mutable(particle_dst.velocity());
+
+    particle_group_wrapper<dimension>::kernel.r.bind(read_cache(particle_src.position()));
+    particle_group_wrapper<dimension>::kernel.image.bind(read_cache(particle_src.image()));
+    particle_group_wrapper<dimension>::kernel.v.bind(read_cache(particle_src.velocity()));
+
+    cuda::configure(
+        (ordered.size() + particle_dst.dim.threads_per_block() - 1) / particle_dst.dim.threads_per_block()
+      , particle_dst.dim.block
+    );
+
+    particle_group_wrapper<dimension>::kernel.particle_group_to_particle(
+        &*ordered.begin()
+      , &*position->begin()
+      , &*image->begin()
+      , &*velocity->begin()
+      , ordered.size()
+    );
 }
 
 } // namespace gpu
