@@ -264,12 +264,12 @@ distclean-luatrace: clean-luatrace
 ## Boost C++ libraries with C++11 ABI
 ##
 
-BOOST_VERSION = 1.55.0
-BOOST_RELEASE = 1_55_0
+BOOST_VERSION = 1.56.0
+BOOST_RELEASE = 1_56_0
 BOOST_ABI = c++11
 BOOST_TARBALL = boost_$(BOOST_RELEASE).tar.bz2
 BOOST_TARBALL_URL = http://sourceforge.net/projects/boost/files/boost/$(BOOST_VERSION)/$(BOOST_TARBALL)
-BOOST_TARBALL_SHA256 = fff00023dd79486d444c8e29922f4072e1d451fc5a4d2b6075852ead7f2b7b52
+BOOST_TARBALL_SHA256 = 134732acaf3a6e7eba85988118d943f0fa6b7f0850f65131fff89823ad30ff1d
 BOOST_PATCH = boost_$(BOOST_RELEASE).patch
 BOOST_PATCH_SHA256 = efe1e6c253c5e8204594438e9601fd46494897c060aad0e4c5df29e2c9f63781
 BOOST_BUILD_DIR = boost_$(BOOST_RELEASE)
@@ -655,14 +655,14 @@ env-gdb:
 ##
 ## Clang C++ compiler
 ##
-CLANG_VERSION = 3.4
-LLVM_TARBALL = llvm-$(CLANG_VERSION).src.tar.gz
+CLANG_VERSION = 3.5.0
+LLVM_TARBALL = llvm-$(CLANG_VERSION).src.tar.xz
 LLVM_TARBALL_URL = http://llvm.org/releases/$(CLANG_VERSION)/$(LLVM_TARBALL)
-LLVM_TARBALL_SHA256 = 25a5612d692c48481b9b397e2b55f4870e447966d66c96d655241702d44a2628
-CLANG_TARBALL = clang-$(CLANG_VERSION).src.tar.gz
-CLANG_TARBALL_URL = http://llvm.org/releases/$(CLANG_VERSION)/$(CLANG_TARBALL)
-CLANG_TARBALL_SHA256 = 22a9780db3b85a7f2eb9ea1f7f6e00da0249e3d12851e8dea0f62f1783242b1b
-CLANG_BUILD_DIR = llvm-$(CLANG_VERSION)
+LLVM_TARBALL_SHA256 = 28e199f368ef0a4666708f31c7991ad3bcc3a578342b0306526dd35f07595c03
+CFE_TARBALL = cfe-$(CLANG_VERSION).src.tar.xz
+CFE_TARBALL_URL = http://llvm.org/releases/$(CLANG_VERSION)/$(CFE_TARBALL)
+CFE_TARBALL_SHA256 = fc80992e004b06f6c7afb612de1cdaa9ac9d25811c55f94fcf7331d9b81cdb8b
+CLANG_BUILD_DIR = llvm-$(CLANG_VERSION).src
 CLANG_CONFIGURE_FLAGS = --enable-optimized --enable-bindings=none --enable-shared
 CLANG_BUILD_FLAGS = REQUIRES_RTTI=1
 CLANG_INSTALL_DIR = $(PREFIX)/clang-$(CLANG_VERSION)
@@ -673,19 +673,19 @@ endif
 
 .fetch-clang-$(CLANG_VERSION):
 	@$(RM) $(LLVM_TARBALL)
-	@$(RM) $(CLANG_TARBALL)
+	@$(RM) $(CFE_TARBALL)
 	$(WGET) $(LLVM_TARBALL_URL)
-	$(WGET) $(CLANG_TARBALL_URL)
+	$(WGET) $(CFE_TARBALL_URL)
 	@echo '$(LLVM_TARBALL_SHA256)  $(LLVM_TARBALL)' | $(SHA256SUM)
-	@echo '$(CLANG_TARBALL_SHA256)  $(CLANG_TARBALL)' | $(SHA256SUM)
+	@echo '$(CFE_TARBALL_SHA256)  $(CFE_TARBALL)' | $(SHA256SUM)
 	@$(TOUCH) $@
 
 fetch-clang: .fetch-clang-$(CLANG_VERSION)
 
 .extract-clang-$(CLANG_VERSION): .fetch-clang-$(CLANG_VERSION)
 	$(RM) $(CLANG_BUILD_DIR)
-	$(TAR) -xzf $(LLVM_TARBALL)
-	cd $(CLANG_BUILD_DIR)/tools && $(TAR) -xzf $(CURDIR)/$(CLANG_TARBALL) && mv clang-$(CLANG_VERSION) clang
+	$(TAR) -xJf $(LLVM_TARBALL)
+	cd $(CLANG_BUILD_DIR)/tools && $(TAR) -xJf $(CURDIR)/$(CFE_TARBALL) && mv cfe-$(CLANG_VERSION).src clang
 	@$(TOUCH) $@
 
 extract-clang: .extract-clang-$(CLANG_VERSION)
@@ -714,7 +714,7 @@ clean-clang:
 distclean-clang: clean-clang
 	@$(RM) .fetch-clang-$(CLANG_VERSION)
 	$(RM) $(LLVM_TARBALL)
-	$(RM) $(CLANG_TARBALL)
+	$(RM) $(CFE_TARBALL)
 
 env-clang:
 	@echo 'export PATH="$(CLANG_INSTALL_DIR)/bin$${PATH+:$$PATH}"'
@@ -1040,10 +1040,10 @@ distclean-cloog-ppl: clean-cloog-ppl
 ## GCC (GNU Compiler Collection)
 ##
 
-GCC_VERSION = 4.9.0
+GCC_VERSION = 4.9.1
 GCC_TARBALL = gcc-$(GCC_VERSION).tar.bz2
 GCC_TARBALL_URL = http://ftp.gwdg.de/pub/misc/gcc/releases/gcc-$(GCC_VERSION)/$(GCC_TARBALL)
-GCC_TARBALL_SHA256 = b9b047a97bade9c1c89970bc8e211ff57b7b8998a1730a80a653d329f8ed1257
+GCC_TARBALL_SHA256 = d334781a124ada6f38e63b545e2a3b8c2183049515a1abab6d513f109f1d717e
 GCC_BUILD_DIR = gcc-$(GCC_VERSION)
 GCC_BUILD_FLAGS = --enable-cxx-flags=-fPIC --enable-languages=c,c++,fortran,lto --disable-multilib
 GCC_INSTALL_DIR = $(PREFIX)/gcc-$(GCC_VERSION)
