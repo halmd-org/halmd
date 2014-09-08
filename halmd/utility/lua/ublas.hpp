@@ -1,5 +1,6 @@
 /*
- * Copyright © 2010  Peter Colberg
+ * Copyright © 2014 Felix Höfling
+ * Copyright © 2010 Peter Colberg
  *
  * This file is part of HALMD.
  *
@@ -63,9 +64,10 @@ struct default_converter<boost::numeric::ublas::vector<T, A> >
     void to(lua_State* L, boost::numeric::ublas::vector<T, A> const& v)
     {
         object table = newtable(L);
-        for (std::size_t i = 0; i < v.size(); ++i) {
+        std::size_t i = 1;
+        for (auto const& x : v) {
             // default_converter<T> only invoked with reference wrapper
-            table[i + 1] = boost::cref(v[i]);
+            table[i++] = boost::cref(x);
         }
         table.push(L);
     }
