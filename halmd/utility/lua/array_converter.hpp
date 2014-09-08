@@ -1,5 +1,6 @@
 /*
- * Copyright © 2008-2010  Peter Colberg
+ * Copyright © 2014      Felix Höfling
+ * Copyright © 2008-2010 Peter Colberg
  *
  * This file is part of HALMD.
  *
@@ -60,9 +61,10 @@ struct default_converter<boost::array<T, N> >
     void to(lua_State* L, boost::array<T, N> const& array)
     {
         luaponte::object table = luaponte::newtable(L);
-        for (std::size_t i = 0; i < array.size(); ++i) {
+        std::size_t i = 1;
+        for (auto const& x : array) {
             // default_converter<T> only invoked with reference wrapper
-            table[i + 1] = boost::cref(array[i]);
+            table[i++] = std::cref(x);
         }
         table.push(L);
     }
@@ -107,9 +109,10 @@ struct default_converter<boost::multi_array<T, 1> >
     void to(lua_State* L, boost::multi_array<T, 1> const& array)
     {
         luaponte::object table = luaponte::newtable(L);
-        for (std::size_t i = 0; i < array.size(); ++i) {
+        std::size_t i = 1;
+        for (auto const& x : array) {
             // default_converter<T> only invoked with reference wrapper
-            table[i + 1] = boost::cref(array[i]);
+            table[i++] = std::cref(x);
         }
         table.push(L);
     }

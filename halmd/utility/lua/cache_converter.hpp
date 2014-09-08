@@ -1,4 +1,5 @@
 /*
+ * Copyright © 2014 Felix Höfling
  * Copyright © 2012 Peter Colberg
  *
  * This file is part of HALMD.
@@ -20,7 +21,7 @@
 #ifndef HALMD_UTILITY_LUA_CACHE_CONVERTER_HPP
 #define HALMD_UTILITY_LUA_CACHE_CONVERTER_HPP
 
-#include <boost/ref.hpp>
+#include <functional>
 #include <luaponte/luaponte.hpp>
 
 namespace halmd {
@@ -45,7 +46,7 @@ struct default_converter<halmd::cache<T> >
     //! convert from C++ to Lua
     void to(lua_State* L, halmd::cache<T> const& cache)
     {
-        object(L, boost::cref(*cache)).push(L);
+        object(L, std::cref(*cache)).push(L);
     }
 };
 

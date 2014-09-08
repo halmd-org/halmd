@@ -67,9 +67,10 @@ struct default_converter<std::vector<T> >
     {
         LOG_TRACE("convert std::vector<" << demangled_name<T>() << "> of size " << v.size() << " to Lua table");
         object table = newtable(L);
-        for (std::size_t i = 0; i < v.size(); ++i) {
+        std::size_t i = 1;
+        for (auto const& x : v) {
             // default_converter<T> only invoked with reference wrapper
-            table[i + 1] = boost::cref(v[i]);
+            table[i++] = std::cref(x);
         }
         table.push(L);
     }
