@@ -24,6 +24,8 @@
 #include <boost/log/attributes/clock.hpp>
 #include <boost/log/support/date_time.hpp>
 #include <boost/log/expressions.hpp>
+// the following header is deprecated, use boost/core/null_deleter.hpp instead
+// in Boost C++ ≥ 1.56
 #include <boost/utility/empty_deleter.hpp>
 #include <boost/version.hpp>
 
