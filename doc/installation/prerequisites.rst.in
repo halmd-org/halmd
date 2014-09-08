@@ -14,18 +14,18 @@ automated installation procedure, refer to the next section, :ref:`automatic`.
 A detailed step-by-step guide for manual installation is given in section
 :ref:`manual`.
 
-* `NVIDIA CUDA toolkit <http://www.nvidia.com/object/cuda_get.html>`_ ≥ 4.1
 
-  .. warning::
+Build environment
+-----------------
 
-    CUDA driver ≤ 4.1 has a known security vulnerability
-    (`CVE-2012-0946 <http://nvidia.custhelp.com/app/answers/detail/a_id/3109/~/security-vulnerability-cve-2012-0946-in-the-nvidia-unix-driver>`_).
-    For this reason, we recommend CUDA 4.2 or later.
+* a :ref:`C++ compiler <supported_compilers>` with sufficient C++11 support,
+  e.g., GCC ≥ 4.6
 
-  Please refer to the installation instructions shipped with the toolkit.
+  HALMD makes extensive use of C++11 features. Instructions for a
+  semi-automated build of GCC are given in :ref:`automatic`.
 
 * `CMake <http://www.cmake.org/>`_ ≥ 2.8.8 with a patch for
-  `native CUDA support <http://sourceforge.net/projects/halmd/files/libs/cmake/>`_
+  `native CUDA support <https://github.com/fhoefling/cmake-cuda>`_
 
   The build process of HALMD depends on CMake, a cross-platform, open-source
   build system.
@@ -36,30 +36,60 @@ A detailed step-by-step guide for manual installation is given in section
     support to CMake and is not to be confused nor compatible with the CUDA
     module in CMake 2.8.
 
+    The patch is not needed for builds without GPU acceleration.
+
+* `NVIDIA CUDA toolkit <http://www.nvidia.com/object/cuda_get.html>`_ ≥ 4.2
+
+  .. warning::
+
+    CUDA driver ≤ 4.1 has a known security vulnerability
+    (`CVE-2012-0946 <http://nvidia.custhelp.com/app/answers/detail/a_id/3109/~/security-vulnerability-cve-2012-0946-in-the-nvidia-unix-driver>`_).
+    For this reason, we recommend CUDA 4.2 or later.
+
+  Please refer to the installation instructions shipped with the toolkit. The
+  toolkit is not needed for builds without GPU acceleration.
+
+
+Third-party libraries
+---------------------
+
 * `Boost C++ Libraries <http://www.boost.org/>`_ ≥ 1.55.0
 
-  The C++ part of HALMD uses of libraries in the Boost C++ collection.
-
-* `Lua interpreter <http://www.lua.org>`_ ≥ 5.1
+  The C++ part of HALMD uses libraries in the Boost C++ collection.
 
   .. note::
 
-     We recommend Lua 5.2 or later.
+    System installations of the Boost C++ Libraries can not be used due to an
+    ABI incompatibility (C++98 vs. C++11). For instructions how to build Boost
+    C++ with the C++11 ABI, see :ref:`automatic`.
+
+* `Lua interpreter <http://www.lua.org>`_ ≥ 5.1 *or* `Lua Just-In-Time compiler
+  <http://luajit.org/luajit.html>`_ ≥ 2.0
+
+  .. note::
+
+    We recommend Lua 5.2 or later. The Lua JIT compiler is recommended for
+    advanced simulation scripts containing loops, user-defined correlation
+    functions, etc.
 
   A simulation with HALMD is setup and configured by means of the Lua scripting
   language. The fast and lightweight Lua interpreter is embedded in the HALMD
   executable.
 
-* `HDF5 C++ Library <http://www.hdfgroup.org/HDF5/>`_ >= 1.8
+* `HDF5 C++ Library <http://www.hdfgroup.org/HDF5/>`_ ≥ 1.8
 
   "HDF5 is a data model, library, and file format for storing and managing
   data. It supports an unlimited variety of datatypes, and is designed for
   flexible and efficient I/O and for high volume and complex data."
 
 
-To optionally generate documentation in HTML and PDF format:
+Documentation
+-------------
 
-* `Sphinx documentation generator <http://sphinx.pocoo.org/>`_ ≥ 0.6.1
+Documentation is generated **optionally** in HTML and PDF format if these
+prerequisites are met:
+
+* `Sphinx documentation generator <http://sphinx.pocoo.org/>`_ ≥ 1.1
 
   "Sphinx is a tool that makes it easy to create intelligent and beautiful
   documentation."

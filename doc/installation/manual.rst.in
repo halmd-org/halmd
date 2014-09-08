@@ -229,28 +229,4 @@ Include Sphinx in your shell environment, by adding to ~/.bashrc::
    export PATH="${HOME}/opt/Sphinx-1.0.7/bin${PATH+:$PATH}"
    export PYTHONPATH="${HOME}/opt/Sphinx-1.0.7/lib/python2.5/site-packages${PYTHONPATH+:$PYTHONPATH}"
 
-AIX
----
-
-Boost
-^^^^^
-
-Compile and install Boost using ::
-
-   ./bjam --toolset=vacpp address-model=64 cxxflags=-qrtti=all install --prefix=$HOME/opt/powerpc-ibm-aix5.3/boost_1_47_0
-
-Lua
-^^^
-
-Compile the Lua library ::
-
-   make aix
-
-
-HDF5
-^^^^
-
-Prepare a statically linked build of the HDF5 C and C++ library with ::
-
-   CC=xlc_r CXX=xlC_r CXXFLAGS=-qrtti=all ./configure --enable-cxx --enable-static --disable-shared --prefix=$HOME/opt/powerpc-ibm-aix5.3/hdf5-1.8.6
 

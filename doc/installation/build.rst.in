@@ -125,6 +125,8 @@ the build tree by ::
   ctest
 
 
+.. _supported_compilers:
+
 Supported compilers
 ===================
 
