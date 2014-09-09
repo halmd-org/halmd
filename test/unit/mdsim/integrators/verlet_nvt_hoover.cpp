@@ -24,7 +24,6 @@
 #include <boost/test/unit_test.hpp>
 #include <boost/test/parameterized_test.hpp>
 
-#include <boost/assign.hpp>
 #include <boost/numeric/ublas/assignment.hpp> // <<=
 #include <boost/numeric/ublas/banded.hpp>
 #include <limits>
@@ -60,7 +59,6 @@
 #include <test/tools/ctest.hpp>
 
 using namespace boost;
-using namespace boost::assign; // list_of
 using namespace halmd;
 using namespace std;
 
@@ -265,6 +263,7 @@ verlet_nvt_hoover<modules_type>::verlet_nvt_hoover()
 {
     BOOST_TEST_MESSAGE("initialise simulation modules");
 
+    typedef fixed_vector<double, dimension> vector_type;
     // set module parameters
     temp = 1.;
     start_temp = 3.;
@@ -272,7 +271,7 @@ verlet_nvt_hoover<modules_type>::verlet_nvt_hoover()
     npart = 1500;
     timestep = 0.002;
     resonance_frequency = 5.;
-    box_ratios = (dimension == 3) ? list_of(1.)(2.)(1.01) : list_of(1.)(2.);
+    box_ratios = (dimension == 3) ? vector_type{1., 2., 1.01} : vector_type{1., 2.};
     double det = accumulate(box_ratios.begin(), box_ratios.end(), 1., multiplies<double>());
     double volume = npart / density;
     double edge_length = pow(volume / det, 1. / dimension);

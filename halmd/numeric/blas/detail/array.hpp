@@ -23,7 +23,7 @@
 #include <halmd/config.hpp>
 
 #ifndef __CUDACC__
-# include <boost/array.hpp>
+# include <array>
 #endif
 
 namespace halmd {
@@ -35,7 +35,10 @@ namespace detail {
 
 template <typename T, size_t N>
 struct fixed_array
-  : boost::array<T, N> {};
+  : std::array<T, N> {
+  public:
+      enum { static_size = N };
+};
 
 #else /* __CUDACC__ */
 

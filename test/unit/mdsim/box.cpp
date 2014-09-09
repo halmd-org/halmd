@@ -23,7 +23,6 @@
 #include <boost/test/unit_test.hpp>
 
 #include <algorithm>
-#include <boost/assign.hpp>
 #include <boost/foreach.hpp>
 #include <boost/numeric/ublas/banded.hpp>
 #include <limits>
@@ -41,7 +40,6 @@
 #include <test/tools/ctest.hpp>
 
 using namespace boost;
-using namespace boost::assign;
 using namespace halmd;
 using namespace std;
 
@@ -53,7 +51,7 @@ void construction()
 
     double const epsilon = numeric_limits<double>::epsilon();
 
-    vector_type ratios = (dimension == 2) ? list_of(1.)(1.) : list_of(.001)(1.)(1000.);
+    vector_type ratios = (dimension == 2) ? vector_type{1., 1.} : vector_type{.001, 1., 1000.};
     vector_type length = element_prod(vector_type(10), ratios);
     boost::numeric::ublas::diagonal_matrix<typename box_type::matrix_type::value_type> edges(dimension);
     for (unsigned int i = 0; i < dimension; ++i) {
@@ -75,7 +73,7 @@ void periodic_host()
 
     double const epsilon = numeric_limits<double>::epsilon();
 
-    vector_type length = (dimension == 2) ? list_of(1./3)(1./5) : list_of(.001)(1.)(1000.);
+    vector_type length = (dimension == 2) ? vector_type{1./3, 1./5} : vector_type{.001, 1., 1000.};
     boost::numeric::ublas::diagonal_matrix<typename box_type::matrix_type::value_type> edges(dimension);
     for (unsigned int i = 0; i < dimension; ++i) {
         edges(i, i) = length[i];
@@ -85,18 +83,18 @@ void periodic_host()
     // set up list of positions that are (half-) multiples of the
     // edge lengths or completely unrelated
     std::vector<vector_type> position;
-    position += vector_type(0);
-    position += length;
-    position += -1.5 * length;
-    position += length / 7;
+    position.push_back(vector_type{0});
+    position.push_back(length);
+    position.push_back(-1.5 * length);
+    position.push_back(length / 7);
     if (dimension == 2) {
-        position += list_of(0.)(-.2);
-        position += list_of(1./3)(1./10);
-        position += list_of(-1./6)(1./5);
+        position.push_back(vector_type{0., -.2});
+        position.push_back(vector_type{1./3, 1./10});
+        position.push_back(vector_type{-1./6, 1./5});
     }
     else if (dimension == 3) {
-        position += list_of(-0.001)(1.)(1000.);
-        position += list_of(0.001)(-.1)(-500.);
+        position.push_back(vector_type{-0.001, 1., 1000.});
+        position.push_back(vector_type{0.001, -.1, -500.});
     }
 
     // perform periodic reduction and extend the reduced vector afterwards
@@ -113,11 +111,11 @@ void periodic_host()
         }
 
         box.extend_periodic(r1, image);
-        if (r0 != vector_type(0)) {
+        if (norm_2(r0) > epsilon) {
             BOOST_CHECK_SMALL(norm_2(r0 - r1) / norm_2(r0), epsilon);
         }
         else {
-            BOOST_CHECK_EQUAL(r1, r0);
+            BOOST_CHECK_SMALL(norm_2(r1), epsilon);
         }
     }
 }
@@ -132,29 +130,29 @@ void periodic_gpu()
 
     float_type const epsilon = numeric_limits<float_type>::epsilon();
 
-    vector_type length = (dimension == 2) ? list_of(1./3)(1./5) : list_of(.001)(1.)(1000.);
+    vector_type length = (dimension == 2) ? vector_type{1./3, 1./5} : vector_type{.001, 1., 1000.};
     unsigned int warp_size = 32;
 
     // set up list of positions that are (half-) multiples of the
     // edge lengths or completely unrelated
     std::vector<vector_type> position;
-    position += vector_type(0);
-    position += length;
-    position += -1.5 * length;
-    position += length / 7;
-    position += 2 * length;
-    position += -2.5 * length;
-    position += vector_type(.5);
-    position += vector_type(1);
-    position += vector_type(1.5);
+    position.push_back(vector_type{0});
+    position.push_back(length);
+    position.push_back(-1.5 * length);
+    position.push_back(length / 7);
+    position.push_back(2 * length);
+    position.push_back(-2.5 * length);
+    position.push_back(vector_type{.5});
+    position.push_back(vector_type{1});
+    position.push_back(vector_type{1.5});
     if (dimension == 2) {
-        position += list_of(0.)(-.2);
-        position += list_of(1./3)(1./10);
-        position += list_of(-1./6)(1./5);
+        position.push_back(vector_type{0., -.2});
+        position.push_back(vector_type{1./3, 1./10});
+        position.push_back(vector_type{-1./6, 1./5});
     }
     else if (dimension == 3) {
-        position += list_of(-0.001)(1.)(1000.);
-        position += list_of(0.001)(-.1)(-500.);
+        position.push_back(vector_type{-0.001, 1., 1000.});
+        position.push_back(vector_type{0.001, -.1, -500.});
     }
     unsigned int npos = position.size();
 
@@ -195,11 +193,11 @@ void periodic_gpu()
         }
 
         r1 = h_position[i]; // reduced and extended position
-        if (r0 != vector_type(0)) {
+        if (norm_2(r0) > epsilon) {
             BOOST_CHECK_SMALL(norm_2(r0 - r1) / norm_2(r0), epsilon);
         }
         else {
-            BOOST_CHECK_EQUAL(r1, r0);
+            BOOST_CHECK_SMALL(norm_2(r1), epsilon);
         }
     }
 }

@@ -21,7 +21,7 @@
 #define HALMD_UTILITY_TUPLE_HPP
 
 #ifndef __CUDACC__
-# include <boost/tuple/tuple.hpp>
+# include <tuple>
 #else
 # include <boost/mpl/int.hpp>
 # include <boost/type_traits/remove_reference.hpp>
@@ -34,10 +34,10 @@ namespace halmd {
 #ifndef __CUDACC__
 
 // import Boost.Tuple library into halmd namespace
-using boost::tuple;
-using boost::get;
-using boost::make_tuple;
-using boost::tie;
+using std::tuple;
+using std::get;
+using std::make_tuple;
+using std::tie;
 
 #else /* __CUDACC__ */
 

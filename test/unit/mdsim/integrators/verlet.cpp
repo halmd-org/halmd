@@ -24,7 +24,6 @@
 #define BOOST_TEST_MODULE verlet
 #include <boost/test/unit_test.hpp>
 
-#include <boost/assign.hpp>
 #include <boost/numeric/ublas/banded.hpp>
 #include <limits>
 #include <numeric>
@@ -51,7 +50,6 @@
 #include <test/tools/ctest.hpp>
 
 using namespace boost;
-using namespace boost::assign; // list_of
 using namespace halmd;
 using namespace std;
 
@@ -132,13 +130,14 @@ template <typename modules_type>
 ideal_gas<modules_type>::ideal_gas()
 {
     BOOST_TEST_MESSAGE("initialise simulation modules");
+    typedef fixed_vector<double, dimension> vector_type;
 
     // set module parameters
     density = 1;
     temp = 1;
     double timestep = 0.001;
     npart = 1000;
-    box_ratios = (dimension == 3) ? list_of(1.)(2.)(1.01) : list_of(1.)(2.);
+    box_ratios = (dimension == 3) ? vector_type{1., 2., 1.01} : vector_type{1., 2.};
     double det = accumulate(box_ratios.begin(), box_ratios.end(), 1., multiplies<double>());
     double volume = npart / density;
     double edge_length = pow(volume / det, 1. / dimension);

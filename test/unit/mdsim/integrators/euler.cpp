@@ -23,7 +23,6 @@
 #include <boost/test/unit_test.hpp>
 
 #include <algorithm>
-#include <boost/assign.hpp>
 #include <boost/numeric/ublas/banded.hpp>
 #include <functional>
 #include <limits>
@@ -54,7 +53,6 @@
 #include <test/tools/ctest.hpp>
 
 using namespace boost;
-using namespace boost::assign; // list_of
 using namespace halmd;
 using namespace std;
 
@@ -212,6 +210,7 @@ template <typename modules_type>
 test_euler<modules_type>::test_euler()
 {
     BOOST_TEST_MESSAGE("initialise simulation modules");
+    typedef fixed_vector<double, dimension> vector_type;
 
     // set test parameters
     steps = 1000000; // run for as many steps as possible, wrap around the box for about 10 times
@@ -221,7 +220,7 @@ test_euler<modules_type>::test_euler()
     temp = 1; // the temperature defines the average velocities
     timestep = 0.001; // small, but typical timestep
     npart = gpu ? 4000 : 108; // optimize filling of fcc lattice, use only few particles on the host
-    box_ratios = (dimension == 3) ? list_of<double>(1)(2)(1.01) : list_of<double>(1)(2);
+    box_ratios = (dimension == 3) ? vector_type{1., 2., 1.01} : vector_type{1., 2.};
     double det = accumulate(box_ratios.begin(), box_ratios.end(), 1., multiplies<double>());
     double volume = npart / density;
     double edge_length = pow(volume / det, 1. / dimension);

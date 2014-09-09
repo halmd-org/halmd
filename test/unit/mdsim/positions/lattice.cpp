@@ -22,7 +22,6 @@
 #define BOOST_TEST_MODULE lattice
 #include <boost/test/unit_test.hpp>
 
-#include <boost/assign.hpp>
 #include <boost/bind.hpp>
 #include <boost/foreach.hpp>
 #include <boost/numeric/ublas/banded.hpp>
@@ -49,7 +48,6 @@
 #include <test/tools/ctest.hpp>
 
 using namespace boost;
-using namespace boost::assign; // list_of
 using namespace halmd;
 using namespace std;
 
@@ -147,13 +145,13 @@ void lattice<modules_type>::test()
     double qlat = 2 * M_PI / lattice_constant;
     if (dimension == 3) {
         for (unsigned i = 7; i > 0; --i) {
-            fixed_vector<double, dimension> q_ = list_of((i >> 2) & 1)((i >> 1) & 1)(i & 1);
+            fixed_vector<double, dimension> q_{(i >> 2) & 1, (i >> 1) & 1, i & 1};
             q.push_back(qlat * q_);
         }
     }
     else if (dimension == 2) {
         for (unsigned i = 3; i > 0; --i) {
-            fixed_vector<double, dimension> q_ = list_of((i >> 1) & 1)(i & 1);
+            fixed_vector<double, dimension> q_{(i >> 1) & 1, i & 1};
             q.push_back(qlat * q_);
         }
     }
@@ -202,8 +200,10 @@ template <typename modules_type>
 lattice<modules_type>::lattice()
 {
     BOOST_TEST_MESSAGE("initialise simulation modules");
+    typedef fixed_vector<unsigned, dimension> cell_vector;
+    typedef fixed_vector<double, dimension> vector_type;
 
-    ncell = (dimension == 3) ? list_of(3)(6)(6) : list_of(4)(1024);
+    ncell = (dimension == 3) ? cell_vector{3, 6, 6} : cell_vector{4, 1024};
     nunit_cell = (dimension == 3) ? 4 : 2;  //< number of particles per unit cell
     npart = nunit_cell * accumulate(ncell.begin(), ncell.end(), 1, multiplies<unsigned int>());
     density = 0.3;
@@ -214,7 +214,7 @@ lattice<modules_type>::lattice()
         edges(i, i) = lattice_constant * box_ratios[i];
     }
 
-    slab = (dimension == 3) ? list_of(1.)(.5)(1.) : list_of(1.)(1.);
+    slab = (dimension == 3) ? vector_type{1., .5, 1.} : vector_type{1., 1.};
     double slab_vol_frac = accumulate(slab.begin(), slab.end(), 1., multiplies<double>());
     // adjust density to make sure that the slab can accomodate an fcc lattice with the
     // same lattice spacing (a mismatch is a likely reason for failure of the test)

@@ -153,7 +153,7 @@ void test_host_random( unsigned long n )
     for (unsigned i=0; i < n; i++) {
         // FIXME y is unused due to impractical host::random::normal design
         double x, y;
-        boost::tie(x, y) = rng.normal(1.0);
+        std::tie(x, y) = rng.normal(1.0);
         a(x);
         double x2 = x * x;
         a3(x * x2);

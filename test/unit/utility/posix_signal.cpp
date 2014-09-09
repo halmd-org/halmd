@@ -20,7 +20,6 @@
 #define BOOST_TEST_MODULE posix_signal
 #include <boost/test/unit_test.hpp>
 
-#include <boost/assign.hpp>
 #include <boost/test/parameterized_test.hpp>
 #include <sys/types.h>
 #include <signal.h>
@@ -124,22 +123,21 @@ BOOST_AUTO_TEST_CASE( test_alarm )
 
 HALMD_TEST_INIT( init_unit_test_suite )
 {
-    using namespace boost::assign;
     using namespace boost::unit_test;
     using namespace boost::unit_test::framework;
 
-    vector<int> const signum = list_of
-        (SIGHUP)
-        (SIGINT)
-        (SIGALRM)
-        (SIGTERM)
-        (SIGUSR1)
-        (SIGUSR2)
-        (SIGCONT)
-        (SIGTSTP)
-        (SIGTTIN)
-        (SIGTTOU)
-        ;
+    vector<int> const signum = {
+        SIGHUP
+      , SIGINT
+      , SIGALRM
+      , SIGTERM
+      , SIGUSR1
+      , SIGUSR2
+      , SIGCONT
+      , SIGTSTP
+      , SIGTTIN
+      , SIGTTOU
+    };
 
     for (size_t i = 1, j = 1, t; j <= 144; t = j, j += i, i = t)
     {

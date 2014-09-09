@@ -20,7 +20,6 @@
 #define BOOST_TEST_MODULE demangle
 #include <boost/test/unit_test.hpp>
 
-#include <boost/assign/list_of.hpp>
 #include <boost/mpl/at.hpp>
 #include <boost/mpl/vector.hpp>
 
@@ -74,7 +73,6 @@ struct test_type
     >::type type;
 };
 
-using namespace boost::assign;
 using namespace halmd;
 using namespace std;
 

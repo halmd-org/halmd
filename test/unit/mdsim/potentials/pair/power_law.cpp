@@ -22,7 +22,6 @@
 #define BOOST_TEST_MODULE power_law
 #include <boost/test/unit_test.hpp>
 
-#include <boost/assign.hpp>
 #include <boost/foreach.hpp>
 #include <boost/numeric/ublas/assignment.hpp> // <<=
 #include <boost/numeric/ublas/banded.hpp>
@@ -42,7 +41,6 @@
 #include <test/tools/ctest.hpp>
 
 using namespace boost;
-using namespace boost::assign; // list_of
 using namespace halmd;
 using namespace std;
 

@@ -45,12 +45,12 @@ void pick_lattice_points()
     double epsilon = 0.05;
     unsigned int max_count = 7;
     const vector_type unit_cell =
-        (dimension == 3) ? list_of(2)(3)(5) : list_of(1)(1);
+        (dimension == 3) ? vector_type{2, 3, 5} : vector_type{1, 1};
 
-    vector<double> radii = list_of(.5)(1)(1.5)(1.91)(2)(2.7)(3)(3)(4)(5)(30);
+    vector<double> radii{.5, 1, 1.5, 1.91, 2, 2.7, 3, 3, 4, 5, 30};
     vector<unsigned int> count = (dimension == 3)
-        ? list_of(0)(0)(0)(1)(1)(0)(1)(1)(1)(2)(max_count)
-        : list_of(0)(2)(0)(2)(2)(1)(2)(2)(4)(6)(max_count);
+        ? vector<unsigned int>{0, 0, 0, 1, 1, 0, 1, 1, 1, 2, max_count}
+        : vector<unsigned int>{0, 2, 0, 2, 2, 1, 2, 2, 4, 6, max_count};
 
     multimap<typename vector<double>::const_iterator, vector_type> lattice_points;
 

@@ -23,7 +23,6 @@
 #define BOOST_TEST_MODULE ssf
 #include <boost/test/unit_test.hpp>
 
-#include <boost/assign.hpp>
 #include <boost/bind.hpp>
 #include <boost/numeric/ublas/banded.hpp>
 #include <cmath>
@@ -49,7 +48,6 @@
 #endif
 #include <test/tools/ctest.hpp>
 
-using boost::assign::list_of;
 using namespace halmd;
 using namespace std;
 
@@ -249,8 +247,9 @@ template <typename modules_type>
 lattice<modules_type>::lattice()
 {
     BOOST_TEST_MESSAGE("initialise simulation modules");
+    typedef fixed_vector<unsigned, dimension> cell_vector;
 
-    ncell = (dimension == 3) ? list_of(6)(12)(12) : list_of(4)(1024);
+    ncell = (dimension == 3) ? cell_vector{6, 12, 12} : cell_vector{4, 1024};
     if (dimension == 3 && gpu) {
         ncell[0] *= 19; // prime
     }

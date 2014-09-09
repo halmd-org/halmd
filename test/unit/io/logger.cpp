@@ -20,7 +20,6 @@
 #define BOOST_TEST_MODULE logger
 #include <boost/test/unit_test.hpp>
 
-#include <boost/assign.hpp>
 #include <boost/foreach.hpp>
 #include <fstream>
 #include <iostream>
@@ -32,7 +31,6 @@
 #include <test/tools/ctest.hpp>
 
 using namespace boost;
-using namespace boost::assign;
 using namespace halmd;
 using namespace std;
 
@@ -128,13 +126,13 @@ BOOST_AUTO_TEST_CASE( log_levels )
 {
     string const logfile("test_unit_io_logger.log");
 
-    vector<logging::severity_level> log_levels = list_of
-        (logging::error)
-        (logging::warning)
-        (logging::info)
-        (logging::debug)
-        (logging::trace)
-        ;
+    vector<logging::severity_level> log_levels = {
+        logging::error
+      , logging::warning
+      , logging::info
+      , logging::debug
+      , logging::trace
+    };
 
     // sweep all verbosities
     BOOST_FOREACH(logging::severity_level log_level, log_levels) {
