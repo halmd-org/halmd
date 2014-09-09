@@ -1,0 +1,190 @@
+--
+-- Copyright © 2010,2013  Felix Höfling
+-- Copyright © 2013       Nicolas Höft
+-- Copyright © 2010-2011  Peter Colberg
+--
+-- This file is part of HALMD.
+--
+-- HALMD is free software: you can redistribute it and/or modify
+-- it under the terms of the GNU General Public License as published by
+-- the Free Software Foundation, either version 3 of the License, or
+-- (at your option) any later version.
+--
+-- This program is distributed in the hope that it will be useful,
+-- but WITHOUT ANY WARRANTY; without even the implied warranty of
+-- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+-- GNU General Public License for more details.
+--
+-- You should have received a copy of the GNU General Public License
+-- along with this program.  If not, see <http://www.gnu.org/licenses/>.
+--
+
+local device            = require("halmd.utility.device")
+local log               = require("halmd.io.log")
+local numeric           = require("halmd.numeric")
+local utility           = require("halmd.utility")
+local module            = require("halmd.utility.module")
+
+---
+-- Modified Lennard-Jones potential
+-- ================================
+--
+-- This module implements a modified Lennard-Jones potential,
+--
+-- .. math::
+--
+--    U_\text{LJ}\left(r_{ij}\right) = 4\epsilon_{ij} \left(
+--        \left(\frac{\sigma_{ij}}{r_{ij}}\right)^{m_{ij}}
+--      - \left(\frac{\sigma_{ij}}{r_{ij}}\right)^{n_{ij}}
+--    \right)
+--
+-- for the interaction between two particles of species :math:`i` and :math:`j`.
+--
+-- The difference to :class:`halmd.mdsim.potentials.pair.lennard_jones` is that
+-- the exponents of repulsion, :math:`m_{ij}`, and of attraction,
+-- :math:`n_{ij}`, can be specified explicitly.
+--
+
+-- grab C++ wrappers
+local modified_lennard_jones = {
+    host = assert(libhalmd.mdsim.host.potentials.pair.modified_lennard_jones)
+}
+if device.gpu then
+    modified_lennard_jones.gpu = assert(libhalmd.mdsim.gpu.potentials.pair.modified_lennard_jones)
+end
+
+---
+-- Construct modified Lennard-Jones potential.
+--
+-- :param table args: keyword arguments
+-- :param table args.epsilon: matrix with elements :math:`\epsilon_{ij}` (*default:* ``1``)
+-- :param table args.sigma: matrix with elements :math:`\sigma_{ij}` (*default:* ``1``)
+-- :param table args.cutoff: matrix with elements :math:`r_{\text{c}, ij}`
+-- :param table args.index_repulsion: exponent of repulsive part, :math:`m_{ij}`
+-- :param table args.index_attraction: exponent of attractive part, , :math:`n_{ij}`
+-- :param number args.species: number of particle species *(optional)*
+-- :param string args.memory: select memory location *(optional)*
+-- :param string args.label: instance label *(optional)*
+--
+-- If the argument ``species`` is omitted, it is inferred from the first
+-- dimension of the parameter matrices.
+--
+-- If all elements of a matrix are equal, a scalar value may be passed instead
+-- which is promoted to a square matrix of size given by the number of particle
+-- ``species``.
+--
+-- The supported values for ``memory`` are "host" and "gpu". If ``memory`` is
+-- not specified, the memory location is selected according to the compute
+-- device.
+--
+-- .. note::
+--
+--    The cutoff is only relevant with :class:`halmd.mdsim.forces.pair_trunc`.
+--
+-- .. attribute:: epsilon
+--
+--    Matrix with elements :math:`\epsilon_{ij}`.
+--
+-- .. attribute:: sigma
+--
+--    Matrix with elements :math:`\sigma_{ij}`.
+--
+-- .. attribute:: r_cut
+--
+--    Matrix with elements :math:`r_{\text{c}, ij}` in reduced units.
+--
+-- .. attribute:: r_cut_sigma
+--
+--    Matrix with elements :math:`r_{\text{c}, ij}` in units of :math:`\sigma_{ij}`.
+--
+-- .. attribute:: index_m
+--
+--    Matrix with exponents :math:`m_{ij}` of repulsive part of the potential
+--
+-- .. attribute:: index_n
+--
+--    Matrix with exponents :math:`n_{ij}` of attractive part of the potential
+--
+-- .. attribute:: description
+--
+--    Name of potential for profiler.
+--
+-- .. attribute:: memory
+--
+--    Device where the particle memory resides.
+--
+local M = module(function(args)
+    local epsilon = args and args.epsilon or 1
+    if type(epsilon) ~= "table" and type(epsilon) ~= "number" then
+        error("bad argument 'epsilon'", 2)
+    end
+    local sigma = args and args.sigma or 1
+    if type(sigma) ~= "table" and type(sigma) ~= "number" then
+        error("bad argument 'sigma'", 2)
+    end
+    local index_m = utility.assert_kwarg(args, "index_repulsion")
+    if type(index_m) ~= "table" and type(index_m) ~= "number" then
+        error("bad argument 'index_m'", 2)
+    end
+    local index_n = utility.assert_kwarg(args, "index_attraction")
+    if type(index_n) ~= "table" and type(index_n) ~= "number" then
+        error("bad argument 'index_n'", 2)
+    end
+    local cutoff = utility.assert_kwarg(args, "cutoff")
+    if type(cutoff) ~= "table" and type(cutoff) ~= "number" then
+        error("bad argument 'cutoff'", 2)
+    end
+
+    local memory = args and args.memory or (device.gpu and "gpu" or "host")
+
+    local label = args and args.label and utility.assert_type(args.label, "string")
+    label = label and (" (%s)"):format(label) or ""
+    local logger = log.logger({label =  "modified_lennard_jones" .. label})
+
+    -- derive number of species from parameter matrices
+    local species = args and args.species
+        or (type(epsilon) == "table" and #epsilon) or (type(sigma) == "table" and #sigma)
+        or (type(index_m) == "table" and #index_m) or (type(index_n) == "table" and #index_n)
+        or (type(cutoff) == "table" and #cutoff) or 1
+    utility.assert_type(species, "number")
+
+    -- promote scalars to matrices
+    if type(cutoff) == "number" then
+        cutoff = numeric.scalar_matrix(species, species, cutoff)
+    end
+    if type(epsilon) == "number" then
+        epsilon = numeric.scalar_matrix(species, species, epsilon)
+    end
+    if type(sigma) == "number" then
+        sigma = numeric.scalar_matrix(species, species, sigma)
+    end
+    if type(index_m) == "number" then
+        index_m = numeric.scalar_matrix(species, species, index_m)
+    end
+    if type(index_n) == "number" then
+        index_n = numeric.scalar_matrix(species, species, index_n)
+    end
+
+    -- construct instance
+    if not modified_lennard_jones[memory] then
+        error(("unsupported memory type '%s'"):format(memory), 2)
+    end
+    local self = modified_lennard_jones[memory](cutoff, epsilon, sigma, index_m, index_n, logger)
+
+    -- add description for profiler
+    self.description = property(function()
+        return "modified Lennard-Jones potential" .. label
+    end)
+
+    -- store memory location
+    self.memory = property(function(self) return memory end)
+
+    -- add logger instance for pair_trunc
+    self.logger = property(function()
+        return logger
+    end)
+
+    return self
+end)
+
+return M

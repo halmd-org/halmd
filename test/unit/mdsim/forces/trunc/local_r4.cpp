@@ -31,12 +31,12 @@
 
 #include <halmd/mdsim/box.hpp>
 #include <halmd/mdsim/forces/trunc/local_r4.hpp>
-#include <halmd/mdsim/host/potentials/lennard_jones.hpp>
+#include <halmd/mdsim/host/potentials/pair/lennard_jones.hpp>
 #ifdef HALMD_WITH_GPU
 # include <halmd/mdsim/gpu/forces/pair_trunc.hpp>
 # include <halmd/mdsim/gpu/particle.hpp>
-# include <halmd/mdsim/gpu/potentials/lennard_jones.hpp>
-# include <test/unit/mdsim/potentials/gpu/neighbour_chain.hpp>
+# include <halmd/mdsim/gpu/potentials/pair/lennard_jones.hpp>
+# include <test/unit/mdsim/potentials/pair/gpu/neighbour_chain.hpp>
 # include <test/tools/cuda.hpp>
 #endif
 #include <test/tools/ctest.hpp>
@@ -45,7 +45,7 @@ BOOST_AUTO_TEST_SUITE( host )
 
 BOOST_AUTO_TEST_CASE( local_r4 )
 {
-    typedef halmd::mdsim::host::potentials::lennard_jones<double> potential_type;
+    typedef halmd::mdsim::host::potentials::pair::lennard_jones<double> potential_type;
     typedef halmd::mdsim::forces::trunc::local_r4<double> trunc_type;
     typedef potential_type::matrix_type matrix_type;
 
@@ -163,8 +163,8 @@ struct test_local_r4
     typedef halmd::mdsim::forces::trunc::local_r4<float_type> trunc_type;
     typedef halmd::mdsim::forces::trunc::local_r4<double> host_trunc_type;
     typedef halmd::mdsim::gpu::particle<dimension, float_type> particle_type;
-    typedef halmd::mdsim::gpu::potentials::lennard_jones<float_type> potential_type;
-    typedef halmd::mdsim::host::potentials::lennard_jones<double> host_potential_type;
+    typedef halmd::mdsim::gpu::potentials::pair::lennard_jones<float_type> potential_type;
+    typedef halmd::mdsim::host::potentials::pair::lennard_jones<double> host_potential_type;
     typedef halmd::mdsim::gpu::forces::pair_trunc<dimension, float_type, potential_type, trunc_type> force_type;
     typedef neighbour_chain<dimension, float_type> neighbour_type;
 

@@ -68,7 +68,7 @@ local function liquid(args)
     boltzmann:set()
 
     -- smoothly truncated Lennard-Jones potential
-    local potential = mdsim.potentials.lennard_jones({cutoff = args.cutoff, species = particle.nspecies})
+    local potential = mdsim.potentials.pair.lennard_jones({cutoff = args.cutoff, species = particle.nspecies})
     -- smooth truncation
     local trunc = nil
     if args.smoothing > 0 then

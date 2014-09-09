@@ -54,7 +54,7 @@ local function lennard_jones(args)
     mdsim.velocities.boltzmann({particle = particle, temperature = temperature}):set()
 
     -- define interaction using truncated Lennard-Jones potential
-    local potential = mdsim.potentials.lennard_jones({cutoff = cutoff})
+    local potential = mdsim.potentials.pair.lennard_jones({cutoff = cutoff})
     -- compute forces
     local force = mdsim.forces.pair_trunc({
         box = box, particle = particle, potential = potential, -- neighbour_skin = 0.7

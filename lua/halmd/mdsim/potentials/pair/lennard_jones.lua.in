@@ -1,0 +1,166 @@
+--
+-- Copyright © 2010-2013 Felix Höfling
+-- Copyright © 2010-2012 Peter Colberg
+--
+-- This file is part of HALMD.
+--
+-- HALMD is free software: you can redistribute it and/or modify
+-- it under the terms of the GNU General Public License as published by
+-- the Free Software Foundation, either version 3 of the License, or
+-- (at your option) any later version.
+--
+-- This program is distributed in the hope that it will be useful,
+-- but WITHOUT ANY WARRANTY; without even the implied warranty of
+-- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+-- GNU General Public License for more details.
+--
+-- You should have received a copy of the GNU General Public License
+-- along with this program.  If not, see <http://www.gnu.org/licenses/>.
+--
+
+local device            = require("halmd.utility.device")
+local numeric           = require("halmd.numeric")
+local log               = require("halmd.io.log")
+local utility           = require("halmd.utility")
+local module            = require("halmd.utility.module")
+
+---
+-- Lennard-Jones potential
+-- =======================
+--
+-- This module implements the Lennard-Jones potential,
+--
+-- .. math::
+--
+--    U_\text{LJ}\left(r_{ij}\right) = 4\epsilon_{ij} \left(
+--        \left(\frac{\sigma_{ij}}{r_{ij}}\right)^{12}
+--      - \left(\frac{\sigma_{ij}}{r_{ij}}\right)^6
+--    \right)
+--
+-- for the interaction between two particles of species :math:`i` and :math:`j`.
+--
+
+-- grab C++ wrappers
+local lennard_jones = { host = assert(libhalmd.mdsim.host.potentials.pair.lennard_jones) }
+local lennard_jones_simple
+if device.gpu then
+    lennard_jones.gpu = assert(libhalmd.mdsim.gpu.potentials.pair.lennard_jones)
+    lennard_jones_simple = assert(libhalmd.mdsim.gpu.potentials.pair.lennard_jones_simple)
+end
+
+---
+-- Construct Lennard-Jones potential.
+--
+-- :param table args: keyword arguments
+-- :param table args.epsilon: matrix with elements :math:`\epsilon_{ij}` (*default:* ``1``)
+-- :param table args.sigma: matrix with elements :math:`\sigma_{ij}` (*default:* ``1``)
+-- :param table args.cutoff: matrix with elements :math:`r_{\text{c}, ij}`
+-- :param number args.species: number of particle species *(optional)*
+-- :param string args.memory: select memory location *(optional)*
+-- :param string args.label: instance label *(optional)*
+--
+-- If the argument ``species`` is omitted, it is inferred from the first
+-- dimension of the parameter matrices.
+--
+-- If all elements of a matrix are equal, a scalar value may be passed instead
+-- which is promoted to a square matrix of size given by the number of particle
+-- ``species``.
+--
+-- The supported values for ``memory`` are "host" and "gpu". If ``memory`` is
+-- not specified, the memory location is selected according to the compute
+-- device.
+--
+-- .. note::
+--
+--    The cutoff is only relevant with :class:`halmd.mdsim.forces.pair_trunc`.
+--
+-- .. attribute:: epsilon
+--
+--    Matrix with elements :math:`\epsilon_{ij}`.
+--
+-- .. attribute:: sigma
+--
+--    Matrix with elements :math:`\sigma_{ij}`.
+--
+-- .. attribute:: r_cut
+--
+--    Matrix with elements :math:`r_{\text{c}, ij}` in reduced units.
+--
+-- .. attribute:: r_cut_sigma
+--
+--    Matrix with elements :math:`r_{\text{c}, ij}` in units of :math:`\sigma_{ij}`.
+--
+-- .. attribute:: description
+--
+--    Name of potential for profiler.
+--
+-- .. attribute:: memory
+--
+--    Device where the particle memory resides.
+--
+local M = module(function(args)
+    local epsilon = args and args.epsilon or 1
+    if type(epsilon) ~= "table" and type(epsilon) ~= "number" then
+        error("bad argument 'epsilon'", 2)
+    end
+    local sigma = args and args.sigma or 1
+    if type(sigma) ~= "table" and type(sigma) ~= "number" then
+        error("bad argument 'sigma'", 2)
+    end
+    local cutoff = utility.assert_kwarg(args, "cutoff")
+    if type(cutoff) ~= "table" and type(cutoff) ~= "number" then
+        error("bad argument 'cutoff'", 2)
+    end
+
+    local memory = args and args.memory or (device.gpu and "gpu" or "host")
+
+    local label = args and args.label and utility.assert_type(args.label, "string")
+    label = label and (" (%s)"):format(label) or ""
+    local logger = log.logger({label =  "lennard_jones" .. label})
+
+    -- derive number of species from parameter matrices
+    local species = args and args.species
+        or (type(epsilon) == "table" and #epsilon) or (type(sigma) == "table" and #sigma)
+        or (type(cutoff) == "table" and #cutoff) or 1
+    utility.assert_type(species, "number")
+
+    -- construct instance
+    local self
+    if memory == "gpu" and epsilon == 1 and sigma == 1 and type(cutoff) == "number" then
+        -- select optimised GPU version if ε = 1 and σ = 1
+        self = assert(lennard_jones_simple)(cutoff, logger)
+    else
+        -- promote scalars to matrices
+        if type(cutoff) == "number" then
+            cutoff = numeric.scalar_matrix(species, species, cutoff)
+        end
+        if type(epsilon) == "number" then
+            epsilon = numeric.scalar_matrix(species, species, epsilon)
+        end
+        if type(sigma) == "number" then
+            sigma = numeric.scalar_matrix(species, species, sigma)
+        end
+
+        if not lennard_jones[memory] then
+            error(("unsupported memory type '%s'"):format(memory), 2)
+        end
+        self = lennard_jones[memory](cutoff, epsilon, sigma, logger)
+    end
+
+    -- add description for profiler
+    self.description = property(function()
+        return "Lennard-Jones potential" .. label
+    end)
+
+    -- store memory location
+    self.memory = property(function(self) return memory end)
+
+    -- add logger instance for pair_trunc
+    self.logger = property(function()
+        return logger
+    end)
+
+    return self
+end)
+
+return M

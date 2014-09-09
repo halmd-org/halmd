@@ -1,5 +1,6 @@
 --
--- Copyright © 2012  Peter Colberg
+-- Copyright © 2014 Felix Höfling
+-- Copyright © 2012 Peter Colberg
 --
 -- This file is part of HALMD.
 --
@@ -27,8 +28,7 @@ local module = require("halmd.utility.module")
 --
 -- .. toctree::
 --    :maxdepth: 2
---    :glob:
 --
---    *
+--    pair/index
 --
 return module.loader("halmd.mdsim.potentials")

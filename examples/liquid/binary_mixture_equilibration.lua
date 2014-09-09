@@ -80,7 +80,7 @@ local function liquid(args)
     boltzmann:set()
 
     -- truncated Lennard-Jones potential
-    local potential = mdsim.potentials.lennard_jones({
+    local potential = mdsim.potentials.pair.lennard_jones({
         epsilon = {
             {1  , 1.5} -- AA, AB
           , {1.5, 0.5} -- BA, BB

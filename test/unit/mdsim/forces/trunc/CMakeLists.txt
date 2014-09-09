@@ -1,10 +1,10 @@
-if(HALMD_WITH_lennard_jones)
+if(HALMD_WITH_pair_lennard_jones)
   add_executable(test_unit_mdsim_forces_trunc_local_r4
     local_r4.cpp
   )
   if(HALMD_WITH_GPU)
     target_link_libraries(test_unit_mdsim_forces_trunc_local_r4
-      halmd_mdsim_gpu_potentials_lennard_jones
+      halmd_mdsim_gpu_potentials_pair_lennard_jones
       halmd_mdsim_gpu
       halmd_mdsim
       halmd_algorithm_gpu
@@ -12,7 +12,7 @@ if(HALMD_WITH_lennard_jones)
     )
   endif()
   target_link_libraries(test_unit_mdsim_forces_trunc_local_r4
-    halmd_mdsim_host_potentials_lennard_jones
+    halmd_mdsim_host_potentials_pair_lennard_jones
     halmd_mdsim_forces_trunc
     ${HALMD_TEST_LIBRARIES}
   )

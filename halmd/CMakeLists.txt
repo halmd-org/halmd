@@ -30,11 +30,12 @@ endmacro()
 # This macro automatically adds the specified potential module if enabled via
 # the CMake cache variable HALMD_POTENTIALS, see cmake/potentials.cmake.
 #
-# The first argument is the library name, the second the name of the potential,
-# the remaining arguments are passed to add_library()
+# The first argument is the library name, the second the type of the potential
+# (e.g., pair), and the third one the name of the potential, the remaining
+# arguments are passed to add_library()
 #
-macro(halmd_add_potential LIBRARY POTENTIAL)
-  if(HALMD_WITH_${POTENTIAL})
+macro(halmd_add_potential LIBRARY TYPE POTENTIAL)
+  if(HALMD_WITH_${TYPE}_${POTENTIAL})
     halmd_add_library(${LIBRARY} ${ARGN})
     halmd_add_modules("lib${LIBRARY}")
   endif()

@@ -140,7 +140,7 @@ if(HALMD_WITH_GPU)
 endif()
 
 # module verlet_nvt_hoover
-if(HALMD_WITH_lennard_jones)
+if(HALMD_WITH_pair_lennard_jones)
   add_executable(test_unit_mdsim_integrators_verlet_nvt_hoover
     verlet_nvt_hoover.cpp
   )
@@ -150,7 +150,7 @@ if(HALMD_WITH_lennard_jones)
       halmd_mdsim_gpu_integrators
       halmd_mdsim_gpu_neighbours
       halmd_mdsim_gpu_positions
-      halmd_mdsim_gpu_potentials_lennard_jones
+      halmd_mdsim_gpu_potentials_pair_lennard_jones
       halmd_mdsim_gpu_velocities
       halmd_mdsim_gpu
       halmd_observables_gpu
@@ -163,7 +163,7 @@ if(HALMD_WITH_lennard_jones)
     halmd_mdsim_host_neighbours
     halmd_mdsim_host_particle_groups
     halmd_mdsim_host_positions
-    halmd_mdsim_host_potentials_lennard_jones
+    halmd_mdsim_host_potentials_pair_lennard_jones
     halmd_mdsim_host_velocities
     halmd_mdsim_host
     halmd_mdsim

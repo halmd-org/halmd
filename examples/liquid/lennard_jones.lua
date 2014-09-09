@@ -60,7 +60,7 @@ local function liquid(args)
     local particle = mdsim.particle({dimension = dimension, particles = nparticle, species = nspecies})
 
     -- smoothly truncated Lennard-Jones potential
-    local potential = mdsim.potentials.lennard_jones({cutoff = args.cutoff, species = particle.nspecies})
+    local potential = mdsim.potentials.pair.lennard_jones({cutoff = args.cutoff, species = particle.nspecies})
     -- smooth truncation
     local trunc
     if args.smoothing > 0 then
