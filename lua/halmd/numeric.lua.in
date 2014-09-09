@@ -95,6 +95,21 @@ function M.min(t)
 end
 
 ---
+-- Create vector of given size with scalar value
+--
+-- :param number size: number of elements
+-- :param value: value for each element of the vector
+-- :returns: vector of length :math:`\text{size}` with each element set to ``value``
+--
+function M.scalar_vector(size, value)
+    local vec = {}
+    for i = 1, size do
+        vec[i] = value
+    end
+    return vec
+end
+
+---
 -- Create matrix of given size with scalar value
 --
 -- :param number rows: number of rows
