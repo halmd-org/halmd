@@ -23,7 +23,6 @@
 
 #include <halmd/io/logger.hpp>
 
-#include <boost/assign.hpp>
 #include <boost/numeric/ublas/matrix.hpp>
 #include <boost/tuple/tuple.hpp>
 #include <lua.hpp>

@@ -21,7 +21,6 @@
 #ifndef HALMD_MDSIM_HOST_POTENTIALS_MORSE_HPP
 #define HALMD_MDSIM_HOST_POTENTIALS_MORSE_HPP
 
-#include <boost/assign.hpp>
 #include <boost/numeric/ublas/matrix.hpp>
 #include <boost/tuple/tuple.hpp>
 #include <lua.hpp>
