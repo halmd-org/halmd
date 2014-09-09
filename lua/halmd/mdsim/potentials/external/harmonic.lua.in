@@ -1,0 +1,149 @@
+--
+-- Copyright © 2010-2014 Felix Höfling
+-- Copyright © 2013      Nicolas Höft
+-- Copyright © 2010      Peter Colberg
+--
+-- This file is part of HALMD.
+--
+-- HALMD is free software: you can redistribute it and/or modify
+-- it under the terms of the GNU General Public License as published by
+-- the Free Software Foundation, either version 3 of the License, or
+-- (at your option) any later version.
+--
+-- This program is distributed in the hope that it will be useful,
+-- but WITHOUT ANY WARRANTY; without even the implied warranty of
+-- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+-- GNU General Public License for more details.
+--
+-- You should have received a copy of the GNU General Public License
+-- along with this program.  If not, see <http://www.gnu.org/licenses/>.
+--
+
+local device            = require("halmd.utility.device")
+local log               = require("halmd.io.log")
+local numeric           = require("halmd.numeric")
+local utility           = require("halmd.utility")
+local module            = require("halmd.utility.module")
+
+-- grab C++ wrappers
+local harmonic = {
+    host = {
+        [2] = assert(libhalmd.mdsim.host.potentials.external.harmonic_2)
+      , [3] = assert(libhalmd.mdsim.host.potentials.external.harmonic_3)
+    }
+}
+if device.gpu then
+    harmonic.gpu = {
+        [2] = assert(libhalmd.mdsim.gpu.potentials.external.harmonic_2)
+      , [3] = assert(libhalmd.mdsim.gpu.potentials.external.harmonic_3)
+    }
+end
+
+---
+-- Harmonic potential
+-- ==================
+--
+-- This module implements the harmonic potential,
+--
+-- .. math::
+--
+--    U_i \left(\vec r\right) = \frac{1}{2} K_i \left(\vec r - \vec r_{0,i} \right)^2
+--
+-- for the potential energy of a particle of species :math:`i`.
+--
+
+---
+-- Construct the harmonic potential.
+--
+-- :param table args: keyword arguments
+-- :param table args.stiffness: sequence of stiffness coefficients :math:`K_i`
+-- :param table args.offset: sequence of offset vectors :math:`\vec r_{0,i}`
+-- :param number args.species: number of particle species *(optional)*
+-- :param string args.memory: select memory location *(optional)*
+-- :param string args.label: instance label *(optional)*
+--
+-- If all elements of a parameter sequence are equal, a single value may be
+-- passed instead. In this case, ``species`` must be specified.
+--
+-- If the argument ``species`` is omitted, it is inferred from the length
+-- of the parameter sequences.
+--
+-- The supported values for ``memory`` are "host" and "gpu". If ``memory`` is
+-- not specified, the memory location is selected according to the compute
+-- device.
+--
+-- .. attribute:: stiffness
+--
+--    Sequence with stiffness coefficients :math:`K_i`.
+--
+-- .. attribute:: offset
+--
+--    Sequence with offset vectors :math:`\vec r_{0,i}`.
+--
+-- .. attribute:: description
+--
+--    Name of potential for profiler.
+--
+-- .. attribute:: memory
+--
+--    Device where the particle memory resides.
+--
+local M = module(function(args)
+    local stiffness = utility.assert_kwarg(args, "stiffness")
+    if type(stiffness) ~= "table" and type(stiffness) ~= "number" then
+        error("bad argument 'stiffness'", 2)
+    end
+    local offset = utility.assert_type(utility.assert_kwarg(args, "offset"), "table")
+    local memory = args and args.memory or (device.gpu and "gpu" or "host")
+
+    local label = args and args.label and utility.assert_type(args.label, "string")
+    label = label and (" (%s)"):format(label) or ""
+    local logger = log.logger({label =  "harmonic" .. label})
+
+    -- derive number of species from parameter sequence
+    local species = args and args.species or (type(stiffness) == "table" and #stiffness)
+    if not species or type(species) ~= "number" or species < 1 then
+        error("missing or invalid argument: species", 2)
+    end
+
+    -- promote single elements to sequences
+    if type(stiffness) == "number" then
+        stiffness = numeric.scalar_vector(species, stiffness)
+    end
+    if type(offset[1]) == "number" then
+        offset = numeric.scalar_vector(species, offset)
+    end
+
+    if #stiffness ~= #offset then
+        error("mismatching size of parameter sequences", 2)
+    end
+
+    -- determine space dimension from length of offset vectors
+    local dimension = #(offset[1])
+
+    -- construct instance
+    if not harmonic[memory] then
+        error(("unsupported memory type '%s'"):format(memory), 2)
+    end
+    if not harmonic[memory][dimension] then
+        error(("unsupported dimension '%d'"):format(dimension), 2)
+    end
+    local self = harmonic[memory][dimension](stiffness, offset, logger)
+
+    -- add description for profiler
+    self.description = property(function()
+        return "harmonic potential" .. label
+    end)
+
+    -- store memory location
+    self.memory = property(function(self) return memory end)
+
+    -- add logger instance
+    self.logger = property(function()
+        return logger
+    end)
+
+    return self
+end)
+
+return M

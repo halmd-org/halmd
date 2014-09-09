@@ -1,6 +1,5 @@
 --
 -- Copyright © 2014 Felix Höfling
--- Copyright © 2012 Peter Colberg
 --
 -- This file is part of HALMD.
 --
@@ -21,16 +20,15 @@
 local module = require("halmd.utility.module")
 
 ---
--- .. _potentials:
+-- .. _external_potentials:
 --
--- Potentials
--- ==========
+-- External potentials
+-- ===================
 --
 -- .. toctree::
---    :maxdepth: 2
+--    :maxdepth: 1
 --    :glob:
 --
---    external/*
---    pair/*
+--    *
 --
-return module.loader("halmd.mdsim.potentials")
+return module.loader("halmd.mdsim.potentials.external")
