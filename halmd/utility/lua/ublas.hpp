@@ -67,7 +67,7 @@ struct default_converter<boost::numeric::ublas::vector<T, A> >
         std::size_t i = 1;
         for (auto const& x : v) {
             // default_converter<T> only invoked with reference wrapper
-            table[i++] = std::cref(x);
+            table[i++] = boost::cref(x);
         }
         table.push(L);
     }
@@ -119,7 +119,7 @@ struct default_converter<boost::numeric::ublas::matrix<T, F, A> >
         for (std::size_t i = 0; i < m.size1(); ++i) {
             vector_type r = row(m, i);
             // default_converter<T> only invoked with reference wrapper
-            table[i + 1] = std::cref(r);
+            table[i + 1] = boost::cref(r);
         }
         table.push(L);
     }
@@ -164,7 +164,7 @@ struct default_converter<boost::numeric::ublas::symmetric_matrix<T, F1, F2, A> >
         for (std::size_t i = 0; i < m.size1(); ++i) {
             vector_type r = row(m, i);
             // default_converter<T> only invoked with reference wrapper
-            table[i + 1] = std::cref(r);
+            table[i + 1] = boost::cref(r);
         }
         table.push(L);
     }

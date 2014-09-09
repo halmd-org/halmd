@@ -47,7 +47,7 @@ static luaponte::object read_attribute(
 {
     if (h5xx::exists_attribute(object, name)) {
         T value = h5xx::read_attribute<T>(object, name);
-        return luaponte::object(L, std::cref(value));
+        return luaponte::object(L, boost::cref(value));
     }
     return luaponte::object(); // == nil
 }

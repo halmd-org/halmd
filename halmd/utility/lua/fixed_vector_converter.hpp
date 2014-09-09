@@ -67,7 +67,7 @@ struct default_converter<halmd::fixed_vector<T, N> >
         std::size_t i = 1;
         for (auto const& x : v) {
             // default_converter<T> only invoked with reference wrapper
-            table[i++] = std::cref(x);
+            table[i++] = boost::cref(x);
         }
         table.push(L);
     }

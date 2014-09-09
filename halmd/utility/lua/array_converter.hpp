@@ -64,7 +64,7 @@ struct default_converter<boost::array<T, N> >
         std::size_t i = 1;
         for (auto const& x : array) {
             // default_converter<T> only invoked with reference wrapper
-            table[i++] = std::cref(x);
+            table[i++] = boost::cref(x);
         }
         table.push(L);
     }
@@ -112,7 +112,7 @@ struct default_converter<boost::multi_array<T, 1> >
         std::size_t i = 1;
         for (auto const& x : array) {
             // default_converter<T> only invoked with reference wrapper
-            table[i++] = std::cref(x);
+            table[i++] = boost::cref(x);
         }
         table.push(L);
     }

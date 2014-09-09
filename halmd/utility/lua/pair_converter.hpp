@@ -55,8 +55,8 @@ struct default_converter<std::pair<T, U> >
     void to(lua_State* L, std::pair<T, U> const& v)
     {
         object table = newtable(L);
-        table[1] = std::cref(v.first);
-        table[2] = std::cref(v.second);
+        table[1] = boost::cref(v.first);
+        table[2] = boost::cref(v.second);
         table.push(L);
     }
 };
