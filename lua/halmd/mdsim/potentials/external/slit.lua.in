@@ -1,0 +1,189 @@
+--
+-- Copyright © 2014      Sutapa Roy
+-- Copyright © 2010-2014 Felix Höfling
+-- Copyright © 2013      Nicolas Höft
+-- Copyright © 2010      Peter Colberg
+--
+-- This file is part of HALMD.
+--
+-- HALMD is free software: you can redistribute it and/or modify
+-- it under the terms of the GNU General Public License as published by
+-- the Free Software Foundation, either version 3 of the License, or
+-- (at your option) any later version.
+--
+-- This program is distributed in the hope that it will be useful,
+-- but WITHOUT ANY WARRANTY; without even the implied warranty of
+-- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+-- GNU General Public License for more details.
+--
+-- You should have received a copy of the GNU General Public License
+-- along with this program.  If not, see <http://www.gnu.org/licenses/>.
+--
+
+local device            = require("halmd.utility.device")
+local log               = require("halmd.io.log")
+local numeric           = require("halmd.numeric")
+local utility           = require("halmd.utility")
+local module            = require("halmd.utility.module")
+
+---
+-- Slit potential
+-- ==================
+--
+-- This module implements the slit potential,
+--
+-- .. math::
+--
+--    U_i^{(\alpha)} (d^{(\alpha)}) = \epsilon_i^{(\alpha)} \Big[ \frac{2}{15} \left(\frac{\sigma_i}{d^{(\alpha)}} \right)^9 - c_i^{(\alpha)}\left(\frac{\sigma_i}{d^{(\alpha)}}\right)^3\Big]
+-- 
+-- for the potential energy of a particle of species :math:`i` due to wall :math:`\alpha` of the slit pore.
+--
+-- For the bottom wall, :math:`d^{(1)} = \frac{D}{2} + {\vec r} \cdot \hat{n} - {\vec r_0} \cdot \hat{n}` 
+--
+-- and for the top wall, :math:`d^{(2)} = D - d^{(1)}.`
+--
+
+-- grab C++ wrappers
+local slit = {
+    host = {
+        [2] = assert(libhalmd.mdsim.host.potentials.external.slit_2)
+      , [3] = assert(libhalmd.mdsim.host.potentials.external.slit_3)
+    }
+}
+if device.gpu then
+    slit.gpu = {
+        [2] = assert(libhalmd.mdsim.gpu.potentials.external.slit_2)
+      , [3] = assert(libhalmd.mdsim.gpu.potentials.external.slit_3)
+    }
+end
+
+---
+-- Construct the slit potential.
+--
+-- :param table args: keyword arguments
+-- :param table args.width: slit width :math:`D`
+-- :param table args.offset: position vector of the slit centre :math:`\vec r_{0}`
+-- :param number args.surface_normal: outward normal vector to the top wall of slit pore :math:`\hat n`
+-- :param number args.epsilon: interaction strengths :math:`\varepsilon_i^{(\alpha)}`
+-- :param number args.sigma: interaction ranges :math:`\sigma_i^{(\alpha)}`
+-- :param number args.wetting: wetting parameter :math:`c_i^{(\alpha)}`
+-- :param string args.memory: select memory location *(optional)*
+-- :param string args.label: instance label *(optional)*
+--
+-- If all elements of a parameter sequence are equal, a single value may be
+-- passed instead. In this case, ``species`` must be specified.
+--
+-- If the argument ``species`` is omitted, it is inferred from the length
+-- of the parameter sequences.
+--
+-- The supported values for ``memory`` are "host" and "gpu". If ``memory`` is
+-- not specified, the memory location is selected according to the compute
+-- device.
+--
+-- .. attribute:: width
+--
+--    Width of the slit :math:`D`.
+--
+-- .. attribute:: offset
+--
+--    Sequence with position vector of the slit centre :math:`\vec r_{0}`.
+--
+-- .. attribute:: surface_normal
+--
+--    Sequence with outward normal vector to top wall of slit pore :math:`\hat {n}`.
+--
+-- .. attribute:: epsilon
+--
+--    Sequence with interaction strengths :math:`\varepsilon_i^{(\alpha)}`.
+--
+-- .. attribute:: sigma
+--
+--    Sequence with interaction ranges :math:`\sigma_i^{(\alpha)}`.
+--
+-- .. attribute:: wetting
+--
+--    Sequence with wetting parameters :math:`c_i^{(\alpha)}`.
+--
+-- .. attribute:: description
+--
+--    Name of potential for profiler.
+--
+-- .. attribute:: memory
+--
+--    Device where the particle memory resides.
+--
+local M = module(function(args)
+    local width = utility.assert_type(utility.assert_kwarg(args, "width"), "number")
+    local offset = utility.assert_type(utility.assert_kwarg(args, "offset"), "table")
+    local surface_normal = utility.assert_type(utility.assert_kwarg(args, "surface_normal"), "table")
+
+    local epsilon = utility.assert_kwarg(args, "epsilon")
+    if type(epsilon) ~= "table" and type(epsilon) ~= "number" then
+        error("bad argument 'epsilon'", 2)
+    end
+    local sigma = utility.assert_kwarg(args, "sigma")
+    if type(sigma) ~= "table" and type(sigma) ~= "number" then
+        error("bad argument 'sigma'", 2)
+    end
+    local wetting = utility.assert_kwarg(args, "wetting")
+    if type(wetting) ~= "table" and type(wetting) ~= "number" then
+        error("bad argument 'wetting'", 2)
+    end
+
+    local memory = args and args.memory or (device.gpu and "gpu" or "host")
+    local label = args and args.label and utility.assert_type(args.label, "string")
+    label = label and (" (%s)"):format(label) or ""
+    local logger = log.logger({label =  "slit pore" .. label})
+
+    -- derive number of species from parameter sequence
+    local species = args and args.species
+                    or (type(epsilon) == "table" and #epsilon)
+                    or (type(sigma) == "table" and #sigma)
+                    or (type(wetting) == "table" and #wetting)
+
+    if not species or type(species) ~= "number" or species < 1 then
+        error("missing or invalid argument: species", 2)
+    end
+
+    -- promote single elements to sequences
+    if type(epsilon) == "number" then
+        epsilon = numeric.scalar_matrix(species, 2, epsilon)
+    end
+
+    if type(sigma) == "number" then
+        sigma = numeric.scalar_matrix(species, 2, sigma)
+    end
+
+    if type(wetting) == "number" then
+        wetting = numeric.scalar_matrix(species, 2, wetting)
+    end
+
+    -- determine space dimension from length of offset vector
+    local dimension = #offset
+
+    -- construct instance
+    if not slit[memory] then
+        error(("unsupported memory type '%s'"):format(memory), 2)
+    end
+    if not slit[memory][dimension] then
+        error(("unsupported dimension '%d'"):format(dimension), 2)
+    end
+    local self = slit[memory][dimension](width, offset, surface_normal, epsilon, sigma, wetting, logger)
+
+    -- add description for profiler
+    self.description = property(function()
+        return "slit pore" .. label .. " with Lennard-Jones potential"
+    end)
+
+    -- store memory location
+    self.memory = property(function(self) return memory end)
+
+    -- add logger instance
+    self.logger = property(function()
+        return logger
+    end)
+
+    return self
+end)
+
+return M
