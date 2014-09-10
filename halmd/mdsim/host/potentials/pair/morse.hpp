@@ -22,8 +22,8 @@
 #define HALMD_MDSIM_HOST_POTENTIALS_PAIR_MORSE_HPP
 
 #include <boost/numeric/ublas/matrix.hpp>
-#include <boost/tuple/tuple.hpp>
 #include <lua.hpp>
+#include <tuple>
 #include <memory>
 
 #include <halmd/io/logger.hpp>
@@ -59,7 +59,7 @@ public:
      * @param b type of second interacting particle
      * @returns tuple of unit "force" @f$ -U'(r)/r @f$ and potential @f$ U(r) @f$
      */
-    boost::tuple<float_type, float_type> operator()(float_type rr, unsigned a, unsigned b) const
+    std::tuple<float_type, float_type> operator()(float_type rr, unsigned a, unsigned b) const
     {
         float_type r_sigma = sqrt(rr) / sigma_(a, b);
         float_type exp_dr = exp(r_min_sigma_(a, b) - r_sigma);
@@ -67,7 +67,7 @@ public:
         float_type fval = 2 * eps_exp_dr * (exp_dr - 1) * r_sigma / rr;
         float_type en_pot = eps_exp_dr * (exp_dr - 2) - en_cut_(a, b);
 
-        return boost::make_tuple(fval, en_pot);
+        return std::make_tuple(fval, en_pot);
     }
 
     matrix_type const& r_cut() const

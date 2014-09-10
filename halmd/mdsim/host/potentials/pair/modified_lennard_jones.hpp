@@ -22,8 +22,8 @@
 #define HALMD_MDSIM_HOST_MODIFIED_POTENTIALS_PAIR_LENNARD_JONES_HPP
 
 #include <boost/numeric/ublas/matrix.hpp>
-#include <boost/tuple/tuple.hpp>
 #include <lua.hpp>
+#include <tuple>
 #include <memory>
 
 #include <halmd/io/logger.hpp>
@@ -67,7 +67,7 @@ public:
      *   U(r) &=& 4 \epsilon (\sigma/r)^{n} \left[ (\sigma/r)^{m-n} - 1 \right]
      * @f}
      */
-    boost::tuple<float_type, float_type> operator()(float_type rr, unsigned a, unsigned b) const
+    std::tuple<float_type, float_type> operator()(float_type rr, unsigned a, unsigned b) const
     {
         float_type sigma2 = sigma2_(a, b);
         unsigned m_2 = index_m_2_(a, b);
@@ -79,7 +79,7 @@ public:
         float_type fval = 8 * rri * eps_rni * (m_2 * rmni - n_2) / sigma2;
         float_type en_pot = 4 * eps_rni * (rmni - 1) - en_cut_(a, b);
 
-        return boost::make_tuple(fval, en_pot);
+        return std::make_tuple(fval, en_pot);
     }
 
     matrix_type const& r_cut() const

@@ -20,13 +20,13 @@
 #ifndef TEST_UNIT_UTILITY_LUA_EXCEPTION_FIXTURE_HPP
 #define TEST_UNIT_UTILITY_LUA_EXCEPTION_FIXTURE_HPP
 
+#include <tuple>
 #include <boost/bind.hpp>
-#include <boost/tuple/tuple.hpp>
-#include <boost/tuple/tuple_io.hpp>
 #include <boost/test/output_test_stream.hpp>
 
 #include <halmd/utility/lua/function.hpp>
 #include <test/tools/lua.hpp>
+#include <test/tools/tuple_io.hpp>
 
 struct function_exception_fixture : lua_test_fixture
 {
@@ -60,47 +60,47 @@ struct function_exception_fixture : lua_test_fixture
 
     static void throw_exception0()
     {
-        throw boost::make_tuple(std::string("exception0"));
+        throw std::make_tuple(std::string("exception0"));
     };
 
     static void throw_exception1(int arg1)
     {
-        throw boost::make_tuple(std::string("exception1"), arg1);
+        throw std::make_tuple(std::string("exception1"), arg1);
     };
 
     static void throw_exception2(int arg1, int arg2)
     {
-        throw boost::make_tuple(std::string("exception2"), arg1, arg2);
+        throw std::make_tuple(std::string("exception2"), arg1, arg2);
     };
 
     static void throw_exception3(int arg1, int arg2, int arg3)
     {
-        throw boost::make_tuple(std::string("exception3"), arg1, arg2, arg3);
+        throw std::make_tuple(std::string("exception3"), arg1, arg2, arg3);
     };
 
     static void throw_exception4(int arg1, int arg2, int arg3, int arg4)
     {
-        throw boost::make_tuple(std::string("exception4"), arg1, arg2, arg3, arg4);
+        throw std::make_tuple(std::string("exception4"), arg1, arg2, arg3, arg4);
     };
 
     static void throw_exception5(int arg1, int arg2, int arg3, int arg4, int arg5)
     {
-        throw boost::make_tuple(std::string("exception5"), arg1, arg2, arg3, arg4, arg5);
+        throw std::make_tuple(std::string("exception5"), arg1, arg2, arg3, arg4, arg5);
     };
 
     static void throw_exception6(int arg1, int arg2, int arg3, int arg4, int arg5, int arg6)
     {
-        throw boost::make_tuple(std::string("exception6"), arg1, arg2, arg3, arg4, arg5, arg6);
+        throw std::make_tuple(std::string("exception6"), arg1, arg2, arg3, arg4, arg5, arg6);
     };
 
     static void throw_exception7(int arg1, int arg2, int arg3, int arg4, int arg5, int arg6, int arg7)
     {
-        throw boost::make_tuple(std::string("exception7"), arg1, arg2, arg3, arg4, arg5, arg6, arg7);
+        throw std::make_tuple(std::string("exception7"), arg1, arg2, arg3, arg4, arg5, arg6, arg7);
     };
 
     static void throw_exception8(int arg1, int arg2, int arg3, int arg4, int arg5, int arg6, int arg7, int arg8)
     {
-        throw boost::make_tuple(std::string("exception8"), arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8);
+        throw std::make_tuple(std::string("exception8"), arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8);
     };
 
     static std::function<void ()> wrap_throw_exception0()
@@ -153,7 +153,7 @@ struct function_exception_fixture : lua_test_fixture
         try {
             slot();
         }
-        catch (boost::tuple<std::string> const& t)
+        catch (std::tuple<std::string> const& t)
         {
             output << t;
         }
@@ -164,7 +164,7 @@ struct function_exception_fixture : lua_test_fixture
         try {
             slot(arg1);
         }
-        catch (boost::tuple<std::string, int> const& t)
+        catch (std::tuple<std::string, int> const& t)
         {
             output << t;
         }
@@ -175,7 +175,7 @@ struct function_exception_fixture : lua_test_fixture
         try {
             slot(arg1, arg2);
         }
-        catch (boost::tuple<std::string, int, int> const& t)
+        catch (std::tuple<std::string, int, int> const& t)
         {
             output << t;
         }
@@ -186,7 +186,7 @@ struct function_exception_fixture : lua_test_fixture
         try {
             slot(arg1, arg2, arg3);
         }
-        catch (boost::tuple<std::string, int, int, int> const& t)
+        catch (std::tuple<std::string, int, int, int> const& t)
         {
             output << t;
         }
@@ -197,7 +197,7 @@ struct function_exception_fixture : lua_test_fixture
         try {
             slot(arg1, arg2, arg3, arg4);
         }
-        catch (boost::tuple<std::string, int, int, int, int> const& t)
+        catch (std::tuple<std::string, int, int, int, int> const& t)
         {
             output << t;
         }
@@ -208,7 +208,7 @@ struct function_exception_fixture : lua_test_fixture
         try {
             slot(arg1, arg2, arg3, arg4, arg5);
         }
-        catch (boost::tuple<std::string, int, int, int, int, int> const& t)
+        catch (std::tuple<std::string, int, int, int, int, int> const& t)
         {
             output << t;
         }
@@ -219,7 +219,7 @@ struct function_exception_fixture : lua_test_fixture
         try {
             slot(arg1, arg2, arg3, arg4, arg5, arg6);
         }
-        catch (boost::tuple<std::string, int, int, int, int, int, int> const& t)
+        catch (std::tuple<std::string, int, int, int, int, int, int> const& t)
         {
             output << t;
         }
@@ -230,7 +230,7 @@ struct function_exception_fixture : lua_test_fixture
         try {
             slot(arg1, arg2, arg3, arg4, arg5, arg6, arg7);
         }
-        catch (boost::tuple<std::string, int, int, int, int, int, int, int> const& t)
+        catch (std::tuple<std::string, int, int, int, int, int, int, int> const& t)
         {
             output << t;
         }
@@ -241,7 +241,7 @@ struct function_exception_fixture : lua_test_fixture
         try {
             slot(arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8);
         }
-        catch (boost::tuple<std::string, int, int, int, int, int, int, int, int> const& t)
+        catch (std::tuple<std::string, int, int, int, int, int, int, int, int> const& t)
         {
             output << t;
         }

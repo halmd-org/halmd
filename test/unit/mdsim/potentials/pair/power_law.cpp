@@ -116,7 +116,7 @@ BOOST_AUTO_TEST_CASE( power_law_host )
     BOOST_FOREACH (array_type const& a, results_aa) {
         double rr = std::pow(a[0], 2);
         double fval, en_pot;
-        tie(fval, en_pot) = potential(rr, 0, 0);  // interaction AA
+        std::tie(fval, en_pot) = potential(rr, 0, 0);  // interaction AA
 
         double tolerance = (1 + index_array(0, 0) / 2) * eps;
         BOOST_CHECK_CLOSE_FRACTION(fval, a[1], tolerance);
@@ -136,7 +136,7 @@ BOOST_AUTO_TEST_CASE( power_law_host )
     BOOST_FOREACH (array_type const& a, results_ab) {
         double rr = std::pow(a[0], 2);
         double fval, en_pot;
-        tie(fval, en_pot) = potential(rr, 0, 1);  // interaction AB
+        std::tie(fval, en_pot) = potential(rr, 0, 1);  // interaction AB
 
         double tolerance = (1 + index_array(0, 1) / 2) * eps;
         BOOST_CHECK_CLOSE_FRACTION(fval, a[1], tolerance);
@@ -156,7 +156,7 @@ BOOST_AUTO_TEST_CASE( power_law_host )
     BOOST_FOREACH (array_type const& a, results_bb) {
         double rr = std::pow(a[0], 2);
         double fval, en_pot;
-        tie(fval, en_pot) = potential(rr, 1, 1);  // interaction BB
+        std::tie(fval, en_pot) = potential(rr, 1, 1);  // interaction BB
 
         double tolerance = (1 + index_array(1, 1) / 2) * eps;
         BOOST_CHECK_CLOSE_FRACTION(fval, a[1], tolerance);
@@ -225,7 +225,7 @@ void power_law<float_type>::test()
 
         // reference values from host module
         float_type fval, en_pot_;
-        tie(fval, en_pot_) = (*host_potential)(inner_prod(r, r), type1, type2);
+        std::tie(fval, en_pot_) = (*host_potential)(inner_prod(r, r), type1, type2);
         // the GPU force module stores only a fraction of these values
         en_pot_ /= 2;
 

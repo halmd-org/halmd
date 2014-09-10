@@ -21,10 +21,9 @@
 
 #include <algorithm>
 #include <boost/algorithm/string/join.hpp> // boost::join
-#include <boost/bind.hpp>
-#include <boost/tuple/tuple.hpp> // boost::tie
 #include <cmath> // std::signbit
 #include <limits>
+#include <tuple>
 #include <luaponte/luaponte.hpp>
 #include <luaponte/out_value_policy.hpp>
 #include <stdexcept>
@@ -35,7 +34,6 @@
 #include <halmd/numeric/blas/fixed_vector.hpp>
 #include <halmd/utility/lua/lua.hpp>
 
-using boost::tie;
 using namespace std;
 
 namespace halmd {

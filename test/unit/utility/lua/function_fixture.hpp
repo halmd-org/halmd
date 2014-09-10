@@ -20,13 +20,13 @@
 #ifndef TEST_UNIT_UTILITY_LUA_FIXTURE_HPP
 #define TEST_UNIT_UTILITY_LUA_FIXTURE_HPP
 
+#include <tuple>
 #include <boost/bind.hpp>
-#include <boost/tuple/tuple.hpp>
-#include <boost/tuple/tuple_io.hpp>
 #include <boost/test/output_test_stream.hpp>
 
 #include <halmd/utility/lua/function.hpp>
 #include <test/tools/lua.hpp>
+#include <test/tools/tuple_io.hpp>
 
 struct function_fixture : lua_test_fixture
 {
@@ -60,47 +60,47 @@ struct function_fixture : lua_test_fixture
 
     static void slot0()
     {
-        output << boost::make_tuple(std::string("slot0"));
+        output << std::make_tuple(std::string("slot0"));
     };
 
     static void slot1(int arg1)
     {
-        output << boost::make_tuple(std::string("slot1"), arg1);
+        output << std::make_tuple(std::string("slot1"), arg1);
     };
 
     static void slot2(int arg1, int arg2)
     {
-        output << boost::make_tuple(std::string("slot2"), arg1, arg2);
+        output << std::make_tuple(std::string("slot2"), arg1, arg2);
     };
 
     static void slot3(int arg1, int arg2, int arg3)
     {
-        output << boost::make_tuple(std::string("slot3"), arg1, arg2, arg3);
+        output << std::make_tuple(std::string("slot3"), arg1, arg2, arg3);
     };
 
     static void slot4(int arg1, int arg2, int arg3, int arg4)
     {
-        output << boost::make_tuple(std::string("slot4"), arg1, arg2, arg3, arg4);
+        output << std::make_tuple(std::string("slot4"), arg1, arg2, arg3, arg4);
     };
 
     static void slot5(int arg1, int arg2, int arg3, int arg4, int arg5)
     {
-        output << boost::make_tuple(std::string("slot5"), arg1, arg2, arg3, arg4, arg5);
+        output << std::make_tuple(std::string("slot5"), arg1, arg2, arg3, arg4, arg5);
     };
 
     static void slot6(int arg1, int arg2, int arg3, int arg4, int arg5, int arg6)
     {
-        output << boost::make_tuple(std::string("slot6"), arg1, arg2, arg3, arg4, arg5, arg6);
+        output << std::make_tuple(std::string("slot6"), arg1, arg2, arg3, arg4, arg5, arg6);
     };
 
     static void slot7(int arg1, int arg2, int arg3, int arg4, int arg5, int arg6, int arg7)
     {
-        output << boost::make_tuple(std::string("slot7"), arg1, arg2, arg3, arg4, arg5, arg6, arg7);
+        output << std::make_tuple(std::string("slot7"), arg1, arg2, arg3, arg4, arg5, arg6, arg7);
     };
 
     static void slot8(int arg1, int arg2, int arg3, int arg4, int arg5, int arg6, int arg7, int arg8)
     {
-        output << boost::make_tuple(std::string("slot8"), arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8);
+        output << std::make_tuple(std::string("slot8"), arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8);
     };
 
     static std::function<void ()> wrap_slot0()

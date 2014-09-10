@@ -235,7 +235,7 @@ inline void pair_trunc<dimension, float_type, potential_type, trunc_type>::compu
                 continue;
 
             float_type fval, pot;
-            boost::tie(fval, pot) = (*potential_)(rr, a, b);
+            std::tie(fval, pot) = (*potential_)(rr, a, b);
 
             // optionally smooth potential yielding continuous 2nd derivative
             (*trunc_)(std::sqrt(rr), potential_->r_cut(a, b), fval, pot);
@@ -299,7 +299,7 @@ inline void pair_trunc<dimension, float_type, potential_type, trunc_type>::compu
                 continue;
 
             float_type fval, pot;
-            boost::tie(fval, pot) = (*potential_)(rr, a, b);
+            std::tie(fval, pot) = (*potential_)(rr, a, b);
 
             // optionally smooth potential yielding continuous 2nd derivative
             (*trunc_)(std::sqrt(rr), potential_->r_cut(a, b), fval, pot);

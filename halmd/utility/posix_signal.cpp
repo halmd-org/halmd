@@ -21,7 +21,6 @@
 #include <boost/lexical_cast.hpp>
 #include <boost/system/error_code.hpp>
 #include <boost/system/system_error.hpp>
-#include <boost/tuple/tuple.hpp>
 
 #include <halmd/io/logger.hpp>
 #include <halmd/utility/lua/lua.hpp>

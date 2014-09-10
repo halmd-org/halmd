@@ -71,7 +71,7 @@ void boltzmann<dimension, float_type>::set()
         vector_type& v = (*velocity)[i];
         // assign two components at a time
         for (unsigned int j = 0; j < dimension - 1; j += 2) {
-            boost::tie(v[j], v[j + 1]) = random_->normal(sigma);
+            std::tie(v[j], v[j + 1]) = random_->normal(sigma);
         }
         // handle last component separately for odd dimensions
         if (dimension % 2 == 1) {
@@ -79,7 +79,7 @@ void boltzmann<dimension, float_type>::set()
                 v[dimension - 1] = r;
             }
             else {
-                boost::tie(v[dimension - 1], r) = random_->normal(sigma);
+                std::tie(v[dimension - 1], r) = random_->normal(sigma);
             }
             r_valid = !r_valid;
         }

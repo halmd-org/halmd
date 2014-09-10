@@ -19,15 +19,13 @@
  */
 
 #include <algorithm>
+#include <tuple>
 #include <boost/bind.hpp>
-#include <boost/tuple/tuple.hpp> // boost::tie
 
 #include <halmd/algorithm/multi_range.hpp>
 #include <halmd/mdsim/host/positions/excluded_volume.hpp>
 #include <halmd/utility/demangle.hpp>
 #include <halmd/utility/lua/lua.hpp>
-
-using boost::tie;
 
 namespace halmd {
 namespace mdsim {
@@ -55,7 +53,7 @@ void excluded_volume<dimension, float_type>::exclude_sphere(
 )
 {
     index_type lower, upper;
-    tie(lower, upper) = this->sphere_extents(centre, diameter);
+    std::tie(lower, upper) = this->sphere_extents(centre, diameter);
     upper += index_type(1); // index range is [lower, upper)
     multi_range_for_each(
         lower
@@ -88,7 +86,7 @@ bool excluded_volume<dimension, float_type>::place_sphere(
 ) const
 {
     index_type lower, upper;
-    tie(lower, upper) = this->sphere_extents(centre, diameter);
+    std::tie(lower, upper) = this->sphere_extents(centre, diameter);
     upper += index_type(1); // index range is [lower, upper)
     index_type result = multi_range_find_if(
         lower

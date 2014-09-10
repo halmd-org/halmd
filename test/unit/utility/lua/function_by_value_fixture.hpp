@@ -20,13 +20,13 @@
 #ifndef TEST_UNIT_UTILITY_LUA_BY_VALUE_FIXTURE_HPP
 #define TEST_UNIT_UTILITY_LUA_BY_VALUE_FIXTURE_HPP
 
+#include <tuple>
 #include <boost/bind.hpp>
-#include <boost/tuple/tuple.hpp>
-#include <boost/tuple/tuple_io.hpp>
 #include <boost/test/output_test_stream.hpp>
 
 #include <halmd/utility/lua/function.hpp>
 #include <test/tools/lua.hpp>
+#include <test/tools/tuple_io.hpp>
 
 struct function_by_value_fixture : lua_test_fixture
 {
@@ -60,55 +60,55 @@ struct function_by_value_fixture : lua_test_fixture
 
     static int slot_by_value0()
     {
-        output << boost::make_tuple(std::string("slot_by_value0"));
+        output << std::make_tuple(std::string("slot_by_value0"));
         return 1000;
     };
 
     static int slot_by_value1(int arg1)
     {
-        output << boost::make_tuple(std::string("slot_by_value1"), arg1);
+        output << std::make_tuple(std::string("slot_by_value1"), arg1);
         return 1001;
     };
 
     static int slot_by_value2(int arg1, int arg2)
     {
-        output << boost::make_tuple(std::string("slot_by_value2"), arg1, arg2);
+        output << std::make_tuple(std::string("slot_by_value2"), arg1, arg2);
         return 1002;
     };
 
     static int slot_by_value3(int arg1, int arg2, int arg3)
     {
-        output << boost::make_tuple(std::string("slot_by_value3"), arg1, arg2, arg3);
+        output << std::make_tuple(std::string("slot_by_value3"), arg1, arg2, arg3);
         return 1003;
     };
 
     static int slot_by_value4(int arg1, int arg2, int arg3, int arg4)
     {
-        output << boost::make_tuple(std::string("slot_by_value4"), arg1, arg2, arg3, arg4);
+        output << std::make_tuple(std::string("slot_by_value4"), arg1, arg2, arg3, arg4);
         return 1004;
     };
 
     static int slot_by_value5(int arg1, int arg2, int arg3, int arg4, int arg5)
     {
-        output << boost::make_tuple(std::string("slot_by_value5"), arg1, arg2, arg3, arg4, arg5);
+        output << std::make_tuple(std::string("slot_by_value5"), arg1, arg2, arg3, arg4, arg5);
         return 1005;
     };
 
     static int slot_by_value6(int arg1, int arg2, int arg3, int arg4, int arg5, int arg6)
     {
-        output << boost::make_tuple(std::string("slot_by_value6"), arg1, arg2, arg3, arg4, arg5, arg6);
+        output << std::make_tuple(std::string("slot_by_value6"), arg1, arg2, arg3, arg4, arg5, arg6);
         return 1006;
     };
 
     static int slot_by_value7(int arg1, int arg2, int arg3, int arg4, int arg5, int arg6, int arg7)
     {
-        output << boost::make_tuple(std::string("slot_by_value7"), arg1, arg2, arg3, arg4, arg5, arg6, arg7);
+        output << std::make_tuple(std::string("slot_by_value7"), arg1, arg2, arg3, arg4, arg5, arg6, arg7);
         return 1007;
     };
 
     static int slot_by_value8(int arg1, int arg2, int arg3, int arg4, int arg5, int arg6, int arg7, int arg8)
     {
-        output << boost::make_tuple(std::string("slot_by_value8"), arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8);
+        output << std::make_tuple(std::string("slot_by_value8"), arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8);
         return 1008;
     };
 

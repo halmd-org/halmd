@@ -22,8 +22,8 @@
 #define HALMD_MDSIM_HOST_POTENTIALS_PAIR_POWER_LAW_HPP
 
 #include <boost/numeric/ublas/matrix.hpp>
-#include <boost/tuple/tuple.hpp>
 #include <lua.hpp>
+#include <tuple>
 #include <memory>
 
 #include <halmd/io/logger.hpp>
@@ -126,7 +126,7 @@ public:
      *
      *
      */
-    boost::tuple<float_type, float_type> operator()(float_type rr, unsigned a, unsigned b) const
+    std::tuple<float_type, float_type> operator()(float_type rr, unsigned a, unsigned b) const
     {
         switch (index_(a, b)) {
             case 6:  return impl_<6>(rr, a, b);
@@ -197,7 +197,7 @@ private:
      * @returns tuple of unit "force" @f$ -U'(r)/r @f$ and potential @f$ U(r) @f$
      */
     template <int const_index>
-    boost::tuple<float_type, float_type> impl_(float_type rr, unsigned a, unsigned b) const
+    std::tuple<float_type, float_type> impl_(float_type rr, unsigned a, unsigned b) const
     {
         // choose arbitrary index_ if template parameter index = 0
         unsigned int n = const_index > 0 ? const_index : index_(a, b);
@@ -211,7 +211,7 @@ private:
         float_type fval = n * eps_rni / rr;
         float_type en_pot = eps_rni - en_cut_(a, b);
 
-        return boost::make_tuple(fval, en_pot);
+        return std::make_tuple(fval, en_pot);
     }
 
     /** interaction strength in MD units */

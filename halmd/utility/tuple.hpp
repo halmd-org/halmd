@@ -33,7 +33,7 @@ namespace halmd {
 
 #ifndef __CUDACC__
 
-// import Boost.Tuple library into halmd namespace
+// import tuple library into halmd namespace
 using std::tuple;
 using std::get;
 using std::make_tuple;
@@ -44,8 +44,8 @@ using std::tie;
 //
 // Poor man's tuple library for CUDA.
 //
-// This library tries to partially model Boost.Tuple using a very
-// simple implementation. We cannot use Boost.Tuple because nvcc
+// This library tries to partially model tuple using a very
+// simple implementation. We cannot use tuple because nvcc
 // refuses to call perfectly valid (and most probably supported)
 // functions if they do not have the __device__ attribute.
 // Sigh…

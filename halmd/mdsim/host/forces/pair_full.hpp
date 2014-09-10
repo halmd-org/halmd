@@ -219,7 +219,7 @@ inline void pair_full<dimension, float_type, potential_type>::compute_()
             float_type rr = inner_prod(r, r);
 
             float_type fval, pot;
-            boost::tie(fval, pot) = (*potential_)(rr, a, b);
+            std::tie(fval, pot) = (*potential_)(rr, a, b);
 
             // add force contribution to both particles
             (*force)[i] += r * fval;
@@ -276,7 +276,7 @@ inline void pair_full<dimension, float_type, potential_type>::compute_aux_()
             float_type rr = inner_prod(r, r);
 
             float_type fval, pot;
-            boost::tie(fval, pot) = (*potential_)(rr, a, b);
+            std::tie(fval, pot) = (*potential_)(rr, a, b);
 
             // add force contribution to both particles
             (*force)[i] += r * fval;

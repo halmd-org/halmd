@@ -20,13 +20,13 @@
 #ifndef TEST_UNIT_UTILITY_LUA_BY_CONST_REF_FIXTURE_HPP
 #define TEST_UNIT_UTILITY_LUA_BY_CONST_REF_FIXTURE_HPP
 
+#include <tuple>
 #include <boost/bind.hpp>
-#include <boost/tuple/tuple.hpp>
-#include <boost/tuple/tuple_io.hpp>
 #include <boost/test/output_test_stream.hpp>
 
 #include <halmd/utility/lua/function.hpp>
 #include <test/tools/lua.hpp>
+#include <test/tools/tuple_io.hpp>
 
 struct function_by_const_ref_fixture : lua_test_fixture
 {
@@ -60,63 +60,63 @@ struct function_by_const_ref_fixture : lua_test_fixture
 
     static int const& slot_by_const_ref0()
     {
-        output << boost::make_tuple(std::string("slot_by_const_ref0"));
+        output << std::make_tuple(std::string("slot_by_const_ref0"));
         static int value = 0;
         return value;
     };
 
     static int const& slot_by_const_ref1(int arg1)
     {
-        output << boost::make_tuple(std::string("slot_by_const_ref1"), arg1);
+        output << std::make_tuple(std::string("slot_by_const_ref1"), arg1);
         static int value = 1;
         return value;
     };
 
     static int const& slot_by_const_ref2(int arg1, int arg2)
     {
-        output << boost::make_tuple(std::string("slot_by_const_ref2"), arg1, arg2);
+        output << std::make_tuple(std::string("slot_by_const_ref2"), arg1, arg2);
         static int value = 2;
         return value;
     };
 
     static int const& slot_by_const_ref3(int arg1, int arg2, int arg3)
     {
-        output << boost::make_tuple(std::string("slot_by_const_ref3"), arg1, arg2, arg3);
+        output << std::make_tuple(std::string("slot_by_const_ref3"), arg1, arg2, arg3);
         static int value = 3;
         return value;
     };
 
     static int const& slot_by_const_ref4(int arg1, int arg2, int arg3, int arg4)
     {
-        output << boost::make_tuple(std::string("slot_by_const_ref4"), arg1, arg2, arg3, arg4);
+        output << std::make_tuple(std::string("slot_by_const_ref4"), arg1, arg2, arg3, arg4);
         static int value = 4;
         return value;
     };
 
     static int const& slot_by_const_ref5(int arg1, int arg2, int arg3, int arg4, int arg5)
     {
-        output << boost::make_tuple(std::string("slot_by_const_ref5"), arg1, arg2, arg3, arg4, arg5);
+        output << std::make_tuple(std::string("slot_by_const_ref5"), arg1, arg2, arg3, arg4, arg5);
         static int value = 5;
         return value;
     };
 
     static int const& slot_by_const_ref6(int arg1, int arg2, int arg3, int arg4, int arg5, int arg6)
     {
-        output << boost::make_tuple(std::string("slot_by_const_ref6"), arg1, arg2, arg3, arg4, arg5, arg6);
+        output << std::make_tuple(std::string("slot_by_const_ref6"), arg1, arg2, arg3, arg4, arg5, arg6);
         static int value = 6;
         return value;
     };
 
     static int const& slot_by_const_ref7(int arg1, int arg2, int arg3, int arg4, int arg5, int arg6, int arg7)
     {
-        output << boost::make_tuple(std::string("slot_by_const_ref7"), arg1, arg2, arg3, arg4, arg5, arg6, arg7);
+        output << std::make_tuple(std::string("slot_by_const_ref7"), arg1, arg2, arg3, arg4, arg5, arg6, arg7);
         static int value = 7;
         return value;
     };
 
     static int const& slot_by_const_ref8(int arg1, int arg2, int arg3, int arg4, int arg5, int arg6, int arg7, int arg8)
     {
-        output << boost::make_tuple(std::string("slot_by_const_ref8"), arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8);
+        output << std::make_tuple(std::string("slot_by_const_ref8"), arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8);
         static int value = 8;
         return value;
     };

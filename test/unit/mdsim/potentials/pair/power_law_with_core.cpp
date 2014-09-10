@@ -41,7 +41,6 @@
 #endif
 #include <test/tools/ctest.hpp>
 
-
 using namespace boost;
 using namespace halmd;
 using namespace std;
@@ -139,7 +138,7 @@ BOOST_AUTO_TEST_CASE( power_law_with_core_host )
     BOOST_FOREACH (array_type const& a, results_aa) {
         double rr = std::pow(a[0], 2);
         double fval, en_pot;
-        tie(fval, en_pot) = potential(rr, 0, 0);  // interaction AA
+        std::tie(fval, en_pot) = potential(rr, 0, 0);  // interaction AA
 
         // tolerance due to floating-point rounding depends on difference (r-r_core)
         double r = a[0] / sigma_array(0, 0);        //< r in units of σ
@@ -161,7 +160,7 @@ BOOST_AUTO_TEST_CASE( power_law_with_core_host )
     BOOST_FOREACH (array_type const& a, results_ab) {
         double rr = std::pow(a[0], 2);
         double fval, en_pot;
-        tie(fval, en_pot) = potential(rr, 0, 1);  // interaction AB
+        std::tie(fval, en_pot) = potential(rr, 0, 1);  // interaction AB
 
         // tolerance due to floating-point rounding depends on difference (r-r_core)
         double r = a[0] / sigma_array(0, 1);        //< r in units of σ
@@ -183,7 +182,7 @@ BOOST_AUTO_TEST_CASE( power_law_with_core_host )
     BOOST_FOREACH (array_type const& a, results_bb) {
         double rr = std::pow(a[0], 2);
         double fval, en_pot;
-        tie(fval, en_pot) = potential(rr, 1, 1);  // interaction BB
+        std::tie(fval, en_pot) = potential(rr, 1, 1);  // interaction BB
 
         // tolerance due to floating-point rounding depends on difference (r-r_core)
         double r = a[0] / sigma_array(1, 1);        //< r in units of σ
@@ -255,7 +254,7 @@ void power_law_with_core<float_type>::test()
 
         // reference values from host module
         float_type fval, en_pot_;
-        tie(fval, en_pot_) = (*host_potential)(inner_prod(r, r), type1, type2);
+        std::tie(fval, en_pot_) = (*host_potential)(inner_prod(r, r), type1, type2);
         // the GPU force module stores only a fraction of these values
         en_pot_ /= 2;
 

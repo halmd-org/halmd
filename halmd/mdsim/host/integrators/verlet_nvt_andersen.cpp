@@ -121,7 +121,7 @@ void verlet_nvt_andersen<dimension, float_type>::finalize()
         else {
             // assign two velocity components at a time
             for (unsigned int i = 0; i < dimension - 1; i += 2) {
-                boost::tie(v[i], v[i + 1]) = random_->normal(sqrt_temperature_);
+                std::tie(v[i], v[i + 1]) = random_->normal(sqrt_temperature_);
             }
             // handle last component separately for odd dimensions
             if (dimension % 2 == 1) {
@@ -129,7 +129,7 @@ void verlet_nvt_andersen<dimension, float_type>::finalize()
                     v[dimension - 1] = rng_cache;
                 }
                 else {
-                    boost::tie(v[dimension - 1], rng_cache) = random_->normal(sqrt_temperature_);
+                    std::tie(v[dimension - 1], rng_cache) = random_->normal(sqrt_temperature_);
                 }
                 rng_cache_valid = !rng_cache_valid;
             }
