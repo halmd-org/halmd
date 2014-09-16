@@ -113,7 +113,6 @@ end
 --    Device where the particle memory resides.
 --
 local M = module(function(args)
-    local width = utility.assert_type(utility.assert_kwarg(args, "width"), "number")
     local offset = utility.assert_type(utility.assert_kwarg(args, "offset"), "table")
     local surface_normal = utility.assert_type(utility.assert_kwarg(args, "surface_normal"), "table")
 
@@ -130,36 +129,44 @@ local M = module(function(args)
         error("bad argument 'wetting'", 2)
     end
 
+    local species = utility.assert_type(utility.assert_kwarg(args, "species"), "number")
+
     local memory = args and args.memory or (device.gpu and "gpu" or "host")
     local label = args and args.label and utility.assert_type(args.label, "string")
     label = label and (" (%s)"):format(label) or ""
     local logger = log.logger({label =  "slit pore" .. label})
 
-    -- derive number of species from parameter sequence
-    local species = args and args.species
-                    or (type(epsilon) == "table" and #epsilon)
-                    or (type(sigma) == "table" and #sigma)
-                    or (type(wetting) == "table" and #wetting)
-
-    if not species or type(species) ~= "number" or species < 1 then
-        error("missing or invalid argument: species", 2)
-    end
+    -- determine number of walls from length of offset vector
+    local nwall = #offset
 
     -- promote single elements to sequences
+    if type(surface_normal[1]) == "number" then
+        surface_normal = numeric.scalar_vector(nwall,  surface_normal)
+    end
+
     if type(epsilon) == "number" then
-        epsilon = numeric.scalar_matrix(species, 2, epsilon)
+        epsilon = numeric.scalar_matrix(nwall, species, epsilon)
     end
 
     if type(sigma) == "number" then
-        sigma = numeric.scalar_matrix(species, 2, sigma)
+        sigma = numeric.scalar_matrix(nwall, species, sigma)
     end
 
     if type(wetting) == "number" then
-        wetting = numeric.scalar_matrix(species, 2, wetting)
+        wetting = numeric.scalar_matrix(nwall, species, wetting)
     end
 
-    -- determine space dimension from length of offset vector
-    local dimension = #offset
+    if #epsilon ~= nwall or #epsilon[1] ~= species then
+        error("mismatching shape of argument 'epsilon'", 2)
+    end
+
+    -- determine space dimension from shape of surface normals
+    local dimension = #surface_normal[1]
+
+    -- FIXME
+    if memory == "gpu" then
+        assert(nwall == 2, "only 2 walls are supported at the GPU")
+    end
 
     -- construct instance
     if not slit[memory] then
@@ -168,7 +175,7 @@ local M = module(function(args)
     if not slit[memory][dimension] then
         error(("unsupported dimension '%d'"):format(dimension), 2)
     end
-    local self = slit[memory][dimension](width, offset, surface_normal, epsilon, sigma, wetting, logger)
+    local self = slit[memory][dimension](offset, surface_normal, epsilon, sigma, wetting, logger)
 
     -- add description for profiler
     self.description = property(function()
