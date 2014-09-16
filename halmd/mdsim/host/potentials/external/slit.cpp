@@ -39,38 +39,40 @@ namespace external {
  */
 template <int dimension, typename float_type>
 slit<dimension, float_type>::slit(
-    float_type const& width
-  , vector_type const& offset
-  , vector_type const& surface_normal
+    scalar_container_type const& offset
+  , vector_container_type const& surface_normal
   , matrix_container_type const& epsilon
   , matrix_container_type const& sigma
   , matrix_container_type const& wetting
   , shared_ptr<logger> logger
 )
   // allocate potential parameters
-  : width_(width)
-  , offset_(offset)
+  : offset_(offset)
   , surface_normal_(surface_normal)
   , epsilon_(epsilon)
   , sigma_(sigma)
   , wetting_(wetting)
-  , offset_dot_normal_(inner_prod(offset_, surface_normal_))
-  , width_2_(width_ / 2)
   , logger_(logger)
 {
+    unsigned int nwall = surface_normal_.size();
+
     // check parameter size
-    if (epsilon_.size1() != sigma_.size1() || epsilon_.size1() != wetting_.size1()
-        || epsilon_.size2() != 2 || sigma_.size2() != 2 || wetting_.size2() != 2
-       ) {
-        throw invalid_argument("parameter lists have mismatching shapes");
+    if (offset_.size() != nwall) {
+        throw invalid_argument("geometry parameters have mismatching shapes");
     }
 
-    LOG("slit width: D = " << width_);
-    LOG("slit centre: r₀ = (" << offset_ << ")");
-    LOG("surface normal: n = (" << surface_normal_ << ")");
-    LOG("interaction strength: epsilon = " << epsilon_);
-    LOG("interaction range: sigma = " << sigma_);
-    LOG("wetting paramter: c = " << wetting_);
+    if (epsilon_.size1() != nwall || sigma_.size1() != nwall || wetting_.size1() != nwall
+     || epsilon_.size2() != sigma_.size2() || epsilon_.size2() != wetting_.size2()
+       ) {
+        throw invalid_argument("potential parameters have mismatching shapes");
+    }
+    
+    LOG("number of walls: " << nwall);
+    LOG("wall positions: d₀ = " << offset_);
+    LOG("surface normals: n = " << surface_normal_);
+    LOG("interaction strengths: epsilon = " << epsilon_);
+    LOG("interaction ranges: sigma = " << sigma_);
+    LOG("wetting paramters: c = " << wetting_);
 }
 
 template <int dimension, typename float_type>
@@ -90,15 +92,14 @@ void slit<dimension, float_type>::luaopen(lua_State* L)
                     [
                         class_<slit, shared_ptr<slit>>(class_name.c_str())
                             .def(constructor<
-                                float_type const& 
-                               , vector_type const& 
-                               , vector_type const& 
+                                 scalar_container_type const& 
+                               , vector_container_type const& 
                                , matrix_container_type const& 
                                , matrix_container_type const& 
                                , matrix_container_type const& 
                                , shared_ptr<logger>
                              >())
-                            .property("width", &slit::width)
+                            .property("offset", &slit::offset)
                     ]
                 ]
             ]
