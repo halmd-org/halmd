@@ -23,6 +23,7 @@
 
 #include <boost/numeric/ublas/matrix.hpp>
 #include <boost/tuple/tuple.hpp>
+#include <cmath>
 #include <lua.hpp>
 #include <memory>
 
@@ -42,12 +43,13 @@ class slit
 {
 public:
     typedef fixed_vector<float_type, dimension> vector_type;
+    typedef boost::numeric::ublas::vector<float_type> scalar_container_type;
+    typedef boost::numeric::ublas::vector<vector_type> vector_container_type;
     typedef boost::numeric::ublas::matrix<float_type> matrix_container_type;
 
     slit(
-        float_type const& width
-      , vector_type const& offset
-      , vector_type const& surface_normal
+        scalar_container_type const& offset
+      , vector_container_type const& surface_normal
       , matrix_container_type const& epsilon
       , matrix_container_type const& sigma
       , matrix_container_type const& wetting
@@ -61,36 +63,37 @@ public:
      */
     boost::tuple<vector_type, float_type> operator()(vector_type const& r, unsigned int species) const
     {
-        // compute distance to bottom wall
-        float_type d = width_2_ + inner_prod(r, surface_normal_) - offset_dot_normal_;
-        // energy and force due to bottom wall
-        float_type fval1;
-        float_type en_pot1;
-        tie(fval1, en_pot1) = lj_wall_(d, epsilon_(species, 0), sigma_(species, 0), wetting_(species, 0));
+        float_type en_pot = 0;
+        vector_type force = 0;
 
-        // compute distance to top wall
-        d = width_ - d;
-        // energy and force due to top wall
-        float_type fval2;
-        float_type en_pot2;
-        tie(fval2, en_pot2) = lj_wall_(d, epsilon_(species, 1), sigma_(species, 1), wetting_(species, 1));
+        // loop over walls
+        for (unsigned int i = 0; i < surface_normal_.size(); ++i) {
 
-        vector_type force = (fval1 - fval2 ) * surface_normal_;
+          // compute absolute distance to wall i
+          float_type d = inner_prod(r, surface_normal_(i)) - offset_(i);
+          
+          float_type epsilon = epsilon_(i, species);
+          float_type sigma = sigma_(i, species);
+          float_type c = wetting_(i, species);
 
-        return make_tuple(force, en_pot1 + en_pot2);
+          // energy and force due to wall i
+          float_type d3i = std::pow(sigma / d, 3);
+          float_type d6i = float_type(2) / 15 * d3i * d3i;
+          float_type eps_d3i = std::copysign(1, d) * epsilon * d3i;
+          float_type fval = 3 * eps_d3i * (3 * d6i - c) / d;
+          force += fval * surface_normal_(i);
+          en_pot += eps_d3i * (d6i - c);
+        }
+
+        return make_tuple(force, en_pot);
     }
 
-    float_type const& width() const
-    {
-        return width_;
-    }
-
-    vector_type const& offset() const
+    scalar_container_type const& offset() const
     {
         return offset_;
     }
     
-    vector_type const& surface_normal() const
+    vector_container_type const& surface_normal() const
     {
         return surface_normal_;
     }
@@ -112,7 +115,7 @@ public:
     
     unsigned int size() const
     {
-        return surface_normal_.size();
+        return offset_.size();
     }
 
     /**
@@ -121,34 +124,16 @@ public:
     static void luaopen(lua_State* L);
 
 private:
-    /** ... */
-    boost::tuple<float_type, float_type> lj_wall_(float_type d, float_type epsilon, float_type sigma, float_type wetting) const
-    {
-      /*
-       * energy and force due to top wall
-       */
-        float_type sigma_d_3 = std::pow(sigma / d, 3);
-        float_type en_pot = epsilon * sigma_d_3 * (float_type(2) / 15 * sigma_d_3 * sigma_d_3 - wetting);
-        float_type fval = float_type(3) * epsilon * sigma_d_3 * (float_type(2) / 5 * sigma_d_3 * sigma_d_3 - wetting)/d;
-        return make_tuple(fval, en_pot);
-    }
-    
-    /** slitwidth in MD units */
-    float_type width_;
-    /** position of slit centre in MD units */
-    vector_type offset_;
-    /** outward normal vector for the top wall in MD units */
-    vector_type surface_normal_;
+    /** wall positions in MD units */
+    scalar_container_type offset_;
+    /** wall normal vectors in MD units */
+    vector_container_type surface_normal_;
     /** interaction strengths for wall potential in MD units */
     matrix_container_type epsilon_;
     /** interaction ranges for wall potential in MD units */
     matrix_container_type sigma_;
     /** wetting parameters for wall potential in MD units */
     matrix_container_type wetting_;
-    /** dot product of slit centre and surface normal vector */
-    float_type offset_dot_normal_;
-    /** half of slit width*/
-    float_type width_2_;
     
     /** module logger */
     std::shared_ptr<logger> logger_;
