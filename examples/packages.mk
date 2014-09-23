@@ -267,6 +267,7 @@ distclean-luatrace: clean-luatrace
 BOOST_VERSION = 1.56.0
 BOOST_RELEASE = 1_56_0
 BOOST_ABI = c++11
+BOOST_TOOLSET = gcc
 BOOST_TARBALL = boost_$(BOOST_RELEASE).tar.bz2
 BOOST_TARBALL_URL = http://sourceforge.net/projects/boost/files/boost/$(BOOST_VERSION)/$(BOOST_TARBALL)
 BOOST_TARBALL_SHA256 = 134732acaf3a6e7eba85988118d943f0fa6b7f0850f65131fff89823ad30ff1d
@@ -274,7 +275,7 @@ BOOST_PATCH = boost_$(BOOST_RELEASE).patch
 BOOST_PATCH_SHA256 = efe1e6c253c5e8204594438e9601fd46494897c060aad0e4c5df29e2c9f63781
 BOOST_BUILD_DIR = boost_$(BOOST_RELEASE)
 BOOST_INSTALL_DIR = $(PREFIX)/boost_$(BOOST_RELEASE)-$(BOOST_ABI)
-BOOST_BUILD_FLAGS = threading=multi variant=release --layout=tagged toolset=gcc cxxflags="-fPIC -std=$(BOOST_ABI)" dll-path=$(BOOST_INSTALL_DIR)/lib
+BOOST_BUILD_FLAGS = threading=multi variant=release --layout=tagged toolset=$(BOOST_TOOLSET) cxxflags="-fPIC -std=$(BOOST_ABI)" dll-path=$(BOOST_INSTALL_DIR)/lib
 
 ifndef USE_BZIP2
 BOOST_BUILD_FLAGS += -sNO_BZIP2=1
