@@ -8,6 +8,7 @@ required for building HALMD.  To find out more about the required packages, see
 :ref:`prerequisites`; details of the installation process are given in
 :ref:`manual`.
 
+
 Quick Start Guide
 -----------------
 
@@ -15,7 +16,7 @@ Create and change to a new directory (preferably on a local disk)::
 
   mkdir /tmp/halmd_prerequisites && cd /tmp/halmd_prerequisites
 
-Download, compile (with 4 processes) and install required packages to ``~/opt``::
+Download, compile (with 4 parallel processes), and install required packages to ``~/opt``::
 
   nice make -f .../halmd/examples/packages.mk CONCURRENCY_LEVEL=4 install
 
@@ -25,26 +26,22 @@ Add packages to shell environment and set the ``CMAKE_PREFIX_PATH`` variable in 
 
 That was easy!
 
+
 A more thorough look at packages.mk
 -----------------------------------
 
 The makefile ``packages.mk`` provides many more rules than just ``install``::
 
-  make -f .../halmd/examples/packages.mk TAB TAB
+  make -f .../halmd/examples/packages.mk install-TAB TAB
 
 ::
 
-  build              clean-luabind      env-boost          fetch-boost
-  build-boost        configure-boost    env-cmake          fetch-cmake
-  build-cmake        configure-cmake    env-hdf5           fetch-hdf5
-  build-hdf5         configure-hdf5     env-lua            fetch-lua
-  build-lua          distclean          env-luabind        fetch-luabind
-  build-luabind      distclean-boost    extract-boost      install
-  clean              distclean-cmake    extract-cmake      install-boost
-  clean-boost        distclean-hdf5     extract-hdf5       install-cmake
-  clean-cmake        distclean-lua      extract-lua        install-hdf5
-  clean-hdf5         distclean-luabind  extract-luabind    install-lua
-  clean-lua          env                fetch              install-luabind
+  install-boost     install-gcc       install-graphviz  install-lua       install-ninja
+  install-clang     install-gdb       install-halmd     install-luajit    install-nvcuda-tools
+  install-cmake     install-git       install-hdf5      install-luatrace  install-python-sphinx
+
+Each ``install-`` rule depends on rules ``fetch-``, ``extract-``,
+``configure-``, and ``build-``.
 
 You may choose to install only selected dependencies::
 
@@ -75,17 +72,32 @@ To compile as a non-root user and install as root::
 Troubleshooting
 ---------------
 
-There are some requirements to ensure a smooth run of packages.mk:
+There are some requirements to ensure a smooth run of ``packages.mk``:
 
-    - a recent C++ compiler (e.g., GCC)
+    - a recent C++ compiler (e.g., GCC ≥ 4.7)
     - some standard tools: wget, tar, gzip, rm, cp, touch, patch
-    - Boost requires a development package of the bzip2 library (files
-      ``bzlib.h`` and ``libbz2.so``)
+    - optionally, the bzip2 library for Boost.IOStreams
 
-The bzip2 library is necessary for Boost.IOStreams. As HALMD does not make use
-of this library, you may opt to compile Boost without bzip2 support by
-prepending ``NO_BZIP2=1`` to the make command.
-
-On a Debian system, the following packages are required::
+On a Debian system, install the following packages::
 
   apt-get install build-essential zlib1g-dev libbz2-dev unzip libreadline6-dev
+
+
+Boost C++ libraries
+*******************
+
+The compilation of Boost C++ requires GCC ≥ 4.7. If your distribution comes
+with GCC = 4.6 specify::
+
+  make -f .../halmd/examples/packages.mk BOOST_ABI=c++0x install-boost
+
+Recent versions of non-GCC compilers may be used by setting ``BOOST_TOOLSET``
+accordingly, e.g., ``clang`` for the Clang compiler, ``intel`` for Intel's C++
+Compiler, or ``pgi`` for PGI's C++ compiler::
+
+  make -f .../halmd/examples/packages.mk BOOST_TOOLSET=clang install-boost
+
+The bzip2 library is necessary to build Boost.IOStreams (files ``bzlib.h`` and
+``libbz2.so``). As *HAL’s MD package* does not make use of this library, you
+may opt to compile the Boost C++ libraries without bzip2 support by prepending
+``NO_BZIP2=1`` to the make command.
