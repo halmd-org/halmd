@@ -723,61 +723,6 @@ env-clang:
 	@echo 'export LD_LIBRARY_PATH="$(CLANG_INSTALL_DIR)/lib$${LD_LIBRARY_PATH+:$$LD_LIBRARY_PATH}"'
 
 ##
-## GNU Parallel
-##
-
-GNU_PARALLEL_VERSION = 20120622
-GNU_PARALLEL_TARBALL = parallel-$(GNU_PARALLEL_VERSION).tar.bz2
-GNU_PARALLEL_TARBALL_URL = http://ftp.gnu.org/gnu/parallel/$(GNU_PARALLEL_TARBALL)
-GNU_PARALLEL_TARBALL_SHA256 = bfdbb4a66835eacce2bffde23f5e0f12b4e99ced5e348b5f69b7aa97d0123869
-GNU_PARALLEL_BUILD_DIR = parallel-$(GNU_PARALLEL_VERSION)
-GNU_PARALLEL_INSTALL_DIR = $(PREFIX)/parallel-$(GNU_PARALLEL_VERSION)
-
-.fetch-gnu-parallel-$(GNU_PARALLEL_VERSION):
-	@$(RM) $(GNU_PARALLEL_TARBALL)
-	$(WGET) $(GNU_PARALLEL_TARBALL_URL)
-	@echo '$(GNU_PARALLEL_TARBALL_SHA256)  $(GNU_PARALLEL_TARBALL)' | $(SHA256SUM)
-	@$(TOUCH) $@
-
-fetch-gnu-parallel: .fetch-gnu-parallel-$(GNU_PARALLEL_VERSION)
-
-.extract-gnu-parallel-$(GNU_PARALLEL_VERSION): .fetch-gnu-parallel-$(GNU_PARALLEL_VERSION)
-	$(RM) $(GNU_PARALLEL_BUILD_DIR)
-	$(TAR) -xjf $(GNU_PARALLEL_TARBALL)
-	@$(TOUCH) $@
-
-extract-gnu-parallel: .extract-gnu-parallel-$(GNU_PARALLEL_VERSION)
-
-.configure-gnu-parallel-$(GNU_PARALLEL_VERSION): .extract-gnu-parallel-$(GNU_PARALLEL_VERSION)
-	cd $(GNU_PARALLEL_BUILD_DIR) && ./configure --prefix=$(GNU_PARALLEL_INSTALL_DIR)
-	@$(TOUCH) $@
-
-configure-gnu-parallel: .configure-gnu-parallel-$(GNU_PARALLEL_VERSION)
-
-.build-gnu-parallel-$(GNU_PARALLEL_VERSION): .configure-gnu-parallel-$(GNU_PARALLEL_VERSION)
-	cd $(GNU_PARALLEL_BUILD_DIR) && $(MAKE) $(PARALLEL_BUILD_FLAGS)
-	@$(TOUCH) $@
-
-build-gnu-parallel: .build-gnu-parallel-$(GNU_PARALLEL_VERSION)
-
-install-gnu-parallel: .build-gnu-parallel-$(GNU_PARALLEL_VERSION)
-	cd $(GNU_PARALLEL_BUILD_DIR) && $(MAKE) install
-
-clean-gnu-parallel:
-	@$(RM) .build-gnu-parallel-$(GNU_PARALLEL_VERSION)
-	@$(RM) .configure-gnu-parallel-$(GNU_PARALLEL_VERSION)
-	@$(RM) .extract-gnu-parallel-$(GNU_PARALLEL_VERSION)
-	$(RM) $(GNU_PARALLEL_BUILD_DIR)
-
-distclean-gnu-parallel: clean-gnu-parallel
-	@$(RM) .fetch-gnu-parallel-$(GNU_PARALLEL_VERSION)
-	$(RM) $(GNU_PARALLEL_TARBALL)
-
-env-gnu-parallel:
-	@echo 'export PATH="$(GNU_PARALLEL_INSTALL_DIR)/bin$${PATH+:$$PATH}"'
-	@echo 'export MANPATH="$(GNU_PARALLEL_INSTALL_DIR)/share/man$${MANPATH+:$$MANPATH}"'
-
-##
 ## GMP (GNU Multiple Precision Arithmetic Library)
 ##
 
