@@ -93,17 +93,27 @@ BOOST_AUTO_TEST_CASE( validation )
     // CM velocity at first step
     const double vcm_limit = gpu ? 0.5 * eps_float : 30 * eps;
     fixed_vector<double, 3> v_cm;
-    h5xx::read_chunked_dataset(
+    h5xx::detail::read_chunked_dataset<double, 1>(
         observables.openDataSet("center_of_mass_velocity/value")
-      , *reinterpret_cast<boost::array<double, 3>*>(&v_cm)
+      , reinterpret_cast<double*>(&v_cm)
       , 0
     );
+//    h5xx::read_chunked_dataset(
+//        observables.openDataSet("center_of_mass_velocity/value")
+//      , v_cm
+//      , 0
+//    );
+// FIXME we use the generic method on raw pointers since halmd::fixed_vector
+// inherits from std::array, which is not yet supported by h5xx. Second,
+// "reinterpret_cast<boost::array<double, 3>*>(&v_cm)" would violate
+// strict-aliasing rules
+
     BOOST_CHECK_SMALL(norm_inf(v_cm), vcm_limit);
 
     // CM velocity at last step
-    h5xx::read_chunked_dataset(
+    h5xx::detail::read_chunked_dataset<double, 1>(  // FIXME see above
         observables.openDataSet("center_of_mass_velocity/value")
-      , *reinterpret_cast<boost::array<double, 3>*>(&v_cm)
+      , reinterpret_cast<double*>(&v_cm)
       , -1
     );
     BOOST_CHECK_SMALL(norm_inf(v_cm), vcm_limit);
