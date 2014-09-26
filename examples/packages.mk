@@ -726,10 +726,10 @@ env-clang:
 ## GMP (GNU Multiple Precision Arithmetic Library)
 ##
 
-GMP_VERSION = 5.0.4
+GMP_VERSION = 5.1.3
 GMP_TARBALL = gmp-$(GMP_VERSION).tar.bz2
 GMP_TARBALL_URL = http://ftp.gnu.org/gnu/gmp/$(GMP_TARBALL)
-GMP_TARBALL_SHA256 = 35d4aade3e4bdf0915c944599b10d23f108ffedf6c3188aeec52221c5cf9a06f
+GMP_TARBALL_SHA256 = 752079520b4690531171d0f4532e40f08600215feefede70b24fabdc6f1ab160
 GMP_BUILD_DIR = gmp-$(GMP_VERSION)
 GMP_INSTALL_DIR = $(CURDIR)/.gmp-$(GMP_VERSION)
 
@@ -778,10 +778,10 @@ distclean-gmp: clean-gmp
 ## MPFR (Multiple-precision floating-point computations with correct rounding)
 ##
 
-MPFR_VERSION = 3.1.0
+MPFR_VERSION = 3.1.2
 MPFR_TARBALL = mpfr-$(MPFR_VERSION).tar.bz2
 MPFR_TARBALL_URL = http://www.mpfr.org/mpfr-$(MPFR_VERSION)/$(MPFR_TARBALL)
-MPFR_TARBALL_SHA256 = 74a7bbbad168dd1cc414f1c9210b8fc16ccfc8e422d34b3371a8978e31eab680
+MPFR_TARBALL_SHA256 = 79c73f60af010a30a5c27a955a1d2d01ba095b72537dab0ecaad57f5a7bb1b6b
 MPFR_BUILD_DIR = mpfr-$(MPFR_VERSION)
 MPFR_INSTALL_DIR = $(CURDIR)/.mpfr-$(MPFR_VERSION)
 
@@ -830,10 +830,10 @@ distclean-mpfr: clean-mpfr
 ## MPC (arithmetic of complex numbers with arbitrarily high precision and correct rounding)
 ##
 
-MPC_VERSION = 0.9
+MPC_VERSION = 1.0.2
 MPC_TARBALL = mpc-$(MPC_VERSION).tar.gz
 MPC_TARBALL_URL = http://www.multiprecision.org/mpc/download/$(MPC_TARBALL)
-MPC_TARBALL_SHA256 = fd3efe422f0d454592059e80f2c00d1a2e381bf2beda424c5094abd4deb049ac
+MPC_TARBALL_SHA256 = b561f54d8a479cee3bc891ee52735f18ff86712ba30f036f8b8537bae380c488
 MPC_BUILD_DIR = mpc-$(MPC_VERSION)
 MPC_INSTALL_DIR = $(CURDIR)/.mpc-$(MPC_VERSION)
 
@@ -879,108 +879,108 @@ distclean-mpc: clean-mpc
 	$(RM) $(MPC_TARBALL)
 
 ##
-## PPL (Parma Polyhedra Library)
+## ISL (Integer Set Library)
 ##
 
-PPL_VERSION = 0.11.2
-PPL_TARBALL = ppl-$(PPL_VERSION).tar.bz2
-PPL_TARBALL_URL = ftp://ftp.cs.unipr.it/pub/ppl/releases/$(PPL_VERSION)/$(PPL_TARBALL)
-PPL_TARBALL_SHA256 = e3fbd1c19ef44c6f020951807cdb6fc6a8153cd3a5c53b0ab9cf4c4f6e8cbbeb
-PPL_BUILD_DIR = ppl-$(PPL_VERSION)
-PPL_INSTALL_DIR = $(CURDIR)/.ppl-$(PPL_VERSION)
+ISL_VERSION = 0.12.2
+ISL_TARBALL = isl-$(ISL_VERSION).tar.bz2
+ISL_TARBALL_URL = ftp://ftp.fu-berlin.de/unix/languages/gcc/infrastructure/$(ISL_TARBALL)
+ISL_TARBALL_SHA256 = f4b3dbee9712850006e44f0db2103441ab3d13b406f77996d1df19ee89d11fb4
+ISL_BUILD_DIR = isl-$(ISL_VERSION)
+ISL_INSTALL_DIR = $(CURDIR)/.isl-$(ISL_VERSION)
 
-.fetch-ppl-$(PPL_VERSION):
-	@$(RM) $(PPL_TARBALL)
-	$(WGET) $(PPL_TARBALL_URL)
-	@echo '$(PPL_TARBALL_SHA256)  $(PPL_TARBALL)' | $(SHA256SUM)
+.fetch-isl-$(ISL_VERSION):
+	@$(RM) $(ISL_TARBALL)
+	$(WGET) $(ISL_TARBALL_URL)
+	@echo '$(ISL_TARBALL_SHA256)  $(ISL_TARBALL)' | $(SHA256SUM)
 	@$(TOUCH) $@
 
-fetch-ppl: .fetch-ppl-$(PPL_VERSION)
+fetch-isl: .fetch-isl-$(ISL_VERSION)
 
-.extract-ppl-$(PPL_VERSION): .fetch-ppl-$(PPL_VERSION)
-	$(RM) $(PPL_BUILD_DIR)
-	$(TAR) -xjf $(PPL_TARBALL)
+.extract-isl-$(ISL_VERSION): .fetch-isl-$(ISL_VERSION)
+	$(RM) $(ISL_BUILD_DIR)
+	$(TAR) -xjf $(ISL_TARBALL)
 	@$(TOUCH) $@
 
-extract-ppl: .extract-ppl-$(PPL_VERSION)
+extract-isl: .extract-isl-$(ISL_VERSION)
 
-.configure-ppl-$(PPL_VERSION): .extract-ppl-$(PPL_VERSION) .install-gmp-$(GMP_VERSION)
-	cd $(PPL_BUILD_DIR) && ./configure --prefix=$(PPL_INSTALL_DIR) --libdir=$(PPL_INSTALL_DIR)/lib --with-gmp=$(GMP_INSTALL_DIR) --with-gmp-library=$(GMP_INSTALL_DIR)/lib --enable-interfaces=c,cxx --disable-shared --disable-watchdog
+.configure-isl-$(ISL_VERSION): .extract-isl-$(ISL_VERSION)
+	cd $(ISL_BUILD_DIR) && LDFLAGS="-L$(GMP_INSTALL_DIR)/lib" ./configure --prefix=$(ISL_INSTALL_DIR) --libdir=$(ISL_INSTALL_DIR)/lib --with-gmp-prefix=$(GMP_INSTALL_DIR) --disable-shared
 	@$(TOUCH) $@
 
-configure-ppl: .configure-ppl-$(PPL_VERSION)
+configure-isl: .configure-isl-$(ISL_VERSION)
 
-.build-ppl-$(PPL_VERSION): .configure-ppl-$(PPL_VERSION)
-	cd $(PPL_BUILD_DIR) && $(MAKE) $(PARALLEL_BUILD_FLAGS)
+.build-isl-$(ISL_VERSION): .configure-isl-$(ISL_VERSION)
+	cd $(ISL_BUILD_DIR) && $(MAKE) $(PARALLEL_BUILD_FLAGS)
 	@$(TOUCH) $@
 
-build-ppl: .build-ppl-$(PPL_VERSION)
+build-isl: .build-isl-$(ISL_VERSION)
 
-.install-ppl-$(PPL_VERSION): .build-ppl-$(PPL_VERSION)
-	cd $(PPL_BUILD_DIR) && $(MAKE) install
+.install-isl-$(ISL_VERSION): .build-isl-$(ISL_VERSION)
+	cd $(ISL_BUILD_DIR) && $(MAKE) install
 	@$(TOUCH) $@
 
-clean-ppl:
-	@$(RM) .build-ppl-$(PPL_VERSION)
-	@$(RM) .configure-ppl-$(PPL_VERSION)
-	@$(RM) .extract-ppl-$(PPL_VERSION)
-	$(RM) $(PPL_BUILD_DIR)
+clean-isl:
+	@$(RM) .build-isl-$(ISL_VERSION)
+	@$(RM) .configure-isl-$(ISL_VERSION)
+	@$(RM) .extract-isl-$(ISL_VERSION)
+	$(RM) $(ISL_BUILD_DIR)
 
-distclean-ppl: clean-ppl
-	@$(RM) .fetch-ppl-$(PPL_VERSION)
-	$(RM) $(PPL_TARBALL)
+distclean-isl: clean-isl
+	@$(RM) .fetch-isl-$(ISL_VERSION)
+	$(RM) $(ISL_TARBALL)
 
 ##
-## CLooG-PPL
+## CLooG (Chunky Loop Generator)
 ##
 
-CLOOG_PPL_VERSION = 0.15.11
-CLOOG_PPL_TARBALL = cloog-ppl-$(CLOOG_PPL_VERSION).tar.gz
-CLOOG_PPL_TARBALL_URL = ftp://ftp.fu-berlin.de/unix/languages/gcc/infrastructure/$(CLOOG_PPL_TARBALL)
-CLOOG_PPL_TARBALL_SHA256 = 7cd634d0b2b401b04096b545915ac67f883556e9a524e8e803a6bf6217a84d5f
-CLOOG_PPL_BUILD_DIR = cloog-ppl-$(CLOOG_PPL_VERSION)
-CLOOG_PPL_INSTALL_DIR = $(CURDIR)/.cloog-ppl-$(CLOOG_PPL_VERSION)
+CLOOG_VERSION = 0.18.1
+CLOOG_TARBALL = cloog-$(CLOOG_VERSION).tar.gz
+CLOOG_TARBALL_URL = ftp://ftp.fu-berlin.de/unix/languages/gcc/infrastructure/$(CLOOG_TARBALL)
+CLOOG_TARBALL_SHA256 = 02500a4edd14875f94fe84cbeda4290425cb0c1c2474c6f75d75a303d64b4196
+CLOOG_BUILD_DIR = cloog-$(CLOOG_VERSION)
+CLOOG_INSTALL_DIR = $(CURDIR)/.cloog-$(CLOOG_VERSION)
 
-.fetch-cloog-ppl-$(CLOOG_PPL_VERSION):
-	@$(RM) $(CLOOG_PPL_TARBALL)
-	$(WGET) $(CLOOG_PPL_TARBALL_URL)
-	@echo '$(CLOOG_PPL_TARBALL_SHA256)  $(CLOOG_PPL_TARBALL)' | $(SHA256SUM)
+.fetch-cloog-$(CLOOG_VERSION):
+	@$(RM) $(CLOOG_TARBALL)
+	$(WGET) $(CLOOG_TARBALL_URL)
+	@echo '$(CLOOG_TARBALL_SHA256)  $(CLOOG_TARBALL)' | $(SHA256SUM)
 	@$(TOUCH) $@
 
-fetch-cloog-ppl: .fetch-cloog-ppl-$(CLOOG_PPL_VERSION)
+fetch-cloog: .fetch-cloog-$(CLOOG_VERSION)
 
-.extract-cloog-ppl-$(CLOOG_PPL_VERSION): .fetch-cloog-ppl-$(CLOOG_PPL_VERSION)
-	$(RM) $(CLOOG_PPL_BUILD_DIR)
-	$(TAR) -xzf $(CLOOG_PPL_TARBALL)
+.extract-cloog-$(CLOOG_VERSION): .fetch-cloog-$(CLOOG_VERSION)
+	$(RM) $(CLOOG_BUILD_DIR)
+	$(TAR) -xzf $(CLOOG_TARBALL)
 	@$(TOUCH) $@
 
-extract-cloog-ppl: .extract-cloog-ppl-$(CLOOG_PPL_VERSION)
+extract-cloog: .extract-cloog-$(CLOOG_VERSION)
 
-.configure-cloog-ppl-$(CLOOG_PPL_VERSION): .extract-cloog-ppl-$(CLOOG_PPL_VERSION) .install-ppl-$(PPL_VERSION) .install-gmp-$(GMP_VERSION)
-	cd $(CLOOG_PPL_BUILD_DIR) && LDFLAGS="-L$(PPL_INSTALL_DIR)/lib -lm" ./configure --prefix=$(CLOOG_PPL_INSTALL_DIR) --libdir=$(CLOOG_PPL_INSTALL_DIR)/lib --with-ppl=$(PPL_INSTALL_DIR) --with-gmp=$(GMP_INSTALL_DIR) --with-gmp-library=$(GMP_INSTALL_DIR)/lib --disable-shared --with-host-libstdcxx=-lstdc++
+.configure-cloog-$(CLOOG_VERSION): .extract-cloog-$(CLOOG_VERSION) .install-isl-$(ISL_VERSION) .install-gmp-$(GMP_VERSION)
+	cd $(CLOOG_BUILD_DIR) && LDFLAGS="-L$(GMP_INSTALL_DIR)/lib -L$(ISL_INSTALL_DIR) -lm" ./configure --prefix=$(CLOOG_INSTALL_DIR) --libdir=$(CLOOG_INSTALL_DIR)/lib --with-isl-prefix=$(ISL_INSTALL_DIR) --with-gmp-prefix=$(GMP_INSTALL_DIR) --disable-shared
 	@$(TOUCH) $@
 
-configure-cloog-ppl: .configure-cloog-ppl-$(CLOOG_PPL_VERSION)
+configure-cloog: .configure-cloog-$(CLOOG_VERSION)
 
-.build-cloog-ppl-$(CLOOG_PPL_VERSION): .configure-cloog-ppl-$(CLOOG_PPL_VERSION)
-	cd $(CLOOG_PPL_BUILD_DIR) && $(MAKE) $(PARALLEL_BUILD_FLAGS)
+.build-cloog-$(CLOOG_VERSION): .configure-cloog-$(CLOOG_VERSION)
+	cd $(CLOOG_BUILD_DIR) && $(MAKE) $(PARALLEL_BUILD_FLAGS)
 	@$(TOUCH) $@
 
-build-cloog-ppl: .build-cloog-ppl-$(CLOOG_PPL_VERSION)
+build-cloog: .build-cloog-$(CLOOG_VERSION)
 
-.install-cloog-ppl-$(CLOOG_PPL_VERSION): .build-cloog-ppl-$(CLOOG_PPL_VERSION)
-	cd $(CLOOG_PPL_BUILD_DIR) && $(MAKE) install
+.install-cloog-$(CLOOG_VERSION): .build-cloog-$(CLOOG_VERSION)
+	cd $(CLOOG_BUILD_DIR) && $(MAKE) install
 	@$(TOUCH) $@
 
-clean-cloog-ppl:
-	@$(RM) .build-cloog-ppl-$(CLOOG_PPL_VERSION)
-	@$(RM) .configure-cloog-ppl-$(CLOOG_PPL_VERSION)
-	@$(RM) .extract-cloog-ppl-$(CLOOG_PPL_VERSION)
-	$(RM) $(CLOOG_PPL_BUILD_DIR)
+clean-cloog:
+	@$(RM) .build-cloog-$(CLOOG_VERSION)
+	@$(RM) .configure-cloog-$(CLOOG_VERSION)
+	@$(RM) .extract-cloog-$(CLOOG_VERSION)
+	$(RM) $(CLOOG_BUILD_DIR)
 
-distclean-cloog-ppl: clean-cloog-ppl
-	@$(RM) .fetch-cloog-ppl-$(CLOOG_PPL_VERSION)
-	$(RM) $(CLOOG_PPL_TARBALL)
+distclean-cloog: clean-cloog
+	@$(RM) .fetch-cloog-$(CLOOG_VERSION)
+	$(RM) $(CLOOG_TARBALL)
 
 ##
 ## GCC (GNU Compiler Collection)
@@ -1000,17 +1000,20 @@ GCC_INSTALL_DIR = $(PREFIX)/gcc-$(GCC_VERSION)
 	@echo '$(GCC_TARBALL_SHA256)  $(GCC_TARBALL)' | $(SHA256SUM)
 	@$(TOUCH) $@
 
-fetch-gcc: .fetch-gcc-$(GCC_VERSION) .fetch-gmp-$(GMP_VERSION) .fetch-mpfr-$(MPFR_VERSION) .fetch-mpc-$(MPC_VERSION) .fetch-ppl-$(PPL_VERSION) .fetch-cloog-ppl-$(CLOOG_PPL_VERSION)
+fetch-gcc: .fetch-gcc-$(GCC_VERSION) .fetch-gmp-$(GMP_VERSION) .fetch-mpfr-$(MPFR_VERSION) .fetch-mpc-$(MPC_VERSION) .fetch-isl-$(ISL_VERSION) .fetch-cloog-$(CLOOG_VERSION)
 
-.extract-gcc-$(GCC_VERSION): .fetch-gcc-$(GCC_VERSION)
+.extract-gcc-$(GCC_VERSION): .fetch-gcc-$(GCC_VERSION) .extract-gmp-$(GMP_VERSION) .extract-mpfr-$(MPFR_VERSION) .extract-mpc-$(MPC_VERSION)
 	$(RM) $(GCC_BUILD_DIR)
 	$(TAR) -xjf $(GCC_TARBALL)
+	$(CP) $(GMP_BUILD_DIR) $(GCC_BUILD_DIR)/gmp
+	$(CP) $(MPFR_BUILD_DIR) $(GCC_BUILD_DIR)/mpfr
+	$(CP) $(MPC_BUILD_DIR) $(GCC_BUILD_DIR)/mpc
 	@$(TOUCH) $@
 
 extract-gcc: .extract-gcc-$(GCC_VERSION)
 
-.configure-gcc-$(GCC_VERSION): .extract-gcc-$(GCC_VERSION) .install-gmp-$(GMP_VERSION) .install-mpfr-$(MPFR_VERSION) .install-mpc-$(MPC_VERSION) .install-ppl-$(PPL_VERSION) .install-cloog-ppl-$(CLOOG_PPL_VERSION)
-	cd $(GCC_BUILD_DIR) && ac_cv_lib_pwl_PWL_handle_timeout=no ./configure --prefix=$(GCC_INSTALL_DIR) --with-gmp=$(GMP_INSTALL_DIR) --with-gmp-library=$(GMP_INSTALL_DIR)/lib --with-mpfr=$(MPFR_INSTALL_DIR) --with-mpc=$(MPC_INSTALL_DIR) --with-ppl=$(PPL_INSTALL_DIR) --with-ppl-library=$(PPL_INSTALL_DIR)/lib --with-cloog=$(CLOOG_PPL_INSTALL_DIR) --enable-build-with-cxx $(GCC_BUILD_FLAGS)
+.configure-gcc-$(GCC_VERSION): .extract-gcc-$(GCC_VERSION) .install-isl-$(ISL_VERSION) .install-cloog-$(CLOOG_VERSION)
+	cd $(GCC_BUILD_DIR) && ac_cv_lib_pwl_PWL_handle_timeout=no ./configure --prefix=$(GCC_INSTALL_DIR) --with-isl=$(ISL_INSTALL_DIR) --with-cloog=$(CLOOG_INSTALL_DIR) --enable-build-with-cxx $(GCC_BUILD_FLAGS)
 	@$(TOUCH) $@
 
 configure-gcc: .configure-gcc-$(GCC_VERSION)
