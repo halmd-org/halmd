@@ -74,6 +74,7 @@ void periodic_host()
     double const epsilon = numeric_limits<double>::epsilon();
 
     vector_type length = (dimension == 2) ? vector_type{1./3, 1./5} : vector_type{.001, 1., 1000.};
+    vector_type unit_vector = (dimension == 2) ? vector_type{1, 1} : vector_type{1, 1, 1};
     boost::numeric::ublas::diagonal_matrix<typename box_type::matrix_type::value_type> edges(dimension);
     for (unsigned int i = 0; i < dimension; ++i) {
         edges(i, i) = length[i];
@@ -83,7 +84,7 @@ void periodic_host()
     // set up list of positions that are (half-) multiples of the
     // edge lengths or completely unrelated
     std::vector<vector_type> position;
-    position.push_back(vector_type{0});
+    position.push_back(0 * unit_vector);
     position.push_back(length);
     position.push_back(-1.5 * length);
     position.push_back(length / 7);
@@ -131,20 +132,21 @@ void periodic_gpu()
     float_type const epsilon = numeric_limits<float_type>::epsilon();
 
     vector_type length = (dimension == 2) ? vector_type{1./3, 1./5} : vector_type{.001, 1., 1000.};
+    vector_type unit_vector = (dimension == 2) ? vector_type{1, 1} : vector_type{1, 1, 1};
     unsigned int warp_size = 32;
 
     // set up list of positions that are (half-) multiples of the
     // edge lengths or completely unrelated
     std::vector<vector_type> position;
-    position.push_back(vector_type{0});
+    position.push_back(0 * unit_vector);
     position.push_back(length);
     position.push_back(-1.5 * length);
     position.push_back(length / 7);
     position.push_back(2 * length);
     position.push_back(-2.5 * length);
-    position.push_back(vector_type{.5});
-    position.push_back(vector_type{1});
-    position.push_back(vector_type{1.5});
+    position.push_back(.5 * unit_vector);
+    position.push_back(unit_vector);
+    position.push_back(1.5 * unit_vector);
     if (dimension == 2) {
         position.push_back(vector_type{0., -.2});
         position.push_back(vector_type{1./3, 1./10});
