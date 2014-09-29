@@ -1153,11 +1153,11 @@ env-nvcuda-tools:
 ##
 ## Ninja - a small build system with a focus on speed
 ##
-NINJA_VERSION = 1.4.0
+NINJA_VERSION = 1.5.1
 NINJA_TARBALL = ninja-$(NINJA_VERSION).tar.gz
 NINJA_TARBALL_REMOTE = v$(NINJA_VERSION).tar.gz
 NINJA_TARBALL_URL = https://github.com/martine/ninja/archive/$(NINJA_TARBALL_REMOTE)
-NINJA_TARBALL_SHA256 = 701cab33c5c69bcdeedad7a3f7bff4c3e61d38e8c2a0ab79d86e3b702de4c317
+NINJA_TARBALL_SHA256 = fba77b9ed4b4dd0e86c4513776938dc64bd4508dc2055b04c0c6df68bcfa397d
 NINJA_BUILD_DIR = ninja-$(NINJA_VERSION)
 NINJA_CONFIGURE_FLAGS =
 NINJA_INSTALL_DIR = $(PREFIX)/ninja-$(NINJA_VERSION)
