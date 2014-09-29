@@ -772,7 +772,9 @@ clean-gmp:
 
 distclean-gmp: clean-gmp
 	@$(RM) .fetch-gmp-$(GMP_VERSION)
+	@$(RM) .install-gmp-$(GMP_VERSION)
 	$(RM) $(GMP_TARBALL)
+	$(RM) $(GMP_INSTALL_DIR)
 
 ##
 ## MPFR (Multiple-precision floating-point computations with correct rounding)
@@ -824,7 +826,9 @@ clean-mpfr:
 
 distclean-mpfr: clean-mpfr
 	@$(RM) .fetch-mpfr-$(MPFR_VERSION)
+	@$(RM) .install-mpfr-$(MPFR_VERSION)
 	$(RM) $(MPFR_TARBALL)
+	$(RM) $(MPFR_INSTALL_DIR)
 
 ##
 ## MPC (arithmetic of complex numbers with arbitrarily high precision and correct rounding)
@@ -876,7 +880,9 @@ clean-mpc:
 
 distclean-mpc: clean-mpc
 	@$(RM) .fetch-mpc-$(MPC_VERSION)
+	@$(RM) .install-mpc-$(MPC_VERSION)
 	$(RM) $(MPC_TARBALL)
+	$(RM) $(MPC_INSTALL_DIR)
 
 ##
 ## ISL (Integer Set Library)
@@ -904,7 +910,7 @@ fetch-isl: .fetch-isl-$(ISL_VERSION)
 
 extract-isl: .extract-isl-$(ISL_VERSION)
 
-.configure-isl-$(ISL_VERSION): .extract-isl-$(ISL_VERSION)
+.configure-isl-$(ISL_VERSION): .extract-isl-$(ISL_VERSION) .install-gmp-$(GMP_VERSION)
 	cd $(ISL_BUILD_DIR) && LDFLAGS="-L$(GMP_INSTALL_DIR)/lib" ./configure --prefix=$(ISL_INSTALL_DIR) --libdir=$(ISL_INSTALL_DIR)/lib --with-gmp-prefix=$(GMP_INSTALL_DIR) --disable-shared
 	@$(TOUCH) $@
 
@@ -928,7 +934,9 @@ clean-isl:
 
 distclean-isl: clean-isl
 	@$(RM) .fetch-isl-$(ISL_VERSION)
+	@$(RM) .install-isl-$(ISL_VERSION)
 	$(RM) $(ISL_TARBALL)
+	$(RM) $(ISL_INSTALL_DIR)
 
 ##
 ## CLooG (Chunky Loop Generator)
@@ -980,7 +988,9 @@ clean-cloog:
 
 distclean-cloog: clean-cloog
 	@$(RM) .fetch-cloog-$(CLOOG_VERSION)
+	@$(RM) .install-cloog-$(CLOOG_VERSION)
 	$(RM) $(CLOOG_TARBALL)
+	$(RM) $(CLOOG_INSTALL_DIR)
 
 ##
 ## GCC (GNU Compiler Collection)
@@ -1028,13 +1038,13 @@ install-gcc: .build-gcc-$(GCC_VERSION)
 	cd $(GCC_BUILD_DIR) && $(MAKE) install
 	cd $(GMP_INSTALL_DIR) && $(CP) include `$(GCC_INSTALL_DIR)/bin/gcc -print-file-name=plugin`
 
-clean-gcc:
+clean-gcc: clean-gmp clean-mpfr clean-mpc clean-isl clean-cloog
 	@$(RM) .build-gcc-$(GCC_VERSION)
 	@$(RM) .configure-gcc-$(GCC_VERSION)
 	@$(RM) .extract-gcc-$(GCC_VERSION)
 	$(RM) $(GCC_BUILD_DIR)
 
-distclean-gcc: clean-gcc
+distclean-gcc: clean-gcc distclean-gmp distclean-mpfr distclean-mpc distclean-isl distclean-cloog
 	@$(RM) .fetch-gcc-$(GCC_VERSION)
 	$(RM) $(GCC_TARBALL)
 
@@ -1185,7 +1195,6 @@ clean-ninja:
 distclean-ninja: clean-ninja
 	@$(RM) .fetch-ninja-$(NINJA_VERSION)
 	$(RM) $(NINJA_TARBALL)
-	$(RM) $(NINJA_MANPAGES_TARBALL)
 
 env-ninja:
 	@echo
