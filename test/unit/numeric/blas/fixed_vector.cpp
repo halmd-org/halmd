@@ -169,7 +169,7 @@ TEST_CASE_VECTOR_TYPE( initialiser_list )
     // construction by initialiser list for all class members
     vector_type x{1, 2, 3, 4};
     for (size_t i = 0; i < N; ++i) {
-        BOOST_CHECK_EQUAL(x[i], i + 1);
+        BOOST_CHECK_EQUAL(x[i], T(i + 1));
     }
 
     // assignment by initialiser list
