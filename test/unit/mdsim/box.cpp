@@ -74,7 +74,6 @@ void periodic_host()
     double const epsilon = numeric_limits<double>::epsilon();
 
     vector_type length = (dimension == 2) ? vector_type{1./3, 1./5} : vector_type{.001, 1., 1000.};
-    vector_type unit_vector = (dimension == 2) ? vector_type{1, 1} : vector_type{1, 1, 1};
     boost::numeric::ublas::diagonal_matrix<typename box_type::matrix_type::value_type> edges(dimension);
     for (unsigned int i = 0; i < dimension; ++i) {
         edges(i, i) = length[i];
@@ -84,18 +83,18 @@ void periodic_host()
     // set up list of positions that are (half-) multiples of the
     // edge lengths or completely unrelated
     std::vector<vector_type> position;
-    position.push_back(0 * unit_vector);
+    position.push_back(0);
     position.push_back(length);
     position.push_back(-1.5 * length);
     position.push_back(length / 7);
     if (dimension == 2) {
-        position.push_back(vector_type{0., -.2});
-        position.push_back(vector_type{1./3, 1./10});
-        position.push_back(vector_type{-1./6, 1./5});
+        position.push_back({0., -.2});
+        position.push_back({1./3, 1./10});
+        position.push_back({-1./6, 1./5});
     }
     else if (dimension == 3) {
-        position.push_back(vector_type{-0.001, 1., 1000.});
-        position.push_back(vector_type{0.001, -.1, -500.});
+        position.push_back({-0.001, 1., 1000.});
+        position.push_back({0.001, -.1, -500.});
     }
 
     // perform periodic reduction and extend the reduced vector afterwards
@@ -106,7 +105,7 @@ void periodic_host()
             BOOST_CHECK_MESSAGE(
                 // FIXME the epsilon-tolerance appears a bit weird here
                 r1[i] >= length[i] * (-.5 - epsilon) && r1[i] < length[i] * (.5 + epsilon)
-              , "coordinate " << i << " of (" << r1 << ") is outside of the simulation box"
+              , "coordinate " << i << " of r[" << i << "] = (" << r1 << ") is outside of the simulation box"
                 << " [(" << -length / 2 << "), (" << length / 2 << ")]"
             );
         }
@@ -132,13 +131,13 @@ void periodic_gpu()
     float_type const epsilon = numeric_limits<float_type>::epsilon();
 
     vector_type length = (dimension == 2) ? vector_type{1./3, 1./5} : vector_type{.001, 1., 1000.};
-    vector_type unit_vector = (dimension == 2) ? vector_type{1, 1} : vector_type{1, 1, 1};
+    vector_type unit_vector(1); // initialisation by scalar value
     unsigned int warp_size = 32;
 
     // set up list of positions that are (half-) multiples of the
     // edge lengths or completely unrelated
     std::vector<vector_type> position;
-    position.push_back(0 * unit_vector);
+    position.push_back(0);
     position.push_back(length);
     position.push_back(-1.5 * length);
     position.push_back(length / 7);
@@ -148,13 +147,13 @@ void periodic_gpu()
     position.push_back(unit_vector);
     position.push_back(1.5 * unit_vector);
     if (dimension == 2) {
-        position.push_back(vector_type{0., -.2});
-        position.push_back(vector_type{1./3, 1./10});
-        position.push_back(vector_type{-1./6, 1./5});
+        position.push_back({0., -.2});
+        position.push_back({1./3, 1./10});
+        position.push_back({-1./6, 1./5});
     }
     else if (dimension == 3) {
-        position.push_back(vector_type{-0.001, 1., 1000.});
-        position.push_back(vector_type{0.001, -.1, -500.});
+        position.push_back({-0.001, 1., 1000.});
+        position.push_back({0.001, -.1, -500.});
     }
     unsigned int npos = position.size();
 
@@ -189,7 +188,7 @@ void periodic_gpu()
             BOOST_CHECK_MESSAGE(
                 // FIXME the epsilon-tolerance appears a bit weird here
                 r1[j] >= length[j] * (-.5 - epsilon) && r1[j] < length[j] * (.5 + epsilon)
-              , "coordinate " << j << " of (" << r1 << ") is outside of the simulation box"
+              , "coordinate " << j << " of r[" << i << "] = (" << r1 << ") is outside of the simulation box"
                 << " [(" << -length / 2 << "), (" << length / 2 << ")]"
             );
         }
