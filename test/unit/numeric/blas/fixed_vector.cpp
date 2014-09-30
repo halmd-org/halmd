@@ -20,12 +20,29 @@
 #define BOOST_TEST_MODULE fixed_vector
 #include <boost/test/unit_test.hpp>
 
+#include <vector>
+
 #include <halmd/numeric/blas/blas.hpp>
 #include <test/tools/ctest.hpp>
 
-using namespace boost;
 using namespace std;
 using namespace halmd;
+
+/**
+ * define test case template to test with various types
+ */
+#define TEST_CASE_VECTOR_TYPE(t)        \
+template <typename T>                   \
+void test_ ## t();                      \
+BOOST_AUTO_TEST_CASE( t )               \
+{                                       \
+    test_ ## t<float>();                \
+    test_ ## t<double>();               \
+    test_ ## t<signed char>();          \
+    test_ ## t<uint64_t>();             \
+}                                       \
+template <typename T>                   \
+void test_ ## t()                       \
 
 /**
  * define test case template to test with various sizes
@@ -133,6 +150,38 @@ BOOST_AUTO_TEST_CASE( t )                       \
 }                                               \
 template <typename T, typename S, size_t N>     \
 void test_ ## t()                               \
+
+BOOST_AUTO_TEST_SUITE( construction )
+
+TEST_CASE_VECTOR_TYPE_SIZE( scalar )
+{
+    fixed_vector<T, N> x(1);
+    for (size_t i = 0; i < N; ++i) {
+        BOOST_CHECK_EQUAL(x[i], 1);
+    }
+}
+
+TEST_CASE_VECTOR_TYPE( initialiser_list )
+{
+    constexpr size_t N = 4;
+    typedef fixed_vector<T, N> vector_type;
+
+    // construction by initialiser list for all class members
+    vector_type x{1, 2, 3, 4};
+    for (size_t i = 0; i < N; ++i) {
+        BOOST_CHECK_EQUAL(x[i], i + 1);
+    }
+
+    // assignment by initialiser list
+    x = {2, 3, 5, 7};
+    T y[4] = { 2, 3, 5, 7 };
+    BOOST_CHECK_EQUAL_COLLECTIONS(begin(x), end(x), y, y + 4);
+
+    // partial initialisation
+    // x = { 1 };   // compiles, but triggers an assertion if compiled in Debug mode
+}
+
+BOOST_AUTO_TEST_SUITE_END() // construction
 
 BOOST_AUTO_TEST_SUITE( blas1 )
 
