@@ -69,6 +69,8 @@ lennard_jones_linear<float_type>::lennard_jones_linear(
     // energy and force shift due to truncation at cutoff distance
     for (unsigned i = 0; i < en_cut_.size1(); ++i) {
         for (unsigned j = 0; j < en_cut_.size2(); ++j) {
+            en_cut_(i, j) = 0;
+            force_cut_(i, j) = 0;
             float_type fval;
             std::tie(fval, en_cut_(i, j)) = (*this)(rr_cut_(i, j), i, j);
             force_cut_(i, j) = fval * r_cut_(i, j);

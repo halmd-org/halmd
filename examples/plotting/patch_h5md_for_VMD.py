@@ -64,8 +64,14 @@ for p in f["particles"].itervalues():
         image["time"] = pos["time"]     # create hard links
         image["step"] = pos["step"]
 
-        length = numpy.diagonal(p["box/edges"])
-        r = pos["value"]
+        # blow up 2D data to 3 dimensions
+        dimension = p["box"].attrs["dimension"]
+        length = numpy.ones((3,))
+        length[:dimension] = numpy.diagonal(p["box/edges"])
+
+        r = numpy.zeros(pos["value"].shape[:-1] + (3,))
+        r[..., :dimension] = pos["value"]
+
         img = numpy.round(r / length)
         image["value"] = img
 

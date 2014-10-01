@@ -35,6 +35,7 @@ CP        = cp -r
 GIT       = git
 GUNZIP    = gzip -d
 MKDIR     = mkdir -p
+OPENSSL   = openssl
 PATCH     = patch
 RM        = rm -rf
 SED       = sed
@@ -1057,23 +1058,44 @@ env-gcc:
 ## HALMD Highly Accerelated Large-scale Molecular Dynamics
 ##
 
-HALMD_VERSION = 1.0-alpha1
-HALMD_GIT_URL = http://git.halmd.org/halmd.git
+HALMD_VERSION = 1.0-alpha2
+HALMD_TARBALL = halmd-$(HALMD_VERSION).tar.bz2
+HALMD_TARBALL_URL = http://code.halmd.org/tar/$(HALMD_TARBALL)
 HALMD_SOURCE_DIR = halmd-$(HALMD_VERSION)
 HALMD_BUILD_DIR = $(HALMD_SOURCE_DIR)/build/release
 HALMD_INSTALL_DIR = $(PREFIX)/halmd-$(HALMD_VERSION)
 HALMD_BUILD_ENV =
 
+define HALMD_CERT_PUBKEY
+LS0tLS1CRUdJTiBQVUJMSUMgS0VZLS0tLS0KTUlJQklqQU5CZ2txaGtpRzl3MEJBUUVGQUFPQ0FR
+OEFNSUlCQ2dLQ0FRRUEweFoycHRJYjNYOVdaYTNQWDhmVgpsVUtBaGpHUVA0YUYrZzk0Mkh0OXp0
+SDZFM2NhN3lJUzdYdk9Dd2RpVFpuQy9WN05KNEw4NloxRkI4bmYrajEwCjlyaEJBWWkyaVZIZzNo
+WXBiMldtWjRCamJ3YWpDdGRPS2pYNzZxUFlYay8zTDVGSlZFSUM3S1hUOFpGMmVVTnkKcFlsZWN5
+T1RFSjREVUJZS2VsZEFzZlgwRGMvSCtabjdmK1lBem54cStZTzZQdXUzU3dweVhFNkd5eGNHWlNW
+cgpEZ2ZYM3o4bEM1WG1aUjZ6WUFYOU9qUzFubnVjNGJCQUt4S3RUWFh2eVZvMTNodU0rbU1kUlZJ
+WUlnMFMzMGV1CnFxQW0zbnc0MlRZM0d2c1dzU0h0RVA3SGR0Q1ZlaUJvQ2l4SlN1Q0lGR1c3T2Vm
+MzJEZ1VndnBObHl3RlkrdHUKeFFJREFRQUIKLS0tLS1FTkQgUFVCTElDIEtFWS0tLS0tCg==
+endef
+export HALMD_CERT_PUBKEY
+
 .fetch-halmd-$(HALMD_VERSION):
-	$(RM) $(HALMD_SOURCE_DIR)
-	$(GIT) clone $(HALMD_GIT_URL) $(HALMD_SOURCE_DIR)
-	cd $(HALMD_SOURCE_DIR) && $(GIT) checkout $(HALMD_VERSION)
-	cd $(HALMD_SOURCE_DIR) && $(GIT) submodule update --init
+	$(RM) $(HALMD_TARBALL)
+	$(WGET) $(HALMD_TARBALL_URL)
+	$(WGET) -q $(HALMD_TARBALL_URL).sig
+	echo $$HALMD_CERT_PUBKEY | $(BASE64) | $(OPENSSL) dgst -sha512 -verify /dev/stdin \
+	  -signature $(HALMD_TARBALL).sig $(HALMD_TARBALL)
+	$(RM) $(HALMD_TARBALL).sig
 	@$(TOUCH) $@
 
 fetch-halmd: .fetch-halmd-$(HALMD_VERSION)
 
-.configure-halmd-$(HALMD_VERSION): .fetch-halmd-$(HALMD_VERSION)
+.extract-halmd-$(HALMD_VERSION): .fetch-halmd-$(HALMD_VERSION)
+	$(TAR) -xjf $(HALMD_TARBALL)
+	@$(TOUCH) $@
+
+extract-halmd: .extract-halmd-$(HALMD_VERSION)
+
+.configure-halmd-$(HALMD_VERSION): .extract-halmd-$(HALMD_VERSION)
 	$(MKDIR) $(HALMD_BUILD_DIR)
 	cd $(HALMD_BUILD_DIR) && $(HALMD_BUILD_ENV) cmake -DCMAKE_INSTALL_PREFIX=$(HALMD_INSTALL_DIR) $(CURDIR)/$(HALMD_SOURCE_DIR)
 	@$(TOUCH) $@
@@ -1096,7 +1118,9 @@ clean-halmd:
 
 distclean-halmd: clean-halmd
 	@$(RM) .fetch-halmd-$(HALMD_VERSION)
+	@$(RM) .extract-halmd-$(HALMD_VERSION)
 	$(RM) $(HALMD_SOURCE_DIR)
+	$(RM) $(HALMD_TARBALL)
 
 env-halmd:
 	@echo
