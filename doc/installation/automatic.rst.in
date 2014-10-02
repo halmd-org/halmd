@@ -92,8 +92,8 @@ with GCC = 4.6 specify::
   make -f .../halmd/examples/packages.mk BOOST_ABI=c++0x install-boost
 
 Recent versions of non-GCC compilers may be used by setting ``BOOST_TOOLSET``
-accordingly, e.g., ``clang`` for the Clang compiler, ``intel`` for Intel's C++
-Compiler, or ``pgi`` for PGI's C++ compiler::
+accordingly, e.g., ``clang`` for the Clang compiler, ``intel`` for Intel’s C++
+Compiler, or ``pgi`` for PGI’s C++ compiler::
 
   make -f .../halmd/examples/packages.mk BOOST_TOOLSET=clang install-boost
 

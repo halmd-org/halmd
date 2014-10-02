@@ -52,12 +52,12 @@ For compilation and subsequent installation type::
 Further CMake configuration
 ---------------------------
 
-Compilation flags may be configured via CMake's text mode interface::
+Compilation flags may be configured via CMake’s text mode interface::
 
   ccmake .
 
 To finish configuration, hit "c" and "g" to apply and recompile with make.
-Alternatively, you may use CMake's graphical interface::
+Alternatively, you may use CMake’s graphical interface::
 
   cmake-gui .
 

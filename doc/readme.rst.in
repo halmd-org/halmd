@@ -85,7 +85,7 @@ Historical footnote
 The name *HAL’s MD package* was chosen in honour of the machine `HAL
 <http://en.wikipedia.org/wiki/HAL_9000>`_ at the Arnold Sommerfeld Center for
 Theoretical Physics of the Ludwigs-Maximilians-Universität München. HAL has
-been the project's first GPGPU machine in 2007, equipped initially with two
+been the project’s first GPGPU machine in 2007, equipped initially with two
 NVIDIA GeForce 8800 Ultra. HAL survived a critical air condition failure in the
 server room.
 

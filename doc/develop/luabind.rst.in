@@ -189,8 +189,8 @@ When an object is created from a C++ class registered with Luabind,
 Luabind actually creates a C++ object representation object that
 wraps this C++ object. This means Luabind C++ objects may be extended
 in Lua with arbitrary member functions or variables. One method of
-extending a C++ object is with Luabind's ``property()`` function, which
-works analogous to Luabind's C++ ``.property()``. Properties may be
+extending a C++ object is with Luabind’s ``property()`` function, which
+works analogous to Luabind’s C++ ``.property()``. Properties may be
 read-only or read-write.
 
 In the first example, we create an object from the C++ class
