@@ -1132,7 +1132,7 @@ env-halmd:
 ##
 
 NVCUDA_TOOLS_VERSION = master
-NVCUDA_TOOLS_GIT_URL = http://github.com/fhoefling/nvcuda-tools.git
+NVCUDA_TOOLS_GIT_URL = http://github.com/halmd-org/nvcuda-tools.git
 NVCUDA_TOOLS_SOURCE_DIR = nvcuda-tools-$(NVCUDA_TOOLS_VERSION)
 NVCUDA_TOOLS_BUILD_DIR = $(NVCUDA_TOOLS_SOURCE_DIR)/build/release
 NVCUDA_TOOLS_INSTALL_DIR = $(PREFIX)/nvcuda-tools-$(NVCUDA_TOOLS_VERSION)

@@ -2,7 +2,7 @@ Short guide on Luabind
 ======================
 
 The *Luabind* library is used to export C++ classes to the Lua scripting
-interface.
+interface. *Luaponte* is a (temporary) fork from *Luabind*.
 
 .. highlight:: c++
 

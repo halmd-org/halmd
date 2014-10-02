@@ -25,7 +25,7 @@ Build environment
   semi-automated build of GCC are given in :ref:`automatic`.
 
 * `CMake <http://www.cmake.org/>`_ ≥ 2.8.8 with a patch for
-  `native CUDA support <https://github.com/fhoefling/cmake-cuda>`_
+  `native CUDA support <https://github.com/halmd-org/cmake-cuda>`_
 
   The build process of HALMD depends on CMake, a cross-platform, open-source
   build system.

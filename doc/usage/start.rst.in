@@ -73,6 +73,6 @@ For a more advanced inspection and analysis of the HDF5 output files, see
   plotting/plot_h5md.py output.h5
 
 You may also have a look at the `H5MD tools
-<http://github.com/fhoefling/h5md-tools>`_, a collection of analysis and plot
+<http://github.com/halmd-org/h5md-tools>`_, a collection of analysis and plot
 scripts.
 

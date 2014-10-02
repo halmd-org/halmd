@@ -12,7 +12,7 @@ system. A copy of the repository is created by ::
 which is redirected to `GitHub <http://github.com>`_. If you prefer the git
 protocol use ::
 
-  git clone --recursive git://github.com/fhoefling/halmd.git
+  git clone --recursive git://github.com/halmd-org/halmd.git
 
 This will create a directory ``halmd``, which holds a hidden copy of the
 repository and a working copy of the source files.

@@ -36,7 +36,7 @@ You may also directly use the preload library::
 
 nvlock is available at ::
 
-  https://github.com/fhoefling/nvcuda-tools
+  https://github.com/halmd-org/nvcuda-tools
 
 and is compiled with ::
 
