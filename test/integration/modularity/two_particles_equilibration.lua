@@ -24,6 +24,7 @@ local halmd = require("halmd")
 local log = halmd.io.log
 local mdsim = halmd.mdsim
 local observables = halmd.observables
+local random = halmd.random
 local writers = halmd.io.writers
 local utility = halmd.utility
 
@@ -94,6 +95,8 @@ local function setup(args)
     particle:set_species(species)
     -- set initial particle positions
     mdsim.positions.lattice({box = box, particle = particle}):set()
+    -- randomly shuffle the positions
+    particle:set_position(random.generator({memory = "host"}):shuffle(particle:get_position()))
     -- set initial particle velocities
     mdsim.velocities.boltzmann({particle = particle, temperature = temp0}):set()
 

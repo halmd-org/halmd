@@ -1,6 +1,6 @@
 #!/usr/bin/env halmd
 --
--- Copyright © 2011-2012 Felix Höfling
+-- Copyright © 2011-2014 Felix Höfling
 -- Copyright © 2010-2012 Peter Colberg
 --
 -- This file is part of HALMD.
@@ -24,6 +24,7 @@ local halmd = require("halmd")
 -- grab modules
 local mdsim = halmd.mdsim
 local observables = halmd.observables
+local random = halmd.random
 local writers = halmd.io.writers
 local utility = halmd.utility
 
@@ -61,6 +62,8 @@ local function kob_andersen(args)
 
     -- set initial particle positions, randomise the particle species
     mdsim.positions.lattice({box = box, particle = particle}):set()
+    -- randomly shuffle the positions
+    particle:set_position(random.generator({memory = "host"}):shuffle(particle:get_position()))
 
     -- set initial particle velocities
     mdsim.velocities.boltzmann({particle = particle, temperature = temperature}):set()

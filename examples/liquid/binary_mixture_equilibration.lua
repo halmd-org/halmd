@@ -26,6 +26,7 @@ local log = halmd.io.log
 local mdsim = halmd.mdsim
 local numeric = halmd.numeric
 local observables = halmd.observables
+local random = halmd.random
 local writers = halmd.io.writers
 local utility = halmd.utility
 
@@ -69,9 +70,11 @@ local function liquid(args)
         offset = offset + nparticle
     end
     particle:set_species(species)
-    -- set initial particle positions
+    -- set initial particle positions sequentially on an fcc lattice
     local lattice = mdsim.positions.lattice({box = box, particle = particle})
     lattice:set()
+    -- randomly shuffle the positions
+--    particle:set_position(random.generator({memory = "host"}):shuffle(particle:get_position()))
     -- set initial particle velocities
     local boltzmann = mdsim.velocities.boltzmann({
         particle = particle

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2013      Felix Höfling
+ * Copyright © 2013-2014 Felix Höfling
  * Copyright © 2008-2011 Peter Colberg
  *
  * This file is part of HALMD.
@@ -19,6 +19,7 @@
  */
 
 #include <memory>
+#include <vector>
 
 #include <halmd/io/logger.hpp>
 #include <halmd/random/host/random.hpp>
@@ -42,6 +43,18 @@ void random::seed(unsigned int seed)
     rng_.seed(seed);
 }
 
+/**
+ * shuffle sequence of abstract Lua type (number, table, userdata, …)
+ * and returned shuffled sequence
+ */
+static std::vector<luaponte::object>
+wrap_shuffle(std::shared_ptr<random> self, std::vector<luaponte::object> const& v)
+{
+    std::vector<luaponte::object> result(v);    // FIXME deep copy needed due to luaponte::out_value bug
+    self->shuffle(result.begin(), result.end());
+    return result;
+}
+
 void random::luaopen(lua_State* L)
 {
     using namespace luaponte;
@@ -51,10 +64,12 @@ void random::luaopen(lua_State* L)
         [
             namespace_("host")
             [
-                class_<random, std::shared_ptr<random> >(rng_name())
+                class_<random, std::shared_ptr<random>>(rng_name())
                     .def(constructor<>())
                     .def(constructor<unsigned int>())
                     .def("seed", &random::seed)
+                    .def("shuffle", &wrap_shuffle)
+//                    .def("shuffle", &wrap_shuffle, out_value(_2)) FIXME does not compile
             ]
         ]
     ];
