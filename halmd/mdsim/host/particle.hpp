@@ -213,7 +213,7 @@ public:
     {
         return mass_;
     }
-        /**
+    /**
      * Returns const reference to particle force.
      */
     cache<force_array_type> const& force()
