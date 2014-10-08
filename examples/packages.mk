@@ -64,9 +64,9 @@ env: env-cmake env-lua env-luajit env-boost env-hdf5 env-git env-python-sphinx e
 ## CMake with CMake-CUDA patch
 ##
 
-CMAKE_CUDA_VERSION = 2.8.12.1-cuda
+CMAKE_CUDA_VERSION = 2.8.12.2-cuda
 CMAKE_CUDA_TARBALL = $(CMAKE_CUDA_VERSION).tar.gz
-CMAKE_CUDA_TARBALL_SHA256 = 6768c17f2facb315187880bb135d5e150fefabac24d483c7448f2a9e276bd5ac
+CMAKE_CUDA_TARBALL_SHA256 = e884782cfc9fcb2c3720c51d1924d2a0dacebb10d09a6524e773ada1ba76c093
 CMAKE_CUDA_TARBALL_URL = http://git.halmd.org/cmake-cuda/archive/$(CMAKE_CUDA_TARBALL)
 CMAKE_SOURCE_DIR = cmake-cuda-$(CMAKE_CUDA_VERSION)
 CMAKE_BUILD_DIR = $(CMAKE_SOURCE_DIR)/build
