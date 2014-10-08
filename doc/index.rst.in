@@ -7,6 +7,7 @@ Documentation of HAL’s MD package
    readme
    installation/index
    usage/index
+   recipes/index
    modules/index
    units
    validation
