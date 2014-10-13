@@ -429,15 +429,70 @@ env-hdf5:
 	@echo 'export CMAKE_PREFIX_PATH="$(HDF5_INSTALL_DIR)$${CMAKE_PREFIX_PATH+:$$CMAKE_PREFIX_PATH}"'
 
 ##
+## Curl library, needed for Git to use the https protocol
+##
+
+CURL_VERSION = 7.38.0
+CURL_TARBALL = curl-$(CURL_VERSION).tar.gz
+CURL_TARBALL_URL = http://curl.haxx.se/download/$(CURL_TARBALL)
+CURL_TARBALL_SHA256 = 5661028aa6532882fa228cd23c99ddbb8b87643dbb1a7ea55c068d34a943dff1
+CURL_BUILD_DIR = curl-$(CURL_VERSION)
+CURL_INSTALL_DIR = $(CURDIR)/.curl-$(CURL_VERSION)
+CURL_CONFIGURE_FLAGS = --with-ssl
+
+.fetch-curl-$(CURL_VERSION):
+	@$(RM) $(CURL_TARBALL)
+	$(WGET) $(CURL_TARBALL_URL)
+	@echo '$(CURL_TARBALL_SHA256)  $(CURL_TARBALL)' | $(SHA256SUM)
+	@$(TOUCH) $@
+
+fetch-curl: .fetch-curl-$(CURL_VERSION)
+
+.extract-curl-$(CURL_VERSION): .fetch-curl-$(CURL_VERSION)
+	$(RM) $(CURL_BUILD_DIR)
+	$(TAR) -xzf $(CURL_TARBALL)
+	@$(TOUCH) $@
+
+extract-curl: .extract-curl-$(CURL_VERSION)
+
+.configure-curl-$(CURL_VERSION): .extract-curl-$(CURL_VERSION)
+	cd $(CURL_BUILD_DIR) && ./configure --prefix=$(CURL_INSTALL_DIR) --libdir=$(CURL_INSTALL_DIR)/lib $(CURL_CONFIGURE_FLAGS)
+	@$(TOUCH) $@
+
+configure-curl: .configure-curl-$(CURL_VERSION)
+
+.build-curl-$(CURL_VERSION): .configure-curl-$(CURL_VERSION)
+	cd $(CURL_BUILD_DIR) && $(MAKE) $(PARALLEL_BUILD_FLAGS)
+	@$(TOUCH) $@
+
+build-curl: .build-curl-$(CURL_VERSION)
+
+.install-curl-$(CURL_VERSION): .build-curl-$(CURL_VERSION)
+	cd $(CURL_BUILD_DIR) && $(MAKE) install
+	@$(TOUCH) $@
+
+clean-curl:
+	@$(RM) .build-curl-$(CURL_VERSION)
+	@$(RM) .configure-curl-$(CURL_VERSION)
+	@$(RM) .extract-curl-$(CURL_VERSION)
+	$(RM) $(CURL_BUILD_DIR)
+
+distclean-curl: clean-curl
+	@$(RM) .fetch-curl-$(CURL_VERSION)
+	@$(RM) .install-curl-$(CURL_VERSION)
+	$(RM) $(CURL_TARBALL)
+	$(RM) $(CURL_INSTALL_DIR)
+
+##
 ## Git version control
 ##
-GIT_VERSION = 1.9.2
+GIT_VERSION = 2.1.2
 GIT_TARBALL = git-$(GIT_VERSION).tar.gz
 GIT_TARBALL_URL = https://www.kernel.org/pub/software/scm/git/$(GIT_TARBALL)
-GIT_TARBALL_SHA256 = d0dceb2e881f6a8f6eada128f782904b8711ea93a4c86dd38da99a7773edc25b
+GIT_TARBALL_SHA256 = fc0af850ef82e6e9ed2940397e65fb45034fba676999eb8404ff31d8d1e388ec
 GIT_MANPAGES_TARBALL = git-manpages-$(GIT_VERSION).tar.gz
 GIT_MANPAGES_TARBALL_URL = https://www.kernel.org/pub/software/scm/git/$(GIT_MANPAGES_TARBALL)
-GIT_MANPAGES_TARBALL_SHA256 = bcf7cb8aa17885f6923c33cf420ecf249e097510079c2996396c6369014c4ca8
+GIT_MANPAGES_TARBALL_SHA256 = f5c553d346894452adc67ce69e20e83b01c272c0003dd4cf5f80fad2b9a61d7c
 GIT_BUILD_DIR = git-$(GIT_VERSION)
 GIT_CONFIGURE_FLAGS = --without-python
 GIT_INSTALL_DIR = $(PREFIX)/git-$(GIT_VERSION)
@@ -451,7 +506,7 @@ GIT_INSTALL_DIR = $(PREFIX)/git-$(GIT_VERSION)
 	@echo '$(GIT_MANPAGES_TARBALL_SHA256)  $(GIT_MANPAGES_TARBALL)' | $(SHA256SUM)
 	@$(TOUCH) $@
 
-fetch-git: .fetch-git-$(GIT_VERSION)
+fetch-git: .fetch-git-$(GIT_VERSION) .fetch-curl-$(CURL_VERSION)
 
 .extract-git-$(GIT_VERSION): .fetch-git-$(GIT_VERSION)
 	$(RM) $(GIT_BUILD_DIR)
@@ -460,8 +515,8 @@ fetch-git: .fetch-git-$(GIT_VERSION)
 
 extract-git: .extract-git-$(GIT_VERSION)
 
-.configure-git-$(GIT_VERSION): .extract-git-$(GIT_VERSION)
-	cd $(GIT_BUILD_DIR) && ./configure $(GIT_CONFIGURE_FLAGS) --prefix=$(GIT_INSTALL_DIR)
+.configure-git-$(GIT_VERSION): .extract-git-$(GIT_VERSION) .install-curl-$(CURL_VERSION)
+	cd $(GIT_BUILD_DIR) && CFLAGS="-DCURL_STATICLIB" ./configure $(GIT_CONFIGURE_FLAGS) --prefix=$(GIT_INSTALL_DIR) --with-curl=$(CURL_INSTALL_DIR)
 	@$(TOUCH) $@
 
 configure-git: .configure-git-$(GIT_VERSION)
@@ -477,13 +532,13 @@ install-git: .build-git-$(GIT_VERSION)
 	install -d $(GIT_INSTALL_DIR)/share/man
 	cd $(GIT_INSTALL_DIR)/share/man && $(TAR) -xzf $(CURDIR)/$(GIT_MANPAGES_TARBALL)
 
-clean-git:
+clean-git: clean-curl
 	@$(RM) .build-git-$(GIT_VERSION)
 	@$(RM) .configure-git-$(GIT_VERSION)
 	@$(RM) .extract-git-$(GIT_VERSION)
 	$(RM) $(GIT_BUILD_DIR)
 
-distclean-git: clean-git
+distclean-git: clean-git distclean-curl
 	@$(RM) .fetch-git-$(GIT_VERSION)
 	$(RM) $(GIT_TARBALL)
 	$(RM) $(GIT_MANPAGES_TARBALL)
