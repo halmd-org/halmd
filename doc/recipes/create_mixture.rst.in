@@ -1,0 +1,28 @@
+Create initial state of a fluid mixture
+=======================================
+
+For fluid mixtures, which have the same interaction laws for each component
+(but different coefficients), all fluid particles are collected in a single
+instance of :mod:`particle <halmd.mdsim.particle>`. The different components
+are distinguished by their value for ``species``, particles of the same species
+form a contiguous range in ``tag`` (which is given by the index in the particle
+array). This allows for the efficient selection of each component from a
+:mod:`range of tags <halmd.mdsim.particle_groups.from_range>`.
+
+The setup procedure has the following steps:
+
+ * create system state
+ * sequentially assign particle species
+ * sequentially place particles on an fcc lattice
+ * randomly shuffle the positions
+ * assign random velocities according to a Maxwell–Boltzmann distribution
+
+.. literalinclude:: /test/lua/recipes/create_mixture.lua
+   :lines: 4-
+
+.. note::
+
+    The approach to randomly shuffle the particle positions is not very
+    efficient performance-wise: in the current implementation, it involves 6
+    deep copies of the position array (assuming that the GPU is the compute
+    device).
