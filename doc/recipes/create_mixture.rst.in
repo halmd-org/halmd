@@ -19,6 +19,7 @@ The setup procedure has the following steps:
 
 .. literalinclude:: /test/lua/recipes/create_mixture.lua
    :lines: 4-
+   :language: lua
 
 .. note::
 
