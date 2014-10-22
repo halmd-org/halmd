@@ -193,7 +193,7 @@ inline void external<dimension, float_type, potential_type>::compute_()
         // evaluate potential
         force_type f;
         en_pot_type en_pot_;
-        boost::tie(f, en_pot_) = (*potential_)(r, s);
+        std::tie(f, en_pot_) = (*potential_)(r, s);
 
         // add force contribution
         (*force)[i] += f;
@@ -232,7 +232,7 @@ inline void external<dimension, float_type, potential_type>::compute_aux_()
         // evaluate potential
         force_type f;
         en_pot_type en_pot_;
-        boost::tie(f, en_pot_) = (*potential_)(r, s);
+        std::tie(f, en_pot_) = (*potential_)(r, s);
 
         // add force contribution
         (*force)[i] += f;
