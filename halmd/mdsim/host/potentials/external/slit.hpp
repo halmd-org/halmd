@@ -22,10 +22,10 @@
 #define HALMD_MDSIM_HOST_POTENTIALS_EXTERNAL_SLIT_HPP
 
 #include <boost/numeric/ublas/matrix.hpp>
-#include <boost/tuple/tuple.hpp>
 #include <cmath>
 #include <lua.hpp>
 #include <memory>
+#include <tuple>
 
 #include <halmd/io/logger.hpp>
 
@@ -61,7 +61,7 @@ public:
      * Form of the potential is given here:
      * u_i(d)=epsilon_i*[(2/15)*(sigma_i/d)**9-wetting_i*(sigma_i/d)**3].
      */
-    boost::tuple<vector_type, float_type> operator()(vector_type const& r, unsigned int species) const
+    std::tuple<vector_type, float_type> operator()(vector_type const& r, unsigned int species) const
     {
         float_type en_pot = 0;
         vector_type force = 0;
@@ -85,7 +85,7 @@ public:
           en_pot += eps_d3i * (d6i - c);
         }
 
-        return make_tuple(force, en_pot);
+        return std::make_tuple(force, en_pot);
     }
 
     scalar_container_type const& offset() const
