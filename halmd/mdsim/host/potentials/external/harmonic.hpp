@@ -21,9 +21,9 @@
 #define HALMD_MDSIM_HOST_POTENTIALS_EXTERNAL_HARMONIC_HPP
 
 #include <boost/numeric/ublas/vector.hpp>
-#include <boost/tuple/tuple.hpp>
 #include <lua.hpp>
 #include <memory>
+#include <tuple>
 
 #include <halmd/io/logger.hpp>
 
@@ -57,13 +57,13 @@ public:
      * @param species   particle species
      * @returns   tuple of force vector @f$ -\nabla U(\vec r) @f$ and potential @f$ U(\vec r) @f$
      */
-    boost::tuple<vector_type, float_type> operator()(vector_type const& r, unsigned int species) const
+    std::tuple<vector_type, float_type> operator()(vector_type const& r, unsigned int species) const
     {
         vector_type dr = r - offset_[species];
         vector_type force = stiffness_[species] * dr;
         float_type en_pot = inner_prod(force, dr) / 2;
 
-        return make_tuple(force, en_pot);
+        return std::make_tuple(force, en_pot);
     }
 
     scalar_container_type const& stiffness() const
