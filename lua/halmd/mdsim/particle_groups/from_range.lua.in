@@ -1,5 +1,6 @@
 --
 -- Copyright © 2012-2014 Felix Höfling
+-- Copyright © 2015      Nicolas Höft
 -- Copyright © 2012      Peter Colberg
 --
 -- This file is part of HALMD.
@@ -21,6 +22,9 @@
 local log     = require("halmd.io.log")
 local module  = require("halmd.utility.module")
 local utility = require("halmd.utility")
+local mdsim   = {
+    particle = require("halmd.mdsim.particle")
+}
 
 ---
 -- From Range
@@ -70,6 +74,32 @@ local from_range = assert(libhalmd.mdsim.particle_groups.from_range)
 --    requires that ``args.global`` was set to true upon construction and
 --    that ``size`` equals the number of particles in ``particle``.
 --
+-- .. method:: to_particle(args)
+--
+--    :param table args: keyword argruments
+--    :param args.particle: instance of :class:`halmd.mdsim.particle` *(optional)*
+--    :param args.label: label of the new particle instance *(optional)*
+--    :returns: instance of :class:`halmd.mdsim.particle` with data from the particle group
+--
+--    Copy the particle group to a new particle instance. If no parameters given,
+--    a suitable particle instance will be constructed.
+--
+--    .. note::
+--
+--       Only positions, mass, species and velocity are copied to the particle instance.
+--       Other data (e.g. id, force) will not be copied.
+--
+--    If ``args.particle`` is present, the particle group will be copied into the given
+--    particle instance. Otherwise a new suitable particle instance with the label
+--    `args.label` will be created. If ``args.label`` is not given, it defaults to
+--    the group label. ``species`` of the new particle instance will be initialized with
+--    ``particle.species``.
+--
+--    .. note::
+--
+--       ``args.particle`` must reside in the same memory as the group and the number of
+--       particles must be equal to ``size``.
+--
 local M = module(function(args)
     local particle = utility.assert_kwarg(args, "particle")
     local range = utility.assert_kwarg(args, "range")
@@ -84,6 +114,18 @@ local M = module(function(args)
 
     -- construct particle group from tag range
     local self = from_range(particle, range, logger)
+
+    -- capture C++ method to_particle
+    local to_particle = assert(self.to_particle)
+    -- forward Lua method to_particle
+    self.to_particle = function(self, args)
+        -- construct particle instance, if none given
+        local particle_dst = args and args.particle
+        local label = (args and args.label) or self.label
+        particle_dst = particle_dst or mdsim.particle({dimension = particle.dimension, particles = self.size, species = particle.nspecies, label = label, memory = particle.memory})
+        to_particle(self, particle, particle_dst)
+        return particle_dst
+    end
 
     -- attach particle instance as read-only property
     self.particle = property(function(self)
