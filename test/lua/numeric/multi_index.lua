@@ -40,7 +40,7 @@ function test(dims)
         for d = 1, #dims do
             output_str = output_str .. "%d "
         end
-        log.debug(output_str, offset, table.unpack(index))
+        log.debug(output_str, offset, unpack(index))
         assert(i == offset)
     end
 end
