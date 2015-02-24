@@ -1,5 +1,7 @@
 /*
- * Copyright © 2010-2011  Peter Colberg and Felix Höfling
+ * Copyright © 2010-2011 Felix Höfling
+ * Copyright © 2015      Nicolas Höft
+ * Copyright © 2010-2011 Peter Colberg
  *
  * This file is part of HALMD.
  *
@@ -35,12 +37,21 @@ static __constant__ unsigned int ntype_;
 static texture<unsigned int> ntypes_;
 /** positions, types */
 static texture<float4> r_;
-/** minimum image vectors */
-static texture<void> image_;
 /** velocities, masses */
 static texture<float4> v_;
 /** tags */
 static texture<unsigned int> tag_;
+
+/** minimum image vectors */
+template<int dimension>
+struct image
+{
+    // instantiate a separate texture for each aligned vector type
+    typedef texture<typename particle_wrapper<dimension>::aligned_vector_type> type;
+    static type tex_;
+};
+// instantiate static members
+template<int dimension> image<dimension>::type image<dimension>::tex_;
 
 /**
  * rearrange particles by a given permutation
@@ -66,8 +77,8 @@ __global__ void rearrange(
     g_v[GTID + GTDIM] = tex1Dfetch(v_, i + GTDIM);
 #endif
 
-    // copy image vector with its type depending on the space dimension
-    g_image[GTID] = tex1Dfetch(reinterpret_cast<texture<aligned_vector_type>&>(image_), i);
+    // select correct image texture depending on the space dimension
+    g_image[GTID] = tex1Dfetch(image<dimension>::tex_, i);
 
     // copy particle tags
     g_tag[GTID] = tex1Dfetch(tag_, i);
@@ -81,7 +92,7 @@ particle_wrapper<dimension> const particle_wrapper<dimension>::kernel = {
   , particle_kernel::ntype_
   , particle_kernel::ntypes_
   , particle_kernel::r_
-  , particle_kernel::image_
+  , particle_kernel::image<dimension>::tex_
   , particle_kernel::v_
   , particle_kernel::tag_
 #ifdef USE_VERLET_DSFUN
@@ -94,6 +105,6 @@ particle_wrapper<dimension> const particle_wrapper<dimension>::kernel = {
 template class particle_wrapper<3>;
 template class particle_wrapper<2>;
 
-} // namespace mdsim
 } // namespace gpu
+} // namespace mdsim
 } // namespace halmd

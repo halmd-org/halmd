@@ -1,5 +1,7 @@
 /*
- * Copyright © 2008-2011  Peter Colberg and Felix Höfling
+ * Copyright © 2008-2011  Felix Höfling
+ * Copyright © 2015       Nicolas Höft
+ * Copyright © 2008-2011  Peter Colberg
  *
  * This file is part of HALMD.
  *
@@ -31,7 +33,15 @@ namespace gpu {
 namespace density_mode_kernel {
 
 // pass wavevectors via texture
-texture<void> q_;
+template<int dimension>
+struct wavevector
+{
+    // instantiate a separate texture for each aligned vector type
+    typedef texture<typename density_mode_wrapper<dimension>::coalesced_vector_type> type;
+    static type tex_;
+};
+// instantiate static members
+template<int dimension> wavevector<dimension>::type wavevector<dimension>::tex_;
 
 // recursive reduction function,
 // terminate for threads=0
@@ -89,7 +99,7 @@ __global__ void compute(
 
     // outer loop over wavevectors
     for (int i=0; i < nq; i++) {
-        vector_type q = tex1Dfetch(reinterpret_cast<texture<coalesced_vector_type>&>(q_), i);
+        vector_type q = tex1Dfetch(wavevector<dimension>::tex_, i);
         sin_[TID] = 0;
         cos_[TID] = 0;
         for (int j = GTID; j < npart; j += GTDIM) {
@@ -164,7 +174,7 @@ __global__ void finalise(
 
 template <int dimension>
 density_mode_wrapper<dimension> const density_mode_wrapper<dimension>::kernel = {
-    density_mode_kernel::q_
+    density_mode_kernel::wavevector<dimension>::tex_
   , density_mode_kernel::compute<fixed_vector<float, dimension> >
   , density_mode_kernel::finalise
 };

@@ -1,5 +1,6 @@
 /*
  * Copyright © 2008-2010  Peter Colberg
+ * Copyright © 2015       Nicolas Höft
  *
  * This file is part of HALMD.
  *
@@ -31,10 +32,19 @@ namespace phase_space_kernel {
 
 /** positions, types */
 texture<float4> r_;
-/** minimum image vectors */
-texture<void> image_;
 /** velocities, tags */
 texture<float4> v_;
+
+/** minimum image vectors */
+template<int dimension>
+struct image
+{
+    // instantiate a separate texture for each aligned vector type
+    typedef texture<typename phase_space_wrapper<dimension>::coalesced_vector_type> type;
+    static type tex_;
+};
+// instantiate static members
+template<int dimension> image<dimension>::type image<dimension>::tex_;
 
 /**
  * sample phase space for all particle of a single species
@@ -60,8 +70,8 @@ __global__ void sample(
         tie(r, type) <<= tex1Dfetch(r_, rtag);
         tie(v, tag) <<= tex1Dfetch(v_, rtag);
         // extend particle positions in periodic box
-        vector_type image = tex1Dfetch(reinterpret_cast<texture<coalesced_vector_type>&>(image_), rtag);
-        box_kernel::extend_periodic(r, image, box_length);
+        vector_type img = tex1Dfetch(image<dimension>::tex_, rtag);
+        box_kernel::extend_periodic(r, img, box_length);
         // store particle in global memory
         g_r[GTID] <<= tie(r, type);
         g_v[GTID] <<= tie(v, type);
@@ -114,7 +124,7 @@ __global__ void copy_particle_group(
 template <int dimension>
 phase_space_wrapper<dimension> const phase_space_wrapper<dimension>::kernel = {
     phase_space_kernel::r_
-  , phase_space_kernel::image_
+  , phase_space_kernel::image<dimension>::tex_
   , phase_space_kernel::v_
   , phase_space_kernel::sample<fixed_vector<float, dimension> >
   , phase_space_kernel::reduce_periodic<fixed_vector<float, dimension> >
@@ -124,6 +134,6 @@ phase_space_wrapper<dimension> const phase_space_wrapper<dimension>::kernel = {
 template class phase_space_wrapper<3>;
 template class phase_space_wrapper<2>;
 
-} // namespace observables
 } // namespace gpu
+} // namespace observables
 } // namespace halmd

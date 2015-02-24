@@ -1,6 +1,6 @@
 /*
- * Copyright © 2013 Nicolas Höft
- * Copyright © 2012 Peter Colberg
+ * Copyright © 2013-2015 Nicolas Höft
+ * Copyright © 2012      Peter Colberg
  *
  * This file is part of HALMD.
  *
@@ -40,6 +40,17 @@ static texture<float> en_pot_;
 /** potential parts of stress tensor */
 static texture<float> stress_pot_;
 
+/** minimum image vectors */
+template<int dimension>
+struct image
+{
+    // instantiate a separate texture for each aligned vector type
+    typedef texture<typename mdsim::type_traits<dimension, float>::gpu::coalesced_vector_type> type;
+    static type tex_;
+};
+// instantiate static members
+template<int dimension> image<dimension>::type image<dimension>::tex_;
+
 template <int dimension, typename float_type>
 __device__ void kinetic_energy<dimension, float_type>::operator()(size_type i)
 {
@@ -55,13 +66,13 @@ __device__ void centre_of_mass<dimension, float_type>::operator()(typename itera
     size_type i;
     fixed_vector<float, dimension> box_length;
     tie(i, box_length) = value;
-    fixed_vector<float, dimension> r, v, image;
+    fixed_vector<float, dimension> r, v, img;
     unsigned int species;
     float mass;
     tie(r, species) <<= tex1Dfetch(position_, i);
     tie(v, mass) <<= tex1Dfetch(velocity_, i);
-    image = tex1Dfetch(reinterpret_cast<texture<coalesced_vector_type>&>(image_), i);
-    mdsim::gpu::box_kernel::extend_periodic(r, image, box_length);
+    img = tex1Dfetch(image<dimension>::tex_, i);
+    mdsim::gpu::box_kernel::extend_periodic(r, img, box_length);
     mr_ += mass * r;
     m_ += mass;
 }
@@ -116,7 +127,7 @@ centre_of_mass<dimension, float_type>::position_texture_ = position_;
 
 template <int dimension, typename float_type>
 cuda::texture<typename centre_of_mass<dimension, float_type>::coalesced_vector_type> const
-centre_of_mass<dimension, float_type>::image_texture_ = image_;
+centre_of_mass<dimension, float_type>::image_texture_ = image<dimension>::tex_;
 
 template <int dimension, typename float_type>
 cuda::texture<float4> const
