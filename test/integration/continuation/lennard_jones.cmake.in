@@ -70,7 +70,7 @@ execute_halmd(
   "@CMAKE_SOURCE_DIR@/examples/liquid/lennard_jones.lua"
   --verbose
   --output "${OUTPUT_PREFIX}_continued"
-  --trajectory "${OUTPUT_PREFIX}.h5"
+  --input "${OUTPUT_PREFIX}.h5"
   --time 2
   --timestep 0.001
   --sampling trajectory=1000

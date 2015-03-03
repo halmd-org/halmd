@@ -61,7 +61,7 @@ execute_halmd(
   "@CMAKE_SOURCE_DIR@/test/integration/modularity/two_particles.lua"
   --verbose
   --output "${OUTPUT_PREFIX}_continued"
-  --trajectory "${OUTPUT_PREFIX}.h5"
+  --input "${OUTPUT_PREFIX}.h5"
   --time 1
   --sampling trajectory=1000
 )

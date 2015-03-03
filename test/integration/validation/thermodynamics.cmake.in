@@ -89,7 +89,7 @@ execute_halmd(
   "@CMAKE_SOURCE_DIR@/examples/liquid/lennard_jones.lua"
   --verbose
   --output "${OUTPUT_PREFIX}_equilibration"
-  --trajectory "${OUTPUT_PREFIX}_thermalisation.h5"
+  --input "${OUTPUT_PREFIX}_thermalisation.h5"
   --cutoff 4
   --timestep 0.001
   --time 30
@@ -105,7 +105,7 @@ execute_halmd(
   "@CMAKE_SOURCE_DIR@/examples/liquid/lennard_jones.lua"
   --verbose
   --output "${OUTPUT_PREFIX}"
-  --trajectory "${OUTPUT_PREFIX}_equilibration.h5"
+  --input "${OUTPUT_PREFIX}_equilibration.h5"
   --cutoff 4
   --time 60
   --timestep 0.001
