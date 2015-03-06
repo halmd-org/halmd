@@ -33,8 +33,8 @@ local writers = halmd.io.writers
 -- particle module
 --
 local function restore(args)
-    -- open H5MD trajectory file for reading
-    local file = readers.h5md({path = args.trajectory})
+    -- open H5MD file for reading
+    local file = readers.h5md({path = args.input})
 
     local samples = {}
     local nspecies = 0
@@ -61,7 +61,7 @@ local function restore(args)
     -- periodic boundary conditions
     local box = mdsim.box({edges = mdsim.box.reader({file = file, location = {"particles", "A"}})})
 
-    -- close H5MD trajectory file
+    -- close H5MD file
     file:close()
 
     -- create system state, one particle instance per species
@@ -264,12 +264,12 @@ local function parse_args()
         args[key] = level[value] or level[#level]
     end, default = 1, help = "increase logging verbosity"})
 
-    parser:add_argument("trajectory", {type = "string", required = true, action = function(args, key, value)
+    parser:add_argument("input", {type = "string", required = true, action = function(args, key, value)
         if not readers.h5md.check(value) then
             error(("not an H5MD file: %s"):format(value), 0)
         end
         args[key] = value
-    end, help = "H5MD trajectory file"})
+    end, help = "H5MD input file"})
 
     parser:add_argument("time", {type = "number", default = 1000, help = "integration time"})
     parser:add_argument("timestep", {type = "number", default = 0.001, help = "integration time step"})
