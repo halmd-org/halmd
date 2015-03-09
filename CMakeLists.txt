@@ -166,6 +166,7 @@ if(NOT HALMD_DOC_ONLY OR NOT HALMD_USE_GIT)
   include_directories(SYSTEM ${LUA_INCLUDE_DIR})
   if(HALMD_WITH_GPU)
     include_directories(SYSTEM ${CUDA_INCLUDE_DIR})
+    include_directories(${HALMD_SOURCE_DIR}/libs/cub)
   endif(HALMD_WITH_GPU)
 
   # If the subdirectory doc/ contains a CMakeLists.txt, we are in a git repository,

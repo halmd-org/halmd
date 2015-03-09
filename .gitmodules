@@ -7,3 +7,6 @@
 [submodule "libs/luaponte"]
 	path = libs/luaponte
 	url = ../luaponte
+[submodule "libs/cub"]
+	path = libs/cub
+	url = ../cub-slim
