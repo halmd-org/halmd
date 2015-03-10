@@ -110,6 +110,7 @@ if(NOT HALMD_DOC_ONLY OR NOT HALMD_USE_GIT)
   # be verbose about library versions (but suppress all the gory details given by find_package)
   message(STATUS "Boost version: ${Boost_MAJOR_VERSION}.${Boost_MINOR_VERSION}.${Boost_SUBMINOR_VERSION}")
   message(STATUS "Lua library version: ${LUA_VERSION_STRING}")
+  message(STATUS "HDF5 library version: ${HDF5_VERSION_STRING}")
 
   # Set HALMD build variant flags
   include(${CMAKE_SOURCE_DIR}/cmake/variant.cmake)

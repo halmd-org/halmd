@@ -8,11 +8,13 @@
 #  HDF5_CPP_LIBRARY
 #  HDF5_HL_LIBRARY
 #  HDF5_LIBRARIES
+#  HDF5_VERSION_STRING
 #
 
 #=============================================================================
 # Copyright 2002-2009 Kitware, Inc.
 # Copyright 2008-2011 Peter Colberg
+# Copyright 2015      Felix Höfling
 #
 # Distributed under the OSI-approved BSD License (the "License");
 # see accompanying file COPYING-CMAKE-SCRIPTS for details.
@@ -64,6 +66,12 @@ endif()
 if(HDF5_LIBRARY AND HDF5_CPP_LIBRARY AND HDF5_HL_LIBRARY)
   set(HDF5_LIBRARIES ${HDF5_LIBRARY} ${HDF5_CPP_LIBRARY} ${HDF5_HL_LIBRARY})
 endif()
+
+# detect HDF5 version
+file(STRINGS "${HDF5_INCLUDE_DIR}/H5pubconf.h" HDF5_VERSION_STRING LIMIT_COUNT 1
+     REGEX "#define H5_VERSION \"(.*)\""
+)
+string(REGEX REPLACE "#define H5_VERSION \"(.*)\"" "\\1" HDF5_VERSION_STRING "${HDF5_VERSION_STRING}")
 
 include(FindPackageHandleStandardArgs)
 
