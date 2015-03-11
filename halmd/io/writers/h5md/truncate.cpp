@@ -97,7 +97,7 @@ static void write_dataset(
 )
 {
     T data = slot();
-    if (!dataset.getId()) {
+    if (!h5xx::is_valid(dataset.getId())) {
         dataset = create_dataset(group, name, data);
     }
     h5xx::write_dataset(dataset, data);

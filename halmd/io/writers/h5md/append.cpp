@@ -111,7 +111,7 @@ write_dataset(
 )
 {
     auto const& data = *slot();
-    if (!dataset.getId()) {
+    if (!h5xx::is_valid(dataset.getId())) {
         dataset = create_dataset(group, name, data);
     }
     h5xx::write_chunked_dataset(dataset, data);
@@ -127,7 +127,7 @@ write_dataset(
 )
 {
     T data = slot();
-    if (!dataset.getId()) {
+    if (!h5xx::is_valid(dataset.getId())) {
         dataset = create_dataset(group, name, data);
     }
     h5xx::write_chunked_dataset(dataset, data);
