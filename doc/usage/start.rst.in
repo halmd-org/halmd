@@ -47,7 +47,7 @@ file using the accompanying script ::
 
   halmd liquid/lennard_jones.lua -v \
     --timestep 0.001 --time 100 \
-    --trajectory output_from_previous_run.h5 \
+    --input output_from_previous_run.h5 \
     --sampling state-vars=1000
 
 This will continue the simulation over 10⁵ steps and write observables like
