@@ -1,0 +1,57 @@
+Publications
+************
+
+This section lists peer-reviewed publications related to *HAL’s MD package*.
+Please send **suggestions** for papers that should be included to
+`info@halmd.org <mailto:info@halmd.org>`_ along with a short description and a
+graphical illustration (if available).
+
+
+Technical papers
+================
+
+
+**MD simulation algorithms**
+   The paper describes the essential MD simulation algorithms and their
+   implementation for the GPU. Please refer to it in all publications based on
+   or linked to *HAL’s MD package*.
+
+   P. H. Colberg and F. Höfling,
+   `Highly accelerated simulations of glassy dynamics using GPUs: Caveats on
+   limited floating-point precision
+   <http://dx.doi.org/10.1016/j.cpc.2011.01.009>`_, Comput. Phys. Commun.
+   **182**, 1120 (2011) `[arXiv:0912.3824] <http://arxiv.org/abs/0912.3824>`_.
+
+**H5MD format of input and output files**
+    The paper introduces and justifies the H5MD file format and contains its
+    detailed specification as of version 1.0.
+
+    P. de Buyl, P. H. Colberg, and F. Höfling,
+    `H5MD: a structured, efficient, and portable file format for molecular data
+    <http://dx.doi.org/10.1016/j.cpc.2014.01.018>`_, Comput. Phys. Commun.
+    **185**, 1546 (2014) `[arXiv:1308.6382] <http://arxiv.org/abs/1308.6382>`_.
+
+
+
+Scientific research
+===================
+
+**Mesoscopic structure of liquid–vapour interfaces**
+    At the molecular scale, liquid–vapour interfaces are broadened and
+    roughened by thermally excited capillary waves. These fluctuations give
+    rise to a divergence of the interfacial structure factor at small
+    wave-numbers; the latter being accessible to grazing-incidence small-angle
+    X-ray scattering (GISAXS) experiments. The paper discusses deviations from
+    the classical theory and relies on extensive simulations of planar interfaces
+    using up to 445,000 Lennard-Jones particles. GISAXS intensities are
+    computed on the fly of the simulations.
+
+    F. Höfling and S. Dietrich,
+    `Enhanced wavelength-dependent surface tension of liquid-vapour interfaces
+    <http://dx.doi.org/10.1209/0295-5075/109/46002>`_, EPL (Europhys. Lett.)
+    **109**, 46002 (2015) `[arXiv:1412.0568] <http://arxiv.org/abs/1412.0568>`_.
+
+    .. image:: _images/interface_epl109.png
+        :alt: Snapshot of a liquid–vapour interface
+        :align: center
+        :width: 50%

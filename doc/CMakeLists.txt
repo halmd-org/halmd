@@ -52,6 +52,15 @@ foreach(input ${files})
   list(APPEND HALMD_DOC_INPUT_FILES ${CMAKE_CURRENT_BINARY_DIR}/${output})
 endforeach(input)
 
+# Copy image files to the binary tree.
+file(GLOB_RECURSE files RELATIVE "${CMAKE_CURRENT_SOURCE_DIR}" "_images/*")
+foreach(input ${files})
+  if(NOT input MATCHES "(^|/)\\.[^/]+$")
+    configure_file("${CMAKE_CURRENT_SOURCE_DIR}/${input}" "${input}" COPYONLY)
+    list(APPEND HALMD_DOC_INPUT_FILES ${CMAKE_CURRENT_BINARY_DIR}/${input})
+  endif()
+endforeach()
+
 # Copy examples for inlining of plot examples into documentation.
 file(GLOB_RECURSE files RELATIVE ${CMAKE_SOURCE_DIR} ${CMAKE_SOURCE_DIR}/examples/*)
 foreach(input ${files})
