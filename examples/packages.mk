@@ -32,6 +32,7 @@ endif
 BASE64    = base64 -di
 CMAKE     = cmake
 CP        = cp -r
+CTEST     = ctest
 GIT       = git
 GUNZIP    = gzip -d
 MKDIR     = mkdir -p
@@ -1114,7 +1115,7 @@ extract-halmd: .extract-halmd-$(HALMD_VERSION)
 
 .configure-halmd-$(HALMD_VERSION): .extract-halmd-$(HALMD_VERSION)
 	$(MKDIR) $(HALMD_BUILD_DIR)
-	cd $(HALMD_BUILD_DIR) && $(HALMD_BUILD_ENV) cmake -DCMAKE_INSTALL_PREFIX=$(HALMD_INSTALL_DIR) $(CURDIR)/$(HALMD_SOURCE_DIR)
+	cd $(HALMD_BUILD_DIR) && $(HALMD_BUILD_ENV) $(CMAKE) -DCMAKE_INSTALL_PREFIX=$(HALMD_INSTALL_DIR) $(CURDIR)/$(HALMD_SOURCE_DIR)
 	@$(TOUCH) $@
 
 configure-halmd: .configure-halmd-$(HALMD_VERSION)
@@ -1124,6 +1125,9 @@ configure-halmd: .configure-halmd-$(HALMD_VERSION)
 	@$(TOUCH) $@
 
 build-halmd: .build-halmd-$(HALMD_VERSION)
+
+test-halmd: .build-halmd-$(HALMD_VERSION)
+	cd $(HALMD_BUILD_DIR) && $(CTEST)
 
 install-halmd: .build-halmd-$(HALMD_VERSION)
 	cd $(HALMD_BUILD_DIR) && $(MAKE) install
@@ -1164,7 +1168,7 @@ fetch-nvcuda-tools: .fetch-nvcuda-tools-$(NVCUDA_TOOLS_VERSION)
 
 .configure-nvcuda-tools-$(NVCUDA_TOOLS_VERSION): .fetch-nvcuda-tools-$(NVCUDA_TOOLS_VERSION)
 	$(MKDIR) $(NVCUDA_TOOLS_BUILD_DIR)
-	cd $(NVCUDA_TOOLS_BUILD_DIR) && cmake -DCMAKE_INSTALL_PREFIX=$(NVCUDA_TOOLS_INSTALL_DIR) $(CURDIR)/$(NVCUDA_TOOLS_SOURCE_DIR)
+	cd $(NVCUDA_TOOLS_BUILD_DIR) && $(CMAKE) -DCMAKE_INSTALL_PREFIX=$(NVCUDA_TOOLS_INSTALL_DIR) $(CURDIR)/$(NVCUDA_TOOLS_SOURCE_DIR)
 	@$(TOUCH) $@
 
 configure-nvcuda-tools: .configure-nvcuda-tools-$(NVCUDA_TOOLS_VERSION)
