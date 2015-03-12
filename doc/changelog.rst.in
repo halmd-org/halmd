@@ -3,6 +3,110 @@
 Changelog
 *********
 
+Version 1.0-alpha4
+==================
+
+**Breaking changes**
+
+* Lua scripts in ``examples/liquid``: rename option "--trajectory" to "--input" *(Felix Höfling)*
+
+**Bug fixes**
+
+* fix native build for Fermi and Kepler GPUs (compute capability ≥ 2.0) *(Nicolas Höft)*
+
+* fix build with Boost ≥ 1.57.0 *(Nicolas Höft)*
+
+* compatibility with HDF5 ≥ 1.8.14 *(Nicolas Höft, Felix Höfling)*
+
+**New features**
+
+* add function ``halmd.random.shuffle()``, which allows one, e.g., to setup
+  well-stirred fluid mixtures *(Felix Höfling)*
+
+**Improvements**
+
+* documentation: new sections "Recipes" and "Publications" *(Felix Höfling)*
+
+* support version 6.0 of the CUDA SDK *(Nicolas Höft)*
+
+* support both Lua 5.1 and Lua 5.2 (built without compatibility flags) *(Nicolas Höft)*
+
+
+Version 1.0-alpha3
+==================
+
+**Breaking changes**
+
+* mdsim/particle: make space dimension mandatory  *(Felix Höfling)*
+
+* mdsim/potentials: move to sub-namespace "pair" *(Felix Höfling)*
+
+**Bug fixes**
+
+* potentials: fix uninitialised memory for energy shift (host only) *(Nicolas
+  Höft)*
+
+* integrators: make Nosé–Hoover thermostat working again *(Felix Höfling)*
+
+* compile and build against Boost C++ 1.56 *(Felix Höfling)*
+
+**New features**
+
+* tensor-valued custom dynamic correlation functions *(Felix Höfling)*
+
+**Improvements**
+
+* packages.mk: more robust installation of prerequisites *(Felix Höfling)*
+
+* documentation: installation instructions, minor fixes *(Felix Höfling)*
+
+**Internal changes**
+
+* move from boost::{array,tuple} to std::{array,tuple} *(Nicolas Höft)*
+
+* mdsim/box: fix failing unit test *(Nicolas Höft)*
+
+
+Version 1.0-alpha2
+==================
+
+**Improvements**
+
+* drop submodule Boost.Log and use library shipped with Boost ≥ 1.55 *(Nicolas
+  Höft)*
+
+* integrators: reduce memory access gives a 10-20% performance gain (GPU only)
+  *(Felix Höfling)*
+
+* documentation: new benchmark results, minor fixes and updates *(Felix Höfling,
+  Nicolas Höft)*
+
+**Bug fixes**
+
+* integrators: fix missing update of box image data (GPU only) *(Felix Höfling)*
+
+
+Version 1.0-alpha1
+==================
+
+Substantial development (1225 commits!) happened since version 0.2.1 with
+contributions from Peter Colberg, Felix Höfling, and Nicolas Höft.
+
+**Most important changes**
+
+* completed the switch from a monolithic to a modular design
+
+* modules are exposed through a Lua API
+
+* simulations are defined and steered by either custom or shipped Lua scripts
+
+* dynamic correlation functions can be customised
+
+* H5MD format (version 1.0) for input and output files
+
+* face lift of the website
+
+
 Version 0.2.1
 =============
 
@@ -32,7 +136,7 @@ This version features a slightly larger choice of potentials and NVT
 integrators, but it brings only rudimentary support for dynamic correlations
 functions.
 
-Version 0.1.2
+Version 0.1.3
 =============
 
 **Improvements**
