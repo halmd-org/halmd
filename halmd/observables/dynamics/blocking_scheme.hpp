@@ -119,6 +119,8 @@ public:
         return time_;
     }
 
+    step_type next() const;
+
     /** Lua bindings */
     static void luaopen(lua_State* L);
 

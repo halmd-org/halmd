@@ -1,5 +1,7 @@
 /*
- * Copyright © 2011  Peter Colberg and Felix Höfling
+ * Copyright © 2011 Felix Höfling
+ * Copyright © 2015 Nicolas Höft
+ * Copyright © 2011 Peter Colberg
  *
  * This file is part of HALMD.
  *
@@ -150,6 +152,31 @@ void blocking_scheme::sample()
     on_append_sample_();
 }
 
+blocking_scheme::step_type blocking_scheme::next() const
+{
+    LOG_TRACE("compute next occurance of a sampling step");
+    step_type next_step;
+    step_type const step = clock_->step();
+
+    // TODO: is this sufficient?
+    next_step = step + separation_;
+
+    // iterate over all coarse-graining levels
+    for (unsigned int i = 0; i < interval_.size(); ++i) {
+        // calculate the next occuring sampling measured from step
+        step_type next;
+        if (origin_[i] < step) {
+            next = origin_[i] + ((step - 1 - origin_[i]) / interval_[i] + 1) * interval_[i];
+        }
+        else {
+            next = origin_[i];
+        }
+
+        next_step = min(next, next_step);
+    }
+    return next_step;
+}
+
 void blocking_scheme::finalise()
 {
     on_prepend_finalise_();
@@ -264,6 +291,7 @@ void blocking_scheme::luaopen(lua_State* L)
                     .def("on_append_sample", &blocking_scheme::on_append_sample)
                     .def("on_prepend_finalise", &blocking_scheme::on_prepend_finalise)
                     .def("on_append_finalise", &blocking_scheme::on_append_finalise)
+                    .def("next", &blocking_scheme::next)
             ]
         ]
     ];
