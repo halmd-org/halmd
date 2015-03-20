@@ -1,5 +1,6 @@
 --
 -- Copyright © 2011-2014 Felix Höfling
+-- Copyright © 2015      Nicolas Höft
 -- Copyright © 2011-2012 Peter Colberg
 --
 -- This file is part of HALMD.
@@ -123,13 +124,15 @@ local M = module(function(args)
         local conn = {}
         result.disconnect = utility.signal.disconnect(conn, "correlation function")
 
-        -- establish internal connections of the correlation function
-        -- e.g., particle:enable_aux() → sampler.on_prepare_force,
-        -- and append to our connection table
-        if tcf.connect then
-            conn_ = tcf:connect({every = every}) -- FIXME pass actual grid of sampling steps
-            for i,c in ipairs(conn_) do
-                table.insert(conn, c)
+        -- enable auxiliary variable calculation, if necessary for correlation function
+        if tcf.aux_enable then
+            local particles = utility.assert_type(tcf.aux_enable, "table")
+            for i,p in ipairs(particles) do
+                table.insert(conn, sampler:on_prepare(function()
+                    if self:next() == clock.step then
+                        p:aux_enable()
+                    end
+                end, 1, clock.step))
             end
         end
 
