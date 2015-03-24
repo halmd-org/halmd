@@ -60,9 +60,13 @@ local from_range = assert(libhalmd.mdsim.particle_groups.from_range)
 --
 --    Particle tags are 1-based, i.e. the first particle has tag 1.
 --
+-- .. attribute:: label
+--
+--    Particle group label.
+--
 -- .. attribute:: particle
 --
---    Instance of :class:`halmd.mdsim.particle`
+--    Instance of :class:`halmd.mdsim.particle`.
 --
 -- .. attribute:: size
 --

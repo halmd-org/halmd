@@ -49,9 +49,13 @@ local all = assert(libhalmd.mdsim.particle_groups.all)
 -- :param boolean args.global: particle group comprises the whole simulation
 --                             world (*default:* ``true``)
 --
+-- .. attribute:: label
+--
+--    Particle group label.
+--
 -- .. attribute:: particle
 --
---    Instance of :class:`halmd.mdsim.particle`
+--    Instance of :class:`halmd.mdsim.particle`.
 --
 -- .. attribute:: size
 --
