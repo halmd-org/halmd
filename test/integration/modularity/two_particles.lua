@@ -90,16 +90,37 @@ local function restore(args)
         }
       , cutoff = 2.5
     })
+
+    -- create binning modules explicitly and therefore only once for each particle instance
+    local binning = {
+        A = mdsim.binning({
+            box = box
+          , particle = particle["A"]
+          , r_cut = potential.r_cut
+        })
+      , B = mdsim.binning({
+            box = box
+          , particle = particle["B"]
+          , r_cut = potential.r_cut
+        })
+    }
     -- define interaction forces with smoothly truncated potential
     local force = {}
     local trunc = mdsim.forces.trunc.local_r4({h = 0.005})
     for label1, p1 in pairs(particle) do
         for label2, p2 in pairs(particle) do
+            local neighbour = mdsim.neighbour({
+                box = box
+              , particle = { p1, p2 }
+              , r_cut = potential.r_cut
+              , binning = { binning[label1], binning[label2] }
+            })
             force[label1 .. label2] = mdsim.forces.pair_trunc({
                 box = box
               , particle = { p1, p2 }
               , potential = potential, trunc = trunc
               , label = label1 .. label2 -- FIXME do not infer logger from potential
+              , neighbour = neighbour
             })
         end
     end
