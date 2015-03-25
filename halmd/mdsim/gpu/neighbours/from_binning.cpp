@@ -146,12 +146,15 @@ void from_binning<dimension, float_type>::update()
     LOG_TRACE("update neighbour lists");
 
     typename binning_type::cell_size_type ncell = binning2_->ncell();
+    if (*std::min_element(ncell.begin(), ncell.end()) < 3) {
+        throw std::logic_error("number of cells per dimension must be at least 3");
+    }
+
     // if the number of cells in each spatial direction do not match or
     // the cell sizes are different, the naive implementation is required
     bool use_naive = preferred_algorithm_ == naive
                   || binning1_->ncell() != binning2_->ncell()
-                  || binning1_->cell_size() != binning2_->cell_size()
-                  || *std::min_element(ncell.begin(), ncell.end()) < 3;
+                  || binning1_->cell_size() != binning2_->cell_size();
 
     if (use_naive && preferred_algorithm_ == shared_mem) {
         LOG_WARNING_ONCE("falling back to 'naive' neighbour list algorithm due to incompatible binning modules");
