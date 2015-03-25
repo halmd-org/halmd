@@ -119,6 +119,7 @@ local function setup(args)
               , particle = { p1, p2 }
               , r_cut = potential.r_cut
               , binning = { binning[label1], binning[label2] }
+              , disable_binning = (p1.memory == "gpu")
             })
             force[label1 .. label2] = mdsim.forces.pair_trunc({
                 box = box
