@@ -47,7 +47,7 @@ class particle_group
 {
 public:
     typedef raw_array<unsigned int> array_type;
-    typedef typename array_type::value_type size_type;
+    typedef array_type::value_type size_type;
 
     /**
      * Returns ordered sequence of particle indices.
@@ -98,12 +98,12 @@ get_unordered(particle_group& group, iterator_type const& first)
 template <typename particle_type>
 double get_mean_en_kin(particle_type const& particle, particle_group& group)
 {
-    typename particle_group::array_type const& unordered = *group.unordered();
+    particle_group::array_type const& unordered = *group.unordered();
     auto const& velocity = read_cache(particle.velocity());
     typename particle_type::mass_array_type const& mass = *particle.mass();
 
     double mv2 = 0;
-    for (typename particle_group::size_type i : unordered) {
+    for (particle_group::size_type i : unordered) {
         mv2 += mass[i] * inner_prod(velocity[i], velocity[i]);
     }
     return  0.5 * mv2 / unordered.size();
@@ -123,7 +123,7 @@ get_r_cm(particle_type const& particle, particle_group& group, box_type const& b
 
     fixed_vector<double, particle_type::velocity_type::static_size> mr = 0;
     double m = 0;
-    for (typename particle_group::size_type i : unordered) {
+    for (particle_group::size_type i : unordered) {
         auto r = position[i];
         box.extend_periodic(r, image[i]);
         mr += mass[i] * r;
@@ -145,7 +145,7 @@ get_v_cm_and_mean_mass(particle_type const& particle, particle_group& group)
 
     fixed_vector<double, particle_type::velocity_type::static_size> mv = 0;
     double m = 0;
-    for (typename particle_group::size_type i : unordered) {
+    for (particle_group::size_type i : unordered) {
         mv += mass[i] * velocity[i];
         m += mass[i];
     }
@@ -172,7 +172,7 @@ double get_mean_en_pot(particle_type& particle, particle_group& group)
     auto const& en_pot = read_cache(particle.potential_energy());
 
     double sum = 0;
-    for (typename particle_group::size_type i : unordered) {
+    for (particle_group::size_type i : unordered) {
         sum += en_pot[i];
     }
     return sum / unordered.size();
@@ -190,7 +190,7 @@ double get_mean_virial(particle_type& particle, particle_group& group)
     auto const& stress_pot = read_cache(particle.stress_pot());
 
     double sum = 0;
-    for (typename particle_group::size_type i : unordered) {
+    for (particle_group::size_type i : unordered) {
         // compute trace of the stress tensor
         for (int j = 0; j < dimension; ++j) {
             sum += stress_pot[i][j];
@@ -207,8 +207,8 @@ template <typename particle_type>
 typename type_traits<particle_type::force_type::static_size, double>::stress_tensor_type
 get_stress_tensor(particle_type& particle, particle_group& group)
 {
-    typedef typename particle_group::size_type size_type;
-    typedef typename particle_group::array_type group_array_type;
+    typedef particle_group::size_type size_type;
+    typedef particle_group::array_type group_array_type;
     typedef typename particle_type::stress_pot_array_type stress_pot_array_type;
     typedef typename particle_type::velocity_array_type velocity_array_type;
     typedef typename particle_type::mass_array_type mass_array_type;
@@ -237,8 +237,7 @@ get_stress_tensor(particle_type& particle, particle_group& group)
 template <typename particle_type>
 void particle_group_to_particle(particle_type const& particle_src, particle_group& group, particle_type& particle_dst)
 {
-    typedef typename particle_group::size_type size_type;
-    typedef typename particle_group::array_type group_array_type;
+    typedef particle_group::size_type size_type;
     enum { dimension = particle_type::force_type::static_size };
 
     if(*group.size() != particle_dst.nparticle()) {
