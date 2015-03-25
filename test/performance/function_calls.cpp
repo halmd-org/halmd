@@ -61,9 +61,11 @@ public:
      *
      * @param method name of function call method
      * @param iterations number of function calls
+     * @param check perform test if the performance test was slower than the C++ test
      */
-    printer(string const& method, size_t iterations)
+    printer(string const& method, size_t iterations, bool check = true)
       : iterations_(iterations)
+      , check_(check)
     {
         BOOST_TEST_MESSAGE( method );
     }
@@ -85,11 +87,14 @@ public:
         BOOST_TEST_MESSAGE( setprecision(2) << fixed << setw(15) << result * 1.e9 << " ns" << setw(15) << factor << "" );
 
         // C++ function call should be fastest
-        BOOST_CHECK( factor >= 1 );
+        if (check_) {
+            BOOST_CHECK( factor >= 1 );
+        }
     }
 
 private:
     size_t iterations_;
+    bool check_;
 };
 
 // use macros to allow stringification for Lua commands
@@ -206,7 +211,7 @@ BOOST_FIXTURE_TEST_CASE( lua_cfunction, lua_test_fixture )
 BOOST_FIXTURE_TEST_CASE( local_lua_function, lua_test_fixture )
 {
     LUA_CHECK( "noop = function() end" );
-    printer p("Lua function (local)", I1E7);
+    printer p("Lua function (local)", I1E7, false); // LuaJIT may generate faster code than C++
     // warm up
     LUA_CHECK( "local noop = noop for i = 1, " xstr(I1E7) " do noop(42.) end" );
     scoped_timer<timer> timer(p);
@@ -220,7 +225,7 @@ BOOST_FIXTURE_TEST_CASE( local_lua_function, lua_test_fixture )
 BOOST_FIXTURE_TEST_CASE( global_lua_function, lua_test_fixture )
 {
     LUA_CHECK( "noop = function() end" );
-    printer p("Lua function (global)", I1E7);
+    printer p("Lua function (global)", I1E7, false); // LuaJIT may generate faster code than C++
     // warm up
     LUA_CHECK( "for i = 1, " xstr(I1E7) " do noop(42.) end" );
     scoped_timer<timer> timer(p);
