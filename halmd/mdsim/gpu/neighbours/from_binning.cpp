@@ -132,6 +132,16 @@ from_binning<dimension, float_type>::g_neighbour()
     return g_neighbour_;
 }
 
+template <int dimension, typename float_type>
+bool from_binning<dimension, float_type>::is_binning_compatible(std::shared_ptr<binning_type> binning1, std::shared_ptr<binning_type> binning2)
+{
+    auto ncell = binning2->ncell();
+    if (*std::min_element(ncell.begin(), ncell.end()) < 3) {
+        return false;
+    }
+    return true;
+}
+
 /**
  * Update neighbour lists
  */
@@ -145,8 +155,7 @@ void from_binning<dimension, float_type>::update()
 
     LOG_TRACE("update neighbour lists");
 
-    typename binning_type::cell_size_type ncell = binning2_->ncell();
-    if (*std::min_element(ncell.begin(), ncell.end()) < 3) {
+    if (!is_binning_compatible(binning1_, binning2_)) {
         throw std::logic_error("number of cells per dimension must be at least 3");
     }
 
@@ -281,6 +290,7 @@ void from_binning<dimension, float_type>::luaopen(lua_State* L)
                   , algorithm
                   , std::shared_ptr<logger>
                 >)
+              , def("is_binning_compatible", &from_binning::is_binning_compatible)
             ]
           , namespace_(defaults_name.c_str())
             [

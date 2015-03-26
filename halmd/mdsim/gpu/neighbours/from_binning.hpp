@@ -107,6 +107,9 @@ public:
      */
     virtual cache<array_type> const& g_neighbour();
 
+    //! returns true if the binning module is compatible with the neighbour list module
+    static bool is_binning_compatible(std::shared_ptr<binning_type> binning1, std::shared_ptr<binning_type> binning2);
+
     /**
      * number of placeholders per neighbour list
      */
