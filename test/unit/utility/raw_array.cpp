@@ -220,10 +220,13 @@ template <typename T>
 static void test_move_constructor(halmd::raw_array<T>& array)
 {
     typedef halmd::raw_array<T> array_type;
-    typename array_type::size_type const size = array.size();
+    typedef typename array_type::size_type size_type;
+    size_type const size = array.size();
+    size_type const capacity = array.capacity();
     typename array_type::pointer const begin = &*array.begin();
 
     BOOST_CHECK_EQUAL( array.size(), size );
+    BOOST_CHECK_EQUAL( array.capacity(), capacity );
     BOOST_CHECK_EQUAL( &*array.begin(), begin );
     BOOST_CHECK_EQUAL( &*array.end(), begin + size );
 
@@ -231,8 +234,10 @@ static void test_move_constructor(halmd::raw_array<T>& array)
     array_type array2(std::move(array));
 
     BOOST_CHECK_EQUAL( array.size(), 0lu );
+    BOOST_CHECK_EQUAL( array.capacity(), 0lu );
     BOOST_CHECK_EQUAL( &*array.begin(), &*array.end() );
     BOOST_CHECK_EQUAL( array2.size(), size );
+    BOOST_CHECK_EQUAL( array2.capacity(), capacity );
     BOOST_CHECK_EQUAL( &*array2.begin(), begin );
     BOOST_CHECK_EQUAL( &*array2.end(), begin + size );
 
@@ -240,8 +245,10 @@ static void test_move_constructor(halmd::raw_array<T>& array)
     array_type array3 = std::move(array2);
 
     BOOST_CHECK_EQUAL( array2.size(), 0lu );
+    BOOST_CHECK_EQUAL( array2.capacity(), 0lu );
     BOOST_CHECK_EQUAL( &*array2.begin(), &*array2.end() );
     BOOST_CHECK_EQUAL( array3.size(), size );
+    BOOST_CHECK_EQUAL( array3.capacity(), capacity );
     BOOST_CHECK_EQUAL( &*array3.begin(), begin );
     BOOST_CHECK_EQUAL( &*array3.end(), begin + size );
 
@@ -249,8 +256,10 @@ static void test_move_constructor(halmd::raw_array<T>& array)
     array_type array4 = std::move(array2);
 
     BOOST_CHECK_EQUAL( array2.size(), 0lu );
+    BOOST_CHECK_EQUAL( array2.capacity(), 0lu );
     BOOST_CHECK_EQUAL( &*array2.begin(), &*array2.end() );
     BOOST_CHECK_EQUAL( array4.size(), 0lu );
+    BOOST_CHECK_EQUAL( array4.capacity(), 0lu );
     BOOST_CHECK_EQUAL( &*array4.begin(), &*array4.end() );
 }
 
@@ -258,24 +267,30 @@ template <typename T>
 static void test_move_assignment(halmd::raw_array<T>& array)
 {
     typedef halmd::raw_array<T> array_type;
-    typename array_type::size_type const size = array.size();
+    typedef typename array_type::size_type size_type;
+    size_type const size = array.size();
+    size_type const capacity = array.capacity();
     typename array_type::pointer const begin = &*array.begin();
 
     BOOST_CHECK_EQUAL( array.size(), size );
+    BOOST_CHECK_EQUAL( array.capacity(), capacity );
     BOOST_CHECK_EQUAL( &*array.begin(), begin );
     BOOST_CHECK_EQUAL( &*array.end(), begin + size );
 
     // construct empty array
     array_type array2;
     BOOST_CHECK_EQUAL( array2.size(), 0lu );
+    BOOST_CHECK_EQUAL( array2.capacity(), 0lu );
     BOOST_CHECK_EQUAL( &*array2.begin(), &*array2.end() );
 
     // assign rvalue reference of non-empty array
     array2 = std::move(array);
 
     BOOST_CHECK_EQUAL( array.size(), 0lu );
+    BOOST_CHECK_EQUAL( array.capacity(), 0lu );
     BOOST_CHECK_EQUAL( &*array.begin(), &*array.end() );
     BOOST_CHECK_EQUAL( array2.size(), size );
+    BOOST_CHECK_EQUAL( array2.capacity(), capacity );
     BOOST_CHECK_EQUAL( &*array2.begin(), begin );
     BOOST_CHECK_EQUAL( &*array2.end(), begin + size );
 
@@ -288,16 +303,110 @@ static void test_move_assignment(halmd::raw_array<T>& array)
     array3 = std::move(array);
 
     BOOST_CHECK_EQUAL( array.size(), 0lu );
+    BOOST_CHECK_EQUAL( array.capacity(), 0lu );
     BOOST_CHECK_EQUAL( &*array.begin(), &*array.end() );
     BOOST_CHECK_EQUAL( array3.size(), 0lu );
+    BOOST_CHECK_EQUAL( array3.capacity(), 0lu );
     BOOST_CHECK_EQUAL( &*array3.begin(), &*array3.end() );
 
     // assign rvalue reference of self
     array2 = std::move(array2);
 
     BOOST_CHECK_EQUAL( array2.size(), size );
+    BOOST_CHECK_EQUAL( array2.capacity(), capacity );
     BOOST_CHECK_EQUAL( &*array2.begin(), begin );
     BOOST_CHECK_EQUAL( &*array2.end(), begin + size );
+}
+
+template <typename T>
+static void test_resize(halmd::raw_array<T>& array)
+{
+    typedef halmd::raw_array<T> array_type;
+    typedef typename array_type::size_type size_type;
+
+    size_type const size = array.size();
+    size_type const capacity = array.capacity();
+
+    std::copy(
+        boost::counting_iterator<T>(1)
+      , boost::counting_iterator<T>(array.size() + 1)
+      , array.begin()
+    );
+    array.resize(size / 2);
+    BOOST_CHECK_EQUAL( array.capacity(), capacity );
+    BOOST_CHECK_EQUAL( array.size(), size / 2 );
+
+    BOOST_CHECK_EQUAL_COLLECTIONS(
+        boost::counting_iterator<T>(1)
+      , boost::counting_iterator<T>(size + 1)
+      , array.begin()
+      , array.begin() + size
+    );
+
+    array.resize(size); // restore old size
+
+    BOOST_CHECK_EQUAL( array.capacity(), capacity );
+    BOOST_CHECK_EQUAL( array.size(), size );
+
+    BOOST_CHECK_EQUAL_COLLECTIONS(
+        boost::counting_iterator<T>(1)
+      , boost::counting_iterator<T>(size + 1)
+      , array.begin()
+      , array.end()
+    );
+
+    // double the array size, old elements must be copied
+    array.resize(size * 2);
+
+    BOOST_CHECK_EQUAL( array.size(), size * 2 );
+    BOOST_CHECK_GE( array.capacity(), size * 2 );
+
+    BOOST_CHECK_EQUAL_COLLECTIONS(
+        boost::counting_iterator<T>(1)
+      , boost::counting_iterator<T>(size + 1)
+      , array.begin()
+      , array.begin() + size
+    );
+}
+
+template <typename T>
+static void test_reserve(halmd::raw_array<T>& array)
+{
+    typedef halmd::raw_array<T> array_type;
+    typedef typename array_type::size_type size_type;
+
+    size_type const size = array.size();
+    size_type const capacity = array.capacity();
+
+    std::copy(
+        boost::counting_iterator<T>(1)
+      , boost::counting_iterator<T>(array.size() + 1)
+      , array.begin()
+    );
+
+    // increase capacity
+    size_type new_capacity = capacity * 2;
+    array.reserve(new_capacity);
+    BOOST_CHECK_EQUAL( array.size(), size );
+    BOOST_CHECK_EQUAL( array.capacity(), new_capacity );
+
+    BOOST_CHECK_EQUAL_COLLECTIONS(
+        boost::counting_iterator<T>(1)
+      , boost::counting_iterator<T>(size + 1)
+      , array.begin()
+      , array.end()
+    );
+
+    // reserve less memory than size(), should do nothing
+    array.reserve(size / 2);
+    BOOST_CHECK_EQUAL( array.size(), size );
+    BOOST_CHECK_EQUAL( array.capacity(), new_capacity );
+    BOOST_CHECK_EQUAL_COLLECTIONS(
+        boost::counting_iterator<T>(1)
+      , boost::counting_iterator<T>(size + 1)
+      , array.begin()
+      , array.end()
+    );
 }
 
 template <typename T>
@@ -341,6 +450,20 @@ static void test_suite(std::size_t size)
         test_move_assignment(array);
     };
     framework::master_test_suite().add(BOOST_TEST_CASE( move_assignment ));
+
+    auto resize = [=]() {
+        BOOST_TEST_MESSAGE( " " << halmd::demangled_name<array_type>() << " of size " << size );
+        array_type array(size);
+        test_resize(array);
+    };
+    framework::master_test_suite().add(BOOST_TEST_CASE( resize ));
+
+    auto reserve = [=]() {
+        BOOST_TEST_MESSAGE( " " << halmd::demangled_name<array_type>() << " of size " << size );
+        array_type array(size);
+        test_reserve(array);
+    };
+    framework::master_test_suite().add(BOOST_TEST_CASE( reserve ));
 }
 
 /**

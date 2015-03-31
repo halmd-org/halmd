@@ -1,5 +1,6 @@
 /*
  * Copyright © 2013 Felix Höfling
+ * Copyright © 2015 Nicolas Höft
  * Copyright © 2012 Peter Colberg
  *
  * This file is part of HALMD.
@@ -23,6 +24,8 @@
 
 #include <cassert>
 #include <cstddef>
+#include <cstring>
+#include <type_traits>
 
 namespace halmd {
 
@@ -37,6 +40,7 @@ namespace halmd {
 template <typename T>
 class raw_array
 {
+    static_assert(std::is_standard_layout<T>(), "raw_array is compatible with standard layout types only");
 public:
     typedef std::size_t size_type;
     typedef std::ptrdiff_t difference_type;
@@ -51,7 +55,7 @@ public:
     /**
      * Allocate uninitialised array of given number of elements.
      */
-    explicit raw_array(size_type size) : size_(size), storage_(allocate(size)) {}
+    explicit raw_array(size_type size) : capacity_(size), size_(size), storage_(allocate(size)) {}
 
     /**
      * Deallocate array.
@@ -64,13 +68,14 @@ public:
     /**
      * Construct empty array.
      */
-    raw_array() : size_(0), storage_(nullptr) {}
+    raw_array() : capacity_(0), size_(0), storage_(nullptr) {}
 
     /**
      * Move constructor.
      */
-    raw_array(raw_array&& array) : size_(array.size_), storage_(array.storage_)
+    raw_array(raw_array&& array) : capacity_(array.capacity_), size_(array.size_), storage_(array.storage_)
     {
+        array.capacity_ = 0;
         array.size_ = 0;
         array.storage_ = nullptr;
     }
@@ -82,8 +87,10 @@ public:
     {
         if (&array != this) {
             deallocate(storage_);
+            capacity_ = array.capacity_;
             size_ = array.size_;
             storage_ = array.storage_;
+            array.capacity_ = 0;
             array.size_ = 0;
             array.storage_ = nullptr;
         }
@@ -104,6 +111,22 @@ public:
     const_iterator begin() const
     {
         return storage_;
+    }
+
+    /**
+     * return capacity
+     */
+    size_type capacity() const
+    {
+        return capacity_;
+    }
+
+    /**
+     * Set the array size to zero, does not affect the capcity of the array.
+     */
+    void clear()
+    {
+        size_ = 0;
     }
 
     /**
@@ -148,6 +171,34 @@ public:
         return storage_[i];
     }
 
+    /**
+     * allocate sufficient memory for specified number of elements
+     */
+    void reserve(size_type size)
+    {
+        if(size > capacity_) {
+            if (size_ > 0) {
+                pointer tmp_storage = allocate(size);
+                std::memcpy(tmp_storage, storage_, sizeof(value_type) * size_);
+                deallocate(storage_);
+                storage_ = tmp_storage;
+            } else {
+                deallocate(storage_);
+                storage_ = allocate(size);
+            }
+            capacity_ = size;
+        }
+    }
+
+    /**
+     * resize element count, new elements will be uninitialised
+     */
+    void resize(size_type size)
+    {
+        reserve(size);
+        size_ = size;
+    }
+
     /** deleted implicit copy constructor */
     raw_array(raw_array const&) = delete;
     /** deleted implicit assignment operator */
@@ -166,10 +217,12 @@ private:
         ::operator delete(p);
     }
 
+    /** number of array elements memory reserved for */
+    size_type capacity_;
     /** number of array elements */
     size_type size_;
     /** uninitialised storage */
-    T* storage_;
+    pointer storage_;
 };
 
 template<typename T>
