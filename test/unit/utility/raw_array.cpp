@@ -1,6 +1,7 @@
 /*
- * Copyright © 2013 Felix Höfling
- * Copyright © 2012 Peter Colberg
+ * Copyright © 2013,2015 Felix Höfling
+ * Copyright © 2015      Nicolas Höft
+ * Copyright © 2012      Peter Colberg
  *
  * This file is part of HALMD.
  *
@@ -230,37 +231,28 @@ static void test_move_constructor(halmd::raw_array<T>& array)
     BOOST_CHECK_EQUAL( &*array.begin(), begin );
     BOOST_CHECK_EQUAL( &*array.end(), begin + size );
 
-    // construct array from rvalue reference of non-empty array
+    // construct array from xvalue reference of non-empty array
     array_type array2(std::move(array));
 
     BOOST_CHECK_EQUAL( array.size(), 0lu );
     BOOST_CHECK_EQUAL( array.capacity(), 0lu );
-    BOOST_CHECK_EQUAL( &*array.begin(), &*array.end() );
+    BOOST_CHECK_EQUAL( array.begin(), array.end() );
     BOOST_CHECK_EQUAL( array2.size(), size );
     BOOST_CHECK_EQUAL( array2.capacity(), capacity );
     BOOST_CHECK_EQUAL( &*array2.begin(), begin );
     BOOST_CHECK_EQUAL( &*array2.end(), begin + size );
 
-    // construct array from rvalue reference of non-empty array
-    array_type array3 = std::move(array2);
+    // construct array from xvalue reference of empty array
+    array_type array3(std::move(array));
 
-    BOOST_CHECK_EQUAL( array2.size(), 0lu );
-    BOOST_CHECK_EQUAL( array2.capacity(), 0lu );
-    BOOST_CHECK_EQUAL( &*array2.begin(), &*array2.end() );
-    BOOST_CHECK_EQUAL( array3.size(), size );
-    BOOST_CHECK_EQUAL( array3.capacity(), capacity );
-    BOOST_CHECK_EQUAL( &*array3.begin(), begin );
-    BOOST_CHECK_EQUAL( &*array3.end(), begin + size );
+    BOOST_CHECK_EQUAL( array.size(), 0lu );
+    BOOST_CHECK_EQUAL( array.capacity(), 0lu );
+    BOOST_CHECK_EQUAL( array.begin(), array.end() );
+    BOOST_CHECK_EQUAL( array3.size(), 0lu );
+    BOOST_CHECK_EQUAL( array3.capacity(), 0lu );
+    BOOST_CHECK_EQUAL( array3.begin(), array3.end() );
 
-    // construct array from rvalue reference of empty array
-    array_type array4 = std::move(array2);
-
-    BOOST_CHECK_EQUAL( array2.size(), 0lu );
-    BOOST_CHECK_EQUAL( array2.capacity(), 0lu );
-    BOOST_CHECK_EQUAL( &*array2.begin(), &*array2.end() );
-    BOOST_CHECK_EQUAL( array4.size(), 0lu );
-    BOOST_CHECK_EQUAL( array4.capacity(), 0lu );
-    BOOST_CHECK_EQUAL( &*array4.begin(), &*array4.end() );
+    // array_type array4(array);   // must not compile due to deleted copy constructor
 }
 
 template <typename T>
@@ -277,45 +269,57 @@ static void test_move_assignment(halmd::raw_array<T>& array)
     BOOST_CHECK_EQUAL( &*array.begin(), begin );
     BOOST_CHECK_EQUAL( &*array.end(), begin + size );
 
-    // construct empty array
-    array_type array2;
-    BOOST_CHECK_EQUAL( array2.size(), 0lu );
-    BOOST_CHECK_EQUAL( array2.capacity(), 0lu );
-    BOOST_CHECK_EQUAL( &*array2.begin(), &*array2.end() );
+    // construct non-empty array
+    size_type size2 = size / 2;
+    size_type capacity2 = size;
+    array_type array2(size2);
+    array2.reserve(capacity2);
+    typename array_type::pointer const begin2 = &*array2.begin();
+    BOOST_CHECK_EQUAL( array2.size(), size2 );
+    BOOST_CHECK_EQUAL( array2.capacity(), capacity2 );
+    BOOST_CHECK_EQUAL( array2.end(), begin2 + size2);
 
-    // assign rvalue reference of non-empty array
-    array2 = std::move(array);
-
-    BOOST_CHECK_EQUAL( array.size(), 0lu );
-    BOOST_CHECK_EQUAL( array.capacity(), 0lu );
-    BOOST_CHECK_EQUAL( &*array.begin(), &*array.end() );
+    // swap non-empty arrays
+    swap(array, array2);
+    BOOST_CHECK_EQUAL( array.size(), size2 );
+    BOOST_CHECK_EQUAL( array.capacity(), capacity2 );
+    BOOST_CHECK_EQUAL( array.begin(), begin2);
+    BOOST_CHECK_EQUAL( array.end(), begin2 + size2 );
     BOOST_CHECK_EQUAL( array2.size(), size );
-    BOOST_CHECK_EQUAL( array2.capacity(), capacity );
-    BOOST_CHECK_EQUAL( &*array2.begin(), begin );
-    BOOST_CHECK_EQUAL( &*array2.end(), begin + size );
+    BOOST_CHECK_EQUAL( array2.capacity(), size );
+    BOOST_CHECK_EQUAL( array2.begin(), begin);
+    BOOST_CHECK_EQUAL( array2.end(), begin + size );
 
-    // construct empty array
-    array_type array3;
-    BOOST_CHECK_EQUAL( array3.size(), 0lu );
-    BOOST_CHECK_EQUAL( &*array3.begin(), &*array3.end() );
-
-    // assign rvalue reference of empty array
-    array3 = std::move(array);
+    // assign xvalue reference of non-empty array
+    array2 = std::move(array);
+    // array2 = array;   // must not compile due to deleted copy constructor
 
     BOOST_CHECK_EQUAL( array.size(), 0lu );
     BOOST_CHECK_EQUAL( array.capacity(), 0lu );
-    BOOST_CHECK_EQUAL( &*array.begin(), &*array.end() );
+    BOOST_CHECK_EQUAL( array.begin(), array.end() );
+    BOOST_CHECK_EQUAL( array2.size(), size2 );
+    BOOST_CHECK_EQUAL( array2.capacity(), capacity2 );
+    BOOST_CHECK_EQUAL( &*array2.begin(), begin2 );
+    BOOST_CHECK_EQUAL( &*array2.end(), begin2 + size2 );
+
+    // construct empty array and assign xvalue reference of empty array
+    array_type array3;
+    array = std::move(array3);
+
+    BOOST_CHECK_EQUAL( array.size(), 0lu );
+    BOOST_CHECK_EQUAL( array.capacity(), 0lu );
+    BOOST_CHECK_EQUAL( array.begin(), array.end() );
     BOOST_CHECK_EQUAL( array3.size(), 0lu );
     BOOST_CHECK_EQUAL( array3.capacity(), 0lu );
-    BOOST_CHECK_EQUAL( &*array3.begin(), &*array3.end() );
+    BOOST_CHECK_EQUAL( array3.begin(), array3.end() );
 
-    // assign rvalue reference of self
+    // assign xvalue reference of self
     array2 = std::move(array2);
 
-    BOOST_CHECK_EQUAL( array2.size(), size );
-    BOOST_CHECK_EQUAL( array2.capacity(), capacity );
-    BOOST_CHECK_EQUAL( &*array2.begin(), begin );
-    BOOST_CHECK_EQUAL( &*array2.end(), begin + size );
+    BOOST_CHECK_EQUAL( array2.size(), size2 );
+    BOOST_CHECK_EQUAL( array2.capacity(), capacity2 );
+    BOOST_CHECK_EQUAL( &*array2.begin(), begin2 );
+    BOOST_CHECK_EQUAL( &*array2.end(), begin2 + size2 );
 }
 
 template <typename T>

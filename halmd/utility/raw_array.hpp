@@ -1,7 +1,7 @@
 /*
- * Copyright © 2013 Felix Höfling
- * Copyright © 2015 Nicolas Höft
- * Copyright © 2012 Peter Colberg
+ * Copyright © 2013,2015 Felix Höfling
+ * Copyright © 2015      Nicolas Höft
+ * Copyright © 2012      Peter Colberg
  *
  * This file is part of HALMD.
  *
@@ -70,30 +70,23 @@ public:
      */
     raw_array() : capacity_(0), size_(0), storage_(nullptr) {}
 
+    /** deleted implicit copy constructor */
+    raw_array(raw_array const&) = delete;
+
     /**
      * Move constructor.
      */
-    raw_array(raw_array&& array) : capacity_(array.capacity_), size_(array.size_), storage_(array.storage_)
+    raw_array(raw_array&& other) : capacity_(0), size_(0), storage_(nullptr)
     {
-        array.capacity_ = 0;
-        array.size_ = 0;
-        array.storage_ = nullptr;
+        swap(other);
     }
 
     /**
      * Move assignment.
      */
-    raw_array& operator=(raw_array&& array)
+    raw_array& operator=(raw_array other)   // invokes move constructor
     {
-        if (&array != this) {
-            deallocate(storage_);
-            capacity_ = array.capacity_;
-            size_ = array.size_;
-            storage_ = array.storage_;
-            array.capacity_ = 0;
-            array.size_ = 0;
-            array.storage_ = nullptr;
-        }
+        swap(other);
         return *this;
     }
 
@@ -172,21 +165,21 @@ public:
     }
 
     /**
-     * allocate sufficient memory for specified number of elements
+     * Allocates sufficient memory for the specified number of elements,
+     * copies the contents of the container up re-allocation of memory.
      */
     void reserve(size_type size)
     {
         if(size > capacity_) {
             if (size_ > 0) {
-                pointer tmp_storage = allocate(size);
-                std::memcpy(tmp_storage, storage_, sizeof(value_type) * size_);
-                deallocate(storage_);
-                storage_ = tmp_storage;
+                raw_array tmp(size); tmp.size_ = size_;
+                std::memcpy(tmp.storage_, storage_, sizeof(value_type) * size_);
+                swap(tmp);
             } else {
                 deallocate(storage_);
                 storage_ = allocate(size);
+                capacity_ = size;
             }
-            capacity_ = size;
         }
     }
 
@@ -199,10 +192,15 @@ public:
         size_ = size;
     }
 
-    /** deleted implicit copy constructor */
-    raw_array(raw_array const&) = delete;
-    /** deleted implicit assignment operator */
-    raw_array& operator=(raw_array const&) = delete;
+    /**
+     * Exchanges the contents of the container with those of 'other'.
+     */
+    void swap(raw_array& other)
+    {
+        std::swap(capacity_, other.capacity_);
+        std::swap(size_,     other.size_);
+        std::swap(storage_,  other.storage_);
+    }
 
 private:
     /** allocate uninitialised storage */
@@ -259,6 +257,11 @@ template<typename T>
 typename raw_array<T>::const_iterator cend(raw_array<T> const& a)
 {
     return a.end();
+}
+
+template<typename T>
+void swap(raw_array<T>& lhs, raw_array<T>& rhs){
+    lhs.swap(rhs);
 }
 
 } // namespace halmd
