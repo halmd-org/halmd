@@ -51,9 +51,10 @@ execute_halmd(
   "@CMAKE_SOURCE_DIR@/test/integration/modularity/two_particles_equilibration.lua"
   --verbose
   --output "${OUTPUT_PREFIX}"
+  --dimension "${DIMENSION}"
   --particles 300,1
-  --time 1
-  --sampling trajectory=500
+  --time 0.1
+  --sampling trajectory=50
 )
 
 execute_halmd(
@@ -62,8 +63,8 @@ execute_halmd(
   --verbose
   --output "${OUTPUT_PREFIX}_continued"
   --input "${OUTPUT_PREFIX}.h5"
-  --time 1
-  --sampling trajectory=1000
+  --time 0.1
+  --sampling trajectory=100 state-vars=19 correlation=7
 )
 
 # FIXME add specific checks of the result
