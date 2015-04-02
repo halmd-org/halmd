@@ -1,6 +1,6 @@
 /*
- * Copyright © 2008-2011  Felix Höfling
- * Copyright © 2014       Nicolas Höft
+ * Copyright © 2008-2015  Felix Höfling
+ * Copyright © 2015       Nicolas Höft
  * Copyright © 2008-2011  Peter Colberg
  *
  * This file is part of HALMD.
@@ -107,9 +107,6 @@ public:
      */
     virtual cache<array_type> const& g_neighbour();
 
-    //! returns true if the binning module is compatible with the neighbour list module
-    static bool is_binning_compatible(std::shared_ptr<binning_type> binning1, std::shared_ptr<binning_type> binning2);
-
     /**
      * number of placeholders per neighbour list
      */
@@ -125,6 +122,12 @@ public:
     {
         return stride_;
     }
+
+    //! returns true if the binning modules are compatible with the neighbour list module
+    static bool is_binning_compatible(
+        std::shared_ptr<binning_type const> binning1
+      , std::shared_ptr<binning_type const> binning2
+    );
 
 private:
     typedef typename particle_type::position_array_type position_array_type;

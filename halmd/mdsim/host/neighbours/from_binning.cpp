@@ -1,5 +1,6 @@
 /*
- * Copyright © 2013       Nicolas Höft
+ * Copyright © 2013-2015  Nicolas Höft
+ * Copyright © 2015       Felix Höfling
  * Copyright © 2008-2011  Peter Colberg
  *
  * This file is part of HALMD.
@@ -90,6 +91,20 @@ from_binning<dimension, float_type>::lists()
         on_append_update_();
     }
     return neighbour_;
+}
+
+/**
+ * Test compatibility of binning parameters with this neighbour list algorithm
+ *
+ * For the host implementation, there are no restrictions.
+ */
+template <int dimension, typename float_type>
+bool from_binning<dimension, float_type>::is_binning_compatible(
+    std::shared_ptr<binning_type const> binning1
+  , std::shared_ptr<binning_type const> binning2
+)
+{
+    return true;
 }
 
 /**
@@ -238,6 +253,7 @@ void from_binning<dimension, float_type>::luaopen(lua_State* L)
                   , double
                   , std::shared_ptr<logger>
                   >)
+              , def("is_binning_compatible", &from_binning::is_binning_compatible)
             ]
         ]
     ];

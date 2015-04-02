@@ -1,6 +1,6 @@
 /*
- * Copyright © 2008-2014 Felix Höfling
- * Copyright © 2013-2014 Nicolas Höft
+ * Copyright © 2008-2015 Felix Höfling
+ * Copyright © 2013-2015 Nicolas Höft
  * Copyright © 2008-2011 Peter Colberg
  *
  * This file is part of HALMD.
@@ -132,14 +132,20 @@ from_binning<dimension, float_type>::g_neighbour()
     return g_neighbour_;
 }
 
+/**
+ * Test compatibility of binning parameters with this neighbour list algorithm
+ *
+ * On the GPU, the binning module is required to have at least 3 cells
+ * in each spatial direction in order to be used with the neighbour module.
+ */
 template <int dimension, typename float_type>
-bool from_binning<dimension, float_type>::is_binning_compatible(std::shared_ptr<binning_type> binning1, std::shared_ptr<binning_type> binning2)
+bool from_binning<dimension, float_type>::is_binning_compatible(
+    std::shared_ptr<binning_type const> binning1
+  , std::shared_ptr<binning_type const> binning2
+)
 {
     auto ncell = binning2->ncell();
-    if (*std::min_element(ncell.begin(), ncell.end()) < 3) {
-        return false;
-    }
-    return true;
+    return *std::min_element(ncell.begin(), ncell.end()) >= 3;
 }
 
 /**

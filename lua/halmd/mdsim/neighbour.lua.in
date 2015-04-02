@@ -1,5 +1,5 @@
 --
--- Copyright © 2013-2014  Nicolas Höft
+-- Copyright © 2013-2015  Nicolas Höft
 -- Copyright © 2010-2011  Peter Colberg
 --
 -- This file is part of HALMD.
@@ -192,12 +192,16 @@ local M = module(function(args)
             error("'particle' instances of binning modules do not match with 'particle' argument", 2)
         end
 
+        -- Test compatiblity of binning module and fall back to from_particle
+        -- if incompatible.
+        --
         -- On the GPU, the binning module is required to have at least 3 cells
-        -- in each spatial direction in order to be used with the neighbour module.
-        -- Therefore, test compatiblity and fall back to from_particle if incompatible
-        if memory == "gpu" and not neighbours.is_binning_compatible(binning[1], binning[2]) then
+        -- in each spatial direction in order to be used with the neighbour
+        -- module.
+        if not neighbours.is_binning_compatible(binning[1], binning[2]) then
             binning = nil
-            log.info("binning module incompatible with neighbour list, will construct the neighbour list from particle positions directly")
+            log.info("binning parameters incompatible with neighbour list algorithm")
+            log.info("fall back to 'neighbours.from_particle'")
         end
     end
 
