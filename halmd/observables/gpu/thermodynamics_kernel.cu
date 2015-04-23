@@ -31,8 +31,6 @@ namespace gpu {
 
 /** particle positions and species */
 static texture<float4> position_;
-/** particle images */
-static texture<void> image_;
 /** particle velocities and masses */
 static texture<float4> velocity_;
 /** potential energies */
