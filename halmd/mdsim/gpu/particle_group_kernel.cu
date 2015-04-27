@@ -23,8 +23,6 @@
 
 /** positions, types */
 static texture<float4> r_;
-/** minimum image vectors */
-static texture<void> image_;
 /** velocities, masses */
 static texture<float4> v_;
 
