@@ -113,17 +113,18 @@ void script::prepend_package_path(std::string const& path)
     lua_getglobal(L, "package");
     // push key for rawset
     lua_pushliteral(L, "path");
+
+    // add Lua scripts in given path and subdirectories
+    std::string s = path + "/?.lua;";
+    lua_pushlstring(L, s.c_str(), s.size());
+
+    s = path + "/?/init.lua;";
+    lua_pushlstring(L, s.c_str(), s.size());
+
     // push key for rawget
     lua_pushliteral(L, "path");
     // get default package.path
-    lua_rawget(L, -3);
-
-    // add Lua scripts in given path and subdirectories
-    std::string s = ";" + path + "/?.lua";
-    lua_pushlstring(L, s.c_str(), s.size());
-
-    s = ";" + path + "/?/init.lua";
-    lua_pushlstring(L, s.c_str(), s.size());
+    lua_rawget(L, -5);
 
     // append the above 2 strings to default package.path
     lua_concat(L, 3);
@@ -142,14 +143,15 @@ void script::prepend_package_cpath(std::string const& path)
     lua_getglobal(L, "package");
     // push key for rawset
     lua_pushliteral(L, "cpath");
+
+    // add shared libraries in given path
+    std::string s = path + "/?.so;";
+    lua_pushlstring(L, s.c_str(), s.size());
+
     // push key for rawget
     lua_pushliteral(L, "cpath");
     // get default package.path
-    lua_rawget(L, -3);
-
-    // add shared libraries in given path
-    std::string s = ";" + path + "/?.so";
-    lua_pushlstring(L, s.c_str(), s.size());
+    lua_rawget(L, -4);
 
     // append the above string to default package.path
     lua_concat(L, 2);
