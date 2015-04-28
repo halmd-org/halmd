@@ -1,7 +1,7 @@
 #!/usr/bin/env halmd
 --
 -- Copyright © 2013      Nicolas Höft
--- Copyright © 2010-2012 Felix Höfling
+-- Copyright © 2010-2015 Felix Höfling
 -- Copyright © 2010-2012 Peter Colberg
 --
 -- This file is part of HALMD.
@@ -21,6 +21,7 @@
 --
 
 local halmd = require("halmd")
+local rescale_velocity = require("rescale_velocity")
 
 -- grab modules
 local log = halmd.io.log
@@ -29,43 +30,6 @@ local observables = halmd.observables
 local dynamics = halmd.observables.dynamics
 local readers = halmd.io.readers
 local writers = halmd.io.writers
-
---
--- Shift velocities to zero mean and rescale them to internal energy or temperature
---
-local function rescale_velocities(args)
-    local msv   = assert(args.msv)
-    local group = assert(msv.group)
-
-    local vcm  = msv:center_of_mass_velocity()
-    local epot = msv:potential_energy()
-    local dimension = #vcm
-
-    for d = 1, dimension do
-        vcm[d] = -vcm[d]
-    end
-
-    group.particle:shift_velocity_group(group, vcm)
-
-    local ekin = msv:kinetic_energy()
-
-    local scale = 1
-    if (args.internal_energy) then
-        if(args.internal_energy < epot) then
-            error("Rescaling not possible, potential energy = %f", epot)
-        end
-        scale = math.sqrt((args.internal_energy - epot) / ekin)
-        log.info("Rescaling velocities of group '%s' with factor %f to internal energy %f", group.label, scale, args.internal_energy)
-    elseif args.temperature then
-        -- to set the temperature correctly, rescale the velocities using the new kinectic energy
-        scale = math.sqrt(args.temperature * dimension / ekin)
-        log.info("Rescaling velocities of group '%s' with factor %f to temperature %f", group.label, scale, args.temperature)
-    else
-        error("Cannot rescale velocities. Missing temperature or internal energy.")
-    end
-
-    group.particle:rescale_velocity_group(group, scale)
-end
 
 --
 -- Setup and run simulation
@@ -80,7 +44,7 @@ local function shear_viscosity(args)
     local box = mdsim.box({length = {length, length, length}})
 
     -- create system state
-    local particle = mdsim.particle({dimension = dimension, particles = nparticle})
+    local particle = mdsim.particle({dimension = 3, particles = nparticle})
 
     -- set initial particle positions
     local lattice = mdsim.positions.lattice({box = box, particle = particle})
@@ -158,7 +122,7 @@ local function shear_viscosity(args)
 
     -- determine the mean energy from equilibration run
     -- and rescale velocities to match the mean energy of the equilibration
-    rescale_velocities({msv = msv, internal_energy = internal_energy:mean()})
+    rescale_velocity({msv = msv, internal_energy = internal_energy:mean()})
     internal_energy:disconnect()
 
     local temperature = observables.utility.accumulator({
