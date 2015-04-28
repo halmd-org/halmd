@@ -34,7 +34,6 @@ local error = error
 --
 -- :param table args: keyword arguments
 -- :param args.msv: instance of :mod:`halmd.observables.thermodynamics`
--- :param args.group: instance of :mod:`halmd.mdsim.particle_group`
 -- :param number args.internal_energy: target value for internal energy
 -- :param number args.temperature: target value for (instantaneous) temperature
 --

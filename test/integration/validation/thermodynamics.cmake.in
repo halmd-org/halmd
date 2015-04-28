@@ -82,6 +82,15 @@ execute_halmd(
 )
 
 #
+# internal energy obtained from manual thermalisation runs over 1000τ
+#
+if(DIMENSION EQUAL 3)
+  set(E_INT 2.8282)
+else()
+  set(E_INT 2.4103)
+endif()
+
+#
 # NVE equilibration over another 30τ with Δt=0.001
 #
 execute_halmd(
@@ -94,6 +103,7 @@ execute_halmd(
   --timestep 0.001
   --time 30
   --sampling state-vars=${INTERVAL} structure=0 correlation=0
+  --rescale-to-energy=${E_INT}
 )
 
 # FIXME rescale velocities from temperature of second half of NVE equilibration run

@@ -1,6 +1,6 @@
 #!/usr/bin/env halmd
 --
--- Copyright © 2010-2014 Felix Höfling
+-- Copyright © 2010-2015 Felix Höfling
 -- Copyright © 2010-2012 Peter Colberg
 --
 -- This file is part of HALMD.
@@ -20,6 +20,7 @@
 --
 
 local halmd = require("halmd")
+local rescale_velocity = require("rescale_velocity")
 
 -- grab modules
 local log = halmd.io.log
@@ -201,6 +202,11 @@ local function liquid(args)
         blocking_scheme:correlation({tcf = selfdiffusion, file = file})
     end
 
+    -- rescale velocities of all particles
+    if args.rescale_to_energy then
+        rescale_velocity({msv = msv, internal_energy = args.rescale_to_energy})
+    end
+
     -- sample initial state
     observables.sampler:sample()
 
@@ -242,6 +248,7 @@ local function parse_args()
         readers.h5md.check(value)
         args[key] = value
     end, help = "H5MD input file"})
+    parser:add_argument("rescale-to-energy", {type = "number", help = "rescale velocities to match given internal energy"})
 
     parser:add_argument("cutoff", {type = "float32", default = math.pow(2, 1 / 6), help = "potential cutoff radius"})
     parser:add_argument("smoothing", {type = "number", default = 0.005, help = "cutoff smoothing parameter"})
