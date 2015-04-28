@@ -1,5 +1,6 @@
 /*
- * Copyright © 2010-2012  Peter Colberg
+ * Copyright © 2015      Felix Höfling
+ * Copyright © 2010-2012 Peter Colberg
  *
  * This file is part of HALMD.
  *
@@ -27,7 +28,6 @@
 #include <halmd/version.h>
 
 namespace fs = boost::filesystem;
-using namespace std;
 
 HALMD_LUA_API int luaopen_halmd(lua_State* L);
 
@@ -46,10 +46,22 @@ script::script()
     luaL_openlibs(L);
     // load Luabind into Lua interpreter
     load_luaponte();
-    // set Lua package path
-    package_path();
-    // set Lua C package path
-    package_cpath();
+
+    // set Lua package path and C package path
+    //
+    // We use the HALMD build tree if the initial current working directory is inside
+    // the build tree, otherwise the installation tree is used.
+    if (contains_path(fs::path(HALMD_BINARY_DIR), fs::path(fs::initial_path()))) {
+        // search for Lua scripts in build tree using relative path
+        prepend_package_path(HALMD_BINARY_DIR "/lua");
+        prepend_package_cpath(HALMD_BINARY_DIR);
+    }
+    else {
+        // search for Lua scripts in installation prefix
+        prepend_package_path(HALMD_INSTALL_PREFIX "/share/halmd/lua");
+        prepend_package_cpath(HALMD_INSTALL_PREFIX "/lib");
+    }
+
     // load HALMD Lua C++ wrapper
     luaopen_halmd(L);
 }
@@ -93,11 +105,9 @@ void script::load_luaponte()
 }
 
 /**
- * Set Lua package path
- *
- * Append HALMD installation prefix paths to package.path.
+ * prepend Lua's package.path by 'path'
  */
-void script::package_path()
+void script::prepend_package_path(std::string const& path)
 {
     // push table "package"
     lua_getglobal(L, "package");
@@ -108,23 +118,14 @@ void script::package_path()
     // get default package.path
     lua_rawget(L, -3);
 
-    // absolute path to HALMD build tree
-    fs::path build_path(HALMD_BINARY_DIR);
-    // absolute path to initial current working directory
-    fs::path initial_path(fs::initial_path());
+    // add Lua scripts in given path and subdirectories
+    std::string s = ";" + path + "/?.lua";
+    lua_pushlstring(L, s.c_str(), s.size());
 
-    if (contains_path(build_path, initial_path)) {
-        // search for Lua scripts in build tree using relative path
-        lua_pushliteral(L, ";" HALMD_BINARY_DIR "/lua/?.lua");
-        lua_pushliteral(L, ";" HALMD_BINARY_DIR "/lua/?/init.lua");
-    }
-    else {
-        // search for Lua scripts in installation prefix
-        lua_pushliteral(L, ";" HALMD_INSTALL_PREFIX "/share/halmd/lua/?.lua");
-        lua_pushliteral(L, ";" HALMD_INSTALL_PREFIX "/share/halmd/lua/?/init.lua");
-    }
+    s = ";" + path + "/?/init.lua";
+    lua_pushlstring(L, s.c_str(), s.size());
 
-    // append above literals to default package.path
+    // append the above 2 strings to default package.path
     lua_concat(L, 3);
     // set new package.path
     lua_rawset(L, -3);
@@ -133,11 +134,9 @@ void script::package_path()
 }
 
 /**
- * Set Lua package cpath
- *
- * Append HALMD installation prefix paths to package.cpath.
+ * prepend Lua's package.cpath by 'path'
  */
-void script::package_cpath()
+void script::prepend_package_cpath(std::string const& path)
 {
     // push table "package"
     lua_getglobal(L, "package");
@@ -145,26 +144,16 @@ void script::package_cpath()
     lua_pushliteral(L, "cpath");
     // push key for rawget
     lua_pushliteral(L, "cpath");
-    // get default package.cpath
+    // get default package.path
     lua_rawget(L, -3);
 
-    // absolute path to HALMD build tree
-    fs::path build_path(HALMD_BINARY_DIR);
-    // absolute path to initial current working directory
-    fs::path initial_path(fs::initial_path());
+    // add shared libraries in given path
+    std::string s = ";" + path + "/?.so";
+    lua_pushlstring(L, s.c_str(), s.size());
 
-    if (contains_path(build_path, initial_path)) {
-        // search for Lua scripts in build tree using relative path
-        lua_pushliteral(L, ";" HALMD_BINARY_DIR "/?.so");
-    }
-    else {
-        // search for Lua scripts in installation prefix
-        lua_pushliteral(L, ";" HALMD_INSTALL_PREFIX "/lib/?.so");
-    }
-
-    // append above literals to default package.cpath
+    // append the above string to default package.path
     lua_concat(L, 2);
-    // set new package.cpath
+    // set new package.path
     lua_rawset(L, -3);
     // remove table "package"
     lua_pop(L, 1);
@@ -175,7 +164,7 @@ void script::package_cpath()
  *
  * If filename is empty, loads from standard input.
  */
-void script::dofile(string const& filename)
+void script::dofile(std::string const& filename)
 {
     using namespace luaponte;
 
@@ -183,14 +172,17 @@ void script::dofile(string const& filename)
     char const* fn = NULL;
     if (!filename.empty()) {
         fn = filename.c_str();
+        // search for Lua scripts relative to script directory
+        prepend_package_path(fs::path(filename).parent_path().string());
     }
+
     // error handler passed to lua_pcall as last argument
     lua_pushcfunction(L, &script::traceback);
 
     if (luaL_loadfile(L, fn) || lua_pcall(L, 0, 0, 1)) {
-        string error(lua_tostring(L, -1));
+        std::string error(lua_tostring(L, -1));
         lua_pop(L, 1);
-        throw runtime_error(error);
+        throw std::runtime_error(error);
     }
 }
 

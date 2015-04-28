@@ -1,5 +1,6 @@
 /*
- * Copyright © 2010-2012  Peter Colberg
+ * Copyright © 2015      Felix Höfling
+ * Copyright © 2010-2012 Peter Colberg
  *
  * This file is part of HALMD.
  *
@@ -45,8 +46,8 @@ public:
 
 private:
     void load_luaponte();
-    void package_path();
-    void package_cpath();
+    void prepend_package_path(std::string const& path);
+    void prepend_package_cpath(std::string const& path);
 
     /** RAII wrapper of Lua state */
     std::shared_ptr<lua_State const> const L_;
