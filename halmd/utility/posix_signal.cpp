@@ -26,7 +26,6 @@
 #include <halmd/utility/lua/lua.hpp>
 #include <halmd/utility/posix_signal.hpp>
 
-using namespace boost::system;
 using namespace std;
 
 namespace halmd {
@@ -38,11 +37,13 @@ namespace halmd {
  */
 sigset_t posix_signal::block_signals()
 {
+    namespace bs = boost::system;
+
     sigset_t set;
     sigfillset(&set);
-    error_code ec(pthread_sigmask(SIG_SETMASK, &set, NULL), get_posix_category());
-    if (ec != errc::success) {
-        throw system_error(ec);
+    bs::error_code ec(pthread_sigmask(SIG_SETMASK, &set, NULL), bs::get_posix_category());
+    if (ec != bs::errc::success) {
+        throw bs::system_error(ec);
     }
     return set;
 }
@@ -159,23 +160,23 @@ void posix_signal::handle(int signum) const
 
 template <int signum>
 static connection
-wrap_on_signal(posix_signal& self, std::function<void ()> const& slot)
+wrap_on_signal(posix_signal& self, function<void ()> const& slot)
 {
     return self.on_signal(signum, [=](int) {
         slot();
     });
 }
 
-static std::function<void ()>
-wrap_wait(std::shared_ptr<posix_signal> self)
+static function<void ()>
+wrap_wait(shared_ptr<posix_signal> self)
 {
     return [=]() {
         self->wait();
     };
 }
 
-static std::function<void ()>
-wrap_poll(std::shared_ptr<posix_signal> self)
+static function<void ()>
+wrap_poll(shared_ptr<posix_signal> self)
 {
     return [=]() {
         self->poll();
@@ -189,7 +190,7 @@ void posix_signal::luaopen(lua_State* L)
     [
         namespace_("utility")
         [
-            class_<posix_signal, std::shared_ptr<posix_signal> >("posix_signal")
+            class_<posix_signal, shared_ptr<posix_signal> >("posix_signal")
                 .def(constructor<>())
                 .def("on_hup", &wrap_on_signal<SIGHUP>)
                 .def("on_int", &wrap_on_signal<SIGINT>)
