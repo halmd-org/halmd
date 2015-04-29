@@ -130,21 +130,29 @@ the build tree by ::
 Supported compilers
 ===================
 
-HALMD requires a C++ compiler with sufficient C++11 support. It is known to
-compile with the following compilers.
+HALMD requires a C++ compiler with sufficient C++11 support. Building has been
+tested with the following compilers:
 
 * GCC
-  - GCC 5.1.0 (upstream) on CentOS 6.3 (x86_64)
-  - GCC 4.9.1, 4.9.0, 4.8.2 (upstream) on openSuSE 12.3 (x86_64) and CentOS 6.3 (x86_64)
-  - GCC 4.7.3 (upstream) on SuSE Linux 11 SP2 (x86_64), CentOS 6.3 (x86_64)
+  - GCC 5.1.0 (upstream) on openSuSE 12.3 (x86_64) and CentOS 6.3 (x86_64)
+  - GCC 4.9.2, 4.8.2 (upstream) on openSuSE 12.3 (x86_64) and CentOS 6.3 (x86_64)
+  - GCC 4.7.3 (upstream) on CentOS 6.3 (x86_64)
   - GCC 4.7.2 on openSuSE 12.3 (x86_64)
   - GCC 4.6.2 on openSuSE 12.1 (x86_64)
 
+  .. note::
+
+    Building with GCC ≥ 5.1 requires the macro definition
+    ``_GLIBCXX_USE_CXX11_ABI=0``, which may be passed via the environment
+    variable ``CXXFLAGS=-D …``. For the background, see `GCC Dual ABI
+    <https://gcc.gnu.org/onlinedocs/libstdc++/manual/using_dual_abi.html>`_.
+
 * Clang
 
+  - Clang 3.6.0 (upstream) on openSuSE 12.3 (x86_64)
   - Clang 3.5.0, 3.4, 3.3, 3.2 (upstream) on openSuSE 12.3 (x86_64) and CentOS 6.3 (x86_64)
 
-The following C++ compilers **fail** to compile HALMD.
+The following C++ compilers **fail** to build HALMD:
 
 * GCC ≤ 4.5
 
