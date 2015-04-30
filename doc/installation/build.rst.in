@@ -134,6 +134,7 @@ HALMD requires a C++ compiler with sufficient C++11 support. Building has been
 tested with the following compilers:
 
 * GCC
+
   - GCC 5.1.0 (upstream) on openSuSE 12.3 (x86_64) and CentOS 6.3 (x86_64)
   - GCC 4.9.2, 4.8.2 (upstream) on openSuSE 12.3 (x86_64) and CentOS 6.3 (x86_64)
   - GCC 4.7.3 (upstream) on CentOS 6.3 (x86_64)
