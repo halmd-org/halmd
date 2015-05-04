@@ -62,6 +62,9 @@ if(NOT HALMD_DOC_ONLY OR NOT HALMD_USE_GIT)
 
   if(CUDA_FOUND)
     enable_language(CUDA)
+    if (CMAKE_CUDA_COMPILER_VERSION VERSION_LESS 5.0)
+      message(SEND_ERROR "Minium required CUDA version is 5.0 (found ${CMAKE_CUDA_COMPILER_VERSION})")
+    endif()
 
     set(HALMD_WITH_GPU TRUE)
 
@@ -71,7 +74,6 @@ if(NOT HALMD_DOC_ONLY OR NOT HALMD_USE_GIT)
     else()
       message(SEND_ERROR "${result}")
     endif()
-
   else()
     set(HALMD_WITH_GPU FALSE)
   endif()
