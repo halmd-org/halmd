@@ -38,13 +38,7 @@ Build environment
 
     The patch is not needed for builds without GPU acceleration.
 
-* `NVIDIA CUDA toolkit <http://www.nvidia.com/object/cuda_get.html>`_ ≥ 4.2
-
-  .. warning::
-
-    CUDA driver ≤ 4.1 has a known security vulnerability
-    (`CVE-2012-0946 <http://nvidia.custhelp.com/app/answers/detail/a_id/3109/~/security-vulnerability-cve-2012-0946-in-the-nvidia-unix-driver>`_).
-    For this reason, we recommend CUDA 4.2 or later.
+* `NVIDIA CUDA toolkit <http://www.nvidia.com/object/cuda_get.html>`_ ≥ 5.0
 
   Please refer to the installation instructions shipped with the toolkit. The
   toolkit is not needed for builds without GPU acceleration.
