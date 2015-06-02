@@ -56,6 +56,8 @@ public:
       , matrix_container_type const& epsilon
       , matrix_container_type const& sigma
       , matrix_container_type const& wetting
+      , matrix_container_type const& cutoff
+      , float_type smoothing
       , std::shared_ptr<halmd::logger> logger = std::make_shared<halmd::logger>()
     );
 
@@ -65,12 +67,12 @@ public:
         slit_wrapper::param_geometry.bind(g_param_geometry_);
         slit_wrapper::param_potential.bind(g_param_potential_);
     }
-    
+
     scalar_container_type const& offset() const
     {
         return offset_;
     }
-    
+
     vector_container_type const& surface_normal() const
     {
         return surface_normal_;
@@ -80,22 +82,31 @@ public:
     {
         return epsilon_;
     }
-    
+
     matrix_container_type const& sigma() const
     {
         return sigma_;
     }
-    
+
     matrix_container_type const& wetting() const
     {
         return wetting_;
     }
-    
+
+    matrix_container_type const& cutoff() const
+    {
+        return cutoff_;
+    }
+
+    float_type smoothing()
+    {
+        return smoothing_;
+    }
+
     unsigned int size() const
     {
         return offset_.size();
     }
-
 
     /**
      * Bind class to Lua.
@@ -103,16 +114,20 @@ public:
     static void luaopen(lua_State* L);
 
 private:
-    /** wall positions in MD units */
+    /** wall position in MD units */
     scalar_container_type offset_;
-    /** wall normal vectors in MD units */
+    /** wall normal vector in MD units */
     vector_container_type surface_normal_;
-    /** interaction strengths for wall potential in MD units */
+    /** interaction strength for wall potential in MD units */
     matrix_container_type epsilon_;
-    /** interaction ranges for wall potential in MD units */
+    /** interaction range for wall potential in MD units */
     matrix_container_type sigma_;
-    /** wetting parameters for wall potential in MD units */
+    /** wetting parameter for wall potential in MD units */
     matrix_container_type wetting_;
+    /** cutoff length for wall potential in MD units */
+    matrix_container_type cutoff_;
+    /** smoothing parameters for wall potential in MD units */
+    float_type smoothing_;
 
     /** potential parameters at CUDA device */
     cuda::vector<float4> g_param_geometry_;

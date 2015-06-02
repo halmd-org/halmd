@@ -35,6 +35,10 @@ namespace slit_kernel {
 static texture<float4> param_potential_;
 /** array of geometry parameters for all walls */
 static texture<float4> param_geometry_;
+/** parameter for C2-smooth trunctation */
+static __constant__ float smoothing_;
+/** number of walls */
+static __constant__ int nwall_;
 
 /**
  * slit external potential
@@ -50,8 +54,8 @@ public:
      *
      * Fetch parameters from texture cache for this particle species.
      */
-    HALMD_GPU_ENABLED slit(unsigned int species) // FIXME , unsigned int nwall)
-      : species_(species), nwall_(2)
+    HALMD_GPU_ENABLED slit(unsigned int species)
+      : species_(species)
     {}
 
      /**
@@ -74,22 +78,51 @@ public:
 
             // compute absolute distance to wall i
             float d = inner_prod(r, surface_normal) - offset;
-            
+
             // fetch potential parameters from texture cache
-            float4 param_potential = tex1Dfetch(param_potential_, species_ * nwall_ + i);
-            float epsilon = param_potential.x;
-            float sigma = param_potential.y;
-            float c = param_potential.z;
+            fixed_vector<float, 4> param_potential = tex1Dfetch(param_potential_, species_ * nwall_ + i);
+            float epsilon = param_potential[EPSILON];
+            float sigma = param_potential[SIGMA];
+            float w = param_potential[WETTING];
+            float cutoff = param_potential[CUTOFF];
+
+            // truncate interaction
+            if (fabs(d) >= cutoff)
+                continue;
+
+            // cutoff energy due to wall i
+            float dc3i = halmd::pow(sigma / cutoff, 3);
+            float dc6i = float(2) / 15 * dc3i * dc3i;
+            float eps_dc3i = epsilon * dc3i;
+            float en_cut = eps_dc3i * (dc6i - w);
 
             // energy and force due to wall i
             float d3i = halmd::pow(sigma / d, 3);
             float d6i = float(2) / 15 * d3i * d3i;
             float eps_d3i = (d > 0 ? 1 : -1) * epsilon * d3i;
-            float fval = 3 * eps_d3i * (3 * d6i - c) / d;
-            force += fval * surface_normal;
-            en_pot += eps_d3i * (d6i - c);
-        }
+            float en_sub = eps_d3i * (d6i - w) - en_cut;
+            float fval = 3 * eps_d3i * (3 * d6i - w) / d;
 
+            // apply smooth truncation
+            float dd = (fabs(d) - cutoff) / smoothing_;
+            float x2 = dd * dd;
+            float x4 = x2 * x2;
+            float x4i = 1 / (1 + x4);
+            float h0_r = x4 * x4i;
+
+            // first derivative
+            float h1_r = 4 * dd * x2 * x4i * x4i;
+
+            // apply smoothing function to obtain C¹ force function
+            fval = h0_r * fval - h1_r * en_sub / smoothing_;
+
+            // apply smoothing function to obtain C² potential function
+            en_sub = h0_r * en_sub;
+
+            // accumulate force and potential energy
+            force += fval * surface_normal;
+            en_pot += en_sub;
+        }
         return make_tuple(force, en_pot);
     }
 
@@ -97,15 +130,14 @@ public:
 private:
     /** species of interacting particle */
     unsigned int species_;
-    /** number of walls */
-    unsigned int nwall_;
-
 };
 
 } // namespace slit_kernel
 
 cuda::texture<float4> slit_wrapper::param_potential = slit_kernel::param_potential_;
 cuda::texture<float4> slit_wrapper::param_geometry = slit_kernel::param_geometry_;
+cuda::symbol<float> slit_wrapper::smoothing = slit_kernel::smoothing_;
+cuda::symbol<int> slit_wrapper::nwall = slit_kernel::nwall_;
 
 } // namespace external
 } // namespace potentials

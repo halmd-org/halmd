@@ -61,21 +61,20 @@ std::tuple<vector_type, double> compute_wall(
 {
     // distance to the planar wall
     double d = inner_prod(r, surface_normal) - offset;
-    if (d < 0) {
-        epsilon *= -1;
-    }
+    double sign = (d > 0) ? 1 : -1;
+    d = std::abs(d);
 
-    if (std::abs(d) > cutoff) {
+    if (d > cutoff) {
         return std::make_tuple(vector_type(0), 0);
     }
 
     // compute magnitude of force and potential energy (shifted at the cutoff)
-    double fval = 3 * epsilon / sigma * ((2. / 5) * std::pow(sigma / d, 10) - wetting * std::pow(sigma / d, 4));
+    double fval = 3 * sign * epsilon / sigma * ((2. / 5) * std::pow(sigma / d, 10) - wetting * std::pow(sigma / d, 4));
     double en_pot = epsilon * ((2. / 15) * std::pow(sigma / d, 9)- wetting * std::pow(sigma / d, 3));
     en_pot -= epsilon * ((2. / 15) * std::pow(sigma / cutoff, 9) - wetting * std::pow(sigma / cutoff, 3));
 
     // apply smooth truncation
-    double xi = (std::abs(d) - cutoff) / smoothing;
+    double xi = (d - cutoff) / smoothing;
     double w = std::pow(xi, 4) / (1 + std::pow(xi, 4));
     double w1 = 4 * std::pow(xi, 3) / std::pow((1 + std::pow(xi, 4)), 2);
     fval = fval * w - w1 * en_pot / smoothing;
@@ -89,65 +88,72 @@ std::vector<vector_type> make_positions()
 {
     // positions of test particles
     std::vector<vector_type> positions;
-    positions.push_back(vector_type({0.0, 0.0, 4.0}));
-    positions.push_back(vector_type({0.0, 0.0, -4.0}));
-    positions.push_back(vector_type({0.0, 0.0, 0.7}));
-    positions.push_back(vector_type({0.0, 0.0, -0.7}));
+    positions.push_back(vector_type({ 0.0,  0.0,  0.0}));
+    positions.push_back(vector_type({ 5.0,  0.0,  1.0}));
+    positions.push_back(vector_type({-4.0,  0.0,  2.0}));
+    positions.push_back(vector_type({-5.7,  0.0,  3.0}));
+    positions.push_back(vector_type({ 0.0, -3.0,  4.0}));
+    positions.push_back(vector_type({-5.2, -8.0,  5.0}));
+    positions.push_back(vector_type({ 0.0,  0.0, 20.0}));
     return positions;
 }
 
 // test in three dimensions only
-std::shared_ptr<mdsim::host::potentials::external::slit<3, double>> make_host_potential()
+template <typename float_type>
+std::shared_ptr<mdsim::host::potentials::external::slit<3, float_type>> make_host_potential()
 {
-    typedef mdsim::host::potentials::external::slit<3, double> potential_type;
-    typedef potential_type::vector_type vector_type;
-
-    unsigned int ntype = 2;  // test a binary mixture
+    typedef mdsim::host::potentials::external::slit<3, float_type> potential_type;
+    typedef typename potential_type::vector_type vector_type;
 
     // define interaction parameters
-    
-    int nwall = 2;
+    unsigned int ntype = 2;  // test a binary mixture
+    unsigned int nwall = 3;  // 3 walls
 
-    potential_type::matrix_container_type cutoff(nwall, ntype);
+    typename potential_type::matrix_container_type cutoff(nwall, ntype);
     cutoff <<=
-        5., 5.
-      , 5., 5.;
+        1., 2.
+      , 10., 10.
+      , 1e2, 1e2;
 
-    potential_type::matrix_container_type epsilon(nwall, ntype);
+    typename potential_type::matrix_container_type epsilon(nwall, ntype);
     epsilon <<=
-        1., 1.
-      , 1., 0.;
+        1., 0.5
+      , 2., 0.
+      , 0., 1.;
 
-    potential_type::matrix_container_type sigma(nwall, ntype);
+    typename potential_type::matrix_container_type sigma(nwall, ntype);
     sigma <<=
-        1., 1.
-      , 1., 1.;
+        1., 2.
+      , 3., 1.
+      , 2., 1.;
 
-    potential_type::matrix_container_type wetting(nwall, ntype);
+    typename potential_type::matrix_container_type wetting(nwall, ntype);
     wetting <<=
-        1., 0.
+        0.4, 0.
+      , -1, 1.
       , 0., 2.;
 
-    potential_type::vector_container_type surface_normal(nwall);
+    typename potential_type::vector_container_type surface_normal(nwall);
     surface_normal <<=
-        vector_type({0, 0, 1})
-      , vector_type({0, 0, 1});
+        vector_type({1,  0, 0})
+      , vector_type({1, -1, 0})
+      , vector_type({-1,  0, 2});
 
-    potential_type::scalar_container_type offset(nwall);
+    typename potential_type::scalar_container_type offset(nwall);
     offset <<=
-        -5, 5;
+        -5, 5, 10;
 
-    double smoothing = 0.005;
+    float_type smoothing = 0.01;
 
     // construct module
-    return std::make_shared<potential_type>(nwall, offset, surface_normal, epsilon, sigma, wetting, cutoff, smoothing);
+    return std::make_shared<potential_type>(offset, surface_normal, epsilon, sigma, wetting, cutoff, smoothing);
 }
 
 BOOST_AUTO_TEST_CASE( slit_host )
 {
     // construct host module with fixed parameters
-    auto potential = make_host_potential();
-    unsigned int nwall2 = potential->epsilon().size1();
+    auto potential = make_host_potential<double>();
+    unsigned int nwall = potential->epsilon().size1();
     unsigned int nspecies = potential->epsilon().size2();
 
     // positions of test particles
@@ -155,18 +161,18 @@ BOOST_AUTO_TEST_CASE( slit_host )
     auto positions = make_positions<vector_type>();
 
     for (unsigned int species = 0; species < nspecies; ++species) {
-
         for (vector_type const& r : positions) {
+            BOOST_MESSAGE("test particle of species " << species << " at " << r);
+
             // compute force and potential energy using the slit module
             vector_type force;
             double en_pot;
             std::tie(force, en_pot) = (*potential)(r, species);  // particle species A
-//            BOOST_MESSAGE("host: " << r << " " << force << " " << en_pot);
 
             // compute reference values: sum up contributions from each wall
             vector_type force2 = 0;
             double en_pot2 = 0;
-            for (unsigned int i = 0; i < nwall2; ++i) {
+            for (unsigned int i = 0; i < nwall; ++i) {
                 vector_type f;
                 double en;
                 std::tie(f, en) = compute_wall(
@@ -177,7 +183,6 @@ BOOST_AUTO_TEST_CASE( slit_host )
                 force2 += f;
                 en_pot2 += en;
             }
-//            BOOST_MESSAGE("reference: " << r << " " << force2 << " " << en_pot2);
 
             // compare output from slit module with reference
             const double tolerance = 5 * std::numeric_limits<double>::epsilon();
@@ -236,12 +241,13 @@ void slit<float_type>::test()
     std::vector<vector_type> f_list(particle->nparticle());
     BOOST_CHECK( get_force(*particle, f_list.begin()) == f_list.end() );
     const float_type tolerance = 10 * std::numeric_limits<float_type>::epsilon();
-            
-    for (unsigned int i = 0; i < positions.size(); ++i) {
 
+    for (unsigned int i = 0; i < positions.size(); ++i) {
         // reference values from host module
         typedef typename host_potential_type::vector_type host_vector_type;
         host_vector_type r = static_cast<host_vector_type>(positions[i]);
+        BOOST_MESSAGE("test particle #" << i+1 << " of species " << species[i] << " at " << r);
+
         host_vector_type force2;
         float_type en_pot2;
         std::tie(force2, en_pot2) = (*host_potential)(r, species[i]);
@@ -269,7 +275,7 @@ slit<float_type>::slit()
     }
 
     // create host module for reference
-    host_potential = make_host_potential();
+    host_potential = make_host_potential<double>();
 
     // create modules
     particle = std::make_shared<particle_type>(positions.size(), host_potential->epsilon().size2()); // 2nd argument: #species
@@ -278,15 +284,14 @@ slit<float_type>::slit()
     // fixed_vector<double, N> is not implicitly convertible to fixed_vector<float, N>
     //
     // Therefore, we have to convert the surface normals by hand.
-    unsigned int nwall2 = host_potential->surface_normal().size();
-    typename potential_type::vector_container_type surface_normal(nwall2);
-    for (unsigned int i = 0; i < nwall2; ++i) {
+    unsigned int nwall = host_potential->surface_normal().size();
+    typename potential_type::vector_container_type surface_normal(nwall);
+    for (unsigned int i = 0; i < nwall; ++i) {
         surface_normal[i] = static_cast<typename potential_type::vector_type>(host_potential->surface_normal()[i]);
     }
 
     potential = std::make_shared<potential_type>(
-            nwall2
-          , host_potential->offset()
+            host_potential->offset()
           , surface_normal
           , host_potential->epsilon()
           , host_potential->sigma()
@@ -296,6 +301,9 @@ slit<float_type>::slit()
     );
 
     force = std::make_shared<force_type>(potential, particle, box);
+
+    particle->on_prepend_force([=](){force->check_cache();});
+    particle->on_force([=](){force->apply();});
 }
 
 BOOST_FIXTURE_TEST_CASE( slit_gpu, device ) {

@@ -1,5 +1,5 @@
 --
--- Copyright © 2014      Sutapa Roy
+-- Copyright © 2014-2015 Sutapa Roy
 -- Copyright © 2010-2014 Felix Höfling
 -- Copyright © 2013      Nicolas Höft
 -- Copyright © 2010      Peter Colberg
@@ -115,7 +115,6 @@ end
 local M = module(function(args)
     local offset = utility.assert_type(utility.assert_kwarg(args, "offset"), "table")
     local surface_normal = utility.assert_type(utility.assert_kwarg(args, "surface_normal"), "table")
-
     local epsilon = utility.assert_kwarg(args, "epsilon")
     if type(epsilon) ~= "table" and type(epsilon) ~= "number" then
         error("bad argument 'epsilon'", 2)
@@ -127,6 +126,10 @@ local M = module(function(args)
     local wetting = utility.assert_kwarg(args, "wetting")
     if type(wetting) ~= "table" and type(wetting) ~= "number" then
         error("bad argument 'wetting'", 2)
+    end
+    local cutoff = utility.assert_kwarg(args, "cutoff")
+    if type(cutoff) ~= "table" and type(cutoff) ~= "number" then
+        error("bad argument 'cutoff'", 2)
     end
 
     local species = utility.assert_type(utility.assert_kwarg(args, "species"), "number")
@@ -156,17 +159,16 @@ local M = module(function(args)
         wetting = numeric.scalar_matrix(nwall, species, wetting)
     end
 
+    if type(cutoff) == "number" then
+        cutoff = numeric.scalar_matrix(nwall, species, cutoff)
+    end
+
     if #epsilon ~= nwall or #epsilon[1] ~= species then
         error("mismatching shape of argument 'epsilon'", 2)
     end
 
     -- determine space dimension from shape of surface normals
     local dimension = #surface_normal[1]
-
-    -- FIXME
-    if memory == "gpu" then
-        assert(nwall == 2, "only 2 walls are supported at the GPU")
-    end
 
     -- construct instance
     if not slit[memory] then
@@ -175,11 +177,11 @@ local M = module(function(args)
     if not slit[memory][dimension] then
         error(("unsupported dimension '%d'"):format(dimension), 2)
     end
-    local self = slit[memory][dimension](offset, surface_normal, epsilon, sigma, wetting, logger)
+    local self = slit[memory][dimension](offset, surface_normal, epsilon, sigma, wetting, cutoff, logger)
 
     -- add description for profiler
     self.description = property(function()
-        return "slit pore" .. label .. " with Lennard-Jones potential"
+        return "slit pore " .. label .. " with Lennard-Jones potential"
     end)
 
     -- store memory location

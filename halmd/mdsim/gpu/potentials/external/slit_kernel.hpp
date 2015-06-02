@@ -30,6 +30,16 @@ namespace potentials {
 namespace external {
 namespace slit_kernel {
 
+/**
+ * indices of potential parameters
+ */
+enum {
+    EPSILON     /* interaction strength */
+  , SIGMA       /* interaction range */
+  , WETTING     /* wetting parameter */
+  , CUTOFF      /* cutoff distance */
+};
+
 // forward declaration for host code
 template <int dimension>
 class slit;
@@ -41,6 +51,8 @@ struct slit_wrapper
     /** potential parameters */
     static cuda::texture<float4> param_geometry;
     static cuda::texture<float4> param_potential;
+    static cuda::symbol<float> smoothing;
+    static cuda::symbol<int> nwall;
 };
 
 } // namespace external

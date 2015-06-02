@@ -44,6 +44,8 @@ slit<dimension, float_type>::slit(
   , matrix_container_type const& epsilon
   , matrix_container_type const& sigma
   , matrix_container_type const& wetting
+  , matrix_container_type const& cutoff
+  , float_type smoothing
   , shared_ptr<logger> logger
 )
   // allocate potential parameters
@@ -52,27 +54,34 @@ slit<dimension, float_type>::slit(
   , epsilon_(epsilon)
   , sigma_(sigma)
   , wetting_(wetting)
+  , cutoff_(cutoff)
+  , smoothing_(smoothing)
   , logger_(logger)
 {
-    unsigned int nwall = surface_normal_.size();
 
     // check parameter size
-    if (offset_.size() != nwall) {
+    if (offset_.size() != sigma_.size1()) {
         throw invalid_argument("geometry parameters have mismatching shapes");
     }
 
-    if (epsilon_.size1() != nwall || sigma_.size1() != nwall || wetting_.size1() != nwall
+    if (epsilon_.size1() != sigma_.size1() || epsilon_.size1() != wetting_.size1() 
      || epsilon_.size2() != sigma_.size2() || epsilon_.size2() != wetting_.size2()
        ) {
         throw invalid_argument("potential parameters have mismatching shapes");
     }
-    
-    LOG("number of walls: " << nwall);
-    LOG("wall positions: d₀ = " << offset_);
-    LOG("surface normals: n = " << surface_normal_);
-    LOG("interaction strengths: epsilon = " << epsilon_);
-    LOG("interaction ranges: sigma = " << sigma_);
-    LOG("wetting paramters: c = " << wetting_);
+
+    LOG("wall position: d₀ = " << offset_);
+    LOG("surface normal: n = " << surface_normal_);
+    LOG("interaction strength: epsilon = " << epsilon_);
+    LOG("interaction range: sigma = " << sigma_);
+    LOG("wetting paramter: w = " << wetting_);
+    LOG("cutoff length: rc = " << cutoff_);
+    LOG("smoothing parameter: h = " << smoothing_);
+
+    // impose normalisation of surface normals
+    for (auto& n : surface_normal_) {
+        n /= norm_2(n);
+    }
 }
 
 template <int dimension, typename float_type>
@@ -97,6 +106,8 @@ void slit<dimension, float_type>::luaopen(lua_State* L)
                                , matrix_container_type const& 
                                , matrix_container_type const& 
                                , matrix_container_type const& 
+                               , matrix_container_type const& 
+                               , float_type
                                , shared_ptr<logger>
                              >())
                             .property("offset", &slit::offset)

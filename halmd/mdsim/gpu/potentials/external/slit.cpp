@@ -25,6 +25,7 @@
 
 #include <halmd/mdsim/gpu/forces/external.hpp>
 #include <halmd/mdsim/gpu/potentials/external/slit.hpp>
+#include <halmd/mdsim/gpu/potentials/external/slit_kernel.hpp>
 #include <halmd/utility/lua/lua.hpp>
 
 using namespace std;
@@ -45,6 +46,8 @@ slit<dimension, float_type>::slit(
   , matrix_container_type const& epsilon
   , matrix_container_type const& sigma
   , matrix_container_type const& wetting
+  , matrix_container_type const& cutoff
+  , float_type smoothing
   , shared_ptr<logger> logger
 )
   // initialise attributes
@@ -53,11 +56,13 @@ slit<dimension, float_type>::slit(
   , epsilon_(epsilon)
   , sigma_(sigma)
   , wetting_(wetting)
+  , cutoff_(cutoff)
+  , smoothing_(smoothing)
   , g_param_geometry_(surface_normal_.size())
   , g_param_potential_(epsilon_.size1() * epsilon_.size2())
   , logger_(logger)
 {
-    unsigned int nwall = surface_normal_.size();
+    unsigned int nwall = epsilon_.size1();
     unsigned int nspecies = epsilon_.size2();
 
     // check parameter size
@@ -65,18 +70,25 @@ slit<dimension, float_type>::slit(
         throw invalid_argument("geometry parameters have mismatching shapes");
     }
 
-    if (epsilon_.size1() != nwall || sigma_.size1() != nwall || wetting_.size1() != nwall
-        || sigma_.size2() != nspecies || wetting_.size2() != nspecies
+    if (epsilon_.size1() != nwall || sigma_.size1() != nwall || wetting_.size1() != nwall || cutoff_.size1() != nwall
+        || sigma_.size2() != nspecies || wetting_.size2() != nspecies || cutoff_.size2() != nspecies
        ) {
         throw invalid_argument("potential parameters have mismatching shapes");
     }
-    
+
     LOG("number of walls: " << nwall);
-    LOG("wall positions: d₀ = " << offset_);
-    LOG("surface normals: n = " << surface_normal_);
-    LOG("interaction strengths: epsilon = " << epsilon_);
-    LOG("interaction ranges: sigma = " << sigma_);
-    LOG("wetting paramters: c = " << wetting_);
+    LOG("wall position: d₀ = " << offset_);
+    LOG("surface normal: n = " << surface_normal_);
+    LOG("interaction strength: epsilon = " << epsilon_);
+    LOG("interaction range: sigma = " << sigma_);
+    LOG("wetting paramter: w = " << wetting_);
+    LOG("cutoff length for wall potential: rc = " << cutoff_);
+    LOG("smoothing parameter for wall potential: h = " << smoothing_);
+
+    // impose normalisation of surface normals
+    for (auto& n : surface_normal_) {
+        n /= norm_2(n);
+    }
 
     // merge geometry parameters in a single array and copy to device
     cuda::host::vector<float4> param_geometry(g_param_geometry_.size());
@@ -89,14 +101,21 @@ slit<dimension, float_type>::slit(
     cuda::host::vector<float4> param_potential(g_param_potential_.size());
     for (size_t i = 0; i < nwall; ++i) {
         for (size_t j = 0; j < nspecies; ++j) {
+              using namespace slit_kernel;
+
               fixed_vector<float, 4> p;
-              p[0] = epsilon_(i, j);
-              p[1] = sigma_(i, j);
-              p[2] = wetting_(i, j);
+              p[EPSILON] = epsilon_(i, j);
+              p[SIGMA]   = sigma_(i, j);
+              p[WETTING] = wetting_(i, j);
+              p[CUTOFF]  = cutoff_(i, j);
               param_potential[j * nwall + i] = p;
         }
     }
     cuda::copy(param_potential, g_param_potential_);
+
+    // copy CUDA symbols
+    cuda::copy(nwall, slit_wrapper::nwall);
+    cuda::copy(smoothing_, slit_wrapper::smoothing);
 }
 
 template <int dimension, typename float_type>
@@ -116,11 +135,13 @@ void slit<dimension, float_type>::luaopen(lua_State* L)
                     [
                         class_<slit, shared_ptr<slit>>(class_name.c_str())
                             .def(constructor<
-                                 scalar_container_type const& 
-                               , vector_container_type const& 
-                               , matrix_container_type const& 
-                               , matrix_container_type const& 
-                               , matrix_container_type const& 
+                                 scalar_container_type const&
+                               , vector_container_type const&
+                               , matrix_container_type const&
+                               , matrix_container_type const&
+                               , matrix_container_type const&
+                               , matrix_container_type const&
+                               , float_type
                                , shared_ptr<logger>
                              >())
                             .property("offset", &slit::offset)
@@ -138,6 +159,7 @@ HALMD_LUA_API int luaopen_libhalmd_mdsim_gpu_potentials_external_slit(lua_State*
     slit<2, float>::luaopen(L);
     forces::external<3, float, slit<3, float>>::luaopen(L);
     forces::external<2, float, slit<2, float>>::luaopen(L);
+    return 0;
 }
 
 // explicit instantiation
