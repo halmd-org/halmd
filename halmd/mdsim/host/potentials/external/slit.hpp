@@ -1,6 +1,6 @@
 /*
- * Copyright © 2014 Sutapa Roy
- * Copyright © 2014 Felix Höfling
+ * Copyright © 2014-2015 Sutapa Roy
+ * Copyright © 2014-2015 Felix Höfling
  *
  * This file is part of HALMD.
  *
