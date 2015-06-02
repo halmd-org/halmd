@@ -27,20 +27,37 @@ local utility           = require("halmd.utility")
 local module            = require("halmd.utility.module")
 
 ---
--- Slit potential
--- ==================
+-- Planar wall potential
+-- =====================
 --
--- This module implements the slit potential,
+-- This module implements the external potential for a collection of planar walls. 
+--
+-- Position vector :math:`{\vec R}_i` of the wall :math:`i` is given by
+-- :math:`{\hat n_i} \cdot {{\vec R}_i} = r_{0,i}` , where :math:`{\hat n} = {\vec n} /
+-- {|\vec n|}` is the normalized outward normal vector to the wall surface. 
+-- :math:`d_i= ({\vec r}_i \cdot \hat{n}_i - r_{0,i})` is the distance of
+-- a particle, at position :math:`{\vec r}`, from the wall :math:`i`.
+--
 --
 -- .. math::
 --
---    U_i^{(\alpha)} (d^{(\alpha)}) = \epsilon_i^{(\alpha)} \Big[ \frac{2}{15} \left(\frac{\sigma_i}{d^{(\alpha)}} \right)^9 - c_i^{(\alpha)}\left(\frac{\sigma_i}{d^{(\alpha)}}\right)^3\Big]
--- 
--- for the potential energy of a particle of species :math:`i` due to wall :math:`\alpha` of the slit pore.
+--     U\left(d_i \right) = \varepsilon_i^\alpha \left( \frac{2}{15}
+--     \left(\frac{\sigma_i^\alpha}{d_i} \right)^9 - w_i^\alpha
+--     \left(\frac{\sigma_i^\alpha}{d_i} \right)^3 \right)
 --
--- For the bottom wall, :math:`d^{(1)} = \frac{D}{2} + {\vec r} \cdot \hat{n} - {\vec r_0} \cdot \hat{n}` 
 --
--- and for the top wall, :math:`d^{(2)} = D - d^{(1)}.`
+-- is the interaction energy of a particle of species :math:`\alpha` due to
+-- the wall :math:`i`. While computing :math:`U\left(d_i \right)` we always
+-- make :math:`d_i` positive.
+--
+-- The potential is truncated at a cutoff distance :math:`r_c` and further
+-- transformed to a :math:`C^2` continuous function using :class:`halmd.mdsim.forces.pair_trunc`.
+--
+-- The parameters :math:`\varepsilon`, :math:`\sigma`, :math:`w` and
+-- :math:`r_c` depend on both the wall and the species. For example,
+-- :math:`\varepsilon[i][\alpha]` contains :math:`\varepsilon_i^\alpha`, where
+-- indices :math:`i`, :math:`\alpha` run over the wall and species
+-- respectively.
 --
 
 -- grab C++ wrappers
@@ -58,17 +75,18 @@ if device.gpu then
 end
 
 ---
--- Construct the slit potential.
+-- Construct the planar wall module.
 --
--- :param table args: keyword arguments
--- :param table args.width: slit width :math:`D`
--- :param table args.offset: position vector of the slit centre :math:`\vec r_{0}`
--- :param number args.surface_normal: outward normal vector to the top wall of slit pore :math:`\hat n`
--- :param number args.epsilon: interaction strengths :math:`\varepsilon_i^{(\alpha)}`
--- :param number args.sigma: interaction ranges :math:`\sigma_i^{(\alpha)}`
--- :param number args.wetting: wetting parameter :math:`c_i^{(\alpha)}`
--- :param string args.memory: select memory location *(optional)*
--- :param string args.label: instance label *(optional)*
+-- :param table args: keyword arguments.
+-- :param table args.offset: positions of the walls :math:`r_{0,i}` in MD units.
+-- :param number args.surface_normal: outward normal vectors to the wall surfaces :math:`\vec n` in MD units.
+-- :param matrix args.epsilon: interaction strengths :math:`\varepsilon_i^\alpha` in MD units.
+-- :param matrix args.sigma: interaction ranges :math:`\sigma_i^\alpha` in MD units.
+-- :param matrix args.wetting: wetting parameters :math:`w_i^\alpha` in MD units.
+-- :param matrix args.cutoff: cutoff lengths :math:`r_{c,i}^\alpha` in MD units.
+-- :param number args.smoothing: smoothing parameter :math:`h` for the :math:`C^2` continuous truncation in MD units.
+-- :param string args.memory: select memory location *(optional)*.
+-- :param string args.label: instance label *(optional)*.
 --
 -- If all elements of a parameter sequence are equal, a single value may be
 -- passed instead. In this case, ``species`` must be specified.
@@ -80,29 +98,33 @@ end
 -- not specified, the memory location is selected according to the compute
 -- device.
 --
--- .. attribute:: width
---
---    Width of the slit :math:`D`.
---
 -- .. attribute:: offset
 --
---    Sequence with position vector of the slit centre :math:`\vec r_{0}`.
+--    Sequence with the wall position :math:`r_{0,i}`.
 --
 -- .. attribute:: surface_normal
 --
---    Sequence with outward normal vector to top wall of slit pore :math:`\hat {n}`.
+--    Sequence with outward normal vector to the wall surface :math:`\vec {n}_i`.
 --
 -- .. attribute:: epsilon
 --
---    Sequence with interaction strengths :math:`\varepsilon_i^{(\alpha)}`.
+--    Sequence with interaction strength :math:`\varepsilon_i^\alpha`.
 --
 -- .. attribute:: sigma
 --
---    Sequence with interaction ranges :math:`\sigma_i^{(\alpha)}`.
+--    Sequence with interaction range :math:`\sigma_i^\alpha`.
 --
 -- .. attribute:: wetting
 --
---    Sequence with wetting parameters :math:`c_i^{(\alpha)}`.
+--    Sequence with wetting parameter :math:`w_i^\alpha`.
+--
+-- .. attribute:: cutoff
+--
+--    Sequence with cutoff length :math:`r_{c,i}^\alpha`.
+--
+-- .. attribute:: smoothing
+--
+--    Sequence with smoothing parameter :math:`h` for the :math:`C^2` continuous truncation.
 --
 -- .. attribute:: description
 --
@@ -131,6 +153,7 @@ local M = module(function(args)
     if type(cutoff) ~= "table" and type(cutoff) ~= "number" then
         error("bad argument 'cutoff'", 2)
     end
+    local smoothing = utility.assert_type(utility.assert_kwarg(args, "smoothing"), "number")
 
     local species = utility.assert_type(utility.assert_kwarg(args, "species"), "number")
 
@@ -177,7 +200,7 @@ local M = module(function(args)
     if not slit[memory][dimension] then
         error(("unsupported dimension '%d'"):format(dimension), 2)
     end
-    local self = slit[memory][dimension](offset, surface_normal, epsilon, sigma, wetting, cutoff, logger)
+    local self = slit[memory][dimension](offset, surface_normal, epsilon, sigma, wetting, cutoff, smoothing, logger)
 
     -- add description for profiler
     self.description = property(function()
