@@ -18,8 +18,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef HALMD_MDSIM_GPU_POTENTIALS_EXTERNAL_SLIT_KERNEL_HPP
-#define HALMD_MDSIM_GPU_POTENTIALS_EXTERNAL_SLIT_KERNEL_HPP
+#ifndef HALMD_MDSIM_GPU_POTENTIALS_EXTERNAL_PLANAR_WALL_KERNEL_HPP
+#define HALMD_MDSIM_GPU_POTENTIALS_EXTERNAL_PLANAR_WALL_KERNEL_HPP
 
 #include <cuda_wrapper/cuda_wrapper.hpp>
 
@@ -28,7 +28,7 @@ namespace mdsim {
 namespace gpu {
 namespace potentials {
 namespace external {
-namespace slit_kernel {
+namespace planar_wall_kernel {
 
 /**
  * indices of potential parameters
@@ -42,11 +42,11 @@ enum {
 
 // forward declaration for host code
 template <int dimension>
-class slit;
+class planar_wall;
 
-} // namespace slit_kernel
+} // namespace planar_wall_kernel
 
-struct slit_wrapper
+struct planar_wall_wrapper
 {
     /** potential parameters */
     static cuda::texture<float4> param_geometry;
@@ -61,4 +61,4 @@ struct slit_wrapper
 } // namespace mdsim
 } // namespace halmd
 
-#endif /* ! HALMD_MDSIM_GPU_POTENTIALS_EXTERNAL_SLIT_KERNEL_HPP */
+#endif /* ! HALMD_MDSIM_GPU_POTENTIALS_EXTERNAL_PLANAR_WALL_KERNEL_HPP */

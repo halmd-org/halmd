@@ -61,16 +61,16 @@ local module            = require("halmd.utility.module")
 --
 
 -- grab C++ wrappers
-local slit = {
+local planar_wall = {
     host = {
-        [2] = assert(libhalmd.mdsim.host.potentials.external.slit_2)
-      , [3] = assert(libhalmd.mdsim.host.potentials.external.slit_3)
+        [2] = assert(libhalmd.mdsim.host.potentials.external.planar_wall_2)
+      , [3] = assert(libhalmd.mdsim.host.potentials.external.planar_wall_3)
     }
 }
 if device.gpu then
-    slit.gpu = {
-        [2] = assert(libhalmd.mdsim.gpu.potentials.external.slit_2)
-      , [3] = assert(libhalmd.mdsim.gpu.potentials.external.slit_3)
+    planar_wall.gpu = {
+        [2] = assert(libhalmd.mdsim.gpu.potentials.external.planar_wall_2)
+      , [3] = assert(libhalmd.mdsim.gpu.potentials.external.planar_wall_3)
     }
 end
 
@@ -160,7 +160,7 @@ local M = module(function(args)
     local memory = args and args.memory or (device.gpu and "gpu" or "host")
     local label = args and args.label and utility.assert_type(args.label, "string")
     label = label and (" (%s)"):format(label) or ""
-    local logger = log.logger({label =  "slit pore" .. label})
+    local logger = log.logger({label =  "planar_wall pore" .. label})
 
     -- determine number of walls from length of offset vector
     local nwall = #offset
@@ -194,17 +194,17 @@ local M = module(function(args)
     local dimension = #surface_normal[1]
 
     -- construct instance
-    if not slit[memory] then
+    if not planar_wall[memory] then
         error(("unsupported memory type '%s'"):format(memory), 2)
     end
-    if not slit[memory][dimension] then
+    if not planar_wall[memory][dimension] then
         error(("unsupported dimension '%d'"):format(dimension), 2)
     end
-    local self = slit[memory][dimension](offset, surface_normal, epsilon, sigma, wetting, cutoff, smoothing, logger)
+    local self = planar_wall[memory][dimension](offset, surface_normal, epsilon, sigma, wetting, cutoff, smoothing, logger)
 
     -- add description for profiler
     self.description = property(function()
-        return "slit pore " .. label .. " with Lennard-Jones potential"
+        return "planar_wall pore " .. label .. " with Lennard-Jones potential"
     end)
 
     -- store memory location

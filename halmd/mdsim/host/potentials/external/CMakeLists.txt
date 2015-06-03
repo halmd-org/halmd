@@ -5,7 +5,7 @@ halmd_add_potential(
 )
 
 halmd_add_potential(
-  halmd_mdsim_host_potentials_external_slit
-  external slit
-  slit.cpp
+  halmd_mdsim_host_potentials_external_planar_wall
+  external planar_wall
+  planar_wall.cpp
 )

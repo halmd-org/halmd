@@ -20,7 +20,7 @@
 
 #include <halmd/config.hpp>
 
-#define BOOST_TEST_MODULE slit
+#define BOOST_TEST_MODULE planar_wall
 #include <boost/test/unit_test.hpp>
 
 #include <boost/numeric/ublas/assignment.hpp> // <<=
@@ -31,18 +31,18 @@
 #include <numeric> // std::accumulate
 
 #include <halmd/mdsim/box.hpp>
-#include <halmd/mdsim/host/potentials/external/slit.hpp>
+#include <halmd/mdsim/host/potentials/external/planar_wall.hpp>
 #ifdef HALMD_WITH_GPU
 # include <halmd/mdsim/gpu/forces/external.hpp>
 # include <halmd/mdsim/gpu/particle.hpp>
-# include <halmd/mdsim/gpu/potentials/external/slit.hpp>
+# include <halmd/mdsim/gpu/potentials/external/planar_wall.hpp>
 # include <halmd/utility/gpu/device.hpp>
 #endif
 #include <test/tools/ctest.hpp>
 
 using namespace halmd;
 
-/** test slit potential
+/** test planar_wall potential
  *
  *  The host module is a conventional functor which can be tested directly. For
  *  the GPU module, we use the external force module to compute some values of
@@ -100,9 +100,9 @@ std::vector<vector_type> make_positions()
 
 // test in three dimensions only
 template <typename float_type>
-std::shared_ptr<mdsim::host::potentials::external::slit<3, float_type>> make_host_potential()
+std::shared_ptr<mdsim::host::potentials::external::planar_wall<3, float_type>> make_host_potential()
 {
-    typedef mdsim::host::potentials::external::slit<3, float_type> potential_type;
+    typedef mdsim::host::potentials::external::planar_wall<3, float_type> potential_type;
     typedef typename potential_type::vector_type vector_type;
 
     // define interaction parameters
@@ -149,7 +149,7 @@ std::shared_ptr<mdsim::host::potentials::external::slit<3, float_type>> make_hos
     return std::make_shared<potential_type>(offset, surface_normal, epsilon, sigma, wetting, cutoff, smoothing);
 }
 
-BOOST_AUTO_TEST_CASE( slit_host )
+BOOST_AUTO_TEST_CASE( planar_wall_host )
 {
     // construct host module with fixed parameters
     auto potential = make_host_potential<double>();
@@ -164,7 +164,7 @@ BOOST_AUTO_TEST_CASE( slit_host )
         for (vector_type const& r : positions) {
             BOOST_MESSAGE("test particle of species " << species << " at " << r);
 
-            // compute force and potential energy using the slit module
+            // compute force and potential energy using the planar_wall module
             vector_type force;
             double en_pot;
             std::tie(force, en_pot) = (*potential)(r, species);  // particle species A
@@ -184,7 +184,7 @@ BOOST_AUTO_TEST_CASE( slit_host )
                 en_pot2 += en;
             }
 
-            // compare output from slit module with reference
+            // compare output from planar_wall module with reference
             const double tolerance = 5 * std::numeric_limits<double>::epsilon();
             for (unsigned int i = 0; i < force.size(); ++i) {
                 BOOST_CHECK_CLOSE_FRACTION(force[i], force2[i], tolerance);
@@ -197,14 +197,14 @@ BOOST_AUTO_TEST_CASE( slit_host )
 #ifdef HALMD_WITH_GPU
 
 template <typename float_type>
-struct slit
+struct planar_wall
 {
     enum { dimension = 3 };
 
     typedef mdsim::box<dimension> box_type;
     typedef mdsim::gpu::particle<dimension, float_type> particle_type;
-    typedef mdsim::gpu::potentials::external::slit<dimension, float_type> potential_type;
-    typedef mdsim::host::potentials::external::slit<dimension, double> host_potential_type;
+    typedef mdsim::gpu::potentials::external::planar_wall<dimension, float_type> potential_type;
+    typedef mdsim::host::potentials::external::planar_wall<dimension, double> host_potential_type;
     typedef mdsim::gpu::forces::external<dimension, float_type, potential_type> force_type;
 
     typedef typename particle_type::vector_type vector_type;
@@ -217,12 +217,12 @@ struct slit
 
     std::vector<vector_type> positions;
 
-    slit();
+    planar_wall();
     void test();
 };
 
 template <typename float_type>
-void slit<float_type>::test()
+void planar_wall<float_type>::test()
 {
     // alternating species of test particles
     std::vector<unsigned int> species(particle->nparticle());
@@ -261,7 +261,7 @@ void slit<float_type>::test()
 }
 
 template <typename float_type>
-slit<float_type>::slit()
+planar_wall<float_type>::planar_wall()
 {
     BOOST_TEST_MESSAGE("initialise simulation modules");
 
@@ -306,7 +306,7 @@ slit<float_type>::slit()
     particle->on_force([=](){force->apply();});
 }
 
-BOOST_FIXTURE_TEST_CASE( slit_gpu, device ) {
-    slit<float>().test();
+BOOST_FIXTURE_TEST_CASE( planar_wall_gpu, device ) {
+    planar_wall<float>().test();
 }
 #endif // HALMD_WITH_GPU

@@ -23,7 +23,7 @@
 #include <string>
 
 #include <halmd/mdsim/host/forces/external.hpp>
-#include <halmd/mdsim/host/potentials/external/slit.hpp>
+#include <halmd/mdsim/host/potentials/external/planar_wall.hpp>
 #include <halmd/utility/lua/lua.hpp>
 
 using namespace std;
@@ -35,10 +35,10 @@ namespace potentials {
 namespace external {
 
 /**
- * Initialise slit potential
+ * Initialise planar_wall potential
  */
 template <int dimension, typename float_type>
-slit<dimension, float_type>::slit(
+planar_wall<dimension, float_type>::planar_wall(
     scalar_container_type const& offset
   , vector_container_type const& surface_normal
   , matrix_container_type const& epsilon
@@ -85,10 +85,10 @@ slit<dimension, float_type>::slit(
 }
 
 template <int dimension, typename float_type>
-void slit<dimension, float_type>::luaopen(lua_State* L)
+void planar_wall<dimension, float_type>::luaopen(lua_State* L)
 {
     using namespace luaponte;
-    static string class_name("slit_" + to_string(dimension));
+    static string class_name("planar_wall_" + to_string(dimension));
     module(L, "libhalmd")
     [
         namespace_("mdsim")
@@ -99,7 +99,7 @@ void slit<dimension, float_type>::luaopen(lua_State* L)
                 [
                     namespace_("external")
                     [
-                        class_<slit, shared_ptr<slit>>(class_name.c_str())
+                        class_<planar_wall, shared_ptr<planar_wall>>(class_name.c_str())
                             .def(constructor<
                                  scalar_container_type const& 
                                , vector_container_type const& 
@@ -110,7 +110,7 @@ void slit<dimension, float_type>::luaopen(lua_State* L)
                                , float_type
                                , shared_ptr<logger>
                              >())
-                            .property("offset", &slit::offset)
+                            .property("offset", &planar_wall::offset)
                     ]
                 ]
             ]
@@ -118,29 +118,29 @@ void slit<dimension, float_type>::luaopen(lua_State* L)
     ];
 }
 
-HALMD_LUA_API int luaopen_libhalmd_mdsim_host_potentials_external_slit(lua_State* L)
+HALMD_LUA_API int luaopen_libhalmd_mdsim_host_potentials_external_planar_wall(lua_State* L)
 {
 #ifndef USE_HOST_SINGLE_PRECISION
-    slit<3, double>::luaopen(L);
-    slit<2, double>::luaopen(L);
-    forces::external<3, double, slit<3, double>>::luaopen(L);
-    forces::external<2, double, slit<2, double>>::luaopen(L);
+    planar_wall<3, double>::luaopen(L);
+    planar_wall<2, double>::luaopen(L);
+    forces::external<3, double, planar_wall<3, double>>::luaopen(L);
+    forces::external<2, double, planar_wall<2, double>>::luaopen(L);
 #else
-    slit<3, float>::luaopen(L);
-    slit<2, float>::luaopen(L);
-    forces::external<3, float, slit<3, float>>::luaopen(L);
-    forces::external<2, float, slit<2, float>>::luaopen(L);
+    planar_wall<3, float>::luaopen(L);
+    planar_wall<2, float>::luaopen(L);
+    forces::external<3, float, planar_wall<3, float>>::luaopen(L);
+    forces::external<2, float, planar_wall<2, float>>::luaopen(L);
 #endif
     return 0;
 }
 
 // explicit instantiation
 #ifndef USE_HOST_SINGLE_PRECISION
-template class slit<3, double>;
-template class slit<2, double>;
+template class planar_wall<3, double>;
+template class planar_wall<2, double>;
 #else
-template class slit<3, float>;
-template class slit<2, float>;
+template class planar_wall<3, float>;
+template class planar_wall<2, float>;
 #endif
 
 } // namespace external
@@ -152,11 +152,11 @@ namespace forces {
 using namespace potentials::external;
 
 #ifndef USE_HOST_SINGLE_PRECISION
-template class external<3, double, slit<3, double>>;
-template class external<2, double, slit<2, double>>;
+template class external<3, double, planar_wall<3, double>>;
+template class external<2, double, planar_wall<2, double>>;
 #else
-template class external<3, float, slit<3, float>>;
-template class external<2, float, slit<2, float>>;
+template class external<3, float, planar_wall<3, float>>;
+template class external<2, float, planar_wall<2, float>>;
 #endif
 
 } // namespace forces

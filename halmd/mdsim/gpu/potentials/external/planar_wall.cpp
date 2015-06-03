@@ -24,8 +24,8 @@
 #include <string>
 
 #include <halmd/mdsim/gpu/forces/external.hpp>
-#include <halmd/mdsim/gpu/potentials/external/slit.hpp>
-#include <halmd/mdsim/gpu/potentials/external/slit_kernel.hpp>
+#include <halmd/mdsim/gpu/potentials/external/planar_wall.hpp>
+#include <halmd/mdsim/gpu/potentials/external/planar_wall_kernel.hpp>
 #include <halmd/utility/lua/lua.hpp>
 
 using namespace std;
@@ -37,10 +37,10 @@ namespace potentials {
 namespace external {
 
 /**
- * Initialise slit potential
+ * Initialise planar_wall potential
  */
 template <int dimension, typename float_type>
-slit<dimension, float_type>::slit(
+planar_wall<dimension, float_type>::planar_wall(
     scalar_container_type const& offset
   , vector_container_type const& surface_normal
   , matrix_container_type const& epsilon
@@ -101,7 +101,7 @@ slit<dimension, float_type>::slit(
     cuda::host::vector<float4> param_potential(g_param_potential_.size());
     for (size_t i = 0; i < nwall; ++i) {
         for (size_t j = 0; j < nspecies; ++j) {
-              using namespace slit_kernel;
+              using namespace planar_wall_kernel;
 
               fixed_vector<float, 4> p;
               p[EPSILON] = epsilon_(i, j);
@@ -114,15 +114,15 @@ slit<dimension, float_type>::slit(
     cuda::copy(param_potential, g_param_potential_);
 
     // copy CUDA symbols
-    cuda::copy(nwall, slit_wrapper::nwall);
-    cuda::copy(smoothing_, slit_wrapper::smoothing);
+    cuda::copy(nwall, planar_wall_wrapper::nwall);
+    cuda::copy(smoothing_, planar_wall_wrapper::smoothing);
 }
 
 template <int dimension, typename float_type>
-void slit<dimension, float_type>::luaopen(lua_State* L)
+void planar_wall<dimension, float_type>::luaopen(lua_State* L)
 {
     using namespace luaponte;
-    static string class_name("slit_" + to_string(dimension));
+    static string class_name("planar_wall_" + to_string(dimension));
     module(L, "libhalmd")
     [
         namespace_("mdsim")
@@ -133,7 +133,7 @@ void slit<dimension, float_type>::luaopen(lua_State* L)
                 [
                     namespace_("external")
                     [
-                        class_<slit, shared_ptr<slit>>(class_name.c_str())
+                        class_<planar_wall, shared_ptr<planar_wall>>(class_name.c_str())
                             .def(constructor<
                                  scalar_container_type const&
                                , vector_container_type const&
@@ -144,7 +144,7 @@ void slit<dimension, float_type>::luaopen(lua_State* L)
                                , float_type
                                , shared_ptr<logger>
                              >())
-                            .property("offset", &slit::offset)
+                            .property("offset", &planar_wall::offset)
                     ]
                 ]
             ]
@@ -153,18 +153,18 @@ void slit<dimension, float_type>::luaopen(lua_State* L)
 }
 
 
-HALMD_LUA_API int luaopen_libhalmd_mdsim_gpu_potentials_external_slit(lua_State* L)
+HALMD_LUA_API int luaopen_libhalmd_mdsim_gpu_potentials_external_planar_wall(lua_State* L)
 {
-    slit<3, float>::luaopen(L);
-    slit<2, float>::luaopen(L);
-    forces::external<3, float, slit<3, float>>::luaopen(L);
-    forces::external<2, float, slit<2, float>>::luaopen(L);
+    planar_wall<3, float>::luaopen(L);
+    planar_wall<2, float>::luaopen(L);
+    forces::external<3, float, planar_wall<3, float>>::luaopen(L);
+    forces::external<2, float, planar_wall<2, float>>::luaopen(L);
     return 0;
 }
 
 // explicit instantiation
-template class slit<3, float>;
-template class slit<2, float>;
+template class planar_wall<3, float>;
+template class planar_wall<2, float>;
 
 } // namespace external
 } // namespace potentials
@@ -174,8 +174,8 @@ namespace forces {
 // explicit instantiation of force modules
 using namespace potentials::external;
 
-template class external<3, float, slit<3, float>>;
-template class external<2, float, slit<2, float>>;
+template class external<3, float, planar_wall<3, float>>;
+template class external<2, float, planar_wall<2, float>>;
 
 } // namespace forces
 } // namespace gpu

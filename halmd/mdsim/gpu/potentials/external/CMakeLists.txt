@@ -6,8 +6,8 @@ halmd_add_potential(
 )
 
 halmd_add_potential(
-  halmd_mdsim_gpu_potentials_external_slit
-  external slit
-  slit.cpp
-  slit_kernel.cu
+  halmd_mdsim_gpu_potentials_external_planar_wall
+  external planar_wall
+  planar_wall.cpp
+  planar_wall_kernel.cu
 )
