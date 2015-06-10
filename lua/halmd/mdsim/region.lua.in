@@ -1,0 +1,102 @@
+--
+-- Copyright © 2014-2015 Nicolas Höft
+--
+-- This file is part of HALMD.
+--
+-- HALMD is free software: you can redistribute it and/or modify
+-- it under the terms of the GNU General Public License as published by
+-- the Free Software Foundation, either version 3 of the License, or
+-- (at your option) any later version.
+--
+-- This program is distributed in the hope that it will be useful,
+-- but WITHOUT ANY WARRANTY; without even the implied warranty of
+-- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+-- GNU General Public License for more details.
+--
+-- You should have received a copy of the GNU General Public License
+-- along with this program.  If not, see <http://www.gnu.org/licenses/>.
+--
+
+local log      = require("halmd.io.log")
+local utility  = require("halmd.utility")
+local module   = require("halmd.utility.module")
+local profiler = require("halmd.utility.profiler")
+
+---
+-- Region
+-- ======
+--
+-- This module defines a geometric region of the simulation domain. It is always
+-- associated with particles that are either within or outside the domain.
+-- A list of available geometries can be found in :mod:`halmd.mdsim.geometries`.
+--
+-- The shape of the region is fixed in time and cannot be altered after
+-- creation. Note that the position used to test whether the particle is inside
+-- or outside the region is with periodic boundary conditions applied.
+--
+
+-- grab C++ wrappers
+local region = libhalmd.mdsim.region
+
+local geometry_selection = {
+    excluded = 1
+  , included = 2
+}
+
+---
+-- Construct region instance.
+--
+-- :param table args: keyword arguments
+-- :param args.particle: instance of :class:`halmd.mdsim.particle`
+-- :param args.box: instance of :class:`halmd.mdsim.box`
+-- :param table args.geometry: geometry of the region, instance of :mod:`halmd.mdsim.geometries`
+-- :param string args.selection: select particles within or outside the geometry. Allowed values are ``included`` and ``excluded``.
+-- :param string args.label: instance label
+--
+-- .. attribute:: particle
+--
+--    Instance of :class:`halmd.mdsim.particle`
+--
+-- .. attribute:: label
+--
+--    Instance label.
+--
+local M = module(function(args)
+    utility.assert_type(args, "table")
+    local particle = utility.assert_kwarg(args, "particle")
+    local box = utility.assert_kwarg(args, "box")
+    local label = utility.assert_type(utility.assert_kwarg(args, "label"), "string")
+    local geometry = utility.assert_kwarg(args, "geometry")
+    local selection = utility.assert_type(utility.assert_kwarg(args, "selection"), "string")
+
+    if not geometry_selection[selection] then
+        error(("unsupported geometry selection '%s'"):format(selection), 2)
+    end
+
+    local logger = log.logger({prefix = ("region (%s)"):format(label)})
+
+    -- construct region instance
+    local self = region(particle, box, geometry, geometry_selection[selection], logger)
+
+    -- store label as Lua property
+    self.label = property(function(self)
+        return label
+    end)
+
+    self.particle = property(function(self)
+        return particle
+    end)
+
+    -- sequence of signal connections
+    local conn = {}
+    self.disconnect = utility.signal.disconnect(conn, "region module")
+
+    -- connect region module to profiler
+    local runtime = assert(self.runtime)
+    table.insert(conn, profiler:on_profile(runtime.update_mask, "update region mask (" .. label .. ")"))
+    table.insert(conn, profiler:on_profile(runtime.update_selection, "update region selection (" .. label .. ")"))
+
+    return self
+end)
+
+return M

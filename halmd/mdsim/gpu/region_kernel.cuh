@@ -17,20 +17,33 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <halmd/utility/gpu/caching_array.cuh>
+#ifndef HALMD_MDSIM_GPU_REGION_KERNEL_CUH
+#define HALMD_MDSIM_GPU_REGION_KERNEL_CUH
 
-namespace halmd {
-namespace detail {
+#include <halmd/numeric/blas/fixed_vector.hpp>
 
-// instantiation of the cub allocator, the boolean parameter
-// determines whether this is a object in global scope or not (it is)
-// and then will skip a call to CachingDeviceAllocator::FreeAllCached()
-// in the d'tor
-// This allocator will be instatiated during the nvcc host pass only
-// (a call from device code would fail anyways)
-#ifndef __CUDA_ARCH__
-cub::CachingDeviceAllocator caching_allocator_(true);
-#endif
+template<typename geometry_type>
+struct geometry_predicate
+{
+    typedef typename geometry_type::vector_type vector_type;
 
-} // namespace detail
-} // namespace halmd
+    geometry_predicate(float4* position, geometry_type& geometry)
+      : position_(position)
+      , geometry_(geometry)
+    {};
+
+    HALMD_GPU_ENABLED bool operator()(int i)
+    {
+        vector_type r;
+        unsigned int type;
+        tie(r, type) <<= position_[i];
+        return geometry_(r);
+    }
+
+private:
+    float4* position_; // position array
+    geometry_type const geometry_;
+
+};
+
+#endif /* ! HALMD_MDSIM_GPU_REGION_KERNEL_CUH */
