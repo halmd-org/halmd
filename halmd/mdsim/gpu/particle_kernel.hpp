@@ -43,12 +43,14 @@ struct particle_wrapper
     cuda::texture<float4> r;
     /** minimum image vectors */
     cuda::texture<aligned_vector_type> image;
+    /** orientation */
+    cuda::texture<float4> u;
     /** velocities, masses */
     cuda::texture<float4> v;
     /** IDs */
     cuda::texture<unsigned int> id;
     /** rearrange particles by a given permutation */
-    cuda::function<void (unsigned int const*, ptr_type, aligned_vector_type*, ptr_type, unsigned int*, unsigned int)> rearrange;
+    cuda::function<void (unsigned int const*, ptr_type, aligned_vector_type*, ptr_type, ptr_type, unsigned int*, unsigned int)> rearrange;
     static particle_wrapper const kernel;
 };
 
