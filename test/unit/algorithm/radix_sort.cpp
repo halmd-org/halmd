@@ -241,18 +241,18 @@ HALMD_TEST_INIT( radix_sort )
 {
     using namespace boost::unit_test;
 
-    for (int count : {1000000, 100000, 10000, 1024, 1000, 512, 100, 10, 2, 1}) {
+    for (int count : {1000000, 100000, 10000, 1024, 1000, 512, 100, 10, 2, 1, 0}) {
         test_suite* ts = BOOST_TEST_SUITE( std::to_string(count) );
         framework::master_test_suite().add(ts);
         {
-            int const repeat = std::max(100000 / count, 5);
+            int const repeat = std::max(100000 / std::max(count, 1), 5);
             auto std_sort = [=]() {
                 test_std_sort(count, repeat);
             };
             ts->add(BOOST_TEST_CASE( std_sort ));
         }
         {
-            int const repeat = std::max(100000 / count, 5);
+            int const repeat = std::max(100000 / std::max(count, 1), 5);
             auto radix_sort_host = [=]() {
                 test_radix_sort_host(count, repeat);
             };
@@ -260,7 +260,7 @@ HALMD_TEST_INIT( radix_sort )
         }
 #ifdef HALMD_WITH_GPU
         {
-            int const repeat = std::max(100 / count, 5);
+            int const repeat = std::max(100 / std::max(count, 1), 5);
             auto radix_sort_gpu = [=]() {
                 set_cuda_device device;
                 test_radix_sort_gpu(count, repeat);
@@ -268,7 +268,7 @@ HALMD_TEST_INIT( radix_sort )
             ts->add(BOOST_TEST_CASE( radix_sort_gpu ));
         }
         {
-            int const repeat = std::max(100 / count, 5);
+            int const repeat = std::max(100 / std::max(count, 1), 5);
             auto permutation_gpu = [=]() {
                 set_cuda_device device;
                 test_permutation_gpu(count, repeat);

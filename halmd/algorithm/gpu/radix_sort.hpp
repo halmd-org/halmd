@@ -60,6 +60,9 @@ public:
         std::size_t const shared_memory = threads_ * BUCKETS_PER_THREAD * sizeof(unsigned int);
         std::size_t const count = last - first;
 
+        // do nothing in case of an empty array
+        if (!count) return;
+
         // assign GPU dual buffers, as in the CUDA SDK radix sort example
         cuda::vector<key_type> g_key(count);
         std::pair<Iterator, Iterator> key = {first, g_key.begin()};
@@ -111,6 +114,9 @@ public:
         std::pair<Iterator1, Iterator1> key = {first1, g_key.begin()};
         cuda::vector<value_type> g_value(count);
         std::pair<Iterator2, Iterator2> value = {first2, g_value.begin()};
+
+        // do nothing in case of an empty array
+        if (!count) return value.first;
 
         for (unsigned int shift = 0; shift < 32; shift += RADIX) {
             // compute partial radix counts
