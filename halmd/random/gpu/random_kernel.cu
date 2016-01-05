@@ -94,6 +94,7 @@ random_wrapper<Rng> random_wrapper<Rng>::kernel = {
 };
 
 template class random_wrapper<random::gpu::rand48_rng>;
+template class random_wrapper<random::gpu::mrg32k3a_rng>;
 
 } // namespace random
 } // namespace gpu

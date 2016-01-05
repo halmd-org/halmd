@@ -1,5 +1,5 @@
 /*
- * Copyright © 2010  Peter Colberg
+ * Copyright © 2016 Manuel Dibak
  *
  * This file is part of HALMD.
  *
@@ -18,10 +18,33 @@
  * <http://www.gnu.org/licenses/>.
  */
 
-#ifndef HALMD_RANDOM_GPU_RANDOM_KERNEL_CUH
-#define HALMD_RANDOM_GPU_RANDOM_KERNEL_CUH
+#ifndef HALMD_RANDOM_GPU_MRG32K3A_KERNEL_HPP
+#define HALMD_RANDOM_GPU_MRG32K3A_KERNEL_HPP
 
-#include <halmd/random/gpu/rand48_kernel.cuh>
+#include <cuda_wrapper/cuda_wrapper.hpp>
 #include <halmd/random/gpu/mrg32k3a_kernel.cuh>
 
-#endif /* ! HALMD_RANDOM_GPU_RANDOM_KERNEL_CUH */
+namespace halmd {
+namespace random {
+namespace gpu {
+
+/**
+ * CUDA C++ wrapper
+ */
+struct mrg32k3a_wrapper
+{
+    cuda::function<void (curandStateMRG32k3a*, uint)> seed;
+    static mrg32k3a_wrapper const kernel;
+};
+
+// syntactic sugar
+inline mrg32k3a_wrapper const& get_mrg32k3a_kernel()
+{
+    return mrg32k3a_wrapper::kernel;
+}
+
+} // namespace random
+} // namespace gpu
+} // namespace halmd
+
+#endif /* ! HALMD_RANDOM_GPU_MRG32K3A_KERNEL_HPP */

@@ -27,6 +27,7 @@
 #include <iterator>
 
 #include <halmd/algorithm/gpu/radix_sort.hpp>
+#include <halmd/random/gpu/mrg32k3a.hpp>
 #include <halmd/random/gpu/rand48.hpp>
 
 namespace halmd {

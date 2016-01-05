@@ -22,6 +22,7 @@
 #include <memory>
 
 #include <halmd/io/logger.hpp>
+#include <halmd/random/gpu/mrg32k3a.hpp>
 #include <halmd/random/gpu/rand48.hpp>
 #include <halmd/random/gpu/random.hpp>
 #include <halmd/random/gpu/random_kernel.hpp>
@@ -130,5 +131,6 @@ HALMD_LUA_API int luaopen_libhalmd_random_gpu_random(lua_State* L)
 } // namespace random
 
 template class random::gpu::random<random::gpu::rand48>;
+template class random::gpu::random<random::gpu::mrg32k3a>;
 
 } // namespace halmd

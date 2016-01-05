@@ -1,4 +1,5 @@
 halmd_add_library(halmd_random_gpu
+  mrg32k3a_kernel.cu
   rand48_kernel.cu
   random_kernel.cu
   random.cpp
