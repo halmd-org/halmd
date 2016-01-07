@@ -83,6 +83,7 @@ void brownian<dimension, float_type, RandomNumberGenerator>::integrate()
 
     // invalidate the particle caches after accessing the velocity!
     auto position = make_cache_mutable(particle_->position());
+    auto orientation = make_cache_mutable(particle_->orientation());
     auto image = make_cache_mutable(particle_->image());
     bind_textures();
     scoped_timer_type timer(runtime_.integrate);
@@ -93,6 +94,7 @@ void brownian<dimension, float_type, RandomNumberGenerator>::integrate()
         cuda::configure(random_->rng().dim.grid, random_->rng().dim.block);
         wrapper_type::kernel.integrate(
             &*position->begin()
+          , &*orientation->begin()
           , &*image->begin()
           , &*velocity.begin()
           , timestep_
@@ -164,13 +166,15 @@ void brownian<dimension, float_type, RandomNumberGenerator>::luaopen(lua_State* 
 HALMD_LUA_API int luaopen_libhalmd_mdsim_gpu_integrators_brownian(lua_State* L)
 {
     brownian<3, float, halmd::random::gpu::rand48>::luaopen(L);
-    brownian<2, float, halmd::random::gpu::rand48>::luaopen(L);
+    //brownian<2, float, halmd::random::gpu::rand48>::luaopen(L);
     return 0;
 }
 
 // explicit instantiation
 template class brownian<3, float, halmd::random::gpu::rand48>;
-template class brownian<2, float, halmd::random::gpu::rand48>;
+template class brownian<3, float, halmd::random::gpu::mrg32k3a>;
+//let's stay 3d for now
+//template class brownian<2, float, halmd::random::gpu::rand48>;
 
 } // namespace integrators
 } // namespace gpu

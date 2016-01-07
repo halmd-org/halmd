@@ -52,6 +52,7 @@
 # include <halmd/mdsim/gpu/particle.hpp>
 # include <halmd/mdsim/gpu/particle_groups/all.hpp>
 # include <halmd/mdsim/gpu/positions/lattice.hpp>
+# include <halmd/mdsim/gpu/orientations/uniform.hpp>
 # include <halmd/mdsim/gpu/velocities/boltzmann.hpp>
 # include <halmd/observables/gpu/phase_space.hpp>
 # include <halmd/random/gpu/random.hpp>
@@ -71,6 +72,7 @@ struct test_brownian
     typedef typename modules_type::particle_type particle_type;
     typedef typename modules_type::particle_group_type particle_group_type;
     typedef typename modules_type::position_type position_type;
+    typedef typename modules_type::orientation_type orientation_type;
     typedef typename modules_type::random_type random_type;
     typedef typename modules_type::velocity_type velocity_type;
     typedef mdsim::clock clock_type;
@@ -101,6 +103,7 @@ struct test_brownian
     std::shared_ptr<integrator_type> integrator;
     std::shared_ptr<random_type> random;
     std::shared_ptr<position_type> position;
+    std::shared_ptr<orientation_type> orientation;
     std::shared_ptr<velocity_type> velocity;
     std::shared_ptr<clock_type> clock;
     std::shared_ptr<phase_space_type> phase_space;
@@ -179,7 +182,7 @@ test_brownian<modules_type>::test_brownian()
     typedef fixed_vector<double, dimension> vector_type;
 
     // set test parameters
-    steps = 1000000; // run for as many steps as possible, wrap around the box for about 10 times
+    steps = 100000; // run for as many steps as possible, wrap around the box for about 10 times
     maximum_lag_time = 100;
     resolution = 1.0;
     block_size = 100;
@@ -187,7 +190,7 @@ test_brownian<modules_type>::test_brownian()
     density = 1e-6; // a low density implies large values of the position vectors
     temp = 1; // the temperature defines the average velocities
     timestep = 0.01; // small, but typical timestep
-    npart = gpu ? 1 : 108; // optimize filling of fcc lattice, use only few particles on the host
+    npart = gpu ? 1024 : 108; // optimize filling of fcc lattice, use only few particles on the host
     box_ratios = (dimension == 3) ? vector_type{1., 2., 1.01} : vector_type{1., 2.};
     //unsigned int seed = 1; 
     double det = accumulate(box_ratios.begin(), box_ratios.end(), 1., multiplies<double>());
@@ -203,9 +206,10 @@ test_brownian<modules_type>::test_brownian()
     // create modules
     particle = std::make_shared<particle_type>(npart, 1);
     box = std::make_shared<box_type>(edges);
-    random = std::make_shared<random_type>(365324873, 1, 64);
+    random = std::make_shared<random_type>(365324873, 2, 512);
     integrator = std::make_shared<integrator_type>(particle, random, box, timestep, D);
     position = std::make_shared<position_type>(particle, box, slab);
+    orientation = std::make_shared<orientation_type>(particle, random);
     velocity = std::make_shared<velocity_type>(particle, random, temp);
     clock = std::make_shared<clock_type>();
     clock->set_timestep(integrator->timestep());
@@ -214,7 +218,9 @@ test_brownian<modules_type>::test_brownian()
 
     // set positions and velocities
     BOOST_TEST_MESSAGE("position particles on lattice");
-    //position->set();
+    position->set();
+    BOOST_TEST_MESSAGE("position orientation uniformly");
+    orientation->set();
     BOOST_TEST_MESSAGE("set particle velocities");
     velocity->set();
     BOOST_TEST_MESSAGE("using timestep  " << integrator->timestep());
@@ -266,10 +272,11 @@ struct gpu_modules
     typedef mdsim::box<dimension> box_type;
     typedef mdsim::gpu::particle<dimension, float_type> particle_type;
     typedef mdsim::gpu::particle_groups::all<particle_type> particle_group_type;
-    typedef halmd::random::gpu::random<halmd::random::gpu::rand48> random_type;
-    typedef mdsim::gpu::integrators::brownian<dimension, float_type, halmd::random::gpu::rand48> integrator_type;
+    typedef halmd::random::gpu::random<halmd::random::gpu::mrg32k3a> random_type;
+    typedef mdsim::gpu::integrators::brownian<dimension, float_type, halmd::random::gpu::mrg32k3a> integrator_type;
+    typedef mdsim::gpu::orientations::uniform<dimension, float_type, halmd::random::gpu::mrg32k3a> orientation_type;
     typedef mdsim::gpu::positions::lattice<dimension, float_type> position_type;
-    typedef mdsim::gpu::velocities::boltzmann<dimension, float_type, halmd::random::gpu::rand48> velocity_type;
+    typedef mdsim::gpu::velocities::boltzmann<dimension, float_type, halmd::random::gpu::mrg32k3a> velocity_type;
     typedef observables::host::samples::phase_space<dimension, float_type> sample_type;
     typedef observables::gpu::phase_space<sample_type> phase_space_type;
 

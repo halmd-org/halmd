@@ -8,6 +8,7 @@ if(HALMD_WITH_GPU)
    halmd_mdsim_gpu_integrators
    halmd_mdsim_gpu_particle_groups
    halmd_mdsim_gpu_positions
+   halmd_mdsim_gpu_orientations
    halmd_mdsim_gpu_velocities
    halmd_mdsim_gpu
    halmd_observables_gpu

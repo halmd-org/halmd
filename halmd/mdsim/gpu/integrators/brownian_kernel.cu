@@ -1,4 +1,5 @@
 /*
+ * Copyright © 2016      Manuel Dibak
  * Copyright © 2011-2014 Felix Höfling
  * Copyright © 2011-2012 Michael Kopp
  *
@@ -25,6 +26,8 @@
 #include <halmd/random/gpu/normal_distribution.cuh>
 #include <halmd/random/gpu/random_number_generator.cuh>
 #include <halmd/utility/gpu/thread.cuh>
+#include <limits>
+#include <cmath>
 
 namespace halmd {
 namespace mdsim {
@@ -34,6 +37,30 @@ namespace brownian_kernel {
 
 /**array of diffusion constants */
 static texture<float> param_;
+
+/**cross product of two vectors
+*/
+template <typename vector_type>
+__device__ vector_type cross_prod(vector_type a, vector_type b)
+{
+    vector_type c;
+    c[0] = a[1]*b[2] - a[2]*b[1];
+    c[1] = a[2]*b[0] - a[0]*b[2];
+    c[2] = a[0]*b[1] - a[1]*b[0];
+    return c;
+}
+/*
+#ifdef USE_VERLET_DSFUN
+template __device__ fixed_vector<dsfloat, 3> cross_prod<3, fixed_vector<dsfloat, 3> >(fixed_vector<dsfloat, 3>* a, fixed_vector<dsfloat, 3>* b);
+#else
+template __device__ fixed_vector<float, 3> cross_prod<3, fixed_vector<float, 3> >(fixed_vector<float, 3>* a, fixed_vector<float, 3>* b);
+#endif
+*/
+template <typename float_type, typename vector_type>
+__device__ float_type norm_2(vector_type* a)
+{
+    return a[0] * a[0] + a[1] * a[1] + a[2] * a[2];
+}
 
 /**
  * Brownian integration: @f$ r(t + \Delta t) = r(t) + v(t) \Delta t @f$
@@ -50,6 +77,7 @@ static texture<float> param_;
 template <int dimension, typename float_type, typename rng_type, typename gpu_vector_type>
 __global__ void integrate(
     float4* g_position
+  , float4* g_orientation
   , gpu_vector_type* g_image
   , float4 const* g_velocity
   , float timestep
@@ -66,55 +94,92 @@ __global__ void integrate(
     unsigned int const thread = GTID;
     unsigned int const nthread = GTDIM;
 
+    //numerical limits for computation
+    float epsilon = 1e-7;
+
     // read position, species, velocity, mass, image from global memory
-    vector_type r, v;
+    vector_type r, u, v;
     unsigned int species;
     float mass;
-    float D;
+    float nothing;
     float const mean = 0.f;
     
     //read random number generator state from global device memory
     typename rng_type::state_type state = rng[thread];
 
-    //initialize random displacement
-    vector_type dr;
-    float_type cache;
-    bool cached = false;
-
-
     for (uint i = thread; i < nparticle; i += nthread) {
+
 #ifdef USE_VERLET_DSFUN
         tie(r, species) <<= tie(g_position[i], g_position[i + nplace]);
+        tie(u, nothing) <<= tie(g_orientation[i], g_orientation[i + nplace]);
         tie(v, mass) <<= tie(g_velocity[i], g_velocity[i + nplace]);
 #else
         tie(r, species) <<= g_position[i];
+        tie(u, nothing) <<= g_orientation[i];
         tie(v, mass) <<= g_velocity[i];
 #endif
-
+        //initialize random displacement and trihedron
+        vector_type dr, e1, e2;
+        
+        //construct trihedron along particle orientation
+        if ( (float) u[1] > epsilon || (float) u[2] > epsilon) {
+            e1[0] = 0; e1[1] = u[2]; e1[2] = -u[1];
+        }
+        else {
+            e1[0] = u[1]; e1[1] = -u[0]; e1[2] = 0;
+        }
+        e1 /= norm_2(e1);
+        // compute cross product u x e1
+        e2 = cross_prod(u, e1);
+        /*
+        e2[0] = u[1]*e1[2] - u[2]*e1[1];
+        e2[1] = u[2]*e1[0] - u[0]*e1[2];
+        e2[2] = u[0]*e1[1] - u[1]*e1[0];
+        */
+        e2 /= norm_2(e2);
+    
         //normal distribution parameters
-        D = 1; // tex1Dfetch(param_, species);
-       float const sigma = sqrtf(2 * D * timestep);
+        float_type const D = tex1Dfetch(param_, species);
+        float_type const sigma = sqrtf(2 * D * timestep);
+        float_type const sigma_rot = sqrtf(2 * D * timestep);
    
-        //compute random displacement
-        tie(dr[0], dr[1]) =  random::gpu::normal(rng, state, mean, sigma);
-        //if (dimension % 2 ) {
-            //if ((cached = !cached)) {
-                tie(dr[2], cache) = random::gpu::normal(rng, state, mean, sigma);
-            //}
-            //else{
-            //    dr[dimension - 1] = cache;
-            //}
-        //}
+        //draw random numbers
+        float_type eta1, eta2, eta3, cache;
+        bool cached = false;
+        tie(eta1, eta2) =  random::gpu::normal(rng, state, mean, sigma);
+        if (dimension % 2 ) {
+            if ((cached = !cached)) {
+                tie(eta3, cache) = random::gpu::normal(rng, state, mean, sigma);
+            }
+            else{
+                eta3 = cache;
+            }
+        }
+        dr = eta1 * e1 + eta2 * e2 + eta3 * u; 
         // Brownian integration
-        r += dr; 
+        r += dr;
+        
+        //update orientation last (Ito interpretation)
+        //no torque included!
+        tie(eta1, eta2) =  random::gpu::normal(rng, state, mean, sigma_rot);
+        vector_type omega = eta1 * e1 + eta2 * e2;
+        float const abs = norm_2(omega);
+        // Ω = eta1 * e1 + eta2 * e2
+        // => Ω × u = (eta1 * e1 × u + eta2  * e2 × u) = eta2 * e1 - eta1 * e2
+        u = cos(abs) * u + sin(abs) / abs * cross_prod(u, omega);
+        //ensure normalization
+        u /= norm_2(u);
+        
         // enforce periodic boundary conditions
-        float_vector_type image =  float_vector_type(0);// box_kernel::reduce_periodic(r, box_length);
+        float_vector_type image = box_kernel::reduce_periodic(r, box_length);
 
         // store position, species, image in global memory
 #ifdef USE_VERLET_DSFUN
         tie(g_position[i], g_position[i + nplace]) <<= tie(r, species);
+        tie(g_orientation[i], g_orientation[i + nplace]) <<= tie(u, nothing);
 #else
         g_position[i] <<= tie(r, species);
+        g_orientation[i] <<= tie(u, nothing);
 #endif
         if (!(image == float_vector_type(0))) {
             g_image[i] = image + static_cast<float_vector_type>(g_image[i]);
@@ -140,7 +205,9 @@ brownian_wrapper<dimension, rng_type> const brownian_wrapper<dimension, rng_type
 
 // explicit instantiation
 template class brownian_wrapper<3, random::gpu::rand48_rng>;
-template class brownian_wrapper<2, random::gpu::rand48_rng>;
+template class brownian_wrapper<3, random::gpu::mrg32k3a_rng>;
+// let's stay 3 dimensional for now
+//template class brownian_wrapper<2, random::gpu::rand48_rng>;
 
 } // namespace integrators
 } // namespace gpu

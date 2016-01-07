@@ -41,6 +41,7 @@ struct brownian_wrapper
 
     cuda::function <void (
         float4*
+      , float4*
       , coalesced_vector_type*
       , float4 const*
       , float
