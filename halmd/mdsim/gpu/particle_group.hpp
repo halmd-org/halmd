@@ -267,11 +267,13 @@ void particle_group_to_particle(particle_type const& particle_src, particle_grou
 
     auto const& ordered = read_cache(group.ordered());
     auto position = make_cache_mutable(particle_dst.position());
+    auto orientation = make_cache_mutable(particle_dst.orientation());
     auto image    = make_cache_mutable(particle_dst.image());
     auto velocity = make_cache_mutable(particle_dst.velocity());
 
     particle_group_wrapper<dimension, float_type>::kernel.r.bind(read_cache(particle_src.position()));
     particle_group_wrapper<dimension, float_type>::kernel.image.bind(read_cache(particle_src.image()));
+    particle_group_wrapper<dimension, float_type>::kernel.u.bind(read_cache(particle_src.orientation()));
     particle_group_wrapper<dimension, float_type>::kernel.v.bind(read_cache(particle_src.velocity()));
 
     cuda::configure(
@@ -283,6 +285,7 @@ void particle_group_to_particle(particle_type const& particle_src, particle_grou
         &*ordered.begin()
       , position->data()
       , &*image->begin()
+      , orientation->data()
       , velocity->data()
       , ordered.size()
     );
