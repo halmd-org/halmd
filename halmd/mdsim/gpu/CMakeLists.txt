@@ -8,6 +8,7 @@ halmd_add_modules(
 
 add_subdirectory(integrators)
 add_subdirectory(neighbours)
+add_subdirectory(orientations)
 add_subdirectory(particle_groups)
 add_subdirectory(positions)
 add_subdirectory(potentials)
