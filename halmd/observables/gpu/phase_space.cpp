@@ -284,7 +284,6 @@ static const std::unordered_map<
   , { typeid(fixed_vector<unsigned int, 4>), phase_space_sampler_typed<4, unsigned int>::create }
 };
 
-
 /**
  * specialized phase_space sampler for host position data
  *
