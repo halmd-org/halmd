@@ -3,11 +3,14 @@ halmd_add_library(halmd_observables_gpu_dynamics
   mean_quartic_displacement_kernel.cu
   mean_square_displacement.cpp
   mean_square_displacement_kernel.cu
+  orientational_autocorrelation.cpp
+  orientational_autocorrelation_kernel.cu
   velocity_autocorrelation.cpp
   velocity_autocorrelation_kernel.cu
 )
 halmd_add_modules(
   libhalmd_observables_gpu_dynamics_mean_quartic_displacement
   libhalmd_observables_gpu_dynamics_mean_square_displacement
+  libhalmd_observables_gpu_dynamics_orientational_autocorrelation
   libhalmd_observables_gpu_dynamics_velocity_autocorrelation
 )
