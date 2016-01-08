@@ -55,6 +55,9 @@
 # include <halmd/mdsim/gpu/orientations/uniform.hpp>
 # include <halmd/mdsim/gpu/velocities/boltzmann.hpp>
 # include <halmd/observables/gpu/phase_space.hpp>
+# include <halmd/observables/gpu/dynamics/orientational_autocorrelation.hpp>
+# include <halmd/observables/gpu/dynamics/mean_quartic_displacement.hpp>
+# include <halmd/observables/gpu/dynamics/mean_square_displacement.hpp>
 # include <halmd/random/gpu/random.hpp>
 # include <halmd/utility/gpu/device.hpp>
 #endif
@@ -108,8 +111,9 @@ struct test_brownian
     std::shared_ptr<clock_type> clock;
     std::shared_ptr<phase_space_type> phase_space;
 
-    typedef observables::host::dynamics::mean_square_displacement<dimension, float_type> msd_type;
-    typedef observables::host::dynamics::mean_quartic_displacement<dimension, float_type> mqd_type;
+    typedef observables::gpu::dynamics::mean_square_displacement<dimension, float_type> msd_type;
+    typedef observables::gpu::dynamics::mean_quartic_displacement<dimension, float_type> mqd_type;
+    typedef observables::gpu::dynamics::orientational_autocorrelation<dimension, float_type> ocf_type;
 
     test_brownian();
     void free_brownian_motion();
@@ -143,6 +147,11 @@ void test_brownian<modules_type>::free_brownian_motion()
     );
     blocking_scheme.on_correlate(correlation_mqd);
 
+    auto correlation_ocf = make_shared<observables::dynamics::correlation<ocf_type>>(
+        make_shared<ocf_type>(), block_sample, block_sample
+    );
+    blocking_scheme.on_correlate(correlation_ocf);
+
     blocking_scheme.on_sample(block_sample);
     // perform integration
     BOOST_TEST_MESSAGE("run Brownian integration for free motion over " << steps << " steps");
@@ -160,6 +169,7 @@ void test_brownian<modules_type>::free_brownian_motion()
     auto time = blocking_scheme.time()[0];
     auto msd = correlation_msd->result()[0];
     auto mqd = correlation_mqd->result()[0];
+    auto ocf = correlation_ocf->result()[0];
     
     BOOST_TEST_MESSAGE("check if msd is close to 6 D t");
     double max_deviation = 0;
@@ -167,7 +177,7 @@ void test_brownian<modules_type>::free_brownian_motion()
       //BOOST_TEST_MESSAGE(abs(mean(msd[i])- 6 * time[i]) - 6 * error_of_mean(msd[i])  );
       //BOOST_CHECK_CLOSE(mean(msd[i]), 6 * time[i], 6 * error_of_mean(msd[i]));
       //max_deviation = std::max(abs(mean(msd[i]) - 6 * time[i]), max_deviation);
-      BOOST_TEST_MESSAGE( time[i] << " " << mean(msd[i]) <<  "  " << mean(msd[i]) / time[i] << "  " << 6 * time[i] << "  " << error_of_mean(msd[i]));//<< (3 * mean(mqd[i])   / (5 * pow(mean(msd[i]), 2))-1) << "  " << (3 * error_of_mean(mqd[i])   / (5 * pow(mean(msd[i]), 2))) + (6 * mean(mqd[i]) * error_of_mean(mqd[i])  / (5 * pow(mean(msd[i]), 3))));
+      BOOST_TEST_MESSAGE( time[i] << " " << mean(msd[i]) <<  "  " << mean(msd[i]) / time[i] << "  " << 6 * time[i] << "  " << error_of_mean(msd[i]) << "  " << mean(ocf[i]));//<< (3 * mean(mqd[i])   / (5 * pow(mean(msd[i]), 2))-1) << "  " << (3 * error_of_mean(mqd[i])   / (5 * pow(mean(msd[i]), 2))) + (6 * mean(mqd[i]) * error_of_mean(mqd[i])  / (5 * pow(mean(msd[i]), 3))));
     }
     BOOST_TEST_MESSAGE("Maximum deviation  " << max_deviation);
 }
@@ -183,13 +193,13 @@ test_brownian<modules_type>::test_brownian()
 
     // set test parameters
     steps = 100000; // run for as many steps as possible, wrap around the box for about 10 times
-    maximum_lag_time = 100;
-    resolution = 1.0;
+    maximum_lag_time = 1;
+    resolution = 0.01;
     block_size = 100;
     // set module parameters
     density = 1e-6; // a low density implies large values of the position vectors
     temp = 1; // the temperature defines the average velocities
-    timestep = 0.01; // small, but typical timestep
+    timestep = 0.001; // small, but typical timestep
     npart = gpu ? 1024 : 108; // optimize filling of fcc lattice, use only few particles on the host
     box_ratios = (dimension == 3) ? vector_type{1., 2., 1.01} : vector_type{1., 2.};
     //unsigned int seed = 1; 
@@ -277,7 +287,8 @@ struct gpu_modules
     typedef mdsim::gpu::orientations::uniform<dimension, float_type, halmd::random::gpu::mrg32k3a> orientation_type;
     typedef mdsim::gpu::positions::lattice<dimension, float_type> position_type;
     typedef mdsim::gpu::velocities::boltzmann<dimension, float_type, halmd::random::gpu::mrg32k3a> velocity_type;
-    typedef observables::host::samples::phase_space<dimension, float_type> sample_type;
+    //typedef observables::host::samples::phase_space<dimension, float_type> sample_type;
+    typedef observables::gpu::samples::phase_space<dimension, float_type> sample_type;
     typedef observables::gpu::phase_space<sample_type> phase_space_type;
 
     static bool const gpu = true;

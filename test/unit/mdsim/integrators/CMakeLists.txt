@@ -12,6 +12,7 @@ if(HALMD_WITH_GPU)
    halmd_mdsim_gpu_velocities
    halmd_mdsim_gpu
    halmd_observables_gpu
+   halmd_observables_gpu_dynamics
    halmd_random_gpu
    halmd_utility_gpu
   )
