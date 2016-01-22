@@ -70,7 +70,7 @@ local function kob_andersen(args)
     local file = writers.h5md({path = ("%s.h5"):format(args.output)})
 
     -- create system state
-    local particle = mdsim.particle({dimension = dimension, particles = nparticle, species = 2})
+    local particle = mdsim.particle({dimension = 3, particles = nparticle, species = 2})
 
     -- setup and sample each particle group separately
     local offset = 0
