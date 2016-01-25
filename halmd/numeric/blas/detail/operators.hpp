@@ -391,6 +391,20 @@ T inner_prod(fixed_vector<T, N> const& v, fixed_vector<T, N> const& w)
 }
 
 /**
+ * Cross product
+ */
+template <typename T>
+inline HALMD_GPU_ENABLED
+fixed_vector<T, 3> cross_prod(fixed_vector<T, 3> const& a, fixed_vector<T, 3> const& b)
+{
+    fixed_vector<T, 3> c;
+    c[0] = a[1]*b[2] - a[2]*b[1];
+    c[1] = a[2]*b[0] - a[0]*b[2];
+    c[2] = a[0]*b[1] - a[1]*b[0];
+    return c;
+}
+
+/**
  * Elementwise vector multiplication
  */
 template <typename T, size_t N, size_t L, size_t U>
