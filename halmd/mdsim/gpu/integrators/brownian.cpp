@@ -40,26 +40,32 @@ brownian<dimension, float_type, RandomNumberGenerator>::brownian(
   , std::shared_ptr<random_type> random
   , std::shared_ptr<box_type const> box
   , double timestep
-  , host_vector_type const& D
+  , double T
+  , diffusion_vector_type const& D
   , std::shared_ptr<logger> logger
 )
   // dependency injection
   : particle_(particle)
   , random_(random)
   , box_(box)
+  , temperature_(T)
   , D_(D)
-  , logger_(logger)
   , g_param_(D_.size())
+  , logger_(logger)
 {
     set_timestep(timestep);
     
-    /**cuda::host::vector<float> param(g_param_.size());
+    cuda::host::vector<float4> param(g_param_.size());
     for (size_t i = 0; i < param.size(); ++i) {
-        param[i] = D_[i];*/
-    cout << "diffusion constant: " << D_.data()[0] << endl; 
-    
+        fixed_vector<float, 4> p;
+        p[0] = D_.data()[i][0];
+        p[1] = D_.data()[i][1];
+        p[2] = D_.data()[i][2];
+        p[3] = D_.data()[i][3];
+        param[i] = p;
+    } 
 
-    cuda::copy(D_.data(), g_param_);
+    cuda::copy(param, g_param_);
 }
 
 /**
@@ -72,6 +78,14 @@ void brownian<dimension, float_type, RandomNumberGenerator>::set_timestep(double
 }
 
 /**
+ * set temperature of the heat bath
+ */
+template <int dimension, typename float_type, typename RandomNumberGenerator>
+void brownian<dimension, float_type, RandomNumberGenerator>::set_temperature(double temperature)
+{
+    temperature_ = temperature;
+}
+/**
  * perform Brownian integration: update positions from random distribution 
  */
 template <int dimension, typename float_type, typename RandomNumberGenerator>
@@ -80,6 +94,7 @@ void brownian<dimension, float_type, RandomNumberGenerator>::integrate()
     LOG_TRACE("update positions")
 
     velocity_array_type const& velocity = read_cache(particle_->velocity());
+    force_array_type const& force = read_cache(particle_->force());
 
     // invalidate the particle caches after accessing the velocity!
     auto position = make_cache_mutable(particle_->position());
@@ -97,7 +112,9 @@ void brownian<dimension, float_type, RandomNumberGenerator>::integrate()
           , &*orientation->begin()
           , &*image->begin()
           , &*velocity.begin()
+          , &*force.begin()
           , timestep_
+          , temperature_
           , random_->rng().rng()
           , particle_->nparticle()
           , particle_->dim.threads()
@@ -142,6 +159,7 @@ void brownian<dimension, float_type, RandomNumberGenerator>::luaopen(lua_State* 
                 class_<brownian>()
                     .property("integrate", &wrap_integrate<brownian>)
                     .property("timestep", &brownian::timestep)
+                    .property("temperature", &brownian::temperature)
                     .def("set_timestep", &brownian::set_timestep)
                     .scope
                     [
@@ -155,7 +173,8 @@ void brownian<dimension, float_type, RandomNumberGenerator>::luaopen(lua_State* 
                   , std::shared_ptr<random_type>
                   , std::shared_ptr<box_type const>
                   , double
-                  , host_vector_type const&
+                  , double
+                  , diffusion_vector_type const&
                   , std::shared_ptr<logger>
                 >)
             ]
@@ -165,7 +184,8 @@ void brownian<dimension, float_type, RandomNumberGenerator>::luaopen(lua_State* 
 
 HALMD_LUA_API int luaopen_libhalmd_mdsim_gpu_integrators_brownian(lua_State* L)
 {
-    brownian<3, float, halmd::random::gpu::rand48>::luaopen(L);
+    //brownian<3, float, halmd::random::gpu::rand48>::luaopen(L);
+    brownian<3, float, halmd::random::gpu::mrg32k3a>::luaopen(L);
     //brownian<2, float, halmd::random::gpu::rand48>::luaopen(L);
     return 0;
 }

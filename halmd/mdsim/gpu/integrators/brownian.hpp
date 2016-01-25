@@ -46,7 +46,7 @@ public:
     typedef gpu::particle<dimension, float_type> particle_type;
     typedef mdsim::box<dimension> box_type;
     typedef typename particle_type::vector_type vector_type;
-    typedef boost::numeric::ublas::vector<float_type> host_vector_type;
+    typedef boost::numeric::ublas::vector<fixed_vector<float, 4> > diffusion_vector_type;
     typedef random::gpu::random<RandomNumberGenerator> random_type;
     typedef typename random_type::rng_type rng_type;
     typedef brownian_wrapper<dimension, rng_type> wrapper_type;
@@ -58,12 +58,14 @@ public:
       , std::shared_ptr<random_type> random
       , std::shared_ptr<box_type const> box
       , double timestep
-      , host_vector_type const& D
+      , double T
+      , diffusion_vector_type const& D
       , std::shared_ptr<halmd::logger> logger = std::make_shared<halmd::logger>()
     );
 
     void integrate();
     void set_timestep(double timestep);
+    void set_temperature(double temperature);
 
     //! returns integration time step
     double timestep() const
@@ -71,6 +73,12 @@ public:
         return timestep_;
     }
 
+    //! returns temperature
+    double temperature() const
+    {
+        return temperature_;
+    }
+    
     void bind_textures() const
     {
         brownian_wrapper<dimension, rng_type>::param.bind(g_param_);
@@ -79,6 +87,7 @@ private:
     typedef typename particle_type::position_array_type position_array_type;
     typedef typename particle_type::image_array_type image_array_type;
     typedef typename particle_type::velocity_array_type velocity_array_type;
+    typedef typename particle_type::force_array_type force_array_type;
 
     typedef utility::profiler::accumulator_type accumulator_type;
     typedef utility::profiler::scoped_timer_type scoped_timer_type;
@@ -91,14 +100,16 @@ private:
     std::shared_ptr<particle_type> particle_;
     std::shared_ptr<random_type> random_;
     std::shared_ptr<box_type const> box_;
-    /** module logger */
-    std::shared_ptr<logger> logger_;
     /** integration time-step */
     float_type timestep_;
+    /** temperature */
+    float_type temperature_;
     /** diffusion constant */
-    host_vector_type D_;
+    diffusion_vector_type D_;
     /** diffusion parameters at CUDA device */
-    cuda::vector<float> g_param_;
+    cuda::vector<float4> g_param_;
+    /** module logger */
+    std::shared_ptr<logger> logger_;
     /** profiling runtime accumulators */
     runtime runtime_;
 };

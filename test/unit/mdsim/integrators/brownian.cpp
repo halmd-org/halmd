@@ -71,7 +71,7 @@ struct test_brownian
 {
     typedef typename modules_type::box_type box_type;
     typedef typename modules_type::integrator_type integrator_type;
-    typedef typename integrator_type::host_vector_type host_vector_type;
+    typedef typename integrator_type::diffusion_vector_type host_vector_type;
     typedef typename modules_type::particle_type particle_type;
     typedef typename modules_type::particle_group_type particle_group_type;
     typedef typename modules_type::position_type position_type;
@@ -177,7 +177,7 @@ void test_brownian<modules_type>::free_brownian_motion()
       //BOOST_TEST_MESSAGE(abs(mean(msd[i])- 6 * time[i]) - 6 * error_of_mean(msd[i])  );
       //BOOST_CHECK_CLOSE(mean(msd[i]), 6 * time[i], 6 * error_of_mean(msd[i]));
       //max_deviation = std::max(abs(mean(msd[i]) - 6 * time[i]), max_deviation);
-      BOOST_TEST_MESSAGE( time[i] << " " << mean(msd[i]) <<  "  " << mean(msd[i]) / time[i] << "  " << 6 * time[i] << "  " << error_of_mean(msd[i]) << "  " << mean(ocf[i]));//<< (3 * mean(mqd[i])   / (5 * pow(mean(msd[i]), 2))-1) << "  " << (3 * error_of_mean(mqd[i])   / (5 * pow(mean(msd[i]), 2))) + (6 * mean(mqd[i]) * error_of_mean(mqd[i])  / (5 * pow(mean(msd[i]), 3))));
+      BOOST_TEST_MESSAGE( time[i] << " " << mean(msd[i]) <<  "  " << mean(msd[i]) / time[i] << "  " << 6 * time[i] << "  " << error_of_mean(msd[i]) << "  " << mean(ocf[i]) << "  " << (3 * mean(mqd[i])   / (5 * mean(msd[i]) * mean(msd[i]))-1) ); // << "  " << (3 * error_of_mean(mqd[i])   / (5 * pow(mean(msd[i]), 2))) + (6 * mean(mqd[i]) * error_of_mean(mqd[i])  / (5 * pow(mean(msd[i]), 3))));
     }
     BOOST_TEST_MESSAGE("Maximum deviation  " << max_deviation);
 }
@@ -192,15 +192,15 @@ test_brownian<modules_type>::test_brownian()
     typedef fixed_vector<double, dimension> vector_type;
 
     // set test parameters
-    steps = 100000; // run for as many steps as possible, wrap around the box for about 10 times
-    maximum_lag_time = 1;
+    steps = 10000; // run for as many steps as possible, wrap around the box for about 10 times
+    maximum_lag_time = 10;
     resolution = 0.01;
-    block_size = 100;
+    block_size = 1000;
     // set module parameters
     density = 1e-6; // a low density implies large values of the position vectors
     temp = 1; // the temperature defines the average velocities
     timestep = 0.001; // small, but typical timestep
-    npart = gpu ? 1024 : 108; // optimize filling of fcc lattice, use only few particles on the host
+    npart = gpu ? 512 : 108; // optimize filling of fcc lattice, use only few particles on the host
     box_ratios = (dimension == 3) ? vector_type{1., 2., 1.01} : vector_type{1., 2.};
     //unsigned int seed = 1; 
     double det = accumulate(box_ratios.begin(), box_ratios.end(), 1., multiplies<double>());
@@ -211,13 +211,13 @@ test_brownian<modules_type>::test_brownian()
         edges(i, i) = edge_length * box_ratios[i];
     }
     slab = 1;
-    D <<= 1;
+    D <<= {1.0,2.0,1.0,30.0};
     BOOST_TEST_MESSAGE("using diffusion constant " << D.data()[0]);
     // create modules
     particle = std::make_shared<particle_type>(npart, 1);
     box = std::make_shared<box_type>(edges);
     random = std::make_shared<random_type>(365324873, 2, 512);
-    integrator = std::make_shared<integrator_type>(particle, random, box, timestep, D);
+    integrator = std::make_shared<integrator_type>(particle, random, box, timestep, temp, D);
     position = std::make_shared<position_type>(particle, box, slab);
     orientation = std::make_shared<orientation_type>(particle, random);
     velocity = std::make_shared<velocity_type>(particle, random, temp);

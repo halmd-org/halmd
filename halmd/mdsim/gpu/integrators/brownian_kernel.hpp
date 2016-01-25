@@ -37,13 +37,15 @@ struct brownian_wrapper
     typedef typename type_traits<dimension, float>::gpu::coalesced_vector_type coalesced_vector_type;
     typedef fixed_vector<float, dimension> vector_type;
 
-    static cuda::texture<float> param;
+    static cuda::texture<float4> param;
 
     cuda::function <void (
         float4*
       , float4*
       , coalesced_vector_type*
       , float4 const*
+      , coalesced_vector_type const*
+      , float
       , float
       , rng_type
       , unsigned int
