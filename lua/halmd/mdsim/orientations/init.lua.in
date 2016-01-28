@@ -1,5 +1,5 @@
 --
--- Copyright © 2012  Peter Colberg
+-- Copyright © 2016  Manuel Dibak
 --
 -- This file is part of HALMD.
 --
@@ -21,21 +21,13 @@
 local module = require("halmd.utility.module")
 
 ---
--- Simulation
--- ==========
+-- Orientations
+-- ============
 --
 -- .. toctree::
 --    :maxdepth: 2
 --    :glob:
 --
 --    *
---    forces/index
---    integrators/index
---    particle_groups/index
---    potentials/index
---    velocities/index
---    positions/index
---    orientations/index
---    sorts/index
 --
-return module.loader("halmd.mdsim")
+return module.loader("halmd.mdsim.orientations")
