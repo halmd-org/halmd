@@ -54,6 +54,7 @@ public:
     typedef unsigned int size_type;
     typedef vector_type position_type;
     typedef vector_type image_type;
+    typedef vector_type orientation_type;
     typedef vector_type velocity_type;
     typedef unsigned int id_type;
     typedef unsigned int reverse_id_type;
@@ -64,6 +65,7 @@ public:
     typedef typename type_traits<dimension, float_type>::stress_tensor_type stress_pot_type;
 
     typedef raw_array<position_type> position_array_type;
+    typedef raw_array<orientation_type> orientation_array_type;
     typedef raw_array<image_type> image_array_type;
     typedef raw_array<velocity_type> velocity_array_type;
     typedef raw_array<id_type> id_array_type;
@@ -216,6 +218,22 @@ public:
     cache<image_array_type>& image()
     {
         return mutable_data<image_type>("image");
+    }
+
+    /**
+     * Returns const reference to particle orientations.
+     */
+    cache<orientation_array_type> const& orientation() const
+    {
+        return data<orientation_type>("orientation");
+    }
+
+    /**
+     * Returns non-const reference to particle orientations.
+     */
+    cache<orientation_array_type>& orientation()
+    {
+        return mutable_data<orientation_type>("orientation");
     }
 
     /**
@@ -516,6 +534,26 @@ inline iterator_type
 set_image(particle_type& particle, iterator_type const& first)
 {
     return particle.template set_data<typename particle_type::image_type>("image", first);
+}
+
+/**
+ * Copy particle orientations to given array.
+ */
+template <typename particle_type, typename iterator_type>
+inline iterator_type
+get_orientation(particle_type const& particle, iterator_type const& first)
+{
+    return particle.template get_data<typename particle_type::orientation_type>("orientation", first);
+}
+
+/**
+ * Copy particle orientations from given array.
+ */
+template <typename particle_type, typename iterator_type>
+inline iterator_type
+set_orientation(particle_type& particle, iterator_type const& first)
+{
+    return particle.template set_data<typename particle_type::orientation_type>("orientation", first);
 }
 
 /**
