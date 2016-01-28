@@ -41,7 +41,7 @@ brownian<dimension, float_type, RandomNumberGenerator>::brownian(
   , std::shared_ptr<box_type const> box
   , double timestep
   , double T
-  , diffusion_vector_type const& D
+  , matrix_type const& D
   , std::shared_ptr<logger> logger
 )
   // dependency injection
@@ -50,7 +50,7 @@ brownian<dimension, float_type, RandomNumberGenerator>::brownian(
   , box_(box)
   , temperature_(T)
   , D_(D)
-  , g_param_(D_.size())
+  , g_param_(D_.size1() * D_.size2() )
   , logger_(logger)
 {
     set_timestep(timestep);
@@ -58,10 +58,10 @@ brownian<dimension, float_type, RandomNumberGenerator>::brownian(
     cuda::host::vector<float4> param(g_param_.size());
     for (size_t i = 0; i < param.size(); ++i) {
         fixed_vector<float, 4> p;
-        p[0] = D_.data()[i][0];
-        p[1] = D_.data()[i][1];
-        p[2] = D_.data()[i][2];
-        p[3] = D_.data()[i][3];
+        p[0] = D_(i,0);
+        p[1] = D_(i,1);
+        p[2] = D_(i,2);
+        p[3] = D_(i,3);
         param[i] = p;
     } 
 
@@ -174,7 +174,7 @@ void brownian<dimension, float_type, RandomNumberGenerator>::luaopen(lua_State* 
                   , std::shared_ptr<box_type const>
                   , double
                   , double
-                  , diffusion_vector_type const&
+                  , matrix_type const&
                   , std::shared_ptr<logger>
                 >)
             ]
@@ -184,7 +184,7 @@ void brownian<dimension, float_type, RandomNumberGenerator>::luaopen(lua_State* 
 
 HALMD_LUA_API int luaopen_libhalmd_mdsim_gpu_integrators_brownian(lua_State* L)
 {
-    //brownian<3, float, halmd::random::gpu::rand48>::luaopen(L);
+    brownian<3, float, halmd::random::gpu::rand48>::luaopen(L);
     brownian<3, float, halmd::random::gpu::mrg32k3a>::luaopen(L);
     //brownian<2, float, halmd::random::gpu::rand48>::luaopen(L);
     return 0;

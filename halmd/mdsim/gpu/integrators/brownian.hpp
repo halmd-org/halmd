@@ -46,7 +46,7 @@ public:
     typedef gpu::particle<dimension, float_type> particle_type;
     typedef mdsim::box<dimension> box_type;
     typedef typename particle_type::vector_type vector_type;
-    typedef boost::numeric::ublas::vector<fixed_vector<float, 4> > diffusion_vector_type;
+    typedef boost::numeric::ublas::matrix<float_type> matrix_type;
     typedef random::gpu::random<RandomNumberGenerator> random_type;
     typedef typename random_type::rng_type rng_type;
     typedef brownian_wrapper<dimension, rng_type> wrapper_type;
@@ -59,7 +59,7 @@ public:
       , std::shared_ptr<box_type const> box
       , double timestep
       , double T
-      , diffusion_vector_type const& D
+      , matrix_type const& D
       , std::shared_ptr<halmd::logger> logger = std::make_shared<halmd::logger>()
     );
 
@@ -105,7 +105,7 @@ private:
     /** temperature */
     float_type temperature_;
     /** diffusion constant */
-    diffusion_vector_type D_;
+    matrix_type D_;
     /** diffusion parameters at CUDA device */
     cuda::vector<float4> g_param_;
     /** module logger */

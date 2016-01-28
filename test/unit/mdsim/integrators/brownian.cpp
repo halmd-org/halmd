@@ -71,7 +71,7 @@ struct test_brownian
 {
     typedef typename modules_type::box_type box_type;
     typedef typename modules_type::integrator_type integrator_type;
-    typedef typename integrator_type::diffusion_vector_type host_vector_type;
+    typedef typename integrator_type::matrix_type matrix_type;
     typedef typename modules_type::particle_type particle_type;
     typedef typename modules_type::particle_group_type particle_group_type;
     typedef typename modules_type::position_type position_type;
@@ -93,7 +93,7 @@ struct test_brownian
     double density;
     double temp;
     double timestep;
-    host_vector_type D = host_vector_type(1);
+    matrix_type D = matrix_type(4, 1);
     double maximum_lag_time;
     double resolution;
     unsigned int block_size;
@@ -211,8 +211,7 @@ test_brownian<modules_type>::test_brownian()
         edges(i, i) = edge_length * box_ratios[i];
     }
     slab = 1;
-    D <<= {1.0,2.0,1.0,30.0};
-    BOOST_TEST_MESSAGE("using diffusion constant " << D.data()[0]);
+    D <<= 1.0, 2.0, 1.0, 30.0;
     // create modules
     particle = std::make_shared<particle_type>(npart, 1);
     box = std::make_shared<box_type>(edges);

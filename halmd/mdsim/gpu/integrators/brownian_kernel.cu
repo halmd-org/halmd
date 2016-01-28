@@ -27,6 +27,7 @@
 #include <halmd/random/gpu/random_number_generator.cuh>
 #include <halmd/utility/gpu/thread.cuh>
 #include <limits>
+#include <cassert>
 #include <cmath>
 
 namespace halmd {
@@ -38,38 +39,6 @@ namespace brownian_kernel {
 /**array of diffusion constants */
 static texture<float4> param_;
 
-/**cross product of two vectors
-
-template <typename vector_type>
-__device__ vector_type cross_prod(vector_type a, vector_type b)
-{
-    vector_type c;
-    c[0] = a[1]*b[2] - a[2]*b[1];
-    c[1] = a[2]*b[0] - a[0]*b[2];
-    c[2] = a[0]*b[1] - a[1]*b[0];
-    return c;
-}
-
-/** inner product of two vectors
-
-template <typename float_type, typename vector_type>
-__device__ float_type inner_prod(vector_type a, vector_type b)
-{
-    return a[0] * b[0] 
-}
-
-#ifdef USE_VERLET_DSFUN
-template __device__ fixed_vector<dsfloat, 3> cross_prod<3, fixed_vector<dsfloat, 3> >(fixed_vector<dsfloat, 3>* a, fixed_vector<dsfloat, 3>* b);
-#else
-template __device__ fixed_vector<float, 3> cross_prod<3, fixed_vector<float, 3> >(fixed_vector<float, 3>* a, fixed_vector<float, 3>* b);
-#endif
-
-template <typename float_type, typename vector_type>
-__device__ float_type norm_2(vector_type* a)
-{
-    return a[0] * a[0] + a[1] * a[1] + a[2] * a[2];
-}
-*/
 /**
  * Brownian integration: @f$ r(t + \Delta t) = r(t) + v(t) \Delta t @f$
  *
@@ -171,7 +140,7 @@ __global__ void integrate(
         vector_type f = static_cast<float_vector_type>(g_force[i]);
         //systematic displacement
         float_type f_u = inner_prod(f, u);
-        //r += (f_u * D_par / temp + prop_str) * u + (D_perp / temp) * (f - f_u * u);
+        dr += ( timestep * f_u * D_par / temp ) * u + ( timestep * D_perp / temp) * (f - f_u * u);
         r += dr; 
         // update orientation last (Ito interpretation)
         // no torque included!
@@ -180,6 +149,7 @@ __global__ void integrate(
         float const abs = norm_2(omega);
         // Ω = eta1 * e1 + eta2 * e2
         // => Ω × u = (eta1 * e1 × u + eta2  * e2 × u) = eta2 * e1 - eta1 * e2
+        assert( float(inner_prod(u, u)) < 2 * epsilon);
         u = cos(abs) * u + sin(abs) / abs * cross_prod(u, omega);
         //ensure normalization
         u /= norm_2(u);
