@@ -131,7 +131,7 @@ local function liquid(args)
         })
 
         -- compute density modes and output their time series,
-        local density_mode = observables.density_mode({group = particle_group, wavevector = wavevector})
+        density_mode = observables.density_mode({group = particle_group, wavevector = wavevector})
         if interval > 0 then
             density_mode:writer({file = file, every = interval})
         end
@@ -158,7 +158,7 @@ local function liquid(args)
 
     -- time correlation functions
     local interval = args.sampling.correlation
-    if interval > 0 and density_mode then
+    if interval > 0 then
         -- setup blocking scheme
         local max_lag = steps * integrator.timestep / 10
         local blocking_scheme = dynamics.blocking_scheme({
@@ -176,30 +176,12 @@ local function liquid(args)
         -- compute velocity autocorrelation function
         local vacf = dynamics.velocity_autocorrelation({phase_space = phase_space})
         blocking_scheme:correlation({tcf = vacf, file = file})
-        -- compute intermediate scattering function
-        local isf = dynamics.intermediate_scattering_function({density_mode = density_mode, norm = nparticle})
-        blocking_scheme:correlation({tcf = isf, file = file })
 
-        -- compute interdiffusion coefficient
-        local selfdiffusion = dynamics.correlation({
-            -- acquire centre of mass
-            acquire = function()
-                return msv:center_of_mass()
-            end
-            -- correlate centre of mass at first and second point in time
-          , correlate = function(first, second)
-                local result = 0
-                for i = 1, #first do
-                    result = result + math.pow(second[i] - first[i], 2)
-                end
-                return result
-            end
-            -- file location
-          , location = {"dynamics", particle_group.label, "selfdiffusion"}
-            -- module description
-          , desc = "selfdiffusion coefficient of A particles"
-        })
-        blocking_scheme:correlation({tcf = selfdiffusion, file = file})
+        if density_mode then
+            -- compute intermediate scattering function
+            local isf = dynamics.intermediate_scattering_function({density_mode = density_mode, norm = nparticle})
+            blocking_scheme:correlation({tcf = isf, file = file })
+        end
     end
 
     -- rescale velocities of all particles
