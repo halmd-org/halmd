@@ -145,6 +145,12 @@ void planar_wall<dimension, float_type>::luaopen(lua_State* L)
                                , shared_ptr<logger>
                              >())
                             .property("offset", &planar_wall::offset)
+                            .property("surface_normal", &planar_wall::surface_normal)
+                            .property("epsilon", &planar_wall::epsilon)
+                            .property("sigma", &planar_wall::sigma)
+                            .property("wetting", &planar_wall::wetting)
+                            .property("cutoff", &planar_wall::cutoff)
+                            .property("smoothing", &planar_wall::smoothing)
                     ]
                 ]
             ]
