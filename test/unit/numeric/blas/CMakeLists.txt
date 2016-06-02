@@ -8,7 +8,7 @@ add_test(unit/numeric/fixed_vector
   test_unit_numeric_fixed_vector --log_level=test_suite
 )
 if(HALMD_WITH_GPU)
-  add_executable(test_unit_numeric_fixed_vector_cuda_vector_converter
+  cuda_add_executable(test_unit_numeric_fixed_vector_cuda_vector_converter
     fixed_vector_cuda_vector_converter.cpp
     fixed_vector_cuda_vector_converter_kernel.cu
   )

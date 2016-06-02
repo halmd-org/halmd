@@ -67,6 +67,13 @@ public:
         return storage_[i];
     }
 
+    T *begin (void) {
+        return &storage_[0];
+    }
+    T *end (void) {
+        return &storage_[N];
+    }
+
 private:
     T storage_[N];
 };

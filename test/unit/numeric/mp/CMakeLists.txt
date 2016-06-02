@@ -1,5 +1,5 @@
 if(HALMD_WITH_GPU)
-  add_executable(test_unit_numeric_mp_dsfun
+  cuda_add_executable(test_unit_numeric_mp_dsfun
     dsfun.cpp
     dsfun_kernel.cu
   )

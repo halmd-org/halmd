@@ -7,7 +7,19 @@
 #
 macro(halmd_add_library TARGET)
   set_property(GLOBAL APPEND PROPERTY HALMD_LIBRARIES ${TARGET})
-  add_library(${TARGET} ${ARGN})
+  if(HALMD_WITH_GPU)
+    cuda_add_library(${TARGET} ${ARGN})
+  else()
+    add_library(${TARGET} ${ARGN})
+  endif()
+endmacro()
+
+macro(halmd_add_executable)
+  if(HALMD_WITH_GPU)
+    cuda_add_executable(${ARGN})
+  else()
+    add_executable(${ARGN})
+  endif()
 endmacro()
 
 ##
@@ -88,7 +100,7 @@ configure_file(version.h.in version.h ESCAPE_QUOTES @ONLY)
 ##
 # HALMD executable
 #
-add_executable(halmd
+halmd_add_executable(halmd
   main.cpp
   "${CMAKE_CURRENT_BINARY_DIR}/modules.cpp"
 )

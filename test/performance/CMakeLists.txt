@@ -2,7 +2,7 @@
 # HALMD performance tests
 #
 if(HALMD_WITH_GPU)
-  add_executable(test_performance_function_calls
+  cuda_add_executable(test_performance_function_calls
     function_calls.cpp
     function_calls_extern.cpp
     function_calls_extern_kernel.cu
@@ -23,7 +23,7 @@ add_test(performance/function_calls
 )
 
 if(HALMD_WITH_GPU)
-  add_executable(test_performance_memory_allocation
+  cuda_add_executable(test_performance_memory_allocation
     memory_allocation.cpp
   )
   target_link_libraries(test_performance_memory_allocation

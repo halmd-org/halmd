@@ -61,21 +61,43 @@ if(NOT HALMD_DOC_ONLY OR NOT HALMD_USE_GIT)
   endif()
 
   if(CUDA_FOUND)
-    enable_language(CUDA)
-    if (CMAKE_CUDA_COMPILER_VERSION VERSION_LESS 5.0)
-      message(SEND_ERROR "Minium required CUDA version is 5.0 (found ${CMAKE_CUDA_COMPILER_VERSION})")
-    endif()
-
-    set(HALMD_WITH_GPU TRUE)
-
-    try_compile(success "${CMAKE_BINARY_DIR}" "${CMAKE_SOURCE_DIR}/cmake/cuda_arch.cu" OUTPUT_VARIABLE result)
-    if(result MATCHES "__CUDA_ARCH__([0-9]+)__")
-      set(HALMD_GPU_ARCH "${CMAKE_MATCH_1}")
+    if(COMMAND cuda_add_library)
+      # original CMake
+      set(HALMD_GPU_ARCH "210") # temporary workaround
+      set(CUDA_INCLUDE_DIR ${CUDA_INCLUDE_DIRS})
     else()
-      message(SEND_ERROR "${result}")
+      # CMake with CUDA patch by Peter Colberg
+
+      enable_language(CUDA)
+      if (CMAKE_CUDA_COMPILER_VERSION VERSION_LESS 5.0)
+        message(SEND_ERROR "Minium required CUDA version is 5.0 (found ${CMAKE_CUDA_COMPILER_VERSION})")
+      endif()
+
+      try_compile(success "${CMAKE_BINARY_DIR}" "${CMAKE_SOURCE_DIR}/cmake/cuda_arch.cu" OUTPUT_VARIABLE result)
+      if(result MATCHES "__CUDA_ARCH__([0-9]+)__")
+        set(HALMD_GPU_ARCH "${CMAKE_MATCH_1}")
+      else()
+        message(SEND_ERROR "${result}")
+      endif()
+
+      # create macros for compatibility with unpatched cmake
+      macro(cuda_add_library)
+        add_library(${ARGN})
+      endmacro()
+      macro(cuda_add_executable)
+        add_executable(${ARGN})
+      endmacro()
     endif()
+    set(HALMD_WITH_GPU TRUE)
   else()
     set(HALMD_WITH_GPU FALSE)
+    # create macros for some of the tests
+    macro(cuda_add_library)
+      add_library(${ARGN})
+    endmacro()
+    macro(cuda_add_executable)
+      add_executable(${ARGN})
+    endmacro()
   endif()
 
   set(HALMD_USE_STATIC_LIBS FALSE CACHE BOOL

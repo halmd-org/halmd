@@ -1,4 +1,4 @@
-add_executable(test_unit_algorithm_gpu_apply
+cuda_add_executable(test_unit_algorithm_gpu_apply
   apply.cpp
   apply_kernel.cu
 )
@@ -9,7 +9,7 @@ add_test(unit/algorithm/gpu/apply
   test_unit_algorithm_gpu_apply --log_level=test_suite
 )
 
-add_executable(test_unit_algorithm_gpu_reduce
+cuda_add_executable(test_unit_algorithm_gpu_reduce
   reduce.cpp
   reduce_kernel.cu
 )
@@ -20,7 +20,7 @@ add_test(unit/algorithm/gpu/reduce
   test_unit_algorithm_gpu_reduce --log_level=test_suite
 )
 
-add_executable(test_unit_algorithm_scan
+cuda_add_executable(test_unit_algorithm_scan
   scan_kernel.cu
   scan.cpp
 )

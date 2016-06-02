@@ -1,5 +1,5 @@
 # module euler
-add_executable(test_unit_mdsim_integrators_euler
+cuda_add_executable(test_unit_mdsim_integrators_euler
   euler.cpp
   apply_negate.cu
 )

@@ -38,7 +38,7 @@ endif()
 
 # module box
 if(HALMD_WITH_GPU)
-  add_executable(test_unit_mdsim_box
+  cuda_add_executable(test_unit_mdsim_box
     box.cpp
     box_kernel.cu
   )
