@@ -141,11 +141,16 @@ HALMD_TEST_INIT( init_unit_test_suite )
 
     for (size_t i = 1, j = 1, t; j <= 144; t = j, j += i, i = t)
     {
+#if BOOST_VERSION >= 106000
+        typedef boost::function<void(int)> callback_type;
+#else
+        typedef callback1<int> callback_type;
+#endif
         master_test_suite().add( BOOST_PARAM_TEST_CASE(
-            callback1<int>(test_signal_wait(j)), signum.begin(), signum.end()
+            callback_type(test_signal_wait(j)), signum.begin(), signum.end()
         ) );
         master_test_suite().add( BOOST_PARAM_TEST_CASE(
-            callback1<int>(test_signal_poll(j)), signum.begin(), signum.end()
+            callback_type(test_signal_poll(j)), signum.begin(), signum.end()
         ) );
     }
 }

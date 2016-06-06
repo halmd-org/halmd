@@ -39,6 +39,7 @@
 #include <boost/iterator/counting_iterator.hpp>
 
 #include <algorithm>
+#include <numeric>
 
 /**
  * Returns randomly shuffled particle tags.

@@ -55,7 +55,7 @@ void pick_lattice_points()
     multimap<typename vector<double>::const_iterator, vector_type> lattice_points;
 
     // call with empty list of radii
-    BOOST_MESSAGE("test empty range");
+    BOOST_TEST_MESSAGE("test empty range");
     vector<double> empty_range;
     pick_lattice_points_from_shell(
         empty_range.begin(), empty_range.end()
@@ -65,7 +65,7 @@ void pick_lattice_points()
     BOOST_CHECK_EQUAL(lattice_points.size(), 0u);
 
     // call with zero box size
-    BOOST_MESSAGE("test zero box size");
+    BOOST_TEST_MESSAGE("test zero box size");
     pick_lattice_points_from_shell(
         radii.begin(), radii.end()
       , inserter(lattice_points, lattice_points.begin())
@@ -74,7 +74,7 @@ void pick_lattice_points()
     BOOST_CHECK_EQUAL(lattice_points.size(), 0u);
 
     // call with zero tolerance
-    BOOST_MESSAGE("test zero tolerance");
+    BOOST_TEST_MESSAGE("test zero tolerance");
     pick_lattice_points_from_shell(
         radii.begin(), radii.end()
       , inserter(lattice_points, lattice_points.begin())
@@ -84,7 +84,7 @@ void pick_lattice_points()
     lattice_points.clear();
 
     // call with zero max_count
-    BOOST_MESSAGE("test zero max_count");
+    BOOST_TEST_MESSAGE("test zero max_count");
     pick_lattice_points_from_shell(
         radii.begin(), radii.end()
       , inserter(lattice_points, lattice_points.begin())
@@ -93,7 +93,7 @@ void pick_lattice_points()
     BOOST_CHECK_EQUAL(lattice_points.size(), 0u);
 
     // construct lattice points
-    BOOST_MESSAGE("construct lattice points");
+    BOOST_TEST_MESSAGE("construct lattice points");
     pick_lattice_points_from_shell(
         radii.begin(), radii.end()
       , inserter(lattice_points, lattice_points.begin())

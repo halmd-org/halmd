@@ -37,7 +37,7 @@
 #include <array>
 #include <functional>
 
-BOOST_GLOBAL_FIXTURE( set_cuda_device )
+BOOST_GLOBAL_FIXTURE( set_cuda_device );
 
 /**
  * Compute sum of natural numbers using a unary reduction.

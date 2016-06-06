@@ -37,7 +37,7 @@ struct ctest_full_output
  * printer as a global fixture instead of an __attribute__((constructor))
  * function. The global fixture is instantiated before the test run.
  */
-BOOST_GLOBAL_FIXTURE( ctest_full_output )
+BOOST_GLOBAL_FIXTURE( ctest_full_output );
 
 #ifndef HALMD_TEST_NO_LOGGING
 /**
@@ -52,7 +52,7 @@ struct ctest_logging
     ctest_logging();
 };
 
-BOOST_GLOBAL_FIXTURE( ctest_logging )
+BOOST_GLOBAL_FIXTURE( ctest_logging );
 #endif
 
 #endif /* ! TEST_TOOLS_CTEST_HPP */

@@ -31,7 +31,7 @@ add_test(unit/algorithm/gpu/scan
   test_unit_algorithm_scan --log_level=test_suite
 )
 
-add_executable(test_unit_algorithm_gpu_copy_if
+cuda_add_executable(test_unit_algorithm_gpu_copy_if
   copy_if_kernel.cu
   copy_if.cpp
 )

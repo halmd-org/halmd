@@ -169,7 +169,7 @@ void periodic_gpu()
 
     // call reduce_periodic kernel
     cuda::config config((npos + warp_size - 1) / warp_size, warp_size);
-    BOOST_MESSAGE("kernel reduce_periodic: using " << config.blocks_per_grid() << " block with "
+    BOOST_TEST_MESSAGE("kernel reduce_periodic: using " << config.blocks_per_grid() << " block with "
         << config.threads_per_block() << " threads"
     );
     cuda::configure(config.grid, config.block);

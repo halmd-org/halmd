@@ -35,7 +35,7 @@
 // Parallel GPU rand48 random number generator test
 //
 
-BOOST_GLOBAL_FIXTURE( set_cuda_device )
+BOOST_GLOBAL_FIXTURE( set_cuda_device );
 
 BOOST_AUTO_TEST_CASE( compare_variates )
 {

@@ -256,18 +256,18 @@ HALMD_TEST_INIT( lattice_primitive )
 {
     using namespace boost::unit_test;
 
-    callback0<> hexagonal_lattice = test_lattice<hexagonal_lattice_fixture>();
+    auto hexagonal_lattice = test_lattice<hexagonal_lattice_fixture>();
     framework::master_test_suite().add(BOOST_TEST_CASE( hexagonal_lattice ));
 
-    callback0<> face_centered_cubic_lattice = test_lattice<face_centered_cubic_lattice_fixture>();
+    auto face_centered_cubic_lattice = test_lattice<face_centered_cubic_lattice_fixture>();
     framework::master_test_suite().add(BOOST_TEST_CASE( face_centered_cubic_lattice ));
 
-    callback0<> square_lattice = test_lattice<square_lattice_fixture>();
+    auto square_lattice = test_lattice<square_lattice_fixture>();
     framework::master_test_suite().add(BOOST_TEST_CASE( square_lattice ));
 
-    callback0<> primitive_cubic_lattice = test_lattice<primitive_cubic_lattice_fixture>();
+    auto primitive_cubic_lattice = test_lattice<primitive_cubic_lattice_fixture>();
     framework::master_test_suite().add(BOOST_TEST_CASE( primitive_cubic_lattice ));
 
-    callback0<> primitive_tesseractic_lattice = test_lattice<primitive_tesseractic_lattice_fixture>();
+    auto primitive_tesseractic_lattice = test_lattice<primitive_tesseractic_lattice_fixture>();
     framework::master_test_suite().add(BOOST_TEST_CASE( primitive_tesseractic_lattice ));
 }

@@ -423,10 +423,10 @@ HALMD_TEST_INIT( multi_range )
      * equivalent to nested for loops in terms of performance.
      */
     for (unsigned int size = 20; size <= 100; size += 20) {
-        callback0<> time_multi_range_for_each = bind(&test_time_multi_range_for_each, size);
+        auto time_multi_range_for_each = bind(&test_time_multi_range_for_each, size);
         framework::master_test_suite().add(BOOST_TEST_CASE( time_multi_range_for_each ));
 
-        callback0<> time_nested_for_loops = bind(&test_time_nested_for_loops, size);
+        auto time_nested_for_loops = bind(&test_time_nested_for_loops, size);
         framework::master_test_suite().add(BOOST_TEST_CASE( time_nested_for_loops ));
     }
 }

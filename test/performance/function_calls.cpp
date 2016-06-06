@@ -43,8 +43,8 @@
  */
 
 // http://gcc.gnu.org/onlinedocs/cpp/Stringification.html
-#define xstr(s) str(s)
-#define str(s) #s
+#define xstr(s) makestr(s)
+#define makestr(s) #s
 
 using namespace boost;
 using namespace halmd; // scoped_timer, timer

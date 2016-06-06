@@ -37,7 +37,7 @@
 #include <test/tools/init.hpp>
 #include <test/unit/algorithm/gpu/copy_if_kernel.hpp>
 
-BOOST_GLOBAL_FIXTURE( set_cuda_device )
+BOOST_GLOBAL_FIXTURE( set_cuda_device );
 
 /**
  * define test case template to test with various value types and predicates

@@ -34,6 +34,36 @@ namespace detail {
 namespace numeric {
 namespace mp {
 
+struct dsfloat;
+
+} // namespace mp
+} // namespace numeric
+} // namespace detail
+
+// import into top-level namespace
+using detail::numeric::mp::dsfloat;
+
+} // namespace halmd
+
+namespace boost
+{
+
+//
+// In order to make dsfloat completely act like a number, it is necessary
+// to specify it as floating point number by the means of
+// boost::is_floating_point<>. Therefore, add a specialization for
+// boost::is_floating_point<dsfloat>.
+//
+template<>
+struct is_floating_point<halmd::dsfloat> : public boost::true_type {};
+
+} // namespace boost
+
+namespace halmd {
+namespace detail {
+namespace numeric {
+namespace mp {
+
 /**
  * Double-single floating point value
  */
@@ -258,27 +288,9 @@ inline HALMD_GPU_ENABLED dsfloat min(dsfloat const& v, dsfloat const& w)
     return v.hi == w.hi ? (v.lo <= w.lo ? v : w) : (v.hi < w.hi ? v : w);
 }
 
-} // namespace detail
-} // namespace numeric
 } // namespace mp
-
-// import into top-level namespace
-using detail::numeric::mp::dsfloat;
-
+} // namespace numeric
+} // namespace detail
 } // namespace halmd
-
-namespace boost
-{
-
-//
-// In order to make dsfloat completely act like a number, it is necessary
-// to specify it as floating point number by the means of
-// boost::is_floating_point<>. Therefore, add a specialization for
-// boost::is_floating_point<dsfloat>.
-//
-template<>
-struct is_floating_point<halmd::dsfloat> : public boost::true_type {};
-
-} // namespace boost
 
 #endif /* ! HALMD_NUMERIC_MP_DSFLOAT_CUH */

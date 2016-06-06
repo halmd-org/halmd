@@ -134,7 +134,7 @@ void h5md(std::vector<unsigned int> const& ntypes)
 
     std::string const filename("test_io_h5md_trajectory_" + std::to_string(dimension) + "d.trj");
 
-    BOOST_MESSAGE("Testing " << ntypes.size() << " particle types");
+    BOOST_TEST_MESSAGE("Testing " << ntypes.size() << " particle types");
 
     // construct phase space sample and fill with positions and velocities
     std::vector<std::shared_ptr<double_sample_type> > double_sample;
