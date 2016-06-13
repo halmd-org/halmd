@@ -60,8 +60,16 @@ if(DEFINED CMAKE_CUDA_COMPILER_ID)
     # We will raise the default compute version later to enable native double
     # precision, as an alternative to double-single precision, and when all
     # kernels are optimised for Fermi GPUs.
+    #
+    # CUDA versions starting from 6.5 do not support comute version 1.2 anymore,
+    # so in that case the default compute version is raised to 2.0 regardless.
 
-    set(CMAKE_CUDA_FLAGS_INIT "-Xcompiler -fPIC -Xptxas -v -arch=compute_12 -code=compute_12,sm_13,sm_20")
+    if(CMAKE_CUDA_COMPILER_VERSION VERSION_LESS 6.5)
+      set(CMAKE_CUDA_FLAGS_INIT "-Xcompiler -fPIC -Xptxas -v -arch=compute_12 -code=compute_12,sm_13,sm_20")
+    else()
+      set(CMAKE_CUDA_FLAGS_INIT "-Xcompiler -fPIC -Xptxas -v -arch=compute_20 -code=compute_20,sm_20")
+    endif()
+
 
   else()
     message(WARNING "Unsupported CUDA compiler: ${CMAKE_CUDA_COMPILER_ID}")
