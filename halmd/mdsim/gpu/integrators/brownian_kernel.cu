@@ -58,6 +58,7 @@ __global__ void integrate(
   , gpu_vector_type* g_image
   , float4 const* g_velocity
   , gpu_vector_type const* g_force
+  , gpu_vector_type const* g_torque
   , float timestep
   , float temp
   , rng_type rng
@@ -81,7 +82,7 @@ __global__ void integrate(
     unsigned int species;
     float mass;
     float nothing;
-    float const mean = 0.f;
+    float const mean = 0;
     
     //read random number generator state from global device memory
     typename rng_type::state_type state = rng[thread];
@@ -118,9 +119,9 @@ __global__ void integrate(
         float_type const D_par = D[1];
         float_type const D_rot = D[2];
         float_type const prop_str = D[3];
-        float_type const sigma_perp = sqrtf(2 * D_perp * timestep);
-        float_type const sigma_par = sqrtf(2 * D_par * timestep);
-        float_type const sigma_rot = sqrtf(2 * D_rot * timestep);
+        float_type const sigma_perp = sqrtf(2 * D_perp * timestep );
+        float_type const sigma_par = sqrtf(2 * D_par * timestep );
+        float_type const sigma_rot = sqrtf(2 * D_rot * timestep );
    
         //draw random numbers
         float_type eta1, eta2, eta3, cache;
@@ -138,6 +139,7 @@ __global__ void integrate(
         // random displacement
         dr = eta1 * e1 + eta2 * e2 + (eta3 + prop_str * timestep) * u; 
         vector_type f = static_cast<float_vector_type>(g_force[i]);
+        vector_type tau = static_cast<float_vector_type>(g_torque[i]);
         //systematic displacement
         float_type f_u = inner_prod(f, u);
         dr += ( timestep * f_u * D_par / temp ) * u + ( timestep * D_perp / temp) * (f - f_u * u);
@@ -145,12 +147,13 @@ __global__ void integrate(
         // update orientation last (Ito interpretation)
         // no torque included!
         tie(eta1, eta2) =  random::gpu::normal(rng, state, mean, sigma_rot);
-        vector_type omega = eta1 * e1 + eta2 * e2;
-        float const abs = norm_2(omega);
+        vector_type omega = eta1 * e1 + eta2 * e2 + tau * D_rot * timestep / temp ;
+        float  alpha = norm_2(omega);
+        omega /= alpha;
         // Ω = eta1 * e1 + eta2 * e2
         // => Ω × u = (eta1 * e1 × u + eta2  * e2 × u) = eta2 * e1 - eta1 * e2
         assert( float(inner_prod(u, u)) < 2 * epsilon);
-        u = cos(abs) * u + sin(abs) / abs * cross_prod(u, omega);
+        u = (1 - cos(alpha)) * inner_prod(omega, u) * omega + cos(alpha) * u + sin(alpha) * cross_prod(omega, u);
         //ensure normalization
         u /= norm_2(u);
         // enforce periodic boundary conditions

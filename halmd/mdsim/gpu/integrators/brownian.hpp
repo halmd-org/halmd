@@ -88,6 +88,7 @@ private:
     typedef typename particle_type::image_array_type image_array_type;
     typedef typename particle_type::velocity_array_type velocity_array_type;
     typedef typename particle_type::force_array_type force_array_type;
+    typedef typename particle_type::torque_array_type torque_array_type;
 
     typedef utility::profiler::accumulator_type accumulator_type;
     typedef utility::profiler::scoped_timer_type scoped_timer_type;

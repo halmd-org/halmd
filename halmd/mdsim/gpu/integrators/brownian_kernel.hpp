@@ -45,6 +45,7 @@ struct brownian_wrapper
       , coalesced_vector_type*
       , float4 const*
       , coalesced_vector_type const*
+      , coalesced_vector_type const*
       , float
       , float
       , rng_type
