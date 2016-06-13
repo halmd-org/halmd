@@ -130,13 +130,13 @@ if(NOT HALMD_DOC_ONLY OR NOT HALMD_USE_GIT)
     thread
     unit_test_framework
   )
-  find_package(HDF5 QUIET REQUIRED)
+  find_package(HDF5 QUIET REQUIRED COMPONENTS C CXX)
   find_package(LuaLibs QUIET REQUIRED)
 
   # be verbose about library versions (but suppress all the gory details given by find_package)
   message(STATUS "Boost version: ${Boost_MAJOR_VERSION}.${Boost_MINOR_VERSION}.${Boost_SUBMINOR_VERSION}")
   message(STATUS "Lua library version: ${LUA_VERSION_STRING}")
-  message(STATUS "HDF5 library version: ${HDF5_VERSION_STRING}")
+  message(STATUS "HDF5 library version: ${HDF5_VERSION}")
 
   # Set HALMD build variant flags
   include(${CMAKE_SOURCE_DIR}/cmake/variant.cmake)
@@ -163,8 +163,8 @@ if(NOT HALMD_DOC_ONLY OR NOT HALMD_USE_GIT)
     ${Boost_FILESYSTEM_LIBRARY}
     ${Boost_SYSTEM_LIBRARY}
     ${Boost_THREAD_LIBRARY}
-    ${HDF5_CPP_LIBRARY}
-    ${HDF5_LIBRARY}
+    ${HDF5_CXX_LIBRARIES}
+    ${HDF5_LIBRARIES}
     ${LUA_LIBRARIES}
   )
   if(HALMD_WITH_GPU)
@@ -188,7 +188,7 @@ if(NOT HALMD_DOC_ONLY OR NOT HALMD_USE_GIT)
   include_directories(${HALMD_SOURCE_DIR})
   include_directories(${HALMD_BINARY_DIR})
   include_directories(SYSTEM ${Boost_INCLUDE_DIR})
-  include_directories(SYSTEM ${HDF5_INCLUDE_DIR})
+  include_directories(SYSTEM ${HDF5_INCLUDE_DIRS})
   include_directories(SYSTEM ${LUA_INCLUDE_DIR})
   if(HALMD_WITH_GPU)
     include_directories(SYSTEM ${CUDA_INCLUDE_DIR})
