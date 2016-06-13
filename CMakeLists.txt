@@ -64,6 +64,8 @@ if(NOT HALMD_DOC_ONLY OR NOT HALMD_USE_GIT)
     if(COMMAND cuda_add_library)
       # original CMake
       set(HALMD_GPU_ARCH "210") # temporary workaround
+      set(CUDA_NVCC_FLAGS "${CUDA_NVCC_FLAGS} -std=c++11 -Xcompiler -fPIC,-Wall")
+      set(CUDA_PROPAGATE_HOST_FLAGS OFF CACHE BOOL "Propagating host flags is unsupported by HALMD" FORCE)
       set(CUDA_INCLUDE_DIR ${CUDA_INCLUDE_DIRS})
     else()
       # CMake with CUDA patch by Peter Colberg
