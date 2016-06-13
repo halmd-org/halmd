@@ -55,8 +55,10 @@ local M = module(function(args)
 
     -- construct module logger
     local logger = log.logger({label = "orientation"})
+    
+    local rng = random.generator({memory = particle.memory})
 
-    local self = uniform(particle)
+    local self = uniform(particle, rng)
     -- sequence of signal connections
     local conn = {}
     self.disconnect = utility.signal.disconnect(conn, "uniform module")

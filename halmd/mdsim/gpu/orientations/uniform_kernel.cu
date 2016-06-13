@@ -23,7 +23,10 @@
 #include <halmd/mdsim/positions/lattice_primitive.hpp>
 #include <halmd/numeric/blas/blas.hpp>
 #include <halmd/numeric/mp/dsfloat.hpp>
+#include <halmd/random/gpu/random_number_generator.cuh>
 #include <halmd/utility/gpu/thread.cuh>
+
+#include <cmath>
 
 namespace halmd {
 namespace mdsim {
@@ -31,16 +34,19 @@ namespace gpu {
 namespace orientations {
 namespace uniform_kernel {
 
-template <typename vector_type>
+template <typename vector_type, typename rng_type>
 __global__ void uniform(
     float4* g_u
   , unsigned int npart
+  , rng_type rng
 )
 {
     enum { dimension = vector_type::static_size };
     unsigned int const threads = GTDIM;
 
     for (unsigned int i = GTID; i < npart; i += threads) {
+        //read random number generator state from global device memory
+        typename rng_type::state_type state = rng[GTID];
 
         // load particle orientation
         vector_type u;
@@ -50,29 +56,42 @@ __global__ void uniform(
 #else
         tie(u, nothing) <<= g_u[i];
 #endif
-        u[0] = 1;
-        u[1] = 0;
-        u[2] = 0;
+        float theta = random::gpu::uniform(rng, state);
+        float phi = random::gpu::uniform(rng, state);
+        float pi = 4*atanf(1);
+
+        theta =  acosf(2*theta - 1);
+        phi = 2*pi*phi;
+
+        /* select random point on unit sphere */ 
+        u[0] = sin(theta) * cos(phi);
+        u[1] = sin(theta) * sin(phi);
+        u[2] = cos(theta);
 
 #ifdef USE_VERLET_DSFUN
         tie(g_u[i], g_u[i + threads]) <<= tie(u, nothing);
 #else
         g_u[i] <<= tie(u, nothing);
 #endif
+        rng[GTID] = state;
     }
 }
 
 } // namespace uniform_kernel
 
-uniform_wrapper const uniform_wrapper::kernel = {
+template <typename rng_type>
+uniform_wrapper<rng_type> const uniform_wrapper<rng_type>::kernel = {
 #ifdef USE_VERLET_DSFUN
-    uniform_kernel::uniform<fixed_vector<dsfloat, 3> >
+    uniform_kernel::uniform<fixed_vector<dsfloat, 3>, rng_type>
 #else
-    uniform_kernel::uniform<fixed_vector<float, 3> >
+    uniform_kernel::uniform<fixed_vector<float, 3>, rng_type>
 #endif
 };
 
 //template class lattice_wrapper<close_packed_lattice<fixed_vector<float, 2>, fixed_vector<unsigned int, 2> > >;
+
+template class uniform_wrapper<random::gpu::rand48_rng>;
+template class uniform_wrapper<random::gpu::mrg32k3a_rng>;
 
 } // namespace mdsim
 } // namespace gpu

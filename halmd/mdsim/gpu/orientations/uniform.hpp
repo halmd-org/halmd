@@ -30,6 +30,7 @@
 #include <halmd/mdsim/box.hpp>
 #include <halmd/mdsim/gpu/particle.hpp>
 #include <halmd/mdsim/type_traits.hpp>
+#include <halmd/random/gpu/random.hpp>
 #include <halmd/utility/profiler.hpp>
 
 namespace halmd {
@@ -37,16 +38,18 @@ namespace mdsim {
 namespace gpu {
 namespace orientations {
 
-template <int dimension, typename float_type>
+template <int dimension, typename float_type, typename RandomNumberGenerator>
 class uniform
 {
 public:
     typedef gpu::particle<dimension, float_type> particle_type;
     typedef typename particle_type::vector_type vector_type;
+    typedef random::gpu::random<RandomNumberGenerator> random_type;
+    typedef typename RandomNumberGenerator::rng_type rng_type;
     typedef typename type_traits<dimension, float>::vector_type gpu_vector_type;
     typedef typename type_traits<dimension, unsigned int>::vector_type index_type;
 
-    uniform(std::shared_ptr<particle_type> particle);// : particle_(particle) { }
+    uniform(std::shared_ptr<particle_type> particle, std::shared_ptr<random_type> random);// : particle_(particle) { }
     static void luaopen(lua_State* L);
 
     void set();
@@ -63,6 +66,7 @@ private:
     };
 
     std::shared_ptr<particle_type> particle_;
+    std::shared_ptr<random_type> random_;
 
     /** profiling runtime accumulators */
     runtime runtime_;

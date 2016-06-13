@@ -23,6 +23,7 @@
 
 #include <halmd/mdsim/gpu/orientations/uniform_kernel.hpp>
 #include <halmd/mdsim/gpu/orientations/uniform.hpp>
+#include <halmd/random/gpu/random.hpp>
 #include <halmd/utility/lua/lua.hpp>
 
 using namespace std;
@@ -32,12 +33,17 @@ namespace mdsim {
 namespace gpu {
 namespace orientations {
 
-template <int dimension, typename float_type>
-uniform<dimension, float_type>::uniform(std::shared_ptr<particle_type> particle) 
-  : particle_(particle){}
+template <int dimension, typename float_type, typename RandomNumberGenerator>
+uniform<dimension, float_type, RandomNumberGenerator>::uniform(
+      std::shared_ptr<particle_type> particle
+    , std::shared_ptr<random_type> random
+) 
+  : particle_(particle)
+  , random_(random)
+    {}
 
-template <int dimension, typename float_type>
-void uniform<dimension, float_type>::set()
+template <int dimension, typename float_type, typename RandomNumberGenerator>
+void uniform<dimension, float_type, RandomNumberGenerator>::set()
 {
     scoped_timer_type timer(runtime_.set);
     auto orientation = make_cache_mutable(particle_->orientation());
@@ -46,7 +52,7 @@ void uniform<dimension, float_type>::set()
     size_t npart = last - first;
     try {
         cuda::configure(particle_->dim.grid, particle_->dim.block);
-        get_uniform_kernel().uniform(first, npart);
+        get_uniform_kernel<rng_type>().uniform(first, npart, random_->rng().rng() );
         cuda::thread::synchronize();
     }
     catch (cuda::error const&) {
@@ -56,8 +62,8 @@ void uniform<dimension, float_type>::set()
     LOG("setting particle orientations");
 }
 
-template <int dimension, typename float_type>
-void uniform<dimension, float_type>::luaopen(lua_State* L)
+template <int dimension, typename float_type, typename RandomNumberGenerator>
+void uniform<dimension, float_type, RandomNumberGenerator>::luaopen(lua_State* L)
 {
     using namespace luaponte;
     module(L, "libhalmd")
@@ -76,6 +82,7 @@ void uniform<dimension, float_type>::luaopen(lua_State* L)
                     .def_readonly("runtime", &uniform::runtime_)
               , def("uniform", &std::make_shared<uniform
                   , std::shared_ptr<particle_type>
+                  , std::shared_ptr<random_type>
                   >)
             ]
         ]
@@ -84,12 +91,14 @@ void uniform<dimension, float_type>::luaopen(lua_State* L)
 
 HALMD_LUA_API int luaopen_libhalmd_mdsim_gpu_orientations_uniform(lua_State* L)
 {
-    uniform<3, float>::luaopen(L);
+    uniform<3, float, halmd::random::gpu::rand48>::luaopen(L);
+    uniform<3, float, halmd::random::gpu::mrg32k3a>::luaopen(L);
     return 0;
 }
 
 // explicit instantiation
-template class uniform<3, float>;
+template class uniform<3, float, halmd::random::gpu::rand48>;
+template class uniform<3, float, halmd::random::gpu::mrg32k3a>;
 
 } // namespace mdsim
 } // namespace gpu
