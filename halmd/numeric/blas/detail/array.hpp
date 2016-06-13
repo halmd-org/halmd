@@ -73,6 +73,9 @@ public:
     T *end (void) {
         return &storage_[N];
     }
+    size_t size (void) const {
+        return N;
+    }
 
 private:
     T storage_[N];
