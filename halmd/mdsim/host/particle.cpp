@@ -64,6 +64,7 @@ particle<dimension, float_type>::particle(size_type nparticle, unsigned int nspe
     auto species = make_cache_mutable(register_data<species_type>("species")->mutable_data());
     auto mass = make_cache_mutable(register_data<mass_type>("mass")->mutable_data());
     auto force = make_cache_mutable(register_data<force_type>("force", [this]() { this->update_force_(); })->mutable_data());
+    auto torque = make_cache_mutable(register_data<torque_type>("torque", [this]() { this->update_force_(); })->mutable_data());
     auto en_pot = make_cache_mutable(register_data<en_pot_type>("potential_energy", [this]() { this->update_force_(true); })->mutable_data());
     auto stress_pot = make_cache_mutable(
             register_data<stress_pot_type>("potential_stress_tensor", [this]() { this->update_force_(true); })->mutable_data());
@@ -81,6 +82,7 @@ particle<dimension, float_type>::particle(size_type nparticle, unsigned int nspe
     std::fill(species->begin() + nparticle_, species->end(), -1U);
     std::fill(mass->begin(), mass->end(), 1);
     std::fill(force->begin(), force->end(), 0);
+    std::fill(torque->begin(), torque->end(), 0);
     std::fill(en_pot->begin(), en_pot->end(), 0);
     std::fill(stress_pot->begin(), stress_pot->end(), 0);
 
