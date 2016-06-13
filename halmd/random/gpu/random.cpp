@@ -124,6 +124,7 @@ void random<RandomNumberGenerator>::luaopen(lua_State* L)
 HALMD_LUA_API int luaopen_libhalmd_random_gpu_random(lua_State* L)
 {
     random<rand48>::luaopen(L);
+    random<mrg32k3a>::luaopen(L);
     return 0;
 }
 

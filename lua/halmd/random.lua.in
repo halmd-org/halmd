@@ -26,7 +26,11 @@ local utility = require("halmd.utility")
 -- grab C++ wrappers
 local random = {host = assert(libhalmd.random.host.mt19937)}
 if device.gpu then
-    random.gpu = assert(libhalmd.random.gpu.rand48)
+random.gpu = assert(libhalmd.random.gpu.MRG32k3a)
+--{
+--        rand48 = assert(libhalmd.random.gpu.rand48),
+--        MRG32k3a = assert(libhalmd.random.gpu.MRG32k3a)
+--    }
 end
 
 ---
@@ -44,6 +48,7 @@ local M = {}
 -- Get pseudo-random number generator.
 --
 -- :param table args: keyword arguments
+-- :param string args.generator: RNG algorithm (*default:* ``mt....`` on host and ``rand48`` on gpu)
 -- :param string args.memory: ``host`` or ``gpu`` (*default:* compute device)
 -- :param number args.seed: initial seed value *(optional)*
 --
@@ -51,6 +56,8 @@ local M = {}
 --
 -- The first call for each memory argument constructs a singleton instance of
 -- the pseudo-random number generator, which is returned in subsequent calls.
+--
+-- The argument ``generator`` specifies the RNG algorithm used and is either ... 
 --
 -- If the argument ``seed`` is omitted, the initial seed is obtained from the
 -- system's random device, e.g., ``/dev/urandom`` on Linux.
