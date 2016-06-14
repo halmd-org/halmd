@@ -24,9 +24,12 @@
 #include <boost/log/attributes/clock.hpp>
 #include <boost/log/support/date_time.hpp>
 #include <boost/log/expressions.hpp>
-// the following header is deprecated, use boost/core/null_deleter.hpp instead
-// in Boost C++ ≥ 1.56
-#include <boost/utility/empty_deleter.hpp>
+#include <boost/version.hpp>
+#if BOOST_VERSION >= 105600
+# include <boost/core/null_deleter.hpp>
+#else
+# include <boost/utility/empty_deleter.hpp>
+#endif
 #include <boost/version.hpp>
 
 #include <halmd/io/logger.hpp>
@@ -48,7 +51,11 @@ void logging::open_console(severity_level level)
 {
     boost::shared_ptr<console_backend_type> backend(boost::make_shared<console_backend_type>());
     backend->add_stream(
+#if BOOST_VERSION >= 105600
+        boost::shared_ptr<std::ostream>(&std::clog, boost::null_deleter())
+#else
         boost::shared_ptr<std::ostream>(&std::clog, boost::empty_deleter())
+#endif
     );
     backend->auto_flush(true);
 
