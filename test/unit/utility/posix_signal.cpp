@@ -29,6 +29,7 @@
 #include <halmd/utility/timer.hpp>
 #include <test/tools/ctest.hpp>
 #include <test/tools/init.hpp>
+#include <boost/version.hpp>
 
 using namespace boost;
 using namespace halmd;
@@ -141,7 +142,7 @@ HALMD_TEST_INIT( init_unit_test_suite )
 
     for (size_t i = 1, j = 1, t; j <= 144; t = j, j += i, i = t)
     {
-#if BOOST_VERSION >= 106000
+#if BOOST_VERSION >= 105900
         typedef boost::function<void(int)> callback_type;
 #else
         typedef callback1<int> callback_type;
