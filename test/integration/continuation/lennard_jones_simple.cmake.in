@@ -75,7 +75,7 @@ execute_halmd(
 
 execute_process(
   COMMAND "@CMAKE_CURRENT_BINARY_DIR@/test_integration_continuation_compare_trajectory"
-    --log_level=test_suite
+    @BOOST_TEST_ARGS@
     "${OUTPUT_PREFIX}.h5"
     "${OUTPUT_PREFIX}_continued.h5"
     -1
