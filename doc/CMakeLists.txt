@@ -1,5 +1,10 @@
 # Generate documentation in HTML and PDF format using Sphinx.
 
+option(HALMD_GENERATE_DOC "Set to OFF to skip documentation generation even if the documentation tools are found." ON)
+if(NOT HALMD_GENERATE_DOC)
+  return()
+endif(NOT HALMD_GENERATE_DOC)
+
 set(GENERATE_DOC TRUE)
 
 # We use the Sphinx documentation generator to render HTML and manual
