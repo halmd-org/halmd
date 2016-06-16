@@ -196,16 +196,16 @@ configure_file(
 )
 
 add_test(unit/mdsim/integrators/verlet_nvt_hoover/lua/host/2d
-  @CMAKE_COMMAND@ -DDIMENSION=2 -DUSE_HOST=1 -P test_unit_mdsim_integrators_verlet_nvt_hoover.cmake
+  ${CMAKE_COMMAND} -DDIMENSION=2 -DUSE_HOST=1 -P test_unit_mdsim_integrators_verlet_nvt_hoover.cmake
 )
 add_test(unit/mdsim/integrators/verlet_nvt_hoover/lua/host/3d
-  @CMAKE_COMMAND@ -DDIMENSION=3 -DUSE_HOST=1 -P test_unit_mdsim_integrators_verlet_nvt_hoover.cmake
+  ${CMAKE_COMMAND} -DDIMENSION=3 -DUSE_HOST=1 -P test_unit_mdsim_integrators_verlet_nvt_hoover.cmake
 )
 if(HALMD_WITH_GPU)
   add_test(unit/mdsim/integrators/verlet_nvt_hoover/lua/gpu/2d
-    @CMAKE_COMMAND@ -DDIMENSION=2 -P test_unit_mdsim_integrators_verlet_nvt_hoover.cmake
+    ${CMAKE_COMMAND} -DDIMENSION=2 -P test_unit_mdsim_integrators_verlet_nvt_hoover.cmake
   )
   add_test(unit/mdsim/integrators/verlet_nvt_hoover/lua/gpu/3d
-    @CMAKE_COMMAND@ -DDIMENSION=3 -P test_unit_mdsim_integrators_verlet_nvt_hoover.cmake
+    ${CMAKE_COMMAND} -DDIMENSION=3 -P test_unit_mdsim_integrators_verlet_nvt_hoover.cmake
   )
 endif()

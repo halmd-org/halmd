@@ -2,6 +2,11 @@ cmake_minimum_required(VERSION 2.8.8)
 
 set(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake")
 
+# Set cmake policies to avoid warnings in newer cmake versions.
+if(POLICY CMP0053)
+  cmake_policy(SET CMP0053 NEW)
+endif()
+
 # If the subdirectory cmake/ contains a version.cmake.in file, we are in a git
 # repository, then extract the git commit from the repository to generate
 # CMake files with version information and rules for crafting a HALMD archive.
