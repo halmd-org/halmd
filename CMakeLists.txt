@@ -6,6 +6,9 @@ set(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake")
 if(POLICY CMP0053)
   cmake_policy(SET CMP0053 NEW)
 endif()
+if(POLICY CMP0026)
+  cmake_policy(SET CMP0026 NEW)
+endif()
 
 # If the subdirectory cmake/ contains a version.cmake.in file, we are in a git
 # repository, then extract the git commit from the repository to generate
