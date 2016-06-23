@@ -40,17 +40,15 @@ CMake
 
 The build process of HALMD depends on `CMake`_, a cross-platform, open-source build system.
 
-Get the latest `CMake-CUDA`_, currently `CMake-CUDA 2.8.12.2`_.
+Get the latest `CMake`_, currently `CMake 3.5.2`_.
 
 .. _CMake: http://www.cmake.org
 
-.. _CMake-CUDA: https://github.com/halmd-org/cmake-cuda
+.. _CMake 3.5.2: https://cmake.org/files/v3.5/cmake-3.5.2.tar.gz
 
-.. _CMake-CUDA 2.8.12.2: https://github.com/halmd-org/cmake-cuda/archive/2.8.12.2-cuda.tar.gz
+Extract the CMake source package, and prepare the CMake build with ::
 
-Extract the CMake-CUDA source package, and prepare the CMake build with ::
-
-   ./configure --prefix=$HOME/opt/cmake-cuda
+   ./configure --prefix=$HOME/opt/cmake
 
 Compile CMake with ::
 
@@ -62,8 +60,8 @@ Install CMake into your packages directory::
 
 Include CMake in your shell environment, by adding to ~/.bashrc::
 
-   export PATH="${HOME}/opt/cmake-cuda/bin${PATH+:$PATH}"
-   export MANPATH="${HOME}/opt/cmake-cuda/man${MANPATH+:$MANPATH}"
+   export PATH="${HOME}/opt/cmake/bin${PATH+:$PATH}"
+   export MANPATH="${HOME}/opt/cmake/man${MANPATH+:$MANPATH}"
 
 
 Boost C++ libraries

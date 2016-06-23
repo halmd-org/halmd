@@ -62,58 +62,58 @@ distclean: distclean-cmake distclean-lua distclean-luajit distclean-boost distcl
 env: env-cmake env-lua env-luajit env-boost env-hdf5 env-git env-python-sphinx env-graphviz env-gdb env-clang env-gcc env-halmd env-nvcuda-tools env-ninja
 
 ##
-## CMake with CMake-CUDA patch
+## CMake
 ##
 
-CMAKE_CUDA_VERSION = 2.8.12.2-cuda
-CMAKE_CUDA_TARBALL = $(CMAKE_CUDA_VERSION).tar.gz
-CMAKE_CUDA_TARBALL_SHA256 = e884782cfc9fcb2c3720c51d1924d2a0dacebb10d09a6524e773ada1ba76c093
-CMAKE_CUDA_TARBALL_URL = http://git.halmd.org/cmake-cuda/archive/$(CMAKE_CUDA_TARBALL)
-CMAKE_SOURCE_DIR = cmake-cuda-$(CMAKE_CUDA_VERSION)
+CMAKE_VERSION = 2.8.12.2
+CMAKE_TARBALL = cmake-$(CMAKE_VERSION).tar.gz
+CMAKE_TARBALL_SHA256 = 8c6574e9afabcb9fc66f463bb1f2f051958d86c85c37fccf067eb1a44a120e5e
+CMAKE_TARBALL_URL = https://cmake.org/files/v2.8/$(CMAKE_TARBALL)
+CMAKE_SOURCE_DIR = cmake-$(CMAKE_VERSION)
 CMAKE_BUILD_DIR = $(CMAKE_SOURCE_DIR)/build
-CMAKE_INSTALL_DIR = $(PREFIX)/cmake-$(CMAKE_CUDA_VERSION)
+CMAKE_INSTALL_DIR = $(PREFIX)/cmake-$(CMAKE_VERSION)
 
-.fetch-cmake-$(CMAKE_CUDA_VERSION):
-	@$(RM) $(CMAKE_CUDA_TARBALL)
-	$(WGET) $(CMAKE_CUDA_TARBALL_URL) -O $(CMAKE_CUDA_TARBALL)
-	@echo '$(CMAKE_CUDA_TARBALL_SHA256)  $(CMAKE_CUDA_TARBALL)' | $(SHA256SUM)
+.fetch-cmake-$(CMAKE_VERSION):
+	@$(RM) $(CMAKE_TARBALL)
+	$(WGET) $(CMAKE_TARBALL_URL) -O $(CMAKE_TARBALL)
+	@echo '$(CMAKE_TARBALL_SHA256)  $(CMAKE_TARBALL)' | $(SHA256SUM)
 	@$(TOUCH) $@
 
-fetch-cmake: .fetch-cmake-$(CMAKE_CUDA_VERSION)
+fetch-cmake: .fetch-cmake-$(CMAKE_VERSION)
 
-.extract-cmake-$(CMAKE_CUDA_VERSION): .fetch-cmake-$(CMAKE_CUDA_VERSION)
+.extract-cmake-$(CMAKE_VERSION): .fetch-cmake-$(CMAKE_VERSION)
 	$(RM) $(CMAKE_SOURCE_DIR)
-	$(TAR) -xzf $(CMAKE_CUDA_TARBALL)
+	$(TAR) -xzf $(CMAKE_TARBALL)
 	@$(TOUCH) $@
 
-extract-cmake: .extract-cmake-$(CMAKE_CUDA_VERSION)
+extract-cmake: .extract-cmake-$(CMAKE_VERSION)
 
-.configure-cmake-$(CMAKE_CUDA_VERSION): .extract-cmake-$(CMAKE_CUDA_VERSION)
+.configure-cmake-$(CMAKE_VERSION): .extract-cmake-$(CMAKE_VERSION)
 	$(MKDIR) $(CMAKE_BUILD_DIR)
 	cd $(CMAKE_BUILD_DIR) && ../configure --prefix=$(CMAKE_INSTALL_DIR)
 	@$(TOUCH) $@
 
-configure-cmake: .configure-cmake-$(CMAKE_CUDA_VERSION)
+configure-cmake: .configure-cmake-$(CMAKE_VERSION)
 
-.build-cmake-$(CMAKE_CUDA_VERSION): .configure-cmake-$(CMAKE_CUDA_VERSION)
+.build-cmake-$(CMAKE_VERSION): .configure-cmake-$(CMAKE_VERSION)
 	cd $(CMAKE_BUILD_DIR) && $(MAKE) $(PARALLEL_BUILD_FLAGS)
 	@$(TOUCH) $@
 
-build-cmake: .build-cmake-$(CMAKE_CUDA_VERSION)
+build-cmake: .build-cmake-$(CMAKE_VERSION)
 
-install-cmake: .build-cmake-$(CMAKE_CUDA_VERSION)
+install-cmake: .build-cmake-$(CMAKE_VERSION)
 	cd $(CMAKE_BUILD_DIR) && $(MAKE) install
 
 clean-cmake:
-	@$(RM) .build-cmake-$(CMAKE_CUDA_VERSION)
-	@$(RM) .configure-cmake-$(CMAKE_CUDA_VERSION)
+	@$(RM) .build-cmake-$(CMAKE_VERSION)
+	@$(RM) .configure-cmake-$(CMAKE_VERSION)
 	$(RM) $(CMAKE_BUILD_DIR)
 
 distclean-cmake: clean-cmake
-	@$(RM) .fetch-cmake-$(CMAKE_CUDA_VERSION)
-	@$(RM) .extract-cmake-$(CMAKE_CUDA_VERSION)
+	@$(RM) .fetch-cmake-$(CMAKE_VERSION)
+	@$(RM) .extract-cmake-$(CMAKE_VERSION)
 	$(RM) $(CMAKE_SOURCE_DIR)
-	$(RM) $(CMAKE_CUDA_TARBALL)
+	$(RM) $(CMAKE_TARBALL)
 
 env-cmake:
 	@echo 'export PATH="$(CMAKE_INSTALL_DIR)/bin$${PATH+:$$PATH}"'

@@ -24,19 +24,10 @@ Build environment
   HALMD makes extensive use of C++11 features. Instructions for a
   semi-automated build of GCC are given in :ref:`automatic`.
 
-* `CMake <http://www.cmake.org/>`_ ≥ 2.8.8 with a patch for
-  `native CUDA support <https://github.com/halmd-org/cmake-cuda>`_
+* `CMake <http://www.cmake.org/>`_ ≥ 2.8.12
 
   The build process of HALMD depends on CMake, a cross-platform, open-source
   build system.
-
-  .. note::
-
-    The CMake-CUDA patch adds *native* CUDA source file compilation and linking
-    support to CMake and is not to be confused nor compatible with the CUDA
-    module in CMake 2.8.
-
-    The patch is not needed for builds without GPU acceleration.
 
 * `NVIDIA CUDA toolkit <http://www.nvidia.com/object/cuda_get.html>`_ ≥ 5.0
 
