@@ -132,7 +132,7 @@ void h5md(std::vector<unsigned int> const& ntypes)
     typedef halmd::fixed_vector<float, dimension> float_vector_type;
     typedef halmd::fixed_vector<double, dimension> double_vector_type;
 
-    std::string const filename("test_io_h5md_trajectory_" + std::to_string(dimension) + "d.trj");
+    std::string filename("test_io_h5md_trajectory_" + std::to_string(dimension) + "d_single" + std::to_string (ntypes.size()) + ".trj");
 
     BOOST_TEST_MESSAGE("Testing " << ntypes.size() << " particle types");
 
@@ -198,6 +198,8 @@ void h5md(std::vector<unsigned int> const& ntypes)
     // resetting the shared_ptr first closes the HDF5 file
     writer.reset();
     writer_file.reset();
+
+    filename = std::string ("test_io_h5md_trajectory_" + std::to_string(dimension) + "d_double" + std::to_string (ntypes.size()) + ".trj");
     writer_file = std::make_shared<halmd::io::writers::h5md::file>(filename);
     writer = std::make_shared<halmd::io::writers::h5md::append>(writer_file->root(), std::vector<std::string>{"trajectory"}, clock);
 
