@@ -72,7 +72,7 @@ if(NOT HALMD_DOC_ONLY OR NOT HALMD_USE_GIT)
     if(COMMAND cuda_add_library)
       # original CMake
 
-      if(CMAKE_CUDA_COMPILER_VERSION VERSION_LESS 6.5)
+      if(CUDA_VERSION VERSION_LESS 6.5)
         set(HALMD_GPU_ARCH "120") # temporary workaround
         set(CMAKE_CUDA_FLAGS "-Xcompiler -fPIC -Xptxas -v -arch=compute_12 -code=compute_12,sm_13,sm_20" CACHE STRING "Flags used by the compiler during all build types")
       else()
