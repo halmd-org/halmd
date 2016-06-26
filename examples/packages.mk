@@ -65,10 +65,10 @@ env: env-cmake env-lua env-luajit env-boost env-hdf5 env-git env-python-sphinx e
 ## CMake
 ##
 
-CMAKE_VERSION = 2.8.12.2
+CMAKE_VERSION = 3.5.2
 CMAKE_TARBALL = cmake-$(CMAKE_VERSION).tar.gz
 CMAKE_TARBALL_SHA256 = 8c6574e9afabcb9fc66f463bb1f2f051958d86c85c37fccf067eb1a44a120e5e
-CMAKE_TARBALL_URL = https://cmake.org/files/v2.8/$(CMAKE_TARBALL)
+CMAKE_TARBALL_URL = https://cmake.org/files/v3.5/$(CMAKE_TARBALL)
 CMAKE_SOURCE_DIR = cmake-$(CMAKE_VERSION)
 CMAKE_BUILD_DIR = $(CMAKE_SOURCE_DIR)/build
 CMAKE_INSTALL_DIR = $(PREFIX)/cmake-$(CMAKE_VERSION)
@@ -332,7 +332,7 @@ env-boost:
 ##
 ## HDF5 library
 ##
-HDF5_VERSION = 1.8.15
+HDF5_VERSION = 1.8.16
 HDF5_TARBALL = hdf5-$(HDF5_VERSION).tar.bz2
 HDF5_TARBALL_URL = http://www.hdfgroup.org/ftp/HDF5/releases/hdf5-$(HDF5_VERSION)/src/$(HDF5_TARBALL)
 HDF5_TARBALL_SHA256 = 0003ac76314b9c3dd819f595eb33890f02f6bf000414013a89f9907ac09e3920
