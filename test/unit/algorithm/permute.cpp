@@ -48,7 +48,7 @@ static std::vector<unsigned int> make_uniform_array(int count)
     std::generate(output.begin(), output.end(), [&]() {
         return dist(gen);
     });
-    return std::move(output);
+    return output;
 }
 
 /**
