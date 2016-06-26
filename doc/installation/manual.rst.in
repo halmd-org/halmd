@@ -67,11 +67,11 @@ Include CMake in your shell environment, by adding to ~/.bashrc::
 Boost C++ libraries
 ^^^^^^^^^^^^^^^^^^^
 
-Get the latest `Boost source package`_, currently `Boost 1.57.0`_ (1.55.0
+Get the latest `Boost source package`_, currently `Boost 1.61.0`_ (1.55.0
 is the minimum required version).
 
 .. _Boost source package: http://www.boost.org/users/download
-.. _Boost 1.57.0: http://sourceforge.net/projects/boost/files/boost/1.57.0/boost_1_57_0.tar.bz2
+.. _Boost 1.61.0: http://sourceforge.net/projects/boost/files/boost/1.61.0/boost_1_61_0.tar.bz2
 
 To build Boost, extract the source package and bootstrap the build with ::
 
@@ -97,21 +97,21 @@ This compiles both dynamic and static libraries.
 
 Install the Boost libraries into your packages directory::
 
-   ./bjam cxxflags="-fPIC -std=c++11" install --prefix=$HOME/opt/boost_1_57_0
+   ./bjam cxxflags="-fPIC -std=c++11" install --prefix=$HOME/opt/boost_1_61_0
 
 Include Boost in your shell environment, by adding to ~/.bashrc::
 
-   export CMAKE_PREFIX_PATH="${HOME}/opt/boost_1_57_0${CMAKE_PREFIX_PATH+:$CMAKE_PREFIX_PATH}"
-   export LD_LIBRARY_PATH="${HOME}/opt/boost_1_57_0/lib${LD_LIBRARY_PATH+:$LD_LIBRARY_PATH}"
+   export CMAKE_PREFIX_PATH="${HOME}/opt/boost_1_61_0${CMAKE_PREFIX_PATH+:$CMAKE_PREFIX_PATH}"
+   export LD_LIBRARY_PATH="${HOME}/opt/boost_1_61_0/lib${LD_LIBRARY_PATH+:$LD_LIBRARY_PATH}"
 
 
 Lua interpreter
 ^^^^^^^^^^^^^^^
 
-Get the latest Lua source package from the `Lua download`_ page, currently `Lua 5.2.3`_.
+Get the latest Lua source package from the `Lua download`_ page, currently `Lua 5.2.4`_.
 
 .. _Lua download: http://www.lua.org/download.html
-.. _Lua 5.2.3: http://www.lua.org/ftp/lua-5.2.3.tar.gz
+.. _Lua 5.2.4: http://www.lua.org/ftp/lua-5.2.4.tar.gz
 
 Extract the Lua source package.
 
@@ -128,26 +128,26 @@ On **64-bit platforms**, include the ``-fPIC`` flag using ::
 
 Install the Lua library into your packages directory::
 
-   make install INSTALL_TOP=~/opt/lua-5.2.3
+   make install INSTALL_TOP=~/opt/lua-5.2.4
 
 Include Lua in your shell environment, by adding to ~/.bashrc::
 
-   export CMAKE_PREFIX_PATH="${HOME}/opt/lua-5.2.3${CMAKE_PREFIX_PATH+:$CMAKE_PREFIX_PATH}"
-   export PATH="${HOME}/opt/lua-5.2.3/bin${PATH+:$PATH}"
-   export MANPATH="${HOME}/opt/lua-5.2.3/man${MANPATH+:$MANPATH}"
+   export CMAKE_PREFIX_PATH="${HOME}/opt/lua-5.2.4${CMAKE_PREFIX_PATH+:$CMAKE_PREFIX_PATH}"
+   export PATH="${HOME}/opt/lua-5.2.4/bin${PATH+:$PATH}"
+   export MANPATH="${HOME}/opt/lua-5.2.4/man${MANPATH+:$MANPATH}"
 
 
 HDF5 library
 ^^^^^^^^^^^^
 
-Get the latest `HDF5 source package`_, currently `HDF5 1.8.14`_.
+Get the latest `HDF5 source package`_, currently `HDF5 1.10.0-patch1`_.
 
 .. _HDF5 source package: http://www.hdfgroup.org/HDF5/release/obtain5.html#obtain
-.. _HDF5 1.8.14: http://www.hdfgroup.org/ftp/HDF5/current/src/hdf5-1.8.14.tar.gz
+.. _HDF5 1.10.0-patch1: http://www.hdfgroup.org/ftp/HDF5/releases/hdf5-1.10/hdf5-1.10.0-patch1/src/hdf5-1.10.0-patch1.tar.bz2
 
 Prepare a statically linked build of the HDF5 C and C++ library with ::
 
-   CFLAGS=-fPIC CXXFLAGS=-fPIC ./configure --enable-cxx --enable-static --prefix=$HOME/opt/hdf5-1.8.14
+   CFLAGS=-fPIC CXXFLAGS=-fPIC ./configure --enable-cxx --enable-static --prefix=$HOME/opt/hdf5-1.10.0-patch1
 
 .. note:: Compiling HDF5 with C++ support disables multi-threading.
 
@@ -161,8 +161,8 @@ Install the HDF5 libraries into your packages directory::
 
 Include HDF5 in your shell environment, by adding to ~/.bashrc::
 
-   export PATH="${HOME}/opt/hdf5-1.8.14/bin${PATH+:$PATH}"
-   export CMAKE_PREFIX_PATH="${HOME}/opt/hdf5-1.8.14${CMAKE_PREFIX_PATH+:$CMAKE_PREFIX_PATH}"
+   export PATH="${HOME}/opt/hdf5-1.10.0-patch1/bin${PATH+:$PATH}"
+   export CMAKE_PREFIX_PATH="${HOME}/opt/hdf5-1.10.0-patch1${CMAKE_PREFIX_PATH+:$CMAKE_PREFIX_PATH}"
 
 
 Sphinx documentation generator
