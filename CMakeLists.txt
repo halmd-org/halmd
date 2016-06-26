@@ -79,6 +79,7 @@ if(NOT HALMD_DOC_ONLY OR NOT HALMD_USE_GIT)
         set(HALMD_GPU_ARCH "210") # temporary workaround
         set(CMAKE_CUDA_FLAGS "-Xcompiler -fPIC -Xptxas -v -arch=compute_20 -code=compute_20,sm_20 -ftz=true -prec-div=false -prec-sqrt=false" CACHE STRING "Flags used by the compiler during all build types")
       endif()
+      mark_as_advanced(CMAKE_CUDA_FLAGS)
 
       set(CUDA_NVCC_FLAGS "${CMAKE_CUDA_FLAGS} \"-DBOOST_NOINLINE=__attribute__((noinline))\"" CACHE INTERNAL "Internal NVCC flags (invisible to the user and overwritten by CMAKE_CUDA_FLAGS)" FORCE)
       set(CUDA_PROPAGATE_HOST_FLAGS OFF CACHE INTERNAL "Internal host flag propagation flag (invisible to the user and always disabled)" FORCE)
