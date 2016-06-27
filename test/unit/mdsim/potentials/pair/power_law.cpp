@@ -238,7 +238,7 @@ void power_law<float_type>::test()
         BOOST_CHECK_SMALL(norm_inf(fval * r - f), max(norm_inf(fval * r), float_type(1)) * tolerance);
 
         // the prefactor is not justified, it is needed for absolute differences on the order 1e-18
-        BOOST_CHECK_CLOSE_FRACTION(en_pot_, en_pot[i], 5 * tolerance);
+        BOOST_CHECK_CLOSE_FRACTION(en_pot_, en_pot[i], 6 * tolerance);
     }
 }
 
