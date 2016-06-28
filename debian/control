@@ -1,7 +1,7 @@
 Source: halmd
 Section: science
 Priority: optional
-Maintainer: Peter Colberg <peter@colberg.org>
+Maintainer: Felix Höfling <f.hoefling@fu-berlin.de>
 Build-Depends: debhelper (>= 8.0.0)
 Standards-Version: 3.9.2
 Homepage: http://halmd.org/
