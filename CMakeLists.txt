@@ -84,6 +84,9 @@ if(NOT HALMD_DOC_ONLY OR NOT HALMD_USE_GIT)
       set(CUDA_NVCC_FLAGS "${CMAKE_CUDA_FLAGS} \"-DBOOST_NOINLINE=__attribute__((noinline))\"" CACHE INTERNAL "Internal NVCC flags (invisible to the user and overwritten by CMAKE_CUDA_FLAGS)" FORCE)
       set(CUDA_PROPAGATE_HOST_FLAGS OFF CACHE INTERNAL "Internal host flag propagation flag (invisible to the user and always disabled)" FORCE)
       set(CUDA_INCLUDE_DIR ${CUDA_INCLUDE_DIRS})
+
+      # output information about CUDA Compiler
+      message(STATUS "The CUDA compiler identification is NVCC ${CUDA_VERSION}")
     else()
       # CMake with CUDA patch by Peter Colberg
 
