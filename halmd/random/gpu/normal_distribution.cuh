@@ -17,13 +17,6 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-//
-// This is a parallel version of the Unix rand48 generator for CUDA.
-// It is based on the rand48 generator of the GNU Scientific Library.
-// The file rng/rand48.c was written by James Theiler and Brian Gough
-// and is licensed under the GPL v3 or later.
-//
-
 #ifndef HALMD_RANDOM_GPU_NORMAL_DISTRIBUTION_CUH
 #define HALMD_RANDOM_GPU_NORMAL_DISTRIBUTION_CUH
 
