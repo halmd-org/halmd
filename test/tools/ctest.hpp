@@ -25,8 +25,12 @@
 #include <boost/version.hpp>
 // avoid warnings about superfluous semicola
 // after BOOST_GLOBAL_FIXTURE for boost < 1.59
+// unfortunately this is not supported for older
+// versions of GCC
 #if BOOST_VERSION < 105900 && defined(__GNUC__)
-#  pragma GCC diagnostic ignored "-Wpedantic"
+#  if (__GNUC__ > 4) || ((__GNUC__ == 4) && (__GNUC_MINOR__ >= 8))
+#    pragma GCC diagnostic ignored "-Wpedantic"
+#  endif
 #endif
 
 /**
