@@ -26,10 +26,22 @@ find_program(SPHINX_EXECUTABLE NAMES sphinx-build
   DOC "Sphinx documentation generator"
 )
 
+if(SPHINX_EXECUTABLE)
+   execute_process (COMMAND "${SPHINX_EXECUTABLE}" -h
+                    OUTPUT_VARIABLE _SPHINX_VERSION
+                    ERROR_VARIABLE  _SPHINX_VERSION
+   )
+
+   if (_SPHINX_VERSION MATCHES "Sphinx v([0-9]+\\.[0-9]+\\.[0-9]+)")
+     set (SPHINX_VERSION_STRING "${CMAKE_MATCH_1}")
+  endif()
+endif ()
+
 include(FindPackageHandleStandardArgs)
 
-find_package_handle_standard_args(Sphinx DEFAULT_MSG
-  SPHINX_EXECUTABLE
+find_package_handle_standard_args(Sphinx
+  REQUIRED_VARS SPHINX_EXECUTABLE
+  VERSION_VAR SPHINX_VERSION_STRING
 )
 
 mark_as_advanced(

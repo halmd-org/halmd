@@ -44,6 +44,12 @@ endif()
 # to avoid rebuilding documentation when input files remain unchanged.
 set(HALMD_DOC_INPUT_FILES)
 
+if(${SPHINX_VERSION_STRING} VERSION_LESS "1.4.0")
+  set (SPHINX_IMGMATH_EXT "sphinx.ext.pngmath")
+else()
+  set (SPHINX_IMGMATH_EXT "sphinx.ext.imgmath")
+endif()
+
 configure_file(conf.py.in conf.py)
 list(APPEND HALMD_DOC_INPUT_FILES ${CMAKE_CURRENT_BINARY_DIR}/conf.py)
 
