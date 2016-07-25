@@ -3,16 +3,57 @@
 Changelog
 *********
 
+Version 1.0-alpha5
+==================
+
+**Breaking changes**
+
+* increase minimal required version of the CUDA SDK to 5.0 *(Nicolas Höft)*
+
+**Bug fixes**
+
+* fix build with up-to-date versions of build tools and third-party libraries:
+  *(Daniel Kirchner, Nicolas Höft)*
+
+* minor fixes in exemplary simulation scripts *(Felix Höfling, Nicolas Höft)*
+
+**New features**
+
+* release the software under the terms of the LGPL-3+ license *(Felix Höfling)*
+
+* find additional Lua scripts in the directory of the simulation script, which
+  allows factoring out common functions or definitions, e.g., of interaction
+  potentials *(Felix Höfling)*
+
+* add function ``to_particle()`` to particle groups, which convert the selected
+  particles to an instance of ``halmd.mdsim.particle`` *(Nicolas Höft)*
+
+**Improvements**
+
+* drop restriction on minimal number of Verlet neighbour cells (fall back to no
+  binning upon neighbour list construction) *(Nicolas Höft)*
+
+* builds with standard CMake ≥ 2.8.12, the patch for native CUDA support is not
+  needed anymore *(Daniel Kirchner)*
+
+* support version 7.5 of the CUDA SDK *(Daniel Kirchner)*
+
+* increase default CUDA compute capability to 2.0 (older hardware is still
+  supported with CUDA SDK ≤ 6.0) *(Daniel Kirchner)*
+
+
 Version 1.0-alpha4
 ==================
 
 **Breaking changes**
 
-* Lua scripts in ``examples/liquid``: rename option "--trajectory" to "--input" *(Felix Höfling)*
+* Lua scripts in ``examples/liquid``: rename option "--trajectory" to "--input"
+  *(Felix Höfling)*
 
 **Bug fixes**
 
-* fix native build for Fermi and Kepler GPUs (compute capability ≥ 2.0) *(Nicolas Höft)*
+* fix native build for Fermi and Kepler GPUs (compute capability ≥ 2.0)
+  *(Nicolas Höft)*
 
 * fix build with Boost ≥ 1.57.0 *(Nicolas Höft)*
 
@@ -29,7 +70,8 @@ Version 1.0-alpha4
 
 * support version 6.0 of the CUDA SDK *(Nicolas Höft)*
 
-* support both Lua 5.1 and Lua 5.2 (built without compatibility flags) *(Nicolas Höft)*
+* support both Lua 5.1 and Lua 5.2 (built without compatibility flags)
+  *(Nicolas Höft)*
 
 
 Version 1.0-alpha3
