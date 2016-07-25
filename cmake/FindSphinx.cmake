@@ -6,8 +6,9 @@
 #  SPHINX_FOUND
 
 #=============================================================================
-# Copyright 2002-2009 Kitware, Inc.
+# Copyright 2016      Daniel Kirchner
 # Copyright 2009-2011 Peter Colberg
+# Copyright 2002-2009 Kitware, Inc.
 #
 # Distributed under the OSI-approved BSD License (the "License");
 # see accompanying file COPYING-CMAKE-SCRIPTS for details.
@@ -32,7 +33,7 @@ if(SPHINX_EXECUTABLE)
                     ERROR_VARIABLE  _SPHINX_VERSION
    )
 
-   if (_SPHINX_VERSION MATCHES "Sphinx v([0-9]+\\.[0-9]+\\.[0-9]+)")
+   if (_SPHINX_VERSION MATCHES "Sphinx v([0-9]+(\\.[0-9]+)+)")
      set (SPHINX_VERSION_STRING "${CMAKE_MATCH_1}")
   endif()
 endif ()
