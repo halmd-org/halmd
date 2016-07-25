@@ -1023,7 +1023,7 @@ env-gcc:
 ## HALMD Highly Accerelated Large-scale Molecular Dynamics
 ##
 
-HALMD_VERSION = 1.0-alpha4
+HALMD_VERSION = 1.0-alpha5
 HALMD_TARBALL = halmd-$(HALMD_VERSION).tar.bz2
 HALMD_TARBALL_URL = http://code.halmd.org/tar/$(HALMD_TARBALL)
 HALMD_SOURCE_DIR = halmd-$(HALMD_VERSION)
