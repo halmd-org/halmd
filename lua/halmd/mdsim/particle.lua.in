@@ -227,8 +227,8 @@ local M = module(function(args)
     -- temporarily redirect removed get_* functions to the new get("*")
     for _,name in ipairs({"position", "image", "velocity", "tag", "reverse_tag", "species",
       "mass", "force", "potential_energy", "stress_pot"}) do
-        self["get_"..name] = self["get_"..name] or function(self) return self:get(name) end
-        self["set_"..name] = self["set_"..name] or function(self, data) self:set(name, data) end
+        self["get_"..name] = function(self) return self:get(name) end
+        self["set_"..name] = function(self, data) self:set(name, data) end
     end
 
     -- store particle label as Lua property

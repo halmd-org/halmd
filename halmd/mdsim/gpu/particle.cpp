@@ -1,4 +1,5 @@
 /*
+ * Copyright © 2016      Daniel Kirchner
  * Copyright © 2010-2012 Felix Höfling
  * Copyright © 2013      Nicolas Höft
  * Copyright © 2008-2012 Peter Colberg
@@ -58,28 +59,58 @@ particle<dimension, float_type>::particle(size_type nparticle, unsigned int nspe
   // allocate global device memory
   , nparticle_(nparticle)
   , nspecies_(std::max(nspecies, 1u))
-  , g_position_(nparticle)
-  , g_image_(nparticle)
-  , g_velocity_(nparticle)
-  , g_tag_(nparticle)
-  , g_reverse_tag_(nparticle)
-  , g_force_(nparticle)
-  , g_en_pot_(nparticle)
-  , g_stress_pot_(nparticle)
   // enable auxiliary variables by default to allow sampling of initial state
   , force_zero_(true)
   , force_dirty_(true)
   , aux_dirty_(true)
   , aux_enabled_(true)
 {
-    auto g_position = make_cache_mutable(g_position_);
-    auto g_image = make_cache_mutable(g_image_);
-    auto g_velocity = make_cache_mutable(g_velocity_);
-    auto g_tag = make_cache_mutable(g_tag_);
-    auto g_reverse_tag = make_cache_mutable(g_reverse_tag_);
-    auto g_force = make_cache_mutable(g_force_);
-    auto g_en_pot = make_cache_mutable(g_en_pot_);
-    auto g_stress_pot = make_cache_mutable(g_stress_pot_);
+    // create particle data
+    auto position_data = particle_data::create<gpu_position_type>(nparticle);
+    auto image_data = particle_data::create<gpu_image_type>(nparticle);
+    auto velocity_data = particle_data::create<gpu_velocity_type>(nparticle);
+    auto tag_data = particle_data::create<gpu_tag_type>(nparticle);
+    auto reverse_tag_data = particle_data::create<gpu_reverse_tag_type>(nparticle);
+    auto force_data = particle_data::create<gpu_force_type>(nparticle, [this](){ this->update_force_(); });
+    auto en_pot_data = particle_data::create<gpu_en_pot_type>(nparticle, [this](){ this->update_force_(true); });
+    auto stress_pot_data = particle_data::create<gpu_stress_pot_type>(nparticle, [this](){ this->update_force_(true); });
+
+    // store particle data in data map
+    data_["g_position"] = position_data;
+    data_["g_image"] = image_data;
+    data_["g_velocity"] = velocity_data;
+    data_["g_tag"] = tag_data;
+    data_["g_reverse_tag"] = reverse_tag_data;
+    data_["g_force"] = force_data;
+    data_["g_en_pot"] = en_pot_data;
+    data_["g_stress_pot"] = stress_pot_data;
+
+    // create host data wrappers for packed data
+    data_["position"] = particle_data::create_packed_wrapper<tuple<position_type, species_type>, 0>(position_data);
+    data_["species"] = particle_data::create_packed_wrapper<tuple<position_type, species_type>, 1>(position_data);
+    data_["velocity"] = particle_data::create_packed_wrapper<tuple<velocity_type, mass_type>, 0>(velocity_data);
+    data_["mass"] = particle_data::create_packed_wrapper<tuple<velocity_type, mass_type>, 1>(velocity_data);
+
+    // create host wrappers for other data
+    data_["force"] = particle_data::create_host_wrapper<force_type>(force_data);
+    data_["image"] = particle_data::create_host_wrapper<image_type>(image_data);
+    data_["tag"] = particle_data::create_host_wrapper<tag_type>(tag_data);
+    data_["reverse_tag"] = particle_data::create_host_wrapper<reverse_tag_type>(reverse_tag_data);
+    data_["en_pot"] = particle_data::create_host_wrapper<en_pot_type>(en_pot_data);
+    data_["stress_pot"] = data_["g_stress_pot"];// TODO: some wrapper is necessary here to allow for a custom get function
+
+    // create alias for potential energy
+    data_["potential_energy"] = data_["en_pot"];
+
+    // get access to the underlying cuda vectors for initialization
+    auto g_position = make_cache_mutable(position_data->mutable_data());
+    auto g_image = make_cache_mutable(image_data->mutable_data());
+    auto g_velocity = make_cache_mutable(velocity_data->mutable_data());
+    auto g_tag = make_cache_mutable(tag_data->mutable_data());
+    auto g_reverse_tag = make_cache_mutable(reverse_tag_data->mutable_data());
+    auto g_force = make_cache_mutable(force_data->mutable_data());
+    auto g_en_pot = make_cache_mutable(en_pot_data->mutable_data());
+    auto g_stress_pot = make_cache_mutable(stress_pot_data->mutable_data());
 
     g_force->reserve(dim.threads());
     g_en_pot->reserve(dim.threads());
@@ -188,18 +219,18 @@ void particle<dimension, float_type>::aux_enable()
 template <int dimension, typename float_type>
 void particle<dimension, float_type>::rearrange(cuda::vector<unsigned int> const& g_index)
 {
-    auto g_position = make_cache_mutable(g_position_);
-    auto g_image = make_cache_mutable(g_image_);
-    auto g_velocity = make_cache_mutable(g_velocity_);
-    auto g_tag = make_cache_mutable(g_tag_);
-    auto g_reverse_tag = make_cache_mutable(g_reverse_tag_);
+    auto g_position = make_cache_mutable(mutable_data<gpu_position_type>("g_position"));
+    auto g_image = make_cache_mutable(mutable_data<gpu_image_type>("g_image"));
+    auto g_velocity = make_cache_mutable(mutable_data<gpu_velocity_type>("g_velocity"));
+    auto g_tag = make_cache_mutable(mutable_data<gpu_tag_type>("g_tag"));
+    auto g_reverse_tag = make_cache_mutable(mutable_data<gpu_reverse_tag_type>("g_reverse_tag"));
 
     scoped_timer_type timer(runtime_.rearrange);
 
-    cuda::vector<float4> position(nparticle_);
-    cuda::vector<gpu_vector_type> image(nparticle_);
-    cuda::vector<float4> velocity(nparticle_);
-    cuda::vector<unsigned int> tag(nparticle_);
+    cuda::vector<gpu_position_type> position(nparticle_);
+    cuda::vector<gpu_image_type> image(nparticle_);
+    cuda::vector<gpu_velocity_type> velocity(nparticle_);
+    cuda::vector<gpu_tag_type> tag(nparticle_);
 
     position.reserve(g_position->capacity());
     image.reserve(g_image->capacity());
@@ -247,218 +278,6 @@ void particle<dimension, float_type>::update_force_(bool with_aux)
     on_append_force_();
 }
 
-template <typename particle_type>
-static std::vector<typename particle_type::position_type>
-wrap_get_position(particle_type const& self)
-{
-    std::vector<typename particle_type::position_type> output;
-    output.reserve(self.nparticle());
-    get_position(self, back_inserter(output));
-    return std::move(output);
-}
-
-template <typename particle_type>
-static void
-wrap_set_position(particle_type& self, std::vector<typename particle_type::position_type> const& input)
-{
-    if (input.size() != self.nparticle()) {
-        throw std::invalid_argument("input array size not equal to number of particles");
-    }
-    set_position(self, input.begin());
-}
-
-template <typename particle_type>
-static std::vector<typename particle_type::image_type>
-wrap_get_image(particle_type const& self)
-{
-    std::vector<typename particle_type::image_type> output;
-    output.reserve(self.nparticle());
-    get_image(self, back_inserter(output));
-    return std::move(output);
-}
-
-template <typename particle_type>
-static void
-wrap_set_image(particle_type& self, std::vector<typename particle_type::image_type> const& input)
-{
-    if (input.size() != self.nparticle()) {
-        throw std::invalid_argument("input array size not equal to number of particles");
-    }
-    set_image(self, input.begin());
-}
-
-template <typename particle_type>
-static std::vector<typename particle_type::velocity_type>
-wrap_get_velocity(particle_type const& self)
-{
-    std::vector<typename particle_type::velocity_type> output;
-    output.reserve(self.nparticle());
-    get_velocity(self, back_inserter(output));
-    return std::move(output);
-}
-
-template <typename particle_type>
-static void
-wrap_set_velocity(particle_type& self, std::vector<typename particle_type::velocity_type> const& input)
-{
-    if (input.size() != self.nparticle()) {
-        throw std::invalid_argument("input array size not equal to number of particles");
-    }
-    set_velocity(self, input.begin());
-}
-
-template <typename particle_type>
-static std::vector<typename particle_type::tag_type>
-wrap_get_tag(particle_type const& self)
-{
-    std::vector<typename particle_type::tag_type> output;
-    output.reserve(self.nparticle());
-    get_tag(self, back_inserter(output));
-    return std::move(output);
-}
-
-template <typename particle_type>
-static void
-wrap_set_tag(particle_type& self, std::vector<typename particle_type::tag_type> const& input)
-{
-    typedef typename particle_type::tag_type tag_type;
-    if (input.size() != self.nparticle()) {
-        throw std::invalid_argument("input array size not equal to number of particles");
-    }
-    tag_type nparticle = self.nparticle();
-    set_tag(
-        self
-      , boost::make_transform_iterator(input.begin(), [&](tag_type t) -> tag_type {
-            if (t >= nparticle) {
-                throw std::invalid_argument("invalid particle tag");
-            }
-            return t;
-        })
-    );
-}
-
-template <typename particle_type>
-static std::vector<typename particle_type::reverse_tag_type>
-wrap_get_reverse_tag(particle_type const& self)
-{
-    std::vector<typename particle_type::reverse_tag_type> output;
-    output.reserve(self.nparticle());
-    get_reverse_tag(self, back_inserter(output));
-    return std::move(output);
-}
-
-template <typename particle_type>
-static void
-wrap_set_reverse_tag(particle_type& self, std::vector<typename particle_type::reverse_tag_type> const& input)
-{
-    typedef typename particle_type::reverse_tag_type reverse_tag_type;
-    if (input.size() != self.nparticle()) {
-        throw std::invalid_argument("input array size not equal to number of particles");
-    }
-    reverse_tag_type nparticle = self.nparticle();
-    set_reverse_tag(
-        self
-      , boost::make_transform_iterator(input.begin(), [&](reverse_tag_type i) -> reverse_tag_type {
-            if (i >= nparticle) {
-                throw std::invalid_argument("invalid particle reverse tag");
-            }
-            return i;
-        })
-    );
-}
-
-template <typename particle_type>
-static std::vector<typename particle_type::species_type>
-wrap_get_species(particle_type const& self)
-{
-    std::vector<typename particle_type::species_type> output;
-    output.reserve(self.nparticle());
-    get_species(self, back_inserter(output));
-    return std::move(output);
-}
-
-template <typename particle_type>
-static void
-wrap_set_species(particle_type& self, std::vector<typename particle_type::species_type> const& input)
-{
-    typedef typename particle_type::species_type species_type;
-    if (input.size() != self.nparticle()) {
-        throw std::invalid_argument("input array size not equal to number of particles");
-    }
-    species_type nspecies = self.nspecies();
-    set_species(
-        self
-      , boost::make_transform_iterator(input.begin(), [&](species_type s) -> species_type {
-            if (s >= nspecies) {
-                throw std::invalid_argument("invalid particle species");
-            }
-            return s;
-        })
-    );
-}
-
-template <typename particle_type>
-static std::vector<typename particle_type::mass_type>
-wrap_get_mass(particle_type const& self)
-{
-    std::vector<typename particle_type::mass_type> output;
-    output.reserve(self.nparticle());
-    get_mass(self, back_inserter(output));
-    return std::move(output);
-}
-
-template <typename particle_type>
-static void
-wrap_set_mass(particle_type& self, std::vector<typename particle_type::mass_type> const& input)
-{
-    if (input.size() != self.nparticle()) {
-        throw std::invalid_argument("input array size not equal to number of particles");
-    }
-    set_mass(self, input.begin());
-}
-
-template <typename particle_type>
-static std::function<std::vector<typename particle_type::force_type> ()>
-wrap_get_force(std::shared_ptr<particle_type> self)
-{
-    return [=]() -> std::vector<typename particle_type::force_type> {
-        std::vector<typename particle_type::force_type> output;
-        {
-            output.reserve(self->force()->size());
-        }
-        get_force(*self, std::back_inserter(output));
-        return std::move(output);
-    };
-}
-
-template <typename particle_type>
-static std::function<std::vector<typename particle_type::en_pot_type> ()>
-wrap_get_potential_energy(std::shared_ptr<particle_type> self)
-{
-    return [=]() -> std::vector<typename particle_type::en_pot_type> {
-        std::vector<typename particle_type::en_pot_type> output;
-        {
-            output.reserve(self->potential_energy()->size());
-        }
-        get_potential_energy(*self, std::back_inserter(output));
-        return std::move(output);
-    };
-}
-
-template <typename particle_type>
-static std::function<std::vector<typename particle_type::stress_pot_type> ()>
-wrap_get_stress_pot(std::shared_ptr<particle_type> self)
-{
-    return [=]() -> std::vector<typename particle_type::stress_pot_type> {
-        std::vector<typename particle_type::stress_pot_type> output;
-        {
-            output.reserve(self->stress_pot()->size());
-        }
-        get_stress_pot(*self, std::back_inserter(output));
-        return std::move(output);
-    };
-}
-
 template <int dimension, typename float_type>
 static int wrap_dimension(particle<dimension, float_type> const&)
 {
@@ -488,23 +307,8 @@ void particle<dimension, float_type>::luaopen(lua_State* L)
                     .def(constructor<size_type, unsigned int>())
                     .property("nparticle", &particle::nparticle)
                     .property("nspecies", &particle::nspecies)
-                    .def("get_position", &wrap_get_position<particle>)
-                    .def("set_position", &wrap_set_position<particle>)
-                    .def("get_image", &wrap_get_image<particle>)
-                    .def("set_image", &wrap_set_image<particle>)
-                    .def("get_velocity", &wrap_get_velocity<particle>)
-                    .def("set_velocity", &wrap_set_velocity<particle>)
-                    .def("get_tag", &wrap_get_tag<particle>)
-                    .def("set_tag", &wrap_set_tag<particle>)
-                    .def("get_reverse_tag", &wrap_get_reverse_tag<particle>)
-                    .def("set_reverse_tag", &wrap_set_reverse_tag<particle>)
-                    .def("get_species", &wrap_get_species<particle>)
-                    .def("set_species", &wrap_set_species<particle>)
-                    .def("get_mass", &wrap_get_mass<particle>)
-                    .def("set_mass", &wrap_set_mass<particle>)
-                    .def("get_force", &wrap_get_force<particle>)
-                    .def("get_potential_energy", &wrap_get_potential_energy<particle>)
-                    .def("get_stress_pot", &wrap_get_stress_pot<particle>)
+                    .def("get", &particle::get_lua)
+                    .def("set", &particle::set_lua)
                     .def("shift_velocity", &shift_velocity<particle>)
                     .def("shift_velocity_group", &shift_velocity_group<particle>)
                     .def("rescale_velocity", &rescale_velocity<particle>)
