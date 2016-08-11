@@ -152,7 +152,7 @@ if(NOT HALMD_DOC_ONLY OR NOT HALMD_USE_GIT)
     thread
     unit_test_framework
   )
-  find_package(HDF5 QUIET REQUIRED COMPONENTS C CXX)
+  find_package(HDF5 QUIET REQUIRED COMPONENTS CXX)
   find_package(LuaLibs QUIET REQUIRED)
 
   # detect HDF5 version manually for cmake < 3.3
