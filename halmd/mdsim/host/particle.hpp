@@ -29,7 +29,7 @@
 #include <halmd/utility/cache.hpp>
 #include <halmd/utility/raw_array.hpp>
 #include <halmd/numeric/blas/fixed_vector.hpp>
-#include <halmd/mdsim/host/particle_data.hpp>
+#include <halmd/mdsim/host/particle_array.hpp>
 #include <halmd/utility/lua/lua.hpp>
 
 #include <lua.hpp>
@@ -108,60 +108,60 @@ public:
     }
 
     /**
-     * get named particle data with iterator
+     * get data from named particle array with iterator
      *
-     * @param name identifier of the particle data
+     * @param name identifier of the particle array
      * @param first output iterator
      * @return output iterator
      *
-     * throws an exception if the data does not exist or has an invalid type
+     * throws an exception if the array does not exist or has an invalid type
      */
     template<typename T, typename iterator_type>
     iterator_type get_data(std::string const& name, iterator_type const& first) const
     {
-        return particle_data::cast<T>(lookup_data_(name))->get_data(first);
+        return particle_array::cast<T>(get_array_(name))->get_data(first);
     }
     /**
-     * set named particle data with iterator
+     * set data in named particle array with iterator
      *
-     * @param name identifier of the particle data
+     * @param name identifier of the particle array
      * @param first input iterator
      * @return input iterator
      *
-     * throws an exception if the data does not exist or has an invalid type
+     * throws an exception if the array does not exist or has an invalid type
      */
     template <typename T, typename iterator_type>
     iterator_type set_data(std::string const& name, iterator_type const& first)
     {
-        return particle_data::cast<T>(lookup_data_(name))->set_data(first);
+        return particle_array::cast<T>(get_array_(name))->set_data(first);
     }
 
     /**
-     * Returns const reference to named particle data.
+     * Returns const reference to the data of a named particle array.
      *
-     * @param name identifier of the particle data
+     * @param name identifier of the particle array
      * @return const reference to the data
      *
-     * throws an exception if the data does not exist or has an invalid type
+     * throws an exception if the array does not exist or has an invalid type
      */
     template<typename T>
     cache<raw_array<T>> const& data(std::string const& name) const
     {
-        return particle_data::cast<T>(lookup_data_(name))->data();
+        return particle_array::cast<T>(get_array_(name))->data();
     }
 
     /**
-     * Returns non-const reference to named particle data.
+     * Returns non-const reference to the data of a named particle array.
      *
-     * @param name identifier of the particle data
+     * @param name identifier of the particle array
      * @return non-const reference to the data
      *
-     * throws an exception if the data does not exist or has an invalid type
+     * throws an exception if the array does not exist or has an invalid type
      */
     template<typename T>
     cache<raw_array<T>>& mutable_data(std::string const& name)
     {
-        return particle_data::cast<T>(lookup_data_(name))->mutable_data();
+        return particle_array::cast<T>(get_array_(name))->mutable_data();
     }
 
     /**
@@ -389,11 +389,11 @@ public:
     }
 
     luaponte::object get_lua(lua_State* L, std::string const& name) {
-        return lookup_data_(name)->get_lua(L);
+        return get_array_(name)->get_lua(L);
     }
 
-    void set_lua (std::string const& name, luaponte::object object) {
-        lookup_data_(name)->set_lua(object);
+    void set_lua(std::string const& name, luaponte::object object) {
+        get_array_(name)->set_lua(object);
     }
 
     /**
@@ -407,8 +407,8 @@ private:
     /** number of particle species */
     unsigned int nspecies_;
 
-    /** map of the stored particle data */
-    std::unordered_map<std::string, std::shared_ptr<particle_data>> data_;
+    /** map of the stored particle arrays */
+    std::unordered_map<std::string, std::shared_ptr<particle_array>> data_;
 
     /** flag that the force has to be reset to zero prior to reading */
     bool force_zero_;
@@ -419,23 +419,23 @@ private:
     /** flag that the computation of auxiliary variables is requested */
     bool aux_enabled_;
 
-    std::shared_ptr<particle_data> const& lookup_data_(std::string const& name) const {
+    std::shared_ptr<particle_array> const& get_array_(std::string const &name) const {
         auto it = data_.find(name);
         if(it == data_.end()) {
-            throw std::invalid_argument("particle data for \"" + name + "\" not registered");
+            throw std::invalid_argument("particle array \"" + name + "\" not registered");
         }
         return it->second;
     }
 
     /**
-     * register typed particle data
+     * register typed particle array
      *
-     * @param name identifier for the particle data
-     * @return non-const reference to the data array to be used for initialization
+     * @param name identifier for the particle array
+     * @return non-const reference to the array data to be used for initialization
      */
     template<typename T>
-    cache<raw_array<T>>& register_data_(std::string const& name) {
-        auto ptr = particle_data::create<T>(nparticle_);
+    cache<raw_array<T>>& register_array_(std::string const &name) {
+        auto ptr = particle_array::create<T>(nparticle_);
         data_[name] = ptr;
         return ptr->mutable_data();
     }

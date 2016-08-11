@@ -18,8 +18,8 @@
  * <http://www.gnu.org/licenses/>.
  */
 
-#ifndef HALMD_MDSIM_HOST_PARTICLE_DATA_HPP
-#define HALMD_MDSIM_HOST_PARTICLE_DATA_HPP
+#ifndef HALMD_MDSIM_HOST_PARTICLE_ARRAY_HPP
+#define HALMD_MDSIM_HOST_PARTICLE_ARRAY_HPP
 
 #include <typeinfo>
 #include <halmd/utility/cache.hpp>
@@ -31,37 +31,37 @@ namespace mdsim {
 namespace host {
 
 template<typename T>
-class particle_data_typed;
+class particle_array_typed;
 
-class particle_data
+class particle_array
 {
 public:
     /**
-     * create particle data of given type
+     * create particle array of given type
      *
      * @param args arguments to be forwarded for the construction of the data container
-     * @return shared pointer to the new particle data
+     * @return shared pointer to the new particle array
      */
     template<typename T, typename... Args>
-    static inline std::shared_ptr<particle_data_typed<T>> create(Args&&... args);
+    static inline std::shared_ptr<particle_array_typed<T>> create(Args&&... args);
 
     /**
-     * cast generic particle data to typed data
+     * cast generic particle array to typed data
      *
-     * @return typed particle data
+     * @return typed particle array
      *
      * throws an exception if the type of the generic object does not match
      */
     template<typename T>
-    static inline std::shared_ptr<particle_data_typed<T>> cast(std::shared_ptr<particle_data> const&);
+    static inline std::shared_ptr<particle_array_typed<T>> cast(std::shared_ptr<particle_array> const&);
 
     /**
      * empty virtual destructor
      *
-     * ensures that the particle data is correctly destroyed even if stored
+     * ensures that the particle array is correctly destroyed even if stored
      * as (shared) pointer to the base class
      */
-    virtual ~particle_data() {}
+    virtual ~particle_array() {}
 
     /**
      * query data type
@@ -103,16 +103,16 @@ protected:
 };
 
 template<typename T>
-class particle_data_typed : public particle_data
+class particle_array_typed : public particle_array
 {
 public:
     /**
-     * typed particle data constructor
+     * typed particle array constructor
      *
      * @param args arguments to be passed down to construct the internal raw_array container
      */
     template <typename... Args>
-    particle_data_typed(Args&&... args)
+    particle_array_typed(Args&&... args)
     : data_(std::forward<Args>(args)...)
     {
     }
@@ -205,22 +205,22 @@ private:
 };
 
 template<typename T, typename... Args>
-inline std::shared_ptr<particle_data_typed<T>> particle_data::create(Args&& ...args)
+inline std::shared_ptr<particle_array_typed<T>> particle_array::create(Args&& ...args)
 {
-    return std::make_shared<particle_data_typed<T>>(args...);
+    return std::make_shared<particle_array_typed<T>>(args...);
 }
 
 template<typename T>
-inline std::shared_ptr<particle_data_typed<T>> particle_data::cast(std::shared_ptr<particle_data> const& ptr)
+inline std::shared_ptr<particle_array_typed<T>> particle_array::cast(std::shared_ptr<particle_array> const& ptr)
 {
     if(ptr->type() != typeid(T)) {
-        throw std::invalid_argument("invalid cast of particle data");
+        throw std::invalid_argument("invalid cast of particle array");
     }
-    return std::static_pointer_cast<particle_data_typed<T>>(ptr);
+    return std::static_pointer_cast<particle_array_typed<T>>(ptr);
 }
 
 } // namespace host
 } // namespace mdsim
 } // namespace halmd
 
-#endif /* ! HALMD_MDSIM_HOST_PARTICLE_DATA_HPP */
+#endif /* ! HALMD_MDSIM_HOST_PARTICLE_ARRAY_HPP */

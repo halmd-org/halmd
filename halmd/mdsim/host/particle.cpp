@@ -53,26 +53,26 @@ particle<dimension, float_type>::particle(size_type nparticle, unsigned int nspe
   , aux_dirty_(true)
   , aux_enabled_(true)
 {
-    // register and allocate named particle data
-    auto position = make_cache_mutable(register_data_<position_type>("position"));
-    auto image = make_cache_mutable(register_data_<image_type>("image"));
-    auto velocity = make_cache_mutable(register_data_<velocity_type>("velocity"));
-    auto tag = make_cache_mutable(register_data_<tag_type>("tag"));
-    auto reverse_tag = make_cache_mutable(register_data_<reverse_tag_type>("reverse_tag"));
-    auto species = make_cache_mutable(register_data_<species_type>("species"));
-    auto mass = make_cache_mutable(register_data_<mass_type>("mass"));
-    auto force = make_cache_mutable(register_data_<force_type>("force"));
-    auto en_pot = make_cache_mutable(register_data_<en_pot_type>("en_pot"));
-    auto stress_pot = make_cache_mutable(register_data_<stress_pot_type>("stress_pot"));
+    // register and allocate named particle arrays
+    auto position = make_cache_mutable(register_array_<position_type>("position"));
+    auto image = make_cache_mutable(register_array_<image_type>("image"));
+    auto velocity = make_cache_mutable(register_array_<velocity_type>("velocity"));
+    auto tag = make_cache_mutable(register_array_<tag_type>("tag"));
+    auto reverse_tag = make_cache_mutable(register_array_<reverse_tag_type>("reverse_tag"));
+    auto species = make_cache_mutable(register_array_<species_type>("species"));
+    auto mass = make_cache_mutable(register_array_<mass_type>("mass"));
+    auto force = make_cache_mutable(register_array_<force_type>("force"));
+    auto en_pot = make_cache_mutable(register_array_<en_pot_type>("en_pot"));
+    auto stress_pot = make_cache_mutable(register_array_<stress_pot_type>("stress_pot"));
 
-    // register force update with relevant particle data on_get signals
+    // register force update with relevant particle array on_get signals
     data_["force"]->on_get([this](){ this->update_force_(); });
     data_["en_pot"]->on_get([this](){ this->update_force_(true); });
     data_["stress_pot"]->on_get([this](){ this->update_force_(true); });
     // potential energy alias
     data_["potential_energy"] = data_["en_pot"];
 
-    // initialize particle data
+    // initialize particle arrays
     std::fill(position->begin(), position->end(), 0);
     std::fill(image->begin(), image->end(), 0);
     std::fill(velocity->begin(), velocity->end(), 0);
