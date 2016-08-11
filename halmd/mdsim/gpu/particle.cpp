@@ -65,52 +65,52 @@ particle<dimension, float_type>::particle(size_type nparticle, unsigned int nspe
   , aux_dirty_(true)
   , aux_enabled_(true)
 {
-    // create particle data
-    auto position_data = particle_data::create<gpu_position_type>(nparticle);
-    auto image_data = particle_data::create<gpu_image_type>(nparticle);
-    auto velocity_data = particle_data::create<gpu_velocity_type>(nparticle);
-    auto tag_data = particle_data::create<gpu_tag_type>(nparticle);
-    auto reverse_tag_data = particle_data::create<gpu_reverse_tag_type>(nparticle);
-    auto force_data = particle_data::create<gpu_force_type>(nparticle, [this](){ this->update_force_(); });
-    auto en_pot_data = particle_data::create<gpu_en_pot_type>(nparticle, [this](){ this->update_force_(true); });
-    auto stress_pot_data = particle_data::create<gpu_stress_pot_type>(nparticle, [this](){ this->update_force_(true); });
+    // create particle arrays
+    auto position_array = particle_array::create<gpu_position_type>(nparticle);
+    auto image_array = particle_array::create<gpu_image_type>(nparticle);
+    auto velocity_array = particle_array::create<gpu_velocity_type>(nparticle);
+    auto tag_array = particle_array::create<gpu_tag_type>(nparticle);
+    auto reverse_tag_array = particle_array::create<gpu_reverse_tag_type>(nparticle);
+    auto force_array = particle_array::create<gpu_force_type>(nparticle, [this](){ this->update_force_(); });
+    auto en_pot_array = particle_array::create<gpu_en_pot_type>(nparticle, [this](){ this->update_force_(true); });
+    auto stress_pot_array = particle_array::create<gpu_stress_pot_type>(nparticle, [this](){ this->update_force_(true); });
 
-    // store particle data in data map
-    data_["g_position"] = position_data;
-    data_["g_image"] = image_data;
-    data_["g_velocity"] = velocity_data;
-    data_["g_tag"] = tag_data;
-    data_["g_reverse_tag"] = reverse_tag_data;
-    data_["g_force"] = force_data;
-    data_["g_en_pot"] = en_pot_data;
-    data_["g_stress_pot"] = stress_pot_data;
+    // store particle arrays in data map
+    data_["g_position"] = position_array;
+    data_["g_image"] = image_array;
+    data_["g_velocity"] = velocity_array;
+    data_["g_tag"] = tag_array;
+    data_["g_reverse_tag"] = reverse_tag_array;
+    data_["g_force"] = force_array;
+    data_["g_en_pot"] = en_pot_array;
+    data_["g_stress_pot"] = stress_pot_array;
 
     // create host data wrappers for packed data
-    data_["position"] = particle_data::create_packed_wrapper<tuple<position_type, species_type>, 0>(position_data);
-    data_["species"] = particle_data::create_packed_wrapper<tuple<position_type, species_type>, 1>(position_data);
-    data_["velocity"] = particle_data::create_packed_wrapper<tuple<velocity_type, mass_type>, 0>(velocity_data);
-    data_["mass"] = particle_data::create_packed_wrapper<tuple<velocity_type, mass_type>, 1>(velocity_data);
+    data_["position"] = particle_array::create_packed_wrapper<tuple<position_type, species_type>, 0>(position_array);
+    data_["species"] = particle_array::create_packed_wrapper<tuple<position_type, species_type>, 1>(position_array);
+    data_["velocity"] = particle_array::create_packed_wrapper<tuple<velocity_type, mass_type>, 0>(velocity_array);
+    data_["mass"] = particle_array::create_packed_wrapper<tuple<velocity_type, mass_type>, 1>(velocity_array);
 
     // create host wrappers for other data
-    data_["force"] = particle_data::create_host_wrapper<force_type>(force_data);
-    data_["image"] = particle_data::create_host_wrapper<image_type>(image_data);
-    data_["tag"] = particle_data::create_host_wrapper<tag_type>(tag_data);
-    data_["reverse_tag"] = particle_data::create_host_wrapper<reverse_tag_type>(reverse_tag_data);
-    data_["en_pot"] = particle_data::create_host_wrapper<en_pot_type>(en_pot_data);
-    data_["stress_pot"] = particle_data::create_host_wrapper<stress_pot_type>(stress_pot_data);
+    data_["force"] = particle_array::create_host_wrapper<force_type>(force_array);
+    data_["image"] = particle_array::create_host_wrapper<image_type>(image_array);
+    data_["tag"] = particle_array::create_host_wrapper<tag_type>(tag_array);
+    data_["reverse_tag"] = particle_array::create_host_wrapper<reverse_tag_type>(reverse_tag_array);
+    data_["en_pot"] = particle_array::create_host_wrapper<en_pot_type>(en_pot_array);
+    data_["stress_pot"] = particle_array::create_host_wrapper<stress_pot_type>(stress_pot_array);
 
     // create alias for potential energy
     data_["potential_energy"] = data_["en_pot"];
 
     // get access to the underlying cuda vectors for initialization
-    auto g_position = make_cache_mutable(position_data->mutable_data());
-    auto g_image = make_cache_mutable(image_data->mutable_data());
-    auto g_velocity = make_cache_mutable(velocity_data->mutable_data());
-    auto g_tag = make_cache_mutable(tag_data->mutable_data());
-    auto g_reverse_tag = make_cache_mutable(reverse_tag_data->mutable_data());
-    auto g_force = make_cache_mutable(force_data->mutable_data());
-    auto g_en_pot = make_cache_mutable(en_pot_data->mutable_data());
-    auto g_stress_pot = make_cache_mutable(stress_pot_data->mutable_data());
+    auto g_position = make_cache_mutable(position_array->mutable_data());
+    auto g_image = make_cache_mutable(image_array->mutable_data());
+    auto g_velocity = make_cache_mutable(velocity_array->mutable_data());
+    auto g_tag = make_cache_mutable(tag_array->mutable_data());
+    auto g_reverse_tag = make_cache_mutable(reverse_tag_array->mutable_data());
+    auto g_force = make_cache_mutable(force_array->mutable_data());
+    auto g_en_pot = make_cache_mutable(en_pot_array->mutable_data());
+    auto g_stress_pot = make_cache_mutable(stress_pot_array->mutable_data());
 
     g_force->reserve(dim.threads());
     g_en_pot->reserve(dim.threads());

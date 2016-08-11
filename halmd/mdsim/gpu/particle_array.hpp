@@ -18,8 +18,8 @@
  * <http://www.gnu.org/licenses/>.
  */
 
-#ifndef HALMD_MDSIM_GPU_PARTICLE_DATA_HPP
-#define HALMD_MDSIM_GPU_PARTICLE_DATA_HPP
+#ifndef HALMD_MDSIM_GPU_PARTICLE_ARRAY_HPP
+#define HALMD_MDSIM_GPU_PARTICLE_ARRAY_HPP
 
 #include <typeinfo>
 #include <halmd/utility/cache.hpp>
@@ -30,7 +30,7 @@ namespace mdsim {
 namespace gpu {
 
 /*
- * wrapper templates used to mark special types that need a custom particle_data_typed implementation
+ * wrapper templates used to mark special types that need a custom particle_array_typed implementation
  * the wrapper template is necessary to create template specializations
  */
 // stress tensor wrapper
@@ -44,93 +44,93 @@ public:
 
 // forward declarations
 template<typename T>
-class particle_data_typed;
+class particle_array_typed;
 template<typename T>
-class particle_data_gpu;
+class particle_array_gpu;
 template<typename host_type, typename gpu_type, bool is_tuple = false>
-class particle_data_host_wrapper;
+class particle_array_host_wrapper;
 
-/** particle data base class */
-class particle_data
+/** particle array base class */
+class particle_array
 {
 public:
     /**
-     * create gpu particle data of given type
+     * create gpu particle array of given type
      *
      * @param size number of particles
      * @param update_function optional update function
-     * @return shared pointer to the new particle data
+     * @return shared pointer to the new particle array
      */
     template<typename T>
-    static inline std::shared_ptr<particle_data_gpu<T>> create(unsigned int size, std::function<void()> update_function = std::function<void()>());
+    static inline std::shared_ptr<particle_array_gpu<T>> create(unsigned int size, std::function<void()> update_function = std::function<void()>());
 
     /**
-     * cast generic particle data to typed data
+     * cast generic particle array to typed data
      *
-     * @param ptr generic particle data
-     * @return typed particle data
+     * @param ptr generic particle array
+     * @return typed particle array
      *
-     * throws an exception if the type of the generic object does not match
+     * throws an exception if the type of the array does not match
      */
     template<typename T>
-    static inline std::shared_ptr<particle_data_typed<T>> cast(std::shared_ptr<particle_data> const& ptr);
+    static inline std::shared_ptr<particle_array_typed<T>> cast(std::shared_ptr<particle_array> const& ptr);
 
     /**
-     * cast generic particle data to typed gpu data
+     * cast generic particle array to typed gpu array
      *
-     * @param ptr generic particle data
-     * @return typed gpu particle data
+     * @param ptr generic particle array
+     * @return typed gpu particle array
      *
-     * throws an exception if the type of the generic object does not match
+     * throws an exception if the type of the array does not match
      */
     template<typename T>
-    static inline std::shared_ptr<particle_data_gpu<T>> cast_gpu(std::shared_ptr<particle_data> const& ptr);
+    static inline std::shared_ptr<particle_array_gpu<T>> cast_gpu(std::shared_ptr<particle_array> const& ptr);
 
     /**
-     * create host wrapper for particle data of given gpu and host type
+     * create host wrapper for particle array of given gpu and host type
      *
-     * @param parent gpu particle data
-     * @return shared pointer to the particle data wrapper
+     * @param parent gpu particle array
+     * @return shared pointer to the particle array wrapper
      *
      * this version returns an actual wrapper object for the case that gpu_type and host_type
      * are actually different
      */
     template<typename host_type, typename gpu_type>
     static inline typename std::enable_if<!std::is_same<host_type, gpu_type>::value,
-            std::shared_ptr<particle_data_host_wrapper<host_type, gpu_type>>>::type
-    create_host_wrapper(std::shared_ptr<particle_data_gpu<gpu_type>> const& parent);
+            std::shared_ptr<particle_array_host_wrapper<host_type, gpu_type>>>::type
+    create_host_wrapper(std::shared_ptr<particle_array_gpu<gpu_type>> const& parent);
 
     /**
-     * create host wrapper for particle data of given gpu and host type
+     * create host wrapper for particle array of given gpu and host type
      *
-     * @param parent gpu particle data
-     * @return shared pointer to the particle data wrapper
+     * @param parent gpu particle array
+     * @return shared pointer to the particle array wrapper
      *
      * this version directly passes down the parent object for the case that gpu_type and host_type
      * are actually the same (e.g. in the case of scalar values)
      */
     template<typename host_type, typename gpu_type>
     static inline typename std::enable_if<std::is_same<host_type, gpu_type>::value,
-            std::shared_ptr<particle_data_gpu<gpu_type>>>::type
-    create_host_wrapper(std::shared_ptr<particle_data_gpu<gpu_type>> const& parent);
+            std::shared_ptr<particle_array_gpu<gpu_type>>>::type
+    create_host_wrapper(std::shared_ptr<particle_array_gpu<gpu_type>> const& parent);
 
     /**
-     * create host wrapper for a tuple element of packed gpu particle data
+     * create host wrapper for an array of tuple elements in a packed gpu particle array
     *
-    * @param parent gpu particle data
-    * @return shared pointer to the particle data wrapper
+    * @param parent gpu particle array
+    * @return shared pointer to the particle array wrapper
     */
     template<typename tuple_type, int field, typename gpu_type>
-    static inline std::shared_ptr<particle_data_host_wrapper<typename std::tuple_element<field, tuple_type>::type, gpu_type, true>>
-    create_packed_wrapper(std::shared_ptr<particle_data_gpu<gpu_type>> const& parent);
+    static inline std::shared_ptr<particle_array_host_wrapper<typename std::tuple_element<field, tuple_type>::type, gpu_type, true>>
+    create_packed_wrapper(std::shared_ptr<particle_array_gpu<gpu_type>> const& parent);
 
     /**
      * empty virtual destructor
      *
-     * ensures that the particle data is correctly destroyed even if stored
+     * ensures that the particle array is correctly destroyed even if stored
      * as (shared) pointer to the base class
      */
-    virtual ~particle_data(){}
+    virtual ~particle_array(){}
 
     /**
      * query data type
@@ -141,7 +141,7 @@ public:
     /**
      * query gpu flag
      *
-     * @return true if the particle data is raw gpu data, false otherwise
+     * @return true if the particle array contains raw gpu data, false otherwise
      */
     virtual bool gpu() const = 0;
 
@@ -160,18 +160,18 @@ public:
     virtual luaponte::object get_lua(lua_State* L) = 0;
 };
 
-/** particle data base class with type information */
+/** particle array base class with type information */
 template<typename T>
-class particle_data_typed : public particle_data
+class particle_array_typed : public particle_array
 {
 public:
     /**
-     * typed particle data constructor
+     * typed particle array constructor
      *
      * @param stride stride of the underlying gpu data
      * @param offset offset of the typed data within the underlying gpu data
      */
-    particle_data_typed(size_t stride, size_t offset) : stride_(stride), offset_(offset) {
+    particle_array_typed(size_t stride, size_t offset) : stride_(stride), offset_(offset) {
     }
     /**
      * query data type
@@ -266,9 +266,9 @@ private:
 
 // explicit specialization for the stress tensor
 template<typename T>
-class particle_data_typed<stress_tensor_wrapper<T>> : public particle_data {
+class particle_array_typed<stress_tensor_wrapper<T>> : public particle_array {
 public:
-    particle_data_typed(size_t stride, size_t offset) : stride_(stride), offset_(offset) {
+    particle_array_typed(size_t stride, size_t offset) : stride_(stride), offset_(offset) {
     }
     virtual std::type_info const& type() const {
         return typeid(stress_tensor_wrapper<T>);
@@ -307,19 +307,19 @@ private:
     size_t offset_;
 };
 
-/** typed gpu particle data */
+/** typed gpu particle array */
 template<typename T>
-class particle_data_gpu : public particle_data_typed<T>
+class particle_array_gpu : public particle_array_typed<T>
 {
 public:
     /**
-     * gpu particle data constructor
+     * gpu particle array constructor
      *
      * @param size size of the underlying cuda::vector
      * @param update_function optional update function
      */
-    particle_data_gpu(unsigned int size, std::function<void()> update_function)
-    : particle_data_typed<T>(sizeof(T), 0), data_(size), update_function_(update_function) {
+    particle_array_gpu(unsigned int size, std::function<void()> update_function)
+    : particle_array_typed<T>(sizeof(T), 0), data_(size), update_function_(update_function) {
         if (!update_function_) {
             update_function_ = [](){};
         }
@@ -398,26 +398,26 @@ private:
     std::function<void()> update_function_;
     /** the host wrapper needs access to get_memory, get_data and set_data */
     template<typename host_type, typename gpu_type, bool is_tuple>
-    friend class particle_data_host_wrapper;
+    friend class particle_array_host_wrapper;
 };
 
 /**
- * wrapper to access gpu particle data as host vector
+ * wrapper to access gpu particle array as host vector
  * (e.g. for gpu particle data of type float4 this wrapper
  * can give access to fixed_vector<3,float> values consiting
  * of the first three components of the float4)
  */
 template<typename host_type, typename gpu_type, bool is_tuple>
-class particle_data_host_wrapper : public particle_data_typed<host_type>
+class particle_array_host_wrapper : public particle_array_typed<host_type>
 {
 public:
     /**
-     * host particle data wrapper constructor
+     * host particle array wrapper constructor
      *
-     * @param parent gpu particle data to be wrapped
+     * @param parent gpu particle array to be wrapped
      */
-    particle_data_host_wrapper(const std::shared_ptr<particle_data_gpu<gpu_type>> &parent, size_t offset = 0)
-            : particle_data_typed<host_type>(sizeof(gpu_type), offset), parent_ (parent) {
+    particle_array_host_wrapper(const std::shared_ptr<particle_array_gpu<gpu_type>> &parent, size_t offset = 0)
+            : particle_array_typed<host_type>(sizeof(gpu_type), offset), parent_ (parent) {
     }
     /**
      * query gpu flag
@@ -458,63 +458,63 @@ protected:
     }
 private:
     /** parent gpu data */
-    std::shared_ptr<particle_data_gpu<gpu_type>> parent_;
+    std::shared_ptr<particle_array_gpu<gpu_type>> parent_;
 };
 
-// implementations of static members of particle_data
+// implementations of static members of particle_array
 
 template<typename T>
-inline std::shared_ptr<particle_data_gpu<T>> particle_data::create(unsigned int size, std::function<void()> update_function)
+inline std::shared_ptr<particle_array_gpu<T>> particle_array::create(unsigned int size, std::function<void()> update_function)
 {
-    return std::make_shared<particle_data_gpu<T>>(size, update_function);
+    return std::make_shared<particle_array_gpu<T>>(size, update_function);
 }
 
 template<typename host_type, typename gpu_type>
-inline typename std::enable_if<!std::is_same<host_type, gpu_type>::value, std::shared_ptr<particle_data_host_wrapper<host_type, gpu_type>>>::type
-particle_data::create_host_wrapper(std::shared_ptr<particle_data_gpu<gpu_type>> const& parent)
+inline typename std::enable_if<!std::is_same<host_type, gpu_type>::value, std::shared_ptr<particle_array_host_wrapper<host_type, gpu_type>>>::type
+particle_array::create_host_wrapper(std::shared_ptr<particle_array_gpu<gpu_type>> const& parent)
 {
-    return std::make_shared<particle_data_host_wrapper<host_type, gpu_type>>(parent);
+    return std::make_shared<particle_array_host_wrapper<host_type, gpu_type>>(parent);
 }
 
 template<typename host_type, typename gpu_type>
-inline typename std::enable_if<std::is_same<host_type, gpu_type>::value, std::shared_ptr<particle_data_gpu<gpu_type>>>::type
-particle_data::create_host_wrapper(std::shared_ptr<particle_data_gpu<gpu_type>> const& parent)
+inline typename std::enable_if<std::is_same<host_type, gpu_type>::value, std::shared_ptr<particle_array_gpu<gpu_type>>>::type
+particle_array::create_host_wrapper(std::shared_ptr<particle_array_gpu<gpu_type>> const& parent)
 {
     return parent;
 }
 
 template<typename tuple_type, int field, typename gpu_type>
-inline std::shared_ptr<particle_data_host_wrapper<typename std::tuple_element<field, tuple_type>::type, gpu_type, true>>
-particle_data::create_packed_wrapper(std::shared_ptr<particle_data_gpu<gpu_type>> const& parent)
+inline std::shared_ptr<particle_array_host_wrapper<typename std::tuple_element<field, tuple_type>::type, gpu_type, true>>
+particle_array::create_packed_wrapper(std::shared_ptr<particle_array_gpu<gpu_type>> const& parent)
 {
     typedef typename std::tuple_element<field, tuple_type>::type host_type;
     static constexpr size_t offset = (field == 0) ? 0 : (sizeof(gpu_type) - sizeof(host_type));
     static_assert(std::tuple_size<tuple_type>::value == 2, "invalid tuple");
-    return std::make_shared<particle_data_host_wrapper<host_type, gpu_type, true>>(parent, offset);
+    return std::make_shared<particle_array_host_wrapper<host_type, gpu_type, true>>(parent, offset);
 }
 
 template<typename T>
-inline std::shared_ptr<particle_data_typed<T>> particle_data::cast(std::shared_ptr<particle_data> const& ptr)
+inline std::shared_ptr<particle_array_typed<T>> particle_array::cast(std::shared_ptr<particle_array> const& ptr)
 {
     if(ptr->type() != typeid(T)) {
-        throw std::invalid_argument("invalid cast of particle data from " + std::string(ptr->type().name())
+        throw std::invalid_argument("invalid cast of particle array from " + std::string(ptr->type().name())
                                     + " to " + std::string(typeid(T).name()));
     }
-    return std::static_pointer_cast<particle_data_typed<T>>(ptr);
+    return std::static_pointer_cast<particle_array_typed<T>>(ptr);
 }
 
 template<typename T>
-inline std::shared_ptr<particle_data_gpu<T>> particle_data::cast_gpu(std::shared_ptr<particle_data> const& ptr)
+inline std::shared_ptr<particle_array_gpu<T>> particle_array::cast_gpu(std::shared_ptr<particle_array> const& ptr)
 {
     if(!ptr->gpu() || ptr->type() != typeid(T)) {
-        throw std::invalid_argument("invalid cast of particle data from " + std::string(ptr->type().name())
+        throw std::invalid_argument("invalid cast of particle array from " + std::string(ptr->type().name())
                                     + " to " + std::string(typeid(T).name()));
     }
-    return std::static_pointer_cast<particle_data_gpu<T>>(ptr);
+    return std::static_pointer_cast<particle_array_gpu<T>>(ptr);
 }
 
 } // namespace gpu
 } // namespace mdsim
 } // namespace halmd
 
-#endif /* ! HALMD_MDSIM_GPU_PARTICLE_DATA_HPP */
+#endif /* ! HALMD_MDSIM_GPU_PARTICLE_ARRAY_HPP */
