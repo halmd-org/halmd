@@ -234,7 +234,7 @@ void particle<dimension, float_type>::update_force_(bool with_aux)
             }
             aux_enabled_ = true;  // turn on computation of aux variables
         }
-        LOG_TRACE("request force" << (aux_enabled_ ? " and auxiliary variables" : ""));
+        LOG_TRACE("request force" << std::string(aux_enabled_ ? " and auxiliary variables" : ""));
 
         force_zero_ = true;       // tell first force module to reset the force
         on_force_();              // compute forces
