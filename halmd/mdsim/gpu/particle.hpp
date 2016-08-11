@@ -62,7 +62,7 @@ public:
     typedef float mass_type;
     typedef vector_type force_type;
     typedef float_type en_pot_type;
-    typedef typename type_traits<dimension, float_type>::stress_tensor_type stress_pot_type;
+    typedef stress_tensor_wrapper<typename type_traits<dimension, float_type>::stress_tensor_type> stress_pot_type;
 
     typedef float4 gpu_position_type;
     typedef float4 gpu_velocity_type;
@@ -601,21 +601,7 @@ template <typename particle_type, typename iterator_type>
 inline iterator_type
 get_stress_pot(particle_type& particle, iterator_type const& first)
 {
-    // copy data from GPU to host
-    typedef typename particle_type::stress_pot_array_type stress_pot_array_type;
-    stress_pot_array_type const& g_stress_pot = read_cache(particle.stress_pot());
-    cuda::host::vector<typename stress_pot_array_type::value_type> h_stress_pot(g_stress_pot.size());
-    h_stress_pot.reserve(g_stress_pot.capacity());
-    cuda::copy(g_stress_pot.begin(), g_stress_pot.begin() + g_stress_pot.capacity(), h_stress_pot.begin());
-
-    // convert from column-major to row-major layout
-    typedef typename particle_type::stress_pot_type stress_pot_type;
-    unsigned int stride = h_stress_pot.capacity() / stress_pot_type::static_size;
-    iterator_type output = first;
-    for (auto const& stress : h_stress_pot) {
-        *output++ = read_stress_tensor<stress_pot_type>(&stress, stride);
-    }
-    return output;
+    return particle.template get_data<typename particle_type::stress_pot_type>("stress_pot", first);
 }
 
 } // namespace gpu

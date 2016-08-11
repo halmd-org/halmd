@@ -29,6 +29,19 @@ namespace halmd {
 namespace mdsim {
 namespace gpu {
 
+/*
+ * wrapper templates used to mark special types that need a custom particle_data_typed implementation
+ * the wrapper template is necessary to create template specializations
+ */
+// stress tensor wrapper
+template<typename T>
+class stress_tensor_wrapper : public T {
+public:
+    template<typename... Args>
+    stress_tensor_wrapper(Args&&... args) : T(std::forward<Args>(args)...) {
+    }
+};
+
 // forward declarations
 template<typename T>
 class particle_data_typed;
@@ -248,6 +261,49 @@ private:
     /** gpu data stride */
     size_t stride_;
     /** typed data offset */
+    size_t offset_;
+};
+
+// explicit specialization for the stress tensor
+template<typename T>
+class particle_data_typed<stress_tensor_wrapper<T>> : public particle_data {
+public:
+    particle_data_typed(size_t stride, size_t offset) : stride_(stride), offset_(offset) {
+    }
+    virtual std::type_info const& type() const {
+        return typeid(stress_tensor_wrapper<T>);
+    }
+    template <typename iterator_type>
+    iterator_type get_data(iterator_type const& first) const
+    {
+        auto data = get_data();
+        // convert from column-major to row-major layout
+        unsigned int stride = data.capacity() / T::static_size;
+        iterator_type it = first;
+        for (auto i = offset_; i < data.size(); i += stride_) {
+            *it++ = read_stress_tensor<T>(reinterpret_cast<typename T::value_type*>(&data[i]), stride);
+        }
+        return it;
+    }
+    virtual void set_lua(luaponte::object table) {
+        throw std::runtime_error("attempt to set read only data");
+    }
+    virtual luaponte::object get_lua(lua_State* L) {
+        auto data = get_data();
+        unsigned int stride = data.capacity() / T::static_size;
+        luaponte::object table = luaponte::newtable(L);
+        std::size_t j = 1;
+        for (size_t i = offset_; i < data.size(); i += stride_) {
+            table[j++] = read_stress_tensor<T>(reinterpret_cast<T*>(&data[i])->begin(), stride);
+        }
+        return table;
+    }
+protected:
+    virtual cuda::host::vector<uint8_t> get_memory() const = 0;
+    virtual cuda::host::vector<uint8_t> get_data() const = 0;
+    virtual void set_data(cuda::host::vector<uint8_t> const& memory) = 0;
+private:
+    size_t stride_;
     size_t offset_;
 };
 

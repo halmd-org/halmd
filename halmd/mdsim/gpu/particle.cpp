@@ -97,7 +97,7 @@ particle<dimension, float_type>::particle(size_type nparticle, unsigned int nspe
     data_["tag"] = particle_data::create_host_wrapper<tag_type>(tag_data);
     data_["reverse_tag"] = particle_data::create_host_wrapper<reverse_tag_type>(reverse_tag_data);
     data_["en_pot"] = particle_data::create_host_wrapper<en_pot_type>(en_pot_data);
-    data_["stress_pot"] = data_["g_stress_pot"];// TODO: some wrapper is necessary here to allow for a custom get function
+    data_["stress_pot"] = particle_data::create_host_wrapper<stress_pot_type>(stress_pot_data);
 
     // create alias for potential energy
     data_["potential_energy"] = data_["en_pot"];
