@@ -120,6 +120,59 @@ public:
     }
 
     /**
+     * register typed particle data
+     *
+     * @param name identifier for the particle data
+     * @param update_function optional update function
+     * @return the newly created particle array
+     *
+     * throws an exception if a particle array with the same name already exists
+     */
+    template<typename T>
+    std::shared_ptr<particle_array_gpu<T>>
+    register_data(std::string const& name, std::function<void()> update_function = std::function<void()>()) {
+        auto ptr = particle_array::create<T>(nparticle_, update_function);
+        if (!data_.insert(std::make_pair(name, ptr)).second) {
+            throw std::runtime_error("a particle array named \"" + name + "\" already exists");
+        }
+        return ptr;
+    }
+
+    /**
+     * register a wrapper for a tuple element of packed gpu data
+     *
+     * @param name identifier for the particle data
+     * @param parent gpu particle array
+     * @return shared pointer to the particle array wrapper
+     */
+    template<typename tuple_type, int field, typename gpu_type>
+    std::shared_ptr<particle_array>
+    register_packed_data_wrapper(std::string const& name, std::shared_ptr<particle_array_gpu<gpu_type>> const& parent) {
+        auto ptr = particle_array::create_packed_wrapper<tuple_type, field> (parent);
+        if (!data_.insert(std::make_pair(name, ptr)).second) {
+            throw std::runtime_error("a particle array named \"" + name + "\" already exists");
+        }
+        return std::static_pointer_cast<particle_array>(ptr);
+    }
+
+    /**
+     * register a wrapper for accessing gpu data with a convenient host type
+     *
+     * @param name identifier for the particle data
+     * @param parent gpu particle array
+     * @return shared pointer to the particle array wrapper
+     */
+    template<typename host_type, typename gpu_type>
+    std::shared_ptr<particle_array>
+    register_host_data_wrapper(std::string const& name, std::shared_ptr<particle_array_gpu<gpu_type>> const& parent) {
+        auto ptr = particle_array::create_host_wrapper<host_type> (parent);
+        if (!data_.insert(std::make_pair(name, ptr)).second) {
+            throw std::runtime_error("a particle array named \"" + name + "\" already exists");
+        }
+        return std::static_pointer_cast<particle_array>(ptr);
+    }
+
+    /**
      * get data from named particle array with iterator
      *
      * @param name identifier of the particle array

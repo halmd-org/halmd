@@ -108,6 +108,25 @@ public:
     }
 
     /**
+     * register typed particle data
+     *
+     * @param name identifier for the particle data
+     * @param update_function optional update function
+     * @return the newly created particle array
+     *
+     * throws an exception if a particle array with the same name already exists
+     */
+    template<typename T>
+    std::shared_ptr<particle_array_typed<T>>
+    register_data(std::string const& name, std::function<void()> update_function = std::function<void()>()) {
+        auto ptr = particle_array::create<T>(nparticle_, update_function);
+        if (!data_.insert(std::make_pair(name, ptr)).second) {
+            throw std::runtime_error("a particle array named \"" + name + "\" already exists");
+        }
+        return ptr;
+    }
+
+    /**
      * get data from named particle array with iterator
      *
      * @param name identifier of the particle array
@@ -425,19 +444,6 @@ private:
             throw std::invalid_argument("particle array \"" + name + "\" not registered");
         }
         return it->second;
-    }
-
-    /**
-     * register typed particle array
-     *
-     * @param name identifier for the particle array
-     * @return non-const reference to the array data to be used for initialization
-     */
-    template<typename T>
-    cache<raw_array<T>>& register_array_(std::string const &name) {
-        auto ptr = particle_array::create<T>(nparticle_);
-        data_[name] = ptr;
-        return ptr->mutable_data();
     }
 
     /**

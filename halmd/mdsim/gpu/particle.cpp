@@ -65,39 +65,29 @@ particle<dimension, float_type>::particle(size_type nparticle, unsigned int nspe
   , aux_dirty_(true)
   , aux_enabled_(true)
 {
-    // create particle arrays
-    auto position_array = particle_array::create<gpu_position_type>(nparticle);
-    auto image_array = particle_array::create<gpu_image_type>(nparticle);
-    auto velocity_array = particle_array::create<gpu_velocity_type>(nparticle);
-    auto tag_array = particle_array::create<gpu_tag_type>(nparticle);
-    auto reverse_tag_array = particle_array::create<gpu_reverse_tag_type>(nparticle);
-    auto force_array = particle_array::create<gpu_force_type>(nparticle, [this](){ this->update_force_(); });
-    auto en_pot_array = particle_array::create<gpu_en_pot_type>(nparticle, [this](){ this->update_force_(true); });
-    auto stress_pot_array = particle_array::create<gpu_stress_pot_type>(nparticle, [this](){ this->update_force_(true); });
+    // register particle arrays
+    auto position_array = register_data<gpu_position_type>("g_position");
+    auto image_array = register_data<gpu_image_type>("g_image");
+    auto velocity_array = register_data<gpu_velocity_type>("g_velocity");
+    auto tag_array = register_data<gpu_tag_type>("g_tag");
+    auto reverse_tag_array = register_data<gpu_reverse_tag_type>("g_reverse_tag");
+    auto force_array = register_data<gpu_force_type>("g_force", [this]() { this->update_force_(); });
+    auto en_pot_array = register_data<gpu_en_pot_type>("g_en_pot", [this]() { this->update_force_(true); });
+    auto stress_pot_array = register_data<gpu_stress_pot_type>("g_stress_pot", [this]() { this->update_force_(true); });
 
-    // store particle arrays in data map
-    data_["g_position"] = position_array;
-    data_["g_image"] = image_array;
-    data_["g_velocity"] = velocity_array;
-    data_["g_tag"] = tag_array;
-    data_["g_reverse_tag"] = reverse_tag_array;
-    data_["g_force"] = force_array;
-    data_["g_en_pot"] = en_pot_array;
-    data_["g_stress_pot"] = stress_pot_array;
+    // register host data wrappers for packed data
+    register_packed_data_wrapper<tuple<position_type, species_type>, 0>("position", position_array);
+    register_packed_data_wrapper<tuple<position_type, species_type>, 1>("species", position_array);
+    register_packed_data_wrapper<tuple<velocity_type, mass_type>, 0>("velocity", velocity_array);
+    register_packed_data_wrapper<tuple<velocity_type, mass_type>, 1>("mass", velocity_array);
 
-    // create host data wrappers for packed data
-    data_["position"] = particle_array::create_packed_wrapper<tuple<position_type, species_type>, 0>(position_array);
-    data_["species"] = particle_array::create_packed_wrapper<tuple<position_type, species_type>, 1>(position_array);
-    data_["velocity"] = particle_array::create_packed_wrapper<tuple<velocity_type, mass_type>, 0>(velocity_array);
-    data_["mass"] = particle_array::create_packed_wrapper<tuple<velocity_type, mass_type>, 1>(velocity_array);
-
-    // create host wrappers for other data
-    data_["force"] = particle_array::create_host_wrapper<force_type>(force_array);
-    data_["image"] = particle_array::create_host_wrapper<image_type>(image_array);
-    data_["tag"] = particle_array::create_host_wrapper<tag_type>(tag_array);
-    data_["reverse_tag"] = particle_array::create_host_wrapper<reverse_tag_type>(reverse_tag_array);
-    data_["en_pot"] = particle_array::create_host_wrapper<en_pot_type>(en_pot_array);
-    data_["stress_pot"] = particle_array::create_host_wrapper<stress_pot_type>(stress_pot_array);
+    // register host wrappers for other data
+    register_host_data_wrapper<force_type>("force", force_array);
+    register_host_data_wrapper<image_type>("image", image_array);
+    register_host_data_wrapper<tag_type>("tag", tag_array);
+    register_host_data_wrapper<reverse_tag_type>("reverse_tag", reverse_tag_array);
+    register_host_data_wrapper<en_pot_type>("en_pot", en_pot_array);
+    register_host_data_wrapper<stress_pot_type>("stress_pot", stress_pot_array);
 
     // create alias for potential energy
     data_["potential_energy"] = data_["en_pot"];

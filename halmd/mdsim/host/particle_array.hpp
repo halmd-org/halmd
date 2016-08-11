@@ -39,11 +39,13 @@ public:
     /**
      * create particle array of given type
      *
-     * @param args arguments to be forwarded for the construction of the data container
+     * @param size number of particles
+     * @param update_function optional update function
      * @return shared pointer to the new particle array
      */
-    template<typename T, typename... Args>
-    static inline std::shared_ptr<particle_array_typed<T>> create(Args&&... args);
+    template<typename T>
+    static inline std::shared_ptr<particle_array_typed<T>> create(unsigned int size,
+      std::function<void()> update_function = std::function<void()>());
 
     /**
      * cast generic particle array to typed data
@@ -81,25 +83,7 @@ public:
      * @param L lua state (passed in by luaponte)
      * @return lua table containing a copy of the data
      */
-    virtual luaponte::object get_lua(lua_State* L) = 0;
-
-    /**
-     * register an on_get handler
-     *
-     * @param slot function to register for the on_get signal
-     * @return signal connection
-     *
-     * the signal is emitted whenever a non-mutable version of the data is queried
-     * and can be used to update out-dated data just in time
-     */
-    connection on_get(halmd::signal<void()>::slot_function_type const& slot)
-    {
-        return on_get_.connect(slot);
-    }
-
-protected:
-    /** on_get signal */
-    halmd::signal<void()> on_get_;
+    virtual luaponte::object get_lua(lua_State* L) const = 0;
 };
 
 template<typename T>
@@ -110,11 +94,14 @@ public:
      * typed particle array constructor
      *
      * @param args arguments to be passed down to construct the internal raw_array container
+     * @param update_function optional update function
      */
-    template <typename... Args>
-    particle_array_typed(Args&&... args)
-    : data_(std::forward<Args>(args)...)
+    particle_array_typed(unsigned int size, std::function<void()> update_function = std::function<void()>())
+      : data_(size), update_function_(update_function)
     {
+        if (!update_function_) {
+            update_function_ = [](){};
+        }
     }
 
     /**
@@ -143,7 +130,7 @@ public:
      */
     cache<raw_array<T>> const& data() const
     {
-        on_get_();
+        update_function_();
         return data_;
     }
 
@@ -189,9 +176,8 @@ public:
      * @param L lua state (passed in by luaponte)
      * @return lua table containing a copy of the data
      */
-    virtual luaponte::object get_lua(lua_State* L)
+    virtual luaponte::object get_lua(lua_State* L) const
     {
-        on_get_();
         luaponte::object table = luaponte::newtable(L);
         std::size_t i = 1;
         for (auto const& x : read_cache(data())) {
@@ -202,12 +188,15 @@ public:
 private:
     /** cached raw_array */
     cache<raw_array<T>> data_;
+    /** optional update function */
+    std::function<void()> update_function_;
 };
 
-template<typename T, typename... Args>
-inline std::shared_ptr<particle_array_typed<T>> particle_array::create(Args&& ...args)
+template<typename T>
+inline std::shared_ptr<particle_array_typed<T>> particle_array::create(unsigned int size,
+  std::function<void()> update_function)
 {
-    return std::make_shared<particle_array_typed<T>>(args...);
+    return std::make_shared<particle_array_typed<T>>(size, update_function);
 }
 
 template<typename T>
