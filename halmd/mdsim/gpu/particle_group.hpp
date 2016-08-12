@@ -50,6 +50,7 @@ class particle_group
 public:
     typedef cuda::vector<unsigned int> array_type;
     typedef array_type::value_type size_type;
+    typedef cuda::host::vector<size_type> host_array_type;
 
     /**
      * Returns ordered sequence of particle indices.
@@ -67,9 +68,27 @@ public:
     virtual cache<size_type> const& size() = 0;
 
     /**
+     * Returns ordered sequence of particle indices in host memory.
+     * If the stored cached copy of the indices is no longer valid,
+     * it is automatically updated from the GPU storage.
+     */
+    host_array_type const& ordered_host_cached() {
+        if (!(ordered_observer_ == ordered())) {
+            auto const& indices = read_cache(ordered());
+            cached_ordered_.resize(indices.size());
+            cuda::copy(indices.begin(), indices.end(), cached_ordered_.begin());
+            ordered_observer_ = ordered();
+        }
+        return cached_ordered_;
+    }
+
+    /**
      * Bind class to Lua.
      */
     static void luaopen(lua_State* L);
+private:
+    host_array_type cached_ordered_;
+    cache<> ordered_observer_;
 };
 
 /**

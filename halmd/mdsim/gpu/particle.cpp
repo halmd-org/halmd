@@ -33,7 +33,6 @@
 #include <halmd/utility/lua/lua.hpp>
 #include <halmd/utility/signal.hpp>
 
-#include <boost/function_output_iterator.hpp>
 #include <boost/iterator/counting_iterator.hpp>
 #include <boost/iterator/transform_iterator.hpp>
 #include <luaponte/out_value_policy.hpp>
@@ -298,7 +297,9 @@ void particle<dimension, float_type>::luaopen(lua_State* L)
                     .property("nparticle", &particle::nparticle)
                     .property("nspecies", &particle::nspecies)
                     .def("get", &particle::get_lua)
+                    .def("get", &particle::get_lua_with_group)
                     .def("set", &particle::set_lua)
+                    .def("set", &particle::set_lua_with_group)
                     .def("shift_velocity", &shift_velocity<particle>)
                     .def("shift_velocity_group", &shift_velocity_group<particle>)
                     .def("rescale_velocity", &rescale_velocity<particle>)

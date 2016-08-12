@@ -24,6 +24,7 @@
 #include <typeinfo>
 #include <halmd/utility/cache.hpp>
 #include <halmd/utility/lua/lua.hpp>
+#include <halmd/mdsim/gpu/particle_group.hpp>
 
 namespace halmd {
 namespace mdsim {
@@ -51,7 +52,7 @@ template<typename host_type, typename gpu_type, bool is_tuple = false>
 class particle_array_host_wrapper;
 
 /** particle array base class */
-class particle_array
+class particle_array : public std::enable_shared_from_this<particle_array>
 {
 public:
     /**
@@ -157,30 +158,51 @@ public:
      * @param L lua state (passed in by luaponte)
      * @return lua table containing a copy of the data
      */
-    virtual luaponte::object get_lua(lua_State* L) = 0;
+    virtual luaponte::object get_lua(lua_State* L) const = 0;
+    /**
+     * convert data according to index map to a slot function
+     *
+     * @param L lua state (passed in by luaponte)
+     * @param group particle group containing the index map
+     * @return lua table containing a slot function to the data
+     */
+    virtual luaponte::object get_lua(lua_State* L, std::shared_ptr<particle_group> group) const = 0;
+    virtual void set_lua(std::shared_ptr<particle_group> particle_group, luaponte::object table) = 0;
 };
 
 namespace detail {
 
+/**
+ * particle data converter
+ *
+ * converts data copied from GPU storage to the desired data type
+ *
+ * the default implementation just casts and copies the data directly,
+ * but custom specializations can perform arbitrary transformations
+ * on the data for specific types
+ */
 template<typename T>
 class particle_data_converter {
 public:
-    static inline T const& get(cuda::host::vector<uint8_t> const& memory, size_t offset) {
+    T const& get(cuda::host::vector<uint8_t> const& memory, size_t offset) const {
         return *reinterpret_cast<const T*>(&memory[offset]);
     }
-    static inline void set(cuda::host::vector<uint8_t>& memory, size_t offset, T const& value) {
+    void set(cuda::host::vector<uint8_t>& memory, size_t offset, T const& value) {
         *reinterpret_cast<T*>(&memory[offset]) = value;
     }
 };
 
+/**
+ * particle data converter - specialization for stress tensor
+ */
 template<typename T>
 class particle_data_converter<stress_tensor_wrapper<T>> {
 public:
-    static inline T get(cuda::host::vector<uint8_t> const& memory, size_t offset) {
+    T get(cuda::host::vector<uint8_t> const& memory, size_t offset) const {
         unsigned int stride = memory.capacity() / (sizeof(typename T::value_type) * T::static_size);
         return read_stress_tensor<T>(reinterpret_cast<typename T::value_type const*>(&memory[offset]), stride);
     }
-    static inline void set(cuda::host::vector<uint8_t>& memory, size_t offset, T const& value) {
+    void set(cuda::host::vector<uint8_t>& memory, size_t offset, T const& value) {
         throw std::runtime_error("attempt to write read-only data");
     }
 };
@@ -197,8 +219,10 @@ public:
      *
      * @param stride stride of the underlying gpu data
      * @param offset offset of the typed data within the underlying gpu data
+     * @param n_elems number of elements in the array
      */
-    particle_array_typed(size_t stride, size_t offset) : stride_(stride), offset_(offset) {
+    particle_array_typed(size_t stride, size_t offset, size_t n_elems)
+    : stride_(stride), offset_(offset), n_elems_(n_elems) {
     }
     /**
      * query data type
@@ -218,7 +242,7 @@ public:
         auto mem = get_memory();
         auto it = first;
         for(size_t i = offset_; i < mem.size(); i += stride_) {
-            detail::particle_data_converter<T>::set(mem, i, *it++);
+            converter.set(mem, i, *it++);
         }
         set_data(mem);
         return it;
@@ -232,10 +256,57 @@ public:
         auto data = get_data();
         auto it = first;
         for(size_t i = offset_; i < data.size(); i += stride_) {
-            *it++ = detail::particle_data_converter<T>::get(data, i);
+            *it++ = converter.get(data, i);
         }
         return it;
     }
+    /**
+     * get data from particle group with iterator
+     */
+    template <typename iterator_type>
+    iterator_type get_data(std::shared_ptr<particle_group> particle_group, iterator_type const& first) const
+    {
+        auto const& group = particle_group->ordered_host_cached();
+        auto data = get_data();
+        auto it = first;
+        for (size_t i : group) {
+            *it++ = converter.get(data, offset_ + i * stride_);
+        }
+        return it;
+    }
+
+    /**
+     * set data with particle group from iterator
+     */
+    template<typename iterator_type>
+    iterator_type set_data(std::shared_ptr<particle_group> particle_group, iterator_type const& first)
+    {
+        auto const& group = particle_group->ordered_host_cached();
+        auto memory = get_memory();
+        auto it = first;
+        for (size_t i : group) {
+            converter.set(memory, offset_ + i * stride_, *it++);
+        }
+        set_data(memory);
+        return it;
+    }
+
+    /**
+     * get a slot function of the data according to an index map
+     *
+     * @param particle_group particle group containing the index map
+     * @return a slot function that can be used to retrieve the data
+     */
+    std::function<std::vector<T>()> get_data(std::shared_ptr<particle_group> particle_group) const {
+        auto self = std::static_pointer_cast<particle_array_typed<T> const>(shared_from_this());
+        return [self, particle_group]() -> std::vector<T> {
+            std::vector<T> data;
+            data.reserve(self->n_elems_);
+            self->get_data(particle_group, std::back_inserter(data));
+            return data;
+        };
+    }
+
     /**
      * set data from lua table
      *
@@ -245,25 +316,49 @@ public:
         auto mem = get_memory();
         size_t j = 1;
         for(size_t i = offset_; i < mem.size(); i += stride_) {
-            detail::particle_data_converter<T>::set(mem, i, luaponte::object_cast<T>(table[j++]));
+            converter.set(mem, i, luaponte::object_cast<T>(table[j++]));
         }
         set_data(mem);
     }
+
+    virtual void set_lua(std::shared_ptr<particle_group> particle_group, luaponte::object table) {
+        auto mem = get_memory();
+        auto const& group = particle_group->ordered_host_cached();
+        size_t j = 1;
+        for(size_t i : group) {
+            converter.set(mem, offset_ + i * stride_, luaponte::object_cast<T>(table[j++]));
+        }
+        set_data(mem);
+    }
+
     /**
      * convert data to lua table
      *
      * @param L lua state (passed in by luaponte)
      * @return lua table containing a copy of the data
      */
-    virtual luaponte::object get_lua(lua_State *L) {
+    virtual luaponte::object get_lua(lua_State *L) const {
         auto data = get_data();
         luaponte::object table = luaponte::newtable(L);
         std::size_t j = 1;
         for(size_t i = offset_; i < data.size(); i += stride_) {
-            auto&& value = detail::particle_data_converter<T>::get(data, i);
+            auto&& value = converter.get(data, i);
             table[j++] = boost::cref(value);
         }
         return table;
+    }
+    /**
+     * get a slot function containing the data according to an index map
+     *
+     * @param L lua state (passed in by luaponte)
+     * @param particle_group particle group containing the index map
+     * @return slot function to retrieve the data
+     */
+    virtual luaponte::object get_lua(lua_State* L, std::shared_ptr<particle_group> particle_group) const {
+        luaponte::default_converter<std::function<std::vector<T>()>>().apply(L, get_data(particle_group));
+        luaponte::object result(luaponte::from_stack(L, -1));
+        lua_pop(L, 1);
+        return result;
     }
 protected:
     /**
@@ -290,6 +385,10 @@ private:
     size_t stride_;
     /** typed data offset */
     size_t offset_;
+    /** number of elements */
+    size_t n_elems_;
+    /** particle data converter */
+    detail::particle_data_converter<T> converter;
 };
 
 /** typed gpu particle array */
@@ -304,7 +403,7 @@ public:
      * @param update_function optional update function
      */
     particle_array_gpu(unsigned int size, std::function<void()> update_function)
-    : particle_array_typed<T>(sizeof(T), 0), data_(size), update_function_(update_function) {
+    : particle_array_typed<T>(sizeof(T), 0, size), data_(size), update_function_(update_function) {
         if (!update_function_) {
             update_function_ = [](){};
         }
@@ -403,7 +502,7 @@ public:
      * @param parent gpu particle array to be wrapped
      */
     particle_array_host_wrapper(const std::shared_ptr<particle_array_gpu<gpu_type>> &parent, size_t offset = 0)
-            : particle_array_typed<host_type>(sizeof(gpu_type), offset), parent_ (parent) {
+            : particle_array_typed<host_type>(sizeof(gpu_type), offset, parent->data()->size()), parent_ (parent) {
     }
     /**
      * query gpu flag

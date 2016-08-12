@@ -24,13 +24,13 @@
 #ifndef HALMD_MDSIM_HOST_PARTICLE_HPP
 #define HALMD_MDSIM_HOST_PARTICLE_HPP
 
-#include <halmd/mdsim/type_traits.hpp>
-#include <halmd/utility/profiler.hpp>
-#include <halmd/utility/cache.hpp>
-#include <halmd/utility/raw_array.hpp>
-#include <halmd/numeric/blas/fixed_vector.hpp>
 #include <halmd/mdsim/host/particle_array.hpp>
+#include <halmd/mdsim/type_traits.hpp>
+#include <halmd/numeric/blas/fixed_vector.hpp>
+#include <halmd/utility/cache.hpp>
 #include <halmd/utility/lua/lua.hpp>
+#include <halmd/utility/profiler.hpp>
+#include <halmd/utility/raw_array.hpp>
 
 #include <lua.hpp>
 
@@ -140,6 +140,24 @@ public:
     {
         return particle_array::cast<T>(get_array_(name))->get_data(first);
     }
+
+    /**
+     * get data from named particle array with iterator
+     *
+     * @param name identifier of the particle array
+     * @param group particle group used as index map
+     * @param first output iterator
+     * @return output iterator
+     *
+     * throws an exception if the array does not exist or has an invalid type
+     */
+    template<typename T, typename iterator_type>
+    iterator_type get_data(std::string const& name, std::shared_ptr<particle_group> group, iterator_type const& first) const
+    {
+        return particle_array::cast<T>(get_array_(name))->get_data(group, first);
+    }
+
+
     /**
      * set data in named particle array with iterator
      *
@@ -154,6 +172,23 @@ public:
     {
         return particle_array::cast<T>(get_array_(name))->set_data(first);
     }
+
+    /**
+     * set data in named particle array with iterator
+     *
+     * @param name identifier of the particle array
+     * @param group particle group used as index map
+     * @param first input iterator
+     * @return input iterator
+     *
+     * throws an exception if the array does not exist or has an invalid type
+     */
+    template <typename T, typename iterator_type>
+    iterator_type set_data(const std::string &name, std::shared_ptr<particle_group> group, iterator_type const& first)
+    {
+        return particle_array::cast<T>(get_array_(name))->set_data(group, first);
+    }
+
 
     /**
      * Returns const reference to the data of a named particle array.
@@ -411,8 +446,19 @@ public:
         return get_array_(name)->get_lua(L);
     }
 
-    void set_lua(std::string const& name, luaponte::object object) {
+    luaponte::object get_lua_with_group(lua_State* L, std::string const& name, std::shared_ptr<particle_group> group)
+    {
+        return get_array_(name)->get_lua(L, group);
+    }
+
+    void set_lua(std::string const& name, luaponte::object object)
+    {
         get_array_(name)->set_lua(object);
+    }
+
+    void set_lua_with_group(std::string const &name, std::shared_ptr<particle_group> group, luaponte::object object)
+    {
+        get_array_(name)->set_lua(group, object);
     }
 
     /**

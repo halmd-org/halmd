@@ -24,12 +24,12 @@
 #ifndef HALMD_MDSIM_GPU_PARTICLE_HPP
 #define HALMD_MDSIM_GPU_PARTICLE_HPP
 
+#include <halmd/mdsim/force_kernel.hpp>
+#include <halmd/mdsim/gpu/particle_array.hpp>
 #include <halmd/mdsim/type_traits.hpp>
 #include <halmd/utility/cache.hpp>
 #include <halmd/utility/profiler.hpp>
 #include <halmd/utility/signal.hpp>
-#include <halmd/mdsim/force_kernel.hpp>
-#include <halmd/mdsim/gpu/particle_array.hpp>
 
 #include <cuda_wrapper/cuda_wrapper.hpp>
 #include <lua.hpp>
@@ -41,6 +41,8 @@
 namespace halmd {
 namespace mdsim {
 namespace gpu {
+
+class particle_group;
 
 template <int dimension, typename float_type>
 class particle
@@ -186,6 +188,23 @@ public:
     {
         return particle_array::cast<T>(get_array_(name))->get_data(first);
     }
+
+    /**
+     * get data from named particle array with iterator
+     *
+     * @param name identifier of the particle array
+     * @param group particle group used as index map
+     * @param first output iterator
+     * @return output iterator
+     *
+     * throws an exception if the array does not exist or has an invalid type
+     */
+    template<typename T, typename iterator_type>
+    iterator_type get_data(std::string const& name, std::shared_ptr<particle_group> group, iterator_type const& first) const
+    {
+        return particle_array::cast<T>(get_array_(name))->get_data(group, first);
+    }
+
     /**
      * set data in named particle array with iterator
      *
@@ -199,6 +218,22 @@ public:
     iterator_type set_data(const std::string &name, iterator_type const& first)
     {
         return particle_array::cast<T>(get_array_(name))->set_data(first);
+    }
+
+    /**
+     * set data in named particle array with iterator
+     *
+     * @param name identifier of the particle array
+     * @param group particle group used as index map
+     * @param first input iterator
+     * @return input iterator
+     *
+     * throws an exception if the array does not exist or has an invalid type
+     */
+    template <typename T, typename iterator_type>
+    iterator_type set_data(const std::string &name, std::shared_ptr<particle_group> group, iterator_type const& first)
+    {
+        return particle_array::cast<T>(get_array_(name))->set_data(group, first);
     }
 
     /**
@@ -419,12 +454,22 @@ public:
     {
         return on_append_force_.connect(slot);
     }
-    luaponte::object get_lua (lua_State *L, std::string const& name) {
+
+    luaponte::object get_lua(lua_State *L, std::string const& name) {
         return get_array_(name)->get_lua(L);
     }
 
-    void set_lua (std::string const& name, luaponte::object object) {
+    luaponte::object get_lua_with_group(lua_State* L, std::string const& name, std::shared_ptr<particle_group> group) {
+        return get_array_(name)->get_lua(L, group);
+    }
+
+    void set_lua(std::string const& name, luaponte::object object) {
         get_array_(name)->set_lua(object);
+    }
+
+    void set_lua_with_group(std::string const &name, std::shared_ptr<particle_group> group, luaponte::object object)
+    {
+        get_array_(name)->set_lua(group, object);
     }
 
     /**

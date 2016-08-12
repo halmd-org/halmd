@@ -197,7 +197,11 @@ local M = module(function(args)
         -- in the latter case, the value string is assigned to the group name
         for k,v in pairs(fields) do
             local name = (type(k) == "string") and k or v
-            writer:on_write(assert(self[v])(), {name})
+            if v == "position" then
+              writer:on_write(assert(self[v])(), {name})
+            else
+              writer:on_write(particle:get(name,group), {name})
+            end
         end
 
         -- store box information
