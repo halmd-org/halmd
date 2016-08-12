@@ -160,6 +160,33 @@ public:
     virtual luaponte::object get_lua(lua_State* L) = 0;
 };
 
+namespace detail {
+
+template<typename T>
+class particle_data_converter {
+public:
+    static inline T const& get(cuda::host::vector<uint8_t> const& memory, size_t offset) {
+        return *reinterpret_cast<const T*>(&memory[offset]);
+    }
+    static inline void set(cuda::host::vector<uint8_t>& memory, size_t offset, T const& value) {
+        *reinterpret_cast<T*>(&memory[offset]) = value;
+    }
+};
+
+template<typename T>
+class particle_data_converter<stress_tensor_wrapper<T>> {
+public:
+    static inline T get(cuda::host::vector<uint8_t> const& memory, size_t offset) {
+        unsigned int stride = memory.capacity() / (sizeof(typename T::value_type) * T::static_size);
+        return read_stress_tensor<T>(reinterpret_cast<typename T::value_type const*>(&memory[offset]), stride);
+    }
+    static inline void set(cuda::host::vector<uint8_t>& memory, size_t offset, T const& value) {
+        throw std::runtime_error("attempt to write read-only data");
+    }
+};
+
+} /* namespace detail */
+
 /** particle array base class with type information */
 template<typename T>
 class particle_array_typed : public particle_array
@@ -191,7 +218,7 @@ public:
         auto mem = get_memory();
         auto it = first;
         for(size_t i = offset_; i < mem.size(); i += stride_) {
-            *reinterpret_cast<T*>(&mem[i]) = *it++;
+            detail::particle_data_converter<T>::set(mem, i, *it++);
         }
         set_data(mem);
         return it;
@@ -205,7 +232,7 @@ public:
         auto data = get_data();
         auto it = first;
         for(size_t i = offset_; i < data.size(); i += stride_) {
-            *it++ = *reinterpret_cast<const T*>(&data[i]);
+            *it++ = detail::particle_data_converter<T>::get(data, i);
         }
         return it;
     }
@@ -218,7 +245,7 @@ public:
         auto mem = get_memory();
         size_t j = 1;
         for(size_t i = offset_; i < mem.size(); i += stride_) {
-            *reinterpret_cast<T*>(&mem[i]) = luaponte::object_cast<T>(table[j++]);
+            detail::particle_data_converter<T>::set(mem, i, luaponte::object_cast<T>(table[j++]));
         }
         set_data(mem);
     }
@@ -233,7 +260,8 @@ public:
         luaponte::object table = luaponte::newtable(L);
         std::size_t j = 1;
         for(size_t i = offset_; i < data.size(); i += stride_) {
-            table[j++] = boost::cref(*reinterpret_cast<T*>(&data[i]));
+            auto&& value = detail::particle_data_converter<T>::get(data, i);
+            table[j++] = boost::cref(value);
         }
         return table;
     }
@@ -261,49 +289,6 @@ private:
     /** gpu data stride */
     size_t stride_;
     /** typed data offset */
-    size_t offset_;
-};
-
-// explicit specialization for the stress tensor
-template<typename T>
-class particle_array_typed<stress_tensor_wrapper<T>> : public particle_array {
-public:
-    particle_array_typed(size_t stride, size_t offset) : stride_(stride), offset_(offset) {
-    }
-    virtual std::type_info const& type() const {
-        return typeid(stress_tensor_wrapper<T>);
-    }
-    template <typename iterator_type>
-    iterator_type get_data(iterator_type const& first) const
-    {
-        auto data = get_data();
-        // convert from column-major to row-major layout
-        unsigned int stride = data.capacity() / T::static_size;
-        iterator_type it = first;
-        for (auto i = offset_; i < data.size(); i += stride_) {
-            *it++ = read_stress_tensor<T>(reinterpret_cast<typename T::value_type*>(&data[i]), stride);
-        }
-        return it;
-    }
-    virtual void set_lua(luaponte::object table) {
-        throw std::runtime_error("attempt to set read only data");
-    }
-    virtual luaponte::object get_lua(lua_State* L) {
-        auto data = get_data();
-        unsigned int stride = data.capacity() / T::static_size;
-        luaponte::object table = luaponte::newtable(L);
-        std::size_t j = 1;
-        for (size_t i = offset_; i < data.size(); i += stride_) {
-            table[j++] = read_stress_tensor<T>(reinterpret_cast<T*>(&data[i])->begin(), stride);
-        }
-        return table;
-    }
-protected:
-    virtual cuda::host::vector<uint8_t> get_memory() const = 0;
-    virtual cuda::host::vector<uint8_t> get_data() const = 0;
-    virtual void set_data(cuda::host::vector<uint8_t> const& memory) = 0;
-private:
-    size_t stride_;
     size_t offset_;
 };
 
@@ -372,9 +357,10 @@ protected:
      * @return a page-locked memory vector containing the contents of the underlying gpu data
      */
     virtual cuda::host::vector<uint8_t> get_data() const {
-        cuda::host::vector<uint8_t> mem(data_->size() * sizeof(T));
         auto const& g_input = read_cache(data());
-        cuda::copy(g_input.begin(), g_input.end(), reinterpret_cast<T*>(&*mem.begin()));
+        cuda::host::vector<uint8_t> mem(g_input.size() * sizeof(T));
+        mem.reserve(g_input.capacity() * sizeof(T));
+        cuda::copy(g_input.begin(), g_input.begin()+g_input.capacity(), reinterpret_cast<T*>(&*mem.begin()));
         return mem;
     }
     /**
