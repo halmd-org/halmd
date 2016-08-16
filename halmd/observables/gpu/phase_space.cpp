@@ -235,79 +235,21 @@ phase_space<host::samples::phase_space<dimension, float_type> >::acquire()
 }
 
 template <int dimension, typename float_type>
-void phase_space<host::samples::phase_space<dimension, float_type> >::set(std::shared_ptr<sample_type const> sample)
-{
+void phase_space<host::samples::phase_space<dimension, float_type>>::set_position(typename sample_type::position_array_type const& input) {
+    particle_->template set_data<typename particle_type::position_type>("position", particle_group_, input.begin());
     group_array_type const& group = read_cache(particle_group_->ordered());
-
-    // invalidate particle caches after accessing the particle group!
     auto position = make_cache_mutable(particle_->position());
     auto image = make_cache_mutable(particle_->image());
-    auto velocity = make_cache_mutable(particle_->velocity());
 
-    scoped_timer_type timer(runtime_.set);
-
-    // allocate additional memory for double-single precision
-    h_r_.reserve(position->capacity());
-    h_v_.reserve(velocity->capacity());
-
-    // copy particle arrays from GPU to host
-    cuda::copy(position->begin(), position->begin() + position->capacity(), h_r_.begin());
-    cuda::copy(velocity->begin(), velocity->begin() + velocity->capacity(), h_v_.begin());
-
-    // assign particle coordinates and types
-    typename particle_type::species_type const nspecies = particle_->nspecies();
-    typename sample_type::position_array_type const& sample_position = sample->position();
-    typename sample_type::velocity_array_type const& sample_velocity = sample->velocity();
-    typename sample_type::species_array_type const& sample_species = sample->species();
-    typename sample_type::mass_array_type const& sample_mass = sample->mass();
-
-    assert(sample_position.size() >= group.size());
-    assert(sample_velocity.size() >= group.size());
-    assert(sample_species.size() >= group.size());
-
-    // copy particle data using reverse tags as on the GPU
-    cuda::host::vector<unsigned int> h_group(group.size());
-    cuda::copy(group.begin(), group.end(), h_group.begin());
-
-    std::size_t tag = 0;
-#ifdef USE_VERLET_DSFUN
-    std::size_t nthreads = particle_->dim.threads();
-#endif
-    for (std::size_t i : h_group) {
-        assert(i < h_r_.size());
-        unsigned int species = sample_species[tag];
-        if (species >= nspecies) {
-            throw std::invalid_argument("invalid species");
-        }
-        h_r_[i] <<= tie(sample_position[tag], species);
-        h_v_[i] <<= tie(sample_velocity[tag], sample_mass[tag]);
-#ifdef USE_VERLET_DSFUN
-        h_r_[i + nthreads] = vector_type(0);
-        h_v_[i + nthreads] = vector_type(0);
-#endif
-        ++tag;
-    }
-
-    try {
-        cuda::copy(h_r_.begin(), h_r_.begin() + h_r_.capacity(), position->begin());
-        cuda::copy(h_v_.begin(), h_v_.begin() + h_v_.capacity(), velocity->begin());
-    }
-    catch (cuda::error const&)
-    {
-        LOG_ERROR("failed to copy particles to GPU");
-        throw;
-    }
-
-    // shift particle positions to range (-L/2, L/2)
     try {
         phase_space_wrapper<dimension>::kernel.r.bind(*position);
         cuda::configure(particle_->dim.grid, particle_->dim.block);
         phase_space_wrapper<dimension>::kernel.reduce_periodic(
-            &*group.begin()
-          , &*position->begin()
-          , &*image->begin()
-          , static_cast<vector_type>(box_->length())
-          , group.size()
+                &*group.begin()
+                , &*position->begin()
+                , &*image->begin()
+                , static_cast<vector_type>(box_->length())
+                , group.size()
         );
     }
     catch (cuda::error const&)
@@ -315,6 +257,30 @@ void phase_space<host::samples::phase_space<dimension, float_type> >::set(std::s
         LOG_ERROR("failed to reduce particle positions on GPU");
         throw;
     }
+}
+
+template <int dimension, typename float_type>
+void phase_space<host::samples::phase_space<dimension, float_type>>::set_species(typename sample_type::species_array_type const& species) {
+    particle_->template set_data<typename particle_type::species_type>("species", particle_group_, species.begin());
+}
+
+template <int dimension, typename float_type>
+void phase_space<host::samples::phase_space<dimension, float_type>>::set_mass(typename sample_type::mass_array_type const& mass) {
+    particle_->template set_data<typename particle_type::mass_type>("mass", particle_group_, mass.begin());
+}
+
+template <int dimension, typename float_type>
+void phase_space<host::samples::phase_space<dimension, float_type>>::set_velocity(typename sample_type::velocity_array_type const& velocity) {
+    particle_->template set_data<typename particle_type::velocity_type>("velocity", particle_group_, velocity.begin());
+}
+
+template <int dimension, typename float_type>
+void phase_space<host::samples::phase_space<dimension, float_type> >::set(std::shared_ptr<sample_type const> sample)
+{
+    set_position(sample->position());
+    set_species(sample->species());
+    set_velocity(sample->velocity());
+    set_mass(sample->mass());
 }
 
 template <typename phase_space_type>
@@ -369,6 +335,10 @@ void phase_space<host::samples::phase_space<dimension, float_type> >::luaopen(lu
                 .property("mass", &wrap_mass<phase_space>)
                 .property("dimension", &wrap_dimension<phase_space>)
                 .def("set", &phase_space::set)
+                .def("set_position", &phase_space::set_position)
+                .def("set_velocity", &phase_space::set_velocity)
+                .def("set_mass", &phase_space::set_mass)
+                .def("set_species", &phase_space::set_species)
                 .scope
                 [
                     class_<runtime>("runtime")

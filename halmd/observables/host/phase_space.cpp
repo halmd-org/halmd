@@ -99,24 +99,10 @@ phase_space<dimension, float_type>::acquire()
 }
 
 template <int dimension, typename float_type>
-void phase_space<dimension, float_type>::set(std::shared_ptr<sample_type const> sample)
-{
+void phase_space<dimension, float_type>::set_position(typename sample_type::position_array_type const& sample_position) {
     group_array_type const& group = read_cache(particle_group_->ordered());
-    species_type nspecies = particle_->nspecies();
-
-    // invalidate particle caches after accessing the particle group!
     auto particle_position = make_cache_mutable(particle_->position());
     auto particle_image = make_cache_mutable(particle_->image());
-    auto particle_velocity = make_cache_mutable(particle_->velocity());
-    auto particle_species = make_cache_mutable(particle_->species());
-    auto particle_mass = make_cache_mutable(particle_->mass());
-
-    typename sample_type::position_array_type const& sample_position = sample->position();
-    typename sample_type::velocity_array_type const& sample_velocity = sample->velocity();
-    typename sample_type::species_array_type const& sample_species = sample->species();
-    typename sample_type::mass_array_type const& sample_mass = sample->mass();
-
-    scoped_timer_type timer(runtime_.set);
 
     size_type tag = 0;
     for (size_type i : group) {
@@ -134,16 +120,32 @@ void phase_space<dimension, float_type>::set(std::shared_ptr<sample_type const> 
         do {
             image += (shift = box_->reduce_periodic(r));
         } while (shift != vector_type(0));
-
-        (*particle_velocity)[i] = sample_velocity[tag];
-        species_type species = sample_species[tag];
-        if (species >= nspecies) {
-            throw std::invalid_argument("invalid species");
-        }
-        (*particle_species)[i] = species;
-        (*particle_mass)[i] = sample_mass[tag];
         ++tag;
     }
+}
+
+template <int dimension, typename float_type>
+void phase_space<dimension, float_type>::set_species(typename sample_type::species_array_type const& species) {
+    particle_->template set_data<typename particle_type::species_type>("species", particle_group_, species.begin());
+}
+
+template <int dimension, typename float_type>
+void phase_space<dimension, float_type>::set_velocity(typename sample_type::velocity_array_type const& velocity) {
+    particle_->template set_data<typename particle_type::velocity_type>("velocity", particle_group_, velocity.begin());
+}
+
+template <int dimension, typename float_type>
+void phase_space<dimension, float_type>::set_mass(typename sample_type::mass_array_type const& mass) {
+    particle_->template set_data<typename particle_type::mass_type>("mass", particle_group_, mass.begin());
+}
+
+template <int dimension, typename float_type>
+void phase_space<dimension, float_type>::set(std::shared_ptr<sample_type const> sample)
+{
+    set_position(sample->position());
+    set_species(sample->species());
+    set_velocity(sample->velocity());
+    set_mass(sample->mass());
 }
 
 template <typename phase_space_type>
@@ -215,6 +217,10 @@ void phase_space<dimension, float_type>::luaopen(lua_State* L)
                     .property("mass", &wrap_mass<phase_space>)
                     .property("dimension", &wrap_dimension<phase_space>)
                     .def("set", &phase_space::set)
+                    .def("set_position", &phase_space::set_position)
+                    .def("set_species", &phase_space::set_species)
+                    .def("set_velocity", &phase_space::set_velocity)
+                    .def("set_mass", &phase_space::set_mass)
                     .scope
                     [
                         class_<runtime>("runtime")

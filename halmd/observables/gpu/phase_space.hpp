@@ -141,6 +141,11 @@ public:
      */
     void set(std::shared_ptr<sample_type const> sample);
 
+    void set_position(typename sample_type::position_array_type const& position);
+    void set_velocity(typename sample_type::velocity_array_type const& velocity);
+    void set_mass(typename sample_type::mass_array_type const& mass);
+    void set_species(typename sample_type::species_array_type const& species);
+
     /**
      * Bind class to Lua.
      */
