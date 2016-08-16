@@ -86,6 +86,19 @@ void truncate::read_dataset(
     h5xx::read_dataset(dataset, slot());
 }
 
+template<typename T>
+void wrap_on_read(std::shared_ptr<truncate> self, H5::DataSet &group, std::function<void(const T&)> slot
+        , std::vector<std::string> const& location)
+{
+    std::shared_ptr<T> array = std::make_shared<T>();
+
+    self->on_read<T&>(group, [array]() -> T& { return *array; }, location);
+    self->on_append_read([array, slot] () mutable {
+        slot(*array);
+        array.reset();
+    });
+}
+
 void truncate::luaopen(lua_State* L)
 {
     using namespace luaponte;
@@ -116,6 +129,15 @@ void truncate::luaopen(lua_State* L)
                         .def("on_read", &truncate::on_read<vector<fixed_vector<double, 3> >&>, pure_out_value(_2))
                         .def("on_read", &truncate::on_read<vector<boost::array<float, 3> >&>, pure_out_value(_2))
                         .def("on_read", &truncate::on_read<vector<boost::array<double, 3> >&>, pure_out_value(_2))
+                        .def("on_read", &wrap_on_read<vector<float>>, pure_out_value(_2))
+                        .def("on_read", &wrap_on_read<vector<double>>, pure_out_value(_2))
+                        .def("on_read", &wrap_on_read<vector<unsigned int>>, pure_out_value(_2))
+                        .def("on_read", &wrap_on_read<vector<fixed_vector<float, 2> >>, pure_out_value(_2))
+                        .def("on_read", &wrap_on_read<vector<fixed_vector<float, 3> >>, pure_out_value(_2))
+                        .def("on_read", &wrap_on_read<vector<fixed_vector<double, 2> >>, pure_out_value(_2))
+                        .def("on_read", &wrap_on_read<vector<fixed_vector<double, 3> >>, pure_out_value(_2))
+                        .def("on_read", &wrap_on_read<vector<boost::array<float, 3> >>, pure_out_value(_2))
+                        .def("on_read", &wrap_on_read<vector<boost::array<double, 3> >>, pure_out_value(_2))
                         .def("on_prepend_read", &truncate::on_prepend_read)
                         .def("on_append_read", &truncate::on_append_read)
                 ]

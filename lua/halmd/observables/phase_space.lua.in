@@ -362,9 +362,7 @@ function M.reader(args)
     -- in the latter case, the value string is assigned the field name
     for k,v in pairs(fields) do
         local name = (type(k) == "string") and k or v
-        local array, array_to_sample = assert(sample[v])(sample)
-        self:on_read(array, {name})
-        self:on_append_read(array_to_sample)
+        self:on_read(assert(sample[v])(sample), {name})
     end
 
     return self, sample
