@@ -86,13 +86,23 @@ public:
     std::shared_ptr<species_sample_type const> acquire_species();
 
     /**
-     * Set particles from phase_space sample.
+     * Set particle position from sample.
      */
-    void set(std::shared_ptr<sample_type const> sample);
-
     void set_position(std::shared_ptr<position_sample_type const> sample);
+
+    /**
+     * Set particle velocity from sample.
+     */
     void set_velocity(std::shared_ptr<velocity_sample_type const> sample);
+
+    /**
+     * Set particle mass from sample.
+     */
     void set_mass(std::shared_ptr<mass_sample_type const> sample);
+
+    /**
+     * Set particle species from sample.
+     */
     void set_species(std::shared_ptr<species_sample_type const> species);
 
     /**

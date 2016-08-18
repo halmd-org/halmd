@@ -237,15 +237,6 @@ void phase_space<dimension, float_type>::set_mass(std::shared_ptr<mass_sample_ty
     particle_->template set_data<typename particle_type::mass_type>("mass", particle_group_, sample->data().begin());
 }
 
-template <int dimension, typename float_type>
-void phase_space<dimension, float_type>::set(std::shared_ptr<sample_type const> sample)
-{
-    set_position(sample->position_sample());
-    set_species(sample->species_sample());
-    set_velocity(sample->velocity_sample());
-    set_mass(sample->mass_sample());
-}
-
 template <typename phase_space_type>
 static std::function<std::shared_ptr<typename phase_space_type::sample_type const> ()>
 wrap_acquire(std::shared_ptr<phase_space_type> self)
@@ -314,7 +305,6 @@ void phase_space<dimension, float_type>::luaopen(lua_State* L)
                     .property("species", &wrap_species<phase_space>)
                     .property("mass", &wrap_mass<phase_space>)
                     .property("dimension", &wrap_dimension<phase_space>)
-                    .def("set", &phase_space::set)
                     .def("set_position", &phase_space::set_position)
                     .def("set_species", &phase_space::set_species)
                     .def("set_velocity", &phase_space::set_velocity)

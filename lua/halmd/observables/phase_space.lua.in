@@ -223,9 +223,11 @@ local M = module(function(args)
         return writer
     end
 
-    self.set = function(self, ...)
+    self.set = function(self, samples)
         logger:info(("setting particles from phase space sample"):format(label))
-        samplers.host:set(...)
+        for name,sample in pairs(samples) do
+            assert(samplers.host["set_"..name])(samplers.host, sample)
+        end
     end
 
     -- sequence of signal connections
@@ -355,7 +357,21 @@ function M.reader(args)
     if not phase_space then
         error(("unsupported space dimension: %d"):format(dimension), 2)
     end
-    local sample = phase_space(nparticle)
+    -- create a metatable for the sample list, so that metainformation about the
+    -- samples can be obtained; pairs(samples) will still only iterate over the
+    -- actual samples, but samples.nparticle, samples.dimension and samples.nspecies
+    -- will return the desired values
+    local sample_metainfo = { nparticle = nparticle, dimension = dimension }
+    local samples = setmetatable({}, {
+        __index = function(table, key)
+            -- calculate nspecies from the species sample if available
+            if key == "nspecies" then
+                local species = rawget(table, "species")
+                return species and (species:maximum() + 1) or 1
+            end
+            return sample_metainfo[key]
+        end
+    })
 
     -- register data fields with reader,
     -- the keys of 'field' may either be strings (dictionary) or numbers (table),
@@ -369,13 +385,13 @@ function M.reader(args)
         local type = dataset.type
         type = (memory == "host") and type or (type == "double" and "float" or type)
 
-        local individual_sample = libhalmd.observables.host.samples["sample_"..dimension.."_"..type](nparticle)
-        self:on_read(individual_sample:data_setter(), {name})
+        local sample = libhalmd.observables.host.samples["sample_"..dimension.."_"..type](nparticle)
+        self:on_read(sample:data_setter(), {name})
 
-        assert(sample[v])(sample, individual_sample)
+        samples[v] = sample
     end
 
-    return self, sample
+    return self, samples
 end
 
 return M

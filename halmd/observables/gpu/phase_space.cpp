@@ -325,8 +325,8 @@ phase_space<host::samples::phase_space<dimension, float_type> >::acquire()
 }
 
 template <int dimension, typename float_type>
-void phase_space<host::samples::phase_space<dimension, float_type>>::set_position(typename sample_type::position_array_type const& input) {
-    particle_->template set_data<typename particle_type::position_type>("position", particle_group_, input.begin());
+void phase_space<host::samples::phase_space<dimension, float_type>>::set_position(std::shared_ptr<position_sample_type const> sample) {
+    particle_->template set_data<typename particle_type::position_type>("position", particle_group_, sample->data().begin());
     group_array_type const& group = read_cache(particle_group_->ordered());
     auto position = make_cache_mutable(particle_->position());
     auto image = make_cache_mutable(particle_->image());
@@ -350,27 +350,18 @@ void phase_space<host::samples::phase_space<dimension, float_type>>::set_positio
 }
 
 template <int dimension, typename float_type>
-void phase_space<host::samples::phase_space<dimension, float_type>>::set_species(typename sample_type::species_array_type const& species) {
-    particle_->template set_data<typename particle_type::species_type>("species", particle_group_, species.begin());
+void phase_space<host::samples::phase_space<dimension, float_type>>::set_species(std::shared_ptr<species_sample_type const> species) {
+    particle_->template set_data<typename particle_type::species_type>("species", particle_group_, species->data().begin());
 }
 
 template <int dimension, typename float_type>
-void phase_space<host::samples::phase_space<dimension, float_type>>::set_mass(typename sample_type::mass_array_type const& mass) {
-    particle_->template set_data<typename particle_type::mass_type>("mass", particle_group_, mass.begin());
+void phase_space<host::samples::phase_space<dimension, float_type>>::set_mass(std::shared_ptr<mass_sample_type const> mass) {
+    particle_->template set_data<typename particle_type::mass_type>("mass", particle_group_, mass->data().begin());
 }
 
 template <int dimension, typename float_type>
-void phase_space<host::samples::phase_space<dimension, float_type>>::set_velocity(typename sample_type::velocity_array_type const& velocity) {
-    particle_->template set_data<typename particle_type::velocity_type>("velocity", particle_group_, velocity.begin());
-}
-
-template <int dimension, typename float_type>
-void phase_space<host::samples::phase_space<dimension, float_type> >::set(std::shared_ptr<sample_type const> sample)
-{
-    set_position(sample->position());
-    set_species(sample->species());
-    set_velocity(sample->velocity());
-    set_mass(sample->mass());
+void phase_space<host::samples::phase_space<dimension, float_type>>::set_velocity(std::shared_ptr<velocity_sample_type const> velocity) {
+    particle_->template set_data<typename particle_type::velocity_type>("velocity", particle_group_, velocity->data().begin());
 }
 
 template <typename phase_space_type>
@@ -424,7 +415,6 @@ void phase_space<host::samples::phase_space<dimension, float_type> >::luaopen(lu
                 .property("species", &wrap_species<phase_space>)
                 .property("mass", &wrap_mass<phase_space>)
                 .property("dimension", &wrap_dimension<phase_space>)
-                .def("set", &phase_space::set)
                 .def("set_position", &phase_space::set_position)
                 .def("set_velocity", &phase_space::set_velocity)
                 .def("set_mass", &phase_space::set_mass)

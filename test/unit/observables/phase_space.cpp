@@ -167,7 +167,6 @@ struct phase_space
     std::shared_ptr<box_type> box;
     std::shared_ptr<clock_type> clock;
     std::shared_ptr<particle_type> particle;
-    std::shared_ptr<input_sample_type> input_sample;
     std::shared_ptr<input_position_sample_type> input_position_sample;
     std::shared_ptr<input_velocity_sample_type> input_velocity_sample;
     std::shared_ptr<input_species_sample_type> input_species_sample;
@@ -207,7 +206,13 @@ void phase_space<modules_type>::test()
 
     // copy input sample to particle
     std::shared_ptr<particle_group_type> particle_group = std::make_shared<particle_group_type>(particle);
-    input_phase_space_type(particle, particle_group, box, clock).set(input_sample);
+    {
+        auto phase_space = input_phase_space_type(particle, particle_group, box, clock);
+        phase_space.set_position(input_position_sample);
+        phase_space.set_velocity(input_velocity_sample);
+        phase_space.set_species(input_species_sample);
+        phase_space.set_mass(input_mass_sample);
+    }
 
     // randomly permute particles in memory, do it three times since permutations are
     // not commutative
@@ -276,8 +281,6 @@ phase_space<modules_type>::phase_space()
     input_velocity_sample = std::make_shared<input_velocity_sample_type>(particle->nparticle());
     input_species_sample = std::make_shared<input_species_sample_type>(particle->nparticle());
     input_mass_sample = std::make_shared<input_mass_sample_type>(particle->nparticle());
-    input_sample = std::make_shared<input_sample_type>(input_position_sample, input_velocity_sample
-                                                     , input_species_sample, input_mass_sample);
     clock = std::make_shared<clock_type>();
     random = std::make_shared<random_type>();
 }
