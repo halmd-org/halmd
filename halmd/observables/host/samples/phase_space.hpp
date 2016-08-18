@@ -70,40 +70,6 @@ public:
     }
 
     /**
-     * Returns const reference to particle positions.
-     *
-     * The positions are extended with their periodic image vectors.
-     */
-    position_array_type const& position() const
-    {
-        return position_->data();
-    }
-
-    /**
-     * Returns const reference to particle velocities.
-     */
-    velocity_array_type const& velocity() const
-    {
-        return velocity_->data();
-    }
-
-    /**
-     * Returns const reference to particle species.
-     */
-    species_array_type const& species() const
-    {
-        return species_->data();
-    }
-
-    /**
-     * Returns const reference to particle mass.
-     */
-    mass_array_type const& mass() const
-    {
-        return mass_->data();
-    }
-
-    /**
      * Returns simulation step when the sample was taken.
      */
     step_type step() const

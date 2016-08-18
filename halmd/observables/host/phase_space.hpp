@@ -105,6 +105,16 @@ public:
      */
     void set_species(std::shared_ptr<species_sample_type const> species);
 
+    typename particle_type::size_type nparticle() const
+    {
+        return particle_->nparticle();
+    }
+
+    typename species_sample_type::data_type nspecies() const
+    {
+        return species_ ? species_->maximum() + 1 : 1;
+    }
+
     /**
      * Bind class to Lua.
      */

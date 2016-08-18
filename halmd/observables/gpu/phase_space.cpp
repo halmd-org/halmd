@@ -104,6 +104,42 @@ wrap_acquire(std::shared_ptr<phase_space_type> self)
 }
 
 template <typename phase_space_type>
+static std::function<std::shared_ptr<typename phase_space_type::position_sample_type const> ()>
+wrap_acquire_position(std::shared_ptr<phase_space_type> self)
+{
+    return [=]() {
+        return self->acquire_position();
+    };
+}
+
+template <typename phase_space_type>
+static std::function<std::shared_ptr<typename phase_space_type::velocity_sample_type const> ()>
+wrap_acquire_velocity(std::shared_ptr<phase_space_type> self)
+{
+    return [=]() {
+        return self->acquire_velocity();
+    };
+}
+
+template <typename phase_space_type>
+static std::function<std::shared_ptr<typename phase_space_type::species_sample_type const> ()>
+wrap_acquire_species(std::shared_ptr<phase_space_type> self)
+{
+    return [=]() {
+        return self->acquire_species();
+    };
+}
+
+template <typename phase_space_type>
+static std::function<std::shared_ptr<typename phase_space_type::mass_sample_type const> ()>
+wrap_acquire_mass(std::shared_ptr<phase_space_type> self)
+{
+    return [=]() {
+        return self->acquire_mass();
+    };
+}
+
+template <typename phase_space_type>
 static int wrap_dimension(phase_space_type const&)
 {
     return phase_space_type::particle_type::vector_type::static_size;
@@ -369,7 +405,7 @@ static std::function<typename phase_space_type::sample_type::position_array_type
 wrap_position(std::shared_ptr<phase_space_type> self)
 {
     return [=]() -> typename phase_space_type::sample_type::position_array_type const& {
-        return self->acquire()->position();
+        return self->acquire_position()->data();
     };
 }
 
@@ -378,7 +414,7 @@ static std::function<typename phase_space_type::sample_type::velocity_array_type
 wrap_velocity(std::shared_ptr<phase_space_type> self)
 {
     return [=]() -> typename phase_space_type::sample_type::velocity_array_type const& {
-        return self->acquire()->velocity();
+        return self->acquire_velocity()->data();
     };
 }
 
@@ -387,7 +423,7 @@ static std::function<typename phase_space_type::sample_type::species_array_type 
 wrap_species(std::shared_ptr<phase_space_type> self)
 {
     return [=]() -> typename phase_space_type::sample_type::species_array_type const& {
-        return self->acquire()->species();
+        return self->acquire_species()->data();
     };
 }
 
@@ -396,7 +432,7 @@ static std::function<typename phase_space_type::sample_type::mass_array_type con
 wrap_mass(std::shared_ptr<phase_space_type> self)
 {
     return [=]() -> typename phase_space_type::sample_type::mass_array_type const& {
-        return self->acquire()->mass();
+        return self->acquire_mass()->data();
     };
 }
 
@@ -410,6 +446,10 @@ void phase_space<host::samples::phase_space<dimension, float_type> >::luaopen(lu
         [
             class_<phase_space>()
                 .property("acquire", &wrap_acquire<phase_space>)
+                .property("acquire_position", &wrap_acquire_position<phase_space>)
+                .property("acquire_velocity", &wrap_acquire_velocity<phase_space>)
+                .property("acquire_species", &wrap_acquire_species<phase_space>)
+                .property("acquire_mass", &wrap_acquire_mass<phase_space>)
                 .property("position", &wrap_position<phase_space>)
                 .property("velocity", &wrap_velocity<phase_space>)
                 .property("species", &wrap_species<phase_space>)

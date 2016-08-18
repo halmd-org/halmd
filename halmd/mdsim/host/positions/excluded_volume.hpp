@@ -29,7 +29,7 @@
 
 #include <halmd/io/logger.hpp>
 #include <halmd/mdsim/box.hpp>
-#include <halmd/observables/host/samples/phase_space.hpp>
+#include <halmd/observables/host/samples/sample.hpp>
 
 namespace halmd {
 namespace mdsim {
@@ -44,8 +44,9 @@ class excluded_volume
 {
 public:
     typedef mdsim::box<dimension> box_type;
-    typedef observables::host::samples::phase_space<dimension, float_type> sample_type;
-    typedef typename sample_type::vector_type vector_type;
+    typedef observables::host::samples::sample<dimension, float_type> position_sample_type;
+    typedef observables::host::samples::sample<1, unsigned int> species_sample_type;
+    typedef typename position_sample_type::data_type vector_type;
 
     excluded_volume(
         std::shared_ptr<box_type const> box
@@ -65,7 +66,8 @@ public:
      * Place a number of spheres at specified positions with given radii
      */
     void exclude_spheres(
-        sample_type const& sample
+        position_sample_type const& position_sample
+      , species_sample_type const& species_sample
       , std::vector<float_type> diameter
     );
 

@@ -38,7 +38,7 @@ local velocity_autocorrelation = assert(libhalmd.observables.dynamics.velocity_a
 --
 -- .. method:: acquire()
 --
---    Acquire phase space sample.
+--    Acquire phase space velocity sample.
 --
 --    :returns: phase space sample
 --
@@ -73,7 +73,7 @@ local M = module(function(args)
     if not phase_space then
         error("missing argument 'phase_space'", 2)
     end
-    local acquire = assert(phase_space.acquire())
+    local acquire = assert(phase_space.acquire_velocity())
     local label = assert(phase_space.group.label)
 
     -- construct instance

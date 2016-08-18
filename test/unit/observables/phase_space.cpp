@@ -229,9 +229,9 @@ void phase_space<modules_type>::test()
     // compare output and input, copy GPU sample to host before
     std::shared_ptr<input_sample_type const> result = copy_sample(output_sample);
 
-    typename input_sample_type::position_array_type const& result_position = result->position();
-    typename input_sample_type::velocity_array_type const& result_velocity = result->velocity();
-    typename input_sample_type::species_array_type const& result_species = result->species();
+    typename input_sample_type::position_array_type const& result_position = result->position_sample()->data();
+    typename input_sample_type::velocity_array_type const& result_velocity = result->velocity_sample()->data();
+    typename input_sample_type::species_array_type const& result_species = result->species_sample()->data();
 
     BOOST_CHECK_EQUAL(result_position.size(), accumulate(npart.begin(), npart.end(), 0u));
     for (unsigned int i = 0, n = 0; i < npart.size(); ++i) { // iterate over particle species

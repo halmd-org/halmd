@@ -37,13 +37,13 @@ namespace samples {
 template <typename phase_space_type>
 static std::size_t wrap_nparticle(phase_space_type const& self)
 {
-    return self.position().size();
+    return self.position_sample()->data().size();
 }
 
 template <typename phase_space_type>
 static std::size_t wrap_nspecies(phase_space_type const& self)
 {
-    return 1 + *std::max_element(self.species().begin(), self.species().end());
+    return 1 + self.species_sample()->maximum();
 }
 
 template <typename phase_space_type>

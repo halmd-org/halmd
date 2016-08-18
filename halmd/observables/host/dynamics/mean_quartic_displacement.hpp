@@ -39,8 +39,8 @@ template <int dimension, typename float_type>
 class mean_quartic_displacement
 {
 public:
-    typedef host::samples::phase_space<dimension, float_type> sample_type;
-    typedef typename sample_type::vector_type vector_type;
+    typedef host::samples::sample<dimension, float_type> sample_type;
+    typedef typename sample_type::data_type vector_type;
     typedef double result_type;
 
     static void luaopen(lua_State* L);

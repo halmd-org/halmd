@@ -57,9 +57,9 @@ using namespace std;
  */
 
 /** compute static structure factor of phase space sample for some wavevectors */
-template <typename sample_type, typename vector_type>
+template <typename position_sample_type, typename vector_type>
 vector<double> compute_ssf(
-    std::shared_ptr<sample_type> sample
+    std::shared_ptr<position_sample_type> position_sample
   , vector<vector_type> const& wavevector
 )
 {
@@ -67,8 +67,8 @@ vector<double> compute_ssf(
     vector<double> ssf(nq);
     vector<double> cos_(nq, 0);
     vector<double> sin_(nq, 0);
-    size_t npart = sample->position().size();
-    BOOST_FOREACH(typename sample_type::vector_type const& r, sample->position()) {
+    size_t npart = position_sample->data().size();
+    BOOST_FOREACH(typename position_sample_type::data_type const& r, position_sample->data()) {
         for (unsigned j = 0; j < nq; ++j) {
             double qr = inner_prod(wavevector[j], static_cast<vector_type>(r));
             cos_[j] += cos(qr);
@@ -88,7 +88,7 @@ struct lattice
     typedef typename modules_type::particle_type particle_type;
     typedef typename modules_type::particle_group_type particle_group_type;
     typedef typename modules_type::position_type position_type;
-    typedef typename modules_type::sample_type sample_type;
+    typedef typename modules_type::position_sample_type position_sample_type;
     typedef typename modules_type::phase_space_type phase_space_type;
     typedef typename particle_type::vector_type vector_type;
     typedef typename vector_type::value_type float_type;
@@ -137,7 +137,7 @@ void lattice<modules_type>::test()
 
     // acquire phase space samples
     BOOST_TEST_MESSAGE("acquire phase space sample");
-    std::shared_ptr<sample_type const> sample = phase_space->acquire();
+    std::shared_ptr<position_sample_type const> position_sample = phase_space->acquire_position();
 
     // compute static structure factors for a set of wavenumbers
     // which are points of the reciprocal lattice
@@ -160,24 +160,24 @@ void lattice<modules_type>::test()
     q.push_back(2 * q[0]);
 
     // compute structure factor
-    vector<double> ssf = compute_ssf(sample, q);
+    vector<double> ssf = compute_ssf(position_sample, q);
     // centre of mass
     fixed_vector<double, dimension> r_cm(
         accumulate(
-            sample->position().begin(), sample->position().end(), vector_type(0)
+            position_sample->data().begin(), position_sample->data().end(), vector_type(0)
           , plus<vector_type>()
         ) / npart
     );
     // minimal and maximal coordinates
     fixed_vector<double, dimension> r_min(
         accumulate(
-            sample->position().begin(), sample->position().end(), vector_type(0)
+            position_sample->data().begin(), position_sample->data().end(), vector_type(0)
           , bind(wrap_element_min<vector_type>, _1, _2)
         )
     );
     fixed_vector<double, dimension> r_max(
         accumulate(
-            sample->position().begin(), sample->position().end(), vector_type(0)
+            position_sample->data().begin(), position_sample->data().end(), vector_type(0)
           , bind(wrap_element_max<vector_type>, _1, _2)
         )
     );
@@ -236,7 +236,7 @@ struct host_modules
     typedef mdsim::host::particle<dimension, float_type> particle_type;
     typedef mdsim::host::particle_groups::all<particle_type> particle_group_type;
     typedef mdsim::host::positions::lattice<dimension, float_type> position_type;
-    typedef observables::host::samples::phase_space<dimension, float_type> sample_type;
+    typedef observables::host::samples::sample<dimension, float_type> position_sample_type;
     typedef observables::host::phase_space<dimension, float_type> phase_space_type;
     static bool const gpu = false;
 };
@@ -256,8 +256,8 @@ struct gpu_modules
     typedef mdsim::gpu::particle<dimension, float_type> particle_type;
     typedef mdsim::gpu::particle_groups::all<particle_type> particle_group_type;
     typedef mdsim::gpu::positions::lattice<dimension, float_type> position_type;
-    typedef observables::host::samples::phase_space<dimension, float_type> sample_type;
-    typedef observables::gpu::phase_space<sample_type> phase_space_type;
+    typedef observables::host::samples::sample<dimension, float_type> position_sample_type;
+    typedef observables::gpu::phase_space<observables::host::samples::phase_space<dimension, float_type>> phase_space_type;
     static bool const gpu = true;
 };
 

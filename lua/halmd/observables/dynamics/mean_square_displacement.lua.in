@@ -38,9 +38,9 @@ local mean_square_displacement = assert(libhalmd.observables.dynamics.mean_squar
 --
 -- .. method:: acquire()
 --
---    Acquire phase space sample.
+--    Acquire phase space position sample.
 --
---    :returns: phase space sample
+--    :returns: phase space position sample
 --
 -- .. method:: correlate(first, second)
 --
@@ -73,7 +73,7 @@ local M = module(function(args)
     if not phase_space then
         error("missing argument 'phase_space'", 2)
     end
-    local acquire = assert(phase_space.acquire())
+    local acquire = assert(phase_space.acquire_position())
     local label = assert(phase_space.group.label)
 
     -- construct instance

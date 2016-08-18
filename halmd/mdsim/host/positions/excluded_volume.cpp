@@ -65,12 +65,13 @@ void excluded_volume<dimension, float_type>::exclude_sphere(
 
 template <int dimension, typename float_type>
 void excluded_volume<dimension, float_type>::exclude_spheres(
-    sample_type const& sample
+    position_sample_type const& position_sample
+  , species_sample_type const& species_sample
   , std::vector<float_type> diameter
 )
 {
-    typename sample_type::position_array_type const& position = sample.position();
-    typename sample_type::species_array_type const& species = sample.species();
+    typename position_sample_type::array_type const& position = position_sample.data();
+    typename species_sample_type::array_type const& species = species_sample.data();
 
     for (size_t i = 0; i < position.size(); ++i) {
         vector_type r = position[i];

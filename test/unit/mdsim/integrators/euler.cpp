@@ -85,7 +85,8 @@ struct test_euler
     typedef typename modules_type::random_type random_type;
     typedef typename modules_type::velocity_type velocity_type;
     typedef mdsim::clock clock_type;
-    typedef typename modules_type::sample_type sample_type;
+    typedef typename modules_type::position_sample_type position_sample_type;
+    typedef typename modules_type::velocity_sample_type velocity_sample_type;
     typedef typename modules_type::phase_space_type phase_space_type;
 
     typedef typename particle_type::vector_type vector_type;
@@ -122,7 +123,8 @@ template <typename modules_type>
 void test_euler<modules_type>::linear_motion()
 {
     // copy initial positions and velocities from particle to host sample
-    std::shared_ptr<sample_type const> initial_sample = phase_space->acquire();
+    std::shared_ptr<position_sample_type const> initial_position_sample = phase_space->acquire_position();
+    std::shared_ptr<velocity_sample_type const> initial_velocity_sample = phase_space->acquire_velocity();
 
     // perform integration
     BOOST_TEST_MESSAGE("running Euler integration for linear motion over " << steps << " steps");
@@ -133,11 +135,11 @@ void test_euler<modules_type>::linear_motion()
     }
 
     // acquire sample with final positions and velocities
-    std::shared_ptr<sample_type const> sample = phase_space->acquire();
+    std::shared_ptr<position_sample_type const> position_sample = phase_space->acquire_position();
 
-    typename sample_type::position_array_type const& initial_position = initial_sample->position();
-    typename sample_type::velocity_array_type const& initial_velocity = initial_sample->velocity();
-    typename sample_type::position_array_type const& position = sample->position();
+    typename position_sample_type::array_type const& initial_position = initial_position_sample->data();
+    typename velocity_sample_type::array_type const& initial_velocity = initial_velocity_sample->data();
+    typename position_sample_type::array_type const& position = position_sample->data();
 
     // particlewise comparison with analytic solution
     // the absolute error should be relative to the maximum value, i.e., the box length
@@ -163,8 +165,8 @@ void test_euler<modules_type>::linear_motion()
 template <typename modules_type>
 void test_euler<modules_type>::overdamped_motion()
 {
-    // copy initial positions and velocities from particle to host sample
-    std::shared_ptr<sample_type const> initial_sample = phase_space->acquire();
+    // copy initial positions from particle to host sample
+    std::shared_ptr<position_sample_type const> initial_position_sample = phase_space->acquire_position();
 
     // reduce number of steps as the test runs much slower
     // and the outcome can't be well represented by float
@@ -179,16 +181,16 @@ void test_euler<modules_type>::overdamped_motion()
         clock->advance();
     }
 
-    // acquire sample with final positions and velocities
-    std::shared_ptr<sample_type const> sample = phase_space->acquire();
+    // acquire sample with final positions
+    std::shared_ptr<position_sample_type const> position_sample = phase_space->acquire_position();
 
     // particlewise comparison with analytic solution
     // r_n = r_0 * (1 - Δt)^n → r_0 * exp(-n Δt)
     float_type factor = pow(1 - integrator->timestep(), static_cast<double>(steps));
     float_type max_deviation = 0;
     for (size_t i = 0; i < npart; ++i) {
-        vector_type const& r0 = initial_sample->position()[i];
-        vector_type const& r_final = sample->position()[i];
+        vector_type const& r0 = initial_position_sample->data()[i];
+        vector_type const& r_final = position_sample->data()[i];
 
         vector_type r_analytic = r0 * factor;
 
@@ -262,7 +264,8 @@ struct host_modules
     typedef halmd::random::host::random random_type;
     typedef mdsim::host::positions::lattice<dimension, float_type> position_type;
     typedef mdsim::host::velocities::boltzmann<dimension, float_type> velocity_type;
-    typedef observables::host::samples::phase_space<dimension, float_type> sample_type;
+    typedef observables::host::samples::sample<dimension, float_type> position_sample_type;
+    typedef observables::host::samples::sample<dimension, float_type> velocity_sample_type;
     typedef observables::host::phase_space<dimension, float_type> phase_space_type;
 
     typedef typename std::numeric_limits<float_type> numeric_limits;
@@ -314,8 +317,9 @@ struct gpu_modules
     typedef halmd::random::gpu::random<halmd::random::gpu::rand48> random_type;
     typedef mdsim::gpu::positions::lattice<dimension, float_type> position_type;
     typedef mdsim::gpu::velocities::boltzmann<dimension, float_type, halmd::random::gpu::rand48> velocity_type;
-    typedef observables::host::samples::phase_space<dimension, float_type> sample_type;
-    typedef observables::gpu::phase_space<sample_type> phase_space_type;
+    typedef observables::host::samples::sample<dimension, float_type> position_sample_type;
+    typedef observables::host::samples::sample<dimension, float_type> velocity_sample_type;
+    typedef observables::gpu::phase_space<observables::host::samples::phase_space<dimension, float_type>> phase_space_type;
 
     static bool const gpu = true;
 

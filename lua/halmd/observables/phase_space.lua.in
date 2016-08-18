@@ -166,6 +166,22 @@ local M = module(function(args)
         return assert(sampler.acquire)
     end
 
+    self.acquire_position = function(self)
+        return assert(samplers.host.acquire_position)
+    end
+
+    self.acquire_velocity = function(self)
+        return assert(samplers.host.acquire_velocity)
+    end
+
+    self.acquire_species = function(self)
+        return assert(samplers.host.acquire_species)
+    end
+
+    self.acquire_mass = function(self)
+        return assert(samplers.host.acquire_mass)
+    end
+
     self.position = function(self)
         return assert(samplers.host.position)
     end

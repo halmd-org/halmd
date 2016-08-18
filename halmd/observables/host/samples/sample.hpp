@@ -59,6 +59,10 @@ public:
         return data_;
     }
 
+    data_type const& maximum() const {
+        return *std::max_element(data_.begin(), data_.end());
+    }
+
     /**
      * Bind class to Lua.
      */

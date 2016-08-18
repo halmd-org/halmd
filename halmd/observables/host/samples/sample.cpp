@@ -21,6 +21,7 @@
 #include <memory>
 
 #include <halmd/observables/host/samples/sample.hpp>
+#include <halmd/observables/samples/blocking_scheme.hpp>
 #include <halmd/utility/demangle.hpp>
 #include <halmd/utility/lua/lua.hpp>
 
@@ -64,7 +65,7 @@ wrap_data_getter(std::shared_ptr<sample_type> self)
 
 template <typename sample_type>
 static typename sample_type::data_type wrap_maximum(sample_type const& self) {
-    return *std::max_element(self.data().begin(), self.data().end());
+    return self.maximum();
 }
 
 static std::string space_to_underscore(std::string const& input)
@@ -107,11 +108,17 @@ HALMD_LUA_API int luaopen_libhalmd_observables_host_samples_sample(lua_State* L)
     sample<3, double>::luaopen(L);
     sample<2, double>::luaopen(L);
     sample<1, double>::luaopen(L);
+
+    observables::samples::blocking_scheme<sample<3, double> >::luaopen(L);
+    observables::samples::blocking_scheme<sample<2, double> >::luaopen(L);
 #endif
     sample<4, float>::luaopen(L);
     sample<3, float>::luaopen(L);
     sample<2, float>::luaopen(L);
     sample<1, float>::luaopen(L);
+
+    observables::samples::blocking_scheme<sample<3, float> >::luaopen(L);
+    observables::samples::blocking_scheme<sample<2, float> >::luaopen(L);
 
     sample<4, int>::luaopen(L);
     sample<3, int>::luaopen(L);
