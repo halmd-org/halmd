@@ -114,6 +114,10 @@ class phase_space<host::samples::phase_space<dimension, float_type> >
 {
 public:
     typedef host::samples::phase_space<dimension, float_type> sample_type;
+    typedef host::samples::sample<dimension, float_type> position_sample_type;
+    typedef host::samples::sample<dimension, float_type> velocity_sample_type;
+    typedef host::samples::sample<1, unsigned int> species_sample_type;
+    typedef host::samples::sample<1, float_type> mass_sample_type;
     typedef mdsim::gpu::particle<dimension, float_type> particle_type;
     typedef mdsim::gpu::particle_group particle_group_type;
     typedef mdsim::box<dimension> box_type;
@@ -135,6 +139,22 @@ public:
      * Acquire phase_space sample.
      */
     std::shared_ptr<sample_type const> acquire();
+    /**
+     * Acquire position sample.
+     */
+    std::shared_ptr<position_sample_type const> acquire_position();
+    /**
+     * Acquire velocity sample.
+     */
+    std::shared_ptr<velocity_sample_type const> acquire_velocity();
+    /**
+     * Acquire species sample.
+     */
+    std::shared_ptr<species_sample_type const> acquire_species();
+    /**
+     * Acquire mass sample.
+     */
+    std::shared_ptr<mass_sample_type const> acquire_mass();
 
     /**
      * Set particles from phase_space sample.
@@ -169,12 +189,20 @@ private:
     std::shared_ptr<logger> logger_;
     /** cached periodically extended particle positions */
     std::shared_ptr<host::samples::sample<dimension, float_type>> position_;
+    /** position cache observer */
+    cache<> position_observer_;
+    cache<> image_observer_;
     /** cached particle velocities */
     std::shared_ptr<host::samples::sample<dimension, float_type>> velocity_;
+    /** velocity cache observer */
+    cache<> velocity_observer_;
     /** cached particle species */
     std::shared_ptr<host::samples::sample<1, unsigned int>> species_;
     /** cached particle mass */
     std::shared_ptr<host::samples::sample<1, float_type>> mass_;
+
+    /** group cache observer */
+    cache<> group_observer_;
 
     /** buffered positions in page-locked host memory */
     cuda::host::vector<float4> h_r_;
@@ -184,6 +212,18 @@ private:
     cuda::host::vector<float4> h_v_;
     /** GPU threads per block */
     unsigned int threads_;
+
+    /**
+     * Acquire position and species sample.
+     */
+    void acquire_position_species_();
+    /**
+     * Acquire velocity and mass sample.
+     */
+    void acquire_velocity_mass_();
+
+
+    group_array_type const& read_group_cache_();
 
     typedef halmd::utility::profiler::accumulator_type accumulator_type;
     typedef halmd::utility::profiler::scoped_timer_type scoped_timer_type;

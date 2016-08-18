@@ -162,6 +162,155 @@ phase_space<host::samples::phase_space<dimension, float_type> >::phase_space(
   , h_v_(particle_->nparticle())
   , threads_(particle_->dim.threads_per_block()) {}
 
+template<int dimension, typename float_type>
+typename phase_space<host::samples::phase_space<dimension, float_type>>::group_array_type const&
+phase_space<host::samples::phase_space<dimension, float_type> >::read_group_cache_()
+{
+    // if the indices changed invalidate everything must be renewed
+    if (!(group_observer_ == particle_group_->ordered())) {
+        position_observer_ = cache<>();
+        image_observer_ = cache<>();
+        velocity_observer_ = cache<>();
+    }
+
+    group_array_type const& group = read_cache(particle_group_->ordered());
+    group_observer_ = particle_group_->ordered();
+
+    return group;
+}
+
+/**
+ * Sample position and species.
+ */
+template <int dimension, typename float_type>
+void phase_space<host::samples::phase_space<dimension, float_type> >::acquire_position_species_()
+{
+    group_array_type const& group = read_group_cache_();
+    if (!(position_observer_ == particle_->position()) || !(image_observer_ == particle_->image())) {
+        {
+            position_array_type const& position = read_cache(particle_->position());
+            image_array_type const& image = read_cache(particle_->image());
+
+            cuda::copy(position.begin(), position.end(), h_r_.begin());
+            cuda::copy(image.begin(), image.end(), h_image_.begin());
+        }
+
+        // re-allocate memory which allows modules (e.g., dynamics::blocking_scheme)
+        // to hold a previous copy of the sample
+        position_ = std::make_shared<position_sample_type>(group.size());
+        species_ = std::make_shared<species_sample_type>(group.size());
+
+        assert(group.size() == position_->data().size());
+        assert(group.size() == species_->data().size());
+
+        typename sample_type::position_array_type& position = position_->data();
+        typename sample_type::species_array_type& species = species_->data();
+
+        // copy particle data using reverse tags as on the GPU
+        auto const& h_group = particle_group_->ordered_host_cached();
+
+        std::size_t tag = 0;
+        for (std::size_t i : h_group) {
+            assert(i < h_r_.size());
+
+            // periodically extended particle position
+            vector_type r;
+            unsigned int type;
+            tie(r, type) <<= h_r_[i];
+            box_->extend_periodic(r, static_cast<vector_type>(h_image_[i]));
+
+            position[tag] = r;
+            species[tag] = type;
+            ++tag;
+        }
+
+        position_observer_ = particle_->position();
+        image_observer_ = particle_->image();
+    }
+}
+
+/**
+ * Sample velocity and mass.
+ */
+template <int dimension, typename float_type>
+void phase_space<host::samples::phase_space<dimension, float_type> >::acquire_velocity_mass_()
+{
+    group_array_type const& group = read_group_cache_();
+    if (!(velocity_observer_ == particle_->velocity())) {
+        {
+            velocity_array_type const& velocity = read_cache(particle_->velocity());
+            cuda::copy(velocity.begin(), velocity.end(), h_v_.begin());
+        }
+
+        // re-allocate memory which allows modules (e.g., dynamics::blocking_scheme)
+        // to hold a previous copy of the sample
+        velocity_ = std::make_shared<velocity_sample_type>(group.size());
+        mass_ = std::make_shared<mass_sample_type>(group.size());
+
+        assert(group.size() == velocity_->data().size());
+        assert(group.size() == mass_->data().size());
+
+        typename sample_type::velocity_array_type& velocity = velocity_->data();
+        typename sample_type::mass_array_type& mass = mass_->data();
+
+        // copy particle data using reverse tags as on the GPU
+        auto const& h_group = particle_group_->ordered_host_cached();
+
+        std::size_t tag = 0;
+        for (std::size_t i : h_group) {
+            assert(i < h_v_.size());
+            tie(velocity[tag], mass[tag]) <<= h_v_[i];
+            ++tag;
+        }
+
+        velocity_observer_ = particle_->velocity();
+    }
+}
+
+/**
+ * Sample position
+ */
+template <int dimension, typename float_type>
+std::shared_ptr<host::samples::sample<dimension, float_type> const>
+phase_space<host::samples::phase_space<dimension, float_type> >::acquire_position()
+{
+    acquire_position_species_();
+    return position_;
+}
+
+/**
+ * Sample velocity
+ */
+template <int dimension, typename float_type>
+std::shared_ptr<host::samples::sample<dimension, float_type> const>
+phase_space<host::samples::phase_space<dimension, float_type> >::acquire_velocity()
+{
+    acquire_velocity_mass_();
+    return velocity_;
+}
+
+/**
+ * Sample species
+ */
+template <int dimension, typename float_type>
+std::shared_ptr<host::samples::sample<1, unsigned int> const>
+phase_space<host::samples::phase_space<dimension, float_type> >::acquire_species()
+{
+    acquire_position_species_();
+    return species_;
+}
+
+/**
+ * Sample mass
+ */
+template <int dimension, typename float_type>
+std::shared_ptr<host::samples::sample<1, float_type> const>
+phase_space<host::samples::phase_space<dimension, float_type> >::acquire_mass()
+{
+    acquire_velocity_mass_();
+    return mass_;
+}
+
 /**
  * Sample phase_space
  */
@@ -169,68 +318,9 @@ template <int dimension, typename float_type>
 std::shared_ptr<host::samples::phase_space<dimension, float_type> const>
 phase_space<host::samples::phase_space<dimension, float_type> >::acquire()
 {
-    // TODO: cache solution as in host implementation
-
-    group_array_type const& group = read_cache(particle_group_->ordered());
-
-    LOG_TRACE("acquire host sample");
-
-    scoped_timer_type timer(runtime_.acquire);
-
-    try {
-        position_array_type const& position = read_cache(particle_->position());
-        image_array_type const& image = read_cache(particle_->image());
-        velocity_array_type const& velocity = read_cache(particle_->velocity());
-
-        cuda::copy(position.begin(), position.end(), h_r_.begin());
-        cuda::copy(image.begin(), image.end(), h_image_.begin());
-        cuda::copy(velocity.begin(), velocity.end(), h_v_.begin());
-    }
-    catch (cuda::error const&) {
-        LOG_ERROR("failed to copy from GPU to host");
-        throw;
-    }
-
-    // re-allocate memory which allows modules (e.g., dynamics::blocking_scheme)
-    // to hold a previous copy of the sample
-    {
-        scoped_timer_type timer(runtime_.reset);
-        position_ = std::make_shared<host::samples::sample<dimension, float_type>>(group.size());
-        velocity_ = std::make_shared<host::samples::sample<dimension, float_type>>(group.size());
-        species_ = std::make_shared<host::samples::sample<1, unsigned int>>(group.size());
-        mass_ = std::make_shared<host::samples::sample<1, float_type>>(group.size());
-    }
-
-    assert(group.size() == position_->data().size());
-    assert(group.size() == velocity_->data().size());
-    assert(group.size() == species_->data().size());
-    assert(group.size() == mass_->data().size());
-
-    typename sample_type::position_array_type& position = position_->data();
-    typename sample_type::velocity_array_type& velocity = velocity_->data();
-    typename sample_type::species_array_type& species = species_->data();
-    typename sample_type::mass_array_type& mass = mass_->data();
-
-    // copy particle data using reverse tags as on the GPU
-    cuda::host::vector<unsigned int> h_group(group.size());
-    cuda::copy(group.begin(), group.end(), h_group.begin());
-
-    std::size_t tag = 0;
-    for (std::size_t i : h_group) {
-        assert(i < h_r_.size());
-
-        // periodically extended particle position
-        vector_type r;
-        unsigned int type;
-        tie(r, type) <<= h_r_[i];
-        box_->extend_periodic(r, static_cast<vector_type>(h_image_[i]));
-
-        position[tag] = r;
-        tie(velocity[tag], mass[tag]) <<= h_v_[i];
-        species[tag] = type;
-        ++tag;
-    }
-
+    // TODO: timing
+    acquire_position_species_();
+    acquire_velocity_mass_();
     return std::make_shared<host::samples::phase_space<dimension, float_type>>(position_, velocity_, species_, mass_, clock_->step());
 }
 

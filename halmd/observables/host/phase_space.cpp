@@ -190,7 +190,7 @@ template <int dimension, typename float_type>
 std::shared_ptr<typename phase_space<dimension, float_type>::sample_type const>
 phase_space<dimension, float_type>::acquire()
 {
-    // TODO timing stuff
+    // TODO: timing stuff
     return std::make_shared<sample_type>(acquire_position(), acquire_velocity(), acquire_species(), acquire_mass(), clock_->step());
 }
 
