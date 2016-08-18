@@ -167,8 +167,14 @@ private:
     std::shared_ptr<clock_type const> clock_;
     /** logger instance */
     std::shared_ptr<logger> logger_;
-    /** cached phase_space sample */
-    std::shared_ptr<sample_type> sample_;
+    /** cached periodically extended particle positions */
+    std::shared_ptr<host::samples::sample<dimension, float_type>> position_;
+    /** cached particle velocities */
+    std::shared_ptr<host::samples::sample<dimension, float_type>> velocity_;
+    /** cached particle species */
+    std::shared_ptr<host::samples::sample<1, unsigned int>> species_;
+    /** cached particle mass */
+    std::shared_ptr<host::samples::sample<1, float_type>> mass_;
 
     /** buffered positions in page-locked host memory */
     cuda::host::vector<float4> h_r_;

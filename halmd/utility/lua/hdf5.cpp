@@ -87,6 +87,52 @@ static void wrap_shape(H5::DataSet const& dataset, std::vector<hsize_t>& shape)
 }
 
 /**
+ * Returns a string encoding the data type of the dataset.
+ */
+static std::string wrap_type(H5::DataSet const& dataset)
+{
+    switch(dataset.getTypeClass())
+    {
+        case H5T_INTEGER:
+            switch (dataset.getIntType().getSign())
+            {
+                case H5T_SGN_NONE:
+                    return "unsigned_int";
+                case H5T_SGN_2:
+                    return "int";
+                default:
+                    throw std::runtime_error("unsupported dataset type: invalid integer sign");
+            }
+        case H5T_FLOAT:
+#ifndef USE_HOST_SINGLE_PRECISION
+            return "double";
+#else
+            return "float";
+#endif
+        case H5T_TIME:
+            throw std::runtime_error("unsupported dataset type: time");
+        case H5T_STRING:
+            throw std::runtime_error("unsupported dataset type: string");
+        case H5T_BITFIELD:
+            throw std::runtime_error("unsupported dataset type: bitfield");
+        case H5T_OPAQUE:
+            throw std::runtime_error("unsupported dataset type: opaque");
+        case H5T_COMPOUND:
+            throw std::runtime_error("unsupported dataset type: compound");
+        case H5T_REFERENCE:
+            throw std::runtime_error("unsupported dataset type: reference");
+        case H5T_ENUM:
+            throw std::runtime_error("unsupported dataset type: enum");
+        case H5T_VLEN:
+            throw std::runtime_error("unsupported dataset type: vlen");
+        case H5T_ARRAY:
+            throw std::runtime_error("unsupported dataset type: array");
+        default:
+            throw std::runtime_error("unsupported dataset type: unknown");
+    }
+}
+
+/**
  * Open HDF5 DataSet.
  */
 static H5::DataSet wrap_open_dataset(H5::CommonFG const& group, std::string const& name)
@@ -150,6 +196,7 @@ HALMD_LUA_API int luaopen_libhalmd_utility_lua_hdf5(lua_State* L)
 
           , class_<H5::DataSet, bases<H5::H5Object, H5::AbstractDs> >("dataset")
                 .property("shape", &wrap_shape, pure_out_value(_2))
+                .property("type", &wrap_type)
 
           , class_<type_wrapper<bool> >("bool")
                 .def(constructor<>())

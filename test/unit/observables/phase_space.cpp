@@ -60,11 +60,21 @@ std::shared_ptr<halmd::observables::host::samples::phase_space<dimension, float_
 copy_sample(std::shared_ptr<halmd::observables::gpu::samples::phase_space<dimension, float_type> const> sample)
 {
     typedef halmd::observables::host::samples::phase_space<dimension, float_type> host_sample_type;
+    typedef typename host_sample_type::position_sample_type host_position_sample_type;
+    typedef typename host_sample_type::velocity_sample_type host_velocity_sample_type;
+    typedef typename host_sample_type::species_sample_type host_species_sample_type;
+    typedef typename host_sample_type::mass_sample_type host_mass_sample_type;
     typedef halmd::observables::gpu::samples::phase_space<dimension, float_type> gpu_sample_type;
     typedef typename gpu_sample_type::position_array_type::value_type gpu_vector_type;
 
     // allocate memory
-    std::shared_ptr<host_sample_type> result = std::make_shared<host_sample_type>(sample->position().size());
+    std::shared_ptr<host_position_sample_type> result_position = std::make_shared<host_position_sample_type>(sample->position().size());
+    std::shared_ptr<host_velocity_sample_type> result_velocity = std::make_shared<host_velocity_sample_type>(sample->position().size());
+    std::shared_ptr<host_species_sample_type> result_species = std::make_shared<host_species_sample_type>(sample->position().size());
+    std::shared_ptr<host_mass_sample_type> result_mass = std::make_shared<host_mass_sample_type>(sample->position().size());
+    std::shared_ptr<host_sample_type> result = std::make_shared<host_sample_type>(result_position, result_velocity, result_species, result_mass);
+    result->set_position_sample(result_position);
+    result->set_velocity_sample(result_velocity);
     cuda::host::vector<gpu_vector_type> h_buf(sample->position().size());
 
     // copy from GPU to host via page-locked memory
@@ -73,13 +83,13 @@ copy_sample(std::shared_ptr<halmd::observables::gpu::samples::phase_space<dimens
     cuda::copy(sample->position(), h_buf);
     cuda::thread::synchronize();
     for (size_t i = 0; i < h_buf.size(); ++i) {
-        tie(result->position()[i], result->species()[i]) <<= h_buf[i];
+        tie(result_position->data()[i], result_species->data()[i]) <<= h_buf[i];
     }
 
     // velocities
     cuda::copy(sample->velocity(), h_buf);
     cuda::thread::synchronize();
-    std::copy(h_buf.begin(), h_buf.end(), result->velocity().begin());
+    std::copy(h_buf.begin(), h_buf.end(), result_velocity->data().begin());
 
     return result;
 }
@@ -138,6 +148,10 @@ struct phase_space
     typedef typename modules_type::particle_group_type particle_group_type;
     typedef typename modules_type::input_phase_space_type input_phase_space_type;
     typedef typename input_phase_space_type::sample_type input_sample_type;
+    typedef typename input_sample_type::position_sample_type input_position_sample_type;
+    typedef typename input_sample_type::velocity_sample_type input_velocity_sample_type;
+    typedef typename input_sample_type::species_sample_type input_species_sample_type;
+    typedef typename input_sample_type::mass_sample_type input_mass_sample_type;
     typedef typename modules_type::output_phase_space_type output_phase_space_type;
     typedef typename output_phase_space_type::sample_type output_sample_type;
     typedef typename modules_type::random_type random_type;
@@ -154,6 +168,10 @@ struct phase_space
     std::shared_ptr<clock_type> clock;
     std::shared_ptr<particle_type> particle;
     std::shared_ptr<input_sample_type> input_sample;
+    std::shared_ptr<input_position_sample_type> input_position_sample;
+    std::shared_ptr<input_velocity_sample_type> input_velocity_sample;
+    std::shared_ptr<input_species_sample_type> input_species_sample;
+    std::shared_ptr<input_mass_sample_type> input_mass_sample;
     std::shared_ptr<random_type> random;
 
     void test();
@@ -165,9 +183,9 @@ void phase_space<modules_type>::test()
 {
     float_type const epsilon = std::numeric_limits<float_type>::epsilon();
 
-    typename input_sample_type::position_array_type& input_position = input_sample->position();
-    typename input_sample_type::velocity_array_type& input_velocity = input_sample->velocity();
-    typename input_sample_type::species_array_type& input_species = input_sample->species();
+    typename input_sample_type::position_array_type& input_position = input_position_sample->data();
+    typename input_sample_type::velocity_array_type& input_velocity = input_velocity_sample->data();
+    typename input_sample_type::species_array_type& input_species = input_species_sample->data();
 
     // prepare input sample
     BOOST_CHECK_EQUAL(input_position.size(), accumulate(npart.begin(), npart.end(), 0u));
@@ -254,7 +272,12 @@ phase_space<modules_type>::phase_space()
     // create modules
     particle = std::make_shared<particle_type>(accumulate(npart.begin(), npart.end(), 0), npart.size());
     box = std::make_shared<box_type>(edges);
-    input_sample = std::make_shared<input_sample_type>(particle->nparticle());
+    input_position_sample = std::make_shared<input_position_sample_type>(particle->nparticle());
+    input_velocity_sample = std::make_shared<input_velocity_sample_type>(particle->nparticle());
+    input_species_sample = std::make_shared<input_species_sample_type>(particle->nparticle());
+    input_mass_sample = std::make_shared<input_mass_sample_type>(particle->nparticle());
+    input_sample = std::make_shared<input_sample_type>(input_position_sample, input_velocity_sample
+                                                     , input_species_sample, input_mass_sample);
     clock = std::make_shared<clock_type>();
     random = std::make_shared<random_type>();
 }

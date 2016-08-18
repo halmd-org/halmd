@@ -52,54 +52,6 @@ static std::size_t wrap_dimension(phase_space_type const&)
     return phase_space_type::position_array_type::value_type::static_size;
 }
 
-template <typename phase_space_type>
-static std::function<void(const std::vector<typename phase_space_type::position_array_type::value_type>&)>
-wrap_position(std::shared_ptr<phase_space_type> self)
-{
-    return [self](const std::vector<typename phase_space_type::position_array_type::value_type> &data) {
-        if (self->position().size() != data.size()) {
-            throw std::runtime_error("phase space sample has mismatching size");
-        }
-        std::copy(data.begin(), data.end(), self->position().begin());
-    };
-}
-
-template <typename phase_space_type>
-static std::function<void(const std::vector<typename phase_space_type::velocity_array_type::value_type>&)>
-wrap_velocity(std::shared_ptr<phase_space_type> self)
-{
-    return [self](const std::vector<typename phase_space_type::velocity_array_type::value_type> &data) {
-        if (self->velocity().size() != data.size()) {
-            throw std::runtime_error("phase space sample has mismatching size");
-        }
-        std::copy(data.begin(), data.end(), self->velocity().begin());
-    };
-}
-
-template <typename phase_space_type>
-static std::function<void(const std::vector<typename phase_space_type::species_array_type::value_type>&)>
-wrap_species(std::shared_ptr<phase_space_type> self)
-{
-    return [self](const std::vector<typename phase_space_type::species_array_type::value_type> &data) {
-        if (self->species().size() != data.size()) {
-            throw std::runtime_error("phase space sample has mismatching size");
-        }
-        std::copy(data.begin(), data.end(), self->species().begin());
-    };
-}
-
-template <typename phase_space_type>
-static std::function<void(const std::vector<typename phase_space_type::mass_array_type::value_type>&)>
-wrap_mass(std::shared_ptr<phase_space_type> self)
-{
-    return [self](const std::vector<typename phase_space_type::mass_array_type::value_type> &data) {
-        if (self->mass().size() != data.size()) {
-            throw std::runtime_error("phase space sample has mismatching size");
-        }
-        std::copy(data.begin(), data.end(), self->mass().begin());
-    };
-}
-
 template <int dimension, typename float_type>
 void phase_space<dimension, float_type>::luaopen(lua_State* L)
 {
@@ -118,10 +70,10 @@ void phase_space<dimension, float_type>::luaopen(lua_State* L)
                         .property("nparticle", &wrap_nparticle<phase_space>)
                         .property("nspecies", &wrap_nspecies<phase_space>)
                         .property("dimension", &wrap_dimension<phase_space>)
-                        .def("position", &wrap_position<phase_space>)
-                        .def("velocity", &wrap_velocity<phase_space>)
-                        .def("species", &wrap_species<phase_space>)
-                        .def("mass", &wrap_mass<phase_space>)
+                        .def("position", &phase_space::set_position_sample)
+                        .def("velocity", &phase_space::set_velocity_sample)
+                        .def("species", &phase_space::set_species_sample)
+                        .def("mass", &phase_space::set_mass_sample)
                 ]
             ]
         ]

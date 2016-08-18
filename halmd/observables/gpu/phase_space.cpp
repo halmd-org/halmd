@@ -169,10 +169,7 @@ template <int dimension, typename float_type>
 std::shared_ptr<host::samples::phase_space<dimension, float_type> const>
 phase_space<host::samples::phase_space<dimension, float_type> >::acquire()
 {
-    if (sample_ && sample_->step() == clock_->step()) {
-        LOG_TRACE("sample is up to date");
-        return sample_;
-    }
+    // TODO: cache solution as in host implementation
 
     group_array_type const& group = read_cache(particle_group_->ordered());
 
@@ -198,18 +195,21 @@ phase_space<host::samples::phase_space<dimension, float_type> >::acquire()
     // to hold a previous copy of the sample
     {
         scoped_timer_type timer(runtime_.reset);
-        sample_ = std::make_shared<sample_type>(group.size(), clock_->step());
+        position_ = std::make_shared<host::samples::sample<dimension, float_type>>(group.size());
+        velocity_ = std::make_shared<host::samples::sample<dimension, float_type>>(group.size());
+        species_ = std::make_shared<host::samples::sample<1, unsigned int>>(group.size());
+        mass_ = std::make_shared<host::samples::sample<1, float_type>>(group.size());
     }
 
-    assert(group.size() == sample_->position().size());
-    assert(group.size() == sample_->velocity().size());
-    assert(group.size() == sample_->species().size());
-    assert(group.size() == sample_->mass().size());
+    assert(group.size() == position_->data().size());
+    assert(group.size() == velocity_->data().size());
+    assert(group.size() == species_->data().size());
+    assert(group.size() == mass_->data().size());
 
-    typename sample_type::position_array_type& position = sample_->position();
-    typename sample_type::velocity_array_type& velocity = sample_->velocity();
-    typename sample_type::species_array_type& species = sample_->species();
-    typename sample_type::mass_array_type& mass = sample_->mass();
+    typename sample_type::position_array_type& position = position_->data();
+    typename sample_type::velocity_array_type& velocity = velocity_->data();
+    typename sample_type::species_array_type& species = species_->data();
+    typename sample_type::mass_array_type& mass = mass_->data();
 
     // copy particle data using reverse tags as on the GPU
     cuda::host::vector<unsigned int> h_group(group.size());
@@ -231,7 +231,7 @@ phase_space<host::samples::phase_space<dimension, float_type> >::acquire()
         ++tag;
     }
 
-    return sample_;
+    return std::make_shared<host::samples::phase_space<dimension, float_type>>(position_, velocity_, species_, mass_, clock_->step());
 }
 
 template <int dimension, typename float_type>

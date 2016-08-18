@@ -362,7 +362,17 @@ function M.reader(args)
     -- in the latter case, the value string is assigned the field name
     for k,v in pairs(fields) do
         local name = (type(k) == "string") and k or v
-        self:on_read(assert(sample[v])(sample), {name})
+
+        local dataset = self.group:open_group(name):open_dataset("value")
+        local shape = assert(dataset.shape)
+        local dimension = shape[3] or 1
+        local type = dataset.type
+        type = (memory == "host") and type or (type == "double" and "float" or type)
+
+        local individual_sample = libhalmd.observables.host.samples["sample_"..dimension.."_"..type](nparticle)
+        self:on_read(individual_sample:data_setter(), {name})
+
+        assert(sample[v])(sample, individual_sample)
     end
 
     return self, sample

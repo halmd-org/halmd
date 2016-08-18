@@ -28,6 +28,7 @@
 
 #include <halmd/mdsim/clock.hpp>
 #include <halmd/numeric/blas/fixed_vector.hpp>
+#include <halmd/observables/host/samples/sample.hpp>
 #include <halmd/utility/raw_array.hpp>
 
 namespace halmd {
@@ -46,6 +47,11 @@ public:
     typedef raw_array<float_type> mass_array_type;
     typedef typename mdsim::clock::step_type step_type;
 
+    typedef sample<dimension, float_type> position_sample_type;
+    typedef sample<dimension, float_type> velocity_sample_type;
+    typedef sample<1, unsigned int> species_sample_type;
+    typedef sample<1, float_type> mass_sample_type;
+
     /**
      * Construct phase space sample.
      *
@@ -54,6 +60,15 @@ public:
      */
     phase_space(std::size_t nparticle, step_type step = std::numeric_limits<step_type>::max());
 
+    phase_space(std::shared_ptr<sample<dimension, float_type> const> position
+             ,  std::shared_ptr<sample<dimension, float_type> const> velocity
+             ,  std::shared_ptr<sample<1, unsigned int> const> species
+             ,  std::shared_ptr<sample<1, float_type> const> mass
+             ,  step_type step = std::numeric_limits<step_type>::max())
+            : position_(position), velocity_(velocity), species_(species), mass_(mass), step_ (step)
+    {
+    }
+
     /**
      * Returns const reference to particle positions.
      *
@@ -61,17 +76,7 @@ public:
      */
     position_array_type const& position() const
     {
-        return position_;
-    }
-
-    /**
-     * Returns non-const reference to particle positions.
-     *
-     * The positions are extended with their periodic image vectors.
-     */
-    position_array_type& position()
-    {
-        return position_;
+        return position_->data();
     }
 
     /**
@@ -79,15 +84,7 @@ public:
      */
     velocity_array_type const& velocity() const
     {
-        return velocity_;
-    }
-
-    /**
-     * Returns non-const reference to particle velocities.
-     */
-    velocity_array_type& velocity()
-    {
-        return velocity_;
+        return velocity_->data();
     }
 
     /**
@@ -95,15 +92,7 @@ public:
      */
     species_array_type const& species() const
     {
-        return species_;
-    }
-
-    /**
-     * Returns non-const reference to particle species.
-     */
-    species_array_type& species()
-    {
-        return species_;
+        return species_->data();
     }
 
     /**
@@ -111,15 +100,7 @@ public:
      */
     mass_array_type const& mass() const
     {
-        return mass_;
-    }
-
-    /**
-     * Returns non-const reference to particle mass.
-     */
-    mass_array_type& mass()
-    {
-        return mass_;
+        return mass_->data();
     }
 
     /**
@@ -133,6 +114,39 @@ public:
         return step_;
     }
 
+    std::shared_ptr<position_sample_type const> position_sample() const {
+        return position_;
+    };
+
+    void set_position_sample(std::shared_ptr<position_sample_type const> sample) {
+        position_ = sample;
+    };
+
+    std::shared_ptr<velocity_sample_type const> velocity_sample() const {
+        return velocity_;
+    };
+
+    void set_velocity_sample(std::shared_ptr<velocity_sample_type const> sample) {
+        velocity_ = sample;
+    };
+
+    std::shared_ptr<species_sample_type const> species_sample() const {
+        return species_;
+    };
+
+    void set_species_sample(std::shared_ptr<species_sample_type const> sample) {
+        species_ = sample;
+    };
+
+    std::shared_ptr<mass_sample_type const> mass_sample() const {
+        return mass_;
+    };
+
+    void set_mass_sample(std::shared_ptr<mass_sample_type const> sample) {
+        mass_ = sample;
+    };
+
+
     /**
      * Bind class to Lua.
      */
@@ -140,23 +154,23 @@ public:
 
 private:
     /** periodically extended particle positions */
-    position_array_type position_;
+    std::shared_ptr<position_sample_type const> position_;
     /** particle velocities */
-    velocity_array_type velocity_;
+    std::shared_ptr<velocity_sample_type const> velocity_;
     /** particle species */
-    species_array_type species_;
+    std::shared_ptr<species_sample_type const> species_;
     /** particle mass */
-    mass_array_type mass_;
+    std::shared_ptr<mass_sample_type const> mass_;
     /** simulation step when sample was taken */
     step_type step_;
 };
 
 template <int dimension, typename float_type>
 inline phase_space<dimension, float_type>::phase_space(std::size_t nparticle, step_type step)
-  : position_(nparticle)
-  , velocity_(nparticle)
-  , species_(nparticle)
-  , mass_(nparticle)
+  : position_(new sample<dimension, float_type>(nparticle))
+  , velocity_(new sample<dimension, float_type>(nparticle))
+  , species_(new sample<1, unsigned int>(nparticle))
+  , mass_(new sample<1, float_type>(nparticle))
   , step_(step)
 {
 }

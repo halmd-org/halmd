@@ -40,6 +40,10 @@ class phase_space
 {
 public:
     typedef samples::phase_space<dimension, float_type> sample_type;
+    typedef samples::sample<dimension, float_type> position_sample_type;
+    typedef samples::sample<dimension, float_type> velocity_sample_type;
+    typedef samples::sample<1, unsigned int> species_sample_type;
+    typedef samples::sample<1, float_type> mass_sample_type;
     typedef mdsim::host::particle<dimension, float_type> particle_type;
     typedef mdsim::host::particle_group particle_group_type;
     typedef mdsim::box<dimension> box_type;
@@ -62,14 +66,34 @@ public:
     std::shared_ptr<sample_type const> acquire();
 
     /**
+     * Acquire position sample.
+     */
+    std::shared_ptr<position_sample_type const> acquire_position();
+
+    /**
+     * Acquire velocity sample.
+     */
+    std::shared_ptr<velocity_sample_type const> acquire_velocity();
+
+    /**
+     * Acquire mass sample.
+     */
+    std::shared_ptr<mass_sample_type const> acquire_mass();
+
+    /**
+     * Acquire species sample.
+     */
+    std::shared_ptr<species_sample_type const> acquire_species();
+
+    /**
      * Set particles from phase_space sample.
      */
     void set(std::shared_ptr<sample_type const> sample);
 
-    void set_position(typename sample_type::position_array_type const& position);
-    void set_velocity(typename sample_type::velocity_array_type const& velocity);
-    void set_mass(typename sample_type::mass_array_type const& mass);
-    void set_species(typename sample_type::species_array_type const& species);
+    void set_position(std::shared_ptr<position_sample_type const> sample);
+    void set_velocity(std::shared_ptr<velocity_sample_type const> sample);
+    void set_mass(std::shared_ptr<mass_sample_type const> sample);
+    void set_species(std::shared_ptr<species_sample_type const> species);
 
     /**
      * Bind class to Lua.
@@ -96,8 +120,29 @@ private:
     std::shared_ptr<clock_type const> clock_;
     /** logger instance */
     std::shared_ptr<logger> logger_;
-    /** cached phase_space sample */
-    std::shared_ptr<sample_type> sample_;
+    /** cached periodically extended particle positions */
+    std::shared_ptr<position_sample_type> position_;
+    /** position cache observer */
+    cache<> position_observer_;
+    cache<> image_observer_;
+    /** cached particle velocities */
+    std::shared_ptr<velocity_sample_type> velocity_;
+    /** velocity cache observer */
+    cache<> velocity_observer_;
+    /** cached particle species */
+    std::shared_ptr<species_sample_type> species_;
+    /** species cache observer */
+    cache<> species_observer_;
+    /** cached particle mass */
+    std::shared_ptr<mass_sample_type> mass_;
+    /** mass cache observer */
+    cache<> mass_observer_;
+
+    /** group cache observer */
+    cache<> group_observer_;
+
+    group_array_type const& read_group_cache_();
+
 
     typedef typename sample_type::vector_type vector_type;
     typedef halmd::utility::profiler::accumulator_type accumulator_type;
