@@ -25,7 +25,7 @@
 
 #include <halmd/numeric/accumulator.hpp>
 #include <halmd/observables/dynamics/mean_quartic_displacement.hpp>
-#include <halmd/observables/host/samples/phase_space.hpp>
+#include <halmd/observables/host/samples/sample.hpp>
 
 namespace halmd {
 namespace observables {

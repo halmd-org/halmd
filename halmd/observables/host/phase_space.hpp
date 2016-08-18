@@ -28,7 +28,7 @@
 #include <halmd/mdsim/clock.hpp>
 #include <halmd/mdsim/host/particle.hpp>
 #include <halmd/mdsim/host/particle_group.hpp>
-#include <halmd/observables/host/samples/phase_space.hpp>
+#include <halmd/observables/host/samples/sample.hpp>
 #include <halmd/utility/profiler.hpp>
 
 namespace halmd {
@@ -39,7 +39,6 @@ template <int dimension, typename float_type>
 class phase_space
 {
 public:
-    typedef samples::phase_space<dimension, float_type> sample_type;
     typedef samples::sample<dimension, float_type> position_sample_type;
     typedef samples::sample<dimension, float_type> velocity_sample_type;
     typedef samples::sample<1, unsigned int> species_sample_type;
@@ -59,11 +58,6 @@ public:
       , std::shared_ptr<clock_type const> clock
       , std::shared_ptr<halmd::logger> logger = std::make_shared<halmd::logger>()
     );
-
-    /**
-     * Acquire phase_space sample.
-     */
-    std::shared_ptr<sample_type const> acquire();
 
     /**
      * Acquire position sample.
@@ -164,7 +158,6 @@ private:
     group_array_type const& read_group_cache_();
 
 
-    typedef typename sample_type::vector_type vector_type;
     typedef halmd::utility::profiler::accumulator_type accumulator_type;
     typedef halmd::utility::profiler::scoped_timer_type scoped_timer_type;
 

@@ -154,6 +154,7 @@ local M = module(function(args)
     -- construct unified Lua object for host and gpu sampler
     local self = {group = group}
 
+    -- TODO: this only exists for gpu samples
     self.acquire = function(self, args)
         local memory = args and args.memory
         if not memory then
@@ -262,20 +263,6 @@ local M = module(function(args)
     return self
 end)
 
--- grab C++ classes
-local phase_space = {}
-phase_space.host = {
-    [2] = assert(libhalmd.observables.host.samples.phase_space_2_double)
-  , [3] = assert(libhalmd.observables.host.samples.phase_space_3_double)
-}
-
-if device.gpu then
-    phase_space.gpu = {
-        [2] = assert(libhalmd.observables.host.samples.phase_space_2_float)
-      , [3] = assert(libhalmd.observables.host.samples.phase_space_3_float)
-    }
-end
-
 ---
 -- .. class:: reader(args)
 --
@@ -369,10 +356,6 @@ function M.reader(args)
     local shape = assert(dataset.shape)
     local nparticle = assert(shape[2])
     local dimension = assert(shape[3])
-    local phase_space = phase_space[memory][dimension]
-    if not phase_space then
-        error(("unsupported space dimension: %d"):format(dimension), 2)
-    end
     -- create a metatable for the sample list, so that metainformation about the
     -- samples can be obtained; pairs(samples) will still only iterate over the
     -- actual samples, but samples.nparticle, samples.dimension and samples.nspecies
@@ -401,7 +384,7 @@ function M.reader(args)
         local type = dataset.type
         type = (memory == "host") and type or (type == "double" and "float" or type)
 
-        local sample = libhalmd.observables.host.samples["sample_"..dimension.."_"..type](nparticle)
+        local sample = assert(libhalmd.observables.host.samples["sample_"..dimension.."_"..type])(nparticle)
         self:on_read(sample:data_setter(), {name})
 
         samples[v] = sample

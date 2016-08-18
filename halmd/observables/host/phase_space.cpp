@@ -86,7 +86,7 @@ phase_space<dimension, float_type>::acquire_position()
         // copy and periodically extend positions using index map
         std::size_t tag = 0;
         for (std::size_t i : group) {
-            vector_type& r = sample_position[tag];
+            auto& r = sample_position[tag];
             r = particle_position[i];
             box_->extend_periodic(r, particle_image[i]);
             ++tag;
@@ -182,18 +182,6 @@ phase_space<dimension, float_type>::acquire_mass()
     return mass_;
 }
 
-
-/**
- * Sample phase_space
- */
-template <int dimension, typename float_type>
-std::shared_ptr<typename phase_space<dimension, float_type>::sample_type const>
-phase_space<dimension, float_type>::acquire()
-{
-    // TODO: timing stuff
-    return std::make_shared<sample_type>(acquire_position(), acquire_velocity(), acquire_species(), acquire_mass(), clock_->step());
-}
-
 template <int dimension, typename float_type>
 void phase_space<dimension, float_type>::set_position(std::shared_ptr<position_sample_type const> sample) {
     group_array_type const& group = read_cache(particle_group_->ordered());
@@ -204,9 +192,9 @@ void phase_space<dimension, float_type>::set_position(std::shared_ptr<position_s
 
     size_type tag = 0;
     for (size_type i : group) {
-        vector_type& r = (*particle_position)[i];
+        auto& r = (*particle_position)[i];
         r = sample_position[tag];
-        vector_type& image = (*particle_image)[i];
+        auto& image = (*particle_image)[i];
         image = 0;
 
         // The host implementation of reduce_periodic wraps the position at
@@ -214,6 +202,7 @@ void phase_space<dimension, float_type>::set_position(std::shared_ptr<position_s
         // simulation. For setting arbitrary particle positions, however,
         // we must ensure that the final position is actually inside the
         // periodic box.
+        typedef typename position_sample_type::data_type vector_type;
         vector_type shift;
         do {
             image += (shift = box_->reduce_periodic(r));
@@ -284,37 +273,37 @@ wrap_acquire_mass(std::shared_ptr<phase_space_type> self)
 
 
 template <typename phase_space_type>
-static std::function<typename phase_space_type::sample_type::position_array_type const& ()>
+static std::function<typename phase_space_type::position_sample_type::array_type const& ()>
 wrap_position(std::shared_ptr<phase_space_type> self)
 {
-    return [=]() -> typename phase_space_type::sample_type::position_array_type const& {
+    return [=]() -> typename phase_space_type::position_sample_type::array_type const& {
         return self->acquire_position()->data();
     };
 }
 
 template <typename phase_space_type>
-static std::function<typename phase_space_type::sample_type::velocity_array_type const& ()>
+static std::function<typename phase_space_type::velocity_sample_type::array_type const& ()>
 wrap_velocity(std::shared_ptr<phase_space_type> self)
 {
-    return [=]() -> typename phase_space_type::sample_type::velocity_array_type const& {
+    return [=]() -> typename phase_space_type::velocity_sample_type::array_type const& {
         return self->acquire_velocity()->data();
     };
 }
 
 template <typename phase_space_type>
-static std::function<typename phase_space_type::sample_type::species_array_type const& ()>
+static std::function<typename phase_space_type::species_sample_type::array_type const& ()>
 wrap_species(std::shared_ptr<phase_space_type> self)
 {
-    return [=]() -> typename phase_space_type::sample_type::species_array_type const& {
+    return [=]() -> typename phase_space_type::species_sample_type::array_type const& {
         return self->acquire_species()->data();
     };
 }
 
 template <typename phase_space_type>
-static std::function<typename phase_space_type::sample_type::mass_array_type const& ()>
+static std::function<typename phase_space_type::mass_sample_type::array_type const& ()>
 wrap_mass(std::shared_ptr<phase_space_type> self)
 {
-    return [=]() -> typename phase_space_type::sample_type::mass_array_type const& {
+    return [=]() -> typename phase_space_type::mass_sample_type::array_type const& {
         return self->acquire_mass()->data();
     };
 }
@@ -336,7 +325,6 @@ void phase_space<dimension, float_type>::luaopen(lua_State* L)
             namespace_("host")
             [
                 class_<phase_space>()
-                    .property("acquire", &wrap_acquire<phase_space>)
                     .property("acquire_position", &wrap_acquire_position<phase_space>)
                     .property("acquire_velocity", &wrap_acquire_velocity<phase_space>)
                     .property("acquire_species", &wrap_acquire_species<phase_space>)

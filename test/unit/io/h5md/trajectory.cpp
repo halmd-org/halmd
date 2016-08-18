@@ -32,7 +32,7 @@
 #include <halmd/io/writers/h5md/append.hpp>
 #include <halmd/io/writers/h5md/file.hpp>
 #include <halmd/mdsim/clock.hpp>
-#include <halmd/observables/host/samples/phase_space.hpp>
+#include <halmd/observables/host/samples/sample.hpp>
 #include <test/tools/ctest.hpp>
 #include <test/tools/init.hpp>
 

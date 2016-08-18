@@ -29,7 +29,7 @@
 #include <halmd/mdsim/gpu/particle.hpp>
 #include <halmd/mdsim/gpu/particle_group.hpp>
 #include <halmd/observables/gpu/samples/phase_space.hpp>
-#include <halmd/observables/host/samples/phase_space.hpp>
+#include <halmd/observables/host/samples/sample.hpp>
 #include <halmd/utility/profiler.hpp>
 
 namespace halmd {
@@ -107,17 +107,29 @@ private:
 };
 
 /**
- * Sample phase_space from GPU memory to host memory
+ * host sample wrapper structure for the specialization of phase_space for host samples
  */
 template <int dimension, typename float_type>
-class phase_space<host::samples::phase_space<dimension, float_type> >
+struct host_sample
 {
-public:
-    typedef host::samples::phase_space<dimension, float_type> sample_type;
     typedef host::samples::sample<dimension, float_type> position_sample_type;
     typedef host::samples::sample<dimension, float_type> velocity_sample_type;
     typedef host::samples::sample<1, unsigned int> species_sample_type;
     typedef host::samples::sample<1, float_type> mass_sample_type;
+};
+
+/**
+ * Sample phase_space from GPU memory to host memory
+ */
+template <int dimension, typename float_type>
+class phase_space<host_sample<dimension, float_type> >
+{
+public:
+    typedef host_sample<dimension, float_type> sample_type;
+    typedef typename sample_type::position_sample_type position_sample_type;
+    typedef typename sample_type::velocity_sample_type velocity_sample_type;
+    typedef typename sample_type::species_sample_type species_sample_type;
+    typedef typename sample_type::mass_sample_type mass_sample_type;
     typedef mdsim::gpu::particle<dimension, float_type> particle_type;
     typedef mdsim::gpu::particle_group particle_group_type;
     typedef mdsim::box<dimension> box_type;
@@ -136,21 +148,20 @@ public:
     );
 
     /**
-     * Acquire phase_space sample.
-     */
-    std::shared_ptr<sample_type const> acquire();
-    /**
      * Acquire position sample.
      */
     std::shared_ptr<position_sample_type const> acquire_position();
+
     /**
      * Acquire velocity sample.
      */
     std::shared_ptr<velocity_sample_type const> acquire_velocity();
+
     /**
      * Acquire species sample.
      */
     std::shared_ptr<species_sample_type const> acquire_species();
+
     /**
      * Acquire mass sample.
      */

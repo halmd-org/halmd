@@ -179,7 +179,7 @@ void phase_space<gpu::samples::phase_space<dimension, float_type> >::luaopen(lua
 }
 
 template <int dimension, typename float_type>
-phase_space<host::samples::phase_space<dimension, float_type> >::phase_space(
+phase_space<host_sample<dimension, float_type> >::phase_space(
     std::shared_ptr<particle_type> particle
   , std::shared_ptr<particle_group_type> particle_group
   , std::shared_ptr<box_type const> box
@@ -199,8 +199,8 @@ phase_space<host::samples::phase_space<dimension, float_type> >::phase_space(
   , threads_(particle_->dim.threads_per_block()) {}
 
 template<int dimension, typename float_type>
-typename phase_space<host::samples::phase_space<dimension, float_type>>::group_array_type const&
-phase_space<host::samples::phase_space<dimension, float_type> >::read_group_cache_()
+typename phase_space<host_sample<dimension, float_type>>::group_array_type const&
+phase_space<host_sample<dimension, float_type> >::read_group_cache_()
 {
     // if the indices changed invalidate everything must be renewed
     if (!(group_observer_ == particle_group_->ordered())) {
@@ -219,7 +219,7 @@ phase_space<host::samples::phase_space<dimension, float_type> >::read_group_cach
  * Sample position and species.
  */
 template <int dimension, typename float_type>
-void phase_space<host::samples::phase_space<dimension, float_type> >::acquire_position_species_()
+void phase_space<host_sample<dimension, float_type> >::acquire_position_species_()
 {
     group_array_type const& group = read_group_cache_();
     if (!(position_observer_ == particle_->position()) || !(image_observer_ == particle_->image())) {
@@ -239,8 +239,8 @@ void phase_space<host::samples::phase_space<dimension, float_type> >::acquire_po
         assert(group.size() == position_->data().size());
         assert(group.size() == species_->data().size());
 
-        typename sample_type::position_array_type& position = position_->data();
-        typename sample_type::species_array_type& species = species_->data();
+        typename position_sample_type::array_type& position = position_->data();
+        typename species_sample_type::array_type& species = species_->data();
 
         // copy particle data using reverse tags as on the GPU
         auto const& h_group = particle_group_->ordered_host_cached();
@@ -269,7 +269,7 @@ void phase_space<host::samples::phase_space<dimension, float_type> >::acquire_po
  * Sample velocity and mass.
  */
 template <int dimension, typename float_type>
-void phase_space<host::samples::phase_space<dimension, float_type> >::acquire_velocity_mass_()
+void phase_space<host_sample<dimension, float_type> >::acquire_velocity_mass_()
 {
     group_array_type const& group = read_group_cache_();
     if (!(velocity_observer_ == particle_->velocity())) {
@@ -286,8 +286,8 @@ void phase_space<host::samples::phase_space<dimension, float_type> >::acquire_ve
         assert(group.size() == velocity_->data().size());
         assert(group.size() == mass_->data().size());
 
-        typename sample_type::velocity_array_type& velocity = velocity_->data();
-        typename sample_type::mass_array_type& mass = mass_->data();
+        typename velocity_sample_type::array_type& velocity = velocity_->data();
+        typename mass_sample_type::array_type& mass = mass_->data();
 
         // copy particle data using reverse tags as on the GPU
         auto const& h_group = particle_group_->ordered_host_cached();
@@ -307,8 +307,8 @@ void phase_space<host::samples::phase_space<dimension, float_type> >::acquire_ve
  * Sample position
  */
 template <int dimension, typename float_type>
-std::shared_ptr<host::samples::sample<dimension, float_type> const>
-phase_space<host::samples::phase_space<dimension, float_type> >::acquire_position()
+std::shared_ptr<typename host_sample<dimension, float_type>::position_sample_type const>
+phase_space<host_sample<dimension, float_type> >::acquire_position()
 {
     acquire_position_species_();
     return position_;
@@ -318,8 +318,8 @@ phase_space<host::samples::phase_space<dimension, float_type> >::acquire_positio
  * Sample velocity
  */
 template <int dimension, typename float_type>
-std::shared_ptr<host::samples::sample<dimension, float_type> const>
-phase_space<host::samples::phase_space<dimension, float_type> >::acquire_velocity()
+std::shared_ptr<typename host_sample<dimension, float_type>::velocity_sample_type const>
+phase_space<host_sample<dimension, float_type> >::acquire_velocity()
 {
     acquire_velocity_mass_();
     return velocity_;
@@ -329,8 +329,8 @@ phase_space<host::samples::phase_space<dimension, float_type> >::acquire_velocit
  * Sample species
  */
 template <int dimension, typename float_type>
-std::shared_ptr<host::samples::sample<1, unsigned int> const>
-phase_space<host::samples::phase_space<dimension, float_type> >::acquire_species()
+std::shared_ptr<typename host_sample<dimension, float_type>::species_sample_type const>
+phase_space<host_sample<dimension, float_type> >::acquire_species()
 {
     acquire_position_species_();
     return species_;
@@ -340,28 +340,15 @@ phase_space<host::samples::phase_space<dimension, float_type> >::acquire_species
  * Sample mass
  */
 template <int dimension, typename float_type>
-std::shared_ptr<host::samples::sample<1, float_type> const>
-phase_space<host::samples::phase_space<dimension, float_type> >::acquire_mass()
+std::shared_ptr<typename host_sample<dimension, float_type>::mass_sample_type const>
+phase_space<host_sample<dimension, float_type> >::acquire_mass()
 {
     acquire_velocity_mass_();
     return mass_;
 }
 
-/**
- * Sample phase_space
- */
 template <int dimension, typename float_type>
-std::shared_ptr<host::samples::phase_space<dimension, float_type> const>
-phase_space<host::samples::phase_space<dimension, float_type> >::acquire()
-{
-    // TODO: timing
-    acquire_position_species_();
-    acquire_velocity_mass_();
-    return std::make_shared<host::samples::phase_space<dimension, float_type>>(position_, velocity_, species_, mass_, clock_->step());
-}
-
-template <int dimension, typename float_type>
-void phase_space<host::samples::phase_space<dimension, float_type>>::set_position(std::shared_ptr<position_sample_type const> sample) {
+void phase_space<host_sample<dimension, float_type>>::set_position(std::shared_ptr<position_sample_type const> sample) {
     particle_->template set_data<typename particle_type::position_type>("position", particle_group_, sample->data().begin());
     group_array_type const& group = read_cache(particle_group_->ordered());
     auto position = make_cache_mutable(particle_->position());
@@ -386,58 +373,58 @@ void phase_space<host::samples::phase_space<dimension, float_type>>::set_positio
 }
 
 template <int dimension, typename float_type>
-void phase_space<host::samples::phase_space<dimension, float_type>>::set_species(std::shared_ptr<species_sample_type const> species) {
+void phase_space<host_sample<dimension, float_type>>::set_species(std::shared_ptr<species_sample_type const> species) {
     particle_->template set_data<typename particle_type::species_type>("species", particle_group_, species->data().begin());
 }
 
 template <int dimension, typename float_type>
-void phase_space<host::samples::phase_space<dimension, float_type>>::set_mass(std::shared_ptr<mass_sample_type const> mass) {
+void phase_space<host_sample<dimension, float_type>>::set_mass(std::shared_ptr<mass_sample_type const> mass) {
     particle_->template set_data<typename particle_type::mass_type>("mass", particle_group_, mass->data().begin());
 }
 
 template <int dimension, typename float_type>
-void phase_space<host::samples::phase_space<dimension, float_type>>::set_velocity(std::shared_ptr<velocity_sample_type const> velocity) {
+void phase_space<host_sample<dimension, float_type>>::set_velocity(std::shared_ptr<velocity_sample_type const> velocity) {
     particle_->template set_data<typename particle_type::velocity_type>("velocity", particle_group_, velocity->data().begin());
 }
 
 template <typename phase_space_type>
-static std::function<typename phase_space_type::sample_type::position_array_type const& ()>
+static std::function<typename phase_space_type::position_sample_type::array_type const& ()>
 wrap_position(std::shared_ptr<phase_space_type> self)
 {
-    return [=]() -> typename phase_space_type::sample_type::position_array_type const& {
+    return [=]() -> typename phase_space_type::position_sample_type::array_type const& {
         return self->acquire_position()->data();
     };
 }
 
 template <typename phase_space_type>
-static std::function<typename phase_space_type::sample_type::velocity_array_type const& ()>
+static std::function<typename phase_space_type::velocity_sample_type::array_type const& ()>
 wrap_velocity(std::shared_ptr<phase_space_type> self)
 {
-    return [=]() -> typename phase_space_type::sample_type::velocity_array_type const& {
+    return [=]() -> typename phase_space_type::velocity_sample_type::array_type const& {
         return self->acquire_velocity()->data();
     };
 }
 
 template <typename phase_space_type>
-static std::function<typename phase_space_type::sample_type::species_array_type const& ()>
+static std::function<typename phase_space_type::species_sample_type::array_type const& ()>
 wrap_species(std::shared_ptr<phase_space_type> self)
 {
-    return [=]() -> typename phase_space_type::sample_type::species_array_type const& {
+    return [=]() -> typename phase_space_type::species_sample_type::array_type const& {
         return self->acquire_species()->data();
     };
 }
 
 template <typename phase_space_type>
-static std::function<typename phase_space_type::sample_type::mass_array_type const& ()>
+static std::function<typename phase_space_type::mass_sample_type::array_type const& ()>
 wrap_mass(std::shared_ptr<phase_space_type> self)
 {
-    return [=]() -> typename phase_space_type::sample_type::mass_array_type const& {
+    return [=]() -> typename phase_space_type::mass_sample_type::array_type const& {
         return self->acquire_mass()->data();
     };
 }
 
 template <int dimension, typename float_type>
-void phase_space<host::samples::phase_space<dimension, float_type> >::luaopen(lua_State* L)
+void phase_space<host_sample<dimension, float_type> >::luaopen(lua_State* L)
 {
     using namespace luaponte;
     module(L, "libhalmd")
@@ -445,7 +432,6 @@ void phase_space<host::samples::phase_space<dimension, float_type> >::luaopen(lu
         namespace_("observables")
         [
             class_<phase_space>()
-                .property("acquire", &wrap_acquire<phase_space>)
                 .property("acquire_position", &wrap_acquire_position<phase_space>)
                 .property("acquire_velocity", &wrap_acquire_velocity<phase_space>)
                 .property("acquire_species", &wrap_acquire_species<phase_space>)
@@ -486,16 +472,16 @@ HALMD_LUA_API int luaopen_libhalmd_observables_gpu_phase_space(lua_State* L)
 {
     phase_space<gpu::samples::phase_space<3, float> >::luaopen(L);
     phase_space<gpu::samples::phase_space<2, float> >::luaopen(L);
-    phase_space<host::samples::phase_space<3, float> >::luaopen(L);
-    phase_space<host::samples::phase_space<2, float> >::luaopen(L);
+    phase_space<host_sample<3, float> >::luaopen(L);
+    phase_space<host_sample<2, float> >::luaopen(L);
     return 0;
 }
 
 // explicit instantiation
 template class phase_space<gpu::samples::phase_space<3, float> >;
 template class phase_space<gpu::samples::phase_space<2, float> >;
-template class phase_space<host::samples::phase_space<3, float> >;
-template class phase_space<host::samples::phase_space<2, float> >;
+template class phase_space<host_sample<3, float> >;
+template class phase_space<host_sample<2, float> >;
 
 } // namespace observables
 } // namespace gpu
